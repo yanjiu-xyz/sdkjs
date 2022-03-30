@@ -5095,7 +5095,10 @@ CT_pivotTableDefinition.prototype.asc_removeDataField = function(api, pivotIndex
 		pivot.removeDataFieldAndReIndex(pivotIndex, dataIndex, true);
 	});
 };
-CT_pivotTableDefinition.prototype.asc_moveToPageField = function(api, pivotIndex, dataIndex) {
+// во всех методах asc_moveTo добавил ещё один параметр для выставления индекса в новом типе. потому что с интерфейса оно приходит как dataIndex.
+// и из-за этого есть баг, что поле всегда добавляется в конец списка и ещё один баг (например: при перемещии из поля values последнего поля в другой тип на первую позицию,
+// удаляется не то поле и получается 2 одинаковых поля). Данная правка решает эти проблемы, нужно только в интерфейсе внести правки.
+CT_pivotTableDefinition.prototype.asc_moveToPageField = function(api, pivotIndex, dataIndex, indexTo) {
 	if (st_VALUES === pivotIndex) {
 		return;
 	}
@@ -5109,10 +5112,10 @@ CT_pivotTableDefinition.prototype.asc_moveToPageField = function(api, pivotIndex
 		if (undefined === deleteIndex && undefined !== dataIndex) {
 			pivot.removeDataFieldAndReIndex(pivotIndex, dataIndex, true);
 		}
-		pivot.addPageField(pivotIndex, undefined, true);
+		pivot.addPageField(pivotIndex, indexTo, true);
 	});
 };
-CT_pivotTableDefinition.prototype.asc_moveToRowField = function(api, pivotIndex, dataIndex) {
+CT_pivotTableDefinition.prototype.asc_moveToRowField = function(api, pivotIndex, dataIndex, indexTo) {
 	var pivotField = this.asc_getPivotFields()[pivotIndex];
 	if (pivotField && !pivotField.dragToRow) {
 		//todo The field you are moving cannot be placed in thet PivotTable area
@@ -5131,11 +5134,11 @@ CT_pivotTableDefinition.prototype.asc_moveToRowField = function(api, pivotIndex,
 			if (undefined === deleteIndex && undefined !== dataIndex) {
 				pivot.removeDataFieldAndReIndex(pivotIndex, dataIndex, true);
 			}
-			pivot.addRowField(pivotIndex, undefined, true);
+			pivot.addRowField(pivotIndex, indexTo, true);
 		}
 	});
 };
-CT_pivotTableDefinition.prototype.asc_moveToColField = function(api, pivotIndex, dataIndex) {
+CT_pivotTableDefinition.prototype.asc_moveToColField = function(api, pivotIndex, dataIndex, indexTo) {
 	var pivotField = this.asc_getPivotFields()[pivotIndex];
 	if (pivotField && !pivotField.dragToCol) {
 		//todo The field you are moving cannot be placed in thet PivotTable area
@@ -5154,11 +5157,11 @@ CT_pivotTableDefinition.prototype.asc_moveToColField = function(api, pivotIndex,
 			if (undefined === deleteIndex && undefined !== dataIndex) {
 				pivot.removeDataFieldAndReIndex(pivotIndex, dataIndex, true);
 			}
-			pivot.addColField(pivotIndex, undefined, true);
+			pivot.addColField(pivotIndex, indexTo, true);
 		}
 	});
 };
-CT_pivotTableDefinition.prototype.asc_moveToDataField = function(api, pivotIndex, dataIndex) {
+CT_pivotTableDefinition.prototype.asc_moveToDataField = function(api, pivotIndex, dataIndex, indexTo) {
 	if (st_VALUES === pivotIndex) {
 		return;
 	}
@@ -5172,7 +5175,7 @@ CT_pivotTableDefinition.prototype.asc_moveToDataField = function(api, pivotIndex
 		if (undefined === deleteIndex && undefined !== dataIndex) {
 			pivot.removeDataFieldAndReIndex(pivotIndex, dataIndex, true);
 		}
-		pivot.addDataFieldAndReIndex(pivotIndex, undefined, true);
+		pivot.addDataFieldAndReIndex(pivotIndex, indexTo, true);
 		pivot.addValuesField(true);
 	});
 };

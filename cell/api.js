@@ -5441,6 +5441,7 @@ var editor;
 		var t = this;
 		if (Asc.CT_pivotTableDefinition.prototype.isValidDataRef(dataRef)) {
 			var wb = this.wbModel;
+			var pivot;
 			this._isLockedAddWorksheets(function(res) {
 				if (res) {
 					History.Create_NewPoint();
@@ -5448,7 +5449,7 @@ var editor;
 					var worksheets = t._addWorksheetsWithoutLock([newSheetName], wb.getActive());
 					var ws = worksheets[0];
 					var range = new Asc.Range(AscCommonExcel.NEW_PIVOT_COL, AscCommonExcel.NEW_PIVOT_ROW, AscCommonExcel.NEW_PIVOT_COL, AscCommonExcel.NEW_PIVOT_ROW);
-					t._asc_insertPivot(wb, dataRef, ws, range, false);
+					pivot = t._asc_insertPivot(wb, dataRef, ws, range, false);
 					History.EndTransaction();
 				} else {
 					//todo
@@ -5458,6 +5459,8 @@ var editor;
 		} else {
 			this.sendEvent('asc_onError', c_oAscError.ID.PivotLabledColumns, c_oAscError.Level.NoCritical);
 		}
+		// добавил возвращение таблицы, для методов билдера
+		return pivot;
 	};
 	spreadsheet_api.prototype.asc_insertPivotExistingWorksheet = function(dataRef, pivotRef, confirmation) {
 		var location = AscFormat.ExecuteNoHistory(function() {
@@ -5473,7 +5476,10 @@ var editor;
 			}
 			this.wb.updateWorksheetByModel();
 			this.wb.showWorksheet();
-			this._asc_insertPivot(wb, dataRef, ws, location.bbox, false);
+			// добавил возвращение таблицы, для методов билдера
+			return this._asc_insertPivot(wb, dataRef, ws, location.bbox, confirmation);
+		} else {
+			return new Error("Problem with pivotRef");
 		}
 	};
 	spreadsheet_api.prototype._asc_insertPivot = function(wb, dataRef, ws, bbox, confirmation) {
