@@ -3992,6 +3992,9 @@ CT_pivotTableDefinition.prototype.asc_getColGrandTotals = function () {
 CT_pivotTableDefinition.prototype.asc_getShowHeaders = function () {
 	return this.showHeaders;
 };
+CT_pivotTableDefinition.prototype.asc_getGrandTotalCaption = function () {
+	return this.grandTotalCaption;
+};
 CT_pivotTableDefinition.prototype.asc_getTitle = function () {
 	return this.pivotTableDefinitionX14 && this.pivotTableDefinitionX14.altText;
 };
@@ -4030,6 +4033,9 @@ CT_pivotTableDefinition.prototype.asc_select = function (api) {
 };
 CT_pivotTableDefinition.prototype.asc_getDataRef = function() {
 	return this.cacheDefinition && this.cacheDefinition.getDataRef() || '';
+};
+CT_pivotTableDefinition.prototype.asc_getFieldIndexByName = function(name) {
+	return this.cacheDefinition && this.cacheDefinition.getFieldIndexByName(name);
 };
 CT_pivotTableDefinition.prototype.getDataLocation = function() {
 	return this.cacheDefinition && this.cacheDefinition.getDataLocation();
@@ -4704,6 +4710,9 @@ CT_pivotTableDefinition.prototype.asc_set = function (api, newVal) {
 		if (null !== newVal.showHeaders) {
 			pivot.asc_setShowHeaders(newVal.showHeaders, true);
 		}
+		if (null !== newVal.grandTotalCaption) {
+			pivot.asc_setGrandTotalCaption(newVal.grandTotalCaption, true);
+		}
 		if (null !== newVal.compact) {
 			pivot.setCompact(newVal.compact, true);
 		}
@@ -4765,6 +4774,10 @@ CT_pivotTableDefinition.prototype.asc_setPageWrap = function(newVal, addToHistor
 CT_pivotTableDefinition.prototype.asc_setShowHeaders = function(newVal, addToHistory) {
 	setTableProperty(this, this.showHeaders, newVal, addToHistory, AscCH.historyitem_PivotTable_SetShowHeaders, true);
 	this.showHeaders = newVal;
+};
+CT_pivotTableDefinition.prototype.asc_setGrandTotalCaption = function(newVal, addToHistory) {
+	setTableProperty(this, this.grandTotalCaption, newVal, addToHistory, AscCH.historyitem_PivotTable_SetGrandTotalCaption, true);
+	this.grandTotalCaption = newVal;
 };
 CT_pivotTableDefinition.prototype.asc_setCompact = function(newVal, addToHistory) {
 	setTableProperty(this, this.compact, newVal, addToHistory, AscCH.historyitem_PivotTable_SetCompact, true);
@@ -15783,7 +15796,9 @@ prot["asc_getPageOverThenDown"] = prot.asc_getPageOverThenDown;
 prot["asc_getRowGrandTotals"] = prot.asc_getRowGrandTotals;
 prot["asc_getColGrandTotals"] = prot.asc_getColGrandTotals;
 prot["asc_getShowHeaders"] = prot.asc_getShowHeaders;
+prot["asc_getGrandTotalCaption"] = prot.asc_getGrandTotalCaption;
 prot["asc_getDataRef"] = prot.asc_getDataRef;
+prot["asc_getFieldIndexByName"] = prot.asc_getFieldIndexByName;
 prot["asc_getTitle"] = prot.asc_getTitle;
 prot["asc_getDescription"] = prot.asc_getDescription;
 prot["asc_getStyleInfo"] = prot.asc_getStyleInfo;
@@ -15803,6 +15818,7 @@ prot["asc_setColGrandTotals"] = prot.asc_setColGrandTotals;
 prot["asc_setPageOverThenDown"] = prot.asc_setPageOverThenDown;
 prot["asc_setPageWrap"] = prot.asc_setPageWrap;
 prot["asc_setShowHeaders"] = prot.asc_setShowHeaders;
+prot["asc_setGrandTotalCaption"] = prot.asc_setGrandTotalCaption;
 prot["asc_setCompact"] = prot.asc_setCompact;
 prot["asc_setOutline"] = prot.asc_setOutline;
 prot["asc_setGridDropZones"] = prot.asc_setGridDropZones;

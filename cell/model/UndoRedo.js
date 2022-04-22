@@ -3863,6 +3863,9 @@ function (window, undefined) {
 			case AscCH.historyitem_PivotTable_SetShowHeaders:
 				pivotTable.asc_setShowHeaders(value);
 				break;
+			case AscCH.historyitem_PivotTable_SetGrandTotalCaption:
+				pivotTable.asc_setGrandTotalCaption(value);
+				break;
 			case AscCH.historyitem_PivotTable_SetCompact:
 				pivotTable.asc_setCompact(value);
 				break;
