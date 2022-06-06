@@ -2426,6 +2426,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype.getElement = function (index) {
 		for (var i = 0; i < this.rowCount; i++) {
+			//TODO length
 			if (index > this.countElementInRow[i].length) {
 				index -= this.countElementInRow[i].length;
 			} else {
@@ -7668,6 +7669,10 @@ function parserFormula( formula, parent, _ws ) {
 	};
 	parserFormula.prototype.simplifyRefType = function (val, opt_ws, opt_row, opt_col) {
 		var ref = this.getArrayFormulaRef(), row, col;
+
+		if (val == null) {
+			return;
+		}
 
 		if (cElementType.cell === val.type || cElementType.cell3D === val.type) {
 			val = val.getValue();
