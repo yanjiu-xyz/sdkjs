@@ -213,7 +213,7 @@ ParaRun.prototype.Copy = function(Selected, oPr)
     var oLogicDocument = this.GetLogicDocument();
 	if(oPr && oPr.Comparison)
 	{
-		oPr.Comparison.updateReviewInfo(NewRun, reviewtype_Add);
+		oPr.Comparison.updateReviewInfo(NewRun, oPr.ReviewType || reviewtype_Add);
 	}
     else if (true === isCopyReviewPr || (oLogicDocument && (oLogicDocument.RecalcTableHeader || oLogicDocument.MoveDrawing)))
 	{
