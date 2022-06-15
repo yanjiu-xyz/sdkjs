@@ -756,21 +756,22 @@
     };
     CDocumentComparison.prototype.compareGroups = function(oBaseGroup, oCompareGroup)
     {
+        var NodeConstructor = this.getNodeConstructor();
         var oLCS = new AscCommon.LCS(oBaseGroup.spTree, oCompareGroup.spTree);
         oLCS.equals = function(a, b) {
             return a.isComparable(b);
         };
 
-        var oBaseNode = new CNode(oBaseGroup, null);
+        var oBaseNode = new NodeConstructor(oBaseGroup, null);
         var oChildNode;
         for(var nSp = 0; nSp < oBaseGroup.spTree.length; ++nSp)
         {
-            oChildNode = new CNode(oBaseGroup.spTree[nSp], oBaseNode);
+            oChildNode = new NodeConstructor(oBaseGroup.spTree[nSp], oBaseNode);
         }
-        var oCompareNode = new CNode(oCompareGroup, null);
+        var oCompareNode = new NodeConstructor(oCompareGroup, null);
         for(nSp = 0; nSp < oCompareGroup.spTree.length; ++nSp)
         {
-            oChildNode = new CNode(oCompareGroup.spTree[nSp], oCompareNode);
+            oChildNode = new NodeConstructor(oCompareGroup.spTree[nSp], oCompareNode);
         }
         var oDiff  = new AscCommon.Diff(oBaseNode, oCompareNode);
         oDiff.equals = function(a, b)
@@ -1921,9 +1922,14 @@
 
         }
     };
+    CDocumentComparison.prototype.getNodeConstructor = function () {
+        return CNode;
+    };
+
     CDocumentComparison.prototype.createNodeFromDocContent = function(oElement, oParentNode, oHashWords)
     {
-        var oRet = new CNode(oElement, oParentNode);
+        var NodeConstructor = this.getNodeConstructor();
+        var oRet = new NodeConstructor(oElement, oParentNode);
         var bRoot = (oParentNode === null);
         for(var i = 0; i < oElement.Content.length; ++i)
         {
@@ -1960,7 +1966,7 @@
                     {
                         oHashWords = new Minhash({});
                     }
-                    var oTableNode = new CNode(oChElement, oRet);
+                    var oTableNode = new NodeConstructor(oChElement, oRet);
                     if(bRoot)
                     {
                         oHashWords = new Minhash({});
@@ -1968,7 +1974,7 @@
                     }
                     for(var j = 0; j < oChElement.Content.length; ++j)
                     {
-                        var oRowNode = new CNode(oChElement.Content[j], oTableNode);
+                        var oRowNode = new NodeConstructor(oChElement.Content[j], oTableNode);
                         for(var k = 0; k < oChElement.Content[j].Content.length; ++k)
                         {
                             this.createNodeFromDocContent(oChElement.Content[j].Content[k].Content, oRowNode, oHashWords);
@@ -1978,7 +1984,7 @@
             }
             else
             {
-                var oNode = new CNode(oChElement, oRet);
+                var oNode = new NodeConstructor(oChElement, oRet);
                 if(bRoot)
                 {
                     oHashWords = new Minhash({});
@@ -1991,7 +1997,8 @@
     };
     CDocumentComparison.prototype.createNodeFromRunContentElement = function(oElement, oParentNode, oHashWords)
     {
-        var oRet = new CNode(oElement, oParentNode);
+        var NodeConstructor = this.getNodeConstructor();
+        var oRet = new NodeConstructor(oElement, oParentNode);
         var oLastText = null, oRun, oRunElement, i, j;
         var aLastWord = [];
         for(i = 0; i < oElement.Content.length; ++i)
@@ -2025,7 +2032,7 @@
                             {
                                 if(oLastText.elements.length > 0)
                                 {
-                                    new CNode(oLastText, oRet);
+                                    new NodeConstructor(oLastText, oRet);
                                     oLastText.updateHash(oHashWords);
                                     oLastText = new CTextElement();
                                     oLastText.setFirstRun(oRun);
@@ -2033,7 +2040,7 @@
 
                                 oLastText.setLastRun(oRun);
                                 oLastText.elements.push(oRunElement);
-                                new CNode(oLastText, oRet);
+                                new NodeConstructor(oLastText, oRet);
                                 oLastText.updateHash(oHashWords);
 
                                 oLastText = new CTextElement();
@@ -2045,13 +2052,13 @@
                                 if(oLastText.elements.length > 0)
                                 {
                                     oLastText.updateHash(oHashWords);
-                                    new CNode(oLastText, oRet);
+                                    new NodeConstructor(oLastText, oRet);
                                     oLastText = new CTextElement();
                                     oLastText.setFirstRun(oRun);
                                     oLastText.setLastRun(oRun);
                                 }
                                 oLastText.elements.push(oRun.Content[j]);
-                                new CNode(oLastText, oRet);
+                                new NodeConstructor(oLastText, oRet);
                                 oLastText = new CTextElement();
                                 oLastText.setFirstRun(oRun);
                                 oLastText.setLastRun(oRun);
@@ -2061,7 +2068,7 @@
                                 if(oLastText.elements.length > 0)
                                 {
                                     oLastText.updateHash(oHashWords);
-                                    new CNode(oLastText, oRet);
+                                    new NodeConstructor(oLastText, oRet);
                                     oLastText = new CTextElement();
                                     oLastText.setFirstRun(oRun);
                                     oLastText.setLastRun(oRun);
@@ -2069,7 +2076,7 @@
                                 oLastText.setFirstRun(oRun);
                                 oLastText.setLastRun(oRun);
                                 oLastText.elements.push(oRun.Content[j]);
-                                new CNode(oLastText, oRet);
+                                new NodeConstructor(oLastText, oRet);
                                 oLastText.updateHash(oHashWords);
                                 oLastText = new CTextElement();
                                 oLastText.setFirstRun(oRun);
@@ -2126,7 +2133,7 @@
                     if(oLastText && oLastText.elements.length > 0)
                     {
                         oLastText.updateHash(oHashWords);
-                        new CNode(oLastText, oRet);
+                        new NodeConstructor(oLastText, oRet);
                     }
                     if(aLastWord.length > 0)
                     {
@@ -2140,7 +2147,7 @@
                     }
                     else
                     {
-                        new CNode(oRun, oRet);
+                        new NodeConstructor(oRun, oRet);
                     }
                 }
             }
@@ -2148,7 +2155,7 @@
         if(oLastText && oLastText.elements.length > 0)
         {
             oLastText.updateHash(oHashWords);
-            new CNode(oLastText, oRet);
+            new NodeConstructor(oLastText, oRet);
         }
         return oRet;
     };
