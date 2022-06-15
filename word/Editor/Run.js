@@ -334,7 +334,8 @@ ParaRun.prototype.Copy2 = function(oPr)
     NewRun.Set_Pr( this.Pr.Copy(undefined, oPr) );
 	if(oPr && oPr.Comparison)
 	{
-		oPr.Comparison.updateReviewInfo(NewRun, reviewtype_Add);
+		var newReviewType = AscFormat.isRealNumber(oPr.ReviewType) ? oPr.ReviewType : reviewtype_Add;
+		oPr.Comparison.updateReviewInfo(NewRun, newReviewType);
 	}
     var StartPos = 0;
     var EndPos   = this.Content.length;
