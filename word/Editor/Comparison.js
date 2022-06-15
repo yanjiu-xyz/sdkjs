@@ -2057,10 +2057,10 @@
                                 oLastText.setFirstRun(oRun);
                             }
 
-                                oLastText.setLastRun(oRun);
-                                oLastText.elements.push(oRunElement);
-                                new NodeConstructor(oLastText, oRet);
-                                oLastText.updateHash(oHashWords);
+                            oLastText.setLastRun(oRun);
+                            oLastText.elements.push(oRunElement);
+                            new NodeConstructor(oLastText, oRet);
+                            oLastText.updateHash(oHashWords);
 
                             oLastText = new CTextElement();
                             oLastText.setFirstRun(oRun);
