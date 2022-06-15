@@ -19831,5 +19831,6 @@ function CParagraphLineNumbersInfo(nStartLineNum)
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].Paragraph = Paragraph;
+window['AscCommonWord'].CParagraphContentPos = CParagraphContentPos;
 window['AscCommonWord'].UnknownValue = UnknownValue;
 window['AscCommonWord'].type_Paragraph = type_Paragraph;
