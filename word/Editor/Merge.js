@@ -108,4 +108,18 @@
         return true;
     }
 
+    function CMergeNode(oElement, oParent) {
+        CNode.call(this, oElement, oParent);
+        this.isVisit = false;
+    }
+
+    CMergeNode.prototype = Object.create(CNode.prototype);
+    CMergeNode.prototype.constructor = CMergeNode;
+
+    CMergeNode.prototype.equals = function (oNode) {
+        if (!(this.element instanceof CMergeTextElement) || !(oNode.element instanceof CMergeTextElement)) return false;
+        return this.element.equals(oNode.element);
+
+    }
+
 })()
