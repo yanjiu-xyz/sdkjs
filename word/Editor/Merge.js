@@ -746,4 +746,81 @@
         return CMergeNode;
     };
 
+    function CDocumentIterator(oDocument) {
+        this.tree = this.createTree(oDocument, null, null);
+        this.parent = this.tree;
+        this.value = this.tree.children[0];
+        if (!this.value) {
+            this.checkValue = false;
+        } else {
+            this.value.isVisit = true;
+            this.checkValue = true;
+        }
+    }
+
+    CDocumentIterator.prototype.createTree = CDocumentMerge.prototype.createNodeFromDocContent;
+    CDocumentIterator.prototype.getNodeConstructor = CDocumentMerge.prototype.getNodeConstructor;
+    CDocumentIterator.prototype.createNodeFromRunContentElement = CDocumentMerge.prototype.createNodeFromRunContentElement;
+
+    CDocumentIterator.prototype.getValue = function () {
+        return this.value;
+    }
+
+    CDocumentIterator.prototype.reset = function () {
+        this.checkValue = true;
+        this.parent = this.tree;
+        this.value = this.tree.children[0];
+        var arrReset = [this.tree];
+        while (arrReset.length) {
+            var checkChild = arrReset.pop();
+            checkChild.isVisit = false;
+            arrReset.push.apply(arrReset, checkChild.children);
+        }
+    };
+
+    CDocumentIterator.prototype.next = function () {
+        var newValue;
+
+        while (!newValue) {
+            if (!this.parent) {
+                this.checkValue = false;
+                break;
+            } else if (this.value.children[0] && !this.value.children[0].isVisit) {
+                newValue = this.value.children[0];
+            } else if (this.value.childidx === this.parent.children.length - 1 || this.parent.children[this.value.childidx + 1].isVisit) {
+                var oldParent = this.parent;
+                this.parent = this.parent.par;
+                this.value = oldParent;
+            } else {
+                newValue = this.parent.children[this.value.childidx + 1];
+            }
+        }
+
+        if (newValue) {
+            this.value = newValue;
+            this.value.isVisit = true;
+            this.parent = this.value.par;
+        }
+    }
+
+    CDocumentIterator.prototype.check = function () {
+        return this.checkValue;
+    }
+
+    CDocumentIterator.prototype.isElementForAdd = function ()
+    {
+        if(this.getValue().IsParaEndRun && this.getValue().IsParaEndRun())
+        {
+            return false;
+        }
+        return true;
+    };
+
+    CDocumentIterator.prototype.skipUnusual = function () {
+        while ((!(this.getValue().element instanceof AscCommonWord.CTextElement)) && this.check()) {
+            this.next();
+        }
+        return this.getValue();
+    };
+
 })()
