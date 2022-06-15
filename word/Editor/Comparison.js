@@ -1833,85 +1833,105 @@
             oReviewIno.DateTime = "Unknown";
         }
     };
-    CDocumentComparison.prototype.setReviewInfoRecursive = function(oObject, nType)
+    CDocumentComparison.prototype.getElementsForSetReviewType = function (oObject) {
+        if (!oObject) {
+            return [];
+        }
+        var arrReturnObjects = [];
+        var arrCheckObjects = [oObject];
+
+        while (arrCheckObjects.length) {
+            var oCheckObject = arrCheckObjects.pop();
+
+            if(oCheckObject.ReviewInfo && oCheckObject.SetReviewTypeWithInfo)
+            {
+               arrReturnObjects.push(oCheckObject);
+            }
+            var i;
+            if(Array.isArray(oCheckObject.Content))
+            {
+                for(i = 0; i < oCheckObject.Content.length; ++i)
+                {
+                    arrCheckObjects.push(oCheckObject.Content[i]);
+                }
+            }
+            if(AscCommon.isRealObject(oCheckObject.Content))
+            {
+                arrCheckObjects.push(oCheckObject.Content);
+            }
+            if(oCheckObject.Type === para_FootnoteReference || oCheckObject.Type === para_EndnoteReference)
+            {
+                arrCheckObjects.push(oCheckObject.Footnote);
+            }
+            if(oCheckObject.GetAllDocContents)
+            {
+                var aContents = oCheckObject.GetAllDocContents();
+                for(i = 0; i < aContents.length; ++i)
+                {
+                    arrCheckObjects.push(aContents[i]);
+                }
+            }
+            if(oCheckObject.Root)
+            {
+                arrCheckObjects.push(oCheckObject.Root);
+            }
+            if(AscCommon.isRealObject(oCheckObject.SectPr) && (oCheckObject instanceof Paragraph))
+            {
+                var oOrigSectPr = oCheckObject.SectPr, oOrigContent;
+                if(oOrigSectPr)
+                {
+                    oOrigContent = oOrigSectPr.HeaderFirst && oOrigSectPr.HeaderFirst.Content;
+                    if(oOrigContent)
+                    {
+                        arrCheckObjects.push(oOrigContent);
+                    }
+                    oOrigContent = oOrigSectPr.HeaderEven && oOrigSectPr.HeaderEven.Content;
+                    if(oOrigContent)
+                    {
+                        arrCheckObjects.push(oOrigContent);
+                    }
+                    oOrigContent = oOrigSectPr.HeaderDefault && oOrigSectPr.HeaderDefault.Content;
+                    if(oOrigContent)
+                    {
+                        arrCheckObjects.push(oOrigContent);
+                    }
+                    oOrigContent = oOrigSectPr.FooterFirst && oOrigSectPr.FooterFirst.Content;
+                    if(oOrigContent)
+                    {
+                        arrCheckObjects.push(oOrigContent);
+                    }
+
+                    oOrigContent = oOrigSectPr.FooterEven && oOrigSectPr.FooterEven.Content;
+                    if(oOrigContent)
+                    {
+                        arrCheckObjects.push(oOrigContent);
+                    }
+                    oOrigContent = oOrigSectPr.FooterDefault && oOrigSectPr.FooterDefault.Content;
+                    if(oOrigContent)
+                    {
+                        arrCheckObjects.push(oOrigContent);
+                    }
+                }
+            }
+        }
+
+        return arrReturnObjects;
+    };
+
+    CDocumentComparison.prototype.setReviewInfoRecursive = function(oObject, nType, bSaveCustomReviewType)
     {
-        if(!oObject)
-        {
-            return;
-        }
-        if(oObject.ReviewInfo && oObject.SetReviewTypeWithInfo)
-        {
-            var oReviewIno = oObject.ReviewInfo.Copy();
-            this.setReviewInfo(oReviewIno);
-            oObject.SetReviewTypeWithInfo(nType, oReviewIno, false);
-        }
-        var i;
-        if(Array.isArray(oObject.Content))
-        {
-            for(i = 0; i < oObject.Content.length; ++i)
-            {
-                this.setReviewInfoRecursive(oObject.Content[i], nType)
-            }
-        }
-        if(AscCommon.isRealObject(oObject.Content))
-        {
-            this.setReviewInfoRecursive(oObject.Content, nType);
-        }
-        if(oObject.Type === para_FootnoteReference || oObject.Type === para_EndnoteReference)
-        {
-            this.setReviewInfoRecursive(oObject.Footnote, nType);
-        }
-        if(oObject.GetAllDocContents)
-        {
-            var aContents = oObject.GetAllDocContents();
-            for(i = 0; i < aContents.length; ++i)
-            {
-                this.setReviewInfoRecursive(aContents[i], nType);
-            }
-        }
-        if(oObject.Root)
-        {
-            this.setReviewInfoRecursive(oObject.Root, nType);
-        }
-        if(AscCommon.isRealObject(oObject.SectPr) && (oObject instanceof Paragraph))
-        {
-            var oOrigSectPr = oObject.SectPr, oOrigContent;
-            if(oOrigSectPr)
-            {
-                oOrigContent = oOrigSectPr.HeaderFirst && oOrigSectPr.HeaderFirst.Content;
-                if(oOrigContent)
-                {
-                    this.setReviewInfoRecursive(oOrigContent, nType);
-                }
-                oOrigContent = oOrigSectPr.HeaderEven && oOrigSectPr.HeaderEven.Content;
-                if(oOrigContent)
-                {
-                    this.setReviewInfoRecursive(oOrigContent, nType);
-                }
-                oOrigContent = oOrigSectPr.HeaderDefault && oOrigSectPr.HeaderDefault.Content;
-                if(oOrigContent)
-                {
-                    this.setReviewInfoRecursive(oOrigContent, nType);
-                }
-                oOrigContent = oOrigSectPr.FooterFirst && oOrigSectPr.FooterFirst.Content;
-                if(oOrigContent)
-                {
-                    this.setReviewInfoRecursive(oOrigContent, nType);
-                }
+        var arrNeedReviewObjects = this.getElementsForSetReviewType(oObject);
 
-                oOrigContent = oOrigSectPr.FooterEven && oOrigSectPr.FooterEven.Content;
-                if(oOrigContent)
-                {
-                    this.setReviewInfoRecursive(oOrigContent, nType);
-                }
-                oOrigContent = oOrigSectPr.FooterDefault && oOrigSectPr.FooterDefault.Content;
-                if(oOrigContent)
-                {
-                    this.setReviewInfoRecursive(oOrigContent, nType);
-                }
+        for (var i = 0; i < arrNeedReviewObjects.length; i += 1) {
+            var oNeedReviewObject = arrNeedReviewObjects[i];
+            var oReviewInfo = oNeedReviewObject.ReviewInfo.Copy();
+            this.setReviewInfo(oReviewInfo);
+            var reviewType;
+            if (bSaveCustomReviewType) {
+                reviewType = oNeedReviewObject.GetReviewType && oNeedReviewObject.GetReviewType();
             }
+            oNeedReviewObject.SetReviewTypeWithInfo(reviewType || nType, oReviewInfo, false);
         }
-
     };
     CDocumentComparison.prototype.updateReviewInfo = function(oObject, nType, bParaEnd)
     {
