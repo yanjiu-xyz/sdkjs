@@ -2169,84 +2169,85 @@
 
     function CompareBinary(oApi, sBinary2, oOptions, bForceApplyChanges)
     {
+        window['AscCommonWord'].mergeBinary(oApi, sBinary2, oOptions);
+        /*
+								var oDoc1 = oApi.WordControl.m_oLogicDocument; TODO: change this
+								if(!window['NATIVE_EDITOR_ENJINE'])
+								{
+										var oCollaborativeEditing = oDoc1.CollaborativeEditing;
+										if(oCollaborativeEditing && !oCollaborativeEditing.Is_SingleUser())
+										{
+												oApi.sendEvent("asc_onError", Asc.c_oAscError.ID.CannotCompareInCoEditing, c_oAscError.Level.NoCritical);
+												return;
+										}
+								}
+								oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
+								var bHaveRevisons2 = false;
+								var oDoc2 = AscFormat.ExecuteNoHistory(function(){
 
-        var oDoc1 = oApi.WordControl.m_oLogicDocument;
-        if(!window['NATIVE_EDITOR_ENJINE'])
-        {
-            var oCollaborativeEditing = oDoc1.CollaborativeEditing;
-            if(oCollaborativeEditing && !oCollaborativeEditing.Is_SingleUser())
-            {
-                oApi.sendEvent("asc_onError", Asc.c_oAscError.ID.CannotCompareInCoEditing, c_oAscError.Level.NoCritical);
-                return;
-            }
-        }
-        oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
-        var bHaveRevisons2 = false;
-        var oDoc2 = AscFormat.ExecuteNoHistory(function(){
+										var oBinaryFileReader, openParams        = {disableRevisions: true, noSendComments: true};
+										var oDoc2 = new CDocument(oApi.WordControl.m_oDrawingDocument, true);
+										oApi.WordControl.m_oDrawingDocument.m_oLogicDocument = oDoc2;
+										oApi.WordControl.m_oLogicDocument = oDoc2;
+										oBinaryFileReader = new AscCommonWord.BinaryFileReader(oDoc2, openParams);
+										AscCommon.pptx_content_loader.Start_UseFullUrl(oApi.insertDocumentUrlsData);
+										if (!oBinaryFileReader.Read(sBinary2))
+										{
+												oDoc2 = null;
+										}
+										if(oDoc2)
+										{
+												bHaveRevisons2 = oBinaryFileReader.oReadResult && oBinaryFileReader.oReadResult.hasRevisions;
+										}
+										oApi.WordControl.m_oDrawingDocument.m_oLogicDocument = oDoc1;
+										oApi.WordControl.m_oLogicDocument = oDoc1;
+							if (oDoc1.History)
+								oDoc1.History.Set_LogicDocument(oDoc1);
+							if (oDoc1.CollaborativeEditing)
+								oDoc1.CollaborativeEditing.m_oLogicDocument = oDoc1;
+										return oDoc2;
+								}, this, []);
+								oDoc1.History.Document = oDoc1;
+								if(oDoc2)
+								{
+										var fCallback = function()
+										{
+												var oComp = new AscCommonWord.CDocumentComparison(oDoc1, oDoc2, oOptions ? oOptions : new ComparisonOptions());
+												oComp.compare();
+										};
 
-            var oBinaryFileReader, openParams        = {disableRevisions: true, noSendComments: true};
-            var oDoc2 = new CDocument(oApi.WordControl.m_oDrawingDocument, true);
-            oApi.WordControl.m_oDrawingDocument.m_oLogicDocument = oDoc2;
-            oApi.WordControl.m_oLogicDocument = oDoc2;
-            oBinaryFileReader = new AscCommonWord.BinaryFileReader(oDoc2, openParams);
-            AscCommon.pptx_content_loader.Start_UseFullUrl(oApi.insertDocumentUrlsData);
-            if (!oBinaryFileReader.Read(sBinary2))
-            {
-                oDoc2 = null;
-            }
-            if(oDoc2)
-            {
-                bHaveRevisons2 = oBinaryFileReader.oReadResult && oBinaryFileReader.oReadResult.hasRevisions;
-            }
-            oApi.WordControl.m_oDrawingDocument.m_oLogicDocument = oDoc1;
-            oApi.WordControl.m_oLogicDocument = oDoc1;
-			if (oDoc1.History)
-				oDoc1.History.Set_LogicDocument(oDoc1);
-			if (oDoc1.CollaborativeEditing)
-				oDoc1.CollaborativeEditing.m_oLogicDocument = oDoc1;
-            return oDoc2;
-        }, this, []);
-        oDoc1.History.Document = oDoc1;
-        if(oDoc2)
-        {
-            var fCallback = function()
-            {
-                var oComp = new AscCommonWord.CDocumentComparison(oDoc1, oDoc2, oOptions ? oOptions : new ComparisonOptions());
-                oComp.compare();
-            };
+										if(window['NATIVE_EDITOR_ENJINE'] || bForceApplyChanges)
+										{
+												fCallback();
+										}
+										else
+										{
 
-            if(window['NATIVE_EDITOR_ENJINE'] || bForceApplyChanges)
-            {
-                fCallback();
-            }
-            else
-            {
+												oDoc1.TrackRevisionsManager.ContinueTrackRevisions();
+												if(oDoc1.TrackRevisionsManager.Have_Changes() || bHaveRevisons2)
+												{
 
-                oDoc1.TrackRevisionsManager.ContinueTrackRevisions();
-                if(oDoc1.TrackRevisionsManager.Have_Changes() || bHaveRevisons2)
-                {
-
-                    oApi.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
-                    oApi.sendEvent("asc_onAcceptChangesBeforeCompare", function (bAccept) {
-                        if(bAccept){
-                            oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
-                            fCallback();
-                        }
-                        else
-                        {
-                        }
-                    })
-                }
-                else
-                {
-                    fCallback();
-                }
-            }
-        }
-        else
-        {
-            AscCommon.pptx_content_loader.End_UseFullUrl();
-        }
+														oApi.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
+														oApi.sendEvent("asc_onAcceptChangesBeforeCompare", function (bAccept) {
+																if(bAccept){
+																		oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
+																		fCallback();
+																}
+																else
+																{
+																}
+														})
+												}
+												else
+												{
+														fCallback();
+												}
+										}
+								}
+								else
+								{
+										AscCommon.pptx_content_loader.End_UseFullUrl();
+								}*/
     }
 
 
