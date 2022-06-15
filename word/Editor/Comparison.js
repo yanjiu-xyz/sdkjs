@@ -2264,4 +2264,7 @@
     window['AscCommonWord']["CompareBinary"] =  window['AscCommonWord'].CompareBinary = CompareBinary;
     window['AscCommonWord']["ComparisonOptions"] = window['AscCommonWord'].ComparisonOptions = ComparisonOptions;
     window['AscCommonWord']['CompareDocuments'] = CompareDocuments;
+    window['AscCommonWord']['CDocumentComparison'] = CDocumentComparison;
+    window['AscCommonWord']['CNode'] = CNode;
+    window['AscCommonWord']['CTextElement'] = window['AscCommonWord'].CTextElement = CTextElement;
 })();
