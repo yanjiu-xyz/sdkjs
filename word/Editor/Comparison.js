@@ -1424,6 +1424,7 @@
             }
         }
     };
+
     CDocumentComparison.prototype.compareSectPr = function(oElement, oPartnerElement)
     {
         var oOrigSectPr = oElement.SectPr;
@@ -1710,7 +1711,7 @@
         {
             oCopyComment = this.CommentsMap[sId];
         }
-        else 
+        else
         {
             var oComment = this.revisedDocument.Comments.Get_ById(sId);
             if(oComment)
@@ -1729,7 +1730,7 @@
             }
         }
         oCopyComment = this.CommentsMap[sId] || null;
-        if(oCopyComment) 
+        if(oCopyComment)
         {
             return oCopyComment.Get_Id();
         }
@@ -2008,122 +2009,88 @@
             {
                 if(oRun.Content.length > 0)
                 {
-                   // if(this.options.getWords())
+                    if(!oLastText)
                     {
-                        if(!oLastText)
+                        oLastText = new CTextElement();
+                        oLastText.setFirstRun(oRun);
+                    }
+                    if(oLastText.elements.length === 0)
+                    {
+                        oLastText.setFirstRun(oRun);
+                        oLastText.setLastRun(oRun);
+                    }
+                    for(j = 0; j < oRun.Content.length; ++j)
+                    {
+                        oRunElement = oRun.Content[j];
+                        var bPunctuation = para_Text === oRunElement.Type && (AscCommon.g_aPunctuation[oRunElement.Value] && !EXCLUDED_PUNCTUATION[oRunElement.Value]);
+                        if(oRunElement.Type === para_Space || oRunElement.Type === para_Tab
+                          || oRunElement.Type === para_Separator || oRunElement.Type === para_NewLine
+                          || oRunElement.Type === para_FootnoteReference
+                          || oRunElement.Type === para_EndnoteReference
+                          || bPunctuation)
                         {
-                            oLastText = new CTextElement();
-                            oLastText.setFirstRun(oRun);
-                        }
-                        if(oLastText.elements.length === 0)
-                        {
-                            oLastText.setFirstRun(oRun);
-                            oLastText.setLastRun(oRun);
-                        }
-                        for(j = 0; j < oRun.Content.length; ++j)
-                        {
-                            oRunElement = oRun.Content[j];
-                            var bPunctuation = para_Text === oRunElement.Type && (AscCommon.g_aPunctuation[oRunElement.Value] && !EXCLUDED_PUNCTUATION[oRunElement.Value]);
-                            if(oRunElement.Type === para_Space || oRunElement.Type === para_Tab
-                                || oRunElement.Type === para_Separator || oRunElement.Type === para_NewLine
-                                || oRunElement.Type === para_FootnoteReference
-                                || oRunElement.Type === para_EndnoteReference
-                                || bPunctuation)
+                            if(oLastText.elements.length > 0)
                             {
-                                if(oLastText.elements.length > 0)
-                                {
-                                    new NodeConstructor(oLastText, oRet);
-                                    oLastText.updateHash(oHashWords);
-                                    oLastText = new CTextElement();
-                                    oLastText.setFirstRun(oRun);
-                                }
+                                new NodeConstructor(oLastText, oRet);
+                                oLastText.updateHash(oHashWords);
+                                oLastText = new CTextElement();
+                                oLastText.setFirstRun(oRun);
+                            }
 
                                 oLastText.setLastRun(oRun);
                                 oLastText.elements.push(oRunElement);
                                 new NodeConstructor(oLastText, oRet);
                                 oLastText.updateHash(oHashWords);
 
-                                oLastText = new CTextElement();
-                                oLastText.setFirstRun(oRun);
-                                oLastText.setLastRun(oRun);
-                            }
-                            else if(oRunElement.Type === para_Drawing)
+                            oLastText = new CTextElement();
+                            oLastText.setFirstRun(oRun);
+                            oLastText.setLastRun(oRun);
+                        }
+                        else if(oRunElement.Type === para_Drawing)
+                        {
+                            if(oLastText.elements.length > 0)
                             {
-                                if(oLastText.elements.length > 0)
-                                {
-                                    oLastText.updateHash(oHashWords);
-                                    new NodeConstructor(oLastText, oRet);
-                                    oLastText = new CTextElement();
-                                    oLastText.setFirstRun(oRun);
-                                    oLastText.setLastRun(oRun);
-                                }
-                                oLastText.elements.push(oRun.Content[j]);
-                                new NodeConstructor(oLastText, oRet);
-                                oLastText = new CTextElement();
-                                oLastText.setFirstRun(oRun);
-                                oLastText.setLastRun(oRun);
-                            }
-                            else if(oRunElement.Type === para_End)
-                            {
-                                if(oLastText.elements.length > 0)
-                                {
-                                    oLastText.updateHash(oHashWords);
-                                    new NodeConstructor(oLastText, oRet);
-                                    oLastText = new CTextElement();
-                                    oLastText.setFirstRun(oRun);
-                                    oLastText.setLastRun(oRun);
-                                }
-                                oLastText.setFirstRun(oRun);
-                                oLastText.setLastRun(oRun);
-                                oLastText.elements.push(oRun.Content[j]);
-                                new NodeConstructor(oLastText, oRet);
                                 oLastText.updateHash(oHashWords);
+                                new NodeConstructor(oLastText, oRet);
                                 oLastText = new CTextElement();
                                 oLastText.setFirstRun(oRun);
                                 oLastText.setLastRun(oRun);
                             }
-                            else
+                            oLastText.elements.push(oRun.Content[j]);
+                            new NodeConstructor(oLastText, oRet);
+                            oLastText = new CTextElement();
+                            oLastText.setFirstRun(oRun);
+                            oLastText.setLastRun(oRun);
+                        }
+                        else if(oRunElement.Type === para_End)
+                        {
+                            if(oLastText.elements.length > 0)
                             {
-                                if(oLastText.elements.length === 0)
-                                {
-                                    oLastText.setFirstRun(oRun);
-                                }
+                                oLastText.updateHash(oHashWords);
+                                new NodeConstructor(oLastText, oRet);
+                                oLastText = new CTextElement();
+                                oLastText.setFirstRun(oRun);
                                 oLastText.setLastRun(oRun);
-                                oLastText.elements.push(oRun.Content[j]);
                             }
+                            oLastText.setFirstRun(oRun);
+                            oLastText.setLastRun(oRun);
+                            oLastText.elements.push(oRun.Content[j]);
+                            new NodeConstructor(oLastText, oRet);
+                            oLastText.updateHash(oHashWords);
+                            oLastText = new CTextElement();
+                            oLastText.setFirstRun(oRun);
+                            oLastText.setLastRun(oRun);
+                        }
+                        else
+                        {
+                            if(oLastText.elements.length === 0)
+                            {
+                                oLastText.setFirstRun(oRun);
+                            }
+                            oLastText.setLastRun(oRun);
+                            oLastText.elements.push(oRun.Content[j]);
                         }
                     }
-                    // else
-                    // {
-                    //     if(oLastText && oLastText.elements.length > 0)
-                    //     {
-                    //         new CNode(oLastText, oRet);
-                    //     }
-                    //     for(j = 0; j < oRun.Content.length; ++j)
-                    //     {
-                    //         oRunElement = oRun.Content[j];
-                    //         if(AscFormat.isRealNumber(oRunElement.Value))
-                    //         {
-                    //             aLastWord.push(oRunElement.Value);
-                    //         }
-                    //         else
-                    //         {
-                    //             if(aLastWord.length > 0)
-                    //             {
-                    //                 oHashWords.update(aLastWord);
-                    //                 aLastWord.length = 0;
-                    //             }
-                    //         }
-                    //         oLastText = new CTextElement();
-                    //         oLastText.setFirstRun(oRun);
-                    //         oLastText.setLastRun(oRun);
-                    //         oLastText.elements.push(oRunElement);
-                    //         new CNode(oLastText, oRet);
-                    //     }
-                    //     oLastText = new CTextElement();
-                    //     oLastText.setFirstRun(oRun);
-                    //     oLastText.setLastRun(oRun);
-                    // }
                 }
             }
             else
