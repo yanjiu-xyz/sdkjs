@@ -11757,7 +11757,7 @@ background-repeat: no-repeat;\
 			}, endCallback: function (_api) {
 
 				if (stream) {
-					AscCommonWord.CompareBinary(oApi, stream, oOptions);
+					AscCommonWord.mergeBinary(oApi, stream, oOptions); //TODO:remove this
 					stream = null;
 				}
 			}
