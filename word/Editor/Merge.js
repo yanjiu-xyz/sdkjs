@@ -8,12 +8,16 @@
     //EXCLUDED_PUNCTUATION[95] = true;
     EXCLUDED_PUNCTUATION[160] = true;
 
-    function getPriorityReviewType(firstReviewType, secondReviewType) {
-        if (firstReviewType === reviewtype_Remove || secondReviewType === reviewtype_Remove) {
-            return reviewtype_Remove;
-        } else if (firstReviewType === reviewtype_Add || secondReviewType === reviewtype_Add) {
-            return reviewtype_Add;
-        }
+    function getPriorityReviewType(arrOfTypes) {
+        var bRemove = arrOfTypes.some(function (reviewType) {
+            return reviewType === reviewtype_Remove;
+        });
+        if (bRemove) return reviewtype_Remove;
+
+        var bAdd = arrOfTypes.some(function (reviewType) {
+            return reviewType === reviewtype_Add;
+        });
+        if (bAdd) return reviewtype_Add;
         return reviewtype_Common;
     }
 
