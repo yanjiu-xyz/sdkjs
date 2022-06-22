@@ -2,6 +2,12 @@
     var CDocumentComparison = AscCommonWord.CDocumentComparison;
     var CNode               = AscCommonWord.CNode;
     var g_oTableId          = AscCommon.g_oTableId;
+    var CTextElement = window['AscCommonWord'].CTextElement;
+
+    var CONFLICT_TYPES = {
+        originalDocument: 0x01,
+        revisedDocument: 0x02,
+    };
 
     var EXCLUDED_PUNCTUATION = {};
     EXCLUDED_PUNCTUATION[46] = true; // TODO: organize import
@@ -38,12 +44,39 @@
         return this.mergeElements[idxElement].run;
     };
 
+    CMergeTextElement.prototype.equalsDuplicate = function (oAnotherTextElement) {
+        return this.equalsWithoutType(oAnotherTextElement) && this.isWord();
+    };
+    CMergeTextElement.prototype.isWord = function () {
+        return this.mergeElements.every(function (elem) {
+            var element = elem.element;
+            var bPunctuation = para_Text === element.Type && (AscCommon.g_aPunctuation[element.Value] && !EXCLUDED_PUNCTUATION[element.Value]);
+            return !(element.Type === para_Space || element.Type === para_Tab
+                || element.Type === para_Separator || element.Type === para_NewLine
+                || element.Type === para_FootnoteReference
+                || element.Type === para_EndnoteReference
+                || bPunctuation);
+        });
+    };
     CMergeTextElement.prototype.getReviewType = function (idxElement) {
         var oRun = this.mergeElements[idxElement].run;
         return oRun && oRun.GetReviewType();
     }
 
-    CMergeTextElement.prototype.merge = function (anotherTextElement, insertIndexesMap) {
+    CMergeTextElement.prototype.getPriorityReviewType = function () {
+        var oThis = this;
+        return this.mergeElements.reduce(function (acc, b, idx) {
+            return getPriorityReviewType([oThis.getReviewType(idx), acc]);
+        }, reviewtype_Common);
+    };
+
+    CMergeTextElement.prototype.logText = function () {
+        return this.mergeElements.map(function (e) {
+            return String.fromCharCode(e.element.Value);
+        }).join('')
+    }
+
+    CMergeTextElement.prototype.merge = function (anotherTextElement, insertIndexesMap, arrOfReviewType) {
         if (!(anotherTextElement instanceof this.constructor)) return;
 
         insertIndexesMap = insertIndexesMap || {};
@@ -123,7 +156,57 @@
     CMergeNode.prototype.equals = function (oNode) {
         if (!(this.element instanceof CMergeTextElement) || !(oNode.element instanceof CMergeTextElement)) return false;
         return this.element.equals(oNode.element);
+    }
 
+    CMergeNode.prototype.equalsWithoutType = function (oNode) {
+        if (!(this.element instanceof CMergeTextElement) || !(oNode.element instanceof CMergeTextElement)) return false;
+        return this.element.equalsWithoutType(oNode.element);
+    }
+
+    CMergeNode.prototype.equalsDuplicate = function (oNode) {
+        if (!(this.element instanceof CMergeTextElement) || !(oNode.element instanceof CMergeTextElement)) return false;
+        return this.element.equalsDuplicate(oNode.element);
+    }
+
+    CMergeNode.prototype.merge = function (oNode) {
+        this.element.merge(oNode.element);
+    }
+
+    CMergeNode.prototype.equalsWithoutType2 = function (oNode) {
+        if (!(this.element instanceof CMergeTextElement) || !(oNode.element instanceof CMergeTextElement)) return false;
+        return this.element.equalsWithoutType(oNode.element);
+    }
+
+    CMergeNode.prototype.arrEquals = function (arrONodes) {
+        var oThis = this;
+        return arrONodes.map(function (oNode) {
+            return oThis.equals(oNode);
+        });
+    }
+
+    CMergeNode.prototype.arrEqualsWithoutType = function (arrONodes) {
+        var oThis = this;
+        return arrONodes.map(function (oNode) {
+            return oThis.equalsWithoutType(oNode);
+        });
+    }
+
+    CMergeNode.prototype.getPriorityReviewType = function (oNode) {
+        return this.element.getPriorityReviewType();
+    }
+
+    CMergeNode.prototype.arrNotEqualsNodes = function (arrONodes) {
+        var oThis = this;
+        return arrONodes.filter(function (oNode) {
+            return !oThis.equals(oNode);
+        });
+    }
+
+
+    
+    CMergeNode.prototype.reviewTypeEquals = function (oNode) {
+        if (!(this.element instanceof CMergeTextElement) || !(oNode.element instanceof CMergeTextElement)) return false;
+        return this.element.reviewTypeEquals(oNode.element);
     }
 
     function CDocumentMerge(oOriginalDocument, oRevisedDocument, oOptions, originalAuthor, revisedAuthor) {
@@ -179,115 +262,6 @@
         }
     };
 
-    CDocumentMerge.prototype.applyInsertsToParagraphsWithRemove = function (oChange, oElement, aContentToInsert) {
-        var oLastText = oChange.remove[oChange.remove.length - 1].element;
-        var oFirstText = oChange.remove[0].element;
-        var oCurRun, oNewRun, oChildElement, k, t;
-        if(oLastText.lastRun)
-        {
-            oCurRun = oLastText.lastRun;
-        }
-        else
-        {
-            oCurRun = oLastText;
-        }
-
-        var nInsertPosition = -1;
-        for(k = oElement.Content.length - 1; k > -1; --k)
-        {
-            if(oElement.Content[k] === oCurRun)
-            {
-                if(oLastText instanceof CTextElement)
-                {
-                    for(t = oCurRun.Content.length - 1; t > -1; t--)
-                    {
-                        if(oCurRun.Content[t] === oLastText.elements[oLastText.elements.length - 1])
-                        {
-                            break;
-                        }
-                    }
-                    if(t > -1)
-                    {
-                        //  if(t !== oCurRun.Content.length - 1)
-                        {
-                            nInsertPosition = k + 1;
-                            oNewRun = oCurRun.Split2(t + 1, oElement, k);
-                            /*oCurRunReviewType = oCurRun.GetReviewType();
-                            if (!oCurRunReviewType) {
-                                oNewRun.SetReviewTypeWithInfo(reviewtype_Common, oCurRun.ReviewInfo.Copy());
-                            }*/
-                        }
-                        // else
-                        // {}
-                    }
-                }
-                else
-                {
-                    nInsertPosition = k + 1;
-                }
-                break;
-            }
-        }
-        for(; k > -1; --k)
-        {
-            oChildElement = oElement.Content[k];
-            if(oChildElement !== oFirstText.firstRun && oChildElement !== oFirstText)
-            {
-                if(!(oChildElement.IsParaEndRun && oChildElement.IsParaEndRun()))
-                {
-
-                    this.setReviewInfoRecursive(oChildElement, reviewtype_Add, true);
-                }
-            }
-            else
-            {
-                if(oChildElement instanceof ParaRun)
-                {
-                    for(t = 0; t < oChildElement.Content.length; t++)
-                    {
-                        if(oChildElement.Content[t] === oFirstText.elements[0])
-                        {
-                            break;
-                        }
-                    }
-                    t = Math.min(Math.max(t, 0), oChildElement.Content.length - 1);
-                    if(t > 0)
-                    {
-                        oNewRun = oChildElement.Split2(t, oElement, k);
-                        if(!(oNewRun.IsParaEndRun && oNewRun.IsParaEndRun()))
-                        {
-                            this.setReviewInfoRecursive(oNewRun, reviewtype_Add, true);
-                        }
-                        nInsertPosition++;
-                    }
-                    else
-                    {
-
-                        if(!(oChildElement.IsParaEndRun && oChildElement.IsParaEndRun()))
-                        {
-                            this.setReviewInfoRecursive(oChildElement, reviewtype_Add, true);
-                        }
-                    }
-                }
-                else
-                {
-                    this.setReviewInfoRecursive(oChildElement, reviewtype_Add, true);
-                }
-                break;
-            }
-        }
-        if(nInsertPosition > -1)
-        {
-            for(t = aContentToInsert.length - 1; t > - 1; --t)
-            {
-                if(this.isElementForAdd(aContentToInsert[t]))
-                {
-                    oElement.AddToContent(nInsertPosition, aContentToInsert[t]);
-                }
-            }
-        }
-    };
-
     CDocumentMerge.prototype.insertNodesToDocContent = function (oElement, nIndex, aInsert) {
 
         var k = 0;
@@ -329,6 +303,30 @@
         return oOrigDocument;
     }
 
+    CDocumentMerge.prototype.getLargestCommonDocument2 = function (oOrigDocument, oRevisedDocument, callback) {
+        var oComp = new CDocumentMergeComparison(oOrigDocument, oRevisedDocument, /*oOptions ? oOptions : */new AscCommonWord.ComparisonOptions());
+        var oThis = this;
+        function callback2() {
+            var documentWithChanges = new CMockDocument(oOrigDocument.Content.map(function (e) {return e.Copy()}));
+            // не нужно хавать документ и очищать его, при сравнении все должно схлопнуться
+            var largestCommonDocument = oThis.getClearDocument(oOrigDocument);
+            callback(largestCommonDocument/*oOrigDocument*/, documentWithChanges);
+        }
+        oComp.compare(callback2);
+    }
+
+    CDocumentMerge.prototype.getConflictName = function (conflictType) {
+        switch (conflictType) {
+            case CONFLICT_TYPES.originalDocument:
+                return ' Original conflict';
+            case CONFLICT_TYPES.revisedDocument:
+                return ' Revised conflict';
+            default:
+                return '';
+        }
+    };
+
+
     CDocumentMerge.prototype.groupByInsertIndex = function (insertInfo) {
         var oRet = {};
         for (var i = 0; i < insertInfo.length; i += 1) {
@@ -349,7 +347,7 @@
             var arrRet = [];
             var temp = [insertInfo[0]];
             for (var i = 1; i < insertInfo.length; i += 1) {
-                if (insertInfo[i].reviewType === temp[temp.length - 1].reviewType) {
+                if (insertInfo[i].reviewType === temp[temp.length - 1].reviewType && insertInfo[i].conflictType === temp[temp.length - 1].conflictType) {
                     temp.push(insertInfo[i]);
                 } else {
                     arrRet.push(temp);
@@ -469,9 +467,406 @@
         }
     };
 
+    CDocumentMerge.prototype.applyMerge2 = function () {
+        for (var idOfRun in this.insertIndexesMap) {
+            var oRun = g_oTableId.Get_ById(idOfRun);
+
+            var insertInfo = this.insertIndexesMap[idOfRun].contentForInsert;
+            var groupedInsertInfo = this.groupByInsertIndex(insertInfo);
+            groupedInsertInfo = this.groupByReviewType2(groupedInsertInfo);
+            var insertIndexes = Object.keys(groupedInsertInfo).sort(function (a, b) {return parseFloat(a) - parseFloat(b);});
+            var deltaInsertIndex = 0;
+            for (var i = 0; i < insertIndexes.length; i += 1) {
+                var insertIndex = parseInt(insertIndexes[i], 10);
+                var groupedTypesForInsert = groupedInsertInfo[insertIndex];
+                var relativeIndex = insertIndex - deltaInsertIndex;
+                oRun = oRun.Split2(relativeIndex, oRun.Paragraph, oRun.GetPosInParent());
+
+                deltaInsertIndex += relativeIndex;
+                for (var j = 0; j < groupedTypesForInsert.length; j += 1) {
+                    var groupedByTypeContent = groupedTypesForInsert[j];
+                    // var p = 0;
+                    for (var k = 0; k < groupedByTypeContent.length; k += 1) {
+                        var mergedChar = groupedByTypeContent[k].mergedChar;
+                        oRun.AddToContent(k, mergedChar);
+                    }
+
+                    var temp = oRun.Split2(k, oRun.Paragraph, oRun.GetPosInParent());
+                    this.setReviewInfoRecursive(oRun, groupedByTypeContent[0].reviewType, undefined, groupedByTypeContent[0].conflictType);
+                    oRun = temp;
+                }
+
+            }
+        }
+    };
+
+
+    CDocumentMerge.prototype.checkIterators = function (arrOfIterators) {
+        return arrOfIterators.some(function (iterator) {
+            return iterator.check();
+        });
+    };
+
+    CDocumentMerge.prototype.filterIterators = function (arrOfIterators) {
+        return arrOfIterators.filter(function (iterator) {
+            return iterator.check();
+        });
+    }
+
+    CDocumentMerge.prototype.skipUnusualIterators = function (arrOfIterators) {
+        return arrOfIterators.map(function (iterator) {
+            return iterator.skipUnusual();
+        });
+    };
+
+    CDocumentMerge.prototype.getValueIterators = function (arrOfIterators) {
+        return arrOfIterators.map(function (iterator) {
+            return iterator.getValue();
+        });
+    };
+
+    CDocumentMerge.prototype.getNotEqualsIterators = function (compareNode) {
+
+    }
+
+    CDocumentMerge.prototype.nextIterators = function (arrOfIterators) {
+        arrOfIterators.forEach(function (iterator) {
+            iterator.next();
+        });
+    }
+
+    CDocumentMerge.prototype.getPriorityReviewTypesFromIterators = function (arrOfIterators) {
+        if (arrOfIterators.length === 0) return [];
+        var oRet = [];
+        for (var i = 0; i < arrOfIterators[0].value.element.mergeElements.length; i += 1) {
+            oRet.push(arrOfIterators[0].value.element.getReviewType(i));
+        }
+
+        for (var i = 1; i < arrOfIterators.length; i += 1) {
+            var oNode = arrOfIterators[i].value;
+            for (var j = 0; j < oRet.length; j += 1) {
+                oRet[j] = getPriorityReviewType([oNode.element.getReviewType(j), oRet[j]]);
+            }
+        }
+        return oRet;
+    }
+
+    // Функция параллельного хода итераторов
+    CDocumentMerge.prototype.applyChangesWithSeveralIterators = function (originalIterator, arrOfMergedIterators) {
+
+        for (originalIterator; originalIterator.check(); originalIterator.next()) {
+            var commonNode = originalIterator.getValue();
+            var diffNodes = this.getValueIterators(arrOfMergedIterators);
+
+            commonNode = originalIterator.skipUnusual();
+            diffNodes = this.skipUnusualIterators(arrOfMergedIterators);
+            if (!originalIterator.check() || !this.checkIterators(arrOfMergedIterators)) {
+                break;
+            }
+
+            var availableMergedIterators = this.filterIterators(arrOfMergedIterators);
+            diffNodes = this.getValueIterators(availableMergedIterators);
+/*            var reviewTypeOfCommonNode = commonNode.getPriorityReviewType();
+            var arrOfEquals
+            if (AscFormat.isRealNumber(reviewTypeOfCommonNode) && reviewTypeOfCommonNode !== reviewtype_Common) {
+                arrOfEquals = commonNode.arrEqualsWithoutType(diffNodes);
+            } else {*/
+               var arrOfEquals = commonNode.arrEquals(diffNodes);
+/*            }*/
+
+            var notEqualsIterators = availableMergedIterators.filter(function (iterator, idx) {
+                return !arrOfEquals[idx];
+            });
+
+            // Пока есть, что мерджить, мерджим
+            while (this.checkIterators(notEqualsIterators)) {
+                // отфильтруем незаконченные итераторы
+                notEqualsIterators = this.filterIterators(notEqualsIterators);
+                if (!notEqualsIterators.length) break;
+
+                // посмотрим, может, после предыдущего пропуска дубликатов Мы уже смерджили все, что можно
+                diffNodes = this.getValueIterators(notEqualsIterators);
+                arrOfEquals = commonNode.arrEquals(diffNodes);
+                notEqualsIterators = notEqualsIterators.filter(function (iterator, idx) {
+                    return !arrOfEquals[idx];
+                });
+                if (!notEqualsIterators.length) break;
+
+
+
+                var mergedIterator = notEqualsIterators.pop();
+                var diffNode = mergedIterator.getValue();
+
+                var duplicateIterators = notEqualsIterators.filter(function (iterator) {
+                    return diffNode.equalsWithoutType(iterator.getValue());
+                });
+                var arrOfReviewType = this.getPriorityReviewTypesFromIterators(duplicateIterators);
+                this.nextIterators(duplicateIterators);
+                this.skipUnusualIterators(duplicateIterators);
+                var bEquals = commonNode.equals(diffNode);
+                if (!bEquals && mergedIterator.check()) {
+                    commonNode.element.merge(diffNode.element, this.insertIndexesMap, arrOfReviewType);
+
+                    mergedIterator.next();
+
+                    diffNode = mergedIterator.skipUnusual();
+                    bEquals = commonNode.equals(diffNode);
+                }
+                if (mergedIterator.check() && !bEquals) {
+                    notEqualsIterators.push(mergedIterator);
+                }
+
+            }
+            availableMergedIterators = this.filterIterators(availableMergedIterators);
+            this.nextIterators(availableMergedIterators);
+        }
+    }
+    
+    CDocumentMerge.prototype.getChangesFromIteratorsBeforeCommonNode = function (arrOfIterators, commonNode) {
+        var oRet = [];
+        arrOfIterators.forEach(function (iterator) {
+           oRet.push(iterator.getChangesBeforeCommonNode(commonNode));
+        });
+        return oRet;
+    }
+
+    function DiffNodesCollector(originalValue, revisedValue, comparisonValue) {
+        this.originalValue = originalValue;
+        this.revisedValue = revisedValue;
+        this.comparisonValue = comparisonValue;
+    }
+
+    function DiffIteratorsCollector(originalIterator, revisedIterator, comparisonIterator) {
+        this.originalIterator = originalIterator || null;
+        this.revisedIterator = revisedIterator || null;
+        this.comparisonIterator = comparisonIterator || null;
+    }
+
+    DiffIteratorsCollector.prototype.getDiffNodesCollector = function () {
+        return new DiffNodesCollector(this.originalIterator && this.originalIterator.getValue(), this.revisedIterator && this.revisedIterator.getValue(), this.comparisonIterator && this.comparisonIterator.getValue());
+    }
+
+    DiffIteratorsCollector.prototype.getDiffNodesCollector = function () {
+        return new DiffNodesCollector(this.originalIterator.getValue(), this.revisedIterator.getValue(), this.comparisonIterator.getValue());
+    }
+
+    DiffIteratorsCollector.prototype.skipUnusual = function () {
+        if (this.originalIterator) {
+            this.originalIterator.skipUnusual();
+        }
+        if (this.revisedIterator) {
+            this.revisedIterator.skipUnusual();
+        }
+        if (this.comparisonIterator) {
+            this.comparisonIterator.skipUnusual();
+        }
+        return this.getDiffNodesCollector();
+    }
+
+    DiffIteratorsCollector.prototype.check = function () {
+        var bCheck = false;
+        if (this.originalIterator) {
+            bCheck = this.originalIterator.check();
+            if (bCheck) return true;
+        }
+        if (this.revisedIterator) {
+            bCheck = this.revisedIterator.check();
+            if (bCheck) return true;
+        }
+        if (this.comparisonIterator) {
+            bCheck = this.comparisonIterator.check();
+            if (bCheck) return true;
+        }
+        return false;
+    }
+
+    DiffIteratorsCollector.prototype.filterCheck = function () {
+        var oRet = new this.constructor();
+
+        if (this.originalIterator && this.originalIterator.check()) {
+            oRet.originalIterator = this.originalIterator
+        }
+        if (this.revisedIterator && this.revisedIterator.check()) {
+            oRet.revisedIterator = this.revisedIterator;
+        }
+        if (this.comparisonIterator && this.comparisonIterator.check()) {
+            oRet.comparisonIterator = this.comparisonIterator;
+        }
+        return oRet;
+    }
+
+    DiffIteratorsCollector.prototype.filterNotEquals = function (commonNode) {
+        var oRet = new this.constructor();
+
+        if (this.originalIterator) {
+            var iterator = this.originalIterator;
+            var diffNode = iterator.getValue();
+            if (!commonNode.equals(diffNode)) {
+                oRet.originalIterator = iterator;
+            }
+        }
+
+        if (this.revisedIterator) {
+            var iterator = this.revisedIterator;
+            var diffNode = iterator.getValue();
+            if (!commonNode.equals(diffNode)) {
+                oRet.revisedIterator = iterator;
+            }
+        }
+
+        if (this.comparisonIterator) {
+            var iterator = this.comparisonIterator;
+            var diffNode = iterator.getValue();
+            if (!commonNode.equals(diffNode)) {
+                oRet.comparisonIterator = iterator;
+            }
+        }
+
+        return oRet;
+    }
+
+    DiffIteratorsCollector.prototype.isExist = function () {
+        if (this.originalIterator) {
+            return true;
+        }
+        if (this.revisedIterator) {
+            return true;
+        }
+        if (this.comparisonIterator) {
+            return true;
+        }
+        return false;
+    }
+
+    DiffIteratorsCollector.prototype.getCompareDiffBeforeNode = function (commonNode) {
+        var oRet = {
+            originalDiff: [],
+            revisedDiff: []
+        };
+
+        var iterator = this.comparisonIterator;
+        if (iterator) {
+            var diffNode = iterator.getValue();
+            var bEquals = commonNode.equals(diffNode);
+            while (!bEquals && iterator.check()) {
+                var reviewType = diffNode.element.getReviewType(0);
+                if (reviewType === reviewtype_Remove) {
+                    oRet.originalDiff.push(diffNode);
+                } else if (reviewType === reviewtype_Add) {
+                    oRet.revisedDiff.push(diffNode);
+                }
+
+                iterator.next();
+                diffNode = iterator.skipUnusual();
+                bEquals = commonNode.equals(diffNode);
+            }
+        }
+        this.comparisonDiff = oRet;
+
+        return oRet;
+    }
+
+    DiffIteratorsCollector.prototype._getDiffFromIterators = function (commonNode, iterator) {
+        var oRet = [];
+        if (iterator) {
+            var diffNode = iterator.getValue();
+            var bEquals = commonNode.equals(diffNode);
+            while (!bEquals && iterator.check()) {
+                oRet.push(diffNode);
+
+                iterator.next();
+
+                diffNode = iterator.skipUnusual();
+                bEquals = commonNode.equals(diffNode);
+            }
+        }
+        return oRet;
+    }
+    
+    DiffIteratorsCollector.prototype.getOriginalDiffBeforeNode = function (commonNode) {
+        var iterator = this.originalIterator;
+        var diffs = this._getDiffFromIterators(commonNode, iterator);
+        return this.comparisonDiff.originalDiff.concat(diffs);
+    }
+
+    DiffIteratorsCollector.prototype.getRevisedDiffBeforeNode = function (commonNode) {
+        var iterator = this.revisedIterator;
+        var diffs = this._getDiffFromIterators(commonNode, iterator);
+        return this.comparisonDiff.revisedDiff.concat(diffs);
+    }
+
+    DiffIteratorsCollector.prototype.next = function () {
+        if (this.originalIterator) {
+            this.originalIterator.next();
+        }
+        if (this.revisedIterator) {
+            this.revisedIterator.next();
+        }
+        if (this.comparisonIterator) {
+            this.comparisonIterator.next();
+        }
+    }
+
+    CDocumentMerge.prototype.compareDiffNodes = function (arrDiff1, arrDiff2) {
+        if (arrDiff1.length !== arrDiff2.length) return false;
+
+        for (var i = 0; i < arrDiff1.length; i += 1) {
+            var bEquals = arrDiff1[i].equals(arrDiff2[i]);
+            if (!bEquals) return false;
+        }
+        return true;
+    };
+
+
+    // Функция параллельного хода итераторов
+    CDocumentMerge.prototype.applyChangesWithSeveralIterators2 = function (largestCommonDocumentIterator, originalIteratorWithChanges, revisedIteratorWithChanges, largestCommonDocumentWithComparisonIterator) {
+        var oThis = this;
+        var diffIterators = new DiffIteratorsCollector(originalIteratorWithChanges, revisedIteratorWithChanges, largestCommonDocumentWithComparisonIterator);
+        for (largestCommonDocumentIterator; largestCommonDocumentIterator.check(); largestCommonDocumentIterator.next()) {
+            var commonNode = largestCommonDocumentIterator.skipUnusual();
+            diffIterators.skipUnusual();
+            if (!largestCommonDocumentIterator.check() || !diffIterators.check()) {
+                break;
+            }
+
+            var availableMergedIterators = diffIterators.filterCheck();
+            var notEqualsIterators = availableMergedIterators.filterNotEquals(commonNode);
+
+            if (notEqualsIterators.check()) {
+                notEqualsIterators = notEqualsIterators.filterCheck();
+                if (!notEqualsIterators.isExist()) break;
+
+                notEqualsIterators = notEqualsIterators.filterNotEquals(commonNode);
+                if (!notEqualsIterators.isExist()) break;
+
+                notEqualsIterators.getCompareDiffBeforeNode(commonNode);
+                var diffOriginalNodes = notEqualsIterators.getOriginalDiffBeforeNode(commonNode);
+                var diffRevisedNodes = notEqualsIterators.getRevisedDiffBeforeNode(commonNode);
+
+                var bDuplicate = this.compareDiffNodes(diffOriginalNodes, diffRevisedNodes);
+                if (bDuplicate) {
+                    diffRevisedNodes.forEach(function (diffNode) {
+                        commonNode.element.merge2(diffNode.element, oThis.insertIndexesMap, []);
+                    });
+                } else {
+                    var bConflict = diffOriginalNodes.length && diffRevisedNodes.length;
+                    diffOriginalNodes.forEach(function(diffNode) {
+                        commonNode.element.merge2(diffNode.element, oThis.insertIndexesMap, [], bConflict ? CONFLICT_TYPES.originalDocument : undefined);
+                    });
+                    diffRevisedNodes.forEach(function(diffNode) {
+                        commonNode.element.merge2(diffNode.element, oThis.insertIndexesMap, [], bConflict ? CONFLICT_TYPES.revisedDocument: undefined);
+                    });
+                }
+            }
+
+            availableMergedIterators = availableMergedIterators.filterCheck();
+            availableMergedIterators.next();
+        }
+    }
+
 
     CDocumentMerge.prototype.applyChangesWithIterators = function (originalIterator, mergedIterator) {
-        for (originalIterator; originalIterator.check(); originalIterator.next()) {
+        for (originalIterator; originalIterator.check() && mergedIterator.check(); originalIterator.next()) {
             var commonNode = originalIterator.getValue();
             var diffNode = mergedIterator.getValue();
 
@@ -567,6 +962,130 @@
 
     };
 
+    CDocumentMerge.prototype.merge4 = function () {
+        var oOriginalDocument = this.originalDocument;
+        var oRevisedDocument = this.revisedDocument;
+
+        if(!oOriginalDocument || !oRevisedDocument)
+        {
+            return;
+        }
+        var oApi = oOriginalDocument.GetApi();
+        if(!oApi)
+        {
+            return;
+        }
+
+        oOriginalDocument.StopRecalculate();
+        oOriginalDocument.StartAction(AscDFH.historydescription_Document_MergeDocuments);
+        oOriginalDocument.Start_SilentMode();
+        var oldTrackRevisions = oOriginalDocument.IsTrackRevisions();
+        oOriginalDocument.SetTrackRevisions(false);
+
+
+
+
+        var oOrigCopy = new CMockDocument(oOriginalDocument.Content.map(function(e){return e.Copy()}));
+        var oRevisedCopy = new CMockDocument(oRevisedDocument.Content.map(function(e){return e.Copy()}));
+
+        /*        for (var iter = new CDocumentIterator(oOriginalDocument); iter.check(); iter.next()) {
+                    console.log(iter.skipUnusual());
+                }*/
+        var oOrigWithoutPrChanges = this.getClearDocument(oOriginalDocument);
+        var oRevisedWithoutChanges = this.getClearDocument(oRevisedDocument);
+
+
+        this.getLargestCommonDocument2(oOrigWithoutPrChanges, oRevisedWithoutChanges, function (largestCommonDocument, documentWithDiff) {
+            // var largestCommonDocumentIterator = new CDocumentIterator(largestCommonDocument);
+            // var originalDocumentWithChangesIterator = new CDocumentIterator(oOrigCopy);
+            // var revisedDocumentWithChangesIterator = new CDocumentIterator(oRevisedCopy);
+            // var largestCommonDocumentWithChangesIterator = new CDocumentIterator(documentWithDiff);
+            // // this.applyChangesWithIterators(largestCommonDocumentIterator, originalDocumentWithChangesIterator);
+            // // largestCommonDocumentIterator.reset();
+            // // this.applyChangesWithIterators(largestCommonDocumentIterator, revisedDocumentWithChangesIterator);
+            //
+            // this.applyChangesWithSeveralIterators2(largestCommonDocumentIterator,
+            //     originalDocumentWithChangesIterator,
+            //     revisedDocumentWithChangesIterator,
+            //     largestCommonDocumentWithChangesIterator
+            // );
+            // console.log(this.insertIndexesMap);
+            // this.applyMerge2();
+
+
+
+            oOriginalDocument.SetTrackRevisions(oldTrackRevisions);
+            oOriginalDocument.End_SilentMode(false);
+            oOriginalDocument.Recalculate();
+            oOriginalDocument.UpdateInterface();
+            oOriginalDocument.FinalizeAction();
+            oApi.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
+        }.bind(this));
+        //
+        //
+
+        /*        var oOrigRootWithChanges = this.createNodeFromDocContent(this.originalDocument, null, null);
+                var oRevisedRootWithChanges =  this.createNodeFromDocContent(this.revisedDocument, null, null);
+
+                var oRevisedRootWithoutChanges = this.getNodesWithoutChanges(this.createNodeFromDocContent({Content: this.originalDocument.Content.map(function (elem) {
+                        return elem.Copy();
+                    })}, null, null));
+                var oOrigRootWithoutChanges    = this.getNodesWithoutChanges(this.createNodeFromDocContent({Content: this.revisedDocument.Content.map(function (elem) {
+                        return elem.Copy();
+                    })}, null, null));
+                console.log(oOrigRootWithChanges, oOrigRootWithoutChanges);*/
+        /*var i, j;
+        var oEqualMap;
+        var aBase, aCompare, bOrig = true;
+        if(oOrigRoot.children.length <= oRevisedRoot.children.length)
+        {
+            aBase = oOrigRoot.children;
+            aCompare = oRevisedRoot.children;
+        }
+        else
+        {
+            bOrig = false;
+            aBase = oRevisedRoot.children;
+            aCompare = oOrigRoot.children;
+        }*/
+
+
+    };
+
+    CDocumentMerge.prototype.merge3 = function () {
+
+        var oOriginalDocument = this.originalDocument;
+        var oRevisedDocument = this.revisedDocument;
+
+        if(!oOriginalDocument || !oRevisedDocument)
+        {
+            return;
+        }
+        var oApi = oOriginalDocument.GetApi();
+        if(!oApi)
+        {
+            return;
+        }
+
+         var oComp = new CDocumentMergeComparison(this.originalDocument, this.revisedDocument, /*oOptions ? oOptions : */new AscCommonWord.ComparisonOptions());
+        var oThis = this;
+        var callback2 = function() {
+            // var documentWithChanges = new CMockDocument(oOrigDocument.Content.map(function (e) {return e.Copy()}));
+            // // не нужно хавать документ и очищать его, при сравнении все должно схлопнуться
+            // var largestCommonDocument = oThis.getClearDocument(oOrigDocument);
+            // callback(largestCommonDocument, documentWithChanges);
+
+
+            oOriginalDocument.Recalculate();
+            oOriginalDocument.UpdateInterface();
+            oApi.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
+        }.bind(this);
+        oComp.compare(callback2);
+            oOriginalDocument.Recalculate();
+            oOriginalDocument.UpdateInterface();
+            oApi.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
+    }
+
     CDocumentMerge.prototype.saveRemoveElementFromDocument = function (oElement) {
         var parent = oElement.Parent;
         if (parent) {
@@ -602,9 +1121,7 @@
         while (arrCheckObjects.length) {
             var checkElement = arrCheckObjects.pop();
             if (checkElement) {
-                if (checkElement instanceof Paragraph) {
-                    this.concatParagraphsWithNext(checkElement);
-                } else if (checkElement.GetReviewType && checkElement.GetReviewType()) {
+                if (!(checkElement instanceof Paragraph) && checkElement.GetReviewType && checkElement.GetReviewType()) {
                     this.saveRemoveElementFromDocument(checkElement);
                 } else if (checkElement.Content) {
                     arrCheckObjects.push.apply(arrCheckObjects, checkElement.Content);
@@ -770,6 +1287,14 @@
         return this.value;
     }
 
+    CDocumentIterator.prototype.getChangesBeforeCommonNode = function (oNode) {
+        var oRet = [];
+        for (this; this.check() && !oNode.equals(this.getValue()); this.next()) {
+            oRet.push(this.getValue());
+        }
+        return oRet;
+    };
+
     CDocumentIterator.prototype.reset = function () {
         this.checkValue = true;
         this.parent = this.tree;
@@ -839,6 +1364,7 @@
             }
         }
         oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
+
         var oDoc2 = AscFormat.ExecuteNoHistory(function() {
             var oBinaryFileReader, openParams        = {noSendComments: true};
             var oDoc2 = new CDocument(oApi.WordControl.m_oDrawingDocument, true);
@@ -858,14 +1384,16 @@
                 oDoc1.CollaborativeEditing.m_oLogicDocument = oDoc1;
             return oDoc2;
         }, this, []);
+
         oDoc1.History.Document = oDoc1;
 
         if (oDoc2) {
             var oMerge = new AscCommonWord.CDocumentMerge(oDoc1, oDoc2, oOptions ? oOptions : new ComparisonOptions());
-            oMerge.merge2(); //TODO: change
+            oMerge.merge4(); //TODO: change
         } else {
             AscCommon.pptx_content_loader.End_UseFullUrl();
         }
+
     }
 
     window['AscCommonWord'].CDocumentMerge = CDocumentMerge;
