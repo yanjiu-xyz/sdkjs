@@ -63,6 +63,337 @@
         return this.element;
     };
 
+    CNode.prototype.cleanEndOfInsert = function (aContentToInsert, idxOfChange, copyPr) {
+        var oElement = this.element;
+        var oChange = this.changes[idxOfChange];
+        var oLastText = oChange.insert[oChange.insert.length - 1].element;
+        var oCurRun = oLastText.lastRun ? oLastText.lastRun : oLastText;
+        var oParentParagraph =  (this.partner && this.partner.element) || oCurRun.Paragraph;
+        var oParentParagraph2 =  oCurRun.Paragraph;
+        var k = oParentParagraph.Content.length - 1;
+        var oNewRun, t;
+
+        for(k; k > -1; --k)
+        {
+            // если мы встретили последний ран, где встречается слово
+            if(oCurRun === oParentParagraph.Content[k])
+            {
+                if(oCurRun instanceof ParaRun)
+                {
+                    for(t = oCurRun.Content.length - 1; t > -1; --t)
+                    {
+                        oCurRun.Paragraph = oElement.Paragraph || oElement;
+                        oNewRun = oCurRun.Copy2(copyPr);
+                        oCurRun.Paragraph = oParentParagraph2;
+                        //очищаем конец слова, которое нужно вставить
+                        if(oLastText.elements[oLastText.elements.length - 1] === oCurRun.Content[t])
+                        {
+                            if(t < oCurRun.Content.length - 1)
+                            {
+                                oNewRun.Remove_FromContent(t + 1, oNewRun.Content.length - (t + 1), false);
+                            }
+                            aContentToInsert.unshift(oNewRun);
+                            break;
+                        }
+                    }
+                }
+                else
+                {
+                //целиком вставим то, что встретили
+                    aContentToInsert.unshift(oCurRun.Copy(false, copyPr));
+                }
+                break;
+            }
+            else if(oLastText === oParentParagraph.Content[k])
+            {
+                //целиком вставим то, что встретили
+                aContentToInsert.unshift(oParentParagraph.Content[k].Copy(false, copyPr));
+                break;
+            }
+        }
+        return k;
+    }
+
+    CNode.prototype.cleanStartOfInsertSameRun = function (oNewRun, idxOfChange) {
+        var t;
+        var oChange = this.changes[idxOfChange];
+        var oFirstText = oChange.insert[0].element;
+        if(oNewRun)
+        {
+            if(oNewRun instanceof ParaRun)
+            {
+                for(t = 0; t < oFirstText.firstRun.Content.length; ++t)
+                {
+                    // удаляем начало рана до изменения в слове
+                    if(oFirstText.elements[0] === oFirstText.firstRun.Content[t])
+                    {
+                        oNewRun.Remove_FromContent(0, t, false);
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    CNode.prototype.cleanStartOfInsertDifferentRun = function (aContentToInsert, posOfLastInsertRun, idxOfChange, copyPr) {
+        var oNewRun, t;
+        var oChange = this.changes[idxOfChange];
+        var oElement = this.element;
+        var oFirstText = oChange.insert[0].element;
+        var oFirstRun = oFirstText.firstRun ? oFirstText.firstRun : oFirstText;
+        var oLastText = oChange.insert[oChange.insert.length - 1].element;
+        var oCurRun = oLastText.lastRun ? oLastText.lastRun : oLastText;
+        var oParentParagraph =  (this.partner && this.partner.element) || oCurRun.Paragraph;
+        var oParentParagraph2 =  oCurRun.Paragraph;
+        var k = posOfLastInsertRun;
+        for(k -= 1; k > -1; --k)
+        {
+            oCurRun = oParentParagraph.Content[k];
+            // Пока не дошли до первого рана слова, закидываем его на добавление
+            if(oCurRun !== oFirstRun && oCurRun !== oFirstText)
+            {
+                aContentToInsert.unshift(oCurRun.Copy(false, copyPr));
+            }
+            else
+            {
+                if(oCurRun === oFirstText)
+                {
+                    aContentToInsert.unshift(oCurRun.Copy(false, copyPr));
+                }
+                else
+                {
+
+                    for(t = 0; t < oCurRun.Content.length; ++t)
+                    {
+                        if(oFirstText.elements[0] === oCurRun.Content[t])
+                        {
+                            if(oLastText.lastRun === oFirstText.firstRun)
+                            {
+                                oNewRun = aContentToInsert[0];
+                            }
+                            else
+                            {
+                                oCurRun.Paragraph = oElement.Paragraph || oElement;
+                                oNewRun = oCurRun.Copy2(copyPr);
+                                oCurRun.Paragraph = oParentParagraph2;
+                                aContentToInsert.splice(0, 0, oNewRun);
+                            }
+                            // удаляем в первом ране символы до нашего слова
+                            oNewRun.Remove_FromContent(0, t, false);
+                        }
+                    }
+                }
+                break;
+            }
+        }
+    }
+
+    CNode.prototype.getArrOfInsertsFromChanges = function (idxOfChange, copyPr) {
+        var oLastText = null;
+        var oFirstText = null;
+        var oChange = this.changes[idxOfChange];
+        var aContentToInsert = [];
+        if(oChange.insert.length > 0)
+        {
+            oFirstText = oChange.insert[0].element;
+            oLastText = oChange.insert[oChange.insert.length - 1].element;
+
+            var posLastRunOfInsert = this.cleanEndOfInsert(aContentToInsert, idxOfChange, copyPr);
+
+
+            // изменения находятся внутри одного рана или это один и тот же элемент
+            if( (oLastText.lastRun && oFirstText.firstRun) && oLastText.lastRun === oFirstText.firstRun || (!oLastText.lastRun && !oFirstText.firstRun) && oLastText === oFirstText)
+            {
+                this.cleanStartOfInsertSameRun(aContentToInsert[0], idxOfChange);
+            }
+            else
+            {
+                this.cleanStartOfInsertDifferentRun(aContentToInsert, posLastRunOfInsert, idxOfChange, copyPr);
+            }
+        }
+        return aContentToInsert;
+    };
+
+
+    CNode.prototype.applyInsertsToParagraph = function (comparison, aContentToInsert, idxOfChange) {
+        var oChange = this.changes[idxOfChange];
+        if (oChange.remove.length > 0) {
+            this.applyInsertsToParagraphsWithRemove(comparison, aContentToInsert, idxOfChange);
+        } else {
+            this.applyInsertsToParagraphsWithoutRemove(comparison, aContentToInsert, idxOfChange);
+        }
+    }
+
+    CNode.prototype.applyInsertsToParagraphsWithoutRemove = function (comparison, aContentToInsert, idxOfChange) {
+        var oChildNode, oFirstText, oCurRun, j, k, t;
+        var oElement = this.element;
+        var oChange = this.changes[idxOfChange];
+        if(aContentToInsert.length > 0)
+        {
+            var index = oChange.anchor.index;
+            oChildNode = this.children[index];
+            if(oChildNode)
+            {
+                oFirstText = oChildNode.element;
+                for(j = 0; j < oElement.Content.length; ++j)
+                {
+                    if(Array.isArray(oElement.Content))
+                    {
+                        oCurRun = oElement.Content[j];
+                        if(oFirstText === oCurRun)
+                        {
+                            for(t = aContentToInsert.length - 1; t > - 1; --t)
+                            {
+                                if(comparison.isElementForAdd(aContentToInsert[t]))
+                                {
+                                    oElement.AddToContent(j + 1, aContentToInsert[t]);
+                                }
+                            }
+                            break;
+                        }
+                        else if(Array.isArray(oCurRun.Content) && Array.isArray(oFirstText.elements))
+                        {
+                            for(k = 0; k < oCurRun.Content.length; ++k)
+                            {
+                                if(oFirstText.elements[0] === oCurRun.Content[k])
+                                {
+                                    break;
+                                }
+                            }
+                            var bFind = false;
+                            if(k === oCurRun.Content.length)
+                            {
+                                if(oFirstText.firstRun === oCurRun)
+                                {
+                                    k = 0;
+                                    bFind = true;
+                                }
+                            }
+                            else
+                            {
+                                bFind = true;
+                            }
+                            if(k <= oCurRun.Content.length && bFind)
+                            {
+                                oCurRun.Split2(k, oElement, j);
+                                for(t = aContentToInsert.length - 1; t > - 1; --t)
+                                {
+                                    if(comparison.isElementForAdd(aContentToInsert[t]))
+                                    {
+                                        oElement.AddToContent(j + 1, aContentToInsert[t]);
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    };
+
+    CNode.prototype.applyInsertsToParagraphsWithRemove = function (comparison, aContentToInsert, idxOfChange) {
+        var oChange = this.changes[idxOfChange];
+        var oElement = this.element;
+        var oLastText = oChange.remove[oChange.remove.length - 1].element;
+        var oFirstText = oChange.remove[0].element;
+        var oCurRun, oNewRun, oChildElement, k, t;
+        if(oLastText.lastRun)
+        {
+            oCurRun = oLastText.lastRun;
+        }
+        else
+        {
+            oCurRun = oLastText;
+        }
+
+        var nInsertPosition = -1;
+        for(k = oElement.Content.length - 1; k > -1; --k)
+        {
+            if(oElement.Content[k] === oCurRun)
+            {
+                if(oLastText instanceof CTextElement)
+                {
+                    for(t = oCurRun.Content.length - 1; t > -1; t--)
+                    {
+                        if(oCurRun.Content[t] === oLastText.elements[oLastText.elements.length - 1])
+                        {
+                            break;
+                        }
+                    }
+                    if(t > -1)
+                    {
+                        nInsertPosition = k + 1;
+                        oNewRun = oCurRun.Split2(t + 1, oElement, k);
+                        oNewRun.SetReviewTypeWithInfo(reviewtype_Common, oCurRun.ReviewInfo.Copy());
+                    }
+                }
+                else
+                {
+                    nInsertPosition = k + 1;
+                }
+                break;
+            }
+        }
+        for(; k > -1; --k)
+        {
+            oChildElement = oElement.Content[k];
+            if(oChildElement !== oFirstText.firstRun && oChildElement !== oFirstText)
+            {
+                if(!(oChildElement.IsParaEndRun && oChildElement.IsParaEndRun()))
+                {
+                    comparison.setReviewInfoRecursive(oChildElement, reviewtype_Remove);
+                }
+            }
+            else
+            {
+                if(oChildElement instanceof ParaRun)
+                {
+                    for(t = 0; t < oChildElement.Content.length; t++)
+                    {
+                        if(oChildElement.Content[t] === oFirstText.elements[0])
+                        {
+                            break;
+                        }
+                    }
+                    t = Math.min(Math.max(t, 0), oChildElement.Content.length - 1);
+                    if(t > 0)
+                    {
+                        oNewRun = oChildElement.Split2(t, oElement, k);
+                        if(!(oNewRun.IsParaEndRun && oNewRun.IsParaEndRun()))
+                        {
+                            comparison.setReviewInfoRecursive(oNewRun, reviewtype_Remove);
+                        }
+                        nInsertPosition++;
+                    }
+                    else
+                    {
+
+                        if(!(oChildElement.IsParaEndRun && oChildElement.IsParaEndRun()))
+                        {
+                            comparison.setReviewInfoRecursive(oChildElement, reviewtype_Remove);
+                        }
+                    }
+                }
+                else
+                {
+                    comparison.setReviewInfoRecursive(oChildElement, reviewtype_Remove);
+                }
+                break;
+            }
+        }
+        if(nInsertPosition > -1)
+        {
+            for(t = aContentToInsert.length - 1; t > - 1; --t)
+            {
+                if(comparison.isElementForAdd(aContentToInsert[t]))
+                {
+                    oElement.AddToContent(nInsertPosition, aContentToInsert[t]);
+                }
+            }
+        }
+    };
+
     CNode.prototype.getNeighbors  = function()
     {
         if(!this.par)
@@ -1095,179 +1426,6 @@
         }
         return true;
     };
-    CDocumentComparison.prototype.applyInsertsToParagraph = function (oChange, oElement, oNode, aContentToInsert) {
-        if (oChange.remove.length > 0) {
-            this.applyInsertsToParagraphsWithRemove(oChange, oElement, aContentToInsert);
-        } else {
-            this.applyInsertsToParagraphsWithoutRemove(oChange, oElement, oNode, aContentToInsert);
-        }
-    }
-
-    CDocumentComparison.prototype.applyInsertsToParagraphsWithoutRemove = function (oChange, oElement, oNode, aContentToInsert) {
-        var oChildNode, oFirstText, oCurRun, j, k, t;
-        if(aContentToInsert.length > 0)
-        {
-            var index = oChange.anchor.index;
-            oChildNode = oNode.children[index];
-            if(oChildNode)
-            {
-                oFirstText = oChildNode.element;
-                for(j = 0; j < oElement.Content.length; ++j)
-                {
-                    if(Array.isArray(oElement.Content))
-                    {
-                        oCurRun = oElement.Content[j];
-                        if(oFirstText === oCurRun)
-                        {
-                            for(t = aContentToInsert.length - 1; t > - 1; --t)
-                            {
-                                if(this.isElementForAdd(aContentToInsert[t]))
-                                {
-                                    oElement.AddToContent(j + 1, aContentToInsert[t]);
-                                }
-                            }
-                            break;
-                        }
-                        else if(Array.isArray(oCurRun.Content) && Array.isArray(oFirstText.elements))
-                        {
-                            for(k = 0; k < oCurRun.Content.length; ++k)
-                            {
-                                if(oFirstText.elements[0] === oCurRun.Content[k])
-                                {
-                                    break;
-                                }
-                            }
-                            var bFind = false;
-                            if(k === oCurRun.Content.length)
-                            {
-                                if(oFirstText.firstRun === oCurRun)
-                                {
-                                    k = 0;
-                                    bFind = true;
-                                }
-                            }
-                            else
-                            {
-                                bFind = true;
-                            }
-                            if(k <= oCurRun.Content.length && bFind)
-                            {
-                                oCurRun.Split2(k, oElement, j);
-                                for(t = aContentToInsert.length - 1; t > - 1; --t)
-                                {
-                                    if(this.isElementForAdd(aContentToInsert[t]))
-                                    {
-                                        oElement.AddToContent(j + 1, aContentToInsert[t]);
-                                    }
-                                }
-                                break;
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    };
-
-    CDocumentComparison.prototype.applyInsertsToParagraphsWithRemove = function (oChange, oElement, aContentToInsert) {
-        var oLastText = oChange.remove[oChange.remove.length - 1].element;
-        var oFirstText = oChange.remove[0].element;
-        var oCurRun, oNewRun, oChildElement, k, t;
-        if(oLastText.lastRun)
-        {
-            oCurRun = oLastText.lastRun;
-        }
-        else
-        {
-            oCurRun = oLastText;
-        }
-
-        var nInsertPosition = -1;
-        for(k = oElement.Content.length - 1; k > -1; --k)
-        {
-            if(oElement.Content[k] === oCurRun)
-            {
-                if(oLastText instanceof CTextElement)
-                {
-                    for(t = oCurRun.Content.length - 1; t > -1; t--)
-                    {
-                        if(oCurRun.Content[t] === oLastText.elements[oLastText.elements.length - 1])
-                        {
-                            break;
-                        }
-                    }
-                    if(t > -1)
-                    {
-                        nInsertPosition = k + 1;
-                        oNewRun = oCurRun.Split2(t + 1, oElement, k);
-                        oNewRun.SetReviewTypeWithInfo(reviewtype_Common, oCurRun.ReviewInfo.Copy());
-                    }
-                }
-                else
-                {
-                    nInsertPosition = k + 1;
-                }
-                break;
-            }
-        }
-        for(; k > -1; --k)
-        {
-            oChildElement = oElement.Content[k];
-            if(oChildElement !== oFirstText.firstRun && oChildElement !== oFirstText)
-            {
-                if(!(oChildElement.IsParaEndRun && oChildElement.IsParaEndRun()))
-                {
-                    this.setReviewInfoRecursive(oChildElement, reviewtype_Remove);
-                }
-            }
-            else
-            {
-                if(oChildElement instanceof ParaRun)
-                {
-                    for(t = 0; t < oChildElement.Content.length; t++)
-                    {
-                        if(oChildElement.Content[t] === oFirstText.elements[0])
-                        {
-                            break;
-                        }
-                    }
-                    t = Math.min(Math.max(t, 0), oChildElement.Content.length - 1);
-                    if(t > 0)
-                    {
-                        oNewRun = oChildElement.Split2(t, oElement, k);
-                        if(!(oNewRun.IsParaEndRun && oNewRun.IsParaEndRun()))
-                        {
-                            this.setReviewInfoRecursive(oNewRun, reviewtype_Remove);
-                        }
-                        nInsertPosition++;
-                    }
-                    else
-                    {
-
-                        if(!(oChildElement.IsParaEndRun && oChildElement.IsParaEndRun()))
-                        {
-                            this.setReviewInfoRecursive(oChildElement, reviewtype_Remove);
-                        }
-                    }
-                }
-                else
-                {
-                    this.setReviewInfoRecursive(oChildElement, reviewtype_Remove);
-                }
-                break;
-            }
-        }
-        if(nInsertPosition > -1)
-        {
-            for(t = aContentToInsert.length - 1; t > - 1; --t)
-            {
-                if(this.isElementForAdd(aContentToInsert[t]))
-                {
-                    oElement.AddToContent(nInsertPosition, aContentToInsert[t]);
-                }
-            }
-        }
-    };
 
     CDocumentComparison.prototype.applyChangesToParagraph = function(oNode)
     {
@@ -1421,6 +1579,62 @@
             }
         }
     };
+
+    CDocumentComparison.prototype.applyChangesToParagraph2 = function(oNode)
+    {
+        var i;
+        oNode.changes.sort(function(c1, c2){return c2.anchor.index - c1.anchor.index});
+        for(i = 0; i < oNode.changes.length; ++i)
+        {
+            var aContentToInsert = oNode.getArrOfInsertsFromChanges(i, this.copyPr);
+            //handle removed elements
+            oNode.applyInsertsToParagraph(this, aContentToInsert, i);
+        }
+
+        this.applyChangesToChildrenOfParagraphNode(oNode);
+        this.applyChangesToSectPr(oNode);
+    };
+
+    CDocumentComparison.prototype.applyChangesToChildrenOfParagraphNode = function (oNode) {
+        var oChildNode;
+        var i, j;
+        for(i = 0; i < oNode.children.length; ++i)
+        {
+            oChildNode = oNode.children[i];
+            if(Array.isArray(oChildNode.element.Content))
+            {
+                this.applyChangesToParagraph2(oChildNode);
+            }
+            else
+            {
+                for(j = 0; j < oChildNode.children.length; ++j)
+                {
+                    if(oChildNode.children[j].element instanceof CDocumentContent)
+                    {
+                        this.applyChangesToDocContent(oChildNode.children[j]);
+                    }
+                }
+            }
+        }
+    }
+    
+    CDocumentComparison.prototype.applyChangesToSectPr = function (oNode) {
+        var oElement = oNode.element;
+        if(oNode.partner)
+        {
+            var oPartnerNode = oNode.partner;
+            var oPartnerElement = oPartnerNode.element;
+            if(oPartnerElement instanceof Paragraph)
+            {
+                var oNewParaPr = this.getNewParaPrWithDiff(oElement.Pr, oPartnerElement.Pr);
+                if(oNewParaPr)
+                {
+                    oElement.Set_Pr(oNewParaPr);
+                }
+                this.compareSectPr(oElement, oPartnerElement);
+            }
+        }
+    }
 
     CDocumentComparison.prototype.compareSectPr = function(oElement, oPartnerElement)
     {
@@ -1771,7 +1985,7 @@
         var oChildElement = oChildNode.element;
         if(oChildElement instanceof Paragraph)
         {
-            this.applyChangesToParagraph(oChildNode);
+            this.applyChangesToParagraph2(oChildNode);
         }
         else if(oChildElement instanceof CDocumentContent)
         {
@@ -1809,14 +2023,17 @@
             this.applyChangesToChildNode(oNode.children[i]);
         }
     };
-    CDocumentComparison.prototype.setReviewInfo = function(oReviewIno)
+    CDocumentComparison.prototype.getConflictName = function (conflictType) {
+      return '';
+    };
+    CDocumentComparison.prototype.setReviewInfo = function(oReviewIno, conflictType)
     {
         oReviewIno.Editor   = this.api;
         oReviewIno.UserId   = "";
         oReviewIno.MoveType = Asc.c_oAscRevisionsMove.NoMove;
         oReviewIno.PrevType = -1;
         oReviewIno.PrevInfo = null;
-        oReviewIno.UserName = this.getUserName();
+        oReviewIno.UserName = this.getUserName() + this.getConflictName(conflictType);
         var oCore = this.revisedDocument.Core;
         if(oCore)
         {
@@ -1915,14 +2132,20 @@
         return arrReturnObjects;
     };
 
-    CDocumentComparison.prototype.setReviewInfoRecursive = function(oObject, nType, bSaveCustomReviewType)
+    function getText(oRun) {
+        return oRun.Content.map(function (el) {
+            return String.fromCharCode(el.Value);
+        }).join('');
+    }
+
+    CDocumentComparison.prototype.setReviewInfoRecursive = function(oObject, nType, bSaveCustomReviewType, conflictType)
     {
         var arrNeedReviewObjects = this.getElementsForSetReviewType(oObject);
 
         for (var i = 0; i < arrNeedReviewObjects.length; i += 1) {
             var oNeedReviewObject = arrNeedReviewObjects[i];
             var oReviewInfo = oNeedReviewObject.ReviewInfo.Copy();
-            this.setReviewInfo(oReviewInfo);
+            this.setReviewInfo(oReviewInfo, conflictType);
             var reviewType;
             if (bSaveCustomReviewType) {
                 reviewType = oNeedReviewObject.GetReviewType && oNeedReviewObject.GetReviewType();
