@@ -333,7 +333,11 @@
         }
         return {posLastRunInContent: k, nInsertPosition: nInsertPosition };
     }
-    
+
+    CNode.prototype.setRemoveReviewType = function (element, comparison) {
+        comparison.setReviewInfoRecursive(element, reviewtype_Remove);
+    };
+
     CNode.prototype.setReviewTypeForRemoveChanges = function (comparison, idxOfChange, posLastRunInContent, nInsertPosition) {
         var oElement = this.element;
         var oNewRun, t;
@@ -347,7 +351,7 @@
                 if(!(oChildElement.IsParaEndRun && oChildElement.IsParaEndRun()))
                 {
                     if (oChildElement.GetReviewType && oChildElement.GetReviewType() === reviewtype_Common) {
-                        comparison.setReviewInfoRecursive(oChildElement, reviewtype_Remove);
+                        this.setRemoveReviewType(oChildElement, comparison);
                     }
                 }
             }
@@ -368,7 +372,7 @@
                         oNewRun = oChildElement.Split2(t, oElement, k);
                         if(!(oNewRun.IsParaEndRun && oNewRun.IsParaEndRun()))
                         {
-                            comparison.setReviewInfoRecursive(oNewRun, reviewtype_Remove);
+                            this.setRemoveReviewType(oNewRun, comparison);
                         }
                         nInsertPosition++;
                     }
@@ -377,13 +381,13 @@
 
                         if(!(oChildElement.IsParaEndRun && oChildElement.IsParaEndRun()))
                         {
-                            comparison.setReviewInfoRecursive(oChildElement, reviewtype_Remove);
+                            this.setRemoveReviewType(oChildElement, comparison);
                         }
                     }
                 }
                 else
                 {
-                    comparison.setReviewInfoRecursive(oChildElement, reviewtype_Remove);
+                    this.setRemoveReviewType(oChildElement, comparison);
                 }
                 break;
             }
