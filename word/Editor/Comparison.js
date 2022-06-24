@@ -112,13 +112,14 @@
                 this.unshiftToArrInsertContentWithCopy(aContentToInsert, oParentParagraph.Content[k], comparison);
                 break;
             } else {
-                this.edgeCaseHandlingOfCleanInsert(aContentToInsert, oCurRun, comparison);
+                this.edgeCaseHandlingOfCleanInsertEnd(aContentToInsert, oCurRun, comparison);
             }
         }
         return k;
     }
 
-    CNode.prototype.edgeCaseHandlingOfCleanInsert = function (aContentToInsert, element, comparison) {};
+    CNode.prototype.edgeCaseHandlingOfCleanInsertStart = function (aContentToInsert, element, comparison) {return false;};
+    CNode.prototype.edgeCaseHandlingOfCleanInsertEnd = function (aContentToInsert, element, comparison) {return false;};
     // comparison need for extends
     CNode.prototype.unshiftToArrInsertContent = function (aContentToInsert, elem, comparison) {
         aContentToInsert.unshift(elem);
@@ -203,7 +204,10 @@
             }
         }
         for (k; k > - 1; k -= 1) {
-            this.edgeCaseHandlingOfCleanInsert(aContentToInsert, oParentParagraph.Content[k], comparison);
+            var bBreak = this.edgeCaseHandlingOfCleanInsertStart(aContentToInsert, oParentParagraph.Content[k], comparison);
+            if (bBreak) {
+                break;
+            }
         }
     }
 
