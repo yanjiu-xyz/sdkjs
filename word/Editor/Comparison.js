@@ -203,7 +203,7 @@
                 break;
             }
         }
-        for (k; k > - 1; k -= 1) {
+        for (k -= 1; k > - 1; k -= 1) {
             var bBreak = this.edgeCaseHandlingOfCleanInsertStart(aContentToInsert, oParentParagraph.Content[k], comparison);
             if (bBreak) {
                 break;

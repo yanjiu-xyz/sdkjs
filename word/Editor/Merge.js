@@ -50,6 +50,16 @@
         if (element.GetReviewType && element.GetReviewType() !== reviewtype_Common) {
             this.unshiftToArrInsertContentWithCopy(aContentToInsert, element, comparison);
             return false;
+        } else if (element instanceof ParaRun) {
+
+            var isOnlySpaceParaRun = element.Content.every(function (textElem) {
+                return textElem.Type === para_Space;
+            });
+            if (isOnlySpaceParaRun) {
+                this.unshiftToArrInsertContentWithCopy(aContentToInsert, element, comparison);
+
+            }
+            return !isOnlySpaceParaRun;
         }
         return true;
     };
