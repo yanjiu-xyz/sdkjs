@@ -35,6 +35,61 @@
             }
         }
     };
+    function isDuplicateArr(arrOfRuns1, arrOfRuns2) {
+        const elementOfRun1 = [];
+        const elementOfRun2 = [];
+
+        for (let i = 0; i < arrOfRuns1.length; i += 1) {
+            for (let j = 0; j < arrOfRuns1[i].Content.length; j += 1) {
+                const elem = arrOfRuns1[i].Content[j];
+                elementOfRun1.push(elem);
+            }
+        }
+        for (let i = 0; i < arrOfRuns2.length; i += 1) {
+            for (let j = 0; j < arrOfRuns2[i].Content.length; j += 1) {
+                const elem = arrOfRuns2[i].Content[j];
+                elementOfRun2.push(elem);
+            }
+        }
+
+        let arr1Index = 0;
+        let arr2Index = 0;
+
+        function skipSpaces() {
+            let element = elementOfRun1[arr1Index];
+            while (arr1Index < elementOfRun1.length && element && element.Type === para_Space) {
+                arr1Index += 1;
+                element = elementOfRun1[arr1Index];
+            }
+            element = elementOfRun2[arr1Index];
+            while (arr2Index < elementOfRun2.length && element && element.Type === para_Space) {
+                arr2Index += 1;
+                element = elementOfRun2[arr2Index];
+            }
+        }
+
+        while (arr1Index < elementOfRun1.length && arr2Index < elementOfRun2.length) {
+            const elem1 = elementOfRun1[arr1Index];
+            const elem2 = elementOfRun2[arr2Index];
+
+            if (elem1.Value === elem2.Value) {
+                arr1Index += 1;
+                arr2Index += 1;
+
+            } else if (elem1.Type === para_Space && elem2.Type === para_Space) {
+                skipSpaces();
+            } else {
+                return false;
+            }
+        }
+        skipSpaces();
+        if (arr1Index < elementOfRun1.length || arr2Index < elementOfRun2.length) {
+            return false;
+        }
+        return true;
+    }
+    CMergeComparisonNode.prototype.needToInsert = function (arrSetRemoveReviewType, aContentToInsert) {return !isDuplicateArr(arrSetRemoveReviewType, aContentToInsert);};
+
 
     CMergeComparisonNode.prototype.unshiftToArrInsertContent = function (aContentToInsert, elem, comparison) {
         aContentToInsert.unshift(elem);
@@ -45,6 +100,15 @@
         this.unshiftToArrInsertContent(aContentToInsert, elemCopy, comparison);
     };
 
+    function isOnlySpaceParaRun(element) {
+        if (element instanceof ParaRun) {
+            return element.Content.every(function (textElem) {
+                return textElem.Type === para_Space;
+            });
+        }
+        return false;
+    }
+
     CMergeComparisonNode.prototype.edgeCaseHandlingOfCleanInsertStart = function (aContentToInsert, element, comparison) {
         this.checkNodeWithInsert(element, comparison)
         if (element.GetReviewType && element.GetReviewType() !== reviewtype_Common) {
@@ -52,14 +116,12 @@
             return false;
         } else if (element instanceof ParaRun) {
 
-            var isOnlySpaceParaRun = element.Content.every(function (textElem) {
-                return textElem.Type === para_Space;
-            });
-            if (isOnlySpaceParaRun) {
+            var isOnlySpaces = isOnlySpaceParaRun(element);
+            if (isOnlySpaces) {
                 this.unshiftToArrInsertContentWithCopy(aContentToInsert, element, comparison);
 
             }
-            return !isOnlySpaceParaRun;
+            return !isOnlySpaces;
         }
         return true;
     };
@@ -701,7 +763,26 @@
         }
         oComp.compare(callback2);
     }
-
+    function collectReviewRunsAround(oRun, posInParent) {
+        const arrRet = [];
+        var oParagraph = oRun.Paragraph;
+        posInParent = AscFormat.isRealNumber(posInParent) ? posInParent : oRun.GetPosInParent();
+        let posNextRun = posInParent;
+        while (posNextRun < oParagraph.Content.length) {
+            const checkElem = oParagraph.Content[posNextRun];
+            if (checkElem instanceof ParaRun) {
+                if ((checkElem.GetReviewType && checkElem.GetReviewType() !== reviewtype_Common) || isOnlySpaceParaRun(checkElem)) {
+                    arrRet.push(checkElem);
+                } else if (posInParent !== posNextRun) {
+                    break;
+                }
+            } else {
+                break;
+            }
+            posNextRun += 1;
+        }
+        return arrRet;
+    }
     CDocumentMerge.prototype.getLargestCommonDocument2 = function (oOrigDocument, oRevisedDocument, callback) {
         var oComp = new CDocumentMergeComparison(oOrigDocument, oRevisedDocument, /*oOptions ? oOptions : */new AscCommonWord.ComparisonOptions());
         var oThis = this;
@@ -732,12 +813,17 @@
                         var oParagraph = oRun.Paragraph;
                         var posInParent = oRun.GetPosInParent();
 
+                        var arrOfReview = collectReviewRunsAround(oRun, posInParent);
+                        var isDuplicate = isDuplicateArr(arrOfReview, contentForInsert);
                         var oNewRun = oRun.Split2(nInsertPosition, oParagraph, posInParent);
 
 
-                        while (contentForInsert.length) {
-                            var oRunForInsert = contentForInsert.pop();
-                            oParagraph.Add_ToContent(posInParent + 1, oRunForInsert.Copy(false, {CopyReviewPr: true}));
+
+                        if (!isDuplicate) {
+                            while (contentForInsert.length) {
+                                var oRunForInsert = contentForInsert.pop();
+                                oParagraph.Add_ToContent(posInParent + 1, oRunForInsert.Copy(false, {CopyReviewPr: true}));
+                            }
                         }
                     }
                 }

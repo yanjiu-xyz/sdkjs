@@ -94,7 +94,7 @@
                             {
                                 oNewRun.Remove_FromContent(t + 1, oNewRun.Content.length - (t + 1), false);
                             }
-                            this.unshiftToArrInsertContent(aContentToInsert, oNewRun, comparison);
+                            this.pushToArrInsertContent(aContentToInsert, oNewRun, comparison);
                             break;
                         }
                     }
@@ -102,14 +102,14 @@
                 else
                 {
                 //целиком вставим то, что встретили
-                    this.unshiftToArrInsertContentWithCopy(aContentToInsert, oCurRun, comparison);
+                    this.pushToArrInsertContentWithCopy(aContentToInsert, oCurRun, comparison);
                 }
                 break;
             }
             else if(oLastText === oParentParagraph.Content[k])
             {
                 //целиком вставим то, что встретили
-                this.unshiftToArrInsertContentWithCopy(aContentToInsert, oParentParagraph.Content[k], comparison);
+                this.pushToArrInsertContentWithCopy(aContentToInsert, oParentParagraph.Content[k], comparison);
                 break;
             } else {
                 this.edgeCaseHandlingOfCleanInsertEnd(aContentToInsert, oCurRun, comparison);
@@ -121,13 +121,13 @@
     CNode.prototype.edgeCaseHandlingOfCleanInsertStart = function (aContentToInsert, element, comparison) {return false;};
     CNode.prototype.edgeCaseHandlingOfCleanInsertEnd = function (aContentToInsert, element, comparison) {return false;};
     // comparison need for extends
-    CNode.prototype.unshiftToArrInsertContent = function (aContentToInsert, elem, comparison) {
-        aContentToInsert.unshift(elem);
+    CNode.prototype.pushToArrInsertContent = function (aContentToInsert, elem, comparison) {
+        aContentToInsert.push(elem);
     }
 
-    CNode.prototype.unshiftToArrInsertContentWithCopy = function (aContentToInsert, elem, comparison) {
+    CNode.prototype.pushToArrInsertContentWithCopy = function (aContentToInsert, elem, comparison) {
         var elemCopy = elem.Copy(false, comparison.copyPr);
-        this.unshiftToArrInsertContent(aContentToInsert, elemCopy, comparison);
+        this.pushToArrInsertContent(aContentToInsert, elemCopy, comparison);
     }
 
     CNode.prototype.cleanStartOfInsertSameRun = function (oNewRun, idxOfChange) {
@@ -169,13 +169,13 @@
             // Пока не дошли до первого рана слова, закидываем его на добавление
             if(!(oCurRun === oFirstRun || oCurRun === oFirstText))
             {
-                this.unshiftToArrInsertContentWithCopy(aContentToInsert, oCurRun, comparison);
+                this.pushToArrInsertContentWithCopy(aContentToInsert, oCurRun, comparison);
             }
             else
             {
                 if(oCurRun === oFirstText)
                 {
-                    this.unshiftToArrInsertContentWithCopy(aContentToInsert, oCurRun, comparison);
+                    this.pushToArrInsertContentWithCopy(aContentToInsert, oCurRun, comparison);
                 }
                 else
                 {
@@ -193,7 +193,7 @@
                                 oCurRun.Paragraph = oElement.Paragraph || oElement;
                                 oNewRun = oCurRun.Copy2(comparison.copyPr);
                                 oCurRun.Paragraph = oParentParagraph2;
-                                this.unshiftToArrInsertContent(aContentToInsert, oNewRun, comparison);
+                                this.pushToArrInsertContent(aContentToInsert, oNewRun, comparison);
                             }
                             // удаляем в первом ране символы до нашего слова
                             oNewRun.Remove_FromContent(0, t, false);
@@ -369,6 +369,7 @@
         var oNewRun, t;
         var oChange = this.changes[idxOfChange];
         var oFirstText = oChange.remove[0].element;
+        var arrSetRemoveReviewType = [];
         for(var k = posLastRunInContent; k > -1; --k)
         {
             var oChildElement = oElement.Content[k];
@@ -391,31 +392,44 @@
                     if(t > 0)
                     {
                         oNewRun = oChildElement.Split2(t, oElement, k);
-                        this.setRemoveReviewType(oNewRun, comparison);
+                        arrSetRemoveReviewType.push(oNewRun);
                         nInsertPosition++;
                     }
                     else
                     {
-                        this.setRemoveReviewType(oChildElement, comparison);
+                        arrSetRemoveReviewType.push(oChildElement);
                     }
                 }
                 else
                 {
-                    this.setRemoveReviewType(oChildElement, comparison);
+                    arrSetRemoveReviewType.push(oChildElement);
                 }
                 break;
             }
         }
-        return nInsertPosition;
+        return {nInsertPosition: nInsertPosition, arrSetRemoveReviewType: arrSetRemoveReviewType };
     }
 
-    CNode.prototype.applyInsertsToParagraphsWithRemove = function (comparison, aContentToInsert, idxOfChange) {
-        var infoAboutEndOfRemoveChange = this.prepareEndOfRemoveChange(idxOfChange, comparison);
-        var nInsertPosition = infoAboutEndOfRemoveChange.nInsertPosition;
-        var posLastRunInContent = infoAboutEndOfRemoveChange.posLastRunInContent;
+    CNode.prototype.needToInsert = function (arrSetRemoveReviewType, aContentToInsert) {return true;};
 
-        nInsertPosition = this.setReviewTypeForRemoveChanges(comparison, idxOfChange, posLastRunInContent, nInsertPosition);
-        this.insertContentAfterRemoveChanges(aContentToInsert, nInsertPosition);
+    CNode.prototype.applyInsertsToParagraphsWithRemove = function (comparison, aContentToInsert, idxOfChange) {
+        const infoAboutEndOfRemoveChange = this.prepareEndOfRemoveChange(idxOfChange, comparison);
+        const posLastRunInContent = infoAboutEndOfRemoveChange.posLastRunInContent;
+
+        let nInsertPosition = infoAboutEndOfRemoveChange.nInsertPosition;
+
+        const infoAboutRemoveReviewType = this.setReviewTypeForRemoveChanges(comparison, idxOfChange, posLastRunInContent, nInsertPosition);
+        nInsertPosition = infoAboutRemoveReviewType.nInsertPosition;
+        const arrSetRemoveReviewType = infoAboutRemoveReviewType.arrSetRemoveReviewType;
+
+        var bNeedToInsert = this.needToInsert(arrSetRemoveReviewType, aContentToInsert);
+
+        for (let i = 0; i < arrSetRemoveReviewType.length; i += 1) {
+            this.setRemoveReviewType(arrSetRemoveReviewType[i], comparison);
+        }
+        if (bNeedToInsert) {
+            this.insertContentAfterRemoveChanges(aContentToInsert, nInsertPosition);
+        }
     };
 
     CNode.prototype.insertContentAfterRemoveChanges = function (aContentToInsert, nInsertPosition) {
@@ -423,8 +437,7 @@
         var t;
         if(nInsertPosition > -1)
         {
-            for(t = aContentToInsert.length - 1; t > - 1; --t)
-            {
+            for (t = aContentToInsert.length - 1; t >= 0; t -= 1) {
                 if(this.isElementForAdd(aContentToInsert[t]))
                 {
                     oElement.AddToContent(nInsertPosition, aContentToInsert[t]);
