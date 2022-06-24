@@ -96,12 +96,17 @@
 
 
     CDocumentMergeComparison.prototype.saveMergeChanges = function (lastNode, parentNode, run, isOriginalDocument) {
-        var currentNode = lastNode || parentNode;
-
-        if (!this.mergeRunsMap[currentNode.element.lastRun.Id]) {
-            this.mergeRunsMap[currentNode.element.lastRun.Id] = {isParent: !lastNode, lastNode: currentNode, contentForInsert: [], isOriginalDocument: isOriginalDocument};
+        if (lastNode) {
+            if (!this.mergeRunsMap[lastNode.element.lastRun.Id]) {
+                this.mergeRunsMap[lastNode.element.lastRun.Id] = {isParent: !lastNode, lastNode: lastNode, contentForInsert: [], isOriginalDocument: isOriginalDocument};
+            }
+            this.mergeRunsMap[lastNode.element.lastRun.Id].contentForInsert.push(run);
+        } else {
+            if (!this.mergeRunsMap[parentNode.element.Id]) {
+                this.mergeRunsMap[parentNode.element.Id] = {isParent: !lastNode, lastNode: parentNode, contentForInsert: [], isOriginalDocument: isOriginalDocument};
+            }
+            this.mergeRunsMap[parentNode.element.Id].contentForInsert.push(run);
         }
-        this.mergeRunsMap[currentNode.element.lastRun.Id].contentForInsert.push(run);
     }
 
     CDocumentMergeComparison.prototype.createNodeFromRunContentElement = function(oElement, oParentNode, oHashWords, isOriginalDocument)
@@ -129,7 +134,7 @@
                         bSkip = false;
                     } else {
                         if (!isOriginalDocument) {
-                            this.saveMergeChanges(lastNode, oParentNode, oRun, isOriginalDocument);
+                            this.saveMergeChanges(lastNode, oParentNode.children[oParentNode.children.length - 1], oRun, isOriginalDocument);
                         }
                         continue;
                     }
@@ -175,7 +180,7 @@
                                 oLastText.setLastRun(oRun);
                             } else {
                                 if (!isOriginalDocument) {
-                                    this.saveMergeChanges(lastNode, oParentNode, oRun, isOriginalDocument);
+                                    this.saveMergeChanges(lastNode, oParentNode.children[oParentNode.children.length - 1], oRun, isOriginalDocument);
                                 }
                                 bSkip = true;
                                 break;
@@ -710,8 +715,19 @@
                 var contentForInsert = insert.contentForInsert;
                 var partner = insert.lastNode.partner;
                 if (partner) {
-                    var oRun = partner.element.lastRun;
-                    var nInsertPosition = partner.element.getPosOfEnd() + 1;
+                    var oRun;
+                    if (insert.isParent) {
+                        oRun = partner.element.Content[0];
+                    } else {
+                        oRun = partner.element.lastRun;
+                    }
+                    var nInsertPosition;
+                    if (insert.isParent) {
+                        nInsertPosition = 0;
+                    } else {
+                        nInsertPosition = partner.element.getPosOfEnd() + 1;
+
+                    }
                     if (oRun) {
                         var oParagraph = oRun.Paragraph;
                         var posInParent = oRun.GetPosInParent();
