@@ -942,6 +942,14 @@
             return AscCommon.translateManager.getValue("Author");
         }
     };
+
+    CDocumentComparison.prototype.getMinJaccardCoefficient = function () {
+        return MIN_JACCARD;
+    }
+
+    CDocumentComparison.prototype.getMinDiffCoefficient = function () {
+        return MIN_DIFF;
+    }
     CDocumentComparison.prototype.compareElementsArray = function(aBase, aCompare, bOrig, bUseMinDiff)
     {
         var oMapEquals = {};
@@ -951,6 +959,8 @@
         var bMatchNoEmpty = false, i, j, key;
         var oLCS;
         var oThis = this;
+        var MIN_JACCARD_COEFFICIENT = this.getMinJaccardCoefficient();
+        var MIN_DIFF_COEFFICIENT = this.getMinDiffCoefficient();
         var fLCSCallback = function(x, y) {
             var oOrigNode = oLCS.a[x];
             var oReviseNode = oLCS.b[y];
@@ -1025,7 +1035,7 @@
                         var dJaccard = oCurNode.hashWords.jaccard(oCompareNode.hashWords);
                         if(oCurNode.element instanceof CTable)
                         {
-                            dJaccard += MIN_JACCARD;
+                            dJaccard += MIN_JACCARD_COEFFICIENT;
                         }
                         var dIntersection = dJaccard*(oCurNode.hashWords.count + oCompareNode.hashWords.count)/(1+dJaccard);
                         var diffA = 0, diffB = 0, dMinDiff = 0;
@@ -1041,9 +1051,9 @@
                             }
                             dMinDiff = Math.max(diffA, diffB);
 
-                            if(oCurInfo.jaccard <= dJaccard && dJaccard >= MIN_JACCARD || (oCurInfo.jaccard < MIN_JACCARD && dMinDiff > MIN_DIFF && oCurInfo.minDiff <= dMinDiff))
+                            if(oCurInfo.jaccard <= dJaccard && dJaccard >= MIN_JACCARD_COEFFICIENT || (oCurInfo.jaccard < MIN_JACCARD_COEFFICIENT && dMinDiff > MIN_DIFF_COEFFICIENT && oCurInfo.minDiff <= dMinDiff))
                             {
-                                if(oCurInfo.jaccard < dJaccard && dJaccard >= MIN_JACCARD)
+                                if(oCurInfo.jaccard < dJaccard && dJaccard >= MIN_JACCARD_COEFFICIENT)
                                 {
                                     oCurInfo.map = {};
                                     oCurInfo.minDiff = 0;
@@ -1061,7 +1071,7 @@
 
                     }
                 }
-                if(oCurInfo.jaccard >= MIN_JACCARD || (bUseMinDiff && oCurInfo.minDiff > MIN_DIFF && oCurNode.hashWords.countLetters > 0 ))
+                if(oCurInfo.jaccard >= MIN_JACCARD_COEFFICIENT || (bUseMinDiff && oCurInfo.minDiff > MIN_DIFF_COEFFICIENT && oCurNode.hashWords.countLetters > 0 ))
                 {
                     aBase2.push(oCurNode);
                     for(key in oCurInfo.map)
@@ -2327,9 +2337,15 @@
         }
         return oRet;
     };
+
+    CDocumentComparison.prototype.getTextElementConstructor = function () {
+        return CTextElement;
+    };
+
     CDocumentComparison.prototype.createNodeFromRunContentElement = function(oElement, oParentNode, oHashWords, isOriginalDocument)
     {
         var NodeConstructor = this.getNodeConstructor();
+        var TextElementConstructor = this.getTextElementConstructor();
         var oRet = new NodeConstructor(oElement, oParentNode);
         var oLastText = null, oRun, oRunElement, i, j;
         var aLastWord = [];
@@ -2342,7 +2358,7 @@
                 {
                     if(!oLastText)
                     {
-                        oLastText = new CTextElement();
+                        oLastText = new TextElementConstructor();
                         oLastText.setFirstRun(oRun);
                     }
                     if(oLastText.elements.length === 0)
@@ -2364,7 +2380,7 @@
                             {
                                 new NodeConstructor(oLastText, oRet);
                                 oLastText.updateHash(oHashWords);
-                                oLastText = new CTextElement();
+                                oLastText = new TextElementConstructor();
                                 oLastText.setFirstRun(oRun);
                             }
 
@@ -2373,7 +2389,7 @@
                             new NodeConstructor(oLastText, oRet);
                             oLastText.updateHash(oHashWords);
 
-                            oLastText = new CTextElement();
+                            oLastText = new TextElementConstructor();
                             oLastText.setFirstRun(oRun);
                             oLastText.setLastRun(oRun);
                         }
@@ -2383,13 +2399,13 @@
                             {
                                 oLastText.updateHash(oHashWords);
                                 new NodeConstructor(oLastText, oRet);
-                                oLastText = new CTextElement();
+                                oLastText = new TextElementConstructor();
                                 oLastText.setFirstRun(oRun);
                                 oLastText.setLastRun(oRun);
                             }
                             oLastText.elements.push(oRun.Content[j]);
                             new NodeConstructor(oLastText, oRet);
-                            oLastText = new CTextElement();
+                            oLastText = new TextElementConstructor();
                             oLastText.setFirstRun(oRun);
                             oLastText.setLastRun(oRun);
                         }
@@ -2399,7 +2415,7 @@
                             {
                                 oLastText.updateHash(oHashWords);
                                 new NodeConstructor(oLastText, oRet);
-                                oLastText = new CTextElement();
+                                oLastText = new TextElementConstructor();
                                 oLastText.setFirstRun(oRun);
                                 oLastText.setLastRun(oRun);
                             }
@@ -2408,7 +2424,7 @@
                             oLastText.elements.push(oRun.Content[j]);
                             new NodeConstructor(oLastText, oRet);
                             oLastText.updateHash(oHashWords);
-                            oLastText = new CTextElement();
+                            oLastText = new TextElementConstructor();
                             oLastText.setFirstRun(oRun);
                             oLastText.setLastRun(oRun);
                         }
