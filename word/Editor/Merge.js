@@ -27,6 +27,81 @@
     CMergeComparisonNode.prototype = Object.create(CNode.prototype);
     CMergeComparisonNode.prototype.constructor = CMergeComparisonNode;
 
+    CMergeComparisonNode.prototype.applyInsertsToParagraphsWithoutRemove = function (comparison, aContentToInsert, idxOfChange) {
+        var oChildNode, oFirstText, oCurRun, j, k, t;
+        var oElement = this.element;
+        var oChange = this.changes[idxOfChange];
+        if(aContentToInsert.length > 0)
+        {
+            var index = oChange.anchor.index;
+            oChildNode = this.children[index];
+            if(oChildNode)
+            {
+                oFirstText = oChildNode.element;
+                for(j = 0; j < oElement.Content.length; ++j)
+                {
+                    if(Array.isArray(oElement.Content))
+                    {
+                        oCurRun = oElement.Content[j];
+                        // если совпали ран, после которого нужно вставлять и ран из цикла
+                        if(oFirstText === oCurRun)
+                        {
+                            for (t = 0; t < aContentToInsert.length; t += 1)
+                            {
+                                if(comparison.isElementForAdd(aContentToInsert[t]))
+                                {
+                                    oElement.AddToContent(j + 1, aContentToInsert[t]);
+                                }
+                            }
+                            break;
+                        }
+                        // иначе надо посмотреть, возможно стоит вставлять элементы не после рана, а после конкретного элемента и текущий ран из цикла нужно засплитить
+                        else if(Array.isArray(oCurRun.Content) && Array.isArray(oFirstText.elements))
+                        {
+                            for(k = 0; k < oCurRun.Content.length; ++k)
+                            {
+                                // если элементы совпали, значит, мы нашли место вставки
+                                if(oFirstText.elements[0] === oCurRun.Content[k])
+                                {
+                                    break;
+                                }
+                            }
+                            var bFind = false;
+                            // проверим, не дошли ли мы просто до конца массива, ничего не встретив
+                            if(k === oCurRun.Content.length)
+                            {
+                                if(oFirstText.firstRun === oCurRun)
+                                {
+                                    k = 0;
+                                    bFind = true;
+                                }
+                            }
+                            else
+                            {
+                                bFind = true;
+                            }
+                            if(k <= oCurRun.Content.length && bFind)
+                            {
+                                var arrOfReview = collectReviewRunsAround(oCurRun, oCurRun.GetPosInParent());
+                                var isDuplicate = isDuplicateArr(arrOfReview, aContentToInsert);
+                                if (isDuplicate) {
+                                    oCurRun.Split2(k, oElement, j);
+                                    for (t = 0; t < aContentToInsert.length; t += 1) {
+                                        if(comparison.isElementForAdd(aContentToInsert[t]))
+                                        {
+                                            oElement.AddToContent(j + 1, aContentToInsert[t]);
+                                        }
+                                    }
+                                }
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    };
+
     CMergeComparisonNode.prototype.setRemoveReviewType = function (element, comparison) {
         if(!(element.IsParaEndRun && element.IsParaEndRun()))
         {
@@ -814,11 +889,9 @@
 
                         var arrOfReview = collectReviewRunsAround(oRun, posInParent);
                         var isDuplicate = isDuplicateArr(arrOfReview, contentForInsert);
-                        var oNewRun = oRun.Split2(nInsertPosition, oParagraph, posInParent);
-
-
 
                         if (!isDuplicate) {
+                            var oNewRun = oRun.Split2(nInsertPosition, oParagraph, posInParent);
                             while (contentForInsert.length) {
                                 var oRunForInsert = contentForInsert.pop();
                                 oParagraph.Add_ToContent(posInParent + 1, oRunForInsert.Copy(false, {CopyReviewPr: true}));
