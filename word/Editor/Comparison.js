@@ -151,6 +151,21 @@
         }
     }
 
+    function getCountOfFirstSpacesInRun(oRun) {
+        let count = 0;
+        if (oRun instanceof ParaRun) {
+            for (let i = 0; i < oRun.Content.length; i += 1) {
+                var element = oRun.Content[i];
+                if (element.Type === para_Space) {
+                    count += 1;
+                } else {
+                    break;
+                }
+            }
+        }
+        return count;
+    }
+
     CNode.prototype.cleanStartOfInsertDifferentRun = function (aContentToInsert, posOfLastInsertRun, idxOfChange, comparison) {
         var oNewRun, t;
         var oChange = this.changes[idxOfChange];
@@ -203,8 +218,10 @@
                 break;
             }
         }
-        for (k -= 1; k > - 1; k -= 1) {
-            var bBreak = this.edgeCaseHandlingOfCleanInsertStart(aContentToInsert, oParentParagraph.Content[k], comparison);
+        let countOfSpaces = getCountOfFirstSpacesInRun(oParentParagraph.Content[k]); // TODO: think about several runs
+        for (k -= 1; k >= 0; k -= 1) {
+            var bBreak = this.edgeCaseHandlingOfCleanInsertStart(aContentToInsert, oParentParagraph.Content[k], comparison, countOfSpaces);
+            countOfSpaces = 0;
             if (bBreak) {
                 break;
             }

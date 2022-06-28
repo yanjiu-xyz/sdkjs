@@ -90,16 +90,6 @@
     }
     CMergeComparisonNode.prototype.needToInsert = function (arrSetRemoveReviewType, aContentToInsert) {return !isDuplicateArr(arrSetRemoveReviewType, aContentToInsert);};
 
-
-    CMergeComparisonNode.prototype.unshiftToArrInsertContent = function (aContentToInsert, elem, comparison) {
-        aContentToInsert.unshift(elem);
-    };
-
-    CMergeComparisonNode.prototype.unshiftToArrInsertContentWithCopy = function (aContentToInsert, elem, comparison) {
-        var elemCopy = elem.Copy(false, comparison.copyPr);
-        this.unshiftToArrInsertContent(aContentToInsert, elemCopy, comparison);
-    };
-
     function isOnlySpaceParaRun(element) {
         if (element instanceof ParaRun) {
             return element.Content.every(function (textElem) {
@@ -109,16 +99,25 @@
         return false;
     }
 
-    CMergeComparisonNode.prototype.edgeCaseHandlingOfCleanInsertStart = function (aContentToInsert, element, comparison) {
+    CMergeComparisonNode.prototype.edgeCaseHandlingOfCleanInsertStart = function (aContentToInsert, element, comparison, countOfSpaces) {
         this.checkNodeWithInsert(element, comparison)
         if (element.GetReviewType && element.GetReviewType() !== reviewtype_Common) {
-            this.unshiftToArrInsertContentWithCopy(aContentToInsert, element, comparison);
+            if (countOfSpaces) {
+                for (let i = 0; i < countOfSpaces; i += 1) {
+                    element.Add_ToContent(element.Content.length, new ParaSpace());
+                }
+            }
+            this.pushToArrInsertContentWithCopy(aContentToInsert, element, comparison);
             return false;
         } else if (element instanceof ParaRun) {
-
             var isOnlySpaces = isOnlySpaceParaRun(element);
             if (isOnlySpaces) {
-                this.unshiftToArrInsertContentWithCopy(aContentToInsert, element, comparison);
+                if (countOfSpaces) {
+                    for (let i = 0; i < countOfSpaces; i += 1) {
+                        element.Add_ToContent(element.Content.length, new ParaSpace());
+                    }
+                }
+                this.pushToArrInsertContentWithCopy(aContentToInsert, element, comparison);
 
             }
             return !isOnlySpaces;
@@ -128,7 +127,7 @@
     CMergeComparisonNode.prototype.edgeCaseHandlingOfCleanInsertEnd = function (aContentToInsert, element, comparison) {
         this.checkNodeWithInsert(element, comparison)
         if (element.GetReviewType && element.GetReviewType() !== reviewtype_Common) {
-            this.unshiftToArrInsertContentWithCopy(aContentToInsert, element, comparison);
+            this.pushToArrInsertContentWithCopy(aContentToInsert, element, comparison);
         } else {
             aContentToInsert.length = 0;
         }
