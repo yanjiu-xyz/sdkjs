@@ -281,9 +281,10 @@
                     if(Array.isArray(oElement.Content))
                     {
                         oCurRun = oElement.Content[j];
+                        // если совпали ран, после которого нужно вставлять и ран из цикла
                         if(oFirstText === oCurRun)
                         {
-                            for(t = aContentToInsert.length - 1; t > - 1; --t)
+                            for (t = 0; t < aContentToInsert.length; t += 1)
                             {
                                 if(comparison.isElementForAdd(aContentToInsert[t]))
                                 {
@@ -292,16 +293,19 @@
                             }
                             break;
                         }
+                        // иначе надо посмотреть, возможно стоит вставлять элементы не после рана, а после конкретного элемента и текущий ран из цикла нужно засплитить
                         else if(Array.isArray(oCurRun.Content) && Array.isArray(oFirstText.elements))
                         {
                             for(k = 0; k < oCurRun.Content.length; ++k)
                             {
+                                // если элементы совпали, значит, мы нашли место вставки
                                 if(oFirstText.elements[0] === oCurRun.Content[k])
                                 {
                                     break;
                                 }
                             }
                             var bFind = false;
+                            // проверим, не дошли ли мы просто до конца массива, ничего не встретив
                             if(k === oCurRun.Content.length)
                             {
                                 if(oFirstText.firstRun === oCurRun)
@@ -317,8 +321,7 @@
                             if(k <= oCurRun.Content.length && bFind)
                             {
                                 oCurRun.Split2(k, oElement, j);
-                                for(t = aContentToInsert.length - 1; t > - 1; --t)
-                                {
+                                for (t = 0; t < aContentToInsert.length; t += 1) {
                                     if(comparison.isElementForAdd(aContentToInsert[t]))
                                     {
                                         oElement.AddToContent(j + 1, aContentToInsert[t]);
@@ -454,7 +457,7 @@
         var t;
         if(nInsertPosition > -1)
         {
-            for (t = aContentToInsert.length - 1; t >= 0; t -= 1) {
+            for (t = 0; t < aContentToInsert.length; t += 1) {
                 if(this.isElementForAdd(aContentToInsert[t]))
                 {
                     oElement.AddToContent(nInsertPosition, aContentToInsert[t]);
