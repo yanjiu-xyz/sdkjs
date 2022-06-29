@@ -213,7 +213,14 @@ ParaRun.prototype.Copy = function(Selected, oPr)
     var oLogicDocument = this.GetLogicDocument();
 	if(oPr && oPr.Comparison)
 	{
-		oPr.Comparison.updateReviewInfo(NewRun, oPr.ReviewType || reviewtype_Add);
+		var newReviewType = reviewtype_Add;
+		if (oPr.bSaveReviewType) {
+			var tempReviewType = this.GetReviewType();
+			if (tempReviewType === reviewtype_Add || tempReviewType === reviewtype_Remove) {
+				newReviewType = tempReviewType;
+			}
+		}
+		oPr.Comparison.updateReviewInfo(NewRun, newReviewType);
 	}
     else if (true === isCopyReviewPr || (oLogicDocument && (oLogicDocument.RecalcTableHeader || oLogicDocument.MoveDrawing)))
 	{
@@ -334,7 +341,13 @@ ParaRun.prototype.Copy2 = function(oPr)
     NewRun.Set_Pr( this.Pr.Copy(undefined, oPr) );
 	if(oPr && oPr.Comparison)
 	{
-		var newReviewType = AscFormat.isRealNumber(oPr.ReviewType) ? oPr.ReviewType : reviewtype_Add;
+		var newReviewType = reviewtype_Add;
+		if (oPr.bSaveReviewType) {
+			var tempReviewType = this.GetReviewType();
+			if (tempReviewType === reviewtype_Add || tempReviewType === reviewtype_Remove) {
+				newReviewType = tempReviewType;
+			}
+		}
 		oPr.Comparison.updateReviewInfo(NewRun, newReviewType);
 	}
     var StartPos = 0;

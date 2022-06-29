@@ -924,7 +924,7 @@
         this.CommentsMap = {};
         this.matchedNums = {};
         this.checkedNums = {};
-
+        this.bSaveCustomReviewType = false;
         this.copyPr = {
             CopyReviewPr: false,
             Comparison: this
@@ -977,7 +977,7 @@
             });
             oThis.applyChangesToChildNode(oOrigNode);
             oThis.compareNotes(oMatching);
-            oThis.compareDrawingObjects(oMatching);
+            oThis.compareDrawingObjectsFromMatching(oMatching);
         };
         var fEquals;
 
@@ -1262,7 +1262,17 @@
             }
         }
     };
-    CDocumentComparison.prototype.compareDrawingObjects = function(oMatching)
+
+    CDocumentComparison.prototype.compareDrawingObjects = function (oBaseDrawing, oCompareDrawing) {
+        if(oBaseDrawing && oCompareDrawing)
+        {
+            var oBaseGrObject = oBaseDrawing.GraphicObj;
+            var oCompareGrObject = oCompareDrawing.GraphicObj;
+            this.compareGraphicObject(oBaseGrObject, oCompareGrObject);
+        }
+    }
+
+    CDocumentComparison.prototype.compareDrawingObjectsFromMatching = function(oMatching)
     {
         for(var key in oMatching.Drawings)
         {
@@ -1270,12 +1280,7 @@
             {
                 var oBaseDrawing = AscCommon.g_oTableId.Get_ById(key);
                 var oCompareDrawing = oMatching.Drawings[key];
-                if(oBaseDrawing && oCompareDrawing)
-                {
-                    var oBaseGrObject = oBaseDrawing.GraphicObj;
-                    var oCompareGrObject = oCompareDrawing.GraphicObj;
-                    this.compareGraphicObject(oBaseGrObject, oCompareGrObject);
-                }
+                this.compareDrawingObjects(oBaseDrawing, oCompareDrawing);
             }
         }
     };
@@ -2233,26 +2238,23 @@
         return arrReturnObjects;
     };
 
-    function getText(oRun) {
-        return oRun.Content.map(function (el) {
-            return String.fromCharCode(el.Value);
-        }).join('');
-    }
-
-    CDocumentComparison.prototype.setReviewInfoRecursive = function(oObject, nType, bSaveCustomReviewType, conflictType)
-    {
-        var arrNeedReviewObjects = this.getElementsForSetReviewType(oObject);
-
+    CDocumentComparison.prototype.setReviewInfoForArray = function (arrNeedReviewObjects, nType, conflictType) {
         for (var i = 0; i < arrNeedReviewObjects.length; i += 1) {
             var oNeedReviewObject = arrNeedReviewObjects[i];
             var oReviewInfo = oNeedReviewObject.ReviewInfo.Copy();
             this.setReviewInfo(oReviewInfo, conflictType);
             var reviewType;
-            if (bSaveCustomReviewType) {
+            if (this.bSaveCustomReviewType) {
                 reviewType = oNeedReviewObject.GetReviewType && oNeedReviewObject.GetReviewType();
             }
             oNeedReviewObject.SetReviewTypeWithInfo(reviewType || nType, oReviewInfo, false);
         }
+    }
+
+    CDocumentComparison.prototype.setReviewInfoRecursive = function(oObject, nType, conflictType)
+    {
+        var arrNeedReviewObjects = this.getElementsForSetReviewType(oObject);
+        this.setReviewInfoForArray(arrNeedReviewObjects, nType, conflictType);
     };
     CDocumentComparison.prototype.updateReviewInfo = function(oObject, nType, bParaEnd)
     {

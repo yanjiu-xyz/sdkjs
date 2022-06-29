@@ -11,15 +11,118 @@
 
     var EXCLUDED_PUNCTUATION = {};
     EXCLUDED_PUNCTUATION[46] = true; // TODO: organize import
-    //EXCLUDED_PUNCTUATION[95] = true;
     EXCLUDED_PUNCTUATION[160] = true;
 
 
-/*    function getText(oRun) {
-        return oRun.Content.map(function (el) {
-            return String.fromCharCode(el.Value);
-        }).join('');
-    }*/
+
+    function isDuplicateArr(arrOfRuns1, arrOfRuns2) {
+        const elementOfRun1 = [];
+        const elementOfRun2 = [];
+
+        for (let i = 0; i < arrOfRuns1.length; i += 1) {
+            for (let j = 0; j < arrOfRuns1[i].Content.length; j += 1) {
+                const elem = arrOfRuns1[i].Content[j];
+                elementOfRun1.push(elem);
+            }
+        }
+        for (let i = 0; i < arrOfRuns2.length; i += 1) {
+            for (let j = 0; j < arrOfRuns2[i].Content.length; j += 1) {
+                const elem = arrOfRuns2[i].Content[j];
+                elementOfRun2.push(elem);
+            }
+        }
+
+        let arr1Index = 0;
+        let arr2Index = 0;
+
+        function skipSpaces() {
+            let element = elementOfRun1[arr1Index];
+            while (arr1Index < elementOfRun1.length && element && element.Type === para_Space) {
+                arr1Index += 1;
+                element = elementOfRun1[arr1Index];
+            }
+            element = elementOfRun2[arr1Index];
+            while (arr2Index < elementOfRun2.length && element && element.Type === para_Space) {
+                arr2Index += 1;
+                element = elementOfRun2[arr2Index];
+            }
+        }
+
+        while (arr1Index < elementOfRun1.length && arr2Index < elementOfRun2.length) {
+            const elem1 = elementOfRun1[arr1Index];
+            const elem2 = elementOfRun2[arr2Index];
+            if (!(elem1.Type === para_Drawing && elem2.Type === para_Drawing)) {
+                if (elem1.Value === elem2.Value) {
+                    arr1Index += 1;
+                    arr2Index += 1;
+
+                } else if (elem1.Type === para_Space && elem2.Type === para_Space) {
+                    skipSpaces();
+                } else {
+                    return false;
+                }
+            } else {
+                if (!elem1.IsComparable(elem2)) {
+                    return false;
+                } else {
+                    arr1Index += 1;
+                    arr2Index += 1;
+                }
+            }
+
+
+        }
+        skipSpaces();
+        if (arr1Index < elementOfRun1.length || arr2Index < elementOfRun2.length) {
+            return false;
+        }
+        return true;
+    }
+
+
+    function isOnlySpaceParaRun(element) {
+        if (element instanceof ParaRun) {
+            return element.Content.every(function (textElem) {
+                return textElem.Type === para_Space;
+            });
+        }
+        return false;
+    }
+
+
+    function getPriorityReviewType(arrOfTypes) {
+        var bRemove = arrOfTypes.some(function (reviewType) {
+            return reviewType === reviewtype_Remove;
+        });
+        if (bRemove) return reviewtype_Remove;
+
+        var bAdd = arrOfTypes.some(function (reviewType) {
+            return reviewType === reviewtype_Add;
+        });
+        if (bAdd) return reviewtype_Add;
+        return reviewtype_Common;
+    }
+
+    function collectReviewRunsAround(oRun, posInParent) {
+        const arrRet = [];
+        var oParagraph = oRun.Paragraph;
+        posInParent = AscFormat.isRealNumber(posInParent) ? posInParent : oRun.GetPosInParent();
+        let posNextRun = posInParent;
+        while (posNextRun < oParagraph.Content.length) {
+            const checkElem = oParagraph.Content[posNextRun];
+            if (checkElem instanceof ParaRun) {
+                if ((checkElem.GetReviewType && checkElem.GetReviewType() !== reviewtype_Common) || isOnlySpaceParaRun(checkElem)) {
+                    arrRet.push(checkElem);
+                } else if (posInParent !== posNextRun) {
+                    break;
+                }
+            } else {
+                break;
+            }
+            posNextRun += 1;
+        }
+        return arrRet;
+    }
 
     function CMergeComparisonNode(oElement, oParent) {
         CNode.call(this, oElement, oParent);
@@ -110,69 +213,7 @@
             }
         }
     };
-    function isDuplicateArr(arrOfRuns1, arrOfRuns2) {
-        const elementOfRun1 = [];
-        const elementOfRun2 = [];
-
-        for (let i = 0; i < arrOfRuns1.length; i += 1) {
-            for (let j = 0; j < arrOfRuns1[i].Content.length; j += 1) {
-                const elem = arrOfRuns1[i].Content[j];
-                elementOfRun1.push(elem);
-            }
-        }
-        for (let i = 0; i < arrOfRuns2.length; i += 1) {
-            for (let j = 0; j < arrOfRuns2[i].Content.length; j += 1) {
-                const elem = arrOfRuns2[i].Content[j];
-                elementOfRun2.push(elem);
-            }
-        }
-
-        let arr1Index = 0;
-        let arr2Index = 0;
-
-        function skipSpaces() {
-            let element = elementOfRun1[arr1Index];
-            while (arr1Index < elementOfRun1.length && element && element.Type === para_Space) {
-                arr1Index += 1;
-                element = elementOfRun1[arr1Index];
-            }
-            element = elementOfRun2[arr1Index];
-            while (arr2Index < elementOfRun2.length && element && element.Type === para_Space) {
-                arr2Index += 1;
-                element = elementOfRun2[arr2Index];
-            }
-        }
-
-        while (arr1Index < elementOfRun1.length && arr2Index < elementOfRun2.length) {
-            const elem1 = elementOfRun1[arr1Index];
-            const elem2 = elementOfRun2[arr2Index];
-
-            if (elem1.Value === elem2.Value) {
-                arr1Index += 1;
-                arr2Index += 1;
-
-            } else if (elem1.Type === para_Space && elem2.Type === para_Space) {
-                skipSpaces();
-            } else {
-                return false;
-            }
-        }
-        skipSpaces();
-        if (arr1Index < elementOfRun1.length || arr2Index < elementOfRun2.length) {
-            return false;
-        }
-        return true;
-    }
     CMergeComparisonNode.prototype.needToInsert = function (arrSetRemoveReviewType, aContentToInsert) {return !isDuplicateArr(arrSetRemoveReviewType, aContentToInsert);};
-
-    function isOnlySpaceParaRun(element) {
-        if (element instanceof ParaRun) {
-            return element.Content.every(function (textElem) {
-                return textElem.Type === para_Space;
-            });
-        }
-        return false;
-    }
 
     CMergeComparisonNode.prototype.edgeCaseHandlingOfCleanInsertStart = function (aContentToInsert, element, comparison, countOfSpaces) {
         this.checkNodeWithInsert(element, comparison)
@@ -225,27 +266,35 @@
     CMergeComparisonTextElement.prototype = Object.create(CTextElement.prototype);
     CMergeComparisonTextElement.prototype.constructor = CMergeComparisonTextElement;
 
-    CMergeComparisonTextElement.prototype.setFirstRun = function (oRun)
+    CMergeComparisonTextElement.prototype.setFirstRun = function (oRun, bSkipSetReview)
     {
         this.firstRun = oRun;
-        this.setReviewWordFlagFromRun(oRun);
+        this.setReviewWordFlagFromRun(oRun, bSkipSetReview);
     };
-    CMergeComparisonTextElement.prototype.setLastRun = function (oRun)
+    CMergeComparisonTextElement.prototype.setLastRun = function (oRun, bSkipSetReview)
     {
         this.lastRun = oRun;
-        this.setReviewWordFlagFromRun(oRun);
+        this.setReviewWordFlagFromRun(oRun, bSkipSetReview);
     };
 
-    CMergeComparisonTextElement.prototype.setReviewWordFlagFromRun = function (oRun) {
-        var reviewType = oRun.GetReviewType();
-        if (reviewType === reviewtype_Add || reviewType === reviewtype_Remove) {
-            this.isReviewWord = true;
-        }
+    CMergeComparisonTextElement.prototype.setReviewWordFlagFromRun = function (oRun, bSkipSetReview) {
+        /*if (bSkipSetReview) {*/
+            var reviewType = oRun.GetReviewType();
+            if (reviewType === reviewtype_Add || reviewType === reviewtype_Remove) {
+                this.isReviewWord = true;
+            }
+/*        }*/
     }
 
     function CDocumentMergeComparison(oOriginalDocument, oRevisedDocument, oOptions) {
         CDocumentComparison.call(this, oOriginalDocument, oRevisedDocument, oOptions);
         this.mergeRunsMap = {};
+        this.bSaveCustomReviewType = true;
+        this.copyPr = {
+            CopyReviewPr: false,
+            Comparison: this,
+            bSaveReviewType: true,
+        };
     }
 
     CDocumentMergeComparison.prototype = Object.create(CDocumentComparison.prototype);
@@ -259,6 +308,18 @@
     CDocumentMergeComparison.prototype.getTextElementConstructor = function () {
         return CMergeComparisonTextElement;
     };
+
+    CDocumentMergeComparison.prototype.compareDrawingObjects = function(oBaseDrawing, oCompareDrawing) {
+        if (oBaseDrawing && oCompareDrawing) {
+            var oBaseRun = oBaseDrawing.GetRun();
+            var oCompareRun = oCompareDrawing.GetRun();
+            var baseReviewType = oBaseRun.GetReviewType();
+            var compareReviewType = oCompareRun.GetReviewType();
+            var priorityReviewType = getPriorityReviewType([baseReviewType, compareReviewType]);
+            this.setReviewInfoForArray([oBaseRun], priorityReviewType);
+        }
+        CDocumentComparison.prototype.compareDrawingObjects.call(this, oBaseDrawing, oCompareDrawing);
+    }
 
     CDocumentMergeComparison.prototype.saveMergeChanges = function (lastNode, parentNode, run, isOriginalDocument) {
         let arrContentForInsert;
@@ -630,19 +691,6 @@
         return null;
     };
 
-    function getPriorityReviewType(arrOfTypes) {
-        var bRemove = arrOfTypes.some(function (reviewType) {
-            return reviewType === reviewtype_Remove;
-        });
-        if (bRemove) return reviewtype_Remove;
-
-        var bAdd = arrOfTypes.some(function (reviewType) {
-            return reviewType === reviewtype_Add;
-        });
-        if (bAdd) return reviewtype_Add;
-        return reviewtype_Common;
-    }
-
     function CDocumentMerge(oOriginalDocument, oRevisedDocument, oOptions) {
         this.originalDocument = oOriginalDocument;
         this.revisedDocument = oRevisedDocument;
@@ -650,27 +698,6 @@
         this.api = oOriginalDocument.GetApi();
         this.comparison = new CDocumentMergeComparison(oOriginalDocument, oRevisedDocument, oOptions ? oOptions : new AscCommonWord.ComparisonOptions());
         this.oldTrackRevisions = false;
-    }
-
-    function collectReviewRunsAround(oRun, posInParent) {
-        const arrRet = [];
-        var oParagraph = oRun.Paragraph;
-        posInParent = AscFormat.isRealNumber(posInParent) ? posInParent : oRun.GetPosInParent();
-        let posNextRun = posInParent;
-        while (posNextRun < oParagraph.Content.length) {
-            const checkElem = oParagraph.Content[posNextRun];
-            if (checkElem instanceof ParaRun) {
-                if ((checkElem.GetReviewType && checkElem.GetReviewType() !== reviewtype_Common) || isOnlySpaceParaRun(checkElem)) {
-                    arrRet.push(checkElem);
-                } else if (posInParent !== posNextRun) {
-                    break;
-                }
-            } else {
-                break;
-            }
-            posNextRun += 1;
-        }
-        return arrRet;
     }
 
     CDocumentMerge.prototype.getConflictName = function (conflictType) {
