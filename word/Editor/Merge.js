@@ -56,7 +56,7 @@
                     arr1Index += 1;
                     arr2Index += 1;
 
-                } else if (elem1.Type === para_Space && elem2.Type === para_Space) {
+                } else if (elem1.Type === para_Space && elem2.Type === para_Space || (arr1Index === 0 && elem1.Type === para_Space || arr2Index === 0 && elem2.Type === para_Space)) {
                     skipSpaces();
                 } else {
                     return false;
@@ -103,10 +103,46 @@
         return reviewtype_Common;
     }
 
+    function collectReviewRunsBefore(oRun, posInParent) {
+        const arrRet = [];
+        var oParagraph = oRun.Paragraph;
+        posInParent = AscFormat.isRealNumber(posInParent) ? posInParent : oRun.GetPosInParent();
+        let posNextRun = posInParent - 1;
+        while (posNextRun >= 0) {
+            const checkElem = oParagraph.Content[posNextRun];
+            if (checkElem instanceof ParaRun) {
+                if ((checkElem.GetReviewType && checkElem.GetReviewType() !== reviewtype_Common) || isOnlySpaceParaRun(checkElem)) {
+                    arrRet.unshift(checkElem);
+                } else {
+                    break;
+                }
+            } else {
+                break;
+            }
+            posNextRun -= 1;
+        }
+
+        return arrRet;
+    }
+
     function collectReviewRunsAround(oRun, posInParent) {
         const arrRet = [];
         var oParagraph = oRun.Paragraph;
         posInParent = AscFormat.isRealNumber(posInParent) ? posInParent : oRun.GetPosInParent();
+        // let posNextRun = posInParent - 1;
+        // while (posNextRun >= 0) {
+        //     const checkElem = oParagraph.Content[posNextRun];
+        //     if (checkElem instanceof ParaRun) {
+        //         if ((checkElem.GetReviewType && checkElem.GetReviewType() !== reviewtype_Common) || isOnlySpaceParaRun(checkElem)) {
+        //             arrRet.unshift(checkElem);
+        //         } else {
+        //             break;
+        //         }
+        //     } else {
+        //         break;
+        //     }
+        //     posNextRun -= 1;
+        // }
         let posNextRun = posInParent;
         while (posNextRun < oParagraph.Content.length) {
             const checkElem = oParagraph.Content[posNextRun];
@@ -185,9 +221,9 @@
                             }
                             if(k <= oCurRun.Content.length && bFind)
                             {
-                                var arrOfReview = collectReviewRunsAround(oCurRun, oCurRun.GetPosInParent());
+                                var arrOfReview = collectReviewRunsBefore(oCurRun, oCurRun.GetPosInParent());
                                 var isDuplicate = isDuplicateArr(arrOfReview, aContentToInsert);
-                                if (isDuplicate) {
+                                if (!isDuplicate) {
                                     oCurRun.Split2(k, oElement, j);
                                     for (t = 0; t < aContentToInsert.length; t += 1) {
                                         if(comparison.isElementForAdd(aContentToInsert[t]))
@@ -278,18 +314,20 @@
     };
 
     CMergeComparisonTextElement.prototype.setReviewWordFlagFromRun = function (oRun, bSkipSetReview) {
-        /*if (bSkipSetReview) {*/
+        if (!bSkipSetReview) {
             var reviewType = oRun.GetReviewType();
             if (reviewType === reviewtype_Add || reviewType === reviewtype_Remove) {
                 this.isReviewWord = true;
             }
-/*        }*/
+        }
     }
 
     function CDocumentMergeComparison(oOriginalDocument, oRevisedDocument, oOptions) {
         CDocumentComparison.call(this, oOriginalDocument, oRevisedDocument, oOptions);
         this.mergeRunsMap = {};
         this.bSaveCustomReviewType = true;
+        this.drawingReviewType = {};
+        this.drawingRunMap = {};
         this.copyPr = {
             CopyReviewPr: false,
             Comparison: this,
@@ -309,19 +347,38 @@
         return CMergeComparisonTextElement;
     };
 
-    CDocumentMergeComparison.prototype.compareDrawingObjects = function(oBaseDrawing, oCompareDrawing) {
+    CDocumentMergeComparison.prototype.GetReviewTypeFromParaDrawing = function (oParaDrawing) {
+        var oRun = oParaDrawing.GetRun();
+        if (oRun) {
+            return oRun.GetReviewType();
+        }
+        return reviewtype_Common;
+    }
+
+    CDocumentMergeComparison.prototype.compareDrawingObjects = function(oBaseDrawing, oCompareDrawing, bOrig) {
         if (oBaseDrawing && oCompareDrawing) {
-            var oBaseRun = oBaseDrawing.GetRun();
-            var oCompareRun = oCompareDrawing.GetRun();
-            var baseReviewType = oBaseRun.GetReviewType();
-            var compareReviewType = oCompareRun.GetReviewType();
-            var priorityReviewType = getPriorityReviewType([baseReviewType, compareReviewType]);
+            var baseReviewType = this.GetReviewTypeFromParaDrawing(oBaseDrawing);
+            var compareReviewType = this.GetReviewTypeFromParaDrawing(oCompareDrawing);
+            var arrOfReviewTypes = [];
+
+            if (baseReviewType) arrOfReviewTypes.push(baseReviewType);
+            if (compareReviewType) arrOfReviewTypes.push(compareReviewType);
+
+            var priorityReviewType = getPriorityReviewType(arrOfReviewTypes);
+
+            var oBaseRun = bOrig ? oBaseDrawing.GetRun() : oCompareDrawing.GetRun();
             this.setReviewInfoForArray([oBaseRun], priorityReviewType);
         }
         CDocumentComparison.prototype.compareDrawingObjects.call(this, oBaseDrawing, oCompareDrawing);
     }
 
     CDocumentMergeComparison.prototype.saveMergeChanges = function (lastNode, parentNode, run, isOriginalDocument) {
+        var bHaveDrawings = run.Content.some(function (element) {
+           return element.Type === para_Drawing;
+        });
+        if (bHaveDrawings) {
+            return;
+        }
         let arrContentForInsert;
         if (lastNode) {
             if (!this.mergeRunsMap[lastNode.element.lastRun.Id]) {
@@ -554,22 +611,27 @@
                             oLastText.updateHash(oHashWords);
 
                             oLastText = new TextElementConstructor();
+                            oLastText.setFirstRun(oRun, true);
+                            oLastText.setLastRun(oRun, true);
                         }
                         else if(oRunElement.Type === para_Drawing)
                         {
                             if(oLastText.elements.length > 0)
                             {
                                 oLastText.updateHash(oHashWords);
-                                new NodeConstructor(oLastText, oRet);
+                                if (!oLastText.isReviewWord) {
+                                    lastNode = new NodeConstructor(oLastText, oRet);
+                                }
                                 oLastText = new TextElementConstructor();
                                 oLastText.setFirstRun(oRun);
                                 oLastText.setLastRun(oRun);
                             }
                             oLastText.elements.push(oRun.Content[j]);
+                            this.drawingRunMap[oRun.Content[j].Id] = oRun;
                             new NodeConstructor(oLastText, oRet);
                             oLastText = new TextElementConstructor();
-                            oLastText.setFirstRun(oRun);
-                            oLastText.setLastRun(oRun);
+                            oLastText.setFirstRun(oRun, true);
+                            oLastText.setLastRun(oRun, true);
                         }
                         else if(oRunElement.Type === para_End)
                         {
@@ -578,8 +640,8 @@
                                 oLastText.updateHash(oHashWords);
                                 new NodeConstructor(oLastText, oRet);
                                 oLastText = new TextElementConstructor();
-                                oLastText.setFirstRun(oRun);
-                                oLastText.setLastRun(oRun);
+                                oLastText.setFirstRun(oRun, true);
+                                oLastText.setLastRun(oRun, true);
                             }
                             oLastText.setFirstRun(oRun);
                             oLastText.setLastRun(oRun);
@@ -587,8 +649,8 @@
                             new NodeConstructor(oLastText, oRet);
                             oLastText.updateHash(oHashWords);
                             oLastText = new TextElementConstructor();
-                            oLastText.setFirstRun(oRun);
-                            oLastText.setLastRun(oRun);
+                            oLastText.setFirstRun(oRun, true);
+                            oLastText.setLastRun(oRun, true);
                         }
                         else
                         {
