@@ -252,6 +252,7 @@
     CMergeComparisonNode.prototype.needToInsert = function (arrSetRemoveReviewType, aContentToInsert) {return !isDuplicateArr(arrSetRemoveReviewType, aContentToInsert);};
 
     CMergeComparisonNode.prototype.edgeCaseHandlingOfCleanInsertStart = function (aContentToInsert, element, comparison, countOfSpaces) {
+        if (isParaDrawingRun(element)) return false;
         this.checkNodeWithInsert(element, comparison)
         if (element.GetReviewType && element.GetReviewType() !== reviewtype_Common) {
             if (countOfSpaces) {
@@ -276,8 +277,15 @@
         }
         return true;
     };
+
+    function isParaDrawingRun(run) {
+        return run.Content.some(function (el) {
+            return el.Type === para_Drawing;
+        });
+    }
     CMergeComparisonNode.prototype.edgeCaseHandlingOfCleanInsertEnd = function (aContentToInsert, element, comparison) {
-        this.checkNodeWithInsert(element, comparison)
+        if (isParaDrawingRun(element)) return;
+        this.checkNodeWithInsert(element, comparison);
         if (element.GetReviewType && element.GetReviewType() !== reviewtype_Common) {
             this.pushToArrInsertContentWithCopy(aContentToInsert, element, comparison);
         } else {
