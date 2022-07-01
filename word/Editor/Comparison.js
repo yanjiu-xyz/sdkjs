@@ -491,6 +491,15 @@
     // CNode.prototype.getNodeConstructor = function () {
     //     return this.constructor;
     // }
+    CNode.prototype.applyInsert = function (arrToInsert, arrToRemove, nInsertPosition, comparison) {
+        const bNeedToInsert = this.needToInsert(arrToRemove, arrToInsert);
+        for (let i = 0; i < arrToRemove.length; i += 1) {
+            this.setRemoveReviewType(arrToRemove[i], comparison);
+        }
+        if (bNeedToInsert) {
+            this.insertContentAfterRemoveChanges(arrToInsert, nInsertPosition);
+        }
+    }
 
     CNode.prototype.applyInsertsToParagraphsWithRemove = function (comparison, aContentToInsert, idxOfChange) {
         const infoAboutEndOfRemoveChange = this.prepareEndOfRemoveChange(idxOfChange, comparison);
@@ -502,14 +511,7 @@
         nInsertPosition = infoAboutRemoveReviewType.nInsertPosition;
         const arrSetRemoveReviewType = infoAboutRemoveReviewType.arrSetRemoveReviewType;
 
-        var bNeedToInsert = this.needToInsert(arrSetRemoveReviewType, aContentToInsert);
-
-        for (let i = 0; i < arrSetRemoveReviewType.length; i += 1) {
-            this.setRemoveReviewType(arrSetRemoveReviewType[i], comparison);
-        }
-        if (bNeedToInsert) {
-            this.insertContentAfterRemoveChanges(aContentToInsert, nInsertPosition);
-        }
+        this.applyInsert(aContentToInsert, arrSetRemoveReviewType, nInsertPosition, comparison);
     };
 
     CNode.prototype.insertContentAfterRemoveChanges = function (aContentToInsert, nInsertPosition) {
@@ -1734,159 +1736,6 @@
         return true;
     };
     CNode.prototype.isElementForAdd = CDocumentComparison.prototype.isElementForAdd;
-
-    CDocumentComparison.prototype.applyChangesToParagraph = function(oNode)
-    {
-        var oElement = oNode.element, oChange, i, j, k, t, oChildElement,
-          oChildNode, oLastText, oFirstText, oCurRun, oNewRun, oFirstRun;
-        var oParentParagraph, aContentToInsert;
-        oNode.changes.sort(function(c1, c2){return c2.anchor.index - c1.anchor.index});
-        for(i = 0; i < oNode.changes.length; ++i)
-        {
-            oChange = oNode.changes[i];
-            oLastText = null;
-            oFirstText = null;
-            aContentToInsert = [];
-            if(oChange.insert.length > 0)
-            {
-                oFirstText = oChange.insert[0].element;
-                oLastText = oChange.insert[oChange.insert.length - 1].element;
-
-                oCurRun = oLastText.lastRun ? oLastText.lastRun : oLastText;
-                oFirstRun = oFirstText.firstRun ? oFirstText.firstRun : oFirstText;
-                oParentParagraph =  (oNode.partner && oNode.partner.element) || oCurRun.Paragraph;
-                var oParentParagraph2 =  oCurRun.Paragraph;
-                for(k = oParentParagraph.Content.length - 1; k > -1; --k)
-                {
-                    if(oCurRun === oParentParagraph.Content[k])
-                    {
-                        if(oCurRun instanceof ParaRun)
-                        {
-                            for(t = oCurRun.Content.length - 1; t > -1; --t)
-                            {
-                                oCurRun.Paragraph = oElement.Paragraph || oElement;
-                                oNewRun = oCurRun.Copy2(this.copyPr);
-                                oCurRun.Paragraph = oParentParagraph2;
-                                if(oLastText.elements[oLastText.elements.length - 1] === oCurRun.Content[t])
-                                {
-                                    if(t < oCurRun.Content.length - 1)
-                                    {
-                                        oNewRun.Remove_FromContent(t + 1, oNewRun.Content.length - (t + 1), false);
-                                    }
-                                    aContentToInsert.splice(0, 0, oNewRun);
-                                    break;
-                                }
-                            }
-                        }
-                        else
-                        {
-                            aContentToInsert.splice(0, 0, oCurRun.Copy(false, this.copyPr));
-                        }
-                        break;
-                    }
-                    else if(oLastText === oParentParagraph.Content[k])
-                    {
-                        aContentToInsert.splice(0, 0,  oParentParagraph.Content[k].Copy(false, this.copyPr));
-                        break;
-                    }
-                }
-                if( (oLastText.lastRun && oFirstText.firstRun) && oLastText.lastRun === oFirstText.firstRun || (!oLastText.lastRun && !oFirstText.firstRun) && oLastText === oFirstText)
-                {
-                    if(aContentToInsert.length > 0)
-                    {
-                        oNewRun = aContentToInsert[0];
-                        if(oNewRun instanceof  ParaRun)
-                        {
-                            for(t = 0; t < oFirstText.firstRun.Content.length; ++t)
-                            {
-                                if(oFirstText.elements[0] === oFirstText.firstRun.Content[t])
-                                {
-                                    oNewRun.Remove_FromContent(0, t, false);
-                                    break;
-                                }
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    for(k -= 1; k > -1; --k)
-                    {
-                        oCurRun = oParentParagraph.Content[k];
-                        if(oCurRun !== oFirstRun && oCurRun !== oFirstText)
-                        {
-                            aContentToInsert.splice(0, 0, oCurRun.Copy(false, this.copyPr));
-                        }
-                        else
-                        {
-                            if(oCurRun === oFirstText)
-                            {
-                                aContentToInsert.splice(0, 0,  oCurRun.Copy(false, this.copyPr));
-                            }
-                            else
-                            {
-
-                                for(t = 0; t < oCurRun.Content.length; ++t)
-                                {
-                                    if(oFirstText.elements[0] === oCurRun.Content[t])
-                                    {
-                                        if(oLastText.lastRun === oFirstText.firstRun)
-                                        {
-                                            oNewRun = aContentToInsert[0];
-                                        }
-                                        else
-                                        {
-                                            oCurRun.Paragraph = oElement.Paragraph || oElement;
-                                            oNewRun = oCurRun.Copy2(this.copyPr);
-                                            oCurRun.Paragraph = oParentParagraph2;
-                                            aContentToInsert.splice(0, 0, oNewRun);
-                                        }
-                                        oNewRun.Remove_FromContent(0, t, false);
-                                    }
-                                }
-                            }
-                            break;
-                        }
-                    }
-                }
-            }
-            //handle removed elements
-            this.applyInsertsToParagraph(oChange, oElement, oNode, aContentToInsert);
-        }
-        for(i = 0; i < oNode.children.length; ++i)
-        {
-            oChildNode = oNode.children[i];
-            if(Array.isArray(oChildNode.element.Content))
-            {
-                this.applyChangesToParagraph(oChildNode);
-            }
-            else
-            {
-                for(j = 0; j < oChildNode.children.length; ++j)
-                {
-                    if(oChildNode.children[j].element instanceof CDocumentContent)
-                    {
-                        this.applyChangesToDocContent(oChildNode.children[j]);
-                    }
-                }
-            }
-        }
-
-        if(oNode.partner)
-        {
-            var oPartnerNode = oNode.partner;
-            var oPartnerElement = oPartnerNode.element;
-            if(oPartnerElement instanceof Paragraph)
-            {
-                var oNewParaPr = this.getNewParaPrWithDiff(oElement.Pr, oPartnerElement.Pr);
-                if(oNewParaPr)
-                {
-                    oElement.Set_Pr(oNewParaPr);
-                }
-                this.compareSectPr(oElement, oPartnerElement);
-            }
-        }
-    };
 
     CDocumentComparison.prototype.applyChangesToParagraph2 = function(oNode)
     {

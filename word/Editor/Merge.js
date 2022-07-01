@@ -294,9 +294,7 @@
     };
 
     CMergeComparisonNode.prototype.checkNodeWithInsert = function (element, comparison) {
-        console.log(element)
         if (element) {
-            console.log('this', element.Id)
             delete comparison.mergeRunsMap[element.Id];
         }
 
@@ -575,10 +573,6 @@
 
             if(oRun instanceof ParaRun)
             {
-                var bReviewType = oRun.GetReviewType() === reviewtype_Remove || oRun.GetReviewType() === reviewtype_Add;
-                if (bReviewType && !isOriginalDocument) {
-                    this.saveMergeChanges(lastNode, oParentNode.children[oParentNode.children.length - 1], oRun, isOriginalDocument);
-                }
                 if(oRun.Content.length > 0)
                 {
                     if(!oLastText)
@@ -670,6 +664,10 @@
                             oLastText.elements.push(oRun.Content[j]);
                         }
                     }
+                }
+                var bReviewType = oRun.GetReviewType() === reviewtype_Remove || oRun.GetReviewType() === reviewtype_Add;
+                if (bReviewType && !isOriginalDocument) {
+                    this.saveMergeChanges(lastNode, oParentNode.children[oParentNode.children.length - 1], oRun, isOriginalDocument);
                 }
             }
             else
