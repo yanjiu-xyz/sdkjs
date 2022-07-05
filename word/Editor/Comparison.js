@@ -65,12 +65,11 @@
     CNode.prototype.checkNodeWithInsert = function (element, comparison) {}
 
     CNode.prototype.cleanEndOfInsert = function (aContentToInsert, idxOfChange, comparison) {
-        var oElement = this.element;
         var oChange = this.changes[idxOfChange];
         var oLastText = oChange.insert[oChange.insert.length - 1].element;
         var oCurRun = oLastText.lastRun ? oLastText.lastRun : oLastText;
         var oParentParagraph =  (this.partner && this.partner.element) || oCurRun.Paragraph;
-        var oParentParagraph2 =  oCurRun.Paragraph;
+        var applyingParagraph = this.getApplyParagraph(comparison);
         var k = oParentParagraph.Content.length - 1;
         var oNewRun, t;
 
@@ -84,9 +83,7 @@
                     for(t = oCurRun.Content.length - 1; t > -1; --t)
                     {
                         this.checkNodeWithInsert(oCurRun, comparison);
-                        oCurRun.Paragraph = oElement.Paragraph || oElement;
-                        oNewRun = oCurRun.Copy2(comparison.copyPr);
-                        oCurRun.Paragraph = oParentParagraph2;
+                        oNewRun = this.copyRunWithMockParagraph(oCurRun, applyingParagraph.Paragraph || applyingParagraph, comparison);
                         //очищаем конец слова, которое нужно вставить
                         if(oLastText.elements[oLastText.elements.length - 1] === oCurRun.Content[t])
                         {
@@ -118,8 +115,8 @@
         return k;
     }
 
-    CNode.prototype.edgeCaseHandlingOfCleanInsertStart = function (aContentToInsert, element, comparison) {return false;};
-    CNode.prototype.edgeCaseHandlingOfCleanInsertEnd = function (aContentToInsert, element, comparison) {return false;};
+    CNode.prototype.edgeCaseHandlingOfCleanInsertStart = function (aContentToInsert, element, comparison) {return true;};
+    CNode.prototype.edgeCaseHandlingOfCleanInsertEnd = function (aContentToInsert, element, comparison) {return true;};
     // comparison need for extends
     CNode.prototype.pushToArrInsertContent = function (aContentToInsert, elem, comparison) {
         aContentToInsert.push(elem);
@@ -166,6 +163,15 @@
         return count;
     }
 
+    CNode.prototype.copyRunWithMockParagraph = function (oRun, mockParagraph, comparison) {
+        var oTempParagraph = oRun.Paragraph;
+        oRun.Paragraph = mockParagraph;
+        var oNewRun = oRun.Copy2(comparison.copyPr);
+        oRun.Paragraph = oTempParagraph;
+
+        return oNewRun;
+    }
+
     CNode.prototype.cleanStartOfInsertDifferentRun = function (aContentToInsert, posOfLastInsertRun, idxOfChange, comparison) {
         var oNewRun, t;
         var oChange = this.changes[idxOfChange];
@@ -175,7 +181,7 @@
         var oLastText = oChange.insert[oChange.insert.length - 1].element;
         var oCurRun = oLastText.lastRun ? oLastText.lastRun : oLastText;
         var oParentParagraph =  (this.partner && this.partner.element) || oCurRun.Paragraph;
-        var oParentParagraph2 =  oCurRun.Paragraph;
+        var applyingParagraph = this.getApplyParagraph(comparison);
         var k = posOfLastInsertRun;
         for(k -= 1; k > -1; --k)
         {
@@ -205,9 +211,7 @@
                             }
                             else
                             {
-                                oCurRun.Paragraph = oElement.Paragraph || oElement;
-                                oNewRun = oCurRun.Copy2(comparison.copyPr);
-                                oCurRun.Paragraph = oParentParagraph2;
+                                oNewRun = this.copyRunWithMockParagraph(oCurRun, applyingParagraph.Paragraph || applyingParagraph, comparison);
                                 this.pushToArrInsertContent(aContentToInsert, oNewRun, comparison);
                             }
                             // удаляем в первом ране символы до нашего слова
@@ -265,10 +269,16 @@
         }
     }
 
+    CNode.prototype.getStartPosition = function (comparison) {
+        return 0;
+    }
+
     CNode.prototype.applyInsertsToParagraphsWithoutRemove = function (comparison, aContentToInsert, idxOfChange) {
         var oChildNode, oFirstText, oCurRun, j, k, t;
         var oElement = this.element;
         var oChange = this.changes[idxOfChange];
+        var startInsertPosition = this.getStartPosition(comparison);
+        var applyingParagraph = this.getApplyParagraph(comparison);
         if(aContentToInsert.length > 0)
         {
             var index = oChange.anchor.index;
@@ -284,13 +294,7 @@
                         // если совпали ран, после которого нужно вставлять и ран из цикла
                         if(oFirstText === oCurRun)
                         {
-                            for (t = 0; t < aContentToInsert.length; t += 1)
-                            {
-                                if(comparison.isElementForAdd(aContentToInsert[t]))
-                                {
-                                    oElement.AddToContent(j + 1, aContentToInsert[t]);
-                                }
-                            }
+                            this.applyInsert(aContentToInsert, [], j + 1, comparison);
                             break;
                         }
                         // иначе надо посмотреть, возможно стоит вставлять элементы не после рана, а после конкретного элемента и текущий ран из цикла нужно засплитить
@@ -320,13 +324,8 @@
                             }
                             if(k <= oCurRun.Content.length && bFind)
                             {
-                                oCurRun.Split2(k, oElement, j);
-                                for (t = 0; t < aContentToInsert.length; t += 1) {
-                                    if(comparison.isElementForAdd(aContentToInsert[t]))
-                                    {
-                                        oElement.AddToContent(j + 1, aContentToInsert[t]);
-                                    }
-                                }
+                                oCurRun.Split2(k, applyingParagraph,startInsertPosition + j);
+                                this.applyInsert(aContentToInsert, [], j + 1, comparison);
                                 break;
                             }
                         }
@@ -336,10 +335,20 @@
         }
     };
 
-    CNode.prototype.prepareEndOfRemoveChange = function (idxOfChange, comparison) {
+    CNode.prototype.getApplyParagraph = function (comparison) {
+        return this.element;
+    }
+
+    CNode.prototype.setCommonReviewTypeWithInfo = function (element, info) {
+        element.SetReviewTypeWithInfo(reviewtype_Common, info);
+    }
+
+    CNode.prototype.prepareEndOfRemoveChange = function (idxOfChange, comparison, arrSetRemove) {
         var t, oNewRun;
         var oChange = this.changes[idxOfChange];
         var oElement = this.element;
+        var oApplyParagraph = this.getApplyParagraph(comparison);
+        var startPosition = this.getStartPosition(comparison);
         var oLastText = oChange.remove[oChange.remove.length - 1].element;
         var oCurRun = oLastText.lastRun || oLastText;
 
@@ -363,8 +372,8 @@
                     if(t > -1)
                     {
                         nInsertPosition = k + 1;
-                        oNewRun = oCurRun.Split2(t + 1, oElement, k);
-                        oNewRun.SetReviewTypeWithInfo(reviewtype_Common, oCurRun.ReviewInfo.Copy());
+                        oNewRun = oCurRun.Split2(t + 1, oApplyParagraph, startPosition + k);
+                        this.setCommonReviewTypeWithInfo(oNewRun, oCurRun.ReviewInfo.Copy());
                     }
                 }
                 else
@@ -384,12 +393,13 @@
         }
     };
 
-    CNode.prototype.setReviewTypeForRemoveChanges = function (comparison, idxOfChange, posLastRunInContent, nInsertPosition) {
+    CNode.prototype.setReviewTypeForRemoveChanges = function (comparison, idxOfChange, posLastRunInContent, nInsertPosition, arrSetRemoveReviewType) {
         var oElement = this.element;
+        var oApplyParagraph = this.getApplyParagraph(comparison);
+        var startPosition = this.getStartPosition(comparison);
         var oNewRun, t;
         var oChange = this.changes[idxOfChange];
         var oFirstText = oChange.remove[0].element;
-        var arrSetRemoveReviewType = [];
         for(var k = posLastRunInContent; k > -1; --k)
         {
             var oChildElement = oElement.Content[k];
@@ -411,7 +421,7 @@
                     t = Math.min(Math.max(t, 0), oChildElement.Content.length - 1);
                     if(t > 0)
                     {
-                        oNewRun = oChildElement.Split2(t, oElement, k);
+                        oNewRun = oChildElement.Split2(t, oApplyParagraph, startPosition + k);
                         arrSetRemoveReviewType.push(oNewRun);
                         nInsertPosition++;
                     }
@@ -427,9 +437,8 @@
                 break;
             }
         }
-        return {nInsertPosition: nInsertPosition, arrSetRemoveReviewType: arrSetRemoveReviewType };
+        return nInsertPosition;
     }
-
     CNode.prototype.needToInsert = function (arrSetRemoveReviewType, aContentToInsert) {return true;};
     //
     //
@@ -497,32 +506,31 @@
             this.setRemoveReviewType(arrToRemove[i], comparison);
         }
         if (bNeedToInsert) {
-            this.insertContentAfterRemoveChanges(arrToInsert, nInsertPosition);
+            this.insertContentAfterRemoveChanges(arrToInsert, nInsertPosition, comparison);
         }
     }
 
     CNode.prototype.applyInsertsToParagraphsWithRemove = function (comparison, aContentToInsert, idxOfChange) {
-        const infoAboutEndOfRemoveChange = this.prepareEndOfRemoveChange(idxOfChange, comparison);
+        const arrSetRemoveReviewType = [];
+        const infoAboutEndOfRemoveChange = this.prepareEndOfRemoveChange(idxOfChange, comparison, arrSetRemoveReviewType);
         const posLastRunInContent = infoAboutEndOfRemoveChange.posLastRunInContent;
 
         let nInsertPosition = infoAboutEndOfRemoveChange.nInsertPosition;
+        nInsertPosition = this.setReviewTypeForRemoveChanges(comparison, idxOfChange, posLastRunInContent, nInsertPosition, arrSetRemoveReviewType);
 
-        const infoAboutRemoveReviewType = this.setReviewTypeForRemoveChanges(comparison, idxOfChange, posLastRunInContent, nInsertPosition);
-        nInsertPosition = infoAboutRemoveReviewType.nInsertPosition;
-        const arrSetRemoveReviewType = infoAboutRemoveReviewType.arrSetRemoveReviewType;
-
-        this.applyInsert(aContentToInsert, arrSetRemoveReviewType, nInsertPosition, comparison);
+        this.applyInsert(aContentToInsert, arrSetRemoveReviewType, nInsertPosition, comparison, true);
     };
 
-    CNode.prototype.insertContentAfterRemoveChanges = function (aContentToInsert, nInsertPosition) {
-        var oElement = this.element;
+    CNode.prototype.insertContentAfterRemoveChanges = function (aContentToInsert, nInsertPosition, comparison) {
+        var oElement = this.getApplyParagraph(comparison);
+        var startPosition = this.getStartPosition(comparison);
         var t;
         if(nInsertPosition > -1)
         {
             for (t = 0; t < aContentToInsert.length; t += 1) {
                 if(this.isElementForAdd(aContentToInsert[t]))
                 {
-                    oElement.AddToContent(nInsertPosition, aContentToInsert[t]);
+                    oElement.AddToContent(startPosition + nInsertPosition, aContentToInsert[t]);
                 }
             }
         }
@@ -1154,18 +1162,9 @@
     CDocumentComparison.prototype.getMinDiffCoefficient = function () {
         return MIN_DIFF;
     }
-    CDocumentComparison.prototype.compareElementsArray = function(aBase, aCompare, bOrig, bUseMinDiff)
-    {
-        var oMapEquals = {};
-        var aBase2 = [];
-        var aCompare2 = [];
-        var oCompareMap = {};
-        var bMatchNoEmpty = false, i, j, key;
-        var oLCS;
+    CDocumentComparison.prototype.getLCSCallback = function (oLCS, bOrig) {
         var oThis = this;
-        var MIN_JACCARD_COEFFICIENT = this.getMinJaccardCoefficient();
-        var MIN_DIFF_COEFFICIENT = this.getMinDiffCoefficient();
-        var fLCSCallback = function(x, y) {
+        return function(x, y) {
             var oOrigNode = oLCS.a[x];
             var oReviseNode = oLCS.b[y];
             var oDiff  = new AscCommon.Diff(oOrigNode, oReviseNode);
@@ -1183,11 +1182,10 @@
             oThis.applyChangesToChildNode(oOrigNode);
             oThis.compareNotes(oMatching);
         };
-        var fEquals;
-
-        fEquals = function(a, b)
-        {
-
+    }
+    
+    CDocumentComparison.prototype.getLCSEqualsMethod = function (oEqualMap, oMapEquals) {
+        return function(a, b) {
             var bEquals = oMapEquals[a.element.Id] || oMapEquals[b.element.Id];
             if(oEqualMap[a.element.Id])
             {
@@ -1216,6 +1214,18 @@
             }
             return false;
         };
+    }
+    
+    CDocumentComparison.prototype.compareElementsArray = function(aBase, aCompare, bOrig, bUseMinDiff)
+    {
+        var oMapEquals = {};
+        var aBase2 = [];
+        var aCompare2 = [];
+        var oCompareMap = {};
+        var bMatchNoEmpty = false, i, j, key;
+        var oLCS;
+        var MIN_JACCARD_COEFFICIENT = this.getMinJaccardCoefficient();
+        var MIN_DIFF_COEFFICIENT = this.getMinDiffCoefficient();
 
         var oEqualMap = {};
         for(i = 0; i < aBase.length; ++i)
@@ -1353,7 +1363,8 @@
             {
                 oLCS = new AscCommon.LCS(aCompare2, aBase2);
             }
-            oLCS.equals = fEquals;
+            var fLCSCallback = this.getLCSCallback(oLCS, bOrig);
+            oLCS.equals = this.getLCSEqualsMethod(oEqualMap, oMapEquals);
             oLCS.forEachCommonSymbol(fLCSCallback);
         }
         oEqualMap.bMatchNoEmpty = bMatchNoEmpty;
@@ -2140,7 +2151,7 @@
     CDocumentComparison.prototype.applyChangesToChildNode = function(oChildNode)
     {
         var oChildElement = oChildNode.element;
-        if(oChildElement instanceof Paragraph)
+        if(oChildElement instanceof Paragraph || oChildElement instanceof AscCommonWord.CMockParagraph)
         {
             this.applyChangesToParagraph2(oChildNode);
         }
@@ -2375,6 +2386,17 @@
                             this.createNodeFromDocContent(oChElement.Content[j].Content[k].Content, oRowNode, oHashWords, isOriginalDocument);
                         }
                     }
+                }
+            }
+            else if (oChElement instanceof AscCommonWord.CMockParagraph) {
+                if(bRoot)
+                {
+                    oHashWords = new AscCommonWord.CMockMinHash();
+                }
+                var oParagraphNode = this.createNodeFromRunContentElement(oChElement, oRet, oHashWords, isOriginalDocument);
+                if(bRoot)
+                {
+                    oParagraphNode.hashWords = oHashWords;
                 }
             }
             else
