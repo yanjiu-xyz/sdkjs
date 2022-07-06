@@ -135,20 +135,6 @@
         const arrRet = [];
         var oParagraph = oRun.Paragraph;
         posInParent = AscFormat.isRealNumber(posInParent) ? posInParent : oRun.GetPosInParent();
-        // let posNextRun = posInParent - 1;
-        // while (posNextRun >= 0) {
-        //     const checkElem = oParagraph.Content[posNextRun];
-        //     if (checkElem instanceof ParaRun) {
-        //         if ((checkElem.GetReviewType && checkElem.GetReviewType() !== reviewtype_Common) || isOnlySpaceParaRun(checkElem)) {
-        //             arrRet.unshift(checkElem);
-        //         } else {
-        //             break;
-        //         }
-        //     } else {
-        //         break;
-        //     }
-        //     posNextRun -= 1;
-        // }
         let posNextRun = posInParent;
         while (posNextRun < oParagraph.Content.length) {
             const checkElem = oParagraph.Content[posNextRun];
@@ -173,10 +159,9 @@
     CMergeComparisonNode.prototype.constructor = CMergeComparisonNode;
 
 
-    // CMergeComparisonNode.prototype.applyInsert = function (arrToInsert, arrToRemove, nInsertPosition, comparison) {
-    //     comparison.resolveConflicts(arrToInsert, arrToRemove);
-    // }
+    CMergeComparisonNode.prototype.resolveReviewTypeConflicts = function () {
 
+    };
     CMergeComparisonNode.prototype.applyInsertsToParagraphsWithoutRemove = function (comparison, aContentToInsert, idxOfChange) {
         var oChildNode, oFirstText, oCurRun, j, k, t;
         var oElement = this.element;
@@ -272,7 +257,7 @@
         } else if (arrToRemove.length === 0) {
             this.insertContentAfterRemoveChanges(arrToInsert, nInsertPosition, comparison);
         } else {
-            comparison.resolveConflicts(arrToInsert.reverse(), arrToRemove.reverse());
+            comparison.resolveConflicts(arrToInsert.reverse(), arrToRemove.reverse(),arrToRemove[0].Paragraph, nInsertPosition - 1);
         }
     }
 
@@ -328,6 +313,79 @@
     CMergeComparisonTextElement.prototype = Object.create(CTextElement.prototype);
     CMergeComparisonTextElement.prototype.constructor = CMergeComparisonTextElement;
 
+    CMergeComparisonTextElement.prototype.getPriorityReviewType = function () {
+        var oParagraph = this.lastRun.Paragraph;
+        var bCheck = false;
+        for (let i = oParagraph.Content.length - 1; i >= 0 && oParagraph.Content[i + 1] !== this.firstRun; i -= 1) {
+            var oRun = oParagraph.Content[i];
+            if (this.lastRun === oRun) {
+                bCheck = true;
+            }
+            if (bCheck) {
+                var reviewType = oRun.GetReviewType();
+                if (reviewType !== reviewtype_Common) {
+                    return reviewType;
+                }
+            }
+        }
+    }
+
+    CMergeComparisonTextElement.prototype.haveCommonReviewType = function () {
+        var bHaveCommonReviewType = false;
+        this.forEachRun(function (oRun) {
+            if (!bHaveCommonReviewType) {
+                bHaveCommonReviewType = oRun.GetReviewType() === reviewtype_Common;
+            }
+        });
+        return bHaveCommonReviewType;
+    };
+
+    CMergeComparisonTextElement.prototype.haveCustomReviewType = function () {
+        var bHaveCustomReviewType = false;
+        this.forEachRun(function (oRun) {
+            if (!bHaveCustomReviewType) {
+                bHaveCustomReviewType = oRun.GetReviewType() !== reviewtype_Common;
+            }
+        });
+        return bHaveCustomReviewType;
+    };
+
+    CMergeComparisonTextElement.prototype.setPriorityReviewType = function (comparison, isOriginalDocument, saveMergesFunction) {
+        if (!(this.haveCommonReviewType() && this.haveCustomReviewType())) return 0;
+        var appendIndex = 0;
+        var oParagraph = this.firstRun.Paragraph;
+        var priorityReviewType = this.getPriorityReviewType();
+
+        if (this.firstRun.GetReviewType() === reviewtype_Common) {
+            var posOfStart = this.getPosOfStart();
+            if (posOfStart !== 0) {
+                var oNewRun = this.firstRun.Split2(posOfStart, oParagraph, this.firstRun.GetPosInParent());
+                if (this.firstRun === this.lastRun) {
+                    this.lastRun = oNewRun;
+                }
+                this.firstRun = oNewRun;
+                appendIndex += 1;
+            }
+        }
+
+        if (this.lastRun.GetReviewType() === reviewtype_Common) {
+            var posOfEnd = this.getPosOfEnd();
+            if (posOfEnd !== this.lastRun.Content.length - 1) {
+                this.lastRun.Split2(posOfEnd, oParagraph, this.lastRun.GetPosInParent());
+            }
+        }
+
+        this.forEachRun(function (oRun) {
+            if (oRun.GetReviewType() === reviewtype_Common) {
+                if (!isOriginalDocument) {
+                    saveMergesFunction(oRun);
+                }
+                comparison.setReviewInfoRecursive(oRun, /*priorityReviewType*/reviewtype_Add);
+            }
+        });
+        return appendIndex;
+    }
+
     CMergeComparisonTextElement.prototype.setFirstRun = function (oRun, bSkipSetReview)
     {
         this.firstRun = oRun;
@@ -372,8 +430,6 @@
             return true;
         }
     }
-
-    // CDocumentResolveConflictComparison.prototype.applyLastComparison = function () {}
 
     function CConflictResolveNode(oElement, oParent) {
         CNode.call(this, oElement, oParent);
@@ -432,15 +488,14 @@
     CDocumentMergeComparison.prototype.constructor = CDocumentMergeComparison;
 
 
-    CDocumentMergeComparison.prototype.resolveConflicts = function(arrToInserts, arrToRemove) {
+    CDocumentMergeComparison.prototype.resolveConflicts = function(arrToInserts, arrToRemove, applyParagraph, nInsertPosition) {
         if (arrToInserts.length === 0 || arrToRemove.length === 0) return;
         var comparison = new CDocumentResolveConflictComparison(this.originalDocument, this.revisedDocument, this.options);
         var originalDocument = new CMockDocument();
         var revisedDocument = new CMockDocument();
         var originalParagraph = new CMockParagraph();
-        var origParagraph = arrToRemove[0].Paragraph;
-        var startPos = arrToRemove[0].GetPosInParent();
-        comparison.startPosition = startPos;
+        var origParagraph = applyParagraph;
+        comparison.startPosition = nInsertPosition;
         comparison.parentParagraph = origParagraph;
         originalParagraph.Content = arrToRemove;
         var revisedParagraph = new CMockParagraph();
@@ -451,25 +506,6 @@
         comparison.compareRoots(originalDocument, revisedDocument);
         return originalParagraph.Content;
     }
-
-    // CDocumentMergeComparison.prototype.resolveConflicts = function(arrToInserts, arrToRemove) {
-    //     var comparison = new CDocumentResolveConflictComparison(this.originalDocument, this.revisedDocument, this.options);
-    //     var originalDocument = new CMockDocument();
-    //     var revisedDocument = new CMockDocument();
-    //     var originalParagraph = new CMockParagraph();
-    //     originalParagraph.Content = arrToRemove.map((e) => e.Copy2());
-    //     var revisedParagraph = new CMockParagraph();
-    //     revisedParagraph.Content = arrToInserts.map((e) => e.Copy2());
-    //     originalDocument.Content.push(originalParagraph);
-    //     revisedDocument.Content.push(revisedParagraph);
-    //
-    //
-    //     var originalNode = comparison.createNodeFromDocContent(originalDocument, null, null, true);
-    //     var originalNode = comparison.createNodeFromDocContent(revisedDocument, null, null, false);
-    //     console.log('before', arrToRemove.map((e) => e.Copy2()), arrToInserts.map((e) => e.Copy2()));
-    //     comparison.compareRoots(originalDocument, revisedDocument);
-    //     console.log('after', originalDocument);
-    // }
 
     CDocumentMergeComparison.prototype.getNodeConstructor = function () {
         return CMergeComparisonNode;
@@ -505,7 +541,7 @@
         CDocumentComparison.prototype.compareDrawingObjects.call(this, oBaseDrawing, oCompareDrawing);
     }
 
-    CDocumentMergeComparison.prototype.saveMergeChanges = function (lastNode, parentNode, run, isOriginalDocument) {
+    CDocumentMergeComparison.prototype.saveMergeChanges = function (lastNode, parentNode, run) {
         var bHaveDrawings = run.Content.some(function (element) {
            return element.Type === para_Drawing;
         });
@@ -515,12 +551,12 @@
         let arrContentForInsert;
         if (lastNode) {
             if (!this.mergeRunsMap[lastNode.element.lastRun.Id]) {
-                this.mergeRunsMap[lastNode.element.lastRun.Id] = {isParent: !lastNode, lastNode: lastNode, contentForInsert: [], isOriginalDocument: isOriginalDocument};
+                this.mergeRunsMap[lastNode.element.lastRun.Id] = {isParent: !lastNode, lastNode: lastNode, contentForInsert: []};
             }
             arrContentForInsert = this.mergeRunsMap[lastNode.element.lastRun.Id].contentForInsert;
         } else {
             if (!this.mergeRunsMap[parentNode.element.Id]) {
-                this.mergeRunsMap[parentNode.element.Id] = {isParent: !lastNode, lastNode: parentNode, contentForInsert: [], isOriginalDocument: isOriginalDocument};
+                this.mergeRunsMap[parentNode.element.Id] = {isParent: !lastNode, lastNode: parentNode, contentForInsert: []};
             }
             arrContentForInsert = this.mergeRunsMap[parentNode.element.Id].contentForInsert;
         }
@@ -528,174 +564,16 @@
 
     }
 
-    // CDocumentMergeComparison.prototype.createNodeFromRunContentElement = function(oElement, oParentNode, oHashWords, isOriginalDocument)
-    // {
-    //     var NodeConstructor = this.getNodeConstructor();
-    //     var oRet = new NodeConstructor(oElement, oParentNode);
-    //     var oLastText = null, oRun,oNextRun, oRunElement, i, j;
-    //     var aLastWord = [];
-    //     var bSkip = false;
-    //     var lastNode = null;
-    //     for(i = 0; i < oElement.Content.length; ++i)
-    //     {
-    //
-    //         oRun = oElement.Content[i];
-    //         oNextRun = oElement.Content[i + 1];
-    //         if(oRun instanceof ParaRun)
-    //         {
-    //             var bReview = oRun.GetReviewType() === reviewtype_Add || oRun.GetReviewType() === reviewtype_Remove;
-    //
-    //             if (bSkip) {
-    //                 if (!bReview) {
-    //                     oLastText = new CTextElement();
-    //                     oLastText.setFirstRun(oRun);
-    //                     oLastText.setLastRun(oRun);
-    //                     bSkip = false;
-    //                 } else {
-    //                     if (!isOriginalDocument) {
-    //                         this.saveMergeChanges(lastNode, oParentNode.children[oParentNode.children.length - 1], oRun, isOriginalDocument);
-    //                     }
-    //                     continue;
-    //                 }
-    //             }
-    //
-    //             if(oRun.Content.length > 0)
-    //             {
-    //                 if(!oLastText)
-    //                 {
-    //                     oLastText = new CTextElement();
-    //                     oLastText.setFirstRun(oRun);
-    //                 }
-    //                 if(oLastText.elements.length === 0)
-    //                 {
-    //                     oLastText.setFirstRun(oRun);
-    //                     oLastText.setLastRun(oRun);
-    //                 }
-    //                 for(j = 0; j < oRun.Content.length; ++j)
-    //                 {
-    //                     oRunElement = oRun.Content[j];
-    //                     var bPunctuation = para_Text === oRunElement.Type && (AscCommon.g_aPunctuation[oRunElement.Value] && !EXCLUDED_PUNCTUATION[oRunElement.Value]);
-    //                     if(oRunElement.Type === para_Space || oRunElement.Type === para_Tab
-    //                         || oRunElement.Type === para_Separator || oRunElement.Type === para_NewLine
-    //                         || oRunElement.Type === para_FootnoteReference
-    //                         || oRunElement.Type === para_EndnoteReference
-    //                         || bPunctuation || bReview)
-    //                     {
-    //                         if(oLastText.elements.length > 0)
-    //                         {
-    //                             lastNode = new NodeConstructor(oLastText, oRet);
-    //                             oLastText.updateHash(oHashWords);
-    //                             oLastText = new CTextElement();
-    //                             oLastText.setFirstRun(oRun);
-    //                         }
-    //                         if (!bReview) {
-    //                             oLastText.setLastRun(oRun);
-    //                             oLastText.elements.push(oRunElement);
-    //                             lastNode = new NodeConstructor(oLastText, oRet);
-    //                             oLastText.updateHash(oHashWords);
-    //
-    //                             oLastText = new CTextElement();
-    //                             oLastText.setFirstRun(oRun);
-    //                             oLastText.setLastRun(oRun);
-    //                         } else {
-    //                             if (!isOriginalDocument) {
-    //                                 this.saveMergeChanges(lastNode, oParentNode.children[oParentNode.children.length - 1], oRun, isOriginalDocument);
-    //                             }
-    //                             bSkip = true;
-    //                             break;
-    //                         }
-    //                     }
-    //                     else if(oRunElement.Type === para_Drawing)
-    //                     {
-    //                         if(oLastText.elements.length > 0)
-    //                         {
-    //                             oLastText.updateHash(oHashWords);
-    //                             new NodeConstructor(oLastText, oRet);
-    //                             oLastText = new CTextElement();
-    //                             oLastText.setFirstRun(oRun);
-    //                             oLastText.setLastRun(oRun);
-    //                         }
-    //                         oLastText.elements.push(oRun.Content[j]);
-    //                         new NodeConstructor(oLastText, oRet);
-    //                         oLastText = new CTextElement();
-    //                         oLastText.setFirstRun(oRun);
-    //                         oLastText.setLastRun(oRun);
-    //                     }
-    //                     else if(oRunElement.Type === para_End)
-    //                     {
-    //                         if(oLastText.elements.length > 0)
-    //                         {
-    //                             oLastText.updateHash(oHashWords);
-    //                             new NodeConstructor(oLastText, oRet);
-    //                             oLastText = new CTextElement();
-    //                             oLastText.setFirstRun(oRun);
-    //                             oLastText.setLastRun(oRun);
-    //                         }
-    //                         oLastText.setFirstRun(oRun);
-    //                         oLastText.setLastRun(oRun);
-    //                         oLastText.elements.push(oRun.Content[j]);
-    //                         new NodeConstructor(oLastText, oRet);
-    //                         oLastText.updateHash(oHashWords);
-    //                         oLastText = new CTextElement();
-    //                         oLastText.setFirstRun(oRun);
-    //                         oLastText.setLastRun(oRun);
-    //                     }
-    //                     else
-    //                     {
-    //                         if(oLastText.elements.length === 0)
-    //                         {
-    //                             oLastText.setFirstRun(oRun);
-    //                         }
-    //                         oLastText.setLastRun(oRun);
-    //                         oLastText.elements.push(oRun.Content[j]);
-    //                     }
-    //                 }
-    //             }
-    //         }
-    //         else
-    //         {
-    //             if(!(oRun instanceof CParagraphBookmark))
-    //             {
-    //                 if(oLastText && oLastText.elements.length > 0)
-    //                 {
-    //                     oLastText.updateHash(oHashWords);
-    //                     new NodeConstructor(oLastText, oRet);
-    //                 }
-    //                 if(aLastWord.length > 0)
-    //                 {
-    //                     oHashWords.update(aLastWord);
-    //                     aLastWord.length = 0;
-    //                 }
-    //                 oLastText = null;
-    //                 if(Array.isArray(oRun.Content))
-    //                 {
-    //                     this.createNodeFromRunContentElement(oRun, oRet, oHashWords, isOriginalDocument);
-    //                 }
-    //                 else
-    //                 {
-    //                     new NodeConstructor(oRun, oRet);
-    //                 }
-    //             }
-    //         }
-    //     }
-    //     if(oLastText && oLastText.elements.length > 0)
-    //     {
-    //         oLastText.updateHash(oHashWords);
-    //         new NodeConstructor(oLastText, oRet);
-    //     }
-    //     return oRet;
-    // };
-
     CDocumentMergeComparison.prototype.createNodeFromRunContentElement = function(oElement, oParentNode, oHashWords, isOriginalDocument)
     {
         var NodeConstructor = this.getNodeConstructor();
         var TextElementConstructor = this.getTextElementConstructor();
         var oRet = new NodeConstructor(oElement, oParentNode);
-        var oLastText = null, oRun, oRunElement, i, j;
+        var oLastText = null, oRun, oRunElement, j;
         var aLastWord = [];
         var lastNode = null;
-        for(i = 0; i < oElement.Content.length; ++i)
-        {
+        var i = 0;
+        while (i < oElement.Content.length) {
             oRun = oElement.Content[i];
 
             if(oRun instanceof ParaRun)
@@ -728,6 +606,7 @@
                                     lastNode = new NodeConstructor(oLastText, oRet);
                                 }
                                 oLastText.updateHash(oHashWords);
+                                i += oLastText.setPriorityReviewType(this, isOriginalDocument, this.saveMergeChanges.bind(this, lastNode, oParentNode.children[oParentNode.children.length - 1]));
                                 oLastText = new TextElementConstructor();
                                 oLastText.setFirstRun(oRun);
                             }
@@ -822,6 +701,7 @@
                     }
                 }
             }
+            i += 1;
         }
         if(oLastText && oLastText.elements.length > 0)
         {
@@ -941,7 +821,7 @@
                     var isDuplicate = isDuplicateArr(arrOfReview, contentForInsert);
                     if (!isDuplicate) {
                         if (arrOfReview.length) {
-                            this.resolveConflicts(contentForInsert, arrOfReview);
+                            this.resolveConflicts(contentForInsert, arrOfReview, oParagraph, arrOfReview[0].GetPosInParent());
                         } else {
                             var oNewRun = oRun.Split2(nInsertPosition, oParagraph, posInParent);
                             while (contentForInsert.length) {

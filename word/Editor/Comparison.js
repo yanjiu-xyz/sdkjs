@@ -440,66 +440,7 @@
         return nInsertPosition;
     }
     CNode.prototype.needToInsert = function (arrSetRemoveReviewType, aContentToInsert) {return true;};
-    //
-    //
-    // CNode.prototype.mergeInsertAndRemoveArrays = function (arrToInsert, arrToRemove, comparison) {
-    //     const insertElems = [];
-    //     const removeElems = [];
-    //     const hashWords = {update: function(){}};
-    //     let oLastText = null;
-    //     const insertNode = new this.constructor();
-    //     const removeNode = new this.constructor();
-    //     for (let i = 0; i < arrToInsert.length; i += 1) {
-    //         const oRun = arrToInsert[i];
-    //         oLastText = this.createNodeFromRun(oRun, oLastText, hashWords, insertNode);
-    //     }
-    //     if (oLastText && oLastText.elements.length > 0) {
-    //         new this.constructor(oLastText, insertNode);
-    //     }
-    //
-    //     oLastText = null;
-    //     for (let i = 0; i < arrToRemove.length; i += 1) {
-    //         const oRun = arrToRemove[i];
-    //         oLastText = this.createNodeFromRun(oRun, oLastText, hashWords, removeNode);
-    //     }
-    //     if (oLastText && oLastText.elements.length > 0) {
-    //         new this.constructor(oLastText, removeNode);
-    //     }
-    //
-    //     let insertNodeChildIndex = 0;
-    //     let removeNodeChildIndex = 0;
-    //
-    //     while (insertNodeChildIndex !== insertNode.children.length || removeNodeChildIndex !== removeNode.children.length) {
-    //         const removeElement = removeNode.children[removeNodeChildIndex].element;
-    //         const insertElement = insertNode.children[insertNodeChildIndex].element;
-    //         if (removeElement.equals(insertElement)) {
-    //             insertNodeChildIndex += 1;
-    //             removeNodeChildIndex += 1;
-    //         } else {
-    //
-    //         }
-    //     }
-    //
-    // }
-    //
-    //
-    //
-    // CNode.prototype.getModifyArr = function (arrToInsert, arrToRemove) {
-    //     const newInsertArr = [];
-    //
-    // }
-    //
-    // CNode.prototype.createNodeFromRun = function (oRun, oLastText, oHashwords, oRet) {
-    //     return CDocumentComparison.prototype.createNodeFromRun.call(this, oRun, oLastText, oHashwords, oRet);
-    // }
-    //
-    // CNode.prototype.getTextElementConstructor = function () {
-    //     return CDocumentComparison.prototype.getTextElementConstructor.call(this);
-    // }
-    //
-    // CNode.prototype.getNodeConstructor = function () {
-    //     return this.constructor;
-    // }
+
     CNode.prototype.applyInsert = function (arrToInsert, arrToRemove, nInsertPosition, comparison) {
         const bNeedToInsert = this.needToInsert(arrToRemove, arrToInsert);
         for (let i = 0; i < arrToRemove.length; i += 1) {
@@ -729,9 +670,21 @@
 
     CTextElement.prototype.getPosOfStart = function () {
         var startElement = this.elements[0];
-        for (var i = 0;i < this.firstRun.Content.length; i += 1) {
-            if (this.firstRun.Content[i] === startElement) {
-                return i;
+        return this.firstRun.GetElementPosition(startElement);
+    }
+
+    CTextElement.prototype.forEachRun = function (callback) {
+        if (this.firstRun && this.lastRun) {
+            var bCheck = false;
+            var oParagraph = this.firstRun.Paragraph;
+            for (let i = 0; i < oParagraph.Content.length && oParagraph.Content[i - 1] !== this.lastRun; i += 1) {
+                var oRun = oParagraph.Content[i];
+                if (oRun === this.firstRun) {
+                    bCheck = true;
+                }
+                if (bCheck) {
+                    callback(oRun);
+                }
             }
         }
     }
@@ -742,11 +695,7 @@
 
     CTextElement.prototype.getPosOfEnd = function () {
         var endElement = this.elements[this.elements.length - 1];
-        for (var i = this.lastRun.Content.length - 1; i >= 0; i -= 1) {
-            if (this.lastRun.Content[i] === endElement) {
-                return i;
-            }
-        }
+        return this.lastRun.GetElementPosition(endElement);
     }
 
     CTextElement.prototype.getElement = function (idx) {
@@ -915,140 +864,6 @@
         }
         return null;
     };
-
-    // function CMergeTextElement() {
-    //     CTextElement.call(this);
-    // }
-    // CMergeTextElement.prototype = Object.create(CTextElement.prototype);
-    // CMergeTextElement.prototype.constructor = CMergeTextElement;
-    //
-    // CMergeTextElement.prototype.addToElements = function (element, opts) {
-    //     opts = opts || {};
-    //     this.elements.push({element: element, posInRun: opts.posInRun, run: opts.run});
-    // }
-    //
-    // CMergeTextElement.prototype.getElement = function (idx) {
-    //     return this.elements[idx].element;
-    // }
-    //
-    // CMergeTextElement.prototype.getPriorityReviewType = function () {
-    //     for (let i = this.elements.length - 1; i >= 0; i -= 1) {
-    //         const reviewType = this.elements[i].run.GetReviewType();
-    //         if (reviewType !== reviewtype_Common) {
-    //             return reviewType;
-    //         }
-    //     }
-    // }
-    //
-    // CMergeTextElement.prototype.haveReview = function () {
-    //     for (let i = this.elements.length - 1; i >= 0; i -= 1) {
-    //         const reviewType = this.elements[i].run.GetReviewType();
-    //         if (reviewType !== reviewtype_Common) {
-    //             return true;
-    //         }
-    //     }
-    //     return false;
-    // }
-    //
-    // CMergeTextElement.prototype.getArrOfRunWord = function () {
-    //     const oRet = [];
-    //     if (this.elements.length > 1) {
-    //         const firstElem = this.elements[0];
-    //         const lastElem = this.elements[this.elements.length - 1];
-    //         const startRun = firstElem.run.Copy2().Split2(firstElem.posInRun, firstElem.run.Paragraph, firstElem.run.GetPosInParent());
-    //         const endRun = lastElem.run.Copy2();
-    //         endRun.Split2(lastElem.posInRun + 1, lastElem.run.Paragraph, firstElem.run.GetPosInParent());
-    //         oRet.push(startRun);
-    //         for (let i = 1; i < this.elements.length - 1; i += 1) {
-    //             oRet.push(this.elements[i].run.Copy2());
-    //         }
-    //         oRet.push(endRun);
-    //     } else if (this.elements.length === 1) {
-    //         const oRetRun = this.elements[0].run.Copy2();
-    //         oRetRun.Remove_FromContent(0, this.elements[0].posInRun);
-    //         oRetRun.Remove_FromContent(1, oRetRun.Content.length - 1);
-    //         oRet.push(oRetRun);
-    //     }
-    //     return oRet;
-    // }
-    //
-    // function setActualReviewTypes(arrToInserts, arrToRemove) {
-    //     const insertNode = new CNode();
-    //     const removeNode = new CNode();
-    //     let lastText = null;
-    //     for (let i = 0; i < arrToInserts.length; i += 1) {
-    //         lastText = createNodeFromRun(arrToInserts[i], lastText, {update: function(){}}, insertNode, CMergeTextElement, CNode);
-    //     }
-    //     if (lastText && lastText.elements.length > 0) {
-    //         new CNode(lastText, insertNode);
-    //     }
-    //     lastText = null;
-    //     for (let i = 0; i < arrToRemove.length; i += 1) {
-    //         lastText = createNodeFromRun(arrToRemove[i], lastText, {update: function(){}}, removeNode, CMergeTextElement, CNode);
-    //     }
-    //     if (lastText && lastText.elements.length > 0) {
-    //         new CNode(lastText, removeNode);
-    //     }
-    //
-    //
-    // }
-    //
-    // function mergeChanges(arrToInserts, arrToRemove) {
-    //     const insertNode = new CNode();
-    //     const removeNode = new CNode();
-    //     let lastText = null;
-    //     for (let i = 0; i < arrToInserts.length; i += 1) {
-    //         lastText = createNodeFromRun(arrToInserts[i], lastText, {update: function(){}}, insertNode, CMergeTextElement, CNode);
-    //     }
-    //     if (lastText && lastText.elements.length > 0) {
-    //         new CNode(lastText, insertNode);
-    //     }
-    //     lastText = null;
-    //     for (let i = 0; i < arrToRemove.length; i += 1) {
-    //         lastText = createNodeFromRun(arrToRemove[i], lastText, {update: function(){}}, removeNode, CMergeTextElement, CNode);
-    //     }
-    //     if (lastText && lastText.elements.length > 0) {
-    //         new CNode(lastText, removeNode);
-    //     }
-    //
-    //     let insertIndex = 0;
-    //     let removeIndex = 0;
-    //     const newRemoveArr = [];
-    //     const newInsertArr = [];
-    //     while (insertIndex < insertNode.children.length && removeIndex < removeNode.children.length) {
-    //         let insertElement = insertNode.children[insertIndex].element;
-    //         let removeElement = removeNode.children[removeIndex].element;
-    //         let bEquals = insertElement.equals(removeElement);
-    //         if (bEquals) {
-    //             newRemoveArr.push.apply(newRemoveArr, insertElement.getArrOfRunWord());
-    //             insertIndex += 1;
-    //             removeIndex += 1;
-    //         } else {
-    //             while (!bEquals && removeIndex < removeNode.children.length && insertIndex < insertNode.children.length) {
-    //                 if (insertElement.elements.length > removeElement.elements.length) {
-    //                     newRemoveArr.push.apply(newRemoveArr, removeElement.getArrOfRunWord());
-    //                     removeIndex += 1;
-    //                 } else {
-    //                     newRemoveArr.push.apply(newRemoveArr, insertIndex.getArrOfRunWord());
-    //                     insertIndex += 1;
-    //                 }
-    //                 insertElement = insertNode.children[insertIndex].element;
-    //                 removeElement = removeNode.children[removeIndex].element;
-    //                 bEquals = insertElement.equals(removeElement);
-    //             }
-    //         }
-    //     }
-    //
-    //     if (insertIndex < insertNode.children.length) {
-    //         for (let i = insertIndex; i < insertNode.children.length; i += 1) {
-    //             newInsertArr.push.apply(newInsertArr, insertNode.children[i].element.getArrOfRunWord());
-    //         }
-    //     } else if (removeIndex < removeNode.children.length) {
-    //         for (let i = removeIndex; i < removeNode.children.length; i += 1) {
-    //             newRemoveArr.push.apply(newRemoveArr, removeNode.children[i].element.getArrOfRunWord());
-    //         }
-    //     }
-    // }
 
     function CMatching()
     {
