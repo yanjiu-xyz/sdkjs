@@ -236,17 +236,11 @@
         return !isDuplicateArr(aContentToInsert, aSetRemoveReviewType);
     };
 
-    CMergeComparisonNode.prototype.applyInsert = function (arrToInsert, arrToRemove, nInsertPosition, comparison, bSkipResolveConflict) {
+    CMergeComparisonNode.prototype.applyInsert = function (arrToInsert, arrToRemove, nInsertPosition, comparison, opts) {
+        var oThis = this;
+        opts = opts || {};
         const bIsDuplicate = isDuplicateArr(arrToInsert, arrToRemove);
-        if (bSkipResolveConflict) {
-            for (let i = 0; i < arrToRemove.length; i += 1) {
-                this.setRemoveReviewType(arrToRemove[i], comparison);
-            }
-            if (!bIsDuplicate)
-            {
-                this.insertContentAfterRemoveChanges(arrToInsert, nInsertPosition, comparison);
-            }
-        } else if (bIsDuplicate) {
+        if (bIsDuplicate) {
             for (let i = 0; i < arrToRemove.length; i += 1) {
                 this.setRemoveReviewType(arrToRemove[i], comparison);
             }
@@ -257,7 +251,22 @@
         } else if (arrToRemove.length === 0) {
             this.insertContentAfterRemoveChanges(arrToInsert, nInsertPosition, comparison);
         } else {
-            comparison.resolveConflicts(arrToInsert.reverse(), arrToRemove.reverse(),arrToRemove[0].Paragraph, nInsertPosition - 1);
+            arrToInsert.forEach(function (el) {
+                if (el.GetReviewType() === reviewtype_Common) {
+                    oThis.setRemoveReviewType(el, comparison);
+                }
+            });
+            arrToRemove.forEach(function (el) {
+                if (el.GetReviewType() === reviewtype_Common) {
+                    oThis.setRemoveReviewType(el, comparison);
+                }
+            });
+            arrToInsert = arrToInsert.reverse();
+            if (opts.needReverse) {
+                arrToRemove = arrToRemove.reverse();
+            }
+            nInsertPosition = arrToRemove[0].GetPosInParent();
+            comparison.resolveConflicts(arrToInsert, arrToRemove, arrToRemove[0].Paragraph, nInsertPosition);
         }
     }
 

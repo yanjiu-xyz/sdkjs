@@ -405,7 +405,7 @@
             var oChildElement = oElement.Content[k];
             if(!(oChildElement === oFirstText.firstRun || oChildElement === oFirstText))
             {
-                this.setRemoveReviewType(oChildElement, comparison);
+                arrSetRemoveReviewType.push(oChildElement);
             }
             else
             {
@@ -441,7 +441,7 @@
     }
     CNode.prototype.needToInsert = function (arrSetRemoveReviewType, aContentToInsert) {return true;};
 
-    CNode.prototype.applyInsert = function (arrToInsert, arrToRemove, nInsertPosition, comparison) {
+    CNode.prototype.applyInsert = function (arrToInsert, arrToRemove, nInsertPosition, comparison, options) {
         const bNeedToInsert = this.needToInsert(arrToRemove, arrToInsert);
         for (let i = 0; i < arrToRemove.length; i += 1) {
             this.setRemoveReviewType(arrToRemove[i], comparison);
@@ -459,7 +459,7 @@
         let nInsertPosition = infoAboutEndOfRemoveChange.nInsertPosition;
         nInsertPosition = this.setReviewTypeForRemoveChanges(comparison, idxOfChange, posLastRunInContent, nInsertPosition, arrSetRemoveReviewType);
 
-        this.applyInsert(aContentToInsert, arrSetRemoveReviewType, nInsertPosition, comparison, true);
+        this.applyInsert(aContentToInsert, arrSetRemoveReviewType, nInsertPosition, comparison, {needReverse: true});
     };
 
     CNode.prototype.insertContentAfterRemoveChanges = function (aContentToInsert, nInsertPosition, comparison) {
