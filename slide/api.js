@@ -1580,14 +1580,13 @@ background-repeat: no-repeat;\
 		var StaxParser = AscCommon.StaxParser;
 		var xmlParserContext = new AscCommon.XmlParserContext();
 		xmlParserContext.DrawingDocument = this.WordControl.m_oDrawingDocument;
-		var jsZipWrapper = new AscCommon.JSZipWrapper();
-		if (!jsZipWrapper.loadSync(data)) {
+		if (!window.nativeZlibEngine || !window.nativeZlibEngine.open(data)) {
 			return false;
 		}
 
 		var reader;
-		xmlParserContext.zip = jsZipWrapper;
-		var doc = new openXml.OpenXmlPackage(jsZipWrapper, null);
+		xmlParserContext.zip = window.nativeZlibEngine;
+		var doc = new openXml.OpenXmlPackage(window.nativeZlibEngine, null);
 
 		let oTableStylesPart = doc.getPartByUri("/ppt/tableStyles.xml");
 		if(oTableStylesPart) {
@@ -1651,16 +1650,24 @@ background-repeat: no-repeat;\
 		for (var path in context.imageMap) {
 			if (context.imageMap.hasOwnProperty(path)) {
 				this.WordControl.m_oLogicDocument.ImageMap[_cur_ind++] = path;
-				let data = context.zip.files[path].sync('uint8array');
-				let blob = new Blob([data], {type: "image/png"});
-				let url = window.URL.createObjectURL(blob);
-				AscCommon.g_oDocumentUrls.addImageUrl(path, url);
-				context.imageMap[path].forEach(function(blipFill) {
-					AscCommon.pptx_content_loader.Reader.initAfterBlipFill(path, blipFill);
-				});
+				let data = context.zip.getFile(path);
+				if (data) {
+					if (window["NATIVE_EDITOR_ENJINE"]) {
+						//slice because array contains garbage after zip.close
+						this.isOpenOOXInBrowserDoctImages[path] = data.slice();
+					} else {
+						let mime = AscCommon.openXml.GetMimeType(AscCommon.GetFileExtension(path));
+						let blob = new Blob([data], {type: mime});
+						let url = window.URL.createObjectURL(blob);
+						AscCommon.g_oDocumentUrls.addImageUrl(path, url);
+					}
+					context.imageMap[path].forEach(function(blipFill) {
+						AscCommon.pptx_content_loader.Reader.initAfterBlipFill(path, blipFill);
+					});
+				}
 			}
 		}
-		jsZipWrapper.close();
+		window.nativeZlibEngine.close();
 		return true;
 	};
 
@@ -2544,11 +2551,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.sync_ReplaceAllCallback = function(ReplaceCount, OverallCount)
 	{
 		this.sendEvent("asc_onReplaceAll", OverallCount, ReplaceCount);
-	};
-
-	asc_docs_api.prototype.sync_SearchEndCallback = function()
-	{
-		this.sendEvent("asc_onSearchEnd");
 	};
 
 	asc_docs_api.prototype.asc_replaceText = function(oProps, replaceWith, isReplaceAll)
@@ -7694,11 +7696,9 @@ background-repeat: no-repeat;\
 				var title = this.documentTitle;
 				this.saveDocumentToZip(this.WordControl.m_oLogicDocument, AscCommon.c_oEditorId.Presentation,
 					function(data) {
-						var blob = new Blob([data], {type: AscCommon.openXml.GetMimeType("pptx")});
-						var link = document.createElement("a");
-						link.href = window.URL.createObjectURL(blob);
-						link.download = title;
-						link.click();
+						if (data) {
+							AscCommon.DownloadFileFromBytes(data, title, AscCommon.openXml.GetMimeType("pptx"));
+						}
 					});
 				if (actionType)
 				{
@@ -8375,6 +8375,15 @@ background-repeat: no-repeat;\
 		drawer.draw();
   };
 
+	asc_docs_api.prototype.asc_EditSelectAll = function()
+	{
+		let oPresentation = (this.WordControl && this.WordControl.m_oLogicDocument);
+		if (!oPresentation)
+			return;
+
+		oPresentation.SelectAll();
+	};
+
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                 = window['Asc'] || {};
 	window['AscCommonSlide']                                      = window['AscCommonSlide'] || {};
@@ -8489,9 +8498,11 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['sync_SearchStartCallback']            = asc_docs_api.prototype.sync_SearchStartCallback;
 	asc_docs_api.prototype['sync_SearchStopCallback']             = asc_docs_api.prototype.sync_SearchStopCallback;
 	asc_docs_api.prototype['sync_SearchEndCallback']              = asc_docs_api.prototype.sync_SearchEndCallback;
+	asc_docs_api.prototype['asc_StartTextAroundSearch']           = asc_docs_api.prototype.asc_StartTextAroundSearch;
+	asc_docs_api.prototype['asc_SelectSearchElement']             = asc_docs_api.prototype.asc_SelectSearchElement;
 	asc_docs_api.prototype['put_TextPrFontName']                  = asc_docs_api.prototype.put_TextPrFontName;
 	asc_docs_api.prototype['put_TextPrFontSize']                  = asc_docs_api.prototype.put_TextPrFontSize;
-	asc_docs_api.prototype['put_TextPrLang']                  	= asc_docs_api.prototype.put_TextPrLang;
+	asc_docs_api.prototype['put_TextPrLang']                      = asc_docs_api.prototype.put_TextPrLang;
 	asc_docs_api.prototype['put_TextPrBold']                      = asc_docs_api.prototype.put_TextPrBold;
 	asc_docs_api.prototype['put_TextPrItalic']                    = asc_docs_api.prototype.put_TextPrItalic;
 	asc_docs_api.prototype['put_TextPrUnderline']                 = asc_docs_api.prototype.put_TextPrUnderline;
@@ -8811,6 +8822,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_SetFastCollaborative']            = asc_docs_api.prototype.asc_SetFastCollaborative;
 	asc_docs_api.prototype['asc_isOffline']                       = asc_docs_api.prototype.asc_isOffline;
 	asc_docs_api.prototype['asc_getUrlType']                      = asc_docs_api.prototype.asc_getUrlType;
+	asc_docs_api.prototype['asc_prepareUrl']                      = asc_docs_api.prototype.asc_prepareUrl;
 	asc_docs_api.prototype['asc_getSessionToken']                 = asc_docs_api.prototype.asc_getSessionToken;
 	asc_docs_api.prototype["asc_setInterfaceDrawImagePlaceShape"] = asc_docs_api.prototype.asc_setInterfaceDrawImagePlaceShape;
 	asc_docs_api.prototype["asc_nativeInitBuilder"]               = asc_docs_api.prototype.asc_nativeInitBuilder;
@@ -8857,7 +8869,8 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_setSkin']							= asc_docs_api.prototype.asc_setSkin;
 	
 	asc_docs_api.prototype['SetDrawImagePreviewBulletForMenu']		= asc_docs_api.prototype.SetDrawImagePreviewBulletForMenu;
-	
+	asc_docs_api.prototype['asc_EditSelectAll']		                = asc_docs_api.prototype.asc_EditSelectAll;
+
 	// mobile
 	asc_docs_api.prototype["asc_GetDefaultTableStyles"]           	= asc_docs_api.prototype.asc_GetDefaultTableStyles;
 	asc_docs_api.prototype["asc_Remove"] 							= asc_docs_api.prototype.asc_Remove;

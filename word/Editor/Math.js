@@ -2273,7 +2273,7 @@ ParaMath.prototype.private_RecalculateRoot = function(PRS, ParaPr, Depth)
 
         var WidthLine = PRS.X - PRS.XRange + PRS.SpaceLen + PRS.WordLen;
 
-        var bFirstItem =  PRS.FirstItemOnLine == true && true === Para.Internal_Check_Ranges(ParaLine, ParaRange);
+        var bFirstItem =  PRS.FirstItemOnLine == true && true === Para.IsSingleRangeOnLine(ParaLine, ParaRange);
         if(bFirstItem && PRS.X + PRS.SpaceLen + PRS.WordLen > PRS.XEnd)
         {
             PRS.bMathWordLarge = true;
@@ -2617,7 +2617,7 @@ ParaMath.prototype.ConvertToInlineMode = function()
 	if (!oAfterItem || !oAfterItem.IsSpace())
 	{
 		let oRun = new ParaRun(oParagraph, false);
-		oRun.Add(new ParaSpace());
+		oRun.Add(new AscWord.CRunSpace());
 		oParent.AddToContent(nPosInParent + 1, oRun);
 	}
 
@@ -2625,7 +2625,7 @@ ParaMath.prototype.ConvertToInlineMode = function()
 	if (oBeforeItem && oBeforeItem.IsText())
 	{
 		let oRun = new ParaRun(oParagraph, false);
-		oRun.Add(new ParaSpace());
+		oRun.Add(new AscWord.CRunSpace());
 		oParent.AddToContent(nPosInParent, oRun);
 	}
 
@@ -2665,7 +2665,7 @@ ParaMath.prototype.ConvertToDisplayMode = function()
 	if (oAfterItem && !oAfterItem.IsParaEnd())
 	{
 		let oRun = new ParaRun(oParagraph, false);
-		oRun.Add(new ParaNewLine(break_Line));
+		oRun.Add(new AscWord.CRunBreak(AscWord.break_Line));
 		oParent.AddToContent(nPosInParent + 1, oRun);
 	}
 
@@ -2673,7 +2673,7 @@ ParaMath.prototype.ConvertToDisplayMode = function()
 	if (oBeforeItem || oParagraph.HaveNumbering())
 	{
 		let oRun = new ParaRun(oParagraph, false);
-		oRun.Add(new ParaNewLine(break_Line));
+		oRun.Add(new AscWord.CRunBreak(AscWord.break_Line));
 		oParent.AddToContent(nPosInParent, oRun);
 	}
 
@@ -2987,7 +2987,7 @@ ParaMath.prototype.Draw_Elements = function(PDSE)
 
     this.Root.Draw_Elements(PDSE);
 
-    PDSE.X = X + this.Root.Get_Width(PDSE.Line, PDSE.Range);
+    PDSE.X = X + this.Root.GetWidth(PDSE.Line, PDSE.Range);
 
     /*PDSE.Graphics.p_color(255,0,0, 255);
      PDSE.Graphics.drawHorLine(0, PDSE.Y - this.Ascent + this.Height, PDSE.X - 30, PDSE.X + this.Width + 30 , 1);*/
@@ -3096,7 +3096,7 @@ ParaMath.prototype.Get_ParaContentPosByXY = function(SearchPos, Depth, _CurLine,
 	var CurX = SearchPos.CurX;
 
 	var MathX = SearchPos.CurX;
-	var MathW = this.Root.Get_Width(_CurLine, _CurRange);
+	var MathW = this.Root.GetWidth(_CurLine, _CurRange);
 
 	// Если мы попадаем четко в формулу, тогда ищем внутри нее, если нет, тогда не заходим внутрь
 	if ((SearchPos.X > MathX && SearchPos.X < MathX + MathW) || SearchPos.DiffX > 1000000 - 1)
