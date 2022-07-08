@@ -276,7 +276,7 @@
         if (element.GetReviewType && element.GetReviewType() !== reviewtype_Common) {
             if (countOfSpaces) {
                 for (let i = 0; i < countOfSpaces; i += 1) {
-                    element.Add_ToContent(element.Content.length, new ParaSpace());
+                    element.Add_ToContent(element.Content.length, new AscWord.CRunSpace());
                 }
             }
             this.pushToArrInsertContentWithCopy(aContentToInsert, element, comparison);
@@ -286,7 +286,7 @@
             if (isOnlySpaces) {
                 if (countOfSpaces) {
                     for (let i = 0; i < countOfSpaces; i += 1) {
-                        element.Add_ToContent(element.Content.length, new ParaSpace());
+                        element.Add_ToContent(element.Content.length, new AscWord.CRunSpace());
                     }
                 }
                 this.pushToArrInsertContentWithCopy(aContentToInsert, element, comparison);
@@ -304,6 +304,40 @@
             this.pushToArrInsertContentWithCopy(aContentToInsert, element, comparison);
         } else {
             aContentToInsert.length = 0;
+        }
+    };
+
+    CMergeComparisonNode.prototype.edgeCaseHandlingOfCleanRemoveStart = function (aContentToRemove, element, countOfSpaces) {
+        if (isParaDrawingRun(element)) return false;
+        if (element.GetReviewType && element.GetReviewType() !== reviewtype_Common) {
+            if (countOfSpaces) {
+                for (let i = 0; i < countOfSpaces; i += 1) {
+                    element.Add_ToContent(element.Content.length, new AscWord.CRunSpace());
+                }
+            }
+            aContentToRemove.push(element);
+            return false;
+        } else if (element instanceof ParaRun) {
+            var isOnlySpaces = isOnlySpaceParaRun(element);
+            if (isOnlySpaces) {
+                if (countOfSpaces) {
+                    for (let i = 0; i < countOfSpaces; i += 1) {
+                        element.Add_ToContent(element.Content.length, new AscWord.CRunSpace());
+                    }
+                }
+                aContentToRemove.push(element);
+            }
+            return !isOnlySpaces;
+        }
+        return true;
+    };
+
+    CMergeComparisonNode.prototype.edgeCaseHandlingOfCleanRemoveEnd = function (aContentToRemove, element) {
+        if (isParaDrawingRun(element)) return;
+        if (element.GetReviewType && element.GetReviewType() !== reviewtype_Common) {
+            aContentToRemove.push(element);
+        } else {
+            aContentToRemove.length = 0;
         }
     };
 
@@ -480,6 +514,37 @@
     }
 
 
+/*    function resolveTypesFromNodeWithPartner(originalNode, comparison) { TODO: end this
+        var previousRuns = {};
+        originalNode.forEach(function (oNode) {
+            var partner = oNode.partner;
+            var originalElement = oNode.element;
+            if (originalElement instanceof ParaRun && partner) {
+                var originalType = oNode;
+                var revisedElement = partner.element;
+
+                var originalType = originalElement.getPriorityReviewType();
+                var revisedType = revisedElement.getPriorityReviewType();
+                var priorityReviewType = getPriorityReviewType([originalType, revisedType]);
+                if (originalElement.firstRun !== originalElement.lastRun) {
+                    originalElement.forEachRun(function (oRun) {
+                        if (oRun === originalElement.firstRun) {
+                            var startPos = originalElement.getPosOfStart();
+                            oRun.Split2(startPos, oRun)
+                        }
+                        if (oRun === originalElement.lastRun) {
+                            var endPos = originalElement.getPosOfEnd();
+                        }
+                    });
+                }
+                if (originalType !== priorityReviewType) {
+                    comparison.setReviewInfoRecursive(originalElement, priorityReviewType);
+                }
+            }
+
+        });
+    }*/
+
     function CDocumentMergeComparison(oOriginalDocument, oRevisedDocument, oOptions) {
         CDocumentComparison.call(this, oOriginalDocument, oRevisedDocument, oOptions);
         this.mergeRunsMap = {};
@@ -515,6 +580,33 @@
         comparison.compareRoots(originalDocument, revisedDocument);
         return originalParagraph.Content;
     }
+
+    CDocumentMergeComparison.prototype.applyLastComparison = function(oOrigRoot, oRevisedRoot) {
+        const bOrig = oOrigRoot.children.length >= oRevisedRoot.children.length;
+        const mainRoot = bOrig ? oOrigRoot : oRevisedRoot;
+        for (let i = 0; i < mainRoot.children.length; i += 1) {
+            const child = mainRoot.children[i];
+            const partner = child.partner;
+            let origChild;
+            let revisedChild;
+            if (bOrig) {
+                origChild = child;
+                revisedChild = partner;
+            } else {
+                revisedChild = child;
+                origChild = partner;
+            }
+            if (origChild && revisedChild) {
+                var childReviewType = origChild.element.GetReviewType && origChild.element.GetReviewType();
+                var partnerReviewType = revisedChild.element.GetReviewType && revisedChild.element.GetReviewType();
+                var priorityReviewType = getPriorityReviewType([childReviewType, partnerReviewType]);
+                if (childReviewType !== priorityReviewType) {
+                    this.setReviewInfoForArray([origChild], priorityReviewType);
+                }
+            }
+        }
+        CDocumentComparison.prototype.applyLastComparison.call(this, oOrigRoot, oRevisedRoot);
+    };
 
     CDocumentMergeComparison.prototype.getNodeConstructor = function () {
         return CMergeComparisonNode;
@@ -554,7 +646,10 @@
         var bHaveDrawings = run.Content.some(function (element) {
            return element.Type === para_Drawing;
         });
-        if (bHaveDrawings) {
+        var bHaveParaEnd = run.Content.some(function (element) {
+            return element.Type === para_End;
+        });
+        if (bHaveDrawings || bHaveParaEnd) {
             return;
         }
         let arrContentForInsert;
@@ -692,7 +787,9 @@
                     if(oLastText && oLastText.elements.length > 0)
                     {
                         oLastText.updateHash(oHashWords);
-                        new NodeConstructor(oLastText, oRet);
+                        if (!oLastText.isReviewWord) {
+                            lastNode = new NodeConstructor(oLastText, oRet);
+                        }
                     }
                     if(aLastWord.length > 0)
                     {
@@ -715,7 +812,9 @@
         if(oLastText && oLastText.elements.length > 0)
         {
             oLastText.updateHash(oHashWords);
-            new NodeConstructor(oLastText, oRet);
+            if (!oLastText.isReviewWord) {
+                lastNode = new NodeConstructor(oLastText, oRet);
+            }
         }
         return oRet;
     };

@@ -42,6 +42,23 @@
     EXCLUDED_PUNCTUATION[46] = true;
     //EXCLUDED_PUNCTUATION[95] = true;
     EXCLUDED_PUNCTUATION[160] = true;
+
+    function getCountOfFirstSpacesInRun(oRun) {
+        let count = 0;
+        if (oRun instanceof ParaRun) {
+            for (let i = 0; i < oRun.Content.length; i += 1) {
+                var element = oRun.Content[i];
+                if (element.Type === para_Space) {
+                    count += 1;
+                } else {
+                    break;
+                }
+            }
+        }
+        return count;
+    }
+
+
     function CNode(oElement, oParent)
     {
         this.element = oElement;
@@ -117,6 +134,8 @@
 
     CNode.prototype.edgeCaseHandlingOfCleanInsertStart = function (aContentToInsert, element, comparison) {return true;};
     CNode.prototype.edgeCaseHandlingOfCleanInsertEnd = function (aContentToInsert, element, comparison) {return true;};
+    CNode.prototype.edgeCaseHandlingOfCleanRemoveStart = function (aContentToRemove, element, comparison) {return true;};
+    CNode.prototype.edgeCaseHandlingOfCleanRemoveEnd = function (aContentToRemove, element, comparison) {return true;};
     // comparison need for extends
     CNode.prototype.pushToArrInsertContent = function (aContentToInsert, elem, comparison) {
         aContentToInsert.push(elem);
@@ -146,21 +165,6 @@
                 }
             }
         }
-    }
-
-    function getCountOfFirstSpacesInRun(oRun) {
-        let count = 0;
-        if (oRun instanceof ParaRun) {
-            for (let i = 0; i < oRun.Content.length; i += 1) {
-                var element = oRun.Content[i];
-                if (element.Type === para_Space) {
-                    count += 1;
-                } else {
-                    break;
-                }
-            }
-        }
-        return count;
     }
 
     CNode.prototype.copyRunWithMockParagraph = function (oRun, mockParagraph, comparison) {
@@ -381,6 +385,8 @@
                     nInsertPosition = k + 1;
                 }
                 break;
+            } else {
+                this.edgeCaseHandlingOfCleanRemoveEnd(arrSetRemove, oCurRun, comparison);
             }
         }
         return {posLastRunInContent: k, nInsertPosition: nInsertPosition };
@@ -434,6 +440,14 @@
                 {
                     arrSetRemoveReviewType.push(oChildElement);
                 }
+                break;
+            }
+        }
+        let countOfSpaces = getCountOfFirstSpacesInRun(oElement.Content[k]);
+        for (k -= 1; k >= 0; k -= 1) {
+            var bBreak = this.edgeCaseHandlingOfCleanRemoveStart(arrSetRemoveReviewType, oElement.Content[k], countOfSpaces);
+            countOfSpaces = 0;
+            if (bBreak) {
                 break;
             }
         }
@@ -2118,13 +2132,15 @@
     CDocumentComparison.prototype.setReviewInfoForArray = function (arrNeedReviewObjects, nType, conflictType) {
         for (var i = 0; i < arrNeedReviewObjects.length; i += 1) {
             var oNeedReviewObject = arrNeedReviewObjects[i];
-            var oReviewInfo = oNeedReviewObject.ReviewInfo.Copy();
-            this.setReviewInfo(oReviewInfo, conflictType);
-            var reviewType;
-            if (this.bSaveCustomReviewType) {
-                reviewType = oNeedReviewObject.GetReviewType && oNeedReviewObject.GetReviewType();
+            if (oNeedReviewObject.SetReviewTypeWithInfo) {
+                var oReviewInfo = oNeedReviewObject.ReviewInfo.Copy();
+                this.setReviewInfo(oReviewInfo, conflictType);
+                var reviewType;
+                if (this.bSaveCustomReviewType) {
+                    reviewType = oNeedReviewObject.GetReviewType && oNeedReviewObject.GetReviewType();
+                }
+                oNeedReviewObject.SetReviewTypeWithInfo(reviewType || nType, oReviewInfo, false);
             }
-            oNeedReviewObject.SetReviewTypeWithInfo(reviewType || nType, oReviewInfo, false);
         }
     }
 
