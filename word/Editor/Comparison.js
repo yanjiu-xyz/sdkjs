@@ -34,11 +34,9 @@
 
 (function (undefined) {
 
-    var MAX_COMPARES = 1200000;
-    var MIN_JACCARD_RUDE = 0.5;
-    var MIN_JACCARD = 0.34;
-    var MIN_DIFF = 0.7;
-    var EXCLUDED_PUNCTUATION = {};
+    const MIN_JACCARD = 0.34;
+    const MIN_DIFF = 0.7;
+    const EXCLUDED_PUNCTUATION = {};
     EXCLUDED_PUNCTUATION[46] = true;
     //EXCLUDED_PUNCTUATION[95] = true;
     EXCLUDED_PUNCTUATION[160] = true;
@@ -47,7 +45,7 @@
         let count = 0;
         if (oRun instanceof ParaRun) {
             for (let i = 0; i < oRun.Content.length; i += 1) {
-                var element = oRun.Content[i];
+                const element = oRun.Content[i];
                 if (element.Type === para_Space) {
                     count += 1;
                 } else {
@@ -82,14 +80,13 @@
     CNode.prototype.checkNodeWithInsert = function (element, comparison) {}
 
     CNode.prototype.cleanEndOfInsert = function (aContentToInsert, idxOfChange, comparison) {
-        var oChange = this.changes[idxOfChange];
-        var oLastText = oChange.insert[oChange.insert.length - 1].element;
-        var oCurRun = oLastText.lastRun ? oLastText.lastRun : oLastText;
-        var oParentParagraph =  (this.partner && this.partner.element) || oCurRun.Paragraph;
-        var applyingParagraph = this.getApplyParagraph(comparison);
-        var k = oParentParagraph.Content.length - 1;
-        var oNewRun, t;
+        const oChange = this.changes[idxOfChange];
+        const oLastText = oChange.insert[oChange.insert.length - 1].element;
+        const oCurRun = oLastText.lastRun ? oLastText.lastRun : oLastText;
+        const oParentParagraph =  (this.partner && this.partner.element) || oCurRun.Paragraph;
+        const applyingParagraph = this.getApplyParagraph(comparison);
 
+        let k = oParentParagraph.Content.length - 1;
         for(k; k > -1; --k)
         {
             // если мы встретили последний ран, где встречается слово
@@ -97,10 +94,10 @@
             {
                 if(oCurRun instanceof ParaRun)
                 {
-                    for(t = oCurRun.Content.length - 1; t > -1; --t)
+                    for(let t = oCurRun.Content.length - 1; t > -1; --t)
                     {
                         this.checkNodeWithInsert(oCurRun, comparison);
-                        oNewRun = this.copyRunWithMockParagraph(oCurRun, applyingParagraph.Paragraph || applyingParagraph, comparison);
+                        const oNewRun = this.copyRunWithMockParagraph(oCurRun, applyingParagraph.Paragraph || applyingParagraph, comparison);
                         //очищаем конец слова, которое нужно вставить
                         if(oLastText.elements[oLastText.elements.length - 1] === oCurRun.Content[t])
                         {
@@ -142,19 +139,18 @@
     }
 
     CNode.prototype.pushToArrInsertContentWithCopy = function (aContentToInsert, elem, comparison) {
-        var elemCopy = elem.Copy(false, comparison.copyPr);
+        const elemCopy = elem.Copy(false, comparison.copyPr);
         this.pushToArrInsertContent(aContentToInsert, elemCopy, comparison);
     }
 
     CNode.prototype.cleanStartOfInsertSameRun = function (oNewRun, idxOfChange) {
-        var t;
-        var oChange = this.changes[idxOfChange];
-        var oFirstText = oChange.insert[0].element;
+        const oChange = this.changes[idxOfChange];
+        const oFirstText = oChange.insert[0].element;
         if(oNewRun)
         {
             if(oNewRun instanceof ParaRun)
             {
-                for(t = 0; t < oFirstText.firstRun.Content.length; ++t)
+                for(let t = 0; t < oFirstText.firstRun.Content.length; ++t)
                 {
                     // удаляем начало рана до изменения в слове
                     if(oFirstText.elements[0] === oFirstText.firstRun.Content[t])
@@ -168,25 +164,25 @@
     }
 
     CNode.prototype.copyRunWithMockParagraph = function (oRun, mockParagraph, comparison) {
-        var oTempParagraph = oRun.Paragraph;
+        const oTempParagraph = oRun.Paragraph;
         oRun.Paragraph = mockParagraph;
-        var oNewRun = oRun.Copy2(comparison.copyPr);
+        const oNewRun = oRun.Copy2(comparison.copyPr);
         oRun.Paragraph = oTempParagraph;
 
         return oNewRun;
     }
 
     CNode.prototype.cleanStartOfInsertDifferentRun = function (aContentToInsert, posOfLastInsertRun, idxOfChange, comparison) {
-        var oNewRun, t;
-        var oChange = this.changes[idxOfChange];
-        var oElement = this.element;
-        var oFirstText = oChange.insert[0].element;
-        var oFirstRun = oFirstText.firstRun ? oFirstText.firstRun : oFirstText;
-        var oLastText = oChange.insert[oChange.insert.length - 1].element;
-        var oCurRun = oLastText.lastRun ? oLastText.lastRun : oLastText;
-        var oParentParagraph =  (this.partner && this.partner.element) || oCurRun.Paragraph;
-        var applyingParagraph = this.getApplyParagraph(comparison);
-        var k = posOfLastInsertRun;
+        const oChange = this.changes[idxOfChange];
+        const oFirstText = oChange.insert[0].element;
+        const oFirstRun = oFirstText.firstRun ? oFirstText.firstRun : oFirstText;
+        const oLastText = oChange.insert[oChange.insert.length - 1].element;
+        const applyingParagraph = this.getApplyParagraph(comparison);
+
+        let oCurRun = oLastText.lastRun ? oLastText.lastRun : oLastText;
+        const oParentParagraph =  (this.partner && this.partner.element) || oCurRun.Paragraph;
+        let k = posOfLastInsertRun;
+
         for(k -= 1; k > -1; --k)
         {
             oCurRun = oParentParagraph.Content[k];
@@ -205,10 +201,11 @@
                 else
                 {
 
-                    for(t = 0; t < oCurRun.Content.length; ++t)
+                    for(let t = 0; t < oCurRun.Content.length; ++t)
                     {
                         if(oFirstText.elements[0] === oCurRun.Content[t])
                         {
+                            let oNewRun;
                             if(oLastText.lastRun === oFirstText.firstRun)
                             {
                                 oNewRun = aContentToInsert[0];
@@ -228,7 +225,7 @@
         }
         let countOfSpaces = getCountOfFirstSpacesInRun(oParentParagraph.Content[k]); // TODO: think about several runs
         for (k -= 1; k >= 0; k -= 1) {
-            var bBreak = this.edgeCaseHandlingOfCleanInsertStart(aContentToInsert, oParentParagraph.Content[k], comparison, countOfSpaces);
+            const bBreak = this.edgeCaseHandlingOfCleanInsertStart(aContentToInsert, oParentParagraph.Content[k], comparison, countOfSpaces);
             countOfSpaces = 0;
             if (bBreak) {
                 break;
@@ -237,18 +234,16 @@
     }
 
     CNode.prototype.getArrOfInsertsFromChanges = function (idxOfChange, comparison) {
-        var oLastText = null;
-        var oFirstText = null;
-        var oChange = this.changes[idxOfChange];
-        var aContentToInsert = [];
+        const oChange = this.changes[idxOfChange];
+        const aContentToInsert = [];
         this.checkNodeWithInsert(this.element, comparison);
+
         if(oChange.insert.length > 0)
         {
-            oFirstText = oChange.insert[0].element;
-            oLastText = oChange.insert[oChange.insert.length - 1].element;
+            const oFirstText = oChange.insert[0].element;
+            const oLastText = oChange.insert[oChange.insert.length - 1].element;
 
-            var posLastRunOfInsert = this.cleanEndOfInsert(aContentToInsert, idxOfChange, comparison);
-
+            const posLastRunOfInsert = this.cleanEndOfInsert(aContentToInsert, idxOfChange, comparison);
 
             // изменения находятся внутри одного рана или это один и тот же элемент
             if( (oLastText.lastRun && oFirstText.firstRun) && oLastText.lastRun === oFirstText.firstRun || (!oLastText.lastRun && !oFirstText.firstRun) && oLastText === oFirstText)
@@ -265,7 +260,7 @@
 
 
     CNode.prototype.applyInsertsToParagraph = function (comparison, aContentToInsert, idxOfChange) {
-        var oChange = this.changes[idxOfChange];
+        const oChange = this.changes[idxOfChange];
         if (oChange.remove.length > 0) {
             this.applyInsertsToParagraphsWithRemove(comparison, aContentToInsert, idxOfChange);
         } else {
@@ -278,23 +273,23 @@
     }
 
     CNode.prototype.applyInsertsToParagraphsWithoutRemove = function (comparison, aContentToInsert, idxOfChange) {
-        var oChildNode, oFirstText, oCurRun, j, k, t;
-        var oElement = this.element;
-        var oChange = this.changes[idxOfChange];
-        var startInsertPosition = this.getStartPosition(comparison);
-        var applyingParagraph = this.getApplyParagraph(comparison);
+        const oElement = this.element;
+        const oChange = this.changes[idxOfChange];
+        const startInsertPosition = this.getStartPosition(comparison);
+        const applyingParagraph = this.getApplyParagraph(comparison);
+
         if(aContentToInsert.length > 0)
         {
-            var index = oChange.anchor.index;
-            oChildNode = this.children[index];
+            const index = oChange.anchor.index;
+            const oChildNode = this.children[index];
             if(oChildNode)
             {
-                oFirstText = oChildNode.element;
-                for(j = 0; j < oElement.Content.length; ++j)
+                const oFirstText = oChildNode.element;
+                for(let j = 0; j < oElement.Content.length; ++j)
                 {
                     if(Array.isArray(oElement.Content))
                     {
-                        oCurRun = oElement.Content[j];
+                        const oCurRun = oElement.Content[j];
                         // если совпали ран, после которого нужно вставлять и ран из цикла
                         if(oFirstText === oCurRun)
                         {
@@ -304,7 +299,8 @@
                         // иначе надо посмотреть, возможно стоит вставлять элементы не после рана, а после конкретного элемента и текущий ран из цикла нужно засплитить
                         else if(Array.isArray(oCurRun.Content) && Array.isArray(oFirstText.elements))
                         {
-                            for(k = 0; k < oCurRun.Content.length; ++k)
+                            let k = 0;
+                            for(k; k < oCurRun.Content.length; ++k)
                             {
                                 // если элементы совпали, значит, мы нашли место вставки
                                 if(oFirstText.elements[0] === oCurRun.Content[k])
@@ -312,7 +308,7 @@
                                     break;
                                 }
                             }
-                            var bFind = false;
+                            let bFind = false;
                             // проверим, не дошли ли мы просто до конца массива, ничего не встретив
                             if(k === oCurRun.Content.length)
                             {
@@ -348,16 +344,15 @@
     }
 
     CNode.prototype.prepareEndOfRemoveChange = function (idxOfChange, comparison, arrSetRemove) {
-        var t, oNewRun;
-        var oChange = this.changes[idxOfChange];
-        var oElement = this.element;
-        var oApplyParagraph = this.getApplyParagraph(comparison);
-        var startPosition = this.getStartPosition(comparison);
-        var oLastText = oChange.remove[oChange.remove.length - 1].element;
-        var oCurRun = oLastText.lastRun || oLastText;
+        const oChange = this.changes[idxOfChange];
+        const oElement = this.element;
+        const oApplyParagraph = this.getApplyParagraph(comparison);
+        const startPosition = this.getStartPosition(comparison);
+        const oLastText = oChange.remove[oChange.remove.length - 1].element;
+        const oCurRun = oLastText.lastRun || oLastText;
 
-        var k = oElement.Content.length - 1;
-        var nInsertPosition = -1;
+        let k = oElement.Content.length - 1;
+        let nInsertPosition = -1;
         
         for(k; k > -1; --k)
         {
@@ -366,7 +361,8 @@
             {
                 if(oLastText instanceof CTextElement)
                 {
-                    for(t = oCurRun.Content.length - 1; t > -1; t--)
+                    let t = oCurRun.Content.length - 1;
+                    for(t; t > -1; t--)
                     {
                         if(oCurRun.Content[t] === oLastText.elements[oLastText.elements.length - 1])
                         {
@@ -376,7 +372,7 @@
                     if(t > -1)
                     {
                         nInsertPosition = k + 1;
-                        oNewRun = oCurRun.Split2(t + 1, oApplyParagraph, startPosition + k);
+                        const oNewRun = oCurRun.Split2(t + 1, oApplyParagraph, startPosition + k);
                         this.setCommonReviewTypeWithInfo(oNewRun, oCurRun.ReviewInfo.Copy());
                     }
                 }
@@ -400,15 +396,16 @@
     };
 
     CNode.prototype.setReviewTypeForRemoveChanges = function (comparison, idxOfChange, posLastRunInContent, nInsertPosition, arrSetRemoveReviewType) {
-        var oElement = this.element;
-        var oApplyParagraph = this.getApplyParagraph(comparison);
-        var startPosition = this.getStartPosition(comparison);
-        var oNewRun, t;
-        var oChange = this.changes[idxOfChange];
-        var oFirstText = oChange.remove[0].element;
-        for(var k = posLastRunInContent; k > -1; --k)
+        const oElement = this.element;
+        const oApplyParagraph = this.getApplyParagraph(comparison);
+        const startPosition = this.getStartPosition(comparison);
+        const oChange = this.changes[idxOfChange];
+        const oFirstText = oChange.remove[0].element;
+
+        let k = posLastRunInContent;
+        for(k; k > -1; --k)
         {
-            var oChildElement = oElement.Content[k];
+            const oChildElement = oElement.Content[k];
             if(!(oChildElement === oFirstText.firstRun || oChildElement === oFirstText))
             {
                 arrSetRemoveReviewType.push(oChildElement);
@@ -417,7 +414,8 @@
             {
                 if(oChildElement instanceof ParaRun)
                 {
-                    for(t = 0; t < oChildElement.Content.length; t++)
+                    let t = 0;
+                    for(t; t < oChildElement.Content.length; t++)
                     {
                         if(oChildElement.Content[t] === oFirstText.elements[0])
                         {
@@ -427,7 +425,7 @@
                     t = Math.min(Math.max(t, 0), oChildElement.Content.length - 1);
                     if(t > 0)
                     {
-                        oNewRun = oChildElement.Split2(t, oApplyParagraph, startPosition + k);
+                        const oNewRun = oChildElement.Split2(t, oApplyParagraph, startPosition + k);
                         arrSetRemoveReviewType.push(oNewRun);
                         nInsertPosition++;
                     }
@@ -445,7 +443,7 @@
         }
         let countOfSpaces = getCountOfFirstSpacesInRun(oElement.Content[k]);
         for (k -= 1; k >= 0; k -= 1) {
-            var bBreak = this.edgeCaseHandlingOfCleanRemoveStart(arrSetRemoveReviewType, oElement.Content[k], countOfSpaces);
+            const bBreak = this.edgeCaseHandlingOfCleanRemoveStart(arrSetRemoveReviewType, oElement.Content[k], countOfSpaces);
             countOfSpaces = 0;
             if (bBreak) {
                 break;
@@ -477,12 +475,11 @@
     };
 
     CNode.prototype.insertContentAfterRemoveChanges = function (aContentToInsert, nInsertPosition, comparison) {
-        var oElement = this.getApplyParagraph(comparison);
-        var startPosition = this.getStartPosition(comparison);
-        var t;
+        const oElement = this.getApplyParagraph(comparison);
+        const startPosition = this.getStartPosition(comparison);
         if(nInsertPosition > -1)
         {
-            for (t = 0; t < aContentToInsert.length; t += 1) {
+            for (let t = 0; t < aContentToInsert.length; t += 1) {
                 if(this.isElementForAdd(aContentToInsert[t]))
                 {
                     oElement.AddToContent(startPosition + nInsertPosition, aContentToInsert[t]);
@@ -519,9 +516,8 @@
     {
         if(this.depth === oNode.depth)
         {
-            var oParent1, oParent2;
-            oParent1 = this.par;
-            oParent2 = oNode.par;
+            const oParent1 = this.par;
+            const oParent2 = oNode.par;
             if(oParent1 && !oParent2 || !oParent1 && oParent2)
             {
                 return false;
@@ -540,8 +536,8 @@
 
     CNode.prototype.privateCompareElements = function(oNode, bCheckNeighbors)
     {
-        var oElement1 = this.element;
-        var oElement2 = oNode.element;
+        const oElement1 = this.element;
+        const oElement2 = oNode.element;
         if(oElement1.constructor === oElement2.constructor)
         {
             if(typeof oElement1.Value === "number")
@@ -552,8 +548,8 @@
             {
                 if(bCheckNeighbors && oElement1.isSpaceText() && oElement2.isSpaceText())
                 {
-                    var aNeighbors1 = this.getNeighbors();
-                    var aNeighbors2 = oNode.getNeighbors();
+                    const aNeighbors1 = this.getNeighbors();
+                    const aNeighbors2 = oNode.getNeighbors();
                     if(!aNeighbors1[0] && !aNeighbors2[0] || !aNeighbors1[1] && !aNeighbors2[1])
                     {
                         return true;
@@ -604,11 +600,7 @@
                     return false;
                 }
             }
-            if(oElement1 instanceof AscCommonWord.ParaMath)
-            {
-                return false;
-            }
-            return true;
+            return !(oElement1 instanceof AscCommonWord.ParaMath);
         }
         return false;
     };
@@ -683,16 +675,17 @@
     }
 
     CTextElement.prototype.getPosOfStart = function () {
-        var startElement = this.elements[0];
+        const startElement = this.elements[0];
         return this.firstRun.GetElementPosition(startElement);
     }
 
     CTextElement.prototype.forEachRun = function (callback) {
         if (this.firstRun && this.lastRun) {
-            var bCheck = false;
-            var oParagraph = this.firstRun.Paragraph;
+            const oParagraph = this.firstRun.Paragraph;
+
+            let bCheck = false;
             for (let i = 0; i < oParagraph.Content.length && oParagraph.Content[i - 1] !== this.lastRun; i += 1) {
-                var oRun = oParagraph.Content[i];
+                const oRun = oParagraph.Content[i];
                 if (oRun === this.firstRun) {
                     bCheck = true;
                 }
@@ -708,7 +701,7 @@
     }
 
     CTextElement.prototype.getPosOfEnd = function () {
-        var endElement = this.elements[this.elements.length - 1];
+        const endElement = this.elements[this.elements.length - 1];
         return this.lastRun.GetElementPosition(endElement);
     }
 
@@ -722,11 +715,10 @@
         {
             return false;
         }
-        var oElement, oOtherElement;
-        for(var i = 0; i < this.elements.length; ++i)
+        for(let i = 0; i < this.elements.length; ++i)
         {
-            oElement = this.getElement(i);
-            oOtherElement = other.getElement(i);
+            const oElement = this.getElement(i);
+            const oOtherElement = other.getElement(i);
             if(oElement.constructor !== oOtherElement.constructor)
             {
                 return false;
@@ -747,11 +739,12 @@
     };
 
     CTextElement.prototype.updateHash = function(oHash){
-        var aCheckArray = [];
-        var bVal = false;
-        for(var i = 0; i < this.elements.length; ++i)
+        const aCheckArray = [];
+
+        let bVal = false;
+        for(let i = 0; i < this.elements.length; ++i)
         {
-            var oElement = this.elements[i];
+            const oElement = this.elements[i];
             if(AscFormat.isRealNumber(oElement.Value))
             {
                 aCheckArray.push(oElement.Value);
@@ -792,8 +785,8 @@
 
     CTextElement.prototype.print = function ()
     {
-        var sResultString = "";
-        for(var i = 0; i < this.elements.length; ++i)
+        let sResultString = "";
+        for(let i = 0; i < this.elements.length; ++i)
         {
             if(this.elements[i] instanceof AscWord.CRunText)
             {
@@ -839,13 +832,13 @@
         && (this.elements[0].Type === para_FootnoteReference && oTextElement.elements[0].Type === para_FootnoteReference
 		 || this.elements[0].Type === para_EndnoteReference && oTextElement.elements[0].Type === para_EndnoteReference))
         {
-            var oBaseContent = this.elements[0].Footnote;
-            var oCompareContent = oTextElement.elements[0].Footnote;
+            let oBaseContent = this.elements[0].Footnote;
+            let oCompareContent = oTextElement.elements[0].Footnote;
             if(oBaseContent && oCompareContent)
             {
                 if(!AscCommon.g_oTableId.Get_ById(oBaseContent.Id))
                 {
-                    var t = oBaseContent;
+                    const t = oBaseContent;
                     oBaseContent = oCompareContent;
                     oCompareContent = t;
                 }
@@ -859,8 +852,8 @@
     {
         if(this.elements.length === 1 && oTextElement.elements.length === 1)
         {
-            var oElement = this.elements[0];
-            var oOtherElement = oTextElement.elements[0];
+            const oElement = this.elements[0];
+            const oOtherElement = oTextElement.elements[0];
             if(oElement.Type === para_Drawing && oOtherElement.Type === para_Drawing)
             {
                 if(oElement.IsComparable(oOtherElement))
@@ -892,18 +885,16 @@
     CMatching.prototype.put = function(oNode1, oNode2)
     {
         oNode1.setPartner(oNode2);
-
-        var aFootnotes, aDrawings;
         if(oNode1.element instanceof CTextElement)
         {
-            aFootnotes = oNode1.element.compareFootnotes(oNode2.element);
+            const aFootnotes = oNode1.element.compareFootnotes(oNode2.element);
             if(aFootnotes)
             {
                 this.Footnotes[aFootnotes[0].Id] = aFootnotes[1];
             }
             else
             {
-                aDrawings = oNode1.element.compareDrawings(oNode2.element);
+                const aDrawings = oNode1.element.compareDrawings(oNode2.element);
                 if(aDrawings)
                 {
                     this.Drawings[aDrawings[0].Id] = aDrawings[1];
@@ -973,7 +964,7 @@
     }
     CDocumentComparison.prototype.getUserName = function()
     {
-        var oCore = this.revisedDocument.Core;
+        const oCore = this.revisedDocument.Core;
         if(oCore && typeof oCore.lastModifiedBy === "string" && oCore.lastModifiedBy.length > 0)
         {
             return  oCore.lastModifiedBy.split(";")[0];
@@ -992,18 +983,18 @@
         return MIN_DIFF;
     }
     CDocumentComparison.prototype.getLCSCallback = function (oLCS, bOrig) {
-        var oThis = this;
+        const oThis = this;
         return function(x, y) {
-            var oOrigNode = oLCS.a[x];
-            var oReviseNode = oLCS.b[y];
-            var oDiff  = new AscCommon.Diff(oOrigNode, oReviseNode);
+            const oOrigNode = oLCS.a[x];
+            const oReviseNode = oLCS.b[y];
+            const oDiff  = new AscCommon.Diff(oOrigNode, oReviseNode);
             oDiff.equals = function(a, b)
             {
                 return a.equals(b);
             };
-            var oMatching = new CMatching();
+            const oMatching = new CMatching();
             oDiff.matchTrees(oMatching);
-            var oDeltaCollector = new AscCommon.DeltaCollector(oMatching, oOrigNode, oReviseNode);
+            const oDeltaCollector = new AscCommon.DeltaCollector(oMatching, oOrigNode, oReviseNode);
             oDeltaCollector.forEachChange(function(oOperation){
                 oOperation.anchor.base.addChange(oOperation);
             });
@@ -1015,7 +1006,7 @@
     
     CDocumentComparison.prototype.getLCSEqualsMethod = function (oEqualMap, oMapEquals) {
         return function(a, b) {
-            var bEquals = oMapEquals[a.element.Id] || oMapEquals[b.element.Id];
+            const bEquals = oMapEquals[a.element.Id] || oMapEquals[b.element.Id];
             if(oEqualMap[a.element.Id])
             {
                 if(bEquals && !AscFormat.fApproxEqual(oEqualMap[a.element.Id].jaccard, 1.0, 0.01))
@@ -1047,43 +1038,42 @@
     
     CDocumentComparison.prototype.compareElementsArray = function(aBase, aCompare, bOrig, bUseMinDiff)
     {
-        var oMapEquals = {};
-        var aBase2 = [];
-        var aCompare2 = [];
-        var oCompareMap = {};
-        var bMatchNoEmpty = false, i, j, key;
-        var oLCS;
-        var MIN_JACCARD_COEFFICIENT = this.getMinJaccardCoefficient();
-        var MIN_DIFF_COEFFICIENT = this.getMinDiffCoefficient();
+        const oMapEquals = {};
+        const aBase2 = [];
+        const aCompare2 = [];
+        const oCompareMap = {};
+        const MIN_JACCARD_COEFFICIENT = this.getMinJaccardCoefficient();
+        const MIN_DIFF_COEFFICIENT = this.getMinDiffCoefficient();
 
-        var oEqualMap = {};
-        for(i = 0; i < aBase.length; ++i)
+        let bMatchNoEmpty = false;
+        let oEqualMap = {};
+        for(let i = 0; i < aBase.length; ++i)
         {
-            var oCurNode =  aBase[i];
+            const oCurNode =  aBase[i];
             if(oCurNode.hashWords)
             {
-                var oCurInfo = {
-
+                const oCurInfo = {
                     jaccard: 0,
                     map: {},
                     minDiff: 0,
                     intersection: 0
                 };
                 oEqualMap[oCurNode.element.Id] = oCurInfo;
-                for(j = 0; j < aCompare.length; ++j)
+                for(let j = 0; j < aCompare.length; ++j)
                 {
-                    var oCompareNode = aCompare[j];
+                    const oCompareNode = aCompare[j];
                     if(oCompareNode.hashWords && oCurNode.isComparable(oCompareNode))
                     {
-                        var dJaccard = oCurNode.hashWords.jaccard(oCompareNode.hashWords);
+                        let dJaccard = oCurNode.hashWords.jaccard(oCompareNode.hashWords);
                         if(oCurNode.element instanceof CTable)
                         {
                             dJaccard += MIN_JACCARD_COEFFICIENT;
                         }
-                        var dIntersection = dJaccard*(oCurNode.hashWords.count + oCompareNode.hashWords.count)/(1+dJaccard);
-                        var diffA = 0, diffB = 0, dMinDiff = 0;
+                        const dIntersection = dJaccard*(oCurNode.hashWords.count + oCompareNode.hashWords.count)/(1+dJaccard);
+
                         if(dJaccard > 0)
                         {
+                            let diffA = 0, diffB = 0, dMinDiff = 0;
                             if(oCurNode.hashWords.count > 0)
                             {
                                 diffA = dIntersection/oCurNode.hashWords.count;
@@ -1117,7 +1107,7 @@
                 if(oCurInfo.jaccard >= MIN_JACCARD_COEFFICIENT || (bUseMinDiff && oCurInfo.minDiff > MIN_DIFF_COEFFICIENT && oCurNode.hashWords.countLetters > 0 ))
                 {
                     aBase2.push(oCurNode);
-                    for(key in oCurInfo.map)
+                    for(let key in oCurInfo.map)
                     {
                         if(oCurInfo.map.hasOwnProperty(key))
                         {
@@ -1131,9 +1121,9 @@
                 }
             }
         }
-        for(j = 0; j < aCompare.length; ++j)
+        for(let j = 0; j < aCompare.length; ++j)
         {
-            oCompareNode = aCompare[j];
+            const oCompareNode = aCompare[j];
             if(oCompareMap[oCompareNode.element.Id])
             {
                 aCompare2.push(oCompareNode);
@@ -1143,7 +1133,7 @@
         {
             if(bOrig)
             {
-                for(i = 0; i < aBase2.length; ++i)
+                for(let i = 0; i < aBase2.length; ++i)
                 {
                     if(i !== aBase2[i].childidx)
                     {
@@ -1151,7 +1141,7 @@
                         break;
                     }
                 }
-                for(i = aCompare2.length - 1; i > -1; i--)
+                for(let i = aCompare2.length - 1; i > -1; i--)
                 {
                     if(i !== aCompare2[i].childidx)
                     {
@@ -1163,7 +1153,7 @@
             else
             {
 
-                for(i = 0; i < aCompare2.length; ++i)
+                for(let i = 0; i < aCompare2.length; ++i)
                 {
                     if(i !== aCompare2[i].childidx)
                     {
@@ -1171,7 +1161,7 @@
                         break;
                     }
                 }
-                for(i = aBase2.length - 1; i > -1; i--)
+                for(let i = aBase2.length - 1; i > -1; i--)
                 {
                     if(i !== aBase2[i].childidx)
                     {
@@ -1184,6 +1174,7 @@
         }
         if(aBase2.length > 0 && aCompare2.length > 0)
         {
+            let oLCS;
             if(bOrig)
             {
                 oLCS = new AscCommon.LCS(aBase2, aCompare2);
@@ -1192,7 +1183,7 @@
             {
                 oLCS = new AscCommon.LCS(aCompare2, aBase2);
             }
-            var fLCSCallback = this.getLCSCallback(oLCS, bOrig);
+            const fLCSCallback = this.getLCSCallback(oLCS, bOrig);
             oLCS.equals = this.getLCSEqualsMethod(oEqualMap, oMapEquals);
             oLCS.forEachCommonSymbol(fLCSCallback);
         }
@@ -1201,12 +1192,12 @@
     };
     CDocumentComparison.prototype.compareNotes = function(oMatching)
     {
-        for(var key in oMatching.Footnotes)
+        for(let key in oMatching.Footnotes)
         {
             if(oMatching.Footnotes.hasOwnProperty(key))
             {
-                var oBaseFootnotes = AscCommon.g_oTableId.Get_ById(key);
-                var oCompareFootnotes = oMatching.Footnotes[key];
+                const oBaseFootnotes = AscCommon.g_oTableId.Get_ById(key);
+                const oCompareFootnotes = oMatching.Footnotes[key];
                 if(oBaseFootnotes && oCompareFootnotes)
                 {
                     this.compareRoots(oBaseFootnotes, oCompareFootnotes);
@@ -1231,54 +1222,53 @@
     };
     CDocumentComparison.prototype.compareGroups = function(oBaseGroup, oCompareGroup)
     {
-        var NodeConstructor = this.getNodeConstructor();
-        var oLCS = new AscCommon.LCS(oBaseGroup.spTree, oCompareGroup.spTree);
+        const NodeConstructor = this.getNodeConstructor();
+        const oLCS = new AscCommon.LCS(oBaseGroup.spTree, oCompareGroup.spTree);
         oLCS.equals = function(a, b) {
             return a.isComparable(b);
         };
 
-        var oBaseNode = new NodeConstructor(oBaseGroup, null);
-        var oChildNode;
-        for(var nSp = 0; nSp < oBaseGroup.spTree.length; ++nSp)
+        const oBaseNode = new NodeConstructor(oBaseGroup, null);
+        for(let nSp = 0; nSp < oBaseGroup.spTree.length; ++nSp)
         {
-            oChildNode = new NodeConstructor(oBaseGroup.spTree[nSp], oBaseNode);
+            new NodeConstructor(oBaseGroup.spTree[nSp], oBaseNode);
         }
-        var oCompareNode = new NodeConstructor(oCompareGroup, null);
-        for(nSp = 0; nSp < oCompareGroup.spTree.length; ++nSp)
+        const oCompareNode = new NodeConstructor(oCompareGroup, null);
+        for(let nSp = 0; nSp < oCompareGroup.spTree.length; ++nSp)
         {
-            oChildNode = new NodeConstructor(oCompareGroup.spTree[nSp], oCompareNode);
+            new NodeConstructor(oCompareGroup.spTree[nSp], oCompareNode);
         }
-        var oDiff  = new AscCommon.Diff(oBaseNode, oCompareNode);
+        const oDiff  = new AscCommon.Diff(oBaseNode, oCompareNode);
         oDiff.equals = function(a, b)
         {
             return a.isComparable(b);
         };
-        var oMatching = new CMatching();
+        const oMatching = new CMatching();
         oDiff.matchTrees(oMatching);
-        var oDeltaCollector = new AscCommon.DeltaCollector(oMatching, oBaseNode, oCompareNode);
+        const oDeltaCollector = new AscCommon.DeltaCollector(oMatching, oBaseNode, oCompareNode);
         oDeltaCollector.forEachChange(function(oOperation){
             oOperation.anchor.base.addChange(oOperation);
         });
         oBaseNode.changes.sort(function(c1, c2){return c2.anchor.index - c1.anchor.index});
-        for(var nChild = 0; nChild < oBaseNode.children.length; ++nChild)
+        for(let nChild = 0; nChild < oBaseNode.children.length; ++nChild)
         {
-            var oChild = oBaseNode.children[nChild];
+            const oChild = oBaseNode.children[nChild];
             if(oChild.partner)
             {
                 this.compareGraphicObject(oChild.element, oChild.partner.element);
             }
         }
-        for(var nChange = 0; nChange < oBaseNode.changes.length; ++nChange)
+        for(let nChange = 0; nChange < oBaseNode.changes.length; ++nChange)
         {
-            var oChange = oBaseNode.changes[nChange];
-            for(var nRemove = oChange.remove.length - 1; nRemove > -1;  --nRemove)
+            const oChange = oBaseNode.changes[nChange];
+            for(let nRemove = oChange.remove.length - 1; nRemove > -1;  --nRemove)
             {
-                var oRemoveSp = oChange.remove[nRemove].element;
+                const oRemoveSp = oChange.remove[nRemove].element;
                 this.setGraphicObjectReviewInfo(oRemoveSp, reviewtype_Remove);
             }
-            for(var nInsert = oChange.insert.length - 1; nInsert > -1;  --nInsert)
+            for(let nInsert = oChange.insert.length - 1; nInsert > -1;  --nInsert)
             {
-                var oInsertSp = oChange.insert[nInsert].element.copy({contentCopyPr: this.copyPr});
+                const oInsertSp = oChange.insert[nInsert].element.copy({contentCopyPr: this.copyPr});
                 oBaseGroup.addToSpTree(oChange.anchor.index, oInsertSp);
                 oInsertSp.setGroup(oBaseGroup);
             }
@@ -1298,7 +1288,7 @@
             }
             case AscDFH.historyitem_type_GroupShape:
             {
-                for(var nSp = 0; nSp < oGrObj.spTree.length; ++nSp)
+                for(let nSp = 0; nSp < oGrObj.spTree.length; ++nSp)
                 {
                     this.setGraphicObjectReviewInfo(oGrObj.spTree[nSp], nType);
                 }
@@ -1310,20 +1300,20 @@
     CDocumentComparison.prototype.compareDrawingObjects = function (oBaseDrawing, oCompareDrawing, bOrig) {
         if(oBaseDrawing && oCompareDrawing)
         {
-            var oBaseGrObject = oBaseDrawing.GraphicObj;
-            var oCompareGrObject = oCompareDrawing.GraphicObj;
+            const oBaseGrObject = oBaseDrawing.GraphicObj;
+            const oCompareGrObject = oCompareDrawing.GraphicObj;
             this.compareGraphicObject(oBaseGrObject, oCompareGrObject);
         }
     }
 
     CDocumentComparison.prototype.compareDrawingObjectsFromMatching = function(oMatching, bOrig)
     {
-        for(var key in oMatching.Drawings)
+        for(let key in oMatching.Drawings)
         {
             if(oMatching.Drawings.hasOwnProperty(key))
             {
-                var oBaseDrawing = AscCommon.g_oTableId.Get_ById(key);
-                var oCompareDrawing = oMatching.Drawings[key];
+                const oBaseDrawing = AscCommon.g_oTableId.Get_ById(key);
+                const oCompareDrawing = oMatching.Drawings[key];
                 this.compareDrawingObjects(oBaseDrawing, oCompareDrawing, bOrig);
             }
         }
@@ -1334,7 +1324,7 @@
         {
             return;
         }
-        var nObjectType = oBaseGrObject.getObjectType();
+        const nObjectType = oBaseGrObject.getObjectType();
         if(nObjectType !== oCompareGrObject.getObjectType())
         {
             return;
@@ -1355,10 +1345,9 @@
     };
 
     CDocumentComparison.prototype.applyLastComparison = function (oOrigRoot, oRevisedRoot) {
-        var j = oRevisedRoot.children.length - 1;
-        var aInserContent = [];
-        var nRemoveCount = 0;
-        for(var i = oOrigRoot.children.length - 1; i > -1 ; --i)
+        const aInsertContent = [];
+        let nRemoveCount = 0;
+        for(let i = oOrigRoot.children.length - 1; i > -1 ; --i)
         {
             if(!oOrigRoot.children[i].partner)
             {
@@ -1367,38 +1356,35 @@
             }
             else
             {
-                aInserContent.length = 0;
-                for(j = oOrigRoot.children[i].partner.childidx + 1;
+                aInsertContent.length = 0;
+                for(let j = oOrigRoot.children[i].partner.childidx + 1;
                     j < oRevisedRoot.children.length && !oRevisedRoot.children[j].partner; ++j)
                 {
-                    aInserContent.push(oRevisedRoot.children[j]);
+                    aInsertContent.push(oRevisedRoot.children[j]);
                 }
-                if(aInserContent.length > 0)
+                if(aInsertContent.length > 0)
                 {
-                    this.insertNodesToDocContent(oOrigRoot.element, i + 1 + nRemoveCount, aInserContent);
+                    this.insertNodesToDocContent(oOrigRoot.element, i + 1 + nRemoveCount, aInsertContent);
                 }
                 nRemoveCount = 0;
             }
         }
-        aInserContent.length = 0;
-        for(j = 0; j < oRevisedRoot.children.length && !oRevisedRoot.children[j].partner; ++j)
+        aInsertContent.length = 0;
+        for(let j = 0; j < oRevisedRoot.children.length && !oRevisedRoot.children[j].partner; ++j)
         {
-            aInserContent.push(oRevisedRoot.children[j]);
+            aInsertContent.push(oRevisedRoot.children[j]);
         }
-        if(aInserContent.length > 0)
+        if(aInsertContent.length > 0)
         {
-            this.insertNodesToDocContent(oOrigRoot.element, nRemoveCount, aInserContent);
+            this.insertNodesToDocContent(oOrigRoot.element, nRemoveCount, aInsertContent);
         }
     };
 
     CDocumentComparison.prototype.compareRoots = function(oRoot1, oRoot2)
     {
-
-        var oOrigRoot = this.createNodeFromDocContent(oRoot1, null, null, true);
-        var oRevisedRoot =  this.createNodeFromDocContent(oRoot2, null, null, false);
-        var i, j;
-        var oEqualMap;
-        var aBase, aCompare, bOrig = true;
+        const oOrigRoot = this.createNodeFromDocContent(oRoot1, null, null, true);
+        const oRevisedRoot =  this.createNodeFromDocContent(oRoot2, null, null, false);
+        let aBase, aCompare, bOrig = true;
         if(oOrigRoot.children.length <= oRevisedRoot.children.length)
         {
             aBase = oOrigRoot.children;
@@ -1411,26 +1397,22 @@
             aCompare = oOrigRoot.children;
         }
 
-        var aBase2 = [];
-        var aCompare2 = [];
-        var oCompareMap = {};
-        var bMatchNoEmpty;
-
-        var oCurNode, oCompareNode;
-        oEqualMap = this.compareElementsArray(aBase, aCompare, bOrig, false);
-        bMatchNoEmpty = oEqualMap.bMatchNoEmpty;
+        const aBase2 = [];
+        const aCompare2 = [];
+        const oEqualMap = this.compareElementsArray(aBase, aCompare, bOrig, false);
+        const bMatchNoEmpty = oEqualMap.bMatchNoEmpty;
 
         //included paragraphs
         if(bMatchNoEmpty)
         {
-            i = 0;
-            j = 0;
-            oCompareMap = {};
+            let i = 0;
+            let j = 0;
+            let oCompareMap = {};
 
             while(i < aBase.length && j < aCompare.length)
             {
-                oCurNode = aBase[i];
-                oCompareNode = aCompare[j];
+                let oCurNode = aBase[i];
+                let oCompareNode = aCompare[j];
                 if(oCurNode.partner && oCompareNode.partner)
                 {
                     ++i;
@@ -1438,10 +1420,10 @@
                 }
                 else
                 {
-                    var nStartI = i;
-                    var nStartJ = j;
-                    var nStartComparIndex = j - 1;
-                    var nEndCompareIndex = nStartComparIndex;
+                    const nStartI = i;
+                    const nStartJ = j;
+                    const nStartCompareIndex = j - 1;
+                    let nEndCompareIndex = nStartCompareIndex;
                     aCompare2.length = 0;
                     while(j < aCompare.length && !aCompare[j].partner)
                     {
@@ -1449,7 +1431,7 @@
                         ++j;
                     }
                     nEndCompareIndex = j;
-                    if((nEndCompareIndex - nStartComparIndex) > 1)
+                    if((nEndCompareIndex - nStartCompareIndex) > 1)
                     {
                         oCompareMap = {};
                         aBase2.length = 0;
@@ -1483,45 +1465,44 @@
     };
     CDocumentComparison.prototype.compare = function(callback)
     {
-        var oOriginalDocument = this.originalDocument;
-        var oRevisedDocument = this.revisedDocument;
+        const oOriginalDocument = this.originalDocument;
+        const oRevisedDocument = this.revisedDocument;
         if(!oOriginalDocument || !oRevisedDocument)
         {
             return;
         }
-        var oThis = this;
-        var aImages = AscCommon.pptx_content_loader.End_UseFullUrl();
-        var oObjectsForDownload = AscCommon.GetObjectsForImageDownload(aImages);
-        var oApi = oOriginalDocument.GetApi(), i;
+        const oThis = this;
+        const aImages = AscCommon.pptx_content_loader.End_UseFullUrl();
+        const oObjectsForDownload = AscCommon.GetObjectsForImageDownload(aImages);
+        const oApi = oOriginalDocument.GetApi();
         if(!oApi)
         {
             return;
         }
-        var fCallback = function (data) {
-            var oImageMap = {};
+        const fCallback = function (data) {
+            const oImageMap = {};
 			AscFormat.ExecuteNoHistory(function () {
 				AscCommon.ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
 			}, oThis, []);
             oOriginalDocument.StopRecalculate();
             oOriginalDocument.StartAction(AscDFH.historydescription_Document_CompareDocuments);
             oOriginalDocument.Start_SilentMode();
-            var oldTrackRevisions = oOriginalDocument.IsTrackRevisions();
+            const oldTrackRevisions = oOriginalDocument.IsTrackRevisions();
             oOriginalDocument.SetTrackRevisions(false);
-            var LogicDocuments = oOriginalDocument.TrackRevisionsManager.Get_AllChangesLogicDocuments();
-            for (var LogicDocId in LogicDocuments)
+            const LogicDocuments = oOriginalDocument.TrackRevisionsManager.Get_AllChangesLogicDocuments();
+            for (let LogicDocId in LogicDocuments)
             {
-                var LogicDoc = AscCommon.g_oTableId.Get_ById(LogicDocId);
+                const LogicDoc = AscCommon.g_oTableId.Get_ById(LogicDocId);
                 if (LogicDoc)
                 {
                     LogicDoc.AcceptRevisionChanges(undefined, true);
                 }
             }
-            var NewNumbering = oRevisedDocument.Numbering.CopyAllNums(oOriginalDocument.Numbering);
+            const NewNumbering = oRevisedDocument.Numbering.CopyAllNums(oOriginalDocument.Numbering);
             oRevisedDocument.CopyNumberingMap = NewNumbering.NumMap;
             oOriginalDocument.Numbering.AppendAbstractNums(NewNumbering.AbstractNum);
             oOriginalDocument.Numbering.AppendNums(NewNumbering.Num);
-            var key;
-            for(key in NewNumbering.NumMap)
+            for(let key in NewNumbering.NumMap)
             {
                 if (NewNumbering.NumMap.hasOwnProperty(key))
                 {
@@ -1531,9 +1512,9 @@
             oThis.compareRoots(oOriginalDocument, oRevisedDocument);
             oThis.compareSectPr(oOriginalDocument, oRevisedDocument);
 
-            var oFonts = oOriginalDocument.Document_Get_AllFontNames();
-            var aFonts = [];
-            for (i in oFonts)
+            const oFonts = oOriginalDocument.Document_Get_AllFontNames();
+            const aFonts = [];
+            for (let i in oFonts)
             {
                 if(oFonts.hasOwnProperty(i))
                 {
@@ -1556,8 +1537,8 @@
     };
     CDocumentComparison.prototype.getNewParaPrWithDiff = function(oElementPr, oPartnerPr)
     {
-        var oOldParaPr = oElementPr.Copy(undefined, undefined);
-        var oNewParaPr = oPartnerPr.Copy(undefined, this.copyPr);
+        const oOldParaPr = oElementPr.Copy(undefined, undefined);
+        const oNewParaPr = oPartnerPr.Copy(undefined, this.copyPr);
         if(oOldParaPr.Is_Equal(oNewParaPr))
         {
             return null;
@@ -1569,21 +1550,17 @@
     };
     CDocumentComparison.prototype.isElementForAdd = function (oElement)
     {
-        if(oElement.IsParaEndRun && oElement.IsParaEndRun())
-        {
-            return false;
-        }
-        return true;
+        return !(oElement.IsParaEndRun && oElement.IsParaEndRun());
+
     };
     CNode.prototype.isElementForAdd = CDocumentComparison.prototype.isElementForAdd;
 
     CDocumentComparison.prototype.applyChangesToParagraph2 = function(oNode)
     {
-        var i;
         oNode.changes.sort(function(c1, c2){return c2.anchor.index - c1.anchor.index});
-        for(i = 0; i < oNode.changes.length; ++i)
+        for(let i = 0; i < oNode.changes.length; ++i)
         {
-            var aContentToInsert = oNode.getArrOfInsertsFromChanges(i, this);
+            const aContentToInsert = oNode.getArrOfInsertsFromChanges(i, this);
             //handle removed elements
             oNode.applyInsertsToParagraph(this, aContentToInsert, i);
         }
@@ -1593,18 +1570,16 @@
     };
 
     CDocumentComparison.prototype.applyChangesToChildrenOfParagraphNode = function (oNode) {
-        var oChildNode;
-        var i, j;
-        for(i = 0; i < oNode.children.length; ++i)
+        for(let i = 0; i < oNode.children.length; ++i)
         {
-            oChildNode = oNode.children[i];
+            const oChildNode = oNode.children[i];
             if(Array.isArray(oChildNode.element.Content))
             {
                 this.applyChangesToParagraph2(oChildNode);
             }
             else
             {
-                for(j = 0; j < oChildNode.children.length; ++j)
+                for(let j = 0; j < oChildNode.children.length; ++j)
                 {
                     if(oChildNode.children[j].element instanceof CDocumentContent)
                     {
@@ -1616,14 +1591,14 @@
     }
     
     CDocumentComparison.prototype.applyChangesToSectPr = function (oNode) {
-        var oElement = oNode.element;
+        const oElement = oNode.element;
         if(oNode.partner)
         {
-            var oPartnerNode = oNode.partner;
-            var oPartnerElement = oPartnerNode.element;
+            const oPartnerNode = oNode.partner;
+            const oPartnerElement = oPartnerNode.element;
             if(oPartnerElement instanceof Paragraph)
             {
-                var oNewParaPr = this.getNewParaPrWithDiff(oElement.Pr, oPartnerElement.Pr);
+                const oNewParaPr = this.getNewParaPrWithDiff(oElement.Pr, oPartnerElement.Pr);
                 if(oNewParaPr)
                 {
                     oElement.Set_Pr(oNewParaPr);
@@ -1635,14 +1610,14 @@
 
     CDocumentComparison.prototype.compareSectPr = function(oElement, oPartnerElement)
     {
-        var oOrigSectPr = oElement.SectPr;
-        var oReviseSectPr = oPartnerElement.SectPr;
-        var oOrigContent, oReviseContent;
+        const oOrigSectPr = oElement.SectPr;
+        const oReviseSectPr = oPartnerElement.SectPr;
+        let oOrigContent, oReviseContent;
         if(!oOrigSectPr && oReviseSectPr)
         {
-            var oLogicDocument = this.originalDocument;
-            var bCopyHdrFtr = true;
-            var SectPr = new CSectionPr(oLogicDocument);
+            const oLogicDocument = this.originalDocument;
+            const bCopyHdrFtr = true;
+            const SectPr = new CSectionPr(oLogicDocument);
             SectPr.Copy(oReviseSectPr, bCopyHdrFtr, this.copyPr);
             if(oElement.Set_SectionPr)
             {
@@ -1749,12 +1724,12 @@
 
             if(oReviseSectPr)
             {
-                var oReviseHeaderFirst = oReviseSectPr.HeaderFirst;
-                var oReviseHeaderEven = oReviseSectPr.HeaderEven;
-                var oReviseHeaderDefault = oReviseSectPr.HeaderDefault;
-                var oReviseFooterFirst = oReviseSectPr.FooterFirst;
-                var oReviseFooterEven = oReviseSectPr.FooterEven;
-                var oReviseFooterDefault = oReviseSectPr.FooterDefault;
+                const oReviseHeaderFirst = oReviseSectPr.HeaderFirst;
+                const oReviseHeaderEven = oReviseSectPr.HeaderEven;
+                const oReviseHeaderDefault = oReviseSectPr.HeaderDefault;
+                const oReviseFooterFirst = oReviseSectPr.FooterFirst;
+                const oReviseFooterEven = oReviseSectPr.FooterEven;
+                const oReviseFooterDefault = oReviseSectPr.FooterDefault;
 
                 oReviseSectPr.HeaderFirst = oOrigSectPr.HeaderFirst;
                 oReviseSectPr.HeaderEven = oOrigSectPr.HeaderEven;
@@ -1776,17 +1751,17 @@
     };
     CDocumentComparison.prototype.applyChangesToTable = function(oNode)
     {
-        var oElement = oNode.element, oChange, i, j, oRow;
+        const oElement = oNode.element;
         oNode.changes.sort(function(c1, c2){return c2.anchor.index - c1.anchor.index});
-        for(i = 0; i < oNode.changes.length; ++i)
+        for(let i = 0; i < oNode.changes.length; ++i)
         {
-            oChange = oNode.changes[i];
-            for(j = oChange.remove.length - 1; j > -1;  --j)
+            const oChange = oNode.changes[i];
+            for(let j = oChange.remove.length - 1; j > -1;  --j)
             {
-                oRow = oChange.remove[j].element;
+                const oRow = oChange.remove[j].element;
                 this.setReviewInfoRecursive(oRow, reviewtype_Remove);
             }
-            for(j = oChange.insert.length - 1; j > -1;  --j)
+            for(let j = oChange.insert.length - 1; j > -1;  --j)
             {
                 oElement.Content.splice(oChange.anchor.index, 0, oChange.insert[j].element.Copy(oElement, this.copyPr));
                 AscCommon.History.Add(new CChangesTableAddRow(oElement, oChange.anchor.index, [oElement.Content[oChange.anchor.index]]));
@@ -1795,7 +1770,7 @@
             if (oElement.Content.length > 0 && oElement.Content[0].Get_CellsCount() > 0)
                 oElement.CurCell = oElement.Content[0].Get_Cell(0);
         }
-        for(i = 0; i < oNode.children.length; ++i)
+        for(let i = 0; i < oNode.children.length; ++i)
         {
             this.applyChangesToTableRow(oNode.children[i]);
         }
@@ -1804,14 +1779,14 @@
     {
         //TODO: handle cell inserts and removes
 
-        for(var i = 0; i < oNode.children.length; ++i)
+        for(let i = 0; i < oNode.children.length; ++i)
         {
             this.applyChangesToDocContent(oNode.children[i]);
         }
     };
     CDocumentComparison.prototype.getCopyNumId = function(sNumId)
     {
-        var NewId = undefined;
+        let NewId;
         if(this.matchedNums[sNumId])
         {
             NewId = this.matchedNums[sNumId];
@@ -1821,17 +1796,17 @@
             if(this.revisedDocument.CopyNumberingMap[sNumId])
             {
                 NewId = this.revisedDocument.CopyNumberingMap[sNumId];
-                var oCopyNum = AscCommon.g_oTableId.Get_ById(NewId);
-                var oOrigNumbering = this.originalDocument.Numbering.Num;
+                const oCopyNum = AscCommon.g_oTableId.Get_ById(NewId);
+                const oOrigNumbering = this.originalDocument.Numbering.Num;
                 if(oCopyNum && oOrigNumbering)
                 {
-                    for(var keyOrig in oOrigNumbering)
+                    for(let keyOrig in oOrigNumbering)
                     {
                         if(oOrigNumbering.hasOwnProperty(keyOrig))
                         {
                             if(!this.checkedNums[keyOrig])
                             {
-                                var oOrigNum = AscCommon.g_oTableId.Get_ById(keyOrig);
+                                const oOrigNum = AscCommon.g_oTableId.Get_ById(keyOrig);
                                 if(oOrigNum && oOrigNum.IsSimilar(oCopyNum))
                                 {
                                     this.matchedNums[sNumId] = keyOrig;
@@ -1862,12 +1837,13 @@
         {
             return this.StylesMap[oStyle.Id];
         }
-        var oStyleCopy;
-        var sStyleId = this.originalDocument.Styles.GetStyleIdByName(oStyle.Name, false);
-        if(oStyleCopy = this.originalDocument.Styles.Get(sStyleId))
+
+        const sStyleId = this.originalDocument.Styles.GetStyleIdByName(oStyle.Name, false);
+        let oStyleCopy = this.originalDocument.Styles.Get(sStyleId);
+        if(oStyleCopy)
         {
             this.StylesMap[oStyle.Id] = sStyleId;
-            var oNewParaPr = this.getNewParaPrWithDiff(oStyleCopy.ParaPr, oStyle.ParaPr);
+            const oNewParaPr = this.getNewParaPrWithDiff(oStyleCopy.ParaPr, oStyle.ParaPr);
             if(oNewParaPr)
             {
                 oStyleCopy.Set_ParaPr(oNewParaPr);
@@ -1914,22 +1890,22 @@
     };
     CDocumentComparison.prototype.copyComment = function(sId)
     {
-        var oCopyComment;
+        let oCopyComment;
         if(this.CommentsMap[sId])
         {
             oCopyComment = this.CommentsMap[sId];
         }
         else
         {
-            var oComment = this.revisedDocument.Comments.Get_ById(sId);
+            const oComment = this.revisedDocument.Comments.Get_ById(sId);
             if(oComment)
             {
-                var oOrigComments = this.originalDocument.Comments;
+                const oOrigComments = this.originalDocument.Comments;
                 if(oOrigComments)
                 {
-                    var oOldParent = oComment.Parent;
+                    const oOldParent = oComment.Parent;
                     oComment.Parent = oOrigComments;
-                    var oCopyComment = oComment.Copy();
+                    oCopyComment = oComment.Copy();
                     this.CommentsMap[sId] = oCopyComment;
                     this.originalDocument.Comments.Add(oCopyComment);
                     this.api.sync_AddComment(oCopyComment.Id, oCopyComment.Data);
@@ -1954,11 +1930,10 @@
     };
     CDocumentComparison.prototype.insertNodesToDocContent = function(oElement, nIndex, aInsert)
     {
-
-        var k = 0;
-        for(var j = 0; j < aInsert.length; ++j)
+        let k = 0;
+        for(let j = 0; j < aInsert.length; ++j)
         {
-            var oChildElement = null;
+            let oChildElement;
             if(aInsert[j].element.Get_Type)
             {
                 oChildElement = aInsert[j].element.Copy(oElement, oElement.DrawingDocument, this.copyPr);
@@ -1979,7 +1954,7 @@
     };
     CDocumentComparison.prototype.applyChangesToChildNode = function(oChildNode)
     {
-        var oChildElement = oChildNode.element;
+        const oChildElement = oChildNode.element;
         if(oChildElement instanceof Paragraph || oChildElement instanceof AscCommonWord.CMockParagraph)
         {
             this.applyChangesToParagraph2(oChildNode);
@@ -2001,21 +1976,20 @@
             this.compareRoots(oNode.element, oNode.partner.element);
             return;
         }
-        var oElement = oNode.element, oChange, i, j, oChildElement, oChildNode;
-
+        const oElement = oNode.element;
         oNode.changes.sort(function(c1, c2){return c2.anchor.index - c1.anchor.index});
-        for(i = 0; i < oNode.changes.length; ++i)
+        for(let i = 0; i < oNode.changes.length; ++i)
         {
-            oChange = oNode.changes[i];
-            for(j = oChange.remove.length - 1; j > -1; --j)
+            const oChange = oNode.changes[i];
+            for(let j = oChange.remove.length - 1; j > -1; --j)
             {
-                oChildNode = oChange.remove[j];
-                oChildElement = oChildNode.element;
+                const oChildNode = oChange.remove[j];
+                const oChildElement = oChildNode.element;
                 this.setReviewInfoRecursive(oChildElement, reviewtype_Remove);
             }
             this.insertNodesToDocContent(oElement, oChange.anchor.index + oChange.remove.length, oChange.insert);
         }
-        for(i = 0; i < oNode.children.length; ++i)
+        for(let i = 0; i < oNode.children.length; ++i)
         {
             this.applyChangesToChildNode(oNode.children[i]);
         }
@@ -2031,7 +2005,7 @@
         oReviewIno.PrevType = -1;
         oReviewIno.PrevInfo = null;
         oReviewIno.UserName = this.getUserName() + this.getConflictName(conflictType);
-        var oCore = this.revisedDocument.Core;
+        const oCore = this.revisedDocument.Core;
         if(oCore)
         {
             if(oCore.modified instanceof Date)
@@ -2048,20 +2022,19 @@
         if (!oObject) {
             return [];
         }
-        var arrReturnObjects = [];
-        var arrCheckObjects = [oObject];
+        const arrReturnObjects = [];
+        const arrCheckObjects = [oObject];
 
         while (arrCheckObjects.length) {
-            var oCheckObject = arrCheckObjects.pop();
+            const oCheckObject = arrCheckObjects.pop();
 
             if(oCheckObject.ReviewInfo && oCheckObject.SetReviewTypeWithInfo)
             {
                arrReturnObjects.push(oCheckObject);
             }
-            var i;
             if(Array.isArray(oCheckObject.Content))
             {
-                for(i = 0; i < oCheckObject.Content.length; ++i)
+                for(let i = 0; i < oCheckObject.Content.length; ++i)
                 {
                     arrCheckObjects.push(oCheckObject.Content[i]);
                 }
@@ -2076,8 +2049,8 @@
             }
             if(oCheckObject.GetAllDocContents)
             {
-                var aContents = oCheckObject.GetAllDocContents();
-                for(i = 0; i < aContents.length; ++i)
+                const aContents = oCheckObject.GetAllDocContents();
+                for(let i = 0; i < aContents.length; ++i)
                 {
                     arrCheckObjects.push(aContents[i]);
                 }
@@ -2088,7 +2061,8 @@
             }
             if(AscCommon.isRealObject(oCheckObject.SectPr) && (oCheckObject instanceof Paragraph))
             {
-                var oOrigSectPr = oCheckObject.SectPr, oOrigContent;
+                const oOrigSectPr = oCheckObject.SectPr;
+                let oOrigContent;
                 if(oOrigSectPr)
                 {
                     oOrigContent = oOrigSectPr.HeaderFirst && oOrigSectPr.HeaderFirst.Content;
@@ -2130,12 +2104,12 @@
     };
 
     CDocumentComparison.prototype.setReviewInfoForArray = function (arrNeedReviewObjects, nType, conflictType) {
-        for (var i = 0; i < arrNeedReviewObjects.length; i += 1) {
-            var oNeedReviewObject = arrNeedReviewObjects[i];
+        for (let i = 0; i < arrNeedReviewObjects.length; i += 1) {
+            const oNeedReviewObject = arrNeedReviewObjects[i];
             if (oNeedReviewObject.SetReviewTypeWithInfo) {
-                var oReviewInfo = oNeedReviewObject.ReviewInfo.Copy();
+                const oReviewInfo = oNeedReviewObject.ReviewInfo.Copy();
                 this.setReviewInfo(oReviewInfo, conflictType);
-                var reviewType;
+                let reviewType;
                 if (this.bSaveCustomReviewType) {
                     reviewType = oNeedReviewObject.GetReviewType && oNeedReviewObject.GetReviewType();
                 }
@@ -2146,16 +2120,16 @@
 
     CDocumentComparison.prototype.setReviewInfoRecursive = function(oObject, nType, conflictType)
     {
-        var arrNeedReviewObjects = this.getElementsForSetReviewType(oObject);
+        const arrNeedReviewObjects = this.getElementsForSetReviewType(oObject);
         this.setReviewInfoForArray(arrNeedReviewObjects, nType, conflictType);
     };
     CDocumentComparison.prototype.updateReviewInfo = function(oObject, nType, bParaEnd)
     {
         if(oObject.ReviewInfo && oObject.SetReviewTypeWithInfo)
         {
-            var oReviewIno = oObject.ReviewInfo.Copy();
-            this.setReviewInfo(oReviewIno);
-            oObject.SetReviewTypeWithInfo(nType, oReviewIno, false);
+            const oReviewInfo = oObject.ReviewInfo.Copy();
+            this.setReviewInfo(oReviewInfo);
+            oObject.SetReviewTypeWithInfo(nType, oReviewInfo, false);
 
         }
     };
@@ -2165,19 +2139,19 @@
 
     CDocumentComparison.prototype.createNodeFromDocContent = function(oElement, oParentNode, oHashWords, isOriginalDocument)
     {
-        var NodeConstructor = this.getNodeConstructor();
-        var oRet = new NodeConstructor(oElement, oParentNode);
-        var bRoot = (oParentNode === null);
-        for(var i = 0; i < oElement.Content.length; ++i)
+        const NodeConstructor = this.getNodeConstructor();
+        const oRet = new NodeConstructor(oElement, oParentNode);
+        const bRoot = (oParentNode === null);
+        for(let i = 0; i < oElement.Content.length; ++i)
         {
-            var oChElement = oElement.Content[i];
+            const oChElement = oElement.Content[i];
             if(oChElement instanceof Paragraph)
             {
                 if(bRoot)
                 {
                     oHashWords = new Minhash({});
                 }
-                var oParagraphNode = this.createNodeFromRunContentElement(oChElement, oRet, oHashWords, isOriginalDocument);
+                const oParagraphNode = this.createNodeFromRunContentElement(oChElement, oRet, oHashWords, isOriginalDocument);
                 if(bRoot)
                 {
                     oParagraphNode.hashWords = oHashWords;
@@ -2189,7 +2163,7 @@
                 {
                     oHashWords = new Minhash({});
                 }
-                var oBlockNode = this.createNodeFromDocContent(oChElement.Content, oRet, oHashWords, isOriginalDocument);
+                const oBlockNode = this.createNodeFromDocContent(oChElement.Content, oRet, oHashWords, isOriginalDocument);
                 if(bRoot)
                 {
                     oBlockNode.hashWords = oHashWords;
@@ -2203,16 +2177,16 @@
                     {
                         oHashWords = new Minhash({});
                     }
-                    var oTableNode = new NodeConstructor(oChElement, oRet);
+                    const oTableNode = new NodeConstructor(oChElement, oRet);
                     if(bRoot)
                     {
                         oHashWords = new Minhash({});
                         oTableNode.hashWords = oHashWords;
                     }
-                    for(var j = 0; j < oChElement.Content.length; ++j)
+                    for(let j = 0; j < oChElement.Content.length; ++j)
                     {
-                        var oRowNode = new NodeConstructor(oChElement.Content[j], oTableNode);
-                        for(var k = 0; k < oChElement.Content[j].Content.length; ++k)
+                        const oRowNode = new NodeConstructor(oChElement.Content[j], oTableNode);
+                        for(let k = 0; k < oChElement.Content[j].Content.length; ++k)
                         {
                             this.createNodeFromDocContent(oChElement.Content[j].Content[k].Content, oRowNode, oHashWords, isOriginalDocument);
                         }
@@ -2224,7 +2198,7 @@
                 {
                     oHashWords = new AscCommonWord.CMockMinHash();
                 }
-                var oParagraphNode = this.createNodeFromRunContentElement(oChElement, oRet, oHashWords, isOriginalDocument);
+                const oParagraphNode = this.createNodeFromRunContentElement(oChElement, oRet, oHashWords, isOriginalDocument);
                 if(bRoot)
                 {
                     oParagraphNode.hashWords = oHashWords;
@@ -2232,7 +2206,7 @@
             }
             else
             {
-                var oNode = new NodeConstructor(oChElement, oRet);
+                const oNode = new NodeConstructor(oChElement, oRet);
                 if(bRoot)
                 {
                     oHashWords = new Minhash({});
@@ -2265,7 +2239,7 @@
             for(let j = 0; j < oRun.Content.length; ++j)
             {
                 const oRunElement = oRun.Content[j];
-                var bPunctuation = para_Text === oRunElement.Type && (AscCommon.g_aPunctuation[oRunElement.Value] && !EXCLUDED_PUNCTUATION[oRunElement.Value]);
+                const bPunctuation = para_Text === oRunElement.Type && (AscCommon.g_aPunctuation[oRunElement.Value] && !EXCLUDED_PUNCTUATION[oRunElement.Value]);
                 if(oRunElement.Type === para_Space || oRunElement.Type === para_Tab
                     || oRunElement.Type === para_Separator || oRunElement.Type === para_NewLine
                     || oRunElement.Type === para_FootnoteReference
@@ -2346,14 +2320,14 @@
 
     CDocumentComparison.prototype.createNodeFromRunContentElement = function(oElement, oParentNode, oHashWords, isOriginalDocument)
     {
-        var NodeConstructor = this.getNodeConstructor();
-        var TextElementConstructor = this.getTextElementConstructor();
-        var oRet = new NodeConstructor(oElement, oParentNode);
-        var oLastText = null, oRun, oRunElement, i, j;
-        var aLastWord = [];
-        for(i = 0; i < oElement.Content.length; ++i)
+        const NodeConstructor = this.getNodeConstructor();
+        const TextElementConstructor = this.getTextElementConstructor();
+        const oRet = new NodeConstructor(oElement, oParentNode);
+        const aLastWord = [];
+        let oLastText = null;
+        for(let i = 0; i < oElement.Content.length; ++i)
         {
-            oRun = oElement.Content[i];
+            const oRun = oElement.Content[i];
             if(oRun instanceof ParaRun)
             {
                 oLastText = this.createNodeFromRun(oRun, oLastText, oHashWords, oRet);
@@ -2401,7 +2375,7 @@
     };
     CDocumentComparison.prototype.getComment = function(sId)
     {
-        var oComment = this.originalDocument.Comments.Get_ById(sId);
+        let oComment = this.originalDocument.Comments.Get_ById(sId);
         if(oComment)
         {
             return oComment;
@@ -2417,10 +2391,10 @@
 
     function CompareBinary(oApi, sBinary2, oOptions, bForceApplyChanges)
     {
-        var oDoc1 = oApi.WordControl.m_oLogicDocument;
+        const oDoc1 = oApi.WordControl.m_oLogicDocument;
         if(!window['NATIVE_EDITOR_ENJINE'])
         {
-            var oCollaborativeEditing = oDoc1.CollaborativeEditing;
+            const oCollaborativeEditing = oDoc1.CollaborativeEditing;
             if(oCollaborativeEditing && !oCollaborativeEditing.Is_SingleUser())
             {
                 oApi.sendEvent("asc_onError", Asc.c_oAscError.ID.CannotCompareInCoEditing, c_oAscError.Level.NoCritical);
@@ -2428,14 +2402,13 @@
             }
         }
         oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
-        var bHaveRevisons2 = false;
-        var oDoc2 = AscFormat.ExecuteNoHistory(function(){
-
-            var oBinaryFileReader, openParams        = {disableRevisions: true, noSendComments: true};
-            var oDoc2 = new CDocument(oApi.WordControl.m_oDrawingDocument, true);
+        let bHaveRevisons2 = false;
+        const oDoc2 = AscFormat.ExecuteNoHistory(function(){
+            const openParams = {disableRevisions: true, noSendComments: true};
+            let oDoc2 = new CDocument(oApi.WordControl.m_oDrawingDocument, true);
             oApi.WordControl.m_oDrawingDocument.m_oLogicDocument = oDoc2;
             oApi.WordControl.m_oLogicDocument = oDoc2;
-            oBinaryFileReader = new AscCommonWord.BinaryFileReader(oDoc2, openParams);
+            const oBinaryFileReader = new AscCommonWord.BinaryFileReader(oDoc2, openParams);
             AscCommon.pptx_content_loader.Start_UseFullUrl(oApi.insertDocumentUrlsData);
             if (!oBinaryFileReader.Read(sBinary2))
             {
@@ -2456,9 +2429,9 @@
         oDoc1.History.Document = oDoc1;
         if(oDoc2)
         {
-            var fCallback = function()
+            const fCallback = function()
             {
-                var oComp = new AscCommonWord.CDocumentComparison(oDoc1, oDoc2, oOptions ? oOptions : new ComparisonOptions());
+                const oComp = new AscCommonWord.CDocumentComparison(oDoc1, oDoc2, oOptions ? oOptions : new ComparisonOptions());
                 oComp.compare();
             };
 
