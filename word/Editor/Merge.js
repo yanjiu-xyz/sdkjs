@@ -159,9 +159,6 @@
     CMergeComparisonNode.prototype.constructor = CMergeComparisonNode;
 
 
-    CMergeComparisonNode.prototype.resolveReviewTypeConflicts = function () {
-
-    };
     CMergeComparisonNode.prototype.applyInsertsToParagraphsWithoutRemove = function (comparison, aContentToInsert, idxOfChange) {
         var oChildNode, oFirstText, oCurRun, j, k, t;
         var oElement = this.element;
@@ -239,12 +236,12 @@
     CMergeComparisonNode.prototype.applyInsert = function (arrToInsert, arrToRemove, nInsertPosition, comparison, opts) {
         var oThis = this;
         opts = opts || {};
-        const bIsDuplicate = isDuplicateArr(arrToInsert, arrToRemove);
+/*        const bIsDuplicate = isDuplicateArr(arrToInsert, arrToRemove);
         if (bIsDuplicate) {
             for (let i = 0; i < arrToRemove.length; i += 1) {
                 this.setRemoveReviewType(arrToRemove[i], comparison);
             }
-        } else if (arrToInsert.length === 0) {
+        } else */if (arrToInsert.length === 0) {
             for (let i = 0; i < arrToRemove.length; i += 1) {
                 this.setRemoveReviewType(arrToRemove[i], comparison);
             }
@@ -449,6 +446,21 @@
         }
     }
 
+    function CResolveConflictTextElement() {
+        CTextElement.call(this);
+    }
+
+    CResolveConflictTextElement.prototype = Object.create(CTextElement.prototype);
+    CResolveConflictTextElement.prototype.constructor = CResolveConflictTextElement;
+
+    CResolveConflictTextElement.prototype.getPriorityReviewType = function () {
+        var arrPriorityReviewTypes = [];
+        this.forEachRun(function (oRun) {
+            arrPriorityReviewTypes.push(oRun.GetReviewType());
+        });
+        return getPriorityReviewType(arrPriorityReviewTypes);
+    }
+
     function CDocumentResolveConflictComparison(oOriginalDocument, oRevisedDocument, oOptions) {
         CDocumentComparison.call(this, oOriginalDocument, oRevisedDocument, oOptions);
         this.parentParagraph = null;
@@ -468,12 +480,20 @@
         return CConflictResolveNode;
     }
 
+    CDocumentResolveConflictComparison.prototype.getTextElementConstructor = function () {
+        return CResolveConflictTextElement;
+    }
+
     CDocumentResolveConflictComparison.prototype.getLCSEqualsMethod = function () {
         return function () {
             return true;
         }
     }
 
+    CDocumentResolveConflictComparison.prototype.applyLastComparison = function (oOrigRoot, oRevisedRoot) {
+        resolveTypesFromNodeWithPartner(oOrigRoot, this, true);
+        CDocumentComparison.prototype.applyLastComparison.call(this, oOrigRoot, oRevisedRoot);
+    }
     function CConflictResolveNode(oElement, oParent) {
         CNode.call(this, oElement, oParent);
     }
@@ -513,37 +533,54 @@
         this.count += 1;
     }
 
-
-/*    function resolveTypesFromNodeWithPartner(originalNode, comparison) { TODO: end this
-        var previousRuns = {};
+    function resolveTypesFromNodeWithPartner(originalNode, comparison, bOrig) {
+        const mergeInfo = [];
         originalNode.forEach(function (oNode) {
-            var partner = oNode.partner;
-            var originalElement = oNode.element;
-            if (originalElement instanceof ParaRun && partner) {
-                var originalType = oNode;
-                var revisedElement = partner.element;
-
-                var originalType = originalElement.getPriorityReviewType();
-                var revisedType = revisedElement.getPriorityReviewType();
-                var priorityReviewType = getPriorityReviewType([originalType, revisedType]);
-                if (originalElement.firstRun !== originalElement.lastRun) {
-                    originalElement.forEachRun(function (oRun) {
-                        if (oRun === originalElement.firstRun) {
-                            var startPos = originalElement.getPosOfStart();
-                            oRun.Split2(startPos, oRun)
-                        }
-                        if (oRun === originalElement.lastRun) {
-                            var endPos = originalElement.getPosOfEnd();
-                        }
-                    });
-                }
-                if (originalType !== priorityReviewType) {
-                    comparison.setReviewInfoRecursive(originalElement, priorityReviewType);
-                }
+            const partner = oNode.partner;
+            const originalElement = oNode.element;
+            if (originalElement instanceof CTextElement && partner) {
+                const revisedElement = partner.element;
+                const originalType = originalElement.getPriorityReviewType();
+                const revisedType = revisedElement.getPriorityReviewType();
+                const priorityReviewType = getPriorityReviewType([originalType, revisedType]);
+                const mainElement = bOrig ? originalElement : revisedElement;
+                const startPos = mainElement.getPosOfStart();
+                const endPos = mainElement.getPosOfEnd();
+                mergeInfo.push({startRun: mainElement.firstRun, startPos: startPos, endRun: mainElement.lastRun, endPos: endPos + 1, reviewType: priorityReviewType});
             }
-
         });
-    }*/
+        const mapSetReview = {};
+        mapSetReview[reviewtype_Common] = [];
+        mapSetReview[reviewtype_Add] = [];
+        mapSetReview[reviewtype_Remove] = [];
+
+        for (let i = mergeInfo.length - 1; i >= 0; i -= 1) {
+            const runSplitInfo = mergeInfo[i];
+            const startPos = runSplitInfo.startPos;
+            const endPos = runSplitInfo.endPos;
+
+            let startRun = runSplitInfo.startRun;
+            let endRun = runSplitInfo.endRun;
+            let oParagraph = startRun.Paragraph;
+            let startRunPosInParent = startRun.GetPosInParent();
+            let endRunPosInParent = endRun.GetPosInParent();
+
+            endRun = endRun.Split2(endPos, oParagraph, endRunPosInParent);
+            startRun = startRun.Split2(startPos, oParagraph, startRunPosInParent);
+            startRunPosInParent += 1;
+            while (startRun !== endRun) {
+                mapSetReview[runSplitInfo.reviewType].push(startRun);
+                startRunPosInParent += 1;
+                startRun = oParagraph.Content[startRunPosInParent];
+            }
+        }
+        const bSaveCustomReviewType = comparison.bSaveCustomReviewType;
+        comparison.bSaveCustomReviewType = false;
+        comparison.setReviewInfoForArray(mapSetReview[reviewtype_Common], reviewtype_Common);
+        comparison.setReviewInfoForArray(mapSetReview[reviewtype_Add], reviewtype_Add);
+        comparison.setReviewInfoForArray(mapSetReview[reviewtype_Remove], reviewtype_Remove);
+        comparison.bSaveCustomReviewType = bSaveCustomReviewType;
+    }
 
     function CDocumentMergeComparison(oOriginalDocument, oRevisedDocument, oOptions) {
         CDocumentComparison.call(this, oOriginalDocument, oRevisedDocument, oOptions);
@@ -927,7 +964,7 @@
 
                     var arrOfReview = collectReviewRunsAround(oRun, posInParent);
                     var isDuplicate = isDuplicateArr(arrOfReview, contentForInsert);
-                    if (!isDuplicate) {
+                    // if (!isDuplicate) {
                         if (arrOfReview.length) {
                             this.resolveConflicts(contentForInsert, arrOfReview, oParagraph, arrOfReview[0].GetPosInParent());
                         } else {
@@ -937,7 +974,7 @@
                                 oParagraph.Add_ToContent(posInParent + 1, oRunForInsert.Copy(false, {CopyReviewPr: true}));
                             }
                         }
-                    }
+                    // }
                 }
             }
         }
