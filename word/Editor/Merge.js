@@ -1,13 +1,8 @@
 (function (undefined) {
     const CDocumentComparison = AscCommonWord.CDocumentComparison;
     const CNode = AscCommonWord.CNode;
-    const g_oTableId = AscCommon.g_oTableId;
     const CTextElement = window['AscCommonWord'].CTextElement;
 
-    const CONFLICT_TYPES = {
-        originalDocument: 0x01,
-        revisedDocument: 0x02,
-    };
     const EXCLUDED_PUNCTUATION = AscCommonWord.COMPARISON_EXCLUDED_PUNCTUATION;
 
     function isParaDrawingRun(run) {
@@ -17,67 +12,105 @@
     }
 
 
-    function isDuplicateArr(arrOfRuns1, arrOfRuns2) {
-        const elementOfRun1 = [];
-        const elementOfRun2 = [];
-
-        for (let i = 0; i < arrOfRuns1.length; i += 1) {
-            for (let j = 0; j < arrOfRuns1[i].Content.length; j += 1) {
-                const elem = arrOfRuns1[i].Content[j];
-                elementOfRun1.push(elem);
-            }
-        }
-        for (let i = 0; i < arrOfRuns2.length; i += 1) {
-            for (let j = 0; j < arrOfRuns2[i].Content.length; j += 1) {
-                const elem = arrOfRuns2[i].Content[j];
-                elementOfRun2.push(elem);
-            }
-        }
-
-        let arr1Index = 0;
-        let arr2Index = 0;
-
-        function skipSpaces() {
-            let element = elementOfRun1[arr1Index];
-            while (arr1Index < elementOfRun1.length && element && element.Type === para_Space) {
-                arr1Index += 1;
-                element = elementOfRun1[arr1Index];
-            }
-            element = elementOfRun2[arr1Index];
-            while (arr2Index < elementOfRun2.length && element && element.Type === para_Space) {
-                arr2Index += 1;
-                element = elementOfRun2[arr2Index];
-            }
-        }
-
-        while (arr1Index < elementOfRun1.length && arr2Index < elementOfRun2.length) {
-            const elem1 = elementOfRun1[arr1Index];
-            const elem2 = elementOfRun2[arr2Index];
-            if (!(elem1.Type === para_Drawing && elem2.Type === para_Drawing)) {
-                if (elem1.Value === elem2.Value) {
-                    arr1Index += 1;
-                    arr2Index += 1;
-
-                } else if (elem1.Type === para_Space && elem2.Type === para_Space || (arr1Index === 0 && elem1.Type === para_Space || arr2Index === 0 && elem2.Type === para_Space)) {
-                    skipSpaces();
-                } else {
-                    return false;
-                }
-            } else {
-                if (!elem1.IsComparable(elem2)) {
-                    return false;
-                } else {
-                    arr1Index += 1;
-                    arr2Index += 1;
-                }
-            }
-
-
-        }
-        skipSpaces();
-        return !(arr1Index < elementOfRun1.length || arr2Index < elementOfRun2.length);
-
-    }
+    // CDocumentResolveConflictComparison.prototype.isDuplicateArrOfRuns = function (arrOfRuns1, arrOfRuns2) {
+    //     const originalDocument = new CMockDocument();
+    //     const originalParagraph = new CMockParagraph();
+    //     originalDocument.Content = originalParagraph;
+    //     originalParagraph.Content = arrOfRuns1;
+    //
+    //     const revisedDocument = new CMockDocument();
+    //     const revisedParagraph = new CMockParagraph();
+    //     revisedDocument.Content = revisedParagraph;
+    //     revisedParagraph.Content = arrOfRuns2;
+    //
+    //     const root1 = this.createNodeFromDocContent(originalDocument);
+    //     const root2 = this.createNodeFromDocContent(revisedDocument);
+    //
+    //     while ()
+    //     if (root1.children[0].children.length !== root2.children[0].children.length) {
+    //         return {isDuplicate: false};
+    //     }
+    //
+    //     for (let i = 0; i < root1.children[0].children.length; i++) {
+    //         const oNode1 = root1.children[0].children[i];
+    //         const oNode2 = root2.children[0].children[i];
+    //         const bEquals = oNode1.equals(oNode2);
+    //         if (!bEquals) return {isDuplicate: false};
+    //     }
+    //     return {isDuplicate: true};
+    // }
+    //
+    // function isDuplicateArr(arrOfRuns1, arrOfRuns2) {
+    //
+    //
+    //     const elementsOfRun1 = [];
+    //     const elementsOfRun2 = [];
+    //
+    //     for (let i = 0; i < arrOfRuns1.length; i += 1) {
+    //         for (let j = 0; j < arrOfRuns1[i].Content.length; j += 1) {
+    //             const elem = arrOfRuns1[i].Content[j];
+    //             elementsOfRun1.push(elem);
+    //         }
+    //     }
+    //     for (let i = 0; i < arrOfRuns2.length; i += 1) {
+    //         for (let j = 0; j < arrOfRuns2[i].Content.length; j += 1) {
+    //             const elem = arrOfRuns2[i].Content[j];
+    //             elementsOfRun2.push(elem);
+    //         }
+    //     }
+    //
+    //
+    //     function getCountOfSpaces(arr) {
+    //         let countOfSpacesInBegin = 0;
+    //         let countOfSpacesInEnd = 0;
+    //         for (let i = 0; i < arr.length; i += 1) {
+    //             if (arr[i].Type === para_Space) {
+    //                 countOfSpacesInBegin += 1;
+    //             } else {
+    //                 break;
+    //             }
+    //         }
+    //         for (let i = arr.length - 1; i >= 0 ; i -= 1) {
+    //             if (arr[i].Type === para_Space) {
+    //                 countOfSpacesInEnd += 1;
+    //             } else {
+    //                 break;
+    //             }
+    //         }
+    //         return {countOfSpacesInBegin: countOfSpacesInBegin, countOfSpacesInEnd: countOfSpacesInEnd};
+    //     }
+    //
+    //
+    //
+    //     let arr1Index = 0;
+    //     let arr2Index = 0;
+    //
+    //     while (arr1Index < elementsOfRun1.length && arr2Index < elementsOfRun2.length) {
+    //         const elem1 = elementsOfRun1[arr1Index];
+    //         const elem2 = elementsOfRun2[arr2Index];
+    //         if (!(elem1.Type === para_Drawing && elem2.Type === para_Drawing)) {
+    //             if (elem1.Value === elem2.Value) {
+    //                 arr1Index += 1;
+    //                 arr2Index += 1;
+    //
+    //             } else {
+    //                 return false;
+    //             }
+    //         } else {
+    //             if (!elem1.IsComparable(elem2)) {
+    //                 return false;
+    //             } else {
+    //                 arr1Index += 1;
+    //                 arr2Index += 1;
+    //             }
+    //         }
+    //
+    //
+    //     }
+    //
+    //     return !(arr1Index < elementsOfRun1.length || arr2Index < elementsOfRun2.length);
+    //
+    // }
 
 
     function isOnlySpaceParaRun(element) {
@@ -149,6 +182,7 @@
     function CMergeComparisonNode(oElement, oParent) {
         CNode.call(this, oElement, oParent);
     }
+
     CMergeComparisonNode.prototype = Object.create(CNode.prototype);
     CMergeComparisonNode.prototype.constructor = CMergeComparisonNode;
 
@@ -209,19 +243,20 @@
             }
         }
     };
-    CMergeComparisonNode.prototype.needToInsert = function (aSetRemoveReviewType, aContentToInsert) {
-        return !isDuplicateArr(aContentToInsert, aSetRemoveReviewType);
-    };
 
     CMergeComparisonNode.prototype.applyInsert = function (arrToInsert, arrToRemove, nInsertPosition, comparison, opts) {
-        var oThis = this;
+        const oThis = this;
         opts = opts || {};
-/*        const bIsDuplicate = isDuplicateArr(arrToInsert, arrToRemove);
-        if (bIsDuplicate) {
-            for (let i = 0; i < arrToRemove.length; i += 1) {
-                this.setRemoveReviewType(arrToRemove[i], comparison);
-            }
-        } else */if (arrToInsert.length === 0) {
+        if (opts.checkInsertForDiplicate) {
+            const infoAboutDuplicate = isDuplicateArr(arrToInsert, arrToRemove);
+        }
+        /*        const bIsDuplicate = isDuplicateArr(arrToInsert, arrToRemove);
+                if (bIsDuplicate) {
+                    for (let i = 0; i < arrToRemove.length; i += 1) {
+                        this.setRemoveReviewType(arrToRemove[i], comparison);
+                    }
+                } else */
+        if (arrToInsert.length === 0) {
             for (let i = 0; i < arrToRemove.length; i += 1) {
                 this.setRemoveReviewType(arrToRemove[i], comparison);
             }
@@ -338,7 +373,7 @@
         return bHaveCustomReviewType;
     };
 
-    CMergeComparisonTextElement.prototype.setPriorityReviewType = function (comparison, isOriginalDocument, saveMergesFunction) { // TODO: check
+    CMergeComparisonTextElement.prototype.setPriorityReviewType = function (comparison, isOriginalDocument, saveMergesFunction) {
         if (!(this.haveCommonReviewType() && this.haveCustomReviewType())) return 0;
         let appendIndex = 0;
         const oParagraph = this.firstRun.Paragraph;
@@ -429,19 +464,37 @@
         return CResolveConflictTextElement;
     }
 
+    CDocumentResolveConflictComparison.prototype.applyChangesToParagraph = function (oNode) {
+        oNode.changes.sort(function (c1, c2) {
+            return c2.anchor.index - c1.anchor.index
+        });
+        let currentChangeId = 0;
+        for (let i = oNode.children.length - 1; i >= 0; i -= 1) {
+            const oChildNode = oNode.children[i];
+            if (currentChangeId < oNode.changes.length && oNode.changes[currentChangeId].anchor.index === i) {
+                const aContentToInsert = oNode.getArrOfInsertsFromChanges(currentChangeId, this);
+                //handle removed elements
+                oNode.applyInsertsToParagraph(this, aContentToInsert, currentChangeId);
+                currentChangeId += 1
+            } else {
+                resolveTypesFromNodeWithPartner(oChildNode, this, true);
+            }
+        }
+
+        this.applyChangesToChildrenOfParagraphNode(oNode);
+        this.applyChangesToSectPr(oNode);
+    }
+
     CDocumentResolveConflictComparison.prototype.getLCSEqualsMethod = function () {
         return function () {
             return true;
         }
     }
 
-    CDocumentResolveConflictComparison.prototype.applyLastComparison = function (oOrigRoot, oRevisedRoot) {
-        resolveTypesFromNodeWithPartner(oOrigRoot, this, true);
-        CDocumentComparison.prototype.applyLastComparison.call(this, oOrigRoot, oRevisedRoot);
-    }
     function CConflictResolveNode(oElement, oParent) {
         CNode.call(this, oElement, oParent);
     }
+
     CConflictResolveNode.prototype = Object.create(CNode.prototype);
     CConflictResolveNode.prototype.constructor = CConflictResolveNode;
 
@@ -851,17 +904,6 @@
         this.comparison = new CDocumentMergeComparison(oOriginalDocument, oRevisedDocument, oOptions ? oOptions : new AscCommonWord.ComparisonOptions());
         this.oldTrackRevisions = false;
     }
-
-    CDocumentMerge.prototype.getConflictName = function (conflictType) {
-        switch (conflictType) {
-            case CONFLICT_TYPES.originalDocument:
-                return ' Original conflict';
-            case CONFLICT_TYPES.revisedDocument:
-                return ' Revised conflict';
-            default:
-                return '';
-        }
-    };
 
     CDocumentMerge.prototype.resolveConflicts = CDocumentMergeComparison.prototype.resolveConflicts;
 

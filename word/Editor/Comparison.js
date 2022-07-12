@@ -431,16 +431,12 @@
         }
         return nInsertPosition;
     }
-    CNode.prototype.needToInsert = function (arrSetRemoveReviewType, aContentToInsert) {return true;};
 
     CNode.prototype.applyInsert = function (arrToInsert, arrToRemove, nInsertPosition, comparison, options) {
-        const bNeedToInsert = this.needToInsert(arrToRemove, arrToInsert);
         for (let i = 0; i < arrToRemove.length; i += 1) {
             this.setRemoveReviewType(arrToRemove[i], comparison);
         }
-        if (bNeedToInsert) {
-            this.insertContentAfterRemoveChanges(arrToInsert, nInsertPosition, comparison);
-        }
+        this.insertContentAfterRemoveChanges(arrToInsert, nInsertPosition, comparison);
     }
 
     CNode.prototype.applyInsertsToParagraphsWithRemove = function (comparison, aContentToInsert, idxOfChange) {
@@ -1974,17 +1970,14 @@
             this.applyChangesToChildNode(oNode.children[i]);
         }
     };
-    CDocumentComparison.prototype.getConflictName = function (conflictType) {
-      return '';
-    };
-    CDocumentComparison.prototype.setReviewInfo = function(oReviewIno, conflictType)
+    CDocumentComparison.prototype.setReviewInfo = function(oReviewIno)
     {
         oReviewIno.Editor   = this.api;
         oReviewIno.UserId   = "";
         oReviewIno.MoveType = Asc.c_oAscRevisionsMove.NoMove;
         oReviewIno.PrevType = -1;
         oReviewIno.PrevInfo = null;
-        oReviewIno.UserName = this.getUserName() + this.getConflictName(conflictType);
+        oReviewIno.UserName = this.getUserName();
         const oCore = this.revisedDocument.Core;
         if(oCore)
         {
@@ -2083,12 +2076,12 @@
         return arrReturnObjects;
     };
 
-    CDocumentComparison.prototype.setReviewInfoForArray = function (arrNeedReviewObjects, nType, conflictType) {
+    CDocumentComparison.prototype.setReviewInfoForArray = function (arrNeedReviewObjects, nType) {
         for (let i = 0; i < arrNeedReviewObjects.length; i += 1) {
             const oNeedReviewObject = arrNeedReviewObjects[i];
             if (oNeedReviewObject.SetReviewTypeWithInfo) {
                 const oReviewInfo = oNeedReviewObject.ReviewInfo.Copy();
-                this.setReviewInfo(oReviewInfo, conflictType);
+                this.setReviewInfo(oReviewInfo);
                 let reviewType;
                 if (this.bSaveCustomReviewType) {
                     reviewType = oNeedReviewObject.GetReviewType && oNeedReviewObject.GetReviewType();
@@ -2098,10 +2091,10 @@
         }
     }
 
-    CDocumentComparison.prototype.setReviewInfoRecursive = function(oObject, nType, conflictType)
+    CDocumentComparison.prototype.setReviewInfoRecursive = function(oObject, nType)
     {
         const arrNeedReviewObjects = this.getElementsForSetReviewType(oObject);
-        this.setReviewInfoForArray(arrNeedReviewObjects, nType, conflictType);
+        this.setReviewInfoForArray(arrNeedReviewObjects, nType);
     };
     CDocumentComparison.prototype.updateReviewInfo = function(oObject, nType, bParaEnd)
     {
