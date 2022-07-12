@@ -41,22 +41,6 @@
     //EXCLUDED_PUNCTUATION[95] = true;
     EXCLUDED_PUNCTUATION[160] = true;
 
-    function getCountOfFirstSpacesInRun(oRun) {
-        let count = 0;
-        if (oRun instanceof ParaRun) {
-            for (let i = 0; i < oRun.Content.length; i += 1) {
-                const element = oRun.Content[i];
-                if (element.Type === para_Space) {
-                    count += 1;
-                } else {
-                    break;
-                }
-            }
-        }
-        return count;
-    }
-
-
     function CNode(oElement, oParent)
     {
         this.element = oElement;
@@ -223,10 +207,8 @@
                 break;
             }
         }
-        let countOfSpaces = getCountOfFirstSpacesInRun(oParentParagraph.Content[k]); // TODO: think about several runs
-        for (k -= 1; k >= 0; k -= 1) {
+        for (k; k >= 0; k -= 1) {
             const bBreak = this.edgeCaseHandlingOfCleanInsertStart(aContentToInsert, oParentParagraph.Content[k], comparison, countOfSpaces);
-            countOfSpaces = 0;
             if (bBreak) {
                 break;
             }
@@ -441,10 +423,8 @@
                 break;
             }
         }
-        let countOfSpaces = getCountOfFirstSpacesInRun(oElement.Content[k]);
-        for (k -= 1; k >= 0; k -= 1) {
+        for (k; k >= 0; k -= 1) {
             const bBreak = this.edgeCaseHandlingOfCleanRemoveStart(arrSetRemoveReviewType, oElement.Content[k], countOfSpaces);
-            countOfSpaces = 0;
             if (bBreak) {
                 break;
             }
@@ -1555,7 +1535,7 @@
     };
     CNode.prototype.isElementForAdd = CDocumentComparison.prototype.isElementForAdd;
 
-    CDocumentComparison.prototype.applyChangesToParagraph2 = function(oNode)
+    CDocumentComparison.prototype.applyChangesToParagraph = function(oNode)
     {
         oNode.changes.sort(function(c1, c2){return c2.anchor.index - c1.anchor.index});
         for(let i = 0; i < oNode.changes.length; ++i)
@@ -1575,7 +1555,7 @@
             const oChildNode = oNode.children[i];
             if(Array.isArray(oChildNode.element.Content))
             {
-                this.applyChangesToParagraph2(oChildNode);
+                this.applyChangesToParagraph(oChildNode);
             }
             else
             {
@@ -1957,7 +1937,7 @@
         const oChildElement = oChildNode.element;
         if(oChildElement instanceof Paragraph || oChildElement instanceof AscCommonWord.CMockParagraph)
         {
-            this.applyChangesToParagraph2(oChildNode);
+            this.applyChangesToParagraph(oChildNode);
         }
         else if(oChildElement instanceof CDocumentContent)
         {
@@ -2487,4 +2467,5 @@
     window['AscCommonWord']['CDocumentComparison'] = CDocumentComparison;
     window['AscCommonWord']['CNode'] = CNode;
     window['AscCommonWord']['CTextElement'] = window['AscCommonWord'].CTextElement = CTextElement;
+    window['AscCommonWord']['COMPARISON_EXCLUDED_PUNCTUATION'] = window['AscCommonWord'].COMPARISON_EXCLUDED_PUNCTUATION = EXCLUDED_PUNCTUATION;
 })();
