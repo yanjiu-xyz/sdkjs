@@ -71,6 +71,7 @@
         const applyingParagraph = this.getApplyParagraph(comparison);
 
         let k = oParentParagraph.Content.length - 1;
+        let lastCheckRun;
         for(k; k > -1; --k)
         {
             // если мы встретили последний ран, где встречается слово
@@ -87,7 +88,10 @@
                         {
                             if(t < oCurRun.Content.length - 1)
                             {
-                                oNewRun.Remove_FromContent(t + 1, oNewRun.Content.length - (t + 1), false);
+                                lastCheckRun = oNewRun.Split2(t + 1);
+                                this.setCommonReviewTypeWithInfo(lastCheckRun, oCurRun.ReviewInfo.Copy());
+                                this.edgeCaseHandlingOfCleanInsertEnd(aContentToInsert, lastCheckRun, comparison);
+                                //oNewRun.Remove_FromContent(t + 1, oNewRun.Content.length - (t + 1), false);
                             }
                             this.pushToArrInsertContent(aContentToInsert, oNewRun, comparison);
                             break;
@@ -166,7 +170,8 @@
         let oCurRun = oLastText.lastRun ? oLastText.lastRun : oLastText;
         const oParentParagraph =  (this.partner && this.partner.element) || oCurRun.Paragraph;
         let k = posOfLastInsertRun;
-
+        let lastCheckRun;
+        let bBreak = false;
         for(k -= 1; k > -1; --k)
         {
             oCurRun = oParentParagraph.Content[k];
@@ -192,26 +197,28 @@
                             let oNewRun;
                             if(oLastText.lastRun === oFirstText.firstRun)
                             {
-                                oNewRun = aContentToInsert[0];
+                                lastCheckRun = aContentToInsert[0];
+                                oNewRun = lastCheckRun.Split2(t);
                             }
                             else
                             {
-                                oNewRun = this.copyRunWithMockParagraph(oCurRun, applyingParagraph.Paragraph || applyingParagraph, comparison);
+                                lastCheckRun = this.copyRunWithMockParagraph(oCurRun, applyingParagraph.Paragraph || applyingParagraph, comparison);
+                                oNewRun = lastCheckRun.Split2(t);
                                 this.pushToArrInsertContent(aContentToInsert, oNewRun, comparison);
+                                this.setCommonReviewTypeWithInfo(lastCheckRun, oCurRun.ReviewInfo.Copy());
                             }
-                            // удаляем в первом ране символы до нашего слова
-                            oNewRun.Remove_FromContent(0, t, false);
+                            bBreak = this.edgeCaseHandlingOfCleanInsertStart(aContentToInsert, lastCheckRun, comparison);
                         }
                     }
                 }
                 break;
             }
         }
-        for (k; k >= 0; k -= 1) {
-            const bBreak = this.edgeCaseHandlingOfCleanInsertStart(aContentToInsert, oParentParagraph.Content[k], comparison, countOfSpaces);
+        for (k -= 1; k >= 0; k -= 1) {
             if (bBreak) {
                 break;
             }
+            bBreak = this.edgeCaseHandlingOfCleanInsertStart(aContentToInsert, oParentParagraph.Content[k], comparison);
         }
     }
 
@@ -356,6 +363,7 @@
                         nInsertPosition = k + 1;
                         const oNewRun = oCurRun.Split2(t + 1, oApplyParagraph, startPosition + k);
                         this.setCommonReviewTypeWithInfo(oNewRun, oCurRun.ReviewInfo.Copy());
+                        this.edgeCaseHandlingOfCleanRemoveEnd(arrSetRemove, oNewRun, comparison);
                     }
                 }
                 else
@@ -385,6 +393,8 @@
         const oFirstText = oChange.remove[0].element;
 
         let k = posLastRunInContent;
+
+        let bBreak = false;
         for(k; k > -1; --k)
         {
             const oChildElement = oElement.Content[k];
@@ -409,6 +419,7 @@
                     {
                         const oNewRun = oChildElement.Split2(t, oApplyParagraph, startPosition + k);
                         arrSetRemoveReviewType.push(oNewRun);
+                        bBreak = this.edgeCaseHandlingOfCleanRemoveStart(arrSetRemoveReviewType, oChildElement);
                         nInsertPosition++;
                     }
                     else
@@ -423,8 +434,9 @@
                 break;
             }
         }
-        for (k; k >= 0; k -= 1) {
-            const bBreak = this.edgeCaseHandlingOfCleanRemoveStart(arrSetRemoveReviewType, oElement.Content[k], countOfSpaces);
+
+        for (k -= 1; k >= 0; k -= 1) {
+            bBreak = this.edgeCaseHandlingOfCleanRemoveStart(arrSetRemoveReviewType, oElement.Content[k]);
             if (bBreak) {
                 break;
             }
