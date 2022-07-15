@@ -371,6 +371,16 @@
         }
     };
 
+    function checkArrayForReviewType(arr) {
+        for (let i = 0; i < 0; i += 1) {
+            if (arr[i].GetReviewType && (arr[i].GetReviewType() !== reviewtype_Common)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+
     CMergeComparisonNode.prototype.applyInsert = function (arrToInsert, arrToRemove, nInsertPosition, comparison, opts) {
         const oThis = this;
         opts = opts || {};
@@ -380,14 +390,16 @@
             }
         } else if (arrToRemove.length === 0) {
             this.insertContentAfterRemoveChanges(arrToInsert, nInsertPosition, comparison);
-        } else {
+        }/* else if (!(checkArrayForReviewType(arrToInsert) || checkArrayForReviewType(arrToRemove))) { // TODO: подумать, действительно ли это быстрее
+            CNode.prototype.applyInsert.call(this, arrToInsert, arrToRemove, nInsertPosition, comparison, opts);
+        } */else {
             arrToInsert.forEach(function (el) {
-                if (el.GetReviewType() === reviewtype_Common) {
+                if (el.GetReviewType && el.GetReviewType() === reviewtype_Common) {
                     oThis.setRemoveReviewType(el, comparison);
                 }
             });
             arrToRemove.forEach(function (el) {
-                if (el.GetReviewType() === reviewtype_Common) {
+                if (el.GetReviewType && el.GetReviewType() === reviewtype_Common) {
                     oThis.setRemoveReviewType(el, comparison);
                 }
             });
