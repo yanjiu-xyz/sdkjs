@@ -43,6 +43,13 @@
         }
         return false;
     }
+    function isAnchorParaDrawingRun(run) {
+        if (!run.Content) return false;
+        for (let i = 0; i < run.Content.length; i += 1) {
+            if (run.Content[i].Type === para_Drawing && !run.Content[i].IsInline()) return true;
+        }
+        return false;
+    }
 
     // TODO:  напоминание
     // В слиянии мы делаем сравнение, не учитывая части с ревью,
@@ -413,7 +420,7 @@
     }
 
     CMergeComparisonNode.prototype.edgeCaseHandlingOfCleanInsertStart = function (aContentToInsert, element, comparison, countOfSpaces) {
-        if (isParaDrawingRun(element)) return false;
+        if (isAnchorParaDrawingRun(element)) return false;
         this.checkNodeWithInsert(element, comparison);
         if (element.GetReviewType && element.GetReviewType() !== reviewtype_Common) {
             if (countOfSpaces) {
@@ -435,7 +442,7 @@
     };
 
     CMergeComparisonNode.prototype.edgeCaseHandlingOfCleanInsertEnd = function (aContentToInsert, element, comparison) {
-        if (isParaDrawingRun(element)) return;
+        if (isAnchorParaDrawingRun(element)) return;
         this.checkNodeWithInsert(element, comparison);
         if (element.GetReviewType && element.GetReviewType() !== reviewtype_Common) {
             this.pushToArrInsertContentWithCopy(aContentToInsert, element, comparison);
@@ -445,7 +452,7 @@
     };
 
     CMergeComparisonNode.prototype.edgeCaseHandlingOfCleanRemoveStart = function (aContentToRemove, element, countOfSpaces) {
-        if (isParaDrawingRun(element)) return false;
+        if (isAnchorParaDrawingRun(element)) return false;
         if (element.GetReviewType && element.GetReviewType() !== reviewtype_Common) {
             aContentToRemove.push(element);
             return false;
@@ -460,7 +467,7 @@
     };
 
     CMergeComparisonNode.prototype.edgeCaseHandlingOfCleanRemoveEnd = function (aContentToRemove, element) {
-        if (isParaDrawingRun(element)) return;
+        if (isAnchorParaDrawingRun(element)) return;
         if (element.GetReviewType && element.GetReviewType() !== reviewtype_Common) {
             aContentToRemove.push(element);
         } else {
@@ -504,10 +511,12 @@
     };
 
     CMergeComparisonTextElement.prototype.setPriorityReviewType = function (comparison, isOriginalDocument, saveMergesFunction) {
-        if (!(this.haveCommonReviewType() && this.haveCustomReviewType())) return 0;
-        let appendIndex = 0;
+        const infoAfterSetReviewType = {
+            appendRunIndex: 0,
+            appendElementIndex: 0
+        };
+        if (!(this.haveCustomReviewType())) return infoAfterSetReviewType;
         const oParagraph = this.firstRun.Paragraph;
-
         if (this.firstRun.GetReviewType() === reviewtype_Common) {
             const posOfStart = this.getPosOfStart();
             if (posOfStart !== 0) {
@@ -516,26 +525,29 @@
                     this.lastRun = oNewRun;
                 }
                 this.firstRun = oNewRun;
-                appendIndex += 1;
+                infoAfterSetReviewType.appendRunIndex += 1;
+                infoAfterSetReviewType.appendElementIndex = posOfStart;
             }
         }
 
         if (this.lastRun.GetReviewType() === reviewtype_Common) {
             const posOfEnd = this.getPosOfEnd();
             if (posOfEnd !== this.lastRun.Content.length - 1) {
-                this.lastRun.Split2(posOfEnd, oParagraph, this.lastRun.GetPosInParent());
+                this.lastRun.Split2(posOfEnd + 1, oParagraph, this.lastRun.GetPosInParent());
+                infoAfterSetReviewType.appendRunIndex += 1;
+                infoAfterSetReviewType.appendElementIndex = 0;
             }
         }
-
+        const oRuns = [];
         this.forEachRun(function (oRun) {
-            if (oRun.GetReviewType() === reviewtype_Common) {
                 if (!isOriginalDocument) {
                     saveMergesFunction(oRun);
                 }
-                comparison.setReviewInfoRecursive(oRun, /*priorityReviewType*/reviewtype_Add);
-            }
+                oRuns.push(oRun);
+                //comparison.setReviewInfoRecursive(oRun, /*priorityReviewType*/reviewtype_Add);
         });
-        return appendIndex;
+        comparison.setReviewInfoForArray(oRuns, reviewtype_Add);
+        return infoAfterSetReviewType;
     }
 
     CMergeComparisonTextElement.prototype.setFirstRun = function (oRun, bSkipSetReview) {
@@ -608,6 +620,9 @@
                 currentChangeId += 1
             } else {
                 resolveTypesFromNodeWithPartner(oChildNode, this, true);
+            }
+            if (currentChangeId < oNode.changes.length && oNode.changes[currentChangeId].anchor.index > i) {
+                currentChangeId += 1;
             }
         }
 
@@ -725,7 +740,6 @@
         this.mergeRunsMap = {};
         this.bSaveCustomReviewType = true;
         this.drawingReviewType = {};
-        this.drawingRunMap = {};
         this.copyPr = {
             CopyReviewPr: false,
             Comparison: this,
@@ -912,9 +926,7 @@
     }
 
     CDocumentMergeComparison.prototype.saveMergeChanges = function (lastNode, parentNode, run) {
-        const bHaveDrawings = run.Content.some(function (element) {
-            return element.Type === para_Drawing;
-        });
+        const bHaveDrawings = isAnchorParaDrawingRun(run);
         const bHaveParaEnd = run.Content.some(function (element) {
             return element.Type === para_End;
         });
@@ -940,13 +952,15 @@
                 };
             }
             arrContentForInsert = this.mergeRunsMap[parentNode.element.Id].contentForInsert;
-        }
-        arrContentForInsert.push(run);
+        } if (arrContentForInsert[arrContentForInsert.length - 1] !== run) {
+            arrContentForInsert.push(run);
 
+        }
     }
 
     CDocumentMergeComparison.prototype.createNodeFromRunContentElement = function (oElement, oParentNode, oHashWords, isOriginalDocument) {
         const NodeConstructor = this.getNodeConstructor();
+        const oThis = this;
         const TextElementConstructor = this.getTextElementConstructor();
         const oRet = new NodeConstructor(oElement, oParentNode);
         const aLastWord = [];
@@ -954,9 +968,25 @@
         let oLastText = null;
         let lastNode = null;
         let i = 0;
+        let j = 0;
+        function offset(oLastText, lastNode, paragraphNode) {
+            const infoAfterSetPriorityType = oLastText.setPriorityReviewType(oThis, isOriginalDocument, oThis.saveMergeChanges.bind(oThis, lastNode, paragraphNode));
+            if (oLastText.lastRun === oRun) {
+                if (infoAfterSetPriorityType.appendRunIndex !== 0) {
+                    i += infoAfterSetPriorityType.appendRunIndex;
+                    oRun = oElement.Content[i];
+                }
+                if (infoAfterSetPriorityType.appendElementIndex !== 0) {
+                    j = (j - infoAfterSetPriorityType.appendElementIndex);
+                } else if (infoAfterSetPriorityType.appendRunIndex !== 0) {
+                    j = 0;
+                }
+            }
+        }
 
+        let oRun;
         while (i < oElement.Content.length) {
-            const oRun = oElement.Content[i];
+            oRun = oElement.Content[i];
 
             if (oRun instanceof ParaRun) {
                 if (oRun.Content.length > 0) {
@@ -968,7 +998,8 @@
                         oLastText.setFirstRun(oRun);
                         oLastText.setLastRun(oRun);
                     }
-                    for (let j = 0; j < oRun.Content.length; ++j) {
+                    j = 0;
+                    while (j < oRun.Content.length) {
                         const oRunElement = oRun.Content[j];
                         const bPunctuation = para_Text === oRunElement.Type && (AscCommon.g_aPunctuation[oRunElement.Value] && !EXCLUDED_PUNCTUATION[oRunElement.Value]);
                         if (oRunElement.Type === para_Space || oRunElement.Type === para_Tab
@@ -981,7 +1012,7 @@
                                     lastNode = new NodeConstructor(oLastText, oRet);
                                 }
                                 oLastText.updateHash(oHashWords);
-                                i += oLastText.setPriorityReviewType(this, isOriginalDocument, this.saveMergeChanges.bind(this, lastNode, oParentNode.children[oParentNode.children.length - 1]));
+                                offset(oLastText, lastNode, oParentNode.children[oParentNode.children.length - 1]);
                                 oLastText = new TextElementConstructor();
                                 oLastText.setFirstRun(oRun);
                             }
@@ -992,7 +1023,7 @@
                                 lastNode = new NodeConstructor(oLastText, oRet);
                             }
                             oLastText.updateHash(oHashWords);
-
+                            offset(oLastText, lastNode, oParentNode.children[oParentNode.children.length - 1]);
                             oLastText = new TextElementConstructor();
                             oLastText.setFirstRun(oRun, true);
                             oLastText.setLastRun(oRun, true);
@@ -1002,13 +1033,20 @@
                                 if (!oLastText.isReviewWord) {
                                     lastNode = new NodeConstructor(oLastText, oRet);
                                 }
+                                offset(oLastText, lastNode, oParentNode.children[oParentNode.children.length - 1]);
                                 oLastText = new TextElementConstructor();
                                 oLastText.setFirstRun(oRun);
                                 oLastText.setLastRun(oRun);
                             }
                             oLastText.elements.push(oRun.Content[j]);
-                            this.drawingRunMap[oRun.Content[j].Id] = oRun;
-                            new NodeConstructor(oLastText, oRet);
+                            if (oRun.Content[j].Is_Inline()) {
+                                if (!oLastText.isReviewWord) {
+                                    lastNode = new NodeConstructor(oLastText, oRet);
+                                }
+                                offset(oLastText, lastNode, oParentNode.children[oParentNode.children.length - 1]);
+                            } else {
+                                new NodeConstructor(oLastText, oRet);
+                            }
                             oLastText = new TextElementConstructor();
                             oLastText.setFirstRun(oRun, true);
                             oLastText.setLastRun(oRun, true);
@@ -1016,6 +1054,7 @@
                             if (oLastText.elements.length > 0) {
                                 oLastText.updateHash(oHashWords);
                                 new NodeConstructor(oLastText, oRet);
+                                offset(oLastText, lastNode, oParentNode.children[oParentNode.children.length - 1]);
                                 oLastText = new TextElementConstructor();
                                 oLastText.setFirstRun(oRun, true);
                                 oLastText.setLastRun(oRun, true);
@@ -1035,11 +1074,8 @@
                             oLastText.setLastRun(oRun);
                             oLastText.elements.push(oRun.Content[j]);
                         }
+                        j += 1;
                     }
-                }
-                const bReviewType = oRun.GetReviewType() === reviewtype_Remove || oRun.GetReviewType() === reviewtype_Add;
-                if (bReviewType && !isOriginalDocument) {
-                    this.saveMergeChanges(lastNode, oParentNode.children[oParentNode.children.length - 1], oRun, isOriginalDocument);
                 }
             } else {
                 if (!(oRun instanceof CParagraphBookmark)) {
@@ -1048,6 +1084,7 @@
                         if (!oLastText.isReviewWord) {
                             lastNode = new NodeConstructor(oLastText, oRet);
                         }
+                        const infoAfterSetPriorityType = oLastText.setPriorityReviewType(this, isOriginalDocument, this.saveMergeChanges.bind(this, lastNode, oParentNode.children[oParentNode.children.length - 1]));
                     }
                     if (aLastWord.length > 0) {
                         oHashWords.update(aLastWord);
@@ -1055,9 +1092,9 @@
                     }
                     oLastText = null;
                     if (Array.isArray(oRun.Content)) {
-                        this.createNodeFromRunContentElement(oRun, oRet, oHashWords, isOriginalDocument);
+                        lastNode = this.createNodeFromRunContentElement(oRun, oRet, oHashWords, isOriginalDocument);
                     } else {
-                        new NodeConstructor(oRun, oRet);
+                        lastNode = new NodeConstructor(oRun, oRet);
                     }
                 }
             }
@@ -1068,7 +1105,7 @@
             if (!oLastText.isReviewWord) {
                 lastNode = new NodeConstructor(oLastText, oRet);
             }
-        }
+       }
         return oRet;
     };
 
@@ -1142,6 +1179,7 @@
         oOriginalDocument.UpdateInterface();
         oOriginalDocument.FinalizeAction();
         oApi.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
+        console.timeEnd('compare');
     }
 
     CDocumentMerge.prototype.merge4 = function () {
@@ -1195,6 +1233,7 @@
         oDoc1.History.Document = oDoc1;
 
         if (oDoc2) {
+            console.time('compare');
             const oMerge = new AscCommonWord.CDocumentMerge(oDoc1, oDoc2, oOptions ? oOptions : new ComparisonOptions());
             oMerge.merge4(); //TODO: change
         } else {
