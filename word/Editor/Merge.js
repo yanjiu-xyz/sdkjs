@@ -633,8 +633,6 @@
     }
 
     CConflictResolveNode.prototype.setRemoveReviewType = CMergeComparisonNode.prototype.setRemoveReviewType;
-    CConflictResolveNode.prototype.setCommonReviewTypeWithInfo = function (element, info) {
-    }
 
     CConflictResolveNode.prototype.getStartPosition = function (comparison) {
         return comparison.startPosition;
@@ -1133,48 +1131,9 @@
 
     CDocumentMerge.prototype.applyLastMergeCallback = function () {
         const oOriginalDocument = this.originalDocument;
-        const oComp = this.comparison;
         const oApi = this.api;
         if (!(oApi && oOriginalDocument)) {
             return;
-        }
-        for (let insertId in oComp.mergeRunsMap) {
-            const insert = oComp.mergeRunsMap[insertId];
-            const contentForInsert = insert.contentForInsert;
-            const partner = insert.lastNode.partner;
-            if (partner) {
-                let oRun;
-                if (insert.isParent) {
-                    oRun = partner.element.Content[0];
-                } else {
-                    oRun = partner.element.lastRun;
-                }
-                let nInsertPosition;
-                if (insert.isParent) {
-                    nInsertPosition = 0;
-                } else {
-                    nInsertPosition = partner.element.getPosOfEnd() + 1;
-
-                }
-                if (oRun) {
-                    const oParagraph = oRun.Paragraph;
-                    const posInParent = oRun.GetPosInParent();
-
-                    const arrOfReview = collectReviewRunsAfter(oRun, posInParent);
-                    const isDuplicate = isDuplicateArr(arrOfReview, contentForInsert);
-                    // if (!isDuplicate) {
-                    if (arrOfReview.length) {
-                        this.resolveConflicts(contentForInsert, arrOfReview, oParagraph, arrOfReview[0].GetPosInParent());
-                    } else {
-                        const oNewRun = oRun.Split2(nInsertPosition, oParagraph, posInParent);
-                        while (contentForInsert.length) {
-                            const oRunForInsert = contentForInsert.pop();
-                            oParagraph.Add_ToContent(posInParent + 1, oRunForInsert.Copy(false, {CopyReviewPr: true}));
-                        }
-                    }
-                    // }
-                }
-            }
         }
 
         oOriginalDocument.SetTrackRevisions(this.oldTrackRevisions);
