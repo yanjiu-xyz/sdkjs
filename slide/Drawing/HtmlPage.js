@@ -79,7 +79,7 @@ function CEditorPage(api)
 	// ------------------------------------------------------------------
 	this.Name           = "";
 	this.IsSupportNotes = true;
-	this.IsSupportAnimPane = false;
+	this.IsSupportAnimPane = true;
 
 	this.EditorType = "presentations";
 
@@ -415,7 +415,7 @@ function CEditorPage(api)
 		this.Splitter1Pos    = 67.5;
         this.Splitter1PosSetUp = this.Splitter1Pos;
 		this.Splitter2Pos    = (this.IsSupportNotes === true && this.m_oApi.isEmbedVersion !== true) ? 11 : 0;
-		this.Splitter3Pos = 0;//top of animation pane
+		this.Splitter3Pos = 100;//top of animation pane
 
 		this.OldSplitter1Pos = this.Splitter1Pos;
 		this.OldSplitter2Pos = this.Splitter2Pos;
@@ -425,8 +425,8 @@ function CEditorPage(api)
 		this.Splitter1PosMax = 80;
 		this.Splitter2PosMin = 10;
 		this.Splitter2PosMax = 100;
-		this.Splitter3PosMin = 0;//10;
-		this.Splitter3PosMax = 0;//100;
+		this.Splitter3PosMin = 10;
+		this.Splitter3PosMax = 100;
 
 		if (this.m_oApi.isReporterMode)
 		{

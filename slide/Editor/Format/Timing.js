@@ -9631,7 +9631,16 @@
     CTimeNodeContainer.prototype.getIndexInSequence = function() {
         var aHierarchy = this.getHierarchy();
         if(aHierarchy[1] && aHierarchy[2]) {
-            return aHierarchy[1].getChildNodeIdx(aHierarchy[2]);
+            let nResultIdx = aHierarchy[1].getChildNodeIdx(aHierarchy[2]);
+            let oFirstEffectContainer = aHierarchy[1].getChildNode(0);
+            if(oFirstEffectContainer) {
+                let aEffects = oFirstEffectContainer.getAllEffects();
+                let oFirstEffect = aEffects[0];
+                if(!oFirstEffect || !oFirstEffect.isClickEffect()) {
+                    nResultIdx -= 1;
+                }
+            }
+            return nResultIdx + 1;
         }
         return -1;
     };
@@ -9690,12 +9699,12 @@
     const ICON_TRIGGER = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTEiIGhlaWdodD0iMTQiIHZpZXdCb3g9IjAgMCAxMSAxNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTEgMEg1TDAgN0g0TDAgMTRMMTEgNUg2TDExIDBaIiBmaWxsPSIjNDQ0NDQ0Ii8+PC9zdmc+";
     
     CTimeNodeContainer.prototype.internalDrawEffectLabel = function(oGraphics) {
-        var oRect = this.getLabelRect();
+        let oRect = this.getLabelRect();
         if(!oRect) {
             return;
         }
         AscFormat.ExecuteNoHistory(function(){
-            var dX, dY, dW, dH;
+            let dX, dY, dW, dH;
             dX = oRect.l;
             dY = oRect.t;
             dW = oRect.w;
@@ -9705,24 +9714,24 @@
                 oGraphics.rect(dX, dY, dW, dH);
                 return;
 			}
-            var oContext = oGraphics.m_oContext;
-            var oFullTr = oGraphics.m_oFullTransform;
-            var oT = oGraphics.m_oCoordTransform;
+            let oContext = oGraphics.m_oContext;
+            let oFullTr = oGraphics.m_oFullTransform;
+            let oT = oGraphics.m_oCoordTransform;
             if(!oContext || !oFullTr || !oT) {
                 return;
             }
 
             oGraphics.SaveGrState();
             
-            var oMatrix = new AscCommon.CMatrix();
+            let oMatrix = new AscCommon.CMatrix();
             oMatrix.tx = dX;
             oMatrix.ty = dY;
             oGraphics.transform3(oMatrix);
             //draw rect
             
             oGraphics.SetIntegerGrid(true);
-            var nFillColor = this.isSelected() ? 0xCBCBCB : 0xFFFFFF;
-            var nLineColor = 0xC0C0C0; 
+            let nFillColor = this.isSelected() ? 0xCBCBCB : 0xFFFFFF;
+            let nLineColor = 0xC0C0C0;
             oGraphics.b_color1((nFillColor >> 16) & 0xFF, (nFillColor >> 8) & 0xFF, nFillColor & 0xFF, 0xFF);
             oGraphics.p_color((nLineColor >> 16) & 0xFF, (nLineColor >> 8) & 0xFF, nLineColor & 0xFF, 255);
             oGraphics.p_width(0);
@@ -9730,10 +9739,10 @@
 
 
             
-            var _x1 = (oFullTr.TransformPointX(0, 0)) >> 0;
-            var _y1 = (oFullTr.TransformPointY(0, 0)) >> 0;
-            var _x2 = (oFullTr.TransformPointX(dW, dH)) >> 0;
-            var _y2 = (oFullTr.TransformPointY(dW, dH)) >> 0;
+            let _x1 = (oFullTr.TransformPointX(0, 0)) >> 0;
+            let _y1 = (oFullTr.TransformPointY(0, 0)) >> 0;
+            let _x2 = (oFullTr.TransformPointX(dW, dH)) >> 0;
+            let _y2 = (oFullTr.TransformPointY(dW, dH)) >> 0;
             
             oContext.lineWidth = 1;
             oContext.rect(_x1 + 0.5, _y1 + 0.5, _x2 - _x1, _y2 - _y1);
@@ -9761,15 +9770,15 @@
                         if(!oObject) {
                             return null;
                         }
-                        var dTX = dX + dW / 2;
-                        var dTY = dY + dH - oObject.convertPixToMM(4);
+                        let dTX = dX + dW / 2;
+                        let dTY = dY + dH - oObject.convertPixToMM(4);
 
 
-                        var nX = oT.TransformPointX(dTX, dTY);
-                        var nY = oT.TransformPointY(dTX, dTY);
-                        var sOldFill = oContext.fillStyle;
+                        let nX = oT.TransformPointX(dTX, dTY);
+                        let nY = oT.TransformPointY(dTX, dTY);
+                        let sOldFill = oContext.fillStyle;
                         oContext.fillStyle = "#000000";
-                        oContext.fillText((nIdx + 1) + "", nX, nY);    
+                        oContext.fillText(nIdx + "", nX, nY);
                         oContext.fillStyle = sOldFill;
                 }
             }
@@ -9779,15 +9788,15 @@
                 if(oApi && oApi.ImageLoader) {
                     var oImage = oApi.ImageLoader.map_image_index[ICON_TRIGGER];
                     if(oImage)  {
-                        var oNImage = oImage.Image;
-                        var nNativeW = oNImage.width / 2;
-                        var nNativeH = oNImage.height / 2;
-                        var nWidth = AscCommon.AscBrowser.convertToRetinaValue(nNativeW, true);
-                        var nHeight = AscCommon.AscBrowser.convertToRetinaValue(nNativeH, true);
-                        var dTX = dX + (dW - oObject.convertPixToMM(nNativeW)) / 2;
-                        var dTY = dY + (dH - oObject.convertPixToMM(nNativeH)) / 2;
-                        var nX = oT.TransformPointX(dTX, dTY);
-                        var nY = oT.TransformPointY(dTX, dTY);
+                        let oNImage = oImage.Image;
+                        let nNativeW = oNImage.width / 2;
+                        let nNativeH = oNImage.height / 2;
+                        let nWidth = AscCommon.AscBrowser.convertToRetinaValue(nNativeW, true);
+                        let nHeight = AscCommon.AscBrowser.convertToRetinaValue(nNativeH, true);
+                        let dTX = dX + (dW - oObject.convertPixToMM(nNativeW)) / 2;
+                        let dTY = dY + (dH - oObject.convertPixToMM(nNativeH)) / 2;
+                        let nX = oT.TransformPointX(dTX, dTY);
+                        let nY = oT.TransformPointY(dTX, dTY);
                         oContext.drawImage(oImage.Image, nX, nY, nWidth, nHeight);
                     }
                 }
@@ -15252,7 +15261,7 @@
 
     function CAnimItem(oParentControl, oEffect) {
         CControlContainer.call(this, oParentControl);
-        this.indexLabel = this.addControl(new CLabel(this, "1.", 7.5));
+        this.indexLabel = this.addControl(new CLabel(this, oEffect.getIndexInSequence() + "", 7.5));
         this.eventTypeImage = this.addControl(new CImageControl(this));
         this.effectTypeImage = this.addControl(new CImageControl(this));
         this.effectLabel = this.addControl(new CLabel(this, oEffect.getObjectName(), 7.5));
