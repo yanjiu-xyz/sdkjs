@@ -14688,10 +14688,7 @@
     InitClass(CTopControl, CControlContainer, CONTROL_TYPE_UNKNOWN);
     CTopControl.prototype.onUpdateRect = function(oBounds) {
         if(this.drawer) {
-            let oSlide = this.getSlide();
-            if(oSlide) {
-                this.drawer.OnAnimPaneChanged(oSlide.num, oBounds);
-            }
+            this.drawer.OnAnimPaneChanged(oBounds);
         }
     };
     CTopControl.prototype.onUpdate = function() {

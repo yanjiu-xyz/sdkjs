@@ -4459,7 +4459,7 @@ function CEditorPage(api)
 				this.m_oNotesApi.OnRecalculateNote(-1, 0, 0);
 
 			if (this.m_oAnimPaneApi)
-				this.m_oAnimPaneApi.OnAnimPaneChanged(-1, null);
+				this.m_oAnimPaneApi.OnAnimPaneChanged(null);
 		}
 
 		if (this.m_oDrawingDocument.TransitionSlide.IsPlaying())
@@ -4486,7 +4486,7 @@ function CEditorPage(api)
 				this.m_oNotesApi.OnRecalculateNote(_curPage, oSlide.NotesWidth, oSlide.getNotesHeight());
 				if(this.m_oAnimPaneApi)
 				{
-					this.m_oAnimPaneApi.OnAnimPaneChanged(_curPage, null);
+					this.m_oAnimPaneApi.OnAnimPaneChanged(null);
 				}
 			}
 		}

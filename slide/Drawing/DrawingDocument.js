@@ -3769,20 +3769,6 @@ function CDrawingDocument()
 		}
 		History.TurnOn();
 	};*/
-
-	this.OnAnimPaneChanged = function(nSlideNum, oRect)
-	{
-		if(!this.m_oWordControl || !this.m_oWordControl.m_oAnimPaneApi)
-		{
-			return;
-		}
-		if(nSlideNum !== this.SlideCurrent)
-		{
-			return;
-		}
-
-		this.m_oWordControl.m_oAnimPaneApi.OnAnimPaneChanged(nSlideNum, oRect);
-	};
 }
 
 function CThPage()
@@ -6430,23 +6416,12 @@ function CNotesDrawer(page)
 
 function CAnimPaneDrawTask()
 {
-	this.Slide = null;
+	this.bDraw = false;
 	this.Rect = null;
 }
-CAnimPaneDrawTask.prototype.Check = function(nSlide, oRect)
+CAnimPaneDrawTask.prototype.Check = function(oRect)
 {
-	if(this.Slide === null)
-	{
-		this.Slide = nSlide;
-		this.Rect = oRect;
-		return;
-	}
-	if(this.Slide !== nSlide)
-	{
-		this.Slide = nSlide;
-		this.Rect = null;
-		return;
-	}
+	this.bDraw = true;
 	if(this.Rect)
 	{
 		if(!oRect)
@@ -6461,11 +6436,11 @@ CAnimPaneDrawTask.prototype.Check = function(nSlide, oRect)
 };
 CAnimPaneDrawTask.prototype.NeedRedraw = function()
 {
-	return this.Slide !== null;
+	return this.bDraw;
 };
 CAnimPaneDrawTask.prototype.Clear = function()
 {
-	this.Slide = null;
+	this.bDraw = false;
 	this.Rect = null;
 };
 CAnimPaneDrawTask.prototype.GetRect = function()
@@ -6813,13 +6788,9 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 		oControl.onResize();
 		oThis.CheckScroll();
 	};
-	oThis.OnAnimPaneChanged = function (nSlideNum, oRect)
+	oThis.OnAnimPaneChanged = function (oRect)
 	{
-		if(oThis.GetCurrentSlideNumber() !== nSlideNum)
-		{
-			return;
-		}
-		oThis.DrawTask.Check(nSlideNum, oRect);
+		oThis.DrawTask.Check(oRect);
 	};
 
 	oThis.GetWidth = function()
