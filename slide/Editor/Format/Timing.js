@@ -1761,14 +1761,6 @@
             this.setBldLst(null);
         }
     };
-    CTiming.prototype.onAnimPaneChanged = function(oRect) {
-        var oSlide = this.parent;
-        if(!oSlide) {
-            return;
-        }
-        var oPresentation = this.getPresentation();
-        oPresentation.OnAnimPaneChanged(oSlide.num, oRect)
-    };
     CTiming.prototype.getTimingRootNode = function() {
         if(this.tnLst) {
             return this.tnLst.getTimeNodeByType(AscFormat.NODE_TYPE_TMROOT);
@@ -2313,34 +2305,6 @@
             return;
         }
         this.buildTree(aSeqs);
-    };
-    CTiming.prototype.drawAnimPane = function(oGraphics) {
-        if(!this.animPane) {
-            this.animPane = new CAnimPane(this);
-        }
-        this.animPane.recalculate();
-        this.animPane.draw(oGraphics);
-    };
-    CTiming.prototype.getAnimPane = function() {
-        if(!this.animPane) {
-            this.animPane = new CAnimPane(this);
-        }
-        return this.animPane;
-    };
-    CTiming.prototype.onAnimPaneResize = function() {
-        this.getAnimPane().onResize();
-    };
-    CTiming.prototype.onAnimPaneMouseDown = function(e, x, y) {
-        this.getAnimPane().onMouseDown(e, x, y);
-    };
-    CTiming.prototype.onAnimPaneMouseMove = function(e, x, y) {
-        this.getAnimPane().onMouseMove(e, x, y);
-    };
-    CTiming.prototype.onAnimPaneMouseUp = function(e, x, y) {
-        this.getAnimPane().onMouseUp(e, x, y);
-    };
-    CTiming.prototype.onAnimPaneMouseWheel = function(e, deltaY, X, Y) {
-        this.getAnimPane().onMouseWheel(e, deltaY, X, Y);
     };
     CTiming.prototype.getRootSequences = function() {
         var oTmRoot = this.getTimingRootNode();
@@ -14165,7 +14129,6 @@
     CControl.prototype.getFullTextTransform = function() {
         return this.transformText;
     };
-
     CControl.prototype.recalculate = function() {
         AscFormat.CShape.prototype.recalculate.call(this);
     };
@@ -14725,7 +14688,7 @@
     InitClass(CTopControl, CControlContainer, CONTROL_TYPE_UNKNOWN);
     CTopControl.prototype.onUpdateRect = function(oBounds) {
         if(this.drawer) {
-            var oSlide = this.getSlide();
+            let oSlide = this.getSlide();
             if(oSlide) {
                 this.drawer.OnAnimPaneChanged(oSlide.num, oBounds);
             }
@@ -15858,121 +15821,6 @@
     const ANIM_ITEM_HEIGHT = TIMELINE_HEIGHT;
     const EFFECT_BAR_HEIGHT = 2*ANIM_ITEM_HEIGHT/3;
     const SEQ_LABEL_HEIGHT = EFFECT_BAR_HEIGHT;
-
-
-    function CAnimPane(oTiming) {
-        CControlContainer.call(this, null);
-        this.timing = oTiming;
-        this.header = this.addControl(new CAnimPaneHeader(this));
-        this.toolbar = this.addControl(new CToolbar(this));
-        this.seqListContainer = this.addControl(new CSeqListContainer(this));
-        this.timelineContainer = this.addControl(new CTimelineContainer(this));
-
-        this.recalcInfo.recalculateHeader = true;
-        this.recalcInfo.recalculateToolbar = true;
-        this.recalcInfo.recalculateSeqListContainer = true;
-        this.recalcInfo.recalculateTimelineContainer = true;
-    }
-    InitClass(CAnimPane, CControlContainer, CONTROL_TYPE_UNKNOWN);
-    CAnimPane.prototype.getHeader = function() {
-        return this.getChildByType(CONTROL_TYPE_HEADER);
-    };
-    CAnimPane.prototype.getToolbar = function() {
-        return this.getChildByType(CONTROL_TYPE_TOOLBAR);
-    };
-    CAnimPane.prototype.getSeqListContainer = function() {
-        return this.getChildByType(CONTROL_TYPE_SEQ_LIST_CONTAINER);
-    };
-    CAnimPane.prototype.getTimelineContainer = function() {
-        return this.getChildByType(CONTROL_TYPE_TIMELINE_CONTAINER);
-    };
-    CAnimPane.prototype.onChanged = function(oRect) {
-        this.timing.onAnimPaneChanged(oRect);
-    };
-    CAnimPane.prototype.onResize = function() {
-        return;
-        this.setLayout(
-            0,
-            0,
-            this.getExternalControlWidth(),
-            this.getExternalControlHeight()
-        );
-        this.recalculate();
-        this.onUpdate();
-    };
-    CAnimPane.prototype.getExternalControl = function() {
-        return editor.WordControl.m_oAnimPaneApi;
-    };
-    CAnimPane.prototype.getExternalControlWidth = function() {
-        return this.getExternalControl().GetWidth();
-    };
-    CAnimPane.prototype.getExternalControlHeight = function() {
-        return this.getExternalControl().GetHeight();
-    };
-    CAnimPane.prototype.onChildUpdate = function(oBounds) {
-        this.getExternalControl().OnAnimPaneChanged(this.getSlideNum(), oBounds);
-    };
-    CAnimPane.prototype.onUpdate = function() {
-        this.getExternalControl().OnAnimPaneChanged(this.getSlideNum(), this.getBounds());
-    };
-    CAnimPane.prototype.getSlideNum = function(oBounds) {
-        return this.timing.parent.num;
-    };
-    CAnimPane.prototype.recalculateChildrenLayout = function() {
-        var dControlWidth = Math.max(0, this.getWidth() - PADDING_LEFT - PADDING_RIGHT);
-        this.header.setLayout(
-            PADDING_LEFT,
-            PADDING_TOP,
-            this.getWidth() - PADDING_LEFT - PADDING_RIGHT,
-            HEADER_HEIGHT
-        );
-        var dBottomPartY = this.header.getBottom() + VERTICAL_SPACE;
-        this.toolbar.setLayout(
-            PADDING_LEFT,
-            dBottomPartY,
-            TOOLBAR_WIDTH,
-            this.getHeight() - dBottomPartY - PADDING_BOTTOM
-        );
-
-        var dRightPartX = PADDING_LEFT + this.toolbar.getWidth() + VERTICAL_SPACE;
-        var dRightPartWidth = Math.max(0, this.getWidth() - dRightPartX - PADDING_RIGHT);
-        this.timelineContainer.setLayout(
-            dRightPartX,
-            this.getHeight() - PADDING_BOTTOM - TIMELINE_HEIGHT,
-            dRightPartWidth,
-            TIMELINE_HEIGHT
-        );
-        var dListTop = dBottomPartY;
-        var dListBottom = this.timelineContainer.getTop();
-        var dListLeft = dRightPartX;
-        this.seqListContainer.setLayout(
-            dListLeft,
-            dListTop,
-            dRightPartWidth,
-            Math.max(0, dListBottom - dListTop)
-        );
-    };
-    CAnimPane.prototype.recalculateHeader = function() {
-        this.header.recalculate();
-    };
-    CAnimPane.prototype.recalculateToolbar = function() {
-        this.toolbar.recalculate();
-    };
-    CAnimPane.prototype.recalculateSeqListContainer = function() {
-        this.seqListContainer.recalculate();
-    };
-    CAnimPane.prototype.recalculateTimelineContainer = function() {
-        this.timelineContainer.recalculate();
-    };
-    
-    CAnimPane.prototype.recalculate = function() {
-        return;
-    };
-    //CAnimPane.prototype.draw = function(oGraphics) {
-    //    oGraphics.b_color1(255, 0, 0, 255);
-    //    oGraphics.rect(0, 0, 100, 100);
-    //    oGraphics.df();
-    //};
 
 
     window['AscFormat'] = window['AscFormat'] || {};

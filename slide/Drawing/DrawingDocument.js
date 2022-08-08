@@ -7027,6 +7027,7 @@ function CAnimationPaneDrawer(page, htmlElement)
 	{
 		return oThis.list.onMouseWhell(e);
 	};
+
 }
 CAnimationPaneDrawer.prototype = Object.create(CPaneDrawerBase);
 
