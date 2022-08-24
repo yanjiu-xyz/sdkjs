@@ -9895,61 +9895,278 @@
 	asc_PreviewBulletType["char"] = asc_PreviewBulletType.char;
 	asc_PreviewBulletType["image"] = asc_PreviewBulletType.image;
 	asc_PreviewBulletType["number"] = asc_PreviewBulletType.number;
-	function CBulletPreviewDrawer(infoOfDrawings, type) {
-		this.arrayOfBullets = this.getBulletArrayFromPreviewInfo(infoOfDrawings);
-		this.infoOfDrawings = infoOfDrawings;
-		this.type = type;
-		this.isNeedCheckFonts = true;
-		this.api = editor || Asc.editor || window["Asc"]["editor"];
+	asc_PreviewBulletType["multiLevel"] = asc_PreviewBulletType.multiLevel;
+	function CBulletPreviewDrawerBase()
+	{
+		this.m_arrNumberingLvl = [];
+		this.m_oApi = editor || Asc.editor || window["Asc"]["editor"];
 	}
 
-	CBulletPreviewDrawer.prototype.getBulletArrayFromPreviewInfo = function (infoOfDrawings) {
-		const arrayOfBullets = [];
-		AscFormat.ExecuteNoHistory(function () {
-			for (let i = 0; i < infoOfDrawings.length; i += 1) {
-				const drawInfo = infoOfDrawings[i];
-				const type = drawInfo["type"];
-				const bullet = new AscCommonWord.CPresentationBullet();
-				const textPr = new AscCommonWord.CTextPr();
-				textPr.Color = AscCommonWord.g_oDocumentDefaultStrokeColor;
-				switch (type)
+	CBulletPreviewDrawerBase.prototype.getClearCanvasForPreview = function (sDivId)
+	{
+		if (!sDivId) return;
+		const oDivElement = document.getElementById(sDivId);
+		const nWidth_px = oDivElement.clientWidth;
+		const nHeight_px = oDivElement.clientHeight;
+
+		let oCanvas = oDivElement.firstChild;
+		if (!oCanvas)
+		{
+			oCanvas = document.createElement('canvas');
+			oCanvas.style.cssText = "padding:0;margin:0;user-select:none;";
+			oCanvas.style.width = nWidth_px + "px";
+			oCanvas.style.height = nHeight_px + "px";
+			if (nWidth_px > 0 && nHeight_px > 0)
+			{
+				oDivElement.appendChild(oCanvas);
+			}
+		}
+
+		oCanvas.width = AscCommon.AscBrowser.convertToRetinaValue(nWidth_px, true);
+		oCanvas.height = AscCommon.AscBrowser.convertToRetinaValue(nHeight_px, true);
+
+		const oContext = oCanvas.getContext("2d");
+		oContext.fillStyle = "#FFFFFF";
+		oContext.fillRect(0, 0, oCanvas.width, oCanvas.height);
+		return oCanvas;
+	};
+
+	CBulletPreviewDrawerBase.prototype.privateGetParagraphByString = function(sText, oTextPr, nX, nY, nLineHeight, oContext, nWidth, nHeight, nSuff, nAlign)
+	{
+		const oApi = this.m_oApi;
+
+		const bOldViewMode = oApi.isViewMode;
+		const bOldMarks = oApi.ShowParaMarks;
+
+		oApi.isViewMode = true;
+		oApi.ShowParaMarks = false;
+
+		const oNewShape = new AscFormat.CShape();
+		oNewShape.createTextBody();
+
+		const oParagraph = oNewShape.txBody.content.GetAllParagraphs()[0];
+		oParagraph.MoveCursorToStartPos();
+
+		//par.Pr = level.ParaPr.Copy();
+		oParagraph.Pr = new AscCommonWord.CParaPr();
+		oTextPr = oTextPr.Copy();
+		oTextPr.FontSize = oTextPr.FontSizeCS = ((2 * nLineHeight * 72 / 96) >> 0) / 2;
+
+		const oParaRun = new AscCommonWord.ParaRun(oParagraph);
+		oParaRun.Set_Pr(oTextPr);
+		oParaRun.AddText(sText);
+		oParagraph.AddToContent(0, oParaRun);
+
+		oParagraph.Reset(0, 0, 1000, 1000, 0, 0, 1);
+		oParagraph.Recalculate_Page(0);
+
+		const nBaseLineOffset = oParagraph.Lines[0].Y;
+		const nParagraphWidth = oParagraph.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
+
+		const nYOffset = nY - ((nBaseLineOffset * AscCommon.g_dKoef_mm_to_pix) >> 0);
+		let nXOffset = nX;
+		switch (nAlign)
+		{
+			case AscCommon.align_Right:
+			{
+				nXOffset -= nParagraphWidth;
+			}
+				break;
+			case AscCommon.align_Center:
+			{
+				nXOffset -= (nParagraphWidth >> 1);
+			}
+				break;
+			default:
+				break;
+		}
+
+
+		let nBackTextWidth = nParagraphWidth + 4; // 4 - чтобы линия никогде не была 'совсем рядом'
+		switch (nSuff)
+		{
+			case Asc.c_oAscNumberingSuff.Space:
+			case Asc.c_oAscNumberingSuff.None:
+			{
+				nBackTextWidth += 4;
+				break;
+			}
+
+			default:
+			{
+				break;
+			}
+		}
+
+		oContext.fillStyle = "#FFFFFF";
+		const nRPR = AscCommon.AscBrowser.retinaPixelRatio;
+		oContext.fillRect(Math.round(nRPR * nXOffset), Math.round((nY - nLineHeight) * nRPR), Math.round(nBackTextWidth * nRPR), Math.round((nLineHeight + (nLineHeight >> 1)) * nRPR));
+		oContext.beginPath();
+
+		oContext.save();
+		oContext.setTransform(1, 0, 0, 1, 0, 0);
+
+		const oGraphics = new AscCommon.CGraphics();
+		oGraphics.init(oContext,
+			AscCommon.AscBrowser.convertToRetinaValue(nWidth, true),
+			AscCommon.AscBrowser.convertToRetinaValue(nHeight, true),
+			nWidth * AscCommon.g_dKoef_pix_to_mm, nHeight * AscCommon.g_dKoef_pix_to_mm);
+		oGraphics.m_oFontManager = AscCommon.g_fontManager;
+
+		oGraphics.m_oCoordTransform.tx = AscCommon.AscBrowser.convertToRetinaValue(nXOffset, true);
+		oGraphics.m_oCoordTransform.ty = AscCommon.AscBrowser.convertToRetinaValue(nYOffset, true);
+
+		oGraphics.transform(1, 0, 0, 1, 0, 0);
+		oParagraph.Draw(0, oGraphics);
+
+		oContext.restore();
+		oApi.isViewMode = bOldViewMode;
+		oApi.ShowParaMarks = bOldMarks;
+	};
+
+	CBulletPreviewDrawerBase.prototype.checkFonts = function (fCallback)
+	{
+		const oApi = this.m_oApi;
+		const oFontsDict = {};
+		for (let i = 0, nCount = this.m_arrNumberingLvl.length; i < nCount; i++)
+		{
+			const oLvl = this.m_arrNumberingLvl[i];
+			const sText = oLvl.GetStringByLvlText();
+			if (sText)
+			{
+				AscFonts.FontPickerByCharacter.checkTextLight(sText);
+			}
+			const oTextPr = oLvl.GetTextPr();
+			if (oTextPr && oTextPr.RFonts)
+			{
+				if (oTextPr.RFonts.Ascii) oFontsDict[oTextPr.RFonts.Ascii.Name] = true;
+				if (oTextPr.RFonts.EastAsia) oFontsDict[oTextPr.RFonts.EastAsia.Name] = true;
+				if (oTextPr.RFonts.HAnsi) oFontsDict[oTextPr.RFonts.HAnsi.Name] = true;
+				if (oTextPr.RFonts.CS) oFontsDict[oTextPr.RFonts.CS.Name] = true;
+			}
+		}
+
+		const arrFonts = [];
+		for (let sFamilyName in oFontsDict)
+		{
+			arrFonts.push(new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(sFamilyName), 0, "", 0, null));
+		}
+		AscFonts.FontPickerByCharacter.extendFonts(arrFonts);
+
+		if (false === AscCommon.g_font_loader.CheckFontsNeedLoading(arrFonts))
+		{
+			return fCallback();
+		}
+
+		const oLoader = new AscCommon.CGlobalFontLoader();
+		oLoader.put_Api(oApi);
+		oLoader.LoadDocumentFonts2(arrFonts, Asc.c_oAscAsyncActionType.Information, fCallback);
+	};
+
+	CBulletPreviewDrawerBase.prototype._draw = function () {};
+
+	CBulletPreviewDrawerBase.prototype.draw = function ()
+	{
+		const oThis = this;
+		this.checkFonts(function ()
+		{
+			oThis._draw();
+		});
+	};
+
+
+	function CBulletPreviewDrawer(arrInfoOfDrawings, nType)
+	{
+		CBulletPreviewDrawerBase.call(this);
+		this.m_arrNumberingLvl = this.getLvlArrayFromPreviewInfo(arrInfoOfDrawings);
+		this.m_arrInfoOfDrawings = arrInfoOfDrawings;
+		this.m_nType = nType;
+		this.m_nCountOfLines = 3;
+		this.m_oApi = editor || Asc.editor || window["Asc"]["editor"];
+	}
+	CBulletPreviewDrawer.prototype = Object.create(CBulletPreviewDrawerBase.prototype);
+	CBulletPreviewDrawer.prototype.constructor = CBulletPreviewDrawer;
+
+	CBulletPreviewDrawer.prototype.getLvlArrayFromPreviewInfo = function (arrInfoOfDrawings)
+	{
+		const arrNumberingLvl = [];
+		AscFormat.ExecuteNoHistory(function ()
+		{
+			for (let i = 0; i < arrInfoOfDrawings.length; i += 1)
+			{
+				const oLvl = new CNumberingLvl();
+				const oTextPr = oLvl.GetTextPr();
+				oTextPr.Color = AscCommonWord.g_oDocumentDefaultStrokeColor.Copy();
+				const oDrawInfo = arrInfoOfDrawings[i];
+				const nType = oDrawInfo["type"];
+				switch (nType)
 				{
 					case asc_PreviewBulletType.text:
 					{
-						const value = drawInfo["text"];
-						const bulletText = AscCommon.translateManager.getValue(value);
-						bullet.m_nType = AscFormat.numbering_presentationnumfrmt_Char;
-						bullet.m_sChar = bulletText;
-						const fontName = AscFonts.FontPickerByCharacter.getFontBySymbol(bulletText.charCodeAt(0));
-						textPr.RFonts.SetAll(fontName);
-						arrayOfBullets.push({bullet: bullet, textPr: textPr});
+						const oLvl = new CNumberingLvl();
+						const oTextPr = oLvl.GetTextPr();
+						oTextPr.Color = AscCommonWord.g_oDocumentDefaultStrokeColor.Copy();
+
+						const sValue = oDrawInfo["text"];
+						const sBulletText = AscCommon.translateManager.getValue(sValue);
+						oLvl.FillLvlTextByNum(undefined, sBulletText);
+						const sFontName = AscFonts.FontPickerByCharacter.getFontBySymbol(sBulletText.getUnicodeIterator().value());
+						oTextPr.RFonts.SetAll(sFontName);
+						arrNumberingLvl.push(oLvl);
 						break;
 					}
 					case asc_PreviewBulletType.char:
 					{
-						const bulletText	= drawInfo["char"];
-						const fontName = drawInfo["specialFont"] || AscFonts.FontPickerByCharacter.getFontBySymbol(bulletText.getUnicodeIterator().value());
-						textPr.RFonts.SetAll(fontName);
-						bullet.m_nType = AscFormat.numbering_presentationnumfrmt_Char;
-						bullet.m_sChar = bulletText;
-						arrayOfBullets.push({bullet: bullet, textPr: textPr});
+						const oLvl = new CNumberingLvl();
+						const oTextPr = oLvl.GetTextPr();
+						oTextPr.Color = AscCommonWord.g_oDocumentDefaultStrokeColor.Copy();
+
+						const sBulletText	= oDrawInfo["char"];
+						oLvl.FillLvlTextByNum(undefined, sBulletText);
+						const sFontName = oDrawInfo["specialFont"] || AscFonts.FontPickerByCharacter.getFontBySymbol(sBulletText.getUnicodeIterator().value());
+						oTextPr.RFonts.SetAll(sFontName);
+						arrNumberingLvl.push(oLvl);
 						break;
 					}
 					case asc_PreviewBulletType.image:
 					{
-						const fullImageSrc = getFullImageSrc2(drawInfo["imageId"]);
-						bullet.m_nType = AscFormat.numbering_presentationnumfrmt_Blip;
-						bullet.m_sSrc = fullImageSrc;
-						arrayOfBullets.push({bullet: bullet, textPr: textPr});
+						const oBullet = new AscCommonWord.CPresentationBullet();
+
+						const sFullImageSrc = getFullImageSrc2(oDrawInfo["imageId"]);
+						oBullet.m_nType = AscFormat.numbering_presentationnumfrmt_Blip;
+						oBullet.m_sSrc = sFullImageSrc;
+						arrNumberingLvl.push(oBullet);
 						break;
 					}
 					case asc_PreviewBulletType.number:
 					{
-						const typeOfNumbering = drawInfo["numberingType"];
-						bullet.m_nType = bullet.convertFromAscTypeToPresentation(typeOfNumbering);
-						textPr.RFonts.SetAll('Arial');
-						arrayOfBullets.push({bullet: bullet, textPr: textPr});
+						const oLvl = new CNumberingLvl();
+						const oTextPr = oLvl.GetTextPr();
+						oTextPr.Color = AscCommonWord.g_oDocumentDefaultStrokeColor.Copy();
+
+						const nTypeOfNumbering = oDrawInfo["numberingType"];
+						oLvl.SetByType(nTypeOfNumbering, 0, undefined, oTextPr);
+						oTextPr.RFonts.SetAll('Arial');
+						arrNumberingLvl.push(oLvl);
 						break;
+					}
+					case asc_PreviewBulletType.multiLevel:
+					{
+						const arrOfLvls = [];
+						const nTypeofMultiLevel = oDrawInfo["multiLevelType"];
+						for (let i = 0; i < this.m_nCountOfLines;i += 1)
+						{
+							const oLvl = new CNumberingLvl();
+							oLvl.InitDefault(i + 1, nTypeofMultiLevel)
+							arrOfLvls.push(oLvl);
+							const oTextPr = oLvl.GetTextPr();
+							if (!oTextPr.GetFontFamily())
+							{
+								oTextPr.RFonts.SetAll("Arial");
+							}
+							oTextPr.Color = AscCommonWord.g_oDocumentDefaultStrokeColor.Copy();
+						}
+						arrNumberingLvl.push(arrOfLvls);
 					}
 					default:
 					{
@@ -9957,326 +10174,306 @@
 					}
 				}
 			}
-
-
 		}, this);
-		return arrayOfBullets;
+		return arrNumberingLvl;
 	}
 
-	CBulletPreviewDrawer.prototype.getClearCanvasForPreview = function (divId) {
-		if (!divId) return;
-		const divElement = document.getElementById(divId);
-		const width_px = divElement.clientWidth;
-		const height_px = divElement.clientHeight;
+	CBulletPreviewDrawer.prototype.drawSingleBullet = function (sDivId, oLvl)
+	{
+		const oCanvas = this.getClearCanvasForPreview(sDivId);
+		if (!oCanvas) return;
 
-		let canvas = divElement.firstChild;
-		if (!canvas)
+		const nWidth_px = parseFloat(oCanvas.style.width);
+		const nHeight_px = parseFloat(oCanvas.style.height);
+		const oContext = oCanvas.getContext("2d");
+		oContext.beginPath();
+
+		const nLineDistance = 32;
+
+		const oTextPr = oLvl.TextPr.Copy();
+		oTextPr.FontSize = oTextPr.FontSizeCS = ((2 * nLineDistance * 72 / 96) >> 0) / 2;
+		if ((oLvl instanceof AscCommonWord.CPresentationBullet) && oLvl.m_sSrc)
 		{
-			canvas = document.createElement('canvas');
-			canvas.style.cssText = "padding:0;margin:0;user-select:none;";
-			canvas.style.width = width_px + "px";
-			canvas.style.height = height_px + "px";
-			if (width_px > 0 && height_px > 0)
-				divElement.appendChild(canvas);
+			const oFormatBullet = new AscFormat.CBullet();
+			oFormatBullet.fillBulletImage(oLvl.m_sSrc);
+			oFormatBullet.drawSquareImage(sDivId, 0.125);
 		}
-
-		canvas.width = AscCommon.AscBrowser.convertToRetinaValue(width_px, true);
-		canvas.height = AscCommon.AscBrowser.convertToRetinaValue(height_px, true);
-
-		const ctx = canvas.getContext("2d");
-		ctx.fillStyle = "#FFFFFF";
-		ctx.fillRect(0, 0, canvas.width, canvas.height);
-		return canvas;
-	}
-
-	CBulletPreviewDrawer.prototype.drawSingleBullet = function (divId, numberInfo) {
-		const canvas = this.getClearCanvasForPreview(divId);
-		if (!canvas) return;
-
-		const width_px = parseFloat(canvas.style.width);
-		const height_px = parseFloat(canvas.style.height);
-		const ctx = canvas.getContext("2d");
-		ctx.beginPath();
-
-		const line_distance = 32, x = 0, y = 0;
-		const bullet = numberInfo.bullet;
-
-
-		const textPr = numberInfo.textPr.Copy();
-		textPr.FontSize = textPr.FontSizeCS = ((2 * line_distance * 72 / 96) >> 0) / 2;
-		if (bullet.m_sSrc) {
-			const formatBullet = new AscFormat.CBullet();
-			formatBullet.fillBulletImage(bullet.m_sSrc);
-			formatBullet.drawSquareImage(divId, 0.125);
-		} else {
-			const text = bullet.getDrawingText();
-			AscCommon.g_oTextMeasurer.SetTextPr(textPr);
+		else
+		{
+			const sText = oLvl.GetStringByLvlText();
+			AscCommon.g_oTextMeasurer.SetTextPr(oTextPr);
 			AscCommon.g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
-			const oInfo = AscCommon.g_oTextMeasurer.Measure2Code(text.getUnicodeIterator().value());
+			const oInfo = AscCommon.g_oTextMeasurer.Measure2Code(sText.getUnicodeIterator().value());
 
-			const x = (width_px >> 1) - Math.round((oInfo.WidthG / 2 + oInfo.rasterOffsetX) * AscCommon.g_dKoef_mm_to_pix);
-			const y = (width_px >> 1) + Math.round((oInfo.Height / 2 + (oInfo.Ascent - oInfo.Height + oInfo.rasterOffsetY)) * AscCommon.g_dKoef_mm_to_pix);
-			this.privateGetParagraphByString(text, textPr, x, y, line_distance, ctx, width_px, height_px);
+			const nX = (nWidth_px >> 1) - Math.round((oInfo.WidthG / 2 + oInfo.rasterOffsetX) * AscCommon.g_dKoef_mm_to_pix);
+			const nY = (nWidth_px >> 1) + Math.round((oInfo.Height / 2 + (oInfo.Ascent - oInfo.Height + oInfo.rasterOffsetY)) * AscCommon.g_dKoef_mm_to_pix);
+			this.privateGetParagraphByString(sText, oTextPr, nX, nY, nLineDistance, oContext, nWidth_px, nHeight_px);
 		}
-	}
-
-	CBulletPreviewDrawer.prototype.drawImageBulletsWithLines = function (fullImageSrc, textPr, x, y, lineHeight, ctx, w, h) {
-		const rPR = AscCommon.AscBrowser.retinaPixelRatio;
-		const sizes = AscCommon.getSourceImageSize(fullImageSrc);
-
-		const imageHeight = sizes.height * rPR;
-		const imageWidth = sizes.width * rPR;
-		const adaptImageHeight = lineHeight * rPR;
-		const adaptImageWidth = (imageWidth * adaptImageHeight / (imageHeight ? imageHeight : 1));
-
-		const backTextWidth = adaptImageWidth / rPR + 4;
-		ctx.fillStyle = "#FFFFFF";
-		ctx.fillRect(Math.round(rPR * x), Math.round((y - lineHeight) * rPR), Math.round(backTextWidth * rPR), Math.round((lineHeight + (lineHeight >> 1)) * rPR));
-		ctx.beginPath();
-
-		const graphics = new AscCommon.CGraphics();
-		graphics.init(ctx,
-			AscCommon.AscBrowser.convertToRetinaValue(w, true),
-			AscCommon.AscBrowser.convertToRetinaValue(h, true),
-			w * AscCommon.g_dKoef_pix_to_mm, h * AscCommon.g_dKoef_pix_to_mm);
-		graphics.m_oFontManager = AscCommon.g_fontManager;
-
-		graphics.drawImage(fullImageSrc, x * rPR, y * rPR - (adaptImageHeight * (0.85)), adaptImageWidth, adaptImageHeight);
-	}
-
-	CBulletPreviewDrawer.prototype.drawBulletsWithLines = function (divId, numberInfo, countOfLines) {
-		const canvas = this.getClearCanvasForPreview(divId);
-		if (!canvas) return;
-		const textPr = numberInfo.textPr.Copy();
-		const bullet = numberInfo.bullet;
-		const width_px = parseFloat(canvas.style.width);
-		const height_px = parseFloat(canvas.style.height);
-		const ctx = canvas.getContext("2d");
-		ctx.beginPath();
-
-		const rPR = AscCommon.AscBrowser.retinaPixelRatio;
-		const offsetBase = 4;
-		const line_w = 2;
-		// считаем расстояние между линиями
-		const line_distance = (((height_px - (offsetBase << 2)) - line_w * countOfLines) / countOfLines) >> 0;
-		// убираем погрешность в offset
-		const offset = (height_px - (line_w * countOfLines + line_distance * countOfLines)) >> 1;
-
-		ctx.lineWidth = 2 * Math.round(rPR);
-		ctx.strokeStyle = "#CBCBCB";
-		const text_base_offset_x = offset + ((2.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
-
-		let y = offset + 11;
-		for (let j = 0; j < countOfLines; j++)
-		{
-			ctx.moveTo(Math.round(text_base_offset_x * rPR), Math.round(y * rPR)); ctx.lineTo(Math.round((width_px - offsetBase) * rPR), Math.round(y * rPR));
-			ctx.stroke();
-			ctx.beginPath();
-			const textYx =  text_base_offset_x - ((3.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
-			const	textYy = y + (line_w * 2.5);
-
-			if (bullet.m_sSrc) {
-				this.drawImageBulletsWithLines(bullet.m_sSrc, textPr, textYx, textYy, (line_distance - 4), ctx, width_px, height_px);
-			} else {
-				this.privateGetParagraphByString(bullet.getDrawingText(j + 1), textPr, textYx, textYy, (line_distance - 4), ctx, width_px, height_px);
-			}
-			y += (line_w + line_distance);
-		}
-	}
-
-	CBulletPreviewDrawer.prototype.drawNoneTextPreview = function (divId, info)
-	{
-		const canvas = this.getClearCanvasForPreview(divId);
-		if (!canvas) return;
-		const width_px = parseFloat(canvas.style.width);
-		const height_px = parseFloat(canvas.style.height);
-		const ctx = canvas.getContext("2d");
-		ctx.beginPath();
-
-
-		const lvl = info;
-		const text = lvl.bullet.getDrawingText();
-		const line_distance = (height_px === 80) ? (height_px / 5 - 1) : ((height_px >> 2) + ((text.length > 6) ? 1 : 2));
-
-
-
-		const oNewShape = new AscFormat.CShape();
-		oNewShape.createTextBody();
-		const par = oNewShape.txBody.content.GetAllParagraphs()[0];
-		par.MoveCursorToStartPos();
-		par.Pr = new AscCommonWord.CParaPr();
-
-		const parRun = new AscCommonWord.ParaRun(par);
-		const textPr = lvl.textPr.Copy();
-		textPr.FontSize = ((2 * line_distance * 72 / 96) >> 0) / 2;
-		parRun.Set_Pr(textPr);
-		parRun.AddText(text);
-		par.AddToContent(0, parRun);
-
-		par.Reset(0, 0, 1000, 1000, 0, 0, 1);
-		par.Recalculate_Page(0);
-
-		const bounds = par.Get_PageBounds(0);
-
-		const parW = par.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
-		const parH = (bounds.Bottom - bounds.Top);
-		const x = (width_px - (parW >> 0)) >> 1;
-		const y = (height_px >> 1) + (parH >> 0);
-
-		this.privateGetParagraphByString(text, textPr, x, y, line_distance, ctx, width_px, height_px);
-	}
-
-	CBulletPreviewDrawer.prototype.privateGetParagraphByString = function(text, textPr, x, y, lineHeight, ctx, w, h)
-	{
-		const api = this.api;
-
-		const oldViewMode = api.isViewMode;
-		const oldMarks = api.ShowParaMarks;
-
-		api.isViewMode = true;
-		api.ShowParaMarks = false;
-
-		const oNewShape = new AscFormat.CShape();
-		oNewShape.createTextBody();
-
-		const par = oNewShape.txBody.content.GetAllParagraphs()[0];
-		par.MoveCursorToStartPos();
-
-		//par.Pr = level.ParaPr.Copy();
-		par.Pr = new AscCommonWord.CParaPr();
-		textPr = textPr.Copy();
-		textPr.FontSize = textPr.FontSizeCS = ((2 * lineHeight * 72 / 96) >> 0) / 2;
-
-		const parRun = new AscCommonWord.ParaRun(par);
-		parRun.Set_Pr(textPr);
-		parRun.AddText(text);
-		par.AddToContent(0, parRun);
-
-		par.Reset(0, 0, 1000, 1000, 0, 0, 1);
-		par.Recalculate_Page(0);
-
-		const baseLineOffset = par.Lines[0].Y;
-		const parW = par.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
-
-		const yOffset = y - ((baseLineOffset * AscCommon.g_dKoef_mm_to_pix) >> 0);
-		const xOffset = x;
-
-		const backTextWidth = parW + 4; // 4 - чтобы линия никогде не была 'совсем рядом'
-
-		ctx.fillStyle = "#FFFFFF";
-		const rPR = AscCommon.AscBrowser.retinaPixelRatio;
-		ctx.fillRect(Math.round(rPR * xOffset), Math.round((y - lineHeight) * rPR), Math.round(backTextWidth * rPR), Math.round((lineHeight + (lineHeight >> 1)) * rPR));
-		ctx.beginPath();
-
-		ctx.save();
-		ctx.setTransform(1, 0, 0, 1, 0, 0);
-
-		const graphics = new AscCommon.CGraphics();
-		graphics.init(ctx,
-			AscCommon.AscBrowser.convertToRetinaValue(w, true),
-			AscCommon.AscBrowser.convertToRetinaValue(h, true),
-			w * AscCommon.g_dKoef_pix_to_mm, h * AscCommon.g_dKoef_pix_to_mm);
-		graphics.m_oFontManager = AscCommon.g_fontManager;
-
-		graphics.m_oCoordTransform.tx = AscCommon.AscBrowser.convertToRetinaValue(xOffset, true);
-		graphics.m_oCoordTransform.ty = AscCommon.AscBrowser.convertToRetinaValue(yOffset, true);
-
-		graphics.transform(1, 0, 0, 1, 0, 0);
-		par.Draw(0, graphics);
-
-		ctx.restore();
-		api.isViewMode = oldViewMode;
-		api.ShowParaMarks = oldMarks;
 	};
 
-	CBulletPreviewDrawer.prototype.checkFonts = function (callback)
+	CBulletPreviewDrawer.prototype.drawImageBulletsWithLines = function (sFullImageSrc, oTextPr, nX, nY, nLineHeight, oContext, nWidth, nHeight) {
+		const nRPR = AscCommon.AscBrowser.retinaPixelRatio;
+		const oSizes = AscCommon.getSourceImageSize(sFullImageSrc);
+
+		const nImageHeight = oSizes.height * nRPR;
+		const nImageWidth = oSizes.width * nRPR;
+		const nAdaptImageHeight = nLineHeight * nRPR;
+		const nAdaptImageWidth = (nImageWidth * nAdaptImageHeight / (nImageHeight ? nImageHeight : 1));
+
+		const nBackTextWidth = nAdaptImageWidth / nRPR + 4;
+		oContext.fillStyle = "#FFFFFF";
+		oContext.fillRect(Math.round(nRPR * nX), Math.round((nY - nLineHeight) * nRPR), Math.round(nBackTextWidth * nRPR), Math.round((nLineHeight + (nLineHeight >> 1)) * nRPR));
+		oContext.beginPath();
+
+		const oGraphics = new AscCommon.CGraphics();
+		oGraphics.init(oContext,
+			AscCommon.AscBrowser.convertToRetinaValue(nWidth, true),
+			AscCommon.AscBrowser.convertToRetinaValue(nHeight, true),
+			nWidth * AscCommon.g_dKoef_pix_to_mm, nHeight * AscCommon.g_dKoef_pix_to_mm);
+		oGraphics.m_oFontManager = AscCommon.g_fontManager;
+
+		oGraphics.drawImage(sFullImageSrc, nX * nRPR, nY * nRPR - (nAdaptImageHeight * (0.85)), nAdaptImageWidth, nAdaptImageHeight);
+	};
+
+
+	CBulletPreviewDrawer.prototype.drawBulletsWithLines = function (sDivId, oLvl)
 	{
-		this.isNeedCheckFonts = false;
-		const api = this.api;
-		const fontsDict = {};
-		for (let i = 0, count = this.arrayOfBullets.length; i < count; i++)
+		const nCountOfLines = this.m_nCountOfLines;
+		const oCanvas = this.getClearCanvasForPreview(sDivId);
+		if (!oCanvas) return;
+		const oTextPr = oLvl.TextPr.Copy();
+
+		const nWidth_px = parseFloat(oCanvas.style.width);
+		const nHeight_px = parseFloat(oCanvas.style.height);
+		const oContext = oCanvas.getContext("2d");
+		oContext.beginPath();
+
+		const nRPR = AscCommon.AscBrowser.retinaPixelRatio;
+		const nOffsetBase = 4;
+		const nLineWidth = 2;
+		// считаем расстояние между линиями
+		const nLineDistance = (((nHeight_px - (nOffsetBase << 2)) - nLineWidth * nCountOfLines) / nCountOfLines) >> 0;
+		// убираем погрешность в offset
+		const nOffset = (nHeight_px - (nLineWidth * nCountOfLines + nLineDistance * nCountOfLines)) >> 1;
+
+		oContext.lineWidth = 2 * Math.round(nRPR);
+		oContext.strokeStyle = "#CBCBCB";
+		const nTextBaseOffsetX = nOffset + ((2.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
+
+		let nY = nOffset + 11;
+		for (let j = 0; j < nCountOfLines; j++)
 		{
-			const bullet = this.arrayOfBullets[i].bullet;
-			const text = bullet.getDrawingText();
-			if (text)
+			oContext.moveTo(Math.round(nTextBaseOffsetX * nRPR), Math.round(nY * nRPR)); oContext.lineTo(Math.round((nWidth_px - nOffsetBase) * nRPR), Math.round(nY * nRPR));
+			oContext.stroke();
+			oContext.beginPath();
+			const nTextYx =  nTextBaseOffsetX - ((3.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
+			const nTextYy = nY + (nLineWidth * 2.5);
+
+			if ((oLvl instanceof AscCommonWord.CPresentationBullet) && oLvl.m_sSrc)
 			{
-				AscFonts.FontPickerByCharacter.checkTextLight(text);
+				this.drawImageBulletsWithLines(oLvl.m_sSrc, oTextPr, nTextYx, nTextYy, (nLineDistance - 4), oContext, nWidth_px, nHeight_px);
 			}
-			const textPr = this.arrayOfBullets[i].textPr;
-			if (textPr && textPr.RFonts)
+			else
 			{
-				if (textPr.RFonts.Ascii) fontsDict[textPr.RFonts.Ascii.Name] = true;
-				if (textPr.RFonts.EastAsia) fontsDict[textPr.RFonts.EastAsia.Name] = true;
-				if (textPr.RFonts.HAnsi) fontsDict[textPr.RFonts.HAnsi.Name] = true;
-				if (textPr.RFonts.CS) fontsDict[textPr.RFonts.CS.Name] = true;
+				this.privateGetParagraphByString(oLvl.GetStringByLvlText(j + 1), oTextPr, nTextYx, nTextYy, (nLineDistance - 4), oContext, nWidth_px, nHeight_px);
 			}
+			nY += (nLineWidth + nLineDistance);
 		}
+	};
 
-		const fonts = [];
-		for (let familyName in fontsDict)
-		{
-			fonts.push(new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(familyName), 0, "", 0, null));
-		}
-		AscFonts.FontPickerByCharacter.extendFonts(fonts);
+	CBulletPreviewDrawer.prototype.drawNoneTextPreview = function (sDivId, oLvl)
+	{
+		const oCanvas = this.getClearCanvasForPreview(sDivId);
+		if (!oCanvas) return;
+		const nWidth_px = parseFloat(oCanvas.style.width);
+		const nHeight_px = parseFloat(oCanvas.style.height);
+		const oContext = oCanvas.getContext("2d");
+		oContext.beginPath();
 
-		if (false === AscCommon.g_font_loader.CheckFontsNeedLoading(fonts))
-		{
-			return callback();
-		}
 
-		const loader = new AscCommon.CGlobalFontLoader();
-		loader.put_Api(api);
-		loader.LoadDocumentFonts2(fonts, Asc.c_oAscAsyncActionType.Information, function() {
-			callback();
-		});
-	}
+		const sText = oLvl.GetStringByLvlText();
+		const nLineDistance = (nHeight_px === 80) ? (nHeight_px / 5 - 1) : ((nHeight_px >> 2) + ((sText.length > 6) ? 1 : 2));
 
-	CBulletPreviewDrawer.prototype.draw = function ()
+
+
+		const oNewShape = new AscFormat.CShape();
+		oNewShape.createTextBody();
+		const oParagraph = oNewShape.txBody.content.GetAllParagraphs()[0];
+		oParagraph.MoveCursorToStartPos();
+		oParagraph.Pr = new AscCommonWord.CParaPr();
+
+		const oParaRun = new AscCommonWord.ParaRun(oParagraph);
+		const oTextPr = oLvl.TextPr.Copy();
+		oTextPr.FontSize = ((2 * nLineDistance * 72 / 96) >> 0) / 2;
+		oParaRun.Set_Pr(oTextPr);
+		oParaRun.AddText(sText);
+		oParagraph.AddToContent(0, oParaRun);
+
+		oParagraph.Reset(0, 0, 1000, 1000, 0, 0, 1);
+		oParagraph.Recalculate_Page(0);
+
+		const oBounds = oParagraph.Get_PageBounds(0);
+
+		const nParagraphWidth = oParagraph.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
+		const nParagraphHeight = (oBounds.Bottom - oBounds.Top);
+		const nX = (nWidth_px - (nParagraphWidth >> 0)) >> 1;
+		const nY = (nHeight_px >> 1) + (nParagraphHeight >> 0);
+
+		this.privateGetParagraphByString(sText, oTextPr, nX, nY, nLineDistance, oContext, nWidth_px, nHeight_px);
+	};
+
+
+	CBulletPreviewDrawer.prototype._draw = function ()
 	{
 		AscFormat.ExecuteNoHistory(function () {
-			const _this = this;
-			if (this.isNeedCheckFonts)
+			for (let i = 0; i < this.m_arrInfoOfDrawings.length; i++)
 			{
-				this.checkFonts(function () {
-					_this.draw();
-				});
-				return;
+				const oDrawingInfo = this.m_arrInfoOfDrawings[i];
+				const sId = oDrawingInfo["divId"];
+				const oLvl = this.m_arrNumberingLvl[i];
+				if (this.m_nType === 0)
+				{
+					if (oDrawingInfo["type"] === asc_PreviewBulletType.text)
+					{
+						this.drawNoneTextPreview(sId, oLvl);
+					}
+					else
+					{
+						this.drawSingleBullet(sId, oLvl);
+					}
+				}
+				else if (this.m_nType === 1)
+				{
+					if (oDrawingInfo["type"] === asc_PreviewBulletType.text)
+					{
+						this.drawNoneTextPreview(sId, oLvl);
+					}
+					else
+					{
+						this.drawBulletsWithLines(sId, oLvl);
+					}
+				}
+				else if (this.m_nType === 2)
+				{
+					this.drawMultiLevelBullet(sId, oLvl);
+				}
 			}
+		}, this, []);
 
-			for (let i = 0; i < this.infoOfDrawings.length; i++)
-			{
-				const drawingInfo = this.infoOfDrawings[i];
-				const id = drawingInfo["divId"];
-				const currentBullet = this.arrayOfBullets[i];
-				if (this.type === 0)
-				{
-					if (drawingInfo["type"] === asc_PreviewBulletType.text)
-					{
-						this.drawNoneTextPreview(id, currentBullet);
-					}
-					else
-					{
-						this.drawSingleBullet(id, currentBullet);
-					}
-				}
-				else if (this.type === 1)
-				{
-					if (drawingInfo["type"] === asc_PreviewBulletType.text)
-					{
-						this.drawNoneTextPreview(id, currentBullet);
-					}
-					else
-					{
-						this.drawBulletsWithLines(id, currentBullet, 3);
-					}
-				}
-				else if (this.type === 2)
-				{
-					//TODO: add multi level support
-				}
-			}
-		}, this);
+
 	};
+	
+	CBulletPreviewDrawer.prototype.drawMultiLevelBullet = function (sDivId, arrLvls)
+	{
+		const nCountOfLines = arrLvls.length;
+		const oCanvas = this.getClearCanvasForPreview(sDivId);
+		if (!oCanvas) return;
+
+
+		const nWidth_px = parseFloat(oCanvas.style.width);
+		const nHeight_px = parseFloat(oCanvas.style.height);
+		const oContext = oCanvas.getContext("2d");
+		oContext.beginPath();
+
+		const nRPR = AscCommon.AscBrowser.retinaPixelRatio;
+		const nOffsetBase = 4;
+		const nLineWidth = 2;
+		// считаем расстояние между линиями
+		const nLineDistance = (((nHeight_px - (nOffsetBase << 2)) - nLineWidth * nCountOfLines) / nCountOfLines) >> 0;
+		// убираем погрешность в offset
+		const nOffset = (nHeight_px - (nLineWidth * nCountOfLines + nLineDistance * nCountOfLines)) >> 1;
+
+		oContext.lineWidth = 2 * Math.round(nRPR);
+		oContext.strokeStyle = "#CBCBCB";
+		let nTextBaseOffsetX = nOffset + ((2.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
+		const nTextBaseOffsetDelta = (2.25 * AscCommon.g_dKoef_mm_to_pix) >> 0;
+
+		let nY = nOffset + 11;
+		for (let i = 0; i < nCountOfLines; i += 1)
+		{
+			const oLvl = arrLvls[i];
+			const oTextPr = oLvl.TextPr.Copy();
+			oContext.moveTo(Math.round(nTextBaseOffsetX * nRPR), Math.round(nY * nRPR)); oContext.lineTo(Math.round((nWidth_px - nOffsetBase) * nRPR), Math.round(nY * nRPR));
+			oContext.stroke();
+			oContext.beginPath();
+			const nTextYx =  nTextBaseOffsetX - ((3.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
+			const nTextYy = nY + (nLineWidth * 2.5);
+
+			if ((oLvl instanceof AscCommonWord.CPresentationBullet) && oLvl.m_sSrc)
+			{
+				this.drawImageBulletsWithLines(oLvl.m_sSrc, oTextPr, nTextYx, nTextYy, (nLineDistance - 4), oContext, nWidth_px, nHeight_px);
+			}
+			else
+			{
+				this.privateGetParagraphByString(oLvl.GetStringByLvlText(i + 1), oTextPr, nTextYx, nTextYy, (nLineDistance - 4), oContext, nWidth_px, nHeight_px);
+			}
+			nY += (nLineWidth + nLineDistance);
+			nTextBaseOffsetX += nTextBaseOffsetDelta;
+		}
+	};
+
+	function CBulletPreviewDrawerChangeList(arrId, arrAscLvl) {
+		CBulletPreviewDrawerBase.call(this);
+		this.m_arrNumberingLvl = arrAscLvl.Lvl;
+		this.m_arrId = arrId;
+		this.m_bIsOnes = this.checkIsOnes(this.m_arrNumberingLvl);
+	}
+	CBulletPreviewDrawerChangeList.prototype = Object.create(CBulletPreviewDrawerBase.prototype);
+	CBulletPreviewDrawerChangeList.prototype.constructor = CBulletPreviewDrawerChangeList;
+
+
+	CBulletPreviewDrawerChangeList.prototype.checkIsOnes = function (arrAscLvl)
+	{
+		const oLvl = arrAscLvl[2];
+		if (oLvl)
+		{
+			const text = oLvl.GetStringByLvlText(1);
+			return text.indexOf("1.1") !== -1;
+		}
+		return false;
+	};
+	CBulletPreviewDrawerChangeList.prototype._draw = function ()
+	{
+		AscFormat.ExecuteNoHistory(function ()
+		{
+			const nAmountOfPreview = Math.min(this.m_arrNumberingLvl.length, this.m_arrId.length);
+			const nOffsetBase = 5;
+			const nLineWidth = 2;
+			const nTextBaseOffsetDist = ( (this.m_bIsOnes ? 2.25 : 3.25) * AscCommon.g_dKoef_mm_to_pix) >> 0;
+
+			for (let i = 0; i < nAmountOfPreview; i += 1)
+			{
+				const oLvl = this.m_arrNumberingLvl[i];
+				const oTextPr = oLvl.GetTextPr().Copy();
+				oLvl.put_Align(AscCommon.Left);
+				const sText = oLvl.GetStringByLvlText(1);
+
+				const sDivId = this.m_arrId[i];
+				const oCanvas = this.getClearCanvasForPreview(sDivId);
+				if (!oCanvas) return;
+				const oContext = oCanvas.getContext("2d");
+
+				const nWidth_px = parseFloat(oCanvas.style.width);
+				const nHeight_px = parseFloat(oCanvas.style.height);
+				const nOffset = (nHeight_px - (nLineWidth << 1)) >> 1;
+				const nY = (nHeight_px >> 1) - (nLineWidth >> 1);
+				const nTextBaseOffsetX = (nOffset + ((3.25 * AscCommon.g_dKoef_mm_to_pix) >> 0)) + nTextBaseOffsetDist * i;
+
+				const nRPR = AscCommon.AscBrowser.retinaPixelRatio;
+				oContext.lineWidth = 2 * Math.round(nRPR);
+				oContext.strokeStyle = "#CBCBCB";
+				const nTextYx = nTextBaseOffsetX - ((4.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
+				const nTextYy = nY + (nLineWidth << 1);
+				oContext.moveTo(Math.round(nTextBaseOffsetX * nRPR), Math.round(nY * nRPR)); oContext.lineTo(Math.round((nWidth_px - nOffsetBase) * nRPR), Math.round(nY * nRPR));
+				oContext.stroke();
+				oContext.beginPath();
+
+				this.privateGetParagraphByString(sText, oTextPr, nTextYx, nTextYy, (nHeight_px >> 1), oContext, nWidth_px, nHeight_px, oLvl.get_Suff(), oLvl.get_Align());
+			}
+		}, this, []);
+
+	};
+
 
 	window.Asc.g_signature_drawer = null;
 	function CSignatureDrawer(id, api, w, h)
@@ -12931,6 +13128,7 @@
 	window["AscCommon"].CEventListenerInfo = CEventListenerInfo;
 
 	window["AscCommon"].CBulletPreviewDrawer = window["AscCommon"]["CBulletPreviewDrawer"] = CBulletPreviewDrawer;
+	window["AscCommon"].CBulletPreviewDrawerChangeList = window["AscCommon"]["CBulletPreviewDrawerChangeList"] = CBulletPreviewDrawerChangeList;
 
 	window["AscCommon"].CSignatureDrawer = window["AscCommon"]["CSignatureDrawer"] = CSignatureDrawer;
 	var prot = CSignatureDrawer.prototype;

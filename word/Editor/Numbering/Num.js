@@ -547,7 +547,7 @@ CNum.prototype.Measure = function(oContext, nLvl, oNumInfo, oNumTextPr, oTheme)
 		{
 			case numbering_lvltext_Text:
 			{
-				var FontSlot = AscWord.GetFontSlotByTextPr(arrText[nTextIndex].Value.charCodeAt(0), oNumTextPr);
+				var FontSlot = AscWord.GetFontSlotByTextPr(arrText[nTextIndex].Value.getUnicodeIterator().value(), oNumTextPr);
 
 				oContext.SetFontSlot(FontSlot, dKoef);
 				nX += oContext.Measure(arrText[nTextIndex].Value).Width;
@@ -558,11 +558,11 @@ CNum.prototype.Measure = function(oContext, nLvl, oNumInfo, oNumTextPr, oTheme)
 			{
 				oContext.SetFontSlot(AscWord.fontslot_ASCII, dKoef);
 				var nCurLvl = arrText[nTextIndex].Value;
-				var langForTextNumbering = oNumTextPr.Lang;
+				var sLangForTextNumbering = oNumTextPr.Lang;
 				var T = "";
 
 				if (nCurLvl < oNumInfo.length)
-					T = this.private_GetNumberedLvlText(nCurLvl, oNumInfo[nCurLvl], oLvl.IsLegalStyle() && nCurLvl < nLvl, langForTextNumbering);
+					T = this.private_GetNumberedLvlText(nCurLvl, oNumInfo[nCurLvl], oLvl.IsLegalStyle() && nCurLvl < nLvl, sLangForTextNumbering);
 
 				for (var iter = T.getUnicodeIterator(); iter.check(); iter.next())
 				{

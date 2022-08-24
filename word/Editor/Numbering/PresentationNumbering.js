@@ -336,7 +336,7 @@ CPresentationBullet.prototype.Get_StartAt = function()
 	return this.m_nStartAt;
 };
 
-CPresentationBullet.prototype.getDrawingText = function (Num) {
+CPresentationBullet.prototype.GetDrawingText = function (Num) {
 	var sT = "";
 	Num = Num || 1;
 	if (this.m_nType === AscFormat.numbering_presentationnumfrmt_Char)
@@ -357,7 +357,7 @@ CPresentationBullet.prototype.getDrawingText = function (Num) {
 CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Theme)
 {
 	this.m_nNum = Num;
-	this.m_sString = this.getDrawingText(Num);
+	this.m_sString = this.GetDrawingText(Num);
 	var dFontSize = FirstTextPr.FontSize;
 	if ( false === this.m_bSizeTx )
 	{
@@ -580,6 +580,7 @@ CPresentationBullet.prototype.IsNumbered = function()
 	return this.m_nType >= AscFormat.numbering_presentationnumfrmt_AlphaLcParenBoth
 		&& this.m_nType <= AscFormat.numbering_presentationnumfrmt_ThaiNumPeriod;
 };
+CPresentationBullet.prototype.GetStringByLvlText = CPresentationBullet.prototype.GetDrawingText;
 CPresentationBullet.prototype.IsNone = function()
 {
 	return this.m_nType === AscFormat.numbering_presentationnumfrmt_None;

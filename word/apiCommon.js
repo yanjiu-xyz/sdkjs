@@ -1838,6 +1838,7 @@
 	{
 		return this.TextPr;
 	};
+	CAscNumberingLvl.prototype.GetTextPr = CAscNumberingLvl.prototype.get_TextPr;
 	CAscNumberingLvl.prototype.get_ParaPr = function ()
 	{
 		return this.ParaPr;
@@ -1910,7 +1911,32 @@
 	{
 		return this.Suff;
 	};
-
+	CAscNumberingLvl.prototype.GetStringByLvlText = function (nNum)
+	{
+		const arrResult = [];
+		for (let i = 0; i < this.Text.length; i += 1)
+		{
+			const oNumberingLvlText = this.Text[i];
+			switch (oNumberingLvlText.Type) {
+				case Asc.c_oAscNumberingLvlTextType.Text:
+				{
+					arrResult.push(oNumberingLvlText.get_Value());
+					break;
+				}
+				case Asc.c_oAscNumberingLvlTextType.Num:
+				{
+					const nFormat = AscFormat.isRealNumber(this.get_Format()) ? this.get_Format() : Asc.c_oAscNumberingFormat.Decimal;
+					arrResult.push(AscCommon.IntToNumberFormat(nNum, nFormat, this.get_OLang()));
+					break;
+				}
+				default:
+				{
+					break;
+				}
+			}
+		}
+		return arrResult.join('');
+	}
 	window['Asc']['CAscNumberingLvl']                 = window['Asc'].CAscNumberingLvl = CAscNumberingLvl;
 	CAscNumberingLvl.prototype['get_LvlNum']          = CAscNumberingLvl.prototype.get_LvlNum;
 	CAscNumberingLvl.prototype['get_Format']          = CAscNumberingLvl.prototype.get_Format;

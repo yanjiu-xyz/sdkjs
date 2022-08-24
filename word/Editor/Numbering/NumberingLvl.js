@@ -976,6 +976,53 @@ CNumberingLvl.prototype.FillFromAscNumberingLvl = function(oAscLvl)
 	if (undefined !== oAscLvl.get_PStyle())
 		this.PStyle = oAscLvl.get_PStyle();
 };
+CNumberingLvl.prototype.FillLvlTextByNum = function(nNum, sPrefix, sPostfix)
+{
+	sPrefix = sPrefix || '';
+	sPostfix = sPostfix || '';
+	const nFormat = AscFormat.isRealNumber(this.GetFormat()) ? this.GetFormat() : Asc.c_oAscNumberingFormat.Decimal;
+
+	for (const oUnicodeIterator = sPrefix.getUnicodeIterator(); oUnicodeIterator.check(); oUnicodeIterator.next())
+	{
+		this.LvlText.push(new CNumberingLvlTextString(AscCommon.encodeSurrogateChar(oUnicodeIterator.value())));
+	}
+	if (AscFormat.isRealNumber(nNum))
+	{
+		const sNum = AscCommon.IntToNumberFormat(nNum, nFormat, this.GetOLang());
+		for (const oUnicodeIterator = sNum.getUnicodeIterator(); oUnicodeIterator.check(); oUnicodeIterator.next())
+		{
+			this.LvlText.push(new CNumberingLvlTextString(AscCommon.encodeSurrogateChar(oUnicodeIterator.value())));
+		}
+	}
+	for (const oUnicodeIterator = sPostfix.getUnicodeIterator(); oUnicodeIterator.check(); oUnicodeIterator.next())
+	{
+		this.LvlText.push(new CNumberingLvlTextString(AscCommon.encodeSurrogateChar(oUnicodeIterator.value())));
+	}
+};
+
+CNumberingLvl.prototype.GetStringByLvlText = function (nNum)
+{
+	const arrResult = [];
+	for (let i = 0; i < this.LvlText.length; i += 1)
+	{
+		const oNumberingLvlText = this.LvlText[i];
+
+		if (oNumberingLvlText.IsText())
+		{
+			arrResult.push(oNumberingLvlText.GetValue());
+		}
+		else
+		{
+			if (AscFormat.isRealNumber(nNum))
+			{
+				const nFormat = AscFormat.isRealNumber(this.GetFormat()) ? this.GetFormat() : Asc.c_oAscNumberingFormat.Decimal;
+				arrResult.push(AscCommon.IntToNumberFormat(nNum, nFormat, this.GetOLang()));
+			}
+		}
+	}
+
+	return arrResult.join('');
+};
 CNumberingLvl.prototype.WriteToBinary = function(oWriter)
 {
 	// Long               : Jc
