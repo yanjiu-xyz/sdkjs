@@ -49,6 +49,12 @@ var c_oAscMultiLevelNumbering = {
 	MultiLevel2 : 102,
 	MultiLevel3 : 103
 };
+window["Asc"]["c_oAscMultiLevelNumbering"] = window["Asc"].c_oAscMultiLevelNumbering = c_oAscMultiLevelNumbering;
+c_oAscMultiLevelNumbering["Bullet"]      = c_oAscMultiLevelNumbering.Bullet;
+c_oAscMultiLevelNumbering["Numbered"]    = c_oAscMultiLevelNumbering.Numbered;
+c_oAscMultiLevelNumbering["MultiLevel1"] = c_oAscMultiLevelNumbering.MultiLevel1;
+c_oAscMultiLevelNumbering["MultiLevel2"] = c_oAscMultiLevelNumbering.MultiLevel2;
+c_oAscMultiLevelNumbering["MultiLevel3"] = c_oAscMultiLevelNumbering.MultiLevel3;
 
 /** enum {number} */
 var c_oAscNumberingLevel = {

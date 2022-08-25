@@ -9888,7 +9888,8 @@
 		text: 0,
 		char: 1,
 		image: 2,
-		number: 3
+		number: 3,
+		multiLevel: 4
 	}
 	window["Asc"].asc_PreviewBulletType = window["Asc"]["asc_PreviewBulletType"] = asc_PreviewBulletType;
 	asc_PreviewBulletType["text"] = asc_PreviewBulletType.text;
@@ -10024,13 +10025,29 @@
 		oApi.ShowParaMarks = bOldMarks;
 	};
 
+	CBulletPreviewDrawerBase.prototype.checkEachLvl = function (callback)
+	{
+		for (let i = 0; i < this.m_arrNumberingLvl.length; i += 1)
+		{
+			if (Array.isArray(this.m_arrNumberingLvl[i]))
+			{
+				for (let j = 0; j < this.m_arrNumberingLvl[i].length; j += 1)
+				{
+					return callback(this.m_arrNumberingLvl[i][j]);
+				}
+			}
+			else
+			{
+				return callback(this.m_arrNumberingLvl[i]);
+			}
+		}
+	};
+
 	CBulletPreviewDrawerBase.prototype.checkFonts = function (fCallback)
 	{
 		const oApi = this.m_oApi;
 		const oFontsDict = {};
-		for (let i = 0, nCount = this.m_arrNumberingLvl.length; i < nCount; i++)
-		{
-			const oLvl = this.m_arrNumberingLvl[i];
+		this.checkEachLvl(function (oLvl) {
 			const sText = oLvl.GetStringByLvlText();
 			if (sText)
 			{
@@ -10044,7 +10061,7 @@
 				if (oTextPr.RFonts.HAnsi) oFontsDict[oTextPr.RFonts.HAnsi.Name] = true;
 				if (oTextPr.RFonts.CS) oFontsDict[oTextPr.RFonts.CS.Name] = true;
 			}
-		}
+		});
 
 		const arrFonts = [];
 		for (let sFamilyName in oFontsDict)
@@ -10078,11 +10095,11 @@
 	function CBulletPreviewDrawer(arrInfoOfDrawings, nType)
 	{
 		CBulletPreviewDrawerBase.call(this);
-		this.m_arrNumberingLvl = this.getLvlArrayFromPreviewInfo(arrInfoOfDrawings);
 		this.m_arrInfoOfDrawings = arrInfoOfDrawings;
 		this.m_nType = nType;
 		this.m_nCountOfLines = 3;
 		this.m_oApi = editor || Asc.editor || window["Asc"]["editor"];
+		this.m_arrNumberingLvl = this.getLvlArrayFromPreviewInfo(arrInfoOfDrawings);
 	}
 	CBulletPreviewDrawer.prototype = Object.create(CBulletPreviewDrawerBase.prototype);
 	CBulletPreviewDrawer.prototype.constructor = CBulletPreviewDrawer;
@@ -10094,7 +10111,7 @@
 		{
 			for (let i = 0; i < arrInfoOfDrawings.length; i += 1)
 			{
-				const oLvl = new CNumberingLvl();
+				const oLvl = new AscCommonWord.CNumberingLvl();
 				const oTextPr = oLvl.GetTextPr();
 				oTextPr.Color = AscCommonWord.g_oDocumentDefaultStrokeColor.Copy();
 				const oDrawInfo = arrInfoOfDrawings[i];
@@ -10103,7 +10120,7 @@
 				{
 					case asc_PreviewBulletType.text:
 					{
-						const oLvl = new CNumberingLvl();
+						const oLvl = new AscCommonWord.CNumberingLvl();
 						const oTextPr = oLvl.GetTextPr();
 						oTextPr.Color = AscCommonWord.g_oDocumentDefaultStrokeColor.Copy();
 
@@ -10117,7 +10134,7 @@
 					}
 					case asc_PreviewBulletType.char:
 					{
-						const oLvl = new CNumberingLvl();
+						const oLvl = new AscCommonWord.CNumberingLvl();
 						const oTextPr = oLvl.GetTextPr();
 						oTextPr.Color = AscCommonWord.g_oDocumentDefaultStrokeColor.Copy();
 
@@ -10141,7 +10158,7 @@
 					}
 					case asc_PreviewBulletType.number:
 					{
-						const oLvl = new CNumberingLvl();
+						const oLvl = new AscCommonWord.CNumberingLvl();
 						const oTextPr = oLvl.GetTextPr();
 						oTextPr.Color = AscCommonWord.g_oDocumentDefaultStrokeColor.Copy();
 
@@ -10154,11 +10171,11 @@
 					case asc_PreviewBulletType.multiLevel:
 					{
 						const arrOfLvls = [];
-						const nTypeofMultiLevel = oDrawInfo["multiLevelType"];
+						const nTypeofMultiLevel = oDrawInfo["numberingType"];
 						for (let i = 0; i < this.m_nCountOfLines;i += 1)
 						{
-							const oLvl = new CNumberingLvl();
-							oLvl.InitDefault(i + 1, nTypeofMultiLevel)
+							const oLvl = new AscCommonWord.CNumberingLvl();
+							oLvl.InitDefault(i, nTypeofMultiLevel)
 							arrOfLvls.push(oLvl);
 							const oTextPr = oLvl.GetTextPr();
 							if (!oTextPr.GetFontFamily())
@@ -10356,7 +10373,13 @@
 				}
 				else if (this.m_nType === 2)
 				{
-					this.drawMultiLevelBullet(sId, oLvl);
+					if (oDrawingInfo["type"] === asc_PreviewBulletType.text)
+					{
+						this.drawNoneTextPreview(sId, oLvl);
+					} else
+					{
+						this.drawMultiLevelBullet(sId, oLvl);
+					}
 				}
 			}
 		}, this, []);
@@ -10406,7 +10429,7 @@
 			}
 			else
 			{
-				this.privateGetParagraphByString(oLvl.GetStringByLvlText(i + 1), oTextPr, nTextYx, nTextYy, (nLineDistance - 4), oContext, nWidth_px, nHeight_px);
+				this.privateGetParagraphByString(oLvl.GetStringByLvlText(1), oTextPr, nTextYx, nTextYy, (nLineDistance - 4), oContext, nWidth_px, nHeight_px);
 			}
 			nY += (nLineWidth + nLineDistance);
 			nTextBaseOffsetX += nTextBaseOffsetDelta;
@@ -10475,7 +10498,7 @@
 
 	};
 
-	function CBulletPreviewDrawerAdvanceOptions(sDivId, props, nLvl, bIsMultiLvlAdvanceOptions)
+	function CBulletPreviewDrawerAdvancedOptions(sDivId, props, nLvl, bIsMultiLvlAdvanceOptions)
 	{
 		CBulletPreviewDrawerBase.call(this);
 		this.m_sId = sDivId;
@@ -10484,10 +10507,10 @@
 		this.m_bIsMultiLvl = bIsMultiLvlAdvanceOptions;
 		this.m_oCanvas = this.getClearCanvasForPreview(this.m_sId);
 	}
-	CBulletPreviewDrawerAdvanceOptions.prototype = Object.create(CBulletPreviewDrawerBase.prototype);
-	CBulletPreviewDrawerAdvanceOptions.prototype.constructor = CBulletPreviewDrawerAdvanceOptions;
+	CBulletPreviewDrawerAdvancedOptions.prototype = Object.create(CBulletPreviewDrawerBase.prototype);
+	CBulletPreviewDrawerAdvancedOptions.prototype.constructor = CBulletPreviewDrawerAdvancedOptions;
 
-	CBulletPreviewDrawerAdvanceOptions.prototype.addControlMultiLvl = function ()
+	CBulletPreviewDrawerAdvancedOptions.prototype.addControlMultiLvl = function ()
 	{
 		if (!this.m_bIsMultiLvl || !this.m_oCanvas) return;
 		const oThis = this;
@@ -10537,7 +10560,7 @@
 			oThis.m_oApi.sendEvent("asc_onPreviewLevelChange", nChangedCurrentLvl);
 		});
 	};
-	CBulletPreviewDrawerAdvanceOptions.prototype.drawMultiLvlAdvanceOptions = function ()
+	CBulletPreviewDrawerAdvancedOptions.prototype.drawMultiLvlAdvancedOptions = function ()
 	{
 		const oCanvas = this.m_oCanvas;
 		const oContext = oCanvas.getContext('2d');
@@ -10589,7 +10612,7 @@
 
 
 	};
-	CBulletPreviewDrawerAdvanceOptions.prototype.drawSingleLvlAdvanceOptions = function ()
+	CBulletPreviewDrawerAdvancedOptions.prototype.drawSingleLvlAdvancedOptions = function ()
 	{
 		const oCanvas = this.m_oCanvas;
 		const oContext = oCanvas.getContext('2d');
@@ -10659,18 +10682,18 @@
 		}
 		oContext.beginPath();
 	};
-	CBulletPreviewDrawerAdvanceOptions.prototype._draw = function ()
+	CBulletPreviewDrawerAdvancedOptions.prototype._draw = function ()
 	{
 		AscFormat.ExecuteNoHistory(function ()
 		{
 			if (this.m_bIsMultiLvl)
 			{
-				this.drawMultiLvlAdvanceOptions();
+				this.drawMultiLvlAdvancedOptions();
 				this.addControlMultiLvl();
 			}
 			else
 			{
-				this.drawSingleLvlAdvanceOptions();
+				this.drawSingleLvlAdvancedOptions();
 			}
 		}, this, []);
 	};
@@ -13329,7 +13352,7 @@
 
 	window["AscCommon"].CBulletPreviewDrawer = window["AscCommon"]["CBulletPreviewDrawer"] = CBulletPreviewDrawer;
 	window["AscCommon"].CBulletPreviewDrawerChangeList = window["AscCommon"]["CBulletPreviewDrawerChangeList"] = CBulletPreviewDrawerChangeList;
-	window["AscCommon"].CBulletPreviewDrawerAdvanceOptions = window["AscCommon"]["CBulletPreviewDrawerAdvanceOptions"] = CBulletPreviewDrawerAdvanceOptions;
+	window["AscCommon"].CBulletPreviewDrawerAdvancedOptions = window["AscCommon"]["CBulletPreviewDrawerAdvancedOptions"] = CBulletPreviewDrawerAdvancedOptions;
 
 	window["AscCommon"].CSignatureDrawer = window["AscCommon"]["CSignatureDrawer"] = CSignatureDrawer;
 	var prot = CSignatureDrawer.prototype;
