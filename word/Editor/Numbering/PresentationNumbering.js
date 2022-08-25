@@ -581,6 +581,10 @@ CPresentationBullet.prototype.IsNumbered = function()
 		&& this.m_nType <= AscFormat.numbering_presentationnumfrmt_ThaiNumPeriod;
 };
 CPresentationBullet.prototype.GetStringByLvlText = CPresentationBullet.prototype.GetDrawingText;
+CPresentationBullet.prototype.GetTextPr = function ()
+{
+	return this.m_oTextPr;
+}
 CPresentationBullet.prototype.IsNone = function()
 {
 	return this.m_nType === AscFormat.numbering_presentationnumfrmt_None;

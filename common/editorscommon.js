@@ -10135,6 +10135,7 @@
 						const sFullImageSrc = getFullImageSrc2(oDrawInfo["imageId"]);
 						oBullet.m_nType = AscFormat.numbering_presentationnumfrmt_Blip;
 						oBullet.m_sSrc = sFullImageSrc;
+						oBullet.m_oTextPr = oTextPr;
 						arrNumberingLvl.push(oBullet);
 						break;
 					}
@@ -10190,7 +10191,7 @@
 
 		const nLineDistance = 32;
 
-		const oTextPr = oLvl.TextPr.Copy();
+		const oTextPr = oLvl.GetTextPr().Copy();
 		oTextPr.FontSize = oTextPr.FontSizeCS = ((2 * nLineDistance * 72 / 96) >> 0) / 2;
 		if ((oLvl instanceof AscCommonWord.CPresentationBullet) && oLvl.m_sSrc)
 		{
@@ -10241,7 +10242,7 @@
 		const nCountOfLines = this.m_nCountOfLines;
 		const oCanvas = this.getClearCanvasForPreview(sDivId);
 		if (!oCanvas) return;
-		const oTextPr = oLvl.TextPr.Copy();
+		const oTextPr = oLvl.GetTextPr().Copy();
 
 		const nWidth_px = parseFloat(oCanvas.style.width);
 		const nHeight_px = parseFloat(oCanvas.style.height);
@@ -10303,7 +10304,7 @@
 		oParagraph.Pr = new AscCommonWord.CParaPr();
 
 		const oParaRun = new AscCommonWord.ParaRun(oParagraph);
-		const oTextPr = oLvl.TextPr.Copy();
+		const oTextPr = oLvl.GetTextPr().Copy();
 		oTextPr.FontSize = ((2 * nLineDistance * 72 / 96) >> 0) / 2;
 		oParaRun.Set_Pr(oTextPr);
 		oParaRun.AddText(sText);
@@ -10392,7 +10393,7 @@
 		for (let i = 0; i < nCountOfLines; i += 1)
 		{
 			const oLvl = arrLvls[i];
-			const oTextPr = oLvl.TextPr.Copy();
+			const oTextPr = oLvl.GetTextPr().Copy();
 			oContext.moveTo(Math.round(nTextBaseOffsetX * nRPR), Math.round(nY * nRPR)); oContext.lineTo(Math.round((nWidth_px - nOffsetBase) * nRPR), Math.round(nY * nRPR));
 			oContext.stroke();
 			oContext.beginPath();
@@ -10474,6 +10475,205 @@
 
 	};
 
+	function CBulletPreviewDrawerAdvanceOptions(sDivId, props, nLvl, bIsMultiLvlAdvanceOptions)
+	{
+		CBulletPreviewDrawerBase.call(this);
+		this.m_sId = sDivId;
+		this.m_arrNumberingLvl = props.Lvl;
+		this.m_nCurrentLvl = nLvl;
+		this.m_bIsMultiLvl = bIsMultiLvlAdvanceOptions;
+		this.m_oCanvas = this.getClearCanvasForPreview(this.m_sId);
+	}
+	CBulletPreviewDrawerAdvanceOptions.prototype = Object.create(CBulletPreviewDrawerBase.prototype);
+	CBulletPreviewDrawerAdvanceOptions.prototype.constructor = CBulletPreviewDrawerAdvanceOptions;
+
+	CBulletPreviewDrawerAdvanceOptions.prototype.addControlMultiLvl = function ()
+	{
+		if (!this.m_bIsMultiLvl || !this.m_oCanvas) return;
+		const oThis = this;
+		AscCommon.addMouseEvent(this.m_oCanvas, "down", function(e) {
+			AscCommon.stopEvent(e);
+
+			const nOffsetBase = 10;
+			const nLineWidth = 4;
+			const nHeight = parseInt(this.style.height, 10);
+			const nLineDistance = (((nHeight - (nOffsetBase << 1)) - nLineWidth * 10) / 9) >> 0;
+			const nOffset = (nHeight - (nLineWidth * 10 + nLineDistance * 9)) >> 1;
+			const nCurrentLvl = oThis.m_nCurrentLvl;
+
+			let nYPos = e.pageY;
+			if (!AscFormat.isRealNumber(nYPos))
+			{
+				nYPos = e.clientY;
+			}
+			nYPos = (nYPos * AscCommon.AscBrowser.zoom);
+			const oClientRect = this.getBoundingClientRect();
+
+			if (AscFormat.isRealNumber(oClientRect.y))
+			{
+				nYPos -= oClientRect.y;
+			}
+			else if (AscFormat.isRealNumber(oClientRect.top))
+			{
+				nYPos -= oClientRect.top;
+			}
+
+			let nChangedCurrentLvl = 8;
+			let nY = nOffset + 2;
+			for (let i = 0; i < oThis.m_arrNumberingLvl.length; i++)
+			{
+				nY += (nLineWidth + nLineDistance);
+				if (i === nCurrentLvl)
+				{
+					nY += (nLineWidth + nLineDistance);
+				}
+
+				if (nYPos < (nY - ((nLineWidth + nLineDistance) >> 1)))
+				{
+					nChangedCurrentLvl = i;
+					break;
+				}
+			}
+			oThis.m_oApi.sendEvent("asc_onPreviewLevelChange", nChangedCurrentLvl);
+		});
+	};
+	CBulletPreviewDrawerAdvanceOptions.prototype.drawMultiLvlAdvanceOptions = function ()
+	{
+		const oCanvas = this.m_oCanvas;
+		const oContext = oCanvas.getContext('2d');
+		const nHeight_px = parseFloat(oCanvas.style.height);
+		const nWidth_px = parseFloat(oCanvas.style.width);
+		const nRPR = AscCommon.AscBrowser.retinaPixelRatio;
+
+		const nOffsetBase = 10;
+		const nLineWidth = 4;
+		// считаем расстояние между линиями
+		const nLineDistance = (((nHeight_px - (nOffsetBase << 1)) - nLineWidth * 10) / 9) >> 0;
+		// убираем погрешность в offset
+		const nOffset = (nHeight_px - (nLineWidth * 10 + nLineDistance * 9)) >> 1;
+		const nCurrentLvl = this.m_nCurrentLvl;
+
+		oContext.lineWidth = 4 * Math.round(nRPR);
+		oContext.strokeStyle = "#CBCBCB";
+
+		const nTextBaseOffsetDist = (6.25 * AscCommon.g_dKoef_mm_to_pix) >> 0;
+		let nY = nOffset + 2;
+		let nTextBaseOffsetX = nOffset + ((6.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
+		for (let i = 0; i < this.m_arrNumberingLvl.length; i += 1)
+		{
+			const nTextYx = nTextBaseOffsetX - ((6.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
+			const nTextYy = nY + nLineWidth;
+			if (i === nCurrentLvl)
+			{
+				oContext.strokeStyle = "#000000";
+				oContext.moveTo(Math.round(nTextBaseOffsetX * nRPR), Math.round(nY * nRPR)); oContext.lineTo(Math.round((nWidth_px - nOffsetBase) * nRPR), Math.round(nY * nRPR));
+				nY += (nLineWidth + nLineDistance);
+				oContext.moveTo(Math.round(nTextBaseOffsetX * nRPR), Math.round(nY * nRPR)); oContext.lineTo(Math.round((nWidth_px - nOffsetBase) * nRPR), Math.round(nY * nRPR));
+				oContext.stroke();
+				oContext.strokeStyle = "#CBCBCB";
+			}
+			else
+			{
+				oContext.moveTo(Math.round(nTextBaseOffsetX * nRPR), Math.round(nY * nRPR)); oContext.lineTo(Math.round((nWidth_px - nOffsetBase) * nRPR), Math.round(nY * nRPR));
+				oContext.stroke();
+			}
+			oContext.beginPath();
+
+			const oLvl = this.m_arrNumberingLvl[i];
+			const sText = oLvl.GetStringByLvlText(1);
+			const oTextPr = oLvl.GetTextPr();
+			this.privateGetParagraphByString(sText, oTextPr, nTextYx,  nTextYy, nLineDistance, oContext, oLvl.get_Suff(), oLvl.get_Align());
+			nY += (nLineWidth + nLineDistance);
+			nTextBaseOffsetX += nTextBaseOffsetDist;
+		}
+
+
+	};
+	CBulletPreviewDrawerAdvanceOptions.prototype.drawSingleLvlAdvanceOptions = function ()
+	{
+		const oCanvas = this.m_oCanvas;
+		const oContext = oCanvas.getContext('2d');
+		const nHeight_px = parseFloat(oCanvas.style.height);
+		const nWidth_px = parseFloat(oCanvas.style.width);
+		const nRPR = AscCommon.AscBrowser.retinaPixelRatio;
+		const offsetBase = 10;
+		const line_w = 4;
+		const nCurrentLvl = this.m_nCurrentLvl;
+		const oCurrentLvl = this.m_arrNumberingLvl[nCurrentLvl];
+		const oTextPr = oCurrentLvl.GetTextPr();
+		const nSuff = oCurrentLvl.get_Suff();
+		const nAlign = oCurrentLvl.get_Align();
+		// считаем расстояние между линиями
+		const nLineDistance = (((nHeight_px - (offsetBase << 1)) - line_w * 10) / 9) >> 0;
+		// убираем погрешность в offset
+		const nOffset = (nHeight_px - (line_w * 10 + nLineDistance * 9)) >> 1;
+
+		oContext.lineWidth = 4 * Math.round(nRPR);
+		oContext.strokeStyle = "#CBCBCB";
+		let nY = nOffset + 2 + 2 * (line_w + nLineDistance);
+
+		let nTextBaseOffsetX = nOffset + (6.25 + (6.25 * (nCurrentLvl + 1) * AscCommon.g_dKoef_mm_to_pix)) >> 0;
+		if (nTextBaseOffsetX > (nWidth_px - offsetBase - 20))
+		{
+			nTextBaseOffsetX = nWidth_px - offsetBase - 20;
+		}
+
+		const arrTextYy = [];
+		arrTextYy.push(nY + line_w); nY += 2 * (line_w + nLineDistance);
+		arrTextYy.push(nY + line_w); nY += 2 * (line_w + nLineDistance);
+		arrTextYy.push(nY + line_w);
+
+		nY = Math.round((nOffset + 2) * nRPR);
+		const nLeftOffset = Math.round(nTextBaseOffsetX * nRPR);
+		const nRightOffset = Math.round((nWidth_px - offsetBase) * nRPR);
+		const nYDist = Math.round((line_w + nLineDistance) * nRPR);
+
+		const nLeftOffset2 = Math.round(offsetBase * nRPR);
+		const nRightOffset2 = Math.round((nWidth_px - offsetBase) * nRPR);
+
+		oContext.moveTo(nLeftOffset2, nY); oContext.lineTo(nRightOffset2, nY); nY += nYDist;
+		oContext.moveTo(nLeftOffset2, nY); oContext.lineTo(nRightOffset2, nY); nY += nYDist;
+		oContext.stroke();
+		oContext.beginPath();
+		oContext.strokeStyle = "#000000";
+
+		oContext.moveTo(nLeftOffset, nY); oContext.lineTo(nRightOffset, nY); nY += nYDist;
+		oContext.moveTo(nLeftOffset, nY); oContext.lineTo(nRightOffset, nY); nY += nYDist;
+		oContext.moveTo(nLeftOffset, nY); oContext.lineTo(nRightOffset, nY); nY += nYDist;
+		oContext.moveTo(nLeftOffset, nY); oContext.lineTo(nRightOffset, nY); nY += nYDist;
+		oContext.moveTo(nLeftOffset, nY); oContext.lineTo(nRightOffset, nY); nY += nYDist;
+		oContext.moveTo(nLeftOffset, nY); oContext.lineTo(nRightOffset, nY); nY += nYDist;
+		oContext.stroke();
+		oContext.beginPath();
+		oContext.strokeStyle = "#CBCBCB";
+		oContext.moveTo(nLeftOffset2, nY); oContext.lineTo(nRightOffset2, nY); nY += nYDist;
+		oContext.moveTo(nLeftOffset2, nY); oContext.lineTo(nRightOffset2, nY);
+		oContext.stroke();
+
+		for (let i = 0; i < arrTextYy.length; i++)
+		{
+			const sText = oCurrentLvl.GetStringByLvlText(i + 1);
+			const nTextYx = (nTextBaseOffsetX - ((6.25 * AscCommon.g_dKoef_mm_to_pix)) >> 0);
+			const nTextYy = arrTextYy[i];
+			this.privateGetParagraphByString(sText, oTextPr, nTextYx, nTextYy, nLineDistance, oContext, nSuff, nAlign);
+		}
+		oContext.beginPath();
+	};
+	CBulletPreviewDrawerAdvanceOptions.prototype._draw = function ()
+	{
+		AscFormat.ExecuteNoHistory(function ()
+		{
+			if (this.m_bIsMultiLvl)
+			{
+				this.drawMultiLvlAdvanceOptions();
+				this.addControlMultiLvl();
+			}
+			else
+			{
+				this.drawSingleLvlAdvanceOptions();
+			}
+		}, this, []);
+	};
 
 	window.Asc.g_signature_drawer = null;
 	function CSignatureDrawer(id, api, w, h)
@@ -13129,6 +13329,7 @@
 
 	window["AscCommon"].CBulletPreviewDrawer = window["AscCommon"]["CBulletPreviewDrawer"] = CBulletPreviewDrawer;
 	window["AscCommon"].CBulletPreviewDrawerChangeList = window["AscCommon"]["CBulletPreviewDrawerChangeList"] = CBulletPreviewDrawerChangeList;
+	window["AscCommon"].CBulletPreviewDrawerAdvanceOptions = window["AscCommon"]["CBulletPreviewDrawerAdvanceOptions"] = CBulletPreviewDrawerAdvanceOptions;
 
 	window["AscCommon"].CSignatureDrawer = window["AscCommon"]["CSignatureDrawer"] = CSignatureDrawer;
 	var prot = CSignatureDrawer.prototype;
