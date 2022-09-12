@@ -8166,6 +8166,7 @@
 		var colItems = pivotTable.getColItems();
 		var pivotFields = pivotTable.asc_getPivotFields();
 		var dataFields = pivotTable.asc_getDataFields();
+		console.log('test');
 		if (!rowItems || !colItems || !dataFields) {
 			return;
 		}
