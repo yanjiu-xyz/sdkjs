@@ -8159,6 +8159,11 @@
 		}
 		return rowFieldsOffset;
 	};
+	/**
+	 * A function that updates the data in the cells of a pivot table.
+	 * @param {CT_pivotTableDefinition} pivotTable
+	 * @param {PivotDataElem} dataRow
+	 */
 	Worksheet.prototype._updatePivotTableCellsData = function(pivotTable, dataRow) {
 		var rowFields = pivotTable.asc_getRowFields();
 		var rowItems = pivotTable.getRowItems();
@@ -8166,18 +8171,24 @@
 		var colItems = pivotTable.getColItems();
 		var pivotFields = pivotTable.asc_getPivotFields();
 		var dataFields = pivotTable.asc_getDataFields();
-		console.log('test');
 		if (!rowItems || !colItems || !dataFields) {
 			return;
 		}
 		var valuesIndex = pivotTable.getRowFieldsValuesIndex();
 		var pivotRange = pivotTable.getRange();
+		/**
+		 * @type {CT_Location}
+		 */
 		var location = pivotTable.location;
 		var r1 = pivotRange.r1 + location.firstDataRow;
 		var c1 = pivotRange.c1 + location.firstDataCol;
 		var curDataRow = dataRow;
 		var dataByRowIndex = [curDataRow];
-		var fieldIndex, field, fieldItem, dataByColIndex, dataField, rowFieldSubtotal;
+		var fieldIndex, field, fieldItem, dataByColIndex, rowFieldSubtotal;
+		/**
+		 * @type {CT_DataField}
+		 */
+		var dataField;
 		for (var rowItemsIndex = 0; rowItemsIndex < rowItems.length; ++rowItemsIndex) {
 			var rowItem = rowItems[rowItemsIndex];
 			if (Asc.c_oAscItemType.Blank === rowItem.t) {
@@ -8233,6 +8244,30 @@
 						dataField = dataFields[dataIndex];
 						var total = curDataRow.total[dataIndex];
 						var oCellValue = total.getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t);
+						switch (dataField.showDataAs) {
+							case 0: // Normal
+								break;
+							case 1: // Difference
+								break;
+							case 2: // Percent
+								break;
+							case 3: // PercentDiff
+								break;
+							case 4: // RunTotal
+								break;
+							case 5: // PercentOfRow
+								break;
+							case 6: // PercentOfCol
+								break;
+							case 7: // PercentOfTotal
+								oCellValue
+								break;
+							case 8: // Index
+								break;
+							default:
+								// Exception Handling
+								break;
+						}
 						if (oCellValue) {
 							var cells = this.getRange4(r1 + rowItemsIndex, c1 + colItemsIndex);
 							if (dataField && dataField.num) {
