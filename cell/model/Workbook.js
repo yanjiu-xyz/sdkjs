@@ -8260,7 +8260,7 @@
 							case 6: // PercentOfCol
 								break;
 							case 7: // PercentOfTotal
-								oCellValue
+								oCellValue.number = oCellValue.number / dataByRowIndex[0].total[dataIndex].getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t).number;
 								break;
 							case 8: // Index
 								break;
