@@ -235,6 +235,8 @@ var c_oAscGroupType = {
 };
 
 var st_VALUES = -2;
+var st_BASE_ITEM_PREV = 1048828;
+var st_BASE_ITEM_NEXT = 1048829;
 var DATA_CAPTION = 'Values';
 var BLANK_CAPTION = '(blank)';
 var GRAND_TOTAL_CAPTION = 'Grand Total';
@@ -15768,6 +15770,8 @@ prot['FiveRating'] = prot.FiveRating;
 prot['FiveQuarters'] = prot.FiveQuarters;
 
 window['Asc']['st_VALUES'] = window['AscCommonExcel'].st_VALUES = st_VALUES;
+window['Asc']['st_BASE_ITEM_PREV'] = window['AscCommonExcel'].st_BASE_ITEM_PREV = st_BASE_ITEM_PREV;
+window['Asc']['st_BASE_ITEM_NEXT'] = window['AscCommonExcel'].st_BASE_ITEM_NEXT = st_BASE_ITEM_NEXT;
 window['AscCommonExcel'].DATA_CAPTION = DATA_CAPTION;
 window['AscCommonExcel'].BLANK_CAPTION = BLANK_CAPTION;
 window['AscCommonExcel'].GRAND_TOTAL_CAPTION = GRAND_TOTAL_CAPTION;

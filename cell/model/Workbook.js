@@ -8215,7 +8215,7 @@
 					}
 				}
 			}
-			//todo
+			//todo dataByColIndex troubles? rowItemsIndex - top to bot steps
 			if (Asc.c_oAscItemType.Data !== rowItem.t || !rowFields || rowR + rowItem.x.length === rowFields.length ||
 				(AscCommonExcel.st_VALUES !== fieldIndex && pivotFields[fieldIndex] &&
 				(pivotFields[fieldIndex].checkSubtotalTop() || !itemSd) && rowR > valuesIndex)) {
@@ -8245,24 +8245,33 @@
 						var total = curDataRow.total[dataIndex];
 						var oCellValue = total.getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t);
 						switch (dataField.showDataAs) {
-							case 0: // Normal
+							case Asc.c_oAscShowDataAs.Normal:
 								break;
-							case 1: // Difference
+							case Asc.c_oAscShowDataAs.Difference:
+								// https://docs.microsoft.com/en-us/openspecs/office_standards/ms-oi29500/0736556b-ddde-42e4-ba59-40410c5735c2
+								switch(dataField.baseItem) {
+									case AscCommonExcel.st_BASE_ITEM_NEXT:
+										break;
+									case AscCommonExcel.st_BASE_ITEM_PREV: 
+										break;
+									default: 		
+										break;
+								}
 								break;
-							case 2: // Percent
+							case Asc.c_oAscShowDataAs.Percent:
 								break;
-							case 3: // PercentDiff
+							case Asc.c_oAscShowDataAs.PercentDiff:
 								break;
-							case 4: // RunTotal
+							case Asc.c_oAscShowDataAs.PercentDiff:
 								break;
-							case 5: // PercentOfRow
+							case Asc.c_oAscShowDataAs.PercentOfRow:
 								break;
-							case 6: // PercentOfCol
+							case Asc.c_oAscShowDataAs.PercentOfCol: 
 								break;
-							case 7: // PercentOfTotal
-								oCellValue.number = oCellValue.number / dataByRowIndex[0].total[dataIndex].getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t).number;
+							case Asc.c_oAscShowDataAs.PercentOfTotal:
+								oCellValue.number = oCellValue.number / dataRow.total[dataIndex].getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t).number;
 								break;
-							case 8: // Index
+							case Asc.c_oAscShowDataAs.Index: 
 								break;
 							default:
 								// Exception Handling
@@ -8279,6 +8288,10 @@
 				}
 			}
 		}
+	};
+	Worksheet.prototype._getPivotPercentOfTotal = function (dataField, total) {
+		var res;
+		var curTotal = total.getCellValue(dataField.subtotal, );
 	};
 	Worksheet.prototype._updatePivotTableCells = function (pivotTable, dataRow) {
 		this._updatePivotTableCellsPage(pivotTable);
