@@ -8253,7 +8253,7 @@
 								fieldItem = field.getItem(colItem.x[colItemsXIndex].getV());
 								curDataRow = curDataRow.subtotal[fieldItem.x];
 								if (curNextDataRow && curNextDataRow.subtotal) {
-									if (fieldIndex == curBaseField && field.getItem(rowItem.x[rowItemsXIndex].getV() + 1)) {
+									if (fieldIndex == curBaseField && field.getItem(colItem.x[colItemsXIndex].getV() + 1)) {
 										curNextDataRow = curNextDataRow.subtotal[field.getItem(colItem.x[colItemsXIndex].getV() + 1).x];
 									} else {
 										curNextDataRow = curNextDataRow.subtotal[field.getItem(colItem.x[colItemsXIndex].getV()).x];
