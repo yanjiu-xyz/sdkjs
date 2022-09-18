@@ -8187,7 +8187,6 @@
 		var nextDataByColIndex;
 		var curBaseField;
 		var curPrevDataRow;
-		var isEnd = false;
 		var dataByRowIndex = [curDataRow];
 		var nextDataByRowIndex = [curNextDataRow];
 		var fieldIndex, field, fieldItem, dataByColIndex, rowFieldSubtotal;
@@ -8218,11 +8217,6 @@
 						curDataRow = curDataRow.vals[fieldItem.x];
 						if (curNextDataRow && curNextDataRow.vals) {
 							if (fieldIndex == curBaseField) {
-								if (field.getItem(rowItem.x[rowItemsXIndex].getV() + 1).x == null) {
-									isEnd = true;
-								} else {
-									isEnd = false;
-								}
 								curNextDataRow = curNextDataRow.vals[field.getItem(rowItem.x[rowItemsXIndex].getV() + 1).x];
 							} else {
 								curNextDataRow = curNextDataRow.vals[field.getItem(rowItem.x[rowItemsXIndex].getV()).x];
@@ -8238,7 +8232,7 @@
 					}
 				}
 			}
-			// todo
+			// todo blank cells, zero in blank cells for diff showas, todo grand totals in diff showas
 			if (Asc.c_oAscItemType.Data !== rowItem.t || !rowFields || rowR + rowItem.x.length === rowFields.length ||
 				(AscCommonExcel.st_VALUES !== fieldIndex && pivotFields[fieldIndex] &&
 				(pivotFields[fieldIndex].checkSubtotalTop() || !itemSd) && rowR > valuesIndex)) {
@@ -8260,11 +8254,6 @@
 								curDataRow = curDataRow.subtotal[fieldItem.x];
 								if (curNextDataRow && curNextDataRow.subtotal) {
 									if (fieldIndex == curBaseField) {
-										if (field.getItem(colItem.x[colItemsXIndex].getV() + 1).x == null) {
-											isEnd = true;
-										} else {
-											isEnd = false;
-										}
 										curNextDataRow = curNextDataRow.subtotal[field.getItem(colItem.x[colItemsXIndex].getV() + 1).x];
 									} else {
 										curNextDataRow = curNextDataRow.subtotal[field.getItem(colItem.x[colItemsXIndex].getV()).x];
@@ -8280,7 +8269,7 @@
 							}
 						}
 					}
-					if (curDataRow || dataField.showDataAs === Asc.c_oAscShowDataAs.Difference) { // todo blank cells, zero in blank cells for diff showas
+					if (curDataRow || dataField.showDataAs === Asc.c_oAscShowDataAs.Difference) { 
 						var total = undefined;
 						var oCellValue = undefined;
 						switch (dataField.showDataAs) {
@@ -8305,7 +8294,7 @@
 												oCellValue = total.getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t);
 												oCellValue.number = -oCellValue.number;
 											}
-										} else if (curDataRow && !isEnd) {
+										} else if (curDataRow) {
 											total = curDataRow.total[dataIndex];
 											oCellValue = total.getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t);
 										} 
