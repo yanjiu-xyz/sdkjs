@@ -8183,7 +8183,13 @@
 		var r1 = pivotRange.r1 + location.firstDataRow;
 		var c1 = pivotRange.c1 + location.firstDataCol;
 		var curDataRow = dataRow;
+		var curNextDataRow = dataRow;
+		var nextDataByColIndex;
+		var curBaseField;
+		var curPrevDataRow;
+		var isEnd = false;
 		var dataByRowIndex = [curDataRow];
+		var nextDataByRowIndex = [curNextDataRow];
 		var fieldIndex, field, fieldItem, dataByColIndex, rowFieldSubtotal;
 		/**
 		 * @type {CT_DataField}
@@ -8196,7 +8202,10 @@
 			}
 			var rowR = rowItem.getR();
 			curDataRow = dataByRowIndex[rowR];
+			curNextDataRow = nextDataByRowIndex[rowR];
 			rowFieldSubtotal = Asc.c_oAscItemType.Default;
+			dataField = dataFields[rowItem.i];
+			curBaseField = dataField.baseField;
 			var itemSd = true;
 			if (Asc.c_oAscItemType.Grand !== rowItem.t && rowFields) {
 				for (var rowItemsXIndex = 0; rowItemsXIndex < rowItem.x.length; ++rowItemsXIndex) {
@@ -8207,23 +8216,41 @@
 						fieldItem = field.getItem(rowItem.x[rowItemsXIndex].getV());
 						itemSd = fieldItem.sd;
 						curDataRow = curDataRow.vals[fieldItem.x];
+						if (curNextDataRow && curNextDataRow.vals) {
+							if (fieldIndex == curBaseField) {
+								if (field.getItem(rowItem.x[rowItemsXIndex].getV() + 1).x == null) {
+									isEnd = true;
+								} else {
+									isEnd = false;
+								}
+								curNextDataRow = curNextDataRow.vals[field.getItem(rowItem.x[rowItemsXIndex].getV() + 1).x];
+							} else {
+								curNextDataRow = curNextDataRow.vals[field.getItem(rowItem.x[rowItemsXIndex].getV()).x];
+							}	
+						}
 					}
 					dataByRowIndex.length = rowR + rowItemsXIndex + 1;
 					dataByRowIndex[dataByRowIndex.length] = curDataRow;
+					nextDataByRowIndex.length = rowR + rowItemsXIndex + 1;
+					nextDataByRowIndex[nextDataByRowIndex.length] = curNextDataRow;
 					if (!curDataRow) {
 						break;
 					}
 				}
 			}
-			//todo dataByColIndex troubles? rowItemsIndex - top to bot steps
+			// todo
 			if (Asc.c_oAscItemType.Data !== rowItem.t || !rowFields || rowR + rowItem.x.length === rowFields.length ||
 				(AscCommonExcel.st_VALUES !== fieldIndex && pivotFields[fieldIndex] &&
 				(pivotFields[fieldIndex].checkSubtotalTop() || !itemSd) && rowR > valuesIndex)) {
 				dataByColIndex = [curDataRow];
+				nextDataByColIndex = [curNextDataRow];
 				for (var colItemsIndex = 0; colItemsIndex < colItems.length; ++colItemsIndex) {
 					var colItem = colItems[colItemsIndex];
 					var colR = colItem.getR();
+					var dataIndex = Math.max(rowItem.i, colItem.i);
+					dataField = dataFields[dataIndex];
 					curDataRow = dataByColIndex[colR];
+					curNextDataRow = nextDataByColIndex[colR]
 					if (curDataRow && Asc.c_oAscItemType.Grand !== colItem.t && colFields) {
 						for (var colItemsXIndex = 0; colItemsXIndex < colItem.x.length; ++colItemsXIndex) {
 							fieldIndex = colFields[colR + colItemsXIndex].asc_getIndex();
@@ -8231,26 +8258,57 @@
 								field = pivotFields[fieldIndex];
 								fieldItem = field.getItem(colItem.x[colItemsXIndex].getV());
 								curDataRow = curDataRow.subtotal[fieldItem.x];
+								if (curNextDataRow && curNextDataRow.subtotal) {
+									if (fieldIndex == curBaseField) {
+										if (field.getItem(colItem.x[colItemsXIndex].getV() + 1).x == null) {
+											isEnd = true;
+										} else {
+											isEnd = false;
+										}
+										curNextDataRow = curNextDataRow.subtotal[field.getItem(colItem.x[colItemsXIndex].getV() + 1).x];
+									} else {
+										curNextDataRow = curNextDataRow.subtotal[field.getItem(colItem.x[colItemsXIndex].getV()).x];
+									}	
+								}
 							}
 							dataByColIndex.length = colR + colItemsXIndex + 1;
 							dataByColIndex[dataByColIndex.length] = curDataRow;
+							nextDataByColIndex.length = colR + colItemsXIndex + 1;
+							nextDataByColIndex[nextDataByColIndex.length] = curNextDataRow;
 							if (!curDataRow) {
 								break;
 							}
 						}
 					}
-					if (curDataRow) {
-						var dataIndex = Math.max(rowItem.i, colItem.i);
-						dataField = dataFields[dataIndex];
-						var total = curDataRow.total[dataIndex];
-						var oCellValue = total.getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t);
+					if (curDataRow || dataField.showDataAs === Asc.c_oAscShowDataAs.Difference) { // todo blank cells, zero in blank cells for diff showas
+						var total = undefined;
+						var oCellValue = undefined;
 						switch (dataField.showDataAs) {
 							case Asc.c_oAscShowDataAs.Normal:
+									total = curDataRow.total[dataIndex];
+									oCellValue = total.getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t);
 								break;
 							case Asc.c_oAscShowDataAs.Difference:
-								// https://docs.microsoft.com/en-us/openspecs/office_standards/ms-oi29500/0736556b-ddde-42e4-ba59-40410c5735c2
 								switch(dataField.baseItem) {
 									case AscCommonExcel.st_BASE_ITEM_NEXT:
+										var nextTotal = undefined;
+										var nextOCellValue = undefined;
+										if (curNextDataRow) {
+											if (curDataRow) {
+												nextTotal = curNextDataRow.total[dataIndex];
+												nextOCellValue = nextTotal.getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t);
+												total = curDataRow.total[dataIndex];
+												oCellValue = total.getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t);
+												oCellValue.number = oCellValue.number - nextOCellValue.number;
+											} else {
+												total = curNextDataRow.total[dataIndex];
+												oCellValue = total.getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t);
+												oCellValue.number = -oCellValue.number;
+											}
+										} else if (curDataRow && !isEnd) {
+											total = curDataRow.total[dataIndex];
+											oCellValue = total.getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t);
+										} 
 										break;
 									case AscCommonExcel.st_BASE_ITEM_PREV: 
 										break;
@@ -8269,7 +8327,11 @@
 							case Asc.c_oAscShowDataAs.PercentOfCol: 
 								break;
 							case Asc.c_oAscShowDataAs.PercentOfTotal:
-								oCellValue.number = oCellValue.number / dataRow.total[dataIndex].getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t).number;
+								if(curDataRow) {
+									total = curDataRow.total[dataIndex];
+									oCellValue = total.getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t);
+									oCellValue.number = oCellValue.number / dataRow.total[dataIndex].getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t).number;
+								}
 								break;
 							case Asc.c_oAscShowDataAs.Index: 
 								break;
@@ -8288,10 +8350,6 @@
 				}
 			}
 		}
-	};
-	Worksheet.prototype._getPivotPercentOfTotal = function (dataField, total) {
-		var res;
-		var curTotal = total.getCellValue(dataField.subtotal, );
 	};
 	Worksheet.prototype._updatePivotTableCells = function (pivotTable, dataRow) {
 		this._updatePivotTableCellsPage(pivotTable);
