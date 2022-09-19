@@ -8221,12 +8221,14 @@
 						nextFieldItem = field.getItem(rowItem.x[rowItemsXIndex].getV() + 1);
 						if (curNextDataRow) {
 							if (fieldIndex == curBaseField) {
-								if (nextFieldItem && nextFieldItem.t !== Asc.c_oAscItemType.Data || nextFieldItem.x === null) {
-									isEnd = true;
-									curNextDataRow = undefined;
-								} else {
-									curNextDataRow = curNextDataRow.vals[nextFieldItem.x];
-									isEnd = false;
+								if (nextFieldItem) {
+									if (nextFieldItem.t !== Asc.c_oAscItemType.Data || nextFieldItem.x === null) {
+										isEnd = true;
+										curNextDataRow = undefined;
+									} else {
+										curNextDataRow = curNextDataRow.vals[nextFieldItem.x];
+										isEnd = false;
+									}
 								}
 							} else {
 								curNextDataRow = curNextDataRow.vals[field.getItem(rowItem.x[rowItemsXIndex].getV()).x];
@@ -8266,11 +8268,13 @@
 								nextFieldItem = field.getItem (colItem.x[colItemsXIndex].getV() + 1)
 								if (curNextDataRow) {
 									if (fieldIndex == curBaseField) {
-										if (nextFieldItem && nextFieldItem.t !== Asc.c_oAscItemType.Data || nextFieldItem.x === null) {
-											isEnd = true;
-										} else {
-											curNextDataRow = curNextDataRow.subtotal[nextFieldItem.x];
-											isEnd = false;
+										if (nextFieldItem) {
+											if (nextFieldItem.t !== Asc.c_oAscItemType.Data || nextFieldItem.x === null) {
+												isEnd = true;
+											} else {
+												curNextDataRow = curNextDataRow.subtotal[nextFieldItem.x];
+												isEnd = false;
+											}
 										}
 									} else {
 										curNextDataRow = curNextDataRow.subtotal[fieldItem.x];
