@@ -8185,7 +8185,9 @@
 		var curDataRow = dataRow;
 		var curNextDataRow = dataRow;
 		var nextDataByColIndex;
+		var nextFieldItem;
 		var curBaseField;
+		var isEnd = false;
 		var curPrevDataRow;
 		var dataByRowIndex = [curDataRow];
 		var nextDataByRowIndex = [curNextDataRow];
@@ -8215,9 +8217,17 @@
 						fieldItem = field.getItem(rowItem.x[rowItemsXIndex].getV());
 						itemSd = fieldItem.sd;
 						curDataRow = curDataRow.vals[fieldItem.x];
-						if (curNextDataRow && curNextDataRow.vals) {
-							if (fieldIndex == curBaseField && field.getItem(rowItem.x[rowItemsXIndex].getV() + 1)) {
-								curNextDataRow = curNextDataRow.vals[field.getItem(rowItem.x[rowItemsXIndex].getV() + 1).x];
+
+						nextFieldItem = field.getItem(rowItem.x[rowItemsXIndex].getV() + 1);
+						if (curNextDataRow) {
+							if (fieldIndex == curBaseField) {
+								if (nextFieldItem && nextFieldItem.t !== Asc.c_oAscItemType.Data || nextFieldItem.x === null) {
+									isEnd = true;
+									curNextDataRow = undefined;
+								} else {
+									curNextDataRow = curNextDataRow.vals[nextFieldItem.x];
+									isEnd = false;
+								}
 							} else {
 								curNextDataRow = curNextDataRow.vals[field.getItem(rowItem.x[rowItemsXIndex].getV()).x];
 							}	
@@ -8252,12 +8262,19 @@
 								field = pivotFields[fieldIndex];
 								fieldItem = field.getItem(colItem.x[colItemsXIndex].getV());
 								curDataRow = curDataRow.subtotal[fieldItem.x];
-								if (curNextDataRow && curNextDataRow.subtotal) {
-									if (fieldIndex == curBaseField && field.getItem(colItem.x[colItemsXIndex].getV() + 1)) {
-										curNextDataRow = curNextDataRow.subtotal[field.getItem(colItem.x[colItemsXIndex].getV() + 1).x];
+
+								nextFieldItem = field.getItem (colItem.x[colItemsXIndex].getV() + 1)
+								if (curNextDataRow) {
+									if (fieldIndex == curBaseField) {
+										if (nextFieldItem && nextFieldItem.t !== Asc.c_oAscItemType.Data || nextFieldItem.x === null) {
+											isEnd = true;
+										} else {
+											curNextDataRow = curNextDataRow.subtotal[nextFieldItem.x];
+											isEnd = false;
+										}
 									} else {
-										curNextDataRow = curNextDataRow.subtotal[field.getItem(colItem.x[colItemsXIndex].getV()).x];
-									}	
+										curNextDataRow = curNextDataRow.subtotal[fieldItem.x];
+									}
 								}
 							}
 							dataByColIndex.length = colR + colItemsXIndex + 1;
@@ -8280,9 +8297,12 @@
 							case Asc.c_oAscShowDataAs.Difference:
 								switch(dataField.baseItem) {
 									case AscCommonExcel.st_BASE_ITEM_NEXT:
+										if (curDataRow === curNextDataRow) {
+											break;
+										}
 										var nextTotal = undefined;
 										var nextOCellValue = undefined;
-										if (curNextDataRow) {
+										if (curNextDataRow && !isEnd) {
 											if (curDataRow) {
 												nextTotal = curNextDataRow.total[dataIndex];
 												nextOCellValue = nextTotal.getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t);
@@ -8294,7 +8314,7 @@
 												oCellValue = total.getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t);
 												oCellValue.number = -oCellValue.number;
 											}
-										} else if (curDataRow) {
+										} else if (curDataRow && !isEnd) {
 											total = curDataRow.total[dataIndex];
 											oCellValue = total.getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t);
 										} 
