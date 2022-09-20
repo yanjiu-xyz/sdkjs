@@ -8176,22 +8176,34 @@
 		}
 		var valuesIndex = pivotTable.getRowFieldsValuesIndex();
 		var pivotRange = pivotTable.getRange();
-		/**
-		 * @type {CT_Location}
-		 */
+
 		var location = pivotTable.location;
 		var r1 = pivotRange.r1 + location.firstDataRow;
 		var c1 = pivotRange.c1 + location.firstDataCol;
+
 		var curDataRow = dataRow;
 		var curNextDataRow = dataRow;
+		var curPrevDataRow = dataRow;
+
+		var prevDataByColIndex;
+		var dataByColIndex;
 		var nextDataByColIndex;
+
+		var prevFieldItem;
+		var fieldItem;
 		var nextFieldItem;
+
+		var fieldIndex;
 		var curBaseField;
+
+		var isBegin = false;
 		var isEnd = false;
-		var curPrevDataRow;
+
+		var prevDataByRowIndex = [curPrevDataRow];
 		var dataByRowIndex = [curDataRow];
 		var nextDataByRowIndex = [curNextDataRow];
-		var fieldIndex, field, fieldItem, dataByColIndex, rowFieldSubtotal;
+
+		var field, rowFieldSubtotal;
 		/**
 		 * @type {CT_DataField}
 		 */
@@ -8202,8 +8214,11 @@
 				continue;
 			}
 			var rowR = rowItem.getR();
+
+			curPrevDataRow = prevDataByRowIndex[rowR];
 			curDataRow = dataByRowIndex[rowR];
 			curNextDataRow = nextDataByRowIndex[rowR];
+
 			rowFieldSubtotal = Asc.c_oAscItemType.Default;
 			dataField = dataFields[rowItem.i];
 			curBaseField = dataField.baseField;
@@ -8214,11 +8229,14 @@
 					if (curDataRow && AscCommonExcel.st_VALUES !== fieldIndex) {
 						field = pivotFields[fieldIndex];
 						rowFieldSubtotal = field.getSubtotalType();
-						fieldItem = field.getItem(rowItem.x[rowItemsXIndex].getV());
-						itemSd = fieldItem.sd;
-						curDataRow = curDataRow.vals[fieldItem.x];
 
+						prevFieldItem = field.getItem(rowItem.x[rowItemsXIndex].getV() - 1);
+						fieldItem = field.getItem(rowItem.x[rowItemsXIndex].getV());
 						nextFieldItem = field.getItem(rowItem.x[rowItemsXIndex].getV() + 1);
+
+						itemSd = fieldItem.sd;
+
+						curDataRow = curDataRow.vals[fieldItem.x];
 						if (curNextDataRow) {
 							if (fieldIndex == curBaseField) {
 								if (nextFieldItem) {
@@ -8231,30 +8249,52 @@
 									}
 								}
 							} else {
-								curNextDataRow = curNextDataRow.vals[field.getItem(rowItem.x[rowItemsXIndex].getV()).x];
+								curNextDataRow = curNextDataRow.vals[fieldItem.x];
 							}	
 						}
+						if (curPrevDataRow) {
+							if (fieldIndex === curBaseField) {
+								if (!prevFieldItem && rowItem.x[rowItemsXIndex].getV() === 0) {
+									isBegin = true;
+									curPrevDataRow = undefined;
+								} else {
+									curPrevDataRow = curPrevDataRow.vals[prevFieldItem.x];
+									isBegin = false;
+								}
+							} else {
+								curPrevDataRow = curPrevDataRow.vals[fieldItem.x];
+							}
+						}
 					}
+					prevDataByRowIndex.length = rowR + rowItemsXIndex + 1;
+					prevDataByRowIndex[prevDataByRowIndex.length] = curPrevDataRow;
+
 					dataByRowIndex.length = rowR + rowItemsXIndex + 1;
 					dataByRowIndex[dataByRowIndex.length] = curDataRow;
+
 					nextDataByRowIndex.length = rowR + rowItemsXIndex + 1;
 					nextDataByRowIndex[nextDataByRowIndex.length] = curNextDataRow;
+
 					if (!curDataRow) {
 						break;
 					}
 				}
 			}
-			// todo blank cells, zero in blank cells for diff showas, todo grand totals in diff showas
+			// todo 
 			if (Asc.c_oAscItemType.Data !== rowItem.t || !rowFields || rowR + rowItem.x.length === rowFields.length ||
 				(AscCommonExcel.st_VALUES !== fieldIndex && pivotFields[fieldIndex] &&
 				(pivotFields[fieldIndex].checkSubtotalTop() || !itemSd) && rowR > valuesIndex)) {
+				
+				prevDataByColIndex = [curPrevDataRow];
 				dataByColIndex = [curDataRow];
 				nextDataByColIndex = [curNextDataRow];
+
 				for (var colItemsIndex = 0; colItemsIndex < colItems.length; ++colItemsIndex) {
 					var colItem = colItems[colItemsIndex];
 					var colR = colItem.getR();
 					var dataIndex = Math.max(rowItem.i, colItem.i);
 					dataField = dataFields[dataIndex];
+					curPrevDataRow = prevDataByColIndex[colR];
 					curDataRow = dataByColIndex[colR];
 					curNextDataRow = nextDataByColIndex[colR]
 					if (curDataRow && Asc.c_oAscItemType.Grand !== colItem.t && colFields) {
@@ -8262,10 +8302,12 @@
 							fieldIndex = colFields[colR + colItemsXIndex].asc_getIndex();
 							if (AscCommonExcel.st_VALUES !== fieldIndex) {
 								field = pivotFields[fieldIndex];
-								fieldItem = field.getItem(colItem.x[colItemsXIndex].getV());
-								curDataRow = curDataRow.subtotal[fieldItem.x];
 
+								prevFieldItem = field.getItem(colItem.x[colItemsXIndex].getV() - 1);
+								fieldItem = field.getItem(colItem.x[colItemsXIndex].getV());
 								nextFieldItem = field.getItem (colItem.x[colItemsXIndex].getV() + 1)
+
+								curDataRow = curDataRow.subtotal[fieldItem.x];
 								if (curNextDataRow) {
 									if (fieldIndex == curBaseField) {
 										if (nextFieldItem) {
@@ -8280,9 +8322,25 @@
 										curNextDataRow = curNextDataRow.subtotal[fieldItem.x];
 									}
 								}
+								if (curPrevDataRow) {
+									if (fieldIndex === curBaseField) {
+										if (!prevFieldItem && colItem.x[colItemsXIndex].getV() === 0) {
+											isBegin = true;
+										} else {
+											curPrevDataRow = curPrevDataRow.subtotal[prevFieldItem.x];
+											isBegin = false;
+										}
+									} else {
+										curPrevDataRow = curPrevDataRow.subtotal[fieldItem.x];
+									}
+								}
 							}
+							prevDataByColIndex.length = colR + colItemsXIndex + 1;
+							prevDataByColIndex[prevDataByColIndex.length] = curPrevDataRow;
+
 							dataByColIndex.length = colR + colItemsXIndex + 1;
 							dataByColIndex[dataByColIndex.length] = curDataRow;
+
 							nextDataByColIndex.length = colR + colItemsXIndex + 1;
 							nextDataByColIndex[nextDataByColIndex.length] = curNextDataRow;
 							if (!curDataRow) {
@@ -8324,6 +8382,28 @@
 										} 
 										break;
 									case AscCommonExcel.st_BASE_ITEM_PREV: 
+										if (curDataRow === curPrevDataRow) {
+											break;
+										}
+										var prevTotal = undefined;
+										var prevOCellValue = undefined;
+										if (curPrevDataRow && !isBegin) {
+											if (curDataRow) {
+												prevTotal = curPrevDataRow.total[dataIndex];
+												prevOCellValue = prevTotal.getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t);
+												total = curDataRow.total[dataIndex];
+												oCellValue = total.getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t);
+												oCellValue.number = oCellValue.number - prevOCellValue.number;
+											} else {
+												total = curPrevDataRow.total[dataIndex];
+												oCellValue = total.getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t);
+												oCellValue.number = -oCellValue.number;
+
+											}
+										} else if (curDataRow && !isBegin) {
+											total = curDataRow.total[dataIndex];
+											oCellValue = total.getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t);
+										}
 										break;
 									default: 		
 										break;
