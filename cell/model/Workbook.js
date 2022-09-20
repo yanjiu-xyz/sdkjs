@@ -8237,33 +8237,33 @@
 						itemSd = fieldItem.sd;
 
 						curDataRow = curDataRow.vals[fieldItem.x];
-						if (curNextDataRow) {
-							if (fieldIndex == curBaseField) {
+						if (fieldIndex === curBaseField) {
+							if (curNextDataRow) {
 								if (nextFieldItem) {
 									if (nextFieldItem.t !== Asc.c_oAscItemType.Data || nextFieldItem.x === null) {
 										isEnd = true;
-										curNextDataRow = undefined;
 									} else {
 										curNextDataRow = curNextDataRow.vals[nextFieldItem.x];
 										isEnd = false;
 									}
 								}
-							} else {
-								curNextDataRow = curNextDataRow.vals[fieldItem.x];
-							}	
-						}
-						if (curPrevDataRow) {
-							if (fieldIndex === curBaseField) {
+							}
+							if (curPrevDataRow) {
 								if (!prevFieldItem && rowItem.x[rowItemsXIndex].getV() === 0) {
 									isBegin = true;
-									curPrevDataRow = undefined;
 								} else {
 									curPrevDataRow = curPrevDataRow.vals[prevFieldItem.x];
 									isBegin = false;
 								}
-							} else {
+							}
+						} else {
+							if (curNextDataRow) {
+								curNextDataRow = curNextDataRow.vals[fieldItem.x];
+							}
+							if (curPrevDataRow) {
 								curPrevDataRow = curPrevDataRow.vals[fieldItem.x];
 							}
+							
 						}
 					}
 					prevDataByRowIndex.length = rowR + rowItemsXIndex + 1;
@@ -8308,8 +8308,8 @@
 								nextFieldItem = field.getItem (colItem.x[colItemsXIndex].getV() + 1)
 
 								curDataRow = curDataRow.subtotal[fieldItem.x];
-								if (curNextDataRow) {
-									if (fieldIndex == curBaseField) {
+								if (fieldIndex === curBaseField) {
+									if (curNextDataRow) {
 										if (nextFieldItem) {
 											if (nextFieldItem.t !== Asc.c_oAscItemType.Data || nextFieldItem.x === null) {
 												isEnd = true;
@@ -8318,19 +8318,20 @@
 												isEnd = false;
 											}
 										}
-									} else {
-										curNextDataRow = curNextDataRow.subtotal[fieldItem.x];
 									}
-								}
-								if (curPrevDataRow) {
-									if (fieldIndex === curBaseField) {
+									if (curPrevDataRow) {
 										if (!prevFieldItem && colItem.x[colItemsXIndex].getV() === 0) {
 											isBegin = true;
 										} else {
 											curPrevDataRow = curPrevDataRow.subtotal[prevFieldItem.x];
 											isBegin = false;
 										}
-									} else {
+									}
+								} else {
+									if (curNextDataRow) {
+										curNextDataRow = curNextDataRow.subtotal[fieldItem.x];
+									}
+									if (curPrevDataRow) {
 										curPrevDataRow = curPrevDataRow.subtotal[fieldItem.x];
 									}
 								}
@@ -8405,7 +8406,8 @@
 											oCellValue = total.getCellValue(dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t);
 										}
 										break;
-									default: 		
+									default:
+
 										break;
 								}
 								break;
