@@ -54,7 +54,7 @@
 		{
 			function ZLib()
 			{
-				this.engine = window["NATIVE_EDITOR_ENJINE"] ? CreateNativeZip() : window["nativeZlibEngine"];
+				this.engine = window["NATIVE_EDITOR_ENJINE"] ? CreateNativeZip() : new AscCommon["CZLibEngineJS"]();
 				this.files = [];
 			}
 			/**
@@ -129,6 +129,18 @@
 			{
 				return this.engine["close"]();
 			};
+			/**
+			 * Get image blob for browser
+			 * @returns {Blob}
+			 */
+			ZLib.prototype.getImageBlob = function(path)
+			{
+				return this.engine["getImageBlob"](path);
+			};
+
+
+			AscCommon.ZLib = ZLib;
+			AscCommon.ZLib.prototype.isModuleInit = true;
 
 			window.nativeZlibEngine = new ZLib();
 			onSuccess();

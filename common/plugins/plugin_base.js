@@ -452,7 +452,8 @@
 		".form-control[disabled]" : { "color" : "text-invers" },
 		".btn-text-default" : { "background-color" : "background-normal", "border-color" : "border-regular-control", "color" : "text-normal" },
 		".btn-text-default:hover" : { "background-color" : "highlight-button-hover" },
-		".btn-text-default:active" : { "background-color" : "highlight-button-pressed !important" },
+		".btn-text-default.active,\
+		.btn-text-default:active" : { "background-color" : "highlight-button-pressed !important", "color" : "text-normal-pressed" },
 		".btn-text-default[disabled]:hover,\
 		.btn-text-default.disabled:hover,\
 		.btn-text-default[disabled]:active,\
@@ -672,6 +673,9 @@
 				case "button":
 				{
 					var _buttonId = parseInt(pluginData.button);
+					if (isNaN(_buttonId))
+						_buttonId =pluginData.button;
+
 					if (!window.Asc.plugin.button && -1 == _buttonId)
 						window.Asc.plugin.executeCommand("close", "");
 					else

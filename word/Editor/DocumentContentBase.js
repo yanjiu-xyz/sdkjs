@@ -670,15 +670,10 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 								this.CurPos.ContentPos = StartPos + 1;
 								this.Content[StartPos + 1].MoveCursorToStartPos(false);
 							}
-							else if (true === bOnTextAdd && type_Paragraph !== this.Content[StartPos + 1].GetType())
+							else
 							{
 								this.CurPos.ContentPos = StartPos;
 								this.Content[StartPos].MoveCursorToEndPos(false, false);
-							}
-							else
-							{
-								this.CurPos.ContentPos = StartPos + 1;
-								this.Content[StartPos + 1].MoveCursorToStartPos(false);
 							}
 						}
 					}
@@ -785,6 +780,8 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 			}
 			else
 			{
+				let isParagraphMarkRemove = this.Content[StartPos].IsParagraph() && this.Content[StartPos].IsSelectedOnlyParagraphMark();
+
 				this.CurPos.ContentPos = StartPos;
 				if (Count < 0 && this.Content[StartPos].IsTable() && true === this.Content[StartPos].IsCellSelection() && true !== bOnTextAdd)
 				{
@@ -792,8 +789,7 @@ CDocumentContentBase.prototype.private_Remove = function(Count, isRemoveWholeEle
 				}
 				else if (false === this.Content[StartPos].Remove(Count, isRemoveWholeElement, bRemoveOnlySelection, bOnTextAdd))
 				{
-					// При добавлении текста, параграф не объединяется
-					if (true !== bOnTextAdd || (isRemoveOnDrag && this.Content[StartPos].IsEmpty()))
+					if (!bOnTextAdd && (isParagraphMarkRemove || ((isRemoveOnDrag || Count > 0 || StartPos < this.Content.length - 1) && this.Content[StartPos].IsEmpty())))
 					{
 						// В ворде параграфы объединяются только когда у них все настройки совпадают.
 						// (почему то при изменении и обратном изменении настроек параграфы перестают объединятся)
@@ -1399,6 +1395,14 @@ CDocumentContentBase.prototype.GetElement = function(nIndex)
 CDocumentContentBase.prototype.AddToContent = function(nPos, oItem, isCorrectContent)
 {
 	this.Add_ToContent(nPos, oItem, isCorrectContent);
+};
+/**
+ * Добавляем элемент в конец
+ * @param oItem
+ */
+CDocumentContentBase.prototype.PushToContent = function(oItem, isCorrectContent)
+{
+	return this.AddToContent(this.GetElementsCount(), oItem, isCorrectContent);
 };
 /**
  * Удаляем заданное количество элементов (с записью в историю)

@@ -450,7 +450,6 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		PDFA    : 0x0209,
 		DJVU    : 0x0203,
 		XPS     : 0x0204,
-		HTML    : 0x0803,
 
 		// Word
 		DOCX : 0x0041,
@@ -458,7 +457,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		ODT  : 0x0043,
 		RTF  : 0x0044,
 		TXT  : 0x0045,
-		HTML_TODO  : 0x0046,
+		HTML : 0x0046,
 		MHT  : 0x0047,
 		EPUB : 0x0048,
 		FB2  : 0x0049,
@@ -696,6 +695,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 
 			ComplexFieldEmptyTOC : -1101,
 			ComplexFieldNoTOC    : -1102,
+
+			TextFormWrongFormat : -1201,
 
 			SecondaryAxis: 1001,
 			ComboSeriesError: 1002,
@@ -1703,11 +1704,11 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		b: 0,
 		bl: 1,
 		br: 2,
-		l: 3,
-		r: 4,
-		t: 5,
-		tl: 6,
-		tr: 7
+		l: 4,
+		r: 5,
+		t: 6,
+		tl: 7,
+		tr: 8
 	}
 
 	var ST_LightRigType = {
@@ -2485,6 +2486,13 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	g_aPunctuation[0x205C] = PUNCTUATION_FLAG_BASE;                                     // ⁜
 	g_aPunctuation[0x205D] = PUNCTUATION_FLAG_BASE;                                     // ⁝
 	g_aPunctuation[0x205E] = PUNCTUATION_FLAG_BASE;                                     // ⁞
+	g_aPunctuation[0x2420] = PUNCTUATION_FLAG_BASE;                                     // ␠
+	g_aPunctuation[0x2421] = PUNCTUATION_FLAG_BASE;                                     // ␡
+	g_aPunctuation[0x2422] = PUNCTUATION_FLAG_BASE;                                     // ␢
+	g_aPunctuation[0x2423] = PUNCTUATION_FLAG_BASE;                                     // ␣
+	g_aPunctuation[0x2424] = PUNCTUATION_FLAG_BASE;                                     // ␤
+	g_aPunctuation[0x2425] = PUNCTUATION_FLAG_BASE;                                     // ␥
+	g_aPunctuation[0x2426] = PUNCTUATION_FLAG_BASE;                                     // ␦
 
 	// Не смотря на то что следующий набор символов идет в блоке CJK Symbols and Punctuation
 	// Word не считает их как EastAsian script (w:lang->w:eastAsian)
@@ -3335,6 +3343,11 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		Simple   : 3
 	};
 
+	var c_oAscMathInputType = {
+		Unicode : 0,
+		LaTeX   : 1
+	};
+
 	const LigaturesFlags = {
 		Standard     : 0x01, //AscFonts.HB_FEATURE.HB_FEATURE_TYPE_LIGATURES_STANDARD,
 		Contextual   : 0x02, //AscFonts.HB_FEATURE.HB_FEATURE_TYPE_LIGATURES_CONTEXTUAL,
@@ -3388,6 +3401,15 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		Words           : 17
 	};
 
+	const DocumentView = {
+		MasterPages : 0,
+		None        : 1,
+		Normal      : 2,
+		Outline     : 3,
+		Print       : 4,
+		Web         : 5
+	};
+
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
 	window['Asc']                          = window['Asc'] || {};
@@ -3417,7 +3439,6 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['ODT']                  = prot.ODT;
 	prot['RTF']                  = prot.RTF;
 	prot['TXT']                  = prot.TXT;
-	prot['HTML_TODO']                = prot.HTML_TODO;
 	prot['MHT']                  = prot.MHT;
 	prot['EPUB']                 = prot.EPUB;
 	prot['FB2']                  = prot.FB2;
@@ -3597,6 +3618,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['Password']                         = prot.Password;
 	prot['ComplexFieldEmptyTOC']             = prot.ComplexFieldEmptyTOC;
 	prot['ComplexFieldNoTOC']                = prot.ComplexFieldNoTOC;
+	prot['TextFormWrongFormat']              = prot.TextFormWrongFormat;
 	prot['SecondaryAxis']                    = prot.SecondaryAxis;
 	prot['ComboSeriesError']                 = prot.ComboSeriesError;
 
@@ -3937,7 +3959,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['Page']                           = prot.Page;
 	prot['Paragraph']                      = prot.Paragraph;
 	prot['TopMargin']                      = prot.TopMargin;
-	window['Asc']['c_oAscBorderStyles'] = window['AscCommon'].c_oAscBorderStyles = c_oAscBorderStyles;
+	window['Asc']['c_oAscBorderStyles'] = window['Asc'].c_oAscBorderStyles = c_oAscBorderStyles;
 	prot                         = c_oAscBorderStyles;
 	prot['None']                 = prot.None;
 	prot['Double']               = prot.Double;
@@ -4637,16 +4659,24 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['Original'] = prot.Original;
 	prot['Simple']   = prot.Simple;
 
+	prot = window['Asc']['c_oAscMathInputType'] = window['Asc'].c_oAscMathInputType = c_oAscMathInputType;
+	prot['Unicode'] = prot.Unicode;
+	prot['LaTeX']   = prot.LaTeX;
+
 	window['AscFormat'] = window['AscFormat'] || {};
 
 	window['AscFormat'].text_fit_No         = window['AscFormat']['text_fit_No']         = 0;
     window['AscFormat'].text_fit_Auto       = window['AscFormat']['text_fit_Auto']       = 1;
     window['AscFormat'].text_fit_NormAuto   = window['AscFormat']['text_fit_NormAuto']   = 2;
 
-	//Overflow Types
-    window['AscFormat'].nOTClip = window['AscFormat']['nOTClip'] = 0;
-    window['AscFormat'].nOTEllipsis = window['AscFormat']['nOTEllipsis'] = 1;
-	window['AscFormat'].nOTOwerflow = window['AscFormat']['nOTOwerflow'] = 2;
+	//Vert Overflow Types
+    window['AscFormat'].nVOTClip = window['AscFormat']['nVOTClip'] = 0;
+    window['AscFormat'].nVOTEllipsis = window['AscFormat']['nVOTEllipsis'] = 1;
+	window['AscFormat'].nVOTOverflow = window['AscFormat']['nVOTOverflow'] = 2;
+
+	//Hor OverFlow Types
+	window['AscFormat'].nHOTClip = window['AscFormat']['nHOTClip'] = 0;
+	window['AscFormat'].nHOTOverflow = window['AscFormat']['nHOTOverflow'] = 1;
 
     window['AscFormat'].BULLET_TYPE_BULLET_NONE = window['AscFormat']['BULLET_TYPE_BULLET_NONE'] = 0;
     window['AscFormat'].BULLET_TYPE_BULLET_CHAR = window['AscFormat']['BULLET_TYPE_BULLET_CHAR'] = 1;
@@ -4724,5 +4754,13 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['WavyDouble']      = prot.WavyDouble;
 	prot['WavyHeavy']       = prot.WavyHeavy;
 	prot['Words']           = prot.Words;
+
+	prot = window['Asc']['DocumentView'] = window['Asc'].DocumentView = DocumentView;
+	prot['MasterPages'] = prot.MasterPages;
+	prot['None']        = prot.None;
+	prot['Normal']      = prot.Normal;
+	prot['Outline']     = prot.Outline;
+	prot['Print']       = prot.Print;
+	prot['Web']         = prot.Web;
 
 })(window);

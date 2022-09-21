@@ -1955,7 +1955,10 @@
 						}
 					}
 
-					if (!bUndoChanges && !bRedoChanges /*&& !notAddToHistory*/ && oldFilter) {
+					//для случая, когда вставляем последнюю строку в ф/т, не добавляю эти сдвиги в историю
+					//это делается при undo в функции _shiftCellsBottom
+					//2 раза дублировать сдвиги не нужно
+					if (!bUndoChanges && !bRedoChanges /*&& !notAddToHistory*/ && oldFilter && !(displayNameFormatTable && insertType === c_oAscInsertOptions.InsertCellsAndShiftDown)) {
 						var changeElement = {
 							oldFilter: oldFilter, newFilterRef: filter.Ref.clone()
 						};
@@ -5790,6 +5793,42 @@
 				range._foreachNoEmpty(function (cell) {
 					if (!cell.isNullText()) {
 						res = false;
+						return true;
+					}
+				});
+				return res;
+			},
+
+			_isContainEmptyCell: function (ar) {
+				var range = this.worksheet.getRange3(Math.max(0, ar.r1), Math.max(0, ar.c1), ar.r2, ar.c2);
+				var res = false;
+				range._foreach2(function (cell) {
+					if (!cell || cell.isNullText()) {
+						res = true;
+						return true;
+					}
+				});
+				return res;
+			},
+
+			_getFirstNotEmptyCell: function (ar) {
+				var range = this.worksheet.getRange3(Math.max(0, ar.r1), Math.max(0, ar.c1), ar.r2, ar.c2);
+				var res = null;
+				range._foreachNoEmpty(function (cell) {
+					if (!cell.isNullText()) {
+						res = cell;
+						return true;
+					}
+				});
+				return res;
+			},
+
+			_getFirstEmptyCellByRow: function (startRow, startCol, endCol) {
+				var range = this.worksheet.getRange3(startRow, startCol, this.worksheet.cellsByColRowsCount - 1, endCol);
+				var res = {nRow: this.worksheet.cellsByColRowsCount, nCol: startCol};
+				range._foreach2(function (cell, row, col) {
+					if (!cell || cell.isNullText()) {
+						res = {nRow: row, nCol: col};
 						return true;
 					}
 				});

@@ -1546,11 +1546,9 @@
 		return res;
 	}
 
-	function FromXml_ST_HorizontalAlignment(val) {
-		var res = -1;
-		if ("general" === val) {
-			res = -1;
-		} else if ("left" === val) {
+	function FromXml_ST_HorizontalAlignment(val, default_null) {
+		var res = default_null ? null: -1;//general == null
+		if ("left" === val) {
 			res = AscCommon.align_Left;
 		} else if ("center" === val) {
 			res = AscCommon.align_Center;
@@ -2068,6 +2066,9 @@
 		val = val.replace(/&#xD;&#xA;/g, "\n");
 		val = val.replace(/_x000D_\r\n/g, "\n");
 		val = val.replace(/\r\n/g, "\n");
+
+		val = unescape_ST_Xstring(val);
+
 		return val;
 	}
 
@@ -2087,8 +2088,66 @@
 		//val = val.replace(/\n/g, "\&#xA;");
 		//от мс приходит \r\n
 		//val = val.replace(/\n/g, "\r\n");
-
+		val = escape_ST_Xstring(val);
 		return val;
+	}
+
+	function unescape_ST_Xstring(s) {
+		var res = "";
+		for (var i = 0; i < s.length; i++) {
+			if (i + 6 < s.length && s[i] === '_' && s[i + 1] === 'x' && !isNaN(s[i + 2]) && !isNaN(s[i + 3]) && s[i + 6] === '_') {
+				res += hex2Str(s.substring(i + 2, i + 6));
+				i += 6;
+			} else {
+				res += s[i];
+			}
+		}
+		return res;
+	}
+
+	var match_hex = "^_x[0-9A-F]{4}_";
+	function escape_ST_Xstring(wstr) {
+		var ret_val = "";
+
+		for (var i = 0; i < wstr.length; i++) {
+			var str = wstr[i];
+			var strCode = str.charCodeAt(0);
+			if (strCode < 0x0009 || strCode === 0x000B || strCode === 0x000C || strCode > 0x000D && strCode < 0x0020 || strCode > 0xD7FF && strCode < 0xE000 || strCode > 0xFFFD) {
+				ret_val += "_x" + wchar_t2hex_str(strCode) + "_";
+			} else if ('_' === str && wstr.substring(i, 7).match(match_hex)) {
+				ret_val += "_x005F_";
+			} else {
+				ret_val += str;
+			}
+		}
+		return ret_val;
+	}
+
+	function wchar_t2hex_str(val)
+	{
+		var hex = "0123456789ABCDEF";
+		var code_string = "";
+		code_string += hex[(val & 0xf000) >> 12];
+		code_string += hex[(val & 0x0f00) >> 8];
+		code_string += hex[(val & 0x00f0) >> 4];
+		code_string += hex[(val & 0x000f)];
+
+		if (code_string === "0000") {
+			return val;
+		}
+
+		return code_string;
+	}
+
+	function hex2Str(hex) {
+		var res = "";
+		for (var i = 0; i < hex.length; i += 2) {
+			var val = parseInt(hex.substr(i, 2), 16);
+			if (val) {
+				res += String.fromCharCode(val);
+			}
+		}
+		return res;
 	}
 
 	//for uri/namespaces
@@ -2281,7 +2340,7 @@
 				} else if ("workbookPr" === name) {
 					val = new CT_WorkbookPr();
 					val.fromXml(reader);
-					this.wb.workbookPr = val.val;
+					this.wb.WorkbookPr = val.val;
 				} else if ("bookViews" === name) {
 					val = new CT_BookViews(t.wb);
 					val.fromXml(reader)
@@ -2748,9 +2807,11 @@
 			}
 		}
 
-		var t = this;
+		let t = this;
+		let oVmlDrawingReader = null;
 		if ("worksheet" === reader.GetNameNoNS()) {
 			var context = reader.GetContext();
+			context.aOleObjectsData = [];
 			context.initFromWS(this);
 			var depth = reader.GetDepth();
 			while (reader.ReadNextSiblingNode(depth)) {
@@ -2832,10 +2893,59 @@
 						oElement.fromXml(oReader, true);
 						context.InitOpenManager.legacyDrawing = oElement;
 					}
+					oVmlDrawingReader = oReader;
 				} else if ("legacyDrawingHF" === name) {
 					//do not support serialize - commented
 				} else if ("oleObjects" === name) {
-					//do not support serialize
+					let oWS = this;
+					let oDrawingData = null;
+					let fReadOleDrawing = function (reader, name) {
+						if(oDrawingData) {
+							return true;
+						}
+						if(name === "AlternateContent") {
+							fCallReadDrawing();
+						} else if(name === "Choice") {
+							fCallReadDrawing();
+						} else if(name === "oleObject") {
+							let oFrom = null, oTo = null, oPrNode = null;
+							let oNode = new CT_XmlNode(function(reader, name) {
+								if(name === "objectPr") {
+									oPrNode = new CT_XmlNode(function(reader, name) {
+										if(name === "anchor") {
+											let oAnchorNode = new CT_XmlNode(function(reader, name){
+												if(name === "from") {
+													oFrom = new AscFormat.CCellObjectInfo();
+													oFrom.fromXml(reader);
+												}
+												else if(name === "to") {
+													oTo = new AscFormat.CCellObjectInfo();
+													oTo.fromXml(reader);
+												}
+												return true;
+											});
+											oAnchorNode.fromXml(reader);
+										}
+										return true;
+									});
+									oPrNode.fromXml(reader);
+								}
+								return true;
+							});
+							oNode.fromXml(reader);
+							oDrawingData = {drawingNode: oNode, from: oFrom, to: oTo, objectPr: oPrNode};
+							context.aOleObjectsData.push(oDrawingData);
+						}
+					};
+					let fCallReadDrawing = function() {
+						let oNode = new CT_XmlNode(function (reader, name) {
+							fReadOleDrawing(reader, name);
+							return true;
+						});
+						oNode.fromXml(reader);
+					};
+					fCallReadDrawing();
+
 				} else if ("controls" === name) {
 					//do not support serialize
 				} else if ("headerFooter" === name) {
@@ -2898,10 +3008,159 @@
 		}
 
 		this.prepareExtLst(extLst, context.InitOpenManager);
+		this.prepareLegacyDrawings(reader, oVmlDrawingReader)
 	};
+	AscCommonExcel.Worksheet.prototype.prepareLegacyDrawings = function(reader, oVmlDrawingReader) {
+		let context = reader.context;
+		let aOleObjectsData = context.aOleObjectsData;
+		let oVmlDrawing = context.InitOpenManager.legacyDrawing;
 
+		let objectRender = new AscFormat.DrawingObjects();
+		let bVmlReader = false;
+
+
+		let oOldReader;
+		if(oVmlDrawingReader) {
+			oOldReader = oVmlDrawingReader.context.reader;
+			oVmlDrawingReader.context.reader = oVmlDrawingReader;
+		}
+		for(let nOle = 0; nOle < aOleObjectsData.length; ++nOle) {
+			let oData = aOleObjectsData[nOle];
+			let oFrom, oTo;
+			let oDrawingNode = oData.drawingNode;
+			let oPrNode = oData.objectPr;
+			oFrom = oData.from;
+			oTo = oData.to;
+			let sShapeId = oDrawingNode.attributes["shapeId"];
+			let oVMLSp = oVmlDrawing.getShape(sShapeId);
+			let sImageRId = null;
+			let sDataLinkId = oDrawingNode.attributes["id"];
+			let sProgId = oDrawingNode.attributes["progId"];
+			if(oVMLSp) {
+				let oClientData = oVMLSp.getClientData();
+				if(oClientData) {
+					let sAnchor = oClientData.m_oAnchor;
+					if(sAnchor) {
+						let aCoords = sAnchor.split(",");
+						if(aCoords.length === 8) {
+							let nFromCol = parseInt(aCoords[0]);
+							let dFromColOff = AscFormat.Px_To_Mm(parseInt(aCoords[1]));
+							let nFromRow = parseInt(aCoords[2]);
+							let dFromRowOff = AscFormat.Px_To_Mm(parseInt(aCoords[3]));
+							let nToCol = parseInt(aCoords[4]);
+							let dToColOff = AscFormat.Px_To_Mm(parseInt(aCoords[5]));
+							let nToRow = parseInt(aCoords[6]);
+							let dToRowOff = AscFormat.Px_To_Mm(parseInt(aCoords[7]));
+							if(AscFormat.isRealNumber(nFromCol) && AscFormat.isRealNumber(dFromColOff) &&
+								AscFormat.isRealNumber(nFromRow) && AscFormat.isRealNumber(dFromRowOff) &&
+								AscFormat.isRealNumber(nToCol) && AscFormat.isRealNumber(dToColOff) &&
+								AscFormat.isRealNumber(nToRow) && AscFormat.isRealNumber(dToRowOff)) {
+								if(!oFrom) {
+									oFrom = new AscFormat.CCellObjectInfo();
+								}
+								oFrom.col = nFromCol;
+								oFrom.colOff = dFromColOff;
+								oFrom.row = nFromRow;
+								oFrom.rowOff = dFromRowOff;
+								if(!oTo) {
+									oTo = new AscFormat.CCellObjectInfo();
+								}
+								oTo.col = nToCol;
+								oTo.colOff = dToColOff;
+								oTo.row = nToRow;
+								oTo.rowOff = dToRowOff;
+							}
+						}
+					}
+				}
+				let oImageData = oVMLSp.getImageData();
+				if(oImageData) {
+					if (oImageData.m_oRelId) sImageRId = oImageData.m_oRelId;
+					else if (oImageData.m_rId) sImageRId = oImageData.m_rId;
+					else if (oImageData.m_rPict) sImageRId = oImageData.m_rPict;
+					if(sImageRId) {
+						bVmlReader = !!oVmlDrawingReader;
+					}
+				}
+			}
+			if(!sImageRId) {
+				if(oPrNode) {
+					sImageRId = oPrNode.attributes["id"];
+					bVmlReader = false;
+				}
+			}
+			if(oFrom && oTo) {
+				let oOleObject = new AscFormat.COleObject();
+				AscFormat.fillImage(oOleObject, "", 0, 0, 50, 50);
+				AscFormat.fReadXmlRasterImageId(bVmlReader ? oVmlDrawingReader : reader, sImageRId, oOleObject.blipFill);
+				oOleObject.fillDataLink(sDataLinkId, reader);
+				oOleObject.setApplicationId(sProgId);
+				let oDrawing = objectRender.createDrawingObject(AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
+				oDrawing.graphicObject = oOleObject;
+				oDrawing.from = oFrom;
+				oDrawing.to = oTo;
+				oDrawing.initAfterSerialize(this);
+			}
+		}
+		//signature lines
+		if(oVmlDrawing) {
+			let aSL = oVmlDrawing.getSignatureLines();
+			let aOOXMLSl = [];
+			for(let nSL = 0; nSL < aSL.length; ++nSL) {
+				let oSL = aSL[nSL];
+				let oOOXMLSL = oSL.convertToOOXML(oVmlDrawing.items, null, oVmlDrawingReader.context);
+				let oFrom, oTo;
+				let oClientData = oSL.getClientData();
+				if(oClientData) {
+					let sAnchor = oClientData.m_oAnchor;
+					if(sAnchor) {
+						let aCoords = sAnchor.split(",");
+						if(aCoords.length === 8) {
+							let nFromCol = parseInt(aCoords[0]);
+							let dFromColOff = AscFormat.Px_To_Mm(parseInt(aCoords[1]));
+							let nFromRow = parseInt(aCoords[2]);
+							let dFromRowOff = AscFormat.Px_To_Mm(parseInt(aCoords[3]));
+							let nToCol = parseInt(aCoords[4]);
+							let dToColOff = AscFormat.Px_To_Mm(parseInt(aCoords[5]));
+							let nToRow = parseInt(aCoords[6]);
+							let dToRowOff = AscFormat.Px_To_Mm(parseInt(aCoords[7]));
+							if(AscFormat.isRealNumber(nFromCol) && AscFormat.isRealNumber(dFromColOff) &&
+								AscFormat.isRealNumber(nFromRow) && AscFormat.isRealNumber(dFromRowOff) &&
+								AscFormat.isRealNumber(nToCol) && AscFormat.isRealNumber(dToColOff) &&
+								AscFormat.isRealNumber(nToRow) && AscFormat.isRealNumber(dToRowOff)) {
+								oFrom = new AscFormat.CCellObjectInfo();
+								oFrom.col = nFromCol;
+								oFrom.colOff = dFromColOff;
+								oFrom.row = nFromRow;
+								oFrom.rowOff = dFromRowOff;
+								oTo = new AscFormat.CCellObjectInfo();
+								oTo.col = nToCol;
+								oTo.colOff = dToColOff;
+								oTo.row = nToRow;
+								oTo.rowOff = dToRowOff;
+							}
+						}
+					}
+				}
+				if(oOOXMLSL && oOOXMLSL.isSignatureLine() && oFrom && oTo) {
+					let oDrawing = objectRender.createDrawingObject(AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
+					let oSpPr = oOOXMLSL.spPr;
+					oOOXMLSL = oOOXMLSL.convertToPPTX(this.getDrawingDocument(), this, false);
+					oOOXMLSL.setSpPr(oSpPr);
+					oDrawing.graphicObject = oOOXMLSL;
+					oDrawing.from = oFrom;
+					oDrawing.to = oTo;
+					oDrawing.initAfterSerialize(this);
+				}
+			}
+			return aOOXMLSl;
+		}
+
+		if(oVmlDrawingReader) {
+			oVmlDrawingReader.context.reader = oOldReader;
+		}
+	};
 	//TOoDO PrepareToWrite делается в x2t, здесь не вижу необходиимости, но проверить нужно
-
 	AscCommonExcel.Worksheet.prototype.toXml = function (writer) {
 		var t = this, i;
 		var context = writer.context;
@@ -3065,28 +3324,76 @@
 			drawingRef.toXml(writer, "drawing");
 		}
 
+		let vmldrawingPart = null;
+		let vmlDrawingMemory = null;
+		let bVmlDrawing = (context.oleDrawings.length > 0 ||
+			context.signatureDrawings.length > 0 ||
+			this.aComments.length > 0);
+		if(bVmlDrawing) {
+			vmldrawingPart = context.part.addPart(AscCommon.openXml.Types.vmlDrawing);
+			vmlDrawingMemory = new AscCommon.CMemory();
+			vmlDrawingMemory.context = context;
+			let vmldrawingRef = new AscCommonExcel.CT_DrawingWSRef();
+			vmldrawingRef.id = vmldrawingPart.rId;
+			vmldrawingRef.toXml(writer, "legacyDrawing");
+			vmlDrawingMemory.WriteXmlString("<xml \
+xmlns:v=\"urn:schemas-microsoft-com:vml\" \
+xmlns:o=\"urn:schemas-microsoft-com:office:office\" \
+xmlns:x=\"urn:schemas-microsoft-com:office:excel\">");
+		}
+
 		//vml drawings
 		if (this.aComments.length > 0) {
 			//TODO m_sGfxdata - не протаскивается
 			var vmldrawing = new AscFormat.CVMLDrawing();
 			vmldrawing.m_mapComments = this.aComments;
+			vmlDrawingMemory.WriteXmlString(vmldrawing.getXmlString());
 
-			var memory = new AscCommon.CMemory();
-			var vmldrawingXml = vmldrawing.getXmlString();
-			memory.WriteXmlString(vmldrawingXml);
-			var jsaData = memory.GetDataUint8();
-			var vmldrawingPart = context.part.addPart(AscCommon.openXml.Types.vmlDrawing);
-			vmldrawingPart.part.setData(jsaData);
-
-			var vmldrawingRef = new AscCommonExcel.CT_DrawingWSRef();
-			vmldrawingRef.id = vmldrawingPart.rId;
-			vmldrawingRef.toXml(writer, "legacyDrawing");
 		}
-
 
 		//skip m_oLegacyDrawingHF
 		//skip m_oPicture
-		//skip m_oOleObjects
+		//OLEObjects
+		if(context.oleDrawings.length > 0) {
+			writer.WriteXmlNodeStart("oleObjects");
+			writer.WriteXmlAttributesEnd();
+			let aDrawings = context.oleDrawings;
+			for(let nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing) {
+				let oDrawing = aDrawings[nDrawing];
+				oDrawing.toXmlOle(writer);
+			}
+			writer.WriteXmlNodeEnd("oleObjects");
+		}
+
+		if(vmlDrawingMemory) {
+			vmlDrawingMemory.context.clearCurrentPartDataMaps();
+		}
+		if(context.oleDrawings.length > 0) {
+			let oldPart = vmlDrawingMemory.context.part;
+			vmlDrawingMemory.context.part = vmldrawingPart.part;
+			let aDrawings = context.oleDrawings;
+			for(let nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing) {
+				let oDrawing = aDrawings[nDrawing];
+				oDrawing.graphicObject.toXmlVML(vmlDrawingMemory, "", "", "", "_x0000_s" + oDrawing.nShapeId)
+			}
+			vmlDrawingMemory.context.part = oldPart;
+		}
+		if(context.signatureDrawings.length > 0) {
+			let oldPart = vmlDrawingMemory.context.part;
+			vmlDrawingMemory.context.part = vmldrawingPart.part;
+			let aDrawings = context.signatureDrawings;
+			for(let nDrawing = 0; nDrawing < aDrawings.length; ++nDrawing) {
+				let oDrawing = aDrawings[nDrawing];
+				oDrawing.graphicObject.toXmlVML(vmlDrawingMemory, "", "", "")
+			}
+			vmlDrawingMemory.context.part = oldPart;
+		}
+
+		if(bVmlDrawing) {
+			vmlDrawingMemory.WriteXmlString("</xml>");
+			let vmlData = vmlDrawingMemory.GetDataUint8();
+			vmldrawingPart.part.setData(vmlData);
+		}
 		//skip m_oControls
 
 		if (this.TableParts && this.TableParts.length > 0) {
@@ -3691,9 +3998,6 @@
 				//если не число - мс пропускает
 				if (AscCommon.isNumber(val)) {
 					this.setHeight(val);
-					if (AscCommon.CurFileVersion < 2) {
-						this.setCustomHeight(true);
-					}
 				}
 			} else if ("ss:Height" === reader.GetName()) {
 				val = reader.GetValueDouble();
@@ -3726,13 +4030,20 @@
 	AscCommonExcel.Cell.prototype.fromXml = function (reader) {
 		this.readAttr(reader);
 
-		var value = reader.GetContext().cellValue;
+		var ctx = reader.GetContext();
+		var value = ctx.cellValue;
 		var depth = reader.GetDepth();
 		while (reader.ReadNextSiblingNode(depth)) {
 			if ("v" === reader.GetName()) {
 				value.fromXml(reader);
 				if (CellValueType.String === this.type) {
-					var ss = reader.GetContext().sharedStrings[parseInt(value.val)];
+					var ss;
+					if (ctx.originType === "str") {
+						ss = prepareTextFromXml(value.val);
+					} else {
+						ss = reader.GetContext().sharedStrings[parseInt(value.val)];
+					}
+
 					if (undefined !== ss) {
 						if (typeof ss === 'string') {
 							this.setValueTextInternal(ss);
@@ -3753,7 +4064,9 @@
 	};
 	AscCommonExcel.Cell.prototype.readAttr = function (reader) {
 		var val;
-		var cellBase = reader.GetContext().cellBase;
+		var ctx = reader.GetContext();
+		var cellBase = ctx.cellBase;
+		ctx.originType = null;
 		while (reader.MoveToNextAttribute()) {
 			if ("r" === reader.GetName()) {
 				val = reader.GetValue();
@@ -3772,6 +4085,7 @@
 				}
 			} else if ("t" === reader.GetName()) {
 				val = reader.GetValue();
+				ctx.originType = val;
 				var type = FromXml_ST_CellValueType(val);
 				if (type != null) {
 					this.type = type;
@@ -3845,7 +4159,7 @@
 			}
 
 			if (null !== text) {
-				writer.WriteXmlValueString("v", text);
+				writer.WriteXmlValueStringEncode2("v", prepareTextToXml(text));
 			} else if (null !== number) {
 				writer.WriteXmlValueNumber("v", number);
 			}
@@ -3938,10 +4252,14 @@
 			while (reader.ReadNextSiblingNode(depth)) {
 				var name = reader.GetNameNoNS();
 				if ("twoCellAnchor" === name) {
-					var drawing = objectRender.createDrawingObject();
+					let drawing = objectRender.createDrawingObject(AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
 					drawing.fromXml(reader);
 				} else if ("oneCellAnchor" === name) {
+					let drawing = objectRender.createDrawingObject(AscCommon.c_oAscCellAnchorType.cellanchorOneCell);
+					drawing.fromXml(reader);
 				} else if ("absoluteAnchor" === name) {
+					let drawing = objectRender.createDrawingObject(AscCommon.c_oAscCellAnchorType.cellanchorAbsolute);
+					drawing.fromXml(reader);
 				}
 			}
 		}
@@ -3949,7 +4267,7 @@
 	CT_DrawingWS.prototype.toXml = function (writer) {
 		writer.WriteXmlString('<?xml version="1.0" encoding="UTF-8" standalone="yes"?>');
 		writer.WriteXmlNodeStart("xdr:wsDr");
-		writer.WriteXmlString(' xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main"');
+		writer.WriteXmlString(' xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"');
 		writer.WriteXmlAttributesEnd();
 		this.ws.Drawings.forEach(function (drawing) {
 			drawing.toXml(writer);
@@ -4520,7 +4838,7 @@
 
 	CT_Value.prototype.fromXml = function (reader) {
 		this.readAttr(reader);
-		this.val = reader.GetText();
+		this.val = reader.GetTextDecodeXml();
 	};
 	CT_Value.prototype.readAttributes = function (attr, uq) {
 		if (attr()) {
@@ -4638,10 +4956,10 @@
 				val = reader.GetValue();
 				this.DisplayName = val;
 			} else if ("headerRowCount" === reader.GetName()) {
-				val = reader.GetValue();
+				val = reader.GetValueInt();
 				this.HeaderRowCount = val;
 			} else if ("totalsRowCount" === reader.GetName()) {
-				val = reader.GetValue();
+				val = reader.GetValueInt();
 				this.TotalsRowCount = val;
 			} else if ("id" === reader.GetName()) {
 				reader.context.InitOpenManager.oReadResult.tableIds[reader.GetValue()] = this;
@@ -5911,10 +6229,11 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 		while (reader.ReadNextSiblingNode(depth)) {
 			var name = reader.GetNameNoNS();
 			if ("formula1" === name) {
-				val = new Asc.CDataFormula(reader.GetText());
+				val = new Asc.CDataFormula(prepareTextFromXml(reader.GetTextDecodeXml()));
+
 				this.formula1 = val;
 			} else if ("formula2" === name) {
-				val = new Asc.CDataFormula(reader.GetText());
+				val = new Asc.CDataFormula(prepareTextFromXml(reader.GetTextDecodeXml()));
 				this.formula2 = val;
 			} else if ("sqref" === name) {
 				this.setSqRef(reader.GetText());
@@ -5946,7 +6265,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 				m_oFormula1->m_sText = convert.convert(oReader.GetText3());*/
 
 				//TODO r1c1? не могу найти в каком виде она должна быть здесь записана
-				val = new Asc.CDataFormula(reader.GetText());
+				val = new Asc.CDataFormula(prepareTextFromXml(reader.GetTextDecodeXml()));
 				this.formula1 = val;
 			}
 		}
@@ -6749,7 +7068,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 				if (!this.securityDescriptors) {
 					this.securityDescriptors = [];
 				}
-				this.securityDescriptors.push(reader.GetText());
+				this.securityDescriptors.push(prepareTextFromXml(reader.GetTextDecodeXml()));
 			}
 		}
 	};
@@ -6829,32 +7148,32 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 		while (reader.ReadNextSiblingNode(depth)) {
 			var name = reader.GetNameNoNS();
 			if ("evenFooter" === name) {
-				val = reader.GetText();
+				val = prepareTextFromXml(reader.GetTextDecodeXml());
 				if (val) {
 					this.setEvenFooter(val);
 				}
 			} else if ("evenHeader" === name) {
-				val = reader.GetText();
+				val = prepareTextFromXml(reader.GetTextDecodeXml());
 				if (val) {
 					this.setEvenHeader(val);
 				}
 			} else if ("firstFooter" === name) {
-				val = reader.GetText();
+				val = prepareTextFromXml(reader.GetTextDecodeXml());
 				if (val) {
 					this.setFirstFooter(val);
 				}
 			} else if ("firstHeader" === name) {
-				val = reader.GetText();
+				val = prepareTextFromXml(reader.GetTextDecodeXml());
 				if (val) {
 					this.setFirstHeader(val);
 				}
 			} else if ("oddFooter" === name) {
-				val = reader.GetText();
+				val = prepareTextFromXml(reader.GetTextDecodeXml());
 				if (val) {
 					this.setOddFooter(val);
 				}
 			} else if ("oddHeader" === name) {
-				val = reader.GetText();
+				val = prepareTextFromXml(reader.GetTextDecodeXml());
 				if (val) {
 					this.setOddHeader(val);
 				}
@@ -7057,7 +7376,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 				this.colorLow = AscCommon.getColorFromXml2(reader);
 			} else if ("f" === name) {
 				//TODO текст, возможно нужно использовать prepareTextToXml
-				this.f = reader.GetText();
+				this.f = prepareTextFromXml(reader.GetTextDecodeXml());
 			} else if ("sparklines" === name) {
 				var depth2 = reader.GetDepth();
 				while (reader.ReadNextSiblingNode(depth2)) {
@@ -7229,7 +7548,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 			var name = reader.GetNameNoNS();
 
 			if ("f" === name) {
-				this.setF(reader.GetText());
+				this.setF(prepareTextFromXml(reader.GetTextDecodeXml()));
 			} else if ("sqref" === name) {
 				this.setSqRef(reader.GetText());
 			}
@@ -7451,6 +7770,9 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 						if ("dxf" === name2) {
 							val = new AscCommonExcel.CellXfs();
 							val.fromXml(reader);
+							if (!this.dxfs) {
+								this.dxfs = [];
+							}
 							this.dxfs.push(val);
 						}
 					}
@@ -7467,7 +7789,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 				} else if ("slicerCacheHideItemsWithNoData" === name) {
 
 				} else if ("id" === name) {
-					val = reader.GetText();
+					val = prepareTextFromXml(reader.GetTextDecodeXml());
 					this.ids.push(val);
 				} else if ("presenceInfo" === name) {
 
@@ -7846,7 +8168,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 				this.aRuleElements.push(val);
 			} else if ("formula" === name || "f" === name) {
 				val = new AscCommonExcel.CFormulaCF()
-				val.Text = reader.GetText();
+				val.Text = prepareTextFromXml(reader.GetTextDecodeXml());
 				this.aRuleElements.push(val);
 			} else if ("iconSet" === name) {
 				val = new AscCommonExcel.CIconSet();
@@ -8070,7 +8392,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 			var name = reader.GetNameNoNS();
 			if ("formula" === name || "f" === name) {
 				//TODO prepareTextToXml?
-				this.Val = reader.GetText();
+				this.Val = prepareTextFromXml(reader.GetTextDecodeXml());
 			}
 		}
 	};
@@ -9196,10 +9518,10 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 			writer.WriteXmlString("<diagonal/>");
 		}
 
-		if (null != border.iv && AscCommon.c_oAscBorderStyles.None !== border.iv.s) {
+		if (null != border.iv && Asc.c_oAscBorderStyles.None !== border.iv.s) {
 			border.iv.toXml(writer, "vertical", childns, childns);
 		}
-		if (null != border.ih && AscCommon.c_oAscBorderStyles.None !== border.ih.s) {
+		if (null != border.ih && Asc.c_oAscBorderStyles.None !== border.ih.s) {
 			border.ih.toXml(writer, "horizontal", childns, childns);
 		}
 
@@ -9220,7 +9542,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 		while (reader.MoveToNextAttribute()) {
 			if ("horizontal" === reader.GetName() || "ss:Horizontal" === reader.GetName()) {
 				val = reader.GetValue();
-				this.hor = FromXml_ST_HorizontalAlignment(val);
+				this.hor = FromXml_ST_HorizontalAlignment(val, true);
 			} else if ("indent" === reader.GetName() || "ss:Indent" === reader.GetName()) {
 				val = reader.GetValueInt();
 				this.indent = val;
@@ -9636,7 +9958,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 				}
 			} else if ("sz" === name) {
 				readOneAttr(reader, "val", function () {
-					t.fs = reader.GetValueInt();
+					t.fs = reader.GetValueDouble();
 				});
 			} else if ("u" === name) {
 				if (reader.GetValue() !== null) {
@@ -10509,7 +10831,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 		var val;
 		while (reader.ReadNextSiblingNode(depth)) {
 			if ("v" === reader.GetName()) {
-				val = reader.GetText();
+				val = prepareTextFromXml(reader.GetTextDecodeXml());
 				this.val.CellValue = val;
 			}
 		}
@@ -11953,7 +12275,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 			var name = reader.GetNameNoNS();
 
 			if ("author" === name) {
-				this.arr.push(reader.GetText());
+				this.arr.push(prepareTextFromXml(reader.GetTextDecodeXml()));
 			}
 		}
 	};
@@ -12290,7 +12612,7 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 			var name = reader.GetNameNoNS();
 
 			if ("text" === name) {
-				this.text = reader.GetText();
+				this.text = prepareTextFromXml(reader.GetTextDecodeXml());
 			} else if ("mentions" === name) {
 				//m_oMentions = oReader;
 				reader.readXmlArray("mention", function () {
@@ -12395,6 +12717,284 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 		writer.WriteXmlNullableAttributeNumber("length", this.length);
 	};
 
+
+	 function PrepareComments (ws, xmlParserContext, comments, pThreadedComments, personList) {
+		var m_mapComments = {};
+		var pVmlDrawing = xmlParserContext.InitOpenManager.legacyDrawing;
+		if (!pVmlDrawing || !comments) {
+			return;
+		}
+
+		var wb = ws.workbook;
+		var mapCheckCopyThreadedComments = [];
+		var arAuthors = comments.authors && comments.authors.arr;
+
+		var i, j, nRow, nCol, nAuthorId, pCommentItem;
+		if (comments.commentList) {
+			var aComments = comments.commentList.arr;
+
+			for (i = 0; i < aComments.length; ++i) {
+				var pComment = aComments[i];
+				if (!pComment) {
+					continue;
+				}
+
+
+				var bThreadedCommentCopy = false;
+				var pThreadedComment = null;
+				if (pThreadedComments) {
+					var pFind;
+
+					var isPlaceholder = false;
+					if (pComment.authorId) {
+						nAuthorId = parseInt(pComment.authorId);
+
+						if (nAuthorId >= 0 && nAuthorId < arAuthors.length) {
+							var sAuthor = arAuthors[nAuthorId];
+							if ("tc=" === sAuthor.substring(0, 3)) {
+								isPlaceholder = true;
+								var sGUID = sAuthor.substr(3);
+								//todo IsZero() is added to fix comments with zero ids(5.4.0)(bug 42947). Remove after few releases
+								if ("{00000000-0000-0000-0000-000000000000}" === sGUID && pComment.ref) {
+									for (j in pThreadedComments.m_mapTopLevelThreadedComments) {
+										var it = pThreadedComments.m_mapTopLevelThreadedComments[j];
+										if (it.ref && pComment.ref === it.ref) {
+											pFind = it;
+											break;
+										}
+									}
+								} else {
+									pFind = pThreadedComments.m_mapTopLevelThreadedComments[sGUID];
+								}
+
+							}
+						}
+					}
+
+					if (pFind) {
+						pThreadedComment = pFind;
+						if (mapCheckCopyThreadedComments[pThreadedComment.id]) {
+							bThreadedCommentCopy = true;
+						} else {
+							mapCheckCopyThreadedComments[pThreadedComment.id + ""] = 1;
+						}
+					} else if (isPlaceholder) {
+						continue;
+					}
+				}
+
+
+				if (pComment.ref && pComment.authorId) {
+					var sRef = AscCommonExcel.g_oRangeCache.getAscRange(pComment.ref);
+					if (sRef) {
+						nRow = sRef.r1;
+						nCol = sRef.c1;
+						pCommentItem = new Asc.asc_CCommentData();
+						pCommentItem.asc_putDocumentFlag(false);
+						pCommentItem.nRow = nRow;
+						pCommentItem.nCol = nCol;
+
+						//TODO флаг всегда будет false
+						/*if (pCommentItem.asc_getDocumentFlag()) {
+							pCommentItem.nId = "doc_" + (this.wb.aComments.length + 1);
+						} else {
+							pCommentItem.wsId = ws.Id;
+							pCommentItem.nId = "sheet" + pCommentItem.wsId + "_" + (ws.aComments.length + 1);
+						}*/
+
+						nAuthorId = parseInt(pComment.authorId);
+						if (nAuthorId >= 0 && nAuthorId < arAuthors.length) {
+							pCommentItem.asc_putUserName(arAuthors[nAuthorId]);
+						}
+
+						var pSi = pComment.oText;
+						if (pSi) {
+							pCommentItem.asc_putText(pSi.getText());
+						}
+
+						pCommentItem.threadedComment = pThreadedComment;//c_oSer_Comments.ThreadedComment
+						pCommentItem.ThreadedCommentCopy = bThreadedCommentCopy;//bool m_bThreadedCommentCopy
+
+						var sNewId = nRow + "-" + nCol;
+						m_mapComments[sNewId] = pCommentItem;
+					}
+				}
+			}
+		}
+
+
+		for (i = 0; i < pVmlDrawing.items.length; ++i) {
+			var pShape = pVmlDrawing.items[i];
+			if (!pShape || AscDFH.historyitem_type_VMLShape !== pShape.getObjectType()) {
+				continue;
+			}
+
+			/*if (pShape.sId)
+			{//mark shape as used
+				boost::unordered_map<std::wstring, OOX::CVmlDrawing::_vml_shape>::iterator pFind = pVmlDrawing->m_mapShapes.find(pShape->m_sId.get());
+				if (pFind != pVmlDrawing->m_mapShapes.end())
+				{
+					pFind->second.bUsed = true;
+				}
+			}*/
+
+			for (j = 0; j < pShape.items.length; ++j) {
+				var pElem = pShape.items[j];
+
+				if (!pElem) {
+					continue;
+				}
+
+				if (AscDFH.historyitem_type_VMLClientData === pElem.getObjectType()) {
+					var pClientData = pElem;
+					if (null != pClientData.m_oRow && null != pClientData.m_oColumn) {
+						nRow = parseInt(pClientData.m_oRow);
+						nCol = parseInt(pClientData.m_oColumn);
+						var sId = nRow + "" + "-" + nCol + "";
+
+						pCommentItem = m_mapComments[sId];
+						if (pCommentItem) {
+							/*if(pShape->m_sGfxData.IsInit())
+								pCommentItem->m_sGfxdata = *pShape->m_sGfxData;*/
+
+							var oCommentCoords = new AscCommonExcel.asc_CCommentCoords();
+							var m_aAnchor = [];
+							pClientData.getAnchorArray(m_aAnchor);
+							if (8 <= m_aAnchor.length) {
+								oCommentCoords.nLeft = Math.abs(m_aAnchor[0]);
+								oCommentCoords.nLeftOffset = Math.abs(m_aAnchor[1]);
+								oCommentCoords.nTop = Math.abs(m_aAnchor[2]);
+								oCommentCoords.nTopOffset = Math.abs(m_aAnchor[3]);
+								oCommentCoords.nRight = Math.abs(m_aAnchor[4]);
+								oCommentCoords.nRightOffset = Math.abs(m_aAnchor[5]);
+								oCommentCoords.nBottom = Math.abs(m_aAnchor[6]);
+								oCommentCoords.nBottomOffset = Math.abs(m_aAnchor[7]);
+							}
+							oCommentCoords.bMoveWithCells = pClientData.m_oMoveWithCells;
+							oCommentCoords.bSizeWithCells = pClientData.m_oSizeWithCells;
+
+							oCommentCoords.nCol = nCol;
+							oCommentCoords.nRow = nRow;
+
+							pCommentItem.coords = oCommentCoords;
+
+							//todo bHidden ?
+							//oCommentCoords->m_bVisible = pClientData->m_oVisible;
+							//pCommentItem.bHidden = !pClientData.m_oVisible;
+
+							//pCommentItem.coords = oCommentCoords;
+
+							if (pShape.m_oFillColor) {
+								/*BYTE r = pShape->m_oFillColor->Get_R();
+								BYTE g = pShape->m_oFillColor->Get_G();
+								BYTE b = pShape->m_oFillColor->Get_B();
+
+								std::wstringstream sstream;
+								sstream << boost::wformat( L"%02X%02X%02X" ) % r % g % b;
+
+								pCommentItem->m_sFillColorRgb = sstream.str();*/
+							}
+
+							var oPoint = new AscFormat.CPoint(), oUCssValue;
+							for (var k = 0; k < pShape.m_oStyle.m_arrProperties.length; ++k) {
+								if (!pShape.m_oStyle.m_arrProperties[i]) {
+									continue;
+								}
+
+								var oProperty = pShape.m_oStyle.m_arrProperties[k];
+								if (AscFormat.ECssPropertyType.cssptMarginLeft === oProperty.get_Type()) {
+									oUCssValue = oProperty.m_oValue;
+									if (AscFormat.ECssUnitsType.cssunitstypeUnits === oUCssValue.oValue.m_eType) {
+										oPoint.FromPoints(oUCssValue.oValue.dValue);
+										pCommentItem.coords.dLeftMM = oPoint.ToMm();
+									}
+								} else if (AscFormat.ECssPropertyType.cssptMarginTop === oProperty.get_Type()) {
+									oUCssValue = oProperty.m_oValue;
+									if (AscFormat.ECssUnitsType.cssunitstypeUnits === oUCssValue.oValue.m_eType) {
+										oPoint.FromPoints(oUCssValue.oValue.dValue);
+										pCommentItem.coords.dTopMM = oPoint.ToMm();
+									}
+								} else if (AscFormat.ECssPropertyType.cssptWidth === oProperty.get_Type()) {
+									oUCssValue = oProperty.m_oValue;
+									if (AscFormat.ECssUnitsType.cssunitstypeUnits === oUCssValue.oValue.m_eType) {
+										oPoint.FromPoints(oUCssValue.oValue.dValue);
+										pCommentItem.coords.dWidthMM = oPoint.ToMm();
+									}
+								} else if (AscFormat.ECssPropertyType.cssptHeight === oProperty.get_Type()) {
+									oUCssValue = oProperty.m_oValue;
+									if (AscFormat.ECssUnitsType.cssunitstypeUnits === oUCssValue.oValue.m_eType) {
+										oPoint.FromPoints(oUCssValue.oValue.dValue);
+										pCommentItem.coords.dHeightMM = oPoint.ToMm();
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+
+		var applyThreadedComment = function (_commentData, _threadedComment) {
+			oAdditionalData.isThreadedComment = true;
+			_commentData.asc_putSolved(false);
+			_commentData.aReplies = [];
+
+			if (_threadedComment.dT != null) {
+				_commentData.asc_putTime("");
+				var dateMs = AscCommon.getTimeISO8601(_threadedComment.dT);
+				if (!isNaN(dateMs)) {
+					_commentData.asc_putOnlyOfficeTime(dateMs + "");
+				}
+			}
+
+			if (_threadedComment.personId != null) {
+				var person = personList.getByGuid(_threadedComment.personId);
+				if (person) {
+					_commentData.asc_putUserName(person.displayName);
+					_commentData.asc_putUserId(person.userId);
+					_commentData.asc_putProviderId(person.providerId);
+				}
+			}
+
+			if (_threadedComment.id != null) {
+				_commentData.asc_putGuid(_threadedComment.id);
+			}
+
+			if (_threadedComment.done != null) {
+				_commentData.asc_putSolved(_threadedComment.done === "1");
+			}
+
+			if (_threadedComment.text != null) {
+				_commentData.asc_putText(_threadedComment.text);
+			}
+
+			if (_threadedComment.m_arrReplies && _threadedComment.m_arrReplies.length) {
+				for (var j = 0; j < _threadedComment.m_arrReplies.length; j++) {
+					var reply = new Asc.asc_CCommentData();
+					applyThreadedComment(reply, _threadedComment.m_arrReplies[j]);
+					_commentData.asc_addReply(reply);
+				}
+			}
+		};
+
+		for (i in m_mapComments) {
+
+			if (m_mapComments[i].asc_getDocumentFlag()) {
+				m_mapComments[i].nId = "doc_" + (wb.aComments.length + 1);
+			} else {
+				m_mapComments[i].wsId = ws.Id;
+				m_mapComments[i].nId = "sheet" + m_mapComments[i].wsId + "_" + (ws.aComments.length + 1);
+			}
+
+			var oAdditionalData = {isThreadedComment: false};
+			if (m_mapComments[i].threadedComment) {
+				applyThreadedComment(m_mapComments[i], m_mapComments[i].threadedComment);
+
+			}
+			xmlParserContext.InitOpenManager.prepareComments(ws, m_mapComments[i].coords, [m_mapComments[i]], oAdditionalData);
+		}
+	};
 
 	// var _x2tFromXml = ''
 	// var _x2t = ''
@@ -12769,6 +13369,8 @@ xmlns:xr16=\"http://schemas.microsoft.com/office/spreadsheetml/2017/revision16\"
 	window["AscCommonExcel"].FromXml_ST_DataValidationImeMode = FromXml_ST_DataValidationImeMode;
 	window["AscCommonExcel"].ToXml_ST_GradientType = ToXml_ST_GradientType;
 	window["AscCommonExcel"].FromXml_ST_GradientType = FromXml_ST_GradientType;
+
+	window["AscCommonExcel"].PrepareComments = PrepareComments;
 
 
 })(window);

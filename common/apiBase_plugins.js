@@ -1088,17 +1088,55 @@
      */
 	Api.prototype["pluginMethod_GetFileToDownload"] = function(format)
 	{
-		var dwnldF = Asc.c_oAscFileType[format] || Asc.c_oAscFileType[this.DocInfo.Format.toUpperCase()];
-		var opts = new Asc.asc_CDownloadOptions(dwnldF);
-		var _t = this;
+		let guid = window.g_asc_plugins ? window.g_asc_plugins.setPluginMethodReturnAsync() : null;
+		let dwnldF = Asc.c_oAscFileType[format] || Asc.c_oAscFileType[this.DocInfo.Format.toUpperCase()];
+		let opts = new Asc.asc_CDownloadOptions(dwnldF);
+		let _t = this;
 		opts.callback = function() {
 			_t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.DownloadAs);
 			_t.fCurCallback = function(res) {
-				var data = (res.status == "ok") ? res.data : "error";
-				window.g_asc_plugins.onPluginEvent("onFileReadyToDownload", data);
+				let data = (res.status == "ok") ? res.data : "error";
+				if (guid)
+					window.g_asc_plugins.onPluginMethodReturn(guid, data);
 			};
 		}
 		this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, opts);
+	};
+
+
+    /**
+     * An object containing the font information.
+     * @typedef {Object} ImageData
+     * @property {string} src
+     * @property {number} width
+     * @property {number} height
+     */
+
+	/**
+     * Returns an image data obtained from first of selected drawings.
+     * If there are no selected drawings it returns white rect.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @alias GetImageDataFromSelection
+     * @returns {?ImageData} - ImageData with png image encoded in base64 format or null if there are no selected objects.
+     */
+	Api.prototype["pluginMethod_GetImageDataFromSelection"] = function()
+	{
+		return this.getImageDataFromSelection();
+	};
+	/**
+     * Replaces the first selected drawing
+     * If there are no selected drawings it inserts the image to the current position.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @alias PutImageDataToSelection
+     * @param {ImageData} oImageData - image encoded in base64 format.
+     */
+	Api.prototype["pluginMethod_PutImageDataToSelection"] = function(oImageData)
+	{
+        this._beforeEvalCommand();
+		this.putImageToSelection(oImageData["src"], oImageData["width"], oImageData["height"]);
+        this._afterEvalCommand();
 	};
 
 	function getLocalStorageItem(key)
@@ -1250,6 +1288,8 @@
 
 		for (let i = 0, len = pluginsArray.length; i < len; i++)
 		{
+			if (pluginsArray[i].isConnector)
+				continue;
 			returnArray.push({
 				"baseUrl" : baseUrl,
 				"guid" : pluginsArray[i].guid,
@@ -1346,5 +1386,22 @@
 	Api.prototype["pluginMethod_UpdatePlugin"] = function(url, guid)
 	{
 		return installPlugin(config, "Updated");
+	};
+
+	/**
+    * Show or hide buttons in header.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CSE", "CPE"]
+     * @param {string} [id] - The id of the button.
+     * @param {boolean} [bShow] - The flag show or hide the button.
+     * @alias ShowButton 
+     */
+	Api.prototype["pluginMethod_ShowButton"] = function(id, bShow)
+	{
+		if (bShow) {
+			this.sendEvent("asc_onPluginShowButton", id);
+		} else {
+			this.sendEvent("asc_onPluginHideButton", id);
+		}
 	};
 })(window);

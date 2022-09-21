@@ -150,7 +150,7 @@
 			this.handlers = new AscCommonExcel.asc_CHandlersList(handlers);
             this._createScrollBars();
 
-			if(Asc.editor.isOleEditor) {
+			if(Asc.editor.isEditOleMode) {
 				return;
 			}
 
@@ -317,7 +317,6 @@
 
 			if(this.targetInfo && (this.targetInfo.target === c_oTargetType.MoveResizeRange ||
 				this.targetInfo.target === c_oTargetType.MoveRange ||
-				this.targetInfo.target === c_oTargetType.FillHandle ||
 				this.targetInfo.target === c_oTargetType.FilterObject ||
 				this.targetInfo.target === c_oTargetType.TableSelectionChange))
 				return true;
@@ -951,6 +950,8 @@
 				case 27: // Esc
 					t.handlers.trigger("stopFormatPainter");
 					t.handlers.trigger("stopAddShape");
+					t.handlers.trigger("cleanCutData", true, true);
+					t.handlers.trigger("cleanCopyData", true, true);
 					window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
 					return result;
 

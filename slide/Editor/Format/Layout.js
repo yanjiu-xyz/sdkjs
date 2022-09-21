@@ -287,6 +287,8 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
         }
     };
     SlideLayout.prototype.changeSize = Slide.prototype.changeSize;
+    SlideLayout.prototype.getAllRasterImages = Slide.prototype.getAllRasterImages;
+    SlideLayout.prototype.Reassign_ImageUrls = Slide.prototype.Reassign_ImageUrls;
     SlideLayout.prototype.checkDrawingUniNvPr = Slide.prototype.checkDrawingUniNvPr;
     SlideLayout.prototype.handleAllContents = Slide.prototype.handleAllContents;
     SlideLayout.prototype.draw = function (graphics, slide) {
@@ -592,6 +594,10 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
         }
 
         this.writecomments = [];
+    };
+    SlideLayout.prototype.fromXml = function(reader, bSkipFirstNode) {
+        AscFormat.CBaseFormatObject.prototype.fromXml.call(this, reader, bSkipFirstNode);
+        reader.context.assignConnectors(this.cSld.spTree);
     };
     SlideLayout.prototype.readAttrXml = function(name, reader) {
         switch (name) {

@@ -36,7 +36,7 @@
       // Import
       var CellValueType = AscCommon.CellValueType;
       var c_oAscCellAnchorType = AscCommon.c_oAscCellAnchorType;
-      var c_oAscBorderStyles = AscCommon.c_oAscBorderStyles;
+      var c_oAscBorderStyles = Asc.c_oAscBorderStyles;
       var gc_nMaxRow0 = AscCommon.gc_nMaxRow0;
       var gc_nMaxCol0 = AscCommon.gc_nMaxCol0;
       var Binary_CommonReader = AscCommon.Binary_CommonReader;
@@ -1464,6 +1464,16 @@
         NA: 3
     };
 
+    var ST_TableType = {
+        queryTable: 0,
+        worksheet: 1,
+        xml: 2
+    }
+
+    var ST_PageOrder = {
+        downThenOver: 0,
+        overThenDown: 1
+    };
 
     var g_nNumsMaxId = 160;
 
@@ -2808,16 +2818,9 @@
             }
             if(null != font.va)
             {
-                var va = font.va;
-                //server constants SubScript:1, SuperScript: 2
-                if (va === AscCommon.vertalign_SubScript) {
-                    va = AscCommon.vertalign_SuperScript;
-                } else if (va === AscCommon.vertalign_SuperScript) {
-                    va = AscCommon.vertalign_SubScript;
-                }
                 this.memory.WriteByte(c_oSerFontTypes.VertAlign);
                 this.memory.WriteByte(c_oSerPropLenType.Byte);
-                this.memory.WriteByte(va);
+                this.memory.WriteByte(font.va);
             }
         };
         this.WriteNumFmts = function()
@@ -6620,12 +6623,6 @@
             else if ( c_oSerFontTypes.VertAlign == type )
             {
                 rPr.va = this.stream.GetUChar();
-                //server constants SubScript:1, SuperScript: 2
-                if (rPr.va === AscCommon.vertalign_SubScript) {
-                    rPr.va = AscCommon.vertalign_SuperScript;
-                } else if (rPr.va === AscCommon.vertalign_SuperScript) {
-                    rPr.va = AscCommon.vertalign_SubScript;
-                }
             }
             else if ( c_oSerFontTypes.Scheme == type )
                 rPr.scheme = this.stream.GetUChar();
@@ -7329,7 +7326,7 @@
 			else if ( c_oSerWorkbookTypes.OleSize === type )
 			{
 				var sRange = this.stream.GetString2LE(length);
-				var parsedRange = AscCommonExcel.g_oRangeCache.getAscRange(sRange);
+				var parsedRange = AscCommonExcel.g_oRangeCache.getAscRange(sRange).clone();
 				if (parsedRange) {
 					this.oWorkbook.setOleSize(new AscCommonExcel.OleSizeSelectionRange(null, parsedRange));
 				}
@@ -10168,7 +10165,6 @@
 
             var aSharedStrings = [];
             var aCellXfs = [];
-            this.InitOpenManager.Dxfs = [];
             var oMediaArray = {};
 
 
@@ -10327,7 +10323,7 @@
                 wb.oApi.vbaMacrosXml = this.InitOpenManager.oReadResult.vbaMacrosXml;
             }
             wb.checkCorrectTables();
-		}
+		};
 		this.PostLoadPrepareDefNames = function(wb)
 		{
 			this.InitOpenManager.oReadResult.defNames.forEach(function (defName) {
@@ -10768,11 +10764,12 @@
         var oBinaryFileReader = new AscCommonExcel.BinaryFileReader();
         oBinaryFileReader.getbase64DecodedData2(stylesZip, 0, stream, 0);
 
-        if (window.nativeZlibEngine && window.nativeZlibEngine.open(new Uint8Array(pointer.data))) {
-            let contentBytes = window.nativeZlibEngine.getFile("presetTableStyles.xml");
+        let jsZlib = new AscCommon.ZLib();
+        if (jsZlib.open(new Uint8Array(pointer.data))) {
+            let contentBytes = jsZlib.getFile("presetTableStyles.xml");
             if (contentBytes) {
                 let content = AscCommon.UTF8ArrayToString(contentBytes, 0, contentBytes.length);
-                window.nativeZlibEngine.close();
+                jsZlib.close();
                 var stylesXml = new CT_PresetTableStyles(wb.TableStyles.DefaultStyles, wb.TableStyles.DefaultStylesPivot);
                 new AscCommon.openXml.SaxParserBase().parse(content, stylesXml);
                 wb.TableStyles.concatStyles();
@@ -11136,6 +11133,7 @@
             sheetIds: {}
         };
         this.wb = wb;
+        this.Dxfs = [];
 
         //при чтении из xml
         this.legacyDrawingId = null;
@@ -11752,6 +11750,11 @@
         var oThis = this;
         var tablesIndex = 1;
         var sheetIndex = 1;
+
+        if (!this.wb) {
+            return;
+        }
+
         this.wb.forEach(function(ws) {
             //prepare tables IDs
             var i;
@@ -11862,6 +11865,11 @@
     };
     InitSaveManager.prototype._prepeareStyles = function (stylesForWrite) {
         stylesForWrite.init();
+
+        if (!this.wb) {
+            return;
+        }
+
         var styles = this.wb.CellStyles.CustomStyles;
         var style = null;
         for (var i = 0; i < styles.length; ++i) {
@@ -12294,6 +12302,9 @@
     window["AscCommonExcel"].ESortMethod = ESortMethod;
     window["AscCommonExcel"].ST_CellComments = ST_CellComments;
     window["AscCommonExcel"].ST_PrintError = ST_PrintError;
+    window["AscCommonExcel"].ST_TableType = ST_TableType;
+    window["AscCommonExcel"].ST_PageOrder = ST_PageOrder;
+    window["AscCommonExcel"].EActivePane = EActivePane;
 
     window["AscCommonExcel"].ReadWbComments = ReadWbComments;
     window["AscCommonExcel"].WriteWbComments = WriteWbComments;

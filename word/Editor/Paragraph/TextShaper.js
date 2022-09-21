@@ -54,6 +54,7 @@
 		this.Temporary = false;
 		this.Ligatures = Asc.LigaturesType.None;
 		this.Spacing   = 0;
+		this.AscFont   = false; // Специальный случай, когда используемый шрифт ASCW3, а не тот, что задан в настройках
 	}
 	CParagraphTextShaper.prototype = Object.create(AscFonts.CTextShaper.prototype);
 	CParagraphTextShaper.prototype.constructor = CParagraphTextShaper;
@@ -65,6 +66,7 @@
 		this.Temporary = isTemporary;
 		this.Ligatures = Asc.LigaturesType.None;
 		this.Spacing   = 0;
+		this.AscFont   = false;
 	};
 	CParagraphTextShaper.prototype.GetCodePoint = function(oItem)
 	{
@@ -80,7 +82,12 @@
 		if (!this.TextPr)
 			return AscFonts.DEFAULT_TEXTFONTINFO;
 
-		return this.TextPr.GetFontInfo(nFontSlot);
+		let oFontInfo = this.TextPr.GetFontInfo(nFontSlot);
+
+		if (this.AscFont)
+			oFontInfo.Name = "ASCW3";
+
+		return oFontInfo;
 	};
 	CParagraphTextShaper.prototype.GetFontSlot = function(nUnicode)
 	{
@@ -169,12 +176,14 @@
 		this.TextPr    = oTextPr;
 		this.Spacing   = isCombForm ? 0 : oTextPr.Spacing;
 		this.Ligatures = isCombForm || Math.abs(this.Spacing) > 0.001 ? Asc.LigaturesType.None : oTextPr.Ligatures;
+		this.AscFont   = oRun.IsUseAscFont(oTextPr);
 	};
 	CParagraphTextShaper.prototype.private_HandleNBSP = function(oItem)
 	{
 		let oFontInfo = this.TextPr.GetFontInfo(AscWord.fontslot_ASCII);
 		let nGrapheme = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(0x00B0, oFontInfo.Name, oFontInfo.Style);
-		this.private_HandleItem(oItem, nGrapheme, AscFonts.GetGraphemeWidth(nGrapheme), oFontInfo.Size, AscWord.fontslot_ASCII, false, false, false);
+		let nSpace    = AscCommon.g_oTextMeasurer.GetGraphemeByUnicode(0x0020, oFontInfo.Name, oFontInfo.Style);
+		this.private_HandleItem(oItem, nGrapheme, AscFonts.GetGraphemeWidth(nSpace), oFontInfo.Size, AscWord.fontslot_ASCII, false, false, false);
 	};
 	CParagraphTextShaper.prototype.private_HandleItem = function(oItem, nGrapheme, nWidth, nFontSize, nFontSlot, nCodePointType)
 	{
