@@ -15564,6 +15564,264 @@ PivotLayout.prototype.getMeasureFld = function() {
 	return iMeasureFld;
 };
 
+function DataRowTraversal() {
+	this.cur = null;
+	this.curRowCache = null;
+	this.curColCache = null;
+
+	//todo diffRowIndex from dataField.baseField. multiple dataFields
+	this.diffRowIndex = 0;
+	this.diffColIndex = null;
+
+	this.diffBase = null;
+	this.diffBaseRowCache = null;
+	this.diffBaseColCache = null;
+}
+DataRowTraversal.prototype.initRow = function(dataRow) {
+	this.cur = dataRow;
+	this.curRowCache = [dataRow];
+	this.curColCache = null;
+};
+DataRowTraversal.prototype.cleanDiff = function() {
+	this.diffBaseRowCache = this.diffBaseColCache = this.diffBase = undefined;
+};
+DataRowTraversal.prototype.setStartRowIndex = function(rowR) {
+	this.cur = this.curRowCache[rowR];
+	if (null !== this.diffRowIndex && this.diffRowIndex >= rowR) {
+		this.cleanDiff();
+	} else if (this.diffBaseRowCache) {
+		this.diffBase = this.diffBaseRowCache[rowR];
+	} else {
+		this.diffBase = null;
+	}
+};
+DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowItem, rowR, rowItemsXIndex, props) {
+	if (this.cur && AscCommonExcel.st_VALUES !== fieldIndex) {
+		let field = pivotFields[fieldIndex];
+		props.rowFieldSubtotal = field.getSubtotalType();
+		let valueIndex = rowItem.x[rowItemsXIndex].getV();
+		let fieldItem = field.getItem(valueIndex);
+		props.itemSd = fieldItem.sd;
+		let oldCur = this.cur;
+		this.cur = this.cur.vals[fieldItem.x];
+
+		if (null !== this.diffRowIndex && this.diffRowIndex > rowR + rowItemsXIndex) {
+			this.cleanDiff();
+		} else if (null !== this.diffRowIndex && this.diffRowIndex === rowR + rowItemsXIndex) {
+			this.diffBaseRowCache = [];
+			//todo all types. here only next
+			fieldItem = field.getItem(valueIndex + 1);
+			if (fieldItem && fieldItem.t === Asc.c_oAscItemType.Data) {
+				this.diffBase = oldCur.vals[fieldItem.x];
+			} else {
+				this.cleanDiff();
+			}
+		} else if (this.diffBase) {
+			this.diffBase = this.diffBase.vals[fieldItem.x];
+		}
+	}
+	this.curRowCache.length = rowR + rowItemsXIndex + 1;
+	this.curRowCache[this.curRowCache.length] = this.cur;
+	if (this.diffBaseRowCache) {
+		this.diffBaseRowCache.length = rowR + rowItemsXIndex + 1;
+		this.diffBaseRowCache[this.diffBaseRowCache.length] = this.diffBase;
+	}
+	return !!this.cur;
+};
+DataRowTraversal.prototype.initCol = function() {
+	this.curColCache = [this.cur];
+	if (this.diffBase) {
+		this.diffBaseColCache = [this.diffBase];
+	}
+};
+DataRowTraversal.prototype.setStartColIndex = function(pivotFields, fieldIndex, colItem, colR, colFields) {
+	this.cur = this.curColCache[colR];
+
+	if (null !== this.diffColIndex && this.diffColIndex >= colR) {
+		this.cleanDiff();
+	} else if (this.diffBaseColCache) {
+		this.diffBase = this.diffBaseColCache[colR];
+	} else {
+		this.diffBase = null;
+	}
+
+	if (this.cur && Asc.c_oAscItemType.Grand !== colItem.t && colFields) {
+		for (var colItemsXIndex = 0; colItemsXIndex < colItem.x.length; ++colItemsXIndex) {
+			fieldIndex = colFields[colR + colItemsXIndex].asc_getIndex();
+			if (AscCommonExcel.st_VALUES !== fieldIndex) {
+				let field = pivotFields[fieldIndex];
+				let valueIndex = colItem.x[colItemsXIndex].getV();
+				let fieldItem = field.getItem(valueIndex);
+				let oldCur = this.cur;
+				this.cur = this.cur.subtotal[fieldItem.x];
+
+				if (null !== this.diffColIndex && this.diffColIndex > colR + colItemsXIndex) {
+					this.cleanDiff();
+				} else if (null !== this.diffColIndex && this.diffColIndex === colR + colItemsXIndex) {
+					this.diffBaseColCache = [];
+					//todo all types. here only next
+					fieldItem = field.getItem(valueIndex + 1);
+					if (fieldItem && fieldItem.t === Asc.c_oAscItemType.Data) {
+						this.diffBase = oldCur.subtotal[fieldItem.x];
+					} else {
+						this.cleanDiff();
+					}
+				} else if (this.diffBase) {
+					this.diffBase = this.diffBase.subtotal[fieldItem.x];
+				}
+			}
+			this.curColCache.length = colR + colItemsXIndex + 1;
+			this.curColCache[this.curColCache.length] = this.cur;
+			if (this.diffBaseColCache) {
+				this.diffBaseColCache.length = colR + colItemsXIndex + 1;
+				this.diffBaseColCache[this.diffBaseColCache.length] = this.diffBase;
+			}
+			if (!this.cur) {
+				break;
+			}
+		}
+	}
+};
+DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem, props) {
+	var dataIndex = Math.max(rowItem.i, colItem.i);
+	/**
+	 * @type {CT_DataField}
+	 */
+	let dataField = dataFields[dataIndex];
+	let oCellValue = null, total;
+	switch (dataField.showDataAs) {
+		case Asc.c_oAscShowDataAs.Normal:
+			if (this.cur) {
+				total = this.cur.total[dataIndex];
+				oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+			}
+			break;
+		case Asc.c_oAscShowDataAs.Difference:
+			if (this.cur && this.diffBase) {
+				let BaseTotal = this.diffBase.total[dataIndex];
+				let BaseOCellValue = BaseTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+				total = this.cur.total[dataIndex];
+				oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+				oCellValue.number = oCellValue.number - BaseOCellValue.number;
+			} else if (this.diffBaseRowCache || this.diffBaseColCache) {
+				if (this.cur) {
+					total = this.cur.total[dataIndex];
+					oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+				} else if(this.diffBase) {
+					total = this.diffBase.total[dataIndex];
+					oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					oCellValue.number *= -1;
+				}
+			}
+			break;
+		case Asc.c_oAscShowDataAs.Percent:
+			break;
+		case Asc.c_oAscShowDataAs.PercentDiff:
+			break;
+		case Asc.c_oAscShowDataAs.PercentOfRow:
+			break;
+		case Asc.c_oAscShowDataAs.PercentOfCol:
+			break;
+		case Asc.c_oAscShowDataAs.PercentOfTotal:
+			if (this.cur) {
+				total = this.cur.total[dataIndex];
+				oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+				oCellValue.number = oCellValue.number / dataRow.total[dataIndex].getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t).number;
+			}
+			break;
+		case Asc.c_oAscShowDataAs.Index:
+			break;
+		default:
+			// Exception Handling
+			break;
+	}
+	return oCellValue;
+};
+
+
+
+PivotLayout.prototype.createPage = function(fld) {
+	var res = new PivotLayout();
+	res.type = PivotLayoutType.page;
+	res.fld = fld;
+	return res;
+};
+PivotLayout.prototype.createHeaderData = function(fld) {
+	var res = new PivotLayout();
+	res.type = PivotLayoutType.headerData;
+	res.fld = AscCommonExcel.st_VALUES;
+	return res;
+};
+PivotLayout.prototype.createHeaderRowCol = function(type, fld) {
+	var res = new PivotLayout();
+	res.type = type;
+	res.fld = fld;
+	return res;
+};
+PivotLayout.prototype.createHeaderCompact = function(type) {
+	var res = new PivotLayout();
+	res.type = type;
+	return res;
+};
+PivotLayout.prototype.createCell = function(rows, cols, rowOffset, colOffset) {
+	var res = new PivotLayout();
+	res.rows = rows;
+	res.cols = cols;
+	if (res.rows && res.cols) {
+		res.type = PivotLayoutType.cell;
+	} else if (res.cols) {
+		res.type = PivotLayoutType.colField;
+		res.cols = res.cols.slice(0, rowOffset);
+	} else if (res.rows && undefined !== colOffset) {
+		res.type = PivotLayoutType.rowField;
+		res.rows = res.rows.slice(0, colOffset);
+	} else {
+		res = undefined;
+	}
+	return res;
+};
+PivotLayout.prototype.getFieldIndex = function(pivotTable) {
+	//todo PivotLayoutType.cell
+	var fld = this.fld;
+	if ((PivotLayoutType.rowField === this.type || PivotLayoutType.cell === this.type) && this.rows && this.rows.length > 0) {
+		fld = this.rows[this.rows.length - 1].fld;
+	} else if (PivotLayoutType.colField === this.type && this.cols && this.cols.length > 0) {
+		fld = this.cols[this.cols.length - 1].fld;
+	} else if (PivotLayoutType.headerCompactRow === this.type && pivotTable.rowFields) {
+		fld = pivotTable.rowFields.getFirstIndexExceptValue();
+	} else if (PivotLayoutType.headerCompactCol === this.type && pivotTable.colFields) {
+		fld = pivotTable.colFields.getFirstIndexExceptValue();
+	}
+	return fld;
+};
+PivotLayout.prototype.getGroupCellLayout = function() {
+	if (this.rows) {
+		return this.rows[this.rows.length - 1];
+	}
+	if (this.cols) {
+		return this.cols[this.cols.length - 1];
+	}
+	return null;
+};
+PivotLayout.prototype.getMeasureFld = function() {
+	var iMeasureFld = 0;
+	if (this.rows) {
+		for (var i = 0; i < this.rows.length; ++i) {
+			if (st_VALUES === this.rows[i].fld) {
+				return this.rows[i].i;
+			}
+		}
+	}
+	if (this.cols) {
+		for (var i = 0; i < this.cols.length; ++i) {
+			if (st_VALUES === this.cols[i].fld) {
+				return this.cols[i].i;
+			}
+		}
+	}
+	return iMeasureFld;
+};
+
 var prot;
 
 window['Asc']['c_oAscSourceType'] = window['Asc'].c_oAscSourceType = c_oAscSourceType;

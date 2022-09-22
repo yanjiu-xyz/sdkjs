@@ -8446,6 +8446,73 @@
 			}
 		}
 	};
+	/**
+	 * A function that updates the data in the cells of a pivot table.
+	 * @param {CT_pivotTableDefinition} pivotTable
+	 * @param {PivotDataElem} dataRow
+	 */
+	Worksheet.prototype._updatePivotTableCellsData2 = function(pivotTable, dataRow) {
+		var rowFields = pivotTable.asc_getRowFields();
+		var rowItems = pivotTable.getRowItems();
+		var colFields = pivotTable.asc_getColumnFields();
+		var colItems = pivotTable.getColItems();
+		var pivotFields = pivotTable.asc_getPivotFields();
+		var dataFields = pivotTable.asc_getDataFields();
+		if (!rowItems || !colItems || !dataFields) {
+			return;
+		}
+		var valuesIndex = pivotTable.getRowFieldsValuesIndex();
+		var pivotRange = pivotTable.getRange();
+		var location = pivotTable.location;
+		var r1 = pivotRange.r1 + location.firstDataRow;
+		var c1 = pivotRange.c1 + location.firstDataCol;
+		let traversal = new DataRowTraversal(dataRow);
+		traversal.initRow(dataRow);
+
+		var fieldIndex, dataField;
+		let props = {rowFieldSubtotal: undefined, itemSd: undefined};
+		var oCellValue;
+		for (var rowItemsIndex = 0; rowItemsIndex < rowItems.length; ++rowItemsIndex) {
+			var rowItem = rowItems[rowItemsIndex];
+			if (Asc.c_oAscItemType.Blank === rowItem.t) {
+				continue;
+			}
+			var rowR = rowItem.getR();
+			traversal.setStartRowIndex(rowR);
+			props.rowFieldSubtotal = Asc.c_oAscItemType.Default;
+			props.itemSd = true;
+			if (Asc.c_oAscItemType.Grand !== rowItem.t && rowFields) {
+				for (var rowItemsXIndex = 0; rowItemsXIndex < rowItem.x.length; ++rowItemsXIndex) {
+					fieldIndex = rowFields[rowR + rowItemsXIndex].asc_getIndex();
+
+					if (!traversal.setRowIndex(pivotFields, fieldIndex, rowItem, rowR, rowItemsXIndex, props)) {
+						break;
+					}
+				}
+			}
+			//todo
+			if (Asc.c_oAscItemType.Data !== rowItem.t || !rowFields || rowR + rowItem.x.length === rowFields.length ||
+				(AscCommonExcel.st_VALUES !== fieldIndex && pivotFields[fieldIndex] &&
+				(pivotFields[fieldIndex].checkSubtotalTop() || !props.itemSd) && rowR > valuesIndex)) {
+
+				traversal.initCol();
+
+				for (var colItemsIndex = 0; colItemsIndex < colItems.length; ++colItemsIndex) {
+					var colItem = colItems[colItemsIndex];
+					var colR = colItem.getR();
+					traversal.setStartColIndex(pivotFields, fieldIndex, colItem, colR, colFields);
+					oCellValue = traversal.getCellValue(dataFields, rowItem, colItem, props);
+					if (oCellValue) {
+						var cells = this.getRange4(r1 + rowItemsIndex, c1 + colItemsIndex);
+						if (dataField && dataField.num) {
+							cells.setNum(dataField.num);
+						}
+						cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
+					}
+				}
+			}
+		}
+	};
 	Worksheet.prototype._updatePivotTableCells = function (pivotTable, dataRow) {
 		this._updatePivotTableCellsPage(pivotTable);
 		this._updatePivotTableCellsHeader(pivotTable);
