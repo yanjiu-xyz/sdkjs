@@ -33,16 +33,17 @@
 const path = require("path");
 
 const allTests = [
-	'../cell/.unit-tests/FormulaTests.html',
-	'../cell/.unit-tests/subdir/PivotTests.html',
-	'../cell/.unit-tests/CopyPasteTests.html',
-	'word/unit-tests/paragraphContentPos.html',
-	'word/document-calculation/paragraph.html',
-	'word/document-calculation/table/flowTablePosition.html',
-	'word/forms/forms.html',
-	'word/forms/complexForm.html',
-	'word/api/api.html',
-	'word/styles/paraPr.html'
+	// 'cell/spreadsheet-calculation/FormulaTests.html',
+	// 'cell/spreadsheet-calculation/PivotTests.html',
+	// 'cell/spreadsheet-calculation/CopyPasteTests.html',
+	// 'word/unit-tests/paragraphContentPos.html',
+	// 'word/document-calculation/paragraph.html',
+	// 'word/document-calculation/table/flowTablePosition.html',
+	// 'word/forms/forms.html',
+	// 'word/forms/complexForm.html',
+	// 'word/api/api.html',
+	// 'word/styles/paraPr.html',
+	'word/merge-documents/mergeDocuments.html'
 ];
 
 const {performance} = require('perf_hooks');
@@ -51,7 +52,7 @@ const {
   runQunitPuppeteer,
   printResultSummary,
   printFailedTests
-} = require("node-qunit-puppeteer");
+} = require("C:\\Users\\Vladimir.Privezenov\\AppData\\Roaming\\npm\\node_modules\\node-qunit-puppeteer");
 
 async function Run()
 {
