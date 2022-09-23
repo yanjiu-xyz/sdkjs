@@ -15570,12 +15570,14 @@ function DataRowTraversal() {
 	this.curColCache = null;
 
 	//todo diffRowIndex from dataField.baseField. multiple dataFields
-	this.diffRowIndex = 0;
+	this.diffRowIndex = null;
 	this.diffColIndex = null;
 
 	this.diffBase = null;
 	this.diffBaseRowCache = null;
 	this.diffBaseColCache = null;
+
+	this.dataField = null;
 }
 DataRowTraversal.prototype.initRow = function(dataRow) {
 	this.cur = dataRow;
@@ -15587,6 +15589,7 @@ DataRowTraversal.prototype.cleanDiff = function() {
 };
 DataRowTraversal.prototype.setStartRowIndex = function(rowR) {
 	this.cur = this.curRowCache[rowR];
+	//this.diffRowIndex = this.dataField.baseField;
 	if (null !== this.diffRowIndex && this.diffRowIndex >= rowR) {
 		this.cleanDiff();
 	} else if (this.diffBaseRowCache) {
@@ -15595,6 +15598,40 @@ DataRowTraversal.prototype.setStartRowIndex = function(rowR) {
 		this.diffBase = null;
 	}
 };
+
+/**
+ * @param {CT_I} rowItem 
+ * @param {CT_I} colItem 
+ * @param {CT_DataField[]} dataFields 
+ */
+ DataRowTraversal.prototype.setDataField = function(rowItem, colItem, dataFields) {
+	var _rowItem = rowItem || {};
+	var _colItem = colItem || {};
+	var _dataIndex = Math.max(_rowItem.i || 0, _colItem.i || 0);
+	this.dataField = dataFields[_dataIndex];
+};
+
+/**
+ * Method that returns the index of item relative to the current field index
+ * @param {CT_DataField} dataField 
+ * @param {Number} valueIndex
+ * @return {Number}
+ */
+DataRowTraversal.prototype.getIndexOfBaseItem = function(dataField, valueIndex) {
+	switch (dataField.baseItem) {
+		case AscCommonExcel.st_BASE_ITEM_NEXT:
+			return valueIndex + 1;
+		case AscCommonExcel.st_BASE_ITEM_PREV:
+			return valueIndex - 1;
+		default:
+			if (valueIndex == dataField.baseItem) {
+				return -1;
+			} else {
+				return dataField.baseItem;
+			}
+	}
+}
+
 DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowItem, rowR, rowItemsXIndex, props) {
 	if (this.cur && AscCommonExcel.st_VALUES !== fieldIndex) {
 		let field = pivotFields[fieldIndex];
@@ -15610,7 +15647,7 @@ DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowIt
 		} else if (null !== this.diffRowIndex && this.diffRowIndex === rowR + rowItemsXIndex) {
 			this.diffBaseRowCache = [];
 			//todo all types. here only next
-			fieldItem = field.getItem(valueIndex + 1);
+			fieldItem = field.getItem(this.getIndexOfBaseItem(this.dataField, valueIndex));
 			if (fieldItem && fieldItem.t === Asc.c_oAscItemType.Data) {
 				this.diffBase = oldCur.vals[fieldItem.x];
 			} else {
@@ -15636,7 +15673,7 @@ DataRowTraversal.prototype.initCol = function() {
 };
 DataRowTraversal.prototype.setStartColIndex = function(pivotFields, fieldIndex, colItem, colR, colFields) {
 	this.cur = this.curColCache[colR];
-
+	//this.diffColIndex = this.dataField.baseField;
 	if (null !== this.diffColIndex && this.diffColIndex >= colR) {
 		this.cleanDiff();
 	} else if (this.diffBaseColCache) {
@@ -15648,6 +15685,9 @@ DataRowTraversal.prototype.setStartColIndex = function(pivotFields, fieldIndex, 
 	if (this.cur && Asc.c_oAscItemType.Grand !== colItem.t && colFields) {
 		for (var colItemsXIndex = 0; colItemsXIndex < colItem.x.length; ++colItemsXIndex) {
 			fieldIndex = colFields[colR + colItemsXIndex].asc_getIndex();
+			if (fieldIndex == this.dataField.baseField) {
+				this.diffColIndex = colR + colItemsXIndex;
+			}
 			if (AscCommonExcel.st_VALUES !== fieldIndex) {
 				let field = pivotFields[fieldIndex];
 				let valueIndex = colItem.x[colItemsXIndex].getV();
@@ -15660,7 +15700,7 @@ DataRowTraversal.prototype.setStartColIndex = function(pivotFields, fieldIndex, 
 				} else if (null !== this.diffColIndex && this.diffColIndex === colR + colItemsXIndex) {
 					this.diffBaseColCache = [];
 					//todo all types. here only next
-					fieldItem = field.getItem(valueIndex + 1);
+					fieldItem = field.getItem(this.getIndexOfBaseItem(this.dataField, valueIndex));
 					if (fieldItem && fieldItem.t === Asc.c_oAscItemType.Data) {
 						this.diffBase = oldCur.subtotal[fieldItem.x];
 					} else {
