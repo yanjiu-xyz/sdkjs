@@ -8469,7 +8469,7 @@
 		let traversal = new DataRowTraversal(dataRow);
 		traversal.initRow(dataRow);
 
-		var fieldIndex, dataField;
+		var fieldIndex;
 		let props = {rowFieldSubtotal: undefined, itemSd: undefined};
 		var oCellValue;
 		for (var rowItemsIndex = 0; rowItemsIndex < rowItems.length; ++rowItemsIndex) {
@@ -8505,11 +8505,11 @@
 					traversal.setDataField(rowItem, colItem, dataFields);
 					var colR = colItem.getR();
 					traversal.setStartColIndex(pivotFields, fieldIndex, colItem, colR, colFields);
-					oCellValue = traversal.getCellValue(dataFields, rowItem, colItem, props);
+					oCellValue = traversal.getCellValue(dataFields, rowItem, colItem, props, dataRow);
 					if (oCellValue) {
 						var cells = this.getRange4(r1 + rowItemsIndex, c1 + colItemsIndex);
-						if (dataField && dataField.num) {
-							cells.setNum(dataField.num);
+						if (traversal.dataField && traversal.dataField.num) {
+							cells.setNum(traversal.dataField.num);
 						}
 						cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 					}
