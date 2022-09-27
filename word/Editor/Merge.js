@@ -35,8 +35,6 @@
     const CNode = AscCommonWord.CNode;
     const CTextElement = AscCommonWord.CTextElement;
 
-    const EXCLUDED_PUNCTUATION = AscCommonWord.COMPARISON_EXCLUDED_PUNCTUATION;
-
     function isParaDrawingRun(run) {
         for (let i = 0; i < run.Content.length; i += 1) {
             if (run.Content[i].Type === para_Drawing) return true;
