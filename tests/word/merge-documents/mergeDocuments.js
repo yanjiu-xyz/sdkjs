@@ -118,13 +118,28 @@ $(function () {
 
     QUnit.module("Unit-tests for merge documents feature");
 
-    QUnit.test("Test:", function(assert)
+    QUnit.test("Test 1 2:", function(assert)
     {
         let strRes = ''
         AscFormat.ExecuteNoHistory(function () {
             for (let i = 0; i < testBinaryFiles.length; i += 1) {
                 const test = testBinaryFiles[i];
                 merge(test[0], test[1], function () {
+                    const doc = mockEditor.WordControl.m_oLogicDocument;
+                    const result = getTestObject(doc);
+                    assert.deepEqual(result, answers[i], comments[i]);
+                });
+            }
+        }, this, []);
+    });
+    
+    QUnit.test("Test 2 1:", function(assert)
+    {
+        let strRes = ''
+        AscFormat.ExecuteNoHistory(function () {
+            for (let i = 0; i < testBinaryFiles.length; i += 1) {
+                const test = testBinaryFiles[i];
+                merge(test[1], test[0], function () {
                     const doc = mockEditor.WordControl.m_oLogicDocument;
                     const result = getTestObject(doc);
                     assert.deepEqual(result, answers[i], comments[i]);
