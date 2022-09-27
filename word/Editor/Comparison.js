@@ -66,8 +66,8 @@
     CNode.prototype.cleanEndOfInsert = function (aContentToInsert, idxOfChange, comparison) {
         const oChange = this.changes[idxOfChange];
         const oLastText = oChange.insert[oChange.insert.length - 1].element;
-        const oCurRun = oLastText.lastRun ? oLastText.lastRun : oLastText;
-        const oParentParagraph =  (this.partner && this.partner.element) || oCurRun.Paragraph;
+        const oEndOfInsertRun = oLastText.lastRun ? oLastText.lastRun : oLastText;
+        const oParentParagraph =  (this.partner && this.partner.element) || oEndOfInsertRun.Paragraph;
         const applyingParagraph = this.getApplyParagraph(comparison);
 
         let k = oParentParagraph.Content.length - 1;
@@ -75,21 +75,22 @@
         for(k; k > -1; --k)
         {
             // если мы встретили последний ран, где встречается слово
-            if(oCurRun === oParentParagraph.Content[k])
+            const oCurrentRun = oParentParagraph.Content[k];
+            if(oEndOfInsertRun === oCurrentRun)
             {
-                if(oCurRun instanceof ParaRun)
+                if(oEndOfInsertRun instanceof ParaRun)
                 {
-                    for(let t = oCurRun.Content.length - 1; t > -1; --t)
+                    for(let t = oEndOfInsertRun.Content.length - 1; t > -1; --t)
                     {
-                        this.checkNodeWithInsert(oCurRun, comparison);
-                        const oNewRun = this.copyRunWithMockParagraph(oCurRun, applyingParagraph.Paragraph || applyingParagraph, comparison);
+                        this.checkNodeWithInsert(oEndOfInsertRun, comparison);
+                        const oNewRun = this.copyRunWithMockParagraph(oEndOfInsertRun, applyingParagraph.Paragraph || applyingParagraph, comparison);
                         //очищаем конец слова, которое нужно вставить
-                        if(oLastText.elements[oLastText.elements.length - 1] === oCurRun.Content[t])
+                        if(oLastText.elements[oLastText.elements.length - 1] === oEndOfInsertRun.Content[t])
                         {
-                            if(t < oCurRun.Content.length - 1)
+                            if(t < oEndOfInsertRun.Content.length - 1)
                             {
                                 lastCheckRun = oNewRun.Split2(t + 1);
-                                this.setCommonReviewTypeWithInfo(lastCheckRun, oCurRun.ReviewInfo.Copy());
+                                this.setCommonReviewTypeWithInfo(lastCheckRun, oEndOfInsertRun.ReviewInfo.Copy());
                                 this.edgeCaseHandlingOfCleanInsertEnd(aContentToInsert, lastCheckRun, comparison);
                                 //oNewRun.Remove_FromContent(t + 1, oNewRun.Content.length - (t + 1), false);
                             }
@@ -101,17 +102,17 @@
                 else
                 {
                 //целиком вставим то, что встретили
-                    this.pushToArrInsertContentWithCopy(aContentToInsert, oCurRun, comparison);
+                    this.pushToArrInsertContentWithCopy(aContentToInsert, oEndOfInsertRun, comparison);
                 }
                 break;
             }
-            else if(oLastText === oParentParagraph.Content[k])
+            else if(oLastText === oCurrentRun)
             {
                 //целиком вставим то, что встретили
-                this.pushToArrInsertContentWithCopy(aContentToInsert, oParentParagraph.Content[k], comparison);
+                this.pushToArrInsertContentWithCopy(aContentToInsert, oCurrentRun, comparison);
                 break;
             } else {
-                this.edgeCaseHandlingOfCleanInsertEnd(aContentToInsert, oCurRun, comparison);
+                this.edgeCaseHandlingOfCleanInsertEnd(aContentToInsert, oCurrentRun, comparison);
             }
         }
         return k;
@@ -338,22 +339,23 @@
         const oApplyParagraph = this.getApplyParagraph(comparison);
         const startPosition = this.getStartPosition(comparison);
         const oLastText = oChange.remove[oChange.remove.length - 1].element;
-        const oCurRun = oLastText.lastRun || oLastText;
+        const oEndOfRemoveRun = oLastText.lastRun || oLastText;
 
         let k = oElement.Content.length - 1;
         let nInsertPosition = -1;
         
         for(k; k > -1; --k)
         {
-            this.checkNodeWithInsert(oElement.Content[k], comparison);
-            if(oElement.Content[k] === oCurRun)
+            const oCurRun = oElement.Content[k];
+            this.checkNodeWithInsert(oCurRun, comparison);
+            if(oCurRun === oEndOfRemoveRun)
             {
                 if(oLastText instanceof CTextElement)
                 {
-                    let t = oCurRun.Content.length - 1;
+                    let t = oEndOfRemoveRun.Content.length - 1;
                     for(t; t > -1; t--)
                     {
-                        if(oCurRun.Content[t] === oLastText.elements[oLastText.elements.length - 1])
+                        if(oEndOfRemoveRun.Content[t] === oLastText.elements[oLastText.elements.length - 1])
                         {
                             break;
                         }
@@ -361,8 +363,8 @@
                     if(t > -1)
                     {
                         nInsertPosition = k + 1;
-                        const oNewRun = oCurRun.Split2(t + 1, oApplyParagraph, startPosition + k);
-                        this.setCommonReviewTypeWithInfo(oNewRun, oCurRun.ReviewInfo.Copy());
+                        const oNewRun = oEndOfRemoveRun.Split2(t + 1, oApplyParagraph, startPosition + k);
+                        this.setCommonReviewTypeWithInfo(oNewRun, oEndOfRemoveRun.ReviewInfo.Copy());
                         this.edgeCaseHandlingOfCleanRemoveEnd(arrSetRemove, oNewRun, comparison);
                     }
                 }
