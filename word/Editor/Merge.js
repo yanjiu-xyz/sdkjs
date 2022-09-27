@@ -1001,12 +1001,7 @@
                     j = 0;
                     while (j < oRun.Content.length) {
                         const oRunElement = oRun.Content[j];
-                        const bPunctuation = para_Text === oRunElement.Type && (AscCommon.g_aPunctuation[oRunElement.Value] && !EXCLUDED_PUNCTUATION[oRunElement.Value]);
-                        if (oRunElement.Type === para_Space || oRunElement.Type === para_Tab
-                            || oRunElement.Type === para_Separator || oRunElement.Type === para_NewLine
-                            || oRunElement.Type === para_FootnoteReference
-                            || oRunElement.Type === para_EndnoteReference
-                            || bPunctuation) {
+                        if (AscCommonWord.isBreakWordElement(oRunElement)) {
                             if (oLastText.elements.length > 0) {
                                 if (!oLastText.isReviewWord) {
                                     lastNode = new NodeConstructor(oLastText, oRet);

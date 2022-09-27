@@ -2209,6 +2209,15 @@
         return CTextElement;
     };
 
+    function isBreakWordElement(oRunElement) {
+        const bPunctuation = para_Text === oRunElement.Type && (AscCommon.g_aPunctuation[oRunElement.Value] && !EXCLUDED_PUNCTUATION[oRunElement.Value]);
+        return (oRunElement.Type === para_Space || oRunElement.Type === para_Tab
+            || oRunElement.Type === para_Separator || oRunElement.Type === para_NewLine
+            || oRunElement.Type === para_FootnoteReference
+            || oRunElement.Type === para_EndnoteReference
+            || bPunctuation);
+    }
+
     function createNodeFromRun(oRun, oLastText, oHashWords, oRet, TextElementConstructor, NodeConstructor) {
 
         if(oRun.Content.length > 0)
@@ -2226,12 +2235,7 @@
             for(let j = 0; j < oRun.Content.length; ++j)
             {
                 const oRunElement = oRun.Content[j];
-                const bPunctuation = para_Text === oRunElement.Type && (AscCommon.g_aPunctuation[oRunElement.Value] && !EXCLUDED_PUNCTUATION[oRunElement.Value]);
-                if(oRunElement.Type === para_Space || oRunElement.Type === para_Tab
-                    || oRunElement.Type === para_Separator || oRunElement.Type === para_NewLine
-                    || oRunElement.Type === para_FootnoteReference
-                    || oRunElement.Type === para_EndnoteReference
-                    || bPunctuation)
+                if(isBreakWordElement(oRunElement))
                 {
                     if(oLastText.elements.length > 0)
                     {
@@ -2474,5 +2478,5 @@
     window['AscCommonWord']['CDocumentComparison'] = CDocumentComparison;
     window['AscCommonWord']['CNode'] = CNode;
     window['AscCommonWord']['CTextElement'] = window['AscCommonWord'].CTextElement = CTextElement;
-    window['AscCommonWord']['COMPARISON_EXCLUDED_PUNCTUATION'] = window['AscCommonWord'].COMPARISON_EXCLUDED_PUNCTUATION = EXCLUDED_PUNCTUATION;
+    window['AscCommonWord'].isBreakWordElement = isBreakWordElement;
 })();
