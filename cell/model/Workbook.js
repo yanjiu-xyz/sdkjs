@@ -8466,7 +8466,7 @@
 		var location = pivotTable.location;
 		var r1 = pivotRange.r1 + location.firstDataRow;
 		var c1 = pivotRange.c1 + location.firstDataCol;
-		let traversal = new DataRowTraversal(dataRow);
+		let traversal = new DataRowTraversal(rowItems, rowFields, pivotFields);
 		traversal.initRow(dataRow);
 
 		var fieldIndex;

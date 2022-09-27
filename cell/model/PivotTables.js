@@ -15564,7 +15564,7 @@ PivotLayout.prototype.getMeasureFld = function() {
 	return iMeasureFld;
 };
 
-function DataRowTraversal() {
+function DataRowTraversal(rowItems, rowFields, pivotFields) {
 	this.cur = null;
 	this.curRowCache = null;
 	this.curColCache = null;
@@ -15579,6 +15579,12 @@ function DataRowTraversal() {
 	this.dataField = null;
 	this.fieldItem = null;
 	this.diffFieldItem = null;
+
+	this.rowItems = rowItems;
+	this.rowFields = rowFields;
+	this.pivotFields = pivotFields;
+
+	this.diffValueIndex = null;
 }
 DataRowTraversal.prototype.initRow = function(dataRow) {
 	this.cur = dataRow;
@@ -15611,6 +15617,40 @@ DataRowTraversal.prototype.setStartRowIndex = function(rowR) {
 	this.dataField = dataFields[_dataIndex];
 };
 
+DataRowTraversal.prototype.findDiffRowItem = function (fieldItem) {
+	let diffFieldIndex = this.rowFields[this.diffRowIndex].asc_getIndex();
+	let diffField = this.pivotFields[diffFieldIndex];
+	let res = null;
+	switch (this.dataField.baseItem) {
+		case AscCommonExcel.st_BASE_ITEM_NEXT:
+			for (let i = this.diffValueIndex; i < diffField.getItemsCount() - 1; i+=1) {
+				let diffFieldItem = diffField.getItem(i + 1);
+				res = this.diffBaseRowCache[diffFieldIndex].vals[diffFieldItem.x];
+				res = res.vals[fieldItem.x];
+				if (res) {
+					return res;
+				}
+			}
+			break;
+		case AscCommonExcel.st_BASE_ITEM_PREV:
+			for (let i = this.diffValueIndex; i > 0; i-=1) {
+				let diffFieldItem = diffField.getItem(i - 1);
+				res = this.diffBaseRowCache[diffFieldIndex].vals[diffFieldItem.x];
+				res = res.vals[fieldItem.x];
+				if (res) {
+					return res;
+				}
+			}
+			break;
+		default:
+			let diffFieldItem = diffField.getItem(this.diffValueIndex);
+			res = this.diffBaseRowCache[diffFieldIndex].vals[diffFieldItem.x];
+			res = res.vals[fieldItem.x];
+			return res;
+	}
+	
+}
+
 /**
  * Method that returns the index of item relative to the current field index
  * @param {CT_DataField} dataField 
@@ -15630,7 +15670,7 @@ DataRowTraversal.prototype.getIndexOfBaseItem = function(dataField, valueIndex) 
 				return dataField.baseItem;
 			}
 	}
-}
+};
 
 DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowItem, rowR, rowItemsXIndex, props) {
 	if (this.cur && AscCommonExcel.st_VALUES !== fieldIndex) {
@@ -15648,12 +15688,14 @@ DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowIt
 			this.diffBaseRowCache = [];
 			this.diffFieldItem = field.getItem(this.getIndexOfBaseItem(this.dataField, valueIndex));
 			if (this.diffFieldItem && this.diffFieldItem.t === Asc.c_oAscItemType.Data) {
+				this.diffBaseRowCache[this.diffRowIndex] = oldCur;
 				this.diffBase = oldCur.vals[this.diffFieldItem.x];
+				this.diffValueIndex = valueIndex;
 			} else {
 				this.cleanDiff();
 			}
 		} else if (this.diffBase) {
-			this.diffBase = this.diffBase.vals[this.fieldItem.x];
+			this.diffBase = this.findDiffRowItem(this.fieldItem);
 		}
 	}
 	this.curRowCache.length = rowR + rowItemsXIndex + 1;
