@@ -15643,9 +15643,7 @@ DataRowTraversal.prototype.findDiffRowItem = function (fieldItem) {
 			}
 			break;
 		default:
-			let diffFieldItem = diffField.getItem(this.diffValueIndex);
-			res = this.diffBaseRowCache[diffFieldIndex].vals[diffFieldItem.x];
-			res = res.vals[fieldItem.x];
+			res = this.diffBase.vals[fieldItem.x];
 			return res;
 	}
 	
