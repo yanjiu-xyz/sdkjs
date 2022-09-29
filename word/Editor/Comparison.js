@@ -40,6 +40,7 @@
     EXCLUDED_PUNCTUATION[46] = true;
     //EXCLUDED_PUNCTUATION[95] = true;
     EXCLUDED_PUNCTUATION[160] = true;
+    EXCLUDED_PUNCTUATION[63] = true;
 
     function CNode(oElement, oParent)
     {
