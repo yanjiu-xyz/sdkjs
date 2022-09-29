@@ -614,11 +614,22 @@
         }
 
     }
+    
+    function mergeDocuments(oApi, oTmpDocument) {
+        oApi.insertDocumentUrlsData = {
+            imageMap: oTmpDocument["GetImageMap"](), documents: [], convertCallback: function (_api, url) {
+            }, endCallback: function (_api) {
+            }
+        };
+        mergeBinary(oApi, oTmpDocument["GetBinary"](), null, true);
+        oApi.insertDocumentUrlsData = null;
+    }
 
     window['AscCommonWord'].CDocumentMerge = CDocumentMerge;
     window['AscCommonWord'].mergeBinary = mergeBinary;
     window['AscCommonWord'].CMockMinHash = CMockMinHash;
     window['AscCommonWord'].CMockDocument = CMockDocument;
     window['AscCommonWord'].CMockParagraph = CMockParagraph;
+    window['AscCommonWord']["mergeDocuments"] = window['AscCommonWord'].mergeDocuments = mergeDocuments;
 
 })()

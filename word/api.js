@@ -11974,7 +11974,79 @@ background-repeat: no-repeat;\
 			}
 		});
 	};
-	asc_docs_api.prototype._CompareDocument = function (document, oOptions) {
+
+	asc_docs_api.prototype.asc_MergeDocumentUrl = function (sUrl, oOptions, token) {
+		if (this.isLocalMode())
+			return this.asc_MergeDocumentUrl_local(sUrl, oOptions, token);
+		
+		this._MergeDocument({url: sUrl, format: "docx", token: token}, oOptions);
+	};
+	asc_docs_api.prototype.asc_MergeDocumentFile = function (oOptions) {
+		if (this.isLocalMode())
+			return this.asc_MergeDocumentFile_local(oOptions);
+		var t = this;
+		AscCommon.ShowDocumentFileDialog(function (error, files) {
+			if (Asc.c_oAscError.ID.No !== error) {
+				t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
+				return;
+			}
+			var format = AscCommon.GetFileExtension(files[0].name);
+			var reader = new FileReader();
+			reader.onload = function () {
+				t._MergeDocument({data: new Uint8Array(reader.result), format: format}, oOptions);
+			};
+			reader.onerror = function () {
+				t.sendEvent("asc_onError", Asc.c_oAscError.ID.Unknown, Asc.c_oAscError.Level.NoCritical);
+			};
+			reader.readAsArrayBuffer(files[0]);
+		});
+	};
+	asc_docs_api.prototype.asc_MergeDocumentUrl_local = function (sUrl, oOptions, token) {
+		var t = this;
+		t.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+		window["AscDesktopEditor"]["DownloadFiles"]([sUrl], [], function(files) {
+			t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+			var _files= [];
+			for (var _elem in files) {
+				_files.push(files[_elem]);
+			}
+			if (_files.length == 1)
+			{
+				if (t.isCloudModeCrypt())
+				{
+					var fileContent = t.getFileAsFromChanges();
+					window["AscDesktopEditor"]["MergeDocumentUrl"](_files[0], oOptions, fileContent.data, fileContent.header);
+				}
+				else
+				{
+					window["AscDesktopEditor"]["MergeDocumentUrl"](_files[0], oOptions);
+				}
+			}
+		});
+	};
+	asc_docs_api.prototype.asc_MergeDocumentFile_local = function (oOptions) {
+		var t = this;
+		window["AscDesktopEditor"]["OpenFilenameDialog"]("word", false, function(_file) {
+			var file = _file;
+			if (Array.isArray(file))
+				file = file[0];
+
+			if (file && "" != file)
+			{
+				if (t.isCloudModeCrypt())
+				{
+					var fileContent = t.getFileAsFromChanges();
+					window["AscDesktopEditor"]["MergeDocumentFile"](file, oOptions, fileContent.data, fileContent.header);
+				}
+				else
+				{
+					window["AscDesktopEditor"]["MergeDocumentFile"](file, oOptions);
+				}
+			}
+		});
+	};
+
+	asc_docs_api.prototype._ConvertDocument = function (document, fEndCallback) {
 		var stream = null;
 		var oApi = this;
 		this.insertDocumentUrlsData = {
@@ -11998,7 +12070,7 @@ background-repeat: no-repeat;\
 			}, endCallback: function (_api) {
 
 				if (stream) {
-					AscCommonWord.mergeBinary(oApi, stream, oOptions); //TODO:remove this
+					fEndCallback(stream);
 					stream = null;
 				}
 			}
@@ -12008,6 +12080,21 @@ background-repeat: no-repeat;\
 		options.isNaturalDownload = true;
 		this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, options);
 	};
+	
+	asc_docs_api.prototype._CompareDocument = function (document, oOptions) {
+		const oThis = this;
+		this._ConvertDocument(document, function (stream) {
+			AscCommonWord.CompareBinary(oThis, stream, oOptions);
+		});
+	};
+
+	asc_docs_api.prototype._MergeDocument = function (document, oOptions) {
+		const oThis = this;
+		this._ConvertDocument(document, function (stream) {
+			AscCommonWord.mergeBinary(oThis, stream, oOptions);
+		});
+	};
+	
 	// callback for local mode
 	window["onDocumentCompare"] = function(folder, file_content, file_content_len, image_map, options) {
 		var api = window.editor;
@@ -12023,6 +12110,22 @@ background-repeat: no-repeat;\
 		file["GetImageMap"] = function() { return image_map; };
 
 		AscCommonWord["CompareDocuments"](api, file);
+	};
+
+	window["onDocumentMerge"] = function(folder, file_content, file_content_len, image_map, options) {
+		var api = window.editor;
+		if (file_content == "")
+		{
+			api.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationOpenError, Asc.c_oAscError.Level.NoCritical);
+			return;
+		}
+
+		var file = {};
+		file["IsValid"] = function() { return true; };
+		file["GetBinary"] = function() { return AscCommon.getBinaryArray(file_content, file_content_len); };
+		file["GetImageMap"] = function() { return image_map; };
+
+		AscCommonWord["mergeDocuments"](api, file);
 	};
 
 	window["asc_docs_api"]                                      = asc_docs_api;
@@ -13557,6 +13660,12 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_CompareDocumentFile"]                   = asc_docs_api.prototype.asc_CompareDocumentFile;
 	asc_docs_api.prototype["asc_CompareDocumentUrl_local"]              = asc_docs_api.prototype.asc_CompareDocumentUrl_local;
 	asc_docs_api.prototype["asc_CompareDocumentFile_local"]             = asc_docs_api.prototype.asc_CompareDocumentFile_local;
+
+	//merge
+	asc_docs_api.prototype["asc_MergeDocumentUrl"]                    = asc_docs_api.prototype.asc_MergeDocumentUrl;
+	asc_docs_api.prototype["asc_MergeDocumentFile"]                   = asc_docs_api.prototype.asc_MergeDocumentFile;
+	asc_docs_api.prototype["asc_MergeDocumentUrl_local"]              = asc_docs_api.prototype.asc_MergeDocumentUrl_local;
+	asc_docs_api.prototype["asc_MergeDocumentFile_local"]             = asc_docs_api.prototype.asc_MergeDocumentFile_local;
 
 
 	asc_docs_api.prototype["asc_canEditGeometry"] 					    = asc_docs_api.prototype.asc_canEditGeometry;
