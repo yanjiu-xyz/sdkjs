@@ -338,14 +338,9 @@
     CMergeComparisonTextElement.prototype = Object.create(CTextElement.prototype);
     CMergeComparisonTextElement.prototype.constructor = CMergeComparisonTextElement;
 
-    CMergeComparisonTextElement.prototype.haveCommonReviewType = function () {
-        let bHaveCommonReviewType = false;
-        this.forEachRun(function (oRun) {
-            if (!bHaveCommonReviewType) {
-                bHaveCommonReviewType = oRun.GetReviewType() === reviewtype_Common;
-            }
-        });
-        return bHaveCommonReviewType;
+    CMergeComparisonTextElement.prototype.addToElements = function (element, reviewType) {
+        CTextElement.prototype.addToElements.call(this, element);
+        this.reviewElementTypes.push(reviewType);
     };
 
     CMergeComparisonTextElement.prototype.haveCustomReviewType = function () {
@@ -422,14 +417,8 @@
 
     CResolveConflictTextElement.prototype = Object.create(CTextElement.prototype);
     CResolveConflictTextElement.prototype.constructor = CResolveConflictTextElement;
-
-    CResolveConflictTextElement.prototype.getPriorityReviewType = function () {
-        const arrPriorityReviewTypes = [];
-        this.forEachRun(function (oRun) {
-            arrPriorityReviewTypes.push(oRun.GetReviewType());
-        });
-        return getPriorityReviewType(arrPriorityReviewTypes);
-    }
+    CResolveConflictTextElement.prototype.addToElements = CMergeComparisonTextElement.prototype.addToElements;
+    
 
     function CDocumentResolveConflictComparison(oOriginalDocument, oRevisedDocument, oOptions) {
         CDocumentComparison.call(this, oOriginalDocument, oRevisedDocument, oOptions);

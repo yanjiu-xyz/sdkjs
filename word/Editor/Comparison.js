@@ -2189,7 +2189,7 @@
     }
 
     function createNodeFromRun(oRun, oLastText, oHashWords, oRet, TextElementConstructor, NodeConstructor) {
-
+        const nReviewType = oRun.GetReviewType && oRun.GetReviewType();
         if(oRun.Content.length > 0)
         {
             if(!oLastText)
@@ -2216,7 +2216,7 @@
                     }
 
                     oLastText.setLastRun(oRun);
-                    oLastText.addToElements(oRunElement, {posInRun: j, run: oRun});
+                    oLastText.addToElements(oRunElement, nReviewType);
                     new NodeConstructor(oLastText, oRet);
                     oLastText.updateHash(oHashWords);
 
@@ -2234,7 +2234,7 @@
                         oLastText.setFirstRun(oRun);
                         oLastText.setLastRun(oRun);
                     }
-                    oLastText.addToElements(oRun.Content[j], {posInRun: j, run: oRun});
+                    oLastText.addToElements(oRun.Content[j], nReviewType);
                     new NodeConstructor(oLastText, oRet);
                     oLastText = new TextElementConstructor();
                     oLastText.setFirstRun(oRun);
@@ -2252,7 +2252,7 @@
                     }
                     oLastText.setFirstRun(oRun);
                     oLastText.setLastRun(oRun);
-                    oLastText.addToElements(oRun.Content[j], {posInRun: j, run: oRun});
+                    oLastText.addToElements(oRun.Content[j], nReviewType);
                     new NodeConstructor(oLastText, oRet);
                     oLastText.updateHash(oHashWords);
                     oLastText = new TextElementConstructor();
@@ -2266,7 +2266,7 @@
                         oLastText.setFirstRun(oRun);
                     }
                     oLastText.setLastRun(oRun);
-                    oLastText.addToElements(oRun.Content[j], {posInRun: j, run: oRun});
+                    oLastText.addToElements(oRun.Content[j], nReviewType);
                 }
             }
         }
