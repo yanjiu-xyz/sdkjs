@@ -15720,7 +15720,7 @@ DataRowTraversal.prototype.initCol = function() {
 };
 DataRowTraversal.prototype.setStartColIndex = function(pivotFields, fieldIndex, colItem, colR, colFields) {
 	this.cur = this.curColCache[colR];
-	if (pivotFields[this.dataField.baseField].axis == null) {
+	if (pivotFields[this.dataField.baseField].axis == null && this.dataField.showDataAs === Asc.c_oAscShowDataAs.Difference) {
 		this.isNoData = true;
 		return;
 	}
