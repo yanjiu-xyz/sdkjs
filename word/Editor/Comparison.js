@@ -62,7 +62,6 @@
     {
         return this.element;
     };
-    CNode.prototype.checkNodeWithInsert = function (element, comparison) {}
 
     CNode.prototype.cleanEndOfInsert = function (aContentToInsert, idxOfChange, comparison) {
         const oChange = this.changes[idxOfChange];
@@ -83,7 +82,6 @@
                 {
                     for(let t = oEndOfInsertRun.Content.length - 1; t > -1; --t)
                     {
-                        this.checkNodeWithInsert(oEndOfInsertRun, comparison);
                         const oNewRun = this.copyRunWithMockParagraph(oEndOfInsertRun, applyingParagraph.Paragraph || applyingParagraph, comparison);
                         //очищаем конец слова, которое нужно вставить
                         if(oLastText.elements[oLastText.elements.length - 1] === oEndOfInsertRun.Content[t])
@@ -92,7 +90,6 @@
                             {
                                 lastCheckRun = oNewRun.Split2(t + 1);
                                 this.setCommonReviewTypeWithInfo(lastCheckRun, oEndOfInsertRun.ReviewInfo.Copy());
-                                this.edgeCaseHandlingOfCleanInsertEnd(aContentToInsert, lastCheckRun, comparison);
                                 //oNewRun.Remove_FromContent(t + 1, oNewRun.Content.length - (t + 1), false);
                             }
                             this.pushToArrInsertContent(aContentToInsert, oNewRun, comparison);
@@ -112,17 +109,10 @@
                 //целиком вставим то, что встретили
                 this.pushToArrInsertContentWithCopy(aContentToInsert, oCurrentRun, comparison);
                 break;
-            } else {
-                this.edgeCaseHandlingOfCleanInsertEnd(aContentToInsert, oCurrentRun, comparison);
             }
         }
         return k;
     }
-
-    CNode.prototype.edgeCaseHandlingOfCleanInsertStart = function (aContentToInsert, element, comparison) {return true;};
-    CNode.prototype.edgeCaseHandlingOfCleanInsertEnd = function (aContentToInsert, element, comparison) {return true;};
-    CNode.prototype.edgeCaseHandlingOfCleanRemoveStart = function (aContentToRemove, element, comparison) {return true;};
-    CNode.prototype.edgeCaseHandlingOfCleanRemoveEnd = function (aContentToRemove, element, comparison) {return true;};
     // comparison need for extends
     CNode.prototype.pushToArrInsertContent = function (aContentToInsert, elem, comparison) {
         aContentToInsert.push(elem);
@@ -177,7 +167,6 @@
         for(k -= 1; k > -1; --k)
         {
             oCurRun = oParentParagraph.Content[k];
-            this.checkNodeWithInsert(oCurRun, comparison);
             // Пока не дошли до первого рана слова, закидываем его на добавление
             if(!(oCurRun === oFirstRun || oCurRun === oFirstText))
             {
@@ -209,25 +198,17 @@
                                 this.pushToArrInsertContent(aContentToInsert, oNewRun, comparison);
                                 this.setCommonReviewTypeWithInfo(lastCheckRun, oCurRun.ReviewInfo.Copy());
                             }
-                            bBreak = this.edgeCaseHandlingOfCleanInsertStart(aContentToInsert, lastCheckRun, comparison);
                         }
                     }
                 }
                 break;
             }
         }
-        for (k -= 1; k >= 0; k -= 1) {
-            if (bBreak) {
-                break;
-            }
-            bBreak = this.edgeCaseHandlingOfCleanInsertStart(aContentToInsert, oParentParagraph.Content[k], comparison);
-        }
     }
 
     CNode.prototype.getArrOfInsertsFromChanges = function (idxOfChange, comparison) {
         const oChange = this.changes[idxOfChange];
         const aContentToInsert = [];
-        this.checkNodeWithInsert(this.element, comparison);
 
         if(oChange.insert.length > 0)
         {
@@ -348,7 +329,6 @@
         for(k; k > -1; --k)
         {
             const oCurRun = oElement.Content[k];
-            this.checkNodeWithInsert(oCurRun, comparison);
             if(oCurRun === oEndOfRemoveRun)
             {
                 if(oLastText instanceof CTextElement)
@@ -366,7 +346,6 @@
                         nInsertPosition = k + 1;
                         const oNewRun = oEndOfRemoveRun.Split2(t + 1, oApplyParagraph, startPosition + k);
                         this.setCommonReviewTypeWithInfo(oNewRun, oEndOfRemoveRun.ReviewInfo.Copy());
-                        this.edgeCaseHandlingOfCleanRemoveEnd(arrSetRemove, oNewRun, comparison);
                     }
                 }
                 else
@@ -374,8 +353,6 @@
                     nInsertPosition = k + 1;
                 }
                 break;
-            } else {
-                this.edgeCaseHandlingOfCleanRemoveEnd(arrSetRemove, oCurRun, comparison);
             }
         }
         return {posLastRunInContent: k, nInsertPosition: nInsertPosition };
@@ -422,7 +399,6 @@
                     {
                         const oNewRun = oChildElement.Split2(t, oApplyParagraph, startPosition + k);
                         arrSetRemoveReviewType.push(oNewRun);
-                        bBreak = this.edgeCaseHandlingOfCleanRemoveStart(arrSetRemoveReviewType, oChildElement);
                         nInsertPosition++;
                     }
                     else
@@ -434,13 +410,6 @@
                 {
                     arrSetRemoveReviewType.push(oChildElement);
                 }
-                break;
-            }
-        }
-
-        for (k -= 1; k >= 0; k -= 1) {
-            bBreak = this.edgeCaseHandlingOfCleanRemoveStart(arrSetRemoveReviewType, oElement.Content[k]);
-            if (bBreak) {
                 break;
             }
         }
