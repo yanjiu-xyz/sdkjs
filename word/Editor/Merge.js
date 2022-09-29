@@ -186,6 +186,12 @@
         return oRet;
     };
 
+    CMergeComparisonNode.prototype.pushToArrInsertContentWithCopy = function (aContentToInsert, elem, comparison) {
+        comparison.copyPr.bSaveReviewType = true;
+        CNode.prototype.pushToArrInsertContentWithCopy.call(this, aContentToInsert, elem, comparison);
+        delete comparison.copyPr.bSaveReviewType;
+    }
+
     CMergeComparisonNode.prototype.setRemoveReviewType = function (element, comparison) {
         if (!(element.IsParaEndRun && element.IsParaEndRun())) {
             if (!element.GetReviewType || element.GetReviewType && element.GetReviewType() === reviewtype_Common) {
@@ -331,12 +337,6 @@
         }
     }
 
-    CDocumentResolveConflictComparison.prototype.pushToArrInsertContentWithCopy = function (aContentToInsert, elem, comparison) {
-        this.copyPr.bSaveCustomReviewType = true;
-        CDocumentComparison.prototype.pushToArrInsertContentWithCopy.call(this, aContentToInsert, elem, comparison);
-        delete this.copyPr.bSaveCustomReviewType;
-    }
-
     function CConflictResolveNode(oElement, oParent) {
         CNode.call(this, oElement, oParent);
     }
@@ -354,6 +354,12 @@
         delete comparison.copyPr.bSaveCustomReviewType;
         return oRet;
     };
+
+    CConflictResolveNode.prototype.pushToArrInsertContentWithCopy = function (aContentToInsert, elem, comparison) {
+        comparison.copyPr.bSaveCustomReviewType = true;
+        CNode.prototype.pushToArrInsertContentWithCopy.call(this, aContentToInsert, elem, comparison);
+        delete comparison.copyPr.bSaveCustomReviewType;
+    }
 
     CConflictResolveNode.prototype.setCommonReviewTypeWithInfo = function (element, info) {
         element.SetReviewTypeWithInfo((element.GetReviewType && element.GetReviewType()) || reviewtype_Common, info);
@@ -475,12 +481,6 @@
             this.setReviewInfoForArray([oBaseRun], priorityReviewType);
         }
         CDocumentComparison.prototype.compareDrawingObjects.call(this, oBaseDrawing, oCompareDrawing);
-    }
-
-    CDocumentMergeComparison.prototype.pushToArrInsertContentWithCopy = function (aContentToInsert, elem, comparison) {
-        this.copyPr.bSaveReviewType = true;
-        CDocumentComparison.prototype.pushToArrInsertContentWithCopy.call(this, aContentToInsert, elem, comparison);
-        delete this.copyPr.bSaveReviewType;
     }
 
 
