@@ -89,7 +89,7 @@ function merge(sMainBinary, sRevisedBinary, callback) {
         oldMergeCallback.call(this);
         callback();
     }
-    merge.merge4();
+    merge.merge();
 }
 
 function getTestObject(oDocument) {

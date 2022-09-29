@@ -215,6 +215,8 @@ ParaRun.prototype.Copy = function(Selected, oPr)
 	{
 		var newReviewType = reviewtype_Add;
 		if (oPr.bSaveReviewType) {
+			 newReviewType = this.GetReviewType();
+		} else if (oPr.bSaveCustomReviewType) {
 			var tempReviewType = this.GetReviewType();
 			if (tempReviewType === reviewtype_Add || tempReviewType === reviewtype_Remove) {
 				newReviewType = tempReviewType;
@@ -343,6 +345,8 @@ ParaRun.prototype.Copy2 = function(oPr)
 	{
 		var newReviewType = reviewtype_Add;
 		if (oPr.bSaveReviewType) {
+			newReviewType = this.GetReviewType();
+		} else if (oPr.bSaveCustomReviewType) {
 			var tempReviewType = this.GetReviewType();
 			if (tempReviewType === reviewtype_Add || tempReviewType === reviewtype_Remove) {
 				newReviewType = tempReviewType;

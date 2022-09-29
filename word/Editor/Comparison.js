@@ -594,6 +594,16 @@
             node.forEach(callback, T);
         });
     };
+    
+    CNode.prototype.forEachRight = function (callback, T) {
+        const arrNodes = [];
+        this.forEach(function (oNode) {
+            arrNodes.push(oNode);
+        });
+        for (let i = arrNodes.length - 1; i > -1; i -= 1) {
+            callback.call(T, arrNodes[i]);
+        }
+    };
 
     CNode.prototype.setPartner = function (oNode) {
         this.partner = oNode;
@@ -637,23 +647,6 @@
     CTextElement.prototype.getPosOfStart = function () {
         const startElement = this.elements[0];
         return this.firstRun.GetElementPosition(startElement);
-    }
-
-    CTextElement.prototype.forEachRun = function (callback) {
-        if (this.firstRun && this.lastRun) {
-            const oParagraph = this.firstRun.Paragraph;
-
-            let bCheck = false;
-            for (let i = 0; i < oParagraph.Content.length && oParagraph.Content[i - 1] !== this.lastRun; i += 1) {
-                const oRun = oParagraph.Content[i];
-                if (oRun === this.firstRun) {
-                    bCheck = true;
-                }
-                if (bCheck) {
-                    callback(oRun);
-                }
-            }
-        }
     }
 
     CTextElement.prototype.addToElements = function (element, options) {
