@@ -132,7 +132,7 @@ const answers = [
         // paragraph
         [
             // review text
-            {reviewType: reviewtype_Add, text: "ПриветикПривет, "}, {reviewType: reviewtype_Common, text: "как дела?"}
+            {reviewType: reviewtype_Add, text: "ПриветПриветик, "}, {reviewType: reviewtype_Common, text: "как дела?"}
         ],
     ],
     // document
@@ -140,7 +140,7 @@ const answers = [
         // paragraph
         [
             // review text
-            {reviewType: reviewtype_Common, text: "Привет, как дела?"}, {reviewType: reviewtype_Add, text: " ХорошоНормально, а у тебя как?"}
+            {reviewType: reviewtype_Common, text: "Привет, как дела?"}, {reviewType: reviewtype_Add, text: " НормальноХорошо, а у тебя как?"}
         ],
     ],
     // document
@@ -148,14 +148,14 @@ const answers = [
         // paragraph
         [
             // review text
-            {reviewType: reviewtype_Common, text: "Привет, как дела?"}, {reviewType: reviewtype_Add, text: " ХорошоНормально, а у тебя как?"}
+            {reviewType: reviewtype_Common, text: "Привет, как дела?"}, {reviewType: reviewtype_Add, text: " НормальноХорошо, а у тебя как?"}
         ],
     ],
     [
         // paragraph
         [
             // review text
-            {reviewType: reviewtype_Common, text: "Привет, как дела? "}, {reviewType: reviewtype_Add, text: "   Нормально"}, {reviewType: reviewtype_Remove, text: "Хорошо"}, {reviewType: reviewtype_Add, text: ", а у тебя как?"}
+            {reviewType: reviewtype_Common, text: "Привет, как дела? "},  {reviewType: reviewtype_Remove, text: "Хорошо"}, {reviewType: reviewtype_Add, text: "   Нормально"}, {reviewType: reviewtype_Add, text: ", а у тебя как?"}
         ],
     ],
 ];
