@@ -1947,25 +1947,25 @@
             this.applyChangesToChildNode(oNode.children[i]);
         }
     };
-    CDocumentComparison.prototype.setReviewInfo = function(oReviewIno)
+    CDocumentComparison.prototype.setReviewInfo = function(oReviewInfo, sCustomReviewUserName)
     {
-        oReviewIno.Editor   = this.api;
-        oReviewIno.UserId   = "";
-        oReviewIno.MoveType = Asc.c_oAscRevisionsMove.NoMove;
-        oReviewIno.PrevType = -1;
-        oReviewIno.PrevInfo = null;
-        oReviewIno.UserName = this.getUserName();
+        oReviewInfo.Editor   = this.api;
+        oReviewInfo.UserId   = "";
+        oReviewInfo.MoveType = Asc.c_oAscRevisionsMove.NoMove;
+        oReviewInfo.PrevType = -1;
+        oReviewInfo.PrevInfo = null;
+        oReviewInfo.UserName = sCustomReviewUserName || this.getUserName();
         const oCore = this.revisedDocument.Core;
         if(oCore)
         {
             if(oCore.modified instanceof Date)
             {
-                oReviewIno.DateTime = oCore.modified.getTime();
+                oReviewInfo.DateTime = oCore.modified.getTime();
             }
         }
         else
         {
-            oReviewIno.DateTime = "Unknown";
+            oReviewInfo.DateTime = "Unknown";
         }
     };
     CDocumentComparison.prototype.getElementsForSetReviewType = function (oObject) {
@@ -2053,12 +2053,12 @@
         return arrReturnObjects;
     };
 
-    CDocumentComparison.prototype.setReviewInfoForArray = function (arrNeedReviewObjects, nType) {
+    CDocumentComparison.prototype.setReviewInfoForArray = function (arrNeedReviewObjects, nType, sCustomReviewUserName) {
         for (let i = 0; i < arrNeedReviewObjects.length; i += 1) {
             const oNeedReviewObject = arrNeedReviewObjects[i];
             if (oNeedReviewObject.SetReviewTypeWithInfo) {
                 const oReviewInfo = oNeedReviewObject.ReviewInfo.Copy();
-                this.setReviewInfo(oReviewInfo);
+                this.setReviewInfo(oReviewInfo, sCustomReviewUserName);
                 let reviewType;
                 if (this.bSaveCustomReviewType) {
                     reviewType = oNeedReviewObject.GetReviewType && oNeedReviewObject.GetReviewType();
@@ -2181,8 +2181,7 @@
             || bPunctuation);
     }
 
-    function createNodeFromRun(oRun, oLastText, oHashWords, oRet, TextElementConstructor, NodeConstructor) {
-        const nReviewType = oRun.GetReviewType && oRun.GetReviewType();
+    function createNodeFromRun(oRun, oLastText, oHashWords, oRet, TextElementConstructor, NodeConstructor, oReviewInfo) {
         if(oRun.Content.length > 0)
         {
             if(!oLastText)
@@ -2209,7 +2208,7 @@
                     }
 
                     oLastText.setLastRun(oRun);
-                    oLastText.addToElements(oRunElement, nReviewType);
+                    oLastText.addToElements(oRunElement, oReviewInfo);
                     new NodeConstructor(oLastText, oRet);
                     oLastText.updateHash(oHashWords);
 
@@ -2227,7 +2226,7 @@
                         oLastText.setFirstRun(oRun);
                         oLastText.setLastRun(oRun);
                     }
-                    oLastText.addToElements(oRun.Content[j], nReviewType);
+                    oLastText.addToElements(oRun.Content[j], oReviewInfo);
                     new NodeConstructor(oLastText, oRet);
                     oLastText = new TextElementConstructor();
                     oLastText.setFirstRun(oRun);
@@ -2245,7 +2244,7 @@
                     }
                     oLastText.setFirstRun(oRun);
                     oLastText.setLastRun(oRun);
-                    oLastText.addToElements(oRun.Content[j], nReviewType);
+                    oLastText.addToElements(oRun.Content[j], oReviewInfo);
                     new NodeConstructor(oLastText, oRet);
                     oLastText.updateHash(oHashWords);
                     oLastText = new TextElementConstructor();
@@ -2259,17 +2258,22 @@
                         oLastText.setFirstRun(oRun);
                     }
                     oLastText.setLastRun(oRun);
-                    oLastText.addToElements(oRun.Content[j], nReviewType);
+                    oLastText.addToElements(oRun.Content[j], oReviewInfo);
                 }
             }
         }
         return oLastText;
     }
 
+    CDocumentComparison.prototype.getReviewTypeAndName = function (oRun) {
+
+    }
+
     CDocumentComparison.prototype.createNodeFromRun = function (oRun, oLastText, oHashWords, oRet) {
         const TextElementConstructor = this.getTextElementConstructor();
         const NodeConstructor = this.getNodeConstructor();
-        return createNodeFromRun(oRun, oLastText, oHashWords, oRet, TextElementConstructor, NodeConstructor);
+        const oReviewInfo = this.getReviewTypeAndName(oRun);
+        return createNodeFromRun(oRun, oLastText, oHashWords, oRet, TextElementConstructor, NodeConstructor, oReviewInfo);
     }
 
     CDocumentComparison.prototype.createNodeFromRunContentElement = function(oElement, oParentNode, oHashWords, isOriginalDocument)
