@@ -15585,6 +15585,9 @@ function DataRowTraversal(pivotFields, rowFields, colFields) {
 
 	this.diffValueIndex = null;
 	this.isNoData = false;
+
+	this.colTotal = null;
+	this.colTotalCache = null;
 }
 DataRowTraversal.prototype.initRow = function(dataRow) {
 	this.cur = dataRow;
@@ -15712,14 +15715,16 @@ DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowIt
 	}
 	return !!this.cur;
 };
-DataRowTraversal.prototype.initCol = function() {
+DataRowTraversal.prototype.initCol = function(dataRow) {
 	this.curColCache = [this.cur];
+	this.colTotalCache = [dataRow];
 	if (this.diffBase) {
 		this.diffBaseColCache = [this.diffBase];
 	}
 };
 DataRowTraversal.prototype.setStartColIndex = function(pivotFields, fieldIndex, colItem, colR, colFields) {
 	this.cur = this.curColCache[colR];
+	this.colTotal = this.colTotalCache[colR];
 	if (pivotFields[this.dataField.baseField].axis == null && this.dataField.showDataAs === Asc.c_oAscShowDataAs.Difference) {
 		this.isNoData = true;
 		return;
@@ -15742,6 +15747,7 @@ DataRowTraversal.prototype.setStartColIndex = function(pivotFields, fieldIndex, 
 				let field = pivotFields[fieldIndex];
 				let valueIndex = colItem.x[colItemsXIndex].getV();
 				this.fieldItem = field.getItem(valueIndex);
+				this.colTotal = this.colTotal.subtotal[this.fieldItem.x];
 				let oldCur = this.cur;
 				if (this.cur) {
 					this.cur = this.cur.subtotal[this.fieldItem.x];
@@ -15762,6 +15768,8 @@ DataRowTraversal.prototype.setStartColIndex = function(pivotFields, fieldIndex, 
 			}
 			this.curColCache.length = colR + colItemsXIndex + 1;
 			this.curColCache[this.curColCache.length] = this.cur;
+			this.colTotalCache.length = colR + colItemsXIndex + 1;
+			this.colTotalCache[this.colTotalCache.length] = this.colTotal;
 			if (this.diffBaseColCache) {
 				this.diffBaseColCache.length = colR + colItemsXIndex + 1;
 				this.diffBaseColCache[this.diffBaseColCache.length] = this.diffBase;
@@ -15818,6 +15826,17 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 		case Asc.c_oAscShowDataAs.PercentOfRow:
 			break;
 		case Asc.c_oAscShowDataAs.PercentOfCol:
+			if (this.cur) {
+				let _colTotal = this.colTotal.total[dataIndex];
+				let _oCellValue = _colTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+				total = this.cur.total[dataIndex];
+				oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+				oCellValue.number = oCellValue.number / _oCellValue.number;
+			} else {
+				oCellValue = AscCommonExcel.StatisticOnlineAlgorithm.prototype.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+				oCellValue.number = 0.0;
+				oCellValue.type = 0;
+			}
 			break;
 		case Asc.c_oAscShowDataAs.PercentOfTotal:
 			if (this.cur) {
