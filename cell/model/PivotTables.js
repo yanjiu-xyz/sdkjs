@@ -15587,6 +15587,8 @@ function DataRowTraversal(pivotFields, rowFields, colFields) {
 	this.isNoData = false;
 
 	this.colTotal = null;
+	this.rowTotal = null;
+
 	this.colTotalCache = null;
 }
 DataRowTraversal.prototype.initRow = function(dataRow) {
@@ -15599,6 +15601,7 @@ DataRowTraversal.prototype.cleanDiff = function() {
 };
 DataRowTraversal.prototype.setStartRowIndex = function(rowR) {
 	this.cur = this.curRowCache[rowR];
+	this.rowTotal = this.curRowCache[rowR];
 	if (null !== this.diffRowIndex && this.diffRowIndex >= rowR) {
 		this.cleanDiff();
 	} else if (this.diffBaseRowCache) {
@@ -15686,6 +15689,7 @@ DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowIt
 		props.itemSd = this.fieldItem.sd;
 		let oldCur = this.cur;
 		this.cur = this.cur.vals[this.fieldItem.x];
+		this.rowTotal = this.rowTotal.vals[this.fieldItem.x];
 
 		if (null !== this.diffRowIndex && this.diffRowIndex > rowR + rowItemsXIndex) {
 			this.cleanDiff();
@@ -15709,6 +15713,7 @@ DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowIt
 	}
 	this.curRowCache.length = rowR + rowItemsXIndex + 1;
 	this.curRowCache[this.curRowCache.length] = this.cur;
+
 	if (this.diffBaseRowCache) {
 		this.diffBaseRowCache.length = rowR + rowItemsXIndex + 1;
 		this.diffBaseRowCache[this.diffBaseRowCache.length] = this.diffBase;
@@ -15824,6 +15829,17 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 		case Asc.c_oAscShowDataAs.PercentDiff:
 			break;
 		case Asc.c_oAscShowDataAs.PercentOfRow:
+			if (this.cur) {
+				let _rowTotal = this.rowTotal.total[dataIndex];
+				let _oCellValue = _rowTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+				total = this.cur.total[dataIndex];
+				oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+				oCellValue.number = oCellValue.number / _oCellValue.number;
+			} else {
+				oCellValue = AscCommonExcel.StatisticOnlineAlgorithm.prototype.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+				oCellValue.number = 0.0;
+				oCellValue.type = 0;
+			}
 			break;
 		case Asc.c_oAscShowDataAs.PercentOfCol:
 			if (this.cur) {
