@@ -72,7 +72,13 @@ var c_oAscShowDataAs = {
 	PercentOfRow: 5,
 	PercentOfCol: 6,
 	PercentOfTotal: 7,
-	Index: 8
+	Index: 8,
+	PercentOfRunningTotal: 9,
+	PercentOfParent: 10,
+	PercentOfParentCol: 11,
+	PercentOfParentRow: 12,
+	RankDescending: 13,
+	RankAscending: 14
 };
 var c_oAscFormatAction = {
 	Blank: 0,
@@ -696,47 +702,43 @@ function ToName_ST_DataConsolidateFunction(val) {
 
 function FromXml_ST_ShowDataAs(val) {
 	var res = -1;
-	if ("normal" === val) {
-		res = c_oAscShowDataAs.Normal;
-	} else if ("difference" === val) {
-		res = c_oAscShowDataAs.Difference;
-	} else if ("percent" === val) {
-		res = c_oAscShowDataAs.Percent;
-	} else if ("percentDiff" === val) {
-		res = c_oAscShowDataAs.PercentDiff;
-	} else if ("runTotal" === val) {
-		res = c_oAscShowDataAs.RunTotal;
-	} else if ("percentOfRow" === val) {
-		res = c_oAscShowDataAs.PercentOfRow;
-	} else if ("percentOfCol" === val) {
-		res = c_oAscShowDataAs.PercentOfCol;
-	} else if ("percentOfTotal" === val) {
-		res = c_oAscShowDataAs.PercentOfTotal;
-	} else if ("index" === val) {
-		res = c_oAscShowDataAs.Index;
+	switch (val) {
+		case "normal": res = c_oAscShowDataAs.Normal; break;
+		case "difference": res = c_oAscShowDataAs.Difference; break;
+		case "percent": res = c_oAscShowDataAs.Percent; break;
+		case "percentDiff": res = c_oAscShowDataAs.PercentDiff; break;
+		case "runTotal": res = c_oAscShowDataAs.RunTotal; break;
+		case "percentOfRow": res = c_oAscShowDataAs.PercentOfRow; break;
+		case "percentOfCol": res = c_oAscShowDataAs.PercentOfCol; break;
+		case "percentOfTotal": res = c_oAscShowDataAs.PercentOfTotal; break;
+		case "index": res = c_oAscShowDataAs.Index; break;
+		case "percentOfRunningTotal": res = c_oAscShowDataAs.PercentOfRunningTotal; break;
+		case "percentOfParent": res = c_oAscShowDataAs.PercentOfParent; break;
+		case "percentOfParentCol": res = c_oAscShowDataAs.PercentOfParentCol; break;
+		case "percentOfParentRow": res = c_oAscShowDataAs.PercentOfParentRow; break;
+		case "rankDescending": res = c_oAscShowDataAs.RankDescending; break;
+		case "rankAscending": res = c_oAscShowDataAs.RankAscending; break;
 	}
 	return res;
 }
 function ToXml_ST_ShowDataAs(val) {
 	var res = "";
-	if (c_oAscShowDataAs.Normal === val) {
-		res = "normal";
-	} else if (c_oAscShowDataAs.Difference === val) {
-		res = "difference";
-	} else if (c_oAscShowDataAs.Percent === val) {
-		res = "percent";
-	} else if (c_oAscShowDataAs.PercentDiff === val) {
-		res = "percentDiff";
-	} else if (c_oAscShowDataAs.RunTotal === val) {
-		res = "runTotal";
-	} else if (c_oAscShowDataAs.PercentOfRow === val) {
-		res = "percentOfRow";
-	} else if (c_oAscShowDataAs.PercentOfCol === val) {
-		res = "percentOfCol";
-	} else if (c_oAscShowDataAs.PercentOfTotal === val) {
-		res = "percentOfTotal";
-	} else if (c_oAscShowDataAs.Index === val) {
-		res = "index";
+	switch (val) {
+		case c_oAscShowDataAs.Normal: res = "normal"; break;
+		case c_oAscShowDataAs.Difference: res = "difference"; break;
+		case c_oAscShowDataAs.Percent: res = "percent"; break;
+		case c_oAscShowDataAs.PercentDiff: res = "percentDiff"; break;
+		case c_oAscShowDataAs.RunTotal: res = "runTotal"; break;
+		case c_oAscShowDataAs.PercentOfRow: res = "percentOfRow"; break;
+		case c_oAscShowDataAs.PercentOfCol: res = "percentOfCol"; break;
+		case c_oAscShowDataAs.PercentOfTotal: res = "percentOfTotal"; break;
+		case c_oAscShowDataAs.Index: res = "index"; break;
+		case c_oAscShowDataAs.PercentOfRunningTotal: res = "percentOfRunningTotal"; break;
+		case c_oAscShowDataAs.PercentOfParent: res = "percentOfParent"; break;
+		case c_oAscShowDataAs.PercentOfParentCol: res = "percentOfParentCol"; break;
+		case c_oAscShowDataAs.PercentOfParentRow: res = "percentOfParentRow"; break;
+		case c_oAscShowDataAs.RankDescending: res = "rankDescending"; break;
+		case c_oAscShowDataAs.RankAscending: res = "rankAscending"; break;
 	}
 	return res;
 }
