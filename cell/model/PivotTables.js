@@ -15866,6 +15866,27 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 			}
 			break;
 		case Asc.c_oAscShowDataAs.Index:
+			if (this.cur) {
+				total = this.cur.total[dataIndex];
+				let _rowTotal = this.rowTotal.total[dataIndex];
+				let _colTotal = this.colTotal.total[dataIndex];
+				let _grandTotal = dataRow.total[dataIndex];
+
+				let _rowOCellValue = _rowTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+				let _colOCellValue = _colTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+				let _grandOCellValue = _grandTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+				oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+
+				let _specGravity = oCellValue.number / _colOCellValue.number;
+				let _totalSpecGravity = _rowOCellValue.number / _grandOCellValue.number;
+				
+				
+				oCellValue.number = _specGravity / _totalSpecGravity;
+			} else {
+				oCellValue = AscCommonExcel.StatisticOnlineAlgorithm.prototype.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+				oCellValue.number = 0.0;
+				oCellValue.type = 0;
+			}
 			break;
 		default:
 			// Exception Handling
