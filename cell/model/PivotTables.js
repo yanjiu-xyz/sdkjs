@@ -15681,6 +15681,67 @@ DataRowTraversal.prototype.getIndexOfBaseItem = function(dataField, valueIndex) 
 	}
 };
 
+DataRowTraversal.prototype.goDeeperRow = function () {
+	if (this.diffBase) {
+		this.diffBase = this.findDiffRowItem(this.fieldItem);
+	}
+};
+
+DataRowTraversal.prototype.goDeeperCol = function () {
+	if (this.diffBase) {
+		this.diffBase = this.diffBase.subtotal[this.fieldItem.x];
+	}
+};
+
+DataRowTraversal.prototype.saveCacheRow = function (rowR, rowItemsXIndex) {
+	this.curRowCache.length = rowR + rowItemsXIndex + 1;
+	this.curRowCache[this.curRowCache.length] = this.cur;
+
+	if (this.diffBaseRowCache) {
+		this.diffBaseRowCache.length = rowR + rowItemsXIndex + 1;
+		this.diffBaseRowCache[this.diffBaseRowCache.length] = this.diffBase;
+	}
+};
+
+DataRowTraversal.prototype.saveCacheCol = function (colR, colItemsXIndex) {
+	// Current Cache
+	this.curColCache.length = colR + colItemsXIndex + 1;
+	this.curColCache[this.curColCache.length] = this.cur;
+	// ColTotal Cache
+	this.colTotalCache.length = colR + colItemsXIndex + 1;
+	this.colTotalCache[this.colTotalCache.length] = this.colTotal;
+	// Difference Cache
+	if (this.diffBaseColCache) {
+		this.diffBaseColCache.length = colR + colItemsXIndex + 1;
+		this.diffBaseColCache[this.diffBaseColCache.length] = this.diffBase;
+	}
+};
+
+DataRowTraversal.prototype.splitUpRow = function (oldCur, field, valueIndex) {
+	this.diffBaseRowCache = [];
+	this.diffFieldItem = field.getItem(this.getIndexOfBaseItem(this.dataField, valueIndex));
+	if (this.diffFieldItem && this.diffFieldItem.t === Asc.c_oAscItemType.Data) {
+		this.diffBaseRowCache[this.diffRowIndex] = oldCur;
+		this.diffBase = oldCur.vals[this.diffFieldItem.x];
+		this.diffValueIndex = valueIndex;
+		if (!this.diffBase) {
+			this.isNoData = true;
+		}
+	} else {
+		this.cleanDiff();
+	}
+};
+
+DataRowTraversal.prototype.splitUpCol = function (oldCur, field, valueIndex) {
+	this.diffBaseColCache = [];
+	this.diffFieldItem = field.getItem(this.getIndexOfBaseItem(this.dataField, valueIndex));
+	if (this.diffFieldItem && this.diffFieldItem.t === Asc.c_oAscItemType.Data) {
+		this.diffBase = oldCur.subtotal[this.diffFieldItem.x];
+	} else {
+		this.cleanDiff();
+	}
+};
+
 DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowItem, rowR, rowItemsXIndex, props) {
 	if (this.cur && AscCommonExcel.st_VALUES !== fieldIndex) {
 		this.isNoData = false;
@@ -15696,29 +15757,11 @@ DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowIt
 		if (null !== this.diffRowIndex && this.diffRowIndex > rowR + rowItemsXIndex) {
 			this.cleanDiff();
 		} else if (null !== this.diffRowIndex && this.diffRowIndex === rowR + rowItemsXIndex) {
-			this.diffBaseRowCache = [];
-			this.diffFieldItem = field.getItem(this.getIndexOfBaseItem(this.dataField, valueIndex));
-			if (this.diffFieldItem && this.diffFieldItem.t === Asc.c_oAscItemType.Data) {
-				this.diffBaseRowCache[this.diffRowIndex] = oldCur;
-				this.diffBase = oldCur.vals[this.diffFieldItem.x];
-				this.diffValueIndex = valueIndex;
-				if (!this.diffBase) {
-					this.isNoData = true;
-				}
-			} else {
-				this.cleanDiff();
-			}
-			// todo the same with colItems
-		} else if (this.diffBase) {
-			this.diffBase = this.findDiffRowItem(this.fieldItem);
+			this.splitUpRow(oldCur, field, valueIndex);
+		} else {
+			this.goDeeperRow();
 		}
-	}
-	this.curRowCache.length = rowR + rowItemsXIndex + 1;
-	this.curRowCache[this.curRowCache.length] = this.cur;
-
-	if (this.diffBaseRowCache) {
-		this.diffBaseRowCache.length = rowR + rowItemsXIndex + 1;
-		this.diffBaseRowCache[this.diffBaseRowCache.length] = this.diffBase;
+		this.saveCacheRow(rowR, rowItemsXIndex)
 	}
 	return !!this.cur;
 };
@@ -15762,25 +15805,12 @@ DataRowTraversal.prototype.setStartColIndex = function(pivotFields, fieldIndex, 
 				if (null !== this.diffColIndex && this.diffColIndex > colR + colItemsXIndex) {
 					this.cleanDiff();
 				} else if (null !== this.diffColIndex && this.diffColIndex === colR + colItemsXIndex) {
-					this.diffBaseColCache = [];
-					this.diffFieldItem = field.getItem(this.getIndexOfBaseItem(this.dataField, valueIndex));
-					if (this.diffFieldItem && this.diffFieldItem.t === Asc.c_oAscItemType.Data) {
-						this.diffBase = oldCur.subtotal[this.diffFieldItem.x];
-					} else {
-						this.cleanDiff();
-					}
-				} else if (this.diffBase) {
-					this.diffBase = this.diffBase.subtotal[this.fieldItem.x];
+					this.splitUpCol(oldCur, field, valueIndex);
+				} else {
+					this.goDeeperCol();
 				}
 			}
-			this.curColCache.length = colR + colItemsXIndex + 1;
-			this.curColCache[this.curColCache.length] = this.cur;
-			this.colTotalCache.length = colR + colItemsXIndex + 1;
-			this.colTotalCache[this.colTotalCache.length] = this.colTotal;
-			if (this.diffBaseColCache) {
-				this.diffBaseColCache.length = colR + colItemsXIndex + 1;
-				this.diffBaseColCache[this.diffBaseColCache.length] = this.diffBase;
-			}
+			this.saveCacheCol(colR, colItemsXIndex);
 		}
 	}
 };
@@ -15889,6 +15919,9 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 				oCellValue.number = 0.0;
 				oCellValue.type = 0;
 			}
+			break;
+		case Asc.c_oAscShowDataAs.RunTotal:
+
 			break;
 		default:
 			// Exception Handling
