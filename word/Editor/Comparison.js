@@ -2073,7 +2073,27 @@
         const arrNeedReviewObjects = this.getElementsForSetReviewType(oObject);
         this.setReviewInfoForArray(arrNeedReviewObjects, nType);
     };
-    CDocumentComparison.prototype.updateReviewInfo = function(oObject, nType, bParaEnd)
+    CDocumentComparison.prototype.saveReviewInfo = function(oNewObject, oOldObject)
+    {
+        if (oOldObject.GetReviewInfo && oNewObject.SetReviewTypeWithInfo) {
+            const reviewType = oOldObject.GetReviewType && oOldObject.GetReviewType();
+            const reviewInfo = oOldObject.GetReviewInfo().Copy();
+            oNewObject.SetReviewTypeWithInfo && oNewObject.SetReviewTypeWithInfo(reviewType, reviewInfo);
+        }
+    };
+    CDocumentComparison.prototype.saveCustomReviewInfo = function(oObject, oOldObject, nType)
+    {
+        if (oOldObject.GetReviewInfo && oObject.SetReviewTypeWithInfo) {
+            const oldReviewType = oOldObject.GetReviewType && oOldObject.GetReviewType();
+            if (oldReviewType === reviewtype_Add || oldReviewType === reviewtype_Remove) {
+                const reviewInfo = oOldObject.GetReviewInfo().Copy();
+                oObject.SetReviewTypeWithInfo && oObject.SetReviewTypeWithInfo(oldReviewType, reviewInfo);
+            } else {
+                this.updateReviewInfo(oObject, nType);
+            }
+        }
+    };
+    CDocumentComparison.prototype.updateReviewInfo = function(oObject, nType)
     {
         if(oObject.ReviewInfo && oObject.SetReviewTypeWithInfo)
         {

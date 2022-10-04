@@ -326,7 +326,13 @@ Paragraph.prototype.Copy = function(Parent, DrawingDocument, oPr)
 
 	if(oPr && oPr.Comparison)
 	{
-		oPr.Comparison.updateReviewInfo(EndRun, reviewtype_Add, true);
+		if (oPr.SkipUpdateInfo) {
+			oPr.Comparison.saveReviewInfo(EndRun, this);
+		} else if (oPr.bSaveCustomReviewType) {
+			oPr.Comparison.saveCustomReviewInfo(EndRun, this, reviewtype_Add);
+		} else {
+			oPr.Comparison.updateReviewInfo(EndRun, reviewtype_Add);
+		}
 	}
 
 	// Добавляем секцию в конце

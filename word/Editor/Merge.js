@@ -191,16 +191,12 @@
     }
 
     CMergeComparisonNode.prototype.copyRunWithMockParagraph = function (oRun, mockParagraph, comparison) {
-        comparison.copyPr.bSaveReviewType = true;
         const oRet = CNode.prototype.copyRunWithMockParagraph.call(this, oRun, mockParagraph, comparison);
-        delete comparison.copyPr.bSaveReviewType;
         return oRet;
     };
 
     CMergeComparisonNode.prototype.pushToArrInsertContentWithCopy = function (aContentToInsert, elem, comparison) {
-        comparison.copyPr.bSaveReviewType = true;
         CNode.prototype.pushToArrInsertContentWithCopy.call(this, aContentToInsert, elem, comparison);
-        delete comparison.copyPr.bSaveReviewType;
     }
 
     CMergeComparisonNode.prototype.setRemoveReviewType = function (element, comparison) {
