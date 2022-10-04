@@ -64,29 +64,40 @@
                 nPriorityReviewType: reviewtype_Common,
                 nStartChangeReviewIndex: -1,
                 nEndChangeReviewIndex: 0,
-                sReviewUserName: ''
+                sReviewUserName: '',
+                oReviewInfo: null,
+                sReviewDate: ''
             }
         ];
         for (let i = 0; i < arrReviewTypesOfRevisedElement.length; i += 1) {
-            const priorityReviewType = getPriorityReviewType([arrReviewTypesOfRevisedElement[i].reviewType, arrReviewTypesOfMainElement[i].reviewType]);
-            const sReviewUserName = arrReviewTypesOfRevisedElement[i].userName;
-            if (priorityReviewType !== reviewtype_Common && priorityReviewType !== arrReviewTypesOfMainElement[i].reviewType) {
+            const priorityReviewType = arrReviewTypesOfRevisedElement[i].reviewType;
+            
+            const oReviewInfo = arrReviewTypesOfRevisedElement[i].reviewInfo;
+            const sReviewUserName = oReviewInfo && oReviewInfo.GetUserName();
+            const sReviewDate = '' + oReviewInfo && oReviewInfo.DateTime;
+            if (priorityReviewType !== reviewtype_Common) {
                 const lastChangeReviewInfo = arrChangeReviewTypesInfo[arrChangeReviewTypesInfo.length - 1];
                 if (lastChangeReviewInfo.nStartChangeReviewIndex === -1) {
                     lastChangeReviewInfo.nStartChangeReviewIndex = i;
                     lastChangeReviewInfo.nEndChangeReviewIndex = i - 1;
                     lastChangeReviewInfo.nPriorityReviewType = priorityReviewType;
-                    lastChangeReviewInfo.sReviewUserName = sReviewUserName
+                    lastChangeReviewInfo.sReviewUserName = sReviewUserName;
+                    lastChangeReviewInfo.sReviewDate = sReviewDate;
                 }
-                if (i - 1 === lastChangeReviewInfo.nEndChangeReviewIndex && priorityReviewType === lastChangeReviewInfo.nPriorityReviewType && lastChangeReviewInfo.sReviewUserName === sReviewUserName) {
+                if (i - 1 === lastChangeReviewInfo.nEndChangeReviewIndex 
+                    && priorityReviewType === lastChangeReviewInfo.nPriorityReviewType 
+                    && lastChangeReviewInfo.sReviewUserName === sReviewUserName 
+                    && sReviewDate === lastChangeReviewInfo.sReviewDate) {
                     lastChangeReviewInfo.nEndChangeReviewIndex = i;
-                    lastChangeReviewInfo.sReviewUserName = sReviewUserName
+                    lastChangeReviewInfo.sReviewUserName = sReviewUserName;
+                    lastChangeReviewInfo.sReviewDate = sReviewDate;
                 } else {
                     arrChangeReviewTypesInfo.push({
                         nPriorityReviewType: priorityReviewType,
                         nStartChangeReviewIndex: i,
                         nEndChangeReviewIndex: i,
-                        sReviewUserName: sReviewUserName
+                        sReviewUserName: sReviewUserName,
+                        sReviewDate: sReviewDate,
                     });
                 }
             }
@@ -124,13 +135,17 @@
                         const nStartChangeReviewIndex = oChangeReviewInfoElement.nStartChangeReviewIndex;
                         const nPriorityReviewType = oChangeReviewInfoElement.nPriorityReviewType;
                         const sReviewUserName = oChangeReviewInfoElement.sReviewUserName;
+                        const sReviewDate = oChangeReviewInfoElement.sReviewDate;
                         const oFirstChangeElement = oOriginalTextElement.elements[nStartChangeReviewIndex];
                         const oLastChangeElement = oOriginalTextElement.elements[nEndChangeReviewIndex];
-                        if (!oNeedReviewWithUser[sReviewUserName]) {
+                        if (!oNeedReviewWithUser[sReviewDate]) {
+                            oNeedReviewWithUser[sReviewDate] = {};
+                        }
+                        if (!oNeedReviewWithUser[sReviewDate][sReviewUserName]) {
                             const oNeedReview = {};
                             oNeedReview[reviewtype_Add] = [];
                             oNeedReview[reviewtype_Remove] = [];
-                            oNeedReviewWithUser[sReviewUserName] = oNeedReview;
+                            oNeedReviewWithUser[sReviewDate][sReviewUserName] = oNeedReview;
                         }
                         while (nCurrentOriginalRunIndex !== -1) {
                             if (nCurrentOriginalRunElementIndex === -1) {
@@ -147,7 +162,7 @@
                                 if (oCurrentOriginalRun === oOriginalTextElement.firstRun) {
                                     bIsFindEndElementForChangeReview = false;
                                 } else if (bIsFindEndElementForChangeReview) {
-                                    oNeedReviewWithUser[sReviewUserName][nPriorityReviewType].push(oCurrentOriginalRun);
+                                    oNeedReviewWithUser[sReviewDate][sReviewUserName][nPriorityReviewType].push(oCurrentOriginalRun);
                                 }
                             }
                             
@@ -158,7 +173,7 @@
 
                             if (oCurrentOriginalRun.Content[nCurrentOriginalRunElementIndex] === oFirstChangeElement) {
                                 const oNewRun = oCurrentOriginalRun.Split2(nCurrentOriginalRunElementIndex, oOriginalTextParagraph, nCurrentOriginalRunIndex);
-                                oNeedReviewWithUser[sReviewUserName][nPriorityReviewType].push(oNewRun);
+                                oNeedReviewWithUser[sReviewDate][sReviewUserName][nPriorityReviewType].push(oNewRun);
                                 break;
                             }
                             nCurrentOriginalRunElementIndex -= 1;
@@ -166,9 +181,11 @@
                     }
                 }
 
-                for (let sUserName in oNeedReviewWithUser) {
-                    comparison.setReviewInfoForArray(oNeedReviewWithUser[sUserName][reviewtype_Add], reviewtype_Add, sUserName);
-                    comparison.setReviewInfoForArray(oNeedReviewWithUser[sUserName][reviewtype_Remove], reviewtype_Remove, sUserName);
+                for (let sReviewDate in oNeedReviewWithUser) {
+                    for (let sUserName in oNeedReviewWithUser[sReviewDate]) {
+                        comparison.setReviewInfoForArray(oNeedReviewWithUser[sReviewDate][sUserName][reviewtype_Add], reviewtype_Add, sUserName, parseInt(sReviewDate, 10));
+                        comparison.setReviewInfoForArray(oNeedReviewWithUser[sReviewDate][sUserName][reviewtype_Remove], reviewtype_Remove, sUserName, parseInt(sReviewDate, 10));
+                    }
                 }
             }
         });
@@ -310,17 +327,46 @@
         return CConflictResolveNode;
     }
 
+    CDocumentResolveConflictComparison.prototype.setReviewInfoForArray = function (arrNeedReviewObjects, nType, sCustomReviewUserName, nCustomReviewDate) {
+        for (let i = 0; i < arrNeedReviewObjects.length; i += 1) {
+            const oNeedReviewObject = arrNeedReviewObjects[i];
+            if (oNeedReviewObject.SetReviewTypeWithInfo) {
+                let oReviewInfo = oNeedReviewObject.ReviewInfo.Copy();
+                this.setReviewInfo(oReviewInfo, sCustomReviewUserName, nCustomReviewDate);
+                if (this.bSaveCustomReviewType) {
+                    const reviewType = oNeedReviewObject.GetReviewType && oNeedReviewObject.GetReviewType();
+                    if (reviewType === reviewtype_Add || reviewType === reviewtype_Remove) {
+                        if (nType === reviewtype_Add && reviewType === reviewtype_Remove) {
+                            oReviewInfo = oNeedReviewObject.ReviewInfo.Copy();
+                            oReviewInfo.SavePrev(reviewtype_Add);
+                            nType = reviewtype_Remove;
+                        } else if (reviewType === reviewtype_Add && nType === reviewtype_Remove) {
+                            oReviewInfo = oNeedReviewObject.ReviewInfo.Copy();
+                            oReviewInfo.SavePrev(reviewtype_Add);
+                            if (sCustomReviewUserName) {
+                                oReviewInfo.UserName = sCustomReviewUserName;
+                            }
+                            if (nCustomReviewDate) {
+                                oReviewInfo.DateTime = nCustomReviewDate;
+                            }
+                        }
+                    }
+                }
+                oNeedReviewObject.SetReviewTypeWithInfo(nType, oReviewInfo, false);
+            }
+        }
+    }
+
     CDocumentResolveConflictComparison.prototype.getTextElementConstructor = function () {
         return CResolveConflictTextElement;
     }
 
     CDocumentResolveConflictComparison.prototype.getReviewTypeAndName = function (oRun) {
         const oReviewInfo = oRun.GetReviewInfo && oRun.GetReviewInfo();
-        const sUserName = oReviewInfo && oReviewInfo.GetUserName();
         const reviewType = oRun.GetReviewType && oRun.GetReviewType();
         return {
             reviewType: reviewType,
-            userName: sUserName
+            reviewInfo: oReviewInfo,
         };
     }
 
