@@ -1495,6 +1495,12 @@
 				return false;
 			}
 		}
+		if(this.view3D && !oPr.view3D || !this.view3D && oPr.view3D) {
+			return false;
+		}
+		if(this.view3D && oPr.view3D && !this.view3D.isEqual(oPr.view3D)) {
+			return false;
+		}
 		return true;
 	};
 	asc_ChartSettings.prototype.isEmpty = function() {
@@ -3307,6 +3313,7 @@
 		this.protectionLockText = null;
 		this.protectionLocked = null;
 		this.protectionPrint = null;
+		this.isMotionPath = false;
 	}
 
 	asc_CShapeProperty.prototype = {
@@ -3530,6 +3537,9 @@
 		}, // Аргумент объект класса CPosition
 		asc_putPosition: function (v) {
 			this.Position = v;
+		},
+		asc_getIsMotionPath: function () {
+			return this.isMotionPath;
 		}
 	};
 
@@ -5431,6 +5441,8 @@
 		this.size = undefined;
 		this.initOnSelectionChanged = undefined;
 
+		this.store = undefined;
+
 		this.events = [];
 		this.eventsMap = {};
 	}
@@ -5622,6 +5634,8 @@
 		_object["size"] = this.size;
 		_object["initOnSelectionChanged"] = this.initOnSelectionChanged;
 
+		_object["store"] = this.store;
+
 		return _object;
 	};
 	CPluginVariation.prototype["deserialize"] = function(_object)
@@ -5648,6 +5662,8 @@
 		this.isUpdateOleOnResize = (_object["isUpdateOleOnResize"] != null) ? _object["isUpdateOleOnResize"] : this.isUpdateOleOnResize;
 
 		this.buttons = (_object["buttons"] != null) ? _object["buttons"] : this.buttons;
+
+		this.store = (_object["store"] != null) ? _object["store"] : this.store;
 
 		if (_object["events"] != null) this["set_Events"](_object["events"]);
 
@@ -6646,8 +6662,9 @@
 	prot["put_ProtectionLocked"] = prot["asc_putProtectionLocked"] = prot.asc_putProtectionLocked;
 	prot["get_ProtectionPrint"] = prot["asc_getProtectionPrint"] = prot.asc_getProtectionPrint;
 	prot["put_ProtectionPrint"] = prot["asc_putProtectionPrint"] = prot.asc_putProtectionPrint;
-	prot["asc_getPosition"] = prot["asc_getPosition"] = prot.asc_getPosition;
-	prot["asc_putPosition"] = prot["asc_putPosition"] = prot.asc_putPosition;
+	prot["get_Position"] = prot["asc_getPosition"] = prot.asc_getPosition;
+	prot["put_Position"] = prot["asc_putPosition"] = prot.asc_putPosition;
+	prot["get_IsMotionPath"] = prot["asc_getIsMotionPath"] = prot.asc_getIsMotionPath;
 
 
 	window["Asc"]["asc_TextArtProperties"] = window["Asc"].asc_TextArtProperties = asc_TextArtProperties;

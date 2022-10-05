@@ -118,6 +118,7 @@ CGraphicObjects.prototype =
     rotateTrackObjects: DrawingObjectsController.prototype.rotateTrackObjects,
     handleRotateTrack: DrawingObjectsController.prototype.handleRotateTrack,
     trackResizeObjects: DrawingObjectsController.prototype.trackResizeObjects,
+    trackGeometryObjects: DrawingObjectsController.prototype.trackGeometryObjects,
     resetInternalSelection: DrawingObjectsController.prototype.resetInternalSelection,
     handleTextHit: DrawingObjectsController.prototype.handleTextHit,
     getConnectorsForCheck: DrawingObjectsController.prototype.getConnectorsForCheck,
@@ -4527,6 +4528,55 @@ CGraphicObjects.prototype.documentIsSelectionLocked = function(CheckType)
 CGraphicObjects.prototype.getAnimationPlayer = function()
 {
     return null;
+};
+
+CGraphicObjects.prototype.getImageDataFromSelection = DrawingObjectsController.prototype.getImageDataFromSelection;
+CGraphicObjects.prototype.putImageToSelection = function(sImageUrl, nWidth, nHeight)
+{
+    let aSelectedObjects = this.getSelectedArray();
+    if(aSelectedObjects.length > 0 && aSelectedObjects[0].isImage())
+    {
+        let oController = this;
+        this.checkSelectedObjectsAndCallback(function() {
+            let dWidth = nWidth * AscCommon.g_dKoef_pix_to_mm;
+            let dHeight = nHeight * AscCommon.g_dKoef_pix_to_mm;
+            let oSp = aSelectedObjects[0];
+            oSp.replacePictureData(sImageUrl, dWidth, dHeight);
+            if(oSp.group)
+            {
+                oController.selection.groupSelection.resetInternalSelection();
+                oSp.group.selectObject(oSp, 0);
+            }
+            else
+            {
+                oController.resetSelection();
+                oController.selectObject(oSp, 0);
+            }
+        }, [], false, 0, []);
+    }
+    else
+    {
+        if (false === this.document.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Content))
+        {
+            let oImageData =
+            {
+                src: sImageUrl,
+                Image:
+                {
+                    width: nWidth,
+                    height: nHeight
+                }
+            };
+            this.document.StartAction();
+            if(aSelectedObjects.length > 0)
+            {
+                this.document.Remove(-1)
+            }
+            this.document.AddImages([oImageData]);
+            this.document.FinalizeAction();
+
+        }
+    }
 };
 
 function ComparisonByZIndexSimpleParent(obj1, obj2)
