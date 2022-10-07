@@ -216,13 +216,13 @@
         CNode.prototype.pushToArrInsertContentWithCopy.call(this, aContentToInsert, elem, comparison);
     }
 
-    CMergeComparisonNode.prototype.setRemoveReviewType = function (element, comparison) {
+    CDocumentMergeComparison.prototype.setRemoveReviewType = function (element) {
         if (!(element.IsParaEndRun && element.IsParaEndRun())) {
             if (!element.GetReviewType || element.GetReviewType && element.GetReviewType() === reviewtype_Common) {
-                comparison.setReviewInfoRecursive(element, reviewtype_Add);
+                this.setReviewInfoRecursive(element, reviewtype_Add);
             }
         }
-    };
+    }
 
     CMergeComparisonNode.prototype.setCommonReviewTypeWithInfo = function (element, info) {
         element.SetReviewTypeWithInfo((element.GetReviewType && element.GetReviewType()) || reviewtype_Common, info);
@@ -233,7 +233,7 @@
         opts = opts || {};
         if (arrToInsert.length === 0) {
             for (let i = 0; i < arrToRemove.length; i += 1) {
-                this.setRemoveReviewType(arrToRemove[i], comparison);
+                comparison.setRemoveReviewType(arrToRemove[i]);
             }
         } else if (arrToRemove.length === 0) {
             this.insertContentAfterRemoveChanges(arrToInsert, nInsertPosition, comparison);
@@ -413,13 +413,13 @@
         element.SetReviewTypeWithInfo((element.GetReviewType && element.GetReviewType()) || reviewtype_Common, info);
     }
 
-    CConflictResolveNode.prototype.setRemoveReviewType = function (element, comparison) {
+    CDocumentResolveConflictComparison.prototype.setRemoveReviewType = function (element) {
         if (!(element.IsParaEndRun && element.IsParaEndRun())) {
             if (!element.GetReviewType || element.GetReviewType && element.GetReviewType() === reviewtype_Common) {
-                comparison.setReviewInfoRecursive(element, reviewtype_Add);
+                this.setReviewInfoRecursive(element, reviewtype_Add);
             }
         }
-    };
+    }
     
     CConflictResolveNode.prototype.getStartPosition = function (comparison) {
         return comparison.startPosition;
@@ -458,6 +458,15 @@
 
     CDocumentMergeComparison.prototype = Object.create(CDocumentComparison.prototype);
     CDocumentMergeComparison.prototype.constructor = CDocumentMergeComparison;
+
+
+    CDocumentMergeComparison.prototype.applyChangesToTableSize = function(oNode) {
+        this.copyPr.SkipUpdateInfo = false;
+        this.copyPr.bSaveCustomReviewType = true;
+        CDocumentComparison.prototype.applyChangesToTableSize.call(this, oNode);
+        delete this.copyPr.bSaveCustomReviewType;
+        this.copyPr.SkipUpdateInfo = true;
+    }
 
     CDocumentMergeComparison.prototype.resolveConflicts = function (arrToInserts, arrToRemove, applyParagraph, nInsertPosition) {
         if (arrToInserts.length === 0 || arrToRemove.length === 0) return;

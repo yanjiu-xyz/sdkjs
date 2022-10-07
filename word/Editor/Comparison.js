@@ -358,10 +358,10 @@
         return {posLastRunInContent: k, nInsertPosition: nInsertPosition };
     }
 
-    CNode.prototype.setRemoveReviewType = function (element, comparison) {
+    CDocumentComparison.prototype.setRemoveReviewType = function (element) {
         if(!(element.IsParaEndRun && element.IsParaEndRun()))
         {
-            comparison.setReviewInfoRecursive(element, reviewtype_Remove);
+            this.setReviewInfoRecursive(element, reviewtype_Remove);
         }
     };
 
@@ -418,7 +418,7 @@
 
     CNode.prototype.applyInsert = function (arrToInsert, arrToRemove, nInsertPosition, comparison, options) {
         for (let i = 0; i < arrToRemove.length; i += 1) {
-            this.setRemoveReviewType(arrToRemove[i], comparison);
+            comparison.setRemoveReviewType(arrToRemove[i]);
         }
         this.insertContentAfterRemoveChanges(arrToInsert, nInsertPosition, comparison);
     }
@@ -1166,7 +1166,7 @@
         }
         else if(oBaseShape.textBoxContent && !oCompareShape.textBoxContent)
         {
-            this.setReviewInfoRecursive(oBaseShape.textBoxContent, reviewtype_Remove);
+            this.setRemoveReviewType(oBaseShape.textBoxContent);
         }
         else if(!oBaseShape.textBoxContent && oCompareShape.textBoxContent)
         {
@@ -1704,6 +1704,11 @@
     };
     CDocumentComparison.prototype.applyChangesToTable = function(oNode)
     {
+        this.applyChangesToTableSize(oNode);
+        this.applyChangesToTableRows(oNode);
+    };
+    CDocumentComparison.prototype.applyChangesToTableSize = function(oNode)
+    {
         const oElement = oNode.element;
         oNode.changes.sort(function(c1, c2){return c2.anchor.index - c1.anchor.index});
         for(let i = 0; i < oNode.changes.length; ++i)
@@ -1712,7 +1717,7 @@
             for(let j = oChange.remove.length - 1; j > -1;  --j)
             {
                 const oRow = oChange.remove[j].element;
-                this.setReviewInfoRecursive(oRow, reviewtype_Remove);
+                this.setRemoveReviewType(oRow);
             }
             for(let j = oChange.insert.length - 1; j > -1;  --j)
             {
@@ -1723,6 +1728,10 @@
             if (oElement.Content.length > 0 && oElement.Content[0].Get_CellsCount() > 0)
                 oElement.CurCell = oElement.Content[0].Get_Cell(0);
         }
+    };
+
+    CDocumentComparison.prototype.applyChangesToTableRows = function(oNode)
+    {
         for(let i = 0; i < oNode.children.length; ++i)
         {
             this.applyChangesToTableRow(oNode.children[i]);
