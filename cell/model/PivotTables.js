@@ -72,13 +72,15 @@ var c_oAscShowDataAs = {
 	PercentOfRow: 5,
 	PercentOfCol: 6,
 	PercentOfTotal: 7,
-	Index: 8,
-	PercentOfRunningTotal: 9,
-	PercentOfParent: 10,
-	PercentOfParentCol: 11,
-	PercentOfParentRow: 12,
-	RankDescending: 13,
-	RankAscending: 14
+	Index: 8
+};
+var c_oAscPivotShowAs = {
+	PercentOfParent: 0,
+	PercentOfParentRow: 1,
+	PercentOfParentCol: 2,
+	PercentOfRunningTotal: 3,
+	RankDescending: 4,
+	RankAscending: 5
 };
 var c_oAscFormatAction = {
 	Blank: 0,
@@ -712,12 +714,6 @@ function FromXml_ST_ShowDataAs(val) {
 		case "percentOfCol": res = c_oAscShowDataAs.PercentOfCol; break;
 		case "percentOfTotal": res = c_oAscShowDataAs.PercentOfTotal; break;
 		case "index": res = c_oAscShowDataAs.Index; break;
-		case "percentOfRunningTotal": res = c_oAscShowDataAs.PercentOfRunningTotal; break;
-		case "percentOfParent": res = c_oAscShowDataAs.PercentOfParent; break;
-		case "percentOfParentCol": res = c_oAscShowDataAs.PercentOfParentCol; break;
-		case "percentOfParentRow": res = c_oAscShowDataAs.PercentOfParentRow; break;
-		case "rankDescending": res = c_oAscShowDataAs.RankDescending; break;
-		case "rankAscending": res = c_oAscShowDataAs.RankAscending; break;
 	}
 	return res;
 }
@@ -733,12 +729,32 @@ function ToXml_ST_ShowDataAs(val) {
 		case c_oAscShowDataAs.PercentOfCol: res = "percentOfCol"; break;
 		case c_oAscShowDataAs.PercentOfTotal: res = "percentOfTotal"; break;
 		case c_oAscShowDataAs.Index: res = "index"; break;
-		case c_oAscShowDataAs.PercentOfRunningTotal: res = "percentOfRunningTotal"; break;
-		case c_oAscShowDataAs.PercentOfParent: res = "percentOfParent"; break;
-		case c_oAscShowDataAs.PercentOfParentCol: res = "percentOfParentCol"; break;
-		case c_oAscShowDataAs.PercentOfParentRow: res = "percentOfParentRow"; break;
-		case c_oAscShowDataAs.RankDescending: res = "rankDescending"; break;
-		case c_oAscShowDataAs.RankAscending: res = "rankAscending"; break;
+	}
+	return res;
+}
+
+function FromXml_ST_PivotShowAs(val) {
+	var res = -1;
+	switch (val) {
+		case "percentOfRunningTotal": res = c_oAscPivotShowAs.PercentOfRunningTotal; break;
+		case "percentOfParent": res = c_oAscPivotShowAs.PercentOfParent; break;
+		case "percentOfParentCol": res = c_oAscPivotShowAs.PercentOfParentCol; break;
+		case "percentOfParentRow": res = c_oAscPivotShowAs.PercentOfParentRow; break;
+		case "rankDescending": res = c_oAscPivotShowAs.RankDescending; break;
+		case "rankAscending": res = c_oAscPivotShowAs.RankAscending; break;
+	}
+	return res;
+}
+
+function ToXml_ST_PivotShowAs(val) {
+	var res = "";
+	switch (val) {
+		case c_oAscPivotShowAs.PercentOfRunningTotal: res = "percentOfRunningTotal"; break;
+		case c_oAscPivotShowAs.PercentOfParent: res = "percentOfParent"; break;
+		case c_oAscPivotShowAs.PercentOfParentCol: res = "percentOfParentCol"; break;
+		case c_oAscPivotShowAs.PercentOfParentRow: res = "percentOfParentRow"; break;
+		case c_oAscPivotShowAs.RankDescending: res = "rankDescending"; break;
+		case c_oAscPivotShowAs.RankAscending: res = "rankAscending"; break;
 	}
 	return res;
 }
@@ -10290,6 +10306,12 @@ CT_Extension.prototype.onStartNode = function(elem, attr, uq) {
 			newContext.readAttributes(attr, uq);
 		}
 		this.elem = newContext;
+	} else if ("x14:dataField" === elem) {
+		newContext = new CT_DataFieldX14();
+		if (newContext.readAttributes) {
+			newContext.readAttributes(attr, uq);
+		}
+		this.elem = newContext;
 	} else {
 		newContext = null;
 	}
@@ -10312,6 +10334,8 @@ CT_Extension.prototype.toXml = function(writer, name) {
 		this.elem.toXml(writer, "x14:pivotCacheDefinition");
 	} else if ("{2946ED86-A175-432a-8AC1-64E0C546D7DE}" === this.uri) {
 		this.elem.toXml(writer, "x14:pivotField");
+	} else if ("{E15A36E0-9728-4e99-A89B-3F7291B0FE68}" === this.uri) {
+		this.elem.toXml(writer, "x14:dataField");
 	}
 	writer.WriteXmlNodeEnd(name);
 };
@@ -11879,6 +11903,29 @@ CT_DataField.prototype.asc_setSubtotal = function(newVal, pivot, index, addToHis
 	setFieldProperty(pivot, index, this.subtotal, newVal, addToHistory, AscCH.historyitem_PivotTable_DataFieldSetSubtotal, true);
 	this.subtotal = newVal;
 };
+function CT_DataFieldX14() {
+	this.pivotShowAs = null;
+}
+CT_DataFieldX14.prototype.readAttributes = function(attr, uq) {
+	if (attr()) {
+		var vals = attr();
+		var val;
+		val = vals["pivotShowAs"];
+		if (undefined !== val) {
+			val = FromXml_ST_PivotShowAs(val);
+			if (-1 !== val) {
+				this.pivotShowAs = val;
+			}
+		}
+	}
+};
+CT_DataFieldX14.prototype.toXml = function (writer) {
+	writer.WriteXmlNodeStart("x14:dataField");
+	if (null !== this.pivotShowAs) {
+		writer.WriteXmlAttributeStringEncode("pivotShowAs", ToXml_ST_PivotShowAs(this.pivotShowAs));
+	}
+	writer.WriteXmlAttributesEnd(true);
+}
 function CT_Format() {
 //Attributes
 	this.action = c_oAscFormatAction.Formatting;
