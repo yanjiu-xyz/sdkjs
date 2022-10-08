@@ -1861,31 +1861,31 @@
 	};
 	CAscNumberingLvl.prototype.get_OLang = function ()
 	{
-		return this.TextPr && this.TextPr.get_Lang();
+		return this.TextPr ? this.TextPr.get_Lang() : undefined;
 	};
 	CAscNumberingLvl.prototype.get_Color = function ()
 	{
-		this.TextPr && this.TextPr.get_Color();
+		return this.TextPr ? this.TextPr.get_Color() : undefined;
 	};
 	CAscNumberingLvl.prototype.get_Bold = function ()
 	{
-		this.TextPr && this.TextPr.get_Bold();
+		return this.TextPr ? this.TextPr.get_Bold() : undefined;
 	};
 	CAscNumberingLvl.prototype.get_Italic = function ()
 	{
-		this.TextPr && this.TextPr.get_Italic();
+		return this.TextPr ? this.TextPr.get_Italic() : undefined;
 	};
 	CAscNumberingLvl.prototype.get_FontFamily = function ()
 	{
-		this.TextPr && this.TextPr.get_FontFamily();
+		return this.TextPr ? this.TextPr.get_FontFamily() : undefined;
 	};
 	CAscNumberingLvl.prototype.get_FontSize = function ()
 	{
-		this.TextPr && this.TextPr.get_FontSize();
+		return this.TextPr ? this.TextPr.get_FontSize() : undefined;
 	};
 	CAscNumberingLvl.prototype.get_IndentSize = function ()
 	{
-		return this.ParaPr && this.ParaPr.Ind && this.ParaPr.Ind.Left;
+		return this.ParaPr && this.ParaPr.Ind ? this.ParaPr.Ind.Left : 0;
 	};
 	CAscNumberingLvl.prototype.get_NumberPosition = function ()
 	{
