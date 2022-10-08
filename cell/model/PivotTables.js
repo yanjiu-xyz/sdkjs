@@ -15663,6 +15663,11 @@ function DataRowTraversal(pivotFields, rowFields, colFields) {
 	this.colTotal = null;
 	this.rowTotal = null;
 
+	this.rowParent = null;
+	this.colParent = null;
+
+	this.rowParentCache = null;
+
 	this.colTotalCache = null;
 }
 DataRowTraversal.prototype.initRow = function(dataRow) {
@@ -15676,6 +15681,7 @@ DataRowTraversal.prototype.cleanDiff = function() {
 DataRowTraversal.prototype.setStartRowIndex = function(rowR) {
 	this.cur = this.curRowCache[rowR];
 	this.rowTotal = this.curRowCache[rowR];
+	this.rowParent = this.curRowCache[rowR];
 	if (null !== this.diffRowIndex && this.diffRowIndex >= rowR) {
 		this.cleanDiff();
 	} else if (this.diffBaseRowCache) {
@@ -15779,6 +15785,9 @@ DataRowTraversal.prototype.saveCacheCol = function (colR, colItemsXIndex) {
 	// ColTotal Cache
 	this.colTotalCache.length = colR + colItemsXIndex + 1;
 	this.colTotalCache[this.colTotalCache.length] = this.colTotal;
+	// ParentRow Cache
+	this.rowParentCache.length = colR + colItemsXIndex + 1;
+	this.rowParentCache[this.rowParentCache.length] = this.rowParent;
 	// Difference Cache
 	if (this.diffBaseColCache) {
 		this.diffBaseColCache.length = colR + colItemsXIndex + 1;
@@ -15817,6 +15826,8 @@ DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowIt
 		props.itemSd = this.fieldItem.sd;
 		let oldCur = this.cur;
 		this.cur = this.cur.vals[this.fieldItem.x];
+
+		this.rowParent = oldCur;
 		this.rowTotal = this.rowTotal.vals[this.fieldItem.x];
 
 		if (null !== this.diffRowIndex && this.diffRowIndex > rowR + rowItemsXIndex) {
@@ -15833,6 +15844,7 @@ DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowIt
 DataRowTraversal.prototype.initCol = function(dataRow) {
 	this.curColCache = [this.cur];
 	this.colTotalCache = [dataRow];
+	this.rowParentCache = [this.rowParent];
 	if (this.diffBase) {
 		this.diffBaseColCache = [this.diffBase];
 	}
@@ -15840,6 +15852,7 @@ DataRowTraversal.prototype.initCol = function(dataRow) {
 DataRowTraversal.prototype.setStartColIndex = function(pivotFields, fieldIndex, colItem, colR, colFields) {
 	this.cur = this.curColCache[colR];
 	this.colTotal = this.colTotalCache[colR];
+	this.rowParent = this.rowParentCache[colR];
 	if (null !== this.diffColIndex && this.diffColIndex >= colR) {
 		this.cleanDiff();
 	} else if (this.diffBaseColCache) {
@@ -15860,8 +15873,12 @@ DataRowTraversal.prototype.setStartColIndex = function(pivotFields, fieldIndex, 
 				this.fieldItem = field.getItem(valueIndex);
 				this.colTotal = this.colTotal.subtotal[this.fieldItem.x];
 				let oldCur = this.cur;
+				this.colParent = oldCur;
 				if (this.cur) {
 					this.cur = this.cur.subtotal[this.fieldItem.x];
+				}
+				if (this.rowParent) {
+					this.rowParent = this.rowParent.subtotal[this.fieldItem.x];
 				}
 				if (null !== this.diffColIndex && this.diffColIndex > colR + colItemsXIndex) {
 					this.cleanDiff();
@@ -15902,6 +15919,17 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 			case Asc.c_oAscPivotShowAs.PercentOfParentCol:
 				break;
 			case Asc.c_oAscPivotShowAs.PercentOfParentRow:
+				if (this.cur) {
+					let parentTotal = this.rowParent.total[dataIndex];
+					let _oCellValue = parentTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					total = this.cur.total[dataIndex];
+					oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					oCellValue.number = oCellValue.number / _oCellValue.number;
+				} else if (this.rowParent) {
+					oCellValue = AscCommonExcel.StatisticOnlineAlgorithm.prototype.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					oCellValue.number = 0.0;
+					oCellValue.type = 0;
+				}
 				break;
 			case Asc.c_oAscPivotShowAs.RankDescending:
 				break;
