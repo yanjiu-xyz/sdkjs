@@ -7077,6 +7077,9 @@ CT_MeasureDimensionMaps.prototype.toXml = function(writer, name) {
 };
 function CT_ExtensionList() {
 //Members
+	/**
+	 * @type {Array.<CT_Extension>}
+	 */
 	this.ext = [];
 }
 CT_ExtensionList.prototype.onStartNode = function(elem, attr, uq) {
@@ -10274,6 +10277,15 @@ function CT_Extension() {
 //Attributes
 	this.uri = null;
 //Members
+	/**
+	 * @type {(
+	 * CT_pivotTableDefinitionX14 |
+	 * CT_PivotCacheDefinitionX14 | 
+	 * CT_PivotFieldX14 | 
+	 * CT_DataFieldX14 |
+	 * null
+	 * )}
+	 */
 	this.elem = null;
 }
 CT_Extension.prototype.readAttributes = function(attr, uq) {
@@ -11903,8 +11915,10 @@ CT_DataField.prototype.asc_setSubtotal = function(newVal, pivot, index, addToHis
 	setFieldProperty(pivot, index, this.subtotal, newVal, addToHistory, AscCH.historyitem_PivotTable_DataFieldSetSubtotal, true);
 	this.subtotal = newVal;
 };
-
-CT_DataField.prototype.asc_getExtLst = function () {
+/**
+ * @return {CT_ExtensionList}
+ */
+CT_DataField.prototype.getExtLst = function () {
 	return this.extLst;
 };
 
@@ -11931,6 +11945,12 @@ CT_DataFieldX14.prototype.toXml = function (writer) {
 	}
 	writer.WriteXmlAttributesEnd(true);
 }
+/**
+ * @return {(Number | null)}
+ */
+CT_DataFieldX14.prototype.getPivotShowAs = function () {
+	return this.pivotShowAs;
+};
 function CT_Format() {
 //Attributes
 	this.action = c_oAscFormatAction.Formatting;
@@ -15861,106 +15881,134 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 	 * @type {CT_DataField}
 	 */
 	let dataField = dataFields[dataIndex];
-	let oCellValue = null, total;
-	switch (dataField.showDataAs) {
-		case Asc.c_oAscShowDataAs.Normal:
-			if (this.cur) {
-				total = this.cur.total[dataIndex];
-				oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+	let extLst = dataField.getExtLst();
+	let pivotShowAs = null;
+	if (extLst) {
+		let ext = extLst.ext;
+		for (let i = 0; i < ext.length; i+=1) {
+			let extension = ext[i];
+			if (extension.elem.pivotShowAs) {
+				pivotShowAs = extension.elem.pivotShowAs;
 			}
-			break;
-		case Asc.c_oAscShowDataAs.Difference:
-			if (this.cur && this.diffBase) {
-				let BaseTotal = this.diffBase.total[dataIndex];
-				let BaseOCellValue = BaseTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-				total = this.cur.total[dataIndex];
-				oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-				oCellValue.number = oCellValue.number - BaseOCellValue.number;
-			} else if (this.diffBaseRowCache || this.diffBaseColCache) {
+		}
+	}
+	let oCellValue = null, total;
+	if (pivotShowAs) {
+		switch (pivotShowAs) {
+			case Asc.c_oAscPivotShowAs.PercentOfRunningTotal:
+				break;
+			case Asc.c_oAscPivotShowAs.PercentOfParent:
+				break;
+			case Asc.c_oAscPivotShowAs.PercentOfParentCol:
+				break;
+			case Asc.c_oAscPivotShowAs.PercentOfParentRow:
+				break;
+			case Asc.c_oAscPivotShowAs.RankDescending:
+				break;
+			case Asc.c_oAscPivotShowAs.RankAscending:
+				break;
+		}
+	} else {
+		switch (dataField.showDataAs) {
+			case Asc.c_oAscShowDataAs.Normal:
 				if (this.cur) {
 					total = this.cur.total[dataIndex];
 					oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-				} else if(this.diffBase) {
-					total = this.diffBase.total[dataIndex];
+				}
+				break;
+			case Asc.c_oAscShowDataAs.Difference:
+				if (this.cur && this.diffBase) {
+					let BaseTotal = this.diffBase.total[dataIndex];
+					let BaseOCellValue = BaseTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					total = this.cur.total[dataIndex];
 					oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-					oCellValue.number *= -1;
-				} else if (this.diffFieldItem && this.fieldItem) {
+					oCellValue.number = oCellValue.number - BaseOCellValue.number;
+				} else if (this.diffBaseRowCache || this.diffBaseColCache) {
+					if (this.cur) {
+						total = this.cur.total[dataIndex];
+						oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					} else if(this.diffBase) {
+						total = this.diffBase.total[dataIndex];
+						oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+						oCellValue.number *= -1;
+					} else if (this.diffFieldItem && this.fieldItem) {
+						oCellValue = AscCommonExcel.StatisticOnlineAlgorithm.prototype.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+						oCellValue.number = 0.0;
+						oCellValue.type = 0;
+					}
+				}
+				break;
+			case Asc.c_oAscShowDataAs.Percent:
+				break;
+			case Asc.c_oAscShowDataAs.PercentDiff:
+				break;
+			case Asc.c_oAscShowDataAs.PercentOfRow:
+				if (this.cur) {
+					let _rowTotal = this.rowTotal.total[dataIndex];
+					let _oCellValue = _rowTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					total = this.cur.total[dataIndex];
+					oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					oCellValue.number = oCellValue.number / _oCellValue.number;
+				} else {
 					oCellValue = AscCommonExcel.StatisticOnlineAlgorithm.prototype.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
 					oCellValue.number = 0.0;
 					oCellValue.type = 0;
 				}
-			}
-			break;
-		case Asc.c_oAscShowDataAs.Percent:
-			break;
-		case Asc.c_oAscShowDataAs.PercentDiff:
-			break;
-		case Asc.c_oAscShowDataAs.PercentOfRow:
-			if (this.cur) {
-				let _rowTotal = this.rowTotal.total[dataIndex];
-				let _oCellValue = _rowTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-				total = this.cur.total[dataIndex];
-				oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-				oCellValue.number = oCellValue.number / _oCellValue.number;
-			} else {
-				oCellValue = AscCommonExcel.StatisticOnlineAlgorithm.prototype.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-				oCellValue.number = 0.0;
-				oCellValue.type = 0;
-			}
-			break;
-		case Asc.c_oAscShowDataAs.PercentOfCol:
-			if (this.cur) {
-				let _colTotal = this.colTotal.total[dataIndex];
-				let _oCellValue = _colTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-				total = this.cur.total[dataIndex];
-				oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-				oCellValue.number = oCellValue.number / _oCellValue.number;
-			} else {
-				oCellValue = AscCommonExcel.StatisticOnlineAlgorithm.prototype.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-				oCellValue.number = 0.0;
-				oCellValue.type = 0;
-			}
-			break;
-		case Asc.c_oAscShowDataAs.PercentOfTotal:
-			if (this.cur) {
-				total = this.cur.total[dataIndex];
-				oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-				oCellValue.number = oCellValue.number / dataRow.total[dataIndex].getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t).number;
-			} else {
-				oCellValue = AscCommonExcel.StatisticOnlineAlgorithm.prototype.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-				oCellValue.number = 0.0;
-				oCellValue.type = 0;
-			}
-			break;
-		case Asc.c_oAscShowDataAs.Index:
-			if (this.cur) {
-				total = this.cur.total[dataIndex];
-				let _rowTotal = this.rowTotal.total[dataIndex];
-				let _colTotal = this.colTotal.total[dataIndex];
-				let _grandTotal = dataRow.total[dataIndex];
-
-				let _rowOCellValue = _rowTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-				let _colOCellValue = _colTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-				let _grandOCellValue = _grandTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-				oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-
-				let _specGravity = oCellValue.number / _colOCellValue.number;
-				let _totalSpecGravity = _rowOCellValue.number / _grandOCellValue.number;
-				
-				
-				oCellValue.number = _specGravity / _totalSpecGravity;
-			} else {
-				oCellValue = AscCommonExcel.StatisticOnlineAlgorithm.prototype.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-				oCellValue.number = 0.0;
-				oCellValue.type = 0;
-			}
-			break;
-		case Asc.c_oAscShowDataAs.RunTotal:
-
-			break;
-		default:
-			// Exception Handling
-			break;
+				break;
+			case Asc.c_oAscShowDataAs.PercentOfCol:
+				if (this.cur) {
+					let _colTotal = this.colTotal.total[dataIndex];
+					let _oCellValue = _colTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					total = this.cur.total[dataIndex];
+					oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					oCellValue.number = oCellValue.number / _oCellValue.number;
+				} else {
+					oCellValue = AscCommonExcel.StatisticOnlineAlgorithm.prototype.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					oCellValue.number = 0.0;
+					oCellValue.type = 0;
+				}
+				break;
+			case Asc.c_oAscShowDataAs.PercentOfTotal:
+				if (this.cur) {
+					total = this.cur.total[dataIndex];
+					oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					oCellValue.number = oCellValue.number / dataRow.total[dataIndex].getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t).number;
+				} else {
+					oCellValue = AscCommonExcel.StatisticOnlineAlgorithm.prototype.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					oCellValue.number = 0.0;
+					oCellValue.type = 0;
+				}
+				break;
+			case Asc.c_oAscShowDataAs.Index:
+				if (this.cur) {
+					total = this.cur.total[dataIndex];
+					let _rowTotal = this.rowTotal.total[dataIndex];
+					let _colTotal = this.colTotal.total[dataIndex];
+					let _grandTotal = dataRow.total[dataIndex];
+	
+					let _rowOCellValue = _rowTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					let _colOCellValue = _colTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					let _grandOCellValue = _grandTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+	
+					let _specGravity = oCellValue.number / _colOCellValue.number;
+					let _totalSpecGravity = _rowOCellValue.number / _grandOCellValue.number;
+					
+					
+					oCellValue.number = _specGravity / _totalSpecGravity;
+				} else {
+					oCellValue = AscCommonExcel.StatisticOnlineAlgorithm.prototype.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					oCellValue.number = 0.0;
+					oCellValue.type = 0;
+				}
+				break;
+			case Asc.c_oAscShowDataAs.RunTotal:
+	
+				break;
+			default:
+				// Exception Handling
+				break;
+		}
 	}
 	return oCellValue;
 };
@@ -16096,6 +16144,15 @@ prot['PercentOfRow'] = prot.PercentOfRow;
 prot['PercentOfCol'] = prot.PercentOfCol;
 prot['PercentOfTotal'] = prot.PercentOfTotal;
 prot['Index'] = prot.Index;
+
+window['Asc']['c_oAscPivotShowAs'] = window['Asc'].c_oAscPivotShowAs = c_oAscPivotShowAs;
+prot = c_oAscPivotShowAs;
+prot['PercentOfParent'] = prot.PercentOfParent;
+prot['PercentOfParentRow'] = prot.PercentOfParentRow;
+prot['PercentOfParentCol'] = prot.PercentOfParentCol;
+prot['PercentOfRunningTotal'] = prot.PercentOfRunningTotal;
+prot['RankDescending'] = prot.RankDescending;
+prot['RankAscending'] = prot.RankAscending;
 
 window['Asc']['c_oAscFormatAction'] = window['Asc'].c_oAscFormatAction = c_oAscFormatAction;
 prot = c_oAscFormatAction;
