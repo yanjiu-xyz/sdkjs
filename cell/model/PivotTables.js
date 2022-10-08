@@ -11903,6 +11903,11 @@ CT_DataField.prototype.asc_setSubtotal = function(newVal, pivot, index, addToHis
 	setFieldProperty(pivot, index, this.subtotal, newVal, addToHistory, AscCH.historyitem_PivotTable_DataFieldSetSubtotal, true);
 	this.subtotal = newVal;
 };
+
+CT_DataField.prototype.asc_getExtLst = function () {
+	return this.extLst;
+};
+
 function CT_DataFieldX14() {
 	this.pivotShowAs = null;
 }
@@ -15699,9 +15704,6 @@ DataRowTraversal.prototype.findDiffRowItem = function (fieldItem) {
 			break;
 		default:
 			res = this.diffBase.vals[fieldItem.x];
-			if (!res) {
-				this.isNoData = true;
-			}
 			return res;
 	}
 	
@@ -15771,9 +15773,6 @@ DataRowTraversal.prototype.splitUpRow = function (oldCur, field, valueIndex) {
 		this.diffBaseRowCache[this.diffRowIndex] = oldCur;
 		this.diffBase = oldCur.vals[this.diffFieldItem.x];
 		this.diffValueIndex = valueIndex;
-		if (!this.diffBase) {
-			this.isNoData = true;
-		}
 	} else {
 		this.cleanDiff();
 	}
@@ -15791,7 +15790,6 @@ DataRowTraversal.prototype.splitUpCol = function (oldCur, field, valueIndex) {
 
 DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowItem, rowR, rowItemsXIndex, props) {
 	if (this.cur && AscCommonExcel.st_VALUES !== fieldIndex) {
-		this.isNoData = false;
 		let field = pivotFields[fieldIndex];
 		props.rowFieldSubtotal = field.getSubtotalType();
 		let valueIndex = rowItem.x[rowItemsXIndex].getV();
@@ -15801,15 +15799,15 @@ DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowIt
 		this.cur = this.cur.vals[this.fieldItem.x];
 		this.rowTotal = this.rowTotal.vals[this.fieldItem.x];
 
-		// if (null !== this.diffRowIndex && this.diffRowIndex > rowR + rowItemsXIndex) {
-		// 	this.cleanDiff();
-		// } else if (null !== this.diffRowIndex && this.diffRowIndex === rowR + rowItemsXIndex) {
-		// 	this.splitUpRow(oldCur, field, valueIndex);
-		// } else {
-		// 	this.goDeeperRow();
-		// }
-		this.saveCacheRow(rowR, rowItemsXIndex)
+		if (null !== this.diffRowIndex && this.diffRowIndex > rowR + rowItemsXIndex) {
+			this.cleanDiff();
+		} else if (null !== this.diffRowIndex && this.diffRowIndex === rowR + rowItemsXIndex) {
+			this.splitUpRow(oldCur, field, valueIndex);
+		} else {
+			this.goDeeperRow();
+		}
 	}
+	this.saveCacheRow(rowR, rowItemsXIndex)
 	return !!this.cur;
 };
 DataRowTraversal.prototype.initCol = function(dataRow) {
@@ -15822,10 +15820,6 @@ DataRowTraversal.prototype.initCol = function(dataRow) {
 DataRowTraversal.prototype.setStartColIndex = function(pivotFields, fieldIndex, colItem, colR, colFields) {
 	this.cur = this.curColCache[colR];
 	this.colTotal = this.colTotalCache[colR];
-	if (pivotFields[this.dataField.baseField].axis == null && this.dataField.showDataAs === Asc.c_oAscShowDataAs.Difference) {
-		this.isNoData = true;
-		return;
-	}
 	if (null !== this.diffColIndex && this.diffColIndex >= colR) {
 		this.cleanDiff();
 	} else if (this.diffBaseColCache) {
@@ -15849,13 +15843,13 @@ DataRowTraversal.prototype.setStartColIndex = function(pivotFields, fieldIndex, 
 				if (this.cur) {
 					this.cur = this.cur.subtotal[this.fieldItem.x];
 				}
-				// if (null !== this.diffColIndex && this.diffColIndex > colR + colItemsXIndex) {
-				// 	this.cleanDiff();
-				// } else if (null !== this.diffColIndex && this.diffColIndex === colR + colItemsXIndex) {
-				// 	this.splitUpCol(oldCur, field, valueIndex);
-				// } else {
-				// 	this.goDeeperCol();
-				// }
+				if (null !== this.diffColIndex && this.diffColIndex > colR + colItemsXIndex) {
+					this.cleanDiff();
+				} else if (null !== this.diffColIndex && this.diffColIndex === colR + colItemsXIndex) {
+					this.splitUpCol(oldCur, field, valueIndex);
+				} else {
+					this.goDeeperCol();
+				}
 			}
 			this.saveCacheCol(colR, colItemsXIndex);
 		}
@@ -15876,12 +15870,6 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 			}
 			break;
 		case Asc.c_oAscShowDataAs.Difference:
-			if (this.isNoData) {
-				oCellValue = AscCommonExcel.StatisticOnlineAlgorithm.prototype.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-				oCellValue.type = AscCommon.CellValueType.Error;
-				oCellValue.text = "#N/A";
-				break;
-			}
 			if (this.cur && this.diffBase) {
 				let BaseTotal = this.diffBase.total[dataIndex];
 				let BaseOCellValue = BaseTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
