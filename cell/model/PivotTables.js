@@ -15808,7 +15808,7 @@ DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowIt
 		// } else {
 		// 	this.goDeeperRow();
 		// }
-		// this.saveCacheRow(rowR, rowItemsXIndex)
+		this.saveCacheRow(rowR, rowItemsXIndex)
 	}
 	return !!this.cur;
 };
