@@ -15801,14 +15801,14 @@ DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowIt
 		this.cur = this.cur.vals[this.fieldItem.x];
 		this.rowTotal = this.rowTotal.vals[this.fieldItem.x];
 
-		if (null !== this.diffRowIndex && this.diffRowIndex > rowR + rowItemsXIndex) {
-			this.cleanDiff();
-		} else if (null !== this.diffRowIndex && this.diffRowIndex === rowR + rowItemsXIndex) {
-			this.splitUpRow(oldCur, field, valueIndex);
-		} else {
-			this.goDeeperRow();
-		}
-		this.saveCacheRow(rowR, rowItemsXIndex)
+		// if (null !== this.diffRowIndex && this.diffRowIndex > rowR + rowItemsXIndex) {
+		// 	this.cleanDiff();
+		// } else if (null !== this.diffRowIndex && this.diffRowIndex === rowR + rowItemsXIndex) {
+		// 	this.splitUpRow(oldCur, field, valueIndex);
+		// } else {
+		// 	this.goDeeperRow();
+		// }
+		// this.saveCacheRow(rowR, rowItemsXIndex)
 	}
 	return !!this.cur;
 };
@@ -15849,13 +15849,13 @@ DataRowTraversal.prototype.setStartColIndex = function(pivotFields, fieldIndex, 
 				if (this.cur) {
 					this.cur = this.cur.subtotal[this.fieldItem.x];
 				}
-				if (null !== this.diffColIndex && this.diffColIndex > colR + colItemsXIndex) {
-					this.cleanDiff();
-				} else if (null !== this.diffColIndex && this.diffColIndex === colR + colItemsXIndex) {
-					this.splitUpCol(oldCur, field, valueIndex);
-				} else {
-					this.goDeeperCol();
-				}
+				// if (null !== this.diffColIndex && this.diffColIndex > colR + colItemsXIndex) {
+				// 	this.cleanDiff();
+				// } else if (null !== this.diffColIndex && this.diffColIndex === colR + colItemsXIndex) {
+				// 	this.splitUpCol(oldCur, field, valueIndex);
+				// } else {
+				// 	this.goDeeperCol();
+				// }
 			}
 			this.saveCacheCol(colR, colItemsXIndex);
 		}
