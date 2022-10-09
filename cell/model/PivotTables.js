@@ -15917,6 +15917,17 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 			case Asc.c_oAscPivotShowAs.PercentOfParent:
 				break;
 			case Asc.c_oAscPivotShowAs.PercentOfParentCol:
+				if (this.cur) {
+					let parentTotal = this.colParent.total[dataIndex];
+					let _oCellValue = parentTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					total = this.cur.total[dataIndex];
+					oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					oCellValue.number = oCellValue.number / _oCellValue.number;
+				} else if (this.colParent) {
+					oCellValue = AscCommonExcel.StatisticOnlineAlgorithm.prototype.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					oCellValue.number = 0.0;
+					oCellValue.type = 0;
+				}
 				break;
 			case Asc.c_oAscPivotShowAs.PercentOfParentRow:
 				if (this.cur) {
