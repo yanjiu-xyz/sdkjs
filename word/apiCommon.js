@@ -2043,7 +2043,7 @@
 					_this.Api.sendEvent("asc_onWatermarkImageLoaded");
 				});
 			}
-		}, false, undefined, token);
+		}, undefined, token);
 	};
 	CAscWatermarkProperties.prototype['put_ImageUrl2'] = CAscWatermarkProperties.prototype.put_ImageUrl2 = function (sUrl) {
 		this.ImageUrl = sUrl;
@@ -2128,7 +2128,7 @@
 					_this.sendEvent("asc_onWatermarkImageLoaded");
 				});
 			}
-		}, false, undefined, token);
+		}, undefined, token);
 	};
 
 	CAscWatermarkProperties.prototype['drawTexture'] = CAscWatermarkProperties.prototype.drawTexture = function () {

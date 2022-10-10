@@ -2413,6 +2413,8 @@
 		rx_ref3D_quoted       = new XRegExp("^'(?<name_from>(?:''|[^\\[\\]'\\/*?:])*)(?::(?<name_to>(?:''|[^\\[\\]'\\/*?:])*))?'!"),
 		rx_ref3D_non_quoted_2 = new XRegExp("^(?<name_from>[" + str_namedRanges + "\\d][" + str_namedRanges + "\\d.]*)(:(?<name_to>[" + str_namedRanges + "\\d][" + str_namedRanges + "\\d.]*))?!", "i"),
 		rx_ref3D              = new XRegExp("^(?<name_from>[^:]+)(:(?<name_to>[^:]+))?!"),
+		rx_ref_external       = /^(\[{1}(\d*)\]{1})/,
+		rx_ref_external2      = /^(\[{1}(\d*)\]{1})/,
 		rx_number             = /^ *[+-]?\d*(\d|\.)\d*([eE][+-]?\d+)?/,
 		rx_RightParentheses   = /^ *\)/,
 		rx_Comma              = /^ *[,;] */,
@@ -2447,6 +2449,52 @@
 
 		rx_table              = build_rx_table(null),
 		rx_table_local        = build_rx_table(null);
+
+
+	function parseExternalLink(url) {
+		//var regExpExceptExternalLink = /('?[a-zA-Z0-9\s\[\]\.]{1,99})?'?!?\$?[a-zA-Z]{1,3}\$?[0-9]{1,7}(:\$?[a-zA-Z]{1,3}\$?[0-9]{1,7})?/;
+
+		//'path/[name]Sheet1'!A1
+		var path, name, startLink, i;
+		if (url && url[0] === "'"/*url.match(/('[^\[]*\[[^\]]+\]([^'])+'!)/g)*/) {
+			for (i = url.length - 1; i >= 0; i--) {
+				if (url[i] === "!" && url[i - 1] === "'") {
+					startLink = true;
+					i--;
+					continue;
+				}
+				if (startLink) {
+					if (name) {
+						if (url[i] === "[" && (url[i - 1] === "/" || url[i - 1] === "/\/" || (url[i - 1] === "'") && i === 1)) {
+							break;
+						} else {
+							name.end--;
+						}
+					} else {
+						if("]" === url[i]) {
+							name = {start: i, end: i};
+						}
+					}
+				}
+			}
+			if (name) {
+				var fullname = url.substring(0, name.start + 1);
+				path = url.substring(1, name.end - 1);
+				name = url.substring(name.end, name.start);
+				return {name: name, path: path, fullname: fullname};
+			}
+		} else if (url && url[0] === "[") { // [name]Sheet1!A1
+			for (i = 1; i < url.length; i++) {
+				if (url[i] === "]") {
+					return {name: url.substring(1, i), path: "", fullname:  url.substring(0, i + 1)};
+				}
+			}
+		} else if (true) { //https://s3.amazonaws.com/nct-files/xlsx/[ExternalLinksDestination.xlsx]Sheet1!A1:A2
+
+		}
+
+		return null;
+	}
 
 	function getUrlType(url)
 	{
@@ -2835,17 +2883,42 @@
 			this._reset();
 		}
 
-		var subSTR = formula.substring(start_pos),
-			match  = XRegExp.exec(subSTR, rx_ref3D_quoted) || XRegExp.exec(subSTR, rx_ref3D_non_quoted);
+		//проверям на [0-9] - в таком виде мы получаем ссылки при открытии.
+		var subSTR = formula.substring(start_pos);
+		var external = XRegExp.exec(subSTR, rx_ref_external);
+		var externalLength = 0;
+		if (external && external[2]) {
+			externalLength = external[0].length;
+			subSTR = formula.substring(start_pos + externalLength);
+			external = external[2];
+		} else {
+			//1. при вводе в ячейку
+			//проверям на наличие ссылки при вводе 'C:\Users\[test.xlsx]Sheet1'!$A$1 (с обратным слэшем тоже нужно распознать) / 'https://test.net/[test.xlsx]Sheet1'!$A$1
+			//необходимо вычленить имя файла и путь к нему, затем проверить путь
+			//если путь указан, то ссылка должна быть в одинарных кавычках, если указан просто название файла в [] - в мс это означает, что данный файл открыт, при его закрытии путь проставляется
+			//пока не реализовываем с открытыми файлами, работаем только с путями
+			external = parseExternalLink(subSTR);
+			if (external) {
+				externalLength = external.fullname.length;
+				subSTR = formula.substring(start_pos + externalLength);
+				if (-1 !== subSTR.indexOf("'")) {
+					externalLength += 1;
+				}
+				subSTR = subSTR.replace("'", "");
+				external = external.path + external.name;
+			}
+		}
+
+		var match  = XRegExp.exec(subSTR, rx_ref3D_quoted) || XRegExp.exec(subSTR, rx_ref3D_non_quoted);
 		if(!match && support_digital_start) {
 			match = XRegExp.exec(subSTR, rx_ref3D_non_quoted_2);
 		}
 
 		if (match != null)
 		{
-			this.pCurrPos += match[0].length;
+			this.pCurrPos += match[0].length + externalLength;
 			this.operand_str = match[1];
-			return [true, match["name_from"] ? match["name_from"].replace(/''/g, "'") : null, match["name_to"] ? match["name_to"].replace(/''/g, "'") : null];
+			return [true, match["name_from"] ? match["name_from"].replace(/''/g, "'") : null, match["name_to"] ? match["name_to"].replace(/''/g, "'") : null, external];
 		}
 		return [false, null, null];
 	};
@@ -9564,9 +9637,12 @@
 
 	function getAltGr(e)
 	{
+		if (true === e["altGraphKey"])
+			return true;
+
 		var ctrlKey = e.metaKey || e.ctrlKey;
 		var altKey = e.altKey;
-		return (altKey && (AscBrowser.isMacOs ? !ctrlKey : ctrlKey));
+		return (altKey && ctrlKey);
 	}
 
 	function getColorSchemeByName(sName)
@@ -10242,7 +10318,7 @@
 		const nLineDistance = 32;
 
 		const oTextPr = oLvl.GetTextPr().Copy();
-		oTextPr.FontSize = oTextPr.FontSizeCS = ((2 * nLineDistance * 72 / 96) >> 0) / 2;
+		oTextPr.FontSize = oTextPr.FontSizeCS = this.getFontSizeByLineHeight(line_distance);
 		if ((oLvl instanceof AscCommonWord.CPresentationBullet) && oLvl.m_sSrc)
 		{
 			const oFormatBullet = new AscFormat.CBullet();
@@ -10319,17 +10395,22 @@
 			oContext.beginPath();
 			const nTextYx =  nTextBaseOffsetX - ((3.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
 			const nTextYy = nY + (nLineWidth * 2.5);
-
+			const nLineHeight = nLineDistance - 4;
+			textPr.FontSize = this.getFontSizeByLineHeight(nLineHeight);
 			if ((oLvl instanceof AscCommonWord.CPresentationBullet) && oLvl.m_sSrc)
 			{
-				this.drawImageBulletsWithLines(oLvl.m_sSrc, oTextPr, nTextYx, nTextYy, (nLineDistance - 4), oContext, nWidth_px, nHeight_px);
+				this.drawImageBulletsWithLines(oLvl.m_sSrc, oTextPr, nTextYx, nTextYy, nLineHeight, oContext, nWidth_px, nHeight_px);
 			}
 			else
 			{
-				this.privateGetParagraphByString(oLvl.GetStringByLvlText(j + 1), oTextPr, nTextYx, nTextYy, (nLineDistance - 4), oContext, nWidth_px, nHeight_px);
+				this.privateGetParagraphByString(oLvl.GetStringByLvlText(j + 1), oTextPr, nTextYx, nTextYy, nLineHeight, oContext, nWidth_px, nHeight_px);
 			}
 			nY += (nLineWidth + nLineDistance);
 		}
+	};
+	CBulletPreviewDrawer.prototype.getFontSizeByLineHeight = function (nLineHeight)
+	{
+		return ((2 * nLineHeight * 72 / 96) >> 0) / 2;
 	};
 
 	CBulletPreviewDrawer.prototype.drawNoneTextPreview = function (sDivId, oLvl)
@@ -10349,28 +10430,37 @@
 
 		const oNewShape = new AscFormat.CShape();
 		oNewShape.createTextBody();
+		oNewShape.extX = nWidth_px * AscCommon.g_dKoef_pix_to_mm;
+		oNewShape.extY = nHeight_px * AscCommon.g_dKoef_pix_to_mm;
+		oNewShape.contentWidth = oNewShape.extX;
+
 		const oParagraph = oNewShape.txBody.content.GetAllParagraphs()[0];
 		oParagraph.MoveCursorToStartPos();
 		oParagraph.Pr = new AscCommonWord.CParaPr();
 
 		const oParaRun = new AscCommonWord.ParaRun(oParagraph);
-		const oTextPr = oLvl.GetTextPr().Copy();
-		oTextPr.FontSize = ((2 * nLineDistance * 72 / 96) >> 0) / 2;
+		const oTextPr = oLvl.textPr.Copy();
 		oParaRun.Set_Pr(oTextPr);
 		oParaRun.AddText(sText);
 		oParagraph.AddToContent(0, oParaRun);
 
-		oParagraph.Reset(0, 0, 1000, 1000, 0, 0, 1);
-		oParagraph.Recalculate_Page(0);
+		let nLineHeight = (nHeight_px === 80) ? (nHeight_px / 5 - 1) : ((nHeight_px >> 2) + ((sText.length > 6) ? 1 : 2));
+		oTextPr.FontSize = this.getFontSizeByLineHeight(nLineHeight);
 
-		const oBounds = oParagraph.Get_PageBounds(0);
+		oParagraph.TextPr.SetFontSize(oTextPr.FontSize);
 
-		const nParagraphWidth = oParagraph.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
-		const nParagraphHeight = (oBounds.Bottom - oBounds.Top);
+		let nParagraphWidth = oParagraph.RecalculateMinMaxContentWidth().Max;
+		if (nParagraphWidth > oNewShape.contentWidth) {
+			oNewShape.findFitFontSizeForSmartArt(true);
+			nParagraphWidth = oParagraph.RecalculateMinMaxContentWidth().Max;
+		}
+
+		nParagraphWidth = nParagraphWidth * AscCommon.g_dKoef_mm_to_pix;
+
+		nLineHeight = oParagraph.Get_EmptyHeight();
 		const nX = (nWidth_px - (nParagraphWidth >> 0)) >> 1;
-		const nY = (nHeight_px >> 1) + (nParagraphHeight >> 0);
-
-		this.privateGetParagraphByString(sText, oTextPr, nX, nY, nLineDistance, oContext, nWidth_px, nHeight_px);
+		const nY = (nHeight_px >> 1) + (nLineHeight >> 0);
+		this.privateGetParagraphByString(sText, oTextPr, nX, nY, nLineHeight, oContext, nWidth_px, nHeight_px);
 	};
 
 
@@ -10419,7 +10509,7 @@
 
 
 	};
-	
+
 	CBulletPreviewDrawer.prototype.drawMultiLevelBullet = function (sDivId, arrLvls)
 	{
 		const nCountOfLines = arrLvls.length;
