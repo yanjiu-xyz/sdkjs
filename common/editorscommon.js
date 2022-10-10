@@ -10012,6 +10012,11 @@
 		this.m_oApi = editor || Asc.editor || window["Asc"]["editor"];
 	}
 
+	CBulletPreviewDrawerBase.prototype.getFontSizeByLineHeight = function (nLineHeight)
+	{
+		return ((2 * nLineHeight * 72 / 96) >> 0) / 2;
+	};
+
 	CBulletPreviewDrawerBase.prototype.getClearCanvasForPreview = function (sDivId)
 	{
 		if (!sDivId) return;
@@ -10060,7 +10065,7 @@
 		//par.Pr = level.ParaPr.Copy();
 		oParagraph.Pr = new AscCommonWord.CParaPr();
 		oTextPr = oTextPr.Copy();
-		oTextPr.FontSize = oTextPr.FontSizeCS = ((2 * nLineHeight * 72 / 96) >> 0) / 2;
+		oTextPr.FontSize = oTextPr.FontSizeCS = oTextPr.FontSize || this.getFontSizeByLineHeight(nLineHeight);
 
 		const oParaRun = new AscCommonWord.ParaRun(oParagraph);
 		oParaRun.Set_Pr(oTextPr);
@@ -10318,7 +10323,7 @@
 		const nLineDistance = 32;
 
 		const oTextPr = oLvl.GetTextPr().Copy();
-		oTextPr.FontSize = oTextPr.FontSizeCS = this.getFontSizeByLineHeight(line_distance);
+		oTextPr.FontSize = oTextPr.FontSizeCS = this.getFontSizeByLineHeight(nLineDistance);
 		if ((oLvl instanceof AscCommonWord.CPresentationBullet) && oLvl.m_sSrc)
 		{
 			const oFormatBullet = new AscFormat.CBullet();
@@ -10396,7 +10401,7 @@
 			const nTextYx =  nTextBaseOffsetX - ((3.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
 			const nTextYy = nY + (nLineWidth * 2.5);
 			const nLineHeight = nLineDistance - 4;
-			textPr.FontSize = this.getFontSizeByLineHeight(nLineHeight);
+			oTextPr.FontSize = this.getFontSizeByLineHeight(nLineHeight);
 			if ((oLvl instanceof AscCommonWord.CPresentationBullet) && oLvl.m_sSrc)
 			{
 				this.drawImageBulletsWithLines(oLvl.m_sSrc, oTextPr, nTextYx, nTextYy, nLineHeight, oContext, nWidth_px, nHeight_px);
@@ -10407,10 +10412,6 @@
 			}
 			nY += (nLineWidth + nLineDistance);
 		}
-	};
-	CBulletPreviewDrawer.prototype.getFontSizeByLineHeight = function (nLineHeight)
-	{
-		return ((2 * nLineHeight * 72 / 96) >> 0) / 2;
 	};
 
 	CBulletPreviewDrawer.prototype.drawNoneTextPreview = function (sDivId, oLvl)
@@ -10424,9 +10425,6 @@
 
 
 		const sText = oLvl.GetStringByLvlText();
-		const nLineDistance = (nHeight_px === 80) ? (nHeight_px / 5 - 1) : ((nHeight_px >> 2) + ((sText.length > 6) ? 1 : 2));
-
-
 
 		const oNewShape = new AscFormat.CShape();
 		oNewShape.createTextBody();
@@ -10439,7 +10437,7 @@
 		oParagraph.Pr = new AscCommonWord.CParaPr();
 
 		const oParaRun = new AscCommonWord.ParaRun(oParagraph);
-		const oTextPr = oLvl.textPr.Copy();
+		const oTextPr = oLvl.GetTextPr().Copy();
 		oParaRun.Set_Pr(oTextPr);
 		oParaRun.AddText(sText);
 		oParagraph.AddToContent(0, oParaRun);
