@@ -15638,19 +15638,21 @@ PivotLayout.prototype.getMeasureFld = function() {
 	return iMeasureFld;
 };
 
-function DataRowTraversal(pivotFields, rowFields, colFields) {
+function DataRowTraversal(pivotFields, rowFields, colFields, dataFields) {
 	this.cur = null;
 	this.curRowCache = null;
 	this.curColCache = null;
 
-	this.diffRowIndex = null;
-	this.diffColIndex = null;
+	this.diffRowIndex = [];
+	this.diffColIndex = [];
 
 	this.diffBase = null;
 	this.diffBaseRowCache = null;
 	this.diffBaseColCache = null;
 
+	this.dataFields = dataFields;
 	this.dataField = null;
+	this.colValueIndexCache = null;
 	this.fieldItem = null;
 	this.diffFieldItem = null;
 
@@ -15829,14 +15831,7 @@ DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowIt
 
 		this.rowParent = oldCur;
 		this.rowTotal = this.rowTotal.vals[this.fieldItem.x];
-
-		if (null !== this.diffRowIndex && this.diffRowIndex > rowR + rowItemsXIndex) {
-			this.cleanDiff();
-		} else if (null !== this.diffRowIndex && this.diffRowIndex === rowR + rowItemsXIndex) {
-			this.splitUpRow(oldCur, field, valueIndex);
-		} else {
-			this.goDeeperRow();
-		}
+		// Надо это делать зная colItem
 	}
 	this.saveCacheRow(rowR, rowItemsXIndex)
 	return !!this.cur;
@@ -15845,33 +15840,37 @@ DataRowTraversal.prototype.initCol = function(dataRow) {
 	this.curColCache = [this.cur];
 	this.colTotalCache = [dataRow];
 	this.rowParentCache = [this.rowParent];
+	this.colValueIndexCache = [];
 	if (this.diffBase) {
 		this.diffBaseColCache = [this.diffBase];
 	}
 };
-DataRowTraversal.prototype.setStartColIndex = function(pivotFields, fieldIndex, colItem, colR, colFields) {
+DataRowTraversal.prototype.setStartColIndex = function(pivotFields, fieldIndex, colItem, colR, colFields, rowItem) {
+	let dataIndex = Math.max(rowItem.i, colItem.i);
 	this.cur = this.curColCache[colR];
 	this.colTotal = this.colTotalCache[colR];
 	this.rowParent = this.rowParentCache[colR];
-	if (null !== this.diffColIndex && this.diffColIndex >= colR) {
-		this.cleanDiff();
-	} else if (this.diffBaseColCache) {
-		this.diffBase = this.diffBaseColCache[colR];
-	} else {
-		this.diffBase = null;
-	}
+	// if (null !== this.diffColIndex && this.diffColIndex >= colR) {
+	// 	this.cleanDiff();
+	// } else if (this.diffBaseColCache) {
+	// 	this.diffBase = this.diffBaseColCache[colR];
+	// } else {
+	// 	this.diffBase = null;
+	// }
 
 	if (Asc.c_oAscItemType.Grand !== colItem.t && colFields) {
 		for (var colItemsXIndex = 0; colItemsXIndex < colItem.x.length; ++colItemsXIndex) {
 			fieldIndex = colFields[colR + colItemsXIndex].asc_getIndex();
-			if (fieldIndex == this.dataField.baseField) {
-				this.diffColIndex = colR + colItemsXIndex;
+			if (fieldIndex === this.dataField.baseField) {
+				this.diffColIndex[dataIndex] = colR + colItemsXIndex;
 			}
 			if (AscCommonExcel.st_VALUES !== fieldIndex) {
 				let field = pivotFields[fieldIndex];
 				let valueIndex = colItem.x[colItemsXIndex].getV();
+				this.colValueIndexCache.length = colR + colItemsXIndex + 1;
 				this.fieldItem = field.getItem(valueIndex);
 				this.colTotal = this.colTotal.subtotal[this.fieldItem.x];
+				this.colValueIndexCache[colR + colItemsXIndex] = this.fieldItem.x;
 				let oldCur = this.cur;
 				this.colParent = oldCur;
 				if (this.cur) {
@@ -15880,13 +15879,13 @@ DataRowTraversal.prototype.setStartColIndex = function(pivotFields, fieldIndex, 
 				if (this.rowParent) {
 					this.rowParent = this.rowParent.subtotal[this.fieldItem.x];
 				}
-				if (null !== this.diffColIndex && this.diffColIndex > colR + colItemsXIndex) {
-					this.cleanDiff();
-				} else if (null !== this.diffColIndex && this.diffColIndex === colR + colItemsXIndex) {
-					this.splitUpCol(oldCur, field, valueIndex);
-				} else {
-					this.goDeeperCol();
-				}
+				// if (null !== this.diffColIndex && this.diffColIndex > colR + colItemsXIndex) {
+				// 	this.cleanDiff();
+				// } else if (null !== this.diffColIndex && this.diffColIndex === colR + colItemsXIndex) {
+				// 	this.splitUpCol(oldCur, field, valueIndex);
+				// } else {
+				// 	this.goDeeperCol();
+				// }
 			}
 			this.saveCacheCol(colR, colItemsXIndex);
 		}
@@ -15904,17 +15903,41 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 		let ext = extLst.ext;
 		for (let i = 0; i < ext.length; i+=1) {
 			let extension = ext[i];
-			if (extension.elem.pivotShowAs) {
+			if (extension.elem.pivotShowAs || extension.elem.pivotShowAs === 0) {
 				pivotShowAs = extension.elem.pivotShowAs;
 			}
 		}
 	}
 	let oCellValue = null, total;
-	if (pivotShowAs) {
+	if (pivotShowAs !== null) {
 		switch (pivotShowAs) {
 			case Asc.c_oAscPivotShowAs.PercentOfRunningTotal:
 				break;
 			case Asc.c_oAscPivotShowAs.PercentOfParent:
+				let parent = null;
+				if ((this.diffRowIndex[dataIndex] || this.diffRowIndex[dataIndex] === 0) && rowItem.t !== Asc.c_oAscItemType.Grand) {
+					parent = this.curRowCache[this.diffRowIndex[dataIndex] + 1];
+					if (Asc.c_oAscItemType.Grand !== colItem.t) {
+						for (let i = 0; i < this.colValueIndexCache.length; i += 1) {
+							if (parent) {
+								parent = parent.subtotal[this.colValueIndexCache[i]];
+							}
+						}
+					}
+				} else if ((this.diffColIndex[dataIndex] || this.diffColIndex[dataIndex] === 0) && colItem.t !== Asc.c_oAscItemType.Grand) {
+					parent = this.curColCache[this.diffColIndex[dataIndex] + 1];
+				}
+				if (this.cur && parent) {
+					let parentTotal = parent.total[dataIndex];
+					let _oCellValue = parentTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					total = this.cur.total[dataIndex];
+					oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					oCellValue.number = oCellValue.number / _oCellValue.number;
+				} else if (parent) {
+					oCellValue = AscCommonExcel.StatisticOnlineAlgorithm.prototype.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					oCellValue.number = 0.0;
+					oCellValue.type = 0;
+				}
 				break;
 			case Asc.c_oAscPivotShowAs.PercentOfParentCol:
 				if (this.cur) {

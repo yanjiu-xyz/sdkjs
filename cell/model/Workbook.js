@@ -8466,7 +8466,7 @@
 		var location = pivotTable.location;
 		var r1 = pivotRange.r1 + location.firstDataRow;
 		var c1 = pivotRange.c1 + location.firstDataCol;
-		let traversal = new DataRowTraversal(pivotFields, rowFields, colFields);
+		let traversal = new DataRowTraversal(pivotFields, rowFields, colFields, dataFields);
 		traversal.initRow(dataRow);
 
 		var fieldIndex;
@@ -8477,7 +8477,6 @@
 			if (Asc.c_oAscItemType.Blank === rowItem.t) {
 				continue;
 			}
-			traversal.setDataField(rowItem, undefined, dataFields);
 			var rowR = rowItem.getR();
 			traversal.setStartRowIndex(rowR);
 			props.rowFieldSubtotal = Asc.c_oAscItemType.Default;
@@ -8485,8 +8484,10 @@
 			if (Asc.c_oAscItemType.Grand !== rowItem.t && rowFields) {
 				for (var rowItemsXIndex = 0; rowItemsXIndex < rowItem.x.length; ++rowItemsXIndex) {
 					fieldIndex = rowFields[rowR + rowItemsXIndex].asc_getIndex();
-					if (fieldIndex == traversal.dataField.baseField) {
-						traversal.diffRowIndex = rowR + rowItemsXIndex;
+					for (let i = 0; i < dataFields.length; i += 1) {
+						if (fieldIndex === dataFields[i].baseField) {
+							traversal.diffRowIndex[i] = rowR + rowItemsXIndex;
+						}
 					}
 					if (!traversal.setRowIndex(pivotFields, fieldIndex, rowItem, rowR, rowItemsXIndex, props)) {
 						break;
@@ -8503,7 +8504,7 @@
 					var colItem = colItems[colItemsIndex];
 					traversal.setDataField(rowItem, colItem, dataFields);
 					var colR = colItem.getR();
-					traversal.setStartColIndex(pivotFields, fieldIndex, colItem, colR, colFields);
+					traversal.setStartColIndex(pivotFields, fieldIndex, colItem, colR, colFields, rowItem);
 					oCellValue = traversal.getCellValue(dataFields, rowItem, colItem, props, dataRow);
 					if (oCellValue) {
 						var cells = this.getRange4(r1 + rowItemsIndex, c1 + colItemsIndex);
