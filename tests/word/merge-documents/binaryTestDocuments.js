@@ -57,9 +57,13 @@ function createTestDocument(document, paragraphsTextInfo) {
         
         for (let j = 0; j < paragraphTextInfo.length; j += 1) {
             const paraRun = new AscWord.ParaRun();
-            paraRun.AddText(paragraphTextInfo[j].text);
-            paraRun.SetReviewTypeWithInfo(paragraphTextInfo[j].reviewType, paragraphTextInfo[j].reviewInfo);
-            paragraph.AddToContentToEnd(paraRun);
+            if (paragraphTextInfo[j].text) {
+                paraRun.AddText(paragraphTextInfo[j].text);
+                paraRun.SetReviewTypeWithInfo(paragraphTextInfo[j].reviewType, paragraphTextInfo[j].reviewInfo);
+                paragraph.AddToContentToEnd(paraRun);
+            } else {
+                paragraph.GetParaEndRun().SetReviewTypeWithInfo(paragraphTextInfo[j].reviewType, paragraphTextInfo[j].reviewInfo, false);
+            }
         }
         if (i !== 0) {
             document.AddToContent(document.Content.length, paragraph);
@@ -76,10 +80,10 @@ function createParagraphInfo(sText, mainReviewInfoOpts, additionalReviewInfoOpts
     let mainReviewInfo;
     if (mainReviewInfoOpts) {
         mainReviewInfo = createReviewInfoFromOptions(mainReviewInfoOpts);
-        oRet.mainReviewType = mainReviewInfoOpts.type;
+        oRet.reviewType = mainReviewInfoOpts.reviewType;
         if (additionalReviewInfoOpts) {
             const additionalReviewInfo = createReviewInfoFromOptions(additionalReviewInfoOpts);
-            additionalReviewInfo.SavePrev(additionalReviewInfo.type);
+            additionalReviewInfo.SavePrev(additionalReviewInfo.reviewType);
             mainReviewInfo.PrevType = additionalReviewInfo.PrevType;
             mainReviewInfo.PrevInfo = additionalReviewInfo.PrevInfo;
         }
@@ -310,9 +314,9 @@ const testObjectInfo = [
 const answers = [
     {
         finalDocument: [
-            [],
+            [createParagraphInfo(undefined, {reviewType: reviewtype_Remove, userName: 'Valdemar', dateTime: 3000000})],
             [
-                createParagraphInfo('')
+                createParagraphInfo('Привет', {reviewType: reviewtype_Add, userName: 'Valdemar', dateTime: 3000000})
             ]
         ]
     }

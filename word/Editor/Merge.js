@@ -547,7 +547,7 @@
         const oParentContent = oOrigRoot.element.Content;
         const oLastElement = oParentContent[oParentContent.length - 1];
         if (oLastElement && oLastElement.GetReviewType() !== reviewtype_Common) {
-            oLastElement.SetReviewType(reviewtype_Common);
+            oLastElement.SetReviewTypeWithInfo(reviewtype_Common, new CReviewInfo());
         }
 
         delete this.copyPr.bSaveCustomReviewType;

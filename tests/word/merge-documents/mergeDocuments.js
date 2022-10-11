@@ -194,7 +194,7 @@ Paragraph.prototype.getTestObject = function (documentContent) {
 }
 
 ParaRun.prototype.getTestObject = function (oParentContent) {
-    if (this.Content.length === 0 || this.IsParaEndRun()) return;
+    if (this.Content.length === 0) return;
     const oReviewInfo = this.GetReviewInfo();
     const prevAdded = oReviewInfo.GetPrevAdded();
     let mainReviewType = this.GetReviewType && this.GetReviewType();
@@ -214,7 +214,7 @@ ParaRun.prototype.getTestObject = function (oParentContent) {
     const needCreateNewText = (oParentContent.length === 0 ||
       currentContent.mainReviewType !== mainReviewType || currentContent.mainUserName !== mainUserName || currentContent.mainDateTime !== mainDateTime ||
       currentContent.additionalReviewType !== additionalReviewType || currentContent.additionalUserName !== additionalUserName || currentContent.additionalDateTime !== additionalDateTime);
-    if (needCreateNewText) {
+    if (needCreateNewText || this.IsParaEndRun()) {
         currentContent = {
             mainReviewType: mainReviewType,
             mainDateTime: mainDateTime,
@@ -249,7 +249,7 @@ $(function () {
                     const doc = mockEditor.WordControl.m_oLogicDocument;
                     const result = getTestObject(doc);
                     console.log(result)
-                    assert.deepEqual(result, answers[i], comments[i]);
+                    assert.deepEqual(result, getTestObject(readMainDocument(answers[i].finalDocument)), comments[i]);
                 });
             }
         }, this, []);
