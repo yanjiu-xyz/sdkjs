@@ -15831,7 +15831,6 @@ DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowIt
 
 		this.rowParent = oldCur;
 		this.rowTotal = this.rowTotal.vals[this.fieldItem.x];
-		// Надо это делать зная colItem
 	}
 	this.saveCacheRow(rowR, rowItemsXIndex)
 	return !!this.cur;
