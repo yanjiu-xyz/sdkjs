@@ -30,11 +30,6 @@
  *
  */
 
-const mockEditor = AscTest.Editor;
-mockEditor.pre_Paste = function (first, second, callback) {
-    callback();
-}
-
 AscCommon.sendImgUrls = function (first, second, callback) {
     callback()
 }
@@ -43,47 +38,8 @@ AscCommon.ResetNewUrls = function () {
     
 }
 
-function readMainDocument(oApi, sBinary) {
-    const stream = AscCommon.Base64.decode(sBinary, true);
-    const openParams = {noSendComments: true};
-    const oDrawingDocument = oApi.WordControl;
-    let oDoc = new CDocument(oDrawingDocument, true);
-
-    oApi.WordControl.m_oDrawingDocument.m_oLogicDocument = oDoc;
-    oApi.WordControl.m_oLogicDocument = oDoc;
-    const oBinaryFileReader = new AscCommonWord.BinaryFileReader(oDoc, openParams);
-    if (!oBinaryFileReader.Read(stream)) {
-        oDoc = null;
-    }
-    return oDoc;
-}
-
-function readRevisedDocument(oApi, sBinary) {
-    const stream = AscCommon.Base64.decode(sBinary, true);
-    const oDoc1 = oApi.WordControl.m_oLogicDocument;
-    const openParams = {noSendComments: true};
-    let oDoc2 = new CDocument(oApi.WordControl.m_oDrawingDocument, true);
-    oApi.WordControl.m_oDrawingDocument.m_oLogicDocument = oDoc2;
-    oApi.WordControl.m_oLogicDocument = oDoc2;
-    const oBinaryFileReader = new AscCommonWord.BinaryFileReader(oDoc2, openParams);
-    AscCommon.pptx_content_loader.Start_UseFullUrl(oApi.insertDocumentUrlsData);
-    if (!oBinaryFileReader.Read(stream)) {
-        oDoc2 = null;
-    }
-    oApi.WordControl.m_oDrawingDocument.m_oLogicDocument = oDoc1;
-    oApi.WordControl.m_oLogicDocument = oDoc1;
-    if (oDoc1.History)
-        oDoc1.History.Set_LogicDocument(oDoc1);
-    if (oDoc1.CollaborativeEditing)
-        oDoc1.CollaborativeEditing.m_oLogicDocument = oDoc1;
-    
-    return oDoc2;
-}
-
-function merge(sMainBinary, sRevisedBinary, callback) {
-    const mainDocument = readMainDocument(mockEditor, sMainBinary);
-    const revisedDocument = readRevisedDocument(mockEditor, sRevisedBinary);
-    const merge = new AscCommonWord.CDocumentMerge(mainDocument, revisedDocument, {});
+function merge(oMainDocument, oRevisedDocument, callback) {
+    const merge = new AscCommonWord.CDocumentMerge(oMainDocument, oRevisedDocument, new AscCommonWord.ComparisonOptions());
     const oldMergeCallback = merge.applyLastMergeCallback;
     merge.applyLastMergeCallback = function () {
         oldMergeCallback.call(this);
@@ -91,26 +47,192 @@ function merge(sMainBinary, sRevisedBinary, callback) {
     }
     merge.merge();
 }
+AscCommonWord.CHeaderFooter.prototype.getTestObject = function (oParentContent) {
+    const content = {type: 'headerfooter', content: []};
+    oParentContent.push(content);
+    this.Content.getTestObject(content.content);
+};
+AscCommonWord.CDocument.prototype.getTestObject = function () {
+    const documentTestObject = {type: 'document', content: []};
+    this.Content.forEach(function (oItem) {
+        if (oItem.getTestObject) {
+            oItem.getTestObject(documentTestObject.content);
+        } else {
+            documentTestObject.content.push(oItem.constructor.name)
+        }
+    });
+    if (this.SectPr) {
+        const HdrFtr = this.SectPr.GetAllHdrFtrs();
+        for (let i = 0; i < HdrFtr.length; i += 1) {
+            HdrFtr[i].getTestObject(documentTestObject.content);
+        }
+
+    }
+    if (this.Footnotes) {
+        this.Footnotes.getTestObject(documentTestObject.content);
+    }
+    return documentTestObject;
+}
+
+AscCommonWord.CTable.prototype.getTestObject = function (documentContent) {
+    const oTableContent = {type: 'table', rows: []};
+    documentContent.push(oTableContent)
+    for (let i = 0; i < this.Content.length; i += 1) {
+        const row = this.Content[i];
+        row.getTestObject(oTableContent.rows);
+    }
+}
+
+AscCommonWord.CTableRow.prototype.getTestObject = function (tableContent) {
+    const rowContent = {type: 'row', content: []};
+    tableContent.push(rowContent);
+    for (let i = 0; i < this.Content.length; i += 1) {
+        const cell = this.Content[i];
+        cell.getTestObject(rowContent.content);
+    }
+}
+
+AscCommonWord.CTableCell.prototype.getTestObject = function (rowContent) {
+    const cellContent = {type: 'cell', content: []};
+    rowContent.push(cellContent);
+    const content = this.GetContent();
+    content.CheckRunContent(function (oRun) {
+        oRun.getTestObject(cellContent.content);
+    });
+}
+
+
+ParaMath.prototype.getTestObject = function (parentContent) {
+    const content = {type: 'paramath', content: []};
+    parentContent.push(content)
+    this.Root.getTestObject(content.content);
+}
+CMathContent.prototype.getTestObject = function (parentContent) {
+    const mathContent = {type: 'mathcontent', content: []};
+    parentContent.push(mathContent)
+    for (var i = 0; i < this.Content.length; ++i)
+    {
+        if (para_Math_Run === this.Content[i].Type)
+            this.Content[i].getTestObject(mathContent.content);
+    }
+}
+CMathBase.prototype.getTestObject = function (parentContent) {
+    const mathBaseContent = {type: 'mathbase', content: []};
+    parentContent.push(mathBaseContent)
+    this.Content.forEach(function (oRun) {
+       oRun.getTestObject(mathBaseContent.content);
+    });
+  }
+CDocumentSectionsInfo.prototype.getTestObject = function (parentContent) {
+      let headers = this.GetAllHdrFtrs();
+      for (let index = 0, count = headers.length; index < count; ++index)
+      {
+          const oHeaderContent = {
+              type: 'documentsectioninfo',
+              content: []
+          }
+          parentContent.push(oHeaderContent);
+          headers[index].getTestObject(oHeaderContent.content);
+      }
+  }
+CDocumentContentBase.prototype.getTestObject = function (parentContent) {
+      const CDocumentContent = {type: 'documentcontentbase', content: []};
+      parentContent.push(CDocumentContent)
+      for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+      {
+          this.Content[nIndex].getTestObject(CDocumentContent.content);
+      }
+ }
+CDocumentContentElementBase.prototype.getTestObject = function () {
+
+  }
+CEndnotesController.prototype.getTestObject = function (parentContent) {
+      for (var sId in this.Endnote)
+      {
+          let oEndnote = this.Endnote[sId];
+          const oEndNoteContent = {type: 'endnote', content: []};
+          parentContent.push(oEndNoteContent);
+          oEndnote.checkTestObject(oEndNoteContent.content)
+      }
+  }
+CFootnotesController.prototype.getTestObject = function (parentContent) {
+      for (var sId in this.Footnote)
+      {
+          let oFootnote = this.Footnote[sId];
+          const oFootnoteContent = {type: 'footnote', content: []};
+          parentContent.push(oFootnoteContent)
+          for (let i = 0; i < oFootnote.Content.length; i += 1) {
+              oFootnote.Content[i].getTestObject(oFootnoteContent.content);
+          }
+      }
+  }
+
+  CParagraphContentBase.prototype.getTestObject = function (parentContent) {
+    const paragraphContent = {type: 'paragraphcontentbase', content: []};
+    parentContent.push(paragraphContent)
+    for (let i = 0; i < this.Content.length;i += 1) {
+        this.Content[i].getTestObject(paragraphContent.content);
+    }
+  }
+  CParagraphContentWithParagraphLikeContent.prototype.getTestObject = function () {
+
+  }
+  CBlockLevelSdt.prototype.getTestObject = function (parentContent) {
+     const BlockLvlSdtContent = {type: 'blocklvlsdt', content: []};
+     parentContent.push(BlockLvlSdtContent)
+     this.Content.getTestObject(BlockLvlSdtContent.content);
+  }
+
+Paragraph.prototype.getTestObject = function (documentContent) {
+    const oTestParagraph = {type: 'paragraph', content: []};
+    documentContent.push(oTestParagraph);
+    const oTestParagraphContent =
+      this.CheckRunContent(function (oRun) {
+          oRun.getTestObject(oTestParagraph.content);
+      });
+    return oTestParagraph;
+}
+
+ParaRun.prototype.getTestObject = function (oParentContent) {
+    if (this.Content.length === 0 || this.IsParaEndRun()) return;
+    const oReviewInfo = this.GetReviewInfo();
+    const prevAdded = oReviewInfo.GetPrevAdded();
+    let mainReviewType = this.GetReviewType && this.GetReviewType();
+    let mainUserName = oReviewInfo.GetUserName();
+    let mainDateTime = oReviewInfo.GetDateTime();
+
+    let additionalReviewType;
+    let additionalUserName;
+    let additionalDateTime;
+
+    if (prevAdded) {
+        additionalReviewType = reviewtype_Add;
+        additionalUserName = prevAdded.GetUserName();
+        additionalDateTime = prevAdded.GetDateTime();
+    }
+    let currentContent = oParentContent[oParentContent.length - 1];
+    const needCreateNewText = (oParentContent.length === 0 ||
+      currentContent.mainReviewType !== mainReviewType || currentContent.mainUserName !== mainUserName || currentContent.mainDateTime !== mainDateTime ||
+      currentContent.additionalReviewType !== additionalReviewType || currentContent.additionalUserName !== additionalUserName || currentContent.additionalDateTime !== additionalDateTime);
+    if (needCreateNewText) {
+        currentContent = {
+            mainReviewType: mainReviewType,
+            mainDateTime: mainDateTime,
+            mainUserName: mainUserName,
+            additionalReviewType: additionalReviewType,
+            additionalDateTime: additionalDateTime,
+            additionalUserName: additionalUserName,
+            text: ''
+        };
+        oParentContent.push(currentContent);
+    }
+    this.Content.forEach(function (el) {
+        currentContent.text += String.fromCharCode(el.Value)
+    });
+}
 
 function getTestObject(oDocument) {
-    const result = [];
-    oDocument.Content.forEach(function (par) {
-        const paragraphContent = [];
-        result.push(paragraphContent);
-        par.CheckRunContent(function (oRun) {
-            if (oRun.Content.length === 0 || oRun.IsParaEndRun()) return;
-            const currentReviewType = oRun.ReviewType;
-            let currentContent = paragraphContent[paragraphContent.length - 1];
-            if (paragraphContent.length === 0 || currentContent.reviewType !== currentReviewType) {
-                currentContent = {reviewType: currentReviewType, text: ''};
-                paragraphContent.push(currentContent);
-            }
-            oRun.Content.forEach(function (el) {
-                currentContent.text += String.fromCharCode(el.Value)
-            });
-        });
-    });
-    return result;
+    return oDocument.getTestObject();
 }
 
 
@@ -118,30 +240,15 @@ $(function () {
 
     QUnit.module("Unit-tests for merge documents feature");
 
-    QUnit.test("Test 1 2:", function(assert)
+    QUnit.test("Test", function(assert)
     {
-        let strRes = ''
         AscFormat.ExecuteNoHistory(function () {
-            for (let i = 0; i < testBinaryFiles.length; i += 1) {
-                const test = testBinaryFiles[i];
-                merge(test[0], test[1], function () {
+            for (let i = 0; i < testObjectInfo.length; i += 1) {
+                const test = testObjectInfo[i];
+                merge(readMainDocument(test.originalDocument), readRevisedDocument(test.revisedDocument), function () {
                     const doc = mockEditor.WordControl.m_oLogicDocument;
                     const result = getTestObject(doc);
-                    assert.deepEqual(result, answers[i], comments[i]);
-                });
-            }
-        }, this, []);
-    });
-    
-    QUnit.test("Test 2 1:", function(assert)
-    {
-        let strRes = ''
-        AscFormat.ExecuteNoHistory(function () {
-            for (let i = 0; i < testBinaryFiles.length; i += 1) {
-                const test = testBinaryFiles[i];
-                merge(test[1], test[0], function () {
-                    const doc = mockEditor.WordControl.m_oLogicDocument;
-                    const result = getTestObject(doc);
+                    console.log(result)
                     assert.deepEqual(result, answers[i], comments[i]);
                 });
             }
