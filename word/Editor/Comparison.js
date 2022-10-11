@@ -1517,14 +1517,9 @@
             //handle removed elements
             oNode.applyInsertsToParagraph(this, aContentToInsert, i);
         }
-        this.checkParaEndReview(oNode);
         this.applyChangesToChildrenOfParagraphNode(oNode);
         this.applyChangesToSectPr(oNode);
     };
-
-    CDocumentComparison.prototype.checkParaEndReview = function () {
-
-    }
 
     CDocumentComparison.prototype.applyChangesToChildrenOfParagraphNode = function (oNode) {
         for(let i = 0; i < oNode.children.length; ++i)
@@ -1741,8 +1736,10 @@
             this.applyChangesToTableRow(oNode.children[i]);
         }
     };
+    CDocumentComparison.prototype.checkRowReview = function(oRowNode) {};
     CDocumentComparison.prototype.applyChangesToTableRow = function(oNode)
     {
+        this.checkRowReview(oNode);
         //TODO: handle cell inserts and removes
 
         for(let i = 0; i < oNode.children.length; ++i)
@@ -2281,7 +2278,7 @@
                     oLastText.setFirstRun(oRun);
                     oLastText.setLastRun(oRun);
                     // мы будем сравнивать ревью paraEnd отдельно, поскольку это единственный общий элемент в параграфе, до которого мы можем вставить любой различающийся контент
-                    oLastText.addToElements(oRun.Content[j], [reviewtype_Common]);
+                    oLastText.addToElements(oRun.Content[j], {reviewType: reviewtype_Common});
                     new NodeConstructor(oLastText, oRet);
                     oLastText.updateHash(oHashWords);
                     oLastText = new TextElementConstructor();

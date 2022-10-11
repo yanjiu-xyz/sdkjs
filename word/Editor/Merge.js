@@ -216,13 +216,6 @@
         CNode.prototype.pushToArrInsertContentWithCopy.call(this, aContentToInsert, elem, comparison);
     }
 
-    CDocumentMergeComparison.prototype.setRemoveReviewType = function (element) {
-        if (!(element.IsParaEndRun && element.IsParaEndRun())) {
-            if (!element.GetReviewType || element.GetReviewType && element.GetReviewType() === reviewtype_Common) {
-                this.setReviewInfoRecursive(element, reviewtype_Add);
-            }
-        }
-    }
 
     CMergeComparisonNode.prototype.setCommonReviewTypeWithInfo = function (element, info) {
         element.SetReviewTypeWithInfo((element.GetReviewType && element.GetReviewType()) || reviewtype_Common, info);
@@ -385,6 +378,14 @@
         }
     }
 
+    CDocumentResolveConflictComparison.prototype.setRemoveReviewType = function (element) {
+        if (!(element.IsParaEndRun && element.IsParaEndRun())) {
+            if (!element.GetReviewType || element.GetReviewType && element.GetReviewType() === reviewtype_Common) {
+                this.setReviewInfoRecursive(element, reviewtype_Add);
+            }
+        }
+    }
+
     function CConflictResolveNode(oElement, oParent) {
         CNode.call(this, oElement, oParent);
     }
@@ -411,14 +412,6 @@
 
     CConflictResolveNode.prototype.setCommonReviewTypeWithInfo = function (element, info) {
         element.SetReviewTypeWithInfo((element.GetReviewType && element.GetReviewType()) || reviewtype_Common, info);
-    }
-
-    CDocumentResolveConflictComparison.prototype.setRemoveReviewType = function (element) {
-        if (!(element.IsParaEndRun && element.IsParaEndRun())) {
-            if (!element.GetReviewType || element.GetReviewType && element.GetReviewType() === reviewtype_Common) {
-                this.setReviewInfoRecursive(element, reviewtype_Add);
-            }
-        }
     }
     
     CConflictResolveNode.prototype.getStartPosition = function (comparison) {
@@ -460,6 +453,40 @@
     CDocumentMergeComparison.prototype.constructor = CDocumentMergeComparison;
 
 
+    CDocumentMergeComparison.prototype.setRemoveReviewType = function (element) {
+        if (!(element.IsParaEndRun && element.IsParaEndRun())) {
+            if (!element.GetReviewType || element.GetReviewType && element.GetReviewType() === reviewtype_Common) {
+                this.setReviewInfoRecursive(element, reviewtype_Add);
+            }
+        }
+    }
+
+    CDocumentMergeComparison.prototype.resolveCustomReviewTypesBetweenElements = function (oMainElement, oRevisedElement) {
+        const nMainReviewType = oMainElement.GetReviewType();
+        const nRevisedReviewType = oRevisedElement.GetReviewType();
+        if (nRevisedReviewType !== reviewtype_Common && nRevisedReviewType !== nMainReviewType) {
+            const oMainReviewInfo = oMainElement.GetReviewInfo();
+            const oRevisedReviewInfo = oRevisedElement.GetReviewInfo().Copy();
+            if (nMainReviewType === reviewtype_Common) {
+                oMainElement.SetReviewTypeWithInfo(nRevisedReviewType, oRevisedReviewInfo);
+            } else if (nMainReviewType === reviewtype_Add) {
+                oRevisedReviewInfo.SavePrev(reviewtype_Add);
+                oMainElement.SetReviewTypeWithInfo(reviewtype_Remove, oRevisedReviewInfo);
+            } else if (nMainReviewType === reviewtype_Remove) {
+                oMainReviewInfo.SavePrev(reviewtype_Add);
+                oMainElement.SetReviewTypeWithInfo(reviewtype_Remove, oMainReviewInfo);
+            }
+        }
+    }
+
+    CDocumentMergeComparison.prototype.checkParaEndReview = function (oNode) {
+        if (oNode && oNode.element.GetType() === type_Paragraph && oNode.partner) {
+            const oMainParaEnd = oNode.element.GetParaEndRun();
+            const oRevisedParaEnd = oNode.partner.element.GetParaEndRun();
+            this.resolveCustomReviewTypesBetweenElements(oMainParaEnd, oRevisedParaEnd);
+        }
+    };
+
     CDocumentMergeComparison.prototype.applyChangesToTableSize = function(oNode) {
         this.copyPr.SkipUpdateInfo = false;
         this.copyPr.bSaveCustomReviewType = true;
@@ -467,6 +494,15 @@
         delete this.copyPr.bSaveCustomReviewType;
         this.copyPr.SkipUpdateInfo = true;
     }
+
+    CDocumentMergeComparison.prototype.checkRowReview = function(oRowNode) {
+        const oPartnerNode = oRowNode.partner;
+        if (oPartnerNode) {
+            const oMainRow = oRowNode.element;
+            const oPartnerRow = oPartnerNode.element;
+            this.resolveCustomReviewTypesBetweenElements(oMainRow, oPartnerRow);
+        }
+    };
 
     CDocumentMergeComparison.prototype.resolveConflicts = function (arrToInserts, arrToRemove, applyParagraph, nInsertPosition) {
         if (arrToInserts.length === 0 || arrToRemove.length === 0) return;
@@ -504,30 +540,16 @@
     CDocumentMergeComparison.prototype.applyParagraphComparison = function (oOrigRoot, oRevisedRoot) {
         this.copyPr.SkipUpdateInfo = false;
         this.copyPr.bSaveCustomReviewType = true;
-        const bOrig = oOrigRoot.children.length >= oRevisedRoot.children.length;
-        const mainRoot = bOrig ? oOrigRoot : oRevisedRoot;
-        for (let i = 0; i < mainRoot.children.length; i += 1) {
-            const child = mainRoot.children[i];
-            const partner = child.partner;
-            let origChild;
-            let revisedChild;
-            if (bOrig) {
-                origChild = child;
-                revisedChild = partner;
-            } else {
-                revisedChild = child;
-                origChild = partner;
-            }
-            if (origChild && revisedChild) {
-                const childReviewType = origChild.element.GetReviewType && origChild.element.GetReviewType();
-                const partnerReviewType = revisedChild.element.GetReviewType && revisedChild.element.GetReviewType();
-                const priorityReviewType = getPriorityReviewType([childReviewType, partnerReviewType]);
-                if (childReviewType !== priorityReviewType) {
-                    this.setReviewInfoForArray([origChild], priorityReviewType);
-                }
-            }
-        }
         CDocumentComparison.prototype.applyParagraphComparison.call(this, oOrigRoot, oRevisedRoot);
+        for (let i = oOrigRoot.children.length - 1; i >= 0; i -= 1) {
+            this.checkParaEndReview(oOrigRoot.children[i]);
+        }
+        const oParentContent = oOrigRoot.element.Content;
+        const oLastElement = oParentContent[oParentContent.length - 1];
+        if (oLastElement && oLastElement.GetReviewType() !== reviewtype_Common) {
+            oLastElement.SetReviewType(reviewtype_Common);
+        }
+
         delete this.copyPr.bSaveCustomReviewType;
         this.copyPr.SkipUpdateInfo = true;
     };
