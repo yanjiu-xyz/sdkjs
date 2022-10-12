@@ -248,7 +248,6 @@ $(function () {
                 merge(readMainDocument(test.originalDocument), readRevisedDocument(test.revisedDocument), function () {
                     const doc = mockEditor.WordControl.m_oLogicDocument;
                     const result = getTestObject(doc);
-                    console.log(result)
                     assert.deepEqual(result, getTestObject(readMainDocument(answers[i].finalDocument)), comments[i]);
                 });
             }
