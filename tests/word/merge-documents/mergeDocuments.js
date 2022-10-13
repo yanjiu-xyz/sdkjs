@@ -30,6 +30,10 @@
  *
  */
 
+// attention: There is a difference in merge in our editors and microsoft editors.
+// Within one paragraph, pieces of text that are missing in the largest common document, we always add with a review like adding
+// When merging, first we add the missing text from the second document, then from the first
+
 const arrTestObjectsInfo = [
     ///////////////////////// -> 1 <- /////////////////////////////
     {
@@ -342,7 +346,23 @@ const arrAnswers = [
     },
 ];
 
-const comments = [];
+const comments = [
+    'Merging an empty document and a document with a non-reviewed paragraph',
+    'Merging empty documents',
+    'Merging documents with different paragraphs without review',
+    'Merging two documents with the same content in paragraphs, but different in review',
+    'Merging two documents with different paragraphs, the first without review, the second with review',
+    'Merging two documents with the same content, where part of the word has a review',
+    'Merging identical documents, in the middle of the document the word has another review',
+    'Merging documents with insertion and review',
+    'Merging to start',
+    'Merging documents with different origins',
+    'Merging documents with differences in text with the same review',
+    'Merging documents with differences in text with different reviews',
+    'Merging documents with differences in text with different reviews and requiring additional reviews',
+    'Merging identical documents with different types of reviews in letters',
+    'Merging two documents with changes in common text',
+];
 
 function merge(oMainDocument, oRevisedDocument, fCallback) {
     const oMerge = new AscCommonWord.CDocumentMerge(oMainDocument, oRevisedDocument, new AscCommonWord.ComparisonOptions());
