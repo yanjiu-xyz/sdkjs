@@ -31,10 +31,190 @@
  */
 
 const mockEditor = AscTest.Editor;
-
 mockEditor.pre_Paste = function (first, second, callback) {
     callback();
+};
+AscCommon.sendImgUrls = function (oApi, arrImages, fCallback) {fCallback()};
+AscCommon.ResetNewUrls = function () {};
+
+AscCommonWord.CDocument.prototype.getTestObject = function () {
+    const oContentObject = {type: 'document', content: []};
+    this.Content.forEach(function (oItem) {
+        if (oItem.getTestObject) {
+            oItem.getTestObject(oContentObject.content);
+        } else {
+            oContentObject.content.push(oItem.constructor.name);
+        }
+    });
+    if (this.SectPr) {
+        const arrHdrFtr = this.SectPr.GetAllHdrFtrs();
+        for (let i = 0; i < arrHdrFtr.length; i += 1) {
+            arrHdrFtr[i].getTestObject(oContentObject.content);
+        }
+
+    }
+    if (this.Footnotes) {
+        this.Footnotes.getTestObject(oContentObject.content);
+    }
+    return oContentObject;
+};
+
+AscCommonWord.CHeaderFooter.prototype.getTestObject = function (arrParentContent) {
+    const oContentObject = {type: 'headerfooter', content: []};
+    arrParentContent.push(oContentObject);
+    this.Content.getTestObject(oContentObject.content);
+};
+
+AscCommonWord.CTable.prototype.getTestObject = function (arrParentContent) {
+    const oContentObject = {type: 'table', rows: []};
+    arrParentContent.push(oContentObject);
+    for (let i = 0; i < this.Content.length; i += 1) {
+        const row = this.Content[i];
+        row.getTestObject(oContentObject.rows);
+    }
 }
+
+AscCommonWord.CTableRow.prototype.getTestObject = function (arrParentContent) {
+    const oContentObject = {type: 'row', content: []};
+    arrParentContent.push(oContentObject);
+    for (let i = 0; i < this.Content.length; i += 1) {
+        const cell = this.Content[i];
+        cell.getTestObject(oContentObject.content);
+    }
+}
+
+AscCommonWord.CTableCell.prototype.getTestObject = function (arrParentContent) {
+    const oContentObject = {type: 'cell', content: []};
+    arrParentContent.push(oContentObject);
+    const oContent = this.GetContent();
+    oContent.CheckRunContent(function (oRun) {
+        oRun.getTestObject(oContentObject.content);
+    });
+}
+
+
+ParaMath.prototype.getTestObject = function (arrParentContent) {
+    const oContentObject = {type: 'paramath', content: []};
+    arrParentContent.push(oContentObject)
+    this.Root.getTestObject(oContentObject.content);
+}
+CMathContent.prototype.getTestObject = function (arrParentContent) {
+    const oContentObject = {type: 'mathcontent', content: []};
+    arrParentContent.push(oContentObject)
+    for (var i = 0; i < this.Content.length; ++i)
+    {
+        if (para_Math_Run === this.Content[i].Type)
+            this.Content[i].getTestObject(oContentObject.content);
+    }
+}
+CMathBase.prototype.getTestObject = function (arrParentContent) {
+    const oContentObject = {type: 'mathbase', content: []};
+    arrParentContent.push(oContentObject)
+    this.Content.forEach(function (oRun) {
+        oRun.getTestObject(oContentObject.content);
+    });
+}
+CDocumentSectionsInfo.prototype.getTestObject = function (arrParentContent) {
+    const arrHeaders = this.GetAllHdrFtrs();
+    for (let index = 0, count = arrHeaders.length; index < count; ++index)
+    {
+        const oContentObject = {
+            type: 'documentsectioninfo',
+            content: []
+        }
+        arrParentContent.push(oContentObject);
+        arrHeaders[index].getTestObject(oContentObject.content);
+    }
+}
+CDocumentContentBase.prototype.getTestObject = function (arrParentContent) {
+    const oContentObject = {type: 'documentcontentbase', content: []};
+    arrParentContent.push(oContentObject)
+    for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
+    {
+        this.Content[nIndex].getTestObject(oContentObject.content);
+    }
+}
+CDocumentContentElementBase.prototype.getTestObject = function () {
+
+};
+CEndnotesController.prototype.getTestObject = function (arrParentContent) {
+    for (var sId in this.Endnote) {
+        const oEndnote = this.Endnote[sId];
+        const oContentObject = {type: 'endnote', content: []};
+        arrParentContent.push(oContentObject);
+        oEndnote.checkTestObject(oContentObject.content)
+    }
+};
+CFootnotesController.prototype.getTestObject = function (arrParentContent) {
+    for (var sId in this.Footnote) {
+        const oFootnote = this.Footnote[sId];
+        const oContentObject = {type: 'footnote', content: []};
+        arrParentContent.push(oContentObject);
+        for (let i = 0; i < oFootnote.Content.length; i += 1) {
+            oFootnote.Content[i].getTestObject(oContentObject.content);
+        }
+    }
+};
+CParagraphContentBase.prototype.getTestObject = function (arrParentContent) {
+    const oContentObject = {type: 'paragraphcontentbase', content: []};
+    arrParentContent.push(oContentObject)
+    for (let i = 0; i < this.Content.length;i += 1) {
+        this.Content[i].getTestObject(oContentObject.content);
+    }
+};
+CParagraphContentWithParagraphLikeContent.prototype.getTestObject = function () {
+
+};
+CBlockLevelSdt.prototype.getTestObject = function (arrParentContent) {
+    const oContentObject = {type: 'blocklvlsdt', content: []};
+    arrParentContent.push(oContentObject)
+    this.Content.getTestObject(oContentObject.content);
+};
+Paragraph.prototype.getTestObject = function (arrParentContent) {
+    const oContentObject = {type: 'paragraph', content: []};
+    arrParentContent.push(oContentObject);
+    const oTestParagraphContent =
+        this.CheckRunContent(function (oRun) {
+            oRun.getTestObject(oContentObject.content);
+        });
+};
+ParaRun.prototype.getTestObject = function (oParentContent) {
+    if (this.Content.length === 0) return;
+    const oReviewInfo = this.GetReviewInfo();
+    const oPrevAdded = oReviewInfo.GetPrevAdded();
+    let nMainReviewType = this.GetReviewType && this.GetReviewType();
+    let sMainUserName = oReviewInfo.GetUserName();
+    let nMainDateTime = oReviewInfo.GetDateTime();
+
+    let nAdditionalReviewType;
+    let sAdditionalUserName;
+    let nAdditionalDateTime;
+
+    if (oPrevAdded) {
+        nAdditionalReviewType = reviewtype_Add;
+        sAdditionalUserName = oPrevAdded.GetUserName();
+        nAdditionalDateTime = oPrevAdded.GetDateTime();
+    }
+    let oCurrentTextInfo = oParentContent[oParentContent.length - 1];
+    const needCreateNewText = (oParentContent.length === 0 ||
+        oCurrentTextInfo.mainReviewType !== nMainReviewType || oCurrentTextInfo.mainUserName !== sMainUserName || oCurrentTextInfo.mainDateTime !== nMainDateTime ||
+        oCurrentTextInfo.additionalReviewType !== nAdditionalReviewType || oCurrentTextInfo.additionalUserName !== sAdditionalUserName || oCurrentTextInfo.additionalDateTime !== nAdditionalDateTime);
+    if (needCreateNewText || this.IsParaEndRun()) {
+        oCurrentTextInfo = {
+            mainReviewType: nMainReviewType,
+            mainDateTime: nMainDateTime,
+            mainUserName: sMainUserName,
+            additionalReviewType: nAdditionalReviewType,
+            additionalDateTime: nAdditionalDateTime,
+            additionalUserName: sAdditionalUserName,
+            text: ''
+        };
+        oParentContent.push(oCurrentTextInfo);
+    }
+    this.Content.forEach(function (el) {
+        oCurrentTextInfo.text += String.fromCharCode(el.Value)
+    });
+};
 
 window['AscCommonWord']['CDocumentComparison'].prototype.setReviewInfo = function(oReviewInfo, sCustomReviewUserName, nCustomReviewDate)
 {
@@ -49,89 +229,89 @@ window['AscCommonWord']['CDocumentComparison'].prototype.setReviewInfo = functio
         oReviewInfo.DateTime = nCustomReviewDate;
     }
 };
-
-function readMainDocument(mainDocumentInfo) {
-    const document = new AscWord.CDocument(mockEditor.WordControl.m_oDrawingDocument, true);
-    mockEditor.WordControl.m_oDrawingDocument.m_oLogicDocument = document;
-    mockEditor.WordControl.m_oLogicDocument = document;
-    document.Api = mockEditor;
-    createTestDocument(document, mainDocumentInfo);
-    return document
+function readMainDocument(oMainDocumentInfo) {
+    const oDocument = new AscWord.CDocument(mockEditor.WordControl.m_oDrawingDocument, true);
+    mockEditor.WordControl.m_oDrawingDocument.m_oLogicDocument = oDocument;
+    mockEditor.WordControl.m_oLogicDocument = oDocument;
+    oDocument.Api = mockEditor;
+    createTestDocument(oDocument, oMainDocumentInfo);
+    return oDocument
 }
 
-function readRevisedDocument(mainDocumentInfo) {
-    const oDoc1 = mockEditor.WordControl.m_oLogicDocument;
-    let oDoc2 = new CDocument(mockEditor.WordControl.m_oDrawingDocument, true);
-    mockEditor.WordControl.m_oDrawingDocument.m_oLogicDocument = oDoc2;
-    mockEditor.WordControl.m_oLogicDocument = oDoc2;
+function readRevisedDocument(oRevisedDocumentInfo) {
+    const oMainDocument = mockEditor.WordControl.m_oLogicDocument;
+    const oRevisedDocument = new CDocument(mockEditor.WordControl.m_oDrawingDocument, true);
+    mockEditor.WordControl.m_oDrawingDocument.m_oLogicDocument = oRevisedDocument;
+    mockEditor.WordControl.m_oLogicDocument = oRevisedDocument;
 
-    createTestDocument(oDoc2, mainDocumentInfo);
+    createTestDocument(oRevisedDocument, oRevisedDocumentInfo);
     
-    mockEditor.WordControl.m_oDrawingDocument.m_oLogicDocument = oDoc1;
-    mockEditor.WordControl.m_oLogicDocument = oDoc1;
-    if (oDoc1.History)
-        oDoc1.History.Set_LogicDocument(oDoc1);
-    if (oDoc1.CollaborativeEditing)
-        oDoc1.CollaborativeEditing.m_oLogicDocument = oDoc1;
-    return oDoc2;
+    mockEditor.WordControl.m_oDrawingDocument.m_oLogicDocument = oMainDocument;
+    mockEditor.WordControl.m_oLogicDocument = oMainDocument;
+    if (oMainDocument.History)
+        oMainDocument.History.Set_LogicDocument(oMainDocument);
+    
+    if (oMainDocument.CollaborativeEditing)
+        oMainDocument.CollaborativeEditing.m_oLogicDocument = oMainDocument;
+    
+    return oRevisedDocument;
 }
 
-function createTestDocument(document, paragraphsTextInfo) {
-
-    for (let i = 0; i < paragraphsTextInfo.length; i += 1) {
-        const paragraphTextInfo = paragraphsTextInfo[i];
-        let paragraph;
+function createTestDocument(oDocument, arrParagraphsTextInfo) {
+    for (let i = 0; i < arrParagraphsTextInfo.length; i += 1) {
+        const oParagraphTextInfo = arrParagraphsTextInfo[i];
+        let oParagraph;
         if (i === 0) {
-            paragraph = document.Content[0];
+            oParagraph = oDocument.Content[0];
         } else {
-            paragraph = AscTest.CreateParagraph();
+            oParagraph = AscTest.CreateParagraph();
         }
         
-        for (let j = 0; j < paragraphTextInfo.length; j += 1) {
-            const paraRun = new AscWord.ParaRun();
-            if (paragraphTextInfo[j].text) {
-                paraRun.AddText(paragraphTextInfo[j].text);
-                paraRun.SetReviewTypeWithInfo(paragraphTextInfo[j].reviewType, paragraphTextInfo[j].reviewInfo);
-                paragraph.AddToContentToEnd(paraRun);
+        for (let j = 0; j < oParagraphTextInfo.length; j += 1) {
+            const oParaRun = new AscWord.ParaRun();
+            if (oParagraphTextInfo[j].text) {
+                oParaRun.AddText(oParagraphTextInfo[j].text);
+                oParaRun.SetReviewTypeWithInfo(oParagraphTextInfo[j].reviewType, oParagraphTextInfo[j].reviewInfo);
+                oParagraph.AddToContentToEnd(oParaRun);
             } else {
-                paragraph.GetParaEndRun().SetReviewTypeWithInfo(paragraphTextInfo[j].reviewType, paragraphTextInfo[j].reviewInfo, false);
+                oParagraph.GetParaEndRun().SetReviewTypeWithInfo(oParagraphTextInfo[j].reviewType, oParagraphTextInfo[j].reviewInfo, false);
             }
         }
         if (i !== 0) {
-            document.AddToContent(document.Content.length, paragraph);
+            oDocument.AddToContent(oDocument.Content.length, oParagraph);
         }
     }
-    return document;
+    return oDocument;
 }
 
-function createParagraphInfo(sText, mainReviewInfoOpts, additionalReviewInfoOpts) {
-    const oRet = {
+function createParagraphInfo(sText, oMainReviewInfoOptions, oAdditionalReviewInfoOptions) {
+    const oResult = {
         text: sText,
         reviewType: reviewtype_Common
     };
-    let mainReviewInfo;
-    if (mainReviewInfoOpts) {
-        mainReviewInfo = createReviewInfoFromOptions(mainReviewInfoOpts);
-        oRet.reviewType = mainReviewInfoOpts.reviewType;
-        if (additionalReviewInfoOpts) {
-            const additionalReviewInfo = createReviewInfoFromOptions(additionalReviewInfoOpts);
-            additionalReviewInfo.SavePrev(additionalReviewInfoOpts.reviewType);
-            mainReviewInfo.PrevType = additionalReviewInfo.PrevType;
-            mainReviewInfo.PrevInfo = additionalReviewInfo.PrevInfo;
+    let oMainReviewInfo;
+    if (oMainReviewInfoOptions) {
+        oMainReviewInfo = createReviewInfoFromOptions(oMainReviewInfoOptions);
+        oResult.reviewType = oMainReviewInfoOptions.reviewType;
+        if (oAdditionalReviewInfoOptions) {
+            const oAdditionalReviewInfo = createReviewInfoFromOptions(oAdditionalReviewInfoOptions);
+            oAdditionalReviewInfo.SavePrev(oAdditionalReviewInfoOptions.reviewType);
+            oMainReviewInfo.PrevType = oAdditionalReviewInfo.PrevType;
+            oMainReviewInfo.PrevInfo = oAdditionalReviewInfo.PrevInfo;
         }
     } else {
-        mainReviewInfo = createReviewInfoFromOptions();
+        oMainReviewInfo = createReviewInfoFromOptions();
     }
-    oRet.reviewInfo = mainReviewInfo;
-    return oRet;
+    oResult.reviewInfo = oMainReviewInfo;
+    return oResult;
 }
 
 function createShapeInfo() {
     
 }
 
-function createReviewInfoFromOptions(opts) {
-    opts = opts || {};
+function createReviewInfoFromOptions(oOptions) {
+    oOptions = oOptions || {};
     const oReviewInfo = new CReviewInfo();
 
     oReviewInfo.Editor = mockEditor;
@@ -139,322 +319,8 @@ function createReviewInfoFromOptions(opts) {
     oReviewInfo.MoveType = Asc.c_oAscRevisionsMove.NoMove;
     oReviewInfo.PrevType = -1;
     oReviewInfo.PrevInfo = null;
-    oReviewInfo.UserName = opts.userName || oReviewInfo.UserName;
-    oReviewInfo.DateTime = opts.dateTime || oReviewInfo.DateTime;
+    oReviewInfo.UserName = oOptions.userName || oReviewInfo.UserName;
+    oReviewInfo.DateTime = oOptions.dateTime || oReviewInfo.DateTime;
 
     return oReviewInfo;
 }
-
-const testObjectInfo = [
-    ///////////////////////// -> 1 <- /////////////////////////////
-    {
-        originalDocument: [
-            [
-                createParagraphInfo(''),
-            ]
-        ],
-        revisedDocument: [
-            [
-                createParagraphInfo('Привет')
-            ]
-        ]
-    },
-    ///////////////////////// -> 2 <- /////////////////////////////
-    {
-        originalDocument: [
-            [
-                createParagraphInfo(''),
-            ]
-        ],
-        revisedDocument: [
-            [
-                createParagraphInfo('')
-            ]
-        ]
-    },
-    ///////////////////////// -> 3 <- /////////////////////////////
-    {
-        originalDocument: [
-            [
-                createParagraphInfo('Привет'),
-            ]
-        ],
-        revisedDocument: [
-            [
-                createParagraphInfo('Приветище')
-            ]
-        ]
-    },
-    ///////////////////////// -> 4 <- /////////////////////////////
-    {
-        originalDocument: [
-            [
-                createParagraphInfo('Привет'),
-            ]
-        ],
-        revisedDocument: [
-            [
-                createParagraphInfo('Привет', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000})
-            ]
-        ]
-    },
-    ///////////////////////// -> 5 <- /////////////////////////////
-    {
-        originalDocument: [
-            [
-                createParagraphInfo('Привет'),
-            ]
-        ],
-        revisedDocument: [
-            [
-                createParagraphInfo('Приветище', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000})
-            ]
-        ]
-    },
-    ///////////////////////// -> 6 <- /////////////////////////////
-    {
-        originalDocument: [
-            [
-                createParagraphInfo('Привет, как дела?'),
-            ]
-        ],
-        revisedDocument: [
-            [
-                createParagraphInfo('При', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo('вет, как дела?')
-            ]
-        ]
-    },
-    ///////////////////////// -> 7 <- /////////////////////////////
-    {
-        originalDocument: [
-            [
-                createParagraphInfo('Привет Привет Привет'),
-            ]
-        ],
-        revisedDocument: [
-            [
-                createParagraphInfo('Привет'), createParagraphInfo(' Привет', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo(' Привет')
-            ]
-        ]
-    },
-    ///////////////////////// -> 8 <- /////////////////////////////
-    {
-        originalDocument: [
-            [
-                createParagraphInfo('Привет'), createParagraphInfo(' ой', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo(' Привет'), createParagraphInfo(' Привет'),
-            ]
-        ],
-        revisedDocument: [
-            [
-                createParagraphInfo('Привет'), createParagraphInfo(' Привет', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo(' Привет')
-            ]
-        ]
-    },
-    ///////////////////////// -> 9 <- /////////////////////////////
-    {
-        originalDocument: [
-            [
-                createParagraphInfo('как дела?')
-            ]
-        ],
-        revisedDocument: [
-            [
-                createParagraphInfo('Привет, ', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo('как дела?')
-            ]
-        ]
-    },
-    ///////////////////////// -> 10 <- /////////////////////////////
-    {
-        originalDocument: [
-            [
-                createParagraphInfo('Привет, как дела?')
-            ]
-        ],
-        revisedDocument: [
-            [
-                createParagraphInfo('Приветик, ', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo('как дела?')
-            ]
-        ]
-    },
-    ///////////////////////// -> 11 <- /////////////////////////////
-    {
-        originalDocument: [
-            [
-                createParagraphInfo('Привет, как дела?'), createParagraphInfo(' Нормально, а у тебя как?', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000})
-            ]
-        ],
-        revisedDocument: [
-            [
-                createParagraphInfo('Привет, как дела?'), createParagraphInfo(' Хорошо, а у тебя как?', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 2000000})
-            ]
-        ]
-    },
-    ///////////////////////// -> 12 <- /////////////////////////////
-    {
-        originalDocument: [
-            [
-                createParagraphInfo('Привет, как дела? Нормально, а у тебя как?')
-            ]
-        ],
-        revisedDocument: [
-            [
-                createParagraphInfo('Привет, как дела?'), createParagraphInfo(' Хорошо, а у тебя как?', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000})
-            ]
-        ]
-    },
-    ///////////////////////// -> 13 <- /////////////////////////////
-    {
-        originalDocument: [
-            [
-                createParagraphInfo('Привет, как дела?   Хорошо, а у тебя как?')
-            ]
-        ],
-        revisedDocument: [
-            [
-                createParagraphInfo('Привет, как дела?    '), createParagraphInfo(' Нормально, а у тебя как?', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000})
-            ]
-        ]
-    },
-    ///////////////////////// -> 14 <- /////////////////////////////
-    {
-        originalDocument: [
-            [
-                createParagraphInfo('При', {reviewType: reviewtype_Remove, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo('вет, как д'),createParagraphInfo('ел', {reviewType: reviewtype_Remove, userName: 'John Smith', dateTime: 1000000}),createParagraphInfo('а?'),
-            ]
-        ],
-        revisedDocument: [
-            [
-                createParagraphInfo('Пр'),createParagraphInfo('и', {reviewType: reviewtype_Add, userName: 'John Smoth', dateTime: 2000000}),createParagraphInfo('в'),createParagraphInfo('е', {reviewType: reviewtype_Add, userName: 'John Smoth', dateTime: 2000000}),createParagraphInfo('т'),createParagraphInfo(',', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}),createParagraphInfo(' к'),createParagraphInfo('а', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}),createParagraphInfo('к', {reviewType: reviewtype_Remove, userName: 'John Smith', dateTime: 1000000}),createParagraphInfo(' '),createParagraphInfo('д', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}),createParagraphInfo('ела?'),
-            ]
-        ]
-    },
-    ///////////////////////// -> 15 <- /////////////////////////////
-    {
-        originalDocument: [
-            [
-                createParagraphInfo('Привет, как уюю у '), createParagraphInfo('тебя', {reviewType: reviewtype_Remove, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo(' дела    ', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo(' дела?')
-            ]
-        ],
-        revisedDocument: [
-            [
-                createParagraphInfo('Привет,'), createParagraphInfo(' ну ты даешь,', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo(' как у '), createParagraphInfo(' опо', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo(' дела?')
-            ]
-        ]
-    },
-
-];
-const answers = [
-  /////////////////////////////////// -> 1 <- ////////////////////////////////////////////
-    {
-        finalDocument: [
-            [createParagraphInfo(undefined, {reviewType: reviewtype_Remove, userName: 'Valdemar', dateTime: 3000000})],
-            [
-                createParagraphInfo('Привет', {reviewType: reviewtype_Add, userName: 'Valdemar', dateTime: 3000000})
-            ]
-        ]
-    },
-    /////////////////////////////////// -> 2 <- ////////////////////////////////////////////
-    {
-        finalDocument: [
-            [createParagraphInfo()],
-        ]
-    },
-    /////////////////////////////////// -> 3 <- ////////////////////////////////////////////
-    {
-        finalDocument: [
-            [createParagraphInfo('Привет', {reviewType: reviewtype_Remove, userName: 'Valdemar', dateTime: 3000000}), createParagraphInfo(undefined, {reviewType: reviewtype_Remove, userName: 'Valdemar', dateTime: 3000000})],
-          [createParagraphInfo('Приветище', {reviewType: reviewtype_Add, userName: 'Valdemar', dateTime: 3000000}), createParagraphInfo(undefined)]
-        ]
-    },
-    /////////////////////////////////// -> 4 <- ////////////////////////////////////////////
-    {
-        finalDocument: [
-            [createParagraphInfo('Привет', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo(undefined)]
-        ]
-    },
-    /////////////////////////////////// -> 5 <- ////////////////////////////////////////////
-    {
-        finalDocument: [
-            [createParagraphInfo('Привет', {reviewType: reviewtype_Remove, userName: 'Valdemar', dateTime: 3000000}), createParagraphInfo(undefined, {reviewType: reviewtype_Remove, userName: 'Valdemar', dateTime: 3000000})],
-            [createParagraphInfo('Приветище', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo(undefined)]
-        ]
-    },
-    /////////////////////////////////// -> 6 <- ////////////////////////////////////////////
-    {
-        finalDocument: [
-            [createParagraphInfo('При', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo('вет, как дела?')],
-        ]
-    },
-    /////////////////////////////////// -> 7 <- ////////////////////////////////////////////
-    {
-        finalDocument: [
-          [createParagraphInfo('Привет'), createParagraphInfo(' Привет', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo(' Привет')]
-        ]
-    },
-    /////////////////////////////////// -> 8 <- ////////////////////////////////////////////
-    {
-        finalDocument: [
-          [
-            createParagraphInfo('Привет'), createParagraphInfo(' ой', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}),createParagraphInfo(' ', {reviewType: reviewtype_Add, userName: 'Valdemar', dateTime: 3000000}),createParagraphInfo('Привет', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo(' Привет')
-          ]
-        ]
-    },
-    /////////////////////////////////// -> 9 <- ////////////////////////////////////////////
-    {
-        finalDocument: [
-            [
-              createParagraphInfo('Привет, ', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo('как дела?')
-            ]
-        ]
-    },
-    /////////////////////////////////// -> 10 <- ////////////////////////////////////////////
-    {
-        finalDocument: [
-            [
-              createParagraphInfo('Привет',{reviewType: reviewtype_Add, userName: 'Valdemar', dateTime: 3000000}),createParagraphInfo('Приветик, ',{reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo('как дела?')
-            ]
-        ]
-    },
-    /////////////////////////////////// -> 11 <- ////////////////////////////////////////////
-    {
-        finalDocument: [
-            [
-              createParagraphInfo('Привет, как дела?'), createParagraphInfo(' Нормально',{reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo('Хорошо', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 2000000}),createParagraphInfo(', а у тебя как?', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}),
-            ]
-        ]
-    },
-    /////////////////////////////////// -> 12 <- ////////////////////////////////////////////
-    {
-        finalDocument: [
-            [
-                createParagraphInfo('Привет, как дела?'), createParagraphInfo(' ',{reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo('Нормально', {reviewType: reviewtype_Add, userName: 'Valdemar', dateTime: 3000000}), createParagraphInfo('Хорошо, а у тебя как?', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000})
-            ]
-        ]
-    },
-    /////////////////////////////////// -> 13 <- ////////////////////////////////////////////
-    {
-        finalDocument: [
-            [
-                createParagraphInfo('Привет, как дела?   '), createParagraphInfo('Хорошо ', {reviewType: reviewtype_Add, userName: 'Valdemar', dateTime: 3000000}), createParagraphInfo(' Нормально, а у тебя как?', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}),
-            ]
-        ]
-    },
-    /////////////////////////////////// -> 14 <- ////////////////////////////////////////////
-    {
-        finalDocument: [
-            [
-                createParagraphInfo('Пр', {reviewType: reviewtype_Remove, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo('и', {reviewType: reviewtype_Remove, userName: 'John Smith', dateTime: 1000000}, {reviewType: reviewtype_Add, userName: 'John Smoth', dateTime: 2000000}), createParagraphInfo('в'), createParagraphInfo('е', {reviewType: reviewtype_Add, userName: 'John Smoth', dateTime: 2000000}), createParagraphInfo('т'), createParagraphInfo(',', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo(' к'), createParagraphInfo('а', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo('к', {reviewType: reviewtype_Remove, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo(' '), createParagraphInfo('д', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo('ел', {reviewType: reviewtype_Remove, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo('а?')
-            ]
-        ]
-    },
-    /////////////////////////////////// -> 15 <- ////////////////////////////////////////////
-    {
-        finalDocument: [
-            [
-              createParagraphInfo('Привет,'),createParagraphInfo(' ну ты даешь,', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo(' как'), createParagraphInfo(' уюю', {reviewType: reviewtype_Add, userName: 'Valdemar', dateTime: 3000000}),createParagraphInfo(' у '), createParagraphInfo('тебя', {reviewType: reviewtype_Remove, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo(' дела     опо', {reviewType: reviewtype_Add, userName: 'John Smith', dateTime: 1000000}), createParagraphInfo(' дела?')
-            ]
-        ]
-    },
-];
-
-const comments = [];
