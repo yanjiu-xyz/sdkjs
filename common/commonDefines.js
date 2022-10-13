@@ -2642,6 +2642,12 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		divide: 4
 	};
 
+	var c_oAbstractNumMultiLvlTypes = {
+		HybridMultiLevel: 0,
+		MultiLevel: 1,
+		SingleLevel: 2
+	};
+
 
 	/** @enum {number} */
 	var c_oAscNumberingFormat = {
@@ -4411,6 +4417,12 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['subtract'] = prot.subtract;
 	prot['multiply'] = prot.multiply;
 	prot['divide'] = prot.divide;
+
+	window['Asc']['c_oAbstractNumMultiLvlTypes'] = window['Asc'].c_oAbstractNumMultiLvlTypes = c_oAbstractNumMultiLvlTypes;
+	prot = c_oAbstractNumMultiLvlTypes;
+	prot['HybridMultiLevel'] = prot.HybridMultiLevel;
+	prot['MultiLevel']       = prot.MultiLevel;
+	prot['SingleLevel']      = prot.SingleLevel;
 
 	window['Asc']['c_oAscNumberingFormat'] = window['Asc'].c_oAscNumberingFormat = c_oAscNumberingFormat;
 	prot = c_oAscNumberingFormat;

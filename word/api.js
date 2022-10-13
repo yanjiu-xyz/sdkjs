@@ -3977,6 +3977,30 @@ background-repeat: no-repeat;\
 		}
 	};
 
+	asc_docs_api.prototype.asc_IsShowListIndentsSettings = function ()
+	{
+		const oLogicDocument = this.private_GetLogicDocument();
+
+		if (!oLogicDocument)
+			return false;
+
+		const oNumPr = oLogicDocument.GetSelectedNum(true);
+		if (!oNumPr)
+			return false;
+
+		const oNum = oLogicDocument.GetNumbering().GetNum(oNumPr.NumId);
+		if (!oNum)
+			return false;
+
+		const oAbstractNum = oNum.GetAbstractNum();
+		if (oAbstractNum)
+		{
+			const nMultiLvlType = oAbstractNum.GetMultiLvlType();
+			return nMultiLvlType !== Asc.c_oAbstractNumMultiLvlTypes.MultiLevel;
+		}
+		return false;
+	};
+
 	asc_docs_api.prototype.put_PrAlign        = function(value)
 	{
 		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Properties))
@@ -13077,6 +13101,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['put_PrAlign']                               = asc_docs_api.prototype.put_PrAlign;
 	asc_docs_api.prototype['put_TextPrBaseline']                        = asc_docs_api.prototype.put_TextPrBaseline;
 	asc_docs_api.prototype['put_ListType']                              = asc_docs_api.prototype.put_ListType;
+	asc_docs_api.prototype['asc_IsShowListIndentsSettings']             = asc_docs_api.prototype.asc_IsShowListIndentsSettings;
 	asc_docs_api.prototype['asc_ContinueNumbering']                     = asc_docs_api.prototype.asc_ContinueNumbering;
 	asc_docs_api.prototype['asc_RestartNumbering']                      = asc_docs_api.prototype.asc_RestartNumbering;
 	asc_docs_api.prototype['asc_GetCurrentNumberingId']                 = asc_docs_api.prototype.asc_GetCurrentNumberingId;
