@@ -488,7 +488,7 @@
     CDocumentMergeComparison.prototype.resolveCustomReviewTypesBetweenElements = CDocumentResolveConflictComparison.prototype.resolveCustomReviewTypesBetweenElements;
 
     CDocumentMergeComparison.prototype.checkParaEndReview = function (oNode) {
-        if (oNode && oNode.element.GetType() === type_Paragraph && oNode.partner) {
+        if (oNode && oNode.element.GetType && oNode.element.GetType() === type_Paragraph && oNode.partner) {
             const oMainParaEnd = oNode.element.GetParaEndRun();
             const oRevisedParaEnd = oNode.partner.element.GetParaEndRun();
             const nRevisedReviewType = oRevisedParaEnd.GetReviewType();
