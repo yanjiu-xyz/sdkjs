@@ -1957,14 +1957,14 @@
             this.applyChangesToChildNode(oNode.children[i]);
         }
     };
-    CDocumentComparison.prototype.setReviewInfo = function(oReviewInfo, sCustomReviewUserName, nCustomReviewDate)
+    CDocumentComparison.prototype.setReviewInfo = function(oReviewInfo)
     {
         oReviewInfo.Editor   = this.api;
         oReviewInfo.UserId   = "";
         oReviewInfo.MoveType = Asc.c_oAscRevisionsMove.NoMove;
         oReviewInfo.PrevType = -1;
         oReviewInfo.PrevInfo = null;
-        oReviewInfo.UserName = sCustomReviewUserName || this.getUserName();
+        oReviewInfo.UserName = this.getUserName();
         const oCore = this.revisedDocument.Core;
         if(oCore)
         {
@@ -1976,9 +1976,6 @@
         else
         {
             oReviewInfo.DateTime = "Unknown";
-        }
-        if (AscFormat.isRealNumber(nCustomReviewDate)) {
-            oReviewInfo.DateTime = nCustomReviewDate;
         }
     };
     CDocumentComparison.prototype.getElementsForSetReviewType = function (oObject) {
@@ -2299,14 +2296,14 @@
         return oLastText;
     }
 
-    CDocumentComparison.prototype.getReviewTypeAndName = function (oRun) {
+    CDocumentComparison.prototype.getCompareReviewInfo = function (oRun) {
 
     }
 
     CDocumentComparison.prototype.createNodeFromRun = function (oRun, oLastText, oHashWords, oRet) {
         const TextElementConstructor = this.getTextElementConstructor();
         const NodeConstructor = this.getNodeConstructor();
-        const oReviewInfo = this.getReviewTypeAndName(oRun);
+        const oReviewInfo = this.getCompareReviewInfo(oRun);
         return createNodeFromRun(oRun, oLastText, oHashWords, oRet, TextElementConstructor, NodeConstructor, oReviewInfo);
     }
 
