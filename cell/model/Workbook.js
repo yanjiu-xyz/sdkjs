@@ -8466,7 +8466,7 @@
 		var location = pivotTable.location;
 		var r1 = pivotRange.r1 + location.firstDataRow;
 		var c1 = pivotRange.c1 + location.firstDataCol;
-		let traversal = new DataRowTraversal(pivotFields, rowFields, colFields, dataFields);
+		let traversal = new DataRowTraversal(pivotFields, dataFields, rowItems, colItems);
 		traversal.initRow(dataRow);
 
 		var fieldIndex;
@@ -8493,6 +8493,8 @@
 						break;
 					}
 				}
+			} else {
+				traversal.rowFieldItemCache = [];
 			}
 			//todo
 			if (Asc.c_oAscItemType.Data !== rowItem.t || !rowFields || rowR + rowItem.x.length === rowFields.length ||
@@ -8505,7 +8507,7 @@
 					traversal.setDataField(rowItem, colItem, dataFields);
 					var colR = colItem.getR();
 					traversal.setStartColIndex(pivotFields, fieldIndex, colItem, colR, colFields, rowItem);
-					oCellValue = traversal.getCellValue(dataFields, rowItem, colItem, props, dataRow);
+					oCellValue = traversal.getCellValue(dataFields, rowItem, colItem, props, dataRow, rowItemsIndex, colItemsIndex);
 					if (oCellValue) {
 						var cells = this.getRange4(r1 + rowItemsIndex, c1 + colItemsIndex);
 						if (traversal.dataField && traversal.dataField.num) {
