@@ -15962,7 +15962,9 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 						if (rowValueIndex !== null) {
 							let field = this.pivotFields[dataField.baseField];
 							let fieldItem = field.getItem(rowValueIndex);
-							difference = difference.vals[fieldItem.x];
+							if (difference) {
+								difference = difference.vals[fieldItem.x];
+							}
 							for (let i = this.diffRowIndex[dataIndex] + 1; i < this.rowFieldItemCache.length; i += 1) {
 								if (difference) {
 									difference = difference.vals[this.rowFieldItemCache[i].x];
@@ -15986,7 +15988,9 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 						if (colValueIndex !== null) {
 							let field = this.pivotFields[dataField.baseField];
 							let fieldItem = field.getItem(colValueIndex);
-							difference = difference.subtotal[fieldItem.x];
+							if (difference) {
+								difference = difference.subtotal[fieldItem.x];
+							}
 							for (let i = this.diffColIndex[dataIndex] + 1; i < this.colFieldItemCache.length; i += 1) {
 								if (difference) {
 									difference = difference.subtotal[this.colFieldItemCache[i].x];
