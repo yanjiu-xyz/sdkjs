@@ -15844,7 +15844,7 @@ DataRowTraversal.prototype.getDiffValueIndex = function (dataIndex, itemIndex, t
 				break;
 			}
 			for (let j =  diffIndex[dataIndex] + 1; j <  valueCache.length && resValueIndex === null; j += 1) {
-				if (j ===  valueCache.length - 1 && tmpTree.vals[valueCache[j]]) {
+				if (j ===  valueCache.length - 1 && tmpTree && tmpTree.vals[valueCache[j]]) {
 					resValueIndex = i;
 					break;
 				}
