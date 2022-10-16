@@ -311,12 +311,12 @@
         return CConflictResolveNode;
     }
 
-    CDocumentResolveConflictComparison.prototype.setReviewInfoForArray = function (arrNeedReviewObjects, nType, sCustomReviewUserName, nCustomReviewDate) {
+    CDocumentResolveConflictComparison.prototype.setReviewInfoForArray = function (arrNeedReviewObjects, nType) {
         for (let i = 0; i < arrNeedReviewObjects.length; i += 1) {
             const oNeedReviewObject = arrNeedReviewObjects[i];
             if (oNeedReviewObject.SetReviewTypeWithInfo) {
                 let oReviewInfo = oNeedReviewObject.ReviewInfo.Copy();
-                this.setReviewInfo(oReviewInfo, sCustomReviewUserName, nCustomReviewDate);
+                this.setReviewInfo(oReviewInfo);
                 if (this.bSaveCustomReviewType) {
                     const reviewType = oNeedReviewObject.GetReviewType && oNeedReviewObject.GetReviewType();
                     if (reviewType === reviewtype_Add || reviewType === reviewtype_Remove) {
@@ -327,12 +327,6 @@
                         } else if (reviewType === reviewtype_Add && nType === reviewtype_Remove) {
                             oReviewInfo = oNeedReviewObject.ReviewInfo.Copy();
                             oReviewInfo.SavePrev(reviewtype_Add);
-                            if (sCustomReviewUserName) {
-                                oReviewInfo.UserName = sCustomReviewUserName;
-                            }
-                            if (nCustomReviewDate) {
-                                oReviewInfo.DateTime = nCustomReviewDate;
-                            }
                         }
                     }
                 }
@@ -539,15 +533,7 @@
         return originalParagraph.Content;
     }
 
-    CDocumentMergeComparison.prototype.getReviewTypeAndName = function (oRun) {
-        const oReviewInfo = oRun.GetReviewInfo && oRun.GetReviewInfo();
-        const sUserName = oReviewInfo && oReviewInfo.GetUserName();
-        const reviewType = oRun.GetReviewType && oRun.GetReviewType();
-        return {
-            reviewType: reviewType,
-            userName: sUserName
-        };
-    }
+    CDocumentMergeComparison.prototype.getCompareReviewInfo = CDocumentResolveConflictComparison.prototype.getCompareReviewInfo;
 
     CDocumentMergeComparison.prototype.applyParagraphComparison = function (oOrigRoot, oRevisedRoot) {
         this.copyPr.SkipUpdateInfo = false;
