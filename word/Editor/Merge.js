@@ -64,37 +64,52 @@
                 nPriorityReviewType: reviewtype_Common,
                 nStartChangeReviewIndex: -1,
                 nEndChangeReviewIndex: 0,
-                sReviewUserName: '',
-                oReviewInfo: null,
-                sReviewDate: ''
+                oReviewInfo: null
             }
         ];
         for (let i = 0; i < arrReviewTypesOfRevisedElement.length; i += 1) {
-            const priorityReviewType = arrReviewTypesOfRevisedElement[i].reviewType;
-            const oReviewInfo = arrReviewTypesOfRevisedElement[i].reviewInfo;
-            const mainReviewType =  arrReviewTypesOfMainElement[i].reviewType;
-            const sReviewUserName = oReviewInfo && oReviewInfo.GetUserName();
-            const sReviewDate = '' + oReviewInfo && oReviewInfo.DateTime;
-            if (priorityReviewType !== reviewtype_Common && priorityReviewType !== mainReviewType) {
+            const nRevisedReviewType = arrReviewTypesOfRevisedElement[i].reviewType;
+            const oRevisedReviewInfo = arrReviewTypesOfRevisedElement[i].reviewInfo;
+            const oRevisedPrevAdded = arrReviewTypesOfRevisedElement[i].prevAdded;
+
+            const nMainReviewType = arrReviewTypesOfMainElement[i].reviewType;
+            const oMainPrevAdded = arrReviewTypesOfMainElement[i].prevAdded;
+
+            let nPriorityReviewType;
+            let oPriorityReviewInfo;
+
+            if (nRevisedReviewType !== reviewtype_Common && !(oMainPrevAdded && nMainReviewType === reviewtype_Remove)) {
+                if (nMainReviewType !== nRevisedReviewType) {
+                    nPriorityReviewType = nRevisedReviewType;
+                    oPriorityReviewInfo = oRevisedReviewInfo;
+                } else if (nMainReviewType === reviewtype_Remove && oRevisedPrevAdded) {
+                    nPriorityReviewType = reviewtype_Add;
+                    oPriorityReviewInfo = oRevisedPrevAdded;
+                }
+            }
+            
+            if (nPriorityReviewType && oPriorityReviewInfo) {
+                const sReviewUserName = oPriorityReviewInfo.GetUserName();
+                const nReviewDate = oPriorityReviewInfo.GetDateTime();
                 const lastChangeReviewInfo = arrChangeReviewTypesInfo[arrChangeReviewTypesInfo.length - 1];
                 if (lastChangeReviewInfo.nStartChangeReviewIndex === -1) {
                     lastChangeReviewInfo.nStartChangeReviewIndex = i;
                     lastChangeReviewInfo.nEndChangeReviewIndex = i - 1;
-                    lastChangeReviewInfo.nPriorityReviewType = priorityReviewType;
-                    lastChangeReviewInfo.reviewInfo = oReviewInfo && oReviewInfo.Copy();
+                    lastChangeReviewInfo.nPriorityReviewType = nPriorityReviewType;
+                    lastChangeReviewInfo.reviewInfo = oPriorityReviewInfo.Copy();
                 }
                 if (i - 1 === lastChangeReviewInfo.nEndChangeReviewIndex 
-                    && priorityReviewType === lastChangeReviewInfo.nPriorityReviewType 
+                    && nPriorityReviewType === lastChangeReviewInfo.nPriorityReviewType
                     && lastChangeReviewInfo.reviewInfo
                     && (lastChangeReviewInfo.reviewInfo.GetUserName() === sReviewUserName )
-                    && lastChangeReviewInfo.reviewInfo.GetDateTime() === sReviewDate) {
+                    && lastChangeReviewInfo.reviewInfo.GetDateTime() === nReviewDate) {
                     lastChangeReviewInfo.nEndChangeReviewIndex = i;
                 } else {
                     arrChangeReviewTypesInfo.push({
-                        nPriorityReviewType: priorityReviewType,
+                        nPriorityReviewType: nPriorityReviewType,
                         nStartChangeReviewIndex: i,
                         nEndChangeReviewIndex: i,
-                        reviewInfo: oReviewInfo && oReviewInfo.Copy()
+                        reviewInfo: oPriorityReviewInfo.Copy()
                     });
                 }
             }
@@ -274,7 +289,7 @@
         }
         if (this.reviewElementTypes.length === otherElement.reviewElementTypes.length) {
             for (let i = 0; i < this.reviewElementTypes.length; i += 1) {
-                if (this.reviewElementTypes[i].reviewType !== otherElement.reviewElementTypes[i].reviewType) {
+                if (this.reviewElementTypes[i].reviewType !== otherElement.reviewElementTypes[i].reviewType || !!this.reviewElementTypes[i].prevAdded !== !!otherElement.reviewElementTypes[i].prevAdded) {
                     return false;
                 }
             }
@@ -339,12 +354,14 @@
         return CResolveConflictTextElement;
     }
 
-    CDocumentResolveConflictComparison.prototype.getReviewTypeAndName = function (oRun) {
+    CDocumentResolveConflictComparison.prototype.getCompareReviewInfo = function (oRun) {
         const oReviewInfo = oRun.GetReviewInfo && oRun.GetReviewInfo();
+        const prevAdded = oReviewInfo.GetPrevAdded();
         const reviewType = oRun.GetReviewType && oRun.GetReviewType();
         return {
             reviewType: reviewType,
             reviewInfo: oReviewInfo,
+            prevAdded: prevAdded
         };
     }
 
