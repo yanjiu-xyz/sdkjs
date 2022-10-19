@@ -15052,10 +15052,11 @@ CTextPr.prototype.GetFontFamily = function()
 };
 CTextPr.prototype.SetFontFamily = function(sFontName)
 {
-	if (!this.RFonts)
+	if (!this.RFonts || typeof sFontName !== 'string')
 		this.RFonts = new CRFonts();
 
-	this.RFonts.SetAll(sFontName);
+	if (typeof sFontName === 'string')
+		this.RFonts.SetAll(sFontName);
 };
 CTextPr.prototype.GetFontSize = function()
 {
