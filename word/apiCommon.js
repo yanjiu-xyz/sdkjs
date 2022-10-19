@@ -1824,7 +1824,9 @@
 	CAscNumberingLvl.prototype.put_IndentSize = function (nIndentSize)
 	{
 		this.checkParaPr();
+		const nOldNumberPosition = this.get_NumberPosition();
 		this.ParaPr.put_Ind(undefined, nIndentSize, undefined);
+		this.put_NumberPosition(nOldNumberPosition);
 	};
 	CAscNumberingLvl.prototype.put_NumberPosition = function (nNumberPosition)
 	{
@@ -1839,6 +1841,7 @@
 		return this.TextPr;
 	};
 	CAscNumberingLvl.prototype.GetTextPr = CAscNumberingLvl.prototype.get_TextPr;
+
 	CAscNumberingLvl.prototype.get_ParaPr = function ()
 	{
 		return this.ParaPr;
@@ -1887,14 +1890,19 @@
 	{
 		return this.ParaPr && this.ParaPr.Ind ? this.ParaPr.Ind.Left : 0;
 	};
+	CAscNumberingLvl.prototype.GetIndentSize = CAscNumberingLvl.prototype.get_IndentSize;
+
 	CAscNumberingLvl.prototype.get_NumberPosition = function ()
 	{
 		const nLeft = this.get_IndentSize();
-		if (nLeft && this.ParaPr.Ind.FirstLine)
+		if (AscFormat.isRealNumber(this.ParaPr.Ind.FirstLine))
 		{
 			return nLeft + this.ParaPr.Ind.FirstLine;
 		}
+		return nLeft;
 	};
+	CAscNumberingLvl.prototype.GetNumberPosition = CAscNumberingLvl.prototype.get_NumberPosition;
+
 	CAscNumberingLvl.prototype.get_LvlNum = function ()
 	{
 		return this.LvlNum;

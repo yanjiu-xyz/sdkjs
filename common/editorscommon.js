@@ -10698,7 +10698,7 @@
 		const nOffset = (nHeight_px - (nLineWidth * 10 + nLineDistance * 9)) >> 1;
 		const nCurrentLvl = this.m_nCurrentLvl;
 
-		oContext.lineWidth = 4 * Math.round(nRPR);
+		oContext.lineWidth = nLineWidth * Math.round(nRPR);
 		oContext.strokeStyle = "#CBCBCB";
 
 		const nTextBaseOffsetDist = (6.25 * AscCommon.g_dKoef_mm_to_pix) >> 0;
@@ -10706,28 +10706,37 @@
 		let nTextBaseOffsetX = nOffset + ((6.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
 		for (let i = 0; i < this.m_arrNumberingLvl.length; i += 1)
 		{
-			const nTextYx = nTextBaseOffsetX - ((6.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
+			const oLvl = this.m_arrNumberingLvl[i];
+			const nIndentSize = oLvl.GetIndentSize() * AscCommon.g_dKoef_mm_to_pix;
+			const nNumberPosition = oLvl.GetNumberPosition();
+			const nTextYx = (nNumberPosition) * AscCommon.g_dKoef_mm_to_pix - ((6.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
 			const nTextYy = nY + nLineWidth;
+			const nSuff = oLvl.get_Suff();
+			let nOffsetText = nTextYx;
+
+			if	(nSuff === Asc.c_oAscNumberingSuff.Tab)
+				nOffsetText = Math.max(nTextYx, nIndentSize);
+
 			if (i === nCurrentLvl)
 			{
+
 				oContext.strokeStyle = "#000000";
-				oContext.moveTo(Math.round(nTextBaseOffsetX * nRPR), Math.round(nY * nRPR)); oContext.lineTo(Math.round((nWidth_px - nOffsetBase) * nRPR), Math.round(nY * nRPR));
+				oContext.moveTo(Math.round(nOffsetText * nRPR), Math.round(nY * nRPR)); oContext.lineTo(Math.round((nWidth_px - nOffsetBase) * nRPR), Math.round(nY * nRPR));
 				nY += (nLineWidth + nLineDistance);
-				oContext.moveTo(Math.round(nTextBaseOffsetX * nRPR), Math.round(nY * nRPR)); oContext.lineTo(Math.round((nWidth_px - nOffsetBase) * nRPR), Math.round(nY * nRPR));
+				oContext.moveTo(Math.round(nIndentSize * nRPR), Math.round(nY * nRPR)); oContext.lineTo(Math.round((nWidth_px - nOffsetBase) * nRPR), Math.round(nY * nRPR));
 				oContext.stroke();
 				oContext.strokeStyle = "#CBCBCB";
 			}
 			else
 			{
-				oContext.moveTo(Math.round(nTextBaseOffsetX * nRPR), Math.round(nY * nRPR)); oContext.lineTo(Math.round((nWidth_px - nOffsetBase) * nRPR), Math.round(nY * nRPR));
+				oContext.moveTo(Math.round(nOffsetText * nRPR), Math.round(nY * nRPR)); oContext.lineTo(Math.round((nWidth_px - nOffsetBase) * nRPR), Math.round(nY * nRPR));
 				oContext.stroke();
 			}
 			oContext.beginPath();
 
-			const oLvl = this.m_arrNumberingLvl[i];
 			const sText = oLvl.GetStringByLvlText(this.m_arrNumberingLvl, i, 1);
 			const oTextPr = oLvl.GetTextPr();
-			this.privateGetParagraphByString(sText, oTextPr, nTextYx,  nTextYy, nLineDistance, oContext, oLvl.get_Suff(), oLvl.get_Align());
+			this.privateGetParagraphByString(sText, oTextPr, nTextYx,  nTextYy, nLineDistance, oContext, nWidth_px, nHeight_px, oLvl.get_Suff(), oLvl.get_Align());
 			nY += (nLineWidth + nLineDistance);
 			nTextBaseOffsetX += nTextBaseOffsetDist;
 		}
@@ -10742,20 +10751,20 @@
 		const nWidth_px = parseFloat(oCanvas.style.width);
 		const nRPR = AscCommon.AscBrowser.retinaPixelRatio;
 		const offsetBase = 10;
-		const line_w = 4;
+		const nLineWidth = 4;
 		const nCurrentLvl = this.m_nCurrentLvl;
 		const oCurrentLvl = this.m_arrNumberingLvl[nCurrentLvl];
 		const oTextPr = oCurrentLvl.GetTextPr();
 		const nSuff = oCurrentLvl.get_Suff();
 		const nAlign = oCurrentLvl.get_Align();
 		// считаем расстояние между линиями
-		const nLineDistance = (((nHeight_px - (offsetBase << 1)) - line_w * 10) / 9) >> 0;
+		const nLineDistance = (((nHeight_px - (offsetBase << 1)) - nLineWidth * 10) / 9) >> 0;
 		// убираем погрешность в offset
-		const nOffset = (nHeight_px - (line_w * 10 + nLineDistance * 9)) >> 1;
+		const nOffset = (nHeight_px - (nLineWidth * 10 + nLineDistance * 9)) >> 1;
 
 		oContext.lineWidth = 4 * Math.round(nRPR);
 		oContext.strokeStyle = "#CBCBCB";
-		let nY = nOffset + 2 + 2 * (line_w + nLineDistance);
+		let nY = nOffset + 2 + 2 * (nLineWidth + nLineDistance);
 
 		let nTextBaseOffsetX = nOffset + (6.25 + (6.25 * (nCurrentLvl + 1) * AscCommon.g_dKoef_mm_to_pix)) >> 0;
 		if (nTextBaseOffsetX > (nWidth_px - offsetBase - 20))
@@ -10764,14 +10773,14 @@
 		}
 
 		const arrTextYy = [];
-		arrTextYy.push(nY + line_w); nY += 2 * (line_w + nLineDistance);
-		arrTextYy.push(nY + line_w); nY += 2 * (line_w + nLineDistance);
-		arrTextYy.push(nY + line_w);
+		arrTextYy.push(nY + nLineWidth); nY += 2 * (nLineWidth + nLineDistance);
+		arrTextYy.push(nY + nLineWidth); nY += 2 * (nLineWidth + nLineDistance);
+		arrTextYy.push(nY + nLineWidth);
 
 		nY = Math.round((nOffset + 2) * nRPR);
 		const nLeftOffset = Math.round(nTextBaseOffsetX * nRPR);
 		const nRightOffset = Math.round((nWidth_px - offsetBase) * nRPR);
-		const nYDist = Math.round((line_w + nLineDistance) * nRPR);
+		const nYDist = Math.round((nLineWidth + nLineDistance) * nRPR);
 
 		const nLeftOffset2 = Math.round(offsetBase * nRPR);
 		const nRightOffset2 = Math.round((nWidth_px - offsetBase) * nRPR);
@@ -10800,7 +10809,7 @@
 			const sText = oCurrentLvl.GetStringByLvlText(this.m_arrNumberingLvl, nCurrentLvl, i + 1);
 			const nTextYx = (nTextBaseOffsetX - ((6.25 * AscCommon.g_dKoef_mm_to_pix)) >> 0);
 			const nTextYy = arrTextYy[i];
-			this.privateGetParagraphByString(sText, oTextPr, nTextYx, nTextYy, nLineDistance, oContext, nSuff, nAlign);
+			this.privateGetParagraphByString(sText, oTextPr, nTextYx, nTextYy, nLineDistance, oContext, nWidth_px, nHeight_px, nSuff, nAlign);
 		}
 		oContext.beginPath();
 	};

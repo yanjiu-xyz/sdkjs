@@ -1307,6 +1307,19 @@ CNumberingLvl.prototype.GetStringByLvlText = function (arrLvls, nLvl, nNum)
 
 	return arrResult.join('');
 };
+CNumberingLvl.prototype.GetNumberPosition = function ()
+{
+	const nLeft = this.GetIndentSize();
+	if (this.ParaPr.Ind.FirstLine)
+	{
+		return nLeft + this.ParaPr.Ind.FirstLine;
+	}
+	return 0;
+};
+CNumberingLvl.prototype.GetIndentSize = function ()
+{
+	return this.ParaPr && this.ParaPr.Ind ? this.ParaPr.Ind.Left : 0;
+};
 CNumberingLvl.prototype.WriteToBinary = function(oWriter)
 {
 	// Long               : Jc

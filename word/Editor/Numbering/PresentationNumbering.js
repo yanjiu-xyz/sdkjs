@@ -335,6 +335,14 @@ CPresentationBullet.prototype.Get_StartAt = function()
 {
 	return this.m_nStartAt;
 };
+CPresentationBullet.prototype.GetIndentSize = function ()
+{
+	return 0;
+};
+CPresentationBullet.prototype.GetNumberPosition = function ()
+{
+	return 0;
+};
 
 CPresentationBullet.prototype.GetDrawingText = function () {
 	let Num;
