@@ -1911,7 +1911,7 @@
 	{
 		return this.Suff;
 	};
-	CAscNumberingLvl.prototype.GetStringByLvlText = function (nNum)
+	CAscNumberingLvl.prototype.GetStringByLvlText = function (arrLvls, nLvl, nNum)
 	{
 		const arrResult = [];
 		for (let i = 0; i < this.Text.length; i += 1)
@@ -1925,8 +1925,20 @@
 				}
 				case Asc.c_oAscNumberingLvlTextType.Num:
 				{
-					const nFormat = AscFormat.isRealNumber(this.get_Format()) ? this.get_Format() : Asc.c_oAscNumberingFormat.Decimal;
-					arrResult.push(AscCommon.IntToNumberFormat(nNum, nFormat, this.get_OLang()));
+					if (nNum) {
+						let nFormat = this.get_Format();
+						const nCurrentLvl = oNumberingLvlText.get_Value();
+						if (nLvl === nCurrentLvl)
+						{
+							nNum = (this.get_Start() - 1) + nNum;
+						}
+						else if (nLvl > nCurrentLvl && arrLvls[nCurrentLvl])
+						{
+							nFormat = arrLvls[nCurrentLvl].get_Format();
+							nNum = arrLvls[nCurrentLvl].get_Start();
+						}
+						arrResult.push(AscCommon.IntToNumberFormat(nNum, nFormat, this.get_OLang()));
+					}
 					break;
 				}
 				default:

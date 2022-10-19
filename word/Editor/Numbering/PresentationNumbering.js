@@ -336,9 +336,16 @@ CPresentationBullet.prototype.Get_StartAt = function()
 	return this.m_nStartAt;
 };
 
-CPresentationBullet.prototype.GetDrawingText = function (Num) {
+CPresentationBullet.prototype.GetDrawingText = function () {
+	let Num;
+	if (arguments.length === 1) {
+		Num = arguments[0];
+	} else if (arguments.length === 3) {
+		Num = arguments[2];
+	} else {
+		Num = 1;
+	}
 	var sT = "";
-	Num = Num || 1;
 	if (this.m_nType === AscFormat.numbering_presentationnumfrmt_Char)
 	{
 		if ( null != this.m_sChar )

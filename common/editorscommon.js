@@ -8658,6 +8658,7 @@
 	 * Переводим числовое значение в строку с заданным форматом нумерации
 	 * @param nValue {number}
 	 * @param nFormat {Asc.c_oAscNumberingFormat}
+	 * @param [oLang] {AscCommonWord.CLang}
 	 * @returns {string}
 	 */
 	function IntToNumberFormat(nValue, nFormat, oLang)
@@ -10147,12 +10148,12 @@
 			{
 				for (let j = 0; j < this.m_arrNumberingLvl[i].length; j += 1)
 				{
-					return callback(this.m_arrNumberingLvl[i][j]);
+					callback(this.m_arrNumberingLvl[i][j], j, this.m_arrNumberingLvl[i]);
 				}
 			}
 			else
 			{
-				return callback(this.m_arrNumberingLvl[i]);
+				callback(this.m_arrNumberingLvl[i], i, this.m_arrNumberingLvl);
 			}
 		}
 	};
@@ -10161,8 +10162,8 @@
 	{
 		const oApi = this.m_oApi;
 		const oFontsDict = {};
-		this.checkEachLvl(function (oLvl) {
-			const sText = oLvl.GetStringByLvlText();
+		this.checkEachLvl(function (oLvl, nLvl, arrLvls) {
+			const sText = oLvl.GetStringByLvlText(arrLvls, nLvl, 1);
 			if (sText)
 			{
 				AscFonts.FontPickerByCharacter.checkTextLight(sText);
@@ -10332,7 +10333,7 @@
 		}
 		else
 		{
-			const sText = oLvl.GetStringByLvlText();
+			const sText = oLvl.GetStringByLvlText([oLvl], 0);
 			AscCommon.g_oTextMeasurer.SetTextPr(oTextPr);
 			AscCommon.g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
 			const oInfo = AscCommon.g_oTextMeasurer.Measure2Code(sText.getUnicodeIterator().value());
@@ -10408,7 +10409,7 @@
 			}
 			else
 			{
-				this.privateGetParagraphByString(oLvl.GetStringByLvlText(j + 1), oTextPr, nTextYx, nTextYy, nLineHeight, oContext, nWidth_px, nHeight_px);
+				this.privateGetParagraphByString(oLvl.GetStringByLvlText([oLvl], 0, j + 1), oTextPr, nTextYx, nTextYy, nLineHeight, oContext, nWidth_px, nHeight_px);
 			}
 			nY += (nLineWidth + nLineDistance);
 		}
@@ -10424,7 +10425,7 @@
 		oContext.beginPath();
 
 
-		const sText = oLvl.GetStringByLvlText();
+		const sText = oLvl.GetStringByLvlText([oLvl], 0, 1);
 
 		const oNewShape = new AscFormat.CShape();
 		oNewShape.createTextBody();
@@ -10550,7 +10551,7 @@
 			}
 			else
 			{
-				this.privateGetParagraphByString(oLvl.GetStringByLvlText(1), oTextPr, nTextYx, nTextYy, (nLineDistance - 4), oContext, nWidth_px, nHeight_px);
+				this.privateGetParagraphByString(oLvl.GetStringByLvlText(arrLvls, i, 1), oTextPr, nTextYx, nTextYy, (nLineDistance - 4), oContext, nWidth_px, nHeight_px);
 			}
 			nY += (nLineWidth + nLineDistance);
 			nTextBaseOffsetX += nTextBaseOffsetDelta;
@@ -10572,7 +10573,7 @@
 		const oLvl = arrAscLvl[2];
 		if (oLvl)
 		{
-			const text = oLvl.GetStringByLvlText(1);
+			const text = oLvl.GetStringByLvlText(arrAscLvl, 2, 1);
 			return text.indexOf("1.1") !== -1;
 		}
 		return false;
@@ -10591,7 +10592,7 @@
 				const oLvl = this.m_arrNumberingLvl[i];
 				const oTextPr = oLvl.GetTextPr().Copy();
 				oLvl.put_Align(AscCommon.Left);
-				const sText = oLvl.GetStringByLvlText(1);
+				const sText = oLvl.GetStringByLvlText(this.m_arrNumberingLvl, i, 1);
 
 				const sDivId = this.m_arrId[i];
 				const oCanvas = this.getClearCanvasForPreview(sDivId);
@@ -10724,7 +10725,7 @@
 			oContext.beginPath();
 
 			const oLvl = this.m_arrNumberingLvl[i];
-			const sText = oLvl.GetStringByLvlText(1);
+			const sText = oLvl.GetStringByLvlText(this.m_arrNumberingLvl, i, 1);
 			const oTextPr = oLvl.GetTextPr();
 			this.privateGetParagraphByString(sText, oTextPr, nTextYx,  nTextYy, nLineDistance, oContext, oLvl.get_Suff(), oLvl.get_Align());
 			nY += (nLineWidth + nLineDistance);
@@ -10796,7 +10797,7 @@
 
 		for (let i = 0; i < arrTextYy.length; i++)
 		{
-			const sText = oCurrentLvl.GetStringByLvlText(i + 1);
+			const sText = oCurrentLvl.GetStringByLvlText(this.m_arrNumberingLvl, nCurrentLvl, i + 1);
 			const nTextYx = (nTextBaseOffsetX - ((6.25 * AscCommon.g_dKoef_mm_to_pix)) >> 0);
 			const nTextYy = arrTextYy[i];
 			this.privateGetParagraphByString(sText, oTextPr, nTextYx, nTextYy, nLineDistance, oContext, nSuff, nAlign);

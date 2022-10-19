@@ -1274,7 +1274,7 @@ CNumberingLvl.prototype.FillLvlTextByNum = function(nNum, sPrefix, sPostfix)
 	}
 };
 
-CNumberingLvl.prototype.GetStringByLvlText = function (nNum)
+CNumberingLvl.prototype.GetStringByLvlText = function (arrLvls, nLvl, nNum)
 {
 	const arrResult = [];
 	for (let i = 0; i < this.LvlText.length; i += 1)
@@ -1289,7 +1289,17 @@ CNumberingLvl.prototype.GetStringByLvlText = function (nNum)
 		{
 			if (AscFormat.isRealNumber(nNum))
 			{
-				const nFormat = AscFormat.isRealNumber(this.GetFormat()) ? this.GetFormat() : Asc.c_oAscNumberingFormat.Decimal;
+				const nNumberingLvl = oNumberingLvlText.GetValue();
+				let nFormat = this.GetFormat();
+				if (nNumberingLvl === nLvl)
+				{
+					nNum = (this.GetStart() - 1) + nNum;
+				}
+				else if (arrLvls[nNumberingLvl] && nLvl > nNumberingLvl)
+				{
+					nFormat = arrLvls[nNumberingLvl].GetFormat();
+					nNum = arrLvls[nNumberingLvl].GetStart();
+				}
 				arrResult.push(AscCommon.IntToNumberFormat(nNum, nFormat, this.GetOLang()));
 			}
 		}
