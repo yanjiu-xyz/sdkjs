@@ -16097,7 +16097,8 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 				if (this.cur) {
 					total = this.cur.total[dataIndex];
 					oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-					oCellValue.number = oCellValue.number / dataRow.total[dataIndex].getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t).number;
+					let _oCellValue = dataRow.total[dataIndex].getCellValue(dataField.subtotal, Asc.c_oAscItemType.Default, Asc.c_oAscItemType.Grand, Asc.c_oAscItemType.Grand)
+					oCellValue.number = oCellValue.number / _oCellValue.number;
 				} else {
 					oCellValue = AscCommonExcel.StatisticOnlineAlgorithm.prototype.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
 					oCellValue.number = 0.0;
