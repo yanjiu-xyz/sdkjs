@@ -10701,15 +10701,15 @@
 		oContext.lineWidth = nLineWidth * Math.round(nRPR);
 		oContext.strokeStyle = "#CBCBCB";
 
-		const nTextBaseOffsetDist = (6.25 * AscCommon.g_dKoef_mm_to_pix) >> 0;
+		const nTextBaseOffsetDist = (2.25 * AscCommon.g_dKoef_mm_to_pix) >> 0;
 		let nY = nOffset + 2;
-		let nTextBaseOffsetX = nOffset + ((6.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
+		const nOffsetScale = 3 / 4;
 		for (let i = 0; i < this.m_arrNumberingLvl.length; i += 1)
 		{
 			const oLvl = this.m_arrNumberingLvl[i];
-			const nIndentSize = oLvl.GetIndentSize() * AscCommon.g_dKoef_mm_to_pix;
-			const nNumberPosition = oLvl.GetNumberPosition();
-			const nTextYx = (nNumberPosition) * AscCommon.g_dKoef_mm_to_pix - ((6.25 * AscCommon.g_dKoef_mm_to_pix) >> 0);
+			const nNumberPosition = oLvl.GetNumberPosition() + nOffset - nTextBaseOffsetDist;
+			const nIndentSize = ((oLvl.GetIndentSize() - nTextBaseOffsetDist) * AscCommon.g_dKoef_mm_to_pix + nOffset) * nOffsetScale;
+			const nTextYx = ((nNumberPosition) * AscCommon.g_dKoef_mm_to_pix - ((6.25 * AscCommon.g_dKoef_mm_to_pix) >> 0)) * nOffsetScale;
 			const nTextYy = nY + nLineWidth;
 			const nSuff = oLvl.get_Suff();
 			let nOffsetText = nTextYx;
@@ -10738,7 +10738,6 @@
 			const oTextPr = oLvl.GetTextPr();
 			this.privateGetParagraphByString(sText, oTextPr, nTextYx,  nTextYy, nLineDistance, oContext, nWidth_px, nHeight_px, oLvl.get_Suff(), oLvl.get_Align());
 			nY += (nLineWidth + nLineDistance);
-			nTextBaseOffsetX += nTextBaseOffsetDist;
 		}
 
 
