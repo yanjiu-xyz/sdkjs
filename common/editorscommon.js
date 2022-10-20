@@ -10682,6 +10682,37 @@
 			oThis.m_oApi.sendEvent("asc_onPreviewLevelChange", nChangedCurrentLvl);
 		});
 	};
+
+	CBulletPreviewDrawerAdvancedOptions.prototype.getScaleCoefficentForMultiLevel = function (nWorkspaceWidth)
+	{
+		const nRPR = AscCommon.AscBrowser.retinaPixelRatio;
+
+		let nMaxIndentSize = this.m_arrNumberingLvl[0].GetIndentSize();
+		let nMaxNumberPosition = this.m_arrNumberingLvl[0].GetNumberPosition();
+		for (let i = 1; i < this.m_arrNumberingLvl.length; i += 1) {
+			const oLvl = this.m_arrNumberingLvl[i];
+			const nIndentSize = oLvl.GetIndentSize();
+			const nNumberPosition = oLvl.GetNumberPosition();
+			if (nMaxIndentSize < nIndentSize)
+			{
+				nMaxIndentSize = nIndentSize;
+			}
+			if (nMaxNumberPosition < nNumberPosition)
+			{
+				nMaxNumberPosition = nNumberPosition;
+			}
+		}
+		let nCoefficient = 1;
+		const nNumberPositionScale = nWorkspaceWidth / (nMaxNumberPosition * AscCommon.g_dKoef_mm_to_pix * nRPR);
+		const nIndentSizeScale = nWorkspaceWidth / (nMaxIndentSize * AscCommon.g_dKoef_mm_to_pix * nRPR);
+		const nCustomScale = Math.min(nNumberPositionScale, nIndentSizeScale);
+		if (nCustomScale < 1.1)
+		{
+			nCoefficient = nCustomScale - 0.1;
+		}
+		return nCoefficient;
+	};
+
 	CBulletPreviewDrawerAdvancedOptions.prototype.drawMultiLvlAdvancedOptions = function ()
 	{
 		const oCanvas = this.m_oCanvas;
@@ -10703,13 +10734,13 @@
 
 		const nTextBaseOffsetDist = (2.25 * AscCommon.g_dKoef_mm_to_pix) >> 0;
 		let nY = nOffset + 2;
-		const nOffsetScale = 3 / 4;
+		const nOffsetScale = this.getScaleCoefficentForMultiLevel(nWidth_px - nOffset);
 		for (let i = 0; i < this.m_arrNumberingLvl.length; i += 1)
 		{
 			const oLvl = this.m_arrNumberingLvl[i];
-			const nNumberPosition = oLvl.GetNumberPosition() + nOffset - nTextBaseOffsetDist;
-			const nIndentSize = ((oLvl.GetIndentSize() - nTextBaseOffsetDist) * AscCommon.g_dKoef_mm_to_pix + nOffset) * nOffsetScale;
-			const nTextYx = ((nNumberPosition) * AscCommon.g_dKoef_mm_to_pix - ((6.25 * AscCommon.g_dKoef_mm_to_pix) >> 0)) * nOffsetScale;
+			const nNumberPosition = Math.round(oLvl.GetNumberPosition() * nRPR * AscCommon.g_dKoef_mm_to_pix * nOffsetScale);
+			const nIndentSize = Math.round(oLvl.GetIndentSize() * nRPR * AscCommon.g_dKoef_mm_to_pix * nOffsetScale);
+			const nTextYx = nNumberPosition;
 			const nTextYy = nY + nLineWidth;
 			const nSuff = oLvl.get_Suff();
 			let nOffsetText = nTextYx;
@@ -10741,6 +10772,25 @@
 		}
 
 
+	};
+	CBulletPreviewDrawerAdvancedOptions.prototype.getScaleCoefficentForSingleLevel = function (nWorkspaceWidth)
+	{
+		const nRPR = AscCommon.AscBrowser.retinaPixelRatio;
+
+		const nCurrentLvl = this.m_nCurrentLvl;
+		const oCurrentLvl = this.m_arrNumberingLvl[nCurrentLvl];
+
+		const nNumberPosition = Math.round(oCurrentLvl.GetNumberPosition() / (nCurrentLvl + 1) * nRPR * AscCommon.g_dKoef_mm_to_pix);
+		const nIndentSize = Math.round(oCurrentLvl.GetIndentSize() / (nCurrentLvl + 1) * nRPR * AscCommon.g_dKoef_mm_to_pix);
+
+		const nNumberPositionScaleCoefficient = nWorkspaceWidth / nNumberPosition;
+		const nIndentSizeScaleCoefficient = nWorkspaceWidth / nIndentSize;
+		const nScaleCoefficient = Math.min(nNumberPositionScaleCoefficient, nIndentSizeScaleCoefficient);
+		if (nScaleCoefficient < 1.1)
+		{
+			return nScaleCoefficient - 0.1;
+		}
+		return 1;
 	};
 	CBulletPreviewDrawerAdvancedOptions.prototype.drawSingleLvlAdvancedOptions = function ()
 	{
@@ -10784,18 +10834,26 @@
 		const nLeftOffset2 = Math.round(offsetBase * nRPR);
 		const nRightOffset2 = Math.round((nWidth_px - offsetBase) * nRPR);
 
+		const nScaleCoefficient = this.getScaleCoefficentForSingleLevel(nRightOffset);
+		let nNumberPosition = Math.round(oCurrentLvl.GetNumberPosition() / (nCurrentLvl + 1) * nRPR * AscCommon.g_dKoef_mm_to_pix) * nScaleCoefficient;
+		let nIndentSize = Math.round(oCurrentLvl.GetIndentSize() / (nCurrentLvl + 1) * nRPR * AscCommon.g_dKoef_mm_to_pix) * nScaleCoefficient;
 		oContext.moveTo(nLeftOffset2, nY); oContext.lineTo(nRightOffset2, nY); nY += nYDist;
 		oContext.moveTo(nLeftOffset2, nY); oContext.lineTo(nRightOffset2, nY); nY += nYDist;
 		oContext.stroke();
 		oContext.beginPath();
 		oContext.strokeStyle = "#000000";
+		const nTextYx = nNumberPosition;
 
-		oContext.moveTo(nLeftOffset, nY); oContext.lineTo(nRightOffset, nY); nY += nYDist;
-		oContext.moveTo(nLeftOffset, nY); oContext.lineTo(nRightOffset, nY); nY += nYDist;
-		oContext.moveTo(nLeftOffset, nY); oContext.lineTo(nRightOffset, nY); nY += nYDist;
-		oContext.moveTo(nLeftOffset, nY); oContext.lineTo(nRightOffset, nY); nY += nYDist;
-		oContext.moveTo(nLeftOffset, nY); oContext.lineTo(nRightOffset, nY); nY += nYDist;
-		oContext.moveTo(nLeftOffset, nY); oContext.lineTo(nRightOffset, nY); nY += nYDist;
+		let nOffsetTextX = nTextYx;
+		if (nSuff === Asc.c_oAscNumberingSuff.Tab)
+			nOffsetTextX = Math.max(nIndentSize, nOffsetTextX);
+
+		oContext.moveTo(nOffsetTextX, nY); oContext.lineTo(nRightOffset, nY); nY += nYDist;
+		oContext.moveTo(nIndentSize, nY); oContext.lineTo(nRightOffset, nY); nY += nYDist;
+		oContext.moveTo(nOffsetTextX, nY); oContext.lineTo(nRightOffset, nY); nY += nYDist;
+		oContext.moveTo(nIndentSize, nY); oContext.lineTo(nRightOffset, nY); nY += nYDist;
+		oContext.moveTo(nOffsetTextX, nY); oContext.lineTo(nRightOffset, nY); nY += nYDist;
+		oContext.moveTo(nIndentSize, nY); oContext.lineTo(nRightOffset, nY); nY += nYDist;
 		oContext.stroke();
 		oContext.beginPath();
 		oContext.strokeStyle = "#CBCBCB";
@@ -10806,7 +10864,6 @@
 		for (let i = 0; i < arrTextYy.length; i++)
 		{
 			const sText = oCurrentLvl.GetStringByLvlText(this.m_arrNumberingLvl, nCurrentLvl, i + 1);
-			const nTextYx = (nTextBaseOffsetX - ((6.25 * AscCommon.g_dKoef_mm_to_pix)) >> 0);
 			const nTextYy = arrTextYy[i];
 			this.privateGetParagraphByString(sText, oTextPr, nTextYx, nTextYy, nLineDistance, oContext, nWidth_px, nHeight_px, nSuff, nAlign);
 		}
