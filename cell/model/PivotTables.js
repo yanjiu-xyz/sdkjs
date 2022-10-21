@@ -15684,6 +15684,7 @@ function DataRowTraversal(pivotFields, dataFields, rowItems, colItems) {
 	this.rowTotal = null;
 
 	this.rowParent = null;
+	this.rowParentType = Asc.c_oAscItemType.Default;
 	this.colParent = null;
 
 	this.rowParentCache = null;
@@ -15774,14 +15775,17 @@ DataRowTraversal.prototype.saveCacheCol = function (colR, colItemsXIndex) {
 DataRowTraversal.prototype.setRowIndex = function(pivotFields, fieldIndex, rowItem, rowR, rowItemsXIndex, props) {
 	if (this.cur && AscCommonExcel.st_VALUES !== fieldIndex) {
 		let field = pivotFields[fieldIndex];
-		props.rowFieldSubtotal = field.getSubtotalType();
 		let valueIndex = rowItem.x[rowItemsXIndex].getV();
-		this.fieldItem = field.getItem(valueIndex);
-		props.itemSd = this.fieldItem.sd;
+
 		let oldCur = this.cur;
+		this.rowParent = oldCur;
+		this.rowParentType = props.rowFieldSubtotal;
+
+		this.fieldItem = field.getItem(valueIndex);
+		props.rowFieldSubtotal = field.getSubtotalType();
+		props.itemSd = this.fieldItem.sd;
 		this.cur = this.cur.vals[this.fieldItem.x];
 
-		this.rowParent = oldCur;
 		this.rowTotal = this.rowTotal.vals[this.fieldItem.x];
 
 		this.rowFieldItemCache.length = rowR + rowItemsXIndex + 1;
@@ -15972,6 +15976,7 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 		switch (pivotShowAs) {
 			case Asc.c_oAscPivotShowAs.PercentOfRunningTotal:
 				break;
+				//TODO
 			case Asc.c_oAscPivotShowAs.PercentOfParent:
 				let parent = null;
 				if ((this.diffRowIndex[dataIndex] || this.diffRowIndex[dataIndex] === 0) && rowItem.t !== Asc.c_oAscItemType.Grand) {
@@ -15996,6 +16001,7 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 					oCellValue.type = 0;
 				}
 				break;
+				//TODO
 			case Asc.c_oAscPivotShowAs.PercentOfParentCol:
 				if (this.cur) {
 					let parentTotal = this.colParent.total[dataIndex];
@@ -16012,7 +16018,7 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 			case Asc.c_oAscPivotShowAs.PercentOfParentRow:
 				if (this.cur) {
 					let parentTotal = this.rowParent.total[dataIndex];
-					let _oCellValue = parentTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					let _oCellValue = parentTotal.getCellValue(dataField.subtotal, this.rowParentType, rowItem.t, colItem.t);
 					total = this.cur.total[dataIndex];
 					oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
 					oCellValue.number = oCellValue.number / _oCellValue.number;
@@ -16070,7 +16076,7 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 			case Asc.c_oAscShowDataAs.PercentOfRow:
 				if (this.cur) {
 					let _rowTotal = this.rowTotal.total[dataIndex];
-					let _oCellValue = _rowTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					let _oCellValue = _rowTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, Asc.c_oAscItemType.Grand);
 					total = this.cur.total[dataIndex];
 					oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
 					oCellValue.number = oCellValue.number / _oCellValue.number;
@@ -16083,7 +16089,7 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 			case Asc.c_oAscShowDataAs.PercentOfCol:
 				if (this.cur) {
 					let _colTotal = this.colTotal.total[dataIndex];
-					let _oCellValue = _colTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+					let _oCellValue = _colTotal.getCellValue(dataField.subtotal, Asc.c_oAscItemType.Default, Asc.c_oAscItemType.Grand, colItem.t);
 					total = this.cur.total[dataIndex];
 					oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
 					oCellValue.number = oCellValue.number / _oCellValue.number;
