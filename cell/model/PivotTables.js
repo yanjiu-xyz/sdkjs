@@ -11888,6 +11888,14 @@ CT_DataField.prototype.toXml = function(writer, name, stylesForWrite) {
 	}
 	WriteNumXml(writer, this.num, stylesForWrite);
 	writer.WriteXmlAttributesEnd();
+	if (null !== this.dataFieldX14) {
+		var ext = new CT_Extension();
+		ext.uri = "{E15A36E0-9728-4e99-A89B-3F7291B0FE68}";
+		ext.elem = this.dataFieldX14;
+		var extList = new CT_ExtensionList();
+		extList.ext.push(ext);
+		extList.toXml(writer, "extLst");
+	}
 	writer.WriteXmlNodeEnd(name);
 };
 CT_DataField.prototype.asc_getName = function () {
@@ -11921,6 +11929,10 @@ CT_DataField.prototype.asc_setName = function(newVal, pivot, index, addToHistory
 	this.name = newVal;
 };
 CT_DataField.prototype.asc_setSubtotal = function(newVal, pivot, index, addToHistory) {
+	setFieldProperty(pivot, index, this.subtotal, newVal, addToHistory, AscCH.historyitem_PivotTable_DataFieldSetSubtotal, true);
+	this.subtotal = newVal;
+};
+CT_DataField.prototype.asc_setShowDataAs = function(newVal, pivot, index, addToHistory) {
 	setFieldProperty(pivot, index, this.subtotal, newVal, addToHistory, AscCH.historyitem_PivotTable_DataFieldSetSubtotal, true);
 	this.subtotal = newVal;
 };
@@ -16621,5 +16633,66 @@ window["Asc"]["PivotRecords"] = window['Asc'].PivotRecords = PivotRecords;
 window["Asc"]["c_oAscAllocationMethod"] = window['Asc'].c_oAscAllocationMethod = c_oAscAllocationMethod;
 window["Asc"]["c_oAscPivotRecType"] = window['Asc'].c_oAscPivotRecType = c_oAscPivotRecType;
 
+function getValues(ws, range) {
+		var res = [];
+		ws.getRange3(range.r1, range.c1, range.r2, range.c2)._foreach(function(cell, r, c, r1, c1) {
+			if (!res[r - r1]) {
+				res[r - r1] = [];
+			}
+			res[r - r1][c - c1] = cell.getValue();
+		});
+		return res;
+	}
+	function getReportValues(pivot) {
+		pivot.init();
+		return getValues(pivot.GetWS(), new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
+	}
+	
+	function getTestMatrix(ws) {
+		if (!ws || !ws.pivotTables[0]) {
+			return "";
+		}
+		var str = "let standards = ";
+		for(var i = 0; i < ws.pivotTables.length; ++i){
+			var res = getReportValues(ws.pivotTables[i]);
+			str += ws.pivotTables[i].asc_getName() + "\n";
+			str += "[\n";
+			for (var j = 0; j < res.length; ++j) {
+				str += JSON.stringify(res[j]);
+				if (j + 1 < res.length) {
+					str += ",\n";
+				} else {
+					str += "\n";
+				}
+			}
+			str += "]\n";
+		}
+		return str;
+	};
+	function getTestValuesMatrix(ws, range) {
+		if (!ws || !range) {
+			return "";
+		}
+		var res = getValues(ws, range);
+		var str = "[\n";
+		for (var i = 0; i < res.length; ++i) {
+			str += JSON.stringify(res[i]);
+			if (i + 1 < res.length) {
+				str += ",\n";
+			} else {
+				str += "\n";
+			}
+		}
+		str += "]\n";
+		return str;
+	};
+	let onDocumentContentReadyOld = AscCommon.baseEditorsApi.prototype.onDocumentContentReady;
+	AscCommon.baseEditorsApi.prototype.onDocumentContentReady = function() {
+		onDocumentContentReadyOld.call(this);
+		if(this.wbModel){
+			console.log('let testData = '+getTestValuesMatrix(this.wbModel.aWorksheets[1], AscCommonExcel.g_oRangeCache.getAscRange("B2:H15")));
+			console.log(getTestMatrix(this.wbModel.aWorksheets[0]));
+		}
+	};
 
 
