@@ -35,6 +35,13 @@ $(function() {
 	// Tests completed in 3980 milliseconds.
 	// 3322 assertions of 3355 passed, 33 failed.
 
+	// To add new test
+	// 1) Create xlsx file in Excel with data and pivot
+	// 2) Uncomment code below and put it at the end of PivotTables.js
+	// 3) Modify AscCommon.baseEditorsApi.prototype.onDocumentContentReady according to your xlsx
+	// 4) Open xlsx in editor and copy from console 'testData' and 'standards' to your new test
+	// 5) Use exiting test as template for example 'testPivotMisc'
+
 	// function getValues(ws, range) {
 	// 	var res = [];
 	// 	ws.getRange3(range.r1, range.c1, range.r2, range.c2)._foreach(function(cell, r, c, r1, c1) {
@@ -54,7 +61,7 @@ $(function() {
 	// 	if (!ws || !ws.pivotTables[0]) {
 	// 		return "";
 	// 	}
-	// 	var str = "";
+	// 	var str = "let standards = ";
 	// 	for(var i = 0; i < ws.pivotTables.length; ++i){
 	// 		var res = getReportValues(ws.pivotTables[i]);
 	// 		str += ws.pivotTables[i].asc_getName() + "\n";
@@ -88,12 +95,52 @@ $(function() {
 	// 	str += "]\n";
 	// 	return str;
 	// };
-	// baseEditorsApi.prototype.onDocumentContentReady = function() {
+	// let onDocumentContentReadyOld = AscCommon.baseEditorsApi.prototype.onDocumentContentReady;
+	// AscCommon.baseEditorsApi.prototype.onDocumentContentReady = function() {
+	// 	onDocumentContentReadyOld.call(this);
 	// 	if(this.wbModel){
-	// 		// console.log(getTestValuesMatrix(this.wbModel.aWorksheets[1], AscCommonExcel.g_oRangeCache.getAscRange("B41:H52")));
+	// 		console.log('let testData = '+getTestValuesMatrix(this.wbModel.aWorksheets[1], AscCommonExcel.g_oRangeCache.getAscRange("B2:H3")));
 	// 		console.log(getTestMatrix(this.wbModel.aWorksheets[0]));
 	// 	}
 	// };
+
+	// To reproduce test in editor
+	// 1) Open xlsx with pivot data in editor
+	// 2) Execute preparation code in console
+	// var api = Asc.editor;
+	// var wb = api.wbModel;
+	// var ws = wb.aWorksheets[0];
+	// var pivotStyle = "PivotStyleDark23";
+	// var reportRange = AscCommonExcel.g_oRangeCache.getAscRange("A3");
+	// var dataRef = "Data!B2:H3";
+	// 3) Execute part of code related to pivot in console. example fo 'testPivotMisc'
+	// var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
+	// pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+	// pivot.pivotTableDefinitionX14 = new Asc.CT_pivotTableDefinitionX14();
+	// pivot.checkPivotFieldItems(0);
+	// pivot.checkPivotFieldItems(1);
+	// pivot.checkPivotFieldItems(2);
+	//
+	// var props = new Asc.CT_pivotTableDefinition();
+	// props.asc_setName("new<&>pivot name");
+	// props.asc_setTitle("Title");
+	// props.asc_setDescription("Description");
+	// pivot.asc_set(api, props);
+	//
+	// pivot.asc_addRowField(api, 0);
+	// pivot.asc_addColField(api, 1);
+	// pivot.asc_addColField(api, 2);
+	// pivot.asc_addDataField(api, 5);
+	// var props = new Asc.CT_pivotTableDefinition();
+	// props.asc_setCompact(false);
+	// props.asc_setOutline(true);
+	// props.asc_setRowGrandTotals(false);
+	// props.asc_setColGrandTotals(false);
+	// pivot.asc_set(api, props);
+	// var pivotField = pivot.asc_getPivotFields()[1];
+	// props = new Asc.CT_PivotField();
+	// props.asc_setDefaultSubtotal(false);
+	// pivotField.asc_set(api, pivot, 1, props);
 
 	Asc.spreadsheet_api.prototype._init = function() {
 		this._loadModules();
@@ -5164,7 +5211,22 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 	function testPivotMisc() {
 		QUnit.test("Test: misc", function(assert ) {
-			var pivot = api._asc_insertPivot(wb, dataRef1Row, ws, reportRange);
+			let testData =  [
+				["Region","Gender","Style","Ship date","Units","Price","Cost"],
+				["East","Boy","Tee","38383","12","11.04","10.42"]
+			];
+			let standards_compact_0row_0col_0data = standards["compact_0row_0col_0data"];
+			let standards_longHeader = [
+				["Sum of Price","Gender","Style"],
+				["","Boy",""],
+				["Region","Tee",""],
+				["East","11.04",""]
+			];
+			let testDataRange = new Asc.Range(0, 0, testData[0].length - 1, testData.length - 1);
+			fillData(wsData, testData, testDataRange);
+			let dataRef = wsData.getName() + "!" + testDataRange.getName();
+
+			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.pivotTableDefinitionX14 = new Asc.CT_pivotTableDefinitionX14();
 			pivot.checkPivotFieldItems(0);
@@ -5172,7 +5234,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			pivot.checkPivotFieldItems(2);
 
 			AscCommon.History.Clear();
-			pivot = checkHistoryOperation(assert, pivot, standards["compact_0row_0col_0data"], "misc", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards_compact_0row_0col_0data, "misc", function(){
 				var props = new Asc.CT_pivotTableDefinition();
 				props.asc_setName("new<&>pivot name");
 				props.asc_setTitle("Title");
@@ -5180,7 +5242,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				pivot.asc_set(api, props);
 			});
 
-			pivot = checkHistoryOperation(assert, pivot, standards["longHeader"], "longHeader", function(){
+			pivot = checkHistoryOperation(assert, pivot, standards_longHeader, "longHeader", function(){
 				pivot.asc_addRowField(api, 0);
 				pivot.asc_addColField(api, 1);
 				pivot.asc_addColField(api, 2);
