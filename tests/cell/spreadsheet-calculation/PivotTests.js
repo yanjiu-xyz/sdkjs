@@ -5265,6 +5265,52 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			// prot["asc_setFillDownLabelsDefault"] = prot.asc_setFillDownLabelsDefault;
 		});
 	}
+	function testPivotShowAs() {
+		QUnit.test("Test: PivotShowAs", function(assert) {
+			let testData =  [
+				["Region","Gender","Style","Ship date","Units","Price","Cost"],
+				["East","Boy","Tee","38383","12","11.04","10.42"],
+				["East","Boy","Golf","38383","12","13","12.6"],
+				["East","Boy","Fancy","38383","12","11.96","11.74"],
+				["East","Girl","Tee","38383","10","11.27","10.56"],
+				["East","Girl","Golf","38383","10","12.12","11.95"],
+				["East","Girl","Fancy","38383","10","13.74","13.33"],
+				["North","Boy","Tee","38383","16","13.08","14.06"],
+				["North","Helicopter","Tee","38383","16","5555","14.06"],
+				["West","Boy","Tee","38383","11","11.44","10.94"],
+				["West","Boy","Golf","38383","11","12.63","11.73"],
+				["West","Boy","Fancy","38383","11","12.06","11.51"],
+				["West","Girl","Tee","38383","15","13.42","13.29"],
+				["West","Girl","Golf","38383","15","11.48","10.67"]
+				];
+			let standard = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","0.63%","0.65%","0.00%","1.28%"],
+				["Fancy","0.21%","0.24%","0.00%","0.45%"],
+				["Golf","0.23%","0.21%","0.00%","0.44%"],
+				["Tee","0.19%","0.20%","0.00%","0.39%"],
+				["North","0.23%","0.00%","97.42%","97.65%"],
+				["Tee","0.23%","0.00%","97.42%","97.65%"],
+				["West","0.63%","0.44%","0.00%","1.07%"],
+				["Fancy","0.21%","0.00%","0.00%","0.21%"],
+				["Golf","0.22%","0.20%","0.00%","0.42%"],
+				["Tee","0.20%","0.24%","0.00%","0.44%"],
+				["Grand Total","1.49%","1.09%","97.42%","100.00%"]
+				];
+			let testDataRange = new Asc.Range(0, 0, testData[0].length - 1, testData.length - 1);
+			fillData(wsData, testData, testDataRange);
+			let dataRef = wsData.getName() + "!" + testDataRange.getName();
+
+			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
+			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.asc_addRowField(api, 0);
+			pivot.asc_addRowField(api, 2);
+			pivot.asc_addColField(api, 1);
+			pivot.asc_addDataField(api, 5);
+			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
+		});
+	}
 
 	QUnit.module("Pivot");
 
