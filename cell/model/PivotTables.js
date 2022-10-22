@@ -705,7 +705,6 @@ function ToName_ST_DataConsolidateFunction(val) {
 function FromXml_ST_ShowDataAs(val) {
 	var res = -1;
 	switch (val) {
-		case "normal": res = c_oAscShowDataAs.Normal; break;
 		case "difference": res = c_oAscShowDataAs.Difference; break;
 		case "percent": res = c_oAscShowDataAs.Percent; break;
 		case "percentDiff": res = c_oAscShowDataAs.PercentDiff; break;
@@ -720,7 +719,6 @@ function FromXml_ST_ShowDataAs(val) {
 function ToXml_ST_ShowDataAs(val) {
 	var res = "";
 	switch (val) {
-		case c_oAscShowDataAs.Normal: res = "normal"; break;
 		case c_oAscShowDataAs.Difference: res = "difference"; break;
 		case c_oAscShowDataAs.Percent: res = "percent"; break;
 		case c_oAscShowDataAs.PercentDiff: res = "percentDiff"; break;
@@ -11921,6 +11919,9 @@ CT_DataField.prototype.asc_set = function (api, pivot, index, newVal) {
 			if (null !== newVal.subtotal) {
 				field.asc_setSubtotal(newVal.subtotal, pivot, index, true);
 			}
+			if (null !== newVal.showDataAs) {
+				field.asc_setShowDataAs(newVal.showDataAs, pivot, index, true);
+			}
 		});
 	}
 };
@@ -11933,8 +11934,8 @@ CT_DataField.prototype.asc_setSubtotal = function(newVal, pivot, index, addToHis
 	this.subtotal = newVal;
 };
 CT_DataField.prototype.asc_setShowDataAs = function(newVal, pivot, index, addToHistory) {
-	setFieldProperty(pivot, index, this.subtotal, newVal, addToHistory, AscCH.historyitem_PivotTable_DataFieldSetSubtotal, true);
-	this.subtotal = newVal;
+	setFieldProperty(pivot, index, this.showDataAs, newVal, addToHistory, AscCH.historyitem_PivotTable_DataFieldSetShowDataAs, true);
+	this.showDataAs = newVal;
 };
 /**
  * @return {CT_ExtensionList}
