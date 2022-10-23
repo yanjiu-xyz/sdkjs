@@ -11923,6 +11923,12 @@ CT_DataField.prototype.asc_set = function (api, pivot, index, newVal) {
 			if (null !== newVal.showDataAs) {
 				field.asc_setShowDataAs(newVal.showDataAs, pivot, index, true);
 			}
+			if (null !== newVal.baseField) {
+				field.asc_setBaseField(newVal.baseField, pivot, index, true);
+			}
+			if (null !== newVal.baseItem) {
+				field.asc_setBaseItem(newVal.baseItem, pivot, index, true);
+			}
 		});
 	}
 };
@@ -11937,6 +11943,14 @@ CT_DataField.prototype.asc_setSubtotal = function(newVal, pivot, index, addToHis
 CT_DataField.prototype.asc_setShowDataAs = function(newVal, pivot, index, addToHistory) {
 	setFieldProperty(pivot, index, this.showDataAs, newVal, addToHistory, AscCH.historyitem_PivotTable_DataFieldSetShowDataAs, true);
 	this.showDataAs = newVal;
+};
+CT_DataField.prototype.asc_setBaseField = function(newVal, pivot, index, addToHistory) {
+	setFieldProperty(pivot, index, this.baseField, newVal, addToHistory, AscCH.historyitem_PivotTable_DataFieldSetBaseField, true);
+	this.baseField = newVal;
+};
+CT_DataField.prototype.asc_setBaseItem = function(newVal, pivot, index, addToHistory) {
+	setFieldProperty(pivot, index, this.baseItem, newVal, addToHistory, AscCH.historyitem_PivotTable_DataFieldSetBaseItem, true);
+	this.baseItem = newVal;
 };
 
 function CT_DataFieldX14() {

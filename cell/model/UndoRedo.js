@@ -4072,7 +4072,11 @@ function (window, undefined) {
 			return;
 		}
 		var fields;
-		if (AscCH.historyitem_PivotTable_DataFieldSetName === Type || Type === AscCH.historyitem_PivotTable_DataFieldSetSubtotal || Type === AscCH.historyitem_PivotTable_DataFieldSetShowDataAs) {
+		if (Type === AscCH.historyitem_PivotTable_DataFieldSetName       ||
+			Type === AscCH.historyitem_PivotTable_DataFieldSetSubtotal   ||
+			Type === AscCH.historyitem_PivotTable_DataFieldSetShowDataAs ||
+			Type === AscCH.historyitem_PivotTable_DataFieldSetBaseField  ||
+			Type === AscCH.historyitem_PivotTable_DataFieldSetBaseItem) {
 			fields = pivotTable.asc_getDataFields();
 		} else {
 			fields = pivotTable.asc_getPivotFields();
@@ -4127,6 +4131,12 @@ function (window, undefined) {
 			case AscCH.historyitem_PivotTable_DataFieldSetShowDataAs:
 				field.asc_setShowDataAs(value, pivotTable, index);
 				break;
+			case AscCH.historyitem_PivotTable_DataFieldSetBaseField:
+				field.asc_setBaseField(value, pivotTable, index);
+				break;
+			case AscCH.historyitem_PivotTable_DataFieldSetBaseItem:
+				field.asc_setBaseItem(value, pivotTable, index);
+				break; 
 		}
 	};
 
