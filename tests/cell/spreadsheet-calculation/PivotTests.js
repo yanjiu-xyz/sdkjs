@@ -5266,7 +5266,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 		});
 	}
 	function testPivotShowAs() {
-		QUnit.test("Test: PivotShowAs", function(assert) {
+		QUnit.test("Test: Show as percent of Total", function(assert) {
 			let testData =  [
 				["Region","Gender","Style","Ship date","Units","Price","Cost"],
 				["East","Boy","Tee","38383","12","11.04","10.42"],
@@ -5283,20 +5283,50 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				["West","Girl","Tee","38383","15","13.42","13.29"],
 				["West","Girl","Golf","38383","15","11.48","10.67"]
 				];
-			let standard = [
+			let percentOfTotal_compact = [
 				["Sum of Price","Column Labels","","",""],
-				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
-				["East","0.63%","0.65%","0.00%","1.28%"],
-				["Fancy","0.21%","0.24%","0.00%","0.45%"],
-				["Golf","0.23%","0.21%","0.00%","0.44%"],
-				["Tee","0.19%","0.20%","0.00%","0.39%"],
-				["North","0.23%","0.00%","97.42%","97.65%"],
-				["Tee","0.23%","0.00%","97.42%","97.65%"],
-				["West","0.63%","0.44%","0.00%","1.07%"],
-				["Fancy","0.21%","0.00%","0.00%","0.21%"],
-				["Golf","0.22%","0.20%","0.00%","0.42%"],
-				["Tee","0.20%","0.24%","0.00%","0.44%"],
-				["Grand Total","1.49%","1.09%","97.42%","100.00%"]
+				["Row Labels", "Boy","Girl","Helicopter","Grand Total"],
+				["East","0.006313308","0.006511476","0","0.012824785"],
+				["Fancy","0.002097421","0.002409579","0","0.004507001"],
+				["Golf","0.002279806","0.002125481","0","0.004405286"],
+				["Tee","0.001936081","0.001976416","0","0.003912498"],
+				["North","0.002293835","0","0.974178568","0.976472404"],
+				["Tee","0.002293835","0","0.974178568","0.976472404"],
+				["West","0.006336107","0.004366705","0","0.010702812"],
+				["Fancy","0.002114958","0","0","0.002114958"],
+				["Golf","0.002214919","0.002013244","0","0.004228163"],
+				["Tee","0.002006229","0.002353461","0","0.00435969"],
+				["Grand Total","0.01494325","0.010878181","0.974178568","1"]
+			  ];
+			let percentOfTotal_tabular = [
+				["Sum of Price","","Gender","","",""],
+				["Region","Style","Boy","Girl","Helicopter","Grand Total"],
+				["East","Fancy","0.002097421","0.002409579","0","0.004507001"],
+				["","Golf","0.002279806","0.002125481","0","0.004405286"],
+				["","Tee","0.001936081","0.001976416","0","0.003912498"],
+				["East Total","","0.006313308","0.006511476","0","0.012824785"],
+				["North","Tee","0.002293835","0","0.974178568","0.976472404"],
+				["North Total","","0.002293835","0","0.974178568","0.976472404"],
+				["West","Fancy","0.002114958","0","0","0.002114958"],
+				["","Golf","0.002214919","0.002013244","0","0.004228163"],
+				["","Tee","0.002006229","0.002353461","0","0.00435969"],
+				["West Total","","0.006336107","0.004366705","0","0.010702812"],
+				["Grand Total","","0.01494325","0.010878181","0.974178568","1"]
+				];
+			let percentOfTotal_outline = [
+				["Sum of Price","","Gender","","",""],
+				["Region","Style","Boy","Girl","Helicopter","Grand Total"],
+				["East","","0.006313308","0.006511476","0","0.012824785"],
+				["","Fancy","0.002097421","0.002409579","0","0.004507001"],
+				["","Golf","0.002279806","0.002125481","0","0.004405286"],
+				["","Tee","0.001936081","0.001976416","0","0.003912498"],
+				["North","","0.002293835","0","0.974178568","0.976472404"],
+				["","Tee","0.002293835","0","0.974178568","0.976472404"],
+				["West","","0.006336107","0.004366705","0","0.010702812"],
+				["","Fancy","0.002114958","0","0","0.002114958"],
+				["","Golf","0.002214919","0.002013244","0","0.004228163"],
+				["","Tee","0.002006229","0.002353461","0","0.00435969"],
+				["Grand Total","","0.01494325","0.010878181","0.974178568","1"]
 				];
 			let testDataRange = new Asc.Range(0, 0, testData[0].length - 1, testData.length - 1);
 			fillData(wsData, testData, testDataRange);
@@ -5308,6 +5338,28 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			pivot.asc_addRowField(api, 2);
 			pivot.asc_addColField(api, 1);
 			pivot.asc_addDataField(api, 5);
+			setPivotLayout(pivot, 'compact');
+			AscCommon.History.Clear();
+			pivot = checkHistoryOperation(assert, pivot, percentOfTotal_compact, "percentOfTotal_compact", function(){
+				var dataField = pivot.asc_getDataFields()[0];
+				props = new Asc.CT_DataField(true);
+				props.asc_setShowDataAs(Asc.c_oAscShowDataAs.PercentOfTotal);
+				dataField.asc_set(api, pivot, 0, props);
+			});
+			setPivotLayout(pivot, 'tabular');
+			pivot = checkHistoryOperation(assert, pivot, percentOfTotal_tabular, "percentOfTotal_tabular", function(){
+				var dataField = pivot.asc_getDataFields()[0];
+				props = new Asc.CT_DataField(true);
+				props.asc_setShowDataAs(Asc.c_oAscShowDataAs.PercentOfTotal);
+				dataField.asc_set(api, pivot, 0, props);
+			});
+			setPivotLayout(pivot, 'outline');
+			pivot = checkHistoryOperation(assert, pivot, percentOfTotal_outline, "percentOfTotal_outline", function(){
+				var dataField = pivot.asc_getDataFields()[0];
+				props = new Asc.CT_DataField(true);
+				props.asc_setShowDataAs(Asc.c_oAscShowDataAs.PercentOfTotal);
+				dataField.asc_set(api, pivot, 0, props);
+			});
 			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
 		});
 	}
@@ -5372,5 +5424,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 		testNumFormat();
 
 		testPivotMisc();
+
+		testPivotShowAs();
 	}
 });
