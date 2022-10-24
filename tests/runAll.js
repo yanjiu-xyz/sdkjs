@@ -33,15 +33,16 @@
 const path = require("path");
 
 const allTests = [
-	'../cell/.unit-tests/FormulaTests.html',
-	'../cell/.unit-tests/subdir/PivotTests.html',
-	'../cell/.unit-tests/CopyPasteTests.html',
+	'cell/spreadsheet-calculation/FormulaTests.html',
+	'cell/spreadsheet-calculation/PivotTests.html',
+	'cell/spreadsheet-calculation/CopyPasteTests.html',
 	'word/unit-tests/paragraphContentPos.html',
 	'word/document-calculation/paragraph.html',
 	'word/document-calculation/table/flowTablePosition.html',
 	'word/forms/forms.html',
 	'word/forms/complexForm.html',
 	'word/api/api.html',
+	'word/api/textInput.html',
 	'word/styles/paraPr.html'
 ];
 
@@ -74,6 +75,8 @@ async function Run()
 			})
 			.catch(ex =>
 			{
+				count++;
+				failed.push(allTests[nIndex]);
 				console.error(ex);
 			});
 	}

@@ -470,6 +470,8 @@
 				  self._onPivotFiltersClick.apply(self, arguments);
 			  }, "pivotCollapseClick": function () {
 				  self._onPivotCollapseClick.apply(self, arguments);
+			  }, "refreshConnections": function () {
+				  return self._onRefreshConnections.apply(self, arguments);
 			  }, "commentCellClick": function () {
 				  self._onCommentCellClick.apply(self, arguments);
 			  }, "isGlobalLockEditCell": function () {
@@ -1033,6 +1035,9 @@
 		//делаю для оптимизации. в случае открытого окна Cell Watches: обновляем весь список только в случае когда меняется этот список
 		// в противном случае в интерфейс отправляю только то, что изменилось по индексу
 		self.changedCellWatchesSheets = true;
+	});
+	this.Api.asc_registerCallback("EndTransactionCheckSize", function() {
+		self.Api.checkChangesSize();
 	});
     this.cellCommentator = new AscCommonExcel.CCellCommentator({
       model: new WorkbookCommentsModel(this.handlers, this.model.aComments),
@@ -1694,6 +1699,17 @@
       return;
     }
     pivotTable.setVisibleFieldItem(this.Api, !idPivotCollapse.sd, idPivotCollapse.fld, idPivotCollapse.index);
+  };
+
+  WorkbookView.prototype._onRefreshConnections = function(isAll) {
+    //todo all connections
+    if (isAll) {
+      this.Api.asc_refreshAllPivots();
+      return true;
+    }
+    let pivot = this.getSelectionInfo().asc_getPivotTableInfo();
+    pivot && pivot.asc_refresh(this.Api);
+    return !!pivot;
   };
 
   WorkbookView.prototype._onGroupRowClick = function(x, y, target, type) {
@@ -2716,7 +2732,7 @@
 				}
 
 				if (name) {
-					res = new AscCommonExcel.CFunctionInfo(name)
+					res = new AscCommonExcel.CFunctionInfo(AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[name] : name)
 
 					//получаем массив аргументов
 					res.argumentsValue = parseResult.getArgumentsValue(t.cellEditor._formula.Formula);
@@ -4885,10 +4901,43 @@
 										//хранится sharedStrings, возмжно придтся использовать для каждого листа свою книгу
 										//необходимо проверить, ссылкой на 2 листа одной книги
 										var wb = eR.getWb();
+										if (!t.Api.isOpenOOXInBrowser) {
+											//в этом случае запрашиваем бинарник
+											// в ответ приходит архив - внутри должен лежать 1 файл "Editor.bin"
+											let jsZlib = new AscCommon.ZLib();
+											if (!jsZlib.open(values[i])) {
+												return false;
+											}
 
-										var updatedData = window["Asc"]["editor"].openDocumentFromZip2(wb ? wb : t.model, values[i]);
-										if (updatedData) {
-											eR && eR.updateData(updatedData);
+											if (jsZlib.files && jsZlib.files.length) {
+												var binaryData = jsZlib.getFile(jsZlib.files[0])
+
+												//заполняем через банарник
+												var oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
+												//чтобы лишнего не читать, проставляю флаг копипаст
+												oBinaryFileReader.InitOpenManager.copyPasteObj = {
+													isCopyPaste: true, activeRange: null, selectAllSheet: true
+												};
+
+												if (!wb) {
+													wb = new AscCommonExcel.Workbook();
+													wb.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
+												}
+												AscFormat.ExecuteNoHistory(function() {
+													AscCommonExcel.executeInR1C1Mode(false, function () {
+														oBinaryFileReader.Read(binaryData, wb);
+													});
+												});
+
+												if (wb.aWorksheets) {
+													eR && eR.updateData(wb.aWorksheets);
+												}
+											}
+										} else {
+											var updatedData = window["Asc"]["editor"].openDocumentFromZip2(wb ? wb : t.model, values[i]);
+											if (updatedData) {
+												eR && eR.updateData(updatedData);
+											}
 										}
 									}
 								}
@@ -4924,6 +4973,7 @@
 		if (!requests) {
 			return;
 		}
+		var t = this;
 		//чтобы потом понять что нужно обновлять, сохраняю сооветсвие, количество запросов соответсвует количеству externalReferences
 		//для этого создаю на все Promise, и если data[i].error -> возвращаю null
 		for (var i = 0; i < data.length; i++) {
@@ -4949,10 +4999,11 @@
 					}, "arraybuffer");
 				};
 
+				//если открыть на клиенте не можем, то запрашиваем бинарник
 				var isXlsx = externalReferences[i].externalReference && externalReferences[i].externalReference.isXlsx();
 				//если внешняя ссылка, то конвертируем в xlsx
-				if (sFileUrl && (isExternalLink || !isXlsx)) {
-					window["Asc"]["editor"]._getXlsxFromUrl(sFileUrl, null, function (fileUrlAfterConvert) {
+				if (sFileUrl && (isExternalLink || !isXlsx) || !t.Api.isOpenOOXInBrowser) {
+					window["Asc"]["editor"]._getFileFromUrl(sFileUrl, t.Api.isOpenOOXInBrowser ? Asc.c_oAscFileType.XLSX : Asc.c_oAscFileType.XLSY, function (fileUrlAfterConvert) {
 						if (fileUrlAfterConvert) {
 							loadFile(fileUrlAfterConvert);
 						} else {

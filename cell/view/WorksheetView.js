@@ -585,7 +585,7 @@
 
 		var tm = this._roundTextMetrics(this.stringRender.measureString("A"));
 		var headersHeightByFont = tm.height;
-		this.defaultRowHeightForPrintPt = Math.min(Asc.c_oAscMaxRowHeight, AscCommonExcel.convertPxToPt(headersHeightByFont));
+		this.defaultRowHeightForPrintPt = Math.min(Asc.c_oAscMaxRowHeight, this.model.getDefaultHeight() || AscCommonExcel.convertPxToPt(headersHeightByFont));
 
 		if (needReplacePpi) {
 			this.drawingCtx.ppiY = truePPIY;
@@ -2080,8 +2080,6 @@
 				return defaultHeight;
 			}
 
-			console.log("index: " + index + " scale: " + t._getRowHeight(index))
-
 			return t._getRowHeight(index);
 		};
 
@@ -3050,7 +3048,7 @@
 	WorksheetView.prototype._setPrintScale = function (val) {
 		var pageOptions = this.model.PagePrintOptions;
 		var pageSetup = pageOptions.asc_getPageSetup();
-		var oldScale = pageSetup.asc_getScale() / 100;
+		var oldScale = pageSetup.asc_getScale();
 
 		if(val !== oldScale) {
 			History.Create_NewPoint();
@@ -12956,7 +12954,7 @@
 				if (pasteInfo.wb && pasteInfo.wb.Core && pasteInfo.wb.Core.title && pasteInfo.wb.Core.category) {
 					//работаем внутри одного портала
 					//если разные документу, то вставляем ссылку на другой документ, если один и тот же, то вставляем обычную ссылку
-					if (api.DocInfo && api.DocInfo.ReferenceData && pasteInfo.wb.Core.category === api.DocInfo.ReferenceData.portalName) {
+					if (api.DocInfo && api.DocInfo.ReferenceData && pasteInfo.wb.Core.category === api.DocInfo.ReferenceData["portalName"]) {
 						_res = true;
 					}
 				}
@@ -13792,10 +13790,13 @@
 					}
 				} else if (linkInfo.type === -2) {
 					//добавляем
-					var referenceData = pastedWb && pastedWb.Core && {
-						fileId: pastedWb.Core.contentStatus,
-						portalName: pastedWb.Core.category
-					};
+					var referenceData;
+					if (pastedWb && pastedWb.Core) {
+						referenceData = {};
+						referenceData["fileId"] = pastedWb.Core.contentStatus;
+						referenceData["portalName"] = pastedWb.Core.category;
+					}
+
 					var name = pastedWb.Core.title;
 
 					var pastedSheetName = pastedWb.aWorksheets[0].sName;
@@ -14609,7 +14610,12 @@
 			} else {
 				//сначала ищем по дополнительной информации
 				//fileId -> contentStatus, portalName -> category
-				var referenceData = pastedWb && pastedWb.Core && {fileId: pastedWb.Core.contentStatus, portalName: pastedWb.Core.category};
+				var referenceData;
+				if (pastedWb && pastedWb.Core) {
+					referenceData = {};
+					referenceData["fileId"] = pastedWb.Core.contentStatus;
+					referenceData["portalName"] = pastedWb.Core.category;
+				}
 				var externalReference = referenceData && this.model.workbook.getExternalLinkByReferenceData(referenceData);
 				externalReference = externalReference && externalReference.index;
 				if (null == externalReference) {

@@ -409,6 +409,10 @@
 			}
 		};
 
+		if (this.isStartCompositeInput()) {
+			this.End_CompositeInput();
+		}
+
 		if (saveValue) {
 			// Пересчет делаем всегда для не пустой ячейки или если были изменения. http://bugzilla.onlyoffice.com/show_bug.cgi?id=34864
 			if (0 < this.undoList.length || 0 < AscCommonExcel.getFragmentsCharCodesLength(this.options.fragments)) {
@@ -1548,17 +1552,18 @@
 
 	CellEditor.prototype._updateCursorPosition = function (redrawText) {
 		// ToDo стоит переправить данную функцию
-		var h = this.canvas.height;
-		var y = -this.textRender.calcLineOffset(this.topLineIndex);
-		var cur = this.textRender.calcCharOffset(this.cursorPos);
-		var charsCount = this.textRender.getCharsCount();
-		var curLeft = asc_round(
-			((AscCommon.align_Right !== this.textFlags.textAlign || this.cursorPos !== charsCount) && cur !== null &&
+		let h = this.canvas.height;
+		let y = -this.textRender.calcLineOffset(this.topLineIndex);
+		let cur = this.textRender.calcCharOffset(this.cursorPos);
+		let charsCount = this.textRender.getCharsCount();
+		let textAlign = this.textFlags && this.textFlags.textAlign;
+		let curLeft = asc_round(
+			((AscCommon.align_Right !== textAlign || this.cursorPos !== charsCount) && cur !== null &&
 			cur.left !== null ? cur.left : this._getContentPosition()) * this.kx);
-		var curTop = asc_round(((cur !== null ? cur.top : 0) + y) * this.ky);
-		var curHeight = asc_round((cur !== null ? cur.height : this._getContentHeight()) * this.ky);
-		var i, dy, nCount = this.textRender.getLinesCount();
-		var zoom = this.getZoom();
+		let curTop = asc_round(((cur !== null ? cur.top : 0) + y) * this.ky);
+		let curHeight = asc_round((cur !== null ? cur.height : this._getContentHeight()) * this.ky);
+		let i, dy, nCount = this.textRender.getLinesCount();
+		let zoom = this.getZoom();
 
 		while (1 < nCount) {
 			if (curTop + curHeight - 1 > h) {
@@ -1620,7 +1625,7 @@
 			this.handlers.trigger( "updateMenuEditorCursorPosition", curTop, curHeight );
 		}
 
-		//var fCurrent = this._getEditableFunction(null, true);
+		//let fCurrent = this._getEditableFunction(null, true);
 		//console.log("func: " + fCurrent.func + " arg: " + fCurrent.argPos);
 		this._updateSelectionInfo();
 	};
@@ -2966,6 +2971,9 @@
 		// Обновляем выделение
 		this._cleanSelection();
 		this._drawSelection();
+	};
+	CellEditor.prototype.isStartCompositeInput = function () {
+		return this.beginCompositePos !== -1 && this.compositeLength !== 0;
 	};
 	CellEditor.prototype.Set_CursorPosInCompositeText = function (nPos) {
 		if (-1 !== this.beginCompositePos) {

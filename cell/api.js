@@ -569,7 +569,7 @@ var editor;
 		}
 	};
 
-	spreadsheet_api.prototype._getXlsxFromUrl = function (url, options, callback) {
+	spreadsheet_api.prototype._getFileFromUrl = function (url, fileType, callback) {
 		if (this.canEdit()) {
 			var document = {url: url, format: "XLSX"};
 			this.insertDocumentUrlsData = {
@@ -577,6 +577,8 @@ var editor;
 					_api.insertDocumentUrlsData.imageMap = url;
 					if (url['output.xlsx']) {
 						callback(url['output.xlsx']);
+					} else if (url['output.xlst']) {
+						callback(url['output.xlst']);
 					} else {
 						callback(null);
 					}
@@ -584,7 +586,7 @@ var editor;
 				}
 			};
 
-			var _options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.XLSX);
+			var _options = new Asc.asc_CDownloadOptions(fileType);
 			_options.isNaturalDownload = true;
 			_options.isGetTextFromUrl = true;
 			this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, _options);
@@ -988,6 +990,17 @@ var editor;
   spreadsheet_api.prototype.asc_savePagePrintOptions = function(arrPagesPrint) {
       this.wb.savePagePrintOptions(arrPagesPrint);
   };
+
+    spreadsheet_api.prototype.getDrawingObjects = function () {
+        var oController = this.getGraphicController();
+        if (oController) {
+            return oController.drawingObjects;
+        }
+    };
+
+    spreadsheet_api.prototype.getDrawingDocument = function () {
+        return this.wbModel && this.wbModel.DrawingDocument
+    };
 
   spreadsheet_api.prototype.asc_getPageOptions = function(index, initPrintTitles, opt_copy) {
     var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
@@ -2078,7 +2091,7 @@ var editor;
 
 	spreadsheet_api.prototype.openDocumentFromZip2 = function (wb, data) {
 		//TODO зачитать sharedStrings
-		if (!data) {
+		if (!data || !this.isOpenOOXInBrowser) {
 			return null;
 		}
 
@@ -4498,66 +4511,79 @@ var editor;
   };
 
   // Cell comment interface
-  spreadsheet_api.prototype.asc_addComment = function(oComment) {
-    if (this.collaborativeEditing.getGlobalLock() || (!this.canEdit() && !this.isRestrictionComments())) {
-      return false;
-    }
-    var oPlace = oComment.bDocument ? this.wb : this.wb.getWorksheet();
-    oPlace.cellCommentator.addComment(oComment);
-  };
+	spreadsheet_api.prototype.asc_addComment = function (oComment) {
+		if (this.collaborativeEditing.getGlobalLock() || (!this.canEdit() && !this.isRestrictionComments())) {
+			return false;
+		}
+		let oPlace = oComment.bDocument ? this.wb : (this.wb && this.wb.getWorksheet());
+		oPlace && oPlace.cellCommentator.addComment(oComment);
+	};
 
-  spreadsheet_api.prototype.asc_changeComment = function(id, oComment) {
-    if (oComment.bDocument) {
-      this.wb.cellCommentator.changeComment(id, oComment);
-    } else {
-      var ws = this.wb.getWorksheet();
-      ws.cellCommentator.changeComment(id, oComment);
-    }
-  };
+	spreadsheet_api.prototype.asc_changeComment = function (id, oComment) {
+		if (this.wb) {
+			if (oComment.bDocument) {
+				this.wb.cellCommentator.changeComment(id, oComment);
+			} else {
+				var ws = this.wb.getWorksheet();
+				ws.cellCommentator.changeComment(id, oComment);
+			}
+		}
+	};
 
-  spreadsheet_api.prototype.asc_selectComment = function(id) {
-    this.wb.getWorksheet().cellCommentator.selectComment(id);
-  };
+	spreadsheet_api.prototype.asc_selectComment = function (id) {
+		this.wb && this.wb.getWorksheet().cellCommentator.selectComment(id);
+	};
 
-  spreadsheet_api.prototype.asc_showComment = function(id, bNew) {
-    var ws = this.wb.getWorksheet();
-    ws.cellCommentator.showCommentById(id, bNew);
-  };
+	spreadsheet_api.prototype.asc_showComment = function (id, bNew) {
+		if (this.wb) {
+			let ws = this.wb.getWorksheet();
+			ws.cellCommentator.showCommentById(id, bNew);
+		}
+	};
 
-  spreadsheet_api.prototype.asc_findComment = function(id) {
-    var ws = this.wb.getWorksheet();
-    return ws.cellCommentator.findComment(id);
-  };
+	spreadsheet_api.prototype.asc_findComment = function (id) {
+		let ws = this.wb && this.wb.getWorksheet();
+		return ws ? ws.cellCommentator.findComment(id) : null;
+	};
 
-  spreadsheet_api.prototype.asc_removeComment = function(id) {
-    this.wb.removeComment(id);
-  };
+	spreadsheet_api.prototype.asc_removeComment = function (id) {
+		if (this.wb) {
+			this.wb.removeComment(id);
+		}
+	};
 
-  spreadsheet_api.prototype.asc_RemoveAllComments = function(isMine, isCurrent) {
-	if (this.collaborativeEditing.getGlobalLock() || (!this.canEdit() && !this.isRestrictionComments())) {
-	  return;
-	}
-  	this.wb.removeAllComments(isMine, isCurrent);
-  };
+	spreadsheet_api.prototype.asc_RemoveAllComments = function (isMine, isCurrent) {
+		if (this.collaborativeEditing.getGlobalLock() || (!this.canEdit() && !this.isRestrictionComments())) {
+			return;
+		}
+		if (this.wb) {
+			this.wb.removeAllComments(isMine, isCurrent);
+		}
+	};
 
-  spreadsheet_api.prototype.asc_GetCommentLogicPositionv = function(sId) {
-  	return -1;
-  };
+	spreadsheet_api.prototype.asc_GetCommentLogicPositionv = function (sId) {
+		return -1;
+	};
 
-	spreadsheet_api.prototype.asc_ResolveAllComments = function(isMine, isCurrent, arrIds)
-	{
+	spreadsheet_api.prototype.asc_ResolveAllComments = function (isMine, isCurrent, arrIds) {
 		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 			return;
 		}
-		this.wb.resolveAllComments(isMine, isCurrent);
+		if (this.wb) {
+			this.wb.resolveAllComments(isMine, isCurrent);
+		}
 	};
 
-  spreadsheet_api.prototype.asc_showComments = function (isShowSolved) {
-    this.wb.showComments(true, isShowSolved);
-  };
-  spreadsheet_api.prototype.asc_hideComments = function () {
-    this.wb.showComments(false, false);
-  };
+	spreadsheet_api.prototype.asc_showComments = function (isShowSolved) {
+		if (this.wb) {
+			this.wb.showComments(true, isShowSolved);
+		}
+	};
+	spreadsheet_api.prototype.asc_hideComments = function () {
+		if (this.wb) {
+			this.wb.showComments(false, false);
+		}
+	};
 
   // Shapes
   spreadsheet_api.prototype.setStartPointHistory = function() {
@@ -7068,7 +7094,7 @@ var editor;
 					password: arr[i].temporaryPassword,
 					salt: arr[i].saltValue,
 					spinCount: arr[i].spinCount,
-					alg: AscCommonExcel.fromModelAlgoritmName(arr[i].algorithmName)
+					alg: AscCommon.fromModelAlgorithmName(arr[i].algorithmName)
 				});
 			}
 		}
@@ -7297,7 +7323,7 @@ var editor;
 				checkPassword([AscCommonExcel.getPasswordHash(props.temporaryPassword, true)]);
 			} else {
 				var checkHash = {password: props.temporaryPassword, salt: props.saltValue, spinCount: props.spinCount,
-					alg: AscCommonExcel.fromModelAlgoritmName(props.algorithmName)};
+					alg: AscCommon.fromModelAlgorithmName(props.algorithmName)};
 				AscCommon.calculateProtectHash([checkHash], checkPassword);
 			}
 		} else {
@@ -7412,7 +7438,7 @@ var editor;
 				checkPassword([AscCommonExcel.getPasswordHash(props.temporaryPassword, true)]);
 			} else {
 				var checkHash = {password: props.temporaryPassword, salt: props.workbookSaltValue, spinCount: props.workbookSpinCount,
-					alg: AscCommonExcel.fromModelAlgoritmName(props.workbookAlgorithmName)};
+					alg: AscCommon.fromModelAlgorithmName(props.algorithmName)};
 				AscCommon.calculateProtectHash([checkHash], checkPassword);
 			}
 		} else {
@@ -8481,8 +8507,8 @@ var editor;
 
 
 
-  prot["asc_getExternalReference"] = prot.asc_getExternalReferences;
-  prot["asc_updateExternalReference"] = prot.asc_updateExternalReferences;
+  prot["asc_getExternalReferences"] = prot.asc_getExternalReferences;
+  prot["asc_updateExternalReferences"] = prot.asc_updateExternalReferences;
   prot["asc_removeExternalReferences"] = prot.asc_removeExternalReferences;
 
 

@@ -9636,6 +9636,10 @@
 		loadScript('../../../../sdkjs/common/Charts/ChartStyles.js', onSuccess, onError);
 	}
 
+	function loadSmartArtPresets(onSuccess, onError) {
+		loadScript('../../../../sdkjs/common/SmartArts/SmartArtPresets.js', onSuccess, onError);
+	}
+
 	function getAltGr(e)
 	{
 		if (true === e["altGraphKey"])
@@ -13414,6 +13418,85 @@
 		return sAction.indexOf("ppaction://hlink") === 0;
 	}
 
+	function generateHashParams() {
+		return {spinCount: 100000, saltValue: AscCommon.randomBytes(16).base64()};
+	}
+
+	function fromModelAlgorithmName(alg) {
+		switch (alg) {
+			case AscCommon.c_oSerAlgorithmNameTypes.MD2 :
+				alg = AscCommon.HashAlgs.MD2;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.MD4 :
+				alg = AscCommon.HashAlgs.MD4;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.MD5 :
+				alg = AscCommon.HashAlgs.MD5;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.RIPEMD_160 :
+				alg = AscCommon.HashAlgs.RMD160;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.SHA_1 :
+				alg = AscCommon.HashAlgs.SHA1;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.SHA_256 :
+				alg = AscCommon.HashAlgs.SHA256;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.SHA_384 :
+				alg = AscCommon.HashAlgs.SHA384;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.SHA_512 :
+				alg = AscCommon.HashAlgs.SHA512;
+				break;
+			case AscCommon.c_oSerAlgorithmNameTypes.WHIRLPOOL :
+				alg = AscCommon.HashAlgs.WHIRLPOOL;
+				break;
+			default:
+				alg = AscCommon.HashAlgs.SHA256;
+		}
+		return alg;
+	}
+
+	function fromModelCryptAlgorithmSid(alg) {
+		var res = null;
+		switch (alg) {
+			case AscCommon.c_oSerCryptAlgorithmSid.MD2 :
+				res = AscCommon.HashAlgs.MD2;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.MD4 :
+				res = AscCommon.HashAlgs.MD4;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.MD5 :
+				res = AscCommon.HashAlgs.MD5;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.SHA_1 :
+				res = AscCommon.HashAlgs.SHA1;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.MAC :
+				//alg = AscCommon.HashAlgs.SHA1;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.RIPEMD :
+				//alg = AscCommon.HashAlgs.SHA256;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.RIPEMD_160 :
+				//alg = AscCommon.HashAlgs.SHA384;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.HMAC :
+				//alg = AscCommon.HashAlgs.SHA512;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.SHA_256 :
+				res = AscCommon.HashAlgs.SHA256;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.SHA_384 :
+				res = AscCommon.HashAlgs.SHA384;
+				break;
+			case AscCommon.c_oSerCryptAlgorithmSid.SHA_512 :
+				res = AscCommon.HashAlgs.SHA512;
+				break;
+		}
+		return res;
+	}
+
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
@@ -13497,6 +13580,7 @@
 	window["AscCommon"].loadSdk = loadSdk;
     window["AscCommon"].loadScript = loadScript;
     window["AscCommon"].loadChartStyles = loadChartStyles;
+    window["AscCommon"].loadSmartArtPresets = loadSmartArtPresets;
 	window["AscCommon"].getAltGr = getAltGr;
 	window["AscCommon"].getColorSchemeByName = getColorSchemeByName;
 	window["AscCommon"].getColorSchemeByIdx = getColorSchemeByIdx;
@@ -13593,6 +13677,9 @@
 	window['AscCommon'].g_oCRC32  = g_oCRC32;
 	window["AscCommon"].RangeTopBottomIterator = RangeTopBottomIterator;
 	window["AscCommon"].IsLinkPPAction = IsLinkPPAction;
+	window["AscCommon"].generateHashParams = generateHashParams;
+	window["AscCommon"].fromModelAlgorithmName = fromModelAlgorithmName;
+	window["AscCommon"].fromModelCryptAlgorithmSid = fromModelCryptAlgorithmSid;
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)

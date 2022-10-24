@@ -1669,6 +1669,12 @@
 	window['AscDFH'].historyitem_type_VMLClientData          = 2110 << 16;
 
 	window['AscDFH'].historyitem_type_OleSizeSelection       = 2111 << 16;
+	window['AscDFH'].historyitem_type_ViewPr                 = 2112 << 16;
+	window['AscDFH'].historyitem_type_CommonViewPr           = 2113 << 16;
+	window['AscDFH'].historyitem_type_CSldViewPr             = 2114 << 16;
+	window['AscDFH'].historyitem_type_CViewPr                = 2115 << 16;
+	window['AscDFH'].historyitem_type_ViewPrScale            = 2116 << 16;
+	window['AscDFH'].historyitem_type_ViewPrGuide            = 2117 << 16;
 
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -2246,6 +2252,7 @@
 	window["AscDFH"].historyitem_Presentation_SetFirstSlideNum            = window["AscDFH"].historyitem_type_Presentation | 11;
 	window["AscDFH"].historyitem_Presentation_SetShowSpecialPlsOnTitleSld = window["AscDFH"].historyitem_type_Presentation | 12;
 	window['AscDFH'].historyitem_Presentation_RemoveSlideMaster           = window['AscDFH'].historyitem_type_Presentation | 13;
+	window['AscDFH'].historyitem_Presentation_ViewPr                      = window['AscDFH'].historyitem_type_Presentation | 14;
 
 	window['AscDFH'].historyitem_ColorMod_SetName = window['AscDFH'].historyitem_type_ColorMod | 1;
 	window['AscDFH'].historyitem_ColorMod_SetVal  = window['AscDFH'].historyitem_type_ColorMod | 2;
@@ -3909,6 +3916,29 @@
 	AscDFH.historyitem_CCommonDataClrListMeth   = AscDFH.historyitem_type_CCommonDataClrList | 4;
 
 
+	AscDFH.historyitem_ViewPrGridSpacing        = AscDFH.historyitem_type_ViewPr | 1;
+	AscDFH.historyitem_ViewPrSlideViewerPr      = AscDFH.historyitem_type_ViewPr | 2;
+	AscDFH.historyitem_ViewPrLastView           = AscDFH.historyitem_type_ViewPr | 3;
+	AscDFH.historyitem_ViewPrShowComments       = AscDFH.historyitem_type_ViewPr | 4;
+
+	AscDFH.historyitem_CommonViewPrCSldViewPr   = AscDFH.historyitem_type_CommonViewPr | 1;
+
+	AscDFH.historyitem_CSldViewPrCViewPr        = AscDFH.historyitem_type_CSldViewPr | 1;
+	AscDFH.historyitem_CSldViewPrGuideLst       = AscDFH.historyitem_type_CSldViewPr | 2;
+	AscDFH.historyitem_CSldViewPrShowGuides     = AscDFH.historyitem_type_CSldViewPr | 3;
+	AscDFH.historyitem_CSldViewPrSnapToGrid     = AscDFH.historyitem_type_CSldViewPr | 4;
+	AscDFH.historyitem_CSldViewPrSnapToObjects  = AscDFH.historyitem_type_CSldViewPr | 5;
+
+	AscDFH.historyitem_CViewPrOrigin            = AscDFH.historyitem_type_CViewPr | 1;
+	AscDFH.historyitem_CViewPrScale             = AscDFH.historyitem_type_CViewPr | 2;
+
+	AscDFH.historyitem_ViewPrScaleSx             = AscDFH.historyitem_type_ViewPrScale | 1;
+	AscDFH.historyitem_ViewPrScaleSy             = AscDFH.historyitem_type_ViewPrScale | 2;
+
+	AscDFH.historyitem_ViewPrGuideOrient         = AscDFH.historyitem_type_ViewPrGuide | 1;
+	AscDFH.historyitem_ViewPrGuidePos            = AscDFH.historyitem_type_ViewPrGuide | 2;
+
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -4325,10 +4355,12 @@
 	window['AscDFH'].historydescription_Document_AddParagraphToTOC                  = 0x0192;
 	window['AscDFH'].historydescription_Document_FillFormsByTags                    = 0x0193;
 	window['AscDFH'].historydescription_Document_FillFormInPlugin                   = 0x0194;
-	window['AscDFH'].historydescription_Document_AddComplexForm                     = 0x0195;
-	window['AscDFH'].historydescription_Document_CorrectFormTextByFormat            = 0x0196;
-	window['AscDFH'].historydescription_Document_CorrectEnterText                   = 0x0197;
-	window['AscDFH'].historydescription_Document_ConvertMathView                    = 0x0198;
+	window['AscDFH'].historydescription_Document_AddSmartArt                        = 0x0195;
+	window['AscDFH'].historydescription_Document_AddComplexForm                     = 0x0196;
+	window['AscDFH'].historydescription_Document_CorrectFormTextByFormat            = 0x0197;
+	window['AscDFH'].historydescription_Document_CorrectEnterText                   = 0x0198;
+	window['AscDFH'].historydescription_Document_ConvertMathView                    = 0x0199;
+	window['AscDFH'].historydescription_Document_DocumentProtection                 = 0x019a;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

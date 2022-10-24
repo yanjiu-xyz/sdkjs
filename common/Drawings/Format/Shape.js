@@ -2236,12 +2236,13 @@ CShape.prototype.getTextRect = function () {
     };
 };
     CShape.prototype.checkTransformTextMatrixSmartArt = function (oMatrix, oContent, oBodyPr, bWordArtTransform, bIgnoreInsets) {
-        if (this.txXfrm) {
+        if (this.txXfrm && (this.isObjectInSmartArt && this.isObjectInSmartArt())) {
             var oSmartArt = this.group.group;
+            const bForceSlideTransform = oSmartArt.bForceSlideTransform;
             var diffX = 0;
             var diffY = 0;
             if (oSmartArt.group) {
-                if ((this.parent && this.parent.getObjectType() === AscDFH.historyitem_type_Slide || this.worksheet)) {
+                if (bForceSlideTransform || (this.parent && this.parent.getObjectType() === AscDFH.historyitem_type_Slide || this.worksheet)) {
                     var mainGroup = oSmartArt.group.getRelativePosition();
                     diffX = mainGroup.x;
                     diffY = mainGroup.y;
@@ -2282,7 +2283,7 @@ CShape.prototype.getTextRect = function () {
             var extX = (oRect.r - oRect.l) / 2;
             var extY = (oRect.b - oRect.t) / 2;
             var deltaTranslateX = 0, deltaTranslateY = 0;
-            if (deltaShape.parent && deltaShape.parent.getObjectType() === AscDFH.historyitem_type_Slide || this.worksheet) {
+            if (bForceSlideTransform || (deltaShape.parent && deltaShape.parent.getObjectType() === AscDFH.historyitem_type_Slide || this.worksheet)) {
                 deltaTranslateX = deltaShape.group.group.x;
                 deltaTranslateY = deltaShape.group.group.y;
             }
@@ -5496,7 +5497,16 @@ CShape.prototype.draw = function (graphics, transform, transformText, pageIndex,
         shape_drawer.fromShape2(this, graphics, geometry);
         shape_drawer.draw(geometry);
     }
-    if (!this.bWordShape && this.isEmptyPlaceholder() && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && graphics.IsNoDrawingEmptyPlaceholder !== true  && !AscCommon.IsShapeToImageConverter)
+    if (graphics.isSmartArtPreviewDrawer && this.isActiveBlipFillPlaceholder()) {
+        const cx = this.spPr.xfrm.extX / 2;
+        const cy = this.spPr.xfrm.extY / 2;
+        if (graphics.imagePlaceholder) {
+            const img = graphics.imagePlaceholder;
+            graphics.drawImage2(img, cx - graphics.placeholderSize / 2, cy - graphics.placeholderSize / 2, graphics.placeholderSize, graphics.placeholderSize);
+        }
+    }
+
+    if (!graphics.isSmartArtPreviewDrawer && !this.bWordShape && this.isEmptyPlaceholder() && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && graphics.IsNoDrawingEmptyPlaceholder !== true  && !AscCommon.IsShapeToImageConverter)
     {
         var drawingObjects = this.getDrawingObjectsController();
         if (typeof editor !== "undefined" && editor && graphics.m_oContext !== undefined && graphics.m_oContext !== null && graphics.IsTrack === undefined && (!drawingObjects || AscFormat.getTargetTextObject(drawingObjects) !== this ))
@@ -5814,33 +5824,6 @@ CShape.prototype.getRotateAngle = function (x, y) {
     var same_flip = flip_h && flip_v || !flip_h && !flip_v;
     var angle = rel_x > this.extX * 0.5 ? Math.atan2(Math.abs(v1_x * v2_y - v1_y * v2_x), v1_x * v2_x + v1_y * v2_y) : -Math.atan2(Math.abs(v1_x * v2_y - v1_y * v2_x), v1_x * v2_x + v1_y * v2_y);
     return same_flip ? angle : -angle;
-};
-
-CShape.prototype.getRectBounds = function () {
-    var transform = this.getTransformMatrix();
-    var w = this.extX;
-    var h = this.extY;
-    var rect_points = [{ x: 0, y: 0 }, { x: w, y: 0 }, { x: w, y: h }, { x: 0, y: h}];
-    var min_x, max_x, min_y, max_y;
-    min_x = transform.TransformPointX(rect_points[0].x, rect_points[0].y);
-    min_y = transform.TransformPointY(rect_points[0].x, rect_points[0].y);
-    max_x = min_x;
-    max_y = min_y;
-    var cur_x, cur_y;
-    for (var i = 1; i < 4; ++i) {
-        cur_x = transform.TransformPointX(rect_points[i].x, rect_points[i].y);
-        cur_y = transform.TransformPointY(rect_points[i].x, rect_points[i].y);
-        if (cur_x < min_x)
-            min_x = cur_x;
-        if (cur_x > max_x)
-            max_x = cur_x;
-
-        if (cur_y < min_y)
-            min_y = cur_y;
-        if (cur_y > max_y)
-            max_y = cur_y;
-    }
-    return { minX: min_x, maxX: max_x, minY: min_y, maxY: max_y };
 };
 
 CShape.prototype.getInvertTransform = function ()

@@ -216,6 +216,7 @@
 		this.isUseNativeViewer = true;
 
 		this.openedAt = undefined;
+		this.maxChangesSize = 0;
 
 		this.isBlurEditor = false;
 		this._correctEmbeddedWork();
@@ -268,6 +269,10 @@
 			t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical);
 		});
 
+		AscCommon.loadSmartArtPresets(function() {}, function(err) {
+			t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical);
+		});
+
 		var oldOnError = window.onerror;
 		window.onerror = function(errorMsg, url, lineNumber, column, errorObj) {
 			//send only first error to reduce number of requests. also following error may be consequences of first
@@ -311,12 +316,16 @@
 		if (body && body.addEventListener)
 		{
 			body.addEventListener("mousewheel", function(e) {
+				if (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey)
+					return;
 				e.preventDefault && e.preventDefault();
 				e.stopPropagation && e.stopPropagation();
 				return false;
 			}, false);
 			body.addEventListener("DOMMouseScroll", function(e)
 			{
+				if (e.ctrlKey || e.altKey || e.shiftKey || e.metaKey)
+					return;
 				e.preventDefault && e.preventDefault();
 				e.stopPropagation && e.stopPropagation();
 				return false;
@@ -824,6 +833,20 @@
 			}
 		}
 	};
+
+	baseEditorsApi.prototype.asc_SaveDrawingAsPicture = function()
+	{
+		let oImageData = this.getImageDataFromSelection();
+		if(oImageData)
+		{
+			let a = document.createElement("a");
+			let sSrc = oImageData.src;
+			a.href = sSrc;
+			let sExt = sSrc.substring("data:image/".length, sSrc.indexOf(";base64"));
+			a.download = AscCommon.translateManager.getValue("Picture") + "." + sExt;
+			a.click();
+		}
+	};
 	baseEditorsApi.prototype.canEdit                         = function()
 	{
 		return !this.isViewMode && this.restrictions === Asc.c_oAscRestrictionType.None;
@@ -1114,6 +1137,61 @@
 			AscCommon.getFile(url);
 		}
 	};
+	baseEditorsApi.prototype.getDrawingObjects = function () {};
+	baseEditorsApi.prototype.getDrawingDocument = function () {};
+	baseEditorsApi.prototype.getLogicDocument = function () {};
+	baseEditorsApi.prototype.asc_createSmartArt = function (nSmartArtType) {
+		AscCommon.History.Create_NewPoint(AscDFH.historydescription_Document_AddSmartArt);
+		const bFromWord = this.isDocumentEditor;
+		const oSmartArt = new AscFormat.SmartArt();
+		oSmartArt.fillByPreset(nSmartArtType);
+		const oLogicDocument = this.getLogicDocument();
+		const oDrawingObjects = this.getDrawingObjects();
+		const oController = this.getGraphicController();
+		if (!bFromWord) {
+			if (oDrawingObjects) {
+				oSmartArt.setDrawingObjects(oDrawingObjects);
+			}
+			if (oDrawingObjects.cSld) {
+				oSmartArt.setParent(oDrawingObjects);
+				oSmartArt.setRecalculateInfo();
+			}
+
+			if (oDrawingObjects.getWorksheetModel) {
+				oSmartArt.setWorksheet(oDrawingObjects.getWorksheetModel());
+			}
+			oSmartArt.addToDrawingObjects(undefined, AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
+			oSmartArt.checkDrawingBaseCoords();
+
+			if (oController) {
+				oController.checkChartTextSelection();
+				oController.resetSelection();
+				oSmartArt.select(oController, 0);
+			}
+			oSmartArt.fitFontSize();
+			oController.startRecalculate();
+			oDrawingObjects.sendGraphicObjectProps();
+		} else {
+			if (true === oLogicDocument.Selection.Use) {
+				oLogicDocument.Remove(1, true);
+			}
+			oSmartArt.fitToPageSize();
+			oSmartArt.fitFontSize();
+			const oParaDrawing = oSmartArt.decorateParaDrawing(oDrawingObjects);
+			oSmartArt.setXfrmByParent();
+			if (oDrawingObjects) {
+				oDrawingObjects.resetSelection2();
+				oLogicDocument.AddToParagraph(oParaDrawing);
+				oLogicDocument.Select_DrawingObject(oParaDrawing.Get_Id());
+				oLogicDocument.Recalculate();
+				oDrawingObjects.clearTrackObjects();
+				oDrawingObjects.clearPreTrackObjects();
+				oDrawingObjects.updateOverlay();
+				oDrawingObjects.changeCurrentState(new AscFormat.NullState(oDrawingObjects));
+			}
+		}
+		return oSmartArt;
+	};
 	baseEditorsApi.prototype.forceSave = function()
 	{
 		return this.CoAuthoringApi.forceSave();
@@ -1266,6 +1344,26 @@
 			this.autoSaveGap = autoSaveGap * 1000; // Нам выставляют в секундах
 		}
 	};
+	baseEditorsApi.prototype.checkChangesSize = function() {
+		if (0 === this.maxChangesSize) {
+			return;
+		}
+		let api = this;
+		let localSize = History.GetLocalChangesSize ? History.GetLocalChangesSize() : 0;
+		let serverSize = api.CoAuthoringApi.get_serverChangesSize();
+		if (localSize + serverSize > api.maxChangesSize) {
+			api.asc_stopSaving();
+			api.sendEvent("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmMaxChangesSize,
+				function(can) {
+					if (can) {
+						api.asc_Undo ? api.asc_Undo() : api.Undo();
+					} else {
+						api.setViewModeDisconnect(true);
+					}
+					api.asc_continueSaving();
+				});
+		}
+	};
 	// send chart message
 	baseEditorsApi.prototype.asc_coAuthoringChatSendMessage      = function(message)
 	{
@@ -1405,12 +1503,16 @@
 		};
 		this.CoAuthoringApi.onLicenseChanged          = function(res)
 		{
+			if (res['settings'] && undefined !== res['settings']['maxChangesSize']) {
+				t.maxChangesSize = res['settings']['maxChangesSize'];
+			}
+			let licenseType = res['licenseType'];
 			if (t.licenseResult) {
-				t.licenseResult['type'] = res;
+				t.licenseResult['type'] = licenseType;
 			}
 			t.isOnLoadLicense = true;
 			var oResult = new AscCommon.asc_CAscEditorPermissions();
-			oResult.setLicenseType(res);
+			oResult.setLicenseType(licenseType);
 			t.sendEvent('asc_onLicenseChanged', oResult);
 		};
 		this.CoAuthoringApi.onWarning                 = function(code)
@@ -2024,6 +2126,11 @@
 			AscCommon.sendCommand(t, fCallback1, oAdditionalData1, dataContainer1);
 		}, this.fCurCallback, options.callback, oAdditionalData, dataContainer);
 	};
+
+	baseEditorsApi.prototype.asc_generateSmartArtPreviews = function(nTypeOfSection)
+	{
+		return this.smartArtPreviewManager.Begin(nTypeOfSection);
+	};
 	// Images & Charts & TextArts
 	baseEditorsApi.prototype.asc_getChartPreviews                = function(chartType, arrId, bEmpty)
 	{
@@ -2484,6 +2591,7 @@
 		this.FontLoader.SetStandartFonts();
 
 		this.chartPreviewManager   = new AscCommon.ChartPreviewManager();
+		this.smartArtPreviewManager   = new AscCommon.SmartArtPreviewDrawer();
 		this.textArtPreviewManager = new AscCommon.TextArtPreviewManager();
 
 		AscFormat.initStyleManager();
@@ -3357,6 +3465,9 @@
 		if (!document.activeElement || !document.createEvent || (document.activeElement.id === "area_id"))
 			return;
 
+		if (!document.activeElement.dispatchEvent)
+			return;
+
 		var e = document.createEvent("HTMLEvents");
 		e.initEvent("blur", true, true);
 		e.eventName = "blur";
@@ -4068,11 +4179,14 @@
 	prot['asc_getInformationBetweenFrameAndGeneralEditor'] = prot.asc_getInformationBetweenFrameAndGeneralEditor;
 	prot['asc_setShapeNames'] = prot.asc_setShapeNames;
 	prot['asc_generateChartPreviews'] = prot.asc_generateChartPreviews;
+	prot['asc_createSmartArt'] = prot.asc_createSmartArt;
+	prot['asc_generateSmartArtPreviews'] = prot.asc_generateSmartArtPreviews;
 	prot['asc_addTableOleObject'] = prot.asc_addTableOleObject;
 	prot['asc_editTableOleObject'] = prot.asc_editTableOleObject;
 	prot['asc_canEditTableOleObject'] = prot.asc_canEditTableOleObject;
 	prot['asc_EditSelectAll'] = prot.asc_EditSelectAll;
 	prot['setOpenedAt'] = prot.setOpenedAt;
+	prot['asc_SaveDrawingAsPicture'] = prot.asc_SaveDrawingAsPicture;
 
 	prot['asc_isCrypto'] = prot.asc_isCrypto;
 

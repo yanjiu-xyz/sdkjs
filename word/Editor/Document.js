@@ -1928,7 +1928,9 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 
     this.CheckEmptyElementsOnSelection = true; // При выделении проверять или нет пустой параграф в конце/начале выделения.
 
-    this.Numbering = new CNumbering();
+    this.Numbering           = new AscWord.CNumbering();
+	this.NumberingApplicator = new AscWord.CNumberingApplicator(this);
+
     this.Styles    = new CStyles();
     this.Styles.Set_LogicDocument(this);
 
@@ -2773,6 +2775,7 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	this.Action.Redraw.Start    = undefined;
 	this.Action.Redraw.End      = undefined;
 	this.Action.Additional      = {};
+	this.Api.checkChangesSize();
 };
 CDocument.prototype.private_CheckAdditionalOnFinalize = function()
 {
@@ -6569,14 +6572,15 @@ CDocument.prototype.SetParagraphIndent = function(Ind)
 	this.UpdateSelection();
 	this.UpdateInterface();
 };
-CDocument.prototype.SetParagraphNumbering = function(NumInfo)
+CDocument.prototype.SetParagraphNumbering = function(numInfo)
 {
-	if (this.private_SetParagraphNumbering(NumInfo))
+	let result = this.NumberingApplicator.Apply(numInfo);
+	if (result)
 	{
 		this.Recalculate();
-		this.Document_UpdateSelectionState();
-		this.Document_UpdateInterfaceState();
-		this.Document_UpdateStylesPanel();
+		this.UpdateSelection();
+		this.UpdateInterface();
+		this.UpdateStylePanel();
 	}
 };
 CDocument.prototype.SetParagraphOutlineLvl = function(nLvl)
@@ -6597,828 +6601,6 @@ CDocument.prototype.SetParagraphSuppressLineNumbers = function(isSuppress)
 	{
 		arrParagraphs[nIndex].SetSuppressLineNumbers(isSuppress);
 	}
-};
-CDocument.prototype.private_SetParagraphNumbering = function(oNumInfo)
-{
-	var oNumPr = this.GetSelectedNum();
-
-	if (!oNumPr && !this.IsTextSelectionUse())
-		oNumPr = this.GetSelectedNum(true);
-
-	var arrSelectedParagraphs;
-
-	if (oNumPr)
-		arrSelectedParagraphs = this.GetAllParagraphsByNumbering(oNumPr);
-	else
-		arrSelectedParagraphs = this.GetSelectedParagraphs();
-
-	if (arrSelectedParagraphs.length <= 0)
-		return false;
-
-	if (oNumInfo.SubType < 0)
-	{
-		this.private_RemoveParagraphNumbering(arrSelectedParagraphs, oNumPr);
-	}
-	else
-	{
-		if (0 === oNumInfo.Type) // Bullet
-		{
-			if (0 === oNumInfo.SubType)
-				this.private_SetParagraphNumberingSimpleBullet(arrSelectedParagraphs, oNumPr);
-			else
-				this.private_SetParagraphNumberingCustomBullet(arrSelectedParagraphs, oNumPr, oNumInfo.SubType)
-		}
-		else if (1 === oNumInfo.Type) // Numbered
-		{
-			if (0 === oNumInfo.SubType)
-				this.private_SetParagraphNumberingSimpleNumbered(arrSelectedParagraphs, oNumPr);
-			else
-				this.private_SetParagraphNumberingCustomNumbered(arrSelectedParagraphs, oNumPr, oNumInfo.SubType);
-		}
-		else if (2 === oNumInfo.Type) // Multilevel
-		{
-			let numId = this.private_SetParagraphNumberingMultiLevel(arrSelectedParagraphs, oNumPr, oNumInfo.SubType);
-			if (numId && oNumInfo.Headings)
-			{
-				let num = this.Numbering.GetNum(numId);
-				let styles = this.GetStyles();
-				if (num && !styles.HaveHeadingsNum())
-				{
-					num.LinkWithHeadings(this.GetStyles());
-
-					for (var index = 0, count = arrSelectedParagraphs.length; index < count; ++index)
-					{
-						let paragraph = arrSelectedParagraphs[index];
-						let numPr     = paragraph.GetNumPr();
-						let iLvl      = numPr ? numPr.Lvl : 0;
-						paragraph.SetNumPr(undefined);
-
-						let pStyle = paragraph.GetParagraphStyle();
-						if (!pStyle || -1 === styles.GetHeadingLevelById(pStyle))
-							paragraph.SetParagraphStyleById(styles.GetDefaultHeading(iLvl));
-					}
-
-					this.Document_UpdateStylesPanel();
-				}
-
-			}
-		}
-	}
-
-	for (var nIndex = 0, nCount = arrSelectedParagraphs.length; nIndex < nCount; ++nIndex)
-	{
-		arrSelectedParagraphs[nIndex].UpdateDocumentOutline();
-	}
-
-	return true;
-};
-CDocument.prototype.private_RemoveParagraphNumbering = function(arrParagraphs, oNumPr)
-{
-	if (this.GetSelectedNum())
-		this.RemoveSelection();
-
-	for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
-	{
-		var oPara = arrParagraphs[nIndex];
-		oPara.RemoveNumPr();
-	}
-};
-CDocument.prototype.private_SetParagraphNumberingSimpleBullet = function(arrParagraphs, oNumPr)
-{
-	if (arrParagraphs.length <= 0)
-		return;
-
-	// 1. Пытаемся присоединить список к списку предыдущего параграфа (если только он маркированный)
-	// 2. Пытаемся присоединить список к списку следующего параграфа (если он маркированный)
-	// 3. Пытаемся добавить список, который добавлялся предыдущий раз
-	// 4. Создаем новый маркированный список
-
-	var sNumId  = null;
-	var nNumLvl = 0;
-
-	var oPrevPara = arrParagraphs[0].GetPrevParagraph();
-	if (oPrevPara && oPrevPara.GetNumPr())
-	{
-		var oPrevNumPr = oPrevPara.GetNumPr();
-		if (oPrevNumPr && this.Numbering.CheckFormat(oPrevNumPr.NumId, oPrevNumPr.Lvl, Asc.c_oAscNumberingFormat.Bullet))
-		{
-			sNumId  = oPrevNumPr.NumId;
-			nNumLvl = oPrevNumPr.Lvl;
-		}
-	}
-
-	if (!sNumId)
-	{
-		var oNextPara = arrParagraphs[arrParagraphs.length - 1].GetNextParagraph();
-		if (oNextPara && oNextPara.GetNumPr())
-		{
-			var oNextNumPr = oNextPara.GetNumPr();
-			if (oNextNumPr && this.Numbering.CheckFormat(oNextNumPr.NumId, oNextNumPr.Lvl, Asc.c_oAscNumberingFormat.Bullet))
-			{
-				sNumId  = oNextNumPr.NumId;
-				nNumLvl = oNextNumPr.Lvl;
-			}
-		}
-	}
-
-	if (oNumPr && this.Numbering.GetNum(oNumPr.NumId))
-	{
-		var oNum = this.Numbering.GetNum(oNumPr.NumId);
-		var oLvl;
-
-		var oLastNumPr = this.GetLastBulletList();
-		if (oLastNumPr && this.Numbering.GetNum(oLastNumPr.NumId) && this.Numbering.GetNum(oLastNumPr.NumId).GetLvl(oLastNumPr.Lvl).IsBulleted())
-		{
-			var oLastNum = this.Numbering.GetNum(oLastNumPr.NumId);
-			oLvl         = oLastNum.GetLvl(oLastNumPr.Lvl).Copy();
-		}
-		else
-		{
-			oLvl = oNum.GetLvl(oNumPr.Lvl).Copy();
-
-			var oTextPr = new CTextPr();
-			oTextPr.RFonts.SetAll("Symbol");
-			oLvl.SetByType(c_oAscNumberingLevel.Bullet, oNumPr.Lvl, String.fromCharCode(0x00B7), oTextPr);
-		}
-
-		oLvl.ParaPr = oNum.GetLvl(oNumPr.Lvl).ParaPr.Copy();
-
-		oNum.SetLvl(oLvl, oNumPr.Lvl);
-		this.SetLastBulletList(oNumPr.NumId, oNumPr.Lvl);
-		return;
-	}
-
-	var isCheckPrev = false;
-	if (!sNumId)
-	{
-		var oLastNumPr = this.GetLastBulletList();
-		if (oLastNumPr && this.Numbering.GetNum(oLastNumPr.NumId) && this.Numbering.GetNum(oLastNumPr.NumId).GetLvl(0).IsBulleted())
-		{
-			var oPrevNum = this.Numbering.GetNum(oLastNumPr.NumId);
-
-			var oNum = this.Numbering.CreateNum();
-			oNum.CreateDefault(c_oAscMultiLevelNumbering.Bullet);
-			oNum.SetLvl(oPrevNum.GetLvl(oLastNumPr.Lvl).Copy(), 0);
-
-			sNumId  = oNum.GetId();
-			nNumLvl = 0;
-
-			isCheckPrev = true;
-		}
-	}
-
-
-	if (!sNumId)
-	{
-		var oNum = this.Numbering.CreateNum();
-		oNum.CreateDefault(c_oAscMultiLevelNumbering.Bullet);
-
-		sNumId  = oNum.GetId();
-		nNumLvl = 0;
-
-		isCheckPrev = true;
-	}
-
-	if (isCheckPrev)
-	{
-		var oResult = this.private_CheckPrevNumberingOnAdd(arrParagraphs, sNumId, nNumLvl);
-		if (oResult)
-		{
-			sNumId  = oResult.NumId;
-			nNumLvl = oResult.Lvl;
-		}
-	}
-
-	this.SetLastBulletList(sNumId, nNumLvl);
-
-	// Если у параграфа уже была нумерация, тогда мы сохраняем её уровень, если нет - добавляем с новым значением nNumLvl
-	for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
-	{
-		var oOldNumPr = arrParagraphs[nIndex].GetNumPr();
-
-		if (oOldNumPr)
-			arrParagraphs[nIndex].ApplyNumPr(sNumId, oOldNumPr.Lvl);
-		else
-			arrParagraphs[nIndex].ApplyNumPr(sNumId, nNumLvl);
-	}
-};
-CDocument.prototype.private_SetParagraphNumberingCustomBullet = function(arrParagraphs, oNumPr, nType)
-{
-	if (arrParagraphs.length <= 0)
-		return;
-
-	// Для начала пробежимся и узнаем, есть ли у нас парграфы с разными списками и разными уровнями
-	var bDiffLvl = false;
-	var bDiffId  = false;
-	var nPrevLvl = null;
-	var sPrevId  = null;
-	for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
-	{
-		var oTempNumPr = arrParagraphs[nIndex].GetNumPr();
-		if (oTempNumPr)
-		{
-			if (null === nPrevLvl)
-				nPrevLvl = oTempNumPr.Lvl;
-
-			if (null === sPrevId)
-				sPrevId = oTempNumPr.NumId;
-
-			if (sPrevId !== oTempNumPr.NumId)
-				bDiffId = true;
-
-			if (nPrevLvl !== oTempNumPr.Lvl)
-			{
-				bDiffLvl = true;
-				break;
-			}
-		}
-		else
-		{
-			bDiffLvl = true;
-			break;
-		}
-	}
-
-
-	// 1. Если у нас есть параграфы со списками разных уровней, тогда мы
-	//    делаем стандартный маркированный список, у которого первый(нулевой)
-	//    уровень изменен на тот который задан через NumInfo.SubType
-	// 2. Если все параграфы содержат списки одного уровня.
-	//    2.1 Если у всех списков одинаковый Id, тогда мы создаем
-	//        копию текущего списка и меняем в нем текущий уровень
-	//        на тот, который задан через NumInfo.SubType
-	//    2.2 Если у списков разные Id, тогда мы создаем стандартный
-	//        маркированный список с измененным уровнем (равным текущему),
-	//        на тот, который прописан в NumInfo.Subtype
-
-	var sLvlText   = "";
-	var oLvlTextPr = new CTextPr();
-	oLvlTextPr.RFonts.SetAll("Times New Roman");
-	switch (nType)
-	{
-		case 1:
-		{
-			sLvlText = String.fromCharCode(0x00B7);
-			oLvlTextPr.RFonts.SetAll("Symbol");
-			break;
-		}
-		case 2:
-		{
-			sLvlText = "o";
-			oLvlTextPr.RFonts.SetAll("Courier New");
-			break;
-		}
-		case 3:
-		{
-			sLvlText = String.fromCharCode(0x00A7);
-			oLvlTextPr.RFonts.SetAll("Wingdings");
-			break;
-		}
-		case 4:
-		{
-			sLvlText = String.fromCharCode(0x0076);
-			oLvlTextPr.RFonts.SetAll("Wingdings");
-			break;
-		}
-		case 5:
-		{
-			sLvlText = String.fromCharCode(0x00D8);
-			oLvlTextPr.RFonts.SetAll("Wingdings");
-			break;
-		}
-		case 6:
-		{
-			sLvlText = String.fromCharCode(0x00FC);
-			oLvlTextPr.RFonts.SetAll("Wingdings");
-			break;
-		}
-		case 7:
-		{
-			sLvlText = String.fromCharCode(0x00A8);
-			oLvlTextPr.RFonts.SetAll("Symbol");
-			break;
-		}
-		case 8:
-		{
-			sLvlText = String.fromCharCode(0x2013);
-			oLvlTextPr.RFonts.SetAll("Arial");
-			break;
-		}
-	}
-
-	var isCheckPrev = false;
-
-	var sNumId = null;
-	if (oNumPr)
-	{
-		nPrevLvl = oNumPr.Lvl;
-
-		oNum = this.Numbering.GetNum(oNumPr.NumId);
-		if (oNum)
-		{
-			oNum.SetLvlByType(oNumPr.Lvl, c_oAscNumberingLevel.Bullet, sLvlText, oLvlTextPr);
-		}
-
-		this.SetLastBulletList(sPrevId, nPrevLvl);
-	}
-	else if (true === bDiffLvl)
-	{
-		nPrevLvl = 0;
-
-		var oNum = this.Numbering.CreateNum();
-		oNum.CreateDefault(c_oAscMultiLevelNumbering.Bullet);
-		oNum.SetLvlByType(0, c_oAscNumberingLevel.Bullet, sLvlText, oLvlTextPr);
-
-		sNumId = oNum.GetId();
-
-		isCheckPrev = true;
-	}
-	else if (true === bDiffId || true != this.Numbering.CheckFormat(sPrevId, nPrevLvl, Asc.c_oAscNumberingFormat.Bullet))
-	{
-		var oNum = this.Numbering.CreateNum();
-		oNum.CreateDefault(c_oAscMultiLevelNumbering.Bullet);
-		oNum.SetLvlByType(nPrevLvl, c_oAscNumberingLevel.Bullet, sLvlText, oLvlTextPr);
-
-		sNumId = oNum.GetId();
-
-		isCheckPrev = true;
-	}
-	else
-	{
-		var oNum = this.Numbering.GetNum(sPrevId);
-		if (oNum)
-		{
-			oNum.SetLvlByType(nPrevLvl, c_oAscNumberingLevel.Bullet, sLvlText, oLvlTextPr);
-		}
-
-		this.SetLastBulletList(sPrevId, nPrevLvl);
-	}
-
-	if (isCheckPrev)
-	{
-		var oResult = this.private_CheckPrevNumberingOnAdd(arrParagraphs, sNumId, nPrevLvl);
-		if (oResult)
-			sNumId = oResult.NumId;
-	}
-
-	if (sNumId)
-	{
-		// Параграфы, которые не содержали списка у них уровень выставляем 0,
-		// а у тех которые содержали, мы уровень не меняем
-		for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
-		{
-			var oOldNumPr = arrParagraphs[nIndex].GetNumPr();
-			if (oOldNumPr)
-				arrParagraphs[nIndex].ApplyNumPr(sNumId, oOldNumPr.Lvl);
-			else
-				arrParagraphs[nIndex].ApplyNumPr(sNumId, 0);
-		}
-
-		this.SetLastBulletList(sNumId, 0);
-	}
-};
-CDocument.prototype.private_SetParagraphNumberingSimpleNumbered = function(arrParagraphs, oNumPr)
-{
-	if (arrParagraphs.length <= 0)
-		return;
-
-	// 1. Пытаемся присоединить список к списку предыдущего параграфа (если он нумерованный)
-	// 2. Пытаемся присоединить список к списку следующего параграфа (если он нумерованный)
-	// 3. Пытаемся добавить список, который добавлялся предыдущий раз (добавляем его копию, и опционально продолжаем)
-	// 4. Создаем новый нумерованный список
-
-	var sNumId  = null;
-	var nNumLvl = 0;
-
-	var oPrevPara = arrParagraphs[0].GetPrevParagraph();
-	if (oPrevPara)
-	{
-		var oPrevNumPr = oPrevPara.GetNumPr();
-		if (oPrevNumPr && true === this.Numbering.CheckFormat(oPrevNumPr.NumId, oPrevNumPr.Lvl, Asc.c_oAscNumberingFormat.Decimal))
-		{
-			sNumId  = oPrevNumPr.NumId;
-			nNumLvl = oPrevNumPr.Lvl;
-		}
-	}
-
-	if (!sNumId)
-	{
-		var oNextPara = arrParagraphs[arrParagraphs.length - 1].GetNextParagraph();
-		if (oNextPara)
-		{
-			var oNextNumPr = oNextPara.GetNumPr();
-			if (oNextNumPr && true == this.Numbering.CheckFormat(oNextNumPr.NumId, oNextNumPr.Lvl, Asc.c_oAscNumberingFormat.Decimal))
-			{
-				sNumId  = oNextNumPr.NumId;
-				nNumLvl = oNextNumPr.Lvl;
-			}
-		}
-	}
-
-	if (oNumPr && this.Numbering.GetNum(oNumPr.NumId))
-	{
-		var oNum = this.Numbering.GetNum(oNumPr.NumId);
-		var oLvl;
-
-		var oLastNumPr = this.GetLastNumberedList();
-		if (oLastNumPr && this.Numbering.GetNum(oLastNumPr.NumId) && this.Numbering.GetNum(oLastNumPr.NumId).GetLvl(oNumPr.Lvl).IsNumbered())
-		{
-			var oPrevNum = this.Numbering.GetNum(oLastNumPr.NumId);
-
-			if (oPrevNum.IsHaveRelatedLvlText())
-			{
-				// В этом случае мы не можем подменить просто текущий уровень, меняем целиком весь список
-				for (var nLvl = 0; nLvl < 9; ++nLvl)
-				{
-					oNum.SetLvl(oPrevNum.GetLvl(nLvl).Copy(), nLvl);
-				}
-			}
-			else
-			{
-				oLvl        = oPrevNum.GetLvl(oLastNumPr.Lvl).Copy();
-				oLvl.ParaPr = oNum.GetLvl(oNumPr.Lvl).ParaPr.Copy();
-				oLvl.ResetNumberedText(oNumPr.Lvl);
-
-				oNum.SetLvl(oLvl, oNumPr.Lvl);
-				this.SetLastNumberedList(oNumPr.NumId, oNumPr.Lvl);
-			}
-		}
-		else
-		{
-			oLvl = oNum.GetLvl(oNumPr.Lvl).Copy();
-			oLvl.SetByType(c_oAscNumberingLevel.DecimalDot_Right, oNumPr.Lvl);
-			oLvl.ParaPr = oNum.GetLvl(oNumPr.Lvl).ParaPr.Copy();
-
-			oNum.SetLvl(oLvl, oNumPr.Lvl);
-			this.SetLastNumberedList(oNumPr.NumId, oNumPr.Lvl);
-		}
-
-		return;
-	}
-
-	var isCheckPrev = false;
-
-	if (!sNumId)
-	{
-		var oLastNumPr = this.GetLastNumberedList();
-		if (oLastNumPr && this.Numbering.GetNum(oLastNumPr.NumId) && this.Numbering.GetNum(oLastNumPr.NumId).GetLvl(0).IsNumbered())
-		{
-			var oLastNum = this.Numbering.GetNum(oLastNumPr.NumId);
-
-			var oNum = this.Numbering.CreateNum();
-
-			if (oLastNum.IsHaveRelatedLvlText())
-			{
-				for (var nLvl = 0; nLvl < 9; ++nLvl)
-				{
-					oNum.SetLvl(oLastNum.GetLvl(nLvl).Copy(), nLvl);
-				}
-			}
-			else
-			{
-				oNum.CreateDefault(c_oAscMultiLevelNumbering.Numbered);
-				oNum.SetLvl(oLastNum.GetLvl(oLastNumPr.Lvl).Copy(), 0);
-			}
-
-			sNumId  = oNum.GetId();
-			nNumLvl = 0;
-
-			isCheckPrev = true;
-		}
-	}
-
-	if (!sNumId)
-	{
-		var oNum = this.Numbering.CreateNum();
-		oNum.CreateDefault(c_oAscMultiLevelNumbering.Numbered);
-
-		sNumId  = oNum.GetId();
-		nNumLvl = 0;
-
-		isCheckPrev = true;
-	}
-
-	if (isCheckPrev)
-	{
-		var oResult = this.private_CheckPrevNumberingOnAdd(arrParagraphs, sNumId, nNumLvl);
-		if (oResult)
-		{
-			sNumId  = oResult.NumId;
-			nNumLvl = oResult.Lvl;
-		}
-	}
-
-	this.SetLastNumberedList(sNumId, nNumLvl);
-
-	// Если у параграфа уже была нумерация, тогда мы сохраняем её уровень, если нет - добавляем с новым значением nNumLvl
-	for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
-	{
-		var oOldNumPr = arrParagraphs[nIndex].GetNumPr();
-		if (oOldNumPr)
-			arrParagraphs[nIndex].ApplyNumPr(sNumId, oOldNumPr.Lvl);
-		else
-			arrParagraphs[nIndex].ApplyNumPr(sNumId, nNumLvl);
-	}
-};
-CDocument.prototype.private_SetParagraphNumberingCustomNumbered = function(arrParagraphs, oNumPr, nType)
-{
-	if (arrParagraphs.length <= 0)
-		return;
-
-	// Для начала пробежимся и узнаем, есть ли у нас парграфы с разными списками и разными уровнями
-	var bDiffLvl = false;
-	var bDiffId  = false;
-	var nPrevLvl = null;
-	var sPrevId  = null;
-	for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
-	{
-		var oTempNumPr = arrParagraphs[nIndex].GetNumPr();
-		if (oTempNumPr)
-		{
-			if (null === nPrevLvl)
-				nPrevLvl = oTempNumPr.Lvl;
-
-			if (null === sPrevId)
-				sPrevId = oTempNumPr.NumId;
-
-			if (sPrevId !== oTempNumPr.NumId)
-				bDiffId = true;
-
-			if (nPrevLvl !== oTempNumPr.Lvl)
-			{
-				bDiffLvl = true;
-				break;
-			}
-		}
-		else
-		{
-			bDiffLvl = true;
-			break;
-		}
-	}
-
-	// 1. Если у нас есть параграфы со списками разных уровней, тогда мы
-	//    делаем стандартный нумерованный список, у которого первый(нулевой)
-	//    уровень изменен на тот который задан через nType
-	// 2. Если все параграфы содержат списки одного уровня.
-	//    2.1 Если у всех списков одинаковый Id, тогда мы создаем
-	//        копию текущего списка и меняем в нем текущий уровень
-	//        на тот, который задан через NumInfo.SubType
-	//    2.2 Если у списков разные Id, тогда мы создаем стандартный
-	//        нумерованный список с измененным уровнем (равным текущему),
-	//        на тот, который прописан в NumInfo.Subtype
-
-	var oNum       = null;
-	var sNumId     = null;
-	var nChangeLvl = 0;
-
-	var isCheckPrev = false;
-
-	if (oNumPr)
-	{
-		oNum       = this.Numbering.GetNum(oNumPr.NumId);
-		nChangeLvl = oNumPr.Lvl;
-	}
-	else if (true === bDiffLvl)
-	{
-		oNum = this.Numbering.CreateNum();
-		oNum.CreateDefault(c_oAscMultiLevelNumbering.Numbered);
-
-		sNumId     = oNum.GetId();
-		nChangeLvl = 0;
-
-		isCheckPrev = true;
-	}
-	else if (true === bDiffId)
-	{
-		oNum = this.Numbering.CreateNum();
-		oNum.CreateDefault(c_oAscMultiLevelNumbering.Numbered);
-
-		sNumId     = oNum.GetId();
-		nChangeLvl = nPrevLvl;
-
-		isCheckPrev = true;
-	}
-	else
-	{
-		oNum       = this.Numbering.GetNum(sPrevId);
-		nChangeLvl = nPrevLvl;
-
-		this.SetLastNumberedList(sPrevId, nPrevLvl);
-	}
-
-	switch (nType)
-	{
-		case 1:
-		{
-			oNum.SetLvlByType(nChangeLvl, c_oAscNumberingLevel.DecimalDot_Right);
-			break;
-		}
-		case 2:
-		{
-			oNum.SetLvlByType(nChangeLvl, c_oAscNumberingLevel.DecimalBracket_Right);
-			break;
-		}
-		case 3:
-		{
-			oNum.SetLvlByType(nChangeLvl, c_oAscNumberingLevel.UpperRomanDot_Right);
-			break;
-		}
-		case 4:
-		{
-			oNum.SetLvlByType(nChangeLvl, c_oAscNumberingLevel.UpperLetterDot_Left);
-			break;
-		}
-		case 5:
-		{
-			oNum.SetLvlByType(nChangeLvl, c_oAscNumberingLevel.LowerLetterBracket_Left);
-			break;
-		}
-		case 6:
-		{
-			oNum.SetLvlByType(nChangeLvl, c_oAscNumberingLevel.LowerLetterDot_Left);
-			break;
-		}
-		case 7:
-		{
-			oNum.SetLvlByType(nChangeLvl, c_oAscNumberingLevel.LowerRomanDot_Right);
-			break;
-		}
-		case 8:
-		{
-			oNum.SetLvlByType(nChangeLvl, c_oAscNumberingLevel.UpperRussian_Dot_Left);
-			break;
-		}
-		case 9:
-		{
-			oNum.SetLvlByType(nChangeLvl, c_oAscNumberingLevel.UpperRussian_Bracket_Left);
-			break;
-		}
-		case 10:
-		{
-			oNum.SetLvlByType(nChangeLvl, c_oAscNumberingLevel.LowerRussian_Dot_Left);
-			break;
-		}
-		case 11:
-		{
-			oNum.SetLvlByType(nChangeLvl, c_oAscNumberingLevel.LowerRussian_Bracket_Left);
-			break;
-		}
-	}
-
-	if (isCheckPrev)
-	{
-		var oResult = this.private_CheckPrevNumberingOnAdd(arrParagraphs, sNumId, nChangeLvl);
-		if (oResult)
-			sNumId = oResult.NumId;
-	}
-
-	if (sNumId)
-	{
-		// Параграфы, которые не содержали списка у них уровень выставляем 0,
-		// а у тех которые содержали, мы уровень не меняем
-		for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
-		{
-			var oOldNumPr = arrParagraphs[nIndex].GetNumPr();
-			if (oOldNumPr)
-				arrParagraphs[nIndex].ApplyNumPr(sNumId, oOldNumPr.Lvl);
-			else
-				arrParagraphs[nIndex].ApplyNumPr(sNumId, 0);
-		}
-
-		this.SetLastNumberedList(sNumId, 0);
-	}
-};
-CDocument.prototype.private_SetParagraphNumberingMultiLevel = function(arrParagraphs, oNumPr, nType)
-{
-	if (arrParagraphs.length <= 0)
-		return;
-
-	var bDiffId = false;
-	var sPrevId = null;
-	for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
-	{
-		var oTempNumPr = arrParagraphs[nIndex].GetNumPr();
-		if (oTempNumPr)
-		{
-			if (null === sPrevId)
-				sPrevId = oTempNumPr.NumId;
-
-			if (sPrevId !== oTempNumPr.NumId)
-				bDiffId = true;
-		}
-		else
-		{
-			bDiffId = true;
-			break;
-		}
-	}
-
-	var oNum   = null;
-	var sNumId = null;
-
-	if (oNumPr)
-	{
-		oNum = this.Numbering.GetNum(oNumPr.NumId);
-	}
-	else if (bDiffId)
-	{
-		oNum   = this.Numbering.CreateNum();
-		sNumId = oNum.GetId();
-	}
-	else
-	{
-		oNum = this.Numbering.GetNum(sPrevId);
-	}
-
-	switch (nType)
-	{
-		case 1:
-		{
-			oNum.CreateDefault(c_oAscMultiLevelNumbering.MultiLevel_1_a_i);
-			break;
-		}
-		case 2:
-		{
-			oNum.CreateDefault(c_oAscMultiLevelNumbering.MultiLevel_1_11_111);
-			break;
-		}
-		case 3:
-		{
-			oNum.CreateDefault(c_oAscMultiLevelNumbering.MultiLevel_Bullet);
-			break;
-		}
-		case 4:
-		{
-			oNum.CreateDefault(c_oAscMultiLevelNumbering.MultiLevel_Article_Section);
-			break;
-		}
-		case 5:
-		{
-			oNum.CreateDefault(c_oAscMultiLevelNumbering.MultiLevel_Chapter);
-			break;
-		}
-		case 6:
-		{
-			oNum.CreateDefault(c_oAscMultiLevelNumbering.MultiLevel_I_A_1);
-			break;
-		}
-		case 7:
-		{
-			oNum.CreateDefault(c_oAscMultiLevelNumbering.MultiLevel_1_11_111_NoInd);
-			break;
-		}
-	}
-
-	if (sNumId)
-	{
-		// Параграфы, которые не содержали списка у них уровень выставляем 0,
-		// а у тех которые содержали, мы уровень не меняем
-		for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
-		{
-			var oOldNumPr = arrParagraphs[nIndex].GetNumPr();
-			if (oOldNumPr)
-				arrParagraphs[nIndex].ApplyNumPr(sNumId, oOldNumPr.Lvl);
-			else
-				arrParagraphs[nIndex].ApplyNumPr(sNumId, 0);
-		}
-
-		return sNumId;
-	}
-
-	return null;
-};
-CDocument.prototype.private_CheckPrevNumberingOnAdd = function(arrParagraphs, sNumId, nLvl)
-{
-	var sResultNumId = sNumId;
-	var nResultLvl   = nLvl;
-
-	if (arrParagraphs.length !== 1 || this.IsSelectionUse())
-		return {NumId : sResultNumId, Lvl : nResultLvl};
-
-	var oPrevPara = arrParagraphs[0].GetPrevParagraph();
-	while (oPrevPara)
-	{
-		if (oPrevPara.GetNumPr() || !oPrevPara.IsEmpty())
-			break;
-
-		oPrevPara = oPrevPara.GetPrevParagraph();
-	}
-
-	if (oPrevPara && oPrevPara.GetNumPr())
-	{
-		var oPrevNumPr = oPrevPara.GetNumPr();
-		var oPrevLvl   = this.Numbering.GetNum(oPrevNumPr.NumId).GetLvl(oPrevNumPr.Lvl);
-		var oCurrLvl   = this.Numbering.GetNum(sNumId).GetLvl(nLvl);
-
-		if (oPrevLvl.IsSimilar(oCurrLvl))
-		{
-			sResultNumId = oPrevNumPr.NumId;
-			nResultLvl   = oPrevNumPr.Lvl;
-		}
-	}
-
-	return {NumId : sResultNumId, Lvl : nResultLvl};
 };
 CDocument.prototype.SetParagraphShd = function(Shd)
 {
@@ -12331,7 +11513,7 @@ CDocument.prototype.private_UpdateInterface = function(isSaveCurrentReviewChange
 	this.Document_UpdateUndoRedoState();
 	this.Document_UpdateCanAddHyperlinkState();
 	this.Document_UpdateSectionPr();
-	this.Document_UpdateStylesPanel();
+	this.UpdateStylePanel();
 };
 CDocument.prototype.private_UpdateRulers = function()
 {
@@ -12551,12 +11733,7 @@ CDocument.prototype.CheckTextFormFormatOnBlur = function(oForm)
 
 		if (this.CollaborativeEditing.Is_SingleUser() || !this.CollaborativeEditing.Is_Fast())
 		{
-			let arrChanges = [];
-			while (oForm === this.History.GetLastPointFormFilling())
-			{
-				arrChanges = arrChanges.concat(this.History.Undo());
-			}
-
+			let arrChanges = this.History.UndoFormFilling(oForm);
 			if (arrChanges.length)
 				this.RecalculateByChanges(arrChanges);
 		}
@@ -13551,6 +12728,13 @@ CDocument.prototype.private_DocumentIsSelectionLocked = function(CheckType)
 			if (this.Core)
 			{
 				this.Core.Lock.Check(this.Core.Get_Id());
+			}
+		}
+		else if (AscCommon.changestype_DocumentProtection === CheckType)
+		{
+			if (this.Settings.DocumentProtection)
+			{
+				this.Settings.DocumentProtection.Lock.Check(this.Settings.DocumentProtection.Get_Id());
 			}
 		}
 		else if (AscCommon.changestype_Document_Settings === CheckType)
@@ -15130,7 +14314,7 @@ CDocument.prototype.Add_ChangedStyle = function(arrStylesId)
 		this.ChangedStyles[arrStylesId[nIndex]] = true;
 	}
 };
-CDocument.prototype.Document_UpdateStylesPanel = function()
+CDocument.prototype.UpdateStylePanel = function()
 {
 	if (0 !== this.TurnOffPanelStyles)
 		return;
@@ -15158,7 +14342,7 @@ CDocument.prototype.UnlockPanelStyles = function(isUpdate)
 	this.TurnOffPanelStyles = Math.max(0, this.TurnOffPanelStyles - 1);
 
 	if (true === isUpdate)
-		this.Document_UpdateStylesPanel();
+		this.UpdateStylePanel();
 };
 CDocument.prototype.GetAllParagraphs = function(Props, ParaArray)
 {
@@ -16668,6 +15852,13 @@ CDocument.prototype.IsSpecialFormsSettingsDefault = function()
 {
 	return this.Settings.SpecialFormsSettings.IsDefault();
 };
+CDocument.prototype.SetProtection = function(props)
+{
+	if (this.Settings.DocumentProtection) {
+		this.Settings.DocumentProtection.setProps(props);
+	}
+};
+
 CDocument.prototype.GetDocumentLayout = function()
 {
 	return this.Layout;
@@ -28263,7 +27454,7 @@ CDocumentNumberingInfoCounter.prototype.CheckNum = function(oNum)
  * Класс для рассчета значение номера для нумерации заданного параграфа
  * @param oPara {Paragraph}
  * @param oNumPr {CNumPr}
- * @param oNumbering {CNumbering}
+ * @param oNumbering {AscWord.CNumbering}
  * @constructor
  */
 function CDocumentNumberingInfoEngine(oPara, oNumPr, oNumbering)
@@ -28583,7 +27774,7 @@ CDocumentFootnotesRangeEngine.prototype.IsCheckEndnotes = function()
  * Класс для поиска подходящей нумерации в документе
  * @param oParagraph {Paragraph}
  * @param oNumPr {CNumPr}
- * @param oNumbering {CNumbering}
+ * @param oNumbering {AscWord.CNumbering}
  */
 function CDocumentNumberingContinueEngine(oParagraph, oNumPr, oNumbering)
 {
