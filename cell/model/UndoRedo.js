@@ -4076,7 +4076,8 @@ function (window, undefined) {
 			Type === AscCH.historyitem_PivotTable_DataFieldSetSubtotal   ||
 			Type === AscCH.historyitem_PivotTable_DataFieldSetShowDataAs ||
 			Type === AscCH.historyitem_PivotTable_DataFieldSetBaseField  ||
-			Type === AscCH.historyitem_PivotTable_DataFieldSetBaseItem) {
+			Type === AscCH.historyitem_PivotTable_DataFieldSetBaseItem   ||
+			Type === AscCH.historyitem_PivotTable_DataFieldSetPivotShowAs) {
 			fields = pivotTable.asc_getDataFields();
 		} else {
 			fields = pivotTable.asc_getPivotFields();
@@ -4137,6 +4138,9 @@ function (window, undefined) {
 			case AscCH.historyitem_PivotTable_DataFieldSetBaseItem:
 				field.asc_setBaseItem(value, pivotTable, index);
 				break; 
+			case AscCH.historyitem_PivotTable_DataFieldSetPivotShowAs:
+				field.asc_setPivotShowAs(value, pivotTable, index);
+				break;
 		}
 	};
 

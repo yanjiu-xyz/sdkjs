@@ -5466,39 +5466,70 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				["Tee","30.79497296","49.62438101","0","1"],
 				["Grand Total","1","1","1","1"]
 				];
+			let percentOfParentCol_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","0.492274033","0.507725967","0","1"],
+				["Fancy","0.46536965","0.53463035","0","1"],
+				["Golf","0.517515924","0.482484076","0","1"],
+				["Tee","0.494845361","0.505154639","0","1"],
+				["North","0.002349104","0","0.997650896","1"],
+				["Tee","0.002349104","0","0.997650896","1"],
+				["West","0.592003932","0.407996068","0","1"],
+				["Fancy","1","0","0","1"],
+				["Golf","0.523849025","0.476150975","0","1"],
+				["Tee","0.460176991","0.539823009","0","1"],
+				["Grand Total","0.01494325","0.010878181","0.974178568","1"]
+				];
+			let percentOfParent_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","1","1","","1"],
+				["Fancy","0.332222222","0.370051172","","0.351428962"],
+				["Golf","0.361111111","0.326420684","","0.34349788"],
+				["Tee","0.306666667","0.303528144","","0.305073157"],
+				["North","1","","1","1"],
+				["Tee","1","","1","1"],
+				["West","1","1","","1"],
+				["Fancy","0.333794631","0","","0.197607734"],
+				["Golf","0.349570994","0.461044177","","0.395051614"],
+				["Tee","0.316634376","0.538955823","","0.407340652"],
+				["Grand Total","","","",""]
+				];
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.asc_addRowField(api, 0);
 			pivot.asc_addRowField(api, 2);
 			pivot.asc_addColField(api, 1);
 			pivot.asc_addDataField(api, 5);
-			function testShowAs(pivot, showAs, baseField, baseItem, standard, message) {
+			function testShowAs(pivot, showAs, baseField, baseItem, standard, message, pivotShowAs) {
 				return checkHistoryOperation(assert, pivot, standard, message, function(){
 					var dataField = pivot.asc_getDataFields()[0];
-					props = new Asc.CT_DataField();
+					let props = new Asc.CT_DataField();
 					props.asc_setBaseField(baseField);
 					props.asc_setBaseItem(baseItem);
+					props.asc_setPivotShowAs(pivotShowAs);
 					props.asc_setShowDataAs(showAs);
 					dataField.asc_set(api, pivot, 0, props);
 				});
 			}
 			AscCommon.History.Clear();
 			setPivotLayout(pivot, 'compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfTotal, 0, 0, percentOfTotal_compact, 'percentOfTotal_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_compact, 'differenceNext_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_compact2, 'differenceNext_compact2');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_PREV, differencePrev_compact, 'differencePrev_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_PREV, differencePrev_compact2, 'differencePrev_compact2');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, 1, differenceBase_compact, 'differenceBase_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, 1, differenceBase_compact2, 'differenceBase_compact2');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfCol, 0, 0, percentOfCol_compact, 'percentOfCol_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfRow, 0, 0, percentOfRow_compact, 'percentOfRow_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Index, 0, 0, index_compact, 'index_compact');
-
-			// pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfParentRow, 0, 0, percentOfParentRow_compact, 'percentOfParentRow_compact');
-			AscCommon.History.Clear();
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfTotal, 0, 0, percentOfTotal_compact, 'percentOfTotal_compact', 0);
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_compact, 'differenceNext_compact', 0);
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_compact2, 'differenceNext_compact2', 0);
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_PREV, differencePrev_compact, 'differencePrev_compact', 0);
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_PREV, differencePrev_compact2, 'differencePrev_compact2', 0);
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, 1, differenceBase_compact, 'differenceBase_compact', 0);
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, 1, differenceBase_compact2, 'differenceBase_compact2', 0);
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfCol, 0, 0, percentOfCol_compact, 'percentOfCol_compact', 0);
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfRow, 0, 0, percentOfRow_compact, 'percentOfRow_compact', 0);
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Index, 0, 0, index_compact, 'index_compact', 0);
+			pivot = testShowAs(pivot, null, 0, 0, percentOfParentRow_compact, 'percentOfParentRow_compact', Asc.c_oAscPivotShowAs.PercentOfParentRow);
+			pivot = testShowAs(pivot, null, 0, 0, percentOfParentCol_compact, 'percentOfParentCol_compact', Asc.c_oAscPivotShowAs.PercentOfParentCol);
+			pivot = testShowAs(pivot, null, 0, 0, percentOfParent_compact, 'percentOfParent_compact', Asc.c_oAscPivotShowAs.PercentOfParent);
 			setPivotLayout(pivot, 'tabular');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_tabular, 'differenceNext_tabular');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_tabular, 'differenceNext_tabular', 0);
 			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
 		});
 	}
