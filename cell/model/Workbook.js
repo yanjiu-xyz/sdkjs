@@ -8487,6 +8487,7 @@
 					for (let i = 0; i < dataFields.length; i += 1) {
 						if (fieldIndex === dataFields[i].baseField) {
 							traversal.diffRowIndex[i] = rowR + rowItemsXIndex;
+							traversal.diffColIndex[i] = null;
 						}
 					}
 					if (!traversal.setRowIndex(pivotFields, fieldIndex, rowItem, rowR, rowItemsXIndex, props)) {

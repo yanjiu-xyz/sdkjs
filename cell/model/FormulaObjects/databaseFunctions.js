@@ -128,6 +128,22 @@
 	StatisticOnlineAlgorithm.prototype.isEmpty = function() {
 		return 0 === this.count && 0 === this.countNums;
 	};
+	/**
+	 * RunTotal show-as
+	 * @param {StatisticOnlineAlgorithm} total
+	 * @return {StatisticOnlineAlgorithm}
+	 */
+	StatisticOnlineAlgorithm.prototype.addTotal = function(total) {
+		this.count += total.getCount();
+		this.countNums += total.getCountNums();
+		this.min += total.getMin();
+		this.max += total.getMax();
+		this.sum += total.getSum();
+		this.product += total.getProduct();
+		this.mean += total.getMean();
+		// ??
+		this.M2 += total.M2;
+	};
 	StatisticOnlineAlgorithm.prototype.getCellValue = function(dataType, fieldType, rowType, colType) {
 		var oCellValue;
 		if (this.isEmpty()) {
