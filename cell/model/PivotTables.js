@@ -15702,6 +15702,7 @@ function DataRowTraversal(pivotFields, dataFields, rowItems, colItems) {
 	this.rowParent = null;
 	this.rowParentType = Asc.c_oAscItemType.Default;
 	this.colParent = null;
+	this.colParentType = Asc.c_oAscItemType.Default;
 
 	this.rowParentCache = null;
 
@@ -15984,6 +15985,12 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 		oCellValue.number = 0;
 		return oCellValue;
 	}
+	function getErrorCellvalue(text) {
+		let oCellValue = new AscCommonExcel.CCelValue();
+		oCellValue.type = AscCommon.CellValueType.Error;
+		oCellValue.text = text;
+		return oCellValue;
+	}
 	var dataIndex = Math.max(rowItem.i, colItem.i);
 	/**
 	 * @type {CT_DataField}
@@ -16074,9 +16081,7 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 						oCellValue = getZeroCellValue();
 					}
 				} else if (this.isNoData) {
-					oCellValue = AscCommonExcel.StatisticOnlineAlgorithm.prototype.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-					oCellValue.type = AscCommon.CellValueType.Error;
-					oCellValue.text = "#N/A";
+					oCellValue = getErrorCellvalue('#N/A');
 					break;
 				}
 				break;
