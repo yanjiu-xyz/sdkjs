@@ -15702,7 +15702,6 @@ function DataRowTraversal(pivotFields, dataFields, rowItems, colItems) {
 	this.rowParent = null;
 	this.rowParentType = Asc.c_oAscItemType.Default;
 	this.colParent = null;
-	this.colParentType = Asc.c_oAscItemType.Default;
 
 	this.rowParentCache = null;
 
@@ -15986,7 +15985,7 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 		return oCellValue;
 	}
 	function getErrorCellvalue(text) {
-		let oCellValue = new AscCommonExcel.CCelValue();
+		let oCellValue = new AscCommonExcel.CCellValue();
 		oCellValue.type = AscCommon.CellValueType.Error;
 		oCellValue.text = text;
 		return oCellValue;

@@ -5376,6 +5376,96 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				["Tee","","1.98","-13.42",""],
 				["Grand Total","","-23.18","5492.97",""]
 				];
+			let differenceBase_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","22.92","37.13","-5555","-5494.95"],
+				["Fancy","#N/A","#N/A","#N/A","#N/A"],
+				["Golf","#N/A","#N/A","#N/A","#N/A"],
+				["Tee","-2.04","11.27","-5555","-5545.77"],
+				["North","","","",""],
+				["Tee","","","",""],
+				["West","23.05","24.9","-5555","-5507.05"],
+				["Fancy","#N/A","#N/A","#N/A","#N/A"],
+				["Golf","#N/A","#N/A","#N/A","#N/A"],
+				["Tee","-1.64","13.42","-5555","-5543.22"],
+				["Grand Total","","","",""]
+				];
+			let differenceBase_compact2 = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","-1.13","","-37.13",""],
+				["Fancy","-1.78","","-13.74",""],
+				["Golf","0.88","","-12.12",""],
+				["Tee","-0.23","","-11.27",""],
+				["North","13.08","","5555",""],
+				["Tee","13.08","","5555",""],
+				["West","11.23","","-24.9",""],
+				["Fancy","12.06","","0",""],
+				["Golf","1.15","","-11.48",""],
+				["Tee","-1.98","","-13.42",""],
+				["Grand Total","23.18","","5492.97",""]
+				]
+			let percentOfCol_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","0.422485624","0.598581332","0","0.012824785"],
+				["Fancy","0.140359113","0.221505723","0","0.004507001"],
+				["Golf","0.152564253","0.195389328","0","0.004405286"],
+				["Tee","0.129562258","0.181686281","0","0.003912498"],
+				["North","0.15350311","0","1","0.976472404"],
+				["Tee","0.15350311","0","1","0.976472404"],
+				["West","0.424011266","0.401418668","0","0.010702812"],
+				["Fancy","0.141532684","0","0","0.002114958"],
+				["Golf","0.14822204","0.185071739","0","0.004228163"],
+				["Tee","0.134256543","0.216346929","0","0.00435969"],
+				["Grand Total","1","1","1","1"]
+				];
+			let percentOfRow_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","0.492274033","0.507725967","0","1"],
+				["Fancy","0.46536965","0.53463035","0","1"],
+				["Golf","0.517515924","0.482484076","0","1"],
+				["Tee","0.494845361","0.505154639","0","1"],
+				["North","0.002349104","0","0.997650896","1"],
+				["Tee","0.002349104","0","0.997650896","1"],
+				["West","0.592003932","0.407996068","0","1"],
+				["Fancy","1","0","0","1"],
+				["Golf","0.523849025","0.476150975","0","1"],
+				["Tee","0.460176991","0.539823009","0","1"],
+				["Grand Total","0.01494325","0.010878181","0.974178568","1"]
+				];
+			let percentOfParentRow_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","0.422485624","0.598581332","0","0.012824785"],
+				["Fancy","0.332222222","0.370051172","","0.351428962"],
+				["Golf","0.361111111","0.326420684","","0.34349788"],
+				["Tee","0.306666667","0.303528144","","0.305073157"],
+				["North","0.15350311","0","1","0.976472404"],
+				["Tee","1","","1","1"],
+				["West","0.424011266","0.401418668","0","0.010702812"],
+				["Fancy","0.333794631","0","","0.197607734"],
+				["Golf","0.349570994","0.461044177","","0.395051614"],
+				["Tee","0.316634376","0.538955823","","0.407340652"],
+				["Grand Total","1","1","1","1"]
+				];
+			let index_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","32.942902","46.67379205","0","1"],
+				["Fancy","31.14246487","49.14703479","0","1"],
+				["Golf","34.63208544","44.3533774","0","1"],
+				["Tee","33.11497489","46.43741721","0","1"],
+				["North","0.157201688","0","1.024094481","1"],
+				["Tee","0.157201688","0","1.024094481","1"],
+				["West","39.61681145","37.50590837","0","1"],
+				["Fancy","66.91984509","0","0","1"],
+				["Golf","35.05589562","43.77119352","0","1"],
+				["Tee","30.79497296","49.62438101","0","1"],
+				["Grand Total","1","1","1","1"]
+				];
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.asc_addRowField(api, 0);
@@ -5399,6 +5489,13 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_compact2, 'differenceNext_compact2');
 			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_PREV, differencePrev_compact, 'differencePrev_compact');
 			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_PREV, differencePrev_compact2, 'differencePrev_compact2');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, 1, differenceBase_compact, 'differenceBase_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, 1, differenceBase_compact2, 'differenceBase_compact2');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfCol, 0, 0, percentOfCol_compact, 'percentOfCol_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfRow, 0, 0, percentOfRow_compact, 'percentOfRow_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Index, 0, 0, index_compact, 'index_compact');
+
+			// pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfParentRow, 0, 0, percentOfParentRow_compact, 'percentOfParentRow_compact');
 			AscCommon.History.Clear();
 			setPivotLayout(pivot, 'tabular');
 			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_tabular, 'differenceNext_tabular');
