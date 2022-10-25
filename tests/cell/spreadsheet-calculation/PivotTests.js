@@ -5301,36 +5301,6 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				["Tee","0.002006229","0.002353461","0","0.00435969"],
 				["Grand Total","0.01494325","0.010878181","0.974178568","1"]
 			  ];
-			let percentOfTotal_tabular = [
-				["Sum of Price","","Gender","","",""],
-				["Region","Style","Boy","Girl","Helicopter","Grand Total"],
-				["East","Fancy","0.002097421","0.002409579","0","0.004507001"],
-				["","Golf","0.002279806","0.002125481","0","0.004405286"],
-				["","Tee","0.001936081","0.001976416","0","0.003912498"],
-				["East Total","","0.006313308","0.006511476","0","0.012824785"],
-				["North","Tee","0.002293835","0","0.974178568","0.976472404"],
-				["North Total","","0.002293835","0","0.974178568","0.976472404"],
-				["West","Fancy","0.002114958","0","0","0.002114958"],
-				["","Golf","0.002214919","0.002013244","0","0.004228163"],
-				["","Tee","0.002006229","0.002353461","0","0.00435969"],
-				["West Total","","0.006336107","0.004366705","0","0.010702812"],
-				["Grand Total","","0.01494325","0.010878181","0.974178568","1"]
-				];
-			let percentOfTotal_outline = [
-				["Sum of Price","","Gender","","",""],
-				["Region","Style","Boy","Girl","Helicopter","Grand Total"],
-				["East","","0.006313308","0.006511476","0","0.012824785"],
-				["","Fancy","0.002097421","0.002409579","0","0.004507001"],
-				["","Golf","0.002279806","0.002125481","0","0.004405286"],
-				["","Tee","0.001936081","0.001976416","0","0.003912498"],
-				["North","","0.002293835","0","0.974178568","0.976472404"],
-				["","Tee","0.002293835","0","0.974178568","0.976472404"],
-				["West","","0.006336107","0.004366705","0","0.010702812"],
-				["","Fancy","0.002114958","0","0","0.002114958"],
-				["","Golf","0.002214919","0.002013244","0","0.004228163"],
-				["","Tee","0.002006229","0.002353461","0","0.00435969"],
-				["Grand Total","","0.01494325","0.010878181","0.974178568","1"]
-				];
 			let differenceNext_compact = [
 				["Sum of Price","Column Labels","","",""],
 				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
@@ -5361,21 +5331,6 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				["West Total","","","","",""],
 				["Grand Total","","","","",""]
 				];
-			let differenceNext_outline = [
-				["Sum of Price","","Gender","","",""],
-				["Region","Style","Boy","Girl","Helicopter","Grand Total"],
-				["East","","22.92","37.13","-5555","-5494.95"],
-				["","Fancy","-0.1","13.74","0","13.64"],
-				["","Golf","0.37","0.64","0","1.01"],
-				["","Tee","-2.04","11.27","-5555","-5545.77"],
-				["North","","-23.05","-24.9","5555","5507.05"],
-				["","Tee","1.64","-13.42","5555","5543.22"],
-				["West","","","","",""],
-				["","Fancy","","","",""],
-				["","Golf","","","",""],
-				["","Tee","","","",""],
-				["Grand Total","","","","",""]
-				];
 			let differenceNext_compact2 = [
 				["Sum of Price","Column Labels","","",""],
 				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
@@ -5390,36 +5345,6 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				["Golf","1.15","11.48","",""],
 				["Tee","-1.98","13.42","",""],
 				["Grand Total","23.18","-5492.97","",""]
-				];
-			let differenceNext_tabular2 = [
-				["Sum of Price","","Gender","","",""],
-				["Region","Style","Boy","Girl","Helicopter","Grand Total"],
-				["East","Fancy","-1.78","13.74","",""],
-				["","Golf","0.88","12.12","",""],
-				["","Tee","-0.23","11.27","",""],
-				["East Total","","-1.13","37.13","",""],
-				["North","Tee","13.08","-5555","",""],
-				["North Total","","13.08","-5555","",""],
-				["West","Fancy","12.06","0","",""],
-				["","Golf","1.15","11.48","",""],
-				["","Tee","-1.98","13.42","",""],
-				["West Total","","11.23","24.9","",""],
-				["Grand Total","","23.18","-5492.97","",""]
-				];
-			let differenceNext_outline2 = [
-				["Sum of Price","","Gender","","",""],
-				["Region","Style","Boy","Girl","Helicopter","Grand Total"],
-				["East","","-1.13","37.13","",""],
-				["","Fancy","-1.78","13.74","",""],
-				["","Golf","0.88","12.12","",""],
-				["","Tee","-0.23","11.27","",""],
-				["North","","13.08","-5555","",""],
-				["","Tee","13.08","-5555","",""],
-				["West","","11.23","24.9","",""],
-				["","Fancy","12.06","0","",""],
-				["","Golf","1.15","11.48","",""],
-				["","Tee","-1.98","13.42","",""],
-				["Grand Total","","23.18","-5492.97","",""]
 				];
 			let differencePrev_compact = [
 				["Sum of Price","Column Labels","","",""],
@@ -5451,66 +5376,6 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				["Tee","","1.98","-13.42",""],
 				["Grand Total","","-23.18","5492.97",""]
 				];
-			let differencePrev_tabular = [
-				["Sum of Price","","Gender","","",""],
-				["Region","Style","Boy","Girl","Helicopter","Grand Total"],
-				["East","Fancy","","","",""],
-				["","Golf","","","",""],
-				["","Tee","","","",""],
-				["East Total","","","","",""],
-				["North","Tee","2.04","-11.27","5555","5545.77"],
-				["North Total","","-22.92","-37.13","5555","5494.95"],
-				["West","Fancy","0.1","-13.74","0","-13.64"],
-				["","Golf","-0.37","-0.64","0","-1.01"],
-				["","Tee","-1.64","13.42","-5555","-5543.22"],
-				["West Total","","23.05","24.9","-5555","-5507.05"],
-				["Grand Total","","","","",""]
-				];
-			let differencePrev_tabular2 = [
-				["Sum of Price","","Gender","","",""],
-				["Region","Style","Boy","Girl","Helicopter","Grand Total"],
-				["East","Fancy","","1.78","-13.74",""],
-				["","Golf","","-0.88","-12.12",""],
-				["","Tee","","0.23","-11.27",""],
-				["East Total","","","1.13","-37.13",""],
-				["North","Tee","","-13.08","5555",""],
-				["North Total","","","-13.08","5555",""],
-				["West","Fancy","","-12.06","0",""],
-				["","Golf","","-1.15","-11.48",""],
-				["","Tee","","1.98","-13.42",""],
-				["West Total","","","-11.23","-24.9",""],
-				["Grand Total","","","-23.18","5492.97",""]
-				];
-			let differencePrev_outline = [
-				["Sum of Price","","Gender","","",""],
-				["Region","Style","Boy","Girl","Helicopter","Grand Total"],
-				["East","","","","",""],
-				["","Fancy","","","",""],
-				["","Golf","","","",""],
-				["","Tee","","","",""],
-				["North","","-22.92","-37.13","5555","5494.95"],
-				["","Tee","2.04","-11.27","5555","5545.77"],
-				["West","","23.05","24.9","-5555","-5507.05"],
-				["","Fancy","0.1","-13.74","0","-13.64"],
-				["","Golf","-0.37","-0.64","0","-1.01"],
-				["","Tee","-1.64","13.42","-5555","-5543.22"],
-				["Grand Total","","","","",""]
-				];
-			let differencePrev_outline2 = [
-				["Sum of Price","","Gender","","",""],
-				["Region","Style","Boy","Girl","Helicopter","Grand Total"],
-				["East","","","1.13","-37.13",""],
-				["","Fancy","","1.78","-13.74",""],
-				["","Golf","","-0.88","-12.12",""],
-				["","Tee","","0.23","-11.27",""],
-				["North","","","-13.08","5555",""],
-				["","Tee","","-13.08","5555",""],
-				["West","","","-11.23","-24.9",""],
-				["","Fancy","","-12.06","0",""],
-				["","Golf","","-1.15","-11.48",""],
-				["","Tee","","1.98","-13.42",""],
-				["Grand Total","","","-23.18","5492.97",""]
-				];
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.asc_addRowField(api, 0);
@@ -5527,25 +5392,16 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 					dataField.asc_set(api, pivot, 0, props);
 				});
 			}
-			setPivotLayout(pivot, 'compact');
 			AscCommon.History.Clear();
+			setPivotLayout(pivot, 'compact');
 			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfTotal, 0, 0, percentOfTotal_compact, 'percentOfTotal_compact');
 			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_compact, 'differenceNext_compact');
 			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_compact2, 'differenceNext_compact2');
 			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_PREV, differencePrev_compact, 'differencePrev_compact');
 			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_PREV, differencePrev_compact2, 'differencePrev_compact2');
+			AscCommon.History.Clear();
 			setPivotLayout(pivot, 'tabular');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfTotal, 0, 0, percentOfTotal_tabular, 'percentOfTotal_tabular');
 			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_tabular, 'differenceNext_tabular');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_tabular2, 'differenceNext_tabular2');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_PREV, differencePrev_tabular, 'differencePrev_tabular');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_PREV, differencePrev_tabular2, 'differencePrev_tabular2');
-			setPivotLayout(pivot, 'outline');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfTotal, 0, 0, percentOfTotal_outline, 'percentOfTotal_outline');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_outline, 'differenceNext_outline');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_outline2, 'differenceNext_outline2');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_PREV, differencePrev_outline, 'differencePrev_outline');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_PREV, differencePrev_outline2, 'differencePrev_outline2');
 			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
 		});
 	}
