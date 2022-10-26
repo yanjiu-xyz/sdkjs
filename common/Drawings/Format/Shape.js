@@ -4566,7 +4566,7 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
         }
     };
 
-    CShape.prototype.setFontSizeInSmartArt = function (fontSize) {
+    CShape.prototype.setFontSizeForAllContent = function (fontSize) {
         let currentFontSize;
         if (this.txBody && this.txBody.content) {
             this.txBody.content.CheckRunContent(function (paraRun) {
@@ -4581,6 +4581,14 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
                 }
                 paragraph.TextPr.SetFontSize(fontSize);
             });
+            this.updateInsetsInSmartArt(currentFontSize, fontSize);
+            this.recalculateContentWitCompiledPr();
+        }
+    };
+
+    CShape.prototype.updateInsetsInSmartArt = function (nOldFontSize, nNewFontSize)
+    {
+        if (this.txBody && this.txBody.content) {
             const oBodyPr = this.getBodyPr && this.getBodyPr();
             if (oBodyPr) {
                 const paddings = {};
@@ -4589,29 +4597,28 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
                 if (point) {
                     const isRecalculateInsets = point.isRecalculateInsets();
                     if (isRecalculateInsets.Top) {
-                        const tInsetPerPt = oBodyPr.tIns / currentFontSize;
-                        paddings.Top = tInsetPerPt * fontSize;
+                        const tInsetPerPt = oBodyPr.tIns / nOldFontSize;
+                        paddings.Top = tInsetPerPt * nNewFontSize;
                     }
                     if (isRecalculateInsets.Bottom) {
-                        const bInsetPerPt = oBodyPr.bIns / currentFontSize;
-                        paddings.Bottom = bInsetPerPt * fontSize;
+                        const bInsetPerPt = oBodyPr.bIns / nOldFontSize;
+                        paddings.Bottom = bInsetPerPt * nNewFontSize;
                     }
                     if (isRecalculateInsets.Left) {
-                        const lInsetPerPt = oBodyPr.lIns / currentFontSize;
-                        paddings.Left = lInsetPerPt * fontSize;
+                        const lInsetPerPt = oBodyPr.lIns / nOldFontSize;
+                        paddings.Left = lInsetPerPt * nNewFontSize;
                     }
                     if (isRecalculateInsets.Right) {
-                        const rInsetPerPt = oBodyPr.rIns / currentFontSize;
-                        paddings.Right = rInsetPerPt * fontSize;
+                        const rInsetPerPt = oBodyPr.rIns / nOldFontSize;
+                        paddings.Right = rInsetPerPt * nNewFontSize;
                     }
                 }
                 // In files layout.xml insets depend on font size.
                 // While there is no recalculation, we consider new insets as a dependency on the previous font size.
                 this.setPaddings(paddings, {bNotCopyToPoints: true});
             }
-            this.recalculateContentWitCompiledPr();
         }
-    };
+    }
 
     CShape.prototype.getInsets = function (properties) {
         const oBodyPr = properties.bodyPr || this.getBodyPr && this.getBodyPr();
@@ -4715,20 +4722,23 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
         }
         return this.contentHeight > sizesOfTextRectContent.height;
     };
-    CShape.prototype.findFitFontSizeForSmartArt = function (bMax) {
-        const MAX_FONT_SIZE = 65;
+    CShape.prototype.findFitFontSize = function (content, nMinFontSize, nMaxFontSize, bMax) {
+        if (nMinFontSize > nMaxFontSize) return null;
+        if (nMaxFontSize === nMinFontSize) return nMaxFontSize;
 
-        const content = this.getCurrentDocContentInSmartArt();
+        const MAX_FONT_SIZE = nMaxFontSize;
+
         if (content) {
-            const scalesForSmartArt = Array((MAX_FONT_SIZE - 4) > 0 ? MAX_FONT_SIZE - 4 : 1).fill(0).map(function (e, ind) {
-                return ind + 5;
+            const nAmountOfFontSizes = nMaxFontSize - nMinFontSize + 1;
+            const arrScalesFontSize = Array(nAmountOfFontSizes).fill(0).map(function (e, ind) {
+                return ind + nMinFontSize;
             });
             let a = 0;
-            let b = scalesForSmartArt.length - 1;
+            let b = arrScalesFontSize.length - 1;
             let averageAmount = Math.floor((a + b) / 2);
 
             while (a !== averageAmount && b !== averageAmount) {
-                this.setFontSizeInSmartArt(scalesForSmartArt[averageAmount]);
+                this.setFontSizeForAllContent(arrScalesFontSize[averageAmount]);
                 let widthOfContent = content.RecalculateMinMaxContentWidth();
                 if (bMax) {
                     widthOfContent = widthOfContent.Max;
@@ -4742,10 +4752,17 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
                 }
                 averageAmount = Math.floor((a + b) / 2);
             }
-            this.setFontSizeInSmartArt(scalesForSmartArt[averageAmount]);
-            return scalesForSmartArt[averageAmount];
+            this.setFontSizeForAllContent(arrScalesFontSize[averageAmount]);
+            return arrScalesFontSize[averageAmount];
         }
         return MAX_FONT_SIZE;
+    }
+    CShape.prototype.findFitFontSizeForSmartArt = function () {
+        const MAX_FONT_SIZE = 65;
+        const MIN_FONT_SIZE = 5;
+        const content = this.getCurrentDocContentInSmartArt();
+
+        return this.findFitFontSize(content, MIN_FONT_SIZE, MAX_FONT_SIZE, false);
     };
 
     CShape.prototype.getShapesForFitText = function () {
@@ -4779,10 +4796,10 @@ var aScales = [25000, 30000, 35000, 40000, 45000, 50000, 55000, 60000, 65000, 70
             if (isPlaceholder) {
                 var minFontSizeForPlaceholder = shape.findFitFontSizeForSmartArt();
                 if (minFontSizeForPlaceholder > minFont) {
-                    shape.setFontSizeInSmartArt(minFont);
+                    shape.setFontSizeForAllContent(minFont);
                 }
             } else if (isFitText) {
-                shape.setFontSizeInSmartArt(minFont);
+                shape.setFontSizeForAllContent(minFont);
             }
         });
     };

@@ -1257,27 +1257,21 @@ CNumberingLvl.prototype.FillFromAscNumberingLvl = function(oAscLvl)
 	if (undefined !== oAscLvl.get_PStyle())
 		this.PStyle = oAscLvl.get_PStyle();
 };
-CNumberingLvl.prototype.FillLvlTextByNum = function(nNum, sPrefix, sPostfix)
+CNumberingLvl.prototype.FillLvlText = function(arrOfInfo)
 {
-	sPrefix = sPrefix || '';
-	sPostfix = sPostfix || '';
-	const nFormat = AscFormat.isRealNumber(this.GetFormat()) ? this.GetFormat() : Asc.c_oAscNumberingFormat.Decimal;
-
-	for (const oUnicodeIterator = sPrefix.getUnicodeIterator(); oUnicodeIterator.check(); oUnicodeIterator.next())
+	for (let i = 0; i < arrOfInfo.length; i += 1)
 	{
-		this.LvlText.push(new CNumberingLvlTextString(AscCommon.encodeSurrogateChar(oUnicodeIterator.value())));
-	}
-	if (AscFormat.isRealNumber(nNum))
-	{
-		const sNum = AscCommon.IntToNumberFormat(nNum, nFormat, this.GetOLang());
-		for (const oUnicodeIterator = sNum.getUnicodeIterator(); oUnicodeIterator.check(); oUnicodeIterator.next())
+		if (AscFormat.isRealNumber(arrOfInfo[i]))
 		{
-			this.LvlText.push(new CNumberingLvlTextString(AscCommon.encodeSurrogateChar(oUnicodeIterator.value())));
+			this.LvlText.push(new CNumberingLvlTextNum(arrOfInfo[i]));
 		}
-	}
-	for (const oUnicodeIterator = sPostfix.getUnicodeIterator(); oUnicodeIterator.check(); oUnicodeIterator.next())
-	{
-		this.LvlText.push(new CNumberingLvlTextString(AscCommon.encodeSurrogateChar(oUnicodeIterator.value())));
+		else if (typeof arrOfInfo[i] === "string")
+		{
+			for (const oUnicodeIterator = arrOfInfo[i].getUnicodeIterator(); oUnicodeIterator.check(); oUnicodeIterator.next())
+			{
+				this.LvlText.push(new CNumberingLvlTextString(AscCommon.encodeSurrogateChar(oUnicodeIterator.value())));
+			}
+		}
 	}
 };
 
@@ -1492,7 +1486,7 @@ CNumberingLvl.prototype.private_CheckSymbols = function ()
 	if (AscFonts.IsCheckSymbols)
 	{
 		const sSymbols = this.GetSymbols();
-		AscFonts.FontPickerByCharacter.checkTextLight(symbols);
+		AscFonts.FontPickerByCharacter.checkTextLight(sSymbols);
 	}
 }
 
@@ -1514,21 +1508,14 @@ CNumberingLvl.prototype.GetSymbols = function()
 		appendDecimal();
 
 	let arrCodesOfSymbols = [];
-	switch (this.Format) {
+	switch (this.Format)
+	{
 		case Asc.c_oAscNumberingFormat.Aiueo:
 		{
 			arrCodesOfSymbols = [0xFF71, 0xFF72, 0xFF73, 0xFF74, 0xFF75, 0xFF76, 0xFF77, 0xFF78, 0xFF79, 0xFF7A, 0xFF7B,
 				0xFF7C, 0xFF7D, 0xFF7E, 0xFF7F, 0xFF80, 0xFF81, 0xFF82, 0xFF83, 0xFF84, 0xFF85, 0xFF86, 0xFF87, 0xFF88,
 				0xFF89, 0xFF8A, 0xFF8B, 0xFF8C, 0xFF8D, 0xFF8E, 0xFF8F, 0xFF90, 0xFF91, 0xFF92, 0xFF93, 0xFF94, 0xFF95,
 				0xFF96, 0xFF97, 0xFF98, 0xFF99, 0xFF9A, 0xFF9B, 0xFF66, 0xFF9D];
-			break;
-		}
-		case Asc.c_oAscNumberingFormat.AiueoFullWidth:
-		{
-			arrCodesOfSymbols = [0x30A2, 0x30A4, 0x30A6, 0x30A8, 0x30AA, 0x30AB, 0x30AD, 0x30AF, 0x30B1, 0x30B3, 0x30B5,
-				0x30B7, 0x30B9, 0x30BB, 0x30BD, 0x30BF, 0x30C1, 0x30C4, 0x30C6, 0x30C8, 0x30CA, 0x30CB, 0x30CC, 0x30CD,
-				0x30CE, 0x30CF, 0x30D2, 0x30D5, 0x30D8, 0x30DB, 0x30DE, 0x30DF, 0x30E0, 0x30E1, 0x30E2, 0x30E4, 0x30E6,
-				0x30E8, 0x30E9, 0x30EA, 0x30EB, 0x30EC, 0x30ED, 0x30EF, 0x30F0, 0x30F1, 0x30F2, 0x30F3];
 			break;
 		}
 		case Asc.c_oAscNumberingFormat.ArabicAbjad:
@@ -1614,13 +1601,10 @@ CNumberingLvl.prototype.GetSymbols = function()
 			appendDecimal();
 			break;
 		}
+		case Asc.c_oAscNumberingFormat.DecimalFullWidth2:
 		case Asc.c_oAscNumberingFormat.DecimalFullWidth:
 		{
 			arrCodesOfSymbols = [0xFF10, 0xFF11, 0xFF12, 0xFF13, 0xFF14, 0xFF15, 0xFF16, 0xFF17, 0xFF18, 0xFF19];
-			break;
-		}
-		case Asc.c_oAscNumberingFormat.DecimalFullWidth2:
-		{
 			break;
 		}
 		case Asc.c_oAscNumberingFormat.Ganada:
@@ -1710,6 +1694,7 @@ CNumberingLvl.prototype.GetSymbols = function()
 				0xFF93, 0xFF94, 0xFF95, 0xFF96, 0xFF97, 0xFF98, 0xFF99, 0xFF9A, 0xFF9B, 0xFF9C, 0xFF9D];
 			break;
 		}
+		case Asc.c_oAscNumberingFormat.AiueoFullWidth:
 		case Asc.c_oAscNumberingFormat.IrohaFullWidth:
 		{
 			arrCodesOfSymbols = [0x30A2, 0x30A4, 0x30A6, 0x30A8, 0x30AA, 0x30AB, 0x30AD, 0x30AF, 0x30B1, 0x30B3, 0x30B5,

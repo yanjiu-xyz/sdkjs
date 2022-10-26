@@ -3074,6 +3074,13 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	c_oAscSmartArtSections[c_oAscSmartArtSectionNames.OfficeCom]    = c_oAscSmartArtOfficeComTypes;
 
 
+	var c_oAscJSONNumberingType = {
+		Remove : "remove",
+		Bullet : "bullet",
+		Number : "number",
+		Hybrid : "hybrid"
+	};
+
 	/** @enum {number} */
 	var c_oAscNumberingFormat = {
 		Aiueo                        :  0,
@@ -5027,7 +5034,12 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['Picture']      = prot.Picture;
 	prot['OfficeCom']    = prot.OfficeCom;
 
-
+	window['Asc']['c_oAscJSONNumberingType'] = window['Asc'].c_oAscJSONNumberingType = c_oAscJSONNumberingType;
+	prot = c_oAscJSONNumberingType;
+	prot["Remove"] = prot.Remove;
+	prot["Bullet"] = prot.Bullet;
+	prot["Number"] = prot.Number;
+	prot["Hybrid"] = prot.Hybrid;
 
 	window['Asc']['c_oAscNumberingFormat'] = window['Asc'].c_oAscNumberingFormat = c_oAscNumberingFormat;
 	prot = c_oAscNumberingFormat;

@@ -4125,11 +4125,11 @@ background-repeat: no-repeat;\
 			}
 
 			if (isBulleted && isNumbered)
-				result.Type = "hybrid";
+				result.Type = Asc.c_oAscJSONNumberingType.Hybrid;
 			else if (isNumbered)
-				result.Type = "number";
+				result.Type = Asc.c_oAscJSONNumberingType.Number;
 			else if (isBulleted)
-				result.Type = "bullet";
+				result.Type = Asc.c_oAscJSONNumberingType.Bullet;
 		}
 
 		return result;

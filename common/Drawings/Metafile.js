@@ -62,10 +62,38 @@
 		},
         fromRFonts : function(rFonts)
         {
-            this.Ascii.Name    = rFonts.Ascii.Name;
-            this.EastAsia.Name = rFonts.EastAsia.Name;
-            this.HAnsi.Name    = rFonts.HAnsi.Name;
-            this.CS.Name       = rFonts.CS.Name;
+			if (rFonts.Ascii)
+			{
+				this.Ascii.Name = rFonts.Ascii.Name;
+			}
+			else
+			{
+				this.Ascii.Name = "Empty";
+			}
+			if (rFonts.EastAsia)
+			{
+				this.EastAsia.Name = rFonts.EastAsia.Name;
+			}
+			else
+			{
+				this.EastAsia.Name = "Empty";
+			}
+			if (rFonts.HAnsi)
+			{
+				this.HAnsi.Name = rFonts.HAnsi.Name;
+			}
+			else
+			{
+				this.HAnsi.Name = "Empty"
+			}
+			if (rFonts.CS)
+			{
+				this.CS.Name = rFonts.CS.Name;
+			}
+			else
+			{
+				this.CS.Name = "Empty";
+			}
 
             this.Ascii.Index    = -1;
             this.EastAsia.Index = -1;
