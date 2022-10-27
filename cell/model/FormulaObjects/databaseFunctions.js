@@ -144,6 +144,23 @@
 		// ??
 		this.M2 += total.M2;
 	};
+	/**
+	 * Returns cloned StatisticOnlineAlgorithm
+	 * @param {StatisticOnlineAlgorithm} oTotal 
+	 * @return {StatisticOnlineAlgorithm}
+	 */
+	StatisticOnlineAlgorithm.prototype.clone = function () {
+		let result = new StatisticOnlineAlgorithm();
+		result.count = this.count;
+		result.countNums = this.countNums;
+		result.min = this.min;
+		result.max = this.max;
+		result.sum = this.sum;
+		result.product = this.product;
+		result.mean = this.mean;
+		result.M2 = this.M2;
+		return result;
+	};
 	StatisticOnlineAlgorithm.prototype.getCellValue = function(dataType, fieldType, rowType, colType) {
 		var oCellValue;
 		if (this.isEmpty()) {
