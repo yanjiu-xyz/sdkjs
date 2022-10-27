@@ -3228,9 +3228,11 @@ var GLOBAL_PATH_COUNT = 0;
         if(this.textLink !== null) {
             copy.setTextLink(this.textLink);
         }
-        copy.cachedImage = this.getBase64Img();
-        copy.cachedPixH = this.cachedPixH;
-        copy.cachedPixW = this.cachedPixW;
+        if(!oPr || false !== oPr.cacheImage) {
+            copy.cachedImage = this.getBase64Img();
+            copy.cachedPixH = this.cachedPixH;
+            copy.cachedPixW = this.cachedPixW;
+        }
         return copy;
     };
     CChartSpace.prototype.convertToWord = function(document) {
@@ -3729,7 +3731,6 @@ var GLOBAL_PATH_COUNT = 0;
             }
         }
         var worksheet = this.worksheet;
-        //this.pointsMap = {};
         if(!worksheet)
             return;
         var charts, series, i, j, ser;
@@ -8038,7 +8039,16 @@ var GLOBAL_PATH_COUNT = 0;
         }
     };
     CChartSpace.prototype.createImage = function () {
-        return this.drawingBase.createImage();
+        var nCoefficient = Asc.getCvtRatio(3, 0, this.drawingBase.worksheet._getPPIX());
+        var oWorkbook = this.drawingBase.worksheet && this.drawingBase.worksheet.workbook;
+        oWorkbook.setOleSize(null);
+        var oDrawingContext = AscCommonExcel.getContext(this.extX * nCoefficient, this.extY * nCoefficient, oWorkbook);
+        var oGraphics = AscCommonExcel.getGraphics(oDrawingContext);
+        const oOldTransform = this.transform.CreateDublicate();
+        this.transform.Reset();
+        this.draw(oGraphics);
+        this.transform = oOldTransform;
+        return oDrawingContext.toDataURL();
     }
     CChartSpace.prototype.checkDrawingCache = function(graphics) {
         if(window["NATIVE_EDITOR_ENJINE"] || graphics.RENDERER_PDF_FLAG || this.isSparkline || this.bPreview || graphics.PrintPreview) {
@@ -8553,14 +8563,14 @@ var GLOBAL_PATH_COUNT = 0;
         return nResult;
     };
     CChartSpace.prototype.fillDataFromTrack = function(oSelectedRange) {
-        var oSlectedSeries = this.getSelectedSeries();
-        if(oSlectedSeries) {
-            oSlectedSeries.fillFromSelectedRange(oSelectedRange);
+        let oSelectedSeries = this.getSelectedSeries();
+        if(oSelectedSeries) {
+            oSelectedSeries.fillFromSelectedRange(oSelectedRange);
             this.recalculate();
             return;
         }
-        var oDataRange = this.getDataRefs();
-        var nResult = this.buildSeries(oDataRange.getSeriesRefsFromSelectedRange(oSelectedRange, this.isScatterChartType()));
+        let oDataRange = this.getDataRefs();
+        let nResult = this.buildSeries(oDataRange.getSeriesRefsFromSelectedRange(oSelectedRange, this.isScatterChartType()));
         if(Asc.c_oAscError.ID.No === nResult) {
             this.recalculate();
         }

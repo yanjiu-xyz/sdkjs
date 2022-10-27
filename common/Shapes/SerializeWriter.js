@@ -606,8 +606,8 @@ function CBinaryFileWriter()
 			this.WriteCustomProperties(presentation.CustomProperties, presentation.Api);
 
         // ViewProps
-		if (presentation.ViewProps)
-			this.WriteViewProps(presentation.ViewProps);
+		if (presentation.viewPr)
+			this.WriteViewProps(presentation.viewPr);
 
         // PresProps
 		this.WritePresProps(presentation);
@@ -769,7 +769,11 @@ function CBinaryFileWriter()
         {
             if(oTableStyleIdMap.hasOwnProperty(key))
             {
-                this.tableStylesGuides[key] = "{" + GUID() + "}"
+                const oStyle = AscCommon.g_oTableId.Get_ById(key);
+                if (oStyle)
+                {
+                    this.tableStylesGuides[key] = oStyle.Get_StyleId() || AscCommon.CreateGUID();
+                }
             }
         }
 
@@ -1053,10 +1057,11 @@ function CBinaryFileWriter()
         this.StartMainRecord(c_oMainTables.CustomProperties);
         customProperties.toStream(this, api);
     };
-    this.WriteViewProps = function(viewprops)
+    this.WriteViewProps = function(viewPr)
     {
         this.StartMainRecord(c_oMainTables.ViewProps);
         this.StartRecord(c_oMainTables.ViewProps);
+        viewPr.toPPTY(this);
         this.EndRecord();
     };
     this.WritePresProps = function(presentation)

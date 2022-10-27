@@ -522,10 +522,10 @@ CBlockLevelSdt.prototype.AddSignatureLine = function(oSignatureDrawing)
 	this.private_ReplacePlaceHolderWithContent();
 	this.Content.AddSignatureLine(oSignatureDrawing);
 };
-CBlockLevelSdt.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect)
+CBlockLevelSdt.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
 	this.private_ReplacePlaceHolderWithContent();
-	this.Content.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect);
+	this.Content.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 };
 CBlockLevelSdt.prototype.AddTextArt = function(nStyle)
 {
@@ -1543,14 +1543,6 @@ CBlockLevelSdt.prototype.SetDocPartObj = function(sCategory, sGallery, isUnique)
 	this.Pr.DocPartObj.Category = sCategory;
 	this.Pr.DocPartObj.Gallery  = sGallery;
 	this.Pr.DocPartObj.Unique   = isUnique;
-};
-CBlockLevelSdt.prototype.IsBuiltInTableOfContents = function()
-{
-	return this.Pr.DocPartObj.Gallery === "Table of Contents";
-};
-CBlockLevelSdt.prototype.IsBuiltInUnique = function()
-{
-	return true === this.Pr.DocPartObj.Unique;
 };
 CBlockLevelSdt.prototype.SetContentControlLock = function(nLockType)
 {

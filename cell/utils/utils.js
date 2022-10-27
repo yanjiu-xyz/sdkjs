@@ -1457,35 +1457,6 @@
 			return res;
 		};
 
-		/**
-		 *
-		 * @param ws
-		 * @param range
-		 * @constructor
-		 * @extends {SelectionRange}
-		 */
-		function OleSizeSelectionRange(ws, range) {
-			SelectionRange.call(this, ws);
-			if (range) {
-				this.ranges = [range];
-				this.activeCell = new AscCommon.CellBase(range.r1, range.c1);
-			}
-		}
-		OleSizeSelectionRange.prototype = Object.create(SelectionRange.prototype);
-		OleSizeSelectionRange.prototype.constructor = OleSizeSelectionRange;
-
-		OleSizeSelectionRange.prototype.validActiveCell = function () {
-			return true;
-		};
-		OleSizeSelectionRange.prototype.clean = function () {
-			this.ranges = [new Range(0, 0, 10, 10)];
-			this.activeCellId = 0;
-			this.activeCell.clean();
-		};
-		OleSizeSelectionRange.prototype.getName = function () {
-			var range = this.getLast();
-			return range.getName();
-		};
     /**
      *
      * @constructor
@@ -1702,7 +1673,12 @@
 			return new MultiplyRange(this.ranges.slice());
 		};
 		MultiplyRange.prototype.union2 = function(multiplyRange) {
-			this.ranges = this.ranges.concat(multiplyRange.ranges);
+			if (!multiplyRange || !multiplyRange.ranges) {
+				return;
+			}
+			for (var i = 0; i < multiplyRange.ranges.length; i++) {
+				this.ranges.push(multiplyRange.ranges[i]);
+			}
 		};
 		MultiplyRange.prototype.isIntersect = function(range) {
 			for (var i = 0; i < this.ranges.length; ++i) {
@@ -2199,7 +2175,7 @@
 		}
 
 		function drawStyle(ctx, graphics, sr, oStyle, sStyleName, width, height, opt_cf_preview) {
-			var bc = null, bs = AscCommon.c_oAscBorderStyles.None, isNotFirst = false; // cached border color
+			var bc = null, bs = Asc.c_oAscBorderStyles.None, isNotFirst = false; // cached border color
 			ctx.clear();
 			// Fill cell
 			if (oStyle.ApplyFill) {
@@ -2443,25 +2419,25 @@
 			var oBorder = dxf && dxf.getBorder();
 			if (oBorder) {
 				var oS = oBorder.l;
-				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None) {
+				if(oS && oS.s !== Asc.c_oAscBorderStyles.None) {
 					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineVer(x0, y0, y1);
 					ctx.stroke();
 				}
 				oS = oBorder.t;
-				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None) {
+				if(oS && oS.s !== Asc.c_oAscBorderStyles.None) {
 					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineHor(x0 + 1, y0, x1 - 1);
 					ctx.stroke();
 				}
 				oS = oBorder.r;
-				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None) {
+				if(oS && oS.s !== Asc.c_oAscBorderStyles.None) {
 					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineVer(x1 - 1, y0, y1);
 					ctx.stroke();
 				}
 				oS = oBorder.b;
-				if(oS && oS.s !== AscCommon.c_oAscBorderStyles.None) {
+				if(oS && oS.s !== Asc.c_oAscBorderStyles.None) {
 					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineHor(x0 + 1, y1 - 1, x1 - 1);
 					ctx.stroke();
@@ -3607,7 +3583,6 @@
 		window["Asc"].Range = Range;
 		window["AscCommonExcel"].Range3D = Range3D;
 		window["AscCommonExcel"].SelectionRange = SelectionRange;
-		window["AscCommonExcel"].OleSizeSelectionRange = OleSizeSelectionRange;
 		window["AscCommonExcel"].ActiveRange = ActiveRange;
 		window["AscCommonExcel"].FormulaRange = FormulaRange;
 		window["AscCommonExcel"].MultiplyRange = MultiplyRange;
