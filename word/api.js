@@ -12614,55 +12614,18 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.SetDrawImagePreviewBulletForMenu = function(arrDrawingInfo, nType)
     {
-		// const info = [{type: Asc.asc_PreviewBulletType.text, text: 'None'}, TODO: delete after 7.3 release
-		// 	{type: Asc.asc_PreviewBulletType.number, numberingType: Asc.asc_oAscNumberingLevel.UpperLetterDot_Left},
-		// 	{type: Asc.asc_PreviewBulletType.number, numberingType: Asc.asc_oAscNumberingLevel.LowerLetterBracket_Left},
-		// 	{type: Asc.asc_PreviewBulletType.number, numberingType: Asc.asc_oAscNumberingLevel.LowerLetterDot_Left},
-		// 	{type: Asc.asc_PreviewBulletType.number, numberingType: Asc.asc_oAscNumberingLevel.DecimalDot_Right},
-		// 	{type: Asc.asc_PreviewBulletType.number, numberingType: Asc.asc_oAscNumberingLevel.DecimalBracket_Right},
-		// 	{type: Asc.asc_PreviewBulletType.number, numberingType: Asc.asc_oAscNumberingLevel.UpperRomanDot_Right},
-		// 	{type: Asc.asc_PreviewBulletType.number, numberingType: Asc.asc_oAscNumberingLevel.LowerRomanDot_Right}]
-		// const oDrawingInfo = [];
-		// for (let i = 0; i < arrDrawingInfo.length; i += 1) {
-		// 	const inf = info[i];
-		// 	const sId = arrDrawingInfo[i];
-		// 	const oDrawing = {divId: sId, text: inf.text, type: inf.type, numberingType: inf.numberingType};
-		// 	oDrawingInfo.push(oDrawing);
-		// }
 
-		// const info = [
-		// 	{type: Asc.asc_PreviewBulletType.text, text: 'None'},
-		// 	{type: Asc.asc_PreviewBulletType.char, char: String.fromCharCode(0x00B7), specialFont: 'Symbol'},
-		// 	{type: Asc.asc_PreviewBulletType.char, char: 'o',                                specialFont: 'Courier New'},
-		// 	{type: Asc.asc_PreviewBulletType.char, char: String.fromCharCode(0x00A7), specialFont: 'Wingdings'},
-		// 	{type: Asc.asc_PreviewBulletType.char, char: String.fromCharCode(0x0076), specialFont: 'Wingdings'},
-		// 	{type: Asc.asc_PreviewBulletType.char, char: String.fromCharCode(0x00D8), specialFont: 'Wingdings'},
-		// 	{type: Asc.asc_PreviewBulletType.char, char: String.fromCharCode(0x00FC), specialFont: 'Wingdings'},
-		// 	{type: Asc.asc_PreviewBulletType.char, char: String.fromCharCode(0x00A8), specialFont: 'Symbol'},
-		// 	{type: Asc.asc_PreviewBulletType.char, char: String.fromCharCode(0x2013), specialFont: 'Arial'}
-		// ];
-		// const oDrawingInfo = [];
-		// for (let i = 0; i < arrDrawingInfo.length; i += 1) {
-		// 	const inf = info[i];
-		// 	const sId = arrDrawingInfo[i];
-		// 	inf.divId = sId;
-		// 	oDrawingInfo.push(inf);
-		// }
-		//
-		// const info = [
-		// 	{"type": Asc.asc_PreviewBulletType.text, "text": 'None'},
-		// 	{"type": Asc.asc_PreviewBulletType.multiLevel, "numberingType":  Asc.c_oAscMultiLevelNumbering.MultiLevel1},
-		// 	{"type": Asc.asc_PreviewBulletType.multiLevel, "numberingType":  Asc.c_oAscMultiLevelNumbering.MultiLevel2},
-		// 	{"type": Asc.asc_PreviewBulletType.multiLevel, "numberingType":  Asc.c_oAscMultiLevelNumbering.MultiLevel3}
-		// ];
-		// const oDrawingInfo = [];
-		// for (let i = 0; i < arrDrawingInfo.length; i += 1) {
-		// 	const inf = info[i];
-		// 	const sId = arrDrawingInfo[i];
-		// 	inf["divId"] = sId;
-		// 	oDrawingInfo.push(inf);
-		// }
-		const oDrawer = new AscCommon.CBulletPreviewDrawer(arrDrawingInfo, nType);
+		const newArrDrawingInfo = [];
+		for (let i = 0; i < arrDrawingInfo.length; i += 1) {
+			const numbering = this.asc_GetCurrentNumberingJson();
+			if (!numbering) {
+				newArrDrawingInfo.push({divId: arrDrawingInfo[i].divId, numberingInfo: {Type: Asc.c_oAscJSONNumberingType.Remove}});
+			} else {
+				numbering.Headings = true
+				newArrDrawingInfo.push({divId: arrDrawingInfo[i].divId, numberingInfo: numbering});
+			}
+		}
+		const oDrawer = new AscCommon.CBulletPreviewDrawer(newArrDrawingInfo, nType);
 		oDrawer.draw();
     };
 
