@@ -5502,13 +5502,12 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			pivot.asc_addRowField(api, 2);
 			pivot.asc_addColField(api, 1);
 			pivot.asc_addDataField(api, 5);
-			function testShowAs(pivot, showAs, baseField, baseItem, standard, message, pivotShowAs) {
+			function testShowAs(pivot, showAs, baseField, baseItem, standard, message) {
 				return checkHistoryOperation(assert, pivot, standard, message, function(){
 					var dataField = pivot.asc_getDataFields()[0];
 					let props = new Asc.CT_DataField();
 					props.asc_setBaseField(baseField);
 					props.asc_setBaseItem(baseItem);
-					props.asc_setPivotShowAs(pivotShowAs);
 					props.asc_setShowDataAs(showAs);
 					dataField.asc_set(api, pivot, 0, props);
 				});
@@ -5525,9 +5524,9 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfCol, 0, 0, percentOfCol_compact, 'percentOfCol_compact', 0);
 			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfRow, 0, 0, percentOfRow_compact, 'percentOfRow_compact', 0);
 			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Index, 0, 0, index_compact, 'index_compact', 0);
-			pivot = testShowAs(pivot, null, 0, 0, percentOfParentRow_compact, 'percentOfParentRow_compact', Asc.c_oAscPivotShowAs.PercentOfParentRow);
-			pivot = testShowAs(pivot, null, 0, 0, percentOfParentCol_compact, 'percentOfParentCol_compact', Asc.c_oAscPivotShowAs.PercentOfParentCol);
-			pivot = testShowAs(pivot, null, 0, 0, percentOfParent_compact, 'percentOfParent_compact', Asc.c_oAscPivotShowAs.PercentOfParent);
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfParentRow, 0, 0, percentOfParentRow_compact, 'percentOfParentRow_compact', );
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfParentCol, 0, 0, percentOfParentCol_compact, 'percentOfParentCol_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfParent, 0, 0, percentOfParent_compact, 'percentOfParent_compact');
 			setPivotLayout(pivot, 'tabular');
 			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_tabular, 'differenceNext_tabular', 0);
 			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
