@@ -118,6 +118,13 @@ CNumberingLvl.prototype.GetTextPr = function()
 	return this.TextPr;
 };
 /**
+ * @param paraPr {AscWord.CTextPr}
+ */
+CNumberingLvl.prototype.SetTextPr = function(oTextPr)
+{
+	this.TextPr = oTextPr;
+};
+/**
  * Доступ к настройкам параграфа данного уровня
  * @returns {CParaPr}
  */
