@@ -11955,10 +11955,10 @@ CT_DataField.prototype.asc_setBaseItem = function(newVal, pivot, index, addToHis
 	setFieldProperty(pivot, index, this.baseItem, newVal, addToHistory, AscCH.historyitem_PivotTable_DataFieldSetBaseItem, true);
 	this.baseItem = newVal;
 };
-CT_DataField.prototype.setShowAs = function (showDataAs, baseField, baseItem, pivot, index, addToHistory) {
-	this.asc_setShowDataAs(showDataAs, pivot, index, addToHistory);
-	this.asc_setBaseField(baseField, pivot, index, addToHistory);
-	this.asc_setBaseItem(baseItem, pivot, index, addToHistory);
+CT_DataField.prototype.setShowAs = function (showDataAs, baseField, baseItem) {
+	this.asc_setShowDataAs(showDataAs);
+	this.asc_setBaseField(baseField);
+	this.asc_setBaseItem(baseItem);
 };
 
 function CT_DataFieldX14() {

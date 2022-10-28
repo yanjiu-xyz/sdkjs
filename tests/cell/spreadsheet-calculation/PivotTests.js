@@ -5506,9 +5506,10 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				return checkHistoryOperation(assert, pivot, standard, message, function(){
 					var dataField = pivot.asc_getDataFields()[0];
 					let props = new Asc.CT_DataField();
-					props.asc_setBaseField(baseField);
-					props.asc_setBaseItem(baseItem);
-					props.asc_setShowDataAs(showAs);
+					// props.asc_setBaseField(baseField);
+					// props.asc_setBaseItem(baseItem);
+					// props.asc_setShowDataAs(showAs);
+					props.setShowAs(showAs, baseField, baseItem);
 					dataField.asc_set(api, pivot, 0, props);
 				});
 			}
