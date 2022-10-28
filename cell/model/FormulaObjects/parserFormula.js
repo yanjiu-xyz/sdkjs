@@ -556,6 +556,41 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return res;
 	};
 
+	cBaseType.prototype.toArray = function (putValue, checkOnError) {
+		let arr = [];
+		if (this.getMatrix) {
+			arr = this.getMatrix();
+			if (putValue || checkOnError) {
+				for (let i = 0; i < arr.length; i++) {
+					if (arr[i]) {
+						for (let j = 0; j < arr[i].length; j++) {
+							if (checkOnError) {
+								if (arr[i][j].type === cElementType.error) {
+									return arr[i][j];
+								}
+							}
+							if (putValue) {
+								arr[i][j] = arr[i][j].getValue();
+							}
+						}
+					}
+				}
+			}
+		} else {
+			if (checkOnError) {
+				if (this.type === cElementType.error) {
+					return this;
+				}
+			}
+
+			if (!arr[0]) {
+				arr[0] = [];
+			}
+			arr[0][0] = putValue ? this.getValue() : this;
+		}
+		return arr;
+	};
+
 	/*Basic types of an elements used into formulas*/
 	/**
 	 * @constructor
@@ -2482,6 +2517,39 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return undefined;
 	};
+	cArray.prototype.foreach = function (action) {
+		if (typeof (action) !== 'function') {
+			return true;
+		}
+		for (var ir = 0; ir < this.rowCount; ir++) {
+			for (var ic = 0; ic < this.countElementInRow[ir]; ic++) {
+				if (action.call(this, this.array[ir][ic], ir, ic)) {
+					return true;
+				}
+			}
+		}
+		return undefined;
+	};
+	cArray.prototype.foreach2 = function (action, byCol) {
+		if (typeof (action) !== 'function') {
+			return true;
+		}
+
+		let ir, ic;
+		if (byCol) {
+			for (ic = 0; ic < this.geMaxElementInRow(); ic++) {
+				for (ir = 0; ir < this.rowCount; ir++) {
+					action.call(this, this.array[ir][ic], ir, ic)
+				}
+			}
+		} else {
+			for (ir = 0; ir < this.rowCount; ir++) {
+				for (ic = 0; ic < this.countElementInRow[ir]; ic++) {
+					action.call(this, this.array[ir][ic], ir, ic)
+				}
+			}
+		}
+	};
 	cArray.prototype.getCountElement = function () {
 		return this.countElement;
 	};
@@ -2490,6 +2558,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype.getRowCount = function () {
 		return this.rowCount;
+	};
+	cArray.prototype.geMaxElementInRow = function () {
+		return Math.max.apply(null, this.countElementInRow);
 	};
 	cArray.prototype.tocNumber = function () {
 		var retArr = new cArray();
@@ -2628,6 +2699,30 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype.getDimensions = function () {
 		return {col: this.getCountElementInRow(), row: this.getRowCount()};
+	};
+	cArray.prototype.fillMatrix = function (replace_empty) {
+		let maxColCount = Math.max.apply(null, this.countElementInRow);
+		this.countElementInRow = [];
+		this.countElement = 0;
+		for (let i = 0; i < this.rowCount; i++) {
+			let currentCount = this.array[i].length;
+			if (currentCount < maxColCount) {
+				for (let j = 0; j < maxColCount - currentCount; j++) {
+					this.array[i].push(replace_empty);
+				}
+			}
+			this.countElementInRow[i] = this.array[i].length;
+			this.countElement += this.array[i].length;
+		}
+	};
+	cArray.prototype.recalculate = function () {
+		this.rowCount = this.array.length;
+		this.countElementInRow = [];
+		this.countElement = 0;
+		for (var i = 0; i < this.array.length; i++) {
+			this.countElementInRow[i] = this.array[i].length;
+			this.countElement += this.array[i].length;
+		}
 	};
 
 
@@ -7826,21 +7921,6 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		}
 		return false;
-	};
-	parserFormula.prototype.getOutsideFunctions = function () {
-		var res;
-		var funcArr = [];
-		var depth = 0;
-		for (var i = 0; i < this.outStack.length; i++) {
-			var elem = this.outStack[i];
-			if (cElementType.func === elem.type) {
-				if (depth === 0) {
-					funcArr.push(elem);
-				}
-				depth++;
-			}
-		}
-		return res;
 	};
 
 	function CalcRecursion() {
