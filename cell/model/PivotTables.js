@@ -11955,6 +11955,11 @@ CT_DataField.prototype.asc_setBaseItem = function(newVal, pivot, index, addToHis
 	setFieldProperty(pivot, index, this.baseItem, newVal, addToHistory, AscCH.historyitem_PivotTable_DataFieldSetBaseItem, true);
 	this.baseItem = newVal;
 };
+CT_DataField.prototype.setShowAs = function (showDataAs, baseField, baseItem, pivot, index, addToHistory) {
+	this.asc_setShowDataAs(showDataAs, pivot, index, addToHistory);
+	this.asc_setBaseField(baseField, pivot, index, addToHistory);
+	this.asc_setBaseItem(baseItem, pivot, index, addToHistory);
+};
 
 function CT_DataFieldX14() {
 	this.pivotShowAs = null;
@@ -16352,9 +16357,6 @@ prot['PercentOfRow'] = prot.PercentOfRow;
 prot['PercentOfCol'] = prot.PercentOfCol;
 prot['PercentOfTotal'] = prot.PercentOfTotal;
 prot['Index'] = prot.Index;
-
-window['Asc']['c_oAscShowDataAs'] = window['Asc'].c_oAscShowDataAs = c_oAscShowDataAs;
-prot = c_oAscShowDataAs;
 prot['PercentOfParent'] = prot.PercentOfParent;
 prot['PercentOfParentRow'] = prot.PercentOfParentRow;
 prot['PercentOfParentCol'] = prot.PercentOfParentCol;
@@ -16667,6 +16669,7 @@ prot["asc_setSubtotal"] = prot.asc_setSubtotal;
 prot["asc_setShowDataAs"] = prot.asc_setShowDataAs;
 prot["asc_setBaseField"] = prot.asc_setBaseField;
 prot["asc_setBaseItem"] = prot.asc_setBaseItem;
+prot["asc_setShowAs"] = prot.asc_setShowAs;
 
 window["Asc"]["CT_RangePr"] = window['Asc'].CT_RangePr = CT_RangePr;
 prot = CT_RangePr.prototype;
