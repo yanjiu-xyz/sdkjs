@@ -11200,6 +11200,28 @@ CT_PivotField.prototype.getFilterObject = function(cacheField, pageFilterItem, n
 	}
 	return values;
 };
+
+CT_PivotField.prototype.getBaseItemObject = function(cacheField) {
+	let values = [];
+	let items = this.getItems();
+	if (items) {
+		for (let i = 0; i < items.length; i += 1) {
+			let item = items[i];
+			if (Asc.c_oAscItemType.Data === item.t || Asc.c_oAscItemType.Blank === item.t) {
+				let elem = '';
+				if (Asc.c_oAscItemType.Data === item.t) {
+					var sharedItem = cacheField.getGroupOrSharedItem(item.x);
+					if (sharedItem) {
+						elem = sharedItem.getCellValue().getTextValue();
+					}
+				}
+				values.push({baseItem: i, name: elem});
+			}
+		}
+	}
+	return values;
+};
+
 CT_PivotField.prototype.getFilterMapFilterColumn = function(cacheField, filterColumn, num) {
 	var map = new Map();
 	var items = this.getItems();
