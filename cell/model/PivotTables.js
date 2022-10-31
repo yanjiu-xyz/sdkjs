@@ -16160,6 +16160,26 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 				}
 				break;
 			case Asc.c_oAscShowDataAs.Percent:
+				let percent = this.getDifference(rowItem, colItem, rowIndex, colIndex, dataIndex);
+				if (this.rowValueIndex !== null || this.colValueIndex !== null) {
+					if (this.cur && percent && this.cur.total[dataIndex] && percent.total[dataIndex]) {
+						let BaseTotal = percent.total[dataIndex];
+						let BaseOCellValue = BaseTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+						total = this.cur.total[dataIndex];
+						oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+						oCellValue.number = oCellValue.number / BaseOCellValue.number;
+					} else if (!this.cur || !this.cur.total[dataIndex]) {
+						oCellValue = getErrorCellvalue('#NULL!');
+					}
+				} else if (this.isNoData) {
+					oCellValue = getErrorCellvalue('#N/A');
+					break;
+				} else if (this.cur && this.cur.total[dataIndex] && ((this.diffRowIndex[dataIndex] !== null && rowItem.t !== Asc.c_oAscItemType.Grand) || (this.diffColIndex[dataIndex] !== null && colItem.t !== Asc.c_oAscItemType.Grand))){
+					let _oCellValue = new AscCommonExcel.CCellValue();
+					_oCellValue.type = AscCommon.CellValueType.Number;
+					_oCellValue.number = 1;
+					oCellValue = _oCellValue;
+				}
 				break;
 			case Asc.c_oAscShowDataAs.PercentDiff:
 				break;
