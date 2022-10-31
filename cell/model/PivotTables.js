@@ -16156,7 +16156,6 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 					}
 				} else if (this.isNoData) {
 					oCellValue = getErrorCellvalue('#N/A');
-					break;
 				}
 				break;
 			case Asc.c_oAscShowDataAs.Percent:
@@ -16173,7 +16172,6 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 					}
 				} else if (this.isNoData) {
 					oCellValue = getErrorCellvalue('#N/A');
-					break;
 				} else if (this.cur && this.cur.total[dataIndex] && ((this.diffRowIndex[dataIndex] !== null && rowItem.t !== Asc.c_oAscItemType.Grand) || (this.diffColIndex[dataIndex] !== null && colItem.t !== Asc.c_oAscItemType.Grand))){
 					let _oCellValue = new AscCommonExcel.CCellValue();
 					_oCellValue.type = AscCommon.CellValueType.Number;
@@ -16196,7 +16194,6 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 					}
 				} else if (this.isNoData) {
 					oCellValue = getErrorCellvalue('#N/A');
-					break;
 				}
 				break;
 			case Asc.c_oAscShowDataAs.PercentOfRow:

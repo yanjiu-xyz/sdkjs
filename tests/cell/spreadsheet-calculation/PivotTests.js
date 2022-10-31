@@ -5555,7 +5555,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				["Golf","","","",""],
 				["Tee","","","",""],
 				["Grand Total","","","",""]
-				]
+				];
 			let percentDiffPrev_compact = [
 				["Sum of Price","Column Labels","","",""],
 				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
@@ -5570,7 +5570,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				["Golf","-0.028461538","-0.052805281","#NULL!","-0.040207006"],
 				["Tee","-0.125382263","","#NULL!","-0.995535265"],
 				["Grand Total","","","",""]
-				]
+				];
 			let percentDiffBase_compact = [
 				["Sum of Price","Column Labels","","",""],
 				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
@@ -5585,7 +5585,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				["Golf","#N/A","#N/A","#N/A","#N/A"],
 				["Tee","-0.125382263","","#NULL!","-0.995535265"],
 				["Grand Total","","","",""]
-				]
+				];
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.asc_addRowField(api, 0);
