@@ -1830,11 +1830,8 @@
 	};
 	CAscNumberingLvl.prototype.put_NumberPosition = function (nNumberPosition)
 	{
-		const nLeft = this.ParaPr.Ind.Left;
-		if (nLeft)
-		{
-			this.ParaPr.put_Ind(nNumberPosition - nLeft, undefined, undefined);
-		}
+		const nLeft = this.ParaPr.Ind.Left || 0;
+		this.ParaPr.put_Ind(nNumberPosition - nLeft, undefined, undefined);
 	};
 	CAscNumberingLvl.prototype.get_TextPr = function ()
 	{

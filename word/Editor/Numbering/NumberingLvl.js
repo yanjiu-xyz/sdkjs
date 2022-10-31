@@ -1317,12 +1317,12 @@ CNumberingLvl.prototype.GetStringByLvlText = function (arrLvls, nLvl, nNum)
 };
 CNumberingLvl.prototype.GetNumberPosition = function ()
 {
-	const nLeft = this.GetIndentSize();
-	if (this.ParaPr.Ind.FirstLine)
+	const nLeft = this.GetIndentSize() || 0;
+	if (AscFormat.isRealNumber(this.ParaPr.Ind.FirstLine))
 	{
 		return nLeft + this.ParaPr.Ind.FirstLine;
 	}
-	return 0;
+	return nLeft;
 };
 CNumberingLvl.prototype.GetIndentSize = function ()
 {
