@@ -191,6 +191,10 @@
         this.m_oOwnChanges        = [];
 
 		this.m_fEndLoadCallBack   = null;
+
+        this.m_RewiewIndex = 0;
+        this.m_RewiewPoints = [];
+        this.m_RewiewDelPoints = [];
     }
 
     CCollaborativeEditingBase.prototype.GetEditorApi = function()
@@ -307,6 +311,9 @@
             this.private_RestoreDocumentState(DocState);
             this.OnStart_Load_Objects(fEndCallBack);
             AscFonts.IsCheckSymbols = false;
+
+            //получаем список изменений разбитый по действиям
+            this.GetRealChange(this.m_aAllChanges);
         }
 		else
 		{
@@ -1150,6 +1157,163 @@
 
 			this.private_PostUndo(state, changeArray);
 		};
+
+        CCollaborativeEditingBase.prototype.GetRealChange = function(changes)
+        {
+            if (changes.length === 0) {
+                return;
+            }
+
+            function ChangeIterator() {
+                this.index = changes.length - 1;
+                this.changes = changes;
+                this.arrCurrentChanges = [];
+                this.arrDelChanges = [];
+
+                this.Init();
+                this.CreateReversePoint();
+            }
+            ChangeIterator.prototype.Init = function() {
+                if (changes.length < 1) {
+                    return
+                }
+
+                while(this.index >= 0)
+                {
+                    let currentBlock = this.changes[this.index].IsDescriptionChange();
+                    let current_arr = [];
+
+                    while (this.changes[this.index] && this.changes[this.index].IsDescriptionChange() === currentBlock)
+                    {
+                        let curr_change = this.changes[this.index--];
+
+                        if (this.changes[this.index + 1] instanceof CChangesRunRemoveItem)
+                        {
+                            this.arrDelChanges.push(curr_change);
+
+                            for (let j = this.index + 1; j < this.changes.length && this.changes[j]; j++)
+                            {
+                                if (this.changes[j].PosArray && curr_change.PosArray[0] <= this.changes[j].PosArray && this.changes[j] instanceof CChangesRunAddItem)
+                                {
+                                    curr_change.PosArray[0]++;
+                                }
+                            }
+
+                            if (this.arrDelChanges.length > 1) {
+                                curr_change.PosArray[0] += this.arrDelChanges.length - 1;
+                            }
+                        }
+
+                        current_arr.push(curr_change)
+                    }
+
+                    this.arrCurrentChanges.push(current_arr);
+                }
+            }
+
+            ChangeIterator.prototype.CreateReversePoint = function () {
+                for (var nIndex = 0, nCount = this.arrDelChanges.length; nIndex < nCount; ++nIndex)
+                {
+                    var oReverseChange = this.arrDelChanges[nIndex].CreateReverseChange();
+                    if (oReverseChange)
+                    {
+                        this.arrDelChanges[nIndex] = oReverseChange;
+                        oReverseChange.SetReverted(true);
+                    }
+                }
+            }
+
+            let oContent = new ChangeIterator();
+            this.m_RewiewPoints = oContent.arrCurrentChanges;
+            this.m_RewiewDelPoints = oContent.arrDelChanges;
+        }
+        CCollaborativeEditingBase.prototype.ReverseDelPoint = function(intCount) {
+            let changeArray = [];
+            let state = this.private_PreUndo();
+            let cur = this.m_RewiewDelPoints[intCount];
+
+            cur.Class.Pr.Strikeout = true;
+            cur.Class.CompiledPr.Strikeout = true;
+            this.ReviewRedoBlock([cur], changeArray);
+            this.private_PostUndo(state, changeArray);
+        }
+        CCollaborativeEditingBase.prototype.ReviewUndoBlock = function(arrBlock, changeArray)
+        {
+            for (let j = 0; j < arrBlock.length; j++) {
+                let change = arrBlock[j];
+
+                if (!change)
+                    continue;
+
+                if (change.IsContentChange())
+                {
+                    let simpleChanges = change.ConvertToSimpleChanges();
+                    for (let simpleIndex = 0; simpleIndex < simpleChanges.length; simpleIndex++)
+                    {
+                        simpleChanges[simpleIndex].Undo();
+                        changeArray.push(simpleChanges[simpleIndex]);
+                    }
+                }
+                else
+                {
+                    change.Undo();
+                    changeArray.push(change);
+                }
+            }
+        }
+        CCollaborativeEditingBase.prototype.ReviewRedoBlock = function(arrBlock, changeArray)
+        {
+            for (let j = arrBlock.length - 1; j >= 0; j--)
+            {
+                let change = arrBlock[j];
+
+                if (!change)
+                    continue;
+
+                if (change.IsContentChange())
+                {
+                    let simpleChanges = change.ConvertToSimpleChanges();
+                    for (let simpleIndex = 0; simpleIndex < simpleChanges.length; simpleIndex++)
+                    {
+                        simpleChanges[simpleIndex].Redo();
+                        changeArray.push(simpleChanges[simpleIndex]);
+                    }
+                }
+                else
+                {
+                    change.Redo();
+                    changeArray.push(change);
+                }
+            }
+        }
+        CCollaborativeEditingBase.prototype.SelectReviewPoint = function(count)
+        {
+            debugger
+            if (count === undefined && count === this.m_RewiewIndex)
+                return;
+
+            let changeArray = [];
+            let state = this.private_PreUndo();
+
+            if (count < this.m_RewiewIndex)
+            {
+                for (let i = this.m_RewiewIndex; i > count; i--)
+                {
+                    this.ReviewRedoBlock(this.m_RewiewPoints[i - 1], changeArray);
+                }
+                this.m_RewiewIndex = count;
+            }
+            else
+            {
+                for (let i = this.m_RewiewIndex; i < count; i++)
+                {
+                    this.ReviewUndoBlock(this.m_RewiewPoints[i], changeArray);
+                }
+                this.m_RewiewIndex = count;
+            }
+
+            this.private_PostUndo(state, changeArray);
+        };
 		CCollaborativeEditingBase.prototype.private_GetReverseChangesForCollaborativeUndo = function()
 		{
 			// На первом шаге мы заданнуюю пачку изменений коммутируем с последними измениями. Смотрим на то какой набор
