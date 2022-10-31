@@ -5541,6 +5541,51 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				["Tee","0.874617737","","#NULL!","0.004464735"],
 				["Grand Total","","","",""]
 				];
+			let percentDiffNext_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","1.752293578","","#NULL!","-0.986866209"],
+				["Fancy","-0.008291874","","#NULL!","1.131011609"],
+				["Golf","0.029295329","0.055749129","#NULL!","0.041891331"],
+				["Tee","-0.155963303","","#NULL!","-0.995993233"],
+				["North","-0.637973983","#NULL!","","90.23513026"],
+				["Tee","0.143356643","#NULL!","","222.9774739"],
+				["West","","","",""],
+				["Fancy","","","",""],
+				["Golf","","","",""],
+				["Tee","","","",""],
+				["Grand Total","","","",""]
+				]
+			let percentDiffPrev_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","","","",""],
+				["Fancy","","","",""],
+				["Golf","","","",""],
+				["Tee","","","",""],
+				["North","-0.636666667","#NULL!","","75.13947764"],
+				["Tee","0.184782609","#NULL!","","248.5777678"],
+				["West","1.762232416","","#NULL!","-0.98903931"],
+				["Fancy","0.008361204","#NULL!","#NULL!","-0.5307393"],
+				["Golf","-0.028461538","-0.052805281","#NULL!","-0.040207006"],
+				["Tee","-0.125382263","","#NULL!","-0.995535265"],
+				["Grand Total","","","",""]
+				]
+			let percentDiffBase_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","1.752293578","","#NULL!","-0.986866209"],
+				["Fancy","#N/A","#N/A","#N/A","#N/A"],
+				["Golf","#N/A","#N/A","#N/A","#N/A"],
+				["Tee","-0.155963303","","#NULL!","-0.995993233"],
+				["North","","","",""],
+				["Tee","","","",""],
+				["West","1.762232416","","#NULL!","-0.98903931"],
+				["Fancy","#N/A","#N/A","#N/A","#N/A"],
+				["Golf","#N/A","#N/A","#N/A","#N/A"],
+				["Tee","-0.125382263","","#NULL!","-0.995535265"],
+				["Grand Total","","","",""]
+				]
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.asc_addRowField(api, 0);
@@ -5576,6 +5621,9 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Percent, 0, AscCommonExcel.st_BASE_ITEM_NEXT, percentNext_compact, 'percentNext_compact');
 			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Percent, 0, AscCommonExcel.st_BASE_ITEM_PREV, percentPrev_compact, 'percentPrev_compact');
 			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Percent, 0, 1, percentBase_compact, 'percentBase_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentDiff, 0, AscCommonExcel.st_BASE_ITEM_NEXT, percentDiffNext_compact, 'percentDiffNext_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentDiff, 0, AscCommonExcel.st_BASE_ITEM_PREV, percentDiffPrev_compact, 'percentDiffPrev_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentDiff, 0, 1, percentDiffBase_compact, 'percentDiffBase_compact');
 			setPivotLayout(pivot, 'tabular');
 			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_tabular, 'differenceNext_tabular', 0);
 			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
