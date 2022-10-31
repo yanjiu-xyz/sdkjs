@@ -16182,6 +16182,22 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 				}
 				break;
 			case Asc.c_oAscShowDataAs.PercentDiff:
+				let percentDiff = this.getDifference(rowItem, colItem, rowIndex, colIndex, dataIndex);
+				if (this.rowValueIndex !== null || this.colValueIndex !== null) {
+					if (this.cur && percentDiff && this.cur.total[dataIndex] && percentDiff.total[dataIndex]) {
+						let BaseTotal = percentDiff.total[dataIndex];
+						let BaseOCellValue = BaseTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+						total = this.cur.total[dataIndex];
+						oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+						let diff = oCellValue.number - BaseOCellValue.number;
+						oCellValue.number = diff / BaseOCellValue.number;
+					} else if (!this.cur || !this.cur.total[dataIndex]) {
+						oCellValue = getErrorCellvalue('#NULL!');
+					}
+				} else if (this.isNoData) {
+					oCellValue = getErrorCellvalue('#N/A');
+					break;
+				}
 				break;
 			case Asc.c_oAscShowDataAs.PercentOfRow:
 				if (this.cur && this.cur.total[dataIndex]) {
