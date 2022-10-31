@@ -898,14 +898,14 @@
 	{
 		if (!info)
 			return;
-		
+
 		let userId      = undefined !== info["UserId"] ? info["UserId"] : info.UserId;
 		let cursorInfo  = undefined !== info["CursorInfo"] ? info["CursorInfo"] : info.CursorInfo;
 		let shortUserId = undefined !== info["UserShortId"] ? info["UserShortId"] : info.UserShortId;
-		
+
 		if (!userId || !cursorInfo || !shortUserId)
 			return;
-		
+
 		this.Add_ForeignCursorToUpdate(userId, cursorInfo, shortUserId);
 	};
     CCollaborativeEditingBase.prototype.Add_ForeignCursorToUpdate = function(UserId, CursorInfo, UserShortId)
