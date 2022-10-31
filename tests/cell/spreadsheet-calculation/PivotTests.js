@@ -5496,6 +5496,51 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				["Tee","0.316634376","0.538955823","","0.407340652"],
 				["Grand Total","","","",""]
 				];
+			let percentNext_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","2.752293578","","#NULL!","0.013133791"],
+				["Fancy","0.991708126","","#NULL!","2.131011609"],
+				["Golf","1.029295329","1.055749129","#NULL!","1.041891331"],
+				["Tee","0.844036697","","#NULL!","0.004006767"],
+				["North","0.362026017","#NULL!","","91.23513026"],
+				["Tee","1.143356643","#NULL!","","223.9774739"],
+				["West","1","1","","1"],
+				["Fancy","1","","","1"],
+				["Golf","1","1","","1"],
+				["Tee","1","1","","1"],
+				["Grand Total","","","",""]
+				];
+			let percentPrev_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","1","1","","1"],
+				["Fancy","1","1","","1"],
+				["Golf","1","1","","1"],
+				["Tee","1","1","","1"],
+				["North","0.363333333","#NULL!","","76.13947764"],
+				["Tee","1.184782609","#NULL!","","249.5777678"],
+				["West","2.762232416","","#NULL!","0.01096069"],
+				["Fancy","1.008361204","#NULL!","#NULL!","0.4692607"],
+				["Golf","0.971538462","0.947194719","#NULL!","0.959792994"],
+				["Tee","0.874617737","","#NULL!","0.004464735"],
+				["Grand Total","","","",""]
+				];
+			let percentBase_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","2.752293578","","#NULL!","0.013133791"],
+				["Fancy","#N/A","#N/A","#N/A","#N/A"],
+				["Golf","#N/A","#N/A","#N/A","#N/A"],
+				["Tee","0.844036697","","#NULL!","0.004006767"],
+				["North","1","","1","1"],
+				["Tee","1","","1","1"],
+				["West","2.762232416","","#NULL!","0.01096069"],
+				["Fancy","#N/A","#N/A","#N/A","#N/A"],
+				["Golf","#N/A","#N/A","#N/A","#N/A"],
+				["Tee","0.874617737","","#NULL!","0.004464735"],
+				["Grand Total","","","",""]
+				];
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.asc_addRowField(api, 0);
@@ -5515,19 +5560,22 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			}
 			AscCommon.History.Clear();
 			setPivotLayout(pivot, 'compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfTotal, 0, 0, percentOfTotal_compact, 'percentOfTotal_compact', 0);
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_compact, 'differenceNext_compact', 0);
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_compact2, 'differenceNext_compact2', 0);
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_PREV, differencePrev_compact, 'differencePrev_compact', 0);
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_PREV, differencePrev_compact2, 'differencePrev_compact2', 0);
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, 1, differenceBase_compact, 'differenceBase_compact', 0);
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, 1, differenceBase_compact2, 'differenceBase_compact2', 0);
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfCol, 0, 0, percentOfCol_compact, 'percentOfCol_compact', 0);
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfRow, 0, 0, percentOfRow_compact, 'percentOfRow_compact', 0);
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Index, 0, 0, index_compact, 'index_compact', 0);
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfParentRow, 0, 0, percentOfParentRow_compact, 'percentOfParentRow_compact', );
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfTotal, 0, 0, percentOfTotal_compact, 'percentOfTotal_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_compact, 'differenceNext_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_compact2, 'differenceNext_compact2');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_PREV, differencePrev_compact, 'differencePrev_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_PREV, differencePrev_compact2, 'differencePrev_compact2');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, 1, differenceBase_compact, 'differenceBase_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, 1, differenceBase_compact2, 'differenceBase_compact2');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfCol, 0, 0, percentOfCol_compact, 'percentOfCol_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfRow, 0, 0, percentOfRow_compact, 'percentOfRow_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Index, 0, 0, index_compact, 'index_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfParentRow, 0, 0, percentOfParentRow_compact, 'percentOfParentRow_compact');
 			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfParentCol, 0, 0, percentOfParentCol_compact, 'percentOfParentCol_compact');
 			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfParent, 0, 0, percentOfParent_compact, 'percentOfParent_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Percent, 0, AscCommonExcel.st_BASE_ITEM_NEXT, percentNext_compact, 'percentNext_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Percent, 0, AscCommonExcel.st_BASE_ITEM_PREV, percentPrev_compact, 'percentPrev_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Percent, 0, 1, percentBase_compact, 'percentBase_compact');
 			setPivotLayout(pivot, 'tabular');
 			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_tabular, 'differenceNext_tabular', 0);
 			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
