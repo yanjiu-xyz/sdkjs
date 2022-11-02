@@ -10344,12 +10344,12 @@
 
 	CBulletPreviewDrawer.prototype.drawSingleBullet = function (sDivId, arrLvls)
 	{
-		const oCanvas = this.getClearCanvasForPreview(sDivId);
+		const oCanvas = this.getClearCanvas(sDivId);
 		if (!oCanvas) return;
 
 		const oLvl = arrLvls[0];
-		const nWidth_px = parseFloat(oCanvas.style.width);
-		const nHeight_px = parseFloat(oCanvas.style.height);
+		const nHeight_px = oCanvas.clientHeight;
+		const nWidth_px = oCanvas.clientWidth;
 		const oContext = oCanvas.getContext("2d");
 		oContext.beginPath();
 
@@ -10361,17 +10361,17 @@
 		}
 		else
 		{
-			const nMaxFontSize = 24;
+			const nMaxFontSize = /*24*/this.getFontSizeByLineHeight(32);
 			// для буллетов решено не уменьшать их превью, как и в word
 			const oFitInformation = this.GetInformationWithFitFontSize(oLvl, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm, nMaxFontSize, nMaxFontSize);
 			const oFitTextPr = oFitInformation.textPr;
 			const nLineHeight = oFitInformation.lineHeight;
 			oLvl.TextPr = oFitTextPr;
-			const oCalculationPosition = this.calculateSingleBulletPosition(oLvl, nWidth_px);
+			const oCalculationPosition = this.getXYForCenterPosition(oLvl, nWidth_px, nHeight_px);
 			const nX = oCalculationPosition.nX;
 			const nY = oCalculationPosition.nY;
 			const sText = oLvl.GetStringByLvlText([oLvl], 0);
-			this.drawParagraphByLvlInformation(sText, oLvl, nX, nY, nLineHeight, oContext, nWidth_px, nHeight_px);
+			this.drawTextWithLvlInformation(sText, oLvl, nX, nY, nLineHeight, oContext);
 		}
 	};
 
@@ -10407,30 +10407,66 @@
 		return {textPr: oTextPr, lineHeight: nLineHeight};
 	};
 
-	CBulletPreviewDrawer.prototype.calculateSingleBulletPosition = function (oLvl, nWidth)
+
+	CBulletPreviewDrawer.prototype.getWidthHeightGlyphs = function (sText, oTextPr)
+	{
+		AscCommon.g_oTextMeasurer.SetTextPr(oTextPr);
+		const oSumInformation = {Width: 0, rasterOffsetX: 0, Height: 0, Ascent: 0, rasterOffsetY: 0};
+		let bFirstGlyphSymbol = false;
+		let nRemoveRightOffset = 0;
+		for (const oIterator = sText.getUnicodeIterator(); oIterator.check(); oIterator.next())
+		{
+			const nValue = oIterator.value();
+			const nFontSlot = AscWord.GetFontSlotByTextPr(nValue, oTextPr);
+			AscCommon.g_oTextMeasurer.SetFontSlot(nFontSlot, 1);
+			const oInfo = AscCommon.g_oTextMeasurer.Measure2Code(nValue);
+
+			// в ворде крайние пробелы в превью буллетов прижимаются к глифу, а не к ширине символа
+			if (!bFirstGlyphSymbol)
+			{
+				if (oInfo.WidthG)
+				{
+					oSumInformation.rasterOffsetX = oInfo.rasterOffsetX;
+					const nWidthWithRightOffset = oInfo.Width - oInfo.rasterOffsetX;
+					oSumInformation.Width += nWidthWithRightOffset;
+					nRemoveRightOffset = nWidthWithRightOffset - oInfo.WidthG;
+					bFirstGlyphSymbol = true;
+				}
+				else
+				{
+					oSumInformation.Width += oInfo.Width;
+				}
+
+			}
+			else
+			{
+				oSumInformation.Width += oInfo.Width;
+				if (oInfo.WidthG)
+				{
+					nRemoveRightOffset = oInfo.Width - oInfo.rasterOffsetX - oInfo.WidthG;
+				}
+			}
+
+			if (oSumInformation.Ascent + oSumInformation.rasterOffsetY < oInfo.Ascent + oInfo.rasterOffsetY)
+			{
+				oSumInformation.rasterOffsetY = oInfo.rasterOffsetY;
+				oSumInformation.Ascent = oInfo.Ascent;
+				oSumInformation.Height = oInfo.Height;
+			}
+		}
+		oSumInformation.Width -= nRemoveRightOffset;
+		return oSumInformation;
+	};
+
+	CBulletPreviewDrawer.prototype.getXYForCenterPosition = function (oLvl, nWidth, nHeight)
 	{
 		// Здесь будем считать позицию отрисовки
 		const sText = oLvl.GetStringByLvlText([oLvl], 0);
 		const oTextPr = oLvl.GetTextPr().Copy();
+		const oSumInformation = this.getWidthHeightGlyphs(sText, oTextPr);
 
-		AscCommon.g_oTextMeasurer.SetTextPr(oTextPr);
-		AscCommon.g_oTextMeasurer.SetFontSlot(fontslot_ASCII, 1);
-
-		const oSumInformation = {WidthG: 0, rasterOffsetX: 0, Height: 0, Ascent: 0, rasterOffsetY: 0};
-		for (const i = sText.getUnicodeIterator(); i.check(); i.next()) {
-			const nValue = i.value();
-			const oInfo = AscCommon.g_oTextMeasurer.Measure2Code(nValue);
-
-			oSumInformation.WidthG += oInfo.WidthG;
-			oSumInformation.rasterOffsetX += oInfo.rasterOffsetX;
-			oSumInformation.rasterOffsetY = Math.max(oSumInformation.rasterOffsetY, oInfo.rasterOffsetY);
-			oSumInformation.Ascent = Math.max(oSumInformation.Ascent, oInfo.Ascent)
-			oSumInformation.Height = Math.max(oSumInformation.Height, oInfo.Height);
-
-		}
-		const nX = (nWidth >> 1) - Math.round((oSumInformation.WidthG / 2 + oSumInformation.rasterOffsetX) * AscCommon.g_dKoef_mm_to_pix);
-		const nY = (nWidth >> 1) + Math.round((oSumInformation.Height / 2 + (oSumInformation.Ascent - oSumInformation.Height + oSumInformation.rasterOffsetY)) * AscCommon.g_dKoef_mm_to_pix);
-
+		 const nX = (nWidth >> 1) - Math.round((oSumInformation.Width / 2 + oSumInformation.rasterOffsetX) * AscCommon.g_dKoef_mm_to_pix);
+		 const nY = (nHeight >> 1) + Math.round((oSumInformation.Height / 2 + (oSumInformation.Ascent - oSumInformation.Height + oSumInformation.rasterOffsetY)) * AscCommon.g_dKoef_mm_to_pix);
 		return {nX: nX, nY: nY};
 	};
 
@@ -10510,25 +10546,25 @@
 
 	CBulletPreviewDrawer.prototype.drawNoneTextPreview = function (sDivId, arrLvls)
 	{
-		const oCanvas = this.getClearCanvasForPreview(sDivId);
+		const oCanvas = this.getClearCanvas(sDivId);
 		if (!oCanvas) return;
 		const oContext = oCanvas.getContext('2d');
 
 		const oLvl = arrLvls[0];
 		const sText = oLvl.GetStringByLvlText([oLvl], 0);
-		const nWidth_px = parseFloat(oCanvas.style.width);
-		const nHeight_px = parseFloat(oCanvas.style.height);
+		const nHeight_px = oCanvas.clientHeight;
+		const nWidth_px = oCanvas.clientWidth;
 		const nMaxFontSize = nWidth_px > 50 ? 11 : 9;
 
 		const oFitInformation = this.GetInformationWithFitFontSize(oLvl, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm, 5, nMaxFontSize);
 		const oFitTextPr = oFitInformation.textPr;
 		const nLineHeight = oFitInformation.lineHeight;
 		oLvl.TextPr = oFitTextPr;
-		const oCalculationPosition = this.calculateSingleBulletPosition(oLvl, nWidth_px);
+		const oCalculationPosition = this.getXYForCenterPosition(oLvl, nWidth_px, nHeight_px);
 		const nX = oCalculationPosition.nX;
 		const nY = oCalculationPosition.nY;
 
-		this.drawParagraphByLvlInformation(sText, oLvl, nX, nY, nLineHeight, oContext, nWidth_px, nHeight_px);
+		this.drawTextWithLvlInformation(sText, oLvl, nX, nY, nLineHeight, oContext);
 	};
 
 	CBulletPreviewDrawer.prototype.getMinNumberPosition = function (arrLvls)
