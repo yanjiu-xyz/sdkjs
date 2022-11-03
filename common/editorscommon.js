@@ -10454,6 +10454,7 @@
 			const oFitTextPr = oFitInformation.textPr;
 			const nLineHeight = oFitInformation.lineHeight;
 			oLvl.TextPr = oFitTextPr;
+			oLvl.Jc = AscCommon.align_Left;
 			const oCalculationPosition = this.getXYForCenterPosition(oLvl, nWidth_px, nHeight_px);
 			const nX = oCalculationPosition.nX;
 			const nY = oCalculationPosition.nY;
