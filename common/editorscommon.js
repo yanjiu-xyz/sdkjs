@@ -10155,6 +10155,7 @@
 
 	CBulletPreviewDrawerBase.prototype.getGraphics = function (oCanvas)
 	{
+		if (!oCanvas) return;
 		const nHeight_px = oCanvas.clientHeight;
 		const nWidth_px = oCanvas.clientWidth;
 		const nRetinaWidth = oCanvas.width;
@@ -10852,6 +10853,7 @@
 		this.m_nCurrentLvl = nLvl;
 		this.m_bIsMultiLvl = bIsMultiLvlAdvanceOptions;
 		this.m_oCanvas = this.getCanvas(this.m_sId);
+		this.m_oGraphics = this.getGraphics(this.m_oCanvas);
 		this.m_bIsHeadings = true;
 		this.m_nScaleIndentsCoefficient = 0.55;
 	}
@@ -10948,7 +10950,7 @@
 		const oCanvas = this.m_oCanvas;
 		if (!oCanvas) return;
 
-		const oGraphics = this.getGraphics(oCanvas);
+		const oGraphics = this.m_oGraphics;
 		const nHeight_px = oCanvas.clientHeight;
 		const nWidth_px = oCanvas.clientWidth;
 
@@ -11021,11 +11023,10 @@
 	{
 		const oCanvas = this.m_oCanvas;
 		if (!oCanvas) return;
-		const oGraphics = this.getGraphics(oCanvas);
+		const oGraphics = this.m_oGraphics;
 		const nHeight_px = oCanvas.clientHeight;
 		const nWidth_px = oCanvas.clientWidth;
 
-		const nRPR = AscCommon.AscBrowser.retinaPixelRatio;
 		const offsetBase = 10;
 		const nLineWidth = 4;
 		const nCurrentLvl = this.m_nCurrentLvl;
