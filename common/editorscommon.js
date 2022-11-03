@@ -10368,7 +10368,7 @@
 
 	CBulletPreviewDrawerBase.prototype.draw = function () {};
 
-	CBulletPreviewDrawerBase.prototype._draw = function ()
+	CBulletPreviewDrawerBase.prototype.checkFontsAndDraw = function ()
 	{
 		const oThis = this;
 		this.checkFonts(function ()

@@ -12603,13 +12603,13 @@ background-repeat: no-repeat;\
     asc_docs_api.prototype.SetDrawImagePreviewBullet = function(sDivId, oProps, nCurrentLvl, bIsMultiLvl)
     {
 		const oDrawer = new AscCommon.CBulletPreviewDrawerAdvancedOptions(sDivId, oProps, nCurrentLvl, bIsMultiLvl);
-        oDrawer.draw();
+        oDrawer.checkFontsAndDraw();
 	};
 	
 	asc_docs_api.prototype.SetDrawImagePreviewBulletChangeListLevel = function(arrId, oProps)
     {
 		const oDrawer = new AscCommon.CBulletPreviewDrawerChangeList(arrId, oProps);
-		oDrawer.draw();
+		oDrawer.checkFontsAndDraw();
     };
 
 	asc_docs_api.prototype.asc_PreConvertTextToTable = function(oProps)
@@ -12663,7 +12663,7 @@ background-repeat: no-repeat;\
 			}
 		}
 		const oDrawer = new AscCommon.CBulletPreviewDrawer(newArrDrawingInfo, nType);
-		oDrawer.draw();
+		oDrawer.checkFontsAndDraw();
     };
 
 	asc_docs_api.prototype.asc_OnHideContextMenu = function()

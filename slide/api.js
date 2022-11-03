@@ -8576,7 +8576,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.SetDrawImagePreviewBulletForMenu = function(drawingInfo, type)
   {
 		var drawer = new AscCommon.CBulletPreviewDrawer(drawingInfo, type);
-		drawer.draw();
+		drawer.checkFontsAndDraw();
   };
 
 	asc_docs_api.prototype.asc_EditSelectAll = function()

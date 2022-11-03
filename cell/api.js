@@ -4436,7 +4436,7 @@ var editor;
   spreadsheet_api.prototype.SetDrawImagePreviewBulletForMenu = function(drawingInfo, type)
   {
     var drawer = new AscCommon.CBulletPreviewDrawer(drawingInfo, type);
-    drawer.draw();
+    drawer.checkFontsAndDraw();
   };
 
   spreadsheet_api.prototype.asc_canEditCrop = function()
