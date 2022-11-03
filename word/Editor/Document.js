@@ -1878,6 +1878,8 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	// TODO: Пока временно так сделаем, в будущем надо переделать в общий класс позиции документа
 	this.FocusCC = null;
 
+	this.MathTrackHandler = new AscWord.CMathTrackHandler(DrawingDocument, this.Api);
+
 	this.Selection =
     {
         Start    : false,
@@ -2131,7 +2133,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 
     this.GlossaryDocument = new CGlossaryDocument(this);
 
-	this.AutoCorrectSettings = new AscCommon.CAutoCorrectOptions();
+	this.AutoCorrectSettings = new AscCommon.CAutoCorrectSettings();
 
     // Контролируем изменения интерфейса
     this.ChangedStyles      = []; // Объект с Id стилями, которые были изменены/удалены/добавлены
@@ -3058,6 +3060,7 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
 	}
 
 	this.DocumentOutline.Update();
+	this.MathTrackHandler.Update();
 
     if (true !== this.Is_OnRecalculate())
         return document_recalcresult_NoRecal;
@@ -11624,11 +11627,8 @@ CDocument.prototype.private_UpdateTracks = function(bSelection, bEmptySelection)
 
 	var oSelectedInfo = this.GetSelectedElementsInfo();
 
-	var Math = oSelectedInfo.GetMath();
-	if (null !== Math && this.IsShowEquationTrack())
-		this.DrawingDocument.Update_MathTrack(true, (false === bSelection || true === bEmptySelection ? true : false), Math);
-	else
-		this.DrawingDocument.Update_MathTrack(false);
+	var oMath = oSelectedInfo.GetMath();
+	this.MathTrackHandler.SetTrackObject(this.IsShowEquationTrack() ? oMath : null, this.CurPage, false === bSelection || true === bEmptySelection)
 
 	var oBlockLevelSdt  = oSelectedInfo.GetBlockLevelSdt();
 	var oInlineLevelSdt = oSelectedInfo.GetInlineLevelSdt();
@@ -13257,6 +13257,7 @@ CDocument.prototype.Viewer_OnChangePosition = function()
 	}
     window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Update_Position();
 	this.TrackRevisionsManager.UpdateSelectedChangesPosition(this.Api);
+	this.MathTrackHandler.OnChangePosition();
 };
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для работы с секциями
@@ -23572,35 +23573,6 @@ CDocument.prototype.IsAutoCorrectHyperlinks = function()
 	return this.AutoCorrectSettings.IsHyperlinks();
 };
 /**
- * Получаем массив исключений для автозамены первой буквы предложения
- * @returns {Array.string}
- */
-CDocument.prototype.GetFirstLetterAutoCorrectExceptions = function()
-{
-	return this.AutoCorrectSettings.GetFirstLetterAutoCorrectExceptions();
-};
-/**
- * Задаем массив исключений для автозамены первой буквы предложения
- * @returns {Array.string}
- */
-CDocument.prototype.SetFirstLetterAutoCorrectExceptions = function(arrExceptions)
-{
-	this.AutoCorrectSettings.SetFirstLetterAutoCorrectExceptions(arrExceptions);
-};
-/**
- * Проверяем слово, попадает ли оно в список исключений
- * @param sWord
- * @returns {boolean}
- */
-CDocument.prototype.CheckFirstLetterAutoCorrectException = function(sWord)
-{
-	return this.AutoCorrectSettings.CheckFirstLetterAutoCorrectException(sWord);
-};
-CDocument.prototype.GetFirstLetterAutoCorrectExceptionsMaxLen = function()
-{
-	return this.AutoCorrectSettings.GetFirstLetterAutoCorrectExceptionsMaxLen();
-};
-/**
  * Получаем идентификатор текущего пользователя
  * @param [isConnectionId=false] {boolean} true - Id соединения пользователя или false - Id пользователя
  * @returns {string}
@@ -26408,114 +26380,13 @@ CDocument.prototype.ConvertMathView = function(isToLinear, isAll)
 		}
 		else
 		{
-			//получаем копию выделенного контента для конвертации
-			var oTempSelectedObject = oMath.Copy(true);
-			
-			//ссылка на выделенный контент
-			var oSelection = oMath.GetSelectContent()
-			var oContent = oSelection.Content;
-			var intStart = oSelection.Start;
-			var intEnd = oSelection.End;
-			
-			if (intEnd < intStart) {
-				var intTemp = intStart;
-				intStart = intEnd;
-				intEnd = intTemp;
-			}
+			oMath.ConvertViewBySelection(isToLinear, nInputType);
+        }
 
-			//корректировка стартовой и конечной позиции selection
-			if (intStart !== intEnd) {
-				for (var nPos = intStart; nPos <= intEnd; nPos++) {
-					var oElement = oContent.Content[nPos].Copy(true);
-					if (oElement.Content.length === 0 || (oContent.Content[nPos].Selection.Use === false && oElement.Type === 49)) {
-						if (nPos === intStart) {
-							intStart++;
-						} else if (nPos === intEnd) {
-							intEnd--;
-						}
-					}
-				}
-			}
-
-			//если выделение затрагивает ParaRun не полностью - его нужно разделить
-			for (var i = intStart; i <= intEnd; i++) {
-				var oParaRun = oContent.Content[i];
-			
-				if (oParaRun.Type === 49  && oParaRun.Selection.StartPos < oParaRun.Selection.EndPos && oParaRun.Content.length > 1) {
-
-					if (oParaRun.Content.length > 1) {
-					
-						if (oParaRun.Selection.EndPos < oParaRun.Selection.StartPos) {
-							var intTemp = oParaRun.Selection.StartPos;
-							oParaRun.Selection.StartPos = oParaRun.Selection.EndPos;
-							oParaRun.Selection.EndPos = intTemp;
-						}
-					
-						if (oParaRun.Selection.StartPos !== 0 && oParaRun.Content.length >= oParaRun.Selection.StartPos) {
-	
-							var isEndPosSplit = oParaRun.Selection.EndPos !== oParaRun.Content.length;
-	
-							var oNewRun = oParaRun.Split_Run(oParaRun.Selection.StartPos);
-							oContent.Add_ToContent(i + 1, oNewRun);
-							intStart++;
-							intEnd++;
-	
-							if (isEndPosSplit) {
-								i++;
-								oParaRun = oContent.Content[i];
-								var oNewRun = oParaRun.Split_Run(oParaRun.Selection.EndPos);
-								oContent.Add_ToContent(i + 1, oNewRun);
-							}
-						}
-						else if (oParaRun.Selection.EndPos !== oParaRun.Content.length && oParaRun.Selection.EndPos!== 0 ) {
-							var oNewRun = oParaRun.Split_Run(oParaRun.Selection.EndPos);
-							oContent.Add_ToContent(i + 1, oNewRun);
-						}
-					}
-				}
-			}
-
-			oTempSelectedObject.ConvertView(isToLinear, nInputType);
-			oContent.RemoveFromContent(intStart, intEnd - intStart + 1, false);
-
-			//вставка нового контента
-			var oOutput = [];
-			for (var i = 0; i < oTempSelectedObject.Root.Content.length; i++) {
-				var oElement = oTempSelectedObject.Root.Content[i];
-				oContent.Add_ToContent(intStart + i, oElement, false);
-				if (oElement.Content.length !== 0) {
-					oOutput.push(oElement);
-				}
-			}
-
-			oContent.RemoveSelection();
-
-			for (var i = 0; i < oOutput.length; i++) {
-				var strId = oOutput[i].Id;
-				for (var j = 0; j < oContent.Content.length; j++) {
-					if (oContent.Content[j].Id === strId) {
-						
-						oContent.Content[j].SelectAll();
-						
-						if (i === 0) {
-							oContent.Selection.Use      = true;
-							oContent.Selection.StartPos = j;
-							oContent.Selection.EndPos   = j;
-						} else {
-							oContent.Selection.EndPos = j;
-						}
-
-						break;
-					}
-				}
-			}
-			oContent.Correct_Selection();
-		}
-
-		this.Recalculate();
-		this.UpdateInterface();
-		this.UpdateTracks();
-		this.FinalizeAction();
+        this.Recalculate();
+        this.UpdateInterface();
+        this.UpdateTracks();
+        this.FinalizeAction();
 	}
 };
 /**

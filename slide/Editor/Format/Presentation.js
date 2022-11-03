@@ -2933,7 +2933,7 @@ function CPresentation(DrawingDocument) {
 
     this.lastMaster = null;
 
-    this.AutoCorrectSettings = new AscCommon.CAutoCorrectOptions();
+    this.AutoCorrectSettings = new AscCommon.CAutoCorrectSettings();
 }
 AscFormat.InitClass(CPresentation, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_Presentation);
 
@@ -11772,35 +11772,6 @@ CPresentation.prototype.SetAutoCorrectHyperlinks = function(isCorrect)
 CPresentation.prototype.IsAutoCorrectHyperlinks = function()
 {
     return this.AutoCorrectSettings.IsHyperlinks();
-};
-/**
- * Получаем массив исключений для автозамены первой буквы предложения
- * @returns {Array.string}
- */
-CPresentation.prototype.GetFirstLetterAutoCorrectExceptions = function()
-{
-    return this.AutoCorrectSettings.GetFirstLetterAutoCorrectExceptions();
-};
-/**
- * Задаем массив исключений для автозамены первой буквы предложения
- * @returns {Array.string}
- */
-CPresentation.prototype.SetFirstLetterAutoCorrectExceptions = function(arrExceptions)
-{
-    this.AutoCorrectSettings.SetFirstLetterAutoCorrectExceptions(arrExceptions);
-};
-/**
- * Проверяем слово, попадает ли оно в список исключений
- * @param sWord
- * @returns {boolean}
- */
-CPresentation.prototype.CheckFirstLetterAutoCorrectException = function(sWord)
-{
-    return this.AutoCorrectSettings.CheckFirstLetterAutoCorrectException(sWord);
-};
-CPresentation.prototype.GetFirstLetterAutoCorrectExceptionsMaxLen = function()
-{
-    return this.AutoCorrectSettings.GetFirstLetterAutoCorrectExceptionsMaxLen();
 };
 CPresentation.prototype.StopAnimation = function()
 {

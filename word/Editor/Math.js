@@ -3491,6 +3491,10 @@ ParaMath.prototype.Get_Bounds = function()
         return this.private_GetBounds(this.Root);
     }
 };
+ParaMath.prototype.GetBounds = function()
+{
+	return this.Get_Bounds();
+};
 ParaMath.prototype.Get_JointSize = function()
 {
     var W = 0, H = 0;
@@ -3707,6 +3711,24 @@ ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
 			this.ConvertFromLaTeX();
 		}
 	}
+};
+ParaMath.prototype.SplitSelectedContent = function() {
+    var oSelection = this.GetSelectContent();
+    var oContent = oSelection.Content; 
+    oContent.SplitSelectedContent();
+}
+ParaMath.prototype.ConvertViewBySelection = function(isToLinear, nInputType)
+{
+    this.SplitSelectedContent();
+    
+    var oSelection = this.GetSelectContent();
+
+    oSelection.Content.ConvertContentView(
+        oSelection.Start,
+        oSelection.End,
+        nInputType,
+        isToLinear
+    );
 };
 ParaMath.prototype.CheckSpelling = function(oCollector, nDepth)
 {

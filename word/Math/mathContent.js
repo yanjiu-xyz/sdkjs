@@ -3291,6 +3291,35 @@ CMathContent.prototype.Add_Text = function(sText, Paragraph, MathStyle)
         this.CurPos++;
     }
 };
+CMathContent.prototype.Add_Text_InPos = function(nPos, sText, Paragraph, MathStyle)
+{
+    this.Paragraph = Paragraph;
+
+    if (sText)
+    {
+        var MathRun = new ParaRun(this.Paragraph, true);
+
+        for (var nCharPos = 0, nTextLen = sText.length; nCharPos < nTextLen; nCharPos++)
+        {
+            var oText = null;
+            if (0x0026 == sText.charCodeAt(nCharPos))
+                oText = new CMathAmp();
+            else
+            {
+                oText = new CMathText(false);
+                oText.addTxt(sText[nCharPos]);
+            }
+            MathRun.Add(oText, true);
+        }
+
+        MathRun.Set_RFont_ForMathRun();
+
+        if (undefined !== MathStyle && null !== MathStyle)
+            MathRun.Math_Apply_Style(MathStyle);
+
+        this.Internal_Content_Add(nPos, MathRun, false);
+    }
+};
 CMathContent.prototype.Add_Symbol = function(Code, TextPr, MathPr)
 {
     var MathRun = new ParaRun(this.Paragraph, true);
@@ -5459,6 +5488,128 @@ CMathContent.prototype.private_IsMenuPropsForContent = function(Action)
 
     return bDecreaseArgSize || bIncreaseArgSize || bInsertForcedBreak || bDeleteForcedBreak;
 };
+
+CMathContent.prototype.SplitSelectedContentPos = function(pos) {
+	let oContent = this.Content[pos];
+	let isStart = this.Selection.StartPos === pos;
+
+	if (oContent) {
+
+		if (oContent.Type === 49) {
+
+			if (oContent.Selection.StartPos > oContent.Selection.EndPos) {
+	        	var intTemp = oContent.Selection.StartPos;
+	        	oContent.Selection.StartPos = oContent.Selection.EndPos;
+	       	 	oContent.Selection.EndPos = intTemp;
+	    	}
+
+	        if (oContent.Selection.StartPos !== 0 && oContent.Selection.StartPos <= oContent.Content.length - 1)
+	        {
+	            let oPrevContent = oContent.Split_Run(oContent.Selection.StartPos);
+	            this.Add_ToContent(this.Selection.StartPos + 1, oPrevContent);
+
+	            this.Selection.StartPos += 1;
+	            this.Selection.EndPos += 1;
+
+	            if (oPrevContent.Selection.EndPos !== oPrevContent.Content.length) {
+	                let oNextContent = oPrevContent.Split_Run(oPrevContent.Selection.EndPos);
+	                this.Add_ToContent(this.Selection.EndPos + 1, oNextContent);
+	            }
+	        }
+	        else if (oContent.Selection.StartPos === oContent.Selection.EndPos && isStart)
+	        {
+	      		this.Selection.StartPos += 1;
+	        }
+
+	        if (oContent.Selection.EndPos !== oContent.Content.length && oContent.Selection.EndPos <= oContent.Content.length - 1)
+	        {
+	            let oNextContent = oContent.Split_Run(oContent.Selection.EndPos);
+	            this.Add_ToContent(this.Selection.EndPos + 1, oNextContent);
+	        }
+	        else if (oContent.Selection.StartPos === oContent.Selection.EndPos && !isStart)
+	        {
+	             this.Selection.EndPos -= 1;
+	        }
+    	}
+	}
+}
+CMathContent.prototype.SplitSelectedContent = function() {
+	if (this.Content.length < 1)
+		return;
+
+	if (this.Selection.StartPos > this.Selection.EndPos) {
+        var intTemp = this.Selection.StartPos;
+        this.Selection.StartPos = this.Selection.EndPos;
+        this.Selection.EndPos = intTemp;
+    }
+
+	if (this.Selection.StartPos !== this.Selection.EndPos) {
+		this.SplitSelectedContentPos(this.Selection.StartPos);
+		this.SplitSelectedContentPos(this.Selection.EndPos);
+	} else {
+		this.SplitSelectedContentPos(this.Selection.StartPos);
+	}
+}
+CMathContent.prototype.ConvertContentView = function(intStart, intEnd, nInputType, isToLinear) {
+	if (this.Content.length === 0) {
+		return
+	}
+
+	if (intStart >= 0 && intEnd <= this.Content.length) {
+		let strContent = "";
+		let intCount = (intEnd - intStart) + 1;
+
+		for (let i = intStart, j = 0; i <= intEnd; i++) {
+			let oElement = this.Content[i];
+
+			if (undefined !== oElement) {
+				strContent += oElement.GetTextOfElement(nInputType);
+			}
+		}
+
+		if (isToLinear || undefined === nInputType || null === nInputType)
+		{
+			this.Remove_FromContent(intStart, intCount);
+			this.Add_Text_InPos(intStart, strContent);
+			this.Content[intStart].SelectAll();
+
+			this.Selection.Use      = true;
+			this.Selection.StartPos = intStart;
+			this.Selection.EndPos   = intStart;
+		}
+		else {
+			let oTempContent = new CMathContent();
+
+			if (nInputType === Asc.c_oAscMathInputType.Unicode)
+			{
+				AscMath.CUnicodeConverter(strContent, oTempContent);
+			}
+			else if (nInputType === Asc.c_oAscMathInputType.LaTeX)
+			{
+				AscMath.ConvertLaTeXToTokensList(strContent, oTempContent);
+			}
+
+			this.Remove_FromContent(intStart, intCount);
+			this.RemoveSelection();
+
+			for (let i = 0; i < oTempContent.Content.length; i++) {
+				this.Add_ToContent(intStart + i, oTempContent.Content[i], false);
+				this.Content[intStart + i].SelectAll();
+
+				if (i === 0) {
+					this.Selection.Use      = true;
+					this.Selection.StartPos = intStart +  i;
+					this.Selection.EndPos   = intStart +  i;
+				} else {
+					this.Selection.EndPos   = intStart +  i;
+				}
+			}
+
+			this.Correct_Content(true)
+			this.Correct_Selection();
+		}
+	}
+}
 CMathContent.prototype.Process_AutoCorrect = function(ActionElement)
 {
 	if (!this.private_NeedAutoCorrect(ActionElement))
@@ -7507,7 +7658,8 @@ CMathAutoCorrectEngine.prototype.private_PackTextToContent = function(oMathConte
 				oMathContent.AddToContent(nInContentPos++, oItem);
 				oMathRun = null;
 			}
-			else if (para_Math_Text === oItem.Type || para_Math_Ampersand === oItem.Type)
+			// we should work with para_Math_BreakOperator (some of it can be inside formula)
+			else if ( para_Math_Text === oItem.Type || para_Math_Ampersand === oItem.Type || ( para_Math_BreakOperator === oItem.Type && g_aMathAutoCorrectFracCharCodes[oItem.value] ) )
 			{
 				if (!oMathRun || (oParent && oParent !== oItem.Parent))
 				{
@@ -10023,7 +10175,14 @@ var g_aMathAutoCorrectFracCharCodes =
     /*0x27 : 1,*/ 0x28 : 1, 0x29 : 1, 0x2A : 1, 0x2B : 1, 0x2C : 1, 0x2D : 1,
     0x2E : 1, 0x2F : 1, 0x3A : 1, 0x3B : 1, 0x3C : 1, 0x3D : 1, 0x3E : 1,
     0x3F : 1, 0x40 : 1, 0x5B : 1, /*0x5C : 1,*/ 0x5D : 1, 0x5E : 1, 0x5F : 1,
-    0x60 : 1, 0x7B : 1, /*0x7C : 1,*/ 0x7D : 1, 0x7E : 1, /*0x2592 : 1,*/ 0xD7 : 1
+    0x60 : 1, 0x7B : 1, /*0x7C : 1,*/ 0x7D : 1, 0x7E : 1, /*0x2592 : 1,*/ 0xD7 : 1,
+	0x221D: 1, 0x2248: 1, 0x2249: 1, 0x2261: 1, 0x2262: 1, 0x00D7 : 1, 0x00F7 : 1,
+	0x226A: 1, 0x226B: 1, 0x203C: 1, 0x2026: 1, 0x2237: 1, 0x2254: 1, 0x226E: 1,
+	0x226F: 1, 0x2260: 1, 0x2245: 1, 0x2213: 1, 0x00B1: 1, 0x2264: 1, 0x2192: 1,
+	0x2265: 1, 0x2200: 1, 0x222A: 1, 0x2229: 1, 0x2205: 1, 0x00B0: 1, 0x2109: 1,
+	0x2103: 1, 0x2203: 1, 0x2204: 1, 0x2208: 1, 0x220B: 1, 0x2190: 1, 0x2191: 1,
+	0x2192: 1, 0x2193: 1, 0x2194: 1, 0x2234: 1, 0x2217: 1, 0x2219: 1, 0x22EE: 1,
+	0x22EF: 1, 0x22F0: 1, 0x22F1: 1, 0x2062: 1, 0x2297: 1
 };
 //символы для определения необходимости автозамены
 var g_aMathAutoCorrectTriggerCharCodes =

@@ -8788,7 +8788,7 @@ background-repeat: no-repeat;\
 				if (actionType) {
 					t.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, actionType);
 				}
-			});
+			}, fileType);
 			return true;
 		} else {
 			if (options.advancedOptions instanceof Asc.asc_CTextOptions)
@@ -11722,21 +11722,31 @@ background-repeat: no-repeat;\
 		return oLogicDocument.SetAutoCorrectDoubleSpaceWithPeriod(isCorrect);
 	};
 
-	asc_docs_api.prototype.asc_SetFirstLetterAutoCorrectExceptions = function(arrExceptions)
+	asc_docs_api.prototype.asc_SetFirstLetterAutoCorrectExceptions = function(exceptions, lang)
 	{
-		var oLogicDocument = this.WordControl.m_oLogicDocument;
-		if (!oLogicDocument)
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
 			return;
 
-		return oLogicDocument.SetFirstLetterAutoCorrectExceptions(arrExceptions);
+		let exceptionManager = oLogicDocument.GetAutoCorrectSettings().GetFirstLetterExceptionManager();
+		return exceptionManager.SetExceptions(exceptions, lang);
 	};
-	asc_docs_api.prototype.asc_GetFirstLetterAutoCorrectExceptions = function()
+	asc_docs_api.prototype.asc_GetFirstLetterAutoCorrectExceptions = function(lang)
 	{
-		var oLogicDocument = this.WordControl.m_oLogicDocument;
-		if (!oLogicDocument)
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
 			return [];
 
-		return oLogicDocument.GetFirstLetterAutoCorrectExceptions();
+		let exceptionManager = oLogicDocument.GetAutoCorrectSettings().GetFirstLetterExceptionManager();
+		return exceptionManager.GetExceptions(lang);
+	};
+	asc_docs_api.prototype.asc_GetAutoCorrectSettings = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return null;
+
+		return logicDocument.GetAutoCorrectSettings();
 	};
 
 	asc_docs_api.prototype.asc_RemoveSelection = function()
@@ -13747,6 +13757,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype['asc_SetFirstLetterAutoCorrectExceptions']   = asc_docs_api.prototype.asc_SetFirstLetterAutoCorrectExceptions;
 	asc_docs_api.prototype['asc_GetFirstLetterAutoCorrectExceptions']   = asc_docs_api.prototype.asc_GetFirstLetterAutoCorrectExceptions;
+	asc_docs_api.prototype['asc_GetAutoCorrectSettings']                = asc_docs_api.prototype.asc_GetAutoCorrectSettings;
 
 	asc_docs_api.prototype['asc_RemoveSelection']                       = asc_docs_api.prototype.asc_RemoveSelection;
 	asc_docs_api.prototype['asc_AddText']                               = asc_docs_api.prototype.asc_AddText;

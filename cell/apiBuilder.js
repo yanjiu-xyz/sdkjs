@@ -1038,11 +1038,33 @@
 	 * from a single row - <b>A1:E1</b>, or cells from a single column - <b>A1:A10</b>, or cells from several rows and columns - <b>A1:E10</b>.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
-	 * @param {string} sRange - The range of cells from the current sheet.
+	 * @param {string | ApiRange} Range1 - The range of cells from the current sheet.
+	 * @param {string | ApiRange} Range2 - The range of cells from the current sheet.
 	 * @returns {ApiRange | null} - returns null if such a range does not exist.
 	 */
-	ApiWorksheet.prototype.GetRange = function (sRange) {
-		var Range = this.worksheet.getRange2(sRange);
+	ApiWorksheet.prototype.GetRange = function (Range1, Range2) {
+		var Range, r1, c1, r2, c2;
+		Range1 = (Range1 instanceof ApiRange) ? Range1.range : (typeof Range1 == 'string') ? this.worksheet.getRange2(Range1) : null;
+
+		if (!Range1) {
+			return new Error('Incorrect "Range1" or it is empty.')
+		}
+		
+		Range2 = (Range2 instanceof ApiRange) ? Range2.range : (typeof Range2 == 'string') ? this.worksheet.getRange2(Range2) : null;
+
+		if (Range2) {
+			r1 = Math.min(Range1.bbox.r1, Range2.bbox.r1);
+			c1 = Math.min(Range1.bbox.c1, Range2.bbox.c1);
+			r2 = Math.max(Range1.bbox.r2, Range2.bbox.r2);
+			c2 = Math.max(Range1.bbox.c1, Range2.bbox.c2);
+		} else {
+			r1 = Range1.bbox.r1;
+			c1 = Range1.bbox.c1;
+			r2 = Range1.bbox.r2;
+			c2 = Range1.bbox.c2;
+		}
+
+		Range = this.worksheet.getRange3(r1, c1, r2, c2);
 
 		if (!Range)
 			return null;
@@ -1407,23 +1429,36 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRange - The range where the hyperlink will be added to.
 	 * @param {string} sAddress - The link address.
+	 * @param {string} subAddress - The subaddress of the hyperlink.
 	 * @param {string} sScreenTip - The screen tip text.
 	 * @param {string} sTextToDisplay - The link text that will be displayed on the sheet.
 	 * */
-	ApiWorksheet.prototype.SetHyperlink = function (sRange, sAddress, sScreenTip, sTextToDisplay)	{
+	ApiWorksheet.prototype.SetHyperlink = function (sRange, sAddress, subAddress, sScreenTip, sTextToDisplay) {
 		var range = new ApiRange(this.worksheet.getRange2(sRange));
-		if (range && range.range.isOneCell() && sAddress) {
-			var externalLink = AscCommon.rx_allowedProtocols.test(sAddress);
+		var address;
+		if ( range && range.range.isOneCell() && (sAddress || subAddress) ) {
+			var externalLink = sAddress ? AscCommon.rx_allowedProtocols.test(sAddress) : false;
 			if (externalLink && AscCommonExcel.getFullHyperlinkLength(sAddress) > Asc.c_nMaxHyperlinkLength) {
-				return null;
+				return new Error('Incorrect "sAddress".');
 			}
-
+			if (!externalLink) {
+				address = subAddress.split("!");
+				if (address.length == 1) 
+					address.unshift(this.GetName());
+				else if (this.worksheet.workbook.getWorksheetByName(address[0]) === null)
+					return new Error('Invalid "subAddress".')
+				
+				var res = this.worksheet.workbook.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.FormatTable, address[1], false);
+				if (res === Asc.c_oAscError.ID.DataRangeError) {
+					return new Error('Invalid "subAddress".');
+				}
+			}
 			this.worksheet.selectionRange.assign2(range.range.bbox);
 			var  Hyperlink = new Asc.asc_CHyperlink();
 			if (sScreenTip) {
 				Hyperlink.asc_setText(sScreenTip);
 			} else {
-				Hyperlink.asc_setText(sAddress);
+				Hyperlink.asc_setText( (externalLink ? sAddress : subAddress) );
 			}
 			if (sTextToDisplay) {
 				Hyperlink.asc_setTooltip(sTextToDisplay);
@@ -1431,8 +1466,8 @@
 			if (externalLink) {
 				Hyperlink.asc_setHyperlinkUrl(sAddress);
 			} else {
-				Hyperlink.asc_setRange(sAddress);
-				Hyperlink.asc_setSheet(this.GetName());
+				Hyperlink.asc_setRange(address[1]);
+				Hyperlink.asc_setSheet(address[0]);
 			}
 			this.worksheet.workbook.oApi.wb.insertHyperlink(Hyperlink);
 		}
