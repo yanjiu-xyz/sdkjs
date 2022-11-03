@@ -10387,6 +10387,9 @@
 		this.m_nCountOfLines = 3;
 		this.m_oApi = editor || Asc.editor || window["Asc"]["editor"];
 		this.m_arrNumberingLvl = this.getLvlArrayFromPreviewInfo(arrInfoOfDrawings);
+		this.m_nSingleBulletFontSizeCoefficient = 0.6;
+		this.m_nSingleBulletNoneFontSizeCoefficient = 0.225;
+		this.m_nLvlWithLinesNoneFontSizeCoefficient = 0.1375;
 	}
 	CBulletPreviewDrawer.prototype = Object.create(CBulletPreviewDrawerBase.prototype);
 	CBulletPreviewDrawer.prototype.constructor = CBulletPreviewDrawer;
@@ -10448,7 +10451,7 @@
 		}
 		else
 		{
-			const nMaxFontSize = /*24*/this.getFontSizeByLineHeight(32);
+			const nMaxFontSize = nHeight_px * this.m_nSingleBulletFontSizeCoefficient;
 			// для буллетов решено не уменьшать их превью, как и в word
 			const oFitInformation = this.GetInformationWithFitFontSize(oLvl, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm, nMaxFontSize, nMaxFontSize);
 			const oFitTextPr = oFitInformation.textPr;
@@ -10648,7 +10651,7 @@
 		}
 	};
 
-	CBulletPreviewDrawer.prototype.drawNoneTextPreview = function (sDivId, arrLvls)
+	CBulletPreviewDrawer.prototype.drawNoneTextPreview = function (sDivId, arrLvls, nFontSizeCoefficient)
 	{
 		const oCanvas = this.getCanvas(sDivId);
 		if (!oCanvas) return;
@@ -10658,7 +10661,7 @@
 		const sText = oLvl.GetStringByLvlText([oLvl], 0);
 		const nHeight_px = oCanvas.clientHeight;
 		const nWidth_px = oCanvas.clientWidth;
-		const nMaxFontSize = nWidth_px > 50 ? 11 : 9;
+		const nMaxFontSize = nWidth_px * nFontSizeCoefficient;
 
 		const oFitInformation = this.GetInformationWithFitFontSize(oLvl, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm, 5, nMaxFontSize);
 		const oFitTextPr = oFitInformation.textPr;
@@ -10741,21 +10744,38 @@
 				const arrLvls = this.m_arrNumberingLvl[i];
 				const bIsHeadingParagraphText = oDrawingInfo.numberingInfo.Headings;
 
-				if (oNumberingType === Asc.c_oAscJSONNumberingType.Remove)
+				if (this.m_nType === 0)
 				{
-					this.drawNoneTextPreview(sId, arrLvls);
-				}
-				else if (this.m_nType === 0)
-				{
-					this.drawSingleBullet(sId, arrLvls);
+					if (oNumberingType === Asc.c_oAscJSONNumberingType.Remove)
+					{
+						this.drawNoneTextPreview(sId, arrLvls, this.m_nSingleBulletNoneFontSizeCoefficient);
+					}
+					else
+					{
+						this.drawSingleBullet(sId, arrLvls);
+					}
 				}
 				else if (this.m_nType === 1)
 				{
-					this.drawSingleLvlWithLines(sId, arrLvls);
+					if (oNumberingType === Asc.c_oAscJSONNumberingType.Remove)
+					{
+						this.drawNoneTextPreview(sId, arrLvls, this.m_nLvlWithLinesNoneFontSizeCoefficient);
+					}
+					else
+					{
+						this.drawSingleLvlWithLines(sId, arrLvls);
+					}
 				}
 				else if (this.m_nType === 2)
 				{
-					this.drawMultiLevelBullet(sId, arrLvls, bIsHeadingParagraphText);
+					if (oNumberingType === Asc.c_oAscJSONNumberingType.Remove)
+					{
+						this.drawNoneTextPreview(sId, arrLvls, this.m_nLvlWithLinesNoneFontSizeCoefficient);
+					}
+					else
+					{
+						this.drawMultiLevelBullet(sId, arrLvls, bIsHeadingParagraphText);
+					}
 				}
 			}
 		}, this, []);
