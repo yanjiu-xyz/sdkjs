@@ -10253,9 +10253,9 @@
 		if (oParagraphTextOptions)
 		{
 			const sParagraphText = oParagraphTextOptions.addingText;
-			const oHeadingTextPr = oTextPr.Copy();
+			const oHeadingTextPr = new AscCommonWord.CTextPr();
 			oHeadingTextPr.RFonts.SetAll("Arial");
-			oHeadingTextPr.FontSize = oHeadingTextPr.FontSizeCS = oTextPr.FontSize * 0.8;
+			oHeadingTextPr.FontSize = oHeadingTextPr.FontSizeCS = oTextPr.FontSize * 0.75;
 			oHeadingTextPr.Color = oParagraphTextOptions.color.Copy();
 
 			oParagraph = this.getParagraphWithText(sParagraphText, oHeadingTextPr);
@@ -10278,9 +10278,11 @@
 
 	CBulletPreviewDrawerBase.prototype.cleanParagraphField = function (oGraphics, nX, nY, nWidth, nHeight)
 	{
+		oGraphics._s();
 		oGraphics.b_color1(this.m_oBackgroundColor.r, this.m_oBackgroundColor.g, this.m_oBackgroundColor.b, 255);
 		oGraphics.rect(nX, nY, nWidth, nHeight);
 		oGraphics.df();
+		oGraphics._e();
 	};
 
 	CBulletPreviewDrawerBase.prototype.drawParagraph = function (oGraphics, oParagraph, nXOffset, nYOffset)
@@ -10649,6 +10651,7 @@
 			}
 			nY += (nLineWidth + nLineDistance);
 		}
+		this.cleanParagraphField(oGraphics, (nWidth_px - nOffsetBase) * AscCommon.g_dKoef_pix_to_mm, 0, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm);
 	};
 
 	CBulletPreviewDrawer.prototype.drawNoneTextPreview = function (sDivId, arrLvls, nFontSizeCoefficient)
@@ -10691,20 +10694,13 @@
 		const nHeight_px = oCanvas.clientHeight;
 		const nWidth_px = oCanvas.clientWidth;
 
-		const nRPR = AscCommon.AscBrowser.retinaPixelRatio;
 		const nOffsetBase = 4;
 		const nLineWidth = 2;
 		// считаем расстояние между линиями
 		const nLineDistance = Math.floor(((nHeight_px - (nOffsetBase << 2)) - nLineWidth * nCountOfLines) / nCountOfLines);
 		// убираем погрешность в offset
 		const nOffset = (nHeight_px - (nLineWidth * nCountOfLines + nLineDistance * nCountOfLines)) >> 1;
-
-		const nScaleCoefficient = this.getScaleCoefficientForMultiLevel(arrLvls, (nWidth_px - nOffset) * (9 / nCountOfLines));
-
-		const nIndentation = Math.min.apply(Math, arrLvls.map((function (e) {
-			return e.GetNumberPosition();
-		})));
-
+		const nScaleCoefficient = 0.5;
 
 		let nY = nOffset + 11;
 		for (let i = 0; i < nCountOfLines; i += 1)
@@ -10714,10 +10710,10 @@
 			const oTextPr = oLvl.GetTextPr();
 			oTextPr.FontSize = this.getFontSizeByLineHeight(nLineDistance - 4);
 			const nNumberPosition = oLvl.GetNumberPosition();
-			const nTextYx =  nOffset + (nNumberPosition - nIndentation) * nScaleCoefficient;
+			const nTextYx =  nOffsetBase + (nNumberPosition) * nScaleCoefficient;
 			const nTextYy = nY + (nLineWidth * 2.5);
 
-			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, Math.round(nY * nRPR), Math.round(nTextYx * nRPR), nLineWidth * Math.round(nRPR));
+			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, Math.round(nY * AscCommon.g_dKoef_pix_to_mm), Math.round(nTextYx), (nWidth_px - nOffset) * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
 
 			if ((oLvl instanceof AscCommonWord.CPresentationBullet) && oLvl.m_sSrc)
 			{
@@ -10731,6 +10727,7 @@
 			}
 			nY += (nLineWidth + nLineDistance);
 		}
+		this.cleanParagraphField(oGraphics, (nWidth_px - nOffsetBase) * AscCommon.g_dKoef_pix_to_mm, 0, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm);
 	};
 
 	CBulletPreviewDrawer.prototype.draw = function ()
