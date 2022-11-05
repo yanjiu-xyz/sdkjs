@@ -158,12 +158,13 @@
 		result.sum = this.sum;
 		result.product = this.product;
 		result.mean = this.mean;
-		result.M2 = this.M2;
+		// ??
+		//result.M2 = this.M2;
 		return result;
 	};
-	StatisticOnlineAlgorithm.prototype.getCellValue = function(dataType, fieldType, rowType, colType) {
+	StatisticOnlineAlgorithm.prototype.getCellValue = function(dataType, fieldType, rowType, colType, isZeroCell) {
 		var oCellValue;
-		if (this.isEmpty()) {
+		if (this.isEmpty() && !isZeroCell) {
 			return oCellValue;
 		}
 		oCellValue = new AscCommonExcel.CCellValue();
