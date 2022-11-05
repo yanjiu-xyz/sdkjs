@@ -16026,7 +16026,6 @@ DataRowTraversal.prototype.setRunTotalRow = function(resValueIndex, prevRunTotal
 	let data = this.curRowCache[this.diffRowIndex[dataIndex]];
 	let field = this.pivotFields[this.dataField.baseField];
 	let fieldItem = field.getItem(resValueIndex);
-	// TODO Добавить в runTotal, иначе создать vals и добавить runTotal
 	data = data.vals[fieldItem.x];
 	let _data = data;
 	for (let j = this.diffRowIndex[dataIndex] + 1; j < this.rowFieldItemCache.length; j += 1) {
@@ -16187,7 +16186,7 @@ DataRowTraversal.prototype.setRunTotals = function(dataIndex) {
 			prevRunTotalCache[i + 1] = data.runTotal[dataIndex];
 		}
 		
-		// Перебор всех rowItems в diff полях
+		// Перебор всех colItems в diff полях
 		let valueCache = this.colValueCache;
 		let value = 1;
 		let diffIndex = this.diffColIndex;
