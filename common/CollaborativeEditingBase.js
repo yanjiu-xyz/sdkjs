@@ -1160,11 +1160,11 @@
 
         CCollaborativeEditingBase.prototype.GetRealChange = function(changes)
         {
-            if (changes.length === 0) {
+            if (changes.length === 0)
                 return;
-            }
 
-            function ChangeIterator() {
+            function ChangeIterator()
+            {
                 this.index = changes.length - 1;
                 this.changes = changes;
                 this.arrCurrentChanges = [];
@@ -1173,48 +1173,67 @@
                 this.Init();
                 this.CreateReversePoint();
             }
-            ChangeIterator.prototype.Init = function() {
-                if (changes.length < 1) {
-                    return
-                }
+            ChangeIterator.prototype.Init = function()
+            {
+                if (changes.length < 1)
+                    return;
 
                 while(this.index >= 0)
                 {
-                    let currentBlock = this.changes[this.index].IsDescriptionChange();
-                    let current_arr = [];
+                    let oCurrentBlock = this.changes[this.index].IsDescriptionChange();
+                    let arrDelChanges = [];
+                    let arrCurrentArray = [];
+                    let isSplit = false;
 
-                    while (this.changes[this.index] && this.changes[this.index].IsDescriptionChange() === currentBlock)
+                    while (this.changes[this.index] && this.changes[this.index].IsDescriptionChange() === oCurrentBlock)
                     {
                         let curr_change = this.changes[this.index--];
 
-                        if (this.changes[this.index + 1] instanceof CChangesRunRemoveItem)
+                        if (curr_change instanceof CChangesRunOnEndSplit || curr_change instanceof CChangesRunOnStartSplit)
                         {
-                            this.arrDelChanges.push(curr_change);
-
-                            for (let j = this.index + 1; j < this.changes.length && this.changes[j]; j++)
-                            {
-                                if (this.changes[j].PosArray && curr_change.PosArray[0] <= this.changes[j].PosArray && this.changes[j] instanceof CChangesRunAddItem)
-                                {
-                                    curr_change.PosArray[0]++;
-                                }
-                            }
-
-                            if (this.arrDelChanges.length > 1) {
-                                curr_change.PosArray[0] += this.arrDelChanges.length - 1;
-                            }
+                            isSplit = true;
                         }
 
-                        current_arr.push(curr_change)
+                        if (this.changes[this.index + 1] instanceof CChangesRunRemoveItem)
+                        {
+                            arrDelChanges.push(curr_change);
+                            // если удаленный текст нужно отобразить после, а не до написанного
+                            // for (let j = this.index + 1; j < this.changes.length && this.changes[j]; j++)
+                            // {
+                            //     if (this.changes[j].PosArray && curr_change.PosArray[0] <= this.changes[j].PosArray + 1 && this.changes[j] instanceof CChangesRunAddItem)
+                            //     {
+                            //         curr_change.PosArray[0]++;
+                            //     }
+                            // }
+                            //
+                            // if (this.arrDelChanges.length > 1) {
+                            //     curr_change.PosArray[0] += this.arrDelChanges.length - 1;
+                            // }
+                        }
+
+                        if (isSplit === true)
+                            break;
+
+                        arrCurrentArray.push(curr_change)
                     }
 
-                    this.arrCurrentChanges.push(current_arr);
+                    if (!isSplit)
+                    {
+                        this.arrCurrentChanges.push(arrCurrentArray);
+                        for (let i = 0; i < arrDelChanges.length; i++)
+                        {
+                            this.arrDelChanges.push(arrDelChanges[i]);
+                        }
+                    }
+                    isSplit = false;
                 }
             }
 
-            ChangeIterator.prototype.CreateReversePoint = function () {
-                for (var nIndex = 0, nCount = this.arrDelChanges.length; nIndex < nCount; ++nIndex)
+            ChangeIterator.prototype.CreateReversePoint = function ()
+            {
+                for (let nIndex = 0, nCount = this.arrDelChanges.length; nIndex < nCount; ++nIndex)
                 {
-                    var oReverseChange = this.arrDelChanges[nIndex].CreateReverseChange();
+                    let oReverseChange = this.arrDelChanges[nIndex].CreateReverseChange();
                     if (oReverseChange)
                     {
                         this.arrDelChanges[nIndex] = oReverseChange;
@@ -1222,19 +1241,86 @@
                     }
                 }
             }
-
             let oContent = new ChangeIterator();
+
             this.m_RewiewPoints = oContent.arrCurrentChanges;
             this.m_RewiewDelPoints = oContent.arrDelChanges;
         }
-        CCollaborativeEditingBase.prototype.ReverseDelPoint = function(intCount) {
-            let changeArray = [];
+        CCollaborativeEditingBase.prototype.ReverseAllDelPoint = function() {
             let state = this.private_PreUndo();
-            let cur = this.m_RewiewDelPoints[intCount];
+            let changeArray = [];
+            let arrContentDel = [];
+            let intStartPos = 0;
+            let intEndPos = 0;
+            let strCurrentId = null;
 
-            cur.Class.Pr.Strikeout = true;
-            cur.Class.CompiledPr.Strikeout = true;
-            this.ReviewRedoBlock([cur], changeArray);
+            for (let i = 0; i < this.m_RewiewDelPoints.length; i++)
+            {
+                let oCurrentChange = this.m_RewiewDelPoints[i];
+                let isNew = false;
+
+                oCurrentChange.Items.reverse();
+
+                if (i === 0 || isNew || strCurrentId !== oCurrentChange.Class.Id)
+                {
+                    strCurrentId = oCurrentChange.Class.Id;
+                    intStartPos = oCurrentChange.PosArray[0];
+                }
+                else if (intStartPos < oCurrentChange.PosArray[0])
+                {
+                    intEndPos = oCurrentChange.PosArray[0];
+                    if (i === this.m_RewiewDelPoints.length - 1)
+                    {
+                        arrContentDel.push([intStartPos, intEndPos, oCurrentChange.Class]);
+                    }
+                }
+                else if (intStartPos !== intEndPos)
+                {
+                    arrContentDel.push([intStartPos, intEndPos, oCurrentChange.Class]);
+                    isNew = true;
+                    intEndPos = 0;
+                    intStartPos = 0;
+                }
+
+                if ((this.m_RewiewDelPoints[i + 1] && this.m_RewiewDelPoints[i + 1].Class.Id !== oCurrentChange.Class.Id))
+                {
+                    arrContentDel.push([intStartPos, intEndPos, oCurrentChange.Class]);
+                    isNew = true;
+                    intEndPos = 0;
+                    intStartPos = 0;
+                }
+                this.ReviewRedoBlock([oCurrentChange], changeArray);
+            }
+
+            //теперь это нужно переделать в изменение
+            for (let i = 0; i < arrContentDel.length; i++)
+            {
+                let CurrentBlock = arrContentDel[i];
+                let firstElement, secondElement;
+
+                if (CurrentBlock[0] !== 0)
+                {
+                    firstElement = CurrentBlock[2].Split_Run(CurrentBlock[0]);
+                    let pos = CurrentBlock[2].Get_Position();
+                    CurrentBlock[2].Parent.Add_ToContent(pos + 1, firstElement);
+                }
+
+                if (firstElement)
+                {
+                    secondElement = firstElement.Split_Run(CurrentBlock[1] - CurrentBlock[0] + 1);
+                    firstElement.SetStrikeout(true);
+                    let pos = firstElement.Get_Position();
+                    firstElement.Parent.Add_ToContent(pos + 2, secondElement);
+                }
+                else
+                {
+                    firstElement = CurrentBlock[2].Split_Run(CurrentBlock[1]);
+                    CurrentBlock[2].SetStrikeout(true);
+                    let pos =  CurrentBlock[2].Get_Position();
+                    CurrentBlock[2].Parent.Add_ToContent(pos + 1, firstElement);
+                }
+            }
+
             this.private_PostUndo(state, changeArray);
         }
         CCollaborativeEditingBase.prototype.ReviewUndoBlock = function(arrBlock, changeArray)
@@ -1269,7 +1355,6 @@
 
                 if (!change)
                     continue;
-
                 if (change.IsContentChange())
                 {
                     let simpleChanges = change.ConvertToSimpleChanges();
@@ -1288,7 +1373,6 @@
         }
         CCollaborativeEditingBase.prototype.SelectReviewPoint = function(count)
         {
-            debugger
             if (count === undefined && count === this.m_RewiewIndex)
                 return;
 
