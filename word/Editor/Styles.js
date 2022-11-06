@@ -18128,6 +18128,7 @@ window["AscCommonWord"].CTextPr = CTextPr;
 window["AscCommonWord"].CLang = CLang;
 window["AscCommonWord"].CParaPr = CParaPr;
 window["AscCommonWord"].CParaTabs = CParaTabs;
+window["AscCommonWord"].CParaTab = CParaTab;
 window["AscCommonWord"].CDocumentShd = CDocumentShd;
 window["AscCommonWord"].g_dKoef_pt_to_mm = g_dKoef_pt_to_mm;
 window["AscCommonWord"].g_dKoef_pc_to_mm = g_dKoef_pc_to_mm;

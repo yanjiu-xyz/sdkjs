@@ -10392,6 +10392,8 @@
 		this.m_nSingleBulletFontSizeCoefficient = 0.6;
 		this.m_nSingleBulletNoneFontSizeCoefficient = 0.225;
 		this.m_nLvlWithLinesNoneFontSizeCoefficient = 0.1375;
+
+		this.m_nMultiLvlIndentCoefficient = 0.5;
 	}
 	CBulletPreviewDrawer.prototype = Object.create(CBulletPreviewDrawerBase.prototype);
 	CBulletPreviewDrawer.prototype.constructor = CBulletPreviewDrawer;
@@ -10698,23 +10700,44 @@
 		const nLineWidth = 2;
 		// считаем расстояние между линиями
 		const nLineDistance = Math.floor(((nHeight_px - (nOffsetBase << 2)) - nLineWidth * nCountOfLines) / nCountOfLines);
+		const nLineHeight = nLineDistance - 4;
 		// убираем погрешность в offset
 		const nOffset = (nHeight_px - (nLineWidth * nCountOfLines + nLineDistance * nCountOfLines)) >> 1;
-		const nScaleCoefficient = 0.5;
-
 		let nY = nOffset + 11;
+
 		for (let i = 0; i < nCountOfLines; i += 1)
 		{
 			const oLvl = arrLvls[i];
+			const nSuff = oLvl.GetSuff();
 			oLvl.Jc = AscCommon.align_Left;
 			const oTextPr = oLvl.GetTextPr();
-			oTextPr.FontSize = this.getFontSizeByLineHeight(nLineDistance - 4);
+			oTextPr.FontSize = this.getFontSizeByLineHeight(nLineHeight);
 			const nNumberPosition = oLvl.GetNumberPosition();
-			const nTextYx =  nOffsetBase + (nNumberPosition) * nScaleCoefficient;
+			const nTextYx =  nOffsetBase + (nNumberPosition) * this.m_nMultiLvlIndentCoefficient;
 			const nTextYy = nY + (nLineWidth * 2.5);
+			let nXPositionOfLine;
+			if (nSuff === Asc.c_oAscNumberingSuff.Tab)
+			{
+				const nStopTab = oLvl.GetStopTab();
+				const nIndentSize = oLvl.GetIndentSize();
+				if (AscFormat.isRealNumber(nStopTab))
+				{
+					nXPositionOfLine = nStopTab * this.m_nMultiLvlIndentCoefficient;
+				}
+				else
+				{
+					nXPositionOfLine =  Math.max(nTextYx, nIndentSize * this.m_nMultiLvlIndentCoefficient);
+				}
 
-			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, Math.round(nY * AscCommon.g_dKoef_pix_to_mm), Math.round(nTextYx), (nWidth_px - nOffset) * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
+			}
+			else
+			{
+				nXPositionOfLine = nTextYx;
+			}
 
+			nXPositionOfLine = nXPositionOfLine << 0;
+
+			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nXPositionOfLine * AscCommon.g_dKoef_pix_to_mm, (nWidth_px - nOffsetBase) * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
 			if ((oLvl instanceof AscCommonWord.CPresentationBullet) && oLvl.m_sSrc)
 			{
 				this.drawImageBulletsWithLines(oLvl.m_sSrc, oTextPr, nTextYx, nTextYy, (nLineDistance - 4), oGraphics, nWidth_px, nHeight_px);
@@ -10723,7 +10746,7 @@
 			{
 				const oParagraphTextOptions = bIsHeadingParagraphText ? this.getHeadingTextInformation(i + 1, nTextYx, nTextYy) : null;
 				const sNumberingText = oLvl.GetStringByLvlText(arrLvls, i, 1);
-				this.drawTextWithLvlInformation(sNumberingText, oLvl, nTextYx, nTextYy, (nLineDistance - 4), oGraphics, oParagraphTextOptions);
+				this.drawTextWithLvlInformation(sNumberingText, oLvl, nTextYx, nTextYy, nLineHeight, oGraphics, oParagraphTextOptions);
 			}
 			nY += (nLineWidth + nLineDistance);
 		}

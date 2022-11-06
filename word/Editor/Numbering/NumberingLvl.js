@@ -1328,6 +1328,35 @@ CNumberingLvl.prototype.GetIndentSize = function ()
 {
 	return this.ParaPr && this.ParaPr.Ind ? this.ParaPr.Ind.Left : 0;
 };
+CNumberingLvl.prototype.GetStopTab = function ()
+{
+	const oParaPr = this.GetParaPr();
+	if (oParaPr)
+	{
+		const oTabs = oParaPr.GetTabs();
+		if (oTabs)
+		{
+			if (oTabs && oTabs.GetCount() === 1)
+			{
+				return oTabs.Get(0).Pos;
+			}
+		}
+	}
+	return null;
+};
+
+CNumberingLvl.prototype.SetStopTab = function (nValue)
+{
+	let oParaPr = this.GetParaPr();
+	if (!oParaPr)
+	{
+		oParaPr = new AscCommonWord.CParaPr();
+		this.SetParaPr(oParaPr);
+	}
+	const oTabs = new AscCommonWord.CParaTabs();
+	oTabs.Add(new AscCommonWord.CParaTab(Asc.c_oAscTabType.Num, nValue));
+	oParaPr.Tabs = oTabs;
+};
 CNumberingLvl.prototype.WriteToBinary = function(oWriter)
 {
 	// Long               : Jc
