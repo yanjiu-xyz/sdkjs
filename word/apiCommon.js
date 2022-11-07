@@ -1832,8 +1832,50 @@
 	{
 		const nLeft = this.ParaPr.Ind.Left || 0;
 		this.ParaPr.put_Ind(nNumberPosition - nLeft, undefined, undefined);
+		const nStopTab = this.GetStopTab();
+		if (AscFormat.isRealNumber(nStopTab) && nStopTab < nNumberPosition)
+		{
+			this.put_StopTab(nNumberPosition);
+		}
 	};
-	CAscNumberingLvl.prototype.get_TextPr = function ()
+	CAscNumberingLvl.prototype.GetStopTab = function ()
+	{
+		const oParaPr = this.ParaPr;
+		if (oParaPr)
+		{
+			const oTabs = oParaPr.GetTabs();
+			if (oTabs)
+			{
+				if (oTabs && oTabs.GetCount() === 1)
+				{
+					return oTabs.Get(0).Pos;
+				}
+			}
+		}
+		return null;
+	};
+
+	CAscNumberingLvl.prototype.SetStopTab = function (nValue)
+	{
+		let oParaPr = this.ParaPr;
+		if (!oParaPr)
+		{
+			oParaPr = new AscCommonWord.CParaPr();
+			this.ParaPr = oParaPr;
+		}
+		if (AscFormat.isRealNumber(nValue))
+		{
+			const oTabs = new AscCommonWord.CParaTabs();
+			oTabs.Add(new AscCommonWord.CParaTab(Asc.c_oAscTabType.Num, nValue));
+			oParaPr.Tabs = oTabs;
+		}
+		else
+		{
+			delete oParaPr.Tabs;
+		}
+	};
+	CAscNumberingLvl.prototype.put_StopTab = CAscNumberingLvl.prototype.SetStopTab;
+		CAscNumberingLvl.prototype.get_TextPr = function ()
 	{
 		return this.TextPr;
 	};
