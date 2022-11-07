@@ -9222,6 +9222,10 @@ function RangeDataManagerElem(bbox, data)
 					}
 					hiddenObj.h = null
 				}
+
+				if (true === isHidden) {
+					worksheet.setRowHidden(isHidden, i, i);
+				}
 			}
 		}
 
