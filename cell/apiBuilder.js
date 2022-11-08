@@ -1736,6 +1736,26 @@
 	};
 
 	/**
+	 * Moves the sheet to another location in the workbook.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiWorksheet} before - The sheet before which the moved sheet will be placed. You cannot specify Before if you specify After.
+	 * @param {ApiWorksheet} after - The sheet after which the moved sheet will be placed. You cannot specify After if you specify Before.
+	*/
+	ApiWorksheet.prototype.Move = function(before, after) {
+		var bb = before instanceof ApiWorksheet;
+		var ba = after instanceof ApiWorksheet;
+		if ( (bb && ba) || (!bb && !ba) )
+			return new Error('Incorrect parametrs.');
+
+		if (bb) {
+			this.worksheet.workbook.oApi.asc_moveWorksheet( before.Index, [this.Index] );
+		} else {
+			this.worksheet.workbook.oApi.asc_moveWorksheet( (after.Index + 1), [this.Index] );
+		}
+	};
+
+	/**
 	 * Specifies the cell border position.
 	 * @typedef {("DiagonalDown" | "DiagonalUp" | "Bottom" | "Left" | "Right" | "Top" | "InsideHorizontal" | "InsideVertical")} BordersIndex
 	 */
@@ -4311,6 +4331,7 @@
 	ApiWorksheet.prototype["GetAllShapes"] = ApiWorksheet.prototype.GetAllShapes;
 	ApiWorksheet.prototype["GetAllCharts"] = ApiWorksheet.prototype.GetAllCharts;
 	ApiWorksheet.prototype["GetAllOleObjects"] = ApiWorksheet.prototype.GetAllOleObjects;
+	ApiWorksheet.prototype["Move"] = ApiWorksheet.prototype.Move;
 
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
