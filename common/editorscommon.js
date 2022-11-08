@@ -10073,14 +10073,15 @@
 		this.m_nAmountOfLvls = 9;
 	}
 
-	CBulletPreviewDrawerBase.prototype.getFirstLineIndent = function (nNumberPosition, oLvl)
+	CBulletPreviewDrawerBase.prototype.getFirstLineIndent = function (oLvl, nCustomNumberPosition, nCustomIndentSize, nCustomStopTab)
 	{
 		const nSuff = oLvl.GetSuff();
+		const nNumberPosition = AscFormat.isRealNumber(nCustomNumberPosition) ? nCustomNumberPosition : oLvl.GetNumberPosition();
 		let nXPositionOfLine;
 		if (nSuff === Asc.c_oAscNumberingSuff.Tab)
 		{
-			const nStopTab = oLvl.GetStopTab();
-			const nIndentSize = oLvl.GetIndentSize();
+			const nStopTab = AscFormat.isRealNumber(nCustomStopTab) || nCustomStopTab === null ? nCustomStopTab : oLvl.GetStopTab();
+			const nIndentSize = AscFormat.isRealNumber(nCustomIndentSize) ? nCustomIndentSize : oLvl.GetIndentSize();
 			if (AscFormat.isRealNumber(nStopTab))
 			{
 				nXPositionOfLine = nStopTab;
@@ -10422,7 +10423,7 @@
 		this.m_nSingleBulletNoneFontSizeCoefficient = 0.225;
 		this.m_nLvlWithLinesNoneFontSizeCoefficient = 0.1375;
 
-		this.m_nMultiLvlIndentCoefficient = 0.5;
+		this.m_nMultiLvlIndentCoefficient = 1 / AscCommon.AscBrowser.retinaPixelRatio;
 	}
 	CBulletPreviewDrawer.prototype = Object.create(CBulletPreviewDrawerBase.prototype);
 	CBulletPreviewDrawer.prototype.constructor = CBulletPreviewDrawer;
@@ -10744,7 +10745,7 @@
 			const nNumberPosition = oLvl.GetNumberPosition();
 			const nTextYx =  nOffsetBase + (nNumberPosition) * this.m_nMultiLvlIndentCoefficient;
 			const nTextYy = nY + (nLineWidth * 2.5);
-			const nXPositionOfLine = nOffsetBase + (this.getFirstLineIndent(nNumberPosition, oLvl) * this.m_nMultiLvlIndentCoefficient) << 0;
+			const nXPositionOfLine = nOffsetBase + (this.getFirstLineIndent(oLvl) * this.m_nMultiLvlIndentCoefficient) << 0;
 
 			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nXPositionOfLine * AscCommon.g_dKoef_pix_to_mm, (nWidth_px - nOffsetBase) * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
 			if ((oLvl instanceof AscCommonWord.CPresentationBullet) && oLvl.m_sSrc)
@@ -10877,7 +10878,7 @@
 
 				const nNumberPosition = oLvl.GetNumberPosition();
 				const nScaleCoefficient = this.getScaleCoefficientForMultiLevel(this.m_arrNumberingLvl, nWidth_px - nOffsetBase * 6);
-				const nXLinePosition = nOffsetBase + (this.getFirstLineIndent(nNumberPosition, oLvl) * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient) << 0;
+				const nXLinePosition = nOffsetBase + (this.getFirstLineIndent(oLvl) * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient) << 0;
 				const nTextYx = nOffsetBase + nNumberPosition * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient;
 				const nTextYy = nY + (nLineWidth << 1);
 
@@ -11020,7 +11021,7 @@
 			const nTextYx = (nOffset + nNumberPosition * AscCommon.g_dKoef_mm_to_pix * this.m_nScaleIndentsCoefficient) >> 0;
 			const nIndentSize = (nOffset + oLvl.GetIndentSize() * AscCommon.g_dKoef_mm_to_pix * this.m_nScaleIndentsCoefficient) >> 0;
 			const nTextYy = nY + nLineWidth;
-			const nOffsetText = nOffset + (this.getFirstLineIndent(nNumberPosition, oLvl) * AscCommon.g_dKoef_mm_to_pix * this.m_nScaleIndentsCoefficient) >> 0;
+			const nOffsetText = nOffset + (this.getFirstLineIndent(oLvl) * AscCommon.g_dKoef_mm_to_pix * this.m_nScaleIndentsCoefficient) >> 0;
 
 			if (i === nCurrentLvl)
 			{
@@ -11047,8 +11048,6 @@
 	};
 	CBulletPreviewDrawerAdvancedOptions.prototype.getScaleCoefficientForSingleLevel = function (nWorkspaceWidth)
 	{
-		const nRPR = AscCommon.AscBrowser.retinaPixelRatio;
-
 		const nCurrentLvl = this.m_nCurrentLvl;
 		const oCurrentLvl = this.m_arrNumberingLvl[nCurrentLvl];
 
@@ -11077,12 +11076,19 @@
 		const nCurrentLvl = this.m_nCurrentLvl;
 		const oCurrentLvl = this.m_arrNumberingLvl[nCurrentLvl];
 		const oTextPr = oCurrentLvl.GetTextPr();
-		const nSuff = oCurrentLvl.GetSuff();
 
 		const nLineDistance = (((nHeight_px - (nOffsetBase << 1)) - nLineWidth * 10) / 9) << 0;
 		oTextPr.FontSize = oTextPr.FontSizeCS = this.getFontSizeByLineHeight(nLineDistance);
-		const sText = oCurrentLvl.GetStringByLvlText(this.m_arrNumberingLvl, nCurrentLvl, 1);
-		const nTextWidth = this.getLvlTextWidth(sText, oTextPr);
+		let nMaxTextWidth = 0;
+		for (let i = 0; i < 3; i += 1)
+		{
+			const sText = oCurrentLvl.GetStringByLvlText(this.m_arrNumberingLvl, nCurrentLvl, i + 1);
+			const nTextWidth = this.getLvlTextWidth(sText, oTextPr);
+			if (nMaxTextWidth < nTextWidth)
+			{
+				nMaxTextWidth = nTextWidth;
+			}
+		}
 
 		const nOffset = (nHeight_px - (nLineWidth * 10 + nLineDistance * 9)) >> 1;
 
@@ -11095,41 +11101,55 @@
 		arrTextYy.push(nY + nLineWidth); nY += 2 * (nLineWidth + nLineDistance);
 		arrTextYy.push(nY + nLineWidth);
 
-		nY = Math.round(nOffset + 2);
-		const nRightOffset = Math.round((nWidth_px - nOffsetBase));
-		const nYDist = Math.round((nLineWidth + nLineDistance));
+		nY = nOffset + 2;
+		const nRightOffset = nWidth_px - nOffsetBase;
+		const nYDist = nLineWidth + nLineDistance;
 
-		const nLeftOffset2 = Math.round(nOffsetBase);
-		const nRightOffset2 = Math.round(nWidth_px - nOffsetBase);
+		const nLeftOffset2 = nOffsetBase;
+		const nRightOffset2 = nWidth_px - nOffsetBase;
 
 		// Здесь получаем коэффициент, чтобы при открытии всегда видеть отступ текста
-		const nScaleCoefficient = this.getScaleCoefficientForSingleLevel(nRightOffset);
-		let nNumberPosition = Math.round(nOffsetBase + (oCurrentLvl.GetNumberPosition()) * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient);
-		let nIndentSize = Math.round(nOffsetBase + (oCurrentLvl.GetIndentSize()) * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient);
+		const nScaleCoefficient = this.getScaleCoefficientForSingleLevel(nWidth_px - nOffsetBase * 5);
+		let nNumberPosition = nOffsetBase + ((oCurrentLvl.GetNumberPosition() * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient) << 0);
+		let nIndentSize = nOffsetBase + ((oCurrentLvl.GetIndentSize() * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient) << 0);
+		const nTabSize = nOffsetBase + ((oCurrentLvl.GetStopTab() * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient) << 0);
 
 		oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nLeftOffset2 * AscCommon.g_dKoef_pix_to_mm, nRightOffset2 * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm); nY += nYDist;
 		oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nLeftOffset2 * AscCommon.g_dKoef_pix_to_mm, nRightOffset2 * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm); nY += nYDist;
 
 		oGraphics.p_color(this.m_oPrimaryTextColor.r, this.m_oPrimaryTextColor.g, this.m_oPrimaryTextColor.b, 255);
 		let nTextYx = nNumberPosition;
-
-		const nIndentation = nLeftOffset2 - (nTextYx - nTextWidth);
+		let nOffsetTextX;
+		// если при прилегании к правому краю левый край текста упирается в оффсет, то линии текста должны двигаться вправо(это относится ко всем типам прилегания)
+		const nIndentation = nLeftOffset2 - (nTextYx - nMaxTextWidth * nScaleCoefficient);
 		if (nIndentation > 0)
 		{
+			nTextYx = Math.round(nLeftOffset2 + nMaxTextWidth);
+			nIndentSize = Math.round(nIndentSize + (nTextYx - nNumberPosition));
 
-			nTextYx += nIndentation;
-			nIndentSize += nIndentation;
+			nOffsetTextX = this.getFirstLineIndent(oCurrentLvl, nTextYx * AscCommon.g_dKoef_pix_to_mm, nIndentSize * AscCommon.g_dKoef_pix_to_mm, (nTabSize + (nTextYx - nNumberPosition)) * AscCommon.g_dKoef_pix_to_mm);
+
+			const nCurrentAlign = oCurrentLvl.Jc;
+			oCurrentLvl.Jc = AscCommon.align_Left;
+			// считаем позицию отдельно, чтобы нумерация по горизонтали начиналась с одного и того же места
+			if (nCurrentAlign === AscCommon.align_Right)
+			{
+				nTextYx -= nMaxTextWidth;
+			}
+			else if (nCurrentAlign === AscCommon.align_Center)
+			{
+				nTextYx -= nMaxTextWidth >> 1;
+			}
 		}
-		nTextYx = Math.round(nTextYx);
-
-		let nOffsetTextX = nTextYx + 4;
-		if (nSuff === Asc.c_oAscNumberingSuff.Tab)
-			nOffsetTextX = Math.max(nIndentSize, nOffsetTextX);
+		else
+		{
+			nOffsetTextX = this.getFirstLineIndent(oCurrentLvl, nTextYx * AscCommon.g_dKoef_pix_to_mm, nIndentSize * AscCommon.g_dKoef_pix_to_mm, nTabSize * AscCommon.g_dKoef_pix_to_mm);
+		}
 
 		for (let i = 0; i < 3; i += 1)
 		{
-			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nOffsetTextX * AscCommon.g_dKoef_pix_to_mm, nRightOffset * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm); nY += nYDist;
-			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nOffsetTextX * AscCommon.g_dKoef_pix_to_mm, nRightOffset * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm); nY += nYDist;
+			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nOffsetTextX, nRightOffset * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm); nY += nYDist;
+			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nIndentSize * AscCommon.g_dKoef_pix_to_mm, nRightOffset * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm); nY += nYDist;
 		}
 
 		oGraphics.p_color(this.m_oSecondaryLineTextColor.r, this.m_oSecondaryLineTextColor.g, this.m_oSecondaryLineTextColor.b, 255);
