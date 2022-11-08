@@ -3827,7 +3827,7 @@
 
 				var documentContentBounds = new DocumentContentBounds();
 				var coverDocument = documentContentBounds.getBounds(0, 0, documentContent);
-				this._parseChildren(coverDocument);
+				AscFormat.ExecuteNoHistory(this._parseChildren, this, [coverDocument]);
 
 				//не вставляем графику в редактор диаграмм
 				//если кроме графики есть ещё данные, то убираем только графику
