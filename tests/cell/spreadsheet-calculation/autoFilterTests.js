@@ -117,28 +117,6 @@ $(function () {
 	};
 
 	QUnit.test("Test: \"simple tests\"", function (assert) {
-
-		/*ws.getRange2("A1").setValue("test1");
-		ws.getRange2("B1").setValue("test2");
-
-		ws.getRange2("A2").setValue("");
-		ws.getRange2("A3").setValue("closed");
-		ws.getRange2("A4").setValue("closed");
-		ws.getRange2("A5").setValue("d");
-		ws.getRange2("A6").setValue("closed");
-		ws.getRange2("A7").setValue("");
-		ws.getRange2("A8").setValue("");
-		ws.getRange2("A9").setValue("closed");
-
-		ws.getRange2("A2").setValue("44851");
-		ws.getRange2("A3").setValue("");
-		ws.getRange2("A4").setValue("");
-		ws.getRange2("A5").setValue("44852");
-		ws.getRange2("A6").setValue("");
-		ws.getRange2("A7").setValue("44851");
-		ws.getRange2("A8").setValue("44851");
-		ws.getRange2("A9").setValue("44851");*/
-
 		let testData = [
 			["test1", "test2"],
 			["", "44851"],
@@ -175,6 +153,46 @@ $(function () {
 		assert.strictEqual(ws.getRowHidden(6), false, "check filter hidden values");
 		assert.strictEqual(ws.getRowHidden(7), false, "check filter hidden values");
 		assert.strictEqual(ws.getRowHidden(8), true, "check filter hidden values");
+
+		autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: 1, id: null});
+		autoFiltersOptions.values[0].asc_setVisible(false);//hide "44851"
+		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.Filters);
+		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
+
+		assert.strictEqual(ws.getRowHidden(1), true, "check filter hidden values_2");
+		assert.strictEqual(ws.getRowHidden(2), true, "check filter hidden values_2");
+		assert.strictEqual(ws.getRowHidden(3), true, "check filter hidden values_2");
+		assert.strictEqual(ws.getRowHidden(4), false, "check filter hidden values_2");
+		assert.strictEqual(ws.getRowHidden(5), true, "check filter hidden values_2");
+		assert.strictEqual(ws.getRowHidden(6), true, "check filter hidden values_2");
+		assert.strictEqual(ws.getRowHidden(7), true, "check filter hidden values_2");
+		assert.strictEqual(ws.getRowHidden(8), true, "check filter hidden values_2");
+
+		ws.setRowHidden(false, 0, 8);
+
+		assert.strictEqual(ws.getRowHidden(1), false, "check hidden row");
+		assert.strictEqual(ws.getRowHidden(2), false, "check hidden row");
+		assert.strictEqual(ws.getRowHidden(3), false, "check hidden row");
+		assert.strictEqual(ws.getRowHidden(4), false, "check hidden row");
+		assert.strictEqual(ws.getRowHidden(5), false, "check hidden row");
+		assert.strictEqual(ws.getRowHidden(6), false, "check hidden row");
+		assert.strictEqual(ws.getRowHidden(7), false, "check hidden row");
+		assert.strictEqual(ws.getRowHidden(8), false, "check hidden row");
+
+		autoFiltersOptions = ws.autoFilters.getAutoFiltersOptions(ws, {colId: 1, id: null});
+		autoFiltersOptions.values[0].asc_setVisible(false);//hide "44851"
+		autoFiltersOptions.filter.asc_setType(c_oAscAutoFilterTypes.Filters);
+		ws.autoFilters.applyAutoFilter(autoFiltersOptions);
+
+		assert.strictEqual(ws.getRowHidden(1), true, "check filter hidden values_3");
+		assert.strictEqual(ws.getRowHidden(2), true, "check filter hidden values_3");
+		assert.strictEqual(ws.getRowHidden(3), true, "check filter hidden values_3");
+		assert.strictEqual(ws.getRowHidden(4), false, "check filter hidden values_3");
+		assert.strictEqual(ws.getRowHidden(5), true, "check filter hidden values_3");
+		assert.strictEqual(ws.getRowHidden(6), true, "check filter hidden values_3");
+		assert.strictEqual(ws.getRowHidden(7), true, "check filter hidden values_3");
+		assert.strictEqual(ws.getRowHidden(8), true, "check filter hidden values_3");
+
 	});
 
 	QUnit.module("CopyPaste");
