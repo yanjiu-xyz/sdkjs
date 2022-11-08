@@ -2663,6 +2663,28 @@
 	});
 
 	/**
+	 * Returns value that represents the format code for the range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @returns {string | null} This property returns null if all cells in the specified range don't have the same number format.
+	 */
+	ApiRange.prototype.GetNumberFormat = function () {
+		var bbox = this.range.bbox;
+		var nCol = bbox.c2 - bbox.c1 + 1;
+		var nRow = bbox.r2 - bbox.r1 + 1;
+		var res = this.range.getNumFormatStr();
+		if ( !this.range.isOneCell() ) {
+			for (var i = 0; i < nRow; i++) {
+				for (var k = 0; k < nCol; k++) {
+					var cell = this.range.worksheet.getRange3( (bbox.r1 + i), (bbox.c1 + k), (bbox.r1 + i), (bbox.c1 + k) );
+					if ( res !== cell.getNumFormatStr() )
+						return null;
+				}
+			}
+		}
+		return res;
+	};
+	/**
 	 * Specifies whether a number in the cell should be treated like number, currency, date, time, etc. or just like text.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
@@ -2672,6 +2694,9 @@
 		this.range.setNumFormat(sFormat);
 	};
 	Object.defineProperty(ApiRange.prototype, "NumberFormat", {
+		get: function () {
+			return this.GetNumberFormat();
+		},
 		set: function (sFormat) {
 			return this.SetNumberFormat(sFormat);
 		}
@@ -4369,6 +4394,7 @@
 	ApiRange.prototype["GetWrapText"] = ApiRange.prototype.GetWrapText;
 	ApiRange.prototype["SetFillColor"] = ApiRange.prototype.SetFillColor;
 	ApiRange.prototype["GetFillColor"] = ApiRange.prototype.GetFillColor;
+	ApiRange.prototype["GetNumberFormat"] = ApiRange.prototype.GetNumberFormat;
 	ApiRange.prototype["SetNumberFormat"] = ApiRange.prototype.SetNumberFormat;
 	ApiRange.prototype["SetBorders"] = ApiRange.prototype.SetBorders;
 	ApiRange.prototype["Merge"] = ApiRange.prototype.Merge;
