@@ -16052,9 +16052,8 @@ DataRowTraversal.prototype.diffCellValues = function(cellValue, _cellValue) {
 
 DataRowTraversal.prototype.divCellValues = function(cellValue, _cellValue) {
 	let oCellValue = new AscCommonExcel.CCellValue();
-	if (cellValue.type === AscCommon.CellValueType.Error || _cellValue.type === AscCommon.CellValueType.Error) {
-		oCellValue.type = AscCommon.CellValueType.Error;
-		cellValue.text !== null ? oCellValue.text = cellValue.text : oCellValue.text = _cellValue.text;
+	if (_cellValue.number === 0) {
+		oCellValue = this.getErrorCellvalue(AscCommonExcel.cErrorType.division_by_zero);
 	} else {
 		oCellValue.number = cellValue.number / _cellValue.number;
 	}
@@ -16347,9 +16346,20 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 						let BaseOCellValue = BaseTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
 						total = this.cur.total[dataIndex];
 						oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+						if (oCellValue.type === AscCommon.CellValueType.Error) {
+							break;
+						} else if (BaseOCellValue.type === AscCommon.CellValueType.Error) {
+							oCellValue = new AscCommonExcel.CCellValue();
+							break;
+						}
 						oCellValue = this.divCellValues(oCellValue, BaseOCellValue);
 					} else if (!this.cur || !this.cur.total[dataIndex]) {
 						oCellValue = this.getErrorCellvalue(AscCommonExcel.cErrorType.null_value);
+					} else if (this.cur && this.cur.total[dataIndex] && ((this.diffRowIndex[dataIndex] !== null && rowItem.t !== Asc.c_oAscItemType.Grand) || (this.diffColIndex[dataIndex] !== null && colItem.t !== Asc.c_oAscItemType.Grand))){
+						oCellValue = this.cur.total[dataIndex].getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+						if (oCellValue.type !== AscCommon.CellValueType.Error) {
+							oCellValue = new AscCommonExcel.CCellValue();
+						}
 					}
 				} else if (this.isNoData) {
 					oCellValue = this.getErrorCellvalue(AscCommonExcel.cErrorType.not_available);;
@@ -16371,10 +16381,22 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 						let BaseOCellValue = BaseTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
 						total = this.cur.total[dataIndex];
 						oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-						let diff = oCellValue.number - BaseOCellValue.number;
-						oCellValue.number = diff / BaseOCellValue.number;
+						if (oCellValue.type === AscCommon.CellValueType.Error) {
+							break;
+						}
+						let diff = this.diffCellValues(oCellValue, BaseOCellValue);
+						if (diff.type === AscCommon.CellValueType.Error) {
+							oCellValue = new AscCommonExcel.CCellValue();
+							break;
+						}
+						oCellValue = this.divCellValues(diff, BaseOCellValue);
 					} else if (!this.cur || !this.cur.total[dataIndex]) {
 						oCellValue = this.getErrorCellvalue(AscCommonExcel.cErrorType.null_value);
+					} else if (this.cur && this.cur.total[dataIndex] && ((this.diffRowIndex[dataIndex] !== null && rowItem.t !== Asc.c_oAscItemType.Grand) || (this.diffColIndex[dataIndex] !== null && colItem.t !== Asc.c_oAscItemType.Grand))){
+						oCellValue = this.cur.total[dataIndex].getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+						if (oCellValue.type !== AscCommon.CellValueType.Error) {
+							oCellValue = new AscCommonExcel.CCellValue();
+						}
 					}
 				} else if (this.isNoData) {
 					oCellValue = this.getErrorCellvalue(AscCommonExcel.cErrorType.not_available);;
