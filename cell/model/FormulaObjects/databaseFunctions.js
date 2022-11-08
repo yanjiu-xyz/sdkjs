@@ -128,43 +128,9 @@
 	StatisticOnlineAlgorithm.prototype.isEmpty = function() {
 		return 0 === this.count && 0 === this.countNums;
 	};
-	/**
-	 * RunTotal show-as
-	 * @param {StatisticOnlineAlgorithm} total
-	 * @return {StatisticOnlineAlgorithm}
-	 */
-	StatisticOnlineAlgorithm.prototype.addTotal = function(total) {
-		this.count += total.getCount();
-		this.countNums += total.getCountNums();
-		this.min += total.getMin();
-		this.max += total.getMax();
-		this.sum += total.getSum();
-		this.product += total.getProduct();
-		this.mean += total.getMean();
-		// ??
-		this.M2 += total.M2;
-	};
-	/**
-	 * Returns cloned StatisticOnlineAlgorithm
-	 * @param {StatisticOnlineAlgorithm} oTotal 
-	 * @return {StatisticOnlineAlgorithm}
-	 */
-	StatisticOnlineAlgorithm.prototype.clone = function () {
-		let result = new StatisticOnlineAlgorithm();
-		result.count = this.count;
-		result.countNums = this.countNums;
-		result.min = this.min;
-		result.max = this.max;
-		result.sum = this.sum;
-		result.product = this.product;
-		result.mean = this.mean;
-		// ??
-		//result.M2 = this.M2;
-		return result;
-	};
-	StatisticOnlineAlgorithm.prototype.getCellValue = function(dataType, fieldType, rowType, colType, isZeroCell) {
+	StatisticOnlineAlgorithm.prototype.getCellValue = function(dataType, fieldType, rowType, colType) {
 		var oCellValue;
-		if (this.isEmpty() && !isZeroCell) {
+		if (this.isEmpty()) {
 			return oCellValue;
 		}
 		oCellValue = new AscCommonExcel.CCellValue();

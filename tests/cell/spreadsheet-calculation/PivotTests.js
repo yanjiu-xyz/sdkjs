@@ -5616,48 +5616,78 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				["Tee","11.44","24.86","24.86",""],
 				["Grand Total","85.21","147.24","5702.24",""]
 				];
+			let runTotal_stdDev_compact = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","0.980612054","1.254843948","0","1.028132611"],
+				["Fancy","#DIV/0!","#DIV/0!","0","1.258650071"],
+				["Golf","#DIV/0!","#DIV/0!","0","0.622253967"],
+				["Tee","#DIV/0!","#DIV/0!","0","0.16263456"],
+				["North","#DIV/0!","1.254843948","#DIV/0!","3919.757345"],
+				["Tee","#DIV/0!","#DIV/0!","#DIV/0!","3918.891847"],
+				["West","#DIV/0!","2.626631103","#DIV/0!","3920.592318"],
+				["Fancy","#DIV/0!","#DIV/0!","0","#DIV/0!"],
+				["Golf","#DIV/0!","#DIV/0!","0","1.435426766"],
+				["Tee","#DIV/0!","#DIV/0!","#DIV/0!","3920.291919"],
+				["Grand Total","","","",""]
+				];
+			let runTotal_stdDev_compact2 = [
+				["Sum of Price","Column Labels","","",""],
+				["Row Labels","Boy","Girl","Helicopter","Grand Total"],
+				["East","0.980612054","2.235456002","2.235456002",""],
+				["Fancy","#DIV/0!","#DIV/0!","#DIV/0!",""],
+				["Golf","#DIV/0!","#DIV/0!","#DIV/0!",""],
+				["Tee","#DIV/0!","#DIV/0!","#DIV/0!",""],
+				["North","#DIV/0!","#DIV/0!","#DIV/0!",""],
+				["Tee","#DIV/0!","#DIV/0!","#DIV/0!",""],
+				["West","0.595175044","1.9669622","1.9669622",""],
+				["Fancy","#DIV/0!","#DIV/0!","#DIV/0!",""],
+				["Golf","#DIV/0!","#DIV/0!","#DIV/0!",""],
+				["Tee","#DIV/0!","#DIV/0!","#DIV/0!",""],
+				["Grand Total","0.774009351","1.896230364","#DIV/0!",""]
+				];
 			var pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
 			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
 			pivot.asc_addRowField(api, 0);
 			pivot.asc_addRowField(api, 2);
 			pivot.asc_addColField(api, 1);
 			pivot.asc_addDataField(api, 5);
-			function testShowAs(pivot, showAs, baseField, baseItem, standard, message) {
+			function testShowAs(pivot, showAs, baseField, baseItem, subtotalType, standard, message) {
 				return checkHistoryOperation(assert, pivot, standard, message, function(){
 					var dataField = pivot.asc_getDataFields()[0];
 					let props = new Asc.CT_DataField();
-					// props.asc_setBaseField(baseField);
-					// props.asc_setBaseItem(baseItem);
-					// props.asc_setShowDataAs(showAs);
 					props.setShowAs(showAs, baseField, baseItem);
+					props.asc_setSubtotal(subtotalType)
 					dataField.asc_set(api, pivot, 0, props);
 				});
 			}
 			AscCommon.History.Clear();
 			setPivotLayout(pivot, 'compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfTotal, 0, 0, percentOfTotal_compact, 'percentOfTotal_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_compact, 'differenceNext_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_compact2, 'differenceNext_compact2');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_PREV, differencePrev_compact, 'differencePrev_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_PREV, differencePrev_compact2, 'differencePrev_compact2');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, 1, differenceBase_compact, 'differenceBase_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, 1, differenceBase_compact2, 'differenceBase_compact2');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfCol, 0, 0, percentOfCol_compact, 'percentOfCol_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfRow, 0, 0, percentOfRow_compact, 'percentOfRow_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Index, 0, 0, index_compact, 'index_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfParentRow, 0, 0, percentOfParentRow_compact, 'percentOfParentRow_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfParentCol, 0, 0, percentOfParentCol_compact, 'percentOfParentCol_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfParent, 0, 0, percentOfParent_compact, 'percentOfParent_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Percent, 0, AscCommonExcel.st_BASE_ITEM_NEXT, percentNext_compact, 'percentNext_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Percent, 0, AscCommonExcel.st_BASE_ITEM_PREV, percentPrev_compact, 'percentPrev_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Percent, 0, 1, percentBase_compact, 'percentBase_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentDiff, 0, AscCommonExcel.st_BASE_ITEM_NEXT, percentDiffNext_compact, 'percentDiffNext_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentDiff, 0, AscCommonExcel.st_BASE_ITEM_PREV, percentDiffPrev_compact, 'percentDiffPrev_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentDiff, 0, 1, percentDiffBase_compact, 'percentDiffBase_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.RunTotal, 0, 0, runTotal_compact, 'runTotal_compact');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.RunTotal, 1, 0, runTotal_compact2, 'runTotal_compact2');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfTotal, 0, 0, c_oAscDataConsolidateFunction.Sum, percentOfTotal_compact, 'percentOfTotal_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_NEXT, c_oAscDataConsolidateFunction.Sum, differenceNext_compact, 'differenceNext_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_NEXT, c_oAscDataConsolidateFunction.Sum, differenceNext_compact2, 'differenceNext_compact2');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_PREV, c_oAscDataConsolidateFunction.Sum, differencePrev_compact, 'differencePrev_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, AscCommonExcel.st_BASE_ITEM_PREV, c_oAscDataConsolidateFunction.Sum, differencePrev_compact2, 'differencePrev_compact2');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, 1, c_oAscDataConsolidateFunction.Sum, differenceBase_compact, 'differenceBase_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 1, 1, c_oAscDataConsolidateFunction.Sum, differenceBase_compact2, 'differenceBase_compact2');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfCol, 0, 0, c_oAscDataConsolidateFunction.Sum, percentOfCol_compact, 'percentOfCol_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfRow, 0, 0, c_oAscDataConsolidateFunction.Sum, percentOfRow_compact, 'percentOfRow_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Index, 0, 0, c_oAscDataConsolidateFunction.Sum, index_compact, 'index_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfParentRow, 0, 0, c_oAscDataConsolidateFunction.Sum, percentOfParentRow_compact, 'percentOfParentRow_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfParentCol, 0, 0, c_oAscDataConsolidateFunction.Sum, percentOfParentCol_compact, 'percentOfParentCol_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentOfParent, 0, 0, c_oAscDataConsolidateFunction.Sum, percentOfParent_compact, 'percentOfParent_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Percent, 0, AscCommonExcel.st_BASE_ITEM_NEXT, c_oAscDataConsolidateFunction.Sum, percentNext_compact, 'percentNext_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Percent, 0, AscCommonExcel.st_BASE_ITEM_PREV, c_oAscDataConsolidateFunction.Sum, percentPrev_compact, 'percentPrev_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Percent, 0, 1, c_oAscDataConsolidateFunction.Sum, percentBase_compact, 'percentBase_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentDiff, 0, AscCommonExcel.st_BASE_ITEM_NEXT, c_oAscDataConsolidateFunction.Sum, percentDiffNext_compact, 'percentDiffNext_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentDiff, 0, AscCommonExcel.st_BASE_ITEM_PREV, c_oAscDataConsolidateFunction.Sum, percentDiffPrev_compact, 'percentDiffPrev_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.PercentDiff, 0, 1, c_oAscDataConsolidateFunction.Sum, percentDiffBase_compact, 'percentDiffBase_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.RunTotal, 0, 0, c_oAscDataConsolidateFunction.Sum, runTotal_compact, 'runTotal_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.RunTotal, 1, 0, c_oAscDataConsolidateFunction.Sum, runTotal_compact2, 'runTotal_compact2');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.RunTotal, 0, 0, c_oAscDataConsolidateFunction.StdDev, runTotal_stdDev_compact, 'runTotal_stdDev_compact');
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.RunTotal, 1, 0, c_oAscDataConsolidateFunction.StdDev, runTotal_stdDev_compact2, 'runTotal_stdDev_compact2');
 			setPivotLayout(pivot, 'tabular');
-			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_NEXT, differenceNext_tabular, 'differenceNext_tabular', 0);
+			pivot = testShowAs(pivot, Asc.c_oAscShowDataAs.Difference, 0, AscCommonExcel.st_BASE_ITEM_NEXT, c_oAscDataConsolidateFunction.Sum, differenceNext_tabular, 'differenceNext_tabular', 0);
 			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
 		});
 	}
