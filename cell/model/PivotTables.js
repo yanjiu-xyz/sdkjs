@@ -16052,10 +16052,15 @@ DataRowTraversal.prototype.diffCellValues = function(cellValue, _cellValue) {
 
 DataRowTraversal.prototype.divCellValues = function(cellValue, _cellValue) {
 	let oCellValue = new AscCommonExcel.CCellValue();
-	if (_cellValue.number === 0) {
-		oCellValue = this.getErrorCellvalue(AscCommonExcel.cErrorType.division_by_zero);
+	if (cellValue.type === AscCommon.CellValueType.Error || _cellValue.type === AscCommon.CellValueType.Error) {
+		oCellValue.type = AscCommon.CellValueType.Error;
+		cellValue.text !== null ? oCellValue.text = cellValue.text : oCellValue.text = _cellValue.text;
 	} else {
-		oCellValue.number = cellValue.number / _cellValue.number;
+		if (_cellValue.number === 0) {
+			oCellValue = this.getErrorCellvalue(AscCommonExcel.cErrorType.division_by_zero);
+		} else {
+			oCellValue.number = cellValue.number / _cellValue.number;
+		}
 	}
 	return oCellValue;
 };
@@ -16437,22 +16442,24 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 			case Asc.c_oAscShowDataAs.Index:
 				if (this.cur && this.cur.total[dataIndex]) {
 					total = this.cur.total[dataIndex];
-					let _rowTotal = this.rowTotal.total[dataIndex];
-					let _colTotal = this.colTotal.total[dataIndex];
-					let _grandTotal = dataRow.total[dataIndex];
-	
-					let _rowOCellValue = _rowTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-					let _colOCellValue = _colTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-					let _grandOCellValue = _grandTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
 					oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-	
-					let _specGravity = oCellValue.number / _colOCellValue.number;
-					let _totalSpecGravity = _rowOCellValue.number / _grandOCellValue.number;
-					
-					oCellValue.number = _specGravity / _totalSpecGravity;
 				} else {
 					oCellValue = this.getZeroCellValue();
 				}
+					
+				let _rowTotal = this.rowTotal.total[dataIndex];
+				let _colTotal = this.colTotal.total[dataIndex];
+				let _grandTotal = dataRow.total[dataIndex];
+
+				let _rowOCellValue = _rowTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+				let _colOCellValue = _colTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+				let _grandOCellValue = _grandTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+				
+
+				let _specGravity = this.divCellValues(oCellValue, _colOCellValue);
+				let _totalSpecGravity = this.divCellValues(_rowOCellValue, _grandOCellValue);
+				
+				oCellValue = this.divCellValues(_specGravity, _totalSpecGravity);
 				break;
 			case Asc.c_oAscShowDataAs.RunTotal:
 				if ((this.diffRowIndex[dataIndex] !== null && rowItem.t !== Asc.c_oAscItemType.Grand) || (this.diffColIndex[dataIndex] !== null && colItem.t !== Asc.c_oAscItemType.Grand)) {
