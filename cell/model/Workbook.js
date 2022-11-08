@@ -16925,6 +16925,27 @@
 			History.LocalChange = false;
 		}
 	};
+	Range.prototype.fillData=function(data){
+		for (var i = 0; i < data.length; ++i) {
+			var row = data[i];
+			for (var j = 0; j < row.length; ++j) {
+				this.setOffset(new AscCommon.CellBase(i, j));
+				var val = row[j];
+				if ("string" === typeof val) {
+					this.setValue(val);
+				} else {
+					if (val.value) {
+						this.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, val.value));
+					}
+					if (val.format) {
+						this.setNumFormat(val.format);
+					}
+				}
+				this.setOffset(new AscCommon.CellBase(-i, -j));
+			}
+		}
+	};
+
 
 	function _isSameSizeMerged(bbox, aMerged, checkProportion) {
 		var oRes = null;

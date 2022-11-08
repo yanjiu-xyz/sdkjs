@@ -18765,8 +18765,6 @@
     };
 
     WorksheetView.prototype.af_setDialogProp = function (filterProp, isReturnProps) {
-        var ws = this.model;
-
         if(!filterProp){
             return;
         }
@@ -18775,121 +18773,16 @@
 			return;
 		}
 
-        //get filter
-        var filter, autoFilter, displayName = null;
-        if (filterProp.id === null) {
-            autoFilter = ws.AutoFilter;
-            filter = ws.AutoFilter;
-        } else {
-            autoFilter = ws.TableParts[filterProp.id].AutoFilter;
-            filter = ws.TableParts[filterProp.id];
-            displayName = filter.DisplayName;
-        }
-
-        //get values
-        var colId = filterProp.colId;
-		if(filterProp.id === null) {
-			colId = this.model.autoFilters._getTrueColId(filter, colId, true);
+		let rowButton;
+		let colButton
+		let autoFilterObject = this.model.autoFilters.getAutoFiltersOptions(this.model, filterProp, function (r, c) {
+			rowButton = r;
+			colButton = c;
+		});
+		if (autoFilterObject) {
+			let cellCoord = this.getCellCoord(colButton, rowButton);
+			autoFilterObject.asc_setCellCoord(cellCoord);
 		}
-
-        var openAndClosedValues = ws.autoFilters.getOpenAndClosedValues(filter, colId);
-        var values = openAndClosedValues.values;
-        var automaticRowCount = openAndClosedValues.automaticRowCount;
-        //для случае когда скрыто только пустое значение не отображаем customfilter
-		var ignoreCustomFilter = openAndClosedValues.ignoreCustomFilter;
-
-		var activeNamedSheetView = ws.getActiveNamedSheetViewId();
-		var nsvFilter;
-		var filters;
-		if (activeNamedSheetView !== null) {
-			nsvFilter = ws.getNvsFilterByTableName(filter.DisplayName);
-			if (nsvFilter) {
-				filters = nsvFilter.getColumnFilterByColId(colId);
-			}
-		} else {
-			filters = autoFilter.getFilterColumn(colId, true);
-		}
-
-        var rangeButton = new Asc.Range(autoFilter.Ref.c1 + colId, autoFilter.Ref.r1, autoFilter.Ref.c1 + colId, autoFilter.Ref.r1);
-        var cellId = ws.autoFilters._rangeToId(rangeButton);
-        var cell = this.model.getRange3(rangeButton.r1, rangeButton.c1, rangeButton.r2, rangeButton.c2);
-        var columnName = cell.getValue();
-
-        var cellCoord = this.getCellCoord(autoFilter.Ref.c1 + colId, autoFilter.Ref.r1);
-
-        //get filter object
-        var filterObj = new Asc.AutoFilterObj();
-		filterObj.convertFromFilterColumn(filters, ignoreCustomFilter);
-
-        //get sort
-        var sortVal = null;
-        var sortColor = null;
-        if (filter && filter.SortState && filter.SortState.SortConditions && filter.SortState.SortConditions[0]) {
-            var SortConditions = filter.SortState.SortConditions;
-
-            for(var i = 0; i < SortConditions.length; i++) {
-				var sortCondition = SortConditions[i];
-            	if (rangeButton.c1 === sortCondition.Ref.c1) {
-
-					var conditionSortBy = SortConditions.ConditionSortBy;
-					switch (conditionSortBy) {
-						case Asc.ESortBy.sortbyCellColor:
-						{
-							sortVal = Asc.c_oAscSortOptions.ByColorFill;
-							sortColor = sortCondition.dxf && sortCondition.dxf.fill ? sortCondition.dxf.fill.bg() : null;
-							break;
-						}
-						case Asc.ESortBy.sortbyFontColor:
-						{
-							sortVal = Asc.c_oAscSortOptions.ByColorFont;
-							sortColor = sortCondition.dxf && sortCondition.dxf.font ? sortCondition.dxf.font.getColor() : null;
-							break;
-						}
-						default:
-						{
-							if (sortCondition.ConditionDescending) {
-								sortVal = Asc.c_oAscSortOptions.Descending;
-							} else {
-								sortVal = Asc.c_oAscSortOptions.Ascending;
-							}
-
-							break;
-						}
-					}
-				}
-			}
-        }
-
-        var ascColor = null;
-        if (null !== sortColor) {
-            ascColor = new Asc.asc_CColor();
-            ascColor.asc_putR(sortColor.getR());
-            ascColor.asc_putG(sortColor.getG());
-            ascColor.asc_putB(sortColor.getB());
-            ascColor.asc_putA(sortColor.getA());
-        }
-
-
-        //set menu object
-        var autoFilterObject = new Asc.AutoFiltersOptions();
-
-        autoFilterObject.asc_setSortState(sortVal);
-        autoFilterObject.asc_setCellCoord(cellCoord);
-        autoFilterObject.asc_setCellId(cellId);
-        autoFilterObject.asc_setValues(values);
-        autoFilterObject.asc_setFilterObj(filterObj);
-        autoFilterObject.asc_setAutomaticRowCount(automaticRowCount);
-        autoFilterObject.asc_setDiplayName(displayName);
-        autoFilterObject.asc_setSortColor(ascColor);
-		autoFilterObject.asc_setColumnName(columnName);
-		autoFilterObject.asc_setSheetColumnName(AscCommon.g_oCellAddressUtils.colnumToColstr(rangeButton.c1 + 1));
-
-		var columnRange = new Asc.Range(colId + autoFilter.Ref.c1, autoFilter.Ref.r1 + 1, colId + autoFilter.Ref.c1, (automaticRowCount && automaticRowCount > autoFilter.Ref.r2) ? automaticRowCount : autoFilter.Ref.r2);
-
-        var filterTypes = this.model.getRowColColors(columnRange);
-        autoFilterObject.asc_setIsTextFilter(filterTypes.text);
-        autoFilterObject.asc_setColorsFill(filterTypes.colors);
-        autoFilterObject.asc_setColorsFont(filterTypes.fontColors);
 
         if (isReturnProps) {
             return autoFilterObject;
