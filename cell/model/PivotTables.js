@@ -16286,7 +16286,13 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 					}
 					parentTotal = parent.total[dataIndex];
 					_oCellValue = parentTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-					oCellValue = this.divCellValues(oCellValue, _oCellValue);
+					if (oCellValue.type === AscCommon.CellValueType.Error && _oCellValue.type !== AscCommon.CellValueType.Error) {
+						oCellValue = this.getErrorCellvalue(AscCommonExcel.cErrorType.wrong_value_type);
+					} else if (oCellValue.type === AscCommon.CellValueType.Error && _oCellValue.type === AscCommon.CellValueType.Error) {
+						oCellValue = new AscCommonExcel.CCellValue();
+					} else {
+						oCellValue = this.divCellValues(oCellValue, _oCellValue);
+					}
 				}
 				break;
 			case Asc.c_oAscShowDataAs.PercentOfParentCol:
@@ -16300,7 +16306,13 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 				}
 				parentTotal = this.colParent.total[dataIndex];
 				_oCellValue = parentTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-				oCellValue = this.divCellValues(oCellValue, _oCellValue);
+				if (oCellValue.type === AscCommon.CellValueType.Error && _oCellValue.type !== AscCommon.CellValueType.Error) {
+						oCellValue = this.getErrorCellvalue(AscCommonExcel.cErrorType.wrong_value_type);
+					} else if (oCellValue.type === AscCommon.CellValueType.Error && _oCellValue.type === AscCommon.CellValueType.Error) {
+						oCellValue = new AscCommonExcel.CCellValue();
+					} else {
+						oCellValue = this.divCellValues(oCellValue, _oCellValue);
+					}
 				break;
 			case Asc.c_oAscShowDataAs.PercentOfParentRow:
 				if (this.cur && this.cur.total[dataIndex]) {
@@ -16313,7 +16325,13 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 				}
 				parentTotal = this.rowParent.total[dataIndex];
 				_oCellValue = parentTotal.getCellValue(dataField.subtotal, this.rowParentType, rowItem.t, colItem.t);
-				oCellValue = this.divCellValues(oCellValue, _oCellValue);
+				if (oCellValue.type === AscCommon.CellValueType.Error && _oCellValue.type !== AscCommon.CellValueType.Error) {
+					oCellValue = this.getErrorCellvalue(AscCommonExcel.cErrorType.wrong_value_type);
+				} else if (oCellValue.type === AscCommon.CellValueType.Error && _oCellValue.type === AscCommon.CellValueType.Error) {
+					oCellValue = new AscCommonExcel.CCellValue();
+				} else {
+					oCellValue = this.divCellValues(oCellValue, _oCellValue);
+				}
 				break;
 			case Asc.c_oAscShowDataAs.RankDescending:
 				break;
