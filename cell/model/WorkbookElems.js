@@ -127,6 +127,17 @@ function shiftSort(a, b, offset)
 function createRgbColor(r, g, b) {
 	return new RgbColor((r << 16) + (g << 8) + b);
 }
+
+function compareValues(val1, val2) {
+	if (val1 === val2) {
+		return true;
+	}
+	if ((val1 == null || val1 == "") && (val2 == null || val2 == "")) {
+		return true;
+	}
+
+	return false;
+}
 var g_oRgbColorProperties = {
 		rgb : 0
 	};
@@ -12934,7 +12945,7 @@ QueryTableField.prototype.clone = function() {
 	CHeaderFooter.prototype.setEvenFooter = function (newVal) {
 		var oldVal = this.evenFooter ? this.evenFooter.str : null;
 
-		if(oldVal !== newVal) {
+		if(!compareValues(oldVal, newVal)) {
 			if(null === newVal) {
 				this.evenFooter = null;
 			} else {
@@ -12951,7 +12962,7 @@ QueryTableField.prototype.clone = function() {
 	CHeaderFooter.prototype.setEvenHeader = function (newVal) {
 		var oldVal = this.evenHeader ? this.evenHeader.str : null;
 
-		if(oldVal !== newVal) {
+		if(!compareValues(oldVal, newVal)) {
 			if(null === newVal) {
 				this.evenHeader = null;
 			} else {
@@ -12968,7 +12979,7 @@ QueryTableField.prototype.clone = function() {
 	CHeaderFooter.prototype.setFirstFooter = function (newVal) {
 		var oldVal = this.firstFooter ? this.firstFooter.str : null;
 
-		if(oldVal !== newVal) {
+		if(!compareValues(oldVal, newVal)) {
 			if(null === newVal) {
 				this.firstFooter = null;
 			} else {
@@ -12985,7 +12996,7 @@ QueryTableField.prototype.clone = function() {
 	CHeaderFooter.prototype.setFirstHeader = function (newVal) {
 		var oldVal = this.firstHeader ? this.firstHeader.str : null;
 
-		if(oldVal !== newVal) {
+		if(!compareValues(oldVal, newVal)) {
 			if(null === newVal) {
 				this.firstHeader = null;
 			} else {
@@ -13002,7 +13013,7 @@ QueryTableField.prototype.clone = function() {
 	CHeaderFooter.prototype.setOddFooter = function (newVal) {
 		var oldVal = this.oddFooter ? this.oddFooter.str : null;
 
-		if(oldVal !== newVal) {
+		if(!compareValues(oldVal, newVal)) {
 			if(null === newVal) {
 				this.oddFooter = null;
 			} else {
@@ -13019,7 +13030,7 @@ QueryTableField.prototype.clone = function() {
 	CHeaderFooter.prototype.setOddHeader = function (newVal) {
 		var oldVal = this.oddHeader ? this.oddHeader.str : null;
 
-		if(oldVal !== newVal) {
+		if(!compareValues(oldVal, newVal)) {
 			if(null === newVal) {
 				this.oddHeader = null;
 			} else {
@@ -13038,7 +13049,7 @@ QueryTableField.prototype.clone = function() {
 		var oldVal = this.alignWithMargins;
 		var defaultVal = null === oldVal && (newVal === 1 || newVal === true);
 
-		if(oldVal !== newVal && !defaultVal) {
+		if(!compareValues(oldVal, newVal) && !defaultVal) {
 			this.alignWithMargins = newVal;
 
 			if (this.ws && History.Is_On()) {
@@ -13052,7 +13063,7 @@ QueryTableField.prototype.clone = function() {
 		var oldVal = this.scaleWithDoc;
 		var defaultVal = null === oldVal && (newVal === 1 || newVal === true);
 
-		if(oldVal !== newVal && !defaultVal) {
+		if(!compareValues(oldVal, newVal) && !defaultVal) {
 			this.scaleWithDoc = newVal;
 
 			if (this.ws && History.Is_On()) {
@@ -13066,7 +13077,7 @@ QueryTableField.prototype.clone = function() {
 		var oldVal = this.differentFirst;
 		var defaultVal = null === oldVal && (newVal === 0 || newVal === false);
 
-		if(oldVal !== newVal && !defaultVal) {
+		if(!compareValues(oldVal, newVal) && !defaultVal) {
 			this.differentFirst = newVal;
 
 			if (this.ws && History.Is_On()) {
@@ -13080,7 +13091,7 @@ QueryTableField.prototype.clone = function() {
 		var oldVal = this.differentOddEven;
 		var defaultVal = null === oldVal && (newVal === 0 || newVal === false);
 
-		if(oldVal !== newVal && !defaultVal) {
+		if(!compareValues(oldVal, newVal) && !defaultVal) {
 			this.differentOddEven = newVal;
 
 			if (this.ws && History.Is_On()) {
