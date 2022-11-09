@@ -5462,6 +5462,26 @@ _func[cElementType.cell3D] = _func[cElementType.cell];
 		return res;
 	};
 
+	ParseResult.prototype.checkNumberOperator = function(elemArr) {
+		//проверка оператора перед числом
+		//TODO ещё необходимо сделать проверку после числа + проверку с другими типами
+		var res = true;
+		let lastElem;
+		if (this.elems && this.elems.length) {
+			lastElem = this.elems[this.elems.length - 1];
+			if (lastElem && lastElem.name === " ") {
+				res = false;
+			}
+		} else if (elemArr) {
+			lastElem = elemArr[elemArr.length - 1];
+			if (lastElem && lastElem.name === " ") {
+				res = false;
+			}
+		}
+		return res;
+	};
+
+
 	var g_defParseResult = new ParseResult(undefined, undefined);
 
 	var lastListenerId = 0;
@@ -6630,7 +6650,7 @@ function parserFormula( formula, parent, _ws ) {
 			}
 
 			/* Numbers*/ else if (parserHelp.isNumber.call(ph, t.Formula, ph.pCurrPos, digitDelim)) {
-				if (ph.operand_str !== ".") {
+				if (ph.operand_str !== "." && parseResult.checkNumberOperator(elemArr)) {
 					var _number = parseFloat(ph.operand_str);
 					//TODO для отрицательныз числе необходимо сделать проверку
 					if (!_checkReferenceCount((_number >= 65536 || !Number.isInteger(_number)) ? 1.25 : 0.5)) {
