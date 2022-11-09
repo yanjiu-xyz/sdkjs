@@ -1166,6 +1166,10 @@ CHistory.prototype.EndTransaction = function()
 	if (this.IsEndTransaction() && this.workbook) {
 		this.workbook.dependencyFormulas.unlockRecal();
 		this.workbook.handlers.trigger("updateCellWatches");
+
+		if (this.Is_LastPointEmpty()) {
+			this.Remove_LastPoint();
+		}
 	}
 };
 /** @returns {boolean} */
