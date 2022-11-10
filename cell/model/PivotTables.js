@@ -15860,10 +15860,6 @@ DataRowTraversal.prototype.setStartColIndex = function(pivotFields, fieldIndex, 
 	if (Asc.c_oAscItemType.Grand !== colItem.t && colFields) {
 		for (var colItemsXIndex = 0; colItemsXIndex < colItem.x.length; ++colItemsXIndex) {
 			fieldIndex = colFields[colR + colItemsXIndex].asc_getIndex();
-			if (fieldIndex === this.dataField.baseField) {
-				this.diffColIndex[dataIndex] = colR + colItemsXIndex;
-				this.diffRowIndex[dataIndex] = null;
-			}
 			if (AscCommonExcel.st_VALUES !== fieldIndex) {
 				let field = pivotFields[fieldIndex];
 				let valueIndex = colItem.x[colItemsXIndex].getV();
@@ -16566,14 +16562,30 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 					}
 				} else if (this.isNoData) {
 					oCellValue = this.getErrorCellvalue(AscCommonExcel.cErrorType.not_available);;
-				} else if (this.cur && this.cur.total[dataIndex] && ((this.diffRowIndex[dataIndex] !== null && rowItem.t !== Asc.c_oAscItemType.Grand) || (this.diffColIndex[dataIndex] !== null && colItem.t !== Asc.c_oAscItemType.Grand))){
-					_oCellValue = this.cur.total[dataIndex].getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
-					if (_oCellValue.type === AscCommon.CellValueType.Number) {
-						_oCellValue.number = 1;
-					} else {
-						_oCellValue = new AscCommonExcel.CCellValue();
+				} else { //this.rowValueCache.length - 1 < this.diffRowIndex[dataIndex] || this.rowValueCache[this.diffRowIndex[dataIndex]] === this.dataField.baseItem
+					if (this.diffRowIndex[dataIndex] !== null && rowItem.t !== Asc.c_oAscItemType.Grand && this.cur && this.cur.total[dataIndex]) {
+						if (this.rowValueCache.length - 1 < this.diffRowIndex[dataIndex]) {
+							break;
+						}
+						_oCellValue = this.cur.total[dataIndex].getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+						if (_oCellValue.type === AscCommon.CellValueType.Number) {
+							_oCellValue.number = 1;
+						} else {
+							_oCellValue = new AscCommonExcel.CCellValue();
+						}
+						oCellValue = _oCellValue;
+					} else if (this.diffColIndex[dataIndex] !== null && colItem.t !== Asc.c_oAscItemType.Grand && this.cur && this.cur.total[dataIndex]) {
+						if (this.colValueCache.length - 1 < this.diffColIndex[dataIndex]) {
+							break;
+						}
+						_oCellValue = this.cur.total[dataIndex].getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+						if (_oCellValue.type === AscCommon.CellValueType.Number) {
+							_oCellValue.number = 1;
+						} else {
+							_oCellValue = new AscCommonExcel.CCellValue();
+						}
+						oCellValue = _oCellValue;
 					}
-					oCellValue = _oCellValue;
 				}
 				break;
 			case Asc.c_oAscShowDataAs.PercentDiff:

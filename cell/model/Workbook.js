@@ -8477,7 +8477,20 @@
 		var c1 = pivotRange.c1 + location.firstDataCol;
 		let traversal = new DataRowTraversal(pivotFields, dataFields, rowItems, colItems, rowFields, colFields);
 		traversal.initRow(dataRow);
-
+		for (let i = 0; i < dataFields.length; i += 1) {
+			for (let j = 0; j < rowFields.length; j += 1) {
+				if (rowFields[j].asc_getIndex() === dataFields[i].baseField) {
+					traversal.diffRowIndex[i] = j;
+					traversal.diffColIndex[i] = null;
+				}
+			}
+			for (let j = 0; j < colFields.length; j += 1) {
+				if (colFields[j].asc_getIndex() === dataFields[i].baseField) {
+					traversal.diffColIndex[i] = j;
+					traversal.diffRowIndex[i] = null;
+				}
+			}
+		}
 		var fieldIndex;
 		let props = {rowFieldSubtotal: undefined, itemSd: undefined};
 		var oCellValue;
@@ -8493,12 +8506,6 @@
 			if (Asc.c_oAscItemType.Grand !== rowItem.t && rowFields) {
 				for (var rowItemsXIndex = 0; rowItemsXIndex < rowItem.x.length; ++rowItemsXIndex) {
 					fieldIndex = rowFields[rowR + rowItemsXIndex].asc_getIndex();
-					for (let i = 0; i < dataFields.length; i += 1) {
-						if (fieldIndex === dataFields[i].baseField) {
-							traversal.diffRowIndex[i] = rowR + rowItemsXIndex;
-							traversal.diffColIndex[i] = null;
-						}
-					}
 					if (!traversal.setRowIndex(pivotFields, fieldIndex, rowItem, rowR, rowItemsXIndex, props)) {
 						break;
 					}
