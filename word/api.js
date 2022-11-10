@@ -12825,13 +12825,6 @@ background-repeat: no-repeat;\
 		}, this);
 		return arrNumberingLvls;
 	};
-	asc_docs_api.prototype.SetDrawImagePreviewBulletForMenu = function(arrDrawingInfo, nType)
-    {
-		const arrAdaptedDrawingInfo = this.CheckDeprecatedBulletPreviewInfo(arrDrawingInfo, nType);
-		const arrNumberingInfo = this.ParseBulletPreviewInformation(arrAdaptedDrawingInfo);
-		const oDrawer = new AscCommon.CBulletPreviewDrawer(arrNumberingInfo, nType);
-		oDrawer.checkFontsAndDraw();
-    };
 
 	asc_docs_api.prototype.asc_OnHideContextMenu = function()
 	{

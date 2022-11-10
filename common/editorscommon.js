@@ -10700,7 +10700,7 @@
 		return CBulletPreviewDrawerBase.prototype.getHeadingTextInformation.call(this, oLvl, nTextXPosition, nTextYPosition, this.m_oSecondaryTextColor.Copy());
 	};
 
-	CBulletPreviewDrawer.prototype.drawMultiLevelBullet = function (sDivId, arrLvls, bIsHeadingParagraphText)
+	CBulletPreviewDrawer.prototype.drawMultiLevelBullet = function (sDivId, arrLvls)
 	{
 		const nCountOfLines = this.m_nCountOfLines;
 		const oCanvas = this.getCanvas(sDivId);
