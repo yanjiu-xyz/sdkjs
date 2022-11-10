@@ -10415,7 +10415,8 @@
 			{
 				AscFonts.FontPickerByCharacter.checkTextLight(sText);
 			}
-			const oTextPr = oThis.cleanTextPr(oLvl.GetTextPr());
+			const oTextPr = oLvl.GetTextPr();
+			oThis.cleanTextPr(oTextPr);
 			if (oTextPr && oTextPr.RFonts)
 			{
 				if (oTextPr.RFonts.Ascii) oFontsDict[oTextPr.RFonts.Ascii.Name] = true;
