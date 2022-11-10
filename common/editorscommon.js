@@ -10834,7 +10834,7 @@
 			for (let i = 0; i < this.m_arrNumberingInfo.length; i++)
 			{
 				const oDrawingInfo = this.m_arrNumberingInfo[i];
-				const sId = oDrawingInfo["divId"];
+				const sId = oDrawingInfo.divId;
 				const arrLvls = oDrawingInfo.arrLvls;
 
 				if (this.m_nType === 0)
