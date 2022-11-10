@@ -10714,10 +10714,8 @@
 
 		const nOffsetBase = 4;
 		const nLineWidth = 2;
-		// считаем расстояние между линиями
 		const nLineDistance = Math.floor(((nHeight_px - (nOffsetBase << 2)) - nLineWidth * nCountOfLines) / nCountOfLines);
 		const nLineHeight = nLineDistance - 4;
-		// убираем погрешность в offset
 		const nOffset = (nHeight_px - (nLineWidth * nCountOfLines + nLineDistance * nCountOfLines)) >> 1;
 		let nY = nOffset + 11;
 
@@ -10824,11 +10822,12 @@
 		}
 
 		const nNumberPositionScale = nWorkspaceWidth / (nMaxNumberPosition * AscCommon.g_dKoef_mm_to_pix);
-		if (nNumberPositionScale < 0.15)
+		const nThresholdScaleCoefficient = 0.3 / AscBrowser.retinaPixelRatio;
+		if (nNumberPositionScale < nThresholdScaleCoefficient)
 		{
 			return nNumberPositionScale;
 		}
-		return 0.15;
+		return nThresholdScaleCoefficient;
 	};
 	CBulletPreviewDrawerChangeList.prototype.draw = function ()
 	{
