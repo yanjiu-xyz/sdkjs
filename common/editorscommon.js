@@ -10982,10 +10982,10 @@
 			const oTextPr = oLvl.GetTextPr();
 			oTextPr.FontSize = this.getFontSizeByLineHeight(nLineDistance);
 			const nNumberPosition = oLvl.GetNumberPosition();
-			const nTextYx = (nOffset + nNumberPosition * AscCommon.g_dKoef_mm_to_pix * this.m_nScaleIndentsCoefficient) >> 0;
-			const nIndentSize = (nOffset + oLvl.GetIndentSize() * AscCommon.g_dKoef_mm_to_pix * this.m_nScaleIndentsCoefficient) >> 0;
+			const nTextYx = (nOffsetBase + nNumberPosition * AscCommon.g_dKoef_mm_to_pix * this.m_nScaleIndentsCoefficient) >> 0;
+			const nIndentSize = (nOffsetBase + oLvl.GetIndentSize() * AscCommon.g_dKoef_mm_to_pix * this.m_nScaleIndentsCoefficient) >> 0;
 			const nTextYy = nY + nLineWidth;
-			const nOffsetText = nOffset + (this.getFirstLineIndent(oLvl) * AscCommon.g_dKoef_mm_to_pix * this.m_nScaleIndentsCoefficient) >> 0;
+			const nOffsetText = nOffsetBase + (this.getFirstLineIndent(oLvl) * AscCommon.g_dKoef_mm_to_pix * this.m_nScaleIndentsCoefficient) >> 0;
 
 			if (i === nCurrentLvl)
 			{
