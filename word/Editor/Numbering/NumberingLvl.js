@@ -1294,10 +1294,18 @@ CNumberingLvl.prototype.IsImageBullet = function ()
 {
 	return false;
 };
+/**
+ *
+ * @returns {AscFonts.CImage}
+ */
 CNumberingLvl.prototype.GetImage = function ()
 {
 
 };
+/**
+ *
+ * @returns {String | Object}
+ */
 CNumberingLvl.prototype.GetDrawingContent = function (arrLvls, nLvl, nNum)
 {
 	if (this.IsImageBullet())
@@ -1388,15 +1396,22 @@ CNumberingLvl.prototype.GetStopTab = function ()
 
 CNumberingLvl.prototype.SetStopTab = function (nValue)
 {
-	let oParaPr = this.GetParaPr();
+	var oParaPr = this.ParaPr;
 	if (!oParaPr)
 	{
-		oParaPr = new AscCommonWord.CParaPr();
-		this.SetParaPr(oParaPr);
+		oParaPr = new AscCommonWord.CParaPr;
+		this.ParaPr = oParaPr;
 	}
-	const oTabs = new AscCommonWord.CParaTabs();
-	oTabs.Add(new AscCommonWord.CParaTab(Asc.c_oAscTabType.Num, nValue));
-	oParaPr.Tabs = oTabs;
+	if (AscFormat.isRealNumber(nValue))
+	{
+		var oTabs = new AscCommonWord.CParaTabs;
+		oTabs.Add(new AscCommonWord.CParaTab(Asc.c_oAscTabType.Num, nValue));
+		oParaPr.Tabs = oTabs;
+	}
+	else
+	{
+		delete oParaPr.Tabs;
+	}
 };
 CNumberingLvl.prototype.WriteToBinary = function(oWriter)
 {
