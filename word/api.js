@@ -12129,6 +12129,7 @@ background-repeat: no-repeat;\
 
 		var options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.CANVAS_WORD);
 		options.isNaturalDownload = true;
+		options.isGetTextFromUrl = true;
 		if (document.url) {
 			options.errorDirect = Asc.c_oAscError.ID.DirectUrl;
 		}
