@@ -10325,6 +10325,17 @@
 			return this.getImageBulletURL();
 		}
 		prot["getImageId"] = prot["asc_getImageId"] = CBullet.prototype.getImageId;
+		prot.getJsonBullet = prot["asc_getJsonBullet"] = function () {
+			const sUrlId = this.getImageBulletURL();
+			const oRes = window['AscJsonConverter'].WriterToJSON.prototype.SerBullet(this);
+			if (sUrlId) {
+				const oBuBlip = oRes["bulletType"] && oRes["bulletType"]["buBlip"] && oRes["bulletType"]["buBlip"]["blip"] && oRes["bulletType"]["buBlip"]["blip"]["fill"];
+				if (oBuBlip) {
+					oBuBlip["rasterImageId"] = sUrlId;
+				}
+			}
+			return oRes;
+		}
 		prot.put_ImageUrl = function (sUrl, token) {
 			var _this = this;
 			var Api = editor || Asc.editor;

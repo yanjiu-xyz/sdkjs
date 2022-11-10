@@ -62,6 +62,14 @@ CNumberingLvl.prototype.GetJc = function()
 	return this.Jc;
 };
 /**
+ * Устанавливаем тип прилегания
+ * @param nJc {AscCommon.align_Left | AscCommon.align_Right | AscCommon.align_Center}
+ */
+CNumberingLvl.prototype.SetJc = function(nJc)
+{
+	this.Jc = nJc;
+};
+/**
  * Доступ к типу данного уровня
  * @returns {Asc.c_oAscNumberingFormat}
  */
@@ -1281,6 +1289,39 @@ CNumberingLvl.prototype.FillLvlText = function(arrOfInfo)
 		}
 	}
 };
+// TODO: исправить при добавлении картиночных буллетов
+CNumberingLvl.prototype.IsImageBullet = function ()
+{
+	return false;
+};
+CNumberingLvl.prototype.GetImage = function ()
+{
+
+};
+CNumberingLvl.prototype.GetDrawingContent = function (arrLvls, nLvl, nNum)
+{
+	if (this.IsImageBullet())
+	{
+		const oImage = this.GetImage();
+		const oResult = {image: oImage, amount: 0};
+		if (oImage)
+		{
+			for (let i = 0; i < this.LvlText.length; i += 1)
+			{
+				const oNumberingLvlText = this.LvlText[i];
+				if (oNumberingLvlText.IsText())
+				{
+					oResult.amount += 1;
+				}
+			}
+		}
+		return oResult;
+	}
+	else
+	{
+		return this.GetStringByLvlText(arrLvls, nLvl, nNum);
+	}
+}
 
 CNumberingLvl.prototype.GetStringByLvlText = function (arrLvls, nLvl, nNum)
 {

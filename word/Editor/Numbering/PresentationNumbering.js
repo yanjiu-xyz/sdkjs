@@ -327,6 +327,20 @@ function getAdaptedNumberingFormat(nType) {
 	}
 }
 
+CPresentationBullet.prototype.GetDrawingContent = function (arrLvls, nLvl, nNum)
+{
+	const oApi = Asc.editor || editor;
+	if (this.m_sSrc)
+	{
+		const oImage = oApi.ImageLoader.map_image_index[this.m_sSrc];
+		return oImage ? {image: oImage, amount: 1} : {amount: 0};
+	}
+	else
+	{
+		return this.GetDrawingText(nNum);
+	}
+
+}
 CPresentationBullet.prototype.Get_Type = function()
 {
 	return this.m_nType;
@@ -345,13 +359,13 @@ CPresentationBullet.prototype.GetNumberPosition = function ()
 };
 
 CPresentationBullet.prototype.GetDrawingText = function () {
-	let Num;
+	let nNum;
 	if (arguments.length === 1) {
-		Num = arguments[0];
+		nNum = arguments[0];
 	} else if (arguments.length === 3) {
-		Num = arguments[2];
+		nNum = arguments[2];
 	} else {
-		Num = 1;
+		nNum = 1;
 	}
 	var sT = "";
 	if (this.m_nType === AscFormat.numbering_presentationnumfrmt_Char)
@@ -362,17 +376,15 @@ CPresentationBullet.prototype.GetDrawingText = function () {
 		}
 	} else if (this.m_nType !== AscFormat.numbering_presentationnumfrmt_Blip)
 	{
-		var typeOfNum = getAdaptedNumberingFormat(this.m_nType);
-		var formatNum = IntToNumberFormat(Num, typeOfNum);
-		sT = this.getHighlightForNumbering(formatNum);
+		var nTypeOfNum = getAdaptedNumberingFormat(this.m_nType);
+		var nFormatNum = IntToNumberFormat(nNum, nTypeOfNum);
+		sT = this.getHighlightForNumbering(nFormatNum);
 	}
 	return sT;
 }
 
-CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Theme)
+CPresentationBullet.prototype.MergeTextPr = function (FirstTextPr)
 {
-	this.m_nNum = Num;
-	this.m_sString = this.GetDrawingText(Num);
 	var dFontSize = FirstTextPr.FontSize;
 	if ( false === this.m_bSizeTx )
 	{
@@ -438,7 +450,13 @@ CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Them
 	});
 	FirstTextPr_.Merge(TextPr_);
 	this.m_oTextPr = FirstTextPr_;
+}
 
+CPresentationBullet.prototype.Measure = function(Context, FirstTextPr, Num, Theme)
+{
+	this.m_nNum = Num;
+	this.m_sString = this.GetDrawingText(Num);
+	this.MergeTextPr(FirstTextPr);
 	if (this.m_nType === AscFormat.numbering_presentationnumfrmt_Blip)
 	{
 		var sizes = AscCommon.getSourceImageSize(this.m_sSrc);
@@ -598,8 +616,19 @@ CPresentationBullet.prototype.IsNumbered = function()
 CPresentationBullet.prototype.GetStringByLvlText = CPresentationBullet.prototype.GetDrawingText;
 CPresentationBullet.prototype.GetTextPr = function ()
 {
+	if (!this.m_oTextPr)
+		this.m_oTextPr = new AscCommonWord.CTextPr();
 	return this.m_oTextPr;
-}
+};
+CPresentationBullet.prototype.SetTextPr = function (oTextPr)
+{
+	this.m_oTextPr = oTextPr;
+};
+CPresentationBullet.prototype.SetJc = function (nJc) {};
+CPresentationBullet.prototype.GetJc = function () {return AscCommon.align_Left};
+CPresentationBullet.prototype.GetSymbols = function () {};
+CPresentationBullet.prototype.GetSuff = function () {};
+
 CPresentationBullet.prototype.IsNone = function()
 {
 	return this.m_nType === AscFormat.numbering_presentationnumfrmt_None;

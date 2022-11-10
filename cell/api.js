@@ -4433,12 +4433,6 @@ var editor;
     return ws.objectRender.getSelectedDrawingObjectsCount();
   };
 
-  spreadsheet_api.prototype.SetDrawImagePreviewBulletForMenu = function(drawingInfo, type)
-  {
-    var drawer = new AscCommon.CBulletPreviewDrawer(drawingInfo, type);
-    drawer.checkFontsAndDraw();
-  };
-
   spreadsheet_api.prototype.asc_canEditCrop = function()
   {
     var ws = this.wb.getWorksheet();

@@ -10063,6 +10063,8 @@
 	{
 		this.m_arrNumberingLvl = [];
 		this.m_oApi = editor || Asc.editor || window["Asc"]["editor"];
+		this.m_oLogicDocument = this.m_oApi.WordControl && this.m_oApi.WordControl.m_oLogicDocument;
+		this.m_oDrawingDocument = this.m_oLogicDocument && this.m_oLogicDocument.DrawingDocument;
 
 		this.m_oPrimaryTextColor = new AscCommonWord.CDocumentColor(0, 0, 0);
 		// для словесного текста используем цвет контрастнее
@@ -10117,10 +10119,19 @@
 		return oParagraph.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
 	};
 
-	CBulletPreviewDrawerBase.prototype.getHeadingTextInformation = function (nHeadingLvl, nTextXPosition, nTextYPosition, oColor)
+	CBulletPreviewDrawerBase.prototype.getHeadingTextInformation = function (oLvl, nTextXPosition, nTextYPosition, oColor)
 	{
-		const sParagraphText = " " + AscCommon.translateManager.getValue("Heading " + nHeadingLvl);
-		return {addingText: sParagraphText, startPositionX: nTextXPosition, startPositionY: nTextYPosition, color: oColor.Copy()};
+		if (!this.m_oLogicDocument) return null;
+
+		const oStyles = this.m_oLogicDocument.Get_Styles();
+		const oStyle = oStyles.Get(oLvl.GetPStyle());
+		if (oStyle)
+		{
+			const sName = oStyle.Get_Name();
+			const sParagraphText = " " + AscCommon.translateManager.getValue(sName);
+			return {addingText: sParagraphText, startPositionX: nTextXPosition, startPositionY: nTextYPosition, color: oColor.Copy()};
+		}
+		return null;
 	};
 
 	CBulletPreviewDrawerBase.prototype.getScaleCoefficientForMultiLevel = function (arrLvl, nWorkspaceWidth)
@@ -10217,16 +10228,15 @@
 
 	CBulletPreviewDrawerBase.prototype.getParagraphWithText = function (sText, oTextPr)
 	{
-		const oApi = this.m_oApi;
-		const oLogicDocument = oApi.WordControl.m_oLogicDocument;
-		const oDrawingDocument = oApi.WordControl.m_oLogicDocument && oApi.WordControl.m_oLogicDocument.DrawingDocument;
-		if (!oDrawingDocument) return null;
+		const oLogicDocument = this.m_oLogicDocument;
 
-		const oParagraph = new AscCommonWord.Paragraph(oDrawingDocument, oLogicDocument);
+		const oShape = new AscFormat.CShape();
+		oShape.createTextBody();
+		const oParagraph = oShape.txBody.content.GetAllParagraphs()[0];
 		oParagraph.MoveCursorToStartPos();
 
 		const oStyles = oLogicDocument && oLogicDocument.Get_Styles();
-		if (oStyles.Default && oStyles.Default.ParaPr)
+		if (oStyles && oStyles.Default && oStyles.Default.ParaPr)
 		{
 			oParagraph.Pr = oStyles.Default.ParaPr.Copy();
 		}
@@ -10285,7 +10295,7 @@
 			const sParagraphText = oParagraphTextOptions.addingText;
 			const oHeadingTextPr = new AscCommonWord.CTextPr();
 			oHeadingTextPr.RFonts.SetAll("Arial");
-			oHeadingTextPr.FontSize = oHeadingTextPr.FontSizeCS = oTextPr.FontSize * 0.75;
+			oHeadingTextPr.FontSize = oHeadingTextPr.FontSizeCS = oTextPr.FontSize * 0.8;
 			oHeadingTextPr.Color = oParagraphTextOptions.color.Copy();
 
 			oParagraph = this.getParagraphWithText(sParagraphText, oHeadingTextPr);
@@ -10411,14 +10421,14 @@
 	};
 
 
-	function CBulletPreviewDrawer(arrInfoOfDrawings, nType)
+	function CBulletPreviewDrawer(arrLvlInfo, nType)
 	{
 		CBulletPreviewDrawerBase.call(this);
-		this.m_arrInfoOfDrawings = arrInfoOfDrawings;
 		this.m_nType = nType;
 		this.m_nCountOfLines = 3;
 		this.m_oApi = editor || Asc.editor || window["Asc"]["editor"];
-		this.m_arrNumberingLvl = this.getLvlArrayFromPreviewInfo(arrInfoOfDrawings);
+		this.m_arrNumberingLvl = arrLvlInfo.map(function (oDrawingInfo) {return oDrawingInfo.arrLvls});
+		this.m_arrNumberingInfo = arrLvlInfo;
 		this.m_nSingleBulletFontSizeCoefficient = 0.6;
 		this.m_nSingleBulletNoneFontSizeCoefficient = 0.225;
 		this.m_nLvlWithLinesNoneFontSizeCoefficient = 0.1375;
@@ -10427,45 +10437,6 @@
 	}
 	CBulletPreviewDrawer.prototype = Object.create(CBulletPreviewDrawerBase.prototype);
 	CBulletPreviewDrawer.prototype.constructor = CBulletPreviewDrawer;
-
-	CBulletPreviewDrawer.prototype.getLvlArrayFromPreviewInfo = function (arrInfoOfDrawings)
-	{
-		const arrNumberingLvls = [];
-		AscFormat.ExecuteNoHistory(function ()
-		{
-			// Пока что нет картиночных буллетов в редакторе документов, будем смотреть на свойство
-			for (let i = 0; i < arrInfoOfDrawings.length; i += 1)
-			{
-				const oDrawInfo = arrInfoOfDrawings[i];
-				const oNumberingInfo = oDrawInfo["numberingInfo"];
-				if (oNumberingInfo.Type === Asc.c_oAscJSONNumberingType.Remove)
-				{
-					const oLvl = new AscCommonWord.CNumberingLvl();
-					const oTextPr = oLvl.GetTextPr();
-					const sNoneText = AscCommon.translateManager.getValue("None");
-					const sFontName = "Arial";
-					oLvl.FillLvlText([sNoneText]);
-					oTextPr.RFonts.SetAll(sFontName);
-					arrNumberingLvls.push([oLvl]);
-				}
-				else
-				{
-					const arrNumberingLvl = [];
-					for (let j = 0; j < oNumberingInfo.Lvl.length; j += 1)
-					{
-						const oLvl = AscCommonWord.CNumberingLvl.FromJson(oNumberingInfo.Lvl[j]);
-						if (oLvl.TextPr.RFonts.IsEmpty())
-						{
-							oLvl.TextPr.RFonts.SetAll("Arial");
-						}
-						arrNumberingLvl.push(oLvl);
-					}
-					arrNumberingLvls.push(arrNumberingLvl);
-				}
-			}
-		}, this);
-		return arrNumberingLvls;
-	}
 
 	CBulletPreviewDrawer.prototype.drawSingleBullet = function (sDivId, arrLvls)
 	{
@@ -10476,12 +10447,16 @@
 		const oLvl = arrLvls[0];
 		const nHeight_px = oCanvas.clientHeight;
 		const nWidth_px = oCanvas.clientWidth;
-
-		if ((oLvl instanceof AscCommonWord.CPresentationBullet) && oLvl.m_sSrc)
+		const drawingContent = oLvl.GetDrawingContent([oLvl], 0);
+		if (typeof drawingContent !== "string")
 		{
-			const oFormatBullet = new AscFormat.CBullet();
-			oFormatBullet.fillBulletImage(oLvl.m_sSrc);
-			oFormatBullet.drawSquareImage(sDivId, 0.125);
+			const oImage = drawingContent.image;
+			if (oImage)
+			{
+				const oFormatBullet = new AscFormat.CBullet();
+				oFormatBullet.fillBulletImage(oImage.src);
+				oFormatBullet.drawSquareImage(sDivId, 0.125);
+			}
 		}
 		else
 		{
@@ -10490,19 +10465,20 @@
 			const oFitInformation = this.GetInformationWithFitFontSize(oLvl, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm, nMaxFontSize, nMaxFontSize);
 			const oFitTextPr = oFitInformation.textPr;
 			const nLineHeight = oFitInformation.lineHeight;
-			oLvl.TextPr = oFitTextPr;
-			oLvl.Jc = AscCommon.align_Left;
+			oLvl.SetTextPr(oFitTextPr);
+			oLvl.SetJc(AscCommon.align_Left);
 			const oCalculationPosition = this.getXYForCenterPosition(oLvl, nWidth_px, nHeight_px);
 			const nX = oCalculationPosition.nX;
 			const nY = oCalculationPosition.nY;
-			const sText = oLvl.GetStringByLvlText([oLvl], 0);
+			const sText = drawingContent;
 			this.drawTextWithLvlInformation(sText, oLvl, nX, nY, nLineHeight, oGraphics);
 		}
 	};
 
 	CBulletPreviewDrawer.prototype.GetInformationWithFitFontSize = function (oLvl, nMaxWidth, nMaxHeight, nMinFontSize, nMaxFontSize)
 	{
-		const sText = oLvl.GetStringByLvlText([oLvl], 0);
+		const sText = oLvl.GetDrawingContent([oLvl], 0);
+		if (typeof sText !== "string") return;
 		const oNewShape = new AscFormat.CShape();
 		oNewShape.createTextBody();
 		oNewShape.extX = nMaxWidth;
@@ -10512,11 +10488,10 @@
 		const oParagraph = oNewShape.txBody.content.GetAllParagraphs()[0];
 		oParagraph.MoveCursorToStartPos();
 
-		const oApi = this.m_oApi;
-		const oLogicDocument = oApi.WordControl.m_oLogicDocument;
+		const oLogicDocument = this.m_oLogicDocument;
 
 		const oStyles = oLogicDocument && oLogicDocument.Get_Styles();
-		if (oStyles.Default && oStyles.Default.ParaPr)
+		if (oStyles && oStyles.Default && oStyles.Default.ParaPr)
 		{
 			oParagraph.Pr = oStyles.Default.ParaPr.Copy();
 		}
@@ -10598,7 +10573,8 @@
 	CBulletPreviewDrawer.prototype.getXYForCenterPosition = function (oLvl, nWidth, nHeight)
 	{
 		// Здесь будем считать позицию отрисовки
-		const sText = oLvl.GetStringByLvlText([oLvl], 0);
+		const sText = oLvl.GetDrawingContent([oLvl], 0);
+		if (typeof sText !== 'string') return;
 		const oTextPr = oLvl.GetTextPr().Copy();
 		const oSumInformation = this.getWidthHeightGlyphs(sText, oTextPr);
 
@@ -10607,28 +10583,25 @@
 		return {nX: nX, nY: nY};
 	};
 
-	CBulletPreviewDrawer.prototype.drawImageBulletsWithLines = function (sFullImageSrc, oTextPr, nX, nY, nLineHeight, oContext, nWidth, nHeight) {
-		const nRPR = AscCommon.AscBrowser.retinaPixelRatio;
-		const oSizes = AscCommon.getSourceImageSize(sFullImageSrc);
+	CBulletPreviewDrawer.prototype.drawImageBulletsWithLines = function (oImageInfo, nX, nY, nLineHeight, oGraphics) {
 
-		const nImageHeight = oSizes.height * nRPR;
-		const nImageWidth = oSizes.width * nRPR;
-		const nAdaptImageHeight = nLineHeight * nRPR;
-		const nAdaptImageWidth = (nImageWidth * nAdaptImageHeight / (nImageHeight ? nImageHeight : 1));
+		const oImage = oImageInfo.image;
+		if (oImage)
+		{
+			const sFullImageSrc = oImage.src;
+			const oSizes = AscCommon.getSourceImageSize(sFullImageSrc);
+			const nImageHeight = oSizes.height;
+			const nImageWidth = oSizes.width;
+			const nAdaptImageHeight = nLineHeight;
+			const nAdaptImageWidth = (nImageWidth * nAdaptImageHeight / (nImageHeight ? nImageHeight : 1));
 
-		const nBackTextWidth = nAdaptImageWidth / nRPR + 4;
-		oContext.fillStyle = this.m_sBackgroundColor;
-		oContext.fillRect(Math.round(nRPR * nX), Math.round((nY - nLineHeight) * nRPR), Math.round(nBackTextWidth * nRPR), Math.round((nLineHeight + (nLineHeight >> 1)) * nRPR));
-		oContext.beginPath();
-
-		const oGraphics = new AscCommon.CGraphics();
-		oGraphics.init(oContext,
-			AscCommon.AscBrowser.convertToRetinaValue(nWidth, true),
-			AscCommon.AscBrowser.convertToRetinaValue(nHeight, true),
-			nWidth * AscCommon.g_dKoef_pix_to_mm, nHeight * AscCommon.g_dKoef_pix_to_mm);
-		oGraphics.m_oFontManager = AscCommon.g_fontManager;
-
-		oGraphics.drawImage(sFullImageSrc, nX * nRPR, nY * nRPR - (nAdaptImageHeight * (0.85)), nAdaptImageWidth, nAdaptImageHeight);
+			for (let i = 0; i < oImageInfo.amount; i += 1)
+			{
+				this.cleanParagraphField(oGraphics, nX * AscCommon.g_dKoef_pix_to_mm, (nY - nLineHeight) * AscCommon.g_dKoef_pix_to_mm, (nAdaptImageWidth + 2) * AscCommon.g_dKoef_pix_to_mm, (nLineHeight + (nLineHeight >> 1)) * AscCommon.g_dKoef_pix_to_mm);
+				oGraphics.drawImage(sFullImageSrc, nX * AscCommon.g_dKoef_pix_to_mm, (nY - nAdaptImageHeight * (0.85)) * AscCommon.g_dKoef_pix_to_mm, nAdaptImageWidth * AscCommon.g_dKoef_pix_to_mm, nAdaptImageHeight * AscCommon.g_dKoef_pix_to_mm);
+				nX += nAdaptImageWidth;
+			}
+		}
 	};
 
 
@@ -10642,7 +10615,8 @@
 		oGraphics.p_color(this.m_oSecondaryLineTextColor.r, this.m_oSecondaryLineTextColor.g, this.m_oSecondaryLineTextColor.b, 255);
 
 		const oLvl = arrLvls[0];
-		oLvl.Jc = AscCommon.align_Left;
+		oLvl.SetJc(AscCommon.align_Left);
+
 		const oTextPr = oLvl.GetTextPr();
 
 		const nWidth_px = oCanvas.clientWidth;
@@ -10672,14 +10646,14 @@
 			const nTextYy = nY + (nLineWidth * 2.5);
 			const nLineHeight = nLineDistance - 4;
 			oTextPr.FontSize = this.getFontSizeByLineHeight(nLineHeight);
-			if ((oLvl instanceof AscCommonWord.CPresentationBullet) && oLvl.m_sSrc)
+			const drawingContent = oLvl.GetDrawingContent([oLvl], 0, j + 1);
+			if (typeof drawingContent !== "string")
 			{
-				this.drawImageBulletsWithLines(oLvl.m_sSrc, oLvl, nTextYx, nTextYy, nLineHeight, oGraphics, nWidth_px, nHeight_px);
+				this.drawImageBulletsWithLines(drawingContent, nTextYx, nTextYy, nLineHeight, oGraphics);
 			}
 			else
 			{
-				const sNumberingText = oLvl.GetStringByLvlText([oLvl], 0, j + 1);
-				this.drawTextWithLvlInformation(sNumberingText, oLvl, nTextYx, nTextYy, nLineHeight, oGraphics);
+				this.drawTextWithLvlInformation(drawingContent, oLvl, nTextYx, nTextYy, nLineHeight, oGraphics);
 			}
 			nY += (nLineWidth + nLineDistance);
 		}
@@ -10701,7 +10675,7 @@
 		const oFitInformation = this.GetInformationWithFitFontSize(oLvl, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm, 5, nMaxFontSize);
 		const oFitTextPr = oFitInformation.textPr;
 		const nLineHeight = oFitInformation.lineHeight;
-		oLvl.TextPr = oFitTextPr;
+		oLvl.SetTextPr(oFitTextPr);
 		const oCalculationPosition = this.getXYForCenterPosition(oLvl, nWidth_px, nHeight_px);
 		const nX = oCalculationPosition.nX;
 		const nY = oCalculationPosition.nY;
@@ -10709,9 +10683,9 @@
 		this.drawTextWithLvlInformation(sText, oLvl, nX, nY, nLineHeight, oGraphics);
 	};
 
-	CBulletPreviewDrawer.prototype.getHeadingTextInformation = function (nHeadingLvl, nTextXPosition, nTextYPosition)
+	CBulletPreviewDrawer.prototype.getHeadingTextInformation = function (oLvl, nTextXPosition, nTextYPosition)
 	{
-		return CBulletPreviewDrawerBase.prototype.getHeadingTextInformation.call(this, nHeadingLvl, nTextXPosition, nTextYPosition, this.m_oSecondaryTextColor.Copy());
+		return CBulletPreviewDrawerBase.prototype.getHeadingTextInformation.call(this, oLvl, nTextXPosition, nTextYPosition, this.m_oSecondaryTextColor.Copy());
 	};
 
 	CBulletPreviewDrawer.prototype.drawMultiLevelBullet = function (sDivId, arrLvls, bIsHeadingParagraphText)
@@ -10738,8 +10712,7 @@
 		for (let i = 0; i < nCountOfLines; i += 1)
 		{
 			const oLvl = arrLvls[i];
-			const nSuff = oLvl.GetSuff();
-			oLvl.Jc = AscCommon.align_Left;
+			oLvl.SetJc(AscCommon.align_Left);
 			const oTextPr = oLvl.GetTextPr();
 			oTextPr.FontSize = this.getFontSizeByLineHeight(nLineHeight);
 			const nNumberPosition = oLvl.GetNumberPosition();
@@ -10748,15 +10721,16 @@
 			const nXPositionOfLine = nOffsetBase + (this.getFirstLineIndent(oLvl) * this.m_nMultiLvlIndentCoefficient) << 0;
 
 			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nXPositionOfLine * AscCommon.g_dKoef_pix_to_mm, (nWidth_px - nOffsetBase) * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
-			if ((oLvl instanceof AscCommonWord.CPresentationBullet) && oLvl.m_sSrc)
+
+			const drawingContent = oLvl.GetDrawingContent(arrLvls, i, 1);
+			if (typeof drawingContent !== 'string')
 			{
-				this.drawImageBulletsWithLines(oLvl.m_sSrc, oTextPr, nTextYx, nTextYy, (nLineDistance - 4), oGraphics, nWidth_px, nHeight_px);
+				this.drawImageBulletsWithLines(drawingContent, nTextYx, nTextYy, (nLineDistance - 4), oGraphics, nWidth_px, nHeight_px);
 			}
 			else
 			{
-				const oParagraphTextOptions = /*bIsHeadingParagraphText*/false ? this.getHeadingTextInformation(i + 1, nXPositionOfLine, nTextYy) : null;
-				const sNumberingText = oLvl.GetStringByLvlText(arrLvls, i, 1);
-				this.drawTextWithLvlInformation(sNumberingText, oLvl, nTextYx, nTextYy, nLineHeight, oGraphics, oParagraphTextOptions);
+				const oParagraphTextOptions = this.getHeadingTextInformation(oLvl, nXPositionOfLine, nTextYy);
+				this.drawTextWithLvlInformation(drawingContent, oLvl, nTextYx, nTextYy, nLineHeight, oGraphics, oParagraphTextOptions);
 			}
 			nY += (nLineWidth + nLineDistance);
 		}
@@ -10766,17 +10740,15 @@
 	CBulletPreviewDrawer.prototype.draw = function ()
 	{
 		AscFormat.ExecuteNoHistory(function () {
-			for (let i = 0; i < this.m_arrInfoOfDrawings.length; i++)
+			for (let i = 0; i < this.m_arrNumberingInfo.length; i++)
 			{
-				const oDrawingInfo = this.m_arrInfoOfDrawings[i];
-				const oNumberingType = oDrawingInfo.numberingInfo.Type;
+				const oDrawingInfo = this.m_arrNumberingInfo[i];
 				const sId = oDrawingInfo["divId"];
-				const arrLvls = this.m_arrNumberingLvl[i];
-				const bIsHeadingParagraphText = oDrawingInfo.numberingInfo.Headings;
+				const arrLvls = oDrawingInfo.arrLvls;
 
 				if (this.m_nType === 0)
 				{
-					if (oNumberingType === Asc.c_oAscJSONNumberingType.Remove)
+					if (oDrawingInfo.isRemoving)
 					{
 						this.drawNoneTextPreview(sId, arrLvls, this.m_nSingleBulletNoneFontSizeCoefficient);
 					}
@@ -10787,7 +10759,7 @@
 				}
 				else if (this.m_nType === 1)
 				{
-					if (oNumberingType === Asc.c_oAscJSONNumberingType.Remove)
+					if (oDrawingInfo.isRemoving)
 					{
 						this.drawNoneTextPreview(sId, arrLvls, this.m_nLvlWithLinesNoneFontSizeCoefficient);
 					}
@@ -10798,13 +10770,13 @@
 				}
 				else if (this.m_nType === 2)
 				{
-					if (oNumberingType === Asc.c_oAscJSONNumberingType.Remove)
+					if (oDrawingInfo.isRemoving)
 					{
 						this.drawNoneTextPreview(sId, arrLvls, this.m_nLvlWithLinesNoneFontSizeCoefficient);
 					}
 					else
 					{
-						this.drawMultiLevelBullet(sId, arrLvls, bIsHeadingParagraphText);
+						this.drawMultiLevelBullet(sId, arrLvls);
 					}
 				}
 			}
