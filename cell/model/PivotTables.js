@@ -16149,6 +16149,86 @@ DataRowTraversal.prototype.setRunTotalCol = function(resValueIndex, dataIndex, r
 	this.prevRunTotalCache = _data.runTotalCellValue[dataIndex];
 	elemCache.push(_data);
 };
+
+DataRowTraversal.prototype.setRanks = function(rowItem, colItem, rowFieldSubtotal, dataIndex, isDescending) {
+	function RankObject(data, rowItem, colItem, rowFieldSubtotal, subtotalType) {
+		this.obj = data;
+		this.oCellValue = data.total[dataIndex].getCellValue(subtotalType, rowFieldSubtotal, rowItem.t, colItem.t);
+	}
+	/**
+	 * @param {RankObject} a 
+	 * @param {RankObject} b 
+	 */
+	function rankAscendingSort(a, b) {
+		return a.oCellValue.number - b.oCellValue.number;
+	}
+	let elemCache = [];
+	if (this.diffRowIndex[dataIndex] || this.diffRowIndex[dataIndex] === 0) {
+		if (this.rowValueCache.length - 1 < this.diffRowIndex[dataIndex]) {
+			return;
+		}
+		let data = this.curRowCache[this.diffRowIndex[dataIndex]];
+		for (let item in data.vals) {
+			let _data = data.vals[item];
+			for (let i = this.diffRowIndex[dataIndex] + 1; i < this.rowFieldItemCache.length; i += 1) {
+				_data = _data.vals[this.rowFieldItemCache[i].x];
+			}
+			for (let i = 0; i < this.colFieldItemCache.length; i += 1) {
+				if (_data) {
+					_data = _data.subtotal[this.colFieldItemCache[i].x];
+				}
+			}
+			if (_data && _data.total[dataIndex].getCellValue(this.dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t).type !== AscCommon.CellValueType.Error) {
+				elemCache.push(new RankObject(_data, rowItem, colItem, rowFieldSubtotal, this.dataField.subtotal));
+			}
+		}
+		if (elemCache.length > 0) {
+			elemCache.sort(rankAscendingSort);
+			isDescending ? elemCache.reverse() : false;
+			let rank = isDescending ? 'rankDescending' : 'rankAscending';
+			elemCache[0].obj[rank][dataIndex] = 1;
+			for (let i = 1; i < elemCache.length; i += 1) {
+				if (elemCache[i - 1].oCellValue.number === elemCache[i].oCellValue.number) {
+					elemCache[i].obj[rank][dataIndex] = elemCache[i - 1].obj[rank][dataIndex];
+				} else {
+					elemCache[i].obj[rank][dataIndex] = elemCache[i - 1].obj[rank][dataIndex] + 1;
+				}
+			}
+		}
+	} else if (this.diffColIndex[dataIndex] || this.diffColIndex[dataIndex] === 0) {
+		if (this.colValueCache.length - 1 < this.diffColIndex[dataIndex]) {
+			return;
+		}
+		let data = this.curColCache[this.diffColIndex[dataIndex]];
+		if (!data) {
+			return;
+		}
+		for (let item in data.subtotal) {
+			let _data = data.subtotal[item];
+			for (let i = this.diffColIndex[dataIndex] + 1; i < this.colFieldItemCache.length; i += 1) {
+				if (_data) {
+					_data = _data.subtotal[this.colFieldItemCache[i].x];
+				}
+			}
+			if (_data && _data.total[dataIndex].getCellValue(this.dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t).type !== AscCommon.CellValueType.Error) {
+				elemCache.push(new RankObject(_data, rowItem, colItem, rowFieldSubtotal, this.dataField.subtotal));
+			}
+		}
+		if (elemCache.length > 0) {
+			elemCache.sort(rankAscendingSort);
+			isDescending ? elemCache.reverse() : false;
+			let rank = isDescending ? 'rankDescending' : 'rankAscending';
+			elemCache[0].obj[rank][dataIndex] = 1;
+			for (let i = 1; i < elemCache.length; i += 1) {
+				if (elemCache[i - 1].oCellValue.number === elemCache[i].oCellValue.number) {
+					elemCache[i].obj[rank][dataIndex] = elemCache[i - 1].obj[rank][dataIndex];
+				} else {
+					elemCache[i].obj[rank][dataIndex] = elemCache[i - 1].obj[rank][dataIndex] + 1;
+				}
+			}
+		}
+	}
+};
 /**
  * Sets runTotal values and returns an array of those elements
  */
@@ -16403,8 +16483,32 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 				}
 				break;
 			case Asc.c_oAscShowDataAs.RankDescending:
+				oCellValue = new AscCommonExcel.CCellValue();
+				oCellValue.type = AscCommon.CellValueType.Number;
+				if ((this.diffRowIndex[dataIndex] !== null && rowItem.t !== Asc.c_oAscItemType.Grand) || (this.diffColIndex[dataIndex] !== null && colItem.t !== Asc.c_oAscItemType.Grand)) {
+					if (this.cur && this.cur.rankDescending[dataIndex]) {
+						oCellValue.number = this.cur.rankDescending[dataIndex];
+					} else {
+						this.setRanks(rowItem, colItem, props.rowFieldSubtotal, dataIndex, true);
+						if (this.cur && this.cur.rankDescending[dataIndex]) {
+							oCellValue.number = this.cur.rankDescending[dataIndex];
+						}
+					}
+				}
 				break;
 			case Asc.c_oAscShowDataAs.RankAscending:
+				oCellValue = new AscCommonExcel.CCellValue();
+				oCellValue.type = AscCommon.CellValueType.Number;
+				if ((this.diffRowIndex[dataIndex] !== null && rowItem.t !== Asc.c_oAscItemType.Grand) || (this.diffColIndex[dataIndex] !== null && colItem.t !== Asc.c_oAscItemType.Grand)) {
+					if (this.cur && this.cur.rankAscending[dataIndex]) {
+						oCellValue.number = this.cur.rankAscending[dataIndex];
+					} else {
+						this.setRanks(rowItem, colItem, props.rowFieldSubtotal, dataIndex, false);
+						if (this.cur && this.cur.rankAscending[dataIndex]) {
+							oCellValue.number = this.cur.rankAscending[dataIndex];
+						}
+					}
+				}
 				break;
 			case Asc.c_oAscShowDataAs.Normal:
 				if (this.cur && this.cur.total[dataIndex]) {
