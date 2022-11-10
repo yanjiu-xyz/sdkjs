@@ -11074,9 +11074,7 @@
 					const oSizes = AscCommon.getSourceImageSize(sFullImageSrc);
 					const nImageHeight = oSizes.height;
 					const nImageWidth = oSizes.width;
-					const nAdaptImageHeight = nLineDistance;
-					const nAdaptImageWidth = (nImageWidth * nAdaptImageHeight / (nImageHeight ? nImageHeight : 1)) * drawingContent.amount;
-					nMaxTextWidth = nAdaptImageWidth;
+					nMaxTextWidth = (nImageWidth * nLineDistance / (nImageHeight ? nImageHeight : 1)) * drawingContent.amount;
 					break;
 				}
 			}
@@ -11105,7 +11103,12 @@
 		const nScaleCoefficient = this.getScaleCoefficientForSingleLevel(nWidth_px - nOffsetBase * 5);
 		let nNumberPosition = nOffsetBase + ((oCurrentLvl.GetNumberPosition() * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient) << 0);
 		let nIndentSize = nOffsetBase + ((oCurrentLvl.GetIndentSize() * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient) << 0);
-		const nTabSize = nOffsetBase + ((oCurrentLvl.GetStopTab() * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient) << 0);
+		const nRawTabSize = oCurrentLvl.GetStopTab();
+		let nTabSize;
+		if (AscFormat.isRealNumber(nRawTabSize))
+		{
+			nTabSize = nOffsetBase + ((nRawTabSize * AscCommon.g_dKoef_mm_to_pix * nScaleCoefficient) << 0);
+		}
 
 		oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nLeftOffset2 * AscCommon.g_dKoef_pix_to_mm, nRightOffset2 * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm); nY += nYDist;
 		oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nLeftOffset2 * AscCommon.g_dKoef_pix_to_mm, nRightOffset2 * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm); nY += nYDist;
@@ -11114,14 +11117,13 @@
 		let nTextYx = nNumberPosition;
 		let nOffsetTextX;
 		// если при прилегании к правому краю левый край текста упирается в оффсет, то линии текста должны двигаться вправо(это относится ко всем типам прилегания)
-		const nIndentation = nLeftOffset2 - (nTextYx - nMaxTextWidth * nScaleCoefficient);
-		if (nIndentation > 0)
+		if ((nTextYx - nMaxTextWidth * nScaleCoefficient) < nLeftOffset2)
 		{
 			nTextYx = nLeftOffset2 + nMaxTextWidth;
 			nIndentSize += (nTextYx - nNumberPosition);
 			nIndentSize = nIndentSize >> 0;
 
-			nOffsetTextX = this.getFirstLineIndent(oCurrentLvl, nTextYx * AscCommon.g_dKoef_pix_to_mm, nIndentSize * AscCommon.g_dKoef_pix_to_mm, (nTabSize + (nTextYx - nNumberPosition)) * AscCommon.g_dKoef_pix_to_mm);
+			nOffsetTextX = this.getFirstLineIndent(oCurrentLvl, nTextYx * AscCommon.g_dKoef_pix_to_mm, nIndentSize * AscCommon.g_dKoef_pix_to_mm, AscFormat.isRealNumber(nTabSize) ? (nTabSize + (nTextYx - nNumberPosition)) * AscCommon.g_dKoef_pix_to_mm : null);
 
 			const nCurrentAlign = oCurrentLvl.Jc;
 			oCurrentLvl.Jc = AscCommon.align_Left;
@@ -11137,7 +11139,7 @@
 		}
 		else
 		{
-			nOffsetTextX = this.getFirstLineIndent(oCurrentLvl, nTextYx * AscCommon.g_dKoef_pix_to_mm, nIndentSize * AscCommon.g_dKoef_pix_to_mm, nTabSize * AscCommon.g_dKoef_pix_to_mm);
+			nOffsetTextX = this.getFirstLineIndent(oCurrentLvl, nTextYx * AscCommon.g_dKoef_pix_to_mm, nIndentSize * AscCommon.g_dKoef_pix_to_mm, AscFormat.isRealNumber(nTabSize) ? nTabSize * AscCommon.g_dKoef_pix_to_mm : null);
 		}
 
 		for (let i = 0; i < 3; i += 1)
