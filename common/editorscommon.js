@@ -10145,6 +10145,7 @@
 		this.m_oApi = editor || Asc.editor || window["Asc"]["editor"];
 		this.m_oLogicDocument = this.m_oApi.WordControl && this.m_oApi.WordControl.m_oLogicDocument;
 		this.m_oDrawingDocument = this.m_oLogicDocument && this.m_oLogicDocument.DrawingDocument;
+		this.m_oLang = this.m_oApi.asc_GetPossibleNumberingLanguage();
 
 		this.m_oPrimaryTextColor = new AscCommonWord.CDocumentColor(0, 0, 0);
 		// для словесного текста используем цвет контрастнее
@@ -10561,7 +10562,7 @@
 		const oLvl = arrLvls[0];
 		const nHeight_px = oCanvas.clientHeight;
 		const nWidth_px = oCanvas.clientWidth;
-		const drawingContent = oLvl.GetDrawingContent([oLvl], 0);
+		const drawingContent = oLvl.GetDrawingContent([oLvl], 0, undefined, this.m_oLang);
 		if (typeof drawingContent !== "string")
 		{
 			const oImage = drawingContent.image;
@@ -10591,7 +10592,7 @@
 
 	CBulletPreviewDrawer.prototype.getInformationWithFitFontSize = function (oLvl, nMaxWidth, nMaxHeight, nMinFontSize, nMaxFontSize)
 	{
-		const sText = oLvl.GetDrawingContent([oLvl], 0);
+		const sText = oLvl.GetDrawingContent([oLvl], 0, undefined, this.m_oLang);
 		if (typeof sText !== "string") return;
 		const oNewShape = new AscFormat.CShape();
 		oNewShape.createTextBody();
@@ -10687,7 +10688,7 @@
 	CBulletPreviewDrawer.prototype.getXYForCenterPosition = function (oLvl, nWidth, nHeight)
 	{
 		// Здесь будем считать позицию отрисовки
-		const sText = oLvl.GetDrawingContent([oLvl], 0);
+		const sText = oLvl.GetDrawingContent([oLvl], 0, undefined, this.m_oLang);
 		if (typeof sText !== 'string') return;
 		const oTextPr = oLvl.GetTextPr().Copy();
 		const oSumInformation = this.getWidthHeightGlyphs(sText, oTextPr);
@@ -10738,7 +10739,7 @@
 			const nTextYy = nY + (nLineWidth * 2.5);
 			const nLineHeight = nLineDistance - 4;
 			oTextPr.FontSize = this.getFontSizeByLineHeight(nLineHeight);
-			const drawingContent = oLvl.GetDrawingContent([oLvl], 0, j + 1);
+			const drawingContent = oLvl.GetDrawingContent([oLvl], 0, j + 1, this.m_oLang);
 			if (typeof drawingContent !== "string")
 			{
 				this.drawImageBulletsWithLine(drawingContent, nTextYx, nTextYy, nLineHeight, oGraphics);
@@ -10759,7 +10760,7 @@
 		const oGraphics = this.getGraphics(oCanvas);
 
 		const oLvl = arrLvls[0];
-		const sText = oLvl.GetDrawingContent([oLvl], 0);
+		const sText = oLvl.GetDrawingContent([oLvl], 0, undefined, this.m_oLang);
 		if (typeof sText !== 'string') return;
 		const nHeight_px = oCanvas.clientHeight;
 		const nWidth_px = oCanvas.clientWidth;
@@ -10813,7 +10814,7 @@
 
 			oGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, nY * AscCommon.g_dKoef_pix_to_mm, nXPositionOfLine * AscCommon.g_dKoef_pix_to_mm, (nWidth_px - nOffsetBase) * AscCommon.g_dKoef_pix_to_mm, nLineWidth * AscCommon.g_dKoef_pix_to_mm);
 
-			const drawingContent = oLvl.GetDrawingContent(arrLvls, i, 1);
+			const drawingContent = oLvl.GetDrawingContent(arrLvls, i, 1, this.m_oLang);
 			const oParagraphTextOptions = this.getHeadingTextInformation(oLvl, nXPositionOfLine, nTextYy);
 			if (typeof drawingContent !== 'string')
 			{
@@ -10932,8 +10933,7 @@
 			{
 				const oLvl = this.m_arrNumberingLvl[i];
 				oLvl.Jc = AscCommon.align_Left;
-				const sText = oLvl.GetStringByLvlText(this.m_arrNumberingLvl, i, 1);
-				const drawingContent = oLvl.GetDrawingContent(this.m_arrNumberingLvl, i, 1);
+				const drawingContent = oLvl.GetDrawingContent(this.m_arrNumberingLvl, i, 1, this.m_oLang);
 				sDivId = this.m_arrId[i];
 				oCanvas = this.getCanvas(sDivId);
 				if (!oCanvas) return;
@@ -10951,7 +10951,7 @@
 				const oParagraphTextOptions = this.getHeadingTextInformation(oLvl, nXLinePosition, nTextYy);
 				if (typeof drawingContent === "string")
 				{
-					this.drawTextWithLvlInformation(sText, oLvl, nTextYx, nTextYy, (nHeight_px >> 1), oGraphics, oParagraphTextOptions);
+					this.drawTextWithLvlInformation(drawingContent, oLvl, nTextYx, nTextYy, (nHeight_px >> 1), oGraphics, oParagraphTextOptions);
 				}
 				else
 				{
@@ -11083,7 +11083,7 @@
 			}
 
 			const oParagraphTextOptions = this.getHeadingTextInformation(oLvl, nOffsetText, nTextYy);
-			const drawingContent = oLvl.GetDrawingContent(this.m_arrNumberingLvl, i, 1);
+			const drawingContent = oLvl.GetDrawingContent(this.m_arrNumberingLvl, i, 1, this.m_oLang);
 			if (typeof drawingContent === "string")
 			{
 				this.drawTextWithLvlInformation(drawingContent, oLvl, nTextYx,  nTextYy, nLineDistance, oGraphics, oParagraphTextOptions);
@@ -11137,7 +11137,7 @@
 		let nMaxTextWidth = 0;
 		for (let i = 0; i < 3; i += 1)
 		{
-			const drawingContent = oCurrentLvl.GetDrawingContent(this.m_arrNumberingLvl, nCurrentLvl, i + 1);
+			const drawingContent = oCurrentLvl.GetDrawingContent(this.m_arrNumberingLvl, nCurrentLvl, i + 1, this.m_oLang);
 			if (typeof drawingContent === 'string')
 			{
 				const nTextWidth = this.getLvlTextWidth(drawingContent, oTextPr);
@@ -11235,7 +11235,7 @@
 
 		for (let i = 0; i < arrTextYy.length; i += 1)
 		{
-			const drawingContent = oCurrentLvl.GetDrawingContent(this.m_arrNumberingLvl, nCurrentLvl, i + 1);
+			const drawingContent = oCurrentLvl.GetDrawingContent(this.m_arrNumberingLvl, nCurrentLvl, i + 1, this.m_oLang);
 			const nTextYy = arrTextYy[i];
 			if (typeof drawingContent === "string")
 			{

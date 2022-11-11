@@ -3529,6 +3529,7 @@
 		this.asc_setCurrentPassword("");
 	};
 
+	baseEditorsApi.prototype.asc_GetPossibleNumberingLanguage = function () {};
 	baseEditorsApi.prototype.CheckDeprecatedBulletPreviewInfo = function (arrDrawingInfo, nTypeOfPreview)
 	{
 		const arrAdaptedDrawingInfo = [];
@@ -4316,6 +4317,7 @@
 	prot['setOpenedAt'] = prot.setOpenedAt;
 	prot['asc_SaveDrawingAsPicture'] = prot.asc_SaveDrawingAsPicture;
 	prot['asc_SetDrawImagePreviewBulletForMenu'] = prot['SetDrawImagePreviewBulletForMenu'] = prot.SetDrawImagePreviewBulletForMenu;
+	prot['asc_GetPossibleNumberingLanguage'] = prot.asc_GetPossibleNumberingLanguage;
 
 	prot['asc_isCrypto'] = prot.asc_isCrypto;
 

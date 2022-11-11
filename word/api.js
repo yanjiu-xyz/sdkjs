@@ -12639,6 +12639,26 @@ background-repeat: no-repeat;\
 
 		return oLogicDocument.ConvertTableToText({type: sep_type, separator: sep, nested: nested});
 	};
+	asc_docs_api.prototype.asc_GetPossibleNumberingLanguage = function ()
+	{
+		const oLogicDocument = this.private_GetLogicDocument();
+		if (oLogicDocument)
+		{
+			const oFirstParagraph = oLogicDocument.GetCurrentParagraph(false);
+			if (oFirstParagraph)
+			{
+				const oTextPr = oFirstParagraph.Get_CompiledPr2(false).TextPr.Copy();
+				const oTempTextPr = oFirstParagraph.TextPr && oFirstParagraph.TextPr.Value.Copy();
+				if (oTempTextPr)
+				{
+					oTextPr.Merge(oTempTextPr);
+				}
+				return oTextPr.Lang;
+			}
+
+		}
+		return null;
+	};
 	asc_docs_api.prototype.CheckDeprecatedBulletPreviewInfo = function (arrDrawingInfo, nTypeOfPreview)
 	{
 		const arrAdaptedDrawingInfo = [];
@@ -13810,6 +13830,7 @@ background-repeat: no-repeat;\
     asc_docs_api.prototype["ConvertTableToText"]						= asc_docs_api.prototype.ConvertTableToText;
     asc_docs_api.prototype["SetDrawImagePreviewBulletChangeListLevel"]	= asc_docs_api.prototype.SetDrawImagePreviewBulletChangeListLevel;
     asc_docs_api.prototype["SetDrawImagePreviewBulletForMenu"]			= asc_docs_api.prototype.SetDrawImagePreviewBulletForMenu;
+    asc_docs_api.prototype["asc_GetPossibleNumberingLanguage"]			= asc_docs_api.prototype.asc_GetPossibleNumberingLanguage;
 
 	asc_docs_api.prototype["asc_AddContentControl"]                     = asc_docs_api.prototype.asc_AddContentControl;
 	asc_docs_api.prototype["asc_AddContentControlCheckBox"]             = asc_docs_api.prototype.asc_AddContentControlCheckBox;

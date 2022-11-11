@@ -1306,7 +1306,7 @@ CNumberingLvl.prototype.GetImage = function ()
  *
  * @returns {String | Object}
  */
-CNumberingLvl.prototype.GetDrawingContent = function (arrLvls, nLvl, nNum)
+CNumberingLvl.prototype.GetDrawingContent = function (arrLvls, nLvl, nNum, oLang)
 {
 	if (this.IsImageBullet())
 	{
@@ -1327,11 +1327,11 @@ CNumberingLvl.prototype.GetDrawingContent = function (arrLvls, nLvl, nNum)
 	}
 	else
 	{
-		return this.GetStringByLvlText(arrLvls, nLvl, nNum);
+		return this.GetStringByLvlText(arrLvls, nLvl, nNum, oLang);
 	}
 }
 
-CNumberingLvl.prototype.GetStringByLvlText = function (arrLvls, nLvl, nNum)
+CNumberingLvl.prototype.GetStringByLvlText = function (arrLvls, nLvl, nNum, oLang)
 {
 	const arrResult = [];
 	for (let i = 0; i < this.LvlText.length; i += 1)
@@ -1357,7 +1357,7 @@ CNumberingLvl.prototype.GetStringByLvlText = function (arrLvls, nLvl, nNum)
 					nFormat = arrLvls[nNumberingLvl].GetFormat();
 					nNum = arrLvls[nNumberingLvl].GetStart();
 				}
-				arrResult.push(AscCommon.IntToNumberFormat(nNum, nFormat, this.GetOLang()));
+				arrResult.push(AscCommon.IntToNumberFormat(nNum, nFormat, oLang));
 			}
 		}
 	}
