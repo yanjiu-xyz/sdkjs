@@ -67,8 +67,8 @@ function (window, undefined) {
 	var _func = AscCommonExcel._func;
 
 	cFormulaFunctionGroup['LookupAndReference'] = cFormulaFunctionGroup['LookupAndReference'] || [];
-	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCOLUMN, cCOLUMNS, cFORMULATEXT,
-		cGETPIVOTDATA, cHLOOKUP, cHYPERLINK, cINDEX, cINDIRECT, cLOOKUP, cMATCH, cOFFSET, cROW, cROWS, cRTD, cTRANSPOSE,
+	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCHOOSECOLS, cCHOOSEROWS, cCOLUMN, cCOLUMNS, cDROP, cFORMULATEXT,
+		cGETPIVOTDATA, cHLOOKUP, cHYPERLINK, cINDEX, cINDIRECT, cLOOKUP, cMATCH, cOFFSET, cROW, cROWS, cRTD, cTRANSPOSE, cTAKE,
 		cUNIQUE, cVLOOKUP, cXLOOKUP, cVSTACK, cHSTACK, cTOROW, cTOCOL, cWRAPROWS, cWRAPCOLS);
 
 	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
@@ -279,6 +279,109 @@ function (window, undefined) {
 		}
 
 		return new cError(cErrorType.wrong_value_type);
+	};
+
+	function chooseRowsCols(arg, argument1, byCol) {
+		var argError = cBaseFunction.prototype._checkErrorArg.call(this, arg);
+		if (argError) {
+			return argError;
+		}
+
+		let arg1 = arg[0];
+		let matrix;
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.array || arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+			matrix = arg1.getMatrix();
+		} else if (arg1.type === cElementType.cellsRange3D) {
+			if (arg1.isSingleSheet()) {
+				matrix = arg1.getMatrix()[0];
+			} else {
+				return new cError(cErrorType.bad_reference);
+			}
+		} else if (arg1.type === cElementType.error) {
+			return arg1;
+		} else if (arg1.type === cElementType.empty) {
+			return new cError(cErrorType.wrong_value_type);
+		} else {
+			matrix = [[arg1]];
+		}
+
+		var dimension = arg1.getDimensions();
+		let res;
+		for (let i = 1; i < arg.length; i++) {
+			let _arg = arg[i];
+
+			if (cElementType.cellsRange === _arg.type || cElementType.cellsRange3D === _arg.type) {
+				//_arg = _arg.getValue2(0,0);
+				return new cError(cErrorType.wrong_value_type);
+			} else if (cElementType.array === _arg.type) {
+				//_arg = _arg.getElementRowCol(0, 0);
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			_arg = _arg.tocNumber();
+			if (_arg.type === cElementType.error) {
+				return _arg;
+			}
+			_arg = _arg.toNumber();
+			let reverse = _arg < 0;
+			_arg = Math.abs(_arg);
+			_arg = parseInt(_arg);
+			if (_arg < 1 || (_arg > dimension.col && byCol) || (_arg > dimension.row && !byCol)) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			if (!res) {
+				res = new cArray();
+			}
+
+			if (byCol) {
+				res.pushCol(matrix, reverse ? dimension.col - (_arg - 1) - 1 : _arg - 1);
+			} else {
+				res.pushRow(matrix, reverse ? dimension.row - (_arg - 1) - 1 : _arg - 1);
+			}
+		}
+
+		return res ? res : new cError(cErrorType.wrong_value_type);
+	}
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cCHOOSECOLS() {
+	}
+
+	//***array-formula***
+	cCHOOSECOLS.prototype = Object.create(cBaseFunction.prototype);
+	cCHOOSECOLS.prototype.constructor = cCHOOSECOLS;
+	cCHOOSECOLS.prototype.name = 'CHOOSECOLS';
+	cCHOOSECOLS.prototype.argumentsMin = 2;
+	cCHOOSECOLS.prototype.argumentsMax = 253;
+	cCHOOSECOLS.prototype.argumentsType = [argType.reference, [argType.number]];
+	cCHOOSECOLS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
+	cCHOOSECOLS.prototype.isXLFN = true;
+	cCHOOSECOLS.prototype.Calculate = function (arg) {
+		return chooseRowsCols(arg, arguments[1], true);
+	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cCHOOSEROWS() {
+	}
+
+	//***array-formula***
+	cCHOOSEROWS.prototype = Object.create(cBaseFunction.prototype);
+	cCHOOSEROWS.prototype.constructor = cCHOOSEROWS;
+	cCHOOSEROWS.prototype.name = 'CHOOSEROWS';
+	cCHOOSEROWS.prototype.argumentsMin = 2;
+	cCHOOSEROWS.prototype.argumentsMax = 253;
+	cCHOOSEROWS.prototype.argumentsType = [argType.reference, [argType.number]];
+	cCHOOSEROWS.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
+	cCHOOSEROWS.prototype.isXLFN = true;
+	cCHOOSEROWS.prototype.Calculate = function (arg) {
+		return chooseRowsCols(arg, arguments[1]);
 	};
 
 	/**
@@ -1338,6 +1441,156 @@ function (window, undefined) {
 
 		return TransposeMatrix(arg0);
 	};
+
+	function takeDrop(arg, argument1, isDrop) {
+		var argError = cBaseFunction.prototype._checkErrorArg.call(this, arg);
+		if (argError) {
+			return argError;
+		}
+
+		let arg1 = arg[0];
+		let matrix;
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.array || arg1.type === cElementType.cell || arg1.type === cElementType.cell3D) {
+			matrix = arg1.getMatrix();
+		} else if (arg1.type === cElementType.cellsRange3D) {
+			if (arg1.isSingleSheet()) {
+				matrix = arg1.getMatrix()[0];
+			} else {
+				return new cError(cErrorType.bad_reference);
+			}
+		} else if (arg1.type === cElementType.error) {
+			return arg1;
+		} else if (arg1.type === cElementType.empty) {
+			return new cError(cErrorType.wrong_value_type);
+		} else {
+			matrix = [[arg1]];
+		}
+
+		let array = new cArray();
+		array.fillFromArray(matrix);
+
+		let arg2 = arg[1];
+		if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
+			//_arg = _arg.getValue2(0,0);
+			return new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.array === arg2.type) {
+			//_arg = _arg.getElementRowCol(0, 0);
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+
+		if (cElementType.empty === arg2.type) {
+			arg2 = null;
+		} else {
+			arg2 = arg2.tocNumber();
+			if (arg2.type === cElementType.error) {
+				return arg2;
+			}
+			arg2 = arg2.toNumber();
+			arg2 = parseInt(arg2);
+			if (Math.abs(arg2) < 1) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		let arg3 = arg[2] ? arg[2] : new cEmpty();
+		if (cElementType.cellsRange === arg3.type || cElementType.cellsRange3D === arg3.type) {
+			//_arg = _arg.getValue2(0,0);
+			return new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.array === arg3.type) {
+			//_arg = _arg.getElementRowCol(0, 0);
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+
+		if (cElementType.empty === arg3.type) {
+			arg3 = null;
+		} else {
+			arg3 = arg3.tocNumber();
+			if (arg3.type === cElementType.error) {
+				return arg3;
+			}
+			arg3 = arg3.toNumber();
+			arg3 = parseInt(arg3);
+			if (Math.abs(arg3) < 1) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		if (isDrop) {
+			let dimensions = array.getDimensions();
+
+			if (arg2 && dimensions.row <= Math.abs(arg2)) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+			if (arg3 && dimensions.col <= Math.abs(arg3)) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+
+			if (arg2) {
+				if (arg2 < 0) {
+					arg2 = dimensions.row - Math.abs(arg2);
+				} else {
+					arg2 = -1 * (dimensions.row - arg2);
+				}
+			}
+			if (arg3) {
+				if (arg3 < 0) {
+					arg3 = dimensions.col - Math.abs(arg3);
+				} else {
+					arg3 = -1 * (dimensions.col - arg3);
+				}
+			}
+		}
+
+		let res = array.crop(arg2, arg3);
+		return res ? res : new cError(cErrorType.wrong_value_type);
+	}
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cTAKE() {
+	}
+
+	//***array-formula***
+	cTAKE.prototype = Object.create(cBaseFunction.prototype);
+	cTAKE.prototype.constructor = cTAKE;
+	cTAKE.prototype.name = 'TAKE';
+	cTAKE.prototype.argumentsMin = 2;
+	cTAKE.prototype.argumentsMax = 3;
+	cTAKE.prototype.arrayIndexes = {0: 1};
+	cTAKE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cTAKE.prototype.isXLFN = true;
+	cTAKE.prototype.argumentsType = [argType.reference, argType.number, argType.number];
+	cTAKE.prototype.arrayIndexes = {0: 1};
+	cTAKE.prototype.Calculate = function (arg) {
+		return takeDrop(arg, arguments[1]);
+	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cDROP() {
+	}
+
+	//***array-formula***
+	cDROP.prototype = Object.create(cBaseFunction.prototype);
+	cDROP.prototype.constructor = cDROP;
+	cDROP.prototype.name = 'DROP';
+	cDROP.prototype.argumentsMin = 2;
+	cDROP.prototype.argumentsMax = 3;
+	cDROP.prototype.arrayIndexes = {0: 1};
+	cDROP.prototype.numFormat = AscCommonExcel.cNumFormatNone;
+	cDROP.prototype.isXLFN = true;
+	cDROP.prototype.argumentsType = [argType.reference, argType.number, argType.number];
+	cDROP.prototype.arrayIndexes = {0: 1};
+	cDROP.prototype.Calculate = function (arg) {
+		return takeDrop(arg, arguments[1], true);
+	};
+
 
 	/**
 	 * @constructor
@@ -2502,7 +2755,7 @@ function (window, undefined) {
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
-	}
+	};
 
 	/**
 	 * @constructor
@@ -2544,7 +2797,7 @@ function (window, undefined) {
 			let maxColCount = 0;
 			for (let j = 0; j < matrix.length; j++) {
 				if (matrix[j]) {
-					maxColCount = Math.max(maxColCount, matrix[j].length)
+					maxColCount = Math.max(maxColCount, matrix[j].length);
 					for (let k = 0; k < matrix[j].length; k++) {
 						if (matrix[j][k]) {
 							if (!unionArray) {
@@ -2569,7 +2822,7 @@ function (window, undefined) {
 		} else {
 			return new cError(cErrorType.wrong_value_type);
 		}
-	}
+	};
 
 	function toRowCol(arg, argument1, toCol) {
 		var argError = cBaseFunction.prototype._checkErrorArg.call(this, arg);
@@ -2680,7 +2933,7 @@ function (window, undefined) {
 	cTOROW.prototype.isXLFN = true;
 	cTOROW.prototype.Calculate = function (arg) {
 		return toRowCol(arg, arguments[1]);
-	}
+	};
 
 	/**
 	 * @constructor
@@ -2701,7 +2954,7 @@ function (window, undefined) {
 	cTOCOL.prototype.isXLFN = true;
 	cTOCOL.prototype.Calculate = function (arg) {
 		return toRowCol(arg, arguments[1], true);
-	}
+	};
 
 	function wrapRowsCols(arg, argument1, toCol) {
 		var argError = cBaseFunction.prototype._checkErrorArg.call(this, arg);
@@ -2799,7 +3052,7 @@ function (window, undefined) {
 	cWRAPROWS.prototype.isXLFN = true;
 	cWRAPROWS.prototype.Calculate = function (arg) {
 		return wrapRowsCols(arg, arguments[1]);
-	}
+	};
 
 	/**
 	 * @constructor
@@ -2820,7 +3073,7 @@ function (window, undefined) {
 	cWRAPCOLS.prototype.isXLFN = true;
 	cWRAPCOLS.prototype.Calculate = function (arg) {
 		return wrapRowsCols(arg, arguments[1], true);
-	}
+	};
 
 	var g_oVLOOKUPCache = new VHLOOKUPCache(false);
 	var g_oHLOOKUPCache = new VHLOOKUPCache(true);

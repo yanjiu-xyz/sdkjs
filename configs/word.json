@@ -19,6 +19,7 @@
 			"common/libfont/engine.js",
 			"common/libfont/loader.js",
 			"word/apiDefines.js",
+			"common/collaborativeHistory.js",
 			"common/CollaborativeEditingBase.js",
 			"word/Editor/CollaborativeEditing.js",
 			"common/macros.js",
@@ -37,6 +38,7 @@
 			"common/api/spellCheckSettings.js",
 			"common/api/addTextSettings.js",
 			"common/api/autoCorrectSettings.js",
+			"common/api/firstLetterExceptions.js",
 
 			"common/nameMap.js",
 			"common/downloaderfiles.js",
@@ -178,6 +180,7 @@
 			"word/Editor/HyperlinkChanges.js",
 			"word/Editor/Field.js",
 			"word/Editor/FieldChanges.js",
+			"word/Editor/FormFieldChanges.js",
 			"word/Editor/Run.js",
 			"word/Editor/PresentationField.js",
 			"word/Editor/RunChanges.js",
@@ -290,6 +293,8 @@
 			"word/Math/operators.js",
 			"word/Math/accent.js",
 			"word/Math/borderBox.js",
+			"word/Math/mathTrackHandler.js",
+
 			"word/Editor/Styles/FixedFormDefaults.js",
 
 			"word/apiBuilder.js",
