@@ -10577,14 +10577,15 @@
 		{
 			const nMaxFontSize = nHeight_px * this.m_nSingleBulletFontSizeCoefficient;
 			// для буллетов решено не уменьшать их превью, как и в word
-			const oFitInformation = this.getInformationWithFitFontSize(oLvl, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm, nMaxFontSize, nMaxFontSize);
-			const oFitTextPr = oFitInformation.textPr;
-			const nLineHeight = oFitInformation.lineHeight;
-			oLvl.SetTextPr(oFitTextPr);
+			//const oFitInformation = this.getInformationWithFitFontSize(oLvl, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm, nMaxFontSize, nMaxFontSize);
+			//const oFitTextPr = oFitInformation.textPr;
+			const oTextPr = oLvl.GetTextPr();
+			oTextPr.FontSize = oTextPr.FontSizeCS = nMaxFontSize;
 			oLvl.SetJc(AscCommon.align_Left);
 			const oCalculationPosition = this.getXYForCenterPosition(oLvl, nWidth_px, nHeight_px);
 			const nX = oCalculationPosition.nX;
 			const nY = oCalculationPosition.nY;
+			const nLineHeight = oCalculationPosition.nLineHeight;
 			const sText = drawingContent;
 			this.drawTextWithLvlInformation(sText, oLvl, nX, nY, nLineHeight, oGraphics);
 		}
@@ -10630,8 +10631,7 @@
 			oNewShape.findFitFontSize(oNewShape.txBody.content, nMinFontSize, nMaxFontSize, true);
 		}
 
-		const nLineHeight = oParagraph.Get_EmptyHeight();
-		return {textPr: oTextPr, lineHeight: nLineHeight};
+		return oTextPr;
 	};
 
 
@@ -10695,7 +10695,7 @@
 
 		 const nX = (nWidth >> 1) - Math.round((oSumInformation.Width / 2 + oSumInformation.rasterOffsetX) * AscCommon.g_dKoef_mm_to_pix);
 		 const nY = (nHeight >> 1) + Math.round((oSumInformation.Height / 2 + (oSumInformation.Ascent - oSumInformation.Height + oSumInformation.rasterOffsetY)) * AscCommon.g_dKoef_mm_to_pix);
-		return {nX: nX, nY: nY};
+		return {nX: nX, nY: nY, nLineHeight: oSumInformation.Height};
 	};
 
 	CBulletPreviewDrawer.prototype.drawSingleLvlWithLines = function (sDivId, arrLvls)
@@ -10766,13 +10766,12 @@
 		const nWidth_px = oCanvas.clientWidth;
 		const nMaxFontSize = nWidth_px * nFontSizeCoefficient;
 
-		const oFitInformation = this.getInformationWithFitFontSize(oLvl, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm, 5, nMaxFontSize);
-		const oFitTextPr = oFitInformation.textPr;
-		const nLineHeight = oFitInformation.lineHeight;
+		const oFitTextPr = this.getInformationWithFitFontSize(oLvl, nWidth_px * AscCommon.g_dKoef_pix_to_mm, nHeight_px * AscCommon.g_dKoef_pix_to_mm, 5, nMaxFontSize);
 		oLvl.SetTextPr(oFitTextPr);
 		const oCalculationPosition = this.getXYForCenterPosition(oLvl, nWidth_px, nHeight_px);
 		const nX = oCalculationPosition.nX;
 		const nY = oCalculationPosition.nY;
+		const nLineHeight = oCalculationPosition.nLineHeight;
 
 		this.drawTextWithLvlInformation(sText, oLvl, nX, nY, nLineHeight, oGraphics);
 	};
@@ -10818,7 +10817,7 @@
 			const oParagraphTextOptions = this.getHeadingTextInformation(oLvl, nXPositionOfLine, nTextYy);
 			if (typeof drawingContent !== 'string')
 			{
-				this.drawImageBulletsWithLine(drawingContent, nTextYx, nTextYy, (nLineDistance - 4), oGraphics, oParagraphTextOptions, oTextPr);
+				this.drawImageBulletsWithLine(drawingContent, nTextYx, nTextYy, nLineHeight, oGraphics, oParagraphTextOptions, oTextPr);
 			}
 			else
 			{
