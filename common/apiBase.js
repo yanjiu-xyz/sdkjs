@@ -3540,11 +3540,11 @@
 			let oNumberingInfo;
 
 			// Это верный тип передачи информации
-			if (arrDrawingInfo[i].numberingInfo)
+			if (arrDrawingInfo[i]["numberingInfo"])
 			{
 				arrAdaptedDrawingInfo.push(arrDrawingInfo[i]);
 			}
-			else if (arrDrawingInfo[i].divId)
+			else if (arrDrawingInfo[i]["divId"])
 			{
 				sDivId = arrDrawingInfo[i]["divId"];
 				let sResult = null;
