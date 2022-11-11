@@ -1854,6 +1854,7 @@
 		}
 		return null;
 	};
+	CAscNumberingLvl.prototype.get_StopTab = CAscNumberingLvl.prototype.GetStopTab;
 
 	CAscNumberingLvl.prototype.SetStopTab = function (nValue)
 	{
@@ -1958,44 +1959,6 @@
 	{
 		return this.Suff;
 	};
-	CAscNumberingLvl.prototype.GetStringByLvlText = function (arrLvls, nLvl, nNum)
-	{
-		const arrResult = [];
-		for (let i = 0; i < this.Text.length; i += 1)
-		{
-			const oNumberingLvlText = this.Text[i];
-			switch (oNumberingLvlText.Type) {
-				case Asc.c_oAscNumberingLvlTextType.Text:
-				{
-					arrResult.push(oNumberingLvlText.get_Value());
-					break;
-				}
-				case Asc.c_oAscNumberingLvlTextType.Num:
-				{
-					if (nNum) {
-						let nFormat = this.get_Format();
-						const nCurrentLvl = oNumberingLvlText.get_Value();
-						if (nLvl === nCurrentLvl)
-						{
-							nNum = (this.get_Start() - 1) + nNum;
-						}
-						else if (nLvl > nCurrentLvl && arrLvls[nCurrentLvl])
-						{
-							nFormat = arrLvls[nCurrentLvl].get_Format();
-							nNum = arrLvls[nCurrentLvl].get_Start();
-						}
-						arrResult.push(AscCommon.IntToNumberFormat(nNum, nFormat, this.get_OLang()));
-					}
-					break;
-				}
-				default:
-				{
-					break;
-				}
-			}
-		}
-		return arrResult.join('');
-	}
 	window['Asc']['CAscNumberingLvl']                 = window['Asc'].CAscNumberingLvl = CAscNumberingLvl;
 	CAscNumberingLvl.prototype['get_LvlNum']          = CAscNumberingLvl.prototype.get_LvlNum;
 	CAscNumberingLvl.prototype['get_Format']          = CAscNumberingLvl.prototype.get_Format;
@@ -2030,7 +1993,8 @@
 	CAscNumberingLvl.prototype['put_IndentSize']      = CAscNumberingLvl.prototype.put_IndentSize;
 	CAscNumberingLvl.prototype['get_NumberPosition']  = CAscNumberingLvl.prototype.get_NumberPosition;
 	CAscNumberingLvl.prototype['put_NumberPosition']  = CAscNumberingLvl.prototype.put_NumberPosition;
-
+	CAscNumberingLvl.prototype['put_StopTab']         = CAscNumberingLvl.prototype.put_StopTab;
+	CAscNumberingLvl.prototype['get_StopTab']         = CAscNumberingLvl.prototype.get_StopTab;
 
 	function CAscWatermarkProperties()
 	{
