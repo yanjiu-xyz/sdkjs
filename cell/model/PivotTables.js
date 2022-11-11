@@ -16174,7 +16174,7 @@ DataRowTraversal.prototype.setRanks = function(rowItem, colItem, rowFieldSubtota
 					_data = _data.subtotal[this.colFieldItemCache[i].x];
 				}
 			}
-			if (_data && _data.total[dataIndex].getCellValue(this.dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t).type !== AscCommon.CellValueType.Error) {
+			if (_data && _data.total[dataIndex] &&_data.total[dataIndex].getCellValue(this.dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t).type !== AscCommon.CellValueType.Error) {
 				elemCache.push(new RankObject(_data, rowItem, colItem, rowFieldSubtotal, this.dataField.subtotal));
 			}
 		}
@@ -16206,7 +16206,7 @@ DataRowTraversal.prototype.setRanks = function(rowItem, colItem, rowFieldSubtota
 					_data = _data.subtotal[this.colFieldItemCache[i].x];
 				}
 			}
-			if (_data && _data.total[dataIndex].getCellValue(this.dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t).type !== AscCommon.CellValueType.Error) {
+			if (_data && _data.total[dataIndex] && _data.total[dataIndex].getCellValue(this.dataField.subtotal, rowFieldSubtotal, rowItem.t, colItem.t).type !== AscCommon.CellValueType.Error) {
 				elemCache.push(new RankObject(_data, rowItem, colItem, rowFieldSubtotal, this.dataField.subtotal));
 			}
 		}
@@ -16562,7 +16562,7 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 					}
 				} else if (this.isNoData) {
 					oCellValue = this.getErrorCellvalue(AscCommonExcel.cErrorType.not_available);;
-				} else { //this.rowValueCache.length - 1 < this.diffRowIndex[dataIndex] || this.rowValueCache[this.diffRowIndex[dataIndex]] === this.dataField.baseItem
+				} else { 
 					if (this.diffRowIndex[dataIndex] !== null && rowItem.t !== Asc.c_oAscItemType.Grand && this.cur && this.cur.total[dataIndex]) {
 						if (this.rowValueCache.length - 1 < this.diffRowIndex[dataIndex]) {
 							break;
