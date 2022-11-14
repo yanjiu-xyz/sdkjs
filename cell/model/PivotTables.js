@@ -15870,7 +15870,6 @@ DataRowTraversal.prototype.initCol = function(dataRow) {
 	this.colValueCache = [];
 };
 DataRowTraversal.prototype.setStartColIndex = function(pivotFields, fieldIndex, colItem, colR, colFields, rowItem) {
-	let dataIndex = Math.max(rowItem.i, colItem.i);
 	this.cur = this.curColCache[colR];
 	this.colTotal = this.colTotalCache[colR];
 	this.rowParent = this.rowParentCache[colR];
