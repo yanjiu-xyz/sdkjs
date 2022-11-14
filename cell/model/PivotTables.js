@@ -16393,7 +16393,7 @@ DataRowTraversal.prototype.checkBaseField = function (dataField) {
  * Repetition of MS functionality.
  * If the current item is in the base field,
  * then we must calculate the percentage of the sum of the current elements
- * if not, then we calculate the percentage of the sum of runtotals.
+ * if not, then we calculate the percentage of the sum of elems.
  * @param {Number} dataIndex 
  * @param {CT_I} rowItem 
  * @param {CT_I} colItem 
