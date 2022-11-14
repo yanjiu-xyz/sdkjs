@@ -16368,7 +16368,11 @@ DataRowTraversal.prototype.setRunTotals = function(rowItem, colItem, rowFieldSub
 	}
 	return elemCache;
 };
-
+/**
+ * Checks if such base field exists in a pivot table.
+ * @param {CT_DataField} dataField 
+ * @return {Boolean} 
+ */
 DataRowTraversal.prototype.checkBaseField = function (dataField) {
 	if (dataField.showDataAs === Asc.c_oAscShowDataAs.PercentOfRunningTotal ||
 		dataField.showDataAs === Asc.c_oAscShowDataAs.PercentOfParent ||
@@ -16389,7 +16393,13 @@ DataRowTraversal.prototype.checkBaseField = function (dataField) {
  * Repetition of MS functionality.
  * If the current item is in the base field,
  * then we must calculate the percentage of the sum of the current elements
- * if not, then we calculate the percentage of the sum of runtotals
+ * if not, then we calculate the percentage of the sum of runtotals.
+ * @param {Number} dataIndex 
+ * @param {CT_I} rowItem 
+ * @param {CT_I} colItem 
+ * @param {CT_DataField} dataField 
+ * @param {Object} props 
+ * @return {AscCommonExcel.CCellValue}
  */
 DataRowTraversal.prototype.getPercentOfRunningTotal = function (dataIndex, rowItem, colItem, dataField, props) {
 	let oCellValue;
@@ -16437,7 +16447,15 @@ DataRowTraversal.prototype.getPercentOfRunningTotal = function (dataIndex, rowIt
 	}
 	return oCellValue;
 };
-
+/**
+ * Returns the current element's percentage of the parent element in the specified base field.
+ * @param {Number} dataIndex 
+ * @param {CT_I} rowItem 
+ * @param {CT_I} colItem 
+ * @param {CT_DataField} dataField 
+ * @param {Object} props 
+ * @return {AscCommonExcel.CCellValue}
+ */
 DataRowTraversal.prototype.getPercentOfParent = function (dataIndex, rowItem, colItem, dataField, props) {
 	let oCellValue;
 	let _oCellValue;
@@ -16473,7 +16491,15 @@ DataRowTraversal.prototype.getPercentOfParent = function (dataIndex, rowItem, co
 	}
 	return oCellValue;
 };
-
+/**
+ * Returns the current element's percentage of the parent element in the parent column.
+ * @param {Number} dataIndex 
+ * @param {CT_I} rowItem 
+ * @param {CT_I} colItem 
+ * @param {CT_DataField} dataField 
+ * @param {Object} props 
+ * @return {AscCommonExcel.CCellValue}
+ */
 DataRowTraversal.prototype.getPercentOfParentCol = function (dataIndex, rowItem, colItem, dataField, props) {
 	let oCellValue;
 	let _oCellValue;
@@ -16498,7 +16524,15 @@ DataRowTraversal.prototype.getPercentOfParentCol = function (dataIndex, rowItem,
 	}
 	return oCellValue;
 };
-
+/**
+ * Returns the current element's percentage of the parent element in the parent row.
+ * @param {Number} dataIndex 
+ * @param {CT_I} rowItem 
+ * @param {CT_I} colItem 
+ * @param {CT_DataField} dataField 
+ * @param {Object} props 
+ * @return {AscCommonExcel.CCellValue}
+ */
 DataRowTraversal.prototype.getPercentOfParentRow = function (dataIndex, rowItem, colItem, dataField, props) {
 	let oCellValue;
 	let _oCellValue;
@@ -16523,8 +16557,16 @@ DataRowTraversal.prototype.getPercentOfParentRow = function (dataIndex, rowItem,
 	}
 	return oCellValue;
 };
-
-DataRowTraversal.prototype.getRankDescending = function (dataIndex, rowItem, colItem, dataField, props) {
+/**
+ * Returns the index of the current element in an descending sorted list of values in this underlying field.
+ * @param {Number} dataIndex 
+ * @param {CT_I} rowItem 
+ * @param {CT_I} colItem 
+ * @param {CT_DataField} dataField 
+ * @param {Object} props 
+ * @return {AscCommonExcel.CCellValue}
+ */
+DataRowTraversal.prototype.getRankDescending = function (dataIndex, rowItem, colItem, props) {
 	let oCellValue = new AscCommonExcel.CCellValue();
 	oCellValue.type = AscCommon.CellValueType.Number;
 	if ((this.diffRowIndex[dataIndex] !== null && rowItem.t !== Asc.c_oAscItemType.Grand) || (this.diffColIndex[dataIndex] !== null && colItem.t !== Asc.c_oAscItemType.Grand)) {
@@ -16539,8 +16581,16 @@ DataRowTraversal.prototype.getRankDescending = function (dataIndex, rowItem, col
 	}
 	return oCellValue;
 };
-
-DataRowTraversal.prototype.getRankAscending = function (dataIndex, rowItem, colItem, dataField, props) {
+/**
+ * Returns the index of the current element in an ascending sorted list of values in this underlying field.
+ * @param {Number} dataIndex 
+ * @param {CT_I} rowItem 
+ * @param {CT_I} colItem 
+ * @param {CT_DataField} dataField 
+ * @param {Object} props 
+ * @return {AscCommonExcel.CCellValue}
+ */
+DataRowTraversal.prototype.getRankAscending = function (dataIndex, rowItem, colItem, props) {
 	let oCellValue = new AscCommonExcel.CCellValue();
 	oCellValue.type = AscCommon.CellValueType.Number;
 	if ((this.diffRowIndex[dataIndex] !== null && rowItem.t !== Asc.c_oAscItemType.Grand) || (this.diffColIndex[dataIndex] !== null && colItem.t !== Asc.c_oAscItemType.Grand)) {
@@ -16555,7 +16605,15 @@ DataRowTraversal.prototype.getRankAscending = function (dataIndex, rowItem, colI
 	}
 	return oCellValue;
 };
-
+/**
+ * Returns the normal value.
+ * @param {Number} dataIndex 
+ * @param {CT_I} rowItem 
+ * @param {CT_I} colItem 
+ * @param {CT_DataField} dataField 
+ * @param {Object} props 
+ * @return {AscCommonExcel.CCellValue}
+ */
 DataRowTraversal.prototype.getNormal = function (dataIndex, rowItem, colItem, dataField, props) {
 	let oCellValue = new AscCommonExcel.CCellValue();
 	if (this.cur && this.cur.total[dataIndex]) {
@@ -16564,7 +16622,17 @@ DataRowTraversal.prototype.getNormal = function (dataIndex, rowItem, colItem, da
 	}
 	return oCellValue;
 };
-
+/**
+ * Returns the difference between the current element and the specified element in the specified base field.
+ * @param {Number} dataIndex 
+ * @param {CT_I} rowItem 
+ * @param {CT_I} colItem 
+ * @param {CT_DataField} dataField 
+ * @param {Object} props 
+ * @param {Number} rowIndex 
+ * @param {Number} colIndex 
+ * @return {AscCommonExcel.CCellValue}
+ */
 DataRowTraversal.prototype.getDifference = function (dataIndex, rowItem, colItem, dataField, props, rowIndex, colIndex) {
 	let oCellValue;
 	let total;
@@ -16593,7 +16661,17 @@ DataRowTraversal.prototype.getDifference = function (dataIndex, rowItem, colItem
 	}
 	return oCellValue;
 };
-
+/**
+ * Returns the proportion of the current element from the specified element in the specified base field.
+ * @param {Number} dataIndex 
+ * @param {CT_I} rowItem 
+ * @param {CT_I} colItem 
+ * @param {CT_DataField} dataField 
+ * @param {Object} props 
+ * @param {Number} rowIndex 
+ * @param {Number} colIndex 
+ * @return {AscCommonExcel.CCellValue}
+ */
 DataRowTraversal.prototype.getPercent = function (dataIndex, rowItem, colItem, dataField, props, rowIndex, colIndex) {
 	let oCellValue;
 	let _oCellValue;
@@ -16649,7 +16727,17 @@ DataRowTraversal.prototype.getPercent = function (dataIndex, rowItem, colItem, d
 	}
 	return oCellValue;
 };
-
+/**
+ * Returns the difference percentage between the current element and the specified element in the specified base field.
+ * @param {Number} dataIndex 
+ * @param {CT_I} rowItem 
+ * @param {CT_I} colItem 
+ * @param {CT_DataField} dataField 
+ * @param {Object} props 
+ * @param {Number} rowIndex 
+ * @param {Number} colIndex 
+ * @return {AscCommonExcel.CCellValue}
+ */
 DataRowTraversal.prototype.getPercentDiff = function (dataIndex, rowItem, colItem, dataField, props, rowIndex, colIndex) {
 	let oCellValue;
 	let total;
@@ -16682,7 +16770,15 @@ DataRowTraversal.prototype.getPercentDiff = function (dataIndex, rowItem, colIte
 	}
 	return oCellValue;
 };
-
+/**
+ * Returns the current element's percentage of the sum in the row.
+ * @param {Number} dataIndex 
+ * @param {CT_I} rowItem 
+ * @param {CT_I} colItem 
+ * @param {CT_DataField} dataField 
+ * @param {Object} props 
+ * @return {AscCommonExcel.CCellValue}
+ */
 DataRowTraversal.prototype.getPercentOfRow = function (dataIndex, rowItem, colItem, dataField, props) {
 	let oCellValue;
 	let total;
@@ -16697,7 +16793,15 @@ DataRowTraversal.prototype.getPercentOfRow = function (dataIndex, rowItem, colIt
 	oCellValue = this.divCellValues(oCellValue, _oCellValue);
 	return oCellValue;
 };
-
+/**
+ * Returns the current element's percentage of the sum in the column.
+ * @param {Number} dataIndex 
+ * @param {CT_I} rowItem 
+ * @param {CT_I} colItem 
+ * @param {CT_DataField} dataField 
+ * @param {Object} props 
+ * @return {AscCommonExcel.CCellValue}
+ */
 DataRowTraversal.prototype.getPercentOfCol = function (dataIndex, rowItem, colItem, dataField, props) {
 	let oCellValue;
 	let total;
@@ -16712,7 +16816,15 @@ DataRowTraversal.prototype.getPercentOfCol = function (dataIndex, rowItem, colIt
 	oCellValue = this.divCellValues(oCellValue, _oCellValue);
 	return oCellValue;
 };
-
+/**
+ * Returns the current element's percentage of the grand total.
+ * @param {Number} dataIndex 
+ * @param {CT_I} rowItem 
+ * @param {CT_I} colItem 
+ * @param {CT_DataField} dataField 
+ * @param {Object} props 
+ * @return {AscCommonExcel.CCellValue}
+ */
 DataRowTraversal.prototype.getPercentOfTotal = function (dataIndex, rowItem, colItem, dataField, props, dataRow) {
 	let oCellValue;
 	let total;
@@ -16726,7 +16838,15 @@ DataRowTraversal.prototype.getPercentOfTotal = function (dataIndex, rowItem, col
 	oCellValue = this.divCellValues(oCellValue, _oCellValue);
 	return oCellValue;
 };
-
+/**
+ * Returns the current element's index.
+ * @param {Number} dataIndex 
+ * @param {CT_I} rowItem 
+ * @param {CT_I} colItem 
+ * @param {CT_DataField} dataField 
+ * @param {Object} props 
+ * @return {AscCommonExcel.CCellValue}
+ */
 DataRowTraversal.prototype.getIndex = function (dataIndex, rowItem, colItem, dataField, props, dataRow) {
 	let oCellValue;
 	let total;
@@ -16751,8 +16871,15 @@ DataRowTraversal.prototype.getIndex = function (dataIndex, rowItem, colItem, dat
 	oCellValue = this.divCellValues(_specGravity, _totalSpecGravity);
 	return oCellValue;
 };
-
-DataRowTraversal.prototype.getRuntotal = function (dataIndex, rowItem, colItem, dataField, props) {
+/**
+ * Returns the sum of all previous elements in the specified base field.
+ * @param {Number} dataIndex 
+ * @param {CT_I} rowItem 
+ * @param {CT_I} colItem 
+ * @param {Object} props 
+ * @return {AscCommonExcel.CCellValue}
+ */
+DataRowTraversal.prototype.getRuntotal = function (dataIndex, rowItem, colItem, props) {
 	let oCellValue;
 	if ((this.diffRowIndex[dataIndex] !== null && rowItem.t !== Asc.c_oAscItemType.Grand) || (this.diffColIndex[dataIndex] !== null && colItem.t !== Asc.c_oAscItemType.Grand)) {
 		if (this.cur && this.cur.runTotalCellValue[dataIndex]) {
@@ -16766,7 +16893,17 @@ DataRowTraversal.prototype.getRuntotal = function (dataIndex, rowItem, colItem, 
 	}
 	return oCellValue;
 };
-
+/**
+ * Returns a value depending on the installed showDataAs.
+ * @param {CT_DataFields} dataFields 
+ * @param {CT_I} rowItem 
+ * @param {CT_I} colItem 
+ * @param {Object} props 
+ * @param {PivotDataElem} dataRow 
+ * @param {Number} rowIndex 
+ * @param {Number} colIndex 
+ * @return {AscCommonExcel.CCellValue} 
+ */
 DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem, props, dataRow, rowIndex, colIndex) {
 	let dataIndex = Math.max(rowItem.i, colItem.i);
 	let dataField = dataFields[dataIndex];
@@ -16788,10 +16925,10 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 				oCellValue = this.getPercentOfParentRow(dataIndex, rowItem, colItem, dataField, props);
 				break;
 			case Asc.c_oAscShowDataAs.RankDescending:
-				oCellValue = this.getRankDescending(dataIndex, rowItem, colItem, dataField, props);
+				oCellValue = this.getRankDescending(dataIndex, rowItem, colItem, props);
 				break;
 			case Asc.c_oAscShowDataAs.RankAscending:
-				oCellValue = this.getRankAscending(dataIndex, rowItem, colItem, dataField, props);
+				oCellValue = this.getRankAscending(dataIndex, rowItem, colItem, props);
 				break;
 			case Asc.c_oAscShowDataAs.Normal:
 				oCellValue = this.getNormal(dataIndex, rowItem, colItem, dataField, props);
@@ -16818,7 +16955,7 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 				oCellValue = this.getIndex(dataIndex, rowItem, colItem, dataField, props, dataRow);
 				break;
 			case Asc.c_oAscShowDataAs.RunTotal:
-				oCellValue = this.getRuntotal(dataIndex, rowItem, colItem, dataField, props);
+				oCellValue = this.getRuntotal(dataIndex, rowItem, colItem, props);
 				break;
 			default:
 				// Exception Handling
