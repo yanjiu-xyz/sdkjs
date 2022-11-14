@@ -16352,12 +16352,32 @@ DataRowTraversal.prototype.setRunTotals = function(rowItem, colItem, rowFieldSub
 	return elemCache;
 };
 
+DataRowTraversal.prototype.checkBaseField = function (dataField) {
+	if (dataField.showDataAs === Asc.c_oAscShowDataAs.PercentOfRunningTotal ||
+		dataField.showDataAs === Asc.c_oAscShowDataAs.PercentOfParent ||
+		dataField.showDataAs === Asc.c_oAscShowDataAs.RankDescending ||
+		dataField.showDataAs === Asc.c_oAscShowDataAs.RankAscending ||
+		dataField.showDataAs === Asc.c_oAscShowDataAs.Difference ||
+		dataField.showDataAs === Asc.c_oAscShowDataAs.Percent ||
+		dataField.showDataAs === Asc.c_oAscShowDataAs.PercentDiff ||
+		dataField.showDataAs === Asc.c_oAscShowDataAs.RankAscending ||
+		dataField.showDataAs === Asc.c_oAscShowDataAs.RankAscending) {
+			if (this.pivotFields[dataField.baseField].axis === null) {
+				return true;
+			}
+		}
+	return false;
+};
+
 DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem, props, dataRow, rowIndex, colIndex) {
 	var dataIndex = Math.max(rowItem.i, colItem.i);
 	/**
 	 * @type {CT_DataField}
 	 */
 	let dataField = dataFields[dataIndex];
+	if (this.checkBaseField(dataField)) {
+		return this.getErrorCellvalue(AscCommonExcel.cErrorType.not_available);
+	}
 	let oCellValue = null, total;
 	let _colTotal, _oCellValue, _rowTotal, _grandTotal, _rowOCellValue, _colOCellValue, _grandOCellValue, parentTotal;
 		switch (dataField.showDataAs) {
