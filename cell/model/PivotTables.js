@@ -16385,7 +16385,7 @@ DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem,
 			 * Repetition of MS functionality.
 			 * If the current item is in the base field,
 			 * then we must calculate the percentage of the sum of the current elements
-			 * if not, then we calculate the percentage of the maximum runtotal
+			 * if not, then we calculate the percentage of the sum of runtotals
 			 */
 			case Asc.c_oAscShowDataAs.PercentOfRunningTotal:
 				if ((this.diffRowIndex[dataIndex] !== null && rowItem.t !== Asc.c_oAscItemType.Grand) || (this.diffColIndex[dataIndex] !== null && colItem.t !== Asc.c_oAscItemType.Grand)) {
