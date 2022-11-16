@@ -445,25 +445,8 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 
 	function fillData(ws, data, range) {
-		var range = ws.getRange4(range.r1, range.c1);
-		for (var i = 0; i < data.length; ++i) {
-			var row = data[i];
-			for (var j = 0; j < row.length; ++j) {
-				range.setOffset(new AscCommon.CellBase(i, j));
-				var val = row[j];
-				if ("string" === typeof val) {
-					range.setValue(val);
-				} else {
-					if (val.value) {
-						range.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, val.value));
-					}
-					if (val.format) {
-						range.setNumFormat(val.format);
-					}
-				}
-				range.setOffset(new AscCommon.CellBase(-i, -j));
-			}
-		}
+		range = ws.getRange4(range.r1, range.c1);
+		range.fillData(data);
 	}
 	function getReportValues(pivot) {
 		var res = [];

@@ -329,8 +329,8 @@ function PivotDataLocation(ws, bbox, headings) {
 }
 PivotDataLocation.prototype.isEqual = function (val) {
 	var res = val && this.ws === val.ws
-		&& (!this.bbox && !val.bbox) || (this.bbox && val.bbox && this.bbox.isEqual(val.bbox))
-		&& (!this.headings && !val.headings) || (this.headings && val.headings && AscCommon.isEqualSortedArrays(this.headings, val.headings));
+		&& ((!this.bbox && !val.bbox) || (this.bbox && val.bbox && this.bbox.isEqual(val.bbox)))
+		&& ((!this.headings && !val.headings) || (this.headings && val.headings && AscCommon.isEqualSortedArrays(this.headings, val.headings)));
 	return !!res;
 }
 function setTableProperty(pivot, oldVal, newVal, addToHistory, historyType, changeData) {
@@ -2464,6 +2464,7 @@ CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFiel
 		var maxValue = Number.NEGATIVE_INFINITY, maxDate = Number.NEGATIVE_INFINITY;
 		var minValue = Number.POSITIVE_INFINITY, minDate = Number.POSITIVE_INFINITY;
 		var records = new PivotRecords();
+		let stringCaseMap = new Map();
 		var lastRow, lastRowWithText;
 		lastRow = lastRowWithText = firstRow - 1;
 		ws.getRange3(lastRow + 1, bbox.c1 + i, bbox.r2, bbox.c1 + i)._foreachNoEmptyByCol(function(cell) {
@@ -2500,7 +2501,13 @@ CT_PivotCacheRecords.prototype.fromWorksheetRange = function(location, cacheFiel
 						break;
 					case AscCommon.CellValueType.String:
 						var text = cell.getValueWithoutFormat();
-						records.addString(text);
+						let textLower = text.toLowerCase();
+						let textWithCase = stringCaseMap.get(textLower);
+						if (!textWithCase) {
+							textWithCase = text;
+							stringCaseMap.set(textLower, textWithCase);
+						}
+						records.addString(textWithCase);
 						if (text.length > 255) {
 							si.longText = true;
 						}
@@ -15166,6 +15173,7 @@ function PivotRecords() {
 	this.startCount = 0;
 
 //inner
+	this.stringMap = new Map();
 	this._curBoolean = new CT_Boolean();
 	this._curDateTime = new CT_DateTime();
 	this._curError = new CT_Error();
@@ -15307,8 +15315,15 @@ PivotRecords.prototype.addMissing = function(count, addition) {
 PivotRecords.prototype.addNumber = function(val, addition) {
 	this._add(c_oAscPivotRecType.Number, val, addition);
 };
+PivotRecords.prototype._addString = function(val) {
+	let valLower = val.toLowerCase();
+	this.stringMap.get(valLower);
+	this.stringMap.set(valLower, {});
+};
 PivotRecords.prototype.addString = function(val, addition) {
 	//todo don't use global editor
+
+	//AscFonts.FontPickerByCharacter.getFontsByString(text);
 	val = window["Asc"]["editor"].wbModel.sharedStrings.addText(val);
 	this._add(c_oAscPivotRecType.String, val, addition);
 };
