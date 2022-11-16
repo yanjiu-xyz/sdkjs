@@ -1485,7 +1485,7 @@
                 callback && callback();
             });
         };
-        AscCommon.sendImgUrls(oApi, oObjectsForDownload.aUrls, fCallback, null, true);
+        AscCommon.sendImgUrls(oApi, oObjectsForDownload.aUrls, fCallback, true);
         return null;
     };
     CDocumentComparison.prototype.getNewParaPrWithDiff = function(oElementPr, oPartnerPr)

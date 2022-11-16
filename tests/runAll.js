@@ -39,9 +39,11 @@ const allTests = [
 	// 'word/unit-tests/paragraphContentPos.html',
 	// 'word/document-calculation/paragraph.html',
 	// 'word/document-calculation/table/flowTablePosition.html',
+	// 'word/document-calculation/textShaper/textShaper.html',
 	// 'word/forms/forms.html',
 	// 'word/forms/complexForm.html',
 	// 'word/api/api.html',
+	// 'word/api/textInput.html',
 	// 'word/styles/paraPr.html',
 	'word/merge-documents/mergeDocuments.html'
 ];
@@ -52,7 +54,7 @@ const {
   runQunitPuppeteer,
   printResultSummary,
   printFailedTests
-} = require("C:\\Users\\Vladimir.Privezenov\\AppData\\Roaming\\npm\\node_modules\\node-qunit-puppeteer");
+} = require("node-qunit-puppeteer");
 
 async function Run()
 {
@@ -75,6 +77,8 @@ async function Run()
 			})
 			.catch(ex =>
 			{
+				count++;
+				failed.push(allTests[nIndex]);
 				console.error(ex);
 			});
 	}

@@ -130,6 +130,10 @@
 	{
 		return this.Id;
 	};
+	CTableId.prototype.GetId = function()
+	{
+		return this.Id;
+	};
 	CTableId.prototype.Clear = function()
 	{
 		this.m_aPairs   = {};
@@ -382,6 +386,20 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArtNodeData  ]     = AscFormat.SmartArtNodeData;
 		this.m_oFactoryClass[AscDFH.historyitem_type_BuBlip            ]     = AscFormat.CBuBlip;
 
+		this.m_oFactoryClass[AscDFH.historyitem_type_UserMaster        ]     = AscWord.CUserMaster;
+		this.m_oFactoryClass[AscDFH.historyitem_type_User              ]     = AscWord.CUser;
+		this.m_oFactoryClass[AscDFH.historyitem_type_SignInfo          ]     = AscWord.CSignInfo;
+		this.m_oFactoryClass[AscDFH.historyitem_type_CipherInfo        ]     = AscWord.CCipherInfo;
+		this.m_oFactoryClass[AscDFH.historyitem_type_FormFieldMaster   ]     = AscWord.CFieldMaster;
+		this.m_oFactoryClass[AscDFH.historyitem_type_FormField         ]     = AscWord.CField;
+		this.m_oFactoryClass[AscDFH.historyitem_type_EncryptedData     ]     = AscWord.CEncryptedData;
+		this.m_oFactoryClass[AscDFH.historyitem_type_KeyInfo           ]     = AscWord.CKeyInfo;
+		this.m_oFactoryClass[AscDFH.historyitem_type_MainDocument      ]     = AscWord.CMainDocument;
+		this.m_oFactoryClass[AscDFH.historyitem_type_FieldsGroup       ]     = AscWord.CFieldsGroup;
+		this.m_oFactoryClass[AscDFH.historyitem_type_FormDate          ]     = AscWord.CFormDate;
+		this.m_oFactoryClass[AscDFH.historyitem_type_SignRequest       ]     = AscWord.CSignRequest;
+		this.m_oFactoryClass[AscDFH.historyitem_type_FieldContent      ]     = AscWord.CFieldContent;
+
 		if (window['AscCommonSlide'])
 		{
 			this.m_oFactoryClass[AscDFH.historyitem_type_Slide]               = AscCommonSlide.Slide;
@@ -455,11 +473,19 @@
 
 		if (window['AscCommonExcel'])
 		{
-			this.m_oFactoryClass[AscDFH.historyitem_type_Sparkline] = AscCommonExcel.sparklineGroup;
+			this.m_oFactoryClass[AscDFH.historyitem_type_Sparkline]            = AscCommonExcel.sparklineGroup;
 			this.m_oFactoryClass[AscDFH.historyitem_type_PivotTableDefinition] = Asc.CT_pivotTableDefinition;
 			this.m_oFactoryClass[AscDFH.historyitem_type_PivotWorksheetSource] = Asc.CT_WorksheetSource;
-			this.m_oFactoryClass[AscDFH.historyitem_type_NamedSheetView] = Asc.CT_NamedSheetView;
-			this.m_oFactoryClass[AscDFH.historyitem_type_DataValidation] = AscCommonExcel.CDataValidation;
+			this.m_oFactoryClass[AscDFH.historyitem_type_NamedSheetView]       = Asc.CT_NamedSheetView;
+			this.m_oFactoryClass[AscDFH.historyitem_type_DataValidation]       = AscCommonExcel.CDataValidation;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OleSizeSelection  ]   = AscCommonExcel.OleSizeSelectionRange;
+			this.m_oFactoryClass[AscDFH.historyitem_type_ViewPr]               = AscFormat.CViewPr;
+			this.m_oFactoryClass[AscDFH.historyitem_type_CommonViewPr]         = AscFormat.CCommonViewPr;
+			this.m_oFactoryClass[AscDFH.historyitem_type_CSldViewPr]           = AscFormat.CCSldViewPr;
+			this.m_oFactoryClass[AscDFH.historyitem_type_CViewPr]              = AscFormat.CCViewPr;
+			this.m_oFactoryClass[AscDFH.historyitem_type_ViewPrScale]          = AscFormat.CViewPrScale;
+			this.m_oFactoryClass[AscDFH.historyitem_type_ViewPrGuide]          = AscFormat.CViewPrGuide;
+
 		}
 
 		this.m_oFactoryClass[AscDFH.historyitem_type_DocumentMacros] = AscCommon.CDocumentMacros;

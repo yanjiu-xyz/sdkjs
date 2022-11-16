@@ -240,6 +240,8 @@ function CStyle(Name, BasedOnId, NextId, type, bNoCreateTablePr)
 {
     this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
+	this.StyleId = null;
+
     this.Name    = Name;
     this.BasedOn = BasedOnId;
     this.Next    = NextId;
@@ -660,6 +662,17 @@ CStyle.prototype =
     {
         return this.Type;
     },
+
+	Set_StyleId: function (sStyleId)
+	{
+		History.Add(new CChangesStyleStyleId(this, this.StyleId, sStyleId));
+		this.StyleId = sStyleId;
+	},
+
+	Get_StyleId: function ()
+	{
+		return this.StyleId;
+	},
 
 	Set_QFormat : function(Value)
 	{
@@ -5917,6 +5930,7 @@ CStyle.prototype =
             || this.Next !== oStyle.Next
             || this.Type !== oStyle.Type
             || this.Link !== oStyle.Link
+            || this.StyleId !== oStyle.StyleId
             || this.qFormat !== oStyle.qFormat
             || this.uiPriority !== oStyle.uiPriority
             || this.hidden !== oStyle.hidden
@@ -7621,6 +7635,52 @@ CStyle.prototype.IsTableStyle = function()
 	return (this.Type === styletype_Table);
 };
 
+CStyle.prototype.wholeToTablePr = function() {
+
+	let oWhole = this.TableWholeTable;
+	if(!oWhole) {
+		return
+	}
+	let oWholeBorders = oWhole.TablePr && oWhole.TablePr.TableBorders;
+	if(!oWholeBorders) {
+		return;
+	}
+	let oWholeCellBorders = oWhole.TableCellPr && oWhole.TableCellPr.TableCellBorders;
+	if(!oWholeCellBorders) {
+		return;
+	}
+
+	let oTablePBorders = this.TablePr && this.TablePr.TableBorders;
+	if(!oTablePBorders) {
+		return;
+	}
+
+	if(oWholeBorders.InsideH) {
+		oTablePBorders.InsideH = oWholeBorders.InsideH;
+		delete oWholeBorders.InsideH;
+	}
+	if(oWholeBorders.InsideV) {
+		oTablePBorders.InsideV = oWholeBorders.InsideV;
+		delete oWholeBorders.InsideV;
+	}
+	if(oWholeCellBorders.Top) {
+		oTablePBorders.Top = oWholeCellBorders.Top;
+		delete oWholeCellBorders.Top;
+	}
+	if(oWholeCellBorders.Bottom) {
+		oTablePBorders.Bottom = oWholeCellBorders.Bottom;
+		delete oWholeCellBorders.Bottom;
+	}
+	if(oWholeCellBorders.Left) {
+		oTablePBorders.Left = oWholeCellBorders.Left;
+		delete oWholeCellBorders.Left;
+	}
+	if(oWholeCellBorders.Right) {
+		oTablePBorders.Right = oWholeCellBorders.Right;
+		delete oWholeCellBorders.Right;
+	}
+};
+
 function CStyles(bCreateDefault)
 {
 	this.ValidDefaultEastAsiaFont = false;
@@ -8390,6 +8450,17 @@ CStyles.prototype =
 		this.Style[Id] = Style;
 		this.Update_Interface(Id);
 		return Id;
+	},
+
+	GetStyleByStyleId: function (sStyleId)
+	{
+		const arrStylesId = Object.keys(this.Style);
+		for (let i = 0; i < arrStylesId.length; i += 1)
+		{
+			const oStyle = this.Style[arrStylesId[i]];
+			if (oStyle.Get_StyleId() === sStyleId)
+				return oStyle;
+		}
 	},
 
 	Remove : function(Id)
@@ -12776,6 +12847,10 @@ CRFonts.prototype.Is_Empty = function()
 		&& undefined === this.HAnsiTheme
 		&& undefined === this.CSTheme);
 };
+CRFonts.prototype.IsEmpty = function()
+{
+	return this.Is_Empty();
+};
 CRFonts.prototype.Copy = function()
 {
 	var oRFonts = new CRFonts();
@@ -13246,6 +13321,10 @@ CLang.prototype.Is_Empty = function()
 		return false;
 
 	return true;
+};
+CLang.prototype.IsEmpty = function()
+{
+	return this.Is_Empty();
 };
 CLang.prototype.IsEqual = function(oLang)
 {
@@ -14718,6 +14797,10 @@ CTextPr.prototype.Is_Empty = function()
 
 	return true;
 };
+CTextPr.prototype.IsEmpty = function()
+{
+	return this.Is_Empty();
+};
 /**
  * Сравниваем данные настройки с заданными, если настройка совпала ставим undefined, если нет, то берем из текущей
  * @param oTextPr {CTextPr}
@@ -15719,6 +15802,10 @@ CParaInd.prototype.Is_Empty = function()
 
 	return true;
 };
+CParaInd.prototype.IsEmpty = function()
+{
+	return this.Is_Empty();
+};
 CParaInd.prototype.Get_Diff = function(Ind)
 {
     var DiffInd = new CParaInd();
@@ -15944,6 +16031,10 @@ CParaSpacing.prototype.Is_Empty = function()
 		return false;
 
 	return true;
+};
+CParaSpacing.prototype.IsEmpty = function()
+{
+	return this.Is_Empty();
 };
 CParaSpacing.prototype.IsEqual = function(oSpacing)
 {
@@ -17618,6 +17709,21 @@ CParaPr.prototype.Is_Empty = function()
 		|| undefined !== this.OutlineLvl
 		|| undefined !== this.SuppressLineNumbers);
 };
+CParaPr.prototype.IsEmpty = function()
+{
+	return this.Is_Empty();
+};
+CParaPr.prototype.IsEmptyBorders = function()
+{
+	return (!this.Brd
+		|| (!this.Brd.First
+			&& !this.Brd.Last
+			&& !this.Brd.Between
+			&& !this.Brd.Bottom
+			&& !this.Brd.Left
+			&& !this.Brd.Right
+			&& !this.Brd.Top));
+};
 CParaPr.prototype.GetDiffPrChange = function()
 {
 	var ParaPr = new CParaPr();
@@ -17881,6 +17987,7 @@ CParaPr.prototype.CheckBorderSpaces = function()
 	if (this.Brd.Between)
 		this.Brd.Between.Space = this.private_CorrectBorderSpace(this.Brd.Between.Space);
 };
+
 //----------------------------------------------------------------------------------------------------------------------
 // CParaPr Export
 //----------------------------------------------------------------------------------------------------------------------
@@ -18043,6 +18150,8 @@ window["AscCommonWord"].wrap_NotBeside = wrap_NotBeside;
 window["AscCommonWord"].wrap_Through = wrap_Through;
 window["AscCommonWord"].wrap_Tight = wrap_Tight;
 
+window["AscWord"].CTextPr = CTextPr;
+window["AscWord"].CParaPr = CParaPr;
 window["AscWord"].CStyle  = CStyle;
 window["AscWord"].CNumPr  = CNumPr;
 window["AscWord"].CBorder = CDocumentBorder;

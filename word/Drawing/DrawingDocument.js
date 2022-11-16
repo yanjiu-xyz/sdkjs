@@ -2249,6 +2249,9 @@ function CDrawingDocument()
 				if (this.m_lPagesCount > this.m_lCountCalculatePages)
 					this.m_arrPages.splice(this.m_lCountCalculatePages, this.m_lPagesCount - this.m_lCountCalculatePages);
 				this.m_lPagesCount = 0;
+
+				this.m_lDrawingFirst = -1;
+				this.m_lDrawingEnd = -1;
 			}
 
 			this.OnEndRecalculate(false);
@@ -2590,9 +2593,14 @@ function CDrawingDocument()
 		if (1 === this.m_oWordControl.ReaderModeCurrent)
 		{
 			params.PrintInReaderMode = true;
-			this.m_oWordControl.ChangeReaderMode();
 			// добавляем еще один longAction, чтобы убрать не после готовности pdf, а после возврата в reader mode
 			this.m_oWordControl.m_oApi.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, params[0]);
+
+			// делаем через таймаут, чтобы fullRecalculate произошел не синхронно (чтобы были выставлены m_arPrintingWaitEndRecalculate)
+			var wordControl = this.m_oWordControl;
+			setTimeout(function(){
+				wordControl.ChangeReaderMode();
+			}, 10);
 		}
 
 		this.m_arPrintingWaitEndRecalculate = params;
@@ -2749,6 +2757,22 @@ function CDrawingDocument()
 	this.FirePaint = function ()
 	{
 		this.m_oWordControl.OnScroll();
+	};
+
+	this.GetVisibleRegion = function()
+	{
+		let height = 0;
+		if (this.m_oWordControl)
+			height += this.m_oWordControl.Y;
+		if (this.m_oWordControl.m_oEditor)
+			height += this.m_oWordControl.m_oEditor.HtmlElement.height;
+		if (true === this.m_oWordControl.m_bIsRuler)
+			height += (7 * g_dKoef_mm_to_pix);
+
+		let pos1 = this.ConvertCoordsFromCursor2(0, 0);
+		let pos2 = this.ConvertCoordsFromCursor2(0, height);
+
+		return [{ Page : pos1.Page, Y : pos1.Y }, { Page : pos2.Page, Y : pos2.Y }];
 	};
 
 	this.ConvertCoordsFromCursor = function (x, y, bIsRul)
@@ -3522,9 +3546,12 @@ function CDrawingDocument()
 	};
 	this.DrawTarget = function ()
 	{
-		if (oThis.NeedTarget && oThis.m_oWordControl.IsFocus)
+		if (oThis.NeedTarget)
 		{
-			oThis.showTarget(!oThis.isShowTarget());
+			if (oThis.m_oWordControl.IsFocus && !oThis.m_oWordControl.m_oApi.isBlurEditor)
+				oThis.showTarget(!oThis.isShowTarget());
+			else
+				oThis.showTarget(true);
 		}
 	};
 
@@ -6504,7 +6531,7 @@ function CDrawingDocument()
 		}
 	};
 
-    this.privateGetParagraphByString = function(level, levelNum, counterCurrent, formats, startText, x, y, lineHeight, ctx, w, h)
+    this.privateGetParagraphByString = function(level, levelNum, counterCurrent, formats, startText, x, y, lineHeight, ctx, w, h, customTextPr)
     {
         var text = "";
         for (var i = 0; i < level.Text.length; i++)
@@ -6546,9 +6573,13 @@ function CDrawingDocument()
         //par.Pr = level.ParaPr.Copy();
 		var styles = this.m_oLogicDocument.Get_Styles();
 		par.Pr = (styles.Default && styles.Default.ParaPr) ? styles.Default.ParaPr.Copy() : new CParaPr();
-        var textPr = level.TextPr.Copy();
-        textPr.FontSize = textPr.FontSizeCS = ((2 * lineHeight * 72 / 96) >> 0) / 2;
-
+        var textPr;
+		if (customTextPr) {
+			textPr = customTextPr;
+		} else {
+			textPr = level.TextPr.Copy();
+			textPr.FontSize = textPr.FontSizeCS = ((2 * lineHeight * 72 / 96) >> 0) / 2;
+		}
         var parRun = new ParaRun(par);
         parRun.Set_Pr(textPr);
         parRun.AddText(text);
@@ -7246,30 +7277,40 @@ function CDrawingDocument()
 			ctx.fillRect(0, 0, canvas.width, canvas.height);
 			ctx.beginPath();
 			var line_distance = (height_px == 80) ? (height_px / 5 - 1) : ((height_px >> 2) + ((text.length > 6) ? 0 : 2));
-			var par = new Paragraph(this, this.m_oWordControl.m_oLogicDocument);
+
+			var shape = new AscFormat.CShape();
+			shape.extX = width_px * AscCommon.g_dKoef_pix_to_mm;
+			shape.extY = height_px * AscCommon.g_dKoef_pix_to_mm;
+			shape.contentWidth = shape.extX;
+			shape.createTextBody();
+			var par = shape.txBody.content.GetAllParagraphs()[0];
+
 			par.MoveCursorToStartPos();
 
 			par.Pr = new CParaPr();
 			var lvl = (type == 2) ? props[0][0] : props[0];
 			var textPr = lvl.TextPr.Copy();
 			textPr.FontSize = ((2 * line_distance * 72 / 96) >> 0) / 2;
+			par.TextPr.SetFontSize(textPr.FontSize);
 
 			var parRun = new ParaRun(par);
 			parRun.Set_Pr(textPr);
 			parRun.AddText(text);
 			par.AddToContent(0, parRun);
 
-			par.Reset(0, 0, 1000, 1000, 0, 0, 1);
-			par.Recalculate_Page(0);
+			var parW = par.RecalculateMinMaxContentWidth().Max;
+			if (parW > shape.contentWidth) {
+				shape.findFitFontSizeForSmartArt(true);
+				parW = par.RecalculateMinMaxContentWidth().Max;
+			}
 
-			var bounds = par.Get_PageBounds(0);
+			parW = parW * AscCommon.g_dKoef_mm_to_pix;
 
-			var parW = par.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
-			var parH = (bounds.Bottom - bounds.Top);
+			line_distance = par.Get_EmptyHeight();
 			var x = (width_px - (parW >> 0)) >> 1;
-			var y = (height_px >> 1) + (parH >> 1);
+			var y = (height_px >> 1) + (line_distance >> 0);
 
-			this.privateGetParagraphByString(lvl, 0, 0, null, null, x, y, line_distance, ctx, width_px, height_px);
+			this.privateGetParagraphByString(lvl, 0, 0, null, null, x, y, line_distance, ctx, width_px, height_px, textPr);
 		}
 
 		for (var i = 1; i < id.length; i++)
@@ -8118,7 +8159,7 @@ function CDrawingDocument()
 	{
 		if (undefined === bIsFromDrawings)
 		{
-			if (this.m_oWordControl.m_oApi.ShowSnapLines)
+			if (this.m_oWordControl.m_oApi.ShowSmartGuides)
 			{
 				this.HorVerAnchors.push({Type: 0, Page: pageNum, Pos: xPos});
 			}
@@ -8138,7 +8179,7 @@ function CDrawingDocument()
 	{
 		if (undefined === bIsFromDrawings)
 		{
-			if (this.m_oWordControl.m_oApi.ShowSnapLines)
+			if (this.m_oWordControl.m_oApi.ShowSmartGuides)
 			{
 				this.HorVerAnchors.push({Type: 1, Page: pageNum, Pos: yPos});
 			}

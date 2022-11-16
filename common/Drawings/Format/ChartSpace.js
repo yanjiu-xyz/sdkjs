@@ -3228,9 +3228,11 @@ var GLOBAL_PATH_COUNT = 0;
         if(this.textLink !== null) {
             copy.setTextLink(this.textLink);
         }
-        copy.cachedImage = this.getBase64Img();
-        copy.cachedPixH = this.cachedPixH;
-        copy.cachedPixW = this.cachedPixW;
+        if(!oPr || false !== oPr.cacheImage) {
+            copy.cachedImage = this.getBase64Img();
+            copy.cachedPixH = this.cachedPixH;
+            copy.cachedPixW = this.cachedPixW;
+        }
         return copy;
     };
     CChartSpace.prototype.convertToWord = function(document) {
@@ -3719,6 +3721,16 @@ var GLOBAL_PATH_COUNT = 0;
         var bVert = (nInfo & AscFormat.SERIES_FLAG_HOR_VALUE) !== 0;
         return {range: sRange, bVert: bVert};
     };
+
+    CChartSpace.prototype.clearDataCache = function() {
+        let aSeries = this.getAllSeries();
+        for(let nSer = 0; nSer < aSeries.length; ++nSer) {
+            aSeries[nSer].clearDataCache();
+        }
+    };
+    CChartSpace.prototype.clearChartDataCache = function() {
+        this.clearDataCache();
+    };
     CChartSpace.prototype.recalculateReferences = function() {
         var oSelectedSeries = this.getSelectedSeries();
         if(AscFormat.isRealNumber(this.selection.series)) {
@@ -3729,7 +3741,6 @@ var GLOBAL_PATH_COUNT = 0;
             }
         }
         var worksheet = this.worksheet;
-        //this.pointsMap = {};
         if(!worksheet)
             return;
         var charts, series, i, j, ser;
@@ -8562,14 +8573,14 @@ var GLOBAL_PATH_COUNT = 0;
         return nResult;
     };
     CChartSpace.prototype.fillDataFromTrack = function(oSelectedRange) {
-        var oSlectedSeries = this.getSelectedSeries();
-        if(oSlectedSeries) {
-            oSlectedSeries.fillFromSelectedRange(oSelectedRange);
+        let oSelectedSeries = this.getSelectedSeries();
+        if(oSelectedSeries) {
+            oSelectedSeries.fillFromSelectedRange(oSelectedRange);
             this.recalculate();
             return;
         }
-        var oDataRange = this.getDataRefs();
-        var nResult = this.buildSeries(oDataRange.getSeriesRefsFromSelectedRange(oSelectedRange, this.isScatterChartType()));
+        let oDataRange = this.getDataRefs();
+        let nResult = this.buildSeries(oDataRange.getSeriesRefsFromSelectedRange(oSelectedRange, this.isScatterChartType()));
         if(Asc.c_oAscError.ID.No === nResult) {
             this.recalculate();
         }

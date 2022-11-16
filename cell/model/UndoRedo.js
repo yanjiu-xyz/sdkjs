@@ -58,13 +58,14 @@ function (window, undefined) {
 	}
 
 //главный обьект для пересылки изменений
-	function UndoRedoItemSerializable(oClass, nActionType, nSheetId, oRange, oData, LocalChange) {
+	function UndoRedoItemSerializable(oClass, nActionType, nSheetId, oRange, oData, LocalChange, bytes) {
 		this.oClass = oClass;
 		this.nActionType = nActionType;
 		this.nSheetId = nSheetId;
 		this.oRange = oRange;
 		this.oData = oData;
 		this.LocalChange = LocalChange;
+		this.bytes = bytes;
 	}
 
 	UndoRedoItemSerializable.prototype.Serialize = function (oBinaryWriter, collaborativeEditing) {
@@ -447,6 +448,8 @@ function (window, undefined) {
 		this.ProtectedRangeData = 160;
 		this.ProtectedRangeDataInner = 161;
 
+		this.externalReference = 170;
+
 		this.Create = function (nType) {
 			switch (nType) {
 				case this.ValueMultiTextElem:
@@ -644,6 +647,8 @@ function (window, undefined) {
 					return new AscCommonExcel.UndoRedoData_ProtectedRange();
 				case this.ProtectedRangeDataInner:
 					return new Asc.CProtectedRange();
+				case this.externalReference:
+					return new AscCommonExcel.ExternalReference();
 			}
 			return null;
 		};
@@ -2425,6 +2430,31 @@ function (window, undefined) {
 		}  else if(AscCH.historyitem_Workbook_Date1904 === Type) {
 			wb.setDate1904(bUndo ? Data.from : Data.to);
 			AscCommon.oNumFormatCache.cleanCache();
+		} else if (AscCH.historyitem_Workbook_ChangeExternalReference === Type) {
+			var from = bUndo ? Data.from : Data.to;
+			var to = bUndo ? Data.to : Data.from;
+			var externalReferenceIndex;
+
+			if (from && !to) {//удаление
+				from.initWorksheetsFromSheetDataSet();
+				externalReferenceIndex = wb.getExternalLinkIndexByName(from.Id);
+				if (externalReferenceIndex !== null) {
+					wb.externalReferences[externalReferenceIndex - 1] = from;
+				} else {
+					wb.externalReferences.push(from);
+				}
+			} else if (!from && to) { //добавление
+				externalReferenceIndex = wb.getExternalLinkIndexByName(to.Id);
+				if (externalReferenceIndex !== null) {
+					wb.externalReferences.splice(externalReferenceIndex - 1, 1);
+				}
+			} else if (from && to) { //изменение
+				//TODO нужно сохранить ссылки на текущий лист
+				externalReferenceIndex = wb.getExternalLinkIndexByName(to.Id);
+				if (externalReferenceIndex !== null) {
+					wb.externalReferences[externalReferenceIndex - 1] = from;
+				}
+			}
 		}
 	};
 	UndoRedoWorkbook.prototype.forwardTransformationIsAffect = function (Type) {
