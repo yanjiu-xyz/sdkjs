@@ -11107,10 +11107,12 @@
 
 		const nNumberPosition = Math.round(oCurrentLvl.GetNumberPosition() * AscCommon.g_dKoef_mm_to_pix);
 		const nIndentSize = Math.round(oCurrentLvl.GetIndentSize() * AscCommon.g_dKoef_mm_to_pix);
+		const nTabSize = Math.round(oCurrentLvl.GetStopTab() * AscCommon.g_dKoef_mm_to_pix);
 
 		const nNumberPositionScaleCoefficient = nWorkspaceWidth / nNumberPosition;
 		const nIndentSizeScaleCoefficient = nWorkspaceWidth / nIndentSize;
-		const nScaleCoefficient = Math.min(nNumberPositionScaleCoefficient, nIndentSizeScaleCoefficient);
+		const nTabSizeScaleCoefficient = nWorkspaceWidth / nTabSize;
+		const nScaleCoefficient = Math.min(nNumberPositionScaleCoefficient, nIndentSizeScaleCoefficient, nTabSizeScaleCoefficient);
 		if (nScaleCoefficient < 1)
 		{
 			return nScaleCoefficient;
@@ -11196,7 +11198,7 @@
 		let nTextYx = nNumberPosition;
 		let nOffsetTextX;
 		// если при прилегании к правому краю левый край текста упирается в оффсет, то линии текста должны двигаться вправо(это относится ко всем типам прилегания)
-		if ((nTextYx - nMaxTextWidth * nScaleCoefficient) < nLeftOffset2)
+		if ((nTextYx - nMaxTextWidth) < nLeftOffset2)
 		{
 			nTextYx = nLeftOffset2 + nMaxTextWidth;
 			nIndentSize += (nTextYx - nNumberPosition);
