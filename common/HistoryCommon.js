@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2023
+ * (c) Copyright Ascensio System SIA 2010-2019
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -1259,6 +1259,9 @@
 				break;
 			case AscDFH.historydescription_Collaborative_Undo:
 				sString = "Collaborative_Undo";
+				break;
+			case AscDFH.historydescription_Collaborative_DeletedTextRecovery:
+				sString = "Collaborative_DeletedTextRecovery";
 				break;
 			case AscDFH.historydescription_Document_AddPlaceholderImages:
 				sString = "Document_AddPlaceholderImages";
@@ -4410,7 +4413,7 @@
 	window['AscDFH'].historydescription_Document_RemoveComplexFieldWrapper          = 0x01a3;
 	window['AscDFH'].historydescription_Document_MergeDocuments                     = 0x01a4;
 	window['AscDFH'].historydescription_Document_FillContentControlPlaceholderOnBlur= 0x01a5;
-
+	window['AscDFH'].historydescription_Collaborative_DeletedTextRecovery           = 0x01a6;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -5006,7 +5009,7 @@
 
 		if (undefined !== this.Old && this.Old.Write_ToBinary)
 			this.Old.Write_ToBinary(Writer);
-		
+
 		this.WriteAdditional(Writer);
 	};
 	CChangesBaseObjectProperty.prototype.ReadFromBinary = function(Reader)
@@ -5052,7 +5055,7 @@
 			if (this.Old && this.Old.Read_FromBinary)
 				this.Old.Read_FromBinary(Reader);
 		}
-		
+
 		this.ReadAdditional(Reader);
 	};
 	CChangesBaseObjectProperty.prototype.WriteAdditional = function(writer)
