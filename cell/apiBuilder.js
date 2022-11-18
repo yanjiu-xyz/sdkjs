@@ -1810,7 +1810,7 @@
 	 * @returns {number}
 	 */
 	ApiRange.prototype.GetRow = function () {
-		return this.range.bbox.r1;
+		return (this.range.bbox.r1 + 1);
 	};
 	Object.defineProperty(ApiRange.prototype, "Row", {
 		get: function () {
@@ -1824,7 +1824,7 @@
 	 * @returns {number}
 	 */
 	ApiRange.prototype.GetCol = function () {
-		return this.range.bbox.c1;
+		return (this.range.bbox.c1 + 1);
 	};
 	Object.defineProperty(ApiRange.prototype, "Col", {
 		get: function () {
