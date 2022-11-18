@@ -3167,7 +3167,10 @@
       		options.sheetIndex = -1;
 		}
 
-		this.handlers.trigger("asc_onRenameCellTextEnd", options.countFindAll, options.countReplaceAll);
+		if (!options.isForMacros) {
+			this.handlers.trigger("asc_onRenameCellTextEnd", options.countFindAll, options.countReplaceAll);
+			options.asc_setIsForMacros(null);
+		}
 		if (options.countFindAll !== options.countReplaceAll) {
 			this.SearchEngine.SetCurrent(this.SearchEngine.CurId);
 		}
@@ -5319,7 +5322,7 @@
 			var ws = this.wb.getActiveWS();
 			var selectionRange = (this.props && this.props.selectionRange) || ws.selectionRange;
 
-			var activeCell = selectionRange.activeCell;
+			var activeCell = this.props.activeCell ? this.props.activeCell : selectionRange.activeCell;
 			if (this.props && this.props.lastSearchElem) {
 				var cell = this.props.lastSearchElem[3];
 				if (cell) {

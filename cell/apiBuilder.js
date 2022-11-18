@@ -3121,7 +3121,7 @@
 			return new Error ("Invalid destination");
 		}
 	};
-	
+
 	/**
 	 * Pastes the Range object to the specified range.
 	 * @memberof ApiRange
@@ -3137,6 +3137,179 @@
 			rangeFrom.range.move(range.bbox, true, range.worksheet);
 		} else {
 			return new Error ("Invalid range");
+		}
+	};
+	
+	/**
+	 * Finds specific information in a range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {String | undefined} What - The data to search for.
+	 * @param {ApiRange} After - The cell after which you want the search to begin. If you don't specify this argument, the search starts after the cell in the upper-left corner of the range.
+	 * @param {String} LookIn - Can be one of the following XlFindLookIn constants: xlFormulas, xlValues.
+	 * @param {String} LookAt - Can be one of the following XlLookAt constants: xlWhole or xlPart.
+	 * @param {String} SearchOrder - Can be one of the following XlSearchOrder constants: xlByRows or xlByColumns.
+	 * @param {String} SearchDirection - Can be one of the following XlSearchDirection constants: xlNext or xlPrevious.
+	 * @param {Boolean} MatchCase - True to make the search case-sensitive. The default value is False.
+	 * @returns {ApiRange | null} - returns null if range does not contains such text.
+	 * 
+	 */
+	ApiRange.prototype.Find = function(What, After, LookIn, LookAt, SearchOrder, SearchDirection, MatchCase) {
+		if (typeof What === 'string' || What === undefined) {
+			let res = null;
+			let options = new Asc.asc_CFindOptions();
+			options.asc_setFindWhat(What);
+			options.asc_setScanForward(SearchDirection != 'xlPrevious');
+			MatchCase && options.asc_setIsMatchCase(MatchCase);
+			options.asc_setIsWholeCell(LookAt === 'xlWhole');
+			options.asc_setScanOnOnlySheet(Asc.c_oAscSearchBy.Range);
+			options.asc_setSpecificRange(this.Address);
+			options.asc_setScanByRows(SearchOrder === 'xlByRows');
+			options.asc_setLookIn( (LookIn === 'xlValues' ? 2 : 1) );
+			options.asc_setNotSearchEmptyCells( !(What === "" && !options.isWholeCell) );
+			let start = ( After instanceof ApiRange && After.range.isOneCell() && this.range.containsRange(After.range) )
+						? { row: After.range.bbox.r1, col: After.range.bbox.c1 }
+						: { row: this.range.bbox.r1, col: this.range.bbox.c1 };
+						
+			start.row += (options.scanByRows ? (options.scanForward ? 1 : -1) : 0);
+			start.col += (!options.scanByRows ? (options.scanForward ? 1 : -1) : 0);
+			options.asc_setActiveCell(start);
+			let engine = this.range.worksheet.workbook.oApi.wb.Search(options);
+			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(options.scanForward);
+			if (id != null) {
+				let elem = engine.Elements[id];
+				res = new ApiRange(this.range.worksheet.getRange3(elem.row, elem.col, elem.row, elem.col));
+			}
+			this._searchOptions = options;
+			return res;
+		} else {
+			return new Error('Invalid parametr "What".')
+		}
+	};
+
+	/**
+	 * Continues a search that was begun with the Find method. Finds the next cell that matches those same conditions and returns a Range object that represents that cell. This does not affect the selection or the active cell..
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} After - The cell after which you want the search to begin. If you don't specify this argument, the search starts from the last founded cell.
+	 * @returns {ApiRange} - returns null if range does not contains such text.
+	 * 
+	*/
+	ApiRange.prototype.FindNext = function(After) {
+		if (this._searchOptions) {
+			let res = null;
+			let activeCell;
+			let engine;
+			this._searchOptions.asc_setScanForward(true);
+			if (After instanceof ApiRange && After.range.isOneCell() && this.range.containsRange(After.range)) {
+				activeCell = { row: After.range.bbox.r1, col: After.range.bbox.c1 };
+				activeCell.row += (this._searchOptions.scanByRows ? 1 : 0);
+				activeCell.col += (!this._searchOptions.scanByRows ? 1 : 0);
+			} else {
+				activeCell = {row: this.range.bbox.r1, col: this.range.bbox.c1};
+			}
+			if (JSON.stringify(this._searchOptions.activeCell) !== JSON.stringify(activeCell)) {
+				this._searchOptions.asc_setActiveCell(activeCell);
+			} else {
+				engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
+				engine.Reset();
+			}
+			engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
+			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(true);
+			if (id != null) {
+				let elem = engine.Elements[id];
+				res = new ApiRange(this.range.worksheet.getRange3(elem.row, elem.col, elem.row, elem.col));
+			}
+			return res;
+		} else {
+			return new Error('You should use "Find" method before this.')
+		}
+	};
+
+	/**
+	 * Continues a search that was begun with the Find method. Finds the next cell that matches those same conditions and returns a Range object that represents that cell. This does not affect the selection or the active cell..
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange} Before - The cell before which you want the search to begin. If you don't specify this argument, the search starts from the last founded cell.
+	 * @returns {ApiRange} - returns null if range does not contains such text.
+	 * 
+	*/
+	ApiRange.prototype.FindPrevious = function(Before) {
+		if (this._searchOptions) {
+			let res = null;
+			let activeCell;
+			let engine;
+			this._searchOptions.asc_setScanForward(false);
+			if (Before instanceof ApiRange && Before.range.isOneCell() && this.range.containsRange(Before.range)) {
+				activeCell = { row: Before.range.bbox.r1, col: Before.range.bbox.c1 };
+				activeCell.row += (this._searchOptions.scanByRows ? -1 : 0);
+				activeCell.col += (!this._searchOptions.scanByRows ? -1 : 0);
+			} else {
+				activeCell = {row: this.range.bbox.r1, col: this.range.bbox.c1};
+			}
+			if (JSON.stringify(this._searchOptions.activeCell) !== JSON.stringify(activeCell)) {
+				this._searchOptions.asc_setActiveCell(activeCell);
+			} else {
+				engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
+				engine.Reset();
+			}
+			engine = this.range.worksheet.workbook.oApi.wb.Search(this._searchOptions);
+			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(false);
+			if (id != null) {
+				let elem = engine.Elements[id];
+				res = new ApiRange(this.range.worksheet.getRange3(elem.row, elem.col, elem.row, elem.col));
+			}
+			return res;
+		} else {
+			return new Error('You should use "Find" method before this.')
+		}
+	};
+
+	/**
+	 * Replaces specific information to another one in a range.
+	 * @memberof ApiRange
+	 * @typeofeditors ["CSE"]
+	 * @param {String | undefined} What - The data to search for.
+	 * @param {String} Replacement - The replacement string.
+	 * @param {String} LookAt - Can be one of the following XlLookAt constants: xlWhole or xlPart.
+	 * @param {String} SearchOrder - Can be one of the following XlSearchOrder constants: xlByRows or xlByColumns.
+	 * @param {String} SearchDirection - Can be one of the following XlSearchDirection constants: xlNext or xlPrevious.
+	 * @param {Boolean} MatchCase - True to make the search case-sensitive. The default value is False.
+	 * @param {Boolean} ReplaceAll - True to replace all. The default value is True.
+	 * 
+	 */
+	ApiRange.prototype.Replace = function(What, Replacement, LookAt, SearchOrder, SearchDirection, MatchCase, ReplaceAll) {
+		if (typeof What === 'string' && typeof Replacement === 'string') {
+			let options = new Asc.asc_CFindOptions();
+			options.asc_setFindWhat(What);
+			options.asc_setReplaceWith(Replacement);
+			options.asc_setScanForward(SearchDirection != 'xlPrevious');
+			MatchCase && options.asc_setIsMatchCase(MatchCase);
+			options.asc_setIsWholeCell(LookAt === 'xlWhole');
+			options.asc_setScanOnOnlySheet(Asc.c_oAscSearchBy.Range);
+			options.asc_setSpecificRange(this.Address);
+			options.asc_setScanByRows(SearchOrder === 'xlByRows');
+			options.asc_setLookIn(Asc.c_oAscFindLookIn.Formulas);
+			if (typeof ReplaceAll !== 'boolean')
+				ReplaceAll = true;
+
+			options.asc_setIsReplaceAll((ReplaceAll === true));
+			this.range.worksheet.workbook.oApi.isReplaceAll = options.isReplaceAll;
+			let engine = this.range.worksheet.workbook.oApi.wb.Search(options);
+			engine.Reset();
+			engine = this.range.worksheet.workbook.oApi.wb.Search(options);
+			let id = this.range.worksheet.workbook.oApi.wb.GetSearchElementId(SearchDirection != 'xlPrevious');
+			options.asc_setIsForMacros(true);
+			if (id != null) {
+				if (ReplaceAll)
+					engine.SetCurrent(id);
+				else
+					this.range.worksheet.workbook.oApi.wb.SelectSearchElement(id);
+
+				this.range.worksheet.workbook.oApi.wb.replaceCellText(options);
+			}
+		} else {
+			return new Error('Invalid type of parametr "What" or "Replacement.')
 		}
 	};
 
@@ -4414,6 +4587,10 @@
 	ApiRange.prototype["GetAreas"] = ApiRange.prototype.GetAreas;
 	ApiRange.prototype["Copy"] = ApiRange.prototype.Copy;
 	ApiRange.prototype["Paste"] = ApiRange.prototype.Paste;
+	ApiRange.prototype["Find"] = ApiRange.prototype.Find;
+	ApiRange.prototype["FindNext"] = ApiRange.prototype.FindNext;
+	ApiRange.prototype["FindPrevious"] = ApiRange.prototype.FindPrevious;
+	ApiRange.prototype["Replace"] = ApiRange.prototype.Replace;
 
 
 	ApiDrawing.prototype["GetClassType"]               =  ApiDrawing.prototype.GetClassType;

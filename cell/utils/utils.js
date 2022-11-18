@@ -3041,6 +3041,7 @@
 			this.isNeedRecalc = null;
 
 			this.specificRange = null;
+			this.isForMacros = null;
 			this.activeCell = null;
 
 			//если запускаем новый поиск из-за измененного документа, то присылаем последний элемент, на который
@@ -3133,6 +3134,7 @@
 		asc_CFindOptions.prototype.asc_setLastSearchElem = function (val) {this.lastSearchElem = val;};
 		asc_CFindOptions.prototype.asc_setNotSearchEmptyCells = function (val) {this.isNotSearchEmptyCells = val;};
 		asc_CFindOptions.prototype.asc_setActiveCell = function (val) {this.activeCell = val;};
+		asc_CFindOptions.prototype.asc_setIsForMacros = function (val) {this.isForMacros = val;};
 
 		/** @constructor */
 		function findResults() {
@@ -3683,6 +3685,8 @@
 		prot["asc_setLastSearchElem"] = prot.asc_setLastSearchElem;
 		prot["asc_setNotSearchEmptyCells"] = prot.asc_setNotSearchEmptyCells;
 		prot["asc_setActiveCell"] = prot.asc_setActiveCell;
+		prot["asc_setIsForMacros"] = prot.asc_setIsForMacros;
+
 
 		window["AscCommonExcel"].findResults = findResults;
 
