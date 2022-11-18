@@ -883,22 +883,41 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} row - The row number or the cell number (if only row is defined).
 	 * @param {number} col - The column number.
-	 * @returns {ApiRange}
+	 * @returns {ApiRange || Error}
 	 */
 	ApiWorksheet.prototype.GetCells = function (row, col) {
-		if (row) row--;
-		if (typeof col !== "undefined" && typeof row !== "undefined") {
-			if (col) col--;
-			return new ApiRange(this.worksheet.getRange3(row, col, row, col));
-		} else if (typeof row !== "undefined") {
-			var r = (row) ?  (row / AscCommon.gc_nMaxCol0) >> 0 : row;
-			var c = (row) ? row % AscCommon.gc_nMaxCol0 : row;
-			if (r && c) c--;
-			return new ApiRange(this.worksheet.getRange3(r, c, r, c));
+		let result;
+		if (typeof col == "number" && typeof row == "number") {
+			if (col < 1 || row < 1 || col > AscCommon.gc_nMaxCol0 || row > AscCommon.gc_nMaxRow0) {
+				result = new Error('Invalid paremert "row" or "col".');
+			} else {
+				row--;
+				col--;
+				result = new ApiRange(this.worksheet.getRange3(row, col, row, col));
+			}
+		} else if (typeof row == "number") {
+			if (row < 1 || row > AscCommon.gc_nMaxRow0) {
+				result = new Error('Invalid paremert "row".');
+			} else {
+				row--
+				let r = (row) ?  (row / AscCommon.gc_nMaxCol0) >> 0 : row;
+				let c = (row) ? row % AscCommon.gc_nMaxCol0 : row;
+				if (r && c) c--;
+				result = new ApiRange(this.worksheet.getRange3(r, c, r, c));
+			}
+			
+		} else if (typeof col == "number") {
+			if (col < 1 || col > AscCommon.gc_nMaxCol0) {
+				result = new Error('Invalid paremert "col".');
+			} else {
+				col--;
+				result = new ApiRange(this.worksheet.getRange3(0, col, 0, col));
+			}
+		} else {
+			result = new ApiRange(this.worksheet.getRange3(0, 0, AscCommon.gc_nMaxRow0, AscCommon.gc_nMaxCol0));
 		}
-		else {
-			return new ApiRange(this.worksheet.getRange3(0, 0, AscCommon.gc_nMaxRow0, AscCommon.gc_nMaxCol0));
-		}
+
+		return result;
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "Cells", {
 		get: function () {
