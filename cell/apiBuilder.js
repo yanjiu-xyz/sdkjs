@@ -1948,20 +1948,36 @@
 	 * @param {number} col - The column number.
 	 * @returns {ApiRange}
 	 */
-	 ApiRange.prototype.GetCells = function (row, col) {
-		if (row) row--;
-		var bbox = this.range.bbox;
-		if (typeof col !== "undefined" && typeof row !== "undefined") {
-			return new ApiRange(this.range.worksheet.getRange3(row, col, row, col));
-		} else if (typeof row !== "undefined") {
-			var cellCount = bbox.c2 - bbox.c1 + 1; 
-			var r = bbox.r1 + ((row) ?  (row / cellCount) >> 0 : row);
-			var c = bbox.c1 + ((r) ? 1 : 0) + ((row) ? row % cellCount : row);
-			if (r && c) c--;
-			return new ApiRange(this.range.worksheet.getRange3(r, c, r, c));
+	ApiRange.prototype.GetCells = function (row, col) {
+		let bbox = this.range.bbox;
+		let r1, c1, result;
+		if (typeof col == "number" && typeof row == "number") {
+			row--;
+			col--
+			r1 = bbox.r1 + row;
+			c1 = bbox.c1 + col;
+		} else if (typeof row == "number") {
+			row--;
+			let cellCount = bbox.c2 - bbox.c1 + 1; 
+			r1 = bbox.r1 + ((row) ?  (row / cellCount) >> 0 : row);
+			c1 = bbox.c1 + ((r1) ? 1 : 0) + ((row) ? row % cellCount : row);
+			if (r1 && c1) c1--;
+		} else if (typeof col == "number") {
+			col--;
+			r1 = bbox.r1;
+			c1 = bbox.c1 + col;
 		} else {
-			return new ApiRange(this.range.worksheet.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2));
+			result = new ApiRange(this.range.worksheet.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2));
 		}
+
+		if (!result) {
+			if (r1 > AscCommon.gc_nMaxRow0) r1 = AscCommon.gc_nMaxRow0;
+			if (r1 < 0) r1 = 0;
+			if (c1 > AscCommon.gc_nMaxCol0) c1 = AscCommon.gc_nMaxCol0;
+			if (c1 < 0) c1 = 0;
+			result = new ApiRange(this.range.worksheet.getRange3(r1, c1, r1, c1));
+		}
+		return result;
 	};
 	Object.defineProperty(ApiRange.prototype, "Cells", {
 		get: function () {
