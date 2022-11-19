@@ -16735,7 +16735,7 @@ DataRowTraversal.prototype.getPercent = function (dataIndex, rowItem, colItem, d
 	if (this.rowValueIndex !== null || this.colValueIndex !== null) {
 		if (this.cur && percent && this.cur.total[dataIndex] && percent.total[dataIndex]) {
 			let BaseTotal = percent.total[dataIndex];
-			let BaseOCellValue = BaseTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+			let BaseOCellValue = BaseTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t) || this.getZeroCellValue();
 			total = this.cur.total[dataIndex];
 			oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
 			if (oCellValue.type === AscCommon.CellValueType.Error) {
@@ -16748,7 +16748,7 @@ DataRowTraversal.prototype.getPercent = function (dataIndex, rowItem, colItem, d
 		} else if (!this.cur || !this.cur.total[dataIndex]) {
 			oCellValue = this.getErrorCellvalue(AscCommonExcel.cErrorType.null_value);
 		} else if (this.cur && this.cur.total[dataIndex] && ((this.diffRowIndex[dataIndex] !== null && rowItem.t !== Asc.c_oAscItemType.Grand) || (this.diffColIndex[dataIndex] !== null && colItem.t !== Asc.c_oAscItemType.Grand))){
-			oCellValue = this.cur.total[dataIndex].getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+			oCellValue = this.cur.total[dataIndex].getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t) || this.getZeroCellValue();
 			if (oCellValue.type !== AscCommon.CellValueType.Error) {
 				oCellValue = new AscCommonExcel.CCellValue();
 			}
@@ -16760,7 +16760,7 @@ DataRowTraversal.prototype.getPercent = function (dataIndex, rowItem, colItem, d
 			if (this.rowValueCache.length - 1 < this.diffRowIndex[dataIndex]) {
 				return new AscCommonExcel.CCellValue();;
 			}
-			_oCellValue = this.cur.total[dataIndex].getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+			_oCellValue = this.cur.total[dataIndex].getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t) || this.getZeroCellValue();
 			if (_oCellValue.type === AscCommon.CellValueType.Number) {
 				_oCellValue.number = 1;
 			} else {
@@ -16771,7 +16771,7 @@ DataRowTraversal.prototype.getPercent = function (dataIndex, rowItem, colItem, d
 			if (this.colValueCache.length - 1 < this.diffColIndex[dataIndex]) {
 				return new AscCommonExcel.CCellValue();;
 			}
-			_oCellValue = this.cur.total[dataIndex].getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+			_oCellValue = this.cur.total[dataIndex].getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t) || this.getZeroCellValue();
 			if (_oCellValue.type === AscCommon.CellValueType.Number) {
 				_oCellValue.number = 1;
 			} else {
@@ -16800,7 +16800,7 @@ DataRowTraversal.prototype.getPercentDiff = function (dataIndex, rowItem, colIte
 	if (this.rowValueIndex !== null || this.colValueIndex !== null) {
 		if (this.cur && percentDiff && this.cur.total[dataIndex] && percentDiff.total[dataIndex]) {
 			let BaseTotal = percentDiff.total[dataIndex];
-			let BaseOCellValue = BaseTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+			let BaseOCellValue = BaseTotal.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t) || this.getZeroCellValue();
 			total = this.cur.total[dataIndex];
 			oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
 			if (oCellValue.type === AscCommon.CellValueType.Error) {
