@@ -4124,15 +4124,9 @@ CT_pivotTableDefinition.prototype.refreshBaseItemIndexes = function (oldFieldIte
 	for (let i = 0; i < dataFields.length; i += 1) {
 		let dataField = dataFields[i];
 		if (dataField.baseField === index && dataField.baseItem !== AscCommonExcel.st_BASE_ITEM_NEXT && dataField.baseItem !== AscCommonExcel.st_BASE_ITEM_PREV) {
-			if (dataField.showDataAs === Asc.c_oAscShowDataAs.PercentOfRunningTotal ||
-				dataField.showDataAs === Asc.c_oAscShowDataAs.PercentOfParent ||
-				dataField.showDataAs === Asc.c_oAscShowDataAs.RankDescending ||
-				dataField.showDataAs === Asc.c_oAscShowDataAs.RankAscending ||
-				dataField.showDataAs === Asc.c_oAscShowDataAs.Difference ||
+			if (dataField.showDataAs === Asc.c_oAscShowDataAs.Difference ||
 				dataField.showDataAs === Asc.c_oAscShowDataAs.Percent ||
-				dataField.showDataAs === Asc.c_oAscShowDataAs.PercentDiff ||
-				dataField.showDataAs === Asc.c_oAscShowDataAs.RankAscending ||
-				dataField.showDataAs === Asc.c_oAscShowDataAs.RankAscending) 
+				dataField.showDataAs === Asc.c_oAscShowDataAs.PercentDiff) 
 			{
 				if (oldFieldItems[dataField.baseItem].x !== newFieldItems[dataField.baseItem].x) {
 					for (let j = 0; j < newFieldItems.length; j += 1) {
