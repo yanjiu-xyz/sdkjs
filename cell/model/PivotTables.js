@@ -4115,6 +4115,39 @@ CT_pivotTableDefinition.prototype.checkPivotFieldItem = function(index, pivotFie
 CT_pivotTableDefinition.prototype.checkPivotUnderlyingData = function() {
 	return !!this.getRecords();
 };
+
+CT_pivotTableDefinition.prototype.refreshBaseItemIndexes = function (oldFieldItems, newFieldItems, index) {
+	let dataFields = this.asc_getDataFields();
+	if (!dataFields) {
+		return;
+	}
+	for (let i = 0; i < dataFields.length; i += 1) {
+		let dataField = dataFields[i];
+		if (dataField.baseField === index && dataField.baseItem !== AscCommonExcel.st_BASE_ITEM_NEXT && dataField.baseItem !== AscCommonExcel.st_BASE_ITEM_PREV) {
+			if (dataField.showDataAs === Asc.c_oAscShowDataAs.PercentOfRunningTotal ||
+				dataField.showDataAs === Asc.c_oAscShowDataAs.PercentOfParent ||
+				dataField.showDataAs === Asc.c_oAscShowDataAs.RankDescending ||
+				dataField.showDataAs === Asc.c_oAscShowDataAs.RankAscending ||
+				dataField.showDataAs === Asc.c_oAscShowDataAs.Difference ||
+				dataField.showDataAs === Asc.c_oAscShowDataAs.Percent ||
+				dataField.showDataAs === Asc.c_oAscShowDataAs.PercentDiff ||
+				dataField.showDataAs === Asc.c_oAscShowDataAs.RankAscending ||
+				dataField.showDataAs === Asc.c_oAscShowDataAs.RankAscending) 
+			{
+				if (oldFieldItems[dataField.baseItem].x !== newFieldItems[dataField.baseItem].x) {
+					for (let j = 0; j < newFieldItems.length; j += 1) {
+						if (newFieldItems[j].x === oldFieldItems[dataField.baseItem].x) {
+							dataField.baseItem = j;
+							break;
+						}
+					}
+				}
+			}
+		}
+	}
+	return;
+};
+
 CT_pivotTableDefinition.prototype.refreshPivotFieldItem = function(index, pivotField, cacheRecords, cacheField, oldCacheField) {
 	var item, i, j, newItem, equalMap = {}, discretePrMap= {};
 	var pivotFieldOld = pivotField.clone();
@@ -4156,6 +4189,7 @@ CT_pivotTableDefinition.prototype.refreshPivotFieldItem = function(index, pivotF
 				newItems.item.push(newItem);
 			}
 		}
+		this.refreshBaseItemIndexes(pivotField.items.item, newItems.item, index);
 		pivotField.items = newItems;
 	}
 	pivotField.checkSubtotal();
@@ -15824,18 +15858,6 @@ DataRowTraversal.prototype.setStartRowIndex = function(rowR) {
 	this.rowTotal = this.curRowCache[rowR];
 	this.rowParent = this.curRowCache[rowR];
 };
-
-/**
- * @param {CT_I} rowItem 
- * @param {CT_I} colItem
- * @param {CT_DataField[]} dataFields 
- */
- DataRowTraversal.prototype.setDataField = function(rowItem, colItem, dataFields) {
-	var _rowItem = rowItem || {};
-	var _colItem = colItem || {};
-	var _dataIndex = Math.max(_rowItem.i || 0, _colItem.i || 0);
-	this.dataField = dataFields[_dataIndex];
-};
 /**
  * Method that returns the index of item relative to the current field index
  * @param {CT_DataField} dataField 
@@ -16089,6 +16111,8 @@ DataRowTraversal.prototype.addCellValues = function(cellValue, _cellValue) {
 
 DataRowTraversal.prototype.diffCellValues = function(cellValue, _cellValue) {
 	let oCellValue = new AscCommonExcel.CCellValue();
+	cellValue = cellValue || this.getZeroCellValue();
+	_cellValue = _cellValue || this.getZeroCellValue();
 	if (cellValue.type === AscCommon.CellValueType.Error || _cellValue.type === AscCommon.CellValueType.Error) {
 		oCellValue.type = AscCommon.CellValueType.Error;
 		cellValue.text !== null ? oCellValue.text = cellValue.text : oCellValue.text = _cellValue.text;
@@ -16680,7 +16704,7 @@ DataRowTraversal.prototype.getDifference = function (dataIndex, rowItem, colItem
 			oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
 		} else if (difference && difference.total[dataIndex]) {
 			total = difference.total[dataIndex];
-			oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+			oCellValue = total.getCellValue(dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t) || this.getZeroCellValue();
 			if (oCellValue.type === AscCommon.CellValueType.Number) {
 				oCellValue.number *= -1;
 			}
@@ -16938,6 +16962,7 @@ DataRowTraversal.prototype.getRuntotal = function (dataIndex, rowItem, colItem, 
 DataRowTraversal.prototype.getCellValue = function(dataFields, rowItem, colItem, props, dataRow, rowIndex, colIndex) {
 	let dataIndex = Math.max(rowItem.i, colItem.i);
 	let dataField = dataFields[dataIndex];
+	this.dataField = dataField;
 	if (this.checkBaseField(dataField)) {
 		return this.getErrorCellvalue(AscCommonExcel.cErrorType.not_available);
 	}

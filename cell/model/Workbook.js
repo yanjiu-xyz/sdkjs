@@ -8508,7 +8508,6 @@
 
 				for (var colItemsIndex = 0; colItemsIndex < colItems.length; ++colItemsIndex) {
 					var colItem = colItems[colItemsIndex];
-					traversal.setDataField(rowItem, colItem, dataFields);
 					var colR = colItem.getR();
 					traversal.setStartColIndex(pivotFields, fieldIndex, colItem, colR, colFields, rowItem);
 					oCellValue = traversal.getCellValue(dataFields, rowItem, colItem, props, dataRow, rowItemsIndex, colItemsIndex);
