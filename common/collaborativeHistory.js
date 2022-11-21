@@ -215,7 +215,6 @@
 		}
 		return changes;
 	};
-
 	CCollaborativeHistory.prototype.InitNavigationRevisionHistory = function ()
 	{
 		let context = this;
@@ -320,12 +319,118 @@
 			this.Changes.length = this.m_RewiewIndexToDel;
 			this.ReviewUndoBlock(this.m_RewiewPoints.shift());
 		}
+	};
+	CCollaborativeHistory.prototype.IsAddContentChanges = function(change)
+	{
+		return	change.Description ===  AscDFH.historydescription_Document_AddLetter 		||
+				change.Description === 	AscDFH.historydescription_Document_AddLetterUnion
+	};
+	CCollaborativeHistory.prototype.IsRemoveContentChanges = function(change)
+	{
+		return	change.Description ===  AscDFH.historydescription_Document_BackSpaceButton
+	};
+	CCollaborativeHistory.prototype.IsTableChangeAndAddChange = function(change)
+	{
+		return 	change instanceof AscCommon.CChangesTableIdDescription 	&&
+				this.IsAddContentChanges(change)
+	};
+	CCollaborativeHistory.prototype.ClearReviewPoints = function()
+	{
+		for (let i = this.m_RewiewPoints.length - 1; i >= 0; i--)
+		{
+			if (this.m_RewiewPoints[i][0].length === 0)
+				this.m_RewiewPoints.splice(i, 1);
+		}
+	};
+	CCollaborativeHistory.prototype.RemoveDeletedTextFromHistory = function()
+	{
+		for (let i = this.m_RewiewPoints.length - 1; i >= 0; i--)
+		{
+			let isDeleteAllAddHistoryArr = this.private_RemoveDeletedTextFromHistoryPoint(this.m_RewiewPoints[i], i);
+			if (isDeleteAllAddHistoryArr)
+			{
+				this.m_RewiewPoints.splice(i, 1);
+				i--;
+			}
+		}
+
+		this.ClearReviewPoints();
+	};
+
+	CCollaborativeHistory.prototype.private_RemoveDeletedTextFromHistoryPoint = function (AddHistoryPoint, Index)
+	{
+		let oLastChange = AddHistoryPoint[AddHistoryPoint.length - 1];
+
+		if (!this.IsTableChangeAndAddChange(oLastChange))
+			return;
+
+		let intStartPos = 	AddHistoryPoint[AddHistoryPoint.length - 2].PosArray[0];
+		let intEndPos = 	AddHistoryPoint[0].PosArray[0];
+
+		for (let nCount = Index - 1; nCount >= 0; nCount--)
+		{
+			let FutureRemovePoint = this.m_RewiewPoints[nCount];
+
+			if (!this.IsRemoveContentChanges(FutureRemovePoint[FutureRemovePoint.length - 1]))
+				continue;
+
+			let isDeleteAllAddHistoryArr = this.private_DeleteData(
+				[intStartPos, intEndPos],
+				FutureRemovePoint,
+				AddHistoryPoint,
+			);
+
+			if (isDeleteAllAddHistoryArr)
+				return true;
+		}
 	}
+
+	CCollaborativeHistory.prototype.private_DeleteData = function(arrStartEndPos, FutureRemovePoint, AddHistoryPoint) {
+		if (!Array.isArray(FutureRemovePoint[0]) || FutureRemovePoint[0] === undefined)
+			return;
+
+		let intStartPos = FutureRemovePoint[0].PosArray[0];
+
+		for (let nCount = 0; nCount < FutureRemovePoint.length; nCount++)
+		{
+			let currentChange = FutureRemovePoint[nCount];
+
+			if (!(currentChange && currentChange.PosArray))
+				continue;
+
+			if (currentChange.PosArray[0] >= arrStartEndPos[0] && currentChange.PosArray[0] <= arrStartEndPos[1])
+			{
+				FutureRemovePoint.splice(nCount, 2, [], []);
+
+				if (AddHistoryPoint)
+					this.DeleteChangesFromAddHistoryPoint(currentChange.PosArray[0], AddHistoryPoint);
+
+				intStartPos += 1;
+				nCount++;
+			}
+
+			if (AddHistoryPoint.length === 1)
+				return true;
+		}
+	};
+	CCollaborativeHistory.prototype.DeleteChangesFromAddHistoryPoint = function (index, Point)
+	{
+		if (!Point)
+			return;
+
+		for (let i = Point.length - 2; i >= 0; i--)
+		{
+			if (Point[i].PosArray && Point[i].PosArray[0] === index)
+				return Point.splice(i, 1);
+		}
+	};
 	CCollaborativeHistory.prototype.NavigationRevisionHistory = function (isRedo)
 	{
-		//если режим без удаленного текста то не нужно обрабатывать изменения свзязанные с удалением контента
 		if (this.IsRestoreDeletedText)
 			this.UndoChangeWithDeletedText();
+
+		if (!this.IsRestoreDeletedText)
+			this.RemoveDeletedTextFromHistory();
 
 		if (isRedo)
 			this.NavigationRevisionHistoryByCount(this.m_RewiewIndex - 1);
@@ -366,7 +471,8 @@
 			this.m_RewiewIndex = intCount;
 		}
 
-		this.GetDeleteTypeChanges();
+		if (this.IsRestoreDeletedText)
+			this.GetDeleteTypeChanges();
 	};
 	CCollaborativeHistory.prototype.ReviewUndoBlock = function(arrBlock)
 	{
@@ -536,8 +642,6 @@
 
 		this.Changes = this.Changes.concat(changeArray);
 		this.PushDataDelPoints(changeArray.reverse());
-
-		editor.WordControl.m_oLogicDocument.RecalculateFromStart();
 	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
