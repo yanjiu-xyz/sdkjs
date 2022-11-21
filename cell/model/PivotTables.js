@@ -16808,7 +16808,7 @@ DataRowTraversal.prototype.getPercentCellValue = function (percent, dataIndex, r
 		let BaseTotal = percent.total[dataIndex];
 		let BaseOCellValue = BaseTotal.getCellValue(this.dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t) || this.getZeroCellValue();
 		total = this.cur.total[dataIndex];
-		oCellValue = total.getCellValue(this.dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+		oCellValue = total.getCellValue(this.dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t) || this.getErrorCellvalue(AscCommonExcel.cErrorType.null_value);
 		if (oCellValue.type === AscCommon.CellValueType.Error) {
 			return oCellValue;
 		} else if (BaseOCellValue.type === AscCommon.CellValueType.Error) {
@@ -16893,7 +16893,7 @@ DataRowTraversal.prototype.getPercentDiffCellValue = function (percentDiff, data
 		let BaseTotal = percentDiff.total[dataIndex];
 		let BaseOCellValue = BaseTotal.getCellValue(this.dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
 		total = this.cur.total[dataIndex];
-		oCellValue = total.getCellValue(this.dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+		oCellValue = total.getCellValue(this.dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t) || this.getErrorCellvalue(AscCommonExcel.cErrorType.null_value);
 		if (oCellValue.type === AscCommon.CellValueType.Error) {
 			return oCellValue;
 		}
@@ -16906,7 +16906,7 @@ DataRowTraversal.prototype.getPercentDiffCellValue = function (percentDiff, data
 	} else if (!this.cur || !this.cur.total[dataIndex]) {
 		oCellValue = this.getErrorCellvalue(AscCommonExcel.cErrorType.null_value);
 	} else if (this.cur && this.cur.total[dataIndex] && ((this.diffRowIndex[dataIndex] !== null && rowItem.t !== Asc.c_oAscItemType.Grand) || (this.diffColIndex[dataIndex] !== null && colItem.t !== Asc.c_oAscItemType.Grand))){
-		oCellValue = this.cur.total[dataIndex].getCellValue(this.dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t);
+		oCellValue = this.cur.total[dataIndex].getCellValue(this.dataField.subtotal, props.rowFieldSubtotal, rowItem.t, colItem.t)|| this.getErrorCellvalue(AscCommonExcel.cErrorType.null_value);;
 		if (oCellValue.type !== AscCommon.CellValueType.Error) {
 			oCellValue = new AscCommonExcel.CCellValue();
 		}
