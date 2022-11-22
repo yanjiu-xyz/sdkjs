@@ -340,9 +340,9 @@ Paragraph.prototype.Copy = function(Parent, DrawingDocument, oPr)
 		if (oPr.SkipUpdateInfo) {
 			oPr.Comparison.saveReviewInfo(EndRun, this);
 		} else if (oPr.bSaveCustomReviewType) {
-			oPr.Comparison.saveCustomReviewInfo(EndRun, this, reviewtype_Add);
+			oPr.Comparison.saveCustomReviewInfo(EndRun, this, oPr.Comparison.nInsertChangesType);
 		} else {
-			oPr.Comparison.updateReviewInfo(EndRun, reviewtype_Add);
+			oPr.Comparison.updateReviewInfo(EndRun, oPr.Comparison.nInsertChangesType);
 		}
 	}
 

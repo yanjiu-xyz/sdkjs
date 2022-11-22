@@ -143,9 +143,9 @@ CTableRow.prototype =
             if (oPr.SkipUpdateInfo) {
                 oPr.Comparison.saveReviewInfo(Row, this);
             } else if (oPr.bSaveCustomReviewType) {
-                oPr.Comparison.saveCustomReviewInfo(Row, this, reviewtype_Add);
+                oPr.Comparison.saveCustomReviewInfo(Row, this, oPr.Comparison.nInsertChangesType);
             } else {
-                oPr.Comparison.updateReviewInfo(Row, reviewtype_Add);
+                oPr.Comparison.updateReviewInfo(Row, oPr.Comparison.nInsertChangesType);
             }
         }
 		return Row;

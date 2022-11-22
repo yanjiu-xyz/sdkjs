@@ -163,7 +163,6 @@
         const oParentParagraph =  (this.partner && this.partner.element) || oCurRun.Paragraph;
         let k = posOfLastInsertRun;
         let lastCheckRun;
-        let bBreak = false;
         for(k -= 1; k > -1; --k)
         {
             oCurRun = oParentParagraph.Content[k];
@@ -361,7 +360,7 @@
     CDocumentComparison.prototype.setRemoveReviewType = function (element) {
         if(!(element.IsParaEndRun && element.IsParaEndRun()))
         {
-            this.setReviewInfoRecursive(element, reviewtype_Remove);
+            this.setReviewInfoRecursive(element, this.nRemoveChangesType);
         }
     };
 
@@ -914,6 +913,8 @@
             CopyReviewPr: false,
             Comparison: this
         };
+        this.nInsertChangesType = reviewtype_Add;
+        this.nRemoveChangesType = reviewtype_Remove;
     }
     CDocumentComparison.prototype.getUserName = function()
     {
@@ -1217,7 +1218,7 @@
             for(let nRemove = oChange.remove.length - 1; nRemove > -1;  --nRemove)
             {
                 const oRemoveSp = oChange.remove[nRemove].element;
-                this.setGraphicObjectReviewInfo(oRemoveSp, reviewtype_Remove);
+                this.setGraphicObjectReviewInfo(oRemoveSp, this.nRemoveChangesType);
             }
             for(let nInsert = oChange.insert.length - 1; nInsert > -1;  --nInsert)
             {
@@ -1304,7 +1305,7 @@
         {
             if(!oOrigRoot.children[i].partner)
             {
-                this.setReviewInfoRecursive(oOrigRoot.children[i].element, reviewtype_Remove);
+                this.setReviewInfoRecursive(oOrigRoot.children[i].element, this.nRemoveChangesType);
                 ++nRemoveCount;
             }
             else
@@ -1582,7 +1583,7 @@
             oReviseContent = oReviseSectPr && oReviseSectPr.HeaderFirst && oReviseSectPr.HeaderFirst.Content;
             if(oOrigContent && !oReviseContent)
             {
-                this.setReviewInfoRecursive(oOrigContent, reviewtype_Remove);
+                this.setReviewInfoRecursive(oOrigContent, this.nRemoveChangesType);
             }
             else if(oOrigContent && oReviseContent)
             {
@@ -1598,7 +1599,7 @@
             oReviseContent = oReviseSectPr && oReviseSectPr.HeaderEven && oReviseSectPr.HeaderEven.Content;
             if(oOrigContent && !oReviseContent)
             {
-                this.setReviewInfoRecursive(oOrigContent, reviewtype_Remove);
+                this.setReviewInfoRecursive(oOrigContent, this.nRemoveChangesType);
             }
             else if(oOrigContent && oReviseContent)
             {
@@ -1614,7 +1615,7 @@
             oReviseContent = oReviseSectPr && oReviseSectPr.HeaderDefault && oReviseSectPr.HeaderDefault.Content;
             if(oOrigContent && !oReviseContent)
             {
-                this.setReviewInfoRecursive(oOrigContent, reviewtype_Remove);
+                this.setReviewInfoRecursive(oOrigContent, this.nRemoveChangesType);
             }
             else if(oOrigContent && oReviseContent)
             {
@@ -1630,7 +1631,7 @@
             oReviseContent = oReviseSectPr && oReviseSectPr.FooterFirst && oReviseSectPr.FooterFirst.Content;
             if(oOrigContent && !oReviseContent)
             {
-                this.setReviewInfoRecursive(oOrigContent, reviewtype_Remove);
+                this.setReviewInfoRecursive(oOrigContent, this.nRemoveChangesType);
             }
             else if(oOrigContent && oReviseContent)
             {
@@ -1646,7 +1647,7 @@
             oReviseContent = oReviseSectPr && oReviseSectPr.FooterEven && oReviseSectPr.FooterEven.Content;
             if(oOrigContent && !oReviseContent)
             {
-                this.setReviewInfoRecursive(oOrigContent, reviewtype_Remove);
+                this.setReviewInfoRecursive(oOrigContent, this.nRemoveChangesType);
             }
             else if(oOrigContent && oReviseContent)
             {
@@ -1662,7 +1663,7 @@
             oReviseContent = oReviseSectPr && oReviseSectPr.FooterDefault && oReviseSectPr.FooterDefault.Content;
             if(oOrigContent && !oReviseContent)
             {
-                this.setReviewInfoRecursive(oOrigContent, reviewtype_Remove);
+                this.setReviewInfoRecursive(oOrigContent, this.nRemoveChangesType);
             }
             else if(oOrigContent && oReviseContent)
             {
@@ -1948,7 +1949,7 @@
             {
                 const oChildNode = oChange.remove[j];
                 const oChildElement = oChildNode.element;
-                this.setReviewInfoRecursive(oChildElement, reviewtype_Remove);
+                this.setReviewInfoRecursive(oChildElement, this.nRemoveChangesType);
             }
             this.insertNodesToDocContent(oElement, oChange.anchor.index + oChange.remove.length, oChange.insert);
         }

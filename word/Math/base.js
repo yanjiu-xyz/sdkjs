@@ -1544,9 +1544,9 @@ CMathBase.prototype.Copy = function(Selected, oPr)
         if (oPr.SkipUpdateInfo) {
             oPr.Comparison.saveReviewInfo(NewElement, this);
         } else if (oPr.bSaveCustomReviewType) {
-            oPr.Comparison.saveCustomReviewInfo(NewElement, this, reviewtype_Add);
+            oPr.Comparison.saveCustomReviewInfo(NewElement, this, oPr.Comparison.nInsertChangesType);
         } else {
-            oPr.Comparison.updateReviewInfo(NewElement, reviewtype_Add);
+            oPr.Comparison.updateReviewInfo(NewElement, oPr.Comparison.nInsertChangesType);
         }
     }
     return NewElement;

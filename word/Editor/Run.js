@@ -216,9 +216,9 @@ ParaRun.prototype.Copy = function(Selected, oPr)
 		if (oPr.SkipUpdateInfo) {
 			oPr.Comparison.saveReviewInfo(NewRun, this);
 		} else if (oPr.bSaveCustomReviewType) {
-			oPr.Comparison.saveCustomReviewInfo(NewRun, this, reviewtype_Add);
+			oPr.Comparison.saveCustomReviewInfo(NewRun, this, oPr.Comparison.nInsertChangesType);
 		} else {
-			oPr.Comparison.updateReviewInfo(NewRun, reviewtype_Add);
+			oPr.Comparison.updateReviewInfo(NewRun, oPr.Comparison.nInsertChangesType);
 		}
 	}
     else if (true === isCopyReviewPr || (oLogicDocument && (oLogicDocument.RecalcTableHeader || oLogicDocument.MoveDrawing)))
@@ -343,9 +343,9 @@ ParaRun.prototype.Copy2 = function(oPr)
 		if (oPr.SkipUpdateInfo) {
 			oPr.Comparison.saveReviewInfo(NewRun, this);
 		} else if (oPr.bSaveCustomReviewType) {
-			oPr.Comparison.saveCustomReviewInfo(NewRun, this, reviewtype_Add);
+			oPr.Comparison.saveCustomReviewInfo(NewRun, this, oPr.Comparison.nInsertChangesType);
 		} else {
-			oPr.Comparison.updateReviewInfo(NewRun, reviewtype_Add);
+			oPr.Comparison.updateReviewInfo(NewRun, oPr.Comparison.nInsertChangesType);
 		}
 	}
     var StartPos = 0;

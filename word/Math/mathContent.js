@@ -2404,9 +2404,9 @@ CMathContent.prototype.CopyTo = function(OtherContent, Selected, oPr)
         if (oPr.SkipUpdateInfo) {
             oPr.Comparison.saveReviewInfo(OtherContent, OtherContent);
         } else if (oPr.bSaveCustomReviewType) {
-            oPr.Comparison.saveCustomReviewInfo(OtherContent, OtherContent, reviewtype_Add);
+            oPr.Comparison.saveCustomReviewInfo(OtherContent, OtherContent, oPr.Comparison.nInsertChangesType);
         } else {
-            oPr.Comparison.updateReviewInfo(OtherContent, reviewtype_Add);
+            oPr.Comparison.updateReviewInfo(OtherContent, oPr.Comparison.nInsertChangesType);
         }
     }
 };
