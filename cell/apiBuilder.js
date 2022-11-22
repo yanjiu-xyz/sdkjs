@@ -1929,34 +1929,63 @@
 	 * @param {Direction} direction - The direction of end in the specified range. *
 	 * @returns {ApiRange}
 	 */
-	 ApiRange.prototype.End = function (direction) {
-		var bbox = this.range.bbox;
-		var r1, c1, r2, c2;
+	ApiRange.prototype.End = function (direction) {
+		let bbox = this.range.bbox;
+		let row, col, res;
 		switch (direction) {
 			case "xlUp":
-				r1 = r2 = 0;
-				c1 = c2 = bbox.c1;
+				row = (bbox.r1 > 0 ? bbox.r1 - 1 : bbox.r1);
+				res = this.range.worksheet.getRange3(0, bbox.c1, 0, bbox.c1);
+				while (row) {
+					let cell = this.range.worksheet.getRange3(row, bbox.c1, row, bbox.c1);
+					if (cell.getValue() !== "") {
+						res = cell;
+						break;
+					}
+					row--;
+				}
 				break;
 			case "xlDown":
-				r1 = r2 = AscCommon.gc_nMaxRow0;
-				c1 = c2 = bbox.c1;
+				row = (bbox.r1 < AscCommon.gc_nMaxRow0 ? bbox.r1 + 1 : bbox.r1);
+				res = this.range.worksheet.getRange3(AscCommon.gc_nMaxRow0, bbox.c1, AscCommon.gc_nMaxRow0, bbox.c1);
+				while (row < AscCommon.gc_nMaxRow0) {
+					let cell = this.range.worksheet.getRange3(row, bbox.c1, row, bbox.c1);
+					if (cell.getValue() !== "") {
+						res = cell;
+						break;
+					}
+					row++;
+				}
 				break;
 			case "xlToRight":
-				r1 = r2 = bbox.r1;
-				c1 = c2 = AscCommon.gc_nMaxCol0;
+				col = (bbox.c1 < AscCommon.gc_nMaxCol0 ? bbox.c1 + 1 : bbox.c1);
+				res = this.range.worksheet.getRange3(bbox.r1, AscCommon.gc_nMaxCol0, bbox.r1, AscCommon.gc_nMaxCol0);
+				while (col < AscCommon.gc_nMaxCol0) {
+					let cell = this.range.worksheet.getRange3(bbox.r1, col, bbox.r1, col);
+					if (cell.getValue() !== "") {
+						res = cell;
+						break;
+					}
+					col++;
+				}
 				break;
 			case "xlToLeft":
-				r1 = r2 = bbox.r1;
-				c1 = c2 = 0;
+				col = (bbox.c1 > 0 ? bbox.c1 - 1 : bbox.c1);
+				res = this.range.worksheet.getRange3(bbox.r1, 0, bbox.r1, 0);
+				while (col) {
+					let cell = this.range.worksheet.getRange3(bbox.r1, col, bbox.r1, col);
+					if (cell.getValue() !== "") {
+						res = cell;
+						break;
+					}
+					col--;
+				}
 				break;
 			default:
-				r1 = bbox.r1;
-				c1 = bbox.c1;
-				r2 = bbox.r2;
-				c2 = bbox.c2;
+				res = this.range.worksheet.getRange3(bbox.r1, bbox.c1, bbox.r2, bbox.c2);
 				break;
 		}
-		return new ApiRange(this.range.worksheet.getRange3(r1, c1, r2, c2));
+		return new ApiRange(res);
 	};
 
 	/**
