@@ -13230,11 +13230,8 @@
 						break;
 					}
 					case 8: {
-						var _length = s.GetULong();
-						var _end_rec2 = s.cur + _length;
-
-						oPresentattion.Api.vbaMacros = s.GetBuffer(_length);
-						s.Seek2(_end_rec2);
+						oPresentattion.Api.vbaProject = new AscCommon.VbaProject();
+						oPresentattion.Api.vbaProject.fromStream(s);
 						break;
 					}
 					case 9: {
@@ -15218,5 +15215,6 @@
 		window['AscFormat'].CLR_IDX_MAP = CLR_IDX_MAP;
 		window['AscFormat'].MAP_AUTONUM_TYPES = MAP_AUTONUM_TYPES;
 		window['AscFormat'].CLR_NAME_MAP = CLR_NAME_MAP;
+		window['AscFormat'].LINE_PRESETS_MAP = LINE_PRESETS_MAP;
 	})
 (window);

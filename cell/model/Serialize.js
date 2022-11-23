@@ -1690,7 +1690,7 @@
         }
         if (error && wb.oApi && wb.oApi.CoAuthoringApi) {
             var msg = 'Error: intersection of merged areas';
-            wb.oApi.CoAuthoringApi.sendChangesError(msg);
+            AscCommon.sendClientLog("error", "changesError: " + msg, wb.oApi);
         }
         return res;
 	}
@@ -3273,11 +3273,14 @@
 				this.bs.WriteItem(c_oSerWorkbookTypes.ExternalReferences, function() {oThis.WriteExternalReferences();});
 			}
 			if (!this.isCopyPaste) {
-                if (this.wb.oApi.vbaMacros) {
+                if (this.wb.oApi.vbaProject) {
                     this.bs.WriteItem(c_oSerWorkbookTypes.VbaProject, function() {
-                        oThis.memory.WriteByte(0);
-                        oThis.memory.WriteULong(oThis.wb.oApi.vbaMacros.length);
-                        oThis.memory.WriteBuffer(oThis.wb.oApi.vbaMacros, 0, oThis.wb.oApi.vbaMacros.length);
+                        var old = new AscCommon.CMemory(true);
+                        pptx_content_writer.BinaryFileWriter.ExportToMemory(old);
+                        pptx_content_writer.BinaryFileWriter.ImportFromMemory(oThis.memory);
+                        pptx_content_writer.BinaryFileWriter.WriteRecord4(0, oThis.wb.oApi.vbaProject);
+                        pptx_content_writer.BinaryFileWriter.ExportToMemory(oThis.memory);
+                        pptx_content_writer.BinaryFileWriter.ImportFromMemory(old);
                     });
                 }
 				var macros = this.wb.oApi.macros.GetData();
@@ -7366,14 +7369,11 @@
                     {
                         case 0:
                         {
-                            let _len = this.stream.GetULong();
-                            this.InitOpenManager.oReadResult.vbaMacros = this.stream.GetBuffer(_len);
-                            break;
-                        }
-                        case 1:
-                        {
-                            let _len = this.stream.GetULong();
-                            this.InitOpenManager.oReadResult.vbaMacrosXml = this.stream.GetString2LE(_len);
+                            var fileStream = this.stream.ToFileStream();
+                            let vbaProject = new AscCommon.VbaProject();
+                            vbaProject.fromStream(fileStream);
+                            this.InitOpenManager.oReadResult.vbaProject = vbaProject;
+                            this.stream.FromFileStream(fileStream);
                             break;
                         }
                         default:
@@ -10335,8 +10335,8 @@
 			if (this.InitOpenManager.oReadResult.vbaMacros) {
 				wb.oApi.vbaMacros = this.InitOpenManager.oReadResult.vbaMacros;
 			}
-            if (this.InitOpenManager.oReadResult.vbaMacrosXml) {
-                wb.oApi.vbaMacrosXml = this.InitOpenManager.oReadResult.vbaMacrosXml;
+            if (this.InitOpenManager.oReadResult.vbaProject) {
+                wb.oApi.vbaProject = this.InitOpenManager.oReadResult.vbaProject;
             }
             wb.checkCorrectTables();
 		};
@@ -11144,6 +11144,7 @@
             stylesTableReader: null,
             pivotCacheDefinitions: {},
             vbaMacros: null,
+            vbaProject: null,
             macros: null,
             slicerCaches: {},
             tableIds: {},
@@ -11178,6 +11179,9 @@
         }
         if (this.oReadResult.vbaMacros) {
             wb.oApi.vbaMacros = this.oReadResult.vbaMacros;
+        }
+        if (this.oReadResult.vbaProject) {
+            wb.oApi.vbaProject = this.oReadResult.vbaProject;
         }
         wb.checkCorrectTables();
     };

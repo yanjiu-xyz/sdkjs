@@ -658,6 +658,43 @@
 		}
 		return stream;
 	}
+
+	function isPdfFormatFile(stream) {
+		let part = AscCommon.UTF8ArrayToString(stream, 0, 4096);//MIN_SIZE_BUFFER
+		return -1 !== part.indexOf("%PDF-");
+	}
+
+	function isDjvuFormatFile(stream) {
+		return stream.length > 4 && 0x41 == stream[0] && 0x54 == stream[1] && 0x26 == stream[2] &&
+			0x54 == stream[3] && 0x46 == stream[4] && 0x4f == stream[5] && 0x52 == stream[6] && 0x4d == stream[7];
+	}
+
+	function isXpsFormatFile(stream) {
+		if (!(stream && stream.length > 4 && 0x50 === stream[0] && 0x4b === stream[1] && 0x03 === stream[2] && 0x04 === stream[3])) {
+			//Local file header signature = 0x04034b50 (PK♥♦ or "PK\3\4")
+			return false;
+		}
+		let jsZlib = new AscCommon.ZLib();
+		if (!jsZlib.open(stream)) {
+			return false;
+		}
+		let _relsBytes = jsZlib.getFile("_rels/.rels");
+		let _rels = _relsBytes ? AscCommon.UTF8ArrayToString(_relsBytes, 0, _relsBytes.length) : "";
+
+		//todo combine pieces
+		let _relsPieceBytes = jsZlib.getFile("_rels/.rels/[0].piece");
+		let _relsPiece = _relsPieceBytes ? AscCommon.UTF8ArrayToString(_relsPieceBytes, 0, _relsPieceBytes.length) : "";
+		jsZlib.close();
+
+		if (-1 !== _rels.indexOf("fixedrepresentation") && (-1 !== _rels.indexOf("/xps/") || -1 !== _rels.indexOf("/oxps/"))) {
+			return true;
+		}
+
+		return !!_relsPiece;
+	}
+	function checkNativeViewerSignature(stream) {
+		return isPdfFormatFile(stream) || isDjvuFormatFile(stream) || isXpsFormatFile(stream);
+	}
 	function checkStreamSignature(stream, Signature) {
 		if (stream.length > Signature.length) {
 			for(var i = 0 ; i < Signature.length; ++i){
@@ -669,37 +706,67 @@
 		}
 		return false;
 	}
-	function checkOOXMLSignature(stream, Signature) {
-		if (!(stream && stream.length > 4 && 0x50 === stream[0] && 0x4b === stream[1] && 0x03 === stream[2] && 0x04 === stream[3])) {
+	function checkOOXMLSignature(stream) {
+		return null !== getEditorByOOXMLSignature(stream);
+	}
+	function getEditorByBinSignature(stream, Signature) {
+		if (stream.length > 4) {
+			let signature = AscCommon.UTF8ArrayToString(stream, 0, 4);
+			switch(signature) {
+				case "DOCY":
+					return AscCommon.c_oEditorId.Word;
+				case "XLSY":
+					return AscCommon.c_oEditorId.Spreadsheet;
+				case "PPTY":
+					return AscCommon.c_oEditorId.Presentation;
+			}
+		}
+		return null;
+	}
+	function getEditorByOOXMLSignature(stream) {
+		if (!(stream && stream.length > 4 && 0x50 === stream[0] && 0x4b === stream[1] && 0x03 === stream[2] &&
+			0x04 === stream[3])) {
 			//Local file header signature = 0x04034b50 (PK♥♦ or "PK\3\4")
-			return false;
+			return null;
 		}
 		let jsZlib = new AscCommon.ZLib();
 		if (!jsZlib.open(stream)) {
-			return false;
+			return null;
 		}
 		let contentTypesBytes = jsZlib.getFile("[Content_Types].xml");
 		let contentTypes = contentTypesBytes ? AscCommon.UTF8ArrayToString(contentTypesBytes, 0, contentTypesBytes.length) : "";
 		jsZlib.close();
 
-		return -1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml") ||
+		if (-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.template.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-word.document.macroEnabled.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-word.template.macroEnabledTemplate.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.oform") ||
-			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.docxf") ||
-			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.wordprocessingml.document.docxf")) {
+			return AscCommon.c_oEditorId.Word;
+		} else if (-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.spreadsheetml.template.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-excel.sheet.macroEnabled.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-excel.template.macroEnabled.main+xml") ||
-			-1 !== contentTypes.indexOf("application/vnd.ms-excel.sheet.binary.macroEnabled.main") ||
-			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml") ||
+			-1 !== contentTypes.indexOf("application/vnd.ms-excel.sheet.binary.macroEnabled.main")) {
+			return AscCommon.c_oEditorId.Spreadsheet;
+		} else if (-1 !== contentTypes.indexOf(
+				"application/vnd.openxmlformats-officedocument.presentationml.presentation.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.presentationml.slideshow.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.openxmlformats-officedocument.presentationml.template.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.presentation.macroEnabled.main+xml") ||
 			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.slideshow.macroEnabled.main+xml") ||
-			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.template.macroEnabled.main+xml");
+			-1 !== contentTypes.indexOf("application/vnd.ms-powerpoint.template.macroEnabled.main+xml")) {
+			return AscCommon.c_oEditorId.Presentation;
+		} else {
+			return null;
+		}
 	}
+	function getEditorBySignature(stream) {
+		let res = getEditorByBinSignature(stream);
+		return null !== res ? res :getEditorByOOXMLSignature (stream);
+	}
+
 	function openFileCommand(docId, binUrl, changesUrl, changesToken, Signature, callback)
 	{
 		var nError = Asc.c_oAscError.ID.No, oResult = new OpenFileResult(), bEndLoadFile = false, bEndLoadChanges = false;
@@ -881,9 +948,12 @@
 			case c_oAscServerError.ConvertLIMITS :
 				nRes = Asc.c_oAscError.ID.ConvertationOpenLimitError;
 				break;
+			case c_oAscServerError.ConvertPARAMS :
+				nRes = AscCommon.c_oAscAdvancedOptionsAction.Save === nAction ? Asc.c_oAscError.ID.ConvertationSaveError :
+						Asc.c_oAscError.ID.ConvertationOpenFormat;
+				break;
 			case c_oAscServerError.ConvertCONVERT_CORRUPTED :
 			case c_oAscServerError.ConvertLIBREOFFICE :
-			case c_oAscServerError.ConvertPARAMS :
 			case c_oAscServerError.ConvertNEED_PARAMS :
 			case c_oAscServerError.ConvertUnknownFormat :
 			case c_oAscServerError.ConvertReadFile :
@@ -2464,7 +2534,7 @@
 		ipRe                  = /^(((https?)|(ftps?)):\/\/)?([\-\wа-яё]*:?[\-\wа-яё]*@)?(((1[0-9]{2}|2[0-4][0-9]|25[0-5]|[1-9][0-9]|[0-9])\.){3}(1[0-9]{2}|2[0-4][0-9]|25[0-5]|[1-9][0-9]|[0-9]))(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?/i,
 		hostnameRe            = /^(((https?)|(ftps?)):\/\/)?([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+\.)+[\wа-яё\-]{2,}(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
 		localRe               = /^(((https?)|(ftps?)):\/\/)([\-\wа-яё]*:?[\-\wа-яё]*@)?(([\-\wа-яё]+)(:\d+)?(\/[%\-\wа-яё]*(\.[\wа-яё]{2,})?(([\wа-яё\-\.\?\\\/+@&#;:`'~=%!,\(\)]*)(\.[\wа-яё]{2,})?)*)*\/?)/i,
-		rx_allowedProtocols      = /(^((https?|ftps?|file|tessa):\/\/)|(mailto:)).*/i,
+		rx_allowedProtocols      = /(^((https?|ftps?|file|tessa|smb):\/\/)|(mailto:)).*/i,
 
 		rx_table              = build_rx_table(null),
 		rx_table_local        = build_rx_table(null);
@@ -2484,7 +2554,7 @@
 				}
 				if (startLink) {
 					if (name) {
-						if (url[i] === "[" && (url[i - 1] === "/" || url[i - 1] === "/\/" || (url[i - 1] === "'") && i === 1)) {
+						if (url[i] === "[" && (url[i - 1] === "/" || url[i - 1] === "/\/" ||  url[i - 1] === "\\" || (url[i - 1] === "'") && i === 1)) {
 							break;
 						} else {
 							name.end--;
@@ -3476,6 +3546,7 @@
 			}
 			else if (Asc.c_oAscSelectionDialogType.ConditionalFormattingRule === dialogType)
 			{
+
 				if (dataRange === null || dataRange === "")
 				{
 					return Asc.c_oAscError.ID.DataRangeError;
@@ -3485,9 +3556,18 @@
 					if (dataRange[0] === "=") {
 						dataRange = dataRange.slice(1);
 					}
+
 					if (!parserHelp.isArea(dataRange) && !parserHelp.isRef(dataRange) && !parserHelp.isTable(dataRange))
 					{
 						return Asc.c_oAscError.ID.DataRangeError;
+					}
+
+					if (model) {
+						var aRanges = AscCommonExcel.getRangeByRef(dataRange, model.getActiveWs())
+						if (aRanges && aRanges.length === 0)
+						{
+							return Asc.c_oAscError.ID.DataRangeError;
+						}
 					}
 				}
 			}
@@ -9120,6 +9200,15 @@
 	}
 
 	/**
+	 * @param unicode
+	 * @returns {boolean}
+	 */
+	function IsPunctuation(unicode)
+	{
+		return !!(AscCommon.g_aPunctuation[unicode])
+	}
+
+	/**
 	 * Присутствует ли символ заданного шрифта в шрифте ASCW3
 	 * @param sFontFamily
 	 * @param nUnicode
@@ -13068,6 +13157,35 @@
 		return res;
 	}
 
+	function getMemoryInfo() {
+		if(!(window.performance && window.performance.memory)) {
+			return "";
+		}
+		//https://gist.github.com/oryanmoshe/6b3ecd895c8a5eb9ae4ec4554f687737#file-window-performance-memory-1-js
+		return JSON.stringify(Object.getOwnPropertyNames(window.performance.memory.__proto__).reduce((acc,key) => {
+				if (key !== 'constructor')
+					acc[key] = window.performance.memory[key];
+				return acc;
+			}, {})
+		);
+	}
+	function getClientInfoString(type, opt_time, opt_memory) {
+		let res = type;
+		if (opt_time >= 0) {
+			res += ' time:' + Math.round(opt_time);
+		}
+		if (opt_memory) {
+			res += ' memory:' + opt_memory;
+		}
+		return res;
+	}
+	function sendClientLog(level, msg, api) {
+		if (!api) {
+			return;
+		}
+		api.CoAuthoringApi.sendClientLog(level, msg);
+	}
+
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
@@ -13125,6 +13243,8 @@
 	window["AscCommon"].initStreamFromResponse = initStreamFromResponse;
 	window["AscCommon"].checkStreamSignature = checkStreamSignature;
 	window["AscCommon"].checkOOXMLSignature = checkOOXMLSignature;
+	window["AscCommon"].checkNativeViewerSignature = checkNativeViewerSignature;
+	window["AscCommon"].getEditorBySignature = getEditorBySignature;
 
 	window["AscCommon"].DocumentUrls = DocumentUrls;
 	window["AscCommon"].OpenFileResult = OpenFileResult;
@@ -13147,6 +13267,7 @@
 	window["AscCommon"].ByteToHex = ByteToHex;
 	window["AscCommon"].IsDigit = IsDigit;
 	window["AscCommon"].IsLetter = IsLetter;
+	window["AscCommon"].IsPunctuation = window["AscCommon"]['IsPunctuation'] = IsPunctuation;
 	window["AscCommon"].CorrectFontSize = CorrectFontSize;
 	window["AscCommon"].IsAscFontSupport = IsAscFontSupport;
 	window["AscCommon"].ExecuteNoHistory = ExecuteNoHistory;
@@ -13252,6 +13373,9 @@
 	window["AscCommon"].generateHashParams = generateHashParams;
 	window["AscCommon"].fromModelAlgorithmName = fromModelAlgorithmName;
 	window["AscCommon"].fromModelCryptAlgorithmSid = fromModelCryptAlgorithmSid;
+	window["AscCommon"].getMemoryInfo = getMemoryInfo;
+	window["AscCommon"].getClientInfoString = getClientInfoString;
+	window["AscCommon"].sendClientLog = sendClientLog;
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)
@@ -13325,7 +13449,7 @@ window["asc_IsNeedBuildCryptedFile"] = function()
         }
         else
         {
-            if (0 != AscCommon.CollaborativeEditing.m_aAllChanges.length)
+            if (0 != AscCommon.CollaborativeEditing.GetAllChangesCount())
                 _returnValue = true;
         }
     }

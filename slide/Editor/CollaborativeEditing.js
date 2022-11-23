@@ -219,8 +219,9 @@ CCollaborativeEditing.prototype.Send_Changes = function(IsUserSave, AdditionalIn
 		this.m_aNeedUnlock2.length = 0;
 	}
 
-    if (0 < aChanges.length || null !== deleteIndex) {
-        this.private_OnSendOwnChanges(aChanges2, deleteIndex);
+    if (0 < aChanges.length || null !== deleteIndex)
+	{
+		this.CoHistory.AddOwnChanges(aChanges2, deleteIndex);
         editor.CoAuthoringApi.saveChanges(aChanges, deleteIndex, AdditionalInfo, editor.canUnlockDocument2, bCollaborative);
         AscCommon.History.CanNotAddChanges = true;
     } else
@@ -295,6 +296,10 @@ CCollaborativeEditing.prototype.Release_Locks = function()
                     else if(Class === editor.WordControl.m_oLogicDocument.slideSizeLock)
                     {
                         editor.sendEvent("asc_onUnLockDocumentProps");
+                    }
+                    else if(Class === editor.WordControl.m_oLogicDocument.viewPrLock)
+                    {
+                        editor.sendEvent("asc_onUnLockViewProps");
                     }
                 }
                 if(object.getObjectType && object.getObjectType() === AscDFH.historyitem_type_Slide && object.deleteLock === Class)

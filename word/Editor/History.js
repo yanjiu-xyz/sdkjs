@@ -355,19 +355,22 @@ CHistory.prototype =
 	/**
 	 * Специальная функция, для создания точки, чтобы отловить все изменения, которые происходят. После использования
 	 * данная точка ДОЛЖНА быть удалена через функцию Remove_LastPoint.
+	 * @param {number} description - идентификатор действия
 	 */
-	CreateNewPointForCollectChanges : function()
+	CreateNewPointToCollectChanges : function(description)
 	{
 		this.Points[++this.Index] = {
 			State       : null,
 			Items       : [],
 			Time        : null,
 			Additional  : {},
-			Description : -1
+			Description : description ? description : -1
 		};
 
 		this.Points.length  = this.Index + 1;
 		this.CollectChanges = true;
+
+		return this.Index;
 	},
     
     Remove_LastPoint : function()
@@ -993,7 +996,7 @@ CHistory.prototype =
             if (this.CanNotAddChanges && this.Api && !this.CollectChanges) {
                 var tmpErr = new Error();
                 if (tmpErr.stack) {
-                    this.Api.CoAuthoringApi.sendChangesError(tmpErr.stack);
+					AscCommon.sendClientLog("error", "changesError: " + tmpErr.stack, this.Api);
                 }
             }
         } catch (e) {

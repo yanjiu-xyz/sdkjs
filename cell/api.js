@@ -124,7 +124,7 @@ var editor;
 
     this.formulasList = null;	// Список всех формул
 
-	this.openingEnd = {bin: false, xlsxStart: false, xlsx: false, data: null};
+	this.openingEnd = {bin: false, xlsxStart: false, xlsx: false, data: null, perfStart: 0};
 
 	this.tmpR1C1mode = null;
 
@@ -582,7 +582,9 @@ var editor;
 					} else {
 						callback(null);
 					}
+					_api.endInsertDocumentUrls();
 				}, endCallback: function (_api) {
+					callback(null);
 				}
 			};
 
@@ -1154,6 +1156,11 @@ var editor;
 	spreadsheet_api.prototype._onEndOpen = function() {
 		var t = this;
 		if (this.openingEnd.bin && this.openingEnd.xlsx && this.openDocumentFromZip(t.wbModel, this.openingEnd.data)) {
+			if (this.openingEnd.perfStart > 0) {
+				let perfEnd = performance.now();
+				AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onOpenDocument", perfEnd - this.openingEnd.perfStart), this);
+				this.openingEnd.perfStart = 0;
+			}
 			//opening xlsx depends on getBinaryOtherTableGVar(called after Editor.bin)
 			Asc.ReadDefTableStyles(t.wbModel);
 			g_oIdCounter.Set_Load(false);
@@ -1486,7 +1493,8 @@ var editor;
 
   spreadsheet_api.prototype.openDocument = function(file) {
 	//todo native.js -> openDocument
-  	if (file.changes && this.VersionHistory) {
+	this.openingEnd.perfStart = performance.now();
+	if (file.changes && this.VersionHistory) {
   		this.VersionHistory.changes = file.changes;
 	}
 	this.isOpenOOXInBrowser = this["asc_isSupportFeature"]("ooxml") && AscCommon.checkOOXMLSignature(file.data);
@@ -1721,7 +1729,7 @@ var editor;
 				if (vbaProjectPart) {
 					var contentVbaProject = vbaProjectPart.getDocumentContent(true);
 					if (contentVbaProject) {
-						xmlParserContext.InitOpenManager.oReadResult.vbaMacros = contentVbaProject;
+						xmlParserContext.InitOpenManager.oReadResult.vbaMacros = new Uint8Array(contentVbaProject);
 					}
 				}
 
@@ -2634,7 +2642,18 @@ var editor;
   };
 
   spreadsheet_api.prototype._onApplyChanges = function(changes, fCallback) {
-    this.wbModel.DeserializeHistory(changes, fCallback);
+	  let t = this;
+	  let perfStart = performance.now();
+	  let callback = fCallback;
+	  if (!this.isDocumentLoadComplete) {
+		  callback = function() {
+			  let perfEnd = performance.now();
+			  AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onApplyChanges", perfEnd - perfStart), t);
+			  fCallback();
+		  };
+
+	  }
+    this.wbModel.DeserializeHistory(changes, callback);
   };
 
   spreadsheet_api.prototype._onUpdateAfterApplyChanges = function() {
@@ -2977,6 +2996,10 @@ var editor;
 				this.asc_setZoom(previousVersionZoom);
 			}
 			this.asc_Resize();
+		}
+
+		if (this.asc_getExternalReferences()) {
+			this.handlers.trigger("asc_onNeedUpdateExternalReferenceOnOpen");
 		}
 		//this.asc_Resize(); // Убрал, т.к. сверху приходит resize (http://bugzilla.onlyoffice.com/show_bug.cgi?id=14680)
 	};
@@ -4117,27 +4140,30 @@ var editor;
   };
 
     spreadsheet_api.prototype.getScaleCoefficientsForOleTableImage = function (nImageWidth, nImageHeight) {
-        const oWorksheet = this.wb.getWorksheet();
+      const oThis = this;
+      return this.wb._executeWithoutZoom(function () {
+        const oWorksheet = oThis.wb.getWorksheet();
         const oSingleChart = oWorksheet.isHaveOnlyOneChart(true);
         let oRangeSizes = {};
         if (oSingleChart) {
-            oRangeSizes = {
-                width: oSingleChart.extX * AscCommon.g_dKoef_mm_to_pix,
-                height: oSingleChart.extY * AscCommon.g_dKoef_mm_to_pix
-            };
+          oRangeSizes = {
+            width: oSingleChart.extX * AscCommon.g_dKoef_mm_to_pix,
+            height: oSingleChart.extY * AscCommon.g_dKoef_mm_to_pix
+          };
         } else {
-            const oOleSize = this.wbModel.getOleSize().getLast();
-            if (oOleSize) {
-                oRangeSizes = oWorksheet.getRangePosition(oOleSize);
-            }
+          const oOleSize = oThis.wbModel.getOleSize().getLast();
+          if (oOleSize) {
+            oRangeSizes = oWorksheet.getRangePosition(oOleSize);
+          }
         }
         if (oRangeSizes.width && oRangeSizes.height) {
-            return {
-                widthCoefficient: nImageWidth / oRangeSizes.width,
-                heightCoefficient: nImageHeight / oRangeSizes.height
-            };
+          return {
+            widthCoefficient: nImageWidth / oRangeSizes.width,
+            heightCoefficient: nImageHeight / oRangeSizes.height
+          };
         }
         return {widthCoefficient: 1, heightCoefficient: 1};
+      });
     };
 
   /**
@@ -4295,6 +4321,11 @@ var editor;
   {
     var ws = this.wb.getWorksheet();
     ws.objectRender.addMath(Type);
+  };
+  spreadsheet_api.prototype.asc_ConvertMathView = function(isToLinear, isAll)
+  {
+    var ws = this.wb.getWorksheet();
+    ws.objectRender.convertMathView(isToLinear, isAll);
   };
 
   spreadsheet_api.prototype.asc_SetMathProps = function(MathProps)
@@ -7977,6 +8008,18 @@ var editor;
 		}
 	};
 
+	spreadsheet_api.prototype.asc_fillHandleDone = function(startRange, endRange, bCtrl) {
+		if (this.canEdit()) {
+			let wb = this.wb;
+			if (!wb) {
+				return;
+			}
+			wb.fillHandleDone(startRange, endRange, bCtrl);
+		}
+	};
+
+
+
   /*
    * Export
    * -----------------------------------------------------------------------------
@@ -8274,6 +8317,7 @@ var editor;
   prot["asc_setDrawImagePlaceParagraph"] = prot.asc_setDrawImagePlaceParagraph;
   prot["asc_changeShapeImageFromFile"] = prot.asc_changeShapeImageFromFile;
   prot["asc_AddMath"] = prot.asc_AddMath;
+  prot["asc_ConvertMathView"] = prot.asc_ConvertMathView;
   prot["asc_SetMathProps"] = prot.asc_SetMathProps;
   //----------------------------------------------------------------------------------------------------------------------
 

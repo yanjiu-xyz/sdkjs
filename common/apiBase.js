@@ -131,6 +131,8 @@
 
 		this.MathMenuLoad          = false;
 
+		this.mathInputType = Asc.c_oAscMathInputType.Unicode;
+
 		// CoAuthoring and Chat
 		this.User                   = undefined;
 		this.CoAuthoringApi         = new AscCommon.CDocsCoApi();
@@ -191,7 +193,7 @@
 		this.disableAutostartMacros = false;
 		this.macros = null;
 		this.vbaMacros = null;
-		this.vbaMacrosXml = null;
+		this.vbaProject = null;
 
         this.openFileCryptBinary = null;
 
@@ -278,11 +280,15 @@
 		window.onerror = function(errorMsg, url, lineNumber, column, errorObj) {
 			//send only first error to reduce number of requests. also following error may be consequences of first
 			window.onerror = oldOnError;
-			var msg = 'Error: ' + errorMsg + ' Script: ' + url + ' Line: ' + lineNumber + ':' + column +
-				' userAgent: ' + (navigator.userAgent || navigator.vendor || window.opera) + ' platform: ' +
-				navigator.platform + ' isLoadFullApi: ' + t.isLoadFullApi + ' isDocumentLoadComplete: ' +
-				t.isDocumentLoadComplete + ' StackTrace: ' + (errorObj ? errorObj.stack : "");
-			t.CoAuthoringApi.sendChangesError(msg);
+			let editorInfo = t.getEditorErrorInfo();
+			let memoryInfo = AscCommon.getMemoryInfo();
+			var msg = 'Error: ' + errorMsg + '\nScript: ' + url + '\nLine: ' + lineNumber + ':' + column +
+				'\nuserAgent: ' + (navigator.userAgent || navigator.vendor || window.opera) + '\nplatform: ' +
+				navigator.platform + '\nisLoadFullApi: ' + t.isLoadFullApi + '\nisDocumentLoadComplete: ' +
+				t.isDocumentLoadComplete + (editorInfo ? '\n' + editorInfo : "") +
+				(memoryInfo ? '\nperformance.memory: ' + memoryInfo : "") +
+				'\nStackTrace: ' + (errorObj ? errorObj.stack : "");
+			AscCommon.sendClientLog("error", "changesError: " + msg, t);
 			if (t.isLoadFullApi ) {
 				if(t.isDocumentLoadComplete) {
 					//todo disconnect and downloadAs ability
@@ -355,26 +361,13 @@
 		}
 		return res;
 	};
-	baseEditorsApi.prototype._editorDefaultExt                = function()
-	{
-		let res = '';
-		switch (this.editorId)
-		{
-			case c_oEditorId.Word:
-				res += 'docx';
-				break;
-			case c_oEditorId.Spreadsheet:
-				res += 'xlsx';
-				break;
-			case c_oEditorId.Presentation:
-				res += 'pptx';
-				break;
-		}
-		return res;
-	};
 	baseEditorsApi.prototype.getEditorId                     = function()
 	{
 		return this.editorId;
+	};
+	baseEditorsApi.prototype.getEditorErrorInfo = function()
+	{
+		return "";
 	};
 
 	// modules
@@ -837,15 +830,19 @@
 
 	baseEditorsApi.prototype.asc_SaveDrawingAsPicture = function()
 	{
-		let oImageData = this.getImageDataFromSelection();
-		if(oImageData)
+		let oController = this.getGraphicController();
+		if(oController)
 		{
-			let a = document.createElement("a");
-			let sSrc = oImageData.src;
-			a.href = sSrc;
-			let sExt = sSrc.substring("data:image/".length, sSrc.indexOf(";base64"));
-			a.download = AscCommon.translateManager.getValue("Picture") + "." + sExt;
-			a.click();
+			let oImageData = oController.getImageDataForSaving();
+			if(oImageData)
+			{
+				let a = document.createElement("a");
+				let sSrc = oImageData.src;
+				a.href = sSrc;
+				let sExt = sSrc.substring("data:image/".length, sSrc.indexOf(";base64"));
+				a.download = AscCommon.translateManager.getValue("Picture") + "." + sExt;
+				a.click();
+			}
 		}
 	};
 	baseEditorsApi.prototype.canEdit                         = function()
@@ -985,7 +982,7 @@
 
 			if (this.isUseNativeViewer)
 			{
-				rData["convertToOrigin"] += '.pdf.xps.oxps.djvu';
+				rData["convertToOrigin"] += Asc.c_sNativeViewerFormats;
 			}
 
 			if (versionHistory)
@@ -1037,14 +1034,30 @@
 	baseEditorsApi.prototype._onOpenCommand                      = function(data)
 	{
 		var t = this;
+		let perfStart = performance.now();
 		AscCommon.openFileCommand(this.documentId, data, this.documentUrlChanges, this.documentTokenChanges, AscCommon.c_oSerFormat.Signature, function(error, result)
 		{
-			var signature = result.data && String.fromCharCode(result.data[0], result.data[1], result.data[2], result.data[3]);
-			if (c_oAscError.ID.No !== error || (!result.bSerFormat && 'PK' !== signature.substring(0, 2) && (t.editorId !== c_oEditorId.Word || 'XLSY' === signature || 'PPTY' === signature)))
+			let perfEnd = performance.now();
+			AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onDownloadFile", perfEnd - perfStart), t);
+			let errorData;
+			if (c_oAscError.ID.No === error) {
+				let editorId = AscCommon.getEditorBySignature(result.data);
+				//todo AscCommon.checkNativeViewerSignature(result.data);
+				let isNativeViewerFormat = -1 !== Asc.c_sNativeViewerFormats.indexOf(t.documentFormat);
+				if (!(!isNativeViewerFormat && t.editorId === editorId || (isNativeViewerFormat && editorId === null))) {
+					error = c_oAscError.ID.ConvertationOpenFormat;
+					switch(editorId) {
+						case AscCommon.c_oEditorId.Word: errorData = 'docx';break;
+						case AscCommon.c_oEditorId.Spreadsheet: errorData = 'xlsx';break;
+						case AscCommon.c_oEditorId.Presentation: errorData = 'pptx';break;
+						default: errorData = 'pdf';break;
+					}
+				}
+			}
+			if (c_oAscError.ID.No !== error)
 			{
-				t.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.Open);
 				var err = c_oAscError.ID.No !== error ? error : c_oAscError.ID.ConvertationOpenError;
-				t.sendEvent("asc_onError",  err, c_oAscError.Level.Critical);
+				t.sendEvent("asc_onError",  err, c_oAscError.Level.Critical, errorData);
 				return;
 			}
 			t.onEndLoadFile(result);
@@ -1106,6 +1119,9 @@
 		this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.Open);
 		this.sendEvent('asc_onDocumentContentReady');
 
+		let time = this.VersionHistory ? undefined : performance.now();//todo perfStart?
+		AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onDocumentContentReady", time, AscCommon.getMemoryInfo()), t);
+
 		if (window.g_asc_plugins)
             window.g_asc_plugins.onPluginEvent("onDocumentContentReady");
 
@@ -1147,9 +1163,9 @@
 		const oSmartArt = new AscFormat.SmartArt();
 		oSmartArt.fillByPreset(nSmartArtType);
 		const oLogicDocument = this.getLogicDocument();
-		const oDrawingObjects = this.getDrawingObjects();
 		const oController = this.getGraphicController();
 		if (!bFromWord) {
+			const oDrawingObjects = this.getDrawingObjects();
 			if (oDrawingObjects) {
 				oSmartArt.setDrawingObjects(oDrawingObjects);
 			}
@@ -1178,17 +1194,17 @@
 			}
 			oSmartArt.fitToPageSize();
 			oSmartArt.fitFontSize();
-			const oParaDrawing = oSmartArt.decorateParaDrawing(oDrawingObjects);
+			const oParaDrawing = oSmartArt.decorateParaDrawing(oController);
 			oSmartArt.setXfrmByParent();
-			if (oDrawingObjects) {
-				oDrawingObjects.resetSelection2();
+			if (oController) {
+				oController.resetSelection2();
 				oLogicDocument.AddToParagraph(oParaDrawing);
 				oLogicDocument.Select_DrawingObject(oParaDrawing.Get_Id());
 				oLogicDocument.Recalculate();
-				oDrawingObjects.clearTrackObjects();
-				oDrawingObjects.clearPreTrackObjects();
-				oDrawingObjects.updateOverlay();
-				oDrawingObjects.changeCurrentState(new AscFormat.NullState(oDrawingObjects));
+				oController.clearTrackObjects();
+				oController.clearPreTrackObjects();
+				oController.updateOverlay();
+				oController.changeCurrentState(new AscFormat.NullState(oController));
 			}
 		}
 		return oSmartArt;
@@ -1313,7 +1329,7 @@
 		if (isWaitAuth && this.isDocumentLoadComplete && !this.canSave) {
 			var errorMsg = 'Error: connection state changed waitAuth' +
 				';this.canSave:' + this.canSave;
-			this.CoAuthoringApi.sendChangesError(errorMsg);
+			AscCommon.sendClientLog("error", "changesError: " + errorMsg, this);
 		}
 		if (this.isDocumentLoadComplete) {
 			// Document is load
@@ -1709,9 +1725,12 @@
 								t.setOpenedAt(input["openedAt"]);
 								var urls = input["data"];
 								AscCommon.g_oDocumentUrls.init(urls);
-								var documentUrl = urls['Editor.bin'] || urls['origin.' + t._editorDefaultExt()];
+								var documentUrl = urls['Editor.bin'] || urls['origin.' + t.documentFormat];
+								if (t["asc_isSupportFeature"]("ooxml") && !documentUrl) {
+									documentUrl = urls['origin.docx'] || urls['origin.xlsx'] || urls['origin.pptx'];
+								}
 								if (t.isUseNativeViewer && !documentUrl)
-									documentUrl = urls['origin.' + t.documentFormat] || urls['origin.pdf'] || urls['origin.xps'] || urls['origin.oxps'] || urls['origin.djvu'];
+									documentUrl = urls['origin.pdf'] || urls['origin.xps'] || urls['origin.oxps'] || urls['origin.djvu'];
 								if (null != documentUrl) {
 									if ('ok' === input["status"] || t.getViewMode()) {
 										t._onOpenCommand(documentUrl);
@@ -3910,12 +3929,18 @@
 	baseEditorsApi.prototype.asc_ConvertMathView = function(isToLinear, isAll)
 	{
 	};
+	baseEditorsApi.prototype.getMathInputType = function()
+	{
+		return this.mathInputType;
+	};
 	baseEditorsApi.prototype.asc_GetMathInputType = function()
 	{
-		return Asc.c_oAscMathInputType.Unicode;
+		return this.getMathInputType();
 	};
 	baseEditorsApi.prototype.asc_SetMathInputType = function(type)
-	{};
+	{
+		this.mathInputType = type;
+	};
 
 	baseEditorsApi.prototype.getFileAsFromChanges = function()
 	{
