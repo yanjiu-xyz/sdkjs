@@ -93,7 +93,7 @@ function CFieldInstructionBase()
 CFieldInstructionBase.prototype.Type = fieldtype_UNKNOWN;
 CFieldInstructionBase.prototype.GetType = function()
 {
-	return 11;//this.Type;
+	return this.Type;
 };
 CFieldInstructionBase.prototype.SetComplexField = function(oComplexField)
 {
