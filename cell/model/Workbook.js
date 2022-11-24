@@ -481,10 +481,18 @@
 		forEachSheetListeners: function(sheetId, callback) {
 			var sheetContainer = this.sheetListeners[sheetId];
 			if (sheetContainer) {
-				for (var i in sheetContainer.cellMap) {
+				var i, j;
+				for (i in sheetContainer.cellMap) {
 					if (sheetContainer.cellMap[i]) {
-						for (var j in sheetContainer.cellMap[i].listeners) {
+						for (j in sheetContainer.cellMap[i].listeners) {
 							callback(sheetContainer.cellMap[i].listeners[j]);
+						}
+					}
+				}
+				for (i in sheetContainer.areaMap) {
+					if (sheetContainer.areaMap[i]) {
+						for (j in sheetContainer.areaMap[i].listeners) {
+							callback(sheetContainer.areaMap[i].listeners[j]);
 						}
 					}
 				}
@@ -2072,7 +2080,7 @@
 		this.lastFindCells = {};
 		this.oleSize = null;
 		if (oApi && oApi.isEditOleMode) {
-			this.oleSize = new AscCommonExcel.OleSizeSelectionRange(null, new Asc.Range(0, 0, 10, 10));
+			this.oleSize = new AscCommonExcel.OleSizeSelectionRange(null, new Asc.Range(0, 0, 6, 9));
 		}
 
 		//при копировании листа с одного wb на другой необходимо менять в стеке
@@ -4209,6 +4217,7 @@
 	Workbook.prototype.removeExternalReferences = function (arr) {
 		//пока предполагаю, что здесь будет массив asc_CExternalReference
 		if (arr) {
+			var isChanged = false;
 			History.Create_NewPoint();
 			History.StartTransaction();
 			for (var i = 0; i < arr.length; i++) {
@@ -4217,6 +4226,7 @@
 
 					//TODO при undo кладутся в массив в обратном порядке - нужно всегда в одном порядке добавлять
 					this.removeExternalReference(eRIndex, true);
+					isChanged = true;
 
 					//TODO нужно заменить все ячейки просто значениями, где есть формулы, которые ссылаются на эту книгу
 					for (var j in arr[i].externalReference.worksheets) {
@@ -4247,12 +4257,17 @@
 				}
 			}
 			History.EndTransaction();
+
+			if (isChanged) {
+				this.handlers.trigger("asc_onUpdateExternalReferenceList");
+			}
 		}
 	};
 
 	Workbook.prototype.removeExternalReference = function (index, addToHistory) {
 		if (index != null) {
 			var from = this.externalReferences[index - 1];
+			//this.reIndexExternalReferencesLinks(index - 1);
 			this.externalReferences.splice(index - 1, 1);
 			if (addToHistory) {
 				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
@@ -4277,6 +4292,7 @@
 				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
 					null, null, new UndoRedoData_FromTo(null, arr[i]));
 			}
+			this.handlers.trigger("asc_onUpdateExternalReferenceList");
 		}
 	};
 
@@ -4315,7 +4331,17 @@
 				eR.removeSheetById(sheetId);
 				this.changeExternalReference(index, eR);
 			}
+			this.handlers.trigger("asc_onUpdateExternalReferenceList");
 		}
+	};
+
+	Workbook.prototype.getExternalReferenceById = function (id) {
+		for (var i = 0; i < this.externalReferences.length; i++) {
+			if (this.externalReferences[i].Id === id) {
+				return this.externalReferences[i];
+			}
+		}
+		return null;
 	};
 
 //-------------------------------------------------------------------------------------------------
@@ -4432,24 +4458,29 @@
 		}
 	};
 	SheetMemory.prototype.copyRange = function(sheetMemory, startFrom, startTo, count) {
-		this.clear(startTo, startTo + count - 1);
+		let dataCopy, startToSrc = startTo, countSrc = count;
 		if (startFrom <= sheetMemory.indexB && startFrom + count - 1 >= sheetMemory.indexA) {
 			if (startFrom < sheetMemory.indexA) {
-				startTo += sheetMemory.indexA - startFrom;
+				let diff = sheetMemory.indexA - startFrom;
+				startTo += diff;
+				count -= diff;
 				startFrom = sheetMemory.indexA;
 			}
 			if (startFrom + count - 1 > sheetMemory.indexB) {
 				count -= startFrom + count - 1 - sheetMemory.indexB;
 			}
 			if (count > 0) {
-				this.checkIndex(startTo);
-				this.checkIndex(startTo + count - 1);
-				var startOffsetFrom = (startFrom - sheetMemory.indexA) * this.structSize;
-				var endOffsetFrom = (startFrom - sheetMemory.indexA + count) * this.structSize;
-				var startOffsetTo = (startTo - this.indexA) * this.structSize;
-
-				this.data.set(sheetMemory.data.subarray(startOffsetFrom, endOffsetFrom), startOffsetTo);
+				let startOffsetFrom = (startFrom - sheetMemory.indexA) * this.structSize;
+				let endOffsetFrom = (startFrom - sheetMemory.indexA + count) * this.structSize;
+				dataCopy = sheetMemory.data.slice(startOffsetFrom, endOffsetFrom);
 			}
+		}
+		this.clear(startToSrc, startToSrc + countSrc);
+		if(dataCopy) {
+			this.checkIndex(startTo);
+			this.checkIndex(startTo + count - 1);
+			let startOffsetTo = (startTo - this.indexA) * this.structSize;
+			this.data.set(dataCopy, startOffsetTo);
 		}
 	};
 	SheetMemory.prototype.copyRangeByChunk = function(from, fromCount, to, toCount) {
@@ -4466,9 +4497,9 @@
 	};
 	SheetMemory.prototype.clear = function(start, end) {
 		start = Math.max(start, this.indexA);
-		end = Math.min(end, this.indexB);
+		end = Math.min(end, this.indexB + 1);
 		if (start < end) {
-			this.data.fill(0, (start - this.indexA) * this.structSize, (end + 1 - this.indexA) * this.structSize);
+			this.data.fill(0, (start - this.indexA) * this.structSize, (end - this.indexA) * this.structSize);
 		}
 	};
 	SheetMemory.prototype.getUint8 = function(index, offset) {
@@ -9694,10 +9725,10 @@
 	};
 
 	Worksheet.prototype.calculateWizardFormula = function (formula, type) {
-		var res = null, resultStr = null;
+		let res = null, resultStr = null;
 		if (formula) {
-			var parser = new AscCommonExcel.parserFormula(formula, /*formulaParsed.parent*/null, this);
-			var parseResultArg = new AscCommonExcel.ParseResult([], []);
+			let parser = new AscCommonExcel.parserFormula(formula, /*formulaParsed.parent*/null, this);
+			let parseResultArg = new AscCommonExcel.ParseResult([], []);
 			parser.parse(true, true, parseResultArg, true);
 			if (!parseResultArg.error) {
 				res = parser.calculate();
@@ -9705,6 +9736,8 @@
 
 			resultStr = "";
 			if (res) {
+				const maxArrayRowCount = 20;
+				const maxArrayColCount = 20;
 				//TODO рассчеты аргументов зависят от конкретных функций
 				//допустим, sum и acos - типа аргумента number, но результат для cellsRange3D разный
 
@@ -9749,7 +9782,7 @@
 					}
 				} else if (type === Asc.c_oAscFormulaArgumentType.logical) {
 					if (res.type === AscCommonExcel.cElementType.cellsRange || res.type === AscCommonExcel.cElementType.cellsRange3D) {
-						res = res.getFullArray(new AscCommonExcel.cNumber(0));
+						res = res.getFullArray(new AscCommonExcel.cNumber(0), maxArrayRowCount, maxArrayColCount);
 					} else if (res.type !== AscCommonExcel.cElementType.array) {
 						res = res.tocBool();
 					}
@@ -9777,7 +9810,7 @@
 					if (res.type === AscCommonExcel.cElementType.array) {
 						resultStr = res.toLocaleString();
 					} else if (res.type === AscCommonExcel.cElementType.cellsRange || res.type === AscCommonExcel.cElementType.cellsRange3D) {
-						res = res.getFullArray(new AscCommonExcel.cNumber(0));
+						res = res.getFullArray(new AscCommonExcel.cNumber(0), maxArrayRowCount, maxArrayColCount);
 						if (res) {
 							resultStr = res.toLocaleString();
 						}

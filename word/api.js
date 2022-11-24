@@ -979,6 +979,22 @@
 		return (null === this.WordControl.m_oLogicDocument);
 	};
 
+	asc_docs_api.prototype.getEditorErrorInfo = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return "DocumentInfo: no logic document";
+
+		let result = "DocumentInfo:";
+
+		if (logicDocument.Action.Start)
+			result += "\nAction: " + logicDocument.Action.Description;
+
+		result += "\nSelection: " + logicDocument.IsSelectionUse();
+
+		return result;
+	};
+
 	asc_docs_api.prototype.SetCollaborativeMarksShowType = function(Type)
 	{
 		if (c_oAscCollaborativeMarksShowType.None !== this.CollaborativeMarksShowType && c_oAscCollaborativeMarksShowType.None === Type && this.WordControl && this.WordControl.m_oLogicDocument)
@@ -1177,7 +1193,6 @@
 		if (this.ImageLoader)
 			this.ImageLoader.bIsAsyncLoadDocumentImages = false;
 	};
-
 	asc_docs_api.prototype.IncreaseReaderFontSize = function()
 	{
 		return this.WordControl.IncreaseReaderFontSize();
@@ -1185,6 +1200,11 @@
 	asc_docs_api.prototype.DecreaseReaderFontSize = function()
 	{
 		return this.WordControl.DecreaseReaderFontSize();
+	};
+
+	asc_docs_api.prototype.SetMobileTopOffset = function(offset, offsetScrollTop)
+	{
+		this.WordControl && this.WordControl.setOffsetTop(offset, offsetScrollTop);
 	};
 
 	asc_docs_api.prototype.CreateCSS = function()
@@ -4049,7 +4069,6 @@ background-repeat: no-repeat;\
 		new Promise(function(resolve)
 		{
 			let symbols = AscWord.GetNumberingSymbols(_numInfo);
-			console.log(symbols);
 			if (symbols && symbols.length)
 				AscFonts.FontPickerByCharacter.checkText(symbols, this, resolve);
 			else
@@ -7593,7 +7612,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.getGraphicController = function () {
 		var document = this.private_GetLogicDocument();
-		return document && document.DrawingsController;
+		return document && document.DrawingsController && document.DrawingsController.DrawingObjects;
 	};
 
 	asc_docs_api.prototype.ChangeColorScheme            = function(sSchemeName)
@@ -7805,8 +7824,15 @@ background-repeat: no-repeat;\
 
 					// TODO: onDocumentContentReady вызываем в конце загрузки всех изменений (и объектов для этих изменений)
 					let oThis = this;
+
+					let perfStart = performance.now();
+					let OtherChanges = AscCommon.CollaborativeEditing.Have_OtherChanges();
 					AscCommon.CollaborativeEditing.Apply_Changes(function()
 					{
+						let perfEnd = performance.now();
+						if (OtherChanges) {
+							AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onApplyChanges", perfEnd - perfStart), oThis);
+						}
 						Document.MoveCursorToStartOfDocument();
 
 						if (isSendOnReady)
@@ -7966,6 +7992,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.openDocument = function(file)
 	{
+		let perfStart = performance.now();
 		if (file.changes && this.VersionHistory)
 		{
 			this.VersionHistory.changes = file.changes;
@@ -7987,6 +8014,8 @@ background-repeat: no-repeat;\
 			else
 				this.OpenDocument(file.url, file.data);
 		}
+		let perfEnd = performance.now();
+		AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onOpenDocument", perfEnd - perfStart), this);
 	};
 
 	asc_docs_api.prototype.asyncImageEndLoadedBackground = function(_image)
@@ -8722,7 +8751,8 @@ background-repeat: no-repeat;\
 		else if (c_oAscFileType.HTML === fileType
 			&& null == options.oDocumentMailMerge && null == options.oMailMergeSendData
 			&& !window.isCloudCryptoDownloadAs && DownloadType.None === downloadType
-			&& !(AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.isChrome))
+			&& !(AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.isChrome)
+			&& !AscCommon.AscBrowser.isAndroidNativeApp)
 		{
 			//DownloadFileFromBytes has bug on Chrome on iOS https://github.com/kennethjiang/js-file-download/issues/72
 			//в asc_nativeGetHtml будет вызван select all, чтобы выделился документ должны выйти из колонтитулов и автофигур
@@ -8972,14 +9002,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_ConvertMathView = function(isToLinear, isAll)
 	{
 		this.private_GetLogicDocument().ConvertMathView(isToLinear, isAll);
-	};
-	asc_docs_api.prototype.asc_GetMathInputType = function()
-	{
-		return this.private_GetLogicDocument().GetMathInputType();
-	};
-	asc_docs_api.prototype.asc_SetMathInputType = function(nType)
-	{
-		this.private_GetLogicDocument().SetMathInputType(nType);
 	};
 	asc_docs_api.prototype.asc_AddPageCount = function()
 	{
@@ -12040,10 +12062,11 @@ background-repeat: no-repeat;\
 	};
 
 	asc_docs_api.prototype.getDrawingObjects = function () {
-		const oController = this.getGraphicController();
+/*		const oController = this.getGraphicController();
 		if (oController) {
-			return oController.DrawingObjects;
-		}
+			return oController.drawingObjects;
+		}*/
+		return null;
 	};
 
 	asc_docs_api.prototype.getDrawingDocument = function () {
@@ -12177,6 +12200,7 @@ background-repeat: no-repeat;\
 
 		var options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.CANVAS_WORD);
 		options.isNaturalDownload = true;
+		options.isGetTextFromUrl = true;
 		if (document.url) {
 			options.errorDirect = Asc.c_oAscError.ID.DirectUrl;
 		}
@@ -13034,10 +13058,21 @@ background-repeat: no-repeat;\
 		if (!oDocument) {
 			return;
 		}
-		var t = this;
 
-		var calculatedHashValue;
-		var callback = function (res) {
+		let curDocProtection = oDocument.Settings && oDocument.Settings.DocumentProtection;
+		if (curDocProtection) {
+			//пытаемся выставить такие же настройки
+			let curIsProtect = curDocProtection.edit != null && curDocProtection.edit !== Asc.c_oAscEDocProtect.None;
+			let isPropsProtect = props.edit != null && props.edit !== Asc.c_oAscEDocProtect.None;
+			if (curIsProtect === isPropsProtect) {
+				return;
+			}
+		}
+
+		let t = this;
+
+		let calculatedHashValue;
+		let callback = function (res) {
 			t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction);
 
 			if (res) {
@@ -13061,10 +13096,10 @@ background-repeat: no-repeat;\
 			}
 		};
 
-		var password = props.temporaryPassword;
+		let password = props.temporaryPassword;
 		props.temporaryPassword = null;
-		var documentProtection = oDocument.Settings.DocumentProtection;
-		var salt, alg, spinCount;
+		let documentProtection = oDocument.Settings.DocumentProtection;
+		let salt, alg, spinCount;
 		if (password !== "" && password != null) {
 			if (documentProtection) {
 				salt = documentProtection.saltValue;
@@ -13073,7 +13108,7 @@ background-repeat: no-repeat;\
 			}
 
 			if (!salt || !spinCount) {
-				var params = AscCommon.generateHashParams();
+				let params = AscCommon.generateHashParams();
 				salt = params.saltValue;
 				spinCount = params.spinCount;
 			}
@@ -13083,7 +13118,7 @@ background-repeat: no-repeat;\
 			}
 		}
 
-		var checkPassword = function (hash, doNotCheckPassword) {
+		let checkPassword = function (hash, doNotCheckPassword) {
 			if (doNotCheckPassword) {
 				callback(true);
 			} else {
@@ -13113,8 +13148,8 @@ background-repeat: no-repeat;\
 				//перед тем, как сгенерировать хэш, мс предварительно преобразовывает пароль
 				//в мс подходит как преобразованные пароль, так и не преобразованный
 				//т.е. если сгенерировать вручную хэш из непреобразованного пароля и положить в xml, то документ можно будет разблокировать по первоначальному паролю
-				var hashPassword = AscCommon.prepareWordPassword(password);
-				var hashArr = [];
+				let hashPassword = AscCommon.prepareWordPassword(password);
+				let hashArr = [];
 				if (hashPassword) {
 					hashArr.push({password: hashPassword, salt: salt, spinCount: spinCount, alg: AscCommon.fromModelCryptAlgorithmSid(alg)});
 				}
@@ -13209,6 +13244,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['SetReaderModeOnly']                         = asc_docs_api.prototype.SetReaderModeOnly;
 	asc_docs_api.prototype['IncreaseReaderFontSize']                    = asc_docs_api.prototype.IncreaseReaderFontSize;
 	asc_docs_api.prototype['DecreaseReaderFontSize']                    = asc_docs_api.prototype.DecreaseReaderFontSize;
+	asc_docs_api.prototype['SetMobileTopOffset']                    	= asc_docs_api.prototype.SetMobileTopOffset;
 	asc_docs_api.prototype['CreateCSS']                                 = asc_docs_api.prototype.CreateCSS;
 	asc_docs_api.prototype['GetCopyPasteDivId']                         = asc_docs_api.prototype.GetCopyPasteDivId;
 	asc_docs_api.prototype['ContentToHTML']                             = asc_docs_api.prototype.ContentToHTML;
@@ -13623,8 +13659,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_AddMath']                               = asc_docs_api.prototype.asc_AddMath;
 	asc_docs_api.prototype['asc_AddMath2']                              = asc_docs_api.prototype.asc_AddMath2;
 	asc_docs_api.prototype['asc_ConvertMathView']                       = asc_docs_api.prototype.asc_ConvertMathView;
-	asc_docs_api.prototype['asc_GetMathInputType']                      = asc_docs_api.prototype.asc_GetMathInputType;
-	asc_docs_api.prototype['asc_SetMathInputType']                      = asc_docs_api.prototype.asc_SetMathInputType;
 	asc_docs_api.prototype['asc_AddPageCount']                          = asc_docs_api.prototype.asc_AddPageCount;
 	asc_docs_api.prototype['asc_StartMailMerge']                        = asc_docs_api.prototype.asc_StartMailMerge;
 	asc_docs_api.prototype['asc_StartMailMergeByList']                  = asc_docs_api.prototype.asc_StartMailMergeByList;

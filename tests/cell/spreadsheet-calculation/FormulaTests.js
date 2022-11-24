@@ -9652,6 +9652,17 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 6);
 
+		ws.getRange2("A1").setValue("12/1");
+		ws.getRange2("A2").setValue("12/1");
+
+		oParser = new parserFormula('COUNTIF(A1:A2,"12/1")', "C2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);
+
+		oParser = new parserFormula('COUNTIF(A1:A2,"12/1/1")', "C2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 0);
+
 		testArrayFormula2(assert, "COUNTIF", 2, 2)
 	});
 
@@ -10003,6 +10014,345 @@ $(function () {
 		testArrayFormula(assert, "EXP");
 
 	});
+
+	QUnit.test("Test: \"EXPAND\"", function (assert) {
+
+		ws.getRange2("A1").setValue("2");
+		ws.getRange2("A2").setValue("");
+		ws.getRange2("A3").setValue("test");
+
+		ws.getRange2("B1").setValue("test2");
+		ws.getRange2("B2").setValue("#N/A");
+		ws.getRange2("B3").setValue("TRUE");
+
+		ws.getRange2("J7").setValue("7");
+
+		// normal call
+		oParser = new parserFormula('EXPAND(A1:B2,3,3,"new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Regular function call: EXPAND(A1:B2,3,3,'new_val')");
+		let array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Regular function call.[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "test2", "Regular function call.[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "new_val", "Regular function call.[0,2]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", "Regular function call.[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#N/A", "Regular function call.[1,1]");
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "new_val", "Regular function call.[1,2]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "new_val", "Regular function call.[2,0]");
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "new_val", "Regular function call.[2,1]");
+		assert.strictEqual(array.getElementRowCol(2, 2).getValue(), "new_val", "Regular function call.[2,2]");
+
+		// array_size > max_array_size
+		oParser = new parserFormula('EXPAND(A1:A3,5000,5000,"new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Call function with resulting array more than 1048576");
+		array = oParser.calculate();
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "If the resulting array is too large return #NUM!");
+
+		// Проверка аргументов
+		// ------------------------------ 1-ый аргумент ------------------------------ //
+		// cell ref(single value)
+		oParser = new parserFormula('EXPAND(A1,2,2,"new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a single value from cell to the first argument");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Pass a single value from cell to the first argument");
+
+		// cell ref(array-like value)
+		oParser = new parserFormula('EXPAND(A1:B2,3,3,"new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Pass an array-like value from cells to the first argument");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Pass an array-like value from cells to the first argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "test2", "Pass an array-like value from cells to the first argument.[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "new_val", "Pass an array-like value from cells to the first argument.[0,2]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", "Pass an array-like value from cells to the first argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#N/A", "Pass an array-like value from cells to the first argument.[1,1]");
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "new_val", "Pass an array-like value from cells to the first argument.[1,2]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "new_val", "Pass an array-like value from cells to the first argument.[2,0]");
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "new_val", "Pass an array-like value from cells to the first argument.[2,1]");
+		assert.strictEqual(array.getElementRowCol(2, 2).getValue(), "new_val", "Pass an array-like value from cells to the first argument.[2,2]");
+
+		// empty (no value)
+		oParser = new parserFormula('EXPAND(,2,2,"new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Pass an empty value() to the first argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Pass an empty value() to the first argument");
+
+		// empty ("")
+		oParser = new parserFormula('EXPAND("",2,2,"new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Pass an empty value('') to the first argument");
+		assert.strictEqual(oParser.calculate().getValue(), "", "Pass an empty value('') to the first argument");
+
+		// string
+		oParser = new parserFormula('EXPAND("str",2,2,"new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a string to the first argument");
+		assert.strictEqual(oParser.calculate().getValue(), "str", "Pass a string to the first argument");
+
+		// bool
+		oParser = new parserFormula('EXPAND(TRUE,2,2,"new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a boolean to the first argument");
+		assert.strictEqual(oParser.calculate().getValue(), "TRUE", "Pass a boolean value to the first argument");
+
+		// number
+		oParser = new parserFormula('EXPAND(98,2,2,"new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a number to the first argument");
+		assert.strictEqual(oParser.calculate().getValue(), 98, "Pass a number to the first argument");
+
+		// error
+		oParser = new parserFormula('EXPAND("#N/A",2,2,"new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Pass an error to the first argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Pass an error to the first argument");
+
+		// array(1,2,3)
+		oParser = new parserFormula('EXPAND({1,2,3},3,3,"new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Pass an array to the first argument");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, "Pass an array to the first argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 2, "Pass an array to the first argument.[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 3, "Pass an array to the first argument.[0,2]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "new_val", "Pass an array to the first argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "new_val", "Pass an array to the first argument.[1,1]");
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "new_val", "Pass an array to the first argument.[1,2]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "new_val", "Pass an array to the first argument.[2,0]");
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "new_val", "Pass an array to the first argument.[2,1]");
+		assert.strictEqual(array.getElementRowCol(2, 2).getValue(), "new_val", "Pass an array to the first argument.[2,2]");
+
+		// ------------------------------ 2-ой аргумент ------------------------------ //
+		// empty (no value)
+		oParser = new parserFormula('EXPAND(A1:B2,,2,"new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Pass an empty value() to the second argument");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Pass an empty value() to the second argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "test2" ,"Pass an empty value() to the second argument.[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", "Pass an empty value() to the second argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#N/A", "Pass an empty value() to the second argument.[1,1]");
+
+		// string
+		oParser = new parserFormula('EXPAND(A1:B2,"str",2,"new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a string with letters to the second argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass a string with letters to the second argument. Should return #VALUE");
+
+		// string (with number inside)
+		oParser = new parserFormula('EXPAND(A1:B2,"2",2,"new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a string with numbers to the second argument");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Pass a string with numbers to the second argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "test2", "Pass a string with numbers to the second argument.[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", "Pass a string with numbers to the second argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#N/A", "Pass a string with numbers to the second argument.[1,1]");
+
+		// bool
+		oParser = new parserFormula('EXPAND(A1:B2,TRUE,2,"new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a boolean to the second argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass a boolean to the second argument.");
+
+		// error
+		oParser = new parserFormula('EXPAND(A1:B2,#N/A,2,"new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Pass an error to the second argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Pass an error to the second argument.");
+
+		// row < arr.length
+		oParser = new parserFormula('EXPAND(A1:B3,1,4,5)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a number to the second argument(number < rows in exist area)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "If the second argument is less than the original row length should return #VALUE!.");
+
+		// array(first number < array.length)
+		oParser = new parserFormula('EXPAND(A1:B2,{1,2,3},4,5)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass an array to the second argument(first number of array < rows in exist area)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "If the second argument is less than the original row length should return #VALUE!.");
+
+		// array(first number >= arr.length)
+		oParser = new parserFormula('EXPAND(A1:B1,{3,2,4},4,5)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass an array to the second argument(first number of array >= rows in exist area)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Pass an array to the second argument(first number of array >= rows in exist area).[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "test2", "Pass an array to the second argument(first number of array >= rows in exist area).[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 5, "Pass an array to the second argument(first number of array >= rows in exist area).[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 5, "Pass an array to the second argument(first number of array >= rows in exist area).[1,1]");
+
+		// cell ref(single value - string)
+		oParser = new parserFormula('EXPAND(A1:B1,B1,3,5)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a reference to value in cell(single - string) to the second argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass a reference to value in cell(single - string) to the second argument.");
+
+		// cell ref(single value - number)
+		oParser = new parserFormula('EXPAND(A1:B1,A1,3,5)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a reference to value in cell(single - number) to the second argument");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Pass a reference to value in cell(single - number) to the second argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "test2", "Pass a reference to value in cell(single - number) to the second argument.[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 5, "Pass a reference to value in cell(single - number) to the second argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 5, "Pass a reference to value in cell(single - number) to the second argument.[1,1]");
+		
+		// cell ref(single value - boolean)
+		oParser = new parserFormula('EXPAND(A1:B1,TRUE,3,5)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a reference to value in cell(single - boolean(TRUE)) to the second argument. TRUE transform in to 1 and then the function works with a number");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Pass a reference to value in cell(single - boolean(TRUE)) to the second argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "test2", "Pass a reference to value in cell(single - boolean(TRUE)) to the second argument.[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", "Pass a reference to value in cell(single - boolean(TRUE)) to the second argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Pass a reference to value in cell(single - boolean(TRUE)) to the second argument.[1,1]");
+
+		// cell ref(single value - boolean)
+		oParser = new parserFormula('EXPAND(A1:B1,FALSE,3,5)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a reference to value in cell(single - boolean(FALSE)) to the second argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass a reference to value in cell(single - boolean(FALSE)) to the second argument.");
+
+		// cell ref(array-like cellsRange)
+		oParser = new parserFormula('EXPAND(A1:B1,A1:B1,3,5)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a reference to values in cells(cellsRange) to the second argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass a reference to values in cells(cellsRange) to the second argument.");
+
+		// ------------------------------ 3-ий аргумент ------------------------------ //
+		// empty (no value)
+		oParser = new parserFormula('EXPAND(A1:B2,2,,"new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Pass an empty value() to the third argument");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Pass an empty value() to the third argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "test2", "Pass an empty value() to the third argument.[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", "Pass an empty value() to the third argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#N/A", "Pass an empty value() to the third argument.[1,1]");
+
+		// string
+		oParser = new parserFormula('EXPAND(A1:B2,2,"str","new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a string with letters to the third argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass a string with letters to the third argument. Should return #VALUE");
+
+		// string (with number inside)
+		oParser = new parserFormula('EXPAND(A1:B2,2,"2","new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a string with numbers to the third argument");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Pass a string with numbers to the third argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "test2", "Pass a string with numbers to the third argument.[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", "Pass a string with numbers to the third argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#N/A", "Pass a string with numbers to the third argument.[1,1]");
+
+		// bool
+		oParser = new parserFormula('EXPAND(A1:B2,2,TRUE,"new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a boolean value to the third argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass a boolean value to the third argument.");
+
+		// error
+		oParser = new parserFormula('EXPAND(A1:B2,2,#N/A,"new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Pass an error to the third argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", "Pass an error to the third argument.");
+
+		// column < array.length
+		oParser = new parserFormula('EXPAND(A1:B3,4,1,5)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a number to the third argument(number < columns in exist area)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "If the third argument is less than the original column length should return #VALUE!.");
+
+		// array(first number < array.length)
+		oParser = new parserFormula('EXPAND(A1:B2,4,{1,2,3},5)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass an array to the third argument(first number of array < columns in exist area)");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "If the third argument is less than the original column length should return #VALUE!.");
+
+		// arry(first number >= arr.length)
+		oParser = new parserFormula('EXPAND(A1:B1,3,{3,2,4},5)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass an array to the third argument(first number of array >= columns in exist area)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Pass an array to the third argument(first number of array >= columns in exist area).[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "test2", "Pass an array to the third argument(first number of array >= columns in exist area).[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 5, "Pass an array to the third argument(first number of array >= columns in exist area).[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 5, "Pass an array to the third argument(first number of array >= columns in exist area).[1,1]");
+
+		// cell ref(single value - string)
+		oParser = new parserFormula('EXPAND(A1:B1,3,B1,5)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a reference to value in cell(single - string) to the third argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass a reference to value in cell(single - string) to the third argument.");
+
+		// cell ref(single value - number)
+		oParser = new parserFormula('EXPAND(A1:B1,3,A1,5)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a reference to value in cell(single - number) to the third argument");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Pass a reference to value in cell(single - number) to the third argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "test2", "Pass a reference to value in cell(single - number) to the third argument.[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 5, "Pass a reference to value in cell(single - number) to the third argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 5, "Pass a reference to value in cell(single - number) to the third argument.[1,1]");
+		
+		// cell ref(single value - boolean)
+		oParser = new parserFormula('EXPAND(A1:B1,3,TRUE,5)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a reference to value in cell(single - boolean) to the third argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass a reference to value in cell(single - boolean) to the third argument.");
+
+		// cell ref(array-like cellsRange)
+		oParser = new parserFormula('EXPAND(A1:B1,3,A1:B1,5)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a reference to values in cells(cellsRange) to the third argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass a reference to values in cells(cellsRange) to the third argument.");
+
+
+		// ------------------------------ 4-ий аргумент ------------------------------ //
+
+		// empty (no value)
+		oParser = new parserFormula('EXPAND(A1:A1,2,2)', "A1", ws);
+		assert.ok(oParser.parse(), "Did not pass a value to the last argument");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Did not pass a value to the last argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#N/A", "Did not pass a value to the last argument.[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#N/A", "Did not pass a value to the last argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#N/A", "Did not pass a value to the last argument.[1,1]");
+
+		// empty ("")
+		oParser = new parserFormula('EXPAND(A1:A1,2,2,)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass an empty value() to the last argument");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Pass an empty value() to the last argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", "Pass an empty value() to the last argument.[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", "Pass an empty value() to the last argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", "Pass an empty value() to the last argument.[1,1]");
+
+		// number
+		oParser = new parserFormula('EXPAND(A1:A1,2,2,5)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a number to the last argument");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Pass a number to the last argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 5, "Pass a number to the last argument.[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 5, "Pass a number to the last argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 5, "Pass a number to the last argument.[1,1]");
+
+		// string
+		oParser = new parserFormula('EXPAND(A1:A1,2,2,"new_val")', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a string to the last argument");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Pass a string to the last argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "new_val", "Pass a string to the last argument.[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "new_val", "Pass a string to the last argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "new_val", "Pass a string to the last argument.[1,1]");
+
+		// bool
+		oParser = new parserFormula('EXPAND(A1:A1,2,2,TRUE)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a boolean value to the last argument");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Pass a boolean value to the last argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "TRUE", "Pass a boolean value to the last argument.[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "TRUE", "Pass a boolean value to the last argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "TRUE", "Pass a boolean value to the last argument.[1,1]");
+
+		// error
+		oParser = new parserFormula('EXPAND(A1:A1,2,2,#N/A)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass an error to the last argument");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Pass an error to the last argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#N/A", "Pass an error to the last argument.[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#N/A", "Pass an error to the last argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#N/A", "Pass an error to the last argument.[1,1]");
+
+		// cell ref(single)
+		oParser = new parserFormula('EXPAND(A1:A1,2,2,A3)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a reference to value in cell(single) to the last argument");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Pass a reference to value in cell(single) to the last argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue().getValue(), "test", "Pass a reference to value in cell(single) to the last argument.[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue().getValue(), "test", "Pass a reference to value in cell(single) to the last argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue().getValue(), "test", "Pass a reference to value in cell(single) to the last argument.[1,1]");
+
+		// cell ref(multiple)
+		// get the array -> get the values from array
+		oParser = new parserFormula('EXPAND(A1:A1,2,2,A1:B1)', "A1", ws);
+		assert.ok(oParser.parse(), "Pass a reference to value in cell(array-like) to the last argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass a reference to value in cell(single) to the last argument.");
+
+		// array
+		oParser = new parserFormula('EXPAND(A1:A1,2,2,{1,2})', "A1", ws);
+		assert.ok(oParser.parse(), "Pass an array to the last argument");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass an array to the last argument.");
+
+	})
 
 	QUnit.test("Test: \"FISHER\"", function (assert) {
 

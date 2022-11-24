@@ -772,7 +772,7 @@ function CBinaryFileWriter()
                 const oStyle = AscCommon.g_oTableId.Get_ById(key);
                 if (oStyle)
                 {
-                    this.tableStylesGuides[key] = oStyle.Get_StyleId() || AscCommon.CreateGUID();
+                    this.tableStylesGuides[key] = oStyle.GetStyleId() || AscCommon.CreateGUID();
                 }
             }
         }
@@ -1225,11 +1225,8 @@ function CBinaryFileWriter()
                 this.EndRecord();
             }
         }
-        if (presentation.Api.vbaMacros) {
-            this.StartRecord(8);
-            this.WriteBuffer(presentation.Api.vbaMacros, 0, presentation.Api.vbaMacros.length);
-            this.EndRecord();
-        }
+        this.WriteRecord4(8, presentation.Api.vbaProject);
+
 		var macros = presentation.Api.macros.GetData();
 		if (macros) {
 			this.StartRecord(9);

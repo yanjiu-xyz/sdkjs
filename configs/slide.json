@@ -19,6 +19,7 @@
 			"common/libfont/engine.js",
 			"common/libfont/loader.js",
 			"slide/apiDefines.js",
+			"common/collaborativeHistory.js",
 			"common/CollaborativeEditingBase.js",
 			"slide/Editor/CollaborativeEditing.js",
 			"common/macros.js",
@@ -26,6 +27,7 @@
 			"common/apiBase_plugins.js",
 			"word/apiCommon.js",
 			"slide/api.js",
+			"slide/api_plugins.js",
 			"common/spell/spell.js",
 			"common/zlib/zlib.js",
 			"word/Editor/Table/TableLook.js"

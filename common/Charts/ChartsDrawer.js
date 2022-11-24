@@ -2086,7 +2086,7 @@ CChartsDrawer.prototype =
 			stackedPerMax = step;
 		}
 
-		var maxPointsCount = 40;
+		var maxPointsCount = 600;
 		for (var i = 0; i < maxPointsCount; i++) {
 			if (this.calcProp.subType === 'stackedPer' && (minUnit + step * i) > stackedPerMax) {
 				break;
@@ -12158,6 +12158,7 @@ drawScatterChart.prototype = {
 
 	_recalculateScatter: function () {
 		let seria, yVal, xVal, points, yNumCache, compiledMarkerSize, compiledMarkerSymbol, yPoint, idx, xPoint;
+		let dispBlanksAs =  this.cChartSpace.chart.dispBlanksAs;
 		for (let i = 0; i < this.chart.series.length; i++) {
 			seria = this.chart.series[i];
 			yNumCache = this.cChartDrawer.getNumCache(seria.yVal);
@@ -12172,9 +12173,16 @@ drawScatterChart.prototype = {
 			//idx не всегда начинается с нуля
 			for (let n = 0; n < yNumCache.ptCount; n++) {
 				idx = yNumCache.pts && undefined !== yNumCache.pts[n] ? yNumCache.pts[n].idx : null;
-				/*if (null === idx) {
-					continue;
-				}*/
+
+				if (dispBlanksAs === AscFormat.DISP_BLANKS_AS_ZERO || dispBlanksAs === AscFormat.DISP_BLANKS_AS_GAP) {
+					if (yNumCache.pts[n-1] && yNumCache.pts[n] && yNumCache.pts[n].idx - yNumCache.pts[n-1].idx > 1) {
+						for (let k = 0; k < yNumCache.pts[n].idx - yNumCache.pts[n-1].idx - 1; k++) {
+							this.paths.points[i].push(null);
+							points[i].push(dispBlanksAs === AscFormat.DISP_BLANKS_AS_ZERO ? {x: 0, y: 0} : null);
+						}
+					}
+				}
+
 				let values = this.cChartDrawer._getScatterPointVal(seria, idx);
 				if(values){
 					yVal = values.y;
@@ -12206,15 +12214,15 @@ drawScatterChart.prototype = {
 					if (yVal != null) {
 						let x = this.cChartDrawer.getYPosition(xVal, this.catAx);
 						let y = this.cChartDrawer.getYPosition(yVal, this.valAx, true);
-						this.paths.points[i][n] = this.cChartDrawer.calculatePoint(x, y, compiledMarkerSize, compiledMarkerSymbol);
+						this.paths.points[i].push(this.cChartDrawer.calculatePoint(x, y, compiledMarkerSize, compiledMarkerSymbol));
 						if (this.chart.series[i].errBars) {
-							this.cChartDrawer.errBars.putPoint(x, y, xVal, yVal, i, n);
+							this.cChartDrawer.errBars.putPoint(x, y, xVal, yVal, seria.idx, idx);
 						}
 
-						points[i][n] = {x: xVal, y: yVal};
+						points[i].push({x: xVal, y: yVal});
 					} else {
-						this.paths.points[i][n] = null;
-						points[i][n] = null;
+						this.paths.points[i].push(null);
+						points[i].push(null);
 					}
 				}
 
@@ -14144,7 +14152,7 @@ valAxisChart.prototype = {
 					return;
 				}
 
-				var stepX = points[1] ? Math.abs(points[1].pos - points[0].pos) : Math.abs(points[1].pos - this.chartProp.chartGutter._bottom / this.chartProp.pxToMM);
+				var stepX = points[1] ? Math.abs(points[1].pos - points[0].pos) : Math.abs(points[0].pos - this.chartProp.chartGutter._bottom / this.chartProp.pxToMM);
 				minorStep = stepX / minorLinesCount;
 				posY = this.valAx.posY;
 
@@ -14650,7 +14658,7 @@ axisChart.prototype = {
 				return;
 			}
 
-			var stepX = points[1] ? Math.abs(points[1].pos - points[0].pos) : Math.abs(points[1].pos - this.chartProp.chartGutter._bottom / this.chartProp.pxToMM);
+			var stepX = points[1] ? Math.abs(points[1].pos - points[0].pos) : Math.abs(points[0].pos - this.chartProp.chartGutter._bottom / this.chartProp.pxToMM);
 			minorStep = stepX / minorLinesCount;
 			posY = this.axis.posY;
 

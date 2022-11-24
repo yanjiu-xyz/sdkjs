@@ -548,7 +548,7 @@
       });
     }
     var oChart = charts[0];
-    var image = oChart.createImage();
+    var image = oChart.getBase64Img();
     return image;
   }
 
@@ -7981,7 +7981,7 @@
                     r2 = vr.r2;
                 } else {
                     r1 = vr.r1;
-                    r2 = vr.r1 - 1 - delta;
+                    r2 = delta < 0 ? (vr.r1 + (oldVR.r1 - vr.r1 - 1)) : (vr.r1 - 1 - delta);
                 }
             } else {
                 r1 = vr.r1;
@@ -9979,23 +9979,31 @@
         if (graphicObjects.length) {
             objectInfo.selectionType = this.objectRender.getGraphicSelectionType(graphicObjects[0].Id);
         }
+		let oController = this.objectRender.controller;
+		let oDocContent = oController.getTargetDocContent();
+		if(oDocContent) {
+			let oPr = new CSelectedElementsInfo({CheckAllSelection : true})
+			let oSelectedInfo = oDocContent.GetSelectedElementsInfo(oPr);
+			let oMath         = oSelectedInfo.GetMath();
+		}
 
-        var textPr = this.objectRender.controller.getParagraphTextPr();
-        var theme = this.objectRender.controller.getTheme();
+
+        var textPr = oController.getParagraphTextPr();
+        var theme = oController.getTheme();
         if (textPr && theme && theme.themeElements && theme.themeElements.fontScheme) {
             textPr.ReplaceThemeFonts(theme.themeElements.fontScheme);
         }
 
-        var paraPr = this.objectRender.controller.getParagraphParaPr();
+        var paraPr = oController.getParagraphParaPr();
         if (!paraPr && textPr) {
             paraPr = new CParaPr();
         }
         if (textPr && paraPr) {
-            objectInfo.text = this.objectRender.controller.GetSelectedText(true);
+            objectInfo.text = oController.GetSelectedText(true);
 
             horAlign = paraPr.Jc;
             vertAlign = Asc.c_oAscVAlign.Center;
-            var shape_props = this.objectRender.controller.getDrawingProps().shapeProps;
+            var shape_props = oController.getDrawingProps().shapeProps;
             if (shape_props) {
                 switch (shape_props.verticalTextAlign) {
                     case AscFormat.VERTICAL_ANCHOR_TYPE_BOTTOM:
@@ -10025,13 +10033,13 @@
             }
 
             if (textPr.Unifill && theme) {
-                textPr.Unifill.check(theme, this.objectRender.controller.getColorMap());
+                textPr.Unifill.check(theme, oController.getColorMap());
             }
             var font = new AscCommonExcel.Font();
             font.assignFromTextPr(textPr);
             xfs.setFont(font);
 
-            var shapeHyperlink = this.objectRender.controller.getHyperlinkInfo();
+            var shapeHyperlink = oController.getHyperlinkInfo();
             if (shapeHyperlink && (shapeHyperlink instanceof ParaHyperlink)) {
 
                 var hyperlink = new AscCommonExcel.Hyperlink();
@@ -10508,6 +10516,57 @@
 		}
     };
 
+	WorksheetView.prototype.fillHandleDone = function (startRange, endRange, bCtrl) {
+		//на входе имеем два диапазона, определяем точку крайней ячейки автозаполнения
+		if (!startRange) {
+			startRange = this.model.selectionRange.getLast().clone();
+		}
+		if (!endRange) {
+			endRange = this.model.selectionRange.getLast().clone();
+		}
+
+		startRange = typeof startRange === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(startRange) : startRange;
+		endRange = typeof endRange === "string" ? AscCommonExcel.g_oRangeCache.getAscRange(endRange) : endRange;
+
+		this.activeFillHandle = startRange.clone();
+
+		if (startRange.r1 !== endRange.r1 || startRange.r2 !== endRange.r2) {
+			this.fillHandleDirection = 1;
+			if (startRange.r1 === endRange.r1 && startRange.r1 <= endRange.r2 && startRange.r2 >= endRange.r2) {
+				//попали внутрь диапазона, т.е. маркером пошли наверх
+				this.activeFillHandle.r2 = endRange.r2 + 1;
+				this.activeFillHandle.r1 = startRange.r2;
+				this.fillHandleArea = 2;
+			} else if (endRange.r1 < startRange.r1) {
+				this.activeFillHandle.r2 = endRange.r1;
+				this.activeFillHandle.r1 = startRange.r2;
+				this.fillHandleArea = 1;
+			} else if (startRange.r1 === endRange.r1 && endRange.r2 > startRange.r2) {
+				this.activeFillHandle.r2 = endRange.r2;
+				this.activeFillHandle.r1 = endRange.r1;
+				this.fillHandleArea = 3;
+			}
+		} else {
+			this.fillHandleDirection = 0;
+			if (startRange.c1 === endRange.c1 && startRange.c1 <= endRange.c2 && startRange.c2 >= endRange.c2) {
+				//попали внутрь диапазона, т.е. маркером пошли наверх
+				this.activeFillHandle.c2 = endRange.c2 + 1;
+				this.activeFillHandle.c1 = startRange.c2;
+				this.fillHandleArea = 2;
+			} else if (endRange.c1 < startRange.c1) {
+				this.activeFillHandle.c2 = endRange.c1;
+				this.activeFillHandle.c1 = startRange.c2;
+				this.fillHandleArea = 1;
+			} else if (startRange.c1 === endRange.c1 && endRange.c2 > startRange.c2) {
+				this.activeFillHandle.c2 = endRange.c2;
+				this.activeFillHandle.c1 = endRange.c1;
+				this.fillHandleArea = 3;
+			}
+		}
+
+		this.applyFillHandle(null, null, bCtrl);
+	};
+
     /* Функция для работы автозаполнения (selection). (x, y) - координаты точки мыши на области */
     WorksheetView.prototype.changeSelectionFillHandle = function (x, y, tableIndex) {
         // Возвращаемый результат
@@ -10912,6 +10971,8 @@
 			t._drawSelection();
         	return;
 		}
+
+		console.log("r1: " + this.activeFillHandle.r1 + " r2: " + this.activeFillHandle.r2 + "c1: " + this.activeFillHandle.c1 + " c2: " + this.activeFillHandle.c2)
 
         // Текущее выделение (к нему применится автозаполнение)
         var arn = t.model.selectionRange.getLast();
@@ -13780,7 +13841,6 @@
 			var linkInfo = t._getPastedLinkInfo(pastedWb);
 			pasteLinkIndex = null;
 			if (linkInfo) {
-				console.log("r1: " + activeCellsPasteFragment.r1 + " c1: " + activeCellsPasteFragment.c1 + " r2: " + activeCellsPasteFragment.r2 + " c2: " + activeCellsPasteFragment.c2)
 				if (linkInfo.type === -1) {
 					pasteLinkIndex = linkInfo.index;
 					pasteSheetLinkName = linkInfo.sheet;
