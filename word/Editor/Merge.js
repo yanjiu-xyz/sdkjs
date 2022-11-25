@@ -408,6 +408,18 @@
     CConflictResolveNode.prototype = Object.create(CNode.prototype);
     CConflictResolveNode.prototype.constructor = CConflictResolveNode;
 
+    CConflictResolveNode.prototype.applyInsertsToParagraphsWithRemove = function (comparison, aContentToInsert, idxOfChange) {
+        const arrSetRemoveReviewType = [];
+        const infoAboutEndOfRemoveChange = this.prepareEndOfRemoveChange(idxOfChange, comparison, arrSetRemoveReviewType);
+        const posLastRunInContent = infoAboutEndOfRemoveChange.posLastRunInContent;
+
+        const nInsertPosition = infoAboutEndOfRemoveChange.nInsertPosition;
+        this.setReviewTypeForRemoveChanges(comparison, idxOfChange, posLastRunInContent, nInsertPosition, arrSetRemoveReviewType);
+
+        const nInsertPosition2 = arrSetRemoveReviewType[arrSetRemoveReviewType.length - 1].GetPosInParent() - this.getStartPosition(comparison);
+        this.applyInsert(aContentToInsert, arrSetRemoveReviewType, nInsertPosition2, comparison, {needReverse: true});
+    };
+
     // обновим ноды в любом случае, для дальнейшего разрешения типов
     CConflictResolveNode.prototype.tryUpdateNode = function (comparison) {
         const oPartnerNode = this.partner;
@@ -844,7 +856,7 @@
                 callback && callback();
             });
         };
-        AscCommon.sendImgUrls(oApi, oObjectsForDownload.aUrls, fCallback, null, true);
+        AscCommon.sendImgUrls(oApi, oObjectsForDownload.aUrls, fCallback, true);
         return null;
     };
 

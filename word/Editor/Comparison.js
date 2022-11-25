@@ -296,7 +296,8 @@
                             if(k <= oCurRun.Content.length && bFind)
                             {
                                 oCurRun.Split2(k, applyingParagraph,startInsertPosition + j);
-                                this.applyInsert(aContentToInsert, [], j + 1, comparison);
+                                //TODO: think about it
+                                this.applyInsert(aContentToInsert, [], j/* + 1*/, comparison);
                                 break;
                             }
                         }
@@ -949,14 +950,16 @@
             const oMatching = new CMatching();
             oDiff.matchTrees(oMatching);
             const oDeltaCollector = new AscCommon.DeltaCollector(oMatching, oOrigNode, oReviseNode);
-            oDeltaCollector.forEachChange(function(oOperation){
-                oOperation.anchor.base.addChange(oOperation);
-            });
+            oDeltaCollector.forEachChange(oThis.forEachChangeCallback);
             oThis.compareDrawingObjectsFromMatching(oMatching, bOrig);
             oThis.applyChangesToChildNode(oOrigNode);
             oThis.compareNotes(oMatching);
         };
     }
+
+    CDocumentComparison.prototype.forEachChangeCallback = function(oOperation) {
+        oOperation.anchor.base.addChange(oOperation);
+    };
     
     CDocumentComparison.prototype.getLCSEqualsMethod = function (oEqualMap, oMapEquals) {
         return function(a, b) {
