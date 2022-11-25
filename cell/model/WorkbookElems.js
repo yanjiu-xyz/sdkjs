@@ -14797,16 +14797,24 @@ QueryTableField.prototype.clone = function() {
 		return this;
 	}
 	CCellWatch.prototype.clone = function () {
+		var res = new CCellWatch();
+		res.r = this.r.clone();
 
+		res._ws = this._ws;
+		res._workbook = this._workbook;
+		res._sheet = this._sheet;
+		res._name = this._name;
+		res._cell = this._cell;
+		res._value = this._value;
+		res._formula = this._formula;
+
+		return res;
 	};
 	CCellWatch.prototype.setNeedRecalc = function () {
 		this.needRecalc = true;
 	};
 	CCellWatch.prototype.setRef = function (ref) {
 		this.r = ref;
-	};
-	CCellWatch.prototype.clone = function () {
-
 	};
 	CCellWatch.prototype.asc_getWorkbook = function () {
 		return this._workbook;
@@ -14878,6 +14886,11 @@ QueryTableField.prototype.clone = function() {
 	};
 	CCellWatch.prototype.initPostOpen = function (ws) {
 		this._ws = ws;
+	};
+	CCellWatch.prototype.setOffset = function (row, col) {
+		if (this.r) {
+			this.r.setOffset({row: row ? row : 0, col: col ? col : 0});
+		}
 	};
 
 

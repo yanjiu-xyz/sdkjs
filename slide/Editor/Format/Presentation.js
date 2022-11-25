@@ -3061,6 +3061,9 @@ CPresentation.prototype.getGridSpacing = function() {
     }
     return AscFormat.CViewPr.prototype.DEFAULT_GRID_SPACING;
 };
+CPresentation.prototype.getGridSpacingMM = function() {
+    return this.getGridSpacing() / g_dKoef_mm_to_emu;
+};
 CPresentation.prototype.getViewPropertiesStride = function() {
     return this.getGridSpacing();
 };
@@ -4763,16 +4766,22 @@ CPresentation.prototype.clearGuides = function() {
         return;
     }
     if(this.viewPr) {
-        this.Create_NewHistoryPoint(0);
-        this.viewPr.clearGuides();
-        this.Recalculate();
+	    if(false === this.Document_Is_SelectionLocked(AscCommon.changestype_ViewPr, undefined, undefined, [])) {
+		    this.Create_NewHistoryPoint(0);
+		    this.viewPr.clearGuides();
+		    this.Recalculate();
+		    this.UpdateInterface();
+	    }
     }
 };
 CPresentation.prototype.deleteGuide = function(sId) {
     if(this.viewPr) {
-        this.Create_NewHistoryPoint(0);
-        this.viewPr.removeGuideById(sId);
-        this.Recalculate();
+	    if(false === this.Document_Is_SelectionLocked(AscCommon.changestype_ViewPr, undefined, undefined, [])) {
+		    this.Create_NewHistoryPoint(0);
+		    this.viewPr.removeGuideById(sId);
+		    this.Recalculate();
+		    this.UpdateInterface();
+	    }
     }
 };
 CPresentation.prototype.hitInGuide = function(x, y) {
