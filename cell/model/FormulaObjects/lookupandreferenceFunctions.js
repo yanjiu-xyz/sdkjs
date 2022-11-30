@@ -69,7 +69,7 @@ function (window, undefined) {
 	cFormulaFunctionGroup['LookupAndReference'] = cFormulaFunctionGroup['LookupAndReference'] || [];
 	cFormulaFunctionGroup['LookupAndReference'].push(cADDRESS, cAREAS, cCHOOSE, cCHOOSECOLS, cCHOOSEROWS, cCOLUMN, cCOLUMNS, cDROP, cEXPAND, cFORMULATEXT,
 		cGETPIVOTDATA, cHLOOKUP, cHYPERLINK, cINDEX, cINDIRECT, cLOOKUP, cMATCH, cOFFSET, cROW, cROWS, cRTD, cTRANSPOSE, cTAKE,
-		cUNIQUE, cVLOOKUP, cXLOOKUP, cVSTACK, cHSTACK, cTOROW, cTOCOL, cWRAPROWS, cWRAPCOLS);
+		cUNIQUE, cVLOOKUP, cXLOOKUP, cVSTACK, cHSTACK, cTOROW, cTOCOL, cWRAPROWS, cWRAPCOLS, cXMATCH);
 
 	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
 	cFormulaFunctionGroup['NotRealised'].push(cAREAS, cGETPIVOTDATA, cRTD);
@@ -95,6 +95,138 @@ function (window, undefined) {
 			.replace(/(~\*)/g, "\\*").replace(/(~\?)/g, "\\?");
 
 		return new RegExp(vFS + "$", flags ? flags : "i");
+	}
+
+	// TODO переделать поиск: добиться такого же результата как в ms
+	function XBinarySearch (target, array, match_mode, isReverse) {
+		let mid, item;
+		let index = -1;
+		let leftPointer = 0,
+			rightPointer = array.length - 1;
+
+		function bidirectionalSearch (secondIteration, isDescending) {
+			while(leftPointer <= rightPointer) {
+				mid = Math.floor((leftPointer + rightPointer) / 2);
+				item = undefined !== array[mid].v ? array[mid].v : array[mid];
+				if(-1 === match_mode || 0 === match_mode || 1 === match_mode) {
+					if (leftPointer === 0 && rightPointer === array.length - 1 && !secondIteration) {
+						if ((isDescending && target >= item) || (!isDescending && target <= item)) {
+							rightPointer = mid - 1;
+						} else {
+							leftPointer = mid + 1;
+						}
+					} else if(!secondIteration) {
+						if (target == item) {
+							index = mid;
+							break;
+						} else if ((isDescending && target > item) || (!isDescending && target < item)) {
+							rightPointer = mid - 1;
+						} else {
+							leftPointer = mid + 1;
+						}
+					}
+
+					if(secondIteration) {
+						// exact
+						if (0 === match_mode) {
+							if(item == target) {
+								index = mid;
+								break;
+							} else if(item < target) {
+								if (isDescending) {
+									rightPointer = mid - 1;
+								} else {
+									leftPointer = mid + 1;
+								}
+							} else {
+								if (isDescending) {
+									leftPointer = mid + 1
+								} else {
+									rightPointer = mid - 1;
+								}
+							}
+						}
+
+						// exact or larger
+						if (1 === match_mode) {
+							if (leftPointer === 0 && rightPointer === array.length - 1) {
+								if (item == target) {
+									index = mid;
+									break;
+								} else if (item < target) {
+									if (isDescending) {
+										rightPointer = mid - 1;
+									} else {
+										leftPointer = mid + 1;
+									}
+								} else {
+									if (isDescending) {
+										leftPointer = mid + 1;
+									} else {
+										rightPointer = mid - 1;
+									}
+								}
+							} else {
+								if (item > target || item == target) {
+									index = mid;
+									break;
+								} else {
+									if (isDescending) {
+										rightPointer = mid - 1;
+									} else {
+										leftPointer = mid + 1;
+									}
+								}
+							}
+						}
+
+						// exact or smaller
+						if (-1 === match_mode) {
+							if (leftPointer === 0 && rightPointer === array.length - 1) {
+								if(item == target) {
+									index = mid;
+									break;
+								} else if (item < target) {
+									if (isDescending) {
+										rightPointer = mid - 1;
+									} else {
+										leftPointer = mid + 1;
+									}
+								} else {
+									if (isDescending) {
+										leftPointer = mid + 1;
+									} else {
+										rightPointer = mid - 1;
+									}
+								}
+							} else {
+								if (item < target || item == target) {
+									index = mid;
+									break;
+								} else {
+									if (isDescending) {
+										leftPointer = mid + 1;
+									} else {
+										rightPointer = mid - 1;
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+
+		bidirectionalSearch(false, isReverse)
+
+		// second iteration
+		if(index === -1 && (1 === match_mode || -1 === match_mode || 0 === match_mode)) {
+			leftPointer = 0;
+			rightPointer = array.length - 1;
+			bidirectionalSearch(true, isReverse);
+		}
+
+		return index;	
 	}
 
 	/**
@@ -2384,11 +2516,26 @@ function (window, undefined) {
 	MatchCache.prototype = Object.create(VHLOOKUPCache.prototype);
 	MatchCache.prototype.constructor = MatchCache;
 	MatchCache.prototype.calculate = function (arg, _arg1) {
+		var arg0 = arg[0], arg1 = arg[1], arg2, arg3;
+		var isXMatch = arg[4];
 
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : new cNumber(1);
+		if(isXMatch) {
+			// default values for XMatch
+			arg2 = arg[2] ? arg[2] : new cNumber(0);
+			arg3 = arg[3] ? arg[3] : new cNumber(1);
+		} else {
+			// default values for Match
+			arg2 = arg[2] ? arg[2] : new cNumber(1);
+			arg3 = new cNumber(1);
+		}
 
 		if (cElementType.cellsRange3D === arg0.type || cElementType.cellsRange === arg0.type) {
-			arg0 = arg0.cross(_arg1);
+			// arg0 = arg0.cross(_arg1);
+			arg0 = arg0.getFullArray().getElementRowCol(0,0);
+
+			if (cElementType.empty === arg0.type) {
+				return new cError(cErrorType.not_available);
+			}
 		} else if (cElementType.array === arg0.type) {
 			arg0 = arg0.getElementRowCol(0,0);
 		} else if (cElementType.error === arg0.type) {
@@ -2403,8 +2550,13 @@ function (window, undefined) {
 		}
 
 		var a2Value = arg2.getValue();
-		if (!(-1 === a2Value || 0 === a2Value || 1 === a2Value)) {
+		if (!(-1 === a2Value || 0 === a2Value || 1 === a2Value || 2 === a2Value)) {
 			return new cError(cErrorType.not_numeric);
+		}
+
+		var a3value = arg3.getValue();
+		if(!(-2 === a3value || -1 === a3value || 1 === a3value || 2 === a3value)) {
+			return new cError(cErrorType.wrong_value_type);
 		}
 
 		if(cElementType.error === arg1.type) {
@@ -2429,12 +2581,11 @@ function (window, undefined) {
 
 		if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type ||
 			cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
+			// add range.isonecell
 			var oSearchRange = arg1.getRange();
-
 			if (!oSearchRange) {
 				return new cError(cErrorType.bad_reference);
 			}
-
 
 			var a1RowCount = oSearchRange.bbox.r2 - oSearchRange.bbox.r1 + 1, a1ColumnCount = oSearchRange.bbox.c2 - oSearchRange.bbox.c1 + 1;
 			var bHor = false;
@@ -2444,15 +2595,16 @@ function (window, undefined) {
 				bHor = true;
 			}
 
-			return this._get(oSearchRange, arg0, arg2, bHor);
+			return this._get(oSearchRange, arg0, arg2, arg3, bHor, isXMatch);
 		} else {
 			return new cError(cErrorType.not_available);
 		}
 	};
-	MatchCache.prototype._get = function (range, arg0, arg2, bHor) {
+	MatchCache.prototype._get = function (range, arg0, arg2, arg3, bHor, isXMatch) {
 		var res, _this = this, wsId = range.getWorksheet().getId(),
 			sRangeName = wsId + g_cCharDelimiter + range.getName(), cacheElem = this.cacheId[sRangeName];
 		var arg2Value = arg2.getValue();
+		var arg3Value = arg3 ? arg3.getValue() : '';
 		var valueForSearching = arg0.getValue();
 		if (!cacheElem) {
 			cacheElem = {elements: [], results: {}};
@@ -2468,9 +2620,11 @@ function (window, undefined) {
 			}
 			cacheRange.add(range.getBBox0(), cacheElem);
 		}
-		var sInputKey = valueForSearching + g_cCharDelimiter + arg2Value;
+		var sInputKey = arg3Value ? valueForSearching + g_cCharDelimiter + arg2Value + g_cCharDelimiter + arg3Value : valueForSearching + g_cCharDelimiter + arg2Value;
 		res = cacheElem.results[sInputKey];
-		if (!res) {
+		if(!res && isXMatch) {
+			cacheElem.results[sInputKey] = res = this._xMatchCalculate(cacheElem.elements, arg0, arg2, arg3);
+		} else if (!res) {
 			cacheElem.results[sInputKey] = res = this._calculate(cacheElem.elements, arg0, arg2);
 		}
 		return res;
@@ -2524,6 +2678,173 @@ function (window, undefined) {
 
 		return (-1 < index) ? new cNumber(index + 1) : new cError(cErrorType.not_available);
 	};
+	MatchCache.prototype._xMatchCalculate = function (arr, a0, a2, a3) {
+		let a0Type = a0.type;
+		let	a0Value = a0.getValue(),
+			a2Value = a2.getValue(),
+			a3value = a3.getValue();
+
+		if (!(cElementType.number === a0Type || cElementType.string === a0Type || cElementType.bool === a0Type ||
+			cElementType.error === a0Type || cElementType.empty === a0Type)) {
+			if(cElementType.empty === a0Value.type) {
+				a0Value = a0Value.tocNumber();
+			}
+			a0Type = a0Value.type;
+			a0Value = a0Value.getValue();
+		}
+
+		let item, index = -1, curIndex;
+
+		if(1 === a3value) {
+			// first iteration for precise search
+			for (let i = 0; i < arr.length; ++i) {
+				item = undefined !== arr[i].v ? arr[i].v : arr[i];
+				curIndex = undefined !== arr[i].i ? arr[i].i : i;
+				if (item.type === a0Type) {
+					if (0 === a2Value || 2 === a2Value) {
+						if (cElementType.string === a0Type) {
+							if (AscCommonExcel.searchRegExp2(item.toString(), a0Value)) {
+								index = curIndex;
+								break;
+							}
+						} else {
+							if (item == a0Value) {
+								index = curIndex;
+								break;
+							}
+						}
+					} else if (-1 === a2Value || 1 === a2Value) {
+						if (item == a0Value) {
+							index = curIndex;
+							break;
+						} 
+					}
+				}
+			}
+
+			// second iteration for approximate search
+			if(index === -1 && (1 === a2Value || -1 === a2Value)) {
+				if(-1 === a2Value) {
+					const lessEqualArr = arr.filter(function (item) { 
+						return item.v <= a0Value;
+					}).sort(function (a, b) { return a.v.getValue() < b.v.getValue() ? 1 : -1 });
+
+					if(lessEqualArr.length > 0) {
+						let closestVal = lessEqualArr[0];
+						for(let i = 0; i < lessEqualArr.length; ++i) {
+							if(closestVal.v.getValue() < lessEqualArr[i].v.getValue()) {
+								closestVal = lessEqualArr[i];
+							} else if(closestVal.v.getValue() == lessEqualArr[i].v.getValue()) {
+								if(closestVal.i > lessEqualArr[i].i) {
+									closestVal = lessEqualArr[i];
+								}
+							}
+						}
+						index = closestVal.i;
+					}
+				} else if(1 === a2Value) {
+					const moreEqualArr = arr.filter(function (item) { 
+						return item.v >= a0Value;
+					}).sort(function (a, b) { return a.v.getValue() > b.v.getValue() ? 1 : -1 });
+
+					if(moreEqualArr.length > 0) {
+						let closestVal = moreEqualArr[0];
+						for(let i = 0; i < moreEqualArr.length; ++i) {
+							if(closestVal.v.getValue() > moreEqualArr[i].v.getValue()) {
+								closestVal = moreEqualArr[i];
+							} else if(closestVal.v.getValue() == moreEqualArr[i].v.getValue()) {
+								if(closestVal.i > moreEqualArr[i].i) {
+									closestVal = moreEqualArr[i];
+								}
+							}
+						}
+						index = closestVal.i;
+					}
+				}
+			}
+		} else if(-1 === a3value) {
+			// reverse search
+			// first iteration for precise search
+			for (let i = arr.length - 1; i > 0; --i) {
+				item = undefined !== arr[i].v ? arr[i].v : arr[i];
+				curIndex = undefined !== arr[i].i ? arr[i].i : i;
+				if (item.type === a0Type) {
+					if (0 === a2Value || 2 === a2Value) {
+						if (cElementType.string === a0Type) {
+							if (AscCommonExcel.searchRegExp2(item.toString(), a0Value)) {
+								index = curIndex;
+								break;
+							}
+						} else {
+							if (item == a0Value) {
+								index = curIndex;
+								break;
+							}
+						}
+					} else if (-1 === a2Value || 1 === a2Value) {
+						if (item == a0Value) {
+							index = curIndex;
+							break;
+						} 
+					}
+				}
+			}
+			// second iteration for approximate search
+			if(index === -1 && (1 === a2Value || -1 === a2Value)) {
+				if(-1 === a2Value) {
+					const lessEqualArr = arr.filter(function (item) {
+						return item.v.getValue() <= a0Value;
+					}).sort(function (a, b) { return a.v.getValue() < b.v.getValue() ? 1 : -1 });
+					
+					if(lessEqualArr.length > 0) {
+						let closestVal = lessEqualArr[0];
+						for(let i = 0; i < lessEqualArr.length; ++i) {
+							if(closestVal.v.getValue() < lessEqualArr[i].v.getValue()) {
+								closestVal = lessEqualArr[i];
+							} else if(closestVal.v.getValue() == lessEqualArr[i].v.getValue()) {
+								if(closestVal.i < lessEqualArr[i].i) {
+									closestVal = lessEqualArr[i];
+								}
+							}
+						}
+						index = closestVal.i;
+					}
+				} else if(1 === a2Value) {
+					const moreEqualArr = arr.filter(function (item) { 
+						return item.v >= a0Value;
+					}).sort(function (a, b) { return a.v.getValue() > b.v.getValue() ? 1 : -1 });
+					if(moreEqualArr.length > 0) {
+						let closestVal = moreEqualArr[0];
+						for(let i = 0; i < moreEqualArr.length; ++i) {
+							if(closestVal.v.getValue() > moreEqualArr[i].v.getValue()) {
+								closestVal = moreEqualArr[i];
+							} else if(closestVal.v.getValue() == moreEqualArr[i].v.getValue()) {
+								if(closestVal.i < moreEqualArr[i].i) {
+									closestVal = moreEqualArr[i];
+								}
+							}
+						}
+						index = closestVal.i;
+					}
+				}
+			}
+
+		} else if(2 === a3value) {
+			if (2 === a2Value) {
+				// wildcard match(err)
+				return new cError(cErrorType.wrong_name);
+			}
+			index = XBinarySearch(a0Value, arr, a2Value, false);
+		} else if(-2 === a3value) {
+			if (2 === a2Value) {
+				// wildcard match(err)
+				return new cError(cErrorType.wrong_name);
+			}
+			index = XBinarySearch(a0Value, arr, a2Value, true);
+		}
+
+		return (-1 < index) ? new cNumber(index + 1) : new cError(cErrorType.not_available);
+	}
 
 	function LOOKUPCache() {
 		this.cacheId = {};
@@ -3180,6 +3501,26 @@ function (window, undefined) {
 	cWRAPCOLS.prototype.isXLFN = true;
 	cWRAPCOLS.prototype.Calculate = function (arg) {
 		return wrapRowsCols(arg, arguments[1], true);
+	};
+
+	/**
+	 * @constructor
+	 * @extends {AscCommonExcel.cBaseFunction}
+	 */
+	function cXMATCH() {
+	}
+		
+	//***array-formula***
+	cXMATCH.prototype = Object.create(cBaseFunction.prototype);
+	cXMATCH.prototype.constructor = cXMATCH;
+	cXMATCH.prototype.name = 'XMATCH';
+	cXMATCH.prototype.argumentsMin = 2;
+	cXMATCH.prototype.argumentsMax = 4;
+	cXMATCH.prototype.arrayIndexes = {1: 1};
+	cXMATCH.prototype.argumentsType = [argType.any, argType.reference, argType.number, argType.number];
+	cXMATCH.prototype.Calculate = function (arg) {
+		arg[4] = true;
+		return g_oMatchCache.calculate(arg, arguments[1]);
 	};
 
 	var g_oVLOOKUPCache = new VHLOOKUPCache(false);
