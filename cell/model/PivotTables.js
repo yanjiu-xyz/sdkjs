@@ -4128,7 +4128,7 @@ CT_pivotTableDefinition.prototype.refreshBaseItemIndexes = function (oldFieldIte
 				dataField.showDataAs === Asc.c_oAscShowDataAs.Percent ||
 				dataField.showDataAs === Asc.c_oAscShowDataAs.PercentDiff) 
 			{
-				if (oldFieldItems[dataField.baseItem].x !== newFieldItems[dataField.baseItem].x) {
+				if (!newFieldItems[dataField.baseItem] || oldFieldItems[dataField.baseItem].x !== newFieldItems[dataField.baseItem].x) {
 					for (let j = 0; j < newFieldItems.length; j += 1) {
 						if (newFieldItems[j].x === oldFieldItems[dataField.baseItem].x) {
 							dataField.baseItem = j;
