@@ -64,6 +64,8 @@
 		this.MoveId      = 1;
 		this.MoveMarks   = {};
 		this.ProcessMove = null;
+
+		this.SkipPreDeleteMoveMarks = false;
 	}
 
 	/**
