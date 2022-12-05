@@ -37,10 +37,10 @@
     const MIN_JACCARD = 0.34;
     const MIN_DIFF = 0.7;
     const EXCLUDED_PUNCTUATION = {};
-    EXCLUDED_PUNCTUATION[46] = true;
+    //EXCLUDED_PUNCTUATION[46] = true;
     //EXCLUDED_PUNCTUATION[95] = true;
     EXCLUDED_PUNCTUATION[160] = true;
-    EXCLUDED_PUNCTUATION[63] = true;
+    //EXCLUDED_PUNCTUATION[63] = true;
 
     function CNode(oElement, oParent)
     {
