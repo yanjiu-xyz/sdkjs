@@ -72,6 +72,7 @@
         for (let i = 0; i < arrReviewTypesOfRevisedElement.length; i += 1) {
             const nRevisedReviewType = arrReviewTypesOfRevisedElement[i].reviewType;
             const nRevisedMoveReviewType = arrReviewTypesOfRevisedElement[i].moveReviewType;
+            const sRevisedNameMoveMark = arrReviewTypesOfRevisedElement[i].moveName;
             const oRevisedReviewInfo = arrReviewTypesOfRevisedElement[i].reviewInfo;
             const oRevisedPrevAdded = arrReviewTypesOfRevisedElement[i].prevAdded;
 
@@ -107,6 +108,7 @@
                     lastChangeReviewInfo.nEndChangeReviewIndex = i - 1;
                     if (bIsMove) {
                         lastChangeReviewInfo.nPriorityMoveReviewType = nPriorityMoveReviewType;
+                        lastChangeReviewInfo.sMoveReviewMarkName = sRevisedNameMoveMark;
                     } else {
                         lastChangeReviewInfo.nPriorityReviewType = nPriorityReviewType;
                     }
@@ -128,6 +130,7 @@
                     };
                     if (bIsMove) {
                         oNewChangeReviewInfo.nPriorityMoveReviewType = nPriorityMoveReviewType;
+                        oNewChangeReviewInfo.sMoveReviewMarkName = sRevisedNameMoveMark;
                     } else {
                         oNewChangeReviewInfo.nPriorityReviewType = nPriorityReviewType;
                     }
@@ -140,6 +143,7 @@
 
     function CMergeComparisonNode(oElement, oParent) {
         CNode.call(this, oElement, oParent);
+        this.bHaveMoveMarks = false;
     }
 
     CMergeComparisonNode.prototype = Object.create(CNode.prototype);
@@ -159,17 +163,11 @@
         return oRet;
     };
 
-    CMergeComparisonNode.prototype.pushToArrInsertContentWithCopy = function (aContentToInsert, elem, comparison) {
-        CNode.prototype.pushToArrInsertContentWithCopy.call(this, aContentToInsert, elem, comparison);
-    }
-
-
     CMergeComparisonNode.prototype.setCommonReviewTypeWithInfo = function (element, info) {
         element.SetReviewTypeWithInfo((element.GetReviewType && element.GetReviewType()) || reviewtype_Common, info);
     };
 
     CMergeComparisonNode.prototype.applyInsert = function (arrToInsert, arrToRemove, nInsertPosition, comparison, opts) {
-        const oThis = this;
         opts = opts || {};
         if (arrToInsert.length === 0) {
             for (let i = 0; i < arrToRemove.length; i += 1) {
@@ -186,6 +184,29 @@
             comparison.resolveConflicts(arrToInsert, arrToRemove, arrToRemove[0].Paragraph, nInsertPosition);
         }
     }
+
+    CMergeComparisonNode.prototype.insertContentAfterRemoveChanges = function (aContentToInsert, nInsertPosition, comparison) {
+        const oElement = this.getApplyParagraph(comparison);
+        if(nInsertPosition > -1)
+        {
+            for (let t = 0; t < aContentToInsert.length; t += 1) {
+                if(this.isElementForAdd(aContentToInsert[t]))
+                {
+                    if (aContentToInsert[t] instanceof AscCommon.CParaRevisionMove) {
+                        const oInsertBefore = oElement.Content[nInsertPosition];
+                        if (oInsertBefore) {
+                            comparison.oComparisonMoveMarkManager.addRevisedMoveMarkToInserts(aContentToInsert[t], oInsertBefore, oElement, false);
+                        }
+                    } else {
+                        const sMoveName = comparison.oComparisonMoveMarkManager.getMoveMarkNameByRun(aContentToInsert[t]);
+                        comparison.oComparisonMoveMarkManager.addMoveMarkNameRunRelation(sMoveName, aContentToInsert[t]);
+                        oElement.AddToContent(nInsertPosition, aContentToInsert[t]);
+                    }
+
+                }
+            }
+        }
+    };
 
     function CMergeComparisonTextElement() {
         CTextElement.call(this);
@@ -315,6 +336,7 @@
         CDocumentComparison.call(this, oOriginalDocument, oRevisedDocument, oOptions);
         this.parentParagraph = null;
         this.startPosition = 0;
+        this.bSkipChangeMoveType = true;
         this.copyPr = {
             CopyReviewPr: false,
             Comparison: this,
@@ -327,6 +349,11 @@
     CDocumentResolveConflictComparison.prototype.getNodeConstructor = function () {
         return CConflictResolveNode;
     }
+    CDocumentResolveConflictComparison.prototype.checkOriginalAndSplitRun = function (oOriginalRun, oSplitRun) {
+        const sName = this.oComparisonMoveMarkManager.getMoveMarkNameByRun(oOriginalRun);
+        this.oComparisonMoveMarkManager.addMoveMarkNameRunRelation(sName, oSplitRun);
+        this.oComparisonMoveMarkManager.addRunMoveMarkNameRelation(sName, oSplitRun);
+    };
 
     CDocumentResolveConflictComparison.prototype.setReviewInfoForArray = function (arrNeedReviewObjects, nType) {
         for (let i = 0; i < arrNeedReviewObjects.length; i += 1) {
@@ -361,9 +388,15 @@
         const prevAdded = oReviewInfo.GetPrevAdded();
         const reviewType = oRun.GetReviewType && oRun.GetReviewType();
         const moveReviewType = oRun.GetReviewMoveType && oRun.GetReviewMoveType();
+        const bNotRunIdInit = !this.oComparisonMoveMarkManager.getMoveMarkNameByRun(oRun);
+        if (moveReviewType !== Asc.c_oAscRevisionsMove.NoMove && bNotRunIdInit && this.oComparisonMoveMarkManager.moveMarksStack.length) {
+            const oCurrentMoveMark = this.oComparisonMoveMarkManager.moveMarksStack[this.oComparisonMoveMarkManager.moveMarksStack.length - 1];
+            this.oComparisonMoveMarkManager.addRunMoveMarkNameRelation(oCurrentMoveMark.Name, oRun);
+        }
         return {
             reviewType: reviewType,
             moveReviewType: moveReviewType,
+            moveName: this.oComparisonMoveMarkManager.getMoveMarkNameByRun(oRun),
             reviewInfo: oReviewInfo,
             prevAdded: prevAdded
         };
@@ -376,16 +409,15 @@
         let currentChangeId = 0;
         for (let i = oNode.children.length - 1; i >= 0; i -= 1) {
             const oChildNode = oNode.children[i];
+            if (i !== oNode.children.length - 1) {
+                oChildNode.tryUpdateNode(this);
+                oChildNode.resolveTypesWithPartner(this);
+            }
             if (currentChangeId < oNode.changes.length && oNode.changes[currentChangeId].anchor.index === i) {
                 const aContentToInsert = oNode.getArrOfInsertsFromChanges(currentChangeId, this);
                 //handle removed elements
                 oNode.applyInsertsToParagraph(this, aContentToInsert, currentChangeId);
                 currentChangeId += 1
-            } else {
-                if (i !== oNode.children.length - 1) {
-                    oChildNode.tryUpdateNode(this);
-                    oChildNode.resolveTypesWithPartner(this);
-                }
             }
             if (currentChangeId < oNode.changes.length && oNode.changes[currentChangeId].anchor.index > i) {
                 currentChangeId += 1;
@@ -442,7 +474,7 @@
         const nInsertPosition = infoAboutEndOfRemoveChange.nInsertPosition;
         this.setReviewTypeForRemoveChanges(comparison, idxOfChange, posLastRunInContent, nInsertPosition, arrSetRemoveReviewType);
 
-        const nInsertPosition2 = arrSetRemoveReviewType[arrSetRemoveReviewType.length - 1].GetPosInParent() - this.getStartPosition(comparison);
+        const nInsertPosition2 = arrSetRemoveReviewType[arrSetRemoveReviewType.length - 1].GetPosInParent();
         this.applyInsert(aContentToInsert, arrSetRemoveReviewType, nInsertPosition2, comparison, {needReverse: true});
     };
 
@@ -601,9 +633,14 @@
                         const nStartChangeReviewIndex = oChangeReviewInfoElement.nStartChangeReviewIndex;
                         const nPriorityReviewType = oChangeReviewInfoElement.nPriorityReviewType;
                         const nPriorityMoveReviewType = oChangeReviewInfoElement.nPriorityMoveReviewType;
+                        const sMoveReviewMarkName = oChangeReviewInfoElement.sMoveReviewMarkName;
                         const oReviewInfo = oChangeReviewInfoElement.oReviewInfo;
                         const sReviewUserName = oReviewInfo.GetUserName();
                         const sReviewDate = oReviewInfo.GetDateTime();
+                        let bChangeFirstRun = false;
+                        if (nStartChangeReviewIndex === 0) {
+                            bChangeFirstRun = true;
+                        }
                         const oFirstChangeElement = oOriginalTextElement.elements[nStartChangeReviewIndex];
                         const oLastChangeElement = oOriginalTextElement.elements[nEndChangeReviewIndex];
 
@@ -639,13 +676,22 @@
                                 if (AscFormat.isRealNumber(nPriorityReviewType)) {
                                     oNeedReviewWithUser[sReviewDate][sReviewUserName].reviewTypes[nPriorityReviewType].push({element: oCurrentOrigRun, reviewInfo: oReviewInfo});
                                 } else if (AscFormat.isRealNumber(nPriorityMoveReviewType)) {
+                                    comparison.oComparisonMoveMarkManager.addMoveMarkNameRunRelation(sMoveReviewMarkName, oCurrentOrigRun);
+                                    comparison.oComparisonMoveMarkManager.addRunMoveMarkNameRelation(sMoveReviewMarkName, oCurrentOrigRun);
                                     oNeedReviewWithUser[sReviewDate][sReviewUserName].moveReviewTypes[nPriorityMoveReviewType].push({element: oCurrentOrigRun, reviewInfo: oReviewInfo});
                                 }
                             } else {
                                 const oNewRun = oCurrentOrigRun.Split2(nPositionOfElement, oOriginalTextParagraph, nCurrentOriginalRunIndex);
+                                if (bChangeFirstRun) {
+                                    // мы меняем только первый ран и элемент, чтобы при вставке изменений мы нашли начало слова для вставки
+                                    oOriginalTextElement.firstRun = oNewRun;
+                                    oOriginalTextElement.elements[0] = oNewRun.Content[0];
+                                }
                                 if (AscFormat.isRealNumber(nPriorityReviewType)) {
                                     oNeedReviewWithUser[sReviewDate][sReviewUserName].reviewTypes[nPriorityReviewType].push({element: oNewRun, reviewInfo: oReviewInfo});
                                 } else if (AscFormat.isRealNumber(nPriorityMoveReviewType)) {
+                                    comparison.oComparisonMoveMarkManager.addMoveMarkNameRunRelation(sMoveReviewMarkName, oNewRun);
+                                    comparison.oComparisonMoveMarkManager.addRunMoveMarkNameRelation(sMoveReviewMarkName, oNewRun);
                                     oNeedReviewWithUser[sReviewDate][sReviewUserName].moveReviewTypes[nPriorityMoveReviewType].push({element: oNewRun, reviewInfo: oReviewInfo});
                                 }
                                 break;
@@ -669,11 +715,54 @@
                             const reviewInfo = info.reviewInfo;
                             comparison.resolveCustomReviewTypesBetweenElements(element, reviewtype_Remove, reviewInfo);
                         }
+                        for (let i = 0; i < oNeedReviewWithUser[sReviewDate][sUserName].moveReviewTypes[Asc.c_oAscRevisionsMove.MoveFrom].length; i += 1) {
+                            const info = oNeedReviewWithUser[sReviewDate][sUserName].moveReviewTypes[Asc.c_oAscRevisionsMove.MoveFrom][i];
+                            const element = info.element;
+                            const reviewInfo = info.reviewInfo;
+                            const nOldReviewType = element.GetReviewType();
+                            if (nOldReviewType !== reviewtype_Common) {
+                                const oOldReviewInfo = element.GetReviewInfo().Copy();
+                                element.SetPrevReviewTypeWithInfoRecursively(nOldReviewType, oOldReviewInfo);
+                            }
+                            element.SetReviewTypeWithInfo(reviewtype_Remove, reviewInfo);
+                        }
+                        for (let i = 0; i < oNeedReviewWithUser[sReviewDate][sUserName].moveReviewTypes[Asc.c_oAscRevisionsMove.MoveTo].length; i += 1) {
+                            const info = oNeedReviewWithUser[sReviewDate][sUserName].moveReviewTypes[Asc.c_oAscRevisionsMove.MoveTo][i];
+                            const element = info.element;
+                            const reviewInfo = info.reviewInfo;
+                            const nOldReviewType = element.GetReviewType();
+                            if (nOldReviewType !== reviewtype_Common) {
+                                const oOldReviewInfo = element.GetReviewInfo().Copy();
+                                element.SetPrevReviewTypeWithInfoRecursively(nOldReviewType, oOldReviewInfo);
+                            }
+                            element.SetReviewTypeWithInfo(reviewtype_Add, reviewInfo);
+                        }
                     }
                 }
             }
         });
     }
+
+    CConflictResolveNode.prototype.applyInsertsToParagraphsWithoutRemove = function (comparison, aContentToInsert, idxOfChange) {
+        const bRet = CNode.prototype.applyInsertsToParagraphsWithoutRemove.call(this, comparison, aContentToInsert, idxOfChange);
+        if (!bRet) {
+            const oChange = this.changes[idxOfChange];
+            const applyingParagraph = this.getApplyParagraph(comparison);
+            const index = oChange.anchor.index;
+            if (index === this.children.length - 1) {
+
+                const oLastConflictElement = this.children[this.children.length - 2].element;
+                const nInsertIndex = oLastConflictElement.lastRun.GetPosInParent(applyingParagraph);
+                const nLastSymbolPosition = oLastConflictElement.lastRun.GetElementPosition(oLastConflictElement.elements[oLastConflictElement.elements.length - 1]);
+                if (nLastSymbolPosition !== -1) {
+                    const oNewRun = oLastConflictElement.lastRun.Split2(nLastSymbolPosition + 1, applyingParagraph, nInsertIndex);
+                    comparison.checkOriginalAndSplitRun(oNewRun, oLastConflictElement.lastRun);
+                    this.applyInsert(aContentToInsert, [], nInsertIndex + 1, comparison);
+                }
+            }
+        }
+    }
+    CConflictResolveNode.prototype.insertContentAfterRemoveChanges = CMergeComparisonNode.prototype.insertContentAfterRemoveChanges;
 
     CConflictResolveNode.prototype.getApplyParagraph = function (comparison) {
         return comparison.parentParagraph;
@@ -687,9 +776,9 @@
     };
 
     CConflictResolveNode.prototype.pushToArrInsertContentWithCopy = function (aContentToInsert, elem, comparison) {
-        comparison.copyPr.bSaveCustomReviewType = true;
-        CNode.prototype.pushToArrInsertContentWithCopy.call(this, aContentToInsert, elem, comparison);
-        delete comparison.copyPr.bSaveCustomReviewType;
+            comparison.copyPr.bSaveCustomReviewType = true;
+            CNode.prototype.pushToArrInsertContentWithCopy.call(this, aContentToInsert, elem, comparison);
+            delete comparison.copyPr.bSaveCustomReviewType;
     }
 
     CConflictResolveNode.prototype.setCommonReviewTypeWithInfo = function (element, info) {
@@ -727,13 +816,129 @@
         this.copyPr = {
             CopyReviewPr: false,
             Comparison: this,
-            SkipUpdateInfo: true
+            SkipUpdateInfo: true,
+            CheckComparisonMoveMarks: true
         };
     }
 
     CDocumentMergeComparison.prototype = Object.create(CDocumentComparison.prototype);
     CDocumentMergeComparison.prototype.constructor = CDocumentMergeComparison;
 
+    CDocumentMergeComparison.prototype.checkOriginalAndSplitRun = CDocumentResolveConflictComparison.prototype.checkOriginalAndSplitRun;
+
+    CDocumentMergeComparison.prototype.createNodeFromDocContent = function (oElement, oParentNode, oHashWords, isOriginalDocument) {
+        this.oComparisonMoveMarkManager.resetMoveMarkStack();
+        const oRet = CDocumentComparison.prototype.createNodeFromDocContent.call(this, oElement, oParentNode, oHashWords, isOriginalDocument);
+        this.oComparisonMoveMarkManager.checkMoveMarksContentNode(oRet);
+        return oRet;
+    }
+    CDocumentMergeComparison.prototype.checkCopyParagraphElement = function (oOldItem, oNewItem, arrMoveMarks) {
+        if (para_RevisionMove === oOldItem.Type) {
+            arrMoveMarks.unshift({moveMark: oNewItem, parentElement: this});
+            return true;
+        } else if (Array.isArray(oNewItem)) {
+            const sMoveName = this.oComparisonMoveMarkManager.getMoveMarkNameByRun(oOldItem[0]);
+            this.oComparisonMoveMarkManager.addRunMoveMarkNameRelation(sMoveName, oNewItem[0]);
+            this.oComparisonMoveMarkManager.oRevisedMoveMarksInserts[oNewItem[0].Id] = arrMoveMarks;
+        } else {
+            const sMoveName = this.oComparisonMoveMarkManager.getMoveMarkNameByRun(oOldItem);
+            this.oComparisonMoveMarkManager.addRunMoveMarkNameRelation(sMoveName, oNewItem);
+            this.oComparisonMoveMarkManager.oRevisedMoveMarksInserts[oNewItem.Id] = arrMoveMarks;
+        }
+        return false;
+    }
+    CDocumentMergeComparison.prototype.correctMoveMarks = function () {
+        const oRemoveMoveTypeNames = {};
+        const oTrackRevisionManager = this.api.WordControl.m_oLogicDocument.TrackRevisionsManager;
+        const oComparisonMoveMarkManager = this.oComparisonMoveMarkManager;
+        const oMoveMarks = oTrackRevisionManager.MoveMarks;
+        const oRevisedMoveMarksInserts = oComparisonMoveMarkManager.getRevisedMoveMarkToInserts();
+        const oInsertMoveMarkId = oComparisonMoveMarkManager.oInsertMoveMarkId;
+        const arrCheckMoveMarksElements = oComparisonMoveMarkManager.getCheckMoveMarkElements();
+
+        for (let i = 0; i < arrCheckMoveMarksElements.length; i += 1) {
+            const oRootElement = arrCheckMoveMarksElements[i];
+            let nStartEndOriginalCounter = 0;
+            let oStartMove = {};
+            function checkOriginalMoveMark(oElement) {
+                if (oMoveMarks[oElement.Name]) {
+                    const oMoveMarkInfo = oMoveMarks[oElement.Name];
+                    if (oMoveMarkInfo.From.Start === oElement || oMoveMarkInfo.To.Start === oElement) {
+                        nStartEndOriginalCounter += 1;
+                    } else if (oMoveMarkInfo.From.End === oElement || oMoveMarkInfo.To.End === oElement) {
+                        nStartEndOriginalCounter -= 1;
+                    }
+                    for (let sName in oStartMove) {
+                        oInsertMoveMarkId[sName] = false;
+                        oRemoveMoveTypeNames[sName] = true;
+                    }
+                    oStartMove = {};
+                }
+            }
+
+            function checkRevisedMoveMark(oElement) {
+                if (oRevisedMoveMarksInserts[oElement.Id]) {
+                    const arrMoveMarks = oRevisedMoveMarksInserts[oElement.Id];
+                    for (let t = 0; t < arrMoveMarks.length; t += 1) {
+                        const oRevisedInsertInfo = arrMoveMarks[t];
+                        if (oRevisedInsertInfo.moveMark.Start) {
+                            oStartMove[oRevisedInsertInfo.moveMark.Name] = true;
+                        } else {
+                            if (!nStartEndOriginalCounter) {
+                                delete oStartMove[oRevisedInsertInfo.moveMark.Name];
+                            }
+                        }
+                    }
+                }
+            }
+
+            for (let j = 0; j < oRootElement.Content.length; j += 1) {
+                const oChildElement = oRootElement.Content[j];
+                if (oChildElement instanceof Paragraph) {
+                    const arrContent = oChildElement.Content;
+                    for (let k = 0; k < arrContent.length - 1; k += 1) {
+                        const oElement = arrContent[k];
+                        if (oElement instanceof AscCommon.CParaRevisionMove) {
+                            checkOriginalMoveMark(oElement);
+                        } else {
+                            checkRevisedMoveMark(oElement);
+                        }
+                    }
+                    const oParaEnd = oChildElement.GetParaEndRun();
+                    checkRevisedMoveMark(oParaEnd);
+                    const oLastMoveMark = oParaEnd.GetLastTrackMoveMark();
+                    if (oLastMoveMark) {
+                        checkOriginalMoveMark(oLastMoveMark);
+                    }
+                }
+            }
+        }
+        for (let sName in oRemoveMoveTypeNames) {
+            const oRevertMoveTypeByName = oComparisonMoveMarkManager.oRevertMoveTypeByName;
+            if (oRevertMoveTypeByName[sName]) {
+                for (let i = 0; i < oRevertMoveTypeByName[sName].length; i += 1) {
+                    oRevertMoveTypeByName[sName][i].RemoveReviewMoveType();
+                }
+            }
+        }
+        for (let sId in oRevisedMoveMarksInserts) {
+            const arrInsert = oRevisedMoveMarksInserts[sId];
+            for (let i = arrInsert.length - 1; i >= 0; i -= 1) {
+                const oInsertInfo = arrInsert[i];
+                const oInsertParaMove = oInsertInfo.moveMark;
+                if (oInsertMoveMarkId[oInsertParaMove.Name]) {
+                    const oRun = AscCommon.g_oTableId.Get_ById(sId);
+                    if (oInsertInfo.isParaEnd) {
+                        oRun.AddAfterParaEnd(oInsertParaMove);
+                        } else {
+                        const oParagraph = oRun.Paragraph;
+                        const nPosition = oRun.GetPosInParent(oParagraph);
+                        oParagraph.AddToContent(nPosition, oInsertParaMove);
+                    }
+                }
+            }
+        }
+    };
 
     CDocumentMergeComparison.prototype.setRemoveReviewType = function (element) {
         if (!(element.IsParaEndRun && element.IsParaEndRun())) {
@@ -750,7 +955,20 @@
             const oRevisedParaEnd = oNode.partner.element.GetParaEndRun();
             const nRevisedReviewType = oRevisedParaEnd.GetReviewType();
             const oRevisedReviewInfo = oRevisedParaEnd.GetReviewInfo();
+            const nOldMainMoveReviewType = oMainParaEnd.GetReviewMoveType();
             this.resolveCustomReviewTypesBetweenElements(oMainParaEnd, nRevisedReviewType, oRevisedReviewInfo);
+            if (nOldMainMoveReviewType === Asc.c_oAscRevisionsMove.NoMove && oMainParaEnd.GetReviewMoveType() !== Asc.c_oAscRevisionsMove.NoMove) {
+                const oRunMoveMark = oRevisedParaEnd.GetLastTrackMoveMark();
+                if (oRunMoveMark) {
+                    const oCopyMoveMark = oRunMoveMark.Copy(this.copyPr);
+                    const sChangedMoveMarkName = this.oComparisonMoveMarkManager.getChangedMoveMarkName(oCopyMoveMark);
+                    oCopyMoveMark.Name = sChangedMoveMarkName;
+                    this.oComparisonMoveMarkManager.addRunMoveMarkNameRelation(sChangedMoveMarkName, oMainParaEnd);
+                    this.oComparisonMoveMarkManager.addMoveMarkNameRunRelation(sChangedMoveMarkName, oMainParaEnd);
+                    this.oComparisonMoveMarkManager.addRevisedMoveMarkToInserts(oCopyMoveMark, oMainParaEnd, oNode.element, true);
+
+                }
+            }
         }
     };
 
@@ -780,6 +998,7 @@
         arrToRemove[arrToRemove.length - 1].Content.push(new AscWord.CRunParagraphMark());
         arrToInserts[arrToInserts.length - 1].Content.push(new AscWord.CRunParagraphMark());
         const comparison = new CDocumentResolveConflictComparison(this.originalDocument, this.revisedDocument, this.options);
+        comparison.oComparisonMoveMarkManager = this.oComparisonMoveMarkManager;
         const originalDocument = new CMockDocument();
         const revisedDocument = new CMockDocument();
         const originalParagraph = new CMockParagraph();
@@ -792,7 +1011,9 @@
         originalDocument.Content.push(originalParagraph);
         revisedDocument.Content.push(revisedParagraph);
 
-        comparison.compareRoots(originalDocument, revisedDocument);
+        comparison.oComparisonMoveMarkManager.executeResolveConflictMode(function () {
+            comparison.compareRoots(originalDocument, revisedDocument);
+        });
         return originalParagraph.Content;
     }
 
@@ -914,8 +1135,10 @@
         if (!(oApi && oOriginalDocument)) {
             return;
         }
-
+        this.comparison.correctMoveMarks();
         oOriginalDocument.SetTrackRevisions(this.oldTrackRevisions);
+        const oTrackRevisionManager = oOriginalDocument.TrackRevisionsManager;
+        oTrackRevisionManager.SkipPreDeleteMoveMarks = this.oldSkipPreDeleteMoveMarks;
         oOriginalDocument.End_SilentMode(false);
         oOriginalDocument.Recalculate();
         oOriginalDocument.UpdateInterface();
@@ -929,13 +1152,14 @@
         if (!oOriginalDocument || !oRevisedDocument) {
             return;
         }
-
         oOriginalDocument.StopRecalculate();
         oOriginalDocument.StartAction(AscDFH.historydescription_Document_MergeDocuments);
         oOriginalDocument.Start_SilentMode();
         this.oldTrackRevisions = oOriginalDocument.IsTrackRevisions();
         oOriginalDocument.SetTrackRevisions(false);
-
+        const oTrackRevisionManager = oOriginalDocument.TrackRevisionsManager;
+        this.oldSkipPreDeleteMoveMarks = oTrackRevisionManager.SkipPreDeleteMoveMarks;
+        oTrackRevisionManager.SkipPreDeleteMoveMarks = true;
         this.comparison.compare(this.applyLastMergeCallback.bind(this));
     };
 
