@@ -612,9 +612,9 @@
             const oPartnerNode = oNode.partner;
             const oOriginalTextElement = oNode.element;
             if (oOriginalTextElement instanceof CTextElement && oPartnerNode) {
-                const oOriginalTextParagraph = oOriginalTextElement.firstRun.Paragraph;
+                const oOriginalTextParagraph = oOriginalTextElement.firstRun.Parent;
                 const oRevisedTextElement = oPartnerNode.element;
-                const arrOriginalContent = oOriginalTextElement.firstRun.Paragraph.Content;
+                const arrOriginalContent = oOriginalTextParagraph.Content;
 
                 const arrChangeReviewTypesInfo = getChangeReviewTypesInformation(oOriginalTextElement.reviewElementTypes, oRevisedTextElement.reviewElementTypes);
                 let nCurrentOriginalRunIndex = oOriginalTextParagraph.Content.length - 1;
