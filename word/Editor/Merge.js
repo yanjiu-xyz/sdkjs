@@ -827,9 +827,12 @@
     CDocumentMergeComparison.prototype.executeWithCheckInsertAndRemove = function (callback, oChange) {
         if (!oChange.remove.length || !oChange.insert.length) {
             const bOldSkipUpdateInfo = this.copyPr.SkipUpdateInfo;
+            const bSaveCustomReviewType = this.copyPr.bSaveCustomReviewType;
             this.copyPr.SkipUpdateInfo = false;
+            this.copyPr.bSaveCustomReviewType = true;
             callback();
             this.copyPr.SkipUpdateInfo = bOldSkipUpdateInfo;
+            this.copyPr.bSaveCustomReviewType = bSaveCustomReviewType;
         } else {
             callback();
         }
