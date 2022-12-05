@@ -449,7 +449,7 @@
             return;
         }
         for (let i = this.childidx - 1; i >= 0; i -= 1) {
-            if (this.par.children[i].element instanceof AscCommon.CTextElement) {
+            if (this.par.children[i].element instanceof CTextElement) {
                 return this.par.children[i];
             }
         }
@@ -459,7 +459,7 @@
             return;
         }
         for (let i = this.childidx + 1; i < this.par.children.length; i += 1) {
-            if (this.par.children[i].element instanceof AscCommon.CTextElement) {
+            if (this.par.children[i].element instanceof CTextElement) {
                 return this.par.children[i];
             }
         }
