@@ -949,7 +949,7 @@
             this.saveCustomReviewInfo(oNewRun, oOldRun, this.nInsertChangesType);
         } else
         {
-            this.updateReviewInfo(oNewRun, oOldRun.nInsertChangesType);
+            this.updateReviewInfo(oNewRun, this.nInsertChangesType);
         }
     }
     CDocumentComparison.prototype.setRemoveReviewType = function (element) {
@@ -1552,14 +1552,20 @@
 
     };
     CNode.prototype.isElementForAdd = CDocumentComparison.prototype.isElementForAdd;
+    CDocumentComparison.prototype.executeWithCheckInsertAndRemove = function (callback, oChange) {
+        callback();
+    };
     CDocumentComparison.prototype.applyChangesToParagraph = function(oNode)
     {
         oNode.changes.sort(function(c1, c2){return c2.anchor.index - c1.anchor.index});
         for(let i = 0; i < oNode.changes.length; ++i)
         {
-            const aContentToInsert = oNode.getArrOfInsertsFromChanges(i, this);
-            //handle removed elements
-            oNode.applyInsertsToParagraph(this, aContentToInsert, i);
+            this.executeWithCheckInsertAndRemove(function () {
+                const aContentToInsert = oNode.getArrOfInsertsFromChanges(i, this);
+                //handle removed elements
+                oNode.applyInsertsToParagraph(this, aContentToInsert, i);
+            }.bind(this), oNode.changes[i]);
+
         }
         this.applyChangesToChildrenOfParagraphNode(oNode);
         this.applyChangesToSectPr(oNode);

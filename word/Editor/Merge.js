@@ -824,6 +824,17 @@
     CDocumentMergeComparison.prototype = Object.create(CDocumentComparison.prototype);
     CDocumentMergeComparison.prototype.constructor = CDocumentMergeComparison;
 
+    CDocumentMergeComparison.prototype.executeWithCheckInsertAndRemove = function (callback, oChange) {
+        if (!oChange.remove.length || !oChange.insert.length) {
+            const bOldSkipUpdateInfo = this.copyPr.SkipUpdateInfo;
+            this.copyPr.SkipUpdateInfo = false;
+            callback();
+            this.copyPr.SkipUpdateInfo = bOldSkipUpdateInfo;
+        } else {
+            callback();
+        }
+    };
+
     CDocumentMergeComparison.prototype.checkOriginalAndSplitRun = CDocumentResolveConflictComparison.prototype.checkOriginalAndSplitRun;
 
     CDocumentMergeComparison.prototype.createNodeFromDocContent = function (oElement, oParentNode, oHashWords, isOriginalDocument) {
