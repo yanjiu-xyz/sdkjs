@@ -722,7 +722,7 @@
                             const nOldReviewType = element.GetReviewType();
                             if (nOldReviewType !== reviewtype_Common) {
                                 const oOldReviewInfo = element.GetReviewInfo().Copy();
-                                element.SetPrevReviewTypeWithInfoRecursively(nOldReviewType, oOldReviewInfo);
+                                reviewInfo.SetPrevReviewTypeWithInfoRecursively(nOldReviewType, oOldReviewInfo);
                             }
                             element.SetReviewTypeWithInfo(reviewtype_Remove, reviewInfo);
                         }
@@ -733,7 +733,7 @@
                             const nOldReviewType = element.GetReviewType();
                             if (nOldReviewType !== reviewtype_Common) {
                                 const oOldReviewInfo = element.GetReviewInfo().Copy();
-                                element.SetPrevReviewTypeWithInfoRecursively(nOldReviewType, oOldReviewInfo);
+                                reviewInfo.SetPrevReviewTypeWithInfoRecursively(nOldReviewType, oOldReviewInfo);
                             }
                             element.SetReviewTypeWithInfo(reviewtype_Add, reviewInfo);
                         }
