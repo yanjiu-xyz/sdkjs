@@ -1465,23 +1465,24 @@ Paragraph.prototype.RecalculateEndInfo = function()
 	var oLogicDocument = this.GetLogicDocument();
 	if (oLogicDocument && oLogicDocument.GetRecalcId && this.EndInfoRecalcId === oLogicDocument.GetRecalcId())
 		return;
-
+	
 	var oPRSI     = this.m_oPRSI;
 	var oPrevInfo = this.Parent.GetPrevElementEndInfo(this);
 	oPRSI.Reset(oPrevInfo);
-
+	
 	for (var nCurPos = 0, nCount = this.Content.length; nCurPos < nCount; ++nCurPos)
 	{
 		this.Content[nCurPos].RecalculateEndInfo(oPRSI);
 	}
-
+	
 	this.EndInfo.SetFromPRSI(oPRSI);
-
+	
 	if (oLogicDocument && oLogicDocument.GetRecalcId)
 		this.EndInfoRecalcId = oLogicDocument.GetRecalcId();
 };
 Paragraph.prototype.GetEndInfo = function()
 {
+	this.RecalculateEndInfo();
 	return this.EndInfo;
 };
 Paragraph.prototype.GetEndInfoByPage = function(CurPage)
@@ -2235,6 +2236,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 		}
 	}
 	PDSH.SetCollectFixedForms(false);
+	PDSH.Reset(this, pGraphics, DrawColl, DrawFind, DrawComm, DrawMMFields, this.GetEndInfoByPage(CurPage - 1), DrawSolvedComments);
 
 	for (var CurLine = StartLine; CurLine <= EndLine; CurLine++)
 	{

@@ -567,9 +567,12 @@ NullState.prototype =
 			    }
 			    else
 			    {
-				    this.drawingObjects.addPreTrackObject(new AscFormat.CGuideTrack(oGuide));
-				    this.drawingObjects.changeCurrentState(new TrackGuideState(this.drawingObjects, oGuide, x, y))
-				    return;
+					if(e.Button !== AscCommon.g_mouse_button_right)
+					{
+						this.drawingObjects.addPreTrackObject(new AscFormat.CGuideTrack(oGuide));
+						this.drawingObjects.changeCurrentState(new TrackGuideState(this.drawingObjects, oGuide, x, y))
+					}
+				    return true;
 			    }
 
 		    }
@@ -715,7 +718,7 @@ TrackSelectionRect.prototype =
         let oTrack = this.drawingObjects.arrPreTrackObjects[0];
         if(oTrack) {
             let dPos = AscFormat.GdPosToMm(this.guide.pos);
-	        dPos = ((dPos * 10) >> 0) / 10;
+	        dPos = (dPos * 10 + 0.5 >> 0) / 10;
             let oConvertedPos = editor.WordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(dStartX, dStartY, 0);
             editor.sendEvent("asc_onTrackGuide", dPos, oConvertedPos.X, oConvertedPos.Y);
         }
@@ -733,8 +736,8 @@ TrackSelectionRect.prototype =
         }
         let bHor = this.guide.isHorizontal();
         if(!this.tracked) {
-            if(bHor && Math.abs(x - this.startX) > MOVE_DELTA ||
-                !bHor && Math.abs(y - this.startY) > MOVE_DELTA) {
+            if(bHor && Math.abs(y - this.startY) > MOVE_DELTA ||
+                !bHor && Math.abs(x - this.startX) > MOVE_DELTA) {
                 this.tracked = true;
                 this.drawingObjects.swapTrackObjects();
                 this.onMouseMove(e, x, y, pageIndex);
@@ -744,11 +747,18 @@ TrackSelectionRect.prototype =
         else {
             let oTrack = this.drawingObjects.arrTrackObjects[0];
             if(oTrack) {
-                oTrack.track(x, y);
-                let oConvertedPos = editor.WordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(x, y, 0);
+	            let oNearestPos = this.drawingObjects.getSnapNearestPos(x, y);
+				let dX = x;
+				let dY = y;
+	            if(oNearestPos) {
+		            dX = oNearestPos.x;
+		            dY = oNearestPos.y;
+	            }
+                oTrack.track(dX, dY);
+                let oConvertedPos = editor.WordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(bHor ? x : dX, !bHor ? y : dY, 0);
 				let dGdPos = oTrack.getPos();
 	            let dPos = AscFormat.GdPosToMm(dGdPos);
-	            dPos = ((dPos * 10) >> 0) / 10;
+	            dPos = (dPos * 10 + 0.5 >> 0) / 10;
                 editor.sendEvent("asc_onTrackGuide", dPos, oConvertedPos.X, oConvertedPos.Y)
                 this.drawingObjects.updateOverlay();
             }

@@ -9404,7 +9404,7 @@ CMathContent.prototype.private_ReplaceAutoCorrect = function(AutoCorrectEngine) 
             } else {
                 this.Remove_FromContent(LastEl.ElPos, 1);
                 bDelete = true;
-                if (FirstEl.ElPos == LastEl.ElPos) {
+                if (FirstEl.ElPos == LastEl.ElPos && FirstEl.Element.Type != para_Math_Composition) {
                     FirstEl.ElPos--;
                 }
             }
@@ -9518,7 +9518,10 @@ CMathAutoCorrectEngine.prototype.private_Add_Element = function(Content) {
         if (Content[i].Type === 49) {
             var kStart = (i === nCount) ? Content[i].State.ContentPos : Content[i].Content.length;
             for (var k = kStart - 1; k >= 0; k--) {
-                this.Elements.unshift({Element: Content[i].Content[k], ElPos: i, ContPos: k});
+            var el = Content[i].Content[k];
+            this.Elements.unshift({Element: el, ElPos: i, ContPos: k});
+            if (el.bUpdateGaps && el != this.ActionElement)
+                this.ActionElement = el;
             }
         } else {
             this.Elements.unshift({Element: Content[i], ElPos: i});
