@@ -1214,7 +1214,7 @@ var editor;
       this.wb._executeWithoutZoom(function () {
       	t.wb.printPreviewState.advancedOptions = options.advancedOptions;
         printPagesData = t.wb.calcPagesPrint(options.advancedOptions);
-        pdfPrinterMemory = t.wb.printSheets(printPagesData).DocumentRenderer.Memory;
+        pdfPrinterMemory = t.wb.printSheets(printPagesData, null, options.advancedOptions).DocumentRenderer.Memory;
       	t.wb.printPreviewState.advancedOptions = null;
       });
       dataContainer.data = oAdditionalData["nobase64"] ? pdfPrinterMemory.GetData() : pdfPrinterMemory.GetBase64Memory();
@@ -6332,7 +6332,7 @@ var editor;
     if (undefined === _printer && _page === undefined) {
       // ПУСТОЙ вызов, так как он должен быть ДО команд печати (картинки). А реальзый вызов - после (pagescount)
       window["AscDesktopEditor"] && window["AscDesktopEditor"]["Print_Start"]();
-      _printer = this.wb.printSheets(_printPagesData).DocumentRenderer;
+      _printer = this.wb.printSheets(_printPagesData, null, _adjustPrint).DocumentRenderer;
 
       if (undefined !== window["AscDesktopEditor"]) {
         var pagescount = _printer.m_lPagesCount;
@@ -6379,7 +6379,7 @@ var editor;
         window["AscDesktopEditor"]["Print_End"](paramEnd);
       }
     } else {
-      this.wb.printSheets(_printPagesData, _printer);
+      this.wb.printSheets(_printPagesData, _printer, _adjustPrint);
     }
 
     this.wb.setPrintOptionsJson(null);

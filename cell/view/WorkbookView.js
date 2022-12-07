@@ -3335,7 +3335,7 @@
   };
 
   // Печать
-  WorkbookView.prototype.printSheets = function(printPagesData, pdfDocRenderer) {
+  WorkbookView.prototype.printSheets = function(printPagesData, pdfDocRenderer, adjustPrint) {
 	  var pdfPrinter;
 	  var t = this;
 	  this._executeWithoutZoom(function () {
@@ -3351,7 +3351,18 @@
 		  } else {
 			  var indexWorksheet = -1;
 			  var indexWorksheetTmp = -1;
-			  for (var i = 0; i < printPagesData.arrPages.length; ++i) {
+			  var startIndex = adjustPrint && adjustPrint.startPageIndex != null ? adjustPrint.startPageIndex : 0;
+			  var endIndex = adjustPrint && adjustPrint.endPageIndex != null  ? adjustPrint.endPageIndex + 1 : printPagesData.arrPages.length;
+			  if (startIndex > endIndex || startIndex > printPagesData.arrPages.length) {
+				  //Печать пустой страницы
+				  ws = t.getWorksheet();
+				  ws.drawForPrint(pdfPrinter, null);
+				  return pdfPrinter;
+			  }
+			  if (endIndex > printPagesData.arrPages.length) {
+				  endIndex = printPagesData.arrPages.length;
+			  }
+			  for (var i = startIndex; i < endIndex; ++i) {
 				  indexWorksheetTmp = printPagesData.arrPages[i].indexWorksheet;
 				  if (indexWorksheetTmp !== indexWorksheet) {
 					  ws = t.getWorksheet(indexWorksheetTmp);
@@ -3478,12 +3489,24 @@
 
     var printPagesData = new asc_CPrintPagesData();
     var printType = adjustPrint.asc_getPrintType();
+
+	var i;
     if (printType === Asc.c_oAscPrintType.ActiveSheets) {
-      this._calcPagesPrintSheet(nActive, printPagesData, false, adjustPrint);
+		var activeSheetsArray = adjustPrint.asc_getActiveSheetsArray();
+		if (activeSheetsArray) {
+			for (i = 0; i < activeSheetsArray.length; ++i) {
+				if(adjustPrint.isOnlyFirstPage && i !== 0) {
+					break;
+				}
+				this._calcPagesPrintSheet(activeSheetsArray[i], printPagesData, false, adjustPrint);
+			}
+		} else {
+			this._calcPagesPrintSheet(nActive, printPagesData, false, adjustPrint);
+		}
     } else if (printType === Asc.c_oAscPrintType.EntireWorkbook) {
       // Колличество листов
       var countWorksheets = this.model.getWorksheetCount();
-      for (var i = 0; i < countWorksheets; ++i) {
+      for (i = 0; i < countWorksheets; ++i) {
       	if(adjustPrint.isOnlyFirstPage && i !== 0) {
       		break;
 		}
