@@ -605,13 +605,20 @@ $(function () {
 
 	var oParser, wb, ws, dif = 1e-9, sData = AscCommon.getEmpty(), tmp;
 	if (AscCommon.c_oSerFormat.Signature === sData.substring(0, AscCommon.c_oSerFormat.Signature.length)) {
-		wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), {
+		let docInfo = new Asc.asc_CDocInfo();
+		docInfo.asc_putTitle("TeSt.xlsx");
+		let api = {
 			wb: {
 				getWorksheet: function () {
 				}
-			}
-		});
+			}, DocInfo: docInfo
+		};
+		window["Asc"]["editor"] = api;
+
+		wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), api);
 		AscCommon.History.init(wb);
+		wb.maxDigitWidth = 7;
+		wb.paddingPlusBorder = 5;
 
 		AscCommon.g_oTableId.init();
 		if (this.User) {
@@ -9288,8 +9295,9 @@ $(function () {
 		ws.getRange2("J2").setValue("1");
 		ws.getRange2("J3").setValue("test");
 		ws.getRange2("J4").setValue("test2");
-
-
+		ws.getRange2("J5").setValue("07/12/2000");
+		ws.getRange2("J6").setValue("");
+		
 		oParser = new parserFormula('CELL("address",J3)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "$J$3");
@@ -9336,7 +9344,7 @@ $(function () {
 
 		oParser = new parserFormula('CELL("contents",J5:O12)', "A1", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 0);
+		assert.strictEqual(oParser.calculate().getValue(), 36719);
 
 		oParser = new parserFormula('CELL("prefix",J3)', "A1", ws);
 		assert.ok(oParser.parse());
@@ -9349,6 +9357,575 @@ $(function () {
 		oParser = new parserFormula('CELL("prefix",J6:O12)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "");
+
+		// address
+		oParser = new parserFormula('CELL("address",J2)', "A1", ws);
+		assert.ok(oParser.parse(), "Addres. Number type in cell.");
+		assert.strictEqual(oParser.calculate().getValue(), "$J$2", "Addres. Number type in cell.");
+
+		oParser = new parserFormula('CELL("address",J3)', "A1", ws);
+		assert.ok(oParser.parse(), "Addres. String type in cell.");
+		assert.strictEqual(oParser.calculate().getValue(), "$J$3", "Addres. String type in cell.");
+
+		oParser = new parserFormula('CELL("address",J2:J3)', "A1", ws);
+		assert.ok(oParser.parse(), "Addres. Cells range.");
+		assert.strictEqual(oParser.calculate().getValue(), "$J$2", "Addres. Cells range.");
+
+		oParser = new parserFormula('CELL("address",H23)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(col,H23).");
+		assert.strictEqual(oParser.calculate().getValue(), "$H$23", "Addres. Result of CELL(address,H23).");
+		
+		oParser = new parserFormula('CELL("address",{1,2,3,4,5})', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(address,{1,2,3,4,5}).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Addres. Result of CELL(address,{1,2,3,4,5}).");
+
+		oParser = new parserFormula('CELL("address",12)', "A1", ws);
+		assert.ok(oParser.parse(), "Addres. Cells range.");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Addres. Cells range.");
+
+		oParser = new parserFormula('CELL("address",)', "A1", ws);
+		assert.ok(oParser.parse(), "Addres. Cells range.");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Addres. Cells range.");
+
+		oParser = new parserFormula('CELL("address",J)', "A1", ws);
+		assert.ok(oParser.parse(), "Addres. Cells range.");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Addres. Cells range.");
+
+		oParser = new parserFormula('CELL("address","J2")', "A1", ws);
+		assert.ok(oParser.parse(), "Addres. Cells range.");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Addres. Cells range.");
+
+		// col
+		oParser = new parserFormula('CELL("col",J2)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(col,J2).");
+		assert.strictEqual(oParser.calculate().getValue(), 10, "Col. Result of CELL(col,J2).");
+
+		oParser = new parserFormula('CELL("col",J2:J4)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(col,J2:J4).");
+		assert.strictEqual(oParser.calculate().getValue(), 10, "Col. Result of CELL(col,J2:J4).");
+
+		oParser = new parserFormula('CELL("col",H23)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(col,H23).");
+		assert.strictEqual(oParser.calculate().getValue(), 8, "Col. Result of CELL(col,H23).");
+		
+		oParser = new parserFormula('CELL("col",{1,2,3,4,5})', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(col,{1,2,3,4,5}).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Col. Result of CELL(col,{1,2,3,4,5}).");
+
+		oParser = new parserFormula('CELL("col",)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(col,).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Col. Result of CELL(col,).");
+
+		oParser = new parserFormula('CELL("col",J)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(col,J).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Col. Result of CELL(col,J).");
+
+		oParser = new parserFormula('CELL("col","J2")', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(col,'J2').");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Result of CELL(col,'J2').");
+
+		// color
+		oParser = new parserFormula('CELL("color",J2)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(color,J2).");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Color. Result of CELL(color,J2).");
+
+		oParser = new parserFormula('CELL("color",J2:J4)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(color,J2:J4).");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Color. Result of CELL(color,J2:J4).");
+
+		oParser = new parserFormula('CELL("color",H23)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(color,H23).");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Color. Result of CELL(color,H23).");
+		
+		oParser = new parserFormula('CELL("color",{1,2,3,4,5})', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(color,{1,2,3,4,5}).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Color. Result of CELL(color,{1,2,3,4,5}).");
+
+		oParser = new parserFormula('CELL("color",)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(color,).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Color. Result of CELL(color,).");
+
+		oParser = new parserFormula('CELL("color",J)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(color,J).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Color. Result of CELL(color,J).");
+
+		oParser = new parserFormula('CELL("color","J2")', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(color,'J2').");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Result of CELL(color,'J2').");
+
+		// contents
+		oParser = new parserFormula('CELL("contents",J2)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(contents,J2).");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Contents. Result of CELL(contents,J2).");
+
+		oParser = new parserFormula('CELL("contents",J2:J4)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(contents,J2:J4).");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Contents. Result of CELL(contents,J2:J4).");
+
+		oParser = new parserFormula('CELL("contents",J5)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(contents,07/12/2000)");
+		assert.strictEqual(oParser.calculate().getValue(), 36719, "Contents. Result of CELL(contents,07/12/2000).");
+
+		oParser = new parserFormula('CELL("contents",H23)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(contents,H23).");
+		assert.strictEqual(oParser.calculate().getValue(), "", "Contents. Result of CELL(contents,H23).");
+		
+		oParser = new parserFormula('CELL("contents",{1,2,3,4,5})', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(contents,{1,2,3,4,5}).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Contents. Result of CELL(contents,{1,2,3,4,5}).");
+
+		oParser = new parserFormula('CELL("contents",)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(contents,).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Contents. Result of CELL(contents,).");
+
+		oParser = new parserFormula('CELL("contents",J)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(contents,J).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Contents. Result of CELL(contents,J).");
+
+		oParser = new parserFormula('CELL("contents","J2")', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(contents,'J2').");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Contents. Result of CELL(contents,'J2').");
+
+		// filename
+		let sheetName = ws.sName;
+		oParser = new parserFormula('CELL("filename",J2)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(filename,J2).");
+		assert.strictEqual(oParser.calculate().getValue(), "[TeSt.xlsx]" + sheetName, "filename. Result of CELL(filename,J2).");
+
+		oParser = new parserFormula('CELL("filename",J2:J4)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(filename,J2:J4).");
+		assert.strictEqual(oParser.calculate().getValue(), "[TeSt.xlsx]" + sheetName, "filename. Result of CELL(filename,J2:J4).");
+
+		oParser = new parserFormula('CELL("filename",H23)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(filename,H23).");
+		assert.strictEqual(oParser.calculate().getValue(), "[TeSt.xlsx]" + sheetName, "filename. Result of CELL(filename,H23).");
+		
+		oParser = new parserFormula('CELL("filename",{1,2,3,4,5})', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(filename,{1,2,3,4,5}).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "filename. Result of CELL(filename,{1,2,3,4,5}).");
+
+		oParser = new parserFormula('CELL("filename",)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(filename,).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "filename. Result of CELL(filename,).");
+
+		oParser = new parserFormula('CELL("filename",J)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(filename,J).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "filename. Result of CELL(filename,J).");
+
+		oParser = new parserFormula('CELL("filename","J2")', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(filename,'J2').");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "filename. Result of CELL(filename,'J2').");
+
+		// format
+		// G
+		ws.getRange2("H2").setValue("50");
+		// F0
+		ws.getRange2("H3").setValue("0");
+		ws.getRange2("H3").setNumFormat("0");
+		// ,0
+		ws.getRange2("H4").setValue("0");
+		ws.getRange2("H4").setNumFormat("#,##0");
+		// ,2
+		ws.getRange2("H54").setValue("0.00");
+		ws.getRange2("H54").setNumFormat("#,##0.00");
+		// F2
+		ws.getRange2("H5").setValue("0.00");
+		ws.getRange2("H5").setNumFormat("0.00");
+		// C0
+		ws.getRange2("H66").setValue("0");
+		ws.getRange2("H66").setNumFormat('#,##0;\\-#,##0');
+		// C0 ms
+		ws.getRange2("H6").setValue("0");
+		ws.getRange2("H6").setNumFormat("$#,##0_);($#,##0)");
+		// C0-
+		ws.getRange2("H77").setValue("0");
+		ws.getRange2("H77").setNumFormat('#,##0;[Red]\\-#,##0');
+		// C0- ms 
+		ws.getRange2("H7").setValue("0");
+		ws.getRange2("H7").setNumFormat('$#,##0_);[Red]($#,##0)');
+		// C2
+		ws.getRange2("H88").setValue("0");
+		ws.getRange2("H88").setNumFormat('#,##0.00;\-#,##0.00');
+		// C2 ms
+		ws.getRange2("H8").setValue("0");
+		ws.getRange2("H8").setNumFormat('$#,##0.00_);($#,##0.00)');
+		// C2-
+		ws.getRange2("H99").setValue("0");
+		ws.getRange2("H99").setNumFormat('#,##0.00;[Red]\-#,##0.00');
+		// C2- ms
+		ws.getRange2("H9").setValue("0");
+		ws.getRange2("H9").setNumFormat('$#,##0.00_);[Red]($#,##0.00)');
+		// P0
+		ws.getRange2("H10").setValue("0");
+		ws.getRange2("H10").setNumFormat("0%");
+		// P2
+		ws.getRange2("H11").setValue("0");
+		ws.getRange2("H11").setNumFormat("0.00%");
+		// S2
+		ws.getRange2("H12").setValue("0");
+		ws.getRange2("H12").setNumFormat("0.00E+00");
+		// G
+		ws.getRange2("H13").setValue("0");
+		ws.getRange2("H13").setNumFormat("# ?/?");
+		// G
+		ws.getRange2("H113").setValue("0");
+		ws.getRange2("H113").setNumFormat("# ??/??");
+		// D1
+		ws.getRange2("H14").setValue("10 Apr 20");
+		ws.getRange2("H14").setNumFormat("dd/mm/yyyy");
+		// D2
+		ws.getRange2("H15").setValue("12-Jun");
+		ws.getRange2("H15").setNumFormat("[$-9]d mmm;@");
+		// D3
+		ws.getRange2("H16").setValue("June-22");
+		ws.getRange2("H16").setNumFormat("[$-9]mmm/yy;@");
+		// D4
+		ws.getRange2("H17").setValue("12/7/2022");
+		ws.getRange2("H17").setNumFormat("m/d/yy;@");
+		// D5
+		ws.getRange2("H18").setValue("05/12");
+		ws.getRange2("H18").setNumFormat("mm/dd;@");
+		// D6
+		ws.getRange2("H19").setValue("12:00:00 AM");
+		ws.getRange2("H19").setNumFormat("h:mm:ss AM/PM");
+		// D7
+		ws.getRange2("H20").setValue("12:00 AM");
+		ws.getRange2("H20").setNumFormat("h:mm AM/PM");
+		// D8
+		ws.getRange2("H21").setValue("12:00:00");
+		ws.getRange2("H21").setNumFormat("h:mm:ss;@");
+		// D9
+		ws.getRange2("H22").setValue("12:00");
+		ws.getRange2("H22").setNumFormat("h:mm;@");
+
+		ws.getRange2("H23").setValue("{1,2,3,4,5}");
+		
+
+		oParser = new parserFormula('CELL("format",{0})', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,{0}).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "contents. Result of CELL(format,{0}).");
+
+		oParser = new parserFormula('CELL("format",H23)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,{1,2,3,4,5}).");
+		assert.strictEqual(oParser.calculate().getValue(), "G", "contents. Result of CELL(format,{1,2,3,4,5}).");
+
+		oParser = new parserFormula('CELL("format",{0;1;2;3})', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H3:H22).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "contents. Result of CELL(format,{0;1;2;3}).");
+
+		oParser = new parserFormula('CELL("format",)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "contents. Result of CELL(format,).");
+
+		oParser = new parserFormula('CELL("format",H3)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H3).");
+		assert.strictEqual(oParser.calculate().getValue(), "F0", "contents. Result of CELL(format,0).");	// F0
+
+		oParser = new parserFormula('CELL("format",H3:H22)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H3:H22).");
+		assert.strictEqual(oParser.calculate().getValue(), "F0", "contents. Result of CELL(format,0).");	// F0
+
+		oParser = new parserFormula('CELL("format",H4)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H4).");
+		assert.strictEqual(oParser.calculate().getValue(), ",0", "contents. Result of CELL(format,H4).");	// ,0
+
+		oParser = new parserFormula('CELL("format",H54)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H54).");
+		assert.strictEqual(oParser.calculate().getValue(), ",2", "contents. Result of CELL(format,H54).");	// ,2
+
+		oParser = new parserFormula('CELL("format",H5)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H5).");
+		assert.strictEqual(oParser.calculate().getValue(), "F2", "contents. Result of CELL(format,H5).");	// F2
+
+		oParser = new parserFormula('CELL("format",H6)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H6).");
+		assert.strictEqual(oParser.calculate().getValue(), "С0", "contents. Result of CELL(format,H6).");	// C0
+
+		oParser = new parserFormula('CELL("format",H7)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H7).");
+		assert.strictEqual(oParser.calculate().getValue(), "С0-", "contents. Result of CELL(format,H7).");	// C0-
+
+		oParser = new parserFormula('CELL("format",H8)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H8).");
+		assert.strictEqual(oParser.calculate().getValue(), "С2", "contents. Result of CELL(format,H8).");	// C2
+
+		oParser = new parserFormula('CELL("format",H9)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H9).");
+		assert.strictEqual(oParser.calculate().getValue(), "С2-", "contents. Result of CELL(format,H9).");	// C2-
+
+		oParser = new parserFormula('CELL("format",H10)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H10).");
+		assert.strictEqual(oParser.calculate().getValue(), "P0", "contents. Result of CELL(format,H10).");	// P0
+
+		oParser = new parserFormula('CELL("format",H11)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H11).");
+		assert.strictEqual(oParser.calculate().getValue(), "P2", "contents. Result of CELL(format,H11).");	// P2
+
+		oParser = new parserFormula('CELL("format",H12)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H12).");
+		assert.strictEqual(oParser.calculate().getValue(), "S2", "contents. Result of CELL(format,H12).");	// S2
+
+		oParser = new parserFormula('CELL("format",H13)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H13).");
+		assert.strictEqual(oParser.calculate().getValue(), "G", "contents. Result of CELL(format,H13).");	// "G"
+
+		oParser = new parserFormula('CELL("format",H113)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,H113).");
+		assert.strictEqual(oParser.calculate().getValue(), "G", "contents. Result of CELL(format,H113).");	// "G"
+
+		oParser = new parserFormula('CELL("format",H2)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,50).");
+		assert.strictEqual(oParser.calculate().getValue(), "G", "Format. Result of CELL(format,50).");	// G
+
+		oParser = new parserFormula('CELL("format",H14)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
+		assert.strictEqual(oParser.calculate().getValue(), "D1", "Format. Result of CELL(format,10 Apr 20).");	//D1
+
+		oParser = new parserFormula('CELL("format",H15)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
+		assert.strictEqual(oParser.calculate().getValue(), "D2", "Format. Result of CELL(format,10 Apr 20).");	//D2
+
+		oParser = new parserFormula('CELL("format",H16)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
+		assert.strictEqual(oParser.calculate().getValue(), "D3", "Format. Result of CELL(format,10 Apr 20).");	//D3
+
+		oParser = new parserFormula('CELL("format",H17)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
+		assert.strictEqual(oParser.calculate().getValue(), "D4", "Format. Result of CELL(format,10 Apr 20).");	//D4
+
+		oParser = new parserFormula('CELL("format",H18)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
+		assert.strictEqual(oParser.calculate().getValue(), "D5", "Format. Result of CELL(format,10 Apr 20).");	//D5
+
+		oParser = new parserFormula('CELL("format",H19)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
+		assert.strictEqual(oParser.calculate().getValue(), "D6", "Format. Result of CELL(format,10 Apr 20).");	//D6
+		
+		oParser = new parserFormula('CELL("format",H20)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
+		assert.strictEqual(oParser.calculate().getValue(), "D7", "Format. Result of CELL(format,10 Apr 20).");	//D7
+
+		oParser = new parserFormula('CELL("format",H21)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
+		assert.strictEqual(oParser.calculate().getValue(), "D8", "Format. Result of CELL(format,10 Apr 20).");	//D8
+
+		oParser = new parserFormula('CELL("format",H22)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,10 Apr 20).");
+		assert.strictEqual(oParser.calculate().getValue(), "D9", "Format. Result of CELL(format,10 Apr 20).");	//D9
+
+		oParser = new parserFormula('CELL("format",J2)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,1).");
+		assert.strictEqual(oParser.calculate().getValue(), "G", "Format. Result of CELL(format,1).");
+
+		oParser = new parserFormula('CELL("format",J3)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,string).");
+		assert.strictEqual(oParser.calculate().getValue(), "G", "Format. Result of CELL(format,string).");
+
+		oParser = new parserFormula('CELL("format",J5)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(format,07/12/2000).");
+		assert.strictEqual(oParser.calculate().getValue(), "D4", "Format. Result of CELL(format,07/12/2000).");
+
+		// parentheses
+		oParser = new parserFormula('CELL("parentheses",J2)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(parentheses,2).");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Parentheses. Result of CELL(parentheses,1).");
+
+		oParser = new parserFormula('CELL("parentheses",J6)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(parentheses,'').");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Parentheses. Result of CELL(parentheses,'').");
+
+		oParser = new parserFormula('CELL("parentheses",J2:J6)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(parentheses,J2:J6).");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Parentheses. Result of CELL(parentheses,J2:J6).");
+
+		oParser = new parserFormula('CELL("parentheses",H23)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(parentheses,H23).");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Parentheses. Result of CELL(parentheses,H23).");
+		
+		oParser = new parserFormula('CELL("parentheses",{1,2,3,4,5})', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(parentheses,{1,2,3,4,5}).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Parentheses. Result of CELL(parentheses,{1,2,3,4,5}).");
+
+		oParser = new parserFormula('CELL("parentheses",)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(parentheses,).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Parentheses. Result of CELL(parentheses,).");
+		
+		oParser = new parserFormula('CELL("parentheses",J)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(parentheses,J).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Parentheses. Result of CELL(parentheses,J).")
+
+		oParser = new parserFormula('CELL("parentheses","J")', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(parentheses,'J').");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Parentheses. Result of CELL(parentheses,'J').")
+
+		// prefix
+		oParser = new parserFormula('CELL("prefix",J2)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(prefix,2).");
+		assert.strictEqual(oParser.calculate().getValue(), "'", "Prefix. Result of CELL(prefix,1).");
+
+		oParser = new parserFormula('CELL("prefix",J6)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(prefix,'').");
+		assert.strictEqual(oParser.calculate().getValue(), "", "Prefix. Result of CELL(prefix,'').");
+
+		oParser = new parserFormula('CELL("prefix",J2:J6)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(prefix,J2:J6).");
+		assert.strictEqual(oParser.calculate().getValue(), "'", "Prefix. Result of CELL(prefix,J2:J6).");
+
+		oParser = new parserFormula('CELL("prefix",)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(prefix,).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Prefix. Result of CELL(prefix,).");
+		
+		oParser = new parserFormula('CELL("prefix",J)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(prefix,J).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Prefix. Result of CELL(prefix,J).");
+
+		oParser = new parserFormula('CELL("prefix",H23)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(prefix,H23).");
+		assert.strictEqual(oParser.calculate().getValue(), "'", "Prefix. Result of CELL(prefix,H23).");
+		
+		oParser = new parserFormula('CELL("prefix",{1,2,3,4,5})', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(prefix,{1,2,3,4,5}).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Prefix. Result of CELL(prefix,{1,2,3,4,5}).");
+
+		oParser = new parserFormula('CELL("prefix","J")', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(prefix,'J').");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Prefix. Result of CELL(prefix,'J').");
+
+		// protect
+		oParser = new parserFormula('CELL("protect",J2)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(protect,2).");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Protect. Result of CELL(protect,1).");
+
+		oParser = new parserFormula('CELL("protect",J6)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(protect,'').");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Protect. Result of CELL(protect,'').");
+
+		oParser = new parserFormula('CELL("protect",J2:J6)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(protect,J2:J6).");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Protect. Result of CELL(protect,J2:J6).");
+
+		oParser = new parserFormula('CELL("protect",H23)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(protect,H23).");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Protect. Result of CELL(protect,H23).");
+		
+		oParser = new parserFormula('CELL("protect",{1,2,3,4,5})', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(protect,{1,2,3,4,5}).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Protect. Result of CELL(protect,{1,2,3,4,5}).");
+
+		oParser = new parserFormula('CELL("protect",)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(protect,).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Protect. Result of CELL(protect,).");
+		
+		oParser = new parserFormula('CELL("protect",J)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(protect,J).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Protect. Result of CELL(protect,J).")
+
+		oParser = new parserFormula('CELL("protect","J")', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(protect,'J').");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Protect. Result of CELL(protect,'J').")
+
+		// row
+		oParser = new parserFormula('CELL("row",J2)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(row,1).");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Row. Result of CELL(row,1).");
+
+		oParser = new parserFormula('CELL("row",J10)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(row,'').");
+		assert.strictEqual(oParser.calculate().getValue(), 10, "Row. Result of CELL(row,'').");
+
+		oParser = new parserFormula('CELL("row",B2:J5)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(row,B2:J5).");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Row. Result of CELL(row,B2:J5).");
+
+		oParser = new parserFormula('CELL("row",H23)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(row,H23).");
+		assert.strictEqual(oParser.calculate().getValue(), 23, "Row. Result of CELL(row,H23).");
+		
+		oParser = new parserFormula('CELL("row",{1,2,3,4,5})', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(row,{1,2,3,4,5}).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Row. Result of CELL(row,{1,2,3,4,5}).");
+
+		oParser = new parserFormula('CELL("row",)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(row,).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Row. Result of CELL(row,).");
+
+		oParser = new parserFormula('CELL("row",J)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(row,J).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Row. Result of CELL(row,J).")
+
+		oParser = new parserFormula('CELL("row","J")', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(row,'J').");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Row. Result of CELL(row,'J').")
+
+		// type
+		oParser = new parserFormula('CELL("type",J2)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(type,1).");
+		assert.strictEqual(oParser.calculate().getValue(), "v", "Type. Result of CELL(type,1).");
+
+		oParser = new parserFormula('CELL("type",J3)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(type,string).");
+		assert.strictEqual(oParser.calculate().getValue(), "l", "Type. Result of CELL(type,string).");
+
+		oParser = new parserFormula('CELL("type",J6)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(type,'').");
+		assert.strictEqual(oParser.calculate().getValue(), "b", "Type. Result of CELL(type,'').");
+
+		oParser = new parserFormula('CELL("type",H23)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(type,H23).");
+		assert.strictEqual(oParser.calculate().getValue(), "l", "Type. Result of CELL(type,H23).");
+		
+		oParser = new parserFormula('CELL("type",{1,2,3,4,5})', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(type,{1,2,3,4,5}).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Type. Result of CELL(type,{1,2,3,4,5}).");
+
+		oParser = new parserFormula('CELL("type",)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(type,).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Type. Result of CELL(type,).");
+
+		oParser = new parserFormula('CELL("type",J)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(type,J).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Type. Result of CELL(type,J).");
+
+		oParser = new parserFormula('CELL("type","J")', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(type,'J').");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Type. Result of CELL(type,'J').");
+
+		// width
+		oParser = new parserFormula('CELL("width",J2)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(width,1).");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 8, "Width. Result of CELL(width,1).");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), "TRUE", "Width. Result of CELL(width,1).");
+
+		oParser = new parserFormula('CELL("width",J3)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(width,string).");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 8, "Width. Result of CELL(width,string).");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), "TRUE", "Width. Result of CELL(width,string).");
+
+		oParser = new parserFormula('CELL("width",J6)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(width,'').");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 8, "Width. Result of CELL(width,'').");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), "TRUE", "Width. Result of CELL(width,'').");
+
+		oParser = new parserFormula('CELL("width",H23)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(width,H23).");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 8, "Width. Result of CELL(width,H23).");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,1).getValue(), "TRUE", "Width. Result of CELL(width,H23).");
+		
+		oParser = new parserFormula('CELL("width",{1,2,3,4,5})', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(width,{1,2,3,4,5}).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Width. Result of CELL(width,{1,2,3,4,5}).");
+
+		oParser = new parserFormula('CELL("width",)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(width,).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Width. Result of CELL(width,).");
+
+		oParser = new parserFormula('CELL("width",J)', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(width,J).");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Width. Result of CELL(width,J).");
+
+		oParser = new parserFormula('CELL("width","J")', "A1", ws);
+		assert.ok(oParser.parse(), "CELL(width,'J').");
+		assert.strictEqual(oParser.calculate().getValue(), "#NAME?", "Width. Result of CELL(width,'J').");
 
 	});
 
