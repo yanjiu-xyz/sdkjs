@@ -7181,22 +7181,280 @@ $(function () {
 	});
 
 	QUnit.test("Test: \"DATEDIF\"", function (assert) {
-
+		// base case
 		oParser = new parserFormula("DATEDIF(DATE(2001,1,1),DATE(2003,1,1),\"Y\")", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 2);
+		assert.ok(oParser.parse(), "DATEDIF(DATE(2001,1,1),DATE(2003,1,1), Y)");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Result DATEDIF(DATE(2001,1,1),DATE(2003,1,1), Y)");
 
-		oParser = new parserFormula("DATEDIF(DATE(2001,6,1),DATE(2002,8,15),\"D\")", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 440);
+		oParser = new parserFormula("DATEDIF(DATE(2001,1,1),DATE(2003,1,1),\"M\")", "A2", ws);
+		assert.ok(oParser.parse(), "DATEDIF(DATE(2001,1,1),DATE(2003,1,1), M)");
+		assert.strictEqual(oParser.calculate().getValue(), 24, "Result DATEDIF(DATE(2001,1,1),DATE(2003,1,1), M)");
+
+		oParser = new parserFormula("DATEDIF(DATE(2001,1,1),DATE(2003,1,1),\"D\")", "A2", ws);
+		assert.ok(oParser.parse(), "DATEDIF(DATE(2001,1,1),DATE(2003,1,1), D)");
+		assert.strictEqual(oParser.calculate().getValue(), 730, "Result DATEDIF(DATE(2001,1,1),DATE(2003,1,1), D)");
 
 		oParser = new parserFormula("DATEDIF(DATE(2001,6,1),DATE(2002,8,15),\"YD\")", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 75);
+		assert.ok(oParser.parse(), "DATEDIF(DATE(2001,6,1),DATE(2002,8,15), YD)");
+		assert.strictEqual(oParser.calculate().getValue(), 75, "Result DATEDIF(DATE(2001,6,1),DATE(2002,8,15), YD)");
 
 		oParser = new parserFormula("DATEDIF(DATE(2001,6,1),DATE(2002,8,15),\"MD\")", "A2", ws);
-		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), 14);
+		assert.ok(oParser.parse(), "DATEDIF(DATE(2001,6,1),DATE(2002,8,15), MD)");
+		assert.strictEqual(oParser.calculate().getValue(), 14, "Result DATEDIF(DATE(2001,6,1),DATE(2002,8,15), MD)");
+
+		oParser = new parserFormula("DATEDIF(DATE(2001,6,1),DATE(2002,8,15),\"YM\")", "A2", ws);
+		assert.ok(oParser.parse(), "DATEDIF(DATE(2001,6,1),DATE(2002,8,15), YM)");
+		assert.strictEqual(oParser.calculate().getValue(), 2, "Result DATEDIF(DATE(2001,6,1),DATE(2002,8,15), YM)");
+
+		// bug 54552 tests
+		oParser = new parserFormula("DATEDIF(DATE(2020,10,2),DATE(2021,10,1),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Bug test case");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Bug test case");
+	
+		oParser = new parserFormula("DATEDIF(DATE(2000,4,13),DATE(2022,4,12),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Bug test case 2");
+		assert.strictEqual(oParser.calculate().getValue(), 21, "Bug test case 2");
+
+		// strings
+		oParser = new parserFormula("DATEDIF(\"sdy\",DATE(2022,4,12),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "String first");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "String first");
+
+		oParser = new parserFormula("DATEDIF(\"12\",DATE(2022,4,12),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "String number first");
+		assert.strictEqual(oParser.calculate().getValue(), 122, "String number first");
+
+		oParser = new parserFormula("DATEDIF(\"999999999999\",DATE(2022,4,12),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "String number first");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "String number first");
+
+		oParser = new parserFormula("DATEDIF(DATE(2022,4,12),\"sdy\",\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "String second");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "String second");
+
+		oParser = new parserFormula("DATEDIF(DATE(2022,4,12),DATE(2032,4,12),\"string\")", "A2", ws);
+		assert.ok(oParser.parse(), "String third");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "String third");
+
+		// numbers
+		// TODO в ms результат: 121
+		oParser = new parserFormula("DATEDIF(12,DATE(2022,4,12),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Number first");
+		assert.strictEqual(oParser.calculate().getValue(), 122, "Number first");
+
+		oParser = new parserFormula("DATEDIF(999999999999,DATE(2022,4,12),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Number first");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Number first");
+
+		oParser = new parserFormula("DATEDIF(DATE(2022,4,12),12,\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Number second");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Number second");
+
+		oParser = new parserFormula("DATEDIF(12,12,\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Two equal numbers");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Two equal numbers");
+
+		oParser = new parserFormula("DATEDIF(12,22,\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "First number less than second(years)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "First number less than second(years)");
+
+		oParser = new parserFormula("DATEDIF(12,22,\"M\")", "A2", ws);
+		assert.ok(oParser.parse(), "First number less than second(months)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "First number less than second(months)");
+
+		oParser = new parserFormula("DATEDIF(12,22,\"D\")", "A2", ws);
+		assert.ok(oParser.parse(), "First number less than second(days)");
+		assert.strictEqual(oParser.calculate().getValue(), 10, "First number less than second(days)");
+
+		oParser = new parserFormula("DATEDIF(12,22,\"MD\")", "A2", ws);
+		assert.ok(oParser.parse(), "First number less than second(MDays)");
+		assert.strictEqual(oParser.calculate().getValue(), 10, "First number less than second(MDays)");
+
+		oParser = new parserFormula("DATEDIF(12,22,\"YM\")", "A2", ws);
+		assert.ok(oParser.parse(), "First number less than second(YMonths)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "First number less than second(YMonths)");
+
+		oParser = new parserFormula("DATEDIF(12,22,\"YD\")", "A2", ws);
+		assert.ok(oParser.parse(), "First number less than second(YDays)");
+		assert.strictEqual(oParser.calculate().getValue(), 10, "First number less than second(YDays)");
+
+		oParser = new parserFormula("DATEDIF(-12,22,\"YD\")", "A2", ws);
+		assert.ok(oParser.parse(), "DATEDIF(-12,22, YD)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "DATEDIF(-12,22, YD)");
+
+		oParser = new parserFormula("DATEDIF(-12,-22,\"YD\")", "A2", ws);
+		assert.ok(oParser.parse(), "DATEDIF(-12,-22, YD)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "DATEDIF(-12,-22, YD)");
+
+		oParser = new parserFormula("DATEDIF(-1.2,22,\"YD\")", "A2", ws);
+		assert.ok(oParser.parse(), "DATEDIF(-1.2,22, YD)");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "DATEDIF(-1.2,22, YD)");
+
+		oParser = new parserFormula("DATEDIF(2,2.2,\"YD\")", "A2", ws);
+		assert.ok(oParser.parse(), "DATEDIF(2,2.2, YD)");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "DATEDIF(2,2.2, YD)");
+
+		oParser = new parserFormula("DATEDIF(1.2,2.2,\"YD\")", "A2", ws);	
+		assert.ok(oParser.parse(), "DATEDIF(1.2,2.2, YD)");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "DATEDIF(1.2,2.2, YD)");
+
+		oParser = new parserFormula("DATEDIF(9,100,\"YM\")", "A2", ws);	
+		assert.ok(oParser.parse(), "DATEDIF(9,100, YM)");
+		assert.strictEqual(oParser.calculate().getValue(), 3, "DATEDIF(9,100, YM)");
+
+		// TODO в ms результат - 2
+		oParser = new parserFormula("DATEDIF(10,100,\"YM\")", "A2", ws);	
+		assert.ok(oParser.parse(), "DATEDIF(10,100, YM)");
+		assert.strictEqual(oParser.calculate().getValue(), 3, "DATEDIF(10,100, YM)");
+		
+		// bool
+		oParser = new parserFormula("DATEDIF(TRUE,DATE(2022,4,12),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Boolean true first");
+		assert.strictEqual(oParser.calculate().getValue(), 122, "Boolean true first");
+
+		oParser = new parserFormula("DATEDIF(FALSE,DATE(2022,4,12),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Boolean false first");
+		assert.strictEqual(oParser.calculate().getValue(), 122, "Boolean false first");
+
+		oParser = new parserFormula("DATEDIF(DATE(2022,4,12),TRUE,\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Boolean second");
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", "Boolean second");
+
+		// exotic dates
+		oParser = new parserFormula("DATEDIF(DATE(4022,4,12),DATE(4023,4,12),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Exotic date");
+		assert.strictEqual(oParser.calculate().getValue(), 1, "Exotic date");
+
+		oParser = new parserFormula("DATEDIF(DATE(9999,30,12),DATE(99999,30,12),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Exotic date");
+		assert.strictEqual(oParser.calculate().getValue(), 90000, "Exotic date");
+
+		oParser = new parserFormula("DATEDIF(DATE(9999,30,12),DATE(99999,30,12),\"M\")", "A2", ws);
+		assert.ok(oParser.parse(), "Exotic date");
+		assert.strictEqual(oParser.calculate().getValue(), 1080000, "Exotic date");
+
+		oParser = new parserFormula("DATEDIF(DATE(9999,30,12),DATE(99999,30,12222),\"M\")", "A2", ws);
+		assert.ok(oParser.parse(), "Exotic date");
+		assert.strictEqual(oParser.calculate().getValue(), 1080401, "Exotic date");
+
+		oParser = new parserFormula("DATEDIF(DATE(9999,30,12),DATE(99999,30,12),\"D\")", "A2", ws);
+		assert.ok(oParser.parse(), "Exotic date");
+		assert.strictEqual(oParser.calculate().getValue(), 32871825, "Exotic date");
+
+		oParser = new parserFormula("DATEDIF(DATE(9999,30,12),DATE(99999,30000,12),\"D\")", "A2", ws);
+		assert.ok(oParser.parse(), "Exotic date");
+		assert.strictEqual(oParser.calculate().getValue(), 33784019, "Exotic date");
+
+		oParser = new parserFormula("DATEDIF(DATE(1,1,1),DATE(1,2,1),\"Y\")", "A2", ws);
+		assert.ok(oParser.parse(), "Exotic date");
+		assert.strictEqual(oParser.calculate().getValue(), 0, "Exotic date");
+
+		// arrays|range
+		ws.getRange2("B2").setValue("2");
+		ws.getRange2("B3").setValue("5");
+		ws.getRange2("B4").setValue("15");
+		ws.getRange2("B5").setValue("string");
+		ws.getRange2("B6").setValue("#N/A");
+		ws.getRange2("B7").setValue();
+		ws.getRange2("B8").setValue("");
+
+		ws.getRange2("C2").setValue("2");
+		ws.getRange2("C3").setValue("12");
+		ws.getRange2("C4").setValue("15");
+		ws.getRange2("C5").setValue("25");
+		ws.getRange2("C6").setValue("25.5");
+
+
+		oParser = new parserFormula("DATEDIF({223,999,250},250,\"D\")", "A2", ws);
+		assert.ok(oParser.parse(), "Pass array to first argument and number to second argument.");
+		assert.strictEqual(oParser.calculate().getValue(), 27, "Pass array to first argument and number to second argument.");
+
+		oParser = new parserFormula("DATEDIF(B2:B2,25,\"D\")", "A2", ws);
+		assert.ok(oParser.parse(), "Pass cellsRange to first argument and number to second argument.");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass array to first argument and number to second argument.");
+
+		oParser = new parserFormula("DATEDIF(C2:C6,25,\"D\")", "A2", ws);
+		assert.ok(oParser.parse(), "Pass cellsRange to first and number to second argument.");
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", "Pass cellsRange to first and number to second argument.");
+
+		// ctrl shift enter cases
+		oParser = new parserFormula("DATEDIF(C2:C6,25,\"D\")", "A2", ws);
+      	oParser.setArrayFormulaRef(ws.getRange2("C2:C6").bbox);
+		assert.ok(oParser.parse(), "Pass cellsRange to first and number to second argument.");
+		let array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 23, "Pass cellsRange to first and number to second argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 13, "Pass cellsRange to first and number to second argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 10, "Pass cellsRange to first and number to second argument.[2,0]");
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 0, "Pass cellsRange to first and number to second argument.[3,0]");
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "#NUM!", "Pass cellsRange to first and number to second argument.[4,0]");
+
+		oParser = new parserFormula("DATEDIF(12,C2:C6,\"D\")", "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:C6").bbox);
+		assert.ok(oParser.parse(), "Pass number to first and cellsRange to second argument.");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#NUM!", "Pass number to first and cellsRange to second argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 0, "Pass number to first and cellsRange to second argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 3, "Pass number to first and cellsRange to second argument.[2,0]");
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 13, "Pass number to first and cellsRange to second argument.[3,0]");
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), 13, "Pass number to first and cellsRange to second argument.[4,0]");
+
+		oParser = new parserFormula("DATEDIF(C2:C6,C2:C6,\"D\")", "A2", ws);
+      	oParser.setArrayFormulaRef(ws.getRange2("C2:C6").bbox);
+		assert.ok(oParser.parse(), "Pass cellsRange to first and cellsRange to second argument.");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 0, "Pass cellsRange to first and cellsRange to second argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 0, "Pass cellsRange to first and cellsRange to second argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 0, "Pass cellsRange to first and cellsRange to second argument.[2,0]");
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 0, "Pass cellsRange to first and cellsRange to second argument.[3,0]");
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), 0, "Pass cellsRange to first and cellsRange to second argument.[4,0]");
+
+		oParser = new parserFormula("DATEDIF(B2:B8,DATE(10,2,2020),\"D\")", "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("B2:B8").bbox);
+		assert.ok(oParser.parse(), "Pass cellsRange to first and date to second argument.");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 5702, "Pass cellsRange to first and date to second argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 5699, "Pass cellsRange to first and date to second argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 5689, "Pass cellsRange to first and date to second argument.[2,0]");
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "#VALUE!", "Pass cellsRange to first and date to second argument.[3,0]");
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "#N/A", "Pass cellsRange to first and date to second argument.[4,0]");
+		assert.strictEqual(array.getElementRowCol(5, 0).getValue(), 5704, "Pass cellsRange to first and date to second argument.[5,0]");
+		assert.strictEqual(array.getElementRowCol(6, 0).getValue(), 5704, "Pass cellsRange to first and date to second argument.[6,0]");
+
+		oParser = new parserFormula("DATEDIF(B2:B8,DATE(2020,10,2),\"D\")", "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("B2:B8").bbox);
+		assert.ok(oParser.parse(), "Pass cellsRange to first and date to second argument.");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 44104, "Pass cellsRange to first and date to second argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 44101, "Pass cellsRange to first and date to second argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 44091, "Pass cellsRange to first and date to second argument.[2,0]");
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "#VALUE!", "Pass cellsRange to first and date to second argument.[3,0]");
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "#N/A", "Pass cellsRange to first and date to second argument.[4,0]");
+		assert.strictEqual(array.getElementRowCol(5, 0).getValue(), 44106, "Pass cellsRange to first and date to second argument.[5,0]");
+		assert.strictEqual(array.getElementRowCol(6, 0).getValue(), 44106, "Pass cellsRange to first and date to second argument.[6,0]");
+
+		oParser = new parserFormula("DATEDIF(DATE(2020,10,2),B2:B8,\"D\")", "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("B2:B8").bbox);
+		assert.ok(oParser.parse(), "Pass date to first and cellsRange to second argument.");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#NUM!", "Pass date to first and cellsRange to second argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#NUM!", "Pass date to first and cellsRange to second argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "#NUM!", "Pass date to first and cellsRange to second argument.[2,0]");
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "#VALUE!", "Pass date to first and cellsRange to second argument.[3,0]");
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "#N/A", "Pass date to first and cellsRange to second argument.[4,0]");
+		assert.strictEqual(array.getElementRowCol(5, 0).getValue(), "#NUM!", "Pass date to first and cellsRange to second argument.[5,0]");
+		assert.strictEqual(array.getElementRowCol(6, 0).getValue(), "#NUM!", "Pass date to first and cellsRange to second argument.[6,0]");
+
+		oParser = new parserFormula("DATEDIF(B2:B8,B2:B8,\"D\")", "A2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("B2:B8").bbox);
+		assert.ok(oParser.parse(), "Pass cellsRange to first and cellsRange to second argument.");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 0, "Pass cellsRange to first and cellsRange to second argument.[0,0]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 0, "Pass cellsRange to first and cellsRange to second argument.[1,0]");
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 0, "Pass cellsRange to first and cellsRange to second argument.[2,0]");
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "#VALUE!", "Pass cellsRange to first and cellsRange to second argument.[3,0]");
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), "#N/A", "Pass cellsRange to first and cellsRange to second argument.[4,0]");
+		assert.strictEqual(array.getElementRowCol(5, 0).getValue(), 0, "Pass cellsRange to first and cellsRange to second argument.[5,0]");
+		assert.strictEqual(array.getElementRowCol(6, 0).getValue(), 0, "Pass cellsRange to first and cellsRange to second argument.[6,0]");
 
 		testArrayFormula2(assert, "DATEDIF", 3, 3);
 	});
