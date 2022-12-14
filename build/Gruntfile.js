@@ -200,10 +200,10 @@ module.exports = function(grunt) {
 	const emptyJs = 'empty.js';
 	grunt.file.write(emptyJs, '');
 
-	const optionsSdkMin ={
-		banner: '',
-		footer: 'window["split"]="split";'
-	};
+	// const optionsSdkMin ={
+	// 	banner: '',
+	// 	footer: 'window["split"]="split";'
+	// };
 	const optionsSdkAll = {
 		banner: '(function(window, undefined) {',
 		footer: '})(window);'
@@ -222,90 +222,70 @@ module.exports = function(grunt) {
 	if (formatting) {
 		compilerArgs.push('--formatting=' + formatting);
 	}
-
-	function getCompilerConfig(js, output) {
-		const args = compilerArgs.concat('--rewrite_polyfills=true', '--jscomp_off=checkVars',
-										'--warning_level=QUIET', '--compilation_level=' + level,
-										'--js_output_file=' + output, '--js=' + js);
-		if (grunt.option('map')) {
-			args.push('--create_source_map=' + output + '.map');
-			args.push('--source_map_format=V3');
-		}
-		let result = {
+	if (grunt.option('map')) {
+		compilerArgs.push('--create_source_map=%outname%.map');
+		compilerArgs.push('--source_map_format=V3');
+	}
+	grunt.registerTask('compile-sdk', 'compile SDK', function () {
+		grunt.initConfig({
 			'closure-compiler': {
 				js: {
 					options: {
-						args: args
+						args: compilerArgs.concat (
+							'--rewrite_polyfills=true',
+							'--jscomp_off=checkVars',
+							'--warning_level=QUIET',
+							'--compilation_level=' + level,
+							'--js=' + emptyJs,
+							'--js=' + sdkWordMinTmp,
+							'--js=' + sdkWordTmp,
+							'--js=' + sdkCellMinTmp,
+							'--js=' + sdkCellTmp,
+							'--js=' + sdkSlideMinTmp,
+							'--js=' + sdkSlideTmp,
+							'--module=polyfill:1',
+							'--module=word-min:1:polyfill',
+							'--module=word-all:1:word-min',
+							'--module=cell-min:1:polyfill',
+							'--module=cell-all:1:cell-min',
+							'--module=slide-min:1:polyfill',
+							'--module=slide-all:1:slide-min',
+						)
 					}
 				}
 			}
-		}
-		return result;
-	}
-	grunt.registerTask('compile-word', function() {
-		grunt.initConfig(getCompilerConfig(sdkWordTmp, 'wordAll.js'));
+		});
 	});
-	grunt.registerTask('compile-cell', function() {
-		grunt.initConfig(getCompilerConfig(sdkCellTmp, 'cellAll.js'));
-	});
-	grunt.registerTask('compile-slide', function() {
-		grunt.initConfig(getCompilerConfig(sdkSlideTmp, 'slideAll.js'));
-	});
-	grunt.registerTask('compile-min-word', function() {
-		grunt.initConfig(getCompilerConfig(sdkWordMinTmp, 'word-min.js'));
-	});
-	grunt.registerTask('compile-min-cell', function() {
-		grunt.initConfig(getCompilerConfig(sdkCellMinTmp, 'cell-min.js'));
-	});
-	grunt.registerTask('compile-min-slide', function() {
-		grunt.initConfig(getCompilerConfig(sdkSlideMinTmp, 'slide-min.js'));
-	});
-
 	grunt.registerTask('build-files', 'Build SDK files', function () {
 		grunt.initConfig({
 			concat: {
 				wordsdkmin: {
-					options: optionsSdkMin,
 					src: getFilesMin(configWord),
 					dest: sdkWordMinTmp
 				},
 				wordsdkall: {
 					options: optionsSdkAll,
 					src: getFilesAll(configWord),
-					dest: sdkAllTmp
-				},
-				wordall: {
-					src: [sdkWordTmp, sdkAllTmp],
 					dest: sdkWordTmp
 				},
 				cellsdkmin: {
-					options: optionsSdkMin,
 					src: getFilesMin(configCell),
 					dest: sdkCellMinTmp
 				},
 				cellsdkall: {
 					options: optionsSdkAll,
 					src: getFilesAll(configCell),
-					dest: sdkAllTmp
-				},
-				cellall: {
-					src: [sdkCellTmp, sdkAllTmp],
 					dest: sdkCellTmp
 				},
 				slidesdkmin: {
-					options: optionsSdkMin,
 					src: getFilesMin(configSlide),
 					dest: sdkSlideMinTmp
 				},
 				slidesdkall: {
 					options: optionsSdkAll,
 					src: getFilesAll(configSlide),
-					dest: sdkAllTmp
-				},
-				slideall: {
-					src: [sdkSlideTmp, sdkAllTmp],
 					dest: sdkSlideTmp
-				}
+				},
 			}
 		});
 	});
@@ -494,13 +474,8 @@ module.exports = function(grunt) {
 		writeScripts(configs.cell['sdk'], 'cell');
 		writeScripts(configs.slide['sdk'], 'slide');
 	});
-	grunt.registerTask('build-sdk', ['build-files', 'concat', 'compile-sdk', 'clean-sdk', 'clean']);
+	grunt.registerTask('build-sdk', ['build-files', 'concat', 'compile-sdk', 'closure-compiler']);
 
-	grunt.registerTask('build-word', 'Build word', ['compile-min-word', 'closure-compiler', 'compile-word', 'closure-compiler']);
-	grunt.registerTask('build-cell', 'Build cell', ['compile-min-cell', 'closure-compiler', 'compile-cell', 'closure-compiler']);
-	grunt.registerTask('build-slide', 'Build slide', ['compile-min-slide', 'closure-compiler', 'compile-slide', 'closure-compiler']);
-
-	grunt.registerTask('compile-sdk', 'compile SDK', ['build-word', 'build-cell', 'build-slide']);
 	grunt.registerTask('default', ['build-sdk']);
 	grunt.registerTask('develop', ['clean-develop', 'clean', 'build-develop']);
 };
