@@ -610,22 +610,26 @@
 	cDATEDIF.prototype.argumentsMax = 3;
 	cDATEDIF.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cDATEDIF.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
+		
+		// --------------- check first argument[arg0] ----------------//
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArray) {
+		} else if (cElementType.array === arg0.type) {
 			arg0 = arg0.getElementRowCol(0, 0);
 		}
 
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
+		// --------------- check second argument[arg1] ----------------//
+		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
 			arg1 = arg1.cross(arguments[1]);
-		} else if (arg1 instanceof cArray) {
+		} else if (cElementType.array === arg1.type) {
 			arg1 = arg1.getElementRowCol(0, 0);
 		}
 
-		if (arg2 instanceof cArea || arg2 instanceof cArea3D) {
+		// --------------- check third argument[arg2] ----------------//
+		if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
 			arg2 = arg2.cross(arguments[1]);
-		} else if (arg2 instanceof cArray) {
+		} else if (cElementType.array === arg2.type) {
 			arg2 = arg2.getElementRowCol(0, 0);
 		}
 
@@ -633,44 +637,77 @@
 		arg1 = arg1.tocNumber();
 		arg2 = arg2.tocString();
 
-		if (arg0 instanceof cError) {
+		if (cElementType.error === arg0.type) {
 			return arg0;
 		}
-		if (arg1 instanceof cError) {
+		if (cElementType.error === arg1.type) {
 			return arg1;
 		}
-		if (arg2 instanceof cError) {
+		if (cElementType.error === arg2.type) {
 			return arg2;
 		}
 
-		var val0 = arg0.getValue(), val1 = arg1.getValue();
+		let val0 = arg0.getValue(), val1 = arg1.getValue();
 
-		if (val0 < 0 || val1 < 0 || val0 >= val1) {
+		if (val0 < 0 || val1 < 0 || val0 > val1) {
 			return new cError(cErrorType.not_numeric);
 		}
 
+		// TODO при передаче в аргументы числовых значений в единственном числе, итоговая дата различается с той что в ms на 1 день, из-за этого результаты могут различатся
 		val0 = cDate.prototype.getDateFromExcel(val0);
 		val1 = cDate.prototype.getDateFromExcel(val1);
 
-		function dateDiff(date1, date2) {
-			var years = date2.getUTCFullYear() - date1.getUTCFullYear();
-			var months = years * 12 + date2.getUTCMonth() - date1.getUTCMonth();
-			var days = date2.getUTCDate() - date1.getUTCDate();
-
-			years -= date2.getUTCMonth() < date1.getUTCMonth();
-			months -= date2.getUTCDate() < date1.getUTCDate();
-			days +=
-				days < 0 ? new cDate(Date.UTC(date2.getUTCFullYear(), date2.getUTCMonth() - 1, 0)).getUTCDate() + 1 : 0;
+		function newDateDiff(date1, date2) {
+			const results = {
+				years: date2.getUTCFullYear() - date1.getUTCFullYear(),
+				months:	date2.getUTCMonth() - date1.getUTCMonth(),
+				days: date2.getUTCDate()  - date1.getUTCDate(),
+				hours: date2.getUTCHours() - date1.getUTCHours()
+			}
+			
+			if (results.hours < 0) {
+				results.days--;
+				results.hours += 24;
+			}
+			if (results.days < 0) {
+				let copy1 = new Date(date1.getTime());
+				copy1.setDate(32);
+				results.months--;
+				results.days = 32 - date1.getUTCDate() - copy1.getUTCDate() + date2.getUTCDate();
+			}
+			if (results.months < 0) {
+				results.years--;
+				results.months += 12;
+			}
+		
+			let years = results.years;
+			let months = results.years * 12 + results.months;
+			let days = results.days;
 
 			return [years, months, days];
 		}
 
+		// function dateDiff(date1, date2) {
+		// 	var years = date2.getUTCFullYear() - date1.getUTCFullYear();
+		// 	var months = years * 12 + date2.getUTCMonth() - date1.getUTCMonth();
+		// 	var days = date2.getUTCDate() - date1.getUTCDate();
+		// 	var daysDiff = (date2 - date1) / c_msPerDay; // ms -> s -> m -> h -> d
+		// 	years -= date2.getUTCMonth() < date1.getUTCMonth();
+		// 	months -= date2.getUTCDate() < date1.getUTCDate();
+		// 	days += days < 0 ? new cDate(Date.UTC(date2.getUTCFullYear(), date2.getUTCMonth() - 1, 0)).getUTCDate() + 1 : 0;
+		// 	if(years === 1 && daysDiff < 365) {
+		// 		years = 0;
+		// 	}
+
+		// 	return [years, months, days];
+		// }
+
 		switch (arg2.getValue().toUpperCase()) {
 			case "Y":
-				return new cNumber(dateDiff(val0, val1)[0]);
+				return new cNumber(newDateDiff(val0, val1)[0]);
 				break;
 			case "M":
-				return new cNumber(dateDiff(val0, val1)[1]);
+				return new cNumber(newDateDiff(val0, val1)[1]);
 				break;
 			case "D":
 				return new cNumber(parseInt((val1 - val0) / c_msPerDay));
@@ -686,7 +723,7 @@
 				}
 				break;
 			case "YM":
-				var d = dateDiff(val0, val1);
+				let d = newDateDiff(val0, val1);
 				return new cNumber(d[1] - d[0] * 12);
 				break;
 			case "YD":

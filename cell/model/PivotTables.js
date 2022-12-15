@@ -11255,10 +11255,12 @@ CT_PivotField.prototype.getFilterObject = function(cacheField, pageFilterItem, n
 	return values;
 };
 
-CT_PivotField.prototype.getBaseItemObject = function(cacheField) {
+CT_PivotField.prototype.asc_getBaseItemObject = function(cacheField) {
 	let values = [];
 	let items = this.getItems();
 	if (items) {
+		values.push({"baseItem": AscCommonExcel.st_BASE_ITEM_PREV, "name": "(previous)"});
+		values.push({"baseItem": AscCommonExcel.st_BASE_ITEM_NEXT, "name": "(next)"});
 		for (let i = 0; i < items.length; i += 1) {
 			let item = items[i];
 			if (Asc.c_oAscItemType.Data === item.t || Asc.c_oAscItemType.Blank === item.t) {
@@ -11269,7 +11271,7 @@ CT_PivotField.prototype.getBaseItemObject = function(cacheField) {
 						elem = sharedItem.getCellValue().getTextValue();
 					}
 				}
-				values.push({baseItem: i, name: elem});
+				values.push({"baseItem": i, "name": elem});
 			}
 		}
 	}
@@ -17495,6 +17497,7 @@ prot["asc_setDefaultSubtotal"] = prot.asc_setDefaultSubtotal;
 prot["asc_setSubtotalTop"] = prot.asc_setSubtotalTop;
 prot["asc_setShowAll"] = prot.asc_setShowAll;
 prot["asc_setSubtotals"] = prot.asc_setSubtotals;
+prot["asc_getBaseItemObject"] = prot.asc_getBaseItemObject;
 
 prot = CT_Field.prototype;
 prot["asc_getIndex"] = prot.asc_getIndex;
