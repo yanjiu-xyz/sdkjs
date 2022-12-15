@@ -223,6 +223,7 @@ module.exports = function(grunt) {
 	if (grunt.option('map')) {
 		compilerArgs.push('--create_source_map=%outname%.map');
 		compilerArgs.push('--source_map_format=V3');
+		compilerArgs.push('--source_map_include_content=true');
 	}
 	grunt.registerTask('compile-sdk', 'compile SDK', function () {
 		grunt.initConfig({
@@ -430,8 +431,8 @@ module.exports = function(grunt) {
 						emptyJs,
 						sdkWordTmp,
 						sdkWordMinTmp,
-						//sdkCellTmp,
-						//sdkCellMinTmp,
+						sdkCellTmp,
+						sdkCellMinTmp,
 						sdkSlideMinTmp,
 						sdkSlideTmp,
 					]
