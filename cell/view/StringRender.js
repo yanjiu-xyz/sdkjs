@@ -810,6 +810,9 @@
 			while (charProp.total * w + width + w <= maxWidth) {
 				insertRepeatChars();
 				charProp.total += 1;
+				if (w === 0) {
+					break;
+				}
 			}
 
 			if (0 === charProp.total)
@@ -1089,6 +1092,10 @@
 				}
 
 				if (isSO || ul) {
+
+					if (angle && window["IS_NATIVE_EDITOR"])
+						ctx.nativeTextDecorationTransform(true);
+
 					x2 = x1 + dw;
 					fsz = prop.font.getSize();
 					lw = asc_round(fsz * ppiy / 72 / 18) || 1;
@@ -1097,15 +1104,18 @@
 					   .beginPath();
 					dy = (lw / 2); dy = dy >> 0;
 					if (ul) {
-						y = asc_round(y1 + bl + prop.lm.d * 0.4);
+						y = asc_round(y1 + bl + prop.lm.d * 0.4 * zoom);
 						ctx.lineHor(x1, y + dy, x2 + 1/*px*/); // ToDo вопрос тут
 					}
 					if (isSO) {
 						dy += 1;
-						y = asc_round(y1 + bl - prop.lm.a * 0.275);
+						y = asc_round(y1 + bl - prop.lm.a * 0.275 * zoom);
 						ctx.lineHor(x1, y - dy, x2 + 1/*px*/); // ToDo вопрос тут
 					}
 					ctx.stroke();
+
+					if (angle && window["IS_NATIVE_EDITOR"])
+						ctx.nativeTextDecorationTransform(false);
 				}
 
 				return dw;

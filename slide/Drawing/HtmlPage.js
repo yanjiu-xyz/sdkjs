@@ -414,7 +414,7 @@ function CEditorPage(api)
 
 		this.Splitter1Pos    = 67.5;
         this.Splitter1PosSetUp = this.Splitter1Pos;
-		this.Splitter2Pos    = (this.IsSupportNotes === true) ? 11 : 0;
+		this.Splitter2Pos    = (this.IsSupportNotes === true && this.m_oApi.isEmbedVersion !== true) ? 11 : 0;
 		this.Splitter3Pos = 0;//top of animation pane
 
 		this.OldSplitter1Pos = this.Splitter1Pos;
@@ -637,6 +637,11 @@ function CEditorPage(api)
 		this.m_oAnimPaneTimeline.Anchor = (g_anchor_left | g_anchor_right | g_anchor_top | g_anchor_bottom);
 		this.m_oAnimPaneTimelineContainer.AddControl(this.m_oAnimPaneTimeline);
 
+
+		if(!this.IsSupportAnimPane)
+		{
+			this.m_oAnimationPaneContainer.HtmlElement.style.display = "none";
+		}
 		// ----------
 
 		this.m_oMainView = CreateControlContainer("id_main_view");
@@ -982,6 +987,7 @@ function CEditorPage(api)
 			this.m_oNotes.HtmlElement.style.backgroundColor = GlobalSkin.BackgroundColor;
 			this.m_oNotesContainer.HtmlElement.style.backgroundColor = GlobalSkin.BackgroundColor;
 			this.m_oBottomPanesContainer.HtmlElement.style.borderTop = ("1px solid " + GlobalSkin.BorderSplitterColor);
+			this.m_oBottomPanesContainer.HtmlElement.style.backgroundColor = GlobalSkin.BackgroundColor;
 			this.m_oAnimationPaneContainer.HtmlElement.style.borderTop = ("1px solid " + GlobalSkin.BorderSplitterColor);
 		}
 
@@ -1034,7 +1040,7 @@ function CEditorPage(api)
 		if (this.retinaScaling != AscCommon.AscBrowser.retinaPixelRatio)
 		{
             this.retinaScaling = AscCommon.AscBrowser.retinaPixelRatio;
-            // сбросить кэш страниц
+			this.m_oDrawingDocument.ClearCachePages();
             this.onButtonTabsDraw();
 		}
 	};
@@ -2369,9 +2375,11 @@ function CEditorPage(api)
 
 		if (oWordControl.m_oDrawingDocument.InlineTextTrackEnabled)
 		{
-			var pos2 = oWordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page, undefined, true);
-			if (pos2.Y > oWordControl.m_oNotesContainer.AbsolutePosition.T * g_dKoef_mm_to_pix)
-				return;
+			if (oWordControl.m_oLogicDocument.IsFocusOnNotes()) {
+				var pos2 = oWordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page, undefined, true);
+				if (pos2.Y > oWordControl.m_oNotesContainer.AbsolutePosition.T * g_dKoef_mm_to_pix)
+					return;
+			}
 		}
 
 		oWordControl.StartUpdateOverlay();
@@ -2461,9 +2469,11 @@ function CEditorPage(api)
 
 		if (oWordControl.m_oDrawingDocument.InlineTextTrackEnabled)
 		{
-			var pos2 = oWordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page, undefined, true);
-			if (pos2.Y > oWordControl.m_oNotesContainer.AbsolutePosition.T * g_dKoef_mm_to_pix)
-				return;
+			if (oWordControl.m_oLogicDocument.IsFocusOnNotes()) {
+				var pos2 = oWordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page, undefined, true);
+				if (pos2.Y > oWordControl.m_oNotesContainer.AbsolutePosition.T * g_dKoef_mm_to_pix)
+					return;
+			}
 		}
 
 		oWordControl.StartUpdateOverlay();
@@ -3215,6 +3225,9 @@ function CEditorPage(api)
 
 		if (this.MobileTouchManager)
 			this.MobileTouchManager.Resize_Before();
+
+		if (this.m_oApi.printPreview)
+			this.m_oApi.printPreview.resize();
 
 		var isDesktopVersion = (undefined !== window["AscDesktopEditor"]) ? true : false;
 
@@ -4159,7 +4172,7 @@ function CEditorPage(api)
 		if (!isRepaint && oWordControl.m_oNotesApi.IsRepaint)
 			isRepaint = true;
 
-		if (oWordControl.IsSupportNotes && oWordControl.m_oNotesApi)
+		if (oWordControl.IsSupportNotes && oWordControl.m_oNotesApi && oWordControl.IsNotesShown())
 			oWordControl.m_oNotesApi.CheckPaint();
 
 		if (oWordControl.m_oAnimPaneApi)

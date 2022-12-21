@@ -134,6 +134,9 @@ CMathPropertiesSettings.prototype.Merge = function(Pr)
     if(Pr.brkBin !== null && Pr.brkBin !== undefined)
         this.brkBin = Pr.brkBin;
 
+    if(Pr.brkBinSub !== null && Pr.brkBinSub !== undefined)
+        this.brkBinSub = Pr.brkBinSub;
+
     if(Pr.dispDef !== null && Pr.dispDef !== undefined)
         this.dispDef = Pr.dispDef;
 	
@@ -1170,7 +1173,10 @@ ParaMath.prototype.GetCompiledDefaultTextPr = function()
 	oTextPr.Merge(this.DefaultTextPr);
 	return oTextPr;
 };
-
+/**
+ * Добавляем элемент в текущую позицию (с учетом возможной глубины)
+ * @param Item
+ */
 ParaMath.prototype.Add = function(Item)
 {
     var LogicDocument  = (this.Paragraph ? this.Paragraph.LogicDocument : undefined);
@@ -1230,7 +1236,7 @@ ParaMath.prototype.Add = function(Item)
     }
     else if (para_Math === Type)
     {
-        var ContentPos = new CParagraphContentPos();
+        var ContentPos = new AscWord.CParagraphContentPos();
 
         if(this.bSelectionUse == true)
             this.Get_ParaContentPos(true, true, ContentPos);
@@ -1282,6 +1288,27 @@ ParaMath.prototype.Add = function(Item)
 
     // Корректируем данный контент
     oContent.Correct_Content(true);
+};
+/**
+ * Добавляем элемент в конец корневого контента
+ * @param oElement
+ */
+ParaMath.prototype.Push = function(oElement)
+{
+	this.Root.AddToContent(this.Root.GetElementsCount(), oElement);
+};
+/**
+ * Добавляем все элементы заданного ParaMath в конец текущего
+ * @param oMath {ParaMath}
+ */
+ParaMath.prototype.Concat = function(oMath)
+{
+	let nCount = oMath.Root.GetElementsCount();
+	for (let nIndex = 0, nCount = oMath.Root.GetElementsCount(); nIndex < nCount; ++nIndex)
+	{
+		this.Push(oMath.Root.GetElement(nIndex));
+	}
+	oMath.Root.RemoveFromContent(0, nCount);
 };
 
 ParaMath.prototype.Get_AlignToLine = function(_CurLine, _CurRange, _Page, _X, _XLimit)
@@ -1736,11 +1763,11 @@ ParaMath.prototype.GetSelectedText = function(bAll, bClearText, oPr)
 	return "";
 };
 
-ParaMath.prototype.GetText = function()
+ParaMath.prototype.GetText = function(isLaTeX)
 {
     var res = "";
     if (this.Root && this.Root.GetTextContent) {
-        var textContent = this.Root.GetTextContent();
+        var textContent = this.Root.GetTextContent(false, isLaTeX);
         if (textContent && textContent.str) {
             res = textContent.str;
         }
@@ -2246,7 +2273,7 @@ ParaMath.prototype.private_RecalculateRoot = function(PRS, ParaPr, Depth)
 
         var WidthLine = PRS.X - PRS.XRange + PRS.SpaceLen + PRS.WordLen;
 
-        var bFirstItem =  PRS.FirstItemOnLine == true && true === Para.Internal_Check_Ranges(ParaLine, ParaRange);
+        var bFirstItem =  PRS.FirstItemOnLine == true && true === Para.IsSingleRangeOnLine(ParaLine, ParaRange);
         if(bFirstItem && PRS.X + PRS.SpaceLen + PRS.WordLen > PRS.XEnd)
         {
             PRS.bMathWordLarge = true;
@@ -2590,7 +2617,7 @@ ParaMath.prototype.ConvertToInlineMode = function()
 	if (!oAfterItem || !oAfterItem.IsSpace())
 	{
 		let oRun = new ParaRun(oParagraph, false);
-		oRun.Add(new ParaSpace());
+		oRun.Add(new AscWord.CRunSpace());
 		oParent.AddToContent(nPosInParent + 1, oRun);
 	}
 
@@ -2598,9 +2625,10 @@ ParaMath.prototype.ConvertToInlineMode = function()
 	if (oBeforeItem && oBeforeItem.IsText())
 	{
 		let oRun = new ParaRun(oParagraph, false);
-		oRun.Add(new ParaSpace());
+		oRun.Add(new AscWord.CRunSpace());
 		oParent.AddToContent(nPosInParent, oRun);
 	}
+	this.Set_Inline(true);
 
 	return true;
 };
@@ -2638,7 +2666,7 @@ ParaMath.prototype.ConvertToDisplayMode = function()
 	if (oAfterItem && !oAfterItem.IsParaEnd())
 	{
 		let oRun = new ParaRun(oParagraph, false);
-		oRun.Add(new ParaNewLine(break_Line));
+		oRun.Add(new AscWord.CRunBreak(AscWord.break_Line));
 		oParent.AddToContent(nPosInParent + 1, oRun);
 	}
 
@@ -2646,9 +2674,10 @@ ParaMath.prototype.ConvertToDisplayMode = function()
 	if (oBeforeItem || oParagraph.HaveNumbering())
 	{
 		let oRun = new ParaRun(oParagraph, false);
-		oRun.Add(new ParaNewLine(break_Line));
+		oRun.Add(new AscWord.CRunBreak(AscWord.break_Line));
 		oParent.AddToContent(nPosInParent, oRun);
 	}
+	this.Set_Inline(false);
 
 	return true;
 };
@@ -2960,7 +2989,7 @@ ParaMath.prototype.Draw_Elements = function(PDSE)
 
     this.Root.Draw_Elements(PDSE);
 
-    PDSE.X = X + this.Root.Get_Width(PDSE.Line, PDSE.Range);
+    PDSE.X = X + this.Root.GetWidth(PDSE.Line, PDSE.Range);
 
     /*PDSE.Graphics.p_color(255,0,0, 255);
      PDSE.Graphics.drawHorLine(0, PDSE.Y - this.Ascent + this.Height, PDSE.X - 30, PDSE.X + this.Width + 30 , 1);*/
@@ -3069,7 +3098,7 @@ ParaMath.prototype.Get_ParaContentPosByXY = function(SearchPos, Depth, _CurLine,
 	var CurX = SearchPos.CurX;
 
 	var MathX = SearchPos.CurX;
-	var MathW = this.Root.Get_Width(_CurLine, _CurRange);
+	var MathW = this.Root.GetWidth(_CurLine, _CurRange);
 
 	// Если мы попадаем четко в формулу, тогда ищем внутри нее, если нет, тогда не заходим внутрь
 	if ((SearchPos.X > MathX && SearchPos.X < MathX + MathW) || SearchPos.DiffX > 1000000 - 1)
@@ -3350,7 +3379,7 @@ ParaMath.prototype.Is_InInnerContent = function()
  */
 ParaMath.prototype.Handle_AddNewLine = function()
 {
-    var ContentPos = new CParagraphContentPos();
+    var ContentPos = new AscWord.CParagraphContentPos();
 
     var CurrContent = this.GetSelectContent().Content;
 
@@ -3361,15 +3390,19 @@ ParaMath.prototype.Handle_AddNewLine = function()
 
     var NeedRecalculate = false;
 
-    if(MATH_EQ_ARRAY === CurrContent.ParentElement.kind)
+    if(MATH_EQ_ARRAY === CurrContent.ParentElement.kind && this.Cursor_Is_End())
     {
-        var oEqArray = CurrContent.Parent;
-
+        var oEqArray = CurrContent.ParentElement;
         oEqArray.Add_Row(oEqArray.CurPos + 1);
         oEqArray.CurPos++;
 
         NeedRecalculate = true;
     }
+    //todo duplication EQ_ARRAY while creating new line 
+    // else if(MATH_EQ_ARRAY === CurrContent.ParentElement.kind)
+    // {
+
+    // }
     else if(MATH_MATRIX !== CurrContent.ParentElement.kind)
     {
         var ctrPrp = CurrContent.Parent.CtrPrp.Copy();
@@ -3391,7 +3424,7 @@ ParaMath.prototype.Handle_AddNewLine = function()
         CurrContent.Add_ToContent(1, EqArray);
         CurrContent.Correct_Content(true);
 
-        var CurrentContent = new CParagraphContentPos();
+        var CurrentContent = new AscWord.CParagraphContentPos();
         this.Get_ParaContentPos(false, false, CurrentContent);
 
         var RightContentPos = new CParagraphSearchPos();
@@ -3403,8 +3436,7 @@ ParaMath.prototype.Handle_AddNewLine = function()
 
         NeedRecalculate = true;
     }
-
-
+    //console.log(CurrContent.ParentElement)
     return NeedRecalculate;
 };
 
@@ -3458,6 +3490,10 @@ ParaMath.prototype.Get_Bounds = function()
     {
         return this.private_GetBounds(this.Root);
     }
+};
+ParaMath.prototype.GetBounds = function()
+{
+	return this.Get_Bounds();
 };
 ParaMath.prototype.Get_JointSize = function()
 {
@@ -3622,6 +3658,81 @@ ParaMath.prototype.CalculateTextToTable = function(oEngine)
 {
 	this.Root.CalculateTextToTable(oEngine);
 };
+ParaMath.prototype.ConvertFromLaTeX = function()
+{
+	var strLaTeX = this.GetText(true);
+	this.Root.Remove_Content(0, this.Root.Content.length);
+    this.Root.Correct_Content(true);
+    AscMath.ConvertLaTeXToTokensList(strLaTeX, this.Root);
+	this.Root.Correct_Content(true);
+};
+ParaMath.prototype.ConvertToLaTeX = function()
+{
+	var strLatex = this.GetText(true);
+	this.Root.Remove_Content(0,this.Root.Content.length);
+	//console.log('LaTeX string:', strLatex);
+	this.Root.Add_Text(strLatex, this.Paragraph);
+};
+ParaMath.prototype.ConvertFromUnicodeMath = function()
+{
+	var strUnicode = this.GetText();
+	this.Root.Remove_Content(0,this.Root.Content.length);
+    this.Root.Correct_Content(true);
+	AscMath.CUnicodeConverter(strUnicode, this.Root);
+	this.Root.Correct_Content(true);
+};
+ParaMath.prototype.ConvertToUnicodeMath = function()
+{
+	var strUnicode = this.GetText();
+	this.Root.Remove_Content(0,this.Root.Content.length);
+	//console.log('Unicode string:', strUnicode);
+	this.Root.Add_Text(strUnicode, this.Paragraph);
+};
+ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
+{
+	if (undefined === nInputType)
+	{
+		let oApi = Asc.editor || editor;
+		nInputType = oApi ? oApi.getMathInputType() : Asc.c_oAscMathInputType.Unicode;
+	}
+
+	if (isToLinear)
+	{
+		if (Asc.c_oAscMathInputType.Unicode === nInputType)
+			this.ConvertToUnicodeMath();
+		else if (Asc.c_oAscMathInputType.LaTeX === nInputType)
+			this.ConvertToLaTeX();
+	}
+	else
+	{
+		if (Asc.c_oAscMathInputType.Unicode === nInputType)
+		{
+			this.ConvertFromUnicodeMath();
+		}
+		else if (Asc.c_oAscMathInputType.LaTeX === nInputType)
+		{
+			this.ConvertFromLaTeX();
+		}
+	}
+};
+ParaMath.prototype.SplitSelectedContent = function() {
+    var oSelection = this.GetSelectContent();
+    var oContent = oSelection.Content; 
+    oContent.SplitSelectedContent();
+}
+ParaMath.prototype.ConvertViewBySelection = function(isToLinear, nInputType)
+{
+    this.SplitSelectedContent();
+    
+    var oSelection = this.GetSelectContent();
+
+    oSelection.Content.ConvertContentView(
+        oSelection.Start,
+        oSelection.End,
+        nInputType,
+        isToLinear
+    );
+};
 ParaMath.prototype.CheckSpelling = function(oCollector, nDepth)
 {
 	if (oCollector.IsExceedLimit())
@@ -3629,6 +3740,31 @@ ParaMath.prototype.CheckSpelling = function(oCollector, nDepth)
 
 	oCollector.FlushWord();
 };
+//----------------------------------------------------------------------------------------------------------------------
+// Search
+//----------------------------------------------------------------------------------------------------------------------
+ParaMath.prototype.Search = function(oParaSearch)
+{
+	this.Root.Search(oParaSearch);
+};
+ParaMath.prototype.AddSearchResult = function(SearchResult, Start, ContentPos, Depth)
+{
+	this.Root.AddSearchResult(SearchResult, Start, ContentPos, Depth);
+};
+ParaMath.prototype.ClearSearchResults = function()
+{
+	this.Root.ClearSearchResults();
+};
+ParaMath.prototype.RemoveSearchResult = function(oSearchResult)
+{
+	this.Root.RemoveSearchResult(oSearchResult);
+};
+ParaMath.prototype.GetSearchElementId = function(bNext, bUseContentPos, ContentPos, Depth)
+{
+	return this.Root.GetSearchElementId(bNext, bUseContentPos, ContentPos, Depth);
+};
+//----------------------------------------------------------------------------------------------------------------------
+
 
 function MatGetKoeffArgSize(FontSize, ArgSize)
 {
@@ -3649,7 +3785,7 @@ function MatGetKoeffArgSize(FontSize, ArgSize)
     }
 
     return FontKoef;
-}
+};
 
 function CMathRecalculateInfo()
 {
