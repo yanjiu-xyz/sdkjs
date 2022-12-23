@@ -254,11 +254,11 @@ module.exports = function(grunt) {
 		grunt.task.run('closure-compiler');
 	});
 	grunt.registerTask('compile-cell', 'Compile Cell SDK', function () {
-		grunt.initConfig(getCompileConfig(sdkWordMinTmp, sdkWordTmp, 'cell-all-min', 'cell-all'));
+		grunt.initConfig(getCompileConfig(sdkCellMinTmp, sdkCellTmp, 'cell-all-min', 'cell-all'));
 		grunt.task.run('closure-compiler');
 	});
 	grunt.registerTask('compile-slide', 'Compile Slide SDK', function () {
-		grunt.initConfig(getCompileConfig(sdkWordMinTmp, sdkWordTmp, 'slide-all-min', 'slide-all'));
+		grunt.initConfig(getCompileConfig(sdkSlideMinTmp, sdkSlideTmp, 'slide-all-min', 'slide-all'));
 		grunt.task.run('closure-compiler');
 	});
 	grunt.registerTask('compile-sdk', ['compile-word', 'compile-cell', 'compile-slide']);
