@@ -203,8 +203,6 @@ module.exports = function(grunt) {
 		banner: '(function(window, undefined) {',
 		footer: '})(window);'
 	};
-	const emptyJs = 'empty.js';
-
 	const sdkWordMinTmp = 'sdk-min-word-tmp.js';
 	const sdkCellMinTmp = 'sdk-min-cell-tmp.js';
 	const sdkSlideMinTmp = 'sdk-min-slide-tmp.js';
@@ -222,14 +220,14 @@ module.exports = function(grunt) {
 		compilerArgs.push('--source_map_format=V3');
 		compilerArgs.push('--source_map_include_content=true');
 	}
-	grunt.registerTask('compile-sdk', 'compile SDK', function () {
-		let license = grunt.file.read(path.join('./license.header'));
-		license = license.replace('@@AppCopyright', process.env['APP_COPYRIGHT'] || appCopyright);
-		license = license.replace('@@PublisherUrl', process.env['PUBLISHER_URL'] || publisherUrl);
-		license = license.replace('@@Version', process.env['PRODUCT_VERSION'] || '0.0.0');
-		license = license.replace('@@Build', process.env['BUILD_NUMBER'] || '0');
+	let license = grunt.file.read(path.join('./license.header'));
+	license = license.replace('@@AppCopyright', process.env['APP_COPYRIGHT'] || appCopyright);
+	license = license.replace('@@PublisherUrl', process.env['PUBLISHER_URL'] || publisherUrl);
+	license = license.replace('@@Version', process.env['PRODUCT_VERSION'] || '0.0.0');
+	license = license.replace('@@Build', process.env['BUILD_NUMBER'] || '0');
 
-		grunt.initConfig({
+	function getCompileConfig(sdkmin, sdkall, outmin, outall) {
+		return {
 			'closure-compiler': {
 				js: {
 					options: {
@@ -239,35 +237,33 @@ module.exports = function(grunt) {
 							'--jscomp_off=checkVars',
 							'--warning_level=QUIET',
 							'--compilation_level=' + level,
-							'--js=' + emptyJs,
-							'--module=polyfill:1',
-							'--module_wrapper=polyfill:' + license +'\n' + '%s',
-							'--js=' + sdkWordMinTmp,
-							'--module=word-all-min:1:polyfill',
-							'--module_wrapper=word-all-min:' + license +'\n' + '%s',
-							'--js=' + sdkWordTmp,
-							'--module=word-all:1:word-all-min',
-							'--module_wrapper=word-all:' + license +'\n' + '%s',
-							'--js=' + sdkCellMinTmp,
-							'--module=cell-all-min:1:polyfill',
-							'--module_wrapper=cell-all-min:' + license +'\n' + '%s',
-							'--js=' + sdkCellTmp,
-							'--module=cell-all:1:cell-all-min',
-							'--module_wrapper=cell-all:' + license + '\n' + '%s',
-							'--js=' + sdkSlideMinTmp,
-							'--module=slide-all-min:1:polyfill',
-							'--module_wrapper=slide-all-min:' + license + '\n' + '%s',
-							'--js=' + sdkSlideTmp,
-							'--module=slide-all:1:slide-all-min',
-							'--module_wrapper=slide-all:' + license +'\n' + '%s',
+							'--js=' + sdkmin,
+							'--module=' + outmin + ':1',
+							'--module_wrapper=' + outmin + ':' + license +'\n' + '%s',
+							'--js=' + sdkall,
+							'--module=' + outall + ':1:' + outmin,
+							'--module_wrapper=' + outall + ':' + license +'\n' + '%s',
 						)
 					}
 				}
 			}
-		});
+		}
+	}
+	grunt.registerTask('compile-word', 'Compile Word SDK', function () {
+		grunt.initConfig(getCompileConfig(sdkWordMinTmp, sdkWordTmp, 'word-all-min', 'word-all'));
+		grunt.task.run('closure-compiler');
 	});
+	grunt.registerTask('compile-cell', 'Compile Cell SDK', function () {
+		grunt.initConfig(getCompileConfig(sdkWordMinTmp, sdkWordTmp, 'cell-all-min', 'cell-all'));
+		grunt.task.run('closure-compiler');
+	});
+	grunt.registerTask('compile-slide', 'Compile Slide SDK', function () {
+		grunt.initConfig(getCompileConfig(sdkWordMinTmp, sdkWordTmp, 'slide-all-min', 'slide-all'));
+		grunt.task.run('closure-compiler');
+	});
+	grunt.registerTask('compile-sdk', ['compile-word', 'compile-cell', 'compile-slide']);
+
 	grunt.registerTask('build-files', 'Build SDK files', function () {
-		grunt.file.write(emptyJs, '');
 		grunt.initConfig({
 			concat: {
 				wordsdkmin: {
@@ -324,7 +320,6 @@ module.exports = function(grunt) {
 	const cell = path.join(deploy, 'cell');
 	const slide = path.join(deploy, 'slide');
 	
-	const polyfill = 'polyfill.js';
 	const wordJsAll = 'word-all.js';
 	const wordJsMin = 'word-all-min.js';
 	const cellJsAll = 'cell-all.js';
@@ -332,15 +327,6 @@ module.exports = function(grunt) {
 	const slideJsAll = 'slide-all.js';
 	const slideJsMin = 'slide-all-min.js';
 	grunt.registerTask('deploy-sdk', 'Deploy SDK files', function () {
-		let copyPolyfill = {};
-		if (grunt.option('copy-polyfill')) {
-			copyPolyfill = {
-				expand: true,
-				src: polyfill,
-				dest: '../vendor/'
-			};
-		}
-
 		grunt.initConfig({
 			clean: {
 				deploy: {
@@ -353,7 +339,6 @@ module.exports = function(grunt) {
 				}
 			},
 			copy: {
-				polyfill: copyPolyfill,
 				sdkjs: {
 					files: [
 						{
@@ -440,7 +425,6 @@ module.exports = function(grunt) {
 						force: true
 					},
 					src: [
-						emptyJs,
 						sdkWordTmp,
 						sdkWordMinTmp,
 						sdkCellTmp,
@@ -501,7 +485,7 @@ module.exports = function(grunt) {
 	});
 	//'license', 'concat', 'replace'
 	//'build-sdk', 'clean-compile', 'deploy', 'clean-deploy'
-	grunt.registerTask('build-sdk', ['build-files', 'concat','misc','replace','compile-sdk', 'closure-compiler']);
+	grunt.registerTask('build-sdk', ['build-files', 'concat','misc','replace','compile-sdk']);
 	grunt.registerTask('deploy', ['deploy-sdk', 'clean', 'copy']);
 	grunt.registerTask('default', ['build-sdk', 'clean-compile', 'deploy', 'clean-deploy']);
 	grunt.registerTask('develop', ['clean-develop', 'clean', 'build-develop']);
