@@ -199,20 +199,13 @@ module.exports = function(grunt) {
 	const appCopyright = "Copyright (C) Ascensio System SIA 2012-" + grunt.template.today('yyyy') +". All rights reserved";
 	const publisherUrl = "https://www.onlyoffice.com/";
 
-	const sdkWordMinTmp = 'sdk-min-word-tmp.js';
-	const sdkCellMinTmp = 'sdk-min-cell-tmp.js';
-	const sdkSlideMinTmp = 'sdk-min-slide-tmp.js';
-
-	const sdkWordTmp = 'sdk-word-tmp.js';
-	const sdkCellTmp = 'sdk-cell-tmp.js';
-	const sdkSlideTmp = 'sdk-slide-tmp.js';
-
 	const compilerArgs = getExterns(configs.externs);
 	if (formatting) {
 		compilerArgs.push('--formatting=' + formatting);
 	}
 	if (grunt.option('map')) {
-		compilerArgs.push('--create_source_map=%outname%.map');
+		grunt.file.mkdir(path.join('./maps'));
+		compilerArgs.push('--create_source_map=' + path.join('maps/%outname%.map'));
 		compilerArgs.push('--source_map_format=V3');
 		compilerArgs.push('--source_map_include_content=true');
 	}
