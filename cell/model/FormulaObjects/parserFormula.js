@@ -532,6 +532,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseType.prototype.getDimensions = function () {
 		return {col: 1, row: 1};
 	};
+	cBaseType.prototype.isOneElement = function () {
+		let dimensions = this.getDimensions();
+		if (dimensions.col === 1 && dimensions.row === 1) {
+			return true;
+		}
+		return false;
+	};
 	cBaseType.prototype.getExternalLinkStr = function (externalLink, locale) {
 		var wb = Asc["editor"] && Asc["editor"].wb;
 
@@ -1231,6 +1238,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return res;
 	};
+	cArea.prototype.getFirstElement = function () {
+		return this.getValueByRowCol(0, 0);
+	}
 
 	/**
 	 * @constructor
@@ -1595,6 +1605,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return res;
 	};
+	cArea3D.prototype.getFirstElement = function () {
+		return this.getValueByRowCol(0, 0);
+	}
 
 	/**
 	 * @constructor
@@ -2751,6 +2764,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		res.fillFromArray(newArray);
 		return res;
 	};
+
+	cArray.prototype.getFirstElement = function () {
+		return this.getElementRowCol(0,0);	
+	}
 
 
 

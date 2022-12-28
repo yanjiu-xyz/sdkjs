@@ -1322,7 +1322,8 @@
     WorksheetView.prototype._hasNumberValueInActiveRange = function () {
         var cell, cellType, exist = false, setCols = {}, setRows = {};
         // ToDo multiselect
-        var selectionRange = this.model.selectionRange.getLast();
+		var selection = this.model.getSelection();
+        var selectionRange = selection.getLast();
         if (selectionRange.isOneCell()) {
             // Для одной ячейки не стоит ничего делать
             return null;
@@ -1370,8 +1371,9 @@
     WorksheetView.prototype.autoCompleteFormula = function (functionName) {
         var t = this;
         // ToDo autoComplete with multiselect
-        var activeCell = this.model.selectionRange.activeCell;
-        var ar = this.model.selectionRange.getLast();
+		var selection = this.model.getSelection();
+        var activeCell = selection.activeCell;
+        var ar = selection.getLast();
         var arCopy = null;
         var arHistorySelect = ar.clone(true);
         var vr = this.visibleRange;
@@ -1674,7 +1676,8 @@
 	WorksheetView.prototype.generateAutoCompleteFormula = function (name, text) {
 		var _res = null;
 
-		var activeCell = this.model.selectionRange.activeCell;
+		var selection = this.model.getSelection();
+		var activeCell = selection.activeCell;
 		var bLocale = AscCommonExcel.oFormulaLocaleInfo.Parse;
 		var cFormulaList = (bLocale && AscCommonExcel.cFormulaFunctionLocalized) ? AscCommonExcel.cFormulaFunctionLocalized : AscCommonExcel.cFormulaFunction;
 		name = name.toUpperCase();
@@ -6607,6 +6610,7 @@
             range = this.model.selectionRange.getLast();
         }
 
+		var isRangeOutside = true;
         // ToDo now delete all. Change this code
 		for (var i = Asc.floor(range.r1 / kRowsCacheSize), l = Asc.floor(range.r2 / kRowsCacheSize); i <= l; ++i) {
 			if (s[i]) {
@@ -6614,6 +6618,16 @@
 					delete rows[j];
 				}
 				delete s[i];
+				isRangeOutside = false;
+			}
+		}
+		if (isRangeOutside) {
+			//for example: 2-user. first user deletes A200, second - changes col width and apply changes
+			//result - at second user don't clean A200, because didn't clean cache
+			for (var _row = range.r1; _row <= range.r2; ++_row) {
+				if (rows[_row]) {
+					delete rows[_row];
+				}
 			}
 		}
     };

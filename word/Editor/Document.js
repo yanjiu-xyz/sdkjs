@@ -3335,7 +3335,18 @@ CDocument.prototype.private_Recalculate = function(_RecalcData, isForceStrictRec
     // а если изменения касались только секций, тогда пересчитываем основную часть документа только с того места, где
     // остановился предыдущий пересчет, либо с того места, где изменения секций приводят к пересчету документа.
     if (true === MainChange)
-        this.FullRecalc.MainStartPos = StartIndex;
+	{
+		if (StartIndex > 0)
+		{
+			// В текущей схеме нам достаточно обновить у предыдущего элемента RecalcId. По хорошему
+			// это надо делать у всех элементов до StartIndex
+			let lastParagraph = this.Content[StartIndex - 1].GetLastParagraph();
+			if (lastParagraph)
+				lastParagraph.UpdateEndInfoRecalcId();
+		}
+		
+		this.FullRecalc.MainStartPos = StartIndex;
+	}
 
     this.DrawingDocument.OnStartRecalculate(StartPage);
 
@@ -3651,7 +3662,7 @@ CDocument.prototype.Recalculate_Page = function()
 					{
 						if (this.private_IsStartTimeoutOnRecalc(PageIndex))
 						{
-							if (window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
+							if (window["native"] && window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
 							{
 								//if (window["native"]["WC_CheckSuspendRecalculate"]())
 								//    return;
@@ -4431,7 +4442,7 @@ CDocument.prototype.Recalculate_PageColumn                   = function()
             {
 				if (this.private_IsStartTimeoutOnRecalc(_PageIndex))
                 {
-                    if (window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
+                    if (window["native"] && window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
 					{
 						//if (window["native"]["WC_CheckSuspendRecalculate"]())
 						//    return;
@@ -5050,7 +5061,7 @@ CDocument.prototype.private_RecalculateHdrFtrPageCountUpdate = function()
 
 			if (window["NATIVE_EDITOR_ENJINE_SYNC_RECALC"] === true)
 			{
-				if (nPageAbs >= this.HdrFtrRecalc.PageIndex + 5 && window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
+				if (nPageAbs >= this.HdrFtrRecalc.PageIndex + 5 && window["native"] && window["native"]["WC_CheckSuspendRecalculate"] !== undefined)
 				{
 					//if (window["native"]["WC_CheckSuspendRecalculate"]())
 					//    return;1
@@ -14758,7 +14769,6 @@ CDocument.prototype.private_StoreViewPositions = function(state)
 	state.CursorDistance = cursorDistance
 	state.CursorPosType  = cursorPosType;
 	
-	
 	let topPos    = this.GetDocumentPositionByXY(viewPort[0].Page, 0, viewPort[0].Y);
 	let bottomPos = this.GetDocumentPositionByXY(viewPort[1].Page, 0, viewPort[1].Y);
 
@@ -14900,19 +14910,31 @@ CDocument.prototype.Load_DocumentStateAfterLoadChanges = function(State)
 
 	if (State.ViewPosTop)
 	{
-		this.ViewPosition = {
-			Top            : State.ViewPosTop,
-			Bottom         : State.ViewPosBottom ? State.ViewPosBottom : State.ViewPosTop,
-			CursorAlign    : State.CursorAlign,
-			CursorDistance : State.CursorDistance,
-			CursorPos      : null
-		};
+		if (this.ViewPosition)
+		{
+			// Сюда попадаем, когда мы еще не успели обработать предыдущую расчитанную позицию курсора, но при этом
+			// прошло несколько пересчетов, которые могли поменять позицию курсора, поэтому мы должны использовать
+			// начально расчитанные значения
+			this.ViewPosition.Top    = State.ViewPosTop;
+			this.ViewPosition.Bottom = State.ViewPosBottom ? State.ViewPosBottom : State.ViewPosTop;
+		}
+		else
+		{
+			this.ViewPosition = {
+				Top            : State.ViewPosTop,
+				Bottom         : State.ViewPosBottom ? State.ViewPosBottom : State.ViewPosTop,
+				CursorAlign    : State.CursorAlign,
+				CursorDistance : State.CursorDistance,
+				CursorPosType  : State.CursorPosType,
+				CursorPos      : null
+			};
+		}
 		
-		if (0 === State.CursorPosType)
+		if (0 === this.ViewPosition.CursorPosType)
 			this.ViewPosition.CursorPos = State.Pos;
-		else if (1 === State.CursorPosType)
+		else if (1 === this.ViewPosition.CursorPosType)
 			this.ViewPosition.CursorPos = State.StartPos;
-		else if (2 === State.CursorPosType)
+		else if (2 === this.ViewPosition.CursorPosType)
 			this.ViewPosition.CursorPos = State.EndPos;
 		else
 			this.ViewPosition.CursorPos = null;
