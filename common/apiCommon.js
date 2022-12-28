@@ -335,7 +335,7 @@
 		this.buildNumber = null;
 		this.liveViewerSupport = null;
 
-		this.betaVersion = window["IS_BETA"];
+		this.betaVersion = window["IS_BETA"] || "false";
 
 		return this;
 	}
