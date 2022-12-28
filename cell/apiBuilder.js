@@ -345,7 +345,7 @@
 	/**
 	 * Class representing a PivotTable field.
 	 * @constructor
-	 * @property {number} Position - Returns or sets a value that represents the position of the field (first, second, third, and so on) among all the fields in its orientation (Rows, Columns, Pages, Data)..
+	 * @property {number} Position - Returns or sets a value that represents the position of the field (first, second, third, and so on) among all the fields in its orientation (Rows, Columns, Pages, Data).
 	 * @property {number} Orientation - A pivot field orientation value that represents the location of the field in the specified PivotTable report.
 	 * @property {string} Caption - Returns or sets a value that represents the label text for the pivot field.
 	 * @property {string} Name - Returns or sets a value representing the name of the object.
@@ -377,7 +377,18 @@
 		this.table = table;
 		this.index = index;
 	}
-	
+
+	/**
+	 * Class representing a PivotTable field.
+	 * @constructor
+	 * @property {todo} todo - todo
+	 */
+	function ApiPivotItem(field, index, value) {
+		this.field = field;
+		this.index = index;
+		this.value = value;
+	}
+
 	/**
 	 * Class representing characters in an object that contains text.
 	 * @constructor
@@ -5953,6 +5964,7 @@
 	 * @returns {[ApiPivotField] | []}
 	 */
 	ApiPivotTable.prototype.GetDataFields = function () {
+		// todo поправить опредление на values (подумать над этим)
 		var vals = this.pivot.asc_getDataFields();
 		var fields = [];
 		if (vals) 
@@ -6196,7 +6208,7 @@
 	 * Moves field from one category to another.
 	 * @memberof ApiPivotTable
 	 * @typeofeditors ["CSE"]
-	 * @param {number | string} identifier - The index number or name of the field..
+	 * @param {number | string} identifier - The index number or name of the field.
 	 * @param {number} type - The type of the field to move (1 - to rows, 2 - to columns, 3 - to values, 4 - to filters, 5 - up, 6 - down, 7 - to beginning, 8 - to end).
 	 * @param {number} index - The index of the field in new category.
 	 * 
@@ -6832,6 +6844,7 @@
 	 * @returns {ApiRange | null}
 	 */
 	ApiPivotTable.prototype.GetRowRange = function () {
+		// TODO не правильно работает ( DataBodyRange - вроде правильно, можно ориентированться на него и всё, что левее считать rowrange)
 		var res = null;
 		if ( this.pivot.getRowFieldsCount() ) {
 			var range = this.pivot.getRange();
@@ -6856,6 +6869,7 @@
 	 * @returns {ApiRange}
 	 */
 	ApiPivotTable.prototype.GetDataBodyRange = function () {
+		// TODO пересмотреть (вроде как есть алгоритм для получения этого range в worksheet._updatePivotTableCellsData, хотя можно и этот оставить, если проблеем не будет)
 		var range = this.pivot.getRange();
 		var location = this.pivot.location;
 		var r1 = range.r1 + location.firstDataRow;
@@ -7241,6 +7255,8 @@
 	 * @returns {string}
 	 */
 	ApiPivotField.prototype.GetCaption = function () {
+		// todo поправить опредление на values
+
 		var vals = this.table.pivot.asc_getDataFields();
 		var check = private_PivotCheckField( this.table.pivot, this.index, (vals || []) );
 		return Common.Utils.String.htmlEncode( ( check.res ? check.field.asc_getName() : this.table.pivot.getPivotFieldName(this.index) ) );
@@ -7253,6 +7269,8 @@
 	 * @param {string} caption - Caption.
 	 */
 	ApiPivotField.prototype.SetCaption = function (caption) {
+		// todo поправить опредление на values
+
 		if (typeof caption == "string" && caption.trim().length > 0) {
 			var vals = this.table.pivot.asc_getDataFields();
 			var check = private_PivotCheckField(this.table.pivot, this.index, vals);
@@ -7282,6 +7300,8 @@
 	 * @returns {string}
 	 */
 	ApiPivotField.prototype.GetName = function () {
+		// todo поправить опредление на values
+
 		return this.GetCaption();
 	};
 
@@ -7292,6 +7312,8 @@
 	 * @param {string} name - Name.
 	 */
 	ApiPivotField.prototype.SetName = function (name) {
+		// todo поправить опредление на values
+
 		if (typeof name == "string" && name.trim().length > 0) {
 			var vals = this.table.pivot.asc_getDataFields();
 			var check = private_PivotCheckField(this.table.pivot, this.index, vals);
@@ -7776,6 +7798,8 @@
 	 * @returns {object}
 	 */
 	ApiPivotField.prototype.GetSubtotals = function () {
+		// todo поправить опредление на values
+
 		var pivField = this.table.pivot.asc_getPivotFields()[this.index];
 		if (!pivField.dataField) {
 			var Subtotals = {
@@ -7844,6 +7868,8 @@
 	 * @param {object} subtotals - Object that represent all subtotals or some of them.
 	 */
 	ApiPivotField.prototype.SetSubtotals = function (subtotals) {
+		// todo поправить опредление на values
+
 		var pivField = this.table.pivot.asc_getPivotFields()[this.index];
 		if (!pivField.dataField) {
 			if (typeof subtotals == "object") {
@@ -7959,6 +7985,8 @@
 	 * @returns {number}
 	 */
 	ApiPivotField.prototype.GetFormula = function () {
+		// todo поправить опредление на values
+
 		/*
 			SummorizeValueFieldBy:
 				Asc.c_oAscItemType.Sum
@@ -7989,6 +8017,8 @@
 	 * @param {number} val - Value by summorize value field by.
 	 */
 	ApiPivotField.prototype.SetFormula = function (val) {
+		// todo поправить опредление на values
+
 		/*
 			val:
 				Asc.c_oAscItemType.Sum
@@ -8203,6 +8233,7 @@
 	 * @returns {string | number}
 	*/
 	ApiPivotField.prototype.GetCurrentPage = function () {
+		// todo поправить опредление на values
 		var filts = this.table.pivot.asc_getPageFields();
 		var check = private_PivotCheckField(this.table.pivot, this.index, (filts || []) );
 		if (check.res) {
@@ -8218,6 +8249,144 @@
 			return this.GetCurrentPage();
 		}
 	});
+
+	/**
+	 * Returns an object that represents either a single PivotTable item (a PivotItem object) or a collection of all the visible and hidden items (a PivotItems object) in the specified field. Read-only.
+	 * @memberof ApiPivotField
+	 * @typeofeditors ["CSE"]
+	 * @returns {[ApiPivotItem] || []}
+	*/
+	ApiPivotField.prototype.GetPivotItems = function () {
+		// todo поправить опредление на values
+		// todo поправить определение index (так как через простой перебор не корректно работает определение индекса)
+		// _updatePivotTableCellsRowColLables - вот в этой функции есть алгоритм как определить индекс и range тоже можно от туда достать (подумать над тем, как обновлять этот индекс при изменении)
+		// может быть хранить какой-то индекс, чтобы можно было найди это поле хоть где-то и оно постоянно, а из него уже искать там, где может поменяться позиция
+
+		if (this.table.pivot.asc_getPivotFields()[this.index].axis !== null) {
+			var items = [];
+			var cacheField = this.table.pivot.asc_getCacheFields()[this.index];
+			var count = cacheField.getGroupOrSharedSize();
+			for (var i = 0; i < count; i++) {
+				var item = cacheField.getGroupOrSharedItems().Items.get(i);
+				items.push( new ApiPivotItem(this, i, item.val ) );
+			}
+			return items;
+		} else {
+			private_MakeError('It is not possible from this field.')
+		}
+		
+	};
+
+	Object.defineProperty(ApiPivotField.prototype, "PivotItems", {
+		get: function () {
+			return this.GetPivotItems();
+		}
+	});
+	
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiPivotItem
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+
+	/**
+	 * Returns a String value representing the name of the object.
+	 * @memberof ApiPivotItem
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 */
+	ApiPivotItem.prototype.GetName = function () {
+		return this.value;
+	};
+
+	Object.defineProperty(ApiPivotItem.prototype, "Name", {
+		get: function () {
+			return this.GetName();
+		}
+	});
+
+	/**
+	 * Returns a String value that represents the label text for the pivot item.
+	 * @memberof ApiPivotItem
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 */
+	ApiPivotItem.prototype.GetCaption = function () {
+		return this.value;
+	};
+
+	Object.defineProperty(ApiPivotItem.prototype, "Caption", {
+		get: function () {
+			return this.GetCaption();
+		}
+	});
+
+	/**
+	 * Returns a String value that represents the name of the specified item in the PivotTable field.
+	 * @memberof ApiPivotItem
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 */
+	ApiPivotItem.prototype.GetValue = function () {
+		return this.value;
+	};
+
+	Object.defineProperty(ApiPivotItem.prototype, "Value", {
+		get: function () {
+			return this.GetValue();
+		}
+	});
+
+	/**
+	 * Returns the parent object for the specified object.
+	 * @memberof ApiPivotItem
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotField}
+	 */
+	ApiPivotItem.prototype.GetParent = function () {
+		return this.field;
+	};
+
+	Object.defineProperty(ApiPivotItem.prototype, "Parent", {
+		get: function () {
+			return this.GetParent();
+		}
+	});
+
+	/**
+	 * Returns the parent object for the specified object.
+	 * @memberof ApiPivotItem
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiPivotField}
+	 */
+	ApiPivotItem.prototype.GetField = function () {
+		return this.field;
+	};
+
+	Object.defineProperty(ApiPivotItem.prototype, "Field", {
+		get: function () {
+			return this.GetField();
+		}
+	});
+
+	// /**
+	//  * Returns the current page showing for the page field (valid only for page fields).
+	//  * @memberof ApiPivotField
+	//  * @typeofeditors ["CSE"]
+	//  * @returns {string | number}
+	// */
+	// ApiPivotField.prototype.GetCurrentPage = function () {
+	// 	var filts = this.table.pivot.asc_getPageFields();
+	// 	var check = private_PivotCheckField(this.table.pivot, this.index, (filts || []) );
+	// 	if (check.res) {
+	// 		var val = this.table.pivot.getPageFieldCellValue(check.index);
+	// 		return val.text || val.number || val.multiText;
+	// 	} else {
+	// 		private_MakeError("It is not possible from this field.");
+	// 	}
+	// };
 
 
 	Api.prototype["Format"]                       = Api.prototype.Format;
