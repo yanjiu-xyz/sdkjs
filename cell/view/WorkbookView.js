@@ -2812,7 +2812,7 @@
 					cellRange = wsView.autoCompleteFormula(trueName);
 				}
 
-				t.cellEditor.insertFormula(name, null, cellRange && cellRange.text);
+				t.cellEditor.insertFormula(name, null, cellRange && !cellRange.notEditCell && cellRange.text);
 				if (cellRange) {
 					res = getFunctionInfo(trueName);
 				}
