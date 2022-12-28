@@ -165,9 +165,6 @@ module.exports = function(grunt) {
 		}
 		return result;
 	}
-	function getSdkPath(min, name) {
-		return path.join(name, min ? 'sdk-all-min.js' : 'sdk-all.js');
-	}
 
 	const path = require('path');
 	const level = grunt.option('level') || 'ADVANCED';
@@ -180,10 +177,7 @@ module.exports = function(grunt) {
 	});
 
 	grunt.loadNpmTasks('grunt-contrib-clean');
-	grunt.loadNpmTasks('grunt-contrib-concat');
 	grunt.loadNpmTasks('grunt-contrib-copy');
-	grunt.loadNpmTasks('grunt-replace');
-	grunt.loadNpmTasks('grunt-split-file');
 
 	const configs = getConfigs();
 	if (!configs.valid()) {
