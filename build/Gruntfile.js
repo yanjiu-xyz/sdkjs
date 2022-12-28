@@ -221,10 +221,10 @@ module.exports = function(grunt) {
 		'--jscomp_off=checkVars',
 		'--warning_level=QUIET',
 		'--compilation_level=' + level,
-		...sdkmin.map((file) => ('--js='+ file)),
+		...sdkmin.map((file) => ('--js=' + file)),
 		'--module=' + outmin + ':' + sdkmin.length,
 		'--module_wrapper=' + outmin + ':' + license +'\n' + '%s',
-		...sdkall.map((file) => ('--js='+ file)),
+		...sdkall.map((file) => ('--js=' + file)),
 		'--module=' + outall + ':' + sdkall.length + ':' + outmin,
 		'--module_wrapper=' + outall + ':' + license +'\n' + '(function(window, undefined) {%s})(window);',)
 		return {
