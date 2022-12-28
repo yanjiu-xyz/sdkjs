@@ -88,6 +88,9 @@
 		CBaseNoIdObject.prototype.Get_Id = function () {
 			return this.Id;
 		};
+		CBaseNoIdObject.prototype.GetId = function () {
+			return this.Id;
+		};
 		CBaseNoIdObject.prototype.Write_ToBinary2 = function (oWriter) {
 			oWriter.WriteLong(this.getObjectType());
 			oWriter.WriteString2(this.Get_Id());
@@ -7088,6 +7091,12 @@
 			History.CanAddChanges() && History.Add(new CChangesDrawingsDouble(this, AscDFH.historyitem_Xfrm_SetRot, this.rot, pr));
 			this.rot = pr;
 			this.handleUpdateRot();
+		};
+		CXfrm.prototype.shift = function(dDX, dDY) {
+			if(this.offX !== null && this.offY !== null) {
+				this.setOffX(this.offX + dDX);
+				this.setOffY(this.offY + dDY);
+			}
 		};
 		CXfrm.prototype.handleUpdatePosition = function () {
 			if (this.parent && this.parent.handleUpdatePosition) {
