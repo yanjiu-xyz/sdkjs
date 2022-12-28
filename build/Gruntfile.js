@@ -216,6 +216,7 @@ module.exports = function(grunt) {
 	license = license.replace('@@Build', process.env['BUILD_NUMBER'] || '0');
 
 	function getCompileConfig(sdkmin, sdkall, outmin, outall) {
+		const minWrapper = `${outmin}:${license}\nwindow.PRODUCT_VERSION="${process.env['PRODUCT_VERSION'] || '0.0.0'}";window.BUILD_NUMBER="${process.env['BUILD_NUMBER'] || '0'}";window.APP_COPYRIGHT="${process.env['APP_COPYRIGHT'] || appCopyright}";window.PUBLISHER_URL="${process.env['PUBLISHER_URL'] || publisherUrl}";%s`
 		const args = compilerArgs.concat (
 		'--rewrite_polyfills=true',
 		'--jscomp_off=checkVars',
@@ -223,7 +224,7 @@ module.exports = function(grunt) {
 		'--compilation_level=' + level,
 		...sdkmin.map((file) => ('--js=' + file)),
 		'--module=' + outmin + ':' + sdkmin.length,
-		'--module_wrapper=' + outmin + ':' + license +'\n' + '%s',
+		'--module_wrapper=' + minWrapper,
 		...sdkall.map((file) => ('--js=' + file)),
 		'--module=' + outall + ':' + sdkall.length + ':' + outmin,
 		'--module_wrapper=' + outall + ':' + license +'\n' + '(function(window, undefined) {%s})(window);',)
@@ -372,30 +373,6 @@ module.exports = function(grunt) {
 			},
 		});
 	});
-	grunt.registerTask('misc', 'Adding app versions, etc.', function () {
-		grunt.initConfig({
-			replace: {
-				version: {
-					options: {
-						patterns: [
-							{
-								json: {
-									AppCopyright: process.env['APP_COPYRIGHT'] || appCopyright,
-									PublisherUrl: process.env['PUBLISHER_URL'] || publisherUrl,
-									Version: process.env['PRODUCT_VERSION'] || '0.0.0',
-									Build: process.env['BUILD_NUMBER'] || '0',
-									Beta: beta
-								}
-							}
-						]
-					},
-					files: [
-						{expand: true, flatten: true, src: [wordJsMin, wordJsAll, cellJsMin, cellJsAll, slideJsMin, slideJsAll]}
-					]
-				}
-			},
-		})
-	});
 	grunt.registerTask('clean-develop', 'Clean develop scripts', function () {
 		const develop = '../develop/sdkjs/';
 		grunt.initConfig({
@@ -418,7 +395,7 @@ module.exports = function(grunt) {
 		writeScripts(configs.cell['sdk'], 'cell');
 		writeScripts(configs.slide['sdk'], 'slide');
 	});
-	grunt.registerTask('build-sdk', ['compile-sdk', 'misc', 'replace']);
+	grunt.registerTask('build-sdk', ['compile-sdk']);
 	grunt.registerTask('deploy', ['deploy-sdk', 'clean', 'copy']);
 	grunt.registerTask('default', ['build-sdk', 'deploy', 'clean-deploy']);
 	grunt.registerTask('develop', ['clean-develop', 'clean', 'build-develop']);

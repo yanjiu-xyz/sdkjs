@@ -126,7 +126,7 @@
 		this.LastPoint     = LastPoint;
 		this.SumIndex      = SumIndex;
 		this.DeletedIndex  = DeletedIndex;
-		this.VersionString = "@@Version.@@Build.@@Rev";
+		this.VersionString = (window["PRODUCT_VERSION"] || "0.0.0") + "." + (window["BUILD_NUMBER"] || "0") +".@@Rev";
 	}
 
 	CChangesTableIdDescription.prototype = Object.create(AscDFH.CChangesBase.prototype);

@@ -1,6 +1,7 @@
 .idea/
 build/node_modules
 build/$weak$.js
+build/maps
 common/AllFonts.js
 common/Images/fonts_thumbnail*
 common/Images/themes_thumbnail*

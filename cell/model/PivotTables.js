@@ -14501,7 +14501,6 @@ function CT_PivotAreaReferences() {
 //Members
 	this.reference = [];
 }
-console.log('test-maps');
 CT_PivotAreaReferences.prototype.clone = function() {
 	var res = new CT_PivotAreaReferences();
 	for (var i = 0; i < this.reference.length; ++i) {
