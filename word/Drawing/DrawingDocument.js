@@ -3724,6 +3724,8 @@ function CDrawingDocument()
 
 	this.OnDrawContentControl = function(obj, state, geom)
 	{
+		if (window["NATIVE_EDITOR_ENJINE"] === true)
+			return;
 		return this.contentControls.OnDrawContentControl(obj, state, geom);
 	};
 
@@ -7761,7 +7763,10 @@ function CDrawingDocument()
 
         var _page = this.m_arrPages[pos.Page];
 		if (this.placeholders.onPointerDown(pos, _page.drawingPage, _page.width_mm, _page.height_mm))
+		{
+			this.m_oWordControl.onMouseUpMainSimple();
 			return true;
+		}
 
 		return false;
 	};

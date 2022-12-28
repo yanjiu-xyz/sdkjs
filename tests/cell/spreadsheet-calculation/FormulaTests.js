@@ -2529,6 +2529,69 @@ $(function () {
 		oParser = new parserFormula("CHOOSECOLS(1,{2;\"\";\"test\"})", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		ws.getRange2("F1").setValue("1");
+		ws.getRange2("G1").setValue("3");
+
+		oParser = new parserFormula("CHOOSECOLS(A1:C2,F1:G1,F1:G1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 0).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 1).getValue(), "r");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 1).getValue(), 3);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 2).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 2).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 3).getValue(), "r");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 3).getValue(), 3);
+
+		oParser = new parserFormula("CHOOSECOLS(A1:C2,F1:G1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 0).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 1).getValue(), "r");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 1).getValue(), 3);
+
+		oParser = new parserFormula("CHOOSECOLS(A1:C2,{1,2},{1,2},{1,2,3})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 0).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 1).getValue(), "q");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 1).getValue(), "w");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 2).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 2).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 3).getValue(), "q");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 3).getValue(), "w");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 4).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 4).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 5).getValue(), "q");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 5).getValue(), "w");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 6).getValue(), "r");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 6).getValue(), 3);
+
+		oParser = new parserFormula("CHOOSECOLS(A1:C2,{1;2},{1;2},{1;2;3})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 0).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 1).getValue(), "q");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 1).getValue(), "w");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 2).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 2).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 3).getValue(), "q");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 3).getValue(), "w");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 4).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 4).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 5).getValue(), "q");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 5).getValue(), "w");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 6).getValue(), "r");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 6).getValue(), 3);
+
+		oParser = new parserFormula("CHOOSECOLS(A1:C2,{1;2},{1,1;2,1},{1;2;3})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("CHOOSECOLS(A1:C2,{1;2},F1:G2)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
 	});
 
 	QUnit.test("Test: \"CHOOSEROWS\"", function (assert) {
@@ -2670,6 +2733,74 @@ $(function () {
 		oParser = new parserFormula("CHOOSEROWS(1,{2;\"\";\"test\"})", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		ws.getRange2("F1").setValue("1");
+		ws.getRange2("G1").setValue("3");
+
+		oParser = new parserFormula("CHOOSEROWS(A1:C2,F1:G1,F1:G1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		ws.getRange2("G1").setValue("2");
+
+		oParser = new parserFormula("CHOOSEROWS(A1:C2,F1:G1,F1:G1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 1).getValue(), "q");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 2).getValue(), "r");
+
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 0).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 1).getValue(), "w");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 2).getValue(), 3);
+
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 1).getValue(), "q");
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 2).getValue(), "r");
+
+		assert.strictEqual(oParser.calculate().getElementRowCol(3, 0).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(3, 1).getValue(), "w");
+		assert.strictEqual(oParser.calculate().getElementRowCol(3, 2).getValue(), 3);
+
+		oParser = new parserFormula("CHOOSEROWS(A1:C2,{1;2},{1;2})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 1).getValue(), "q");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 2).getValue(), "r");
+
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 0).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 1).getValue(), "w");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 2).getValue(), 3);
+
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 1).getValue(), "q");
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 2).getValue(), "r");
+
+		assert.strictEqual(oParser.calculate().getElementRowCol(3, 0).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(3, 1).getValue(), "w");
+		assert.strictEqual(oParser.calculate().getElementRowCol(3, 2).getValue(), 3);
+
+		oParser = new parserFormula("CHOOSEROWS(A1:C2,{1;2},{1;3})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("CHOOSEROWS(A1:C2,{1,2},{1,2})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 1).getValue(), "q");
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 2).getValue(), "r");
+
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 0).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 1).getValue(), "w");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 2).getValue(), 3);
+
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 1).getValue(), "q");
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 2).getValue(), "r");
+
+		assert.strictEqual(oParser.calculate().getElementRowCol(3, 0).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(3, 1).getValue(), "w");
+		assert.strictEqual(oParser.calculate().getElementRowCol(3, 2).getValue(), 3);
+
 	});
 
 	QUnit.test("Test: \"BETA.INV\"", function (assert) {
@@ -5453,6 +5584,18 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "");
 
+		oParser = new parserFormula("TEXTBEFORE(\"\",\",\",\"test\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("TEXTBEFORE(\"\",\",\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+
+		oParser = new parserFormula("TEXTBEFORE(B1,\",\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+
 		/*oParser = new parserFormula( "TEXTBEFORE(B9:C10;B13:C14;B9:C10;B9:C10;B9:C10;B9:C10)", "A1", ws );
 		assert.ok( oParser.parse() );
 		assert.strictEqual( oParser.calculate().getValue(), "#VALUE!" );*/
@@ -5560,6 +5703,22 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), "12333");
 
 		oParser = new parserFormula("TEXTAFTER(12333;123;3;TRUE;TRUE)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+
+		oParser = new parserFormula("TEXTAFTER(\"\",\",\",\"test\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("TEXTAFTER(\"\",\",\",\"test\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("TEXTAFTER(\"\",\",\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
+
+		oParser = new parserFormula("TEXTAFTER(B1,\",\")", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#N/A");
 	});
@@ -5884,6 +6043,55 @@ $(function () {
 		/*oParser = new parserFormula("TEXTSPLIT(C3,C5:D5,C6:D6,C59:D59,{TRUE,FALSE},C11)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "test1");*/
+
+		ws.getRange2("A2").setValue("Do. Or do not. There is no try. -Anonymous");
+		oParser = new parserFormula("TEXTSPLIT(A2,,\".\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "Do");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 0).getValue(), " Or do not");
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 0).getValue(), " There is no try");
+		assert.strictEqual(oParser.calculate().getElementRowCol(3, 0).getValue(), " -Anonymous");
+
+		oParser = new parserFormula("TEXTSPLIT(A2,,{\".\";\"-\"})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "Do");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 0).getValue(), " Or do not");
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 0).getValue(), " There is no try");
+		assert.strictEqual(oParser.calculate().getElementRowCol(3, 0).getValue(), " ");
+		assert.strictEqual(oParser.calculate().getElementRowCol(4, 0).getValue(), "Anonymous");
+
+		oParser = new parserFormula("TEXTSPLIT(A2,,{\".\";\"d\"})", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "Do");
+		assert.strictEqual(oParser.calculate().getElementRowCol(1, 0).getValue(), " Or ");
+		assert.strictEqual(oParser.calculate().getElementRowCol(2, 0).getValue(), "o not");
+		assert.strictEqual(oParser.calculate().getElementRowCol(3, 0).getValue(), " There is no try");
+		assert.strictEqual(oParser.calculate().getElementRowCol(4, 0).getValue(), " -Anonymous");
+
+		ws.getRange2("C1").setValue("1");
+		oParser = new parserFormula("TEXTSPLIT(A2,C1,C1,C1,C1,C1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "do. or do not. there is no try. -anonymous");
+
+		oParser = new parserFormula("TEXTSPLIT(A2,,C1,C1,C1,C1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "do. or do not. there is no try. -anonymous");
+
+		oParser = new parserFormula("TEXTSPLIT(A2,,,C1,C1,C1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
+
+		oParser = new parserFormula("TEXTSPLIT(A2,,C1,,C1,C1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "do. or do not. there is no try. -anonymous");
+
+		oParser = new parserFormula("TEXTSPLIT(A2,,C1,,,C1)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "Do. Or do not. There is no try. -Anonymous");
+
+		oParser = new parserFormula("TEXTSPLIT(A2,,C1,,,)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), "Do. Or do not. There is no try. -Anonymous");
 	});
 
 	function putStackData() {
@@ -6474,6 +6682,21 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
 
+		oParser = new parserFormula("WRAPROWS(1,0)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula("WRAPROWS(1,-100)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula("WRAPROWS(1,)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula("WRAPROWS(1,\"asd\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
 	});
 
 	QUnit.test("Test: \"WRAPCOLS\"", function (assert) {
@@ -6626,6 +6849,22 @@ $(function () {
 		oParser = new parserFormula("WRAPCOLS(1,3, B1:B2)", "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getElementRowCol(0, 0).getValue(), 1);
+
+		oParser = new parserFormula("WRAPCOLS(1,0)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula("WRAPCOLS(1,-100)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula("WRAPCOLS(1,)", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
+
+		oParser = new parserFormula("WRAPCOLS(1,\"asd\")", "A1", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!");
 
 	});
 

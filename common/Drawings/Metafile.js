@@ -1005,7 +1005,8 @@
 		{
 			this.WriteXmlNodeStart(name);
 			this.WriteXmlAttributesEnd(false);
-			this.WriteXmlStringEncode(text.toString());
+			if (text)
+				this.WriteXmlStringEncode(text.toString());
 			this.WriteXmlNodeEnd(name);
 		};
 		this.WriteXmlAttributesEnd = function(isEnd)
@@ -1394,6 +1395,14 @@
 				this.WriteXmlAttributeString("val", val);
 			}
 			this.WriteXmlAttributesEnd(true);
+		};
+		this.WriteXmlHeader = function()
+		{
+			this.WriteXmlString("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n");
+		};
+		this.WriteXmlRelationshipsNS = function()
+		{
+			this.WriteXmlAttributeString("xmlns:r", "http://schemas.openxmlformats.org/officeDocument/2006/relationships");
 		};
 	}
 
