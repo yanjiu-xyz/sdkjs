@@ -33,19 +33,22 @@
 const path = require("path");
 
 const allTests = [
-	// 'cell/spreadsheet-calculation/FormulaTests.html',
-	// 'cell/spreadsheet-calculation/PivotTests.html',
-	// 'cell/spreadsheet-calculation/CopyPasteTests.html',
-	// 'word/unit-tests/paragraphContentPos.html',
-	// 'word/document-calculation/paragraph.html',
-	// 'word/document-calculation/table/flowTablePosition.html',
-	// 'word/document-calculation/textShaper/textShaper.html',
-	// 'word/forms/forms.html',
-	// 'word/forms/complexForm.html',
-	// 'word/api/api.html',
-	// 'word/api/textInput.html',
-	// 'word/styles/paraPr.html',
-	'word/merge-documents/mergeDocuments.html'
+	'cell/spreadsheet-calculation/FormulaTests.html',
+	'cell/spreadsheet-calculation/PivotTests.html',
+	'cell/spreadsheet-calculation/CopyPasteTests.html',
+	'word/unit-tests/paragraphContentPos.html',
+	'word/document-calculation/paragraph.html',
+	'word/document-calculation/table/flowTablePosition.html',
+	'word/document-calculation/textShaper/textShaper.html',
+	'word/forms/forms.html',
+	'word/forms/complexForm.html',
+	'word/api/api.html',
+	'word/api/textInput.html',
+	'word/styles/paraPr.html',
+	'word/merge-documents/mergeDocuments.html',
+
+
+	'oform/xml/oformXml.html'
 ];
 
 const {performance} = require('perf_hooks');

@@ -70,6 +70,14 @@ function (window, undefined) {
 
 	var TOK_SUBTYPE_UNION = 15;
 
+	function getArrayCopy(arr) {
+		var newArray = [];
+		for (var i = 0; i < arr.length; i++) {
+			newArray[i] = arr[i].slice();
+		}
+		return newArray
+	}
+
 	function ParsedThing(value, type, subtype, pos, length) {
 		this.value = value;
 		this.type = type;
@@ -532,6 +540,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cBaseType.prototype.getDimensions = function () {
 		return {col: 1, row: 1};
 	};
+	cBaseType.prototype.isOneElement = function () {
+		let dimensions = this.getDimensions();
+		if (dimensions.col === 1 && dimensions.row === 1) {
+			return true;
+		}
+		return false;
+	};
 	cBaseType.prototype.getExternalLinkStr = function (externalLink, locale) {
 		var wb = Asc["editor"] && Asc["editor"].wb;
 
@@ -560,6 +575,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		let arr = [];
 		if (this.getMatrix) {
 			arr = this.getMatrix();
+			arr = getArrayCopy(arr);
+
 			if (putValue || checkOnError) {
 				for (let i = 0; i < arr.length; i++) {
 					if (arr[i]) {
@@ -1231,6 +1248,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return res;
 	};
+	cArea.prototype.getFirstElement = function () {
+		return this.getValueByRowCol(0, 0);
+	}
 
 	/**
 	 * @constructor
@@ -1595,6 +1615,9 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 		return res;
 	};
+	cArea3D.prototype.getFirstElement = function () {
+		return this.getValueByRowCol(0, 0);
+	}
 
 	/**
 	 * @constructor
@@ -2752,6 +2775,10 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return res;
 	};
 
+	cArray.prototype.getFirstElement = function () {
+		return this.getElementRowCol(0,0);	
+	}
+
 
 
 	/**
@@ -3018,15 +3045,18 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var newArgs = [];
 		var indexArr = null;
 
+		var excludeHiddenRows = this && this.excludeHiddenRows;
+		var excludeErrorsVal = this && this.excludeErrorsVal;
+		var excludeNestedStAg = this && this.excludeNestedStAg;
 		for (var i = 0; i < args.length; i++) {
 			var arg = args[i];
 
 			//для массивов отдельная ветка
 			if (typeArray && cElementType.array === typeArray[i]) {
 				if (cElementType.cellsRange === arg.type || cElementType.array === arg.type) {
-					newArgs[i] = arg.getMatrix(this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg);
+					newArgs[i] = arg.getMatrix(excludeHiddenRows, excludeErrorsVal, excludeNestedStAg);
 				} else if (cElementType.cellsRange3D === arg.type) {
-					newArgs[i] = arg.getMatrix(this.excludeHiddenRows, this.excludeErrorsVal, this.excludeNestedStAg)[0];
+					newArgs[i] = arg.getMatrix(excludeHiddenRows, excludeErrorsVal, excludeNestedStAg)[0];
 				} else if (cElementType.error === arg.type) {
 					newArgs[i] = arg;
 				} else {

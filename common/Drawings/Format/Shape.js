@@ -3295,7 +3295,10 @@ CShape.prototype.Get_ParentTextTransform = function()
 {
     return this.transformText.CreateDublicate();
 };
-
+CShape.prototype.canAddButtonPlaceholder = function () {
+    return (this.parent && (this.parent.getObjectType() === AscDFH.historyitem_type_Slide) ||
+      this.isObjectInSmartArt());
+};
 CShape.prototype.isEmptyPlaceholder = function () {
     if (this.isObjectInSmartArt()) {
         if (this.isPlaceholderInSmartArt()) {
@@ -6565,7 +6568,9 @@ CShape.prototype.getWatermarkProps = function()
     oProps.put_Text(oContent.GetSelectedText(true, {NewLineParagraph : false, NewLine : false}));
     oTextPr = oContent.GetCalculatedTextPr();
     oProps.put_Opacity(255);
-    if(oTextPr.FontSize - (oTextPr.FontSize >> 0) > 0)
+    if(!AscFormat.isRealNumber(oTextPr.FontSize) ||
+	    oTextPr.FontSize < 36 ||
+	    oTextPr.FontSize - (oTextPr.FontSize >> 0) > 0)
     {
         oTextPr.FontSize = -1;
     }
@@ -7183,6 +7188,24 @@ CShape.prototype.getColumnNumber = function(){
             return oApi.getShapeName(sPreset);
         }
         return AscCommon.translateManager.getValue("Shape");
+    };
+
+    CShape.prototype.applyImagePlaceholderCallback = function (aImages, oPlaceholder) {
+        var _image = aImages[0];
+        if (this.isObjectInSmartArt()) {
+            if (this.spPr) {
+                const imageWidth = _image.Image.width;
+                const imageHeight = _image.Image.height;
+                const shapeWidth = this.extX;
+                const shapeHeight = this.extY;
+                const srcRect = new AscFormat.CSrcRect();
+                srcRect.setValueForFitBlipFill(shapeWidth, shapeHeight, imageWidth, imageHeight);
+                const oBlipFillUniFill = AscFormat.CreateBlipFillUniFillFromUrl(_image.src);
+                oBlipFillUniFill.fill.setSrcRect(srcRect);
+                this.changeFill(oBlipFillUniFill);
+            }
+        }
+        return true;
     };
 
 

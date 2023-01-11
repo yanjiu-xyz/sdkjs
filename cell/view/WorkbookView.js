@@ -430,6 +430,8 @@
 				  self._onMoveResizeRangeHandleDone.apply(self, arguments);
 			  }, "editCell": function () {
 				  self._onEditCell.apply(self, arguments);
+			  }, "onPointerDownPlaceholder": function () {
+				  return self._onPointerDownPlaceholder.apply(self, arguments);
 			  }, "stopCellEditing": function () {
 				  return self.closeCellEditor.apply(self, arguments);
 			  }, "isRestrictionComments": function () {
@@ -1408,6 +1410,38 @@
     asc_applyFunction(callback, d);
   };
 
+	WorkbookView.prototype._onPointerDownPlaceholder = function (x, y) {
+		if(window["IS_NATIVE_EDITOR"]) {
+			return false;
+		}
+
+		const oWS = this.getWorksheet();
+		if (x < oWS.cellsLeft || y < oWS.cellsTop) {
+			return false;
+		}
+		const oDrawingDocument = oWS.getDrawingDocument();
+		const nPage = this.model.nActive;
+		const oContext = this.trackOverlay.m_oContext;
+		const oRect = {};
+		const nLeft = 2 * oWS.cellsLeft - oWS._getColLeft(oWS.visibleRange.c1);
+		const nTop = 2 * oWS.cellsTop - oWS._getRowTop(oWS.visibleRange.r1);
+		oRect.left   = nLeft;
+		oRect.right  = nLeft + AscCommon.AscBrowser.convertToRetinaValue(oContext.canvas.width);
+		oRect.top    = nTop;
+		oRect.bottom = nTop + AscCommon.AscBrowser.convertToRetinaValue(oContext.canvas.height);
+		const nPXtoMM = Asc.getCvtRatio(0/*mm*/, 3/*px*/, oWS._getPPIX());
+		const oOffsets = oWS.objectRender.drawingArea.getOffsets(x, y, true);
+		let nX = x;
+		let nY = y;
+		if (oOffsets) {
+			nX -= oOffsets.x;
+			nY -= oOffsets.y;
+		}
+		nX *= nPXtoMM;
+		nY *= nPXtoMM;
+		return oDrawingDocument.placeholders.onPointerDown({X: nX, Y: nY, Page: nPage}, oRect, oContext.canvas.width * nPXtoMM, oContext.canvas.height * nPXtoMM);
+	};
+
   WorkbookView.prototype._onUpdateWorksheet = function(x, y, ctrlKey, callback) {
     var ws = this.getWorksheet(), ct = undefined;
     var arrMouseMoveObjects = [];					// Теперь это массив из объектов, над которыми курсор
@@ -2239,6 +2273,7 @@
     //TODO при добавлении любого действия в историю (например добавление нового листа), мы можем его потом отменить с повощью опции авторазвертывания
     this.toggleAutoCorrectOptions(null, true);
     window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
+  	ws.objectRender.controller.updatePlaceholders();
     return this;
   };
 
@@ -2714,32 +2749,78 @@
     };
 
     WorkbookView.prototype.startWizard = function (name, doCleanCellContent) {
-        var t = this;
-        var callback = function (success) {
+        let t = this;
+        let callback = function (success) {
             if (success) {
                 addFunction(name);
             }
         };
 
-		var ws = this.getActiveWS();
-        var addFunction = function (name, cellEditMode) {
+        //need check all functions
+        let allowCompleteFunctions = {"SUM": 1, "AVERAGE": 1, "COUNT": 1, "MAX": 1, "MIN": 1, "COUNTA": 1, "STDEV": 1};
+		let getFunctionInfo = function (_name) {
+			let _res = new AscCommonExcel.CFunctionInfo(AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[_name] : _name);
+			let _parseResult = t.cellEditor._parseResult;
+
+			//получаем массив аргументов
+			_res.argumentsValue = _parseResult.getArgumentsValue(t.cellEditor._formula.Formula);
+			let argCalc;
+			if (_res.argumentsValue) {
+				let argumentsType = _parseResult.activeFunction.func.argumentsType;
+				_res.argumentsResult = [];
+				for (let i = 0; i < _res.argumentsValue.length; i++) {
+					let argType = null;
+					if (argumentsType) {
+						if (typeof argumentsType[i] == 'object') {
+							argType = argumentsType[i][0];
+						} else if (i > argumentsType.length - 1) {
+							let lastArgType = argumentsType[argumentsType.length - 1];
+							if (typeof lastArgType == 'object') {
+								argType = lastArgType[(i - (argumentsType.length - 1)) % lastArgType.length]
+							}
+						} else {
+							argType = argumentsType[i];
+						}
+					}
+					//вычисляем результат каждого аргумента
+					argCalc = ws.calculateWizardFormula(_res.argumentsValue[i], argType);
+					_res.argumentsResult[i] = argCalc.str;
+				}
+			}
+
+			//get result
+			let sArguments = _res.argumentsValue.join(AscCommon.FormulaSeparators.functionArgumentSeparator);
+			if (argCalc.obj && argCalc.obj.type !== AscCommonExcel.cElementType.error) {
+				let funcCalc = ws.calculateWizardFormula(_name + '(' + sArguments + ')');
+				_res.functionResult = funcCalc.str;
+				if (funcCalc.obj && funcCalc.obj.type !== AscCommonExcel.cElementType.error) {
+					_res.formulaResult = ws.calculateWizardFormula(t.cellEditor._formula).str;
+				}
+			}
+
+			return _res;
+		};
+
+		let wsView = this.getWorksheet();
+		let ws = this.getActiveWS();
+        let addFunction = function (name, cellEditMode) {
         	t.setWizardMode(true);
 			if (doCleanCellContent || !t.cellEditor.isFormula()) {
                 t.cellEditor.selectionBegin = 0;
                 t.cellEditor.selectionEnd = t.cellEditor.textRender.getEndOfText();
             }
 
-			var res;
+			let res;
 			if (!name && t.cellEditor._formula && t.cellEditor._parseResult) {
-				var parseResult = t.cellEditor._parseResult;
+				let parseResult = t.cellEditor._parseResult;
 				name = parseResult.activeFunction && parseResult.activeFunction.func && parseResult.activeFunction.func.name;
 
 				if (cellEditMode) {
 					//ищем общую функцию, в которой находится курсор
 					//если начало и конец селекта в одной функции - показываем настройки для неё, если в разных - добавляем новую
-					var _start = t.cellEditor.selectionBegin !== -1 ? t.cellEditor.selectionBegin : t.cellEditor.cursorPos;
-					var _end = t.cellEditor.selectionEnd !== -1 ? t.cellEditor.selectionEnd : t.cellEditor.cursorPos;
-					var activeFunction = parseResult.getActiveFunction(_start, _end);
+					let _start = t.cellEditor.selectionBegin !== -1 ? t.cellEditor.selectionBegin : t.cellEditor.cursorPos;
+					let _end = t.cellEditor.selectionEnd !== -1 ? t.cellEditor.selectionEnd : t.cellEditor.cursorPos;
+					let activeFunction = parseResult.getActiveFunction(_start, _end);
 					if (activeFunction) {
 						parseResult.activeFunction = activeFunction;
 						parseResult.argPosArr = activeFunction.args;
@@ -2748,42 +2829,7 @@
 				}
 
 				if (name) {
-					res = new AscCommonExcel.CFunctionInfo(AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale[name] : name)
-
-					//получаем массив аргументов
-					res.argumentsValue = parseResult.getArgumentsValue(t.cellEditor._formula.Formula);
-					if (res.argumentsValue) {
-						var argumentsType = parseResult.activeFunction.func.argumentsType;
-						res.argumentsResult = [];
-						for (var i = 0; i < res.argumentsValue.length; i++) {
-							var argType = null;
-							if (argumentsType) {
-								if (typeof argumentsType[i] == 'object') {
-									argType = argumentsType[i][0];
-								} else if (i > argumentsType.length - 1) {
-									var lastArgType = argumentsType[argumentsType.length - 1];
-									if (typeof lastArgType == 'object') {
-										argType = lastArgType[(i - (argumentsType.length - 1)) % lastArgType.length]
-									}
-								} else {
-									argType = argumentsType[i];
-								}
-							}
-							//вычисляем результат каждого аргумента
-							var argCalc = ws.calculateWizardFormula(res.argumentsValue[i], argType);
-							res.argumentsResult[i] = argCalc.str;
-						}
-					}
-
-					//get result
-					var sArguments = res.argumentsValue.join(AscCommon.FormulaSeparators.functionArgumentSeparator);
-					if (argCalc.obj && argCalc.obj.type !== AscCommonExcel.cElementType.error) {
-						var funcCalc = ws.calculateWizardFormula(name + '(' + sArguments + ')');
-						res.functionResult = funcCalc.str;
-						if (funcCalc.obj && funcCalc.obj.type !== AscCommonExcel.cElementType.error) {
-							res.formulaResult = ws.calculateWizardFormula(t.cellEditor._formula).str;
-						}
-					}
+					res = getFunctionInfo(name);
 
 					t.cellEditor.lastRangePos = parseResult.argPosArr[0].start;
 					t.cellEditor.lastRangeLength = parseResult.argPosArr[parseResult.argPosArr.length - 1].end - parseResult.argPosArr[0].start;
@@ -2792,7 +2838,19 @@
 					t.cellEditor._cleanSelection();
 				}
 			} else {
-				t.cellEditor.insertFormula(name);
+				let cellRange;
+				let oFormulaList = AscCommonExcel.cFormulaFunctionLocalized ? AscCommonExcel.cFormulaFunctionLocalized :
+					AscCommonExcel.cFormulaFunction;
+
+				let trueName = oFormulaList[name] && oFormulaList[name].prototype && oFormulaList[name].prototype.name;
+				if (allowCompleteFunctions[trueName]) {
+					cellRange = wsView.autoCompleteFormula(trueName);
+				}
+
+				t.cellEditor.insertFormula(name, null, cellRange && !cellRange.notEditCell && cellRange.text);
+				if (cellRange) {
+					res = getFunctionInfo(trueName);
+				}
 			}
 
 			// ToDo send info from selection
@@ -3335,7 +3393,7 @@
   };
 
   // Печать
-  WorkbookView.prototype.printSheets = function(printPagesData, pdfDocRenderer) {
+  WorkbookView.prototype.printSheets = function(printPagesData, pdfDocRenderer, adjustPrint) {
 	  var pdfPrinter;
 	  var t = this;
 	  this._executeWithoutZoom(function () {
@@ -3351,7 +3409,18 @@
 		  } else {
 			  var indexWorksheet = -1;
 			  var indexWorksheetTmp = -1;
-			  for (var i = 0; i < printPagesData.arrPages.length; ++i) {
+			  var startIndex = adjustPrint && adjustPrint.startPageIndex != null ? adjustPrint.startPageIndex : 0;
+			  var endIndex = adjustPrint && adjustPrint.endPageIndex != null  ? adjustPrint.endPageIndex + 1 : printPagesData.arrPages.length;
+			  if (startIndex > endIndex || startIndex > printPagesData.arrPages.length) {
+				  //Печать пустой страницы
+				  ws = t.getWorksheet();
+				  ws.drawForPrint(pdfPrinter, null);
+				  return pdfPrinter;
+			  }
+			  if (endIndex > printPagesData.arrPages.length) {
+				  endIndex = printPagesData.arrPages.length;
+			  }
+			  for (var i = startIndex; i < endIndex; ++i) {
 				  indexWorksheetTmp = printPagesData.arrPages[i].indexWorksheet;
 				  if (indexWorksheetTmp !== indexWorksheet) {
 					  ws = t.getWorksheet(indexWorksheetTmp);
@@ -3478,12 +3547,24 @@
 
     var printPagesData = new asc_CPrintPagesData();
     var printType = adjustPrint.asc_getPrintType();
+
+	var i;
     if (printType === Asc.c_oAscPrintType.ActiveSheets) {
-      this._calcPagesPrintSheet(nActive, printPagesData, false, adjustPrint);
+		var activeSheetsArray = adjustPrint.asc_getActiveSheetsArray();
+		if (activeSheetsArray) {
+			for (i = 0; i < activeSheetsArray.length; ++i) {
+				if(adjustPrint.isOnlyFirstPage && i !== 0) {
+					break;
+				}
+				this._calcPagesPrintSheet(activeSheetsArray[i], printPagesData, false, adjustPrint);
+			}
+		} else {
+			this._calcPagesPrintSheet(nActive, printPagesData, false, adjustPrint);
+		}
     } else if (printType === Asc.c_oAscPrintType.EntireWorkbook) {
       // Колличество листов
       var countWorksheets = this.model.getWorksheetCount();
-      for (var i = 0; i < countWorksheets; ++i) {
+      for (i = 0; i < countWorksheets; ++i) {
       	if(adjustPrint.isOnlyFirstPage && i !== 0) {
       		break;
 		}
@@ -4264,15 +4345,23 @@
 		this.getWorksheet()._updateGroups(true);
 		this.getWorksheet()._updateGroups(null);
 	};
-	WorkbookView.prototype.pasteSheet = function (base64, insertBefore, name, callback) {
+	WorkbookView.prototype.pasteSheet = function (sheet_data, insertBefore, name, callback) {
 
 		var t = this;
-		var tempWorkbook = new AscCommonExcel.Workbook();
-        tempWorkbook.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
-		tempWorkbook.setCommonIndexObjectsFrom(this.model);
 		var pasteProcessor = AscCommonExcel.g_clipboardExcel.pasteProcessor;
-		var aPastedImages = pasteProcessor._readExcelBinary(base64.split('xslData;')[1], tempWorkbook, true);
-		var pastedWs = tempWorkbook.aWorksheets[0];
+		var aPastedImages, tempWorkbook, pastedWs, base64;
+		if (typeof (sheet_data) === "string") {
+			base64 = sheet_data;
+			tempWorkbook = new AscCommonExcel.Workbook();
+			tempWorkbook.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
+			tempWorkbook.setCommonIndexObjectsFrom(this.model);
+			aPastedImages = pasteProcessor._readExcelBinary(base64.split('xslData;')[1], tempWorkbook, true);
+			pastedWs = tempWorkbook.aWorksheets[0];
+		} else {
+			pastedWs = sheet_data;
+			tempWorkbook = sheet_data.workbook;
+		}
+
 		var newFonts = {};
 		newFonts = tempWorkbook.generateFontMap2();
 		newFonts = pasteProcessor._convertFonts(newFonts);
@@ -4948,7 +5037,7 @@
 							}
 
 							if (jsZlib.files && jsZlib.files.length) {
-								var binaryData = jsZlib.getFile(jsZlib.files[0])
+								var binaryData = jsZlib.getFile(jsZlib.files[0]);
 
 								//заполняем через банарник
 								var oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
@@ -4968,13 +5057,13 @@
 								});
 
 								if (wb.aWorksheets) {
-									eR && eR.updateData(wb.aWorksheets);
+									eR && eR.updateData(wb.aWorksheets, _arrAfterPromise[i].data);
 								}
 							}
 						} else {
 							var updatedData = window["Asc"]["editor"].openDocumentFromZip2(wb ? wb : t.model, stream);
 							if (updatedData) {
-								eR && eR.updateData(updatedData);
+								eR && eR.updateData(updatedData, _arrAfterPromise[i].data);
 							}
 						}
 					} else {
@@ -5016,8 +5105,8 @@
 					var arrAfterPromise = [];
 
 					var aRequests = [];
-					t._getPromiseRequestsArr(data, aRequests, externalReferences, function (_stream, externalReferenceId) {
-						arrAfterPromise.push({stream: _stream, externalReferenceId: externalReferenceId});
+					t._getPromiseRequestsArr(data, aRequests, externalReferences, function (_stream, externalReferenceId, oData) {
+						arrAfterPromise.push({stream: _stream, externalReferenceId: externalReferenceId, data: oData});
 						if (aRequests.length === arrAfterPromise.length) {
 							doUpdateData(arrAfterPromise);
 						}
@@ -5069,10 +5158,10 @@
 						AscCommon.loadFileContent(_fileUrl, function (httpRequest) {
 							if (httpRequest) {
 								var stream = AscCommon.initStreamFromResponse(httpRequest);
-								resolve(_resolve(stream, eR.externalReference.Id));
+								resolve(_resolve(stream, eR.externalReference.Id, oData));
 							} else {
 								//reject - не вызываю, чтобы выполнились все запросы
-								resolve(_resolve(null, eR.externalReference.Id));
+								resolve(_resolve(null, eR.externalReference.Id, oData));
 							}
 						}, "arraybuffer");
 					};
@@ -5087,14 +5176,14 @@
 									successfulLoadFileMap[sFileUrl] = 1;
 									loadFile(fileUrlAfterConvert);
 								} else if (!successfulLoadFileMap[sFileUrl]) {
-									resolve(_resolve(null, eR.externalReference.Id));
+									resolve(_resolve(null, eR.externalReference.Id, oData));
 								}
 							});
 					} else {
 						if (sFileUrl) {
 							loadFile(sFileUrl);
 						} else {
-							resolve(_resolve(null, eR.externalReference.Id));
+							resolve(_resolve(null, eR.externalReference.Id, oData));
 						}
 					}
 				});

@@ -1322,7 +1322,8 @@
     WorksheetView.prototype._hasNumberValueInActiveRange = function () {
         var cell, cellType, exist = false, setCols = {}, setRows = {};
         // ToDo multiselect
-        var selectionRange = this.model.selectionRange.getLast();
+		var selection = this.model.getSelection();
+        var selectionRange = selection.getLast();
         if (selectionRange.isOneCell()) {
             // Для одной ячейки не стоит ничего делать
             return null;
@@ -1370,8 +1371,9 @@
     WorksheetView.prototype.autoCompleteFormula = function (functionName) {
         var t = this;
         // ToDo autoComplete with multiselect
-        var activeCell = this.model.selectionRange.activeCell;
-        var ar = this.model.selectionRange.getLast();
+		var selection = this.model.getSelection();
+        var activeCell = selection.activeCell;
+        var ar = selection.getLast();
         var arCopy = null;
         var arHistorySelect = ar.clone(true);
         var vr = this.visibleRange;
@@ -1674,7 +1676,8 @@
 	WorksheetView.prototype.generateAutoCompleteFormula = function (name, text) {
 		var _res = null;
 
-		var activeCell = this.model.selectionRange.activeCell;
+		var selection = this.model.getSelection();
+		var activeCell = selection.activeCell;
 		var bLocale = AscCommonExcel.oFormulaLocaleInfo.Parse;
 		var cFormulaList = (bLocale && AscCommonExcel.cFormulaFunctionLocalized) ? AscCommonExcel.cFormulaFunctionLocalized : AscCommonExcel.cFormulaFunction;
 		name = name.toUpperCase();
@@ -6607,6 +6610,7 @@
             range = this.model.selectionRange.getLast();
         }
 
+		var isRangeOutside = true;
         // ToDo now delete all. Change this code
 		for (var i = Asc.floor(range.r1 / kRowsCacheSize), l = Asc.floor(range.r2 / kRowsCacheSize); i <= l; ++i) {
 			if (s[i]) {
@@ -6614,6 +6618,16 @@
 					delete rows[j];
 				}
 				delete s[i];
+				isRangeOutside = false;
+			}
+		}
+		if (isRangeOutside) {
+			//for example: 2-user. first user deletes A200, second - changes col width and apply changes
+			//result - at second user don't clean A200, because didn't clean cache
+			for (var _row = range.r1; _row <= range.r2; ++_row) {
+				if (rows[_row]) {
+					delete rows[_row];
+				}
 			}
 		}
     };
@@ -8667,6 +8681,11 @@
 		var dialogOtherRanges = this.getDialogOtherRanges();
 		var readyMode = !(this.getSelectionDialogMode() || this.getCellEditMode());
     var oResDefault = {cursor: kCurDefault, target: c_oTargetType.None, col: -1, row: -1};
+
+    const oPlaceholderCursor = this.objectRender.checkCursorPlaceholder(x, y);
+    if (oPlaceholderCursor) {
+      return {cursor: kCurDefault, target: c_oTargetType.Placeholder, col: -1, row: -1};
+    }
 
     if (this.workbook.Api.isEditVisibleAreaOleEditor) {
       if (x >= this.cellsLeft && y >= this.cellsTop) {
@@ -13116,7 +13135,7 @@
 				if (pasteInfo.wb && pasteInfo.wb.Core && pasteInfo.wb.Core.title && pasteInfo.wb.Core.category) {
 					//работаем внутри одного портала
 					//если разные документу, то вставляем ссылку на другой документ, если один и тот же, то вставляем обычную ссылку
-					if (api.DocInfo && api.DocInfo.ReferenceData && pasteInfo.wb.Core.category === api.DocInfo.ReferenceData["portalName"]) {
+					if (api.DocInfo && api.DocInfo.ReferenceData && pasteInfo.wb.Core.category === api.DocInfo.ReferenceData["instanceId"]) {
 						_res = true;
 					}
 				}
@@ -13954,8 +13973,8 @@
 					var referenceData;
 					if (pastedWb && pastedWb.Core) {
 						referenceData = {};
-						referenceData["fileId"] = pastedWb.Core.contentStatus;
-						referenceData["portalName"] = pastedWb.Core.category;
+						referenceData["fileKey"] = pastedWb.Core.contentStatus;
+						referenceData["instanceId"] = pastedWb.Core.category;
 					}
 
 					var name = pastedWb.Core.title;
@@ -13984,6 +14003,7 @@
 			}
 		};
 
+		var isLinkToOtherWorkbook = false;
 		var pasteLinkIndex = -1;
 		var pasteSheetLinkName = null;
 		var colsWidth = {};
@@ -13994,6 +14014,9 @@
 			if (isPastingLink) {
 				if (-1 === pasteLinkIndex) {
 					_getPasteLinkIndex();
+				}
+				if (pasteLinkIndex != null) {
+					isLinkToOtherWorkbook = true;
 				}
 				t._pasteCellLink(range, fromRow, fromCol, arrFormula, pasteSheetLinkName, pasteLinkIndex);
 				return;
@@ -14203,6 +14226,10 @@
 					}
 				}
 			}
+		}
+
+		if (isLinkToOtherWorkbook) {
+			t.model.workbook.handlers.trigger("asc_onNeedUpdateExternalReference")
 		}
 
 		t.isChanged = true;
@@ -14774,8 +14801,8 @@
 				var referenceData;
 				if (pastedWb && pastedWb.Core) {
 					referenceData = {};
-					referenceData["fileId"] = pastedWb.Core.contentStatus;
-					referenceData["portalName"] = pastedWb.Core.category;
+					referenceData["fileKey"] = pastedWb.Core.contentStatus;
+					referenceData["instanceId"] = pastedWb.Core.category;
 				}
 				var externalReference = referenceData && this.model.workbook.getExternalLinkByReferenceData(referenceData);
 				externalReference = externalReference && externalReference.index;
@@ -17022,7 +17049,9 @@
 
 					}
 
-					t.updateExternalReferenceByCell(c, true);
+					if (t.getExternalReferencesByCell(c, true)) {
+						t.model.workbook.handlers.trigger("asc_onNeedUpdateExternalReference");
+					}
 
 					if (callback) {
 						return callback(bRes);
@@ -19385,7 +19414,7 @@
 				History.EndTransaction();
 				if (shiftCells) {
 					t.cellCommentator.updateCommentsDependencies(true, type, arn);
-					t.shiftCellWatches(true, val, arn);
+					t.shiftCellWatches(true, type, arn);
 					t.model.shiftDataValidation(true, type, arn, true);
 					t.objectRender.updateDrawingObject(true, type, arn);
 					t._onUpdateFormatTable(range);
@@ -24146,14 +24175,20 @@
 
 	WorksheetView.prototype.updateExternalReferenceByCell = function (c, initStructure) {
 		var t = this;
-		var externalReferences = [];
+		var externalReferences = this.getExternalReferencesByCell(c, initStructure);
+		this.workbook.doUpdateExternalReference(externalReferences);
+	};
+
+	WorksheetView.prototype.getExternalReferencesByCell = function (c, initStructure) {
+		let t = this;
+		let externalReferences = [];
 		t.model._getCell(c.bbox.r1, c.bbox.c1, function (cell) {
 			if (cell && cell.isFormula()) {
-				var fP = cell.formulaParsed;
+				let fP = cell.formulaParsed;
 				if (fP) {
-					for (var i = 0; i < fP.outStack.length; i++) {
+					for (let i = 0; i < fP.outStack.length; i++) {
 						if ((AscCommonExcel.cElementType.cellsRange3D === fP.outStack[i].type || AscCommonExcel.cElementType.cell3D === fP.outStack[i].type) && fP.outStack[i].externalLink) {
-							var eR = t.model.workbook.getExternalWorksheet(fP.outStack[i].externalLink);
+							let eR = t.model.workbook.getExternalWorksheet(fP.outStack[i].externalLink);
 							if (eR) {
 								externalReferences.push(eR.getAscLink());
 								if (initStructure) {
@@ -24166,7 +24201,7 @@
 			}
 		});
 
-		this.workbook.doUpdateExternalReference(externalReferences);
+		return externalReferences.length ? externalReferences : null;
 	};
 
 	WorksheetView.prototype.shiftCellWatches = function (bInsert, operType, updateRange) {

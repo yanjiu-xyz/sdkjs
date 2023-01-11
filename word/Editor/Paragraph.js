@@ -90,8 +90,7 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
     this.Pages = []; // Массив страниц (CParaPage)
     this.Lines = []; // Массив строк (CParaLine)
 
-	this.EndInfo         = new CParagraphPageEndInfo();
-	this.EndInfoRecalcId = -1;
+	this.EndInfo = new CParagraphPageEndInfo();
 
     if(!(bFromPresentation === true))
     {
@@ -1462,27 +1461,43 @@ Paragraph.prototype.CheckNotInlineObject = function(nMathPos, nDirection)
 };
 Paragraph.prototype.RecalculateEndInfo = function()
 {
-	var oLogicDocument = this.GetLogicDocument();
-	if (oLogicDocument && oLogicDocument.GetRecalcId && this.EndInfoRecalcId === oLogicDocument.GetRecalcId())
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.GetRecalcId)
 		return;
 	
-	var oPRSI     = this.m_oPRSI;
-	var oPrevInfo = this.Parent.GetPrevElementEndInfo(this);
-	oPRSI.Reset(oPrevInfo);
+	let recalcId = logicDocument.GetRecalcId();
+	if (this.EndInfo.CheckRecalcId(recalcId))
+		return;
 	
-	for (var nCurPos = 0, nCount = this.Content.length; nCurPos < nCount; ++nCurPos)
+	let prevEndInfo = this.Parent.GetPrevElementEndInfo(this);
+	if (prevEndInfo && !prevEndInfo.CheckRecalcId(recalcId))
+		return;
+	
+	let prsi = this.m_oPRSI;
+	prsi.Reset(prevEndInfo);
+	
+	for (let pos = 0, count = this.Content.length; pos < count; ++pos)
 	{
-		this.Content[nCurPos].RecalculateEndInfo(oPRSI);
+		this.Content[pos].RecalculateEndInfo(prsi);
 	}
 	
-	this.EndInfo.SetFromPRSI(oPRSI);
+	this.EndInfo.SetFromPRSI(prsi);
+	this.EndInfo.SetRecalcId(recalcId);
+};
+/**
+ * Данная функция вызывается, когда с данным элементом, и с элементами до него не произошло никаких изменений и мы
+ * просто актуализируем EndInfo.RecalcId
+ */
+Paragraph.prototype.UpdateEndInfoRecalcId = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.GetRecalcId)
+		return;
 	
-	if (oLogicDocument && oLogicDocument.GetRecalcId)
-		this.EndInfoRecalcId = oLogicDocument.GetRecalcId();
+	this.EndInfo.SetRecalcId(logicDocument.GetRecalcId());
 };
 Paragraph.prototype.GetEndInfo = function()
 {
-	this.RecalculateEndInfo();
 	return this.EndInfo;
 };
 Paragraph.prototype.GetEndInfoByPage = function(CurPage)
@@ -2165,7 +2180,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 			{
 				oInlineSdt = PDSH.InlineSdt[nSdtIndex];
 				isForm     = oInlineSdt.IsForm();
-				oFormShd   = isForm ? oInlineSdt.GetFormPr().GetShd() : null;
+				oFormShd   = isForm ? oInlineSdt.GetFormShd() : null;
 
 				if (oFormShd && !oFormShd.IsNil())
 				{
@@ -2188,7 +2203,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 				{
 					oInlineSdt = PDSH.InlineSdt[nSdtIndex];
 					isForm     = oInlineSdt.IsForm();
-					oFormShd   = isForm ? oInlineSdt.GetFormPr().GetShd() : null;
+					oFormShd   = isForm ? oInlineSdt.GetFormShd() : null;
 
 					if (!isForm || !oInlineSdt.IsFixedForm() || -1 !== fixedForms.indexOf(oInlineSdt))
 						continue;
@@ -2201,6 +2216,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 
 					oSdtBounds = oInlineSdt.GetFixedFormBounds();
 
+					let formHighlightColor;
 					if (oFormShd && !oFormShd.IsNil())
 					{
 						var oFormShdColor     = oFormShd.GetSimpleColor(this.GetTheme(), this.GetColorMap());
@@ -2212,15 +2228,15 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 						}
 						else
 						{
-							if (FormsHighlight)
-								pGraphics.b_color1(FormsHighlight.r, FormsHighlight.g, FormsHighlight.b, 255);
+							if ((formHighlightColor = oInlineSdt.GetFormHighlightColor(FormsHighlight)))
+								pGraphics.b_color1(formHighlightColor.r, formHighlightColor.g, formHighlightColor.b, 255);
 							else
 								pGraphics.b_color1(oFormShdColorDark.r, oFormShdColorDark.g, oFormShdColorDark.b, 255);
 						}
 					}
-					else if (FormsHighlight && !oInlineSdt.IsCurrentComplexForm())
+					else if ((formHighlightColor = oInlineSdt.GetFormHighlightColor(FormsHighlight)) && !oInlineSdt.IsCurrentComplexForm())
 					{
-						pGraphics.b_color1(FormsHighlight.r, FormsHighlight.g, FormsHighlight.b, 255);
+						pGraphics.b_color1(formHighlightColor.r, formHighlightColor.g, formHighlightColor.b, 255);
 					}
 					else
 					{
@@ -2435,7 +2451,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 			{
 				oInlineSdt = PDSH.InlineSdt[nSdtIndex];
 				isForm     = oInlineSdt.IsForm();
-				oFormShd   = isForm ? oInlineSdt.GetFormPr().GetShd() : null;
+				oFormShd   = isForm ? oInlineSdt.GetFormShd() : null;
 
 				if (oFormShd && !oFormShd.IsNil())
 				{
@@ -2460,7 +2476,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 					oInlineSdt = PDSH.InlineSdt[nSdtIndex];
 					isForm     = oInlineSdt.IsForm();
 					oSdtBounds = PDSH.InlineSdt[nSdtIndex].GetRangeBounds(CurLine, CurRange);
-					oFormShd   = isForm ? oInlineSdt.GetFormPr().GetShd() : null;
+					oFormShd   = isForm ? oInlineSdt.GetFormShd() : null;
 
 					if (-1 !== fixedForms.indexOf(oInlineSdt) || oInlineSdt.IsFixedForm())
 						continue;
@@ -2470,7 +2486,8 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 
 					if (!isDrawFormHighlight && isForm && (!oFormShd || oFormShd.IsNil()))
 						continue;
-
+					
+					let formHighlightColor;
 					if (oFormShd && !oFormShd.IsNil())
 					{
 						var oFormShdColor     = oFormShd.GetSimpleColor(this.GetTheme(), this.GetColorMap());
@@ -2486,12 +2503,12 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 						}
 						else
 						{
-							if (FormsHighlight)
+							if ((formHighlightColor = oInlineSdt.GetFormHighlightColor(FormsHighlight)))
 							{
-								if (!oPrevColor.IsEqualRGB(FormsHighlight))
+								if (!oPrevColor.IsEqualRGB(formHighlightColor))
 								{
-									pGraphics.b_color1(FormsHighlight.r, FormsHighlight.g, FormsHighlight.b, 255);
-									oPrevColor.SetFromColor(FormsHighlight);
+									pGraphics.b_color1(formHighlightColor.r, formHighlightColor.g, formHighlightColor.b, 255);
+									oPrevColor.SetFromColor(formHighlightColor);
 								}
 							}
 							else if (!oPrevColor.IsEqualRGB(oFormShdColorDark))
@@ -2501,12 +2518,12 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 							}
 						}
 					}
-					else if (isForm && FormsHighlight && !oInlineSdt.IsCurrentComplexForm())
+					else if (isForm && (formHighlightColor = oInlineSdt.GetFormHighlightColor(FormsHighlight)) && !oInlineSdt.IsCurrentComplexForm())
 					{
-						if (!oPrevColor.IsEqualRGB(FormsHighlight))
+						if (!oPrevColor.IsEqualRGB(formHighlightColor))
 						{
-							pGraphics.b_color1(FormsHighlight.r, FormsHighlight.g, FormsHighlight.b, 255);
-							oPrevColor.SetFromColor(FormsHighlight);
+							pGraphics.b_color1(formHighlightColor.r, formHighlightColor.g, formHighlightColor.b, 255);
+							oPrevColor.SetFromColor(formHighlightColor);
 						}
 					}
 					else if (!isForm && SdtHighlightColor)
@@ -18315,6 +18332,7 @@ function CParagraphPageEndInfo()
 	this.ComplexFields = []; // Массив незакрытых полей на данной странице
 
     this.RunRecalcInfo = null;
+	this.RecalcId     = -1;
 }
 CParagraphPageEndInfo.prototype.Copy = function()
 {
@@ -18369,6 +18387,14 @@ CParagraphPageEndInfo.prototype.IsEqual = function(oEndInfo)
 	}
 
 	return true;
+};
+CParagraphPageEndInfo.prototype.CheckRecalcId = function(recalcId)
+{
+	return this.RecalcId === recalcId;
+};
+CParagraphPageEndInfo.prototype.SetRecalcId = function(recalcId)
+{
+	this.RecalcId = recalcId;
 };
 
 function CParaPos(Range, Line, Page, Pos)

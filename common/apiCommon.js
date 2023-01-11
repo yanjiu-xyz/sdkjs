@@ -192,6 +192,16 @@
 		return oCanvas;
 	}
 
+	function isValidJs(str) {
+		try {
+			eval("throw 0;" + str);
+		} catch(e) {
+			if (e === 0)
+				return true;
+		}
+		return false;
+	}
+
 	var c_oLicenseResult = {
 		Error         : 1,
 		Expired       : 2,
@@ -1575,11 +1585,24 @@
 	};
 	asc_ChartSettings.prototype.setRange = function(sRange) {
 		if(this.chartSpace) {
+			const oDataRefs = new AscFormat.CChartDataRefs(null);
+			const nCheckResult = oDataRefs.checkDataRange(sRange, this.getInRows(), this.getType());
+			if(nCheckResult !== Asc.c_oAscError.ID.No) {
+				this.sendError(nCheckResult);
+				return;
+			}
 			this.chartSpace.setRange(sRange);
 			this.updateChart();
 		}
 	};
 	asc_ChartSettings.prototype.isValidRange = function(sRange) {
+		if(this.getRange() !== sRange) {
+			const oDataRefs = new AscFormat.CChartDataRefs(null);
+			const nCheckResult = oDataRefs.checkDataRange(sRange, this.getInRows(), this.getType());
+			if(nCheckResult === Asc.c_oAscError.ID.MaxDataPointsError) {
+				return nCheckResult;
+			}
+		}
 		return AscFormat.isValidChartRange(sRange);
 	};
 	asc_ChartSettings.prototype.getRange = function() {
@@ -1685,6 +1708,9 @@
 		return this.separator;
 	};
 	asc_ChartSettings.prototype.sendErrorOnChangeType = function(nType) {
+		this.sendError(nType);
+	};
+	asc_ChartSettings.prototype.sendError = function(nType) {
 		var oApi = Asc.editor || editor;
 		if(oApi) {
 			oApi.sendEvent("asc_onError", nType, Asc.c_oAscError.Level.NoCritical);
@@ -6807,6 +6833,7 @@
     window["AscCommon"].CWatermarkOnDraw = CWatermarkOnDraw;
     window["AscCommon"].isFileBuild = isFileBuild;
     window["AscCommon"].checkCanvasInDiv = checkCanvasInDiv;
+    window["AscCommon"].isValidJs = isValidJs;
 
 	window["Asc"]["CPluginVariation"] = window["Asc"].CPluginVariation = CPluginVariation;
 	window["Asc"]["CPlugin"] = window["Asc"].CPlugin = CPlugin;

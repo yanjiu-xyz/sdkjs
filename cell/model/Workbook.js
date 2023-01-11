@@ -820,6 +820,9 @@
 		},
 		removeDefName: function(sheetId, name) {
 			this._removeDefName(sheetId, name, AscCH.historyitem_Workbook_DefinedNamesChange);
+			if (!this.wb.bUndoChanges && !this.wb.bRedoChanges) {
+				this.wb.handlers.trigger("updateCellWatches");
+			}
 		},
 		editDefinesNames: function(oldUndoName, newUndoName) {
 			var res = null;
@@ -2136,6 +2139,44 @@
 		}
 		if (bSnapshot) {
 			this.snapshot = this._getSnapshot();
+		}
+	};
+	Workbook.prototype.addImages = function (aImages, oPlaceholder) {
+		const oApi = Asc.editor;
+		if (oPlaceholder && undefined !== oPlaceholder.id && aImages.length === 1 && aImages[0].Image) {
+			const oController = oApi.getGraphicController();
+			const oDrawingObjects = oApi.getDrawingObjects();
+			const oPlaceholderTarget = AscCommon.g_oTableId.Get_ById(oPlaceholder.id);
+			if (oPlaceholderTarget) {
+				if (oPlaceholderTarget.isObjectInSmartArt && oPlaceholderTarget.isObjectInSmartArt()) {
+					const oSmartArtGroup = oPlaceholderTarget.group.getMainGroup();
+					const oSmartArtId = oSmartArtGroup && oSmartArtGroup.Id;
+					this.checkObjectsLock([oSmartArtId], function (bLock) {
+						if (bLock) {
+							History.Create_NewPoint();
+							oController.resetSelection();
+							oPlaceholderTarget.applyImagePlaceholderCallback && oPlaceholderTarget.applyImagePlaceholderCallback(aImages, oPlaceholder);
+							oController.selectObject(oSmartArtGroup, 0);
+							oController.selection.groupSelection = oSmartArtGroup;
+							oSmartArtGroup.selectObject(oPlaceholderTarget, 0);
+							const oWS = oApi.wb.getWorksheet();
+							if (oWS) {
+								oWS.setSelectionShape(true);
+							}
+							oSmartArtGroup.addToRecalculate();
+							oController.startRecalculate();
+							if (oDrawingObjects) {
+								oDrawingObjects.sendGraphicObjectProps();
+							}
+							oController.clearPreTrackObjects();
+							oController.clearTrackObjects();
+							oController.updateOverlay();
+							oController.changeCurrentState(new AscFormat.NullState(oController));
+							oController.updateSelectionState();
+						}
+					});
+				}
+			}
 		}
 	};
 	Workbook.prototype.getOleSize = function () {
@@ -4299,7 +4340,7 @@
 	Workbook.prototype.getExternalLinkByReferenceData = function (referenceData) {
 		for (var i = 0; i < this.externalReferences.length; i++) {
 			if (this.externalReferences[i].referenceData) {
-				if (this.externalReferences[i].referenceData["fileId"] === referenceData["fileId"] && this.externalReferences[i].referenceData["portalName"] === referenceData["portalName"]) {
+				if (this.externalReferences[i].referenceData["fileKey"] === referenceData["fileKey"] && this.externalReferences[i].referenceData["instanceId"] === referenceData["instanceId"]) {
 					return {index: i + 1, val: this.externalReferences};
 				}
 			}
@@ -5123,6 +5164,8 @@
 	Worksheet.prototype.setDirtyConditionalFormatting = function(range) {
 		if (!range) {
 			range = new AscCommonExcel.MultiplyRange([new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxRow0)]);
+		} else if (range && range.isNull && range.isNull()) {
+			return;
 		} else if (range.ranges && range.getUnionRange) {
 			//объединяю в один
 			range = new AscCommonExcel.MultiplyRange([range.getUnionRange()]);
@@ -7785,7 +7828,9 @@
 	Worksheet.prototype.onUpdateRanges = function(ranges) {
 		this.workbook.updateSparklineCache(this.sName, ranges);
 		// ToDo do not update conditional formatting on hidden sheet
-		this.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange(ranges));
+		if (ranges && ranges.length) {
+			this.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange(ranges));
+		}
 		//this.workbook.handlers.trigger("toggleAutoCorrectOptions", null,true);
 	};
 	Worksheet.prototype.updateSparklineCache = function (sheet, ranges) {
@@ -11505,6 +11550,19 @@
 			}
 		}
 		return res;
+	};
+
+	Worksheet.prototype.checkImportXmlLocationForError = function(ranges) {
+		for (var i = 0; i < ranges.length; ++i) {
+			var range = ranges[i];
+			if (this.autoFilters.isIntersectionTable(range)) {
+				return c_oAscError.ID.PivotOverlap;
+			}
+			if (this.inPivotTable(range)) {
+				return c_oAscError.ID.PivotOverlap;
+			}
+		}
+		return c_oAscError.ID.No;
 	};
 
 //-------------------------------------------------------------------------------------------------

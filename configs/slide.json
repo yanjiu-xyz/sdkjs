@@ -40,6 +40,7 @@
 			"common/api/addTextSettings.js",
 			"common/api/autoCorrectSettings.js",
 			"common/api/firstLetterExceptions.js",
+			"common/api/restrictionSettings.js",
 
 			"common/nameMap.js",
 			"common/downloaderfiles.js",
@@ -58,6 +59,7 @@
 
 			"common/stringserialize.js",
 			"common/random.js",
+			"common/keychainstorage.js",
 
 			"common/Drawings/Metafile.js",
 			"common/libfont/textmeasurer.js",
@@ -331,7 +333,6 @@
 		"mobile": [
 			"common/libfont/engine/fonts_native.js",
 			"common/Charts/ChartStyles.js",
-			"common/SmartArts/SmartArtPresets.js",
 			"common/Native/Wrappers/DrawingStream.js",
 			"common/Native/Wrappers/ShapeDrawer.js",
 			"common/Native/Wrappers/Overlay.js",

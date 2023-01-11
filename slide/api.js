@@ -609,7 +609,7 @@
 
 		this.ShowParaMarks        = false;
 		this.ShowSmartGuides      = true;
-		this.ShowGuides           = true;
+		this.ShowGuides           = false;
 		this.ShowGridlines        = false;
 
 
@@ -7598,6 +7598,7 @@ background-repeat: no-repeat;\
             }
 			this.checkChangesSize();
 		}
+		this.WordControl.m_oLogicDocument.Recalculate();
 		this.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
 	};
 	asc_docs_api.prototype.SlideTransitionApplyToAll = function()
@@ -8653,6 +8654,8 @@ background-repeat: no-repeat;\
 	// print-preview
 	asc_docs_api.prototype.asc_initPrintPreview = function(containerId, options)
 	{
+		if (this.printPreview)
+			return;
 		this.printPreview = new AscCommon.CPrintPreview(this, containerId);
 	};
 	asc_docs_api.prototype.asc_drawPrintPreview = function(index, paperSize)

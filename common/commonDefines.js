@@ -567,6 +567,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 			LoadingScriptError    : -24,
 			EditingError          :	-25,
 			LoadingFontError      : -26,
+			LoadingBinError       : -27,
 
 			SplitCellMaxRows     : -30,
 			SplitCellMaxCols     : -31,
@@ -594,20 +595,20 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 			FTRangeIncludedOtherTables       : -57,
 			ChangeFilteredRangeError         : -58,
 
+			CanNotPasteImage: -63,
 			PasteMaxRangeError   : -64,
 			PastInMergeAreaError : -65,
 			CopyMultiselectAreaError : -66,
 			PasteSlicerError: 67,
 			MoveSlicerError: 68,
 			PasteMultiSelectError : -69,
-			CanNotPasteImage: -70,
 
-			DataRangeError   : -75,
-			CannotMoveRange  : -74,
-			ErrorInFormula   : -73,
-			InvalidReference : -72,
-			NoSingleRowCol   : -71,
 			NoValues         : -70,
+			NoSingleRowCol   : -71,
+			InvalidReference : -72,
+			ErrorInFormula   : -73,
+			CannotMoveRange  : -74,
+			DataRangeError   : -75,
 
 			MaxDataSeriesError : -80,
 			CannotFillRange    : -81,
@@ -772,6 +773,13 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		View           : 0x80 // Отличие данного ограничения от обычного ViewMode в том, что редактор открывается
 		                      // как полноценный редактор, просто мы запрещаем ЛЮБОЕ редактирование. А во ViewMode
 		                      // открывается именно просмотрщик.
+	};
+
+	var c_oAscLocalRestrictionType = {
+		None		: 0x00,
+		ReadOnly	: 0x01,
+		Locked		: 0x02,
+		Nosafe		: 0x04
 	};
 
 	// Режимы отрисовки
@@ -4011,7 +4019,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['PasteSlicerError']                 = prot.PasteSlicerError;
 	prot['MoveSlicerError']                  = prot.MoveSlicerError;
 	prot['PasteMultiSelectError']            = prot.PasteMultiSelectError;
-	prot['canNotPasteImage']                 = prot.canNotPasteImage;
+	prot['CanNotPasteImage']                 = prot.CanNotPasteImage;
 	prot['DataRangeError']                   = prot.DataRangeError;
 	prot['CannotMoveRange']                  = prot.CannotMoveRange;
 	prot['MaxDataSeriesError']               = prot.MaxDataSeriesError;
@@ -4668,6 +4676,12 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['OnlyComments']   = c_oAscRestrictionType.OnlyComments;
 	prot['OnlySignatures'] = c_oAscRestrictionType.OnlySignatures;
 	prot['View']           = c_oAscRestrictionType.View;
+
+	prot = window['Asc']['c_oAscLocalRestrictionType'] = window['Asc'].c_oAscLocalRestrictionType = c_oAscLocalRestrictionType;
+	prot['None']     = c_oAscLocalRestrictionType.None;
+	prot['ReadOnly'] = c_oAscLocalRestrictionType.ReadOnly;
+	prot['Locked']   = c_oAscLocalRestrictionType.Locked;
+	prot['Nosafe']   = c_oAscLocalRestrictionType.Nosafe;
 
 
 	prot =  window["AscCommon"]["c_oAscCellAnchorType"] = window["AscCommon"].c_oAscCellAnchorType = c_oAscCellAnchorType;
