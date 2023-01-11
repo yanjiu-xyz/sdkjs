@@ -19414,7 +19414,7 @@
 				History.EndTransaction();
 				if (shiftCells) {
 					t.cellCommentator.updateCommentsDependencies(true, type, arn);
-					t.shiftCellWatches(true, val, arn);
+					t.shiftCellWatches(true, type, arn);
 					t.model.shiftDataValidation(true, type, arn, true);
 					t.objectRender.updateDrawingObject(true, type, arn);
 					t._onUpdateFormatTable(range);
