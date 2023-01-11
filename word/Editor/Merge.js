@@ -1211,7 +1211,7 @@
         oDoc1.History.Document = oDoc1;
 
         if (oDoc2) {
-            const oMerge = new AscCommonWord.CDocumentMerge(oDoc1, oDoc2, oOptions ? oOptions : new ComparisonOptions());
+            const oMerge = new AscCommonWord.CDocumentMerge(oDoc1, oDoc2, oOptions ? oOptions : new AscCommonWord.ComparisonOptions());
             oMerge.merge();
         } else {
             AscCommon.pptx_content_loader.End_UseFullUrl();
