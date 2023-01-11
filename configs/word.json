@@ -265,6 +265,7 @@
 			"word/Editor/DocumentProtection.js",
 			"word/Editor/Comparison.js",
 			"word/Editor/Revisions/TrackRevisionsManager.js",
+			"word/Editor/Merge.js",
 
 			"word/Drawing/Graphics.js",
 			"word/Drawing/ShapeDrawer.js",

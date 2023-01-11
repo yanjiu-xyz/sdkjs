@@ -213,7 +213,7 @@ ParaRun.prototype.Copy = function(Selected, oPr)
     var oLogicDocument = this.GetLogicDocument();
 	if(oPr && oPr.Comparison)
 	{
-		oPr.Comparison.updateReviewInfo(NewRun, reviewtype_Add);
+		oPr.Comparison.checkCopyParaRun(NewRun, this);
 	}
     else if (true === isCopyReviewPr || (oLogicDocument && (oLogicDocument.RecalcTableHeader || oLogicDocument.MoveDrawing)))
 	{
@@ -334,7 +334,7 @@ ParaRun.prototype.Copy2 = function(oPr)
     NewRun.Set_Pr( this.Pr.Copy(undefined, oPr) );
 	if(oPr && oPr.Comparison)
 	{
-		oPr.Comparison.updateReviewInfo(NewRun, reviewtype_Add);
+		oPr.Comparison.checkCopyParaRun(NewRun, this);
 	}
     var StartPos = 0;
     var EndPos   = this.Content.length;

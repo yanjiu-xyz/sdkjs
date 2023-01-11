@@ -299,6 +299,7 @@ Paragraph.prototype.Copy = function(Parent, DrawingDocument, oPr)
 
 	// Копируем содержимое параграфа
 	var Count = this.Content.length;
+	var arrMoveMarks = [];
 	for (var Index = 0; Index < Count; Index++)
 	{
 		var Item = this.Content[Index];
@@ -309,6 +310,18 @@ Paragraph.prototype.Copy = function(Parent, DrawingDocument, oPr)
 			continue;
 
 		let newItems = Item.Copy(false, oPr);
+		if (oPr.Comparison && oPr.CheckComparisonMoveMarks)
+		{
+			var bContinue = oPr.Comparison.checkCopyParagraphElement(Item, newItems, arrMoveMarks);
+			if (bContinue)
+			{
+				continue;
+			}
+			else
+			{
+				arrMoveMarks = [];
+			}
+		}
 		if (Array.isArray(newItems))
 		{
 			for (let newIndex = 0, newCount = newItems.length; newIndex < newCount; ++newIndex)
@@ -336,7 +349,7 @@ Paragraph.prototype.Copy = function(Parent, DrawingDocument, oPr)
 
 	if(oPr && oPr.Comparison)
 	{
-		oPr.Comparison.updateReviewInfo(EndRun, reviewtype_Add, true);
+		oPr.Comparison.checkCopyParaRun(EndRun, this.GetParaEndRun());
 	}
 
 	// Добавляем секцию в конце
