@@ -3780,6 +3780,25 @@ CT_pivotTableDefinition.prototype.getPivotTableButtons = function (range, button
 	}
 	this._getPivotLabelButtons(range, buttons);
 };
+CT_pivotTableDefinition.prototype.getDataFieldByRange = function (range) {
+	let pivotRange = this.getRange();
+	let location = this.location;
+	let dataFields = this.asc_getDataFields();
+	let rowItems = this.getRowItems();
+	let colItems = this.getColItems();
+	let baseCol = pivotRange.c1 + location.firstDataCol;
+	let baseRow = pivotRange.r1 + location.firstDataRow;
+	let curRow = range.r1 - baseRow;
+	let curCol = range.c1 - baseCol;
+	let result = null;
+	if (curRow > 0 && curCol > 0) {
+		let rowItem = rowItems[curRow];
+		let colItem = colItems[curCol];
+		let dataIndex = Math.max(rowItem.i, colItem.i);
+		result = dataFields[dataIndex];
+	}
+	return result;
+};
 CT_pivotTableDefinition.prototype.getPivotFieldButtonCompact = function(range, buttons, rowColFields, row, col) {
 	if (!range.contains(col, row)) {
 		return;
