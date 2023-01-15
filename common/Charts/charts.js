@@ -1135,10 +1135,7 @@ TextArtPreviewManager.prototype.getShapeByPrst = function(prst)
 
 	var oBodypr = oShape.getBodyPr().createDuplicate();
 	oBodypr.prstTxWarp = AscFormat.CreatePrstTxWarpGeometry(prst);
-	oBodypr.lIns = 2.54;
-	oBodypr.tIns = 2.54;
-	oBodypr.rIns = 2.54;
-	oBodypr.bIns = 2.54;
+	oBodypr.setDefaultInsets();
 	if(!oShape.bWordShape)
 	{
 		oShape.txBody.setBodyPr(oBodypr);

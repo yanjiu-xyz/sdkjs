@@ -9551,23 +9551,26 @@
 				this.textFit.Read_FromBinary(r);
 			}
 		};
+		CBodyPr.prototype.setDefaultInsets = function() {
+			this.bIns = 45720 / 36000;
+			this.tIns = 45720 / 36000;
+			this.lIns = 91440 / 36000;
+			this.rIns = 91440 / 36000;
+		};
 		CBodyPr.prototype.setDefault = function () {
+			this.setDefaultInsets();
 			this.flatTx = null;
 			this.anchor = 4;
 			this.anchorCtr = false;
-			this.bIns = 45720 / 36000;
 			this.compatLnSpc = false;
 			this.forceAA = false;
 			this.fromWordArt = false;
 			this.horzOverflow = AscFormat.nHOTOverflow;
-			this.lIns = 91440 / 36000;
 			this.numCol = 1;
-			this.rIns = 91440 / 36000;
 			this.rot = null;
 			this.rtlCol = false;
 			this.spcCol = false;
 			this.spcFirstLastPara = null;
-			this.tIns = 45720 / 36000;
 			this.upright = false;
 			this.vert = AscFormat.nVertTThorz;
 			this.vertOverflow = AscFormat.nVOTOverflow;

@@ -67,6 +67,11 @@ DrawingCopyObject.prototype.copy = function (oIdMap) {
 
 };
 
+const PE_SELECTED_CONTENT_EMPTY = 0;
+const PE_SELECTED_CONTENT_SLIDES = 1;
+const PE_SELECTED_CONTENT_DRAWINGS = 2;
+const PE_SELECTED_CONTENT_DOC_CONTENT = 3;
+
 function PresentationSelectedContent() {
     this.SlideObjects = [];
     this.Notes = [];
@@ -174,13 +179,22 @@ PresentationSelectedContent.prototype.copy = function () {
 
 PresentationSelectedContent.prototype.getContentType = function () {
     if (this.SlideObjects.length > 0) {
-        return 1;
+        return PE_SELECTED_CONTENT_SLIDES;
     } else if (this.Drawings.length > 0) {
-        return 2;
+        return PE_SELECTED_CONTENT_DRAWINGS;
     } else if (this.DocContent) {
-        return 3;
+        return PE_SELECTED_CONTENT_DOC_CONTENT;
     }
-    return 0;
+    return PE_SELECTED_CONTENT_EMPTY;
+};
+PresentationSelectedContent.prototype.isSlidesContent = function() {
+	return this.getContentType() === PE_SELECTED_CONTENT_SLIDES;
+};
+PresentationSelectedContent.prototype.isDrawingsContent = function() {
+	return this.getContentType() === PE_SELECTED_CONTENT_DRAWINGS;
+};
+PresentationSelectedContent.prototype.isDocContent = function() {
+	return this.getContentType() === PE_SELECTED_CONTENT_DOC_CONTENT;
 };
 
 function CreatePresentationTableStyles(Styles, IdMap) {
