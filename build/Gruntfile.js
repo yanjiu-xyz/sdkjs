@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -211,7 +211,7 @@ module.exports = function(grunt) {
 	license = license.replace('@@Version', version);
 	license = license.replace('@@Build', buildNumber);
 
-	function getCompileConfig(sdkmin, sdkall, outmin, outall) {
+	function getCompileConfig(sdkmin, sdkall, outmin, outall, name) {
 		const minWrapper = `${outmin}:${license}\nwindow.PRODUCT_VERSION="${version}";window.BUILD_NUMBER="${buildNumber}";window.APP_COPYRIGHT="${appCopyright}";window.PUBLISHER_URL="${publisherUrl}";window.IS_BETA="${beta}";%s`
 		const args = compilerArgs.concat (
 		'--rewrite_polyfills=true',
@@ -223,7 +223,11 @@ module.exports = function(grunt) {
 		'--module_wrapper=' + minWrapper,
 		...sdkall.map((file) => ('--js=' + file)),
 		'--module=' + outall + ':' + sdkall.length + ':' + outmin,
-		'--module_wrapper=' + outall + ':' + license +'\n' + '(function(window, undefined) {%s})(window);',)
+		'--module_wrapper=' + outall + ':' + license +'\n' + '(function(window, undefined) {%s})(window);');
+		if (grunt.option('map')) {
+			args.push('--property_renaming_report=' + path.join(`maps/${name}.props.js.map`));
+			args.push('--variable_renaming_report=' + path.join(`maps/${name}.vars.js.map`));
+		}
 		return {
 			'closure-compiler': {
 				js: {
@@ -235,15 +239,15 @@ module.exports = function(grunt) {
 		}
 	}
 	grunt.registerTask('compile-word', 'Compile Word SDK', function () {
-		grunt.initConfig(getCompileConfig(getFilesMin(configWord), getFilesAll(configWord), 'word-all-min', 'word-all'));
+		grunt.initConfig(getCompileConfig(getFilesMin(configWord), getFilesAll(configWord), 'word-all-min', 'word-all', 'word'));
 		grunt.task.run('closure-compiler');
 	});
 	grunt.registerTask('compile-cell', 'Compile Cell SDK', function () {
-		grunt.initConfig(getCompileConfig(getFilesMin(configCell), getFilesAll(configCell), 'cell-all-min', 'cell-all'));
+		grunt.initConfig(getCompileConfig(getFilesMin(configCell), getFilesAll(configCell), 'cell-all-min', 'cell-all', 'cell'));
 		grunt.task.run('closure-compiler');
 	});
 	grunt.registerTask('compile-slide', 'Compile Slide SDK', function () {
-		grunt.initConfig(getCompileConfig(getFilesMin(configSlide), getFilesAll(configSlide), 'slide-all-min', 'slide-all'));
+		grunt.initConfig(getCompileConfig(getFilesMin(configSlide), getFilesAll(configSlide), 'slide-all-min', 'slide-all', 'slide'));
 		grunt.task.run('closure-compiler');
 	});
 	grunt.registerTask('compile-sdk', ['compile-word', 'compile-cell', 'compile-slide']);
