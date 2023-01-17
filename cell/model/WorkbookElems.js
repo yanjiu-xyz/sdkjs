@@ -14481,6 +14481,9 @@ QueryTableField.prototype.clone = function() {
 		}
 		return null;
 	};
+	asc_CExternalReference.prototype.asc_getPath = function () {
+		return this.externalReference && this.externalReference.Id;
+	};
 	asc_CExternalReference.prototype.asc_getLocation = function () {
 
 	};
@@ -15282,6 +15285,8 @@ QueryTableField.prototype.clone = function() {
 	prot["asc_getSource"] = prot.asc_getSource;
 	prot["asc_getId"] = prot.asc_getId;
 	prot["asc_isExternalLink"] = prot.isExternalLink;
+	prot["asc_getPath"] = prot.asc_getPath;
+
 
 
 	window["AscCommonExcel"].CPrintPreviewState = CPrintPreviewState;

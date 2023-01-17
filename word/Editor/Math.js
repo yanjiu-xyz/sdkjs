@@ -1431,6 +1431,10 @@ ParaMath.prototype.Remove = function(Direction, bOnAddText)
                     // Значит мы в каком-то элементе, тогда надо выделить данный элемент
                     oContent.ParentElement.Select_WholeElement();
 
+                    // выставляем выделение для родительского элемента
+                    // TODO нужно понять почему mathContent.Select_WholeElement() не выделяет родительский элемент
+                    this.Parent.SelectFotMath();
+
                     return true;
                 }
 
@@ -2911,6 +2915,8 @@ ParaMath.prototype.MathToImageConverter = function(bCopy, _canvasInput, _widthPx
         {
             _ret.ImageUrl = "";
         }
+        if (_canvas.isNativeGraphics === true)
+            _canvas.Destroy();
         return _ret;
     }
     return null;
@@ -3664,6 +3670,10 @@ ParaMath.prototype.ConvertFromLaTeX = function()
 {
 	var strLaTeX = this.GetText(true);
 	this.Root.Remove_Content(0, this.Root.Content.length);
+    this.Root.Add_Text(strLaTeX);
+    this.Root.CorrectAllMathWords(true);
+    strLaTeX = this.GetText(true);
+    this.Root.Remove_Content(0, this.Root.Content.length);
     this.Root.Correct_Content(true);
     AscMath.ConvertLaTeXToTokensList(strLaTeX, this.Root);
 	this.Root.Correct_Content(true);
@@ -3676,7 +3686,7 @@ ParaMath.prototype.ConvertToLaTeX = function()
 };
 ParaMath.prototype.ConvertFromUnicodeMath = function()
 {
-    this.Root.CorrectAllMathWords();
+    this.Root.CorrectAllMathWords(false);
 	var strUnicode = this.GetText();
 	this.Root.Remove_Content(0,this.Root.Content.length);
     this.Root.Correct_Content(true);
