@@ -1795,16 +1795,14 @@
 	 * @param {ApiWorksheet} after - The sheet after which the moved sheet will be placed. You cannot specify After if you specify Before.
 	*/
 	ApiWorksheet.prototype.Move = function(before, after) {
-		var bb = before instanceof ApiWorksheet;
-		var ba = after instanceof ApiWorksheet;
+		let bb = before instanceof ApiWorksheet;
+		let ba = after instanceof ApiWorksheet;
 		if ( (bb && ba) || (!bb && !ba) )
 			return new Error('Incorrect parametrs.');
 
-		if (bb) {
-			this.worksheet.workbook.oApi.asc_moveWorksheet( before.Index, [this.Index] );
-		} else {
-			this.worksheet.workbook.oApi.asc_moveWorksheet( (after.Index + 1), [this.Index] );
-		}
+		let curIndex = this.GetIndex();
+		let newIndex = ( bb ? ( before.GetIndex() ) : (after.GetIndex() + 1) );
+		this.worksheet.workbook.oApi.asc_moveWorksheet( newIndex, [curIndex] );
 	};
 
 	/**
