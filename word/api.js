@@ -8375,7 +8375,7 @@ background-repeat: no-repeat;\
 		return this.WordControl.m_dScrollY;
 	};
 
-	asc_docs_api.prototype.getFormatPainterData = function()
+	asc_docs_api.prototype.retrieveFormatPainterData = function()
 	{
 		let oLogicDocument = this.private_GetLogicDocument();
 		if(!oLogicDocument)

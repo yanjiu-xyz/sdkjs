@@ -2040,7 +2040,7 @@ CHeaderFooterController.prototype =
 	{
 		return this.CurHdrFtr.AddNewParagraph();
 	},
-	
+
 	AddInlineImage : function(W, H, Img, Chart, bFlow)
     {
         if ( null != this.CurHdrFtr )

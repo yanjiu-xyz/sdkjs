@@ -1780,8 +1780,8 @@ CSelectedElementsInfo.prototype.IsFixedFormShape = function()
 
 function CDocumentFormatPainterData(oTextPr, oParaPr, oDrawing)
 {
-	this.CopyTextPr = oTextPr;
-	this.CopyParaPr = oDrawing;
+	this.TextPr = oTextPr;
+	this.ParaPr = oParaPr;
 	this.Drawing = oDrawing;
 }
 
@@ -1982,8 +1982,6 @@ function CDocument(DrawingDocument, isMainLogicDocument)
         PageNum : 0
     };
 
-    this.CopyTextPr = null; // TextPr для копирования по образцу
-    this.CopyParaPr = null; // ParaPr для копирования по образцу
 
     // Класс для работы со статискикой документа
     this.Statistics = new CStatistics( this );
@@ -11150,8 +11148,7 @@ CDocument.prototype.GetFormatPainterData = function()
 };
 CDocument.prototype.Document_Format_Copy = function()
 {
-	this.CopyTextPr = this.GetDirectTextPr();
-	this.CopyParaPr = this.GetDirectParaPr();
+	this.Api.checkFormatPainterData();
 };
 CDocument.prototype.EndHdrFtrEditing = function(bCanStayOnPage)
 {
@@ -11249,7 +11246,10 @@ CDocument.prototype.EndFormEditing = function()
 };
 CDocument.prototype.Document_Format_Paste = function()
 {
-	this.Controller.PasteFormatting(this.CopyTextPr, this.CopyParaPr);
+	let oData = this.Api.getFormatPainterData();
+	if(!oData)
+		return;
+	this.Controller.PasteFormatting(oData.TextPr, oData.ParaPr);
 	this.Recalculate();
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateSelectionState();

@@ -12419,10 +12419,8 @@
 		this.state = nState;
 	};
 	CFormatPainter.prototype.changeState = function(nState) {
-		let bIsOldOn = this.isOn();
 		this.setState(nState);
-		let bIsNewOn = this.isOn();
-		if(bIsNewOn !== bIsOldOn) {
+		if(this.isOn()) {
 			this.checkData();
 		}
 		if(!this.data && this.isOn()) {
@@ -12430,12 +12428,8 @@
 		}
 	};
 	CFormatPainter.prototype.checkData = function() {
-		if(this.isOn()) {
-			this.data = this.api.getFormatPainterData();
-		}
-		else {
-			this.data = null;
-		}
+		this.data = this.api.retrieveFormatPainterData();
+		return this.data;
 	};
 
 

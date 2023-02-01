@@ -4235,8 +4235,17 @@
 	};
 
 
-	baseEditorsApi.prototype.getFormatPainterData = function() {
+	baseEditorsApi.prototype.retrieveFormatPainterData = function() {
 		return null;
+	};
+	baseEditorsApi.prototype.getFormatPainter = function() {
+		return this.formatPainter;
+	};
+	baseEditorsApi.prototype.checkFormatPainterData = function() {
+		return this.formatPainter.checkData();
+	};
+	baseEditorsApi.prototype.getFormatPainterData = function() {
+		return this.formatPainter.data;
 	};
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
