@@ -225,7 +225,7 @@ DrawingObjectsController.prototype.paragraphFormatPaste = function( CopyTextPr, 
 
 DrawingObjectsController.prototype.paragraphFormatPaste2 = function()
 {
-    return this.paragraphFormatPaste(this.getPresentation().CopyTextPr, null, true);
+    return this.paragraphFormatPaste(this.getPresentation().CopyTextPr, null);
 };
 DrawingObjectsController.prototype.getDrawingDocument = function()
 {

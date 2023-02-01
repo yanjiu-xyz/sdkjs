@@ -7908,7 +7908,7 @@ CPresentation.prototype.Document_Format_Copy = function () {
 CPresentation.prototype.Document_Format_Paste = function () {
     if (this.CopyTextPr && this.CopyParaPr) {
         var oController = this.GetCurrentController();
-        oController && oController.paragraphFormatPaste(this.CopyTextPr, /*this.CopyParaPr*/null, false);
+        oController && oController.paragraphFormatPaste(this.CopyTextPr, /*this.CopyParaPr*/null);
         this.Document_UpdateInterfaceState();
     }
 };
