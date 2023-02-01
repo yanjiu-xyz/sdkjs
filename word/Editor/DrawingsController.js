@@ -430,7 +430,7 @@ CDrawingsController.prototype.UpdateCursorType = function(X, Y, PageAbs, MouseEv
 };
 CDrawingsController.prototype.PasteFormatting = function(TextPr, ParaPr)
 {
-	this.DrawingObjects.paragraphFormatPaste(TextPr, ParaPr);
+	this.DrawingObjects.pasteFormatting(TextPr, ParaPr);
 };
 CDrawingsController.prototype.IsSelectionUse = function()
 {

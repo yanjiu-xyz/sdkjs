@@ -6801,6 +6801,15 @@ background-repeat: no-repeat;\
 		return this.WordControl.m_dScrollY;
 	};
 
+	asc_docs_api.prototype.retrieveFormatPainterData = function()
+	{
+		let oPresentation = this.private_GetLogicDocument();
+		if(!oPresentation)
+		{
+			return null;
+		}
+		return oPresentation.GetFormatPainterData();
+	};
 	asc_docs_api.prototype.SetPaintFormat = function(value)
 	{
 		this.formatPainterState = value;

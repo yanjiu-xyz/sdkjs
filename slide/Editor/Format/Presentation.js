@@ -2861,8 +2861,6 @@ function CPresentation(DrawingDocument) {
             PageNum: 0
         };
 
-    this.CopyTextPr = null; // TextPr для копирования по образцу
-    this.CopyParaPr = null; // ParaPr для копирования по образцу
 
 
     this.Lock = new AscCommon.CLock();
@@ -7900,17 +7898,20 @@ CPresentation.prototype.Refresh_ContentChanges = function () {
 };
 
 
+CPresentation.prototype.GetFormatPainterData = function () {
+	return new CDocumentFormatPainterData(this.GetDirectTextPr(), this.GetDirectParaPr(), null);
+};
 CPresentation.prototype.Document_Format_Copy = function () {
-    this.CopyTextPr = this.GetDirectTextPr();
-    this.CopyParaPr = this.GetDirectParaPr();
+	this.Api.checkFormatPainterData();
 };
 
 CPresentation.prototype.Document_Format_Paste = function () {
-    if (this.CopyTextPr && this.CopyParaPr) {
-        var oController = this.GetCurrentController();
-        oController && oController.paragraphFormatPaste(this.CopyTextPr, /*this.CopyParaPr*/null);
-        this.Document_UpdateInterfaceState();
-    }
+	let oData = this.Api.getFormatPainterData();
+	if(!oData || !oData.TextPr)
+		return;
+	var oController = this.GetCurrentController();
+	oController && oController.pasteFormatting(oData.TextPr, /*this.CopyParaPr*/null);
+	this.Document_UpdateInterfaceState();
 };
 
 // Возвращаем выделенный текст, если в выделении не более 1 параграфа, и там нет картинок, нумерации страниц и т.д.

@@ -346,7 +346,7 @@ CGraphicFrame.prototype.hitInPath= function()
         return false;
 };
 
-CGraphicFrame.prototype.paragraphFormatPaste= function(CopyTextPr, CopyParaPr)
+CGraphicFrame.prototype.pasteFormatting= function(CopyTextPr, CopyParaPr)
     {
         if(isRealObject(this.graphicObject))
         {

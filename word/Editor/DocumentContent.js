@@ -5619,7 +5619,7 @@ CDocumentContent.prototype.PasteFormatting = function(TextPr, ParaPr)
 
 	if (docpostype_DrawingObjects === this.CurPos.Type)
 	{
-		return this.LogicDocument.DrawingObjects.paragraphFormatPaste(TextPr, ParaPr);
+		return this.LogicDocument.DrawingObjects.pasteFormatting(TextPr, ParaPr);
 	}
 	else //if ( docpostype_Content === this.CurPos.Type )
 	{

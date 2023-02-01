@@ -2440,7 +2440,7 @@ CGraphicObjects.prototype =
         }
     },
 
-    paragraphFormatPaste: function(CopyTextPr, CopyParaPr)
+	pasteFormatting: function(CopyTextPr, CopyParaPr)
     {
         var content = this.getTargetDocContent();
         content && content.PasteFormatting(CopyTextPr, CopyParaPr);
