@@ -3503,7 +3503,12 @@ CFootnotesController.prototype.CollectSelectedReviewChanges = function(oTrackMan
 		this.CurFootnote.CollectSelectedReviewChanges(oTrackManager);
 	}
 };
-
+CFootnotesController.prototype.GetFormatPainterData = function ()
+{
+	if(!this.CurFootnote)
+		return null;
+	return this.CurFootnote.GetFormatPainterData();
+};
 
 function CFootEndnotePageColumn()
 {

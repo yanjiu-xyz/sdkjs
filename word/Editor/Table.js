@@ -6019,6 +6019,10 @@ CTable.prototype.AddNewParagraph = function()
 {
 	this.CurCell.Content.AddNewParagraph();
 };
+CTable.prototype.GetFormatPainterData = function()
+{
+	return new CDocumentFormatPainterData(this.GetDirectTextPr(), this.GetDirectParaPr(), null);
+};
 CTable.prototype.AddInlineImage = function(W, H, Img, Chart, bFlow)
 {
 	this.Selection.Use  = true;

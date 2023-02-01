@@ -98,6 +98,10 @@ CDrawingsController.prototype.AddNewParagraph = function(bRecalculate, bForceAdd
 {
 	return this.DrawingObjects.addNewParagraph(bRecalculate, bForceAdd);
 };
+CDrawingsController.prototype.GetFormatPainterData = function()
+{
+	return this.DrawingObjects.getFormatPainterData();
+};
 CDrawingsController.prototype.AddInlineImage = function(nW, nH, oImage, oChart, bFlow)
 {
 	return this.DrawingObjects.addInlineImage(nW, nH, oImage, oChart, bFlow);

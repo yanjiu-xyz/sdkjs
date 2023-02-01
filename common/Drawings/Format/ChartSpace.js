@@ -2184,6 +2184,12 @@ var GLOBAL_PATH_COUNT = 0;
         }
         return null;
     };
+	CChartSpace.prototype.getChartTitle = function() {
+		if(this.chart && this.chart.title) {
+			return this.chart.title;
+		}
+		return null;
+	};
     CChartSpace.prototype.getAllTitles = function() {
         var ret = [];
         if(this.chart) {

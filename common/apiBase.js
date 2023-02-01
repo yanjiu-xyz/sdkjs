@@ -222,6 +222,10 @@
 		this.binaryChanges = false;
 
 		this.isBlurEditor = false;
+
+		this.formatPainterState = AscCommon.c_oAscFormatPainterState.kOff;
+
+		this.formatPainter = new AscCommon.CFormatPainter(this);
 		this._correctEmbeddedWork();
 
 		return this;
@@ -4230,6 +4234,10 @@
 		this.asc_pluginRun(plugin.guid, 0, startData);
 	};
 
+
+	baseEditorsApi.prototype.getFormatPainterData = function() {
+		return null;
+	};
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
 	window['AscCommon'].baseEditorsApi = baseEditorsApi;

@@ -9041,6 +9041,52 @@ DrawingObjectsController.prototype =
 		return dShift;
 	},
 
+	getFormatPainterData: function() {
+		let oTargetDocContent = this.getTargetDocContent();
+		if(oTargetDocContent)
+		{
+			let oTextPr = oTargetDocContent.GetDirectTextPr();
+			let oParaPr = oTargetDocContent.GetDirectParaPr();
+			return new CDocumentFormatPainterData(oTextPr, oTextPr, null);
+		}
+		let aSelectedObjects = this.getSelectedArray();
+		if(aSelectedObjects.length === 1)
+		{
+			let oDrawing = aSelectedObjects[0];
+			if(oDrawing.isShape() || oDrawing.isImage())
+			{
+				return new CDocumentFormatPainterData(null, null, oDrawing);
+			}
+			if(oDrawing.isTable())
+			{
+				let oTable = oDrawing.graphicObject;
+				let oCell = oTable.CurCell;
+				if(oCell)
+				{
+					let oContent = oCell.Content;
+					let oTextPr = oContent.GetDirectTextPr();
+					let oParaPr = oContent.GetDirectParaPr();
+					return new CDocumentFormatPainterData(oTextPr, oParaPr, null);
+				}
+			}
+			else if(oDrawing.isChart())
+			{
+				let oChartTitle = oDrawing.getChartTitle();
+				if(oChartTitle)
+				{
+					let oContent = oChartTitle.getDocContent();
+					if(oContent)
+					{
+						let oTextPr = oContent.GetDirectTextPr();
+						let oParaPr = oContent.GetDirectParaPr();
+						return new CDocumentFormatPainterData(oTextPr, oParaPr, null);
+					}
+				}
+			}
+		}
+		return null;
+	},
+
     getEditorApi: function()
     {
         if(window["Asc"] && window["Asc"]["editor"])

@@ -5996,6 +5996,18 @@ var editor;
 
   // Формат по образцу
   spreadsheet_api.prototype.asc_formatPainter = function(formatPainterState) {
+	if(formatPainterState !== null && formatPainterState !== undefined) {
+		this.formatPainterState = formatPainterState;
+	}
+	else {
+		//toggle state if it is not specified
+		if(this.formatPainterState !== Asc.c_oAscFormatPainterState.kOff) {
+			this.formatPainterState = Asc.c_oAscFormatPainterState.kOff;
+		}
+		else {
+			this.formatPainterState = Asc.c_oAscFormatPainterState.kOn;
+		}
+	}
     if (this.wb) {
       this.wb.formatPainter(formatPainterState);
     }

@@ -2090,7 +2090,7 @@ function CDrawingDocument()
 		{
             if ("text" == sType)
             {
-                if (AscCommon.c_oAscFormatPainterState.kOff !== this.m_oWordControl.m_oApi.isPaintFormat)
+                if (AscCommon.c_oAscFormatPainterState.kOff !== this.m_oWordControl.m_oApi.formatPainterState)
                     this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.kCurFormatPainterWord);
                 else if (this.m_oWordControl.m_oApi.isMarkerFormat)
                     this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-markerformat");

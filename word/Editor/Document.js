@@ -1778,6 +1778,13 @@ CSelectedElementsInfo.prototype.IsFixedFormShape = function()
 	return this.FixedFormShape;
 };
 
+function CDocumentFormatPainterData(oTextPr, oParaPr, oDrawing)
+{
+	this.CopyTextPr = oTextPr;
+	this.CopyParaPr = oDrawing;
+	this.Drawing = oDrawing;
+}
+
 /**
  * Основной класс для работы с документом в Word.
  * @param DrawingDocument
@@ -9105,7 +9112,7 @@ CDocument.prototype.OnKeyDown = function(e)
 				editor.sync_MarkerFormatCallback(false);
 				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
 			}
-			else if (c_oAscFormatPainterState.kOff !== editor.isPaintFormat)
+			else if (c_oAscFormatPainterState.kOff !== editor.formatPainterState)
 			{
 				editor.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
 				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
@@ -10182,7 +10189,7 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 		this.CheckComplexFieldsInSelection();
 		isUpdateTarget = this.private_UpdateSelectionOnMouseEvent(X, Y, this.CurPage, e);
 
-		if (c_oAscFormatPainterState.kOff !== editor.isPaintFormat)
+		if (c_oAscFormatPainterState.kOff !== editor.formatPainterState)
 		{
 			if (false === this.Document_Is_SelectionLocked(changestype_Paragraph_Content))
 			{
@@ -10191,7 +10198,7 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 				this.FinalizeAction();
 			}
 
-			if (c_oAscFormatPainterState.kOn === editor.isPaintFormat)
+			if (c_oAscFormatPainterState.kOn === editor.formatPainterState)
 				editor.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
 		}
 		else if (true === editor.isMarkerFormat && true === this.IsTextSelectionUse())
@@ -11136,6 +11143,10 @@ CDocument.prototype.SetSectionStartPage = function(nStartPage)
 	this.Document_UpdateRulersState();
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateSelectionState();
+};
+CDocument.prototype.GetFormatPainterData = function()
+{
+	return this.Controller.GetFormatPainterData();
 };
 CDocument.prototype.Document_Format_Copy = function()
 {
@@ -18488,6 +18499,10 @@ CDocument.prototype.controller_AddNewParagraph = function(bRecalculate, bForceAd
 		}
 	}
 };
+CDocument.prototype.controller_GetFormatPainterData = function()
+{
+	return new CDocumentFormatPainterData(this.GetDirectTextPr(), this.GetDirectParaPr(), null);
+};
 CDocument.prototype.controller_AddInlineImage = function(W, H, Img, Chart, bFlow)
 {
 	if (true == this.Selection.Use)
@@ -21608,6 +21623,7 @@ CDocument.prototype.controller_CollectSelectedReviewChanges = function(oTrackMan
 		this.Content[nPos].CollectSelectedReviewChanges(oTrackManager);
 	}
 };
+CDocument.prototype.controller_GetFormatPainterData
 //----------------------------------------------------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------------------------------------------------

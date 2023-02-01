@@ -8873,7 +8873,7 @@
 			};
 		}
 
-		if (this.workbook.formatPainterState) {
+		if (this.workbook.Api.formatPainterState) {
 			if (x <= this.cellsLeft && y >= this.cellsTop) {
 				r = this._findRowUnderCursor(y, true);
 				if (r !== null) {
@@ -10434,7 +10434,7 @@
 
     // Окончание выделения
     WorksheetView.prototype.changeSelectionDone = function () {
-        if (this.workbook.formatPainterState) {
+        if (this.workbook.Api.formatPainterState) {
             this.applyFormatPainter();
 		} else {
 			this.checkSelectionSparkline();
@@ -10507,7 +10507,7 @@
             }
 
             // Сбрасываем параметры
-            if (c_oAscFormatPainterState.kMultiple !== t.workbook.formatPainterState) {
+            if (c_oAscFormatPainterState.kMultiple !== this.workbook.Api.formatPainterState) {
                 t.handlers.trigger('onStopFormatPainter', true);
             }
 

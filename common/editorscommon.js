@@ -12396,6 +12396,48 @@
 		this.CheckStyleDisplay();
 	};
 
+	function CFormatPainter(oApi) {
+		this.api = oApi;
+		this.state = AscCommon.c_oAscFormatPainterState.kOff;
+		this.data = null
+	}
+	CFormatPainter.prototype.isOn = function() {
+		return !this.isOff();
+	};
+	CFormatPainter.prototype.isOff = function() {
+		return this.state === AscCommon.c_oAscFormatPainterState.kOff;
+	};
+	CFormatPainter.prototype.toggle = function() {
+		if(this.isOn()) {
+			this.changeState(AscCommon.c_oAscFormatPainterState.kOff);
+		}
+		else {
+			this.changeState(AscCommon.c_oAscFormatPainterState.kOn);
+		}
+	};
+	CFormatPainter.prototype.setState = function(nState) {
+		this.state = nState;
+	};
+	CFormatPainter.prototype.changeState = function(nState) {
+		let bIsOldOn = this.isOn();
+		this.setState(nState);
+		let bIsNewOn = this.isOn();
+		if(bIsNewOn !== bIsOldOn) {
+			this.checkData();
+		}
+		if(!this.data && this.isOn()) {
+			this.setState(AscCommon.c_oAscFormatPainterState.kOff);
+		}
+	};
+	CFormatPainter.prototype.checkData = function() {
+		if(this.isOn()) {
+			this.data = this.api.getFormatPainterData();
+		}
+		else {
+			this.data = null;
+		}
+	};
+
 
 	//------------------------------------------------------------fill polyfill--------------------------------------------
 	if (!Array.prototype.findIndex) {
@@ -13554,6 +13596,7 @@
 	window["AscCommon"].sendClientLog = sendClientLog;
 
 	window["AscCommon"].getNativePrintRanges = getNativePrintRanges;
+	window["AscCommon"].CFormatPainter = CFormatPainter;
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)

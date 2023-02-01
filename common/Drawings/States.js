@@ -2003,10 +2003,10 @@ TextAddState.prototype =
         {
             if(oApi.editorId === AscCommon.c_oEditorId.Presentation)
             {
-                if(AscCommon.c_oAscFormatPainterState.kOff !== oApi.isPaintFormat)
+                if(AscCommon.c_oAscFormatPainterState.kOff !== oApi.formatPainterState)
                 {
                     this.drawingObjects.paragraphFormatPaste2();
-                    if (AscCommon.c_oAscFormatPainterState.kOn === oApi.isPaintFormat)
+                    if (AscCommon.c_oAscFormatPainterState.kOn === oApi.formatPainterState)
                     {
                         oApi.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
                     }

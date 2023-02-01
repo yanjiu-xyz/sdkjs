@@ -4969,7 +4969,9 @@ CPresentation.prototype.AddNewParagraph = function (bRecalculate) {
     oController && oController.checkSelectedObjectsAndCallback(oController.addNewParagraph, [], false, AscDFH.historydescription_Presentation_AddNewParagraph);
     this.Document_UpdateInterfaceState();
 };
-
+CPresentation.prototype.GetFormatPainterData = function() {
+	return null;
+};
 CPresentation.prototype.Search = function (oProps) {
     if (true === this.SearchEngine.Compare(oProps))
         return this.SearchEngine;
@@ -6839,7 +6841,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
             if (true === this.DrawingDocument.IsTrackText()) {
                 this.DrawingDocument.CancelTrackText();
             }
-            if (AscCommon.c_oAscFormatPainterState.kOff !== this.Api.isPaintFormat) {
+            if (AscCommon.c_oAscFormatPainterState.kOff !== this.Api.formatPainterState) {
                 this.Api.sync_PaintFormatCallback(AscCommon.c_oAscFormatPainterState.kOff);
                 this.OnMouseMove(global_mouseEvent, 0, 0, this.CurPage);
             }
