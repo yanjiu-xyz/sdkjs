@@ -703,9 +703,9 @@ CBlockLevelSdt.prototype.GetSelectedContent = function(oSelectedContent)
 		return this.Content.GetSelectedContent(oSelectedContent);
 	}
 };
-CBlockLevelSdt.prototype.PasteFormatting = function(TextPr, ParaPr)
+CBlockLevelSdt.prototype.PasteFormatting = function(oData)
 {
-	return this.Content.PasteFormatting(TextPr, ParaPr);
+	return this.Content.PasteFormatting(oData);
 };
 CBlockLevelSdt.prototype.GetCurPosXY = function()
 {

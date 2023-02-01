@@ -11249,7 +11249,7 @@ CDocument.prototype.Document_Format_Paste = function()
 	let oData = this.Api.getFormatPainterData();
 	if(!oData)
 		return;
-	this.Controller.PasteFormatting(oData.TextPr, oData.ParaPr);
+	this.Controller.PasteFormatting(oData);
 	this.Recalculate();
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateSelectionState();
@@ -20741,7 +20741,7 @@ CDocument.prototype.controller_UpdateCursorType = function(X, Y, PageAbs, MouseE
 	var ElementPageIndex = this.private_GetElementPageIndexByXY(ContentPos, X, Y, PageAbs);
 	Item.UpdateCursorType(X, Y, ElementPageIndex);
 };
-CDocument.prototype.controller_PasteFormatting = function(TextPr, ParaPr)
+CDocument.prototype.controller_PasteFormatting = function(oData)
 {
 	if (true === this.Selection.Use)
 	{
@@ -20757,13 +20757,13 @@ CDocument.prototype.controller_PasteFormatting = function(TextPr, ParaPr)
 
 			for (var Pos = Start; Pos <= End; Pos++)
 			{
-				this.Content[Pos].PasteFormatting(TextPr, ParaPr);
+				this.Content[Pos].PasteFormatting(oData);
 			}
 		}
 	}
 	else
 	{
-		this.Content[this.CurPos.ContentPos].PasteFormatting(TextPr, ParaPr);
+		this.Content[this.CurPos.ContentPos].PasteFormatting(oData);
 	}
 };
 CDocument.prototype.controller_IsSelectionUse = function()

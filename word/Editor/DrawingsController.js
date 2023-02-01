@@ -428,9 +428,9 @@ CDrawingsController.prototype.UpdateCursorType = function(X, Y, PageAbs, MouseEv
 	// TODO: Надо вызывать не у LogicDocument, а у DocumentContent заданного
 	this.LogicDocument.controller_UpdateCursorType(X, Y, PageAbs, MouseEvent);
 };
-CDrawingsController.prototype.PasteFormatting = function(TextPr, ParaPr)
+CDrawingsController.prototype.PasteFormatting = function(oData)
 {
-	this.DrawingObjects.pasteFormatting(TextPr, ParaPr);
+	this.DrawingObjects.pasteFormatting(oData);
 };
 CDrawingsController.prototype.IsSelectionUse = function()
 {

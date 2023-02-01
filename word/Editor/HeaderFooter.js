@@ -787,9 +787,9 @@ CHeaderFooter.prototype =
 		this.Content.ClearParagraphFormatting(isClearParaPr, isClearTextPr);
 	},
 
-	PasteFormatting : function(TextPr, ParaPr)
+	PasteFormatting : function(oData)
 	{
-		this.Content.PasteFormatting(TextPr, ParaPr);
+		this.Content.PasteFormatting(oData);
 	},
 
     Remove : function(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord)
@@ -2098,10 +2098,10 @@ CHeaderFooterController.prototype =
 			return this.CurHdrFtr.ClearParagraphFormatting();
 	},
 
-	PasteFormatting : function(TextPr, ParaPr)
+	PasteFormatting : function(oData)
 	{
 		if (null != this.CurHdrFtr)
-			return this.CurHdrFtr.PasteFormatting(TextPr, ParaPr);
+			return this.CurHdrFtr.PasteFormatting(oData);
 	},
 
     Remove : function(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord)

@@ -2680,11 +2680,11 @@ CEndnotesController.prototype.UpdateCursorType = function(X, Y, PageAbs, MouseEv
 		oEndnote.UpdateCursorType(X, Y, oResult.EndnotePageIndex, MouseEvent);
 	}
 };
-CEndnotesController.prototype.PasteFormatting = function(TextPr, ParaPr)
+CEndnotesController.prototype.PasteFormatting = function(oData)
 {
 	for (var sId in this.Selection.Endnotes)
 	{
-		this.Selection.Endnotes[sId].PasteFormatting(TextPr, ParaPr);
+		this.Selection.Endnotes[sId].PasteFormatting(oData);
 	}
 };
 CEndnotesController.prototype.IsSelectionUse = function()

@@ -5602,7 +5602,7 @@ CDocumentContent.prototype.IncreaseDecreaseIndent = function(bIncrease)
 		}
 	}
 };
-CDocumentContent.prototype.PasteFormatting = function(TextPr, ParaPr)
+CDocumentContent.prototype.PasteFormatting = function(oData)
 {
 	if (true === this.ApplyToAll)
 	{
@@ -5610,7 +5610,7 @@ CDocumentContent.prototype.PasteFormatting = function(TextPr, ParaPr)
 		{
 			var Item = this.Content[Index];
 			Item.SetApplyToAll(true);
-			Item.PasteFormatting(TextPr, ParaPr);
+			Item.PasteFormatting(oData);
 			Item.SetApplyToAll(false);
 		}
 
@@ -5619,7 +5619,7 @@ CDocumentContent.prototype.PasteFormatting = function(TextPr, ParaPr)
 
 	if (docpostype_DrawingObjects === this.CurPos.Type)
 	{
-		return this.LogicDocument.DrawingObjects.pasteFormatting(TextPr, ParaPr);
+		return this.LogicDocument.DrawingObjects.pasteFormatting(oData);
 	}
 	else //if ( docpostype_Content === this.CurPos.Type )
 	{
@@ -5641,7 +5641,7 @@ CDocumentContent.prototype.PasteFormatting = function(TextPr, ParaPr)
 
 					for (var Pos = Start; Pos <= End; Pos++)
 					{
-						this.Content[Pos].PasteFormatting(TextPr, ParaPr);
+						this.Content[Pos].PasteFormatting(oData);
 					}
 					break;
 				}
@@ -5649,7 +5649,7 @@ CDocumentContent.prototype.PasteFormatting = function(TextPr, ParaPr)
 		}
 		else
 		{
-			this.Content[this.CurPos.ContentPos].PasteFormatting(TextPr, ParaPr);
+			this.Content[this.CurPos.ContentPos].PasteFormatting(oData);
 		}
 	}
 };

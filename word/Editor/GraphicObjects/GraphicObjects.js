@@ -2440,10 +2440,10 @@ CGraphicObjects.prototype =
         }
     },
 
-	pasteFormatting: function(CopyTextPr, CopyParaPr)
+	pasteFormatting: function(oData)
     {
         var content = this.getTargetDocContent();
-        content && content.PasteFormatting(CopyTextPr, CopyParaPr);
+        content && content.PasteFormatting(oData);
     },
 
     getHdrFtrObjectsByPageIndex: function(pageIndex)

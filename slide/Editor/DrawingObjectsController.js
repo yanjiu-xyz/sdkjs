@@ -213,12 +213,12 @@ DrawingObjectsController.prototype.getDrawingObjects = function()
     return this.drawingObjects.cSld.spTree;
 };
 
-DrawingObjectsController.prototype.pasteFormatting = function( CopyTextPr, CopyParaPr)
+DrawingObjectsController.prototype.pasteFormatting = function(oFormatData)
 {
     this.checkSelectedObjectsAndCallback(function()
     {
-        this.applyTextFunction(CDocumentContent.prototype.PasteFormatting, CTable.prototype.PasteFormatting, [CopyTextPr, CopyParaPr]);
-    }, [CopyTextPr, CopyParaPr], false, AscDFH.historydescription_Presentation_ParaFormatPaste);
+        this.applyTextFunction(CDocumentContent.prototype.PasteFormatting, CTable.prototype.PasteFormatting, [oFormatData]);
+    }, [oFormatData], false, AscDFH.historydescription_Presentation_ParaFormatPaste);
 };
 
 
@@ -227,7 +227,7 @@ DrawingObjectsController.prototype.paragraphFormatPaste2 = function()
 	let oData = this.getEditorApi().getFormatPainterData();
 	if(!oData || !oData.TextPr)
 		return;
-    return this.pasteFormatting(oData.TextPr, null);
+    return this.pasteFormatting(oData);
 };
 DrawingObjectsController.prototype.getDrawingDocument = function()
 {

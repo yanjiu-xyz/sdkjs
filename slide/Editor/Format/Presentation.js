@@ -7909,8 +7909,8 @@ CPresentation.prototype.Document_Format_Paste = function () {
 	let oData = this.Api.getFormatPainterData();
 	if(!oData || !oData.TextPr)
 		return;
-	var oController = this.GetCurrentController();
-	oController && oController.pasteFormatting(oData.TextPr, /*this.CopyParaPr*/null);
+	let oController = this.GetCurrentController();
+	oController && oController.pasteFormatting(oData);
 	this.Document_UpdateInterfaceState();
 };
 
