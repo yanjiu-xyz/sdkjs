@@ -346,11 +346,11 @@ CGraphicFrame.prototype.hitInPath= function()
         return false;
 };
 
-CGraphicFrame.prototype.paragraphFormatPaste= function(CopyTextPr, CopyParaPr, Bool)
+CGraphicFrame.prototype.paragraphFormatPaste= function(CopyTextPr, CopyParaPr)
     {
         if(isRealObject(this.graphicObject))
         {
-            this.graphicObject.PasteFormatting(CopyTextPr, CopyParaPr, Bool);
+            this.graphicObject.PasteFormatting(CopyTextPr, CopyParaPr);
 
             this.recalcInfo.recalculateContent = true;
             this.recalcInfo.recalculateTransformText = true;

@@ -20757,13 +20757,13 @@ CDocument.prototype.controller_PasteFormatting = function(TextPr, ParaPr)
 
 			for (var Pos = Start; Pos <= End; Pos++)
 			{
-				this.Content[Pos].PasteFormatting(TextPr, ParaPr, Start === End ? false : true);
+				this.Content[Pos].PasteFormatting(TextPr, ParaPr);
 			}
 		}
 	}
 	else
 	{
-		this.Content[this.CurPos.ContentPos].PasteFormatting(TextPr, ParaPr, true);
+		this.Content[this.CurPos.ContentPos].PasteFormatting(TextPr, ParaPr);
 	}
 };
 CDocument.prototype.controller_IsSelectionUse = function()

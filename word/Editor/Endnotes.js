@@ -2684,7 +2684,7 @@ CEndnotesController.prototype.PasteFormatting = function(TextPr, ParaPr)
 {
 	for (var sId in this.Selection.Endnotes)
 	{
-		this.Selection.Endnotes[sId].PasteFormatting(TextPr, ParaPr, true);
+		this.Selection.Endnotes[sId].PasteFormatting(TextPr, ParaPr);
 	}
 };
 CEndnotesController.prototype.IsSelectionUse = function()

@@ -570,7 +570,7 @@ CDocumentContentElementBase.prototype.SetTableProps = function(oProps)
 CDocumentContentElementBase.prototype.GetSelectedContent = function(oSelectedContent)
 {
 };
-CDocumentContentElementBase.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
+CDocumentContentElementBase.prototype.PasteFormatting = function(TextPr, ParaPr)
 {
 };
 CDocumentContentElementBase.prototype.GetCurPosXY = function()

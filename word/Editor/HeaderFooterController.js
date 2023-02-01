@@ -303,7 +303,7 @@ CHdrFtrController.prototype.UpdateCursorType = function(X, Y, PageAbs, MouseEven
 };
 CHdrFtrController.prototype.PasteFormatting = function(TextPr, ParaPr)
 {
-	this.HdrFtr.PasteFormatting(TextPr, ParaPr, false);
+	this.HdrFtr.PasteFormatting(TextPr, ParaPr);
 };
 CHdrFtrController.prototype.IsSelectionUse = function()
 {

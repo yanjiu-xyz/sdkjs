@@ -10755,7 +10755,7 @@ Paragraph.prototype.GetCompiledParaPr = function(copy)
 {
 	return this.Get_CompiledPr2(copy).ParaPr;
 };
-Paragraph.prototype.PasteFormatting = function(TextPr, oParaPr, ApplyPara)
+Paragraph.prototype.PasteFormatting = function(TextPr, oParaPr)
 {
 	// Применяем текстовые настройки всегда
 	if (TextPr)

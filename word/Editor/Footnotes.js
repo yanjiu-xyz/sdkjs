@@ -2692,7 +2692,7 @@ CFootnotesController.prototype.PasteFormatting = function(TextPr, ParaPr)
 {
 	for (var sId in this.Selection.Footnotes)
 	{
-		this.Selection.Footnotes[sId].PasteFormatting(TextPr, ParaPr, true);
+		this.Selection.Footnotes[sId].PasteFormatting(TextPr, ParaPr);
 	}
 };
 CFootnotesController.prototype.IsSelectionUse = function()

@@ -6123,7 +6123,7 @@ CTable.prototype.ClearParagraphFormatting = function(isClearParaPr, isClearTextP
 		this.CurCell.Content.ClearParagraphFormatting(isClearParaPr, isClearTextPr);
 	}
 };
-CTable.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
+CTable.prototype.PasteFormatting = function(TextPr, ParaPr)
 {
 	if (this.IsCellSelection())
 	{
@@ -6136,13 +6136,13 @@ CTable.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
 
 			var Cell_Content = Cell.Content;
 			Cell_Content.SetApplyToAll(true);
-			Cell.Content.PasteFormatting(TextPr, ParaPr, true);
+			Cell.Content.PasteFormatting(TextPr, ParaPr);
 			Cell_Content.SetApplyToAll(false);
 		}
 	}
 	else
 	{
-		this.CurCell.Content.PasteFormatting(TextPr, ParaPr, false);
+		this.CurCell.Content.PasteFormatting(TextPr, ParaPr);
 	}
 };
 CTable.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord)
