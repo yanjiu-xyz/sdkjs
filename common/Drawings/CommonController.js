@@ -3246,6 +3246,25 @@ DrawingObjectsController.prototype =
         return nRet;
     },
 
+	pasteFormattingWithPoint: function(oData)
+	{
+		let oThis = this;
+		this.checkSelectedObjectsAndCallback(function(){
+			oThis.pasteFormatting(oData);
+		}, [], false, 0);
+	},
+	pasteFormatting: function(oData)
+	{
+		if(!oData)
+			return;
+		let aSelectedObjects = this.selectedObjects;
+		for(let nDrawing = 0; nDrawing < aSelectedObjects.length; ++nDrawing)
+		{
+			let oSelectedDrawing = aSelectedObjects[nDrawing];
+			oSelectedDrawing.pasteFormatting(oData);
+		}
+	},
+
     applyTextFunction: function(docContentFunction, tableFunction, args)
     {
         if(this.selection.textSelection)
@@ -9047,7 +9066,7 @@ DrawingObjectsController.prototype =
 		{
 			let oTextPr = oTargetDocContent.GetDirectTextPr();
 			let oParaPr = oTargetDocContent.GetDirectParaPr();
-			return new CDocumentFormatPainterData(oTextPr, oTextPr, null);
+			return new CDocumentFormatPainterData(oTextPr, oParaPr, null);
 		}
 		let aSelectedObjects = this.getSelectedArray();
 		if(aSelectedObjects.length === 1)

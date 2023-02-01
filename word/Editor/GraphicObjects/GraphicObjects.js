@@ -2440,11 +2440,7 @@ CGraphicObjects.prototype =
         }
     },
 
-	pasteFormatting: function(oData)
-    {
-        var content = this.getTargetDocContent();
-        content && content.PasteFormatting(oData);
-    },
+	pasteFormatting: DrawingObjectsController.prototype.pasteFormatting,
 
     getHdrFtrObjectsByPageIndex: function(pageIndex)
     {
