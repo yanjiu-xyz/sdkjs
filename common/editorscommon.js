@@ -12420,13 +12420,29 @@
 	CFormatPainter.prototype.setState = function(nState) {
 		this.state = nState;
 	};
+	CFormatPainter.prototype.getState = function(nState) {
+		return this.state;
+	};
+	CFormatPainter.prototype.toggleState = function() {
+		if(this.isOn()) {
+			this.setState(AscCommon.c_oAscFormatPainterState.kOff);
+		}
+		else {
+			this.setState(AscCommon.c_oAscFormatPainterState.kOn);
+		}
+	};
+	CFormatPainter.prototype.putState = function(nState) {
+		if(nState !== null && nState !== undefined) {
+			this.setState(nState);
+		}
+		else {
+			this.toggleState();
+		}
+	};
 	CFormatPainter.prototype.changeState = function(nState) {
 		this.setState(nState);
 		if(this.isOn()) {
 			this.checkData();
-		}
-		if(!this.data && this.isOn()) {
-			this.setState(AscCommon.c_oAscFormatPainterState.kOff);
 		}
 	};
 	CFormatPainter.prototype.checkData = function() {

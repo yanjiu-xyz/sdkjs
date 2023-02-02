@@ -6812,13 +6812,13 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.SetPaintFormat = function(value)
 	{
-		this.formatPainterState = value;
+		this.fromatPainter.putState(value);
 		this.WordControl.m_oLogicDocument.Document_Format_Copy();
 	};
 
 	asc_docs_api.prototype.sync_PaintFormatCallback = function(value)
 	{
-		this.formatPainterState = value;
+		this.formatPainter.putState(value);
 		return this.sendEvent("asc_onPaintFormatChanged", value);
 	};
 	asc_docs_api.prototype.SetMarkerFormat          = function(value, is_flag, r, g, b)

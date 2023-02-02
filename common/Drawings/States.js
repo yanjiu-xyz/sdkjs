@@ -2024,10 +2024,10 @@ TextAddState.prototype =
         {
             if(oApi.editorId === AscCommon.c_oEditorId.Presentation)
             {
-                if(AscCommon.c_oAscFormatPainterState.kOff !== oApi.formatPainterState)
+                if(oApi.isFormatPainterOn())
                 {
                     this.drawingObjects.paragraphFormatPaste2();
-                    if (AscCommon.c_oAscFormatPainterState.kOn === oApi.formatPainterState)
+                    if (oApi.isFormatPainterOn())
                     {
                         oApi.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
                     }

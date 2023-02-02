@@ -223,7 +223,6 @@
 
 		this.isBlurEditor = false;
 
-		this.formatPainterState = AscCommon.c_oAscFormatPainterState.kOff;
 
 		this.formatPainter = new AscCommon.CFormatPainter(this);
 		this._correctEmbeddedWork();
@@ -4241,8 +4240,11 @@
 	baseEditorsApi.prototype.getFormatPainter = function() {
 		return this.formatPainter;
 	};
+	baseEditorsApi.prototype.getFormatPainterState = function() {
+		return this.formatPainter.getState();
+	};
 	baseEditorsApi.prototype.isFormatPainterOn = function() {
-		return this.formatPainterState !== AscCommon.c_oAscFormatPainterState.kOff;
+		return this.formatPainter.isOn();
 	};
 	baseEditorsApi.prototype.checkFormatPainterData = function() {
 		return this.formatPainter.checkData();
@@ -4254,7 +4256,7 @@
 	{
 		var value = ( true === _value ? c_oAscFormatPainterState.kOn : ( false === _value ? c_oAscFormatPainterState.kOff : _value ) );
 
-		this.formatPainterState = value;
+		this.formatPainter.putState(value);
 		return this.sendEvent("asc_onPaintFormatChanged", value);
 	};
 	//----------------------------------------------------------export----------------------------------------------------

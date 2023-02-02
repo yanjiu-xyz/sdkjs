@@ -553,7 +553,7 @@
 
 			  // FormatPainter
 			  'isFormatPainter': function () {
-				  return self.Api.formatPainterState;
+				  return self.Api.getFormatPainterState();
 			  },
 
 			  //calculate
@@ -1321,7 +1321,7 @@
     if (this.selectionDialogMode) {
       return;
     }
-    var formatPainterState = this.Api.formatPainterState;
+    var formatPainterState = this.Api.getFormatPainterState();
     var ws = this.getWorksheet();
     ws.changeSelectionDone();
     this._onSelectionNameChanged(ws.getSelectionName(/*bRangeText*/false));
@@ -1783,7 +1783,7 @@
   };
 
   WorkbookView.prototype._onStopFormatPainter = function (bLockDraw) {
-    if (this.Api.formatPainterState) {
+    if (this.Api.getFormatPainterState()) {
       this.formatPainter(c_oAscFormatPainterState.kOff, bLockDraw);
     }
   };
@@ -2433,10 +2433,10 @@
 	};
 
 	WorkbookView.prototype.isDrawFormatPainter = function () {
-	    return this.Api.formatPainterState && this.formatPainterSheet === this.wsActive;
+	    return this.Api.getFormatPainterState() && this.formatPainterSheet === this.wsActive;
     };
     WorkbookView.prototype.getFormatPainterSheet = function () {
-        return this.Api.formatPainterState && this.model.getWorksheet(this.formatPainterSheet);
+        return this.Api.getFormatPainterState() && this.model.getWorksheet(this.formatPainterSheet);
     };
 
   WorkbookView.prototype.getIsTrackShape = function() {
@@ -3171,7 +3171,7 @@
 
 
 
-    if (this.Api.formatPainterState) {
+    if (this.Api.getFormatPainterState()) {
       this.formatPainterSheet = this.wsActive;
       this.formatPainterRange = ws.model.selectionRange.clone();
     } else {

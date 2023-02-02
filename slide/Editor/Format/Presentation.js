@@ -6809,7 +6809,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
 			if (true === this.DrawingDocument.IsTrackText()) {
 				this.DrawingDocument.CancelTrackText();
 			}
-			if (AscCommon.c_oAscFormatPainterState.kOff !== this.Api.formatPainterState) {
+			if (this.Api.isFormatPainterOn()) {
 				this.Api.sync_PaintFormatCallback(AscCommon.c_oAscFormatPainterState.kOff);
 				this.OnMouseMove(global_mouseEvent, 0, 0, this.CurPage);
 			} else if (this.Api.isMarkerFormat) {
