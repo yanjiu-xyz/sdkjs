@@ -3720,6 +3720,8 @@
 	var g_oHtmlCursor = new CHTMLCursor();
 	var kCurFormatPainterWord = 'de-formatpainter';
 	g_oHtmlCursor.register(kCurFormatPainterWord, "text_copy", "2 11", "pointer");
+	var kCurFormatPainterDrawing = 'drawing-formatpainter';
+	g_oHtmlCursor.register(kCurFormatPainterDrawing, "text_copy", "2 11", "pointer");
 
 	function asc_ajax(obj)
 	{
@@ -13514,6 +13516,7 @@
 	window["AscCommon"].rx_allowedProtocols = rx_allowedProtocols;
 
 	window["AscCommon"].kCurFormatPainterWord = kCurFormatPainterWord;
+	window["AscCommon"].kCurFormatPainterDrawing = kCurFormatPainterDrawing;
 	window["AscCommon"].parserHelp = parserHelp;
 	window["AscCommon"].g_oIdCounter = g_oIdCounter;
 

@@ -403,13 +403,14 @@ NullState.prototype =
     {
         this.drawingObjects.checkRedrawOnChangeCursorPosition(oStartContent, oStartPara);
     },
-    onMouseDown: function(e, x, y, pageIndex, bTextFlag)
+    onMouseDown: function(e, x, y, pageIndex)
     {
         let start_target_doc_content, end_target_doc_content, selected_comment_index = -1;
         let oStartPara = null;
         let bHandleMode = this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE;
         let sHitGuideId = this.drawingObjects.hitInGuide(x, y);
         let oAnimPlayer = this.drawingObjects.getAnimationPlayer && this.drawingObjects.getAnimationPlayer();
+		let oAPI = this.drawingObjects.getEditorApi();
         if(bHandleMode)
         {
             start_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
@@ -422,6 +423,26 @@ NullState.prototype =
                 }
             }
             this.startTargetTextObject = AscFormat.getTargetTextObject(this.drawingObjects);
+        }
+		else
+		{
+			if(oAPI.isFormatPainterOn())
+			{
+				let oPainterData = oAPI.getFormatPainterData();
+				let sType = "default";
+				if(oPainterData)
+				{
+					if(oPainterData.isDrawingData())
+					{
+						sType = AscCommon.kCurFormatPainterDrawing;
+					}
+					else
+					{
+						sType = AscCommon.kCurFormatPainterWord;
+					}
+				}
+				return {cursorType: sType, objectId: "1"};
+			}
         }
         var ret;
         ret = this.drawingObjects.handleSlideComments(e, x, y, pageIndex);

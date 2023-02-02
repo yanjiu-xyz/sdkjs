@@ -4241,11 +4241,21 @@
 	baseEditorsApi.prototype.getFormatPainter = function() {
 		return this.formatPainter;
 	};
+	baseEditorsApi.prototype.isFormatPainterOn = function() {
+		return this.formatPainterState !== AscCommon.c_oAscFormatPainterState.kOff;
+	};
 	baseEditorsApi.prototype.checkFormatPainterData = function() {
 		return this.formatPainter.checkData();
 	};
 	baseEditorsApi.prototype.getFormatPainterData = function() {
 		return this.formatPainter.data;
+	};
+	baseEditorsApi.prototype.sendPaintFormatEvent = function(_value)
+	{
+		var value = ( true === _value ? c_oAscFormatPainterState.kOn : ( false === _value ? c_oAscFormatPainterState.kOff : _value ) );
+
+		this.formatPainterState = value;
+		return this.sendEvent("asc_onPaintFormatChanged", value);
 	};
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};

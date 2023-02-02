@@ -1784,6 +1784,10 @@ function CDocumentFormatPainterData(oTextPr, oParaPr, oDrawing)
 	this.ParaPr = oParaPr;
 	this.Drawing = oDrawing;
 }
+CDocumentFormatPainterData.prototype.isDrawingData = function()
+{
+	return !!this.Drawing;
+};
 
 /**
  * Основной класс для работы с документом в Word.

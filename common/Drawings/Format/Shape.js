@@ -6483,11 +6483,11 @@
 			if(oDrawing) {
 				this.pasteDrawingFormatting(oFormatData.Drawing);
 			}
-			else {
+			if(oFormatData.ParaPr || oFormatData.TextPr) {
 				let oContent = this.getDocContent();
 				if(oContent) {
 					let bApplyToAll = true;
-					var oController = this.getDrawingObjectsController && this.getDrawingObjectsController();
+					let oController = this.getDrawingObjectsController && this.getDrawingObjectsController();
 					if(oController) {
 						if(AscFormat.getTargetTextObject(oController) === this) {
 							bApplyToAll = false;
