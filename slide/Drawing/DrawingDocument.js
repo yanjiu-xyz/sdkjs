@@ -884,26 +884,6 @@ function CDrawingDocument()
 		if ("" === this.m_sLockedCursorType)
 		{
 			elem.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
-			// if (oApi.formatPainterState)
-			// {
-			// 	let oData = oApi.getFormatPainterData();
-			// 	if(oData)
-			// 	{
-			// 		let sCursor = "default";
-			// 		if(oData.Drawing)
-			// 		{
-			// 			sCursor = AscCommon.kCurFormatPainterWord;//TODO: use special cursor for drawing format paste
-			// 		}
-			// 		else
-			// 		{
-			// 			sCursor = AscCommon.kCurFormatPainterWord;
-			// 		}
-			// 	}
-			// 	this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value(sCursor);
-			// }
-			// else if (this.m_oWordControl.m_oApi.isMarkerFormat)
-			// 	this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-markerformat");
-
 		}
 		else
             elem.style.cursor = AscCommon.g_oHtmlCursor.value(this.m_sLockedCursorType);
