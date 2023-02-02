@@ -8285,6 +8285,7 @@
 		cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 	};
 	Worksheet.prototype._updatePivotTableCellsPage = function (pivotTable) {
+		//CT_pivotTableDefinition.prototype.getLayoutByCellPage
 		if (pivotTable.pageFieldsPositions) {
 			for (var i = 0; i < pivotTable.pageFieldsPositions.length; ++i) {
 				var pos = pivotTable.pageFieldsPositions[i];
@@ -8304,6 +8305,7 @@
 		}
 	};
 	Worksheet.prototype._updatePivotTableCellsHeader = function (pivotTable) {
+		//CT_pivotTableDefinition.prototype.getLayoutByCellHeader
 		var location = pivotTable.location;
 		if (0 === location.firstHeaderRow) {
 			return;
@@ -8348,6 +8350,7 @@
 		}
 	};
 	Worksheet.prototype._updatePivotTableCellsRowColLables = function(pivotTable, rowFieldsOffset) {
+		//CT_pivotTableDefinition.prototype.getLayoutByCellHeaderRowColLables
 		var items, fields, field, oCellValue, fieldIndex, cells, r1, c1, i, j, valuesIndex;
 		var pivotRange = pivotTable.getRange();
 		var location = pivotTable.location;
@@ -8481,6 +8484,7 @@
 		}
 	};
 	Worksheet.prototype._updatePivotTableCellsRowHeaderLabels = function(pivotTable) {
+		//CT_pivotTableDefinition.prototype.getLayoutByCellHeaderRowColLables
 		var rowFieldsOffset = [0];
 		var rowFields = pivotTable.asc_getRowFields();
 		if (!rowFields) {
