@@ -1780,10 +1780,12 @@ CSelectedElementsInfo.prototype.IsFixedFormShape = function()
 
 function CDocumentFormatPainterData(oTextPr, oParaPr, oDrawing)
 {
+	AscCommon.CFormatPainterDataBase.call();
 	this.TextPr = oTextPr;
 	this.ParaPr = oParaPr;
 	this.Drawing = oDrawing;
 }
+AscFormat.InitClassWithoutType(CDocumentFormatPainterData, AscCommon.CFormatPainterDataBase);
 CDocumentFormatPainterData.prototype.isDrawingData = function()
 {
 	return !!this.Drawing;

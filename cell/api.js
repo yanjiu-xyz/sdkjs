@@ -6001,6 +6001,14 @@ var editor;
       this.wb.formatPainter(formatPainterState);
     }
   };
+	spreadsheet_api.prototype.retrieveFormatPainterData = function()
+	{
+		let oWSView = this.wb.getWorksheet();
+		if(!oWSView || !oWSView.model) {
+			return null;
+		}
+		return new AscCommonExcel.CCellFormatPasteData(oWSView.model);
+	};
 
   spreadsheet_api.prototype.asc_showAutoComplete = function() {
     this.wb.showAutoComplete();

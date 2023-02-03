@@ -67,6 +67,13 @@
 
   var g_clipboardExcel = AscCommonExcel.g_clipboardExcel;
 
+  function CCellFormatPasteData(oWS) {
+	  AscCommon.CFormatPainterDataBase.call();
+	  this.ws = oWS;
+	  this.range = oWS.selectionRange.clone();
+	  this.docData = null;
+  }
+  AscFormat.InitClassWithoutType(CCellFormatPasteData, AscCommon.CFormatPainterDataBase);
 
   function WorkbookCommentsModel(handlers, aComments) {
     this.workbook = {handlers: handlers};
@@ -257,8 +264,6 @@
     this.mainOverlay = null;
     this.autoShapeTrack = null;
 
-    this.formatPainterRange = null;
-    this.formatPainterSheet = null;
 
     this.selectionDialogMode = false;
     this.dialogAbsName = false;
@@ -2433,10 +2438,25 @@
 	};
 
 	WorkbookView.prototype.isDrawFormatPainter = function () {
-	    return this.Api.getFormatPainterState() && this.formatPainterSheet === this.wsActive;
+		if(this.Api.getFormatPainterState()) {
+			let oData = this.Api.getFormatPainterData();
+			if(oData && !oData.docData) {
+				let oWS = this.getWorksheet();
+				if(oWS && oWS.model === oData.ws) {
+					return true;
+				}
+			}
+		}
+		return false;
     };
     WorkbookView.prototype.getFormatPainterSheet = function () {
-        return this.Api.getFormatPainterState() && this.model.getWorksheet(this.formatPainterSheet);
+	    if(this.Api.getFormatPainterState()) {
+		    let oData = this.Api.getFormatPainterData();
+		    if(oData && oData.ws) {
+			    return oData.ws;
+		    }
+	    }
+	    return null;
     };
 
   WorkbookView.prototype.getIsTrackShape = function() {
@@ -3169,13 +3189,10 @@
         ws.cleanSelection();
     }
 
-
-
     if (this.Api.getFormatPainterState()) {
-      this.formatPainterSheet = this.wsActive;
-      this.formatPainterRange = ws.model.selectionRange.clone();
+      this.Api.checkFormatPainterData()
     } else {
-      this.formatPainterSheet = this.formatPainterRange = null;
+      this.Api.clearFormatPainterData();
       this.handlers.trigger('asc_onStopFormatPainter');
     }
     if (!bLockDraw) {
@@ -5819,4 +5836,5 @@
 	//------------------------------------------------------------export---------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
   window["AscCommonExcel"].WorkbookView = WorkbookView;
+  window["AscCommonExcel"].CCellFormatPasteData = CCellFormatPasteData;
 })(window);

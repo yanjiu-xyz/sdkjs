@@ -12449,7 +12449,17 @@
 		this.data = this.api.retrieveFormatPainterData();
 		return this.data;
 	};
+	CFormatPainter.prototype.clearData = function() {
+		this.data = null;
+	};
 
+	function CFormatPainterDataBase() {
+
+	}
+	CFormatPainterDataBase.prototype.isDrawingData = function()
+	{
+		return false;
+	};
 
 	//------------------------------------------------------------fill polyfill--------------------------------------------
 	if (!Array.prototype.findIndex) {
@@ -13610,6 +13620,7 @@
 
 	window["AscCommon"].getNativePrintRanges = getNativePrintRanges;
 	window["AscCommon"].CFormatPainter = CFormatPainter;
+	window["AscCommon"].CFormatPainterDataBase = CFormatPainterDataBase;
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)

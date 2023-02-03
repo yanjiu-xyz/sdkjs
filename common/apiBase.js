@@ -4252,6 +4252,9 @@
 	baseEditorsApi.prototype.getFormatPainterData = function() {
 		return this.formatPainter.data;
 	};
+	baseEditorsApi.prototype.clearFormatPainterData = function() {
+		return this.formatPainter.clearData();
+	};
 	baseEditorsApi.prototype.sendPaintFormatEvent = function(_value)
 	{
 		var value = ( true === _value ? c_oAscFormatPainterState.kOn : ( false === _value ? c_oAscFormatPainterState.kOff : _value ) );
