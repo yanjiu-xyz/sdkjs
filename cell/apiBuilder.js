@@ -217,10 +217,10 @@
 
 	/**
      * Possible values for the position of chart tick labels (either horizontal or vertical).
-     * * **"none"** - does not display the selected tick labels.
-     * * **"nextTo"** - sets the position of the selected tick labels next to the main label.
-     * * **"low"** - sets the position of the selected tick labels in the part of the chart with lower values.
-     * * **"high"** - sets the position of the selected tick labels in the part of the chart with higher values.
+     * * <b>"none"</b> - does not display the selected tick labels.
+     * * <b>"nextTo"</b> - sets the position of the selected tick labels next to the main label.
+     * * <b>"low"</b> - sets the position of the selected tick labels in the part of the chart with lower values.
+     * * <b>"high"</b> - sets the position of the selected tick labels in the part of the chart with higher values.
 	 * @typedef {("none" | "nextTo" | "low" | "high")} TickLabelPosition
 	 * **/
 	
@@ -1481,7 +1481,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sRange - The range where the hyperlink will be added to.
 	 * @param {string} sAddress - The link address.
-	 * @param {string} subAddress - The subaddress of the hyperlink.
+	 * @param {string} subAddress - The link subaddress to insert internal sheet hyperlinks.
 	 * @param {string} sScreenTip - The screen tip text.
 	 * @param {string} sTextToDisplay - The link text that will be displayed on the sheet.
 	 * */

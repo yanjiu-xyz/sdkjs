@@ -617,8 +617,8 @@ CFraction.prototype.raw_SetFractionType = function(FractionType)
 CFraction.prototype.GetTextOfElement = function(isLaTeX)
 {
 	let strTemp = "";
-	let strNumerator = this.getNumerator().GetMultipleContentForGetText(isLaTeX);
-	let strDenominator = this.getDenominator().GetMultipleContentForGetText(isLaTeX);
+	let strNumerator = this.getNumerator().GetMultipleContentForGetText(isLaTeX, );
+	let strDenominator = this.getDenominator().GetMultipleContentForGetText(isLaTeX, );
 
 	if (true === isLaTeX)
     {
@@ -632,6 +632,7 @@ CFraction.prototype.GetTextOfElement = function(isLaTeX)
 			case 0:	strTemp += '\\frac'; break;
 			case 1:	strTemp += '\\sfrac'; break;
 			case 2:	strTemp += '\\cfrac'; break;
+            case 3: strTemp += '\\binom'; break;
 			default: strTemp += '\\frac';  break;
 		}
 
@@ -650,7 +651,6 @@ CFraction.prototype.GetTextOfElement = function(isLaTeX)
 		}
 
 		strTemp += strDenominator;
-		strTemp = strTemp;
 	}
 	return strTemp;
 };

@@ -14042,11 +14042,11 @@ QueryTableField.prototype.clone = function() {
 
 	OleSizeSelectionRange.prototype.getFirstFromLocalHistory = function () {
 		return this.localHistory[0].clone();
-	}
+	};
 
 	OleSizeSelectionRange.prototype.getLastFromLocalHistory = function () {
 		return this.localHistory[this.localHistory.length - 1].clone();
-	}
+	};
 
 	OleSizeSelectionRange.prototype.resetHistory = function () {
 		this.localHistory = [];
@@ -14066,7 +14066,7 @@ QueryTableField.prototype.clone = function() {
 		this.ranges = [oRange.clone()];
 		this.activeCellId = 0;
 		this.activeCell = new AscCommon.CellBase(oRange.r1, oRange.c1);
-	}
+	};
 
 	OleSizeSelectionRange.prototype.clean = function () {
 		this.ranges = [new Asc.Range(0, 0, 10, 10)];
@@ -14243,10 +14243,13 @@ QueryTableField.prototype.clone = function() {
 			//если есть this.worksheets, если нет - проверить и обработать
 			var sheetName = arr[i].sName;
 			if (this.worksheets && this.worksheets[sheetName]) {
+				let wsTo = this.worksheets[sheetName];
 				//меняем лист
 				AscFormat.ExecuteNoHistory(function(){
 					AscCommonExcel.executeInR1C1Mode(false, function () {
-						t.worksheets[sheetName].copyFrom(arr[i], t.worksheets[sheetName].sName);
+						var oAllRange = wsTo.getRange3(0, 0, wsTo.getRowsCount(), wsTo.getColsCount());
+						oAllRange.cleanAll();
+						wsTo.copyFrom(arr[i], wsTo.sName);
 					});
 				});
 				//this.worksheets[sheetName] = arr[i];
@@ -14384,7 +14387,7 @@ QueryTableField.prototype.clone = function() {
 			var sheetDataSet = this.SheetDataSet[sheetDataSetIndex];
 			var ws = this.worksheets[sheetName];
 			if (!this.worksheets[sheetName]) {
-				var wb = new AscCommonExcel.Workbook();
+				var wb = new AscCommonExcel.Workbook(null, window["Asc"]["editor"]);
 				ws = new AscCommonExcel.Worksheet(wb);
 				ws.sName = sheetName;
 
@@ -14510,12 +14513,13 @@ QueryTableField.prototype.clone = function() {
 		return this.data;
 	};
 	asc_CExternalReference.prototype.asc_getSource = function () {
-		if (this.externalReference && this.externalReference.Id) {
-			var lastIndex = this.externalReference.Id.lastIndexOf('/');
+		let id = this.externalReference && this.externalReference.Id;
+		if (id) {
+			let lastIndex =0 === id.indexOf("file:///") ? id.lastIndexOf('\\') : id.lastIndexOf('/');
 			if (lastIndex === -1) {
-				lastIndex = this.externalReference.Id.lastIndexOf('/\/');
+				lastIndex = id.lastIndexOf('/\/');
 			}
-			return lastIndex === -1 ? this.externalReference.Id : this.externalReference.Id.substr(lastIndex + 1);
+			return lastIndex === -1 ? id : id.substr(lastIndex + 1);
 		}
 		return null;
 	};
@@ -14602,7 +14606,7 @@ QueryTableField.prototype.clone = function() {
 			var addedRowMap = [];
 			for (var i = 0; i < ranges.length; i++) {
 				var range = sheet.getRange3(ranges[i].r1, ranges[i].c1, ranges[i].r2, ranges[i].c2);
-				range._foreachNoEmpty(function (cell) {
+				range._foreach(function (cell) {
 					if (!addedRowMap[cell.nRow]) {
 						var row = new ExternalRow();
 						row.R = cell.nRow + 1;
@@ -14639,8 +14643,12 @@ QueryTableField.prototype.clone = function() {
 						continue;
 					}
 					var range = sheet.getRange2(externalCell.Ref);
-					range._foreachNoEmpty(function (cell) {
-						isChanged = externalCell.initFromCell(cell, true);
+					range._foreach(function (cell) {
+
+						let changedCell = externalCell.initFromCell(cell, true);
+						if (!isChanged) {
+							isChanged = changedCell;
+						}
 
 						var api_sheet = Asc['editor'];
 						var wb = api_sheet.wbModel;
@@ -14785,7 +14793,7 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 	ExternalCell.prototype.clone = function () {
-		var newObj = new ExternalRow();
+		var newObj = new ExternalCell();
 
 		newObj.Ref = this.Ref;
 		newObj.CellType = this.CellType;

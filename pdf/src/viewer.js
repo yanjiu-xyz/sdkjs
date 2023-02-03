@@ -748,7 +748,7 @@
 			var _t = this;
 			xhr.onload = function()
 			{
-				if (this.status === 200)
+				if (this.status === 200 || location.href.indexOf("file:") == 0)
 				{
 					_t.isCMapLoading = false;
 					_t.file.setCMap(new Uint8Array(this.response));
@@ -1851,7 +1851,7 @@
 
 		this._paint = function()
 		{
-			if (!this.file.isValid())
+			if (!this.file || !this.file.isValid())
 				return;
 
 			this.canvas.width = this.canvas.width;

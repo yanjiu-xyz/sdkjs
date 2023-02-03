@@ -539,10 +539,6 @@ ParaRun.prototype.GetTextOfElement = function(isLaTeX)
 			str += this.Content[i].GetTextOfElement(isLaTeX);
 		}
 	}
-	//???
-	if (str === 'mod') {
-		str = '\\bmod'
-	}
 	return str;
 };
 ParaRun.prototype.MathAutocorrection_GetBracketsOperatorsInfo = function (isLaTeX)
@@ -1094,6 +1090,20 @@ ParaRun.prototype.IsOnlyCommonTextScript = function()
 	}
 
 	return isCommonScript;
+};
+/**
+ * Is a run inside smartArt
+ * @param [bReturnSmartArtShape] {boolean}
+ * @returns {boolean|null|AscFormat.CShape}
+ */
+ParaRun.prototype.IsInsideSmartArtShape = function (bReturnSmartArtShape)
+{
+	const oParagraph = this.GetParagraph();
+	if (oParagraph)
+	{
+		return oParagraph.IsInsideSmartArtShape(bReturnSmartArtShape);
+	}
+	return bReturnSmartArtShape ? null : false;
 };
 /**
  * Проверяем, предзназначен ли данный ран чисто для математических формул.
@@ -8523,9 +8533,9 @@ ParaRun.prototype.IsSelectionEmpty = function(CheckEnd)
     var Selection = this.State.Selection;
     if (true !== Selection.Use)
         return true;
-
-    if(this.Type == para_Math_Run && this.IsPlaceholder())
-        return true;
+	
+	if (this.IsMathRun() && this.IsPlaceholder())
+		return false;
 
     var StartPos = Selection.StartPos;
     var EndPos   = Selection.EndPos;
@@ -9398,7 +9408,7 @@ ParaRun.prototype.Apply_Pr = function(TextPr)
 			}
 		}
 	}
-	if (undefined !== TextPr.AscLine)
+	if (undefined !== TextPr.AscLine && null !== TextPr.AscLine)
 	{
 		if(this.Paragraph)
 		{
@@ -11208,20 +11218,17 @@ ParaRun.prototype.Math_GetRealFontSize = function(FontSize)
 
     return RealFontSize;
 };
-ParaRun.prototype.Math_CompareFontSize = function(ComparableFontSize, bStartLetter)
+ParaRun.prototype.Math_GetFontSize = function(fromBegin)
 {
-    var lng = this.Content.length;
-
-    var Letter = this.Content[lng - 1];
-
-    if(bStartLetter == true)
-        Letter = this.Content[0];
-
-
-    var CompiledPr = this.Get_CompiledPr(false);
-    var LetterFontSize = Letter.Is_LetterCS() ? CompiledPr.FontSizeCS : CompiledPr.FontSize;
-
-    return ComparableFontSize == this.Math_GetRealFontSize(LetterFontSize);
+	let compiledPr = this.Get_CompiledPr(false);
+	let fontSize   = compiledPr.FontSize;
+	if (this.Content.length > 0)
+	{
+		let runItem = this.Content[fromBegin ? 0 : this.Content.length - 1];
+		fontSize    = runItem.IsCS() ? compiledPr.FontSizeCS : compiledPr.FontSize;
+	}
+	
+	return this.Math_GetRealFontSize(fontSize);
 };
 ParaRun.prototype.Math_EmptyRange = function(_CurLine, _CurRange) // до пересчета нужно узнать будет ли данный Run пустым или нет в данном Range, необходимо для того, чтобы выставить wrapIndent
 {

@@ -1507,6 +1507,7 @@
 		this.ctHyperlink = 160;
 		this.ctLink      = 161;
 		this.ctFormField = 162;
+		this.ctDocInfo   = 163;
 
 		this.ctPageWidth  = 200;
 		this.ctPageHeight = 201;
@@ -3467,6 +3468,44 @@
 		{
 			if (0 !== this.m_lPagesCount)
 				this.m_arrayPages[this.m_lPagesCount - 1].AddFormField(nX, nY, nW, nH, nBaseLineOffset, oForm);
+		},
+
+		DocInfo : function(props)
+		{
+			if (props)
+			{
+				this.Memory.WriteByte(CommandType.ctDocInfo);
+
+				var nFlagPos = this.Memory.GetCurPosition();
+				this.Memory.Skip(4);
+				var nFlag = 0;
+
+				if (props.asc_getTitle())
+				{
+					nFlag |= 1;
+					this.Memory.WriteString(props.asc_getTitle());
+				}
+				if (props.asc_getCreator())
+				{
+					nFlag |= (1 << 1);
+					this.Memory.WriteString(props.asc_getCreator());
+				}
+				if (props.asc_getSubject())
+				{
+					nFlag |= (1 << 2);
+					this.Memory.WriteString(props.asc_getSubject());
+				}
+				if (props.asc_getKeywords())
+				{
+					nFlag |= (1 << 3);
+					this.Memory.WriteString(props.asc_getKeywords());
+				}
+
+				var nEndPos = this.Memory.GetCurPosition();
+				this.Memory.Seek(nFlagPos);
+				this.Memory.WriteLong(nFlag);
+				this.Memory.Seek(nEndPos);
+			}
 		}
 	};
 

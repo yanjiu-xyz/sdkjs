@@ -118,9 +118,6 @@ CDocProtect.prototype.getRestrictionType = function () {
 			res = Asc.c_oAscRestrictionType.View;
 			break;
 		case Asc.c_oAscEDocProtect.TrackedChanges:
-			//asc_SetLocalTrackRevisions
-			//asc_SetGlobalTrackRevisions
-			res = Asc.c_oAscRestrictionType.OnlySignatures;
 			break;
 	}
 	return res;
@@ -205,7 +202,7 @@ CDocProtect.prototype.asc_getIsPassword = function()
 };
 CDocProtect.prototype.asc_getEditType = function()
 {
-	return this.edit;
+	return this.enforcement !== false ? this.edit : Asc.c_oAscEDocProtect.None;
 };
 CDocProtect.prototype.asc_setPassword = function(val)
 {
@@ -214,6 +211,9 @@ CDocProtect.prototype.asc_setPassword = function(val)
 CDocProtect.prototype.asc_setEditType = function(val)
 {
 	this.edit = val;
+	if (this.edit != null) {
+		this.enforcement = true;
+	}
 };
 
 

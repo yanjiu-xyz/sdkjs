@@ -1042,7 +1042,8 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 
 	if (this.IsContentControlEquation())
 		return;
-
+	
+	var oDrawingDocument = oLogicDocument.GetDrawingDocument();
 	let oMainForm;
 	if (this.IsForm() && (oMainForm = this.GetMainForm()) && oMainForm !== this)
 	{
@@ -1052,16 +1053,18 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 		}
 		else
 		{
-			oMainForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Main, X, Y, nCurPage, isCheckHit);
-
 			// В режиме заполнения, у внутренних текстовых форм и чекбоксов не рисуем собственный трек, а только внешний
 			if (oLogicDocument.IsFillingFormMode()
 				&& (this.IsTextForm() || this.IsCheckBox()))
+			{
+				oDrawingDocument.OnDrawContentControl(null, nType);
+				oMainForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Main, X, Y, nCurPage, isCheckHit);
 				return;
+			}
+
+			oMainForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Main, X, Y, nCurPage, isCheckHit);
 		}
 	}
-
-	var oDrawingDocument = oLogicDocument.GetDrawingDocument();
 	
 	if (undefined !== X && undefined !== Y && undefined !== nCurPage)
 	{
@@ -1354,9 +1357,12 @@ CInlineLevelSdt.prototype.private_ReplacePlaceHolderWithContent = function(bMath
 
 	if (this.IsContentControlEquation())
 	{
+		let textPr = this.GetDefaultTextPr();
+		
 		var oParaMath = new ParaMath();
-		oParaMath.Root.Load_FromMenu(c_oAscMathType.Default_Text, this.GetParagraph());
+		oParaMath.Root.Load_FromMenu(c_oAscMathType.Default_Text, this.GetParagraph(), textPr.Copy());
 		oParaMath.Root.Correct_Content(true);
+		oParaMath.ApplyTextPr(textPr.Copy(), undefined, true);
 		this.AddToContent(0, oParaMath);
 	}
 	else
@@ -2286,19 +2292,19 @@ CInlineLevelSdt.prototype.GetDatePickerPr = function()
 /**
  * Применяем к данному контейнеру настройки того, что это специальный контйенер для даты
  * @param oPr {AscWord.CSdtDatePickerPr}
+ * @param updateValue {boolean}
  */
-CInlineLevelSdt.prototype.ApplyDatePickerPr = function(oPr)
+CInlineLevelSdt.prototype.ApplyDatePickerPr = function(oPr, updateValue)
 {
 	this.SetDatePickerPr(oPr);
 
 	if (!this.IsDatePicker())
 		return;
 
-	this.SetPlaceholder(c_oAscDefaultPlaceholderName.DateTime);
-	if (this.IsPlaceHolder())
+	if (true === updateValue || !this.IsPlaceHolder())
+		this.private_UpdateDatePickerContent();
+	else
 		this.private_FillPlaceholderContent();
-
-	this.private_UpdateDatePickerContent();
 };
 CInlineLevelSdt.prototype.private_UpdateDatePickerContent = function()
 {

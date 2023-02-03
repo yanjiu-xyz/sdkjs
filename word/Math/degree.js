@@ -183,7 +183,7 @@ CDegreeBase.prototype.GetSizeSup = function(oMeasure, Metric)
     {
         lastElem = this.baseContent.GetLastElement();
 
-        var bSameFontSize  = lastElem.Type == para_Math_Run && lastElem.Math_CompareFontSize(mgCtrPrp.FontSize, false);
+        var bSameFontSize  = lastElem.Type == para_Math_Run && (mgCtrPrp.FontSize === lastElem.Math_GetFontSize(false));
         bTextElement = bSameFontSize || (lastElem.Type !== para_Math_Run && lastElem.IsJustDraw());
     }
 
@@ -264,7 +264,7 @@ CDegreeBase.prototype.GetSizeSubScript = function(oMeasure, Metric)
     {
         var lastElem = this.baseContent.GetLastElement();
 
-        var bSameFontSize  = lastElem.Type == para_Math_Run && lastElem.Math_CompareFontSize(mgCtrPrp.FontSize, false);
+        var bSameFontSize  = lastElem.Type == para_Math_Run && (mgCtrPrp.FontSize === lastElem.Math_GetFontSize(false));
         bTextElement      = bSameFontSize || (lastElem.Type !== para_Math_Run && lastElem.IsJustDraw());
     }
 
@@ -544,19 +544,8 @@ CDegree.prototype.Can_ModifyArgSize = function()
 CDegree.prototype.GetTextOfElement = function(isLaTeX) {
 	var strTemp = "";
 	var strTypeOfScript = this.Pr.type === 1 ? '^' : '_';
-
-	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX, true);
+	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX);
 	var strIterator = this.getIterator().GetMultipleContentForGetText(isLaTeX);
-
-    // if (strBase.length > 1)
-    // {
-    //     if (strBase[0] !== "{" && strBase[0] !== "(") {
-    //         if (isLaTeX)
-    //             strBase = "{" + strBase + "}";
-    //         else
-    //             strBase = "(" + strBase + ")";
-    //     }
-    // }
 
 	if (isLaTeX)
     {
@@ -594,11 +583,11 @@ CDegree.prototype.GetTextOfElement = function(isLaTeX) {
 			default: break;
 		}
         
-		strTemp = strBase + strTypeOfScript + strIterator;
+		strTemp = strBase.trim() + strTypeOfScript + strIterator;
 	}
     else
     {
-		strTemp = strBase + strTypeOfScript + strIterator;
+		strTemp = strBase + strTypeOfScript + strIterator + " ";
 	}
 	return strTemp;
 };
@@ -841,7 +830,7 @@ CDegreeSubSupBase.prototype.GetSize = function(oMeasure, Metric)
         var bFirstItem = this.Pr.type == DEGREE_SubSup;
         var BaseItem = bFirstItem ? this.baseContent.GetLastElement() : this.baseContent.GetFirstElement();
 
-        var bSameFontSize  = BaseItem.Type == para_Math_Run && BaseItem.Math_CompareFontSize(mgCtrPrp.FontSize, bFirstItem);
+        var bSameFontSize  = BaseItem.Type == para_Math_Run && (mgCtrPrp.FontSize === BaseItem.Math_GetFontSize(bFirstItem));
         TextElement  = bSameFontSize || (BaseItem.Type !== para_Math_Run && BaseItem.IsJustDraw());
     }
 
@@ -1279,10 +1268,14 @@ CDegreeSubSup.prototype.GetTextOfElement = function(isLaTeX)
 	}
     else
     {
+
 		if (true === isPreScript)
 			strTemp = '(' + '_' + strLower + '^' + strUpper + ')' + Base;
-        else
-			strTemp = Base + '_' + strLower + '^' + strUpper;
+        else {
+            strTemp = Base + '_' + strLower + '^' + strUpper;
+        }
+
+        strTemp += " ";
 	}
 	return strTemp;
 };

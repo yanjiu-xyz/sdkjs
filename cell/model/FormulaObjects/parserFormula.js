@@ -78,6 +78,23 @@ function (window, undefined) {
 		return newArray
 	}
 
+	function generate3DLink(externalPath, sheet, range) {
+		let filePrefix = "file:///";
+		if (externalPath && 0 === externalPath.indexOf(filePrefix)) {
+			//"file:///C:\root\from1.xlsx"
+			sheet = sheet.split(":");
+			var wsFrom = sheet[0], wsTo = sheet[1] === undefined ? wsFrom : sheet[1];
+			wsFrom = wsFrom.replace(/'/g, "''");
+			wsTo = wsTo.replace(/'/g, "''");
+			return "'" + externalPath + (wsFrom !== wsTo ? wsFrom + ":" + wsTo : wsFrom) + "'!" + range;
+		} else {
+			if (!externalPath) {
+				externalPath = "";
+			}
+			return parserHelp.get3DRef(externalPath + sheet, range);
+		}
+	}
+	
 	function ParsedThing(value, type, subtype, pos, length) {
 		this.value = value;
 		this.type = type;
@@ -1406,14 +1423,15 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		var wsFrom = this.wsFrom.getName();
 		var wsTo = this.wsTo.getName();
 		var name = AscCommonExcel.g_ProcessShared && this.bbox ? this.bbox.getName() : this.value;
-		return this.getExternalLinkStr(this.externalLink) + parserHelp.get3DRef(wsFrom !== wsTo ? wsFrom + ':' + wsTo : wsFrom, name);
+		var exPath = this.getExternalLinkStr(this.externalLink);
+		return parserHelp.get3DRef(wsFrom !== wsTo ? (exPath + wsFrom + ':' + wsTo) : (exPath + wsFrom), name);
 	};
 	cArea3D.prototype.toLocaleString = function () {
 		var wsFrom = this.wsFrom.getName();
 		var wsTo = this.wsTo.getName();
 		var name = this.bbox ? this.bbox.getName() : this.value;
 		var exPath = this.getExternalLinkStr(this.externalLink, true);
-		return  parserHelp.get3DRef(wsFrom !== wsTo ? exPath + wsFrom + ':' + wsTo : exPath + wsFrom, name);
+		return generate3DLink(exPath, wsFrom !== wsTo ? (wsFrom + ':' + wsTo) : wsFrom, name);
 	};
 	cArea3D.prototype.tocNumber = function () {
 		return this.getValue()[0].tocNumber();
@@ -1426,13 +1444,16 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArea3D.prototype.tocArea = function () {
 		var wsR = this.wsRange();
-		if (wsR.length == 1) {
+		if (wsR.length === 1) {
 			return new cArea(this.value, wsR[0]);
 		}
 		return false;
 	};
 	cArea3D.prototype.getWS = function () {
 		return this.wsFrom;
+	};
+	cArea3D.prototype.getWsId = function () {
+		return this.wsFrom && this.wsFrom.Id;
 	};
 	cArea3D.prototype.cross = function (arg, ws) {
 		if (!this.isSingleSheet()) {
@@ -1814,15 +1835,16 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		}
 	};
 	cRef3D.prototype.toString = function () {
+		var exPath = this.getExternalLinkStr(this.externalLink);
 		if (AscCommonExcel.g_ProcessShared) {
-			return this.getExternalLinkStr(this.externalLink) + parserHelp.get3DRef(this.ws.getName(), this.range.getName());
+			return parserHelp.get3DRef(exPath + this.ws.getName(), this.range.getName());
 		} else {
-			return this.getExternalLinkStr(this.externalLink) + parserHelp.get3DRef(this.ws.getName(), this.value);
+			return parserHelp.get3DRef(exPath + this.ws.getName(), this.value);
 		}
 	};
 	cRef3D.prototype.toLocaleString = function () {
 		var exPath = this.getExternalLinkStr(this.externalLink, true);
-		return parserHelp.get3DRef(exPath + this.ws.getName(), this.range.getName());
+		return generate3DLink(exPath, this.ws.getName(), this.range.getName());
 	};
 	cRef3D.prototype.getWS = function () {
 		return this.ws;

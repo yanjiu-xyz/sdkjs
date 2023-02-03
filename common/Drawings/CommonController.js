@@ -2812,7 +2812,7 @@ DrawingObjectsController.prototype =
     },
 
 
-    getNearestPos: function(x, y){
+    getNearestPos: function(x, y, pageIndex, drawing){
         var oTragetDocContent = this.getTargetDocContent(false, false);
         if(oTragetDocContent){
             var tx = x, ty = y;
@@ -2821,7 +2821,7 @@ DrawingObjectsController.prototype =
                 var oInvertTransform = AscCommon.global_MatrixTransformer.Invert(oTransform);
                 tx = oInvertTransform.TransformPointX(x, y);
                 ty = oInvertTransform.TransformPointY(x, y);
-                return oTragetDocContent.Get_NearestPos(0, tx, ty, false);
+                return oTragetDocContent.Get_NearestPos(0, tx, ty, false, drawing);
             }
         }
         return null;
@@ -2886,6 +2886,15 @@ DrawingObjectsController.prototype =
             return text_object.getDocContent();
         }
         return null;
+    },
+
+    checkCurrentTextObjectExtends: function()
+    {
+        var text_object = getTargetTextObject(this);
+        if(text_object)
+        {
+            text_object.checkExtentsByDocContent && text_object.checkExtentsByDocContent(true, true);
+        }
     },
 
 
@@ -3693,8 +3702,22 @@ DrawingObjectsController.prototype =
 
     },
 
+		deleteSelectedObjectsCallback: function() {
+			var oSelection  = this.selection.groupSelection ? this.selection.groupSelection.selection : this.selection;
+			if(oSelection.chartSelection)
+			{
+				oSelection.chartSelection.resetSelection(true);
+				oSelection.chartSelection = null;
+			}
+			if(oSelection.textSelection)
+			{
+				oSelection.textSelection = null;
+			}
+			this.removeCallback(-1, undefined, undefined, undefined, undefined, undefined);
+		},
     deleteSelectedObjects: function(){
-        if(Asc["editor"] && Asc["editor"].isChartEditor && (!this.selection.chartSelection)){
+        if(Asc["editor"] && Asc["editor"].isChartEditor && (!this.selection.chartSelection))
+		{
             return true;
         }
         if(this.checkSelectedObjectsProtection())
@@ -3704,15 +3727,7 @@ DrawingObjectsController.prototype =
         var oThis = this;
         this.checkSelectedObjectsAndCallback(function(){
 
-            var oSelection  = oThis.selection.groupSelection ? oThis.selection.groupSelection.selection : oThis.selection;
-            if(oSelection.chartSelection) {
-                oSelection.chartSelection.resetSelection(true);
-                oSelection.chartSelection = null;
-            }
-            if(oSelection.textSelection) {
-                oSelection.textSelection = null;
-            }
-            oThis.removeCallback(-1, undefined, undefined, undefined, undefined, undefined);
+			oThis.deleteSelectedObjectsCallback();
             oThis.updateSelectionState();
         }, [], false, AscDFH.historydescription_Spreadsheet_Remove);
         return true;
@@ -6507,7 +6522,8 @@ DrawingObjectsController.prototype =
     onKeyDown: function(e)
     {
         var ctrlKey = e.metaKey || e.ctrlKey;
-		var macCmdKey = AscCommon.AscBrowser.isMacOs && e.metaKey;
+		var bIsMacOs = AscCommon.AscBrowser.isMacOs;
+		var macCmdKey = bIsMacOs && e.metaKey;
 
         var drawingObjectsController = this;
         var bRetValue = false;
@@ -6790,7 +6806,7 @@ DrawingObjectsController.prototype =
         }
         else if ( e.keyCode == 67) // C
         {
-            if(e.altKey)
+            if(e.altKey && (!bIsMacOs || bIsMacOs && true === ctrlKey))
             {
                 var oSelector = this.selection.groupSelection || this;
                 var aSelected = oSelector.selectedObjects;
@@ -6866,7 +6882,7 @@ DrawingObjectsController.prototype =
         }
         else if ( e.keyCode == 83) //  S - save
         {
-            if(e.altKey)
+            if(e.altKey && (!bIsMacOs || bIsMacOs && true === ctrlKey))
             {
                 var oSelector = this.selection.groupSelection || this;
                 var aSelected = oSelector.selectedObjects;
@@ -8752,7 +8768,7 @@ DrawingObjectsController.prototype =
                 }
                 case AscDFH.historyitem_type_GraphicFrame:
                 {
-                    if(table_props === undefined)
+                    if(table_props === undefined && drawings.length === 1)
                     {
                         new_table_props = drawing.graphicObject.Get_Props();
                         table_props = new_table_props;

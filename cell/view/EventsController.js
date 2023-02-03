@@ -775,6 +775,7 @@
 		/** @param event {KeyboardEvent} */
 		asc_CEventsController.prototype._onWindowKeyDown = function (event) {
 			var t = this, dc = 0, dr = 0, canEdit = this.canEdit(), action = false, enterOptions;
+			var macOs = AscCommon.AscBrowser.isMacOs;
 			var ctrlKey = !AscCommon.getAltGr(event) && (event.metaKey || event.ctrlKey);
 			var macCmdKey = AscCommon.AscBrowser.isMacOs && event.metaKey;
 			var shiftKey = event.shiftKey;
@@ -974,9 +975,10 @@
 					if (t.getCellEditMode()) {
 						return true;
 					}
-					var isSelectColumns = !AscBrowser.isMacOs && ctrlKey || AscBrowser.isMacOs && event.altKey;
+					var isSelectColumns = ctrlKey;
+					var isSelectAllMacOs = isSelectColumns && shiftKey && macOs;
 					// Обработать как обычный текст
-					if (!isSelectColumns && !shiftKey) {
+					if ((!isSelectColumns && !shiftKey) || isSelectAllMacOs) {
 						//теперь пробел обрабатывается на WindowKeyDown
 						//вторыы аргументом передаю true, чтобы два раза пробел не добавлялся и сработало событие CellEditor.prototype._onWindowKeyDown
 						//задача функции EnterText в данном случае - либо добавить данные в графику, либо открыть редактор ячейки, чтобы потом
@@ -1215,14 +1217,12 @@
 					}
 					stop();
 					return result;
-
 				case 61:  // Firefox, Opera (+/=)
 				case 187: // +/=
 					if (!canEdit || t.getCellEditMode() || selectionDialogMode) {
 						return true;
 					}
-
-					if (event.altKey) {
+					if (event.altKey && (!macOs || (macOs && event.ctrlKey))) {
 						this.handlers.trigger('addFunction',
 							AscCommonExcel.cFormulaFunctionToLocale ? AscCommonExcel.cFormulaFunctionToLocale['SUM'] :
 								'SUM', Asc.c_oAscPopUpSelectorType.Func, true);

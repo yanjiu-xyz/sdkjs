@@ -183,6 +183,47 @@
 		return [pivotCollapseButtonClose, pivotCollapseButtonOpen];
 	}
 
+	function buildRelativePath(fromPath, thisPath) {
+		if (!fromPath || !thisPath) {
+			return null;
+		}
+
+		let fromTree = fromPath.split("/");
+		let thisTree = thisPath.split("/");
+		if (fromTree[0] === thisTree[0]) {
+			if (fromTree.length < thisTree.length) {
+				// "/" + from
+				// from root: "/root/from1.xlsx"
+				return fromPath.substring(thisTree[0].length);
+			} else {
+				//if this is part of from
+				let fromIsPartOfTo = true;
+				for (let i = 0; i < thisTree.length - 1; i++) {
+					if (fromTree[i] !== thisTree[i]) {
+						fromIsPartOfTo = false;
+						break;
+					}
+				}
+				if (fromIsPartOfTo) {
+					// "inside/inside2/inseide3/inside4/from2.xlsx"
+					// "from2.xlsx"
+					let path = "";
+					for (let i = thisTree.length - 1; i < fromTree.length; i++) {
+						path += (path === "" ? "" : "/") + fromTree[i];
+					}
+					return path;
+				} else {
+					// from root: "/root/from1.xlsx"
+					return fromPath.substring(thisTree[0].length);
+				}
+			}
+		}
+
+		//return absolute path
+		// "file:///C:\root\from1.xlsx"
+		return "file:///" + fromPath.replaceAll("/", "\\");
+	}
+
 	function CacheColumn() {
 	    this.left = 0;
 		this.width = 0;
@@ -13132,9 +13173,22 @@
 			var isAllowPasteLink = function () {
 				var _res = false;
 				var api = window["Asc"]["editor"];
-				//wb.Core.title -> DocInfo.ReferenceData.fileId
-				//wb.Core.category -> DocInfo.ReferenceData.portalName
-				if (pasteInfo.wb && pasteInfo.wb.Core && pasteInfo.wb.Core.title && pasteInfo.wb.Core.category) {
+
+				//for portals:
+				//wb.Core.contentStatus -> DocInfo.ReferenceData.fileKey
+				//wb.Core.category -> DocInfo.ReferenceData.instanceId
+
+				//for desktops:
+				//contentStatus -> filePath
+
+				if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
+					let _core = pasteInfo.wb.Core;
+					let pasteProcessor = AscCommonExcel.g_clipboardExcel && AscCommonExcel.g_clipboardExcel.pasteProcessor;
+					let sameDoc = pasteProcessor && pasteProcessor._checkPastedInOriginalDoc(pasteInfo.wb, true);
+					if (sameDoc || (_core.contentStatus && !_core.category && window["AscDesktopEditor"]["LocalFileGetSaved"]())) {
+						_res = true;
+					}
+				} else if (pasteInfo.wb && pasteInfo.wb.Core && pasteInfo.wb.Core.contentStatus && pasteInfo.wb.Core.category) {
 					//работаем внутри одного портала
 					//если разные документу, то вставляем ссылку на другой документ, если один и тот же, то вставляем обычную ссылку
 					if (api.DocInfo && api.DocInfo.ReferenceData && pasteInfo.wb.Core.category === api.DocInfo.ReferenceData["instanceId"]) {
@@ -13973,13 +14027,16 @@
 				} else if (linkInfo.type === -2) {
 					//добавляем
 					var referenceData;
-					if (pastedWb && pastedWb.Core) {
-						referenceData = {};
-						referenceData["fileKey"] = pastedWb.Core.contentStatus;
-						referenceData["instanceId"] = pastedWb.Core.category;
-					}
-
 					var name = pastedWb.Core.title;
+					if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
+						name = linkInfo.path;
+					} else {
+						if (pastedWb && pastedWb.Core) {
+							referenceData = {};
+							referenceData["fileKey"] = pastedWb.Core.contentStatus;
+							referenceData["instanceId"] = pastedWb.Core.category;
+						}
+					}
 
 					var pastedSheetName = pastedWb.aWorksheets[0].sName;
 					var newExternalReference = new AscCommonExcel.ExternalReference();
@@ -14770,22 +14827,23 @@
 		//1 - вставляем в эту же книгу и на другой лист
 		//-1 - вставляем в другую книгу и сслыка на неё уже есть
 		//-2 - вставляем в другую книгу и ссылки на неё ешё нет
-		var type = null;
-		var index = null;
-		var sheet = null;
+
+		let type = null;
+		let index = null;
+		let sheet = null;
+		let relativePath;
 		if (pastedWb) {
 			//вставляем в этот же документ. но исходный лист уже мог измениться/удалиться и тп
 			//TODO просмотреть все эти случаи, ms desktop и online ведут себя по-разному
 			//сейчас сравниваю по имени
 
 			//TODO обработать: при вставке из одного и того же документа(открытого разными юзерами) с листа, который ещё не был добавлен другим юзером в режиме строго совместного редактирования
-
-			var sameDoc = pastedWb && AscCommonExcel.g_clipboardExcel && AscCommonExcel.g_clipboardExcel.pasteProcessor && AscCommonExcel.g_clipboardExcel.pasteProcessor._checkPastedInOriginalDoc(pastedWb, true);
-			var sameSheet = sameDoc && pastedWb.aWorksheets[0].sName === this.model.sName;
-			var externalSheetSameWb;
+			let sameDoc = AscCommonExcel.g_clipboardExcel && AscCommonExcel.g_clipboardExcel.pasteProcessor && AscCommonExcel.g_clipboardExcel.pasteProcessor._checkPastedInOriginalDoc(pastedWb, true);
+			let sameSheet = sameDoc && pastedWb.aWorksheets[0].sName === this.model.sName;
+			let externalSheetSameWb;
 			if (!sameSheet && sameDoc) {
-				var sName = pastedWb.aWorksheets[0].sName;
-				for (var i = 0; i < this.model.workbook.aWorksheets.length; i++) {
+				let sName = pastedWb.aWorksheets[0].sName;
+				for (let i = 0; i < this.model.workbook.aWorksheets.length; i++) {
 					if (this.model.workbook.aWorksheets[i].sName === sName) {
 						externalSheetSameWb = sName;
 					}
@@ -14798,19 +14856,27 @@
 				type = 1;
 				sheet = externalSheetSameWb;
 			} else {
-				//сначала ищем по дополнительной информации
-				//fileId -> contentStatus, portalName -> category
-				var referenceData;
-				if (pastedWb && pastedWb.Core) {
-					referenceData = {};
-					referenceData["fileKey"] = pastedWb.Core.contentStatus;
-					referenceData["instanceId"] = pastedWb.Core.category;
-				}
-				var externalReference = referenceData && this.model.workbook.getExternalLinkByReferenceData(referenceData);
-				externalReference = externalReference && externalReference.index;
-				if (null == externalReference) {
-					//потом пробуем по имени найти
-					externalReference = pastedWb && pastedWb.Core && this.model.workbook.getExternalLinkIndexByName(pastedWb.Core.title);
+				let externalReference;
+				if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
+					let fromPath = pastedWb.Core.contentStatus;
+					let thisPath = window["AscDesktopEditor"]["LocalFileGetSourcePath"]();
+					relativePath = buildRelativePath(fromPath, thisPath);
+					externalReference = this.model.workbook.getExternalLinkIndexByName(relativePath);
+				} else {
+					//сначала ищем по дополнительной информации
+					//fileId -> contentStatus, portalName -> category
+					let referenceData;
+					if (pastedWb && pastedWb.Core) {
+						referenceData = {};
+						referenceData["fileKey"] = pastedWb.Core.contentStatus;
+						referenceData["instanceId"] = pastedWb.Core.category;
+					}
+					externalReference = referenceData && this.model.workbook.getExternalLinkByReferenceData(referenceData);
+					externalReference = externalReference && externalReference.index;
+					if (null == externalReference) {
+						//потом пробуем по имени найти
+						externalReference = pastedWb && pastedWb.Core && this.model.workbook.getExternalLinkIndexByName(pastedWb.Core.title);
+					}
 				}
 
 				//если всё-таки не нашли, то добавляем новый external reference
@@ -14824,8 +14890,10 @@
 			}
 		}
 
-		return type !== null ? {type: type, index: index, sheet: sheet} : null;
+		return type !== null ? {type: type, index: index, sheet: sheet, path: relativePath} : null;
 	};
+
+
 
 	WorksheetView.prototype.showSpecialPasteOptions = function (options/*, range, positionShapeContent*/) {
 		var specialPasteShowOptions = window['AscCommon'].g_specialPasteHelper.buttonInfo;
@@ -17041,17 +17109,23 @@
 						}
 					}
 
-					var bRes = t._saveCellValueAfterEdit(c, val, flags, /*isNotHistory*/false, /*lockDraw*/false);
+					let _compare = function (_oldReferenceIds, _newReferenceIds) {
+						if (_oldReferenceIds && _newReferenceIds && _oldReferenceIds.length === _newReferenceIds.length) {
+							for (let i = 0; i < _newReferenceIds.length; i++) {
+								if (_oldReferenceIds[i] !== _newReferenceIds[i]) {
+									return false;
+								}
+							}
+							return true;
+						}
+						return false;
+					};
 
-					var tempCell;
-					c._foreachNoEmpty(function (cell) {
-						tempCell = cell;
-					});
-					if (tempCell) {
+					let beforeExternalReferences = t.getExternalReferencesByCell(c, null, true);
+					let bRes = t._saveCellValueAfterEdit(c, val, flags, /*isNotHistory*/false, /*lockDraw*/false);
 
-					}
-
-					if (t.getExternalReferencesByCell(c, true)) {
+					let afterExternalReferences = t.getExternalReferencesByCell(c, true, true);
+					if (afterExternalReferences && !_compare(afterExternalReferences, beforeExternalReferences)) {
 						t.model.workbook.handlers.trigger("asc_onNeedUpdateExternalReference");
 					}
 
@@ -24181,7 +24255,7 @@
 		this.workbook.doUpdateExternalReference(externalReferences);
 	};
 
-	WorksheetView.prototype.getExternalReferencesByCell = function (c, initStructure) {
+	WorksheetView.prototype.getExternalReferencesByCell = function (c, initStructure, opt_get_only_ids) {
 		let t = this;
 		let externalReferences = [];
 		t.model._getCell(c.bbox.r1, c.bbox.c1, function (cell) {
@@ -24192,7 +24266,7 @@
 						if ((AscCommonExcel.cElementType.cellsRange3D === fP.outStack[i].type || AscCommonExcel.cElementType.cell3D === fP.outStack[i].type) && fP.outStack[i].externalLink) {
 							let eR = t.model.workbook.getExternalWorksheet(fP.outStack[i].externalLink);
 							if (eR) {
-								externalReferences.push(eR.getAscLink());
+								externalReferences.push(opt_get_only_ids ? eR.Id : eR.getAscLink());
 								if (initStructure) {
 									eR.initRows(fP.outStack[i].getRange());
 								}
@@ -24354,5 +24428,6 @@
     window["AscCommonExcel"].WorksheetView = WorksheetView;
 
 	window['AscCommonExcel'].getPivotButtonsForLoad = getPivotButtonsForLoad;
+	window['AscCommonExcel'].buildRelativePath = buildRelativePath;
 
 })(window);

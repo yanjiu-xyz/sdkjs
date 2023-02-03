@@ -340,8 +340,8 @@ CLimit.prototype.GetTextOfElement = function(isLaTeX) {
     {
 		strLimitSymbol = (this.Pr.type == 1) ? "┴" : "┬";
 	}
-	
-	if (strArgument.length > 1)
+
+	if (strArgument.length > 1 || isLaTeX)
 		strArgument = strStartBracet + strArgument + strCloseBracet;
 
 	strTemp = strFuncName + strLimitSymbol+ strArgument;
@@ -455,7 +455,14 @@ CMathFunc.prototype.GetTextOfElement = function(isLaTeX) {
 
     if (!isLaTeX)
     {
-      strArgument =  " 〖" + strArgument + "〗";
+        if (!this.getArgument().IsOneElementInContentForGetText())
+        {
+            strArgument =  " 〖" + strArgument + "〗";
+        }
+        else
+        {
+            strArgument = " " + strArgument;
+        }
     }
     if (isLaTeX)
     {
@@ -501,7 +508,7 @@ CMathFunc.prototype.GetTextOfElement = function(isLaTeX) {
 		}
 	}
 
-	strTemp =  strFuncName + strArgument;
+	strTemp = strFuncName + strArgument;
 
 	return strTemp;
 };

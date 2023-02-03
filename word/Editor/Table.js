@@ -10215,10 +10215,12 @@ CTable.prototype.RemoveTableColumn = function()
 	}
 
 	// Возвращаем курсор
-	this.DrawingDocument.TargetStart();
-	this.DrawingDocument.TargetShow();
-
-	this.DrawingDocument.SelectEnabled(false);
+	if(!this.bPresentation)
+	{
+		this.DrawingDocument.TargetStart();
+		this.DrawingDocument.TargetShow();
+		this.DrawingDocument.SelectEnabled(false);
+	}
 
 	// При удалении последней строки, надо сообщить об этом родительскому классу
 	if (this.Content.length <= 0)
@@ -18595,9 +18597,11 @@ CTable.prototype.DistributeRows = function()
 
 		for (var nCurPage in this.RowsInfo[nCurRow].TopDy)
 			nRowSummaryH -= this.RowsInfo[nCurRow].TopDy[nCurPage];
-
-		var oRow      = this.GetRow(nCurRow);
-		nRowSummaryH -= oRow.GetTopMargin() + oRow.GetBottomMargin();
+		if(!this.bPresentation)
+		{
+			var oRow      = this.GetRow(nCurRow);
+			nRowSummaryH -= oRow.GetTopMargin() + oRow.GetBottomMargin();
+		}
 
 		nSumH += nRowSummaryH;
 	}
