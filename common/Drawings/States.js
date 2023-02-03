@@ -426,22 +426,25 @@ NullState.prototype =
         }
 		else
 		{
-			if(oAPI.isFormatPainterOn())
+			if(oAPI.editorId === AscCommon.c_oEditorId.Presentation)
 			{
-				let oPainterData = oAPI.getFormatPainterData();
-				let sType = "default";
-				if(oPainterData)
+				if(oAPI.isFormatPainterOn())
 				{
-					if(oPainterData.isDrawingData())
+					let oPainterData = oAPI.getFormatPainterData();
+					let sType = "default";
+					if(oPainterData)
 					{
-						sType = AscCommon.kCurFormatPainterDrawing;
+						if(oPainterData.isDrawingData())
+						{
+							sType = AscCommon.kCurFormatPainterDrawing;
+						}
+						else
+						{
+							sType = AscCommon.kCurFormatPainterWord;
+						}
 					}
-					else
-					{
-						sType = AscCommon.kCurFormatPainterWord;
-					}
+					return {cursorType: sType, objectId: "1"};
 				}
-				return {cursorType: sType, objectId: "1"};
 			}
         }
         var ret;
@@ -2049,6 +2052,10 @@ TextAddState.prototype =
                         oApi.sync_MarkerFormatCallback(true);
                     }
                 }
+            }
+			else if(oApi.editorId === AscCommon.c_oEditorId.Spreadsheet)
+			{
+				this.drawingObjects.checkFormatPainterOnMouseEvent();
             }
         }
     }

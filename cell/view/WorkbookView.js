@@ -67,13 +67,25 @@
 
   var g_clipboardExcel = AscCommonExcel.g_clipboardExcel;
 
-  function CCellFormatPasteData(oWS) {
+  function CCellFormatPasteData(oWSView) {
 	  AscCommon.CFormatPainterDataBase.call();
-	  this.ws = oWS;
-	  this.range = oWS.selectionRange.clone();
+	  this.ws = oWSView.model;
+	  this.range = this.ws.selectionRange.clone();
+
 	  this.docData = null;
+	  if (oWSView && oWSView.isSelectOnShape) {
+		  if (oWSView.objectRender && oWSView.objectRender.controller) {
+			  this.docData = oWSView.objectRender.controller.getFormatPainterData();
+		  }
+	  }
   }
   AscFormat.InitClassWithoutType(CCellFormatPasteData, AscCommon.CFormatPainterDataBase);
+	CCellFormatPasteData.prototype.isDrawingData = function() {
+		return !!this.docData;
+	};
+	CCellFormatPasteData.prototype.getDocData = function() {
+		return this.docData;
+	};
 
   function WorkbookCommentsModel(handlers, aComments) {
     this.workbook = {handlers: handlers};

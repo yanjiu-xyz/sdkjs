@@ -4257,10 +4257,13 @@
 	};
 	baseEditorsApi.prototype.sendPaintFormatEvent = function(_value)
 	{
-		var value = ( true === _value ? c_oAscFormatPainterState.kOn : ( false === _value ? c_oAscFormatPainterState.kOff : _value ) );
-
+		let value = ( true === _value ? c_oAscFormatPainterState.kOn : ( false === _value ? c_oAscFormatPainterState.kOff : _value ) );
 		this.formatPainter.putState(value);
-		return this.sendEvent("asc_onPaintFormatChanged", value);
+		this.sendEvent("asc_onPaintFormatChanged", value);
+		if(value === c_oAscFormatPainterState.kOff)
+		{
+			this.sendEvent('asc_onStopFormatPainter');
+		}
 	};
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};

@@ -1297,7 +1297,7 @@
 						let oData = oAPI.getFormatPainterData();
 						if (oData) {
 							if (oData.isDrawingData()) {
-								this.pasteFormattingWithPoint(oData);
+								this.pasteFormattingWithPoint(oData.getDocData());
 								this.resetTracking();
 								oAPI.sendPaintFormatEvent(AscCommon.c_oAscFormatPainterState.kOff);
 								return true;

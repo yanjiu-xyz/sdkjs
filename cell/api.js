@@ -6007,7 +6007,7 @@ var editor;
 		if(!oWSView || !oWSView.model) {
 			return null;
 		}
-		return new AscCommonExcel.CCellFormatPasteData(oWSView.model);
+		return new AscCommonExcel.CCellFormatPasteData(oWSView);
 	};
 
   spreadsheet_api.prototype.asc_showAutoComplete = function() {

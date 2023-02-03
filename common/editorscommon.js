@@ -12460,6 +12460,10 @@
 	{
 		return false;
 	};
+	CFormatPainterDataBase.prototype.getDocData = function()
+	{
+		return null;
+	};
 
 	//------------------------------------------------------------fill polyfill--------------------------------------------
 	if (!Array.prototype.findIndex) {

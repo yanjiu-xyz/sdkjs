@@ -1790,6 +1790,10 @@ CDocumentFormatPainterData.prototype.isDrawingData = function()
 {
 	return !!this.Drawing;
 };
+CDocumentFormatPainterData.prototype.getDocData = function()
+{
+	return this;
+};
 
 /**
  * Основной класс для работы с документом в Word.

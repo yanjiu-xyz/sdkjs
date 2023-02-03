@@ -8895,7 +8895,12 @@
 					col = c.col;
 				}
 			}
-			return {cursor: kCurFormatPainterExcel, target: target, col: col, row: row};
+			let oData = this.workbook.Api.getFormatPainterData();
+			let sCursor = kCurFormatPainterExcel;
+			if(oData && oData.isDrawingData()) {
+				sCursor = AscCommon.kCurFormatPainterDrawing;
+			}
+			return {cursor: sCursor, target: target, col: col, row: row};
 		}
 
 		if (dialogOtherRanges && (this.getFormulaEditMode() || this.isChartAreaEditMode)) {
