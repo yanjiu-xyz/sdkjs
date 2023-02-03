@@ -71,10 +71,6 @@ CHdrFtrController.prototype.AddNewParagraph = function(bRecalculate, bForceAdd)
 {
 	return this.HdrFtr.AddNewParagraph(bRecalculate, bForceAdd);
 };
-CHdrFtrController.prototype.GetFormatPainterData = function()
-{
-	return this.HdrFtr.GetFormatPainterData();
-};
 CHdrFtrController.prototype.AddSignatureLine = function(oSignatureDrawing)
 {
 	this.HdrFtr.AddSignatureLine(oSignatureDrawing);
@@ -301,9 +297,9 @@ CHdrFtrController.prototype.UpdateCursorType = function(X, Y, PageAbs, MouseEven
 {
 	this.HdrFtr.UpdateCursorType(X, Y, PageAbs, MouseEvent);
 };
-CHdrFtrController.prototype.PasteFormatting = function(oData)
+CHdrFtrController.prototype.PasteFormatting = function(TextPr, ParaPr)
 {
-	this.HdrFtr.PasteFormatting(oData);
+	this.HdrFtr.PasteFormatting(TextPr, ParaPr, false);
 };
 CHdrFtrController.prototype.IsSelectionUse = function()
 {

@@ -277,20 +277,7 @@ CGraphicObjects.prototype =
                     this.drawingDocument.SetCursorType("default");
                     return true;
                 }
-				let sCursorType = ret.cursorType;
-				let oAPI = this.getEditorApi();
-				if(oAPI.isFormatPainterOn())
-				{
-					if(sCursorType !== "text")
-					{
-						let oData = oAPI.getFormatPainterData();
-						if(oData.isDrawingData())
-						{
-							sCursorType = AscCommon.kCurFormatPainterDrawing;
-						}
-					}
-				}
-                this.drawingDocument.SetCursorType(sCursorType);
+                this.drawingDocument.SetCursorType(ret.cursorType);
             }
             return true;
         }
@@ -2453,11 +2440,11 @@ CGraphicObjects.prototype =
         }
     },
 
-	resetTracking: DrawingObjectsController.prototype.resetTracking,
-	getFormatPainterData: DrawingObjectsController.prototype.getFormatPainterData,
-	pasteFormatting: DrawingObjectsController.prototype.pasteFormatting,
-	checkFormatPainterOnMouseEvent: DrawingObjectsController.prototype.checkFormatPainterOnMouseEvent,
-	pasteFormattingWithPoint: DrawingObjectsController.prototype.pasteFormattingWithPoint,
+    paragraphFormatPaste: function( CopyTextPr, CopyParaPr, Bool )
+    {
+        var content = this.getTargetDocContent();
+        content && content.PasteFormatting(CopyTextPr, CopyParaPr, Bool );
+    },
 
     getHdrFtrObjectsByPageIndex: function(pageIndex)
     {

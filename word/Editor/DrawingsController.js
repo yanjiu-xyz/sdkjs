@@ -98,10 +98,6 @@ CDrawingsController.prototype.AddNewParagraph = function(bRecalculate, bForceAdd
 {
 	return this.DrawingObjects.addNewParagraph(bRecalculate, bForceAdd);
 };
-CDrawingsController.prototype.GetFormatPainterData = function()
-{
-	return this.DrawingObjects.getFormatPainterData();
-};
 CDrawingsController.prototype.AddInlineImage = function(nW, nH, oImage, oChart, bFlow)
 {
 	return this.DrawingObjects.addInlineImage(nW, nH, oImage, oChart, bFlow);
@@ -428,9 +424,9 @@ CDrawingsController.prototype.UpdateCursorType = function(X, Y, PageAbs, MouseEv
 	// TODO: Надо вызывать не у LogicDocument, а у DocumentContent заданного
 	this.LogicDocument.controller_UpdateCursorType(X, Y, PageAbs, MouseEvent);
 };
-CDrawingsController.prototype.PasteFormatting = function(oData)
+CDrawingsController.prototype.PasteFormatting = function(TextPr, ParaPr)
 {
-	this.DrawingObjects.pasteFormatting(oData);
+	this.DrawingObjects.paragraphFormatPaste(TextPr, ParaPr, false);
 };
 CDrawingsController.prototype.IsSelectionUse = function()
 {

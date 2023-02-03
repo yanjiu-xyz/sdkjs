@@ -2688,11 +2688,11 @@ CFootnotesController.prototype.UpdateCursorType = function(X, Y, PageAbs, MouseE
 		oFootnote.UpdateCursorType(X, Y, oResult.FootnotePageIndex, MouseEvent);
 	}
 };
-CFootnotesController.prototype.PasteFormatting = function(oData)
+CFootnotesController.prototype.PasteFormatting = function(TextPr, ParaPr)
 {
 	for (var sId in this.Selection.Footnotes)
 	{
-		this.Selection.Footnotes[sId].PasteFormatting(oData);
+		this.Selection.Footnotes[sId].PasteFormatting(TextPr, ParaPr, true);
 	}
 };
 CFootnotesController.prototype.IsSelectionUse = function()
@@ -3503,12 +3503,7 @@ CFootnotesController.prototype.CollectSelectedReviewChanges = function(oTrackMan
 		this.CurFootnote.CollectSelectedReviewChanges(oTrackManager);
 	}
 };
-CFootnotesController.prototype.GetFormatPainterData = function ()
-{
-	if(!this.CurFootnote)
-		return null;
-	return this.CurFootnote.GetFormatPainterData();
-};
+
 
 function CFootEndnotePageColumn()
 {

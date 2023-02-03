@@ -583,7 +583,7 @@ CDocumentControllerBase.prototype.UpdateCursorType = function(X, Y, PageAbs, Mou
  * @param TextPr
  * @param ParaPr
  */
-CDocumentControllerBase.prototype.PasteFormatting = function(oData){};
+CDocumentControllerBase.prototype.PasteFormatting = function(TextPr, ParaPr){};
 /**
  * Проверяем используется ли в данный момент селект.
  * @returns {boolean}
@@ -820,12 +820,3 @@ CDocumentControllerBase.prototype.FindNextFillingForm = function(isNext, isCurre
  * @param oTrackManager {AscWord.CTrackRevisionsManager}
  */
 CDocumentControllerBase.prototype.CollectSelectedReviewChanges = function(oTrackManager) {};
-
-/**
- * returns data for format copying
- * @return {?CDocumentFormatPainterData}
- * */
-CDocumentControllerBase.prototype.GetFormatPainterData = function()
-{
-	return null;
-};

@@ -886,6 +886,7 @@
 		this.isPageBreakBefore    = false;
 		this.isKeepLinesTogether  = false;
 
+		this.isPaintFormat              = c_oAscFormatPainterState.kOff;
 		this.isMarkerFormat             = false;
 		this.isStartAddShape            = false;
 		this.isDrawTablePen				= false;
@@ -8375,21 +8376,11 @@ background-repeat: no-repeat;\
 		return this.WordControl.m_dScrollY;
 	};
 
-	asc_docs_api.prototype.retrieveFormatPainterData = function()
-	{
-		let oLogicDocument = this.private_GetLogicDocument();
-		if(!oLogicDocument)
-		{
-			return null;
-		}
-		return oLogicDocument.GetFormatPainterData();
-	};
-
 	asc_docs_api.prototype.SetPaintFormat = function(_value)
 	{
 		var value = ( true === _value ? c_oAscFormatPainterState.kOn : ( false === _value ? c_oAscFormatPainterState.kOff : _value ) );
 
-		this.formatPainter.putState(value);
+		this.isPaintFormat = value;
 
 		if (c_oAscFormatPainterState.kOff !== value)
 			this.WordControl.m_oLogicDocument.Document_Format_Copy();
@@ -8404,7 +8395,7 @@ background-repeat: no-repeat;\
 	{
 		var value = ( true === _value ? c_oAscFormatPainterState.kOn : ( false === _value ? c_oAscFormatPainterState.kOff : _value ) );
 
-		this.formatPainter.putState(value);
+		this.isPaintFormat = value;
 		return this.sendEvent("asc_onPaintFormatChanged", value);
 	};
 	asc_docs_api.prototype.SetMarkerFormat          = function(value, is_flag, r, g, b)
@@ -12952,7 +12943,7 @@ background-repeat: no-repeat;\
 			this.sync_MarkerFormatCallback(false);
 			oLogicDocument.UpdateCursorType(oLogicDocument.CurPos.RealX, oLogicDocument.CurPos.RealY, oLogicDocument.CurPage, new AscCommon.CMouseEventHandler());
 		}
-		else if (this.isFormatPainterOn())
+		else if (c_oAscFormatPainterState.kOff !== this.isPaintFormat)
 		{
 			this.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
 			oLogicDocument.UpdateCursorType(oLogicDocument.CurPos.RealX, oLogicDocument.CurPos.RealY, oLogicDocument.CurPage, new AscCommon.CMouseEventHandler());

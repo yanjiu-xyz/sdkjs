@@ -1460,13 +1460,6 @@ CEndnotesController.prototype.AddNewParagraph = function(bRecalculate, bForceAdd
 
 	return this.CurEndnote.AddNewParagraph(bRecalculate, bForceAdd);
 };
-CEndnotesController.prototype.GetFormatPainterData = function()
-{
-	if (!this.CurEndnote)
-		return null;
-
-	return this.CurEndnote.GetFormatPainterData();
-};
 CEndnotesController.prototype.AddInlineImage = function(nW, nH, oImage, oChart, bFlow)
 {
 	if (false === this.private_CheckEndnotesSelectionBeforeAction())
@@ -2680,11 +2673,11 @@ CEndnotesController.prototype.UpdateCursorType = function(X, Y, PageAbs, MouseEv
 		oEndnote.UpdateCursorType(X, Y, oResult.EndnotePageIndex, MouseEvent);
 	}
 };
-CEndnotesController.prototype.PasteFormatting = function(oData)
+CEndnotesController.prototype.PasteFormatting = function(TextPr, ParaPr)
 {
 	for (var sId in this.Selection.Endnotes)
 	{
-		this.Selection.Endnotes[sId].PasteFormatting(oData);
+		this.Selection.Endnotes[sId].PasteFormatting(TextPr, ParaPr, true);
 	}
 };
 CEndnotesController.prototype.IsSelectionUse = function()

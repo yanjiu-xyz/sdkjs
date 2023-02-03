@@ -10755,17 +10755,13 @@ Paragraph.prototype.GetCompiledParaPr = function(copy)
 {
 	return this.Get_CompiledPr2(copy).ParaPr;
 };
-Paragraph.prototype.PasteFormatting = function(oData)
+Paragraph.prototype.PasteFormatting = function(TextPr, oParaPr, ApplyPara)
 {
-	if(!oData)
-		return;
-	let oTextPr = oData.TextPr;
-	let oParaPr = oData.ParaPr;
 	// Применяем текстовые настройки всегда
-	if (oTextPr)
+	if (TextPr)
 	{
 		var oParaTextPr = new ParaTextPr();
-		oParaTextPr.Value.Set_FromObject(oTextPr, true);
+		oParaTextPr.Value.Set_FromObject(TextPr, true);
 		this.Add(oParaTextPr);
 	}
 

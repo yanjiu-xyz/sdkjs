@@ -67,25 +67,6 @@
 
   var g_clipboardExcel = AscCommonExcel.g_clipboardExcel;
 
-  function CCellFormatPasteData(oWSView) {
-	  AscCommon.CFormatPainterDataBase.call();
-	  this.ws = oWSView.model;
-	  this.range = this.ws.selectionRange.clone();
-
-	  this.docData = null;
-	  if (oWSView && oWSView.isSelectOnShape) {
-		  if (oWSView.objectRender && oWSView.objectRender.controller) {
-			  this.docData = oWSView.objectRender.controller.getFormatPainterData();
-		  }
-	  }
-  }
-  AscFormat.InitClassWithoutType(CCellFormatPasteData, AscCommon.CFormatPainterDataBase);
-	CCellFormatPasteData.prototype.isDrawingData = function() {
-		return !!this.docData;
-	};
-	CCellFormatPasteData.prototype.getDocData = function() {
-		return this.docData;
-	};
 
   function WorkbookCommentsModel(handlers, aComments) {
     this.workbook = {handlers: handlers};
@@ -276,6 +257,9 @@
     this.mainOverlay = null;
     this.autoShapeTrack = null;
 
+    this.formatPainterState = c_oAscFormatPainterState.kOff;
+    this.formatPainterRange = null;
+    this.formatPainterSheet = null;
 
     this.selectionDialogMode = false;
     this.dialogAbsName = false;
@@ -570,7 +554,7 @@
 
 			  // FormatPainter
 			  'isFormatPainter': function () {
-				  return self.Api.getFormatPainterState();
+				  return self.formatPainterState;
 			  },
 
 			  //calculate
@@ -1338,7 +1322,7 @@
     if (this.selectionDialogMode) {
       return;
     }
-    var formatPainterState = this.Api.getFormatPainterState();
+    var formatPainterState = this.formatPainterState;
     var ws = this.getWorksheet();
     ws.changeSelectionDone();
     this._onSelectionNameChanged(ws.getSelectionName(/*bRangeText*/false));
@@ -1800,7 +1784,7 @@
   };
 
   WorkbookView.prototype._onStopFormatPainter = function (bLockDraw) {
-    if (this.Api.getFormatPainterState()) {
+    if (this.formatPainterState) {
       this.formatPainter(c_oAscFormatPainterState.kOff, bLockDraw);
     }
   };
@@ -2450,25 +2434,10 @@
 	};
 
 	WorkbookView.prototype.isDrawFormatPainter = function () {
-		if(this.Api.getFormatPainterState()) {
-			let oData = this.Api.getFormatPainterData();
-			if(oData && !oData.docData) {
-				let oWS = this.getWorksheet();
-				if(oWS && oWS.model === oData.ws) {
-					return true;
-				}
-			}
-		}
-		return false;
+	    return this.formatPainterState && this.formatPainterSheet === this.wsActive;
     };
     WorkbookView.prototype.getFormatPainterSheet = function () {
-	    if(this.Api.getFormatPainterState()) {
-		    let oData = this.Api.getFormatPainterData();
-		    if(oData && oData.ws) {
-			    return oData.ws;
-		    }
-	    }
-	    return null;
+        return this.formatPainterState && this.model.getWorksheet(this.formatPainterSheet);
     };
 
   WorkbookView.prototype.getIsTrackShape = function() {
@@ -3201,10 +3170,15 @@
         ws.cleanSelection();
     }
 
-    if (this.Api.getFormatPainterState()) {
-      this.Api.checkFormatPainterData()
+    // Если передали состояние, то выставляем его. Если нет - то меняем на противоположное.
+    this.formatPainterState = (null != formatPainterState) ? formatPainterState :
+        ((c_oAscFormatPainterState.kOff !== this.formatPainterState) ? c_oAscFormatPainterState.kOff : c_oAscFormatPainterState.kOn);
+
+    if (this.formatPainterState) {
+      this.formatPainterSheet = this.wsActive;
+      this.formatPainterRange = ws.model.selectionRange.clone();
     } else {
-      this.Api.clearFormatPainterData();
+      this.formatPainterSheet = this.formatPainterRange = null;
       this.handlers.trigger('asc_onStopFormatPainter');
     }
     if (!bLockDraw) {
@@ -5848,5 +5822,4 @@
 	//------------------------------------------------------------export---------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
   window["AscCommonExcel"].WorkbookView = WorkbookView;
-  window["AscCommonExcel"].CCellFormatPasteData = CCellFormatPasteData;
 })(window);

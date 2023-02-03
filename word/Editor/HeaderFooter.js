@@ -739,11 +739,6 @@ CHeaderFooter.prototype =
 		this.Content.AddNewParagraph();
 	},
 
-	GetFormatPainterData : function()
-	{
-		return this.Content.AddNewParagraph();
-	},
-
 	AddInlineImage : function(W, H, Img, Chart, bFlow)
     {
         this.Content.AddInlineImage(W,H,Img, Chart, bFlow);
@@ -787,9 +782,9 @@ CHeaderFooter.prototype =
 		this.Content.ClearParagraphFormatting(isClearParaPr, isClearTextPr);
 	},
 
-	PasteFormatting : function(oData)
+	PasteFormatting : function(TextPr, ParaPr, ApplyPara)
 	{
-		this.Content.PasteFormatting(oData);
+		this.Content.PasteFormatting(TextPr, ParaPr, ApplyPara);
 	},
 
     Remove : function(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord)
@@ -2036,11 +2031,6 @@ CHeaderFooterController.prototype =
 			return this.CurHdrFtr.AddNewParagraph();
 	},
 
-	GetFormatPainterData : function()
-	{
-		return this.CurHdrFtr.AddNewParagraph();
-	},
-
 	AddInlineImage : function(W, H, Img, Chart, bFlow)
     {
         if ( null != this.CurHdrFtr )
@@ -2098,10 +2088,10 @@ CHeaderFooterController.prototype =
 			return this.CurHdrFtr.ClearParagraphFormatting();
 	},
 
-	PasteFormatting : function(oData)
+	PasteFormatting : function(TextPr, ParaPr, ApplyPara)
 	{
 		if (null != this.CurHdrFtr)
-			return this.CurHdrFtr.PasteFormatting(oData);
+			return this.CurHdrFtr.PasteFormatting(TextPr, ParaPr, ApplyPara);
 	},
 
     Remove : function(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord)

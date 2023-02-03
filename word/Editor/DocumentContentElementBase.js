@@ -424,10 +424,6 @@ CDocumentContentElementBase.prototype.AddNewParagraph = function()
 {
 
 };
-CDocumentContentElementBase.prototype.GetFormatPainterData = function()
-{
-	return null;
-};
 CDocumentContentElementBase.prototype.Get_SelectionState2 = function()
 {
 	return null;
@@ -570,7 +566,7 @@ CDocumentContentElementBase.prototype.SetTableProps = function(oProps)
 CDocumentContentElementBase.prototype.GetSelectedContent = function(oSelectedContent)
 {
 };
-CDocumentContentElementBase.prototype.PasteFormatting = function(oData)
+CDocumentContentElementBase.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
 {
 };
 CDocumentContentElementBase.prototype.GetCurPosXY = function()

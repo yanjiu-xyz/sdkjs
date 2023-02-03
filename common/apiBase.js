@@ -222,9 +222,6 @@
 		this.binaryChanges = false;
 
 		this.isBlurEditor = false;
-
-
-		this.formatPainter = new AscCommon.CFormatPainter(this);
 		this._correctEmbeddedWork();
 
 		return this;
@@ -4233,38 +4230,6 @@
 		this.asc_pluginRun(plugin.guid, 0, startData);
 	};
 
-
-	baseEditorsApi.prototype.retrieveFormatPainterData = function() {
-		return null;
-	};
-	baseEditorsApi.prototype.getFormatPainter = function() {
-		return this.formatPainter;
-	};
-	baseEditorsApi.prototype.getFormatPainterState = function() {
-		return this.formatPainter.getState();
-	};
-	baseEditorsApi.prototype.isFormatPainterOn = function() {
-		return this.formatPainter.isOn();
-	};
-	baseEditorsApi.prototype.checkFormatPainterData = function() {
-		return this.formatPainter.checkData();
-	};
-	baseEditorsApi.prototype.getFormatPainterData = function() {
-		return this.formatPainter.data;
-	};
-	baseEditorsApi.prototype.clearFormatPainterData = function() {
-		return this.formatPainter.clearData();
-	};
-	baseEditorsApi.prototype.sendPaintFormatEvent = function(_value)
-	{
-		let value = ( true === _value ? c_oAscFormatPainterState.kOn : ( false === _value ? c_oAscFormatPainterState.kOff : _value ) );
-		this.formatPainter.putState(value);
-		this.sendEvent("asc_onPaintFormatChanged", value);
-		if(value === c_oAscFormatPainterState.kOff)
-		{
-			this.sendEvent('asc_onStopFormatPainter');
-		}
-	};
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
 	window['AscCommon'].baseEditorsApi = baseEditorsApi;

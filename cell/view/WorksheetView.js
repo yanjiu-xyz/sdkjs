@@ -6100,13 +6100,10 @@
     };
 
     WorksheetView.prototype._drawFormatPainterRange = function () {
-        let t = this, color = new CColor(0, 0, 0);
-		let oData = this.workbook.Api.getFormatPainterData();
-		if(oData && oData.range) {
-			oData.range.ranges.forEach(function (item) {
-				t._drawElements(t._drawSelectionElement, item, AscCommonExcel.selectionLineType.Dash, color);
-			});
-		}
+        var t = this, color = new CColor(0, 0, 0);
+        this.workbook.formatPainterRange.ranges.forEach(function (item) {
+            t._drawElements(t._drawSelectionElement, item, AscCommonExcel.selectionLineType.Dash, color);
+        });
     };
 
     WorksheetView.prototype._drawFormulaRanges = function (ranges) {
@@ -6399,11 +6396,7 @@
         if (this.model.copySelection) {
             selectionRange = this.model.selectionRange;
         } else if (this.workbook.isDrawFormatPainter()) {
-			let oData = this.workbook.Api.getFormatPainterData();
-	        selectionRange = null;
-			if(oData && oData.range) {
-				selectionRange = oData.range;
-			}
+            selectionRange = this.workbook.formatPainterRange;
         } else {
             selectionRange = null;
         }
@@ -8880,7 +8873,7 @@
 			};
 		}
 
-		if (this.workbook.Api.getFormatPainterState()) {
+		if (this.workbook.formatPainterState) {
 			if (x <= this.cellsLeft && y >= this.cellsTop) {
 				r = this._findRowUnderCursor(y, true);
 				if (r !== null) {
@@ -8895,12 +8888,7 @@
 					col = c.col;
 				}
 			}
-			let oData = this.workbook.Api.getFormatPainterData();
-			let sCursor = kCurFormatPainterExcel;
-			if(oData && oData.isDrawingData()) {
-				sCursor = AscCommon.kCurFormatPainterDrawing;
-			}
-			return {cursor: sCursor, target: target, col: col, row: row};
+			return {cursor: kCurFormatPainterExcel, target: target, col: col, row: row};
 		}
 
 		if (dialogOtherRanges && (this.getFormulaEditMode() || this.isChartAreaEditMode)) {
@@ -10446,7 +10434,7 @@
 
     // Окончание выделения
     WorksheetView.prototype.changeSelectionDone = function () {
-        if (this.workbook.Api.getFormatPainterState()) {
+        if (this.workbook.formatPainterState) {
             this.applyFormatPainter();
 		} else {
 			this.checkSelectionSparkline();
@@ -10508,51 +10496,47 @@
     // ----- Changing cells -----
 
     WorksheetView.prototype.applyFormatPainter = function () {
-		let oData = this.workbook.Api.getFormatPainterData();
-		let oRange = oData && oData.range;
-		if(oRange) {
-			let t = this;
-			let from = oRange.getLast(), to = this.model.selectionRange.getLast().clone();
-			let onApplyFormatPainterCallback = function (isSuccess) {
-				// Очищаем выделение
-				t.cleanSelection();
+        var t = this;
+        var from = this.workbook.formatPainterRange.getLast(), to = this.model.selectionRange.getLast().clone();
+        var onApplyFormatPainterCallback = function (isSuccess) {
+            // Очищаем выделение
+            t.cleanSelection();
 
-				if (isSuccess) {
-					AscCommonExcel.promoteFromTo(from, t.workbook.getFormatPainterSheet(), to, t.model);
+            if (isSuccess) {
+                AscCommonExcel.promoteFromTo(from, t.workbook.getFormatPainterSheet(), to, t.model);
+            }
+
+            // Сбрасываем параметры
+            if (c_oAscFormatPainterState.kMultiple !== t.workbook.formatPainterState) {
+                t.handlers.trigger('onStopFormatPainter', true);
+            }
+
+            if (isSuccess) {
+                t._updateRange(to);
+            }
+
+            // Перерисовываем
+			t.draw();
+        };
+
+        var result = AscCommonExcel.preparePromoteFromTo(from, to);
+        if (!result) {
+            // ToDo вывести ошибку
+            onApplyFormatPainterCallback(false);
+            return;
+        }
+
+		//проверку отдельно добавляю, возможно стоит добавить внутрь preparePromoteFromTo
+		if (this.model.getSheetProtection() && this.model.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
+			this.checkProtectRangeOnEdit([to], function (success) {
+				if (success) {
+					t._isLockedCells(to, null, onApplyFormatPainterCallback);
+				} else {
+					onApplyFormatPainterCallback(false);
 				}
-
-				// Сбрасываем параметры
-				if (c_oAscFormatPainterState.kMultiple !== t.workbook.Api.getFormatPainterState()) {
-					t.handlers.trigger('onStopFormatPainter', true);
-				}
-
-				if (isSuccess) {
-					t._updateRange(to);
-				}
-
-				// Перерисовываем
-				t.draw();
-			};
-
-			let result = AscCommonExcel.preparePromoteFromTo(from, to);
-			if (!result) {
-				// ToDo вывести ошибку
-				onApplyFormatPainterCallback(false);
-				return;
-			}
-
-			//проверку отдельно добавляю, возможно стоит добавить внутрь preparePromoteFromTo
-			if (this.model.getSheetProtection() && this.model.getSheetProtection(Asc.c_oAscSheetProtectType.formatCells)) {
-				this.checkProtectRangeOnEdit([to], function (success) {
-					if (success) {
-						t._isLockedCells(to, null, onApplyFormatPainterCallback);
-					} else {
-						onApplyFormatPainterCallback(false);
-					}
-				})
-			} else {
-				this._isLockedCells(to, null, onApplyFormatPainterCallback);
-			}
+			})
+		} else {
+			this._isLockedCells(to, null, onApplyFormatPainterCallback);
 		}
     };
 
