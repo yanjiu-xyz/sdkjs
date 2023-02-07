@@ -3525,7 +3525,7 @@
 	var kCurFormatPainterWord = 'de-formatpainter';
 	g_oHtmlCursor.register(kCurFormatPainterWord, "text_copy", "2 11", "pointer");
 	var kCurFormatPainterDrawing = 'drawing-formatpainter';
-	g_oHtmlCursor.register(kCurFormatPainterDrawing, "text_copy", "2 11", "pointer");
+	g_oHtmlCursor.register(kCurFormatPainterDrawing, "shape_copy", "2 11", "pointer");
 
 	function asc_ajax(obj)
 	{
