@@ -12331,6 +12331,93 @@
 		return null;
 	};
 
+	function CEyedropper(oAPI)
+	{
+		this.api = oAPI;
+		this.started = false;
+		this.imgData = null;
+		this.r = null;
+		this.g = null;
+		this.b = null;
+	}
+	CEyedropper.prototype.isStarted = function()
+	{
+		return this.started;
+	};
+	CEyedropper.prototype.setColor = function(r, g, b)
+	{
+		this.r = r;
+		this.g = g;
+		this.b = b;
+	};
+	CEyedropper.prototype.getColor = function()
+	{
+		return new AscCommon.CColor(this.r, this.g, this.b)
+	};
+	CEyedropper.prototype.clearColor = function()
+	{
+		this.setColor(null, null, null);
+	};
+	CEyedropper.prototype.start = function(fEndCallback)
+	{
+		this.started = true;
+		this.endCallback = fEndCallback;
+	};
+	CEyedropper.prototype.cancel = function()
+	{
+		this.end();
+	};
+	CEyedropper.prototype.end = function()
+	{
+		this.started = false;
+		this.endCallback = null;
+		this.clearColor();
+		this.clearImageData();
+	};
+	CEyedropper.prototype.clearImageData = function()
+	{
+		this.imgData = null;
+	};
+	CEyedropper.prototype.finish = function()
+	{
+		if(!this.isStarted())
+		{
+			return;
+		}
+		if(this.r !== null && this.g !== null && this.b !== null && this.endCallback)
+		{
+			this.endCallback(this.r, this.g, this.b);
+		}
+		this.end();
+	};
+	CEyedropper.prototype.getImageData = function()
+	{
+		if(!this.imgData) {
+			this.imgData = this.api.getEyedropperImgData();
+		}
+		return this.imgData;
+	};
+	CEyedropper.prototype.checkColor = function(nX, nY)
+	{
+		if(!this.isStarted())
+		{
+			return;
+		}
+		const oImgData = this.getImageData();
+		if(!oImgData)
+		{
+			this.cancel();
+			return;
+		}
+		const nXImg = Math.min(oImgData.width, nX);
+		const nYImg = Math.min(oImgData.height, nY);
+		const nArrayPos = (nYImg * oImgData.width + nXImg) * 4;
+		const aPixels = oImgData.data;
+		const nR = aPixels[nArrayPos];
+		const nG = aPixels[nArrayPos + 1];
+		const nB = aPixels[nArrayPos + 2];
+		this.setColor(nR, nG, nB);
+	};
 	//------------------------------------------------------------fill polyfill--------------------------------------------
 	if (!Array.prototype.findIndex) {
 		Object.defineProperty(Array.prototype, 'findIndex', {
@@ -13508,6 +13595,8 @@
 	}
 	window["AscCommon"].CFormatPainter = CFormatPainter;
 	window["AscCommon"].CFormatPainterDataBase = CFormatPainterDataBase;
+	
+	window["AscCommon"].CEyedropper = CEyedropper;
 
 })(window);
 

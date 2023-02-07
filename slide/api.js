@@ -6358,6 +6358,7 @@ background-repeat: no-repeat;\
 				}
 			}
 		}
+
 		this.sendEvent("asc_onMouseMove", Data);
 	};
 
@@ -8691,7 +8692,16 @@ background-repeat: no-repeat;\
 			delete this.printPreview;
 		}
 	};
-
+	asc_docs_api.prototype.getEyedropperImgData = function()
+	{
+		const oCanvas = document.getElementById("id_viewer");
+		if(!oCanvas)
+		{
+			return null;
+		}
+		const oCtx = oCanvas.getContext("2d");
+		return oCtx.getImageData(0, 0, oCanvas.width, oCanvas.height);
+	};
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                 = window['Asc'] || {};
 	window['AscCommonSlide']                                      = window['AscCommonSlide'] || {};

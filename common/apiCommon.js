@@ -4480,7 +4480,7 @@
 			this.Type  = ( undefined != obj.Type ) ? obj.Type : c_oAscMouseMoveDataTypes.Common;
 			this.X_abs = ( undefined != obj.X_abs ) ? obj.X_abs : 0;
 			this.Y_abs = ( undefined != obj.Y_abs ) ? obj.Y_abs : 0;
-
+			this.EyedropperColor = ( undefined != obj.EyedropperColor ) ? obj.EyedropperColor : undefined;
 			switch (this.Type)
 			{
 				case c_oAscMouseMoveDataTypes.Hyperlink :
@@ -4554,6 +4554,10 @@
 	CMouseMoveData.prototype.get_ReviewChange = function()
 	{
 		return this.ReviewChange;
+	};
+	CMouseMoveData.prototype.get_EyedropperColor = function()
+	{
+		return this.EyedropperColor;
 	};
 
 
@@ -6735,6 +6739,7 @@
 	prot["get_FootnoteNumber"] = prot.get_FootnoteNumber;
 	prot["get_FormHelpText"] = prot.get_FormHelpText;
 	prot["get_ReviewChange"] = prot.get_ReviewChange;
+	prot["get_EyedropperColor"] = prot.get_EyedropperColor;
 
 	window["Asc"]["asc_CUserInfo"] = window["Asc"].asc_CUserInfo = asc_CUserInfo;
 	prot = asc_CUserInfo.prototype;

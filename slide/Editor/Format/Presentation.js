@@ -7418,6 +7418,10 @@ CPresentation.prototype.OnMouseDown = function (e, X, Y, PageIndex) {
 		return;
 	}
 
+	if(this.Api.isEyedropperStarted()) {
+		return;
+	}
+
 	// Сбрасываем текущий элемент в поиске
 	if (this.SearchEngine.Count > 0)
 		this.SearchEngine.ResetCurrent();
@@ -7452,6 +7456,10 @@ CPresentation.prototype.OnMouseUp = function (e, X, Y, PageIndex) {
 	var nStartPage = this.CurPage;
 
 	var oController = this.Slides[this.CurPage] && this.Slides[this.CurPage].graphicObjects;
+	if(this.Api.isEyedropperStarted()) {
+		this.Api.finishEyedropper();
+		return;
+	}
 	if (oController) {
 		var aStartAnims = oController.getAnimSelectionState();
 		oController.onMouseUp(e, X, Y);
@@ -7486,10 +7494,14 @@ CPresentation.prototype.OnMouseUp = function (e, X, Y, PageIndex) {
 };
 
 CPresentation.prototype.OnMouseMove = function (e, X, Y, PageIndex) {
+
 	e.ctrlKey = e.CtrlKey;
 	e.shiftKey = e.ShiftKey;
 	this.Api.sync_MouseMoveStartCallback();
 	this.CurPage = PageIndex;
+	if(this.Api.isEyedropperStarted()) {
+		this.Api.checkEyedropperColor(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+	}
 	var oController = this.Slides[this.CurPage] && this.Slides[this.CurPage].graphicObjects;
 	if (oController) {
 		oController.onMouseMove(e, X, Y);
