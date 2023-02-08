@@ -6291,7 +6291,7 @@ var editor;
 		}
 	};
 	spreadsheet_api.prototype._onUpdateDocumentCanUndoRedo = function () {
-		AscCommon.History._sendCanUndoRedo();
+		AscCommon.History && AscCommon.History._sendCanUndoRedo();
 	};
 
   spreadsheet_api.prototype._onCheckCommentRemoveLock = function(lockElem) {
@@ -6471,6 +6471,7 @@ var editor;
 
     var pageSetup;
     var countWorksheets = this.wbModel.getWorksheetCount();
+    var t = this;
 
     if(_options) {
       //печатаем только 1 страницу первой книги
@@ -6574,8 +6575,9 @@ var editor;
     if (undefined === _printer && _page === undefined) {
       // ПУСТОЙ вызов, так как он должен быть ДО команд печати (картинки). А реальзый вызов - после (pagescount)
       window["AscDesktopEditor"] && window["AscDesktopEditor"]["Print_Start"]();
-      _printer = this.wb.printSheets(_printPagesData, null, _adjustPrint).DocumentRenderer;
-
+      this.wb.executeWithoutPreview(function () {
+        _printer = t.wb.printSheets(_printPagesData, null, _adjustPrint).DocumentRenderer;
+      });
       if (undefined !== window["AscDesktopEditor"]) {
         var pagescount = _printer.m_lPagesCount;
 
