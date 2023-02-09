@@ -125,9 +125,11 @@ StartAddNewShape.prototype =
                 this.drawingObjects.handleEventMode = HANDLE_EVENT_MODE_HANDLE;
                 this.drawingObjects.changeCurrentState(oOldState);
 
-                if(oResult){
-                    var oObject = AscCommon.g_oTableId.Get_ById(oResult.objectId);
-                    this.drawingObjects.connector = oObject;
+                if(oResult) {
+                    let oObject = AscCommon.g_oTableId.Get_ById(oResult.objectId);
+					if(oObject.canConnectTo && oObject.canConnectTo()) {
+						this.drawingObjects.connector = oObject;
+					}
                 }
                 if(this.drawingObjects.connector !== this.oldConnector){
                     this.oldConnector = this.drawingObjects.connector;
@@ -401,32 +403,14 @@ NullState.prototype =
     {
         this.drawingObjects.checkRedrawOnChangeCursorPosition(oStartContent, oStartPara);
     },
-    onMouseDown: function(e, x, y, pageIndex, bTextFlag)
+    onMouseDown: function(e, x, y, pageIndex)
     {
         let start_target_doc_content, end_target_doc_content, selected_comment_index = -1;
         let oStartPara = null;
         let bHandleMode = this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE;
         let sHitGuideId = this.drawingObjects.hitInGuide(x, y);
         let oAnimPlayer = this.drawingObjects.getAnimationPlayer && this.drawingObjects.getAnimationPlayer();
-        if(!oAnimPlayer)
-        {
-            let oGuide = AscCommon.g_oTableId.Get_ById(sHitGuideId);
-            if(oGuide)
-            {
-                if(!bHandleMode)
-                {
-                    let bHor = oGuide.isHorizontal();
-                    return {cursorType: bHor ? "ns-resize" : "ew-resize", objectId: "1"};
-                }
-                else
-                {
-                    this.drawingObjects.addPreTrackObject(new AscFormat.CGuideTrack(oGuide));
-                    this.drawingObjects.changeCurrentState(new TrackGuideState(this.drawingObjects, oGuide, x, y))
-                    return;
-                }
-
-            }
-        }
+		let oAPI = this.drawingObjects.getEditorApi();
         if(bHandleMode)
         {
             start_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
@@ -439,6 +423,29 @@ NullState.prototype =
                 }
             }
             this.startTargetTextObject = AscFormat.getTargetTextObject(this.drawingObjects);
+        }
+		else
+		{
+			if(oAPI.editorId === AscCommon.c_oEditorId.Presentation)
+			{
+				if(oAPI.isFormatPainterOn())
+				{
+					let oPainterData = oAPI.getFormatPainterData();
+					let sType = "default";
+					if(oPainterData)
+					{
+						if(oPainterData.isDrawingData())
+						{
+							sType = AscCommon.kCurFormatPainterDrawing;
+						}
+						else
+						{
+							sType = AscCommon.kCurFormatPainterWord;
+						}
+					}
+					return {cursorType: sType, objectId: "1"};
+				}
+			}
         }
         var ret;
         ret = this.drawingObjects.handleSlideComments(e, x, y, pageIndex);
@@ -572,6 +579,28 @@ NullState.prototype =
                 }
             }
         }
+	    if(!oAnimPlayer)
+	    {
+		    let oGuide = AscCommon.g_oTableId.Get_ById(sHitGuideId);
+		    if(oGuide)
+		    {
+			    if(!bHandleMode)
+			    {
+				    let bHor = oGuide.isHorizontal();
+				    return {cursorType: bHor ? "ns-resize" : "ew-resize", objectId: "1"};
+			    }
+			    else
+			    {
+					if(e.Button !== AscCommon.g_mouse_button_right)
+					{
+						this.drawingObjects.addPreTrackObject(new AscFormat.CGuideTrack(oGuide));
+						this.drawingObjects.changeCurrentState(new TrackGuideState(this.drawingObjects, oGuide, x, y))
+					}
+				    return true;
+			    }
+
+		    }
+	    }
         return null;
     },
 
@@ -712,13 +741,12 @@ TrackSelectionRect.prototype =
         this.startY = dStartY;
         let oTrack = this.drawingObjects.arrPreTrackObjects[0];
         if(oTrack) {
-            let bHor = this.guide.isHorizontal();
-            let dPos = bHor ? dStartY : dStartX;
+            let dPos = AscFormat.GdPosToMm(this.guide.pos);
+	        dPos = (dPos * 10 + 0.5 >> 0) / 10;
             let oConvertedPos = editor.WordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(dStartX, dStartY, 0);
             editor.sendEvent("asc_onTrackGuide", dPos, oConvertedPos.X, oConvertedPos.Y);
         }
     }
-
     TrackGuideState.prototype.onMouseDown = function (e, x, y, pageIndex) {
         if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_CURSOR) {
             let bHor = this.guide.isHorizontal();
@@ -732,8 +760,8 @@ TrackSelectionRect.prototype =
         }
         let bHor = this.guide.isHorizontal();
         if(!this.tracked) {
-            if(bHor && Math.abs(x - this.startX) > MOVE_DELTA ||
-                !bHor && Math.abs(y - this.startY) > MOVE_DELTA) {
+            if(bHor && Math.abs(y - this.startY) > MOVE_DELTA ||
+                !bHor && Math.abs(x - this.startX) > MOVE_DELTA) {
                 this.tracked = true;
                 this.drawingObjects.swapTrackObjects();
                 this.onMouseMove(e, x, y, pageIndex);
@@ -743,9 +771,18 @@ TrackSelectionRect.prototype =
         else {
             let oTrack = this.drawingObjects.arrTrackObjects[0];
             if(oTrack) {
-                oTrack.track(x, y);
-                let dPos = bHor ? y : x;
-                let oConvertedPos = editor.WordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(x, y, 0);
+	            let oNearestPos = this.drawingObjects.getSnapNearestPos(x, y);
+				let dX = x;
+				let dY = y;
+	            if(oNearestPos) {
+		            dX = oNearestPos.x;
+		            dY = oNearestPos.y;
+	            }
+                oTrack.track(dX, dY);
+                let oConvertedPos = editor.WordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(bHor ? x : dX, !bHor ? y : dY, 0);
+				let dGdPos = oTrack.getPos();
+	            let dPos = AscFormat.GdPosToMm(dGdPos);
+	            dPos = (dPos * 10 + 0.5 >> 0) / 10;
                 editor.sendEvent("asc_onTrackGuide", dPos, oConvertedPos.X, oConvertedPos.Y)
                 this.drawingObjects.updateOverlay();
             }
@@ -1990,17 +2027,21 @@ TextAddState.prototype =
         {
             if(oApi.editorId === AscCommon.c_oEditorId.Presentation)
             {
-                if(AscCommon.c_oAscFormatPainterState.kOff !== oApi.isPaintFormat)
+	            let oPresentation = oApi.WordControl && oApi.WordControl.m_oLogicDocument;
+                if(oApi.isFormatPainterOn())
                 {
                     this.drawingObjects.paragraphFormatPaste2();
-                    if (AscCommon.c_oAscFormatPainterState.kOn === oApi.isPaintFormat)
+                    if (oApi.isFormatPainterOn())
                     {
                         oApi.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
+						if(oPresentation)
+						{
+							oPresentation.OnMouseMove(e, x, y, pageIndex)
+						}
                     }
                 }
                 else if(oApi.isMarkerFormat)
                 {
-                    var oPresentation = oApi.WordControl && oApi.WordControl.m_oLogicDocument;
                     if(oPresentation)
                     {
                         if(oPresentation.HighlightColor)
@@ -2015,6 +2056,10 @@ TextAddState.prototype =
                         oApi.sync_MarkerFormatCallback(true);
                     }
                 }
+            }
+			else if(oApi.editorId === AscCommon.c_oEditorId.Spreadsheet)
+			{
+				this.drawingObjects.checkFormatPainterOnMouseEvent();
             }
         }
     }

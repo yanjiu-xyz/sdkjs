@@ -140,7 +140,13 @@ CTableRow.prototype =
 		Row.private_UpdateTableGrid();
         if(oPr && oPr.Comparison)
         {
-            oPr.Comparison.updateReviewInfo(Row, reviewtype_Add, true);
+            if (oPr.SkipUpdateInfo) {
+                oPr.Comparison.saveReviewInfo(Row, this);
+            } else if (oPr.bSaveCustomReviewType) {
+                oPr.Comparison.saveCustomReviewInfo(Row, this, oPr.Comparison.nInsertChangesType);
+            } else {
+                oPr.Comparison.updateReviewInfo(Row, oPr.Comparison.nInsertChangesType);
+            }
         }
 		return Row;
 	},

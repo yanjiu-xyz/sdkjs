@@ -1254,6 +1254,27 @@
 			case AscDFH.historydescription_Document_CorrectEnterText:
 				sString = "Document_CorrectEnterText";
 				break;
+			case AscDFH.historydescription_Document_DocumentProtection:
+				sString = "Document_DocumentProtection";
+				break;
+			case AscDFH.historydescription_Collaborative_Undo:
+				sString = "Collaborative_Undo";
+				break;
+			case AscDFH.historydescription_Document_AddPlaceholderImages:
+				sString = "Document_AddPlaceholderImages";
+				break;
+			case AscDFH.historydescription_OForm_AddRole:
+				sString = "OForm_AddRole";
+				break;
+			case AscDFH.historydescription_OForm_RemoveRole:
+				sString = "OForm_RemoveRole";
+				break;
+			case AscDFH.historydescription_OForm_EditRole:
+				sString = "OForm_EditRole";
+				break;
+			case AscDFH.historydescription_OForm_ChangeRoleOrder:
+				sString = "OForm_ChangeRoleOrder";
+				break;
 		}
 		return sString;
 	}
@@ -1683,20 +1704,11 @@
 	window['AscDFH'].historyitem_type_ViewPrScale            = 2116 << 16;
 	window['AscDFH'].historyitem_type_ViewPrGuide            = 2117 << 16;
 
-	window['AscDFH'].historyitem_type_UserMaster             = 2200 << 16;
-	window['AscDFH'].historyitem_type_User                   = 2201 << 16;
-	window['AscDFH'].historyitem_type_SignInfo               = 2202 << 16;
-	window['AscDFH'].historyitem_type_CipherInfo             = 2203 << 16;
-	window['AscDFH'].historyitem_type_FormFieldMaster        = 2204 << 16;
-	window['AscDFH'].historyitem_type_FormField              = 2205 << 16;
-	window['AscDFH'].historyitem_type_EncryptedData          = 2206 << 16;
-	window['AscDFH'].historyitem_type_KeyInfo                = 2207 << 16;
-	window['AscDFH'].historyitem_type_MainDocument           = 2208 << 16;
-	window['AscDFH'].historyitem_type_FieldsGroup            = 2209 << 16;
-	window['AscDFH'].historyitem_type_FormDate               = 2210 << 16;
-	window['AscDFH'].historyitem_type_SignRequest            = 2211 << 16;
-	window['AscDFH'].historyitem_type_FieldContent           = 2212 << 16;
-
+	window['AscDFH'].historyitem_type_OForm_UserMaster       = 2200 << 16;
+	window['AscDFH'].historyitem_type_OForm_User             = 2201 << 16;
+	window['AscDFH'].historyitem_type_OForm_FieldMaster      = 2202 << 16;
+	window['AscDFH'].historyitem_type_OForm_Document         = 2203 << 16;
+	window['AscDFH'].historyitem_type_OForm_FieldGroup       = 2204 << 16;
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	//
@@ -3959,8 +3971,6 @@
 
 	AscDFH.historyitem_ViewPrGuideOrient         = AscDFH.historyitem_type_ViewPrGuide | 1;
 	AscDFH.historyitem_ViewPrGuidePos            = AscDFH.historyitem_type_ViewPrGuide | 2;
-
-
 	AscDFH.historyitem_UserMasterUserId       = AscDFH.historyitem_type_UserMaster | 1;
 	AscDFH.historyitem_UserMasterSignInfo     = AscDFH.historyitem_type_UserMaster | 2;
 	AscDFH.historyitem_UserMasterCipherInfo   = AscDFH.historyitem_type_UserMaster | 3;
@@ -4439,6 +4449,16 @@
 	window['AscDFH'].historydescription_Document_CorrectEnterText                   = 0x0198;
 	window['AscDFH'].historydescription_Document_ConvertMathView                    = 0x0199;
 	window['AscDFH'].historydescription_Document_DocumentProtection                 = 0x019a;
+	window['AscDFH'].historydescription_Collaborative_Undo                          = 0x019b;
+	window['AscDFH'].historydescription_Document_AddPlaceholderImages               = 0x019c;
+	window['AscDFH'].historydescription_OForm_AddRole                               = 0x019d;
+	window['AscDFH'].historydescription_OForm_RemoveRole                            = 0x019e;
+	window['AscDFH'].historydescription_OForm_EditRole                              = 0x019f;
+	window['AscDFH'].historydescription_OForm_ChangeRoleOrder                       = 0x01a0;
+	window['AscDFH'].historydescription_Document_AddAddinField                      = 0x01a1;
+	window['AscDFH'].historydescription_Document_UpdateAddinFields                  = 0x01a2;
+	window['AscDFH'].historydescription_Document_RemoveComplexFieldWrapper          = 0x01a3;
+	window['AscDFH'].historydescription_Document_MergeDocuments                     = 0x01a4;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4712,13 +4732,27 @@
 		else
 		{
 			let Pos = this.Pos;
-			for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+			if (this.Add)
 			{
-				arrActions.push({
-					Item : this.Items[nIndex],
-					Pos  : Pos + nIndex,
-					Add  : this.Add
-				});
+				for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+				{
+					arrActions.push({
+						Item : this.Items[nIndex],
+						Pos  : Pos + nIndex,
+						Add  : true
+					});
+				}
+			}
+			else
+			{
+				for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+				{
+					arrActions.push({
+						Item : this.Items[nIndex],
+						Pos  : Pos,
+						Add  : false
+					});
+				}
 			}
 		}
 
@@ -5442,4 +5476,23 @@
 		this.Old = Reader.GetDouble();
 	};
 	window['AscDFH'].CChangesBaseDoubleValue = CChangesBaseDoubleValue;
+	//------------------------------------------------------------------------------------------------------------------
+	function DoNotRecalculate()
+	{
+		return false;
+	}
+	window['AscDFH'].InheritPropertyChange = function(changeClass, baseChange, type, setFunction, needRecalculate)
+	{
+		window['AscDFH'].changesFactory[type]   = changeClass;
+
+		changeClass.prototype                   = Object.create(baseChange.prototype);
+		changeClass.prototype.constructor       = changeClass;
+		changeClass.prototype.Type              = type;
+		changeClass.prototype.private_SetValue  = setFunction;
+
+		if (undefined !== needRecalculate && !needRecalculate)
+			changeClass.prototype.IsNeedRecalculate = DoNotRecalculate;
+
+	};
+
 })(window);

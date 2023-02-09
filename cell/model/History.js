@@ -240,6 +240,10 @@ function (window, undefined) {
 	window['AscCH'].historyitem_PivotTable_PivotCacheId = 53;
 	window['AscCH'].historyitem_PivotTable_PivotFieldVisible = 54;
 	window['AscCH'].historyitem_PivotTable_UseAutoFormatting = 55;
+	window['AscCH'].historyitem_PivotTable_HideValuesRow = 56;
+	window['AscCH'].historyitem_PivotTable_DataFieldSetShowDataAs = 57;
+	window['AscCH'].historyitem_PivotTable_DataFieldSetBaseField = 58;
+	window['AscCH'].historyitem_PivotTable_DataFieldSetBaseItem = 59;
 
 	window['AscCH'].historyitem_SharedFormula_ChangeFormula = 1;
 	window['AscCH'].historyitem_SharedFormula_ChangeShared = 2;
@@ -1054,7 +1058,7 @@ CHistory.prototype.CanAddChanges = function()
 
 CHistory.prototype._sendCanUndoRedo = function()
 {
-	if (this.workbook.bCollaborativeChanges) {
+	if (!this.workbook || this.workbook.bCollaborativeChanges) {
 		return;
 	}
 
@@ -1166,6 +1170,10 @@ CHistory.prototype.EndTransaction = function()
 	if (this.IsEndTransaction() && this.workbook) {
 		this.workbook.dependencyFormulas.unlockRecal();
 		this.workbook.handlers.trigger("updateCellWatches");
+
+		if (this.Is_LastPointEmpty()) {
+			this.Remove_LastPoint();
+		}
 	}
 };
 /** @returns {boolean} */
@@ -1278,7 +1286,7 @@ CHistory.prototype.GetSerializeArray = function()
 			if (this.CanNotAddChanges) {
 				var tmpErr = new Error();
 				if (tmpErr.stack) {
-					this.workbook.oApi.CoAuthoringApi.sendChangesError(tmpErr.stack);
+					AscCommon.sendClientLog("error", "changesError: " + tmpErr.stack, this.workbook.oApi);
 				}
 			}
 		} catch (e) {

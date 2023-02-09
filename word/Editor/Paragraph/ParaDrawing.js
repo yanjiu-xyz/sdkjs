@@ -820,7 +820,13 @@ ParaDrawing.prototype.IsWatermark = function()
 				return true;
 		}
 	}
-
+	if(this.docPr) 
+	{
+		if(this.docPr.name && 
+			this.docPr.name.indexOf("PowerPlusWaterMarkObject") > -1) {
+				return true;
+		}
+	}
 	return false;
 };
 ParaDrawing.prototype.Set_ParaMath = function(ParaMath)
@@ -1288,6 +1294,10 @@ ParaDrawing.prototype.GetScaleCoefficient = function ()
 	}
 
 	return 1;
+};
+ParaDrawing.prototype.createPlaceholderControl = function (arrObjects)
+{
+	this.GraphicObj && this.GraphicObj.createPlaceholderControl(arrObjects);
 };
 ParaDrawing.prototype.IsNeedSaveRecalculateObject = function()
 {
@@ -2347,10 +2357,10 @@ ParaDrawing.prototype.isTextSelectionUse = function()
 		return this.GraphicObj.isTextSelectionUse();
 	return false;
 };
-ParaDrawing.prototype.paragraphFormatPaste = function( CopyTextPr, CopyParaPr, Bool )
+ParaDrawing.prototype.pasteFormatting = function(oData)
 {
-	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.isTextSelectionUse === "function")
-		return this.GraphicObj.paragraphFormatPaste(CopyTextPr, CopyParaPr, Bool);
+	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.pasteFormatting === "function")
+		return this.GraphicObj.pasteFormatting(oData);
 };
 ParaDrawing.prototype.getNearestPos = function(x, y, pageIndex)
 {

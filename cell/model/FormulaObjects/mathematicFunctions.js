@@ -2624,9 +2624,8 @@
 	cMINVERSE.prototype.arrayIndexes = {0: 1};
 	cMINVERSE.prototype.argumentsType = [argType.array];
 	cMINVERSE.prototype.Calculate = function (arg) {
-
 		function Determinant(A) {
-			var N = A.length, B = [], denom = 1, exchanges = 0, i, j;
+			let N = A.length, B = [], denom = 1, exchanges = 0, i, j;
 
 			for (i = 0; i < N; ++i) {
 				B[i] = [];
@@ -2636,16 +2635,16 @@
 			}
 
 			for (i = 0; i < N - 1; ++i) {
-				var maxN = i, maxValue = Math.abs(B[i][i]);
+				let maxN = i, maxValue = Math.abs(B[i][i]);
 				for (j = i + 1; j < N; ++j) {
-					var value = Math.abs(B[j][i]);
+					let value = Math.abs(B[j][i]);
 					if (value > maxValue) {
 						maxN = j;
 						maxValue = value;
 					}
 				}
 				if (maxN > i) {
-					var temp = B[i];
+					let temp = B[i];
 					B[i] = B[maxN];
 					B[maxN] = temp;
 					++exchanges;
@@ -2654,11 +2653,11 @@
 						return maxValue;
 					}
 				}
-				var value1 = B[i][i];
+				let value1 = B[i][i];
 				for (j = i + 1; j < N; ++j) {
-					var value2 = B[j][i];
+					let value2 = B[j][i];
 					B[j][i] = 0;
-					for (var k = i + 1; k < N; ++k) {
+					for (let k = i + 1; k < N; ++k) {
 						B[j][k] = (B[j][k] * value1 - B[i][k] * value2) / denom;
 					}
 				}
@@ -2672,15 +2671,15 @@
 		}
 
 		function MatrixCofactor(i, j, __A) {        //Алгебраическое дополнение матрицы
-			var N = __A.length, sign = ((i + j) % 2 == 0) ? 1 : -1;
+			let N = __A.length, sign = ((i + j) % 2 == 0) ? 1 : -1;
 
-			for (var m = 0; m < N; m++) {
-				for (var n = j + 1; n < N; n++) {
+			for (let m = 0; m < N; m++) {
+				for (let n = j + 1; n < N; n++) {
 					__A[m][n - 1] = __A[m][n];
 				}
 				__A[m].length--;
 			}
-			for (var k = (i + 1); k < N; k++) {
+			for (let k = (i + 1); k < N; k++) {
 				__A[k - 1] = __A[k];
 			}
 			__A.length--;
@@ -2689,14 +2688,14 @@
 		}
 
 		function AdjugateMatrix(_A) {             //Союзная (присоединённая) матрица к A. (матрица adj(A), составленная из алгебраических дополнений A).
-			var N = _A.length, B = [], adjA = [];
+			let N = _A.length, B = [], adjA = [];
 
-			for (var i = 0; i < N; i++) {
+			for (let i = 0; i < N; i++) {
 				adjA[i] = [];
-				for (var j = 0; j < N; j++) {
-					for (var m = 0; m < N; m++) {
+				for (let j = 0; j < N; j++) {
+					for (let m = 0; m < N; m++) {
 						B[m] = [];
-						for (var n = 0; n < N; n++) {
+						for (let n = 0; n < N; n++) {
 							B[m][n] = _A[m][n];
 						}
 					}
@@ -2708,22 +2707,22 @@
 		}
 
 		function InverseMatrix(A) {
-			var i, j;
+			let i, j;
 			for (i = 0; i < A.length; i++) {
 				for (j = 0; j < A[i].length; j++) {
-					if (A[i][j] instanceof cEmpty || A[i][j] instanceof cString) {
-						return new cError(cErrorType.not_available);
+					if(cElementType.empty === A[i][j].type || cElementType.string === A[i][j].type) {
+						return new cError(cErrorType.wrong_value_type);
 					} else {
 						A[i][j] = A[i][j].getValue();
 					}
 				}
 			}
 
-			var detA = Determinant(A), invertA, res;
+			let detA = Determinant(A), invertA, res;
 
 			if (detA != 0) {
 				invertA = AdjugateMatrix(A);
-				var datA = 1 / detA;
+				let datA = 1 / detA;
 				for (i = 0; i < invertA.length; i++) {
 					for (j = 0; j < invertA[i].length; j++) {
 						invertA[i][j] = new cNumber(datA * invertA[i][j]);
@@ -2732,17 +2731,39 @@
 				res = new cArray();
 				res.fillFromArray(invertA);
 			} else {
-				res = new cError(cErrorType.not_available);
+				res = new cError(cErrorType.not_numeric);
 			}
 
 			return res;
 		}
 
-		var arg0 = arg[0];
-		if (arg0 instanceof cArea || arg0 instanceof cArray) {
+		function _getArrayCopy(arr) {
+			var newArray = [];
+			for (var i = 0; i < arr.length; i++) {
+				newArray[i] = arr[i].slice();
+			}
+			return newArray
+		}
+
+		let arg0 = arg[0];
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type || cElementType.array === arg0.type) {
+			if (arg0.isOneElement()) {
+				return new cNumber (1 / arg0.getFirstElement());
+			}
 			arg0 = arg0.getMatrix();
+			//TODO при мерже релиза, перейти на функцию getArrayCopy/ добавить параметр getMatrix для генерации копии
+			arg0 = _getArrayCopy(arg0);
+		} else if (cElementType.number === arg0.type) {
+			return new cNumber(1 / arg0);
+		} else if (cElementType.cell === arg0.type) {
+			let arg0Val = arg0.getValue();
+			if (cElementType.number === arg0Val.type) {
+				return new cNumber(1 / arg0Val);
+			} else {
+				return new cError(cErrorType.wrong_value_type);
+			}
 		} else {
-			return new cError(cErrorType.not_available);
+			return new cError(cErrorType.wrong_value_type);
 		}
 
 		if (arg0[0].length != arg0.length) {
@@ -3705,37 +3726,71 @@
 	cRANDBETWEEN.prototype.Calculate = function (arg) {
 
 		function randBetween(a, b) {
-			a = Math.round(a);
-			b = Math.round(b);
-			return new cNumber(Math.round(Math.random() * Math.abs(a - b)) + a);
+			if ((a > 0 && a < 1) && (b > 0 && b < 1)) {
+				return new cNumber(1);
+			}
+
+			if ((a < 0 && a > -1) && (b < 0 && b > -1)) {
+				return new cNumber(0);
+			}
+
+			let firstNumber = Math.ceil(a);
+			let secondNumber = Math.floor(b);
+
+			return new cNumber(Math.round(Math.random() * Math.abs(firstNumber - secondNumber)) + firstNumber);
 		}
 
 		function f(a, b, r, c) {
-			if (a instanceof cNumber && b instanceof cNumber) {
+			if (cElementType.number === a.type && cElementType.number === b.type) {
 				this.array[r][c] = randBetween(a.getValue(), b.getValue());
 			} else {
 				this.array[r][c] = new cError(cErrorType.wrong_value_type);
 			}
 		}
 
-		var arg0 = arg[0], arg1 = arg[1];
-		if (arg0 instanceof cArea || arg1 instanceof cArea3D) {
+		let arg0 = arg[0] ? arg[0] : new cError(cErrorType.not_available);
+		let arg1 = arg[1] ? arg[1] : new cError(cErrorType.not_available);
+
+		if (cElementType.bool === arg0.type || cElementType.bool === arg1.type) {
+			return new cError(cErrorType.wrong_value_type);
+		}
+
+		if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+			let arg0Val = arg0.getValue();
+			if (arg0Val && arg0Val.type) {
+				if (cElementType.bool === arg0Val.type) {
+					return new cError(cErrorType.wrong_value_type);
+				}
+			}
+		}
+
+		if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type ) {
+			let arg1Val = arg1.getValue();
+			if (arg1Val && arg1Val.type) {
+				if (cElementType.bool === arg1Val.type) {
+					return new cError(cErrorType.wrong_value_type);
+				}
+			}
+		}
+
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 			arg0 = arg0.cross(arguments[1]);
 		}
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
+
+		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
 			arg1 = arg1.cross(arguments[1]);
 		}
 		arg0 = arg0.tocNumber();
 		arg1 = arg1.tocNumber();
 
-		if (arg0 instanceof cError) {
+		if (cElementType.error === arg0.type) {
 			return arg0;
 		}
-		if (arg1 instanceof cError) {
+		if (cElementType.error === arg1.type) {
 			return arg1;
 		}
 
-		if (arg0 instanceof cArray && arg1 instanceof cArray) {
+		if (cElementType.array === arg0.type && cElementType.array === arg1.type) {
 			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
 				return new cError(cErrorType.not_available);
 			} else {
@@ -3744,26 +3799,28 @@
 				});
 				return arg0;
 			}
-		} else if (arg0 instanceof cArray) {
+		} else if (cElementType.array === arg0.type) {
 			arg0.foreach(function (elem, r, c) {
 				f.call(this, elem, arg1, r, c)
 			});
 			return arg0;
-		} else if (arg1 instanceof cArray) {
+		} else if (cElementType.array === arg1.type) {
 			arg1.foreach(function (elem, r, c) {
 				f.call(this, arg0, elem, r, c);
 			});
 			return arg1;
 		}
 
-		if (!(arg0 instanceof cNumber) || ( arg1 && !(arg0 instanceof cNumber) )) {
+		if (!(cElementType.number === arg0.type) || ( arg1 && !(cElementType.number === arg0.type) )) {
 			return new cError(cErrorType.wrong_value_type);
+		} else if(cElementType.number === arg0.type && cElementType.number === arg1.type) {
+			if (arg0.getValue() > arg1.getValue()) {
+				return new cError(cErrorType.not_numeric);
+			}
 		}
-
 
 		return new cNumber(randBetween(arg0.getValue(), arg1.getValue()));
 	};
-
 	/**
 	 * @constructor
 	 * @extends {AscCommonExcel.cBaseFunction}
@@ -5399,66 +5456,71 @@
 	cTRUNC.prototype.inheritFormat = true;
 	cTRUNC.prototype.argumentsType = [argType.number, argType.number];
 	cTRUNC.prototype.Calculate = function (arg) {
+		// TODO fix floating point number precision problem (IEEE754)
+		// https://0.30000000000000004.com/
 
 		function truncHelper(a, b) {
 			//TODO возможно стоит добавить ограничения для коэффициента b(ms не ограничивает; LO - максимальные значения 20/-20)
-			if(b > 20) {
+			if (b > 20) {
 				b = 20;
+			} else if (!Number.isInteger(b)) {
+				b = +b.toFixed();
 			}
 
-			var numDegree = Math.pow(10, b);
+			let numDegree = Math.pow(10, b);
+
 			return new cNumber(Math.trunc(a*numDegree) / numDegree);
 		}
 
-		var arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cNumber(0);
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
-			arg0 = arg0.cross(arguments[1]);
-		}
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
-			arg1 = arg1.cross(arguments[1]);
-		}
+		let arg0 = arg[0], arg1 = arg[1] ? arg[1] : new cNumber(0);
 
-		if (arg0 instanceof cError) {
-			return arg0;
-		}
-		if (arg1 instanceof cError) {
-			return arg1;
-		}
-
-		if (arg0 instanceof cRef || arg0 instanceof cRef3D) {
-			arg0 = arg0.getValue();
-			if (arg0 instanceof cError) {
-				return arg0;
-			} else if (arg0 instanceof cString) {
-				return new cError(cErrorType.wrong_value_type);
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			if (arg0.isOneElement()) {
+				arg0 = arg0.getFirstElement();
 			} else {
-				arg0 = arg0.tocNumber();
+				arg0 = new cError(cErrorType.wrong_value_type);
 			}
+		} else if (cElementType.array === arg0.type) {
+			arg0 = arg0.getElementRowCol(0,0);
+		} 
+		if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
+			if (arg1.isOneElement()) {
+				arg1 = arg1.getFirstElement();
+			} else {
+				arg1 = new cError(cErrorType.wrong_value_type);
+			}
+		} else if (cElementType.array === arg1.type) {
+			arg1 = arg1.getElementRowCol(0,0);
+		} 
+
+		if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+			arg0 = arg0.getValue().tocNumber();
 		} else {
 			arg0 = arg0.tocNumber();
 		}
 
-		if (arg1 instanceof cRef || arg1 instanceof cRef3D) {
-			arg1 = arg1.getValue();
-			if (arg1 instanceof cError) {
-				return arg1;
-			} else if (arg1 instanceof cString) {
-				return new cError(cErrorType.wrong_value_type);
-			} else {
-				arg1 = arg1.tocNumber();
-			}
+		if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
+			arg1 = arg1.getValue().tocNumber();
 		} else {
 			arg1 = arg1.tocNumber();
 		}
 
-		if (arg0 instanceof cArray && arg1 instanceof cArray) {
+
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if (cElementType.error === arg1.type) {
+			return arg1;
+		}
+
+		if (cElementType.array === arg0.type && cElementType.array === arg1.type) {
 			if (arg0.getCountElement() != arg1.getCountElement() || arg0.getRowCount() != arg1.getRowCount()) {
 				return new cError(cErrorType.not_available);
 			} else {
 				arg0.foreach(function (elem, r, c) {
-					var a = elem;
-					var b = arg1.getElementRowCol(r, c);
-					if (a instanceof cNumber && b instanceof cNumber) {
+					let a = elem;
+					let b = arg1.getElementRowCol(r, c);
+					if (cElementType.number === a.type && cElementType.number === b.type) {
 						this.array[r][c] = truncHelper(a.getValue(), b.getValue())
 					} else {
 						this.array[r][c] = new cError(cErrorType.wrong_value_type);
@@ -5466,22 +5528,22 @@
 				});
 				return arg0;
 			}
-		} else if (arg0 instanceof cArray) {
+		} else if (cElementType.array === arg0.type) {
 			arg0.foreach(function (elem, r, c) {
-				var a = elem;
-				var b = arg1;
-				if (a instanceof cNumber && b instanceof cNumber) {
+				let a = elem;
+				let b = arg1;
+				if (cElementType.number === a.type && cElementType.number === b.type) {
 					this.array[r][c] = truncHelper(a.getValue(), b.getValue())
 				} else {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);
 				}
 			});
 			return arg0;
-		} else if (arg1 instanceof cArray) {
+		} else if (cElementType.array === arg1.type) {
 			arg1.foreach(function (elem, r, c) {
-				var a = arg0;
-				var b = elem;
-				if (a instanceof cNumber && b instanceof cNumber) {
+				let a = arg0;
+				let b = elem;
+				if (cElementType.number === a.type && cElementType.number === b.type) {
 					this.array[r][c] = truncHelper(a.getValue(), b.getValue())
 				} else {
 					this.array[r][c] = new cError(cErrorType.wrong_value_type);

@@ -1048,7 +1048,7 @@ function BinaryPPTYLoader()
 
         s.Skip2(1); // start attributes
 
-        var _old_default = this.presentation.DefaultTableStyleId;
+        let sNewDefaultStyleStyleId;
         while (true)
         {
             var _at = s.GetUChar();
@@ -1059,8 +1059,7 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
-                    var _def = s.GetString2();
-                    this.presentation.DefaultTableStyleId = _def;
+                    sNewDefaultStyleStyleId = s.GetString2();
                     break;
                 }
                 default:
@@ -1077,10 +1076,13 @@ function BinaryPPTYLoader()
             s.Skip2(1);
             this.ReadTableStyle();
         }
-
-        if(!this.presentation.globalTableStyles.Style[this.presentation.DefaultTableStyleId])
+        if(typeof sNewDefaultStyleStyleId === 'string' && this.presentation && this.presentation.globalTableStyles)
         {
-            this.presentation.DefaultTableStyleId = _old_default;
+            const oDefaultStyle = this.presentation.globalTableStyles.GetStyleByStyleId(sNewDefaultStyleStyleId);
+            if (oDefaultStyle)
+            {
+                this.presentation.DefaultTableStyleId = oDefaultStyle.Id;
+            }
         }
         s.Seek2(_end_rec);
     };
@@ -1107,20 +1109,23 @@ function BinaryPPTYLoader()
                 case 0:
                 {
                     var _id = s.GetString2();
-                    _style.Set_StyleId(_id);
+                    _style.SetStyleId(_id);
                    // _style.Id = _id;
 					if(AscCommon.isRealObject(this.presentation.TableStylesIdMap) && !bNotAddStyle)
 						this.presentation.TableStylesIdMap[_style.Id] = true;
 
-                    const oOldStyle = this.presentation.globalTableStyles.GetStyleByStyleId(_id);
-                    if (oOldStyle)
+                    if (this.presentation && this.presentation.globalTableStyles)
                     {
-                        this.presentation.globalTableStyles.Remove(oOldStyle.GetId());
-                        this.presentation.globalTableStyles.Add(_style);
-                    }
-                    else
-                    {
-                        this.map_table_styles[_id] = _style;
+                        const oOldStyle = this.presentation.globalTableStyles.GetStyleByStyleId(_id);
+                        if (oOldStyle)
+                        {
+                            this.presentation.globalTableStyles.Remove(oOldStyle.GetId());
+                            this.presentation.globalTableStyles.Add(_style);
+                        }
+                        else
+                        {
+                            this.map_table_styles[_id] = _style;
+                        }
                     }
                     break;
                 }
@@ -1280,7 +1285,7 @@ function BinaryPPTYLoader()
 		}
 		else
 		{
-			if(this.presentation.globalTableStyles)
+			if(this.presentation && this.presentation.globalTableStyles)
 				this.presentation.globalTableStyles.Add(_style);
 		}
     };
@@ -7798,7 +7803,7 @@ function BinaryPPTYLoader()
             {
                 _table.Set_TableStyle(this.map_table_styles[props.style].Id);
             }
-            else if (this.presentation && this.presentation.globalTableStyles.GetStyleByStyleId(props.style))
+            else if (this.presentation && this.presentation.globalTableStyles && this.presentation.globalTableStyles.GetStyleByStyleId(props.style))
             {
                 style = this.presentation.globalTableStyles.GetStyleByStyleId(props.style);
                 _table.Set_TableStyle(style.GetId());

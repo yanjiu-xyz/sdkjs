@@ -6019,6 +6019,10 @@ CTable.prototype.AddNewParagraph = function()
 {
 	this.CurCell.Content.AddNewParagraph();
 };
+CTable.prototype.GetFormatPainterData = function()
+{
+	return new CDocumentFormatPainterData(this.GetDirectTextPr(), this.GetDirectParaPr(), null);
+};
 CTable.prototype.AddInlineImage = function(W, H, Img, Chart, bFlow)
 {
 	this.Selection.Use  = true;
@@ -6119,7 +6123,7 @@ CTable.prototype.ClearParagraphFormatting = function(isClearParaPr, isClearTextP
 		this.CurCell.Content.ClearParagraphFormatting(isClearParaPr, isClearTextPr);
 	}
 };
-CTable.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
+CTable.prototype.PasteFormatting = function(oData)
 {
 	if (this.IsCellSelection())
 	{
@@ -6132,13 +6136,13 @@ CTable.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
 
 			var Cell_Content = Cell.Content;
 			Cell_Content.SetApplyToAll(true);
-			Cell.Content.PasteFormatting(TextPr, ParaPr, true);
+			Cell.Content.PasteFormatting(oData);
 			Cell_Content.SetApplyToAll(false);
 		}
 	}
 	else
 	{
-		this.CurCell.Content.PasteFormatting(TextPr, ParaPr, false);
+		this.CurCell.Content.PasteFormatting(oData);
 	}
 };
 CTable.prototype.Remove = function(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord)
@@ -10215,10 +10219,12 @@ CTable.prototype.RemoveTableColumn = function()
 	}
 
 	// Возвращаем курсор
-	this.DrawingDocument.TargetStart();
-	this.DrawingDocument.TargetShow();
-
-	this.DrawingDocument.SelectEnabled(false);
+	if(!this.bPresentation)
+	{
+		this.DrawingDocument.TargetStart();
+		this.DrawingDocument.TargetShow();
+		this.DrawingDocument.SelectEnabled(false);
+	}
 
 	// При удалении последней строки, надо сообщить об этом родительскому классу
 	if (this.Content.length <= 0)
@@ -17793,8 +17799,11 @@ CTable.prototype.Resize = function(nWidth, nHeight)
 	}
 	else
 	{
-		nSummaryHeight -= this.RowsInfo[this.RowsInfo.length - 1].MaxBotBorder;
-		nMinHeight     -= this.RowsInfo[this.RowsInfo.length - 1].MaxBotBorder;
+		if(!this.bPresentation)
+		{
+			nSummaryHeight -= this.RowsInfo[this.RowsInfo.length - 1].MaxBotBorder;
+			nMinHeight     -= this.RowsInfo[this.RowsInfo.length - 1].MaxBotBorder;
+		}
 	}
 
 	if (this.Pages.length <= 0)
@@ -17833,26 +17842,28 @@ CTable.prototype.Resize = function(nWidth, nHeight)
 			var oRowH = oRow.GetHeight();
 			var nNewH = arrRowsH[nCurRow] / nTableSumH * (nSummaryHeight + nDiffY);
 
-			if (null !== nCellSpacing)
-				nNewH += nCellSpacing;
-			else if (this.RowsInfo[nCurRow] && this.RowsInfo[nCurRow].TopDy[0])
-				nNewH -= this.RowsInfo[nCurRow].TopDy[0];
-
-			var nTopMargin = 0,
-				nBotMargin = 0;
-			for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+			if(!this.bPresentation)
 			{
-				var oCell    = oRow.GetCell(nCurCell);
-				var oMargins = oCell.GetMargins();
+				if (null !== nCellSpacing)
+					nNewH += nCellSpacing;
+				else if (this.RowsInfo[nCurRow] && this.RowsInfo[nCurRow].TopDy[0])
+					nNewH -= this.RowsInfo[nCurRow].TopDy[0];
 
-				if (oMargins.Top.W > nTopMargin)
-					nTopMargin = oMargins.Top.W;
+				var nTopMargin = 0,
+					nBotMargin = 0;
+				for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+				{
+					var oCell    = oRow.GetCell(nCurCell);
+					var oMargins = oCell.GetMargins();
 
-				if (oMargins.Bottom.W > nBotMargin)
-					nBotMargin = oMargins.Bottom.W;
+					if (oMargins.Top.W > nTopMargin)
+						nTopMargin = oMargins.Top.W;
+
+					if (oMargins.Bottom.W > nBotMargin)
+						nBotMargin = oMargins.Bottom.W;
+				}
+				nNewH -= nTopMargin + nBotMargin;
 			}
-
-			nNewH -= nTopMargin + nBotMargin;
 
 			oRow.SetHeight(nNewH, oRowH.HRule === Asc.linerule_Exact ? Asc.linerule_Exact : Asc.linerule_AtLeast);
 		}
@@ -17914,26 +17925,30 @@ CTable.prototype.Resize = function(nWidth, nHeight)
 				var oRowH = oRow.GetHeight();
 				var nNewH = arrNewH[nCurRow];
 
-				if (null !== nCellSpacing)
-					nNewH += nCellSpacing;
-				else if (this.RowsInfo[nCurRow] && this.RowsInfo[nCurRow].TopDy[0])
-					nNewH -= this.RowsInfo[nCurRow].TopDy[0];
 
-				var nTopMargin = 0,
-					nBotMargin = 0;
-				for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+
+				if(!this.bPresentation)
 				{
-					var oCell    = oRow.GetCell(nCurCell);
-					var oMargins = oCell.GetMargins();
+					if (null !== nCellSpacing)
+						nNewH += nCellSpacing;
+					else if (this.RowsInfo[nCurRow] && this.RowsInfo[nCurRow].TopDy[0])
+						nNewH -= this.RowsInfo[nCurRow].TopDy[0];
 
-					if (oMargins.Top.W > nTopMargin)
-						nTopMargin = oMargins.Top.W;
+					var nTopMargin = 0,
+						nBotMargin = 0;
+					for (var nCurCell = 0, nCellsCount = oRow.GetCellsCount(); nCurCell < nCellsCount; ++nCurCell)
+					{
+						var oCell    = oRow.GetCell(nCurCell);
+						var oMargins = oCell.GetMargins();
 
-					if (oMargins.Bottom.W > nBotMargin)
-						nBotMargin = oMargins.Bottom.W;
+						if (oMargins.Top.W > nTopMargin)
+							nTopMargin = oMargins.Top.W;
+
+						if (oMargins.Bottom.W > nBotMargin)
+							nBotMargin = oMargins.Bottom.W;
+					}
+					nNewH -= nTopMargin + nBotMargin;
 				}
-
-				nNewH -= nTopMargin + nBotMargin;
 
 				oRow.SetHeight(nNewH, oRowH.HRule === Asc.linerule_Exact ? Asc.linerule_Exact : Asc.linerule_AtLeast);
 			}
@@ -18586,9 +18601,11 @@ CTable.prototype.DistributeRows = function()
 
 		for (var nCurPage in this.RowsInfo[nCurRow].TopDy)
 			nRowSummaryH -= this.RowsInfo[nCurRow].TopDy[nCurPage];
-
-		var oRow      = this.GetRow(nCurRow);
-		nRowSummaryH -= oRow.GetTopMargin() + oRow.GetBottomMargin();
+		if(!this.bPresentation)
+		{
+			var oRow      = this.GetRow(nCurRow);
+			nRowSummaryH -= oRow.GetTopMargin() + oRow.GetBottomMargin();
+		}
 
 		nSumH += nRowSummaryH;
 	}

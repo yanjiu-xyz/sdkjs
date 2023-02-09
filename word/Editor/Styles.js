@@ -663,17 +663,6 @@ CStyle.prototype =
         return this.Type;
     },
 
-	Set_StyleId: function (sStyleId)
-	{
-		History.Add(new CChangesStyleStyleId(this, this.StyleId, sStyleId));
-		this.StyleId = sStyleId;
-	},
-
-	Get_StyleId: function ()
-	{
-		return this.StyleId;
-	},
-
 	Set_QFormat : function(Value)
 	{
 		History.Add(new CChangesStyleQFormat(this, this.qFormat, Value));
@@ -6337,6 +6326,23 @@ CStyle.prototype =
     }
 };
 /**
+ * Устаналиваем форматный идентификатор стиля
+ * @param styleId
+ * @constructor
+ */
+CStyle.prototype.SetStyleId = function(styleId)
+{
+	if (styleId === this.StyleId)
+		return;
+
+	History.Add(new CChangesStyleStyleId(this, this.StyleId, styleId));
+	this.StyleId = styleId;
+};
+CStyle.prototype.GetStyleId = function()
+{
+	return this.StyleId;
+};
+/**
  * Выставляем текстовые настройки
  * @param {CTextPr | Object} oTextPr
  */
@@ -8454,11 +8460,10 @@ CStyles.prototype =
 
 	GetStyleByStyleId: function (sStyleId)
 	{
-		const arrStylesId = Object.keys(this.Style);
-		for (let i = 0; i < arrStylesId.length; i += 1)
+		for (let sId in this.Style)
 		{
-			const oStyle = this.Style[arrStylesId[i]];
-			if (oStyle.Get_StyleId() === sStyleId)
+			const oStyle = this.Style[sId];
+			if (oStyle.GetStyleId() === sStyleId)
 				return oStyle;
 		}
 	},
@@ -10360,6 +10365,7 @@ CDocumentColor.prototype.ConvertToUniColor = function()
 {
 	return AscFormat.CreateUniColorRGB(this.r, this.g, this.b);
 };
+AscWord.CDocumentColor = CDocumentColor;
 
 function CDocumentShd()
 {
@@ -10430,6 +10436,12 @@ CDocumentShd.prototype =
             this.FillRef = undefined;
         }
     }
+};
+CDocumentShd.fromObject = function(val)
+{
+	let shd = new CDocumentShd();
+	shd.Set_FromObject(val);
+	return shd;
 };
 CDocumentShd.prototype.Copy = function()
 {
@@ -18158,6 +18170,7 @@ window["AscWord"].CParaPr = CParaPr;
 window["AscWord"].CStyle  = CStyle;
 window["AscWord"].CNumPr  = CNumPr;
 window["AscWord"].CBorder = CDocumentBorder;
+window["AscWord"].CShd    = CDocumentShd;
 
 
 // Создаем глобальные дефолтовые стили, чтобы быстро можно было отдать дефолтовые настройки

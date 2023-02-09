@@ -44,7 +44,11 @@ const allTests = [
 	'word/forms/complexForm.html',
 	'word/api/api.html',
 	'word/api/textInput.html',
-	'word/styles/paraPr.html'
+	'word/styles/paraPr.html',
+	'word/plugins/pluginsApi.html',
+	'word/merge-documents/mergeDocuments.html',
+
+	'oform/xml/oformXml.html'
 ];
 
 const {performance} = require('perf_hooks');

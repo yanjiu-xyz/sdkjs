@@ -2086,26 +2086,55 @@ function CDrawingDocument()
 	};
 	this.SetCursorType = function (sType, Data)
 	{
-		if ("" == this.m_sLockedCursorType)
+		let oAPI = this.m_oWordControl.m_oApi;
+		let oHTMLElement = this.m_oWordControl.m_oMainContent.HtmlElement;
+		if ("" === this.m_sLockedCursorType)
 		{
-            if ("text" == sType)
+            if ("text" === sType)
             {
-                if (AscCommon.c_oAscFormatPainterState.kOff !== this.m_oWordControl.m_oApi.isPaintFormat)
-                    this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.kCurFormatPainterWord);
-                else if (this.m_oWordControl.m_oApi.isMarkerFormat)
-                    this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-markerformat");
-                else if (this.m_oWordControl.m_oApi.isDrawTablePen)
-                    this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-tablepen");
-                else if (this.m_oWordControl.m_oApi.isDrawTableErase)
-                    this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-tableeraser");
+                if (oAPI.isFormatPainterOn())
+                {
+					let oData = oAPI.getFormatPainterData();
+					if(!oData.isDrawingData())
+					{
+						oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.kCurFormatPainterWord);
+					}
+					else
+					{
+						oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.kCurFormatPainterDrawing);
+					}
+                }
+                else if (oAPI.isMarkerFormat)
+                    oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-markerformat");
+                else if (oAPI.isDrawTablePen)
+                    oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-tablepen");
+                else if (oAPI.isDrawTableErase)
+                    oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-tableeraser");
                 else
-                    this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
+                    oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
             }
             else
-                this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
+            {
+	            if (oAPI.isFormatPainterOn())
+	            {
+		            let oData = oAPI.getFormatPainterData();
+		            if(oData.isDrawingData())
+		            {
+			            oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.kCurFormatPainterDrawing);
+		            }
+					else
+		            {
+			            oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
+		            }
+	            }
+				else
+	            {
+		            oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
+	            }
+            }
 		}
 		else
-			this.m_oWordControl.m_oMainContent.HtmlElement.style.cursor = AscCommon.g_oHtmlCursor.value(this.m_sLockedCursorType);
+			oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(this.m_sLockedCursorType);
 
 		if ("undefined" === typeof(Data) || null === Data)
 			Data = new AscCommon.CMouseMoveData();
@@ -2256,6 +2285,9 @@ function CDrawingDocument()
 
 			this.OnEndRecalculate(false);
 		}
+
+		if (this.m_oWordControl.m_oApi.printPreview && this.m_oWordControl.m_oApi.printPreview.page === index)
+			this.m_oWordControl.m_oApi.printPreview.update();
 	};
 
 	this.OnEndRecalculate = function (isFull, isBreak)
@@ -2662,6 +2694,7 @@ function CDrawingDocument()
 		var renderer = this.m_oDocRenderer;
 		renderer.Memory.Seek(0);
 		renderer.VectorMemoryForPrint.ClearNoAttack();
+		renderer.DocInfo(this.m_oWordControl.m_oApi.asc_getCoreProps());
 
 		for (var i = start; i <= end; i++)
 		{
@@ -2761,16 +2794,18 @@ function CDrawingDocument()
 
 	this.GetVisibleRegion = function()
 	{
-		let height = 0;
+		let yOffset = 0;
 		if (this.m_oWordControl)
-			height += this.m_oWordControl.Y;
-		if (this.m_oWordControl.m_oEditor)
-			height += this.m_oWordControl.m_oEditor.HtmlElement.height;
+			yOffset += this.m_oWordControl.Y;
 		if (true === this.m_oWordControl.m_bIsRuler)
-			height += (7 * g_dKoef_mm_to_pix);
+			yOffset += (7 * g_dKoef_mm_to_pix);
 
-		let pos1 = this.ConvertCoordsFromCursor2(0, 0);
-		let pos2 = this.ConvertCoordsFromCursor2(0, height);
+		let height = 0;
+		if (this.m_oWordControl.m_oEditor)
+			height += AscCommon.AscBrowser.convertToRetinaValue(this.m_oWordControl.m_oEditor.HtmlElement.height);
+
+		let pos1 = this.ConvertCoordsFromCursor2(0, yOffset);
+		let pos2 = this.ConvertCoordsFromCursor2(0, yOffset + height);
 
 		return [{ Page : pos1.Page, Y : pos1.Y }, { Page : pos2.Page, Y : pos2.Y }];
 	};
@@ -3719,6 +3754,8 @@ function CDrawingDocument()
 
 	this.OnDrawContentControl = function(obj, state, geom)
 	{
+		if (window["NATIVE_EDITOR_ENJINE"] === true)
+			return;
 		return this.contentControls.OnDrawContentControl(obj, state, geom);
 	};
 
@@ -7273,30 +7310,46 @@ function CDrawingDocument()
 			ctx.fillRect(0, 0, canvas.width, canvas.height);
 			ctx.beginPath();
 			var line_distance = (height_px == 80) ? (height_px / 5 - 1) : ((height_px >> 2) + ((text.length > 6) ? 0 : 2));
-			var par = new Paragraph(this, this.m_oWordControl.m_oLogicDocument);
+
+			var shape = new AscFormat.CShape();
+			shape.extX = width_px * AscCommon.g_dKoef_pix_to_mm;
+			shape.extY = height_px * AscCommon.g_dKoef_pix_to_mm;
+			shape.contentWidth = shape.extX;
+			shape.createTextBody();
+			var par = shape.txBody.content.GetAllParagraphs()[0];
+			shape.setPaddings({Left: 0, Top: 0, Right: 0, Bottom: 0});
+
 			par.MoveCursorToStartPos();
 
 			par.Pr = new CParaPr();
 			var lvl = (type == 2) ? props[0][0] : props[0];
 			var textPr = lvl.TextPr.Copy();
 			textPr.FontSize = ((2 * line_distance * 72 / 96) >> 0) / 2;
+			par.TextPr.SetFontSize(textPr.FontSize);
 
 			var parRun = new ParaRun(par);
 			parRun.Set_Pr(textPr);
 			parRun.AddText(text);
 			par.AddToContent(0, parRun);
 
+			var parW = par.RecalculateMinMaxContentWidth().Max;
+			if (parW > shape.contentWidth) {
+				const nNewFontSize = shape.findFitFontSizeForSmartArt(true);
+				shape.setFontSizeInSmartArt(nNewFontSize);
+				shape.recalculateContentWitCompiledPr();
+				parW = par.RecalculateMinMaxContentWidth().Max;
+			}
+
+			parW = parW * AscCommon.g_dKoef_mm_to_pix;
+
 			par.Reset(0, 0, 1000, 1000, 0, 0, 1);
 			par.Recalculate_Page(0);
 
-			var bounds = par.Get_PageBounds(0);
-
-			var parW = par.Lines[0].Ranges[0].W * AscCommon.g_dKoef_mm_to_pix;
 			var parH = (bounds.Bottom - bounds.Top);
 			var x = (width_px - (parW >> 0)) >> 1;
 			var y = (height_px >> 1) + (parH >> 1);
 
-			this.privateGetParagraphByString(lvl, 0, 0, null, null, x, y, line_distance, ctx, width_px, height_px);
+			this.privateGetParagraphByString(lvl, 0, 0, null, null, x, y, line_distance, ctx, width_px, height_px, textPr);
 		}
 
 		for (var i = 1; i < id.length; i++)
@@ -7742,7 +7795,10 @@ function CDrawingDocument()
 
         var _page = this.m_arrPages[pos.Page];
 		if (this.placeholders.onPointerDown(pos, _page.drawingPage, _page.width_mm, _page.height_mm))
+		{
+			this.m_oWordControl.onMouseUpMainSimple();
 			return true;
+		}
 
 		return false;
 	};

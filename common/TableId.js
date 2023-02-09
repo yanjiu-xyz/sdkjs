@@ -69,13 +69,13 @@
 	};
 	CTableId.prototype.Add = function(Class, Id)
 	{
-		if (false === this.m_bTurnOff)
-		{
-			Class.Id          = Id;
-			this.m_aPairs[Id] = Class;
-
-			AscCommon.History.Add(new AscCommon.CChangesTableIdAdd(this, Id, Class));
-		}
+		if (this.m_bTurnOff || !Class)
+			return;
+		
+		Class.Id          = Id;
+		this.m_aPairs[Id] = Class;
+		
+		AscCommon.History.Add(new AscCommon.CChangesTableIdAdd(this, Id, Class));
 	};
 	CTableId.prototype.TurnOff = function()
 	{
@@ -104,6 +104,10 @@
 
 		return null;
 	};
+	CTableId.prototype.GetById = function(id)
+	{
+		return this.GetClass(id);
+	}
 	CTableId.prototype.GetClass = function(id)
 	{
 		if (!id || !this.m_aPairs[id])
@@ -121,7 +125,7 @@
 		if (Class.Get_Id)
 			return Class.Get_Id();
 
-		if (Class.GetId())
+		if (Class.GetId)
 			return Class.GetId();
 
 		return null;
@@ -386,20 +390,6 @@
 		this.m_oFactoryClass[AscDFH.historyitem_type_SmartArtNodeData  ]     = AscFormat.SmartArtNodeData;
 		this.m_oFactoryClass[AscDFH.historyitem_type_BuBlip            ]     = AscFormat.CBuBlip;
 
-		this.m_oFactoryClass[AscDFH.historyitem_type_UserMaster        ]     = AscWord.CUserMaster;
-		this.m_oFactoryClass[AscDFH.historyitem_type_User              ]     = AscWord.CUser;
-		this.m_oFactoryClass[AscDFH.historyitem_type_SignInfo          ]     = AscWord.CSignInfo;
-		this.m_oFactoryClass[AscDFH.historyitem_type_CipherInfo        ]     = AscWord.CCipherInfo;
-		this.m_oFactoryClass[AscDFH.historyitem_type_FormFieldMaster   ]     = AscWord.CFieldMaster;
-		this.m_oFactoryClass[AscDFH.historyitem_type_FormField         ]     = AscWord.CField;
-		this.m_oFactoryClass[AscDFH.historyitem_type_EncryptedData     ]     = AscWord.CEncryptedData;
-		this.m_oFactoryClass[AscDFH.historyitem_type_KeyInfo           ]     = AscWord.CKeyInfo;
-		this.m_oFactoryClass[AscDFH.historyitem_type_MainDocument      ]     = AscWord.CMainDocument;
-		this.m_oFactoryClass[AscDFH.historyitem_type_FieldsGroup       ]     = AscWord.CFieldsGroup;
-		this.m_oFactoryClass[AscDFH.historyitem_type_FormDate          ]     = AscWord.CFormDate;
-		this.m_oFactoryClass[AscDFH.historyitem_type_SignRequest       ]     = AscWord.CSignRequest;
-		this.m_oFactoryClass[AscDFH.historyitem_type_FieldContent      ]     = AscWord.CFieldContent;
-
 		if (window['AscCommonSlide'])
 		{
 			this.m_oFactoryClass[AscDFH.historyitem_type_Slide]               = AscCommonSlide.Slide;
@@ -489,6 +479,8 @@
 		}
 
 		this.m_oFactoryClass[AscDFH.historyitem_type_DocumentMacros] = AscCommon.CDocumentMacros;
+		
+		this.InitOFormClasses();
 	};
 	CTableId.prototype.GetClassFromFactory = function(nType)
 	{
@@ -499,6 +491,25 @@
 	};
 	CTableId.prototype.Refresh_RecalcData = function(Data)
 	{
+	};
+	CTableId.prototype.InitOFormClasses = function()
+	{
+		if (AscCommon.IsSupportOFormFeature())
+		{
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_UserMaster]  = AscOForm.CUserMaster;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_User]        = AscOForm.CUser;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldMaster] = AscOForm.CFieldMaster;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_Document]    = AscOForm.CDocument;
+			this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldGroup]  = AscOForm.CFieldGroup;
+		}
+		else
+		{
+			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_UserMaster];
+			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_User];
+			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldMaster];
+			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_Document];
+			delete this.m_oFactoryClass[AscDFH.historyitem_type_OForm_FieldGroup];
+		}
 	};
 	//-----------------------------------------------------------------------------------
 	// Функции для работы с совместным редактирования

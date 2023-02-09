@@ -1879,6 +1879,7 @@ CDocumentContent.prototype.GetAllTables = function(oProps, arrTables)
 
 	return arrTables;
 };
+
 /**
  * Специальный пресет с номером страницы для колонтитула
  * @param nAlignType
@@ -2684,15 +2685,23 @@ CDocumentContent.prototype.AddNewParagraph = function(bForceAdd)
         //    в том числе если стиля нет у обоих, тогда копируем еще все прямые настройки.
         //    (Т.е. если стили разные, а у исходный параграф был параграфом со списком, тогда
         //    новый параграф будет без списка).
-        if (type_Paragraph === Item.GetType())
+        if (Item.IsParagraph())
         {
         	var isCheckAutoCorrect = false;
+			let numPr = Item.GetNumPr();
 
             // Если текущий параграф пустой и с нумерацией, тогда удаляем нумерацию и отступы левый и первой строки
-            if (true !== bForceAdd && undefined != Item.GetNumPr() && true === Item.IsEmpty({SkipNewLine : true}) && true === Item.IsCursorAtBegin())
+            if (true !== bForceAdd && numPr && true === Item.IsEmpty({SkipNewLine : true}) && true === Item.IsCursorAtBegin())
             {
-                Item.RemoveNumPr();
-                Item.Set_Ind({FirstLine : undefined, Left : undefined, Right : Item.Pr.Ind.Right}, true);
+				if (numPr.Lvl <= 0)
+				{
+					Item.RemoveNumPr();
+					Item.Set_Ind({FirstLine : undefined, Left : undefined, Right : Item.Pr.Ind.Right}, true);
+				}
+				else
+				{
+					Item.SetNumPr(numPr.NumId, numPr.Lvl - 1);
+				}
             }
             else
             {
@@ -2830,6 +2839,17 @@ CDocumentContent.prototype.AddNewParagraph = function(bForceAdd)
 		}
 	}
 };
+CDocumentContent.prototype.GetFormatPainterData = function()
+{
+	if (docpostype_DrawingObjects === this.CurPos.Type)
+	{
+		return this.DrawingObjects.getFormatPainterData();
+	}
+	else
+	{
+		return new CDocumentFormatPainterData(this.GetDirectTextPr(), this.GetDirectParaPr(), null);
+	}
+};
 // Расширяем документ до точки (X,Y) с помощью новых параграфов
 // Y0 - низ последнего параграфа, YLimit - предел страницы
 CDocumentContent.prototype.Extend_ToPos                       = function(X, Y)
@@ -2905,8 +2925,6 @@ CDocumentContent.prototype.Extend_ToPos                       = function(X, Y)
 			this.RemoveFromContent(this.Content.length - 1, 1, false);
             break;
         }
-
-        this.Internal_Content_Add(this.Content.length, NewParagraph);
 
         if (NewParagraph.Pages[0].Bounds.Bottom > Y)
             break;
@@ -5585,7 +5603,7 @@ CDocumentContent.prototype.IncreaseDecreaseIndent = function(bIncrease)
 		}
 	}
 };
-CDocumentContent.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
+CDocumentContent.prototype.PasteFormatting = function(oData)
 {
 	if (true === this.ApplyToAll)
 	{
@@ -5593,7 +5611,7 @@ CDocumentContent.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
 		{
 			var Item = this.Content[Index];
 			Item.SetApplyToAll(true);
-			Item.PasteFormatting(TextPr, ParaPr, true);
+			Item.PasteFormatting(oData);
 			Item.SetApplyToAll(false);
 		}
 
@@ -5602,7 +5620,7 @@ CDocumentContent.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
 
 	if (docpostype_DrawingObjects === this.CurPos.Type)
 	{
-		return this.LogicDocument.DrawingObjects.paragraphFormatPaste(TextPr, ParaPr, ApplyPara);
+		return this.LogicDocument.DrawingObjects.pasteFormatting(oData);
 	}
 	else //if ( docpostype_Content === this.CurPos.Type )
 	{
@@ -5624,7 +5642,7 @@ CDocumentContent.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
 
 					for (var Pos = Start; Pos <= End; Pos++)
 					{
-						this.Content[Pos].PasteFormatting(TextPr, ParaPr, ( Start === End ? false : true ));
+						this.Content[Pos].PasteFormatting(oData);
 					}
 					break;
 				}
@@ -5632,7 +5650,7 @@ CDocumentContent.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
 		}
 		else
 		{
-			this.Content[this.CurPos.ContentPos].PasteFormatting(TextPr, ParaPr, true);
+			this.Content[this.CurPos.ContentPos].PasteFormatting(oData);
 		}
 	}
 };
@@ -6806,6 +6824,10 @@ CDocumentContent.prototype.SetSelectionToBeginEnd = function(isSelectionStart, i
 };
 CDocumentContent.prototype.Select_DrawingObject      = function(Id)
 {
+	let drawingObject = AscCommon.g_oTableId.GetById(Id);
+	if (!drawingObject || !drawingObject.IsUseInDocument())
+		return;
+	
     this.RemoveSelection();
 
     this.Parent.Set_CurrentElement(true, this.Get_StartPage_Absolute() + this.CurPage, this);

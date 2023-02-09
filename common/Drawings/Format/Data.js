@@ -790,20 +790,6 @@ Because of this, the display is sometimes not correct.
 
     const Constr_font_scale = 360;
 
-    if (!String.prototype.includes) {
-      String.prototype.includes = function(search, start) {
-        if (typeof start !== 'number') {
-          start = 0;
-        }
-
-        if (start + search.length > this.length) {
-          return false;
-        } else {
-          return this.indexOf(search, start) !== -1;
-        }
-      };
-    }
-
     changesFactory[AscDFH.historyitem_DiagramDataDataModel] = CChangeObject;
     drawingsChangesMap[AscDFH.historyitem_DiagramDataDataModel] = function (oClass, value) {
       oClass.dataModel = value;
@@ -1659,7 +1645,7 @@ Because of this, the display is sometimes not correct.
     }
 
     Point.prototype.getShape = function () {
-      if (this.parent && this.parent.parent instanceof CShape) {
+      if (this.parent && this.parent.parent instanceof AscFormat.CShape) {
         return this.parent.parent;
       }
     }
@@ -1718,6 +1704,11 @@ Because of this, the display is sometimes not correct.
     Point.prototype.setPhldrT = function(pr) {
       var prSet = this.getPrSet();
       prSet && prSet.setPhldrT(pr);
+    }
+
+    Point.prototype.getPhldrT = function() {
+      var prSet = this.getPrSet();
+      return prSet && prSet.getPhldrT();
     }
 
     Point.prototype.getCxnId = function () {
@@ -1790,14 +1781,37 @@ Because of this, the display is sometimes not correct.
     }
 
     Point.prototype.isBlipFillPlaceholder = function () {
-      var imagePlaceholderArrStylelbl = ['alignImgPlace1', 'bgImgPlace1', 'fgImgPlace1'];
-      var imagePlaceholderArrName = ['Image', 'image', 'imageRepeatNode', 'pictRect'];
-      var pointAssociationPrSet = this.prSet;
-      return pointAssociationPrSet && ((imagePlaceholderArrStylelbl.indexOf(pointAssociationPrSet.presStyleLbl) !== -1) ||
-        (imagePlaceholderArrName.indexOf(pointAssociationPrSet.presName) !== -1) ||
-        (pointAssociationPrSet.presName === 'rect1' && pointAssociationPrSet.presStyleLbl === 'bgShp') ||
-        (pointAssociationPrSet.presName === 'rect1' && pointAssociationPrSet.presStyleLbl === 'lnNode1') ||
-        (pointAssociationPrSet.presName === 'adorn' && pointAssociationPrSet.presStyleLbl === 'fgAccFollowNode1'))
+      //TODO: The method is a crutch. in the future, you need to determine the picture placeholder from the layout.xml file
+      const pointAssociationPrSet = this.prSet;
+      if (pointAssociationPrSet) {
+        const sStyleLbl = pointAssociationPrSet.presStyleLbl;
+        const sName = pointAssociationPrSet.presName;
+        const oExcludes = {
+          'node1': ['imageRepeatNode'],
+          'alignImgPlace1': ['ChildAccent', 'bentUpArrow1', 'ParentShape1', 'ParentShape2', 'Text1', 'Text2', 'Text3', 'Text4', 'Text5', 'Text6'],
+          'bgImgPlace1': ['LeftNode', 'RightNode', 'Background'],
+        };
+        if (oExcludes[sStyleLbl]) {
+          if (oExcludes[sStyleLbl].indexOf(sName) !== -1) {
+            return false;
+          }
+        }
+        const imagePlaceholderArrStylelbl = ['alignImgPlace1', 'bgImgPlace1', 'fgImgPlace1'];
+        const imagePlaceholderArrName = ['Image', 'imageRepeatNode', 'pictRect'];
+        let bCheckImagePlaceholderStyleLbl = imagePlaceholderArrStylelbl.indexOf(sStyleLbl) !== -1;
+        let bCheckImagePlaceholderName = false;
+        if (sName) {
+          bCheckImagePlaceholderName = imagePlaceholderArrName.indexOf(sName) !== -1 || sName.indexOf('image') !== -1;
+        }
+
+        return (bCheckImagePlaceholderStyleLbl ||
+          bCheckImagePlaceholderName ||
+          (sName === 'rect1' && sStyleLbl === 'bgShp') ||
+          (sName === 'rect1' && sStyleLbl === 'lnNode1') ||
+          (sName === 'adorn' && sStyleLbl === 'fgAccFollowNode1'));
+      }
+
+      return false;
     }
 
     Point.prototype.fillObject = function (oCopy, oIdMap) {
@@ -10048,6 +10062,7 @@ Because of this, the display is sometimes not correct.
       CBaseFormatObject.call(this);
       this.shapePoint = null;
       this.contentPoint = [];
+      this.maxFontSize = null;
     }
     InitClass(ShapeSmartArtInfo, CBaseFormatObject, AscDFH.historyitem_type_ShapeSmartArtInfo);
 
@@ -10070,6 +10085,9 @@ Because of this, the display is sometimes not correct.
         oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_ShapeSmartArtInfoRemoveLstContentPoint, nIdx, [this.contentPoint[nIdx]], false));
         nIdx === this.contentPoint.length - 1 ? this.contentPoint.pop() : this.contentPoint.splice(nIdx, 1);
       }
+    }
+    ShapeSmartArtInfo.prototype.setMaxFontSize = function (oPr) {
+      this.maxFontSize = oPr;
     }
 
     changesFactory[AscDFH.historyitem_SmartArtColorsDef] = CChangeObject;
@@ -10098,6 +10116,7 @@ Because of this, the display is sometimes not correct.
       oClass.styleDef = value;
     };
     drawingsChangesMap[AscDFH.historyitem_SmartArtParent] = function (oClass, value) {
+		oClass.oldParent = oClass.parent;
       oClass.parent = value;
     };
 
@@ -10113,6 +10132,7 @@ Because of this, the display is sometimes not correct.
       this.bNeedUpdatePosition = true;
 
       this.calcGeometry = null;
+      this.bFirstRecalculate = true;
     }
 
     InitClass(SmartArt, CGroupShape, AscDFH.historyitem_type_SmartArt);
@@ -10173,19 +10193,22 @@ Because of this, the display is sometimes not correct.
     }
 
     SmartArt.prototype.recalculate = function () {
-    var oldParaMarks = editor && editor.ShowParaMarks;
-      if (oldParaMarks) {
-        editor.ShowParaMarks = false;
-      }
-      CGroupShape.prototype.recalculate.call(this);
-      if (this.group && this.bNeedUpdatePosition) {
-        this.bNeedUpdatePosition = false;
-        var group = this.getMainGroup();
-        group.updateCoordinatesAfterInternalResize();
-      }
-      if (oldParaMarks) {
-        editor.ShowParaMarks = oldParaMarks;
-      }
+      if(this.bDeleted)
+        return;
+      AscFormat.ExecuteNoHistory(function () {
+        var oldParaMarks = editor && editor.ShowParaMarks;
+        if (oldParaMarks) {
+          editor.ShowParaMarks = false;
+        }
+        CGroupShape.prototype.recalculate.call(this);
+        if (this.bFirstRecalculate) {
+          this.bFirstRecalculate = false;
+          this.fitFontSize();
+        }
+        if (oldParaMarks) {
+          editor.ShowParaMarks = oldParaMarks;
+        }
+      }, this, []);
     }
 
     SmartArt.prototype.decorateParaDrawing = function (drawingObjects) {
@@ -10197,52 +10220,23 @@ Because of this, the display is sometimes not correct.
       return drawing;
     };
 
-
     SmartArt.prototype.fillByPreset = function (nSmartArtType, bLoadOnlyDrawing) {
-      this.setDataModel(new AscFormat.DiagramData());
-      this.setColorsDef(new AscFormat.ColorsDef());
-      this.setLayoutDef(new AscFormat.LayoutDef());
-      this.setStyleDef(new AscFormat.StyleDef());
-      this.setDrawing(new AscFormat.Drawing());
-
       const oApi = Asc.editor || editor;
-      if (oApi) {
+      if (oApi && AscCommon.g_oBinarySmartArts) {
+        const nShift = AscCommon.g_oBinarySmartArts.shifts[nSmartArtType];
+        const oDrawingDocument = oApi.getDrawingDocument();
+        const oLogicDocument = oApi.getLogicDocument();
+
         const pReader = new AscCommon.BinaryPPTYLoader();
-        const drawingDocument = oApi.getDrawingDocument();
-        const logicDocument = oApi.getLogicDocument();
-        pReader.presentation = logicDocument;
-        pReader.DrawingDocument = drawingDocument;
+        pReader.stream = new AscCommon.FileStream(AscCommon.g_oBinarySmartArts.stream, AscCommon.g_oBinarySmartArts.stream.length);
+        pReader.stream.cur = nShift;
 
-        let sData = AscCommon['g_oSmartArtDrawings'][nSmartArtType];
-        let data = AscCommon.Base64.decode(sData, true, undefined, undefined);
-        pReader.stream = new AscCommon.FileStream(data, data.length);
-        pReader.ReadSmartArtGroup(this.drawing);
-        this.drawing.setGroup(this);
-        this.addToSpTree(0, this.drawing);
+        pReader.presentation = oLogicDocument;
+        pReader.DrawingDocument = oDrawingDocument;
 
-        if (!bLoadOnlyDrawing) {
-          sData = AscCommon['g_oSmartArtStyleDef'][nSmartArtType];
-          data = AscCommon.Base64.decode(sData, true, undefined, undefined);
-          pReader.stream = new AscCommon.FileStream(data, data.length);
-          this.styleDef.fromPPTY(pReader);
-
-          sData = AscCommon['g_oSmartArtLayoutDef'][nSmartArtType];
-          data = AscCommon.Base64.decode(sData, true, undefined, undefined);
-          pReader.stream = new AscCommon.FileStream(data, data.length);
-          this.layoutDef.fromPPTY(pReader);
-
-          sData = AscCommon['g_oSmartArtColorsDef'][nSmartArtType];
-          data = AscCommon.Base64.decode(sData, true, undefined, undefined);
-          pReader.stream = new AscCommon.FileStream(data, data.length);
-          this.colorsDef.fromPPTY(pReader);
-
-          sData = AscCommon['g_oSmartArtData'][nSmartArtType];
-          data = AscCommon.Base64.decode(sData, true, undefined, undefined);
-          pReader.stream = new AscCommon.FileStream(data, data.length);
-          this.dataModel.fromPPTY(pReader);
-          this.setConnections2();
-        }
-
+        pReader.loadOnlyDrawingSmartArt = bLoadOnlyDrawing;
+        pReader.stream.GetUChar();
+        this.fromPPTY(pReader);
         this.setSpPr(new AscFormat.CSpPr());
         this.spPr.setParent(this);
         const smXfrm = new AscFormat.CXfrm();
@@ -10256,11 +10250,11 @@ Because of this, the display is sometimes not correct.
         this.drawing.setXfrmByParent();
 
         if (!bLoadOnlyDrawing) {
-          this.checkNodePointsAfterRead();
+          this.checkNodePointsAfterRead(true);
         }
       }
       return this;
-    };
+    }
 
     SmartArt.prototype.fitToPageSize = function () {
       const oApi = Asc.editor || editor;
@@ -10283,8 +10277,9 @@ Because of this, the display is sometimes not correct.
 
     SmartArt.prototype.fitFontSize = function () {
       this.spTree[0] && this.spTree[0].spTree.forEach(function (oShape) {
-        oShape.recalculateContent2()
-        oShape.findFitFontSizeForSmartArt();
+        oShape.recalculateContentWitCompiledPr();
+        oShape.setTruthFontSizeInSmartArt();
+        oShape.recalculateContentWitCompiledPr();
       });
     };
 
@@ -11412,11 +11407,14 @@ Because of this, the display is sometimes not correct.
             if (!connections[cxn.destId]) {
               connections[cxn.destId] = [];
             }
-            connections[cxn.destId].push({
-              point: ptMap[cxn.srcId],
-              srcOrd: parseInt(cxn.srcOrd, 10),
-              destOrd: parseInt(cxn.destOrd, 10)
-            });
+            if (ptMap[cxn.srcId]) {
+              connections[cxn.destId].push({
+                point: ptMap[cxn.srcId],
+                srcOrd: parseInt(cxn.srcOrd, 10),
+                destOrd: parseInt(cxn.destOrd, 10)
+              });
+            }
+
           }
         });
 
@@ -11510,22 +11508,38 @@ Because of this, the display is sometimes not correct.
           break;
         }
         case 1: {
+          if (pReader.loadOnlyDrawingSmartArt) {
+            s.SkipRecord();
+            break;
+          }
           this.setDataModel(new DiagramData());
           this.dataModel.fromPPTY(pReader);
           this.setConnections2();
           break;
         }
         case 2: {
+          if (pReader.loadOnlyDrawingSmartArt) {
+            s.SkipRecord();
+            break;
+          }
           this.setColorsDef(new ColorsDef());
           this.colorsDef.fromPPTY(pReader);
           break;
         }
         case 3: {
+          if (pReader.loadOnlyDrawingSmartArt) {
+            s.SkipRecord();
+            break;
+          }
           this.setLayoutDef(new LayoutDef());
           this.layoutDef.fromPPTY(pReader);
           break;
         }
         case 4: {
+          if (pReader.loadOnlyDrawingSmartArt) {
+            s.SkipRecord();
+            break;
+          }
           this.setStyleDef(new StyleDef());
           this.styleDef.fromPPTY(pReader);
           break;
@@ -11882,12 +11896,19 @@ Because of this, the display is sometimes not correct.
         oDrawing.spPr.xfrm.setOffY(0);
       }
     };
-    SmartArt.prototype.checkNodePointsAfterRead = function() {
+    SmartArt.prototype.checkNodePointsAfterRead = function(bReplaceAll) {
       let tree = this.createHierarchy();
       tree.traverseBF(function (node) {
         let nodePoint = node.data && (node.data.nodePoint || node.data.asstPoint);
         if (nodePoint) {
-          nodePoint.setPhldrT('[' + AscCommon.translateManager.getValue('Text') + ']');
+          if (bReplaceAll) {
+            nodePoint.setPhldrT('[' + AscCommon.translateManager.getValue('Text') + ']');
+          } else {
+            const oPlaceholderText = nodePoint.getPhldrT();
+            if (typeof oPlaceholderText !== 'string') {
+              nodePoint.setPhldrT('');
+            }
+          }
         }
       });
     };

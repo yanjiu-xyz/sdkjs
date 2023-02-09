@@ -678,13 +678,10 @@ ChartPreviewManager.prototype.getChartPreviews = function(chartType, arrId, bEmp
 	function SmartArtPreviewDrawer() {
 		AscCommon.CActionOnTimerBase.call(this);
 		this.SMARTART_PREVIEW_SIZE_MM = 8128000 * AscCommonWord.g_dKoef_emu_to_mm;
-		this.CANVAS_SIZE = 100;
+		this.CANVAS_SIZE = 70;
 		this.canvas = null;
 		this.imageType = "image/jpeg";
 		this.imageBuffer = [];
-		this.imagePlaceholderUrl = "../../../../sdkjs/common/Images/placeholders/image@2x.png";
-		this.placeholderImg = null;
-		this.placeholderSize = this.SMARTART_PREVIEW_SIZE_MM / 10;
 		this.index = 0;
 		this.cache = {};
 		this.queue = [];
@@ -693,15 +690,15 @@ ChartPreviewManager.prototype.getChartPreviews = function(chartType, arrId, bEmp
 	SmartArtPreviewDrawer.prototype.constructor = SmartArtPreviewDrawer;
 
 	SmartArtPreviewDrawer.prototype.Begin = function (nTypeOfSectionLoad) {
-		if (AscFormat.isRealNumber(nTypeOfSectionLoad)) {
-			const oThis = this;
-			const arrPreviewObjects = Asc.c_oAscSmartArtSections[nTypeOfSectionLoad].map(function (nTypeOfSmartArt) {
-				return new CSmartArtPreviewInfo(nTypeOfSmartArt, nTypeOfSectionLoad);
-			});
-			this.queue = this.queue.concat(arrPreviewObjects);
-			oThis.loadImagePlaceholder(function () {
-				AscCommon.CActionOnTimerBase.prototype.Begin.call(oThis);
-			});
+		const oApi = Asc.editor || editor;
+		if (oApi && AscCommon.g_oBinarySmartArts) {
+			if (AscFormat.isRealNumber(nTypeOfSectionLoad)) {
+				const arrPreviewObjects = Asc.c_oAscSmartArtSections[nTypeOfSectionLoad].map(function (nTypeOfSmartArt) {
+					return new CSmartArtPreviewInfo(nTypeOfSmartArt, nTypeOfSectionLoad);
+				});
+				this.queue = this.queue.concat(arrPreviewObjects);
+				AscCommon.CActionOnTimerBase.prototype.Begin.call(this);
+			}
 		}
 	};
 	SmartArtPreviewDrawer.prototype.OnBegin = function () {
@@ -758,24 +755,13 @@ ChartPreviewManager.prototype.getChartPreviews = function(chartType, arrId, bEmp
 		oContext.fillRect(0, 0, oCanvas.width, oCanvas.height);
 		const oGraphics = new AscCommon.CGraphics();
 		oGraphics.isSmartArtPreviewDrawer = true;
-		oGraphics.imagePlaceholder = this.placeholderImg;
-		oGraphics.placeholderSize = this.placeholderSize;
 		oGraphics.init(oContext, oCanvas.width, oCanvas.height, this.SMARTART_PREVIEW_SIZE_MM, this.SMARTART_PREVIEW_SIZE_MM);
 		oGraphics.m_oFontManager = AscCommon.g_fontManager;
 		oGraphics.transform(1,0,0,1,0,0);
-		return oGraphics;
-	}
-
-	SmartArtPreviewDrawer.prototype.loadImagePlaceholder = function (callback) {
-		if (!this.placeholderImg) {
-			this.placeholderImg = new Image();
-			this.placeholderImg.onload = callback;
-			this.placeholderImg.src = this.imagePlaceholderUrl;
-			this.placeholderImg.src = this.imagePlaceholderUrl;
-			AscCommon.backoffOnErrorImg(this.placeholderImg);
-		} else {
-			callback();
+		if (AscCommon.AscBrowser.retinaPixelRatio < 2) {
+			oGraphics.bDrawRectWithLines = true;
 		}
+		return oGraphics;
 	}
 
 	// SmartArtPreviewDrawer.prototype.createPreviews = function () {
@@ -850,32 +836,31 @@ ChartPreviewManager.prototype.getChartPreviews = function(chartType, arrId, bEmp
 	SmartArtPreviewDrawer.prototype.getSmartArt = function(nSmartArtType) {
 		return AscFormat.ExecuteNoHistory(function () {
 			const oSmartArt = new AscFormat.SmartArt();
-			oSmartArt.bForceSlideTransform = true;
-			oSmartArt.fillByPreset(nSmartArtType, true);
-			oSmartArt.getContrastDrawing();
-			oSmartArt.setBDeleted2(false);
-			const oXfrm = oSmartArt.spPr.xfrm;
-
+			oSmartArt.bNeedUpdatePosition = false;
+			oSmartArt.bFirstRecalculate = false;
 			const oApi = Asc.editor || editor;
-			if (oApi) {
+				oSmartArt.bForceSlideTransform = true;
+				oSmartArt.fillByPreset(nSmartArtType, true);
+				oSmartArt.getContrastDrawing();
+				oSmartArt.setBDeleted2(false);
+				const oXfrm = oSmartArt.spPr.xfrm;
 				const oDrawingObjects = oApi.getDrawingObjects();
 				oXfrm.setOffX(0);
 				oXfrm.setOffY((this.SMARTART_PREVIEW_SIZE_MM - oXfrm.extY) / 2);
 				if (oDrawingObjects) {
 					oSmartArt.setDrawingObjects(oDrawingObjects);
-				}
-				if (oDrawingObjects.cSld) {
-					oSmartArt.setParent2(oDrawingObjects);
-					oSmartArt.setRecalculateInfo();
-				}
+					if (oDrawingObjects.cSld) {
+						oSmartArt.setParent2(oDrawingObjects);
+						oSmartArt.setRecalculateInfo();
+					}
 
-				if (oDrawingObjects.getWorksheetModel) {
-					oSmartArt.setWorksheet(oDrawingObjects.getWorksheetModel());
+					if (oDrawingObjects.getWorksheetModel) {
+						oSmartArt.setWorksheet(oDrawingObjects.getWorksheetModel());
+					}
 				}
 				this.fitSmartArtForPreview(oSmartArt);
 				oSmartArt.recalcTransformText();
 				oSmartArt.recalculate();
-			}
 
 			return oSmartArt;
 		}, this, []);
@@ -1155,10 +1140,7 @@ TextArtPreviewManager.prototype.getShapeByPrst = function(prst)
 
 	var oBodypr = oShape.getBodyPr().createDuplicate();
 	oBodypr.prstTxWarp = AscFormat.CreatePrstTxWarpGeometry(prst);
-	oBodypr.lIns = 2.54;
-	oBodypr.tIns = 2.54;
-	oBodypr.rIns = 2.54;
-	oBodypr.bIns = 2.54;
+	oBodypr.setDefaultInsets();
 	if(!oShape.bWordShape)
 	{
 		oShape.txBody.setBodyPr(oBodypr);
