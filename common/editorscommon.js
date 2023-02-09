@@ -10575,7 +10575,11 @@
 		// TODO: add function after merge, add set new font size
 		let nParagraphWidth = oParagraph.RecalculateMinMaxContentWidth().Max;
 		if (nParagraphWidth > oNewShape.contentWidth) {
-			oNewShape.findFitFontSize(oNewShape.txBody.content, nMinFontSize, nMaxFontSize, true);
+			const nNewFontSize = oNewShape.findFitFontSize(nMinFontSize, nMaxFontSize, true);
+			if (nNewFontSize !== null)
+			{
+				oNewShape.setFontSizeInSmartArt(nNewFontSize);
+			}
 		}
 
 		return oTextPr;
