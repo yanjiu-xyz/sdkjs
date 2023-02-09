@@ -11228,6 +11228,7 @@
 				var id = protectedRanges[i].Id;
 				var cloneRange = protectedRanges[i].clone();
 				cloneRange.Id = id;
+				cloneRange.isLock = protectedRanges[i].isLock;
 				res.push(cloneRange);
 			}
 		}
