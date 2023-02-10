@@ -6143,16 +6143,16 @@ CT_pivotTableDefinition.prototype.getContextMenuInfo = function(selection) {
 	res.layoutGroup = this.getLayoutsForGroup(selection, res.layout);
 
 	if (Asc.PivotLayoutType.cell === res.layout.type && selection.isSingleRange() && selection.getLast().isOneCell()) {
-		let cellLayout = res.layout.getHeaderCellLayoutRow();
-		if (null !== cellLayout) {
+		let cellLayout = res.layout.getHeaderCellLayoutRowExceptValue();
+		if (null !== cellLayout && null !== cellLayout.fld) {
 			let autoFilterObject = new Asc.AutoFiltersOptions();
 			// autoFilterObject.asc_setCellCoord(this.getCellCoord(idPivot.col, idPivot.row));
 			autoFilterObject.asc_setCellId(new AscCommon.CellBase(row, col).getName());
 			this.fillAutoFiltersOptions(autoFilterObject, cellLayout.fld);
 			res.filterRow = autoFilterObject;
 		}
-		cellLayout = res.layout.getHeaderCellLayoutCol();
-		if (null !== cellLayout) {
+		cellLayout = res.layout.getHeaderCellLayoutColExceptValue();
+		if (null !== cellLayout && null !== cellLayout.fld ) {
 			let autoFilterObject = new Asc.AutoFiltersOptions();
 			// autoFilterObject.asc_setCellCoord(this.getCellCoord(idPivot.col, idPivot.row));
 			autoFilterObject.asc_setCellId(new AscCommon.CellBase(row, col).getName());
@@ -15819,7 +15819,7 @@ PivotContextMenu.prototype.asc_getRowGrandTotals = function() {
 	if (!this.layout || this.layout.type !== Asc.PivotLayoutType.rowField) {
 		return false;
 	}
-	let cellLayout = this.layout.getHeaderCellLayout();
+	let cellLayout = this.layout.getHeaderCellLayoutExceptValue();
 	if (cellLayout && cellLayout.t === Asc.c_oAscItemType.Grand) {
 		return true;
 	}
@@ -15829,7 +15829,7 @@ PivotContextMenu.prototype.asc_getColGrandTotals = function() {
 	if (!this.layout || this.layout.type !== Asc.PivotLayoutType.colField) {
 		return false;
 	}
-	let cellLayout = this.layout.getHeaderCellLayout();
+	let cellLayout = this.layout.getHeaderCellLayoutExceptValue();
 	if (cellLayout && cellLayout.t === Asc.c_oAscItemType.Grand) {
 		return true;
 	}
@@ -15895,7 +15895,7 @@ PivotLayout.prototype.getSortFilterInfo = function(pivotTable) {
 	let sortDataIndex = -1;
 	if (PivotLayoutType.cell === this.type || PivotLayoutType.rowField === this.type || PivotLayoutType.colField === this.type) {
 		fld = null;
-		let cellLayout = this.getHeaderCellLayout();
+		let cellLayout = this.getHeaderCellLayoutExceptValue();
 		if (cellLayout) {
 			fld = cellLayout.fld;
 		}
@@ -15909,24 +15909,32 @@ PivotLayout.prototype.getSortFilterInfo = function(pivotTable) {
 	}
 	return {fld: fld, sortDataIndex: sortDataIndex};
 };
-PivotLayout.prototype.getHeaderCellLayoutRow = function() {
-	if (this.rows && this.rows.length > 0) {
-		return this.rows[this.rows.length - 1];
+PivotLayout.prototype.getHeaderCellLayoutRowExceptValue = function() {
+	if (this.rows) {
+		if (this.rows.length > 0 && AscCommonExcel.st_VALUES !== this.rows[this.rows.length - 1].fld) {
+			return this.rows[this.rows.length - 1];
+		} else if (this.rows.length > 1) {
+			return this.rows[this.rows.length - 2];
+		}
 	}
 	return null;
 };
-PivotLayout.prototype.getHeaderCellLayoutCol = function() {
+PivotLayout.prototype.getHeaderCellLayoutColExceptValue = function() {
 	if (this.cols && this.cols.length > 0) {
-		return this.cols[this.cols.length - 1];
+		if (this.cols.length > 0 && AscCommonExcel.st_VALUES !== this.cols[this.cols.length - 1].fld) {
+			return this.cols[this.rows.length - 1];
+		} else if (this.cols.length > 1) {
+			return this.cols[this.cols.length - 2];
+		}
 	}
 	return null;
 };
-PivotLayout.prototype.getHeaderCellLayout = function () {
-	return this.getHeaderCellLayoutRow() || this.getHeaderCellLayoutCol() || null;
+PivotLayout.prototype.getHeaderCellLayoutExceptValue = function () {
+	return this.getHeaderCellLayoutRowExceptValue() || this.getHeaderCellLayoutColExceptValue() || null;
 };
 PivotLayout.prototype.getGroupCellLayout = function() {
 	if (PivotLayoutType.rowField === this.type || PivotLayoutType.colField === this.type) {
-		return this.getHeaderCellLayout();
+		return this.getHeaderCellLayoutExceptValue();
 	}
 	return null;
 };
