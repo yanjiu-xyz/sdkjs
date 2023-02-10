@@ -194,10 +194,10 @@ class Deserializer {
 				`${Editor.Word}|${Editor.Cell}|${Editor.Slide}`,
 				'g'
 			).exec(result.script)?.[0];
-			const stackTraceVariable = /\(reading '\w+'\)/
+			const stackTraceVariable = /'\w+'/
 				.exec(result.stackTrace)?.[0]
-				.replace("(reading '", '')
-				.replace("')", '')
+				.replace("'", '')
+				.replace("'", '')
 				.trim();
 			if (stackTraceVariable) {
 				result.stackTrace = result.stackTrace.replace(
@@ -206,6 +206,19 @@ class Deserializer {
 						stackTraceVariable,
 						editor
 					)})`
+				);
+			} else {
+				// is not a function
+				const stackTraceFunction = /(\w*\.*)*\sis\snot\sa\sfunction/g
+					.exec(result.stackTrace)?.[0]
+					.replace('is not a function', '')
+					.trim();
+				const props = stackTraceFunction
+					.split('.')
+					.map((prop) => this._deserializeProp(prop, editor));
+				result.stackTrace = result.stackTrace.replace(
+					stackTraceFunction,
+					`${stackTraceFunction} (${props.join('.')})`
 				);
 			}
 		}
@@ -375,11 +388,23 @@ class Controller {
 					fs.mkdirSync(`${__dirname}/cache/${version}`);
 				}
 				if (mapsType == this._MapsCheckingType.Old) {
-					fs.renameSync(`${__dirname}/../maps/${OLD_PROPS_MAP_NAME}`, `${__dirname}/cache/${version}/${OLD_PROPS_MAP_NAME}`);
+					fs.renameSync(
+						`${__dirname}/../maps/${OLD_PROPS_MAP_NAME}`,
+						`${__dirname}/cache/${version}/${OLD_PROPS_MAP_NAME}`
+					);
 				} else {
-					fs.renameSync(`${__dirname}/../maps/${NEW_PROPS_MAP_WORD_NAME}`, `${__dirname}/cache/${version}/${NEW_PROPS_MAP_WORD_NAME}`);
-					fs.renameSync(`${__dirname}/../maps/${NEW_PROPS_MAP_CELL_NAME}`, `${__dirname}/cache/${version}/${NEW_PROPS_MAP_CELL_NAME}`);
-					fs.renameSync(`${__dirname}/../maps/${NEW_PROPS_MAP_SLIDE_NAME}`, `${__dirname}/cache/${version}/${NEW_PROPS_MAP_SLIDE_NAME}`);
+					fs.renameSync(
+						`${__dirname}/../maps/${NEW_PROPS_MAP_WORD_NAME}`,
+						`${__dirname}/cache/${version}/${NEW_PROPS_MAP_WORD_NAME}`
+					);
+					fs.renameSync(
+						`${__dirname}/../maps/${NEW_PROPS_MAP_CELL_NAME}`,
+						`${__dirname}/cache/${version}/${NEW_PROPS_MAP_CELL_NAME}`
+					);
+					fs.renameSync(
+						`${__dirname}/../maps/${NEW_PROPS_MAP_SLIDE_NAME}`,
+						`${__dirname}/cache/${version}/${NEW_PROPS_MAP_SLIDE_NAME}`
+					);
 				}
 				console.log(
 					`Map was found in ${__dirname}/../maps. This map will be used as a ${version} version.`
@@ -392,7 +417,7 @@ class Controller {
 							this._MapsCheckingType.New
 					)
 				);
-				versions.clear()
+				versions.clear();
 			} else if (
 				this._checkMaps(`${__dirname}/..`) == this._MapsCheckingType.New ||
 				this._checkMaps(`${__dirname}/..`) == this._MapsCheckingType.Old
@@ -406,29 +431,40 @@ class Controller {
 					fs.mkdirSync(`${__dirname}/cache/${version}`);
 				}
 				if (mapsType == this._MapsCheckingType.Old) {
-					fs.renameSync(`${__dirname}/../${OLD_PROPS_MAP_NAME}`, `${__dirname}/cache/${version}/${OLD_PROPS_MAP_NAME}`);
+					fs.renameSync(
+						`${__dirname}/../${OLD_PROPS_MAP_NAME}`,
+						`${__dirname}/cache/${version}/${OLD_PROPS_MAP_NAME}`
+					);
 				} else {
-					fs.renameSync(`${__dirname}/../${NEW_PROPS_MAP_WORD_NAME}`, `${__dirname}/cache/${version}/${NEW_PROPS_MAP_WORD_NAME}`);
-					fs.renameSync(`${__dirname}/../${NEW_PROPS_MAP_CELL_NAME}`, `${__dirname}/cache/${version}/${NEW_PROPS_MAP_CELL_NAME}`);
-					fs.renameSync(`${__dirname}/../${NEW_PROPS_MAP_SLIDE_NAME}`, `${__dirname}/cache/${version}/${NEW_PROPS_MAP_SLIDE_NAME}`);
+					fs.renameSync(
+						`${__dirname}/../${NEW_PROPS_MAP_WORD_NAME}`,
+						`${__dirname}/cache/${version}/${NEW_PROPS_MAP_WORD_NAME}`
+					);
+					fs.renameSync(
+						`${__dirname}/../${NEW_PROPS_MAP_CELL_NAME}`,
+						`${__dirname}/cache/${version}/${NEW_PROPS_MAP_CELL_NAME}`
+					);
+					fs.renameSync(
+						`${__dirname}/../${NEW_PROPS_MAP_SLIDE_NAME}`,
+						`${__dirname}/cache/${version}/${NEW_PROPS_MAP_SLIDE_NAME}`
+					);
 				}
-				
+
 				this.deserializers.set(
 					version,
 					new Deserializer(
 						version,
-						this._checkMaps(`${__dirname}/..`) ==
-							this._MapsCheckingType.New
+						this._checkMaps(`${__dirname}/..`) == this._MapsCheckingType.New
 					)
 				);
-				versions.clear()
+				versions.clear();
 			} else {
 				console.error(
 					`No maps found in build folder.\n` +
 						`Not enough versions found! Found: ${this.deserializers.size}. Expected: ${versions.size}\n` +
 						`Tip: If only one version is missing, it can be found automatically in build folder.`
 				);
-				process.exit()
+				process.exit();
 			}
 		} else if (versions.size > 1) {
 			console.error(
@@ -436,7 +472,7 @@ class Controller {
 					`Found: ${this.deserializers.size}. Expected: ${versions.size}\n` +
 					`Tip: If only one version is missing, it can be found automatically in build folder.`
 			);
-			process.exit()
+			process.exit();
 		}
 		const resultArray = errors.map((error) => {
 			if (this._getVersion(error)) {
