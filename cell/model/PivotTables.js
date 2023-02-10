@@ -6142,13 +6142,33 @@ CT_pivotTableDefinition.prototype.getContextMenuInfo = function(selection) {
 	res.layout = this.getLayoutByCell(row, col);
 	res.layoutGroup = this.getLayoutsForGroup(selection, res.layout);
 
-	//selection.isSingleRange() && selection.getLast().isOneCell()
-
-	// let autoFilterObject = new Asc.AutoFiltersOptions();
-	// // autoFilterObject.asc_setCellCoord(this.getCellCoord(idPivot.col, idPivot.row));
-	// autoFilterObject.asc_setCellId(new AscCommon.CellBase(row, col).getName());
-	// this.fillAutoFiltersOptions(autoFilterObject, res.layout.fld);
-	// res.filter = autoFilterObject;
+	if (Asc.PivotLayoutType.cell === res.layout.type && selection.isSingleRange() && selection.getLast().isOneCell()) {
+		let cellLayout = res.layout.getHeaderCellLayoutRow();
+		if (null !== cellLayout) {
+			let autoFilterObject = new Asc.AutoFiltersOptions();
+			// autoFilterObject.asc_setCellCoord(this.getCellCoord(idPivot.col, idPivot.row));
+			autoFilterObject.asc_setCellId(new AscCommon.CellBase(row, col).getName());
+			this.fillAutoFiltersOptions(autoFilterObject, cellLayout.fld);
+			res.filterRow = autoFilterObject;
+		}
+		cellLayout = res.layout.getHeaderCellLayoutCol();
+		if (null !== cellLayout) {
+			let autoFilterObject = new Asc.AutoFiltersOptions();
+			// autoFilterObject.asc_setCellCoord(this.getCellCoord(idPivot.col, idPivot.row));
+			autoFilterObject.asc_setCellId(new AscCommon.CellBase(row, col).getName());
+			this.fillAutoFiltersOptions(autoFilterObject, cellLayout.fld);
+			res.filterCol = autoFilterObject;
+		}
+	} else if (Asc.PivotLayoutType.rowField === res.layout.type || Asc.PivotLayoutType.colField === res.layout.type) {
+		let info = res.layout.getSortFilterInfo(this);
+		if (null !== info.fld) {
+			let autoFilterObject = new Asc.AutoFiltersOptions();
+			// autoFilterObject.asc_setCellCoord(this.getCellCoord(idPivot.col, idPivot.row));
+			autoFilterObject.asc_setCellId(new AscCommon.CellBase(row, col).getName());
+			this.fillAutoFiltersOptions(autoFilterObject, info.fld);
+			res.filter = autoFilterObject;
+		}
+	}
 	return res;
 };
 CT_pivotTableDefinition.prototype.getLayoutsForGroup = function(selection, opt_layout) {
@@ -6275,66 +6295,7 @@ CT_pivotTableDefinition.prototype.getLayoutByCellHeaderRowColLables = function(r
 		}
 		return;
 	}
-	//return this.getLayoutByCellHeaderRowColLablesCell(row, col, rowFieldsOffset);
 };
-// CT_pivotTableDefinition.prototype.getLayoutByCellHeaderRowColLablesCell = function(row, col, rowFieldsOffset) {
-// 	var items, fields, r1, c1, i, j;
-// 	var pivotRange = this.getRange();
-// 	var location = this.location;
-// 	var dataFields = this.asc_getDataFields();
-// 	if (rowFieldsOffset) {
-// 		items = this.getRowItems();
-// 		fields = this.asc_getRowFields();
-// 		r1 = pivotRange.r1 + location.firstDataRow;
-// 		c1 = pivotRange.c1;
-// 	} else {
-// 		items = this.getColItems();
-// 		fields = this.asc_getColumnFields();
-// 		r1 = pivotRange.r1 + location.firstHeaderRow;
-// 		c1 = pivotRange.c1 + location.firstDataCol;
-// 	}
-// 	if (rowFieldsOffset) {
-// 		i = row - r1;
-// 		j = -1;
-// 		if(undefined !== rowFieldsOffset[col - c1]) {
-// 			j = rowFieldsOffset[col - c1];
-// 		}
-// 	} else {
-// 		i = col - c1;
-// 		j = row - r1;
-// 	}
-// 	if (i < 0 || i >= items.length || j < 0) {
-// 		return;
-// 	}
-// 	var item = items[i];
-// 	if (Asc.c_oAscItemType.Grand === item.t) {
-// 		if (dataFields[item.i]) {
-// 			let type = rowFieldsOffset ? PivotLayoutType.headerGrandTotalRow : PivotLayoutType.headerGrandTotalCol;
-// 			return PivotLayout.prototype.createLayout(type, dataFields[item.i].fld);
-// 		}
-// 	} else if (Asc.c_oAscItemType.Blank !== item.t) {
-// 		let type = rowFieldsOffset ? PivotLayoutType.headerRow : PivotLayoutType.headerCol;
-// 		var r = item.getR();
-// 		j = Math.min(j, r + item.x.length - 1);
-// 		let fld = fields[j].asc_getIndex();
-// 		let fldVal = null;
-// 		if (j < r) {
-// 			while(i > 0) {
-// 				i--;
-// 				item = items[i];
-// 				r = item.getR();
-// 				if(j >= r) {
-// 					j = Math.min(j, r + item.x.length - 1);
-// 					fldVal = item.x[j - r].getV();
-// 					break;
-// 				}
-// 			}
-// 		} else {
-// 			fldVal = item.x[j - r].getV();
-// 		}
-// 		return PivotLayout.prototype.createLayout(type, fld, fldVal);
-// 	}
-// };
 CT_pivotTableDefinition.prototype.getLayoutByCellRowHeaderLabels = function(row, col, rowFieldsOffset) {
 	//Worksheet.prototype._updatePivotTableCellsRowHeaderLabels
 	rowFieldsOffset.push(0);
@@ -6406,7 +6367,11 @@ CT_pivotTableDefinition.prototype.getLayoutByCellData = function(row, col, rowFi
 		type = PivotLayoutType.colField;
 		cols = cols.slice(0, rowOffset);
 		if (cols.length > 0) {
-			fld = cols[cols.length - 1].fld;
+			if (cols[cols.length - 1].t === Asc.c_oAscItemType.Grand) {
+				fld = this.getDataFieldIndexByCell(row, col);
+			} else {
+				fld = cols[cols.length - 1].fld;
+			}
 		}
 	} else if (rowDataStart <= row && row <= rowDataEnd && colHeader <= col && col < colDataStart && rows) {
 		type = PivotLayoutType.rowField;
@@ -6446,11 +6411,11 @@ CT_pivotTableDefinition.prototype._getLayoutByCellItems = function(index, indexH
 };
 CT_pivotTableDefinition.prototype._getLayoutByCellItem = function(r, len, item, fields, res) {
 	for (var i = 0; i < Math.min(item.x.length, len); ++i) {
-		var fieldIndex = fields[r + i].asc_getIndex();
+		var fld = fields[r + i].asc_getIndex();
 		if (Asc.c_oAscItemType.Grand === item.t || Asc.c_oAscItemType.Blank === item.t) {
-			fieldIndex = null;
+			fld = null;
 		}
-		res[r + i] = new PivotLayoutCell(item.t, fieldIndex, item.x[i].getV(), item.i);
+		res[r + i] = new PivotLayoutCell(item.t, fld, item.x[i].getV(), item.i);
 	}
 };
 CT_pivotTableDefinition.prototype.updateSelection = function(wsView) {
@@ -15811,9 +15776,11 @@ PivotRecords.prototype._toXml = function(writer, elem) {
 
 function PivotContextMenu(pivot){
 	this.pivot = pivot;
-	this.fld = null;
 	this.layout = null;
 	this.layoutGroup = null;
+	this.filter = null;
+	this.filterRow = null;
+	this.filterCol = null;
 }
 PivotContextMenu.prototype.asc_getPageFieldIndex = function () {
 	if (this.layout && this.pivot.pageFields) {
@@ -15838,6 +15805,15 @@ PivotContextMenu.prototype.asc_getDataFieldIndex = function () {
 		return this.pivot.dataFields.find(this.layout.fld);
 	}
 	return -1;
+};
+PivotContextMenu.prototype.asc_getFilter = function () {
+	return this.filter;
+};
+PivotContextMenu.prototype.asc_getFilterRow = function () {
+	return this.filterRow;
+};
+PivotContextMenu.prototype.asc_getFilterCol = function () {
+	return this.filterCol;
 };
 PivotContextMenu.prototype.asc_getRowGrandTotals = function() {
 	if (!this.layout || this.layout.type !== Asc.PivotLayoutType.rowField) {
@@ -15933,14 +15909,20 @@ PivotLayout.prototype.getSortFilterInfo = function(pivotTable) {
 	}
 	return {fld: fld, sortDataIndex: sortDataIndex};
 };
-PivotLayout.prototype.getHeaderCellLayout = function() {
+PivotLayout.prototype.getHeaderCellLayoutRow = function() {
 	if (this.rows && this.rows.length > 0) {
 		return this.rows[this.rows.length - 1];
 	}
+	return null;
+};
+PivotLayout.prototype.getHeaderCellLayoutCol = function() {
 	if (this.cols && this.cols.length > 0) {
 		return this.cols[this.cols.length - 1];
 	}
 	return null;
+};
+PivotLayout.prototype.getHeaderCellLayout = function () {
+	return this.getHeaderCellLayoutRow() || this.getHeaderCellLayoutCol() || null;
 };
 PivotLayout.prototype.getGroupCellLayout = function() {
 	if (PivotLayoutType.rowField === this.type || PivotLayoutType.colField === this.type) {
@@ -17742,6 +17724,9 @@ prot["asc_getPageFieldIndex"] = prot.asc_getPageFieldIndex;
 prot["asc_getColFieldIndex"] = prot.asc_getColFieldIndex;
 prot["asc_getRowFieldIndex"] = prot.asc_getRowFieldIndex;
 prot["asc_getDataFieldIndex"] = prot.asc_getDataFieldIndex;
+prot["asc_getFilter"] = prot.asc_getFilter;
+prot["asc_getFilterRow"] = prot.asc_getFilterRow;
+prot["asc_getFilterCol"] = prot.asc_getFilterCol;
 prot["asc_getRowGrandTotals"] = prot.asc_getRowGrandTotals;
 prot["asc_getColGrandTotals"] = prot.asc_getColGrandTotals;
 prot["asc_canGroup"] = prot.asc_canGroup;
