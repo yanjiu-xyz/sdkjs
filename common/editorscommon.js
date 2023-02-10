@@ -3525,7 +3525,9 @@
 	var kCurFormatPainterWord = 'de-formatpainter';
 	g_oHtmlCursor.register(kCurFormatPainterWord, "text_copy", "2 11", "pointer");
 	var kCurFormatPainterDrawing = 'drawing-formatpainter';
-	g_oHtmlCursor.register(kCurFormatPainterDrawing, "shape_copy", "2 11", "pointer");
+	g_oHtmlCursor.register(kCurFormatPainterDrawing, "shape_copy", "0 3", "pointer");
+	var kCurEyedropper = 'eyedropper';
+	g_oHtmlCursor.register(kCurEyedropper, "eyedropper", "1 17", "pointer");
 
 	function asc_ajax(obj)
 	{
@@ -13159,6 +13161,7 @@
 		const nG = aPixels[nArrayPos + 1];
 		const nB = aPixels[nArrayPos + 2];
 		this.setColor(nR, nG, nB);
+		console.log("Check Color r: " + nR + "g: " + nG + "b: " + nB);
 	};
 	//------------------------------------------------------------fill polyfill--------------------------------------------
 	if (!Array.prototype.findIndex) {
@@ -14244,6 +14247,7 @@
 
 	window["AscCommon"].kCurFormatPainterWord = kCurFormatPainterWord;
 	window["AscCommon"].kCurFormatPainterDrawing = kCurFormatPainterDrawing;
+	window["AscCommon"].kCurEyedropper = kCurEyedropper;
 	window["AscCommon"].parserHelp = parserHelp;
 	window["AscCommon"].g_oIdCounter = g_oIdCounter;
 

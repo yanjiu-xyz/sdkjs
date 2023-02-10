@@ -2421,6 +2421,23 @@ function CEditorPage(api)
 		if (is_drawing === true)
 			return;
 
+
+		if(oThis.m_oApi.isEyedropperStarted()) {
+			let nX  = global_mouseEvent.X - oWordControl.X - (oWordControl.m_oMainParent.AbsolutePosition.L + oWordControl.m_oMainView.AbsolutePosition.L) * AscCommon.g_dKoef_mm_to_pix;
+			let nY  = global_mouseEvent.Y - oWordControl.Y - (oWordControl.m_oMainParent.AbsolutePosition.T + oWordControl.m_oMainView.AbsolutePosition.T) * AscCommon.g_dKoef_mm_to_pix;
+			nX = AscCommon.AscBrowser.convertToRetinaValue(nX, true);
+			nY = AscCommon.AscBrowser.convertToRetinaValue(nY, true);
+			oThis.m_oApi.checkEyedropperColor(nX, nY);
+			oThis.m_oApi.sync_MouseMoveStartCallback();
+			let MMData = new AscCommon.CMouseMoveData();
+			let Coords = oWordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page, null);
+			MMData.X_abs = Coords.X;
+			MMData.Y_abs = Coords.Y;
+			oWordControl.m_oDrawingDocument.SetCursorType("eyedropper", MMData);
+			oThis.m_oApi.sync_MouseMoveEndCallback();
+			oWordControl.EndUpdateOverlay();
+			return;
+		}
 		oWordControl.m_oLogicDocument.OnMouseMove(global_mouseEvent, pos.X, pos.Y, pos.Page);
 		oWordControl.EndUpdateOverlay();
 	};

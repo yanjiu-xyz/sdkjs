@@ -4411,10 +4411,16 @@ CPresentation.prototype.replaceMisspelledWord = function (Word, SpellCheckProper
 	}
 };
 
+CPresentation.prototype.CancelEyedropper = function() {
+	if(this.Api.isEyedropperStarted()) {
+		this.Api.cancelEyedropper();
+	}
+};
 
 CPresentation.prototype.Recalculate = function (RecalcData) {
 	this.DrawingDocument.OnStartRecalculate(this.Slides.length);
 	this.StopAnimationPreview();
+	this.CancelEyedropper();
 	++this.RecalcId;
 	this.private_ClearSearchOnRecalculate();
 
@@ -7458,6 +7464,7 @@ CPresentation.prototype.OnMouseUp = function (e, X, Y, PageIndex) {
 	var oController = this.Slides[this.CurPage] && this.Slides[this.CurPage].graphicObjects;
 	if(this.Api.isEyedropperStarted()) {
 		this.Api.finishEyedropper();
+		this.OnMouseMove(e, X, Y, PageIndex);
 		return;
 	}
 	if (oController) {
@@ -7500,20 +7507,25 @@ CPresentation.prototype.OnMouseMove = function (e, X, Y, PageIndex) {
 	this.Api.sync_MouseMoveStartCallback();
 	this.CurPage = PageIndex;
 	if(this.Api.isEyedropperStarted()) {
-		this.Api.checkEyedropperColor(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+		let oWordControl = this.Api.WordControl;
+		let nX  = global_mouseEvent.X - oWordControl.X - (oWordControl.m_oMainParent.AbsolutePosition.L + oWordControl.m_oMainView.AbsolutePosition.L) * AscCommon.g_dKoef_mm_to_pix;
+		let nY  = global_mouseEvent.Y - oWordControl.Y - (oWordControl.m_oMainParent.AbsolutePosition.T + oWordControl.m_oMainView.AbsolutePosition.T) * AscCommon.g_dKoef_mm_to_pix;
+		nX = AscCommon.AscBrowser.convertToRetinaValue(nX, true);
+		nY = AscCommon.AscBrowser.convertToRetinaValue(nY, true);
+		this.Api.checkEyedropperColor(nX, nY);
 	}
-	var oController = this.Slides[this.CurPage] && this.Slides[this.CurPage].graphicObjects;
+	let oController = this.Slides[this.CurPage] && this.Slides[this.CurPage].graphicObjects;
 	if (oController) {
 		oController.onMouseMove(e, X, Y);
 	}
-	var bOldFocus = this.FocusOnNotes;
+	let bOldFocus = this.FocusOnNotes;
 	this.FocusOnNotes = false;
 	this.UpdateCursorType(X, Y, e);
 	this.FocusOnNotes = bOldFocus;
 	this.Api.sync_MouseMoveEndCallback();
 	if (oController.isSlideShow()) {
 		oController.handleEventMode = AscFormat.HANDLE_EVENT_MODE_CURSOR;
-		var oResult = oController.curState.onMouseDown(e, X, Y, 0);
+		let oResult = oController.curState.onMouseDown(e, X, Y, 0);
 		oController.handleEventMode = AscFormat.HANDLE_EVENT_MODE_HANDLE;
 		if (oResult) {
 			return keydownresult_PreventAll;

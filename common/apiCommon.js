@@ -4515,6 +4515,7 @@
 			this.Type  = c_oAscMouseMoveDataTypes.Common;
 			this.X_abs = 0;
 			this.Y_abs = 0;
+			this.EyedropperColor = undefined;
 		}
 	}
 
