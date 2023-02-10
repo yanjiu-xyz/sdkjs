@@ -423,18 +423,20 @@ class Controller {
 				);
 				versions.clear()
 			} else {
-				throw new Error(
+				console.error(
 					`No maps found in build folder.\n` +
 						`Not enough versions found! Found: ${this.deserializers.size}. Expected: ${versions.size}\n` +
 						`Tip: If only one version is missing, it can be found automatically in build folder.`
 				);
+				process.exit()
 			}
 		} else if (versions.size > 1) {
-			throw new Error(
+			console.error(
 				`Not enough versions found!` +
 					`Found: ${this.deserializers.size}. Expected: ${versions.size}\n` +
 					`Tip: If only one version is missing, it can be found automatically in build folder.`
 			);
+			process.exit()
 		}
 		const resultArray = errors.map((error) => {
 			if (this._getVersion(error)) {
