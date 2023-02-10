@@ -5714,7 +5714,7 @@ Because of this, the display is sometimes not correct.
             break;
           case Constr_type_primFontSz:
           case Constr_type_secFontSz:
-            //return shape.setFontSizeInSmartArt;
+            //return shape.setFontSizeForAllContent;
             break;
           case Constr_type_pyraAcctRatio:
             break;

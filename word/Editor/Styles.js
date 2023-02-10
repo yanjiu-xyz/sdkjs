@@ -15101,10 +15101,11 @@ CTextPr.prototype.GetFontFamily = function()
 };
 CTextPr.prototype.SetFontFamily = function(sFontName)
 {
-	if (!this.RFonts)
+	if (!this.RFonts || typeof sFontName !== 'string')
 		this.RFonts = new CRFonts();
 
-	this.RFonts.SetAll(sFontName);
+	if (typeof sFontName === 'string')
+		this.RFonts.SetAll(sFontName);
 };
 CTextPr.prototype.GetFontSize = function()
 {
@@ -18136,8 +18137,10 @@ asc_CStyle.prototype["put_Link"]    = asc_CStyle.prototype.put_Link;
 window["AscCommonWord"].CDocumentColor = CDocumentColor;
 window["AscCommonWord"].CStyle = CStyle;
 window["AscCommonWord"].CTextPr = CTextPr;
+window["AscCommonWord"].CLang = CLang;
 window["AscCommonWord"].CParaPr = CParaPr;
 window["AscCommonWord"].CParaTabs = CParaTabs;
+window["AscCommonWord"].CParaTab = CParaTab;
 window["AscCommonWord"].CDocumentShd = CDocumentShd;
 window["AscCommonWord"].g_dKoef_pt_to_mm = g_dKoef_pt_to_mm;
 window["AscCommonWord"].g_dKoef_pc_to_mm = g_dKoef_pc_to_mm;

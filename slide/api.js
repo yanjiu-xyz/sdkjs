@@ -8654,12 +8654,6 @@ background-repeat: no-repeat;\
 		return this.canEdit();
 	};
 
-	asc_docs_api.prototype.SetDrawImagePreviewBulletForMenu = function(drawingInfo, type)
-  {
-		var drawer = new AscCommon.CBulletPreviewDrawer(drawingInfo, type);
-		drawer.draw();
-  };
-
 	asc_docs_api.prototype.asc_EditSelectAll = function()
 	{
 		let oPresentation = (this.WordControl && this.WordControl.m_oLogicDocument);

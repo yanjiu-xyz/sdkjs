@@ -1058,7 +1058,7 @@ CHistory.prototype.CanAddChanges = function()
 
 CHistory.prototype._sendCanUndoRedo = function()
 {
-	if (this.workbook.bCollaborativeChanges) {
+	if (!this.workbook || this.workbook.bCollaborativeChanges) {
 		return;
 	}
 

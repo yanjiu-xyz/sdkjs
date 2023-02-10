@@ -9111,7 +9111,7 @@
 
 			var nBulleType = AscFormat.BULLET_TYPE_BULLET_NONE;
 			var nAutoNumType;
-			switch (oParsedBulletType["AutoNumType"])
+			switch (oParsedBulletType["autoNumType"])
 			{
 				case "alphaLcParenBoth":
 					nAutoNumType = AscFormat.numbering_presentationnumfrmt_AlphaLcParenBoth;

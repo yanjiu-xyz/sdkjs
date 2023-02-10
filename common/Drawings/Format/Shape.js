@@ -4336,6 +4336,43 @@
 			}
 			return false;
 		};
+		CShape.prototype.findFitFontSize = function (nMinFontSize, nMaxFontSize, bMax) {
+			if (nMinFontSize > nMaxFontSize) {
+				return null;
+			}
+			if (nMinFontSize === nMaxFontSize) {
+				return nMaxFontSize;
+			}
+			if (nMinFontSize)
+			return AscFormat.ExecuteNoHistory(function () {
+				const MAX_FONT_SIZE = nMaxFontSize || 65;
+				const content = this.getCurrentDocContentInSmartArt();
+				if (content) {
+					const nOldFontSize = this.getFirstFontSize();
+					const scalesForSmartArt = Array((MAX_FONT_SIZE - (nMinFontSize - 1)) > 0 ? MAX_FONT_SIZE - (nMinFontSize - 1) : 1).fill(0).map(function (e, ind) {
+						return ind + nMinFontSize;
+					});
+					let a = 0;
+					let b = scalesForSmartArt.length - 1;
+					let averageAmount = Math.floor((a + b) / 2);
+					while (a !== averageAmount && b !== averageAmount) {
+						this.setFontSizeInSmartArt(scalesForSmartArt[averageAmount]);
+						let bCheck = this.compareWidthOfBoundsTextInSmartArt(bMax) || this.compareHeightOfBoundsTextInSmartArt();
+
+						if (bCheck) {
+							b = averageAmount;
+						} else {
+							a = averageAmount;
+						}
+						averageAmount = Math.floor((a + b) / 2);
+					}
+					this.setFontSizeInSmartArt(nOldFontSize);
+					this.recalculateContent();
+					return scalesForSmartArt[averageAmount];
+				}
+				return MAX_FONT_SIZE;
+			}, this, []);
+		};
 		CShape.prototype.findFitFontSizeForSmartArt = function (bMax) {
 			return AscFormat.ExecuteNoHistory(function () {
 				const MAX_FONT_SIZE = 65;

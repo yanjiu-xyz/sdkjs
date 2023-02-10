@@ -3064,6 +3064,7 @@
 	/**
 	 * Class representing a document form base.
 	 * @constructor
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @property {string} key - Form key.
 	 * @property {string} tip - Form tip text.
 	 * @property {boolean} required - Specifies if the form is required or not.
@@ -3075,13 +3076,14 @@
 	}
 
 	/**
-	 * Class representing a document text form.
+	 * Class representing a document text field.
 	 * @constructor
-	 * @property {boolean} comb - Specifies if the text form should be a comb of characters with the same cell width. The maximum number of characters must be set to a positive value.
-	 * @property {number} maxCharacters - The maximum number of characters in the text form.
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @property {boolean} comb - Specifies if the text field should be a comb of characters with the same cell width. The maximum number of characters must be set to a positive value.
+	 * @property {number} maxCharacters - The maximum number of characters in the text field.
 	 * @property {number} cellWidth - The cell width for each character measured in millimeters. If this parameter is not specified or equal to 0 or less, then the width will be set automatically.
-	 * @property {boolean} multiLine - Specifies if the current fixed size text form is multiline or not.
-	 * @property {boolean} autoFit - Specifies if the text form content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
+	 * @property {boolean} multiLine - Specifies if the current fixed size text field is multiline or not.
+	 * @property {boolean} autoFit - Specifies if the text field content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
 	 * @extends {ApiFormBase}
 	 */
 	function ApiTextForm(oSdt)
@@ -3093,8 +3095,9 @@
 	ApiTextForm.prototype.constructor = ApiTextForm;
 
 	/**
-	 * Class representing a document combo box form.
+	 * Class representing a document combo box / dropdown list.
 	 * @constructor
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @property {boolean} editable - Specifies if the combo box text can be edited.
 	 * @property {boolean} autoFit - Specifies if the combo box form content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
 	 * @property {Array.<string | Array.<string>>} items - The combo box items.
@@ -3112,8 +3115,9 @@
 	ApiComboBoxForm.prototype.constructor = ApiComboBoxForm;
 
 	/**
-	 * Class representing a document checkbox form.
+	 * Class representing a document checkbox / radio button.
 	 * @constructor
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @property {boolean} radio - Specifies if the current checkbox is a radio button. In this case, the key parameter is considered as an identifier for the group of radio buttons.
 	 * @extends {ApiFormBase}
 	 */
@@ -3128,6 +3132,7 @@
 	/**
 	 * Class representing a document picture form.
 	 * @constructor
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @property {ScaleFlag} scaleFlag - The condition to scale an image in the picture form: "always", "never", "tooBig" or "tooSmall".
 	 * @property {boolean} lockAspectRatio - Specifies if the aspect ratio of the picture form is locked or not.
 	 * @property {boolean} respectBorders - Specifies if the form border width is respected or not when scaling the image.
@@ -3150,9 +3155,10 @@
 	ApiPictureForm.prototype.constructor = ApiPictureForm;
 
 	/**
-	 * Class representing a complex form.
+	 * Class representing a complex field.
 	 * @param oSdt
 	 * @constructor
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @extends {ApiFormBase}
 	 */
 	function ApiComplexForm(oSdt)
@@ -4703,7 +4709,7 @@
 		if (oParsedObj["styles"])
 			oReader.StylesFromJSON(oParsedObj["styles"]);
 
-			switch (oParsedObj["type"])
+		switch (oParsedObj["type"])
 		{
 			case "document":
 				if (oParsedObj["numbering"])
@@ -5302,6 +5308,36 @@
 		}
 		
 		return arrApiOleObjects;
+	};
+	/**
+	 * Returns an array of all paragraphs from the current document content
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiParagraph[]}
+	 */
+	ApiDocumentContent.prototype.GetAllParagraphs = function()
+	{
+		let result = [];
+		this.Document.GetAllParagraphs().forEach(function(paragraph)
+		{
+			result.push(new ApiParagraph(paragraph));
+		});
+		return result;
+	};
+	/**
+	 * Returns an array of all tables from the current document content
+	 * @memberof ApiDocumentContent
+	 * @typeofeditors ["CDE"]
+	 * @return {ApiParagraph[]}
+	 */
+	ApiDocumentContent.prototype.GetAllTables = function()
+	{
+		let result = [];
+		this.Document.GetAllTables().forEach(function(table)
+		{
+			result.push(new ApiTable(table));
+		});
+		return result;
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -6908,6 +6944,19 @@
             "SymbolsCount"   : oLogicDocument.Statistics.SymbolsWOSpaces,
             "SymbolsWSCount" : oLogicDocument.Statistics.SymbolsWhSpaces
         }
+	};
+	/**
+	 * Returns the number of pages in a document
+	 * <note>This method can be slow for large documents, because it runs the document calculation
+	 * process before the full recalculation.</note>
+	 * @memberof ApiDocument
+	 * @typeofeditors ["CDE"]
+	 * @return {number}
+	 */
+	ApiDocument.prototype.GetPageCount = function()
+	{
+		this.ForceRecalculate();
+		return this.Document.GetPagesCount();
 	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
@@ -8521,7 +8570,7 @@
 		oParaTo.GetAllSeqFieldsByType(sCaption, aTempCompFlds);
 		if (aTempCompFlds.length === 0)
 			return false;
-		if (nRefTo === 7 && oParaTo.asc_canAddRefToCaptionText(typeRec.displayValue) === false)
+		if (nRefTo === 7 && oParaTo.CanAddRefAfterSEQ(sCaption) === false)
 		{
 			console.log("The request reference is empty.");
 			return false;
@@ -11534,7 +11583,7 @@
 	ApiStyle.prototype.ToJSON = function(bWriteNumberings)
 	{
 		var oWriter = new AscJsonConverter.WriterToJSON();
-		var oJSON = oWriter.SerStyle(this.Style);
+		var oJSON = oWriter.SerWordStyle(this.Style);
 		if (bWriteNumberings)
 			oJSON["numbering"] = oWriter.jsonWordNumberings;
 		return JSON.stringify(oJSON);
@@ -16549,7 +16598,7 @@
 	/**
 	 * Returns a type of the ApiFormBase class.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {"form"}
 	 */
 	ApiFormBase.prototype.GetClassType = function()
@@ -16559,7 +16608,7 @@
 	/**
 	 * Returns a type of the current form.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {FormType}
 	 */
 	ApiFormBase.prototype.GetFormType = function()
@@ -16580,7 +16629,7 @@
 	/**
 	 * Returns the current form key.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string}
 	 */
 	ApiFormBase.prototype.GetFormKey = function()
@@ -16598,7 +16647,7 @@
 	/**
 	 * Sets a key to the current form.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {string} sKey - Form key.
 	 * @returns {boolean}
 	 */
@@ -16625,7 +16674,7 @@
 	/**
 	 * Returns the tip text of the current form.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string}
 	 */
 	ApiFormBase.prototype.GetTipText = function()
@@ -16640,7 +16689,7 @@
 	/**
 	 * Sets the tip text to the current form.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {string} sText - Tip text.
 	 * @returns {boolean}
 	 */
@@ -16658,7 +16707,7 @@
 	/**
 	 * Checks if the current form is required.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiFormBase.prototype.IsRequired = function()
@@ -16668,7 +16717,7 @@
 	/**
 	 * Specifies if the current form should be required.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {boolean} bRequired - Defines if the current form is required (true) or not (false).
 	 * @returns {boolean}
 	 */
@@ -16688,7 +16737,7 @@
 	/**
 	 * Checks if the current form is fixed size.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiFormBase.prototype.IsFixed = function()
@@ -16700,7 +16749,7 @@
 	 * @memberof ApiFormBase
 	 * @param {twips} nWidth - The wrapper shape width measured in twentieths of a point (1/1440 of an inch).
 	 * @param {twips} nHeight - The wrapper shape height measured in twentieths of a point (1/1440 of an inch).
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiFormBase.prototype.ToFixed = function(nWidth, nHeight)
@@ -16715,7 +16764,7 @@
 	 * Converts the current form to an inline form.
 	 * *Picture form can't be converted to an inline form, it's always a fixed size object.*
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiFormBase.prototype.ToInline = function()
@@ -16733,7 +16782,7 @@
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} bNone - Defines that border color will not be set.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiFormBase.prototype.SetBorderColor = function(r, g, b, bNone)
@@ -16762,7 +16811,7 @@
 	 * @param {byte} g - Green color component value.
 	 * @param {byte} b - Blue color component value.
 	 * @param {boolean} bNone - Defines that background color will not be set.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiFormBase.prototype.SetBackgroundColor = function(r, g, b, bNone)
@@ -16804,7 +16853,7 @@
 	 * Returns the text from the current form.
 	 * *This method is used only for text and combo box forms.*
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string}
 	 */
 	ApiFormBase.prototype.GetText = function()
@@ -16814,7 +16863,7 @@
 	/**
 	 * Clears the current form.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 */
 	ApiFormBase.prototype.Clear = function()
 	{
@@ -16824,7 +16873,7 @@
 	 * Returns a shape in which the form is placed to control the position and size of the fixed size form frame.
 	 * The null value will be returned for the inline forms.
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {?ApiShape} - returns the shape in which the form is placed.
 	 */
 	ApiFormBase.prototype.GetWrapperShape = function()
@@ -16841,7 +16890,7 @@
 	 * *Can't be set to checkbox or radio button.*
 	 * @memberof ApiFormBase
 	 * @param {string} sText - The text that will be set to the current form.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiFormBase.prototype.SetPlaceholderText = function(sText)
@@ -16858,7 +16907,7 @@
 	 * Sets the text properties to the current form.
 	 * *This method is used only for text and combo box forms.*
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @param {ApiTextPr} oTextPr - The text properties that will be set to the current form.
 	 * @return {boolean}  
 	 */
@@ -16876,7 +16925,7 @@
 	 * Returns the text properties from the current form.
 	 * *This method is used only for text and combo box forms.*
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @return {ApiTextPr}  
 	 */
 	ApiFormBase.prototype.GetTextPr = function()
@@ -16886,7 +16935,7 @@
 	/**
 	 * Copies the current form (copies with the shape if it exists).
 	 * @memberof ApiFormBase
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {?ApiForm}
 	 */
 	ApiFormBase.prototype.Copy = function()
@@ -16930,9 +16979,9 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Checks if the text form content is autofit, i.e. whether the font size adjusts to the size of the fixed size form.
+	 * Checks if the text field content is autofit, i.e. whether the font size adjusts to the size of the fixed size form.
 	 * @memberof ApiTextForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiTextForm.prototype.IsAutoFit = function()
@@ -16940,10 +16989,10 @@
 		return this.Sdt.IsAutoFitContent();
 	};
 	/**
-	 * Specifies if the text form content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
+	 * Specifies if the text field content should be autofit, i.e. whether the font size adjusts to the size of the fixed size form.
 	 * @memberof ApiTextForm
-	 * @param {boolean} bAutoFit - Defines if the text form content is autofit (true) or not (false).
-	 * @typeofeditors ["CDE"]
+	 * @param {boolean} bAutoFit - Defines if the text field content is autofit (true) or not (false).
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiTextForm.prototype.SetAutoFit = function(bAutoFit)
@@ -16960,9 +17009,9 @@
 		return true;
 	};
 	/**
-	 * Checks if the current text form is multiline.
+	 * Checks if the current text field is multiline.
 	 * @memberof ApiTextForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiTextForm.prototype.IsMultiline = function()
@@ -16970,11 +17019,11 @@
 		return this.Sdt.IsMultiLineForm();
 	};
 	/**
-	 * Specifies if the current text form should be miltiline.
+	 * Specifies if the current text field should be miltiline.
 	 * @memberof ApiTextForm
-	 * @param {boolean} bMultiline - Defines if the current text form is multiline (true) or not (false).
-	 * @typeofeditors ["CDE"]
-	 * @returns {boolean} - return false, if the text form is not fixed size.
+	 * @param {boolean} bMultiline - Defines if the current text field is multiline (true) or not (false).
+	 * @typeofeditors ["CDE", "CFE"]
+	 * @returns {boolean} - return false, if the text field is not fixed size.
 	 */
 	ApiTextForm.prototype.SetMultiline = function(bMultiline)
 	{
@@ -16992,9 +17041,9 @@
 		return true;
 	};
 	/**
-	 * Returns a limit of the text form characters.
+	 * Returns a limit of the text field characters.
 	 * @memberof ApiTextForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {number} - if this method returns -1 -> the form has no limit for characters
 	 */
 	ApiTextForm.prototype.GetCharactersLimit = function()
@@ -17006,12 +17055,12 @@
 		return oPr.GetMaxCharacters();
 	};
 	/**
-	 * Sets a limit to the text form characters.
+	 * Sets a limit to the text field characters.
 	 * @memberof ApiTextForm
-	 * @param {number} nChars - The maximum number of characters in the text form. If this parameter is equal to -1, no limit will be set.
+	 * @param {number} nChars - The maximum number of characters in the text field. If this parameter is equal to -1, no limit will be set.
 	 * A limit is required to be set if a comb of characters is applied.
 	 * Maximum value for this parameter is 1000000.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiTextForm.prototype.SetCharactersLimit = function(nChars)
@@ -17036,9 +17085,9 @@
 		return true;
 	};
 	/**
-	 * Checks if the text form is a comb of characters with the same cell width.
+	 * Checks if the text field is a comb of characters with the same cell width.
 	 * @memberof ApiTextForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiTextForm.prototype.IsComb = function()
@@ -17047,11 +17096,11 @@
 		return oPr ? oPr.IsComb() : false;
 	};
 	/**
-	 * Specifies if the text form should be a comb of characters with the same cell width.
+	 * Specifies if the text field should be a comb of characters with the same cell width.
 	 * The maximum number of characters must be set to a positive value.
 	 * @memberof ApiTextForm
-	 * @param {boolean} bComb - Defines if the text form is a comb of characters (true) or not (false).
-	 * @typeofeditors ["CDE"]
+	 * @param {boolean} bComb - Defines if the text field is a comb of characters (true) or not (false).
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiTextForm.prototype.SetComb = function(bComb)
@@ -17080,7 +17129,7 @@
 	 * @memberof ApiTextForm
 	 * @param {mm} [nCellWidth=0] - The cell width measured in millimeters.
 	 * If this parameter is not specified or equal to 0 or less, then the width will be set automatically. Must be >= 1 and <= 558.8.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiTextForm.prototype.SetCellWidth = function(nCellWidth)
@@ -17099,10 +17148,10 @@
 		return true;
 	};
 	/**
-	 * Sets the text to the current text form.
+	 * Sets the text to the current text field.
 	 * @memberof ApiTextForm
-	 * @param {string} sText - The text that will be set to the current text form.
-	 * @typeofeditors ["CDE"]
+	 * @param {string} sText - The text that will be set to the current text field.
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiTextForm.prototype.SetText = function(sText)
@@ -17124,7 +17173,7 @@
 	/**
 	 * Returns the current scaling condition of the picture form.
 	 * @memberof ApiPictureForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {ScaleFlag}
 	 */
 	ApiPictureForm.prototype.GetScaleFlag = function()
@@ -17153,7 +17202,7 @@
 	 * Sets the scaling condition to the current picture form.
 	 * @memberof ApiPictureForm
 	 * @param {ScaleFlag} sScaleFlag - Picture scaling condition: "always", "never", "tooBig" or "tooSmall".
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiPictureForm.prototype.SetScaleFlag = function(sScaleFlag)
@@ -17187,7 +17236,7 @@
 	 * Locks the aspect ratio of the current picture form.
 	 * @memberof ApiPictureForm
 	 * @param {boolean} [isLock=true] - Specifies if the aspect ratio of the current picture form will be locked (true) or not (false).
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiPictureForm.prototype.SetLockAspectRatio = function(isLock)
@@ -17201,7 +17250,7 @@
 	/**
 	 * Checks if the aspect ratio of the current picture form is locked or not.
 	 * @memberof ApiPictureForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiPictureForm.prototype.IsLockAspectRatio = function()
@@ -17216,7 +17265,7 @@
 	 * @memberof ApiPictureForm
 	 * @param {percentage} nShiftX - Horizontal position measured in percent.
 	 * @param {percentage} nShiftY - Vertical position measured in percent.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiPictureForm.prototype.SetPicturePosition = function(nShiftX, nShiftY)
@@ -17231,7 +17280,7 @@
 	/**
 	 * Returns the picture position inside the current form.
 	 * @memberof ApiPictureForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {Array.<percentage>} Array of two numbers [shiftX, shiftY]
 	 */
 	ApiPictureForm.prototype.GetPicturePosition = function()
@@ -17243,7 +17292,7 @@
 	 * Respects the form border width when scaling the image.
 	 * @memberof ApiPictureForm
 	 * @param {boolean} [isRespect=true] - Specifies if the form border width will be respected (true) or not (false).
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiPictureForm.prototype.SetRespectBorders = function(isRespect)
@@ -17257,7 +17306,7 @@
 	/**
 	 * Checks if the form border width is respected or not.
 	 * @memberof ApiPictureForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiPictureForm.prototype.IsRespectBorders = function()
@@ -17267,7 +17316,7 @@
 	/**
 	 * Returns an image in the base64 format from the current picture form.
 	 * @memberof ApiPictureForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {base64img}
 	 */
 	ApiPictureForm.prototype.GetImage = function()
@@ -17291,7 +17340,7 @@
 	 * Sets an image to the current picture form.
 	 * @memberof ApiPictureForm
 	 * @param {string} sImageSrc - The image source where the image to be inserted should be taken from (currently, only internet URL or base64 encoded images are supported).
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiPictureForm.prototype.SetImage = function(sImageSrc)
@@ -17328,7 +17377,7 @@
 	/**
 	 * Returns the list values from the current combo box.
 	 * @memberof ApiComboBoxForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string[]}
 	 */
 	ApiComboBoxForm.prototype.GetListValues = function()
@@ -17348,7 +17397,7 @@
 	 * Sets the list values to the current combo box.
 	 * @memberof ApiComboBoxForm
 	 * @param {string[]} aListString - The combo box list values.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiComboBoxForm.prototype.SetListValues = function(aListString)
@@ -17380,7 +17429,7 @@
 	 * Selects the specified value from the combo box list values. 
 	 * @memberof ApiComboBoxForm
 	 * @param {string} sValue - The combo box list value that will be selected.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiComboBoxForm.prototype.SelectListValue = function(sValue)
@@ -17403,7 +17452,7 @@
 	 * *Available only for editable combo box forms.*
 	 * @memberof ApiComboBoxForm
 	 * @param {string} sText - The combo box text.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiComboBoxForm.prototype.SetText = function(sText)
@@ -17424,9 +17473,9 @@
 		return true;
 	};
 	/**
-	 * Checks if the combo box text can be edited.
+	 * Checks if the combo box text can be edited. If it is not editable, then this form is a dropdown list.
 	 * @memberof ApiComboBoxForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiComboBoxForm.prototype.IsEditable = function()
@@ -17444,7 +17493,7 @@
 	 * Checks the current checkbox.
 	 * @memberof ApiCheckBoxForm
 	 * @param {boolean} isChecked - Specifies if the current checkbox will be checked (true) or not (false).
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiCheckBoxForm.prototype.SetChecked = function(isChecked)
@@ -17458,7 +17507,7 @@
 	/**
 	 * Returns the state of the current checkbox (checked or not).
 	 * @memberof ApiCheckBoxForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiCheckBoxForm.prototype.IsChecked = function()
@@ -17468,7 +17517,7 @@
 	/**
 	 * Checks if the current checkbox is a radio button. 
 	 * @memberof ApiCheckBoxForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {boolean}
 	 */
 	ApiCheckBoxForm.prototype.IsRadioButton = function()
@@ -17478,7 +17527,7 @@
 	/**
 	 * Returns the radio group key if the current checkbox is a radio button.
 	 * @memberof ApiCheckBoxForm
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 * @returns {string}
 	 */
 	ApiCheckBoxForm.prototype.GetRadioGroup = function()
@@ -17487,10 +17536,10 @@
 		return (sRadioGroup ? sRadioGroup : "");
 	};
 	/**
-	 * Sets the radio group key to the current checkbox.
+	 * Sets the radio group key to the current radio button.
 	 * @memberof ApiCheckBoxForm
 	 * @param {string} sKey - Radio group key.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CDE", "CFE"]
 	 */
 	ApiCheckBoxForm.prototype.SetRadioGroup = function(sKey)
 	{
@@ -18431,6 +18480,8 @@
 	ApiDocumentContent.prototype["GetAllImages"]         = ApiDocumentContent.prototype.GetAllImages;
 	ApiDocumentContent.prototype["GetAllCharts"]         = ApiDocumentContent.prototype.GetAllCharts;
 	ApiDocumentContent.prototype["GetAllOleObjects"]     = ApiDocumentContent.prototype.GetAllOleObjects;
+	ApiDocumentContent.prototype["GetAllParagraphs"]     = ApiDocumentContent.prototype.GetAllParagraphs;
+	ApiDocumentContent.prototype["GetAllTables"]         = ApiDocumentContent.prototype.GetAllTables;
 
 	ApiRange.prototype["GetClassType"]               = ApiRange.prototype.GetClassType
 	ApiRange.prototype["GetParagraph"]               = ApiRange.prototype.GetParagraph;
@@ -18512,6 +18563,7 @@
 	ApiDocument.prototype["GetAllComments"]              = ApiDocument.prototype.GetAllComments;
 	ApiDocument.prototype["GetCommentById"]              = ApiDocument.prototype.GetCommentById;
 	ApiDocument.prototype["GetStatistics"]               = ApiDocument.prototype.GetStatistics;
+	ApiDocument.prototype["GetPageCount"]                = ApiDocument.prototype.GetPageCount;
 	
 	ApiDocument.prototype["GetSelectedDrawings"]         = ApiDocument.prototype.GetSelectedDrawings;
 	ApiDocument.prototype["ReplaceCurrentImage"]         = ApiDocument.prototype.ReplaceCurrentImage;

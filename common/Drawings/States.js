@@ -2027,17 +2027,21 @@ TextAddState.prototype =
         {
             if(oApi.editorId === AscCommon.c_oEditorId.Presentation)
             {
+	            let oPresentation = oApi.WordControl && oApi.WordControl.m_oLogicDocument;
                 if(oApi.isFormatPainterOn())
                 {
                     this.drawingObjects.paragraphFormatPaste2();
                     if (oApi.isFormatPainterOn())
                     {
                         oApi.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
+						if(oPresentation)
+						{
+							oPresentation.OnMouseMove(e, x, y, pageIndex)
+						}
                     }
                 }
                 else if(oApi.isMarkerFormat)
                 {
-                    var oPresentation = oApi.WordControl && oApi.WordControl.m_oLogicDocument;
                     if(oPresentation)
                     {
                         if(oPresentation.HighlightColor)

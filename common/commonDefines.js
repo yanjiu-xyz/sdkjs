@@ -2655,6 +2655,12 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		divide: 4
 	};
 
+	var c_oAbstractNumMultiLvlTypes = {
+		HybridMultiLevel: 0,
+		MultiLevel: 1,
+		SingleLevel: 2
+	};
+
 
 	var c_oAscSmartArtTypes = {
 		AccentedPicture: 0, // Акцентируемый рисунок
@@ -3079,6 +3085,13 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	c_oAscSmartArtSections[c_oAscSmartArtSectionNames.OfficeCom]    = c_oAscSmartArtOfficeComTypes;
 
 
+	var c_oAscJSONNumberingType = {
+		Remove : "remove",
+		Bullet : "bullet",
+		Number : "number",
+		Hybrid : "hybrid"
+	};
+
 	/** @enum {number} */
 	var c_oAscNumberingFormat = {
 		Aiueo                        :  0,
@@ -3166,6 +3179,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		'0001, 0002, 0003, ...': c_oAscNumberingFormat.CustomDecimalThreeZero,
 		'001, 002, 003, ...': c_oAscNumberingFormat.CustomDecimalTwoZero
 	};
+
+	var c_oAscAllNumberingTypes = [c_oAscNumberingFormat.Aiueo, c_oAscNumberingFormat.AiueoFullWidth, c_oAscNumberingFormat.ArabicAbjad, c_oAscNumberingFormat.ArabicAlpha, c_oAscNumberingFormat.BahtText, c_oAscNumberingFormat.CardinalText, c_oAscNumberingFormat.Chicago, c_oAscNumberingFormat.ChineseCounting, c_oAscNumberingFormat.ChineseCountingThousand, c_oAscNumberingFormat.ChineseLegalSimplified, c_oAscNumberingFormat.Chosung, c_oAscNumberingFormat.Decimal, c_oAscNumberingFormat.DecimalEnclosedCircle, c_oAscNumberingFormat.DecimalEnclosedCircleChinese, c_oAscNumberingFormat.DecimalEnclosedFullstop, c_oAscNumberingFormat.DecimalEnclosedParen, c_oAscNumberingFormat.DecimalFullWidth, c_oAscNumberingFormat.DecimalFullWidth2, c_oAscNumberingFormat.DecimalHalfWidth, c_oAscNumberingFormat.DecimalZero, c_oAscNumberingFormat.Ganada, c_oAscNumberingFormat.Hebrew1, c_oAscNumberingFormat.Hebrew2, c_oAscNumberingFormat.Hex, c_oAscNumberingFormat.HindiConsonants, c_oAscNumberingFormat.HindiCounting, c_oAscNumberingFormat.HindiNumbers, c_oAscNumberingFormat.HindiVowels, c_oAscNumberingFormat.IdeographDigital, c_oAscNumberingFormat.IdeographEnclosedCircle, c_oAscNumberingFormat.IdeographLegalTraditional, c_oAscNumberingFormat.IdeographTraditional, c_oAscNumberingFormat.IdeographZodiac, c_oAscNumberingFormat.IdeographZodiacTraditional, c_oAscNumberingFormat.Iroha, c_oAscNumberingFormat.IrohaFullWidth, c_oAscNumberingFormat.JapaneseCounting, c_oAscNumberingFormat.JapaneseDigitalTenThousand, c_oAscNumberingFormat.JapaneseLegal, c_oAscNumberingFormat.KoreanCounting, c_oAscNumberingFormat.KoreanDigital, c_oAscNumberingFormat.KoreanDigital2, c_oAscNumberingFormat.KoreanLegal, c_oAscNumberingFormat.LowerLetter, c_oAscNumberingFormat.LowerRoman, c_oAscNumberingFormat.NumberInDash, c_oAscNumberingFormat.Ordinal, c_oAscNumberingFormat.OrdinalText, c_oAscNumberingFormat.RussianLower, c_oAscNumberingFormat.RussianUpper, c_oAscNumberingFormat.TaiwaneseCounting, c_oAscNumberingFormat.TaiwaneseCountingThousand, c_oAscNumberingFormat.TaiwaneseDigital, c_oAscNumberingFormat.ThaiCounting, c_oAscNumberingFormat.ThaiLetters, c_oAscNumberingFormat.ThaiNumbers, c_oAscNumberingFormat.UpperLetter, c_oAscNumberingFormat.UpperRoman, c_oAscNumberingFormat.VietnameseCounting, c_oAscNumberingFormat.CustomGreece, c_oAscNumberingFormat.CustomDecimalFourZero, c_oAscNumberingFormat.CustomDecimalThreeZero, c_oAscNumberingFormat.CustomDecimalTwoZero,];
 
 	/** enum {number} */
 	var c_oAscNumberingSuff = {
@@ -4869,6 +4884,12 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['multiply'] = prot.multiply;
 	prot['divide'] = prot.divide;
 
+	window['Asc']['c_oAbstractNumMultiLvlTypes'] = window['Asc'].c_oAbstractNumMultiLvlTypes = c_oAbstractNumMultiLvlTypes;
+	prot = c_oAbstractNumMultiLvlTypes;
+	prot['HybridMultiLevel'] = prot.HybridMultiLevel;
+	prot['MultiLevel']       = prot.MultiLevel;
+	prot['SingleLevel']      = prot.SingleLevel;
+
 	window['Asc']['c_oAscSmartArtTypes'] = window['Asc'].c_oAscSmartArtTypes = c_oAscSmartArtTypes;
 	prot = c_oAscSmartArtTypes;
 	prot['AccentedPicture']                   = prot.AccentedPicture;
@@ -5035,7 +5056,12 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['Picture']      = prot.Picture;
 	prot['OfficeCom']    = prot.OfficeCom;
 
-
+	window['Asc']['c_oAscJSONNumberingType'] = window['Asc'].c_oAscJSONNumberingType = c_oAscJSONNumberingType;
+	prot = c_oAscJSONNumberingType;
+	prot["Remove"] = prot.Remove;
+	prot["Bullet"] = prot.Bullet;
+	prot["Number"] = prot.Number;
+	prot["Hybrid"] = prot.Hybrid;
 
 	window['Asc']['c_oAscNumberingFormat'] = window['Asc'].c_oAscNumberingFormat = c_oAscNumberingFormat;
 	prot = c_oAscNumberingFormat;
@@ -5102,6 +5128,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['UpperLetter']                  = prot.UpperLetter;
 	prot['UpperRoman']                   = prot.UpperRoman;
 	prot['VietnameseCounting']           = prot.VietnameseCounting;
+
+	window['Asc']['c_oAscAllNumberingTypes'] = window['Asc'].c_oAscAllNumberingTypes = c_oAscAllNumberingTypes;
 
 	// new presentation types
 	prot['Ea1JpnKor']                    = prot.Ea1JpnKor;

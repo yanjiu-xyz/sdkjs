@@ -67,6 +67,8 @@ function CAbstractNum()
 		this.Lvl[nLvl].InitDefault(nLvl);
 	}
 
+	this.MultiLvlType = Asc.c_oAbstractNumMultiLvlTypes.MultiLevel;
+
 	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
 	AscCommon.g_oTableId.Add(this, this.Id);
 }
@@ -150,6 +152,15 @@ CAbstractNum.prototype.RecalculateRelatedParagraphs = function(nLvl)
 	{
 		arrParagraphs[nIndex].RecalcCompiledPr();
 	}
+};
+CAbstractNum.prototype.GetMultiLvlType = function()
+{
+	return this.MultiLvlType;
+};
+
+CAbstractNum.prototype.SetMultiLvlType = function(nMultiLvlType)
+{
+	this.MultiLvlType = nMultiLvlType;
 };
 /**
  * Получаем заданный уровень

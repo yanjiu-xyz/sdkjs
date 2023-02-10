@@ -330,7 +330,9 @@
 				for (;nIndex < nCount; ++nIndex) {
 					oLock = this.m_arrNeedUnlock[nIndex];
 					if (c_oAscLockTypes.kLockTypeOther2 === oLock.getType()) {
-						if (!this.handlers.trigger("checkCommentRemoveLock", oLock.Element) && !this.handlers.trigger("checkCFRemoveLock", oLock.Element)) {
+						if (!this.handlers.trigger("checkCommentRemoveLock", oLock.Element)
+							&& !this.handlers.trigger("checkCFRemoveLock", oLock.Element) &&
+							!this.handlers.trigger("checkProtectedRangeRemoveLock", oLock.Element)) {
 							drawing = AscCommon.g_oTableId.Get_ById(oLock.Element["rangeOrObjectId"]);
 							if(drawing && drawing.lockType !== c_oAscLockTypes.kLockTypeNone) {
 								var bLocked = drawing.lockType !== c_oAscLockTypes.kLockTypeNone && drawing.lockType !== c_oAscLockTypes.kLockTypeMine;
