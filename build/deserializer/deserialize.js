@@ -103,11 +103,11 @@ class Deserializer {
 		if (this.isNewSourceMaps) {
 			const re = new RegExp(`\\w*:${prop}\\s`, 'g');
 			return (
-				re.exec(this.serializedProps[editor])?.[0].replace(`:${prop}\n`, '') ||
+				re.exec(this.serializedProps[editor])?.[0].replace(`:${prop.replace('\$', '\\$')}\n`, '') ||
 				prop
 			);
 		} else {
-			const re = new RegExp(`\\w*:${prop}\\s`, 'g');
+			const re = new RegExp(`\\w*\\:${prop.replace('\$', '\\$')}\\s`, 'g');
 			return (
 				re.exec(this.serializedProps)?.[0].replace(`:${prop}\n`, '') || prop
 			);
@@ -128,8 +128,15 @@ class Deserializer {
 				`${Editor.Word}|${Editor.Cell}|${Editor.Slide}`,
 				'g'
 			).exec(url)?.[0];
-			const propsRegExp = /at\s(\w*|\.)*/g;
-			const props = propsRegExp.exec(expression)[0]?.replace('at ', '');
+			const propsRegExp = /at(\snew)?\s(\w*|\.|\$)*/g;
+			const props = propsRegExp
+				.exec(expression)[0]
+				?.replace('at', '')
+				.replace('new', '')
+				.trim();
+			if (props.includes('Ma.$de')) {
+				console.log(props);
+			}
 			if (!props) {
 				return expression;
 			}
@@ -138,7 +145,9 @@ class Deserializer {
 				.map((prop) => this._deserializeProp(prop, editor));
 			return expression.replace(
 				propsRegExp,
-				`at ${props} (${propsArray.join('.')})`
+				`at ${
+					expression.includes('new') ? 'new' : ''
+				}${props} (${propsArray.join('.')})`
 			);
 		} else {
 			return expression;
