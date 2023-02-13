@@ -3913,6 +3913,8 @@ function CEditorPage(api)
 		if (null == canvas)
 			return;
 
+
+
 		var context = canvas.getContext("2d");
 		var _width  = canvas.width;
 		var _height = canvas.height;
@@ -3948,6 +3950,10 @@ function CEditorPage(api)
 		{
 			this.m_oDrawingDocument.UpdateTargetNoAttack();
 			this.m_bIsUpdateTargetNoAttack = false;
+		}
+		if(this.m_oApi.isEyedropperStarted())
+		{
+			this.m_oApi.clearEyedropperImgData();
 		}
 	};
 
@@ -4500,7 +4506,7 @@ function CEditorPage(api)
 			// сборка файлов
 			return;
 		}
-		if(this.m_oApi.isEyedropperStarted())
+		if(this.m_oApi.isEyedropperStarted() && drDoc.SlideCurrent !== lPageNum)
 		{
 			this.m_oApi.cancelEyedropper();
 		}
