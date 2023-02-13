@@ -6456,10 +6456,10 @@ CPresentation.prototype.SelectAll = function () {
 
 CPresentation.prototype.UpdateCursorType = function (X, Y, MouseEvent) {
 
-	var oApi = this.Api;
-	var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
+	const oApi = this.Api;
+	const isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
 
-	var oController = this.GetCurrentController();
+	const oController = this.GetCurrentController();
 	if (oController) {
 		var graphicObjectInfo = oController.isPointInDrawingObjects(X, Y, MouseEvent);
 		if (graphicObjectInfo) {
@@ -7424,9 +7424,6 @@ CPresentation.prototype.OnMouseDown = function (e, X, Y, PageIndex) {
 		return;
 	}
 
-	if(this.Api.isEyedropperStarted()) {
-		return;
-	}
 
 	// Сбрасываем текущий элемент в поиске
 	if (this.SearchEngine.Count > 0)
@@ -7459,16 +7456,11 @@ CPresentation.prototype.OnMouseDown = function (e, X, Y, PageIndex) {
 CPresentation.prototype.OnMouseUp = function (e, X, Y, PageIndex) {
 	e.ctrlKey = e.CtrlKey;
 	e.shiftKey = e.ShiftKey;
-	var nStartPage = this.CurPage;
+	const nStartPage = this.CurPage;
 
-	var oController = this.Slides[this.CurPage] && this.Slides[this.CurPage].graphicObjects;
-	if(this.Api.isEyedropperStarted()) {
-		this.Api.finishEyedropper();
-		this.OnMouseMove(e, X, Y, PageIndex);
-		return;
-	}
+	const oController = this.Slides[this.CurPage] && this.Slides[this.CurPage].graphicObjects;
 	if (oController) {
-		var aStartAnims = oController.getAnimSelectionState();
+		const aStartAnims = oController.getAnimSelectionState();
 		oController.onMouseUp(e, X, Y);
 		oController.checkRedrawAnimLabels(aStartAnims);
 		this.private_UpdateCursorXY(true, true);
@@ -7478,8 +7470,8 @@ CPresentation.prototype.OnMouseUp = function (e, X, Y, PageIndex) {
 		this.Document_UpdateSelectionState();
 	}
 	if (e.Button === AscCommon.g_mouse_button_right && !this.noShowContextMenu) {
-		var ContextData = new AscCommonSlide.CContextMenuData();
-		var ConvertedPos = this.DrawingDocument.ConvertCoordsToCursorWR(X, Y, PageIndex);
+		const ContextData = new AscCommonSlide.CContextMenuData();
+		const ConvertedPos = this.DrawingDocument.ConvertCoordsToCursorWR(X, Y, PageIndex);
 		ContextData.X_abs = ConvertedPos.X;
 		ContextData.Y_abs = ConvertedPos.Y;
 		ContextData.IsSlideSelect = false;
@@ -7491,7 +7483,7 @@ CPresentation.prototype.OnMouseUp = function (e, X, Y, PageIndex) {
 	this.Api.sendEvent("asc_onSelectionEnd");
 	if (oController.isSlideShow()) {
 		oController.handleEventMode = AscFormat.HANDLE_EVENT_MODE_CURSOR;
-		var oResult = oController.curState.onMouseDown(e, X, Y, 0);
+		const oResult = oController.curState.onMouseDown(e, X, Y, 0);
 		oController.handleEventMode = AscFormat.HANDLE_EVENT_MODE_HANDLE;
 		if (oResult) {
 			return keydownresult_PreventAll;
@@ -7506,14 +7498,6 @@ CPresentation.prototype.OnMouseMove = function (e, X, Y, PageIndex) {
 	e.shiftKey = e.ShiftKey;
 	this.Api.sync_MouseMoveStartCallback();
 	this.CurPage = PageIndex;
-	if(this.Api.isEyedropperStarted()) {
-		let oWordControl = this.Api.WordControl;
-		let nX  = global_mouseEvent.X - oWordControl.X - (oWordControl.m_oMainParent.AbsolutePosition.L + oWordControl.m_oMainView.AbsolutePosition.L) * AscCommon.g_dKoef_mm_to_pix;
-		let nY  = global_mouseEvent.Y - oWordControl.Y - (oWordControl.m_oMainParent.AbsolutePosition.T + oWordControl.m_oMainView.AbsolutePosition.T) * AscCommon.g_dKoef_mm_to_pix;
-		nX = AscCommon.AscBrowser.convertToRetinaValue(nX, true);
-		nY = AscCommon.AscBrowser.convertToRetinaValue(nY, true);
-		this.Api.checkEyedropperColor(nX, nY);
-	}
 	let oController = this.Slides[this.CurPage] && this.Slides[this.CurPage].graphicObjects;
 	if (oController) {
 		oController.onMouseMove(e, X, Y);
