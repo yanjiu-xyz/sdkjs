@@ -4500,6 +4500,10 @@ function CEditorPage(api)
 			// сборка файлов
 			return;
 		}
+		if(this.m_oApi.isEyedropperStarted())
+		{
+			this.m_oApi.cancelEyedropper();
+		}
 
 		var _old_empty = this.m_oDrawingDocument.IsEmptyPresentation;
 
