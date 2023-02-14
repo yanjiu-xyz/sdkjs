@@ -5666,6 +5666,10 @@
 	ApiWorksheet.prototype["GetBottomMargin"] = ApiWorksheet.prototype.GetBottomMargin;		
 	ApiWorksheet.prototype["SetPageOrientation"] = ApiWorksheet.prototype.SetPageOrientation;
 	ApiWorksheet.prototype["GetPageOrientation"] = ApiWorksheet.prototype.GetPageOrientation;
+	ApiWorksheet.prototype["GetPrintHeadings"] = ApiWorksheet.prototype.GetPrintHeadings;
+	ApiWorksheet.prototype["SetPrintHeadings"] = ApiWorksheet.prototype.SetPrintHeadings;
+	ApiWorksheet.prototype["GetPrintGridlines"] = ApiWorksheet.prototype.GetPrintGridlines;
+	ApiWorksheet.prototype["SetPrintGridlines"] = ApiWorksheet.prototype.SetPrintGridlines;
 	ApiWorksheet.prototype["GetDefNames"] = ApiWorksheet.prototype.GetDefNames;
 	ApiWorksheet.prototype["GetDefName"] = ApiWorksheet.prototype.GetDefName;
 	ApiWorksheet.prototype["AddDefName"] = ApiWorksheet.prototype.AddDefName;
