@@ -969,7 +969,8 @@
     // Отключаемся сами
     this.isCloseCoAuthoring = true;
     if (opt_code) {
-      this.socketio.disconnect();//todo (opt_code, opt_reason);
+      this.onDisconnect(opt_reason, opt_code);
+      this.socketio.disconnect();
     } else {
       this._send({"type": "close"});
       this._state = ConnectionState.ClosedCoAuth;
@@ -1776,6 +1777,7 @@
 	DocsCoApi.prototype._initSocksJs = function () {
       var t = this;
       let socket;
+      let firstConnection = true;
       let options = {
         "path": this.socketio_url,
         "transports": ["websocket", "polling"],
@@ -1795,6 +1797,7 @@
         let io = AscCommon.getSocketIO();
         socket = io(options);
         socket.on("connect", function () {
+          firstConnection = false;
           t._onServerOpen();
         });
         socket.on("disconnect", function (reason) {
@@ -1812,6 +1815,9 @@
             //cases: authorization
             t._onServerClose(true);
             t.onDisconnect(err.data.description, err.data.code);
+          } else if (firstConnection) {
+            firstConnection = false;
+            socket.io.opts.transports = ["polling", "websocket"];
           }
         });
         socket.io.on("reconnect_failed", function () {
