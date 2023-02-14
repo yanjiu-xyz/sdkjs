@@ -1048,14 +1048,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return res;
 	};
 	cArea.prototype.getValueByRowCol = function (i, j) {
-		var res, r;
+		let res, r;
 		r = this.getRange();
 		r.worksheet._getCellNoEmpty(r.bbox.r1 + i, r.bbox.c1 + j, function(cell) {
 			if(cell) {
 				res = checkTypeCell(cell);
 			}
 		});
-
 		return res;
 	};
 	cArea.prototype.getRange = function () {
@@ -1399,7 +1398,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return (null == _val[0]) ? new cEmpty() : _val[0];
 	};
 	cArea3D.prototype.getValueByRowCol = function (i, j) {
-		var r = this.getRanges(), res;
+		let r = this.getRanges(), res;
 
 		if (r[0]) {
 			r[0].worksheet._getCellNoEmpty(r[0].bbox.r1 + i, r[0].bbox.c1 + j, function (cell) {
@@ -7939,6 +7938,7 @@ function parserFormula( formula, parent, _ws ) {
 			}
 		} else if (cElementType.array === val.type) {
 			if (ref && opt_ws) {
+				// TODO check behaviour when row === 1
 				row = 1 === val.array.length ? 0 : opt_row - ref.r1;
 				col = 1 === val.array[0].length ? 0 : opt_col - ref.c1;
 				if (val.array[row] && val.array[row][col]) {
