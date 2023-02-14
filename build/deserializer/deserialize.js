@@ -31,17 +31,18 @@
  */
 
 const fs = require('node:fs');
-
+// Input and output file with errors
 const INPUTFILE = `${__dirname}/input.txt`;
 const OUTPUTFILE = `${__dirname}/output.txt`;
-
+// Old serialized props map
 const OLD_PROPS_MAP_NAME = 'sdk-all.props.js.map';
-
+// New serialized props map
 const NEW_PROPS_MAP_WORD_NAME = 'word.props.js.map';
 const NEW_PROPS_MAP_CELL_NAME = 'cell.props.js.map';
 const NEW_PROPS_MAP_SLIDE_NAME = 'slide.props.js.map';
 
 /**
+ * Error header where other information is stored.
  * @typedef Header
  * @property {string} date
  * @property {string} version
@@ -55,21 +56,27 @@ const NEW_PROPS_MAP_SLIDE_NAME = 'slide.props.js.map';
  */
 
 /**
- * @enum
+ * @typedef {'word' | 'cell' | 'slide'} Editor
  */
-const Editor = {
-	Word: 'word',
-	Cell: 'cell',
-	Slide: 'slide',
-};
 
+
+/**
+ * A class whose instance can dereference properties in a particular version. One instance - one version.
+ * @class
+ */
 class Deserializer {
 	/**
-	 * @param {string} version
-	 * @param {boolean} isNewSourceMaps
+	 * @param {string} version version in cache for dereference
+	 * @param {boolean} isNewSourceMaps New or old maps should be used (feature/source-maps)
 	 */
 	constructor(version, isNewSourceMaps = false) {
+		/**
+		 * @type {string}
+		 */
 		this.version = version;
+		/**
+		 * @type {boolean}
+		 */
 		this.isNewSourceMaps = isNewSourceMaps;
 		if (this.isNewSourceMaps) {
 			this.serializedProps = {
@@ -96,18 +103,19 @@ class Deserializer {
 	/**
 	 * @private
 	 * @param {string} prop
-	 * @param {string} editor
-	 * @return {string | undefined}
+	 * @param {'word', 'cell', slide} editor
+	 * @return {string}
 	 */
 	_deserializeProp(prop, editor = null) {
 		if (this.isNewSourceMaps) {
 			const re = new RegExp(`\\w*:${prop}\\s`, 'g');
 			return (
-				re.exec(this.serializedProps[editor])?.[0].replace(`:${prop.replace('\$', '\\$')}\n`, '') ||
-				prop
+				re
+					.exec(this.serializedProps[editor])?.[0]
+					.replace(`:${prop.replace('$', '\\$')}\n`, '') || prop
 			);
 		} else {
-			const re = new RegExp(`\\w*\\:${prop.replace('\$', '\\$')}\\s`, 'g');
+			const re = new RegExp(`\\w*\\:${prop.replace('$', '\\$')}\\s`, 'g');
 			return (
 				re.exec(this.serializedProps)?.[0].replace(`:${prop}\n`, '') || prop
 			);
@@ -124,19 +132,13 @@ class Deserializer {
 		}
 		const url = /http.*\.js/g.exec(expression)[0];
 		if (/sdkjs/.test(url)) {
-			const editor = new RegExp(
-				`${Editor.Word}|${Editor.Cell}|${Editor.Slide}`,
-				'g'
-			).exec(url)?.[0];
+			const editor = new RegExp(`word|cell|slide`, 'g').exec(url)?.[0];
 			const propsRegExp = /at(\snew)?\s(\w*|\.|\$)*/g;
 			const props = propsRegExp
 				.exec(expression)[0]
 				?.replace('at', '')
 				.replace('new', '')
 				.trim();
-			if (props.includes('Ma.$de')) {
-				console.log(props);
-			}
 			if (!props) {
 				return expression;
 			}
@@ -165,7 +167,7 @@ class Deserializer {
 		const result = {};
 		result.date = /\d\d\d\d\-\d\d\-\d\d\s+\d\d\:\d\d\:\d\d/.exec(header)?.[0];
 		result.version = this.version;
-		result.script = /Script\:\s*.*\.js/
+		result.script = /Script\:\s*\S*\.js/
 			.exec(header)?.[0]
 			.replace('Script:', '')
 			.trim();
@@ -199,10 +201,9 @@ class Deserializer {
 			/sdkjs/.test(result.script) &&
 			result.stackTrace.includes('TypeError')
 		) {
-			const editor = new RegExp(
-				`${Editor.Word}|${Editor.Cell}|${Editor.Slide}`,
-				'g'
-			).exec(result.script)?.[0];
+			const editor = new RegExp(`word|cell|slide`, 'g').exec(
+				result.script
+			)?.[0];
 			const stackTraceVariable = /'\w+'/
 				.exec(result.stackTrace)?.[0]
 				.replace("'", '')
@@ -328,7 +329,6 @@ class Controller {
 	 */
 	_checkMaps(path) {
 		const files = fs.readdirSync(path);
-		// TODO: V3 format maps optional checking for new maps
 		if (
 			files.includes(NEW_PROPS_MAP_WORD_NAME) &&
 			files.includes(NEW_PROPS_MAP_CELL_NAME) &&
@@ -346,6 +346,7 @@ class Controller {
 	/**
 	 * @private
 	 * @param {string} version
+	 * @return {number}
 	 */
 	_checkVersionInCache(version) {
 		const path = `${__dirname}/cache/${version}`;
@@ -353,6 +354,50 @@ class Controller {
 			return this._checkMaps(path);
 		} else {
 			return this._MapsCheckingType.NotExists;
+		}
+	}
+	/**
+	 * @param {string} path
+	 * @param {string} version
+	 * @return {boolean} returns whether maps were found
+	 */
+	_findLastMaps(path, version) {
+		console.log(`Trying to find it in ${path}`);
+		if (
+			fs.existsSync(path) &&
+			(this._checkMaps(path) == this._MapsCheckingType.New ||
+				this._checkMaps(path) == this._MapsCheckingType.Old)
+		) {
+			const mapsType = this._checkMaps(path);
+			if (!fs.existsSync(`${__dirname}/cache/${version}`)) {
+				fs.mkdirSync(`${__dirname}/cache/${version}`);
+			}
+			if (mapsType == this._MapsCheckingType.Old) {
+				fs.renameSync(
+					`${path}/${OLD_PROPS_MAP_NAME}`,
+					`${__dirname}/cache/${version}/${OLD_PROPS_MAP_NAME}`
+				);
+			} else {
+				fs.renameSync(
+					`${path}/${NEW_PROPS_MAP_WORD_NAME}`,
+					`${__dirname}/cache/${version}/${NEW_PROPS_MAP_WORD_NAME}`
+				);
+				fs.renameSync(
+					`${path}/${NEW_PROPS_MAP_CELL_NAME}`,
+					`${__dirname}/cache/${version}/${NEW_PROPS_MAP_CELL_NAME}`
+				);
+				fs.renameSync(
+					`${path}/${NEW_PROPS_MAP_SLIDE_NAME}`,
+					`${__dirname}/cache/${version}/${NEW_PROPS_MAP_SLIDE_NAME}`
+				);
+			}
+			this.deserializers.set(
+				version,
+				new Deserializer(version, mapsType === this._MapsCheckingType.New)
+			);
+			return true;
+		} else {
+			return false;
 		}
 	}
 	run(inputFile = INPUTFILE, outputFile = OUTPUTFILE) {
@@ -383,90 +428,20 @@ class Controller {
 			}
 		});
 		if (versions.size == 1) {
+			const version = versions.values().next().value;
 			console.log('One version missing. Trying to find it automatically...');
-			console.log(`Trying to find it in ${__dirname}/../maps...`);
-			if (
-				fs.existsSync(`${__dirname}/../maps`) &&
-				(this._checkMaps(`${__dirname}/../maps`) ==
-					this._MapsCheckingType.New ||
-					this._checkMaps(`${__dirname}/../maps`) == this._MapsCheckingType.Old)
-			) {
-				const mapsType = this._checkMaps(`${__dirname}/../maps`);
-				const version = versions.values().next().value;
-				if (!fs.existsSync(`${__dirname}/cache/${version}`)) {
-					fs.mkdirSync(`${__dirname}/cache/${version}`);
-				}
-				if (mapsType == this._MapsCheckingType.Old) {
-					fs.renameSync(
-						`${__dirname}/../maps/${OLD_PROPS_MAP_NAME}`,
-						`${__dirname}/cache/${version}/${OLD_PROPS_MAP_NAME}`
-					);
-				} else {
-					fs.renameSync(
-						`${__dirname}/../maps/${NEW_PROPS_MAP_WORD_NAME}`,
-						`${__dirname}/cache/${version}/${NEW_PROPS_MAP_WORD_NAME}`
-					);
-					fs.renameSync(
-						`${__dirname}/../maps/${NEW_PROPS_MAP_CELL_NAME}`,
-						`${__dirname}/cache/${version}/${NEW_PROPS_MAP_CELL_NAME}`
-					);
-					fs.renameSync(
-						`${__dirname}/../maps/${NEW_PROPS_MAP_SLIDE_NAME}`,
-						`${__dirname}/cache/${version}/${NEW_PROPS_MAP_SLIDE_NAME}`
-					);
-				}
+			if (this._findLastMaps(`${__dirname}/../maps`, version)) {
 				console.log(
-					`Map was found in ${__dirname}/../maps. This map will be used as a ${version} version.`
+					`Map was found in ${__dirname}/../maps This map will be used as a ${version} version.`
 				);
-				this.deserializers.set(
-					version,
-					new Deserializer(
-						version,
-						this._checkMaps(`${__dirname}/../maps`) ==
-							this._MapsCheckingType.New
-					)
-				);
-				versions.clear();
-			} else if (
-				this._checkMaps(`${__dirname}/..`) == this._MapsCheckingType.New ||
-				this._checkMaps(`${__dirname}/..`) == this._MapsCheckingType.Old
-			) {
-				const mapsType = this._checkMaps(`${__dirname}/..`);
-				const version = versions.values().next().value;
+			} else if (this._findLastMaps(`${__dirname}/..`, version)) {
 				console.log(
 					`Map was found in ${__dirname}/.. This map will be used as a ${version} version.`
 				);
-				if (!fs.existsSync(`${__dirname}/cache/${version}`)) {
-					fs.mkdirSync(`${__dirname}/cache/${version}`);
-				}
-				if (mapsType == this._MapsCheckingType.Old) {
-					fs.renameSync(
-						`${__dirname}/../${OLD_PROPS_MAP_NAME}`,
-						`${__dirname}/cache/${version}/${OLD_PROPS_MAP_NAME}`
-					);
-				} else {
-					fs.renameSync(
-						`${__dirname}/../${NEW_PROPS_MAP_WORD_NAME}`,
-						`${__dirname}/cache/${version}/${NEW_PROPS_MAP_WORD_NAME}`
-					);
-					fs.renameSync(
-						`${__dirname}/../${NEW_PROPS_MAP_CELL_NAME}`,
-						`${__dirname}/cache/${version}/${NEW_PROPS_MAP_CELL_NAME}`
-					);
-					fs.renameSync(
-						`${__dirname}/../${NEW_PROPS_MAP_SLIDE_NAME}`,
-						`${__dirname}/cache/${version}/${NEW_PROPS_MAP_SLIDE_NAME}`
-					);
-				}
-
-				this.deserializers.set(
-					version,
-					new Deserializer(
-						version,
-						this._checkMaps(`${__dirname}/..`) == this._MapsCheckingType.New
-					)
+			} else if (this._findLastMaps(`${__dirname}`, version)) {
+				console.log(
+					`Map was found in ${__dirname}/.. This map will be used as a ${version} version.`
 				);
-				versions.clear();
 			} else {
 				console.error(
 					`No maps found in build folder.\n` +
@@ -496,9 +471,6 @@ class Controller {
 		fs.writeFileSync(outputFile, result, { encoding: 'utf-8' });
 	}
 }
-// at w.o5h (https://doc.onlyoffice.com/7.2.0-204/sdkjs/cell/sdk-all.js:6530:6)
-// const des = new Deserializer('7.2.0', '204', false);
-// des.init();
-// des._deserializeError(testError);
 const controller = new Controller();
+console.log('Running...');
 controller.run(INPUTFILE, OUTPUTFILE);
