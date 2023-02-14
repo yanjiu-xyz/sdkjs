@@ -28,7 +28,7 @@ For example
     **But if only one version is missing, it can be found automatically in build folder.**
 * Run deserializer
     ```
-    node deserializer.js
+    node deserialize.js
     ```
 * The result of the execution will be in the `output.txt`
 
