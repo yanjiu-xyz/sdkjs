@@ -4422,7 +4422,6 @@ CPresentation.prototype.CancelEyedropper = function() {
 CPresentation.prototype.Recalculate = function (RecalcData) {
 	this.DrawingDocument.OnStartRecalculate(this.Slides.length);
 	this.StopAnimationPreview();
-	this.CancelEyedropper();
 	++this.RecalcId;
 	this.private_ClearSearchOnRecalculate();
 

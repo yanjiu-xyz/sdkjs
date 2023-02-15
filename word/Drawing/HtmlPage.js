@@ -1946,7 +1946,10 @@ function CEditorPage(api)
 			//oWordControl.m_oLogicDocument.OnMouseDown(global_mouseEvent, pos.X, pos.Y, pos.Page);
 		}
 		oWordControl.m_oDrawingDocument.NeedScrollToTargetFlag = true;
-		oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		if(!oThis.checkFinishEyedropper())
+		{
+			oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		}
 		oWordControl.m_oDrawingDocument.NeedScrollToTargetFlag = false;
 
 		oWordControl.MouseDownDocumentCounter--;
@@ -2092,8 +2095,10 @@ function CEditorPage(api)
 			// пошлем сначала моусдаун
 			//oWordControl.m_oLogicDocument.OnMouseDown(global_mouseEvent, pos.X, pos.Y, pos.Page);
 		}
-		oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
-
+		if(!oThis.checkFinishEyedropper())
+		{
+			oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		}
 		oWordControl.MouseDownDocumentCounter--;
 		if (oWordControl.MouseDownDocumentCounter < 0)
 			oWordControl.MouseDownDocumentCounter = 0;
