@@ -8275,6 +8275,25 @@ var editor;
 		return false;
 	};
 
+	spreadsheet_api.prototype.getEyedropperImgData = function() {
+		const oWSViewerCanvas = document.getElementById("ws-canvas");
+		const oWSOverlayCanvas = document.getElementById("ws-canvas-overlay");
+		const oGrViewerCanvas = document.getElementById("ws-canvas-graphic");
+		const oGrOverlayCanvas = document.getElementById("ws-canvas-graphic-overlay");
+		if(!oWSViewerCanvas || !oWSOverlayCanvas
+			|| !oGrViewerCanvas || !oGrOverlayCanvas) {
+			return null;
+		}
+		let oCanvas = document.createElement("canvas");
+		oCanvas.width = oWSViewerCanvas.width;
+		oCanvas.height = oWSViewerCanvas.height;
+		const oCtx = oCanvas.getContext("2d");
+		oCtx.drawImage(oWSViewerCanvas, 0, 0);
+		oCtx.drawImage(oWSOverlayCanvas, 0, 0);
+		oCtx.drawImage(oGrViewerCanvas, 0, 0);
+		oCtx.drawImage(oGrOverlayCanvas, 0, 0);
+		return oCtx.getImageData(0, 0, oCanvas.width, oCanvas.height);
+	};
 
 
   /*

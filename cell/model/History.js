@@ -986,6 +986,12 @@ CHistory.prototype.Create_NewPoint = function()
 
 	window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
 	this.workbook.handlers.trigger("toggleAutoCorrectOptions", null, true);
+	let oAPI = this.workbook && this.workbook.oApi;
+	if(oAPI) {
+		if(oAPI.isEyedropperStarted()) {
+			oApi.cancelEyedropper();
+		}
+	}
 	//this.workbook.handlers.trigger("cleanCutData");
 
 	return true;

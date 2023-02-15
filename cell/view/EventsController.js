@@ -961,6 +961,7 @@
 					t.handlers.trigger("stopAddShape");
 					t.handlers.trigger("cleanCutData", true, true);
 					t.handlers.trigger("cleanCopyData", true, true);
+					t.view.Api.cancelEyedropper();
 					window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
 					return result;
 
@@ -1576,7 +1577,9 @@
 
 			AscCommon.global_mouseEvent.LockMouse();
 
-
+			if(t.view.Api.isEyedropperStarted()) {
+				return ;
+			}
 			if (t.handlers.trigger("isGlobalLockEditCell")) {
 				return;
 			}
@@ -1780,6 +1783,10 @@
 				return true;
 			}
 
+			if(this.view.Api.isEyedropperStarted()) {
+				this.view.Api.finishEyedropper();
+				return true;
+			}
 			// Shapes
 			var coord = this._getCoordinates(event);
 			event.isLocked = this.isMousePressed = false;
@@ -1851,6 +1858,11 @@
 
 			t.hasCursor = true;
 
+			if(t.view.Api.isEyedropperStarted()) {
+				t.view.Api.checkEyedropperColor(coord.x, coord.y);
+				t.handlers.trigger("updateWorksheet", coord.x, coord.y, ctrlKey, function(info){t.targetInfo = info;});
+				return true;
+			}
 			// Shapes
 			var graphicsInfo = t.handlers.trigger("getGraphicsInfo", coord.x, coord.y);
 			if ( graphicsInfo )

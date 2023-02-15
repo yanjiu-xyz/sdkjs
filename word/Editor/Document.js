@@ -9175,7 +9175,11 @@ CDocument.prototype.OnKeyDown = function(e)
 			{
 				this.EndHdrFtrEditing(true);
 			}
-
+			else if (this.Api.isEyedropperStarted())
+			{
+				this.Api.cancelEyedropper();
+				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
+			}
 			if (window['AscCommon'].g_specialPasteHelper.showSpecialPasteButton)
 			{
 				window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();

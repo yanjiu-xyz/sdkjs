@@ -3324,6 +3324,9 @@
 			//пересчёт выполянется когда пришли данные от других пользователей
 			return;
 		}
+		if(this.workbook.Api.isEyedropperStarted()) {
+			this.workbook.Api.clearEyedropperImgData();
+		}
 		this._recalculate();
 		this.handlers.trigger("checkLastWork");
         this._clean();
@@ -8731,6 +8734,9 @@
 		var oResDefault = {cursor: kCurDefault, target: c_oTargetType.None, col: -1, row: -1};
 		var t = this;
 
+		if(this.workbook.Api.isEyedropperStarted()) {
+			return {cursor: AscCommon.kCurEyedropper, target: c_oTargetType.Cells, color: this.workbook.Api.getEyedropperColor(x, y)};
+		}
 		const oPlaceholderCursor = this.objectRender.checkCursorPlaceholder(x, y);
 		if (oPlaceholderCursor) {
 			return {cursor: kCurDefault, target: c_oTargetType.Placeholder, col: -1, row: -1};
@@ -17412,6 +17418,9 @@
 		this._reinitializeScroll();
 	};
 	WorksheetView.prototype._updateDrawingArea = function () {
+		if(this.workbook.Api.isEyedropperStarted()) {
+			this.workbook.Api.clearEyedropperImgData();
+		}
 		if (this.objectRender && this.objectRender.drawingArea) {
 			this.objectRender.drawingArea.reinitRanges();
 		}
