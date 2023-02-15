@@ -13161,7 +13161,7 @@
 		const nG = aPixels[nArrayPos + 1];
 		const nB = aPixels[nArrayPos + 2];
 		this.setColor(nR, nG, nB);
-		console.log("Check Color r: " + nR + "g: " + nG + "b: " + nB);
+		//console.log("Check Color r: " + nR + " g: " + nG + " b: " + nB);
 	};
 	//------------------------------------------------------------fill polyfill--------------------------------------------
 	if (!Array.prototype.findIndex) {
