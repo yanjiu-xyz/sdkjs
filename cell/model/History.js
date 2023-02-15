@@ -989,7 +989,7 @@ CHistory.prototype.Create_NewPoint = function()
 	let oAPI = this.workbook && this.workbook.oApi;
 	if(oAPI) {
 		if(oAPI.isEyedropperStarted()) {
-			oApi.cancelEyedropper();
+			oAPI.cancelEyedropper();
 		}
 	}
 	//this.workbook.handlers.trigger("cleanCutData");
