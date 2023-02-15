@@ -1795,9 +1795,10 @@
 	DocsCoApi.prototype._initSocksJs = function () {
       var t = this;
       let socket;
+      let firstConnection = true;
       let options = {
         "path": this.socketio_url,
-        "transports": ["polling", "websocket"],
+        "transports": ["websocket", "polling"],
         "closeOnBeforeunload": false,
         "reconnectionAttempts": 15,
         "reconnectionDelay": 500,
@@ -1815,6 +1816,7 @@
         socket = io(options);
       }
       socket.on("connect", function () {
+        firstConnection = false;
         t._onServerOpen();
       });
       socket.on("disconnect", function (reason) {
@@ -1832,6 +1834,11 @@
           //cases: authorization
           t._onServerClose(true);
           t.onDisconnect(err.data.description, err.data.code);
+        } else if (firstConnection) {
+          firstConnection = false;
+          if (socket.io.opts) {
+            socket.io.opts.transports = ["polling", "websocket"];
+          }
         }
       });
       socket.io.on("reconnect_failed", function () {
