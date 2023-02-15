@@ -2359,7 +2359,8 @@ function CEditorPage(api)
 			oWordControl.StartUpdateOverlay();
 			oWordControl.m_oDrawingDocument.m_lCurrentPage = pos.Page;
 
-			if(!oThis.m_oApi.isEyedropperStarted()) {
+			if(!oThis.m_oApi.isEyedropperStarted())
+			{
 				oWordControl.m_oLogicDocument.OnMouseDown(global_mouseEvent, pos.X, pos.Y, pos.Page);
 			}
 			oWordControl.EndUpdateOverlay();
@@ -2425,7 +2426,8 @@ function CEditorPage(api)
 			return;
 
 
-		if(oThis.m_oApi.isEyedropperStarted()) {
+		if(oThis.m_oApi.isEyedropperStarted())
+		{
 			let oMainPos = oWordControl.m_oMainParent.AbsolutePosition;
 			let oParentPos = oWordControl.m_oMainView.AbsolutePosition;
 			let nX  = global_mouseEvent.X - oWordControl.X - (oMainPos.L + oParentPos.L) * AscCommon.g_dKoef_mm_to_pix;
@@ -2438,12 +2440,14 @@ function CEditorPage(api)
 			let Coords = oWordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page, null);
 			MMData.X_abs = Coords.X;
 			MMData.Y_abs = Coords.Y;
+			MMData.EyedropperColor = oThis.m_oApi.getEyedropperColor();
 			oWordControl.m_oDrawingDocument.SetCursorType("eyedropper", MMData);
 			oThis.m_oApi.sync_MouseMoveEndCallback();
-			oWordControl.EndUpdateOverlay();
-			return;
 		}
-		oWordControl.m_oLogicDocument.OnMouseMove(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		else
+		{
+			oWordControl.m_oLogicDocument.OnMouseMove(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		}
 		oWordControl.EndUpdateOverlay();
 	};
 	this.onMouseMove2 = function()

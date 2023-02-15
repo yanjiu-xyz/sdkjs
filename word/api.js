@@ -13614,6 +13614,24 @@ background-repeat: no-repeat;\
 
 		return null;
 	};
+	asc_docs_api.prototype.getEyedropperImgData = function()
+	{
+		const oViewerCanvas = document.getElementById("id_viewer");
+		const oOverlayCanvas = document.getElementById("id_viewer_overlay");
+		if(!oViewerCanvas || !oOverlayCanvas)
+		{
+			return null;
+		}
+		let oCanvas = document.createElement("canvas");
+		oCanvas.width = oViewerCanvas.width;
+		oCanvas.height = oViewerCanvas.height;
+		const oCtx = oCanvas.getContext("2d");
+		oCtx.fillStyle = oViewerCanvas.style.backgroundColor;
+		oCtx.fillRect(0, 0, oCanvas.width, oCanvas.height);
+		oCtx.drawImage(oViewerCanvas, 0, 0);
+		oCtx.drawImage(oOverlayCanvas, 0, 0);
+		return oCtx.getImageData(0, 0, oCanvas.width, oCanvas.height);
+	};
 
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};
