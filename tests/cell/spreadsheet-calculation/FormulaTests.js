@@ -607,12 +607,9 @@ $(function () {
 	if (AscCommon.c_oSerFormat.Signature === sData.substring(0, AscCommon.c_oSerFormat.Signature.length)) {
 		let docInfo = new Asc.asc_CDocInfo();
 		docInfo.asc_putTitle("TeSt.xlsx");
-		let api = {
-			wb: {
-				getWorksheet: function () {
-				}
-			}, DocInfo: docInfo
-		};
+		let api = new Asc.spreadsheet_api({
+			'id-view': 'editor_sdk'
+		});
 		window["Asc"]["editor"] = api;
 
 		wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), api);
