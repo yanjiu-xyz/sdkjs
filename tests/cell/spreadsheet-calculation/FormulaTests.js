@@ -605,11 +605,14 @@ $(function () {
 
 	var oParser, wb, ws, dif = 1e-9, sData = AscCommon.getEmpty(), tmp;
 	if (AscCommon.c_oSerFormat.Signature === sData.substring(0, AscCommon.c_oSerFormat.Signature.length)) {
-		let docInfo = new Asc.asc_CDocInfo();
-		docInfo.asc_putTitle("TeSt.xlsx");
 		let api = new Asc.spreadsheet_api({
 			'id-view': 'editor_sdk'
 		});
+
+		let docInfo = new Asc.asc_CDocInfo();
+		docInfo.asc_putTitle("TeSt.xlsx");
+		api.DocInfo = docInfo;
+
 		window["Asc"]["editor"] = api;
 
 		wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), api);
