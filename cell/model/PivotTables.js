@@ -15938,7 +15938,7 @@ PivotLayout.prototype.getHeaderCellLayoutRowExceptValue = function() {
 PivotLayout.prototype.getHeaderCellLayoutColExceptValue = function() {
 	if (this.cols && this.cols.length > 0) {
 		if (this.cols.length > 0 && AscCommonExcel.st_VALUES !== this.cols[this.cols.length - 1].fld) {
-			return this.cols[this.rows.length - 1];
+			return this.cols[this.cols.length - 1];
 		} else if (this.cols.length > 1) {
 			return this.cols[this.cols.length - 2];
 		}

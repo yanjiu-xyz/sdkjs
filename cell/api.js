@@ -6735,6 +6735,30 @@ var editor;
 		return null;
 	};
 
+  spreadsheet_api.prototype.asc_getPivotShowValueAsInfo = function(opt_pivotTable) {
+    /**
+     * @typedef PivotShowValueAsInfo
+     * @property {number} fld
+     * @property {number} itemIndex
+     */
+    /**
+     * @type {PivotShowValueAsInfo}
+     */
+    var res = {}
+    var ws = this.wbModel.getActiveWs();
+    var activeCell = ws.selectionRange.activeCell;
+    var pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
+    if (pivotTable) {
+      var layout = pivotTable.getLayoutByCell(activeCell.row, activeCell.col);
+      var cellLayout = layout.getHeaderCellLayoutRowExceptValue();
+      cellLayout = cellLayout === null ? layout.getHeaderCellLayoutColExceptValue() : cellLayout;
+      res.fld = cellLayout.fld
+      res.itemIndex = cellLayout.v;
+      return res;
+    }
+    return null;
+  }
+
 	spreadsheet_api.prototype.asc_getAddPivotTableOptions = function(range) {
 		var ws = this.wb.getWorksheet();
 		if (ws.model.getSelection().isSingleRange()) {
