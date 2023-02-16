@@ -6764,14 +6764,6 @@ var editor;
         }
       }
     }
-    /**
-     * @typedef PivotShowValueAsInfo
-     * @property {number} fld
-     * @property {number} itemIndex
-     */
-    /**
-     * @type {PivotShowValueAsInfo}
-     */
     var res = {}
     var ws = this.wbModel.getActiveWs();
     var activeCell = ws.selectionRange.activeCell;
