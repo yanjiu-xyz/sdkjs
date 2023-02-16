@@ -606,6 +606,10 @@ $(function () {
 
 	var oParser, wb, ws, dif = 1e-9, sData = AscCommon.getEmpty(), tmp, array;
 	if (AscCommon.c_oSerFormat.Signature === sData.substring(0, AscCommon.c_oSerFormat.Signature.length)) {
+
+		Asc.spreadsheet_api.prototype._init = function() {
+		};
+		
 		let api = new Asc.spreadsheet_api({
 			'id-view': 'editor_sdk'
 		});
