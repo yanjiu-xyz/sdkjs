@@ -2236,7 +2236,7 @@
 				}
 			}
 		}
-		data = checkFormat(data || AscCommon.cErrorLocal.na);
+		data = checkFormat(data || 0);
 		this.range.setValue(data.toString());
 		if (data.type === AscCommonExcel.cElementType.number)
 			this.SetNumberFormat(AscCommon.getShortDateFormat());
