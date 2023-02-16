@@ -15775,7 +15775,13 @@ PivotRecords.prototype._toXml = function(writer, elem) {
 };
 
 function PivotContextMenu(pivot){
+	/**
+	 * @type {CT_pivotTableDefinition}
+	 */
 	this.pivot = pivot;
+	/**
+	 * @type {PivotLayout | null | undefined}
+	 */
 	this.layout = null;
 	this.layoutGroup = null;
 	this.filter = null;
@@ -15802,7 +15808,11 @@ PivotContextMenu.prototype.asc_getColFieldIndex = function () {
 };
 PivotContextMenu.prototype.asc_getDataFieldIndex = function () {
 	if (this.layout && this.pivot.dataFields) {
-		return this.pivot.dataFields.find(this.layout.fld);
+		let rowIndex = (this.layout.rows && this.layout.rows[0] && this.layout.rows[0].i);
+		let colIndex = (this.layout.cols && this.layout.cols[0] && this.layout.cols[0].i);
+		rowIndex = rowIndex !== void 0 ? rowIndex : -1;
+		colIndex = colIndex !== void 0 ? colIndex : -1;
+		return Math.max(rowIndex, colIndex);
 	}
 	return -1;
 };
@@ -15879,7 +15889,13 @@ function PivotLayout(){
 	this.fld = null;
 
 	//PivotLayoutType.cell , rowField, colField
+	/**
+	 * @type {PivotLayoutCell[]}
+	 */
 	this.rows = null;
+	/**
+	 * @type {PivotLayoutCell[]}
+	 */
 	this.cols = null;
 }
 PivotLayout.prototype.createLayout = function(type, opt_fld, opt_rows, opt_cols) {
