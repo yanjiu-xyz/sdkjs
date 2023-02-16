@@ -8732,7 +8732,7 @@
 		}
 		else oCapPr.HeadingLvl = 0;
 
-		this.Paragraph.Document_SetThisElementCurrent();
+		this.Paragraph.SetThisElementCurrent();
 
 		oDoc.AddCaption(oCapPr);
 		return true;
@@ -10761,6 +10761,100 @@
 			return null;
 
 		return new ApiComment(oComment)
+	};
+
+	/**
+     * Adds a caption table after (or before) the current table.
+	 * <note>Please note that the current table must be in the document (not in the footer/header).
+	 * And if the current table is placed in a shape, then a caption is added after (or before) the parent shape.</note>
+     * @memberof ApiTable
+     * @typeofeditors ["CDE"]
+     * @param {string} sAdditional - The additional text.
+	 * @param {CaptionLabel | String} [sLabel="Table"] - The caption label.
+	 * @param {boolean} [bExludeLabel=false] - Specifies whether to exclude the label from the caption.
+	 * @param {CaptionNumberingFormat} [sNumberingFormat="Arabic"] - The possible caption numbering format.
+	 * @param {boolean} [bBefore=false] - Specifies whether to insert the caption before the current table (true) or after (false) (after/before the shape if it is placed in the shape).
+	 * @param {Number} [nHeadingLvl=undefined] - The heading level (used if you want to specify the chapter number).
+	 * <note>If you want to specify "Heading 1", then nHeadingLvl === 0 and etc.</note>
+	 * @param {CaptionSep} [sCaptionSep="hyphen"] - The caption separator (used if you want to specify the chapter number).
+     * @returns {boolean}
+     */
+	ApiTable.prototype.AddCaption = function(sAdditional, sLabel, bExludeLabel, sNumberingFormat, bBefore, nHeadingLvl, sCaptionSep)
+	{
+		var oTableParent = this.Table.GetParent();
+		if (this.Table.IsUseInDocument() === false || !oTableParent || oTableParent.Is_TopDocument(true) !== private_GetLogicDocument())
+			return false;
+		if (typeof(sAdditional) !== "string" || sAdditional.trim() === "")
+			sAdditional = "";
+		if (typeof(bExludeLabel) !== "boolean")
+			bExludeLabel = false;
+		if (typeof(bBefore) !== "boolean")
+			bBefore = false;
+		if (typeof(sLabel) !== "string" || sLabel.trim() === "")
+			sLabel = "Table";
+		
+		let oCapPr = new Asc.CAscCaptionProperties();
+		let oDoc = private_GetLogicDocument();
+
+		let nNumFormat;
+		switch (sNumberingFormat)
+		{
+			case "ALPHABETIC":
+				nNumFormat = Asc.c_oAscNumberingFormat.UpperLetter;
+				break;
+			case "alphabetic":
+				nNumFormat = Asc.c_oAscNumberingFormat.LowerLetter;
+				break;
+			case "Roman":
+				nNumFormat = Asc.c_oAscNumberingFormat.UpperRoman;
+				break;
+			case "roman":
+				nNumFormat = Asc.c_oAscNumberingFormat.LowerRoman;
+				break;
+			default:
+				nNumFormat = Asc.c_oAscNumberingFormat.Decimal;
+				break;
+		}
+		switch (sCaptionSep)
+		{
+			case "hyphen":
+				sCaptionSep = "-";
+				break;
+			case "period":
+				sCaptionSep = ".";
+				break;
+			case "colon":
+				sCaptionSep = ":";
+				break;
+			case "longDash":
+				sCaptionSep = "—";
+				break;
+			case "dash":
+				sCaptionSep = "-";
+				break;
+			default:
+				sCaptionSep = "-";
+				break;
+		}
+
+		oCapPr.Label = sLabel;
+		oCapPr.Before = bBefore;
+		oCapPr.ExcludeLabel = bExludeLabel;
+		oCapPr.NumFormat = nNumFormat;
+		oCapPr.Separator = sCaptionSep;
+		oCapPr.Additional = sAdditional;
+
+		if (nHeadingLvl >= 0 && nHeadingLvl <= 8)
+		{
+			oCapPr.HeadingLvl = nHeadingLvl;
+			oCapPr.IncludeChapterNumber = true;
+		}
+		else oCapPr.HeadingLvl = 0;
+
+		this.Table.Document_SetThisElementCurrent();
+
+		oDoc.AddCaption(oCapPr);
+		return true;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -16633,6 +16727,100 @@
 		return true;
 	};
 
+	/**
+     * Adds a caption content control after (or before) the current content control.
+	 * <note>Please note that the current content control must be in the document (not in the footer/header).
+	 * And if the current content control is placed in a shape, then a caption is added after (or before) the parent shape.</note>
+     * @memberof ApiBlockLvlSdt
+     * @typeofeditors ["CDE"]
+     * @param {string} sAdditional - The additional text.
+	 * @param {CaptionLabel | String} [sLabel="Table"] - The caption label.
+	 * @param {boolean} [bExludeLabel=false] - Specifies whether to exclude the label from the caption.
+	 * @param {CaptionNumberingFormat} [sNumberingFormat="Arabic"] - The possible caption numbering format.
+	 * @param {boolean} [bBefore=false] - Specifies whether to insert the caption before the current content control (true) or after (false) (after/before the shape if it is placed in the shape).
+	 * @param {Number} [nHeadingLvl=undefined] - The heading level (used if you want to specify the chapter number).
+	 * <note>If you want to specify "Heading 1", then nHeadingLvl === 0 and etc.</note>
+	 * @param {CaptionSep} [sCaptionSep="hyphen"] - The caption separator (used if you want to specify the chapter number).
+     * @returns {boolean}
+     */
+	ApiBlockLvlSdt.prototype.AddCaption = function(sAdditional, sLabel, bExludeLabel, sNumberingFormat, bBefore, nHeadingLvl, sCaptionSep)
+	{
+		var oSdtParent = this.Sdt.GetParent();
+		if (this.Sdt.IsUseInDocument() === false || !oSdtParent || oSdtParent.Is_TopDocument(true) !== private_GetLogicDocument())
+			return false;
+		if (typeof(sAdditional) !== "string" || sAdditional.trim() === "")
+			sAdditional = "";
+		if (typeof(bExludeLabel) !== "boolean")
+			bExludeLabel = false;
+		if (typeof(bBefore) !== "boolean")
+			bBefore = false;
+		if (typeof(sLabel) !== "string" || sLabel.trim() === "")
+			sLabel = "Table";
+		
+		let oCapPr = new Asc.CAscCaptionProperties();
+		let oDoc = private_GetLogicDocument();
+
+		let nNumFormat;
+		switch (sNumberingFormat)
+		{
+			case "ALPHABETIC":
+				nNumFormat = Asc.c_oAscNumberingFormat.UpperLetter;
+				break;
+			case "alphabetic":
+				nNumFormat = Asc.c_oAscNumberingFormat.LowerLetter;
+				break;
+			case "Roman":
+				nNumFormat = Asc.c_oAscNumberingFormat.UpperRoman;
+				break;
+			case "roman":
+				nNumFormat = Asc.c_oAscNumberingFormat.LowerRoman;
+				break;
+			default:
+				nNumFormat = Asc.c_oAscNumberingFormat.Decimal;
+				break;
+		}
+		switch (sCaptionSep)
+		{
+			case "hyphen":
+				sCaptionSep = "-";
+				break;
+			case "period":
+				sCaptionSep = ".";
+				break;
+			case "colon":
+				sCaptionSep = ":";
+				break;
+			case "longDash":
+				sCaptionSep = "—";
+				break;
+			case "dash":
+				sCaptionSep = "-";
+				break;
+			default:
+				sCaptionSep = "-";
+				break;
+		}
+
+		oCapPr.Label = sLabel;
+		oCapPr.Before = bBefore;
+		oCapPr.ExcludeLabel = bExludeLabel;
+		oCapPr.NumFormat = nNumFormat;
+		oCapPr.Separator = sCaptionSep;
+		oCapPr.Additional = sAdditional;
+
+		if (nHeadingLvl >= 0 && nHeadingLvl <= 8)
+		{
+			oCapPr.HeadingLvl = nHeadingLvl;
+			oCapPr.IncludeChapterNumber = true;
+		}
+		else oCapPr.HeadingLvl = 0;
+
+		this.Sdt.SetThisElementCurrent();
+
+		oDoc.AddCaption(oCapPr);
+		return true;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiFormBase
@@ -18815,6 +19003,7 @@
 	ApiTable.prototype["GetPosInParent"]    	     = ApiTable.prototype.GetPosInParent;
 	ApiTable.prototype["ReplaceByElement"]    		 = ApiTable.prototype.ReplaceByElement;
 	ApiTable.prototype["AddComment"]  		  		 = ApiTable.prototype.AddComment;
+	ApiTable.prototype["AddCaption"]  		  		 = ApiTable.prototype.AddCaption;
 
 	ApiTableRow.prototype["GetClassType"]            = ApiTableRow.prototype.GetClassType;
 	ApiTableRow.prototype["GetCellsCount"]           = ApiTableRow.prototype.GetCellsCount;
@@ -19181,6 +19370,8 @@
 	ApiBlockLvlSdt.prototype["GetPosInParent"]          = ApiBlockLvlSdt.prototype.GetPosInParent;
 	ApiBlockLvlSdt.prototype["ReplaceByElement"]        = ApiBlockLvlSdt.prototype.ReplaceByElement;
 	ApiBlockLvlSdt.prototype["AddComment"]              = ApiBlockLvlSdt.prototype.AddComment;
+	ApiBlockLvlSdt.prototype["SetBackgroundColor"]      = ApiBlockLvlSdt.prototype.SetBackgroundColor;
+	ApiBlockLvlSdt.prototype["AddCaption"]              = ApiBlockLvlSdt.prototype.AddCaption;
 
 	ApiFormBase.prototype["GetClassType"]        = ApiFormBase.prototype.GetClassType;
 	ApiFormBase.prototype["GetFormType"]         = ApiFormBase.prototype.GetFormType;
