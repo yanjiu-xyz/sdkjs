@@ -30,6 +30,7 @@
  *
  */
 
+
 $(function () {
 
 	var cDate = Asc.cDate;
@@ -603,7 +604,7 @@ $(function () {
 	var fSortAscending = AscCommon.fSortAscending;
 	var g_oIdCounter = AscCommon.g_oIdCounter;
 
-	var oParser, wb, ws, dif = 1e-9, sData = AscCommon.getEmpty(), tmp;
+	var oParser, wb, ws, dif = 1e-9, sData = AscCommon.getEmpty(), tmp, array;
 	if (AscCommon.c_oSerFormat.Signature === sData.substring(0, AscCommon.c_oSerFormat.Signature.length)) {
 		let api = new Asc.spreadsheet_api({
 			'id-view': 'editor_sdk'
@@ -12861,10 +12862,10 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), "Quarterly Profit Report");
 		assert.strictEqual(oParser.value.hyperlink, 'http://example.microsoft.com/Annual Report.docx]QrtlyProfits');
 
-		oParser = new parserFormula('HYPERLINK("\\FINANCE\Statements\1stqtr.xlsx",D101)', "A1", ws);
+		oParser = new parserFormula('HYPERLINK("\\FINANCE\\Statements\\1stqtr.xlsx",D101)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue() - 0, 0);
-		assert.strictEqual(oParser.value.hyperlink, '\\FINANCE\Statements\1stqtr.xlsx');
+		assert.strictEqual(oParser.value.hyperlink, '\\FINANCE\\Statements\\1stqtr.xlsx');
 
 		oParser = new parserFormula('HYPERLINK("http://test.com")', "A1", ws);
 		assert.ok(oParser.parse());
@@ -18707,6 +18708,7 @@ $(function () {
 
 	QUnit.test("Test: \"VDB\"", function (assert) {
 		function _getVDB(cost, salvage, life, life1, startperiod, factor) {
+			var end;
 			var fVdb = 0, nLoopEnd = end = Math.ceil(startperiod), fTerm, fLia = 0, fRestwert = cost - salvage, bNowLia = false, fGda;
 
 			for (var i = 1; i <= nLoopEnd; i++) {
