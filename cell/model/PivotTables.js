@@ -15808,11 +15808,7 @@ PivotContextMenu.prototype.asc_getColFieldIndex = function () {
 };
 PivotContextMenu.prototype.asc_getDataFieldIndex = function () {
 	if (this.layout && this.pivot.dataFields) {
-		let rowIndex = (this.layout.rows && this.layout.rows[0] && this.layout.rows[0].i);
-		let colIndex = (this.layout.cols && this.layout.cols[0] && this.layout.cols[0].i);
-		rowIndex = rowIndex !== void 0 ? rowIndex : -1;
-		colIndex = colIndex !== void 0 ? colIndex : -1;
-		return Math.max(rowIndex, colIndex);
+		return this.pivot.dataFields.find(this.layout.fld);;
 	}
 	return -1;
 };

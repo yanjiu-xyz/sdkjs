@@ -6729,13 +6729,41 @@ var editor;
 		var ws = this.wbModel.getActiveWs();
 		var activeCell = ws.selectionRange.activeCell;
 		var pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
+    this.asc_getPivotShowValueAsInfo(opt_pivotTable, Asc.c_oAscShowDataAs.PercentOfParent)
 		if (pivotTable) {
 			return pivotTable.getContextMenuInfo(ws.selectionRange);
 		}
 		return null;
 	};
-
-  spreadsheet_api.prototype.asc_getPivotShowValueAsInfo = function(opt_pivotTable) {
+  // Uses for % of, difference from, % difference from, running total in, % running total in, % of parent
+  spreadsheet_api.prototype.asc_getPivotShowValueAsInfo = function(opt_pivotTable, showAs) {
+    function correctInfoPercentOfParent(layout) {
+      if (layout.rows) {
+        if (layout.rows.length > 0 && AscCommonExcel.st_VALUES !== layout.rows[layout.rows.length - 1].fld) {
+          if (layout.rows.length > 1) {
+            return layout.rows[layout.rows.length - 2];
+          }
+          return layout.rows[layout.rows.length - 1];
+        } else if (layout.rows.length > 1) {
+          if (layout.rows.length > 2) {
+            return layout.rows[layout.rows.length - 3];
+          }
+          return layout.rows[layout.rows.length - 2];
+        }
+      } else if (layout.cols) {
+        if (layout.cols.length > 0 && AscCommonExcel.st_VALUES !== layout.cols[layout.cols.length - 1].fld) {
+          if (layout.cols.length > 1) {
+            return layout.cols[layout.cols.length - 2];
+          }
+          return layout.cols[layout.cols.length - 1];
+        } else if (layout.cols.length > 1) {
+          if (layout.cols.length > 2) {
+            return layout.cols[layout.cols.length - 3];
+          }
+          return layout.cols[layout.cols.length - 2];
+        }
+      }
+    }
     /**
      * @typedef PivotShowValueAsInfo
      * @property {number} fld
@@ -6750,8 +6778,12 @@ var editor;
     var pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
     if (pivotTable) {
       var layout = pivotTable.getLayoutByCell(activeCell.row, activeCell.col);
-      var cellLayout = layout.getHeaderCellLayoutRowExceptValue();
-      cellLayout = cellLayout === null ? layout.getHeaderCellLayoutColExceptValue() : cellLayout;
+      var cellLayout = null;
+      if (showAs === Asc.c_oAscShowDataAs.PercentOfParent) {
+        cellLayout = correctInfoPercentOfParent(layout);
+      } else {
+        cellLayout = layout.getHeaderCellLayoutExceptValue();
+      }
       res.fld = cellLayout.fld
       res.itemIndex = cellLayout.v;
       return res;
