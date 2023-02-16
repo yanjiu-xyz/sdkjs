@@ -6763,6 +6763,7 @@ var editor;
           return layout.cols[layout.cols.length - 2];
         }
       }
+      return null;
     }
     var res = {}
     var ws = this.wbModel.getActiveWs();
@@ -6776,8 +6777,12 @@ var editor;
       } else {
         cellLayout = layout.getHeaderCellLayoutExceptValue();
       }
-      res.fld = cellLayout.fld
-      res.itemIndex = cellLayout.v;
+      if (cellLayout !== null) {
+        res.fld = cellLayout.fld
+        res.itemIndex = cellLayout.v;
+      } else {
+        res = null;
+      }
       return res;
     }
     return null;
