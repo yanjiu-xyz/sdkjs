@@ -241,7 +241,7 @@ var editor;
 	};
 	spreadsheet_api.prototype.asc_getLocaleExample = function(format, value, culture) {
 		var cultureInfo = AscCommon.g_aCultureInfos[culture] || AscCommon.g_oDefaultCultureInfo;
-		var numFormat = AscCommon.oNumFormatCache.get(format);
+		var numFormat = AscCommon.oNumFormatCache.get(format || "General");
 		var res;
 		if (null == value) {
 			var ws = this.wbModel.getActiveWs();
@@ -303,6 +303,8 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setLocale = function (LCID, decimalSeparator, groupSeparator) {
+      console.log('asc_setLocale'+new Error().stack);
+      console.log('asc_setLocale'+LCID);
     if (!this.isLoadFullApi) {
       this.tmpLCID = LCID;
       this.tmpDecimalSeparator = decimalSeparator;
@@ -6424,6 +6426,7 @@ var editor;
 	};
 
   spreadsheet_api.prototype.asc_nativePrint = function (_printer, _page, _options) {
+      console.log('asc_nativePrint'+JSON.stringify(_options));
     var _adjustPrint = (window.AscDesktopEditor_PrintOptions && window.AscDesktopEditor_PrintOptions.advancedOptions) || new Asc.asc_CAdjustPrint();
     window.AscDesktopEditor_PrintOptions = undefined;
 
@@ -6729,7 +6732,8 @@ var editor;
 		var ws = this.wbModel.getActiveWs();
 		var activeCell = ws.selectionRange.activeCell;
 		var pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
-    this.asc_getPivotShowValueAsInfo(opt_pivotTable, Asc.c_oAscShowDataAs.PercentOfParent)
+    let q = this.asc_getPivotShowValueAsInfo(opt_pivotTable, Asc.c_oAscShowDataAs.Difference);
+        console.log(JSON.stringify(q));
 		if (pivotTable) {
 			return pivotTable.getContextMenuInfo(ws.selectionRange);
 		}
