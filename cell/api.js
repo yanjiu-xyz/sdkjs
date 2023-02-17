@@ -6732,15 +6732,13 @@ var editor;
 		var ws = this.wbModel.getActiveWs();
 		var activeCell = ws.selectionRange.activeCell;
 		var pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
-    let q = this.asc_getPivotShowValueAsInfo(opt_pivotTable, Asc.c_oAscShowDataAs.Difference);
-        console.log(JSON.stringify(q));
 		if (pivotTable) {
 			return pivotTable.getContextMenuInfo(ws.selectionRange);
 		}
 		return null;
 	};
   // Uses for % of, difference from, % difference from, running total in, % running total in, % of parent
-  spreadsheet_api.prototype.asc_getPivotShowValueAsInfo = function(opt_pivotTable, showAs) {
+  spreadsheet_api.prototype.asc_getPivotShowValueAsInfo = function(showAs, opt_pivotTable) {
     function correctInfoPercentOfParent(layout) {
       if (layout.rows) {
         if (layout.rows.length > 0 && AscCommonExcel.st_VALUES !== layout.rows[layout.rows.length - 1].fld) {
@@ -6769,7 +6767,7 @@ var editor;
       }
       return null;
     }
-    var res = {}
+    var res = null;
     var ws = this.wbModel.getActiveWs();
     var activeCell = ws.selectionRange.activeCell;
     var pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
@@ -6782,14 +6780,12 @@ var editor;
         cellLayout = layout.getHeaderCellLayoutExceptValue();
       }
       if (cellLayout !== null) {
-        res.fld = cellLayout.fld
-        res.itemIndex = cellLayout.v;
-      } else {
-        res = null;
+        res = new Asc.CT_DataField();
+        res.baseField = cellLayout.fld;
+        res.baseItem = cellLayout.v;
       }
-      return res;
     }
-    return null;
+    return res;
   }
 
 	spreadsheet_api.prototype.asc_getAddPivotTableOptions = function(range) {
@@ -8755,6 +8751,7 @@ var editor;
   prot["asc_insertPivotNewWorksheet"] = prot.asc_insertPivotNewWorksheet;
   prot["asc_insertPivotExistingWorksheet"] = prot.asc_insertPivotExistingWorksheet;
   prot["asc_getPivotContextMenuInfo"] = prot.asc_getPivotContextMenuInfo;
+  prot["asc_getPivotShowValueAsInfo"] = prot.asc_getPivotShowValueAsInfo;
 	// signatures
   prot["asc_addSignatureLine"] 		     = prot.asc_addSignatureLine;
   prot["asc_CallSignatureDblClickEvent"] = prot.asc_CallSignatureDblClickEvent;
