@@ -5806,15 +5806,25 @@ CT_pivotTableDefinition.prototype._setVisibleFieldItem = function (visible, fld,
 		pivotField.asc_setVisible(visible, this, fld, index, true);
 	}
 };
-CT_pivotTableDefinition.prototype.asc_sortByCell = function(api, type, row, col) {
+CT_pivotTableDefinition.prototype._canSortByCell = function(row, col) {
 	if (this.contains(col, row)) {
 		var t = this;
 		var layout = t.getLayoutByCell(row, col);
 		if (layout) {
-			var info = layout.getSortFilterInfo(this);
-			if (null !== info.fld) {
-				this.sortByFieldIndex(api, info.fld, type, info.sortDataIndex);
-			}
+			return layout.getSortFilterInfo(this);
+		}
+	}
+	return null;
+};
+CT_pivotTableDefinition.prototype.canSortByCell = function(row, col) {
+	let sortInfo = this._canSortByCell(row, col);
+	return sortInfo && null !== sortInfo.fld || false;
+};
+CT_pivotTableDefinition.prototype.asc_sortByCell = function(api, type, row, col) {
+	let sortInfo = this._canSortByCell(row, col);
+	if (sortInfo) {
+		if (null !== sortInfo.fld) {
+			this.sortByFieldIndex(api, sortInfo.fld, type, sortInfo.sortDataIndex);
 		}
 	} else {
 		//todo
@@ -15918,6 +15928,8 @@ PivotLayout.prototype.getSortFilterInfo = function(pivotTable) {
 		fld = pivotTable.rowFields.getFirstIndexExceptValue();
 	} else if (PivotLayoutType.headerCompactCol === this.type && pivotTable.colFields) {
 		fld = pivotTable.colFields.getFirstIndexExceptValue();
+	} else if (PivotLayoutType.headerRow !== this.type && PivotLayoutType.headerCol !== this.type) {
+		fld = null;
 	}
 	return {fld: fld, sortDataIndex: sortDataIndex};
 };
