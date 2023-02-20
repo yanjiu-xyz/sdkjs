@@ -3710,6 +3710,7 @@ CT_pivotTableDefinition.prototype.fillAutoFiltersOptions = function (autoFilterO
 		indexSorting = sortDataIndex + 1;
 	}
 	var pivotFilterObj = new Asc.PivotFilterObj();
+	pivotFilterObj.asc_setPivotField(index);
 	pivotFilterObj.asc_setDataFields(pivotDataFields);
 	pivotFilterObj.asc_setDataFieldIndexSorting(indexSorting);
 	pivotFilterObj.asc_setDataFieldIndexFilter(iMeasureFld);
@@ -5892,12 +5893,17 @@ CT_pivotTableDefinition.prototype._sortPivotItems = function(index, type, sortDa
 };
 CT_pivotTableDefinition.prototype.asc_filterByCell = function(api, autoFilterObject, row, col) {
 	var t = this;
-	var layout = t.getLayoutByCell(row, col);
-	if (layout) {
-		var info = layout.getSortFilterInfo(this);
-		if (null !== info.fld) {
-			this.filterByFieldIndex(api, autoFilterObject, info.fld, false);
+	let pivotObj = autoFilterObject.asc_getPivotObj();
+	let fld = pivotObj.asc_getPivotField();
+	if (null === fld) {
+		var layout = t.getLayoutByCell(row, col);
+		if (layout) {
+			var info = layout.getSortFilterInfo(this);
+			fld = info.fld;
 		}
+	}
+	if (null !== fld) {
+		this.filterByFieldIndex(api, autoFilterObject, fld, false);
 	}
 };
 CT_pivotTableDefinition.prototype.filterByFieldIndex = function (api, autoFilterObject, fld, confirmation) {
