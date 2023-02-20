@@ -4424,6 +4424,9 @@ function (window, undefined) {
 					};
 
 					cfRule.ranges = toAscRanges(value);
+					if (oModel) {
+						oModel.cleanConditionalFormattingRangeIterator();
+					}
 					break;
 				}
 				case AscCH.historyitem_CFRule_SetRuleElements: {
