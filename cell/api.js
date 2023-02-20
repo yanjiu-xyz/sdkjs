@@ -6728,7 +6728,7 @@ var editor;
 		}
 	};
 
-	spreadsheet_api.prototype.asc_getPivotContextMenuInfo = function(opt_pivotTable) {
+	spreadsheet_api.prototype.asc_getPivotInfo = function(opt_pivotTable) {
 		var ws = this.wbModel.getActiveWs();
 		var activeCell = ws.selectionRange.activeCell;
 		var pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
@@ -8750,7 +8750,7 @@ var editor;
   prot["asc_getAddPivotTableOptions"] = prot.asc_getAddPivotTableOptions;
   prot["asc_insertPivotNewWorksheet"] = prot.asc_insertPivotNewWorksheet;
   prot["asc_insertPivotExistingWorksheet"] = prot.asc_insertPivotExistingWorksheet;
-  prot["asc_getPivotContextMenuInfo"] = prot.asc_getPivotContextMenuInfo;
+  prot["asc_getPivotInfo"] = prot.asc_getPivotInfo;
   prot["asc_getPivotShowValueAsInfo"] = prot.asc_getPivotShowValueAsInfo;
 	// signatures
   prot["asc_addSignatureLine"] 		     = prot.asc_addSignatureLine;
