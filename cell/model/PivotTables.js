@@ -3783,6 +3783,10 @@ CT_pivotTableDefinition.prototype.getPivotTableButtons = function (range, button
 	}
 	this._getPivotLabelButtons(range, buttons);
 };
+
+/**
+ * Returns the index in CT_DataFields.dataField array
+ */
 CT_pivotTableDefinition.prototype.getDataFieldIndexByCell = function (row, col) {
 	let pivotRange = this.getRange();
 	let location = this.location;
@@ -3798,12 +3802,28 @@ CT_pivotTableDefinition.prototype.getDataFieldIndexByCell = function (row, col) 
 		let rowItem = rowItems[curRow];
 		let colItem = colItems[curCol];
 		let dataIndex = Math.max(rowItem.i, colItem.i);
-		if (dataIndex < dataFields.length) {
-			result = dataFields[dataIndex].fld;
+		if (dataIndex < dataFields.length && rowItem.t !== Asc.c_oAscItemType.Blank && colItem.t !== Asc.c_oAscItemType.Blank) {
+			result = dataIndex;
 		}
 	}
 	return result;
 };
+
+/**
+ * Returns dataField.fld by col and row
+ * @param {number} row 
+ * @param {number} col 
+ * @return {number}
+ */
+CT_pivotTableDefinition.prototype.getDataFieldFldByCell = function (row, col) {
+	let dataFields = this.asc_getDataFields();
+	let dataIndex = this.getDataFieldIndexByCell(row, col)
+	if (dataIndex !== null) {
+		return dataFields[dataIndex].fld;
+	}
+	return null;
+};
+
 CT_pivotTableDefinition.prototype.getPivotFieldButtonCompact = function(range, buttons, rowColFields, row, col) {
 	if (!range.contains(col, row)) {
 		return;
@@ -6141,9 +6161,11 @@ CT_pivotTableDefinition.prototype.filterPivotItemsFilters = function(index, valu
 };
 CT_pivotTableDefinition.prototype.getLayoutByCell = function(row, col) {
 	var rowFieldsOffset = [];
-	return this.getLayoutByCellPage(row, col) || this.getLayoutByCellHeader(row, col)
-		|| this.getLayoutByCellHeaderRowColLables(row, col) || this.getLayoutByCellRowHeaderLabels(row, col, rowFieldsOffset)
-		|| this.getLayoutByCellHeaderRowColLables(row, col, rowFieldsOffset) || this.getLayoutByCellData(row, col, rowFieldsOffset);
+	var res = this.getLayoutByCellPage(row, col) || this.getLayoutByCellHeader(row, col)
+	|| this.getLayoutByCellHeaderRowColLables(row, col) || this.getLayoutByCellRowHeaderLabels(row, col, rowFieldsOffset)
+	|| this.getLayoutByCellHeaderRowColLables(row, col, rowFieldsOffset) || this.getLayoutByCellData(row, col, rowFieldsOffset);
+	res.dataFieldIndex = this.getDataFieldIndexByCell(row, col);
+	return res;
 };
 CT_pivotTableDefinition.prototype.getContextMenuInfo = function(selection) {
 	let res = new PivotContextMenu(this);
@@ -6372,13 +6394,13 @@ CT_pivotTableDefinition.prototype.getLayoutByCellData = function(row, col, rowFi
 	let type = null, fld = null;
 	if (rowDataStart <= row && row <= rowDataEnd && colDataStart <= col && col <= colDataEnd) {
 		type = PivotLayoutType.cell;
-		fld = this.getDataFieldIndexByCell(row, col);
+		fld = this.getDataFieldFldByCell(row, col);
 	} else if (rowHeader <= row && row < rowDataStart && colDataStart <= col && col <= colDataEnd && cols) {
 		type = PivotLayoutType.colField;
 		cols = cols.slice(0, rowOffset);
 		if (cols.length > 0) {
 			if (cols[cols.length - 1].t === Asc.c_oAscItemType.Grand) {
-				fld = this.getDataFieldIndexByCell(row, col);
+				fld = this.getDataFieldFldByCell(row, col);
 			} else {
 				fld = cols[cols.length - 1].fld;
 			}
@@ -15817,8 +15839,8 @@ PivotContextMenu.prototype.asc_getColFieldIndex = function () {
 	return -1;
 };
 PivotContextMenu.prototype.asc_getDataFieldIndex = function () {
-	if (this.layout && this.pivot.dataFields) {
-		return this.pivot.dataFields.find(this.layout.fld);;
+	if (this.layout && this.pivot.dataFields && this.layout.dataFieldIndex !== null) {
+		return this.layout.dataFieldIndex;
 	}
 	return -1;
 };
@@ -15903,13 +15925,15 @@ function PivotLayout(){
 	 * @type {PivotLayoutCell[]}
 	 */
 	this.cols = null;
+	this.dataFieldIndex = null;
 }
-PivotLayout.prototype.createLayout = function(type, opt_fld, opt_rows, opt_cols) {
+PivotLayout.prototype.createLayout = function(type, opt_fld, opt_rows, opt_cols, opt_dataFieldIndex) {
 	var res = new PivotLayout();
 	res.type = type;
 	res.fld = opt_fld;
 	res.rows = opt_rows;
 	res.cols = opt_cols;
+	res.dataFieldIndex = opt_dataFieldIndex;
 	return res;
 };
 PivotLayout.prototype.getSortFilterInfo = function(pivotTable) {
