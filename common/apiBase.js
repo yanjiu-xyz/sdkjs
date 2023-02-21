@@ -4350,10 +4350,10 @@
 	};
 	baseEditorsApi.prototype.sendPaintFormatEvent = function(_value)
 	{
-		let value = ( true === _value ? c_oAscFormatPainterState.kOn : ( false === _value ? c_oAscFormatPainterState.kOff : _value ) );
+		let value = ( true === _value ? AscCommon.c_oAscFormatPainterState.kOn : ( false === _value ? AscCommon.c_oAscFormatPainterState.kOff : _value ) );
 		this.formatPainter.putState(value);
 		this.sendEvent("asc_onPaintFormatChanged", value);
-		if(value === c_oAscFormatPainterState.kOff)
+		if(value === AscCommon.c_oAscFormatPainterState.kOff)
 		{
 			this.sendEvent('asc_onStopFormatPainter');
 		}
