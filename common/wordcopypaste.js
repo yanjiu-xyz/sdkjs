@@ -91,13 +91,15 @@ function GetObjectsForImageDownload(aBuilderImages, bSameDoc)
     var oMapImages = {}, aBuilderImagesByUrl = [], aUrls =[];
     for(var i = 0; i < aBuilderImages.length; ++i)
     {
-        if(!g_oDocumentUrls.getImageLocal(aBuilderImages[i].Url))
+		let oBuilderImg = aBuilderImages[i];
+		let sUrl = oBuilderImg.Url;
+        if(!g_oDocumentUrls.getImageLocal(sUrl) && !g_oDocumentUrls.isThemeUrl(sUrl))
         {
-            if(!Array.isArray(oMapImages[aBuilderImages[i].Url]))
+            if(!Array.isArray(oMapImages[sUrl]))
             {
-                oMapImages[aBuilderImages[i].Url] = [];
+                oMapImages[sUrl] = [];
             }
-            oMapImages[aBuilderImages[i].Url].push(aBuilderImages[i]);
+            oMapImages[sUrl].push(oBuilderImg);
         }
     }
     for(var key in oMapImages)
@@ -3761,7 +3763,7 @@ PasteProcessor.prototype =
                     var aContent = oThis._convertExcelBinary(aContentExcel, aContentExcel ? aContentExcel.pDrawings : null);
                     revertLocale();
                     oThis.aContent = aContent.content;
-	                addThemeImagesToMap(oImageMap, oObjectsForDownload, aContentExcel.arrImages);
+	                addThemeImagesToMap(oImageMap, oObjectsForDownload.aUrls, aContentExcel.arrImages);
                     oThis.api.pre_Paste(aContent.fonts, oImageMap, fPrepasteCallback);
                 }, true);
             } else {
@@ -3911,7 +3913,7 @@ PasteProcessor.prototype =
 					var oImageMap = {};
 					ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
 
-					addThemeImagesToMap(oImageMap, oObjectsForDownload, arrImages);
+					addThemeImagesToMap(oImageMap, oObjectsForDownload.aUrls, arrImages);
 					oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
 				}, true);
 			} else {
@@ -4248,7 +4250,7 @@ PasteProcessor.prototype =
 						AscFormat.checkBlipFillRasterImages(presentationSelectedContent.Drawings[i].Drawing);
 					}
 				}
-				addThemeImagesToMap(oImageMap, oObjectsForDownload, aContent.aPastedImages);
+				addThemeImagesToMap(oImageMap, oObjectsForDownload.aUrls, aContent.aPastedImages);
 				oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
 			}, true);
 		} else {
@@ -4500,7 +4502,7 @@ PasteProcessor.prototype =
 				AscCommon.sendImgUrls(oThis.api, oObjectsForDownload.aUrls, function (data) {
 					let oImageMap = {};
 					ResetNewUrls(data, oObjectsForDownload.aUrls, oObjectsForDownload.aBuilderImagesByUrl, oImageMap);
-					addThemeImagesToMap(oImageMap, oObjectsForDownload, arr_Images);
+					addThemeImagesToMap(oImageMap, oObjectsForDownload.aUrls, arr_Images);
 					oThis.api.pre_Paste(fonts, oImageMap, paste_callback);
 				}, true);
 			} else {
@@ -10696,25 +10698,27 @@ function CreateImageFromBinary(bin, nW, nH)
 
 function Check_LoadingDataBeforePrepaste(_api, _fonts, _images, _callback)
 {
-    var aPrepeareFonts = [];
+    let aPrepeareFonts = [];
     for (var font_family in _fonts)
     {
         aPrepeareFonts.push(new CFont(font_family, 0, "", 0));
     }
     AscFonts.FontPickerByCharacter.extendFonts(aPrepeareFonts);
 
-    var aImagesToDownload = [];
-    for (var image in _images)
+    let aImagesToDownload = [];
+	let aAllImages = [];
+    for (let image in _images)
     {
         var src = _images[image];
         if (undefined !== window["Native"] && undefined !== window["Native"]["GetImageUrl"])
         {
             _images[image] = window["Native"]["GetImageUrl"](_images[image]);
         }
-        else if (!g_oDocumentUrls.getImageUrl(src) && !g_oDocumentUrls.getImageLocal(src))
+        else if (!g_oDocumentUrls.getImageUrl(src) && !g_oDocumentUrls.getImageLocal(src) && !g_oDocumentUrls.isThemeUrl(src))
         {
 			aImagesToDownload.push(src);
         }
+	    aAllImages.push({Url: _images[image]});
     }
     if (aImagesToDownload.length > 0)
     {
@@ -10735,6 +10739,7 @@ function Check_LoadingDataBeforePrepaste(_api, _fonts, _images, _callback)
                     image_map[i] = sFrom;
                 }
             }
+	        addThemeImagesToMap(image_map, aImagesToDownload, aAllImages);
             _api.pre_Paste(aPrepeareFonts, image_map, _callback);
         }, true);
     }
@@ -11333,18 +11338,14 @@ function checkOnlyOneImage(node)
 	return res;
 }
 
-function addThemeImagesToMap(oImageMap, oObjectsForDownload, aImages) {
-	if(!oObjectsForDownload) {
-		return;
-	}
-	let aDnldUrls = oObjectsForDownload.aUrls;
-	if(!Array.isArray(aDnldUrls)) {
+function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
+	if(!Array.isArray(aDwnldUrls)) {
 		return;
 	}
 	if(!Array.isArray(aImages)) {
 		return;
 	}
-	if(aDnldUrls.length === aImages.length) {
+	if(aDwnldUrls.length === aImages.length) {
 		return;
 	}
 	let oAddMap = {};
@@ -11356,13 +11357,13 @@ function addThemeImagesToMap(oImageMap, oObjectsForDownload, aImages) {
 		}
 		let sUrl = oImgObject.Url;
 		let nDnldImg;
-		for(nDnldImg = 0; nDnldImg < aDnldUrls.length; ++nDnldImg) {
-			let sDnldUrl = aDnldUrls[nDnldImg];
+		for(nDnldImg = 0; nDnldImg < aDwnldUrls.length; ++nDnldImg) {
+			let sDnldUrl = aDwnldUrls[nDnldImg];
 			if(sUrl === sDnldUrl) {
 				break;
 			}
 		}
-		if(nDnldImg === aDnldUrls.length) {
+		if(nDnldImg === aDwnldUrls.length) {
 			oAddMap[nAddIdx++] = sUrl;
 		}
 	}
