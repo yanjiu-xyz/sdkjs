@@ -6190,7 +6190,7 @@ CT_pivotTableDefinition.prototype.getLayoutByCell = function(row, col) {
 	var res = this.getLayoutByCellPage(row, col) || this.getLayoutByCellHeader(row, col)
 	|| this.getLayoutByCellHeaderRowColLables(row, col) || this.getLayoutByCellRowHeaderLabels(row, col, rowFieldsOffset)
 	|| this.getLayoutByCellHeaderRowColLables(row, col, rowFieldsOffset) || this.getLayoutByCellData(row, col, rowFieldsOffset);
-	if (res !== null) {
+	if (res !== null && res !== void 0) {
 		res.dataFieldIndex = this.getDataFieldIndexByCell(row, col);
 	}
 	return res;
