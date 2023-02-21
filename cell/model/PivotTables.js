@@ -15973,7 +15973,7 @@ PivotLayout.prototype.getSortFilterInfo = function(pivotTable) {
 		if (cellLayout) {
 			fld = cellLayout.fld;
 		}
-		if(PivotLayoutType.cell === this.type) {
+		if(PivotLayoutType.cell === this.type && pivotTable.dataFields) {
 			sortDataIndex = pivotTable.dataFields.find(this.fld);
 		}
 	} else if (PivotLayoutType.headerCompactRow === this.type && pivotTable.rowFields) {
