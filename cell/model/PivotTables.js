@@ -6201,8 +6201,7 @@ CT_pivotTableDefinition.prototype.getContextMenuInfo = function(selection) {
 	let col = selection.activeCell.col;
 	res.layout = this.getLayoutByCell(row, col);
 	res.layoutGroup = this.getLayoutsForGroup(selection, res.layout);
-
-	if (Asc.PivotLayoutType.cell === res.layout.type && selection.isSingleRange() && selection.getLast().isOneCell()) {
+	if (res.layout && Asc.PivotLayoutType.cell === res.layout.type && selection.isSingleRange() && selection.getLast().isOneCell()) {
 		let cellLayout = res.layout.getHeaderCellLayoutRowExceptValue();
 		if (null !== cellLayout && null !== cellLayout.fld) {
 			let autoFilterObject = new Asc.AutoFiltersOptions();
@@ -6219,7 +6218,7 @@ CT_pivotTableDefinition.prototype.getContextMenuInfo = function(selection) {
 			this.fillAutoFiltersOptions(autoFilterObject, cellLayout.fld);
 			res.filterCol = autoFilterObject;
 		}
-	} else if (Asc.PivotLayoutType.rowField === res.layout.type || Asc.PivotLayoutType.colField === res.layout.type) {
+	} else if (res.layout && (Asc.PivotLayoutType.rowField === res.layout.type || Asc.PivotLayoutType.colField === res.layout.type)) {
 		let info = res.layout.getSortFilterInfo(this);
 		if (null !== info.fld) {
 			let autoFilterObject = new Asc.AutoFiltersOptions();
