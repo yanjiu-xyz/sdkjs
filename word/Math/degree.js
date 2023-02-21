@@ -183,7 +183,7 @@ CDegreeBase.prototype.GetSizeSup = function(oMeasure, Metric)
     {
         lastElem = this.baseContent.GetLastElement();
 
-        var bSameFontSize  = lastElem.Type == para_Math_Run && lastElem.Math_CompareFontSize(mgCtrPrp.FontSize, false);
+        var bSameFontSize  = lastElem.Type == para_Math_Run && (mgCtrPrp.FontSize === lastElem.Math_GetFontSize(false));
         bTextElement = bSameFontSize || (lastElem.Type !== para_Math_Run && lastElem.IsJustDraw());
     }
 
@@ -264,7 +264,7 @@ CDegreeBase.prototype.GetSizeSubScript = function(oMeasure, Metric)
     {
         var lastElem = this.baseContent.GetLastElement();
 
-        var bSameFontSize  = lastElem.Type == para_Math_Run && lastElem.Math_CompareFontSize(mgCtrPrp.FontSize, false);
+        var bSameFontSize  = lastElem.Type == para_Math_Run && (mgCtrPrp.FontSize === lastElem.Math_GetFontSize(false));
         bTextElement      = bSameFontSize || (lastElem.Type !== para_Math_Run && lastElem.IsJustDraw());
     }
 
@@ -544,18 +544,11 @@ CDegree.prototype.Can_ModifyArgSize = function()
 CDegree.prototype.GetTextOfElement = function(isLaTeX) {
 	var strTemp = "";
 	var strTypeOfScript = this.Pr.type === 1 ? '^' : '_';
-
-	var oBase = this.getBase();
-
-	var strBase = this.CheckIsEmpty(oBase.GetTextOfElement(isLaTeX));
-	var strIterator = this.CheckIsEmpty(this.getIterator().GetTextOfElement(isLaTeX));
-	var strStartBracet = this.GetStartBracetForGetTextContent(isLaTeX);
-	var strCloseBracet = this.GetEndBracetForGetTextContent(isLaTeX);
+	var strBase = this.getBase().GetMultipleContentForGetText(isLaTeX);
+	var strIterator = this.getIterator().GetMultipleContentForGetText(isLaTeX);
 
 	if (isLaTeX)
     {
-		strIterator = strStartBracet + strIterator + strCloseBracet;
-		
 		switch (strBase) {
 			case 'cos':
 			case 'sin':
@@ -590,16 +583,11 @@ CDegree.prototype.GetTextOfElement = function(isLaTeX) {
 			default: break;
 		}
         
-		strTemp = strBase + strTypeOfScript + strIterator;
+		strTemp = strBase.trim() + strTypeOfScript + strIterator;
 	}
     else
     {
-		strIterator = strStartBracet + strIterator + strCloseBracet;
-		
-		if (strBase.length > 1 && strIterator.length > 1) {
-			strBase = '〖'+ strBase +'〗';
-		}
-		strTemp = strBase + strTypeOfScript + strIterator;
+		strTemp = strBase + strTypeOfScript + strIterator + " ";
 	}
 	return strTemp;
 };
@@ -842,7 +830,7 @@ CDegreeSubSupBase.prototype.GetSize = function(oMeasure, Metric)
         var bFirstItem = this.Pr.type == DEGREE_SubSup;
         var BaseItem = bFirstItem ? this.baseContent.GetLastElement() : this.baseContent.GetFirstElement();
 
-        var bSameFontSize  = BaseItem.Type == para_Math_Run && BaseItem.Math_CompareFontSize(mgCtrPrp.FontSize, bFirstItem);
+        var bSameFontSize  = BaseItem.Type == para_Math_Run && (mgCtrPrp.FontSize === BaseItem.Math_GetFontSize(bFirstItem));
         TextElement  = bSameFontSize || (BaseItem.Type !== para_Math_Run && BaseItem.IsJustDraw());
     }
 
@@ -1257,51 +1245,37 @@ CDegreeSubSup.prototype.Can_ModifyArgSize = function()
 {
     return this.CurPos !== 0 && false === this.Is_SelectInside(); // находимся в итераторе
 };
-CDegreeSubSup.prototype.GetTextOfElement = function(isLaTeX) {
-	var strTemp = "";
-	var Base = this.getBase().GetTextOfElement(isLaTeX);
-	var strLower = this.CheckIsEmpty(this.getLowerIterator().GetTextOfElement(isLaTeX));
-	var strUpper = this.CheckIsEmpty(this.getUpperIterator().GetTextOfElement(isLaTeX));
-	var isPreScript = this.Pr.type === -1;
+CDegreeSubSup.prototype.GetTextOfElement = function(isLaTeX)
+{
+	let strTemp = "";
+	let Base = this.getBase().GetMultipleContentForGetText(isLaTeX);
+	let strLower = this.getLowerIterator().GetMultipleContentForGetText(isLaTeX);
+	let strUpper = this.getUpperIterator().GetMultipleContentForGetText(isLaTeX);
+
+	let isPreScript = this.Pr.type === -1;
 	
-    if (isLaTeX) {
-		strLower = '{' + strLower + '}';
-		strUpper = '{' + strUpper + '}';
-		Base = '{'+ Base +'}';
-
-		if(strLower.length === 0 || strLower === '⬚') {
+    if (isLaTeX)
+    {
+		if(strLower.length === 0 || strLower === '⬚')
 			strLower = '{}'
-		}
-		if(strUpper.length === 0 || strUpper === '⬚') {
+		if(strUpper.length === 0 || strUpper === '⬚')
 			strUpper = '{}'
-		}
 
-		if (true === isPreScript) {
+		if (true === isPreScript)
 			strTemp = '{' + '_' + strLower + '^' + strUpper + '}' + Base;
-		}
-        else {
+        else
 			strTemp = Base + '_' + strLower + '^' + strUpper;
-		}
+	}
+    else
+    {
 
-	} else {
-		strLower = '(' + strLower + ')';
-		
-        if(strLower.length === 0) {
-			strLower = '()'
-		}
-
-		strUpper = '(' + strUpper + ')';
-		
-        if(strUpper.length === 0) {
-			strUpper = '()'
-		}
-
-		if (true === isPreScript) {
+		if (true === isPreScript)
 			strTemp = '(' + '_' + strLower + '^' + strUpper + ')' + Base;
-		}
         else {
-			strTemp = Base + '_' + strLower + '^' + strUpper;
-		}
+            strTemp = Base + '_' + strLower + '^' + strUpper;
+        }
+
+        strTemp += " ";
 	}
 	return strTemp;
 };

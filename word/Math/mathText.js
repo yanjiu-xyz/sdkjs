@@ -1004,9 +1004,9 @@ CMathText.prototype.Read_FromBinary = function(Reader)
 	if (AscFonts.IsCheckSymbols)
 		AscFonts.FontPickerByCharacter.getFontBySymbol(this.value);
 };
-CMathText.prototype.Is_LetterCS = function()
+CMathText.prototype.GetFontSlot = function()
 {
-    return this.FontSlot == AscWord.fontslot_CS;
+	return this.FontSlot;
 };
 CMathText.prototype.ToSearchElement = function(oProps)
 {
@@ -1034,10 +1034,24 @@ CMathText.prototype.GetTextOfElement = function(isLaTeX) {
 		}
 	}
 
+    if (isLaTeX)
+    {
+        let str = AscMath.SymbolsToLaTeX[String.fromCharCode(this.value)];
+        if (str)
+        {
+            return str + " ";
+        }
+
+    }
+
     if (this.value && this.value !== 11034)
         return strPre + AscCommon.encodeSurrogateChar(this.value);
 
 	return "";
+};
+CMathText.prototype.GetCodePoint = function()
+{
+    return this.value;
 };
 /*CMathText.prototype.Recalculate_Reset = function(StartRange, StartLine, PRS)
 {
@@ -1425,4 +1439,7 @@ var q_Math_BreakOperators =
     0x00D7: 1, 0x00F7:  1
 };
 
-
+//--------------------------------------------------------export----------------------------------------------------
+window['AscWord'] = window['AscWord'] || {};
+window['AscWord'].CMathText = CMathText;
+window['AscWord'].CMathAmp = CMathAmp;

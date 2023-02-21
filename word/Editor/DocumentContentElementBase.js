@@ -424,6 +424,10 @@ CDocumentContentElementBase.prototype.AddNewParagraph = function()
 {
 
 };
+CDocumentContentElementBase.prototype.GetFormatPainterData = function()
+{
+	return null;
+};
 CDocumentContentElementBase.prototype.Get_SelectionState2 = function()
 {
 	return null;
@@ -463,6 +467,7 @@ CDocumentContentElementBase.prototype.AddImages = function(aImages)
 };
 CDocumentContentElementBase.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
+	return null;
 };
 CDocumentContentElementBase.prototype.AddSignatureLine = function(oSignatureDrawing)
 {
@@ -566,7 +571,7 @@ CDocumentContentElementBase.prototype.SetTableProps = function(oProps)
 CDocumentContentElementBase.prototype.GetSelectedContent = function(oSelectedContent)
 {
 };
-CDocumentContentElementBase.prototype.PasteFormatting = function(TextPr, ParaPr, ApplyPara)
+CDocumentContentElementBase.prototype.PasteFormatting = function(oData)
 {
 };
 CDocumentContentElementBase.prototype.GetCurPosXY = function()
@@ -1242,6 +1247,14 @@ CDocumentContentElementBase.prototype.CalculateTextToTable = function(oEngine){}
  * @param arrChanges
  */
 CDocumentContentElementBase.prototype.GetSelectedReviewChanges = function(arrChanges, oTrackChanges) {return arrChanges ? arrChanges : [];};
+/**
+ * Прокидываем наверх событие об изменении содержимого данного элемента
+ */
+CDocumentContentElementBase.prototype.OnContentChange = function()
+{
+	if (this.Parent && this.Parent.OnContentChange)
+		this.Parent.OnContentChange();
+};
 
 //--------------------------------------------------------export--------------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};

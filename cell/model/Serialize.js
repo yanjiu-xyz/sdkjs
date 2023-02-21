@@ -53,6 +53,39 @@
 	var g_StyleCache = AscCommonExcel.g_StyleCache;
     var g_cSharedWriteStreak = 64;//like Excel
 
+    function decodeXmlPath(str, opt_prepare_external_data) {
+        var res = str;
+
+        if (opt_prepare_external_data) {
+            res = res.replaceAll("\\'", "\"");
+        }
+
+        res = res.replace(/&apos;/g,"'");
+        res = res.replace(/&amp;/g,'&');
+        res = res.replace(/%20/g,' ');
+        res = res.replace(/%23/g,'#');
+        res = res.replace(/%25/g,'%');
+        res = res.replace(/%5e/g,'^');
+
+        return res;
+    }
+
+    function encodeXmlPath(str, opt_amp_encode, opt_prepare_external_data) {
+        var res = str;
+        if (opt_prepare_external_data) {
+            res = res.replaceAll('\"',"\\'");
+        }
+        if (opt_amp_encode) {
+            res = res.replace(/&/g,'&amp;');
+        }
+        res = res.replace(/%/g,'%25');
+        res = res.replace(/ /g,'%20');
+        res = res.replace(/#/g,'%23');
+        res = res.replace(/\^/g,'%5e');
+
+        return res;
+    }
+
 	var XLSB = {
 		rt_ROW_HDR : 0,
 		rt_CELL_BLANK : 1,
@@ -3254,7 +3287,7 @@
             if (slicerCachesExt) {
                 this.bs.WriteItem(c_oSerWorkbookTypes.SlicerCachesExt, function () {oThis.WriteSlicerCaches(slicerCachesExt/*, oThis.tableIds, oThis.sheetIds*/);});
             }
-			if (!this.isCopyPaste && this.wb.externalReferences.length > 0) {
+			if (this.wb.externalReferences.length > 0) {
 
             /*<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
             <externalLink xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" mc:Ignorable="x14" xmlns:x14="http://schemas.microsoft.com/office/spreadsheetml/2009/9/main">
@@ -3492,31 +3525,30 @@
             if (externalReference.referenceData) {
                  if (externalReference.referenceData["fileKey"]) {
                      oThis.memory.WriteByte(c_oSerWorkbookTypes.ExternalFileId);
-                     oThis.memory.WriteByte(c_oSerPropLenType.Variable);
-                     oThis.memory.WriteString2(externalReference.referenceData["fileKey"].replaceAll('\"',"'"));
+                     var fileKey = externalReference.referenceData["fileKey"];
+                     oThis.memory.WriteString2(encodeXmlPath(fileKey, true, true));
                  }
                  if (externalReference.referenceData["instanceId"]) {
                      oThis.memory.WriteByte(c_oSerWorkbookTypes.ExternalPortalName);
-                     oThis.memory.WriteByte(c_oSerPropLenType.Variable);
                      oThis.memory.WriteString2(externalReference.referenceData["instanceId"]);
                  }
-             }
+            }
 
             switch (externalReference.Type) {
                 case 0:
-                    this.memory.WriteByte(c_oSerWorkbookTypes.ExternalBook);
-                    this.memory.WriteByte(c_oSerPropLenType.Variable);
-                    this.bs.WriteItemWithLength(function(){oThis.WriteExternalBook(externalReference);});
+                    this.bs.WriteItem( c_oSerWorkbookTypes.ExternalBook, function(){
+                        oThis.WriteExternalBook(externalReference);
+                    });
                     break;
                 case 1:
-                    this.memory.WriteByte(c_oSerWorkbookTypes.OleLink);
-                    this.memory.WriteByte(c_oSerPropLenType.Variable);
-                    this.bs.WriteItemWithLength(function(){oThis.memory.WriteBuffer(externalReference.Buffer, 0, externalReference.Buffer.length);});
+                    this.bs.WriteItem( c_oSerWorkbookTypes.OleLink, function(){
+                        oThis.memory.WriteBuffer(externalReference.Buffer, 0, externalReference.Buffer.length);
+                    });
                     break;
                 case 2:
-                    this.memory.WriteByte(c_oSerWorkbookTypes.OleLink);
-                    this.memory.WriteByte(c_oSerPropLenType.Variable);
-                    this.bs.WriteItemWithLength(function(){oThis.memory.WriteBuffer(externalReference.Buffer, 0, externalReference.Buffer.length);});
+                    this.bs.WriteItem( c_oSerWorkbookTypes.OleLink, function(){
+                        oThis.memory.WriteBuffer(externalReference.Buffer, 0, externalReference.Buffer.length);
+                    });
                     break;
             }
         };
@@ -3524,7 +3556,7 @@
 			var oThis = this;
 			if (null != externalReference.Id) {
 				oThis.memory.WriteByte(c_oSer_ExternalLinkTypes.Id);
-				oThis.memory.WriteString2(externalReference.Id);
+				oThis.memory.WriteString2(encodeXmlPath(externalReference.Id));
 			}
 			if (externalReference.SheetNames.length > 0) {
 				this.bs.WriteItem(c_oSer_ExternalLinkTypes.SheetNames, function() {
@@ -3543,7 +3575,8 @@
 			}
 		};
 		this.WriteExternalSheetNames = function(sheetNames) {
-			for (var i = 0; i < sheetNames.length; i++) {
+            var oThis = this;
+		    for (var i = 0; i < sheetNames.length; i++) {
 				this.memory.WriteByte(c_oSer_ExternalLinkTypes.SheetName);
 				this.memory.WriteString2(sheetNames[i]);
 			}
@@ -3559,12 +3592,14 @@
 		this.WriteExternalDefinedName = function(definedName) {
 			var oThis = this;
 			if (null != definedName.Name) {
-				oThis.memory.WriteByte(c_oSer_ExternalLinkTypes.DefinedNameName);
-				oThis.memory.WriteString2(definedName.Name);
+                this.bs.WriteItem(c_oSer_ExternalLinkTypes.DefinedNameName, function() {
+                    oThis.memory.WriteString2(definedName.Name);
+                });
 			}
 			if (null != definedName.RefersTo) {
-				oThis.memory.WriteByte(c_oSer_ExternalLinkTypes.DefinedNameRefersTo);
-				oThis.memory.WriteString2(definedName.RefersTo);
+                this.bs.WriteItem(c_oSer_ExternalLinkTypes.DefinedNameRefersTo, function() {
+                    oThis.memory.WriteString2(definedName.RefersTo);
+                });
 			}
 			if (null != definedName.SheetId) {
 				this.bs.WriteItem(c_oSer_ExternalLinkTypes.DefinedNameSheetId, function() {
@@ -3631,6 +3666,7 @@
 				oThis.memory.WriteString2(cell.CellValue);
 			}
 		};
+
         this.WriteComments = function(aComments) {
             var t = this;
             for (var i = 0; i < aComments.length; ++i) {
@@ -7602,7 +7638,12 @@
                     return oThis.ReadExternalReference(t, l, externalReferenceExt);
                 });
                 if (externalReferenceExt.externalReference && externalReferenceExt.externalFileId && externalReferenceExt.externalPortalName) {
-                    externalReferenceExt.externalReference.setReferenceData(externalReferenceExt.externalFileId.replaceAll("'", "\""), externalReferenceExt.externalPortalName);
+                    var filId = externalReferenceExt.externalFileId;
+                    if (filId) {
+                        filId = decodeXmlPath(filId, true);
+                    }
+
+                    externalReferenceExt.externalReference.setReferenceData(filId, externalReferenceExt.externalPortalName);
                 }
             } else
                 res = c_oSerConstants.ReadUnknown;
@@ -7635,7 +7676,11 @@
 			var res = c_oSerConstants.ReadOk;
 			var oThis = this;
 			if (c_oSer_ExternalLinkTypes.Id == type) {
-				externalBook.Id = this.stream.GetString2LE(length);
+			    var id = this.stream.GetString2LE(length);
+			    if (id) {
+                    id = decodeXmlPath(id);
+                }
+				externalBook.Id = id;
 			} else if (c_oSer_ExternalLinkTypes.SheetNames == type) {
 				res = this.bcr.Read1(length, function(t, l) {
 					return oThis.ReadExternalSheetNames(t, l, externalBook.SheetNames);
@@ -12536,6 +12581,8 @@
     window['AscCommonExcel'].CT_PivotCaches = CT_PivotCaches;
     window['AscCommonExcel'].CT_PivotCache = CT_PivotCache;
 
+    window['AscCommonExcel'].decodeXmlPath = decodeXmlPath;
+    window['AscCommonExcel'].encodeXmlPath = encodeXmlPath;
 
 
 })(window);

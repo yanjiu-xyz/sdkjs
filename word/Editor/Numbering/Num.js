@@ -551,13 +551,25 @@ CNum.prototype.Draw = function(nX, nY, oContext, nLvl, oNumInfo, oNumTextPr, oTh
 		{
 			case numbering_lvltext_Text:
 			{
-				var FontSlot = AscWord.GetFontSlotByTextPr(arrText[nTextIndex].Value.charCodeAt(0), oNumTextPr);
+				let strValue  = arrText[nTextIndex].Value;
+				let codePoint = strValue.charCodeAt(0);
+				let curCoef   = dKoef;
 
-				oContext.SetFontSlot(FontSlot, dKoef);
-				g_oTextMeasurer.SetFontSlot(FontSlot, dKoef);
+				let info;
+				if ((info = this.ApplyTextPrToCodePoint(codePoint, oNumTextPr)))
+				{
+					curCoef *= info.FontCoef;
+					codePoint = info.CodePoint;
+					strValue  = String.fromCodePoint(codePoint);
+				}
 
-				oContext.FillText(nX, nY, arrText[nTextIndex].Value);
-				nX += g_oTextMeasurer.Measure(arrText[nTextIndex].Value).Width;
+				var FontSlot = AscWord.GetFontSlotByTextPr(codePoint, oNumTextPr);
+
+				oContext.SetFontSlot(FontSlot, curCoef);
+				g_oTextMeasurer.SetFontSlot(FontSlot, curCoef);
+
+				oContext.FillText(nX, nY, strValue);
+				nX += g_oTextMeasurer.Measure(strValue).Width;
 
 				break;
 			}
@@ -612,10 +624,22 @@ CNum.prototype.Measure = function(oContext, nLvl, oNumInfo, oNumTextPr, oTheme)
 		{
 			case numbering_lvltext_Text:
 			{
-				var FontSlot = AscWord.GetFontSlotByTextPr(arrText[nTextIndex].Value.charCodeAt(0), oNumTextPr);
+				let strValue  = arrText[nTextIndex].Value;
+				let codePoint = strValue.getUnicodeIterator().value();
+				let curCoef   = dKoef;
 
-				oContext.SetFontSlot(FontSlot, dKoef);
-				nX += oContext.Measure(arrText[nTextIndex].Value).Width;
+				let info;
+				if ((info = this.ApplyTextPrToCodePoint(codePoint, oNumTextPr)))
+				{
+					curCoef *= info.FontCoef;
+					codePoint = info.CodePoint;
+					strValue  = String.fromCodePoint(codePoint);
+				}
+
+				var FontSlot = AscWord.GetFontSlotByTextPr(codePoint, oNumTextPr);
+
+				oContext.SetFontSlot(FontSlot, curCoef);
+				nX += oContext.MeasureCode(codePoint).Width;
 
 				break;
 			}
@@ -623,11 +647,11 @@ CNum.prototype.Measure = function(oContext, nLvl, oNumInfo, oNumTextPr, oTheme)
 			{
 				oContext.SetFontSlot(AscWord.fontslot_ASCII, dKoef);
 				var nCurLvl = arrText[nTextIndex].Value;
-				var langForTextNumbering = oNumTextPr.Lang;
+				var sLangForTextNumbering = oNumTextPr.Lang;
 				var T = "";
 
 				if (nCurLvl < oNumInfo.length)
-					T = this.private_GetNumberedLvlText(nCurLvl, oNumInfo[nCurLvl], oLvl.IsLegalStyle() && nCurLvl < nLvl, langForTextNumbering);
+					T = this.private_GetNumberedLvlText(nCurLvl, oNumInfo[nCurLvl], oLvl.IsLegalStyle() && nCurLvl < nLvl, sLangForTextNumbering);
 
 				for (var iter = T.getUnicodeIterator(); iter.check(); iter.next())
 				{
@@ -989,6 +1013,24 @@ CNum.prototype.Read_FromBinary2 = function(oReader)
 
 	this.Numbering.AddNum(this);
 };
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Private area
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+CNum.prototype.ApplyTextPrToCodePoint = function(codePoint, textPr)
+{
+	if (!textPr || (!textPr.Caps && !textPr.SmallCaps))
+		return null;
+
+	let resultCodePoint = (String.fromCharCode(codePoint).toUpperCase()).charCodeAt(0);
+	if (resultCodePoint === codePoint)
+		return null;
+
+	return {
+		CodePoint : resultCodePoint,
+		FontCoef  : !textPr.Caps ? smallcaps_Koef : 1,
+	};
+};
+
 
 /**
  * Класс реализующий замену уровня в нумерации CNum

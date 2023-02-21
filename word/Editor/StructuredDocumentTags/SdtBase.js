@@ -164,11 +164,11 @@ CSdtBase.prototype.SetContentControlEquation = function(isEquation)
  */
 CSdtBase.prototype.ApplyContentControlEquationPr = function()
 {
-	var oTextPr = new CTextPr();
-	oTextPr.SetItalic(true);
-	oTextPr.SetFontFamily("Cambria Math");
+	let textPr = this.GetDefaultTextPr().Copy();
+	textPr.SetItalic(true);
+	textPr.SetFontFamily("Cambria Math");
 
-	this.SetDefaultTextPr(oTextPr);
+	this.SetDefaultTextPr(textPr);
 	this.SetContentControlEquation(true);
 	this.SetContentControlTemporary(true);
 
@@ -257,7 +257,7 @@ CSdtBase.prototype.private_CheckFieldMasterBeforeSet = function(formPr)
 	let oform;
 	
 	if (!logicDocument
-		|| !window['AscOForm']
+		|| !AscCommon.IsSupportOFormFeature()
 		|| !(oform = logicDocument.GetOFormDocument())
 		|| !logicDocument.IsActionStarted())
 		return;
@@ -360,6 +360,23 @@ CSdtBase.prototype.GetFormKey = function()
 	return (this.Pr.FormPr.Key);
 };
 /**
+ * Задаем новый ключ для специальной формы
+ * @param key {string}
+ */
+CSdtBase.prototype.SetFormKey = function(key)
+{
+	if (this.GetFormKey() === key)
+		return;
+	
+	let formPr = this.GetFormPr();
+	if (!formPr)
+		return;
+	
+	formPr = formPr.Copy();
+	formPr.Key = key;
+	this.SetFormPr(formPr);
+};
+/**
  * Проверяем, является ли данный контейнер чекбоксом
  * @returns {boolean}
  */
@@ -393,6 +410,20 @@ CSdtBase.prototype.GetRadioButtonGroupKey = function()
 		return undefined;
 
 	return (this.Pr.CheckBox.GroupKey);
+};
+/**
+ * Задаем групповой ключ для радио кнопки
+ * @param {string }groupKey
+ */
+CSdtBase.prototype.SetRadioButtonGroupKey = function(groupKey)
+{
+	let checkBoxPr = this.Pr.CheckBox;
+	if (!this.IsRadioButton() || !checkBoxPr)
+		return;
+	
+	checkBoxPr = checkBoxPr.Copy();
+	checkBoxPr.SetGroupKey(groupKey);
+	this.SetCheckBoxPr(checkBoxPr);
 };
 /**
  * Для чекбоксов и радио-кнопок получаем состояние
@@ -894,6 +925,15 @@ CSdtBase.prototype.GetFormRole = function()
 	let userMaster  = fieldMaster ? fieldMaster.getFirstUser() : null;
 	return userMaster ? userMaster.getRole() : "";
 };
+CSdtBase.prototype.SetFormRole = function(roleName)
+{
+	if (!this.IsForm() || roleName === this.GetFormRole())
+		return;
+	
+	let formPr = this.GetFormPr().Copy();
+	formPr.SetRole(roleName);
+	this.SetFormPr(formPr);
+};
 CSdtBase.prototype.SetFieldMaster = function(fieldMaster)
 {
 	if (!fieldMaster)
@@ -923,7 +963,21 @@ CSdtBase.prototype.GetFormHighlightColor = function(defaultColor)
 		defaultColor = logicDocument && logicDocument.GetSpecialFormsHighlight ? logicDocument.GetSpecialFormsHighlight() : null;
 	}
 	
+	let logicDocument = this.GetLogicDocument();
+	
+	if (!logicDocument || !this.IsForm())
+		return defaultColor;
+	
 	let formPr = this.GetFormPr();
+	if (!this.IsMainForm())
+	{
+		let mainForm = this.GetMainForm();
+		if (!mainForm)
+			return defaultColor;
+		
+		formPr = mainForm.GetFormPr();
+	}
+	
 	if (!formPr)
 		return defaultColor;
 	
@@ -931,7 +985,6 @@ CSdtBase.prototype.GetFormHighlightColor = function(defaultColor)
 	let userMaster  = fieldMaster ? fieldMaster.getFirstUser() : null;
 	let userColor   = userMaster ? userMaster.getColor() : null;
 	
-	let logicDocument = this.GetLogicDocument();
 	let oform         = logicDocument ? logicDocument.GetOFormDocument() : null;
 	let currentUser   = oform ? oform.getCurrentUserMaster() : null;
 	
@@ -939,4 +992,12 @@ CSdtBase.prototype.GetFormHighlightColor = function(defaultColor)
 		return userColor ? userColor : defaultColor;
 	
 	return new AscWord.CDocumentColor(0xF2, 0xF2, 0xF2);
+};
+CSdtBase.prototype.CheckOFormUserMaster = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument)
+		return true;
+	
+	return logicDocument.CheckOFormUserMaster(this);
 };

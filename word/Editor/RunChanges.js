@@ -524,6 +524,7 @@ CChangesRunBold.prototype.private_SetValue = function(Value)
 
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
+	oRun.OnContentChange();
 };
 CChangesRunBold.prototype.Load = function(Color)
 {
@@ -629,7 +630,11 @@ CChangesRunFontSize.prototype.private_SetValue = function(Value)
 {
 	var oRun = this.Class;
 	oRun.Pr.FontSize = Value;
-
+	const oSmartArtShape = oRun.IsInsideSmartArtShape(true);
+	if (oSmartArtShape)
+	{
+		oSmartArtShape.resetSmartArtMaxFontSize();
+	}
 	oRun.Recalc_CompiledPr(true);
 	oRun.private_UpdateTrackRevisionOnChangeTextPr(false);
 };

@@ -4257,6 +4257,9 @@
 			case Asc.c_oAscRevisionsChangeType.RowsRem:
 				sChangeType = "rowsRem";
 				break;
+			case Asc.c_oAscRevisionsChangeType.TableRowPr:
+				sChangeType = "tableRowPr";
+				break;
 			case Asc.c_oAscRevisionsChangeType.MoveMark:
 				sChangeType = "moveMark";
 				break;
@@ -9111,7 +9114,7 @@
 
 			var nBulleType = AscFormat.BULLET_TYPE_BULLET_NONE;
 			var nAutoNumType;
-			switch (oParsedBulletType["AutoNumType"])
+			switch (oParsedBulletType["autoNumType"])
 			{
 				case "alphaLcParenBoth":
 					nAutoNumType = AscFormat.numbering_presentationnumfrmt_AlphaLcParenBoth;
@@ -9943,6 +9946,9 @@
 				break;
 			case "tablePr":
 				nChangeType = Asc.c_oAscRevisionsChangeType.TablePr;
+				break;
+			case "tableRowPr":
+				nChangeType = Asc.c_oAscRevisionsChangeType.TableRowPr;
 				break;
 			case "rowsAdd":
 				nChangeType = Asc.c_oAscRevisionsChangeType.RowsAdd;
@@ -12170,7 +12176,7 @@
 	ReaderFromJSON.prototype.StyleFromJSON = function(oParsedStyle)
 	{
 		var sStyleName       = oParsedStyle["name"];
-		var nNextId          = oParsedStyle["next"];
+		var nNextId          = oParsedStyle["next"] != undefined ? oParsedStyle["next"] : null;
 		var nStyleType       = styletype_Paragraph;
 		var bNoCreateTablePr = !oParsedStyle["tblStylePr"];
 		var nBasedOnId       = oParsedStyle["basedOn"];
@@ -12191,8 +12197,7 @@
 				break;
 		}
 		var oStyle = new CStyle(sStyleName, nBasedOnId, nNextId, nStyleType, bNoCreateTablePr);
-		this.RestoredStylesMap[oParsedStyle.styleId] = oStyle;
-
+		
 		oParsedStyle["link"] != undefined && oStyle.SetLink(oParsedStyle["link"]);
 		oParsedStyle["customStyle"] != undefined && oStyle.SetCustom(oParsedStyle["customStyle"]);
 		oParsedStyle["qFormat"] != undefined && oStyle.SetQFormat(oParsedStyle["qFormat"]);
@@ -12243,6 +12248,8 @@
 			}
 		}
 
+		this.RestoredStylesMap[oParsedStyle.styleId] = oStyle;
+		
 		return oStyle;
 	};
 	ReaderFromJSON.prototype.TableStylePrFromJSON = function(oParsedPr)
@@ -16834,13 +16841,13 @@
 				oResult["color"] = {};
 
 				if (this.Color.Auto != null)
-					oResult["auto"] = this.Color.Auto;
+					oResult["color"]["auto"] = this.Color.Auto;
 				if (this.Color.r != null)
-					oResult["r"] = this.Color.r;
+					oResult["color"]["r"] = this.Color.r;
 				if (this.Color.g != null)
-					oResult["g"] = this.Color.g;
+					oResult["color"]["g"] = this.Color.g;
 				if (this.Color.b != null)
-					oResult["b"] = this.Color.b;
+					oResult["color"]["b"] = this.Color.b;
 			}
 
 			if (this.CS != null)

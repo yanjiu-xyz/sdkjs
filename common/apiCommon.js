@@ -217,7 +217,8 @@
 		ConnectionsLiveOS: 12,
 		ConnectionsLive: 13,
 		UsersViewCount: 14,
-		UsersViewCountOS: 15
+		UsersViewCountOS: 15,
+		NotBefore: 16
 	};
 
 	var c_oRights = {
@@ -5737,8 +5738,10 @@
 		return 0;
 	};
 
-	CPlugin.prototype["get_Name"]    = function()
+	CPlugin.prototype["get_Name"]    = function(locale)
 	{
+		if (locale && this.nameLocale && this.nameLocale[locale])
+			return this.nameLocale[locale];
 		return this.name;
 	};
 	CPlugin.prototype["set_Name"]    = function(value)
@@ -5904,6 +5907,7 @@
 	prot['ConnectionsLive'] = prot.ConnectionsLive;
 	prot['UsersViewCount'] = prot.UsersViewCount;
 	prot['UsersViewCountOS'] = prot.UsersViewCountOS;
+	prot['NotBefore'] = prot.NotBefore;
 
 	window['Asc']['c_oRights'] = window['Asc'].c_oRights = c_oRights;
 	prot = c_oRights;

@@ -6618,6 +6618,7 @@ function (window, undefined) {
 
 	cF_TEST.prototype = Object.create(cFTEST.prototype);
 	cF_TEST.prototype.constructor = cF_TEST;
+	cF_TEST.prototype.isXLFN = true;
 	cF_TEST.prototype.name = 'F.TEST';
 
 	/**
@@ -9999,6 +10000,7 @@ function (window, undefined) {
 	cSKEW.prototype.argumentsMin = 1;
 	cSKEW.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cSKEW.prototype.argumentsType = [[argType.number]];
+	cSKEW.prototype.isXLFN = true;
 	cSKEW.prototype.Calculate = function (arg) {
 
 		var arr0 = [];

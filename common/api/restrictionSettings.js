@@ -41,6 +41,7 @@
 	function CRestrictionSettings()
 	{
 		this.OFormRole = undefined;
+		this.ResetNone = false;
 	}
 	CRestrictionSettings.prototype.GetOFormRole = function()
 	{

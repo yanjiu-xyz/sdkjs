@@ -98,6 +98,10 @@ CDrawingsController.prototype.AddNewParagraph = function(bRecalculate, bForceAdd
 {
 	return this.DrawingObjects.addNewParagraph(bRecalculate, bForceAdd);
 };
+CDrawingsController.prototype.GetFormatPainterData = function()
+{
+	return this.DrawingObjects.getFormatPainterData();
+};
 CDrawingsController.prototype.AddInlineImage = function(nW, nH, oImage, oChart, bFlow)
 {
 	return this.DrawingObjects.addInlineImage(nW, nH, oImage, oChart, bFlow);
@@ -112,7 +116,7 @@ CDrawingsController.prototype.AddSignatureLine = function(oSignatureDrawing)
 };
 CDrawingsController.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory)
 {
-	this.DrawingObjects.addOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
+	return this.DrawingObjects.addOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 };
 CDrawingsController.prototype.AddTextArt = function(nStyle)
 {
@@ -424,9 +428,9 @@ CDrawingsController.prototype.UpdateCursorType = function(X, Y, PageAbs, MouseEv
 	// TODO: Надо вызывать не у LogicDocument, а у DocumentContent заданного
 	this.LogicDocument.controller_UpdateCursorType(X, Y, PageAbs, MouseEvent);
 };
-CDrawingsController.prototype.PasteFormatting = function(TextPr, ParaPr)
+CDrawingsController.prototype.PasteFormatting = function(oData)
 {
-	this.DrawingObjects.paragraphFormatPaste(TextPr, ParaPr, false);
+	this.DrawingObjects.pasteFormatting(oData);
 };
 CDrawingsController.prototype.IsSelectionUse = function()
 {

@@ -34,12 +34,7 @@
 
 (function(window)
 {
-	const NumberingType = {
-		Remove : "remove",
-		Bullet : "bullet",
-		Number : "number",
-		Hybrid : "hybrid"
-	};
+	const NumberingType = Asc.c_oAscJSONNumberingType;
 
 	/**
 	 * Класс для применения нумерации к документу

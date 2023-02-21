@@ -758,6 +758,9 @@ ChartPreviewManager.prototype.getChartPreviews = function(chartType, arrId, bEmp
 		oGraphics.init(oContext, oCanvas.width, oCanvas.height, this.SMARTART_PREVIEW_SIZE_MM, this.SMARTART_PREVIEW_SIZE_MM);
 		oGraphics.m_oFontManager = AscCommon.g_fontManager;
 		oGraphics.transform(1,0,0,1,0,0);
+		if (AscCommon.AscBrowser.retinaPixelRatio < 2) {
+			oGraphics.bDrawRectWithLines = true;
+		}
 		return oGraphics;
 	}
 
@@ -833,6 +836,8 @@ ChartPreviewManager.prototype.getChartPreviews = function(chartType, arrId, bEmp
 	SmartArtPreviewDrawer.prototype.getSmartArt = function(nSmartArtType) {
 		return AscFormat.ExecuteNoHistory(function () {
 			const oSmartArt = new AscFormat.SmartArt();
+			oSmartArt.bNeedUpdatePosition = false;
+			oSmartArt.bFirstRecalculate = false;
 			const oApi = Asc.editor || editor;
 				oSmartArt.bForceSlideTransform = true;
 				oSmartArt.fillByPreset(nSmartArtType, true);
@@ -1135,10 +1140,7 @@ TextArtPreviewManager.prototype.getShapeByPrst = function(prst)
 
 	var oBodypr = oShape.getBodyPr().createDuplicate();
 	oBodypr.prstTxWarp = AscFormat.CreatePrstTxWarpGeometry(prst);
-	oBodypr.lIns = 2.54;
-	oBodypr.tIns = 2.54;
-	oBodypr.rIns = 2.54;
-	oBodypr.bIns = 2.54;
+	oBodypr.setDefaultInsets();
 	if(!oShape.bWordShape)
 	{
 		oShape.txBody.setBodyPr(oBodypr);

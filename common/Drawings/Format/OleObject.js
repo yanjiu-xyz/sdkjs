@@ -445,10 +445,7 @@ function (window, undefined) {
         oBodyPr.horzOverflow = AscFormat.nHOTOverflow;
         oBodyPr.vert = AscFormat.nVertTThorz;
         oBodyPr.wrap = AscFormat.nTWTNone;
-        oBodyPr.lIns = 2.54;
-        oBodyPr.tIns = 1.27;
-        oBodyPr.rIns = 2.54;
-        oBodyPr.bIns = 1.27;
+        oBodyPr.setDefaultInsets();
         oBodyPr.numCol = 1;
         oBodyPr.spcCol = 0;
         oBodyPr.rtlCol = 0;

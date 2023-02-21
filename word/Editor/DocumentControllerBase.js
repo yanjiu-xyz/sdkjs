@@ -313,7 +313,10 @@ CDocumentControllerBase.prototype.AddImages = function(aImages){};
  * @param bSelect
  * @param arrImagesForAddToHistory
  */
-CDocumentControllerBase.prototype.AddOleObject = function(nW, nH, nWidthPix, nHeightPix, oImage, oData, sApplicationId, bSelect, arrImagesForAddToHistory){};
+CDocumentControllerBase.prototype.AddOleObject = function(nW, nH, nWidthPix, nHeightPix, oImage, oData, sApplicationId, bSelect, arrImagesForAddToHistory)
+{
+	return null;
+};
 /**
  * Добавляем графический объект TextArt.
  * @param nStyle
@@ -583,7 +586,7 @@ CDocumentControllerBase.prototype.UpdateCursorType = function(X, Y, PageAbs, Mou
  * @param TextPr
  * @param ParaPr
  */
-CDocumentControllerBase.prototype.PasteFormatting = function(TextPr, ParaPr){};
+CDocumentControllerBase.prototype.PasteFormatting = function(oData){};
 /**
  * Проверяем используется ли в данный момент селект.
  * @returns {boolean}
@@ -820,3 +823,12 @@ CDocumentControllerBase.prototype.FindNextFillingForm = function(isNext, isCurre
  * @param oTrackManager {AscWord.CTrackRevisionsManager}
  */
 CDocumentControllerBase.prototype.CollectSelectedReviewChanges = function(oTrackManager) {};
+
+/**
+ * returns data for format copying
+ * @return {?CDocumentFormatPainterData}
+ * */
+CDocumentControllerBase.prototype.GetFormatPainterData = function()
+{
+	return null;
+};

@@ -1006,7 +1006,8 @@
 		getNextTableName: function() {
 			var sNewName;
 			var collaborativeIndexUser = "";
-			if (this.wb.oApi.collaborativeEditing.getCollaborativeEditing()) {
+			var api = window["Asc"]["editor"];
+			if (api && api.collaborativeEditing && api.collaborativeEditing.getCollaborativeEditing()) {
 				collaborativeIndexUser = "_" + this.wb.oApi.CoAuthoringApi.get_indexUser();
 			}
 			do {
@@ -4140,13 +4141,21 @@
 			//предполагаем, что здесь уже лежит ссылка в грамотном виде
 			//ищем последний слэш или двоеточие и разделяем на части
 			res = res.Id;
+			var lastSlash = "/";
+			var checkPrefix = "file:///";
+			var prefixFile = "";
+			if (0 === res.indexOf(checkPrefix)) {
+				res = res.substring(8);
+				prefixFile = checkPrefix;
+				lastSlash = "\\";
+			}
 			for (var i = res.length - 1; i >= 0; i--) {
-				if (res[i] === "/" || res[i] === ":") {
-					return {path: res.substring(0, i + 1), name: res.substring(i + 1, res.length)};
+				if (res[i] === lastSlash || res[i] === ":") {
+					return {path: prefixFile + res.substring(0, i + 1), name: res.substring(i + 1, res.length)};
 				}
 			}
 			if (res) {
-				res = {path: "", name: res};
+				res = {path: prefixFile + "", name: res};
 			}
 		}
 		return res ? res : null;
@@ -4351,10 +4360,12 @@
 	Workbook.prototype.getExternalReferences = function () {
 		var res = null;
 		for (var i = 0; i < this.externalReferences.length; i++) {
-			if (!res) {
-				res = [];
+			if (this.externalReferences[i].getAscLink) {
+				if (!res) {
+					res = [];
+				}
+				res.push(this.externalReferences[i].getAscLink());
 			}
-			res.push(this.externalReferences[i].getAscLink())
 		}
 		return res;
 	};
@@ -8334,7 +8345,13 @@
 		if (pivotTable.showHeaders && colFields) {
 			cells = this.getRange4(pivotRange.r1, pivotRange.c1 + location.firstDataCol);
 			if (pivotTable.compact) {
-				this._updatePivotTableSetCellValue(cells, pivotTable.colHeaderCaption || AscCommon.translateManager.getValue(AscCommonExcel.COL_HEADER_CAPTION));
+				let caption;
+				if (1 === colFields.length && st_VALUES === colFields[0].asc_getIndex()) {
+					caption = pivotTable.dataCaption || AscCommon.translateManager.getValue(AscCommonExcel.DATA_CAPTION)
+				} else {
+					caption = pivotTable.colHeaderCaption || AscCommon.translateManager.getValue(AscCommonExcel.COL_HEADER_CAPTION);
+				}
+				this._updatePivotTableSetCellValue(cells, caption);
 			} else {
 				var offset = new AscCommon.CellBase(0, 1);
 				for (var i = 0; i < colFields.length; ++i) {
@@ -11215,6 +11232,7 @@
 				var id = protectedRanges[i].Id;
 				var cloneRange = protectedRanges[i].clone();
 				cloneRange.Id = id;
+				cloneRange.isLock = protectedRanges[i].isLock;
 				res.push(cloneRange);
 			}
 		}
@@ -12098,6 +12116,7 @@
 			DataOld = this.getValueData();
 		//[{text:"",format:TextFormat},{}...]
 		var xfTableAndCond = this.getCompiledStyleCustom(true, false, true);
+		var oldFP = this.formulaParsed;
 		this.setFormulaInternal(null);
 		this.cleanText();
 		this._setValue2(array, undefined, xfTableAndCond);
@@ -12114,6 +12133,7 @@
 			var cell = this.ws.getCell3(this.nRow, this.nCol);
 			cell.removeHyperlink();
 		}
+		this.checkRemoveExternalReferences(this.formulaParsed, oldFP);
 	};
 	Cell.prototype.setValueForValidation = function(array, formula, callback, isCopyPaste, byRef) {
 		this.setFormulaInternal(null, true);
