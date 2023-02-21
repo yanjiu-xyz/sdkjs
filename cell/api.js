@@ -6784,6 +6784,9 @@ var editor;
               return layout.rows[i];
             }
           }
+          if (layout.rows[layout.rows.length - 1].fld !== AscCommonExcel.st_VALUES) {
+            return layout.rows[layout.rows.length - 1];
+          }
         }
       } else if (layout.cols) {
         if (layout.cols.length == 1 && AscCommonExcel.st_VALUES !== layout.cols[layout.cols.length - 1].fld) {
@@ -6793,6 +6796,9 @@ var editor;
             if (layout.cols[i].fld !== AscCommonExcel.st_VALUES) {
               return layout.cols[i];
             }
+          }
+          if (layout.cols[layout.cols.length - 1].fld !== AscCommonExcel.st_VALUES) {
+            return layout.cols[layout.cols.length - 1];
           }
         }
       }
