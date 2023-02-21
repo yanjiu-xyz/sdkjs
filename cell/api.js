@@ -241,7 +241,7 @@ var editor;
 	};
 	spreadsheet_api.prototype.asc_getLocaleExample = function(format, value, culture) {
 		var cultureInfo = AscCommon.g_aCultureInfos[culture] || AscCommon.g_oDefaultCultureInfo;
-		var numFormat = AscCommon.oNumFormatCache.get(format);
+		var numFormat = AscCommon.oNumFormatCache.get(format || "General");
 		var res;
 		if (null == value) {
 			var ws = this.wbModel.getActiveWs();
@@ -6762,6 +6762,67 @@ var editor;
 			}
 		}
 	};
+
+	spreadsheet_api.prototype.asc_getPivotInfo = function(opt_pivotTable) {
+		var ws = this.wbModel.getActiveWs();
+		var activeCell = ws.selectionRange.activeCell;
+		var pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
+		if (pivotTable) {
+			return pivotTable.getContextMenuInfo(ws.selectionRange);
+		}
+		return null;
+	};
+  // Uses for % of, difference from, % difference from, running total in, % running total in, % of parent
+  spreadsheet_api.prototype.asc_getPivotShowValueAsInfo = function(showAs, opt_pivotTable) {
+    function correctInfoPercentOfParent(layout) {
+      if (layout.rows) {
+        if (layout.rows.length > 0 && AscCommonExcel.st_VALUES !== layout.rows[layout.rows.length - 1].fld) {
+          if (layout.rows.length > 1) {
+            return layout.rows[layout.rows.length - 2];
+          }
+          return layout.rows[layout.rows.length - 1];
+        } else if (layout.rows.length > 1) {
+          if (layout.rows.length > 2) {
+            return layout.rows[layout.rows.length - 3];
+          }
+          return layout.rows[layout.rows.length - 2];
+        }
+      } else if (layout.cols) {
+        if (layout.cols.length > 0 && AscCommonExcel.st_VALUES !== layout.cols[layout.cols.length - 1].fld) {
+          if (layout.cols.length > 1) {
+            return layout.cols[layout.cols.length - 2];
+          }
+          return layout.cols[layout.cols.length - 1];
+        } else if (layout.cols.length > 1) {
+          if (layout.cols.length > 2) {
+            return layout.cols[layout.cols.length - 3];
+          }
+          return layout.cols[layout.cols.length - 2];
+        }
+      }
+      return null;
+    }
+    var res = null;
+    var ws = this.wbModel.getActiveWs();
+    var activeCell = ws.selectionRange.activeCell;
+    var pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
+    if (pivotTable) {
+      var layout = pivotTable.getLayoutByCell(activeCell.row, activeCell.col);
+      var cellLayout = null;
+      if (showAs === Asc.c_oAscShowDataAs.PercentOfParent) {
+        cellLayout = correctInfoPercentOfParent(layout);
+      } else {
+        cellLayout = layout.getHeaderCellLayoutExceptValue();
+      }
+      if (cellLayout !== null) {
+        res = new Asc.CT_DataField();
+        res.baseField = cellLayout.fld;
+        res.baseItem = cellLayout.v;
+      }
+    }
+    return res;
+  }
+
 	spreadsheet_api.prototype.asc_getAddPivotTableOptions = function(range) {
 		var ws = this.wb.getWorksheet();
 		if (ws.model.getSelection().isSingleRange()) {
@@ -8724,6 +8785,8 @@ var editor;
   prot["asc_insertPivotNewWorksheet"] = prot.asc_insertPivotNewWorksheet;
   prot["asc_insertPivotExistingWorksheet"] = prot.asc_insertPivotExistingWorksheet;
   prot["asc_refreshAllPivots"] = prot.asc_refreshAllPivots;
+  prot["asc_getPivotInfo"] = prot.asc_getPivotInfo;
+  prot["asc_getPivotShowValueAsInfo"] = prot.asc_getPivotShowValueAsInfo;
 	// signatures
   prot["asc_addSignatureLine"] 		     = prot.asc_addSignatureLine;
   prot["asc_CallSignatureDblClickEvent"] = prot.asc_CallSignatureDblClickEvent;

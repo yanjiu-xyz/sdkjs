@@ -383,6 +383,7 @@
 
 			if ( !(this instanceof PivotFilterObj) ) {return new PivotFilterObj();}
 
+			this.fld = null;//pivotField index
 			this.dataFields = null;//pivot.asc_getDataFields. for sorting and value filters
 			this.dataFieldIndexSorting = 0;//selected index in dataFields
 			this.dataFieldIndexFilter = 0;//selected index in dataFields
@@ -394,6 +395,7 @@
 		}
 		PivotFilterObj.prototype = {
 			constructor: PivotFilterObj,
+			asc_setPivotField : function(val) { this.fld = val;},
 			asc_setDataFields : function(val) { this.dataFields = val || null;},
 			asc_setDataFieldIndexSorting : function(val) { this.dataFieldIndexSorting = val;},
 			asc_setDataFieldIndexFilter : function(val) { this.dataFieldIndexFilter = val;},
@@ -401,6 +403,7 @@
 			asc_setIsMultipleItemSelectionAllowed : function(val) { this.isMultipleItemSelectionAllowed = val;},
 			asc_setIsTop10Sum : function(val) { this.isTop10Sum = val;},
 
+			asc_getPivotField : function(val) { return this.fld;},
 			asc_getDataFields : function(val) { return this.dataFields;},
 			asc_getDataFieldIndexSorting : function(val) { return this.dataFieldIndexSorting;},
 			asc_getDataFieldIndexFilter : function(val) { return this.dataFieldIndexFilter;},
@@ -6353,12 +6356,14 @@
 
 		window["Asc"]["PivotFilterObj"]		    = window["Asc"].PivotFilterObj = PivotFilterObj;
 		prot									= PivotFilterObj.prototype;
+		prot["asc_setPivotField"]						= prot.asc_setPivotField;
 		prot["asc_setDataFields"]						= prot.asc_setDataFields;
 		prot["asc_setDataFieldIndexSorting"]			= prot.asc_setDataFieldIndexSorting;
 		prot["asc_setDataFieldIndexFilter"]				= prot.asc_setDataFieldIndexFilter;
 		prot["asc_setIsPageFilter"]						= prot.asc_setIsPageFilter;
 		prot["asc_setIsMultipleItemSelectionAllowed"]	= prot.asc_setIsMultipleItemSelectionAllowed;
 		prot["asc_setIsTop10Sum"]						= prot.asc_setIsTop10Sum;
+		prot["asc_getPivotField"]						= prot.asc_getPivotField;
 		prot["asc_getDataFields"]						= prot.asc_getDataFields;
 		prot["asc_getDataFieldIndexSorting"]			= prot.asc_getDataFieldIndexSorting;
 		prot["asc_getDataFieldIndexFilter"]				= prot.asc_getDataFieldIndexFilter;
