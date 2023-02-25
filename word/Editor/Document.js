@@ -8110,7 +8110,7 @@ CDocument.prototype.OnEndTextDrag = function(NearPos, bCopy)
 		// залоченных контент контролов
 		this.SetCheckContentControlsLock(false);
 
-		var oSelectInfo = this.GetSelectedElementsInfo();
+		var oSelectInfo = this.GetSelectedElementsInfo({CheckAllSelection : true});
 		var arrSdts     = oSelectInfo.GetAllSdts();
 		if (arrSdts.length > 0 && !bCopy)
 		{
