@@ -6201,7 +6201,7 @@ CT_pivotTableDefinition.prototype.getContextMenuInfo = function(selection) {
 	let col = selection.activeCell.col;
 	res.layout = this.getLayoutByCell(row, col);
 	res.layoutGroup = this.getLayoutsForGroup(selection, res.layout);
-	if (res.layout && Asc.PivotLayoutType.cell === res.layout.type && selection.isSingleRange() && selection.getLast().isOneCell()) {
+	if (res.layout && res.layout.dataFieldIndex !== null && Asc.PivotLayoutType.cell === res.layout.type && selection.isSingleRange() && selection.getLast().isOneCell()) {
 		let cellLayout = res.layout.getHeaderCellLayoutRowExceptValue();
 		if (null !== cellLayout && null !== cellLayout.fld) {
 			let autoFilterObject = new Asc.AutoFiltersOptions();

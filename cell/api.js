@@ -6811,10 +6811,12 @@ var editor;
     if (pivotTable) {
       var layout = pivotTable.getLayoutByCell(activeCell.row, activeCell.col);
       var cellLayout = null;
-      if (showAs === Asc.c_oAscShowDataAs.PercentOfParent) {
-        cellLayout = correctInfoPercentOfParent(layout);
-      } else {
-        cellLayout = layout.getHeaderCellLayoutExceptValue();
+      if (layout) {
+        if (showAs === Asc.c_oAscShowDataAs.PercentOfParent) {
+          cellLayout = correctInfoPercentOfParent(layout);
+        } else {
+          cellLayout = layout.getHeaderCellLayoutExceptValue();
+        }
       }
       if (cellLayout !== null) {
         res = new Asc.CT_DataField();
