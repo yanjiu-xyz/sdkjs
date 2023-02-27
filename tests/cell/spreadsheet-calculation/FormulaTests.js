@@ -22546,6 +22546,491 @@ $(function () {
 
 	});
 
+	QUnit.test("Test: \"FILTER\"", function (assert) {
+		let array;
+
+		ws.getRange2("B10").setValue("");
+		ws.getRange2("B11").setValue();
+
+		ws.getRange2("F10").setValue("1");
+		ws.getRange2("F11").setValue("3");
+		ws.getRange2("F12").setValue("5");
+		ws.getRange2("F13").setValue("7");
+		ws.getRange2("F14").setValue("9");
+		ws.getRange2("F15").setValue("11");
+		ws.getRange2("G10").setValue("25");
+		ws.getRange2("G11").setValue("24");
+		ws.getRange2("G12").setValue("23");
+		ws.getRange2("G13").setValue("22");
+		ws.getRange2("G14").setValue("21");
+		ws.getRange2("G15").setValue("20");
+		ws.getRange2("H10").setValue("1");
+		ws.getRange2("H11").setValue("-10");
+		ws.getRange2("H12").setValue("-5");
+		ws.getRange2("H13").setValue("0");
+		ws.getRange2("H14").setValue("5");
+		ws.getRange2("H15").setValue("10");
+
+		// range && range
+		oParser = new parserFormula("FILTER(F10:H15,F10:H10=1)", "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), "FILTER(F10:H15,F10:H10=1)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of FILTER(F10:H15,F10:H10=1)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 1, 'Result of FILTER(F10:H15,F10:H10=1)[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "", 'Result of FILTER(F10:H15,F10:H10=1)[0,2]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 3, 'Result of FILTER(F10:H15,F10:H10=1)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), -10, 'Result of FILTER(F10:H15,F10:H10=1)[1,1]');
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "", 'Result of FILTER(F10:H15,F10:H10=1)[1,2]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 5, 'Result of FILTER(F10:H15,F10:H10=1)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), -5, 'Result of FILTER(F10:H15,F10:H10=1)[2,1]');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 7, 'Result of FILTER(F10:H15,F10:H10=1)[3,0]');
+		assert.strictEqual(array.getElementRowCol(3, 1).getValue(), 0, 'Result of FILTER(F10:H15,F10:H10=1)[3,1]');
+
+		oParser = new parserFormula('FILTER({1;2;3},{FALSE;FALSE;FALSE},25)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3},{FALSE;FALSE;FALSE},25)');
+		array = oParser.calculate();
+		assert.strictEqual(oParser.calculate().getValue(), 25, 'Result of FILTER({1;2;3},{FALSE;FALSE;FALSE},25)');
+
+		oParser = new parserFormula('FILTER({1,2,3}, {TRUE,FALSE,TRUE})', "С2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), 'FILTER({1,2,3}, {TRUE,FALSE,TRUE})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of FILTER({1,2,3}, {TRUE,FALSE,TRUE})[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 3, 'Result of FILTER({1,2,3}, {TRUE,FALSE,TRUE})[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "", 'Result of FILTER({1,2,3}, {TRUE,FALSE,TRUE})[0,2]');
+
+		oParser = new parserFormula("FILTER(F10:H15,F10:F15>8)", "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), "FILTER(F10:H15,F10:F15>8)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 9, 'Result of FILTER(F10:H15,F10:F15>8)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 21, 'Result of FILTER(F10:H15,F10:F15>8)[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 5, 'Result of FILTER(F10:H15,F10:F15>8)[0,2]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 11, 'Result of FILTER(F10:H15,F10:F15>8)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 20, 'Result of FILTER(F10:H15,F10:F15>8)[1,1]');
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 10, 'Result of FILTER(F10:H15,F10:F15>8)[1,2]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "", 'Result of FILTER(F10:H15,F10:F15>8)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), "", 'Result of FILTER(F10:H15,F10:F15>8)[2,1]');
+		assert.strictEqual(array.getElementRowCol(2, 2).getValue(), "", 'Result of FILTER(F10:H15,F10:F15>8)[2,2]');
+
+		oParser = new parserFormula("FILTER({1;2;3;4},{FALSE;0;1;1},25)", "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), "FILTER({1;2;3;4},{FALSE;0;1;1},25)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 3, 'Result of FILTER({1;2;3;4},{FALSE;0;1;1},25)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", 'Result of FILTER({1;2;3;4},{FALSE;0;1;1},25)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 4, 'Result of FILTER({1;2;3;4},{FALSE;0;1;1},25)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", 'Result of FILTER({1;2;3;4},{FALSE;0;1;1},25)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "", 'Result of FILTER({1;2;3;4},{FALSE;0;1;1},25)[2,0]');
+
+		oParser = new parserFormula('FILTER({1;2;3;4},{"FALSE";0;1;1},25)', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3;4},{"FALSE";0;1;1},25)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 3, 'Result of FILTER({1;2;3;4},{"FALSE";0;1;1},25)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", 'Result of FILTER({1;2;3;4},{"FALSE";0;1;1},25)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 4, 'Result of FILTER({1;2;3;4},{"FALSE";0;1;1},25)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", 'Result of FILTER({1;2;3;4},{"FALSE";0;1;1},25)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "", 'Result of FILTER({1;2;3;4},{"FALSE";0;1;1},25)[2,0]');
+
+		oParser = new parserFormula('FILTER({1;2;3;4},{"FALSE";0;"TRUE";"trUe"},25)', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3;4},{"FALSE";0;"TRUE";"trUe"},25)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 3, 'Result of FILTER({1;2;3;4},{"FALSE";0;"TRUE";"trUe"},25)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", 'Result of FILTER({1;2;3;4},{"FALSE";0;"TRUE";"trUe"},25)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 4, 'Result of FILTER({1;2;3;4},{"FALSE";0;"TRUE";"trUe"},25)[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", 'Result of FILTER({1;2;3;4},{"FALSE";0;"TRUE";"trUe"},25)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "", 'Result of FILTER({1;2;3;4},{"FALSE";0;"TRUE";"trUe"},25)[2,0]');
+
+		oParser = new parserFormula('FILTER({1;2;3;4},{FALSE;"0";1;1},25)', "C2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3;4},{FALSE;"0";1;1},25)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of FILTER({1;2;3;4},{FALSE;"0";1;1},25)');
+
+		oParser = new parserFormula('FILTER({1;2;3;4},{FALSE;0;1;"str"},25)', "C2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3;4},{FALSE;0;1;"str"},25)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of FILTER({1;2;3;4},{FALSE;0;1;"str"},25)');
+
+		oParser = new parserFormula('FILTER({1;2;3;4;5},{FALSE;0;1;"str"},25)', "C2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3;4;5},{FALSE;0;1;"str"},25)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of FILTER({1;2;3;4;5},{FALSE;0;1;"str"},25)');
+
+		oParser = new parserFormula('FILTER({1;2;3},{FALSE;TRUE},25)', "C2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3},{FALSE;TRUE},25)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of FILTER({1;2;3},{FALSE;TRUE},25)');
+
+		oParser = new parserFormula('FILTER({1;2;3},{FALSE;TRUE})', "C2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3},{FALSE;TRUE})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of FILTER({1;2;3},{FALSE;TRUE})');
+
+		oParser = new parserFormula("FILTER(F10:H15,(F10:F15>5)*(F10:F15<9))", "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), "FILTER(F10:H15,(F10:F15>5)*(F10:F15<9)))");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 7, 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<9)))[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 22, 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<9)))[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 0, 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<9)))[0,2]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<9)))[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<9)))[1,1]');
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<9)))[1,2]');
+
+		oParser = new parserFormula("FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))", "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), "FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", 'Result of FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#N/A", 'Result of FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))[0,2]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), -10, 'Result of FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", 'Result of FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), -5, 'Result of FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))[2,0]');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), 0, 'Result of FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))[3,0]');
+		assert.strictEqual(array.getElementRowCol(4, 0).getValue(), 5, 'Result of FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))[4,0]');
+		assert.strictEqual(array.getElementRowCol(5, 0).getValue(), 10, 'Result of FILTER(F10:H15,(F10:H10=1)*(F11:H11=-10))[5,0]');
+
+		oParser = new parserFormula('FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),F10:G11)', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), "FILTER(F10:H15,(F10:F15>5)*(F10:F15<6)),F10:G11)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),F10:G11))[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 25, 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),F10:G11))[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 3, 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),F10:G11))[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 24, 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),F10:G11))[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),F10:G11))[2,0]');
+
+		oParser = new parserFormula('FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),B10)', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), "FILTER(F10:H15,(F10:F15>5)*(F10:F15<6)),B10)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue().getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),B10))');
+
+		oParser = new parserFormula('FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),B11)', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), "FILTER(F10:H15,(F10:F15>5)*(F10:F15<6)),B11)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue().getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),B11))');
+
+		oParser = new parserFormula('FILTER(F10:H15,(F10:F15>5)*(F10:F15<6), "")', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), "FILTER(F10:H15,(F10:F15>5)*(F10:F15<6)))");
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),""))');
+
+		oParser = new parserFormula('FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),25)', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), "FILTER(F10:H15,(F10:F15>5)*(F10:F15<6)),25)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), 25, 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),25))');
+
+		oParser = new parserFormula('FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),"str")', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), "FILTER(F10:H15,(F10:F15>5)*(F10:F15<6)),'str')");
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "str", 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),"str"))');
+
+		oParser = new parserFormula('FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),TRUE)', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), "FILTER(F10:H15,(F10:F15>5)*(F10:F15<6)),TRUE)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "TRUE", 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),TRUE))');
+
+		oParser = new parserFormula('FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),FALSE)', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), "FILTER(F10:H15,(F10:F15>5)*(F10:F15<6)),FALSE)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "FALSE", 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),FALSE))');
+
+		oParser = new parserFormula('FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),{1,2,3})', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), "FILTER(F10:H15,(F10:F15>5)*(F10:F15<6)),{1,2,3})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),{1,2,3}))[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 2, 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),{1,2,3}))[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 3, 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),{1,2,3}))[0,2]');
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),{1,2,3}))[0,3]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),{1,2,3}))[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),{1,2,3}))[1,1]');
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),{1,2,3}))[1,2]');
+		assert.strictEqual(array.getElementRowCol(1, 3).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),{1,2,3}))[1,3]');
+
+		oParser = new parserFormula('FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),{1;2;3})', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), "FILTER(F10:H15,(F10:F15>5)*(F10:F15<6)),{1;2;3})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),{1;2;3}))[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),{1;2;3}))[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),{1;2;3}))[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),{1;2;3}))[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 3, 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),{1;2;3}))[2,0]');
+
+		oParser = new parserFormula('FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),{1,2;3,4})', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), "FILTER(F10:H15,(F10:F15>5)*(F10:F15<6)),{1,2;3,4})");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),{1,2;3,4}))[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 2, 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),{1,2;3,4}))[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 3, 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),{1,2;3,4}))[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4, 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),{1,2;3,4}))[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(F10:F15<6),{1,2;3,4}))[2,0]');
+
+		oParser = new parserFormula('FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15))', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), 'FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15))');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 9, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15))[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 21, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15))[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 5, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15))[0,2]');
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15))[0,3]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 11, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15))[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 20, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15))[1,1]');
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 10, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15))[1,2]');
+		assert.strictEqual(array.getElementRowCol(1, 3).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15))[1,3]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15))[2,0]');
+
+		oParser = new parserFormula('FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(TRUE))', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), 'FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(TRUE))');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 9, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(TRUE))[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 21, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(TRUE))[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 5, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(TRUE))[0,2]');
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(TRUE))[0,3]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 11, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(TRUE))[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 20, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(TRUE))[1,1]');
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 10, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(TRUE))[1,2]');
+		assert.strictEqual(array.getElementRowCol(1, 3).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(TRUE))[1,3]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(TRUE))[2,0]');
+
+		oParser = new parserFormula('FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(1))', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), 'FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(1))');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 9, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(1))[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 21, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(1))[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 5, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(1))[0,2]');
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(1))[0,3]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 11, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(1))[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 20, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(1))[1,1]');
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 10, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(1))[1,2]');
+		assert.strictEqual(array.getElementRowCol(1, 3).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(1))[1,3]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(1))[2,0]');
+
+		oParser = new parserFormula('FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*({1}))', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), 'FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*({1}))');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 9, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*({1}))[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 21, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*({1}))[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 5, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*({1}))[0,2]');
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*({1}))[0,3]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 11, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*({1}))[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 20, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*({1}))[1,1]');
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), 10, 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*({1}))[1,2]');
+		assert.strictEqual(array.getElementRowCol(1, 3).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*({1}))[1,3]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "", 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*({1}))[2,0]');
+
+		oParser = new parserFormula('FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(FALSE))', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), 'FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(FALSE))');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(FALSE))');
+
+		oParser = new parserFormula('FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(0))', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), 'FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(0))');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*(0))');
+
+		oParser = new parserFormula('FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*({0}))', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), 'FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*({0}))');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*({0}))');
+
+		oParser = new parserFormula('FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*({1,2}))', "C2", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("C2:E7").bbox);
+		assert.ok(oParser.parse(), 'FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*({1,2}))');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of FILTER(F10:H15,(F10:F15>5)*(G10:G15<23)*(H10:H15)*({1,2}))');
+
+		// value && value
+		oParser = new parserFormula('FILTER(12,"0")', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,"0")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER(12,"0")');
+		
+		oParser = new parserFormula('FILTER(12,"1")', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,"1")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER(12,"1")');
+
+		oParser = new parserFormula('FILTER(12,"TRUE")', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,"TRUE")');
+		assert.strictEqual(oParser.calculate().getValue(), 12, 'Result of FILTER(12,"TRUE")');
+
+		oParser = new parserFormula('FILTER(12,"FALSE")', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,"FALSE")');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER(12,"FALSE")');		// #CALC!
+
+		oParser = new parserFormula('FILTER(12,"0",25)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,"0",25)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER(12,"0",25)');
+		
+		oParser = new parserFormula('FILTER(12,"1",25)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,"1",25)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER(12,"1",25)');
+
+		oParser = new parserFormula('FILTER(12,"TRUE",25)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,"TRUE",25)');
+		assert.strictEqual(oParser.calculate().getValue(), 12, 'Result of FILTER(12,"TRUE",25)');
+
+		oParser = new parserFormula('FILTER(12,"FALSE",25)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,"FALSE")');
+		assert.strictEqual(oParser.calculate().getValue(), 25, 'Result of FILTER(12,"FALSE")');
+
+		oParser = new parserFormula('FILTER(12,TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,TRUE)');
+		assert.strictEqual(oParser.calculate().getValue(), 12, 'Result of FILTER(12,TRUE)');
+
+		oParser = new parserFormula('FILTER(12,FALSE)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,FALSE)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER(12,FALSE)');	// #CALC!
+
+		oParser = new parserFormula('FILTER(12,12)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,12)');
+		assert.strictEqual(oParser.calculate().getValue(), 12, 'Result of FILTER(12,12)');
+
+		oParser = new parserFormula('FILTER(12,0)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,0)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER(12,0)');		// #CALC!
+
+		oParser = new parserFormula('FILTER(FALSE,TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(FALSE,TRUE)');
+		assert.strictEqual(oParser.calculate().getValue(), "FALSE", 'Result of FILTER(FALSE,TRUE)');
+
+		oParser = new parserFormula('FILTER(#N/A,TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(#N/A,TRUE)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of FILTER(#N/A,TRUE)');
+
+		oParser = new parserFormula('FILTER(FALSE,#NUM!)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(FALSE,#NUM!)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of FILTER(FALSE,#NUM!)');
+
+		oParser = new parserFormula('FILTER(#N/A,#NUM!)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(#N/A,#NUM!)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of FILTER(#N/A,#NUM!)');
+
+		oParser = new parserFormula('FILTER(,TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(,TRUE)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER(,TRUE)');
+
+		oParser = new parserFormula('FILTER(B10,TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(B10,TRUE)');
+		assert.strictEqual(oParser.calculate().getValue(), "", 'Result of FILTER(B10,TRUE)');	// 0
+
+		oParser = new parserFormula('FILTER(B11,TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(B11,TRUE)');
+		assert.strictEqual(oParser.calculate().getValue(), "", 'Result of FILTER(B11,TRUE)');	// 0
+
+		oParser = new parserFormula('FILTER(TRUE,)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(TRUE,)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER(TRUE,)');
+
+		oParser = new parserFormula('FILTER(TRUE,B10)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(TRUE,B10)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER(TRUE,B10)');	// #CALC!
+
+		oParser = new parserFormula('FILTER(TRUE,B11)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(TRUE,B11)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER(TRUE,B11)');	// #CALC!
+
+		// value && range
+		oParser = new parserFormula('FILTER("z", {TRUE})', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER("z", {TRUE})');
+		assert.strictEqual(oParser.calculate().getValue(), "z", 'Result of FILTER("z", {TRUE})');
+
+		oParser = new parserFormula('FILTER("z", {TRUE,FALSE})', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER("z", {TRUE,FALSE})');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER("z", {TRUE,FALSE})');
+
+		oParser = new parserFormula('FILTER("x", {TRUE;FALSE})', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER("x", {TRUE;FALSE})');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER("x", {TRUE;FALSE})');
+
+		oParser = new parserFormula('FILTER("12", {FALSE})', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER("12", {FALSE})');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of FILTER("12", {FALSE})');	// #CALC!
+
+		// range && value
+		oParser = new parserFormula('FILTER({1;2;3},FALSE,25)', "C2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3},FALSE,25)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), 25, 'Result of FILTER({1;2;3},FALSE,25)');
+
+		oParser = new parserFormula('FILTER({1,2,3},TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1,2,3},TRUE)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of FILTER({1,2,3},TRUE)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 2, 'Result of FILTER({1,2,3},TRUE)[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), 3, 'Result of FILTER({1,2,3},TRUE)[0,2]');
+		assert.strictEqual(array.getElementRowCol(0, 3).getValue(), "", 'Result of FILTER({1,2,3},TRUE)[0,3]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "", 'Result of FILTER({1,2,3},TRUE)[1,0]');
+
+		oParser = new parserFormula('FILTER({1;2;3},TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3},TRUE)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 1, 'Result of FILTER({1,2,3},TRUE)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "", 'Result of FILTER({1,2,3},TRUE)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 2, 'Result of FILTER({1,2,3},TRUE)[1,0]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), 3, 'Result of FILTER({1,2,3},TRUE)[2,0]');
+		assert.strictEqual(array.getElementRowCol(3, 0).getValue(), "", 'Result of FILTER({1,2,3},TRUE)[3,0]');
+
+		oParser = new parserFormula('FILTER({1;2;3},FALSE, 25)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3},FALSE, 25)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), 25, 'Result of FILTER({1,2,3},FALSE)');
+
+		oParser = new parserFormula('FILTER({1;2;3},FALSE,)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3},FALSE,)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", 'Result of FILTER({1,2,3},FALSE,)');
+
+		oParser = new parserFormula('FILTER({1;2;3},FALSE,B10)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3},FALSE,B10)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue().getValue(), "", 'Result of FILTER({1,2,3},FALSE,B10)'); 		// 0
+
+		oParser = new parserFormula('FILTER({1;2;3},FALSE,B11)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3},FALSE,B11)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue().getValue(), "", 'Result of FILTER({1,2,3},FALSE,B11)');			// 0
+
+		oParser = new parserFormula('FILTER({1;2;3},FALSE,#N/A)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3},FALSE,#N/A)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#N/A", 'Result of FILTER({1,2,3},FALSE,#N/A)');
+
+		oParser = new parserFormula('FILTER({1;2;3},FALSE,0)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER({1;2;3},FALSE,0)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), 0, 'Result of FILTER({1,2,3},FALSE,0)');
+
+		oParser = new parserFormula('FILTER(12,TRUE,)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,TRUE,)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), 12, 'Result of FILTER(12,TRUE,)');
+
+		oParser = new parserFormula('FILTER(12,TRUE,#N/A)', "A2", ws);
+		assert.ok(oParser.parse(), 'FILTER(12,TRUE,#N/A)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), 12, 'Result of FILTER(12,TRUE,#N/A)');
+
+	});
+
 	QUnit.test("Test: \"reference argument test\"", function (assert) {
 		ws.getRange2("A1").setValue("1");
 		ws.getRange2("A2").setValue("2");
