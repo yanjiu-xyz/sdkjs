@@ -2572,6 +2572,11 @@ background-repeat: no-repeat;\
 		}
 	};
 
+	asc_docs_api.prototype.GetContentFromHtml = function(html, callback)
+	{
+		AscCommon.GetContentFromHtml(this, html, callback);
+	};
+
 	asc_docs_api.prototype._finalizeAction = function()
 	{
 		var _logicDoc = this.WordControl.m_oLogicDocument;

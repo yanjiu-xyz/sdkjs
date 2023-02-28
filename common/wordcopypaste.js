@@ -2094,6 +2094,13 @@ function CopyPasteCorrectString(str)
     return res;
 }
 
+function GetContentFromHtml(api, html, callback)
+{
+	var oPasteProcessor = new PasteProcessor(api, true, true, false, undefined, callback);
+	oPasteProcessor.doNotInsertInDoc = true;
+	oPasteProcessor.Start(html);
+}
+
 function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPasteProps, callback)
 {
     var oPasteProcessor = new PasteProcessor(api, true, true, false, undefined, callback);
@@ -2312,18 +2319,20 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
 	this.msoComments = [];
 
 	this.startMsoAnnotation = undefined;
-	this.needAddCommentStart;
-	this.needAddCommentEnd;
+	this.needAddCommentStart = null;
+	this.needAddCommentEnd = null;
 
-	this.aMsoHeadStylesStr;
+	this.aMsoHeadStylesStr = null;
 	this.oMsoHeadStylesListMap = [];
 	this.oMsoStylesParser = null;
 
-	this.pasteTextIntoList;
+	this.pasteTextIntoList = null;
 
-	this.rtfImages;
+	this.rtfImages = null;
 
-	this.aNeedRecalcImgSize;
+	this.aNeedRecalcImgSize = null;
+
+	this.doNotInsertInDoc = null;
 }
 PasteProcessor.prototype =
 {
@@ -2688,6 +2697,11 @@ PasteProcessor.prototype =
 			//TODO проверку на excel пеерсмотреть!!!!
 			oSelectedContent.EndCollect(this.oLogicDocument);
 			oSelectedContent.SetCopyComments(false);
+
+			if (this.doNotInsertInDoc) {
+				this.pasteCallback && this.pasteCallback(oSelectedContent);
+				return;
+			}
 
 			if(!this.pasteInExcel && !oSelectedContent.CanInsert(NearPos))
 			{
@@ -11391,6 +11405,8 @@ function addThemeImagesToMap(oImageMap, aDwnldUrls, aImages) {
   window["AscCommon"].Editor_Paste_Exec = Editor_Paste_Exec;
   window["AscCommon"].sendImgUrls = sendImgUrls;
   window["AscCommon"].PasteProcessor = PasteProcessor;
+  window["AscCommon"].GetContentFromHtml = GetContentFromHtml;
+
 
   window["AscCommon"].addTextIntoRun = addTextIntoRun;
   window["AscCommon"].searchBinaryClass = searchBinaryClass;
