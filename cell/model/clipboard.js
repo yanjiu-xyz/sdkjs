@@ -4274,7 +4274,9 @@
 							break;
 						}
 						case para_NewLine: {
-							if(AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Excel) {
+							//on feature: read ms style comments and use only sameCell flag
+							if(AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Excel ||
+								(paraRunContent[pR].Flags && paraRunContent[pR].Flags.sameCell)) {
 								text += newLine;
 							} else {
 								pushData();
@@ -4746,8 +4748,12 @@
 				for (var i = 0, length = elem.Content.length; i < length; i++) {
 					if (elem.Content[i] && elem.Content[i].Content) {
 						for (var j = 0; j < elem.Content[i].Content.length; j++) {
-							if (elem.Content[i].Content[j] && para_NewLine === elem.Content[i].Content[j].GetType()  && AscCommon.g_clipboardBase.pastedFrom !== AscCommon.c_oClipboardPastedFrom.Excel) {
-								oNewElem.height++;
+							let innerElem = elem.Content[i].Content[j];
+							if (innerElem && para_NewLine === innerElem.GetType()) {
+								//on feature: read ms style comments and use only sameCell flag 
+								if (AscCommon.g_clipboardBase.pastedFrom !== AscCommon.c_oClipboardPastedFrom.Excel && !(innerElem.Flags && innerElem.Flags.sameCell === true)) {
+									oNewElem.height++;
+								}
 							}
 						}
 					}

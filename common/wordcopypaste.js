@@ -2304,7 +2304,7 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
         "tab-stops": 1, "list-style-type": 1, "mso-special-character": 1, "mso-column-break-before": 1, "mso-break-type": 1, "mso-padding-alt": 1, "mso-border-insidev": 1,
         "mso-border-insideh": 1, "mso-row-margin-left": 1, "mso-row-margin-right": 1, "mso-cellspacing": 1, "mso-border-alt": 1,
         "mso-border-left-alt": 1, "mso-border-top-alt": 1, "mso-border-right-alt": 1, "mso-border-bottom-alt": 1, "mso-border-between": 1, "mso-list": 1,
-		"mso-comment-reference": 1, "mso-comment-date": 1, "mso-comment-continuation": 1};
+		"mso-comment-reference": 1, "mso-comment-date": 1, "mso-comment-continuation": 1, "mso-data-placement": 1};
     this.oBorderCache = {};
 
 	this.msoListMap = [];
@@ -8738,6 +8738,7 @@ PasteProcessor.prototype =
 			oPasteProcessor.aMsoHeadStylesStr = this.aMsoHeadStylesStr;
 			oPasteProcessor.oMsoHeadStylesListMap = this.oMsoHeadStylesListMap;
 			oPasteProcessor.msoListMap = this.msoListMap;
+			oPasteProcessor.pasteInExcel = this.pasteInExcel;
 			oPasteProcessor._Execute(node, pPr, true, true, false);
 			oPasteProcessor._PrepareContent();
 			oPasteProcessor._AddNextPrevToContent(levelSdt.Content);
@@ -9165,6 +9166,7 @@ PasteProcessor.prototype =
 			oPasteProcessor.msoListMap = this.msoListMap;
 			oPasteProcessor.dMaxWidth = this._CalcMaxWidthByCell(cell);
 			oPasteProcessor.oMsoStylesParser = this.oMsoStylesParser;
+			oPasteProcessor.pasteInExcel = this.pasteInExcel;
 			if (true === bUseScaleKoef) {
 				oPasteProcessor.bUseScaleKoef = bUseScaleKoef;
 				oPasteProcessor.dScaleKoef = dScaleKoef;
@@ -9708,7 +9710,13 @@ PasteProcessor.prototype =
 					} else {
 						bAddParagraph = oThis._Decide_AddParagraph(node.parentNode, pPr, bAddParagraph);
 						oThis._Commit_Br(0, node, pPr);
-						oThis._AddToParagraph(new AscWord.CRunBreak(AscWord.break_Line));
+						let breakLine = new AscWord.CRunBreak(AscWord.break_Line);
+						if (breakLine.Flags && oThis.pasteInExcel) {
+							//save mso flag for unite cell text with line breaks
+							//use only in excel
+							breakLine.Flags.sameCell = pPr["mso-data-placement"] === "same-cell";
+						}
+						oThis._AddToParagraph(breakLine);
 					} /*else {
 						bAddParagraph = oThis._Decide_AddParagraph(node.parentNode, pPr, bAddParagraph, false);
 						oThis.nBrCount++;
