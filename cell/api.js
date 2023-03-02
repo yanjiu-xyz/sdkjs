@@ -6776,28 +6776,30 @@ var editor;
   spreadsheet_api.prototype.asc_getPivotShowValueAsInfo = function(showAs, opt_pivotTable) {
     function correctInfoPercentOfParent(layout) {
       if (layout.rows) {
-        if (layout.rows.length > 0 && AscCommonExcel.st_VALUES !== layout.rows[layout.rows.length - 1].fld) {
-          if (layout.rows.length > 1) {
-            return layout.rows[layout.rows.length - 2];
-          }
+        if (layout.rows.length == 1 && AscCommonExcel.st_VALUES !== layout.rows[layout.rows.length - 1].fld) {
           return layout.rows[layout.rows.length - 1];
-        } else if (layout.rows.length > 1) {
-          if (layout.rows.length > 2) {
-            return layout.rows[layout.rows.length - 3];
+        } else if (layout.rows.length > 1){
+          for (let i = layout.rows.length - 2; i >= 0; i -= 1) {
+            if (layout.rows[i].fld !== AscCommonExcel.st_VALUES) {
+              return layout.rows[i];
+            }
           }
-          return layout.rows[layout.rows.length - 2];
+          if (layout.rows[layout.rows.length - 1].fld !== AscCommonExcel.st_VALUES) {
+            return layout.rows[layout.rows.length - 1];
+          }
         }
       } else if (layout.cols) {
-        if (layout.cols.length > 0 && AscCommonExcel.st_VALUES !== layout.cols[layout.cols.length - 1].fld) {
-          if (layout.cols.length > 1) {
-            return layout.cols[layout.cols.length - 2];
-          }
+        if (layout.cols.length == 1 && AscCommonExcel.st_VALUES !== layout.cols[layout.cols.length - 1].fld) {
           return layout.cols[layout.cols.length - 1];
-        } else if (layout.cols.length > 1) {
-          if (layout.cols.length > 2) {
-            return layout.cols[layout.cols.length - 3];
+        } else if (layout.cols.length > 1){
+          for (let i = layout.cols.length - 2; i >= 0; i -= 1) {
+            if (layout.cols[i].fld !== AscCommonExcel.st_VALUES) {
+              return layout.cols[i];
+            }
           }
-          return layout.cols[layout.cols.length - 2];
+          if (layout.cols[layout.cols.length - 1].fld !== AscCommonExcel.st_VALUES) {
+            return layout.cols[layout.cols.length - 1];
+          }
         }
       }
       return null;
@@ -6809,10 +6811,12 @@ var editor;
     if (pivotTable) {
       var layout = pivotTable.getLayoutByCell(activeCell.row, activeCell.col);
       var cellLayout = null;
-      if (showAs === Asc.c_oAscShowDataAs.PercentOfParent) {
-        cellLayout = correctInfoPercentOfParent(layout);
-      } else {
-        cellLayout = layout.getHeaderCellLayoutExceptValue();
+      if (layout) {
+        if (showAs === Asc.c_oAscShowDataAs.PercentOfParent) {
+          cellLayout = correctInfoPercentOfParent(layout);
+        } else {
+          cellLayout = layout.getHeaderCellLayoutExceptValue();
+        }
       }
       if (cellLayout !== null) {
         res = new Asc.CT_DataField();

@@ -3789,7 +3789,7 @@ CT_pivotTableDefinition.prototype.getPivotTableButtons = function (range, button
 /**
  * Returns the index in CT_DataFields.dataField array
  */
-CT_pivotTableDefinition.prototype.getDataFieldIndexByCell = function (row, col) {
+CT_pivotTableDefinition.prototype.getDataFieldIndexByCell = function (row, col, layout) {
 	let pivotRange = this.getRange();
 	let location = this.location;
 	let dataFields = this.asc_getDataFields();
@@ -3799,16 +3799,28 @@ CT_pivotTableDefinition.prototype.getDataFieldIndexByCell = function (row, col) 
 	let baseRow = pivotRange.r1 + location.firstDataRow;
 	let curRow = row - baseRow;
 	let curCol = col - baseCol;
-	let result = null;
-	if (curRow >= 0 && curCol >= 0 && dataFields) {
-		let rowItem = rowItems[curRow];
-		let colItem = colItems[curCol];
-		let dataIndex = Math.max(rowItem.i, colItem.i);
-		if (dataIndex < dataFields.length && rowItem.t !== Asc.c_oAscItemType.Blank && colItem.t !== Asc.c_oAscItemType.Blank) {
-			result = dataIndex;
+	if (dataFields) {
+		if (curRow >= 0 && curCol >= 0) {
+			let rowItem = rowItems[curRow];
+			let colItem = colItems[curCol];
+			let dataIndex = Math.max(rowItem.i, colItem.i);
+			if (dataIndex < dataFields.length && rowItem.t !== Asc.c_oAscItemType.Blank && colItem.t !== Asc.c_oAscItemType.Blank) {
+				return dataIndex;
+			}
+		} else if (layout) {
+			let cellLayout = layout.getHeaderCellLayoutExceptValue();
+			if (cellLayout && cellLayout.t === Asc.c_oAscItemType.Grand) {
+				return cellLayout.i;
+			} else if (layout.rows && layout.type === Asc.PivotLayoutType.rowField && layout.rows[layout.rows.length - 1].fld === AscCommonExcel.st_VALUES) {
+				return layout.rows[layout.rows.length - 1].i;
+			} else if (layout.cols && layout.type === Asc.PivotLayoutType.colField && layout.cols[layout.cols.length - 1].fld === AscCommonExcel.st_VALUES) {
+				return layout.cols[layout.cols.length - 1].i;
+			} else if (dataFields.length === 1 && layout.type === Asc.PivotLayoutType.headerData) {
+				return 0;
+			}
 		}
 	}
-	return result;
+	return null;
 };
 
 /**
@@ -6190,8 +6202,8 @@ CT_pivotTableDefinition.prototype.getLayoutByCell = function(row, col) {
 	var res = this.getLayoutByCellPage(row, col) || this.getLayoutByCellHeader(row, col)
 	|| this.getLayoutByCellHeaderRowColLables(row, col) || this.getLayoutByCellRowHeaderLabels(row, col, rowFieldsOffset)
 	|| this.getLayoutByCellHeaderRowColLables(row, col, rowFieldsOffset) || this.getLayoutByCellData(row, col, rowFieldsOffset);
-	if (res !== null) {
-		res.dataFieldIndex = this.getDataFieldIndexByCell(row, col);
+	if (res) {
+		res.dataFieldIndex = this.getDataFieldIndexByCell(row, col, res);
 	}
 	return res;
 };
@@ -6201,8 +6213,7 @@ CT_pivotTableDefinition.prototype.getContextMenuInfo = function(selection) {
 	let col = selection.activeCell.col;
 	res.layout = this.getLayoutByCell(row, col);
 	res.layoutGroup = this.getLayoutsForGroup(selection, res.layout);
-
-	if (Asc.PivotLayoutType.cell === res.layout.type && selection.isSingleRange() && selection.getLast().isOneCell()) {
+	if (res.layout && res.layout.dataFieldIndex !== null && Asc.PivotLayoutType.cell === res.layout.type && selection.isSingleRange() && selection.getLast().isOneCell()) {
 		let cellLayout = res.layout.getHeaderCellLayoutRowExceptValue();
 		if (null !== cellLayout && null !== cellLayout.fld) {
 			let autoFilterObject = new Asc.AutoFiltersOptions();
@@ -6219,7 +6230,7 @@ CT_pivotTableDefinition.prototype.getContextMenuInfo = function(selection) {
 			this.fillAutoFiltersOptions(autoFilterObject, cellLayout.fld);
 			res.filterCol = autoFilterObject;
 		}
-	} else if (Asc.PivotLayoutType.rowField === res.layout.type || Asc.PivotLayoutType.colField === res.layout.type) {
+	} else if (res.layout && (Asc.PivotLayoutType.rowField === res.layout.type || Asc.PivotLayoutType.colField === res.layout.type)) {
 		let info = res.layout.getSortFilterInfo(this);
 		if (null !== info.fld) {
 			let autoFilterObject = new Asc.AutoFiltersOptions();
@@ -15973,7 +15984,7 @@ PivotLayout.prototype.getSortFilterInfo = function(pivotTable) {
 		if (cellLayout) {
 			fld = cellLayout.fld;
 		}
-		if(PivotLayoutType.cell === this.type) {
+		if(PivotLayoutType.cell === this.type && pivotTable.dataFields) {
 			sortDataIndex = pivotTable.dataFields.find(this.fld);
 		}
 	} else if (PivotLayoutType.headerCompactRow === this.type && pivotTable.rowFields) {
