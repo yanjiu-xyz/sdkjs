@@ -23031,6 +23031,274 @@ $(function () {
 
 	});
 
+	QUnit.test("Test: \"ARRAYTOTEXT\"", function (assert) {
+		let array;
+
+		ws.getRange2("B10").setValue("");
+		ws.getRange2("B11").setValue();
+		ws.getRange2("C10").setValue("");
+		ws.getRange2("C11").setValue("1");
+
+		ws.getRange2("C110").setValue("12");
+		ws.getRange2("C110").setNumFormat("@");
+
+		ws.getRange2("D10").setValue("19");
+		ws.getRange2("D11").setValue("#N/A");
+		ws.getRange2("D12").setValue("0");
+		ws.getRange2("E10").setValue("str");
+		ws.getRange2("E11").setValue("TRUE");
+		ws.getRange2("E12").setValue("1");
+
+		// array|range && array|range|value
+		oParser = new parserFormula('ARRAYTOTEXT(B10:C11,0)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(B10:C11,0)');
+		assert.strictEqual(oParser.calculate().getValue(), ", , , 1", 'Result of ARRAYTOTEXT(B10:C11,0)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(B10:C11,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(B10:C11,1)');
+		assert.strictEqual(oParser.calculate().getValue(), "{,;,1}", 'Result of ARRAYTOTEXT(B10:C11,1)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(12,B10:C11)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(12,B10:C11)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "12", 'Result of ARRAYTOTEXT(12,B10:C11)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "12", 'Result of ARRAYTOTEXT(12,B10:C11)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "12", 'Result of ARRAYTOTEXT(12,B10:C11)[1,0]');				
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '{12}', 'Result of ARRAYTOTEXT(12,B10:C11)[1,1]');
+
+		oParser = new parserFormula('ARRAYTOTEXT("12",B10:C11)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT("12",B10:C11)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "12", 'Result of ARRAYTOTEXT("12",B10:C11)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "12", 'Result of ARRAYTOTEXT("12",B10:C11)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "12", 'Result of ARRAYTOTEXT("12",B10:C11)[1,0]');				
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '{"12"}', 'Result of ARRAYTOTEXT("12",B10:C11)[1,1]');
+
+		oParser = new parserFormula('ARRAYTOTEXT(C110,B10:C11)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(C110,B10:C11)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "12", 'Result of ARRAYTOTEXT(C110,B10:C11)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "12", 'Result of ARRAYTOTEXT(C110,B10:C11)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "12", 'Result of ARRAYTOTEXT(C110,B10:C11)[1,0]');				
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '{12}', 'Result of ARRAYTOTEXT(C110,B10:C11)[1,1]');
+
+		oParser = new parserFormula('ARRAYTOTEXT(C110,{1,0;FALSE,TRUE})', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(C110,{1,0;FALSE,TRUE})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "{12}", 'Result of ARRAYTOTEXT(C110,{1,0;FALSE,TRUE})[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "12", 'Result of ARRAYTOTEXT(C110,{1,0;FALSE,TRUE})[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "12", 'Result of ARRAYTOTEXT(C110,{1,0;FALSE,TRUE})[1,0]');				
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '{12}', 'Result of ARRAYTOTEXT(C110,{1,0;FALSE,TRUE})[1,1]');
+
+		oParser = new parserFormula('ARRAYTOTEXT(B10:C11,B10:C11)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(B10:C11,B10:C11)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), ", , , 1", 'Result of ARRAYTOTEXT(B10:C11,B10:C11)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), ", , , 1", 'Result of ARRAYTOTEXT(B10:C11,B10:C11)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), ", , , 1", 'Result of ARRAYTOTEXT(B10:C11,B10:C11)[1,0]');				
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '{,;,1}', 'Result of ARRAYTOTEXT(B10:C11,B10:C11)[1,1]');
+
+		oParser = new parserFormula('ARRAYTOTEXT(D10:E11)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(D10:E11)');
+		assert.strictEqual(oParser.calculate().getValue(), "19, str, #N/A, TRUE", 'Result of ARRAYTOTEXT(D10:E11)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(D10:E11,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(D10:E11,1)');
+		assert.strictEqual(oParser.calculate().getValue(), '{19,"str";#N/A,TRUE}', 'Result of ARRAYTOTEXT(D10:E11,1)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(D10:E11,2)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(D10:E11,2)');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Result of ARRAYTOTEXT(D10:E11,2)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(12,{3,#NUM!;0,1})', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(12,{3,#NUM!;0,1})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(12,{3,#NUM!;0,1})[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#NUM!", 'Result of ARRAYTOTEXT(12,{3,#NUM!;0,1})[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "12", 'Result of ARRAYTOTEXT(12,{3,#NUM!;0,1})[1,0]');				
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '{12}', 'Result of ARRAYTOTEXT(12,{3,#NUM!;0,1})[1,1]');
+
+		oParser = new parserFormula('ARRAYTOTEXT("12",{3,#NUM!;0,1})', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT("12",{3,#NUM!;0,1})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(12,{3,#NUM!;0,1})[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#NUM!", 'Result of ARRAYTOTEXT(12,{3,#NUM!;0,1})[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), '12', 'Result of ARRAYTOTEXT(12,{3,#NUM!;0,1})[1,0]');				
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '{"12"}', 'Result of ARRAYTOTEXT(12,{3,#NUM!;0,1})[1,1]');
+
+		oParser = new parserFormula('ARRAYTOTEXT("1s",{3,#NUM!;0,1})', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT("1s",{3,#NUM!;0,1})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(12,{3,#NUM!;0,1})[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#NUM!", 'Result of ARRAYTOTEXT(12,{3,#NUM!;0,1})[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), '1s', 'Result of ARRAYTOTEXT(12,{3,#NUM!;0,1})[1,0]');				
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '{"1s"}', 'Result of ARRAYTOTEXT(12,{3,#NUM!;0,1})[1,1]');
+
+		oParser = new parserFormula('ARRAYTOTEXT(FALSE,{3,#NUM!;0,1})', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(FALSE,{3,#NUM!;0,1})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(12,{3,#NUM!;0,1})[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#NUM!", 'Result of ARRAYTOTEXT(12,{3,#NUM!;0,1})[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 'FALSE', 'Result of ARRAYTOTEXT(12,{3,#NUM!;0,1})[1,0]');				
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '{FALSE}', 'Result of ARRAYTOTEXT(12,{3,#NUM!;0,1})[1,1]');
+
+		oParser = new parserFormula('ARRAYTOTEXT(TRUE,{3,#NUM!;0,1})', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(TRUE,{3,#NUM!;0,1})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(12,{3,#NUM!;0,1})[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#NUM!", 'Result of ARRAYTOTEXT(12,{3,#NUM!;0,1})[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 'TRUE', 'Result of ARRAYTOTEXT(12,{3,#NUM!;0,1})[1,0]');				
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '{TRUE}', 'Result of ARRAYTOTEXT(12,{3,#NUM!;0,1})[1,1]');
+
+		oParser = new parserFormula('ARRAYTOTEXT(D10:E11,{0,1,2})', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(D10:E11,{0,1,2})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "19, str, #N/A, TRUE", 'Result of ARRAYTOTEXT(D10:E11,{0,1,2})[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), '{19,"str";#N/A,TRUE}', 'Result of ARRAYTOTEXT(D10:E11,{0,1,2})[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(D10:E11,{0,1,2})[0,2]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), '', 'Result of ARRAYTOTEXT(D10:E11,{0,1,2})[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '', 'Result of ARRAYTOTEXT(D10:E11,{0,1,2})[1,1]');
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), '', 'Result of ARRAYTOTEXT(D10:E11,{0,1,2})[1,2]');
+
+		oParser = new parserFormula('ARRAYTOTEXT(D10:E11,{0,1,2;FALSE,"1","TRUE"})', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(D10:E11,{0,1,2})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), '19, str, #N/A, TRUE', 'Result of ARRAYTOTEXT(D10:E11,{0,1,2})[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), '{19,"str";#N/A,TRUE}', 'Result of ARRAYTOTEXT(D10:E11,{0,1,2})[0,1]');
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), '#VALUE!', 'Result of ARRAYTOTEXT(D10:E11,{0,1,2})[0,2]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), '19, str, #N/A, TRUE', 'Result of ARRAYTOTEXT(D10:E11,{0,1,2})[1,0]');
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '{19,"str";#N/A,TRUE}', 'Result of ARRAYTOTEXT(D10:E11,{0,1,2})[1,1]');
+		assert.strictEqual(array.getElementRowCol(1, 2).getValue(), '#VALUE!', 'Result of ARRAYTOTEXT(D10:E11,{0,1,2})[1,2]');
+
+		oParser = new parserFormula('ARRAYTOTEXT(D10:E11, D10:E12)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(D10:E11, D10:E12)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(D10:E11,D10:E12)[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(D10:E11,D10:E12)[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#N/A", 'Result of ARRAYTOTEXT(D10:E11,D10:E12)[1,0]');	
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '{19,"str";#N/A,TRUE}', 'Result of ARRAYTOTEXT(D10:E11,D10:E12)[1,1]');
+		assert.strictEqual(array.getElementRowCol(2, 0).getValue(), "19, str, #N/A, TRUE", 'Result of ARRAYTOTEXT(D10:E11,D10:E12)[2,0]');
+		assert.strictEqual(array.getElementRowCol(2, 1).getValue(), '{19,"str";#N/A,TRUE}', 'Result of ARRAYTOTEXT(D10:E11,D10:E12)[2,1]');
+
+		oParser = new parserFormula('ARRAYTOTEXT({"str",12,TRUE},{3,#NUM!;0,1})', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT({"str",12,TRUE},{3,#NUM!;0,1})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT({"str",12,TRUE},{3,#NUM!;0,1})[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#NUM!", 'Result of ARRAYTOTEXT({"str",12,TRUE},{3,#NUM!;0,1})[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "str, 12, TRUE", 'Result of ARRAYTOTEXT({"str",12,TRUE},{3,#NUM!;0,1})[1,0]');				
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '{"str",12,TRUE}', 'Result of ARRAYTOTEXT({"str",12,TRUE},{3,#NUM!;0,1})[1,1]');
+
+		oParser = new parserFormula('ARRAYTOTEXT({"str",12,TRUE},{3,#NUM!;"0",TRUE})', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT({"str",12,TRUE},{3,#NUM!;"0",TRUE})');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), "#VALUE!", 'Result of ARRAYTOTEXT({"str",12,TRUE},{3,#NUM!;"0",TRUE})[0,0]');
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#NUM!", 'Result of ARRAYTOTEXT({"str",12,TRUE},{3,#NUM!;"0",TRUE})[0,1]');
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "str, 12, TRUE", 'Result of ARRAYTOTEXT({"str",12,TRUE},{3,#NUM!;"0",TRUE})[1,0]');				
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), '{"str",12,TRUE}', 'Result of ARRAYTOTEXT({"str",12,TRUE},{3,#NUM!;"0",TRUE})[1,1]');
+
+		// value && array|range|value
+		oParser = new parserFormula('ARRAYTOTEXT(,0)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(,0)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(,0)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(,B10)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(,B10)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(,B10)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(,B11)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(,B11)');
+		assert.strictEqual(oParser.calculate().getValue(), "#VALUE!", 'Result of ARRAYTOTEXT(,B11)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(12)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(12)');
+		assert.strictEqual(oParser.calculate().getValue(), "12", 'Result of ARRAYTOTEXT(12)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(12,1)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(12,1)');
+		assert.strictEqual(oParser.calculate().getValue(), "{12}", 'Result of ARRAYTOTEXT(12,1)');
+
+		oParser = new parserFormula('ARRAYTOTEXT("12")', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT("12")');
+		assert.strictEqual(oParser.calculate().getValue(), "12", 'Result of ARRAYTOTEXT("12")');
+
+		oParser = new parserFormula('ARRAYTOTEXT(TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(TRUE)');
+		assert.strictEqual(oParser.calculate().getValue(), "TRUE", 'Result of ARRAYTOTEXT(TRUE)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(FALSE)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(FALSE)');
+		assert.strictEqual(oParser.calculate().getValue(), "FALSE", 'Result of ARRAYTOTEXT(FALSE)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(#N/A)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(#N/A)');
+		assert.strictEqual(oParser.calculate().getValue(), "#N/A", 'Result of ARRAYTOTEXT(#N/A)');
+
+		oParser = new parserFormula('ARRAYTOTEXT("str")', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT("str")');
+		assert.strictEqual(oParser.calculate().getValue(), "str", 'Result of ARRAYTOTEXT("str")');
+
+		oParser = new parserFormula('ARRAYTOTEXT("str", "0")', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT("str", "0")');
+		assert.strictEqual(oParser.calculate().getValue(), 'str', 'Result of ARRAYTOTEXT("str", "0")');
+
+		oParser = new parserFormula('ARRAYTOTEXT("str", "1")', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT("str", "1")');
+		assert.strictEqual(oParser.calculate().getValue(), '{"str"}', 'Result of ARRAYTOTEXT("str", "1")');
+
+		oParser = new parserFormula('ARRAYTOTEXT("str", "1s")', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT("str", "1s")');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Result of ARRAYTOTEXT("str", "1s")');
+
+		oParser = new parserFormula('ARRAYTOTEXT("str",FALSE)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT("str",FALSE)');
+		assert.strictEqual(oParser.calculate().getValue(), "str", 'Result of ARRAYTOTEXT("str",FALSE)');
+
+		oParser = new parserFormula('ARRAYTOTEXT("str", TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT("str", TRUE)');
+		assert.strictEqual(oParser.calculate().getValue(), '{"str"}', 'Result of ARRAYTOTEXT("str", TRUE)');
+
+		oParser = new parserFormula('ARRAYTOTEXT("str", 1)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT("str", 1)');
+		assert.strictEqual(oParser.calculate().getValue(), '{"str"}', 'Result of ARRAYTOTEXT("str", 1)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(E10)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(E10)');
+		assert.strictEqual(oParser.calculate().getValue(), "str", 'Result of ARRAYTOTEXT(E10)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(E10, "0")', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(E10, "0")');
+		assert.strictEqual(oParser.calculate().getValue(), 'str', 'Result of ARRAYTOTEXT(E10, "0")');
+
+		oParser = new parserFormula('ARRAYTOTEXT(E10, "1")', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(E10, "1")');
+		assert.strictEqual(oParser.calculate().getValue(), '{"str"}', 'Result of ARRAYTOTEXT(E10, "1")');
+
+		oParser = new parserFormula('ARRAYTOTEXT(E10, "1s")', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(E10, "1s")');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Result of ARRAYTOTEXT(E10, "1s")');
+
+		oParser = new parserFormula('ARRAYTOTEXT(E10,FALSE)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(E10,FALSE)');
+		assert.strictEqual(oParser.calculate().getValue(), "str", 'Result of ARRAYTOTEXT(E10,FALSE)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(E10, TRUE)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(E10, TRUE)');
+		assert.strictEqual(oParser.calculate().getValue(), '{"str"}', 'Result of ARRAYTOTEXT(E10, TRUE)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(E10, 1)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(E10, 1)');
+		assert.strictEqual(oParser.calculate().getValue(), '{"str"}', 'Result of ARRAYTOTEXT(E10, 1)');
+
+		oParser = new parserFormula('ARRAYTOTEXT("str", 12)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT("str", 12)');
+		assert.strictEqual(oParser.calculate().getValue(), '#VALUE!', 'Result of ARRAYTOTEXT("str", 12)');
+
+		oParser = new parserFormula('ARRAYTOTEXT(#NUM!, #N/A)', "A2", ws);
+		assert.ok(oParser.parse(), 'ARRAYTOTEXT(#NUM!, #N/A)');
+		assert.strictEqual(oParser.calculate().getValue(), "#NUM!", 'Result of ARRAYTOTEXT(#NUM!, #N/A)');
+
+	});
+
 	QUnit.test("Test: \"reference argument test\"", function (assert) {
 		ws.getRange2("A1").setValue("1");
 		ws.getRange2("A2").setValue("2");
