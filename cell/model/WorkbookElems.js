@@ -9019,6 +9019,10 @@ function RangeDataManagerElem(bbox, data)
 		}
 
 		this.Ref = ref;
+
+		if (this.SortState) {
+			this.SortState.changeRef(col, row, bIsFirst);
+		}
 	};
 	AutoFilter.prototype.changeRefOnRange = function (range) {
 		if (!range) {
