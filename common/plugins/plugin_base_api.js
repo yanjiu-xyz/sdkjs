@@ -328,6 +328,24 @@ window.startPluginApi = function() {
 	 */
 
 	/**
+	 * Event: onContextMenuShow
+	 * @event Plugin#onContextMenuShow
+	 * @memberof Plugin
+	 * @alias onContextMenuShow
+	 * @description The function called when context menu will be shown
+	 * @param {Object} options - Defines the options for current selection.
+	 */
+
+	/**
+	 * Event: onContextMenuShow
+	 * @event Plugin#onContextMenuClick
+	 * @memberof Plugin
+	 * @alias onContextMenuClick
+	 * @description The function called when context menu item was clicked
+	 * @param {string} id - Item id.
+	 */
+
+	/**
 	 * Event: onCommandCallback
 	 * @event Plugin#onCommandCallback
 	 * @memberof Plugin

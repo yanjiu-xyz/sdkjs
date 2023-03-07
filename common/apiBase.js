@@ -4272,6 +4272,109 @@
 		this.hideVideoControl();
 	};
 
+	// context menu items
+	baseEditorsApi.prototype["onPluginContextMenuShow"] = function()
+	{
+		let contextMenuInfo = {
+			"isSelection" : this.can_CopyCut()
+		};
+		let plugins = window.g_asc_plugins.onPluginEvent("onContextMenuShow", contextMenuInfo);
+		if (0 === plugins.length)
+		{
+			if (this.contextMenuPlugins)
+				delete this.contextMenuPlugins;
+			return true;
+		}
+
+		if (!this.contextMenuPlugins)
+		{
+			this.contextMenuPlugins = {
+				items : {},
+				itemsCount : 0,
+				processItems : {},
+				processItemsCount : 0
+			};
+		}
+
+		for (let i = 0, len = plugins.length; i < len; i++)
+		{
+			if (!this.contextMenuPlugins.processItems[plugins[i]])
+			{
+				this.contextMenuPlugins.processItems[plugins[i]] = 0;
+				this.contextMenuPlugins.processItemsCount++;
+			}
+			++this.contextMenuPlugins.processItems[plugins[i]];
+		}
+
+		return false;
+	};
+	baseEditorsApi.prototype["onPluginContextMenuItemClick"] = function(guid, itemId)
+	{
+		let guids = {}; guids[guid] = true;
+		window.g_asc_plugins.onPluginEvent2("onContextMenuClick", itemId, guids);
+	};
+	baseEditorsApi.prototype.onPluginCloseContextMenuItem = function(guid)
+	{
+		if (!this.contextMenuPlugins)
+			return;
+
+		let isUpdate = false;
+		if (this.contextMenuPlugins.processItems[guid])
+		{
+			delete this.contextMenuPlugins.processItems[guid];
+			this.contextMenuPlugins.processItemsCount--;
+			isUpdate = true;
+		}
+
+		if (this.contextMenuPlugins.items[guid])
+		{
+			delete this.contextMenuPlugins.items[guid];
+			this.contextMenuPlugins.itemsCount--;
+			isUpdate = true;
+		}
+
+		if (isUpdate)
+			this.onPluginCheckContextMenuItems();
+	};
+	baseEditorsApi.prototype.onPluginAddContextMenuItem = function(items)
+	{
+		if (!this.contextMenuPlugins)
+			return;
+
+		let guid = items["guid"];
+		if (this.contextMenuPlugins.processItems[guid])
+		{
+			this.contextMenuPlugins.processItems[guid]--;
+			if (this.contextMenuPlugins.processItems[guid] === 0)
+			{
+				delete this.contextMenuPlugins.processItems[guid];
+				this.contextMenuPlugins.processItemsCount--;
+			}
+		}
+
+		if (!this.contextMenuPlugins.items[guid])
+			this.contextMenuPlugins.itemsCount++;
+
+		this.contextMenuPlugins.items[guid] = items;
+
+		this.onPluginCheckContextMenuItems();
+	};
+	baseEditorsApi.prototype.onPluginCheckContextMenuItems = function()
+	{
+		if (0 !== this.contextMenuPlugins.processItemsCount)
+			return;
+
+		let items = [];
+		for (let item in this.contextMenuPlugins.items)
+		{
+			if (this.contextMenuPlugins.items.hasOwnProperty(item))
+				items.push(this.contextMenuPlugins.items[item]);
+		}
+
+		delete this.contextMenuPlugins;
+		this.sendEvent("onPluginContextMenu", items);
+	};
+
 	// ---------------------------------------------------- wopi ---------------------------------------------
 	baseEditorsApi.prototype.asc_wopi_renameFile = function(name) {
 		var t = this;

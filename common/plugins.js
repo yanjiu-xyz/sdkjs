@@ -456,6 +456,7 @@
 			}
 
 			delete this.runnedPluginsMap[guid];
+			this.api.onPluginCloseContextMenuItem(guid);
 
 			if (this.runAndCloseData)
 			{
@@ -824,6 +825,7 @@
 			if (this.mainEventTypes[name])
 				this.mainEvents[name] = data;
 
+			let needsGuids = [];
             for (var guid in this.runnedPluginsMap)
             {
                 var plugin = this.getPluginByGuid(guid);
@@ -831,6 +833,7 @@
 
                 if (plugin && plugin.variations[runObject.currentVariation].eventsMap[name])
                 {
+					needsGuids.push(plugin.guid);
                     if (!runObject.isInitReceive)
                     {
                         if (!runObject.waitEvents)
@@ -847,6 +850,7 @@
 					this.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginData);
                 }
             }
+			return needsGuids;
         },
 
         onPluginEvent2 : function(name, data, guids)
