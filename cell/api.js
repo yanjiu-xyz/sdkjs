@@ -389,6 +389,7 @@ var editor;
     AscCommonExcel.g_oUndoRedoProtectedSheet = new AscCommonExcel.UndoRedoProtectedSheet(wbModel);
     AscCommonExcel.g_oUndoRedoProtectedWorkbook = new AscCommonExcel.UndoRedoProtectedWorkbook(wbModel);
     AscCommonExcel.g_oUndoRedoNamedSheetViews = new AscCommonExcel.UndoRedoNamedSheetViews(wbModel);
+    AscCommonExcel.g_oUndoRedoUserProtectedRange = new AscCommonExcel.UndoRedoUserProtectedRange(wbModel);
   };
 
   spreadsheet_api.prototype.asc_DownloadAs = function (options) {
@@ -2602,6 +2603,9 @@ var editor;
       },
       "checkProtectedRangeRemoveLock": function(lockElem) {
       	return t._onCheckProtectedRangeRemoveLock(lockElem);
+      },
+      "unlockUserProtectedRanges": function() {
+      	t._onUnlockUserProtectedRanges.apply(t, arguments);
       }
     }, this.getViewMode());
 
@@ -2676,6 +2680,7 @@ var editor;
 
           t._onUpdateCFLock(lockElem);
           t._onUpdateProtectedRangesLock(lockElem);
+          t._onUpdateUserProtectedRange(lockElem);
 
 
           var ws = t.wb.getWorksheet();
@@ -2762,6 +2767,8 @@ var editor;
           t._onUpdateHeaderFooterLock(lockElem);
           //эвент о локе в меню опции scale во вкладке layout
           t._onUpdatePrintScaleLock(lockElem);
+          /*снимаем лок c защищенных юзером диапазонов*/
+          t.handlers.trigger("asc_onLockUserProtectedManager");
         }
       }
     };
@@ -4036,14 +4043,28 @@ var editor;
       return;
     }
 
-    var ws = this.wb.getWorksheet();
+    var wb = this.wb;
+    var ws = wb.getWorksheet();
+    if (this.wb) {
+    	//check user protected range. if sheet at least one protected for this user range
+    	if (options.isReplaceAll) {
+			if (options.scanOnOnlySheet === Asc.c_oAscSearchBy.Workbook && wb.model.isUserProtectedRangesIntersection()) {
+				this.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
+				return;
+			} else if (options.scanOnOnlySheet === Asc.c_oAscSearchBy.Sheet && ws.isUserProtectedRangesIntersection()) {
+				this.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
+				return;
+			}
+		}
+	}
+
     if (ws.model.getSheetProtection()) {
         this.handlers.trigger("asc_onError", c_oAscError.ID.CannotUseCommandProtectedSheet, c_oAscError.Level.NoCritical);
         return;
     }
 
     options.lookIn = Asc.c_oAscFindLookIn.Formulas; // При замене поиск только в формулах
-    this.wb.replaceCellText(options);
+	  wb.replaceCellText(options);
   };
 
   spreadsheet_api.prototype.asc_endFindText = function() {
@@ -5747,7 +5768,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-    var ws = this.wb.getWorksheet();
+  	var ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
     } else {
@@ -7587,8 +7608,15 @@ var editor;
 
 	spreadsheet_api.prototype.asc_setProtectedSheet = function (props) {
 		// Проверка глобального лока
-		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit() || !this.wb) {
 			return false;
+		}
+
+		var wsView = this.wb.getWorksheet();
+		var ws = wsView && wsView.model;
+		if (ws && ws.isUserProtectedRangesIntersection(null, null, true)) {
+			this.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
+			return;
 		}
 
 		if (!props) {
@@ -7602,7 +7630,6 @@ var editor;
 			//this.asc_closeCellEditor(true);
 		}
 
-		var wsView = this.wb.getWorksheet();
 		var i = this.wbModel.getActive();
 		var sheetId = this.wbModel.getWorksheet(i).getId();
 		var lockInfo = this.collaborativeEditing.getLockInfo(c_oAscLockTypeElem.Sheet, /*subType*/null, sheetId,
@@ -8340,7 +8367,95 @@ var editor;
 		return false;
 	};
 
+	spreadsheet_api.prototype.asc_addUserProtectedRange = function (obj) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return false;
+		}
 
+		if (this.wb && this.wb.getCellEditMode()) {
+			return;
+		}
+
+		this.wb.changeUserProtectedRanges(null, obj);
+	};
+
+	spreadsheet_api.prototype.asc_changeUserProtectedRange = function (oldObj, newObj) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return false;
+		}
+
+		if (this.wb && this.wb.getCellEditMode()) {
+			return;
+		}
+
+		this.wb.changeUserProtectedRanges(oldObj, newObj);
+	};
+
+	spreadsheet_api.prototype.asc_deleteUserProtectedRange = function (arr) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return false;
+		}
+
+		if (this.wb && this.wb.getCellEditMode()) {
+			return;
+		}
+
+		this.wb.deleteUserProtectedRanges(arr);
+	};
+
+	spreadsheet_api.prototype.asc_getUserProtectedRanges = function(sheetName) {
+		if (!this.wb) {
+			return null;
+		}
+
+		let res = [];
+		if (sheetName) {
+			let sheet = this.wb.model.getWorksheetByName(sheetName);
+			for (let i = 0; i < sheet.userProtectedRanges.length; i++) {
+				res.push(sheet.userProtectedRanges[i]);
+			}
+		} else {
+			this.wb.model.forEach(function (ws) {
+				for (let i = 0; i < ws.userProtectedRanges.length; i++) {
+					res.push(ws.userProtectedRanges[i]);
+				}
+			});
+		}
+
+		return res;
+	};
+
+	spreadsheet_api.prototype._onUpdateUserProtectedRange = function (lockElem) {
+		let _element = lockElem.Element;
+		let isNeedObject = _element["sheetId"] !== -1 && _element["rangeOrObjectId"] !== -1;
+		let isNeedType = isNeedObject && AscCommonExcel.c_oAscLockTypeElemSubType.UserProtectedRange === _element.subType &&
+			c_oAscLockTypeElem.Object === _element["type"];
+
+		if (isNeedType) {
+			let sheet = this.wbModel.getWorksheetById(_element["sheetId"]);
+			if (sheet) {
+				var userRange = sheet.getUserProtectedRangeById(_element["rangeOrObjectId"]);
+				if (userRange) {
+					if (!this.collaborativeEditing.getFast()) {
+						userRange.obj.isLock = lockElem.UserId;
+					}
+					this.handlers.trigger("asc_onRefreshUserProtectedRangesList");
+				}
+			}
+			this.handlers.trigger("asc_onLockUserProtectedManager", true);
+		}
+	};
+
+	spreadsheet_api.prototype._onUnlockUserProtectedRanges = function() {
+		this.wb.unlockUserProtectedRanges();
+	};
+
+	spreadsheet_api.prototype.asc_checkUserProtectedRangeName = function(checkName) {
+		if (!this.wbModel) {
+			return;
+		}
+		return this.wbModel.checkUserProtectedRangeName(checkName);
+	};
 
   /*
    * Export
@@ -8894,6 +9009,15 @@ var editor;
 
   prot["asc_ImportXmlStart"] = prot.asc_ImportXmlStart;
   prot["asc_ImportXmlEnd"]   = prot.asc_ImportXmlEnd;
+
+  prot["asc_addUserProtectedRange"]       = prot.asc_addUserProtectedRange;
+  prot["asc_changeUserProtectedRange"]    = prot.asc_changeUserProtectedRange;
+  prot["asc_deleteUserProtectedRange"]    = prot.asc_deleteUserProtectedRange;
+  prot["asc_getUserProtectedRanges"]      = prot.asc_getUserProtectedRanges;
+  prot["asc_checkUserProtectedRangeName"] = prot.asc_checkUserProtectedRangeName;
+
+
+
 
 
 
