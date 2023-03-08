@@ -874,9 +874,8 @@
                     pluginData.setAttribute("type", "onEvent");
                     pluginData.setAttribute("eventName", name);
                     pluginData.setAttribute("eventData", data);
-                    var _iframe = document.getElementById(runObject.frameId);
-                    if (_iframe)
-                        _iframe.contentWindow.postMessage(pluginData.serialize(), "*");
+
+					this.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginData);
                 }
             }
         },
