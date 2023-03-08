@@ -1590,7 +1590,7 @@
 	 * The context menu item
 	 * @property {string} id - The item id.
 	 * @property {localeTranslate} text - The item text.
-	 * @property {boolean} [enabled] - Is enabled item.
+	 * @property {boolean} [disabled] - Is disabled item.
 	 * @property {ContextMenuItem[]} items - An array containing the items for current item.
 	 */
 
