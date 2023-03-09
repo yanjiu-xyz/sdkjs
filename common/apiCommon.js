@@ -4339,6 +4339,7 @@
 		this.LineEndSize = null;
 
 		this.canChangeArrows = false;
+		this.transparent = null;
 	}
 
 	asc_CStroke.prototype = {
@@ -4387,7 +4388,12 @@
 		asc_getCanChangeArrows: function () {
 			return this.canChangeArrows;
 		},
-
+		asc_getTransparent: function () {
+			return this.transparent;
+		},
+		asc_putTransparent: function (v) {
+			this.transparent = v;
+		},
 		asc_putPrstDash: function (v) {
 			this.prstDash = v;
 		}, asc_getPrstDash: function () {
@@ -6718,6 +6724,8 @@
 	prot["get_canChangeArrows"] = prot["asc_getCanChangeArrows"] = prot.asc_getCanChangeArrows;
 	prot["put_prstDash"] = prot["asc_putPrstDash"] = prot.asc_putPrstDash;
 	prot["get_prstDash"] = prot["asc_getPrstDash"] = prot.asc_getPrstDash;
+	prot["get_transparent"] = prot["asc_getTransparent"] = prot.asc_getTransparent;
+	prot["put_transparent"] = prot["asc_putTransparent"] = prot.asc_putTransparent;
 
 	window["AscCommon"].CAscColorScheme = CAscColorScheme;
 	prot = CAscColorScheme.prototype;

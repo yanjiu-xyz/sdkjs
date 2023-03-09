@@ -13986,6 +13986,9 @@
 			if (true === _canChangeArrows)
 				ret.canChangeArrows = true;
 
+			if (isRealNumber(ln.Fill.transparent)) {
+				ret.transparent = ln.Fill.transparent;
+			}
 			return ret;
 		}
 
@@ -14014,6 +14017,11 @@
 					ret.Fill.fill = new CSolidFill();
 					ret.Fill.fill.color = CorrectUniColor(_color, ret.Fill.fill.color, flag);
 				}
+			}
+
+			var _alpha = asc_stroke.transparent;
+			if (null != _alpha) {
+				ret.Fill.transparent = _alpha;
 			}
 
 			var _join = asc_stroke.LineJoin;
