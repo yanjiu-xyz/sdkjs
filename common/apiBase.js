@@ -4281,10 +4281,7 @@
 	// context menu items
 	baseEditorsApi.prototype["onPluginContextMenuShow"] = function()
 	{
-		let contextMenuInfo = {
-			"isSelection" : this.can_CopyCut(),
-			"data": this.getPluginContextMenuInfo()
-		};
+		let contextMenuInfo = this.getPluginContextMenuInfo();
 		let plugins = window.g_asc_plugins.onPluginEvent("onContextMenuShow", contextMenuInfo);
 		if (0 === plugins.length)
 		{
