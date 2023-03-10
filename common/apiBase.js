@@ -4380,7 +4380,7 @@
 	};
 	baseEditorsApi.prototype.onPluginUpdateContextMenuItem = function(items)
 	{
-		this.sendEvent("onPluginUpdateContextMenu", items);
+		this.sendEvent("onPluginContextMenu", items);
 	};
 
 	// ---------------------------------------------------- wopi ---------------------------------------------
