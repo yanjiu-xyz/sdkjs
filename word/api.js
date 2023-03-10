@@ -13437,6 +13437,25 @@ background-repeat: no-repeat;\
 		}
 		return oDocument.PutImageToSelection(sImageSrc, nWidth, nHeight);
 	};
+	asc_docs_api.prototype.getPluginContextMenuInfo = function (sImageSrc, nWidth, nHeight)
+	{
+		const oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+		{
+			return new AscCommon.CPluginCtxMenuInfo();
+		}
+		if (!oLogicDocument.IsSelectionUse())
+		{
+			return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Target);
+		}
+		const oDrawingObjects = oLogicDocument.DrawingObjects;
+		const aSelectedObjects = oDrawingObjects.selectedObjects;
+		if(aSelectedObjects.length < 1)
+		{
+			return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Selection);
+		}
+		return oDrawingObjects.getPluginSelectionInfo();
+	};
 
 	asc_docs_api.prototype.asc_getDocumentProtection = function () {
 		let oDocument = this.private_GetLogicDocument();

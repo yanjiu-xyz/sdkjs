@@ -13939,6 +13939,16 @@
 		return pages;
 	}
 
+
+	function CPluginCtxMenuInfo(sType, sOlePluginGuid) {
+		if(!sType) {
+			this["type"] = Asc.c_oPluginContextMenuTypes.None;
+		}
+		else {
+			this["type"] = sType;
+			this["guid"] = sOlePluginGuid;
+		}
+	}
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
@@ -14155,6 +14165,7 @@
 	}
 	window["AscCommon"].CFormatPainter = CFormatPainter;
 	window["AscCommon"].CFormatPainterDataBase = CFormatPainterDataBase;
+	window["AscCommon"].CPluginCtxMenuInfo = CPluginCtxMenuInfo;
 
 })(window);
 

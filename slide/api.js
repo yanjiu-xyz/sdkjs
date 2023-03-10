@@ -4429,6 +4429,21 @@ background-repeat: no-repeat;\
 	{
 		return this.WordControl.m_oLogicDocument.putImageToSelection(sImageSrc, nWidth, nHeight);
 	};
+
+	asc_docs_api.prototype.getPluginContextMenuInfo = function ()
+	{
+		const oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+		{
+			return new AscCommon.CPluginCtxMenuInfo();
+		}
+		let oCurrentController = oLogicDocument.GetCurrentController();
+		if(!oCurrentController)
+		{
+			return new AscCommon.CPluginCtxMenuInfo();
+		}
+		return oCurrentController.getPluginSelectionInfo();
+	};
 	asc_docs_api.prototype.StartAddShape = function(prst, is_apply)
 	{
 		this.WordControl.m_oLogicDocument.StartAddShape(prst, is_apply);

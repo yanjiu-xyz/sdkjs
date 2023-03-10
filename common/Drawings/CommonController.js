@@ -9062,6 +9062,40 @@
 					}
 					return null;
 				},
+				getPluginSelectionInfo: function() {
+					let oTargetContent = this.getTargetDocContent();
+					if(oTargetContent)
+					{
+						if (!oTargetContent.IsSelectionUse())
+						{
+							return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Target);
+						}
+						return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Selection);
+					}
+
+					let oFirstSelected = this.getSelectedArray()[0];
+					if(!oFirstSelected)
+					{
+						return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.None);
+					}
+					let nType = oFirstSelected.getObjectType();
+					switch(nType)
+					{
+						case AscDFH.historyitem_type_OleObject:
+						{
+							return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.OleObject, oFirstSelected.m_sApplicationId);
+						}
+						case AscDFH.historyitem_type_ImageShape:
+						{
+							return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Image);
+						}
+						default:
+						{
+							return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Shape);
+						}
+					}
+					return new AscCommon.CPluginCtxMenuInfo();
+				},
 				getHorGuidesPos: function () {
 					return [];
 				},

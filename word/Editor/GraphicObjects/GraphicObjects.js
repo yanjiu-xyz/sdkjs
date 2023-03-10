@@ -4604,6 +4604,10 @@ CGraphicObjects.prototype.putImageToSelection = function(sImageUrl, nWidth, nHei
         }
     }
 };
+CGraphicObjects.prototype.getPluginSelectionInfo = function()
+{
+    return DrawingObjectsController.prototype.getPluginSelectionInfo.call(this);
+};
 CGraphicObjects.prototype.getSelectionImageData = DrawingObjectsController.prototype.getSelectionImageData;
 CGraphicObjects.prototype.getImageDataForSaving = DrawingObjectsController.prototype.getImageDataForSaving;
 CGraphicObjects.prototype.getPresentation = DrawingObjectsController.prototype.getPresentation;

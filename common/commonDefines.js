@@ -3884,6 +3884,15 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		ConfirmAddCellWatches: 5
 	};
 
+
+	const c_oPluginContextMenuTypes = {
+		None: "None",
+		Target: "Target",
+		Selection: "Selection",
+		Image: "Image",
+		Shape: "Shape",
+		OleObject: "OleObject"
+	};
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
 	window['Asc']                          = window['Asc'] || {};
@@ -5446,5 +5455,15 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['ConfirmAddCellWatches'] = prot.ConfirmAddCellWatches;
 
 	window['Asc'].c_oAscSmartArtSections = c_oAscSmartArtSections;
+
+
+
+	prot = window['Asc']['c_oPluginContextMenuTypes'] = window['Asc'].c_oPluginContextMenuTypes = c_oPluginContextMenuTypes;
+	prot['None'] = prot.None;
+	prot['Target'] = prot.Target;
+	prot['Selection'] = prot.Selection;
+	prot['Image'] = prot.Image;
+	prot['Shape'] = prot.Shape;
+	prot['OleObject'] = prot.OleObject;
 
 })(window);

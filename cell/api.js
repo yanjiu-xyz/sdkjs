@@ -5154,6 +5154,20 @@ var editor;
       return ws.objectRender.controller.putImageToSelection(sImageSrc, nWidth, nHeight);
   };
 
+
+	spreadsheet_api.prototype.getPluginContextMenuInfo = function () {
+		const oWorksheet = this.wb.getWorksheet();
+		if(oWorksheet){
+			if(oWorksheet.isSelectOnShape){
+				return oWorksheet.objectRender.controller.getPluginSelectionInfo();
+			}
+			else{
+				return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Selection);
+			}
+		}
+		return new AscCommon.CPluginCtxMenuInfo();
+	};
+
   spreadsheet_api.prototype.asc_putPrLineSpacing = function(type, value) {
     var ws = this.wb.getWorksheet();
     ws.objectRender.controller.putPrLineSpacing(type, value);

@@ -4272,11 +4272,18 @@
 		this.hideVideoControl();
 	};
 
+
+	baseEditorsApi.prototype.getPluginContextMenuInfo = function()
+	{
+		return new AscCommon.CPluginCtxMenuInfo();
+	};
+
 	// context menu items
 	baseEditorsApi.prototype["onPluginContextMenuShow"] = function()
 	{
 		let contextMenuInfo = {
-			"isSelection" : this.can_CopyCut()
+			"isSelection" : this.can_CopyCut(),
+			"data": this.getPluginContextMenuInfo()
 		};
 		let plugins = window.g_asc_plugins.onPluginEvent("onContextMenuShow", contextMenuInfo);
 		if (0 === plugins.length)
