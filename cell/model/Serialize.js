@@ -2099,8 +2099,12 @@
         this.WriteSortConditions = function(sortConditions)
         {
             var oThis = this;
-            for(var i = 0, length = sortConditions.length; i < length; ++i)
-                this.bs.WriteItem(c_oSer_SortState.SortCondition, function(){oThis.WriteSortCondition(sortConditions[i]);});
+            for(var i = 0, length = sortConditions.length; i < length; ++i) {
+                if (sortConditions[i]) {
+                    this.bs.WriteItem(c_oSer_SortState.SortCondition, function(){oThis.WriteSortCondition(sortConditions[i]);});
+                }
+            }
+
         };
         this.WriteSortCondition = function(sortCondition)
         {

@@ -6733,6 +6733,9 @@
 
 		function SaveRunsFormatting(aSourceContent, aCopyContent, oTheme, oColorMap, oPr) {
 			var bMergeRunPr = (aCopyContent === aSourceContent);
+			if(aCopyContent.length !== aSourceContent.length) {
+				return;
+			}
 			for (var i = 0; i < aCopyContent.length; ++i) {
 				if (aCopyContent[i] instanceof ParaRun && aCopyContent[i].Pr) {
 					if (bMergeRunPr) {

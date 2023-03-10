@@ -1653,6 +1653,14 @@ CFieldInstructionParser.prototype.private_Parse = function()
 	{
 		this.private_ReadADDIN();
 	}
+	else if ("MERGEFIELD" === sBuffer)
+	{
+		this.private_ReadMERGEFIELD();
+	}
+	else if ("FORMTEXT" === sBuffer)
+	{
+		this.private_ReadFORMTEXT();
+	}
 	else if(sBuffer.indexOf("=") === 0)
 	{
 		this.private_ReadFORMULA();
@@ -2283,4 +2291,16 @@ CFieldInstructionParser.prototype.private_ReadADDIN = function()
 	
 	if (this.private_ReadTillEnd())
 		this.Result.SetValue(this.Buffer);
+};
+CFieldInstructionParser.prototype.private_ReadMERGEFIELD = function()
+{
+	this.Result = new AscWord.CFieldInstructionMERGEFIELD();
+	
+	let arrArguments = this.private_ReadArguments();
+	if (arrArguments.length)
+		this.Result.SetName(arrArguments[0]);
+};
+CFieldInstructionParser.prototype.private_ReadFORMTEXT = function()
+{
+	this.Result = new AscWord.CFieldInstructionFORMTEXT();
 };
