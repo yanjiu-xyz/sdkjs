@@ -1606,4 +1606,16 @@
 		this.onPluginAddContextMenuItem(items);
 	};
 
+	/**
+	 * Update items in context menu
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias UpdateContextMenuItem
+	 * @param {ContextMenuItem[]} items - Array of items
+	 */
+	Api.prototype["pluginMethod_UpdateContextMenuItem"] = function(items)
+	{
+		this.onPluginUpdateContextMenuItem(items);
+	};
+
 })(window);

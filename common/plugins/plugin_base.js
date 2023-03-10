@@ -740,6 +740,8 @@
 				{
 					if (window.Asc.plugin["event_" + pluginData.eventName])
 						window.Asc.plugin["event_" + pluginData.eventName](pluginData.eventData);
+					else if (window.Asc.plugin.onEvent)
+						window.Asc.plugin.onEvent(pluginData.eventName, pluginData.eventData);
 					break;
 				}
 				default:

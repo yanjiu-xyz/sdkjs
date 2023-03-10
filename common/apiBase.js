@@ -4374,6 +4374,10 @@
 		delete this.contextMenuPlugins;
 		this.sendEvent("onPluginContextMenu", items);
 	};
+	baseEditorsApi.prototype.onPluginUpdateContextMenuItem = function(items)
+	{
+		this.sendEvent("onPluginUpdateContextMenu", items);
+	};
 
 	// ---------------------------------------------------- wopi ---------------------------------------------
 	baseEditorsApi.prototype.asc_wopi_renameFile = function(name) {
