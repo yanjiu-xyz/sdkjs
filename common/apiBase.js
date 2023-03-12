@@ -4349,6 +4349,8 @@
 		if (this.contextMenuPlugins.processItems[guid])
 		{
 			this.contextMenuPlugins.processItems[guid]--;
+			// не копим.
+			this.contextMenuPlugins.processItems[guid] = 0;
 			if (this.contextMenuPlugins.processItems[guid] === 0)
 			{
 				delete this.contextMenuPlugins.processItems[guid];
