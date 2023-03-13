@@ -32,7 +32,7 @@
 
 const fs = require('node:fs');
 // Input and output file with errors
-const INPUTFILE = `${__dirname}/input.txt`;
+const INPUTFILE = `${__dirname}/${process.argv[2]}` || `${__dirname}/input.txt`;
 const OUTPUTFILE = `${__dirname}/output.txt`;
 // Old serialized props map
 const OLD_PROPS_MAP_NAME = 'sdk-all.props.js.map';
@@ -42,23 +42,27 @@ const NEW_PROPS_MAP_CELL_NAME = 'cell.props.js.map';
 const NEW_PROPS_MAP_SLIDE_NAME = 'slide.props.js.map';
 
 /**
- * Error header where other information is stored.
- * @typedef Header
- * @property {string} date
- * @property {string} version
- * @property {string} script
- * @property {string} line
- * @property {string} userAgent
- * @property {string} platform
- * @property {string} stackTrace
- * @property {string} isLoadFullApi
- * @property {string} isDocumentLoadComplete
- */
-
-/**
  * @typedef {'word' | 'cell' | 'slide'} Editor
  */
 
+/**
+ * @param {string} line
+ * @return {boolean}
+ */
+function isStackTrace(line) {
+	return (
+		/^(at\s)?(\w+|\.|\$|\[|\])+.*http.*\.js/.test(line) &&
+		!/Script|StackTrace/.test(line)
+	);
+}
+
+/**
+ * @param {string} string
+ * @return {string}
+ */
+function escapeRegExp(string) {
+	return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 /**
  * A class whose instance can dereference properties in a particular version. One instance - one version.
@@ -70,13 +74,9 @@ class Deserializer {
 	 * @param {boolean} isNewSourceMaps New or old maps should be used (feature/source-maps)
 	 */
 	constructor(version, isNewSourceMaps = false) {
-		/**
-		 * @type {string}
-		 */
+		/** @type {string} */
 		this.version = version;
-		/**
-		 * @type {boolean}
-		 */
+		/** @type {boolean} */
 		this.isNewSourceMaps = isNewSourceMaps;
 		if (this.isNewSourceMaps) {
 			this.serializedProps = {
@@ -122,34 +122,45 @@ class Deserializer {
 		}
 	}
 	/**
+	 * Parses dot-separated properties in string.
+	 * @private
+	 * @param {string} expression
+	 * @param {Editor} editor
+	 * @return {string}
+	 */
+	_deserializePropsString(expression, editor) {
+		let result = expression;
+		const expressionArray = expression.split(/\.|\[|\]/g);
+		const changedExpressions = expressionArray.map((exp) => ({
+			old: exp,
+			new: this._deserializeProp(exp, editor),
+		}));
+		changedExpressions.forEach((exp) => {
+			result = result.replace(new RegExp(escapeRegExp(exp.old)), exp.new);
+		})
+		return result;
+	}
+	/**
 	 * @private
 	 * @param {string} expression
 	 * @return {string}
 	 */
 	_deserializeExpression(expression) {
-		if (/at\s+http.*\.js/g.test(expression)) {
+		if (/at\s+http.*\.js/.test(expression)) {
 			return expression;
 		}
-		const url = /http.*\.js/g.exec(expression)[0];
+		const url = /http.*\.js/.exec(expression)?.[0];
 		if (/sdkjs/.test(url)) {
 			const editor = new RegExp(`word|cell|slide`, 'g').exec(url)?.[0];
-			const propsRegExp = /at(\snew)?\s(\w*|\.|\$)*/g;
+			const propsRegExp = /^(at)?\s?(new)?\s?(\w+|\.|\$|\[|\])*/;
 			const props = propsRegExp
-				.exec(expression)[0]
-				?.replace('at', '')
-				.replace('new', '')
+				.exec(expression)?.[0]
+				.replace(/at\s|new\s/g, '')
 				.trim();
-			if (!props) {
-				return expression;
-			}
-			const propsArray = props
-				.split('.')
-				.map((prop) => this._deserializeProp(prop, editor));
+			const changedExpression = this._deserializePropsString(props, editor);
 			return expression.replace(
-				propsRegExp,
-				`at ${
-					expression.includes('new') ? 'new' : ''
-				}${props} (${propsArray.join('.')})`
+				expression,
+				`${expression} (${changedExpression})`
 			);
 		} else {
 			return expression;
@@ -158,77 +169,22 @@ class Deserializer {
 	/**
 	 * @private
 	 * @param {string} header
-	 * @return {Header}
 	 */
 	_parseHeader(header) {
-		/**
-		 * @type {Header}
-		 */
-		const result = {};
-		result.date = /\d\d\d\d\-\d\d\-\d\d\s+\d\d\:\d\d\:\d\d/.exec(header)?.[0];
-		result.version = this.version;
-		result.script = /Script\:\s*\S*\.js/
-			.exec(header)?.[0]
-			.replace('Script:', '')
-			.trim();
-		result.line = /Line\:\s*\d+\:\d+/
-			.exec(header)?.[0]
-			.replace('Line:', '')
-			.trim();
-		result.userAgent = /userAgent\:.*platform/
-			.exec(header)?.[0]
-			.replace('platform', '')
-			.replace('userAgent:', '')
-			.trim();
-		result.platform = /platform\:.*isLoadFullApi/
-			.exec(header)?.[0]
-			.replace('platform:', '')
-			.replace('isLoadFullApi', '')
-			.trim();
-		result.isLoadFullApi = /isLoadFullApi\:\s*(true|false)/
-			.exec(header)?.[0]
-			.replace('isLoadFullApi:', '')
-			.trim();
-		result.isDocumentLoadComplete = /isDocumentLoadComplete\:\s*(true|false)/
-			.exec(header)?.[0]
-			.replace('isDocumentLoadComplete:', '')
-			.trim();
-		result.stackTrace = /StackTrace\:.*$/
-			.exec(header)?.[0]
-			.replace('StackTrace:', '')
-			.trim();
-		if (
-			/sdkjs/.test(result.script) &&
-			result.stackTrace.includes('TypeError')
-		) {
-			const editor = new RegExp(`word|cell|slide`, 'g').exec(
-				result.script
-			)?.[0];
-			const stackTraceVariable = /'\w+'/
-				.exec(result.stackTrace)?.[0]
-				.replace("'", '')
-				.replace("'", '')
-				.trim();
-			if (stackTraceVariable) {
-				result.stackTrace = result.stackTrace.replace(
-					stackTraceVariable,
-					`${stackTraceVariable} (${this._deserializeProp(
-						stackTraceVariable,
-						editor
-					)})`
-				);
-			} else {
-				// is not a function
-				const stackTraceFunction = /(\w*\.*)*\sis\snot\sa\sfunction/g
-					.exec(result.stackTrace)?.[0]
-					.replace('is not a function', '')
+		header = header.replace(/"/g, '').trim();
+		let result = header.replace(/,|\n|\\n/g, '\n');
+		let typeError = /TypeError.*/.exec(result)?.[0];
+		if (typeError) {
+			let errorProp =
+				/\'\w*\'/.exec(typeError)?.[0].replace(/'/g, '') ||
+				/(\w+|\.|\$|\[|\])*\sis\s.*/
+					.exec(typeError)?.[0]
+					.replace(/\sis\s.*/, '')
 					.trim();
-				const props = stackTraceFunction
-					.split('.')
-					.map((prop) => this._deserializeProp(prop, editor));
-				result.stackTrace = result.stackTrace.replace(
-					stackTraceFunction,
-					`${stackTraceFunction} (${props.join('.')})`
+			if (errorProp) {
+				result = result.replace(
+					new RegExp(escapeRegExp(typeError), 'g'),
+					`${typeError} (${this._deserializePropsString(errorProp)})`
 				);
 			}
 		}
@@ -240,25 +196,21 @@ class Deserializer {
 	 * @return {string}
 	 */
 	deserializeError(error) {
-		const errorArray = error.split('\r');
+		const errorArray = error.split(/\n|\r|\\n/);
 		const expressions = [];
 		const headerArray = [];
 		errorArray.forEach((line) => {
 			line = line.trim();
-			if (/^at\s(\w*|\.)*/g.test(line) && /http.*\.js/g.test(line)) {
-				expressions.push(line);
-			} else {
-				headerArray.push(line);
+			if (/StackTrace: (at\s)?(\w+|\.|\$|\[|\])+.*http.*\.js/.test(line)) {
+				expressions.push(line.replace('StackTrace: ', ''));
 			}
+			isStackTrace(line) ? expressions.push(line) : headerArray.push(line);
 		});
-		const header = this._parseHeader(headerArray.join(' ').trim());
+		const header = this._parseHeader(headerArray.join('\n').trim());
 		const changedExpressions = expressions.map((expression) =>
 			this._deserializeExpression(expression)
 		);
-		let result = '';
-		for (let i in header) {
-			result += `${i}: ${header[i]}\n`;
-		}
+		let result = 'Header:\n' + header + '\n';
 		changedExpressions.forEach((expression) => {
 			result += `${expression}\n`;
 		});
@@ -298,14 +250,21 @@ class Controller {
 	 */
 	_parseErrors(errors) {
 		const result = [''];
+		let isHeader = false;
 		let index = 0;
-		errors.split('\n').forEach((line) => {
-			if (line === '\r') {
-				index += 1;
-				result[index] = '';
-			}
-			result[index] += line;
-		});
+		errors
+			.split(/\n|\\n/)
+			.map((line) => line.trim())
+			.forEach((line) => {
+				if (!isStackTrace(line) && !isHeader) {
+					isHeader = true;
+					index += 1;
+					result[index] = '';
+				} else if (isStackTrace(line)) {
+					isHeader = false;
+				}
+				result[index] += line + '\n';
+			});
 		return result;
 	}
 	/**
