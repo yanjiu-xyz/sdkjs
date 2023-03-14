@@ -31,7 +31,9 @@ cache/
     ```bash
     node deserialize.js your-input-file
     ```
+
     or
+
     ```bash
     node deserialize.js
     ```
