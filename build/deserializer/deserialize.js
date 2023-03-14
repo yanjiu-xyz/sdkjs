@@ -32,7 +32,7 @@
 
 const fs = require('node:fs');
 // Input and output file with errors
-const INPUTFILE = `${__dirname}/${process.argv[2]}` || `${__dirname}/input.txt`;
+const INPUTFILE = process.argv[2] ? `${__dirname}/${process.argv[2]}` : `${__dirname}/input.txt`;
 const OUTPUTFILE = `${__dirname}/output.txt`;
 // Old serialized props map
 const OLD_PROPS_MAP_NAME = 'sdk-all.props.js.map';
@@ -129,15 +129,16 @@ class Deserializer {
 	 * @return {string}
 	 */
 	_deserializePropsString(expression, editor) {
-		let result = expression;
+		let result = '';
+		const delimiters = expression.matchAll(/\.|\[|\]/g);
 		const expressionArray = expression.split(/\.|\[|\]/g);
-		const changedExpressions = expressionArray.map((exp) => ({
-			old: exp,
-			new: this._deserializeProp(exp, editor),
-		}));
+		const changedExpressions = expressionArray.map((exp) => 
+			this._deserializeProp(exp, editor),
+		);
 		changedExpressions.forEach((exp) => {
-			result = result.replace(new RegExp(escapeRegExp(exp.old)), exp.new);
-		})
+			let next = delimiters.next();
+			result = result += exp + (next.done ? '' : next.value);
+		});
 		return result;
 	}
 	/**
