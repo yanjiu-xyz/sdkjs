@@ -2912,23 +2912,30 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function(nW, nH)
 	var oLogicDocument    = oParagraph ? oParagraph.GetLogicDocument() : null;
 	var nPosInParent      = this.GetPosInParent(oParent);
 
-	if (undefined === nW)
+	let _nW = 50;
+	let _nH = 50;
+	let X = 0;
+	let Y = 0;
+	
+	if (oParent)
 	{
-		nW = 50;
-		nH = 50;
-
-		if (oParent)
+		for (var Key in this.Bounds)
 		{
-			for (var Key in this.Bounds)
+			if (this.Bounds[Key].W > 0.001 && this.Bounds[Key].H > 0.001)
 			{
-				if (this.Bounds[Key].W > 0.001 && this.Bounds[Key].H > 0.001)
-				{
-					nW = this.Bounds[Key].W + (2 * 25.4 / 72) * 2 + 0.1;
-					nH = this.Bounds[Key].H + 0.1;
-					break;
-				}
+				X  = this.Bounds[Key].X - (2 * 25.4 / 72);
+				Y  = this.Bounds[Key].Y;
+				nW = this.Bounds[Key].W + (2 * 25.4 / 72) * 2 + 0.1;
+				nH = this.Bounds[Key].H + 0.1;
+				break;
 			}
 		}
+	}
+	
+	if (undefined === nW)
+	{
+		nW = _nW;
+		nH = _nH;
 	}
 
 	// Для билдера, чтобы мы могли конвертить форму, даже если она нигде не лежит
@@ -2944,7 +2951,9 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function(nW, nH)
 		return null;
 
 	let oParaDrawing = this.private_ConvertFormToFixed(nW, nH);
-
+	oParaDrawing.Set_PositionH(Asc.c_oAscRelativeFromH.Page, false, X, false);
+	oParaDrawing.Set_PositionV(Asc.c_oAscRelativeFromV.Page, false, Y, false);
+	
 	var oRun = new ParaRun(oParagraph, false);
 	oRun.AddToContent(0, oParaDrawing);
 
