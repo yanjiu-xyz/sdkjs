@@ -2494,13 +2494,13 @@
 		switch (this.ColorSchemeId) {
 			// bg1,tx1,bg2,tx2,accent1 - accent6
 			case 6: {
-				return "backround 1";
+				return "background 1";
 			}
 			case 15: {
 				return "text 1";
 			}
 			case 7: {
-				return "backround 2";
+				return "background 2";
 			}
 			case 16: {
 				return "text 2";
