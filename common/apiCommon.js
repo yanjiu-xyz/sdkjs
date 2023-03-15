@@ -2362,6 +2362,7 @@
 
 		this.Mods = [];
 		this.ColorSchemeId = -1;
+		this.EffectValue  = 0;
 		if (1 === arguments.length) {
 			this.r = arguments[0].r;
 			this.g = arguments[0].g;
@@ -2464,6 +2465,17 @@
 	};
 	asc_CColor.prototype.getVal = function () {
 		return (((this.r << 16) & 0xFF0000) + ((this.g << 8)&0xFF00)+this.b);
+	};
+	asc_CColor.prototype.asc_putEffectValue = function (v) {
+		let dVal = Math.abs(v);
+		dVal = ((dVal * 100 + 0.5) >> 0) / 100;
+		if(v < 0) {
+			dVal = -dVal;
+		}
+		this.EffectValue = dVal;
+	};
+	asc_CColor.prototype.asc_getEffectValue = function () {
+		return this.EffectValue;
 	};
 
 	/** @constructor */
@@ -6313,6 +6325,9 @@
 	prot["get_hex"] = prot["asc_getHex"] = prot.get_hex = prot.asc_getHex;
 	prot["get_color"] = prot["asc_getColor"] = prot.get_color = prot.asc_getColor;
 	prot["get_name"] = prot["asc_getName"] = prot.get_name = prot.asc_getName;
+	prot["get_effectValue"] = prot["asc_getEffectValue"] = prot.get_effectValue = prot.asc_getEffectValue;
+	prot["put_effectValue"] = prot["asc_putEffectValue"] = prot.put_effectValue = prot.asc_putEffectValue;
+
 
 	window["Asc"]["asc_CTextBorder"] = window["Asc"].asc_CTextBorder = asc_CTextBorder;
 	prot = asc_CTextBorder.prototype;

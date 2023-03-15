@@ -1726,6 +1726,35 @@
 			}
 			this.Mods = oOther.Mods.concat(this.Mods);
 		};
+		CColorModifiers.prototype.getShadeOrTint = function() {
+			const M = this.Mods;
+			if(M.length === 1 && M[0].name === "lumMod" && M[0].val > 0) {//shade
+				return -M[0].val;
+			}
+			if(M.length === 2 && M[0].name === "lumMod" && M[0].val > 0 && M[1].name === "lumOff" && M[1].val > 0) {
+				return M[0].val;
+			}
+			return null;
+		};
+		CColorModifiers.prototype.canGetShadeOrTint = function() {
+			return this.getShadeOrTint() !== null;
+		};
+		CColorModifiers.prototype.getEffectValue = function () {
+			if(this.Mods.length === 1) {
+				let oMod = this.Mods[0];
+				if(oMod.name === "wordTint") {
+					return oMod.val / 255;
+				}
+				if(oMod.name === "wordShade") {
+					return -oMod.val / 255;
+				}
+			}
+			let nVal = this.getShadeOrTint();
+			if(nVal !== null) {
+				return nVal / 100000;
+			}
+			return 0;
+		};
 
 
 		function getPercentageValue(sVal) {
@@ -2487,10 +2516,7 @@
 			}
 		};
 		CUniColor.prototype.canConvertPPTXModsToWord = function () {
-			return this.Mods
-				&& ((this.Mods.Mods.length === 1 && this.Mods.Mods[0].name === "lumMod" && this.Mods.Mods[0].val > 0)
-					|| (this.Mods.Mods.length === 2 && this.Mods.Mods[0].name === "lumMod" && this.Mods.Mods[0].val > 0
-						&& this.Mods.Mods[1].name === "lumOff" && this.Mods.Mods[1].val > 0));
+			return this.Mods && this.Mods.canGetShadeOrTint();
 		};
 		CUniColor.prototype.convertToWordMods = function () {
 			if (this.canConvertPPTXModsToWord()) {
