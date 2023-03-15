@@ -2279,7 +2279,10 @@
 	};
 	Workbook.prototype.setActiveById=function(sheetId){
 		var ws = this.getWorksheetById(sheetId);
-		return this.setActive(ws.getIndex());
+		if (ws) {
+			this.setActive(ws.getIndex());
+		}
+		return false;
 	};
 	Workbook.prototype.getSheetIdByIndex = function(index) {
 		var ws = this.getWorksheet(index);
@@ -4360,10 +4363,12 @@
 	Workbook.prototype.getExternalReferences = function () {
 		var res = null;
 		for (var i = 0; i < this.externalReferences.length; i++) {
-			if (!res) {
-				res = [];
+			if (this.externalReferences[i].getAscLink) {
+				if (!res) {
+					res = [];
+				}
+				res.push(this.externalReferences[i].getAscLink());
 			}
-			res.push(this.externalReferences[i].getAscLink())
 		}
 		return res;
 	};
@@ -9245,7 +9250,7 @@
 			options.isWholeWord = true;
 		}
 
-		var selectionRange = options.selectionRange || this.selectionRange;
+		var selectionRange = options.selectionRange || this.selectionRange || this.copySelection;
 		var lastRange = selectionRange.getLast();
 		var activeCell = selectionRange.activeCell;
 		var merge = this.getMergedByCell(activeCell.row, activeCell.col);
@@ -13318,7 +13323,8 @@
 							} else {
 								//like in CellXfs.prototype.merge
 								var isTableColor = oCurtext.format.isNormalXfColor();
-								oCurFormat = xfs._mergeProperty(g_StyleCache.addFont, oCurtext.format, xfs.font, true, isTableColor);
+								let mergedFont = xfs._mergeProperty(g_StyleCache.addFont, oCurtext.format, xfs.font, true, isTableColor);
+								oCurFormat.assign(mergedFont);
 							}
 						} else {
 							oCurFormat.assign(cellfont);

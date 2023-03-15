@@ -1123,8 +1123,24 @@
 
   DocsCoApi.prototype._onRefreshToken = function(jwt) {
     this.jwtOpen = undefined;
+    if (this.socketio) {
+      if (this.socketio.auth) {
+        this.socketio.auth.token = this.jwtOpen;
+      }
+      if (this.socketio.io && this.socketio.io.setOpenToken) {
+        this.socketio.io.setOpenToken(this.jwtOpen);
+      }
+    }
     if (jwt) {
       this.jwtSession = jwt;
+      if (this.socketio) {
+        if (this.socketio.auth) {
+          this.socketio.auth.session = this.jwtSession;
+        }
+        if (this.socketio.io && this.socketio.io.setSessionToken) {
+          this.socketio.io.setSessionToken(this.jwtSession);
+        }
+      }
     }
   };
 
@@ -1553,12 +1569,13 @@
     this._onRefreshToken(data['jwt']);
     if (true === this._isAuth) {
       this._state = ConnectionState.Authorized;
+
+      this._onServerVersion(data);
+
       // Мы должны только соединиться для получения файла. Совместное редактирование уже было отключено.
       if (this.isCloseCoAuthoring) {
-		  return;
-	  }
-
-	  this._onServerVersion(data);
+        return;
+      }
 
       this._onLicenseChanged(data);
       // Мы уже авторизовывались, нужно обновить пользователей (т.к. пользователи могли входить и выходить пока у нас не было соединения)
@@ -1763,6 +1780,8 @@
     this.settings = settings;
     this.io = this;
     this.settings["type"] = "socketio";
+
+    this.events = {};
   }
   CNativeSocket.prototype.open = function() { return this.engine.open(this.settings); };
   CNativeSocket.prototype.send = function(message) { return this.engine.send(message); };
@@ -1773,6 +1792,32 @@
   CNativeSocket.prototype.reconnectionDelay    = function(val) { this.settings["reconnectionDelay"] = val; };
   CNativeSocket.prototype.reconnectionDelayMax = function(val) { this.settings["reconnectionDelayMax"] = val; };
   CNativeSocket.prototype.randomizationFactor  = function(val) { this.settings["randomizationFactor"] = val; };
+  CNativeSocket.prototype.setOpenToken = function (val) {
+    if (this.settings["auth"]) {
+      this.settings["auth"]["token"] = val;
+    }
+  };
+  CNativeSocket.prototype.setSessionToken = function (val) {
+    if (this.settings["auth"]) {
+      this.settings["auth"]["session"] = val;
+    }
+  };
+
+  CNativeSocket.prototype.on = function(name, callback) {
+    if (!this.events.hasOwnProperty(name))
+      this.events[name] = [];
+    this.events[name].push(callback);
+  };
+  CNativeSocket.prototype.onMessage = function() {
+    var name = arguments[0];
+    if (this.events.hasOwnProperty(name))
+    {
+      for (var i = 0; i < this.events[name].length; ++i)
+        this.events[name][i].apply(this, Array.prototype.slice.call(arguments, 1));
+      return true;
+    }
+    return false;
+  };
 
 	DocsCoApi.prototype._initSocksJs = function () {
       var t = this;
@@ -1787,7 +1832,8 @@
         "reconnectionDelayMax": 10000,
         "randomizationFactor": 0.5,
         "auth": {
-          "token": this.jwtOpen
+          "token": this.jwtOpen,
+          "session": this.jwtSession
         }
       };
       if (window['IS_NATIVE_EDITOR']) {
@@ -1796,42 +1842,43 @@
       } else {
         let io = AscCommon.getSocketIO();
         socket = io(options);
-        socket.on("connect", function () {
+      }
+      socket.on("connect", function () {
+        firstConnection = false;
+        t._onServerOpen();
+      });
+      socket.on("disconnect", function (reason) {
+        //(explicit disconnection), the client will not try to reconnect and you need to manually call
+        let explicit = 'io server disconnect' === reason || 'io client disconnect' === reason;
+        t._onServerClose(explicit);
+        if (!explicit) {
+          //explicit disconnect sends disconnect reason on its own
+          t.onDisconnect();
+        }
+      });
+      socket.on('connect_error', function (err) {
+        //cases: every connect error and reconnect
+        if (err.data) {
+          //cases: authorization
+          t._onServerClose(true);
+          t.onDisconnect(err.data.description, err.data.code);
+        } else if (firstConnection) {
           firstConnection = false;
-          t._onServerOpen();
-        });
-        socket.on("disconnect", function (reason) {
-          //(explicit disconnection), the client will not try to reconnect and you need to manually call
-          let explicit = 'io server disconnect' === reason || 'io client disconnect' === reason;
-          t._onServerClose(explicit);
-          if (!explicit) {
-            //explicit disconnect sends disconnect reason on its own
-            t.onDisconnect();
-          }
-        });
-        socket.on('connect_error', function (err) {
-          //cases: every connect error and reconnect
-          if (err.data) {
-            //cases: authorization
-            t._onServerClose(true);
-            t.onDisconnect(err.data.description, err.data.code);
-          } else if (firstConnection) {
-            firstConnection = false;
+          if (socket.io.opts) {
             socket.io.opts.transports = ["polling", "websocket"];
           }
-        });
-        socket.io.on("reconnect_failed", function () {
-          //cases: connection restore, wrong socketio_url
-          t._onServerClose(true);
-          t.onDisconnect("reconnect_failed", c_oCloseCode.restore);
-        });
-        socket.on("message", function (data) {
-          t._onServerMessage(data);
-        });
-      }
-    this.socketio = socket;
-
-		return socket;
+        }
+      });
+      socket.io.on("reconnect_failed", function () {
+        //cases: connection restore, wrong socketio_url
+        t._onServerClose(true);
+        t.onDisconnect("reconnect_failed", c_oCloseCode.restore);
+      });
+      socket.on("message", function (data) {
+        t._onServerMessage(data);
+      });
+      this.socketio = socket;
+      return socket;
 	};
 
 	DocsCoApi.prototype._onServerOpen = function () {
