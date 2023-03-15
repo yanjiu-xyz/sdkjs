@@ -662,7 +662,7 @@ var editor;
 
 		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
 			// TODO: add translations
-			window["AscDesktopEditor"]["OpenFilenameDialog"]("(*xml)", false, function (_file) {
+			window["AscDesktopEditor"]["OpenFilenameDialog"]("(*.xml)", false, function (_file) {
 				let file = _file;
 				if (Array.isArray(file)) {
 					file = file[0];
