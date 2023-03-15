@@ -2815,7 +2815,7 @@ function CDrawingDocument()
 				var _rgba = {R : _color_src.r, G : _color_src.g, B : _color_src.b, A : 255};
 				dst_mods.Apply(_rgba);
 
-				_ret_array[_cur_index] = new CColor(_rgba.R, _rgba.G, _rgba.B);
+				_ret_array[_cur_index] = new Asc.asc_CColor(_rgba.R, _rgba.G, _rgba.B);
 				_cur_index++;
 			}
 		}

@@ -218,7 +218,7 @@ var editor;
       for (var j = 0, length = aTints.length; j < length; ++j) {
         var tint = aTints[j];
         var color = AscCommonExcel.g_oColorManager.getThemeColor(i, tint);
-        _ret_array[_cur_index] = new CColor(color.getR(), color.getG(), color.getB());
+        _ret_array[_cur_index] = new Asc.asc_CColor(color.getR(), color.getG(), color.getB());
         _cur_index++;
       }
     }
