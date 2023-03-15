@@ -2740,7 +2740,8 @@ function CDrawingDocument()
 			color.Calculate(_theme, _slide, _layout, _master, rgba);
 
 			var _rgba     = color.RGBA;
-			arr_colors[i] = new CColor(_rgba.R, _rgba.G, _rgba.B);
+			arr_colors[i] = new Asc.asc_CColor(_rgba.R, _rgba.G, _rgba.B);
+			arr_colors[i].setColorSchemeId(color.color.id);
 		}
 
 		// теперь проверим
@@ -2798,6 +2799,7 @@ function CDrawingDocument()
 		let _ret_array = new Array(_count * 6);
 		let _cur_index = 0;
 
+		let array_colors_types = [6, 15, 7, 16, 0, 1, 2, 3, 4, 5];
 		for (let i = 0; i < _count; ++i)
 		{
 			let _color_src = this.GuiControlColorsMap[i];
@@ -2817,6 +2819,7 @@ function CDrawingDocument()
 
 				let oColor = new Asc.asc_CColor(_rgba.R, _rgba.G, _rgba.B);
 				oColor.put_effectValue(dst_mods.getEffectValue());
+				oColor.setColorSchemeId(array_colors_types[i]);
 				_ret_array[_cur_index] = oColor;
 				_cur_index++;
 			}

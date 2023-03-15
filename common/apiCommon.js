@@ -2477,6 +2477,61 @@
 	asc_CColor.prototype.asc_getEffectValue = function () {
 		return this.EffectValue;
 	};
+	asc_CColor.prototype.print = function() {
+		console.log("Color");
+		console.log("r: " + this.r);
+		console.log("g: " + this.g);
+		console.log("b: " + this.b);
+		console.log("effect val: " + this.asc_getEffectValue());
+		console.log("name: " + this.asc_getName());
+		console.log("name in scheme: " + this.asc_getNameInColorScheme());
+		console.log("---------------");
+	};
+	asc_CColor.prototype.asc_getNameInColorScheme = function () {
+		if(this.ColorSchemeId === -1) {
+			return null;
+		}
+		switch (this.ColorSchemeId) {
+			// bg1,tx1,bg2,tx2,accent1 - accent6
+			case 6: {
+				return "backround 1";
+			}
+			case 15: {
+				return "text 1";
+			}
+			case 7: {
+				return "backround 2";
+			}
+			case 16: {
+				return "text 2";
+			}
+			case 0: {
+				return "accent 1";
+			}
+			case 1: {
+				return "accent 2";
+			}
+			case 2: {
+				return "accent 3";
+			}
+			case 3: {
+				return "accent 4";
+			}
+			case 4: {
+				return "accent 5";
+			}
+			case 5: {
+				return "accent 6";
+			}
+		}
+		return null;
+	};
+	asc_CColor.prototype.setColorSchemeId = function (v) {
+		this.ColorSchemeId = v;
+		if(!AscFormat.isRealNumber(this.ColorSchemeId)) {
+			this.ColorSchemeId = -1;
+		}
+	};
 
 	/** @constructor */
 	function asc_CTextBorder(obj) {
@@ -6327,6 +6382,7 @@
 	prot["get_name"] = prot["asc_getName"] = prot.get_name = prot.asc_getName;
 	prot["get_effectValue"] = prot["asc_getEffectValue"] = prot.get_effectValue = prot.asc_getEffectValue;
 	prot["put_effectValue"] = prot["asc_putEffectValue"] = prot.put_effectValue = prot.asc_putEffectValue;
+	prot["get_nameInColorScheme"] = prot["asc_getNameInColorScheme"] = prot.get_nameInColorScheme = prot.asc_getNameInColorScheme;
 
 
 	window["Asc"]["asc_CTextBorder"] = window["Asc"].asc_CTextBorder = asc_CTextBorder;

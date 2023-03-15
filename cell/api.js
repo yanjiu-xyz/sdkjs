@@ -161,10 +161,12 @@ var editor;
     // потом реализовать проверку на то, что нужно ли посылать
 
     var arr_colors = new Array(10);
+	var array_colors_types = [6, 15, 7, 16, 0, 1, 2, 3, 4, 5];
     var _count = arr_colors.length;
     for (var i = 0; i < _count; ++i) {
       var color = AscCommonExcel.g_oColorManager.getThemeColor(i);
-      arr_colors[i] = new CColor(color.getR(), color.getG(), color.getB());
+      arr_colors[i] = new Asc.asc_CColor(color.getR(), color.getG(), color.getB());
+      arr_colors[i].setColorSchemeId(array_colors_types[i])
     }
 
     // теперь проверим
@@ -212,6 +214,7 @@ var editor;
     let _ret_array = new Array(_count * 6);
     let _cur_index = 0;
 
+    var array_colors_types = [6, 15, 7, 16, 0, 1, 2, 3, 4, 5];
     for (let i = 0; i < _count; ++i) {
       let basecolor = AscCommonExcel.g_oColorManager.getThemeColor(i);
       let aTints = AscCommonExcel.g_oThemeColorsDefaultModsSpreadsheet[AscCommon.GetDefaultColorModsIndex(basecolor.getR(), basecolor.getG(), basecolor.getB())];
@@ -219,6 +222,7 @@ var editor;
 	    let tint = aTints[j];
 	    let color = AscCommonExcel.g_oColorManager.getThemeColor(i, tint);
 	    let oColor = new Asc.asc_CColor(color.getR(), color.getG(), color.getB());
+		oColor.setColorSchemeId(array_colors_types[i]);
 		oColor.put_effectValue(tint);
         _ret_array[_cur_index] = oColor;
         _cur_index++;
