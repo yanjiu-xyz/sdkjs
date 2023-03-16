@@ -367,6 +367,11 @@
 		var opt = this.options;
 		var t = this;
 
+		var api = window["Asc"]["editor"];
+		if (api && !api.canUndoRedoByRestrictions()) {
+			saveValue = false;
+		}
+
 		var localSaveValueCallback = function(isSuccess) {
 			if(!isSuccess) {
 				t.setFocus(true);
@@ -387,7 +392,7 @@
 					window.removeEventListener("mouseup", t.fKeyMouseUp, false);
 					window.removeEventListener("mousemove", t.fKeyMouseMove, false);
 				}
-				t.input.blur();
+				t._blur();
 				t._updateTopLineActive(false);
 				t.input.isFocused = false;
 				t._updateCursor();
@@ -443,7 +448,7 @@
 				window.removeEventListener("mouseup", this.fKeyMouseUp, false);
 				window.removeEventListener("mousemove", this.fKeyMouseMove, false);
 			}
-			this.input.blur();
+			this._blur();
 			this._updateTopLineActive(false);
 			this.input.isFocused = false;
 			this._updateCursor();
@@ -462,6 +467,10 @@
 		}
 
 		return true;
+	};
+
+	CellEditor.prototype._blur = function () {
+		this.handlers.trigger("doEditorFocus");
 	};
 
 	CellEditor.prototype.setTextStyle = function (prop, val) {
@@ -530,10 +539,18 @@
 	};
 
 	CellEditor.prototype.undo = function () {
+		var api = window["Asc"]["editor"];
+		if (api && !api.canUndoRedoByRestrictions()) {
+			return;
+		}
 		this._performAction( this.undoList, this.redoList );
 	};
 
 	CellEditor.prototype.redo = function () {
+		var api = window["Asc"]["editor"];
+		if (api && !api.canUndoRedoByRestrictions()) {
+			return;
+		}
 		this._performAction( this.redoList, this.undoList );
 	};
 
@@ -886,10 +903,10 @@
 					}
 					isName = true;
 				}
-				if (cElementType.cell === oper.type || cElementType.cellsRange === oper.type || cElementType.cell3D === oper.type) {
+				if ((cElementType.cell === oper.type || cElementType.cellsRange === oper.type || cElementType.cell3D === oper.type) && oper.externalLink == null) {
 					wsName = oper.getWS().getName();
 					bboxOper = oper.getBBox0();
-				} else if (cElementType.cellsRange3D === oper.type) {
+				} else if ((cElementType.cellsRange3D === oper.type) && oper.externalLink == null) {
 					if (oper.isSingleSheet()) {
 						wsName = oper.getWS().getName();
 						bboxOper = oper.getBBox0NoCheck();

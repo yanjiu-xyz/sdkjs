@@ -256,9 +256,19 @@ CTableCell.prototype =
     // Формируем конечные свойства параграфа на основе стиля и прямых настроек.
     Get_CompiledPr : function(bCopy)
     {
+		let forceCompile = false;
+		if (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
+		{
+			let logicDocument = this.GetLogicDocument();
+			if (logicDocument
+				&& logicDocument.IsDocumentEditor()
+				&& logicDocument.CompileStyleOnLoad)
+				forceCompile = true;
+		}
+		
         if ( true === this.CompiledPr.NeedRecalc )
         {
-            if (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead)
+            if (!forceCompile && (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead))
             {
                 this.CompiledPr.Pr     = g_oDocumentDefaultTableCellPr;
                 this.CompiledPr.ParaPr = g_oDocumentDefaultParaPr;
@@ -272,7 +282,7 @@ CTableCell.prototype =
                 this.CompiledPr.Pr         = FullPr.CellPr;
                 this.CompiledPr.ParaPr     = FullPr.ParaPr;
                 this.CompiledPr.TextPr     = FullPr.TextPr;
-                this.CompiledPr.NeedRecalc = false;
+                this.CompiledPr.NeedRecalc = forceCompile;
             }
         }
 
@@ -682,6 +692,35 @@ CTableCell.prototype =
         return this.Content.Get_PagesCount();
     },
 
+    Content_Draw_Line : function (pGraphics)
+    {
+        const oParagraph = this.Content.Get_FirstParagraph();
+        if (oParagraph)
+        {
+            const nLineWidth = oParagraph.XLimit - oParagraph.X;
+            const nOffset = nLineWidth * 0.2;
+            const nLeftOffset = oParagraph.X + nOffset;
+            const nRightOffset = oParagraph.XLimit - nOffset;
+
+            const oTextPr = oParagraph.Get_FirstTextPr();
+            if (oTextPr.Unifill)
+            {
+                const oColor = oTextPr.Unifill.getRGBAColor();
+                pGraphics.p_color(oColor.R, oColor.G, oColor.B, 255);
+            }
+            else if (oTextPr.Color)
+            {
+                const oColor = oTextPr.Color;
+                pGraphics.p_color(oColor.r, oColor.g, oColor.b, 255);
+            }
+            else
+            {
+                pGraphics.p_color(0, 0, 0, 255);
+            }
+            pGraphics.drawHorLine(AscCommon.c_oAscLineDrawingRule.Center, oParagraph.Y + (this.Row.Height / 2), nLeftOffset, nRightOffset, 4 * AscCommon.g_dKoef_pix_to_mm);
+        }
+    },
+
     Content_Draw : function(PageIndex, pGraphics)
     {
         var TextDirection = this.Get_TextDirection();
@@ -699,7 +738,14 @@ CTableCell.prototype =
             pGraphics.transform3(_transform);
         }
 
-        this.Content.Draw(PageIndex, pGraphics);
+        if (pGraphics.bIsDrawCellTextLines)
+        {
+            this.Content_Draw_Line(pGraphics);
+        }
+        else
+        {
+            this.Content.Draw(PageIndex, pGraphics);
+        }
         if (bNeedRestore)
         {
             pGraphics.RestoreGrState();
@@ -901,8 +947,7 @@ CTableCell.prototype =
 
 	RecalculateMinMaxContentWidth : function(isRotated, nPctWidth)
 	{
-		var oTable         = this.GetTable();
-		var oLogicDocument = oTable ? oTable.GetLogicDocument() : null;
+		var oLogicDocument = this.GetLogicDocument();
 
 		if (undefined === isRotated)
 			isRotated = false;
@@ -1140,11 +1185,16 @@ CTableCell.prototype =
 
 	Set_Pr : function(CellPr)
 	{
+		let isHavePrChange = this.HavePrChange();
+		
 		this.private_AddPrChange();
 		History.Add(new CChangesTableCellPr(this, this.Pr, CellPr));
 		this.Pr = CellPr;
 		this.Recalc_CompiledPr();
 		this.private_UpdateTableGrid();
+		
+		if (isHavePrChange || this.HavePrChange())
+			this.private_UpdateTrackRevisions();
 	},
 
     Copy_Pr : function(OtherPr, bCopyOnlyVisualProps)
@@ -1847,6 +1897,16 @@ CTableCell.prototype =
     {
         return this.BorderInfo;
     },
+	
+	GetBorderInfoLeft : function()
+	{
+		return this.BorderInfo.Left;
+	},
+	
+	GetBorderInfoRight : function()
+	{
+		return this.BorderInfo.Right;
+	},
 
     //-----------------------------------------------------------------------------------
     // Undo/Redo функции
@@ -2005,6 +2065,18 @@ CTableCell.prototype.GetTable = function()
 		return null;
 
 	return oRow.GetTable();
+};
+/**
+ * Доступ к главному классу документа
+ * @returns {CDocument|null}
+ */
+CTableCell.prototype.GetLogicDocument = function()
+{
+	let table = this.GetTable();
+	if (table)
+		return table.GetLogicDocument();
+	
+	return null;
 };
 /**
  * Доступ к родительскому классу для родительской таблицы
@@ -2674,6 +2746,12 @@ CTableCell.prototype.private_GetRowTopMargin = function()
 	}
 
 	return nTop;
+};
+CTableCell.prototype.OnContentChange = function()
+{
+	let table = this.GetTable();
+	if (table)
+		table.OnContentChange();
 };
 
 

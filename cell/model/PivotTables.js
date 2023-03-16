@@ -2687,6 +2687,7 @@ function CT_pivotTableDefinition(setDefaults) {
 	this.ascDataRef = null;
 	this.ascAltText = null;
 	this.ascAltTextSummary = null;
+	this.ascHideValuesRow = null;
 
 	if (setDefaults) {
 		this.setDefaults();
@@ -4011,6 +4012,9 @@ CT_pivotTableDefinition.prototype.asc_getTitle = function () {
 CT_pivotTableDefinition.prototype.asc_getDescription = function () {
 	return this.pivotTableDefinitionX14 && this.pivotTableDefinitionX14.altTextSummary;
 };
+CT_pivotTableDefinition.prototype.asc_getHideValuesRow = function () {
+	return this.pivotTableDefinitionX14 && this.pivotTableDefinitionX14.hideValuesRow;
+};
 CT_pivotTableDefinition.prototype.asc_getStyleInfo = function () {
 	return this.pivotTableStyleInfo;
 };
@@ -4233,10 +4237,12 @@ CT_pivotTableDefinition.prototype.getRowColIndexes = function(fields, withoutVal
 	return indexes;
 };
 CT_pivotTableDefinition.prototype.getCacheFieldName = function(index) {
-	return this.asc_getCacheFields()[index].name || "";
+	let cacheFields = this.asc_getCacheFields();
+	return (cacheFields && cacheFields[index] && cacheFields[index].name) || "";
 };
 CT_pivotTableDefinition.prototype.getPivotFieldName = function(index) {
-	return this.asc_getPivotFields()[index].name || this.getCacheFieldName(index);
+	let pivotFields = this.asc_getPivotFields();
+	return (pivotFields && pivotFields[index] && pivotFields[index].name) || this.getCacheFieldName(index);
 };
 CT_pivotTableDefinition.prototype.getDataFieldName = function(index) {
 	var dataField = this.asc_getDataFields()[index];
@@ -4563,7 +4569,9 @@ CT_pivotTableDefinition.prototype.updateLocation = function() {
 		location.firstDataCol = 0;
 		location.firstHeaderRow = 1;
 		if (1 === colFieldsCount && st_VALUES === colFields[0].asc_getIndex()) {
-			location.firstHeaderRow = 0;
+			if (!this.showHeaders || (this.pivotTableDefinitionX14 && this.pivotTableDefinitionX14.hideValuesRow)) {
+				location.firstHeaderRow = 0;
+			}
 			colFieldsCountWithoutValues = 0;
 		}
 		if (this.gridDropZones && (0 === colFieldsCountWithoutValues || 0 === rowFieldsCount)) {
@@ -4741,6 +4749,9 @@ CT_pivotTableDefinition.prototype.asc_set = function (api, newVal) {
 		if (null != newVal.ascAltTextSummary) {
 			pivot.setDescription(newVal.ascAltTextSummary, true);
 		}
+		if (null != newVal.ascHideValuesRow) {
+			pivot.setHideValuesRow(newVal.ascHideValuesRow, true);
+		}
 		if (null !== newVal.ascInsertBlankRow) {
 			pivot.setInsertBlankRow(newVal.ascInsertBlankRow, true);
 		}
@@ -4853,6 +4864,9 @@ CT_pivotTableDefinition.prototype.setTitle = function(newVal, addToHistory) {
 CT_pivotTableDefinition.prototype.asc_setDescription = function(newVal, addToHistory) {
 	this.ascAltTextSummary = newVal;
 };
+CT_pivotTableDefinition.prototype.asc_setHideValuesRow = function(newVal, addToHistory) {
+	this.ascHideValuesRow = newVal;
+};
 CT_pivotTableDefinition.prototype.setDescription = function(newVal, addToHistory) {
 	if (!this.pivotTableDefinitionX14) {
 		this.pivotTableDefinitionX14 = new CT_pivotTableDefinitionX14();
@@ -4860,6 +4874,14 @@ CT_pivotTableDefinition.prototype.setDescription = function(newVal, addToHistory
 	var oldVal = this.pivotTableDefinitionX14.altTextSummary;
 	setTableProperty(this, oldVal, newVal, addToHistory, AscCH.historyitem_PivotTable_SetAltTextSummary, true);
 	this.pivotTableDefinitionX14.altTextSummary = newVal;
+};
+CT_pivotTableDefinition.prototype.setHideValuesRow = function(newVal, addToHistory) {
+	if (!this.pivotTableDefinitionX14) {
+		this.pivotTableDefinitionX14 = new CT_pivotTableDefinitionX14();
+	}
+	var oldVal = this.pivotTableDefinitionX14.hideValuesRow;
+	setTableProperty(this, oldVal, newVal, addToHistory, AscCH.historyitem_PivotTable_HideValuesRow, true);
+	this.pivotTableDefinitionX14.hideValuesRow = newVal;
 };
 CT_pivotTableDefinition.prototype.asc_setInsertBlankRow = function(newVal) {
 	this.ascInsertBlankRow = newVal;

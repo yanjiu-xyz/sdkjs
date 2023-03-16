@@ -1263,6 +1263,21 @@
 			case AscDFH.historydescription_Collaborative_DeletedTextRecovery:
 				sString = "Collaborative_DeletedTextRecovery";
 				break;
+			case AscDFH.historydescription_Document_AddPlaceholderImages:
+				sString = "Document_AddPlaceholderImages";
+				break;
+			case AscDFH.historydescription_OForm_AddRole:
+				sString = "OForm_AddRole";
+				break;
+			case AscDFH.historydescription_OForm_RemoveRole:
+				sString = "OForm_RemoveRole";
+				break;
+			case AscDFH.historydescription_OForm_EditRole:
+				sString = "OForm_EditRole";
+				break;
+			case AscDFH.historydescription_OForm_ChangeRoleOrder:
+				sString = "OForm_ChangeRoleOrder";
+				break;
 		}
 		return sString;
 	}
@@ -1692,11 +1707,11 @@
 	window['AscDFH'].historyitem_type_ViewPrScale            = 2116 << 16;
 	window['AscDFH'].historyitem_type_ViewPrGuide            = 2117 << 16;
 
-	window['AscDFH'].historyitem_type_UserMaster             = 2200 << 16;
-	window['AscDFH'].historyitem_type_User                   = 2201 << 16;
-	window['AscDFH'].historyitem_type_SignInfo               = 2202 << 16;
-	window['AscDFH'].historyitem_type_CipherInfo             = 2203 << 16;
-	window['AscDFH'].historyitem_type_FormFieldMaster        = 2204 << 16;
+	window['AscDFH'].historyitem_type_OForm_UserMaster       = 2200 << 16;
+	window['AscDFH'].historyitem_type_OForm_User             = 2201 << 16;
+	window['AscDFH'].historyitem_type_OForm_FieldMaster      = 2202 << 16;
+	window['AscDFH'].historyitem_type_OForm_Document         = 2203 << 16;
+	window['AscDFH'].historyitem_type_OForm_FieldGroup       = 2204 << 16;
 	window['AscDFH'].historyitem_type_FormField              = 2205 << 16;
 	window['AscDFH'].historyitem_type_EncryptedData          = 2206 << 16;
 	window['AscDFH'].historyitem_type_KeyInfo                = 2207 << 16;
@@ -4449,7 +4464,15 @@
 	window['AscDFH'].historydescription_Document_ConvertMathView                    = 0x0199;
 	window['AscDFH'].historydescription_Document_DocumentProtection                 = 0x019a;
 	window['AscDFH'].historydescription_Collaborative_Undo                          = 0x019b;
-	window['AscDFH'].historydescription_Collaborative_DeletedTextRecovery           = 0x019c;
+	window['AscDFH'].historydescription_Document_AddPlaceholderImages               = 0x019c;
+	window['AscDFH'].historydescription_OForm_AddRole                               = 0x019d;
+	window['AscDFH'].historydescription_OForm_RemoveRole                            = 0x019e;
+	window['AscDFH'].historydescription_OForm_EditRole                              = 0x019f;
+	window['AscDFH'].historydescription_OForm_ChangeRoleOrder                       = 0x01a0;
+	window['AscDFH'].historydescription_Document_AddAddinField                      = 0x01a1;
+	window['AscDFH'].historydescription_Document_UpdateAddinFields                  = 0x01a2;
+	window['AscDFH'].historydescription_Document_RemoveComplexFieldWrapper          = 0x01a3;
+	window['AscDFH'].historydescription_Collaborative_DeletedTextRecovery           = 0x01a4;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

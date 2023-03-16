@@ -237,6 +237,10 @@ CWordCollaborativeEditing.prototype.OnEnd_Load_Objects = function()
 	this.m_oLogicDocument.ResumeRecalculate();
 	this.m_oLogicDocument.RecalculateByChanges(this.CoHistory.GetAllChanges(), this.m_nRecalcIndexStart, this.m_nRecalcIndexEnd, false, nPageIndex);
 	this.m_oLogicDocument.UpdateTracks();
+	
+	let oform = this.m_oLogicDocument.GetOFormDocument();
+	if (oform)
+		oform.onEndLoadChanges();
 
     editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.ApplyChanges);
 };
@@ -498,6 +502,15 @@ CWordCollaborativeEditing.prototype.OnEnd_ReadForeignChanges = function()
 
 		if (this.m_oLogicDocument && this.m_oLogicDocument.ClearListsCache)
 			this.m_oLogicDocument.ClearListsCache();
+
+		if (this.m_oLogicDocument && this.m_oLogicDocument.Settings && this.m_oLogicDocument.Settings.DocumentProtection)
+		{
+			let updateFromUser = this.m_oLogicDocument.Settings.DocumentProtection.GetNeedUpdate();
+			if (updateFromUser) {
+				oApi.asc_OnProtectionUpdate(updateFromUser);
+				this.m_oLogicDocument.Settings.DocumentProtection.SetNeedUpdate(null);
+			}
+		}
 	}
 };
 CWordCollaborativeEditing.prototype.private_RecalculateDocument = function(arrChanges)

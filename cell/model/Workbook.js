@@ -481,10 +481,18 @@
 		forEachSheetListeners: function(sheetId, callback) {
 			var sheetContainer = this.sheetListeners[sheetId];
 			if (sheetContainer) {
-				for (var i in sheetContainer.cellMap) {
+				var i, j;
+				for (i in sheetContainer.cellMap) {
 					if (sheetContainer.cellMap[i]) {
-						for (var j in sheetContainer.cellMap[i].listeners) {
+						for (j in sheetContainer.cellMap[i].listeners) {
 							callback(sheetContainer.cellMap[i].listeners[j]);
+						}
+					}
+				}
+				for (i in sheetContainer.areaMap) {
+					if (sheetContainer.areaMap[i]) {
+						for (j in sheetContainer.areaMap[i].listeners) {
+							callback(sheetContainer.areaMap[i].listeners[j]);
 						}
 					}
 				}
@@ -812,6 +820,9 @@
 		},
 		removeDefName: function(sheetId, name) {
 			this._removeDefName(sheetId, name, AscCH.historyitem_Workbook_DefinedNamesChange);
+			if (!this.wb.bUndoChanges && !this.wb.bRedoChanges) {
+				this.wb.handlers.trigger("updateCellWatches");
+			}
 		},
 		editDefinesNames: function(oldUndoName, newUndoName) {
 			var res = null;
@@ -995,7 +1006,8 @@
 		getNextTableName: function() {
 			var sNewName;
 			var collaborativeIndexUser = "";
-			if (this.wb.oApi.collaborativeEditing.getCollaborativeEditing()) {
+			var api = window["Asc"]["editor"];
+			if (api && api.collaborativeEditing && api.collaborativeEditing.getCollaborativeEditing()) {
 				collaborativeIndexUser = "_" + this.wb.oApi.CoAuthoringApi.get_indexUser();
 			}
 			do {
@@ -2072,7 +2084,7 @@
 		this.lastFindCells = {};
 		this.oleSize = null;
 		if (oApi && oApi.isEditOleMode) {
-			this.oleSize = new AscCommonExcel.OleSizeSelectionRange(null, new Asc.Range(0, 0, 10, 10));
+			this.oleSize = new AscCommonExcel.OleSizeSelectionRange(null, new Asc.Range(0, 0, 6, 9));
 		}
 
 		//при копировании листа с одного wb на другой необходимо менять в стеке
@@ -2128,6 +2140,44 @@
 		}
 		if (bSnapshot) {
 			this.snapshot = this._getSnapshot();
+		}
+	};
+	Workbook.prototype.addImages = function (aImages, oPlaceholder) {
+		const oApi = Asc.editor;
+		if (oPlaceholder && undefined !== oPlaceholder.id && aImages.length === 1 && aImages[0].Image) {
+			const oController = oApi.getGraphicController();
+			const oDrawingObjects = oApi.getDrawingObjects();
+			const oPlaceholderTarget = AscCommon.g_oTableId.Get_ById(oPlaceholder.id);
+			if (oPlaceholderTarget) {
+				if (oPlaceholderTarget.isObjectInSmartArt && oPlaceholderTarget.isObjectInSmartArt()) {
+					const oSmartArtGroup = oPlaceholderTarget.group.getMainGroup();
+					const oSmartArtId = oSmartArtGroup && oSmartArtGroup.Id;
+					this.checkObjectsLock([oSmartArtId], function (bLock) {
+						if (bLock) {
+							History.Create_NewPoint();
+							oController.resetSelection();
+							oPlaceholderTarget.applyImagePlaceholderCallback && oPlaceholderTarget.applyImagePlaceholderCallback(aImages, oPlaceholder);
+							oController.selectObject(oSmartArtGroup, 0);
+							oController.selection.groupSelection = oSmartArtGroup;
+							oSmartArtGroup.selectObject(oPlaceholderTarget, 0);
+							const oWS = oApi.wb.getWorksheet();
+							if (oWS) {
+								oWS.setSelectionShape(true);
+							}
+							oSmartArtGroup.addToRecalculate();
+							oController.startRecalculate();
+							if (oDrawingObjects) {
+								oDrawingObjects.sendGraphicObjectProps();
+							}
+							oController.clearPreTrackObjects();
+							oController.clearTrackObjects();
+							oController.updateOverlay();
+							oController.changeCurrentState(new AscFormat.NullState(oController));
+							oController.updateSelectionState();
+						}
+					});
+				}
+			}
 		}
 	};
 	Workbook.prototype.getOleSize = function () {
@@ -2229,7 +2279,10 @@
 	};
 	Workbook.prototype.setActiveById=function(sheetId){
 		var ws = this.getWorksheetById(sheetId);
-		return this.setActive(ws.getIndex());
+		if (ws) {
+			this.setActive(ws.getIndex());
+		}
+		return false;
 	};
 	Workbook.prototype.getSheetIdByIndex = function(index) {
 		var ws = this.getWorksheet(index);
@@ -4091,13 +4144,21 @@
 			//предполагаем, что здесь уже лежит ссылка в грамотном виде
 			//ищем последний слэш или двоеточие и разделяем на части
 			res = res.Id;
+			var lastSlash = "/";
+			var checkPrefix = "file:///";
+			var prefixFile = "";
+			if (0 === res.indexOf(checkPrefix)) {
+				res = res.substring(8);
+				prefixFile = checkPrefix;
+				lastSlash = "\\";
+			}
 			for (var i = res.length - 1; i >= 0; i--) {
-				if (res[i] === "/" || res[i] === ":") {
-					return {path: res.substring(0, i + 1), name: res.substring(i + 1, res.length)};
+				if (res[i] === lastSlash || res[i] === ":") {
+					return {path: prefixFile + res.substring(0, i + 1), name: res.substring(i + 1, res.length)};
 				}
 			}
 			if (res) {
-				res = {path: "", name: res};
+				res = {path: prefixFile + "", name: res};
 			}
 		}
 		return res ? res : null;
@@ -4209,6 +4270,7 @@
 	Workbook.prototype.removeExternalReferences = function (arr) {
 		//пока предполагаю, что здесь будет массив asc_CExternalReference
 		if (arr) {
+			var isChanged = false;
 			History.Create_NewPoint();
 			History.StartTransaction();
 			for (var i = 0; i < arr.length; i++) {
@@ -4217,6 +4279,7 @@
 
 					//TODO при undo кладутся в массив в обратном порядке - нужно всегда в одном порядке добавлять
 					this.removeExternalReference(eRIndex, true);
+					isChanged = true;
 
 					//TODO нужно заменить все ячейки просто значениями, где есть формулы, которые ссылаются на эту книгу
 					for (var j in arr[i].externalReference.worksheets) {
@@ -4247,12 +4310,17 @@
 				}
 			}
 			History.EndTransaction();
+
+			if (isChanged) {
+				this.handlers.trigger("asc_onUpdateExternalReferenceList");
+			}
 		}
 	};
 
 	Workbook.prototype.removeExternalReference = function (index, addToHistory) {
 		if (index != null) {
 			var from = this.externalReferences[index - 1];
+			//this.reIndexExternalReferencesLinks(index - 1);
 			this.externalReferences.splice(index - 1, 1);
 			if (addToHistory) {
 				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
@@ -4277,13 +4345,14 @@
 				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
 					null, null, new UndoRedoData_FromTo(null, arr[i]));
 			}
+			this.handlers.trigger("asc_onUpdateExternalReferenceList");
 		}
 	};
 
 	Workbook.prototype.getExternalLinkByReferenceData = function (referenceData) {
 		for (var i = 0; i < this.externalReferences.length; i++) {
 			if (this.externalReferences[i].referenceData) {
-				if (this.externalReferences[i].referenceData["fileId"] === referenceData["fileId"] && this.externalReferences[i].referenceData["portalName"] === referenceData["portalName"]) {
+				if (this.externalReferences[i].referenceData["fileKey"] === referenceData["fileKey"] && this.externalReferences[i].referenceData["instanceId"] === referenceData["instanceId"]) {
 					return {index: i + 1, val: this.externalReferences};
 				}
 			}
@@ -4294,10 +4363,12 @@
 	Workbook.prototype.getExternalReferences = function () {
 		var res = null;
 		for (var i = 0; i < this.externalReferences.length; i++) {
-			if (!res) {
-				res = [];
+			if (this.externalReferences[i].getAscLink) {
+				if (!res) {
+					res = [];
+				}
+				res.push(this.externalReferences[i].getAscLink());
 			}
-			res.push(this.externalReferences[i].getAscLink())
 		}
 		return res;
 	};
@@ -4315,7 +4386,17 @@
 				eR.removeSheetById(sheetId);
 				this.changeExternalReference(index, eR);
 			}
+			this.handlers.trigger("asc_onUpdateExternalReferenceList");
 		}
+	};
+
+	Workbook.prototype.getExternalReferenceById = function (id) {
+		for (var i = 0; i < this.externalReferences.length; i++) {
+			if (this.externalReferences[i].Id === id) {
+				return this.externalReferences[i];
+			}
+		}
+		return null;
 	};
 
 //-------------------------------------------------------------------------------------------------
@@ -5097,6 +5178,11 @@
 	Worksheet.prototype.setDirtyConditionalFormatting = function(range) {
 		if (!range) {
 			range = new AscCommonExcel.MultiplyRange([new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxRow0)]);
+		} else if (range && range.isNull && range.isNull()) {
+			return;
+		} else if (range.ranges && range.getUnionRange) {
+			//объединяю в один
+			range = new AscCommonExcel.MultiplyRange([range.getUnionRange()]);
 		}
 		if (this.updateConditionalFormattingRange) {
 			this.updateConditionalFormattingRange.union2(range);
@@ -7756,7 +7842,9 @@
 	Worksheet.prototype.onUpdateRanges = function(ranges) {
 		this.workbook.updateSparklineCache(this.sName, ranges);
 		// ToDo do not update conditional formatting on hidden sheet
-		this.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange(ranges));
+		if (ranges && ranges.length) {
+			this.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange(ranges));
+		}
 		//this.workbook.handlers.trigger("toggleAutoCorrectOptions", null,true);
 	};
 	Worksheet.prototype.updateSparklineCache = function (sheet, ranges) {
@@ -8258,7 +8346,13 @@
 		if (pivotTable.showHeaders && colFields) {
 			cells = this.getRange4(pivotRange.r1, pivotRange.c1 + location.firstDataCol);
 			if (pivotTable.compact) {
-				this._updatePivotTableSetCellValue(cells, pivotTable.colHeaderCaption || AscCommon.translateManager.getValue(AscCommonExcel.COL_HEADER_CAPTION));
+				let caption;
+				if (1 === colFields.length && st_VALUES === colFields[0].asc_getIndex()) {
+					caption = pivotTable.dataCaption || AscCommon.translateManager.getValue(AscCommonExcel.DATA_CAPTION)
+				} else {
+					caption = pivotTable.colHeaderCaption || AscCommon.translateManager.getValue(AscCommonExcel.COL_HEADER_CAPTION);
+				}
+				this._updatePivotTableSetCellValue(cells, caption);
 			} else {
 				var offset = new AscCommon.CellBase(0, 1);
 				for (var i = 0; i < colFields.length; ++i) {
@@ -9156,7 +9250,7 @@
 			options.isWholeWord = true;
 		}
 
-		var selectionRange = options.selectionRange || this.selectionRange;
+		var selectionRange = options.selectionRange || this.selectionRange || this.copySelection;
 		var lastRange = selectionRange.getLast();
 		var activeCell = selectionRange.activeCell;
 		var merge = this.getMergedByCell(activeCell.row, activeCell.col);
@@ -9685,10 +9779,10 @@
 	};
 
 	Worksheet.prototype.calculateWizardFormula = function (formula, type) {
-		var res = null, resultStr = null;
+		let res = null, resultStr = null;
 		if (formula) {
-			var parser = new AscCommonExcel.parserFormula(formula, /*formulaParsed.parent*/null, this);
-			var parseResultArg = new AscCommonExcel.ParseResult([], []);
+			let parser = new AscCommonExcel.parserFormula(formula, /*formulaParsed.parent*/null, this);
+			let parseResultArg = new AscCommonExcel.ParseResult([], []);
 			parser.parse(true, true, parseResultArg, true);
 			if (!parseResultArg.error) {
 				res = parser.calculate();
@@ -9696,6 +9790,8 @@
 
 			resultStr = "";
 			if (res) {
+				const maxArrayRowCount = 20;
+				const maxArrayColCount = 20;
 				//TODO рассчеты аргументов зависят от конкретных функций
 				//допустим, sum и acos - типа аргумента number, но результат для cellsRange3D разный
 
@@ -9740,7 +9836,7 @@
 					}
 				} else if (type === Asc.c_oAscFormulaArgumentType.logical) {
 					if (res.type === AscCommonExcel.cElementType.cellsRange || res.type === AscCommonExcel.cElementType.cellsRange3D) {
-						res = res.getFullArray(new AscCommonExcel.cNumber(0));
+						res = res.getFullArray(new AscCommonExcel.cNumber(0), maxArrayRowCount, maxArrayColCount);
 					} else if (res.type !== AscCommonExcel.cElementType.array) {
 						res = res.tocBool();
 					}
@@ -9768,7 +9864,7 @@
 					if (res.type === AscCommonExcel.cElementType.array) {
 						resultStr = res.toLocaleString();
 					} else if (res.type === AscCommonExcel.cElementType.cellsRange || res.type === AscCommonExcel.cElementType.cellsRange3D) {
-						res = res.getFullArray(new AscCommonExcel.cNumber(0));
+						res = res.getFullArray(new AscCommonExcel.cNumber(0), maxArrayRowCount, maxArrayColCount);
 						if (res) {
 							resultStr = res.toLocaleString();
 						}
@@ -11461,6 +11557,38 @@
 		this.workbook.handlers.trigger("changeCellWatches", this.getIndex());
 	};
 
+	Worksheet.prototype.deleteCellWatchesByRange = function (range, addToHistory) {
+		for (var i = 0; i < this.aCellWatches.length; i++) {
+			if (range.containsRange(this.aCellWatches[i].r)) {
+				this.deleteCellWatch(this.aCellWatches[i].r, addToHistory);
+				i--;
+			}
+		}
+	};
+
+	Worksheet.prototype.getCellWatchesByRange = function (range) {
+		let res = [];
+		for (var i = 0; i < this.aCellWatches.length; i++) {
+			if (range.containsRange(this.aCellWatches[i].r)) {
+				res.push(this.aCellWatches[i]);
+			}
+		}
+		return res;
+	};
+
+	Worksheet.prototype.checkImportXmlLocationForError = function(ranges) {
+		for (var i = 0; i < ranges.length; ++i) {
+			var range = ranges[i];
+			if (this.autoFilters.isIntersectionTable(range)) {
+				return c_oAscError.ID.PivotOverlap;
+			}
+			if (this.inPivotTable(range)) {
+				return c_oAscError.ID.PivotOverlap;
+			}
+		}
+		return c_oAscError.ID.No;
+	};
+
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
 	var g_nCellOffsetXf = g_nCellOffsetFlag + 1;
@@ -11990,6 +12118,7 @@
 			DataOld = this.getValueData();
 		//[{text:"",format:TextFormat},{}...]
 		var xfTableAndCond = this.getCompiledStyleCustom(true, false, true);
+		var oldFP = this.formulaParsed;
 		this.setFormulaInternal(null);
 		this.cleanText();
 		this._setValue2(array, undefined, xfTableAndCond);
@@ -12006,6 +12135,7 @@
 			var cell = this.ws.getCell3(this.nRow, this.nCol);
 			cell.removeHyperlink();
 		}
+		this.checkRemoveExternalReferences(this.formulaParsed, oldFP);
 	};
 	Cell.prototype.setValueForValidation = function(array, formula, callback, isCopyPaste, byRef) {
 		this.setFormulaInternal(null, true);
@@ -13193,7 +13323,8 @@
 							} else {
 								//like in CellXfs.prototype.merge
 								var isTableColor = oCurtext.format.isNormalXfColor();
-								oCurFormat = xfs._mergeProperty(g_StyleCache.addFont, oCurtext.format, xfs.font, true, isTableColor);
+								let mergedFont = xfs._mergeProperty(g_StyleCache.addFont, oCurtext.format, xfs.font, true, isTableColor);
+								oCurFormat.assign(mergedFont);
 							}
 						} else {
 							oCurFormat.assign(cellfont);

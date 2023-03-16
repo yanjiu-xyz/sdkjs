@@ -2256,6 +2256,9 @@ function CDrawingDocument()
 
 			this.OnEndRecalculate(false);
 		}
+
+		if (this.m_oWordControl.m_oApi.printPreview && this.m_oWordControl.m_oApi.printPreview.page === index)
+			this.m_oWordControl.m_oApi.printPreview.update();
 	};
 
 	this.OnEndRecalculate = function (isFull, isBreak)
@@ -2662,6 +2665,7 @@ function CDrawingDocument()
 		var renderer = this.m_oDocRenderer;
 		renderer.Memory.Seek(0);
 		renderer.VectorMemoryForPrint.ClearNoAttack();
+		renderer.DocInfo(this.m_oWordControl.m_oApi.asc_getCoreProps());
 
 		for (var i = start; i <= end; i++)
 		{
@@ -2761,16 +2765,18 @@ function CDrawingDocument()
 
 	this.GetVisibleRegion = function()
 	{
-		let height = 0;
+		let yOffset = 0;
 		if (this.m_oWordControl)
-			height += this.m_oWordControl.Y;
-		if (this.m_oWordControl.m_oEditor)
-			height += this.m_oWordControl.m_oEditor.HtmlElement.height;
+			yOffset += this.m_oWordControl.Y;
 		if (true === this.m_oWordControl.m_bIsRuler)
-			height += (7 * g_dKoef_mm_to_pix);
+			yOffset += (7 * g_dKoef_mm_to_pix);
 
-		let pos1 = this.ConvertCoordsFromCursor2(0, 0);
-		let pos2 = this.ConvertCoordsFromCursor2(0, height);
+		let height = 0;
+		if (this.m_oWordControl.m_oEditor)
+			height += AscCommon.AscBrowser.convertToRetinaValue(this.m_oWordControl.m_oEditor.HtmlElement.height);
+
+		let pos1 = this.ConvertCoordsFromCursor2(0, yOffset);
+		let pos2 = this.ConvertCoordsFromCursor2(0, yOffset + height);
 
 		return [{ Page : pos1.Page, Y : pos1.Y }, { Page : pos2.Page, Y : pos2.Y }];
 	};
@@ -3719,6 +3725,8 @@ function CDrawingDocument()
 
 	this.OnDrawContentControl = function(obj, state, geom)
 	{
+		if (window["NATIVE_EDITOR_ENJINE"] === true)
+			return;
 		return this.contentControls.OnDrawContentControl(obj, state, geom);
 	};
 
@@ -7284,6 +7292,7 @@ function CDrawingDocument()
 			shape.contentWidth = shape.extX;
 			shape.createTextBody();
 			var par = shape.txBody.content.GetAllParagraphs()[0];
+			shape.setPaddings({Left: 0, Top: 0, Right: 0, Bottom: 0});
 
 			par.MoveCursorToStartPos();
 
@@ -7300,7 +7309,9 @@ function CDrawingDocument()
 
 			var parW = par.RecalculateMinMaxContentWidth().Max;
 			if (parW > shape.contentWidth) {
-				shape.findFitFontSizeForSmartArt(true);
+				const nNewFontSize = shape.findFitFontSizeForSmartArt(true);
+				shape.setFontSizeInSmartArt(nNewFontSize);
+				shape.recalculateContentWitCompiledPr();
 				parW = par.RecalculateMinMaxContentWidth().Max;
 			}
 
@@ -7756,7 +7767,10 @@ function CDrawingDocument()
 
         var _page = this.m_arrPages[pos.Page];
 		if (this.placeholders.onPointerDown(pos, _page.drawingPage, _page.width_mm, _page.height_mm))
+		{
+			this.m_oWordControl.onMouseUpMainSimple();
 			return true;
+		}
 
 		return false;
 	};

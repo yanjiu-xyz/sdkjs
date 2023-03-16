@@ -567,6 +567,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 			LoadingScriptError    : -24,
 			EditingError          :	-25,
 			LoadingFontError      : -26,
+			LoadingBinError       : -27,
 
 			SplitCellMaxRows     : -30,
 			SplitCellMaxCols     : -31,
@@ -594,6 +595,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 			FTRangeIncludedOtherTables       : -57,
 			ChangeFilteredRangeError         : -58,
 
+			CanNotPasteImage: -63,
 			PasteMaxRangeError   : -64,
 			PastInMergeAreaError : -65,
 			CopyMultiselectAreaError : -66,
@@ -601,12 +603,12 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 			MoveSlicerError: 68,
 			PasteMultiSelectError : -69,
 
-			DataRangeError   : -75,
-			CannotMoveRange  : -74,
-			ErrorInFormula   : -73,
-			InvalidReference : -72,
-			NoSingleRowCol   : -71,
 			NoValues         : -70,
+			NoSingleRowCol   : -71,
+			InvalidReference : -72,
+			ErrorInFormula   : -73,
+			CannotMoveRange  : -74,
+			DataRangeError   : -75,
 
 			MaxDataSeriesError : -80,
 			CannotFillRange    : -81,
@@ -771,6 +773,13 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		View           : 0x80 // Отличие данного ограничения от обычного ViewMode в том, что редактор открывается
 		                      // как полноценный редактор, просто мы запрещаем ЛЮБОЕ редактирование. А во ViewMode
 		                      // открывается именно просмотрщик.
+	};
+
+	var c_oAscLocalRestrictionType = {
+		None		: 0x00,
+		ReadOnly	: 0x01,
+		Locked		: 0x02,
+		Nosafe		: 0x04
 	};
 
 	// Режимы отрисовки
@@ -3209,16 +3218,17 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 
 	/** @enum {number} */
 	var c_oAscRevisionsChangeType = {
-		Unknown : 0x00,
-		TextAdd : 0x01,
-		TextRem : 0x02,
-		ParaAdd : 0x03,
-		ParaRem : 0x04,
-		TextPr  : 0x05,
-		ParaPr  : 0x06,
-		TablePr : 0x07,
-		RowsAdd : 0x08,
-		RowsRem : 0x09,
+		Unknown    : 0x00,
+		TextAdd    : 0x01,
+		TextRem    : 0x02,
+		ParaAdd    : 0x03,
+		ParaRem    : 0x04,
+		TextPr     : 0x05,
+		ParaPr     : 0x06,
+		TablePr    : 0x07,
+		RowsAdd    : 0x08,
+		RowsRem    : 0x09,
+		TableRowPr : 0x0A,
 
 		MoveMark       : 0xFE, // специальный внутренний тип, для обозначения меток переноса
 		MoveMarkRemove : 0xFF  // внутреннний тип, для удаления отметок переноса внутри параграфов и таблиц
@@ -4010,6 +4020,7 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['PasteSlicerError']                 = prot.PasteSlicerError;
 	prot['MoveSlicerError']                  = prot.MoveSlicerError;
 	prot['PasteMultiSelectError']            = prot.PasteMultiSelectError;
+	prot['CanNotPasteImage']                 = prot.CanNotPasteImage;
 	prot['DataRangeError']                   = prot.DataRangeError;
 	prot['CannotMoveRange']                  = prot.CannotMoveRange;
 	prot['MaxDataSeriesError']               = prot.MaxDataSeriesError;
@@ -4667,6 +4678,12 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['OnlySignatures'] = c_oAscRestrictionType.OnlySignatures;
 	prot['View']           = c_oAscRestrictionType.View;
 
+	prot = window['Asc']['c_oAscLocalRestrictionType'] = window['Asc'].c_oAscLocalRestrictionType = c_oAscLocalRestrictionType;
+	prot['None']     = c_oAscLocalRestrictionType.None;
+	prot['ReadOnly'] = c_oAscLocalRestrictionType.ReadOnly;
+	prot['Locked']   = c_oAscLocalRestrictionType.Locked;
+	prot['Nosafe']   = c_oAscLocalRestrictionType.Nosafe;
+
 
 	prot =  window["AscCommon"]["c_oAscCellAnchorType"] = window["AscCommon"].c_oAscCellAnchorType = c_oAscCellAnchorType;
 	prot["cellanchorAbsolute"] = prot.cellanchorAbsolute;
@@ -5148,17 +5165,18 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 
 
 	prot = window['Asc']['c_oAscRevisionsChangeType'] = window['Asc'].c_oAscRevisionsChangeType = c_oAscRevisionsChangeType;
-	prot['Unknown']  = c_oAscRevisionsChangeType.Unknown;
-	prot['TextAdd']  = c_oAscRevisionsChangeType.TextAdd;
-	prot['TextRem']  = c_oAscRevisionsChangeType.TextRem;
-	prot['ParaAdd']  = c_oAscRevisionsChangeType.ParaAdd;
-	prot['ParaRem']  = c_oAscRevisionsChangeType.ParaRem;
-	prot['TextPr']   = c_oAscRevisionsChangeType.TextPr;
-	prot['ParaPr']   = c_oAscRevisionsChangeType.ParaPr;
-	prot['TablePr']  = c_oAscRevisionsChangeType.TablePr;
-	prot['RowsAdd']  = c_oAscRevisionsChangeType.RowsAdd;
-	prot['RowsRem']  = c_oAscRevisionsChangeType.RowsRem;
-	prot['MoveMark'] = c_oAscRevisionsChangeType.MoveMark;
+	prot['Unknown']    = c_oAscRevisionsChangeType.Unknown;
+	prot['TextAdd']    = c_oAscRevisionsChangeType.TextAdd;
+	prot['TextRem']    = c_oAscRevisionsChangeType.TextRem;
+	prot['ParaAdd']    = c_oAscRevisionsChangeType.ParaAdd;
+	prot['ParaRem']    = c_oAscRevisionsChangeType.ParaRem;
+	prot['TextPr']     = c_oAscRevisionsChangeType.TextPr;
+	prot['ParaPr']     = c_oAscRevisionsChangeType.ParaPr;
+	prot['TablePr']    = c_oAscRevisionsChangeType.TablePr;
+	prot['RowsAdd']    = c_oAscRevisionsChangeType.RowsAdd;
+	prot['RowsRem']    = c_oAscRevisionsChangeType.RowsRem;
+	prot['TableRowPr'] = c_oAscRevisionsChangeType.TableRowPr;
+	prot['MoveMark']   = c_oAscRevisionsChangeType.MoveMark;
 
 	prot = window['Asc']['c_oAscSectionBreakType'] = window['Asc'].c_oAscSectionBreakType = c_oAscSectionBreakType;
 	prot['NextPage']   = c_oAscSectionBreakType.NextPage;

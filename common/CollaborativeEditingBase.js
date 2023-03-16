@@ -898,6 +898,20 @@
     //----------------------------------------------------------------------------------------------------------------------
     // Функции для работы с обновлением курсоров после принятия изменений
     //----------------------------------------------------------------------------------------------------------------------
+	CCollaborativeEditingBase.prototype.UpdateForeignCursorByAdditionalInfo = function(info)
+	{
+		if (!info)
+			return;
+		
+		let userId      = undefined !== info["UserId"] ? info["UserId"] : info.UserId;
+		let cursorInfo  = undefined !== info["CursorInfo"] ? info["CursorInfo"] : info.CursorInfo;
+		let shortUserId = undefined !== info["UserShortId"] ? info["UserShortId"] : info.UserShortId;
+		
+		if (!userId || !cursorInfo || !shortUserId)
+			return;
+		
+		this.Add_ForeignCursorToUpdate(userId, cursorInfo, shortUserId);
+	};
     CCollaborativeEditingBase.prototype.Add_ForeignCursorToUpdate = function(UserId, CursorInfo, UserShortId)
     {
         this.m_aCursorsToUpdate[UserId] = CursorInfo;
@@ -1124,10 +1138,8 @@
         if (DocState.EndPos)
             this.Add_DocumentPosition(DocState.EndPos);
 
-		if (DocState.ViewPosTop)
-			this.Add_DocumentPosition(DocState.ViewPosTop);
-		if (DocState.ViewPosBottom)
-			this.Add_DocumentPosition(DocState.ViewPosBottom);
+		if (DocState.AnchorPos)
+			this.Add_DocumentPosition(DocState.AnchorPos);
 
         if (DocState.FootnotesStart && DocState.FootnotesStart.Pos)
             this.Add_DocumentPosition(DocState.FootnotesStart.Pos);
@@ -1151,10 +1163,8 @@
         if (DocState.EndPos)
             this.Update_DocumentPosition(DocState.EndPos);
 
-		if (DocState.ViewPosTop)
-			this.Update_DocumentPosition(DocState.ViewPosTop);
-		if (DocState.ViewPosBottom)
-			this.Update_DocumentPosition(DocState.ViewPosBottom);
+		if (DocState.AnchorPos)
+			this.Update_DocumentPosition(DocState.AnchorPos);
 
         if (DocState.FootnotesStart && DocState.FootnotesStart.Pos)
             this.Update_DocumentPosition(DocState.FootnotesStart.Pos);

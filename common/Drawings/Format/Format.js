@@ -88,6 +88,9 @@
 		CBaseNoIdObject.prototype.Get_Id = function () {
 			return this.Id;
 		};
+		CBaseNoIdObject.prototype.GetId = function () {
+			return this.Id;
+		};
 		CBaseNoIdObject.prototype.Write_ToBinary2 = function (oWriter) {
 			oWriter.WriteLong(this.getObjectType());
 			oWriter.WriteString2(this.Get_Id());
@@ -4766,6 +4769,13 @@
 			return getGrayscaleValue(this);
 		};
 
+		function checkUniFillRasterImageId(oUnifill) {
+			if (oUnifill) {
+				return oUnifill.checkRasterImageId();
+			}
+			return null;
+		}
+
 		function CUniFill() {
 			CBaseNoIdObject.call(this);
 			this.fill = null;
@@ -4975,7 +4985,6 @@
 			const RGBAColor = this.getRGBAColor();
 			return getGrayscaleValue(RGBAColor);
 		};
-
 		CUniFill.prototype.getRGBAColor = function () {
 			if (this.fill) {
 				if (this.fill.type === c_oAscFill.FILL_TYPE_SOLID) {
@@ -5176,6 +5185,11 @@
 				}
 			}
 		};
+		CUniFill.prototype.checkRasterImageId = function() {
+			if (this.fill && typeof this.fill.RasterImageId === "string" && this.fill.RasterImageId.length > 0)
+				return this.fill.RasterImageId;
+			return null;
+		}
 
 		function CBuBlip() {
 			CBaseNoIdObject.call(this);
@@ -7089,6 +7103,12 @@
 			this.rot = pr;
 			this.handleUpdateRot();
 		};
+		CXfrm.prototype.shift = function(dDX, dDY) {
+			if(this.offX !== null && this.offY !== null) {
+				this.setOffX(this.offX + dDX);
+				this.setOffY(this.offY + dDY);
+			}
+		};
 		CXfrm.prototype.handleUpdatePosition = function () {
 			if (this.parent && this.parent.handleUpdatePosition) {
 				this.parent.handleUpdatePosition();
@@ -7456,9 +7476,7 @@
 			return false;
 		};
 		CSpPr.prototype.checkUniFillRasterImageId = function (unifill) {
-			if (unifill && unifill.fill && typeof unifill.fill.RasterImageId === "string" && unifill.fill.RasterImageId.length > 0)
-				return unifill.fill.RasterImageId;
-			return null;
+			return checkUniFillRasterImageId(unifill);
 		};
 		CSpPr.prototype.checkBlipFillRasterImage = function (images) {
 			var fill_image_id = this.checkUniFillRasterImageId(this.Fill);
@@ -8562,7 +8580,7 @@
 				else if(oData.Type === AscDFH.historyitem_ThemeSetFontScheme) {
 					let oPresentation = this.GetLogicDocument();
 					let aSlideIndexes = this.GetAllSlideIndexes();
-					if(oPresentation && aSlideIndexes.length > 0) {
+					if(oPresentation && aSlideIndexes && aSlideIndexes.length > 0) {
 						oPresentation.Refresh_RecalcData2({Type: AscDFH.historyitem_ThemeSetFontScheme, aIndexes: aSlideIndexes});
 					}
 				}
@@ -8695,6 +8713,13 @@
 			}
 			this.shadeToTitle = r.GetBool();
 		};
+		CBgPr.prototype.checkBlipFillRasterImage = function (images) {
+			let fill_image_id = checkUniFillRasterImageId(this.Fill);
+			if (fill_image_id !== null)
+				images.push(fill_image_id);
+		};
+
+
 
 		function CBg() {
 			CBaseNoIdObject.call(this);
@@ -8791,6 +8816,11 @@
 				}
 			}
 			return null;
+		};
+		CSld.prototype.forEachSp = function(fCallback) {
+			for(let nSp = 0; nSp < this.spTree.length; ++nSp) {
+				fCallback(this.spTree[nSp]);
+			}
 		};
 
 		function CSpTree(oSlideObject) {
@@ -13230,11 +13260,8 @@
 						break;
 					}
 					case 8: {
-						var _length = s.GetULong();
-						var _end_rec2 = s.cur + _length;
-
-						oPresentattion.Api.vbaMacros = s.GetBuffer(_length);
-						s.Seek2(_end_rec2);
+						oPresentattion.Api.vbaProject = new AscCommon.VbaProject();
+						oPresentattion.Api.vbaProject.fromStream(s);
 						break;
 					}
 					case 9: {
@@ -13280,6 +13307,19 @@
 		InitClass(IdEntry, CBaseNoIdObject, undefined);
 
 
+		function CreateSchemeUnicolorWithMods(id, aMods) {
+			let oColor = new CUniColor();
+			oColor.color = new CSchemeColor();
+			oColor.color.id = id;
+			for(let nMod = 0; nMod < aMods.length; ++nMod) {
+				let oModObject = aMods[nMod];
+				let oMod = new CColorMod();
+				oMod.name = oModObject.name;
+				oMod.val = oModObject.val;
+				oColor.addColorMod(oMod);
+			}
+			return oColor;
+		}
 
 // DEFAULT OBJECTS
 		function GenerateDefaultTheme(presentation, opt_fontName) {
@@ -13320,15 +13360,62 @@
 				theme.themeElements.fmtScheme.fillStyleLst.push(brush);
 
 				brush = new CUniFill();
-				brush.setFill(new CSolidFill());
-				brush.fill.setColor(new CUniColor());
-				brush.fill.color.setColor(CreateUniColorRGB(0, 0, 0));
+
+				let oFill = new CGradFill();
+				oFill.rotateWithShape = true;
+				brush.setFill(oFill);
+				let oLin = new GradLin();
+				oFill.setLin(oLin);
+				oLin.setAngle(16200000);
+				oLin.setScale(true);
+				let oGs = new CGs();
+				oFill.addColor(oGs);
+				oGs.setPos(0);
+
+				let oColor = CreateSchemeUnicolorWithMods(14, [{name: "tint", val: 50000}, {name: "satMod", val: 300000}]);
+				oGs.setColor(oColor);
+
+				oGs = new CGs();
+				oFill.addColor(oGs);
+				oGs.setPos(35000);
+				oColor = CreateSchemeUnicolorWithMods(14, [{name: "tint", val: 37000}, {name: "satMod", val: 300000}]);
+				oGs.setColor(oColor);
+
+				oGs = new CGs();
+				oFill.addColor(oGs);
+				oGs.setPos(100000);
+				oColor = CreateSchemeUnicolorWithMods(14, [{name: "tint", val: 15000}, {name: "satMod", val: 350000}]);
+				oGs.setColor(oColor);
+
 				theme.themeElements.fmtScheme.fillStyleLst.push(brush);
 
 				brush = new CUniFill();
-				brush.setFill(new CSolidFill());
-				brush.fill.setColor(new CUniColor());
-				brush.fill.color.setColor(CreateUniColorRGB(0, 0, 0));
+
+				oFill = new CGradFill();
+				brush.setFill(oFill);
+				oFill.rotateWithShape = true;
+				oLin = new GradLin();
+				oFill.setLin(oLin);
+				oLin.setAngle(16200000);
+				oLin.setScale(false);
+				oGs = new CGs();
+				oFill.addColor(oGs);
+				oGs.setPos(0);
+				oColor = CreateSchemeUnicolorWithMods(14, [{name: "shade", val: 51000}, {name: "satMod", val: 130000}]);
+				oGs.setColor(oColor);
+
+				oGs = new CGs();
+				oFill.addColor(oGs);
+				oGs.setPos(80000);
+				oColor = CreateSchemeUnicolorWithMods(14, [{name: "shade", val: 93000}, {name: "satMod", val: 130000}]);
+				oGs.setColor(oColor);
+
+				oGs = new CGs();
+				oFill.addColor(oGs);
+				oGs.setPos(100000);
+				oColor = CreateSchemeUnicolorWithMods(14, [{name: "shade", val: 94000}, {name: "satMod", val: 135000}]);
+				oGs.setColor(oColor);
+				
 				theme.themeElements.fmtScheme.fillStyleLst.push(brush);
 				// ----------------------------------------------------
 
@@ -15218,5 +15305,6 @@
 		window['AscFormat'].CLR_IDX_MAP = CLR_IDX_MAP;
 		window['AscFormat'].MAP_AUTONUM_TYPES = MAP_AUTONUM_TYPES;
 		window['AscFormat'].CLR_NAME_MAP = CLR_NAME_MAP;
+		window['AscFormat'].LINE_PRESETS_MAP = LINE_PRESETS_MAP;
 	})
 (window);

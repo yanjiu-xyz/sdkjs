@@ -84,11 +84,20 @@ function CDocProtect() {
 
 	this.Lock = new AscCommon.CLock();
 	this.lockType = AscCommon.c_oAscLockTypes.kLockTypeNone;
+	this.NeedUpdateByUser = null;
 
 	this.temporaryPassword = null;
 }
 CDocProtect.prototype.Get_Id = function () {
 	return this.Id;
+};
+CDocProtect.prototype.SetNeedUpdate = function(userId)
+{
+	this.NeedUpdateByUser = userId;
+};
+CDocProtect.prototype.GetNeedUpdate = function()
+{
+	return this.NeedUpdateByUser;
 };
 CDocProtect.prototype.isOnlyView = function () {
 	return this.edit === Asc.c_oAscEDocProtect.ReadOnly;
@@ -109,9 +118,6 @@ CDocProtect.prototype.getRestrictionType = function () {
 			res = Asc.c_oAscRestrictionType.View;
 			break;
 		case Asc.c_oAscEDocProtect.TrackedChanges:
-			//asc_SetLocalTrackRevisions
-			//asc_SetGlobalTrackRevisions
-			res = Asc.c_oAscRestrictionType.OnlySignatures;
 			break;
 	}
 	return res;
@@ -142,7 +148,9 @@ CDocProtect.prototype.isPassword = function () {
 	return this.algorithmName != null || this.cryptAlgorithmSid != null;
 };
 CDocProtect.prototype.setProps = function (oProps) {
-	History.Add(new CChangesDocumentProtection(this, this, oProps));
+	let doc = editor && editor.private_GetLogicDocument && editor.private_GetLogicDocument();
+	let userId = doc && doc.GetUserId && doc.GetUserId();
+	History.Add(new CChangesDocumentProtection(this, this, oProps, userId));
 	this.setFromInterface(oProps);
 };
 CDocProtect.prototype.setFromInterface = function (oProps) {
@@ -151,6 +159,7 @@ CDocProtect.prototype.setFromInterface = function (oProps) {
 	this.spinCount = oProps.spinCount;
 	this.cryptAlgorithmSid = oProps.cryptAlgorithmSid;
 	this.hashValue = oProps.hashValue;
+	this.cryptProviderType = oProps.cryptProviderType;
 
 	this.enforcement = oProps.enforcement;
 };
@@ -193,7 +202,7 @@ CDocProtect.prototype.asc_getIsPassword = function()
 };
 CDocProtect.prototype.asc_getEditType = function()
 {
-	return this.edit;
+	return this.enforcement !== false ? this.edit : Asc.c_oAscEDocProtect.None;
 };
 CDocProtect.prototype.asc_setPassword = function(val)
 {
@@ -202,6 +211,9 @@ CDocProtect.prototype.asc_setPassword = function(val)
 CDocProtect.prototype.asc_setEditType = function(val)
 {
 	this.edit = val;
+	if (this.edit != null) {
+		this.enforcement = true;
+	}
 };
 
 
@@ -223,9 +235,12 @@ function CWriteProtection() {
 	this.cryptProviderTypeExtSource = null;
 }
 
+//--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'].CDocProtect = CDocProtect;
 prot = CDocProtect.prototype;
 prot["asc_getIsPassword"] = prot.asc_getIsPassword;
 prot["asc_getEditType"] = prot.asc_getEditType;
 prot["asc_setEditType"] = prot.asc_setEditType;
 prot["asc_setPassword"] = prot.asc_setPassword;
+
+window['AscCommonWord'].ECryptAlgType = ECryptAlgType;

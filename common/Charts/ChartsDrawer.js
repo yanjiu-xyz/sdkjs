@@ -42,6 +42,7 @@ function (window, undefined) {
 // Import
 var cToDeg = AscFormat.cToDeg;
 var ORIENTATION_MIN_MAX = AscFormat.ORIENTATION_MIN_MAX;
+var ORIENTATION_MAX_MIN = AscFormat.ORIENTATION_MAX_MIN;
 var Point3D = AscFormat.Point3D;
 
 var c_oAscTickMark = Asc.c_oAscTickMark;
@@ -6206,6 +6207,8 @@ drawBarChart.prototype = {
 		var height = point.compiledDlb.extY;
 
 		var centerX, centerY;
+		//TODO check revert valAx orientation for other charts labels
+		var maxMinAxis = this.valAx && this.valAx.scaling && this.valAx.scaling.orientation === ORIENTATION_MAX_MIN;
 
 		switch (point.compiledDlb.dLblPos) {
 			case c_oAscChartDataLabelsPos.bestFit: {
@@ -6223,7 +6226,7 @@ drawBarChart.prototype = {
 			case c_oAscChartDataLabelsPos.inBase: {
 				centerX = x + w / 2 - width / 2;
 				centerY = y;
-				if (point.val > 0) {
+				if ((point.val > 0 && !maxMinAxis) || (point.val < 0 && maxMinAxis)) {
 					centerY = y - height;
 				}
 				break;
@@ -6231,7 +6234,7 @@ drawBarChart.prototype = {
 			case c_oAscChartDataLabelsPos.inEnd: {
 				centerX = x + w / 2 - width / 2;
 				centerY = y - h;
-				if (point.val < 0) {
+				if ((point.val < 0 && !maxMinAxis) || (point.val > 0 && maxMinAxis)) {
 					centerY = centerY - height;
 				}
 				break;
@@ -6239,7 +6242,7 @@ drawBarChart.prototype = {
 			case c_oAscChartDataLabelsPos.outEnd: {
 				centerX = x + w / 2 - width / 2;
 				centerY = y - h - height;
-				if (point.val < 0) {
+				if ((point.val < 0 && !maxMinAxis) || (point.val > 0 && maxMinAxis)) {
 					centerY = centerY + height;
 				}
 				break;
@@ -10220,13 +10223,19 @@ drawPieChart.prototype = {
 		var oCommand1, calcPath, oCommand0;
 		// циклом находим крайнюю точку
 		for (var i = 0; i < this.paths.series.length; i++) {
-			calcPath = this.paths.series[i][numCache[i].val].insidePath;
-			calcPath = this.cChartSpace.GetPath(calcPath).getCommandByIndex(1);
-			if (calcPath) {
-				oCommand1 = calcPath;
+			calcPath = null;
+			if (this.paths.series[i] && numCache[i] && null != numCache[i].val && this.paths.series[i][numCache[i].val]) {
+				calcPath = this.paths.series[i][numCache[i].val].insidePath;
+				calcPath = null != calcPath && this.cChartSpace.GetPath(calcPath).getCommandByIndex(1);
+				if (calcPath) {
+					oCommand1 = calcPath;
+				}
 			}
 		}
 
+		if (!oCommand1) {
+			return;
+		}
 		if (!AscFormat.isRealNumber(path)) {
 			return;
 		}
@@ -12193,7 +12202,7 @@ drawScatterChart.prototype = {
 						var y = this.cChartDrawer.getYPosition(yVal, this.valAx, true);
 						this.paths.points[i][n] = this.cChartDrawer.calculatePoint(x, y, compiledMarkerSize, compiledMarkerSymbol);
 						if (this.chart.series[i].errBars) {
-							this.cChartDrawer.errBars.putPoint(x, y, xVal, yVal, i, n);
+							this.cChartDrawer.errBars.putPoint(x, y, xVal, yVal, seria.idx, idx);
 						}
 
 						points[i][n] = {x: xVal, y: yVal};
@@ -15726,14 +15735,14 @@ CErrBarsDraw.prototype = {
 			switch (errBars.errValType) {
 				case AscFormat.st_errvaltypeCUST: {
 					//TODO numRef ?
-					var numLit = errBars.plus.numLit || (errBars.plus.numRef && errBars.plus.numRef.numCache);
+					var numLit = errBars.plus && (errBars.plus.numLit || (errBars.plus.numRef && errBars.plus.numRef.numCache));
 					if (errBars.plus && numLit) {
 						plusErrVal = numLit.getPtByIndex(numLit.ptCount === 1 ? 0 : val);
 						if (plusErrVal) {
 							plusErrVal = plusErrVal.val;
 						}
 					}
-					numLit = errBars.minus.numLit || (errBars.minus.numRef && errBars.minus.numRef.numCache);
+					numLit = errBars.minus && (errBars.minus.numLit || (errBars.minus.numRef && errBars.minus.numRef.numCache));
 					if (errBars.minus && numLit) {
 						minusErrVal = numLit.getPtByIndex(numLit.ptCount === 1 ? 0 : val);
 						if (minusErrVal) {

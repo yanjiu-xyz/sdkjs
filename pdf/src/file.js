@@ -187,6 +187,10 @@
             this.nativeFile = null;
         }
     };
+    CFile.prototype.getFileBinary = function()
+    {
+        return this.nativeFile ? this.nativeFile["getFileAsBase64"]() : null;
+    };
     CFile.prototype.memory = function()
     {
         return this.nativeFile ? this.nativeFile["memory"]() : null;
@@ -202,6 +206,15 @@
     CFile.prototype.getDocumentInfo = function()
     {
         return this.nativeFile ? this.nativeFile["getDocumentInfo"]() : null;
+    };
+    CFile.prototype.isNeedCMap = function()
+    {
+        return this.nativeFile ? this.nativeFile["isNeedCMap"]() : false;
+    };
+    CFile.prototype.setCMap = function(data)
+    {
+        if (this.nativeFile)
+            this.nativeFile["setCMap"](data);
     };
 
     CFile.prototype.getPage = function(pageIndex, width, height, isNoUseCacheManager, backgroundColor)

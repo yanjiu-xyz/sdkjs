@@ -1879,6 +1879,7 @@ CDocumentContent.prototype.GetAllTables = function(oProps, arrTables)
 
 	return arrTables;
 };
+
 /**
  * Специальный пресет с номером страницы для колонтитула
  * @param nAlignType
@@ -2684,15 +2685,23 @@ CDocumentContent.prototype.AddNewParagraph = function(bForceAdd)
         //    в том числе если стиля нет у обоих, тогда копируем еще все прямые настройки.
         //    (Т.е. если стили разные, а у исходный параграф был параграфом со списком, тогда
         //    новый параграф будет без списка).
-        if (type_Paragraph === Item.GetType())
+        if (Item.IsParagraph())
         {
         	var isCheckAutoCorrect = false;
+			let numPr = Item.GetNumPr();
 
             // Если текущий параграф пустой и с нумерацией, тогда удаляем нумерацию и отступы левый и первой строки
-            if (true !== bForceAdd && undefined != Item.GetNumPr() && true === Item.IsEmpty({SkipNewLine : true}) && true === Item.IsCursorAtBegin())
+            if (true !== bForceAdd && numPr && true === Item.IsEmpty({SkipNewLine : true}) && true === Item.IsCursorAtBegin())
             {
-                Item.RemoveNumPr();
-                Item.Set_Ind({FirstLine : undefined, Left : undefined, Right : Item.Pr.Ind.Right}, true);
+				if (numPr.Lvl <= 0)
+				{
+					Item.RemoveNumPr();
+					Item.Set_Ind({FirstLine : undefined, Left : undefined, Right : Item.Pr.Ind.Right}, true);
+				}
+				else
+				{
+					Item.SetNumPr(numPr.NumId, numPr.Lvl - 1);
+				}
             }
             else
             {
@@ -2906,8 +2915,6 @@ CDocumentContent.prototype.Extend_ToPos                       = function(X, Y)
             break;
         }
 
-        this.Internal_Content_Add(this.Content.length, NewParagraph);
-
         if (NewParagraph.Pages[0].Bounds.Bottom > Y)
             break;
 
@@ -3042,11 +3049,12 @@ CDocumentContent.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, 
 		if (true == this.Selection.Use)
 			this.Remove(1, true);
 
-		var Item = this.Content[this.CurPos.ContentPos];
+		let Item = this.Content[this.CurPos.ContentPos];
+		let Drawing;
 		if (type_Paragraph == Item.GetType())
 		{
-			var Drawing = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
-			var Image   = this.DrawingObjects.createOleObject(Data, sApplicationId, Img, 0, 0, W, H, nWidthPix, nHeightPix, arrImagesForAddToHistory);
+			Drawing = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
+			let Image   = this.DrawingObjects.createOleObject(Data, sApplicationId, Img, 0, 0, W, H, nWidthPix, nHeightPix, arrImagesForAddToHistory);
 			Image.setParent(Drawing);
 			Drawing.Set_GraphicObject(Image);
 
@@ -3058,8 +3066,9 @@ CDocumentContent.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, 
 		}
 		else
 		{
-			Item.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
+			Drawing = Item.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 		}
+		return Drawing;
 	}
 };
 CDocumentContent.prototype.AddTextArt = function(nStyle)
@@ -6806,6 +6815,10 @@ CDocumentContent.prototype.SetSelectionToBeginEnd = function(isSelectionStart, i
 };
 CDocumentContent.prototype.Select_DrawingObject      = function(Id)
 {
+	let drawingObject = AscCommon.g_oTableId.GetById(Id);
+	if (!drawingObject || !drawingObject.IsUseInDocument())
+		return;
+	
     this.RemoveSelection();
 
     this.Parent.Set_CurrentElement(true, this.Get_StartPage_Absolute() + this.CurPage, this);
@@ -7246,6 +7259,7 @@ CDocumentContent.prototype.Internal_Content_Add = function(Position, NewObject, 
 		this.Internal_Content_Add(this.Content.length, new Paragraph(this.DrawingDocument, this, this.bPresentation === true));
 
 	this.private_ReindexContent(Position);
+	this.OnContentChange();
 };
 CDocumentContent.prototype.Internal_Content_Remove = function(Position, Count, isCorrectContent)
 {
@@ -7280,6 +7294,7 @@ CDocumentContent.prototype.Internal_Content_Remove = function(Position, Count, i
 		this.Internal_Content_Add(this.Content.length, new Paragraph(this.DrawingDocument, this, this.bPresentation === true));
 
 	this.private_ReindexContent(Position);
+	this.OnContentChange();
 };
 CDocumentContent.prototype.Clear_ContentChanges = function()
 {

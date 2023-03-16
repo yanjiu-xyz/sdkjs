@@ -1755,6 +1755,12 @@
 			});
 		};
 
+		MultiplyRange.prototype.isNull = function() {
+			if (!this.ranges || 0 === this.ranges.length || (1 === this.ranges.length && this.ranges[0] == null)) {
+				return true;
+			}
+			return false;
+		};
 
 		function VisibleRange(visibleRange, offsetX, offsetY) {
 			this.visibleRange = visibleRange;
@@ -2812,6 +2818,7 @@
 			this.ignorePrintArea = null;
 
 			this.isOnlyFirstPage = null;
+			this.nativeOptions = undefined;
 
 			// ToDo сюда же start и end page index
 
@@ -2823,6 +2830,8 @@
 		asc_CAdjustPrint.prototype.asc_setPageOptionsMap = function (val) { this.pageOptionsMap = val; };
 		asc_CAdjustPrint.prototype.asc_getIgnorePrintArea = function () { return this.ignorePrintArea; };
 		asc_CAdjustPrint.prototype.asc_setIgnorePrintArea = function (val) { this.ignorePrintArea = val; };
+		asc_CAdjustPrint.prototype.asc_getNativeOptions = function () { return this.nativeOptions; };
+		asc_CAdjustPrint.prototype.asc_setNativeOptions = function (val) { this.nativeOptions = val; };
 
 		/** @constructor */
 		function asc_CLockInfo () {
@@ -3122,7 +3131,16 @@
 		asc_CFindOptions.prototype.asc_setIsWholeCell = function (val) {this.isWholeCell = val;};
 		asc_CFindOptions.prototype.asc_setIsWholeWord = function (val) {this.isWholeWord = val;};
 		asc_CFindOptions.prototype.asc_changeSingleWord = function (val) { this.isChangeSingleWord = val; };
-		asc_CFindOptions.prototype.asc_setScanOnOnlySheet = function (val) {this.scanOnOnlySheet = val;};
+		asc_CFindOptions.prototype.asc_setScanOnOnlySheet = function (val) {
+			//TODO не стал менять native.js, поставил условие для scanOnOnlySheet
+			if (val === true) {
+				this.scanOnOnlySheet = Asc.c_oAscSearchBy.Sheet;
+			} else if (val === false) {
+				this.scanOnOnlySheet = Asc.c_oAscSearchBy.Workbook;
+			} else {
+				this.scanOnOnlySheet = val;
+			}
+		};
 		asc_CFindOptions.prototype.asc_setLookIn = function (val) {this.lookIn = val;};
 		asc_CFindOptions.prototype.asc_setReplaceWith = function (val) {this.replaceWith = val;};
 		asc_CFindOptions.prototype.asc_setIsReplaceAll = function (val) {this.isReplaceAll = val;};
@@ -3637,6 +3655,8 @@
 		prot["asc_setPageOptionsMap"] = prot.asc_setPageOptionsMap;
 		prot["asc_getIgnorePrintArea"] = prot.asc_getIgnorePrintArea;
 		prot["asc_setIgnorePrintArea"] = prot.asc_setIgnorePrintArea;
+		prot["asc_getNativeOptions"] = prot.asc_getNativeOptions;
+		prot["asc_setNativeOptions"] = prot.asc_setNativeOptions;
 
 		window["AscCommonExcel"].asc_CLockInfo = asc_CLockInfo;
 

@@ -12461,7 +12461,7 @@ QueryTableField.prototype.clone = function() {
 		this.copies = 1;
 		this.draft = false;
 		this.errors = 0; // displayed ST_PrintError
-		this.firstPageNumber = -1;
+		this.firstPageNumber = null;//default 1
 		this.pageOrder = 0; // downThenOver ST_PageOrder
 		this.scale = 100;
 		this.useFirstPageNumber = false;
@@ -13969,11 +13969,11 @@ QueryTableField.prototype.clone = function() {
 
 	OleSizeSelectionRange.prototype.getFirstFromLocalHistory = function () {
 		return this.localHistory[0].clone();
-	}
+	};
 
 	OleSizeSelectionRange.prototype.getLastFromLocalHistory = function () {
 		return this.localHistory[this.localHistory.length - 1].clone();
-	}
+	};
 
 	OleSizeSelectionRange.prototype.resetHistory = function () {
 		this.localHistory = [];
@@ -13993,7 +13993,7 @@ QueryTableField.prototype.clone = function() {
 		this.ranges = [oRange.clone()];
 		this.activeCellId = 0;
 		this.activeCell = new AscCommon.CellBase(oRange.r1, oRange.c1);
-	}
+	};
 
 	OleSizeSelectionRange.prototype.clean = function () {
 		this.ranges = [new Asc.Range(0, 0, 10, 10)];
@@ -14070,10 +14070,10 @@ QueryTableField.prototype.clone = function() {
 		if (r.GetBool()) {
 			this.referenceData = {};
 			if (r.GetBool()) {
-				this.referenceData["fileId"] = r.GetString2();
+				this.referenceData["fileKey"] = r.GetString2();
 			}
 			if (r.GetBool()) {
-				this.referenceData["portalName"] = r.GetString2();
+				this.referenceData["instanceId"] = r.GetString2();
 			}
 		}
 	};
@@ -14116,15 +14116,15 @@ QueryTableField.prototype.clone = function() {
 
 		if (null != this.referenceData) {
 			w.WriteBool(true);
-			if (null != this.referenceData["fileId"]) {
+			if (null != this.referenceData["fileKey"]) {
 				w.WriteBool(true);
-				w.WriteString2(this.referenceData["fileId"]);
+				w.WriteString2(this.referenceData["fileKey"]);
 			} else {
 				w.WriteBool(false);
 			}
-			if (null != this.referenceData["portalName"]) {
+			if (null != this.referenceData["instanceId"]) {
 				w.WriteBool(true);
-				w.WriteString2(this.referenceData["portalName"]);
+				w.WriteString2(this.referenceData["instanceId"]);
 			} else {
 				w.WriteBool(false);
 			}
@@ -14155,14 +14155,14 @@ QueryTableField.prototype.clone = function() {
 		if (null != this.referenceData) {
 
 			newObj.referenceData = {};
-			newObj.referenceData["fileId"] = this.referenceData["fileId"];
-			newObj.referenceData["portalName"] = this.referenceData["portalName"];
+			newObj.referenceData["fileKey"] = this.referenceData["fileKey"];
+			newObj.referenceData["instanceId"] = this.referenceData["instanceId"];
 		}
 
 		return newObj;
 	};
 
-	ExternalReference.prototype.updateData = function (arr) {
+	ExternalReference.prototype.updateData = function (arr, oPortalData) {
 		var t = this;
 		var isChanged = false;
 		var cloneER = this.clone();
@@ -14170,10 +14170,13 @@ QueryTableField.prototype.clone = function() {
 			//если есть this.worksheets, если нет - проверить и обработать
 			var sheetName = arr[i].sName;
 			if (this.worksheets && this.worksheets[sheetName]) {
+				let wsTo = this.worksheets[sheetName];
 				//меняем лист
 				AscFormat.ExecuteNoHistory(function(){
 					AscCommonExcel.executeInR1C1Mode(false, function () {
-						t.worksheets[sheetName].copyFrom(arr[i], t.worksheets[sheetName].sName);
+						var oAllRange = wsTo.getRange3(0, 0, wsTo.getRowsCount(), wsTo.getColsCount());
+						oAllRange.cleanAll();
+						wsTo.copyFrom(arr[i], wsTo.sName);
 					});
 				});
 				//this.worksheets[sheetName] = arr[i];
@@ -14189,6 +14192,13 @@ QueryTableField.prototype.clone = function() {
 					}
 				}
 			}
+		}
+
+		var oReferenceData = oPortalData && oPortalData["referenceData"];
+		//data from portal, need update reference data
+		if (oReferenceData && (!this.referenceData || (this.referenceData["instanceId"] !== oReferenceData["instanceId"] || this.referenceData["fileKey"] !== oReferenceData["fileKey"]))) {
+			this.setReferenceData(oReferenceData["fileKey"], oReferenceData["instanceId"]);
+			isChanged = true;
 		}
 
 		if (isChanged && History.Is_On()) {
@@ -14304,7 +14314,7 @@ QueryTableField.prototype.clone = function() {
 			var sheetDataSet = this.SheetDataSet[sheetDataSetIndex];
 			var ws = this.worksheets[sheetName];
 			if (!this.worksheets[sheetName]) {
-				var wb = new AscCommonExcel.Workbook();
+				var wb = new AscCommonExcel.Workbook(null, window["Asc"]["editor"]);
 				ws = new AscCommonExcel.Worksheet(wb);
 				ws.sName = sheetName;
 
@@ -14406,6 +14416,17 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 
+	ExternalReference.prototype.setReferenceData = function (fileId, portalName) {
+		if (!fileId || !portalName) {
+			return;
+		}
+		if (!this.referenceData) {
+			this.referenceData = {};
+		}
+		this.referenceData["instanceId"] = portalName;
+		this.referenceData["fileKey"] = fileId;
+	};
+
 	function asc_CExternalReference() {
 		this.type = null;
 		this.data = null;
@@ -14419,20 +14440,27 @@ QueryTableField.prototype.clone = function() {
 		return this.data;
 	};
 	asc_CExternalReference.prototype.asc_getSource = function () {
-		if (this.externalReference && this.externalReference.Id) {
-			var lastIndex = this.externalReference.Id.lastIndexOf('/');
+		let id = this.externalReference && this.externalReference.Id;
+		if (id) {
+			let lastIndex =0 === id.indexOf("file:///") ? id.lastIndexOf('\\') : id.lastIndexOf('/');
 			if (lastIndex === -1) {
-				lastIndex = this.externalReference.Id.lastIndexOf('/\/');
+				lastIndex = id.lastIndexOf('/\/');
 			}
-			return lastIndex === -1 ? this.externalReference.Id : this.externalReference.Id.substr(lastIndex + 1);
+			return lastIndex === -1 ? id : id.substr(lastIndex + 1);
 		}
 		return null;
+	};
+	asc_CExternalReference.prototype.asc_getPath = function () {
+		return this.externalReference && this.externalReference.Id;
 	};
 	asc_CExternalReference.prototype.asc_getLocation = function () {
 
 	};
 	asc_CExternalReference.prototype.isExternalLink = function () {
 		return this.type === Asc.c_oAscExternalReferenceType.link;
+	};
+	asc_CExternalReference.prototype.asc_getId = function () {
+		return this.externalReference && this.externalReference.Id;
 	};
 
 
@@ -14505,7 +14533,7 @@ QueryTableField.prototype.clone = function() {
 			var addedRowMap = [];
 			for (var i = 0; i < ranges.length; i++) {
 				var range = sheet.getRange3(ranges[i].r1, ranges[i].c1, ranges[i].r2, ranges[i].c2);
-				range._foreachNoEmpty(function (cell) {
+				range._foreach(function (cell) {
 					if (!addedRowMap[cell.nRow]) {
 						var row = new ExternalRow();
 						row.R = cell.nRow + 1;
@@ -14542,8 +14570,12 @@ QueryTableField.prototype.clone = function() {
 						continue;
 					}
 					var range = sheet.getRange2(externalCell.Ref);
-					range._foreachNoEmpty(function (cell) {
-						isChanged = externalCell.initFromCell(cell, true);
+					range._foreach(function (cell) {
+
+						let changedCell = externalCell.initFromCell(cell, true);
+						if (!isChanged) {
+							isChanged = changedCell;
+						}
 
 						var api_sheet = Asc['editor'];
 						var wb = api_sheet.wbModel;
@@ -14639,7 +14671,7 @@ QueryTableField.prototype.clone = function() {
 		if (needGenerateRow) {
 			cell = new ExternalCell();
 			AscCommonExcel.executeInR1C1Mode(false, function () {
-				cell.Ref = new Asc.Range(t.R - 1, index, t.R - 1, index).getName();
+				cell.Ref = new Asc.Range(index, t.R - 1, index, t.R - 1).getName();
 			});
 			this.Cell.push(cell);
 		}
@@ -14688,7 +14720,7 @@ QueryTableField.prototype.clone = function() {
 		}
 	};
 	ExternalCell.prototype.clone = function () {
-		var newObj = new ExternalRow();
+		var newObj = new ExternalCell();
 
 		newObj.Ref = this.Ref;
 		newObj.CellType = this.CellType;
@@ -14759,16 +14791,24 @@ QueryTableField.prototype.clone = function() {
 		return this;
 	}
 	CCellWatch.prototype.clone = function () {
+		var res = new CCellWatch();
+		res.r = this.r.clone();
 
+		res._ws = this._ws;
+		res._workbook = this._workbook;
+		res._sheet = this._sheet;
+		res._name = this._name;
+		res._cell = this._cell;
+		res._value = this._value;
+		res._formula = this._formula;
+
+		return res;
 	};
 	CCellWatch.prototype.setNeedRecalc = function () {
 		this.needRecalc = true;
 	};
 	CCellWatch.prototype.setRef = function (ref) {
 		this.r = ref;
-	};
-	CCellWatch.prototype.clone = function () {
-
 	};
 	CCellWatch.prototype.asc_getWorkbook = function () {
 		return this._workbook;
@@ -14840,6 +14880,11 @@ QueryTableField.prototype.clone = function() {
 	};
 	CCellWatch.prototype.initPostOpen = function (ws) {
 		this._ws = ws;
+	};
+	CCellWatch.prototype.setOffset = function (row, col) {
+		if (this.r) {
+			this.r.setOffset({row: row ? row : 0, col: col ? col : 0});
+		}
 	};
 
 
@@ -15211,6 +15256,10 @@ QueryTableField.prototype.clone = function() {
 	prot["asc_getType"] = prot.asc_getType;
 	prot["asc_getData"] = prot.asc_getData;
 	prot["asc_getSource"] = prot.asc_getSource;
+	prot["asc_getId"] = prot.asc_getId;
+	prot["asc_isExternalLink"] = prot.isExternalLink;
+	prot["asc_getPath"] = prot.asc_getPath;
+
 
 
 	window["AscCommonExcel"].CPrintPreviewState = CPrintPreviewState;

@@ -670,29 +670,57 @@ CChangesSdtPrTextForm.prototype.private_CreateObject = function()
 function CChangesSdtPrFormPr(Class, Old, New)
 {
 	AscDFH.CChangesBaseObjectProperty.call(this, Class, Old, New);
+	this.OformSupport = AscCommon.IsSupportOFormFeature();
 }
 CChangesSdtPrFormPr.prototype = Object.create(AscDFH.CChangesBaseObjectProperty.prototype);
 CChangesSdtPrFormPr.prototype.constructor = CChangesSdtPrFormPr;
 CChangesSdtPrFormPr.prototype.Type = AscDFH.historyitem_SdtPr_FormPr;
 CChangesSdtPrFormPr.prototype.private_SetValue = function(Value)
 {
-	this.Class.Pr.FormPr = Value;
-
-	let oLogicDocument = this.Class.GetLogicDocument();
-	if (oLogicDocument)
+	let form = this.Class;
+	if (this.OformSupport)
 	{
-		let oFormsManager = oLogicDocument.GetFormsManager();
-
-		if (Value)
-			oFormsManager.Register(this.Class);
-		else
-			oFormsManager.Unregister(this.Class);
+		let oldFieldMaster = form.Pr.FormPr ? form.Pr.FormPr.Field : undefined;
+		let newFieldMaster = Value ? Value.Field : undefined;
+		
+		if (oldFieldMaster && oldFieldMaster !== newFieldMaster)
+			oldFieldMaster.setLogicField(null);
+		
+		if (newFieldMaster && newFieldMaster !== oldFieldMaster)
+			newFieldMaster.setLogicField(form)
+		
+		form.Pr.FormPr = Value;
 	}
-
+	else
+	{
+		let fieldMaster = form.Pr.FormPr ? form.Pr.FormPr.Field : undefined;
+		form.Pr.FormPr = Value;
+		
+		if (form.Pr.FormPr)
+			form.Pr.FormPr.Field = fieldMaster;
+	}
+	
+	let logicDocument = form.GetLogicDocument();
+	let formManager   = logicDocument ? logicDocument.GetFormsManager() : null;
+	if (formManager)
+	{
+		if (Value)
+			formManager.Register(form);
+		else
+			formManager.Unregister(form);
+	}
 };
 CChangesSdtPrFormPr.prototype.private_CreateObject = function()
 {
 	return new AscWord.CSdtFormPr();
+};
+CChangesSdtPrFormPr.prototype.WriteAdditional = function(writer)
+{
+	writer.WriteBool(this.OformSupport);
+};
+CChangesSdtPrFormPr.prototype.ReadAdditional = function(reader)
+{
+	this.OformSupport = reader.GetBool();
 };
 /**
  * @constructor
@@ -746,7 +774,7 @@ function CChangesSdtPrOForm(Class, Old, New)
 	}
 	if(New)
 	{
-		sNew = Old.Get_Id();
+		sNew = New.Get_Id();
 	}
 	AscDFH.CChangesBaseStringProperty.call(this, Class, sOld, sNew);
 }
