@@ -2100,13 +2100,22 @@ function GetContentFromHtml(api, html, callback) {
 		return;
 	}
 
-	var oPasteProcessor = new PasteProcessor(api, true, true, false, undefined, callback);
-	oPasteProcessor.doNotInsertInDoc = true;
 	if (typeof html === "string") {
 		var wrapper = document.createElement('div');
 		wrapper.innerHTML = html;
 		html = wrapper && wrapper.firstChild;
 	}
+
+	let _body = document.body;
+	_body.appendChild(html);
+
+	var oPasteProcessor = new PasteProcessor(api, true, true, false, undefined, function (selectedContent) {
+		if (selectedContent) {
+			_body.contains(html) && _body.removeChild(html);
+			callback(selectedContent);
+		}
+	});
+	oPasteProcessor.doNotInsertInDoc = true;
 	html && oPasteProcessor.Start(html);
 }
 
