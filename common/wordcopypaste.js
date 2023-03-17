@@ -2100,23 +2100,19 @@ function GetContentFromHtml(api, html, callback) {
 		return;
 	}
 
-	if (typeof html === "string") {
-		var wrapper = document.createElement('div');
-		wrapper.innerHTML = html;
-		html = wrapper && wrapper.firstChild;
-	}
-
-	let _body = document.body;
-	_body.appendChild(html);
-
-	var oPasteProcessor = new PasteProcessor(api, true, true, false, undefined, function (selectedContent) {
-		if (selectedContent) {
-			_body.contains(html) && _body.removeChild(html);
-			callback(selectedContent);
+	//need document -> write, because some props not compile if use innerHTML(sub/sup tags give only "baseline")
+	//TODO use iframe from clipboard_base
+	AscCommon.g_clipboardBase.CommonIframe_PasteStart(html, null, function (oHtmlElem) {
+		if (oHtmlElem) {
+			var oPasteProcessor = new PasteProcessor(api, true, true, false, undefined, function (selectedContent) {
+				if (selectedContent) {
+					callback(selectedContent);
+				}
+			});
+			oPasteProcessor.doNotInsertInDoc = true;
+			oHtmlElem && oPasteProcessor.Start(oHtmlElem);
 		}
 	});
-	oPasteProcessor.doNotInsertInDoc = true;
-	html && oPasteProcessor.Start(html);
 }
 
 function Editor_Paste_Exec(api, _format, data1, data2, text_data, specialPasteProps, callback)

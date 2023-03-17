@@ -792,7 +792,7 @@
 			}
 		},
 
-		CommonIframe_PasteStart : function(_html_data, text_data)
+		CommonIframe_PasteStart : function(_html_data, text_data, getHtmlElemCallback)
 		{
 			var ifr = document.getElementById(this.CommonIframeId);
 			if (!ifr)
@@ -824,13 +824,22 @@
 				if (null != frameWindow.document && null != frameWindow.document.body)
 				{
 					ifr.style.display = "block";
-					this.pastedFrom = definePastedFrom(frameWindow.document);
-					this.Api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, frameWindow.document.body, ifr, text_data);
+					if (getHtmlElemCallback)
+					{
+						getHtmlElemCallback(frameWindow.document.body);
+						getHtmlElemCallback = null;
+					}
+					else
+					{
+						this.pastedFrom = definePastedFrom(frameWindow.document);
+						this.Api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, frameWindow.document.body, ifr, text_data);
+					}
 				}
 			}
 
 			ifr.style.width = '100px';
 
+			getHtmlElemCallback && getHtmlElemCallback(null);
 			g_clipboardBase.Paste_End();
 		},
 
