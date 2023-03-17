@@ -11814,7 +11814,7 @@ CDocument.prototype.private_UpdateTracks = function(bSelection, bEmptySelection)
 		if (oInlineLevelSdt.IsForm())
 			oCurrentForm = oInlineLevelSdt;
 		
-		if (!oInlineLevelSdt.IsForm() || !oInlineLevelSdt.IsFixedForm())
+		if (!oInlineLevelSdt.IsForm() || !oInlineLevelSdt.IsFixedForm() || this.IsFillingOFormMode())
 			oInlineLevelSdt.DrawContentControlsTrack(AscCommon.ContentControlTrack.In);
 	}
 	else if (oBlockLevelSdt)

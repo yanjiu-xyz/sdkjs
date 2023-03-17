@@ -1046,7 +1046,7 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 	var oDrawingDocument = oLogicDocument.GetDrawingDocument();
 
 	// Не рисуем трек для фиксед форм, т.к. он уже есть от рамки автофигуры
-	if (this.IsFixedForm() && this.IsCurrent())
+	if (this.IsFixedForm() && this.IsCurrent() && oLogicDocument.IsDocumentEditor() && !oLogicDocument.IsFillingOFormMode())
 	{
 		oDrawingDocument.OnDrawContentControl(null, nType);
 		return;

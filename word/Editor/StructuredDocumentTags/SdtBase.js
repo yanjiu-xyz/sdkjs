@@ -495,7 +495,7 @@ CSdtBase.prototype.SetCurrent = function(isCurrent)
 	{
 		let logicDocument   = this.GetLogicDocument();
 		let drawingDocument = logicDocument ? logicDocument.GetDrawingDocument() : null;
-		if (drawingDocument)
+		if (drawingDocument && !logicDocument.IsFillingOFormMode())
 		{
 			drawingDocument.OnDrawContentControl(null, AscCommon.ContentControlTrack.In);
 			drawingDocument.OnDrawContentControl(null, AscCommon.ContentControlTrack.Hover);
