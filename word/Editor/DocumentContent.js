@@ -7425,7 +7425,7 @@ CDocumentContent.prototype.GetSelectionState = function()
 
 	var State = null;
 
-	if (this.LogicDocument && true === editor.isStartAddShape && docpostype_DrawingObjects === this.CurPos.Type)
+	if (this.LogicDocument && (editor.isStartAddShape || editor.isInkDrawerOn()) && docpostype_DrawingObjects === this.CurPos.Type)
 	{
 		DocState.CurPos.Type     = docpostype_Content;
 		DocState.Selection.Start = false;

@@ -8824,7 +8824,7 @@
 			}
 
 			var drawingInfo = this.objectRender.checkCursorDrawingObject(x, y);
-			if (asc["editor"].isStartAddShape &&
+			if ((asc["editor"].isStartAddShape || asc["editor"].isInkDrawerOn()) &&
 				AscCommonExcel.CheckIdSatetShapeAdd(this.objectRender.controller.curState)) {
 				return {cursor: kCurFillHandle, target: c_oTargetType.Shape, col: -1, row: -1};
 			}

@@ -13076,6 +13076,54 @@
 	{
 		return null;
 	};
+
+	const INK_DRAWER_STATE_OFF = 0;
+	const INK_DRAWER_STATE_DRAW = 1;
+	const INK_DRAWER_STATE_ERASE = 2;
+	function CInkDrawer(oApi) {
+		this.api = oApi;
+		this.state = INK_DRAWER_STATE_OFF;
+		this.pen = null;
+	}
+	CInkDrawer.prototype.setState = function(nState) {
+		this.state = nState;
+		this.api.onInkDrawerChangeState();
+	};
+	CInkDrawer.prototype.startDraw = function(oAscPen) {
+		this.pen = AscFormat.CorrectUniStroke(oAscPen);
+		this.setState(INK_DRAWER_STATE_DRAW);
+	};
+	CInkDrawer.prototype.startErase = function() {
+		this.pen = null;
+		this.setState(INK_DRAWER_STATE_ERASE);
+	};
+	CInkDrawer.prototype.turnOff = function() {
+		this.pen = null;
+		this.setState(INK_DRAWER_STATE_OFF);
+	};
+	CInkDrawer.prototype.isOn = function() {
+		return this.state !== INK_DRAWER_STATE_OFF;
+	};
+	CInkDrawer.prototype.isDraw = function() {
+		return this.state === INK_DRAWER_STATE_DRAW;
+	};
+	CInkDrawer.prototype.isErase = function() {
+		return this.state === INK_DRAWER_STATE_ERASE;
+	};
+	CInkDrawer.prototype.getPen = function() {
+		return this.pen;
+	};
+	CInkDrawer.prototype.getState = function() {
+		return {state: this.state, pen: this.pen};
+	};
+	CInkDrawer.prototype.restoreState = function(oState) {
+		if(!oState) {
+			return;
+		}
+		this.state = oState.state;
+		this.pen = oState.pen;
+	};
+
 	if (!Object.values) {
 		Object.values = function (obj) {
 			return Object.keys(obj).map(function (e) {
@@ -14164,6 +14212,7 @@
 		return word;
 	}
 	window["AscCommon"].CFormatPainter = CFormatPainter;
+	window["AscCommon"].CInkDrawer = CInkDrawer;
 	window["AscCommon"].CFormatPainterDataBase = CFormatPainterDataBase;
 	window["AscCommon"].CPluginCtxMenuInfo = CPluginCtxMenuInfo;
 

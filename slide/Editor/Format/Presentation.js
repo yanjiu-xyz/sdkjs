@@ -6819,6 +6819,8 @@ CPresentation.prototype.OnKeyDown = function (e) {
 			} else if (this.Api.isMarkerFormat) {
 				this.Api.sync_MarkerFormatCallback(false);
 				this.OnMouseMove(global_mouseEvent, 0, 0, this.CurPage);
+			} else if (this.Api.isInkDrawerOn()) {
+				this.Api.asc_StopInkDrawer();
 			}
 			bRetValue = keydownresult_PreventAll;
 		} else if (e.KeyCode === 32) // Space
@@ -11416,22 +11418,48 @@ CPresentation.prototype.MoveAnimation = function (bEarlier) {
 	}
 };
 
-CPresentation.prototype.StartAddShape = function (preset, _is_apply) {
-	if (this.Slides[this.CurPage]) {
-		if (!(_is_apply === false)) {
-			this.FocusOnNotes = false;
-			this.SetThumbnailsFocusElement(FOCUS_OBJECT_MAIN);
-			this.Api.sync_HideComment();
-			this.Slides[this.CurPage].graphicObjects.startTrackNewShape(preset);
-		} else {
-			this.Slides[this.CurPage].graphicObjects.clearTrackObjects();
-			this.Slides[this.CurPage].graphicObjects.clearPreTrackObjects();
-			// this.Slides[this.CurPage].graphicObjects.resetSelectionState();
-
-			this.Slides[this.CurPage].graphicObjects.changeCurrentState(new AscFormat.NullState(this.Slides[this.CurPage].graphicObjects));
-			this.DrawingDocument.m_oWordControl.OnUpdateOverlay();
-			this.Api.sync_EndAddShape();
+CPresentation.prototype.OnInkDrawerChangeState = function() {
+	let oSlide = this.GetCurrentSlide();
+	if(!oSlide) {
+		return;
+	}
+	this.FocusOnNotes = false;
+	this.SetThumbnailsFocusElement(FOCUS_OBJECT_MAIN);
+	let oController = oSlide.graphicObjects;
+	if(this.Api.isInkDrawerOn()) {
+		if(this.Api.isDrawInkMode()) {
+			oController.changeCurrentState(new AscFormat.CInkDrawState(oController));
 		}
+		else {
+			oController.changeCurrentState(new AscFormat.CInkEraseState(oController));
+		}
+	}
+	else {
+		oController.clearTrackObjects();
+		oController.clearPreTrackObjects();
+		oController.changeCurrentState(new AscFormat.NullState(oController));
+		this.DrawingDocument.m_oWordControl.OnUpdateOverlay();
+	}
+};
+
+CPresentation.prototype.StartAddShape = function (preset, _is_apply) {
+	const oCurSlide = this.GetCurrentSlide();
+	if(!oCurSlide) {
+		return;
+	}
+	let oController = oCurSlide.graphicObjects;
+	if (!(_is_apply === false)) {
+		this.FocusOnNotes = false;
+		this.SetThumbnailsFocusElement(FOCUS_OBJECT_MAIN);
+		this.Api.sync_HideComment();
+		oController.startTrackNewShape(preset);
+	} else {
+		oController.clearTrackObjects();
+		oController.clearPreTrackObjects();
+
+		oController.changeCurrentState(new AscFormat.NullState(oController));
+		this.DrawingDocument.m_oWordControl.OnUpdateOverlay();
+		this.Api.sync_EndAddShape();
 	}
 };
 

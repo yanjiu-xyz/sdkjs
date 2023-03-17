@@ -13290,6 +13290,10 @@ background-repeat: no-repeat;\
 			oLogicDocument.DrawingObjects.endTrackNewShape();
 			oLogicDocument.UpdateCursorType(oLogicDocument.CurPos.RealX, oLogicDocument.CurPos.RealY, oLogicDocument.CurPage, new AscCommon.CMouseEventHandler());
 		}
+		else if(this.isInkDrawerOn())
+		{
+			this.asc_StopInkDrawer();
+		}
 
 		oLogicDocument.private_CheckCursorPosInFillingFormMode();
 		oLogicDocument.UpdateSelection();
@@ -13654,6 +13658,7 @@ background-repeat: no-repeat;\
 
 		return null;
 	};
+	asc_docs_api.prototype.onInkDrawerChangeState = function() {};
 
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};

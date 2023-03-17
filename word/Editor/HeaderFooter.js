@@ -1035,16 +1035,20 @@ CHeaderFooter.prototype =
     {
         this.Set_Page( PageIndex );
 
-        if ( true === editor.isStartAddShape )
+        if (editor.isStartAddShape || editor.isInkDrawerOn())
         {
             this.Content.SetDocPosType(docpostype_DrawingObjects);
             this.Content.Selection.Use   = true;
             this.Content.Selection.Start = true;
 
-            if ( true != this.LogicDocument.DrawingObjects.isPolylineAddition() )
-                this.LogicDocument.DrawingObjects.startAddShape( editor.addShapePreset );
+			let oDrawingObjects = this.LogicDocument.DrawingObjects;
+			if(true === editor.isStartAddShape)
+			{
+				if(!oDrawingObjects.isPolylineAddition())
+					oDrawingObjects.startAddShape(editor.addShapePreset);
 
-            this.LogicDocument.DrawingObjects.OnMouseDown(MouseEvent, X, Y, PageIndex);
+			}
+	        oDrawingObjects.OnMouseDown(MouseEvent, X, Y, PageIndex);
         }
         else
 		{
@@ -2344,7 +2348,7 @@ CHeaderFooterController.prototype =
 
         var PageMetrics = this.LogicDocument.Get_PageContentStartPos( PageIndex );
         
-        if ( MouseEvent.ClickCount >= 2 && true != editor.isStartAddShape &&
+        if ( MouseEvent.ClickCount >= 2 && (!editor.isStartAddShape && !editor.isInkDrawerOn()) &&
             !( Y <= PageMetrics.Y      || ( null !== ( TempHdrFtr = this.Pages[PageIndex].Header ) && true === TempHdrFtr.Is_PointInDrawingObjects( X, Y ) ) ) &&
             !( Y >= PageMetrics.YLimit || ( null !== ( TempHdrFtr = this.Pages[PageIndex].Footer ) && true === TempHdrFtr.Is_PointInDrawingObjects( X, Y ) ) ) )
         {
@@ -2364,7 +2368,7 @@ CHeaderFooterController.prototype =
 
         // Проверяем попали ли мы в колонтитул, если он есть. Если мы попали в
         // область колонтитула, а его там нет, тогда добавим новый колонтитул.
-        if ( Y <= PageMetrics.Y || ( null !== ( TempHdrFtr = this.Pages[PageIndex].Header ) && true === TempHdrFtr.Is_PointInDrawingObjects( X, Y ) ) || true === editor.isStartAddShape )
+        if ( Y <= PageMetrics.Y || ( null !== ( TempHdrFtr = this.Pages[PageIndex].Header ) && true === TempHdrFtr.Is_PointInDrawingObjects( X, Y ) ) || (editor.isStartAddShape || editor.isInkDrawerOn()) )
         {
             if ( null === this.Pages[PageIndex].Header )
             {
@@ -2512,7 +2516,7 @@ CHeaderFooterController.prototype =
 
     Get_NearestPos : function(PageNum, X, Y, bAnchor, Drawing)
     {
-        var HdrFtr = (true === editor.isStartAddShape ? this.CurHdrFtr : this.Internal_GetContentByXY( X, Y, PageNum ));
+        var HdrFtr = (editor.isStartAddShape || editor.isInkDrawerOn() ? this.CurHdrFtr : this.Internal_GetContentByXY( X, Y, PageNum ));
         
         if ( null != HdrFtr )
             return HdrFtr.Get_NearestPos( X, Y, bAnchor, Drawing );

@@ -6514,6 +6514,7 @@
 				},
 
 				startTrackNewShape: function (presetGeom) {
+					presetGeom = "ink";
 					switch (presetGeom) {
 						case "spline": {
 							this.changeCurrentState(new AscFormat.SplineBezierState(this));
@@ -6529,6 +6530,10 @@
 						}
 						case "customAnimPath": {
 							this.changeCurrentState(new AscFormat.AddPolyLine2State(this, true));
+							break;
+						}
+						case "ink": {
+							this.changeCurrentState(new AscFormat.CInkEraseState(this));
 							break;
 						}
 						default : {
@@ -10593,6 +10598,89 @@
 		};
 
 
+		function CDrawingControllerStateBase(oController) {
+			this.controller = oController;
+			this.drawingObjects = oController;
+		}
+		CDrawingControllerStateBase.prototype.onMouseDown = function (e, x, y, pageIndex) {};
+		CDrawingControllerStateBase.prototype.onMouseMove = function (e, x, y, pageIndex) {};
+		CDrawingControllerStateBase.prototype.onMouseUp = function (e, x, y, pageIndex) {};
+		CDrawingControllerStateBase.prototype.changeControllerState = function(oState) {
+			this.controller.changeCurrentState(oState);
+		};
+
+		function CInkEraseState(drawingObjects) {
+			CDrawingControllerStateBase.call(this, drawingObjects);
+		}
+		CInkEraseState.prototype = Object.create(CDrawingControllerStateBase.prototype);
+		CInkEraseState.prototype.superclass = CDrawingControllerStateBase;
+		CInkEraseState.prototype.constructor = CInkEraseState;
+		CInkEraseState.prototype.onMouseDown = function (e, x, y, pageIndex) {
+			return this.onMouseMove(e, x, y, pageIndex);
+		};
+		CInkEraseState.prototype.onMouseMove = function (e, x, y, pageIndex) {
+			if(this.controller.handleEventMode === HANDLE_EVENT_MODE_HANDLE) {
+				if(e.IsLocked) {
+					const aDrawings = this.controller.getDrawingObjects();
+					for(let nIdx = aDrawings.length - 1; nIdx > -1; --nIdx) {
+						let oDrawing = aDrawings[nIdx];
+						if(oDrawing.isShape() && !oDrawing.getPresetGeom())  {
+							if(oDrawing.hit(x, y)) {
+								this.controller.resetSelection();
+								this.controller.selectObject(oDrawing, pageIndex);
+								this.controller.remove();
+							}
+						}
+					}
+					this.changeControllerState(this);
+				}
+			}
+		};
+		CInkEraseState.prototype.onMouseUp = function (e, x, y, pageIndex) {
+			return null;
+		};
+
+		function CInkDrawState(drawingObjects) {
+			CDrawingControllerStateBase.call(this, drawingObjects);
+			this.drawingState = this.getPolylineState();
+		}
+		CInkDrawState.prototype = Object.create(CDrawingControllerStateBase.prototype);
+		CInkDrawState.prototype.superclass = CDrawingControllerStateBase;
+		CInkDrawState.prototype.constructor = CInkDrawState;
+
+		CInkDrawState.prototype.onMouseDown = function (e, x, y, pageIndex) {
+			const oResult = this.drawingState.onMouseDown(e, x, y, pageIndex);
+			this.checkControllerState();
+			return oResult;
+		};
+		CInkDrawState.prototype.onMouseMove = function (e, x, y, pageIndex) {
+			const oResult = this.drawingState.onMouseMove(e, x, y, pageIndex);
+			this.checkControllerState();
+			return oResult;
+		};
+		CInkDrawState.prototype.onMouseUp = function (e, x, y, pageIndex) {
+			const oResult = this.drawingState.onMouseUp(e, x, y, pageIndex);
+			this.checkControllerState();
+			return oResult;
+		};
+		CInkDrawState.prototype.getPolylineState = function() {
+			return new AscFormat.PolyLineAddState(this.controller);
+		};
+		CInkDrawState.prototype.checkControllerState = function() {
+			let oControllerState = this.controller.curState;
+			if(oControllerState === this) {
+				return;
+			}
+			this.controller.resetSelection();
+			this.changeControllerState(this);
+			let oDrawingState = oControllerState;
+			if(oControllerState instanceof AscFormat.NullState) {
+				oDrawingState = this.getPolylineState();
+			}
+			this.drawingState = oDrawingState;
+
+		};
+
 		function CDrawTask(rect) {
 			this.rect = null;
 			if (rect) {
@@ -10701,6 +10789,8 @@
 		window['AscFormat'].CARD_DIRECTION_W = CARD_DIRECTION_W;
 		window['AscFormat'].CARD_DIRECTION_NW = CARD_DIRECTION_NW;
 		window['AscFormat'].GeometryEditState = GeometryEditState;
+		window['AscFormat'].CInkDrawState = CInkDrawState;
+		window['AscFormat'].CInkEraseState = CInkEraseState;
 
 
 		window['AscFormat'].CURSOR_TYPES_BY_CARD_DIRECTION = CURSOR_TYPES_BY_CARD_DIRECTION;

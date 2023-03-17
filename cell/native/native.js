@@ -2769,7 +2769,7 @@ function OfflineEditor () {
             this.worksheet.overlayGraphicCtx.clear();
             this.worksheet._drawCollaborativeElements(autoShapeTrack);
             
-            if (!this.worksheet.objectRender.controller.selectedObjects.length && !this.api.isStartAddShape)
+            if (!this.worksheet.objectRender.controller.selectedObjects.length && !this.api.isStartAddShape && !this.api.isInkDrawerOn())
                 this.worksheet._drawSelection();
             
             var chart;
@@ -3012,7 +3012,7 @@ function OfflineEditor () {
             this.visibleRange = new asc_Range(c1, r1, c2, r2);
             
             isFrozen = !!isFrozen;
-            if (window["Asc"]["editor"].isStartAddShape || this.objectRender.selectedGraphicObjectsExists()) {
+            if (window["Asc"]["editor"].isStartAddShape || window["Asc"]["editor"].isInkDrawerOn() || this.objectRender.selectedGraphicObjectsExists()) {
                 return;
             }
             
@@ -3166,7 +3166,7 @@ function OfflineEditor () {
                 return this.__selectedCellRange(ranges, 0, 0, Asc.c_oAscSelectionType.RangeChart);
             }
             
-            if (window["Asc"]["editor"].isStartAddShape || this.objectRender.selectedGraphicObjectsExists()) {
+            if (window["Asc"]["editor"].isStartAddShape || window["Asc"]["editor"].isInkDrawerOn() || this.objectRender.selectedGraphicObjectsExists()) {
                 if (this.isChartAreaEditMode && this.oOtherRanges) {
                     return this.__selectedCellRanges(0, 0, Asc.c_oAscSelectionType.RangeChart);
                 }

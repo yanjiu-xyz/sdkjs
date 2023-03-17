@@ -225,6 +225,7 @@
 
 
 		this.formatPainter = new AscCommon.CFormatPainter(this);
+		this.inkDrawer = new AscCommon.CInkDrawer(this);
 		this._correctEmbeddedWork();
 
 		return this;
@@ -4471,6 +4472,26 @@
 			this.sendEvent('asc_onStopFormatPainter');
 		}
 	};
+	baseEditorsApi.prototype.asc_StartDrawInk = function(oAscPen) {
+		this.inkDrawer.startDraw(oAscPen);
+	};
+	baseEditorsApi.prototype.asc_StartInkEraser = function() {
+		this.inkDrawer.startErase();
+	};
+	baseEditorsApi.prototype.asc_StopInkDrawer = function() {
+		this.inkDrawer.turnOff();
+	};
+	baseEditorsApi.prototype.onInkDrawerChangeState = function() {
+	};
+	baseEditorsApi.prototype.isInkDrawerOn = function() {
+		return this.inkDrawer.isOn();
+	};
+	baseEditorsApi.prototype.isDrawInkMode = function() {
+		return this.inkDrawer.isDraw();
+	};
+	baseEditorsApi.prototype.isEraseInkMode = function() {
+		return this.inkDrawer.isErase();
+	};
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
 	window['AscCommon'].baseEditorsApi = baseEditorsApi;
@@ -4524,7 +4545,9 @@
 	prot['AddImageUrl'] = prot.AddImageUrl;
 	prot['asc_SetDrawImagePreviewBulletForMenu'] = prot['SetDrawImagePreviewBulletForMenu'] = prot.SetDrawImagePreviewBulletForMenu;
 	prot['asc_GetPossibleNumberingLanguage'] = prot.asc_GetPossibleNumberingLanguage;
-
 	prot['asc_isCrypto'] = prot.asc_isCrypto;
+	prot['asc_StartDrawInk'] = prot.asc_StartDrawInk;
+	prot['asc_StartInkEraser'] = prot.asc_StartInkEraser;
+	prot['asc_StopInkDrawer'] = prot.asc_StopInkDrawer;
 
 })(window);
