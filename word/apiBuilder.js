@@ -6951,7 +6951,7 @@
         oLogicDocument.Statistics.SymbolsWOSpaces = 0;
         oLogicDocument.Statistics.SymbolsWhSpaces = 0;
 
-		oLogicDocument.Statistics.Update_Pages(this.Pages.length);
+		oLogicDocument.Statistics.Update_Pages(oLogicDocument.Pages.length);
 		for (let CurPage = 0, PagesCount = oLogicDocument.Pages.length; CurPage < PagesCount; ++CurPage)
 		{
 			oLogicDocument.DrawingObjects.documentStatistics(CurPage, oLogicDocument.Statistics);
