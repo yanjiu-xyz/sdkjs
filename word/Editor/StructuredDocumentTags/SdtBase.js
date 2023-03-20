@@ -1012,3 +1012,11 @@ CSdtBase.prototype.CheckOFormUserMaster = function()
 	
 	return logicDocument.CheckOFormUserMaster(this);
 };
+/**
+ * Проверяем, можно ли ставить курсор внутрь
+ */
+CSdtBase.prototype.CanPlaceCursorInside = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	return (!this.IsPicture() && (!this.IsForm() || !logicDocument || logicDocument.IsFillingOFormMode()))
+};
