@@ -74,10 +74,18 @@ function PolyLine (drawingObjects, theme, master, layout, slide, pageIndex)
         style.lnRef.Color.Calculate(theme, slide, layout, master);
         RGBA = style.lnRef.Color.RGBA;
 
+	    const API = Asc.editor || editor;
+	    const bInkDraw = API.isInkDrawerOn();
+		this.bInk = bInkDraw;
+		if(bInkDraw)
+		{
+			pen = API.getInkPen();
+		}
         if(pen.Fill)
         {
             pen.Fill.calculate(theme, slide, layout, master, RGBA);
         }
+
 
         this.pen = pen;
 
@@ -212,6 +220,10 @@ function PolyLine (drawingObjects, theme, master, layout, slide, pageIndex)
         shape.spPr.xfrm.setExtX(xMax-xMin);
         shape.spPr.xfrm.setExtY(yMax - yMin);
         shape.setStyle(AscFormat.CreateDefaultShapeStyle());
+	    if(this.bInk)
+	    {
+		    shape.spPr.setLn(this.pen);
+	    }
         var geometry = new AscFormat.Geometry();
 
 

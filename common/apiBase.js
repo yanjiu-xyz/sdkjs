@@ -4492,6 +4492,9 @@
 	baseEditorsApi.prototype.isEraseInkMode = function() {
 		return this.inkDrawer.isErase();
 	};
+	baseEditorsApi.prototype.getInkPen = function() {
+		return this.inkDrawer.getPen();
+	};
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
 	window['AscCommon'].baseEditorsApi = baseEditorsApi;

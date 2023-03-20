@@ -13091,6 +13091,12 @@
 	};
 	CInkDrawer.prototype.startDraw = function(oAscPen) {
 		this.pen = AscFormat.CorrectUniStroke(oAscPen);
+		if(!this.pen) {
+			this.pen = new AscFormat.CLn();
+			this.pen.w = 180000;
+			this.pen.Fill = AscFormat.CreateSolidFillRGB(255, 255, 0);
+			this.pen.Fill.transparent = 127;
+		}
 		this.setState(INK_DRAWER_STATE_DRAW);
 	};
 	CInkDrawer.prototype.startErase = function() {

@@ -6514,7 +6514,6 @@
 				},
 
 				startTrackNewShape: function (presetGeom) {
-					presetGeom = "ink";
 					switch (presetGeom) {
 						case "spline": {
 							this.changeCurrentState(new AscFormat.SplineBezierState(this));
@@ -6530,10 +6529,6 @@
 						}
 						case "customAnimPath": {
 							this.changeCurrentState(new AscFormat.AddPolyLine2State(this, true));
-							break;
-						}
-						case "ink": {
-							this.changeCurrentState(new AscFormat.CInkEraseState(this));
 							break;
 						}
 						default : {
@@ -10611,6 +10606,9 @@
 
 		function CInkEraseState(drawingObjects) {
 			CDrawingControllerStateBase.call(this, drawingObjects);
+			const API = Asc.editor || editor;
+			this.inkDrawer = API.inkDrawer;
+			this.startState = API.inkDrawer.getState();
 		}
 		CInkEraseState.prototype = Object.create(CDrawingControllerStateBase.prototype);
 		CInkEraseState.prototype.superclass = CDrawingControllerStateBase;
@@ -10633,8 +10631,14 @@
 						}
 					}
 					this.changeControllerState(this);
+					this.inkDrawer.restoreState(this.startState);
 				}
 			}
+			return {
+				objectId: "1",
+				bMarker: true,
+				cursorType: "default"
+			};
 		};
 		CInkEraseState.prototype.onMouseUp = function (e, x, y, pageIndex) {
 			return null;
@@ -10643,15 +10647,21 @@
 		function CInkDrawState(drawingObjects) {
 			CDrawingControllerStateBase.call(this, drawingObjects);
 			this.drawingState = this.getPolylineState();
+			const API = Asc.editor || editor;
+			this.inkDrawer = API.inkDrawer;
+			this.startState = API.inkDrawer.getState();
 		}
 		CInkDrawState.prototype = Object.create(CDrawingControllerStateBase.prototype);
 		CInkDrawState.prototype.superclass = CDrawingControllerStateBase;
 		CInkDrawState.prototype.constructor = CInkDrawState;
-
 		CInkDrawState.prototype.onMouseDown = function (e, x, y, pageIndex) {
 			const oResult = this.drawingState.onMouseDown(e, x, y, pageIndex);
 			this.checkControllerState();
-			return oResult;
+			return {
+				objectId: "1",
+				bMarker: true,
+				cursorType: "default"
+			};
 		};
 		CInkDrawState.prototype.onMouseMove = function (e, x, y, pageIndex) {
 			const oResult = this.drawingState.onMouseMove(e, x, y, pageIndex);
@@ -10678,7 +10688,7 @@
 				oDrawingState = this.getPolylineState();
 			}
 			this.drawingState = oDrawingState;
-
+			this.inkDrawer.restoreState(this.startState);
 		};
 
 		function CDrawTask(rect) {
