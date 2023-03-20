@@ -11401,21 +11401,8 @@ CPresentation.prototype.OnInkDrawerChangeState = function() {
 	}
 	this.FocusOnNotes = false;
 	this.SetThumbnailsFocusElement(FOCUS_OBJECT_MAIN);
-	let oController = oSlide.graphicObjects;
-	if(this.Api.isInkDrawerOn()) {
-		if(this.Api.isDrawInkMode()) {
-			oController.changeCurrentState(new AscFormat.CInkDrawState(oController));
-		}
-		else {
-			oController.changeCurrentState(new AscFormat.CInkEraseState(oController));
-		}
-	}
-	else {
-		oController.clearTrackObjects();
-		oController.clearPreTrackObjects();
-		oController.changeCurrentState(new AscFormat.NullState(oController));
-		this.DrawingDocument.m_oWordControl.OnUpdateOverlay();
-	}
+	const oController = oSlide.graphicObjects;
+	oController.onInkDrawerChangeState();
 };
 
 CPresentation.prototype.StartAddShape = function (preset, _is_apply) {

@@ -9107,6 +9107,24 @@
 				},
 				hitInGuide: function (x, y) {
 					return null;
+				},
+
+				onInkDrawerChangeState: function() {
+					const oAPI = this.getEditorApi();
+					if(oAPI.isInkDrawerOn()) {
+						if(oAPI.isDrawInkMode()) {
+							this.changeCurrentState(new AscFormat.CInkDrawState(this));
+						}
+						else {
+							this.changeCurrentState(new AscFormat.CInkEraseState(this));
+						}
+					}
+					else {
+						this.clearTrackObjects();
+						this.clearPreTrackObjects();
+						this.changeCurrentState(new AscFormat.NullState(this));
+						this.updateOverlay();
+					}
 				}
 			};
 
