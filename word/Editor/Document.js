@@ -11520,6 +11520,19 @@ CDocument.prototype.ReplaceCurrentWord = function(nDirection, sReplace)
 
 	return bResult;
 };
+/**
+ * Получаем текущее слово (или часть текущего слова)
+ * @param nDirection -1 - часть до курсора, 1 - часть после курсора, 0 (или не задано) слово целиком
+ * @returns {string}
+ */
+CDocument.prototype.GetCurrentSentence = function(nDirection)
+{
+	let paragraph = this.GetCurrentParagraph();
+	if (!paragraph)
+		return "";
+	
+	return paragraph.GetCurrentSentence(nDirection);
+};
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для работы с таблицами
 //----------------------------------------------------------------------------------------------------------------------
@@ -11817,8 +11830,9 @@ CDocument.prototype.private_UpdateTracks = function(bSelection, bEmptySelection)
 	{
 		if (oInlineLevelSdt.IsForm())
 			oCurrentForm = oInlineLevelSdt;
-
-		oInlineLevelSdt.DrawContentControlsTrack(AscCommon.ContentControlTrack.In);
+		
+		if (!oInlineLevelSdt.IsForm() || !oInlineLevelSdt.IsFixedForm() || this.IsFillingOFormMode())
+			oInlineLevelSdt.DrawContentControlsTrack(AscCommon.ContentControlTrack.In);
 	}
 	else if (oBlockLevelSdt)
 	{

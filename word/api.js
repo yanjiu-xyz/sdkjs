@@ -2377,11 +2377,13 @@ background-repeat: no-repeat;\
 
 		if (null != this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
 		{
-			if (window["AscDesktopEditor"]["IsSupportNativePrint"](this.DocumentUrl) === true)
+			var viewer = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
+			if (window["AscDesktopEditor"] && !window["AscDesktopEditor"]["IsLocalFile"]() && window["AscDesktopEditor"]["SetPdfCloudPrintFileInfo"])
 			{
-				window["AscDesktopEditor"]["Print"](JSON.stringify(desktopOptions));
-				return true;
+				if (!window["AscDesktopEditor"]["IsCachedPdfCloudPrintFileInfo"]())
+					window["AscDesktopEditor"]["SetPdfCloudPrintFileInfo"](AscCommon.Base64.encode(viewer.getFileNativeBinary()));
 			}
+			window["AscDesktopEditor"]["Print"](JSON.stringify(desktopOptions), viewer.savedPassword ? viewer.savedPassword : "");
 		}
 		else
 		{
@@ -2391,7 +2393,6 @@ background-repeat: no-repeat;\
 			}
 			desktopOptions["documentLayout"] = {"drawPlaceHolders":false,"drawFormHighlight":false,"isPrint":true};
 			window["AscDesktopEditor"]["Print"](JSON.stringify(desktopOptions));
-			return true;
 		}
 		return true;
 	};

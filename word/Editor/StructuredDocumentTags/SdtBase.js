@@ -490,6 +490,17 @@ CSdtBase.prototype.IsCurrent = function()
 CSdtBase.prototype.SetCurrent = function(isCurrent)
 {
 	this.Current = isCurrent;
+	
+	if (this.IsForm() && this.IsFixedForm())
+	{
+		let logicDocument   = this.GetLogicDocument();
+		let drawingDocument = logicDocument ? logicDocument.GetDrawingDocument() : null;
+		if (drawingDocument && !logicDocument.IsFillingOFormMode())
+		{
+			drawingDocument.OnDrawContentControl(null, AscCommon.ContentControlTrack.In);
+			drawingDocument.OnDrawContentControl(null, AscCommon.ContentControlTrack.Hover);
+		}
+	}
 };
 /**
  * Специальная функция, которая обновляет текстовые настройки у плейсхолдера для форм
@@ -1000,4 +1011,12 @@ CSdtBase.prototype.CheckOFormUserMaster = function()
 		return true;
 	
 	return logicDocument.CheckOFormUserMaster(this);
+};
+/**
+ * Проверяем, можно ли ставить курсор внутрь
+ */
+CSdtBase.prototype.CanPlaceCursorInside = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	return (!this.IsPicture() && (!this.IsForm() || !logicDocument || logicDocument.IsFillingOFormMode()))
 };

@@ -5912,7 +5912,7 @@
 		CShape.prototype.hitInPath = function (x, y) {
 
 			var oInnerForm = null;
-			if (this.isForm && this.isForm() && (oInnerForm = this.getInnerForm()) && !oInnerForm.IsPictureForm()) {
+			if (this.isForm && this.isForm() && (oInnerForm = this.getInnerForm()) && oInnerForm.CanPlaceCursorInside()) {
 				var oApi = Asc.editor || editor;
 				var oLogicDocument = oApi && oApi.WordControl && oApi.WordControl.m_oLogicDocument ? oApi.WordControl.m_oLogicDocument : null;
 				if (oLogicDocument && oLogicDocument.IsDocumentEditor() && oLogicDocument.IsFillingFormMode())
@@ -5959,7 +5959,7 @@
 				return false;
 			}
 			var oInnerForm = null;
-			if (this.isForm && this.isForm() && (oInnerForm = this.getInnerForm()) && !oInnerForm.IsPictureForm()) {
+			if (this.isForm && this.isForm() && (oInnerForm = this.getInnerForm()) && oInnerForm.CanPlaceCursorInside()) {
 				var oApi = Asc.editor || editor;
 				var oLogicDocument = oApi && oApi.WordControl && oApi.WordControl.m_oLogicDocument ? oApi.WordControl.m_oLogicDocument : null;
 				if (oLogicDocument && oLogicDocument.IsDocumentEditor() && oLogicDocument.IsFillingFormMode())
