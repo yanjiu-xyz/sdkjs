@@ -182,7 +182,6 @@ MasterSlide.prototype.draw = function (graphics, slide) {
 		let nTime = (new Date()).getTime();
         if (this.cSld.spTree[i].isPlaceholder && !this.cSld.spTree[i].isPlaceholder())
             this.cSld.spTree[i].draw(graphics);
-		console.log("ID "  + this.cSld.spTree[i].Get_Id() + " Time: " + ((new Date()).getTime() - nTime))
     }
 };
 MasterSlide.prototype.getMatchingLayout = function (type, matchingName, cSldName, themeFlag) {
