@@ -12248,7 +12248,7 @@
 			}
 		}
 
-		this.RestoredStylesMap[oParsedStyle.styleId] = oStyle;
+		this.RestoredStylesMap[oParsedStyle["styleId"]] = oStyle;
 		
 		return oStyle;
 	};
