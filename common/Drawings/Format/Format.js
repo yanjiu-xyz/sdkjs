@@ -8916,6 +8916,27 @@
 				fCallback(this.spTree[nSp]);
 			}
 		};
+		CSld.prototype.handleAllContents = function(fCallback) {
+			this.forEachSp(function(oSp) {
+				if (oSp.handleAllContents) {
+					oSp.handleAllContents(fCallback);
+				}
+			});
+		};
+		CSld.prototype.refreshAllContentsFields = function() {
+			this.handleAllContents(RefreshContentAllFields);
+		};
+
+		function RefreshContentAllFields(oContent) {
+			if(!oContent) {
+				return;
+			}
+			if(!oContent.RecalcAllFields) {
+				return;
+			}
+			oContent.RecalcAllFields();
+		}
+
 
 		function CSpTree(oSlideObject) {
 			CBaseNoIdObject.call(this);
@@ -15411,6 +15432,7 @@
 		window['AscFormat'].CVariantArray = CVariantArray;
 		window['AscFormat'].CVariantVStream = CVariantVStream;
 		window['AscFormat'].fRGBAToHexString = fRGBAToHexString;
+		window['AscFormat'].RefreshContentAllFields = RefreshContentAllFields;
 		window['AscFormat'].szPh_full = szPh_full;
 		window['AscFormat'].szPh_half = szPh_half;
 		window['AscFormat'].szPh_quarter = szPh_quarter;
