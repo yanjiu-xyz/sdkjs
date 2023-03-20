@@ -179,7 +179,6 @@ MasterSlide.prototype.draw = function (graphics, slide) {
         }
     }
     for (var i = 0; i < this.cSld.spTree.length; ++i) {
-		let nTime = (new Date()).getTime();
         if (this.cSld.spTree[i].isPlaceholder && !this.cSld.spTree[i].isPlaceholder())
             this.cSld.spTree[i].draw(graphics);
     }
