@@ -5569,6 +5569,10 @@
 				if (oElm.IsUseInDocument())
 					continue;
 
+				if (oElm.Parent != null) {
+					oElm.SetParent(private_GetLogicDocument());
+				}
+
 				oSelectedContent.Add(new AscCommonWord.CSelectedElement(oElm, true));
 			}
 		}
