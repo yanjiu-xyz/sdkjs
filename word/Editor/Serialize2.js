@@ -5640,9 +5640,9 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
 		this.bs.WriteItem(c_oSer_FldSimpleType.CharType, function() {
 			oThis.memory.WriteByte(fldChar.CharType);
 		});
-		if (null !== fldChar.PrivateData) {
+		if (null !== fldChar.fldData) {
 			this.bs.WriteItem(c_oSer_FldSimpleType.PrivateData, function () {
-				oThis.memory.WriteString3(fldChar.PrivateData);
+				oThis.memory.WriteString3(fldChar.fldData);
 			});
 		}
 	};
@@ -11657,7 +11657,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		if (c_oSer_FldSimpleType.CharType === type) {
 			paraField.Init(this.stream.GetUChar(), paraField.LogicDocument);
 		} else if (c_oSer_FldSimpleType.PrivateData === type) {
-			paraField.PrivateData = this.stream.GetString2LE(length);
+			paraField.fldData = this.stream.GetString2LE(length);
 		} else
 			res = c_oSerConstants.ReadUnknown;
 		return res;
@@ -11685,7 +11685,7 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		// 	});
 		// 	oFldSimpleObj.ParaField.FFData = FFData;
 		// } else  if (c_oSer_FldSimpleType.PrivateData === type) {
-		// 	oFldSimpleObj.ParaField.PrivateData = this.stream.GetString2LE(length);
+		// 	oFldSimpleObj.ParaField.fldData = this.stream.GetString2LE(length);
 		} else if (c_oSer_FldSimpleType.Content === type) {
 			if(null != oFldSimpleObj.ParaField) {
 				res = this.bcr.Read1(length, function (t, l) {
