@@ -8485,14 +8485,11 @@ var editor;
 		return ws.setSheetViewType(val);
 	};
 
-	spreadsheet_api.prototype.asc_GetSheetViewType = function() {
-		let wb = this.wb;
-		if (!wb) {
-			return null;
-		}
-		var ws = this.wb.getWorksheet();
-		if (ws && ws.model && ws.model.sheetViews) {
-			var sheetView = this.sheetViews[0];
+	spreadsheet_api.prototype.asc_GetSheetViewType = function(index) {
+		var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
+		var ws = this.wbModel.getWorksheet(sheetIndex);
+		if (ws && ws.sheetViews) {
+			var sheetView = ws.sheetViews[0];
 			if (!sheetView) {
 				return null;
 			}
