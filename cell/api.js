@@ -8472,6 +8472,35 @@ var editor;
 		return this.wbModel.checkUserProtectedRangeName(checkName);
 	};
 
+	spreadsheet_api.prototype.asc_SetSheetViewType = function(val) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
+		}
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		var ws = this.wb.getWorksheet();
+		//val -> window['Asc']['c_oAscESheetViewType']
+		return ws.setSheetViewType(val);
+	};
+
+	spreadsheet_api.prototype.asc_GetSheetViewType = function() {
+		let wb = this.wb;
+		if (!wb) {
+			return null;
+		}
+		var ws = this.wb.getWorksheet();
+		if (ws && ws.model && ws.model.sheetViews) {
+			var sheetView = this.sheetViews[0];
+			if (!sheetView) {
+				return null;
+			}
+			return sheetView.view;
+		}
+		return null;
+	};
+
   /*
    * Export
    * -----------------------------------------------------------------------------
@@ -9006,14 +9035,9 @@ var editor;
 
   prot["onWorksheetChange"] = prot.onWorksheetChange;  
 
-
   prot["asc_addCellWatches"]               = prot.asc_addCellWatches;
   prot["asc_deleteCellWatches"]            = prot.asc_deleteCellWatches;
   prot["asc_getCellWatches"]               = prot.asc_getCellWatches;
-
-
-
-
 
   prot["asc_getExternalReferences"] = prot.asc_getExternalReferences;
   prot["asc_updateExternalReferences"] = prot.asc_updateExternalReferences;
@@ -9030,7 +9054,8 @@ var editor;
   prot["asc_deleteUserProtectedRange"]    = prot.asc_deleteUserProtectedRange;
   prot["asc_getUserProtectedRanges"]      = prot.asc_getUserProtectedRanges;
   prot["asc_checkUserProtectedRangeName"] = prot.asc_checkUserProtectedRangeName;
-
+  prot["asc_SetSheetViewType"]   = prot.asc_SetSheetViewType;
+  prot["asc_GetSheetViewType"]   = prot.asc_GetSheetViewType;
 
 
 
