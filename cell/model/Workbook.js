@@ -11848,6 +11848,8 @@
 
 				History.EndTransaction();
 			}
+
+			this.workbook.handlers.trigger("asc_updateSheetViewType", this.index);
 			return true;
 		}
 	};
