@@ -5921,6 +5921,8 @@
 						|| this.curState instanceof AscFormat.SplineBezierState
 						|| this.curState instanceof AscFormat.PolyLineAddState
 						|| this.curState instanceof AscFormat.AddPolyLine2State
+						|| this.curState instanceof AscFormat.CInkDrawState
+						|| this.curState instanceof AscFormat.CInkEraseState
 						|| this.haveTrackedObjects();
 				},
 
@@ -6551,6 +6553,7 @@
 						X: 0,
 						Y: 0
 					}, 0, 0, 0);
+
 					if (bRet === false && this.document) {
 						var oElement = this.document.Content[this.document.CurPos.ContentPos];
 						if (oElement) {
