@@ -6867,9 +6867,9 @@ var editor;
   
   spreadsheet_api.prototype.asc_showDetails = function(opt_pivotTable) {
     var ws = this.wbModel.getActiveWs();
-		var activeCell = ws.selectionRange.activeCell;
-		var pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
-		if (pivotTable) {
+    var activeCell = ws.selectionRange.activeCell;
+    var pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
+    if (pivotTable) {
       let cells = pivotTable.getCellArrayForDetails(activeCell.row, activeCell.col);
       console.log(cells);
       // this.asc_addWorksheet('testSheet');
