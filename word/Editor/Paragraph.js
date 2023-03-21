@@ -13199,6 +13199,10 @@ Paragraph.prototype.Split = function(oNewParagraph, oContentPos, isNoDuplicate)
 
 	if (!oContentPos)
 		oContentPos = this.Get_ParaContentPos(false, false);
+	
+	let complexFields = this.GetComplexFieldsByPos(oContentPos);
+	for (let iField = 0, nFields = complexFields.length; iField < nFields; ++iField)
+		complexFields[iField].StartCharsUpdate();
 
 	var TextPr = this.Get_TextPr(oContentPos);
 
@@ -13286,7 +13290,10 @@ Paragraph.prototype.Split = function(oNewParagraph, oContentPos, isNoDuplicate)
 
 	oNewParagraph.DeleteCommentOnRemove = true;
 	this.DeleteCommentOnRemove          = true;
-
+	
+	for (let iField = 0, nFields = complexFields.length; iField < nFields; ++iField)
+		complexFields[iField].FinishCharsUpdate();
+	
 	return oNewParagraph;
 };
 /**
@@ -13298,6 +13305,10 @@ Paragraph.prototype.Concat = function(Para, isUseConcatedStyle)
 {
 	this.DeleteCommentOnRemove = false;
 	Para.DeleteCommentOnRemove = false;
+	
+	let complexFields = this.GetComplexFieldsByPos(this.GetEndPos());
+	for (let iField = 0, nFields = complexFields.length; iField < nFields; ++iField)
+		complexFields[iField].StartCharsUpdate();
 
 	// Если в параграфе Para были точки NearPos, за которыми нужно следить перенесем их в этот параграф
 	var NearPosCount = Para.NearPosArray.length;
@@ -13331,6 +13342,9 @@ Paragraph.prototype.Concat = function(Para, isUseConcatedStyle)
 
 	this.DeleteCommentOnRemove = true;
 	Para.DeleteCommentOnRemove = true;
+	
+	for (let iField = 0, nFields = complexFields.length; iField < nFields; ++iField)
+		complexFields[iField].FinishCharsUpdate();
 
 	if (true === isUseConcatedStyle)
 		Para.CopyPr(this);
@@ -13347,6 +13361,10 @@ Paragraph.prototype.ConcatBefore = function(oPara, nSelection)
 {
 	this.DeleteCommentOnRemove = false;
 	oPara.DeleteCommentOnRemove = false;
+	
+	let complexFields = this.GetComplexFieldsByPos(this.GetStartPos());
+	for (let iField = 0, nFields = complexFields.length; iField < nFields; ++iField)
+		complexFields[iField].StartCharsUpdate();
 
 	// Убираем метку конца параграфа у добавляемого параграфа
 	oPara.RemoveParaEnd();
@@ -13417,6 +13435,9 @@ Paragraph.prototype.ConcatBefore = function(oPara, nSelection)
 			this.CurPos.ContentPos  = nEndPos;
 		}
 	}
+	
+	for (let iField = 0, nFields = complexFields.length; iField < nFields; ++iField)
+		complexFields[iField].FinishCharsUpdate();
 };
 /**
  * Копируем настройки параграфа и последние текстовые настройки в новый параграф

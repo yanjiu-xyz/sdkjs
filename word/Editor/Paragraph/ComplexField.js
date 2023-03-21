@@ -376,7 +376,16 @@ CComplexField.prototype.IsCurrent = function()
 };
 CComplexField.prototype.IsUpdate = function()
 {
-	return this.StartUpdate;
+	return (this.StartUpdate > 0);
+};
+CComplexField.prototype.StartCharsUpdate = function()
+{
+	++this.StartUpdate;
+};
+CComplexField.prototype.FinishCharsUpdate = function()
+{
+	if (this.StartUpdate > 0)
+		--this.StartUpdate;
 };
 CComplexField.prototype.SetInstruction = function(oParaInstr)
 {
@@ -459,7 +468,7 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 		this.LogicDocument.StartAction();
 	}
 
-	this.StartUpdate = true;
+	this.StartCharsUpdate();
 	switch (this.Instruction.GetType())
 	{
 		case fieldtype_PAGE:
@@ -498,7 +507,7 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 		case fieldtype_ADDIN:
 			break;
 	}
-	this.StartUpdate = false;
+	this.FinishCharsUpdate();
 
 	if (false !== isNeedRecalculate)
 		this.LogicDocument.Recalculate();
