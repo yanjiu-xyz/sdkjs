@@ -6872,7 +6872,7 @@ CT_pivotTableDefinition.prototype.getItemFieldsMap = function(rowItemIndex, colI
 			for (let i = 0; i < item.x.length && i < length; i+= 1) {
 				let x = item.x[i];
 				let pivotFieldIndex = rowColFields[item.getR() + i].asc_getIndex();
-				let	fieldItem = pivotFields[pivotFieldIndex].getItem(x.getV());
+				let fieldItem = pivotFields[pivotFieldIndex].getItem(x.getV());
 				result.set(pivotFieldIndex, fieldItem);
 			}
 			r = item.getR() - 1;
@@ -6897,11 +6897,11 @@ CT_pivotTableDefinition.prototype.getCellArrayForDetails = function(row, col) {
 	let colItems = this.getColItems();
 	let indexes = this.getItemsIndexesByActiveCell(row, col);
 	if (rowItems[indexes.rowItemIndex].t === Asc.c_oAscItemType.Blank || colItems[indexes.colItemIndex] === Asc.c_oAscItemType.Blank || indexes === null) {
-        return null;
-    }
+		return null;
+	}
 	let itemMap = this.getItemFieldsMap(indexes.rowItemIndex, indexes.colItemIndex);
-    let cacheFields = this.asc_getCacheFields();
-    let records = this.getRecords();
+	let cacheFields = this.asc_getCacheFields();
+	let records = this.getRecords();
 
 	/**
 	 * @param {PivotRecordValue} col
