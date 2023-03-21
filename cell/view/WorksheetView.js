@@ -24787,9 +24787,15 @@
 			printRanges = this.pagesModeData.printRanges;
 			if (!printRanges) {
 				let printPages = this.pagesModeData.printPages;
-				let startRange = printPages[0].page.pageRange;
-				let endRange = printPages[printPages.length - 1].page.pageRange;
-				printRanges = [{range: new Asc.Range(startRange.c1, startRange.r1, endRange.c2, endRange.r2), start: 0, end: printPages.length}];
+				let startRange = printPages && printPages[0] && printPages[0].page && printPages[0].page.pageRange;
+				let endRange = printPages && printPages[printPages.length - 1] && printPages[printPages.length - 1].page && printPages[printPages.length - 1].page.pageRange;
+				if (startRange && endRange) {
+					printRanges = [{
+						range: new Asc.Range(startRange.c1, startRange.r1, endRange.c2, endRange.r2),
+						start: 0,
+						end: printPages.length
+					}];
+				}
 			}
 		}
 		return printRanges;
