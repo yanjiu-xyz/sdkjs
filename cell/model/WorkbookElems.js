@@ -3111,6 +3111,38 @@ var g_oFontProperties = {
 		return res;
 	}
 
+	function FromXml_ST_SheetViewType(val) {
+		var res = null;
+		switch (val) {
+			case "normal":
+				res = window["Asc"].c_oAscESheetViewType.normal;
+				break;
+			case "pageBreakPreview":
+				res = window["Asc"].c_oAscESheetViewType.pageBreakPreview;
+				break;
+			case "pageLayout":
+				res = window["Asc"].c_oAscESheetViewType.pageLayout;
+				break;
+		}
+		return res;
+	}
+
+	function ToXml_ST_SheetViewType(val) {
+		var res = null;
+		switch (val) {
+			case window["Asc"].c_oAscESheetViewType.normal:
+				res = "normal";
+				break;
+			case window["Asc"].c_oAscESheetViewType.pageBreakPreview:
+				res = "pageBreakPreview";
+				break;
+			case window["Asc"].c_oAscESheetViewType.pageLayout:
+				res = "pageLayout";
+				break;
+		}
+		return res;
+	}
+
 	function GradientFill() {
 		//Attributes
 		this.type = Asc.c_oAscFillGradType.GRAD_LINEAR;
@@ -15478,6 +15510,8 @@ QueryTableField.prototype.clone = function() {
 	window["AscCommonExcel"].ToXml_ST_DataBarAxisPosition = ToXml_ST_DataBarAxisPosition;
 	window["AscCommonExcel"].FromXml_ST_CellValueType = FromXml_ST_CellValueType;
 	window["AscCommonExcel"].ToXml_ST_CellValueType = ToXml_ST_CellValueType;
+	window["AscCommonExcel"].FromXml_ST_SheetViewType = FromXml_ST_SheetViewType;
+	window["AscCommonExcel"].ToXml_ST_SheetViewType = ToXml_ST_SheetViewType;
 
 	window["AscCommonExcel"].CCellWatch = CCellWatch;
 	prot = CCellWatch.prototype;
