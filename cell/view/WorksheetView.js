@@ -648,7 +648,7 @@
 
 	WorksheetView.prototype._initColsCount = function () {
 		var old = this.nColsCount;
-		this.nColsCount = Math.min(Math.max(this.model.getColsCount(), this.visibleRange.c2) + 1, gc_nMaxCol);
+		this.setColsCount(Math.min(Math.max(this.model.getColsCount(), this.visibleRange.c2) + 1, gc_nMaxCol);
 		return old !== this.nColsCount;
 	};
 
@@ -1947,7 +1947,7 @@
 			this._calcColWidth(i);
         }
 
-        this.nColsCount = Math.min(Math.max(this.nColsCount, i), gc_nMaxCol);
+		this.setColsCount(Math.min(Math.max(this.nColsCount, i), gc_nMaxCol));
     };
 
     /**
@@ -7801,7 +7801,7 @@
         })();
 
         if (newCol >= t.nColsCount && newCol <= gc_nMaxCol0) {
-            t.nColsCount = newCol + 1;
+			t.setColsCount(newCol + 1);
             //t._calcWidthColumns(AscCommonExcel.recalcType.newLines);
         }
         if (newRow >= t.nRowsCount && newRow <= gc_nMaxRow0) {
@@ -7865,7 +7865,7 @@
 			var missingWidth = this._getMissingWidth();
 			if (0 < missingWidth) {
 				var colWidth = Asc.round(this.defaultColWidthPx * this.getZoom() * AscCommon.AscBrowser.retinaPixelRatio);
-				this.nColsCount = Math.min(this.nColsCount + Asc.ceil(missingWidth / colWidth), gc_nMaxCol);
+				this.setColsCount(Math.min(this.nColsCount + Asc.ceil(missingWidth / colWidth), gc_nMaxCol));
 				this._calcVisibleColumns();
 				if (!skipScrollReinit) {
 					this.handlers.trigger("reinitializeScroll", AscCommonExcel.c_oAscScrollType.ScrollHorizontal);
@@ -9610,13 +9610,13 @@
 		if (arn.c1 < vr.c1) {
 			scroll = arn.c1 - vr.c1;
 		} else if (arn.c1 >= vr.c2) {
-			this.nColsCount = arn.c2 + 1 + 1;
+			this.setColsCount(arn.c2 + 1 + 1);
 			scroll = this.getHorizontalScrollRange();
 			if (scroll > arn.c1) {
 				scroll = arn.c1;
 			}
 			scroll -= vr.c1 - (this.topLeftFrozenCell ? this.topLeftFrozenCell.getCol0() : 0);
-			this.nColsCount = nColsCount;
+			this.setColsCount(nColsCount);
 		}
 		if (scroll) {
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
@@ -24825,6 +24825,12 @@
 			this.draw();
 		}
 	};
+
+	WorksheetView.prototype.setColsCount = function (val) {
+		this.nColsCount = val;
+		console.log("nColsCount + view: " + val)
+	};
+
 
 	//------------------------------------------------------------export---------------------------------------------------
     window['AscCommonExcel'] = window['AscCommonExcel'] || {};
