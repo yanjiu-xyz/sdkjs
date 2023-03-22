@@ -24828,7 +24828,6 @@
 
 	WorksheetView.prototype.setColsCount = function (val) {
 		this.nColsCount = val;
-		console.log("nColsCount + view: " + val)
 	};
 
 
