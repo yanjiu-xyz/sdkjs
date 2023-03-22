@@ -1615,7 +1615,7 @@
 	 */
 	Api.prototype["pluginMethod_UpdateContextMenuItem"] = function(items)
 	{
-		this.onPluginUpdateContextMenuItem(items);
+		this.onPluginUpdateContextMenuItem([items]);
 	};
 
 	/**
