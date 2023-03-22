@@ -8488,14 +8488,14 @@ var editor;
 	spreadsheet_api.prototype.asc_GetSheetViewType = function(index) {
 		let sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
 		let ws = this.wbModel.getWorksheet(sheetIndex);
-		let res = Asc.c_oAscESheetViewType.normal;
+		let res = null;
 		if (ws && ws.sheetViews) {
 			var sheetView = ws.sheetViews[0];
 			if (sheetView) {
 				res = sheetView.view;
 			}
 		}
-		return res;
+		return res == null ? Asc.c_oAscESheetViewType.normal : res;
 	};
 
   /*
