@@ -14363,6 +14363,12 @@ QueryTableField.prototype.clone = function() {
 			this.setReferenceData(oReferenceData["fileKey"], oReferenceData["instanceId"]);
 			isChanged = true;
 		}
+		//path also can changed
+		var path = oPortalData && oPortalData["path"];
+		if (path && this.Id !== path) {
+			this.setId(path);
+			isChanged = true;
+		}
 
 		if (isChanged && History.Is_On()) {
 			History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
@@ -14589,6 +14595,15 @@ QueryTableField.prototype.clone = function() {
 		this.referenceData["instanceId"] = portalName;
 		this.referenceData["fileKey"] = fileId;
 	};
+
+	ExternalReference.prototype.setId = function (id) {
+		if (!id) {
+			return;
+		}
+
+		this.Id = id;
+	};
+
 
 	function asc_CExternalReference() {
 		this.type = null;
