@@ -1629,6 +1629,7 @@
 	 */
 	Api.prototype["pluginMethod_ShowWindow"] = function(frameId, variation)
 	{
+		variation["guid"] = window.g_asc_plugins.guidAsyncMethod;
 		this.sendEvent("asc_onPluginWindowShow", frameId, variation);
 	};
 
