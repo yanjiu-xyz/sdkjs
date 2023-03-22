@@ -648,7 +648,7 @@
 
 	WorksheetView.prototype._initColsCount = function () {
 		var old = this.nColsCount;
-		this.setColsCount(Math.min(Math.max(this.model.getColsCount(), this.visibleRange.c2) + 1, gc_nMaxCol);
+		this.setColsCount(Math.min(Math.max(this.model.getColsCount(), this.visibleRange.c2) + 1, gc_nMaxCol));
 		return old !== this.nColsCount;
 	};
 
