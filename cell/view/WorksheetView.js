@@ -8222,6 +8222,9 @@
         //this._cleanPagesModeData();
 
 		if (reinitScrollX || (0 > delta && initColsCount && this._initColsCount())) {
+			if (reinitScrollX && (start - cFrozen) === 0 && 0 > delta && initColsCount) {
+				this._initColsCount();
+			}
 			this.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
         }
 
