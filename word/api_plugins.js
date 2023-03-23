@@ -102,6 +102,14 @@
 	 * * <b>forms</b> - allow editing of form fields
 	 * * <b>readOnly</b> - allow no editing
 	 */
+	
+	/**
+	 * @typedef {("entirely" | "beforeCursor" | "afterCursor")} ReplaceTextType
+	 * A value that defines if it is possible to delete and/or edit the content control or not:
+	 * * <b>entirely</b> - replace all text with the specified one
+	 * * <b>beforeCursor</b> - replace only the part of the word that is before cursor
+	 * * <b>beforeCursor</b> - replace only the part of the word that is after cursor
+	 */
 
     var Api = window["asc_docs_api"];
 
@@ -1164,7 +1172,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias GetCurrentWord
-	 * @since 7.3.4
+	 * @since 7.4.0
 	 * @example
 	 * window.Asc.plugin.executeMethod("GetCurrentWord");
 	 */
@@ -1177,13 +1185,49 @@
 		return logicDocument.GetCurrentWord();
 	};
 	/**
+	 * Get the current word
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias ReplaceCurrentWord
+	 * @param {string} replaceString
+	 * @param {ReplaceTextType} [type="entirely"]
+	 * @since 7.3.4
+	 * @example
+	 * window.Asc.plugin.executeMethod("ReplaceCurrentWord");
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_ReplaceCurrentWord"] = function(replaceString, type)
+	{
+		let _replaceString = AscBuilder.GetStringParameter(replaceString, null);
+
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || null === _replaceString)
+			return;
+		
+		let direction = 0;
+		switch (AscBuilder.GetStringParameter(type, "entirely"))
+		{
+			case "beforeCursor":
+				direction = -1;
+				break;
+			case "afterCursor":
+				direction = 1;
+				break;
+			case "entirely":
+			default:
+				direction = 0;
+				break;
+		}
+		
+		logicDocument.ReplaceCurrentWord(direction, _replaceString);
+	};
+	/**
 	 * Get the current sentence
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
-	 * @alias GetCurrentWord
-	 * @since 7.3.4
+	 * @alias GetCurrentSentence
+	 * @since 7.4.0
 	 * @example
-	 * window.Asc.plugin.executeMethod("GetCurrentWord");
+	 * window.Asc.plugin.executeMethod("GetCurrentSentence");
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_GetCurrentSentence"] = function()
 	{
