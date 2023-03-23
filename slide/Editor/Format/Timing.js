@@ -10046,6 +10046,12 @@
             oGraphics.FreeFont && oGraphics.FreeFont();
         }
     };
+	CBaseAnimTexture.prototype.beforeRelease = function() {
+		if(this.canvas) {
+			this.canvas.width = 0;
+			this.canvas.height = 0;
+		}
+	};
 
     function CAnimTexture(oCache, oCanvas, fScale, nX, nY) {
         CBaseAnimTexture.call(this, oCanvas, fScale, nX, nY);
@@ -11106,11 +11112,14 @@
     };
     CTexturesCache.prototype.removeTexture = function (sId) {
         if (this.map[sId]) {
+			this.map[sId].beforeRelease();
             delete this.map[sId];
         }
     };
     CTexturesCache.prototype.clear = function () {
-        this.map = {};
+        for(let sId in this.map) {
+			this.removeTexture(sId);
+        }
     };
 
     function CAnimationDrawer(player) {
