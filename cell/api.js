@@ -8495,7 +8495,7 @@ var editor;
 				res = sheetView.view;
 			}
 		}
-		return res == null ? Asc.c_oAscESheetViewType.normal : res;
+		return res == null ? AscCommonExcel.ESheetViewType.normal : res;
 	};
 
   /*
