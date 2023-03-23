@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -3060,11 +3060,12 @@ CDocumentContent.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, 
 		if (true == this.Selection.Use)
 			this.Remove(1, true);
 
-		var Item = this.Content[this.CurPos.ContentPos];
+		let Item = this.Content[this.CurPos.ContentPos];
+		let Drawing;
 		if (type_Paragraph == Item.GetType())
 		{
-			var Drawing = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
-			var Image   = this.DrawingObjects.createOleObject(Data, sApplicationId, Img, 0, 0, W, H, nWidthPix, nHeightPix, arrImagesForAddToHistory);
+			Drawing = new ParaDrawing(W, H, null, this.DrawingDocument, this, null);
+			let Image   = this.DrawingObjects.createOleObject(Data, sApplicationId, Img, 0, 0, W, H, nWidthPix, nHeightPix, arrImagesForAddToHistory);
 			Image.setParent(Drawing);
 			Drawing.Set_GraphicObject(Image);
 
@@ -3076,8 +3077,9 @@ CDocumentContent.prototype.AddOleObject = function(W, H, nWidthPix, nHeightPix, 
 		}
 		else
 		{
-			Item.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
+			Drawing = Item.AddOleObject(W, H, nWidthPix, nHeightPix, Img, Data, sApplicationId, bSelect, arrImagesForAddToHistory);
 		}
+		return Drawing;
 	}
 };
 CDocumentContent.prototype.AddTextArt = function(nStyle)
@@ -7268,6 +7270,7 @@ CDocumentContent.prototype.Internal_Content_Add = function(Position, NewObject, 
 		this.Internal_Content_Add(this.Content.length, new Paragraph(this.DrawingDocument, this, this.bPresentation === true));
 
 	this.private_ReindexContent(Position);
+	this.OnContentChange();
 };
 CDocumentContent.prototype.Internal_Content_Remove = function(Position, Count, isCorrectContent)
 {
@@ -7302,6 +7305,7 @@ CDocumentContent.prototype.Internal_Content_Remove = function(Position, Count, i
 		this.Internal_Content_Add(this.Content.length, new Paragraph(this.DrawingDocument, this, this.bPresentation === true));
 
 	this.private_ReindexContent(Position);
+	this.OnContentChange();
 };
 CDocumentContent.prototype.Clear_ContentChanges = function()
 {

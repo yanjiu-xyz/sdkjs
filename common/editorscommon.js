@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -385,6 +385,10 @@
 				}
 			}
 			return res;
+		},
+
+		isThemeUrl: function(sUrl) {
+			return sUrl && (0 === sUrl.indexOf('theme'));
 		}
 	};
 	var g_oDocumentUrls = new DocumentUrls();
@@ -13164,111 +13168,12 @@
 		//console.log("Check Color r: " + nR + " g: " + nG + " b: " + nB);
 	};
 	//------------------------------------------------------------fill polyfill--------------------------------------------
-	if (!Array.prototype.findIndex) {
-		Object.defineProperty(Array.prototype, 'findIndex', {
-			value: function(predicate) {
-				if (this == null) {
-					throw new TypeError('Array.prototype.findIndex called on null or undefined');
-				}
-				if (typeof predicate !== 'function') {
-					throw new TypeError('predicate must be a function');
-				}
-				var list = Object(this);
-				var length = list.length >>> 0;
-				var thisArg = arguments[1];
-				var value;
-
-				for (var i = 0; i < length; i++) {
-					value = list[i];
-					if (predicate.call(thisArg, value, i, list)) {
-						return i;
-					}
-				}
-				return -1;
-			}
-		});
-	}
-	if (!Array.prototype.fill) {
-		Object.defineProperty(Array.prototype, 'fill', {
-			value: function(value) {
-
-				// Steps 1-2.
-				if (this == null) {
-					throw new TypeError('this is null or not defined');
-				}
-
-				var O = Object(this);
-
-				// Steps 3-5.
-				var len = O.length >>> 0;
-
-				// Steps 6-7.
-				var start = arguments[1];
-				var relativeStart = start >> 0;
-
-				// Step 8.
-				var k = relativeStart < 0 ?
-					Math.max(len + relativeStart, 0) :
-					Math.min(relativeStart, len);
-
-				// Steps 9-10.
-				var end = arguments[2];
-				var relativeEnd = end === undefined ?
-					len : end >> 0;
-
-				// Step 11.
-				var final = relativeEnd < 0 ?
-					Math.max(len + relativeEnd, 0) :
-					Math.min(relativeEnd, len);
-
-				// Step 12.
-				while (k < final) {
-					O[k] = value;
-					k++;
-				}
-
-				// Step 13.
-				return O;
-			}
-		});
-	}
-
 	if (!Object.values) {
 		Object.values = function (obj) {
 			return Object.keys(obj).map(function (e) {
 				return obj[e];
 			});
 		}
-	}
-	if (typeof Int8Array !== 'undefined' && !Int8Array.prototype.fill) {
-		Int8Array.prototype.fill = Array.prototype.fill;
-	}
-	if (typeof Uint8Array !== 'undefined' && !Uint8Array.prototype.fill) {
-		Uint8Array.prototype.fill = Array.prototype.fill;
-	}
-	if (typeof Uint8ClampedArray !== 'undefined' && !Uint8ClampedArray.prototype.fill) {
-		Uint8ClampedArray.prototype.fill = Array.prototype.fill;
-	}
-	if (typeof Int16Array !== 'undefined' && !Int16Array.prototype.fill) {
-		Int16Array.prototype.fill = Array.prototype.fill;
-	}
-	if (typeof Uint16Array !== 'undefined' && !Uint16Array.prototype.fill) {
-		Uint16Array.prototype.fill = Array.prototype.fill;
-	}
-	if (typeof Int32Array !== 'undefined' && !Int32Array.prototype.fill) {
-		Int32Array.prototype.fill = Array.prototype.fill;
-	}
-	if (typeof Uint32Array !== 'undefined' && !Uint32Array.prototype.fill) {
-		Uint32Array.prototype.fill = Array.prototype.fill;
-	}
-	if (typeof Float32Array !== 'undefined' && !Float32Array.prototype.fill) {
-		Float32Array.prototype.fill = Array.prototype.fill;
-	}
-	if (typeof Float64Array !== 'undefined' && !Float64Array.prototype.fill) {
-		Float64Array.prototype.fill = Array.prototype.fill;
-	}
-	if (typeof Uint8Array !== 'undefined' && !Uint8Array.prototype.slice) {
-		Uint8Array.prototype.slice = Array.prototype.slice;
 	}
 
 	function parseText(text, options, bTrimSpaces) {
@@ -14016,7 +13921,7 @@
 			return "";
 		}
 		//https://gist.github.com/oryanmoshe/6b3ecd895c8a5eb9ae4ec4554f687737#file-window-performance-memory-1-js
-		return JSON.stringify(Object.getOwnPropertyNames(window.performance.memory.__proto__).reduce((acc,key) => {
+		return JSON.stringify(Object.getOwnPropertyNames(window.performance.memory.__proto__).reduce(function(acc,key) {
 				if (key !== 'constructor')
 					acc[key] = window.performance.memory[key];
 				return acc;
@@ -14126,6 +14031,16 @@
 		return pages;
 	}
 
+
+	function CPluginCtxMenuInfo(sType, sOlePluginGuid) {
+		if(!sType) {
+			this["type"] = Asc.c_oPluginContextMenuTypes.None;
+		}
+		else {
+			this["type"] = sType;
+			this["guid"] = sOlePluginGuid;
+		}
+	}
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
@@ -14342,9 +14257,9 @@
 		return word;
 	}
 	window["AscCommon"].CFormatPainter = CFormatPainter;
-	window["AscCommon"].CFormatPainterDataBase = CFormatPainterDataBase;
-	
 	window["AscCommon"].CEyedropper = CEyedropper;
+	window["AscCommon"].CFormatPainterDataBase = CFormatPainterDataBase;
+	window["AscCommon"].CPluginCtxMenuInfo = CPluginCtxMenuInfo;
 
 })(window);
 

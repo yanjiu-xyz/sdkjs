@@ -1,5 +1,5 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -9019,6 +9019,10 @@ function RangeDataManagerElem(bbox, data)
 		}
 
 		this.Ref = ref;
+
+		if (this.SortState) {
+			this.SortState.changeRef(col, row, bIsFirst);
+		}
 	};
 	AutoFilter.prototype.changeRefOnRange = function (range) {
 		if (!range) {
@@ -12457,6 +12461,8 @@ QueryTableField.prototype.clone = function() {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Left, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageMargins.prototype.asc_setRight = function (newVal) {
 		var oldVal = this.right;
@@ -12465,6 +12471,8 @@ QueryTableField.prototype.clone = function() {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Right, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageMargins.prototype.asc_setTop = function (newVal) {
 		var oldVal = this.top;
@@ -12473,6 +12481,8 @@ QueryTableField.prototype.clone = function() {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Top, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageMargins.prototype.asc_setBottom = function (newVal) {
 		var oldVal = this.bottom;
@@ -12481,6 +12491,8 @@ QueryTableField.prototype.clone = function() {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Bottom, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 
 	asc_CPageMargins.prototype.asc_setHeader = function (newVal) {
@@ -12588,6 +12600,8 @@ QueryTableField.prototype.clone = function() {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Orientation, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageSetup.prototype.asc_setWidth = function (newVal) {
 		var oldVal = this.width;
@@ -12596,12 +12610,32 @@ QueryTableField.prototype.clone = function() {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Width, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageSetup.prototype.asc_setHeight = function (newVal) {
 		var oldVal = this.height;
 		this.height = newVal;
 		if (this.ws && History.Is_On() && oldVal !== this.height) {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Height, this.ws.getId(),
+				null, new UndoRedoData_Layout(oldVal, newVal));
+		}
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
+	};
+	asc_CPageSetup.prototype.asc_getFirstPageNumber = function () {
+		return this.useFirstPageNumber ? this.firstPageNumber : null;
+	};
+	asc_CPageSetup.prototype.asc_setFirstPageNumber = function (newVal) {
+		let oldVal = this.firstPageNumber;
+		let oldValUse = this.useFirstPageNumber;
+		if (newVal) {
+			newVal = parseInt(newVal);
+		}
+		this.firstPageNumber = newVal;
+		this.useFirstPageNumber = true;
+		if (this.ws && History.Is_On() && (oldVal !== this.firstPageNumber || oldValUse !== this.useFirstPageNumber)) {
+			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_FirstPageNumber, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
 	};
@@ -12637,6 +12671,8 @@ QueryTableField.prototype.clone = function() {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_FitToWidth, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageSetup.prototype.asc_setFitToHeight = function (newVal) {
 		//TODO заглушка! потому что из меню проставляется булево значение, а должно быть число
@@ -12652,6 +12688,8 @@ QueryTableField.prototype.clone = function() {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_FitToHeight, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageSetup.prototype.asc_setOptions = function (obj) {
 
@@ -12680,6 +12718,10 @@ QueryTableField.prototype.clone = function() {
 		if(prop !== this.asc_getFitToHeight()) {
 			this.asc_setFitToHeight(prop);
 		}
+		prop = obj.asc_getFirstPageNumber();
+		if(prop !== this.asc_getFirstPageNumber()) {
+			this.asc_setFirstPageNumber(prop);
+		}
 	};
 
 	asc_CPageSetup.prototype.asc_setScale = function (newVal) {
@@ -12689,6 +12731,8 @@ QueryTableField.prototype.clone = function() {
 			History.Add(AscCommonExcel.g_oUndoRedoLayout, AscCH.historyitem_Layout_Scale, this.ws.getId(),
 				null, new UndoRedoData_Layout(oldVal, newVal));
 		}
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 
 	asc_CPageSetup.prototype.getPreviewHeaderFooter = function () {
@@ -12919,9 +12963,13 @@ QueryTableField.prototype.clone = function() {
 	};
 	asc_CPageOptions.prototype.asc_setPrintTitlesWidth = function (newVal) {
 		this.printTitlesWidth = newVal;
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageOptions.prototype.asc_setPrintTitlesHeight = function (newVal) {
 		this.printTitlesHeight = newVal;
+		let wb = this.ws && this.ws.workbook && this.ws.workbook;
+		wb && wb.handlers && wb.handlers.trigger("onChangePageSetupProps", this.ws.getId());
 	};
 	asc_CPageOptions.prototype.asc_getPrintTitlesWidth = function () {
 		return this.printTitlesWidth;
@@ -13935,6 +13983,16 @@ QueryTableField.prototype.clone = function() {
 
 		return res;
 	};
+	CPrintPreviewState.prototype.getActivePageSetup = function () {
+		if (!this.isStart()) {
+			return;
+		}
+		let activeSheet = this.activeSheet;
+		let advancedOptions = this.advancedOptions;
+		if (advancedOptions && advancedOptions.pageOptionsMap) {
+			return advancedOptions.pageOptionsMap[activeSheet] && advancedOptions.pageOptionsMap[activeSheet].pageSetup;
+		}
+	};
 
 
 	function CT_Connection() {
@@ -14267,7 +14325,7 @@ QueryTableField.prototype.clone = function() {
 			}
 		}
 
-		var oReferenceData = oPortalData && oPortalData.referenceData;
+		var oReferenceData = oPortalData && oPortalData["referenceData"];
 		//data from portal, need update reference data
 		if (oReferenceData && (!this.referenceData || (this.referenceData["instanceId"] !== oReferenceData["instanceId"] || this.referenceData["fileKey"] !== oReferenceData["fileKey"]))) {
 			this.setReferenceData(oReferenceData["fileKey"], oReferenceData["instanceId"]);
@@ -15244,6 +15302,8 @@ QueryTableField.prototype.clone = function() {
 	prot["asc_setFitToHeight"] = prot.asc_setFitToHeight;
 	prot["asc_getScale"] = prot.asc_getScale;
 	prot["asc_setScale"] = prot.asc_setScale;
+	prot["asc_getFirstPageNumber"] = prot.asc_getFirstPageNumber;
+	prot["asc_setFirstPageNumber"] = prot.asc_setFirstPageNumber;
 
 	window["Asc"]["asc_CPageOptions"] = window["Asc"].asc_CPageOptions = asc_CPageOptions;
 	prot = asc_CPageOptions.prototype;

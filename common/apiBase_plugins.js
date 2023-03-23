@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1564,4 +1564,133 @@
 		}
 	};
 
+    /**
+     * Gets the document language.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CPE"]
+     * @alias GetDocumentLang
+     * @returns {string} 
+     */
+    Api.prototype["pluginMethod_GetDocumentLang"] = function()
+    {
+        let langCode = 1033; // en-US
+        let langName = "en-US";
+
+        if (this.WordControl && this.WordControl.m_oLogicDocument && this.WordControl.m_oLogicDocument.GetDefaultLanguage)
+            langCode = this.WordControl.m_oLogicDocument.GetDefaultLanguage();
+
+        if (window["Common"])
+            langName = window["Common"]["util"]['LanguageInfo']['getLocalLanguageName'](langCode)[0];
+
+        return langName;
+    };
+
+	/**
+	 * @typedef {Object} ContextMenuItem
+	 * The context menu item
+	 * @property {string} id - The item id.
+	 * @property {localeTranslate} text - The item text.
+	 * @property {boolean} [disabled] - Is disabled item.
+	 * @property {ContextMenuItem[]} items - An array containing the items for current item.
+	 */
+
+	/**
+	 * Add item to context menu
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias AddContextMenuItem
+	 * @param {ContextMenuItem[]} items - Array of items
+	 */
+	Api.prototype["pluginMethod_AddContextMenuItem"] = function(items)
+	{
+		this.onPluginAddContextMenuItem(items);
+	};
+
+	/**
+	 * Update items in context menu
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias UpdateContextMenuItem
+	 * @param {ContextMenuItem[]} items - Array of items
+	 */
+	Api.prototype["pluginMethod_UpdateContextMenuItem"] = function(items)
+	{
+		this.onPluginUpdateContextMenuItem(items);
+	};
+
+	/**
+	 * Shows modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} [frameId] - The frame ID.
+	 * @param {variation} [variation] - The plugin variation.
+	 * @alias ShowWindow 
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_ShowWindow"] = function(frameId, variation)
+	{
+		this.sendEvent("asc_onPluginWindowShow", frameId, variation);
+	};
+
+	/**
+	 * Close modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} [frameId] - The frame ID.
+	 * @alias CloseWindow
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_CloseWindow"] = function(frameId)
+	{
+		this.sendEvent("asc_onPluginWindowClose", frameId);
+	};
+
+	/**
+	 * Resize modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} [frameId] - The frame ID.
+	 * @param {number} [size] - The frame size.
+	 * @param {number} [minSize] - The frame min size.
+	 * @param {number} [maxSize] - The frame max size.
+	 * @alias ResizeWindow
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_ResizeWindow"] = function(frameId, size, minSize, maxSize)
+	{
+		let guidAsync = window.g_asc_plugins.setPluginMethodReturnAsync();
+		this.sendEvent("asc_onPluginWindowResize", frameId, size, minSize, maxSize, function(){
+			window.g_asc_plugins.onPluginMethodReturn(guidAsync, 'resize_result');
+		});
+	};
+
+	/**
+	 * Mouse up modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} [frameId] - The frame ID.
+	 * @param {number} [x] - coordinate.
+	 * @param {number} [y] - coordinate.
+	 * @alias MouseUpWindow
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_MouseUpWindow"] = function(frameId, x, y)
+	{
+		this.sendEvent("asc_onPluginWindowMouseUp", frameId, x, y);
+	};
+
+	/**
+	 * Mouse move modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} [frameId] - The frame ID.
+ 	 * @param {number} [x] - coordinate.
+	 * @param {number} [y] - coordinate.
+	 * @alias MouseMoveWindow
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_MouseMoveWindow"] = function(frameId, x, y)
+	{
+		this.sendEvent("asc_onPluginWindowMouseMove", frameId, x, y);
+	};
 })(window);

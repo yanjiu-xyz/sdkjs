@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1123,8 +1123,24 @@
 
   DocsCoApi.prototype._onRefreshToken = function(jwt) {
     this.jwtOpen = undefined;
+    if (this.socketio) {
+      if (this.socketio.auth) {
+        this.socketio.auth.token = this.jwtOpen;
+      }
+      if (this.socketio.io && this.socketio.io.setOpenToken) {
+        this.socketio.io.setOpenToken(this.jwtOpen);
+      }
+    }
     if (jwt) {
       this.jwtSession = jwt;
+      if (this.socketio) {
+        if (this.socketio.auth) {
+          this.socketio.auth.session = this.jwtSession;
+        }
+        if (this.socketio.io && this.socketio.io.setSessionToken) {
+          this.socketio.io.setSessionToken(this.jwtSession);
+        }
+      }
     }
   };
 
@@ -1553,12 +1569,13 @@
     this._onRefreshToken(data['jwt']);
     if (true === this._isAuth) {
       this._state = ConnectionState.Authorized;
+
+      this._onServerVersion(data);
+
       // Мы должны только соединиться для получения файла. Совместное редактирование уже было отключено.
       if (this.isCloseCoAuthoring) {
-		  return;
-	  }
-
-	  this._onServerVersion(data);
+        return;
+      }
 
       this._onLicenseChanged(data);
       // Мы уже авторизовывались, нужно обновить пользователей (т.к. пользователи могли входить и выходить пока у нас не было соединения)
@@ -1775,6 +1792,16 @@
   CNativeSocket.prototype.reconnectionDelay    = function(val) { this.settings["reconnectionDelay"] = val; };
   CNativeSocket.prototype.reconnectionDelayMax = function(val) { this.settings["reconnectionDelayMax"] = val; };
   CNativeSocket.prototype.randomizationFactor  = function(val) { this.settings["randomizationFactor"] = val; };
+  CNativeSocket.prototype.setOpenToken = function (val) {
+    if (this.settings["auth"]) {
+      this.settings["auth"]["token"] = val;
+    }
+  };
+  CNativeSocket.prototype.setSessionToken = function (val) {
+    if (this.settings["auth"]) {
+      this.settings["auth"]["session"] = val;
+    }
+  };
 
   CNativeSocket.prototype.on = function(name, callback) {
     if (!this.events.hasOwnProperty(name))
@@ -1795,16 +1822,18 @@
 	DocsCoApi.prototype._initSocksJs = function () {
       var t = this;
       let socket;
+      let firstConnection = true;
       let options = {
         "path": this.socketio_url,
-        "transports": ["polling", "websocket"],
+        "transports": ["websocket", "polling"],
         "closeOnBeforeunload": false,
         "reconnectionAttempts": 15,
         "reconnectionDelay": 500,
         "reconnectionDelayMax": 10000,
         "randomizationFactor": 0.5,
         "auth": {
-          "token": this.jwtOpen
+          "token": this.jwtOpen,
+          "session": this.jwtSession
         }
       };
       if (window['IS_NATIVE_EDITOR']) {
@@ -1815,6 +1844,7 @@
         socket = io(options);
       }
       socket.on("connect", function () {
+        firstConnection = false;
         t._onServerOpen();
       });
       socket.on("disconnect", function (reason) {
@@ -1832,6 +1862,11 @@
           //cases: authorization
           t._onServerClose(true);
           t.onDisconnect(err.data.description, err.data.code);
+        } else if (firstConnection) {
+          firstConnection = false;
+          if (socket.io.opts) {
+            socket.io.opts.transports = ["polling", "websocket"];
+          }
         }
       });
       socket.io.on("reconnect_failed", function () {

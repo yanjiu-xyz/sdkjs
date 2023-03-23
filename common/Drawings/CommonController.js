@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -4317,16 +4317,16 @@
 					var nAx;
 					if (aAx.length === aAxSettings.length) {
 						for (nAx = 0; nAx < aAx.length; ++nAx) {
-							aAx[nAx].setMenuProps(aAxSettings[nAx]);
 							oChartSpace.checkElementChartStyle(aAx[nAx]);
+							aAx[nAx].setMenuProps(aAxSettings[nAx]);
 						}
 					}
 					aAx = oOrderedAxes.getVerticalAxes();
 					aAxSettings = oProps.getVertAxesProps();
 					if (aAx.length === aAxSettings.length) {
 						for (nAx = 0; nAx < aAx.length; ++nAx) {
-							aAx[nAx].setMenuProps(aAxSettings[nAx]);
 							oChartSpace.checkElementChartStyle(aAx[nAx]);
+							aAx[nAx].setMenuProps(aAxSettings[nAx]);
 						}
 					}
 
@@ -4582,6 +4582,12 @@
 							return AscFormat.CreateSurfaceChart(chartSeries, bUseCache, options, true, false);
 						case c_oAscChartTypeSettings.contourWireframe:
 							return AscFormat.CreateSurfaceChart(chartSeries, bUseCache, options, true, true);
+						case c_oAscChartTypeSettings.radar:
+							return AscFormat.CreateRadarChart(chartSeries, bUseCache, options, false, false);
+						case c_oAscChartTypeSettings.radarMarker:
+							return AscFormat.CreateRadarChart(chartSeries, bUseCache, options, true, false);
+						case c_oAscChartTypeSettings.radarFilled:
+							return AscFormat.CreateRadarChart(chartSeries, bUseCache, options, false, true);
 						case c_oAscChartTypeSettings.comboAreaBar:
 						case c_oAscChartTypeSettings.comboBarLine:
 						case c_oAscChartTypeSettings.comboBarLineSecondary:
@@ -6540,11 +6546,32 @@
 
 				endTrackNewShape: function () {
 					this.curState.bStart = this.curState.bStart !== false;
-					var bRet = AscFormat.StartAddNewShape.prototype.onMouseUp.call(this.curState, {
-						ClickCount: 1,
-						X: 0,
-						Y: 0
-					}, 0, 0, 0);
+					let aTracks = this.arrTrackObjects;
+					let bNewShape = false;
+					let bRet = false;
+					if (aTracks.length > 0) {
+						let nT;
+						for (nT = 0; nT < aTracks.length; ++nT) {
+							let oTrack = aTracks[nT];
+							if (!oTrack.getShape) {
+								break;
+							}
+						}
+						if (nT === aTracks.length) {
+							bNewShape = true;
+						}
+						if (bNewShape) {
+							bRet = AscFormat.StartAddNewShape.prototype.onMouseUp.call(this.curState, {
+								ClickCount : 1,
+								X : 0,
+								Y : 0
+							}, 0, 0, 0);
+						}
+						else {
+							this.curState.onMouseUp({ClickCount : 1, X : 0, Y : 0}, 0, 0, 0);
+							bRet = true;
+						}
+					}
 					if (bRet === false && this.document) {
 						var oElement = this.document.Content[this.document.CurPos.ContentPos];
 						if (oElement) {
@@ -7226,11 +7253,8 @@
 								break;
 							}
 							case AscDFH.historyitem_type_ChartSpace: {
-								var type_subtype = drawing.getTypeSubType();
 								new_chart_props =
 									{
-										type: type_subtype.type,
-										subtype: type_subtype.subtype,
 										styleId: drawing.style,
 										w: drawing.extX,
 										h: drawing.extY,
@@ -9061,6 +9085,40 @@
 						}
 					}
 					return null;
+				},
+				getPluginSelectionInfo: function() {
+					let oTargetContent = this.getTargetDocContent();
+					if(oTargetContent)
+					{
+						if (!oTargetContent.IsSelectionUse())
+						{
+							return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Target);
+						}
+						return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Selection);
+					}
+
+					let oFirstSelected = this.getSelectedArray()[0];
+					if(!oFirstSelected)
+					{
+						return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.None);
+					}
+					let nType = oFirstSelected.getObjectType();
+					switch(nType)
+					{
+						case AscDFH.historyitem_type_OleObject:
+						{
+							return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.OleObject, oFirstSelected.m_sApplicationId);
+						}
+						case AscDFH.historyitem_type_ImageShape:
+						{
+							return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Image);
+						}
+						default:
+						{
+							return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Shape);
+						}
+					}
+					return new AscCommon.CPluginCtxMenuInfo();
 				},
 				getHorGuidesPos: function () {
 					return [];

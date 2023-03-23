@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -193,6 +193,22 @@
 			|| sFontName === 'Inconsolata'
 			|| sFontName === 'Roboto Mono'
 			|| sFontName === 'Source Code Pro';
+	}
+
+	function private_CheckDrawingOnAdd(oApiDrawing) {
+		if(window.g_asc_plugins)
+		{
+			let oDrawing = oApiDrawing.Drawing;
+			if(oDrawing)
+			{
+				if(oDrawing.GraphicObj &&
+					oDrawing.GraphicObj.getObjectType() === AscDFH.historyitem_type_OleObject)
+				{
+					let oData = oDrawing.GraphicObj.getDataObject();
+					window.g_asc_plugins.onPluginEvent("onInsertOleObjects", [oData]);
+				}
+			}
+		}
 	}
 
 	/**
@@ -5553,6 +5569,10 @@
 				if (oElm.IsUseInDocument())
 					continue;
 
+				if (oElm.Parent != null) {
+					oElm.SetParent(private_GetLogicDocument());
+				}
+
 				oSelectedContent.Add(new AscCommonWord.CSelectedElement(oElm, true));
 			}
 		}
@@ -5747,6 +5767,17 @@
 			return;
 
 		var sReplace = oProperties["replaceString"];
+		
+		sReplace = sReplace.replaceAll('\t', "^t");
+		sReplace = sReplace.replaceAll('\v', "^l");
+		sReplace = sReplace.replaceAll('\f', "^m");
+		// TODO: ^p пока не поддерживается для замены
+		//sReplace = sReplace.replaceAll('\r', "^p");
+		sReplace = sReplace.replaceAll('\x0e', "^n");
+		sReplace = sReplace.replaceAll('\x1e', "^~");
+		// TODO: Сделать поддержку softHyphen
+		//sReplace = sReplace.replaceAll('\x1f', "");
+		
 		this.Document.ReplaceSearchElement(sReplace, true, null, false);
 	};
 	/**
@@ -6924,7 +6955,7 @@
         oLogicDocument.Statistics.SymbolsWOSpaces = 0;
         oLogicDocument.Statistics.SymbolsWhSpaces = 0;
 
-		oLogicDocument.Statistics.Update_Pages(this.Pages.length);
+		oLogicDocument.Statistics.Update_Pages(oLogicDocument.Pages.length);
 		for (let CurPage = 0, PagesCount = oLogicDocument.Pages.length; CurPage < PagesCount; ++CurPage)
 		{
 			oLogicDocument.DrawingObjects.documentStatistics(CurPage, oLogicDocument.Statistics);
@@ -7302,7 +7333,7 @@
 		oRun.Add_ToContent(0, oDrawing.Drawing);
 		private_PushElementToParagraph(this.Paragraph, oRun);
 		oDrawing.Drawing.Set_Parent(oRun);
-
+		private_CheckDrawingOnAdd(oDrawing);
 		return new ApiRun(oRun);
 	};
 
@@ -8732,12 +8763,56 @@
 		}
 		else oCapPr.HeadingLvl = 0;
 
-		this.Paragraph.Document_SetThisElementCurrent();
+		this.Paragraph.SetThisElementCurrent();
 
 		oDoc.AddCaption(oCapPr);
 		return true;
 	};
 
+	/**
+     * Gets the section of paragraph.
+     * @memberof ApiParagraph
+     * @typeofeditors ["CDE"]
+     * @returns {ApiSection}
+     */
+	ApiParagraph.prototype.GetSection = function()
+	{
+		let oSectPr = this.private_GetImpl().Get_SectPr();
+		if (!oSectPr)
+			return null;
+
+		return new ApiSection(oSectPr);
+	};
+	/**
+     * Sets the specified section to paragraph.
+     * @memberof ApiParagraph
+     * @typeofeditors ["CDE"]
+     * @param {ApiSection} oSection - the section which will setted to the paragraph.
+     * @returns {boolean}
+     */
+	ApiParagraph.prototype.SetSection = function(oSection)
+	{
+		if (typeof(oSection) != "object" || !(oSection instanceof ApiSection))
+			return false;
+
+		if (!this.Paragraph.CanAddSectionPr())
+			return new Error('Paragraph must be in a document.');
+
+		let oDoc = private_GetLogicDocument();
+		if (!oDoc)
+			return false;
+
+		let oSectPr = oSection.Section;
+		let nContentPos = this.Paragraph.GetIndex();
+		let oCurSectPr = oDoc.SectionsInfo.Get_SectPr(nContentPos).SectPr;
+
+		oCurSectPr.Set_Type(oSectPr.Type);
+		oCurSectPr.Set_PageNum_Start(-1);
+		oCurSectPr.Clear_AllHdrFtr();
+
+		this.private_GetImpl().Set_SectionPr(oSectPr);
+		return true;
+	};
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiRun
@@ -8863,7 +8938,7 @@
 
 		this.Run.Add_ToContent(this.Run.Content.length, oDrawing.Drawing);
 		oDrawing.Drawing.Set_Parent(this.Run);
-
+		private_CheckDrawingOnAdd(oDrawing);
 		return true;
 	};
 	/**
@@ -10717,6 +10792,100 @@
 			return null;
 
 		return new ApiComment(oComment)
+	};
+
+	/**
+     * Adds a caption table after (or before) the current table.
+	 * <note>Please note that the current table must be in the document (not in the footer/header).
+	 * And if the current table is placed in a shape, then a caption is added after (or before) the parent shape.</note>
+     * @memberof ApiTable
+     * @typeofeditors ["CDE"]
+     * @param {string} sAdditional - The additional text.
+	 * @param {CaptionLabel | String} [sLabel="Table"] - The caption label.
+	 * @param {boolean} [bExludeLabel=false] - Specifies whether to exclude the label from the caption.
+	 * @param {CaptionNumberingFormat} [sNumberingFormat="Arabic"] - The possible caption numbering format.
+	 * @param {boolean} [bBefore=false] - Specifies whether to insert the caption before the current table (true) or after (false) (after/before the shape if it is placed in the shape).
+	 * @param {Number} [nHeadingLvl=undefined] - The heading level (used if you want to specify the chapter number).
+	 * <note>If you want to specify "Heading 1", then nHeadingLvl === 0 and etc.</note>
+	 * @param {CaptionSep} [sCaptionSep="hyphen"] - The caption separator (used if you want to specify the chapter number).
+     * @returns {boolean}
+     */
+	ApiTable.prototype.AddCaption = function(sAdditional, sLabel, bExludeLabel, sNumberingFormat, bBefore, nHeadingLvl, sCaptionSep)
+	{
+		var oTableParent = this.Table.GetParent();
+		if (this.Table.IsUseInDocument() === false || !oTableParent || oTableParent.Is_TopDocument(true) !== private_GetLogicDocument())
+			return false;
+		if (typeof(sAdditional) !== "string" || sAdditional.trim() === "")
+			sAdditional = "";
+		if (typeof(bExludeLabel) !== "boolean")
+			bExludeLabel = false;
+		if (typeof(bBefore) !== "boolean")
+			bBefore = false;
+		if (typeof(sLabel) !== "string" || sLabel.trim() === "")
+			sLabel = "Table";
+		
+		let oCapPr = new Asc.CAscCaptionProperties();
+		let oDoc = private_GetLogicDocument();
+
+		let nNumFormat;
+		switch (sNumberingFormat)
+		{
+			case "ALPHABETIC":
+				nNumFormat = Asc.c_oAscNumberingFormat.UpperLetter;
+				break;
+			case "alphabetic":
+				nNumFormat = Asc.c_oAscNumberingFormat.LowerLetter;
+				break;
+			case "Roman":
+				nNumFormat = Asc.c_oAscNumberingFormat.UpperRoman;
+				break;
+			case "roman":
+				nNumFormat = Asc.c_oAscNumberingFormat.LowerRoman;
+				break;
+			default:
+				nNumFormat = Asc.c_oAscNumberingFormat.Decimal;
+				break;
+		}
+		switch (sCaptionSep)
+		{
+			case "hyphen":
+				sCaptionSep = "-";
+				break;
+			case "period":
+				sCaptionSep = ".";
+				break;
+			case "colon":
+				sCaptionSep = ":";
+				break;
+			case "longDash":
+				sCaptionSep = "—";
+				break;
+			case "dash":
+				sCaptionSep = "-";
+				break;
+			default:
+				sCaptionSep = "-";
+				break;
+		}
+
+		oCapPr.Label = sLabel;
+		oCapPr.Before = bBefore;
+		oCapPr.ExcludeLabel = bExludeLabel;
+		oCapPr.NumFormat = nNumFormat;
+		oCapPr.Separator = sCaptionSep;
+		oCapPr.Additional = sAdditional;
+
+		if (nHeadingLvl >= 0 && nHeadingLvl <= 8)
+		{
+			oCapPr.HeadingLvl = nHeadingLvl;
+			oCapPr.IncludeChapterNumber = true;
+		}
+		else oCapPr.HeadingLvl = 0;
+
+		this.Table.Document_SetThisElementCurrent();
+
+		oDoc.AddCaption(oCapPr);
+		return true;
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -16589,6 +16758,100 @@
 		return true;
 	};
 
+	/**
+     * Adds a caption content control after (or before) the current content control.
+	 * <note>Please note that the current content control must be in the document (not in the footer/header).
+	 * And if the current content control is placed in a shape, then a caption is added after (or before) the parent shape.</note>
+     * @memberof ApiBlockLvlSdt
+     * @typeofeditors ["CDE"]
+     * @param {string} sAdditional - The additional text.
+	 * @param {CaptionLabel | String} [sLabel="Table"] - The caption label.
+	 * @param {boolean} [bExludeLabel=false] - Specifies whether to exclude the label from the caption.
+	 * @param {CaptionNumberingFormat} [sNumberingFormat="Arabic"] - The possible caption numbering format.
+	 * @param {boolean} [bBefore=false] - Specifies whether to insert the caption before the current content control (true) or after (false) (after/before the shape if it is placed in the shape).
+	 * @param {Number} [nHeadingLvl=undefined] - The heading level (used if you want to specify the chapter number).
+	 * <note>If you want to specify "Heading 1", then nHeadingLvl === 0 and etc.</note>
+	 * @param {CaptionSep} [sCaptionSep="hyphen"] - The caption separator (used if you want to specify the chapter number).
+     * @returns {boolean}
+     */
+	ApiBlockLvlSdt.prototype.AddCaption = function(sAdditional, sLabel, bExludeLabel, sNumberingFormat, bBefore, nHeadingLvl, sCaptionSep)
+	{
+		var oSdtParent = this.Sdt.GetParent();
+		if (this.Sdt.IsUseInDocument() === false || !oSdtParent || oSdtParent.Is_TopDocument(true) !== private_GetLogicDocument())
+			return false;
+		if (typeof(sAdditional) !== "string" || sAdditional.trim() === "")
+			sAdditional = "";
+		if (typeof(bExludeLabel) !== "boolean")
+			bExludeLabel = false;
+		if (typeof(bBefore) !== "boolean")
+			bBefore = false;
+		if (typeof(sLabel) !== "string" || sLabel.trim() === "")
+			sLabel = "Table";
+		
+		let oCapPr = new Asc.CAscCaptionProperties();
+		let oDoc = private_GetLogicDocument();
+
+		let nNumFormat;
+		switch (sNumberingFormat)
+		{
+			case "ALPHABETIC":
+				nNumFormat = Asc.c_oAscNumberingFormat.UpperLetter;
+				break;
+			case "alphabetic":
+				nNumFormat = Asc.c_oAscNumberingFormat.LowerLetter;
+				break;
+			case "Roman":
+				nNumFormat = Asc.c_oAscNumberingFormat.UpperRoman;
+				break;
+			case "roman":
+				nNumFormat = Asc.c_oAscNumberingFormat.LowerRoman;
+				break;
+			default:
+				nNumFormat = Asc.c_oAscNumberingFormat.Decimal;
+				break;
+		}
+		switch (sCaptionSep)
+		{
+			case "hyphen":
+				sCaptionSep = "-";
+				break;
+			case "period":
+				sCaptionSep = ".";
+				break;
+			case "colon":
+				sCaptionSep = ":";
+				break;
+			case "longDash":
+				sCaptionSep = "—";
+				break;
+			case "dash":
+				sCaptionSep = "-";
+				break;
+			default:
+				sCaptionSep = "-";
+				break;
+		}
+
+		oCapPr.Label = sLabel;
+		oCapPr.Before = bBefore;
+		oCapPr.ExcludeLabel = bExludeLabel;
+		oCapPr.NumFormat = nNumFormat;
+		oCapPr.Separator = sCaptionSep;
+		oCapPr.Additional = sAdditional;
+
+		if (nHeadingLvl >= 0 && nHeadingLvl <= 8)
+		{
+			oCapPr.HeadingLvl = nHeadingLvl;
+			oCapPr.IncludeChapterNumber = true;
+		}
+		else oCapPr.HeadingLvl = 0;
+
+		this.Sdt.SetThisElementCurrent();
+
+		oDoc.AddCaption(oCapPr);
+		return true;
+	};
+
 	//------------------------------------------------------------------------------------------------------------------
 	//
 	// ApiFormBase
@@ -18652,6 +18915,8 @@
 	ApiParagraph.prototype["GetPosInParent"]         = ApiParagraph.prototype.GetPosInParent;
 	ApiParagraph.prototype["ReplaceByElement"]       = ApiParagraph.prototype.ReplaceByElement;
 	ApiParagraph.prototype["AddCaption"]             = ApiParagraph.prototype.AddCaption;
+	ApiParagraph.prototype["SetSection"]             = ApiParagraph.prototype.SetSection;
+	ApiParagraph.prototype["GetSection"]             = ApiParagraph.prototype.GetSection;
 
 	ApiParagraph.prototype["ToJSON"]                 = ApiParagraph.prototype.ToJSON;
 
@@ -18769,6 +19034,7 @@
 	ApiTable.prototype["GetPosInParent"]    	     = ApiTable.prototype.GetPosInParent;
 	ApiTable.prototype["ReplaceByElement"]    		 = ApiTable.prototype.ReplaceByElement;
 	ApiTable.prototype["AddComment"]  		  		 = ApiTable.prototype.AddComment;
+	ApiTable.prototype["AddCaption"]  		  		 = ApiTable.prototype.AddCaption;
 
 	ApiTableRow.prototype["GetClassType"]            = ApiTableRow.prototype.GetClassType;
 	ApiTableRow.prototype["GetCellsCount"]           = ApiTableRow.prototype.GetCellsCount;
@@ -19135,6 +19401,8 @@
 	ApiBlockLvlSdt.prototype["GetPosInParent"]          = ApiBlockLvlSdt.prototype.GetPosInParent;
 	ApiBlockLvlSdt.prototype["ReplaceByElement"]        = ApiBlockLvlSdt.prototype.ReplaceByElement;
 	ApiBlockLvlSdt.prototype["AddComment"]              = ApiBlockLvlSdt.prototype.AddComment;
+	ApiBlockLvlSdt.prototype["SetBackgroundColor"]      = ApiBlockLvlSdt.prototype.SetBackgroundColor;
+	ApiBlockLvlSdt.prototype["AddCaption"]              = ApiBlockLvlSdt.prototype.AddCaption;
 
 	ApiFormBase.prototype["GetClassType"]        = ApiFormBase.prototype.GetClassType;
 	ApiFormBase.prototype["GetFormType"]         = ApiFormBase.prototype.GetFormType;

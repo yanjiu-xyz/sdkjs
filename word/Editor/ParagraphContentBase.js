@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -814,9 +814,10 @@ CParagraphContentBase.prototype.IsStartFromNewLine = function()
  * @param {AscWord.CParagraphContentPos} oEndPos
  * @param {number} nDepth
  * @param {?AscWord.CParagraphContentPos} oCurrentPos
+ * @param {boolean} [isForward=false]
  * @returns {boolean}
  */
-CParagraphContentBase.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos)
+CParagraphContentBase.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos, isForward)
 {
 	return false;
 };
@@ -4587,21 +4588,41 @@ CParagraphContentWithParagraphLikeContent.prototype.CanAddComment = function()
 
 	return true;
 };
-CParagraphContentWithParagraphLikeContent.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos)
+CParagraphContentWithParagraphLikeContent.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos, isForward)
 {
+	if (undefined === isForward)
+		isForward = true;
+	
 	let nStartPos = oStartPos && oStartPos.GetDepth() >= nDepth ? oStartPos.Get(nDepth) : 0;
 	let nEndPos   = oEndPos && oEndPos.GetDepth() >= nDepth ? oEndPos.Get(nDepth) : this.Content.length - 1;
-
-	for (var nPos = nStartPos; nPos <= nEndPos; ++nPos)
+	
+	if (isForward)
 	{
-		let _s = oStartPos && nPos === nStartPos ? oStartPos : null;
-		let _e = oEndPos && nPos === nEndPos ? oEndPos : null;
-
-		if (oCurrentPos)
-			oCurrentPos.Update(nPos, nDepth);
-
-		if (this.Content[nPos].CheckRunContent(fCheck, _s, _e, nDepth + 1, oCurrentPos))
-			return true;
+		for (var nPos = nStartPos; nPos <= nEndPos; ++nPos)
+		{
+			let _s = oStartPos && nPos === nStartPos ? oStartPos : null;
+			let _e = oEndPos && nPos === nEndPos ? oEndPos : null;
+			
+			if (oCurrentPos)
+				oCurrentPos.Update(nPos, nDepth);
+			
+			if (this.Content[nPos].CheckRunContent(fCheck, _s, _e, nDepth + 1, oCurrentPos, isForward))
+				return true;
+		}
+	}
+	else
+	{
+		for (var nPos = nEndPos; nPos >= nStartPos; --nPos)
+		{
+			let _s = oStartPos && nPos === nStartPos ? oStartPos : null;
+			let _e = oEndPos && nPos === nEndPos ? oEndPos : null;
+			
+			if (oCurrentPos)
+				oCurrentPos.Update(nPos, nDepth);
+			
+			if (this.Content[nPos].CheckRunContent(fCheck, _s, _e, nDepth + 1, oCurrentPos, isForward))
+				return true;
+		}
 	}
 };
 CParagraphContentWithParagraphLikeContent.prototype.ProcessComplexFields = function(oComplexFields)
