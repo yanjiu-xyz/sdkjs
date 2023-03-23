@@ -2729,9 +2729,15 @@
 			return null;
 		}
 		var oCanvas = document.createElement('canvas');
+		if(!oCanvas) {
+			return null;
+		}
 		oCanvas.width = nWidth;
 		oCanvas.height = nHeight;
 		var oCtx = oCanvas.getContext('2d');
+		if(!oCtx) {
+			return null;
+		}
 		var oGraphics = new AscCommon.CGraphics();
 		oGraphics.init(oCtx, nWidth, nHeight, nWidth / scale, nHeight / scale);
 		oGraphics.m_oFontManager = AscCommon.g_fontManager;

@@ -11099,6 +11099,9 @@
             return undefined;
         }
         var oBaseTexture = oDrawing.getAnimTexture(fScale);
+		if(!oBaseTexture) {
+			return undefined;
+		}
         return new CAnimTexture(this, oBaseTexture.canvas, oBaseTexture.scale, oBaseTexture.x, oBaseTexture.y);
     };
     CTexturesCache.prototype.removeTexture = function (sId) {
@@ -11200,7 +11203,9 @@
         if (!this.isDrawingHidden(sDrawingId) || (oAttributes && oAttributes["style.visibility"] === "visible")) {
             if (!oSandwich) {
                 var oTexture = this.texturesCache.checkTexture(sDrawingId, fScale);
-                oTexture.draw(oGraphics);
+				if(oTexture) {
+					oTexture.draw(oGraphics);
+				}
             } else {
                 oSandwich.drawObject(oGraphics, oDrawing, this.texturesCache, oAttributes);
             }
@@ -11917,6 +11922,9 @@
         var fScale = oGraphics.m_oCoordTransform.sx;
         var sId = oDrawing.Get_Id();
         var oTexture = oTextureCache.checkTexture(sId, fScale);
+		if(!oTexture) {
+			return;
+		}
         if (oFillColor || sFillType || bFillOn !== undefined || oStrokeColor || bStrokeOn !== undefined) {
             var oOldBrush = oDrawing.brush;
             var oOldPen = oDrawing.pen;
@@ -13808,8 +13816,13 @@
         }
         this.bDrawTexture = true;
         var oBaseTexture = this.getAnimTexture(dGraphicsScale);
-        this.cachedCanvas = new CAnimTexture(this, oBaseTexture.canvas, oBaseTexture.scale, oBaseTexture.x, oBaseTexture.y);
-        this.bDrawTexture = false;
+		if(oBaseTexture) {
+			this.cachedCanvas = new CAnimTexture(this, oBaseTexture.canvas, oBaseTexture.scale, oBaseTexture.x, oBaseTexture.y);
+		}
+		else {
+			this.cachedCanvas = null;
+		}
+		this.bDrawTexture = false;
         return this.cachedCanvas;
     };
     CSeqList.prototype.clearCachedTexture = function () {
@@ -14348,8 +14361,10 @@
             this.cachedParaPr = oContent.Content[0].CompiledPr;
         }
         var oBaseTexture = oLabel.getAnimTexture(scale);
-        this.labels[nTime] = new CAnimTexture(this, oBaseTexture.canvas, oBaseTexture.scale, oBaseTexture.x, oBaseTexture.y);
-        return this.labels[nTime];
+		if(oBaseTexture) {
+			this.labels[nTime] = new CAnimTexture(this, oBaseTexture.canvas, oBaseTexture.scale, oBaseTexture.x, oBaseTexture.y);
+		}
+		return this.labels[nTime];
     };
     CTimeline.prototype.getTimeString = function (nTime) {
         if (nTime < 60) {
