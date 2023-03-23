@@ -104,7 +104,7 @@
 	 */
 	
 	/**
-	 * @typedef {("entirely" | "beforeCursor" | "afterCursor")} ReplaceTextType
+	 * @typedef {("entirely" | "beforeCursor" | "afterCursor")} TextPartType
 	 * A value that defines if it is possible to delete and/or edit the content control or not:
 	 * * <b>entirely</b> - replace all text with the specified one
 	 * * <b>beforeCursor</b> - replace only the part of the word that is before cursor
@@ -1172,17 +1172,33 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE"]
 	 * @alias GetCurrentWord
+	 * @param {TextPartType} [type="entirely"]
 	 * @since 7.4.0
 	 * @example
 	 * window.Asc.plugin.executeMethod("GetCurrentWord");
 	 */
-	window["asc_docs_api"].prototype["pluginMethod_GetCurrentWord"] = function()
+	window["asc_docs_api"].prototype["pluginMethod_GetCurrentWord"] = function(type)
 	{
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
 			return "";
 		
-		return logicDocument.GetCurrentWord();
+		let direction = 0;
+		switch (AscBuilder.GetStringParameter(type, "entirely"))
+		{
+			case "beforeCursor":
+				direction = -1;
+				break;
+			case "afterCursor":
+				direction = 1;
+				break;
+			case "entirely":
+			default:
+				direction = 0;
+				break;
+		}
+		
+		return logicDocument.GetCurrentWord(direction);
 	};
 	/**
 	 * Get the current word
@@ -1190,14 +1206,14 @@
 	 * @typeofeditors ["CDE"]
 	 * @alias ReplaceCurrentWord
 	 * @param {string} replaceString
-	 * @param {ReplaceTextType} [type="entirely"]
-	 * @since 7.3.4
+	 * @param {TextPartType} [type="entirely"]
+	 * @since 7.4.0
 	 * @example
 	 * window.Asc.plugin.executeMethod("ReplaceCurrentWord");
 	 */
 	window["asc_docs_api"].prototype["pluginMethod_ReplaceCurrentWord"] = function(replaceString, type)
 	{
-		let _replaceString = AscBuilder.GetStringParameter(replaceString, null);
+		let _replaceString = "" === replaceString ? "" : AscBuilder.GetStringParameter(replaceString, null);
 
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument || null === _replaceString)
