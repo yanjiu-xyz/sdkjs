@@ -545,11 +545,15 @@ CBlockLevelSdt.prototype.Remove = function(nCount, isRemoveWholeElement, bRemove
 {
 	if (this.IsPlaceHolder())
 	{
-		if (!bOnAddText)
-			return false;
-
-		this.private_ReplacePlaceHolderWithContent();
-		return true;
+		let logicDocument = this.GetLogicDocument();
+		
+		if (!this.CanBeDeleted() && !bOnAddText)
+			return true;
+		
+		if (bOnAddText || !(logicDocument && logicDocument.IsDocumentEditor() && logicDocument.IsFillingFormMode()))
+			this.private_ReplacePlaceHolderWithContent();
+		
+		return !!bOnAddText;
 	}
 
 	var bResult = this.Content.Remove(nCount, isRemoveWholeElement, bRemoveOnlySelection, bOnAddText, isWord);
