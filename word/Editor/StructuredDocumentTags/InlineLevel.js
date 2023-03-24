@@ -1349,7 +1349,7 @@ CInlineLevelSdt.prototype.IsPlaceHolder = function()
 {
 	// В режиме редактирования мы не даем редактировать внутреннюю часть формы, поэтому пусть она ведет себя, как заполнитель
 	let logicDocument = this.GetLogicDocument();
-	if (this.IsForm() && logicDocument && logicDocument.IsDocumentEditor() && !logicDocument.IsFillingFormMode())
+	if (this.IsForm() && !this.IsComplexForm() && logicDocument && logicDocument.IsDocumentEditor() && !logicDocument.IsFillingFormMode())
 		return true;
 	
 	return this.Pr.ShowingPlcHdr;
