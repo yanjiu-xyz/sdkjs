@@ -26951,6 +26951,13 @@ CDocument.prototype.ConvertAllMathView = function(isToLinear)
 	this.UpdateTracks();
 	this.FinalizeAction();
 };
+CDocument.prototype.IsCheckFormPlaceholder = function()
+{
+	if (!this.IsFillingFormMode())
+		return false;
+	
+	return this.CheckFormPlaceHolder;
+};
 
 function CDocumentSelectionState()
 {
