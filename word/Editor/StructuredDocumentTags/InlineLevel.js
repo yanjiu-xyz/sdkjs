@@ -58,8 +58,9 @@ function CInlineLevelSdt()
 	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
 	AscCommon.g_oTableId.Add(this, this.Id);
 
-	this.SkipSpecialLock = false;
-	this.Current         = false;
+	this.SkipSpecialLock  = false;
+	this.SkipFillFormLock = false;
+	this.Current          = false;
 }
 
 CInlineLevelSdt.prototype = Object.create(CParagraphContentWithParagraphLikeContent.prototype);
@@ -1734,7 +1735,7 @@ CInlineLevelSdt.prototype.CanBeDeleted = function()
 CInlineLevelSdt.prototype.CanBeEdited = function()
 {
 	let logicDocument = this.GetLogicDocument();
-	if (this.IsForm() && !this.IsComplexForm() && logicDocument && logicDocument.IsDocumentEditor() && !logicDocument.IsFillingFormMode())
+	if (!this.SkipFillFormLock && this.IsForm() && !this.IsComplexForm() && logicDocument && logicDocument.IsDocumentEditor() && !logicDocument.IsFillingFormMode())
 		return false;
 	
 	if (!this.SkipSpecialLock && (this.IsCheckBox() || this.IsPicture() || this.IsDropDownList()))
@@ -1932,6 +1933,14 @@ CInlineLevelSdt.prototype.SkipSpecialContentControlLock = function(isSkip)
 CInlineLevelSdt.prototype.IsSkipSpecialContentControlLock = function()
 {
 	return this.SkipSpecialLock;
+};
+/**
+ * Выключаем проверку невозможности редактирования формы в обычном режиме редактирования
+ * @param isSkip
+ */
+CInlineLevelSdt.prototype.SkipFillingFormModeCheck = function(isSkip)
+{
+	this.SkipFillFormLock = isSkip;
 };
 CInlineLevelSdt.prototype.private_UpdateCheckBoxContent = function()
 {
