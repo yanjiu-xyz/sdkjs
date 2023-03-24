@@ -1938,7 +1938,7 @@
 			responseType: "arraybuffer",
 			headers: {
 				'Authorization': 'Bearer ' + token,
-				'x-url': url
+				'x-url': encodeURI(url)
 			},
 			success: function(resp) {
 				fSuccess(AscCommon.initStreamFromResponse(resp));
