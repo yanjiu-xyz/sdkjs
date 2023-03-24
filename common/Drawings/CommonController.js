@@ -10668,7 +10668,7 @@
 		CInkEraseState.prototype.onMouseMove = function (e, x, y, pageIndex) {
 			if(this.controller.handleEventMode === HANDLE_EVENT_MODE_HANDLE) {
 				if(e.IsLocked) {
-					const aDrawings = this.controller.getDrawingObjects();
+					const aDrawings = this.controller.getDrawingObjects(pageIndex);
 					for(let nIdx = aDrawings.length - 1; nIdx > -1; --nIdx) {
 						let oDrawing = aDrawings[nIdx];
 						if(oDrawing.isShape() && !oDrawing.getPresetGeom())  {
@@ -10686,7 +10686,7 @@
 			}
 			else {
 				return {
-					objectId: "1",
+					objectId: null,
 					bMarker: true,
 					cursorType: "default"
 				};
@@ -10710,7 +10710,7 @@
 			const oResult = this.drawingState.onMouseDown(e, x, y, pageIndex);
 			this.checkControllerState();
 			return {
-				objectId: "1",
+				objectId: null,
 				bMarker: true,
 				cursorType: "default"
 			};

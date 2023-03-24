@@ -10053,7 +10053,7 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 	var OldCurPage = this.CurPage;
 	this.CurPage   = PageIndex;
 
-	if ((true === this.Api.isStartAddShape || this.Api.isInkDrawerOn()) && (docpostype_HdrFtr !== this.CurPos.Type || null !== this.HdrFtr.CurHdrFtr))
+	if ((this.Api.isStartAddShape || this.Api.isInkDrawerOn()) && (docpostype_HdrFtr !== this.CurPos.Type || null !== this.HdrFtr.CurHdrFtr))
 	{
 		if (docpostype_HdrFtr !== this.CurPos.Type)
 		{
@@ -10075,7 +10075,7 @@ CDocument.prototype.OnMouseDown = function(e, X, Y, PageIndex)
 			DocContent.Selection.Start = true;
 		}
 
-		if (true != this.DrawingObjects.isPolylineAddition())
+		if (this.Api.isStartAddShape && !this.DrawingObjects.isPolylineAddition())
 			this.DrawingObjects.startAddShape(this.Api.addShapePreset);
 
 		this.DrawingObjects.OnMouseDown(e, X, Y, this.CurPage);

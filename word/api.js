@@ -8657,6 +8657,11 @@ background-repeat: no-repeat;\
 		}
 	};
 
+	asc_docs_api.prototype.onInkDrawerChangeState = function() {
+		if (!this.WordControl.m_oLogicDocument)
+			return;
+		this.WordControl.m_oLogicDocument.DrawingObjects.onInkDrawerChangeState();
+	};
 
 	asc_docs_api.prototype.sync_StartAddShapeCallback = function(value)
 	{
@@ -13674,7 +13679,6 @@ background-repeat: no-repeat;\
 
 		return null;
 	};
-	asc_docs_api.prototype.onInkDrawerChangeState = function() {};
 
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};

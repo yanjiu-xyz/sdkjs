@@ -247,9 +247,9 @@ CGraphicObjects.prototype =
                 var oApi = Asc.editor || editor;
                 var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
 
-                var oShape     = null;
+                var oShape     = AscCommon.g_oTableId.Get_ById(ret.objectId);
                 var oInnerForm = null;
-                if ((oShape = AscCommon.g_oTableId.Get_ById(ret.objectId)) && oShape.isForm() && (oInnerForm = oShape.getInnerForm()))
+                if (oShape && oShape.isForm() && (oInnerForm = oShape.getInnerForm()))
 				{
 					if (isDrawHandles && oInnerForm.IsFormLocked())
 						isDrawHandles = false;
@@ -1535,21 +1535,35 @@ CGraphicObjects.prototype =
     },
 
 
+	getAllDrawingsOnPage: function(pageIndex, bHdrFtr)
+	{
+		if(!this.graphicPages[pageIndex])
+			this.graphicPages[pageIndex] = new CGraphicPage(pageIndex, this);
+		var arr, page, i, ret = [];
+		if(!bHdrFtr)
+		{
+
+			page = this.graphicPages[pageIndex];
+		}
+		else
+		{
+			page = this.graphicPages[pageIndex].hdrFtrPage;
+		}
+		arr = page.behindDocObjects.concat(page.beforeTextObjects);
+		return arr;
+	},
+
+	getDrawingObjects: function(pageIndex)
+	{
+		return this.getAllDrawingsOnPage(pageIndex, false);
+	},
+
     getAllFloatObjectsOnPage: function(pageIndex, docContent)
     {
         if(!this.graphicPages[pageIndex])
             this.graphicPages[pageIndex] = new CGraphicPage(pageIndex, this);
         var arr, page, i, ret = [];
-        if(!docContent.IsHdrFtr())
-        {
-
-            page = this.graphicPages[pageIndex];
-        }
-        else
-        {
-            page = this.graphicPages[pageIndex].hdrFtrPage;
-        }
-        arr = page.behindDocObjects.concat(page.beforeTextObjects);
+        arr = this.getAllDrawingsOnPage(pageIndex, docContent.IsHdrFtr());
         for(i = 0; i < arr.length; ++i)
         {
             if(arr[i].parent && arr[i].parent.DocumentContent === docContent)
@@ -4621,6 +4635,8 @@ CGraphicObjects.prototype.getVertGuidesPos = function() {
 CGraphicObjects.prototype.hitInGuide = function(x, y) {
     return null;
 };
+CGraphicObjects.prototype.onInkDrawerChangeState = DrawingObjectsController.prototype.onInkDrawerChangeState;
+
 function ComparisonByZIndexSimpleParent(obj1, obj2)
 {
     if(obj1.parent && obj2.parent)
