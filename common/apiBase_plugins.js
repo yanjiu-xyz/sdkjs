@@ -1636,8 +1636,8 @@
 	 * Shows modal window.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string} [frameId] - The frame ID.
-	 * @param {variation} [variation] - The plugin variation.
+	 * @param {string} frameId - The frame ID.
+	 * @param {variation} variation - The plugin variation.
 	 * @alias ShowWindow 
 	 * @since 7.3.4
 	 */
@@ -1651,13 +1651,28 @@
 	 * Close modal window.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
-	 * @param {string} [frameId] - The frame ID.
+	 * @param {string} frameId - The frame ID.
 	 * @alias CloseWindow
 	 * @since 7.3.4
 	 */
 	Api.prototype["pluginMethod_CloseWindow"] = function(frameId)
 	{
 		this.sendEvent("asc_onPluginWindowClose", frameId);
+	};
+
+	/**
+	 * Send message to window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} windowID - The frame ID.
+	 * @param {string} name - The event name.
+	 * @param {object} data - The even data.
+	 * @alias SendToWindow
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_SendToWindow"] = function(windowID, name, data)
+	{
+		window.g_asc_plugins.onPluginEventWindow(windowID, name, data);
 	};
 
 	/**
