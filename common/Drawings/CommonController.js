@@ -6585,6 +6585,10 @@
 							}
 						}
 					}
+					const oApi = this.getEditorApi();
+					if(oApi.isInkDrawerOn()) {
+						oApi.asc_StopInkDrawer();
+					}
 				},
 
 				resetTracking: function () {
@@ -10678,12 +10682,15 @@
 					this.changeControllerState(this);
 					this.inkDrawer.restoreState(this.startState);
 				}
+				return true;
 			}
-			return {
-				objectId: "1",
-				bMarker: true,
-				cursorType: "default"
-			};
+			else {
+				return {
+					objectId: "1",
+					bMarker: true,
+					cursorType: "default"
+				};
+			}
 		};
 		CInkEraseState.prototype.onMouseUp = function (e, x, y, pageIndex) {
 			return null;
