@@ -1159,45 +1159,13 @@
 					this.checkSelectedObjectsAndCallback(function () {
 						cropObject.checkSrcRect();
 						if (cropObject.createCropObject()) {
-							var oBlipFill = cropObject.getBlipFill();
-							if (oBlipFill) {
-								var oImgP = new Asc.asc_CImgProperty();
-								oImgP.ImageUrl = oBlipFill.RasterImageId;
-								var oSize = oImgP.asc_getOriginSize(this.getEditorApi());
-								var oShapeDrawer = new AscCommon.CShapeDrawer();
-								oShapeDrawer.bIsCheckBounds = true;
-								oShapeDrawer.Graphics = new AscFormat.CSlideBoundsChecker();
-								cropObject.check_bounds(oShapeDrawer);
-								var bounds_w = oShapeDrawer.max_x - oShapeDrawer.min_x;
-								var bounds_h = oShapeDrawer.max_y - oShapeDrawer.min_y;
-								var dScale = bounds_w / oSize.Width;
-								var dTestHeight = oSize.Height * dScale;
-								var srcRect = new AscFormat.CSrcRect();
-								if (dTestHeight <= bounds_h) {
-									srcRect.l = 0;
-									srcRect.r = 100;
-									srcRect.t = -100 * (bounds_h - dTestHeight) / 2.0 / dTestHeight;
-									srcRect.b = 100 - srcRect.t;
-								} else {
-									srcRect.t = 0;
-									srcRect.b = 100;
-									dScale = bounds_h / oSize.Height;
-									var dTestWidth = oSize.Width * dScale;
-									srcRect.l = -100 * (bounds_w - dTestWidth) / 2.0 / dTestWidth;
-									srcRect.r = 100 - srcRect.l;
-								}
-								cropObject.setSrcRect(srcRect);
-								var oParent = cropObject.parent;
-								if (oParent && oParent.Check_WrapPolygon) {
-									oParent.Check_WrapPolygon();
-								}
-								this.selection.cropSelection = cropObject;
-								this.sendCropState();
-								if (this.drawingObjects && this.drawingObjects.showDrawingObjects) {
-									this.drawingObjects.showDrawingObjects();
-								}
-								this.updateOverlay();
+							cropObject.cropFit();
+							this.selection.cropSelection = cropObject;
+							this.sendCropState();
+							if (this.drawingObjects && this.drawingObjects.showDrawingObjects) {
+								this.drawingObjects.showDrawingObjects();
 							}
+							this.updateOverlay();
 						}
 					}, [], false);
 				},
@@ -1215,36 +1183,7 @@
 					this.checkSelectedObjectsAndCallback(function () {
 						cropObject.checkSrcRect();
 						if (cropObject.createCropObject()) {
-							var oImgP = new Asc.asc_CImgProperty();
-							oImgP.ImageUrl = cropObject.getBlipFill().RasterImageId;
-							var oSize = oImgP.asc_getOriginSize(this.getEditorApi());
-							var oShapeDrawer = new AscCommon.CShapeDrawer();
-							oShapeDrawer.bIsCheckBounds = true;
-							oShapeDrawer.Graphics = new AscFormat.CSlideBoundsChecker();
-							cropObject.check_bounds(oShapeDrawer);
-							var bounds_w = oShapeDrawer.max_x - oShapeDrawer.min_x;
-							var bounds_h = oShapeDrawer.max_y - oShapeDrawer.min_y;
-							var dScale = bounds_w / oSize.Width;
-							var dTestHeight = oSize.Height * dScale;
-							var srcRect = new AscFormat.CSrcRect();
-							if (dTestHeight >= bounds_h) {
-								srcRect.l = 0;
-								srcRect.r = 100;
-								srcRect.t = -100 * (bounds_h - dTestHeight) / 2.0 / dTestHeight;
-								srcRect.b = 100 - srcRect.t;
-							} else {
-								srcRect.t = 0;
-								srcRect.b = 100;
-								dScale = bounds_h / oSize.Height;
-								var dTestWidth = oSize.Width * dScale;
-								srcRect.l = -100 * (bounds_w - dTestWidth) / 2.0 / dTestWidth;
-								srcRect.r = 100 - srcRect.l;
-							}
-							cropObject.setSrcRect(srcRect);
-							var oParent = cropObject.parent;
-							if (oParent && oParent.Check_WrapPolygon) {
-								oParent.Check_WrapPolygon();
-							}
+							cropObject.cropFill();
 							this.selection.cropSelection = cropObject;
 							this.sendCropState();
 							if (this.drawingObjects && this.drawingObjects.showDrawingObjects) {
@@ -8923,7 +8862,7 @@
 						"height": nHeight
 					};
 				},
-				putImageToSelection: function (sImageUrl, nWidth, nHeight) {
+				putImageToSelection: function (sImageUrl, nWidth, nHeight, replaceMode) {
 					let spTree = this.getDrawingArray();
 					let selectedObjects = this.getSelectedArray();
 					const nPageIndex = 0;
@@ -8939,7 +8878,7 @@
 								let oSp = spTree[nSp];
 								if (oSp === oFirstSelectedObject) {
 									if (oSp.isImage()) {
-										oSp.replacePictureData(sImageUrl, _w, _h);
+										oSp.replacePictureData(sImageUrl, _w, _h, false, replaceMode);
 										if (oSp.group) {
 											oController.selection.groupSelection.resetInternalSelection();
 											oSp.group.selectObject(oSp, 0);

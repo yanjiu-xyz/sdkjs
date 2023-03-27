@@ -5411,10 +5411,10 @@ CPresentation.prototype.getImageDataFromSelection = function () {
 	}
 	return null;
 };
-CPresentation.prototype.putImageToSelection = function (sImageSrc, nWidth, nHeight) {
+CPresentation.prototype.putImageToSelection = function (sImageSrc, nWidth, nHeight, replaceMode) {
 	let oSlide = this.GetCurrentSlide();
 	if (oSlide) {
-		oSlide.graphicObjects.putImageToSelection(sImageSrc, nWidth, nHeight);
+		oSlide.graphicObjects.putImageToSelection(sImageSrc, nWidth, nHeight, replaceMode);
 	}
 };
 
