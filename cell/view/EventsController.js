@@ -1783,12 +1783,14 @@
 				return true;
 			}
 
+			var coord = this._getCoordinates(event);
 			if(this.view.Api.isEyedropperStarted()) {
 				this.view.Api.finishEyedropper();
+				var t = this;
+				t.handlers.trigger("updateWorksheet", coord.x, coord.y, false, function(info){t.targetInfo = info;});
 				return true;
 			}
 			// Shapes
-			var coord = this._getCoordinates(event);
 			event.isLocked = this.isMousePressed = false;
 
 			if (this.isShapeAction) {
