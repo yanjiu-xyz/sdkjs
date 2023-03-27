@@ -10507,7 +10507,7 @@
 
 				this.drawingObjects.swapTrackObjects();
 				this.drawingObjects.changeCurrentState(new GeometryEditState(this.drawingObjects, this.majorObject, this.startX, this.startY));
-				this.checkFormatPainterOnMouseEvent();
+				this.drawingObjects.checkFormatPainterOnMouseEvent();
 				this.drawingObjects.OnMouseMove(e, x, y, pageIndex);
 			}
 		};
@@ -10598,7 +10598,7 @@
 				} else {
 					this.drawingObjects.addPreTrackObject(new AscFormat.EditShapeGeometryTrack(this.drawing, this.drawingObjects));
 					this.drawingObjects.changeCurrentState(new PreGeometryEditState(this.drawingObjects, this.drawing, x, y, oHit));
-					this.checkFormatPainterOnMouseEvent();
+					this.drawingObjects.checkFormatPainterOnMouseEvent();
 					return true;
 				}
 			}
