@@ -5150,9 +5150,9 @@ var editor;
       var ws = this.wb.getWorksheet();
       return ws.objectRender.controller.getImageDataFromSelection();
   };
-  spreadsheet_api.prototype.putImageToSelection = function(sImageSrc, nWidth, nHeight) {
+  spreadsheet_api.prototype.putImageToSelection = function(sImageSrc, nWidth, nHeight, replaceMode) {
       var ws = this.wb.getWorksheet();
-      return ws.objectRender.controller.putImageToSelection(sImageSrc, nWidth, nHeight);
+      return ws.objectRender.controller.putImageToSelection(sImageSrc, nWidth, nHeight, replaceMode);
   };
 
 
@@ -8505,16 +8505,16 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_GetSheetViewType = function(index) {
-		var sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
-		var ws = this.wbModel.getWorksheet(sheetIndex);
+		let sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
+		let ws = this.wbModel.getWorksheet(sheetIndex);
+		let res = null;
 		if (ws && ws.sheetViews) {
 			var sheetView = ws.sheetViews[0];
-			if (!sheetView) {
-				return null;
+			if (sheetView) {
+				res = sheetView.view;
 			}
-			return sheetView.view;
 		}
-		return null;
+		return res == null ? AscCommonExcel.ESheetViewType.normal : res;
 	};
 
   /*

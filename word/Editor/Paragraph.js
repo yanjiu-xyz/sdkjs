@@ -17232,6 +17232,7 @@ Paragraph.prototype.GetPlaceHolderObject = function(oContentPos)
 
 	let oSdt  = oInfo.GetInlineLevelSdt();
 	let oMath = oInfo.GetMath();
+	
 	if (oSdt && oSdt.IsPlaceHolder())
 		return oSdt;
 	else if (oMath && oMath.IsMathContentPlaceholder())

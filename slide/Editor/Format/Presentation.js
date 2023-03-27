@@ -5418,10 +5418,10 @@ CPresentation.prototype.getImageDataFromSelection = function () {
 	}
 	return null;
 };
-CPresentation.prototype.putImageToSelection = function (sImageSrc, nWidth, nHeight) {
+CPresentation.prototype.putImageToSelection = function (sImageSrc, nWidth, nHeight, replaceMode) {
 	let oSlide = this.GetCurrentSlide();
 	if (oSlide) {
-		oSlide.graphicObjects.putImageToSelection(sImageSrc, nWidth, nHeight);
+		oSlide.graphicObjects.putImageToSelection(sImageSrc, nWidth, nHeight, replaceMode);
 	}
 };
 
@@ -7857,7 +7857,7 @@ CPresentation.prototype.Refresh_ContentChanges = function () {
 };
 
 
-CPresentation.prototype.GetFormatPainterData = function () {
+CPresentation.prototype.GetFormattingPasteData = function () {
 	let oController = this.GetCurrentController();
 	if (!oController)
 		return null;

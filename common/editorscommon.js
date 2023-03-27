@@ -1938,7 +1938,7 @@
 			responseType: "arraybuffer",
 			headers: {
 				'Authorization': 'Bearer ' + token,
-				'x-url': url
+				'x-url': encodeURI(url)
 			},
 			success: function(resp) {
 				fSuccess(AscCommon.initStreamFromResponse(resp));
@@ -13067,17 +13067,43 @@
 		this.data = null;
 	};
 
-	function CFormatPainterDataBase() {
+	function CFormattingPasteDataBase() {
 
 	}
-	CFormatPainterDataBase.prototype.isDrawingData = function()
+	CFormattingPasteDataBase.prototype.isDrawingData = function()
 	{
 		return false;
 	};
-	CFormatPainterDataBase.prototype.getDocData = function()
+	CFormattingPasteDataBase.prototype.getDocData = function()
 	{
 		return null;
 	};
+	function CTextFormattingPasteData(textPr, paraPr)
+	{
+		CFormattingPasteDataBase.call();
+		this.TextPr = textPr;
+		this.ParaPr = paraPr;
+	}
+	CTextFormattingPasteData.prototype = Object.create(CFormattingPasteDataBase.prototype);
+	CTextFormattingPasteData.prototype.getDocData = function()
+	{
+		return this;
+	};
+	function CDrawingFormattingPasteData(drawing)
+	{
+		CFormattingPasteDataBase.call();
+		this.Drawing = drawing;
+	}
+	CDrawingFormattingPasteData.prototype = Object.create(CFormattingPasteDataBase.prototype);
+	CDrawingFormattingPasteData.prototype.isDrawingData = function()
+	{
+		return true;
+	};
+	CDrawingFormattingPasteData.prototype.getDocData = function()
+	{
+		return this;
+	};
+	
 
 	function CEyedropper(oAPI)
 	{
@@ -13175,7 +13201,7 @@
 			});
 		}
 	}
-
+	
 	function parseText(text, options, bTrimSpaces) {
 		var delimiterChar;
 		if (options.asc_getDelimiterChar()) {
@@ -14257,8 +14283,10 @@
 		return word;
 	}
 	window["AscCommon"].CFormatPainter = CFormatPainter;
+	window["AscCommon"].CFormattingPasteDataBase = CFormattingPasteDataBase;
+	window["AscCommon"].CTextFormattingPasteData = CTextFormattingPasteData;
+	window["AscCommon"].CDrawingFormattingPasteData = CDrawingFormattingPasteData;
 	window["AscCommon"].CEyedropper = CEyedropper;
-	window["AscCommon"].CFormatPainterDataBase = CFormatPainterDataBase;
 	window["AscCommon"].CPluginCtxMenuInfo = CPluginCtxMenuInfo;
 
 })(window);

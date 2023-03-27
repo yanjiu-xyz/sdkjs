@@ -8481,7 +8481,7 @@ background-repeat: no-repeat;\
 		{
 			return null;
 		}
-		return oLogicDocument.GetFormatPainterData();
+		return oLogicDocument.GetFormattingPasteData();
 	};
 
 	asc_docs_api.prototype.SetPaintFormat = function(_value)
@@ -13306,6 +13306,9 @@ background-repeat: no-repeat;\
 			oLogicDocument.DrawingObjects.endTrackNewShape();
 			oLogicDocument.UpdateCursorType(oLogicDocument.CurPos.RealX, oLogicDocument.CurPos.RealY, oLogicDocument.CurPage, new AscCommon.CMouseEventHandler());
 		}
+		
+		if (!oLogicDocument.IsFillingFormMode() && oLogicDocument.FocusCC && oLogicDocument.FocusCC.IsForm())
+			oLogicDocument.FocusCC.SelectContentControl();
 
 		oLogicDocument.private_CheckCursorPosInFillingFormMode();
 		oLogicDocument.UpdateSelection();
@@ -13452,14 +13455,14 @@ background-repeat: no-repeat;\
 		return oDocument.GetImageDataFromSelection();
 	};
 
-	asc_docs_api.prototype.putImageToSelection = function (sImageSrc, nWidth, nHeight)
+	asc_docs_api.prototype.putImageToSelection = function (sImageSrc, nWidth, nHeight, replaceMode)
 	{
 		let oDocument = this.private_GetLogicDocument();
 		if(!oDocument)
 		{
 			return;
 		}
-		return oDocument.PutImageToSelection(sImageSrc, nWidth, nHeight);
+		return oDocument.PutImageToSelection(sImageSrc, nWidth, nHeight, replaceMode);
 	};
 	asc_docs_api.prototype.getPluginContextMenuInfo = function (sImageSrc, nWidth, nHeight)
 	{
