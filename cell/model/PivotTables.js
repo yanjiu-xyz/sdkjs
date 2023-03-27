@@ -6949,7 +6949,12 @@ CT_pivotTableDefinition.prototype.getCellArrayForDetails = function(row, col) {
 
 		resultCells.push(row);
 	});
-
+	if (resultCells.length === 0) {
+		resultCells.push([]);
+		for (let i = 0; i < records._cols.length; i += 1) {
+			resultCells[0].push(new AscCommonExcel.CCellValue());
+		}
+	}
 	return resultCells;
 };
 

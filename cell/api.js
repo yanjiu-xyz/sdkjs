@@ -6864,18 +6864,27 @@ var editor;
     }
     return res;
   }
-  
+  // TableStyleMedium2
   spreadsheet_api.prototype.asc_showDetails = function(opt_pivotTable) {
     var ws = this.wbModel.getActiveWs();
     var activeCell = ws.selectionRange.activeCell;
     var pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
     if (pivotTable) {
-      let cells = pivotTable.getCellArrayForDetails(activeCell.row, activeCell.col);
+      var cells = pivotTable.getCellArrayForDetails(activeCell.row, activeCell.col);
+      if (cells === null) {
+        return null;
+      }
+      var columnNames = pivotTable.asc_getCacheFields().map(function(field) {
+        return field.asc_getName();
+      });
       console.log(cells);
-      // this.asc_addWorksheet('testSheet');
-      // ws = this.wbModel.getActiveWs();
-      // var tablePart = ws.createTablePart();
-      // console.log(tablePart);
+      this.asc_addWorksheet('testSheet');
+      ws = this.wbModel.getActiveWs();
+      var tablePart = ws.createTablePart();
+      ws.addTablePart(tablePart, true);
+      //var keka = this.asc_addAutoFilter('TableStyleMedium2', this.asc_getAddFormatTableOptions("$A$1:$E$2"));
+      // var range = new AscCommonExcel.Range(ws, 0, 0, cells.length, cells[0].length);
+      //console.log(tablePart);
 		}
 		return null;
   };
