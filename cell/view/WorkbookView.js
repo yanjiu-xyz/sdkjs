@@ -1601,7 +1601,7 @@
 
 		if(this.Api.isEyedropperStarted()) {
 			arrMouseMoveObjects.push(new asc_CMM({
-				type: c_oAscMouseMoveType.Cells,
+				type: c_oAscMouseMoveType.Eyedropper,
 				x: AscCommon.AscBrowser.convertToRetinaValue(x),
 				y: AscCommon.AscBrowser.convertToRetinaValue(y),
 				color: ct.color

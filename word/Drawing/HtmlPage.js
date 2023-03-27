@@ -1784,6 +1784,7 @@ function CEditorPage(api)
 			MMData.X_abs = Coords.X;
 			MMData.Y_abs = Coords.Y;
 			MMData.EyedropperColor = oThis.m_oApi.getEyedropperColor();
+			MMData.Type = Asc.c_oAscMouseMoveDataTypes.Eyedropper;
 			oWordControl.m_oDrawingDocument.SetCursorType("eyedropper", MMData);
 			oThis.m_oApi.sync_MouseMoveEndCallback();
 		}
