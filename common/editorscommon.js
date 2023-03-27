@@ -13126,7 +13126,7 @@
 	};
 	CEyedropper.prototype.getColor = function()
 	{
-		return new AscCommon.CColor(this.r, this.g, this.b)
+		return new Asc.asc_CColor(this.r, this.g, this.b)
 	};
 	CEyedropper.prototype.clearColor = function()
 	{
