@@ -6368,9 +6368,10 @@ CDocument.prototype.Remove = function(nDirection, isRemoveWholeElement, bRemoveO
 	if (isCheckInlineLevelSdt)
 	{
 		// Эта проверка важна для работы с fixed-form, чтобы CC не удалялся при простом backspace/remove/cut
-		var oSelectInfo = this.GetSelectedElementsInfo();
-		if (oSelectInfo.GetInlineLevelSdt())
-			this.CheckInlineSdtOnDelete = oSelectInfo.GetInlineLevelSdt();
+		let selectedInfo = this.GetSelectedElementsInfo();
+		let inlineSdt    = selectedInfo.GetInlineLevelSdt();
+		if (inlineSdt && inlineSdt.IsForm() && inlineSdt.IsMainForm())
+			this.CheckInlineSdtOnDelete = inlineSdt;
 	}
 
 	this.Controller.Remove(nDirection, isRemoveWholeElement, bRemoveOnlySelection, bOnTextAdd, isWord);
