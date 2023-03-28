@@ -736,6 +736,11 @@ CSdtBase.prototype.GetAllSubForms = function(arrForms)
  */
 CSdtBase.prototype.IsCurrentComplexForm = function()
 {
+	// Текущая форма есть только в режиме заполнения. В режиме редактирования не даем заполнять форму
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsDocumentEditor() && !logicDocument.IsFillingFormMode())
+		return false;
+	
 	if (this.IsCurrent())
 		return true;
 

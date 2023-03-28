@@ -30,6 +30,7 @@
  *
  */
 
+
 $(function () {
 
 	var cDate = Asc.cDate;
@@ -603,16 +604,20 @@ $(function () {
 	var fSortAscending = AscCommon.fSortAscending;
 	var g_oIdCounter = AscCommon.g_oIdCounter;
 
-	var oParser, wb, ws, dif = 1e-9, sData = AscCommon.getEmpty(), tmp;
+	var oParser, wb, ws, dif = 1e-9, sData = AscCommon.getEmpty(), tmp, array;
 	if (AscCommon.c_oSerFormat.Signature === sData.substring(0, AscCommon.c_oSerFormat.Signature.length)) {
+
+		Asc.spreadsheet_api.prototype._init = function() {
+		};
+		
+		let api = new Asc.spreadsheet_api({
+			'id-view': 'editor_sdk'
+		});
+
 		let docInfo = new Asc.asc_CDocInfo();
 		docInfo.asc_putTitle("TeSt.xlsx");
-		let api = {
-			wb: {
-				getWorksheet: function () {
-				}
-			}, DocInfo: docInfo
-		};
+		api.DocInfo = docInfo;
+
 		window["Asc"]["editor"] = api;
 
 		wb = new AscCommonExcel.Workbook(new AscCommonExcel.asc_CHandlersList(), api);
@@ -7476,6 +7481,22 @@ $(function () {
 
 	QUnit.test("Test: \"WORKDAY.INTL\"", function (assert) {
 
+		ws.getRange2("D10").setValue("44980");
+		ws.getRange2("D11").setValue("44981");
+		ws.getRange2("D12").setValue("1");
+
+		oParser = new parserFormula("WORKDAY.INTL(DATE(2023,2,22),1,1,D10:D11)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 44984);
+
+		oParser = new parserFormula("WORKDAY.INTL(DATE(2023,2,22),D12,1,D10:D11)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 44984);
+
+		oParser = new parserFormula("WORKDAY.INTL(DATE(2023,2,22),2,1,D10:D11)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 44985);
+
 		oParser = new parserFormula("WORKDAY.INTL(DATE(2012,1,1),30,0)", "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "#NUM!");
@@ -12861,10 +12882,10 @@ $(function () {
 		assert.strictEqual(oParser.calculate().getValue(), "Quarterly Profit Report");
 		assert.strictEqual(oParser.value.hyperlink, 'http://example.microsoft.com/Annual Report.docx]QrtlyProfits');
 
-		oParser = new parserFormula('HYPERLINK("\\FINANCE\Statements\1stqtr.xlsx",D101)', "A1", ws);
+		oParser = new parserFormula('HYPERLINK("\\FINANCE\\Statements\\1stqtr.xlsx",D101)', "A1", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue() - 0, 0);
-		assert.strictEqual(oParser.value.hyperlink, '\\FINANCE\Statements\1stqtr.xlsx');
+		assert.strictEqual(oParser.value.hyperlink, '\\FINANCE\\Statements\\1stqtr.xlsx');
 
 		oParser = new parserFormula('HYPERLINK("http://test.com")', "A1", ws);
 		assert.ok(oParser.parse());
@@ -18707,6 +18728,7 @@ $(function () {
 
 	QUnit.test("Test: \"VDB\"", function (assert) {
 		function _getVDB(cost, salvage, life, life1, startperiod, factor) {
+			var end;
 			var fVdb = 0, nLoopEnd = end = Math.ceil(startperiod), fTerm, fLia = 0, fRestwert = cost - salvage, bNowLia = false, fGda;
 
 			for (var i = 1; i <= nLoopEnd; i++) {

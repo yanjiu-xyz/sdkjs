@@ -1784,23 +1784,6 @@ CSelectedElementsInfo.prototype.IsFixedFormShape = function()
 	return this.FixedFormShape;
 };
 
-function CDocumentFormatPainterData(oTextPr, oParaPr, oDrawing)
-{
-	AscCommon.CFormatPainterDataBase.call();
-	this.TextPr = oTextPr;
-	this.ParaPr = oParaPr;
-	this.Drawing = oDrawing;
-}
-AscFormat.InitClassWithoutType(CDocumentFormatPainterData, AscCommon.CFormatPainterDataBase);
-CDocumentFormatPainterData.prototype.isDrawingData = function()
-{
-	return !!this.Drawing;
-};
-CDocumentFormatPainterData.prototype.getDocData = function()
-{
-	return this;
-};
-
 /**
  * Основной класс для работы с документом в Word.
  * @param DrawingDocument
@@ -6028,9 +6011,9 @@ CDocument.prototype.GetImageDataFromSelection = function()
     return this.DrawingObjects.getImageDataFromSelection();
 
 };
-CDocument.prototype.PutImageToSelection = function(sImageSrc, nWidth, nHeight)
+CDocument.prototype.PutImageToSelection = function(sImageSrc, nWidth, nHeight, replaceMode)
 {
-    return this.DrawingObjects.putImageToSelection(sImageSrc, nWidth, nHeight);
+    return this.DrawingObjects.putImageToSelection(sImageSrc, nWidth, nHeight, replaceMode);
 
 };
 /**
@@ -9205,7 +9188,11 @@ CDocument.prototype.OnKeyDown = function(e)
 			{
 				this.EndHdrFtrEditing(true);
 			}
-
+			else if (this.Api.isEyedropperStarted())
+			{
+				this.Api.cancelEyedropper();
+				this.UpdateCursorType(this.CurPos.RealX, this.CurPos.RealY, this.CurPage, new AscCommon.CMouseEventHandler());
+			}
 			if (window['AscCommon'].g_specialPasteHelper.showSpecialPasteButton)
 			{
 				window['AscCommon'].g_specialPasteHelper.SpecialPasteButton_Hide();
@@ -11220,10 +11207,6 @@ CDocument.prototype.SetSectionStartPage = function(nStartPage)
 	this.Document_UpdateRulersState();
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateSelectionState();
-};
-CDocument.prototype.GetFormatPainterData = function()
-{
-	return this.Controller.GetFormatPainterData();
 };
 CDocument.prototype.Document_Format_Copy = function()
 {
@@ -18597,10 +18580,6 @@ CDocument.prototype.controller_AddNewParagraph = function(bRecalculate, bForceAd
 		}
 	}
 };
-CDocument.prototype.controller_GetFormatPainterData = function()
-{
-	return new CDocumentFormatPainterData(this.GetDirectTextPr(), this.GetDirectParaPr(), null);
-};
 CDocument.prototype.controller_AddInlineImage = function(W, H, Img, Chart, bFlow)
 {
 	if (true == this.Selection.Use)
@@ -21723,7 +21702,6 @@ CDocument.prototype.controller_CollectSelectedReviewChanges = function(oTrackMan
 		this.Content[nPos].CollectSelectedReviewChanges(oTrackManager);
 	}
 };
-CDocument.prototype.controller_GetFormatPainterData
 //----------------------------------------------------------------------------------------------------------------------
 //
 //----------------------------------------------------------------------------------------------------------------------
@@ -26954,6 +26932,13 @@ CDocument.prototype.ConvertAllMathView = function(isToLinear)
 	this.UpdateInterface();
 	this.UpdateTracks();
 	this.FinalizeAction();
+};
+CDocument.prototype.IsCheckFormPlaceholder = function()
+{
+	if (!this.IsFillingFormMode())
+		return false;
+	
+	return this.CheckFormPlaceHolder;
 };
 
 function CDocumentSelectionState()
