@@ -167,7 +167,11 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 
 	this.document        = editor.WordControl.m_oLogicDocument;
 	this.drawingDocument = DrawingDocument;
-	this.graphicObjects  = editor.WordControl.m_oLogicDocument.DrawingObjects;
+	if (editor.WordControl.m_oLogicDocument)
+		this.graphicObjects  = editor.WordControl.m_oLogicDocument.DrawingObjects;
+	else if (editor.isDocumentRenderer()) {
+		this.graphicObjects = editor.getDocumentRenderer().DrawingObjects;
+	}
 	this.selected        = false;
 
 	this.behindDoc    = false;
@@ -1450,7 +1454,12 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	this.DocumentContent = oDocumentContent;
 	var PageNum          = ParaLayout.PageNum;
 
-	var OtherFlowObjects = editor.WordControl.m_oLogicDocument.DrawingObjects.getAllFloatObjectsOnPage(PageNum, this.Parent.Parent);
+	var OtherFlowObjects;
+	if (editor.WordControl.m_oLogicDocument)
+		OtherFlowObjects = editor.WordControl.m_oLogicDocument.DrawingObjects.getAllFloatObjectsOnPage(PageNum, this.Parent.Parent);
+	else if (editor.isDocumentRenderer())
+		OtherFlowObjects = editor.getDocumentRenderer().DrawingObjects.getAllFloatObjectsOnPage(PageNum, this.Parent.Parent);
+		
 	var bInline          = this.Is_Inline();
 	this.Internal_Position.SetScaleFactor(this.GetScaleCoefficient());
 	this.Internal_Position.Set(this.GraphicObj.extX, this.GraphicObj.extY, this.getXfrmRot(), this.EffectExtent, this.YOffset, ParaLayout, PageLimits);

@@ -231,6 +231,12 @@
 							isSpaceAsText = false;
 						break;
 					}
+					case AscCommon.c_oEditorId.Word:
+					{
+						if (this.Api.isDocumentRenderer() && this.Api.WordControl.m_oDrawingDocument.m_oDocumentRenderer.fieldFillingMode)
+							isSpaceAsText = false;
+						break;
+					}
 					default:
 						break;
 				}
@@ -272,7 +278,7 @@
 	};
 	CTextInputPrototype.onKeyPress = function(e)
 	{
-		if (this.Api.isLongAction() || !this.Api.asc_IsFocus() || this.Api.isViewMode)
+		if (this.Api.isLongAction() || !this.Api.asc_IsFocus() || (this.Api.isViewMode && !this.Api.getDocumentRenderer().fieldFillingMode))
 		{
 			AscCommon.stopEvent(e);
 			return false;

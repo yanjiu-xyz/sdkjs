@@ -1474,6 +1474,10 @@ background-repeat: no-repeat;\
 	{
 		return !!this.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
 	};
+	asc_docs_api.prototype.getDocumentRenderer = function()
+	{
+		return this.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
+	};
 
 	asc_docs_api.prototype.OpenDocument = function(url, gObject)
 	{
@@ -1539,7 +1543,7 @@ background-repeat: no-repeat;\
 			_t.sendEvent("asc_onHyperlinkClick", url);
 		});
 
-		AscCommon.InitBrowserInputContext(this, "", "id_viewer");
+		AscCommon.InitBrowserInputContext(this, "id_target_cursor", "id_viewer");
 		if (AscCommon.g_inputContext)
 			AscCommon.g_inputContext.onResize(this.HtmlElementName);
 
@@ -1547,10 +1551,20 @@ background-repeat: no-repeat;\
 			this.WordControl.initEventsMobile();
 
 		// destroy unused memory
-		AscCommon.pptx_content_writer.BinaryFileWriter = null;
-		AscCommon.History.BinaryWriter = null;
+		let isEditForms = true;
+		if (isEditForms == false) {
+			AscCommon.pptx_content_writer.BinaryFileWriter = null;
+			AscCommon.History.BinaryWriter = null;
+		}
 
 		this.WordControl.OnResize(true);
+		this.getDocumentRenderer().ImageMap = {};
+        this.getDocumentRenderer().InitDocument = function() {return};
+
+		this.FontLoader.LoadDocumentFonts(this.WordControl.m_oDrawingDocument.CheckFontNeeds(), false);
+		let LoadTimer = setInterval(function() {
+			AscFonts.FontPickerByCharacter.checkText('✓⦿〇' + String.fromCharCode(0x25C9) + String.fromCharCode(0x25CB), editor, function() {clearInterval(LoadTimer)}, false, true, true);
+		}, 1000);
 	};
 	asc_docs_api.prototype["asc_setViewerThumbnailsZoom"] = function(value) {
 		if (this.WordControl.m_oDrawingDocument.m_oDocumentRenderer &&
@@ -2466,7 +2480,19 @@ background-repeat: no-repeat;\
 		if (!this.WordControl.m_oLogicDocument)
 		{
 			var _text_object = (AscCommon.c_oAscClipboardDataFormat.Text & _formats) ? {Text : ""} : null;
-			var _html_data   = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Copy(_text_object);
+			var _html_data;
+			var oActiveForm = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.mouseDownFieldObject;
+			if (oActiveForm && oActiveForm._content.IsSelectionUse()) {
+				let sText = oActiveForm._content.GetSelectedText(true);
+				if (sText == "")
+					return;
+
+				_text_object.Text = sText;
+				_html_data = "<div><p><span>" + sText + "</span></p></div>";
+			}
+			else {
+				_html_data = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Copy(_text_object)
+			}
 
 			//TEXT
 			if (AscCommon.c_oAscClipboardDataFormat.Text & _formats)
@@ -2525,57 +2551,96 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.asc_SelectionCut = function()
 	{
-	    if (AscCommon.CollaborativeEditing.Get_GlobalLock())
-    	    return;
+		let _logicDoc = this.WordControl.m_oLogicDocument;
+		let oViewer = this.getDocumentRenderer();
 
-		var _logicDoc = this.WordControl.m_oLogicDocument;
-		if (!_logicDoc || _logicDoc.IsSelectionEmpty(true))
-			return;
+		if (_logicDoc) {
+			if (AscCommon.CollaborativeEditing.Get_GlobalLock())
+    	    	return;
+			if (_logicDoc.IsSelectionEmpty(true))
+				return;
 
-		if (!_logicDoc.IsSelectionLocked(AscCommon.changestype_Remove, null, true, _logicDoc.IsFormFieldEditing()))
-		{
-			_logicDoc.StartAction(AscDFH.historydescription_Cut);
-			_logicDoc.Remove(-1, true, true, false, false, true); // -1 - нормальное удаление  (например, для таблиц)
-			_logicDoc.Recalculate();
-			_logicDoc.UpdateSelection();
-			_logicDoc.FinalizeAction();
+			if (!_logicDoc.IsSelectionLocked(AscCommon.changestype_Remove, null, true, _logicDoc.IsFormFieldEditing()))
+			{
+				_logicDoc.StartAction(AscDFH.historydescription_Cut);
+				_logicDoc.Remove(-1, true, true, false, false, true); // -1 - нормальное удаление  (например, для таблиц)
+				_logicDoc.Recalculate();
+				_logicDoc.UpdateSelection();
+				_logicDoc.FinalizeAction();
+			}
 		}
+		else if (oViewer) {
+			let oField = oViewer.mouseDownFieldObject;
+			if (oField && (oField.type == "text" || (oField.type == "combobox" && oField._editable))) {
+				if (oField._content.IsSelectionUse()) {
+					oField.Remove(-1);
+					oViewer._paintForms();
+					oViewer.onUpdateOverlay();
+					this.WordControl.m_oDrawingDocument.TargetStart();
+					this.WordControl.m_oDrawingDocument.showTarget(true);
+				}
+			}
+		}
+
 	};
 
 	asc_docs_api.prototype.asc_PasteData = function(_format, data1, data2, text_data, useCurrentPoint, callback, checkLocks)
 	{
-		if (AscCommon.CollaborativeEditing.Get_GlobalLock())
-			return;
-
-		var _logicDoc = this.WordControl.m_oLogicDocument;
-		if (!_logicDoc)
-			return;
-
-		// TODO: isPasteImage заменить на проверку того, что вставляется просто картинка
-		var isPasteImage = AscCommon.checkOnlyOneImage(data1);
-
-		var isLocked = false;
-		var oCC      = null;
-
-		if (isPasteImage)
-			oCC = _logicDoc.GetContentControl();
-
-		if (false !== checkLocks)
+		if (this.isDocumentRenderer() == false)
 		{
-			if (oCC && oCC.IsPicture())
-				isLocked = _logicDoc.IsSelectionLocked(AscCommon.changestype_Image_Properties, null, true, _logicDoc.IsFormFieldEditing());
-			else
-				isLocked = _logicDoc.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, _logicDoc.IsFormFieldEditing());
+			if (AscCommon.CollaborativeEditing.Get_GlobalLock())
+				return;
+
+			var _logicDoc = this.WordControl.m_oLogicDocument;
+			if (!_logicDoc)
+				return;
+
+			// TODO: isPasteImage заменить на проверку того, что вставляется просто картинка
+			var isPasteImage = AscCommon.checkOnlyOneImage(data1);
+
+			var isLocked = false;
+			var oCC      = null;
+
+			if (isPasteImage)
+				oCC = _logicDoc.GetContentControl();
+
+			if (false !== checkLocks)
+			{
+				if (oCC && oCC.IsPicture())
+					isLocked = _logicDoc.IsSelectionLocked(AscCommon.changestype_Image_Properties, null, true, _logicDoc.IsFormFieldEditing());
+				else
+					isLocked = _logicDoc.IsSelectionLocked(AscCommon.changestype_Paragraph_Content, null, true, _logicDoc.IsFormFieldEditing());
+			}
+
+			if (!isLocked)
+			{
+				window['AscCommon'].g_specialPasteHelper.Paste_Process_Start(arguments[5]);
+
+				if (!useCurrentPoint)
+					_logicDoc.StartAction(AscDFH.historydescription_Document_PasteHotKey);
+
+				AscCommon.Editor_Paste_Exec(this, _format, data1, data2, text_data, undefined, callback);
+			}
 		}
-
-		if (!isLocked)
+		else
 		{
-			window['AscCommon'].g_specialPasteHelper.Paste_Process_Start(arguments[5]);
+			let oViewer = this.getDocumentRenderer();
+			let oField = oViewer.mouseDownFieldObject;
+			if (text_data.length == 0)
+				return;
 
-			if (!useCurrentPoint)
-				_logicDoc.StartAction(AscDFH.historydescription_Document_PasteHotKey);
+			if (oField && (oField.type == "text" || (oField.type == "combobox" && oField._editable)))
+			{
+				let aChars = [];
+				for (let i = 0; i < text_data.length; i++)
+					aChars.push(text_data[i].charCodeAt(0));
 
-			AscCommon.Editor_Paste_Exec(this, _format, data1, data2, text_data, undefined, callback);
+				oField.EnterText(aChars);
+				oViewer.Api.WordControl.m_oDrawingDocument.showTarget(true);
+				oViewer.Api.WordControl.m_oDrawingDocument.TargetStart();
+				oViewer._paintForms();
+				oViewer.onUpdateOverlay();
+			}
 		}
 	};
 
@@ -5826,7 +5891,17 @@ background-repeat: no-repeat;\
 						oApi.WordControl.m_oLogicDocument.AddPlaceholderImages(arrImages, oOptionObject);
 					}
 				}
-				else if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+				else if (this.isDocumentRenderer() && oOptionObject && oOptionObject.type === "button")
+				{
+					let oViewer = this.getDocumentRenderer();
+					const oImage = oApi.ImageLoader.LoadImage(arrUrls[0], 1);
+					if(oImage && oImage.Image)
+					{
+						oOptionObject.AddImage(oImage);
+						oViewer._paintForms();
+					}
+				}
+				else if (this.WordControl.m_oLogicDocument && false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Content))
 				{
 					const arrImages = [];
 					for(let i = 0; i < arrUrls.length; ++i)
@@ -11080,6 +11155,18 @@ background-repeat: no-repeat;\
 
 		oLogicDocument.DocumentOutline.SetUse(false);
 	};
+	asc_docs_api.prototype.asc_SelectPDFFormListItem = function(sId)
+	{
+		let nIdx = parseInt(sId);
+		let oViewer = this.getDocumentRenderer();
+		let oField = oViewer.mouseDownFieldObject;
+		if (!oField)
+			return;
+
+		oField.SelectOption(nIdx);
+		oField.UnionLastHistoryPoints(false);
+		oViewer._paintForms();
+	};
 	asc_docs_api.prototype.sync_OnDocumentOutlineUpdate = function()
 	{
 		this.sendEvent("asc_onDocumentOutlineUpdate");
@@ -11979,10 +12066,24 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_enterText = function(value)
 	{
 		let logicDocument = this.private_GetLogicDocument();
-		if (!logicDocument)
-			return false;
+		let documentRenderer = this.getDocumentRenderer();
+		if (logicDocument)
+			return logicDocument.EnterText(value);
+		else if (documentRenderer.fieldFillingMode) {
+			documentRenderer.mouseDownFieldObject.EnterText(value);
+			if (documentRenderer.mouseDownFieldObject._needRecalc) {
+				documentRenderer._paintForms();
+				documentRenderer.onUpdateOverlay();
+			}
 
-		return logicDocument.EnterText(value);
+			this.WordControl.m_oDrawingDocument.TargetStart();
+			// Чтобы при зажатой клавише курсор не пропадал
+			this.WordControl.m_oDrawingDocument.showTarget(true);
+			
+			return true;
+		}
+		
+		return false;
 	};
 	asc_docs_api.prototype.asc_correctEnterText = function(oldValue, newValue)
 	{
@@ -12044,7 +12145,7 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.Input_UpdatePos = function()
 	{
-		if (this.WordControl.m_oLogicDocument)
+		if (this.WordControl.m_oLogicDocument || this.isDocumentRenderer())
 			this.WordControl.m_oDrawingDocument.MoveTargetInInputContext();
 	};
 

@@ -949,7 +949,7 @@
 		switch (this.editorId)
 		{
 			case c_oEditorId.Word:
-				res = !this.isPdfViewer();
+				res = true;
 				break;
 			case c_oEditorId.Presentation:
 				res = true;
