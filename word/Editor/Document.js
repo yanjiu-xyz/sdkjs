@@ -2170,6 +2170,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 	this.OFormDocument           = AscCommon.IsSupportOFormFeature() && false !== isMainLogicDocument ? new AscOForm.OForm(this) : null;
 	this.FormsManager            = new AscWord.CFormsManager(this);
 	this.CurrentForm             = null;
+	this.CurrentFormFixed        = false;
 	this.HighlightRequiredFields = false;  // Выделяем ли обязательные поля
 	this.RequiredFieldsBorder    = new CDocumentBorder();
 	this.RequiredFieldsBorder.SetSimpleColor(255, 0, 0);
@@ -16115,17 +16116,18 @@ CDocument.prototype.SetDocumentPrintMode = function()
 };
 CDocument.prototype.private_SetCurrentSpecialForm = function(oForm)
 {
-	if (this.CurrentForm === oForm)
+	if (this.CurrentForm === oForm && ((!oForm && !this.CurrentFormFixed) || (oForm && this.CurrentFormFixed === oForm.IsFixedForm())))
 		return false;
 
 	if (this.CurrentForm)
 		this.CurrentForm.SetCurrent(false);
 
 	this.CurrentForm = oForm;
+	this.CurrentFormFixed = oForm ? oForm.IsFixedForm() : false;
 
 	if (this.CurrentForm)
 		this.CurrentForm.SetCurrent(true);
-
+	
 	return true;
 };
 /**
@@ -25436,16 +25438,24 @@ CDocument.prototype.ConvertFormFixedType = function(sId, isToFixed)
 		this.StartAction(AscDFH.historydescription_Document_ConvertFormFixedType);
 
 		if (isToFixed)
-			oForm.ConvertFormToFixed();
+		{
+			let drawing = oForm.ConvertFormToFixed();
+			
+			this.RemoveSelection();
+			if (drawing)
+				drawing.SelectAsDrawing();
+		}
 		else
+		{
 			oForm.ConvertFormToInline();
-
-		this.RemoveSelection();
-		oForm.MoveCursorToContentControl(false);
-
+			this.RemoveSelection();
+			oForm.SelectContentControl();
+		}
+		
 		this.Recalculate();
 		this.UpdateInterface();
 		this.UpdateSelection();
+		this.UpdateTracks();
 		this.FinalizeAction();
 
 		return true;
