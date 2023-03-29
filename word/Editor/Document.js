@@ -6890,7 +6890,11 @@ CDocument.prototype.SetImageProps = function(Props)
 {
 	this.Controller.SetImageProps(Props);
 	this.Recalculate();
-	this.Document_UpdateInterfaceState();
+	if(this.Api.noCreatePoint)
+	{
+		this.UpdateInterface();
+	}
+	this.UpdateSelection();
 };
 CDocument.prototype.ShapeApply = function(shapeProps)
 {

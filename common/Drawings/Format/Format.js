@@ -14059,6 +14059,12 @@
 
 			var _alpha = asc_stroke.transparent;
 			if (null != _alpha) {
+				if(!ret.Fill) {
+					ret.Fill = AscFormat.CreateSolidFillRGB(0, 0, 0);
+					if(!ret.w) {
+						ret.w = 12700;
+					}
+				}
 				ret.Fill.transparent = _alpha;
 			}
 
