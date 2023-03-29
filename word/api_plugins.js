@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -101,6 +101,14 @@
 	 * * <b>comments</b> - allow editing of comments
 	 * * <b>forms</b> - allow editing of form fields
 	 * * <b>readOnly</b> - allow no editing
+	 */
+	
+	/**
+	 * @typedef {("entirely" | "beforeCursor" | "afterCursor")} TextPartType
+	 * A value that defines if it is possible to delete and/or edit the content control or not:
+	 * * <b>entirely</b> - replace all text with the specified one
+	 * * <b>beforeCursor</b> - replace only the part of the word that is before cursor
+	 * * <b>beforeCursor</b> - replace only the part of the word that is after cursor
 	 */
 
     var Api = window["asc_docs_api"];
@@ -1158,6 +1166,92 @@
 			return;
 		
 		this.asc_setRestriction(_restrictions);
+	};
+	/**
+	 * Get the current word
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias GetCurrentWord
+	 * @param {TextPartType} [type="entirely"]
+	 * @since 7.4.0
+	 * @example
+	 * window.Asc.plugin.executeMethod("GetCurrentWord");
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_GetCurrentWord"] = function(type)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return "";
+		
+		let direction = 0;
+		switch (AscBuilder.GetStringParameter(type, "entirely"))
+		{
+			case "beforeCursor":
+				direction = -1;
+				break;
+			case "afterCursor":
+				direction = 1;
+				break;
+			case "entirely":
+			default:
+				direction = 0;
+				break;
+		}
+		
+		return logicDocument.GetCurrentWord(direction);
+	};
+	/**
+	 * Get the current word
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias ReplaceCurrentWord
+	 * @param {string} replaceString
+	 * @param {TextPartType} [type="entirely"]
+	 * @since 7.4.0
+	 * @example
+	 * window.Asc.plugin.executeMethod("ReplaceCurrentWord");
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_ReplaceCurrentWord"] = function(replaceString, type)
+	{
+		let _replaceString = "" === replaceString ? "" : AscBuilder.GetStringParameter(replaceString, null);
+
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || null === _replaceString)
+			return;
+		
+		let direction = 0;
+		switch (AscBuilder.GetStringParameter(type, "entirely"))
+		{
+			case "beforeCursor":
+				direction = -1;
+				break;
+			case "afterCursor":
+				direction = 1;
+				break;
+			case "entirely":
+			default:
+				direction = 0;
+				break;
+		}
+		
+		logicDocument.ReplaceCurrentWord(direction, _replaceString);
+	};
+	/**
+	 * Get the current sentence
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias GetCurrentSentence
+	 * @since 7.4.0
+	 * @example
+	 * window.Asc.plugin.executeMethod("GetCurrentSentence");
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_GetCurrentSentence"] = function()
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return "";
+		
+		return logicDocument.GetCurrentSentence();
 	};
 
 	function private_ReadContentControlCommonPr(commonPr)

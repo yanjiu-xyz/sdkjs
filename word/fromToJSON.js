@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -5563,7 +5563,8 @@
 				"abstractNum": {
 				},
 				"num": {
-				}
+				},
+				"type": "numbering"
 			}
 		}
 
@@ -9114,7 +9115,7 @@
 
 			var nBulleType = AscFormat.BULLET_TYPE_BULLET_NONE;
 			var nAutoNumType;
-			switch (oParsedBulletType["AutoNumType"])
+			switch (oParsedBulletType["autoNumType"])
 			{
 				case "alphaLcParenBoth":
 					nAutoNumType = AscFormat.numbering_presentationnumfrmt_AlphaLcParenBoth;
@@ -10498,7 +10499,7 @@
 	ReaderFromJSON.prototype.AbstractNumFromJSON = function(oParsedAbstrNum)
 	{
 		var oDocument = private_GetLogicDocument();
-		var oAbstractNum = new CAbstractNum();
+		var oAbstractNum = new AscCommonWord.CAbstractNum();
 		var oTempLvl;
 
 		for (var nLvl = 0; nLvl < oParsedAbstrNum["lvl"].length; nLvl++)
@@ -12197,7 +12198,7 @@
 				break;
 		}
 		var oStyle = new CStyle(sStyleName, nBasedOnId, nNextId, nStyleType, bNoCreateTablePr);
-
+		
 		oParsedStyle["link"] != undefined && oStyle.SetLink(oParsedStyle["link"]);
 		oParsedStyle["customStyle"] != undefined && oStyle.SetCustom(oParsedStyle["customStyle"]);
 		oParsedStyle["qFormat"] != undefined && oStyle.SetQFormat(oParsedStyle["qFormat"]);
@@ -12248,8 +12249,8 @@
 			}
 		}
 
-		this.RestoredStylesMap[oParsedStyle.styleId] = oStyle;
-
+		this.RestoredStylesMap[oParsedStyle["styleId"]] = oStyle;
+		
 		return oStyle;
 	};
 	ReaderFromJSON.prototype.TableStylePrFromJSON = function(oParsedPr)

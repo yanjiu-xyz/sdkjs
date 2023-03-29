@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -109,6 +109,10 @@ function (window, undefined) {
 
 	window['AscCH'].historyitem_Worksheet_AddCellWatch = 58;
 	window['AscCH'].historyitem_Worksheet_DelCellWatch = 59;
+
+	window['AscCH'].historyitem_Worksheet_ChangeUserProtectedRange = 60;
+
+	window['AscCH'].historyitem_Worksheet_SetSheetViewType = 61;
 
 	window['AscCH'].historyitem_RowCol_Fontname = 1;
 	window['AscCH'].historyitem_RowCol_Fontsize = 2;
@@ -241,6 +245,9 @@ function (window, undefined) {
 	window['AscCH'].historyitem_PivotTable_PivotFieldVisible = 54;
 	window['AscCH'].historyitem_PivotTable_UseAutoFormatting = 55;
 	window['AscCH'].historyitem_PivotTable_HideValuesRow = 56;
+	window['AscCH'].historyitem_PivotTable_DataFieldSetShowDataAs = 57;
+	window['AscCH'].historyitem_PivotTable_DataFieldSetBaseField = 58;
+	window['AscCH'].historyitem_PivotTable_DataFieldSetBaseItem = 59;
 
 	window['AscCH'].historyitem_SharedFormula_ChangeFormula = 1;
 	window['AscCH'].historyitem_SharedFormula_ChangeShared = 2;
@@ -257,6 +264,7 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Layout_Headings = 10;
 	window['AscCH'].historyitem_Layout_Orientation = 11;
 	window['AscCH'].historyitem_Layout_Scale = 12;
+	window['AscCH'].historyitem_Layout_FirstPageNumber = 13;
 	
 	window['AscCH'].historyitem_ArrayFromula_AddFormula = 1;
 	window['AscCH'].historyitem_ArrayFromula_DeleteFormula = 2;
@@ -354,6 +362,8 @@ function (window, undefined) {
 	window['AscCH'].historyitem_Protected_SetWorkbookSpinCount = 33;
 
 	window['AscCH'].historyitem_Protected_SetPassword = 34;
+
+	window['AscCH'].historyitem_UserProtectedRange_Ref = 1;
 
 function CHistory()
 {
@@ -1167,6 +1177,10 @@ CHistory.prototype.EndTransaction = function()
 	if (this.IsEndTransaction() && this.workbook) {
 		this.workbook.dependencyFormulas.unlockRecal();
 		this.workbook.handlers.trigger("updateCellWatches");
+
+		if (this.Is_LastPointEmpty()) {
+			this.Remove_LastPoint();
+		}
 	}
 };
 /** @returns {boolean} */

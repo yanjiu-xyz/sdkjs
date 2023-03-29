@@ -5,6 +5,7 @@
 			"common/userinfo_parser.js",
 			"common/browser.js",
 			"common/skin.js",
+			"common/errorCodes.js",
 			"common/commonDefines.js",
 			"common/docscoapicommon.js",
 			"common/docscoapi.js",
@@ -271,6 +272,7 @@
 			"word/Editor/DocumentProtection.js",
 			"word/Editor/Comparison.js",
 			"word/Editor/Revisions/TrackRevisionsManager.js",
+			"word/Editor/Merge.js",
 
 			"word/Drawing/Graphics.js",
 			"word/Drawing/ShapeDrawer.js",

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1176,6 +1176,10 @@
 		this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, opts);
 	};
 
+	/**
+	 * The current selection type ("none", "text", "drawing", or "slide").
+	 * @typedef {("fill" | "fit" | "original" | "stretch")} ReplaceImageMode
+	 */
 
     /**
      * An object containing the information about the base64 encoded *png* image.
@@ -1183,6 +1187,7 @@
      * @property {string} src The image source in the base64 format.
      * @property {number} width The image width in pixels.
      * @property {number} height The image height in pixels.
+     * @property  {?ReplaceImageMode} replaceMode If presents, defines how to adjust image object in case of replacing selected image
      */
 
 	/**
@@ -1208,9 +1213,22 @@
      */
 	Api.prototype["pluginMethod_PutImageDataToSelection"] = function(oImageData)
 	{
-        this._beforeEvalCommand();
-		this.putImageToSelection(oImageData["src"], oImageData["width"], oImageData["height"]);
-        this._afterEvalCommand();
+		let sMethodGuid = window.g_asc_plugins.setPluginMethodReturnAsync();
+		let sImgSrc = oImageData["src"];
+		this.asc_checkImageUrlAndAction(sImgSrc, function(oImage)
+		{
+			let nWidth = oImageData["width"];
+			let nHeight = oImageData["height"];
+			const isN = AscFormat.isRealNumber;
+			if(!isN(nWidth) || !isN(nHeight))
+			{
+				nWidth = oImage.Image.width;
+				nHeight = oImage.Image.height;
+			}
+			this.putImageToSelection(AscCommon.g_oDocumentUrls.getImageLocal(oImage.src), nWidth, nHeight, oImageData["replaceMode"]);
+			window.g_asc_plugins.onPluginMethodReturn(sMethodGuid);
+
+		});
 	};
 
 	function getLocalStorageItem(key)
@@ -1564,4 +1582,163 @@
 		}
 	};
 
+    /**
+     * Gets the document language.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CPE"]
+     * @alias GetDocumentLang
+     * @returns {string} 
+     */
+    Api.prototype["pluginMethod_GetDocumentLang"] = function()
+    {
+        let langCode = 1033; // en-US
+        let langName = "en-US";
+
+        if (this.WordControl && this.WordControl.m_oLogicDocument && this.WordControl.m_oLogicDocument.GetDefaultLanguage)
+            langCode = this.WordControl.m_oLogicDocument.GetDefaultLanguage();
+
+        if (window["Common"])
+            langName = window["Common"]["util"]['LanguageInfo']['getLocalLanguageName'](langCode)[0];
+
+        return langName;
+    };
+
+	function correctItemsWithData(items)
+	{
+		for (let i = 0, itemsLen = items.length; i < itemsLen; i++)
+		{
+			if (undefined !== items[i]["id"] && undefined !== items[i]["data"])
+				items[i]["id"] = items[i]["id"] + "_oo_sep_" + items[i]["data"];
+
+			if (items[i]["items"])
+				correctItemsWithData(items[i]["items"]);
+		}
+	}
+
+	/**
+	 * @typedef {Object} ContextMenuItem
+	 * The context menu item
+	 * @property {string} id - The item id.
+	 * @property {localeTranslate} text - The item text.
+	 * @property {boolean} [disabled] - Is disabled item.
+	 * @property {ContextMenuItem[]} items - An array containing the items for current item.
+	 */
+
+	/**
+	 * Add item to context menu
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias AddContextMenuItem
+	 * @param {ContextMenuItem[]} items - Array of items
+	 */
+	Api.prototype["pluginMethod_AddContextMenuItem"] = function(items)
+	{
+		if (items["items"]) correctItemsWithData(items["items"]);
+		this.onPluginAddContextMenuItem(items);
+	};
+
+	/**
+	 * Update items in context menu
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias UpdateContextMenuItem
+	 * @param {ContextMenuItem[]} items - Array of items
+	 */
+	Api.prototype["pluginMethod_UpdateContextMenuItem"] = function(items)
+	{
+		if (items["items"]) correctItemsWithData(items["items"]);
+		this.onPluginUpdateContextMenuItem([items]);
+	};
+
+	/**
+	 * Shows modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} frameId - The frame ID.
+	 * @param {variation} variation - The plugin variation.
+	 * @alias ShowWindow 
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_ShowWindow"] = function(frameId, variation)
+	{
+		variation["guid"] = window.g_asc_plugins.guidAsyncMethod;
+		this.sendEvent("asc_onPluginWindowShow", frameId, variation);
+	};
+
+	/**
+	 * Close modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} frameId - The frame ID.
+	 * @alias CloseWindow
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_CloseWindow"] = function(frameId)
+	{
+		this.sendEvent("asc_onPluginWindowClose", frameId);
+	};
+
+	/**
+	 * Send message to window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} windowID - The frame ID.
+	 * @param {string} name - The event name.
+	 * @param {object} data - The even data.
+	 * @alias SendToWindow
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_SendToWindow"] = function(windowID, name, data)
+	{
+		window.g_asc_plugins.onPluginEventWindow(windowID, name, data);
+	};
+
+	/**
+	 * Resize modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} [frameId] - The frame ID.
+	 * @param {number} [size] - The frame size.
+	 * @param {number} [minSize] - The frame min size.
+	 * @param {number} [maxSize] - The frame max size.
+	 * @alias ResizeWindow
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_ResizeWindow"] = function(frameId, size, minSize, maxSize)
+	{
+		let guidAsync = window.g_asc_plugins.setPluginMethodReturnAsync();
+		this.sendEvent("asc_onPluginWindowResize", frameId, size, minSize, maxSize, function(){
+			window.g_asc_plugins.onPluginMethodReturn(guidAsync, 'resize_result');
+		});
+	};
+
+	/**
+	 * Mouse up modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} [frameId] - The frame ID.
+	 * @param {number} [x] - coordinate.
+	 * @param {number} [y] - coordinate.
+	 * @alias MouseUpWindow
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_MouseUpWindow"] = function(frameId, x, y)
+	{
+		this.sendEvent("asc_onPluginWindowMouseUp", frameId, x, y);
+	};
+
+	/**
+	 * Mouse move modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} [frameId] - The frame ID.
+ 	 * @param {number} [x] - coordinate.
+	 * @param {number} [y] - coordinate.
+	 * @alias MouseMoveWindow
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_MouseMoveWindow"] = function(frameId, x, y)
+	{
+		this.sendEvent("asc_onPluginWindowMouseMove", frameId, x, y);
+	};
 })(window);

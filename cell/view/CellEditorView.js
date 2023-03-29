@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -612,7 +612,7 @@
 		this.skipTLUpdate = true;
 	};
 
-	CellEditor.prototype.insertFormula = function (functionName, isDefName) {
+	CellEditor.prototype.insertFormula = function (functionName, isDefName, sRange) {
 		this.skipTLUpdate = false;
 
 		// ToDo check selection formula in wizard for delete
@@ -631,7 +631,7 @@
 		if (functionName) {
 			addText += functionName;
 			if (!isDefName) {
-				addText += '()';
+				addText += sRange ? '(' + sRange + ')' : '()';
 			}
 		}
 
@@ -2057,15 +2057,19 @@
 		return pos === end ? {index: i - 1, begin: begin, end: end} : undefined;
 	};
 
-	CellEditor.prototype._findFragmentToInsertInto = function ( pos ) {
-		var opt = this.options, i, begin, end;
+	CellEditor.prototype._findFragmentToInsertInto = function ( pos, fragments ) {
+		var i, begin, end;
 
-		for ( i = 0, begin = 0; i < opt.fragments.length; ++i ) {
-			end = begin + opt.fragments[i].getCharCodesLength();
+		if (!fragments) {
+			fragments = this.options.fragments;
+		}
+
+		for ( i = 0, begin = 0; i < fragments.length; ++i ) {
+			end = begin + fragments[i].getCharCodesLength();
 			if ( pos >= begin && pos <= end ) {
 				return {index: i, begin: begin, end: end};
 			}
-			if ( i < opt.fragments.length - 1 ) {
+			if ( i < fragments.length - 1 ) {
 				begin = end;
 			}
 		}
@@ -2159,19 +2163,23 @@
 		}
 	};
 
-	CellEditor.prototype._mergeFragments = function () {
-		var t = this, opt = t.options, i;
+	CellEditor.prototype._mergeFragments = function (fragments) {
+		var i;
+		
+		if (!fragments) {
+			fragments = this.options.fragments;
+		}
 
-		for (i = 0; i < opt.fragments.length;) {
-			if (opt.fragments[i].getCharCodesLength() < 1 && opt.fragments.length > 1) {
-				opt.fragments.splice(i, 1);
+		for (i = 0; i < fragments.length;) {
+			if (fragments[i].getCharCodesLength() < 1 && fragments.length > 1) {
+				fragments.splice(i, 1);
 				continue;
 			}
-			if (i < opt.fragments.length - 1) {
-				var fr = opt.fragments[i];
-				var nextFr = opt.fragments[i + 1];
+			if (i < fragments.length - 1) {
+				var fr = fragments[i];
+				var nextFr = fragments[i + 1];
 				if (fr.format.isEqual(nextFr.format)) {
-					opt.fragments.splice(i, 2, new Fragment({format: fr.format, charCodes: fr.getCharCodes().concat(nextFr.getCharCodes())}));
+					fragments.splice(i, 2, new Fragment({format: fr.format, charCodes: fr.getCharCodes().concat(nextFr.getCharCodes())}));
 					continue;
 				}
 			}
@@ -2656,6 +2664,13 @@
 				}
 				break;
 
+			case 110: //NumpadDecimal
+				var api = window["Asc"]["editor"];
+				t._addChars(api.asc_getDecimalSeparator());
+				event.stopPropagation();
+				event.preventDefault();
+				return false;
+
 			case 113: // F2
 				if (AscBrowser.isOpera) {
 					event.stopPropagation();
@@ -2893,6 +2908,10 @@
 		//TODO оставляю текст!
 		var t = this;
 		if (!this.handlers.trigger("canEdit") || this.loadFonts) {
+			return true;
+		}
+		if (this.handlers.trigger("isUserProtectActiveCell")) {
+			this.handlers.trigger("asc_onError", Asc.c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			return true;
 		}
 		if (this.handlers.trigger("isProtectActiveCell")) {

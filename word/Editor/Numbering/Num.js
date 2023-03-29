@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -554,7 +554,7 @@ CNum.prototype.Draw = function(nX, nY, oContext, nLvl, oNumInfo, oNumTextPr, oTh
 				let strValue  = arrText[nTextIndex].Value;
 				let codePoint = strValue.charCodeAt(0);
 				let curCoef   = dKoef;
-				
+
 				let info;
 				if ((info = this.ApplyTextPrToCodePoint(codePoint, oNumTextPr)))
 				{
@@ -562,7 +562,7 @@ CNum.prototype.Draw = function(nX, nY, oContext, nLvl, oNumInfo, oNumTextPr, oTh
 					codePoint = info.CodePoint;
 					strValue  = String.fromCodePoint(codePoint);
 				}
-				
+
 				var FontSlot = AscWord.GetFontSlotByTextPr(codePoint, oNumTextPr);
 
 				oContext.SetFontSlot(FontSlot, curCoef);
@@ -625,9 +625,9 @@ CNum.prototype.Measure = function(oContext, nLvl, oNumInfo, oNumTextPr, oTheme)
 			case numbering_lvltext_Text:
 			{
 				let strValue  = arrText[nTextIndex].Value;
-				let codePoint = strValue.charCodeAt(0);
+				let codePoint = strValue.getUnicodeIterator().value();
 				let curCoef   = dKoef;
-				
+
 				let info;
 				if ((info = this.ApplyTextPrToCodePoint(codePoint, oNumTextPr)))
 				{
@@ -635,11 +635,11 @@ CNum.prototype.Measure = function(oContext, nLvl, oNumInfo, oNumTextPr, oTheme)
 					codePoint = info.CodePoint;
 					strValue  = String.fromCodePoint(codePoint);
 				}
-				
+
 				var FontSlot = AscWord.GetFontSlotByTextPr(codePoint, oNumTextPr);
 
 				oContext.SetFontSlot(FontSlot, curCoef);
-				nX += oContext.Measure(strValue).Width;
+				nX += oContext.MeasureCode(codePoint).Width;
 
 				break;
 			}
@@ -647,11 +647,11 @@ CNum.prototype.Measure = function(oContext, nLvl, oNumInfo, oNumTextPr, oTheme)
 			{
 				oContext.SetFontSlot(AscWord.fontslot_ASCII, dKoef);
 				var nCurLvl = arrText[nTextIndex].Value;
-				var langForTextNumbering = oNumTextPr.Lang;
+				var sLangForTextNumbering = oNumTextPr.Lang;
 				var T = "";
 
 				if (nCurLvl < oNumInfo.length)
-					T = this.private_GetNumberedLvlText(nCurLvl, oNumInfo[nCurLvl], oLvl.IsLegalStyle() && nCurLvl < nLvl, langForTextNumbering);
+					T = this.private_GetNumberedLvlText(nCurLvl, oNumInfo[nCurLvl], oLvl.IsLegalStyle() && nCurLvl < nLvl, sLangForTextNumbering);
 
 				for (var iter = T.getUnicodeIterator(); iter.check(); iter.next())
 				{
@@ -1020,11 +1020,11 @@ CNum.prototype.ApplyTextPrToCodePoint = function(codePoint, textPr)
 {
 	if (!textPr || (!textPr.Caps && !textPr.SmallCaps))
 		return null;
-	
+
 	let resultCodePoint = (String.fromCharCode(codePoint).toUpperCase()).charCodeAt(0);
 	if (resultCodePoint === codePoint)
 		return null;
-	
+
 	return {
 		CodePoint : resultCodePoint,
 		FontCoef  : !textPr.Caps ? smallcaps_Koef : 1,

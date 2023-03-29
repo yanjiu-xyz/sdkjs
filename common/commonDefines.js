@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -530,204 +530,6 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		PlainParagraph : 3
 	};
 
-	var c_oAscError = {
-		Level : {
-			Critical   : -1,
-			NoCritical : 0
-		},
-		ID    : {
-			ServerSaveComplete   : 3,
-			ConvertationProgress : 2,
-			DownloadProgress     : 1,
-			No                   : 0,
-			Unknown              : -1,
-			ConvertationTimeout  : -2,
-
-			DownloadError        : -4,
-			UnexpectedGuid       : -5,
-			Database             : -6,
-			FileRequest          : -7,
-			FileVKey             : -8,
-			UplImageSize         : -9,
-			UplImageExt          : -10,
-			UplImageFileCount    : -11,
-			NoSupportClipdoard   : -12,
-			UplImageUrl          : -13,
-			DirectUrl            : -14,
-
-
-			MaxDataPointsError    : -16,
-			StockChartError       : -17,
-			CoAuthoringDisconnect : -18,
-			ConvertationPassword  : -19,
-			VKeyEncrypt           : -20,
-			KeyExpire             : -21,
-			UserCountExceed       : -22,
-			AccessDeny            : -23,
-			LoadingScriptError    : -24,
-			EditingError          :	-25,
-			LoadingFontError      : -26,
-			LoadingBinError       : -27,
-
-			SplitCellMaxRows     : -30,
-			SplitCellMaxCols     : -31,
-			SplitCellRowsDivider : -32,
-
-			MobileUnexpectedCharCount : -35,
-
-			// Mail Merge
-			MailMergeLoadFile : -40,
-			MailMergeSaveFile : -41,
-
-			// Data Validate
-			DataValidate : -45,
-			MoreOneTypeDataValidate: -46,
-			ContainsCellsWithoutDataValidate: -47,
-
-			// for AutoFilter
-			AutoFilterDataRangeError         : -50,
-			AutoFilterChangeFormatTableError : -51,
-			AutoFilterChangeError            : -52,
-			AutoFilterMoveToHiddenRangeError : -53,
-			LockedAllError                   : -54,
-			LockedWorksheetRename            : -55,
-			FTChangeTableRangeError          : -56,
-			FTRangeIncludedOtherTables       : -57,
-			ChangeFilteredRangeError         : -58,
-
-			CanNotPasteImage: -63,
-			PasteMaxRangeError   : -64,
-			PastInMergeAreaError : -65,
-			CopyMultiselectAreaError : -66,
-			PasteSlicerError: 67,
-			MoveSlicerError: 68,
-			PasteMultiSelectError : -69,
-
-			NoValues         : -70,
-			NoSingleRowCol   : -71,
-			InvalidReference : -72,
-			ErrorInFormula   : -73,
-			CannotMoveRange  : -74,
-			DataRangeError   : -75,
-
-			MaxDataSeriesError : -80,
-			CannotFillRange    : -81,
-
-			ConvertationOpenError      : -82,
-            ConvertationSaveError      : -83,
-			ConvertationOpenLimitError : -84,
-			ConvertationOpenFormat     : -85,
-
-			UserDrop : -100,
-			Warning  : -101,
-			UpdateVersion : -102,
-
-			PrintMaxPagesCount					: -110,
-
-			SessionAbsolute: -120,
-			SessionIdle: -121,
-			SessionToken: -122,
-
-			/* для формул */
-			FrmlMaxReference            : -297,
-			FrmlMaxLength               : -298,
-			FrmlMaxTextLength           : -299,
-			FrmlWrongCountParentheses   : -300,
-			FrmlWrongOperator           : -301,
-			FrmlWrongMaxArgument        : -302,
-			FrmlWrongCountArgument      : -303,
-			FrmlWrongFunctionName       : -304,
-			FrmlAnotherParsingError     : -305,
-			FrmlWrongArgumentRange      : -306,
-			FrmlOperandExpected         : -307,
-			FrmlParenthesesCorrectCount : -308,
-			FrmlWrongReferences         : -309,
-
-			InvalidReferenceOrName : -310,
-			LockCreateDefName      : -311,
-
-			LockedCellPivot				: -312,
-			PivotLabledColumns			: -313,
-			PivotOverlap				: -314,
-			PivotGroup					: -315,
-			PivotWithoutUnderlyingData	: -316,
-
-			ForceSaveButton: -331,
-			ForceSaveTimeout: -332,
-			Submit: -333,
-
-			OpenWarning : 500,
-
-            DataEncrypted : -600,
-
-			CannotChangeFormulaArray: -450,
-			MultiCellsInTablesFormulaArray: -451,
-
-			MailToClientMissing	: -452,
-
-			NoDataToParse : -601,
-
-			CannotCompareInCoEditing : 651,
-
-			CannotUngroupError : -700,
-
-			UplDocumentSize         : -751,
-			UplDocumentExt          : -752,
-			UplDocumentFileCount    : -753,
-
-			CustomSortMoreOneSelectedError: -800,
-			CustomSortNotOriginalSelectError: -801,
-
-			// Data Validate
-			DataValidateNotNumeric: -830,
-			DataValidateNegativeTextLength: -831,
-			DataValidateMustEnterValue: -832,
-			DataValidateMinGreaterMax: 833,
-			DataValidateInvalid: 834,
-			NamedRangeNotFound: 835,
-			FormulaEvaluateError: 836,
-			DataValidateInvalidList: 837,
-
-
-			RemoveDuplicates : -850,
-
-			LargeRangeWarning: -900,
-
-			LockedEditView: -950,
-
-			Password : -1000,
-
-			ComplexFieldEmptyTOC : -1101,
-			ComplexFieldNoTOC    : -1102,
-
-			TextFormWrongFormat : -1201,
-
-			SecondaryAxis: 1001,
-			ComboSeriesError: 1002,
-
-			//conditional formatting
-			NotValidPercentile : 1003,
-			CannotAddConditionalFormatting: 1004,
-			NotValidPercentage: 1005,
-			NotSingleReferenceCannotUsed: 1006,
-			CannotUseRelativeReference: 1007,
-			ValueMustBeGreaterThen: 1008,
-			IconDataRangesOverlap: 1009,
-			ErrorTop10Between: 1010,
-
-			SingleColumnOrRowError: 1020,
-			LocationOrDataRangeError: 1021,
-
-			ChangeOnProtectedSheet: 1030,
-			PasswordIsNotCorrect: 1031,
-			DeleteColumnContainsLockedCell: 1032,
-			DeleteRowContainsLockedCell: 1033,
-			CannotUseCommandProtectedSheet: 1034,
-
-			FillAllRowsWarning: 1040
-		}
-	};
-
 	var c_oAscAsyncAction = {
 		Open               : 0,  // открытие документа
 		Save               : 1,  // сохранение
@@ -1054,7 +856,10 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		comboBarLine           : 39,
 		comboBarLineSecondary  : 40,
 		comboAreaBar           : 41,
-		unknown                : 42
+		radar                  : 42,
+		radarMarker            : 43,
+		radarFilled            : 44,
+		unknown                : 45
 	};
 
 	var c_oAscValAxisRule = {
@@ -2655,6 +2460,12 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		divide: 4
 	};
 
+	var c_oAbstractNumMultiLvlTypes = {
+		HybridMultiLevel: 0,
+		MultiLevel: 1,
+		SingleLevel: 2
+	};
+
 
 	var c_oAscSmartArtTypes = {
 		AccentedPicture: 0, // Акцентируемый рисунок
@@ -3079,6 +2890,13 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	c_oAscSmartArtSections[c_oAscSmartArtSectionNames.OfficeCom]    = c_oAscSmartArtOfficeComTypes;
 
 
+	var c_oAscJSONNumberingType = {
+		Remove : "remove",
+		Bullet : "bullet",
+		Number : "number",
+		Hybrid : "hybrid"
+	};
+
 	/** @enum {number} */
 	var c_oAscNumberingFormat = {
 		Aiueo                        :  0,
@@ -3166,6 +2984,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		'0001, 0002, 0003, ...': c_oAscNumberingFormat.CustomDecimalThreeZero,
 		'001, 002, 003, ...': c_oAscNumberingFormat.CustomDecimalTwoZero
 	};
+
+	var c_oAscAllNumberingTypes = [c_oAscNumberingFormat.Aiueo, c_oAscNumberingFormat.AiueoFullWidth, c_oAscNumberingFormat.ArabicAbjad, c_oAscNumberingFormat.ArabicAlpha, c_oAscNumberingFormat.BahtText, c_oAscNumberingFormat.CardinalText, c_oAscNumberingFormat.Chicago, c_oAscNumberingFormat.ChineseCounting, c_oAscNumberingFormat.ChineseCountingThousand, c_oAscNumberingFormat.ChineseLegalSimplified, c_oAscNumberingFormat.Chosung, c_oAscNumberingFormat.Decimal, c_oAscNumberingFormat.DecimalEnclosedCircle, c_oAscNumberingFormat.DecimalEnclosedCircleChinese, c_oAscNumberingFormat.DecimalEnclosedFullstop, c_oAscNumberingFormat.DecimalEnclosedParen, c_oAscNumberingFormat.DecimalFullWidth, c_oAscNumberingFormat.DecimalFullWidth2, c_oAscNumberingFormat.DecimalHalfWidth, c_oAscNumberingFormat.DecimalZero, c_oAscNumberingFormat.Ganada, c_oAscNumberingFormat.Hebrew1, c_oAscNumberingFormat.Hebrew2, c_oAscNumberingFormat.Hex, c_oAscNumberingFormat.HindiConsonants, c_oAscNumberingFormat.HindiCounting, c_oAscNumberingFormat.HindiNumbers, c_oAscNumberingFormat.HindiVowels, c_oAscNumberingFormat.IdeographDigital, c_oAscNumberingFormat.IdeographEnclosedCircle, c_oAscNumberingFormat.IdeographLegalTraditional, c_oAscNumberingFormat.IdeographTraditional, c_oAscNumberingFormat.IdeographZodiac, c_oAscNumberingFormat.IdeographZodiacTraditional, c_oAscNumberingFormat.Iroha, c_oAscNumberingFormat.IrohaFullWidth, c_oAscNumberingFormat.JapaneseCounting, c_oAscNumberingFormat.JapaneseDigitalTenThousand, c_oAscNumberingFormat.JapaneseLegal, c_oAscNumberingFormat.KoreanCounting, c_oAscNumberingFormat.KoreanDigital, c_oAscNumberingFormat.KoreanDigital2, c_oAscNumberingFormat.KoreanLegal, c_oAscNumberingFormat.LowerLetter, c_oAscNumberingFormat.LowerRoman, c_oAscNumberingFormat.NumberInDash, c_oAscNumberingFormat.Ordinal, c_oAscNumberingFormat.OrdinalText, c_oAscNumberingFormat.RussianLower, c_oAscNumberingFormat.RussianUpper, c_oAscNumberingFormat.TaiwaneseCounting, c_oAscNumberingFormat.TaiwaneseCountingThousand, c_oAscNumberingFormat.TaiwaneseDigital, c_oAscNumberingFormat.ThaiCounting, c_oAscNumberingFormat.ThaiLetters, c_oAscNumberingFormat.ThaiNumbers, c_oAscNumberingFormat.UpperLetter, c_oAscNumberingFormat.UpperRoman, c_oAscNumberingFormat.VietnameseCounting, c_oAscNumberingFormat.CustomGreece, c_oAscNumberingFormat.CustomDecimalFourZero, c_oAscNumberingFormat.CustomDecimalThreeZero, c_oAscNumberingFormat.CustomDecimalTwoZero,];
 
 	/** enum {number} */
 	var c_oAscNumberingSuff = {
@@ -3867,6 +3687,15 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 		ConfirmAddCellWatches: 5
 	};
 
+
+	const c_oPluginContextMenuTypes = {
+		None: "None",
+		Target: "Target",
+		Selection: "Selection",
+		Image: "Image",
+		Shape: "Shape",
+		OleObject: "OleObject"
+	};
 	//------------------------------------------------------------export--------------------------------------------------
 	var prot;
 	window['Asc']                          = window['Asc'] || {};
@@ -3959,155 +3788,6 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['BlockLine'] = prot.BlockLine;
 	prot['PlainLine'] = prot.PlainLine;
 	prot['PlainParagraph'] = prot.PlainParagraph;
-
-	window['Asc']['c_oAscError'] = window['Asc'].c_oAscError = c_oAscError;
-	prot                                     = c_oAscError;
-	prot['Level']                            = prot.Level;
-	prot['ID']                               = prot.ID;
-	prot                                     = c_oAscError.Level;
-	prot['Critical']                         = prot.Critical;
-	prot['NoCritical']                       = prot.NoCritical;
-	prot                                     = c_oAscError.ID;
-	prot['ServerSaveComplete']               = prot.ServerSaveComplete;
-	prot['ConvertationProgress']             = prot.ConvertationProgress;
-	prot['DownloadProgress']                 = prot.DownloadProgress;
-	prot['No']                               = prot.No;
-	prot['Unknown']                          = prot.Unknown;
-	prot['ConvertationTimeout']              = prot.ConvertationTimeout;
-	prot['DownloadError']                    = prot.DownloadError;
-	prot['UnexpectedGuid']                   = prot.UnexpectedGuid;
-	prot['Database']                         = prot.Database;
-	prot['FileRequest']                      = prot.FileRequest;
-	prot['FileVKey']                         = prot.FileVKey;
-	prot['UplImageSize']                     = prot.UplImageSize;
-	prot['UplImageExt']                      = prot.UplImageExt;
-	prot['UplImageFileCount']                = prot.UplImageFileCount;
-	prot['NoSupportClipdoard']               = prot.NoSupportClipdoard;
-	prot['UplImageUrl']                      = prot.UplImageUrl;
-	prot['DirectUrl']                        = prot.DirectUrl;
-	prot['MaxDataPointsError']               = prot.MaxDataPointsError;
-	prot['StockChartError']                  = prot.StockChartError;
-	prot['CoAuthoringDisconnect']            = prot.CoAuthoringDisconnect;
-	prot['ConvertationPassword']             = prot.ConvertationPassword;
-	prot['VKeyEncrypt']                      = prot.VKeyEncrypt;
-	prot['KeyExpire']                        = prot.KeyExpire;
-	prot['UserCountExceed']                  = prot.UserCountExceed;
-	prot['AccessDeny']                       = prot.AccessDeny;
-	prot['LoadingScriptError']               = prot.LoadingScriptError;
-	prot['EditingError']                     = prot.EditingError;
-	prot['LoadingFontError']                 = prot.LoadingFontError;
-	prot['SplitCellMaxRows']                 = prot.SplitCellMaxRows;
-	prot['SplitCellMaxCols']                 = prot.SplitCellMaxCols;
-	prot['SplitCellRowsDivider']             = prot.SplitCellRowsDivider;
-	prot['MobileUnexpectedCharCount']        = prot.MobileUnexpectedCharCount;
-	prot['MailMergeLoadFile']                = prot.MailMergeLoadFile;
-	prot['MailMergeSaveFile']                = prot.MailMergeSaveFile;
-	prot['DataValidate']                     = prot.DataValidate;
-	prot['MoreOneTypeDataValidate']          = prot.MoreOneTypeDataValidate;
-	prot['ContainsCellsWithoutDataValidate'] = prot.ContainsCellsWithoutDataValidate;
-	prot['AutoFilterDataRangeError']         = prot.AutoFilterDataRangeError;
-	prot['AutoFilterChangeFormatTableError'] = prot.AutoFilterChangeFormatTableError;
-	prot['AutoFilterChangeError']            = prot.AutoFilterChangeError;
-	prot['AutoFilterMoveToHiddenRangeError'] = prot.AutoFilterMoveToHiddenRangeError;
-	prot['LockedAllError']                   = prot.LockedAllError;
-	prot['LockedWorksheetRename']            = prot.LockedWorksheetRename;
-	prot['FTChangeTableRangeError']          = prot.FTChangeTableRangeError;
-	prot['FTRangeIncludedOtherTables']       = prot.FTRangeIncludedOtherTables;
-	prot['ChangeFilteredRangeError']         = prot.ChangeFilteredRangeError;
-	prot['PasteMaxRangeError']               = prot.PasteMaxRangeError;
-	prot['PastInMergeAreaError']             = prot.PastInMergeAreaError;
-	prot['CopyMultiselectAreaError']         = prot.CopyMultiselectAreaError;
-	prot['PasteSlicerError']                 = prot.PasteSlicerError;
-	prot['MoveSlicerError']                  = prot.MoveSlicerError;
-	prot['PasteMultiSelectError']            = prot.PasteMultiSelectError;
-	prot['CanNotPasteImage']                 = prot.CanNotPasteImage;
-	prot['DataRangeError']                   = prot.DataRangeError;
-	prot['CannotMoveRange']                  = prot.CannotMoveRange;
-	prot['MaxDataSeriesError']               = prot.MaxDataSeriesError;
-	prot['CannotFillRange']                  = prot.CannotFillRange;
-	prot['ConvertationOpenError']            = prot.ConvertationOpenError;
-	prot['ConvertationSaveError']            = prot.ConvertationSaveError;
-	prot['ConvertationOpenLimitError']       = prot.ConvertationOpenLimitError;
-	prot['ConvertationOpenFormat']       	 = prot.ConvertationOpenFormat;
-	prot['UserDrop']                         = prot.UserDrop;
-	prot['Warning']                          = prot.Warning;
-	prot['UpdateVersion']                    = prot.UpdateVersion;
-	prot['PrintMaxPagesCount']               = prot.PrintMaxPagesCount;
-	prot['SessionAbsolute']                  = prot.SessionAbsolute;
-	prot['SessionIdle']                      = prot.SessionIdle;
-	prot['SessionToken']                     = prot.SessionToken;
-	prot['FrmlMaxTextLength']                = prot.FrmlMaxTextLength;
-	prot['FrmlMaxLength']                    = prot.FrmlMaxLength;
-	prot['FrmlMaxReference']                 = prot.FrmlMaxReference;
-	prot['FrmlWrongCountParentheses']        = prot.FrmlWrongCountParentheses;
-	prot['FrmlWrongOperator']                = prot.FrmlWrongOperator;
-	prot['FrmlWrongMaxArgument']             = prot.FrmlWrongMaxArgument;
-	prot['FrmlWrongCountArgument']           = prot.FrmlWrongCountArgument;
-	prot['FrmlWrongFunctionName']            = prot.FrmlWrongFunctionName;
-	prot['FrmlAnotherParsingError']          = prot.FrmlAnotherParsingError;
-	prot['FrmlWrongArgumentRange']           = prot.FrmlWrongArgumentRange;
-	prot['FrmlOperandExpected']              = prot.FrmlOperandExpected;
-	prot['FrmlParenthesesCorrectCount']      = prot.FrmlParenthesesCorrectCount;
-	prot['FrmlWrongReferences']              = prot.FrmlWrongReferences;
-	prot['InvalidReferenceOrName']           = prot.InvalidReferenceOrName;
-	prot['LockCreateDefName']                = prot.LockCreateDefName;
-	prot['LockedCellPivot']                  = prot.LockedCellPivot;
-	prot['PivotLabledColumns']               = prot.PivotLabledColumns;
-	prot['PivotOverlap']                     = prot.PivotOverlap;
-	prot['PivotGroup']                       = prot.PivotGroup;
-	prot['PivotWithoutUnderlyingData']       = prot.PivotWithoutUnderlyingData;
-	prot['ForceSaveButton']                  = prot.ForceSaveButton;
-	prot['ForceSaveTimeout']                 = prot.ForceSaveTimeout;
-	prot['Submit']                           = prot.Submit;
-	prot['CannotChangeFormulaArray']         = prot.CannotChangeFormulaArray;
-	prot['MultiCellsInTablesFormulaArray']   = prot.MultiCellsInTablesFormulaArray;
-	prot['MailToClientMissing']				 = prot.MailToClientMissing;
-	prot['OpenWarning']                      = prot.OpenWarning;
-	prot['DataEncrypted']                    = prot.DataEncrypted;
-	prot['NoDataToParse']                    = prot.NoDataToParse;
-	prot['CannotCompareInCoEditing']         = prot.CannotCompareInCoEditing;
-	prot['CannotUngroupError']               = prot.CannotUngroupError;
-	prot['UplDocumentSize']                  = prot.UplDocumentSize;
-	prot['UplDocumentExt']                   = prot.UplDocumentExt;
-	prot['UplDocumentFileCount']             = prot.UplDocumentFileCount;
-	prot['CustomSortMoreOneSelectedError']   = prot.CustomSortMoreOneSelectedError;
-	prot['CustomSortNotOriginalSelectError'] = prot.CustomSortNotOriginalSelectError;
-	prot['RemoveDuplicates']                 = prot.RemoveDuplicates;
-	prot['LargeRangeWarning']                = prot.LargeRangeWarning;
-	prot['LockedEditView']                   = prot.LockedEditView;
-	prot['Password']                         = prot.Password;
-	prot['ComplexFieldEmptyTOC']             = prot.ComplexFieldEmptyTOC;
-	prot['ComplexFieldNoTOC']                = prot.ComplexFieldNoTOC;
-	prot['TextFormWrongFormat']              = prot.TextFormWrongFormat;
-	prot['SecondaryAxis']                    = prot.SecondaryAxis;
-	prot['ComboSeriesError']                 = prot.ComboSeriesError;
-
-	prot['DataValidateNotNumeric']           = prot.DataValidateNotNumeric;
-	prot['DataValidateNegativeTextLength']   = prot.DataValidateNegativeTextLength;
-	prot['DataValidateMustEnterValue']       = prot.DataValidateMustEnterValue;
-	prot['DataValidateMinGreaterMax']        = prot.DataValidateMinGreaterMax;
-	prot['DataValidateInvalid']              = prot.DataValidateInvalid;
-	prot['NamedRangeNotFound']               = prot.NamedRangeNotFound;
-	prot['FormulaEvaluateError']             = prot.FormulaEvaluateError;
-	prot['DataValidateInvalidList']          = prot.DataValidateInvalidList;
-
-	prot['NotValidPercentile']               = prot.NotValidPercentile;
-	prot['CannotAddConditionalFormatting']   = prot.CannotAddConditionalFormatting;
-	prot['NotValidPercentage']               = prot.NotValidPercentage;
-	prot['NotSingleReferenceCannotUsed']     = prot.NotSingleReferenceCannotUsed;
-	prot['CannotUseRelativeReference']       = prot.CannotUseRelativeReference;
-	prot['ValueMustBeGreaterThen']           = prot.ValueMustBeGreaterThen;
-	prot['IconDataRangesOverlap']            = prot.IconDataRangesOverlap;
-	prot['ErrorTop10Between']                = prot.ErrorTop10Between;
-	prot['SingleColumnOrRowError']           = prot.SingleColumnOrRowError;
-	prot['LocationOrDataRangeError']         = prot.LocationOrDataRangeError;
-	prot['ChangeOnProtectedSheet']           = prot.ChangeOnProtectedSheet;
-	prot['PasswordIsNotCorrect']             = prot.PasswordIsNotCorrect;
-	prot['DeleteColumnContainsLockedCell']   = prot.DeleteColumnContainsLockedCell;
-	prot['DeleteRowContainsLockedCell']      = prot.DeleteRowContainsLockedCell;
-	prot['FillAllRowsWarning']               = prot.FillAllRowsWarning;
-	prot['CannotUseCommandProtectedSheet']   = prot.CannotUseCommandProtectedSheet;
-
 
 
 	window['Asc']['c_oAscAsyncAction']       = window['Asc'].c_oAscAsyncAction = c_oAscAsyncAction;
@@ -4321,6 +4001,9 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['comboBarLine']               = prot.comboBarLine;
 	prot['comboBarLineSecondary']      = prot.comboBarLineSecondary;
 	prot['comboAreaBar']               = prot.comboAreaBar;
+	prot['radar']                      = prot.radar;
+	prot['radarMarker']                = prot.radarMarker;
+	prot['radarFilled']                = prot.radarFilled;
 	prot['unknown']                    = prot.unknown;
 
 	window['Asc']['c_oAscValAxisRule'] = window['Asc'].c_oAscValAxisRule = c_oAscValAxisRule;
@@ -4870,6 +4553,12 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['multiply'] = prot.multiply;
 	prot['divide'] = prot.divide;
 
+	window['Asc']['c_oAbstractNumMultiLvlTypes'] = window['Asc'].c_oAbstractNumMultiLvlTypes = c_oAbstractNumMultiLvlTypes;
+	prot = c_oAbstractNumMultiLvlTypes;
+	prot['HybridMultiLevel'] = prot.HybridMultiLevel;
+	prot['MultiLevel']       = prot.MultiLevel;
+	prot['SingleLevel']      = prot.SingleLevel;
+
 	window['Asc']['c_oAscSmartArtTypes'] = window['Asc'].c_oAscSmartArtTypes = c_oAscSmartArtTypes;
 	prot = c_oAscSmartArtTypes;
 	prot['AccentedPicture']                   = prot.AccentedPicture;
@@ -5036,7 +4725,12 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['Picture']      = prot.Picture;
 	prot['OfficeCom']    = prot.OfficeCom;
 
-
+	window['Asc']['c_oAscJSONNumberingType'] = window['Asc'].c_oAscJSONNumberingType = c_oAscJSONNumberingType;
+	prot = c_oAscJSONNumberingType;
+	prot["Remove"] = prot.Remove;
+	prot["Bullet"] = prot.Bullet;
+	prot["Number"] = prot.Number;
+	prot["Hybrid"] = prot.Hybrid;
 
 	window['Asc']['c_oAscNumberingFormat'] = window['Asc'].c_oAscNumberingFormat = c_oAscNumberingFormat;
 	prot = c_oAscNumberingFormat;
@@ -5103,6 +4797,8 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['UpperLetter']                  = prot.UpperLetter;
 	prot['UpperRoman']                   = prot.UpperRoman;
 	prot['VietnameseCounting']           = prot.VietnameseCounting;
+
+	window['Asc']['c_oAscAllNumberingTypes'] = window['Asc'].c_oAscAllNumberingTypes = c_oAscAllNumberingTypes;
 
 	// new presentation types
 	prot['Ea1JpnKor']                    = prot.Ea1JpnKor;
@@ -5414,5 +5110,15 @@ var lcid_haLatn = 0x7c68; // Hausa, Latin
 	prot['ConfirmAddCellWatches'] = prot.ConfirmAddCellWatches;
 
 	window['Asc'].c_oAscSmartArtSections = c_oAscSmartArtSections;
+
+
+
+	prot = window['Asc']['c_oPluginContextMenuTypes'] = window['Asc'].c_oPluginContextMenuTypes = c_oPluginContextMenuTypes;
+	prot['None'] = prot.None;
+	prot['Target'] = prot.Target;
+	prot['Selection'] = prot.Selection;
+	prot['Image'] = prot.Image;
+	prot['Shape'] = prot.Shape;
+	prot['OleObject'] = prot.OleObject;
 
 })(window);

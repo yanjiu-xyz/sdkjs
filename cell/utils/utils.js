@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -2425,25 +2425,25 @@
 			var oBorder = dxf && dxf.getBorder();
 			if (oBorder) {
 				var oS = oBorder.l;
-				if(oS && oS.s !== Asc.c_oAscBorderStyles.None) {
+				if(oS && !oS.isEmpty()) {
 					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineVer(x0, y0, y1);
 					ctx.stroke();
 				}
 				oS = oBorder.t;
-				if(oS && oS.s !== Asc.c_oAscBorderStyles.None) {
+				if(oS && !oS.isEmpty()) {
 					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineHor(x0 + 1, y0, x1 - 1);
 					ctx.stroke();
 				}
 				oS = oBorder.r;
-				if(oS && oS.s !== Asc.c_oAscBorderStyles.None) {
+				if(oS && !oS.isEmpty()) {
 					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineVer(x1 - 1, y0, y1);
 					ctx.stroke();
 				}
 				oS = oBorder.b;
-				if(oS && oS.s !== Asc.c_oAscBorderStyles.None) {
+				if(oS && !oS.isEmpty()) {
 					ctx.setStrokeStyle(oS.getColorOrDefault()).setLineWidth(1).setLineDash(oS.getDashSegments()).beginPath();
 					ctx.lineHor(x0 + 1, y1 - 1, x1 - 1);
 					ctx.stroke();
@@ -2819,8 +2819,10 @@
 
 			this.isOnlyFirstPage = null;
 			this.nativeOptions = undefined;
+			this.activeSheetsArray = null;//массив с индексами листов, которые необходимо напечатать
 
-			// ToDo сюда же start и end page index
+			this.startPageIndex = null;
+			this.endPageIndex = null;
 
 			return this;
 		}
@@ -2832,6 +2834,12 @@
 		asc_CAdjustPrint.prototype.asc_setIgnorePrintArea = function (val) { this.ignorePrintArea = val; };
 		asc_CAdjustPrint.prototype.asc_getNativeOptions = function () { return this.nativeOptions; };
 		asc_CAdjustPrint.prototype.asc_setNativeOptions = function (val) { this.nativeOptions = val; };
+		asc_CAdjustPrint.prototype.asc_getActiveSheetsArray = function () { return this.activeSheetsArray; };
+		asc_CAdjustPrint.prototype.asc_setActiveSheetsArray = function (val) { this.activeSheetsArray = val; };
+		asc_CAdjustPrint.prototype.asc_getStartPageIndex = function () { return this.startPageIndex; };
+		asc_CAdjustPrint.prototype.asc_setStartPageIndex = function (val) { this.startPageIndex = val; };
+		asc_CAdjustPrint.prototype.asc_getEndPageIndex = function () { return this.endPageIndex; };
+		asc_CAdjustPrint.prototype.asc_setEndPageIndex = function (val) { this.endPageIndex = val; };
 
 		/** @constructor */
 		function asc_CLockInfo () {
@@ -2866,6 +2874,7 @@
 			this.showZeros = null;
 
 			this.topLeftCell = null;
+			this.view = null;
 
 			return this;
 		}
@@ -3050,6 +3059,8 @@
 			this.isNeedRecalc = null;
 
 			this.specificRange = null;
+			this.isForMacros = null;
+			this.activeCell = null;
 
 			//если запускаем новый поиск из-за измененного документа, то присылаем последний элемент, на который
 			//кликнул пользователь и далее пытаемся найти следующий/предыдущий
@@ -3089,6 +3100,7 @@
 			result.specificRange = this.specificRange;
 			result.lastSearchElem = this.lastSearchElem;
 			result.isNotSearchEmptyCells = this.isNotSearchEmptyCells;
+			result.activeCell = this.activeCell;
 
 			return result;
 		};
@@ -3098,9 +3110,9 @@
 				this.scanOnOnlySheet === obj.scanOnOnlySheet;
 		};
 		asc_CFindOptions.prototype.isEqual2 = function (obj) {
-			return obj && this.findWhat === obj.findWhat && this.scanByRows === obj.scanByRows &&
-				this.isMatchCase === obj.isMatchCase && this.isWholeCell === obj.isWholeCell &&
-				this.lookIn === obj.lookIn && this.specificRange == obj.specificRange && this.isNotSearchEmptyCells == obj.isNotSearchEmptyCells;
+			return obj && this.findWhat === obj.findWhat && this.scanByRows === obj.scanByRows && this.isMatchCase === obj.isMatchCase && this.isWholeCell === obj.isWholeCell &&
+				this.lookIn === obj.lookIn && this.specificRange == obj.specificRange && this.isNotSearchEmptyCells == obj.isNotSearchEmptyCells && this.activeCell ==
+				obj.activeCell;
 		};
 		asc_CFindOptions.prototype.clearFindAll = function () {
 			this.countFindAll = 0;
@@ -3148,6 +3160,8 @@
 		asc_CFindOptions.prototype.asc_setNeedRecalc = function (val) {this.isNeedRecalc = val;};
 		asc_CFindOptions.prototype.asc_setLastSearchElem = function (val) {this.lastSearchElem = val;};
 		asc_CFindOptions.prototype.asc_setNotSearchEmptyCells = function (val) {this.isNotSearchEmptyCells = val;};
+		asc_CFindOptions.prototype.asc_setActiveCell = function (val) {this.activeCell = val;};
+		asc_CFindOptions.prototype.asc_setIsForMacros = function (val) {this.isForMacros = val;};
 
 		/** @constructor */
 		function findResults() {
@@ -3657,6 +3671,12 @@
 		prot["asc_setIgnorePrintArea"] = prot.asc_setIgnorePrintArea;
 		prot["asc_getNativeOptions"] = prot.asc_getNativeOptions;
 		prot["asc_setNativeOptions"] = prot.asc_setNativeOptions;
+		prot["asc_getActiveSheetsArray"] = prot.asc_getActiveSheetsArray;
+		prot["asc_setActiveSheetsArray"] = prot.asc_setActiveSheetsArray;
+		prot["asc_getStartPageIndex"] = prot.asc_getStartPageIndex;
+		prot["asc_setStartPageIndex"] = prot.asc_setStartPageIndex;
+		prot["asc_getEndPageIndex"] = prot.asc_getEndPageIndex;
+		prot["asc_setEndPageIndex"] = prot.asc_setEndPageIndex;
 
 		window["AscCommonExcel"].asc_CLockInfo = asc_CLockInfo;
 
@@ -3699,6 +3719,9 @@
 		prot["asc_setNeedRecalc"] = prot.asc_setNeedRecalc;
 		prot["asc_setLastSearchElem"] = prot.asc_setLastSearchElem;
 		prot["asc_setNotSearchEmptyCells"] = prot.asc_setNotSearchEmptyCells;
+		prot["asc_setActiveCell"] = prot.asc_setActiveCell;
+		prot["asc_setIsForMacros"] = prot.asc_setIsForMacros;
+
 
 		window["AscCommonExcel"].findResults = findResults;
 

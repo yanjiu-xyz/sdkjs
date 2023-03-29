@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -8469,7 +8469,6 @@ function (window, undefined) {
 	cMODE.prototype.inheritFormat = true;
 	cMODE.prototype.argumentsType = [[argType.array]];
 	cMODE.prototype.Calculate = function (arg) {
-
 		function mode(x) {
 
 			var medArr = [], t, i;
@@ -8505,7 +8504,7 @@ function (window, undefined) {
 					nMaxIndex = i - 1;
 				}
 				if (nMax == 1 && nCount == 1) {
-					return new cError(cErrorType.wrong_value_type);
+					return new cError(cErrorType.not_available);
 				} else if (nMax == 1) {
 					return new cNumber(nOldVal);
 				} else {
@@ -8513,56 +8512,115 @@ function (window, undefined) {
 				}
 			}
 		}
+		
+		let arr0 = [];
 
-		var arr0 = [];
+		for (let j = 0; j < arg.length; j++) {
 
-		for (var j = 0; j < arg.length; j++) {
-
-			if (arg[j] instanceof cArea || arg[j] instanceof cArea3D) {
+			if (cElementType.cellsRange === arg[j].type || cElementType.cellsRange3D === arg[j].type) {
 				arg[j].foreach2(function (elem) {
-					if (elem instanceof cNumber) {
+					if (cElementType.number === elem.type) {
 						arr0.push(elem);
 					}
 				});
-			} else if (arg[j] instanceof cRef || arg[j] instanceof cRef3D) {
-				var a = arg[j].getValue();
-				if (a instanceof cNumber) {
+			} else if (cElementType.cell === arg[j].type || cElementType.cell3D === arg[j].type) {
+				let a = arg[j].getValue();
+				if (cElementType.number === a.type) {
 					arr0.push(a);
 				}
-			} else if (arg[j] instanceof cArray) {
+			} else if (cElementType.array === arg[j].type) {
 				arg[j].foreach(function (elem) {
-					if (elem instanceof cNumber) {
+					if (cElementType.number === elem.type) {
 						arr0.push(elem);
 					}
 				});
-			} else if (arg[j] instanceof cNumber || arg[j] instanceof cBool) {
+			} else if (cElementType.number === arg[j].type) {
 				arr0.push(arg[j].tocNumber());
-			} else if (arg[j] instanceof cString) {
+			} else if (cElementType.string === arg[j].type) {
 				continue;
 			} else {
 				return new cError(cErrorType.wrong_value_type);
 			}
 
 		}
-		return mode(arr0);
 
+		return mode(arr0);
 	};
 
 	/**
 	 * @constructor
 	 * @extends {cPERCENTILE}
 	 */
-	//TODO разницы в работе функций cMODE_MULT и cMODE не нашёл, но в LO обработки немного разные. проверить!
 	function cMODE_MULT() {
 	}
 
 	//***array-formula***
 	//TODO другое поведение для формул массива!!!
-	cMODE_MULT.prototype = Object.create(cMODE.prototype);
+	cMODE_MULT.prototype = Object.create(cBaseFunction.prototype);
 	cMODE_MULT.prototype.constructor = cMODE_MULT;
 	cMODE_MULT.prototype.name = 'MODE.MULT';
 	cMODE_MULT.prototype.isXLFN = true;
+	cMODE_MULT.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.array;
 	cMODE_MULT.prototype.argumentsType = [[argType.array]];
+	cMODE_MULT.prototype.Calculate = function (arg) {
+		function modeMult(numArray) {
+			if (numArray.length < 1) {
+				return new cError(cErrorType.wrong_value_type);
+			} else {
+				let res = new cArray(), i, maxEntry = 0;
+				let elemMap = new Map();
+				for (i = 0; i < numArray.length; i++) {
+					let key = numArray[i];
+					let _elemIndex = elemMap.get(key);
+					let index = !_elemIndex ? 1 : _elemIndex + 1;
+					elemMap.set(key, index);
+					maxEntry = Math.max(maxEntry, index);
+				}
+
+				if(maxEntry === 1) {
+					return new cError(cErrorType.not_available);
+				} else {
+					elemMap.forEach(function (_val, _key) {
+						if(!(_val < maxEntry)) {
+							res.addRow();
+							res.addElement(new cNumber(_key));
+						}
+					});
+					return res;
+				}
+			}
+		}
+
+		let arr0 = [];
+		for (let j = 0; j < arg.length; j++) {
+			if (cElementType.cellsRange === arg[j].type || cElementType.cellsRange3D === arg[j].type) {
+				arg[j].foreach2(function (elem) {
+					if (cElementType.number === elem.type) {
+						arr0.push(elem.toNumber());
+					}
+				});
+			} else if (cElementType.cell === arg[j].type || cElementType.cell3D === arg[j].type) {
+				let a = arg[j].getValue();
+				if (cElementType.number === a.type) {
+					arr0.push(a.toNumber());
+				}
+			} else if (cElementType.array === arg[j].type) {
+				arg[j].foreach(function (elem) {
+					if (cElementType.number === elem.type) {
+						arr0.push(elem.toNumber());
+					}
+				});
+			} else if (cElementType.number === arg[j].type) {
+				arr0.push(arg[j].toNumber());
+			} else if (cElementType.string === arg[j].type) {
+				continue;
+			} else {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		}
+
+		return modeMult(arr0);
+	}
 
 	/**
 	 * @constructor

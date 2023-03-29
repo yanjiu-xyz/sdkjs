@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -671,14 +671,17 @@
 	{
 		let arrContent = [];
 		let intCountOfBracketBlock = 1;
-		while (this.IsExpLiteral() || this.oLookahead.data === "∣" || this.oLookahead.data === "│" || this.oLookahead.data === "ⓜ" || this.oLookahead.data === "│") {
-			if (this.IsExpLiteral()) {
-				let oToken = this.GetExpLiteral();
-				if ((oToken && !Array.isArray(oToken)) || Array.isArray(oToken) && oToken.length > 0) {
+
+		while (this.IsExpLiteral() || this.oLookahead.data === "∣" || this.oLookahead.data === "│" || this.oLookahead.data === "ⓜ" || this.oLookahead.data === "│")
+		{
+			if (this.IsExpLiteral())
+			{
+				let oToken = this.GetExpLiteral(["&", "@"]);
+				if (oToken && !Array.isArray(oToken) || (Array.isArray(oToken) && oToken.length > 0))
 					arrContent.push(oToken)
-				}
 			}
-			else {
+			else
+			{
 				this.EatToken(this.oLookahead.class);
 				intCountOfBracketBlock++;
 			}
@@ -1660,11 +1663,14 @@
 	{
 		return this.IsElementLiteral() || this.oLookahead.class === oLiteralNames.operatorLiteral[0] || this.oLookahead.data === "/";
 	};
-	CUnicodeParser.prototype.GetExpLiteral = function ()
+	CUnicodeParser.prototype.GetExpLiteral = function (arrCorrectSymbols)
 	{
+		if (!arrCorrectSymbols)
+			arrCorrectSymbols = [];
+
 		const oExpLiteral = [];
 
-		while (this.IsExpLiteral())
+		while (this.IsExpLiteral() || arrCorrectSymbols.includes(this.oLookahead.data))
 		{
 			if (this.oLookahead.data === "/")
 			{
@@ -1683,8 +1689,8 @@
 					})
 			}
 			
-			else if (this.IsElementLiteral()) {
-
+			else if (this.IsElementLiteral())
+			{
 				let oElement = this.GetElementLiteral();
 				
 				if (oElement !== null)
@@ -1696,8 +1702,16 @@
 					oExpLiteral.push(this.otherLiteral());
 				}
 			}
+			else if (arrCorrectSymbols.includes(this.oLookahead.data))
+			{
+				oExpLiteral.push({
+					type: oLiteralNames.charLiteral[num],
+					value: this.EatToken(this.oLookahead.class).data
+				})
+			}
 			
-			if (this.oLookahead.class === oLiteralNames.operatorLiteral[0]) {
+			if (this.oLookahead.class === oLiteralNames.operatorLiteral[0])
+			{
 				oExpLiteral.push(this.GetOperatorLiteral())
 			}
 		}
