@@ -309,7 +309,7 @@ StartAddNewShape.prototype =
                     }
                     shape.addToDrawingObjects(undefined, AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
                     shape.checkDrawingBaseCoords();
-	                let oAPI = this.drawingObjects.getEditorApi();
+	                let oAPI = oThis.drawingObjects.getEditorApi();
 					if(!oAPI.isDrawInkMode())
 					{
 						oThis.drawingObjects.checkChartTextSelection();
