@@ -8863,8 +8863,18 @@
 					};
 				},
 				putImageToSelection: function (sImageUrl, nWidth, nHeight, replaceMode) {
-					let spTree = this.getDrawingArray();
+					let spTree;
 					let selectedObjects = this.getSelectedArray();
+					let oFirstSelectedObject = selectedObjects[0];
+					if(!oFirstSelectedObject) {
+						return;
+					}
+					if(!oFirstSelectedObject.group) {
+						spTree = this.getDrawingArray();
+					}
+					else {
+						spTree = oFirstSelectedObject.group.spTree;
+					}
 					const nPageIndex = 0;
 					let oController = this;
 					if (selectedObjects.length > 0 && !this.getTargetDocContent()) {
@@ -8873,7 +8883,7 @@
 							let _w = nWidth * AscCommon.g_dKoef_pix_to_mm;
 							let _h = nHeight * AscCommon.g_dKoef_pix_to_mm;
 							let oImage = oController.createImage(sImageUrl, 0, 0, _w, _h);
-							let oFirstSelectedObject = selectedObjects[0];
+
 							for (let nSp = 0; nSp < spTree.length; ++nSp) {
 								let oSp = spTree[nSp];
 								if (oSp === oFirstSelectedObject) {
