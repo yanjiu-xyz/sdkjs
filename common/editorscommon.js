@@ -13201,6 +13201,7 @@
 		this.api = oApi;
 		this.state = INK_DRAWER_STATE_OFF;
 		this.pen = null;
+		this.silentMode = false;
 	}
 	CInkDrawer.prototype.setState = function(nState) {
 		this.state = nState;
@@ -13220,9 +13221,18 @@
 		this.pen = null;
 		this.setState(INK_DRAWER_STATE_ERASE);
 	};
+	CInkDrawer.prototype.startSilentMode = function() {
+		this.silentMode = true;
+	};
+	CInkDrawer.prototype.endSilentMode = function() {
+		this.silentMode = false;
+	};
 	CInkDrawer.prototype.turnOff = function() {
 		this.pen = null;
 		this.setState(INK_DRAWER_STATE_OFF);
+		if(!this.silentMode) {
+			this.api.sendEvent("asc_onInkDrawerStop");
+		}
 	};
 	CInkDrawer.prototype.isOn = function() {
 		return this.state !== INK_DRAWER_STATE_OFF;

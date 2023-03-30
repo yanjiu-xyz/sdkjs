@@ -4521,7 +4521,6 @@
 	};
 	baseEditorsApi.prototype.asc_StopInkDrawer = function() {
 		this.inkDrawer.turnOff();
-		this.sendEvent("asc_onInkDrawerStop");
 	};
 	baseEditorsApi.prototype.onInkDrawerChangeState = function() {
 	};

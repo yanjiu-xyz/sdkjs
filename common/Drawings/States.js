@@ -194,7 +194,7 @@ StartAddNewShape.prototype =
                     if(oCurSlide) {
                         if(oPresentation.IsSelectionLocked(AscCommon.changestype_Timing) === false) {
                             oPresentation.StartAction(0);
-                            let oTiming = oCurSlide.timing;
+                            let oTiming;
                             let aAddedEffects;
                             aAddedEffects = oCurSlide.addAnimation(AscFormat.PRESET_CLASS_PATH, AscFormat.MOTION_SQUARE, 0, this.bReplace);
                             oTiming = oCurSlide.timing;
@@ -309,18 +309,25 @@ StartAddNewShape.prototype =
                     }
                     shape.addToDrawingObjects(undefined, AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
                     shape.checkDrawingBaseCoords();
-                    oThis.drawingObjects.checkChartTextSelection();
-                    oThis.drawingObjects.resetSelection();
-                    shape.select(oThis.drawingObjects, 0);
-                    if(oThis.preset === "textRect")
-                    {
-                        oThis.drawingObjects.selection.textSelection = shape;
-                        shape.recalculate();
-                        shape.selectionSetStart(e, x, y, 0);
-                        shape.selectionSetEnd(e, x, y, 0);
-                    }
+	                let oAPI = this.drawingObjects.getEditorApi();
+					if(!oAPI.isDrawInkMode())
+					{
+						oThis.drawingObjects.checkChartTextSelection();
+						oThis.drawingObjects.resetSelection();
+						shape.select(oThis.drawingObjects, 0);
+						if(oThis.preset === "textRect")
+						{
+							oThis.drawingObjects.selection.textSelection = shape;
+							shape.recalculate();
+							shape.selectionSetStart(e, x, y, 0);
+							shape.selectionSetEnd(e, x, y, 0);
+						}
+					}
                     oThis.drawingObjects.startRecalculate();
-                    oThis.drawingObjects.drawingObjects.sendGraphicObjectProps();
+					if(!oAPI.isDrawInkMode())
+					{
+						oThis.drawingObjects.drawingObjects.sendGraphicObjectProps();
+					}
                 }
 
             };

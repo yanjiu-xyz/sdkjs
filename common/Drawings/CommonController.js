@@ -10596,8 +10596,11 @@
 			return this.onMouseMove(e, x, y, pageIndex);
 		};
 		CInkEraseState.prototype.onMouseMove = function (e, x, y, pageIndex) {
+
+
 			if(this.controller.handleEventMode === HANDLE_EVENT_MODE_HANDLE) {
 				if(e.IsLocked) {
+					this.inkDrawer.startSilentMode();
 					const aDrawings = this.controller.getDrawingObjects(pageIndex);
 					for(let nIdx = aDrawings.length - 1; nIdx > -1; --nIdx) {
 						let oDrawing = aDrawings[nIdx];
@@ -10611,6 +10614,8 @@
 					}
 					this.changeControllerState(this);
 					this.inkDrawer.restoreState(this.startState);
+
+					this.inkDrawer.endSilentMode();
 				}
 				return true;
 			}
@@ -10637,8 +10642,10 @@
 		CInkDrawState.prototype.superclass = CDrawingControllerStateBase;
 		CInkDrawState.prototype.constructor = CInkDrawState;
 		CInkDrawState.prototype.onMouseDown = function (e, x, y, pageIndex) {
+			this.inkDrawer.startSilentMode();
 			const oResult = this.drawingState.onMouseDown(e, x, y, pageIndex);
 			this.checkControllerState();
+			this.inkDrawer.endSilentMode();
 			return {
 				objectId: null,
 				bMarker: true,
@@ -10646,13 +10653,18 @@
 			};
 		};
 		CInkDrawState.prototype.onMouseMove = function (e, x, y, pageIndex) {
+			this.inkDrawer.startSilentMode();
 			const oResult = this.drawingState.onMouseMove(e, x, y, pageIndex);
 			this.checkControllerState();
+			this.inkDrawer.endSilentMode();
 			return oResult;
 		};
 		CInkDrawState.prototype.onMouseUp = function (e, x, y, pageIndex) {
+
+			this.inkDrawer.startSilentMode();
 			const oResult = this.drawingState.onMouseUp(e, x, y, pageIndex);
 			this.checkControllerState();
+			this.inkDrawer.endSilentMode();
 			return oResult;
 		};
 		CInkDrawState.prototype.getPolylineState = function() {
