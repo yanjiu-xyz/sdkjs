@@ -1723,7 +1723,7 @@ CInlineLevelSdt.prototype.GetContentControlPr = function()
  */
 CInlineLevelSdt.prototype.CanBeDeleted = function()
 {
-	if (this.IsFixedForm())
+	if (this.IsFixedForm() && this.IsMainForm())
 		return false;
 
 	return (undefined === this.Pr.Lock || c_oAscSdtLockType.Unlocked === this.Pr.Lock || c_oAscSdtLockType.ContentLocked === this.Pr.Lock);
@@ -2495,7 +2495,7 @@ CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
 			&& oLogicDocument
 			&& oLogicDocument.IsCheckContentControlsLock()
 			&& ((this.IsPlaceHolder() && oLogicDocument.IsFillingFormMode())
-				|| (!this.CanBeEdited() && (oLogicDocument.IsFillingFormMode() || this.IsFixedForm()))))
+				|| (!this.CanBeEdited() && (oLogicDocument.IsFillingFormMode() || (this.IsFixedForm() && this.IsMainForm())))))
 		{
 			return AscCommon.CollaborativeEditing.Add_CheckLock(true);
 		}
