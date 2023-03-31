@@ -4989,6 +4989,14 @@ var editor;
     return this.isStartAddShape;
   };
 
+	spreadsheet_api.prototype.onInkDrawerChangeState = function() {
+		const oController = this.getGraphicController();
+		if(!oController) {
+			return;
+		}
+		oController.onInkDrawerChangeState();
+	};
+
   spreadsheet_api.prototype.asc_canAddShapeHyperlink = function() {
     var ws = this.wb.getWorksheet();
     return ws.objectRender.controller.canAddHyperlink();

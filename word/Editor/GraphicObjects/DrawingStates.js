@@ -169,8 +169,12 @@ StartAddNewShape.prototype =
                 drawing.Set_XYForAdd(shape.x, shape.y, nearest_pos, this.pageIndex);
                 drawing.AddToDocument(nearest_pos);
                 drawing.CheckWH();
-                this.drawingObjects.resetSelection();
-                shape.select(this.drawingObjects, this.pageIndex);
+				let oAPI = this.drawingObjects.getEditorApi();
+	            if(!oAPI.isDrawInkMode())
+	            {
+		            this.drawingObjects.resetSelection();
+		            shape.select(this.drawingObjects, this.pageIndex);
+	            }
                 this.drawingObjects.document.Recalculate();
 				oLogicDocument.FinalizeAction();
                 if(this.preset && (this.preset.indexOf("textRect") === 0))

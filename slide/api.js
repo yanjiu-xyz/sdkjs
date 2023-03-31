@@ -6851,6 +6851,11 @@ background-repeat: no-repeat;\
 		this.WordControl.m_oLogicDocument.Document_Format_Copy();
 	};
 
+	asc_docs_api.prototype.onInkDrawerChangeState = function()
+	{
+		this.WordControl.m_oLogicDocument.OnInkDrawerChangeState();
+	};
+
 	asc_docs_api.prototype.sync_PaintFormatCallback = function(value)
 	{
 		this.formatPainter.putState(value);

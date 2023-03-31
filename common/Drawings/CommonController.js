@@ -5860,6 +5860,8 @@
 						|| this.curState instanceof AscFormat.SplineBezierState
 						|| this.curState instanceof AscFormat.PolyLineAddState
 						|| this.curState instanceof AscFormat.AddPolyLine2State
+						|| this.curState instanceof AscFormat.CInkDrawState
+						|| this.curState instanceof AscFormat.CInkEraseState
 						|| this.haveTrackedObjects();
 				},
 
@@ -6528,6 +6530,10 @@
 								oParagraph.Document_SetThisElementCurrent(true);
 							}
 						}
+					}
+					const oApi = this.getEditorApi();
+					if(oApi.isInkDrawerOn()) {
+						oApi.asc_StopInkDrawer();
 					}
 				},
 
@@ -9083,6 +9089,24 @@
 				},
 				hitInGuide: function (x, y) {
 					return null;
+				},
+
+				onInkDrawerChangeState: function() {
+					const oAPI = this.getEditorApi();
+					if(oAPI.isInkDrawerOn()) {
+						if(oAPI.isDrawInkMode()) {
+							this.changeCurrentState(new AscFormat.CInkDrawState(this));
+						}
+						else {
+							this.changeCurrentState(new AscFormat.CInkEraseState(this));
+						}
+					}
+					else {
+						this.clearTrackObjects();
+						this.clearPreTrackObjects();
+						this.changeCurrentState(new AscFormat.NullState(this));
+						this.updateOverlay();
+					}
 				}
 			};
 
@@ -10572,6 +10596,119 @@
 		};
 
 
+		function CDrawingControllerStateBase(oController) {
+			this.controller = oController;
+			this.drawingObjects = oController;
+		}
+		CDrawingControllerStateBase.prototype.onMouseDown = function (e, x, y, pageIndex) {};
+		CDrawingControllerStateBase.prototype.onMouseMove = function (e, x, y, pageIndex) {};
+		CDrawingControllerStateBase.prototype.onMouseUp = function (e, x, y, pageIndex) {};
+		CDrawingControllerStateBase.prototype.changeControllerState = function(oState) {
+			this.controller.changeCurrentState(oState);
+		};
+
+		function CInkEraseState(drawingObjects) {
+			CDrawingControllerStateBase.call(this, drawingObjects);
+			const API = Asc.editor || editor;
+			this.inkDrawer = API.inkDrawer;
+			this.startState = API.inkDrawer.getState();
+		}
+		CInkEraseState.prototype = Object.create(CDrawingControllerStateBase.prototype);
+		CInkEraseState.prototype.superclass = CDrawingControllerStateBase;
+		CInkEraseState.prototype.constructor = CInkEraseState;
+		CInkEraseState.prototype.onMouseDown = function (e, x, y, pageIndex) {
+			return this.onMouseMove(e, x, y, pageIndex);
+		};
+		CInkEraseState.prototype.onMouseMove = function (e, x, y, pageIndex) {
+
+
+			if(this.controller.handleEventMode === HANDLE_EVENT_MODE_HANDLE) {
+				if(e.IsLocked) {
+					this.inkDrawer.startSilentMode();
+					const aDrawings = this.controller.getDrawingObjects(pageIndex);
+					for(let nIdx = aDrawings.length - 1; nIdx > -1; --nIdx) {
+						let oDrawing = aDrawings[nIdx];
+						if(oDrawing.isShape() && !oDrawing.getPresetGeom())  {
+							if(oDrawing.hit(x, y)) {
+								this.controller.resetSelection();
+								this.controller.selectObject(oDrawing, pageIndex);
+								this.controller.remove();
+							}
+						}
+					}
+					this.changeControllerState(this);
+					this.inkDrawer.restoreState(this.startState);
+
+					this.inkDrawer.endSilentMode();
+				}
+				return true;
+			}
+			else {
+				return {
+					objectId: null,
+					bMarker: true,
+					cursorType: "default"
+				};
+			}
+		};
+		CInkEraseState.prototype.onMouseUp = function (e, x, y, pageIndex) {
+			return null;
+		};
+
+		function CInkDrawState(drawingObjects) {
+			CDrawingControllerStateBase.call(this, drawingObjects);
+			this.drawingState = this.getPolylineState();
+			const API = Asc.editor || editor;
+			this.inkDrawer = API.inkDrawer;
+			this.startState = API.inkDrawer.getState();
+		}
+		CInkDrawState.prototype = Object.create(CDrawingControllerStateBase.prototype);
+		CInkDrawState.prototype.superclass = CDrawingControllerStateBase;
+		CInkDrawState.prototype.constructor = CInkDrawState;
+		CInkDrawState.prototype.onMouseDown = function (e, x, y, pageIndex) {
+			this.inkDrawer.startSilentMode();
+			const oResult = this.drawingState.onMouseDown(e, x, y, pageIndex);
+			this.checkControllerState();
+			this.inkDrawer.endSilentMode();
+			return {
+				objectId: null,
+				bMarker: true,
+				cursorType: "default"
+			};
+		};
+		CInkDrawState.prototype.onMouseMove = function (e, x, y, pageIndex) {
+			this.inkDrawer.startSilentMode();
+			const oResult = this.drawingState.onMouseMove(e, x, y, pageIndex);
+			this.checkControllerState();
+			this.inkDrawer.endSilentMode();
+			return oResult;
+		};
+		CInkDrawState.prototype.onMouseUp = function (e, x, y, pageIndex) {
+
+			this.inkDrawer.startSilentMode();
+			const oResult = this.drawingState.onMouseUp(e, x, y, pageIndex);
+			this.checkControllerState();
+			this.inkDrawer.endSilentMode();
+			return oResult;
+		};
+		CInkDrawState.prototype.getPolylineState = function() {
+			return new AscFormat.PolyLineAddState(this.controller);
+		};
+		CInkDrawState.prototype.checkControllerState = function() {
+			let oControllerState = this.controller.curState;
+			if(oControllerState === this) {
+				return;
+			}
+			this.controller.resetSelection();
+			this.changeControllerState(this);
+			let oDrawingState = oControllerState;
+			if(oControllerState instanceof AscFormat.NullState) {
+				oDrawingState = this.getPolylineState();
+			}
+			this.drawingState = oDrawingState;
+			this.inkDrawer.restoreState(this.startState);
+		};
+
 		function CDrawTask(rect) {
 			this.rect = null;
 			if (rect) {
@@ -10680,6 +10817,8 @@
 		window['AscFormat'].CARD_DIRECTION_W = CARD_DIRECTION_W;
 		window['AscFormat'].CARD_DIRECTION_NW = CARD_DIRECTION_NW;
 		window['AscFormat'].GeometryEditState = GeometryEditState;
+		window['AscFormat'].CInkDrawState = CInkDrawState;
+		window['AscFormat'].CInkEraseState = CInkEraseState;
 
 
 		window['AscFormat'].CURSOR_TYPES_BY_CARD_DIRECTION = CURSOR_TYPES_BY_CARD_DIRECTION;

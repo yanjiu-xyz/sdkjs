@@ -13193,6 +13193,70 @@
 		this.setColor(nR, nG, nB);
 		//console.log("Check Color r: " + nR + " g: " + nG + " b: " + nB);
 	};
+
+	const INK_DRAWER_STATE_OFF = 0;
+	const INK_DRAWER_STATE_DRAW = 1;
+	const INK_DRAWER_STATE_ERASE = 2;
+	function CInkDrawer(oApi) {
+		this.api = oApi;
+		this.state = INK_DRAWER_STATE_OFF;
+		this.pen = null;
+		this.silentMode = false;
+	}
+	CInkDrawer.prototype.setState = function(nState) {
+		this.state = nState;
+		this.api.onInkDrawerChangeState();
+	};
+	CInkDrawer.prototype.startDraw = function(oAscPen) {
+		this.pen = AscFormat.CorrectUniStroke(oAscPen);
+		if(!this.pen) {
+			this.pen = new AscFormat.CLn();
+			this.pen.w = 180000;
+			this.pen.Fill = AscFormat.CreateSolidFillRGB(255, 255, 0);
+			this.pen.Fill.transparent = 127;
+		}
+		this.setState(INK_DRAWER_STATE_DRAW);
+	};
+	CInkDrawer.prototype.startErase = function() {
+		this.pen = null;
+		this.setState(INK_DRAWER_STATE_ERASE);
+	};
+	CInkDrawer.prototype.startSilentMode = function() {
+		this.silentMode = true;
+	};
+	CInkDrawer.prototype.endSilentMode = function() {
+		this.silentMode = false;
+	};
+	CInkDrawer.prototype.turnOff = function() {
+		this.pen = null;
+		this.setState(INK_DRAWER_STATE_OFF);
+		if(!this.silentMode) {
+			this.api.sendEvent("asc_onInkDrawerStop");
+		}
+	};
+	CInkDrawer.prototype.isOn = function() {
+		return this.state !== INK_DRAWER_STATE_OFF;
+	};
+	CInkDrawer.prototype.isDraw = function() {
+		return this.state === INK_DRAWER_STATE_DRAW;
+	};
+	CInkDrawer.prototype.isErase = function() {
+		return this.state === INK_DRAWER_STATE_ERASE;
+	};
+	CInkDrawer.prototype.getPen = function() {
+		return this.pen;
+	};
+	CInkDrawer.prototype.getState = function() {
+		return {state: this.state, pen: this.pen};
+	};
+	CInkDrawer.prototype.restoreState = function(oState) {
+		if(!oState) {
+			return;
+		}
+		this.state = oState.state;
+		this.pen = oState.pen;
+	};
+
 	//------------------------------------------------------------fill polyfill--------------------------------------------
 	if (!Object.values) {
 		Object.values = function (obj) {
@@ -14287,6 +14351,7 @@
 	window["AscCommon"].CTextFormattingPasteData = CTextFormattingPasteData;
 	window["AscCommon"].CDrawingFormattingPasteData = CDrawingFormattingPasteData;
 	window["AscCommon"].CEyedropper = CEyedropper;
+	window["AscCommon"].CInkDrawer = CInkDrawer;
 	window["AscCommon"].CPluginCtxMenuInfo = CPluginCtxMenuInfo;
 
 })(window);

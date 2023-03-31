@@ -1587,14 +1587,14 @@
 				t.handlers.trigger("canvasClick");
 			}
 
-			if (!(asc["editor"].isStartAddShape || this.getSelectionDialogMode() || this.getCellEditMode() && !this.handlers.trigger("stopCellEditing"))) {
+			if (!(asc["editor"].isStartAddShape || asc["editor"].isInkDrawerOn() || this.getSelectionDialogMode() || this.getCellEditMode() && !this.handlers.trigger("stopCellEditing"))) {
 				const isPlaceholder = t.handlers.trigger("onPointerDownPlaceholder", coord.x, coord.y);
 				if (isPlaceholder) {
 					return;
 				}
 			}
 
-			if (asc["editor"].isStartAddShape || graphicsInfo) {
+			if (asc["editor"].isStartAddShape || asc["editor"].isInkDrawerOn() || graphicsInfo) {
 				// При выборе диапазона не нужно выделять автофигуру
 				if (this.getSelectionDialogMode()) {
 					return;
@@ -1796,7 +1796,7 @@
 				event.ClickCount = this.clickCounter.clickCount;
 				this.handlers.trigger("graphicObjectMouseUp", event, coord.x, coord.y);
 				this._changeSelectionDone(event);
-                if (asc["editor"].isStartAddShape)
+                if (asc["editor"].isStartAddShape || asc["editor"].isInkDrawerOn())
                 {
                     event.preventDefault && event.preventDefault();
                     event.stopPropagation && event.stopPropagation();

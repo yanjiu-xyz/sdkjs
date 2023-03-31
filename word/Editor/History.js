@@ -1123,6 +1123,9 @@ CHistory.prototype.ClearAdditional = function()
 		if(this.Api.isEyedropperStarted())
 			this.Api.cancelEyedropper();
 	}
+
+	if (this.Api && true === this.Api.isInkDrawerOn())
+		this.Api.asc_StopInkDrawer();
 };
 CHistory.prototype.private_UpdateContentChangesOnUndo = function(Item)
 {
