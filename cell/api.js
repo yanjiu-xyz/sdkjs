@@ -6890,6 +6890,7 @@ var editor;
       this.asc_addAutoFilter('TableStyleMedium2', options);
   
       History.EndTransaction();
+      return cells;
     }
     return null;
   };

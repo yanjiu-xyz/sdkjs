@@ -5298,7 +5298,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				["West","Boy","Fancy","38383","11","12.06","11.51"],
 				["West","Girl","Tee","38383","15","13.42","13.29"],
 				["West","Girl","Golf","38383","15","11.48","10.67"]
-				];
+			];
 			let testDataRange = new Asc.Range(0, 0, testData[0].length - 1, testData.length - 1);
 			fillData(wsData, testData, testDataRange);
 			let dataRef = wsData.getName() + "!" + testDataRange.getName();
@@ -5899,7 +5899,50 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
 		});
 	}
-
+	function testPivotShowDetails() {
+		QUnit.test('Test: Show Details', function (assert) {
+			let testData =  [
+				["Region","Gender","Style","Ship date","Units","Price","Cost"],
+				["East","Boy","Tee","1","12","11.04","10.42"],
+				["East","Boy","Golf","1","12","13","12.6"],
+				["East","Boy","Fancy","2","12","11.96","11.74"],
+				["East","Girl","Tee","2","10","11.27","10.56"],
+				["East","Girl","Golf","1","10","12.12","11.95"],
+				["East","Girl","Fancy","2","10","13.74","13.33"],
+				["West","Boy","Tee","1","11","11.44","10.94"],
+				["West","Boy","Golf","2","11","12.63","11.73"],
+				["West","Boy","Fancy","1","11","12.06","11.51"],
+				["West","Girl","Tee","2","15","13.42","13.29"],
+				["West","Girl","Golf","1","15","11.48","10.67"]
+			];
+			let standardNoFilter = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['East', 'Boy', 'Tee', 1, 12, 11.04, 10.42],
+				['East', 'Boy', 'Golf',	1, 12, 13, 12.6],
+				['East', 'Boy', 'Fancy', 2,	12,	11.96, 11.74],
+				['East', 'Girl', 'Tee',	2, 10,	11.27, 10.56],
+				['East', 'Girl', 'Golf', 1,	10, 12.12, 11.95],
+				['East', 'Girl', 'Fancy', 2, 10, 13.74,	13.33]
+			];
+			function CellValueToVar(oCellValue) {
+				return oCellValue.text ? oCellValue.text : oCellValue.number;
+			}
+			let testDataRange = new Asc.Range(0, 0, testData[0].length - 1, testData.length - 1);
+			fillData(wsData, testData, testDataRange);
+			let dataRef = wsData.getName() + "!" + testDataRange.getName();
+			let pivot = api._asc_insertPivot(wb, dataRef, ws, reportRange);
+			pivot.asc_getStyleInfo().asc_setName(api, pivot, pivotStyle);
+			pivot.asc_addRowField(api, 0);
+			pivot.asc_addRowField(api, 2);
+			pivot.asc_addRowField(api, 4);
+			pivot.asc_addColField(api, 1);
+			pivot.asc_addDataField(api, 5);
+			let cells = pivot.getCellArrayForDetails(4, 3).map(function(row) {
+				return row.map(CellValueToVar);
+			});
+			assert.deepEqual(cells, standardNoFilter, 'no-filter test')
+		});
+	}
 	QUnit.module("Pivot");
 
 	function startTests() {
@@ -5962,5 +6005,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 		testPivotMisc();
 
 		testPivotShowAs();
+
+		testPivotShowDetails();
 	}
 });
