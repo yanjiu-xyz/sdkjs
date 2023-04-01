@@ -6800,15 +6800,13 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_getPivotInfo = function(opt_pivotTable) {
-		var ws = this.wbModel.getActiveWs();
-		var activeCell = ws.selectionRange.activeCell;
-		var pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
-    // TEST
-    this.asc_showDetails(pivotTable);
-		if (pivotTable) {
-			return pivotTable.getContextMenuInfo(ws.selectionRange);
-		}
-		return null;
+    var ws = this.wbModel.getActiveWs();
+    var activeCell = ws.selectionRange.activeCell;
+    var pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
+    if (pivotTable) {
+      return pivotTable.getContextMenuInfo(ws.selectionRange);
+    }
+    return null;
 	};
   // Uses for % of, difference from, % difference from, running total in, % running total in, % of parent
   spreadsheet_api.prototype.asc_getPivotShowValueAsInfo = function(showAs, opt_pivotTable) {
@@ -6865,28 +6863,35 @@ var editor;
     return res;
   }
   // TableStyleMedium2
-  spreadsheet_api.prototype.asc_showDetails = function(opt_pivotTable) {
-    var ws = this.wbModel.getActiveWs();
-    var activeCell = ws.selectionRange.activeCell;
-    var pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
+  spreadsheet_api.prototype.asc_pivotShowDetails = function(opt_pivotTable) {
+    let ws = this.wbModel.getActiveWs();
+    let activeCell = ws.selectionRange.activeCell;
+    let pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
     if (pivotTable) {
-      var cells = pivotTable.getCellArrayForDetails(activeCell.row, activeCell.col);
+      let cells = pivotTable.getCellArrayForDetails(activeCell.row, activeCell.col);
       if (cells === null) {
         return null;
       }
-      var columnNames = pivotTable.asc_getCacheFields().map(function(field) {
-        return field.asc_getName();
-      });
-      console.log(cells);
-      // this.asc_addWorksheet('testSheet');
-      // ws = this.wbModel.getActiveWs();
-      // var tablePart = ws.createTablePart();
-      // ws.addTablePart(tablePart, true);
-      //var keka = this.asc_addAutoFilter('TableStyleMedium2', this.asc_getAddFormatTableOptions("$A$1:$E$2"));
-      // var range = new AscCommonExcel.Range(ws, 0, 0, cells.length, cells[0].length);
-      //console.log(tablePart);
-		}
-		return null;
+      History.Create_NewPoint();
+      History.StartTransaction();
+
+      this.asc_addWorksheet('testSheet');
+      ws = this.wbModel.getActiveWs();
+
+      for (let row = 0; row < cells.length; row += 1) {
+        for (let col = 0; col < cells[0].length; col += 1) {
+          let cell = ws.getRange4(row, col);
+          cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, cells[row][col]));
+        }
+      }
+
+      let range = new Asc.Range(0, 0, cells[0].length - 1, cells.length - 1).getAbsName(); //getAbsName()
+      let options = this.asc_getAddFormatTableOptions(range);
+      this.asc_addAutoFilter('TableStyleMedium2', options);
+  
+      History.EndTransaction();
+    }
+    return null;
   };
 
 	spreadsheet_api.prototype.asc_getAddPivotTableOptions = function(range) {
