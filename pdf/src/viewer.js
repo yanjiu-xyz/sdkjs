@@ -608,7 +608,7 @@
 		this.onLoadModule = function()
 		{
 			this.moduleState = ModuleState.Loaded;
-			window["AscViewer"]["InitializeFonts"]();
+			window["AscViewer"]["InitializeFonts"](this.Api.baseFontsPath !== undefined ? this.Api.baseFontsPath : undefined);
 
 			if (this._fileData != null)
 			{
@@ -737,7 +737,11 @@
 			}
 
 			var xhr = new XMLHttpRequest();
-			xhr.open('GET', "../../../../sdkjs/pdf/src/engine/cmap.bin", true);
+			let urlCmap = "../../../../sdkjs/pdf/src/engine/cmap.bin";
+			if (this.Api.isSeparateModule === true)
+				urlCmap = window["AscViewer"]["baseEngineUrl"] + "cmap.bin";
+
+			xhr.open('GET', urlCmap, true);
 			xhr.responseType = 'arraybuffer';
 
 			if (xhr.overrideMimeType)
