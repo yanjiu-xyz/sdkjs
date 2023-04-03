@@ -17618,7 +17618,8 @@
     };
     CChartDataRefs.prototype.privateCheckCellValueNumberOrEmpty = function(oCell) {
         var sValue = oCell.getValue();
-        if(AscCommon.isNumber(sValue) || sValue === "") {
+	    var dNumValue = oCell.getNumberValue();
+        if(AscFormat.isRealNumber(dNumValue) || sValue === "") {
             return true;
         }
         return false;

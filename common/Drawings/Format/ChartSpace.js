@@ -3999,7 +3999,7 @@ function(window, undefined) {
 				for (var i = 0; i < aAxes.length; ++i) {
 					var oAxis = aAxes[i];
 					if (oAxis && oAxis.title) {
-						var pos = this.chartObj.recalculatePositionText(oAxis);
+						var pos = this.chartObj.recalculatePositionText(oAxis.title);
 
 						if (oAxis.title.layout) {
 							layout = oAxis.title.layout;

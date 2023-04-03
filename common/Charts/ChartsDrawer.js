@@ -574,7 +574,7 @@ CChartsDrawer.prototype =
 					if (parentType === AscDFH.historyitem_type_Chart) {
 						pos = this._calculatePositionTitle(obj);
 					} else if (parentType === AscDFH.historyitem_type_ValAx || parentType === AscDFH.historyitem_type_CatAx || parentType === AscDFH.historyitem_type_DateAx) {
-						pos = this._calculatePositionAxisTitle(obj);
+						pos = this._calculatePositionAxisTitle(obj.parent);
 					}
 					break;
 				}
