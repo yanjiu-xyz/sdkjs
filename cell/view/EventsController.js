@@ -1937,6 +1937,9 @@
 			if (this.isFillHandleMode) {
 				t.fillHandleModeTimerId = window.setTimeout(function(){t._changeFillHandle2(event)},0);
 			}
+			if(t.view.Api.isEyedropperStarted()) {
+				this.view.Api.sendEvent("asc_onHideEyedropper");
+			}
 			return true;
 		};
 

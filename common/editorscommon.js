@@ -13145,6 +13145,7 @@
 	{
 		this.started = false;
 		this.endCallback = null;
+		this.api.sendEvent("asc_onHideEyedropper");
 		this.clearColor();
 		this.clearImageData();
 	};
