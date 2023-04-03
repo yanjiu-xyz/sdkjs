@@ -6862,7 +6862,10 @@ var editor;
     }
     return res;
   }
-  // TableStyleMedium2
+  /**
+   * @param {CT_pivotTableDefinition} opt_pivotTable 
+   * @return {boolean} Execution Success 
+   */
   spreadsheet_api.prototype.asc_pivotShowDetails = function(opt_pivotTable) {
     let ws = this.wbModel.getActiveWs();
     let activeCell = ws.selectionRange.activeCell;
@@ -6870,7 +6873,7 @@ var editor;
     if (pivotTable) {
       let cells = pivotTable.getCellArrayForDetails(activeCell.row, activeCell.col);
       if (cells === null) {
-        return null;
+        return false;
       }
       History.Create_NewPoint();
       History.StartTransaction();
@@ -6890,9 +6893,9 @@ var editor;
       this.asc_addAutoFilter('TableStyleMedium2', options);
   
       History.EndTransaction();
-      return cells;
+      return true;
     }
-    return null;
+    return false;
   };
 
 	spreadsheet_api.prototype.asc_getAddPivotTableOptions = function(range) {
