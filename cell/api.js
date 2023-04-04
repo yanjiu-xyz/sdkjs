@@ -6868,7 +6868,7 @@ var editor;
     for(let i = 0; i < wc; i += 1) {
       sheetNames.push(this.asc_getWorksheetName(i).toLowerCase());
     }
-    let name = null;
+    let name = 'Sheet';
     for (let i = 1; i < 1000; i += 1) {
       name = AscCommon.translateManager.getValue("Sheet") + i;
       if (sheetNames.indexOf(name.toLowerCase()) < 0) {
