@@ -5943,15 +5943,43 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
 				['East', 'Girl', 'Fancy', 2, 10, 13.74, 13.33],
 			];
+			let standardNoFilter12Girl = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				[null, null, null, null, null, null, null],
+			];
+			let standardFilterEastGT = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['East', 'Boy', 'Tee', 1, 12, 11.04, 10.42],
+				['East', 'Boy', 'Golf', 1, 12, 13, 12.6],
+				['East', 'Girl', 'Golf', 1, 10, 12.12, 11.95],
+			];
+			let standardFilterGTGT = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['East', 'Boy', 'Tee', 1, 12, 11.04, 10.42],
+				['East', 'Boy', 'Golf', 1, 12, 13, 12.6],
+				['East', 'Girl', 'Golf', 1, 10, 12.12, 11.95],
+				['West', 'Boy', 'Tee', 1, 11, 11.44, 10.94],
+				['West', 'Boy', 'Fancy', 1, 11, 12.06, 11.51],
+				['West', 'Girl', 'Golf', 1, 15, 11.48, 10.67],
+			];
 			function CellValueToVar(oCellValue) {
 				return oCellValue.text ? oCellValue.text : oCellValue.number;
 			}
-			function testPivotCellForDetails(row, col, standard, message) {
+			function testPivotCellForDetails(pivot, row, col, standard, message) {
 				let cells = pivot.getCellArrayForDetails(row, col).map(function(row) {
 					return row.map(CellValueToVar);
 				});
 				assert.deepEqual(cells, standard, message)
 			}
+			function getNewFilter(fld, index) {
+				var autoFilterObject = new Asc.AutoFiltersOptions();
+				pivot.fillAutoFiltersOptions(autoFilterObject, fld);
+				for (var i = 0; i < autoFilterObject.values.length; ++i) {
+					autoFilterObject.values[i].visible = i == index;
+				}
+				autoFilterObject.filter.type = Asc.c_oAscAutoFilterTypes.Filters;
+				return autoFilterObject;
+			};
 			let testDataRange = new Asc.Range(0, 0, testData[0].length - 1, testData.length - 1);
 			fillData(wsData, testData, testDataRange);
 			let dataRef = wsData.getName() + "!" + testDataRange.getName();
@@ -5962,11 +5990,17 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			pivot.asc_addRowField(api, 4);
 			pivot.asc_addColField(api, 1);
 			pivot.asc_addDataField(api, 5);
-			testPivotCellForDetails(4, 3, standardNoFilterEastGT, 'no-filter East | GT');
-			testPivotCellForDetails(5, 3, standardNoFilterFancyGT, 'no-filter East -> Fancy | GT');
-			testPivotCellForDetails(6, 3, standardNoFilter10GT, 'no-filter East -> Fancy -> 10 (Units) | GT');
-			testPivotCellForDetails(4, 2, standardNoFilterEastGirl, 'no-filter East | Girl');
-			testPivotCellForDetails(5, 2, standardNoFilterFancyGirl, 'no-filter East -> Fancy | Girl');
+			testPivotCellForDetails(pivot, 4, 3, standardNoFilterEastGT, 'no-filter East | GT');
+			testPivotCellForDetails(pivot, 5, 3, standardNoFilterFancyGT, 'no-filter East -> Fancy | GT');
+			testPivotCellForDetails(pivot, 6, 3, standardNoFilter10GT, 'no-filter East -> Fancy -> 10 (Units) | GT');
+			testPivotCellForDetails(pivot, 4, 2, standardNoFilterEastGirl, 'no-filter East | Girl');
+			testPivotCellForDetails(pivot, 5, 2, standardNoFilterFancyGirl, 'no-filter East -> Fancy | Girl');
+			testPivotCellForDetails(pivot, 5, 2, standardNoFilterFancyGirl, 'no-filter East -> Fancy | Girl');
+			testPivotCellForDetails(pivot, 7, 2, standardNoFilter12Girl, 'no-filter East -> Fancy -> 12 (Units) | Girl');
+			pivot.asc_addPageField(api, 3);
+			pivot.filterByFieldIndex(api, getNewFilter(3, 0), 3, true);
+			testPivotCellForDetails(pivot, 4, 3, standardFilterEastGT, 'filter 1 (ship date) East | GT');
+			testPivotCellForDetails(pivot, 17, 3, standardFilterGTGT, 'filter 1 (ship date) GTGT');
 		});
 	}
 	QUnit.module("Pivot");
