@@ -10392,6 +10392,7 @@ function(window, undefined) {
 		cat_ax.setLblAlgn(AscFormat.LBL_ALG_CTR);
 		cat_ax.setLblOffset(100);
 		cat_ax.setNoMultiLvlLbl(false);
+		cat_ax.setTickLblPos(c_oAscTickLabelsPos.TICK_LABEL_POSITION_NEXT_TO);
 		var scaling = cat_ax.scaling;
 		scaling.setOrientation(AscFormat.ORIENTATION_MIN_MAX);
 		val_ax.setScaling(new AscFormat.CScaling());
