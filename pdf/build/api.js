@@ -86,6 +86,9 @@
 
 			if (options["fontsPath"])
 				AscCommon.g_font_loader.fontFilesPath = options["fontsPath"];
+
+			if (options["theme"])
+				AscCommon.updateGlobalSkin(options["theme"]);
 		}
 
 		var apiFake = {

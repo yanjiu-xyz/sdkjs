@@ -165,6 +165,7 @@ window.onload = function()
 
 	var options = {};
 	options.enginePath = "./../src/engine/";
+	//options.theme = { type : "dark" };
 	//options.fontsPath = "https://url_to_fonts/";
 	window.Viewer = window.AscViewer.createViewer("mainPanel", options);
 	window.Thumbnails = window.AscViewer.createThumbnails("panelThimbnailsNatural");
