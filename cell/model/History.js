@@ -998,6 +998,9 @@ CHistory.prototype.Create_NewPoint = function()
 		if(oAPI.isEyedropperStarted()) {
 			oAPI.cancelEyedropper();
 		}
+		if (oAPI.isInkDrawerOn()) {
+			oAPI.asc_StopInkDrawer();
+		}
 	}
 	//this.workbook.handlers.trigger("cleanCutData");
 
