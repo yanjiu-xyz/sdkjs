@@ -12508,6 +12508,13 @@
 		}
 	};
 
+	CRadarSeries.prototype.getPreviewBrush = function() {
+		if(this.parent && this.parent.radarStyle === AscFormat.RADAR_STYLE_FILLED) {
+			return CSeriesBase.prototype.getPreviewBrush.call(this);
+		}
+		return CLineSeries.prototype.getPreviewBrush.call(this);
+	};
+
 	var ORIENTATION_MAX_MIN = 0;
     var ORIENTATION_MIN_MAX = 1;
 
