@@ -1346,11 +1346,15 @@ CInlineLevelSdt.prototype.CheckSelectionForDropCap = function(isUsePos, oEndPos,
  * Активен PlaceHolder сейчас или нет
  * @returns {boolean}
  */
-CInlineLevelSdt.prototype.IsPlaceHolder = function()
+CInlineLevelSdt.prototype.IsPlaceHolder = function(skipEditCheck)
 {
+	// TODO: Добавлен флаг skipEditCheck, чтобы обойти проверку в режиме редактирования
+	//       По хорошему нужно везде где используется IsPlaceHolder с этой проверкой сделать отдельный метод
+	//       что-то типа CanFillForm. А метод IsPlaceHolder должен быть простым без всяких флагов
+	
 	// В режиме редактирования мы не даем редактировать внутреннюю часть формы, поэтому пусть она ведет себя, как заполнитель
 	let logicDocument = this.GetLogicDocument();
-	if (this.IsForm() && !this.IsComplexForm() && logicDocument && logicDocument.IsDocumentEditor() && !logicDocument.IsFillingFormMode())
+	if (!skipEditCheck && this.IsForm() && !this.IsComplexForm() && logicDocument && logicDocument.IsDocumentEditor() && !logicDocument.IsFillingFormMode())
 		return true;
 	
 	return this.Pr.ShowingPlcHdr;
