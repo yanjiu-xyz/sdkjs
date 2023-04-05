@@ -136,7 +136,7 @@ var c_oAscError = Asc.c_oAscError;
 	{
 		return this._saveCheck();
 	};
-	spreadsheet_api.prototype.asc_Save = function (isNoUserSave, isSaveAs, isResaveAttack)
+	spreadsheet_api.prototype.asc_Save = function (isNoUserSave, isSaveAs, isResaveAttack, options)
 	{
 		if (this.isFrameEditor() || AscCommon.c_oAscAdvancedOptionsAction.None !== this.advancedOptionsAction)
 			return;
@@ -160,7 +160,7 @@ var c_oAscError = Asc.c_oAscError;
 				this.CoAuthoringApi.onUnSaveLock();
 
 			if (_isNaturalSave === true)
-				window["DesktopOfflineAppDocumentStartSave"](isSaveAs);
+				window["DesktopOfflineAppDocumentStartSave"](isSaveAs, undefined, undefined, undefined, options);
 		}
 	};
     spreadsheet_api.prototype.asc_DownloadAsNatural = spreadsheet_api.prototype.asc_DownloadAs;
@@ -168,7 +168,7 @@ var c_oAscError = Asc.c_oAscError;
 	{
         if (options && options.isNaturalDownload)
             return this.asc_DownloadAsNatural(options);
-		this.asc_Save(false, true);
+		this.asc_Save(false, true, undefined, options);
 	};
 	spreadsheet_api.prototype.asc_isOffline = function()
 	{
@@ -226,7 +226,7 @@ var c_oAscError = Asc.c_oAscError;
 			asc["editor"].CoAuthoringApi.onSaveChanges(_changes[i], null, true);
 		}
 	};
-	window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isForce, docinfo)
+	window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isForce, docinfo, options)
 	{
 		window.doadssIsSaveAs = isSaveAs;
 		if (true !== isForce && window.g_asc_plugins && AscCommon.EncryptionWorker.isNeedCrypt())
@@ -260,7 +260,7 @@ var c_oAscError = Asc.c_oAscError;
 			}
 		}
 
-		window["AscDesktopEditor"]["LocalFileSave"](_param, (password === undefined) ? asc["editor"].currentPassword : password, docinfo, 0, printOptions);
+		window["AscDesktopEditor"]["LocalFileSave"](_param, (password === undefined) ? asc["editor"].currentPassword : password, docinfo, (options && options.fileType) ? options.fileType : 0, printOptions);
 	};
 	window["DesktopOfflineAppDocumentEndSave"] = function(error, hash, password)
 	{
