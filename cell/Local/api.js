@@ -250,6 +250,7 @@ var c_oAscError = Asc.c_oAscError;
 				var printOptionsObj = asc["editor"].getPrintOptionsJson();
 				printOptionsObj["documentLayout"] = { "openedAt" : asc["editor"].openedAt };
 				printOptionsObj["locale"] = asc["editor"].asc_getLocale();
+				printOptionsObj["translate"] = AscCommon.translateManager.mapTranslate;
 
 				printOptions = JSON.stringify(printOptionsObj);
 			}
