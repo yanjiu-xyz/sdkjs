@@ -1401,14 +1401,13 @@ CInlineLevelSdt.prototype.private_ReplacePlaceHolderWithContent = function(bMath
 };
 CInlineLevelSdt.prototype.private_ReplaceContentWithPlaceHolder = function(isSelect, isForceUpdate)
 {
-	if (this.IsPlaceHolder())
+	if (this.IsPlaceHolder(true))
 	{
 		if (isForceUpdate)
 			this.private_FillPlaceholderContent();
 
 		return;
 	}
-
 
 	this.SetShowingPlcHdr(true);
 
