@@ -38,6 +38,7 @@
 var TRACK_CIRCLE_RADIUS     = 5;
 var TRACK_RECT_SIZE2        = 4;
 var TRACK_RECT_SIZE         = 8;
+var TRACK_RECT_SIZE_FORM    = 6;
 var TRACK_RECT_SIZE_CT      = 6;
 var TRACK_DISTANCE_ROTATE   = 25;
 var TRACK_DISTANCE_ROTATE2  = 25;
@@ -1147,6 +1148,11 @@ CAutoshapeTrack.prototype =
 
         switch (type)
         {
+            case AscFormat.TYPE_TRACK.FORM:
+            {
+                SCALE_TRACK_RECT_SIZE = Math.round(TRACK_RECT_SIZE_FORM * rPR);
+                type = AscFormat.TYPE_TRACK.SHAPE;
+            }
             case AscFormat.TYPE_TRACK.SHAPE:
             case AscFormat.TYPE_TRACK.GROUP:
             case AscFormat.TYPE_TRACK.CHART_TEXT:
