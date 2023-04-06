@@ -1025,3 +1025,6 @@ CSdtBase.prototype.CanPlaceCursorInside = function()
 	let logicDocument = this.GetLogicDocument();
 	return (!this.IsPicture() && (!this.IsForm() || this.IsComplexForm() || !logicDocument || logicDocument.IsFillingOFormMode()))
 };
+CSdtBase.prototype.SkipFillingFormModeCheck = function(isSkip)
+{
+};
