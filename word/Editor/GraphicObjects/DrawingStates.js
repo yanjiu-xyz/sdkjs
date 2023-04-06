@@ -1493,7 +1493,20 @@ MoveInGroupState.prototype =
             else
             {
                 this.group.parent.CheckWH();
-                this.group.parent.Set_XY(this.group.posX + posX, this.group.posY + posY, parent_paragraph, this.getStartPageNumber(), false);
+				let nPageNum;
+	            if(this.group && this.group.parent)
+				{
+		            nPageNum = this.group.parent.pageIndex;
+	            }
+				else if(AscFormat.isRealNumber(this.startPageIndex))
+				{
+		            nPageNum = this.startPageIndex;
+	            }
+				else
+	            {
+					nPageNum = 0;
+	            }
+                this.group.parent.Set_XY(this.group.posX + posX, this.group.posY + posY, parent_paragraph, nPageNum, false);
             }
             this.drawingObjects.document.Recalculate();
 			this.drawingObjects.document.FinalizeAction();
@@ -1503,14 +1516,6 @@ MoveInGroupState.prototype =
         this.drawingObjects.updateOverlay();
     }
 };
-	MoveInGroupState.prototype.getStartPageNumber = function()
-	{
-		if(this.group && this.group.parent)
-			return this.group.parent.pageIndex;
-		
-		return this.startPageIndex;
-	};
-
 
 function PreRotateInGroupState(drawingObjects, group, majorObject)
 {
@@ -1622,13 +1627,6 @@ ResizeInGroupState.prototype =
     onMouseMove: ResizeState.prototype.onMouseMove,
     onMouseUp: MoveInGroupState.prototype.onMouseUp
 };
-	ResizeInGroupState.prototype.getStartPageNumber = function()
-	{
-		if (this.group && this.group.parent)
-			return this.group.parent.pageIndex;
-		
-		return 0;
-	};
 
 function PreChangeAdjInGroupState(drawingObjects, group)
 {
