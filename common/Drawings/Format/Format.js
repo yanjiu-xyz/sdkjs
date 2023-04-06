@@ -1065,7 +1065,8 @@
 			TEXT: 2,
 			EMPTY_PH: 3,
 			CHART_TEXT: 4,
-			CROP: 5
+			CROP: 5,
+			FORM: 6
 		};
 		var TYPE_KIND = {
 			SLIDE: 0,

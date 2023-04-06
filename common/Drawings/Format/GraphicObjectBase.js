@@ -1128,6 +1128,8 @@
 			this.shdwSp.draw(graphics);
 		}
 	};
+	CGraphicObjectBase.prototype.drawAdjustments = function (drawingDocument) {
+	};
 	CGraphicObjectBase.prototype.getAllRasterImages = function (mapUrl) {
 	};
 	CGraphicObjectBase.prototype.getImageFromBulletsMap = function (oImages) {
