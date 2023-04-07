@@ -443,6 +443,14 @@ CParagraphContentBase.prototype.Cursor_Is_End = function()
 {
 	return true;
 };
+/**
+ * TODO: Надо объединить эту функцию с  IsCursorPlaceable, поскольку они по смыслу одинаковые
+ * и сделать тут по умолчанию false
+ */
+CParagraphContentBase.prototype.CanPlaceCursorInside = function()
+{
+	return true;
+};
 CParagraphContentBase.prototype.MoveCursorToStartPos = function()
 {
 };
@@ -3028,6 +3036,10 @@ CParagraphContentWithParagraphLikeContent.prototype.IsCursorPlaceable = function
 {
     return true;
 };
+CParagraphContentWithParagraphLikeContent.prototype.CanPlaceCursorInside = function()
+{
+	return true;
+};
 CParagraphContentWithParagraphLikeContent.prototype.IsCursorAtBegin = function()
 {
 	if (this.IsPlaceHolder())
@@ -3537,6 +3549,15 @@ CParagraphContentWithParagraphLikeContent.prototype.Set_SelectionContentPos = fu
 {
 	if (this.Content.length <= 0)
 		return;
+	
+	if (!this.CanPlaceCursorInside())
+	{
+		if (this.Paragraph && this.Paragraph.GetSelectDirection() > 0)
+			this.SelectAll(1);
+		else
+			this.SelectAll(-1);
+		return;
+	}
 
     var Selection = this.Selection;
 

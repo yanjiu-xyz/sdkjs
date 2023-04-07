@@ -10295,9 +10295,9 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 	}
 
 	this.private_CheckCursorPosInFillingFormMode();
-
 	this.private_UpdateCursorXY(true, true, isUpdateTarget);
-
+	
+	this.UpdateSelection();
 	this.UpdateInterface();
 	this.UpdateRulers();
 };
@@ -21294,8 +21294,27 @@ CDocument.prototype.controller_UpdateRulersState = function()
 		}
 	}
 };
+CDocument.prototype.HandleOformSelectionInEditMode = function()
+{
+	if (this.IsFillingFormMode())
+		return false;
+	
+	let selectionInfo = this.GetSelectedElementsInfo();
+	let form          = selectionInfo.GetInlineLevelSdt();
+	
+	if (!form || !form.IsForm() || form.IsComplexForm())
+		return false;
+	
+	form.SelectContentControl();
+	this.DrawingDocument.SelectEnabled(false);
+	this.DrawingDocument.TargetEnd();
+	return true;
+};
 CDocument.prototype.controller_UpdateSelectionState = function()
 {
+	if (this.HandleOformSelectionInEditMode())
+		return;
+	
 	if (true === this.Selection.Use)
 	{
 		// Выделение нумерации

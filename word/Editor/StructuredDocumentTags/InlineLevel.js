@@ -666,7 +666,7 @@ CInlineLevelSdt.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, U
 			}
 		}
 	}
-	else if (this.IsForm() && this.IsPlaceHolder() && UseContentPos)
+	else if (this.IsForm() && (this.IsPlaceHolder() || !this.CanPlaceCursorInside()) && UseContentPos)
 	{
 		return false;
 	}
@@ -772,7 +772,7 @@ CInlineLevelSdt.prototype.Get_RightPos = function(SearchPos, ContentPos, Depth, 
 			}
 		}
 	}
-	else if (this.IsForm() && this.IsPlaceHolder() && UseContentPos)
+	else if (this.IsForm() && (this.IsPlaceHolder() || !this.CanPlaceCursorInside()) && UseContentPos)
 	{
 		return false;
 	}
@@ -1353,11 +1353,19 @@ CInlineLevelSdt.prototype.IsPlaceHolder = function(skipEditCheck)
 	//       что-то типа CanFillForm. А метод IsPlaceHolder должен быть простым без всяких флагов
 	
 	// В режиме редактирования мы не даем редактировать внутреннюю часть формы, поэтому пусть она ведет себя, как заполнитель
-	let logicDocument = this.GetLogicDocument();
-	if (!this.SkipFillFormLock && !skipEditCheck && this.IsForm() && !this.IsComplexForm() && logicDocument && logicDocument.IsDocumentEditor() && !logicDocument.IsFillingFormMode())
-		return true;
+
+	// let logicDocument = this.GetLogicDocument();
+	// if (!this.SkipFillFormLock && !skipEditCheck && this.IsForm() && !this.IsComplexForm() && logicDocument && logicDocument.IsDocumentEditor() && !logicDocument.IsFillingFormMode())
+	// 	return true;
 	
 	return this.Pr.ShowingPlcHdr;
+};
+CInlineLevelSdt.prototype.CanPlaceCursorInside = function()
+{
+	if (this.SkipFillFormLock)
+		return false;
+	
+	return CSdtBase.prototype.CanPlaceCursorInside.apply(this, arguments);
 };
 CInlineLevelSdt.prototype.private_ReplacePlaceHolderWithContent = function(bMathRun)
 {
