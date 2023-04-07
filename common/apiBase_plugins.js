@@ -1585,6 +1585,18 @@
         return langName;
     };
 
+	function correctItemsWithData(items)
+	{
+		for (let i = 0, itemsLen = items.length; i < itemsLen; i++)
+		{
+			if (undefined !== items[i]["id"] && undefined !== items[i]["data"])
+				items[i]["id"] = items[i]["id"] + "_oo_sep_" + items[i]["data"];
+
+			if (items[i]["items"])
+				correctItemsWithData(items[i]["items"]);
+		}
+	}
+
 	/**
 	 * @typedef {Object} ContextMenuItem
 	 * The context menu item
@@ -1603,6 +1615,7 @@
 	 */
 	Api.prototype["pluginMethod_AddContextMenuItem"] = function(items)
 	{
+		if (items["items"]) correctItemsWithData(items["items"]);
 		this.onPluginAddContextMenuItem(items);
 	};
 
@@ -1615,7 +1628,99 @@
 	 */
 	Api.prototype["pluginMethod_UpdateContextMenuItem"] = function(items)
 	{
-		this.onPluginUpdateContextMenuItem(items);
+		if (items["items"]) correctItemsWithData(items["items"]);
+		this.onPluginUpdateContextMenuItem([items]);
 	};
 
+	/**
+	 * Shows modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} frameId - The frame ID.
+	 * @param {variation} variation - The plugin variation.
+	 * @alias ShowWindow 
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_ShowWindow"] = function(frameId, variation)
+	{
+		variation["guid"] = window.g_asc_plugins.guidAsyncMethod;
+		this.sendEvent("asc_onPluginWindowShow", frameId, variation);
+	};
+
+	/**
+	 * Close modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} frameId - The frame ID.
+	 * @alias CloseWindow
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_CloseWindow"] = function(frameId)
+	{
+		this.sendEvent("asc_onPluginWindowClose", frameId);
+	};
+
+	/**
+	 * Send message to window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} windowID - The frame ID.
+	 * @param {string} name - The event name.
+	 * @param {object} data - The even data.
+	 * @alias SendToWindow
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_SendToWindow"] = function(windowID, name, data)
+	{
+		window.g_asc_plugins.onPluginEventWindow(windowID, name, data);
+	};
+
+	/**
+	 * Resize modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} [frameId] - The frame ID.
+	 * @param {number} [size] - The frame size.
+	 * @param {number} [minSize] - The frame min size.
+	 * @param {number} [maxSize] - The frame max size.
+	 * @alias ResizeWindow
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_ResizeWindow"] = function(frameId, size, minSize, maxSize)
+	{
+		let guidAsync = window.g_asc_plugins.setPluginMethodReturnAsync();
+		this.sendEvent("asc_onPluginWindowResize", frameId, size, minSize, maxSize, function(){
+			window.g_asc_plugins.onPluginMethodReturn(guidAsync, 'resize_result');
+		});
+	};
+
+	/**
+	 * Mouse up modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} [frameId] - The frame ID.
+	 * @param {number} [x] - coordinate.
+	 * @param {number} [y] - coordinate.
+	 * @alias MouseUpWindow
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_MouseUpWindow"] = function(frameId, x, y)
+	{
+		this.sendEvent("asc_onPluginWindowMouseUp", frameId, x, y);
+	};
+
+	/**
+	 * Mouse move modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} [frameId] - The frame ID.
+ 	 * @param {number} [x] - coordinate.
+	 * @param {number} [y] - coordinate.
+	 * @alias MouseMoveWindow
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_MouseMoveWindow"] = function(frameId, x, y)
+	{
+		this.sendEvent("asc_onPluginWindowMouseMove", frameId, x, y);
+	};
 })(window);

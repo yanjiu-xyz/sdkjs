@@ -49,6 +49,7 @@ function ParaFieldChar(Type, LogicDocument)
 	this.Use           = true;
 	this.CharType      = undefined === Type ? fldchartype_Begin : Type;
 	this.ComplexField  = (this.CharType === fldchartype_Begin) ? new CComplexField(LogicDocument) : null;
+	this.fldData   = null;
 	this.Run           = null;
 	this.X             = 0;
 	this.Y             = 0;
@@ -84,6 +85,7 @@ ParaFieldChar.prototype.Copy = function()
 		oChar.SetComplexField(oComplexField);
 		oComplexField.ReplaceChar(oChar);
 	}
+	//todo fldData
 
 	return oChar;
 };
@@ -154,11 +156,13 @@ ParaFieldChar.prototype.Write_ToBinary = function(Writer)
 	// Long : CharType
 	Writer.WriteLong(this.Type);
 	Writer.WriteLong(this.CharType);
+	//todo fldData
 };
 ParaFieldChar.prototype.Read_FromBinary = function(Reader)
 {
 	// Long : CharType
 	this.Init(Reader.GetLong(), editor.WordControl.m_oLogicDocument);
+	//todo fldData
 };
 ParaFieldChar.prototype.SetParent = function(oParent)
 {

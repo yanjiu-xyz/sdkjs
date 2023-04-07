@@ -821,8 +821,9 @@
 		removeDefName: function(sheetId, name) {
 			this._removeDefName(sheetId, name, AscCH.historyitem_Workbook_DefinedNamesChange);
 			if (!this.wb.bUndoChanges && !this.wb.bRedoChanges) {
-				this.wb.handlers.trigger("updateCellWatches");
+				this.wb.handlers.trigger("updateCellWatches", sheetId);
 			}
+			this.wb.handlers.trigger("onChangePageSetupProps");
 		},
 		editDefinesNames: function(oldUndoName, newUndoName) {
 			var res = null;
@@ -860,6 +861,7 @@
 			if (!this.wb.bUndoChanges && !this.wb.bRedoChanges) {
 				this.wb.handlers.trigger("updateCellWatches");
 			}
+			this.wb.handlers.trigger("onChangePageSetupProps", newUndoName.sheetId);
 			return res;
 		},
 		checkDefName: function (name, sheetIndex) {
@@ -4680,7 +4682,7 @@
 				if(maxRow >= oThis.nRowsCount)
 					oThis.nRowsCount = maxRow + 1;
 				if(maxCol >= oThis.nColsCount)
-					oThis.nColsCount = maxCol + 1;
+					oThis.setColsCount(maxCol + 1);
 			}
 		});
 		this.mergeManager.worksheet = this;
@@ -4710,7 +4712,7 @@
 				if(maxRow >= oThis.nRowsCount)
 					oThis.nRowsCount = maxRow + 1;
 				if(maxCol >= oThis.nColsCount)
-					oThis.nColsCount = maxCol + 1;
+					oThis.setColsCount(maxCol + 1);
 			}
 		});
 		this.hyperlinkManager.setDependenceManager(this.mergeManager);
@@ -4882,7 +4884,7 @@
 		this.oSheetFormatPr = wsFrom.oSheetFormatPr.clone();
 		//this.index = wsFrom.index;
 		this.nRowsCount = wsFrom.nRowsCount;
-		this.nColsCount = wsFrom.nColsCount;
+		this.setColsCount(wsFrom.nColsCount);
 		var renameParams = {lastName: wsFrom.getName(), newName: this.getName(), tableNameMap: {}, slicerNameMap: {}, copySlicerError: false};
 		for (i = 0; i < wsFrom.TableParts.length; ++i)
 		{
@@ -5749,6 +5751,9 @@
 			result = Math.max(result, pane.topLeftFrozenCell.getRow0());
 		return result;
 	};
+	Worksheet.prototype.getSheetViewType=function(){
+		return this.sheetViews && this.sheetViews.length && this.sheetViews[0].view;
+	};
 	Worksheet.prototype.removeRows=function(start, stop, bExcludeHiddenRows){
 		var removeRowsArr = bExcludeHiddenRows ? this._getNoHiddenRowsArr(start, stop) : [{start: start, stop: stop}];
 		for(var i = removeRowsArr.length - 1; i >= 0; i--) {
@@ -5848,7 +5853,7 @@
 			}
 			t.cellsByColRowsCount = Math.max(t.cellsByColRowsCount, newNRow + 1);
 			t.nRowsCount = Math.max(t.nRowsCount, t.cellsByColRowsCount);
-			t.nColsCount = Math.max(t.nColsCount, newNCol + 1);
+			t.setColsCount(Math.max(t.nColsCount, newNCol + 1));
 		});
 	};
 	Worksheet.prototype._removeRows=function(start, stop){
@@ -6146,7 +6151,7 @@
 			this.cellsByCol[i + count] = this.cellsByCol[i];
 			this.cellsByCol[i] = undefined;
 		}
-		this.nColsCount = Math.max(this.nColsCount, this.getColDataLength());
+		this.setColsCount(Math.max(this.nColsCount, this.getColDataLength()));
 		this.aCols.splice(gc_nMaxCol0 - count + 1, count);
 		for(var i = this.aCols.length - 1; i >= index; --i) {
 			this.aCols[i + count] = this.aCols[i];
@@ -6155,7 +6160,7 @@
 				this.aCols[i + count].moveHor(count);
 			}
 		}
-		this.nColsCount = Math.max(this.nColsCount, this.aCols.length);
+		this.setColsCount(Math.max(this.nColsCount, this.aCols.length));
 		if (!this.workbook.bUndoChanges) {
 			//copy property from col/cell above
 			var oPrevCol = null;
@@ -6179,7 +6184,7 @@
 				for(var i = index; i < index + count; ++i) {
 					this.cellsByCol[i] = prevCellsByCol.clone();
 				}
-				this.nColsCount = Math.max(this.nColsCount, this.getColDataLength());
+				this.setColsCount(Math.max(this.nColsCount, this.getColDataLength()));
 				//show rows and remain only cell xf property
 				this.getRange3(0, index, gc_nMaxRow0, index + count - 1)._foreachNoEmpty(function(cell) {
 					cell.clearDataKeepXf(borders[cell.nRow]);
@@ -6968,7 +6973,7 @@
 			t.cellsByColRowsCount = Math.max(t.cellsByColRowsCount, nRow + 1);
 			t.nRowsCount = Math.max(t.nRowsCount, t.cellsByColRowsCount);
 			if (nCol >= t.nColsCount)
-				t.nColsCount = nCol + 1;
+				t.setColsCount(nCol + 1);
 		});
 		//init ColData otherwise all 'foreach' will not return this cell until saveContent(loadCells)
 		var sheetMemory = this.getColData(nCol);
@@ -7057,7 +7062,7 @@
 				else
 					oCurCol = new AscCommonExcel.Col(this, index);
 				this.aCols[index] = oCurCol;
-				this.nColsCount = index >= this.nColsCount ? index + 1 : this.nColsCount;
+				this.setColsCount(index >= this.nColsCount ? index + 1 : this.nColsCount)
 			}
 		}
 		return oCurCol;
@@ -7303,7 +7308,7 @@
 		//modify nRowsCount/nColsCount for correct foreach functions
 		wsTo.cellsByColRowsCount = Math.max(wsTo.cellsByColRowsCount, nRowsCountNew);
 		wsTo.nRowsCount = Math.max(wsTo.nRowsCount, wsTo.cellsByColRowsCount);
-		wsTo.nColsCount = Math.max(wsTo.nColsCount, nColsCountNew);
+		wsTo.setColsCount(Math.max(wsTo.nColsCount, nColsCountNew));
 		wsTo.getRange3(oBBoxTo.r1, oBBoxTo.c1, oBBoxTo.r2, oBBoxTo.c2)._foreachNoEmpty(function(cell){
 			var formula = cell.getFormulaParsed();
 			if (formula) {
@@ -7554,7 +7559,7 @@
 				sheetMemoryFrom.clear(oBBox.r1, oBBox.r2 + 1);
 			}
 		}
-		this.nColsCount = Math.max(this.nColsCount, this.getColDataLength());
+		this.setColsCount(Math.max(this.nColsCount, this.getColDataLength()));
 		//copy property from row/cell above
 		if (nLeft > 0 && !this.workbook.bUndoChanges)
 		{
@@ -7564,7 +7569,7 @@
 				for (var i = nLeft; i <= nRight; ++i) {
 					this.getColData(i).copyRange(prevSheetMemory, oBBox.r1, oBBox.r1, oBBox.r2 - oBBox.r1 + 1);
 				}
-				this.nColsCount = Math.max(this.nColsCount, this.getColDataLength());
+				this.setColsCount(Math.max(this.nColsCount, this.getColDataLength()));
 				//show rows and remain only cell xf property
 				this.getRange3(oBBox.r1, oBBox.c1, oBBox.r2, oBBox.c2)._foreachNoEmpty(function(cell) {
 					cell.clearDataKeepXf(borders[cell.nRow]);
@@ -11821,6 +11826,36 @@
 				}
 			}
 		}
+	};
+
+
+	Worksheet.prototype.setSheetViewType = function(val, addToHistory) {
+		var sheetView = this.sheetViews[0];
+
+		if (!sheetView) {
+			return;
+		}
+
+		var oldValue = sheetView.view;
+		if (oldValue !== val) {
+			sheetView.view = val;
+			if (addToHistory) {
+				History.Create_NewPoint();
+				History.StartTransaction();
+
+				History.Add(AscCommonExcel.g_oUndoRedoWorksheet, AscCH.historyitem_Worksheet_SetSheetViewType,
+					this.getId(), null, new UndoRedoData_FromTo(oldValue, val));
+
+				History.EndTransaction();
+			}
+
+			this.workbook.handlers.trigger("asc_updateSheetViewType", this.index);
+			return true;
+		}
+	};
+
+	Worksheet.prototype.setColsCount = function(val) {
+		this.nColsCount = val;
 	};
 
 
