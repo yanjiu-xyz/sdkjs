@@ -861,7 +861,7 @@ else
 					AP[MKType]["fontInfo"].push(fontInfo);
 				}
 			}
-			let nIFflag = reader.readInt();
+			let flags = reader.readInt();
 			if (flags & (1 << 0))
 			{
 				AP["IF"] = {};
