@@ -11164,7 +11164,17 @@ background-repeat: no-repeat;\
 			return;
 
 		oField.SelectOption(nIdx);
-		oField.UnionLastHistoryPoints(false);
+		if (oField._commitOnSelChange) {
+			oField.ApplyValueForAll();
+			this.WordControl.m_oDrawingDocument.TargetEnd();
+			oField._needApplyToAll		= false;
+			oField._needDrawHighlight	= true;
+			oField.mouseDownFieldObject = null;
+			
+			oViewer._paintFormsHighlight();
+		}
+		else
+			oField.UnionLastHistoryPoints(false);
 		oViewer._paintForms();
 	};
 	asc_docs_api.prototype.sync_OnDocumentOutlineUpdate = function()
@@ -12066,14 +12076,15 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_enterText = function(value)
 	{
 		let logicDocument = this.private_GetLogicDocument();
-		let documentRenderer = this.getDocumentRenderer();
+		let oViewer = this.getDocumentRenderer();
+
 		if (logicDocument)
 			return logicDocument.EnterText(value);
-		else if (documentRenderer.fieldFillingMode) {
-			documentRenderer.mouseDownFieldObject.EnterText(value);
-			if (documentRenderer.mouseDownFieldObject._needRecalc) {
-				documentRenderer._paintForms();
-				documentRenderer.onUpdateOverlay();
+		else if (oViewer.fieldFillingMode) {
+			oViewer.mouseDownFieldObject.EnterText(value);
+			if (oViewer.pagesInfo.pages[oViewer.mouseDownFieldObject._page].needRedrawForms) {
+				oViewer._paintForms();
+				oViewer.onUpdateOverlay();
 			}
 
 			this.WordControl.m_oDrawingDocument.TargetStart();

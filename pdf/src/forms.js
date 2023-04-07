@@ -93,9 +93,15 @@
 	//------------------------------------------------------------------------------------------------------------------
     
     let ALIGN_TYPE = {
-        left:   "left",
-        center: "center",
-        right:  "right"
+        left:   0,
+        center: 1,
+        right:  2
+    }
+
+    let APPEARANCE_TYPE = {
+        normal:     0,
+        rollover:   1,
+        mouseDown:  2
     }
 
     let border = {
@@ -241,7 +247,7 @@
         this._delay         = false;
         this._display       = display["visible"];
         this._doc           = null;
-        this._fillColor     = ["RGB",1,1,1];
+        this._fillColor     = [1,1,1];
         this._bgColor       = undefined;          // prop for old versions (fillColor)
         this._hidden        = false;             // This property has been superseded by the display property and its use is discouraged.
         this._lineWidth     = LINE_WIDTH.thin;  // In older versions of this specification, this property was borderWidth
@@ -258,7 +264,7 @@
                                         // although it is still valid for backward compatibility.
         this._borderColor   = undefined;
         this._submitName    = "";
-        this._textColor     = ["RGB",0,0,0];
+        this._textColor     = [0,0,0];
         this._fgColor       = undefined;
         this._textSize      = 10; // 0 == max text size // to do
         this._userName      = ""; // It is intended to be used as tooltip text whenever the cursor enters a field. 
@@ -444,8 +450,8 @@
 
         let X       = Math.round(this._pagePos.x * nScale);
         let Y       = Math.round(this._pagePos.y * nScale);
-        let nWidth  = Math.round(this._pagePos.w * nScale);
-        let nHeight = Math.round(this._pagePos.h * nScale);
+        let nWidth  = Math.round((this._pagePos.w) * nScale);
+        let nHeight = Math.round((this._pagePos.h) * nScale);
         
         oCtx.globalAlpha = 0.6; 
         if (this.type == "button" && this._buttonPressed) {
@@ -459,26 +465,78 @@
     };
 
     CBaseField.prototype.DrawBorders = function(oCtx) {
-        let oViewer = private_getViewer();
-        let nScale = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
-        let nLineWidth = 1 * nScale * this._lineWidth;
+        let oViewer     = private_getViewer();
+        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
+        let nLineWidth  = this._rect[0] / this._origRect[0] * nScale * this._lineWidth;
+
         oCtx.lineWidth = nLineWidth;
         if (nLineWidth == 0) {
             return;
         }
 
-        let X       = Math.round(this._pagePos.x * nScale) + nLineWidth / 2;
-        let Y       = Math.round(this._pagePos.y * nScale) + nLineWidth / 2;
-        let nWidth  = Math.round(this._pagePos.w * nScale) - nLineWidth;
-        let nHeight = Math.round(this._pagePos.h * nScale) - nLineWidth;
+        let X       = this._pagePos.x * nScale;
+        let Y       = this._pagePos.y * nScale;
+        let nWidth  = this._pagePos.w * nScale;
+        let nHeight = this._pagePos.h * nScale;
 
-        let color = {
-            r: this._borderColor[0] * 255,
-            g: this._borderColor[1] * 255,
-            b: this._borderColor[2] * 255
+        let color;
+        if (this._strokeColor.length == 1) {
+            color = {
+                r: this._strokeColor[0] * 255,
+                g: this._strokeColor[0] * 255,
+                b: this._strokeColor[0] * 255
+            }
         }
+        else if (this._strokeColor.length == 3) {
+            color = {
+                r: this._strokeColor[0] * 255,
+                g: this._strokeColor[1] * 255,
+                b: this._strokeColor[2] * 255
+            }
+        }
+        else if (this._strokeColor.length == 4) {
+            function cmykToRgb(c, m, y, k) {
+                return {
+                    r: Math.round(255 * (1 - c) * (1 - k)),
+                    g: Math.round(255 * (1 - m) * (1 - k)),
+                    b: Math.round(255 * (1 - y) * (1 - k))
+                }
+            }
+
+            color = cmykToRgb(this._strokeColor[0], this._strokeColor[1], this._strokeColor[2], this._strokeColor[3]);
+        }
+        
         oCtx.strokeStyle = `rgb(${color.r}, ${color.g}, ${color.b})`;
 
+        // корректировка координат по бордеру
+        switch (this._borderStyle) {
+            case BORDER_TYPES.solid:
+            case BORDER_TYPES.dashed:
+                Y += nLineWidth / 2;
+                X += nLineWidth / 2;
+                nWidth  -= nLineWidth;
+                nHeight -= nLineWidth;
+
+                break;
+            case BORDER_TYPES.beveled:
+                Y += nLineWidth / 2;
+                X += nLineWidth / 2;
+                nWidth  -= nLineWidth;
+                nHeight -= nLineWidth;
+                break;
+            case BORDER_TYPES.inset:
+                Y += nLineWidth / 2;
+                X += nLineWidth / 2;
+                nWidth  -= nLineWidth;
+                nHeight -= nLineWidth;
+                break;
+            case BORDER_TYPES.underline:
+                Y -= nLineWidth / 2;
+                //nWidth /= 2;
+                break;
+        }
+
+        // отрисовка
         switch (this._borderStyle) {
             case BORDER_TYPES.solid:
                 oCtx.setLineDash([]);
@@ -487,6 +545,7 @@
                 oCtx.stroke();
                 break;
             case BORDER_TYPES.beveled:
+                oCtx.setLineDash([]);
                 oCtx.beginPath();
                 oCtx.rect(X, Y, nWidth, nHeight);
                 oCtx.stroke();
@@ -613,6 +672,7 @@
             }
         }
     };
+    
     CBaseField.prototype.SetNeedRecalc = function(bRecalc) {
         if (bRecalc == false) {
             this._needRecalc = false;
@@ -654,9 +714,30 @@
             this._required = bRequired;
     };
     CBaseField.prototype.SetBorderColor = function(aColor) {
-        this._borderColor = aColor;
+        this._strokeColor = this._borderColor = aColor;
     };
+    CBaseField.prototype.SetBackgroundColor = function(aColor) {
+        this._fillColor = this._bgColor = aColor;
+    };
+    CBaseField.prototype.DrawBackground = function(oCtx) {
+        if (this._fillColor) {
+            let oViewer     = private_getViewer();
+            let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
 
+            let X       = Math.round(this._pagePos.x * nScale);
+            let Y       = Math.round(this._pagePos.y * nScale);
+            let nWidth  = Math.round((this._pagePos.w) * nScale);
+            let nHeight = Math.round((this._pagePos.h) * nScale);
+
+            oCtx.globalAlpha = 0.8;
+            let r = this._fillColor[0] * 255;
+            let g = this._fillColor[1] * 255;
+            let b = this._fillColor[2] * 255;
+
+            oCtx.fillStyle = `rgb(${r}, ${g}, ${b})`;
+            oCtx.fillRect(X, Y, nWidth, nHeight);
+        }
+    };
 
     /**
 	 * Gets Api class for this form.
@@ -704,12 +785,14 @@
         this._rollOverCaption   = undefined;
 
         this._buttonPressed = false;
+
         // internal
         TurnOffHistory();
         this._content           = new AscWord.CDocumentContent(null, editor.WordControl.m_oDrawingDocument, 0, 0, 0, 0, undefined, undefined, false);
         this._content.ParentPDF = this;
         this._content.SetUseXLimit(false);
-        this.SetAlign(align_Center);
+
+        this.SetAlign(ALIGN_TYPE.center);
 
         this._captionRun            = null;
         this._downCaptionRun        = null;
@@ -718,7 +801,7 @@
     CPushButtonField.prototype = Object.create(CBaseField.prototype);
 	CPushButtonField.prototype.constructor = CPushButtonField;
     CPushButtonField.prototype.AddImage = function(oImgData) {
-		if (!oImgData) {
+		if (!oImgData || this._buttonPosition == position["textOnly"]) {
 			return;
 		}
 		const oHTMLImg = oImgData.Image; m
@@ -733,18 +816,12 @@
             oParentRun.RemoveElement(oExistDrawing);
         }
         
-        let oViewer = private_getViewer();
-        let scaleCoef = oViewer.zoom * AscCommon.AscBrowser.retinaPixelRatio;
-        let oMargins = this.GetBordersWidth();
-
 		const dImgW = Math.max((oHTMLImg.width * AscCommon.g_dKoef_pix_to_mm), 1);
 		const dImgH = Math.max((oHTMLImg.height * AscCommon.g_dKoef_pix_to_mm), 1);
 		const oRect = this.getFormRelRect();
         let nContentWidth;
         switch (this._buttonPosition) {
             case position["iconTextH"]:
-                nContentWidth = this._content.GetElement(0).GetContentWidthInRange();
-                break;
             case position["textIconH"]:
                 nContentWidth = this._content.GetElement(0).GetContentWidthInRange();
                 break;
@@ -752,15 +829,18 @@
                 nContentWidth = 0;
                 break;
         }
-		const dFrmW = oRect.W - ((oMargins.left + oMargins.right) * g_dKoef_pix_to_mm / scaleCoef + nContentWidth);
-		const dFrmH = oRect.H - ((oMargins.top + oMargins.bottom) * g_dKoef_pix_to_mm / scaleCoef + nContentWidth);
-		const dCW = dFrmW/dImgW;
-		const dCH = dFrmH/dImgH;
+        
+		const dFrmW = oRect.W;
+		const dFrmH = oRect.H;
+		const dCW   = (dFrmW - nContentWidth)/dImgW;
+		const dCH   = dFrmH/dImgH;
 		const dCoef = Math.min(dCW, dCH);
 		const dDrawingW = dCoef*dImgW;
 		const dDrawingH = dCoef*dImgH;
-		const oDrawing = new AscCommonWord.ParaDrawing(dDrawingW, dDrawingH, null, this._content.DrawingDocument, this._content, null);
-		
+		const oDrawing  = new AscCommonWord.ParaDrawing(dDrawingW, dDrawingH, null, this._content.DrawingDocument, this._content, null);
+		oDrawing.Set_WrappingType(WRAPPING_TYPE_SQUARE);
+        oDrawing.Set_DrawingType(drawing_Inline);
+        
         let oShapeTrack = new AscFormat.NewShapeTrack("rect", 0, 0, this._content.Get_Theme(), null, null, null, 0);
 		oShapeTrack.track({}, dDrawingW, dDrawingH);
 		let oShape = oShapeTrack.getShape(true, this._content.DrawingDocument, null);
@@ -771,15 +851,14 @@
         oShape.setBodyPr(oBodyPr);
 		oShape.createTextBoxContent();
         oShape.textBoxContent.SetParagraphAlign(AscCommon.align_Center);
-        oShape.textBoxContent.GetElement(0).private_CompileParaPr(true);
-        oShape.recalculateTxBoxContent();
+        oShape.textBoxContent.Content[0].Set_DocumentIndex(0);
         
-        let oFill = new AscFormat.CUniFill();
-        oFill.fill = new AscFormat.CBlipFill();
+        let oFill   = new AscFormat.CUniFill();
+        oFill.fill  = new AscFormat.CBlipFill();
         oFill.fill.setRasterImageId(oImgData.src);
-        oFill.fill.tile = null;
-        oFill.fill.srcRect = null;
-        oFill.fill.stretch = true;
+        oFill.fill.tile     = null;
+        oFill.fill.srcRect  = null;
+        oFill.fill.stretch  = true;
         oFill.convertToPPTXMods();
         oShape.setFill(oFill);
 
@@ -838,11 +917,65 @@
         }
 
         oRunForImg.Add_ToContent(oRunForImg.Content.length, oDrawing);
+        //oRunForImg.AddText("Test2");
 		oDrawing.Set_Parent(oRunForImg);
 
         oShape.recalculate();
+        oShape.recalculateText();
+
 		this.SetNeedRecalc(true);
 	};
+    /**
+	 * Corrects the positions of the caption and image.
+	 * @memberof CPushButtonField
+	 * @typeofeditors ["PDF"]
+	 */
+    CPushButtonField.prototype.Internal_CorrectContentPos = function() {
+        if (this.GetDrawing() == null)
+            return;
+
+        let oPara1                      = this._content.GetElement(0);
+        let oRun                        = oPara1.GetElement(0);
+        oPara1.Pr.Spacing.Before        = 0;
+        oPara1.Pr.Spacing.After         = 0;
+        oPara1.CompiledPr.NeedRecalc    = true;
+        // удаляем таб
+        if (true == oRun.GetElement(oRun.GetElementsCount() - 1).IsTab()) {
+            oRun.RemoveFromContent(oRun.GetElementsCount() - 1, 1);
+        }
+
+        this._content.Recalculate_Page(0, true);
+
+        let oRect           = this.getFormRelRect();
+        let oContentBounds  = this._content.GetContentBounds(0);
+        
+        if (this._content.GetElementsCount() == 2) {
+            let nFreeVerSpace = oRect.H - (oContentBounds.Bottom - oContentBounds.Top);
+
+            if (oPara1.GetAllDrawingObjects().length != 0) {
+                oPara1.Pr.Spacing.Before = nFreeVerSpace / 2;
+            }
+
+            oPara1.Pr.Spacing.After = nFreeVerSpace / 2;
+            oPara1.CompiledPr.NeedRecalc = true;
+        }
+        else {
+            if (this._buttonPosition == position["iconTextH"])
+                this.SetAlign(ALIGN_TYPE.right);
+            else if (this._buttonPosition == position["textIconH"])
+                this.SetAlign(ALIGN_TYPE.left);
+
+            let nFreeHorSpace = oRect.W - (oContentBounds.Right - oContentBounds.Left);
+            
+            
+            let oTabs = new CParaTabs();
+            oTabs.Add(new CParaTab(Asc.c_oAscTabType.Left, this._content.X + oRun.GetContentWidthInRange() + nFreeHorSpace / 2, undefined));
+            oRun.Add_ToContent(oRun.GetElementsCount(), new AscWord.CRunTab());
+
+            oPara1.SetParagraphTabs(oTabs);
+        }
+    };
+
     /**
 	 * Gets the caption associated with a button.
 	 * @memberof CPushButtonField
@@ -888,11 +1021,13 @@
             case 0:
                 this._buttonCaption = cCaption;
                 let oCaptionRun;
+                let oPara = this._content.GetElement(0);
+
                 switch (this._buttonPosition) {
                     case position["textIconV"]:
                     case position["textOnly"]:
                     case position["textIconH"]:
-                        oCaptionRun = this._content.GetElement(0).GetElement(0);
+                        oCaptionRun = oPara.GetElement(0);
                         oCaptionRun.ClearContent();
                         oCaptionRun.AddText(cCaption);
                         this._captionRun = oCaptionRun;
@@ -907,9 +1042,17 @@
                         this._captionRun = oCaptionRun;
                         break;
                     case position["iconTextH"]:
-                        oCaptionRun = this._content.GetElement(0).GetElement(1);
-                        oCaptionRun.ClearContent();
-                        oCaptionRun.AddText(cCaption);
+                        oCaptionRun = oPara.GetElement(1);
+                        if (oCaptionRun.IsParaEndRun()) {
+                            oCaptionRun = new ParaRun(oPara, false);
+                            oCaptionRun.AddText(cCaption);
+                            oPara.AddToContent(1, oCaptionRun);
+                        }
+                        else {
+                            oCaptionRun.ClearContent();
+                            oCaptionRun.AddText(cCaption);
+                        }
+                        
                         this._captionRun = oCaptionRun;
                         break;
                     case position["overlay"]:
@@ -919,7 +1062,7 @@
                             oCaptionRun = oShapeCont.GetElement(0).GetElement(0);
                         }
                         else {
-                            oCaptionRun = this._content.GetElement(0).GetElement(0);
+                            oCaptionRun = oPara.GetElement(0);
                         }
                         
                         oCaptionRun.ClearContent();
@@ -953,15 +1096,13 @@
         };
 
         this.DrawBorders(oCtx);
-        let oMargins = this.GetBordersWidth();
-
-        let contentX = (X + nWidth * 0.01 + oMargins.left) * g_dKoef_pix_to_mm;
-        let contentY = (Y + nWidth * 0.01 + oMargins.top) * g_dKoef_pix_to_mm;
-        let contentXLimit = (X + nWidth * 0.99 - oMargins.right) * g_dKoef_pix_to_mm;
-        let contentYLimit = (Y + nHeight - nWidth * 0.01 - oMargins.bottom) * g_dKoef_pix_to_mm;
+        let oMargins = this.GetMarginsFromBorders(false, false);
         
-        contentY = Y * g_dKoef_pix_to_mm;
-
+        let contentX = (X + 2 * oMargins.left) * g_dKoef_pix_to_mm;
+        let contentY = (Y + 2 * oMargins.top) * g_dKoef_pix_to_mm;
+        let contentXLimit = (X + nWidth - 2 * oMargins.left) * g_dKoef_pix_to_mm;
+        let contentYLimit = (Y + nHeight - 2 * oMargins.bottom) * g_dKoef_pix_to_mm;
+        
         this._formRect.X = X * g_dKoef_pix_to_mm;
         this._formRect.Y = Y * g_dKoef_pix_to_mm;
         this._formRect.W = nWidth * g_dKoef_pix_to_mm;
@@ -972,26 +1113,8 @@
         this._contentRect.W = contentXLimit - contentX;
         this._contentRect.H = contentYLimit - contentY;
 
-        // контент посередине
-        let oDrawing = this.GetDrawing();
-        let nContentH = this._content.Get_EmptyHeight();
-        if (oDrawing) {
-            if (this._content.Content.length == 2)
-                contentY = contentY + ((contentYLimit - contentY) - (oDrawing.Extent.H + nContentH)) / 2;
-            else
-                contentY = contentY + ((contentYLimit - contentY) - oDrawing.Extent.H) / 2;
-        }
-        else {
-            if (this._content.Content.length == 2) {
-                if (this._buttonPosition == position["iconTextV"])
-                    contentY = contentY + ((contentYLimit - contentY) - nContentH) / 2 - nContentH;
-                else
-                    contentY = contentY + ((contentYLimit - contentY) - nContentH) / 2;
-            }
-            else
-                contentY = contentY + ((contentYLimit - contentY) - nContentH) / 2;
-        }
-            
+        if (this._needRecalc)
+            this.Internal_CorrectContentPos();
 
         if (contentX != this._oldContentPos.X || contentY != this._oldContentPos.Y ||
         contentXLimit != this._oldContentPos.XLimit) {
@@ -1000,18 +1123,9 @@
             this._content.XLimit = this._oldContentPos.XLimit   = contentXLimit;
             this._content.YLimit = this._oldContentPos.YLimit   = 20000;
             this._content.Recalculate_Page(0, true);
-            if (oDrawing && this._buttonPosition == position["overlay"]) {
-                oDrawing.GraphicObj.recalculateTxBoxContent();
-            }
         }
         else if (this._needRecalc) {
-            this._content.Content.forEach(function(element) {
-                element.Recalculate_Page(0);
-            });
-            if (oDrawing && this._buttonPosition == position["overlay"]) {
-                oDrawing.GraphicObj.recalculateTxBoxContent();
-            }
-
+            this._content.Recalculate_Page(0, false);
             this.SetNeedRecalc(false);
         }
 
@@ -1047,6 +1161,11 @@
         this._needDrawHighlight = true;
 
         this.buttonImportIcon();
+        if (this.IsNeedDrawFromStream() == true) {
+            this.SetDrawFromStream(false);
+            this.SetWasChanged(true);
+        }
+
         oViewer._paintFormsHighlight();
     };
     CPushButtonField.prototype.buttonImportIcon = function() {
@@ -1480,12 +1599,8 @@
         this._content = new AscWord.CDocumentContent(null, editor.WordControl.m_oDrawingDocument, 0, 0, 0, 0, undefined, undefined, false);
         this._content.ParentPDF = this;
         
-        let oPara = this._content.GetElement(0);
-        oPara.Recalculate_Page(0);
-        oPara.SetParagraphAlign(align_Center);
-        oPara.CompiledPr.NeedRecalc = false;
-        oPara.CompiledPr.Pr.ParaPr.Jc = align_Center;
-    }
+        this.SetAlign(ALIGN_TYPE.center);
+    };
     
     CBaseCheckBoxField.prototype = Object.create(CBaseField.prototype);
 	CBaseCheckBoxField.prototype.constructor = CBaseCheckBoxField;
@@ -1506,18 +1621,15 @@
             h: nHeight
         };
 
-        if (this.type == "checkbox")
-            this.DrawBorders(oCtx);
+        this.DrawBorders(oCtx);
 
-        let oMargins = this.GetBordersWidth();
+        let oMargins = this.GetMarginsFromBorders(false, false);
 
-        let contentX = (X + nWidth * 0.02 + oMargins.left) * g_dKoef_pix_to_mm;
-        let contentY = (Y + nWidth * 0.01 + oMargins.top) * g_dKoef_pix_to_mm;
-        let contentXLimit = (X + nWidth * 0.98 - oMargins.right) * g_dKoef_pix_to_mm;
-        let contentYLimit = (Y + nHeight - nWidth * 0.01 - oMargins.bottom) * g_dKoef_pix_to_mm;
+        let contentX        = (X + oMargins.left) * g_dKoef_pix_to_mm;
+        let contentY        = (Y + oMargins.top) * g_dKoef_pix_to_mm;
+        let contentXLimit   = (X + nWidth - oMargins.left) * g_dKoef_pix_to_mm;
+        let contentYLimit   = (Y + nHeight - oMargins.bottom) * g_dKoef_pix_to_mm;
         
-        contentY = Y * g_dKoef_pix_to_mm;
-
         this._formRect.X = X * g_dKoef_pix_to_mm;
         this._formRect.Y = Y * g_dKoef_pix_to_mm;
         this._formRect.W = nWidth * g_dKoef_pix_to_mm;
@@ -1530,10 +1642,6 @@
 
         // подгоняем размер галочки
         this.ProcessAutoFitContent();
-
-        // выставляем текст посередине
-        // let nContentH = this._content.GetElement(0).Get_EmptyHeight();
-        // contentY = contentY + ((contentYLimit - contentY) - nContentH) / 2;
 
         if (contentX != this._oldContentPos.X || contentY != this._oldContentPos.Y ||
         contentXLimit != this._oldContentPos.XLimit) {
@@ -1591,6 +1699,74 @@
         nNewFontSize = oBounds.H / g_dKoef_pt_to_mm;
         oRun.SetFontSize(nNewFontSize);
     };
+    /**
+     * Returns a canvas with origin view (from appearance stream) of current form.
+	 * @memberof CBaseCheckBoxField
+     * @param {number} nAPType - APPEARANCE_TYPE (type of AP)
+     * @param {boolean} isChecked - wheter to retuns view when checkbox is checked
+	 * @typeofeditors ["PDF"]
+     * @returns {canvas}
+	 */
+    CBaseCheckBoxField.prototype.GetOriginView = function(nAPType, isChecked) {
+        if (this._apIdx == -1)
+            return null;
+
+        let oViewer = private_getViewer();
+        let oFile   = oViewer.file;
+        
+        let oApearanceInfo  = this.GetOriginViewInfo();
+
+        let canvas  = document.createElement("canvas");
+        let nWidth  = oApearanceInfo["w"];
+        let nHeight = oApearanceInfo["h"];
+        
+        canvas.width    = nWidth;
+        canvas.height   = nHeight;
+
+        canvas.x    = oApearanceInfo["x"];
+        canvas.y    = oApearanceInfo["y"];
+        
+        let nRetValue, oApInfoTmp;
+
+        switch (nAPType) {
+            case APPEARANCE_TYPE.normal:
+                oApInfoTmp = oApearanceInfo["N"];
+                break;
+            case APPEARANCE_TYPE.rollover:
+                oApInfoTmp = oApearanceInfo["R"] ? oApearanceInfo["R"] : oApearanceInfo["N"];
+                break;
+            case APPEARANCE_TYPE.mouseDown:
+                oApInfoTmp = oApearanceInfo["D"] ? oApearanceInfo["D"] : oApearanceInfo["N"];
+                break;
+            default:
+                oApInfoTmp = oApearanceInfo["N"];
+                break;
+        }
+
+        nRetValue = isChecked ? oApInfoTmp["Yes"]["retValue"] : oApInfoTmp["Off"]["retValue"];
+
+        let supportImageDataConstructor = (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge) ? false : true;
+
+        let ctx             = canvas.getContext("2d");
+        let mappedBuffer    = new Uint8ClampedArray(oFile.memory().buffer, oApearanceInfo["retValue"], 4 * nWidth * nHeight);
+        let imageData       = null;
+
+        if (supportImageDataConstructor)
+        {
+            imageData = new ImageData(mappedBuffer, nWidth, nHeight);
+        }
+        else
+        {
+            imageData = ctx.createImageData(nWidth, nHeight);
+            imageData.data.set(mappedBuffer, 0);                    
+        }
+        if (ctx)
+            ctx.putImageData(imageData, 0, 0);
+        
+        oViewer.file.free(oApearanceInfo["retValue"]);
+
+        return canvas;
+    };
     CBaseCheckBoxField.prototype.SetExportValue = function(sValue) {
         this._exportValue = sValue;
     };
@@ -1603,7 +1779,8 @@
     {
         CBaseCheckBoxField.call(this, sName, FIELD_TYPE.checkbox, nPage, aRect);
 
-        this._style = style.ch;
+        this._style     = style.ch;
+        this._caption   = undefined;
     }
     CCheckBoxField.prototype = Object.create(CBaseCheckBoxField.prototype);
 	CCheckBoxField.prototype.constructor = CCheckBoxField;
@@ -1617,6 +1794,10 @@
             }
             else
                 TurnOffHistory();
+
+            if (field.IsNeedDrawFromStream() == true) {
+                field.SetDrawFromStream(false);
+            }
 
             let oRun = field._content.GetElement(0).GetElement(0);
             if (field._value != "Off") {
@@ -1807,6 +1988,10 @@
             }
 
             aFields.forEach(function(field) {
+                if (field.IsNeedDrawFromStream() == true) {
+                    field.SetDrawFromStream(false);
+                }
+
                 if (field == oThis)
                     return;
 
@@ -2030,18 +2215,57 @@
         this._richText = bRichText;
     };
     CTextField.prototype.SetValue = function(sValue) {
-        this._content.GetElement(0).GetElement(0).AddText(sValue);
+        let oPara = this._content.GetElement(0);
+        oPara.RemoveFromContent(1, oPara.GetElementsCount() - 1);
+        let oRun = oPara.GetElement(0);
+        oRun.ClearContent();
+
+        oRun.AddText(sValue);
+        // to do, добавить установку добавление rich value
+        this._content.MoveCursorToStartPos();
     };
-    CTextField.prototype.SetValueFormat = function(sValue) {
-        this._contentFormat.GetElement(0).GetElement(0).AddText(sValue);
+    /**
+	 * Gets the value of current form.
+	 * @memberof CTextField
+	 * @typeofeditors ["PDF"]
+     * @returns {string | Array} - can be array of rich value
+	 */
+    CTextField.prototype.GetValue = function() {
+        // to do обработать rich value
+        return this._content.GetElement(0).GetText({ParaEndToSpace: false});
+    };
+
+    /**
+	 * Set the default value as propetry.
+	 * @memberof CTextField
+     * @param {string | Array} value - string value or array of rich value.
+	 * @typeofeditors ["PDF"]
+	 */
+    CTextField.prototype.SetDefaultValue = function(value) {
+        this._defaultValue = value;
+        // to do, добавить установку rich value
+    };
+    CTextField.prototype.GetDefaultValue = function() {
+        return this._defaultValue;
+    };
+
+    /**
+	 * Applies default value to current form.
+	 * @memberof CTextField
+     * @param {string | Array} value - string value or array of rich value.
+	 * @typeofeditors ["PDF"]
+     * @returns {string}
+	 */
+    CTextField.prototype.ApplyDefaultValue = function() {
+        this.SetValue(this.GetDefaultValue());
     };
 
     CTextField.prototype.Draw = function(oCtx) {
         let oViewer = private_getViewer();
 
-        let X = this._rect[0];
-        let Y = this._rect[1];
-        let nWidth = ((this._rect[2]) - (this._rect[0]));
+        let X       = this._rect[0];
+        let Y       = this._rect[1];
+        let nWidth  = ((this._rect[2]) - (this._rect[0]));
         let nHeight = ((this._rect[3]) - (this._rect[1]));
 
         // save pos in page.
@@ -2054,12 +2278,15 @@
 
         let nScale = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
         
+        this.DrawBackground(oCtx);
         this.DrawBorders(oCtx);
         
-        let contentX        = (X + nWidth * 0.01) * g_dKoef_pix_to_mm;
-        let contentY        = (Y + nWidth * 0.01) * g_dKoef_pix_to_mm;
-        let contentXLimit   = (X + nWidth * 0.99) * g_dKoef_pix_to_mm;
-        let contentYLimit   = (Y + nHeight - nWidth * 0.01) * g_dKoef_pix_to_mm;
+        let oMargins = this.GetMarginsFromBorders(false, false);
+        
+        let contentX = (X + oMargins.left) * g_dKoef_pix_to_mm;
+        let contentY = (Y + oMargins.top) * g_dKoef_pix_to_mm;
+        let contentXLimit = (X + nWidth - oMargins.left) * g_dKoef_pix_to_mm;
+        let contentYLimit = (Y + nHeight - oMargins.bottom) * g_dKoef_pix_to_mm;
 
         let oContentToDraw = this._actions.Format && oViewer.mouseDownFieldObject != this ? this._contentFormat : this._content;
 
@@ -2073,6 +2300,11 @@
             // выставляем текст посередине
             let nContentH = this._content.GetElement(0).Get_EmptyHeight();
             contentY = (Y + nHeight / 2) * g_dKoef_pix_to_mm - nContentH / 2;
+        }
+        else {
+            contentY        = (Y + 12) * g_dKoef_pix_to_mm;
+            contentX        = (X + 10) * g_dKoef_pix_to_mm;
+            contentXLimit   = (X + nWidth - 10) * g_dKoef_pix_to_mm;
         }
 
         this._formRect.X = X * g_dKoef_pix_to_mm;
@@ -2106,7 +2338,7 @@
             oContentToDraw.ShiftView(this._curShiftView.x, this._curShiftView.y);
         }
 
-        if (this._bAutoShiftContentView)
+        if (this._bAutoShiftContentView && oViewer.mouseDownFieldObject == this)
             this.CheckFormViewWindow();
 
         let oGraphics = new AscCommon.CGraphics();
@@ -2118,7 +2350,7 @@
 		oGraphics.m_oFontManager = AscCommon.g_fontManager;
 		oGraphics.endGlobalAlphaColor = [255, 255, 255];
         oGraphics.transform(1, 0, 0, 1, 0, 0);
-        oGraphics.AddClipRect(oContentToDraw.X, oContentToDraw.Y, oContentToDraw.XLimit - oContentToDraw.X, contentYLimit - contentY);
+        oGraphics.AddClipRect(oContentToDraw.X, oContentToDraw.Y, oContentToDraw.XLimit - oContentToDraw.X, contentYLimit - contentY - (oMargins.bottom / 2) * g_dKoef_pix_to_mm);
 
         oContentToDraw.Draw(0, oGraphics);
 
@@ -2217,14 +2449,50 @@
         }
 
         if (aChars.length > 0) {
-            this.SetNeedRecalc(true);
+            this._doNotScroll == false && this.SetNeedRecalc(true);
             this._needApplyToAll = true; // флаг что значение будет применено к остальным формам с таким именем
             this._bAutoShiftContentView = true && this._doNotScroll == false;
+        }
+
+        if (this._doNotScroll) {
+            oPara.Recalculate_Page(0);
+            let isOutOfForm = this.IsTextOutOfForm();
+            if ((this._multiline && isOutOfForm.ver) || (isOutOfForm.hor && this._multiline == false))
+                AscCommon.History.Undo();
+
+            this.AddToRedraw();
         }
 
         this.SetWasChanged(true);
         return true;
     };
+    /**
+	 * Checks is text in form is out of form bounds.
+     * Note: in vertical case one line always be valid even if form is very short.
+	 * @memberof CTextField
+	 * @typeofeditors ["PDF"]
+     * @returns {object} - {hor: {boolean}, ver: {boolean}}
+	 */
+    CTextField.prototype.IsTextOutOfForm = function() {
+        let oPageBounds = this._content.GetContentBounds(0);
+        let oFormBounds = this.getFormRelRect();
+
+        let oResult = {
+            hor: false,
+            ver: false
+        }
+
+        if (oPageBounds.Right - oPageBounds.Left > oFormBounds.W) {
+            oResult.hor = true;
+        }
+
+        if (this._multiline && oPageBounds.Bottom - oPageBounds.Top > oFormBounds.H) {
+            oResult.ver = true;
+        }
+
+        return oResult;
+    };
+
     /**
 	 * Applies value of this field to all field with the same name.
 	 * @memberof CTextField
@@ -2265,6 +2533,13 @@
 
         if (aFields.length == 1)
             this._needApplyToAll = false;
+
+        // устанавливаем дефолтное значение формы
+        if (this.GetValue() == "" && this.GetDefaultValue() != null) {
+            this.ApplyDefaultValue();
+            this.SetNeedRecalc(true);
+            this.AddToRedraw();
+        }
 
         for (let i = 0; i < aFields.length; i++) {
             aFields[i].SetWasChanged(true); // фиксируем, что форма была изменена
@@ -2440,6 +2715,91 @@
             }
         }
     };
+    CTextField.prototype.CheckFormViewWindow = function()
+    {
+        // размеры всего контента
+        let oPageBounds = this._content.GetContentBounds(0);
+        let oFormBounds = this.getFormRelRect();
+
+        let oParagraph = this._content.GetElement(0);
+        
+        let nDx = 0, nDy = 0;
+
+        if (oPageBounds.Right - oPageBounds.Left > oFormBounds.W)
+        {
+            if (oPageBounds.Left > oFormBounds.X)
+                nDx = -oPageBounds.Left + oFormBounds.X;
+            else if (oPageBounds.Right < oFormBounds.X + oFormBounds.W)
+                nDx = oFormBounds.X + oFormBounds.W - oPageBounds.Right;
+        }
+        else
+        {
+            nDx = -this._content.ShiftViewX;
+        }
+
+        if (Math.abs(nDx) > 0.001 || Math.abs(nDy))
+        {
+            this._content.ShiftView(nDx, nDy);
+            this._originShiftView = {
+                x: this._content.ShiftViewX,
+                y: this._content.ShiftViewY
+            }
+        }
+
+        var oCursorPos  = oParagraph.GetCalculatedCurPosXY();
+        var oLineBounds = oParagraph.GetLineBounds(oCursorPos.Internal.Line);
+        var oLastLineBounds = oParagraph.GetLineBounds(oParagraph.GetLinesCount() - 1);
+
+	    nDx = 0;
+	    nDy = 0;
+
+        var nCursorT = Math.min(oCursorPos.Y, oLineBounds.Top);
+        var nCursorB = Math.max(oCursorPos.Y + oCursorPos.Height, oLineBounds.Bottom);
+        var nCursorH = Math.max(0, nCursorB - nCursorT);
+
+        if (oPageBounds.Right - oPageBounds.Left > oFormBounds.W)
+        {
+            if (oCursorPos.X < oFormBounds.X)
+                nDx = oFormBounds.X - oCursorPos.X;
+            else if (oCursorPos.X > oFormBounds.X + oFormBounds.W)
+                nDx = oFormBounds.X + oFormBounds.W - oCursorPos.X;
+        }
+
+        if (this._multiline) {
+            // если высота контента больше чем высота формы
+            if (oParagraph.IsSelectionUse()) {
+                if (oParagraph.GetSelectDirection() == 1) {
+                    if (nCursorT + nCursorH > oFormBounds.Y + oFormBounds.H)
+                        nDy = oFormBounds.Y + oFormBounds.H - (nCursorT + nCursorH);
+                }
+                else {
+                    if (nCursorT < oFormBounds.Y)
+                        nDy = oFormBounds.Y - nCursorT;
+                }
+            }
+            else {
+                if (oPageBounds.Bottom - oPageBounds.Top > oFormBounds.H) {
+                    if (oLastLineBounds.Bottom - Math.floor(((oFormBounds.Y + oFormBounds.H) * 1000)) / 1000 < 0)
+                        nDy = oFormBounds.Y + oFormBounds.H - oLastLineBounds.Bottom;
+                    else if (nCursorT < oFormBounds.Y)
+                        nDy = oFormBounds.Y - nCursorT;
+                    else if (nCursorT + nCursorH > oFormBounds.Y + oFormBounds.H)
+                        nDy = oFormBounds.Y + oFormBounds.H - (nCursorT + nCursorH);
+                }
+                else
+                    nDy = -this._content.ShiftViewY;
+            }
+        }
+
+        if (Math.abs(nDx) > 0.001 || Math.round(nDy) != 0)
+        {
+            this._content.ShiftView(nDx, nDy);
+            this._curShiftView = {
+                x: this._content.ShiftViewX,
+                y: this._content.ShiftViewY
+            }
+        }
+    };
 
     // pdf api methods
 
@@ -2526,6 +2886,8 @@
         this._contentFormat = new AscWord.CDocumentContent(null, editor.WordControl.m_oDrawingDocument, 0, 0, 0, 0, undefined, undefined, false);
         this._contentFormat.ParentPDF = this;
         this._contentFormat.SetUseXLimit(false);
+
+        this._markRect = null;
     };
     CComboBoxField.prototype = Object.create(CBaseListField.prototype);
 	CComboBoxField.prototype.constructor = CComboBoxField;
@@ -2533,27 +2895,12 @@
     CComboBoxField.prototype.Draw = function(oCtx) {
         let oViewer = private_getViewer();
 
+        this.DrawMarker(oCtx);
+        
         let X = this._rect[0];
         let Y = this._rect[1];
         let nWidth = (this._rect[2] - this._rect[0]);
         let nHeight = (this._rect[3] - this._rect[1]);
-
-        // маркер dropdown
-        let nMarkX = X + nWidth * 0.95 + (nWidth * 0.025) - (nWidth * 0.025)/4;
-        let nMarkWidth = nWidth * 0.025;
-        let nMarkHeight = nMarkWidth/ 2;
-        oCtx.beginPath();
-        oCtx.moveTo(nMarkX, Y + nHeight/2 + nMarkHeight/2);
-        oCtx.lineTo(nMarkX + nMarkWidth/2, Y + nHeight/2 - nMarkHeight/2);
-        oCtx.lineTo(nMarkX - nMarkWidth/2, Y + nHeight/2 - nMarkHeight/2);
-        oCtx.fill();
-
-        this._markRect = {
-            x1: (nMarkX - nMarkWidth/2) - ((X + nWidth) - (nMarkX + nMarkWidth/2)),
-            y1: Y,
-            x2: X + nWidth,
-            y2: Y + nHeight
-        }
 
         // save pos in page.
         this._pagePos = {
@@ -2566,15 +2913,17 @@
         this.DrawBorders(oCtx,);
         let oMargins = this.GetBordersWidth();
 
-        let contentX = (X + nWidth * 0.02 + oMargins.left) * g_dKoef_pix_to_mm;
-        let contentY = (Y + nWidth * 0.01 + oMargins.top) * g_dKoef_pix_to_mm;
-        let contentXLimit = (X + nWidth * 0.98 - oMargins.right) * g_dKoef_pix_to_mm;
-        let contentYLimit = (Y + nHeight - nWidth * 0.01 - oMargins.bottom) * g_dKoef_pix_to_mm;
+        let nScale = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
+
+        let nScaleX = this._rect[0] / this._origRect[0];
+
+        let contentX        = (X + nWidth * 0.02 + oMargins.left) * g_dKoef_pix_to_mm;
+        let contentY        = (Y + nWidth * 0.02 + oMargins.top) * g_dKoef_pix_to_mm;
+        let contentXLimit   = (this._markRect.x1 * nScaleX - nWidth * 0.025 ) * g_dKoef_pix_to_mm; // ограничиваем контент позицией маркера
+        let contentYLimit   = (Y + nHeight - nWidth * 0.02 - oMargins.bottom) * g_dKoef_pix_to_mm;
         
         let oContentToDraw = this._actions.Format && oViewer.mouseDownFieldObject != this ? this._contentFormat : this._content;
 
-        // ограничиваем контент позицией маркера
-        contentXLimit = this._markRect.x1 * g_dKoef_pix_to_mm; 
         let nContentH = this._content.GetElement(0).Get_EmptyHeight();
         contentY = (Y + nHeight / 2) * g_dKoef_pix_to_mm - nContentH / 2;
 
@@ -2604,13 +2953,13 @@
             this.SetNeedRecalc(false);
         }
         
-        this.CheckFormViewWindow();
+        if (oViewer.mouseDownFieldObject == this)
+            this.CheckFormViewWindow();
 
         let oGraphics = new AscCommon.CGraphics();
         let widthPx = oViewer.canvas.width;
         let heightPx = oViewer.canvas.height;
         
-        let nScale = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
         oGraphics.init(oCtx, widthPx * nScale, heightPx * nScale, widthPx * g_dKoef_pix_to_mm, heightPx * g_dKoef_pix_to_mm);
 		oGraphics.m_oFontManager = AscCommon.g_fontManager;
 		oGraphics.endGlobalAlphaColor = [255, 255, 255];
@@ -2625,11 +2974,53 @@
         
         oGraphics.RemoveClip();
     };
+    CComboBoxField.prototype.DrawMarker = function(oCtx) {
+        let oViewer = private_getViewer();
+        let nScale  = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
+
+        let X       = this._rect[0] * nScale;
+        let Y       = this._rect[1] * nScale;
+        let nWidth  = (this._rect[2] - this._rect[0]) * nScale;
+        let nHeight = (this._rect[3] - this._rect[1]) * nScale;
+        
+        let oMargins = this.GetBordersWidth(true);
+
+        let nMarkWidth  = (nWidth * 0.05);
+        let nMarkX      = (X + nWidth * 0.95) - oMargins.left;
+        let nMarkHeight = (nMarkWidth / 2);
+
+        oCtx.beginPath();
+        oCtx.moveTo(nMarkX, Y + nHeight/2 + nMarkHeight/2);
+        oCtx.lineTo(nMarkX + nMarkWidth/2, Y + nHeight/2 - nMarkHeight/2);
+        oCtx.lineTo(nMarkX - nMarkWidth/2, Y + nHeight/2 - nMarkHeight/2);
+        oCtx.fill();
+
+        // далее вычисляем координаты на самой странице, как origRect у field.
+        if (this._markRect != null)
+            return;
+
+        let origX       = this._origRect[0];
+        let origY       = this._origRect[1];
+        let orignWidth  = this._origRect[2] - this._origRect[0];
+        let origHeight  = this._origRect[3] - this._origRect[1]
+
+        let origMargins = this.GetBordersWidth();
+
+        let origMarkWidth  = (orignWidth * 0.05);
+        let origMarkX      = (origX + orignWidth * 0.95) - origMargins.left / AscCommon.AscBrowser.retinaPixelRatio; // to do (разобраться почему без деления получается неверные координаты по x)
+
+        this._markRect = {
+            x1: origMarkX - origMarkWidth / 2,
+            y1: origY,
+            x2: origMarkX + origMarkWidth / 2,
+            y2: origY + origHeight
+        }
+    };
     CComboBoxField.prototype.onMouseDown = function(x, y, e) {
         let oViewer = private_getViewer();
 
         let {X, Y} = private_getPageCoordsMM(x, y, this._page);
-        var pageObject = this.getPageByCoords(x - oViewer.x, y - oViewer.y);
+        var pageObject = oViewer.getPageByCoords(x - oViewer.x, y - oViewer.y);
 
         editor.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
         editor.WordControl.m_oDrawingDocument.m_lCurrentPage = 0; // to do
@@ -2645,6 +3036,10 @@
         }
         
         this._content.RecalculateCurPos();
+        if (this.IsNeedDrawFromStream() == true) {
+            this.SetDrawFromStream(false);
+            private_getViewer()._paintForms();
+        }
     };
     
     /**
@@ -2679,7 +3074,10 @@
         }
 
         this.SetNeedRecalc(true);
+        this._content.MoveCursorToStartPos();
         this._needApplyToAll = true;
+
+        this.SetWasChanged(true);
     };
 
     CComboBoxField.prototype.SetValue = function(sValue) {
@@ -2703,6 +3101,7 @@
             sTextToAdd = sValue;
 
         this._content.GetElement(0).GetElement(0).AddText(sTextToAdd);
+        this._content.MoveCursorToStartPos();
         this.CheckCurValueIndex();
     };
     CComboBoxField.prototype.SetValueFormat = function(sValue) {
@@ -2816,6 +3215,8 @@
             this._needApplyToAll = false;
 
         for (let i = 0; i < aFields.length; i++) {
+            aFields[i].SetWasChanged(true);
+
             if (this.HasShiftView())
                 aFields[i]._content.MoveCursorToStartPos();
 
@@ -2895,6 +3296,15 @@
 
         this._options = aOptToPush;
     };
+    /**
+	 * Set the default value as propetry.
+	 * @memberof CComboBoxField
+     * @param {string} value
+	 * @typeofeditors ["PDF"]
+	 */
+    CComboBoxField.prototype.SetDefaultValue = function(value) {
+        this._defaultValue = value;
+    };
     
     function CListBoxField(sName, nPage, aRect)
     {
@@ -2927,12 +3337,12 @@
         };
 
         this.DrawBorders(oCtx);
-        let oMargins = this.GetBordersWidth();
+        let oMargins = this.GetMarginsFromBorders(false, false);
 
-        let contentX = (X + nWidth * 0.01 + oMargins.left) * g_dKoef_pix_to_mm;
-        let contentY = (Y + nWidth * 0.01 + oMargins.top) * g_dKoef_pix_to_mm;
-        let contentXLimit = (X + nWidth * 0.99 - oMargins.right) * g_dKoef_pix_to_mm;
-        let contentYLimit = (Y + nHeight - nWidth * 0.01 - oMargins.bottom) * g_dKoef_pix_to_mm;
+        let contentX        = (X + oMargins.left) * g_dKoef_pix_to_mm;
+        let contentY        = (Y + oMargins.top) * g_dKoef_pix_to_mm;
+        let contentXLimit   = (X + nWidth - oMargins.left) * g_dKoef_pix_to_mm;
+        let contentYLimit   = (Y + nHeight - oMargins.bottom) * g_dKoef_pix_to_mm;
         
         this._formRect.X = X * g_dKoef_pix_to_mm;
         this._formRect.Y = Y * g_dKoef_pix_to_mm;
@@ -2943,6 +3353,11 @@
         this._contentRect.Y = contentY;
         this._contentRect.W = contentXLimit - contentX;
         this._contentRect.H = contentYLimit - contentY;
+
+        this._content.Content.forEach(function(para) {
+            para.Pr.Ind.FirstLine = oMargins.left * g_dKoef_pix_to_mm;
+            para.private_CompileParaPr(true);
+        });
 
         if (contentX != this._oldContentPos.X || contentY != this._oldContentPos.Y ||
         contentXLimit != this._oldContentPos.XLimit) {
@@ -3026,7 +3441,6 @@
 
         let aFields = this._doc.getWidgetsByName(this.GetFullName());
         let oThis = this;
-        
         
         if (bUnionPoints)
             this.UnionLastHistoryPoints();
@@ -3228,7 +3642,7 @@
             oPara.private_CompileParaPr(true);
         }
 
-        this._currentValueIndices = aIndexes.length > 1 ? aIndexes : aIndexes[0];
+        this._currentValueIndices = this._multipleSelection == true ? aIndexes : aIndexes[0];
     };
     CListBoxField.prototype.InsertOption = function(sName, sExport, nIdx) {
         let optToInsert = sExport ? [sName, sExport] : sName;
@@ -3292,6 +3706,11 @@
         this._bAutoShiftContentView = true;
         this.UnionLastHistoryPoints(false);
 
+        if (this._commitOnSelChange == true) {
+            this.ApplyValueForAll();
+			this._needApplyToAll = false;
+        }
+
         oViewer._paintForms();
     };
     CListBoxField.prototype.MoveSelectDown = function() {
@@ -3337,14 +3756,12 @@
         let nContentH       = oContentBounds.Bottom - oContentBounds.Top;
         let oScroll, oScrollDocElm, oScrollSettings;
 
-        if (nContentH < oContentRect.H)
-            return;
-
         if (typeof(bShow) != "boolean" && this._scrollInfo)
             bShow = this._scrollInfo.scroll.canvas.style.display == "none" ? false : true;
 
-        if (bShow == false) {
-            if (this._scrollInfo)
+        if (nContentH < oContentRect.H || this._doNotScroll) {
+            
+            if (bShow == false && this._scrollInfo)
                 this._scrollInfo.scroll.canvas.style.display = "none";
             return;
         }
@@ -3360,12 +3777,12 @@
             oScrollDocElm = document.createElement('div');
             document.getElementById('editor_sdk').appendChild(oScrollDocElm);
             oScrollDocElm.id = "formScroll_" + CListBoxField.scrollCount;
-            oScrollDocElm.style.top = oGlobalCoords1.Y - oBorderWidth.top / 2 + 'px';
-            oScrollDocElm.style.left = oGlobalCoords2.X + 'px';
-            oScrollDocElm.style.position = "absolute";
-            oScrollDocElm.style.display = "block";
-			oScrollDocElm.style.width = "14px";
-			oScrollDocElm.style.height = (oGlobalCoords2.Y - oGlobalCoords1.Y) + (oBorderWidth.top + oBorderWidth.bottom) / 2 + "px";
+            oScrollDocElm.style.top         = Math.round(oGlobalCoords1.Y) + 'px';
+            oScrollDocElm.style.left        = Math.round(oGlobalCoords2.X) + 'px';
+            oScrollDocElm.style.position    = "absolute";
+            oScrollDocElm.style.display     = "block";
+			oScrollDocElm.style.width       = "14px";
+			oScrollDocElm.style.height      = Math.round(oGlobalCoords2.Y) - Math.round(oGlobalCoords1.Y) + "px";
 
             let nMaxShiftY = oContentRect.H - nContentH;
 
@@ -3421,9 +3838,9 @@
                 let nScrollCoeff = this._content.ShiftViewY / nMaxShiftY;
                 this._scrollInfo.scrollCoeff = nScrollCoeff;
 
-                this._scrollInfo.docElem.style.top      = oGlobalCoords1.Y - oBorderWidth.top / 2 + 'px';
-                this._scrollInfo.docElem.style.left     = oGlobalCoords2.X + 'px';
-                this._scrollInfo.docElem.style.height   = (oGlobalCoords2.Y - oGlobalCoords1.Y) + (oBorderWidth.top + oBorderWidth.bottom) / 2 + "px";
+                this._scrollInfo.docElem.style.top      = Math.round(oGlobalCoords1.Y) + 'px';
+                this._scrollInfo.docElem.style.left     = Math.round(oGlobalCoords2.X) + 'px';
+                this._scrollInfo.docElem.style.height   = Math.round(oGlobalCoords2.Y) - Math.round(oGlobalCoords1.Y) + "px";
             
                 this._scrollInfo.oldZoom = oViewer.zoom;
                 this._scrollInfo.baseYPos = parseInt(this._scrollInfo.docElem.style.top);
@@ -3524,6 +3941,9 @@
             this._originShiftView.y = this._curShiftView.y;
         }
     };
+    CListBoxField.prototype.SetDefaultValue = function(sValue) {
+        this._defaultValue = sValue;
+    };
 
     function CSignatureField(sName, nPage, aRect)
     {
@@ -3576,113 +3996,6 @@
         return new CFormAction(this.type, this.script);
     }
     
-    CBaseField.prototype.CheckFormViewWindow = function()
-    {
-        let oParagraph  = this._content.GetElement(this._content.CurPos.ContentPos);
-        let nEndPos     = this._content.Pages[0].EndPos;
-
-        // размеры до текущего параграффа
-        this._content.Pages[0].EndPos = this._content.CurPos.ContentPos;
-        let oPageBoundsToCurPara = this._content.GetContentBounds(0);
-        this._content.Pages[0].EndPos = nEndPos;
-
-        // размеры всего контента
-        let oPageBounds     = this._content.GetContentBounds(0);
-        let oCurParaHeight  = oParagraph.Lines[0].Bottom - oParagraph.Lines[0].Top;
-
-        let oFormBounds = this.getFormRelRect();
-
-        let nDx = 0, nDy = 0;
-
-        if (oPageBounds.Right - oPageBounds.Left > oFormBounds.W)
-        {
-            if (oPageBounds.Left > oFormBounds.X)
-                nDx = -oPageBounds.Left + oFormBounds.X;
-            else if (oPageBounds.Right < oFormBounds.X + oFormBounds.W)
-                nDx = oFormBounds.X + oFormBounds.W - oPageBounds.Right;
-        }
-        else
-        {
-            nDx = -this._content.ShiftViewX;
-        }
-
-        // если высота контента больше чем высота формы (для нескольких параграфов)
-        if (this.type == "listbox") {
-            if (oPageBounds.Bottom - oPageBounds.Top > oFormBounds.H) {
-                if (oPageBoundsToCurPara.Bottom > oFormBounds.Y + oFormBounds.H)
-                    nDy = oFormBounds.Y + oFormBounds.H - oPageBoundsToCurPara.Bottom;
-                else if (oPageBoundsToCurPara.Bottom - oCurParaHeight < oFormBounds.Y)
-                    nDy = oFormBounds.Y - (oPageBoundsToCurPara.Bottom - oCurParaHeight);
-                else if (oPageBoundsToCurPara.Bottom < oFormBounds.Y)
-                    nDy = oCurParaHeight;
-            }
-        }
-
-        if (Math.abs(nDx) > 0.001 || Math.abs(nDy))
-        {
-            this._content.ShiftView(nDx, nDy);
-            this._originShiftView = {
-                x: this._content.ShiftViewX,
-                y: this._content.ShiftViewY
-            }
-        }
-
-        var oCursorPos  = oParagraph.GetCalculatedCurPosXY();
-        var oLineBounds = oParagraph.GetLineBounds(oCursorPos.Internal.Line);
-        var oLastLineBounds = oParagraph.GetLineBounds(oParagraph.GetLinesCount() - 1);
-
-	    nDx = 0;
-	    nDy = 0;
-
-        var nCursorT = Math.min(oCursorPos.Y, oLineBounds.Top);
-        var nCursorB = Math.max(oCursorPos.Y + oCursorPos.Height, oLineBounds.Bottom);
-        var nCursorH = Math.max(0, nCursorB - nCursorT);
-
-        if (oPageBounds.Right - oPageBounds.Left > oFormBounds.W)
-        {
-            if (oCursorPos.X < oFormBounds.X)
-                nDx = oFormBounds.X - oCursorPos.X;
-            else if (oCursorPos.X > oFormBounds.X + oFormBounds.W)
-                nDx = oFormBounds.X + oFormBounds.W - oCursorPos.X;
-        }
-
-        if (this._multiline) {
-            // если высота контента больше чем высота формы
-            if (oParagraph.IsSelectionUse()) {
-                if (oParagraph.GetSelectDirection() == 1) {
-                    if (nCursorT + nCursorH > oFormBounds.Y + oFormBounds.H)
-                        nDy = oFormBounds.Y + oFormBounds.H - (nCursorT + nCursorH);
-                }
-                else {
-                    if (nCursorT < oFormBounds.Y)
-                        nDy = oFormBounds.Y - nCursorT;
-                }
-            }
-            else {
-                if (oPageBounds.Bottom - oPageBounds.Top > oFormBounds.H) {
-                    if (oLastLineBounds.Bottom - Math.floor(((oFormBounds.Y + oFormBounds.H) * 1000)) / 1000 < 0)
-                        nDy = oFormBounds.Y + oFormBounds.H - oLastLineBounds.Bottom;
-                    else if (nCursorT < oFormBounds.Y)
-                        nDy = oFormBounds.Y - nCursorT;
-                    else if (nCursorT + nCursorH > oFormBounds.Y + oFormBounds.H)
-                        nDy = oFormBounds.Y + oFormBounds.H - (nCursorT + nCursorH);
-                }
-                else
-                    nDy = -this._content.ShiftViewY;
-            }
-        }
-
-        if (this.type == "listbox") nDx = 0;
-
-        if (Math.abs(nDx) > 0.001 || Math.round(nDy) != 0)
-        {
-            this._content.ShiftView(nDx, nDy);
-            this._curShiftView = {
-                x: this._content.ShiftViewX,
-                y: this._content.ShiftViewY
-            }
-        }
-    };
     CBaseField.prototype.RevertContentViewToOriginal = function() {
         this._content.ResetShiftView();
         this._curShiftView.x = this._originShiftView.x;
@@ -3701,9 +4014,9 @@
             this._curShiftView.x != this._originShiftView.x)
             return true;
     };
-    CBaseField.prototype.GetBordersWidth = function(bZoomed) {
+    CBaseField.prototype.GetBordersWidth = function(bScaled) {
         let oViewer = private_getViewer();
-        let nLineWidth = bZoomed == true ? this._lineWidth * AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom : this._lineWidth * AscCommon.AscBrowser.retinaPixelRatio;
+        let nLineWidth = bScaled == true ? 1.25 * this._lineWidth * AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom : 1.25 * this._lineWidth;
 
         if (nLineWidth == 0 || this.type == "radiobutton") {
             return {
@@ -3752,6 +4065,36 @@
                 }
         }
     };
+    CBaseField.prototype.GetMarginsFromBorders = function(bScaled, bMM) {
+        let oBorders    = this.GetBordersWidth(bScaled);
+        let nKoeff      = bMM == true ? g_dKoef_pix_to_mm : 1;
+
+        switch (this._borderStyle) {
+            case BORDER_TYPES.solid:
+            case BORDER_TYPES.dashed:
+            case BORDER_TYPES.underline:
+                return {
+                    left:     oBorders.bottom * nKoeff,
+                    top:      oBorders.bottom * nKoeff,
+                    right:    oBorders.bottom * nKoeff,
+                    bottom:   oBorders.bottom * nKoeff
+                }
+            case BORDER_TYPES.inset:
+                return {
+                    left:     oBorders.bottom * nKoeff,
+                    top:      oBorders.bottom * nKoeff,
+                    right:    oBorders.bottom * nKoeff,
+                    bottom:   oBorders.bottom * nKoeff
+                }
+            case BORDER_TYPES.beveled:
+                return {
+                    left:     oBorders.bottom * nKoeff,
+                    top:      oBorders.bottom * nKoeff,
+                    right:    oBorders.bottom * nKoeff,
+                    bottom:   oBorders.bottom * nKoeff
+                }
+        };
+    };
     CBaseField.prototype.HasShiftView = function() {
         if (this._content.ShiftViewX != 0 || this._content.ShiftViewY != 0)
             return true;
@@ -3762,14 +4105,27 @@
         this._content.MoveCursorToStartPos();
     };
     CBaseField.prototype.SetAlign = function(nAlgnType) {
+        let nGlobalType;
+        switch (nAlgnType) {
+            case ALIGN_TYPE.left:
+                nGlobalType = align_Left;
+                break;
+            case ALIGN_TYPE.center:
+                nGlobalType = align_Center;
+                break;
+            case ALIGN_TYPE.right:
+                nGlobalType = align_Right;
+                break;
+        }
+
         this._content.SetApplyToAll(true);
-        this._content.SetParagraphAlign(nAlgnType);
+        this._content.SetParagraphAlign(nGlobalType);
         this._content.GetElement(0).private_CompileParaPr(true);
         this._content.SetApplyToAll(false);
 
         if (this._contentFormat) {
             this._contentFormat.SetApplyToAll(true);
-            this._contentFormat.SetParagraphAlign(nAlgnType);
+            this._contentFormat.SetParagraphAlign(nGlobalType);
             this._contentFormat.SetApplyToAll(false);
             this._contentFormat.GetElement(0).private_CompileParaPr(true);
         }
@@ -3793,13 +4149,8 @@
 
         let oViewer = private_getViewer();
         let oFile   = oViewer.file;
-        let oPage   = oViewer.drawingPages[this._page];
-
-        let w = (oPage.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let h = (oPage.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-
-        let aFormsInfo      = oFile.nativeFile.getInteractiveFormsAP(this._page, w, h);
-        let oApearanceInfo  = aFormsInfo[this._apIdx];
+        
+        let oApearanceInfo  = this.GetOriginViewInfo();
 
         let canvas  = document.createElement("canvas");
         let nWidth  = oApearanceInfo["w"];
@@ -3833,18 +4184,53 @@
 
         return canvas;
     };
+    /**
+     * Returns AP info of this field.
+	 * @memberof CBaseField
+	 * @typeofeditors ["PDF"]
+     * @returns {Object}
+	 */
+    CBaseField.prototype.GetOriginViewInfo = function() {
+        let oViewer     = private_getViewer();
+        let oPageInfo   = oViewer.pagesInfo.pages[this._page];
+        
+        if (oPageInfo.fieldsAPInfo == null || oPageInfo.fieldsAPInfo.zoom != oViewer.zoom) {
+            let oFile   = oViewer.file;
+            let oPage   = oViewer.drawingPages[this._page];
+
+            let w = (oPage.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+            let h = (oPage.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+
+            oPageInfo.fieldsAPInfo = {
+                info: oFile.nativeFile.getInteractiveFormsAP(this._page, w, h),
+                zoom: oViewer.zoom
+            }
+        }
+        
+        return oPageInfo.fieldsAPInfo.info[this._apIdx];
+    };
+
     CBaseField.prototype.DrawOriginView = function(oCtx) {
         let oViewer = private_getViewer();
-        let originView = this.GetOriginView();
+        let originView;
+        if (this._originView == null || (this._originView &&  this._originView.zoom != oViewer.zoom)) {
+            originView = this.GetOriginView();
+            this._originView = originView;
+            this._originView.zoom = oViewer.zoom;
+        }
+        else {
+            originView = this._originView;
+        }
+
         let nScale = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
 
         let X = this._rect[0];
         let Y = this._rect[1];
         let nWidth = ((this._rect[2]) - (this._rect[0]));
         let nHeight = ((this._rect[3]) - (this._rect[1]));
-
+        
         if (originView) {
-            oCtx.clearRect(X * nScale, Y * nScale, (nWidth + 1) * nScale, ((nHeight + 1) * nScale));
+            oCtx.clearRect(X * nScale, Y * nScale, (nWidth + 1 * nScale) * nScale, ((nHeight + 1 * nScale) * nScale));
 
             let x = Math.round((X * nScale));
             let y = Math.round((Y * nScale));
@@ -3852,7 +4238,6 @@
             let h = Math.round(((nHeight + 1) * nScale));
 
             oCtx.drawImage(originView, 0, 0, originView.width, originView.height, originView.x, originView.y, originView.width, originView.height);
-            return;
         }
     };
     // for format
@@ -4221,7 +4606,7 @@
         oCultureInfo.MonthNames.length = 12;
 
         let oResParsed = oFormatParser.parseDatePDF(sCurValue, oCultureInfo, oNumFormat);
-        
+                
         if (sCurValue == "")
             oTargetRun.ClearContent();
         if (!oResParsed) {
@@ -4262,6 +4647,7 @@
         if (!oCurForm)
             return;
 
+        // to do сделать обработку ms 
         let oCultureInfo = {};
         Object.assign(oCultureInfo, AscCommon.g_aCultureInfos[9]);
 
@@ -4276,7 +4662,7 @@
                 }
                 break;
             case 1:
-                sFormat = "h:MM AM/PM";
+                sFormat = "h:MM tt";
                 fIsValidTime = function isValidTime(time) {
                     const pattern = /^([0-9]|0[0-9]|1[0-9]|2[0-3]):([0-5][0-9]|[0-9])\s*([APap][mM])?$/;
                     return pattern.test(time);
@@ -4290,7 +4676,7 @@
                 }
                 break;
             case 3:
-                sFormat = "h:MM:ss AM/PM";
+                sFormat = "h:MM:ss tt";
                 fIsValidTime = function isValidTime(time) {
                     const pattern = /^([0-9]|0[0-9]|1[0-9]|2[0-3]):([0-5][0-9]|[0-9])(:([0-5][0-9]|[0-9]))?\s*([APap][mM])?$/;
                     return pattern.test(time);
@@ -4598,14 +4984,23 @@
 
         return {X, Y};
     }
-    function private_getGlobalCoordsByPageCoords(x, y, nPage) {
+    /**
+	 * Converts page coords to global pix coords.
+     * Note: use scaled coordinates like pagePos_ from field, and not original like _origRect from field.
+     * @param {Number} x
+     * @param {Number} y
+     * @param {Number} nPage
+     * @param {boolean} isNotMM - coordinates in millimeters or not 
+	 * @typeofeditors ["PDF"]
+	 */
+    function private_getGlobalCoordsByPageCoords(x, y, nPage, isNotMM) {
         let oViewer = private_getViewer();
 
         let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
         let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
 
-        let X = x * g_dKoef_mm_to_pix / nScaleX;
-        let Y = y * g_dKoef_mm_to_pix / nScaleY;
+        let X = isNotMM ? x / nScaleX : x * g_dKoef_mm_to_pix / nScaleX;
+        let Y = isNotMM ? y / nScaleY : y * g_dKoef_mm_to_pix / nScaleY;
 
         let pageCoords = oViewer.pageDetector.pages[nPage];
 
@@ -4636,13 +5031,13 @@
     CComboBoxField.prototype.MoveCursorRight        = CTextField.prototype.MoveCursorRight;
     CComboBoxField.prototype.SelectionSetStart      = CTextField.prototype.SelectionSetStart;
     CComboBoxField.prototype.SelectionSetEnd        = CTextField.prototype.SelectionSetEnd;
-
-    CComboBoxField.prototype.SetAlign = CTextField.prototype.SetAlign;
-    CComboBoxField.prototype.SetDoNotSpellCheck = CTextField.prototype.SetDoNotSpellCheck;
-
+    CComboBoxField.prototype.CheckFormViewWindow    = CTextField.prototype.CheckFormViewWindow;
+    CComboBoxField.prototype.SetAlign               = CTextField.prototype.SetAlign;
+    CComboBoxField.prototype.SetDoNotSpellCheck     = CTextField.prototype.SetDoNotSpellCheck;
     CComboBoxField.prototype.RemoveNotAppliedChangesPoints = CTextField.prototype.RemoveNotAppliedChangesPoints;
-    CTextField.prototype.UpdateScroll               = CListBoxField.prototype.UpdateScroll;
-    CTextField.prototype.ScrollVertical             = CListBoxField.prototype.ScrollVertical;
+
+    CTextField.prototype.UpdateScroll   = CListBoxField.prototype.UpdateScroll;
+    CTextField.prototype.ScrollVertical = CListBoxField.prototype.ScrollVertical;
     
     if (!window["AscPDFEditor"])
 	    window["AscPDFEditor"] = {};
@@ -4656,5 +5051,5 @@
 	window["AscPDFEditor"].CListBoxField        = CListBoxField;
 	window["AscPDFEditor"].CRadioButtonField    = CRadioButtonField;
 	window["AscPDFEditor"].CSignatureField      = CSignatureField;
-	window["AscPDFEditor"].private_getGlobalCoordsByPageCoords      = private_getGlobalCoordsByPageCoords;
+	window["AscPDFEditor"].private_getGlobalCoordsByPageCoords  = private_getGlobalCoordsByPageCoords;
 })();

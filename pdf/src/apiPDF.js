@@ -974,7 +974,15 @@
                 editor.getDocumentRenderer()._paintForms();
             },
             get() {
-                return this.field._content.GetElement(0).GetText({ParaEndToSpace: false});
+                return this.field.GetValue();
+            }
+        },
+        "defaultValue": {
+            set(value) {
+                this.field._defaultValue = value;
+            },
+            get() {
+                return this.field._defaultValue = value;
             }
         }
     });

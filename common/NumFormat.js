@@ -1587,7 +1587,8 @@ NumFormat.prototype =
 				hour:		oDateTmp.getHours(),
 				min:		oDateTmp.getMinutes(),
 				month:		oDateTmp.getMonth(),
-				ms:			oDateTmp.getMilliseconds(),
+				ms:			0,
+				//ms:			oDateTmp.getMilliseconds(),
 				sec:		oDateTmp.getSeconds(),
 				year:		oDateTmp.getFullYear()
 			}
@@ -4130,7 +4131,7 @@ FormatParser.prototype =
 
             for (var i = 0, length = match.length; i < length; i++) {
                 var elem = match[i];
-                if (elem.date) {
+                if (elem.date || (elem.time == false && elem.type == oDataTypes.digit)) {
                     if (elem.type == oDataTypes.digit)
                         aDate.push(elem.val);
                     else if (elem.type == oDataTypes.letter && null != elem.month) {
@@ -4160,8 +4161,6 @@ FormatParser.prototype =
 				aDate.length = 3;
 
             var nDateLength = aDate.length;
-            if (nDateLength > 0 && !(2 <= nDateLength && nDateLength <= 3 && (null == nMonthIndex || (3 == nDateLength && 1 == nMonthIndex) || 2 == nDateLength)))
-                bError = true;
             var nTimeLength = aTime.length;
             if (nTimeLength > 3)
                 aTime.length = 3;
@@ -4169,95 +4168,38 @@ FormatParser.prototype =
                 res = { d: null, m: null, y: null, h: null, min: null, s: null, am: am, pm: pm, sDateFormat: null };
                 if (nDateLength > 0) {
                     if (null != nMonthIndex) {
-                        if (2 == nDateLength) {
-                            res.d = aDate[nDateLength - 1 - nMonthIndex];
-                            res.m = aDate[nMonthIndex];
-                            //приоритет у формата d-mmm, но если он не подходит пробуем сделать mmm-yy
-                            if (this.isValidDate((new Date()).getFullYear(), res.m - 1, res.d))
-                                res.sDateFormat = "d-mmm";
-                            else {
-                                //не в классическом случае(!= dd/mm/yyyy) меняем местами d и m перед тем как пробовать y
-                                if (!isDMY(cultureInfo) && this.isValidDate((new Date()).getFullYear(), res.d - 1, res.m)) {
-                                    res.sDateFormat = "d-mmm";
-                                    var temp = res.d;
-                                    res.d = res.m;
-                                    res.m = temp;
-                                }
-                                else {
-                                    //если текстовый месяц стоит вторым, то первый параметр может быть только днем
-                                    if (0 == nMonthIndex) {
-                                        res.sDateFormat = "mmm-yy";
-                                        res.d = null;
-                                        res.m = aDate[0];
-                                        res.y = aDate[1];
-                                    }
-                                    else
-                                        bError = true;
-                                }
-                            }
-                        }
-                        else {
-                            res.sDateFormat = "d-mmm-yy";
-                            res.d = aDate[0];
-                            res.m = aDate[1];
-                            res.y = aDate[2];
-                        }
+                        res.m = aDate[nMonthIndex];
+
+						if (nIndexD != -1) {
+							if (nIndexD != nMonthIndex) {
+								res.d = aDate[nIndexD];
+							}
+							else {
+								if (aDate[0] <= 31) {
+									res.d = aDate[0];
+									res.y = aDate[2];
+								}
+								else {
+									res.d = aDate[2];
+									res.y = aDate[0];
+								}
+							}
+						}
+						
+						if (nIndexY != -1 && res.y == null) {
+							if (nIndexY != nMonthIndex) {
+								res.y = aDate[nIndexY];
+							}
+							else {
+								res.d = aDate[0];
+								res.y = aDate[2];
+							}
+						}
                     }
                     else {
-                        //смотрим порядок в default формат
-                        if (2 == nDateLength) {
-                            //в приоритете d и m
-                            if (nIndexD < nIndexM) {
-                                res.d = aDate[0];
-                                res.m = aDate[1];
-                            }
-                            else {
-                                res.m = aDate[0];
-                                res.d = aDate[1];
-                            }
-                            if (this.isValidDate((new Date()).getFullYear(), res.m - 1, res.d))
-                                res.sDateFormat = "d-mmm";
-                            else{
-                                //в обратной записи(== yyyy/mm/dd) меняем местами d и m перед тем как пробовать y
-                                if (isYMD(cultureInfo) && this.isValidDate((new Date()).getFullYear(), res.d - 1, res.m)) {
-                                    res.sDateFormat = "d-mmm";
-                                    var temp = res.d;
-                                    res.d = res.m;
-                                    res.m = temp;
-                                }
-                                else{
-                                    res.sDateFormat = "mmm-yy";
-                                    res.d = null;
-                                    if (nIndexM < nIndexY) {
-                                        res.m = aDate[0];
-                                        res.y = aDate[1];
-                                    }
-                                    else {
-                                        res.y = aDate[0];
-                                        res.m = aDate[1];
-                                    }
-                                }
-                            }
-                        } else if(3 == nDateLength && aDate[0] > 1000) {
-                            res.y = aDate[0];
-                            res.m = aDate[1];
-                            res.d = aDate[2];
-                            res.sDateFormat = getShortDateFormat(cultureInfo);
-                        } else {
-                            for (var i = 0, length = cultureInfo.ShortDatePattern.length; i < length; i++)
-                            {
-                                var nIndex = cultureInfo.ShortDatePattern[i] - 0;
-                                var val = aDate[i];
-                                if (0 == nIndex || 1 == nIndex) {
-                                    res.d = val;
-                                } else if (2 == nIndex || 3 == nIndex) {
-                                    res.m = val;
-                                } else if (4 == nIndex || 5 == nIndex) {
-                                    res.y = val;
-                                }
-                            }
-                            res.sDateFormat = getShortDateFormat(cultureInfo);
-                        }
+                        res.m = aDate[nIndexM];
+						res.d = aDate[nIndexD];
+						res.y = aDate[nIndexY];
                     }
                     if(null != res.y)
                     {
@@ -4590,7 +4532,8 @@ FormatParser.prototype =
 		                            oNewElem.val = oNewElem.val - 0;
 								if (oNewElem.val < 100 && sCurValue.length == 4)
 									bError = true; // год до ста лет, пример: 0001 год
-		                        match.push(oNewElem);
+		                        
+								match.push(oNewElem);
 		                    }
 		                    sCurValue = sChar;
 		                    oPrevType = oCurDataType;
@@ -4663,6 +4606,7 @@ FormatParser.prototype =
 		        var oNewElem = { val: sCurValue, type: oCurDataType, month: null, am: false, pm: false, date: false, time: false };
 		        if (oDataTypes.digit == oCurDataType)
 		            oNewElem.val = oNewElem.val - 0;
+
 		        match.push(oNewElem);
 		    }
 		}

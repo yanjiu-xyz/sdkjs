@@ -896,6 +896,8 @@
 			this.pagesInfo.setCount(this.file.pages.length);
 			
 			this.checkLoadCMap();
+
+			AscCommon.g_oIdCounter.Set_Load(false); // to do возможно не тут стоит выключать флаг
 			this.openForms();
 		};
 		this.getFileNativeBinary = function()
@@ -958,42 +960,15 @@
 				}
 				else
 					oForm.SetBorderWidth(0);
-
+				if (oFormInfo["BG"] != null)
+					oForm.SetBackgroundColor(oFormInfo["BG"]);
+				
 				if (oFormInfo["AP"] != null) {
 					oForm._apIdx = oFormInfo["AP"]["i"];
 					oForm.SetDrawFromStream(true);
 				}
 
-				// members
-				if (oFormInfo["NameOfYes"])
-				{
-					oForm.SetExportValue(oFormInfo["NameOfYes"]);
-				}
-				if (oFormInfo["radiosInUnison"])
-				{
-					oForm.SetRadiosInUnison(Boolean(oFormInfo["radiosInUnison"]));
-				}
-				if (oFormInfo["commitOnSelChange"])
-				{
-					// to do
-					oForm.SetCommitOnSelChange(oFormInfo["commitOnSelChange"]);
-				}
-				if (oFormInfo["editable"])
-				{
-					oForm.SetEditable(oFormInfo["editable"]);
-				}
-				if (oFormInfo["multipleSelection"])
-				{
-					oForm.SetMultipleSelection(oFormInfo["multipleSelection"]);
-				}
-				if (oFormInfo["opt"])
-				{
-					oForm.SetOptions(oFormInfo["opt"]);
-				}
-				if (oFormInfo["alignment"])
-				{
-					oForm.SetAlign(oFormInfo["alignment"]);
-				}
+				// text form
 				if (oFormInfo["multiline"] != null)
 				{
 					oForm.SetMultiline(Boolean(oFormInfo["multiline"]));
@@ -1002,15 +977,80 @@
 				{
 					oForm.SetComb(Boolean(oFormInfo["comb"]));
 				}
+				if (oFormInfo["richText"])
+				{
+					// to do
+					oForm.SetRichText(Boolean(oFormInfo["richText"]));
+				}
+				if (oFormInfo["password"])
+				{
+					// to do
+					oForm.SetPassword(Boolean(oFormInfo["password"]));
+				}
+
+				// button
+				if (oFormInfo["positionCaption"] != null) {
+					oForm.SetLayout(oFormInfo["positionCaption"]);
+				}
+				if (oFormInfo["caption"] != null && oForm["type"] == "button") {
+					oForm.SetCaption(oFormInfo["caption"]);
+				}
+
+				// combobox - listbox
+				if (oFormInfo["editable"])
+				{
+					oForm.SetEditable(Boolean(oFormInfo["editable"]));
+				}
+				if (oFormInfo["commitOnSelChange"])
+				{
+					// to do
+					oForm.SetCommitOnSelChange(Boolean(oFormInfo["commitOnSelChange"]));
+				}
+				if (oFormInfo["multipleSelection"])
+				{
+					oForm.SetMultipleSelection(Boolean(oFormInfo["multipleSelection"]));
+				}
+				if (oFormInfo["opt"])
+				{
+					oFormInfo["opt"].forEach(function(item) {
+						if (Array.isArray(item)) {
+							let temp = item[1];
+							item[0] = item[1];
+							item[1] = temp;
+						}
+					});
+
+					oForm.SetOptions(oFormInfo["opt"]);
+				}
+
+				// checkbox - radiobutton
+				if (oFormInfo["NameOfYes"])
+				{
+					oForm.SetExportValue(oFormInfo["NameOfYes"]);
+				}
+				if (oFormInfo["radiosInUnison"])
+				{
+					oForm.SetRadiosInUnison(Boolean(oFormInfo["radiosInUnison"]));
+				}
+				if (oFormInfo["NoToggleToOff"])
+				{
+					oForm.SetNoTogleToOff(Boolean(oFormInfo["NoToggleToOff"]));
+				}
+
+				// common
+				if (oFormInfo["alignment"] != null && ["radiobutton", "checkbox", "pushbutton"].includes(oFormInfo["type"]) == false)
+				{
+					oForm.SetAlign(oFormInfo["alignment"]);
+				}
 				if (oFormInfo["maxLen"] != null)
 				{
 					oForm.SetCharLimit(oFormInfo["maxLen"]);
 				}
-				if (oFormInfo["doNotScroll"])
+				if (oFormInfo["doNotScroll"] != null)
 				{
 					oForm.SetDoNotScroll(Boolean(oFormInfo["doNotScroll"]));
 				}
-				if (oFormInfo["doNotSpellCheck"])
+				if (oFormInfo["doNotSpellCheck"] != null)
 				{
 					// to do
 					oForm.SetDoNotSpellCheck(Boolean(oFormInfo["doNotSpellCheck"]));
@@ -1028,11 +1068,6 @@
 				{
 					// to do
 				}
-				if (oFormInfo["password"])
-				{
-					// to do
-					oForm.SetPassword(Boolean(oFormInfo["password"]));
-				}
 				if (oFormInfo["readonly"])
 				{
 					// to do
@@ -1043,24 +1078,15 @@
 					// to do
 					oForm.SetRequired(Boolean(oFormInfo["required"]));
 				}
-				if (oFormInfo["richText"])
-				{
-					// to do
-					oForm.SetRichText(Boolean(oFormInfo["richText"]));
-				}
 				if (oFormInfo["value"] != null && oForm.type != "button")
 				{
 					oForm.SetValue(oFormInfo["value"]);
 				}
-				if (oFormInfo["NoToggleToOff"])
-				{
-					oForm.SetNoTogleToOff(Boolean(oFormInfo["NoToggleToOff"]));
+				if (oFormInfo["sort"] != null) {
+					// to do sort
 				}
-				if (oFormInfo["positionCaption"] != null) {
-					oForm.SetLayout(oFormInfo["positionCaption"]);
-				}
-				if (oFormInfo["caption"] != null) {
-					oForm.SetCaption(oFormInfo["caption"]);
+				if (oFormInfo["defaultValue"] != null) {
+					oForm.SetDefaultValue(oFormInfo["defaultValue"]);
 				}
 			}
 
@@ -1441,14 +1467,14 @@
 			oThis.isMouseMoveBetweenDownUp = false;
 			oThis.mouseDownLinkObject = oThis.getPageLinkByMouse();
 			
-			// если попали в другую форму (или снимаем выделение с формы), то применяем значение текущей формы
-			let oField = oThis.getPageFieldByMouse();
-			if (oThis.mouseDownFieldObject && oField != oThis.mouseDownFieldObject) {
+			// выход из формы кликом
+			let oMouseDownField = oThis.getPageFieldByMouse();
+			if (oThis.mouseDownFieldObject && oMouseDownField != oThis.mouseDownFieldObject) {
 				let oFieldToSkip = null; // для listbox
 
 				if (oThis.mouseDownFieldObject.type == "listbox") {
-					if (oField && oField.GetFullName() == oThis.mouseDownFieldObject.GetFullName() && oField._multipleSelection == false) {
-						oFieldToSkip = oField;
+					if (oMouseDownField && oMouseDownField.GetFullName() == oThis.mouseDownFieldObject.GetFullName() && oMouseDownField._multipleSelection == false) {
+						oFieldToSkip = oMouseDownField;
 					}
 					oThis.mouseDownFieldObject.UpdateScroll(false);
 				}
@@ -1459,6 +1485,7 @@
 					if (oThis.mouseDownFieldObject.IsChanged() == false) {
 						oThis.mouseDownFieldObject.SetDrawFromStream(true);
 						oThis.mouseDownFieldObject._needDrawHighlight = true;
+						oThis.mouseDownFieldObject = null;
 						oThis._paintForms();
 					}
 					else {
@@ -1491,24 +1518,26 @@
 				}
 			}
 			
-			oThis.mouseDownFieldObject = oField;
-			if (oThis.mouseDownFieldObject)
+			if (oMouseDownField)
 			{
-				switch (oThis.mouseDownFieldObject.type)
+				let oFieldBefore = oThis.mouseDownFieldObject;
+				oThis.mouseDownFieldObject = oMouseDownField;
+
+				switch (oMouseDownField.type)
 				{
 					case "text":
 						oThis.fieldFillingMode = true;
 						cursorType = "text";
-						oThis.mouseDownFieldObject._needDrawHighlight = false;
+						oMouseDownField._needDrawHighlight = false;
 						oThis._paintFormsHighlight();
-						oThis.mouseDownFieldObject.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
-						if (oThis.mouseDownFieldObject._actions.Format) {
+						oMouseDownField.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+						if (oMouseDownField._actions.Format && oMouseDownField != oFieldBefore) {
 							/*
 								to do
 								при щелчке по форме с установленным форматом, чтобы отобразить неформатированный, перерисоываются все формы
 								нужно переделать чтобы можно было увидеть неформатированный контент не отрисовывая заново все формы
 							*/
-							oThis.mouseDownFieldObject.AddToRedraw();
+							oMouseDownField.AddToRedraw();
 							oThis._paintForms();
 						}
 							
@@ -1517,37 +1546,40 @@
 						oThis.onUpdateOverlay();
 						break;
 					case "combobox":
-						oThis.mouseDownFieldObject._needDrawHighlight = false;
+						oMouseDownField._needDrawHighlight = false;
 						oThis._paintFormsHighlight();
-						oThis.mouseDownFieldObject.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
-						if (oThis.mouseDownFieldObject._actions.Format) {
+						oMouseDownField.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+						if (oMouseDownField._actions.Format && oMouseDownField != oFieldBefore) {
 							/*
 								to do
 								при щелчке по форме с установленным форматом, чтобы отобразить неформатированный, перерисоываются все формы
 								нужно переделать чтобы можно было увидеть неформатированный контент не отрисовывая заново все формы
 							*/
-							oThis.mouseDownFieldObject.AddToRedraw();
+							oMouseDownField.AddToRedraw();
 						}
 
 						oThis.Api.WordControl.m_oDrawingDocument.TargetStart();
 						oThis.Api.WordControl.m_oDrawingDocument.showTarget(true);
 						oThis.onUpdateOverlay();
-						if (oThis.mouseDownFieldObject._editable)
+						if (oMouseDownField._editable)
 							oThis.fieldFillingMode = true;
 						cursorType = "text";
 						break;
 					case "listbox":
 						oThis.Api.WordControl.m_oDrawingDocument.TargetEnd();
-						oThis.mouseDownFieldObject._needDrawHighlight = false;
+						oMouseDownField._needDrawHighlight = false;
 						oThis._paintFormsHighlight();
-						oThis.mouseDownFieldObject.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+						oMouseDownField.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
 						oThis.onUpdateOverlay();
 						cursorType = "pointer";
 						break;
 					case "button":
-						oThis.mouseDownFieldObject.onMouseDown();
+						oMouseDownField.onMouseDown();
 						break;
 				}
+			}
+			else {
+				oThis.mouseDownFieldObject = null;
 			}
 
 			// нажали мышь - запомнили координаты и находимся ли на ссылке
@@ -1887,9 +1919,11 @@
 									cursorType = "text";
 									break;
 								case "combobox":
-									let X = (AscCommon.global_mouseEvent.X - oThis.x) * AscCommon.AscBrowser.retinaPixelRatio;
-       								let Y = (AscCommon.global_mouseEvent.Y - oThis.y) * AscCommon.AscBrowser.retinaPixelRatio;
-									if (X >= mouseMoveFieldObject._markRect.x1 && X <= mouseMoveFieldObject._markRect.x2 && Y >= mouseMoveFieldObject._markRect.y1 && Y <= mouseMoveFieldObject._markRect.y2 && mouseMoveFieldObject._options.length != 0) {
+									var pageObject = oThis.getPageByCoords(AscCommon.global_mouseEvent.X - oThis.x, AscCommon.global_mouseEvent.Y - oThis.y);
+									if (!pageObject)
+										return null;
+
+									if (pageObject.x >= mouseMoveFieldObject._markRect.x1 && pageObject.x <= mouseMoveFieldObject._markRect.x2 && pageObject.y >= mouseMoveFieldObject._markRect.y1 && pageObject.y <= mouseMoveFieldObject._markRect.y2 && mouseMoveFieldObject._options.length != 0) {
 										cursorType = "pointer";
 									}
 									else
@@ -2500,7 +2534,6 @@
 
 					page.ImageForms = tmpCanvas;
 					this.pagesInfo.pages[i].needRedrawForms = false;
-					this.pagesInfo.pages[i].pageZoom = this.zoom;
 				}
 				
 				if (this.pagesInfo.pages[i].fields != null) {
@@ -2525,6 +2558,8 @@
 					else
 						tmpCanvas = page.ImageForms;
 				}
+
+				this.pagesInfo.pages[i].pageZoom = this.zoom;
 
 				let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
 				let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
@@ -3000,6 +3035,7 @@
 								this._paintForms();
 							}
 							else if (oThis.mouseDownFieldObject._actions.Format && oThis.mouseDownFieldObject.value != "") {
+								oThis.mouseDownFieldObject.AddToRedraw();
 								oThis.mouseDownFieldObject = null;
 								oThis._paintForms();
 							}
@@ -3331,8 +3367,6 @@
 							oParentForm.RemoveNotAppliedChangesPoints(nCurPoindIdx);
 						}
 
-						oParentForm._needRecalc = true;
-
 						if (oCurPoint.Additional.FormFilling.type == "listbox") {
 							oCurPoint.Additional.FormFilling.CheckCurValueIndex();
 							oCurPoint.Additional.FormFilling.ApplyValueForAll(null, false);
@@ -3348,6 +3382,9 @@
 							this.mouseDownFieldObject = null;
 						}
 					}
+
+					oParentForm.SetNeedRecalc(true);
+					oParentForm.AddToRedraw();
 
 					// Перерисуем страницу, на которой произошли изменения
 					this._paintForms();
@@ -3368,8 +3405,7 @@
 					// если мы в форме, то изменения (undo) применяются только для неё
 					// иначе для всех с таким именем
 					if (this.mouseDownFieldObject == null || oCurPoint.Additional && oCurPoint.Additional.CanUnion === false) {
-						oParentForm._needRecalc = true;
-
+						
 						// убираем курсор
 						if (oParentForm.type == "combobox" || oParentForm.type == "text") {
 							if (oCurPoint.Additional.FormFilling.CheckCurValueIndex)
@@ -3396,6 +3432,7 @@
 						}
 					}
 
+					oParentForm._needRecalc = true;
 					// Перерисуем страницу, на которой произошли изменения
 					this._paintForms();
 					return;
