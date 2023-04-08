@@ -10461,9 +10461,9 @@ CDocument.prototype.private_HandleMouseRightClickOnHeaderFooter = function(X, Y,
 };
 CDocument.prototype.private_UpdateSelectionOnMouseEvent = function(nX, nY, nCurPage, oMouseEvent)
 {
-	var isHitHdrFtr = docpostype_HdrFtr !== this.GetDocPosType() ? this.private_IsHitInHdrFtr(nY, nCurPage) : false;
+	var isHitHdrFtr = docpostype_HdrFtr !== this.GetDocPosType() && oMouseEvent && AscCommon.g_mouse_event_type_move !== oMouseEvent.Type ? this.private_IsHitInHdrFtr(nY, nCurPage) : false;
 	if (isHitHdrFtr)
-		this.TurnOff_RecalculateCurPos();
+		this.Api.asc_LockScrollToTarget(true);
 
 	// TODO: По логике это не нужно (убрать на develop)
 	if (oMouseEvent && AscCommon.g_mouse_event_type_down === oMouseEvent.Type)
@@ -10472,7 +10472,7 @@ CDocument.prototype.private_UpdateSelectionOnMouseEvent = function(nX, nY, nCurP
 	this.UpdateSelection();
 
 	if (isHitHdrFtr)
-		this.TurnOn_RecalculateCurPos();
+		this.Api.asc_LockScrollToTarget(false);
 
 	return !isHitHdrFtr;
 };
@@ -21296,6 +21296,7 @@ CDocument.prototype.controller_UpdateRulersState = function()
 };
 CDocument.prototype.HandleOformSelectionInEditMode = function()
 {
+	return false;
 	if (this.IsFillingFormMode())
 		return false;
 	
