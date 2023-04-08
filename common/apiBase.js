@@ -182,7 +182,8 @@
 
 		this.pluginsManager = null;
 
-		this.isLockTargetUpdate = false;
+		this.isLockTargetUpdate   = false;
+		this.isLockScrollToTarget = false;
 
 		this.lastWorkTime = 0;
 
@@ -585,6 +586,10 @@
 	baseEditorsApi.prototype.asc_LockTargetUpdate		     = function(isLock)
 	{
 		this.isLockTargetUpdate = isLock;
+	};
+	baseEditorsApi.prototype.asc_LockScrollToTarget          = function(isLock)
+	{
+		this.isLockScrollToTarget = isLock;
 	};
 	// Просмотр PDF
 	baseEditorsApi.prototype.isPdfViewer                     = function()
