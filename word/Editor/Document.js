@@ -21296,7 +21296,6 @@ CDocument.prototype.controller_UpdateRulersState = function()
 };
 CDocument.prototype.HandleOformSelectionInEditMode = function()
 {
-	return false;
 	if (this.IsFillingFormMode())
 		return false;
 	
