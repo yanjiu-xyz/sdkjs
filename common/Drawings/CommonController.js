@@ -10696,6 +10696,13 @@
 		CDrawingControllerStateBase.prototype.changeControllerState = function(oState) {
 			this.controller.changeCurrentState(oState);
 		};
+		CDrawingControllerStateBase.prototype.emulateMouseUp = function(e, x, y, pageIndex) {
+			const nOldType = e.Type;
+			e.Type   = AscCommon.g_mouse_event_type_up;
+			const nResult = this.onMouseUp(e, x, y, pageIndex);
+			e.Type = nOldType;
+			return nResult;
+		};
 
 		function CInkEraseState(drawingObjects) {
 			CDrawingControllerStateBase.call(this, drawingObjects);
@@ -10964,4 +10971,5 @@
 
 		window['AscCommon'] = window['AscCommon'] || {};
 		window["AscCommon"].CDrawTask = CDrawTask;
+		window["AscCommon"].CDrawingControllerStateBase = CDrawingControllerStateBase;
 	})(window);
