@@ -8670,7 +8670,7 @@
                     bChanged = true;
                 }
             }
-            else if(!props.logBase && scaling.logBase !== null) {
+            else if(!props.logScale && scaling.logBase !== null) {
                 scaling.setLogBase(null);
                 bChanged = true;
             }
