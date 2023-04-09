@@ -3150,7 +3150,7 @@
 	CGraphicObjectBase.prototype.getPictureBase64Data = function () {
 		return null;
 	};
-	CGraphicObjectBase.prototype.getBase64Img = function () {
+	CGraphicObjectBase.prototype.getBase64Img = function (bForceAsDraw) {
 		if (typeof this.cachedImage === "string" && this.cachedImage.length > 0) {
 			return this.cachedImage;
 		}
@@ -3166,7 +3166,10 @@
 				return "";
 			}
 		}
-		let oPictureData = this.getPictureBase64Data();
+		let oPictureData;
+		if(!bForceAsDraw) {
+			oPictureData = this.getPictureBase64Data();
+		}
 		if (!AscFormat.isRealNumber(this.x) || !AscFormat.isRealNumber(this.y) ||
 			!AscFormat.isRealNumber(this.extX) || !AscFormat.isRealNumber(this.extY)
 			|| (AscFormat.fApproxEqual(this.extX, 0) && AscFormat.fApproxEqual(this.extY, 0)))

@@ -862,7 +862,7 @@
 		let oController = this.getGraphicController();
 		if(oController)
 		{
-			let oImageData = oController.getImageDataForSaving();
+			let oImageData = oController.getImageDataForSaving(true);
 			if(oImageData)
 			{
 				let a = document.createElement("a");
