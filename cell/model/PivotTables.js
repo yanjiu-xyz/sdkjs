@@ -6277,6 +6277,7 @@ CT_pivotTableDefinition.prototype.getContextMenuInfo = function(selection) {
 			}
 		}
 	}
+	res.showDetails = this.asc_canShowDetails(row, col);
 	return res;
 };
 CT_pivotTableDefinition.prototype.getLayoutsForGroup = function(selection, opt_layout) {
@@ -16036,6 +16037,7 @@ function PivotContextMenu(pivot){
 	this.filter = null;
 	this.filterRow = null;
 	this.filterCol = null;
+	this.showDetails = false;
 }
 PivotContextMenu.prototype.asc_getPageFieldIndex = function () {
 	if (this.layout && this.pivot.pageFields) {
@@ -16092,6 +16094,9 @@ PivotContextMenu.prototype.asc_getColGrandTotals = function() {
 };
 PivotContextMenu.prototype.asc_canGroup = function() {
 	return !!(this.layoutGroup && null !== this.layoutGroup.fld);
+};
+PivotContextMenu.prototype.asc_showDetails = function() {
+	return this.showDetails;
 };
 
 function PivotLayoutGroup(){
@@ -18030,6 +18035,7 @@ prot["asc_getFilterCol"] = prot.asc_getFilterCol;
 prot["asc_getRowGrandTotals"] = prot.asc_getRowGrandTotals;
 prot["asc_getColGrandTotals"] = prot.asc_getColGrandTotals;
 prot["asc_canGroup"] = prot.asc_canGroup;
+prot["asc_showDetails"] = prot.asc_showDetails;
 
 window["Asc"]["CT_PivotFilter"] = window['Asc'].CT_PivotFilter = CT_PivotFilter;
 window["Asc"]["CT_WorksheetSource"] = window['Asc'].CT_WorksheetSource = CT_WorksheetSource;

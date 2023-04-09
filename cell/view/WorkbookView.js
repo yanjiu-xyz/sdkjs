@@ -1911,7 +1911,7 @@
         asc_applyFunction(callback);
         return;
       }
-	  var pivotTable = ws.model.getPivotTable(ct.col, ct.row);
+      var pivotTable = ws.model.getPivotTable(ct.col, ct.row);
       if (pivotTable && pivotTable.asc_canShowDetails(ct.row, ct.col)) {
         this.Api.asc_pivotShowDetails(pivotTable);
         return;
