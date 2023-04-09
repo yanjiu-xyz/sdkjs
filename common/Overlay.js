@@ -1121,8 +1121,9 @@ CAutoshapeTrack.prototype =
         if (_len_y < 1)
             _len_y = 1;
 
-        var bIsRectsTrackX = (_len_x >= 30) ? true : false;
-        var bIsRectsTrackY = (_len_y >= 30) ? true : false;
+        var epsForCenter = 30 * rPR;
+        var bIsRectsTrackX = (_len_x >= epsForCenter) ? true : false;
+        var bIsRectsTrackY = (_len_y >= epsForCenter) ? true : false;
         var bIsRectsTrack = (bIsRectsTrackX || bIsRectsTrackY) ? true : false;
 
         if (bIsRectsTrack && (type == AscFormat.TYPE_TRACK.CHART_TEXT))
