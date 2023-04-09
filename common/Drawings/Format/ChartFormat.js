@@ -7739,6 +7739,8 @@
         }
     };
     CAxisBase.prototype.setGridlinesSetting = function(gridinesSettings) {
+        let bSetMajor = false;
+        let bSetMinor = false;
         switch(gridinesSettings) {
             case Asc.c_oAscGridLinesSettings.none:
             {
@@ -7754,6 +7756,7 @@
             {
                 if(!this.majorGridlines) {
                     this.setMajorGridlines(new AscFormat.CSpPr());
+                    bSetMajor = true;
                 }
                 if(this.minorGridlines) {
                     this.setMinorGridlines(null);
@@ -7764,6 +7767,7 @@
             {
                 if(!this.minorGridlines) {
                     this.setMinorGridlines(new AscFormat.CSpPr());
+                    bSetMinor = true;
                 }
                 if(this.majorGridlines) {
                     this.setMajorGridlines(null);
@@ -7774,11 +7778,21 @@
             {
                 if(!this.minorGridlines) {
                     this.setMinorGridlines(new AscFormat.CSpPr());
+                    bSetMinor = true;
                 }
                 if(!this.majorGridlines) {
                     this.setMajorGridlines(new AscFormat.CSpPr());
+                    bSetMajor = true;
                 }
                 break;
+            }
+        }
+        if(bSetMajor || bSetMinor) {
+            const oChartSpace = this.getChartSpace();
+            if(oChartSpace) {
+                let oSpPr = this.spPr;
+                oChartSpace.checkElementChartStyle(this);
+                this.setSpPr(oSpPr);
             }
         }
     };
