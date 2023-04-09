@@ -2278,7 +2278,7 @@
                     let aParagraphs = oTxBody.content.Content;
                     for(let nPara = 0; nPara < aParagraphs.length; ++nPara) {
                         let oParagraph = aParagraphs[nPara];
-                        oParagraph.Clear_TextFormatting();
+                        oParagraph.Clear_TextFormatting(true);
                         if(oParagraph.Pr && oParagraph.Pr.DefaultRunPr) {
                             let oCopyPr = oParagraph.Pr.Copy();
                             oCopyPr.DefaultRunPr = undefined;

@@ -11113,7 +11113,7 @@ Paragraph.prototype.Clear_Formatting = function()
 	// Надо пересчитать конечный стиль
 	this.CompiledPr.NeedRecalc = true;
 };
-Paragraph.prototype.Clear_TextFormatting = function()
+Paragraph.prototype.Clear_TextFormatting = function(bHighlight)
 {
 	var sDefHyperlink = null;
 	if (this.bFromDocument && this.LogicDocument)
@@ -11124,7 +11124,7 @@ Paragraph.prototype.Clear_TextFormatting = function()
 	for (var Index = 0; Index < this.Content.length; Index++)
 	{
 		var Item = this.Content[Index];
-		Item.Clear_TextFormatting(sDefHyperlink);
+		Item.Clear_TextFormatting(sDefHyperlink, bHighlight);
 	}
 
 	this.TextPr.Clear_Style();
