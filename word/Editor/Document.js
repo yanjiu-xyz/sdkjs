@@ -8186,6 +8186,7 @@ CDocument.prototype.OnEndTextDrag = function(NearPos, bCopy)
             this.UpdateSelection();
             this.UpdateInterface();
             this.UpdateRulers();
+			this.UpdateTracks();
 			this.FinalizeAction();
 
 			this.CheckFormPlaceHolder = true;
