@@ -48,6 +48,24 @@
         g: 193,
         b: 218
     }
+
+    let CHECKBOX_STYLES_CODES = {
+        check:      10003,
+        cross:      10005,
+        diamond:    11201,
+        circle:     11044,
+        star:       9733,
+        square:     11035
+    }
+
+    let CHECKBOX_STYLES = {
+        circle:     0,
+        check:      1,
+        cross:      2,
+        diamond:    3,
+        square:     4,
+        star:       5
+    }
     
     let FIELD_TYPE = {
         button:         "button",
@@ -944,7 +962,7 @@
             oRun.RemoveFromContent(oRun.GetElementsCount() - 1, 1);
         }
 
-        this._content.Recalculate_Page(0, true);
+        this._content.Recalculate_Page(0, false);
 
         let oRect           = this.getFormRelRect();
         let oContentBounds  = this._content.GetContentBounds(0);
@@ -1595,7 +1613,8 @@
 
         this._value         = "Off";
         this._exportValue   = "Yes";
-        
+        this._chStyle       = CHECKBOX_STYLES.check;
+
         this._content = new AscWord.CDocumentContent(null, editor.WordControl.m_oDrawingDocument, 0, 0, 0, 0, undefined, undefined, false);
         this._content.ParentPDF = this;
         
@@ -1640,8 +1659,7 @@
         this._contentRect.W = contentXLimit - contentX;
         this._contentRect.H = contentYLimit - contentY;
 
-        // подгоняем размер галочки
-        this.ProcessAutoFitContent();
+        this.Internal_CorrectContent();
 
         if (contentX != this._oldContentPos.X || contentY != this._oldContentPos.Y ||
         contentXLimit != this._oldContentPos.XLimit) {
@@ -1677,10 +1695,28 @@
         
         oGraphics.RemoveClip();
     };
+    /**
+	 * Corrects the positions of symbol.
+	 * @memberof CBaseCheckBoxField
+	 * @typeofeditors ["PDF"]
+	 */
+    CBaseCheckBoxField.prototype.Internal_CorrectContent = function() {
+        let oPara = this._content.GetElement(0);
+
+        this._content.Recalculate_Page(0, true);
+
+        // подгоняем размер галочки
+        let nCharH = this.ProcessAutoFitContent();
+        
+        let oRect = this.getFormRelRect();
+
+        oPara.Pr.Spacing.Before = (oRect.H - nCharH) / 2;
+        oPara.CompiledPr.NeedRecalc = true;
+    };
 
     CBaseCheckBoxField.prototype.ProcessAutoFitContent = function() {
-        let oPara = this._content.GetElement(0);
-        let oRun = oPara.GetElement(0);
+        let oPara   = this._content.GetElement(0);
+        let oRun    = oPara.GetElement(0);
         let oTextPr = oRun.Get_CompiledPr(true);
         let oBounds = this.getFormRelRect();
 
@@ -1692,12 +1728,20 @@
 	    var nFontSize   = oTextPr.FontSize;
 
         if (nMaxWidth < 0.001 || nTextHeight < 0.001 || oBounds.W < 0.001 || oBounds.H < 0.001)
-		    return;
+		    return nTextHeight;
 
 	    var nNewFontSize = nFontSize;
 
-        nNewFontSize = oBounds.H / g_dKoef_pt_to_mm;
+        nNewFontSize = (oBounds.H / g_dKoef_pt_to_mm) >> 0;
         oRun.SetFontSize(nNewFontSize);
+
+        oTextPr.FontSize    = nNewFontSize;
+        oTextPr.FontSizeCS  = nNewFontSize;
+
+        g_oTextMeasurer.SetTextPr(oTextPr, null);
+        g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
+
+        return g_oTextMeasurer.GetHeight();
     };
     /**
      * Returns a canvas with origin view (from appearance stream) of current form.
@@ -1748,7 +1792,7 @@
         let supportImageDataConstructor = (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge) ? false : true;
 
         let ctx             = canvas.getContext("2d");
-        let mappedBuffer    = new Uint8ClampedArray(oFile.memory().buffer, oApearanceInfo["retValue"], 4 * nWidth * nHeight);
+        let mappedBuffer    = new Uint8ClampedArray(oFile.memory().buffer, nRetValue, 4 * nWidth * nHeight);
         let imageData       = null;
 
         if (supportImageDataConstructor)
@@ -1770,11 +1814,32 @@
     CBaseCheckBoxField.prototype.SetExportValue = function(sValue) {
         this._exportValue = sValue;
     };
+    /**
+     * Sets the checkbox style
+	 * @memberof CBaseCheckBoxField
+     * @param {number} nType - checkbox style type (CHECKBOX_STYLES)
+	 * @typeofeditors ["PDF"]
+	 */
+    CBaseCheckBoxField.prototype.SetStyle = function(nType) {
+        this._chStyle = nType;
+    };
+    CBaseCheckBoxField.prototype.GetCheckboxSymbolCode = function() {
+        switch (this._chStyle) {
+            case CHECKBOX_STYLES.circle:
+                return CHECKBOX_STYLES_CODES.circle;
+            case CHECKBOX_STYLES.check:
+                return CHECKBOX_STYLES_CODES.check;
+            case CHECKBOX_STYLES.cross:
+                return CHECKBOX_STYLES_CODES.cross;
+            case CHECKBOX_STYLES.diamond:
+                return CHECKBOX_STYLES_CODES.diamond;
+            case CHECKBOX_STYLES.square:
+                return CHECKBOX_STYLES_CODES.square;
+            case CHECKBOX_STYLES.star:
+                return CHECKBOX_STYLES_CODES.star;
+        }
+    };
     
-    // for radiobutton
-    const CheckedSymbol   = 0x25C9;
-	const UncheckedSymbol = 0x25CB;
-
     function CCheckBoxField(sName, nPage, aRect)
     {
         CBaseCheckBoxField.call(this, sName, FIELD_TYPE.checkbox, nPage, aRect);
@@ -1899,10 +1964,6 @@
     {
         CBaseCheckBoxField.call(this, sName, FIELD_TYPE.radiobutton, nPage, aRect);
         
-        let oRun = this._content.GetElement(0).GetElement(0);
-        //oRun.AddText(String.fromCharCode(UncheckedSymbol));
-        oRun.AddText("〇");
-
         this._radiosInUnison = false;
         this._noToggleToOff = true;
 
@@ -2073,15 +2134,15 @@
         let oRun = this._content.GetElement(0).GetElement(0);
         if (bChecked) {
             oRun.ClearContent();
-            oRun.AddText(String.fromCharCode(CheckedSymbol));
+            oRun.AddText(String.fromCharCode(this.GetCheckboxSymbolCode()));
             this._value = this._exportValue;
         }
         else {
             oRun.ClearContent();
-            oRun.AddText("〇");
             this._value = "Off";
         }
     };
+
     /**
 	 * Applies value of this field to all field with the same name.
 	 * @memberof CRadioButtonField
@@ -2116,8 +2177,7 @@
     CRadioButtonField.prototype.SetValue = function(sValue) {
         if (sValue != "Off") {
             let oRun = this._content.GetElement(0).GetElement(0);
-            oRun.ClearContent();
-            oRun.AddText(String.fromCharCode(CheckedSymbol));
+            oRun.AddText(String.fromCharCode(this.GetCheckboxSymbolCode()));
             this._value = sValue;
         }
     };

@@ -1036,6 +1036,10 @@
 				{
 					oForm.SetNoTogleToOff(Boolean(oFormInfo["NoToggleToOff"]));
 				}
+				if (oFormInfo["style"] != null)
+				{
+					oForm.SetStyle(oFormInfo["style"]);
+				}
 
 				// common
 				if (oFormInfo["alignment"] != null && ["radiobutton", "checkbox", "pushbutton"].includes(oFormInfo["type"]) == false)
