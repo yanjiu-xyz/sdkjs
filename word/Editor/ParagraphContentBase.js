@@ -1916,7 +1916,10 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove = function(Direction,
 	{
 		var ContentPos = this.State.ContentPos;
 
-		if ((true === this.Cursor_Is_Start() || true === this.Cursor_Is_End()) && (!(this instanceof CInlineLevelSdt) || !(this.IsTextForm() || this.IsComboBox() || this.IsComplexForm())))
+		if ((true === this.Cursor_Is_Start() || true === this.Cursor_Is_End())
+			&& (!this.CanPlaceCursorInside()
+				|| !(this instanceof CInlineLevelSdt)
+				|| (!this.IsComplexForm() && !this.IsTextForm() && !this.IsComboBox())))
 		{
 			this.SelectAll();
 			this.SelectThisElement(1);
