@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -56,22 +56,22 @@
 
     /**
      * The editors which the plugin is available for:
-	 * * **word** - text document editor,
-	 * * **cell** - spreadsheet editor,
-	 * * **slide** - presentation editor.
+	 * * <b>word</b> - text document editor,
+	 * * <b>cell</b> - spreadsheet editor,
+	 * * <b>slide</b> - presentation editor.
 	 * @typedef {("word" | "cell" | "slide")} editorType
      */
 
     /**
 	 * The data type selected in the editor and sent to the plugin:
-     * * **text** - the text data,
-	 * * **html** - HTML formatted code,
-	 * * **ole** - OLE object data,
-     * * **desktop** - the desktop editor data,
-     * * **destop-external** - the main page data of the desktop app (system messages),
-     * * **none** - no data will be send to the plugin from the editor.
-	 * * **sign** - plugin for keychain.
-	 * @typedef {("text" | "html" | "ole" | "desktop" | "destop-external" | "none")} initDataType
+     * * <b>text</b> - the text data,
+	 * * <b>html</b> - HTML formatted code,
+	 * * <b>ole</b> - OLE object data,
+     * * <b>desktop</b> - the desktop editor data,
+     * * <b>destop-external</b> - the main page data of the desktop app (system messages),
+     * * <b>none</b> - no data will be send to the plugin from the editor,
+	 * * <b>sign</b> - the sign for the keychain plugin.
+	 * @typedef {("text" | "html" | "ole" | "desktop" | "destop-external" | "none" | "sign")} initDataType
      */
 
     /**
@@ -219,7 +219,7 @@
 	 * @property {number} m_usWeigth The visual weight (stroke blackness or thickness) of the font characters (1-1000).
 	 * @property {number} m_usWidth The relative change from the normal aspect ratio (width to height ratio).
 	 * @property {number} m_sFamilyClass The font family class which values are assigned by IBM to each font family.
-	 * @property {number} m_eFontFormat The specific file type(s) used to store font data: **0** - *.fon, **1** - *.ttf, **2** - *.ttf, *.otf (CFF), **3** - unknown font format.
+	 * @property {number} m_eFontFormat The specific file type(s) used to store font data: <b>0</b> - *.fon, <b>1</b> - *.ttf, <b>2</b> - *.ttf, *.otf (CFF), <b>3</b> - unknown font format.
 	 * @property {number} m_shAvgCharWidth The arithmetic average of the escapement (width) of all non-zero width glyphs in the font.
 	 * @property {number} m_shAscent The height above the baseline for a clipping region.
 	 * @property {number} m_shDescent The vertical extent below the baseline for a clipping region.
@@ -392,7 +392,7 @@
     };
 
 	/**
-	 * Returns all VBA macros into a document.
+	 * Returns all VBA macros from the document.
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias GetVBAMacros
@@ -409,7 +409,7 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias StartAction
-     * @param {number} type - A value which defines an action type which can take **0** if this is an *Information* action or **1** if this is a *BlockInteraction* action.
+     * @param {number} type - A value which defines an action type which can take <b>0</b> if this is an *Information* action or <b>1</b> if this is a *BlockInteraction* action.
 	 * @param {string} description - A string value that specifies the description text for the start action of the operation.
      */
     Api.prototype["pluginMethod_StartAction"] = function(type, description)
@@ -422,7 +422,7 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias EndAction
-     * @param {number} type - A value which defines an action type which can take **0** if this is the *Information* action or **1** if this is the *BlockInteraction* action.
+     * @param {number} type - A value which defines an action type which can take <b>0</b> if this is the *Information* action or <b>1</b> if this is the *BlockInteraction* action.
      * @param {string} description - A string value that specifies the description text for the operation end action.
      */
     Api.prototype["pluginMethod_EndAction"] = function(type, description, status)
@@ -477,11 +477,11 @@
      * @alias OnEncryption
      * @param {object} obj - The encryption properties.
      * @param {string} obj.type - The type of encrypting operation:
-     * * **generatePassword** - generates a password for the document,
-     * * **getPasswordByFile** - sends the password when opening the document,
-     * * **setPasswordByFile** - sets a password to the document,
-     * * **encryptData** - encrypts changes when co-editing,
-     * * **decryptData** - decrypts changes when co-editing.
+     * * <b>generatePassword</b> - generates a password for the document,
+     * * <b>getPasswordByFile</b> - sends the password when opening the document,
+     * * <b>setPasswordByFile</b> - sets a password to the document,
+     * * <b>encryptData</b> - encrypts changes when co-editing,
+     * * <b>decryptData</b> - decrypts changes when co-editing.
      * @param {string} obj.password - A string value specifying the password to access the document.
      * @param {string} obj.data - Encrypted/decrypted changes.
      * @param {boolean} obj.check - Checks if the encryption/decryption operation is successful or not (used only for *encryptData* or *decryptData* types).
@@ -561,9 +561,9 @@
 	 * @property {Array.<number>} fill The watermark fill color in the RGB format. The empty array [] means that the watermark has no fill.
      * @property {number} stroke-width The watermark stroke width measured in millimeters.
 	 * @property {Array.<number>} stroke The watermark stroke color in the RGB format. The empty array [] means that the watermark stroke has no fill.
-	 * @property {number} align The vertical text align in the watermark shape: **0** - bottom, **1** - center, **4** - top.
+	 * @property {number} align The vertical text align in the watermark shape: <b>0</b> - bottom, <b>1</b> - center, <b>4</b> - top.
 	 * @property {Array.<object>} paragraphs The array with paragraphs from the current watermark with their properties.
-	 * @property {number} paragraphs.align The horizontal text align in the current paragraph: **0** - right, **1** - left, **2** - center, **3** - justify.
+	 * @property {number} paragraphs.align The horizontal text align in the current paragraph: <b>0</b> - right, <b>1</b> - left, <b>2</b> - center, <b>3</b> - justify.
 	 * @property {Array.<number>} paragraphs.fill The paragraph highlight in the RGB format. The empty array [] means that the paragraph is not highlighted.
 	 * @property {number} paragraphs.linespacing The text linespecing in the current paragraph.
 	 * @property {Array.<object>} paragraphs.runs The array with runs from the current paragraph with their properties.
@@ -582,7 +582,7 @@
      * @typedef {Object} fillForms
      * @property {object} tags The form tags which specify the content for each form type with such a tag.
      * @property {string} tags.text The text field value (some text).
-	 * @property {string} tags.checkBox The checkbox form value (**true** - checked, **false** - unchecked).
+	 * @property {string} tags.checkBox The checkbox form value (<b>true</b> - checked, <b>false</b> - unchecked).
 	 * @property {string} tags.picture The image form value (a link to the image).
 	 * @property {string} tags.comboBox The combo box form value (one of the items from the combo box list values).
      */
@@ -1176,6 +1176,10 @@
 		this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, opts);
 	};
 
+	/**
+	 * The current selection type ("none", "text", "drawing", or "slide").
+	 * @typedef {("fill" | "fit" | "original" | "stretch")} ReplaceImageMode
+	 */
 
     /**
      * An object containing the information about the base64 encoded *png* image.
@@ -1183,6 +1187,7 @@
      * @property {string} src The image source in the base64 format.
      * @property {number} width The image width in pixels.
      * @property {number} height The image height in pixels.
+     * @property  {?ReplaceImageMode} replaceMode If presents, defines how to adjust image object in case of replacing selected image
      */
 
 	/**
@@ -1208,9 +1213,22 @@
      */
 	Api.prototype["pluginMethod_PutImageDataToSelection"] = function(oImageData)
 	{
-        this._beforeEvalCommand();
-		this.putImageToSelection(oImageData["src"], oImageData["width"], oImageData["height"]);
-        this._afterEvalCommand();
+		let sMethodGuid = window.g_asc_plugins.setPluginMethodReturnAsync();
+		let sImgSrc = oImageData["src"];
+		this.asc_checkImageUrlAndAction(sImgSrc, function(oImage)
+		{
+			let nWidth = oImageData["width"];
+			let nHeight = oImageData["height"];
+			const isN = AscFormat.isRealNumber;
+			if(!isN(nWidth) || !isN(nHeight))
+			{
+				nWidth = oImage.Image.width;
+				nHeight = oImage.Image.height;
+			}
+			this.putImageToSelection(AscCommon.g_oDocumentUrls.getImageLocal(oImage.src), nWidth, nHeight, oImageData["replaceMode"]);
+			window.g_asc_plugins.onPluginMethodReturn(sMethodGuid);
+
+		});
 	};
 
 	function getLocalStorageItem(key)
@@ -1442,8 +1460,8 @@
 		}
 
 		return {
-			type : "Removed",
-			guid : removedPlugin ? removedPlugin.guid : ""
+			"type" : "Removed",
+			"guid" : removedPlugin ? removedPlugin.guid : ""
 		};
 	};
 	/**
@@ -1516,4 +1534,211 @@
 	{
 	};
 
+	/**
+	 * Implements the external drag&drop emulation.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {object} obj The drag&drop emulation properties.
+     * @param {string} obj.type - The drag&drop event type:
+     * * <b>onbeforedrop</b> - an event that is fired when the selected text or element is dragged;
+     * * <b>ondrop</b> - an event that is fired when the selected text or element is dropped on a valid drop target.
+     * @param {number} obj.x - The horizontal coordinate (in pixels) at which the mouse was clicked, relative to the left edge of the entire document.
+     * @param {number} obj.y - The vertical coordinate (in pixels) at which the mouse was clicked, relative to the top edge of the entire document.
+     * @param {string} obj.html - The dragged HTML element.
+     * @param {string} obj.text - The dragged text.
+	 * @alias OnDropEvent
+	 * @since 7.3.0
+	 */
+	Api.prototype["pluginMethod_OnDropEvent"] = function(obj)
+	{
+		if (!obj || !obj["type"])
+			return;
+
+		var e = {
+			pageX : obj["x"],
+			pageY : obj["y"]
+		};
+
+		switch (obj.type)
+		{
+			case "onbeforedrop":
+			{
+				this.beginInlineDropTarget(e);
+				break;
+			}
+			case "ondrop":
+			{
+				this.endInlineDropTarget(e);
+
+				if (obj["html"])
+					this["pluginMethod_PasteHtml"](obj["html"]);
+				else if (obj["text"])
+					this["pluginMethod_PasteText"](obj["text"]);
+
+				break;
+			}
+			default:
+				break;
+		}
+	};
+
+    /**
+     * Gets the document language.
+     * @memberof Api
+     * @typeofeditors ["CDE", "CPE"]
+     * @alias GetDocumentLang
+     * @returns {string} 
+     */
+    Api.prototype["pluginMethod_GetDocumentLang"] = function()
+    {
+        let langCode = 1033; // en-US
+        let langName = "en-US";
+
+        if (this.WordControl && this.WordControl.m_oLogicDocument && this.WordControl.m_oLogicDocument.GetDefaultLanguage)
+            langCode = this.WordControl.m_oLogicDocument.GetDefaultLanguage();
+
+        if (window["Common"])
+            langName = window["Common"]["util"]['LanguageInfo']['getLocalLanguageName'](langCode)[0];
+
+        return langName;
+    };
+
+	function correctItemsWithData(items)
+	{
+		for (let i = 0, itemsLen = items.length; i < itemsLen; i++)
+		{
+			if (undefined !== items[i]["id"] && undefined !== items[i]["data"])
+				items[i]["id"] = items[i]["id"] + "_oo_sep_" + items[i]["data"];
+
+			if (items[i]["items"])
+				correctItemsWithData(items[i]["items"]);
+		}
+	}
+
+	/**
+	 * @typedef {Object} ContextMenuItem
+	 * The context menu item
+	 * @property {string} id - The item id.
+	 * @property {localeTranslate} text - The item text.
+	 * @property {boolean} [disabled] - Is disabled item.
+	 * @property {ContextMenuItem[]} items - An array containing the items for current item.
+	 */
+
+	/**
+	 * Add item to context menu
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias AddContextMenuItem
+	 * @param {ContextMenuItem[]} items - Array of items
+	 */
+	Api.prototype["pluginMethod_AddContextMenuItem"] = function(items)
+	{
+		if (items["items"]) correctItemsWithData(items["items"]);
+		this.onPluginAddContextMenuItem(items);
+	};
+
+	/**
+	 * Update items in context menu
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias UpdateContextMenuItem
+	 * @param {ContextMenuItem[]} items - Array of items
+	 */
+	Api.prototype["pluginMethod_UpdateContextMenuItem"] = function(items)
+	{
+		if (items["items"]) correctItemsWithData(items["items"]);
+		this.onPluginUpdateContextMenuItem([items]);
+	};
+
+	/**
+	 * Shows modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} frameId - The frame ID.
+	 * @param {variation} variation - The plugin variation.
+	 * @alias ShowWindow 
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_ShowWindow"] = function(frameId, variation)
+	{
+		variation["guid"] = window.g_asc_plugins.guidAsyncMethod;
+		this.sendEvent("asc_onPluginWindowShow", frameId, variation);
+	};
+
+	/**
+	 * Close modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} frameId - The frame ID.
+	 * @alias CloseWindow
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_CloseWindow"] = function(frameId)
+	{
+		this.sendEvent("asc_onPluginWindowClose", frameId);
+	};
+
+	/**
+	 * Send message to window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} windowID - The frame ID.
+	 * @param {string} name - The event name.
+	 * @param {object} data - The even data.
+	 * @alias SendToWindow
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_SendToWindow"] = function(windowID, name, data)
+	{
+		window.g_asc_plugins.onPluginEventWindow(windowID, name, data);
+	};
+
+	/**
+	 * Resize modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} [frameId] - The frame ID.
+	 * @param {number} [size] - The frame size.
+	 * @param {number} [minSize] - The frame min size.
+	 * @param {number} [maxSize] - The frame max size.
+	 * @alias ResizeWindow
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_ResizeWindow"] = function(frameId, size, minSize, maxSize)
+	{
+		let guidAsync = window.g_asc_plugins.setPluginMethodReturnAsync();
+		this.sendEvent("asc_onPluginWindowResize", frameId, size, minSize, maxSize, function(){
+			window.g_asc_plugins.onPluginMethodReturn(guidAsync, 'resize_result');
+		});
+	};
+
+	/**
+	 * Mouse up modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} [frameId] - The frame ID.
+	 * @param {number} [x] - coordinate.
+	 * @param {number} [y] - coordinate.
+	 * @alias MouseUpWindow
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_MouseUpWindow"] = function(frameId, x, y)
+	{
+		this.sendEvent("asc_onPluginWindowMouseUp", frameId, x, y);
+	};
+
+	/**
+	 * Mouse move modal window.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} [frameId] - The frame ID.
+ 	 * @param {number} [x] - coordinate.
+	 * @param {number} [y] - coordinate.
+	 * @alias MouseMoveWindow
+	 * @since 7.3.4
+	 */
+	Api.prototype["pluginMethod_MouseMoveWindow"] = function(frameId, x, y)
+	{
+		this.sendEvent("asc_onPluginWindowMouseMove", frameId, x, y);
+	};
 })(window);

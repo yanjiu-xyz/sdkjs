@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -100,6 +100,10 @@ CParagraphContentBase.prototype.IsThisElementCurrent = function()
 	return false;
 };
 CParagraphContentBase.prototype.IsRun = function()
+{
+	return false;
+};
+CParagraphContentBase.prototype.IsMath = function()
 {
 	return false;
 };
@@ -436,6 +440,14 @@ CParagraphContentBase.prototype.Cursor_Is_NeededCorrectPos = function()
 	return true;
 };
 CParagraphContentBase.prototype.Cursor_Is_End = function()
+{
+	return true;
+};
+/**
+ * TODO: Надо объединить эту функцию с  IsCursorPlaceable, поскольку они по смыслу одинаковые
+ * и сделать тут по умолчанию false
+ */
+CParagraphContentBase.prototype.CanPlaceCursorInside = function()
 {
 	return true;
 };
@@ -810,9 +822,10 @@ CParagraphContentBase.prototype.IsStartFromNewLine = function()
  * @param {AscWord.CParagraphContentPos} oEndPos
  * @param {number} nDepth
  * @param {?AscWord.CParagraphContentPos} oCurrentPos
+ * @param {boolean} [isForward=false]
  * @returns {boolean}
  */
-CParagraphContentBase.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos)
+CParagraphContentBase.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos, isForward)
 {
 	return false;
 };
@@ -896,11 +909,14 @@ CParagraphContentBase.prototype.SetThisElementCurrentInParagraph = function()
 	if (!this.IsCursorPlaceable() || !oParagraph)
 		return;
 
-	var oContentPos = this.Paragraph.Get_PosByElement(this);
-	if (!oContentPos)
+	let contentPos = this.Paragraph.Get_PosByElement(this);
+	if (!contentPos)
 		return;
+	
+	// Дополним полученную позицию текущей в текущем элементе
+	this.Get_ParaContentPos(false, false, contentPos, false);
 
-	this.Paragraph.Set_ParaContentPos(oContentPos, true, -1, -1, false);
+	this.Paragraph.Set_ParaContentPos(contentPos, true, -1, -1, false);
 };
 CParagraphContentBase.prototype.createDuplicateForSmartArt = function(oPr)
 {
@@ -1813,10 +1829,17 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove = function(Direction,
 			else
 			{
 				this.Content[StartPos].Remove(Direction, bOnAddText);
-
-				if (StartPos !== this.Content.length - 1 && true === this.Content[StartPos].Is_Empty() && true !== bOnAddText)
+				
+				let isTextDrag = this.Paragraph && this.Paragraph.LogicDocument ? this.Paragraph.LogicDocument.DragAndDropAction : false;
+				if (StartPos !== this.Content.length - 1 && true === this.Content[StartPos].Is_Empty() && (!bOnAddText || isTextDrag))
 				{
-					this.Remove_FromContent(StartPos, 1, true);
+					this.RemoveFromContent(StartPos, 1, true);
+					this.State.ContentPos = StartPos;
+					this.Content[StartPos].MoveCursorToStartPos();
+				}
+				else
+				{
+					this.State.ContentPos = StartPos;
 				}
 			}
 		}
@@ -1829,8 +1852,9 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove = function(Direction,
 			else
 			{
 				this.Content[EndPos].Remove(Direction, bOnAddText);
-
-				if (EndPos !== this.Content.length - 1 && true === this.Content[EndPos].Is_Empty() && true !== bOnAddText)
+				
+				let isTextDrag = this.Paragraph && this.Paragraph.LogicDocument ? this.Paragraph.LogicDocument.DragAndDropAction : false;
+				if (EndPos !== this.Content.length - 1 && true === this.Content[EndPos].Is_Empty() && (!bOnAddText || isTextDrag))
 				{
 					this.Remove_FromContent(EndPos, 1, true);
 				}
@@ -1894,7 +1918,10 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove = function(Direction,
 	{
 		var ContentPos = this.State.ContentPos;
 
-		if ((true === this.Cursor_Is_Start() || true === this.Cursor_Is_End()) && (!(this instanceof CInlineLevelSdt) || !(this.IsTextForm() || this.IsComboBox() || this.IsComplexForm())))
+		if ((true === this.Cursor_Is_Start() || true === this.Cursor_Is_End())
+			&& (!this.CanPlaceCursorInside()
+				|| !(this instanceof CInlineLevelSdt)
+				|| (!this.IsComplexForm() && !this.IsTextForm() && !this.IsComboBox())))
 		{
 			this.SelectAll();
 			this.SelectThisElement(1);
@@ -3014,6 +3041,10 @@ CParagraphContentWithParagraphLikeContent.prototype.IsCursorPlaceable = function
 {
     return true;
 };
+CParagraphContentWithParagraphLikeContent.prototype.CanPlaceCursorInside = function()
+{
+	return true;
+};
 CParagraphContentWithParagraphLikeContent.prototype.IsCursorAtBegin = function()
 {
 	if (this.IsPlaceHolder())
@@ -3523,6 +3554,15 @@ CParagraphContentWithParagraphLikeContent.prototype.Set_SelectionContentPos = fu
 {
 	if (this.Content.length <= 0)
 		return;
+	
+	if (!this.CanPlaceCursorInside())
+	{
+		if (this.Paragraph && this.Paragraph.GetSelectDirection() > 0)
+			this.SelectAll(1);
+		else
+			this.SelectAll(-1);
+		return;
+	}
 
     var Selection = this.Selection;
 
@@ -4580,21 +4620,41 @@ CParagraphContentWithParagraphLikeContent.prototype.CanAddComment = function()
 
 	return true;
 };
-CParagraphContentWithParagraphLikeContent.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos)
+CParagraphContentWithParagraphLikeContent.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos, isForward)
 {
+	if (undefined === isForward)
+		isForward = true;
+	
 	let nStartPos = oStartPos && oStartPos.GetDepth() >= nDepth ? oStartPos.Get(nDepth) : 0;
 	let nEndPos   = oEndPos && oEndPos.GetDepth() >= nDepth ? oEndPos.Get(nDepth) : this.Content.length - 1;
-
-	for (var nPos = nStartPos; nPos <= nEndPos; ++nPos)
+	
+	if (isForward)
 	{
-		let _s = oStartPos && nPos === nStartPos ? oStartPos : null;
-		let _e = oEndPos && nPos === nEndPos ? oEndPos : null;
-
-		if (oCurrentPos)
-			oCurrentPos.Update(nPos, nDepth);
-
-		if (this.Content[nPos].CheckRunContent(fCheck, _s, _e, nDepth + 1, oCurrentPos))
-			return true;
+		for (var nPos = nStartPos; nPos <= nEndPos; ++nPos)
+		{
+			let _s = oStartPos && nPos === nStartPos ? oStartPos : null;
+			let _e = oEndPos && nPos === nEndPos ? oEndPos : null;
+			
+			if (oCurrentPos)
+				oCurrentPos.Update(nPos, nDepth);
+			
+			if (this.Content[nPos].CheckRunContent(fCheck, _s, _e, nDepth + 1, oCurrentPos, isForward))
+				return true;
+		}
+	}
+	else
+	{
+		for (var nPos = nEndPos; nPos >= nStartPos; --nPos)
+		{
+			let _s = oStartPos && nPos === nStartPos ? oStartPos : null;
+			let _e = oEndPos && nPos === nEndPos ? oEndPos : null;
+			
+			if (oCurrentPos)
+				oCurrentPos.Update(nPos, nDepth);
+			
+			if (this.Content[nPos].CheckRunContent(fCheck, _s, _e, nDepth + 1, oCurrentPos, isForward))
+				return true;
+		}
 	}
 };
 CParagraphContentWithParagraphLikeContent.prototype.ProcessComplexFields = function(oComplexFields)
@@ -4819,15 +4879,27 @@ CParagraphContentWithParagraphLikeContent.prototype.Add = function(Item)
 
 				if (null !== NewElement)
 					this.Add_ToContent(CurPos + 1, NewElement, true);
-
-				var Elem = new ParaMath();
-				Elem.Root.Load_FromMenu(Item.Menu, this.GetParagraph());
-				Elem.Root.Correct_Content(true);
-				this.Add_ToContent(CurPos + 1, Elem, true);
-
-				// Перемещаем кусор в конец формулы
-				this.State.ContentPos = CurPos + 1;
-				this.Content[this.State.ContentPos].MoveCursorToEndPos(false);
+				
+				let paraMath = null;
+				if (Item instanceof ParaMath)
+				{
+					paraMath = Item;
+				}
+				else if (Item instanceof AscCommonWord.MathMenu)
+				{
+					let textPr = Item.GetTextPr();
+					paraMath = new ParaMath();
+					paraMath.Root.Load_FromMenu(Item.Menu, this.GetParagraph(), textPr.Copy(), Item.GetText());
+					paraMath.Root.Correct_Content(true);
+					paraMath.ApplyTextPr(textPr.Copy(), undefined, true);
+				}
+				
+				if (paraMath)
+				{
+					this.AddToContent(CurPos + 1, paraMath, true);
+					this.State.ContentPos = CurPos + 1;
+					this.Content[this.State.ContentPos].MoveCursorToEndPos(false);
+				}
 			}
 			else
 			{

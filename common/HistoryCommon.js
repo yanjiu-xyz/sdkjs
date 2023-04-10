@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -2268,6 +2268,7 @@
 	window['AscDFH'].historyitem_CommonChart_SetVaryColors        = window['AscDFH'].historyitem_type_CommonShape | 312;
 	window['AscDFH'].historyitem_CommonChart_AddFilteredSeries    = window['AscDFH'].historyitem_type_CommonShape | 313;
 	window['AscDFH'].historyitem_CommonChart_RemoveFilteredSeries = window['AscDFH'].historyitem_type_CommonShape | 314;
+	window['AscDFH'].historyitem_CommonChart_DataLabelsRange      = window['AscDFH'].historyitem_type_CommonShape | 315;
 
 	window['AscDFH'].historyitem_Common_AddWatermark = window['AscDFH'].historyitem_type_CommonShape | 401;
 	//------------------------------------------------------------------------------------------------------------------
@@ -2470,6 +2471,7 @@
 	window['AscDFH'].historyitem_DLbl_SetTx             = window['AscDFH'].historyitem_type_DLbl | 14;
 	window['AscDFH'].historyitem_DLbl_SetTxPr           = window['AscDFH'].historyitem_type_DLbl | 15;
 	window['AscDFH'].historyitem_DLbl_SetParent         = window['AscDFH'].historyitem_type_DLbl | 16;
+	window['AscDFH'].historyitem_DLbl_SetShowDLblsRange = window['AscDFH'].historyitem_type_DLbl | 17;
 
 	window['AscDFH'].historyitem_Marker_SetSize   = window['AscDFH'].historyitem_type_Marker | 1;
 	window['AscDFH'].historyitem_Marker_SetSpPr   = window['AscDFH'].historyitem_type_Marker | 2;
@@ -4455,6 +4457,10 @@
 	window['AscDFH'].historydescription_OForm_RemoveRole                            = 0x019e;
 	window['AscDFH'].historydescription_OForm_EditRole                              = 0x019f;
 	window['AscDFH'].historydescription_OForm_ChangeRoleOrder                       = 0x01a0;
+	window['AscDFH'].historydescription_Document_AddAddinField                      = 0x01a1;
+	window['AscDFH'].historydescription_Document_UpdateAddinFields                  = 0x01a2;
+	window['AscDFH'].historydescription_Document_RemoveComplexFieldWrapper          = 0x01a3;
+	window['AscDFH'].historydescription_Document_MergeDocuments                     = 0x01a4;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -4728,13 +4734,27 @@
 		else
 		{
 			let Pos = this.Pos;
-			for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+			if (this.Add)
 			{
-				arrActions.push({
-					Item : this.Items[nIndex],
-					Pos  : Pos + nIndex,
-					Add  : this.Add
-				});
+				for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+				{
+					arrActions.push({
+						Item : this.Items[nIndex],
+						Pos  : Pos + nIndex,
+						Add  : true
+					});
+				}
+			}
+			else
+			{
+				for (let nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+				{
+					arrActions.push({
+						Item : this.Items[nIndex],
+						Pos  : Pos,
+						Add  : false
+					});
+				}
 			}
 		}
 
@@ -5037,6 +5057,8 @@
 
 		if (undefined !== this.Old && this.Old.Write_ToBinary)
 			this.Old.Write_ToBinary(Writer);
+		
+		this.WriteAdditional(Writer);
 	};
 	CChangesBaseObjectProperty.prototype.ReadFromBinary = function(Reader)
 	{
@@ -5081,6 +5103,14 @@
 			if (this.Old && this.Old.Read_FromBinary)
 				this.Old.Read_FromBinary(Reader);
 		}
+		
+		this.ReadAdditional(Reader);
+	};
+	CChangesBaseObjectProperty.prototype.WriteAdditional = function(writer)
+	{
+	};
+	CChangesBaseObjectProperty.prototype.ReadAdditional = function(reader)
+	{
 	};
 	CChangesBaseObjectProperty.prototype.private_CreateObject = function()
 	{

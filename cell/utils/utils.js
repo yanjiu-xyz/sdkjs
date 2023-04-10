@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1755,6 +1755,12 @@
 			});
 		};
 
+		MultiplyRange.prototype.isNull = function() {
+			if (!this.ranges || 0 === this.ranges.length || (1 === this.ranges.length && this.ranges[0] == null)) {
+				return true;
+			}
+			return false;
+		};
 
 		function VisibleRange(visibleRange, offsetX, offsetY) {
 			this.visibleRange = visibleRange;
@@ -2868,6 +2874,7 @@
 			this.showZeros = null;
 
 			this.topLeftCell = null;
+			this.view = null;
 
 			return this;
 		}
@@ -3136,7 +3143,16 @@
 		asc_CFindOptions.prototype.asc_setIsWholeCell = function (val) {this.isWholeCell = val;};
 		asc_CFindOptions.prototype.asc_setIsWholeWord = function (val) {this.isWholeWord = val;};
 		asc_CFindOptions.prototype.asc_changeSingleWord = function (val) { this.isChangeSingleWord = val; };
-		asc_CFindOptions.prototype.asc_setScanOnOnlySheet = function (val) {this.scanOnOnlySheet = val;};
+		asc_CFindOptions.prototype.asc_setScanOnOnlySheet = function (val) {
+			//TODO не стал менять native.js, поставил условие для scanOnOnlySheet
+			if (val === true) {
+				this.scanOnOnlySheet = Asc.c_oAscSearchBy.Sheet;
+			} else if (val === false) {
+				this.scanOnOnlySheet = Asc.c_oAscSearchBy.Workbook;
+			} else {
+				this.scanOnOnlySheet = val;
+			}
+		};
 		asc_CFindOptions.prototype.asc_setLookIn = function (val) {this.lookIn = val;};
 		asc_CFindOptions.prototype.asc_setReplaceWith = function (val) {this.replaceWith = val;};
 		asc_CFindOptions.prototype.asc_setIsReplaceAll = function (val) {this.isReplaceAll = val;};

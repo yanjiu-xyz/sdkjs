@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -2478,30 +2478,31 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
 
         case 10000: // ASC_SOCKET_EVENT_TYPE_OPEN
         {
-            _api.CoAuthoringApi._CoAuthoringApi._onServerOpen();
+            _api.CoAuthoringApi._CoAuthoringApi.socketio.onMessage("connect");
             break;
         }
 
         case 10010: // ASC_SOCKET_EVENT_TYPE_ON_CLOSE
         {
-
+            // NOT USED
             break;
         }
 
         case 10020: // ASC_SOCKET_EVENT_TYPE_MESSAGE
         {
-            _api.CoAuthoringApi._CoAuthoringApi._onServerMessage(_params ? JSON.parse(_params) : {});
+            _api.CoAuthoringApi._CoAuthoringApi.socketio.onMessage("message", _params ? JSON.parse(_params) : {});
             break;
         }
 
         case 11010: // ASC_SOCKET_EVENT_TYPE_ON_DISCONNECT
         {
+            _api.CoAuthoringApi._CoAuthoringApi.socketio.onMessage("disconnect", _params || "");
             break;
         }
 
         case 11020: // ASC_SOCKET_EVENT_TYPE_TRY_RECONNECT
         {
-            _api.CoAuthoringApi._CoAuthoringApi._reconnect();
+            // NOT USED
             break;
         }
 
@@ -2552,6 +2553,31 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
             imageProp.ImageUrl = _src;
             this.ImgApply(imageProp);
 
+            break;
+        }
+
+        case 21003: // ASC_COAUTH_EVENT_TYPE_INSERT_SCREEN_URL_IMAGE
+        {
+            var urls = JSON.parse(_params[_current.pos++]);
+            AscCommon.g_oDocumentUrls.addUrls(urls);
+            var firstUrl;
+            for (var i in urls) {
+                if (urls.hasOwnProperty(i)) {
+                    firstUrl = urls[i];
+                    break;
+                }
+            }
+
+            var _src = firstUrl;
+            var _w = _params[_current.pos++];
+            var _h = _params[_current.pos++];
+            var _pageNum = _params[_current.pos++];
+            var _additionalParams = _params[_current.pos++];
+            var _posX = _params[_current.pos++];
+            var _posY = _params[_current.pos++];
+            var _wrapType = _params[_current.pos++];
+
+            this.AddImageUrlAtPosNative(_src, _w, _h, _pageNum, _posX, _posY, _wrapType);
             break;
         }
 
@@ -6738,6 +6764,7 @@ function onApiShowRevisionsChange(data) {
                     }
                     break;
                 case Asc.c_oAscRevisionsChangeType.TablePr:
+                case Asc.c_oAscRevisionsChangeType.TableRowPr:
                     commonChanges.push("|Table Settings Changed|");
                     break;
                 case Asc.c_oAscRevisionsChangeType.RowsAdd:
@@ -6822,6 +6849,9 @@ function readSDKContentControl(props, selectedObjects) {
                 }
             }
         }
+    } else if (type == Asc.c_oAscContentControlSpecificType.DateTime) {
+        specProps = props.get_DateTimePr();
+        result["get_FullDate"] = specProps ? specProps.get_FullDate() : null;
     }
 
     // form settings
@@ -7033,7 +7063,7 @@ function onFocusObject(SelectedObjects, localTrigger) {
     }
 
     // Form object
-    if (control_props && control_props.get_FormPr()) {
+    if (control_props) {
         var spectype = control_props.get_SpecificType();
         settings.push({
             type: Asc.c_oAscTypeSelectElement.ContentControl,
@@ -7336,6 +7366,22 @@ window["asc_docs_api"].prototype["asc_nativeGetCoreProps"] = function() {
     return {};
 }
 
+// The helper function, wrap of asc_SetContentControlDatePickerDate
+window["asc_docs_api"].prototype["asc_nativeSetContentControlDatePickerDate"] = function(textDate, sId) {
+    var oLogicDocument = this.WordControl.m_oLogicDocument;
+    if (!oLogicDocument)
+        return;
+
+    var oContentControl = oLogicDocument.GetContentControl(sId);
+    if (!oContentControl || !oContentControl.IsDatePicker() || !oContentControl.CanBeEdited())
+        return;
+
+    var oPr = oContentControl.GetContentControlPr().get_DateTimePr();
+    oPr.put_FullDate(new  Date(textDate));
+
+    _api.asc_SetContentControlDatePickerPr(oPr, sId, true);
+}
+
 window["Asc"]["asc_docs_api"].prototype["asc_nativeAddText"] = function(text, wrapWithSpaces) {
     var settings = new AscCommon.CAddTextSettings();
 
@@ -7344,6 +7390,16 @@ window["Asc"]["asc_docs_api"].prototype["asc_nativeAddText"] = function(text, wr
     }
     
     _api.asc_AddText(text, settings);
+}
+
+window["Asc"]["asc_docs_api"].prototype["asc_nativeGetDocumentProtection"] = function() {
+    var props = (_api) ? _api.asc_getDocumentProtection() : null;
+    if (props) {
+        return {
+            "asc_getEditType": props.asc_getEditType()
+        }
+    }
+    return {};
 }
 
 window["AscCommon"].getFullImageSrc2 = function(src) {

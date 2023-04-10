@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -620,7 +620,6 @@
 		this.bSelectedSlidesTheme = false;
 		this.bIsShowAnimTab       = false;
 
-		this.isPaintFormat              = AscCommon.c_oAscFormatPainterState.kOff;
 		this.isMarkerFormat             = false;
 		this.isShowTableEmptyLine       = false;//true;
 		this.isShowTableEmptyLineAttack = false;//true;
@@ -1035,8 +1034,7 @@
 		{
 			if (e && true === AscCommon.CollaborativeEditing.Is_Fast())
 			{
-				var CursorInfo = JSON.parse(e);
-				AscCommon.CollaborativeEditing.Add_ForeignCursorToUpdate(CursorInfo.UserId, CursorInfo.CursorInfo, CursorInfo.UserShortId);
+				AscCommon.CollaborativeEditing.UpdateForeignCursorByAdditionalInfo(JSON.parse(e));
 			}
 		};
 	};
@@ -1525,7 +1523,30 @@ background-repeat: no-repeat;\
 			[Asc.c_oAscPresentationShortcutType.Save, 83, true, false, false],
 			[Asc.c_oAscPresentationShortcutType.ShowContextMenu, 93, false, false, false],
 			[Asc.c_oAscPresentationShortcutType.ShowContextMenu, 121, false, true, false],
-			[Asc.c_oAscPresentationShortcutType.ShowContextMenu, 57351, false, false, false]
+			[Asc.c_oAscPresentationShortcutType.ShowContextMenu, 57351, false, false, false],
+			[Asc.c_oAscPresentationShortcutType.ShowParaMarks, 56, true, true, false],
+			[Asc.c_oAscPresentationShortcutType.Bold, 66, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.CopyFormat, 67, true, true, false],
+			[Asc.c_oAscPresentationShortcutType.CenterAlign, 69, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.EuroSign, 69, true, false, true],
+			[Asc.c_oAscPresentationShortcutType.Group, 71, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.UnGroup, 71, true, true, false],
+			[Asc.c_oAscPresentationShortcutType.Italic, 73, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.JustifyAlign, 74, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.AddHyperlink, 75, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.BulletList, 76, true, true, false],
+			[Asc.c_oAscPresentationShortcutType.LeftAlign, 76, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.RightAlign, 82, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.Underline, 85, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.Strikethrough, 53, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.PasteFormat, 83, true, true, false],
+			[Asc.c_oAscPresentationShortcutType.Superscript, 187, true, true, false],
+			[Asc.c_oAscPresentationShortcutType.Superscript, 188, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.Subscript, 187, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.Subscript, 190, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.EnDash, 189, true, true, false],
+			[Asc.c_oAscPresentationShortcutType.DecreaseFont, 219, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.IncreaseFont, 221, true, false, false]
 		];
 		this.initShortcuts(aShortcuts, false)
 	};
@@ -1923,10 +1944,16 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.Undo           = function()
 	{
+		if (!this.canUndoRedoByRestrictions())
+			return;
+		
 		this.WordControl.m_oLogicDocument.Document_Undo();
 	};
 	asc_docs_api.prototype.Redo           = function()
 	{
+		if (!this.canUndoRedoByRestrictions())
+			return;
+
 		this.WordControl.m_oLogicDocument.Document_Redo();
 	};
 	asc_docs_api.prototype.Copy           = function()
@@ -2288,9 +2315,9 @@ background-repeat: no-repeat;\
 		else
 		{
 			AscCommon.CollaborativeEditing.Send_Changes(this.IsUserSave, {
-				UserId      : this.CoAuthoringApi.getUserConnectionId(),
-				UserShortId : this.DocInfo.get_UserId(),
-				CursorInfo  : CursorInfo
+				"UserId"      : this.CoAuthoringApi.getUserConnectionId(),
+				"UserShortId" : this.DocInfo.get_UserId(),
+				"CursorInfo"  : CursorInfo
 			}, undefined, true);
 		}
 	};
@@ -2425,16 +2452,20 @@ background-repeat: no-repeat;\
 	{
 		this.sendEvent("asc_onGetDocInfoEnd");
 	};
-	asc_docs_api.prototype.sync_CanUndoCallback         = function(bCanUndo)
+	asc_docs_api.prototype.sync_CanUndoCallback         = function(canUndo)
 	{
-		this.sendEvent("asc_onCanUndo", bCanUndo);
+		if (!this.canUndoRedoByRestrictions())
+			canUndo = false;
+		
+		this.sendEvent("asc_onCanUndo", canUndo);
 	};
-	asc_docs_api.prototype.sync_CanRedoCallback         = function(bCanRedo)
+	asc_docs_api.prototype.sync_CanRedoCallback         = function(canRedo)
 	{
-		if (true === AscCommon.CollaborativeEditing.Is_Fast() && true !== AscCommon.CollaborativeEditing.Is_SingleUser())
-			bCanRedo = false;
+		if (!this.canUndoRedoByRestrictions()
+			|| (true === AscCommon.CollaborativeEditing.Is_Fast() && true !== AscCommon.CollaborativeEditing.Is_SingleUser()))
+			canRedo = false;
 
-		this.sendEvent("asc_onCanRedo", bCanRedo);
+		this.sendEvent("asc_onCanRedo", canRedo);
 	};
 
 
@@ -4416,9 +4447,24 @@ background-repeat: no-repeat;\
 	{
 		return this.WordControl.m_oLogicDocument.getImageDataFromSelection();
 	};
-	asc_docs_api.prototype.putImageToSelection = function(sImageSrc, nWidth, nHeight)
+	asc_docs_api.prototype.putImageToSelection = function(sImageSrc, nWidth, nHeight, replaceMode)
 	{
-		return this.WordControl.m_oLogicDocument.putImageToSelection(sImageSrc, nWidth, nHeight);
+		return this.WordControl.m_oLogicDocument.putImageToSelection(sImageSrc, nWidth, nHeight, replaceMode);
+	};
+
+	asc_docs_api.prototype.getPluginContextMenuInfo = function ()
+	{
+		const oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+		{
+			return new AscCommon.CPluginCtxMenuInfo();
+		}
+		let oCurrentController = oLogicDocument.GetCurrentController();
+		if(!oCurrentController)
+		{
+			return new AscCommon.CPluginCtxMenuInfo();
+		}
+		return oCurrentController.getPluginSelectionInfo();
 	};
 	asc_docs_api.prototype.StartAddShape = function(prst, is_apply)
 	{
@@ -5879,11 +5925,13 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.asc_AddMath2 = function(Type)
 	{
-		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Content))
+		let logicDocument = this.WordControl.m_oLogicDocument
+		if (false === logicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Paragraph_Content))
 		{
-			this.WordControl.m_oLogicDocument.Create_NewHistoryPoint(AscDFH.historydescription_Document_AddMath);
-			var MathElement = new AscCommonWord.MathMenu(Type);
-			this.WordControl.m_oLogicDocument.AddToParagraph(MathElement, false);
+			let textPr = logicDocument.GetDirectTextPr();
+			logicDocument.Create_NewHistoryPoint(AscDFH.historydescription_Document_AddMath);
+			var MathElement = new AscCommonWord.MathMenu(Type, textPr ? textPr.Copy() : null);
+			logicDocument.AddToParagraph(MathElement, false);
 			this.checkChangesSize();
 		}
 	};
@@ -6347,6 +6395,7 @@ background-repeat: no-repeat;\
 				}
 			}
 		}
+
 		this.sendEvent("asc_onMouseMove", Data);
 	};
 
@@ -6782,35 +6831,34 @@ background-repeat: no-repeat;\
 		this.SelectedObjectsStack[this.SelectedObjectsStack.length] = new asc_CSelectedObject(c_oAscTypeSelectElement.Slide, obj);
 	};
 
-	asc_docs_api.prototype.ExitHeader_Footer = function(pageNumber)
-	{
-		if (this.WordControl.m_oDrawingDocument.IsFreezePage(pageNumber))
-			return;
-
-		var oldClickCount            = global_mouseEvent.ClickCount;
-		global_mouseEvent.ClickCount = 2;
-		this.WordControl.m_oLogicDocument.OnMouseDown(global_mouseEvent, 0, AscCommon.Page_Height / 2, pageNumber);
-		this.WordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, 0, AscCommon.Page_Height / 2, pageNumber);
-
-		this.WordControl.m_oLogicDocument.Document_UpdateInterfaceState();
-
-		global_mouseEvent.ClickCount = oldClickCount;
-	};
-
 	asc_docs_api.prototype.GetCurrentPixOffsetY = function()
 	{
 		return this.WordControl.m_dScrollY;
 	};
 
+	asc_docs_api.prototype.retrieveFormatPainterData = function()
+	{
+		let oPresentation = this.private_GetLogicDocument();
+		if(!oPresentation)
+		{
+			return null;
+		}
+		return oPresentation.GetFormattingPasteData();
+	};
 	asc_docs_api.prototype.SetPaintFormat = function(value)
 	{
-		this.isPaintFormat = value;
+		this.formatPainter.putState(value);
 		this.WordControl.m_oLogicDocument.Document_Format_Copy();
+	};
+
+	asc_docs_api.prototype.onInkDrawerChangeState = function()
+	{
+		this.WordControl.m_oLogicDocument.OnInkDrawerChangeState();
 	};
 
 	asc_docs_api.prototype.sync_PaintFormatCallback = function(value)
 	{
-		this.isPaintFormat = value;
+		this.formatPainter.putState(value);
 		return this.sendEvent("asc_onPaintFormatChanged", value);
 	};
 	asc_docs_api.prototype.SetMarkerFormat          = function(value, is_flag, r, g, b)
@@ -7144,11 +7192,12 @@ background-repeat: no-repeat;\
 		if (window.g_asc_plugins)
 			window.g_asc_plugins.stopWorked();
 
-		var is_reporter = (reporterStartObject && !this.isReporterMode);
-		if (is_reporter)
+		this.cancelEyedropper();
+		const bIsreporter = (reporterStartObject && !this.isReporterMode);
+		if (bIsreporter)
 			this.DemonstrationReporterStart(reporterStartObject);
 
-		if (is_reporter && (this.reporterWindow || window["AscDesktopEditor"]))
+		if (bIsreporter && (this.reporterWindow || window["AscDesktopEditor"]))
 			this.WordControl.DemonstrationManager.StartWaitReporter(div_id, slidestart_num, true);
 		else
 			this.WordControl.DemonstrationManager.Start(div_id, slidestart_num, true);
@@ -8469,6 +8518,7 @@ background-repeat: no-repeat;\
 		var _renderer                         = new AscCommon.CDocumentRenderer();
         _renderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
 		_renderer.VectorMemoryForPrint        = new AscCommon.CMemory();
+		_renderer.DocInfo(this.asc_getCoreProps());
 		var _bOldShowMarks                    = this.ShowParaMarks;
 		this.ShowParaMarks                    = false;
 		_renderer.IsNoDrawingEmptyPlaceholder = true;
@@ -8616,11 +8666,7 @@ background-repeat: no-repeat;\
 				this.WordControl.m_oDrawingDocument.placeholders.update(slide.getPlaceholdersControls());
 		}
 
-		if (this.isRestrictionSignatures() && !AscCommon.History.Have_Changes())
-		{
-			AscCommon.History.Clear();
-			logicDocument.Document_UpdateInterfaceState();
-		}
+		logicDocument.Document_UpdateInterfaceState();
 	};
 
 	asc_docs_api.prototype.isShowShapeAdjustments = function()
@@ -8635,12 +8681,6 @@ background-repeat: no-repeat;\
 	{
 		return this.canEdit();
 	};
-
-	asc_docs_api.prototype.SetDrawImagePreviewBulletForMenu = function(drawingInfo, type)
-  {
-		var drawer = new AscCommon.CBulletPreviewDrawer(drawingInfo, type);
-		drawer.draw();
-  };
 
 	asc_docs_api.prototype.asc_EditSelectAll = function()
 	{
@@ -8674,7 +8714,22 @@ background-repeat: no-repeat;\
 			delete this.printPreview;
 		}
 	};
-
+	asc_docs_api.prototype.getEyedropperImgData = function()
+	{
+		const oViewerCanvas = document.getElementById("id_viewer");
+		const oOverlayCanvas = document.getElementById("id_viewer_overlay");
+		if(!oViewerCanvas || !oOverlayCanvas)
+		{
+			return null;
+		}
+		let oCanvas = document.createElement("canvas");
+		oCanvas.width = oViewerCanvas.width;
+		oCanvas.height = oViewerCanvas.height;
+		const oCtx = oCanvas.getContext("2d");
+		oCtx.drawImage(oViewerCanvas, 0, 0);
+		oCtx.drawImage(oOverlayCanvas, 0, 0);
+		return oCtx.getImageData(0, 0, oCanvas.width, oCanvas.height);
+	};
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                 = window['Asc'] || {};
 	window['AscCommonSlide']                                      = window['AscCommonSlide'] || {};
@@ -9064,7 +9119,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_getSpellCheckSettings']           = asc_docs_api.prototype.asc_getSpellCheckSettings;
 	asc_docs_api.prototype['sync_shapePropCallback']              = asc_docs_api.prototype.sync_shapePropCallback;
 	asc_docs_api.prototype['sync_slidePropCallback']              = asc_docs_api.prototype.sync_slidePropCallback;
-	asc_docs_api.prototype['ExitHeader_Footer']                   = asc_docs_api.prototype.ExitHeader_Footer;
 	asc_docs_api.prototype['GetCurrentPixOffsetY']                = asc_docs_api.prototype.GetCurrentPixOffsetY;
 	asc_docs_api.prototype['SetPaintFormat']                      = asc_docs_api.prototype.SetPaintFormat;
 	asc_docs_api.prototype['sync_PaintFormatCallback']            = asc_docs_api.prototype.sync_PaintFormatCallback;

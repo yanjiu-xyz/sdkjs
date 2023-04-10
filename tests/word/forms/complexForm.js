@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -115,6 +115,7 @@ $(function () {
 		assert.strictEqual(complexForm.IsThisElementCurrent(), true, "Check cursor position in complex field");
 		assert.strictEqual(textForm1.IsPlaceHolder(), true, "Is placeholder in textForm1");
 
+		AscTest.SetFillingFormMode();
 		textForm1.Add(new AscWord.CRunText(0x61));
 		textForm1.Add(new AscWord.CRunText(0x62));
 		textForm1.Add(new AscWord.CRunText(0x63));
@@ -301,8 +302,10 @@ $(function () {
 		tempRun3.AddText("333");
 		complexForm.Add(tempRun3);
 
+		AscTest.SetFillingFormMode();
 		AscTest.AddTextToInlineSdt(textForm1, "abc def");
 		AscTest.AddTextToInlineSdt(textForm2, "ABC DEF");
+		AscTest.SetEditingMode();
 
 		assert.strictEqual(complexForm.GetInnerText(), "111abc def222ABC DEF333", "Check text of all complex form");
 
@@ -383,6 +386,8 @@ $(function () {
 
 	QUnit.test("Check mouse clicks", function (assert)
 	{
+		AscTest.SetFillingFormMode();
+		
 		// Внутри составной формы тройной клик должен выделять всю составную форму целиком, где бы мы не кликали
 		// Двойной клик внутри простой подформы выделяет целиком подформу, а двойно клик вне простой подфоры выделяет
 		// слово (по обычному) в рамках составной формы

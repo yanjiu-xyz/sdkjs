@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1048,7 +1048,7 @@ function BinaryPPTYLoader()
 
         s.Skip2(1); // start attributes
 
-        var _old_default = this.presentation.DefaultTableStyleId;
+        let sNewDefaultStyleStyleId;
         while (true)
         {
             var _at = s.GetUChar();
@@ -1059,8 +1059,7 @@ function BinaryPPTYLoader()
             {
                 case 0:
                 {
-                    var _def = s.GetString2();
-                    this.presentation.DefaultTableStyleId = _def;
+                    sNewDefaultStyleStyleId = s.GetString2();
                     break;
                 }
                 default:
@@ -1077,10 +1076,13 @@ function BinaryPPTYLoader()
             s.Skip2(1);
             this.ReadTableStyle();
         }
-
-        if(this.presentation && this.presentation.globalTableStyles && !this.presentation.globalTableStyles.Style[this.presentation.DefaultTableStyleId])
+        if(typeof sNewDefaultStyleStyleId === 'string' && this.presentation && this.presentation.globalTableStyles)
         {
-            this.presentation.DefaultTableStyleId = _old_default;
+            const oDefaultStyle = this.presentation.globalTableStyles.GetStyleByStyleId(sNewDefaultStyleStyleId);
+            if (oDefaultStyle)
+            {
+                this.presentation.DefaultTableStyleId = oDefaultStyle.Id;
+            }
         }
         s.Seek2(_end_rec);
     };

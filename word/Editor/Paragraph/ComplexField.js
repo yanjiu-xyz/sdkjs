@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -49,6 +49,7 @@ function ParaFieldChar(Type, LogicDocument)
 	this.Use           = true;
 	this.CharType      = undefined === Type ? fldchartype_Begin : Type;
 	this.ComplexField  = (this.CharType === fldchartype_Begin) ? new CComplexField(LogicDocument) : null;
+	this.fldData   = null;
 	this.Run           = null;
 	this.X             = 0;
 	this.Y             = 0;
@@ -84,6 +85,7 @@ ParaFieldChar.prototype.Copy = function()
 		oChar.SetComplexField(oComplexField);
 		oComplexField.ReplaceChar(oChar);
 	}
+	//todo fldData
 
 	return oChar;
 };
@@ -154,11 +156,13 @@ ParaFieldChar.prototype.Write_ToBinary = function(Writer)
 	// Long : CharType
 	Writer.WriteLong(this.Type);
 	Writer.WriteLong(this.CharType);
+	//todo fldData
 };
 ParaFieldChar.prototype.Read_FromBinary = function(Reader)
 {
 	// Long : CharType
 	this.Init(Reader.GetLong(), editor.WordControl.m_oLogicDocument);
+	//todo fldData
 };
 ParaFieldChar.prototype.SetParent = function(oParent)
 {
@@ -346,22 +350,26 @@ ParaInstrText.prototype.GetReplacementItem = function()
 	return this.Replacement;
 };
 
-function CComplexField(oLogicDocument)
+function CComplexField(logicDocument)
 {
-	this.LogicDocument   = oLogicDocument;
+	this.LogicDocument   = logicDocument;
 	this.Current         = false;
 	this.BeginChar       = null;
 	this.EndChar         = null;
 	this.SeparateChar    = null;
 	this.InstructionLine = "";
 	this.Instruction     = null;
-	this.Id              = null;
+	this.FieldId         = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetFieldsManager().GetNewComplexFieldId() : null;
 
 	this.InstructionLineSrc = "";
 	this.InstructionCF      = [];
 
 	this.StartUpdate = false;
 }
+CComplexField.prototype.GetFieldId = function()
+{
+	return this.FieldId;
+};
 CComplexField.prototype.SetCurrent = function(isCurrent)
 {
 	this.Current = isCurrent;
@@ -372,7 +380,16 @@ CComplexField.prototype.IsCurrent = function()
 };
 CComplexField.prototype.IsUpdate = function()
 {
-	return this.StartUpdate;
+	return (this.StartUpdate > 0);
+};
+CComplexField.prototype.StartCharsUpdate = function()
+{
+	++this.StartUpdate;
+};
+CComplexField.prototype.FinishCharsUpdate = function()
+{
+	if (this.StartUpdate > 0)
+		--this.StartUpdate;
 };
 CComplexField.prototype.SetInstruction = function(oParaInstr)
 {
@@ -442,7 +459,7 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 	this.private_CheckNestedComplexFields();
 	this.private_UpdateInstruction();
 
-	if (!this.Instruction || !this.BeginChar || !this.EndChar || !this.SeparateChar)
+	if (!this.Instruction || !this.IsValid())
 		return;
 
 	this.SelectFieldValue();
@@ -455,7 +472,7 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 		this.LogicDocument.StartAction();
 	}
 
-	this.StartUpdate = true;
+	this.StartCharsUpdate();
 	switch (this.Instruction.GetType())
 	{
 		case fieldtype_PAGE:
@@ -491,8 +508,10 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 		case fieldtype_NOTEREF:
 			this.private_UpdateNOTEREF();
 			break;
+		case fieldtype_ADDIN:
+			break;
 	}
-	this.StartUpdate = false;
+	this.FinishCharsUpdate();
 
 	if (false !== isNeedRecalculate)
 		this.LogicDocument.Recalculate();
@@ -545,6 +564,9 @@ CComplexField.prototype.CalculateValue = function()
 			break;
 		case fieldtype_NOTEREF:
 			sResult = this.private_CalculateNOTEREF();
+			break;
+		case fieldtype_ADDIN:
+			sResult = "";
 			break;
 
 	}
@@ -1071,13 +1093,13 @@ CComplexField.prototype.private_CalculateTIME = function(ms)
 		if (undefined !== ms)
 		{
 			var oDateTime = new Asc.cDate(ms);
-			sDate         = oFormat.formatToWord(oDateTime.getExcelDate() + (oDateTime.getUTCHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
+			sDate         = oFormat.formatToWord(oDateTime.getExcelDate(true) + (oDateTime.getUTCHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
 
 		}
 		else
 		{
 			let oDateTime = new Asc.cDate();
-			sDate         = oFormat.formatToWord(oDateTime.getExcelDate() + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
+			sDate         = oFormat.formatToWord(oDateTime.getExcelDate(true) + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
 		}
 	}
 
@@ -1440,10 +1462,12 @@ CComplexField.prototype.SelectField = function()
 };
 CComplexField.prototype.GetFieldValueText = function()
 {
+	let logicDocument = this.LogicDocument;
 	var oDocument = this.GetTopDocumentContent();
 	if (!oDocument)
 		return;
-
+	
+	let state = logicDocument ? logicDocument.SaveDocumentState() : null;
 	oDocument.RemoveSelection();
 
 	var oRun = this.SeparateChar.GetRun();
@@ -1457,8 +1481,12 @@ CComplexField.prototype.GetFieldValueText = function()
 	var oEndPos = oDocument.GetContentPosition(false);
 
 	oDocument.SetSelectionByContentPositions(oStartPos, oEndPos);
-
-	return oDocument.GetSelectedText();
+	let result = oDocument.GetSelectedText();
+	
+	if (state)
+		logicDocument.LoadDocumentState(state);
+	
+	return result;
 };
 CComplexField.prototype.GetTopDocumentContent = function()
 {
@@ -1685,6 +1713,24 @@ CComplexField.prototype.ChangeInstruction = function(sNewInstruction)
 	this.InstructionCF      = [];
 	this.private_UpdateInstruction();
 };
+CComplexField.prototype.CheckType = function(type)
+{
+	if (!this.IsValid())
+		return false;
+	
+	let instruction = this.GetInstruction();
+	if (!instruction)
+		return false;
+	
+	return instruction.GetType() === type;
+};
+CComplexField.prototype.IsAddin = function()
+{
+	return this.CheckType(fieldtype_ADDIN);
+};
 //--------------------------------------------------------export----------------------------------------------------
 window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CComplexField = CComplexField;
+
+window['AscWord'] = window['AscWord'] || {};
+window['AscWord'].CComplexField = CComplexField;

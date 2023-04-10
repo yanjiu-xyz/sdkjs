@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -217,7 +217,8 @@
 		ConnectionsLiveOS: 12,
 		ConnectionsLive: 13,
 		UsersViewCount: 14,
-		UsersViewCountOS: 15
+		UsersViewCountOS: 15,
+		NotBefore: 16
 	};
 
 	var c_oRights = {
@@ -486,6 +487,7 @@
 		this.label = null;
 		this.gridlines = null;
 		this.numFmt = null;
+		this.isRadar = false;
 	}
 	asc_ValAxisSettings.prototype.isEqual = function(oPr){
 		if(!oPr){
@@ -873,6 +875,12 @@
 
 		_stream["WriteByte"](255);
 	};
+	asc_ValAxisSettings.prototype.isRadarAxis = function() {
+		return this.isRadar;
+	};
+	asc_ValAxisSettings.prototype.putIsRadarAxis = function(v) {
+		this.isRadar = v;
+	};
 
 	/** @constructor */
 	function asc_CatAxisSettings() {
@@ -895,6 +903,7 @@
 		this.gridlines = null;
 		this.numFmt = null;
 		this.auto = false;
+		this.isRadar = false;
 	}
 	asc_CatAxisSettings.prototype.isEqual = function(oPr){
 		if(!oPr){
@@ -1254,6 +1263,12 @@
 
 		_stream["WriteByte"](255);
 	};
+	asc_CatAxisSettings.prototype.isRadarAxis = function() {
+		return this.isRadar;
+	};
+	asc_CatAxisSettings.prototype.putIsRadarAxis = function(v) {
+		this.isRadar = v;
+	};
 
 	/** @constructor */
 	function asc_ChartSettings() {
@@ -1585,11 +1600,24 @@
 	};
 	asc_ChartSettings.prototype.setRange = function(sRange) {
 		if(this.chartSpace) {
+			const oDataRefs = new AscFormat.CChartDataRefs(null);
+			const nCheckResult = oDataRefs.checkDataRange(sRange, this.getInRows(), this.getType());
+			if(nCheckResult !== Asc.c_oAscError.ID.No) {
+				this.sendError(nCheckResult);
+				return;
+			}
 			this.chartSpace.setRange(sRange);
 			this.updateChart();
 		}
 	};
 	asc_ChartSettings.prototype.isValidRange = function(sRange) {
+		if(this.getRange() !== sRange) {
+			const oDataRefs = new AscFormat.CChartDataRefs(null);
+			const nCheckResult = oDataRefs.checkDataRange(sRange, this.getInRows(), this.getType());
+			if(nCheckResult === Asc.c_oAscError.ID.MaxDataPointsError) {
+				return nCheckResult;
+			}
+		}
 		return AscFormat.isValidChartRange(sRange);
 	};
 	asc_ChartSettings.prototype.getRange = function() {
@@ -1695,6 +1723,9 @@
 		return this.separator;
 	};
 	asc_ChartSettings.prototype.sendErrorOnChangeType = function(nType) {
+		this.sendError(nType);
+	};
+	asc_ChartSettings.prototype.sendError = function(nType) {
 		var oApi = Asc.editor || editor;
 		if(oApi) {
 			oApi.sendEvent("asc_onError", nType, Asc.c_oAscError.Level.NoCritical);
@@ -2190,6 +2221,58 @@
 		}
 	};
 
+
+	const STANDART_COLORS_MAP = {};
+	STANDART_COLORS_MAP[0x000000] = "Black";
+	STANDART_COLORS_MAP[0xFFFFFF] = "White";
+	STANDART_COLORS_MAP[0xFF0000] = "Red";
+	STANDART_COLORS_MAP[0x00FF00] = "Green";
+	STANDART_COLORS_MAP[0x0000FF] = "Blue";
+	STANDART_COLORS_MAP[0xFFFF00] = "Yellow";
+	STANDART_COLORS_MAP[0xFF00FF] = "Purple";
+	STANDART_COLORS_MAP[0x00FFFF] = "Aqua";
+	STANDART_COLORS_MAP[0x800000] = "Dark Red";
+	STANDART_COLORS_MAP[0x008000] = "Dark Green";
+	STANDART_COLORS_MAP[0x000080] = "Dark Blue";
+	STANDART_COLORS_MAP[0x808000] = "Dark Yellow";
+	STANDART_COLORS_MAP[0x800080] = "Dark Purple";
+	STANDART_COLORS_MAP[0x008080] = "Dark Teal";
+	STANDART_COLORS_MAP[0xC0C0C0] = "Light Gray";
+	STANDART_COLORS_MAP[0x808080] = "Gray";
+	STANDART_COLORS_MAP[0x9999FF] = "Light Blue";
+	STANDART_COLORS_MAP[0x993366] = "Pink";
+	STANDART_COLORS_MAP[0xFFFFCC] = "Light Yellow";
+	STANDART_COLORS_MAP[0xCCFFFF] = "Sky Blue";
+	STANDART_COLORS_MAP[0x660066] = "Dark Purple";
+	STANDART_COLORS_MAP[0xFF8080] = "Rose";
+	STANDART_COLORS_MAP[0x0066CC] = "Blue";
+	STANDART_COLORS_MAP[0xCCCCFF] = "Light Blue";
+	STANDART_COLORS_MAP[0x00CCFF] = "Turquosie";
+	STANDART_COLORS_MAP[0xCCFFCC] = "Light Green";
+	STANDART_COLORS_MAP[0xFFFF99] = "Light Yellow";
+	STANDART_COLORS_MAP[0x99CCFF] = "Light Blue";
+	STANDART_COLORS_MAP[0xFF99CC] = "Pink";
+	STANDART_COLORS_MAP[0xCC99FF] = "Lavender";
+	STANDART_COLORS_MAP[0xFFCC99] = "Light Orange";
+	STANDART_COLORS_MAP[0x3366FF] = "Blue";
+	STANDART_COLORS_MAP[0x33CCCC] = "Teal";
+	STANDART_COLORS_MAP[0x99CC00] = "Green";
+	STANDART_COLORS_MAP[0xFFCC00] = "Gold";
+	STANDART_COLORS_MAP[0xFF9900] = "Orange";
+	STANDART_COLORS_MAP[0xFF6600] = "Orange";
+	STANDART_COLORS_MAP[0x666699] = "Indigo";
+	STANDART_COLORS_MAP[0x969696] = "Gray";
+	STANDART_COLORS_MAP[0x003366] = "Dark Blue";
+	STANDART_COLORS_MAP[0x339966] = "Green";
+	STANDART_COLORS_MAP[0x003300] = "Dark Green";
+	STANDART_COLORS_MAP[0x333300] = "Dark Yellow";
+	STANDART_COLORS_MAP[0x993300] = "Brown";
+	STANDART_COLORS_MAP[0x333399] = "Indigo";
+	STANDART_COLORS_MAP[0x333333] = "Dark Gray";
+
+	const REVERSE_COLORS_MAP = {};
+
+
 	/**
 	 * Класс CColor для работы с цветами
 	 * -----------------------------------------------------------------------------
@@ -2247,6 +2330,10 @@
 
 		getVal: function () {
 			return (((this.r << 16) & 0xFF0000) + ((this.g << 8)&0xFF00)+this.b);
+		},
+
+		getColorName: function() {
+			return (new asc_CColor(this.r, this.g, this.b)).asc_getName();
 		}
 	};
 
@@ -2263,7 +2350,7 @@
 
 		this.Mods = [];
 		this.ColorSchemeId = -1;
-
+		this.EffectValue  = 0;
 		if (1 === arguments.length) {
 			this.r = arguments[0].r;
 			this.g = arguments[0].g;
@@ -2280,51 +2367,233 @@
 		}
 	}
 
-	asc_CColor.prototype = {
-		constructor: asc_CColor, asc_getR: function () {
-			return this.r
-		}, asc_putR: function (v) {
-			this.r = v;
-			this.hex = undefined;
-		}, asc_getG: function () {
-			return this.g;
-		}, asc_putG: function (v) {
-			this.g = v;
-			this.hex = undefined;
-		}, asc_getB: function () {
-			return this.b;
-		}, asc_putB: function (v) {
-			this.b = v;
-			this.hex = undefined;
-		}, asc_getA: function () {
-			return this.a;
-		}, asc_putA: function (v) {
-			this.a = v;
-			this.hex = undefined;
-		}, asc_getType: function () {
-			return this.type;
-		}, asc_putType: function (v) {
-			this.type = v;
-		}, asc_getValue: function () {
-			return this.value;
-		}, asc_putValue: function (v) {
-			this.value = v;
-		}, asc_getHex: function () {
-			if (!this.hex) {
-				var a = this.a.toString(16);
-				var r = this.r.toString(16);
-				var g = this.g.toString(16);
-				var b = this.b.toString(16);
-				this.hex = ( a.length == 1 ? "0" + a : a) + ( r.length == 1 ? "0" + r : r) + ( g.length == 1 ? "0" + g : g) +
-					( b.length == 1 ? "0" + b : b);
+	asc_CColor.prototype.constructor = asc_CColor;
+	asc_CColor.prototype.asc_getR = function () {
+		return this.r
+	};
+	asc_CColor.prototype.asc_putR = function (v) {
+		this.r = v;
+		this.hex = undefined;
+	};
+	asc_CColor.prototype.asc_getG = function () {
+		return this.g;
+	};
+	asc_CColor.prototype.asc_putG = function (v) {
+		this.g = v;
+		this.hex = undefined;
+	};
+	asc_CColor.prototype.asc_getB = function () {
+		return this.b;
+	};
+	asc_CColor.prototype.asc_putB = function (v) {
+		this.b = v;
+		this.hex = undefined;
+	};
+	asc_CColor.prototype.asc_getA = function () {
+		return this.a;
+	};
+	asc_CColor.prototype.asc_putA = function (v) {
+		this.a = v;
+		this.hex = undefined;
+	};
+	asc_CColor.prototype.asc_getType = function () {
+		return this.type;
+	};
+	asc_CColor.prototype.asc_putType = function (v) {
+		this.type = v;
+	};
+	asc_CColor.prototype.asc_getValue = function () {
+		return this.value;
+	};
+	asc_CColor.prototype.asc_putValue = function (v) {
+		this.value = v;
+	};
+	asc_CColor.prototype.asc_getHex = function () {
+		if (!this.hex) {
+			var a = this.a.toString(16);
+			var r = this.r.toString(16);
+			var g = this.g.toString(16);
+			var b = this.b.toString(16);
+			this.hex = ( a.length == 1 ? "0" + a : a) + ( r.length == 1 ? "0" + r : r) + ( g.length == 1 ? "0" + g : g) +
+				( b.length == 1 ? "0" + b : b);
+		}
+		return this.hex;
+	};
+	asc_CColor.prototype.asc_getColor = function () {
+		return new CColor(this.r, this.g, this.b);
+	};
+	asc_CColor.prototype.asc_putAuto = function (v) {
+		this.Auto = v;
+	};
+	asc_CColor.prototype.asc_getAuto = function () {
+		return this.Auto;
+	};
+	asc_CColor.prototype.getColorDiff = function (nC1, nC2) {
+		let nC1R = (nC1 >> 16) & 0xFF;
+		let nC1G = (nC1 >> 8) & 0xFF;
+		let nC1B = nC1 & 0xFF;
+		let nC2R = (nC2 >> 16) & 0xFF;
+		let nC2G = (nC2 >> 8) & 0xFF;
+		let nC2B = nC2 & 0xFF;
+		let lab1 = this.RGB2LAB(nC1R, nC1G, nC1B);
+		let lab2 = this.RGB2LAB(nC2R, nC2G, nC2B);
+		return Math.abs(lab2[0] - lab1[0]) + Math.abs(lab2[1] - lab1[1]) + Math.abs(lab2[2] - lab1[2]);
+	};
+	asc_CColor.prototype.RGB2LAB = function (R, G, B) {
+		let r, g, b, X, Y, Z, fx, fy, fz, xr, yr, zr;
+		let Ls, as, bs;
+		let eps = 216.0 / 24389.0;
+		let k = 24389.0 / 27.0;
+
+		let Xr = 0.964221;  // reference white D50
+		let Yr = 1.0;
+		let Zr = 0.825211;
+
+		// RGB to XYZ
+		r = R / 255; //R 0..1
+		g = G / 255; //G 0..1
+		b = B / 255; //B 0..1
+
+		// assuming sRGB (D65)
+		if (r <= 0.04045)
+			r = r / 12;
+		else
+			r = Math.pow((r + 0.055) / 1.055, 2.4);
+
+		if (g <= 0.04045)
+			g = g / 12;
+		else
+			g = Math.pow((g + 0.055) / 1.055, 2.4);
+
+		if (b <= 0.04045)
+			b = b / 12;
+		else
+			b = Math.pow((b + 0.055) / 1.055, 2.4);
+
+
+		X = 0.436052025 * r + 0.385081593 * g + 0.143087414 * b;
+		Y = 0.222491598 * r + 0.71688606 * g + 0.060621486 * b;
+		Z = 0.013929122 * r + 0.097097002 * g + 0.71418547 * b;
+
+		// XYZ to Lab
+		xr = X / Xr;
+		yr = Y / Yr;
+		zr = Z / Zr;
+
+		if (xr > eps)
+			fx = Math.pow(xr, 1 / 3.);
+		else
+			fx = ((k * xr + 16.) / 116.);
+
+		if (yr > eps)
+			fy = Math.pow(yr, 1 / 3.);
+		else
+			fy = ((k * yr + 16.) / 116.);
+
+		if (zr > eps)
+			fz = Math.pow(zr, 1 / 3.);
+		else
+			fz = ((k * zr + 16.) / 116);
+
+		Ls = (116 * fy) - 16;
+		as = 500 * (fx - fy);
+		bs = 200 * (fy - fz);
+
+		let lab = [];
+		lab[0] = (2.55 * Ls + .5) >> 0;
+		lab[1] = (as + .5) >> 0;
+		lab[2] = (bs + .5) >> 0;
+		return lab;
+	};
+	asc_CColor.prototype.asc_getName = function() {
+		const nColorVal = this.getVal();
+		for(let nCurColor in STANDART_COLORS_MAP) {
+			if(STANDART_COLORS_MAP.hasOwnProperty(nCurColor)) {
+				if(nCurColor === nColorVal) {
+					return STANDART_COLORS_MAP[nCurColor];
+				}
 			}
-			return this.hex;
-		}, asc_getColor: function () {
-			return new CColor(this.r, this.g, this.b);
-		}, asc_putAuto: function (v) {
-			this.Auto = v;
-		}, asc_getAuto: function () {
-			return this.Auto;
+		}
+		let dMinDistance = 1000000;
+		let sMinName = "Black";
+		for(let nCurColor in STANDART_COLORS_MAP) {
+			if(STANDART_COLORS_MAP.hasOwnProperty(nCurColor)) {
+				let dDist = this.getColorDiff(nColorVal, nCurColor);
+				if(dDist < dMinDistance) {
+					dMinDistance = dDist;
+					sMinName = STANDART_COLORS_MAP[nCurColor];
+				}
+			}
+		}
+		return sMinName;
+	};
+	asc_CColor.prototype.getVal = function () {
+		return (((this.r << 16) & 0xFF0000) + ((this.g << 8)&0xFF00)+this.b);
+	};
+	asc_CColor.prototype.asc_putEffectValue = function (v) {
+		let dVal = Math.abs(v);
+		dVal = ((dVal * 100 + 0.5) >> 0) / 100;
+		if(v < 0) {
+			dVal = -dVal;
+		}
+		this.EffectValue = dVal;
+	};
+	asc_CColor.prototype.asc_getEffectValue = function () {
+		return this.EffectValue;
+	};
+	asc_CColor.prototype.print = function() {
+		console.log("Color");
+		console.log("r: " + this.r);
+		console.log("g: " + this.g);
+		console.log("b: " + this.b);
+		console.log("effect val: " + this.asc_getEffectValue());
+		console.log("name: " + this.asc_getName());
+		console.log("name in scheme: " + this.asc_getNameInColorScheme());
+		console.log("---------------");
+	};
+	asc_CColor.prototype.asc_getNameInColorScheme = function () {
+		if(this.ColorSchemeId === -1) {
+			return null;
+		}
+		switch (this.ColorSchemeId) {
+			// bg1,tx1,bg2,tx2,accent1 - accent6
+			case 6: {
+				return "background 1";
+			}
+			case 15: {
+				return "text 1";
+			}
+			case 7: {
+				return "background 2";
+			}
+			case 16: {
+				return "text 2";
+			}
+			case 0: {
+				return "accent 1";
+			}
+			case 1: {
+				return "accent 2";
+			}
+			case 2: {
+				return "accent 3";
+			}
+			case 3: {
+				return "accent 4";
+			}
+			case 4: {
+				return "accent 5";
+			}
+			case 5: {
+				return "accent 6";
+			}
+		}
+		return null;
+	};
+	asc_CColor.prototype.setColorSchemeId = function (v) {
+		this.ColorSchemeId = v;
+		if(!AscFormat.isRealNumber(this.ColorSchemeId)) {
+			this.ColorSchemeId = -1;
 		}
 	};
 
@@ -4322,6 +4591,7 @@
 		this.LineEndSize = null;
 
 		this.canChangeArrows = false;
+		this.transparent = null;
 	}
 
 	asc_CStroke.prototype = {
@@ -4370,7 +4640,12 @@
 		asc_getCanChangeArrows: function () {
 			return this.canChangeArrows;
 		},
-
+		asc_getTransparent: function () {
+			return this.transparent;
+		},
+		asc_putTransparent: function (v) {
+			this.transparent = v;
+		},
 		asc_putPrstDash: function (v) {
 			this.prstDash = v;
 		}, asc_getPrstDash: function () {
@@ -4464,7 +4739,7 @@
 			this.Type  = ( undefined != obj.Type ) ? obj.Type : c_oAscMouseMoveDataTypes.Common;
 			this.X_abs = ( undefined != obj.X_abs ) ? obj.X_abs : 0;
 			this.Y_abs = ( undefined != obj.Y_abs ) ? obj.Y_abs : 0;
-
+			this.EyedropperColor = ( undefined != obj.EyedropperColor ) ? obj.EyedropperColor : undefined;
 			switch (this.Type)
 			{
 				case c_oAscMouseMoveDataTypes.Hyperlink :
@@ -4499,6 +4774,7 @@
 			this.Type  = c_oAscMouseMoveDataTypes.Common;
 			this.X_abs = 0;
 			this.Y_abs = 0;
+			this.EyedropperColor = undefined;
 		}
 	}
 
@@ -4538,6 +4814,10 @@
 	CMouseMoveData.prototype.get_ReviewChange = function()
 	{
 		return this.ReviewChange;
+	};
+	CMouseMoveData.prototype.get_EyedropperColor = function()
+	{
+		return this.EyedropperColor;
 	};
 
 
@@ -5721,8 +6001,10 @@
 		return 0;
 	};
 
-	CPlugin.prototype["get_Name"]    = function()
+	CPlugin.prototype["get_Name"]    = function(locale)
 	{
+		if (locale && this.nameLocale && this.nameLocale[locale])
+			return this.nameLocale[locale];
 		return this.name;
 	};
 	CPlugin.prototype["set_Name"]    = function(value)
@@ -5888,6 +6170,7 @@
 	prot['ConnectionsLive'] = prot.ConnectionsLive;
 	prot['UsersViewCount'] = prot.UsersViewCount;
 	prot['UsersViewCountOS'] = prot.UsersViewCountOS;
+	prot['NotBefore'] = prot.NotBefore;
 
 	window['Asc']['c_oRights'] = window['Asc'].c_oRights = c_oRights;
 	prot = c_oRights;
@@ -6005,6 +6288,7 @@
 	prot["getGridlines"] = prot.getGridlines;
 	prot["putNumFmt"] = prot.putNumFmt;
 	prot["getNumFmt"] = prot.getNumFmt;
+	prot["isRadarAxis"] = prot.isRadarAxis;
 
 	window["AscCommon"].asc_CatAxisSettings = asc_CatAxisSettings;
 	prot = asc_CatAxisSettings.prototype;
@@ -6047,6 +6331,7 @@
 	prot["getNumFmt"] = prot.getNumFmt;
 	prot["getAuto"] = prot.getAuto;
 	prot["putAuto"] = prot.putAuto;
+	prot["isRadarAxis"] = prot.isRadarAxis;
 
 	window["Asc"]["asc_ChartSettings"] = window["Asc"].asc_ChartSettings = asc_ChartSettings;
 	prot = asc_ChartSettings.prototype;
@@ -6149,23 +6434,27 @@
 
 	window["Asc"]["asc_CColor"] = window["Asc"].asc_CColor = asc_CColor;
 	prot = asc_CColor.prototype;
-	prot["get_r"] = prot["asc_getR"] = prot.asc_getR;
-	prot["put_r"] = prot["asc_putR"] = prot.asc_putR;
-	prot["get_g"] = prot["asc_getG"] = prot.asc_getG;
-	prot["put_g"] = prot["asc_putG"] = prot.asc_putG;
-	prot["get_b"] = prot["asc_getB"] = prot.asc_getB;
-	prot["put_b"] = prot["asc_putB"] = prot.asc_putB;
-	prot["get_a"] = prot["asc_getA"] = prot.asc_getA;
-	prot["put_a"] = prot["asc_putA"] = prot.asc_putA;
-	prot["get_auto"] = prot["asc_getAuto"] = prot.asc_getAuto;
-	prot["put_auto"] = prot["asc_putAuto"] = prot.asc_putAuto;
-	prot["get_type"] = prot["asc_getType"] = prot.asc_getType;
-	prot["put_type"] = prot["asc_putType"] = prot.asc_putType;
-	prot["get_value"] = prot["asc_getValue"] = prot.asc_getValue;
-	prot["put_value"] = prot["asc_putValue"] = prot.asc_putValue;
-	prot["get_hex"] = prot["asc_getHex"] = prot.asc_getHex;
-	prot["get_color"] = prot["asc_getColor"] = prot.asc_getColor;
-	prot["get_hex"] = prot["asc_getHex"] = prot.asc_getHex;
+	prot["get_r"] = prot["asc_getR"] = prot.get_r = prot.asc_getR;
+	prot["put_r"] = prot["asc_putR"] = prot.put_r = prot.asc_putR;
+	prot["get_g"] = prot["asc_getG"] = prot.get_g = prot.asc_getG;
+	prot["put_g"] = prot["asc_putG"] = prot.put_g = prot.asc_putG;
+	prot["get_b"] = prot["asc_getB"] = prot.get_b = prot.asc_getB;
+	prot["put_b"] = prot["asc_putB"] = prot.put_b = prot.asc_putB;
+	prot["get_a"] = prot["asc_getA"] = prot.get_a = prot.asc_getA;
+	prot["put_a"] = prot["asc_putA"] = prot.put_a = prot.asc_putA;
+	prot["get_auto"] = prot["asc_getAuto"] = prot.get_auto = prot.asc_getAuto;
+	prot["put_auto"] = prot["asc_putAuto"] = prot.put_auto = prot.asc_putAuto;
+	prot["get_type"] = prot["asc_getType"] = prot.get_type = prot.asc_getType;
+	prot["put_type"] = prot["asc_putType"] = prot.put_type = prot.asc_putType;
+	prot["get_value"] = prot["asc_getValue"] = prot.get_value = prot.asc_getValue;
+	prot["put_value"] = prot["asc_putValue"] = prot.put_value = prot.asc_putValue;
+	prot["get_hex"] = prot["asc_getHex"] = prot.get_hex = prot.asc_getHex;
+	prot["get_color"] = prot["asc_getColor"] = prot.get_color = prot.asc_getColor;
+	prot["get_name"] = prot["asc_getName"] = prot.get_name = prot.asc_getName;
+	prot["get_effectValue"] = prot["asc_getEffectValue"] = prot.get_effectValue = prot.asc_getEffectValue;
+	prot["put_effectValue"] = prot["asc_putEffectValue"] = prot.put_effectValue = prot.asc_putEffectValue;
+	prot["get_nameInColorScheme"] = prot["asc_getNameInColorScheme"] = prot.get_nameInColorScheme = prot.asc_getNameInColorScheme;
+
 
 	window["Asc"]["asc_CTextBorder"] = window["Asc"].asc_CTextBorder = asc_CTextBorder;
 	prot = asc_CTextBorder.prototype;
@@ -6698,6 +6987,8 @@
 	prot["get_canChangeArrows"] = prot["asc_getCanChangeArrows"] = prot.asc_getCanChangeArrows;
 	prot["put_prstDash"] = prot["asc_putPrstDash"] = prot.asc_putPrstDash;
 	prot["get_prstDash"] = prot["asc_getPrstDash"] = prot.asc_getPrstDash;
+	prot["get_transparent"] = prot["asc_getTransparent"] = prot.asc_getTransparent;
+	prot["put_transparent"] = prot["asc_putTransparent"] = prot.asc_putTransparent;
 
 	window["AscCommon"].CAscColorScheme = CAscColorScheme;
 	prot = CAscColorScheme.prototype;
@@ -6717,6 +7008,7 @@
 	prot["get_FootnoteNumber"] = prot.get_FootnoteNumber;
 	prot["get_FormHelpText"] = prot.get_FormHelpText;
 	prot["get_ReviewChange"] = prot.get_ReviewChange;
+	prot["get_EyedropperColor"] = prot.get_EyedropperColor;
 
 	window["Asc"]["asc_CUserInfo"] = window["Asc"].asc_CUserInfo = asc_CUserInfo;
 	prot = asc_CUserInfo.prototype;

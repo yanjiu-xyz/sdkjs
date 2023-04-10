@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -213,7 +213,7 @@ ParaRun.prototype.Copy = function(Selected, oPr)
     var oLogicDocument = this.GetLogicDocument();
 	if(oPr && oPr.Comparison)
 	{
-		oPr.Comparison.updateReviewInfo(NewRun, reviewtype_Add);
+		oPr.Comparison.checkCopyParaRun(NewRun, this);
 	}
     else if (true === isCopyReviewPr || (oLogicDocument && (oLogicDocument.RecalcTableHeader || oLogicDocument.MoveDrawing)))
 	{
@@ -334,7 +334,7 @@ ParaRun.prototype.Copy2 = function(oPr)
     NewRun.Set_Pr( this.Pr.Copy(undefined, oPr) );
 	if(oPr && oPr.Comparison)
 	{
-		oPr.Comparison.updateReviewInfo(NewRun, reviewtype_Add);
+		oPr.Comparison.checkCopyParaRun(NewRun, this);
 	}
     var StartPos = 0;
     var EndPos   = this.Content.length;
@@ -538,10 +538,6 @@ ParaRun.prototype.GetTextOfElement = function(isLaTeX)
 		if (this.Content[i]) {
 			str += this.Content[i].GetTextOfElement(isLaTeX);
 		}
-	}
-	//???
-	if (str === 'mod') {
-		str = '\\bmod'
 	}
 	return str;
 };
@@ -1094,6 +1090,20 @@ ParaRun.prototype.IsOnlyCommonTextScript = function()
 	}
 
 	return isCommonScript;
+};
+/**
+ * Is a run inside smartArt
+ * @param [bReturnSmartArtShape] {boolean}
+ * @returns {boolean|null|AscFormat.CShape}
+ */
+ParaRun.prototype.IsInsideSmartArtShape = function (bReturnSmartArtShape)
+{
+	const oParagraph = this.GetParagraph();
+	if (oParagraph)
+	{
+		return oParagraph.IsInsideSmartArtShape(bReturnSmartArtShape);
+	}
+	return bReturnSmartArtShape ? null : false;
 };
 /**
  * Проверяем, предзназначен ли данный ран чисто для математических формул.
@@ -4615,48 +4625,49 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                         X += SpaceLen;
                         SpaceLen = 0;
                     }
-
-                    if (Item.IsPageBreak() || Item.IsColumnBreak())
-                    {
-                        PRS.BreakPageLine = true;
-                        if (Item.IsPageBreak())
-                            PRS.BreakRealPageLine = true;
-
-						// Учитываем разрыв страницы/колонки, только если мы находимся в главной части документа, либо
-						// во вложенной в нее SdtContent (вложение может быть многоуровневым)
-                        var oParent = Para.Parent;
-                        while (oParent instanceof CDocumentContent && oParent.IsBlockLevelSdtContent())
-							oParent = oParent.GetParent().GetParent();
-
-						if (!(oParent instanceof CDocument) || true !== Para.Is_Inline())
+					
+					let isLineBreak = Item.IsLineBreak();
+					if (Item.IsPageBreak() || Item.IsColumnBreak())
+					{
+						isLineBreak = false;
+						PRS.BreakPageLine = true;
+						if (Item.IsPageBreak())
+							PRS.BreakRealPageLine = true;
+						
+						if (Para.IsTableCellContent() || !Para.IsInline())
 						{
-							// TODO: Продумать, как избавиться от данного элемента, т.к. удалять его при пересчете нельзя,
-							//       иначе будут проблемы с совместным редактированием.
-
 							Item.Flags.Use = false;
 							continue;
 						}
-
-						if (Item.IsPageBreak() && !Para.CheckSplitPageOnPageBreak(Item))
-                            continue;
-
-                        Item.Flags.NewLine = true;
-
-                        NewPage       = true;
-                        NewRange      = true;
-                    }
-                    else
-                    {
-                    	PRS.BreakLine = true;
-
-                        NewRange = true;
-                        EmptyLine = false;
+						else if (!(PRS.GetTopDocument() instanceof CDocument))
+						{
+							// Везде кроме таблиц считаем такие разрывы обычными разрывами строки
+							isLineBreak = true;
+						}
+						else
+						{
+							if (Item.IsPageBreak() && !Para.CheckSplitPageOnPageBreak(Item))
+								continue;
+							
+							Item.Flags.NewLine = true;
+							
+							NewPage       = true;
+							NewRange      = true;
+						}
+					}
+					
+					if (isLineBreak)
+					{
+						PRS.BreakLine = true;
+						
+						NewRange = true;
+						EmptyLine = false;
 						TextOnLine = true;
-
-                        // здесь оставляем проверку, т.к. в случае, если после неинлайновой формулы нах-ся инлайновая необходимо в любом случае сделать перенос (проверка в private_RecalculateRange(), где выставляется PRS.ForceNewLine = true не пройдет)
-                        if (true === PRS.MathNotInline)
-                            PRS.ForceNewLine = true;
-                    }
+						
+						// здесь оставляем проверку, т.к. в случае, если после неинлайновой формулы нах-ся инлайновая необходимо в любом случае сделать перенос (проверка в private_RecalculateRange(), где выставляется PRS.ForceNewLine = true не пройдет)
+						if (true === PRS.MathNotInline)
+							PRS.ForceNewLine = true;
+					}
 
                     RangeEndPos = Pos + 1;
 
@@ -8522,9 +8533,9 @@ ParaRun.prototype.IsSelectionEmpty = function(CheckEnd)
     var Selection = this.State.Selection;
     if (true !== Selection.Use)
         return true;
-
-    if(this.Type == para_Math_Run && this.IsPlaceholder())
-        return true;
+	
+	if (this.IsMathRun() && this.IsPlaceholder())
+		return false;
 
     var StartPos = Selection.StartPos;
     var EndPos   = Selection.EndPos;
@@ -8600,7 +8611,7 @@ ParaRun.prototype.Selection_CheckParaContentPos = function(ContentPos, Depth, bS
 //-----------------------------------------------------------------------------------
 // Функции для работы с настройками текста свойств
 //-----------------------------------------------------------------------------------
-ParaRun.prototype.Clear_TextFormatting = function(DefHyper)
+ParaRun.prototype.Clear_TextFormatting = function(DefHyper, bHighlight)
 {
 	// Highlight и Lang не сбрасываются при очистке текстовых настроек
 
@@ -8625,6 +8636,12 @@ ParaRun.prototype.Clear_TextFormatting = function(DefHyper)
 	this.Set_Shd(undefined);
 	this.Set_TextFill(undefined);
 	this.Set_TextOutline(undefined);
+
+	if(bHighlight)
+	{
+		this.Set_HighLight(undefined);
+		this.SetHighlightColor(undefined);
+	}
 
 	// Насильно заставим пересчитать стиль, т.к. как данная функция вызывается у параграфа, у которого мог смениться стиль
 	this.Recalc_CompiledPr(true);
@@ -8695,6 +8712,10 @@ ParaRun.prototype.Get_CompiledPr = function(bCopy)
     {
         this.RecalcInfo.TextPr = false;
         this.CompiledPr = this.Internal_Compile_Pr();
+		
+		// Пока настройки параграфа не считаются скомпилированными, мы не можем считать скомпилированными настройки рана
+		if (this.Paragraph && !this.Paragraph.IsParaPrCompiled())
+			this.RecalcInfo.TextPr = true;
     }
 
     if ( false === bCopy )
@@ -9397,7 +9418,7 @@ ParaRun.prototype.Apply_Pr = function(TextPr)
 			}
 		}
 	}
-	if (undefined !== TextPr.AscLine)
+	if (undefined !== TextPr.AscLine && null !== TextPr.AscLine)
 	{
 		if(this.Paragraph)
 		{
@@ -11207,20 +11228,17 @@ ParaRun.prototype.Math_GetRealFontSize = function(FontSize)
 
     return RealFontSize;
 };
-ParaRun.prototype.Math_CompareFontSize = function(ComparableFontSize, bStartLetter)
+ParaRun.prototype.Math_GetFontSize = function(fromBegin)
 {
-    var lng = this.Content.length;
-
-    var Letter = this.Content[lng - 1];
-
-    if(bStartLetter == true)
-        Letter = this.Content[0];
-
-
-    var CompiledPr = this.Get_CompiledPr(false);
-    var LetterFontSize = Letter.Is_LetterCS() ? CompiledPr.FontSizeCS : CompiledPr.FontSize;
-
-    return ComparableFontSize == this.Math_GetRealFontSize(LetterFontSize);
+	let compiledPr = this.Get_CompiledPr(false);
+	let fontSize   = compiledPr.FontSize;
+	if (this.Content.length > 0)
+	{
+		let runItem = this.Content[fromBegin ? 0 : this.Content.length - 1];
+		fontSize    = runItem.IsCS() ? compiledPr.FontSizeCS : compiledPr.FontSize;
+	}
+	
+	return this.Math_GetRealFontSize(fontSize);
 };
 ParaRun.prototype.Math_EmptyRange = function(_CurLine, _CurRange) // до пересчета нужно узнать будет ли данный Run пустым или нет в данном Range, необходимо для того, чтобы выставить wrapIndent
 {
@@ -12773,7 +12791,7 @@ ParaRun.prototype.UpdateBookmarks = function(oManager)
 			this.Content[nIndex].UpdateBookmarks(oManager);
 	}
 };
-ParaRun.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos)
+ParaRun.prototype.CheckRunContent = function(fCheck, oStartPos, oEndPos, nDepth, oCurrentPos, isForward)
 {
 	let nStartPos = oStartPos && oStartPos.GetDepth() >= nDepth ? oStartPos.Get(nDepth) : 0;
 	let nEndPos   = oEndPos && oEndPos.GetDepth() >= nDepth ? oEndPos.Get(nDepth) : this.Content.length;

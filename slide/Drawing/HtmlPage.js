@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1934,17 +1934,20 @@ function CEditorPage(api)
 
 	this.hitToSplitter = function()
 	{
-		var oWordControl = oThis;
 
-		var x1 = oWordControl.Splitter1Pos * g_dKoef_mm_to_pix;
-		var x2 = (oWordControl.Splitter1Pos + GlobalSkin.SplitterWidthMM) * g_dKoef_mm_to_pix;
 
-		var _x = global_mouseEvent.X - oWordControl.X;
-		var _y = global_mouseEvent.Y - oWordControl.Y;
+		let nResult = 0;
+		let oWordControl = oThis;
+
+		let x1 = oWordControl.Splitter1Pos * g_dKoef_mm_to_pix;
+		let x2 = (oWordControl.Splitter1Pos + GlobalSkin.SplitterWidthMM) * g_dKoef_mm_to_pix;
+
+		let _x = global_mouseEvent.X - oWordControl.X;
+		let _y = global_mouseEvent.Y - oWordControl.Y;
 
 		if (_x >= x1 && _x <= x2 && _y >= 0 && _y <= oWordControl.Height && (oThis.IsUseNullThumbnailsSplitter || (oThis.Splitter1Pos != 0)))
 		{
-			return 1;
+			nResult = 1;
 		}
 		else if (_x >= x2 && _x <= oWordControl.Width)
 		{
@@ -1954,7 +1957,7 @@ function CEditorPage(api)
 
 			if(_y >= y1 && _y <= y2)
 			{
-				return 2;
+				nResult = 2;
 			}
 			else
 			{
@@ -1964,12 +1967,41 @@ function CEditorPage(api)
 					y2 = oWordControl.Height - (oWordControl.Splitter3Pos * g_dKoef_mm_to_pix);
 					if(_y >= y1 && _y <= y2)
 					{
-						return 3;
+						nResult = 3;
 					}
 				}
 			}
 		}
-		return 0;
+
+		//check event sender to prevent tracking after click on menu elements (bug 60586)
+		if(nResult !== 0)
+		{
+			if(global_mouseEvent.Sender)
+			{
+				let oThContainer, oMainContainer, oBodyElement;
+				let oSender = global_mouseEvent.Sender;
+				if(this.m_oThumbnailsContainer)
+				{
+					oThContainer = this.m_oThumbnailsContainer.HtmlElement;
+				}
+				if(this.m_oMainParent)
+				{
+					oMainContainer = this.m_oMainParent.HtmlElement;
+				}
+				if(this.m_oBody)
+				{
+					oBodyElement = this.m_oBody.HtmlElement;
+				}
+				if(!(oThContainer && oThContainer.contains(oSender) ||
+					oMainContainer && oMainContainer.contains(oSender) ||
+					oBodyElement && oSender.contains(oBodyElement)))
+				{
+					return 0;
+				}
+			}
+
+		}
+		return nResult;
 	};
 
 	this.onBodyMouseDown = function(e)
@@ -1980,18 +2012,19 @@ function CEditorPage(api)
 		if (AscCommon.g_inputContext && AscCommon.g_inputContext.externalChangeFocus())
 			return;
 
-		if (oThis.SplitterType != 0)
+		if (oThis.SplitterType !== 0)
 			return;
 
-		var _isCatch = false;
+		let _isCatch = false;
 
-		var downClick = global_mouseEvent.ClickCount;
+		let downClick = global_mouseEvent.ClickCount;
 		AscCommon.check_MouseDownEvent(e, true);
 		global_mouseEvent.ClickCount = downClick;
 		global_mouseEvent.LockMouse();
 
-		var oWordControl = oThis;
-		var nSplitter = oThis.hitToSplitter();
+		let oWordControl = oThis;
+		let nSplitter = 0;
+		nSplitter = oThis.hitToSplitter();
 		if(nSplitter > 0)
 		{
 			if(nSplitter === 1)
@@ -2325,7 +2358,11 @@ function CEditorPage(api)
 
 			oWordControl.StartUpdateOverlay();
 			oWordControl.m_oDrawingDocument.m_lCurrentPage = pos.Page;
-			oWordControl.m_oLogicDocument.OnMouseDown(global_mouseEvent, pos.X, pos.Y, pos.Page);
+
+			if(!oThis.m_oApi.isEyedropperStarted())
+			{
+				oWordControl.m_oLogicDocument.OnMouseDown(global_mouseEvent, pos.X, pos.Y, pos.Page);
+			}
 			oWordControl.EndUpdateOverlay();
 		}
 		else
@@ -2388,7 +2425,30 @@ function CEditorPage(api)
 		if (is_drawing === true)
 			return;
 
-		oWordControl.m_oLogicDocument.OnMouseMove(global_mouseEvent, pos.X, pos.Y, pos.Page);
+
+		if(oThis.m_oApi.isEyedropperStarted())
+		{
+			let oMainPos = oWordControl.m_oMainParent.AbsolutePosition;
+			let oParentPos = oWordControl.m_oMainView.AbsolutePosition;
+			let nX  = global_mouseEvent.X - oWordControl.X - (oMainPos.L + oParentPos.L) * AscCommon.g_dKoef_mm_to_pix;
+			let nY  = global_mouseEvent.Y - oWordControl.Y - (oMainPos.T + oParentPos.T) * AscCommon.g_dKoef_mm_to_pix;
+			nX = AscCommon.AscBrowser.convertToRetinaValue(nX, true);
+			nY = AscCommon.AscBrowser.convertToRetinaValue(nY, true);
+			oThis.m_oApi.checkEyedropperColor(nX, nY);
+			oThis.m_oApi.sync_MouseMoveStartCallback();
+			let MMData = new AscCommon.CMouseMoveData();
+			let Coords = oWordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page, null);
+			MMData.X_abs = Coords.X;
+			MMData.Y_abs = Coords.Y;
+			MMData.EyedropperColor = oThis.m_oApi.getEyedropperColor();
+			MMData.Type = Asc.c_oAscMouseMoveDataTypes.Eyedropper;
+			oWordControl.m_oDrawingDocument.SetCursorType("eyedropper", MMData);
+			oThis.m_oApi.sync_MouseMoveEndCallback();
+		}
+		else
+		{
+			oWordControl.m_oLogicDocument.OnMouseMove(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		}
 		oWordControl.EndUpdateOverlay();
 	};
 	this.onMouseMove2 = function()
@@ -2412,6 +2472,20 @@ function CEditorPage(api)
 
 		oWordControl.m_oLogicDocument.OnMouseMove(global_mouseEvent, pos.X, pos.Y, pos.Page);
 		oWordControl.EndUpdateOverlay();
+	};
+	this.checkFinishEyedropper = function()
+	{
+		if(oThis.m_oApi.isEyedropperStarted())
+		{
+			oThis.m_oApi.finishEyedropper();
+			const oPos = oThis.m_oDrawingDocument.ConvertCoordsFromCursor2(global_mouseEvent.X, global_mouseEvent.Y);
+			if (oPos.Page !== -1)
+			{
+				oThis.m_oLogicDocument.OnMouseMove(global_mouseEvent, oPos.X, oPos.Y, oPos.Page);
+			}
+			return true;
+		}
+		return false;
 	};
 	this.onMouseUp    = function(e, bIsWindow)
 	{
@@ -2482,7 +2556,10 @@ function CEditorPage(api)
 		if (is_drawing === true)
 			return;
 
-		oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		if(!oThis.checkFinishEyedropper())
+		{
+			oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		}
 
 		oWordControl.m_bIsMouseUpSend = false;
 		//        oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
@@ -2571,8 +2648,10 @@ function CEditorPage(api)
 		oWordControl.StartUpdateOverlay();
 
 		oWordControl.m_bIsMouseUpSend = true;
-
-		oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		if(!oThis.checkFinishEyedropper())
+		{
+			oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		}
 		oWordControl.m_bIsMouseUpSend = false;
 		oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
 		oWordControl.m_oLogicDocument.Document_UpdateRulersState();
@@ -3699,7 +3778,7 @@ function CEditorPage(api)
 		{
 			var dGlobalAplpha = ctx.globalAlpha;
 			ctx.globalAlpha = 1.0;
-			drDoc.DrawMathTrack(overlay);
+			drDoc.DrawMathTrack(isDrawNotes ? overlayNotes : overlay);
 			ctx.globalAlpha = dGlobalAplpha;
 		}
 
@@ -3863,6 +3942,8 @@ function CEditorPage(api)
 		if (null == canvas)
 			return;
 
+
+
 		var context = canvas.getContext("2d");
 		var _width  = canvas.width;
 		var _height = canvas.height;
@@ -3898,6 +3979,10 @@ function CEditorPage(api)
 		{
 			this.m_oDrawingDocument.UpdateTargetNoAttack();
 			this.m_bIsUpdateTargetNoAttack = false;
+		}
+		if(this.m_oApi.isEyedropperStarted())
+		{
+			this.m_oApi.clearEyedropperImgData();
 		}
 	};
 
@@ -4449,6 +4534,10 @@ function CEditorPage(api)
 		{
 			// сборка файлов
 			return;
+		}
+		if(this.m_oApi.isEyedropperStarted() && drDoc.SlideCurrent !== lPageNum)
+		{
+			this.m_oApi.cancelEyedropper();
 		}
 
 		var _old_empty = this.m_oDrawingDocument.IsEmptyPresentation;

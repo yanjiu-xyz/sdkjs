@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -131,7 +131,8 @@ var c_oAscMouseMoveType = {
   ResizeRow: 5,
   Filter: 6,
   Tooltip: 7,
-  ForeignSelect: 8
+  ForeignSelect: 8,
+  Eyedropper: 9
 };
 
 var c_oAscMouseMoveLockedObjectType = {
@@ -154,7 +155,8 @@ var c_oAscLockTypeElemSubType = {
   InsertRows: 4,
   ChangeProperties: 5,
   DefinedNames: 6,
-  NamedSheetView: 7
+  NamedSheetView: 7,
+  UserProtectedRange: 8
 };
 
 var c_oAscRecalcIndexTypes = {
@@ -346,7 +348,8 @@ var c_oAscVisibleAreaOleEditorBorderColor = new CColor(32, 139, 255);
     Resize      : 4,
     Promote     : 8,
     Dash        : 16,
-    DashThick   : 32
+    DashThick   : 32,
+    ResizeRange : 64
   };
 
   var docChangedType = {
@@ -425,7 +428,8 @@ var c_oAscPopUpSelectorType = {
   var c_oAscChangePrintAreaType = {
       set: 0,
       clear: 1,
-      add: 2
+      add: 2,
+      change: 3
   };
 
   //поля header/footer
@@ -677,6 +681,7 @@ var c_oAscPopUpSelectorType = {
   prot['Filter'] = prot.Filter;
   prot['Tooltip'] = prot.Tooltip;
   prot['ForeignSelect'] = prot.ForeignSelect;
+  prot['Eyedropper'] = prot.Eyedropper;
   window['Asc']['c_oAscMouseMoveLockedObjectType'] = window['Asc'].c_oAscMouseMoveLockedObjectType = c_oAscMouseMoveLockedObjectType;
   prot = c_oAscMouseMoveLockedObjectType;
   prot['None'] = prot.None;

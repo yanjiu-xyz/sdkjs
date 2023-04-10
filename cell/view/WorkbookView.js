@@ -1,5 +1,5 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -67,6 +67,25 @@
 
   var g_clipboardExcel = AscCommonExcel.g_clipboardExcel;
 
+  function CCellFormatPasteData(oWSView) {
+	  AscCommon.CFormattingPasteDataBase.call();
+	  this.ws = oWSView.model;
+	  this.range = this.ws.selectionRange.clone();
+
+	  this.docData = null;
+	  if (oWSView && oWSView.isSelectOnShape) {
+		  if (oWSView.objectRender && oWSView.objectRender.controller) {
+			  this.docData = oWSView.objectRender.controller.getFormatPainterData();
+		  }
+	  }
+  }
+  AscFormat.InitClassWithoutType(CCellFormatPasteData, AscCommon.CFormattingPasteDataBase);
+	CCellFormatPasteData.prototype.isDrawingData = function() {
+		return !!this.docData;
+	};
+	CCellFormatPasteData.prototype.getDocData = function() {
+		return this.docData;
+	};
 
   function WorkbookCommentsModel(handlers, aComments) {
     this.workbook = {handlers: handlers};
@@ -257,9 +276,6 @@
     this.mainOverlay = null;
     this.autoShapeTrack = null;
 
-    this.formatPainterState = c_oAscFormatPainterState.kOff;
-    this.formatPainterRange = null;
-    this.formatPainterSheet = null;
 
     this.selectionDialogMode = false;
     this.dialogAbsName = false;
@@ -554,7 +570,7 @@
 
 			  // FormatPainter
 			  'isFormatPainter': function () {
-				  return self.formatPainterState;
+				  return self.Api.getFormatPainterState();
 			  },
 
 			  //calculate
@@ -584,15 +600,20 @@
       if (this.input && this.input.addEventListener) {
 				var eventInfo = new AscCommon.CEventListenerInfo(this.input, "focus", function () {
 					if (this.Api.isEditVisibleAreaOleEditor) {
-						this.input.blur();
+						this._blurCellEditor();
 						return;
 					}
 					this.input.isFocused = true;
 					if (!this.canEdit()) {
 						return;
 					}
-					if (this.isProtectActiveCell()) {
+					if (this.isUserProtectActiveCell()) {
 						this.input.blur();
+						this.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
+						return;
+					}
+					if (this.isProtectActiveCell()) {
+						this._blurCellEditor();
 						this.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
 						return;
 					}
@@ -809,6 +830,8 @@
 				  return self.canEdit();
 			  }, "isProtectActiveCell": function () {
 				  return self.isProtectActiveCell();
+			  }, "isUserProtectActiveCell": function () {
+				  return self.isProtectActiveCell();
 			  }, "getFormulaRanges": function () {
 			      return self.isActive() ? self.getWorksheet().oOtherRanges : null;
 			  }, "isActive": function () {
@@ -825,7 +848,9 @@
 				  self.handlers.trigger("asc_onFormulaInfo", fName, pos);
 			  }, "onSelectionEnd" : function () {
 				  self.handlers.trigger("asc_onSelectionEnd");
-        }
+			  }, "doEditorFocus" : function () {
+				  self._setEditorFocus();
+			  }
 		  }, this.defaults.worksheetView.cells.padding);
 
 	  this.wsViewHandlers = new AscCommonExcel.asc_CHandlersList(/*handlers*/{
@@ -939,9 +964,13 @@
       self.onShowDrawingObjects.apply(self, arguments);
     });
     this.model.handlers.add("setCanUndo", function(bCanUndo) {
+      if (!self.Api.canUndoRedoByRestrictions())
+        bCanUndo = false;
       self.handlers.trigger("asc_onCanUndoChanged", bCanUndo);
     });
     this.model.handlers.add("setCanRedo", function(bCanRedo) {
+      if (!self.Api.canUndoRedoByRestrictions())
+        bCanRedo = false;
       self.handlers.trigger("asc_onCanRedoChanged", bCanRedo);
     });
     this.model.handlers.add("setDocumentModified", function(bIsModified) {
@@ -1037,6 +1066,12 @@
 		//делаю для оптимизации. в случае открытого окна Cell Watches: обновляем весь список только в случае когда меняется этот список
 		// в противном случае в интерфейс отправляю только то, что изменилось по индексу
 		self.changedCellWatchesSheets = true;
+	});
+	this.model.handlers.add("onChangePageSetupProps", function(wsId) {
+		var ws = self.getWorksheetById(wsId);
+		if (ws) {
+			ws.onChangePageSetupProps();
+		}
 	});
 	this.Api.asc_registerCallback("EndTransactionCheckSize", function() {
 		self.Api.checkChangesSize();
@@ -1322,7 +1357,7 @@
     if (this.selectionDialogMode) {
       return;
     }
-    var formatPainterState = this.formatPainterState;
+    var formatPainterState = this.Api.getFormatPainterState();
     var ws = this.getWorksheet();
     ws.changeSelectionDone();
     this._onSelectionNameChanged(ws.getSelectionName(/*bRangeText*/false));
@@ -1411,6 +1446,10 @@
   };
 
 	WorkbookView.prototype._onPointerDownPlaceholder = function (x, y) {
+		if(window["IS_NATIVE_EDITOR"]) {
+			return false;
+		}
+
 		const oWS = this.getWorksheet();
 		if (x < oWS.cellsLeft || y < oWS.cellsTop) {
 			return false;
@@ -1560,6 +1599,14 @@
             }
 		}
 
+		if(this.Api.isEyedropperStarted()) {
+			arrMouseMoveObjects.push(new asc_CMM({
+				type: c_oAscMouseMoveType.Eyedropper,
+				x: AscCommon.AscBrowser.convertToRetinaValue(x),
+				y: AscCommon.AscBrowser.convertToRetinaValue(y),
+				color: ct.color
+			}));
+		}
       /* Проверяем, может мы на никаком объекте (такая схема оказалась приемлимой
        * для отдела разработки приложений)
        */
@@ -1670,7 +1717,9 @@
 
 		if (this.Api.isEditVisibleAreaOleEditor && target.isOleRange) {
 			d = ws.changeSelectionMoveResizeVisibleAreaHandle(x, y, target);
-		} else {
+		} else if (target.isPageBreakPreview) {
+			d = ws.changePageBreakPreviewAreaHandle(x, y, target);
+	    } else {
 			d = ws.changeSelectionMoveResizeRangeHandle(x, y, target, this.cellEditor);
 		}
 
@@ -1681,9 +1730,9 @@
 		return this.model.getOleSize();
 	};
 
-  WorkbookView.prototype._onMoveResizeRangeHandleDone = function() {
+  WorkbookView.prototype._onMoveResizeRangeHandleDone = function(isPageBreakPreview) {
     var ws = this.getWorksheet();
-    ws.applyMoveResizeRangeHandle();
+    isPageBreakPreview ? ws.applyResizePageBreakPreviewRangeHandle() : ws.applyMoveResizeRangeHandle();
   };
 
   // Frozen anchor
@@ -1780,7 +1829,7 @@
   };
 
   WorkbookView.prototype._onStopFormatPainter = function (bLockDraw) {
-    if (this.formatPainterState) {
+    if (this.Api.getFormatPainterState()) {
       this.formatPainter(c_oAscFormatPainterState.kOff, bLockDraw);
     }
   };
@@ -1901,7 +1950,7 @@
     var activeWsModel = this.model.getActiveWs();
     if (activeWsModel.inPivotTable(activeCellRange)) {
 		if (t.input.isFocused) {
-			t.input.blur();
+			t._blurCellEditor();
 		}
 		this.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellPivot, c_oAscError.Level.NoCritical);
 		return;
@@ -1951,11 +2000,26 @@
 	var needBlurFunc;
 	if (t.input && t.input.isFocused) {
 		needBlurFunc = function () {
-			t.input && t.input.blur();
+			t._blurCellEditor();
 			needBlur = true;
 		}
 	}
-    ws.checkProtectRangeOnEdit([new Asc.Range(activeCellRange.c1, activeCellRange.r1, activeCellRange.c1, activeCellRange.r1)], doEdit, null, needBlurFunc);
+	let checkRange = new Asc.Range(activeCellRange.c1, activeCellRange.r1, activeCellRange.c1, activeCellRange.r1);
+	if (ws.model.isIntersectionOtherUserProtectedRanges(checkRange)) {
+	  //error
+	  needBlurFunc && needBlurFunc();
+	  this.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
+	  return;
+	}
+    ws.checkProtectRangeOnEdit([checkRange], doEdit, null, needBlurFunc);
+  };
+
+  WorkbookView.prototype._blurCellEditor = function () {
+	 this._setEditorFocus();
+  };
+
+  WorkbookView.prototype._setEditorFocus = function () {
+	 this.element && this.element.focus();
   };
 
   /**
@@ -1976,7 +2040,7 @@
 			  return sImageBase64;
 		  });
 	  }, this, []);
-  }
+  };
 
   WorkbookView.prototype._checkStopCellEditorInFormulas = function() {
 	  if (this.isCellEditMode && this.isFormulaEditMode && this.cellEditor.canEnterCellRange()) {
@@ -2026,6 +2090,11 @@
 		  };
 		  var selection = ws._getSelection();
 		  var ranges = selection && selection.ranges;
+		  if (ws.model.isIntersectionOtherUserProtectedRanges(ranges)) {
+			  //error
+			  this.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
+			  return;
+		  }
 		  if (!ws.objectRender.selectedGraphicObjectsExists()) {
 			  ws.checkProtectRangeOnEdit(ranges, doDelete);
 		  } else {
@@ -2194,6 +2263,9 @@
       return this;
     }
 
+	if(this.Api.isEyedropperStarted()) {
+		this.Api.cancelEyedropper();
+	}
     var selectionRange = null;
     // Только если есть активный
     if (-1 !== this.wsActive) {
@@ -2397,6 +2469,14 @@
 		return ws.isProtectActiveCell();
 	};
 
+	WorkbookView.prototype.isUserProtectActiveCell = function() {
+		var ws = this.getWorksheet();
+		if (!ws) {
+			return false;
+		}
+		return ws.isUserProtectActiveCell();
+	};
+
     WorkbookView.prototype.getDialogSheetName = function () {
         return this.dialogSheetName || !this.isActive();
     };
@@ -2430,10 +2510,25 @@
 	};
 
 	WorkbookView.prototype.isDrawFormatPainter = function () {
-	    return this.formatPainterState && this.formatPainterSheet === this.wsActive;
+		if(this.Api.getFormatPainterState()) {
+			let oData = this.Api.getFormatPainterData();
+			if(oData && !oData.docData) {
+				let oWS = this.getWorksheet();
+				if(oWS && oWS.model === oData.ws) {
+					return true;
+				}
+			}
+		}
+		return false;
     };
     WorkbookView.prototype.getFormatPainterSheet = function () {
-        return this.formatPainterState && this.model.getWorksheet(this.formatPainterSheet);
+	    if(this.Api.getFormatPainterState()) {
+		    let oData = this.Api.getFormatPainterData();
+		    if(oData && oData.ws) {
+			    return oData.ws;
+		    }
+	    }
+	    return null;
     };
 
   WorkbookView.prototype.getIsTrackShape = function() {
@@ -3052,7 +3147,7 @@
 
   WorkbookView.prototype.setOleSize = function (oPr) {
     this.model.setOleSize(oPr);
-  }
+  };
   WorkbookView.prototype.setSelectionDialogMode = function (selectionDialogType, selectRange) {
       var newSelectionDialogMode = c_oAscSelectionDialogType.None !== selectionDialogType;
 
@@ -3166,15 +3261,10 @@
         ws.cleanSelection();
     }
 
-    // Если передали состояние, то выставляем его. Если нет - то меняем на противоположное.
-    this.formatPainterState = (null != formatPainterState) ? formatPainterState :
-        ((c_oAscFormatPainterState.kOff !== this.formatPainterState) ? c_oAscFormatPainterState.kOff : c_oAscFormatPainterState.kOn);
-
-    if (this.formatPainterState) {
-      this.formatPainterSheet = this.wsActive;
-      this.formatPainterRange = ws.model.selectionRange.clone();
+    if (this.Api.getFormatPainterState()) {
+      this.Api.checkFormatPainterData()
     } else {
-      this.formatPainterSheet = this.formatPainterRange = null;
+      this.Api.clearFormatPainterData();
       this.handlers.trigger('asc_onStopFormatPainter');
     }
     if (!bLockDraw) {
@@ -3393,7 +3483,7 @@
 	  var pdfPrinter;
 	  var t = this;
 	  this._executeWithoutZoom(function () {
-		  pdfPrinter = new AscCommonExcel.CPdfPrinter(t.fmgrGraphics[3], t.m_oFont);
+		  pdfPrinter = new AscCommonExcel.CPdfPrinter(t.fmgrGraphics[3], t.m_oFont.clone());
 		  if (pdfDocRenderer) {
 			  pdfPrinter.DocumentRenderer = pdfDocRenderer;
 		  }
@@ -3422,7 +3512,7 @@
 					  ws = t.getWorksheet(indexWorksheetTmp);
 					  indexWorksheet = indexWorksheetTmp;
 				  }
-				  ws.drawForPrint(pdfPrinter, printPagesData.arrPages[i], i, printPagesData.arrPages.length);
+				  ws.drawForPrint(pdfPrinter, printPagesData.arrPages[i], i, printPagesData.arrPages);
 			  }
 		  }
 	  });
@@ -3458,6 +3548,27 @@
 		return oRet;
 	};
 
+	WorkbookView.prototype.executeWithoutPreview = function (runFunction) {
+		if (!this.printPreviewState) {
+			runFunction();
+			return;
+		}
+
+		let oldState = this.printPreviewState.isStart();
+		let oldZoom = this.getZoom();
+		if (oldState) {
+			this.printPreviewState.start = false;
+			if (null != this.printPreviewState.realZoom) {
+				this.changeZoom(this.printPreviewState.realZoom, true, true);
+			}
+		}
+		runFunction();
+		this.printPreviewState.start = oldState;
+		if (this.printPreviewState.start) {
+			this.changeZoom(oldZoom, true, true);
+		}
+	};
+
   WorkbookView.prototype.getSimulatePageForOleObject = function (sizes, oRange) {
     var page = new AscCommonExcel.CPagePrint();
     page.indexWorksheet = 0;
@@ -3470,7 +3581,7 @@
     page.pageWidth = sizes.width;
     page.scale = 1;
     return page;
-  }
+  };
   
   WorkbookView.prototype.printForOleObject = function (ws, oRange) {
     var sizes = ws.getRangePosition(oRange);
@@ -3481,7 +3592,7 @@
 		previewOleObjectContext.isNotDrawBackground = !this.Api.isFromSheetEditor;
     ws.drawForPrint(previewOleObjectContext, page, 0, 1);
     return previewOleObjectContext;
-  }
+  };
 
 	WorkbookView.prototype.printSheetPrintPreview = function(index) {
 		var printPreviewState = this.printPreviewState;
@@ -3517,7 +3628,7 @@
 			ws.drawForPrint(printPreviewContext, null);
 		} else {
 			ws = this.getWorksheet(page.indexWorksheet);
-			ws.drawForPrint(printPreviewContext, page, index, printPreviewState.getPagesLength());
+			ws.drawForPrint(printPreviewContext, page, index, printPreviewState.pages && printPreviewState.pages.arrPages);
 		}
 	};
 
@@ -3603,9 +3714,6 @@
   WorkbookView.prototype.scrollToCell = function (row, column) {
     this.getWorksheet().scrollToCell(row, column);
   };
-  WorkbookView.prototype.scrollAndResizeToRange = function (r1, c1, r2, c2) {
-    this.getWorksheet().scrollAndResizeToRange(r1, c1, r2, c2);
-  }
   WorkbookView.prototype.onShowDrawingObjects = function() {
       var oWSView = this.getWorksheet();
       var oDrawingsRender;
@@ -4941,7 +5049,7 @@
 	WorkbookView.prototype.EnterText = function (codePoints, skipCellEditor) {
 		this.controller.EnterText(codePoints);
 		if (this.isCellEditMode && !skipCellEditor) {
-			this.cellEditor.EnterText(codePoints);
+			return this.cellEditor.EnterText(codePoints);
 		}
 	};
 
@@ -5007,33 +5115,48 @@
 			// })
 
 
+			let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
 			var doUpdateData = function (_arrAfterPromise) {
 				History.Create_NewPoint();
 				History.StartTransaction();
 
 				var updatedReferences = [];
 				for (var i = 0; i < _arrAfterPromise.length; i++) {
-					var externalReferenceId = _arrAfterPromise[i].externalReferenceId;
-					var stream = _arrAfterPromise[i].stream;
-					var eR = t.model.getExternalReferenceById(externalReferenceId);
+					let externalReferenceId = _arrAfterPromise[i].externalReferenceId;
+					let stream = _arrAfterPromise[i].stream;
+					let eR = t.model.getExternalReferenceById(externalReferenceId);
 					if (stream && eR) {
 						updatedReferences.push(eR);
 						//TODO если внутри не zip, отправляем на конвертацию в xlsx, далее повторно обрабатываем - позже реализовать
 						//использую общий wb для externalReferences. поскольку внутри
 						//хранится sharedStrings, возмжно придтся использовать для каждого листа свою книгу
 						//необходимо проверить, ссылкой на 2 листа одной книги
-						var wb = eR.getWb();
-						if (!t.Api["asc_isSupportFeature"]("ooxml")) {
+						let wb = eR.getWb();
+						let editor;
+						if (!t.Api["asc_isSupportFeature"]("ooxml") || isLocalDesktop) {
 							//в этом случае запрашиваем бинарник
 							// в ответ приходит архив - внутри должен лежать 1 файл "Editor.bin"
-							let jsZlib = new AscCommon.ZLib();
-							if (!jsZlib.open(stream)) {
-								t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
-								return false;
+
+							let binaryData = stream;
+							if (!isLocalDesktop) {
+								//xlst
+								binaryData = null;
+								let jsZlib = new AscCommon.ZLib();
+								if (!jsZlib.open(stream)) {
+									t.model.handlers.trigger("asc_onErrorUpdateExternalReference", eR.Id);
+									continue;
+								}
+
+								if (jsZlib.files && jsZlib.files.length) {
+									binaryData = jsZlib.getFile(jsZlib.files[0]);
+								}
 							}
 
-							if (jsZlib.files && jsZlib.files.length) {
-								var binaryData = jsZlib.getFile(jsZlib.files[0]);
+							if (binaryData) {
+								editor = AscCommon.getEditorByBinSignature(binaryData);
+								if (editor !== AscCommon.c_oEditorId.Spreadsheet) {
+									continue;
+								}
 
 								//заполняем через банарник
 								var oBinaryFileReader = new AscCommonExcel.BinaryFileReader(true);
@@ -5043,7 +5166,7 @@
 								};
 
 								if (!wb) {
-									wb = new AscCommonExcel.Workbook();
+									wb = new AscCommonExcel.Workbook(null, window["Asc"]["editor"]);
 									wb.DrawingDocument = Asc.editor.wbModel.DrawingDocument;
 								}
 								AscFormat.ExecuteNoHistory(function () {
@@ -5056,8 +5179,13 @@
 									eR && eR.updateData(wb.aWorksheets, _arrAfterPromise[i].data);
 								}
 							}
+
 						} else {
-							var updatedData = window["Asc"]["editor"].openDocumentFromZip2(wb ? wb : t.model, stream);
+							editor = AscCommon.getEditorByOOXMLSignature(stream);
+							if (editor !== AscCommon.c_oEditorId.Spreadsheet) {
+								continue;
+							}
+							let updatedData = window["Asc"]["editor"].openDocumentFromZip2(wb ? wb : t.model, stream);
 							if (updatedData) {
 								eR && eR.updateData(updatedData, _arrAfterPromise[i].data);
 							}
@@ -5072,15 +5200,15 @@
 				History.EndTransaction();
 
 				//кроме пересчёта нужно изменить ссылку на лист во всех диапазонах, которые используют данную ссылку
-				for (var j = 0; i < updatedReferences.length; j++) {
-					for (var n in updatedReferences[j].worksheets) {
-						var prepared = t.model.dependencyFormulas.prepareChangeSheet(updatedReferences[j].worksheets[n].getId());
+				for (let j = 0; i < updatedReferences.length; j++) {
+					for (let n in updatedReferences[j].worksheets) {
+						let prepared = t.model.dependencyFormulas.prepareChangeSheet(updatedReferences[j].worksheets[n].getId());
 						t.model.dependencyFormulas.dependencyFormulas.changeSheet(prepared);
 					}
 				}
 
 				//t.model.dependencyFormulas.calcTree();
-				var ws = t.getWorksheet();
+				let ws = t.getWorksheet();
 				ws.draw();
 
 				t.model.handlers.trigger("asc_onStartUpdateExternalReference", false);
@@ -5088,36 +5216,39 @@
 
 			this.model.handlers.trigger("asc_onStartUpdateExternalReference", true);
 
-			if (window["AscDesktopEditor"]) {
+			let doPromise = function (data) {
+				//создаём запросы
+				var arrAfterPromise = [];
+
+				var aRequests = [];
+				t._getPromiseRequestsArr(data, aRequests, externalReferences, function (_stream, externalReferenceId, oData) {
+					arrAfterPromise.push({stream: _stream, externalReferenceId: externalReferenceId, data: oData});
+					if (aRequests.length === arrAfterPromise.length) {
+						doUpdateData(arrAfterPromise);
+					}
+				});
+
+				if (!aRequests.length) {
+					t.model.handlers.trigger("asc_onStartUpdateExternalReference", false);
+					return;
+				}
+
+				var _promise = Promise.resolve();
+				for (let i in aRequests) {
+					_promise = _promise.then(aRequests[i]);
+				}
+			};
+
+			if (isLocalDesktop) {
 				//TODO для декстопа необходима функция получения файлов + при копипасте нужно записывать путь файла(и знать путь текущего файла, чтобы вычислить относительный)
 				//десктоп
 				//var arrAfterPromise = getFilesContent(externalReferences);
 				//doUpdateData(arrAfterPromise);
+				doPromise();
 			} else {
 				//портал
 				//получаем ссылку на файл через asc_onUpdateExternalReference от портала
-				t._getExternalReferenceData(externalReferences, function (data) {
-					//создаём запросы
-					var arrAfterPromise = [];
-
-					var aRequests = [];
-					t._getPromiseRequestsArr(data, aRequests, externalReferences, function (_stream, externalReferenceId, oData) {
-						arrAfterPromise.push({stream: _stream, externalReferenceId: externalReferenceId, data: oData});
-						if (aRequests.length === arrAfterPromise.length) {
-							doUpdateData(arrAfterPromise);
-						}
-					});
-
-					if (!aRequests.length) {
-						t.model.handlers.trigger("asc_onStartUpdateExternalReference", false);
-						return;
-					}
-
-					var _promise = Promise.resolve();
-					for (let i in aRequests) {
-						_promise = _promise.then(aRequests[i]);
-					}
-				});
+				t._getExternalReferenceData(externalReferences, doPromise);
 			}
 		}
 	};
@@ -5132,55 +5263,88 @@
 		if (!requests) {
 			return;
 		}
-		var t = this;
+		let t = this;
 		//чтобы потом понять что нужно обновлять, сохраняю сооветсвие, количество запросов соответсвует количеству externalReferences
 		//для этого создаю на все Promise, и если data[i].error -> возвращаю null
 
-		var successfulLoadFileMap = {};
-		var getPromise = function (oData, eR, _resolve) {
+		let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
+		let successfulLoadFileMap = {};
+		let getPromise = function (oData, eR, _resolve) {
 			return function () {
 
 				return new Promise(function (resolve) {
-					var sFileUrl = oData && !oData.error ? oData.url : null;
-					var isExternalLink = eR.isExternalLink();
 
-					//если ссылка на внешний источник, пробуем получить контент
-					if (!sFileUrl && oData.error && isExternalLink) {
-						sFileUrl = eR.data;
-					}
-
+					let resolveStream = function (stream) {
+						resolve(_resolve(stream, eR.externalReference.Id, oData));
+					};
 					//получаем контент файла
-					var loadFile = function (_fileUrl) {
+					let loadFile = function (_fileUrl) {
 						AscCommon.loadFileContent(_fileUrl, function (httpRequest) {
+							let stream;
 							if (httpRequest) {
-								var stream = AscCommon.initStreamFromResponse(httpRequest);
-								resolve(_resolve(stream, eR.externalReference.Id, oData));
+								stream = AscCommon.initStreamFromResponse(httpRequest);
 							} else {
 								//reject - не вызываю, чтобы выполнились все запросы
-								resolve(_resolve(null, eR.externalReference.Id, oData));
+								stream = null;
 							}
+							resolveStream(stream);
 						}, "arraybuffer");
 					};
 
-					//если открыть на клиенте не можем, то запрашиваем бинарник
-					var isXlsx = eR.externalReference && eR.externalReference.isXlsx();
-					//если внешняя ссылка, то конвертируем в xlsx
-					if (sFileUrl && (isExternalLink || !isXlsx) || !t.Api["asc_isSupportFeature"]("ooxml")) {
-						window["Asc"]["editor"]._getFileFromUrl(sFileUrl, t.Api["asc_isSupportFeature"]("ooxml") ? Asc.c_oAscFileType.XLSX : Asc.c_oAscFileType.XLSY,
-							function (fileUrlAfterConvert) {
-								if (fileUrlAfterConvert) {
-									successfulLoadFileMap[sFileUrl] = 1;
-									loadFile(fileUrlAfterConvert);
-								} else if (!successfulLoadFileMap[sFileUrl]) {
-									resolve(_resolve(null, eR.externalReference.Id, oData));
-								}
-							});
-					} else {
+					let sFileUrl = isLocalDesktop ? eR.externalReference && eR.externalReference.Id : (oData && !oData["error"] ? oData["url"] : null);
+					let isExternalLink = eR.isExternalLink();
+
+					if (isLocalDesktop) {
+						//TODO isExternalLink
 						if (sFileUrl) {
-							loadFile(sFileUrl);
+							//resolveStream(stream);
+							window["AscDesktopEditor"]["convertFile"](sFileUrl, 0x2002, function (_file) {
+								let stream = null;
+								if (_file) {
+									stream = _file["get"](/*Editor.bin*/);
+									_file["close"]();
+								}
+								resolveStream(stream ? new Uint8Array(stream) : null);
+							});
+
 						} else {
 							resolve(_resolve(null, eR.externalReference.Id, oData));
 						}
+					} else if (!window["NATIVE_EDITOR_ENJINE"]) {
+						//если ссылка на внешний источник, пробуем получить контент
+						if (!sFileUrl && oData["error"] && isExternalLink) {
+							sFileUrl = eR.data;
+						}
+
+						//если открыть на клиенте не можем, то запрашиваем бинарник
+						let isXlsx = eR.externalReference && eR.externalReference.isXlsx();
+						let outputFormat = t.Api["asc_isSupportFeature"]("ooxml") ? Asc.c_oAscFileType.XLSX : Asc.c_oAscFileType.XLSY;
+						let fileType = oData["fileType"];
+						let token = oData["token"];
+						let directUrl = oData["directUrl"];
+
+						//если внешняя ссылка, то конвертируем в xlsx
+						if (sFileUrl && (isExternalLink || !isXlsx) || !t.Api["asc_isSupportFeature"]("ooxml")) {
+							t.Api._getFileFromUrl(sFileUrl, fileType, token, outputFormat,
+								function (fileUrlAfterConvert) {
+									if (fileUrlAfterConvert) {
+										successfulLoadFileMap[sFileUrl] = 1;
+										loadFile(fileUrlAfterConvert);
+									} else if (!successfulLoadFileMap[sFileUrl]) {
+										resolve(_resolve(null, eR.externalReference.Id, oData));
+									}
+								});
+						} else {
+							if (directUrl || sFileUrl) {
+								t.Api._downloadOriginalFile(directUrl, sFileUrl, fileType, token, function(stream){
+									resolveStream(stream);
+								});
+							} else {
+								resolve(_resolve(null, eR.externalReference.Id, oData));
+							}
+						}
+					} else {
+						resolveStream(null);
 					}
 				});
 			}
@@ -5188,11 +5352,12 @@
 		};
 
 
-		for (var i = 0; i < data.length; i++) {
-			var _oData = data && data[i];
-			var _eR = externalReferences[i];
+		let _length = data ? data.length : externalReferences.length;
+		for (let i = 0; i < _length; i++) {
+			let _oData = data && data[i];
+			let _eR = externalReferences[i];
 
-			if (_oData && _eR && (_eR.isExternalLink() || !_oData.error)) {
+			if (isLocalDesktop || (_oData && _eR && (_eR.isExternalLink() || !_oData["error"]))) {
 				requests.push(getPromise(_oData, _eR, resolveFunc));
 			}
 		}
@@ -5201,6 +5366,172 @@
 	WorkbookView.prototype.updateExternalReferences = function (arr) {
 		this.doUpdateExternalReference(arr);
 	};
+
+	//*****user range protect*****
+	WorkbookView.prototype.changeUserProtectedRanges = function(oldObj, newObj) {
+		//ToDo проверка defName.ref на знак "=" в начале ссылки. знака нет тогда это либо число либо строка, так делает Excel.
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
+		}
+
+		var t = this;
+
+		if ((oldObj && !oldObj._ws) || (newObj && !newObj._ws)) {
+			return;
+		}
+
+		if (newObj._ws.isIntersectionOtherUserProtectedRanges(newObj.ref)) {
+			//error
+			this.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
+			return;
+		}
+
+		var doEdit = function() {
+			History.Create_NewPoint();
+			History.StartTransaction();
+
+			if (oldObj && newObj) {
+				//change obj
+				if (oldObj._ws === newObj._ws && oldObj._ws && newObj._ws) {
+					//change
+					newObj._ws.editUserProtectedRanges(oldObj, newObj, true);
+				} else {
+					//remove
+					oldObj._ws.editUserProtectedRanges(oldObj, null, true);
+					//add
+					newObj._ws.editUserProtectedRanges(null, newObj, true);
+				}
+			} else if (oldObj && oldObj._ws) {
+				//remove
+				oldObj._ws.editUserProtectedRanges(oldObj, null, true);
+			} else if (newObj && newObj._ws) {
+				//add
+				newObj._ws.editUserProtectedRanges(null, newObj, true);
+			}
+
+			History.EndTransaction();
+
+			//t.handlers.trigger("asc_onEditDefName", oldName, newName);
+
+			//условие исключает второй вызов asc_onRefreshDefNameList(первый в unlockDefName)
+			if (!(t.collaborativeEditing.getCollaborativeEditing() && t.collaborativeEditing.getFast())) {
+				t.handlers.trigger("asc_onRefreshUserProtectedRangesList");
+			}
+		};
+		
+
+		var callbackLockObj = function(res) {
+			if (res) {
+				let arrLocks = [];
+				if (wsFrom) {
+					arrLocks.push({id: lockId, ws: wsFrom});
+				} else if (wsTo) {
+					arrLocks.push({id: lockId, ws: wsTo});
+				}
+				t._isLockedUserProtectedRange(doEdit, arrLocks);
+			}
+		};
+
+		//когда меняем диапазон с одного листа на другой, два раза нужно лочить, вначале на одном листе, потом на другом
+		let wsFrom = oldObj ? oldObj._ws : null;
+		let wsTo = newObj ? newObj._ws : null;
+
+		let wsViewFrom;
+		let wsViewTo;
+		for (let i = 0; i < this.wsViews.length; i++) {
+			if (this.wsViews[i]) {
+				if (this.wsViews[i].model === wsFrom) {
+					wsViewFrom = this.wsViews[i];
+				}
+				if (this.wsViews[i].model === wsTo) {
+					wsViewTo = this.wsViews[i];
+				}
+			}
+		}
+
+		let lockId = oldObj ? oldObj.Id : newObj.Id;
+		let lockRangeFrom = oldObj ? oldObj.ref : null;
+		let lockRangeTo = newObj ? newObj.ref : null;
+
+		function callback (res) {
+			if (res) {
+				if (wsViewFrom && wsViewTo) {
+					wsViewTo._isLockedCells(lockRangeTo, null, callbackLockObj);
+				} else if (wsTo) {
+					callbackLockObj(true);
+				}
+			}
+		}
+
+		if (wsViewFrom) {
+			wsViewFrom._isLockedCells(lockRangeFrom, null, callback);
+		} else if (wsViewTo) {
+			wsViewTo._isLockedCells(lockRangeTo, null, callback);
+		} else {
+			callback(true);
+		}
+	};
+
+	WorkbookView.prototype.deleteUserProtectedRanges = function(arr) {
+		//ToDo проверка defName.ref на знак "=" в начале ссылки. знака нет тогда это либо число либо строка, так делает Excel.
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
+		}
+
+		var t = this;
+
+		var doEdit = function(res) {
+			if (res) {
+
+				History.Create_NewPoint();
+				History.StartTransaction();
+
+				for (let i = 0; i < arr.length; i++) {
+					arr[i]._ws.editUserProtectedRanges(arr[i], null, true);
+				}
+
+				History.EndTransaction();
+
+				//t.handlers.trigger("asc_onEditDefName", oldName, newName);
+
+				//условие исключает второй вызов asc_onRefreshDefNameList(первый в unlockDefName)
+				if (!(t.collaborativeEditing.getCollaborativeEditing() && t.collaborativeEditing.getFast())) {
+					t.handlers.trigger("asc_onRefreshUserProtectedRangesList");
+				}
+
+			} else {
+				t.handlers.trigger("asc_onError", c_oAscError.ID.LockCreateDefName, c_oAscError.Level.NoCritical);
+			}
+		};
+
+		let aLockInfo = [];
+		for (let i = 0; i < arr.length; i++) {
+			aLockInfo.push({id: arr[i].Id, ws: arr[i]._ws});
+		}
+
+		//lock only ranges by id
+		this._isLockedUserProtectedRange(doEdit, aLockInfo);
+		
+	};
+
+	WorkbookView.prototype.unlockUserProtectedRanges = function() {
+		this.model.unlockUserProtectedRanges();
+		this.handlers.trigger("asc_onRefreshUserProtectedRangesList");
+		//this.handlers.trigger("asc_onLockDefNameManager", Asc.c_oAscDefinedNameReason.OK);
+	};
+
+	WorkbookView.prototype._isLockedUserProtectedRange = function (callback, aIds) {
+		let aLockInfo = [];
+		let lockInfo;
+		for (let i = 0; i < aIds.length; i++) {
+			lockInfo = this.collaborativeEditing.getLockInfo(AscCommonExcel.c_oAscLockTypeElem.Object,
+				AscCommonExcel.c_oAscLockTypeElemSubType.UserProtectedRange, aIds[i].ws.getId(), aIds[i].id);
+			aLockInfo.push(lockInfo);
+		}
+
+		this.collaborativeEditing.lock(aLockInfo, callback);
+	};
+
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
 	function CDocumentSearchExcel(wb) {
@@ -5318,7 +5649,7 @@
 		var elem = this.Elements[nId];
 		if (elem) {
 			var ws = this.wb.getWorksheet();
-			if (elem.index !== ws.index) {
+			if (elem.index !== ws.model.index) {
 				this.wb.model.handlers.trigger('undoRedoHideSheet', elem.index);
 				ws = this.wb.getWorksheet(elem.index);
 			}
@@ -5455,7 +5786,7 @@
 			return this.Direction ? this.CurId + 1 : this.CurId - 1;
 		} else {
 			var ws = this.wb.getActiveWS();
-			var selectionRange = (this.props && this.props.selectionRange) || ws.selectionRange;
+			var selectionRange = (this.props && this.props.selectionRange) || ws.selectionRange || ws.copySelection;
 
 			var activeCell = this.props.activeCell ? this.props.activeCell : selectionRange.activeCell;
 			if (this.props && this.props.lastSearchElem) {
@@ -5818,4 +6149,5 @@
 	//------------------------------------------------------------export---------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
   window["AscCommonExcel"].WorkbookView = WorkbookView;
+  window["AscCommonExcel"].CCellFormatPasteData = CCellFormatPasteData;
 })(window);

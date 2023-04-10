@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2022
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -113,6 +113,10 @@
 	{
 		this.MoveDrawing = isMoveDrawing;
 	};
+	CSelectedContent.prototype.IsMoveDrawing = function()
+	{
+		return this.MoveDrawing;
+	};
 	CSelectedContent.prototype.SetCopyComments = function(isCopy)
 	{
 		this.CopyComments = isCopy;
@@ -156,8 +160,27 @@
 		if (((oParentShape && !oParentShape.isForm()) || true === oDocContent.IsFootnote()) && true === this.HaveShape())
 			return false;
 
-		// В заголовки диаграмм не вставляем формулы и любые DrawingObjects
-		if (oParagraph.bFromDocument === false && (this.DrawingObjects.length > 0 || this.HaveMath() || this.HaveTable()))
+		// В заголовки диаграмм не вставляем формулы
+		if(this.HaveMath())
+		{
+			if(oParagraph.bFromDocument === false)
+			{
+				let oDrawing = oDocContent.Is_DrawingShape(true);
+				if(oDrawing)
+				{
+					let nDrawingType = null;
+					if(oDrawing.getObjectType) 
+					{
+						nDrawingType = oDrawing.getObjectType();
+					}
+					if(nDrawingType !== AscDFH.historyitem_type_Shape)
+					{
+						return false;
+					}
+				}
+			}
+		}
+		if (oParagraph.bFromDocument === false && (this.DrawingObjects.length > 0 || this.HaveTable()))
 			return false;
 
 		let oParaAnchorPos = oParagraph.Get_ParaNearestPos(oAnchorPos);
@@ -166,6 +189,10 @@
 
 		let oRun = oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 1];
 		if (!oRun || !(oRun instanceof AscCommonWord.ParaRun))
+			return false;
+		
+		// Пока автофигуры не поддерживаются внутри формул, запрещаем их туда всталять
+		if (oRun.IsMathRun() && this.IsMoveDrawing())
 			return false;
 
 		return (oRun.IsMathRun() ? this.CanConvertToMath() : true);
@@ -203,7 +230,11 @@
 			oLogicDocument.SetLocalTrackRevisions(false);
 		}
 
-		if (oRun.IsMathRun())
+		if (this.private_IsBlockLevelSdtPlaceholder())
+		{
+			this.private_InsertToBlockLevelSdtWithPlaceholder();
+		}
+		else if (oRun.IsMathRun())
 		{
 			this.private_InsertToMathRun();
 		}
@@ -230,6 +261,21 @@
 
 		if (false !== isLocalTrack)
 			oLogicDocument.SetLocalTrackRevisions(isLocalTrack);
+
+		if (window.g_asc_plugins)
+		{
+			let aAllOleObjects = [];
+			let aAllOleObjectsData = [];
+			for(let nDrawing = 0; nDrawing < this.DrawingObjects.length; ++nDrawing)
+			{
+				this.DrawingObjects[nDrawing].GetAllOleObjects(null, aAllOleObjects);
+			}
+			for(let nOle = 0; nOle < aAllOleObjects.length; ++nOle)
+			{
+				aAllOleObjectsData.push(aAllOleObjects[nOle].getDataObject())
+			}
+			window.g_asc_plugins.onPluginEvent("onInsertOleObjects", aAllOleObjectsData);
+		}
 
 		return true;
 	};
@@ -411,7 +457,7 @@
 	 */
 	CSelectedContent.prototype.ConvertToText = function()
 	{
-		var oParagraph = new Paragraph(editor.WordControl.m_oDrawingDocument, undefined, this.IsPresentationContent);
+		var oParagraph = this.private_CreateParagraph();
 
 		var sText = "";
 		for (var nIndex = 0, nCount = this.Elements.length; nIndex < nCount; ++nIndex)
@@ -456,7 +502,7 @@
 	};
 	CSelectedContent.prototype.ConvertToInline = function()
 	{
-		var oParagraph = new Paragraph(editor.WordControl.m_oDrawingDocument, undefined, this.IsPresentationContent);
+		var oParagraph = this.private_CreateParagraph();
 
 		for (var nIndex = 0, nCount = this.Elements.length; nIndex < nCount; ++nIndex)
 		{
@@ -1108,6 +1154,46 @@
 			this.PasteHelper = oParagraphE;
 		else
 			this.PasteHelper = this.Elements[this.Elements.length - 1].Element;
+	};
+	CSelectedContent.prototype.private_GetDrawingDocument = function()
+	{
+		let _editor = editor;
+		if (!_editor && Asc && Asc.editor)
+			_editor = Asc.editor;
+		
+		if (!_editor)
+			return null;
+		
+		return _editor.getDrawingDocument();
+	};
+	CSelectedContent.prototype.private_CreateParagraph = function()
+	{
+		return new AscWord.CParagraph(this.private_GetDrawingDocument(), undefined, this.IsPresentationContent);
+	};
+	CSelectedContent.prototype.private_IsBlockLevelSdtPlaceholder = function()
+	{
+		let paragraph = this.Run.GetParagraph();
+		if (!paragraph)
+			return false;
+		
+		let paraIndex  = paragraph.GetIndex();
+		let docContent = paragraph.GetParent();
+		
+		if (!docContent
+			|| paragraph !== docContent.GetElement(paraIndex)
+			|| !docContent.IsBlockLevelSdtContent())
+			return false;
+		
+		let blockSdt = docContent.GetParent();
+		if (blockSdt.IsPlaceHolder())
+			return true;
+	};
+	CSelectedContent.prototype.private_InsertToBlockLevelSdtWithPlaceholder = function()
+	{
+		let blockSdt = this.Run.GetParagraph().GetParent().GetParent();
+		blockSdt.ReplacePlaceHolderWithContent();
+		let docContent = blockSdt.GetContent();
+		this.ReplaceContent(docContent, true);
 	};
 
 	/**

@@ -1,5 +1,5 @@
 ﻿/*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -564,10 +564,25 @@
 
 					if (null === _blockStd)
 					{
-						var oCurPara = LogicDocument.GetCurrentParagraph();
-						if (oCurPara && !oCurPara.IsCursorAtBegin())
-							LogicDocument.AddNewParagraph(false, true);
-
+						let curPara = LogicDocument.GetCurrentParagraph();
+						if (curPara)
+						{
+							let paraParent = curPara.GetParent();
+							if (paraParent && paraParent.IsBlockLevelSdtContent())
+							{
+								let parentBlockSdt = paraParent.GetParent();
+								if (parentBlockSdt.IsPlaceHolder())
+									parentBlockSdt.ReplacePlaceHolderWithContent();
+								else
+									paraParent.AddNewParagraph(true);
+							}
+							else if (!curPara.IsCursorAtBegin())
+							{
+								LogicDocument.AddNewParagraph(false, true);
+							}
+						}
+						
+						
 						_blockStd = LogicDocument.AddContentControl(c_oAscSdtLevelType.Block);
 					}
 
@@ -886,7 +901,6 @@
 		this.isPageBreakBefore    = false;
 		this.isKeepLinesTogether  = false;
 
-		this.isPaintFormat              = c_oAscFormatPainterState.kOff;
 		this.isMarkerFormat             = false;
 		this.isStartAddShape            = false;
 		this.isDrawTablePen				= false;
@@ -1002,9 +1016,9 @@
 		let result = "DocumentInfo:";
 
 		if (logicDocument.Action.Start)
-			result += "\nAction: " + logicDocument.Action.Description;
+			result += "\n Action: " + logicDocument.Action.Description;
 
-		result += "\nSelection: " + logicDocument.IsSelectionUse();
+		result += "\n Selection: " + logicDocument.IsSelectionUse();
 
 		return result;
 	};
@@ -1218,7 +1232,14 @@
 
 	asc_docs_api.prototype.SetMobileTopOffset = function(offset, offsetScrollTop)
 	{
-		this.WordControl && this.WordControl.setOffsetTop(offset, offsetScrollTop);
+		if (!this.WordControl || !this.WordControl.IsInitControl)
+		{
+			this.startMobileOffset = { offset : offset, offsetScrollTop : offsetScrollTop };
+		}
+		else
+		{
+			this.WordControl.setOffsetTop(offset, offsetScrollTop);
+		}
 	};
 
 	asc_docs_api.prototype.CreateCSS = function()
@@ -1354,7 +1375,7 @@ background-repeat: no-repeat;\
 		return text_data.data;
 	};
 
-	asc_docs_api.prototype.initDefaultShortcuts = function()
+	asc_docs_api.prototype._InitCommonShortcuts = function () 
 	{
 		// ActionType, Key, Ctrl, Shift, Alt
 		this.initShortcuts([
@@ -1363,9 +1384,6 @@ background-repeat: no-repeat;\
 			[c_oAscDocumentShortcutType.InsertColumnBreak, 13, true, true, false],
 			[c_oAscDocumentShortcutType.ResetChar, 32, true, false, false],
 			[c_oAscDocumentShortcutType.NonBreakingSpace, 32, true, true, false],
-			[c_oAscDocumentShortcutType.ApplyHeading1, 49, false, false, true],
-			[c_oAscDocumentShortcutType.ApplyHeading2, 50, false, false, true],
-			[c_oAscDocumentShortcutType.ApplyHeading3, 51, false, false, true],
 			[c_oAscDocumentShortcutType.Strikeout, 53, true, false, false],
 			[c_oAscDocumentShortcutType.ShowAll, 56, true, true, false],
 			[c_oAscDocumentShortcutType.EditSelectAll, 65, true, false, false],
@@ -1375,7 +1393,6 @@ background-repeat: no-repeat;\
 			[c_oAscDocumentShortcutType.InsertEndnoteNow, 68, true, false, true],
 			[c_oAscDocumentShortcutType.CenterPara, 69, true, false, false],
 			[c_oAscDocumentShortcutType.EuroSign, 69, true, false, true],
-			[c_oAscDocumentShortcutType.InsertFootnoteNow, 70, true, false, true],
 			[c_oAscDocumentShortcutType.Italic, 73, true, false, false],
 			[c_oAscDocumentShortcutType.JustifyPara, 74, true, false, false],
 			[c_oAscDocumentShortcutType.InsertHyperlink, 75, true, false, false],
@@ -1396,15 +1413,51 @@ background-repeat: no-repeat;\
 			[c_oAscDocumentShortcutType.EnDash, 109, true, false, false],
 			[c_oAscDocumentShortcutType.EmDash, 109, true, false, true],
 			[c_oAscDocumentShortcutType.UpdateFields, 120, false, false, false],
-			[c_oAscDocumentShortcutType.InsertEquation, 187, false, false, true],
 			[c_oAscDocumentShortcutType.Superscript, 188, true, false, false],
 			[c_oAscDocumentShortcutType.NonBreakingHyphen, 189, true, true, false],
-			[c_oAscDocumentShortcutType.SoftHyphen, 189, false, false, true],
 			[c_oAscDocumentShortcutType.HorizontalEllipsis, 190, true, false, true],
 			[c_oAscDocumentShortcutType.Subscript, 190, true, false, false],
-			[c_oAscDocumentShortcutType.IncreaseFontSize, 219, true, false, false],
-			[c_oAscDocumentShortcutType.DecreaseFontSize, 221, true, false, false],
+			[c_oAscDocumentShortcutType.IncreaseFontSize, 221, true, false, false],
+			[c_oAscDocumentShortcutType.DecreaseFontSize, 219, true, false, false]
 		]);
+	}
+
+	asc_docs_api.prototype._InitWindowsShortcuts = function ()
+	{
+		// ActionType, Key, Ctrl, Shift, Alt
+		this.initShortcuts([
+			[c_oAscDocumentShortcutType.ApplyHeading1, 49, false, false, true],
+			[c_oAscDocumentShortcutType.ApplyHeading2, 50, false, false, true],
+			[c_oAscDocumentShortcutType.ApplyHeading3, 51, false, false, true],
+			[c_oAscDocumentShortcutType.InsertFootnoteNow, 70, true, false, true],
+			[c_oAscDocumentShortcutType.InsertEquation, 187, false, false, true],
+			[c_oAscDocumentShortcutType.SoftHyphen, 189, false, false, true]
+		]);
+	}
+
+	asc_docs_api.prototype._InitMacOsShortcuts = function () {
+		// ActionType, Key, Ctrl, Shift, Alt
+		this.initShortcuts([
+			[c_oAscDocumentShortcutType.ApplyHeading1, 49, true, false, true],
+			[c_oAscDocumentShortcutType.ApplyHeading2, 50, true, false, true],
+			[c_oAscDocumentShortcutType.ApplyHeading3, 51, true, false, true],
+			[c_oAscDocumentShortcutType.InsertEquation, 187, true, false, true],
+			[c_oAscDocumentShortcutType.SoftHyphen, 189, true, false, true]
+		]);
+	}
+
+	asc_docs_api.prototype.initDefaultShortcuts = function()
+	{
+
+		this._InitCommonShortcuts();
+		if (AscCommon.AscBrowser.isMacOs) 
+		{
+			this._InitMacOsShortcuts();
+		} 
+		else 
+		{
+			this._InitWindowsShortcuts();
+		}
 	};
 
 	asc_docs_api.prototype.InitEditor = function()
@@ -1951,8 +2004,7 @@ background-repeat: no-repeat;\
 		{
 			if (e && true === AscCommon.CollaborativeEditing.Is_Fast())
 			{
-				var CursorInfo = JSON.parse(e);
-				AscCommon.CollaborativeEditing.Add_ForeignCursorToUpdate(CursorInfo.UserId, CursorInfo.CursorInfo, CursorInfo.UserShortId);
+				AscCommon.CollaborativeEditing.UpdateForeignCursorByAdditionalInfo(JSON.parse(e));
 			}
 		};
 	};
@@ -2340,11 +2392,13 @@ background-repeat: no-repeat;\
 
 		if (null != this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
 		{
-			if (window["AscDesktopEditor"]["IsSupportNativePrint"](this.DocumentUrl) === true)
+			var viewer = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
+			if (window["AscDesktopEditor"] && !window["AscDesktopEditor"]["IsLocalFile"]() && window["AscDesktopEditor"]["SetPdfCloudPrintFileInfo"])
 			{
-				window["AscDesktopEditor"]["Print"](JSON.stringify(desktopOptions));
-				return true;
+				if (!window["AscDesktopEditor"]["IsCachedPdfCloudPrintFileInfo"]())
+					window["AscDesktopEditor"]["SetPdfCloudPrintFileInfo"](AscCommon.Base64.encode(viewer.getFileNativeBinary()));
 			}
+			window["AscDesktopEditor"]["Print"](JSON.stringify(desktopOptions), viewer.savedPassword ? viewer.savedPassword : "");
 		}
 		else
 		{
@@ -2354,27 +2408,30 @@ background-repeat: no-repeat;\
 			}
 			desktopOptions["documentLayout"] = {"drawPlaceHolders":false,"drawFormHighlight":false,"isPrint":true};
 			window["AscDesktopEditor"]["Print"](JSON.stringify(desktopOptions));
-			return true;
 		}
 		return true;
 	};
 	asc_docs_api.prototype.Undo           = function()
 	{
+		if (!this.canUndoRedoByRestrictions())
+			return;
+		
 		var oLogicDocument = this.private_GetLogicDocument();
 		if (!oLogicDocument)
 			return;
 
-		if (oLogicDocument.CanEdit() || oLogicDocument.IsEditCommentsMode() || oLogicDocument.IsFillingFormMode())
-			oLogicDocument.Document_Undo();
+		oLogicDocument.Document_Undo();
 	};
 	asc_docs_api.prototype.Redo           = function()
 	{
+		if (!this.canUndoRedoByRestrictions())
+			return;
+		
 		var oLogicDocument = this.private_GetLogicDocument();
 		if (!oLogicDocument)
 			return;
 
-		if (oLogicDocument.CanEdit() || oLogicDocument.IsEditCommentsMode() || oLogicDocument.IsFillingFormMode())
-			oLogicDocument.Document_Redo();
+		oLogicDocument.Document_Redo();
 	};
 	asc_docs_api.prototype.Copy           = function()
 	{
@@ -2535,6 +2592,11 @@ background-repeat: no-repeat;\
 
 			AscCommon.Editor_Paste_Exec(this, _format, data1, data2, text_data, undefined, callback);
 		}
+	};
+
+	asc_docs_api.prototype.GetContentFromHtml = function(html, callback)
+	{
+		AscCommon.GetContentFromHtml(this, html, callback);
 	};
 
 	asc_docs_api.prototype._finalizeAction = function()
@@ -2771,9 +2833,9 @@ background-repeat: no-repeat;\
 		{
 			// Пересылаем свои изменения
 			AscCommon.CollaborativeEditing.Send_Changes(this.IsUserSave, {
-				UserId      : this.CoAuthoringApi.getUserConnectionId(),
-				UserShortId : this.DocInfo.get_UserId(),
-				CursorInfo  : CursorInfo
+				"UserId"      : this.CoAuthoringApi.getUserConnectionId(),
+				"UserShortId" : this.DocInfo.get_UserId(),
+				"CursorInfo"  : CursorInfo
 			}, HaveOtherChanges, true);
 		}
 	};
@@ -3081,16 +3143,20 @@ background-repeat: no-repeat;\
 	{
 		this.sendEvent("asc_onGetDocInfoEnd");
 	};
-	asc_docs_api.prototype.sync_CanUndoCallback         = function(bCanUndo)
+	asc_docs_api.prototype.sync_CanUndoCallback         = function(canUndo)
 	{
-		this.sendEvent("asc_onCanUndo", bCanUndo);
+		if (!this.canUndoRedoByRestrictions())
+			canUndo = false;
+		
+		this.sendEvent("asc_onCanUndo", canUndo);
 	};
-	asc_docs_api.prototype.sync_CanRedoCallback         = function(bCanRedo)
+	asc_docs_api.prototype.sync_CanRedoCallback         = function(canRedo)
 	{
-		if (true === AscCommon.CollaborativeEditing.Is_Fast() && true !== AscCommon.CollaborativeEditing.Is_SingleUser())
-			bCanRedo = false;
+		if (!this.canUndoRedoByRestrictions()
+			|| (true === AscCommon.CollaborativeEditing.Is_Fast() && true !== AscCommon.CollaborativeEditing.Is_SingleUser()))
+			canRedo = false;
 
-		this.sendEvent("asc_onCanRedo", bCanRedo);
+		this.sendEvent("asc_onCanRedo", canRedo);
 	};
 
 	asc_docs_api.prototype.can_CopyCut = function()
@@ -3108,14 +3174,14 @@ background-repeat: no-repeat;\
 		this.noCreatePoint  = true;
 		this.exucuteHistory = true;
 		this.incrementCounterLongAction();
-		this.WordControl.m_oLogicDocument.TurnOff_InterfaceEvents();
+		//this.WordControl.m_oLogicDocument.TurnOff_InterfaceEvents();
 	};
 	asc_docs_api.prototype.setEndPointHistory   = function()
 	{
 		this.noCreatePoint     = false;
 		this.exucuteHistoryEnd = true;
 		this.decrementCounterLongAction();
-		this.WordControl.m_oLogicDocument.TurnOn_InterfaceEvents();
+		//this.WordControl.m_oLogicDocument.TurnOn_InterfaceEvents();
 	};
 
 	function CDocInfoProp(obj)
@@ -4035,6 +4101,30 @@ background-repeat: no-repeat;\
 		}
 	};
 
+	asc_docs_api.prototype.asc_IsShowListIndentsSettings = function ()
+	{
+		const oLogicDocument = this.private_GetLogicDocument();
+
+		if (!oLogicDocument)
+			return false;
+
+		const oNumPr = oLogicDocument.GetSelectedNum(true);
+		if (!oNumPr)
+			return false;
+
+		const oNum = oLogicDocument.GetNumbering().GetNum(oNumPr.NumId);
+		if (!oNum)
+			return false;
+
+		const oAbstractNum = oNum.GetAbstractNum();
+		if (oAbstractNum)
+		{
+			const nMultiLvlType = oAbstractNum.GetMultiLvlType();
+			return nMultiLvlType !== Asc.c_oAbstractNumMultiLvlTypes.MultiLevel;
+		}
+		return false;
+	};
+
 	asc_docs_api.prototype.put_PrAlign        = function(value)
 	{
 		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Properties))
@@ -4137,11 +4227,11 @@ background-repeat: no-repeat;\
 			}
 
 			if (isBulleted && isNumbered)
-				result.Type = "hybrid";
+				result.Type = Asc.c_oAscJSONNumberingType.Hybrid;
 			else if (isNumbered)
-				result.Type = "number";
+				result.Type = Asc.c_oAscJSONNumberingType.Number;
 			else if (isBulleted)
-				result.Type = "bullet";
+				result.Type = Asc.c_oAscJSONNumberingType.Bullet;
 		}
 
 		return result;
@@ -6390,8 +6480,16 @@ background-repeat: no-repeat;\
 		if (null != _image)//картинка уже должна быть загружена
 		{
             this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_PasteHotKey);
-			this.WordControl.m_oLogicDocument.AddOleObject(fWidth, fHeight, nWidthPix, nHeightPix, sLocalUrl, sData, sApplicationId, bSelect, arrImagesForAddToHistory);
+			let oDrawing = this.WordControl.m_oLogicDocument.AddOleObject(fWidth, fHeight, nWidthPix, nHeightPix, sLocalUrl, sData, sApplicationId, bSelect, arrImagesForAddToHistory);
             this.WordControl.m_oLogicDocument.FinalizeAction();
+			if(window.g_asc_plugins)
+			{
+				if(oDrawing)
+				{
+					let oData = oDrawing.GraphicObj.getDataObject();
+					window.g_asc_plugins.onPluginEvent("onInsertOleObjects", [oData]);
+				}
+			}
 		}
 	};
 
@@ -8376,11 +8474,21 @@ background-repeat: no-repeat;\
 		return this.WordControl.m_dScrollY;
 	};
 
+	asc_docs_api.prototype.retrieveFormatPainterData = function()
+	{
+		let oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+		{
+			return null;
+		}
+		return oLogicDocument.GetFormattingPasteData();
+	};
+
 	asc_docs_api.prototype.SetPaintFormat = function(_value)
 	{
 		var value = ( true === _value ? c_oAscFormatPainterState.kOn : ( false === _value ? c_oAscFormatPainterState.kOff : _value ) );
 
-		this.isPaintFormat = value;
+		this.formatPainter.putState(value);
 
 		if (c_oAscFormatPainterState.kOff !== value)
 			this.WordControl.m_oLogicDocument.Document_Format_Copy();
@@ -8395,7 +8503,7 @@ background-repeat: no-repeat;\
 	{
 		var value = ( true === _value ? c_oAscFormatPainterState.kOn : ( false === _value ? c_oAscFormatPainterState.kOff : _value ) );
 
-		this.isPaintFormat = value;
+		this.formatPainter.putState(value);
 		return this.sendEvent("asc_onPaintFormatChanged", value);
 	};
 	asc_docs_api.prototype.SetMarkerFormat          = function(value, is_flag, r, g, b)
@@ -8549,6 +8657,11 @@ background-repeat: no-repeat;\
 		}
 	};
 
+	asc_docs_api.prototype.onInkDrawerChangeState = function() {
+		if (!this.WordControl.m_oLogicDocument)
+			return;
+		this.WordControl.m_oLogicDocument.DrawingObjects.onInkDrawerChangeState();
+	};
 
 	asc_docs_api.prototype.sync_StartAddShapeCallback = function(value)
 	{
@@ -8744,7 +8857,9 @@ background-repeat: no-repeat;\
 			oAdditionalData["c"] = 'savefromorigin';
 			if (this.currentPassword) {
 				oAdditionalData["password"] = this.currentPassword;
-				oAdditionalData["savepassword"] = this.currentPassword;
+				if (DownloadType.Print !== downloadType) {
+					oAdditionalData["savepassword"] = this.currentPassword;
+				}
 			}
 		}
 
@@ -9047,7 +9162,14 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_ConvertMathView = function(isToLinear, isAll)
 	{
-		this.private_GetLogicDocument().ConvertMathView(isToLinear, isAll);
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		if (isAll)
+			logicDocument.ConvertAllMathView(isToLinear);
+		else
+			logicDocument.ConvertMathView(isToLinear);
 	};
 	asc_docs_api.prototype.asc_AddPageCount = function()
 	{
@@ -10347,14 +10469,17 @@ background-repeat: no-repeat;\
 
 		var oCC = oLogicDocument.GetContentControl(sId);
 		oCC.SkipSpecialContentControlLock(true);
+		oCC.SkipFillingFormModeCheck(true);
 		if (!oCC || !oCC.IsPicture() || !oCC.SelectPicture() || !oCC.CanBeEdited())
 		{
+			oCC.SkipFillingFormModeCheck(false);
 			oCC.SkipSpecialContentControlLock(false);
 			return;
 		}
 
 		if (!oLogicDocument.IsSelectionLocked(AscCommon.changestype_Image_Properties, undefined, false, oLogicDocument.IsFormFieldEditing()))
 		{
+			oCC.SkipFillingFormModeCheck(false);
 			oCC.SkipSpecialContentControlLock(false);
 
 			var oImagePr = {
@@ -10453,6 +10578,7 @@ background-repeat: no-repeat;\
 		}
 		else
 		{
+			oCC.SkipFillingFormModeCheck(false);
 			oCC.SkipSpecialContentControlLock(false);
 		}
 	};
@@ -10585,7 +10711,7 @@ background-repeat: no-repeat;\
 		oLogicDocument.LoadDocumentState(oState);
 		return sValue;
 	};
-	asc_docs_api.prototype.asc_SetContentControlDatePickerPr = function(oPr, sId)
+	asc_docs_api.prototype.asc_SetContentControlDatePickerPr = function(oPr, sId, updateDate)
 	{
 		var oLogicDocument = this.private_GetLogicDocument();
 		if (!oLogicDocument)
@@ -10620,7 +10746,7 @@ background-repeat: no-repeat;\
 		if (false === isLocked)
 		{
 			oLogicDocument.StartAction(AscDFH.historydescription_Document_SetContentControlListPr);
-			oContentControl.ApplyDatePickerPr(oPr);
+			oContentControl.ApplyDatePickerPr(oPr, updateDate);
 			oLogicDocument.Recalculate();
 			oLogicDocument.UpdateInterface();
 			oLogicDocument.UpdateTracks();
@@ -10636,8 +10762,8 @@ background-repeat: no-repeat;\
 		var oContentControl = oLogicDocument.GetContentControl(sId);
 		if (!oContentControl || !oContentControl.IsDatePicker() || !oContentControl.CanBeEdited())
 			return;
-
-		this.asc_SetContentControlDatePickerPr(oPr, sId);
+		
+		this.asc_SetContentControlDatePickerPr(oPr, sId, true);
 	};
 	asc_docs_api.prototype.asc_SetContentControlTextPlaceholder = function(sText, sId)
 	{
@@ -11679,6 +11805,11 @@ background-repeat: no-repeat;\
 		this.sendEvent("asc_onBookmarksUpdate");
 	};
 
+	asc_docs_api.prototype.asc_OnProtectionUpdate = function(sUserId)
+	{
+		this.sendEvent("asc_onChangeDocumentProtection", sUserId);
+	};
+
 	asc_docs_api.prototype.asc_GetHeadingLevel = function(sStyleName)
 	{
 		var oLogicDocument = this.WordControl.m_oLogicDocument;
@@ -12150,7 +12281,79 @@ background-repeat: no-repeat;\
 			}
 		});
 	};
-	asc_docs_api.prototype._CompareDocument = function (document, oOptions) {
+
+	asc_docs_api.prototype.asc_MergeDocumentUrl = function (sUrl, oOptions, token) {
+		if (this.isLocalMode())
+			return this.asc_MergeDocumentUrl_local(sUrl, oOptions, token);
+		
+		this._MergeDocument({url: sUrl, format: "docx", token: token}, oOptions);
+	};
+	asc_docs_api.prototype.asc_MergeDocumentFile = function (oOptions) {
+		if (this.isLocalMode())
+			return this.asc_MergeDocumentFile_local(oOptions);
+		var t = this;
+		AscCommon.ShowDocumentFileDialog(function (error, files) {
+			if (Asc.c_oAscError.ID.No !== error) {
+				t.sendEvent("asc_onError", error, Asc.c_oAscError.Level.NoCritical);
+				return;
+			}
+			var format = AscCommon.GetFileExtension(files[0].name);
+			var reader = new FileReader();
+			reader.onload = function () {
+				t._MergeDocument({data: new Uint8Array(reader.result), format: format}, oOptions);
+			};
+			reader.onerror = function () {
+				t.sendEvent("asc_onError", Asc.c_oAscError.ID.Unknown, Asc.c_oAscError.Level.NoCritical);
+			};
+			reader.readAsArrayBuffer(files[0]);
+		});
+	};
+	asc_docs_api.prototype.asc_MergeDocumentUrl_local = function (sUrl, oOptions, token) {
+		var t = this;
+		t.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+		window["AscDesktopEditor"]["DownloadFiles"]([sUrl], [], function(files) {
+			t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+			var _files= [];
+			for (var _elem in files) {
+				_files.push(files[_elem]);
+			}
+			if (_files.length == 1)
+			{
+				if (t.isCloudModeCrypt())
+				{
+					var fileContent = t.getFileAsFromChanges();
+					window["AscDesktopEditor"]["MergeDocumentUrl"](_files[0], oOptions, fileContent.data, fileContent.header);
+				}
+				else
+				{
+					window["AscDesktopEditor"]["MergeDocumentUrl"](_files[0], oOptions);
+				}
+			}
+		});
+	};
+	asc_docs_api.prototype.asc_MergeDocumentFile_local = function (oOptions) {
+		var t = this;
+		window["AscDesktopEditor"]["OpenFilenameDialog"]("word", false, function(_file) {
+			var file = _file;
+			if (Array.isArray(file))
+				file = file[0];
+
+			if (file && "" != file)
+			{
+				if (t.isCloudModeCrypt())
+				{
+					var fileContent = t.getFileAsFromChanges();
+					window["AscDesktopEditor"]["MergeDocumentFile"](file, oOptions, fileContent.data, fileContent.header);
+				}
+				else
+				{
+					window["AscDesktopEditor"]["MergeDocumentFile"](file, oOptions);
+				}
+			}
+		});
+	};
+
+	asc_docs_api.prototype._ConvertDocument = function (document, fEndCallback) {
 		var stream = null;
 		var oApi = this;
 		this.insertDocumentUrlsData = {
@@ -12174,7 +12377,7 @@ background-repeat: no-repeat;\
 			}, endCallback: function (_api) {
 
 				if (stream) {
-					AscCommonWord.CompareBinary(oApi, stream, oOptions);
+					fEndCallback(stream);
 					stream = null;
 				}
 			}
@@ -12188,6 +12391,21 @@ background-repeat: no-repeat;\
 		}
 		this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, options);
 	};
+	
+	asc_docs_api.prototype._CompareDocument = function (document, oOptions) {
+		const oThis = this;
+		this._ConvertDocument(document, function (stream) {
+			AscCommonWord.CompareBinary(oThis, stream, oOptions);
+		});
+	};
+
+	asc_docs_api.prototype._MergeDocument = function (document, oOptions) {
+		const oThis = this;
+		this._ConvertDocument(document, function (stream) {
+			AscCommonWord.mergeBinary(oThis, stream, oOptions);
+		});
+	};
+	
 	// callback for local mode
 	window["onDocumentCompare"] = function(folder, file_content, file_content_len, image_map, options) {
 		var api = window.editor;
@@ -12203,6 +12421,22 @@ background-repeat: no-repeat;\
 		file["GetImageMap"] = function() { return image_map; };
 
 		AscCommonWord["CompareDocuments"](api, file);
+	};
+
+	window["onDocumentMerge"] = function(folder, file_content, file_content_len, image_map, options) {
+		var api = window.editor;
+		if (file_content == "")
+		{
+			api.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationOpenError, Asc.c_oAscError.Level.NoCritical);
+			return;
+		}
+
+		var file = {};
+		file["IsValid"] = function() { return true; };
+		file["GetBinary"] = function() { return AscCommon.getBinaryArray(file_content, file_content_len); };
+		file["GetImageMap"] = function() { return image_map; };
+
+		AscCommonWord["mergeDocuments"](api, file);
 	};
 
 	window["asc_docs_api"]                                      = asc_docs_api;
@@ -12442,7 +12676,7 @@ background-repeat: no-repeat;\
 			}
 			return new Uint8Array(0);
 		} else {
-			var oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(this.WordControl.m_oLogicDocument);
+			var oBinaryFileWriter = new AscCommonWord.BinaryFileWriter(this.WordControl.m_oLogicDocument, undefined, undefined, undefined, undefined, undefined);
 			var _memory           = oBinaryFileWriter.memory;
 
 			oBinaryFileWriter.Write(true);
@@ -12453,15 +12687,56 @@ background-repeat: no-repeat;\
 			return _memory.ImData.data;
 		}
 	};
-
+	
 	window["asc_docs_api"].prototype["asc_nativeGetHtml"] = function()
 	{
 		var _old                           = PasteElementsId.copyPasteUseBinary;
 		PasteElementsId.copyPasteUseBinary = false;
+		var oCore = this.asc_getCoreProps();
 		this.WordControl.m_oLogicDocument.SelectAll();
 		var oCopyProcessor = new AscCommon.CopyProcessor(this);
 		oCopyProcessor.Start();
-		var _ret = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" /></head><body>" + oCopyProcessor.getInnerHtml() + "</body></html>";
+		var _ret = "<html><head><meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\" />";
+		if (oCore)
+		{
+			if (oCore.asc_getTitle())
+			{
+				var title = AscCommon.escapeHtmlCharacters(oCore.asc_getTitle());
+				_ret += ("<title>" + title + "</title>");
+			}
+			if (oCore.asc_getCreator())
+			{
+				var creator = AscCommon.escapeHtmlCharacters(oCore.asc_getCreator());
+				_ret += ("<meta name=\"creator\" content=\"" + creator + "\" />");
+			}
+			if (oCore.asc_getDescription())
+			{
+				var description = AscCommon.escapeHtmlCharacters(oCore.asc_getDescription());
+				_ret += ("<meta name=\"description\" content=\"" + description + "\" />");
+			}
+			if (oCore.asc_getKeywords())
+			{
+				var keywords = AscCommon.escapeHtmlCharacters(oCore.asc_getKeywords());
+				_ret += ("<meta name=\"keywords\" content=\"" + keywords + "\" />");
+			}
+			if (oCore.asc_getSubject())
+			{
+				var subject = AscCommon.escapeHtmlCharacters(oCore.asc_getSubject());
+				_ret += ("<meta name=\"subject\" content=\"" + subject + "\" />");
+			}
+			if (oCore.asc_getIdentifier())
+			{
+				var identifier = AscCommon.escapeHtmlCharacters(oCore.asc_getIdentifier());
+				_ret += ("<meta name=\"identifier\" content=\"" + identifier + "\" />");
+			}
+			if (oCore.asc_getLanguage())
+			{
+				var language = AscCommon.escapeHtmlCharacters(oCore.asc_getLanguage());
+				_ret += ("<meta name=\"language\" content=\"" + language + "\" />");
+			}
+		}
+		_ret += ("</head><body>" + oCopyProcessor.getInnerHtml() + "</body></html>");
+
 		this.WordControl.m_oLogicDocument.RemoveSelection();
 		PasteElementsId.copyPasteUseBinary = _old;
 		return _ret;
@@ -12565,6 +12840,7 @@ background-repeat: no-repeat;\
 		var _renderer                  = new AscCommon.CDocumentRenderer();
         _renderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
 		_renderer.VectorMemoryForPrint = new AscCommon.CMemory();
+		_renderer.DocInfo(this.asc_getCoreProps());
 		var _bOldShowMarks             = this.ShowParaMarks;
 		this.ShowParaMarks             = false;
 
@@ -12659,16 +12935,16 @@ background-repeat: no-repeat;\
             this.WordControl.m_oDrawingDocument.SetDrawImagePreviewMargins(id, props);
     };
 
-    asc_docs_api.prototype.SetDrawImagePreviewBullet = function(id, props, level, is_multi_level)
+    asc_docs_api.prototype.SetDrawImagePreviewBullet = function(sDivId, oProps, nCurrentLvl, bIsMultiLvl)
     {
-        if (this.WordControl.m_oDrawingDocument)
-            this.WordControl.m_oDrawingDocument.SetDrawImagePreviewBullet(id, props, level, is_multi_level);
+		const oDrawer = new AscCommon.CBulletPreviewDrawerAdvancedOptions(sDivId, oProps, nCurrentLvl, bIsMultiLvl);
+        oDrawer.checkFontsAndDraw();
 	};
 	
-	asc_docs_api.prototype.SetDrawImagePreviewBulletChangeListLevel = function(id, props)
+	asc_docs_api.prototype.SetDrawImagePreviewBulletChangeListLevel = function(arrId, oProps)
     {
-		if (this.WordControl.m_oDrawingDocument)
-			this.WordControl.m_oDrawingDocument.SetDrawImagePreviewBulletChangeListLevel(id, props);
+		const oDrawer = new AscCommon.CBulletPreviewDrawerChangeList(arrId, oProps);
+		oDrawer.checkFontsAndDraw();
     };
 
 	asc_docs_api.prototype.asc_PreConvertTextToTable = function(oProps)
@@ -12697,12 +12973,213 @@ background-repeat: no-repeat;\
 
 		return oLogicDocument.ConvertTableToText({type: sep_type, separator: sep, nested: nested});
 	};
+	asc_docs_api.prototype.asc_GetPossibleNumberingLanguage = function ()
+	{
+		const oLogicDocument = this.private_GetLogicDocument();
+		if (oLogicDocument)
+		{
+			const oFirstParagraph = oLogicDocument.GetCurrentParagraph(false);
+			if (oFirstParagraph)
+			{
+				const oTextPr = oFirstParagraph.Get_CompiledPr2(false).TextPr.Copy();
+				const oTempTextPr = oFirstParagraph.TextPr && oFirstParagraph.TextPr.Value.Copy();
+				if (oTempTextPr)
+				{
+					oTextPr.Merge(oTempTextPr);
+				}
+				return oTextPr.Lang;
+			}
 
-	asc_docs_api.prototype.SetDrawImagePreviewBulletForMenu = function(id, type)
-    {
-		if (this.WordControl.m_oDrawingDocument)
-			this.WordControl.m_oDrawingDocument.SetDrawImagePreviewBulletForMenu(id, type);
-    };
+		}
+		return null;
+	};
+	asc_docs_api.prototype.CheckDeprecatedBulletPreviewInfo = function (arrDrawingInfo, nTypeOfPreview)
+	{
+		const arrAdaptedDrawingInfo = [];
+
+		for (let i = 0; i < arrDrawingInfo.length; i += 1)
+		{
+			let sDivId;
+			let oNumberingInfo;
+
+			// Это верный тип передачи информации
+			if (arrDrawingInfo[i].numberingInfo)
+			{
+				arrAdaptedDrawingInfo.push(arrDrawingInfo[i]);
+
+			}
+			else if (arrDrawingInfo[i].divId)
+			{
+				sDivId = arrDrawingInfo[i]["divId"];
+				let sResult = null;
+				switch (arrDrawingInfo[i]["type"])
+				{
+					case 0:
+					{
+						oNumberingInfo = {"Type": Asc.c_oAscJSONNumberingType.Remove};
+						break;
+					}
+					case 1:
+					{
+						let result = {};
+						const oLvl = new AscCommonWord.CNumberingLvl();
+						oLvl.AddStringToLvlText(arrDrawingInfo[i]["char"]);
+						oLvl.TextPr.RFonts.SetAll(arrDrawingInfo[i]["specialFont"] || "Arial");
+						result["Type"] = Asc.c_oAscJSONNumberingType.Bullet;
+						result["Lvl"] = [oLvl.ToJson()];
+						oNumberingInfo = result;
+						break;
+					}
+					case 3:
+					{
+						switch (arrDrawingInfo[i]["numberingType"])
+						{
+							case Asc.c_oAscNumberingLevel.UpperLetterDot_Left: sResult = '{"Type":"number","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"upperLetter"},"lvlText":"%1."}]}'; break;
+							case Asc.c_oAscNumberingLevel.LowerLetterBracket_Left: sResult = '{"Type":"number","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"%1)"}]}'; break;
+							case Asc.c_oAscNumberingLevel.LowerLetterDot_Left: sResult = '{"Type":"number","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"%1."}]}'; break;
+							case Asc.c_oAscNumberingLevel.DecimalDot_Right: sResult = '{"Type":"number","Lvl":[{"lvlJc":"right","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1."}]}'; break;
+							case Asc.c_oAscNumberingLevel.DecimalBracket_Right: sResult = '{"Type":"number","Lvl":[{"lvlJc":"right","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1)"}]}'; break;
+							case Asc.c_oAscNumberingLevel.UpperRomanDot_Right: sResult = '{"Type":"number","Lvl":[{"lvlJc":"right","suff":"tab","numFmt":{"val":"upperRoman"},"lvlText":"%1."}]}'; break;
+							case Asc.c_oAscNumberingLevel.LowerRomanDot_Right: sResult = '{"Type":"number","Lvl":[{"lvlJc":"right","suff":"tab","numFmt":{"val":"lowerRoman"},"lvlText":"%1."}]}'; break;
+							case Asc.c_oAscNumberingLevel.UpperRussian_Dot_Left: sResult = '{"Type":"number","Lvl":[{"lvlJc":"left","numFmt":{"val":"russianUpper"},"lvlText":"%1."}]}'; break;
+							case Asc.c_oAscNumberingLevel.UpperRussian_Bracket_Left: sResult = '{"Type":"number","Lvl":[{"lvlJc":"left","numFmt":{"val":"russianUpper"},"lvlText":"%1)"}]}'; break;
+							case Asc.c_oAscNumberingLevel.LowerRussian_Dot_Left: sResult = '{"Type":"number","Lvl":[{"lvlJc":"left","numFmt":{"val":"russianLower"},"lvlText":"%1."}]}'; break;
+							case Asc.c_oAscNumberingLevel.LowerRussian_Bracket_Left: sResult = '{"Type":"number","Lvl":[{"lvlJc":"left","numFmt":{"val":"russianLower"},"lvlText":"%1)"}]}'; break;
+							default: break;
+						}
+						break;
+					}
+					case 4:
+					{
+						switch (arrDrawingInfo[i]["numberingType"])
+						{
+							case Asc.c_oAscMultiLevelNumbering.MultiLevel_1_a_i          : sResult = '{"Type":"number","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1)","pPr":{"ind":{"left":360,"firstLine":-360}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"%2)","pPr":{"ind":{"left":720,"firstLine":-360}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerRoman"},"lvlText":"%3)","pPr":{"ind":{"left":1080,"firstLine":-360}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%4)","pPr":{"ind":{"left":1440,"firstLine":-360}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"%5)","pPr":{"ind":{"left":1800,"firstLine":-360}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerRoman"},"lvlText":"%6)","pPr":{"ind":{"left":2160,"firstLine":-360}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%7)","pPr":{"ind":{"left":2520,"firstLine":-360}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"%8)","pPr":{"ind":{"left":2880,"firstLine":-360}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerRoman"},"lvlText":"%9)","pPr":{"ind":{"left":3240,"firstLine":-360}}}]}'; break;
+							case Asc.c_oAscMultiLevelNumbering.MultiLevel_1_11_111       : sResult = '{"Type":"number","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.","pPr":{"ind":{"left":360,"firstLine":-360}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.","pPr":{"ind":{"left":792,"firstLine":-432}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.","pPr":{"ind":{"left":1224,"firstLine":-504}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.","pPr":{"ind":{"left":1728,"firstLine":-648}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.%5.","pPr":{"ind":{"left":2232,"firstLine":-792}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.%5.%6.","pPr":{"ind":{"left":2736,"firstLine":-936}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.%5.%6.%7.","pPr":{"ind":{"left":3240,"firstLine":-1080}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.%5.%6.%7.%8.","pPr":{"ind":{"left":3744,"firstLine":-1224}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.%5.%6.%7.%8.%9.","pPr":{"ind":{"left":4320,"firstLine":-1440}}}]}'; break;
+							case Asc.c_oAscMultiLevelNumbering.MultiLevel_Bullet         : sResult = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"v","pPr":{"ind":{"left":360,"firstLine":-360}},"rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"Ø","pPr":{"ind":{"left":720,"firstLine":-360}},"rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"§","pPr":{"ind":{"left":1080,"firstLine":-360}},"rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"·","pPr":{"ind":{"left":1440,"firstLine":-360}},"rPr":{"rFonts":{"ascii":"Symbol","cs":"Symbol","eastAsia":"Symbol","hAnsi":"Symbol"}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"¨","pPr":{"ind":{"left":1800,"firstLine":-360}},"rPr":{"rFonts":{"ascii":"Symbol","cs":"Symbol","eastAsia":"Symbol","hAnsi":"Symbol"}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"Ø","pPr":{"ind":{"left":2160,"firstLine":-360}},"rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"§","pPr":{"ind":{"left":2520,"firstLine":-360}},"rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"·","pPr":{"ind":{"left":2880,"firstLine":-360}},"rPr":{"rFonts":{"ascii":"Symbol","cs":"Symbol","eastAsia":"Symbol","hAnsi":"Symbol"}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"¨","pPr":{"ind":{"left":3240,"firstLine":-360}},"rPr":{"rFonts":{"ascii":"Symbol","cs":"Symbol","eastAsia":"Symbol","hAnsi":"Symbol"}}}]}'; break;
+							case Asc.c_oAscMultiLevelNumbering.MultiLevel_Article_Section: sResult = '{"Type":"number","Headings":"true","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"upperRoman"},"lvlText":"Article %1.","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimalZero"},"lvlText":"Section %1.%2","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"(%3)","pPr":{"ind":{"left":720,"firstLine":-432}}},{"lvlJc":"right","suff":"tab","numFmt":{"val":"lowerRoman"},"lvlText":"(%4)","pPr":{"ind":{"left":864,"firstLine":-144}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%5)","pPr":{"ind":{"left":1008,"firstLine":-432}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"%6)","pPr":{"ind":{"left":1152,"firstLine":-432}}},{"lvlJc":"right","suff":"tab","numFmt":{"val":"lowerRoman"},"lvlText":"%7)","pPr":{"ind":{"left":1296,"firstLine":-288}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"%8.","pPr":{"ind":{"left":1440,"firstLine":-432}}},{"lvlJc":"right","suff":"tab","numFmt":{"val":"lowerRoman"},"lvlText":"%9.","pPr":{"ind":{"left":1584,"firstLine":-144}}}]}'; break;
+							case Asc.c_oAscMultiLevelNumbering.MultiLevel_Chapter        : sResult = '{"Type":"number","Headings":"true","Lvl":[{"lvlJc":"left","suff":"space","numFmt":{"val":"decimal"},"lvlText":"Chapter %1","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"nothing","numFmt":{"val":"none"},"lvlText":"","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"nothing","numFmt":{"val":"none"},"lvlText":"","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"nothing","numFmt":{"val":"none"},"lvlText":"","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"nothing","numFmt":{"val":"none"},"lvlText":"","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"nothing","numFmt":{"val":"none"},"lvlText":"","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"nothing","numFmt":{"val":"none"},"lvlText":"","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"nothing","numFmt":{"val":"none"},"lvlText":"","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"nothing","numFmt":{"val":"none"},"lvlText":"","pPr":{"ind":{"left":0,"firstLine":0}}}]}'; break;
+							case Asc.c_oAscMultiLevelNumbering.MultiLevel_I_A_1          : sResult = '{"Type":"number","Headings":"true","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"upperRoman"},"lvlText":"%1.","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"upperLetter"},"lvlText":"%2.","pPr":{"ind":{"left":720,"firstLine":0}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%3.","pPr":{"ind":{"left":1440,"firstLine":0}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"%4)","pPr":{"ind":{"left":2160,"firstLine":0}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"(%5)","pPr":{"ind":{"left":2880,"firstLine":0}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"(%6)","pPr":{"ind":{"left":3600,"firstLine":0}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerRoman"},"lvlText":"(%7)","pPr":{"ind":{"left":4320,"firstLine":0}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"(%8)","pPr":{"ind":{"left":5040,"firstLine":0}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerRoman"},"lvlText":"(%9)","pPr":{"ind":{"left":5760,"firstLine":0}}}]}'; break;
+							case Asc.c_oAscMultiLevelNumbering.MultiLevel_1_11_111_NoInd : sResult = '{"Type":"number","Headings":"true","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.","pPr":{"ind":{"left":432,"firstLine":-432}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.","pPr":{"ind":{"left":576,"firstLine":-576}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.","pPr":{"ind":{"left":720,"firstLine":-720}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.","pPr":{"ind":{"left":864,"firstLine":-864}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.%5.","pPr":{"ind":{"left":1008,"firstLine":-1008}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.%5.%6.","pPr":{"ind":{"left":1152,"firstLine":-1152}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.%5.%6.%7.","pPr":{"ind":{"left":1296,"firstLine":-1296}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.%5.%6.%7.%8.","pPr":{"ind":{"left":1440,"firstLine":-1440}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.%5.%6.%7.%8.%9.","pPr":{"ind":{"left":1584,"firstLine":-1584}}}]}'; break;
+							default: break;
+						}
+						break;
+					}
+				}
+				if (sResult !== null)
+					oNumberingInfo = JSON.parse(sResult);
+				arrAdaptedDrawingInfo.push({"divId": sDivId, "numberingInfo": oNumberingInfo});
+			}
+			else if (typeof arrDrawingInfo[i] === "string")
+			{
+				sDivId = arrDrawingInfo[i];
+				let sResult;
+				if (nTypeOfPreview === 0)
+				{
+					switch (i)
+					{
+						case 0: sResult = '{"Type":"remove"}'; break;
+						case 1: sResult = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"·","rPr":{"rFonts":{"ascii":"Symbol","cs":"Symbol","eastAsia":"Symbol","hAnsi":"Symbol"}}}]}'; break;
+						case 2: sResult = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"o","rPr":{"rFonts":{"ascii":"Courier New","cs":"Courier New","eastAsia":"Courier New","hAnsi":"Courier New"}}}]}'; break;
+						case 3: sResult = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"§","rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}}]}'; break;
+						case 4: sResult = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"v","rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}}]}'; break;
+						case 5: sResult = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"Ø","rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}}]}'; break;
+						case 6: sResult = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"ü","rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}}]}'; break;
+						case 7: sResult = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"¨","rPr":{"rFonts":{"ascii":"Symbol","cs":"Symbol","eastAsia":"Symbol","hAnsi":"Symbol"}}}]}'; break;
+						case 8: sResult = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"–","rPr":{"rFonts":{"ascii":"Arial","cs":"Arial","eastAsia":"Arial","hAnsi":"Arial"}}}]}'; break;
+						default: sResult = null; break;
+					}
+				}
+				else if (nTypeOfPreview === 1)
+				{
+					switch (i)
+					{
+						case 0: sResult = '{"Type":"remove"}'; break;
+						case 1: sResult = '{"Type":"number","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"upperLetter"},"lvlText":"%1."}]}'; break;
+						case 2: sResult = '{"Type":"number","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"%1)"}]}'; break;
+						case 3: sResult = '{"Type":"number","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"%1."}]}'; break;
+						case 4: sResult = '{"Type":"number","Lvl":[{"lvlJc":"right","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1."}]}'; break;
+						case 5: sResult = '{"Type":"number","Lvl":[{"lvlJc":"right","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1)"}]}'; break;
+						case 6: sResult = '{"Type":"number","Lvl":[{"lvlJc":"right","suff":"tab","numFmt":{"val":"upperRoman"},"lvlText":"%1."}]}'; break;
+						case 7: sResult = '{"Type":"number","Lvl":[{"lvlJc":"right","suff":"tab","numFmt":{"val":"lowerRoman"},"lvlText":"%1."}]}'; break;
+						case 8: sResult = '{"Type":"number","Lvl":[{"lvlJc":"left","numFmt":{"val":"russianUpper"},"lvlText":"%1."}]}'; break;
+						case 9: sResult = '{"Type":"number","Lvl":[{"lvlJc":"left","numFmt":{"val":"russianUpper"},"lvlText":"%1)"}]}'; break;
+						case 10: sResult = '{"Type":"number","Lvl":[{"lvlJc":"left","numFmt":{"val":"russianLower"},"lvlText":"%1."}]}'; break;
+						case 11: sResult = '{"Type":"number","Lvl":[{"lvlJc":"left","numFmt":{"val":"russianLower"},"lvlText":"%1)"}]}'; break;
+						default: sResult = null; break;
+					}
+				}
+				else if (nTypeOfPreview === 2)
+				{
+					switch (i)
+					{
+						case 0: sResult = '{"Type":"remove"}'; break;
+						case 1: sResult = '{"Type":"number","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1)","pPr":{"ind":{"left":360,"firstLine":-360}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"%2)","pPr":{"ind":{"left":720,"firstLine":-360}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerRoman"},"lvlText":"%3)","pPr":{"ind":{"left":1080,"firstLine":-360}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%4)","pPr":{"ind":{"left":1440,"firstLine":-360}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"%5)","pPr":{"ind":{"left":1800,"firstLine":-360}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerRoman"},"lvlText":"%6)","pPr":{"ind":{"left":2160,"firstLine":-360}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%7)","pPr":{"ind":{"left":2520,"firstLine":-360}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"%8)","pPr":{"ind":{"left":2880,"firstLine":-360}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerRoman"},"lvlText":"%9)","pPr":{"ind":{"left":3240,"firstLine":-360}}}]}'; break;
+						case 2: sResult = '{"Type":"number","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.","pPr":{"ind":{"left":360,"firstLine":-360}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.","pPr":{"ind":{"left":792,"firstLine":-432}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.","pPr":{"ind":{"left":1224,"firstLine":-504}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.","pPr":{"ind":{"left":1728,"firstLine":-648}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.%5.","pPr":{"ind":{"left":2232,"firstLine":-792}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.%5.%6.","pPr":{"ind":{"left":2736,"firstLine":-936}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.%5.%6.%7.","pPr":{"ind":{"left":3240,"firstLine":-1080}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.%5.%6.%7.%8.","pPr":{"ind":{"left":3744,"firstLine":-1224}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.%5.%6.%7.%8.%9.","pPr":{"ind":{"left":4320,"firstLine":-1440}}}]}'; break;
+						case 3: sResult = '{"Type":"bullet","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"v","pPr":{"ind":{"left":360,"firstLine":-360}},"rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"Ø","pPr":{"ind":{"left":720,"firstLine":-360}},"rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"§","pPr":{"ind":{"left":1080,"firstLine":-360}},"rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"·","pPr":{"ind":{"left":1440,"firstLine":-360}},"rPr":{"rFonts":{"ascii":"Symbol","cs":"Symbol","eastAsia":"Symbol","hAnsi":"Symbol"}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"¨","pPr":{"ind":{"left":1800,"firstLine":-360}},"rPr":{"rFonts":{"ascii":"Symbol","cs":"Symbol","eastAsia":"Symbol","hAnsi":"Symbol"}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"Ø","pPr":{"ind":{"left":2160,"firstLine":-360}},"rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"§","pPr":{"ind":{"left":2520,"firstLine":-360}},"rPr":{"rFonts":{"ascii":"Wingdings","cs":"Wingdings","eastAsia":"Wingdings","hAnsi":"Wingdings"}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"·","pPr":{"ind":{"left":2880,"firstLine":-360}},"rPr":{"rFonts":{"ascii":"Symbol","cs":"Symbol","eastAsia":"Symbol","hAnsi":"Symbol"}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"bullet"},"lvlText":"¨","pPr":{"ind":{"left":3240,"firstLine":-360}},"rPr":{"rFonts":{"ascii":"Symbol","cs":"Symbol","eastAsia":"Symbol","hAnsi":"Symbol"}}}]}'; break;
+						case 4: sResult = '{"Type":"number","Headings":"true","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"upperRoman"},"lvlText":"Article %1.","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimalZero"},"lvlText":"Section %1.%2","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"(%3)","pPr":{"ind":{"left":720,"firstLine":-432}}},{"lvlJc":"right","suff":"tab","numFmt":{"val":"lowerRoman"},"lvlText":"(%4)","pPr":{"ind":{"left":864,"firstLine":-144}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%5)","pPr":{"ind":{"left":1008,"firstLine":-432}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"%6)","pPr":{"ind":{"left":1152,"firstLine":-432}}},{"lvlJc":"right","suff":"tab","numFmt":{"val":"lowerRoman"},"lvlText":"%7)","pPr":{"ind":{"left":1296,"firstLine":-288}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"%8.","pPr":{"ind":{"left":1440,"firstLine":-432}}},{"lvlJc":"right","suff":"tab","numFmt":{"val":"lowerRoman"},"lvlText":"%9.","pPr":{"ind":{"left":1584,"firstLine":-144}}}]}'; break;
+						case 5: sResult = '{"Type":"number","Headings":"true","Lvl":[{"lvlJc":"left","suff":"space","numFmt":{"val":"decimal"},"lvlText":"Chapter %1","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"nothing","numFmt":{"val":"none"},"lvlText":"","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"nothing","numFmt":{"val":"none"},"lvlText":"","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"nothing","numFmt":{"val":"none"},"lvlText":"","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"nothing","numFmt":{"val":"none"},"lvlText":"","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"nothing","numFmt":{"val":"none"},"lvlText":"","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"nothing","numFmt":{"val":"none"},"lvlText":"","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"nothing","numFmt":{"val":"none"},"lvlText":"","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"nothing","numFmt":{"val":"none"},"lvlText":"","pPr":{"ind":{"left":0,"firstLine":0}}}]}'; break;
+						case 6: sResult = '{"Type":"number","Headings":"true","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"upperRoman"},"lvlText":"%1.","pPr":{"ind":{"left":0,"firstLine":0}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"upperLetter"},"lvlText":"%2.","pPr":{"ind":{"left":720,"firstLine":0}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%3.","pPr":{"ind":{"left":1440,"firstLine":0}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"%4)","pPr":{"ind":{"left":2160,"firstLine":0}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"(%5)","pPr":{"ind":{"left":2880,"firstLine":0}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"(%6)","pPr":{"ind":{"left":3600,"firstLine":0}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerRoman"},"lvlText":"(%7)","pPr":{"ind":{"left":4320,"firstLine":0}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerLetter"},"lvlText":"(%8)","pPr":{"ind":{"left":5040,"firstLine":0}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"lowerRoman"},"lvlText":"(%9)","pPr":{"ind":{"left":5760,"firstLine":0}}}]}'; break;
+						case 7: sResult = '{"Type":"number","Headings":"true","Lvl":[{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.","pPr":{"ind":{"left":432,"firstLine":-432}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.","pPr":{"ind":{"left":576,"firstLine":-576}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.","pPr":{"ind":{"left":720,"firstLine":-720}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.","pPr":{"ind":{"left":864,"firstLine":-864}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.%5.","pPr":{"ind":{"left":1008,"firstLine":-1008}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.%5.%6.","pPr":{"ind":{"left":1152,"firstLine":-1152}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.%5.%6.%7.","pPr":{"ind":{"left":1296,"firstLine":-1296}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.%5.%6.%7.%8.","pPr":{"ind":{"left":1440,"firstLine":-1440}}},{"lvlJc":"left","suff":"tab","numFmt":{"val":"decimal"},"lvlText":"%1.%2.%3.%4.%5.%6.%7.%8.%9.","pPr":{"ind":{"left":1584,"firstLine":-1584}}}]}'; break;
+						default: sResult = null; break;
+					}
+				}
+				if (sResult !== null)
+					oNumberingInfo = JSON.parse(sResult);
+				arrAdaptedDrawingInfo.push({"divId": sDivId, "numberingInfo": oNumberingInfo});
+			}
+		}
+		return arrAdaptedDrawingInfo;
+	};
+	asc_docs_api.prototype.ParseBulletPreviewInformation = function (arrDrawingInfo)
+	{
+		const arrNumberingLvls = [];
+		AscFormat.ExecuteNoHistory(function ()
+		{
+			for (let i = 0; i < arrDrawingInfo.length; i += 1)
+			{
+				const oDrawInfo = arrDrawingInfo[i];
+				const oNumberingInfo = oDrawInfo["numberingInfo"];
+				if (!oNumberingInfo) continue;
+				const sDivId = oDrawInfo["divId"];
+				if (oNumberingInfo["Type"] === Asc.c_oAscJSONNumberingType.Remove)
+				{
+					const oLvl = new AscCommonWord.CNumberingLvl();
+					const oTextPr = oLvl.GetTextPr();
+					const sNoneText = AscCommon.translateManager.getValue("None");
+					const sFontName = "Arial";
+					oLvl.FillLvlText([sNoneText]);
+					oTextPr.RFonts.SetAll(sFontName);
+					arrNumberingLvls.push({divId: sDivId, arrLvls:[oLvl], isRemoving: true});
+				}
+				else
+				{
+					const arrNumberingLvl = [];
+					const arrLvls = oNumberingInfo["Lvl"];
+					for (let j = 0; j < arrLvls.length; j += 1)
+					{
+						const oLvl = AscCommonWord.CNumberingLvl.FromJson(arrLvls[j]);
+						if (oLvl.TextPr.RFonts.IsEmpty())
+						{
+							oLvl.TextPr.RFonts.SetAll("Arial");
+						}
+						if (oNumberingInfo["Headings"])
+						{
+							const oLogicDocument = this.private_GetLogicDocument();
+							const oStyles = oLogicDocument.GetStyles();
+							if (oStyles)
+							{
+								const nStyleId = oStyles.GetDefaultHeading(j);
+								oLvl.SetPStyle(nStyleId);
+							}
+						}
+						arrNumberingLvl.push(oLvl);
+					}
+					arrNumberingLvls.push({divId: sDivId, arrLvls: arrNumberingLvl});
+				}
+			}
+		}, this);
+		return arrNumberingLvls;
+	};
 
 	asc_docs_api.prototype.asc_OnHideContextMenu = function()
 	{
@@ -12814,14 +13291,7 @@ background-repeat: no-repeat;\
 				oLogicDocument.UpdateSelection();
 			}
 		}
-
-		var oHistory = oLogicDocument.GetHistory();
-		if (this.isRestrictionSignatures() && oHistory && !oHistory.Have_Changes())
-		{
-			oHistory.Clear();
-			oLogicDocument.UpdateInterface();
-		}
-
+		
 		if (this.isDrawTablePen || this.isDrawTableErase)
 		{
 			this.isDrawTablePen && this.sync_TableDrawModeCallback(false);
@@ -12833,7 +13303,7 @@ background-repeat: no-repeat;\
 			this.sync_MarkerFormatCallback(false);
 			oLogicDocument.UpdateCursorType(oLogicDocument.CurPos.RealX, oLogicDocument.CurPos.RealY, oLogicDocument.CurPage, new AscCommon.CMouseEventHandler());
 		}
-		else if (c_oAscFormatPainterState.kOff !== this.isPaintFormat)
+		else if (this.isFormatPainterOn())
 		{
 			this.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
 			oLogicDocument.UpdateCursorType(oLogicDocument.CurPos.RealX, oLogicDocument.CurPos.RealY, oLogicDocument.CurPage, new AscCommon.CMouseEventHandler());
@@ -12845,9 +13315,17 @@ background-repeat: no-repeat;\
 			oLogicDocument.DrawingObjects.endTrackNewShape();
 			oLogicDocument.UpdateCursorType(oLogicDocument.CurPos.RealX, oLogicDocument.CurPos.RealY, oLogicDocument.CurPage, new AscCommon.CMouseEventHandler());
 		}
+		else if(this.isInkDrawerOn())
+		{
+			this.asc_StopInkDrawer();
+		}
+		
+		if (!oLogicDocument.IsFillingFormMode() && oLogicDocument.FocusCC && oLogicDocument.FocusCC.IsForm())
+			oLogicDocument.FocusCC.SelectContentControl();
 
 		oLogicDocument.private_CheckCursorPosInFillingFormMode();
 		oLogicDocument.UpdateSelection();
+		oLogicDocument.UpdateInterface();
 		
 		let oform = oLogicDocument.GetOFormDocument();
 		if (oform)
@@ -12990,14 +13468,33 @@ background-repeat: no-repeat;\
 		return oDocument.GetImageDataFromSelection();
 	};
 
-	asc_docs_api.prototype.putImageToSelection = function (sImageSrc, nWidth, nHeight)
+	asc_docs_api.prototype.putImageToSelection = function (sImageSrc, nWidth, nHeight, replaceMode)
 	{
 		let oDocument = this.private_GetLogicDocument();
 		if(!oDocument)
 		{
 			return;
 		}
-		return oDocument.PutImageToSelection(sImageSrc, nWidth, nHeight);
+		return oDocument.PutImageToSelection(sImageSrc, nWidth, nHeight, replaceMode);
+	};
+	asc_docs_api.prototype.getPluginContextMenuInfo = function (sImageSrc, nWidth, nHeight)
+	{
+		const oLogicDocument = this.private_GetLogicDocument();
+		if(!oLogicDocument)
+		{
+			return new AscCommon.CPluginCtxMenuInfo();
+		}
+		if (!oLogicDocument.IsSelectionUse())
+		{
+			return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Target);
+		}
+		const oDrawingObjects = oLogicDocument.DrawingObjects;
+		const aSelectedObjects = oDrawingObjects.selectedObjects;
+		if(aSelectedObjects.length < 1)
+		{
+			return new AscCommon.CPluginCtxMenuInfo(Asc.c_oPluginContextMenuTypes.Selection);
+		}
+		return oDrawingObjects.getPluginSelectionInfo();
 	};
 
 	asc_docs_api.prototype.asc_getDocumentProtection = function () {
@@ -13028,8 +13525,8 @@ background-repeat: no-repeat;\
 		let curDocProtection = oDocument.Settings && oDocument.Settings.DocumentProtection;
 		if (curDocProtection) {
 			//пытаемся выставить такие же настройки
-			let curIsProtect = curDocProtection.edit != null && curDocProtection.edit !== Asc.c_oAscEDocProtect.None;
-			let isPropsProtect = props.edit != null && props.edit !== Asc.c_oAscEDocProtect.None;
+			let curIsProtect = curDocProtection.edit != null && curDocProtection.edit !== Asc.c_oAscEDocProtect.None && curDocProtection.enforcement !== false;
+			let isPropsProtect = props.edit != null && props.edit !== Asc.c_oAscEDocProtect.None && props.enforcement !== false;
 			if (curIsProtect === isPropsProtect) {
 				return;
 			}
@@ -13056,7 +13553,7 @@ background-repeat: no-repeat;\
 					oDocument.SetProtection(props);
 					oDocument.UpdateInterface();
 					oDocument.FinalizeAction();
-					t.sendEvent("asc_onChangeDocumentProtection");
+					t.asc_OnProtectionUpdate();
 				}
 			} else {
 				t.sendEvent("asc_onError", c_oAscError.ID.PasswordIsNotCorrect, c_oAscError.Level.NoCritical);
@@ -13105,7 +13602,7 @@ background-repeat: no-repeat;\
 					} else {
 						//неверный пароль
 						t.sendEvent("asc_onError", c_oAscError.ID.PasswordIsNotCorrect, c_oAscError.Level.NoCritical);
-						t.sendEvent("asc_onChangeDocumentProtection");
+						t.asc_OnProtectionUpdate();
 						t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction);
 					}
 				}
@@ -13188,6 +13685,24 @@ background-repeat: no-repeat;\
 		}
 
 		return null;
+	};
+	asc_docs_api.prototype.getEyedropperImgData = function()
+	{
+		const oViewerCanvas = document.getElementById("id_viewer");
+		const oOverlayCanvas = document.getElementById("id_viewer_overlay");
+		if(!oViewerCanvas || !oOverlayCanvas)
+		{
+			return null;
+		}
+		let oCanvas = document.createElement("canvas");
+		oCanvas.width = oViewerCanvas.width;
+		oCanvas.height = oViewerCanvas.height;
+		const oCtx = oCanvas.getContext("2d");
+		oCtx.fillStyle = oViewerCanvas.style.backgroundColor;
+		oCtx.fillRect(0, 0, oCanvas.width, oCanvas.height);
+		oCtx.drawImage(oViewerCanvas, 0, 0);
+		oCtx.drawImage(oOverlayCanvas, 0, 0);
+		return oCtx.getImageData(0, 0, oCanvas.width, oCanvas.height);
 	};
 
 	//-------------------------------------------------------------export---------------------------------------------------
@@ -13401,6 +13916,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['put_PrAlign']                               = asc_docs_api.prototype.put_PrAlign;
 	asc_docs_api.prototype['put_TextPrBaseline']                        = asc_docs_api.prototype.put_TextPrBaseline;
 	asc_docs_api.prototype['put_ListType']                              = asc_docs_api.prototype.put_ListType;
+	asc_docs_api.prototype['asc_IsShowListIndentsSettings']             = asc_docs_api.prototype.asc_IsShowListIndentsSettings;
 	asc_docs_api.prototype['put_ListTypeCustom']                        = asc_docs_api.prototype.put_ListTypeCustom;
 	asc_docs_api.prototype['asc_GetCurrentNumberingJson']               = asc_docs_api.prototype.asc_GetCurrentNumberingJson;
 	asc_docs_api.prototype['asc_ContinueNumbering']                     = asc_docs_api.prototype.asc_ContinueNumbering;
@@ -13766,6 +14282,7 @@ background-repeat: no-repeat;\
     asc_docs_api.prototype["ConvertTableToText"]						= asc_docs_api.prototype.ConvertTableToText;
     asc_docs_api.prototype["SetDrawImagePreviewBulletChangeListLevel"]	= asc_docs_api.prototype.SetDrawImagePreviewBulletChangeListLevel;
     asc_docs_api.prototype["SetDrawImagePreviewBulletForMenu"]			= asc_docs_api.prototype.SetDrawImagePreviewBulletForMenu;
+    asc_docs_api.prototype["asc_GetPossibleNumberingLanguage"]			= asc_docs_api.prototype.asc_GetPossibleNumberingLanguage;
 
 	asc_docs_api.prototype["asc_AddContentControl"]                     = asc_docs_api.prototype.asc_AddContentControl;
 	asc_docs_api.prototype["asc_AddContentControlCheckBox"]             = asc_docs_api.prototype.asc_AddContentControlCheckBox;
@@ -13951,6 +14468,12 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_CompareDocumentFile"]                   = asc_docs_api.prototype.asc_CompareDocumentFile;
 	asc_docs_api.prototype["asc_CompareDocumentUrl_local"]              = asc_docs_api.prototype.asc_CompareDocumentUrl_local;
 	asc_docs_api.prototype["asc_CompareDocumentFile_local"]             = asc_docs_api.prototype.asc_CompareDocumentFile_local;
+
+	//merge
+	asc_docs_api.prototype["asc_MergeDocumentUrl"]                    = asc_docs_api.prototype.asc_MergeDocumentUrl;
+	asc_docs_api.prototype["asc_MergeDocumentFile"]                   = asc_docs_api.prototype.asc_MergeDocumentFile;
+	asc_docs_api.prototype["asc_MergeDocumentUrl_local"]              = asc_docs_api.prototype.asc_MergeDocumentUrl_local;
+	asc_docs_api.prototype["asc_MergeDocumentFile_local"]             = asc_docs_api.prototype.asc_MergeDocumentFile_local;
 
 
 	asc_docs_api.prototype["asc_canEditGeometry"] 					    = asc_docs_api.prototype.asc_canEditGeometry;

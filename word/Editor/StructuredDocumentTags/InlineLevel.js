@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -58,8 +58,9 @@ function CInlineLevelSdt()
 	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
 	AscCommon.g_oTableId.Add(this, this.Id);
 
-	this.SkipSpecialLock = false;
-	this.Current         = false;
+	this.SkipSpecialLock  = false;
+	this.SkipFillFormLock = false;
+	this.Current          = false;
 }
 
 CInlineLevelSdt.prototype = Object.create(CParagraphContentWithParagraphLikeContent.prototype);
@@ -665,7 +666,7 @@ CInlineLevelSdt.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, U
 			}
 		}
 	}
-	else if (this.IsForm() && this.IsPlaceHolder() && UseContentPos)
+	else if (this.IsForm() && (this.IsPlaceHolder() || !this.CanPlaceCursorInside()) && UseContentPos)
 	{
 		return false;
 	}
@@ -771,7 +772,7 @@ CInlineLevelSdt.prototype.Get_RightPos = function(SearchPos, ContentPos, Depth, 
 			}
 		}
 	}
-	else if (this.IsForm() && this.IsPlaceHolder() && UseContentPos)
+	else if (this.IsForm() && (this.IsPlaceHolder() || !this.CanPlaceCursorInside()) && UseContentPos)
 	{
 		return false;
 	}
@@ -1042,7 +1043,16 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 
 	if (this.IsContentControlEquation())
 		return;
+	
+	var oDrawingDocument = oLogicDocument.GetDrawingDocument();
 
+	// Не рисуем трек для фиксед форм, т.к. он уже есть от рамки автофигуры
+	if (this.IsFixedForm() && this.IsCurrent() && oLogicDocument.IsDocumentEditor() && !oLogicDocument.IsFillingOFormMode())
+	{
+		oDrawingDocument.OnDrawContentControl(null, nType);
+		return;
+	}
+	
 	let oMainForm;
 	if (this.IsForm() && (oMainForm = this.GetMainForm()) && oMainForm !== this)
 	{
@@ -1052,16 +1062,18 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 		}
 		else
 		{
-			oMainForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Main, X, Y, nCurPage, isCheckHit);
-
 			// В режиме заполнения, у внутренних текстовых форм и чекбоксов не рисуем собственный трек, а только внешний
 			if (oLogicDocument.IsFillingFormMode()
 				&& (this.IsTextForm() || this.IsCheckBox()))
+			{
+				oDrawingDocument.OnDrawContentControl(null, nType);
+				oMainForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Main, X, Y, nCurPage, isCheckHit);
 				return;
+			}
+
+			oMainForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Main, X, Y, nCurPage, isCheckHit);
 		}
 	}
-
-	var oDrawingDocument = oLogicDocument.GetDrawingDocument();
 	
 	if (undefined !== X && undefined !== Y && undefined !== nCurPage)
 	{
@@ -1134,7 +1146,7 @@ CInlineLevelSdt.prototype.SelectContentControl = function()
 		return;
 	}
 
-	if (this.IsForm() && this.IsPlaceHolder() && this.GetLogicDocument() && this.GetLogicDocument().CheckFormPlaceHolder)
+	if (this.IsForm() && this.IsPlaceHolder() && this.GetLogicDocument() && this.GetLogicDocument().IsCheckFormPlaceholder())
 	{
 		this.RemoveSelection();
 		this.MoveCursorToStartPos();
@@ -1338,6 +1350,13 @@ CInlineLevelSdt.prototype.IsPlaceHolder = function()
 {
 	return this.Pr.ShowingPlcHdr;
 };
+CInlineLevelSdt.prototype.CanPlaceCursorInside = function()
+{
+	if (this.SkipFillFormLock)
+		return false;
+	
+	return CSdtBase.prototype.CanPlaceCursorInside.apply(this, arguments);
+};
 CInlineLevelSdt.prototype.private_ReplacePlaceHolderWithContent = function(bMathRun)
 {
 	if (!this.IsPlaceHolder())
@@ -1354,9 +1373,12 @@ CInlineLevelSdt.prototype.private_ReplacePlaceHolderWithContent = function(bMath
 
 	if (this.IsContentControlEquation())
 	{
+		let textPr = this.GetDefaultTextPr();
+		
 		var oParaMath = new ParaMath();
-		oParaMath.Root.Load_FromMenu(c_oAscMathType.Default_Text, this.GetParagraph());
+		oParaMath.Root.Load_FromMenu(c_oAscMathType.Default_Text, this.GetParagraph(), textPr.Copy());
 		oParaMath.Root.Correct_Content(true);
+		oParaMath.ApplyTextPr(textPr.Copy(), undefined, true);
 		this.AddToContent(0, oParaMath);
 	}
 	else
@@ -1384,7 +1406,6 @@ CInlineLevelSdt.prototype.private_ReplaceContentWithPlaceHolder = function(isSel
 
 		return;
 	}
-
 
 	this.SetShowingPlcHdr(true);
 
@@ -1472,7 +1493,7 @@ CInlineLevelSdt.prototype.Set_SelectionContentPos = function(StartContentPos, En
 {
 	if (this.IsPlaceHolder())
 	{
-		if (this.IsForm() && StartContentPos && EndContentPos && this.GetLogicDocument() && this.GetLogicDocument().CheckFormPlaceHolder)
+		if (this.IsForm() && StartContentPos && EndContentPos && this.GetLogicDocument() && this.GetLogicDocument().IsCheckFormPlaceholder())
 		{
 			this.Get_StartPos(StartContentPos, Depth);
 			this.Get_StartPos(EndContentPos, Depth);
@@ -1494,7 +1515,7 @@ CInlineLevelSdt.prototype.Set_SelectionContentPos = function(StartContentPos, En
 };
 CInlineLevelSdt.prototype.Set_ParaContentPos = function(ContentPos, Depth)
 {
-	if (this.IsPlaceHolder() && this.IsForm() && ContentPos && this.GetLogicDocument() && this.GetLogicDocument().CheckFormPlaceHolder)
+	if (this.IsPlaceHolder() && this.IsForm() && ContentPos && this.GetLogicDocument() && this.GetLogicDocument().IsCheckFormPlaceholder())
 	{
 		this.Get_StartPos(ContentPos, Depth);
 		CParagraphContentWithParagraphLikeContent.prototype.Set_ParaContentPos.call(this, ContentPos, Depth);
@@ -1703,7 +1724,7 @@ CInlineLevelSdt.prototype.GetContentControlPr = function()
  */
 CInlineLevelSdt.prototype.CanBeDeleted = function()
 {
-	if (this.IsFixedForm())
+	if (this.IsFixedForm() && this.IsMainForm())
 		return false;
 
 	return (undefined === this.Pr.Lock || c_oAscSdtLockType.Unlocked === this.Pr.Lock || c_oAscSdtLockType.ContentLocked === this.Pr.Lock);
@@ -1714,6 +1735,10 @@ CInlineLevelSdt.prototype.CanBeDeleted = function()
  */
 CInlineLevelSdt.prototype.CanBeEdited = function()
 {
+	let logicDocument = this.GetLogicDocument();
+	if (!this.SkipFillFormLock && this.IsForm() && !this.IsComplexForm() && logicDocument && logicDocument.IsDocumentEditor() && !logicDocument.IsFillingFormMode())
+		return false;
+	
 	if (!this.SkipSpecialLock && (this.IsCheckBox() || this.IsPicture() || this.IsDropDownList()))
 		return false;
 
@@ -1909,6 +1934,14 @@ CInlineLevelSdt.prototype.SkipSpecialContentControlLock = function(isSkip)
 CInlineLevelSdt.prototype.IsSkipSpecialContentControlLock = function()
 {
 	return this.SkipSpecialLock;
+};
+/**
+ * Выключаем проверку невозможности редактирования формы в обычном режиме редактирования
+ * @param isSkip
+ */
+CInlineLevelSdt.prototype.SkipFillingFormModeCheck = function(isSkip)
+{
+	this.SkipFillFormLock = isSkip;
 };
 CInlineLevelSdt.prototype.private_UpdateCheckBoxContent = function()
 {
@@ -2286,19 +2319,19 @@ CInlineLevelSdt.prototype.GetDatePickerPr = function()
 /**
  * Применяем к данному контейнеру настройки того, что это специальный контйенер для даты
  * @param oPr {AscWord.CSdtDatePickerPr}
+ * @param updateValue {boolean}
  */
-CInlineLevelSdt.prototype.ApplyDatePickerPr = function(oPr)
+CInlineLevelSdt.prototype.ApplyDatePickerPr = function(oPr, updateValue)
 {
 	this.SetDatePickerPr(oPr);
 
 	if (!this.IsDatePicker())
 		return;
 
-	this.SetPlaceholder(c_oAscDefaultPlaceholderName.DateTime);
-	if (this.IsPlaceHolder())
+	if (true === updateValue || !this.IsPlaceHolder())
+		this.private_UpdateDatePickerContent();
+	else
 		this.private_FillPlaceholderContent();
-
-	this.private_UpdateDatePickerContent();
 };
 CInlineLevelSdt.prototype.private_UpdateDatePickerContent = function()
 {
@@ -2463,7 +2496,7 @@ CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
 			&& oLogicDocument
 			&& oLogicDocument.IsCheckContentControlsLock()
 			&& ((this.IsPlaceHolder() && oLogicDocument.IsFillingFormMode())
-				|| (!this.CanBeEdited() && (oLogicDocument.IsFillingFormMode() || this.IsFixedForm()))))
+				|| (!this.CanBeEdited() && (oLogicDocument.IsFillingFormMode() || (this.IsFixedForm() && this.IsMainForm())))))
 		{
 			return AscCommon.CollaborativeEditing.Add_CheckLock(true);
 		}
@@ -2906,23 +2939,30 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function(nW, nH)
 	var oLogicDocument    = oParagraph ? oParagraph.GetLogicDocument() : null;
 	var nPosInParent      = this.GetPosInParent(oParent);
 
-	if (undefined === nW)
+	let _nW = 50;
+	let _nH = 50;
+	let X = 0;
+	let Y = 0;
+	
+	if (oParent)
 	{
-		nW = 50;
-		nH = 50;
-
-		if (oParent)
+		for (var Key in this.Bounds)
 		{
-			for (var Key in this.Bounds)
+			if (this.Bounds[Key].W > 0.001 && this.Bounds[Key].H > 0.001)
 			{
-				if (this.Bounds[Key].W > 0.001 && this.Bounds[Key].H > 0.001)
-				{
-					nW = this.Bounds[Key].W + (2 * 25.4 / 72) * 2 + 0.1;
-					nH = this.Bounds[Key].H + 0.1;
-					break;
-				}
+				X  = this.Bounds[Key].X - (2 * 25.4 / 72);
+				Y  = this.Bounds[Key].Y;
+				nW = this.Bounds[Key].W + (2 * 25.4 / 72) * 2 + 0.1;
+				nH = this.Bounds[Key].H + 0.1;
+				break;
 			}
 		}
+	}
+	
+	if (undefined === nW)
+	{
+		nW = _nW;
+		nH = _nH;
 	}
 
 	// Для билдера, чтобы мы могли конвертить форму, даже если она нигде не лежит
@@ -2938,7 +2978,9 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function(nW, nH)
 		return null;
 
 	let oParaDrawing = this.private_ConvertFormToFixed(nW, nH);
-
+	oParaDrawing.Set_PositionH(Asc.c_oAscRelativeFromH.Page, false, X, false);
+	oParaDrawing.Set_PositionV(Asc.c_oAscRelativeFromV.Page, false, Y, false);
+	
 	var oRun = new ParaRun(oParagraph, false);
 	oRun.AddToContent(0, oParaDrawing);
 
@@ -3475,6 +3517,9 @@ CInlineLevelSdt.prototype.CheckSpelling = function(oCollector, nDepth)
 };
 CInlineLevelSdt.prototype.MoveCursorOutsideForm = function(isBefore)
 {
+	let logicDocument = this.GetLogicDocument();
+	logicDocument.RemoveSelection();
+	
 	let oShape;
 	if (this.IsForm()
 		&& this.Paragraph

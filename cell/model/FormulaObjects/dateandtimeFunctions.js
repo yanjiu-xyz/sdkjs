@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -299,6 +299,15 @@
 			} else {
 				val = new cDate((val - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay);
 			}
+		} else {
+			val = new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
+		}
+		return val;
+	}
+
+	function getCorrectDate2(val) {
+		if (!AscCommon.bDate1904) {
+			val = new cDate((val - AscCommonExcel.c_DateCorrectConst - 1) * c_msPerDay);
 		} else {
 			val = new cDate((val - AscCommonExcel.c_DateCorrectConst) * c_msPerDay);
 		}
@@ -1446,52 +1455,101 @@
 	cNETWORKDAYS.prototype.arrayIndexes = {2: 1};
 	cNETWORKDAYS.prototype.argumentsType = [argType.any, argType.any, argType.any];
 	cNETWORKDAYS.prototype.Calculate = function (arg) {
-		var oArguments = this._prepareArguments([arg[0], arg[1]], arguments[1]);
-		var argClone = oArguments.args;
+		let oArguments = this._prepareArguments([arg[0], arg[1]], arguments[1]);
+		let argClone = oArguments.args;
 
-		argClone[0] = argClone[0].tocNumber();
-		argClone[1] = argClone[1].tocNumber();
+		let arg0 = arg[0],
+			arg1 = arg[1],
+			arg2 = arg[2];
 
-		var argError;
+		// arg0 type check
+		if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+			arg0 = arg0.getValue();
+		} else if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			if (arg0.isOneElement()) {
+				arg0 = arg0.getFirstElement();
+			} else {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		} else if (cElementType.array === arg0.type) {
+			arg0 = arg0.getElementRowCol(0, 0);
+		}
+
+		if (cElementType.bool === arg0.type) {
+			arg0 = new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.empty === arg0.type) {
+			arg0 = new cNumber(0);
+		}
+
+		// arg1 type check
+		if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
+			arg1 = arg1.getValue();
+		} else if (cElementType.cellsRange === arg1.type || cElementType.cellsRange3D === arg1.type) {
+			if (arg1.isOneElement()) {
+				arg1 = arg1.getFirstElement();
+			} else {
+				return new cError(cErrorType.wrong_value_type);
+			}
+		} else if (cElementType.array === arg1.type) {
+			arg1 = arg1.getElementRowCol(0, 0);
+		}
+
+		if (cElementType.bool === arg1.type) {
+			arg1 = new cError(cErrorType.wrong_value_type);
+		} else if (cElementType.empty === arg1.type) {
+			arg1 = new cNumber(0);
+		}
+
+		arg0 = arg0.tocNumber();
+		arg1 = arg1.tocNumber();
+
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+
+		if (cElementType.error === arg1.type) {
+			return arg1;
+		}
+
+		let val0 = Math.trunc(arg0.getValue()), val1 = Math.trunc(arg1.getValue());
+
+		if (val0 < 0 || val1 < 0) {
+			return new cError(cErrorType.not_numeric);
+		} else if (val0 === 0 && val1 === 0) {
+			return new cNumber(0);
+		}
+
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var arg0 = argClone[0], arg1 = argClone[1], arg2 = arg[2];
-		var val0 = arg0.getValue(), val1 = arg1.getValue();
-
-		if (val0 < 0) {
-			return new cError(cErrorType.not_numeric);
-		}
-		if (val1 < 0) {
-			return new cError(cErrorType.not_numeric);
-		}
-
-		val0 = getCorrectDate(val0);
-		val1 = getCorrectDate(val1);
+		//function weekday also don't separate < 60
+		val0 = getCorrectDate2(val0);
+		val1 = getCorrectDate2(val1);
 
 		//Holidays
-		var holidays = getHolidays(arg2);
-		if (holidays instanceof cError) {
+		let holidays = getHolidays(arg2);
+		if (holidays.type === cElementType.error) {
 			return holidays;
 		}
 
-		var calcDate = function () {
-			var count = 0;
-			var start = val0;
-			var end = val1;
-			var dif = val1 - val0;
+		const calcDate = function () {
+			let count = 0;
+			let start = val0;
+			let end = val1;
+			let dif = val1 - val0;
 			if (dif < 0) {
 				start = val1;
 				end = val0;
 			}
 
-			var difAbs = ( end - start );
+			let difAbs = ( end - start );
 			difAbs = ( difAbs + (c_msPerDay) ) / c_msPerDay;
 
-			for (var i = 0; i < difAbs; i++) {
-				var date = new cDate(start);
-				date.setUTCDate(start.getUTCDate() + i);
+			for (let i = 0; i < difAbs; i++) {
+				let date = new cDate(start);
+				date.setUTCDate(Date.prototype.getUTCDate.call(start) + i);
 				if (date.getUTCDay() !== 6 && date.getUTCDay() !== 0 && !_includeInHolidays(date, holidays)) {
 					count++;
 				}
@@ -2091,64 +2149,64 @@
 	cWORKDAY_INTL.prototype.returnValueType = AscCommonExcel.cReturnFormulaType.value_replace_area;
 	cWORKDAY_INTL.prototype.Calculate = function (arg) {
 		//TODO проблема с формулами следующего типа - WORKDAY.INTL(8,60,"0000000")
-		var t = this;
-		var tempArgs = arg[2] ? [arg[0], arg[1], arg[2]] : [arg[0], arg[1]];
-		var oArguments = this._prepareArguments(tempArgs, arguments[1]);
-		var argClone = oArguments.args;
+		let t = this;
+		let tempArgs = arg[2] ? [arg[0], arg[1], arg[2]] : [arg[0], arg[1]];
+		let oArguments = this._prepareArguments(tempArgs, arguments[1]);
+		let argClone = oArguments.args;
 
 		argClone[0] = argClone[0].tocNumber();
 		argClone[1] = argClone[1].tocNumber();
 
-		var argError;
+		let argError;
 		if (argError = this._checkErrorArg(argClone)) {
 			return argError;
 		}
 
-		var arg0 = argClone[0], arg1 = argClone[1], arg2 = argClone[2], arg3 = arg[3];
+		let arg0 = argClone[0], arg1 = argClone[1], arg2 = argClone[2], arg3 = arg[3];
 
-		var val0 = arg0.getValue();
+		let val0 = arg0.getValue();
 		if (val0 < 0) {
 			return new cError(cErrorType.not_numeric);
 		}
 		val0 = getCorrectDate(val0);
 
-		//Weekend
+		// Weekend
 		if (arg2 && "1111111" === arg2.getValue()) {
 			return new cError(cErrorType.wrong_value_type);
 		}
-		var weekends = getWeekends(arg2);
+		let weekends = getWeekends(arg2);
 		if (weekends instanceof cError) {
 			return weekends;
 		}
 
-		//Holidays
-		var holidays = getHolidays(arg3);
+		// Holidays
+		let holidays = getHolidays(arg3);
 		if (holidays instanceof cError) {
 			return holidays;
 		}
 
-		var calcDate = function () {
-			var dif = arg1.getValue(), count = 1, dif1 = dif > 0 ? 1 : dif < 0 ? -1 : 0, val, date = val0;
+		let calcDate = function () {
+			let dif = arg1.getValue(), count = 0, dif1 = dif > 0 ? 1 : dif < 0 ? -1 : 0, val, date = val0, isEndOfCycle = false;
 			while (Math.abs(dif) > count) {
 				date = new cDate(val0.getTime() + dif1 * c_msPerDay);
 				if (!_includeInHolidays(date, holidays) && !weekends[date.getUTCDay()]) {
 					count++;
 				}
-				dif >= 0 ? dif1++ : dif1--;
-
 				//если последняя итерация
 				if (!(Math.abs(dif) > count)) {
 					//проверяем не оказалось ли следом выходных. если оказались - прибавляем
 					date = new cDate(val0.getTime() + dif1 * c_msPerDay);
-					for (var i = 0; i < 7; i++) {
+					for (let i = 0; i < 7; i++) {
 						if (weekends[date.getUTCDay()]) {
 							dif >= 0 ? dif1++ : dif1--;
 							date = new cDate(val0.getTime() + (dif1) * c_msPerDay);
 						} else {
+							isEndOfCycle = true;
 							break;
 						}
 					}
 				}
+				!isEndOfCycle ? (dif >= 0 ? dif1++ : dif1--) : null;
 			}
 			date = new cDate(val0.getTime() + dif1 * c_msPerDay);
 			val = date.getExcelDate();

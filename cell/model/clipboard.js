@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -403,7 +403,7 @@
 						ws.workbook.cutIdSheet = ws.model.Id;
 						ws.copyCutRange = [ws.model.selectionRange.getLast()];
 					}
-				} else {
+				} else if (!ws.objectRender.selectedGraphicObjectsExists()) {
 					ws.copyCutRange = ws.model.selectionRange.ranges;
 				}
 			}
@@ -412,6 +412,9 @@
 		Clipboard.prototype.pasteData = function (ws, _format, data1, data2, text_data, bIsSpecialPaste, doNotShowButton, isPasteAll) {
 			var t = this;
 			var wb = window["Asc"]["editor"].wb;
+			if (wb.selectionDialogMode) {
+				return;
+			}
 			var cellEditor = wb.cellEditor;
 			t.pasteProcessor.clean();
 
@@ -609,7 +612,11 @@
 
 					//для внешних данных необходимо протащить docInfo->ReferenceData
 					//пока беру данные поля, поскольку для копипаста они не используются. по названию не особо совпадают - пересмотреть
-					if (wb.oApi && wb.oApi.DocInfo && !notSupportExternalReferenceFileFormat[wb.oApi.DocInfo.Format]) {
+					let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
+					if (isLocalDesktop && window["AscDesktopEditor"]["LocalFileGetSaved"]()) {
+						wb.Core.contentStatus = window["AscDesktopEditor"]["LocalFileGetSourcePath"]();
+						wb.Core.category = null;
+					} else if (wb.oApi && wb.oApi.DocInfo && !notSupportExternalReferenceFileFormat[wb.oApi.DocInfo.Format]) {
 						wb.Core.contentStatus = wb.oApi.DocInfo.ReferenceData ? wb.oApi.DocInfo.ReferenceData["fileKey"] : null;
 						wb.Core.category = wb.oApi.DocInfo.ReferenceData ? wb.oApi.DocInfo.ReferenceData["instanceId"] : null;
 					}
@@ -1694,6 +1701,16 @@
 					worksheet.objectRender.controller.checkPasteInText(callback);
 				};
 
+				let getFontsFromDrawings = function (_drawings) {
+					let _fonts = {};
+					if (_drawings) {
+						for (var i = 0; i < _drawings.length; i++) {
+							_drawings[i].graphicObject.getAllFonts(_fonts);
+						}
+					}
+					return _fonts;
+				};
+
 				var res = false;
 				if (isCellEditMode) {
 					res = this._getTextFromWorksheet(pasteData);
@@ -1706,27 +1723,27 @@
 								doPasteData();
 							}
 						} else if (window["NativeCorrectImageUrlOnPaste"]) {
-							var url;
-							for (var i = 0, length = aPastedImages.length; i < length; ++i) {
-								url = window["NativeCorrectImageUrlOnPaste"](aPastedImages[i].Url);
-								aPastedImages[i].Url = url;
+							newFonts = getFontsFromDrawings(pasteData.Drawings);
+							worksheet._loadFonts(newFonts, function () {
+								var url;
+								for (var i = 0, length = aPastedImages.length; i < length; ++i) {
+									url = window["NativeCorrectImageUrlOnPaste"](aPastedImages[i].Url);
+									aPastedImages[i].Url = url;
 
-								var imageElem = aPastedImages[i];
-								if (null != imageElem) {
-									imageElem.SetUrl(url);
+									var imageElem = aPastedImages[i];
+									if (null != imageElem) {
+										imageElem.SetUrl(url);
+									}
 								}
-							}
 
-							t._insertImagesFromBinary(worksheet, pasteData, isIntoShape, null, isPasteAll, tempWorkbook);
-							if(isPasteAll) {
-								doPasteData();
-							}
+								t._insertImagesFromBinary(worksheet, pasteData, isIntoShape, null, isPasteAll, tempWorkbook);
+								if(isPasteAll) {
+									doPasteData();
+								}
+							});
 						} else if (!(window["Asc"]["editor"] && window["Asc"]["editor"].isChartEditor)) {
 
-							newFonts = {};
-							for (var i = 0; i < pasteData.Drawings.length; i++) {
-								pasteData.Drawings[i].graphicObject.getAllFonts(newFonts);
-							}
+							newFonts = getFontsFromDrawings(pasteData.Drawings);
 
 							worksheet._loadFonts(newFonts, function () {
 								if (aPastedImages && aPastedImages.length) {
@@ -1854,6 +1871,12 @@
 							ws.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
 							ws.handlers.trigger("cleanCutData", true);
 							return true;
+						}
+
+						if (ws.model.isUserProtectedRangesIntersection(toRange)) {
+							ws.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
+							ws.handlers.trigger("cleanCutData", true);
+							return;
 						}
 
 						var wsTo = ws.model.Id !== wsFrom.model.Id ? ws : null;
@@ -3145,6 +3168,7 @@
 
 				oPasteProcessor.map_font_index = window["Asc"]["editor"].FontLoader.map_font_index;
 				oPasteProcessor.bIsDoublePx = false;
+				oPasteProcessor.pasteInPresentationShape = true;
 
 				var newFonts;
 				//если находимся внутри диаграммы убираем ссылки
@@ -4259,7 +4283,9 @@
 							break;
 						}
 						case para_NewLine: {
-							if(AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Excel) {
+							//on feature: read ms style comments and use only sameCell flag
+							if(AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Excel ||
+								(paraRunContent[pR].Flags && paraRunContent[pR].Flags.sameCell)) {
 								text += newLine;
 							} else {
 								pushData();
@@ -4731,8 +4757,12 @@
 				for (var i = 0, length = elem.Content.length; i < length; i++) {
 					if (elem.Content[i] && elem.Content[i].Content) {
 						for (var j = 0; j < elem.Content[i].Content.length; j++) {
-							if (elem.Content[i].Content[j] && para_NewLine === elem.Content[i].Content[j].GetType()  && AscCommon.g_clipboardBase.pastedFrom !== AscCommon.c_oClipboardPastedFrom.Excel) {
-								oNewElem.height++;
+							let innerElem = elem.Content[i].Content[j];
+							if (innerElem && para_NewLine === innerElem.GetType()) {
+								//on feature: read ms style comments and use only sameCell flag 
+								if (AscCommon.g_clipboardBase.pastedFrom !== AscCommon.c_oClipboardPastedFrom.Excel && !(innerElem.Flags && innerElem.Flags.sameCell === true)) {
+									oNewElem.height++;
+								}
 							}
 						}
 					}

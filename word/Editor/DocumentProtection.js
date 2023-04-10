@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2021
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -84,11 +84,20 @@ function CDocProtect() {
 
 	this.Lock = new AscCommon.CLock();
 	this.lockType = AscCommon.c_oAscLockTypes.kLockTypeNone;
+	this.NeedUpdateByUser = null;
 
 	this.temporaryPassword = null;
 }
 CDocProtect.prototype.Get_Id = function () {
 	return this.Id;
+};
+CDocProtect.prototype.SetNeedUpdate = function(userId)
+{
+	this.NeedUpdateByUser = userId;
+};
+CDocProtect.prototype.GetNeedUpdate = function()
+{
+	return this.NeedUpdateByUser;
 };
 CDocProtect.prototype.isOnlyView = function () {
 	return this.edit === Asc.c_oAscEDocProtect.ReadOnly;
@@ -109,9 +118,6 @@ CDocProtect.prototype.getRestrictionType = function () {
 			res = Asc.c_oAscRestrictionType.View;
 			break;
 		case Asc.c_oAscEDocProtect.TrackedChanges:
-			//asc_SetLocalTrackRevisions
-			//asc_SetGlobalTrackRevisions
-			res = Asc.c_oAscRestrictionType.OnlySignatures;
 			break;
 	}
 	return res;
@@ -196,7 +202,7 @@ CDocProtect.prototype.asc_getIsPassword = function()
 };
 CDocProtect.prototype.asc_getEditType = function()
 {
-	return this.edit;
+	return this.enforcement !== false ? this.edit : Asc.c_oAscEDocProtect.None;
 };
 CDocProtect.prototype.asc_setPassword = function(val)
 {
@@ -205,6 +211,9 @@ CDocProtect.prototype.asc_setPassword = function(val)
 CDocProtect.prototype.asc_setEditType = function(val)
 {
 	this.edit = val;
+	if (this.edit != null) {
+		this.enforcement = true;
+	}
 };
 
 

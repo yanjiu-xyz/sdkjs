@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -107,7 +107,7 @@ else
 		if (undefined === start)
 			start = 0;
 		if (undefined === len)
-			len = buffer.length;
+			len = buffer.length - start;
 
 		var result = "";
 		var index  = start;
@@ -207,6 +207,27 @@ else
 			outputData[outputIndex++] = 0;
 
 		return new Uint8Array(tmpStrings, 0, outputIndex);
+	};
+
+	function StringPointer(pointer, len)
+	{
+		this.ptr = pointer;
+		this.length = len;
+	}
+	StringPointer.prototype.free = function()
+	{
+		if (0 !== this.ptr)
+			Module["_free"](this.ptr);
+	};
+
+	String.prototype.toUtf8Pointer = function(isNoEndNull) {
+		var tmp = this.toUtf8(isNoEndNull);
+		var pointer = Module["_malloc"](tmp.length);
+		if (0 == pointer)
+			return null;
+
+		Module["HEAP8"].set(tmp, pointer);
+		return new StringPointer(pointer, tmp.length);		
 	};
 
 })();

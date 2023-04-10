@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1535,6 +1535,22 @@ function CEditorPage(api)
 			oWordControl.onMouseMove2();
 	};
 
+
+	this.checkFinishEyedropper = function()
+	{
+		if(oThis.m_oApi.isEyedropperStarted())
+		{
+			oThis.m_oApi.finishEyedropper();
+			const oPos = oThis.m_oDrawingDocument.ConvertCoordsFromCursor2(global_mouseEvent.X, global_mouseEvent.Y);
+			if (oPos.Page !== -1)
+			{
+				oThis.m_oLogicDocument.OnMouseMove(global_mouseEvent, oPos.X, oPos.Y, oPos.Page);
+			}
+			return true;
+		}
+		return false;
+	};
+
 	this.onMouseDown = function(e, isTouch)
 	{
 		oThis.m_oApi.checkInterfaceElementBlur();
@@ -1648,7 +1664,10 @@ function CEditorPage(api)
 				}
 
 				oWordControl.m_oDrawingDocument.NeedScrollToTargetFlag = true;
-				oWordControl.m_oLogicDocument.OnMouseDown(global_mouseEvent, pos.X, pos.Y, pos.Page);
+				if(!oThis.m_oApi.isEyedropperStarted())
+				{
+					oWordControl.m_oLogicDocument.OnMouseDown(global_mouseEvent, pos.X, pos.Y, pos.Page);
+				}
 				oWordControl.m_oDrawingDocument.NeedScrollToTargetFlag = false;
 
 				oWordControl.MouseDownDocumentCounter++;
@@ -1751,7 +1770,28 @@ function CEditorPage(api)
 			return;
 
 		oWordControl.m_oDrawingDocument.TableOutlineDr.bIsNoTable = true;
-		oWordControl.m_oLogicDocument.OnMouseMove(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		if(oThis.m_oApi.isEyedropperStarted())
+		{
+			let oParentPos = oWordControl.m_oMainView.AbsolutePosition;
+			let nX  = global_mouseEvent.X - oWordControl.X - oParentPos.L * AscCommon.g_dKoef_mm_to_pix;
+			let nY  = global_mouseEvent.Y - oWordControl.Y - oParentPos.T * AscCommon.g_dKoef_mm_to_pix;
+			nX = AscCommon.AscBrowser.convertToRetinaValue(nX, true);
+			nY = AscCommon.AscBrowser.convertToRetinaValue(nY, true);
+			oThis.m_oApi.checkEyedropperColor(nX, nY);
+			oThis.m_oApi.sync_MouseMoveStartCallback();
+			let MMData = new AscCommon.CMouseMoveData();
+			let Coords = oWordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page, null);
+			MMData.X_abs = Coords.X;
+			MMData.Y_abs = Coords.Y;
+			MMData.EyedropperColor = oThis.m_oApi.getEyedropperColor();
+			MMData.Type = Asc.c_oAscMouseMoveDataTypes.Eyedropper;
+			oWordControl.m_oDrawingDocument.SetCursorType("eyedropper", MMData);
+			oThis.m_oApi.sync_MouseMoveEndCallback();
+		}
+		else
+		{
+			oWordControl.m_oLogicDocument.OnMouseMove(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		}
 
 		if (oWordControl.m_oDrawingDocument.TableOutlineDr.bIsNoTable === false)
 		{
@@ -1907,7 +1947,10 @@ function CEditorPage(api)
 			//oWordControl.m_oLogicDocument.OnMouseDown(global_mouseEvent, pos.X, pos.Y, pos.Page);
 		}
 		oWordControl.m_oDrawingDocument.NeedScrollToTargetFlag = true;
-		oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		if(!oThis.checkFinishEyedropper())
+		{
+			oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		}
 		oWordControl.m_oDrawingDocument.NeedScrollToTargetFlag = false;
 
 		oWordControl.MouseDownDocumentCounter--;
@@ -2053,8 +2096,10 @@ function CEditorPage(api)
 			// пошлем сначала моусдаун
 			//oWordControl.m_oLogicDocument.OnMouseDown(global_mouseEvent, pos.X, pos.Y, pos.Page);
 		}
-		oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
-
+		if(!oThis.checkFinishEyedropper())
+		{
+			oWordControl.m_oLogicDocument.OnMouseUp(global_mouseEvent, pos.X, pos.Y, pos.Page);
+		}
 		oWordControl.MouseDownDocumentCounter--;
 		if (oWordControl.MouseDownDocumentCounter < 0)
 			oWordControl.MouseDownDocumentCounter = 0;
@@ -3600,6 +3645,10 @@ function CEditorPage(api)
 			this.m_oDrawingDocument.UpdateTargetNoAttack();
 			this.m_bIsUpdateTargetNoAttack = false;
 		}
+		if(this.m_oApi.isEyedropperStarted())
+		{
+			this.m_oApi.clearEyedropperImgData();
+		}
 	};
 
     this.CheckRetinaElement = function(htmlElem)
@@ -3831,6 +3880,12 @@ function CEditorPage(api)
             if (this.m_oApi.isMobileVersion)
                 this.initEventsMobile();
         }
+
+		if (undefined !== this.m_oApi.startMobileOffset)
+		{
+			this.setOffsetTop(this.m_oApi.startMobileOffset.offset, this.m_oApi.startMobileOffset.offsetScrollTop);
+			delete this.m_oApi.startMobileOffset;
+		}
 
 		//this.m_oDrawingDocument.CheckFontCache();
 

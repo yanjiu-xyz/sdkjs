@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2022
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -65,12 +65,14 @@
 		space : 32,
 		backspace : 8,
 		minus : 45,
+		enter : 13
 	};
 
 	function IsKeyDown(key)
 	{
 		return (Key.space === key
-			|| Key.backspace === key);
+			|| Key.backspace === key
+			|| Key.enter === key);
 	}
 
 	function CreateLogicDocument()
@@ -144,19 +146,33 @@
 		else
 			logicDocument.OnKeyPress(global_mouseEvent);
 	}
-	function MoveCursorLeft(isShift, isCtrl)
+	function MoveCursorLeft(isShift, isCtrl, count)
 	{
 		if (!logicDocument)
 			return;
-
-		logicDocument.MoveCursorLeft(!!isShift, !!isCtrl);
+		
+		if (!count)
+			count = 1;
+		
+		while (count)
+		{
+			logicDocument.MoveCursorLeft(!!isShift, !!isCtrl);
+			--count;
+		}
 	}
-	function MoveCursorRight(isShift, isCtrl)
+	function MoveCursorRight(isShift, isCtrl, count)
 	{
 		if (!logicDocument)
 			return;
 
-		logicDocument.MoveCursorRight(!!isShift, !!isCtrl, false);
+		if (!count)
+			count = 1;
+
+		while (count)
+		{
+			logicDocument.MoveCursorRight(!!isShift, !!isCtrl, false);
+			--count;
+		}
 	}
 	function ClickMouseButton(x, y, page, isRight, count)
 	{
@@ -229,28 +245,74 @@
 		ReplaceCompositeInput(text);
 		EndCompositeInput();
 	}
+	function MoveCursorToParagraph(paragraph, isToStart)
+	{
+		if (!paragraph || !(paragraph instanceof AscWord.CParagraph))
+			return;
+		
+		paragraph.SetThisElementCurrent();
+		
+		if (false === isToStart)
+			paragraph.MoveCursorToEndPos();
+		else
+			paragraph.MoveCursorToStartPos();
+	}
+	function AddNumbering(type, subtype)
+	{
+		if (!logicDocument)
+			return;
+		
+		let numObject = AscWord.GetNumberingObjectByDeprecatedTypes(type, subtype);
+		if (!numObject)
+			return;
+		
+		let _numInfo = numObject;
+		if (typeof _numInfo === "string" || _numInfo instanceof String)
+		{
+			try
+			{
+				_numInfo = JSON.parse(numInfo);
+			}
+			catch (e)
+			{
+				return;
+			}
+		}
+		
+		logicDocument.SetParagraphNumbering(_numInfo);
+	}
+	function SetParagraphNumberingLvl(paragraph, iLvl)
+	{
+		let numPr = paragraph.GetNumPr();
+		if (!numPr)
+			return;
+		
+		paragraph.SetNumPr(numPr.NumId, iLvl)
+	}
 	//--------------------------------------------------------export----------------------------------------------------
-	AscTest.CreateLogicDocument     = CreateLogicDocument;
-	AscTest.CreateParagraph         = CreateParagraph;
-	AscTest.CreateTable             = CreateTable;
-	AscTest.GetParagraphText        = GetParagraphText;
-	AscTest.RemoveTableBorders      = RemoveTableBorders;
-	AscTest.SetFillingFormMode      = SetFillingFormMode;
-	AscTest.SetEditingMode          = SetEditingMode;
-	AscTest.PressKey                = PressKey;
-	AscTest.MoveCursorLeft          = MoveCursorLeft;
-	AscTest.MoveCursorRight         = MoveCursorRight;
-	AscTest.Recalculate             = Recalculate;
-	AscTest.ClickMouseButton        = ClickMouseButton;
-	AscTest.ClearDocument           = ClearDocument;
-	AscTest.EnterText               = EnterText;
-	AscTest.CorrectEnterText        = CorrectEnterText;
-	AscTest.BeginCompositeInput     = BeginCompositeInput;
-	AscTest.ReplaceCompositeInput   = ReplaceCompositeInput;
-	AscTest.EndCompositeInput       = EndCompositeInput;
-	AscTest.EnterTextCompositeInput = EnterTextCompositeInput;
-	AscTest.Key                     = Key;
+	AscTest.CreateLogicDocument      = CreateLogicDocument;
+	AscTest.CreateParagraph          = CreateParagraph;
+	AscTest.CreateTable              = CreateTable;
+	AscTest.GetParagraphText         = GetParagraphText;
+	AscTest.RemoveTableBorders       = RemoveTableBorders;
+	AscTest.SetFillingFormMode       = SetFillingFormMode;
+	AscTest.SetEditingMode           = SetEditingMode;
+	AscTest.PressKey                 = PressKey;
+	AscTest.MoveCursorLeft           = MoveCursorLeft;
+	AscTest.MoveCursorRight          = MoveCursorRight;
+	AscTest.Recalculate              = Recalculate;
+	AscTest.ClickMouseButton         = ClickMouseButton;
+	AscTest.ClearDocument            = ClearDocument;
+	AscTest.EnterText                = EnterText;
+	AscTest.CorrectEnterText         = CorrectEnterText;
+	AscTest.BeginCompositeInput      = BeginCompositeInput;
+	AscTest.ReplaceCompositeInput    = ReplaceCompositeInput;
+	AscTest.EndCompositeInput        = EndCompositeInput;
+	AscTest.EnterTextCompositeInput  = EnterTextCompositeInput;
+	AscTest.Key                      = Key;
+	AscTest.MoveCursorToParagraph    = MoveCursorToParagraph;
+	AscTest.AddNumbering             = AddNumbering;
+	AscTest.SetParagraphNumberingLvl = SetParagraphNumberingLvl;
 
 })(window);
-
 
