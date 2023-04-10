@@ -81,7 +81,7 @@
 			if (!isNoVisibleElement)
 			{
 				element.correctionTimeout = setTimeout(function (){
-					calculateCanvasSize(element, true);
+					AscCommon.calculateCanvasSize(element, true);
 				}, 100);
 			}
 
@@ -101,33 +101,156 @@
 
 		setCanvasSize(element,
 			Math.round(scale * rect.right) - Math.round(scale * rect.left),
-			new_height = Math.round(scale * rect.bottom) - Math.round(scale * rect.top),
+			Math.round(scale * rect.bottom) - Math.round(scale * rect.top),
 			is_correction);
 	};
 
-	window["AscViewer"] = window["AscViewer"] || {};
-
-	AscFonts.g_fontApplication.Init();
-
-	window["AscViewer"].createViewer = function(parent, options)
+	function loadScript(url, onSuccess, onError)
 	{
-		if (options)
+		var script = document.createElement('script');
+		script.type = 'text/javascript';
+		script.src = url;
+		script.onload = onSuccess;
+		script.onerror = onError;
+
+		document.head.appendChild(script);
+	}
+
+	var documentScriptUrl = document.currentScript ? document.currentScript.src : "";
+
+	function CViewer(parent, options)
+	{
+		this.isLoadAllFonts = (AscFonts.g_font_files.length > 1) ? true : false;
+		this.allFontsUrl = "";
+		this.fontsErrorCounter = 0;
+		this.fontsErrorMax = 3;
+
+		this.options = options;
+		this.api = this.checkOptions();
+
+		this.viewer = new AscCommon.CViewer(parent, this.api);
+	}
+
+	CViewer.prototype.isInitFonts = false;
+	CViewer.prototype["open"] = function(data)
+	{
+		if (!this.isLoadAllFonts && this.allFontsUrl !== "")
 		{
-			if (options["enginePath"])
-				window["AscViewer"]["baseEngineUrl"] = options["enginePath"];
-
-			if (options["fontsPath"])
-				AscCommon.g_font_loader.fontFilesPath = options["fontsPath"];
-
-			if (options["theme"])
-				AscCommon.updateGlobalSkin(options["theme"]);
+			this.data = data;
+			this.checkFonts();
+			return;
 		}
 
-		var apiFake = {
+		this.initFonts();
+		this.viewer.open(data);
+	};
+	CViewer.prototype["createThumbnails"] = function(parent)
+	{
+		var oThumbnails = new AscCommon.ThumbnailsControl(parent)
+		this.viewer.setThumbnailsControl(oThumbnails);
+		return oThumbnails;
+	};
+	CViewer.prototype["registerEvent"] = function(name, callback)
+	{
+		this.viewer.registerEvent(name, callback);
+	};
+	CViewer.prototype["resize"] = function()
+	{
+		this.viewer.resize();
+	};
+	CViewer.prototype["navigate"] = function(node)
+	{
+		return this.viewer.navigate(node);
+	};
+	CViewer.prototype["getEngine"] = function()
+	{
+		return this.viewer;
+	};
+
+	// private
+	CViewer.prototype.initFonts = function()
+	{
+		if (!this.isInitFonts)
+		{
+			this.isInitFonts = true;
+			AscFonts.checkAllFonts();
+			AscFonts.g_fontApplication.Init();
+
+			AscCommon.g_font_loader.fontFiles = AscFonts.g_font_files;
+			AscCommon.g_font_loader.fontInfos = AscFonts.g_font_infos;
+			AscCommon.g_font_loader.map_font_index = AscFonts.g_map_font_index;
+		}
+	};
+	CViewer.prototype.checkFonts = function()
+	{
+		var onSuccess = function() {
+			this.isLoadAllFonts = true;
+			this.open(this.data);
+			delete this.data;
+		};
+		var onError = function() {
+			this.fontsErrorCounter++;
+			if (this.fontsErrorCounter === this.fontsErrorMax)
+			{
+				console.error("cannot load AllFonts.js");
+				return;
+			}
+			this.checkFonts();
+		};
+
+		loadScript(this.allFontsUrl, onSuccess.bind(this), onError.bind(this));
+	};
+	CViewer.prototype.checkOptions = function()
+	{
+		if (this.options)
+		{
+			var sAllFontsUrl = "";
+			var sModuleUrl = "";
+			var sFontsPath = "";
+
+			if (this.options["sdkjsPath"])
+			{
+				sAllFontsUrl = this.options["sdkjsPath"] + "/common/AllFonts.js";
+				sModuleUrl = this.options["sdkjsPath"] + "/pdf/src/engine/";
+				sFontsPath = this.options["sdkjsPath"] + "/../fonts/"
+			}
+
+			if (this.options["enginePath"])
+				sModuleUrl = this.options["enginePath"];
+
+			if (this.options["fontsPath"])
+				sFontsPath = this.options["fontsPath"];
+
+			if (documentScriptUrl !== "")
+			{
+				var scriptDirectory = documentScriptUrl;
+				scriptDirectory = scriptDirectory.substr(0,scriptDirectory.replace(/[?#].*/,"").lastIndexOf("/") + 1);
+
+				if (sAllFontsUrl === "")
+					sAllFontsUrl = scriptDirectory + "../../../common/AllFonts.js";
+				if (sModuleUrl === "")
+					sModuleUrl = scriptDirectory;
+				if (sFontsPath === "")
+					sFontsPath = scriptDirectory + "../../../../fonts/";
+			}
+
+			this.allFontsUrl = sAllFontsUrl;
+
+			if (sModuleUrl !== "")
+				window["AscViewer"]["baseEngineUrl"] = sModuleUrl;
+
+			if (sFontsPath !== "")
+				AscCommon.g_font_loader.fontFilesPath = sFontsPath;
+
+			if (this.options["theme"])
+				AscCommon.updateGlobalSkin(this.options["theme"]);
+		}
+
+		return {
 			isMobileVersion : false,
 			isSeparateModule : true,
 
-			baseFontsPath : (options && options["fontsPath"]) ? options["fontsPath"] : undefined,
+			baseFontsPath : (this.options && this.options["fontsPath"]) ? this.options["fontsPath"] : undefined,
 
 			getPageBackgroundColor : function() {
 				// TODO: get color from theme
@@ -143,13 +266,17 @@
 			sendEvent : function() {
 			}
 		};
-
-		return new AscCommon.CViewer(parent, apiFake);
 	};
 
-	window["AscViewer"].createThumbnails = function(parent)
+	window["AscViewer"] = window["AscViewer"] || {};
+	window["AscViewer"]["CViewer"] = CViewer;
+
+	window["AscViewer"]["checkApplicationScale"] = function()
 	{
-		return new AscCommon.ThumbnailsControl(parent);
+		var zoomValue = AscCommon.checkDeviceScale();
+		AscCommon.AscBrowser.retinaPixelRatio = zoomValue.applicationPixelRatio;
+		AscCommon.AscBrowser.zoom = zoomValue.zoom;
+		AscCommon.correctApplicationScale(zoomValue);
 	};
 
 })();
