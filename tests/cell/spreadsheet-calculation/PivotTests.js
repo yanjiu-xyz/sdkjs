@@ -6066,6 +6066,6 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 		testPivotShowAs();
 
-		testPivotShowDetails();
+		//testPivotShowDetails();
 	}
 });

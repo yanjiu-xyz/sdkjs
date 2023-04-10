@@ -2596,6 +2596,85 @@ CT_PivotCacheRecords.prototype.Read_FromBinary2 = function(r) {
 CT_PivotCacheRecords.prototype.updateCacheData = function() {
 	this.cacheRecords.updateCacheData();
 };
+/**
+ * @param {Worksheet} ws
+ * @param {Map.<number, Map<number, number>} itemMap
+ * @param {CT_CacheFields} cacheFields
+ * @return {Map<number, number>}
+ */
+CT_PivotCacheRecords.prototype.getRowMapByItemMap = function(itemMap, cacheFields) {
+	let result = new Map();
+	let t = this;
+	for (let i = 0; i < this._cols[0].size; i += 1) {
+		result.set(i, 1);
+	}
+	this._cols.forEach(function(col, index) {
+		if (itemMap.get(index) === void 0) {
+			return;
+		}
+		result.forEach(function(value, key) {
+			let row = t._getGroupOrSharedRow(cacheFields, index, key);
+			if(!itemMap.get(index).has(row)) {
+				result.delete(key);
+			}
+		});
+	});
+	return result;
+};
+/**
+ * @param {Worksheet} ws
+ * @param {Map<number, number>} rowMap rows to copy
+ * @param {CT_CacheFields} cacheFields
+ * @return {Object}
+ */
+CT_PivotCacheRecords.prototype.copyRowsToWorksheet = function(ws, rowMap, cacheFields) {
+	let rowsAddedByMap = 0;
+	let t = this;
+	for (let i = 0; i < this._cols.length; i += 1) {
+		let cellValue = new AscCommonExcel.CCellValue();
+		let cell = ws.getRange4(1, i);
+		cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, cellValue));
+	}
+	rowMap.forEach(function(value, key) {
+		t._cols.forEach(function(col, index) {
+			let rowElem = col.get(key);
+			let cellValue = null;
+			if (rowElem.type === Asc.c_oAscPivotRecType.Index) {
+				cellValue = cacheFields[index].getGroupOrSharedItem(rowElem.val).getCellValue();
+			} else {
+				cellValue = rowElem.getCellValue();
+			}
+			let cell = ws.getRange4(rowsAddedByMap + 1, index);
+			cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, cellValue));
+		});
+		rowsAddedByMap += 1;
+	});
+	return {
+		rowLength: rowsAddedByMap === 0 ? 1 : rowsAddedByMap,
+		colLength: this._cols.length - 1,
+	};
+};
+/**
+ * @param {Worksheet} ws 
+ * @param {Map.<number, Map<number, number>} itemMap 
+ * @param {CT_CacheFields} cacheFields
+ * @return {Object} lengths
+ */
+CT_PivotCacheRecords.prototype.fillPivotDetails = function(ws, itemMap, cacheFields) {
+	let columnNames = cacheFields.map(function(field) {
+		return field.asc_getName();
+	});
+	columnNames.forEach(function(name, index) {
+		let cell = ws.getRange4(0, index);
+		let oCellValue = new AscCommonExcel.CCellValue();
+		oCellValue.type = AscCommon.CellValueType.String;
+		oCellValue.text = name;
+		cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue))
+	});
+	let rowMap = this.getRowMapByItemMap(itemMap, cacheFields);
+	let lengths = this.copyRowsToWorksheet(ws, rowMap, cacheFields);
+	return lengths;
+};
 
 function PivotTableChanged() {
 	this.oldRanges = null;
@@ -6851,10 +6930,11 @@ CT_pivotTableDefinition.prototype._groupDiscreteAddFields = function(fld, parFld
 };
 
 /**
- * Returns an array that stores the Map<pivotFieldIndex, fieldItem>, which describes the values of this item in each field
+ * Returns an array that stores the Map<pivotFieldIndex, Map<fieldItem.x, number>(Set-like map)>, 
+ * which describes the values of this item in each field
  * @param {number} rowItemIndex item index rowItems array.
  * @param {number} colItemIndex item index colItems array.
- * @return {Map.<number, number>}
+ * @return {Map.<number, Map<number, number>}
  */
 CT_pivotTableDefinition.prototype.getItemFieldsMap = function(rowItemIndex, colItemIndex) {
 	let rowItems = this.getRowItems();
@@ -6867,11 +6947,7 @@ CT_pivotTableDefinition.prototype.getItemFieldsMap = function(rowItemIndex, colI
 	let pivotFields = this.asc_getPivotFields();
 	let result = new Map();
 	filterMaps.labelFilters.forEach(function (filter) {
-		let res = [];
-		filter.map.forEach(function(value, key) {
-			res.push(key);
-		})
-		result.set(filter.index, res);
+		result.set(filter.index, filter.map);
 	});
 	function getRowColFieldsMap(searchItemIndex, rowColFields, items) {
 		let searchItem = items[searchItemIndex];
@@ -6883,7 +6959,9 @@ CT_pivotTableDefinition.prototype.getItemFieldsMap = function(rowItemIndex, colI
 				let pivotFieldIndex = rowColFields[item.getR() + i].asc_getIndex();
 				if (pivotFieldIndex !== AscCommonExcel.st_VALUES) {
 					let fieldItem = pivotFields[pivotFieldIndex].getItem(x.getV());
-					result.set(pivotFieldIndex, [fieldItem.x]);
+					let res = new Map();
+					res.set(fieldItem.x, 1);
+					result.set(pivotFieldIndex, res);
 				}
 			}
 			r = item.getR() - 1;
@@ -6904,80 +6982,23 @@ CT_pivotTableDefinition.prototype.getItemFieldsMap = function(rowItemIndex, colI
 	}
 	return result;
 };
-
-CT_pivotTableDefinition.prototype.getCellArrayForDetails = function(row, col) {
+/**
+ * @param {Worksheet} ws 
+ * @param {number} row 
+ * @param {number} col 
+ * @return {Object}
+ */
+CT_pivotTableDefinition.prototype.showDetails = function(ws, row, col) {
 	let rowItems = this.getRowItems();
 	let colItems = this.getColItems();
 	let indexes = this.getItemsIndexesByActiveCell(row, col);
 	if (indexes === null || rowItems[indexes.rowItemIndex].t === Asc.c_oAscItemType.Blank || colItems[indexes.colItemIndex].t === Asc.c_oAscItemType.Blank) {
-		return null;
+		return false;
 	}
 	let itemMap = this.getItemFieldsMap(indexes.rowItemIndex, indexes.colItemIndex);
 	let cacheFields = this.asc_getCacheFields();
 	let records = this.getRecords();
-	/**
-	 * @param {PivotRecordValue} col
-	 * @param {number} colIndex
-	 * @param {number[]} rowIndexes Set-like array
-	 * @return {number[]}
-	 */
-	function getCorrectRowsIndexes(col, colIndex, rowIndexes) {
-		if (itemMap.get(colIndex) === void 0) {
-			return rowIndexes;
-		}
-		for (let i = 0; i < rowIndexes.length; i += 1) {
-			let row = records._getGroupOrSharedRow(cacheFields, colIndex, rowIndexes[i])
-			if (itemMap.get(colIndex).indexOf(row) === -1) {
-				rowIndexes.splice(i, 1);
-				i -= 1;
-			}
-		}
-		return rowIndexes;
-	}
-
-	let rowIndexes = [];
-	for (let i = 0; i < records._cols[0].size; i += 1) {
-		rowIndexes.push(i);
-	}
-
-	records._cols.forEach(function(col, index) {
-		getCorrectRowsIndexes(col, index, rowIndexes);
-	});
-
-	let columnNames = this.asc_getCacheFields().map(function(field) {
-		return field.asc_getName();
-	});
-
-	let resultCells = [];
-	resultCells.push(columnNames.map(function(name) {
-		let oCellValue = new AscCommonExcel.CCellValue();
-		oCellValue.type = AscCommon.CellValueType.String;
-		oCellValue.text = name;
-		return oCellValue;
-	}));
-
-	rowIndexes.forEach(function(rowIndex) {
-		let row = [];
-		records._cols.forEach(function(col, index) {
-			let rowElem = col.get(rowIndex);
-			let cellValue = null;
-			if (rowElem.type === Asc.c_oAscPivotRecType.Index) {
-				cellValue = cacheFields[index].getGroupOrSharedItem(rowElem.val).getCellValue();
-			} else {
-				cellValue = rowElem.getCellValue();
-			}
-			row.push(cellValue);
-		});
-
-		resultCells.push(row);
-	});
-	if (resultCells.length === 1) {
-		resultCells.push([]);
-		for (let i = 0; i < records._cols.length; i += 1) {
-			resultCells[1].push(new AscCommonExcel.CCellValue());
-		}
-	}
-	return resultCells;
+	return records.fillPivotDetails(ws, itemMap, cacheFields);
 };
 
 CT_pivotTableDefinition.prototype.asc_canShowDetails = function(row, col) {

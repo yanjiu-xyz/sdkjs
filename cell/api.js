@@ -6871,7 +6871,8 @@ var editor;
 			sheetNames.push(this.asc_getWorksheetName(i).toLowerCase());
 		}
 		let name = 'Sheet';
-		for (let i = 1; i < 1000; i += 1) {
+		let i = 0;
+		while (i += 1) {
 			name = AscCommon.translateManager.getValue("Sheet") + i;
 			if (sheetNames.indexOf(name.toLowerCase()) < 0) {
 				break;
@@ -6881,7 +6882,7 @@ var editor;
 	};
 	/**
 	* @param {CT_pivotTableDefinition} opt_pivotTable 
-	* @return {boolean} Execution Success 
+	* @return {boolean} Success
 	*/
 	spreadsheet_api.prototype.asc_pivotShowDetails = function(opt_pivotTable) {
 		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
@@ -6894,11 +6895,6 @@ var editor;
 		if (!pivotTable) {
 			return false;
 		}
-		let cells = pivotTable.getCellArrayForDetails(activeCell.row, activeCell.col);
-		if (cells === null) {
-			return false;
-		}
-
 		this._addWorksheets([this.asc_createSheetName()],  this.wbModel.getActive(), function(worksheets){
 			let ws = worksheets[0];
 			if (!ws) {
@@ -6907,15 +6903,10 @@ var editor;
 			History.Create_NewPoint();
 			History.StartTransaction();
 
-			for (let row = 0; row < cells.length; row += 1) {
-				for (let col = 0; col < cells[0].length; col += 1) {
-					let cell = ws.getRange4(row, col);
-					cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, cells[row][col]));
-				}
-			}
+			let lengths = pivotTable.showDetails(ws, activeCell.row, activeCell.col);
 
-			let range = new Asc.Range(0, 0, cells[0].length - 1, cells.length - 1);
-			let ref = range.getAbsName(); //getAbsName()
+			let range = new Asc.Range(0, 0, lengths.colLength, lengths.rowLength);
+			let ref = range.getAbsName();
 			let options = t.asc_getAddFormatTableOptions(ref);
 			let tableStyle = t.asc_getDefaultTableStyle();
 			t.asc_addAutoFilter(tableStyle, options);
@@ -6924,6 +6915,7 @@ var editor;
 
 			t.handlers.trigger("setSelection", range.clone());
 		});
+		return true;
 	};
 
 	spreadsheet_api.prototype.asc_getAddPivotTableOptions = function(range) {
