@@ -1829,8 +1829,9 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove = function(Direction,
 			else
 			{
 				this.Content[StartPos].Remove(Direction, bOnAddText);
-
-				if (StartPos !== this.Content.length - 1 && true === this.Content[StartPos].Is_Empty() && true !== bOnAddText)
+				
+				let isTextDrag = this.Paragraph && this.Paragraph.LogicDocument ? this.Paragraph.LogicDocument.DragAndDropAction : false;
+				if (StartPos !== this.Content.length - 1 && true === this.Content[StartPos].Is_Empty() && (!bOnAddText || isTextDrag))
 				{
 					this.RemoveFromContent(StartPos, 1, true);
 					this.State.ContentPos = StartPos;
@@ -1851,8 +1852,9 @@ CParagraphContentWithParagraphLikeContent.prototype.Remove = function(Direction,
 			else
 			{
 				this.Content[EndPos].Remove(Direction, bOnAddText);
-
-				if (EndPos !== this.Content.length - 1 && true === this.Content[EndPos].Is_Empty() && true !== bOnAddText)
+				
+				let isTextDrag = this.Paragraph && this.Paragraph.LogicDocument ? this.Paragraph.LogicDocument.DragAndDropAction : false;
+				if (EndPos !== this.Content.length - 1 && true === this.Content[EndPos].Is_Empty() && (!bOnAddText || isTextDrag))
 				{
 					this.Remove_FromContent(EndPos, 1, true);
 				}
