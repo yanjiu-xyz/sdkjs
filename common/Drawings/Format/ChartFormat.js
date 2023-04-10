@@ -5556,6 +5556,7 @@
 		}
 		oRadarChart.mergeWithoutSeries(oOldChart);
 		oRadarChart.setRadarStyle(nRadarStyle);
+        oRadarChart.setVaryColors(false);
 		var nSeries, oSeries;
 		for(nSeries = 0; nSeries < aSeries.length; ++nSeries) {
 			oSeries = new AscFormat.CRadarSeries();
