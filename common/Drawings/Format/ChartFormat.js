@@ -5583,7 +5583,7 @@
 			}
 		}
 		const aSeries = this.getAllSeries();
-		const aAxes = this.createRegularAxes(this.getAxisNumFormatByType(nType, aSeries), false);
+		const aAxes = this.createRadarAxes(this.getAxisNumFormatByType(nType, aSeries));
 		const oRadarChart = this.createRadarChart(nType, aSeries, aAxes, this.charts[0]);
 		oRadarChart.addAxes(aAxes);
 		this.addChartWithAxes(oRadarChart);
@@ -5988,9 +5988,15 @@
         }
         return [oCatAx, oValAx];
     };
-	CPlotArea.prototype.createRadarAxes = function(sNewNumFormat, bSecondary) {
+	CPlotArea.prototype.createRadarAxes = function(sNewNumFormat) {
 		const aAxes = this.createRegularAxes(sNewNumFormat, false);
-		return aAxes;
+        const oValAx = aAxes[1];
+        if(oValAx) {
+            if(oValAx.crossBetween !== AscFormat.CROSS_BETWEEN_BETWEEN) {
+                oValAx.setCrossBetween(AscFormat.CROSS_BETWEEN_BETWEEN);
+            }
+        }
+        return aAxes;
 	};
     CPlotArea.prototype.createRegularAxes = function(sNewNumFormat, bSecondary, bArea) {
         var aRegAxes = this.createCatValAxes(sNewNumFormat);
@@ -6866,7 +6872,7 @@
                         aNewAxes = oPlotArea.createHBarAxes(oPlotArea.getAxisNumFormatByType(nType, [oSeries]), true);
                     }
 					else if(oPlotArea.isRadarType(nType)) {
-	                    aNewAxes = oPlotArea.createRadarAxes(oPlotArea.getAxisNumFormatByType(nType, [oSeries]), true)
+	                    aNewAxes = oPlotArea.createRadarAxes(oPlotArea.getAxisNumFormatByType(nType, [oSeries]))
                     }
                     else {
 						let aCharts = oPlotArea.charts;
