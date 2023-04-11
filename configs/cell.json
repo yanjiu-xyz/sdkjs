@@ -116,7 +116,6 @@
 
 			"common/Drawings/Externals.js",
 			"common/GlobalLoaders.js",
-			"common/CollaborativeEditingBase.js",
 			"common/Controls.js",
 			"common/Overlay.js",
 			"common/Drawings/HatchPattern.js",
