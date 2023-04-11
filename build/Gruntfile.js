@@ -201,6 +201,7 @@ module.exports = function(grunt) {
 
 	const appCopyright = process.env['APP_COPYRIGHT'] || "Copyright (C) Ascensio System SIA 2012-" + grunt.template.today('yyyy') +". All rights reserved";
 	const publisherUrl = process.env['PUBLISHER_URL'] || "https://www.onlyoffice.com/";
+	const companyName = process.env['COMPANY_NAME'] || 'onlyoffice';
 	const version = process.env['PRODUCT_VERSION'] || '0.0.0';
 	const buildNumber = process.env['BUILD_NUMBER'] || '0';
 	const beta = grunt.option('beta') || 'false';
@@ -212,18 +213,21 @@ module.exports = function(grunt) {
 	license = license.replace('@@Build', buildNumber);
 
 	function getCompileConfig(sdkmin, sdkall, outmin, outall, name) {
-		const minWrapper = `${outmin}:${license}\nwindow.PRODUCT_VERSION="${version}";window.BUILD_NUMBER="${buildNumber}";window.APP_COPYRIGHT="${appCopyright}";window.PUBLISHER_URL="${publisherUrl}";window.IS_BETA="${beta}";%s`
 		const args = compilerArgs.concat (
+		`--define=window.AscCommon.g_cCompanyName='${companyName}'`,
+		`--define=window.AscCommon.g_cProductVersion='${version}'`,
+		`--define=window.AscCommon.g_cBuildNumber='${buildNumber}'`,
+		`--define=window.AscCommon.g_cIsBeta='${beta}'`,
 		'--rewrite_polyfills=true',
 		'--jscomp_off=checkVars',
 		'--warning_level=QUIET',
 		'--compilation_level=' + level,
 		...sdkmin.map((file) => ('--js=' + file)),
-		'--module=' + outmin + ':' + sdkmin.length,
-		'--module_wrapper=' + minWrapper,
+		`--module=${outmin}:${sdkmin.length}`,
+		`--module_wrapper=${outmin}:${license}\n%s`,
 		...sdkall.map((file) => ('--js=' + file)),
-		'--module=' + outall + ':' + sdkall.length + ':' + outmin,
-		'--module_wrapper=' + outall + ':' + license +'\n' + '(function(window, undefined) {%s})(window);');
+		`--module=${outall}:${sdkall.length}:${outmin}`,
+		`--module_wrapper=${outall}:${license}\n(function(window, undefined) {%s})(window);`);
 		if (grunt.option('map')) {
 			args.push('--property_renaming_report=' + path.join(`maps/${name}.props.js.map`));
 			args.push('--variable_renaming_report=' + path.join(`maps/${name}.vars.js.map`));

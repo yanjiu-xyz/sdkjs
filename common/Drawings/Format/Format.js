@@ -11984,7 +11984,7 @@
 
 		InitClass(CApp, CBaseNoIdObject, 0);
 		CApp.prototype.getAppName = function() {
-			return "@@AppName/" + (window["PRODUCT_VERSION"] || "0.0.0");
+			return AscCommon.g_cCompanyName + "/" + AscCommon.g_cProductVersion;
 		};
 		CApp.prototype.setRequiredDefaults = function() {
 			this.Application = this.getAppName();

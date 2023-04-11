@@ -129,7 +129,7 @@
 		this.LastPoint     = LastPoint;
 		this.SumIndex      = SumIndex;
 		this.DeletedIndex  = DeletedIndex;
-		this.VersionString = (window["PRODUCT_VERSION"] || "0.0.0") + "." + (window["BUILD_NUMBER"] || "0") +".@@Rev";
+		this.VersionString = AscCommon.g_cProductVersion + "." + AscCommon.g_cBuildNumber;
 	}
 
 	CChangesTableIdDescription.prototype = Object.create(AscDFH.CChangesBase.prototype);
