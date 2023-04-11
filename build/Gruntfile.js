@@ -223,11 +223,11 @@ module.exports = function(grunt) {
 		'--warning_level=QUIET',
 		'--compilation_level=' + level,
 		...sdkmin.map((file) => ('--js=' + file)),
-		`--module=${outmin}:${sdkmin.length}`,
-		`--module_wrapper=${outmin}:${license}\n%s`,
+		`--chunk=${outmin}:${sdkmin.length}`,
+		`--chunk_wrapper=${outmin}:${license}\n%s`,
 		...sdkall.map((file) => ('--js=' + file)),
-		`--module=${outall}:${sdkall.length}:${outmin}`,
-		`--module_wrapper=${outall}:${license}\n(function(window, undefined) {%s})(window);`);
+		`--chunk=${outall}:${sdkall.length}:${outmin}`,
+		`--chunk_wrapper=${outall}:${license}\n(function(window, undefined) {%s})(window);`);
 		if (grunt.option('map')) {
 			args.push('--property_renaming_report=' + path.join(`maps/${name}.props.js.map`));
 			args.push('--variable_renaming_report=' + path.join(`maps/${name}.vars.js.map`));
