@@ -2421,8 +2421,9 @@ CInlineLevelSdt.prototype.GetTextFormPr = function()
 /**
  * Применяем к данному контейнеру настройки того, что это специальный контйенер для даты
  * @param oPr {AscWord.CSdtDatePickerPr}
+ * @param {boolean} [keepContent=false]
  */
-CInlineLevelSdt.prototype.ApplyTextFormPr = function(oPr)
+CInlineLevelSdt.prototype.ApplyTextFormPr = function(oPr, keepContent)
 {
 	this.SetTextFormPr(oPr);
 
@@ -2432,9 +2433,9 @@ CInlineLevelSdt.prototype.ApplyTextFormPr = function(oPr)
 	if (this.IsPlaceHolder())
 		this.private_FillPlaceholderContent();
 	else
-		this.private_UpdateTextFormContent();
+		this.private_UpdateTextFormContent(keepContent);
 };
-CInlineLevelSdt.prototype.private_UpdateTextFormContent = function()
+CInlineLevelSdt.prototype.private_UpdateTextFormContent = function(keepContent)
 {
 	if (!this.Pr.TextForm)
 		return;
@@ -2442,7 +2443,7 @@ CInlineLevelSdt.prototype.private_UpdateTextFormContent = function()
 	if (this.IsPlaceHolder())
 		this.ReplacePlaceHolderWithContent();
 
-	this.MakeSingleRunElement();
+	this.MakeSingleRunElement(!keepContent);
 };
 CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
 {
