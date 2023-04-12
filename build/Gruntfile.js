@@ -221,6 +221,7 @@ module.exports = function(grunt) {
 		'--rewrite_polyfills=true',
 		'--jscomp_off=checkVars',
 		'--warning_level=QUIET',
+		'--language_out=ECMASCRIPT5',
 		'--compilation_level=' + level,
 		...sdkmin.map((file) => ('--js=' + file)),
 		`--chunk=${outmin}:${sdkmin.length}`,
