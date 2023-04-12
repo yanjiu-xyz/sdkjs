@@ -1,3 +1,35 @@
+/*
+ * (c) Copyright Ascensio System SIA 2010-2023
+ *
+ * This program is a free software product. You can redistribute it and/or
+ * modify it under the terms of the GNU Affero General Public License (AGPL)
+ * version 3 as published by the Free Software Foundation. In accordance with
+ * Section 7(a) of the GNU AGPL its Section 15 shall be amended to the effect
+ * that Ascensio System SIA expressly excludes the warranty of non-infringement
+ * of any third-party rights.
+ *
+ * This program is distributed WITHOUT ANY WARRANTY; without even the implied
+ * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
+ * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
+ *
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
+ * street, Riga, Latvia, EU, LV-1050.
+ *
+ * The  interactive user interfaces in modified source and object code versions
+ * of the Program must display Appropriate Legal Notices, as required under
+ * Section 5 of the GNU AGPL version 3.
+ *
+ * Pursuant to Section 7(b) of the License you must retain the original Product
+ * logo when distributing the program. Pursuant to Section 7(e) we decline to
+ * grant you any rights under trademark law for use of our trademarks.
+ *
+ * All the Product's GUI elements, including illustrations and icon sets, as
+ * well as technical writing content are licensed under the terms of the
+ * Creative Commons Attribution-ShareAlike 4.0 International. See the License
+ * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
+ *
+ */
+
 var aa="function"==typeof Object.defineProperties?Object.defineProperty:function(r,w,A){if(r==Array.prototype||r==Object.prototype)return r;r[w]=A.value;return r};function ba(r){r=["object"==typeof globalThis&&globalThis,r,"object"==typeof window&&window,"object"==typeof self&&self,"object"==typeof global&&global];for(var w=0;w<r.length;++w){var A=r[w];if(A&&A.Math==Math)return A}throw Error("Cannot find global object");}var ca=ba(this);
 function t(r,w){if(w)a:{var A=ca;r=r.split(".");for(var y=0;y<r.length-1;y++){var u=r[y];if(!(u in A))break a;A=A[u]}r=r[r.length-1];y=A[r];w=w(y);w!=y&&null!=w&&aa(A,r,{configurable:!0,writable:!0,value:w})}}t("Array.prototype.fill",function(r){return r?r:function(w,A,y){var u=this.length||0;0>A&&(A=Math.max(0,u+A));if(null==y||y>u)y=u;y=Number(y);0>y&&(y=Math.max(0,u+y));for(A=Number(A||0);A<y;A++)this[A]=w;return this}});function L(r){return r?r:Array.prototype.fill}
 t("Int8Array.prototype.fill",L);t("Uint8Array.prototype.fill",L);t("Uint8ClampedArray.prototype.fill",L);t("Int16Array.prototype.fill",L);t("Uint16Array.prototype.fill",L);t("Int32Array.prototype.fill",L);t("Uint32Array.prototype.fill",L);t("Float32Array.prototype.fill",L);t("Float64Array.prototype.fill",L);window.AscCommon=window.AscCommon||{};var T=window,da={Wd:{De:-1,Qo:0},Ud:{Ap:3,mm:2,Jm:1,Po:0,Ij:-1,om:-2,Im:-4,Wp:-5,Database:-6,Um:-7,Vm:-8,cq:-9,aq:-10,bq:-11,To:-12,fq:-13,Hm:-14,Fo:-16,Lp:-17,yi:-18,lm:-19,iq:-20,ho:-21,gq:-22,xl:-23,ro:-24,Lm:-25,gj:-26,qo:-27,Hp:-30,Gp:-31,Ip:-32,Ho:-35,Bo:-40,Co:-41,ym:-45,Io:-46,bm:-47,Bl:-50,Al:-51,zl:-52,Cl:-53,uo:-54,xo:-55,Rm:-56,Sm:-57,Sl:-58,Jl:-63,cp:-64,bp:-65,pm:-66,fp:67,Jo:68,ep:-69,Uo:-70,So:-71,$n:-72,Nm:-73,Ol:-74,xm:-75,Go:-80,Nl:-81,Fi:-82,nm:-83,km:-84,jm:-85,hq:-100,mq:-101,

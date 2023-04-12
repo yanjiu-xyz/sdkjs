@@ -64,3 +64,10 @@ for item in externals:
 base.cmd("java", build_params)
 
 base.delete_file("./begin.js")
+
+licence_text = base.readFile("./api.js")
+licence_text_end = licence_text.find("(function(){")
+licence_text = licence_text[:licence_text_end]
+
+generate_file = base.readFile("./../src/engine/viewer.js")
+base.writeFile("./../src/engine/viewer.js", licence_text + generate_file)
