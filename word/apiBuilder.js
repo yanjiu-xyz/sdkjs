@@ -3044,7 +3044,7 @@
 	function ApiComment(oComment)
 	{
 		this.Comment = oComment;
-	};
+	}
 
 	/**
 	 * Class representing a comment reply.
@@ -3054,7 +3054,7 @@
 	{
 		this.Comment = oParentComm;
 		this.Data = oCommentReply;
-	};
+	}
 
 	/**
 	 * Class representing a Paragraph hyperlink.
@@ -18419,7 +18419,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
 	 */
-	ApiComment.prototype.GetAutorName = function () {
+	ApiComment.prototype.GetAuthorName = function () {
 		return this.Comment.GetData().Get_Name();
 	};
 
@@ -18430,7 +18430,7 @@
 	 * @param {string} sAuthorName - The comment author's name.
 	 * @returns {ApiComment} - this
 	 */
-	ApiComment.prototype.SetAutorName = function (sAuthorName) {
+	ApiComment.prototype.SetAuthorName = function (sAuthorName) {
 		this.Comment.GetData().Set_Name(sAuthorName);
 		this.private_OnChange();
 		return this;
@@ -18690,7 +18690,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @returns {string}
 	 */
-	ApiCommentReply.prototype.GetAutorName = function () {
+	ApiCommentReply.prototype.GetAuthorName = function () {
 		return this.Data.Get_Name();
 	};
 
@@ -18701,7 +18701,7 @@
 	 * @param {string} sAuthorName - The comment reply author's name.
 	 * @returns {ApiCommentReply} - this
 	 */
-	ApiCommentReply.prototype.SetAutorName = function (sAuthorName) {
+	ApiCommentReply.prototype.SetAuthorName = function (sAuthorName) {
 		this.Data.Set_Name(sAuthorName);
 		this.private_OnChange();
 		return this;
@@ -19514,8 +19514,10 @@
 	ApiComment.prototype["GetClassType"]	= ApiComment.prototype.GetClassType;
 	ApiComment.prototype["GetText"]			= ApiComment.prototype.GetText;
 	ApiComment.prototype["SetText"]			= ApiComment.prototype.SetText;
-	ApiComment.prototype["GetAutorName"]	= ApiComment.prototype.GetAutorName;
-	ApiComment.prototype["SetAutorName"]	= ApiComment.prototype.SetAutorName;
+	ApiComment.prototype["GetAuthorName"]	= ApiComment.prototype.GetAuthorName;
+	ApiComment.prototype["SetAuthorName"]	= ApiComment.prototype.SetAuthorName;
+	ApiComment.prototype["GetAutorName"]	= ApiComment.prototype.GetAuthorName; // compatibility with a typo in the old name
+	ApiComment.prototype["SetAutorName"]	= ApiComment.prototype.SetAuthorName;
 	ApiComment.prototype["GetUserId"]		= ApiComment.prototype.GetUserId;
 	ApiComment.prototype["SetUserId"]		= ApiComment.prototype.SetUserId;
 	ApiComment.prototype["IsSolved"]		= ApiComment.prototype.IsSolved;
@@ -19534,8 +19536,10 @@
 	ApiCommentReply.prototype["GetClassType"]	= ApiCommentReply.prototype.GetClassType;
 	ApiCommentReply.prototype["GetText"]		= ApiCommentReply.prototype.GetText;
 	ApiCommentReply.prototype["SetText"]		= ApiCommentReply.prototype.SetText;
-	ApiCommentReply.prototype["GetAutorName"]	= ApiCommentReply.prototype.GetAutorName;
-	ApiCommentReply.prototype["SetAutorName"]	= ApiCommentReply.prototype.SetAutorName;
+	ApiCommentReply.prototype["GetAuthorName"]	= ApiCommentReply.prototype.GetAuthorName;
+	ApiCommentReply.prototype["SetAuthorName"]	= ApiCommentReply.prototype.SetAuthorName;
+	ApiCommentReply.prototype["GetAutorName"]	= ApiCommentReply.prototype.GetAuthorName; // compatibility with a typo in the old name
+	ApiCommentReply.prototype["SetAutorName"]	= ApiCommentReply.prototype.SetAuthorName;
 	ApiCommentReply.prototype["GetUserId"]		= ApiCommentReply.prototype.GetUserId;
 	ApiCommentReply.prototype["SetUserId"]		= ApiCommentReply.prototype.SetUserId;
 
