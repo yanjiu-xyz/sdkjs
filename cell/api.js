@@ -6268,7 +6268,7 @@ var editor;
   ////////////////////////////AutoSave api/////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 	spreadsheet_api.prototype._autoSaveInner = function () {
-		if (this.asc_getCellEditMode() || this.asc_getIsTrackShape()) {
+		if (this.asc_getCellEditMode() || this.asc_getIsTrackShape() || this.isInkDrawerOn()) {
 		  return;
         }
 
