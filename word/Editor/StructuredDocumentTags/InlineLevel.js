@@ -58,8 +58,8 @@ function CInlineLevelSdt()
 	// Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
 	AscCommon.g_oTableId.Add(this, this.Id);
 
-	this.SkipSpecialLock  = false;
-	this.SkipFillFormLock = false;
+	this.SkipSpecialLock  = 0;
+	this.SkipFillFormLock = 0;
 	this.Current          = false;
 }
 
@@ -1352,7 +1352,7 @@ CInlineLevelSdt.prototype.IsPlaceHolder = function()
 };
 CInlineLevelSdt.prototype.CanPlaceCursorInside = function()
 {
-	if (this.SkipFillFormLock)
+	if (this.IsSkipFillingFormModeCheck())
 		return false;
 	
 	return CSdtBase.prototype.CanPlaceCursorInside.apply(this, arguments);
@@ -1736,10 +1736,10 @@ CInlineLevelSdt.prototype.CanBeDeleted = function()
 CInlineLevelSdt.prototype.CanBeEdited = function()
 {
 	let logicDocument = this.GetLogicDocument();
-	if (!this.SkipFillFormLock && this.IsForm() && !this.IsComplexForm() && logicDocument && logicDocument.IsDocumentEditor() && !logicDocument.IsFillingFormMode())
+	if (!this.IsSkipFillingFormModeCheck() && this.IsForm() && !this.IsComplexForm() && logicDocument && logicDocument.IsDocumentEditor() && !logicDocument.IsFillingFormMode())
 		return false;
 	
-	if (!this.SkipSpecialLock && (this.IsCheckBox() || this.IsPicture() || this.IsDropDownList()))
+	if (!this.IsSkipSpecialContentControlLock() && (this.IsCheckBox() || this.IsPicture() || this.IsDropDownList()))
 		return false;
 
 	return (undefined === this.Pr.Lock || c_oAscSdtLockType.Unlocked === this.Pr.Lock || c_oAscSdtLockType.SdtLocked === this.Pr.Lock);
@@ -1926,14 +1926,17 @@ CInlineLevelSdt.prototype.SetCheckBoxChecked = function(isChecked)
  */
 CInlineLevelSdt.prototype.SkipSpecialContentControlLock = function(isSkip)
 {
-	this.SkipSpecialLock = isSkip;
+	if (isSkip)
+		++this.SkipSpecialLock;
+	else if (this.SkipSpecialLock > 0)
+		--this.SkipSpecialLock;
 };
 /**
  * @retuns {boolean}
  */
 CInlineLevelSdt.prototype.IsSkipSpecialContentControlLock = function()
 {
-	return this.SkipSpecialLock;
+	return !!this.SkipSpecialLock;
 };
 /**
  * Выключаем проверку невозможности редактирования формы в обычном режиме редактирования
@@ -1941,7 +1944,14 @@ CInlineLevelSdt.prototype.IsSkipSpecialContentControlLock = function()
  */
 CInlineLevelSdt.prototype.SkipFillingFormModeCheck = function(isSkip)
 {
-	this.SkipFillFormLock = isSkip;
+	if (isSkip)
+		++this.SkipFillFormLock;
+	else if (this.SkipFillFormLock > 0)
+		--this.SkipFillFormLock;
+};
+CInlineLevelSdt.prototype.IsSkipFillingFormModeCheck = function()
+{
+	return !!this.SkipFillFormLock;
 };
 CInlineLevelSdt.prototype.private_UpdateCheckBoxContent = function()
 {
@@ -2455,10 +2465,12 @@ CInlineLevelSdt.prototype.Document_Is_SelectionLocked = function(CheckType)
 		&& this.IsPicture()))
 	{
 		this.SkipSpecialContentControlLock(true);
+		this.SkipFillingFormModeCheck(true);
 		if (!this.CanBeEdited())
 			AscCommon.CollaborativeEditing.Add_CheckLock(true);
 		this.SkipSpecialContentControlLock(false);
-
+		this.SkipFillingFormModeCheck(false);
+		
 		return;
 	}
 

@@ -1572,16 +1572,16 @@ CSelectedElementsInfo.prototype.CanEditBlockSdts = function()
 {
 	for (var nIndex = 0, nCount = this.m_arrSdts.length; nIndex < nCount; ++nIndex)
 	{
-		var isSkip = this.m_arrSdts[nIndex].IsSkipSpecialContentControlLock();
-		this.m_arrSdts[nIndex].SkipSpecialContentControlLock(true);
-
-		if (this.m_arrSdts[nIndex].IsBlockLevel() && !this.m_arrSdts[nIndex].CanBeEdited())
-		{
-			this.m_arrSdts[nIndex].SkipSpecialContentControlLock(isSkip);
+		let contentControl = this.m_arrSdts[nIndex];
+		contentControl.SkipSpecialContentControlLock(true);
+		contentControl.SkipFillingFormModeCheck(true);
+		
+		let canEdit = (!contentControl.IsBlockLevel() || contentControl.CanBeEdited());
+		contentControl.SkipSpecialContentControlLock(false);
+		contentControl.SkipFillingFormModeCheck(false);
+		
+		if (!canEdit)
 			return false;
-		}
-
-		this.m_arrSdts[nIndex].SkipSpecialContentControlLock(isSkip);
 	}
 
 	return true;
@@ -1600,16 +1600,16 @@ CSelectedElementsInfo.prototype.CanEditInlineSdts = function()
 {
 	for (var nIndex = 0, nCount = this.m_arrSdts.length; nIndex < nCount; ++nIndex)
 	{
-		var isSkip = this.m_arrSdts[nIndex].IsSkipSpecialContentControlLock();
-		this.m_arrSdts[nIndex].SkipSpecialContentControlLock(true);
+		let contentControl = this.m_arrSdts[nIndex];
+		contentControl.SkipSpecialContentControlLock(true);
+		contentControl.SkipFillingFormModeCheck(true);
 
-		if (this.m_arrSdts[nIndex].IsInlineLevel() && !this.m_arrSdts[nIndex].CanBeEdited())
-		{
-			this.m_arrSdts[nIndex].SkipSpecialContentControlLock(isSkip);
+		let canEdit = (!contentControl.IsInlineLevel() || contentControl.CanBeEdited());
+		contentControl.SkipFillingFormModeCheck(false);
+		contentControl.SkipSpecialContentControlLock(false);
+		
+		if (!canEdit)
 			return false;
-		}
-
-		this.m_arrSdts[nIndex].SkipSpecialContentControlLock(isSkip);
 	}
 
 	return true;
