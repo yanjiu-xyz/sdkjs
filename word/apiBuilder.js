@@ -2775,22 +2775,22 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text (required).
-	 * @param {string} sAutor - The author's name (optional).
+	 * @param {string} sAuthor - The author's name (optional).
 	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
-	ApiRange.prototype.AddComment = function(sText, sAutor)
+	ApiRange.prototype.AddComment = function(sText, sAuthor)
 	{
 		let oDocument = private_GetLogicDocument();
 
 		if (typeof(sText) !== "string" || sText.trim() === "")
 			return null;
-		if (typeof(sAutor) !== "string")
-			sAutor = "";
+		if (typeof(sAuthor) !== "string")
+			sAuthor = "";
 		
 		var CommentData = new AscCommon.CCommentData();
 		CommentData.SetText(sText);
-		if (sAutor !== "")
-			CommentData.SetUserName(sAutor);
+		if (sAuthor !== "")
+			CommentData.SetUserName(sAuthor);
 
 		var documentState = oDocument.SaveDocumentState();
 		this.Select();
@@ -4963,16 +4963,16 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiRun[] | DocumentElement} oElement - The element where the comment will be added. It may be applied to any element which has the *AddComment* method.
 	 * @param {string} sText - The comment text (required).
-	 * @param {string} sAutor - The author's name (optional).
+	 * @param {string} sAuthor - The author's name (optional).
 	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
-	Api.prototype.AddComment = function(oElement, sText, sAutor)
+	Api.prototype.AddComment = function(oElement, sText, sAuthor)
 	{
 		if (!sText || typeof(sText) !== "string")
 			return null;
 	
-		if (typeof(sAutor) !== "string")
-			sAutor = "";
+		if (typeof(sAuthor) !== "string")
+			sAuthor = "";
 		
 		// Если oElement не является массивом, определяем параграф это или документ
 		if (!Array.isArray(oElement))
@@ -4981,7 +4981,7 @@
 				oElement instanceof ApiBlockLvlSdt || oElement instanceof ApiInlineLvlSdt || oElement instanceof ApiTable ||
 				oElement instanceof ApiRun)
 				{
-					return oElement.AddComment(sText, sAutor);
+					return oElement.AddComment(sText, sAuthor);
 				}
 		}
 		// Проверка на массив с ранами
@@ -5006,7 +5006,7 @@
 
 			var CommentData = new AscCommon.CCommentData();
 			CommentData.SetText(sText);
-			CommentData.SetUserName(sAutor);
+			CommentData.SetUserName(sAuthor);
 
 			var oStartRun = private_GetFirstRunInArray(oElement); 
 			var oStartPos = oStartRun.Run.GetDocumentPositionFromObject();
@@ -6030,20 +6030,20 @@
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text (required).
-	 * @param {string} sAutor - The author's name (optional).
+	 * @param {string} sAuthor - The author's name (optional).
 	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
-	ApiDocument.prototype.AddComment = function(sText, sAutor)
+	ApiDocument.prototype.AddComment = function(sText, sAuthor)
 	{
 		if (!sText || typeof(sText) !== "string")
 			return null;
 	
-		if (typeof(sAutor) !== "string")
-			sAutor = "";
+		if (typeof(sAuthor) !== "string")
+			sAuthor = "";
 		
 		var CommentData = new AscCommon.CCommentData();
 		CommentData.SetText(sText);
-		CommentData.SetUserName(sAutor);
+		CommentData.SetUserName(sAuthor);
 
 		var oComment = this.Document.AddComment(CommentData, true);
 
@@ -7393,15 +7393,15 @@
 	 * @memberof ApiParagraph
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text (required).
-	 * @param {string} sAutor - The author's name (optional).
+	 * @param {string} sAuthor - The author's name (optional).
 	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
-	ApiParagraph.prototype.AddComment = function(sText, sAutor)
+	ApiParagraph.prototype.AddComment = function(sText, sAuthor)
 	{
 		if (!sText || typeof(sText) !== "string")
 			return null;
-		if (typeof(sAutor) !== "string")
-			sAutor = "";
+		if (typeof(sAuthor) !== "string")
+			sAuthor = "";
 
 		if (!this.Paragraph.IsUseInDocument())
 			return null;
@@ -7412,7 +7412,7 @@
 		var CommentData = new AscCommon.CCommentData();
 		CommentData.Set_QuoteText(sQuotedText);
 		CommentData.SetText(sText);
-		CommentData.SetUserName(sAutor);
+		CommentData.SetUserName(sAuthor);
 
 		var oComment = new AscCommon.CComment(oDocument.Comments, CommentData);
 		oDocument.Comments.Add(oComment);
@@ -9520,15 +9520,15 @@
 	 * @memberof ApiRun
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text (required).
-	 * @param {string} sAutor - The author's name (optional).
+	 * @param {string} sAuthor - The author's name (optional).
 	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
-	ApiRun.prototype.AddComment = function(sText, sAutor)
+	ApiRun.prototype.AddComment = function(sText, sAuthor)
 	{
 		if (!sText || typeof(sText) !== "string")
 			return null;
-		if (typeof(sAutor) !== "string")
-			sAutor = "";
+		if (typeof(sAuthor) !== "string")
+			sAuthor = "";
 
 		if (!this.Run.IsUseInDocument())
 			return null;
@@ -9537,8 +9537,8 @@
 		var CommentData = new AscCommon.CCommentData();
 
 		CommentData.SetText(sText);
-		if (sAutor !== "")
-			CommentData.SetUserName(sAutor);
+		if (sAuthor !== "")
+			CommentData.SetUserName(sAuthor);
 
 		var oDocumentState = oDocument.SaveDocumentState();
 		this.Run.SelectThisElement();
@@ -10789,15 +10789,15 @@
 	 * @memberof ApiTable
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text (required).
-	 * @param {string} sAutor - The author's name (optional).
+	 * @param {string} sAuthor - The author's name (optional).
 	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
-	ApiTable.prototype.AddComment = function(sText, sAutor)
+	ApiTable.prototype.AddComment = function(sText, sAuthor)
 	{
 		if (!sText || typeof(sText) !== "string")
 			return null;
-		if (typeof(sAutor) !== "string")
-			sAutor = "";
+		if (typeof(sAuthor) !== "string")
+			sAuthor = "";
 
 		if (!this.Table.IsUseInDocument())
 			return null;
@@ -10806,8 +10806,8 @@
 		var CommentData = new AscCommon.CCommentData();
 
 		CommentData.SetText(sText);
-		if (sAutor !== "")
-			CommentData.SetUserName(sAutor);
+		if (sAuthor !== "")
+			CommentData.SetUserName(sAuthor);
 
 		var oDocumentState = oDocument.SaveDocumentState();
 		this.Table.SelectAll();
@@ -16120,15 +16120,15 @@
 	 * @memberof ApiInlineLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text (required).
-	 * @param {string} sAutor - The author's name (optional).
+	 * @param {string} sAuthor - The author's name (optional).
 	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
-	ApiInlineLvlSdt.prototype.AddComment = function(sText, sAutor)
+	ApiInlineLvlSdt.prototype.AddComment = function(sText, sAuthor)
 	{
 		if (!sText || typeof(sText) !== "string")
 			return null;
-		if (typeof(sAutor) !== "string")
-			sAutor = "";
+		if (typeof(sAuthor) !== "string")
+			sAuthor = "";
 
 		if (!this.Sdt.IsUseInDocument())
 			return null;
@@ -16137,8 +16137,8 @@
 		var CommentData = new AscCommon.CCommentData();
 
 		CommentData.SetText(sText);
-		if (sAutor !== "")
-			CommentData.SetUserName(sAutor);
+		if (sAuthor !== "")
+			CommentData.SetUserName(sAuthor);
 
 		var oDocumentState = oDocument.SaveDocumentState();
 		this.Sdt.SelectContentControl();
@@ -16710,15 +16710,15 @@
 	 * @memberof ApiBlockLvlSdt
 	 * @typeofeditors ["CDE"]
 	 * @param {string} sText - The comment text (required).
-	 * @param {string} sAutor - The author's name (optional).
+	 * @param {string} sAuthor - The author's name (optional).
 	 * @returns {ApiComment?} - Returns null if the comment was not added.
 	 */
-	ApiBlockLvlSdt.prototype.AddComment = function(sText, sAutor)
+	ApiBlockLvlSdt.prototype.AddComment = function(sText, sAuthor)
 	{
 		if (!sText || typeof(sText) !== "string")
 			return null;
-		if (typeof(sAutor) !== "string")
-			sAutor = "";
+		if (typeof(sAuthor) !== "string")
+			sAuthor = "";
 
 		if (!this.Sdt.IsUseInDocument())
 			return null;
@@ -16727,8 +16727,8 @@
 		var CommentData = new AscCommon.CCommentData();
 
 		CommentData.SetText(sText);
-		if (sAutor !== "")
-			CommentData.SetUserName(sAutor);
+		if (sAuthor !== "")
+			CommentData.SetUserName(sAuthor);
 
 		var oDocumentState = oDocument.SaveDocumentState();
 		this.Sdt.SelectContentControl();
@@ -18427,11 +18427,11 @@
 	 * Sets the comment author's name.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sAutorName - The comment author's name.
+	 * @param {string} sAuthorName - The comment author's name.
 	 * @returns {ApiComment} - this
 	 */
-	ApiComment.prototype.SetAutorName = function (sAutorName) {
-		this.Comment.GetData().Set_Name(sAutorName);
+	ApiComment.prototype.SetAutorName = function (sAuthorName) {
+		this.Comment.GetData().Set_Name(sAuthorName);
 		this.private_OnChange();
 		return this;
 	};
@@ -18584,12 +18584,12 @@
 	 * @memberof ApiComment
 	 * @typeofeditors ["CDE"]
 	 * @param {String} sText - The comment reply text (required).
-	 * @param {String} sAutorName - The name of the comment reply author (optional).
+	 * @param {String} sAuthorName - The name of the comment reply author (optional).
 	 * @param {String} sUserId - The user ID of the comment reply author (optional).
 	 * @param {Number} [nPos=this.GetRepliesCount()] - The comment reply position.
 	 * @returns {ApiComment?} - this
 	 */
-	ApiComment.prototype.AddReply = function (sText, sAutorName, sUserId, nPos) {
+	ApiComment.prototype.AddReply = function (sText, sAuthorName, sUserId, nPos) {
 		if (typeof(sText) !== "string" || sText === "")
 			return null;
 		
@@ -18599,8 +18599,8 @@
 		var oReply = new AscCommon.CCommentData();
 
 		oReply.SetText(sText);
-		if (typeof(sAutorName) === "string" && sAutorName !== "")
-			oReply.SetUserName(sAutorName);
+		if (typeof(sAuthorName) === "string" && sAuthorName !== "")
+			oReply.SetUserName(sAuthorName);
 		if (sUserId != undefined && typeof(sUserId) === "string" && sUserId !== "")
 			oReply.m_sUserId = sUserId;
 
@@ -18698,11 +18698,11 @@
 	 * Sets the comment reply author's name.
 	 * @memberof ApiCommentReply
 	 * @typeofeditors ["CDE"]
-	 * @param {string} sAutorName - The comment reply author's name.
+	 * @param {string} sAuthorName - The comment reply author's name.
 	 * @returns {ApiCommentReply} - this
 	 */
-	ApiCommentReply.prototype.SetAutorName = function (sAutorName) {
-		this.Data.Set_Name(sAutorName);
+	ApiCommentReply.prototype.SetAutorName = function (sAuthorName) {
+		this.Data.Set_Name(sAuthorName);
 		this.private_OnChange();
 		return this;
 	};
