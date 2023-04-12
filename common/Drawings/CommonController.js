@@ -10729,7 +10729,12 @@
 							if(oDrawing.hit(x, y)) {
 								this.controller.resetSelection();
 								this.controller.selectObject(oDrawing, pageIndex);
-								this.controller.remove();
+								if(this.controller.document) {
+									this.controller.checkSelectedObjectsAndCallback(this.controller.remove, [], true, 0, []);
+								}
+								else {
+									this.controller.remove();
+								}
 							}
 						}
 					}
