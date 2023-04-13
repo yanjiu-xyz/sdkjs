@@ -1224,6 +1224,28 @@
 		
 		return logicDocument.GetCurrentSentence(private_GetTextDirection(type));
 	};
+	/**
+	 * Get the current sentence
+	 * @memberof Api
+	 * @typeofeditors ["CDE"]
+	 * @alias ReplaceCurrentSentence
+	 * @param {string} replaceString
+	 * @param {TextPartType} [type="entirely"]
+	 * @since 7.4.0
+	 * @example
+	 * window.Asc.plugin.executeMethod("ReplaceCurrentSentence");
+	 */
+	window["asc_docs_api"].prototype["pluginMethod_ReplaceCurrentSentence"] = function(replaceString, type)
+	{
+		let _replaceString = "" === replaceString ? "" : AscBuilder.GetStringParameter(replaceString, null);
+		
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument || null === _replaceString)
+			return;
+
+		
+		return logicDocument.ReplaceCurrentSentence(private_GetTextDirection(type), _replaceString);
+	};
 
 	function private_ReadContentControlCommonPr(commonPr)
 	{

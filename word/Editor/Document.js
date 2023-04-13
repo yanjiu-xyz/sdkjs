@@ -11523,6 +11523,35 @@ CDocument.prototype.GetCurrentSentence = function(nDirection)
 	
 	return paragraph.GetCurrentSentence(nDirection);
 };
+/**
+ * Заменяем текущее предложения (или часть текущего предложения) на заданную строку
+ * @param nDirection {number} -1 - часть до курсора, 1 - часть после курсора, 0 (или не задано) слово целиком
+ * @param sReplace {string}
+ * @returns {boolean}
+ */
+CDocument.prototype.ReplaceCurrentSentence = function(nDirection, sReplace)
+{
+	let paragraph = this.GetCurrentParagraph();
+	if (!paragraph)
+		return false;
+	
+	let result = false;
+	if (!this.IsSelectionLocked(AscCommon.changestype_None, {
+		Type      : AscCommon.changestype_2_Element_and_Type,
+		Element   : paragraph,
+		CheckType : AscCommon.changestype_Paragraph_Content
+	}))
+	{
+		this.StartAction(AscDFH.historydescription_Document_ReplaceCurrentWord);
+		result = paragraph.ReplaceCurrentSentence(nDirection, sReplace);
+		this.Recalculate();
+		this.UpdateSelection();
+		this.UpdateInterface();
+		this.FinalizeAction();
+	}
+	
+	return result;
+};
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для работы с таблицами
 //----------------------------------------------------------------------------------------------------------------------

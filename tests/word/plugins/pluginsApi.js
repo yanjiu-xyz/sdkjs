@@ -233,6 +233,20 @@ $(function () {
 		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence("afterCursor"), "!", "Check the right part of the current sentence");
 		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence("beforeCursor"), "Eat more of those fresh french loafs and drink a tea", "Check the left part of the current sentence");
 		
+		AscTest.MoveCursorToParagraph(p, true);
+		AscTest.MoveCursorRight(false, false, 16);
+		PluginsApi.pluginMethod_ReplaceCurrentSentence("The slow yellow rabbit jumps over the fluffy cat!", "entirely");
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence(), "The five boxing wizards jump quickly.", "Replace first sentence and check next sentence.");
+		AscTest.MoveCursorLeft(false, false, 5);
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence(), "The slow yellow rabbit jumps over the fluffy cat!", "Check replaced sentence.");
+		AscTest.MoveCursorToParagraph(p, true);
+		AscTest.MoveCursorRight(false, false, 58);
+		PluginsApi.pluginMethod_ReplaceCurrentSentence("The eight", "beforeCursor");
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence(), "The eight boxing wizards jump quickly.", "Replace left part of the sentence.");
+		PluginsApi.pluginMethod_ReplaceCurrentSentence(" relaxing wizards jump slowly.", "afterCursor");
+		AscTest.MoveCursorLeft(false, false, 5);
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence(), "The eight relaxing wizards jump slowly.", "Replace right part of the sentence.");
+		
 	})
 	
 	
