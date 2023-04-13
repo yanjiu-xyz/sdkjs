@@ -212,6 +212,27 @@ $(function () {
 		PluginsApi.pluginMethod_ReplaceCurrentWord("654", "beforeCursor");
 		assert.strictEqual(AscTest.GetParagraphText(p), "654123 text", "Replace the part of the word before cursor");
 		
+		
+		AscTest.ClearDocument();
+		p = MoveToNewParagraph();
+		AscTest.EnterText("The quick brown fox jumps over the lazy dog. The five boxing wizards jump quickly. Eat more of those fresh french loafs and drink a tea!");
+		AscTest.MoveCursorToParagraph(p, true);
+		AscTest.MoveCursorRight(false, false, 16);
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence("entirely"), "The quick brown fox jumps over the lazy dog.", "Check current sentence");
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence("afterCursor"), "fox jumps over the lazy dog.", "Check the right part of the current sentence");
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence("beforeCursor"), "The quick brown ", "Check the left part of the current sentence");
+		
+		AscTest.MoveCursorRight(false, false, 28);
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence("entirely"), "The five boxing wizards jump quickly.", "Check current sentence");
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence("afterCursor"), "The five boxing wizards jump quickly.", "Check the right part of the current sentence");
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence("beforeCursor"), "", "Check the left part of the current sentence");
+		
+		AscTest.MoveCursorToParagraph(p, false);
+		AscTest.MoveCursorLeft(false, false, 1);
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence("entirely"), "Eat more of those fresh french loafs and drink a tea!", "Check current sentence");
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence("afterCursor"), "!", "Check the right part of the current sentence");
+		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence("beforeCursor"), "Eat more of those fresh french loafs and drink a tea", "Check the left part of the current sentence");
+		
 	})
 	
 	

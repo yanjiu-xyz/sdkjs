@@ -17515,11 +17515,15 @@ Paragraph.prototype.GetCurrentSentence = function(nDirection)
 	{
 		startPos = oInfo.Start;
 		endPos   = this.Get_ParaContentPos(false, false);
+		if (endPos.Compare(startPos) < 0)
+			endPos = startPos.Copy();
 	}
 	else
 	{
 		startPos = this.Get_ParaContentPos(false, false);
 		endPos   = oInfo.End;
+		if (startPos.Compare(oInfo.Start) < 0)
+			startPos = oInfo.Start;
 	}
 	
 	this.Selection.Use = true;
