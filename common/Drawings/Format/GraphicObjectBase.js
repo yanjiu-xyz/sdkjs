@@ -3151,7 +3151,7 @@
 		return null;
 	};
 	CGraphicObjectBase.prototype.getBase64Img = function (bForceAsDraw, sImageFormat) {
-		if (typeof this.cachedImage === "string" && this.cachedImage.length > 0) {
+		if (!sImageFormat && typeof this.cachedImage === "string" && this.cachedImage.length > 0) {
 			return this.cachedImage;
 		}
 		if (this.parent) {

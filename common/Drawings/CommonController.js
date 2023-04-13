@@ -9180,16 +9180,26 @@
 				hitInGuide: function (x, y) {
 					return null;
 				},
-
-				onInkDrawerChangeState: function() {
+				checkInkState: function () {
 					const oAPI = this.getEditorApi();
 					if(oAPI.isInkDrawerOn()) {
 						if(oAPI.isDrawInkMode()) {
-							this.changeCurrentState(new AscFormat.CInkDrawState(this));
+							if(!(this.curState instanceof  AscFormat.CInkDrawState)) {
+								this.changeCurrentState(new AscFormat.CInkDrawState(this));
+
+							}
 						}
 						else {
-							this.changeCurrentState(new AscFormat.CInkEraseState(this));
+							if(!(this.curState instanceof  AscFormat.CInkEraseState)) {
+								this.changeCurrentState(new AscFormat.CInkEraseState(this));
+							}
 						}
+					}
+				},
+				onInkDrawerChangeState: function() {
+					const oAPI = this.getEditorApi();
+					if(oAPI.isInkDrawerOn()) {
+						this.checkInkState();
 					}
 					else {
 						this.clearTrackObjects();
