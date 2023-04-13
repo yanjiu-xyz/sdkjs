@@ -1925,12 +1925,13 @@ ChangeAdjInGroupState.prototype =
     onMouseUp: MoveInGroupState.prototype.onMouseUp
 };
 
-function TextAddState(drawingObjects, majorObject, startX, startY)
+function TextAddState(drawingObjects, majorObject, startX, startY, button)
 {
     this.drawingObjects = drawingObjects;
     this.majorObject = majorObject;
     this.startX = startX;
     this.startY = startY;
+    this.button = button;
     this.bIsSelectionEmpty = this.isSelectionEmpty();
 }
 
@@ -1982,6 +1983,10 @@ TextAddState.prototype =
     {
         if(!e.IsLocked)
         {
+            if(this.button === AscCommon.g_mouse_button_right)
+            {
+                return this.endState(e, x, y, pageIndex);
+            }
             //todo: implement inheritance from AscCommon.CDrawingControllerStateBase
             return AscCommon.CDrawingControllerStateBase.prototype.emulateMouseUp.call(this, e, x, y, pageIndex);
         }
@@ -2016,6 +2021,11 @@ TextAddState.prototype =
         {
             e.CtrlKey = oldCtrl;
         }
+        return this.endState(e, x, y, pageIndex);
+    },
+
+    endState: function(e, x, y, pageIndex)
+    {
         this.drawingObjects.updateSelectionState();
         this.drawingObjects.drawingObjects.sendGraphicObjectProps();
         this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
@@ -2038,17 +2048,17 @@ TextAddState.prototype =
         {
             if(oApi.editorId === AscCommon.c_oEditorId.Presentation)
             {
-	            let oPresentation = oApi.WordControl && oApi.WordControl.m_oLogicDocument;
+                let oPresentation = oApi.WordControl && oApi.WordControl.m_oLogicDocument;
                 if(oApi.isFormatPainterOn())
                 {
                     this.drawingObjects.paragraphFormatPaste2();
                     if (oApi.isFormatPainterOn())
                     {
                         oApi.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
-						if(oPresentation)
-						{
-							oPresentation.OnMouseMove(e, x, y, pageIndex)
-						}
+                        if(oPresentation)
+                        {
+                            oPresentation.OnMouseMove(e, x, y, pageIndex)
+                        }
                     }
                 }
                 else if(oApi.isMarkerFormat)
@@ -2068,9 +2078,9 @@ TextAddState.prototype =
                     }
                 }
             }
-			else if(oApi.editorId === AscCommon.c_oEditorId.Spreadsheet)
-			{
-				this.drawingObjects.checkFormatPainterOnMouseEvent();
+            else if(oApi.editorId === AscCommon.c_oEditorId.Spreadsheet)
+            {
+                this.drawingObjects.checkFormatPainterOnMouseEvent();
             }
         }
     }

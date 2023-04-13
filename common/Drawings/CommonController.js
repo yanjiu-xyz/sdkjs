@@ -1864,7 +1864,7 @@
 							e.CtrlKey = oldCtrlKey;
 						}
 
-						this.changeCurrentState(new AscFormat.TextAddState(this, object, x, y));
+						this.changeCurrentState(new AscFormat.TextAddState(this, object, x, y, e.Button));
 						return true;
 					} else {
 						var ret = {objectId: object.Get_Id(), cursorType: "text"};
