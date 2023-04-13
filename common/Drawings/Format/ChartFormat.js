@@ -5583,7 +5583,7 @@
 			}
 		}
 		const aSeries = this.getAllSeries();
-		const aAxes = this.createRadarAxes(this.getAxisNumFormatByType(nType, aSeries));
+		const aAxes = this.createRadarAxes(this.getAxisNumFormatByType(nType, aSeries), false);
 		const oRadarChart = this.createRadarChart(nType, aSeries, aAxes, this.charts[0]);
 		oRadarChart.addAxes(aAxes);
 		this.addChartWithAxes(oRadarChart);
@@ -5988,12 +5988,25 @@
         }
         return [oCatAx, oValAx];
     };
-	CPlotArea.prototype.createRadarAxes = function(sNewNumFormat) {
+	CPlotArea.prototype.createRadarAxes = function(sNewNumFormat, bSecondary) {
+
+        const oCurAxes = this.getAxisByTypes();
 		const aAxes = this.createRegularAxes(sNewNumFormat, false);
         const oValAx = aAxes[1];
         if(oValAx) {
             if(oValAx.crossBetween !== AscFormat.CROSS_BETWEEN_BETWEEN) {
                 oValAx.setCrossBetween(AscFormat.CROSS_BETWEEN_BETWEEN);
+            }
+            if(bSecondary) {
+                const oOldValAx = oCurAxes.valAx[0];
+                if(oOldValAx) {
+                    const aCharts = this.getChartsForAxis(oOldValAx);
+                    const oChart = aCharts[0];
+                    if(oChart && oChart.getObjectType() === AscDFH.historyitem_type_RadarChart) {
+                        oValAx.setMajorGridlines(null);
+                        oValAx.setMinorGridlines(null);
+                    }
+                }
             }
         }
         return aAxes;
@@ -6872,7 +6885,7 @@
                         aNewAxes = oPlotArea.createHBarAxes(oPlotArea.getAxisNumFormatByType(nType, [oSeries]), true);
                     }
 					else if(oPlotArea.isRadarType(nType)) {
-	                    aNewAxes = oPlotArea.createRadarAxes(oPlotArea.getAxisNumFormatByType(nType, [oSeries]))
+	                    aNewAxes = oPlotArea.createRadarAxes(oPlotArea.getAxisNumFormatByType(nType, [oSeries]), true)
                     }
                     else {
 						let aCharts = oPlotArea.charts;
