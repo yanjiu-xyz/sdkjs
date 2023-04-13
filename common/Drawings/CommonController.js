@@ -8959,12 +8959,12 @@
 					}
 					return null;
 				},
-				getImageDataFromSelection: function (bForceAsDraw) {
+				getImageDataFromSelection: function (bForceAsDraw, sImageFormat) {
 					let aSelectedObjects = this.getSelectedArray();
 					if (aSelectedObjects.length < 1) {
 						return null;
 					}
-					let sSrc = aSelectedObjects[0].getBase64Img(bForceAsDraw);
+					let sSrc = aSelectedObjects[0].getBase64Img(bForceAsDraw, sImageFormat);
 					let nWidth = aSelectedObjects[0].cachedPixW || 50;
 					let nHeight = aSelectedObjects[0].cachedPixH || 50;
 					return {
@@ -9121,10 +9121,10 @@
 					}
 					return null;
 				},
-				getImageDataForSaving: function (bForceAsDraw) {
+				getImageDataForSaving: function (bForceAsDraw, sImageFormat) {
 					let aSelectedObjects = this.getSelectedArray();
 					if (aSelectedObjects.length === 1) {
-						return this.getImageDataFromSelection(bForceAsDraw);
+						return this.getImageDataFromSelection(bForceAsDraw, sImageFormat);
 					} else {
 						let oImageData = this.getSelectionImageData();
 						if (oImageData) {

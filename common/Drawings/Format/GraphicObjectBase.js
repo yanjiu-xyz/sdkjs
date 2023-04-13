@@ -3150,7 +3150,7 @@
 	CGraphicObjectBase.prototype.getPictureBase64Data = function () {
 		return null;
 	};
-	CGraphicObjectBase.prototype.getBase64Img = function (bForceAsDraw) {
+	CGraphicObjectBase.prototype.getBase64Img = function (bForceAsDraw, sImageFormat) {
 		if (typeof this.cachedImage === "string" && this.cachedImage.length > 0) {
 			return this.cachedImage;
 		}
@@ -3175,7 +3175,7 @@
 			|| (AscFormat.fApproxEqual(this.extX, 0) && AscFormat.fApproxEqual(this.extY, 0)))
 			return "";
 
-		let oImageData = AscCommon.ShapeToImageConverter(this, this.pageIndex);
+		let oImageData = AscCommon.ShapeToImageConverter(this, this.pageIndex, sImageFormat);
 		if (oImageData) {
 			if (oImageData.ImageNative) {
 				try {
