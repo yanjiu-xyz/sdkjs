@@ -17420,7 +17420,7 @@ Paragraph.prototype.private_ReplaceSubstring = function(replaceString, startPos,
 	this.TurnOffCorrectContent();
 	this.Selection.Use = true;
 	this.Set_SelectionContentPos(startPos, endPos);
-	this.Remove(1, false, false, false, false);
+	this.Remove(1, false, false, true, false);
 	this.RemoveSelection();
 	this.TurnOnCorrectContent();
 	
