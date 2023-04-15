@@ -5917,58 +5917,61 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			];
 			let standardNoFilterEastGT = [
 				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
-				['East', 'Boy', 'Tee', 1, 12, 11.04, 10.42],
-				['East', 'Boy', 'Golf', 1, 12, 13, 12.6],
-				['East', 'Boy', 'Fancy', 2, 12, 11.96, 11.74],
-				['East', 'Girl', 'Tee', 2, 10, 11.27, 10.56],
-				['East', 'Girl', 'Golf', 1, 10, 12.12, 11.95],
-				['East', 'Girl', 'Fancy', 2, 10, 13.74, 13.33],
+				['East', 'Boy', 'Tee', '1', '12', '11.04', '10.42'],
+				['East', 'Boy', 'Golf', '1', '12', '13', '12.6'],
+				['East', 'Boy', 'Fancy', '2', '12', '11.96', '11.74'],
+				['East', 'Girl', 'Tee', '2', '10', '11.27', '10.56'],
+				['East', 'Girl', 'Golf', '1', '10', '12.12', '11.95'],
+				['East', 'Girl', 'Fancy', '2', '10', '13.74', '13.33'],
 			];
 			let standardNoFilterFancyGT = [
 				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
-				['East', 'Boy', 'Fancy', 2, 12, 11.96, 11.74],
-				['East', 'Girl', 'Fancy', 2, 10, 13.74, 13.33],
+				['East', 'Boy', 'Fancy', '2', '12', '11.96', '11.74'],
+				['East', 'Girl', 'Fancy', '2', '10', '13.74', '13.33'],
 			];
 			let standardNoFilter10GT = [
 				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
-				['East', 'Girl', 'Fancy', 2, 10, 13.74, 13.33],
+				['East', 'Girl', 'Fancy', '2', '10', '13.74', '13.33'],
 			];
 			let standardNoFilterEastGirl = [
 				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
-				['East', 'Girl', 'Tee', 2, 10, 11.27, 10.56],
-				['East', 'Girl', 'Golf', 1, 10, 12.12, 11.95],
-				['East', 'Girl', 'Fancy', 2, 10, 13.74, 13.33],
+				['East', 'Girl', 'Tee', '2', '10', '11.27', '10.56'],
+				['East', 'Girl', 'Golf', '1', '10', '12.12', '11.95'],
+				['East', 'Girl', 'Fancy', '2', '10', '13.74', '13.33'],
 			];
 			let standardNoFilterFancyGirl = [
 				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
-				['East', 'Girl', 'Fancy', 2, 10, 13.74, 13.33],
+				['East', 'Girl', 'Fancy', '2', '10', '13.74', '13.33'],
 			];
 			let standardNoFilter12Girl = [
 				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
-				[null, null, null, null, null, null, null],
+				['', '', '', '', '', '', ''],
 			];
 			let standardFilterEastGT = [
 				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
-				['East', 'Boy', 'Tee', 1, 12, 11.04, 10.42],
-				['East', 'Boy', 'Golf', 1, 12, 13, 12.6],
-				['East', 'Girl', 'Golf', 1, 10, 12.12, 11.95],
+				['East', 'Boy', 'Tee', '1', '12', '11.04', '10.42'],
+				['East', 'Boy', 'Golf', '1', '12', '13', '12.6'],
+				['East', 'Girl', 'Golf', '1', '10', '12.12', '11.95'],
 			];
 			let standardFilterGTGT = [
 				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
-				['East', 'Boy', 'Tee', 1, 12, 11.04, 10.42],
-				['East', 'Boy', 'Golf', 1, 12, 13, 12.6],
-				['East', 'Girl', 'Golf', 1, 10, 12.12, 11.95],
-				['West', 'Boy', 'Tee', 1, 11, 11.44, 10.94],
-				['West', 'Boy', 'Fancy', 1, 11, 12.06, 11.51],
-				['West', 'Girl', 'Golf', 1, 15, 11.48, 10.67],
+				['East', 'Boy', 'Tee', '1', '12', '11.04', '10.42'],
+				['East', 'Boy', 'Golf', '1', '12', '13', '12.6'],
+				['East', 'Girl', 'Golf', '1', '10', '12.12', '11.95'],
+				['West', 'Boy', 'Tee', '1', '11', '11.44', '10.94'],
+				['West', 'Boy', 'Fancy', '1', '11', '12.06', '11.51'],
+				['West', 'Girl', 'Golf', '1', '15', '11.48', '10.67'],
 			];
-			function CellValueToVar(oCellValue) {
-				return oCellValue.text ? oCellValue.text : oCellValue.number;
-			}
 			function testPivotCellForDetails(pivot, row, col, standard, message) {
-				let cells = pivot.getCellArrayForDetails(row, col).map(function(row) {
-					return row.map(CellValueToVar);
-				});
+				pivot.showDetails(ws, row, col);
+				let activeWs = api.wbModel.getActiveWs();
+				let cells = [];
+				for (let i = 0; i < standard.length; i += 1) {
+					cells[i] = [];
+					for (let j = 0; j < standard[0].length; j += 1) {
+						cells[i][j] = activeWs.getCell3(i, j).getValue();
+					}
+				}
 				assert.deepEqual(cells, standard, message)
 			}
 			function getNewFilter(fld, index) {
@@ -6066,6 +6069,6 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 
 		testPivotShowAs();
 
-		//testPivotShowDetails();
+		testPivotShowDetails();
 	}
 });
