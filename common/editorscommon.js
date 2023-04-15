@@ -1938,7 +1938,7 @@
 			responseType: "arraybuffer",
 			headers: {
 				'Authorization': 'Bearer ' + token,
-				'x-url': url
+				'x-url': encodeURI(url)
 			},
 			success: function(resp) {
 				fSuccess(AscCommon.initStreamFromResponse(resp));
@@ -3529,7 +3529,9 @@
 	var kCurFormatPainterWord = 'de-formatpainter';
 	g_oHtmlCursor.register(kCurFormatPainterWord, "text_copy", "2 11", "pointer");
 	var kCurFormatPainterDrawing = 'drawing-formatpainter';
-	g_oHtmlCursor.register(kCurFormatPainterDrawing, "shape_copy", "2 11", "pointer");
+	g_oHtmlCursor.register(kCurFormatPainterDrawing, "shape_copy", "0 3", "pointer");
+	var kCurEyedropper = 'eyedropper';
+	g_oHtmlCursor.register(kCurEyedropper, "eyedropper", "1 17", "pointer");
 
 	function asc_ajax(obj)
 	{
@@ -13065,17 +13067,202 @@
 		this.data = null;
 	};
 
-	function CFormatPainterDataBase() {
+	function CFormattingPasteDataBase() {
 
 	}
-	CFormatPainterDataBase.prototype.isDrawingData = function()
+	CFormattingPasteDataBase.prototype.isDrawingData = function()
 	{
 		return false;
 	};
-	CFormatPainterDataBase.prototype.getDocData = function()
+	CFormattingPasteDataBase.prototype.getDocData = function()
 	{
 		return null;
 	};
+	function CTextFormattingPasteData(textPr, paraPr)
+	{
+		CFormattingPasteDataBase.call();
+		this.TextPr = textPr;
+		this.ParaPr = paraPr;
+	}
+	CTextFormattingPasteData.prototype = Object.create(CFormattingPasteDataBase.prototype);
+	CTextFormattingPasteData.prototype.getDocData = function()
+	{
+		return this;
+	};
+	function CDrawingFormattingPasteData(drawing)
+	{
+		CFormattingPasteDataBase.call();
+		this.Drawing = drawing;
+	}
+	CDrawingFormattingPasteData.prototype = Object.create(CFormattingPasteDataBase.prototype);
+	CDrawingFormattingPasteData.prototype.isDrawingData = function()
+	{
+		return true;
+	};
+	CDrawingFormattingPasteData.prototype.getDocData = function()
+	{
+		return this;
+	};
+	
+
+	function CEyedropper(oAPI)
+	{
+		this.api = oAPI;
+		this.started = false;
+		this.imgData = null;
+		this.r = null;
+		this.g = null;
+		this.b = null;
+	}
+	CEyedropper.prototype.isStarted = function()
+	{
+		return this.started;
+	};
+	CEyedropper.prototype.setColor = function(r, g, b)
+	{
+		this.r = r;
+		this.g = g;
+		this.b = b;
+	};
+	CEyedropper.prototype.getColor = function()
+	{
+		return new Asc.asc_CColor(this.r, this.g, this.b)
+	};
+	CEyedropper.prototype.clearColor = function()
+	{
+		this.setColor(null, null, null);
+	};
+	CEyedropper.prototype.start = function(fEndCallback)
+	{
+		this.started = true;
+		this.endCallback = fEndCallback;
+	};
+	CEyedropper.prototype.cancel = function()
+	{
+		this.end();
+	};
+	CEyedropper.prototype.end = function()
+	{
+		this.started = false;
+		this.endCallback = null;
+		this.api.sendEvent("asc_onHideEyedropper");
+		this.clearColor();
+		this.clearImageData();
+	};
+	CEyedropper.prototype.clearImageData = function()
+	{
+		this.imgData = null;
+	};
+	CEyedropper.prototype.finish = function()
+	{
+		if(!this.isStarted())
+		{
+			return;
+		}
+		if(this.r !== null && this.g !== null && this.b !== null && this.endCallback)
+		{
+			this.endCallback(this.r, this.g, this.b);
+		}
+		this.end();
+	};
+	CEyedropper.prototype.getImageData = function()
+	{
+		if(!this.imgData) {
+			this.imgData = this.api.getEyedropperImgData();
+		}
+		return this.imgData;
+	};
+	CEyedropper.prototype.checkColor = function(nX, nY)
+	{
+		if(!this.isStarted())
+		{
+			return;
+		}
+		const oImgData = this.getImageData();
+		if(!oImgData)
+		{
+			this.cancel();
+			return;
+		}
+		const nXImg = Math.min(oImgData.width, nX);
+		const nYImg = Math.min(oImgData.height, nY);
+		const nArrayPos = (nYImg * oImgData.width + nXImg) * 4;
+		const aPixels = oImgData.data;
+		const nR = aPixels[nArrayPos];
+		const nG = aPixels[nArrayPos + 1];
+		const nB = aPixels[nArrayPos + 2];
+		this.setColor(nR, nG, nB);
+		//console.log("Check Color r: " + nR + " g: " + nG + " b: " + nB);
+	};
+
+	const INK_DRAWER_STATE_OFF = 0;
+	const INK_DRAWER_STATE_DRAW = 1;
+	const INK_DRAWER_STATE_ERASE = 2;
+	function CInkDrawer(oApi) {
+		this.api = oApi;
+		this.state = INK_DRAWER_STATE_OFF;
+		this.pen = null;
+		this.silentMode = false;
+	}
+	CInkDrawer.prototype.setState = function(nState) {
+		this.state = nState;
+		this.api.onInkDrawerChangeState();
+	};
+	CInkDrawer.prototype.startDraw = function(oAscPen) {
+		this.pen = AscFormat.CorrectUniStroke(oAscPen);
+		if(!this.pen) {
+			this.pen = new AscFormat.CLn();
+			this.pen.w = 180000;
+			this.pen.Fill = AscFormat.CreateSolidFillRGB(255, 255, 0);
+			this.pen.Fill.transparent = 127;
+		}
+		this.setState(INK_DRAWER_STATE_DRAW);
+	};
+	CInkDrawer.prototype.startErase = function() {
+		this.pen = null;
+		this.setState(INK_DRAWER_STATE_ERASE);
+	};
+	CInkDrawer.prototype.startSilentMode = function() {
+		this.silentMode = true;
+	};
+	CInkDrawer.prototype.endSilentMode = function() {
+		this.silentMode = false;
+	};
+	CInkDrawer.prototype.isSilentMode = function() {
+		return this.silentMode;
+	};
+	CInkDrawer.prototype.turnOff = function() {
+		if(!this.silentMode) {
+			this.pen = null;
+			this.setState(INK_DRAWER_STATE_OFF);
+			this.api.sendEvent("asc_onInkDrawerStop");
+		}
+	};
+	CInkDrawer.prototype.isOn = function() {
+		return this.state !== INK_DRAWER_STATE_OFF;
+	};
+	CInkDrawer.prototype.isDraw = function() {
+		return this.state === INK_DRAWER_STATE_DRAW;
+	};
+	CInkDrawer.prototype.isErase = function() {
+		return this.state === INK_DRAWER_STATE_ERASE;
+	};
+	CInkDrawer.prototype.getPen = function() {
+		return this.pen;
+	};
+	CInkDrawer.prototype.getState = function() {
+		return {state: this.state, pen: this.pen, silentMode: this.silentMode};
+	};
+	CInkDrawer.prototype.restoreState = function(oState) {
+		if(!oState) {
+			return;
+		}
+		this.state = oState.state;
+		this.pen = oState.pen;
+		this.silentMode = oState.silentMode;
+	};
+
+	//------------------------------------------------------------fill polyfill--------------------------------------------
 	if (!Object.values) {
 		Object.values = function (obj) {
 			return Object.keys(obj).map(function (e) {
@@ -13083,7 +13270,7 @@
 			});
 		}
 	}
-
+	
 	function parseText(text, options, bTrimSpaces) {
 		var delimiterChar;
 		if (options.asc_getDelimiterChar()) {
@@ -14070,6 +14257,7 @@
 
 	window["AscCommon"].kCurFormatPainterWord = kCurFormatPainterWord;
 	window["AscCommon"].kCurFormatPainterDrawing = kCurFormatPainterDrawing;
+	window["AscCommon"].kCurEyedropper = kCurEyedropper;
 	window["AscCommon"].parserHelp = parserHelp;
 	window["AscCommon"].g_oIdCounter = g_oIdCounter;
 
@@ -14164,7 +14352,11 @@
 		return word;
 	}
 	window["AscCommon"].CFormatPainter = CFormatPainter;
-	window["AscCommon"].CFormatPainterDataBase = CFormatPainterDataBase;
+	window["AscCommon"].CFormattingPasteDataBase = CFormattingPasteDataBase;
+	window["AscCommon"].CTextFormattingPasteData = CTextFormattingPasteData;
+	window["AscCommon"].CDrawingFormattingPasteData = CDrawingFormattingPasteData;
+	window["AscCommon"].CEyedropper = CEyedropper;
+	window["AscCommon"].CInkDrawer = CInkDrawer;
 	window["AscCommon"].CPluginCtxMenuInfo = CPluginCtxMenuInfo;
 
 })(window);

@@ -4685,6 +4685,8 @@ function CThumbnailsManager()
 		if (null == canvas)
 			return;
 
+		this.m_oWordControl.m_oApi.clearEyedropperImgData();
+
 		var context = canvas.getContext("2d");
 		var _width  = canvas.width;
 		var _height = canvas.height;
@@ -5323,7 +5325,7 @@ function CThumbnailsManager()
 					}
 					else
 					{
-						if (oDrawingDocument.SlideCurrent > 0)
+						if (oDrawingDocument.SlideCurrent !== (slidesCount - 1))
 						{
 							this.CorrectShiftSelect(false, true);
 						}

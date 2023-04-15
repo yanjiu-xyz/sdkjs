@@ -2720,6 +2720,13 @@
 			return this.fLocksText !== false;
 		};
 
+		CShape.prototype.canEditText = function () {
+			let form = this.isForm && this.isForm() ? this.getInnerForm() : null;
+			if (form && !form.CanPlaceCursorInside())
+				return false;
+			
+			return this.superclass.prototype.canEditText.call(this);
+		};
 		CShape.prototype.canEditTextInSmartArt = function () {
 			if (this.isObjectInSmartArt()) {
 				var pointContent = this.getSmartArtPointContent();
@@ -5927,8 +5934,18 @@
 			}
 			var x_t = invert_transform.TransformPointX(x, y);
 			var y_t = invert_transform.TransformPointY(x, y);
-			if (isRealObject(this.spPr) && isRealObject(this.spPr.geometry))
-				return this.spPr.geometry.hitInPath(this.getCanvasContext(), x_t, y_t);
+			if (isRealObject(this.spPr) && isRealObject(this.spPr.geometry)) {
+				let bOldDIst = AscFormat.DIST_HIT_IN_LINE;
+				if(this.pen) {
+					const nW = this.pen.w || 12700;
+					const dWidth = nW / 36000;
+					AscFormat.DIST_HIT_IN_LINE = Math.max(bOldDIst, dWidth);
+				}
+
+				let bResult = this.spPr.geometry.hitInPath(this.getCanvasContext(), x_t, y_t);
+				AscFormat.DIST_HIT_IN_LINE = bOldDIst;
+				return bResult;
+			}
 			else
 				return this.hitInBoundingRect(x, y);
 			return false;
@@ -5998,6 +6015,9 @@
 
 		CShape.prototype.canGroup = function () {
 			if (this.isPlaceholder()) {
+				return false;
+			}
+			if(this.isForm()) {
 				return false;
 			}
 			if (this.signatureLine) {

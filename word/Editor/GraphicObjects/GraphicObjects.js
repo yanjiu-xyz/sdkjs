@@ -247,9 +247,9 @@ CGraphicObjects.prototype =
                 var oApi = Asc.editor || editor;
                 var isDrawHandles = oApi ? oApi.isShowShapeAdjustments() : true;
 
-                var oShape     = null;
+                var oShape     = AscCommon.g_oTableId.Get_ById(ret.objectId);
                 var oInnerForm = null;
-                if ((oShape = AscCommon.g_oTableId.Get_ById(ret.objectId)) && oShape.isForm() && (oInnerForm = oShape.getInnerForm()))
+                if (oShape && oShape.isForm() && (oInnerForm = oShape.getInnerForm()))
 				{
 					if (isDrawHandles && oInnerForm.IsFormLocked())
 						isDrawHandles = false;
@@ -1535,21 +1535,35 @@ CGraphicObjects.prototype =
     },
 
 
+	getAllDrawingsOnPage: function(pageIndex, bHdrFtr)
+	{
+		if(!this.graphicPages[pageIndex])
+			this.graphicPages[pageIndex] = new CGraphicPage(pageIndex, this);
+		var arr, page, i, ret = [];
+		if(!bHdrFtr)
+		{
+
+			page = this.graphicPages[pageIndex];
+		}
+		else
+		{
+			page = this.graphicPages[pageIndex].hdrFtrPage;
+		}
+		arr = page.behindDocObjects.concat(page.beforeTextObjects);
+		return arr;
+	},
+
+	getDrawingObjects: function(pageIndex)
+	{
+		return this.getAllDrawingsOnPage(pageIndex, false);
+	},
+
     getAllFloatObjectsOnPage: function(pageIndex, docContent)
     {
         if(!this.graphicPages[pageIndex])
             this.graphicPages[pageIndex] = new CGraphicPage(pageIndex, this);
         var arr, page, i, ret = [];
-        if(!docContent.IsHdrFtr())
-        {
-
-            page = this.graphicPages[pageIndex];
-        }
-        else
-        {
-            page = this.graphicPages[pageIndex].hdrFtrPage;
-        }
-        arr = page.behindDocObjects.concat(page.beforeTextObjects);
+        arr = this.getAllDrawingsOnPage(pageIndex, docContent.IsHdrFtr());
         for(i = 0; i < arr.length; ++i)
         {
             if(arr[i].parent && arr[i].parent.DocumentContent === docContent)
@@ -2926,6 +2940,7 @@ CGraphicObjects.prototype =
 		{
 			this.document.SetLocalTrackRevisions(bTrackRevisions);
 		}
+		return para_drawing;
     },
 
     unGroupSelectedObjects: function()
@@ -4557,7 +4572,7 @@ CGraphicObjects.prototype.getAnimationPlayer = function()
 };
 
 CGraphicObjects.prototype.getImageDataFromSelection = DrawingObjectsController.prototype.getImageDataFromSelection;
-CGraphicObjects.prototype.putImageToSelection = function(sImageUrl, nWidth, nHeight)
+CGraphicObjects.prototype.putImageToSelection = function(sImageUrl, nWidth, nHeight, replaceMode)
 {
     let aSelectedObjects = this.getSelectedArray();
     if(aSelectedObjects.length > 0 && aSelectedObjects[0].isImage())
@@ -4567,7 +4582,7 @@ CGraphicObjects.prototype.putImageToSelection = function(sImageUrl, nWidth, nHei
             let dWidth = nWidth * AscCommon.g_dKoef_pix_to_mm;
             let dHeight = nHeight * AscCommon.g_dKoef_pix_to_mm;
             let oSp = aSelectedObjects[0];
-            oSp.replacePictureData(sImageUrl, dWidth, dHeight);
+            oSp.replacePictureData(sImageUrl, dWidth, dHeight, true, replaceMode);
             if(oSp.group)
             {
                 oController.selection.groupSelection.resetInternalSelection();
@@ -4621,6 +4636,9 @@ CGraphicObjects.prototype.getVertGuidesPos = function() {
 CGraphicObjects.prototype.hitInGuide = function(x, y) {
     return null;
 };
+CGraphicObjects.prototype.onInkDrawerChangeState = DrawingObjectsController.prototype.onInkDrawerChangeState;
+CGraphicObjects.prototype.checkInkState = DrawingObjectsController.prototype.checkInkState;
+
 function ComparisonByZIndexSimpleParent(obj1, obj2)
 {
     if(obj1.parent && obj2.parent)

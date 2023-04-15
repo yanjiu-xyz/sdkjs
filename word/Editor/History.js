@@ -1109,14 +1109,23 @@ CHistory.prototype.ClearAdditional = function()
 			this.SetAdditionalFormFilling(form);
 	}
 
-	if (this.Api && true === this.Api.isMarkerFormat)
-		this.Api.sync_MarkerFormatCallback(false);
+	if(this.Api)
+	{
+		if (true === this.Api.isMarkerFormat)
+			this.Api.sync_MarkerFormatCallback(false);
 
-	if (this.Api && true === this.Api.isDrawTablePen)
-		this.Api.sync_TableDrawModeCallback(false);
+		if (true === this.Api.isDrawTablePen)
+			this.Api.sync_TableDrawModeCallback(false);
 
-	if (this.Api && true === this.Api.isDrawTableErase)
-		this.Api.sync_TableEraseModeCallback(false);
+		if (true === this.Api.isDrawTableErase)
+			this.Api.sync_TableEraseModeCallback(false);
+
+		if(this.Api.isEyedropperStarted())
+			this.Api.cancelEyedropper();
+	}
+
+	if (this.Api && true === this.Api.isInkDrawerOn())
+		this.Api.asc_StopInkDrawer();
 };
 CHistory.prototype.private_UpdateContentChangesOnUndo = function(Item)
 {
