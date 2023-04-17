@@ -11976,6 +11976,20 @@ $(function () {
 		ws.getRange2("B101").setValue();
 		ws.getRange2("B102").setValue();
 
+		oParser = new parserFormula('EXPAND(B101,2,3)', "A1", ws);
+		assert.ok(oParser.parse(), "EXPAND(B101,2,3)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getValue(), "#VALUE!", "Result of EXPAND(B101,2,3)");
+
+		oParser = new parserFormula('EXPAND(A1,2,3)', "A1", ws);
+		assert.ok(oParser.parse(), "EXPAND(A1,2,3)");
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 2, "Result of EXPAND(A1,2,3).[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), "#N/A", "Result of EXPAND(A1,2,3).[0,1]");
+		assert.strictEqual(array.getElementRowCol(0, 2).getValue(), "#N/A", "Result of EXPAND(A1,2,3).[0,2]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), "#N/A", "Result of EXPAND(A1,2,3).[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), "#N/A", "Result of EXPAND(A1,2,3).[1,1]");
+
 		oParser = new parserFormula('EXPAND(B101:B102,)', "A1", ws);
 		assert.ok(oParser.parse(), "EXPAND(B101:B102,)");
 		array = oParser.calculate();
@@ -23053,6 +23067,23 @@ $(function () {
 		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 0, "Result of SEQUENCE(1,1,G11,{1,2;3,4})[0,1]");
 		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 0, "Result of SEQUENCE(1,1,G11,{1,2;3,4})[1,0]");
 		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 0, "Result of SEQUENCE(1,1,G11,{1,2;3,4})[1,1]");
+
+		oParser = new parserFormula('SEQUENCE(2.9,2.1,0.9,1.1)', "A2", ws);
+		assert.ok(oParser.parse(), 'SEQUENCE(2.9,2.1,0.9,1.1)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), 0.9, "Result of SEQUENCE(2.9,2.1,0.9,1.1)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), 2, "Result of SEQUENCE(2.9,2.1,0.9,1.1)[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), 3.1, "Result of SEQUENCE(2.9,2.1,0.9,1.1)[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), 4.2, "Result of SEQUENCE(2.9,2.1,0.9,1.1)[1,1]");
+
+		// =SEQUENCE(2.9,2.1,-0.9,-1.010101)
+		oParser = new parserFormula('SEQUENCE(2.4,2.5,-0.9,-1.01010)', "A2", ws);
+		assert.ok(oParser.parse(), 'SEQUENCE(2.4,2.5,-0.9,-1.01010)');
+		array = oParser.calculate();
+		assert.strictEqual(array.getElementRowCol(0, 0).getValue(), -0.9, "Result of SEQUENCE(2.4,2.5,-0.9,-1.01010)[0,0]");
+		assert.strictEqual(array.getElementRowCol(0, 1).getValue(), -1.9101, "Result of SEQUENCE(2.4,2.5,-0.9,-1.01010)[0,1]");
+		assert.strictEqual(array.getElementRowCol(1, 0).getValue(), -2.9202, "Result of SEQUENCE(2.4,2.5,-0.9,-1.01010)[1,0]");
+		assert.strictEqual(array.getElementRowCol(1, 1).getValue(), -3.9303, "Result of SEQUENCE(2.4,2.5,-0.9,-1.01010)[1,1]");
 
 		// Max array size (10223960?)
 		// oParser = new parserFormula('SEQUENCE(10223960,2,1,1)', "A2", ws);

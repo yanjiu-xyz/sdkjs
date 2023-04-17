@@ -626,6 +626,7 @@ function (window, undefined) {
 	cEXPAND.prototype = Object.create(cBaseFunction.prototype);
 	cEXPAND.prototype.constructor = cEXPAND;
 	cEXPAND.prototype.name = 'EXPAND';
+	cEXPAND.prototype.isXLFN = true;
 	cEXPAND.prototype.argumentsMin = 2;
 	cEXPAND.prototype.argumentsMax = 4;
 	cEXPAND.prototype.arrayIndexes = {0: 1, 3: 1};
@@ -665,9 +666,13 @@ function (window, undefined) {
 		} else {
 			array = new cArray();
 			if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
+				if (arg0.getValue().type === cElementType.empty) {
+					return new cError(cErrorType.wrong_value_type);
+				}
 				array.addElement(arg0.getValue());
+			} else {
+				array.addElement(arg0);
 			}
-			array.addElement(arg0);
 		}
 
 		// --------------------- arg1(row) type check ----------------------//

@@ -247,6 +247,15 @@ $(function () {
 		AscTest.MoveCursorLeft(false, false, 5);
 		assert.strictEqual(PluginsApi.pluginMethod_GetCurrentSentence(), "The eight relaxing wizards jump slowly.", "Replace right part of the sentence.");
 		
+		AscTest.ClearDocument();
+		p = MoveToNewParagraph();
+		AscTest.EnterText("The quick brown fox jumps over the lazy dog. The five boxing wizards jump quickly. Eat more of those fresh french loafs and drink a tea!");
+		AscTest.MoveCursorToParagraph(p, true);
+		AscTest.MoveCursorRight(false, false, 64);
+		PluginsApi.pluginMethod_ReplaceCurrentSentence("The five boxing wizards jump quickly.", "entirely");
+		assert.strictEqual(AscTest.GetParagraphText(p), "The quick brown fox jumps over the lazy dog. The five boxing wizards jump quickly. Eat more of those fresh french loafs and drink a tea!", "Replace sentence on itself and check all text");
+		
+		
 	})
 	
 	
