@@ -18992,5 +18992,6 @@
 	window['AscCommonExcel']._isSameSizeMerged = _isSameSizeMerged;
 	window['AscCommonExcel'].g_nDefNameMaxLength = g_nDefNameMaxLength;
 	window['AscCommonExcel'].changeTextCase = changeTextCase;
+	window['AscCommonExcel'].g_sNewSheetNamePattern = g_sNewSheetNamePattern;
 
 })(window);
