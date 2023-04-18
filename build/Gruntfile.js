@@ -29,7 +29,6 @@
  * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
  */
-const glob = require('glob');
 module.exports = function(grunt) {
 	function loadConfig(pathConfigs, name) {
 		let config;
@@ -384,7 +383,7 @@ module.exports = function(grunt) {
 		const jsFiles = [];
 		const noJSFiles = [];
 		paths.forEach((p) => {
-			glob.globSync(p, {
+			glob.sync(p, {
 				cwd: cwd,
 			}).forEach((f) => {
 				if (path.extname(f) === '.js' && !ignoreFiles.includes(path.parse(f).name)) {
