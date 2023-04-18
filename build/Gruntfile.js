@@ -165,8 +165,12 @@ module.exports = function(grunt) {
 		}
 		return result;
 	}
-
 	const path = require('path');
+	const deploy = '../deploy/sdkjs/';
+	const word = path.join(deploy, 'word');
+	const cell = path.join(deploy, 'cell');
+	const slide = path.join(deploy, 'slide');
+
 	const level = grunt.option('level') || 'ADVANCED';
 	const formatting = grunt.option('formatting') || '';
 
@@ -200,28 +204,31 @@ module.exports = function(grunt) {
 				'hash/hash/*',
 				'zlib/engine/*'
 			],
-			dest: path.join(deploy, 'common')
+			dest: path.join(deploy, 'common'),
+			name: 'common'
 		},
 		{
 			cwd: '../cell/css',
 			src: ['*.css'],
-			dest: path.join(cell, 'css')
+			dest: path.join(deploy),
+			name: 'cell-css'
 		},
 		{
 			cwd: '../slide/themes',
 			src: ['**/**'],
-			dest: path.join(slide, 'themes')
+			dest: path.join(deploy),
+			name: 'slide-themes'
 		},
 		{
 			cwd: '../pdf/',
 			src: ['src/engine/*'],
-			dest: path.join(deploy, 'pdf')
+			dest: path.join(deploy),
+			name: 'pdf'
 		}
 	];
 	const configWord = configs.word['sdk'];
 	const configCell = configs.cell['sdk'];
 	const configSlide = configs.slide['sdk'];
-	const deploy = '../deploy/sdkjs/';
 
 	const compilerArgs = getExterns(configs.externs);
 	if (formatting) {
@@ -233,9 +240,6 @@ module.exports = function(grunt) {
 		compilerArgs.push('--source_map_format=V3');
 		compilerArgs.push('--source_map_include_content=true');
 	}
-	const word = path.join(deploy, 'word');
-	const cell = path.join(deploy, 'cell');
-	const slide = path.join(deploy, 'slide');
 
 	const appCopyright = process.env['APP_COPYRIGHT'] || "Copyright (C) Ascensio System SIA 2012-" + grunt.template.today('yyyy') +". All rights reserved";
 	const publisherUrl = process.env['PUBLISHER_URL'] || "https://www.onlyoffice.com/";
@@ -251,6 +255,7 @@ module.exports = function(grunt) {
 	license = license.replace('@@Build', buildNumber);
 
 	function getCompileConfig(sdkmin, sdkall, outmin, outall, name, pathPrefix) {
+		console.log(pathPrefix);
 		const args = compilerArgs.concat (
 		`--define=window.AscCommon.g_cCompanyName='${companyName}'`,
 		`--define=window.AscCommon.g_cProductVersion='${version}'`,
@@ -283,15 +288,15 @@ module.exports = function(grunt) {
 		}
 	}
 	grunt.registerTask('compile-word', 'Compile Word SDK', function () {
-		grunt.initConfig(getCompileConfig(getFilesMin(configWord), getFilesAll(configWord), 'sdk-all-min', 'sdk-all', 'word', word + '/'));
+		grunt.initConfig(getCompileConfig(getFilesMin(configWord), getFilesAll(configWord), 'sdk-all-min', 'sdk-all', 'word', path.join(word , '/')));
 		grunt.task.run('closure-compiler');
 	});
 	grunt.registerTask('compile-cell', 'Compile Cell SDK', function () {
-		grunt.initConfig(getCompileConfig(getFilesMin(configCell), getFilesAll(configCell), 'sdk-all-min', 'sdk-all', 'cell', cell + '/'));
+		grunt.initConfig(getCompileConfig(getFilesMin(configCell), getFilesAll(configCell), 'sdk-all-min', 'sdk-all', 'cell', path.join(cell , '/')));
 		grunt.task.run('closure-compiler');
 	});
 	grunt.registerTask('compile-slide', 'Compile Slide SDK', function () {
-		grunt.initConfig(getCompileConfig(getFilesMin(configSlide), getFilesAll(configSlide), 'sdk-all-min', 'sdk-all', 'slide', slide + '/'));
+		grunt.initConfig(getCompileConfig(getFilesMin(configSlide), getFilesAll(configSlide), 'sdk-all-min', 'sdk-all', 'slide', path.join(slide , '/')));
 		grunt.task.run('closure-compiler');
 	});
 	grunt.registerTask('compile-sdk', ['compile-word', 'compile-cell', 'compile-slide']);
@@ -311,6 +316,7 @@ module.exports = function(grunt) {
 		grunt.task.run('clean');
 	});
 	const glob = require('glob');
+	const ignoreFiles = ['jquery_native'];
 	/**
 	 * @param {string[]} paths
 	 * @param {string} cwd
@@ -323,56 +329,73 @@ module.exports = function(grunt) {
 			glob.globSync(p, {
 				cwd: cwd,
 			}).forEach((f) => {
-				if (path.extname(f) === '.js') {
-					jsFiles.push(f);
+				if (path.extname(f) === '.js' && !ignoreFiles.includes(path.parse(f).name)) {
+					jsFiles.push(path.join(cwd, f));
 				} else {
-					noJSFiles.push(f);
+					noJSFiles.push(path.join(cwd, f));
 				}
 			})
 		});
 		return [jsFiles, noJSFiles];
 	}
-	grunt.registerTask('copy-other', 'Copy other SDK files', function () {
-		otherFiles.forEach((o) => {
-			const [jsFiles, noJSFiles] = splitJSFiles(o.src, o.cwd);
-			path.extname()
-			grunt.initConfig({
-				'closure-compiler': {
-					js: {
-						options: {
-							args: [
-								...jsFiles.map(f => `--js=${f}`),
-								...jsFiles.map(f => `--chunk=${path.parse(f).name}`)
-								`--chunk_output_path_prefix=${path.join(o.cwd, o.src)}`,
-								`--chunk_wrapper=${outall}:${license}\n(function(window, undefined) {%s})(window);`,
-							],
-						}
+	function getOtherCompileConfig(o, jsFiles) {
+		return {
+			'closure-compiler': {
+				js: {
+					options: {
+						args: [
+							'--language_out=ECMASCRIPT5',
+							'--compilation_level=WHITESPACE_ONLY',
+							'--rewrite_polyfills=true',
+							'--jscomp_off=checkVars',
+							'--warning_level=QUIET',
+							...jsFiles.map(f => `--js=${f}`),
+							...jsFiles.map(f => `--chunk=${path.parse(f).name}:1`),
+							...jsFiles.map(f => `--chunk_output_path_prefix=${path.join(o.dest, path.parse(f).dir, '/')}`),
+							...jsFiles.map(f => `--chunk_wrapper=${path.parse(f).name}:${license}\n%s`),
+						]
 					}
 				}
-			});
-		});
-		
-		grunt.initConfig({
+			}
+		}
+	}
+	function getOtherCopyConfig(o, noJSFiles) {
+		return {
 			copy: {
 				sdkjs: {
-					files: [
-						{
-							expand: true,
-						},
-						{
-							expand: true,
-						},
-						{
-							expand: true,
-						},
-						{
-							expand: true,
-						}
-					]
+					files: noJSFiles.map(f => ({
+						expand: true,
+						src: f,
+						dest: o.dest
+					}))
 				}
-			},
+			}
+		}
+	}
+	grunt.registerTask('copy-other', 'Copy other SDK files', function () {
+		const compilerTasks = [];
+		const copyTasks = [];
+		otherFiles.forEach((o) => {
+			const [jsFiles, noJSFiles] = splitJSFiles(o.src, o.cwd);
+			console.log(jsFiles);
+			if (jsFiles.length !== 0) {
+				grunt.registerTask(`compile-${path.normalize(o.dest)}`, `Compiling ${path.normalize(o.dest)}`, function() {
+					grunt.initConfig(getOtherCompileConfig(o, jsFiles));
+					grunt.task.run('closure-compiler');
+				});
+				compilerTasks.push(`compile-${path.normalize(o.dest)}`);
+			}
+			if (noJSFiles.length !== 0) {
+				console.log(getOtherCopyConfig(o, noJSFiles).copy.sdkjs.files)
+				grunt.registerTask(`copy-${path.normalize(o.name)}`, `Copying files ${path.normalize(o.name)}`, function() {
+					grunt.initConfig(getOtherCopyConfig(o, noJSFiles));
+					grunt.task.run('copy');
+				});
+				copyTasks.push(`copy-${path.normalize(o.name)}`);
+			}
 		});
-		grunt.task.run('copy');
+		//grunt.task.run(compilerTasks);
+		grunt.task.run(copyTasks);
 	});
 	grunt.registerTask('clean-develop', 'Clean develop scripts', function () {
 		const develop = '../develop/sdkjs/';
@@ -396,6 +419,6 @@ module.exports = function(grunt) {
 		writeScripts(configs.cell['sdk'], 'cell');
 		writeScripts(configs.slide['sdk'], 'slide');
 	});
-	grunt.registerTask('default', ['clean-deploy', 'compile-sdk', 'copy-other']);
+	grunt.registerTask('default', ['clean-deploy', 'copy-other', 'compile-sdk']);
 	grunt.registerTask('develop', ['clean-develop', 'clean', 'build-develop']);
 };
