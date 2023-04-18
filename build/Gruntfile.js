@@ -333,7 +333,7 @@ module.exports = function(grunt) {
 				cwd: cwd,
 			}).forEach((f) => {
 				if (path.extname(f) === '.js' && !ignoreFiles.includes(path.parse(f).name)) {
-					jsFiles.push(path.join(cwd, f));
+					jsFiles.push(path.join(f));
 				} else {
 					noJSFiles.push(path.join(f));
 				}
@@ -341,7 +341,7 @@ module.exports = function(grunt) {
 		});
 		return [jsFiles, noJSFiles];
 	}
-	function getOtherCompileConfig(o, jsFiles) {
+	function getOtherCompileConfig(o, jsFile) {
 		return {
 			'closure-compiler': {
 				js: {
@@ -352,10 +352,9 @@ module.exports = function(grunt) {
 							'--rewrite_polyfills=true',
 							'--jscomp_off=checkVars',
 							'--warning_level=QUIET',
-							...jsFiles.map(f => `--js=${f}`),
-							...jsFiles.map(f => `--chunk=${path.parse(f).name}:1`),
-							...jsFiles.map(f => `--chunk_output_path_prefix=${path.join(o.dest, path.parse(f).dir, '/')}`),
-							...jsFiles.map(f => `--chunk_wrapper=${path.parse(f).name}:${license}\n%s`),
+							`--js=${path.join(o.cwd, jsFile)}`,
+							`--js_output_file=${path.join(o.dest, jsFile)}`,
+							`--output_wrapper=${license}\n%output%`
 						]
 					}
 				}
@@ -382,11 +381,13 @@ module.exports = function(grunt) {
 		otherFiles.forEach((o) => {
 			const [jsFiles, noJSFiles] = splitJSFiles(o.src, o.cwd);
 			if (jsFiles.length !== 0) {
-				grunt.registerTask(`compile-${path.normalize(o.dest)}`, `Compiling ${path.normalize(o.dest)}`, function() {
-					grunt.initConfig(getOtherCompileConfig(o, jsFiles));
-					grunt.task.run('closure-compiler');
+				jsFiles.forEach((f) => {
+					grunt.registerTask(`compile-${path.join(o.dest, f)}`, `Compiling ${path.join(o.dest, f)}`, function() {
+						grunt.initConfig(getOtherCompileConfig(o, f));
+						grunt.task.run('closure-compiler');
+					});
+					compilerTasks.push(`compile-${path.join(o.dest, f)}`);
 				});
-				compilerTasks.push(`compile-${path.normalize(o.dest)}`);
 			}
 			if (noJSFiles.length !== 0) {
 				grunt.registerTask(`copy-${path.normalize(o.name)}`, `Copying files ${path.normalize(o.name)}`, function() {
@@ -396,7 +397,7 @@ module.exports = function(grunt) {
 				copyTasks.push(`copy-${path.normalize(o.name)}`);
 			}
 		});
-		//grunt.task.run(compilerTasks);
+		grunt.task.run(compilerTasks);
 		grunt.task.run(copyTasks);
 	});
 	grunt.registerTask('clean-develop', 'Clean develop scripts', function () {
