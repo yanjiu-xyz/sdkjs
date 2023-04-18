@@ -210,19 +210,19 @@ module.exports = function(grunt) {
 		{
 			cwd: '../cell/css',
 			src: ['*.css'],
-			dest: path.join(deploy),
+			dest: path.join(cell, 'css'),
 			name: 'cell-css'
 		},
 		{
 			cwd: '../slide/themes',
 			src: ['**/**'],
-			dest: path.join(deploy),
+			dest: path.join(slide, 'themes'),
 			name: 'slide-themes'
 		},
 		{
 			cwd: '../pdf/',
 			src: ['src/engine/*'],
-			dest: path.join(deploy),
+			dest: path.join(deploy, 'pdf'),
 			name: 'pdf'
 		}
 	];
@@ -255,7 +255,6 @@ module.exports = function(grunt) {
 	license = license.replace('@@Build', buildNumber);
 
 	function getCompileConfig(sdkmin, sdkall, outmin, outall, name, pathPrefix) {
-		console.log(pathPrefix);
 		const args = compilerArgs.concat (
 		`--define=window.AscCommon.g_cCompanyName='${companyName}'`,
 		`--define=window.AscCommon.g_cProductVersion='${version}'`,
@@ -332,7 +331,8 @@ module.exports = function(grunt) {
 				if (path.extname(f) === '.js' && !ignoreFiles.includes(path.parse(f).name)) {
 					jsFiles.push(path.join(cwd, f));
 				} else {
-					noJSFiles.push(path.join(cwd, f));
+					noJSFiles.push(path.join(f));
+					console.log(f)
 				}
 			})
 		});
@@ -365,6 +365,7 @@ module.exports = function(grunt) {
 				sdkjs: {
 					files: noJSFiles.map(f => ({
 						expand: true,
+						cwd: o.cwd,
 						src: f,
 						dest: o.dest
 					}))
@@ -377,7 +378,6 @@ module.exports = function(grunt) {
 		const copyTasks = [];
 		otherFiles.forEach((o) => {
 			const [jsFiles, noJSFiles] = splitJSFiles(o.src, o.cwd);
-			console.log(jsFiles);
 			if (jsFiles.length !== 0) {
 				grunt.registerTask(`compile-${path.normalize(o.dest)}`, `Compiling ${path.normalize(o.dest)}`, function() {
 					grunt.initConfig(getOtherCompileConfig(o, jsFiles));
@@ -386,7 +386,6 @@ module.exports = function(grunt) {
 				compilerTasks.push(`compile-${path.normalize(o.dest)}`);
 			}
 			if (noJSFiles.length !== 0) {
-				console.log(getOtherCopyConfig(o, noJSFiles).copy.sdkjs.files)
 				grunt.registerTask(`copy-${path.normalize(o.name)}`, `Copying files ${path.normalize(o.name)}`, function() {
 					grunt.initConfig(getOtherCopyConfig(o, noJSFiles));
 					grunt.task.run('copy');
