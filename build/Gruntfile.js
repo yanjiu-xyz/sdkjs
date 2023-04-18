@@ -234,13 +234,6 @@ module.exports = function(grunt) {
 	if (formatting) {
 		compilerArgs.push('--formatting=' + formatting);
 	}
-	if (grunt.option('map')) {
-		grunt.file.mkdir(path.join('./maps'));
-		compilerArgs.push('--create_source_map=' + path.join('maps/%outname%.map'));
-		compilerArgs.push('--source_map_format=V3');
-		compilerArgs.push('--source_map_include_content=true');
-	}
-
 	const appCopyright = process.env['APP_COPYRIGHT'] || "Copyright (C) Ascensio System SIA 2012-" + grunt.template.today('yyyy') +". All rights reserved";
 	const publisherUrl = process.env['PUBLISHER_URL'] || "https://www.onlyoffice.com/";
 	const companyName = process.env['COMPANY_NAME'] || 'onlyoffice';
@@ -274,9 +267,10 @@ module.exports = function(grunt) {
 		`--chunk_wrapper=${outall}:${license}\n(function(window, undefined) {%s})(window);`);
 		if (grunt.option('map')) {
 			grunt.file.mkdir(path.join('./maps'));
+			grunt.file.mkdir(path.join(`./maps/${name}`));
 			args.push('--property_renaming_report=' + path.join(`maps/${name}/sdk-all.props.js.map`));
 			args.push('--variable_renaming_report=' + path.join(`maps/${name}/sdk-all.vars.js.map`));
-			args.push('--create_source_map=' + path.join(`maps/${name}/%outname%.map`));
+			args.push('--create_source_map=' + path.join(`%outname%.map`));
 			args.push('--source_map_format=V3');
 			args.push('--source_map_include_content=true');
 		}
@@ -301,6 +295,67 @@ module.exports = function(grunt) {
 	grunt.registerTask('compile-slide', 'Compile Slide SDK', function () {
 		grunt.initConfig(getCompileConfig(getFilesMin(configSlide), getFilesAll(configSlide), 'sdk-all-min', 'sdk-all', 'slide', path.join(slide , '/')));
 		grunt.task.run('closure-compiler');
+	});
+	grunt.registerTask('copy-maps', 'Copy maps from deploy to build', function() {
+		grunt.initConfig({
+			copy: {
+				word: {
+					files: [
+						{
+							expand: true,
+							cwd: word,
+							src: [
+								'sdk-all-min.js.map',
+								'sdk-all.js.map',
+							],
+							dest: 'maps/word'
+						}
+					]
+				},
+				cell: {
+					files: [
+						{
+							expand: true,
+							cwd: cell,
+							src: [
+								'sdk-all-min.js.map',
+								'sdk-all.js.map',
+							],
+							dest: 'maps/cell'
+						}
+					]
+				},
+				slide: {
+					files: [
+						{
+							expand: true,
+							cwd: slide,
+							src: [
+								'sdk-all-min.js.map',
+								'sdk-all.js.map',
+							],
+							dest: 'maps/slide'
+						}
+					]
+				}
+			},
+			clean: {
+				deploy: {
+					options: {
+						force: true
+					},
+					src: [
+						path.join(word, 'sdk-all-min.js.map'),
+						path.join(word, 'sdk-all.js.map'),
+						path.join(cell, 'sdk-all-min.js.map'),
+						path.join(cell, 'sdk-all.js.map'),
+						path.join(slide, 'sdk-all-min.js.map'),
+						path.join(slide, 'sdk-all.js.map'),
+					]
+				}
+			}
+		});
+		grunt.task.run('copy', 'clean');
 	});
 	grunt.registerTask('compile-sdk', ['compile-word', 'compile-cell', 'compile-slide']);
 	grunt.registerTask('clean-deploy', 'Clean deploy folder before deploying', function () {
@@ -417,11 +472,14 @@ module.exports = function(grunt) {
 		if (!configs.valid()) {
 			return;
 		}
-
 		writeScripts(configs.word['sdk'], 'word');
 		writeScripts(configs.cell['sdk'], 'cell');
 		writeScripts(configs.slide['sdk'], 'slide');
 	});
-	grunt.registerTask('default', ['clean-deploy', 'copy-other', 'compile-sdk']);
+	const defaultTasks = ['clean-deploy', 'compile-sdk', 'copy-other'];
+	if (grunt.option('map')) {
+		defaultTasks.push('copy-maps');
+	}
+	grunt.registerTask('default', defaultTasks);
 	grunt.registerTask('develop', ['clean-develop', 'clean', 'build-develop']);
 };
