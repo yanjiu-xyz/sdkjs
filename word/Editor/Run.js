@@ -13791,6 +13791,36 @@ CReviewInfo.prototype.IsMovedFrom = function()
 {
 	return this.MoveType === Asc.c_oAscRevisionsMove.MoveFrom;
 };
+/**
+ * Сравнение информации об изменениях
+ * @returns {boolean}
+ */
+CReviewInfo.prototype.IsEqual = function(oAnotherReviewInfo, bIsMergingDocuments)
+{
+	let oThisReviewInfo = this;
+	let oCompareReviewInfo = oAnotherReviewInfo;
+	let bEquals = true;
+	while (bEquals && oThisReviewInfo && oCompareReviewInfo)
+	{
+		bEquals = oThisReviewInfo.UserName === oCompareReviewInfo.UserName &&
+		oThisReviewInfo.DateTime === oCompareReviewInfo.DateTime &&
+		oThisReviewInfo.MoveType === oCompareReviewInfo.MoveType &&
+		oThisReviewInfo.PrevType === oCompareReviewInfo.PrevType;
+
+		if (!bIsMergingDocuments)
+		{
+			bEquals = bEquals && oThisReviewInfo.UserId === oCompareReviewInfo.UserId;
+		}
+
+		oThisReviewInfo = oThisReviewInfo.PrevInfo;
+		oCompareReviewInfo = oCompareReviewInfo.PrevInfo;
+	}
+	if (!oThisReviewInfo && oCompareReviewInfo || oThisReviewInfo && !oCompareReviewInfo)
+	{
+		return false;
+	}
+	return bEquals;
+};
 
 /**
  * @constructor
