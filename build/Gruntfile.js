@@ -29,7 +29,7 @@
  * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
  */
-
+const glob = require('glob');
 module.exports = function(grunt) {
 	function loadConfig(pathConfigs, name) {
 		let config;
@@ -373,8 +373,7 @@ module.exports = function(grunt) {
 		});
 		grunt.task.run('clean');
 	});
-	console.log('first');
-	const { globSync } = require('glob'); // <-- Node v12 died on that line (SyntaxError: Unexpected token '(').
+	const glob = require('glob');
 	const ignoreFiles = ['jquery_native'];
 	/**
 	 * @param {string[]} paths
@@ -385,7 +384,7 @@ module.exports = function(grunt) {
 		const jsFiles = [];
 		const noJSFiles = [];
 		paths.forEach((p) => {
-			globSync(p, {
+			glob.globSync(p, {
 				cwd: cwd,
 			}).forEach((f) => {
 				if (path.extname(f) === '.js' && !ignoreFiles.includes(path.parse(f).name)) {
