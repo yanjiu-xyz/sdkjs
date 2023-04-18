@@ -273,8 +273,12 @@ module.exports = function(grunt) {
 		`--chunk_output_path_prefix=${pathPrefix}`,
 		`--chunk_wrapper=${outall}:${license}\n(function(window, undefined) {%s})(window);`);
 		if (grunt.option('map')) {
-			args.push('--property_renaming_report=' + path.join(`maps/${name}.props.js.map`));
-			args.push('--variable_renaming_report=' + path.join(`maps/${name}.vars.js.map`));
+			grunt.file.mkdir(path.join('./maps'));
+			args.push('--property_renaming_report=' + path.join(`maps/${name}/sdk-all.props.js.map`));
+			args.push('--variable_renaming_report=' + path.join(`maps/${name}/sdk-all.vars.js.map`));
+			args.push('--create_source_map=' + path.join(`maps/${name}/%outname%.map`));
+			args.push('--source_map_format=V3');
+			args.push('--source_map_include_content=true');
 		}
 		return {
 			'closure-compiler': {
@@ -332,7 +336,6 @@ module.exports = function(grunt) {
 					jsFiles.push(path.join(cwd, f));
 				} else {
 					noJSFiles.push(path.join(f));
-					console.log(f)
 				}
 			})
 		});
