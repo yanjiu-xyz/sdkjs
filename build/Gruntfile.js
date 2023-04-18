@@ -373,7 +373,8 @@ module.exports = function(grunt) {
 		});
 		grunt.task.run('clean');
 	});
-	const glob = require('glob');
+	console.log('first');
+	const { globSync } = require('glob'); // <-- Node v12 died on that line (SyntaxError: Unexpected token '(').
 	const ignoreFiles = ['jquery_native'];
 	/**
 	 * @param {string[]} paths
@@ -384,7 +385,7 @@ module.exports = function(grunt) {
 		const jsFiles = [];
 		const noJSFiles = [];
 		paths.forEach((p) => {
-			glob.globSync(p, {
+			globSync(p, {
 				cwd: cwd,
 			}).forEach((f) => {
 				if (path.extname(f) === '.js' && !ignoreFiles.includes(path.parse(f).name)) {
