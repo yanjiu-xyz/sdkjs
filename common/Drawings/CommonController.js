@@ -9186,7 +9186,9 @@
 						if(oAPI.isDrawInkMode()) {
 							if(!(this.curState instanceof  AscFormat.CInkDrawState)) {
 								this.changeCurrentState(new AscFormat.CInkDrawState(this));
-
+							}
+							else {
+								this.curState.checkStartState();
 							}
 						}
 						else {
@@ -10804,7 +10806,7 @@
 			this.drawingState = this.getPolylineState();
 			const API = Asc.editor || editor;
 			this.inkDrawer = API.inkDrawer;
-			this.startState = API.inkDrawer.getState();
+			this.checkStartState();
 		}
 		CInkDrawState.prototype = Object.create(CDrawingControllerStateBase.prototype);
 		CInkDrawState.prototype.superclass = CDrawingControllerStateBase;
@@ -10851,6 +10853,10 @@
 			}
 			this.drawingState = oDrawingState;
 			this.inkDrawer.restoreState(this.startState);
+		};
+		CInkDrawState.prototype.checkStartState = function() {
+			const API = Asc.editor || editor;
+			this.startState = API.inkDrawer.getState();
 		};
 
 		function CDrawTask(rect) {
