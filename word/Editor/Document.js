@@ -25483,7 +25483,7 @@ CDocument.prototype.ConvertFormFixedType = function(sId, isToFixed)
 	var oParagraph = oForm.GetParagraph();
 	if (oParagraph)
 	{
-		if (oParagraph.GetParentShape())
+		if (isToFixed && oParagraph.GetParentShape())
 			return false;
 		
 		isLocked = this.IsSelectionLocked(AscCommon.changestype_None, {
