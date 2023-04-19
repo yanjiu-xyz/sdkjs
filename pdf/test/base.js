@@ -78,10 +78,7 @@ window.onload = function()
 	var g_positionSplitterW = 5;
 	window.onresize = function()
 	{
-		var zoomValue = AscCommon.checkDeviceScale();
-		AscCommon.AscBrowser.retinaPixelRatio = zoomValue.applicationPixelRatio;
-		AscCommon.AscBrowser.zoom = zoomValue.zoom;
-		AscCommon.correctApplicationScale(zoomValue);
+		AscViewer.checkApplicationScale();
 	
 		document.getElementById("leftPanel").style.width = g_positionSplitter + "px";
 		document.getElementById("buttonBookmarks").style.left = "10px";
@@ -163,104 +160,12 @@ window.onload = function()
 		document.body.onmouseup = function(e) {};
 	};
 
-	///
-	function setCanvasSize(element, width, height, is_correction)
-	{
-		if (element.width === width && element.height === height)
-			return;
-
-		if (true !== is_correction)
-		{
-			element.width = width;
-			element.height = height;
-			return;
-		}
-
-		var data = element.getContext("2d").getImageData(0, 0, element.width, element.height);
-		element.width = width;
-		element.height = height;
-		element.getContext("2d").putImageData(data, 0, 0);
-	};
-
-	AscCommon.calculateCanvasSize = function(element, is_correction, is_wait_correction)
-	{
-		if (true !== is_correction && undefined !== element.correctionTimeout)
-		{
-			clearTimeout(element.correctionTimeout);
-			element.correctionTimeout = undefined;
-		}
-
-		var scale = AscCommon.AscBrowser.retinaPixelRatio;
-		if (Math.abs(scale - (scale >> 0)) < 0.001)
-		{
-			setCanvasSize(element,
-				scale * parseInt(element.style.width),
-				scale * parseInt(element.style.height),
-				is_correction);
-			return;
-		}
-
-		var rect = element.getBoundingClientRect();
-		var isCorrectRect = (rect.width === 0 && rect.height === 0) ? false : true;
-		if (is_wait_correction || !isCorrectRect)
-		{
-			var isNoVisibleElement = false;
-			if (element.style.display === "none")
-				isNoVisibleElement = true;
-			else if (element.parentNode && element.parentNode.style.display === "none")
-				isNoVisibleElement = true;
-
-			if (!isNoVisibleElement)
-			{
-				element.correctionTimeout = setTimeout(function (){
-					calculateCanvasSize(element, true);
-				}, 100);
-			}
-
-			if (!isCorrectRect)
-			{
-				var style_width = parseInt(element.style.width);
-				var style_height = parseInt(element.style.height);
-
-				rect = {
-					x: 0, left: 0,
-					y: 0, top: 0,
-					width: style_width, right: style_width,
-					height: style_height, bottom: style_height
-				};
-			}
-		}
-
-		setCanvasSize(element,
-			Math.round(scale * rect.right) - Math.round(scale * rect.left),
-			new_height = Math.round(scale * rect.bottom) - Math.round(scale * rect.top),
-			is_correction);
-	};
-	///
-
-	var api = {
-		isMobileVersion : false,
-
-		getPageBackgroundColor : function() {
-	    	// TODO: get color from theme
-			if (this.isDarkMode)
-				return [0x3A, 0x3A, 0x3A];
-			return [0xFF, 0xFF, 0xFF];
-	    },
-
-	    WordControl : {
-	    	NoneRepaintPages : false
-	    },
-
-	    sendEvent : function() {
-
-	    }
-	};
-
-	AscFonts.g_fontApplication.Init();
-	window.Viewer = new AscCommon.CViewer("mainPanel", api);
-	window.Thumbnails = new AscCommon.ThumbnailsControl("panelThimbnailsNatural");
-	window.Viewer.setThumbnailsControl(window.Thumbnails);
+	var options = {};
+	//options.enginePath = "./../src/engine/"; // FOR NO-MINIMIZED TEST (index.html)
+	//options.theme = { type : "dark" };
+	//options.fontsPath = "https://url_to_fonts/";
+	window.Viewer = new window.AscViewer.CViewer("mainPanel", options);
+	window.Thumbnails = window.Viewer.createThumbnails("panelThimbnailsNatural");
 	
 	var trackbar = document.querySelectorAll('.trackbar')[0];
 	trackbar.onChangedValue = function(val) {

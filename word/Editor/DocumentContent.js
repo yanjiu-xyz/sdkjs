@@ -2839,17 +2839,6 @@ CDocumentContent.prototype.AddNewParagraph = function(bForceAdd)
 		}
 	}
 };
-CDocumentContent.prototype.GetFormatPainterData = function()
-{
-	if (docpostype_DrawingObjects === this.CurPos.Type)
-	{
-		return this.DrawingObjects.getFormatPainterData();
-	}
-	else
-	{
-		return new CDocumentFormatPainterData(this.GetDirectTextPr(), this.GetDirectParaPr(), null);
-	}
-};
 // Расширяем документ до точки (X,Y) с помощью новых параграфов
 // Y0 - низ последнего параграфа, YLimit - предел страницы
 CDocumentContent.prototype.Extend_ToPos                       = function(X, Y)
@@ -7425,7 +7414,7 @@ CDocumentContent.prototype.GetSelectionState = function()
 
 	var State = null;
 
-	if (this.LogicDocument && true === editor.isStartAddShape && docpostype_DrawingObjects === this.CurPos.Type)
+	if (this.LogicDocument && (editor.isStartAddShape || editor.isInkDrawerOn()) && docpostype_DrawingObjects === this.CurPos.Type)
 	{
 		DocState.CurPos.Type     = docpostype_Content;
 		DocState.Selection.Start = false;

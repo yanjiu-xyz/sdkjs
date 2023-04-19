@@ -380,7 +380,16 @@ CComplexField.prototype.IsCurrent = function()
 };
 CComplexField.prototype.IsUpdate = function()
 {
-	return this.StartUpdate;
+	return (this.StartUpdate > 0);
+};
+CComplexField.prototype.StartCharsUpdate = function()
+{
+	++this.StartUpdate;
+};
+CComplexField.prototype.FinishCharsUpdate = function()
+{
+	if (this.StartUpdate > 0)
+		--this.StartUpdate;
 };
 CComplexField.prototype.SetInstruction = function(oParaInstr)
 {
@@ -463,7 +472,7 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 		this.LogicDocument.StartAction();
 	}
 
-	this.StartUpdate = true;
+	this.StartCharsUpdate();
 	switch (this.Instruction.GetType())
 	{
 		case fieldtype_PAGE:
@@ -502,7 +511,7 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 		case fieldtype_ADDIN:
 			break;
 	}
-	this.StartUpdate = false;
+	this.FinishCharsUpdate();
 
 	if (false !== isNeedRecalculate)
 		this.LogicDocument.Recalculate();
@@ -1084,13 +1093,13 @@ CComplexField.prototype.private_CalculateTIME = function(ms)
 		if (undefined !== ms)
 		{
 			var oDateTime = new Asc.cDate(ms);
-			sDate         = oFormat.formatToWord(oDateTime.getExcelDate() + (oDateTime.getUTCHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
+			sDate         = oFormat.formatToWord(oDateTime.getExcelDate(true) + (oDateTime.getUTCHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
 
 		}
 		else
 		{
 			let oDateTime = new Asc.cDate();
-			sDate         = oFormat.formatToWord(oDateTime.getExcelDate() + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
+			sDate         = oFormat.formatToWord(oDateTime.getExcelDate(true) + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
 		}
 	}
 

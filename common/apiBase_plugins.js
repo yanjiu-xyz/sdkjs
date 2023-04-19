@@ -1176,6 +1176,10 @@
 		this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, opts);
 	};
 
+	/**
+	 * The current selection type ("none", "text", "drawing", or "slide").
+	 * @typedef {("fill" | "fit" | "original" | "stretch")} ReplaceImageMode
+	 */
 
     /**
      * An object containing the information about the base64 encoded *png* image.
@@ -1183,6 +1187,7 @@
      * @property {string} src The image source in the base64 format.
      * @property {number} width The image width in pixels.
      * @property {number} height The image height in pixels.
+     * @property  {?ReplaceImageMode} replaceMode If presents, defines how to adjust image object in case of replacing selected image
      */
 
 	/**
@@ -1208,9 +1213,22 @@
      */
 	Api.prototype["pluginMethod_PutImageDataToSelection"] = function(oImageData)
 	{
-        this._beforeEvalCommand();
-		this.putImageToSelection(oImageData["src"], oImageData["width"], oImageData["height"]);
-        this._afterEvalCommand();
+		let sMethodGuid = window.g_asc_plugins.setPluginMethodReturnAsync();
+		let sImgSrc = oImageData["src"];
+		this.asc_checkImageUrlAndAction(sImgSrc, function(oImage)
+		{
+			let nWidth = oImageData["width"];
+			let nHeight = oImageData["height"];
+			const isN = AscFormat.isRealNumber;
+			if(!isN(nWidth) || !isN(nHeight))
+			{
+				nWidth = oImage.Image.width;
+				nHeight = oImage.Image.height;
+			}
+			this.putImageToSelection(AscCommon.g_oDocumentUrls.getImageLocal(oImage.src), nWidth, nHeight, oImageData["replaceMode"]);
+			window.g_asc_plugins.onPluginMethodReturn(sMethodGuid);
+
+		});
 	};
 
 	function getLocalStorageItem(key)
@@ -1244,6 +1262,21 @@
 			return {
 				"type" : loadFuncName,
 				"guid" : ""
+			};
+		}
+		
+		const isDesktop = window["AscDesktopEditor"] !== undefined;
+		if (isDesktop)
+		{
+			// Отдаём весь конфиг, внутри вычислим путь к deploy
+			// TODO: отслеживать возможные ошибки при +/- плагинов: из ++кода отправлять статус операции и на основе его отправлять в менеджер плагинов корректный ответ.
+			// UPD: done. Ничего не изменять в менеджере плагинов, если guid пуст
+
+            let result = window["AscDesktopEditor"]["PluginInstall"](JSON.stringify(config));
+			
+			return {
+				"type" : loadFuncName,
+				"guid" : result ? config["guid"] : ""
 			};
 		}
 
@@ -1362,6 +1395,22 @@
 			}
 		*/
 
+		const isDesktop = window["AscDesktopEditor"] !== undefined;
+
+		// В случае Desktop нужно проверить какие плагины нельзя удалять. В UpdateInstallPlugins работаем с двумя типами папок.
+		// Пока проверка тут, но грамотнее будет сделать и использовать доп.свойство isSystemInstall класса CPlugin
+		// т.к. не будем лишний раз парсить папки, только при +/- плагинов.
+		let protectedPlugins = [];
+
+		if (isDesktop) {
+			var _pluginsTmp = JSON.parse(window["AscDesktopEditor"]["GetInstallPlugins"]());
+
+			var len = _pluginsTmp[0]["pluginsData"].length;
+			for (var i = 0; i < len; i++) {
+				protectedPlugins.push(_pluginsTmp[0]["pluginsData"][i]["guid"]);
+			}
+		}
+
 		let baseUrl = window.location.href;
 		let posQ = baseUrl.indexOf("?");
 		if (-1 !== posQ)
@@ -1377,11 +1426,14 @@
 			returnArray.push({
 				"baseUrl" : baseUrl,
 				"guid" : pluginsArray[i].guid,
-				"canRemoved" : true,
+				"canRemoved" : protectedPlugins.indexOf(pluginsArray[i].guid) == -1,
 				"obj" : pluginsArray[i].serialize(),
 				"removed" : false
 			});
 		}
+
+		if (isDesktop)
+			return returnArray;
 
 		// нужно послать и удаленные. так как удаленный может не быть в сторе. тогда его никак не установить обратно
 		let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
@@ -1414,8 +1466,29 @@
      * @returns {object} - An object with the result information.
      * @since 7.2.0
      */
-	Api.prototype["pluginMethod_RemovePlugin"] = function(guid)
+	Api.prototype["pluginMethod_RemovePlugin"] = function(guid, backup)
 	{
+		const isDesktop = window["AscDesktopEditor"] !== undefined;
+
+		if (isDesktop)
+		{
+			// Вызываем только этот ++код, никаких дополнительных действий типа:
+			// window.g_asc_plugins.unregister(guid), window["UpdateInstallPlugins"](), this.sendEvent("asc_onPluginsReset"), window.g_asc_plugins.updateInterface()
+			// не требуется, т.к. ++код вызывает UpdateInstallPlugins, в нём идёт перестроение списка плагинов и обновление интерфейса.
+			// Просто отдаём менеджеру плагинов ответ.
+			// TODO: отслеживать возможные ошибки при +/- плагинов:
+			// из ++кода отправлять статус операции и на основе его отправлять в менеджер плагинов корректный ответ.
+			// ничего не изменять в менеджере плагинов, если guid пуст
+
+			let result = window["AscDesktopEditor"]["PluginUninstall"](guid, backup);
+						
+			return {
+				type : "Removed",
+				guid : result ? guid : "",
+				backup : backup
+			};
+		}
+		
 		let removedPlugin = window.g_asc_plugins.unregister(guid);
 
 		if (removedPlugin)

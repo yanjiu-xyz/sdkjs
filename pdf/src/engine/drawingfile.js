@@ -39,6 +39,8 @@
 		return name;
 	}
 
+	var baseFontsPath = "../../../../fonts/";
+
 	var FS = undefined;
 
 	// correct fetch for desktop application
@@ -1010,7 +1012,9 @@ else
 	};
 	
 	self["AscViewer"]["CDrawingFile"] = CFile;
-	self["AscViewer"]["InitializeFonts"] = function() {
+	self["AscViewer"]["InitializeFonts"] = function(basePath) {
+		if (undefined !== basePath && "" !== basePath)
+			baseFontsPath = basePath;
 		if (!window["g_fonts_selection_bin"])
 			return;
 		var memoryBuffer = window["g_fonts_selection_bin"].toUtf8();
@@ -1099,7 +1103,7 @@ else
 			{
 				// шрифт не грузится - надо загрузить
 				var _t = file;
-				file.LoadFontAsync("../../../../fonts/", function(){
+				file.LoadFontAsync(baseFontsPath, function(){
 					fontToMemory(_t, true);
 
 					var pages = self.fontStreams[fileId].pages;
