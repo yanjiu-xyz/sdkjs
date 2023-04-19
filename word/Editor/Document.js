@@ -8963,6 +8963,7 @@ CDocument.prototype.OnKeyDown = function(e)
 				this.StartAction(AscDFH.historydescription_Document_BackSpaceButton);
 				this.Remove(-1, true, false, false, e.CtrlKey, true);
 				this.FinalizeAction();
+				this.private_UpdateCursorXY(true, true);
 			}
 			bRetValue = keydownresult_PreventAll;
 		}
@@ -9479,6 +9480,7 @@ CDocument.prototype.OnKeyDown = function(e)
 					this.StartAction(AscDFH.historydescription_Document_DeleteButton);
 					this.Remove(1, false, false, false, e.CtrlKey, true);
 					this.FinalizeAction();
+					this.private_UpdateCursorXY(true, true);
 				}
 				bRetValue = keydownresult_PreventAll;
 			}
