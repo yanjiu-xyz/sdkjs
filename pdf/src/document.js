@@ -35,10 +35,16 @@
     let AscPDFEditor = window["AscPDFEditor"];
 
     function CPDFDoc() {
-        this._widgets = []; // непосредственно сами поля, которые отрисовываем (дочерние без потомков)
-        this._rootFields = new Map(); // root поля форм
+        this.widgets = []; // непосредственно сами поля, которые отрисовываем (дочерние без потомков)
+        this.rootFields = new Map(); // root поля форм
+
+        this.actionsInfo = new CActionQueue();
     }
 
+    CPDFDoc.prototype.GetActionsQueue = function() {
+        return this.actionsInfo;
+    }
+    
     /**
 	 * Adds an interactive field to document.
 	 * @memberof CPDFDoc
@@ -104,18 +110,18 @@
 
         // создаем родительские поля, последнее будет виджет-полем
         if (aPartNames.length > 1) {
-            if (this._rootFields.get(aPartNames[0]) == null) { // если нет root поля, то создаем
-                this._rootFields.set(aPartNames[0], private_createField(aPartNames[0], "", "", []));
+            if (this.rootFields.get(aPartNames[0]) == null) { // если нет root поля, то создаем
+                this.rootFields.set(aPartNames[0], private_createField(aPartNames[0], "", "", []));
             }
 
-            let oParentField = this._rootFields.get(aPartNames[0]);
+            let oParentField = this.rootFields.get(aPartNames[0]);
             
             for (let i = 1; i < aPartNames.length; i++) {
                 // последним добавляем виджет-поле (то, которое рисуем)
                 if (i == aPartNames.length - 1) {
                     oField = private_createField(aPartNames[i], cFieldType, nPageNum, oCoords);
                     oParentField.AddKid(oField);
-                    this._widgets.push(oField);
+                    this.widgets.push(oField);
                 }
                 else {
                     // если есть поле с таким именем (part name), то двигаемся дальше, если нет, то создаем
@@ -132,7 +138,7 @@
         // сразу создаем виджет-поле
         else {
             oField = private_createField(aPartNames[0], cFieldType, nPageNum, oCoords);
-            this._widgets.push(oField);
+            this.widgets.push(oField);
         }
 
         if (oPagesInfo.pages[nPageNum].fields == null) {
@@ -225,18 +231,18 @@
 
         // создаем родительские поля, последнее будет виджет-полем
         if (aPartNames.length > 1) {
-            if (this._rootFields.get(aPartNames[0]) == null) { // если нет root поля, то создаем
-                this._rootFields.set(aPartNames[0], private_createField(aPartNames[0], "", "", []));
+            if (this.rootFields.get(aPartNames[0]) == null) { // если нет root поля, то создаем
+                this.rootFields.set(aPartNames[0], private_createField(aPartNames[0], "", "", []));
             }
 
-            let oParentField = this._rootFields.get(aPartNames[0]);
+            let oParentField = this.rootFields.get(aPartNames[0]);
             
             for (let i = 1; i < aPartNames.length; i++) {
                 // последним добавляем виджет-поле (то, которое рисуем)
                 if (i == aPartNames.length - 1) {
                     oField = private_createField(aPartNames[i], cFieldType, nPageNum, oCoords);
                     oParentField.AddKid(oField);
-                    this._widgets.push(oField);
+                    this.widgets.push(oField);
                 }
                 else {
                     // если есть поле с таким именем (part name), то двигаемся дальше, если нет, то создаем
@@ -253,7 +259,7 @@
         // сразу создаем виджет-поле
         else {
             oField = private_createField(aPartNames[0], cFieldType, nPageNum, oCoords);
-            this._widgets.push(oField);
+            this.widgets.push(oField);
         }
 
         if (oPagesInfo.pages[nPageNum].fields == null)
@@ -305,11 +311,11 @@
 
         // создаем родительские поля, последнее будет виджет-полем
         if (aPartNames.length > 1) {
-            if (this._rootFields.get(aPartNames[0]) == null) { // root поле
-                this._rootFields.set(aPartNames[0], private_createField(aPartNames[0], "", "", []));
+            if (this.rootFields.get(aPartNames[0]) == null) { // root поле
+                this.rootFields.set(aPartNames[0], private_createField(aPartNames[0], "", "", []));
             }
 
-            let oParentField = this._rootFields.get(aPartNames[0]);
+            let oParentField = this.rootFields.get(aPartNames[0]);
             
             for (let i = 1; i < aPartNames.length; i++) {
                 // добавляем виджет-поле (то, которое рисуем)
@@ -335,6 +341,54 @@
     };
 
     /**
+	 * Changes the interactive field name.
+     * Note: This method used by forms actions.
+	 * @memberof CPDFDoc
+     * @param {CBaseField[]} aForms - array with forms to reset. If param is undefined or array is empty then resets all forms.
+	 * @typeofeditors ["PDF"]
+	 */
+    CPDFDoc.prototype.ResetForms = function(aForms) {
+        let oActionsQueue   = this.GetActionsQueue();
+
+        if (aForms.length > 0) {
+            aForms.forEach(function(field) {
+                field.Reset();
+            });
+        }
+        else {
+            this.widgets.forEach(function(field) {
+                field.Reset();
+            });
+        }
+
+        oActionsQueue.Continue();
+    };
+    /**
+	 * Hides/shows forms by names
+	 * @memberof CPDFDoc
+     * @param {boolean} bHidden
+     * @param {CBaseField[]} aForms - array with forms to reset. If param is undefined or array is empty then resets all forms.
+	 * @typeofeditors ["PDF"]
+	 * @returns {CBaseForm}
+	 */
+    CPDFDoc.prototype.SetHiddenForms = function(bHidden, aForms) {
+        let oActionsQueue   = this.GetActionsQueue();
+
+        if (aForms.length > 0) {
+            aForms.forEach(function(field) {
+                field.SetHidden(bHidden);
+            });
+        }
+        else {
+            this.widgets.forEach(function(field) {
+                field.SetHidden(bHidden);
+            });
+        }
+
+        oActionsQueue.Continue();
+    };
+
+    /**
 	 * Returns an interactive field by name.
 	 * @memberof CPDFDoc
 	 * @typeofeditors ["PDF"]
@@ -356,8 +410,8 @@
                 oField._parent.RemoveKid(oField);
                 this.private_checkField(oField._parent);
             }
-            else if (this._rootFields.get(oField.name)) {
-                this._rootFields.delete(oField.name);
+            else if (this.rootFields.get(oField.name)) {
+                this.rootFields.delete(oField.name);
             }
         }
     };
@@ -370,9 +424,9 @@
 	 */
     CPDFDoc.prototype.getWidgetsByName = function(sName) {
         let aFields = [];
-        for (let i = 0; i < this._widgets.length; i++) {
-            if (this._widgets[i]._apiForm.name == sName)
-                aFields.push(this._widgets[i]);
+        for (let i = 0; i < this.widgets.length; i++) {
+            if (this.widgets[i]._apiForm.name == sName)
+                aFields.push(this.widgets[i]);
         }
 
         return aFields;
@@ -392,14 +446,62 @@
 
         let sPartName = aPartNames[0];
         for (let i = 0; i < aPartNames.length; i++) {
-            for (let j = 0; j < this._widgets.length; j++) {
-                if (this._widgets[j].name == sPartName) // checks by fully name
-                    return this._widgets[j];
+            for (let j = 0; j < this.widgets.length; j++) {
+                if (this.widgets[j].name == sPartName) // checks by fully name
+                    return this.widgets[j];
             }
             sPartName += "." + aPartNames[i + 1];
         }
 
         return null;
+    };
+
+    function CActionQueue() {
+        this.actions        = [];
+        this.next           = null;
+        this.isInProgress   = false;
+    };
+
+    CActionQueue.prototype.AddActions = function(aActions) {
+        this.actions = this.actions.concat(aActions);
+    };
+    CActionQueue.prototype.SetNextAction = function(oAction) {
+        this.next = oAction;
+    };
+    CActionQueue.prototype.GetNextAction = function(oAction) {
+        return this.next;
+    };
+    CActionQueue.prototype.Clear = function() {
+        this.actions = [];
+        this.next = null;
+        this.isInProgress = false;
+    };
+    CActionQueue.prototype.IsInProgress = function() {
+        return this.isInProgress;
+    };
+    CActionQueue.prototype.SetInProgress = function(bValue) {
+        this.isInProgress = true;
+    };
+    CActionQueue.prototype.Start = function() {
+        if (this.IsInProgress() == false) {
+            let oFirstAction = this.actions[0];
+            if (oFirstAction) {
+                this.SetInProgress(true);
+                setTimeout(function() {
+                    oFirstAction.Do();
+                }, 100);
+            }
+        }
+    };
+    CActionQueue.prototype.Continue = function() {
+        let oNextAction = this.GetNextAction();
+        if (oNextAction) {
+            oNextAction.Do();
+        }
+        else {
+            editor.getDocumentRenderer()._paintForms();
+            editor.getDocumentRenderer()._paintFormsHighlight();
+        }
     };
 
     function private_createField(cName, cFieldType, nPageNum, oCoords) {

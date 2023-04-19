@@ -54,7 +54,7 @@
         text:           "text"
     }
 
-    let ACTION_TRIGGER_TYPES = {
+    let FORMS_TRIGGERS_TYPES = {
         MouseUp:    0,
         MouseDown:  1,
         MouseEnter: 2,
@@ -209,7 +209,7 @@
     Object.freeze(highlight);
     Object.freeze(VALID_ROTATIONS);
     Object.freeze(style);
-    Object.freeze(ACTION_TRIGGER_TYPES);
+    Object.freeze(FORMS_TRIGGERS_TYPES);
 
     /**
 	 * A string that sets the trigger for the action. Values are:
@@ -515,10 +515,45 @@
 	 */
     ApiBaseField.prototype.setAction = function(cTrigger, cScript) {
         let aFields = this.field._doc.getWidgetsByName(this.name);
-        
-        aFields.forEach(function(field) {
-            field.SetAction(cTrigger, cScript);
-        });
+        let nInternalType;
+        switch (cTrigger) {
+            case "MouseUp":
+                nInternalType = FORMS_TRIGGERS_TYPES.MouseUp;
+                break;
+            case "MouseDown":
+                nInternalType = FORMS_TRIGGERS_TYPES.MouseDown;
+                break;
+            case "MouseEnter":
+                nInternalType = FORMS_TRIGGERS_TYPES.MouseEnter;
+                break;
+            case "MouseExit":
+                nInternalType = FORMS_TRIGGERS_TYPES.MouseExit;
+                break;
+            case "OnFocus":
+                nInternalType = FORMS_TRIGGERS_TYPES.OnFocus;
+                break;
+            case "OnBlur":
+                nInternalType = FORMS_TRIGGERS_TYPES.OnBlur;
+                break;
+            case "Keystroke":
+                nInternalType = FORMS_TRIGGERS_TYPES.Keystroke;
+                break;
+            case "Validate":
+                nInternalType = FORMS_TRIGGERS_TYPES.Validate;
+                break;
+            case "Calculate":
+                nInternalType = FORMS_TRIGGERS_TYPES.Calculate;
+                break;
+            case "Format":
+                nInternalType = FORMS_TRIGGERS_TYPES.Format;
+                break;
+        }
+
+        if (nInternalType != null) {
+            aFields.forEach(function(field) {
+                field.SetAction(nInternalType, cScript);
+            });
+        }
     };
 
     function ApiPushButtonField(oField)
@@ -841,11 +876,11 @@
                 let aFields = this._doc.getWidgetsByName(this.name);
                 aFields.forEach(function(field) {
                     field._doNotScroll = bValue;
-                    if (editor.getDocumentRenderer().mouseDownFieldObject == field) {
+                    if (editor.getDocumentRenderer().activeForm == field) {
                         if (bValue == true)
-                            editor.getDocumentRenderer().mouseDownFieldObject.UpdateScroll(false, false);
+                            editor.getDocumentRenderer().activeForm.UpdateScroll(false, false);
                         else
-                            editor.getDocumentRenderer().mouseDownFieldObject.UpdateScroll();
+                            editor.getDocumentRenderer().activeForm.UpdateScroll();
                     }
                 });
             },

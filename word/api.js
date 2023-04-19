@@ -2494,7 +2494,7 @@ background-repeat: no-repeat;\
 		{
 			var _text_object = (AscCommon.c_oAscClipboardDataFormat.Text & _formats) ? {Text : ""} : null;
 			var _html_data;
-			var oActiveForm = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.mouseDownFieldObject;
+			var oActiveForm = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.activeForm;
 			if (oActiveForm && oActiveForm._content.IsSelectionUse()) {
 				let sText = oActiveForm._content.GetSelectedText(true);
 				if (sText == "")
@@ -2583,7 +2583,7 @@ background-repeat: no-repeat;\
 			}
 		}
 		else if (oViewer) {
-			let oField = oViewer.mouseDownFieldObject;
+			let oField = oViewer.activeForm;
 			if (oField && (oField.type == "text" || (oField.type == "combobox" && oField._editable))) {
 				if (oField._content.IsSelectionUse()) {
 					oField.Remove(-1);
@@ -2638,7 +2638,7 @@ background-repeat: no-repeat;\
 		else
 		{
 			let oViewer = this.getDocumentRenderer();
-			let oField = oViewer.mouseDownFieldObject;
+			let oField = oViewer.activeForm;
 			if (text_data.length == 0)
 				return;
 
@@ -5906,12 +5906,10 @@ background-repeat: no-repeat;\
 				}
 				else if (this.isDocumentRenderer() && oOptionObject && oOptionObject.type === "button")
 				{
-					let oViewer = this.getDocumentRenderer();
 					const oImage = oApi.ImageLoader.LoadImage(arrUrls[0], 1);
 					if(oImage && oImage.Image)
 					{
 						oOptionObject.AddImage(oImage);
-						oViewer._paintForms();
 					}
 				}
 				else if (this.WordControl.m_oLogicDocument && false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Content))
@@ -11172,7 +11170,7 @@ background-repeat: no-repeat;\
 	{
 		let nIdx = parseInt(sId);
 		let oViewer = this.getDocumentRenderer();
-		let oField = oViewer.mouseDownFieldObject;
+		let oField = oViewer.activeForm;
 		if (!oField)
 			return;
 
@@ -11182,7 +11180,7 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oDrawingDocument.TargetEnd();
 			oField._needApplyToAll		= false;
 			oField._needDrawHighlight	= true;
-			oField.mouseDownFieldObject = null;
+			oField.activeForm = null;
 			
 			oViewer._paintFormsHighlight();
 		}
@@ -12094,8 +12092,8 @@ background-repeat: no-repeat;\
 		if (logicDocument)
 			return logicDocument.EnterText(value);
 		else if (oViewer.fieldFillingMode) {
-			oViewer.mouseDownFieldObject.EnterText(value);
-			if (oViewer.pagesInfo.pages[oViewer.mouseDownFieldObject._page].needRedrawForms) {
+			oViewer.activeForm.EnterText(value);
+			if (oViewer.pagesInfo.pages[oViewer.activeForm._page].needRedrawForms) {
 				oViewer._paintForms();
 				oViewer.onUpdateOverlay();
 			}
