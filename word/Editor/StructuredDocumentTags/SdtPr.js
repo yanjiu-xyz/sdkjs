@@ -566,7 +566,7 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		else if (!this.TextFormPr.Comb && isCombChanged && oContentControl.IsPlaceHolder())
 			oContentControl.ReplaceContentWithPlaceHolder(false, true);
 
-		if (oContentControl.IsFixedForm() && !isCombChanged)
+		if (oContentControl.IsFixedForm() && oContentControl.IsMainForm() && !isCombChanged)
 			oContentControl.UpdateFixedFormSizeByCombWidth();
 
 		if (!this.TextFormPr.MultiLine)
