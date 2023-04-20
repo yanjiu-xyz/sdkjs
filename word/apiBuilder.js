@@ -18364,7 +18364,7 @@
 	 * @typeofeditors ["CDE"]
 	 * @returns {?string}
 	 */
-	ApiComment.prototype.GetCommentId = function ()
+	ApiComment.prototype.GetId = function ()
 	{
 		let durableId = this.Comment.GetDurableId();
 		if (-1 === durableId || null === durableId)
@@ -19493,6 +19493,7 @@
 	ApiCheckBoxForm.prototype["Copy"]          = ApiCheckBoxForm.prototype.Copy;
 
 	ApiComment.prototype["GetClassType"]	= ApiComment.prototype.GetClassType;
+	ApiComment.prototype["GetId"]           = ApiComment.prototype.GetId;
 	ApiComment.prototype["GetText"]			= ApiComment.prototype.GetText;
 	ApiComment.prototype["SetText"]			= ApiComment.prototype.SetText;
 	ApiComment.prototype["GetAuthorName"]	= ApiComment.prototype.GetAuthorName;
