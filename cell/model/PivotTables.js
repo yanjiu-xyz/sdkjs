@@ -6942,8 +6942,8 @@ CT_pivotTableDefinition.prototype.getItemFieldsMap = function(rowItemIndex, colI
 	let rowFields = this.asc_getRowFields();
 	let colFields = this.asc_getColumnFields();
 	let filterMaps = this.getFilterMaps({});
-	let searchRowItem = rowItems[rowItemIndex];
-	let searchColItem = colItems[colItemIndex];
+	let searchRowItem = rowItems && rowItems[rowItemIndex];
+	let searchColItem = colItems && colItems[colItemIndex];
 	let pivotFields = this.asc_getPivotFields();
 	let result = new Map();
 	filterMaps.labelFilters.forEach(function (filter) {
@@ -6974,10 +6974,10 @@ CT_pivotTableDefinition.prototype.getItemFieldsMap = function(rowItemIndex, colI
 			}
 		}
 	}
-	if (searchRowItem.t !== Asc.c_oAscItemType.Grand) {
+	if (searchRowItem && searchRowItem.t !== Asc.c_oAscItemType.Grand) {
 		getRowColFieldsMap(rowItemIndex, rowFields, rowItems);
 	}
-	if (searchColItem.t !== Asc.c_oAscItemType.Grand) {
+	if (searchColItem && searchColItem.t !== Asc.c_oAscItemType.Grand) {
 		getRowColFieldsMap(colItemIndex, colFields, colItems);
 	}
 	return result;
@@ -7008,7 +7008,7 @@ CT_pivotTableDefinition.prototype.asc_canShowDetails = function(row, col) {
 	}
 	let rowItem = this.getRowItems() && this.getRowItems()[indexes.rowItemIndex];
 	let colItem = this.getColItems() && this.getRowItems()[indexes.colItemIndex];
-	if (rowItem === null || colItem === null) {
+	if (rowItem === null && colItem === null) {
 		return false;
 	}
 	if (rowItem.t === Asc.c_oAscItemType.Blank || colItem.t === Asc.c_oAscItemType.Blank) {
