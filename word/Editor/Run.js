@@ -3265,12 +3265,12 @@ ParaRun.prototype.GetSelectedText = function(bAll, bClearText, oPr)
             {
                 Str += AscCommon.encodeSurrogateChar(Item.value);
                 break;
-            }			case para_NewLine:
+            }
+			case para_NewLine:
 			{
 				if (oPr && true === oPr.NewLine)
-				{
 					Str += '\r';
-				}
+				
 				break;
 			}
 			case para_End:

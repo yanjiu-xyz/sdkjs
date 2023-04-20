@@ -2502,7 +2502,7 @@
 					this.Memory.WriteLong(oTextFormPr.MaxCharacters);
 				}
 
-				let sValue = oForm.GetSelectedText(true);
+				let sValue = oForm.GetSelectedText(true, false, {NewLine : true});
 				if (sValue)
 				{
 					nFlag |= (1 << 22);
