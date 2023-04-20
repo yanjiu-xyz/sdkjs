@@ -7006,8 +7006,11 @@ CT_pivotTableDefinition.prototype.asc_canShowDetails = function(row, col) {
 	if (indexes === null) {
 		return false;
 	}
-	let rowItem = this.getRowItems()[indexes.rowItemIndex];
-	let colItem = this.getColItems()[indexes.colItemIndex];
+	let rowItem = this.getRowItems() && this.getRowItems()[indexes.rowItemIndex];
+	let colItem = this.getColItems() && this.getRowItems()[indexes.colItemIndex];
+	if (rowItem === null || colItem === null) {
+		return false;
+	}
 	if (rowItem.t === Asc.c_oAscItemType.Blank || colItem.t === Asc.c_oAscItemType.Blank) {
 		return false;
 	}
