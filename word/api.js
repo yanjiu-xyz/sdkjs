@@ -10706,6 +10706,8 @@ background-repeat: no-repeat;\
 		if (!oContentControl || !oContentControl.IsDatePicker())
 			return;
 
+		oContent.SkipSpecialContentControlLock(true);
+		oContent.SkipFillingFormModeCheck(true);
 		if (c_oAscSdtLevelType.Block === oContentControl.GetContentControlType())
 		{
 			isLocked = oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_None, {
@@ -10727,7 +10729,7 @@ background-repeat: no-repeat;\
 			}
 		}
 
-		if (false === isLocked)
+		if (!isLocked)
 		{
 			oLogicDocument.StartAction(AscDFH.historydescription_Document_SetContentControlListPr);
 			oContentControl.ApplyDatePickerPr(oPr, updateDate);
@@ -10736,6 +10738,9 @@ background-repeat: no-repeat;\
 			oLogicDocument.UpdateTracks();
 			oLogicDocument.FinalizeAction();
 		}
+
+		oContent.SkipSpecialContentControlLock(false);
+		oContent.SkipFillingFormModeCheck(false);
 	};
 	asc_docs_api.prototype.asc_SetContentControlDatePickerDate = function(oPr, sId)
 	{
