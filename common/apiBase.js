@@ -3833,6 +3833,9 @@
     	if (!this.asc_canPaste())
     		return;
 
+		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["isSupportMacroses"] && !window["AscDesktopEditor"]["isSupportMacroses"]())
+			return;
+
     	this._beforeEvalCommand();
 		this.macros.runAuto();
 		this._afterEvalCommand(undefined);
@@ -3847,6 +3850,9 @@
 
     	if (!this.asc_canPaste())
     		return;
+
+		if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["isSupportMacroses"] && !window["AscDesktopEditor"]["isSupportMacroses"]())
+			return;
 
     	this._beforeEvalCommand();
 		this.macros.run(sGuid);

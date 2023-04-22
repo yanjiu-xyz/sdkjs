@@ -345,6 +345,9 @@
 		},
 		run : function(guid, variation, data, isNoUse_isNoSystemPluginsOnlyOne)
 		{
+			if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["isSupportPlugins"] && !window["AscDesktopEditor"]["isSupportPlugins"]())
+				return;
+
             var isEnabled = this.api.DocInfo ? this.api.DocInfo.get_IsEnabledPlugins() : true;
 			if (false === isEnabled)
 				return;
