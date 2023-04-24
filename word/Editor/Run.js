@@ -9731,6 +9731,10 @@ ParaRun.prototype.Set_Color = function(Value)
         this.private_UpdateTrackRevisionOnChangeTextPr(true);
     }
 };
+ParaRun.prototype.SetColor = function(color)
+{
+	return this.Set_Color(color);
+};
 
 ParaRun.prototype.Set_Unifill = function(Value, bForce)
 {
