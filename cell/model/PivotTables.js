@@ -6950,7 +6950,6 @@ CT_pivotTableDefinition.prototype.getItemFieldsMap = function(rowItemIndex, colI
 	let searchRowItem = rowItems && rowItems[rowItemIndex];
 	let searchColItem = colItems && colItems[colItemIndex];
 	let pivotFields = this.asc_getPivotFields();
-	let cacheFields = this.asc_getCacheFields();
 	let result = new Map();
 	filterMaps.labelFilters.forEach(function (filter) {
 		result.set(filter.index, filter.map);
