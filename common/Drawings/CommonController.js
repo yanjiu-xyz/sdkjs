@@ -5958,7 +5958,7 @@
 				checkEndAddShape: function () {
 					if (this.checkTrackDrawings()) {
 						this.endTrackNewShape();
-						if (Asc["editor"]) {
+						if (Asc["editor"] && Asc["editor"].wb) {
 							Asc["editor"].asc_endAddShape();
 							var ws = Asc["editor"].wb.getWorksheet();
 							if (ws) {
