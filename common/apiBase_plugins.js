@@ -1549,6 +1549,36 @@
 	};
 
 	/**
+	 * Installs a plugin by the URL to the plugin config.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} configUrl - The plugin config.json url for installing.
+	 * @alias InstallDeveloperPlugin
+	 * @returns {boolean} - Is plugin installed
+	 * @since 7.2.0
+	 */
+	Api.prototype["installDeveloperPlugin"] = function(configUrl)
+	{
+		try
+		{
+			var xhrObj = new XMLHttpRequest();
+			if ( xhrObj )
+			{
+				xhrObj.open('GET', configUrl, false);
+				xhrObj.send('');
+
+				var configJson = JSON.parse(xhrObj.responseText);
+				configJson["baseUrl"] = configUrl.substr(0, configUrl.lastIndexOf("/") + 1);
+
+				installPlugin(configJson, "Installed");
+				return true;
+			}
+		}
+		catch (e) {}
+		return false;
+	};
+
+	/**
     * Shows or hides buttons in the header.
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
