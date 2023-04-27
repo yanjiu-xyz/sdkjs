@@ -4867,6 +4867,9 @@ CPresentation.prototype.deleteGuide = function (sId) {
 	}
 };
 CPresentation.prototype.hitInGuide = function (x, y) {
+	if(!this.Api.asc_getShowGuides()) {
+		return null;
+	}
 	if (this.viewPr) {
 		return this.viewPr.hitInGuide(x, y);
 	}
