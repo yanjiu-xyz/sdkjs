@@ -5997,7 +5997,9 @@
 					this.clearTrackObjects();
 					this.changeCurrentState(new AscFormat.NullState(this, this.drawingObjects));
 					this.updateSelectionState();
-					Asc["editor"] && Asc["editor"].asc_endAddShape();
+					if(Asc["editor"] && Asc["editor"].wb) {
+						Asc["editor"].asc_endAddShape();
+					}
 				},
 
 				resetSelectionState2: function () {
