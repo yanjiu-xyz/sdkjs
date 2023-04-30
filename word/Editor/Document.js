@@ -8963,6 +8963,7 @@ CDocument.prototype.OnKeyDown = function(e)
 				this.StartAction(AscDFH.historydescription_Document_BackSpaceButton);
 				this.Remove(-1, true, false, false, e.CtrlKey, true);
 				this.FinalizeAction();
+				this.private_UpdateCursorXY(true, true);
 			}
 			bRetValue = keydownresult_PreventAll;
 		}
@@ -9181,7 +9182,7 @@ CDocument.prototype.OnKeyDown = function(e)
 			}
 			else if (this.Api.isInkDrawerOn())
 			{
-				this.Api.asc_StopInkDrawer();
+				this.Api.stopInkDrawer();
 			}
 			else if (this.IsFormFieldEditing())
 			{
@@ -9479,6 +9480,7 @@ CDocument.prototype.OnKeyDown = function(e)
 					this.StartAction(AscDFH.historydescription_Document_DeleteButton);
 					this.Remove(1, false, false, false, e.CtrlKey, true);
 					this.FinalizeAction();
+					this.private_UpdateCursorXY(true, true);
 				}
 				bRetValue = keydownresult_PreventAll;
 			}
@@ -10732,15 +10734,34 @@ CDocument.prototype.Select_DrawingObject = function(Id)
 	if (!drawingObject || !drawingObject.IsUseInDocument())
 		return;
 
+	const oDocContent = drawingObject.GetDocumentContent();
+	if(!oDocContent)
+		return;
+
 	this.RemoveSelection();
 
 	// Прячем курсор
 	this.DrawingDocument.TargetEnd();
 	this.DrawingDocument.SetCurrentPage(this.CurPage);
 
-	this.Selection.Start = false;
-	this.Selection.Use   = true;
-	this.SetDocPosType(docpostype_DrawingObjects);
+	const oHdrFtr = oDocContent.IsHdrFtr(true);
+	if (!oHdrFtr)
+	{
+		this.Selection.Start = false;
+		this.Selection.Use   = true;
+		this.SetDocPosType(docpostype_DrawingObjects);
+	}
+	else
+	{
+		this.SetDocPosType(docpostype_HdrFtr);
+		this.Selection.Start = false;
+		this.Selection.Use   = true;
+		const oDocContent = oHdrFtr.Content;
+		oDocContent.SetDocPosType(docpostype_DrawingObjects);
+		oDocContent.Selection.Use   = true;
+		oDocContent.Selection.Start = true;
+	}
+
 	this.DrawingObjects.selectById(Id, this.CurPage);
 
 	this.Document_UpdateInterfaceState();
@@ -21845,6 +21866,7 @@ CDocument.prototype.MoveToFillingForm = function(isNext)
 	else if ((oForm = oInfo.GetField()) instanceof ParaField)
 		oForm.SelectThisElement();
 
+	this.DrawingObjects.resetDrawStateBeforeAction();
 	var oRes = null;
 	if (docpostype_DrawingObjects === this.GetDocPosType())
 	{
@@ -22032,6 +22054,7 @@ CDocument.prototype.AddContentControl = function(nContentControlType)
 {
 	if (this.IsDrawingSelected() && !this.DrawingObjects.getTargetDocContent())
 	{
+		this.DrawingObjects.resetDrawStateBeforeAction();
 		var oDrawing = this.DrawingObjects.getMajorParaDrawing();
 		if (oDrawing)
 			oDrawing.SelectAsText();
@@ -25483,6 +25506,9 @@ CDocument.prototype.ConvertFormFixedType = function(sId, isToFixed)
 	var oParagraph = oForm.GetParagraph();
 	if (oParagraph)
 	{
+		if (isToFixed && oParagraph.GetParentShape())
+			return false;
+		
 		isLocked = this.IsSelectionLocked(AscCommon.changestype_None, {
 			Type      : AscCommon.changestype_2_ElementsArray_and_Type,
 			Elements  : [oParagraph],
@@ -26563,6 +26589,7 @@ CDocument.prototype.GetSearchElementId = function(bNext)
 
 	this.SearchEngine.SetDirection(bNext);
 
+	this.DrawingObjects.resetDrawStateBeforeAction();
 	if (docpostype_DrawingObjects === this.CurPos.Type)
 	{
 		var ParaDrawing = this.DrawingObjects.getMajorParaDrawing();

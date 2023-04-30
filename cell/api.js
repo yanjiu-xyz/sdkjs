@@ -2307,7 +2307,7 @@ var editor;
 					wb.init(initOpenManager.oReadResult.tableCustomFunc, initOpenManager.oReadResult.tableIds, initOpenManager.oReadResult.sheetIds, false, true);
 				} else {
 					readSheetDataExternal(true);
-					if (window["Asc"] && window["Asc"]["editor"] !== undefined) {
+					if (Asc["editor"] && Asc["editor"].wb) {
 						wb.init(initOpenManager.oReadResult.tableCustomFunc, initOpenManager.oReadResult.tableIds, initOpenManager.oReadResult.sheetIds, true);
 					}
 				}
@@ -4913,6 +4913,8 @@ var editor;
       this.asc_endAddShape();
       return false;
     }
+	this.stopInkDrawer();
+	this.cancelEyedropper();
     this.isStartAddShape = this.controller.isShapeAction = true;
     ws.objectRender.controller.startTrackNewShape(sPreset);
   };
@@ -8499,6 +8501,10 @@ var editor;
 				}
 			});
 		}
+
+		res.sort(function (a, b) {
+			return a.name > b.name ? 1 : -1;
+		});
 
 		return res;
 	};
