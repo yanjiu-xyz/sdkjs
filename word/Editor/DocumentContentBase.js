@@ -2414,7 +2414,7 @@ CDocumentContentBase.prototype.private_RecalculateNumbering = function(elements)
 		{
 			history.Add_RecalcNumPr(elements[iElement].GetNumPr());
 		}
-		else if (Element.GetAllParagraphs)
+		else if (elements[iElement].GetAllParagraphs)
 		{
 			let paragraphs = elements[iElement].GetAllParagraphs({All : true});
 			for (let iPara = 0, nParas = paragraphs.length; iPara < nParas; ++iPara)
