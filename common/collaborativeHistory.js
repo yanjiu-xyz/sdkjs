@@ -48,11 +48,10 @@
 
 		this.SyncIndex = -1; // Позиция в массиве изменений, которые согласованы с сервером
 
-		this.IsRestoreDeletedText = false;
 		this.m_RewiewPoints = [];
 		this.m_RewiewDelPoints = [];
 		this.m_RewiewIndex = 0;
-		this.m_RewiewIndexToDel = null;
+		this.m_PreparedData = [];
 	}
 
 	CCollaborativeHistory.prototype.AddChange = function(change)
@@ -155,6 +154,7 @@
 
 		return count ? this.UndoGlobalChanges(count) : [];
 	};
+
 	/**
 	 * Отменяем собственные последние действия, прокатывая их через чужие
 	 * @returns {[]} возвращаем массив новых действий
@@ -193,12 +193,10 @@
 
 			let data = AscCommon.CCollaborativeChanges.ToBase64(historyItem.Binary.Pos, historyItem.Binary.Len);
 			changesToSend.push(data);
-
 			changesToRecalc.push(historyChange);
 		}
 		AscCommon.History.Remove_LastPoint();
 		this.CoEditing.Clear_DCChanges();
-
 		editor.CoAuthoringApi.saveChanges(changesToSend, null, null, false, this.CoEditing.getCollaborativeEditing());
 
 		return changesToRecalc;
@@ -214,75 +212,6 @@
 				changes.push(tempChange);
 		}
 		return changes;
-	};
-	CCollaborativeHistory.prototype.InitNavigationRevisionHistory = function ()
-	{
-		let context = this;
-		if (this.Changes === 0)
-			return;
-
-		function ChangeIterator()
-		{
-			this.index = 0;
-			this.changes = context.Changes;
-			this.arrCurrentChanges = [];
-			this.arrDelChanges = [];
-			this.Init();
-		}
-		ChangeIterator.prototype.Init = function()
-		{
-			while(this.index < this.changes.length)
-			{
-				let arrDelChanges = [];
-				let arrCurrentArray = [];
-				let isSplit = false;
-
-				const GetBlockIfChangeIsCChangesBase = function (context)
-				{
-					arrCurrentArray.push(context.changes[context.index]);
-					context.index++;
-					return context.changes[context.index].IsDescriptionChange();
-				}
-
-				let oCurrentBlock = (this.changes[this.index] instanceof AscDFH.CChangesBase && arrCurrentArray.length === 0)
-					? GetBlockIfChangeIsCChangesBase(this)
-					: this.changes[this.index].IsDescriptionChange()
-
-				while (
-					(this.changes[this.index] && this.changes[this.index].IsDescriptionChange() === oCurrentBlock) ||
-					(this.changes[this.index]?.Description === 135 || this.changes[this.index] instanceof CChangesRunRemoveItem) && (this.changes[this.index - 1]?.Description === 135 || this.changes[this.index - 1] instanceof CChangesRunRemoveItem)
-					)
-				{
-					let curr_change = this.changes[this.index++];
-
-					if (this.changes[this.index - 1] instanceof CChangesRunRemoveItem)
-						arrDelChanges.push(curr_change);
-
-					if (isSplit === true)
-						break;
-
-					arrCurrentArray.push(curr_change);
-				}
-
-				if (!isSplit)
-				{
-					this.arrCurrentChanges.push(arrCurrentArray.reverse());
-					for (let i = 0; i < arrDelChanges.length; i++)
-					{
-						this.arrDelChanges.push(arrDelChanges[i]);
-					}
-				}
-				isSplit = false;
-			}
-
-
-		}
-
-		let oContent = new ChangeIterator(this);
-
-		this.m_RewiewPoints = oContent.arrCurrentChanges.reverse();
-		this.m_RewiewIndexToDel = this.Changes.length;
-		this.GetDeleteTypeChanges();
 	};
 	CCollaborativeHistory.prototype.GetDeleteTypeChanges = function()
 	{
@@ -314,9 +243,9 @@
 	};
 	CCollaborativeHistory.prototype.UndoChangeWithDeletedText = function ()
 	{
-		if (this.Changes.length > this.m_RewiewIndexToDel)
+		if (this.Changes.length > this.m_RewiewIndex)
 		{
-			this.Changes.length = this.m_RewiewIndexToDel;
+			this.Changes.length = this.m_RewiewIndex;
 			this.ReviewUndoBlock(this.m_RewiewPoints.shift());
 		}
 	};
@@ -356,7 +285,6 @@
 
 		this.ClearReviewPoints();
 	};
-
 	CCollaborativeHistory.prototype.private_RemoveDeletedTextFromHistoryPoint = function (AddHistoryPoint, Index)
 	{
 		let oLastChange = AddHistoryPoint[AddHistoryPoint.length - 1];
@@ -385,268 +313,592 @@
 		}
 	}
 
-	CCollaborativeHistory.prototype.private_DeleteData = function(arrStartEndPos, FutureRemovePoint, AddHistoryPoint) {
-		if (!Array.isArray(FutureRemovePoint[0]) || FutureRemovePoint[0] === undefined)
-			return;
+	// Инициализация и обработка изменений
+	CCollaborativeHistory.prototype.InitRevision = function(isNotRefresh)
+	{
+		let arrChanges 			= this.Changes;
+		let arrCurrent		= [];
+		let arrTemp			= [];
+		let arrDelChanges 	= [];
 
-		let intStartPos = FutureRemovePoint[0].PosArray[0];
-
-		for (let nCount = 0; nCount < FutureRemovePoint.length; nCount++)
+		// разделяем по типу изменений
+		for (let i = 0; i < arrChanges.length; i++)
 		{
-			let currentChange = FutureRemovePoint[nCount];
+			let oCurrentChange = arrChanges[i];
+			let oPrevChange = i === 0 ? undefined : arrChanges[i - 1];
 
-			if (!(currentChange && currentChange.PosArray))
-				continue;
-
-			if (currentChange.PosArray[0] >= arrStartEndPos[0] && currentChange.PosArray[0] <= arrStartEndPos[1])
+			if (oCurrentChange instanceof CChangesRunRemoveItem
+				|| oCurrentChange instanceof CChangesParagraphRemoveItem
+				|| oCurrentChange instanceof CChangesDocumentRemoveItem)
 			{
-				FutureRemovePoint.splice(nCount, 2, [], []);
-
-				if (AddHistoryPoint)
-					this.DeleteChangesFromAddHistoryPoint(currentChange.PosArray[0], AddHistoryPoint);
-
-				intStartPos += 1;
-				nCount++;
+				arrDelChanges.push([arrCurrent.length, oCurrentChange]);
 			}
 
-			if (AddHistoryPoint.length === 1)
-				return true;
-		}
-	};
-	CCollaborativeHistory.prototype.DeleteChangesFromAddHistoryPoint = function (index, Point)
-	{
-		if (!Point)
-			return;
+			if (oPrevChange && (oPrevChange instanceof AscCommon.CChangesTableIdDescription || oPrevChange.IsDescriptionChange() === oCurrentChange.IsDescriptionChange()))
+			{
+				arrTemp.push(oCurrentChange);
+			}
+			else
+			{
+				if (arrTemp.length > 0)
+				{
+					arrCurrent.push(arrTemp);
+					arrTemp = [];
+				}
 
-		for (let i = Point.length - 2; i >= 0; i--)
-		{
-			if (Point[i].PosArray && Point[i].PosArray[0] === index)
-				return Point.splice(i, 1);
+				arrTemp = [oCurrentChange]
+			}
 		}
+		if (arrTemp.length > 0)
+		{
+			arrCurrent.push(arrTemp);
+			arrTemp = [];
+		}
+
+		const isRemovedAfter = function (nCountInArray, oChange)
+		{
+			for (let i = nCountInArray + 1; i < arrCurrent.length; i++)
+			{
+				let arrCurrentElement = arrCurrent[i];
+
+				for (let j = 0; j < arrCurrentElement.length; j++)
+				{
+					let oCurrentChange = arrCurrentElement[j];
+
+					if (oCurrentChange.Class !== oChange.Class)
+						continue;
+
+					if (oCurrentChange instanceof AscCommon.CChangesTableIdDescription)
+						continue;
+
+					//  позиции совпадают & контент совпадает & и ParaRun один и тот же
+				    let isSame = oCurrentChange.PosArray && oChange.PosArray &&
+											oCurrentChange.PosArray[0] 			=== oChange.PosArray[0]
+											&& oCurrentChange.Items[0].Value 	=== oChange.Items[0].Value
+											&& oCurrentChange.Class 			=== oChange.Class;
+
+					if (isSame)
+					{
+						// удаляем текущее изменение
+						arrCurrentElement.splice(j, 1);
+						return true
+					}
+				}
+			}
+			return false;
+		}
+
+		// убираем из массива изменения, которые добавляют удаленный текст (до того как его удалили)
+		if (arrCurrent.length > 1)
+		{
+			for (let i = 0; i < arrCurrent.length; i++)
+			{
+				let arrCurrentElement = arrCurrent[i];
+				for (let j = 0; j < arrCurrentElement.length; j++)
+				{
+					let oCurrentChange = arrCurrentElement[j];
+
+					if (oCurrentChange instanceof AscCommon.CChangesTableIdDescription)
+						continue;
+
+					if (true === isRemovedAfter(i, oCurrentChange))
+					{
+						arrCurrentElement.splice(j, 1);
+						j--;
+					}
+				}
+			}
+		}
+
+		// убираем изменения состоящие только из AscCommon.CChangesTableIdDescription (так как эти изменения были убраны из массива)
+		for (let i = 0; i < arrCurrent.length; i++)
+		{
+			let arrCurrentElement = arrCurrent[i];
+
+			if (arrCurrentElement === undefined)
+				i++;
+
+			if (arrCurrentElement.length === 1)
+				arrCurrentElement.length = 0;
+		}
+
+		this.m_RewiewPoints = arrCurrent;
+		this.m_RewiewIndex = this.m_RewiewPoints.length;
+		this.m_RewiewDelPoints = arrDelChanges;
+	};
+	// Подготовка данных для отображения удаленного теста, зависит от текущей позиции
+	CCollaborativeHistory.prototype.SplitDelPointByClass = function ()
+	{
+		let arrDel = [];
+		let arrTempSaver = [];
+
+		let arrCurrentPoint 	= undefined;
+		let nCurrentPoint		= undefined;
+		let oCurrentDelPoint	= undefined;
+		let nCurrentPos			= undefined;
+
+		let arrPreviousPoint 	= undefined;
+		let nPrevPoint		= undefined;
+		let oPrevDelPoint		= undefined;
+		let nPrevPos			= undefined;
+
+		let arrNextPoint 	= undefined;
+		let nNextPoint		= undefined;
+		let oNextDelPoint		= undefined;
+		let nNextPos			= undefined;
+
+		let GetCurrent = function (context, nCounter)
+		{
+			arrCurrentPoint 	= context.m_RewiewDelPoints[nCounter];
+			nCurrentPoint		= arrCurrentPoint ? arrCurrentPoint[0] 				: undefined;
+			oCurrentDelPoint	= arrCurrentPoint ? arrCurrentPoint[1] 				: undefined;
+			nCurrentPos			= arrCurrentPoint ? oCurrentDelPoint.PosArray[0] 	: undefined;
+		}
+		let GetPrev = function (context, nCounter)
+		{
+			arrPreviousPoint 	= (nCounter - 1 >= 0) ? context.m_RewiewDelPoints[nCounter - 1] : undefined;
+			nPrevPoint			= arrPreviousPoint ? arrPreviousPoint[0] 						: undefined;
+			oPrevDelPoint		= arrPreviousPoint ? arrPreviousPoint[1] 						: undefined;
+			nPrevPos			= arrPreviousPoint ? oPrevDelPoint.PosArray[0] 					: undefined;
+		}
+		let GetNext = function (context, nCounter)
+		{
+			arrNextPoint 	= (nCounter + 1 < context.m_RewiewDelPoints.length) ? context.m_RewiewDelPoints[nCounter + 1] : undefined;
+			nNextPoint			= arrPreviousPoint ? arrPreviousPoint[0] 						: undefined;
+			oNextDelPoint		= arrPreviousPoint ? arrPreviousPoint[1] 						: undefined;
+			nNextPos			= arrPreviousPoint ? oPrevDelPoint.PosArray[0] 					: undefined;
+		}
+
+		for (let nCounter = 0; nCounter < this.m_RewiewDelPoints.length; nCounter++)
+		{
+			GetCurrent(this, nCounter);
+			GetPrev(this, nCounter);
+			GetNext(this, nCounter);
+
+			if (this.m_RewiewIndex <= nCurrentPoint - 1 && oNextDelPoint && oCurrentDelPoint.Class === oNextDelPoint.Class)
+			{
+				this.m_PreparedData = arrDel;
+				return
+			}
+
+			if (this.m_RewiewIndex <= nCurrentPoint - 1)
+				break;
+
+			if (arrPreviousPoint && oCurrentDelPoint.Class === oPrevDelPoint.Class && nPrevPos === nCurrentPos + 1)
+			{
+				arrTempSaver.push(arrCurrentPoint);
+			}
+			else
+			{
+				if (arrTempSaver.length > 0)
+				{
+					arrDel.push(arrTempSaver);
+					arrTempSaver = [];
+				}
+				arrTempSaver = [arrCurrentPoint];
+			}
+		}
+
+		if (arrTempSaver.length > 0)
+		{
+			arrDel.push(arrTempSaver);
+		}
+
+		this.m_PreparedData = arrDel;
+	};
+	// Отображение удаленного текста
+	CCollaborativeHistory.prototype.ShowDel = function ()
+	{
+		this.UndoPoints();
+		AscCommon.History.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_DeletedTextRecovery);
+
+		this.SplitDelPointByClass();
+		this.GetDelText();
+
+		let changes = this.GetChangesFormHistory();
+		editor.WordControl.m_oLogicDocument.RecalculateByChanges(changes);
 	};
 	CCollaborativeHistory.prototype.NavigationRevisionHistory = function (isRedo)
 	{
-		if (this.IsRestoreDeletedText)
-			this.UndoChangeWithDeletedText();
+		let changes = [];
+		this.UndoPoints();
 
-		if (!this.IsRestoreDeletedText)
-			this.RemoveDeletedTextFromHistory();
+		changes = this.NavigationRevisionHistoryByCount(isRedo ? -1 : 1, false);
+		this.Check();
 
-		if (isRedo)
-			this.NavigationRevisionHistoryByCount(this.m_RewiewIndex - 1);
-		else
-			this.NavigationRevisionHistoryByCount(this.m_RewiewIndex + 1);
+		if (!changes || !Array.isArray(changes))
+			changes = [];
 
-		if (this.IsRestoreDeletedText)
-			this.GetDeletedText();
-
-		editor.WordControl.m_oLogicDocument.RecalculateFromStart();
+		editor.WordControl.m_oLogicDocument.RecalculateByChanges(changes);
 	};
-	CCollaborativeHistory.prototype.NavigationRevisionHistoryByCount = function (intCount)
+	CCollaborativeHistory.prototype.NavigationRevisionHistoryByCount = function (intCount, isSkipFirst)
 	{
-		if (
-			intCount === undefined 				||
-			intCount === this.m_RewiewIndex 	||
-			intCount < 0 						||
-			intCount > this.m_RewiewPoints.length - 1
-		)
-			return;
-
-		let arrChange = [];
-
-		if (intCount < this.m_RewiewIndex)
+		let FindRules = function (context, isMore, i, isSkipFirst)
 		{
-			for (let i = this.m_RewiewIndex; i > intCount; i--)
+			if (context.m_RewiewPoints.length === 1)
 			{
-				this.ReviewRedoBlock(this.m_RewiewPoints[i - 1], arrChange);
+				isSkipFirst = false;
 			}
-			this.m_RewiewIndex = intCount;
-		}
-		else
-		{
-			for (let i = this.m_RewiewIndex; i < intCount; i++)
+
+			if (isMore)
 			{
-				this.ReviewUndoBlock(this.m_RewiewPoints[i], arrChange);
-			}
-			this.m_RewiewIndex = intCount;
-		}
-
-		if (this.IsRestoreDeletedText)
-			this.GetDeleteTypeChanges();
-	};
-	CCollaborativeHistory.prototype.ReviewUndoBlock = function(arrBlock)
-	{
-		for (let j = 0; j < arrBlock.length; j++) {
-			let change = arrBlock[j];
-
-			if (!change)
-				continue;
-
-			if (change.IsContentChange())
-			{
-				let simpleChanges = change.ConvertToSimpleChanges();
-				for (let simpleIndex = 0; simpleIndex < simpleChanges.length; simpleIndex++)
+				for (let j = i; j < context.m_RewiewPoints.length; j++)
 				{
-					simpleChanges[simpleIndex].Undo();
+					let arrCurrent = context.m_RewiewPoints[j];
+					if (arrCurrent && arrCurrent.length !== 0)
+					{
+						if (isSkipFirst)
+						{
+							isSkipFirst = false;
+							continue;
+						}
+						return [arrCurrent, j]
+					}
+
 				}
 			}
 			else
-				change.Undo();
+			{
+				for (let j = i; j >= 0; j--)
+				{
+					let arrCurrent = context.m_RewiewPoints[j];
+					if (arrCurrent && arrCurrent.length !== 0)
+					{
+						if (isSkipFirst)
+						{
+							isSkipFirst = false;
+							continue;
+						}
+						return [arrCurrent, j]
+					}
+				}
+			}
+			return false;
 		}
+
+		let arrChange = [];
+		intCount = this.m_RewiewIndex + intCount;
+
+		if (intCount === 0)
+			return arrChange;
+
+		if (intCount <= this.m_RewiewIndex)
+		{
+			let oRule = FindRules(this, false, this.m_RewiewIndex, isSkipFirst);
+			if (oRule !== false)
+			{
+				let arrChanges = oRule[0];
+				this.m_RewiewIndex = oRule[1] - 1;
+				this.ReviewUndoBlock(arrChanges, arrChange);
+			}
+		}
+		else
+		{
+			let oRule = FindRules(this, true,  this.m_RewiewIndex, isSkipFirst);
+			if (oRule !== false)
+			{
+				let arrChanges = oRule[0];
+				this.m_RewiewIndex = oRule[1] + 1;
+				this.ReviewRedoBlock(arrChanges.slice(0, arrChanges.length).reverse(), arrChange);
+			}
+		}
+
+		for (let i = 0; i < arrChange.length; i++)
+		{
+			arrChange[i] = arrChange[i].Data;
+		}
+
+		return arrChange;
 	};
-	CCollaborativeHistory.prototype.ReviewRedoBlock = function(arrBlock)
+	CCollaborativeHistory.prototype.ReviewUndoBlock = function(arrBlock, arrChanges)
 	{
 		for (let j = arrBlock.length - 1; j >= 0; j--)
 		{
-			let change = arrBlock[j];
+			let oChange = arrBlock[j];
 
-			if (!change)
-				continue;
-			if (change.IsContentChange())
+			if (oChange.Items)
 			{
-				let simpleChanges = change.ConvertToSimpleChanges();
-				for (let simpleIndex = 0; simpleIndex < simpleChanges.length; simpleIndex++)
+				for (let i = 0; i < oChange.Items.length; i++)
 				{
-					simpleChanges[simpleIndex].Redo();
+					console.log(String.fromCharCode(oChange.Items[i].Value));
 				}
 			}
-			else
-				change.Redo();
-		}
-	};
-	CCollaborativeHistory.prototype.PushDataDelPoints = function(arr)
-	{
-		this.m_RewiewPoints.unshift(arr);
-	};
-	CCollaborativeHistory.prototype.UndoToChanges = function(arrBlock, changeArray)
-	{
-		for (let j = 0; j < arrBlock.length; j++) {
-			let change = arrBlock[j];
 
-			if (!change)
+			if (!oChange)
 				continue;
 
-			if (change.IsContentChange())
-			{
-				let simpleChanges = change.ConvertToSimpleChanges();
-				for (let simpleIndex = 0; simpleIndex < simpleChanges.length; simpleIndex++)
-				{
-					changeArray.push(simpleChanges[simpleIndex].CreateReverseChange());
-					changeArray[changeArray.length - 1].Redo();
-				}
-			}
-			else
-			{
-				changeArray.push(change.CreateReverseChange());
-				changeArray[changeArray.length - 1].Redo();
-			}
+			this.RedoUndoChange(oChange, false, arrChanges);
 		}
 	};
-	CCollaborativeHistory.prototype.GetDeletedText = function()
+	CCollaborativeHistory.prototype.ReviewRedoBlock = function(arrBlock, arrChanges)
 	{
-		let changeArray = [];
-		let arrContentDel = [];
-
-		function one(obj, isStart) {
-
-			for (let i = 0; i < arrContentDel.length; i++) {
-
-				arrContentDel[i][0] += 1;
-				arrContentDel[i][1] += 1;
-
-				if (obj[2] === arrContentDel[i][2])
-				{
-					let count = obj[1] - obj[0];
-					arrContentDel[i][0] += count;
-					arrContentDel[i][1] += count;
-				}
-			}
-			arrContentDel.push(obj);
-			isPushed = true;
-		}
-
-		let pointIndex = AscCommon.History.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_DeletedTextRecovery);
-
-		let intStartPos = 0;
-		let intEndPos = 0;
-		let strCurrentId = null;
-		let isPushed = true;
-
-		for (let i = 0; i < this.m_RewiewDelPoints.length; i++)
+		for (let j = arrBlock.length - 1; j >= 0; j--)
 		{
-			let oCurrentChange = this.m_RewiewDelPoints[i];
+			let oChange = arrBlock[j];
 
-			if (strCurrentId !== oCurrentChange.Class.Id || isPushed)
+			if (!oChange)
+				continue;
+
+			if (oChange.Items)
 			{
-				strCurrentId = oCurrentChange.Class.Id;
-				intEndPos = intStartPos = oCurrentChange.PosArray[0];
-				isPushed = false;
-			}
-			else if (intStartPos < oCurrentChange.PosArray[0])
-			{
-				intEndPos = oCurrentChange.PosArray[0];
-				isPushed = false;
+				for (let i = 0; i < oChange.Items.length; i++)
+				{
+					console.log(String.fromCharCode(oChange.Items[i].Value));
+				}
 			}
 
-			if (this.m_RewiewDelPoints.length - 1 === i || (this.m_RewiewDelPoints[i + 1] && (this.m_RewiewDelPoints[i + 1].Class.Id !== oCurrentChange.Class.Id) || (this.m_RewiewDelPoints[i + 1].PosArray[0] <  intEndPos)))
-				one([intStartPos, intEndPos, oCurrentChange.Class], i === this.m_RewiewDelPoints.length - 1);
-
-			this.UndoToChanges([oCurrentChange], changeArray);
+			this.RedoUndoChange(oChange, true, arrChanges);
 		}
-
-		if (arrContentDel.length < 1)
+	};
+	CCollaborativeHistory.prototype.RedoUndoChange = function (change, isRedo, arrToSave)
+	{
+		if (!change)
 			return;
 
-		let startPoint = arrContentDel[arrContentDel.length - 1]
-		if (startPoint[0] === 0) {
-			startPoint[1]++;
-		}
-
-		for (let i = 0; i < arrContentDel.length; i++)
+		if (change.IsContentChange())
 		{
-			let CurrentBlock = arrContentDel[i];
-			let firstElement, secondElement;
+			let simpleChanges = change.ConvertToSimpleChanges();
 
-			if (CurrentBlock[0] !== 0)
+			for (let simpleIndex = simpleChanges.length - 1; simpleIndex >= 0; simpleIndex--)
 			{
-				firstElement = CurrentBlock[2].Split_Run(CurrentBlock[0]);
-				let pos = CurrentBlock[2].Get_Position();
-				CurrentBlock[2].Parent.Add_ToContent(pos + 1, firstElement);
-			}
+				if (isRedo)
+					simpleChanges[simpleIndex].Redo();
+				else
+					simpleChanges[simpleIndex].Undo();
 
-			if (firstElement)
-			{
-				secondElement = firstElement.Split_Run(CurrentBlock[1] - CurrentBlock[0] + 1);
-				firstElement.SetStrikeout(true);
-				let pos = firstElement.Get_Position();
-				firstElement.Parent.Add_ToContent(pos + 2, secondElement);
+				arrToSave.push({Data:simpleChanges[simpleIndex]});
 			}
+		}
+		else
+		{
+			if (isRedo)
+				change.Redo();
 			else
+				change.Undo();
+
+			arrToSave.push({Data: change});
+		}
+	};
+	CCollaborativeHistory.prototype.UndoTemp = function ()
+	{
+		let reverseChanges = this.GetReverseTemp();
+		if (reverseChanges.length <= 0)
+			return [];
+
+		return reverseChanges;
+	};
+	CCollaborativeHistory.prototype.UndoPoints = function ()
+	{
+		let localHistory = AscCommon.History
+
+		if (localHistory.Points.length > 0)
+		{
+			//let state   = this.CoEditing.PreUndo();
+			let changes = this.UndoTemp();
+			let oHistoryPoint = localHistory.Points[localHistory.Points.length - 1];
+			AscCommon.History.private_UndoPoint(oHistoryPoint, changes);
+			AscCommon.History.Remove_LastPoint();
+			this.CoEditing.Clear_DCChanges();
+			editor.WordControl.m_oLogicDocument.RecalculateFromStart();
+			return true
+		}
+
+	};
+	CCollaborativeHistory.prototype.GetChangesFormHistory = function ()
+	{
+		let arr = [];
+		let localHistory = AscCommon.History
+		let oHistoryPoint = localHistory.Points[localHistory.Points.length - 1];
+
+		for (let i = 0; i < oHistoryPoint.Items.length; i++)
+		{
+			let oChange = oHistoryPoint.Items[i];
+			arr.push(oChange.Data);
+		}
+
+		return arr;
+	};
+	// и нужно помнить что Paragraph нужно тоже обработать, а не только ParaRun
+
+	CCollaborativeHistory.prototype.Check = function ()
+	{
+		let oChanged = this.CoEditing.m_aChangedClasses;
+		let arrKeys = Object.keys(oChanged);
+
+		for (let i = 0; i < arrKeys.length; i++)
+		{
+			let one = oChanged[arrKeys[i]];
+
+			if (one instanceof ParaRun)
 			{
-				firstElement = CurrentBlock[2].Split_Run(CurrentBlock[1]);
-				CurrentBlock[2].SetStrikeout(true);
-				let pos = CurrentBlock[2].Get_Position();
-				CurrentBlock[2].Parent.Add_ToContent(pos + 1, firstElement);
+				let CollaborativeMarks = one.CollaborativeMarks;
+				let arrRanges = CollaborativeMarks.Ranges;
+				let oRange = arrRanges[0];
+				oRange.PosE = one.Content.length;
 			}
 		}
-		AscCommon.History.Update_PointInfoItem(pointIndex, pointIndex, pointIndex, 0, null);
+	};
+	CCollaborativeHistory.prototype.GetDelText = function ()
+	{
+		let localHistory = AscCommon.History;
+		let arrCurrentPoint = localHistory.Points[0].Items;
+		let arrSplits = [];
+		let arr = this.CoEditing.m_aChangedClasses;
 
-		let oHistoryPoint = AscCommon.History.Points[pointIndex];
-		for (let nIndex = 0, nCount = oHistoryPoint.Items.length; nIndex < nCount; ++nIndex)
+		debugger
+
+		let historyStore = this.CoEditing
+			.m_oLogicDocument
+			.Api
+			.CoAuthoringApi
+			._CoAuthoringApi
+			._participants;
+
+		let one = new CReviewInfo();
+
+
+
+
+		for (let nCounter = this.m_PreparedData.length - 1; nCounter >= 0; nCounter--)
 		{
-			changeArray.push(oHistoryPoint.Items[nIndex].Data);
+			let arrCurrentDel = this.m_PreparedData[nCounter];
+			let nStartPos = 0;
+			let nEndPos = 0;
+
+			for (let nCount = arrCurrentDel.length - 1; nCount >= 0; nCount--)
+			{
+				let aCurrentDel = arrCurrentDel[nCount];
+				let oCurrDel 	= aCurrentDel[1];
+				let oDelChange 	= oCurrDel.CreateReverseChange();
+
+				if (nCount === arrCurrentDel.length - 1)
+					nStartPos = oDelChange.PosArray[0];
+
+				this.RedoUndoChange(oDelChange, true, arrCurrentPoint);
+
+				if (oDelChange.Class instanceof CDocument)
+				{
+					let arrParagraphsInDocument = oDelChange.Items;
+					for (let nCounterParagraph = 0; nCounterParagraph < arrParagraphsInDocument.length; nCounterParagraph++)
+					{
+						let oCurrentParagraph = arrParagraphsInDocument[nCounterParagraph];
+						oCurrentParagraph.SetReviewType(1);
+
+						let arrRunsInParagraph = oCurrentParagraph.Content;
+						for (let nCounterRuns = 0; nCounterRuns < arrRunsInParagraph.length; nCounterRuns++)
+						{
+							let oCurrentRun = arrRunsInParagraph[nCounterRuns];
+							oCurrentRun.SetReviewType(1);
+						}
+					}
+					return;
+				}
+				else if (nCount === 0 && (oDelChange.Class instanceof ParaRun || oDelChange.Class instanceof Paragraph))
+				{
+					if (oDelChange.PosArray.length > 1)
+						nEndPos = oDelChange.PosArray.length;
+					else
+						nEndPos = oDelChange.PosArray[0];
+
+					if (nStartPos === 0 && nEndPos === oDelChange.Class.Content.length)
+					{
+						oDelChange.Class.SetReviewType(1);
+					}
+					else if (nStartPos === nEndPos)
+					{
+						let oParent 	= oDelChange.Class.GetParent();
+						let RunPos 		= oDelChange.Class.private_GetPosInParent(oParent);
+						let RightRun 	= oDelChange.Class.Split2AndSpreadCollaborativeMark(arrSplits, nStartPos);
+
+						oParent.Add_ToContent(RunPos + 1, RightRun);
+						let oNewer = RightRun.Split2AndSpreadCollaborativeMark(arrSplits, 1);
+
+						oParent.Add_ToContent(RunPos + 2, oNewer);
+						RightRun.SetReviewType(1);
+					}
+					else
+					{
+						let oParent 	= oDelChange.Class.GetParent();
+						let RunPos 		= oDelChange.Class.private_GetPosInParent(oParent);
+						let RightRun 	= oDelChange.Class.Split2AndSpreadCollaborativeMark(arrSplits, nStartPos);
+
+						oParent.Add_ToContent(RunPos + 1, RightRun);
+
+						if (RightRun.Content.length > 1)
+						{
+							let RunPos 	= RightRun.private_GetPosInParent(oParent);
+							let oNewer 	= RightRun.Split2AndSpreadCollaborativeMark(arrSplits, arrCurrentDel.length);
+
+							oParent.Add_ToContent(RunPos + 1, oNewer);
+							RightRun.SetReviewType(1);
+						}
+					}
+				}
+			}
 		}
 
-		AscCommon.History.Remove_LastPoint();
-		this.CoEditing.Clear_DCChanges();
+		let ProceedParaRun = function(oParaRun)
+		{
+			let CurrentRanges = oParaRun.CollaborativeMarks.Ranges;
+			let oFirstRange = CurrentRanges[0];
+			if (oFirstRange)
+				oFirstRange.PosE = oParaRun.Content.length;
+		}
 
-		this.Changes = this.Changes.concat(changeArray);
-		this.PushDataDelPoints(changeArray.reverse());
+		for (let i = 0; i < arrSplits.length; i++)
+		{
+			let oCurrentElement = arrSplits[i];
+
+			if (oCurrentElement instanceof ParaRun)
+			{
+				ProceedParaRun(oCurrentElement);
+			}
+			else if (oCurrentElement instanceof Paragraph)
+			{
+				let arrContent = oCurrentElement.Content;
+				for (let i = 0; i < arrContent; i++)
+				{
+					let oCurrentRun = arrContent[i];
+					//ProceedParaRun(oCurrentRun);
+				}
+			}
+		}
 	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	CCollaborativeHistory.prototype.GetReverseTemp = function()
+	{
+		let localHistory = AscCommon.History;
+		let arrCurrentPoint = localHistory.Points[0].Items;
+
+		if (arrCurrentPoint <= 0)
+			return [];
+
+		let arrChanges = [];
+		for (let nIndex = arrCurrentPoint.length - 1; nIndex >= 0; --nIndex)
+		{
+			let oChange = arrCurrentPoint[nIndex].Data;
+			if (!oChange)
+				continue;
+			else
+				arrChanges.push(oChange);
+		}
+
+		let arrReverseChanges = [];
+		for (let nIndex = 0, nCount = arrChanges.length; nIndex < nCount; ++nIndex)
+		{
+			let oReverseChange = arrChanges[nIndex].CreateReverseChange();
+			if (oReverseChange)
+			{
+				arrReverseChanges.push(oReverseChange);
+				oReverseChange.SetReverted(true);
+			}
+		}
+
+		return arrReverseChanges;
+	};
 	CCollaborativeHistory.prototype.GetReverseOwnChanges = function()
 	{
 		// На первом шаге мы заданнуюю пачку изменений коммутируем с последними измениями. Смотрим на то какой набор
@@ -733,13 +985,11 @@
 							break;
 						}
 					}
-
 					oTempChange.ConvertFromSimpleActions(arrOtherActions);
 				}
 
 				if (!oResult)
 					break;
-
 			}
 
 			if (null !== oResult)

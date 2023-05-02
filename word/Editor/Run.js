@@ -2896,7 +2896,30 @@ ParaRun.prototype.SplitNoDuplicate = function(oContentPos, nDepth, oNewParagraph
 
 	oNewParagraph.AddToContent(oNewParagraph.Content.length, oNewRun, false);
 };
+ParaRun.prototype.Split2AndSpreadCollaborativeMark = function(arrChange, CurPos, Parent, ParentPos)
+{
+	let isNot = true;
 
+	for (let i = 0; i < arrChange.length; i++)
+	{
+		if (arrChange[i].Id === this)
+			isNot = false;
+	}
+
+	if (isNot)
+		arrChange.push(this);
+
+	let NewRun = this.Split2(CurPos, Parent, ParentPos);
+
+	if (this.CollaborativeMarks.Ranges.length > 0)
+	{
+		let Ranges = NewRun.CollaborativeMarks.Ranges;
+		let oNewRange = new CRunCollaborativeRange(0, NewRun.Content.length, this.CollaborativeMarks.Ranges[0].Color);
+		Ranges.push(oNewRange);
+	}
+
+	return NewRun;
+};
 ParaRun.prototype.Check_NearestPos = function(ParaNearPos, Depth)
 {
     var RunNearPos = new CParagraphElementNearPos();
