@@ -3006,6 +3006,10 @@ CDocument.prototype.private_FinalizeFormChange = function()
 	for (var sKey in this.Action.Additional.FormChange)
 	{
 		let oForm = this.Action.Additional.FormChange[sKey];
+		
+		if (oForm.IsFixedForm() && oForm.IsMainForm() && oForm.IsAutoFitContent())
+			this.CheckFormAutoFit(oForm);
+		
 		this.FormsManager.OnChange(oForm);
 		this.Action.Recalculate = true;
 	}
