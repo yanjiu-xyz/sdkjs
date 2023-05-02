@@ -5898,12 +5898,9 @@ background-repeat: no-repeat;\
 		{
 			return true;
 		}
-		if(this.documentTitle)
+		if (this.documentTitle && this.documentTitle.endsWith(".ppsx"))
 		{
-			if(this.documentTitle.indexOf(".ppsx") === (this.documentTitle.length - 5))
-			{
-				return true;
-			}
+			return true;
 		}
 		return false;
 	};
