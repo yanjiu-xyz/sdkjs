@@ -12188,59 +12188,68 @@ CDocument.prototype.SetWatermarkProps = function(oProps)
 	if (!this.CanPerformAction())
 		return;
 
-    this.StartAction(AscDFH.historydescription_Document_AddWatermark);
-    var SectionPageInfo = this.Get_SectionPageNumInfo(this.CurPage);
-    var bFirst = SectionPageInfo.bFirst;
-    var bEven  = SectionPageInfo.bEven;
-    var HdrFtr = this.Get_SectionHdrFtr(this.CurPage, bFirst, bEven);
-    var Header = HdrFtr.Header;
-    if(null === Header)
-    {
-        if(Asc.c_oAscWatermarkType.None === oProps.get_Type())
-        {
-            this.FinalizeAction(true);
-            return;
-        }
-        Header = this.Create_SectionHdrFtr(hdrftr_Header, this.CurPage);
-    }
-    var oWatermark = Header.FindWatermark();
-    if(oWatermark)
-    {
-        if(oWatermark.GraphicObj.selected)
-        {
-            this.RemoveSelection(true);
-        }
-        oWatermark.Remove_FromDocument(false);
-    }
-    oWatermark = this.DrawingObjects.createWatermark(oProps);
-    if(oWatermark)
-    {
-        var oDocState = this.Get_SelectionState2();
-        var oContent = Header.Content;
-        oContent.MoveCursorToEndPos(false);
-        var oSdt = null, oElement;
-        for(var i = 0; i < oContent.Content.length; ++i)
-        {
-            oElement = oContent.Content[i];
-            if(oElement.GetType && oElement.GetType() === AscCommonWord.type_BlockLevelSdt)
-            {
-                oSdt = oElement;
-                break;
-            }
-        }
-        if(!oSdt)
-        {
-            oSdt = oContent.AddContentControl(Asc.c_oAscSdtLevelType.Block);
-        }
-        oSdt.SetDocPartObj(undefined, "Watermarks", true);
-        oSdt.AddToParagraph(oWatermark);
-        this.Set_SelectionState2(oDocState);
-    }
-    this.Recalculate();
-    this.Document_UpdateInterfaceState();
-    this.Document_UpdateSelectionState();
-    this.Document_UpdateRulersState();
-    this.FinalizeAction(true);
+	this.StartAction(AscDFH.historydescription_Document_AddWatermark);
+	const SectionPageInfo = this.Get_SectionPageNumInfo(this.CurPage);
+	const bFirst = SectionPageInfo.bFirst;
+	const bEven  = SectionPageInfo.bEven;
+	const HdrFtr = this.Get_SectionHdrFtr(this.CurPage, bFirst, bEven);
+	let Header = HdrFtr.Header;
+	if(null === Header)
+	{
+		if(Asc.c_oAscWatermarkType.None === oProps.get_Type())
+		{
+			this.FinalizeAction(true);
+			return;
+		}
+		Header = this.Create_SectionHdrFtr(hdrftr_Header, this.CurPage);
+	}
+	let oWatermark = Header.FindWatermark();
+	if(oWatermark)
+	{
+		if(oWatermark.GraphicObj.selected)
+		{
+			this.RemoveSelection(true);
+		}
+		oWatermark.Remove_FromDocument(false);
+	}
+	oWatermark = this.DrawingObjects.createWatermark(oProps);
+	if(oWatermark)
+	{
+		const oDocState = this.Get_SelectionState2();
+		const oContent = Header.Content;
+		let oWatermarkCC = null;
+		const aAllContentControls = oContent.GetAllContentControls();
+		const nCount = aAllContentControls.length;
+		for(let nContentControl = 0; nContentControl < nCount; ++nContentControl)
+		{
+			let oContentControl = aAllContentControls[nContentControl];
+			let oDocPart = oContentControl.Pr.DocPartObj;
+			if(oDocPart.Gallery === "Watermarks" && oDocPart.Unique)
+			{
+				oWatermarkCC = oContentControl;
+				break;
+			}
+		}
+		if(!oWatermarkCC)
+		{
+			oWatermarkCC = oContent.AddContentControl(c_oAscSdtLevelType.Inline);
+			oWatermarkCC.SetDocPartObj(undefined, "Watermarks", true);
+		}
+		if(oWatermarkCC.IsBlockLevel())
+		{
+			oWatermarkCC.AddToParagraph(oWatermark);
+		}
+		else
+		{
+			oWatermarkCC.Add(oWatermark);
+		}
+		this.Set_SelectionState2(oDocState);
+	}
+	this.Recalculate();
+	this.Document_UpdateInterfaceState();
+	this.Document_UpdateSelectionState();
+	this.Document_UpdateRulersState();
+	this.FinalizeAction(true);
 };
 
 /**
