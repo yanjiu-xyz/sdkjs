@@ -907,6 +907,10 @@ function (window, undefined) {
 			}
 		}
 
+		if (cElementType.cellsRange === resultArr.type || cElementType.cellsRange3D === resultArr.type) {
+			resultArr = resultArr.getFullArray();
+		}
+
 		return resultArr;
 	};
 
@@ -1864,7 +1868,7 @@ function (window, undefined) {
 	cSORT.prototype.isXLFN = true;
 	cSORT.prototype.isXLWS = true;
 	cSORT.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1};
-	cSORT.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.bool];
+	cSORT.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.logical];
 	cSORT.prototype.Calculate = function (arg) {
 		function arrayHelper (byColArray, by_col) {
 			let dimensions = byColArray.getDimensions(),
@@ -3835,6 +3839,11 @@ function (window, undefined) {
 					} else {
 						_res = _range.isOneCell() ?  new cRef3D(rangeName, arg2.getWS()) : new cArea3D(rangeName, arg2.getWS());
 					}
+
+					if (_res.type === cElementType.cellsRange || _res.type === cElementType.cellsRange3D) {
+						_res = _res.getFullArray();
+					}
+
 					return _res;
 				} else {
 					var _length = !bVertical ? dimensions2.row : dimensions2.col;

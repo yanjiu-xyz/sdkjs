@@ -7310,9 +7310,10 @@ CDocumentContent.prototype.Refresh_ContentChanges = function()
 };
 CDocumentContent.prototype.Internal_Content_RemoveAll = function()
 {
-	var Count = this.Content.length;
-	for (var Index = 0; Index < Count; Index++)
-		this.Content[Index].PreDelete();
+	for (let index = 0, count = this.Content.length; index < count; ++index)
+	{
+		this.Content[index].PreDelete();
+	}
 
 	History.Add(new CChangesDocumentRemoveItem(this, 0, this.Content.slice(0, this.Content.length)));
 	this.Content = [];
@@ -8433,29 +8434,6 @@ CDocumentContent.prototype.GetTopDocumentContent = function(isOneLevel)
 
     return this;
 };
-CDocumentContent.prototype.private_RecalculateNumbering = function(Elements)
-{
-    if (true === AscCommon.g_oIdCounter.m_bLoad || true === AscCommon.g_oIdCounter.m_bRead || true === this.bPresentation)
-        return;
-
-    for (var Index = 0, Count = Elements.length; Index < Count; ++Index)
-    {
-        var Element = Elements[Index];
-        if (type_Paragraph === Element.Get_Type())
-            History.Add_RecalcNumPr(Element.GetNumPr());
-        else if (type_Paragraph === Element.Get_Type())
-        {
-            var ParaArray = [];
-            Element.GetAllParagraphs({All : true}, ParaArray);
-
-            for (var ParaIndex = 0, ParasCount = ParaArray.length; ParaIndex < ParasCount; ++ParaIndex)
-            {
-                var Para = ParaArray[ParaIndex];
-                History.Add_RecalcNumPr(Para.GetNumPr());
-            }
-        }
-    }
-};
 CDocumentContent.prototype.Set_ParaPropsForVerticalTextInCell = function(isVerticalText)
 {
     for (var Pos = 0, Count = this.Content.length; Pos < Count; ++Pos)
@@ -8671,7 +8649,17 @@ CDocumentContent.prototype.CanEditAllContentControls = function()
 
 	for (var nIndex = 0, nCount = arrCC.length; nIndex < nCount; ++nIndex)
 	{
-		if (!arrCC[nIndex].CanBeEdited())
+		let cc = arrCC[nIndex];
+		
+		cc.SkipSpecialContentControlLock(true);
+		cc.SkipFillingFormModeCheck(true);
+		
+		let canEdit = cc.CanBeEdited();
+		
+		cc.SkipFillingFormModeCheck(false);
+		cc.SkipSpecialContentControlLock(false);
+		
+		if (!canEdit)
 			return false;
 	}
 
