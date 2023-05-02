@@ -6099,11 +6099,16 @@ var editor;
 
   // Формат по образцу
   spreadsheet_api.prototype.asc_formatPainter = function(formatPainterState) {
-	this.formatPainter.putState(formatPainterState);
-    if (this.wb) {
-      this.wb.formatPainter(formatPainterState);
-    }
+	this.changeFormatPainterState(formatPainterState, undefined);
   };
+
+
+	spreadsheet_api.prototype.changeFormatPainterState = function(formatPainterState, bLockDraw) {
+		this.formatPainter.putState(formatPainterState);
+		if (this.wb) {
+			this.wb.formatPainter(formatPainterState, bLockDraw);
+		}
+	};
 	spreadsheet_api.prototype.retrieveFormatPainterData = function()
 	{
 		let oWSView = this.wb.getWorksheet();

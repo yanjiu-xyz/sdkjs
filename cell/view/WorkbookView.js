@@ -1829,8 +1829,13 @@
   };
 
   WorkbookView.prototype._onStopFormatPainter = function (bLockDraw) {
-    if (this.Api.getFormatPainterState()) {
-      this.formatPainter(c_oAscFormatPainterState.kOff, bLockDraw);
+    if (this.Api.getFormatPainterState() !== c_oAscFormatPainterState.kOff) {
+      this.Api.changeFormatPainterState(c_oAscFormatPainterState.kOff, bLockDraw);
+        //update cursor
+        const oTargetInfo = this.controller.targetInfo;
+        if (oTargetInfo) {
+           this._onUpdateWorksheet(oTargetInfo.coordX, oTargetInfo.coordY, false);
+        }
     }
   };
 
