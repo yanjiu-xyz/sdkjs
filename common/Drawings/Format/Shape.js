@@ -4356,7 +4356,7 @@
 				const content = this.getCurrentDocContentInSmartArt();
 				if (content) {
 					const nOldFontSize = this.getFirstFontSize();
-					const scalesForSmartArt = Array((MAX_FONT_SIZE - (nMinFontSize - 1)) > 0 ? MAX_FONT_SIZE - (nMinFontSize - 1) : 1).fill(0).map(function (e, ind) {
+					const scalesForSmartArt = Array(Math.max(1, Math.trunc(MAX_FONT_SIZE - (nMinFontSize - 1)))).fill(0).map(function (e, ind) {
 						return ind + nMinFontSize;
 					});
 					let a = 0;
