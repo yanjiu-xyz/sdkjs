@@ -9187,6 +9187,11 @@
 					oAPI.stopInkDrawer();
 				},
 				checkInkState: function () {
+					if (typeof AscCommonSlide !== "undefined" &&
+						AscCommonSlide.CNotes &&
+						this.drawingObjects instanceof AscCommonSlide.CNotes) {
+						return;
+					}
 					const oAPI = this.getEditorApi();
 					if(oAPI.isInkDrawerOn()) {
 						if(oAPI.isDrawInkMode()) {
