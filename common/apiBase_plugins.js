@@ -1471,6 +1471,7 @@
      */
 	Api.prototype["pluginMethod_RemovePlugin"] = function(guid, backup)
 	{
+		let removedPlugin = window.g_asc_plugins.unregister(guid);
 		const isDesktop = window["AscDesktopEditor"] !== undefined;
 
 		if (isDesktop)
@@ -1492,8 +1493,6 @@
 			};
 		}
 		
-		let removedPlugin = window.g_asc_plugins.unregister(guid);
-
 		if (removedPlugin)
 		{
 			let currentRemovedPlugins = getLocalStorageItem("asc_plugins_removed");
