@@ -5934,16 +5934,22 @@
 			}
 			var x_t = invert_transform.TransformPointX(x, y);
 			var y_t = invert_transform.TransformPointY(x, y);
-			if (isRealObject(this.spPr) && isRealObject(this.spPr.geometry)) {
-				let bOldDIst = AscFormat.DIST_HIT_IN_LINE;
+			var oGeometry = this.spPr && this.spPr.geometry || this.calcGeometry;
+			if (oGeometry) {
+				const dOldDIst = AscFormat.DIST_HIT_IN_LINE;
 				if(this.pen) {
 					const nW = this.pen.w || 12700;
 					const dWidth = nW / 36000;
-					AscFormat.DIST_HIT_IN_LINE = Math.max(bOldDIst, dWidth);
+					const oAPI = Asc.editor;
+					if(oAPI.isEraseInkMode() && !oGeometry.preset) {
+						AscFormat.DIST_HIT_IN_LINE = dWidth;
+					}
+					else {
+						AscFormat.DIST_HIT_IN_LINE = Math.max(dOldDIst, dWidth);
+					}
 				}
-
-				let bResult = this.spPr.geometry.hitInPath(this.getCanvasContext(), x_t, y_t);
-				AscFormat.DIST_HIT_IN_LINE = bOldDIst;
+				let bResult = oGeometry.hitInPath(this.getCanvasContext(), x_t, y_t);
+				AscFormat.DIST_HIT_IN_LINE = dOldDIst;
 				return bResult;
 			}
 			else
