@@ -12068,7 +12068,7 @@
 	}
 	CInkDrawer.prototype.setState = function(nState) {
 		const bChange = this.state !== nState;
-		if(bChange) {
+		if(bChange || this.isDraw()) {
 			this.state = nState;
 			this.api.onInkDrawerChangeState();
 		}
