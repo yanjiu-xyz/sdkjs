@@ -1051,15 +1051,6 @@
 			}, this, []);
 		}
 	};
-	CGraphicObjectBase.prototype.check_bounds = function (checker) {
-		checker._s();
-		checker._m(0, 0);
-		checker._l(this.extX, 0);
-		checker._l(this.extX, this.extY);
-		checker._l(0, this.extY);
-		checker._z();
-		checker._e();
-	};
 	CGraphicObjectBase.prototype.handleObject = function (fCallback) {
 		fCallback(this);
 	};
@@ -1127,6 +1118,8 @@
 			this.shdwSp.transform = oTransform;
 			this.shdwSp.draw(graphics);
 		}
+	};
+	CGraphicObjectBase.prototype.drawAdjustments = function (drawingDocument) {
 	};
 	CGraphicObjectBase.prototype.getAllRasterImages = function (mapUrl) {
 	};
@@ -3148,8 +3141,8 @@
 	CGraphicObjectBase.prototype.getPictureBase64Data = function () {
 		return null;
 	};
-	CGraphicObjectBase.prototype.getBase64Img = function () {
-		if (typeof this.cachedImage === "string" && this.cachedImage.length > 0) {
+	CGraphicObjectBase.prototype.getBase64Img = function (bForceAsDraw, sImageFormat) {
+		if (!sImageFormat && typeof this.cachedImage === "string" && this.cachedImage.length > 0) {
 			return this.cachedImage;
 		}
 		if (this.parent) {
@@ -3164,13 +3157,16 @@
 				return "";
 			}
 		}
-		let oPictureData = this.getPictureBase64Data();
+		let oPictureData;
+		if(!bForceAsDraw) {
+			oPictureData = this.getPictureBase64Data();
+		}
 		if (!AscFormat.isRealNumber(this.x) || !AscFormat.isRealNumber(this.y) ||
 			!AscFormat.isRealNumber(this.extX) || !AscFormat.isRealNumber(this.extY)
 			|| (AscFormat.fApproxEqual(this.extX, 0) && AscFormat.fApproxEqual(this.extY, 0)))
 			return "";
 
-		let oImageData = AscCommon.ShapeToImageConverter(this, this.pageIndex);
+		let oImageData = AscCommon.ShapeToImageConverter(this, this.pageIndex, sImageFormat);
 		if (oImageData) {
 			if (oImageData.ImageNative) {
 				try {
