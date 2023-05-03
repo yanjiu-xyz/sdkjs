@@ -11982,12 +11982,22 @@
 	};
 	CEyedropper.prototype.setColor = function(r, g, b)
 	{
+		const fN = AscFormat.isRealNumber;
+		if(!fN(r) || !fN(g) || !fN(b)) {
+			this.r = null;
+			this.g = null;
+			this.b = null;
+		}
 		this.r = r;
 		this.g = g;
 		this.b = b;
 	};
 	CEyedropper.prototype.getColor = function()
 	{
+		const fN = AscFormat.isRealNumber;
+		if(!fN(this.r) || !fN(this.g) || !fN(this.b)) {
+			return null;
+		}
 		return new Asc.asc_CColor(this.r, this.g, this.b)
 	};
 	CEyedropper.prototype.clearColor = function()
@@ -12046,8 +12056,10 @@
 			this.cancel();
 			return;
 		}
-		const nXImg = Math.min(oImgData.width, nX);
-		const nYImg = Math.min(oImgData.height, nY);
+		const nXFixed = nX + 0.5 >> 0;
+		const nYFixed = nY + 0.5 >> 0;
+		const nXImg = Math.max(0, Math.min(oImgData.width, nXFixed));
+		const nYImg = Math.max(0, Math.min(oImgData.height, nYFixed));
 		const nArrayPos = (nYImg * oImgData.width + nXImg) * 4;
 		const aPixels = oImgData.data;
 		const nR = aPixels[nArrayPos];
