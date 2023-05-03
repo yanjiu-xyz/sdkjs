@@ -3358,6 +3358,7 @@ var editor;
 	};
 	spreadsheet_api.prototype._addWorksheetsWithoutLock = function (arrNames, where) {
 		var res = [];
+		this.inkDrawer.startSilentMode();
 		History.Create_NewPoint();
 		History.StartTransaction();
 		for (var i = arrNames.length - 1; i >= 0; --i) {
@@ -3369,6 +3370,7 @@ var editor;
 		History.EndTransaction();
 		// Посылаем callback об изменении списка листов
 		this.sheetsChanged();
+		this.inkDrawer.endSilentMode();
 		return res;
 	};
 
