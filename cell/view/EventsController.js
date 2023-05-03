@@ -1908,7 +1908,7 @@
 				return true;
 			}
 
-			if (t.isShapeAction || graphicsInfo) {
+			if (t.isShapeAction || graphicsInfo || asc["editor"].isInkDrawerOn()) {
 				event.isLocked = t.isMousePressed;
 				t.handlers.trigger("graphicObjectMouseMove", event, coord.x, coord.y);
 				t.handlers.trigger("updateWorksheet", coord.x, coord.y, ctrlKey, function(info){t.targetInfo = info;});
