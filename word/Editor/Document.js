@@ -2826,6 +2826,16 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	
 	this.Action.UpdateStates = false;
 };
+/**
+ * Сообщаем, что нужно отменить начатое действие
+ */
+CDocument.prototype.CancelAction = function()
+{
+	if (!this.IsActionStarted())
+		return;
+
+	this.Action.CancelAction = true;
+};
 CDocument.prototype.StartUndoRedoAction = function()
 {
 	this.Action.UndoRedo = true;
