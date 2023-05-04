@@ -2261,8 +2261,11 @@
 					} else if (oChart) {
 						oChart.drawSelect(drawingDocument, pageIndex);
 					} else if (oWrp) {
-						if (oWrp.selectStartPage === pageIndex)
-							oWrp.DrawEditWrapPointsPolygon(oWrp.parent.wrappingPolygon.calculatedPoints, new AscCommon.CMatrix());
+						if (oWrp.selectStartPage === pageIndex) {
+							if(oTrackDrawer.DrawEditWrapPointsPolygon) {
+								oTrackDrawer.DrawEditWrapPointsPolygon(oWrp.parent.wrappingPolygon.calculatedPoints, new AscCommon.CMatrix());
+							}
+						}
 					} else {
 						for (i = 0; i < this.selectedObjects.length; ++i) {
 							let oDrawing = this.selectedObjects[i];
