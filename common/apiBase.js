@@ -4535,9 +4535,21 @@
 	};
 	baseEditorsApi.prototype.asc_StartDrawInk = function(oAscPen) {
 		this.inkDrawer.startDraw(oAscPen);
+		if(this.formatPainter.isOn()) {
+			this.formatPainter.toggleState();
+		}
+		if(this.eyedropper.isStarted()) {
+			this.eyedropper.end();
+		}
 	};
 	baseEditorsApi.prototype.asc_StartInkEraser = function() {
 		this.inkDrawer.startErase();
+		if(this.formatPainter.isOn()) {
+			this.formatPainter.toggleState();
+		}
+		if(this.eyedropper.isStarted()) {
+			this.eyedropper.end();
+		}
 	};
 	baseEditorsApi.prototype.asc_StopInkDrawer = function() {
 		this.stopInkDrawer();
