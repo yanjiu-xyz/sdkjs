@@ -27042,6 +27042,9 @@ CDocumentSectionsInfo.prototype =
 
     Find_ByHdrFtr : function(HdrFtr)
     {
+		if (!HdrFtr)
+			return -1;
+		
         var Count = this.Elements.length;
         for ( var Index = 0; Index < Count; Index++ )
         {

@@ -1167,6 +1167,7 @@ CChangesParagraphPStyle.prototype.private_SetValue = function(Value)
 	oParagraph.private_UpdateTrackRevisionOnChangeParaPr(false);
 	oParagraph.Recalc_RunsCompiledPr();
 	oParagraph.UpdateDocumentOutline();
+	oParagraph.private_RefreshNumbering();
 	private_ParagraphChangesOnSetValue(this.Class);
 };
 CChangesParagraphPStyle.prototype.Merge = private_ParagraphChangesOnMergePr;

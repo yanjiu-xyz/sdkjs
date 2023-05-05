@@ -10939,6 +10939,7 @@ Paragraph.prototype.Style_Add = function(Id, bDoNotDeleteProps)
 		this.Pr.PStyle = Id;
 		this.private_UpdateTrackRevisionOnChangeParaPr(true);
 		this.UpdateDocumentOutline();
+		this.private_RefreshNumbering();
 	}
 
 	if (true === bDoNotDeleteProps)
@@ -10993,6 +10994,7 @@ Paragraph.prototype.Style_Remove = function()
 		History.Add(new CChangesParagraphPStyle(this, this.Pr.PStyle, undefined));
 		this.Pr.PStyle = undefined;
 		this.UpdateDocumentOutline();
+		this.private_RefreshNumbering();
 	}
 
 	// Надо пересчитать конечный стиль
