@@ -10791,7 +10791,7 @@
 					let bDocStartAction = false;
 					for(let nIdx = aDrawings.length - 1; nIdx > -1; --nIdx) {
 						let oDrawing = aDrawings[nIdx];
-						if(oDrawing.isShape() && !oDrawing.getPresetGeom())  {
+						if(oDrawing.isInk())  {
 							if(oDrawing.hit(x, y)) {
 								this.controller.resetSelection();
 								this.controller.selectObject(oDrawing, pageIndex);

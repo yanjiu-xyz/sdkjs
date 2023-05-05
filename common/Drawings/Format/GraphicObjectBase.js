@@ -1096,6 +1096,9 @@
 	CGraphicObjectBase.prototype.isImage = function () {
 		return this.getObjectType() === AscDFH.historyitem_type_ImageShape;
 	};
+	CGraphicObjectBase.prototype.isInk = function () {
+		return false;
+	};
 	CGraphicObjectBase.prototype.isPlaceholder = function () {
 		let oUniPr = this.getUniNvProps();
 		if (oUniPr) {
