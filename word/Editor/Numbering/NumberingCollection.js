@@ -236,6 +236,10 @@
 	};
 	CNumberingCollection.prototype.AddToSingleLvlCollection = function(num, iLvl)
 	{
+		let numLvl = num.GetLvl(iLvl);
+		if (Asc.c_oAscNumberingFormat.None === numLvl.GetFormat())
+			return;
+		
 		let numInfo = AscWord.CNumInfo.FromNum(num, iLvl, this.LogicDocument.GetStyles());
 		let json    = JSON.stringify(numInfo.ToJson());
 		
