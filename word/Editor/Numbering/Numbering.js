@@ -251,20 +251,17 @@
 	};
 	/**
 	 * Проверяем по типам Numbered и Bullet
-	 * @param sNumId {string}
-	 * @param nLvl {number}
-	 * @param nType {Asc.c_oAscNumberingFormat}
+	 * @param numId {string}
+	 * @param iLvl {number}
+	 * @param format {Asc.c_oAscNumberingFormat}
 	 * @returns {boolean}
 	 */
-	CNumbering.prototype.CheckFormat = function(sNumId, nLvl, nType)
+	CNumbering.prototype.CheckFormat = function(numId, iLvl, format)
 	{
-		var nFormat = this.GetNumFormat(sNumId, nLvl);
-
-		if ((Asc.c_oAscNumberingFormat.BulletFlag & nFormat && Asc.c_oAscNumberingFormat.BulletFlag & nType)
-			|| (Asc.c_oAscNumberingFormat.NumberedFlag & nFormat && Asc.c_oAscNumberingFormat.NumberedFlag & nType))
-			return true;
-
-		return false;
+		let numFormat = this.GetNumFormat(numId, iLvl);
+		
+		return !!((AscWord.IsBulletedNumbering(format) && AscWord.IsBulletedNumbering(numFormat))
+				|| (AscWord.IsNumberedNumbering(format) && AscWord.IsNumberedNumbering(numFormat)));
 	};
 	CNumbering.prototype.Draw    = function(sNumId, nLvl, nX, nY, oContext, oNumInfo, oTextPr, oTheme)
 	{
