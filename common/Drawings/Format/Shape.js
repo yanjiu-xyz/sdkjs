@@ -5128,7 +5128,7 @@
 				shape_drawer.draw(geometry);
 			}
 
-			if (!graphics.isSmartArtPreviewDrawer && !this.bWordShape && this.isEmptyPlaceholder() && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && graphics.IsNoDrawingEmptyPlaceholder !== true && !AscCommon.IsShapeToImageConverter) {
+			if (!graphics.isSmartArtPreviewDrawer && !graphics.RENDERER_PDF_FLAG && !this.bWordShape && this.isEmptyPlaceholder() && !(this.parent && this.parent.kind === AscFormat.TYPE_KIND.NOTES) && !(this.pen && this.pen.Fill && this.pen.Fill.fill && !(this.pen.Fill.fill instanceof AscFormat.CNoFill)) && graphics.IsNoDrawingEmptyPlaceholder !== true && !AscCommon.IsShapeToImageConverter) {
 				var drawingObjects = this.getDrawingObjectsController();
 				if (typeof editor !== "undefined" && editor && graphics.m_oContext !== undefined && graphics.m_oContext !== null && graphics.IsTrack === undefined && (!drawingObjects || AscFormat.getTargetTextObject(drawingObjects) !== this)) {
 					var angle = _transform.GetRotation();
@@ -5259,7 +5259,7 @@
 					var oTheme = this.getParentObjects().theme;
 					var oColorMap = this.Get_ColorMap();
 					if (!this.bWordShape && (!this.txBody.content || this.txBody.content.Is_Empty()) && !AscCommon.IsShapeToImageConverter && this.txBody.content2 != null && !this.txBody.checkCurrentPlaceholder() && (this.isEmptyPlaceholder ? this.isEmptyPlaceholder() : false)) {
-						if (graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true) {
+						if (graphics.IsNoDrawingEmptyPlaceholder !== true && graphics.IsNoDrawingEmptyPlaceholderText !== true && !graphics.RENDERER_PDF_FLAG) {
 							if (editor && editor.ShowParaMarks) {
 								this.txWarpStructParamarks2.draw(graphics, this.transformTextWordArt2, oTheme, oColorMap);
 							} else {
