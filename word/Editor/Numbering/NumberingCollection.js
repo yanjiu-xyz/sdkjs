@@ -137,6 +137,10 @@
 		if (!this.NeedRecollect)
 			return;
 		
+		// С этими включенными флагами мы не можем до конца рассчитать нумерацию у параграфа
+		if (AscCommon.g_oIdCounter.m_bLoad || AscCommon.g_oIdCounter.m_bRead)
+			return;
+		
 		this.NeedRecollect = false;
 		
 		let numToCheck = {};
