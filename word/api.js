@@ -8817,7 +8817,7 @@ background-repeat: no-repeat;\
 
 		if (this.WordControl.m_oLogicDocument && this.isCloudSaveAsLocalToDrawingFormat(actionType, fileType))
 		{
-			this.localSaveToDrawingFormat(this.WordControl.m_oDrawingDocument.ToRendererPart(false, options.isPdfPrint), fileType);
+			this.localSaveToDrawingFormat(this.WordControl.m_oDrawingDocument.ToRendererPart(false, options.isPdfPrint || ((fileType & 0x0400) === 0x0400)), fileType);
 			return true;
 		}
 
@@ -12815,7 +12815,7 @@ background-repeat: no-repeat;\
             pagescount = 1;
 
 		var _renderer                  = new AscCommon.CDocumentRenderer();
-		if (options && options["saveFormat"] === "image")
+		if (options && ((options["saveFormat"] === "image") || (options["isPrint"] === true)))
 			_renderer.isPrintMode = true;
 
         _renderer.InitPicker(AscCommon.g_oTextMeasurer.m_oManager);
