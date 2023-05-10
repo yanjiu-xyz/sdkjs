@@ -212,6 +212,7 @@ window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isFo
 		let nativeOptions = options.advancedOptions.asc_getNativeOptions();
 		if (nativeOptions)
 		{
+			jsonOptions["isPrint"] = true;
 			jsonOptions["nativeOptions"] = nativeOptions;
 			jsonOptions["nativeOptions"]["currentPage"] = editor.getCurrentPage() + 1;
  		}
