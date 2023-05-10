@@ -4178,7 +4178,13 @@ function CEditorPage(api)
 
 	this.setOffsetTop = function(offset, offsetScrollTop)
 	{
-		if (offset !== undefined && offset !== this.offsetTop)
+		if (this.m_oDrawingDocument.m_oDocumentRenderer &&
+			offset !== undefined &&
+			offset !== this.m_oDrawingDocument.m_oDocumentRenderer.offsetTop)
+		{
+			this.m_oDrawingDocument.m_oDocumentRenderer.setOffsetTop(offset);
+		}
+		else if (offset !== undefined && offset !== this.offsetTop)
 		{
 			this.offsetTop = offset;
 

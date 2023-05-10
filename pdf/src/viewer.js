@@ -2557,6 +2557,12 @@
 			return (undefined === value) ? 0 : value;
 		};
 
+		this.setOffsetTop = function(offset)
+		{
+			this.offsetTop = offset;
+			this.resize();
+		};
+
 		this.createComponents();
 	}
 

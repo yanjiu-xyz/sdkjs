@@ -1217,12 +1217,18 @@
 
 	asc_docs_api.prototype.SetMobileTopOffset = function(offset, offsetScrollTop)
 	{
-		if (!this.WordControl || !this.WordControl.IsInitControl)
+		if (!this.WordControl)
 		{
 			this.startMobileOffset = { offset : offset, offsetScrollTop : offsetScrollTop };
 		}
 		else
 		{
+			if (!this.WordControl.IsInitControl && !this.isDocumentRenderer())
+			{
+				this.startMobileOffset = { offset : offset, offsetScrollTop : offsetScrollTop };
+				return;
+			}
+
 			this.WordControl.setOffsetTop(offset, offsetScrollTop);
 		}
 	};
@@ -1499,25 +1505,27 @@ background-repeat: no-repeat;\
 		var _t = this;
 
 		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer = new AscCommon.CViewer(this.HtmlElementName, this);
-		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.registerEvent("onNeedPassword", function(){
+		var viewer = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
+
+		viewer.registerEvent("onNeedPassword", function(){
 			_t.sendEvent("asc_onAdvancedOptions", c_oAscAdvancedOptionsID.DRM);
 		});
-		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.registerEvent("onStructure", function(structure){
+		viewer.registerEvent("onStructure", function(structure){
 			_t.sendEvent("asc_onViewerBookmarksUpdate", structure);
 		});
-		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.registerEvent("onCurrentPageChanged", function(pageNum){
+		viewer.registerEvent("onCurrentPageChanged", function(pageNum){
 			_t.sendEvent("asc_onCurrentPage", pageNum);
 		});
-		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.registerEvent("onPagesCount", function(pagesCount){
+		viewer.registerEvent("onPagesCount", function(pagesCount){
 			_t.sendEvent("asc_onCountPages", pagesCount);
 		});
-		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.registerEvent("onZoom", function(value, type){
+		viewer.registerEvent("onZoom", function(value, type){
 			_t.WordControl.m_nZoomValue = ((value * 100) + 0.5) >> 0;
 			_t.sync_zoomChangeCallback(_t.WordControl.m_nZoomValue, type);
 		});
-		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.open(gObject);
+		viewer.open(gObject);
 
-		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.registerEvent("onFileOpened", function() {
+		viewer.registerEvent("onFileOpened", function() {
 			_t.disableRemoveFonts = true;
 			_t.onDocumentContentReady();
 			_t.bInit_word_control = true;
@@ -1535,7 +1543,7 @@ background-repeat: no-repeat;\
 			}
 			oViewer.isDocumentContentReady = true;
 		});
-		this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.registerEvent("onHyperlinkClick", function(url){
+		viewer.registerEvent("onHyperlinkClick", function(url){
 			_t.sendEvent("asc_onHyperlinkClick", url);
 		});
 
@@ -1549,6 +1557,12 @@ background-repeat: no-repeat;\
 		// destroy unused memory
 		AscCommon.pptx_content_writer.BinaryFileWriter = null;
 		AscCommon.History.BinaryWriter = null;
+
+		if (undefined !== this.startMobileOffset)
+		{
+			this.WordControl.setOffsetTop(this.startMobileOffset.offset, this.startMobileOffset.offsetScrollTop);
+			delete this.startMobileOffset;
+		}
 
 		this.WordControl.OnResize(true);
 	};
