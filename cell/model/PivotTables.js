@@ -2604,10 +2604,9 @@ CT_PivotCacheRecords.prototype.updateCacheData = function() {
  */
 CT_PivotCacheRecords.prototype.getRowMapByItemMap = function(itemMap, cacheFields) {
 	let result = [];
+	result.length = this._cols[0].size;
+	result.fill(true);
 	let t = this;
-	for (let i = 0; i < this._cols[0].size; i += 1) {
-		result.push(true);
-	}
 	cacheFields.forEach(function(field, index) {
 		if (itemMap.get(index) === void 0) {
 			return;
@@ -2641,7 +2640,7 @@ CT_PivotCacheRecords.prototype.copyRowsToWorksheet = function(ws, rowMap, cacheF
 				let rowElem = col.get(key);
 				let cellValue = null;
 				if (rowElem.type === Asc.c_oAscPivotRecType.Index) {
-					cellValue = cacheFields[index].getGroupOrSharedItem(rowElem.val).getCellValue();
+					cellValue = cacheFields[index].getSharedItem(rowElem.val).getCellValue();
 				} else {
 					cellValue = rowElem.getCellValue();
 				}
@@ -2663,8 +2662,8 @@ CT_PivotCacheRecords.prototype.copyRowsToWorksheet = function(ws, rowMap, cacheF
  * @return {Object} lengths
  */
 CT_PivotCacheRecords.prototype.fillPivotDetails = function(ws, itemMap, cacheFields) {
-	let cacheFieldsWithoutGroups = cacheFields.filter(function(field) {
-		return !(field.fieldGroup !== null && field.fieldGroup.base !== null);
+	let cacheFieldsWithoutGroups = cacheFields.filter(function(field, index) {
+		return !field.getGroupBaseIndex() || field.getGroupBaseIndex() === index;
 	});
 	let columnNames = cacheFieldsWithoutGroups.map(function(field) {
 		return field.asc_getName();
