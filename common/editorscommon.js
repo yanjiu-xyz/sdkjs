@@ -12110,11 +12110,15 @@
 		return this.silentMode;
 	};
 	CInkDrawer.prototype.turnOff = function() {
-		if(!this.silentMode) {
-			this.pen = null;
-			this.setState(INK_DRAWER_STATE_OFF);
-			this.api.sendEvent("asc_onInkDrawerStop");
+		if(!this.isOn()) {
+			return;
 		}
+		if(this.isSilentMode()) {
+			return;
+		}
+		this.pen = null;
+		this.setState(INK_DRAWER_STATE_OFF);
+		this.api.sendEvent("asc_onInkDrawerStop");
 	};
 	CInkDrawer.prototype.isOn = function() {
 		return this.state !== INK_DRAWER_STATE_OFF;

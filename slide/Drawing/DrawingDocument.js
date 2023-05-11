@@ -3381,11 +3381,14 @@ function CDrawingDocument()
 		}
 		else
 		{
-			if (!this.isButtonsDisabled() && this.placeholders.onPointerMove(pos, this.SlideCurrectRect, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM()))
+			if(!AscCommon.global_mouseEvent.IsLocked)
 			{
-				oWordControl.OnUpdateOverlay();
-				oWordControl.EndUpdateOverlay();
-				bIsReturn = true;
+				if (!this.isButtonsDisabled() && this.placeholders.onPointerMove(pos, this.SlideCurrectRect, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM()))
+				{
+					oWordControl.OnUpdateOverlay();
+					oWordControl.EndUpdateOverlay();
+					bIsReturn = true;
+				}
 			}
 		}
 
