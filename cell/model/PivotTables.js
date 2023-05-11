@@ -7015,7 +7015,7 @@ CT_pivotTableDefinition.prototype.asc_canShowDetails = function(row, col) {
 	if (rowItem === null && colItem === null) {
 		return false;
 	}
-	if (rowItem.t === Asc.c_oAscItemType.Blank || colItem.t === Asc.c_oAscItemType.Blank) {
+	if ((rowItem && rowItem.t === Asc.c_oAscItemType.Blank) || (colItem && colItem.t === Asc.c_oAscItemType.Blank)) {
 		return false;
 	}
 	return true;
