@@ -2795,17 +2795,20 @@ CTable.prototype.Internal_UpdateFlowPosition = function(X, Y)
 };
 CTable.prototype.Move = function(X, Y, PageNum, NearestPos)
 {
-	var oLogicDocument = editor.WordControl.m_oLogicDocument;
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return;
 
 	this.Document_SetThisElementCurrent(false);
 	this.MoveCursorToStartPos();
 
+	let isCancelMove = false;
 	var oTargetTable = this;
 	if (true != this.Is_Inline())
 	{
-		if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Table_Properties, null, true))
+		if (false === logicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Table_Properties, null, true))
 		{
-			oLogicDocument.StartAction(AscDFH.historydescription_Document_MoveFlowTable);
+			logicDocument.StartAction(AscDFH.historydescription_Document_MoveFlowTable);
 
 			// Переносим привязку (если получается, что заносим таблицу саму в себя, тогда привязку не меняем)
 			var NewDocContent = NearestPos.Paragraph.Parent;
@@ -2934,21 +2937,21 @@ CTable.prototype.Move = function(X, Y, PageNum, NearestPos)
 				oTargetTable.Set_PositionV(c_oAscVAnchor.Page, false, Y);
 				oTargetTable.PositionV_Old = undefined;
 			}
-
-			oLogicDocument.FinalizeAction();
+			
+			logicDocument.FinalizeAction();
 		}
 	}
 	else
 	{
 		// Проверяем, можно ли двигать данную таблицу
-		if (false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Table_Properties, {
+		if (false === logicDocument.Document_Is_SelectionLocked(AscCommon.changestype_Table_Properties, {
 				Type    : AscCommon.changestype_2_InlineObjectMove,
 				PageNum : PageNum,
 				X       : X,
 				Y       : Y
 			}, true))
 		{
-			oLogicDocument.StartAction(AscDFH.historydescription_Document_MoveInlineTable);
+			logicDocument.StartAction(AscDFH.historydescription_Document_MoveInlineTable);
 
 			var NewDocContent = NearestPos.Paragraph.Parent;
 			var OldDocContent = this.Parent;
@@ -2980,8 +2983,8 @@ CTable.prototype.Move = function(X, Y, PageNum, NearestPos)
 					NewIndex++;
 				}
 
-				var oTargetTable = AscCommon.CollaborativeEditing.Is_SingleUser() ? this : this.Copy(NewDocContent);
-				if (NewDocContent != OldDocContent)
+				oTargetTable = AscCommon.CollaborativeEditing.Is_SingleUser() ? this : this.Copy(NewDocContent);
+				if (NewDocContent !== OldDocContent)
 				{
 					// Сначала добавляем таблицу в новый класс
 					NewDocContent.Internal_Content_Add(NewIndex, oTargetTable);
@@ -3004,19 +3007,31 @@ CTable.prototype.Move = function(X, Y, PageNum, NearestPos)
 						NewDocContent.Internal_Content_Add(NewIndex, oTargetTable);
 					}
 				}
-
-				editor.WordControl.m_oLogicDocument.Recalculate();
+				
+				if (!oTargetTable.IsUseInDocument())
+				{
+					isCancelMove = true;
+					logicDocument.CancelAction();
+					oTargetTable = this;
+				}
+				
+				logicDocument.Recalculate();
 			}
 
 			oTargetTable.StartTrackTable();
-			oLogicDocument.FinalizeAction();
-
+			logicDocument.FinalizeAction();
 		}
 	}
-	editor.WordControl.m_oLogicDocument.RemoveSelection();
+	
+	logicDocument.RemoveSelection();
+
+	if (isCancelMove)
+		oTargetTable.SelectAll();
+	else
+		oTargetTable.MoveCursorToStartPos();
+	
 	oTargetTable.Document_SetThisElementCurrent(true);
-	oTargetTable.MoveCursorToStartPos();
-	editor.WordControl.m_oLogicDocument.Document_UpdateSelectionState();
+	logicDocument.UpdateSelection();
 };
 CTable.prototype.Reset = function(X, Y, XLimit, YLimit, PageNum, ColumnNum, ColumnsCount)
 {
@@ -12452,11 +12467,16 @@ CTable.prototype.DeleteTablePart = function(X_Front, X_After, Y_Over, Y_Under, b
 	// Если выделяем целиком колонку - удаляем её
 	else if (Y_Over && Y_Under && bCanMerge)
 	{
-		if (this.Selection.Data[0].Row === 0 && this.Selection.Data[this.Selection.Data.length - 1].Row === this.GetRowsCount() - 1)
+		let nLastRow = this.Selection.Data[this.Selection.Data.length - 1].Row;
+		let nLastCell = this.Selection.Data[this.Selection.Data.length - 1].Cell;
+		let nVMergeCount = this.GetVMergeCount(nLastCell, nLastRow);
+
+		if (this.Selection.Data[0].Row === 0 && nLastRow + nVMergeCount === this.GetRowsCount())
 		{
 			this.Selection.Use = true;
 			this.Selection.Type = 0;
 			this.RemoveTableColumn();
+			this.Selection.Use = false;
 			return true;
 		}
 		return false;

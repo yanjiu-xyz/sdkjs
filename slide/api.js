@@ -5898,12 +5898,9 @@ background-repeat: no-repeat;\
 		{
 			return true;
 		}
-		if(this.documentTitle)
+		if (this.documentTitle && this.documentTitle.endsWith(".ppsx"))
 		{
-			if(this.documentTitle.indexOf(".ppsx") === (this.documentTitle.length - 5))
-			{
-				return true;
-			}
+			return true;
 		}
 		return false;
 	};
@@ -7718,7 +7715,6 @@ background-repeat: no-repeat;\
 	// Вставка диаграмм
 	asc_docs_api.prototype.asc_getChartObject = function(type)
 	{
-		this.isChartEditor = true;		// Для совместного редактирования
         if (!AscFormat.isRealNumber(type))
         {
             this.asc_onOpenChartFrame();
@@ -7954,6 +7950,13 @@ background-repeat: no-repeat;\
 	{
 		var t = this;
 		var fileType = options.fileType;
+
+		if (this.isCloudSaveAsLocalToDrawingFormat(actionType, fileType))
+		{
+			this.localSaveToDrawingFormat(this.WordControl.m_oDrawingDocument.ToRendererPart(false, options.isPdfPrint), fileType);
+			return true;
+		}
+
 		if (c_oAscFileType.PDF === fileType || c_oAscFileType.PDFA === fileType)
 		{
 			var isSelection = false;

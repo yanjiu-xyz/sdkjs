@@ -3156,8 +3156,7 @@ function (window, undefined) {
 
 		if (cElementType.cellsRange3D === arg0.type || cElementType.cellsRange === arg0.type) {
 			// TODO пересмотреть поведение функции при получении массива первым аргументом
-			// arg0 = arg0.cross(_arg1);
-			arg0 = arg0.getFullArray().getElementRowCol(0,0);
+			arg0 = isXMatch ? arg0.getFullArray().getElementRowCol(0,0) : arg0.cross(_arg1);
 
 			if (cElementType.empty === arg0.type) {
 				return new cError(cErrorType.not_available);
@@ -3729,8 +3728,8 @@ function (window, undefined) {
 	cXLOOKUP.prototype.isXLFN = true;
 	cXLOOKUP.prototype.Calculate = function (arg) {
 
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
-		var arg3 = arg[3], arg4 = arg[4], arg5 = arg[5];
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
+		let arg3 = arg[3], arg4 = arg[4], arg5 = arg[5];
 
 		if (cElementType.error === arg0.type) {
 			return arg0;
@@ -3790,9 +3789,9 @@ function (window, undefined) {
 		}
 
 		//массив arg1 должен содержать 1 строку или 1 столбец
-		var dimensions1 = arg1.getDimensions();
-		var dimensions2 = arg2.getDimensions();
-		var bVertical = null;
+		let dimensions1 = arg1.getDimensions();
+		let dimensions2 = arg2.getDimensions();
+		let bVertical = null;
 		if (dimensions1 && dimensions2) {
 			if (dimensions1.col === 1 && dimensions2.row === dimensions1.row) {
 				bVertical = true;
@@ -3804,7 +3803,7 @@ function (window, undefined) {
 		if (bVertical === null) {
 			return new cError(cErrorType.wrong_value_type);
 		} else {
-			var res;
+			let res, arrayOffset = 0;
 			if (bVertical) {
 				res = g_oVLOOKUPCache.calculate([arg0, arg1, null, null, arg4, arg5], arguments[1]);
 			} else {
@@ -3814,8 +3813,14 @@ function (window, undefined) {
 			if (res === -1) {
 				return arg3;
 			} else {
+				if (arg1.type === cElementType.array) {
+					if (dimensions2.bbox) {
+						arrayOffset = bVertical ? dimensions2.bbox.r1 : dimensions2.bbox.c1;
+						res += arrayOffset;
+					}
+				}
 				//возвращаем из arg2 строку или столбец
-				var _startRange = 0;
+				let _startRange = 0;
 				if (dimensions2.bbox) {
 					_startRange = bVertical ? dimensions2.bbox.r1 : dimensions2.bbox.c1;
 				} else if (dimensions1.bbox) {
@@ -3823,14 +3828,14 @@ function (window, undefined) {
 				}
 
 				if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
-					var _r1 = !bVertical ? dimensions2.bbox.r1 : res - _startRange + dimensions2.bbox.r1;
-					var _cl = bVertical ? dimensions2.bbox.c1 : res - _startRange + dimensions2.bbox.c1;
-					var _r2 = !bVertical ? dimensions2.bbox.r2 : res - _startRange + dimensions2.bbox.r1;
-					var _c2 = bVertical ? dimensions2.bbox.c2 : res - _startRange + dimensions2.bbox.c1;
-					var _range = new Asc.Range(_cl, _r1, _c2, _r2);
+					let _r1 = !bVertical ? dimensions2.bbox.r1 : res - _startRange + dimensions2.bbox.r1;
+					let _cl = bVertical ? dimensions2.bbox.c1 : res - _startRange + dimensions2.bbox.c1;
+					let _r2 = !bVertical ? dimensions2.bbox.r2 : res - _startRange + dimensions2.bbox.r1;
+					let _c2 = bVertical ? dimensions2.bbox.c2 : res - _startRange + dimensions2.bbox.c1;
+					let _range = new Asc.Range(_cl, _r1, _c2, _r2);
 
-					var _res;
-					var rangeName;
+					let _res;
+					let rangeName;
 					AscCommonExcel.executeInR1C1Mode(false, function () {
 						rangeName = _range.getName();
 					});
@@ -3846,12 +3851,12 @@ function (window, undefined) {
 
 					return _res;
 				} else {
-					var _length = !bVertical ? dimensions2.row : dimensions2.col;
-					var _array = new cArray();
-					for (var i = 0; i < _length; i++) {
-						var _row = !bVertical ? i : res - _startRange;
-						var _col = bVertical ? i : res - _startRange;
-						var _elem = arg2.getElementRowCol ? arg2.getElementRowCol(_row, _col) : arg2.getValueByRowCol(_row, _col);
+					let _length = !bVertical ? dimensions2.row : dimensions2.col;
+					let _array = new cArray();
+					for (let i = 0; i < _length; i++) {
+						let _row = !bVertical ? i : res - _startRange;
+						let _col = bVertical ? i : res - _startRange;
+						let _elem = arg2.getElementRowCol ? arg2.getElementRowCol(_row, _col) : arg2.getValueByRowCol(_row, _col);
 						if (!bVertical) {
 							_array.addRow();
 							_array.addElement(_elem);
@@ -3859,9 +3864,9 @@ function (window, undefined) {
 							_array.addElement(_elem);
 						}
 					}
-				}
 
-				return _array;
+					return _array;
+				}
 			}
 		}
 	};

@@ -12022,7 +12022,41 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 0);
 
-		testArrayFormula2(assert, "COUNTIF", 2, 2)
+		oParser = new parserFormula('COUNTIF({1,2,3},">1")', "C2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);		// ms - doesn't work, gs - 2, lo - 2
+
+		oParser = new parserFormula('COUNTIF({1;2;3},">1")', "C2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);		// ms - doesn't work, gs - 2, lo - 2
+
+		oParser = new parserFormula('COUNTIF({1,2,3;4,5,6},">1")', "C2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 5);		// ms - doesn't work, gs - 5, lo - 5
+
+		// bug 62491
+		ws.getRange2("A100").setValue("Math");
+		ws.getRange2("A101").setValue("87");
+		ws.getRange2("A102").setValue("99");
+		ws.getRange2("A103").setValue("21");
+		ws.getRange2("A104").setValue("72");
+		ws.getRange2("A105").setValue("68");
+		ws.getRange2("B100").setValue("Physics");
+		ws.getRange2("B101").setValue("91");
+		ws.getRange2("B102").setValue("78");
+		ws.getRange2("B103").setValue("12");
+		ws.getRange2("B104").setValue("23");
+		ws.getRange2("B105").setValue("55");
+
+		oParser = new parserFormula('COUNTIF(XLOOKUP(A100,A100:B100,A101:B105),">80")', "C2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);
+
+		oParser = new parserFormula('COUNTIF(XLOOKUP(B100,A100:B100,A101:B105),">80")', "C2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1);
+
+		// testArrayFormula2(assert, "COUNTIF", 2, 2)
 	});
 
 	QUnit.test("Test: \"COUNTBLANK\"", function (assert) {
@@ -16069,6 +16103,48 @@ $(function () {
 		oParser = new parserFormula('XLOOKUP(4,{1,2,6},{2,2,3})', "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(_getValue(oParser.calculate()), "#N/A");
+
+		ws.getRange2("A203").setValue("Mark");
+		ws.getRange2("A204").setValue("Ned");
+		ws.getRange2("A205").setValue("Hans");
+		ws.getRange2("A206").setValue("Martha");
+		ws.getRange2("A207").setValue("Greg");
+		ws.getRange2("A208").setValue("Scott");
+		ws.getRange2("A209").setValue("Jenna");
+		ws.getRange2("A210").setValue("Donna");
+
+		ws.getRange2("B202").setValue("Math");
+		ws.getRange2("B203").setValue("87");
+		ws.getRange2("B204").setValue("67");
+		ws.getRange2("B205").setValue("16");
+		ws.getRange2("B206").setValue("68");
+		ws.getRange2("B207").setValue("21");
+		ws.getRange2("B208").setValue("72");
+		ws.getRange2("B209").setValue("19");
+		ws.getRange2("B210").setValue("14");
+
+		ws.getRange2("C202").setValue("Physics");
+		ws.getRange2("C203").setValue("91");
+		ws.getRange2("C204").setValue("71");
+		ws.getRange2("C205").setValue("32");
+		ws.getRange2("C206").setValue("82");
+		ws.getRange2("C207").setValue("94");
+		ws.getRange2("C208").setValue("38");
+		ws.getRange2("C209").setValue("40");
+		ws.getRange2("C210").setValue("69");
+
+		oParser = new parserFormula('XLOOKUP(19,B203:B210,A203:A210)', "A2", ws);
+		assert.ok(oParser.parse(), 'XLOOKUP(19,B203:B210,A203:A210)');
+		assert.strictEqual(_getValue(oParser.calculate()), "Jenna", 'Result of XLOOKUP(19,B203:B210,A203:A210)');
+
+		oParser = new parserFormula('XLOOKUP(19,XLOOKUP(B202,B202:C202,B203:C210),A203:A210)', "A2", ws);
+		assert.ok(oParser.parse(), 'XLOOKUP(19,XLOOKUP(B202,B202:C202,B202:C210),A203:A210)');
+		assert.strictEqual(_getValue(oParser.calculate()), "Jenna", 'Result of XLOOKUP(19,XLOOKUP(B202,B202:C202,B202:C210),A203:A210)');
+
+		oParser = new parserFormula('XLOOKUP(19,{87;67;16;68;21;72;19;14},A203:A210)', "A2", ws);
+		assert.ok(oParser.parse(), 'XLOOKUP(19,{87;67;16;68;21;72;19;14},A203:A210)');
+		assert.strictEqual(_getValue(oParser.calculate()), "Jenna", 'Result of XLOOKUP(19,{87;67;16;68;21;72;19;14},A203:A210)');
+
 	});
 
 
@@ -16171,6 +16247,63 @@ $(function () {
 		oParser = new parserFormula("MATCH({6,2,3},F106:F117,1)", "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), 5);
+
+		// bug 62332
+		ws.getRange2("B200").setValue("P/N");
+		ws.getRange2("B201").setValue("V-PS-TE-AW");
+		ws.getRange2("B202").setValue("VA-ARM-PLL-D-A");
+		ws.getRange2("B203").setValue("VA-ARM-PLL-U-A");
+		ws.getRange2("B204").setValue("VA-ARM-U-P-SSS-C");
+		ws.getRange2("B205").setValue("#N/A");
+		ws.getRange2("B206").setValue("");
+
+		ws.getRange2("C300").setValue("P/N");
+		ws.getRange2("C301").setValue("V-PS-TE-AW");
+		ws.getRange2("C302").setValue("VA-ARM-PLL-D-A");
+		ws.getRange2("C303").setValue("VA-ARM-PLL-U-A");
+		ws.getRange2("C304").setValue("VA-ARM-U-P-SSS-C");
+		ws.getRange2("C305").setValue("#N/A");
+		ws.getRange2("C306").setValue("");
+
+		let bbox = ws.getRange2("D200").bbox;
+		let cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 1);
+
+		bbox = ws.getRange2("D201").bbox;
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 2);
+
+		bbox = ws.getRange2("D202").bbox;
+		cellWithFormula = new window['AscCommonExcel'].CCellWithFormula(ws, bbox.r1, bbox.c1);
+		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", cellWithFormula, ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), 3);
+
+		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", "D202", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("A100").bbox);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(2,0).getValue(), 3);
+		assert.strictEqual(oParser.calculate().getElementRowCol(3,0).getValue(), 4);
+		assert.strictEqual(oParser.calculate().getElementRowCol(4,0).getValue(), 5);
+		assert.strictEqual(oParser.calculate().getElementRowCol(5,0).getValue(), "#N/A");
+		assert.strictEqual(oParser.calculate().getElementRowCol(6,0).getValue(), 7);
+
+		oParser = new parserFormula("MATCH(B200:B206,C300:C306,0)", "D202", ws);
+		oParser.setArrayFormulaRef(ws.getRange2("D200").bbox);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getElementRowCol(0,0).getValue(), 1);
+		assert.strictEqual(oParser.calculate().getElementRowCol(1,0).getValue(), 2);
+		assert.strictEqual(oParser.calculate().getElementRowCol(2,0).getValue(), 3);
+		assert.strictEqual(oParser.calculate().getElementRowCol(3,0).getValue(), 4);
+		assert.strictEqual(oParser.calculate().getElementRowCol(4,0).getValue(), 5);
+		assert.strictEqual(oParser.calculate().getElementRowCol(5,0).getValue(), "#N/A");
+		assert.strictEqual(oParser.calculate().getElementRowCol(6,0).getValue(), 7);
 
 		//TODO excel по-другому работает
 		/*oParser = new parserFormula( "MATCH(123,F106:F117,1)", "A2", ws );

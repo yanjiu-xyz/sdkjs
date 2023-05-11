@@ -564,6 +564,8 @@ CGraphicObjects.prototype =
             oParaDrawing.Set_Distance(3.2, 0, 3.2, 0);
             oParaDrawing.Set_PositionH(Asc.c_oAscRelativeFromH.Margin, true,  Asc.c_oAscAlignH.Center, false);
             oParaDrawing.Set_PositionV(Asc.c_oAscRelativeFromV.Margin, true,  Asc.c_oAscAlignV.Center, false);
+	        ++AscFormat.Ax_Counter.GLOBAL_AX_ID_COUNTER;
+			oParaDrawing.docPr.setName("PowerPlusWaterMarkObject" + AscFormat.Ax_Counter.GLOBAL_AX_ID_COUNTER)
         }
 
         if (false !== bTrackRevisions)
