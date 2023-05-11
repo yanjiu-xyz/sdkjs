@@ -245,6 +245,10 @@
 		
 		return json;
 	};
+	CNumInfo.prototype.IsSingleLevel = function()
+	{
+		return (1 === this.Lvl.length);
+	};
 	CNumInfo.prototype.FillNum = function(num)
 	{
 		if (!num || !(num instanceof Asc.CAscNumbering))

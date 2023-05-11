@@ -6730,7 +6730,7 @@ CDocument.prototype.SetParagraphNumbering = function(numInfo)
 		
 		let paraPr = this.GetCalculatedParaPr();
 		let numPr  = paraPr.NumPr;
-		return (numPr && numPr.IsValid() ? this.Numbering.GetNum(numPr.NumId) : null);
+		return (numPr && numPr.IsValid() ? numPr : null);
 	}
 	else
 	{

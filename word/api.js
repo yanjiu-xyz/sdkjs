@@ -4151,13 +4151,14 @@ background-repeat: no-repeat;\
 			if (!logicDocument.IsSelectionLocked(AscCommon.changestype_Paragraph_Properties))
 			{
 				logicDocument.StartAction(AscDFH.historydescription_Document_SetParagraphNumbering);
-				let num = logicDocument.SetParagraphNumbering(numInfo);
+				let numPr = logicDocument.SetParagraphNumbering(numInfo);
 				logicDocument.FinalizeAction();
 				
+				let num = numPr ? logicDocument.GetNumbering().GetNum(numPr.NumId) : null;
 				if (!num)
 					oRes = null;
-				else if (!numInfo.HaveLvl())
-					oRes = AscWord.CNumInfo.FromNum(num, 0).ToJson();
+				else if ((!numInfo.HaveLvl() ||numInfo.IsSingleLevel()) && undefined !== numPr.Lvl)
+					oRes = AscWord.CNumInfo.FromNum(num, numPr.Lvl).ToJson();
 				else
 					oRes = AscWord.CNumInfo.FromNum(num, null, logicDocument.GetStyles()).ToJson();
 			}
