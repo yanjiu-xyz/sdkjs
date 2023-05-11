@@ -2663,7 +2663,7 @@ CT_PivotCacheRecords.prototype.copyRowsToWorksheet = function(ws, rowMap, cacheF
  */
 CT_PivotCacheRecords.prototype.fillPivotDetails = function(ws, itemMap, cacheFields) {
 	let cacheFieldsWithoutGroups = cacheFields.filter(function(field, index) {
-		return !field.getGroupBaseIndex() || field.getGroupBaseIndex() === index;
+		return field.getGroupBaseIndex() === void 0 || field.getGroupBaseIndex() === index;
 	});
 	let columnNames = cacheFieldsWithoutGroups.map(function(field) {
 		return field.asc_getName();
