@@ -461,7 +461,7 @@
 	};
 	CNumberingApplicator.prototype.ApplyMultilevel = function()
 	{
-		let commonNumId = this.NumPr ? this.NumPr.NumId : this.GetCommonNumId();
+		let commonNumId = this.NumPr ? this.NumPr.NumId : null;
 
 		let num, numId;
 		if (commonNumId)
