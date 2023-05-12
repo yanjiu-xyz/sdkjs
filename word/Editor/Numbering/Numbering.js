@@ -104,7 +104,7 @@
 		this.Num         = {};
 	};
 	/**
-	 * Добавляем к текущим абстрактным нумеациям новые
+	 * Добавляем к текущим абстрактным нумерациям новые
 	 * @param oAbstractNums
 	 */
 	CNumbering.prototype.AppendAbstractNums = function(oAbstractNums)
@@ -116,7 +116,7 @@
 		}
 	};
 	/**
-	 * Добавляем к текущим нумеациям новые
+	 * Добавляем к текущим нумерациям новые
 	 * @param oNums
 	 */
 	CNumbering.prototype.AppendNums = function(oNums)
@@ -321,6 +321,26 @@
 	CNumbering.prototype.IsEmpty = function()
 	{
 		return 0 === Object.keys(this.Num).length;
+	};
+	/**
+	 * Получаем список идентификаторов всех нумераций, который основаны на заданной абстрактной
+	 * @param abstractNum {AscWord.CAbstractNum}
+	 * @returns {AscWord.CNum[]}
+	 */
+	CNumbering.prototype.GetAllNumsByAbstractNum = function(abstractNum)
+	{
+		if (!abstractNum)
+			return [];
+		
+		let abstractNumId = abstractNum.GetId();
+		let result = [];
+		for (let numId in this.Num)
+		{
+			let num = this.Num[numId];
+			if (abstractNumId === num.GetAbstractNumId())
+				result.push(num);
+		}
+		return result;
 	};
 	//---------------------------------------------------------export---------------------------------------------------
 	window["AscWord"].CNumbering        = CNumbering;
