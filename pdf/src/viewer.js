@@ -471,7 +471,8 @@
 			if (this.Api.WordControl.MobileTouchManager && this.Api.WordControl.MobileTouchManager.iScroll)
 				this.Api.WordControl.MobileTouchManager.iScroll.x = - Math.max(0, Math.min(pos, maxPos));
 
-			this.paint();
+			if (this.disabledPaintOnScroll != true)
+				this.paint();
 		};
 		this.scrollVertical = function(pos, maxPos)
 		{
@@ -480,7 +481,8 @@
 			if (this.Api.WordControl.MobileTouchManager && this.Api.WordControl.MobileTouchManager.iScroll)
 				this.Api.WordControl.MobileTouchManager.iScroll.y = - Math.max(0, Math.min(pos, maxPos));
 
-			this.paint();
+			if (this.disabledPaintOnScroll != true)
+				this.paint();
 		};
 
 		this.resize = function(isDisablePaint)
@@ -1040,14 +1042,6 @@
 				}
 				if (oFormInfo["opt"])
 				{
-					oFormInfo["opt"].forEach(function(item) {
-						if (Array.isArray(item)) {
-							let temp = item[1];
-							item[0] = item[1];
-							item[1] = temp;
-						}
-					});
-
 					oForm.SetOptions(oFormInfo["opt"]);
 				}
 
@@ -1082,7 +1076,7 @@
 				{
 					oForm.SetDoNotScroll(Boolean(oFormInfo["doNotScroll"]));
 				}
-				if (oFormInfo["doNotSpellCheck"] != null)
+				if (oFormInfo["doNotSpellCheck"] != null && ["text", "combobox"].includes(oFormInfo["type"]))
 				{
 					// to do
 					oForm.SetDoNotSpellCheck(Boolean(oFormInfo["doNotSpellCheck"]));
@@ -1134,12 +1128,43 @@
 					{
 						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDFEditor.FORMS_TRIGGERS_TYPES.MouseDown, ExtractActions(oFormInfo["AA"]["D"])));
 					}
+					// mouseenter 2
+					if (oFormInfo["AA"]["E"])
+					{
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDFEditor.FORMS_TRIGGERS_TYPES.MouseEnter, ExtractActions(oFormInfo["AA"]["E"])));
+					}
+					// mouseexit 3
+					if (oFormInfo["AA"]["X"])
+					{
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDFEditor.FORMS_TRIGGERS_TYPES.MouseExit, ExtractActions(oFormInfo["AA"]["X"])));
+					}
+					// onFocus 4
+					if (oFormInfo["AA"]["Fo"])
+					{
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDFEditor.FORMS_TRIGGERS_TYPES.OnFocus, ExtractActions(oFormInfo["AA"]["Fo"])));
+					}
+					// onBlur 5
+					if (oFormInfo["AA"]["Bl"])
+					{
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDFEditor.FORMS_TRIGGERS_TYPES.OnBlur, ExtractActions(oFormInfo["AA"]["Bl"])));
+					}
 
-					
 					// keystroke 6
 					if (oFormInfo["AA"]["K"])
 					{
 						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDFEditor.FORMS_TRIGGERS_TYPES.Keystroke, ExtractActions(oFormInfo["AA"]["K"])));
+					}
+
+					// Calculate 8
+					if (oFormInfo["AA"]["V"])
+					{
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDFEditor.FORMS_TRIGGERS_TYPES.Validate, ExtractActions(oFormInfo["AA"]["V"])));
+					}
+
+					// Calculate 8
+					if (oFormInfo["AA"]["C"])
+					{
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDFEditor.FORMS_TRIGGERS_TYPES.Calculate, ExtractActions(oFormInfo["AA"]["C"])));
 					}
 
 					// format 9
@@ -1147,9 +1172,6 @@
 					{
 						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDFEditor.FORMS_TRIGGERS_TYPES.Format, ExtractActions(oFormInfo["AA"]["F"])));
 					}
-					
-
-					
 				}
 
 			}
@@ -1167,13 +1189,22 @@
 
 			return;
 		};
-		this.setZoom = function(value)
+		this.onEndFormsActions = function() {
+            if (this.needRedraw == true) { // отключали отрисовку на скроле из ActionToGo, поэтому рисуем тут
+				this._paint();
+				this.needRedraw = false;
+			}
+            else {
+                this._paintForms();
+                this._paintFormsHighlight();
+            }
+		};
+		this.setZoom = function(value, isDisablePaint)
 		{
-			var oldZoom = this.zoom;
 			this.zoom = value;
 			this.zoomMode = ZoomMode.Custom;
 			this.sendEvent("onZoom", this.zoom);
-			this.resize(oldZoom);
+			this.resize(isDisablePaint);
 		};
 		this.setZoomMode = function(value)
 		{
@@ -1310,7 +1341,7 @@
 			this.m_oScrollVerApi.scrollToY(posY);
 		};
 
-		this.navigateToPage = function(pageNum, yOffset)
+		this.navigateToPage = function(pageNum, yOffset, xOffset)
 		{
 			var drawingPage = this.drawingPages[pageNum];
 			if (!drawingPage)
@@ -1328,7 +1359,29 @@
 
 			if (posY > this.scrollMaxY)
 				posY = this.scrollMaxY;
+
+			var posX = 0;
+
+			if (xOffset)
+			{
+				xOffset *= (drawingPage.W / this.file.pages[pageNum].W);
+				xOffset = xOffset >> 0;
+				posX += xOffset;
+			}
+
+			if (posX > this.scrollMaxX)
+				posX = this.scrollMaxX;
+
+			// выход из формы если вышли со страницы, где находится активная форма.
+			if (this.disabledPaintOnScroll == false && this.activeForm && this.pageDetector.pages.map(function(item) {
+				return item.num;
+			}).includes(this.activeForm._page) == false) {
+				this.activeForm.SetDrawHighlight(true);
+				this.activeForm = null;
+			}
+
 			this.m_oScrollVerApi.scrollToY(posY);
+			this.m_oScrollHorApi.scrollToX(posX);
 		};
 
 		this.navigateToLink = function(link)
@@ -1549,8 +1602,7 @@
 			// выход из формы кликом
 			let oMouseDownField = oThis.getPageFieldByMouse();
 			if (oThis.activeForm && oMouseDownField != oThis.activeForm) {
-				let oFieldToSkip = null; // для listbox
-
+				
 				if (oThis.activeForm.type == "listbox") {
 					if (oMouseDownField && oMouseDownField.GetFullName() == oThis.activeForm.GetFullName() && oMouseDownField._multipleSelection == false) {
 						oFieldToSkip = oMouseDownField;
@@ -1575,9 +1627,12 @@
 					}
 					else {
 						oThis.activeForm.SetDrawHighlight(true);
-						if (oThis.activeForm._needApplyToAll) {
-							oThis.activeForm.ApplyValueForAll(oFieldToSkip);
-							oThis.activeForm._needApplyToAll = false;
+						if (oThis.activeForm.IsNeedApplyToAll()) {
+							let oDoc = oThis.activeForm.GetDocument();
+							oDoc.DoCalculateFields();
+							oDoc.AddFieldToApply(oThis.activeForm);
+							oDoc.ApplyFields();
+							oThis.activeForm.SetNeedApplyToAll(false);
 							oThis.activeForm = null;
 							oThis._paintForms();
 						}
@@ -1597,8 +1652,8 @@
 					oThis._paintFormsHighlight();
 				}
 
-				if (oThis.activeForm && oThis.activeForm._content.IsSelectionEmpty()) {
-					oThis.activeForm._content.RemoveSelection();
+				if (oThis.activeForm && oThis.activeForm.content && oThis.activeForm.content.IsSelectionEmpty()) {
+					oThis.activeForm.content.RemoveSelection();
 					oThis.onUpdateOverlay();
 				}
 			}
@@ -1606,8 +1661,7 @@
 			if (oMouseDownField)
 			{
 				let oFieldBefore = oThis.activeForm;
-				oThis.activeForm = oMouseDownField;
-
+				
 				switch (oMouseDownField.type)
 				{
 					case "text":
@@ -1659,6 +1713,8 @@
 						cursorType = "pointer";
 						break;
 					case "button":
+					case "radiobutton":
+					case "checkbox":
 						oMouseDownField.onMouseDown(e);
 						break;
 				}
@@ -1774,23 +1830,25 @@
 
 			AscCommon.check_MouseUpEvent(e);
 
+			
+			let oMouseUpField = oThis.getPageFieldByMouse();
 			if (oThis.MouseHandObject)
 			{
 				if (oThis.activeForm)
 				{
 					if (global_mouseEvent.ClickCount == 2 && (oThis.activeForm.type == "text" || oThis.activeForm.type == "combobox"))
 					{
-						oThis.activeForm._content.SelectAll();
-						if (oThis.activeForm._content.IsSelectionEmpty() == false)
+						oThis.activeForm.content.SelectAll();
+						if (oThis.activeForm.content.IsSelectionEmpty() == false)
 							oThis.Api.WordControl.m_oDrawingDocument.TargetEnd();
 						else
-							oThis.activeForm._content.RemoveSelection();
+							oThis.activeForm.content.RemoveSelection();
 
 						oThis.onUpdateOverlay();
 					}
-					else if (!oThis.isMouseMoveBetweenDownUp && oThis.activeForm._content.IsSelectionUse())
+					else if (!oThis.isMouseMoveBetweenDownUp && oThis.activeForm.content && oThis.activeForm.content.IsSelectionUse())
 					{
-						oThis.activeForm._content.RemoveSelection();
+						oThis.activeForm.content.RemoveSelection();
 						oThis.onUpdateOverlay();
 					}
 
@@ -1799,12 +1857,22 @@
 						case "checkbox":
 						case "radiobutton":
 							oThis.Api.WordControl.m_oDrawingDocument.TargetEnd();
-							oThis.activeForm.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+							if (oMouseUpField == oThis.activeForm) {
+								oThis.activeForm.onMouseUp();
+
+								let oDoc = oThis.activeForm.GetDocument();
+								oDoc.DoCalculateFields();
+								oDoc.AddFieldToApply(oThis.activeForm);
+								oDoc.ApplyFields();
+								
+								oThis._paintForms();
+							}
 							cursorType = "pointer";
 							oThis.fieldFillingMode = false;
 							break;
-						case "button":
-							oThis.activeForm.onMouseUp(e);
+						default:
+							if (oMouseUpField == oThis.activeForm)
+								oThis.activeForm.onMouseUp();
 							break;
 					}
 				}
@@ -1847,17 +1915,17 @@
 				{
 					if (global_mouseEvent.ClickCount == 2 && oThis.activeForm.type == "text" || oThis.activeForm.type == "combobox")
 					{
-						oThis.activeForm._content.SelectAll();
-						if (oThis.activeForm._content.IsSelectionEmpty() == false)
+						oThis.activeForm.content.SelectAll();
+						if (oThis.activeForm.content.IsSelectionEmpty() == false)
 							oThis.Api.WordControl.m_oDrawingDocument.TargetEnd();
 						else
-							oThis.activeForm._content.RemoveSelection();
+							oThis.activeForm.content.RemoveSelection();
 
 						oThis.onUpdateOverlay();
 					}
-					else if (!oThis.isMouseMoveBetweenDownUp && oThis.activeForm._content.IsSelectionUse())
+					else if (!oThis.isMouseMoveBetweenDownUp && oThis.activeForm.content && oThis.activeForm.content.IsSelectionUse())
 					{
-						oThis.activeForm._content.RemoveSelection();
+						oThis.activeForm.content.RemoveSelection();
 						oThis.onUpdateOverlay();
 					}
 
@@ -1866,12 +1934,23 @@
 						case "checkbox":
 						case "radiobutton":
 							oThis.Api.WordControl.m_oDrawingDocument.TargetEnd();
-							oThis.activeForm.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+							if (oMouseUpField == oThis.activeForm) {
+								oThis.activeForm.onMouseUp();
+
+								let oDoc = oThis.activeForm.GetDocument();
+								oDoc.DoCalculateFields();
+								oDoc.AddFieldToApply(oThis.activeForm);
+								oDoc.ApplyFields();
+								
+								oThis._paintForms();
+							}
+								
 							cursorType = "pointer";
 							oThis.fieldFillingMode = false;
 							break;
 						case "button":
-							oThis.activeForm.onMouseUp();
+							if (oMouseUpField == oThis.activeForm)
+								oThis.activeForm.onMouseUp();
 							break;
 					}
 
@@ -1966,7 +2045,7 @@
 							if (oThis.activeForm.type == "text" || oThis.activeForm.type == "combobox")
 							{
 								oThis.activeForm.SelectionSetEnd(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
-								if (oThis.activeForm._content.IsSelectionEmpty() == false) {
+								if (oThis.activeForm.content.IsSelectionEmpty() == false) {
 									oThis.Api.WordControl.m_oDrawingDocument.TargetEnd();
 								}
 								else {
@@ -1999,10 +2078,14 @@
 							if (oThis.mouseMoveFieldObject)
 								oThis.mouseMoveFieldObject._needDrawHoverBorder = false;
 
+							oThis.mouseMoveFieldObject && oThis.mouseMoveFieldObject.onMouseExit();
 							oThis.mouseMoveFieldObject = mouseMoveFieldObject;
+							mouseMoveFieldObject.onMouseEnter();
+
 							oThis._paintFormsHighlight();
 						}
 						else if (mouseMoveFieldObject == null && oThis.mouseMoveFieldObject) {
+							oThis.mouseMoveFieldObject.onMouseExit();
 							oThis.mouseMoveFieldObject._needDrawHoverBorder = false;
 							oThis.mouseMoveFieldObject = null;
 							oThis._paintFormsHighlight();
@@ -2092,10 +2175,14 @@
 						if (oThis.mouseMoveFieldObject)
 							oThis.mouseMoveFieldObject._needDrawHoverBorder = false;
 
+						oThis.mouseMoveFieldObject && oThis.mouseMoveFieldObject.onMouseExit();
 						oThis.mouseMoveFieldObject = mouseMoveFieldObject;
+						mouseMoveFieldObject.onMouseEnter();
+							
 						oThis._paintFormsHighlight();
 					}
 					else if (mouseMoveFieldObject == null && oThis.mouseMoveFieldObject) {
+						oThis.mouseMoveFieldObject.onMouseExit();
 						oThis.mouseMoveFieldObject._needDrawHoverBorder = false;
 						oThis.mouseMoveFieldObject = null;
 						oThis._paintFormsHighlight();
@@ -2121,7 +2208,7 @@
 									cursorType = "text";
 								break;
 							default:
-								cursorType = "default";
+								cursorType = "pointer";
 						}
 					}
 
@@ -2474,9 +2561,9 @@
 				ctx.fill();
 				ctx.beginPath();
 			}
-			if (this.activeForm && this.activeForm._content.IsSelectionUse() && this.activeForm._content.IsSelectionEmpty() == false)
+			if (this.activeForm && this.activeForm.content && this.activeForm.content.IsSelectionUse() && this.activeForm.content.IsSelectionEmpty() == false)
 			{
-				this.activeForm._content.DrawSelectionOnPage(0);
+				this.activeForm.content.DrawSelectionOnPage(0);
 				ctx.globalAlpha = 0.2;
 				ctx.fill();
 			}
@@ -2596,11 +2683,19 @@
 				this.pageDetector.addPage(i, x, y, w, h);
 			}
 			
-			this._paintForms();
-			this._paintFormsHighlight();
-
 			this.isClearPages = false;
 			this.updateCurrentPage(this.pageDetector.getCurrentPage(this.currentPage));
+			
+			// выход из формы если вышли со страницы, где находится активная форма.
+			if (this.activeForm && this.pageDetector.pages.map(function(item) {
+				return item.num;
+			}).includes(this.activeForm._page) == false) {
+				this.activeForm.SetDrawHighlight(true);
+				this.activeForm = null;
+			}
+
+			this._paintForms();
+			this._paintFormsHighlight();
 		};
 		this._paintForms = function()
 		{
@@ -2684,6 +2779,8 @@
 
 			if (this.activeForm && this.activeForm.UpdateScroll)
 				this.activeForm.UpdateScroll(true);
+			if (this.activeForm && ["combobox", "text"].includes(this.activeForm.type))
+				this.activeForm.content.RecalculateCurPos();
 		};
 		this._paintFormsHighlight = function()
 		{
@@ -2764,9 +2861,9 @@
 				if (!oNextForm)
 					return;
 
-				if (this.activeForm.ApplyValueForAll)
+				if (this.activeForm.Apply)
 				{
-					this.activeForm.ApplyValueForAll();
+					this.activeForm.Apply();
 					this._paintForms();
 				}
 				
@@ -2783,8 +2880,8 @@
         				this.Api.WordControl.m_oDrawingDocument.m_lCurrentPage = 0;
         				this.Api.WordControl.m_oDrawingDocument.m_lPagesCount = 1;
 						this.Api.WordControl.m_oDrawingDocument.TargetStart();
-						this.activeForm._content.GetElement(0).MoveCursorToStartPos();
-						this.activeForm._content.RecalculateCurPos();
+						this.activeForm.content.GetElement(0).MoveCursorToStartPos();
+						this.activeForm.content.RecalculateCurPos();
 						break;
 					default:
 						this.Api.WordControl.m_oDrawingDocument.TargetEnd();
@@ -3109,7 +3206,7 @@
 				if (this.activeForm && this.fieldFillingMode)
 				{
 					this.activeForm.Remove(-1, e.CtrlKey == true);
-					if (this.activeForm._needRecalc)
+					if (this.activeForm.IsNeedRecalc())
 						this._paintForms();
 
 					this.onUpdateOverlay();
@@ -3133,6 +3230,7 @@
 			{
 				if (this.activeForm)
 				{
+					window.event.stopPropagation();
 					switch (this.activeForm.type)
 					{
 						case "checkbox":
@@ -3140,21 +3238,27 @@
 							this.activeForm.onMouseDown();
 							break;
 						default:
-							oThis.activeForm.SetDrawHighlight(true);
+							this.activeForm.SetDrawHighlight(true);
 							if (this.activeForm.UpdateScroll)
 								this.activeForm.UpdateScroll(false);
 
-							if (this.activeForm._needApplyToAll) {
+							if (this.activeForm.IsNeedApplyToAll()) {
 								this.fieldFillingMode = false;
-								this.activeForm.ApplyValueForAll();
-								this.activeForm._needApplyToAll = false;
+								let oDoc = this.activeForm.GetDocument();
+
+								if (oDoc.DoValidateAction(this.activeForm, this.activeForm.api.value)) {
+									oDoc.DoCalculateFields();
+									oDoc.AddFieldToApply(this.activeForm);
+									oDoc.ApplyFields();
+								}
+								
 								this.activeForm = null;
 								this._paintForms();
 							}
-							else if (oThis.activeForm._triggers.Format && oThis.activeForm.value != "") {
-								oThis.activeForm.AddToRedraw();
-								oThis.activeForm = null;
-								oThis._paintForms();
+							else if (this.activeForm._triggers.Format && this.activeForm.value != "") {
+								this.activeForm.AddToRedraw();
+								this.activeForm = null;
+								this._paintForms();
 							}
 							
 							this.Api.WordControl.m_oDrawingDocument.TargetEnd();
@@ -3219,7 +3323,7 @@
 
 					let oFieldBounds = this.activeForm.getFormRelRect();
 					let oCurPos = this.activeForm.MoveCursorLeft(true === e.ShiftKey, true === e.CtrlKey);
-					if (this.activeForm._content.IsSelectionUse())
+					if (this.activeForm.content.IsSelectionUse())
 						this.Api.WordControl.m_oDrawingDocument.TargetEnd();
 						
 					let nCursorH = g_oTextMeasurer.GetHeight();
@@ -3262,7 +3366,7 @@
 
 							let oFieldBounds = this.activeForm.getFormRelRect();
 							let oCurPos = this.activeForm.MoveCursorUp(true === e.ShiftKey, true === e.CtrlKey);
-							if (this.activeForm._content.IsSelectionUse())
+							if (this.activeForm.content.IsSelectionUse())
 								this.Api.WordControl.m_oDrawingDocument.TargetEnd();
 
 							let nCursorH = g_oTextMeasurer.GetHeight();
@@ -3308,7 +3412,7 @@
 					let oFieldBounds = this.activeForm.getFormRelRect();
 					let oCurPos = this.activeForm.MoveCursorRight(true === e.ShiftKey, true === e.CtrlKey);
 					
-					if (this.activeForm._content.IsSelectionUse())
+					if (this.activeForm.content.IsSelectionUse())
 						this.Api.WordControl.m_oDrawingDocument.TargetEnd();
 
 					if ((oCurPos.X > oFieldBounds.X + oFieldBounds.W || oCurPos.Y > oFieldBounds.Y + oFieldBounds.H) && this.activeForm._doNotScroll == false)
@@ -3350,7 +3454,7 @@
 
 							let oFieldBounds = this.activeForm.getFormRelRect();
 							let oCurPos = this.activeForm.MoveCursorDown(true === e.ShiftKey, true === e.CtrlKey);
-							if (this.activeForm._content.IsSelectionUse())
+							if (this.activeForm.content.IsSelectionUse())
 								this.Api.WordControl.m_oDrawingDocument.TargetEnd();
 								
 							if (oCurPos.Y > oFieldBounds.Y + oFieldBounds.H && this.activeForm._doNotScroll == false)
@@ -3409,8 +3513,8 @@
 			{
 				if (this.activeForm && this.fieldFillingMode)
 				{
-					this.activeForm._content.SelectAll();
-					if (this.activeForm._content.IsSelectionUse())
+					this.activeForm.content.SelectAll();
+					if (this.activeForm.content.IsSelectionUse())
 						this.Api.WordControl.m_oDrawingDocument.TargetEnd();
 					
 					this.onUpdateOverlay();
@@ -3486,10 +3590,10 @@
 
 						if (oCurPoint.Additional.FormFilling.type == "listbox") {
 							oCurPoint.Additional.FormFilling.CheckCurValueIndex();
-							oCurPoint.Additional.FormFilling.ApplyValueForAll(null, false);
+							oCurPoint.Additional.FormFilling.Apply(null, false);
 						}
 						else
-							oParentForm.ApplyValueForAll(false);
+							oParentForm.Apply(false);
 
 						// выход из формы
 						if (this.activeForm)
@@ -3535,10 +3639,10 @@
 						// 
 						if (oCurPoint.Additional.FormFilling.type == "listbox") {
 							oCurPoint.Additional.FormFilling.CheckCurValueIndex();
-							oCurPoint.Additional.FormFilling.ApplyValueForAll(null, false);
+							oCurPoint.Additional.FormFilling.Apply(null, false);
 						}
 						else
-							oParentForm.ApplyValueForAll(false);
+							oParentForm.Apply(false);
 
 						// выход из формы
 						if (this.activeForm)
@@ -3549,7 +3653,7 @@
 						}
 					}
 
-					oParentForm._needRecalc = true;
+					oParentForm.SetNeedRecalc(true);
 					oParentForm.AddToRedraw()
 					
 					// Перерисуем страницу, на которой произошли изменения

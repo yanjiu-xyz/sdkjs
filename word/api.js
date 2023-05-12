@@ -2510,8 +2510,8 @@ background-repeat: no-repeat;\
 			var _text_object = (AscCommon.c_oAscClipboardDataFormat.Text & _formats) ? {Text : ""} : null;
 			var _html_data;
 			var oActiveForm = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.activeForm;
-			if (oActiveForm && oActiveForm._content.IsSelectionUse()) {
-				let sText = oActiveForm._content.GetSelectedText(true);
+			if (oActiveForm && oActiveForm.content.IsSelectionUse()) {
+				let sText = oActiveForm.content.GetSelectedText(true);
 				if (sText == "")
 					return;
 
@@ -2600,7 +2600,7 @@ background-repeat: no-repeat;\
 		else if (oViewer) {
 			let oField = oViewer.activeForm;
 			if (oField && (oField.type == "text" || (oField.type == "combobox" && oField._editable))) {
-				if (oField._content.IsSelectionUse()) {
+				if (oField.content.IsSelectionUse()) {
 					oField.Remove(-1);
 					oViewer._paintForms();
 					oViewer.onUpdateOverlay();
@@ -11200,7 +11200,7 @@ background-repeat: no-repeat;\
 
 		oField.SelectOption(nIdx);
 		if (oField._commitOnSelChange) {
-			oField.ApplyValueForAll();
+			oField.Apply();
 			this.WordControl.m_oDrawingDocument.TargetEnd();
 			oField._needApplyToAll		= false;
 			oField._needDrawHighlight	= true;
@@ -12115,7 +12115,7 @@ background-repeat: no-repeat;\
 
 		if (logicDocument)
 			return logicDocument.EnterText(value);
-		else if (oViewer.fieldFillingMode) {
+		else if (oViewer.activeForm && oViewer.fieldFillingMode) {
 			oViewer.activeForm.EnterText(value);
 			if (oViewer.pagesInfo.pages[oViewer.activeForm._page].needRedrawForms) {
 				oViewer._paintForms();

@@ -34,16 +34,96 @@
 
     let AscPDFEditor = window["AscPDFEditor"];
 
+    function CCalculateInfo(oDoc) {
+        this.calculateFields = [];
+        this.document = oDoc;
+        this.fieldsToApply = [];
+    };
+
+    CCalculateInfo.prototype.AddToCalculateField = function(oField) {
+        if (null == this.calculateFields.find(function(field) {
+            return field.api.name == oField.api.name;
+        })) {
+            this.calculateFields.push(oField);
+        }
+    };
+    CCalculateInfo.prototype.SetIsInProgress = function(bValue) {
+        this.isInProgress = bValue;
+    };
+    CCalculateInfo.prototype.IsInProgress = function() {
+        return this.isInProgress;
+    };
+
     function CPDFDoc() {
         this.widgets = []; // непосредственно сами поля, которые отрисовываем (дочерние без потомков)
         this.rootFields = new Map(); // root поля форм
 
-        this.actionsInfo = new CActionQueue();
+        this.actionsInfo = new CActionQueue(this);
+        this.api = this.GetDocumentApi();
+        this.CalculateInfo = new CCalculateInfo(this);
+        this.fieldsToApply = [];
+        window.formsEvent = {};
     }
+
+    CPDFDoc.prototype.ApplyFields = function() {
+        this.fieldsToApply.forEach(function(field) {
+            field.Apply();
+        });
+        this.fieldsToApply = [];
+    };
+    CPDFDoc.prototype.AddFieldToApply = function(oField) {
+        this.fieldsToApply.push(oField);
+    };
+    CPDFDoc.prototype.ClearFieldsToApply = function() {
+        this.fieldsToApply = [];
+    };
+
+    CPDFDoc.prototype.DoCalculateFields = function() {
+        // смысл такой, что когда изменяем какое-либо поле, вызываем этот метод, который делает calculate
+        // для всех необходимых полей и добавляет их в массив fieldsToApply,
+        // далее вызываем ApplyFields чтобы применить значения для всех связных полей
+        let oThis = this;
+        this.CalculateInfo.calculateFields.forEach(function(field) {
+            let oFormatTrigger = field.GetTrigger(AscPDFEditor.FORMS_TRIGGERS_TYPES.Calculate);
+            let oActionRunScript = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
+
+            if (oActionRunScript) {
+                oThis.activeForm = field;
+                oActionRunScript.RunScript();
+                field.SetNeedRecalc(true);
+                oThis.fieldsToApply.push(field);
+            }
+        });
+    };
+
+    CPDFDoc.prototype.GetCalculateInfo = function() {
+        return this.CalculateInfo;
+    };
 
     CPDFDoc.prototype.GetActionsQueue = function() {
         return this.actionsInfo;
-    }
+    };
+    CPDFDoc.prototype.DoValidateAction = function(oField, value) {
+        if (window.formsEvent["target"] != oField.GetFormApi()) {
+            window.formsEvent = {
+                "target": oField.GetFormApi(),
+                "value": value
+            };
+        }
+
+        let oValidateTrigger = oField.GetTrigger(AscPDFEditor.FORMS_TRIGGERS_TYPES.Validate);
+        let oValidateScript = oValidateTrigger ? oValidateTrigger.GetActions()[0] : null;
+
+        if (oValidateScript == null)
+            return true;
+
+        let isValid = oValidateScript.RunScript();
+        if (isValid == false) {
+            editor.sendEvent("asc_onValidateErrorPdfForm", window.formsEvent);
+        }
+
+        return isValid;
+    };
     
     /**
 	 * Adds an interactive field to document.
@@ -93,7 +173,7 @@
         while (cName.indexOf('..') != -1)
             cName = cName.replace(new RegExp("\.\.", "g"), ".");
 
-        let oExistsWidget = this.private_getWidgetField(cName);
+        let oExistsWidget = this.GetField(cName);
         // если есть виджет-поле с таким именем, но другим типом, то не добавляем 
         if (oExistsWidget && oExistsWidget.type != cFieldType)
             return null; // to do add error (field with this name already exists)
@@ -214,7 +294,7 @@
         while (cName.indexOf('..') != -1)
             cName = cName.replace(new RegExp("\.\.", "g"), ".");
 
-        let oExistsWidget = this.private_getWidgetField(cName);
+        let oExistsWidget = this.GetField(cName);
         // если есть виджет-поле с таким именем, но другим типом, то не добавляем 
         if (oExistsWidget && oExistsWidget.type != cFieldType)
             return null; // to do add error (field with this name already exists)
@@ -287,7 +367,7 @@
         while (cName.indexOf('..') != -1)
             cName = cName.replace(new RegExp("\.\.", "g"), ".");
 
-        let oExistsWidget = this.private_getWidgetField(cName);
+        let oExistsWidget = this.GetField(cName);
         // если есть виджет-поле с таким именем то не добавляем 
         if (oExistsWidget && oExistsWidget.type != oField.type)
             return null; // to do выдавать ошибку создания поля
@@ -348,7 +428,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CPDFDoc.prototype.ResetForms = function(aForms) {
-        let oActionsQueue   = this.GetActionsQueue();
+        let oActionsQueue = this.GetActionsQueue();
 
         if (aForms.length > 0) {
             aForms.forEach(function(field) {
@@ -389,17 +469,6 @@
     };
 
     /**
-	 * Returns an interactive field by name.
-	 * @memberof CPDFDoc
-	 * @typeofeditors ["PDF"]
-	 * @returns {CBaseForm}
-	 */
-    CPDFDoc.prototype.getField = function(sName) {
-        if (this._fields)
-            return
-    };
-
-    /**
 	 * Checks the field for the field widget, if not then the field will be removed.
 	 * @memberof CPDFDoc
 	 * @typeofeditors ["PDF"]
@@ -422,15 +491,29 @@
 	 * @typeofeditors ["PDF"]
 	 * @returns {boolean}
 	 */
-    CPDFDoc.prototype.getWidgetsByName = function(sName) {
+    CPDFDoc.prototype.GetFields = function(sName) {
         let aFields = [];
         for (let i = 0; i < this.widgets.length; i++) {
-            if (this.widgets[i]._apiForm.name == sName)
+            if (this.widgets[i].api.name == sName)
                 aFields.push(this.widgets[i]);
         }
 
         return aFields;
     };
+
+    /**
+	 * Gets API PDF doc.
+	 * @memberof CPDFDoc
+	 * @typeofeditors ["PDF"]
+	 * @returns {boolean}
+	 */
+    CPDFDoc.prototype.GetDocumentApi = function(sName) {
+        if (this.api)
+            return this.api;
+
+        return new AscPDFEditor.ApiDocument(this);
+    };
+
     /**
 	 * Сhecks if the field is a widget or not.
      * Checks by full name.
@@ -438,7 +521,7 @@
 	 * @typeofeditors ["PDF"]
 	 * @returns {?CBaseField}
 	 */
-    CPDFDoc.prototype.private_getWidgetField = function(sName) {
+    CPDFDoc.prototype.GetField = function(sName) {
         let aPartNames = sName.split('.').filter(function(item) {
             if (item != "")
                 return item;
@@ -447,7 +530,7 @@
         let sPartName = aPartNames[0];
         for (let i = 0; i < aPartNames.length; i++) {
             for (let j = 0; j < this.widgets.length; j++) {
-                if (this.widgets[j].name == sPartName) // checks by fully name
+                if (this.widgets[j].api.name == sPartName) // checks by fully name
                     return this.widgets[j];
             }
             sPartName += "." + aPartNames[i + 1];
@@ -456,37 +539,48 @@
         return null;
     };
 
-    function CActionQueue() {
+    function CActionQueue(oDoc) {
+        this.doc            = oDoc;
         this.actions        = [];
-        this.next           = null;
         this.isInProgress   = false;
+        this.curAction  = null;
+        this.curActionIdx   = -1;
+        this.callBackAfterFocus = null;
     };
 
     CActionQueue.prototype.AddActions = function(aActions) {
         this.actions = this.actions.concat(aActions);
     };
-    CActionQueue.prototype.SetNextAction = function(oAction) {
-        this.next = oAction;
+    CActionQueue.prototype.SetCurAction = function(oAction) {
+        this.curAction = oAction;
     };
-    CActionQueue.prototype.GetNextAction = function(oAction) {
-        return this.next;
+    CActionQueue.prototype.GetNextAction = function() {
+        return this.actions[this.curActionIdx + 1];
     };
     CActionQueue.prototype.Clear = function() {
         this.actions = [];
-        this.next = null;
-        this.isInProgress = false;
+        this.curActionIdx = -1;
+        this.curAction = null;
+        this.callBackAfterFocus = null;
+    };
+    CActionQueue.prototype.Stop = function() {
+        this.SetInProgress(false);
     };
     CActionQueue.prototype.IsInProgress = function() {
         return this.isInProgress;
     };
     CActionQueue.prototype.SetInProgress = function(bValue) {
-        this.isInProgress = true;
+        this.isInProgress = bValue;
+    };
+    CActionQueue.prototype.SetCurActionIdx = function(nValue) {
+        this.curActionIdx = nValue;
     };
     CActionQueue.prototype.Start = function() {
         if (this.IsInProgress() == false) {
             let oFirstAction = this.actions[0];
             if (oFirstAction) {
                 this.SetInProgress(true);
+                this.SetCurActionIdx(0);
                 setTimeout(function() {
                     oFirstAction.Do();
                 }, 100);
@@ -495,12 +589,17 @@
     };
     CActionQueue.prototype.Continue = function() {
         let oNextAction = this.GetNextAction();
-        if (oNextAction) {
+        if (this.callBackAfterFocus && this.curAction.triggerType == AscPDFEditor.FORMS_TRIGGERS_TYPES.OnFocus && (!oNextAction || oNextAction.triggerType != AscPDFEditor.FORMS_TRIGGERS_TYPES.OnFocus))
+            this.callBackAfterFocus();
+
+        if (oNextAction && this.IsInProgress()) {
+            this.curActionIdx += 1;
             oNextAction.Do();
         }
         else {
-            editor.getDocumentRenderer()._paintForms();
-            editor.getDocumentRenderer()._paintFormsHighlight();
+            this.Stop();
+            editor.getDocumentRenderer().onEndFormsActions();
+            this.Clear();
         }
     };
 

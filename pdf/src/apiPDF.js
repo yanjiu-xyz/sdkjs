@@ -217,6 +217,28 @@
 	 * For a list box, use the Keystroke trigger for the Selection Change event.
      */
 
+    
+    // main class (this) in JS PDF scripts
+    function ApiDocument(oDoc) {
+        this.doc = oDoc;
+    };
+
+    /**
+	 * Returns an interactive field by name.
+	 * @memberof ApiDocument
+     * @param {string} sName - field name.
+	 * @typeofeditors ["PDF"]
+	 * @returns {ApiBaseField}
+	 */
+    ApiDocument.prototype.getField = function(sName) {
+        for (let i = 0; i < this.doc.widgets.length; i++) {
+            if (this.doc.widgets[i].api.name == sName)
+                return this.doc.widgets[i].GetFormApi();
+        }
+
+        return null;
+    };
+
     // base form class with attributes and method for all types of forms
 	function ApiBaseField(oField)
     {
@@ -252,18 +274,15 @@
         "borderStyle": {
             set(sValue) {
                 if (Object.values(border).includes(sValue)) {
-                    let aFields = this._doc.getWidgetsByName(this.name);
+                    let aFields = this._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
                         field._borderStyle = sValue;
                         field.SetNeedRecalc(true);
-                        field._content.GetElement(0).Content.forEach(function(run) {
+                        field.content.GetElement(0).Content.forEach(function(run) {
                             run.RecalcInfo.Measure = true;
                         });
                     });
-
-                    editor.getDocumentRenderer()._paintForms();
                 }
-
             },
             get() {
                 return this._borderStyle;
@@ -323,16 +342,14 @@
             set(nValue) {
                 nValue = parseInt(nValue);
                 if (Object.values(LINE_WIDTH).includes(nValue)) {
-                    let aFields = this._doc.getWidgetsByName(this.name);
+                    let aFields = this._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
                         field._lineWidth = nValue;
                         field.SetNeedRecalc(true);
-                        field._content.GetElement(0).Content.forEach(function(run) {
+                        field.content.GetElement(0).Content.forEach(function(run) {
                             run.RecalcInfo.Measure = true;
                         });
                     });
-
-                    editor.getDocumentRenderer()._paintForms();
                 }
             },
             get() {
@@ -369,7 +386,7 @@
         "readonly": {
             set(bValue) {
                 if (typeof(bValue) == "boolean") {
-                    let aFields = this._doc.getWidgetsByName(this.name);
+                    let aFields = this._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
                         field.SetReadOnly(bValue);
                     })
@@ -402,7 +419,7 @@
         "required": {
             set(bValue) {
                 if (typeof(bValue) == "boolean" && this.type != "button") {
-                    let aFields = this._doc.getWidgetsByName(this.name);
+                    let aFields = this._doc.GetFields(this.name);
 
                     aFields.forEach(function(field) {
                         field.SetRequired(bValue);
@@ -473,13 +490,13 @@
         "textSize": {
             set(nValue) {
                 if (typeof(nValue) == "number" && nValue >= 0 && nValue < MAX_TEXT_SIZE) {
-                    let aFields = this._doc.getWidgetsByName(this.name);
+                    let aFields = this._doc.GetFields(this.name);
                     let oField;
                     for (var i = 0; i < aFields.length; i++) {
                         oField = aFields[i];
                         oField._textSize = nValue;
 
-                        let aParas = oField._content.Content;
+                        let aParas = oField.content.Content;
                         aParas.forEach(function(para) {
                            para.SetApplyToAll(true);
                            para.Add(new AscCommonWord.ParaTextPr({FontSize : nValue}));
@@ -514,7 +531,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     ApiBaseField.prototype.setAction = function(cTrigger, cScript) {
-        let aFields = this.field._doc.getWidgetsByName(this.name);
+        let aFields = this.field._doc.GetFields(this.name);
         let nInternalType;
         switch (cTrigger) {
             case "MouseUp":
@@ -664,7 +681,7 @@
                     else if (arrValues[i] === "")
                         arrValues[i] = "Yes";
 
-                let aFields = this._doc.getWidgetsByName(this.name);
+                let aFields = this._doc.GetFields(this.name);
                 for (var i = 0; i < aFields.length; i++) {
                     aFields[i]._exportValues = arrValues;
                     if (arrValues[i])
@@ -702,7 +719,7 @@
      * @returns {string}
 	 */
     ApiBaseCheckBoxField.prototype.isBoxChecked = function(nWidget) {
-        let aFields = this.field._doc.getWidgetsByName(this.name);
+        let aFields = this.field._doc.GetFields(this.name);
         let oField = aFields[nWidget];
         if (!oField)
             return false;
@@ -726,7 +743,7 @@
     Object.defineProperties(ApiCheckBoxField.prototype, {
         "value": {
             set(sValue) {
-                let aFields = this._doc.getWidgetsByName(this.name);
+                let aFields = this.field.GetDocument().GetFields(this.name);
                 if (this._exportValues.includes(sValue)) {
                     aFields.forEach(function(field) {
                         field._value = sValue;
@@ -737,10 +754,9 @@
                         field._value = "Off";
                     });
                 }
-                editor.getDocumentRenderer()._paintForms();
             },
             get() {
-                return this._value;
+                return this.field._value;
             }
         }
     });
@@ -755,11 +771,10 @@
         "radiosInUnison": {
             set(bValue) {
                 if (typeof(bValue) == "boolean") {
-                    let aFields = this._doc.getWidgetsByName(this.name);
+                    let aFields = this._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
                         field._radiosInUnison = bValue;
                     });
-                    this.UpdateAll();
                 }
             },
             get() {
@@ -768,7 +783,7 @@
         },
         "value": {
             set(sValue) {
-                let aFields = this._doc.getWidgetsByName(this.name);
+                let aFields = this._doc.GetFields(this.name);
                 if (this._exportValues.includes(sValue)) {
                     aFields.forEach(function(field) {
                         field._value = sValue;
@@ -779,10 +794,20 @@
                         field._value = "Off";
                     });
                 }
-                this.UpdateAll();
             },
             get() {
-                return this._value;
+                let aFields = this.field.GetDocument().GetFields(this.name);
+                for (let i = 0; i < aFields.length; i++) {
+                    if (aFields[i]._value != "Off" && aFields[i].IsNeedApplyToAll()) {
+                        return aFields[i]._value;
+                    }
+                }
+                for (let i = 0; i < aFields.length; i++) {
+                    if (aFields[i]._value != "Off") {
+                        return aFields[i]._value;
+                    }
+                }
+                return "Off";
             }
         }
     });
@@ -800,12 +825,10 @@
                     this._alignment = sValue;
                     var nJcType = private_GetFieldAlign(sValue);
 
-                    let aFields = this.field._doc.getWidgetsByName(this.name);
+                    let aFields = this.field._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
                         field.SetAlign(nJcType);
                     });
-
-                    editor.getDocumentRenderer()._paintForms();
                 }
             },
             get() {
@@ -815,7 +838,7 @@
         "calcOrderIndex": {
             set(nValue) {
                 if (typeof(nValue) == "number") {
-                    let aFields = this._doc.getWidgetsByName(this.name);
+                    let aFields = this._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
                         field._calcOrderIndex = nValue;
                     });
@@ -828,22 +851,20 @@
         "charLimit": {
             set(nValue) {
                 if (typeof(nValue) == "number" && nValue <= 500 && nValue > 0 && this.fileSelect === false) {
-                    let aFields = this._doc.getWidgetsByName(this.name);
+                    let aFields = this._doc.GetFields(this.name);
                     nValue = Math.round(nValue);
                     if (this._charLimit != nValue) {
                         let aChars = [];
-                        let sText = this._content.GetElement(0).GetText({ParaEndToSpace: false});
+                        let sText = this.content.GetElement(0).GetText({ParaEndToSpace: false});
                         for (let i = 0; i < sText.length; i++) {
                             aChars.push(sText[i].charCodeAt(0));
                         }
 
                         aFields.forEach(function(field) {
                             field._charLimit = nValue;
-                            field._content.SelectAll();
+                            field.content.SelectAll();
                             field.EnterText(aChars);
                         });
-
-                        editor.getDocumentRenderer()._paintForms();
                     }
                 }
             },
@@ -856,12 +877,11 @@
                 if (typeof(bValue) != "boolean")
                     return;
 
-                let aFields = this._doc.getWidgetsByName(this.name);
+                let aFields = this._doc.GetFields(this.name);
                 aFields.forEach(function(field) {
                     field.SetComb(bValue);
                     field.SetNeedRecalc(true);
                 });
-                editor.getDocumentRenderer()._paintForms();
             },
             get() {
                 return this._comb;
@@ -873,7 +893,7 @@
                     return;
                 }
 
-                let aFields = this._doc.getWidgetsByName(this.name);
+                let aFields = this._doc.GetFields(this.name);
                 aFields.forEach(function(field) {
                     field._doNotScroll = bValue;
                     if (editor.getDocumentRenderer().activeForm == field) {
@@ -891,7 +911,7 @@
         "doNotSpellCheck": {
             set(bValue) {
                 if (typeof(bValue) === "boolean") {
-                    let aFields = this._doc.getWidgetsByName(this.name);
+                    let aFields = this._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
                         field._doNotSpellCheck = bValue;
                     });
@@ -906,7 +926,7 @@
                 if (typeof(bValue) != "boolean")
                     return;
 
-                let aFields = this._doc.getWidgetsByName(this.name);
+                let aFields = this._doc.GetFields(this.name);
                 aFields.forEach(function(field) {
                     field.SetFileSelect(bValue);
                 });
@@ -920,12 +940,10 @@
                 if (typeof(bValue) != "boolean")
                     return;
 
-                let aFields = this._doc.getWidgetsByName(this.name);
+                let aFields = this._doc.GetFields(this.name);
                 aFields.forEach(function(field) {
                     field.SetMultiline(bValue);
                 });
-
-                editor.getDocumentRenderer()._paintForms();
             },
             get() {
                 return this._multiline;
@@ -936,7 +954,7 @@
                 if (typeof(bValue) != "boolean")
                     return;
 
-                let aFields = this._doc.getWidgetsByName(this.name);
+                let aFields = this._doc.GetFields(this.name);
                 aFields.forEach(function(field) {
                     field.SetPassword(bValue);
                 });
@@ -948,7 +966,7 @@
         "richText": {
             set(bValue) {
                 if (typeof(bValue) == "boolean") {
-                    let aFields = this._doc.getWidgetsByName(this.name);
+                    let aFields = this._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
                         field.SetRichText(bValue);
                     });
@@ -966,7 +984,7 @@
                             return item;
                     });
 
-                    let aFields = this._doc.getWidgetsByName(this.name);
+                    let aFields = this._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
                         field._richValue = aCorrectVals;
                     });
@@ -979,7 +997,7 @@
         "textFont": {
             set(sValue) {
                 if (typeof(sValue) == "string" && sValue !== "") {
-                    let aFields = this._doc.getWidgetsByName(this.name);
+                    let aFields = this._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
                         field._textFont = sValue;
                     });
@@ -998,18 +1016,22 @@
                 
                 let oTextFormat = new AscWord.CTextFormFormat();
                 let arrBuffer = oTextFormat.GetBuffer(value);
-                this.content.GetElement(0).GetElement(0).ClearContent();
-                let isCanEnter = this.EnterText(arrBuffer);
+                this.field.content.GetElement(0).GetElement(0).ClearContent();
+                let isCanEnter = this.field.EnterText(arrBuffer);
                 if (!isCanEnter) {
                     return; // to do вызвать ошибку формата
                 }
-                this._value = value;
-                this.ApplyValueForAll(true);
-
-                editor.getDocumentRenderer()._paintForms();
+                this.field._value = value;
+                this.field.Apply(true);
             },
             get() {
-                return this.field.GetValue();
+                // изменения еще могли быть не применены ко всем с таким именем, поэтому находим измененное и возвращаем его значение
+                let aFields = this.field.GetDocument().GetFields(this.name);
+                let oNotAppliedField = aFields.find(function(field) {
+                    return field.IsNeedApplyToAll();
+                });
+
+                return oNotAppliedField ? oNotAppliedField.GetValue() : this.field.GetValue();
             }
         },
         "defaultValue": {
@@ -1032,7 +1054,7 @@
         "commitOnSelChange": {
             set(bValue) {
                 if (typeof(bValue) == "boolean") {
-                    let aFields = this._doc.getWidgetsByName(this.name);
+                    let aFields = this._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
                         field.SetCommitOnSelChange(bValue);
                     })
@@ -1092,7 +1114,7 @@
         "calcOrderIndex": {
             set(nValue) {
                 if (typeof(nValue) == "number") {
-                    let aFields = this._doc.getWidgetsByName(this.name);
+                    let aFields = this._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
                         field._calcOrderIndex = nValue;
                     });
@@ -1105,7 +1127,7 @@
         "doNotSpellCheck": {
             set(bValue) {
                 if (typeof(bValue) === "boolean") {
-                    let aFields = this._doc.getWidgetsByName(this.name);
+                    let aFields = this._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
                         field.SetDoNotSpellCheck(bValue);
                     });
@@ -1118,7 +1140,7 @@
         "editable": {
             set(bValue) {
                 if (typeof(bValue) === "boolean") {
-                    let aFields = this._doc.getWidgetsByName(this.name);
+                    let aFields = this._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
                         this.SetEditable(bValue);
                     });
@@ -1131,17 +1153,17 @@
         "currentValueIndices": {
             set(value) {
                 if (typeof(value) === "number" && this.getItemAt(value, false) !== undefined) {
-                    let aFields = this._doc.getWidgetsByName(this.name);
+                    let aFields = this._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
                         field._currentValueIndices = value;
                     });
 
                     this.SelectOption(value);
-                    this.ApplyValueForAll();
+                    this.Apply();
                 }
             },
             get() {
-                return this._currentValueIndices;
+                return this.field._currentValueIndices;
             }
         },
         "value": {
@@ -1159,11 +1181,16 @@
                     return; // to do вызвать ошибку формата
                 }
                 this._value = value;
-                this.ApplyValueForAll(true);
-                editor.getDocumentRenderer()._paintForms();
+                this.Apply(true);
             },
             get() {
-                return this._value;
+               // изменения еще могли быть не применены ко всем с таким именем, поэтому находим измененное и возвращаем его значение
+               let aFields = this.field.GetDocument().GetFields(this.name);
+               let oNotAppliedField = aFields.find(function(field) {
+                   return field.IsNeedApplyToAll();
+               });
+
+               return oNotAppliedField ? oNotAppliedField.GetValue() : this.field.GetValue();
             }
         }
     });
@@ -1195,7 +1222,7 @@
             }
         }
 
-        let aFields = this._doc.getWidgetsByName(this.name);
+        let aFields = this._doc.GetFields(this.name);
         aFields.forEach(function(field) {
             field._options = aOptToPush.slice();
             if (field == oThis) {
@@ -1206,8 +1233,6 @@
             else
                 field.SelectOption(0, false);
         });
-
-        editor.getDocumentRenderer()._paintForms();
     };
 
     function ApiListBoxField(oField)
@@ -1224,7 +1249,7 @@
                     if (bValue == this.multipleSelection)
                         return;
 
-                    let aFields = this._doc.getWidgetsByName(this.name);
+                    let aFields = this._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
                         field.SetMultipleSelection(bValue);
                     });
@@ -1263,19 +1288,38 @@
                             }
                         }
                         this._currentValueIndices = value.sort();
-                        this.ApplyValueForAll();
+                        this.Apply();
                     }
                 }
                 else if (this.multipleSelection === false && typeof(value) === "number" && this.getItemAt(value, false) !== undefined) {
                     this._currentValueIndices = value;
                     this.SelectOption(value, true);
-                    this.ApplyValueForAll();
+                    this.Apply();
                 }
             },
             get() {
-                return this._currentValueIndices;
+                return this.field._currentValueIndices;
             }
         },
+        "value": {
+            set(value) {
+                this.field.SetValue(value);
+            },
+            get() {
+                if (Array.isArray(this.currentValueIndices)) {
+                    let oThis = this;
+                    let aValues = [];
+                    this.currentValueIndices.forEach(function(idx) {
+                        aValues.push(oThis.field._options[idx][1] ? oThis.field._options[idx][1] : oThis.field._options[idx])
+                    });
+                    
+                    return aValues;
+                }
+                else {
+                    return this.field._options[this.currentValueIndices][1] ? this.field._options[this.currentValueIndices][1] : this.field._options[this.currentValueIndices]
+                }
+            }
+        }
     });
 
     /**
@@ -1287,11 +1331,11 @@
 	 * @typeofeditors ["PDF"]
 	 */
     ApiListBoxField.prototype.setItems = function(values) {
-        let aFields = this._doc.getWidgetsByName(this.name);
+        let aFields = this._doc.GetFields(this.name);
 
         aFields.forEach(function(field) {
             field._options = [];
-            field._content.Internal_Content_RemoveAll();
+            field.content.Internal_Content_RemoveAll();
             let sCaption, oPara, oRun;
             
             for (let i = 0; i < values.length; i++) {
@@ -1314,15 +1358,15 @@
                 }
 
                 if (sCaption != "") {
-                    oPara = new AscCommonWord.Paragraph(field._content.DrawingDocument, field._content, false);
+                    oPara = new AscCommonWord.Paragraph(field.content.DrawingDocument, field.content, false);
                     oRun = new AscCommonWord.ParaRun(oPara, false);
-                    field._content.Internal_Content_Add(i, oPara);
+                    field.content.Internal_Content_Add(i, oPara);
                     oPara.Add(oRun);
                     oRun.AddText(sCaption);
                 }
             }
 
-            field._content.Recalculate_Page(0, true);
+            field.content.Recalculate_Page(0, true);
             field._curShiftView.x = 0;
             field._curShiftView.y = 0;
         });
@@ -1336,9 +1380,7 @@
             this._currentValueIndices = 0;
 
         if (aFields.length > 1)
-            this.ApplyValueForAll(this, false);
-
-        editor.getDocumentRenderer()._paintForms();
+            this.Apply(this, false);
     };
     /**
 	 * Inserts a new item into a list box
@@ -1352,13 +1394,11 @@
 	 * @typeofeditors ["PDF"]
 	 */
     ApiListBoxField.prototype.insertItemAt = function(cName, cExport, nIdx) {
-        let aFields = this.field._doc.getWidgetsByName(this.name);
+        let aFields = this.field._doc.GetFields(this.name);
 
         aFields.forEach(function(field) {
             field.InsertOption(cName, cExport, nIdx);
         })
-
-        editor.getDocumentRenderer()._paintForms();
     };
 
     function ApiSignatureField(oField)
@@ -1475,6 +1515,7 @@
     if (!window["AscPDFEditor"])
 	    window["AscPDFEditor"] = {};
         
+	window["AscPDFEditor"].ApiDocument          = ApiDocument;
 	window["AscPDFEditor"].ApiTextField         = ApiTextField;
 	window["AscPDFEditor"].ApiPushButtonField   = ApiPushButtonField;
 	window["AscPDFEditor"].ApiCheckBoxField     = ApiCheckBoxField;
