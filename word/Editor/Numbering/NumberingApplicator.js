@@ -477,11 +477,17 @@
 		if (!num)
 			return false;
 
-		for (let ilvl = 0; ilvl < 9; ++ilvl)
+		for (let iLvl = 0; iLvl < 9; ++iLvl)
 		{
-			let numLvl = this.CreateSingleNumberingLvl(ilvl);
+			let numLvl = this.CreateSingleNumberingLvl(iLvl);
 			if (numLvl)
-				num.SetLvl(numLvl, ilvl);
+			{
+				let pStyle = num.GetLvl(iLvl).GetPStyle();
+				if (pStyle)
+					numLvl.SetPStyle(pStyle);
+				
+				num.SetLvl(numLvl, iLvl);
+			}
 		}
 
 		if (numId)
