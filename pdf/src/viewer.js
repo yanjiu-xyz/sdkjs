@@ -3251,6 +3251,10 @@
 									oDoc.AddFieldToApply(this.activeForm);
 									oDoc.ApplyFields();
 								}
+								else {
+									if (this.activeForm.UndoNotAppliedChanges)
+									this.activeForm.UndoNotAppliedChanges();
+								}
 								
 								this.activeForm = null;
 								this._paintForms();
@@ -3582,17 +3586,17 @@
 							// убираем курсор
 						if (oParentForm.type == "combobox" || oParentForm.type == "text") {
 							this.Api.WordControl.m_oDrawingDocument.TargetEnd();
-							if (oCurPoint.Additional.FormFilling.CheckCurValueIndex)
-								oCurPoint.Additional.FormFilling.CheckCurValueIndex();
+							if (oParentForm.CheckCurValueIndex)
+								oParentForm.CheckCurValueIndex();
 
 							oParentForm.RemoveNotAppliedChangesPoints(nCurPoindIdx);
 						}
 
-						if (oCurPoint.Additional.FormFilling.type == "listbox") {
-							oCurPoint.Additional.FormFilling.CheckCurValueIndex();
-							oCurPoint.Additional.FormFilling.Apply(null, false);
+						if (oParentForm.type == "listbox") {
+							oParentForm.CheckCurValueIndex();
+							oParentForm.Apply(null, false);
 						}
-						else
+						else if ("radiobutton" != oParentForm.type)
 							oParentForm.Apply(false);
 
 						// выход из формы
@@ -3629,19 +3633,18 @@
 						
 						// убираем курсор
 						if (oParentForm.type == "combobox" || oParentForm.type == "text") {
-							if (oCurPoint.Additional.FormFilling.CheckCurValueIndex)
-								oCurPoint.Additional.FormFilling.CheckCurValueIndex();
+							if (oParentForm.CheckCurValueIndex)
+								oParentForm.CheckCurValueIndex();
 
 							this.Api.WordControl.m_oDrawingDocument.TargetEnd();
 						}
 							
 						
-						// 
-						if (oCurPoint.Additional.FormFilling.type == "listbox") {
-							oCurPoint.Additional.FormFilling.CheckCurValueIndex();
-							oCurPoint.Additional.FormFilling.Apply(null, false);
+						if (oParentForm.type == "listbox") {
+							oParentForm.CheckCurValueIndex();
+							oParentForm.Apply(null, false);
 						}
-						else
+						else if (["radiobutton", "checkbox"].includes(oParentForm.type) == false)
 							oParentForm.Apply(false);
 
 						// выход из формы
@@ -3662,127 +3665,6 @@
 				}
 			}
 		};
-		// this.private_RecalculateFastRunRange = function(arrChanges)
-		// {
-		// 	var nStartIndex = 0;
-		// 	var nEndIndex   = arrChanges.length - 1;
-
-		// 	var oRun = null;
-		// 	for (var nIndex = nStartIndex; nIndex <= nEndIndex; ++nIndex)
-		// 	{
-		// 		var oChange = arrChanges[nIndex];
-
-		// 		if (oChange.IsDescriptionChange())
-		// 			continue;
-
-		// 		if (!oRun)
-		// 			oRun = oChange.GetClass();
-		// 		else if (oRun !== oChange.GetClass())
-		// 			return null;
-		// 	}
-
-		// 	if (!oRun || !(oRun instanceof ParaRun) || !oRun.GetParagraph())
-		// 		return null;
-
-			
-		// 	var oParaPos = oRun.GetSimpleChangesRange(arrChanges, nStartIndex, nEndIndex);
-		// 	let oParentForm = oRun.GetParagraph().GetParent().ParentPDF;
-
-		// 	return oParentForm;
-		// };
-		// this.private_RecalculateFastParagraph = function(arrChanges, nStartIndex, nEndIndex)
-		// {
-		// 	var nStartIndex = 0;
-		// 	var nEndIndex   = arrChanges.length - 1;
-
-		// 	// Смотрим, чтобы изменения происходили только внутри параграфов. Если есть изменение,
-		// 	// которое не возвращает параграф, значит возвращаем null.
-		// 	// А также проверяем, что каждое из этих изменений влияет только на параграф.
-		// 	var arrParagraphs = [];
-		// 	for (var nIndex = nStartIndex; nIndex <= nEndIndex; ++nIndex)
-		// 	{
-		// 		var oChange = arrChanges[nIndex];
-		// 		var oClass  = oChange.GetClass();
-		// 		var oPara   = null;
-
-		// 		if (oClass instanceof Paragraph)
-		// 			oPara = oClass;
-		// 		else if (oClass instanceof AscCommon.CTableId || oClass instanceof AscCommon.CComments)
-		// 			continue;
-		// 		else if (oClass.GetParagraph)
-		// 			oPara = oClass.GetParagraph();
-		// 		else
-		// 			return false;
-
-		// 		// Такое может быть, если класс еще не приписан ни к какому параграфу. Либо класс дальше небудет
-		// 		// использован, либо его добавят в параграф и в этом изменении мы отметим параграф
-		// 		// Поэтому мы не отказываемся от быстрого пересчета в данной ситуации
-		// 		if (!oPara)
-		// 			continue;
-
-		// 		if (!oClass.IsParagraphSimpleChanges || !oClass.IsParagraphSimpleChanges(oChange))
-		// 			return false;
-
-		// 		var isAdd = true;
-		// 		for (var nParaIndex = 0, nParasCount = arrParagraphs.length; nParaIndex < nParasCount; ++nParaIndex)
-		// 		{
-		// 			if (oPara === arrParagraphs[nParaIndex])
-		// 			{
-		// 				isAdd = false;
-		// 				break;
-		// 			}
-		// 		}
-
-		// 		if (isAdd)
-		// 			arrParagraphs.push(oPara);
-		// 	}
-
-		// 	if (arrParagraphs.length > 0)
-		// 	{
-		// 		var oFastPages     = {};
-		// 		var bCanFastRecalc = true;
-		// 		for (var nSimpleIndex = 0, nSimplesCount = arrParagraphs.length; nSimpleIndex < nSimplesCount; ++nSimpleIndex)
-		// 		{
-		// 			var oSimplePara  = arrParagraphs[nSimpleIndex];
-		// 			var arrFastPages = oSimplePara.Recalculate_FastWholeParagraph();
-		// 			if (!arrFastPages || arrFastPages.length <= 0)
-		// 			{
-		// 				bCanFastRecalc = false;
-		// 				break;
-		// 			}
-		// 		}
-
-
-		// 		if (bCanFastRecalc)
-		// 		{
-		// 			for (var nPageIndex in oFastPages)
-		// 			{
-		// 				// // Recalculation LOG
-		// 				// console.log("Fast Recalculation Paragraph, PageIndex=" + nPageIndex);
-		// 				this.DrawingDocument.OnRecalculatePage(oFastPages[nPageIndex], this.Pages[nPageIndex]);
-		// 			}
-
-		// 			this.DrawingDocument.OnEndRecalculate(false, true);
-		// 			this.History.Reset_RecalcIndex();
-		// 			this.private_UpdateCursorXY(true, true);
-
-		// 			for (var nSimpleIndex = 0, nSimplesCount = arrParagraphs.length; nSimpleIndex < nSimplesCount; ++nSimpleIndex)
-		// 			{
-		// 				var oSimplePara = arrParagraphs[nSimpleIndex];
-		// 				if (oSimplePara.Parent && oSimplePara.Parent.GetTopDocumentContent)
-		// 				{
-		// 					var oTopDocument = oSimplePara.Parent.GetTopDocumentContent();
-		// 					if (oTopDocument instanceof CFootEndnote)
-		// 						oTopDocument.OnFastRecalculate();
-		// 				}
-		// 			}
-
-		// 			return true;
-		// 		}
-		// 	}
-
-		// 	return false;
-		// };
 		this.showTextMessage = function()
 		{
 			if (this.isFullTextMessage)

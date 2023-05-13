@@ -2483,6 +2483,7 @@
             }
 
             field.SetChecked(oThis.IsChecked());
+            field.AddToRedraw();
         });
     };
 
@@ -2645,14 +2646,14 @@
                 if (field == oThis)
                     return;
 
-                if (field._value != "Off") {
+                if (field.IsChecked() == true && oThis.IsChecked()) {
                     field.SetChecked(false);
                     field.SetNeedRecalc(true);
                 }
             }); 
         }
         else {
-            if (this._value != "Off") {
+            if (this.IsChecked() == true) {
                 if (this._noToggleToOff == false) {
                     this.SetChecked(false);
                     this.SetNeedRecalc(true);
@@ -2667,15 +2668,15 @@
                 if (field == oThis)
                     return;
 
-                if (field._exportValue != oThis._exportValue && field._value != "Off") {
+                if (field._exportValue != oThis._exportValue && field.IsChecked() == true) {
                     field.SetChecked(false);
                     field.SetNeedRecalc(true);
                 }
-                else if (field._exportValue == oThis._exportValue && oThis._value == "Off") {
+                else if (field._exportValue == oThis._exportValue && oThis.IsChecked() == false) {
                     field.SetChecked(false);
                     field.SetNeedRecalc(true);
                 }
-                else if (field._exportValue == oThis._exportValue && field._value == "Off") {
+                else if (field._exportValue == oThis._exportValue && field.IsChecked() == false) {
                     field.SetChecked(true);
                     field.SetNeedRecalc(true);
                 }
@@ -3127,13 +3128,7 @@
             // например для даты, маски
             if (isValidFormat === false && this.api.value != "") {
                 // отменяем все изменения сделанные в форме, т.к. не подходят формату 
-                this.UnionLastHistoryPoints();
-                let nPoint = AscCommon.History.Index;
-                AscCommon.History.Undo();
-                
-                // удаляем точки
-                AscCommon.History.Points.length = nPoint;
-
+                this.UndoNotAppliedChanges();
                 // to do выдать предупреждение, что строка не подходит по формату
                 return;
             }
@@ -3205,7 +3200,17 @@
         this.SetCalculatedValue(undefined);
         this.SetNeedApplyToAll(false);
     };
-    
+    CTextField.prototype.UndoNotAppliedChanges = function() {
+        this.UnionLastHistoryPoints();
+        let nPoint = AscCommon.History.Index;
+        AscCommon.History.Undo();
+        
+        // удаляем точки
+        AscCommon.History.Points.length = nPoint;
+        
+        this.AddToRedraw();
+        this.SetNeedApplyToAll(false);
+    };
     /**
 	 * Unions the last history points of this form.
 	 * @memberof CTextField
