@@ -1826,7 +1826,7 @@
             }
 
             let oNewPara = new AscCommonWord.Paragraph(oPara1.DrawingDocument, this.content, false);
-            oNewPara.Correctcontent();
+            oNewPara.CorrectContent();
             this.content.AddToContent(1, oNewPara);
             oNewPara.Set_Align(align_Center);
             oNewPara.private_CompileParaPr(true);
@@ -1869,7 +1869,7 @@
             }
 
             let oNewPara = new AscCommonWord.Paragraph(oPara1.DrawingDocument, this.content, false);
-            oNewPara.Correctcontent();
+            oNewPara.CorrectContent();
             this.content.AddToContent(0, oNewPara);
             oNewPara.Set_Align(align_Center);
             oNewPara.private_CompileParaPr(true);
@@ -3207,7 +3207,7 @@
         
         // удаляем точки
         AscCommon.History.Points.length = nPoint;
-        
+
         this.AddToRedraw();
         this.SetNeedApplyToAll(false);
     };
