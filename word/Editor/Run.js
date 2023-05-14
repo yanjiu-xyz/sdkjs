@@ -2896,10 +2896,9 @@ ParaRun.prototype.SplitNoDuplicate = function(oContentPos, nDepth, oNewParagraph
 
 	oNewParagraph.AddToContent(oNewParagraph.Content.length, oNewRun, false);
 };
-ParaRun.prototype.Split2AndSpreadCollaborativeMark = function(arrChange, CurPos, Parent, ParentPos)
+ParaRun.prototype.Split2AndSpreadCollaborativeMark = function(arrChange, CurPos, isSpread)
 {
 	let isNot = true;
-
 	for (let i = 0; i < arrChange.length; i++)
 	{
 		if (arrChange[i].Id === this)
@@ -2907,16 +2906,14 @@ ParaRun.prototype.Split2AndSpreadCollaborativeMark = function(arrChange, CurPos,
 	}
 
 	if (isNot)
-		arrChange.push(this);
-
-	let NewRun = this.Split2(CurPos, Parent, ParentPos);
-
-	if (this.CollaborativeMarks.Ranges.length > 0)
 	{
-		let Ranges = NewRun.CollaborativeMarks.Ranges;
-		let oNewRange = new CRunCollaborativeRange(0, NewRun.Content.length, this.CollaborativeMarks.Ranges[0].Color);
-		Ranges.push(oNewRange);
+		arrChange.push(this);
 	}
+
+	let NewRun = this.Split2(CurPos);
+
+	if (isSpread !== false && this.CollaborativeMarks.Ranges.length > 0)
+		NewRun.CollaborativeMarks.Add(0, NewRun.Content.length, this.CollaborativeMarks.Ranges[0].Color);
 
 	return NewRun;
 };

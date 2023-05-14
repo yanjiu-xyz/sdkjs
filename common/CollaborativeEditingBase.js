@@ -359,6 +359,13 @@
             this.private_RestoreDocumentState(DocState);
             this.OnStart_Load_Objects(fEndCallBack);
             AscFonts.IsCheckSymbols = false;
+
+            // При отображении ревизии
+            this.CoHistory.InitRevision();
+            if (this.CoHistory.GetIsShowDelText())
+            {
+                this.CoHistory.ShowDel();
+            }
         }
 		else
 		{
