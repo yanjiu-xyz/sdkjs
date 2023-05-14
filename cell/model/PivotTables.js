@@ -12087,6 +12087,7 @@ function CT_DataField(setDefaults) {
 	this.baseItem = null;
 	this.numFmtId = null;
 	this.num = null;
+	this.ascNumFormat = null;
 //Members
 	if (setDefaults) {
 		this.setDefaults();
@@ -12236,6 +12237,9 @@ CT_DataField.prototype.asc_set = function (api, pivot, index, newVal) {
 			if (null !== newVal.baseItem) {
 				field.asc_setBaseItem(newVal.baseItem, pivot, index, true);
 			}
+			if (null !== newVal.ascNumFormat) {
+				field.setNumFormat(newVal.ascNumFormat, pivot, index, true);
+			}
 		});
 	}
 };
@@ -12258,6 +12262,20 @@ CT_DataField.prototype.asc_setBaseField = function(newVal, pivot, index, addToHi
 CT_DataField.prototype.asc_setBaseItem = function(newVal, pivot, index, addToHistory) {
 	setFieldProperty(pivot, index, this.baseItem, newVal, addToHistory, AscCH.historyitem_PivotTable_DataFieldSetBaseItem, true);
 	this.baseItem = newVal;
+};
+CT_DataField.prototype.asc_setNumFormat = function(newVal){
+	this.ascNumFormat = newVal;
+};
+CT_DataField.prototype.setNumFormat = function(newVal, pivot, index, addToHistory){
+	let num = null;
+	if (newVal && "General" !== newVal) {
+		num = AscCommonExcel.Num.prototype.initFromParams(null, newVal);
+	} else {
+		num = newVal = null;
+	}
+	let oldVal = this.num && this.num.getFormat() || null;
+	setFieldProperty(pivot, index, oldVal, newVal, addToHistory, AscCH.historyitem_PivotTable_DataFieldSetNumFormat, true);
+	this.num = num;
 };
 CT_DataField.prototype.setShowAs = function (showDataAs, baseField, baseItem) {
 	this.asc_setShowDataAs(showDataAs);
