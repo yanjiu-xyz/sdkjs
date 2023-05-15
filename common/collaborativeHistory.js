@@ -276,6 +276,8 @@
 				    let isSame =	oCurrentChange.PosArray
 									&& oChange.PosArray
 									&& oCurrentChange.PosArray[0] 		=== oChange.PosArray[0]
+									&&	oCurrentChange.Items
+									&& oChange.Items.length > 0
 									&& oCurrentChange.Items[0].Value 	=== oChange.Items[0].Value
 									&& oCurrentChange.Class 			=== oChange.Class;
 
@@ -458,7 +460,16 @@
 		{
 			if (!oReviewInfoParent || !oReviewInfoParent.ReviewInfo)
 			{
-				if (oReviewInfoParent.Content.length > 0)
+				if (oReviewInfoParent instanceof ParaMath)
+				{
+					let oRootContent = oReviewInfoParent.Root.Content;
+					for (let i = 0; i < oRootContent.length; i++)
+					{
+						let oCurrentContent = oRootContent[i];
+						SetReviewInfo(oCurrentContent);
+					}
+				}
+				else if (oReviewInfoParent.Content.length > 0)
 				{
 					for (let i = 0; i < oReviewInfoParent.Content.length; i++)
 					{
@@ -475,12 +486,6 @@
 			oCurrentReviewType.DateTime 	= timeOfRevision;
 			oReviewInfoParent.SetReviewTypeWithInfo(1,oCurrentReviewType);
 		}
-		let DisableReviewInfo = function (oReviewInfoParent)
-		{
-			if (oReviewInfoParent.ReviewInfo)
-				oReviewInfoParent.ReviewInfo = new CReviewInfo();
-		}
-
 		const FindPosInParent = function(oClass)
 		{
 			let oParent = oClass.GetParent();
@@ -505,10 +510,12 @@
 				let oCurrDel 	= aCurrentDel[1];
 				let oDelChange 	= oCurrDel.CreateReverseChange();
 
-				if (nCount === arrCurrentDel.length - 1)
-					nStartPos = oDelChange.PosArray[0];
+				nEndPos += oDelChange.Items.length;
 
-				// иногда у изменений позиция больше чем реальная позиция куда они будут добавлены
+				if (nCount === arrCurrentDel.length - 1)
+					nStartPos = oDelChange.PosArray[0]
+
+				// иногда у изменений позиция больше чем реальная позиция - куда они будут добавлены
 				// изменяем позицию на длину контента
 				if (oDelChange.PosArray[0] > oDelChange.Class.Content.length)
 				{
@@ -519,9 +526,8 @@
 
 				if (nCount === 0)
 				{
-					debugger
 					if (oDelChange.Class instanceof CDocument)
-					{
+					 {
 						let arrParagraphsInDocument = oDelChange.Items;
 						for (let nCounterParagraph = 0; nCounterParagraph < arrParagraphsInDocument.length; nCounterParagraph++)
 						{
@@ -538,32 +544,18 @@
 					}
 					else if (oDelChange.Class instanceof Paragraph)
 					{
-						if (oDelChange.PosArray.length > 1)
-							nEndPos = oDelChange.PosArray.length;
-						else
-							nEndPos = oDelChange.PosArray[0];
+						nEndPos	+= nStartPos;
 
-						if (nEndPos === oDelChange.Class.Content.length - 1)
+						for (let i = nStartPos; i < nEndPos; i++)
 						{
-							SetReviewInfo(oDelChange.Class);
+							SetReviewInfo(oDelChange.Class.Content[i]);
 						}
-						else
-						{
-							for (let i = nStartPos; i < nEndPos; i++)
-							{
-								SetReviewInfo(oDelChange.Items[i]);
-							}
-						}
-
 					}
 					else if (oDelChange.Class instanceof ParaRun)
 					{
-						if (oDelChange.PosArray.length > 1)
-							nEndPos = oDelChange.PosArray.length - 1;
-						else
-							nEndPos = oDelChange.PosArray[0];
+						nEndPos	+= nStartPos;
 
-						if (nStartPos === 0 && nEndPos === oDelChange.Class.Content.length - 1)
+						if (nStartPos === 0 && nEndPos === oDelChange.Class.Content.length)
 						{
 							SetReviewInfo(oDelChange.Class);
 						}
@@ -586,11 +578,11 @@
 							let RightRun 	= oDelChange.Class.Split2AndSpreadCollaborativeMark(arrSplits, nStartPos);
 							oParent.Add_ToContent(RunPos + 1, RightRun);
 
-							if (RightRun.Content.length - 1 !== nEndPos - nStartPos)
-							{
-								let oNewer 	= RightRun.Split2AndSpreadCollaborativeMark(arrSplits, nStartPos > nEndPos ? nEndPos : nEndPos - nStartPos + 1);
+							if (RightRun.Content.length > 1) {
+								let oNewer = RightRun.Split2AndSpreadCollaborativeMark(arrSplits, nEndPos - nStartPos);
 								oParent.Add_ToContent(RunPos + 2, oNewer);
 							}
+
 							SetReviewInfo(RightRun);
 						}
 					}
@@ -647,16 +639,30 @@
 	// перемещаемся по истории ревизии
 	CCollaborativeHistory.prototype.NavigationRevisionHistory = function (isUndo)
 	{
-		this.isPrevUndo = isUndo;
-
-		if (this.isPrevUndo === true && isUndo < 0)
+		if (this.isPrevUndo === true && isUndo === undefined)
 		{
-			return this.NavigationRevisionHistoryByCount(-2);
+			this.m_RewiewIndex--;
 		}
-		return this.NavigationRevisionHistoryByCount(isUndo ? -1 : 1);
+		else if (this.isPrevUndo === false && isUndo === true)
+		{
+			this.m_RewiewIndex++;
+		}
+
+		let isProceed = this.NavigationRevisionHistoryByStep(isUndo === true ? -1 : 1);
+
+		if (isUndo === undefined)
+		{
+			this.isPrevUndo = false;
+		}
+		else if (isUndo === true)
+		{
+			this.isPrevUndo = true;
+		}
+
+		return isProceed;
 	};
-	// перемещаемся по истории ревизии на заданное количество изменений
-	CCollaborativeHistory.prototype.NavigationRevisionHistoryByCount = function (intCount)
+	// перемещаемся по истории ревизии на заданное количество изменений относительно текущей позиции
+	CCollaborativeHistory.prototype.NavigationRevisionHistoryByStep = function (intCount, isMore)
 	{
 		if (this.m_RewiewIndex + intCount < 0)
 		{
@@ -667,8 +673,12 @@
 			return false;
 		}
 
-		this.UndoPoints();
-		AscCommon.History.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_DeletedTextRecovery);
+		if (!isMore)
+		{
+			this.UndoPoints();
+			AscCommon.History.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_DeletedTextRecovery);
+		}
+
 
 		let FindRules = function (context, isMore, i)
 		{
@@ -699,25 +709,28 @@
 		}
 
 		let arrChange = [];
-		intCount = this.m_RewiewIndex + intCount;
 
-		if (intCount <= this.m_RewiewIndex)
+		if (intCount < 0)
 		{
-			let oRule = FindRules(this, false, this.m_RewiewIndex);
+			intCount = this.m_RewiewIndex + intCount;
+
+			let oRule = FindRules(this, false, intCount);
 			if (oRule !== false)
 			{
 				let arrChanges 		= oRule[0];
-				this.m_RewiewIndex 	= oRule[1] - 1;
+				this.m_RewiewIndex 	= oRule[1];
 				this.UndoReviewBlock(arrChanges, arrChange);
 			}
 		}
-		else
+		else if (intCount > 0)
 		{
-			let oRule = FindRules(this, true,  this.m_RewiewIndex);
+			intCount = this.m_RewiewIndex + intCount;
+
+			let oRule = FindRules(this, true, intCount);
 			if (oRule !== false)
 			{
 				let arrChanges 		= oRule[0];
-				this.m_RewiewIndex 	= oRule[1] + 1;
+				this.m_RewiewIndex 	= oRule[1];
 				this.RedoReviewBlock(arrChanges.slice(0, arrChanges.length).reverse(), arrChange);
 			}
 		}
@@ -729,12 +742,10 @@
 
 		this.Check();
 
-		if (!arrChange || !Array.isArray(arrChange))
-			arrChange = [];
+		if (!isMore)
+			editor.WordControl.m_oLogicDocument.RecalculateByChanges(arrChange);
 
-		editor.WordControl.m_oLogicDocument.RecalculateByChanges(arrChange);
-
-		if (this.GetIsShowDelText())
+		if (this.GetIsShowDelText() && !isMore)
 		{
 			this.ShowDel();
 		}
