@@ -384,9 +384,9 @@
 			if (lastNum.IsHaveRelatedLvlText())
 			{
 				// В этом случае мы не можем подменить просто текущий уровень, меняем целиком весь список
-				for (let ilvl = 0; ilvl < 9; ++ilvl)
+				for (let iLvl = 0; iLvl < 9; ++iLvl)
 				{
-					num.SetLvl(lastNum.GetLvl(nLvl).Copy(), ilvl);
+					num.SetLvl(lastNum.GetLvl(iLvl).Copy(), iLvl);
 				}
 			}
 			else

@@ -12433,11 +12433,6 @@ CTable.prototype.DrawBorderByClick = function(X1, Y1, CurPageStart)
 		}
 		else if (isVSelect)
 		{
-			if (this.Selection.Data.length === 1)
-			{
-				var Cell = this.GetRow(this.Selection.Data[0].Row).Get_Cell(this.Selection.Data[0].Cell);
-				Cell.Set_Border(border, 3);
-			}
 			var Cell_1 = this.GetRow(this.Selection.Data[0].Row).Get_Cell(this.Selection.Data[0].Cell);
 			var Cell_2 = this.GetRow(this.Selection.Data[1].Row).Get_Cell(this.Selection.Data[1].Cell);
 

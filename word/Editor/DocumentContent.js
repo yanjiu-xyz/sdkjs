@@ -1484,7 +1484,7 @@ CDocumentContent.prototype.Draw                           = function(nPageIndex,
 	{
 		var oTable = oPage.FlowTables[nFlowTableIndex];
 
-		var nElementPageIndex = this.private_GetElementPageIndex(oTable.GetIndex(), nPageIndex, ColumnIndex, ColumnsCount);
+		var nElementPageIndex = this.private_GetElementPageIndex(oTable.GetIndex(), nPageIndex, 0, 1);
 		oTable.Draw(nElementPageIndex, pGraphics);
 	}
 
@@ -1502,7 +1502,7 @@ CDocumentContent.prototype.Draw                           = function(nPageIndex,
 
 		for (var nFlowIndex = oFrame.StartIndex; nFlowIndex < oFrame.StartIndex + oFrame.FlowCount; ++nFlowIndex)
 		{
-			var nElementPageIndex = this.private_GetElementPageIndex(nFlowIndex, nPageIndex, ColumnIndex, ColumnsCount);
+			var nElementPageIndex = this.private_GetElementPageIndex(nFlowIndex, nPageIndex, 0, 1);
 			this.Content[nFlowIndex].Draw(nElementPageIndex, pGraphics);
 		}
 
