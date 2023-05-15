@@ -5154,7 +5154,8 @@
     CPlotArea.prototype.getFullFlipH = CShape.prototype.getFullFlipH;
     CPlotArea.prototype.getFullFlipV = CShape.prototype.getFullFlipV;
     CPlotArea.prototype.getAspect = CShape.prototype.getAspect;
-    CPlotArea.prototype.getGeom = CShape.prototype.getGeom;
+    CPlotArea.prototype.getGeometry = CShape.prototype.getGeometry;
+    CPlotArea.prototype.getTrackGeometry = CShape.prototype.getTrackGeometry;
     CPlotArea.prototype.convertPixToMM = function(pix) {
         var oChartSpace = this.getChartSpace();
         if(oChartSpace) {
@@ -10100,7 +10101,8 @@
     CLegend.prototype.getFullFlipH = CShape.prototype.getFullFlipH;
     CLegend.prototype.getFullFlipV = CShape.prototype.getFullFlipV;
     CLegend.prototype.getAspect = CShape.prototype.getAspect;
-    CLegend.prototype.getGeom = CShape.prototype.getGeom;
+    CLegend.prototype.getGeometry = CShape.prototype.getGeometry;
+    CLegend.prototype.getTrackGeometry = CShape.prototype.getTrackGeometry;
     CLegend.prototype.hitInBoundingRect = CShape.prototype.hitInBoundingRect;
     CLegend.prototype.hitInInnerArea = CShape.prototype.hitInInnerArea;
     CLegend.prototype.hitInPath = CShape.prototype.hitInPath;

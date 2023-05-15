@@ -108,7 +108,8 @@ var c_oAscSlideTransitionTypes = {
 	UnCover : 5,
 	Cover   : 6,
 	Clock   : 7,
-	Zoom    : 8
+	Zoom    : 8,
+	Morph   : 9
 };
 
 /** @enum {number} */
@@ -136,7 +137,11 @@ var c_oAscSlideTransitionParams = {
 
 	Zoom_In        : 0,
 	Zoom_Out       : 1,
-	Zoom_AndRotate : 2
+	Zoom_AndRotate : 2,
+
+	Morph_Objects: 0,
+	Morph_Words: 1,
+	Morph_Letters:2
 };
 
 /** @enum {number} */

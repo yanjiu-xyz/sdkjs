@@ -1543,28 +1543,34 @@
 		_ret.idx = oConnectorInfo.idx;
 		return _ret;
 	};
-	CGraphicObjectBase.prototype.getGeom = function () {
-
-		var _geom;
-		if (this.rectGeometry) {
-			_geom = this.rectGeometry;
-		} else if (this.calcGeometry) {
-			_geom = this.calcGeometry;
-		} else if (this.spPr && this.spPr.geometry) {
-			_geom = this.spPr.geometry;
-		} else {
-			_geom = AscFormat.ExecuteNoHistory(
-				function () {
-					var _ret = AscFormat.CreateGeometry("rect");
-					_ret.Recalculate(this.extX, this.extY);
-					return _ret;
-				}, this, []
-			);
+	CGraphicObjectBase.prototype.getGeometry = function() {
+		if(this.calcGeometry) {
+			return this.calcGeometry;
 		}
-		return _geom;
+		if(this.spPr && this.spPr.geometry) {
+			return this.spPr.geometry;
+		}
+		return null;
+	};
+	CGraphicObjectBase.prototype.getTrackGeometry = function () {
+
+		const oOwnGeometry = this.getGeometry();
+		if(oOwnGeometry) {
+			return oOwnGeometry;
+		}
+		if(this.rectGeometry) {
+			return this.rectGeometry;
+		}
+		return AscFormat.ExecuteNoHistory(
+			function () {
+				var _ret = AscFormat.CreateGeometry("rect");
+				_ret.Recalculate(this.extX, this.extY);
+				return _ret;
+			}, this, []
+		);
 	};
 	CGraphicObjectBase.prototype.findGeomConnector = function (x, y) {
-		var _geom = this.getGeom();
+		var _geom = this.getTrackGeometry();
 		var oInvertTransform = this.invertTransform;
 		var _x = oInvertTransform.TransformPointX(x, y);
 		var _y = oInvertTransform.TransformPointY(x, y);
@@ -1657,7 +1663,7 @@
 		return this.group.getMainGroup();
 	};
 	CGraphicObjectBase.prototype.drawConnectors = function (overlay) {
-		var _geom = this.getGeom();
+		var _geom = this.getTrackGeometry();
 		_geom.drawConnectors(overlay, this.transform);
 	};
 	CGraphicObjectBase.prototype.getConnectionParams = function (cnxIdx, _group) {
@@ -1671,7 +1677,7 @@
 			}, this, []
 		);
 		if (cnxIdx !== null) {
-			var oConnectionObject = this.getGeom().cnxLst[cnxIdx];
+			var oConnectionObject = this.getTrackGeometry().cnxLst[cnxIdx];
 			if (oConnectionObject) {
 				var g_conn_info = {
 					idx: cnxIdx,
@@ -2994,10 +3000,17 @@
 	CGraphicObjectBase.prototype.getTypeName = function () {
 		return AscCommon.translateManager.getValue("Graphic Object");
 	};
-	CGraphicObjectBase.prototype.getObjectName = function () {
-		var oCNvPr = this.getCNvProps();
+	CGraphicObjectBase.prototype.getOwnName = function() {
+		const oCNvPr = this.getCNvProps();
 		if (oCNvPr && typeof oCNvPr.name === "string" && oCNvPr.name.length > 0) {
 			return oCNvPr.name;
+		}
+		return null;
+	};
+	CGraphicObjectBase.prototype.getObjectName = function () {
+		const sOwnName = this.getOwnName();
+		if (sOwnName) {
+			return sOwnName;
 		}
 		return this.getTypeName() + " " + this.getFormatId();
 	};

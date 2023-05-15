@@ -4703,13 +4703,6 @@
 			return Math.PI * 0.5 + Math.atan2(px - this.extX * 0.5, py - this.extY * 0.5);
 		};
 
-
-		CShape.prototype.recalculateGeometry = function () {
-			if (this.spPr && isRealObject(this.spPr.geometry)) {
-				var transform = this.getTransform();
-				this.spPr.geometry.Recalculate(transform.extX, transform.extY);
-			}
-		};
 		CShape.prototype.drawAdjustments = function (drawingDocument) {
 			if (this.spPr && isRealObject(this.spPr.geometry) && this.canChangeAdjustments()) {
 				this.spPr.geometry.drawAdjustments(drawingDocument, this.transform, false);
@@ -5045,7 +5038,7 @@
 			var _transform = transform ? transform : this.transform;
 			var _transform_text = transformText ? transformText : this.transformText;
 			var _transform_text2 = options.transformText2 || this.transformText2;
-			var geometry = this.calcGeometry || this.spPr && this.spPr.geometry;
+			var geometry = this.getGeometry();
 
 			if (graphics.IsSlideBoundsCheckerType === true) {
 
@@ -5880,7 +5873,7 @@
 			}
 			var invert_transform;
 			var t_x, t_y, ret;
-			var _calcGeom = this.calcGeometry || (this.spPr && this.spPr.geometry);
+			var _calcGeom = this.getGeometry();
 			var _dist;
 			if (global_mouseEvent && global_mouseEvent.AscHitToHandlesEpsilon) {
 				_dist = global_mouseEvent.AscHitToHandlesEpsilon;
@@ -5960,7 +5953,7 @@
 				}
 				var x_t = invert_transform.TransformPointX(x, y);
 				var y_t = invert_transform.TransformPointY(x, y);
-				var oGeometry = this.spPr && this.spPr.geometry || this.calcGeometry;
+				var oGeometry = this.getGeometry();
 				if (isRealObject(oGeometry) && oGeometry.pathLst.length > 0 && !(this.getObjectType && this.getObjectType() === AscDFH.historyitem_type_ChartSpace))
 					return oGeometry.hitInInnerArea(this.getCanvasContext(), x_t, y_t);
 				if (this.getObjectType() === AscDFH.historyitem_type_Shape) {

@@ -11084,8 +11084,7 @@
     };
 
 
-    function CTexturesCache(oDrawer) {
-        this.drawer = oDrawer;
+    function CTexturesCache() {
         this.map = {};
     }
 
@@ -11126,7 +11125,7 @@
         this.player = player;
         this.sandwiches = {};//map by drawing id
         this.lastFrameSandwiches = {};
-        this.texturesCache = new CTexturesCache(this);
+        this.texturesCache = new CTexturesCache();
         this.hiddenObjects = {};
         this.showObjects = {};
         this.collectHiddenObjects();
@@ -15829,6 +15828,7 @@
     window['AscCommon'].CSeqListContainer = CSeqListContainer;
     window['AscCommon'].CTimelineContainer = CTimelineContainer;
     window['AscCommon'].CColorPercentage = CColorPercentage;
+    window['AscCommon'].CTexturesCache = CTexturesCache;
 
 
     window['AscFormat'].NODE_FILL_FREEZE = NODE_FILL_FREEZE;
