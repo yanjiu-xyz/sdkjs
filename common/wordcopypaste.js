@@ -3333,7 +3333,7 @@ PasteProcessor.prototype =
 			y = pos.Y;
 		}
 		let screenPos;
-		let bThumbnals = (presentation.GetFocusObjType() === FOCUS_OBJECT_THUMBNAILS);
+		let bThumbnals = presentation.IsFocusOnThumbnails();
 		let sSlideId = null;
 
 		let aSelectedSlides = presentation.GetSelectedSlides();
