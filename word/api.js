@@ -4184,9 +4184,21 @@ background-repeat: no-repeat;\
 		if (!numInfo)
 			return false;
 		
-		let numPr = logicDocument.GetSelectedNum(true);
+		let numPr;
+		if (singleLevel)
+		{
+			// MSWord показывает нумерацию у первого параграфа в выделении (т.е. кнопка с нумерация может не быть зажата
+			// вообще, но при этом в списке нумераций выбрана нумерация первого параграфа)
+			let paragraph = logicDocument.GetCurrentParagraph(false, false, {FirstInSelection : true});
+			numPr = paragraph ? paragraph.GetNumPr() : null;
+		}
+		else
+		{
+			numPr = logicDocument.GetSelectedNum(true);
+		}
+		
 		if (!numPr || !numPr.IsValid())
-			return numInfo.IsRemove();
+			return numInfo.IsNone();
 		
 		let num = logicDocument.GetNumbering().GetNum(numPr.NumId);
 		return numInfo.CompareWithNum(num, singleLevel ? numPr.Lvl : undefined);

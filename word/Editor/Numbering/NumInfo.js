@@ -225,6 +225,10 @@
 	{
 		return this.Type === Asc.c_oAscJSONNumberingType.Remove;
 	};
+	CNumInfo.prototype.IsNone = function()
+	{
+		return this.IsRemove();
+	};
 	CNumInfo.prototype.HaveLvl = function()
 	{
 		return (!!this.Lvl.length);
