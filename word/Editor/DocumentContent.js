@@ -2078,11 +2078,23 @@ CDocumentContent.prototype.GetCurrentParagraph = function(bIgnoreSelection, arrS
 		}
 		else
 		{
-			var Pos = true === this.Selection.Use && true !== bIgnoreSelection ? this.Selection.StartPos : this.CurPos.ContentPos;
-			if (Pos < 0 || Pos >= this.Content.length)
+			let pos = this.CurPos.ContentPos;
+			if (this.Selection.Use && true !== bIgnoreSelection)
+			{
+				pos = this.Selection.StartPos;
+				if (oPr)
+				{
+					if (oPr.FirstInSelection)
+						pos = this.Selection.StartPos <= this.Selection.EndPos ? this.Selection.StartPos : this.Selection.EndPos;
+					else if (oPr.LastInSelection)
+						pos = this.Selection.StartPos <= this.Selection.EndPos ? this.Selection.EndPos : this.Selection.StartPos;
+				}
+			}
+			
+			if (pos < 0 || pos >= this.Content.length)
 				return null;
-
-			return this.Content[Pos].GetCurrentParagraph(bIgnoreSelection, null, oPr);
+			
+			return this.Content[pos].GetCurrentParagraph(bIgnoreSelection, null, oPr);
 		}
 	}
 

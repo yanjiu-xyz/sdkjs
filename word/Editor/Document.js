@@ -11449,6 +11449,8 @@ CDocument.prototype.GetSelectedText = function(bClearText, oPr)
  * @param {object} oPr
  *  oPr.ReplacePlaceHolder {boolean} - Если текущий параграф в плейсхолдере, тогда заменяем его нормальным контентом
  *  oPr.ReturnSelectedTable {boolean} - Если идет выделение по ячейкам, тогда возвращаем таблицу
+ *  oPr.FirstInSelection {boolean} - Если true, и bReturnSelectedArray = false, то мы возвращаем первый параграф в выделении (а не тот, с которого начали)
+ *  oPr.LastInSelection {boolean} - Если true, и bReturnSelectedArray = false, то мы возвращаем последний параграф в выделении
  * @returns {Paragraph | [Paragraph]}
  */
 CDocument.prototype.GetCurrentParagraph = function(bIgnoreSelection, bReturnSelectedArray, oPr)
@@ -20998,11 +21000,23 @@ CDocument.prototype.controller_GetCurrentParagraph = function(bIgnoreSelection, 
 	}
 	else
 	{
-		var Pos = true === this.Selection.Use && true !== bIgnoreSelection ? this.Selection.StartPos : this.CurPos.ContentPos;
-		if (Pos < 0 || Pos >= this.Content.length)
+		let pos = this.CurPos.ContentPos;
+		if (this.Selection.Use && true !== bIgnoreSelection)
+		{
+			pos = this.Selection.StartPos;
+			if (oPr)
+			{
+				if (oPr.FirstInSelection)
+					pos = this.Selection.StartPos <= this.Selection.EndPos ? this.Selection.StartPos : this.Selection.EndPos;
+				else if (oPr.LastInSelection)
+					pos = this.Selection.StartPos <= this.Selection.EndPos ? this.Selection.EndPos : this.Selection.StartPos;
+			}
+		}
+		
+		if (pos < 0 || pos >= this.Content.length)
 			return null;
-
-		return this.Content[Pos].GetCurrentParagraph(bIgnoreSelection, null, oPr);
+		
+		return this.Content[pos].GetCurrentParagraph(bIgnoreSelection, null, oPr);
 	}
 };
 CDocument.prototype.controller_GetCurrentTablesStack = function(arrTables)
