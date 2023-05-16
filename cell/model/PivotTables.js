@@ -17830,6 +17830,7 @@ prot["asc_setSubtotal"] = prot.asc_setSubtotal;
 prot["asc_setShowDataAs"] = prot.asc_setShowDataAs;
 prot["asc_setBaseField"] = prot.asc_setBaseField;
 prot["asc_setBaseItem"] = prot.asc_setBaseItem;
+prot["asc_setNumFormat"] = prot.asc_setNumFormat;
 prot["asc_setShowAs"] = prot.asc_setShowAs;
 
 window["Asc"]["CT_RangePr"] = window['Asc'].CT_RangePr = CT_RangePr;
