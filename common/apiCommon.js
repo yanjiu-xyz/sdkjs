@@ -2077,7 +2077,9 @@
 
 	};
 	asc_ChartSettings.prototype.write = function(_type, _stream) {
-		_stream["WriteByte"](_type);
+		if(_type !== undefined && _type !== null) {
+			_stream["WriteByte"](_type);
+		}
 
 		if (this.style !== undefined && this.style !== null)
 		{
@@ -4013,7 +4015,10 @@
 			return this.isMotionPath;
 		};
 	asc_CShapeProperty.prototype.write = function (_type, _stream) {
-		_stream["WriteByte"](_type);
+
+		if(_type !== undefined && _type !== null) {
+			_stream["WriteByte"](_type);
+		}
 
 		if (this.type !== undefined && this.type !== null) {
 			_stream["WriteByte"](0);
@@ -4094,8 +4099,8 @@
 					break;
 				}
 				case 8: {
-					this.shadow = new Asc.asc_CShadowProperty();
-					this.shadow.read(_params, _cursor);
+					const oShadow = new Asc.asc_CShadowProperty();
+					this.shadow = oShadow.read(_params, _cursor);
 					break;
 				}
 				case 9: {

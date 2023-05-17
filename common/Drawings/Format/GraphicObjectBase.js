@@ -979,6 +979,13 @@
 		}
 		return null;
 	};
+	CGraphicObjectBase.prototype.getOuterShdwAsc = function () {
+		const oShdw = this.getOuterShdw();
+		if(!oShdw) {
+			return oShdw;
+		}
+		return oShdw.getAscShdw();
+	};
 	CGraphicObjectBase.prototype.recalculateShdw = function () {
 
 		this.shdwSp = null;
