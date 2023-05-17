@@ -4504,6 +4504,7 @@
 	baseEditorsApi.prototype.asc_startEyedropper = function(fEndCallback)
 	{
 		this.eyedropper.start(fEndCallback);
+		this.stopInkDrawer()
 	};
 	baseEditorsApi.prototype.finishEyedropper = function()
 	{

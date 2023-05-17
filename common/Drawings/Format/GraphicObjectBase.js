@@ -788,7 +788,7 @@
 				if (!sMacro) {
 					return null;
 				}
-				for (nSp = 1; nSp < this.spTree.length; ++nSp) {
+				for (let nSp = 1; nSp < this.spTree.length; ++nSp) {
 					if (sMacro !== this.spTree[nSp].getMacroOwnOrGroup()) {
 						return null;
 					}
@@ -978,6 +978,13 @@
 			return this.spPr.effectProps.EffectLst.outerShdw;
 		}
 		return null;
+	};
+	CGraphicObjectBase.prototype.getOuterShdwAsc = function () {
+		const oShdw = this.getOuterShdw();
+		if(!oShdw) {
+			return oShdw;
+		}
+		return oShdw.getAscShdw();
 	};
 	CGraphicObjectBase.prototype.recalculateShdw = function () {
 
@@ -3053,8 +3060,8 @@
 		}
 	};
 	CGraphicObjectBase.prototype.IsUseInDocument = function () {
-		if (CShape.prototype.IsUseInDocument) {
-			return CShape.prototype.IsUseInDocument.call(this);
+		if (AscFormat.CShape.prototype.IsUseInDocument) {
+			return AscFormat.CShape.prototype.IsUseInDocument.call(this);
 		}
 		return true;
 	};

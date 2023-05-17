@@ -3346,7 +3346,8 @@ function CDrawingDocument()
         var oWordControl = this.m_oWordControl;
 		var bIsReturn = false;
 
-        if (this.placeholders.onPointerDown(pos, this.SlideCurrectRect, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM())) {
+		if (!this.isButtonsDisabled() && this.placeholders.onPointerDown(pos, this.SlideCurrectRect, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM()))
+		{
 			bIsReturn = true;
 			this.m_oWordControl.onMouseUpMainSimple();
 		}
@@ -3382,7 +3383,7 @@ function CDrawingDocument()
 		{
 			if(!AscCommon.global_mouseEvent.IsLocked)
 			{
-				if (this.placeholders.onPointerMove(pos, this.SlideCurrectRect, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM()))
+				if (!this.isButtonsDisabled() && this.placeholders.onPointerMove(pos, this.SlideCurrectRect, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM()))
 				{
 					oWordControl.OnUpdateOverlay();
 					oWordControl.EndUpdateOverlay();
@@ -3399,6 +3400,11 @@ function CDrawingDocument()
         return bIsReturn;
 	};
 
+	this.isButtonsDisabled = function()
+	{
+		return Asc.editor.isEyedropperStarted() || Asc.editor.isDrawInkMode();
+	};
+
 	this.checkMouseUp_Drawing = function (pos)
 	{
 		var oWordControl = this.m_oWordControl;
@@ -3413,7 +3419,7 @@ function CDrawingDocument()
 
             bIsReturn = true;
 		}
-        else if (this.placeholders.onPointerUp(pos, this.SlideCurrectRect, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM()))
+        else if (!this.isButtonsDisabled() && this.placeholders.onPointerUp(pos, this.SlideCurrectRect, this.m_oLogicDocument.GetWidthMM(), this.m_oLogicDocument.GetHeightMM()))
             bIsReturn = true;
 
         if (bIsReturn)

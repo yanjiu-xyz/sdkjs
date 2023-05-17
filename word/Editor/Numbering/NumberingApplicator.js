@@ -384,9 +384,9 @@
 			if (lastNum.IsHaveRelatedLvlText())
 			{
 				// В этом случае мы не можем подменить просто текущий уровень, меняем целиком весь список
-				for (let ilvl = 0; ilvl < 9; ++ilvl)
+				for (let iLvl = 0; iLvl < 9; ++iLvl)
 				{
-					num.SetLvl(lastNum.GetLvl(nLvl).Copy(), ilvl);
+					num.SetLvl(lastNum.GetLvl(iLvl).Copy(), iLvl);
 				}
 			}
 			else
@@ -461,7 +461,7 @@
 	};
 	CNumberingApplicator.prototype.ApplyMultilevel = function()
 	{
-		let commonNumId = this.NumPr ? this.NumPr.NumId : this.GetCommonNumId();
+		let commonNumId = this.NumPr ? this.NumPr.NumId : null;
 
 		let num, numId;
 		if (commonNumId)
@@ -477,11 +477,17 @@
 		if (!num)
 			return false;
 
-		for (let ilvl = 0; ilvl < 9; ++ilvl)
+		for (let iLvl = 0; iLvl < 9; ++iLvl)
 		{
-			let numLvl = this.CreateSingleNumberingLvl(ilvl);
+			let numLvl = this.CreateSingleNumberingLvl(iLvl);
 			if (numLvl)
-				num.SetLvl(numLvl, ilvl);
+			{
+				let pStyle = num.GetLvl(iLvl).GetPStyle();
+				if (pStyle)
+					numLvl.SetPStyle(pStyle);
+				
+				num.SetLvl(numLvl, iLvl);
+			}
 		}
 
 		if (numId)

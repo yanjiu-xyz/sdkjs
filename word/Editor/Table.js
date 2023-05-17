@@ -5070,6 +5070,7 @@ CTable.prototype.Selection_SetStart = function(X, Y, CurPage, MouseEvent)
 };
 CTable.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent)
 {
+	let LogicDocument = this.GetLogicDocument();
 	var TablePr = this.Get_CompiledPr(false).TablePr;
 	if (CurPage < 0 || CurPage >= this.Pages.length)
 		CurPage = 0;
@@ -5077,7 +5078,6 @@ CTable.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent)
 	var Page = this.Pages[CurPage];
 	if (this.Selection.Type2 === table_Selection_Border)
 	{
-		var LogicDocument = this.LogicDocument;
 		if (!LogicDocument || true !== LogicDocument.CanEdit() || this.Selection.Data2.PageNum != CurPage)
 			return;
 
@@ -5621,7 +5621,10 @@ CTable.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent)
 	this.Selection.CurRow            = Pos.Row;
 
 	// При селекте внутри ячейки мы селектим содержимое ячейки
-	if (table_Selection_Common === this.Selection.Type2 && this.Parent.IsSelectedSingleElement() && this.Selection.StartPos.Pos.Row === this.Selection.EndPos.Pos.Row && this.Selection.StartPos.Pos.Cell === this.Selection.EndPos.Pos.Cell)
+	if (table_Selection_Common === this.Selection.Type2
+		&& (this.Parent.IsSelectedSingleElement() || (LogicDocument && LogicDocument.IsDocumentEditor() && LogicDocument.IsNumberingSelection()))
+		&& this.Selection.StartPos.Pos.Row === this.Selection.EndPos.Pos.Row
+		&& this.Selection.StartPos.Pos.Cell === this.Selection.EndPos.Pos.Cell)
 	{
 		this.private_SetSelectionData(null);
 
@@ -8273,25 +8276,34 @@ CTable.prototype.GetCurrentParagraph = function(bIgnoreSelection, arrSelectedPar
 	}
 	else
 	{
-		var arrSelectionArray = this.GetSelectionArray();
-		if (arrSelectionArray.length > 0)
+		let selectionArray = this.GetSelectionArray();
+		if (selectionArray.length <= 0)
+			return null;
+		
+		let pos = 0;
+		if (true !== bIgnoreSelection && oPr)
 		{
-			var nCurCell = arrSelectionArray[0].Cell;
-			var nCurRow  = arrSelectionArray[0].Row;
+			if (oPr.FirstInSelection)
+				pos = 0;
+			else if (oPr.LastInSelection)
+				pos = selectionArray.length - 1;
+		}
+		
+		var nCurCell = selectionArray[pos].Cell;
+		var nCurRow  = selectionArray[pos].Row;
 
-			var oCellContent = this.GetRow(nCurRow).GetCell(nCurCell).GetContent();
+		var oCellContent = this.GetRow(nCurRow).GetCell(nCurCell).GetContent();
 
-			if (true === this.Selection.Use && table_Selection_Cell === this.Selection.Type)
-			{
-				oCellContent.SetApplyToAll(true);
-				var oRes = oCellContent.GetCurrentParagraph(bIgnoreSelection, null, oPr);
-				oCellContent.SetApplyToAll(false);
-				return oRes;
-			}
-			else
-			{
-				return oCellContent.GetCurrentParagraph(bIgnoreSelection, null, oPr);
-			}
+		if (true === this.Selection.Use && table_Selection_Cell === this.Selection.Type)
+		{
+			oCellContent.SetApplyToAll(true);
+			var oRes = oCellContent.GetCurrentParagraph(bIgnoreSelection, null, oPr);
+			oCellContent.SetApplyToAll(false);
+			return oRes;
+		}
+		else
+		{
+			return oCellContent.GetCurrentParagraph(bIgnoreSelection, null, oPr);
 		}
 	}
 
@@ -12430,11 +12442,6 @@ CTable.prototype.DrawBorderByClick = function(X1, Y1, CurPageStart)
 		}
 		else if (isVSelect)
 		{
-			if (this.Selection.Data.length === 1)
-			{
-				var Cell = this.GetRow(this.Selection.Data[0].Row).Get_Cell(this.Selection.Data[0].Cell);
-				Cell.Set_Border(border, 3);
-			}
 			var Cell_1 = this.GetRow(this.Selection.Data[0].Row).Get_Cell(this.Selection.Data[0].Cell);
 			var Cell_2 = this.GetRow(this.Selection.Data[1].Row).Get_Cell(this.Selection.Data[1].Cell);
 
