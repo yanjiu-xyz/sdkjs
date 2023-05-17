@@ -10306,6 +10306,7 @@ function(window, undefined) {
 		plot_area.setLayout(new AscFormat.CLayout());
 
 		let oRadarChart = new AscFormat.CRadarChart();
+		oRadarChart.setVaryColors(false);
 		oRadarChart.setRadarStyle(bFilled ? AscFormat.RADAR_STYLE_FILLED : AscFormat.RADAR_STYLE_MARKER);
 		plot_area.addChart(oRadarChart);
 
