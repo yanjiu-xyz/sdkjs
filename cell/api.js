@@ -1431,12 +1431,10 @@ var editor;
     var fileType = options.fileType;
 
 	if (this.isCloudSaveAsLocalToDrawingFormat(actionType, fileType)) {
-	  var printPagesData, pdfPrinterMemory;
+	  var printPagesData, pdfPrinterMemory, t = this;
       this.wb._executeWithoutZoom(function () {
-        t.wb.printPreviewState.advancedOptions = options.advancedOptions;
         printPagesData = t.wb.calcPagesPrint(options.advancedOptions);
         pdfPrinterMemory = t.wb.printSheets(printPagesData, null, options.advancedOptions).DocumentRenderer.Memory;
-		t.wb.printPreviewState.advancedOptions = null;
 	  });
       this.localSaveToDrawingFormat(pdfPrinterMemory.GetBase64Memory(), fileType);
 	  return true;
