@@ -5404,8 +5404,9 @@ function(window, undefined) {
 			var oFirstChart = aCharts[0];
 			var bNoPieChart = (oFirstChart.getObjectType() !== AscDFH.historyitem_type_PieChart && oFirstChart.getObjectType() !== AscDFH.historyitem_type_DoughnutChart);
 			var bSurfaceChart = (oFirstChart.getObjectType() === AscDFH.historyitem_type_SurfaceChart);
+			const bRadarChart = (oFirstChart.getObjectType() === AscDFH.historyitem_type_RadarChart);
 
-			var bSeriesLegend = aCharts.length > 1 || (bNoPieChart && (!(oFirstChart.varyColors && series.length === 1) || bSurfaceChart));
+			var bSeriesLegend = aCharts.length > 1 || (bNoPieChart && (!(oFirstChart.varyColors && series.length === 1) || bSurfaceChart || bRadarChart));
 			if (bSeriesLegend) {
 				if (bSurfaceChart) {
 					this.legendLength = this.chart.plotArea.charts[0].compiledBandFormats.length;
