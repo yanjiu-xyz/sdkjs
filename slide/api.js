@@ -7196,11 +7196,16 @@ background-repeat: no-repeat;\
 			window.g_asc_plugins.stopWorked();
 
 		this.cancelEyedropper();
-		const bIsreporter = (reporterStartObject && !this.isReporterMode);
-		if (bIsreporter)
+		if(slidestart_num !== this.WordControl.m_oLogicDocument.CurPage)
+		{
+			this.WordControl.GoToPage(slidestart_num);
+		}
+
+		const bIsReporter = (reporterStartObject && !this.isReporterMode);
+		if (bIsReporter)
 			this.DemonstrationReporterStart(reporterStartObject);
 
-		if (bIsreporter && (this.reporterWindow || window["AscDesktopEditor"]))
+		if (bIsReporter && (this.reporterWindow || window["AscDesktopEditor"]))
 			this.WordControl.DemonstrationManager.StartWaitReporter(div_id, slidestart_num, true);
 		else
 			this.WordControl.DemonstrationManager.Start(div_id, slidestart_num, true);
