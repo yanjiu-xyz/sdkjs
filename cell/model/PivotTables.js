@@ -2645,6 +2645,7 @@ CT_PivotCacheRecords.prototype.copyRowsToWorksheet = function(ws, rowMap, cacheF
 					cellValue = rowElem.getCellValue();
 				}
 				let cell = ws.getRange4(rowsAddedByMap + 1, index);
+				cell.setNum(cacheFields[index].num);
 				cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, cellValue));
 			});
 			rowsAddedByMap += 1;
