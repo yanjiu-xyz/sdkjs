@@ -5907,7 +5907,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 	}
 	function testPivotShowDetails() {
 		QUnit.test('Test: Show Details', function (assert) {
-			let testData =  [
+			const testData =  [
 				["Region","Gender","Style","Ship date","Units","Price","Cost"],
 				["East","Boy","Tee","1","12","11.04","10.42"],
 				["East","Boy","Golf","1","12","13","12.6"],
@@ -5921,7 +5921,7 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				["West","Girl","Tee","2","15","13.42","13.29"],
 				["West","Girl","Golf","1","15","11.48","10.67"]
 			];
-			let standardNoFilterEastGT = [
+			const standardNoFilterEastGT = [
 				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
 				['East', 'Boy', 'Tee', '1', '12', '11.04', '10.42'],
 				['East', 'Boy', 'Golf', '1', '12', '13', '12.6'],
@@ -5930,36 +5930,36 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				['East', 'Girl', 'Golf', '1', '10', '12.12', '11.95'],
 				['East', 'Girl', 'Fancy', '2', '10', '13.74', '13.33'],
 			];
-			let standardNoFilterFancyGT = [
+			const standardNoFilterFancyGT = [
 				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
 				['East', 'Boy', 'Fancy', '2', '12', '11.96', '11.74'],
 				['East', 'Girl', 'Fancy', '2', '10', '13.74', '13.33'],
 			];
-			let standardNoFilter10GT = [
+			const standardNoFilter10GT = [
 				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
 				['East', 'Girl', 'Fancy', '2', '10', '13.74', '13.33'],
 			];
-			let standardNoFilterEastGirl = [
+			const standardNoFilterEastGirl = [
 				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
 				['East', 'Girl', 'Tee', '2', '10', '11.27', '10.56'],
 				['East', 'Girl', 'Golf', '1', '10', '12.12', '11.95'],
 				['East', 'Girl', 'Fancy', '2', '10', '13.74', '13.33'],
 			];
-			let standardNoFilterFancyGirl = [
+			const standardNoFilterFancyGirl = [
 				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
 				['East', 'Girl', 'Fancy', '2', '10', '13.74', '13.33'],
 			];
-			let standardNoFilter12Girl = [
+			const standardNoFilter12Girl = [
 				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
 				['', '', '', '', '', '', ''],
 			];
-			let standardFilterEastGT = [
+			const standardFilterEastGT = [
 				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
 				['East', 'Boy', 'Tee', '1', '12', '11.04', '10.42'],
 				['East', 'Boy', 'Golf', '1', '12', '13', '12.6'],
 				['East', 'Girl', 'Golf', '1', '10', '12.12', '11.95'],
 			];
-			let standardFilterGTGT = [
+			const standardFilterGTGT = [
 				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
 				['East', 'Boy', 'Tee', '1', '12', '11.04', '10.42'],
 				['East', 'Boy', 'Golf', '1', '12', '13', '12.6'],
@@ -5967,6 +5967,11 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				['West', 'Boy', 'Tee', '1', '11', '11.44', '10.94'],
 				['West', 'Boy', 'Fancy', '1', '11', '12.06', '11.51'],
 				['West', 'Girl', 'Golf', '1', '15', '11.48', '10.67'],
+			];
+			const standardGroupFilter = [
+				['Region', 'Gender', 'Style', 'Ship date', 'Units', 'Price', 'Cost'],
+				['East', 'Boy', 'Golf', '1', '12', '13', '12.6'],
+				['East', 'Girl', 'Golf', '1', '10', '12.12', '11.95'],
 			];
 			function testPivotCellForDetails(assert, pivot, row, col, standard, message) {
 				let undoStandard = [];
@@ -6025,7 +6030,20 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			AscCommon.History.Clear();
 			pivot = testPivotCellForDetails(assert, pivot, 4, 3, standardFilterEastGT, 'filter 1 (ship date) East | GT');
 			pivot = testPivotCellForDetails(assert, pivot, 17, 3, standardFilterGTGT, 'filter 1 (ship date) GTGT');
+
+			const group = new PivotLayoutGroup();
+			group.fld = 4;
+			group.groupMap = {
+				0: 1,
+				2: 1
+			};
+			const onRepeat = function () {
+				api._groupPivot(true, onRepeat);
+			}
+			pivot.groupPivot(api, group, false, onRepeat);
+			pivot = testPivotCellForDetails(assert, pivot, 6, 3, standardGroupFilter, 'filter 1 (ship date) Group 1 Units (10, 12)');
 			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
+			console.log();
 		});
 	}
 	QUnit.module("Pivot");
