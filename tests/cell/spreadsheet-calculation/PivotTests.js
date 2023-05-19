@@ -6043,7 +6043,6 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 			pivot.groupPivot(api, group, false, onRepeat);
 			pivot = testPivotCellForDetails(assert, pivot, 6, 3, standardGroupFilter, 'filter 1 (ship date) Group 1 Units (10, 12)');
 			ws.deletePivotTables(new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange());
-			console.log();
 		});
 	}
 	QUnit.module("Pivot");
