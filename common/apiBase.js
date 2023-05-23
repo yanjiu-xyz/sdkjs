@@ -153,6 +153,7 @@
 		this.isPreOpenLocks = true;
 		this.isApplyChangesOnOpenEnabled = true;
 		this.isProtectionSupport = true;
+		this.isAnonymousSupport = true;
 
 		this.canSave    = true;        // Флаг нужен чтобы не происходило сохранение пока не завершится предыдущее сохранение
 		this.IsUserSave = false;    // Флаг, контролирующий сохранение было сделано пользователем или нет (по умолчанию - нет)
@@ -1468,6 +1469,9 @@
 
 				if (undefined !== this.licenseResult['protectionSupport']) {
 					this.isProtectionSupport = this.licenseResult['protectionSupport'];
+				}
+				if (undefined !== this.licenseResult['isAnonymousSupport']) {
+					this.isAnonymousSupport = this.licenseResult['isAnonymousSupport'];
 				}
 			}
 			this.sendEvent('asc_onGetEditorPermissions', oResult);
@@ -3276,6 +3280,10 @@
             return window["AscDesktopEditor"]["IsProtectionSupport"]();
         return !(this.DocInfo && this.DocInfo.get_OfflineApp()) && this.isProtectionSupport;
     };
+	baseEditorsApi.prototype.asc_isAnonymousSupport = function()
+	{
+		return this.isAnonymousSupport;
+	};
 
 	baseEditorsApi.prototype.asc_gotoSignature = function(guid)
 	{
