@@ -8446,6 +8446,16 @@ var editor;
 		this.wb.updateExternalReferences(arr);
 	};
 
+	spreadsheet_api.prototype.asc_openExternalReference = function(externalReference) {
+		let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
+		if (isLocalDesktop) {
+			alert("NEED SUPPORT LOCAL OPEN FILE");
+			return null;
+		} else {
+			return externalReference;
+		}
+	};
+
 	spreadsheet_api.prototype.asc_removeExternalReferences = function(arr) {
 		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 			return;
@@ -9154,6 +9164,8 @@ var editor;
   prot["asc_getExternalReferences"] = prot.asc_getExternalReferences;
   prot["asc_updateExternalReferences"] = prot.asc_updateExternalReferences;
   prot["asc_removeExternalReferences"] = prot.asc_removeExternalReferences;
+  prot["asc_openExternalReference"] = prot.asc_openExternalReference;
+
 
   prot["asc_fillHandleDone"] = prot.asc_fillHandleDone;
   prot["asc_canFillHandle"]  = prot.asc_canFillHandle;
