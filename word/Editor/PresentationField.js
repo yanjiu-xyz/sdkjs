@@ -252,7 +252,7 @@
                 if(oFormat)
                 {
                     oDateTime = new Asc.cDate();
-                    sStr =  oFormat.formatToChart(oDateTime.getExcelDate(true) + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
+                    sStr =  oFormat.formatToWord(oDateTime.getExcelDate(true) + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
                 }
                 else
                 {
@@ -310,7 +310,7 @@
                     sFormat = aFormat[nIdx]
                 }
             }
-            oFormat = AscCommon.oNumFormatCache.get(sFormat);
+            oFormat = AscCommon.oNumFormatCache.get(sFormat, AscCommon.NumFormatType.WordFieldDate);
         }
         return oFormat;
     };
