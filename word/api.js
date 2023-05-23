@@ -4128,6 +4128,14 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oLogicDocument.FinalizeAction();
 		}
 	};
+	asc_docs_api.prototype.put_ListType = function(type, subtype)
+	{
+		let numObject = AscWord.GetNumberingObjectByDeprecatedTypes(type, subtype);
+		if (!numObject)
+			return;
+
+		this.put_ListTypeCustom(numObject);
+	};
 	asc_docs_api.prototype.put_ListTypeCustom = function(value)
 	{
 		let numInfo = AscWord.CNumInfo.Parse(value);
@@ -13777,6 +13785,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['put_PrAlign']                               = asc_docs_api.prototype.put_PrAlign;
 	asc_docs_api.prototype['put_TextPrBaseline']                        = asc_docs_api.prototype.put_TextPrBaseline;
 	asc_docs_api.prototype['asc_IsShowListIndentsSettings']             = asc_docs_api.prototype.asc_IsShowListIndentsSettings;
+	asc_docs_api.prototype['put_ListType']                              = asc_docs_api.prototype.put_ListType;
 	asc_docs_api.prototype['put_ListTypeCustom']                        = asc_docs_api.prototype.put_ListTypeCustom;
 	asc_docs_api.prototype['asc_GetCurrentNumberingJson']               = asc_docs_api.prototype.asc_GetCurrentNumberingJson;
 	asc_docs_api.prototype['asc_IsCurrentNumberingPreset']              = asc_docs_api.prototype.asc_IsCurrentNumberingPreset;
