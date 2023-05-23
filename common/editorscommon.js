@@ -2047,9 +2047,12 @@
                             xhr.onreadystatechange = fOnReadyChnageState;
                             xhr.send(file);
                         }
-                    }
-                    else if(this.status === 403){
+                    } else if(this.status === 403) {
 						callback(Asc.c_oAscError.ID.VKeyEncrypt);
+					} else if(this.status === 413) {
+						callback(Asc.c_oAscError.ID.UplImageSize);
+					} else if(this.status === 415) {
+						callback(Asc.c_oAscError.ID.UplImageExt);
 					} else {
 						callback(Asc.c_oAscError.ID.UplImageUrl);
 					}
