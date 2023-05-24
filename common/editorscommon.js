@@ -13240,6 +13240,7 @@
 	window["AscCommon"].CEyedropper = CEyedropper;
 	window["AscCommon"].CInkDrawer = CInkDrawer;
 	window["AscCommon"].CPluginCtxMenuInfo = CPluginCtxMenuInfo;
+	window["AscCommon"].c_oAscImageUploadProp = c_oAscImageUploadProp;
 
 })(window);
 
