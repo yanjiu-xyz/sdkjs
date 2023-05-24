@@ -1985,7 +1985,8 @@ function handleMouseUpPreMoveState(drawingObjects, e, x, y, pageIndex, bWord)
     state.drawingObjects.clearPreTrackObjects();
     state.drawingObjects.changeCurrentState(new AscFormat.NullState(state.drawingObjects));
     var bHandle = false;
-    if(!state.shift && /*!state.ctrl &&*/ state.bInside && state.majorObjectIsSelected && e.Button !== AscCommon.g_mouse_button_right)
+    const bRightButton = (e.Button === AscCommon.g_mouse_button_right);
+    if(!state.shift && /*!state.ctrl &&*/ state.bInside && state.majorObjectIsSelected && !bRightButton)
     {
         switch (state.majorObject.getObjectType())
         {
@@ -2016,7 +2017,7 @@ function handleMouseUpPreMoveState(drawingObjects, e, x, y, pageIndex, bWord)
     }
     if(!bHandle)
     {
-        if(!state.shift && !state.ctrl && state.bInside && state.majorObject.getObjectType() === AscDFH.historyitem_type_ImageShape)
+        if(!bRightButton && !state.shift && !state.ctrl && state.bInside && state.majorObject.getObjectType() === AscDFH.historyitem_type_ImageShape)
         {
             var sMediaName = state.majorObject.getMediaFileName();
             if(sMediaName)
