@@ -4430,6 +4430,7 @@ function CDrawingDocument()
 		if (page < 0 || page >= this.m_lPagesCount)
 			return {X: 0, Y: 0, Page: -1, DrawPage: -1};
 
+		var dKoef = (100 * g_dKoef_pix_to_mm / this.m_oWordControl.m_nZoomValue);
 		var rect = this.m_arrPages[page].drawingPage;
 		var x_mm = (x - this.m_oWordControl.X - rect.left) * dKoef;
 		var y_mm = (y - this.m_oWordControl.Y - rect.top) * dKoef;
