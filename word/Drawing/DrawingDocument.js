@@ -4431,8 +4431,8 @@ function CDrawingDocument()
 			return {X: 0, Y: 0, Page: -1, DrawPage: -1};
 
 		var rect = this.m_arrPages[page].drawingPage;
-		var x_mm = (_x - this.m_oWordControl.X - rect.left) * dKoef;
-		var y_mm = (_y - this.m_oWordControl.Y - rect.top) * dKoef;
+		var x_mm = (x - this.m_oWordControl.X - rect.left) * dKoef;
+		var y_mm = (y - this.m_oWordControl.Y - rect.top) * dKoef;
 
 		return {X: x_mm, Y: y_mm, Page: rect.pageIndex, DrawPage: page};
 	};
