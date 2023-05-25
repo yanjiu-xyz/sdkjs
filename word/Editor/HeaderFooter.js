@@ -2740,8 +2740,14 @@ CHeaderFooterController.prototype.GetStyleFromFormatting = function()
 };
 CHeaderFooterController.prototype.GetSimilarNumbering = function(oEngine)
 {
-	if (this.CurHdrFtr)
-		this.CurHdrFtr.Content.GetSimilarNumbering(oEngine)
+	if (!this.CurHdrFtr)
+		return null;
+	
+	let docContent = this.CurHdrFtr.GetContent();
+	if (docpostype_DrawingObjects === docContent.GetDocPosType() && this.LogicDocument)
+		return this.LogicDocument.DrawingsController.GetSimilarNumbering(oEngine);
+	else
+		return this.CurHdrFtr.Content.GetSimilarNumbering(oEngine)
 };
 CHeaderFooterController.prototype.GetPlaceHolderObject = function()
 {
