@@ -1078,7 +1078,7 @@
 						oNum.CreateDefault(c_oAscMultiLevelNumbering.Numbered);
 						for (var iLvl = 0, nCount = arrResult.length; iLvl < nCount; ++iLvl)
 						{
-							let oldLvl = oNum.GetLvl(nLvl);
+							let oldLvl = oNum.GetLvl(iLvl);
 							let newLvl = arrResult[iLvl].Lvl;
 							newLvl.SetParaPr(oldLvl.GetParaPr());
 							oNum.SetLvl(newLvl, iLvl);
