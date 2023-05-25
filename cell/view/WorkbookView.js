@@ -5113,7 +5113,7 @@
 		}
 
 		//TODO Replace_CompositeText
-		this.cellEditor.replaceText(curPos - maxShifts, maxShifts, newCodePoints)
+		this.cellEditor.replaceText(curPos - maxShifts, maxShifts, newCodePoints);
 
 		return true;
 	};
@@ -5124,6 +5124,18 @@
 
 	WorkbookView.prototype.addExternalReferences = function (arr) {
 		this.model.addExternalReferences(arr);
+	};
+
+	WorkbookView.prototype.changeExternalReference = function (eR, to) {
+		if (!eR || !eR.externalReference) {
+			return;
+		}
+
+		let index = this.model.getExternalLinkIndexByName(eR.externalReference.Id);
+		let toER = eR.externalReference.clone();
+		toER.initFromObj(to);
+
+		this.model.changeExternalReference(index, toER);
 	};
 
 	//external requests
