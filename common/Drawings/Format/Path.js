@@ -1108,6 +1108,127 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
         }
         return sSVG;
     };
+    Path.prototype.isInk = function() {
+        const nCmdCount = this.ArrPathCommandInfo.length;
+        for(let nCmd = 0; nCmd < nCmdCount; ++nCmd) {
+            let oCmd = this.ArrPathCommandInfo[nCmd];
+            if(oCmd.id === close) {
+                return false;
+            }
+            if(oCmd.id === arcTo) {
+                return false;
+            }
+        }
+        return true;
+    };
+    Path.prototype.convertToBezierCurves = function (oPath, oTransform) {
+        const nCmdCount = this.ArrPathCommandInfo.length;
+        let dX0, dY0, dX1, dY1, dX2, dY2;
+        let oLastMoveTo = null;
+        let dLastX, dLastY;
+        let oFirstCmd = this.ArrPathCommand[0];
+        if(!oFirstCmd) {
+            return null;
+        }
+        if(oFirstCmd.id !== moveTo) {
+            return null;
+        }
+        for(let nCmd = 0; nCmd < nCmdCount; ++nCmd) {
+            let oCmd = this.ArrPathCommand[nCmd];
+            switch (oCmd.id) {
+                case moveTo: {
+                    dX0 = oTransform.TransformPointX(oCmd.X, oCmd.Y)*36000 >> 0;
+                    dY0 = oTransform.TransformPointY(oCmd.X, oCmd.Y)*36000 >> 0;
+                    oPath.moveTo(dX0, dY0);
+                    oLastMoveTo = oCmd;
+                    dLastX = oCmd.X;
+                    dLastY = oCmd.Y;
+                    break;
+                }
+                case lineTo: {
+                    dX0 = oTransform.TransformPointX(oCmd.X, oCmd.Y)*36000 >> 0;
+                    dY0 = oTransform.TransformPointY(oCmd.X, oCmd.Y)*36000 >> 0;
+                    dX0 = oTransform.TransformPointX(dLastX + (oCmd.X - dLastX)*(1/3), dLastY + (oCmd.Y - dLastY)*(1/3))*36000 >> 0;
+                    dY0 = oTransform.TransformPointY(dLastX + (oCmd.X - dLastX)*(1/3), dLastY + (oCmd.Y - dLastY)*(1/3))*36000 >> 0;
+                    dX1 = oTransform.TransformPointX(dLastX + (oCmd.X - dLastX)*(2/3), dLastY + (oCmd.Y - dLastY)*(2/3))*36000 >> 0;
+                    dY1 = oTransform.TransformPointY(dLastX + (oCmd.X - dLastX)*(2/3), dLastY + (oCmd.Y - dLastY)*(2/3))*36000 >> 0;
+                    dX2 = oTransform.TransformPointX(oCmd.X, oCmd.Y)*36000 >> 0;
+                    dY2 = oTransform.TransformPointY(oCmd.X, oCmd.Y)*36000 >> 0;
+                    oPath.cubicBezTo(dX0, dY0, dX1, dY1, dX2, dY2);
+                    dLastX = oCmd.X;
+                    dLastY = oCmd.Y;
+                    break;
+                }
+                case bezier3: {
+                    dX0 = oTransform.TransformPointX(oCmd.X0, oCmd.Y0)*36000 >> 0;
+                    dY0 = oTransform.TransformPointY(oCmd.X0, oCmd.Y0)*36000 >> 0;
+                    dX1 = oTransform.TransformPointX(oCmd.X1, oCmd.Y1)*36000 >> 0;
+                    dY1 = oTransform.TransformPointY(oCmd.X1, oCmd.Y1)*36000 >> 0;
+                    oPath.cubicBezTo(dX0, dY0, dX1, dY1, dX1, dY1);
+                    dLastX = oCmd.X1;
+                    dLastY = oCmd.Y1;
+                    break;
+                }
+                case bezier4: {
+                    dX0 = oTransform.TransformPointX(oCmd.X0, oCmd.Y0)*36000 >> 0;
+                    dY0 = oTransform.TransformPointY(oCmd.X0, oCmd.Y0)*36000 >> 0;
+                    dX1 = oTransform.TransformPointX(oCmd.X1, oCmd.Y1)*36000 >> 0;
+                    dY1 = oTransform.TransformPointY(oCmd.X1, oCmd.Y1)*36000 >> 0;
+                    dX2 = oTransform.TransformPointX(oCmd.X2, oCmd.Y2)*36000 >> 0;
+                    dY2 = oTransform.TransformPointY(oCmd.X2, oCmd.Y2)*36000 >> 0;
+                    oPath.cubicBezTo(dX0, dY0, dX1, dY1, dX2, dY2);
+                    dLastX = oCmd.X2;
+                    dLastY = oCmd.Y2;
+                    break;
+                }
+                case arcTo: {
+                    let oPathAccumulator = new AscFormat.PathAccumulator();
+                    ArcToCurvers(oPathAccumulator, oCmd.stX, oCmd.stY, oCmd.wR, oCmd.hR, oCmd.stAng, oCmd.swAng);
+                    let aArcToCommands = oPathAccumulator.pathCommand;
+                    for(let nArcCmd = 0; nArcCmd < aArcToCommands.length; ++nArcCmd)  {
+                        let oArcToCmd = aArcToCommands[nArcCmd];
+                        switch (oArcToCmd.id) {
+                            case AscFormat.moveTo: {
+                                break;
+                            }
+                            case AscFormat.bezier4: {
+                                dX0 = oTransform.TransformPointX(oArcToCmd.X0, oArcToCmd.Y0)*36000 >> 0;
+                                dY0 = oTransform.TransformPointY(oArcToCmd.X0, oArcToCmd.Y0)*36000 >> 0;
+                                dX1 = oTransform.TransformPointX(oArcToCmd.X1, oArcToCmd.Y1)*36000 >> 0;
+                                dY1 = oTransform.TransformPointY(oArcToCmd.X1, oArcToCmd.Y1)*36000 >> 0;
+                                dX2 = oTransform.TransformPointX(oArcToCmd.X2, oArcToCmd.Y2)*36000 >> 0;
+                                dY2 = oTransform.TransformPointY(oArcToCmd.X2, oArcToCmd.Y2)*36000 >> 0;
+                                oPath.cubicBezTo(dX0, dY0, dX1, dY1, dX2, dY2);
+
+                                dLastX = oArcToCmd.X2;
+                                dLastY = oArcToCmd.Y2;
+                                break;
+                            }
+                        }
+                    }
+                    break;
+                }
+                case close: {
+                    if(oLastMoveTo) {
+                        let dXM = oTransform.TransformPointX(oLastMoveTo.X, oLastMoveTo.Y);
+                        let dYM = oTransform.TransformPointY(oLastMoveTo.X, oLastMoveTo.Y);
+                        let dLastXM = oTransform.TransformPointX(dLastX, dLastY);
+                        let dLastYM = oTransform.TransformPointY(dLastX, dLastY);
+                        dX0 = (dLastXM + (dXM - dLastXM) / 4) * 36000 >> 0;
+                        dY0 = (dLastYM + (dYM - dLastYM) / 4) * 36000 >> 0;
+                        dX1 = (dLastXM + 3 * (dXM - dLastXM) / 4) * 36000 >> 0;
+                        dY1 = (dLastYM + 3 * (dYM - dLastYM) / 4) * 36000 >> 0;
+                        dX2 = (dXM) * 36000 >> 0;
+                        dY2 = (dYM) * 36000 >> 0;
+                        oPath.cubicBezTo(dX0, dY0, dX1, dY1, dX2, dY2);
+                    }
+                    oPath.close();
+                    break;
+                }
+            }
+        }
+        oPath.recalculate({}, true);
+    };
     function CPathCmd() {
         AscFormat.CBaseNoIdObject.call(this);
         this.pts = [];
@@ -1162,6 +1283,10 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
 
         isEmpty: function() {
             return this.bEmpty;
+        },
+
+        isInk: function() {
+            return false;
         },
 
         checkArray: function(nSize){
@@ -2403,6 +2528,74 @@ function partition_bezier4(x0, y0, x1, y1, x2, y2, x3, y3, epsilon)
     return partition_bezier4(x0, y0, x01, y01, x012, y012, x0123, y0123, epsilon).concat(partition_bezier4(x0123, y0123, x123, y123, x23, y23, x3, y3, epsilon));
 }
 
+    function splitBezier4(x0, y0, x1, y1, x2, y2, x3, y3, parameters) {
+        const aResult = [[x0, y0, x1, y1, x2, y2, x3, y3]];
+        if(!Array.isArray(parameters) || parameters.length === 0) {
+            return aResult;
+        }
+        const aWorkingParameters =  [].concat(parameters);
+        aWorkingParameters.sort(function (a, b) {return a - b});
+        const isN = AscFormat.isRealNumber;
+        const isE = AscFormat.fApproxEqual;
+        let dLastParam = 1.0;
+        for(let nParamIdx = aWorkingParameters.length - 1; nParamIdx > -1; --nParamIdx) {
+            let dParam = aWorkingParameters[nParamIdx];
+            if(!isN(dParam) || dParam <= 0 || dParam >= 1.0 || isE(dParam, dLastParam)) {
+                aWorkingParameters.splice(nParamIdx, 1);
+            }
+            else {
+                dLastParam = dParam;
+            }
+        }
+
+        dLastParam = 1.0;
+        for(let nParamIdx = aWorkingParameters.length - 1; nParamIdx > -1; --nParamIdx) {
+            let dParam = aWorkingParameters[nParamIdx];
+            let dWorkingParam = dParam/dLastParam;
+            let oCurrentCurve = aResult[0];
+
+            let x0c = oCurrentCurve[0];
+            let y0c = oCurrentCurve[1];
+            let x1c = oCurrentCurve[2];
+            let y1c = oCurrentCurve[3];
+            let x2c = oCurrentCurve[4];
+            let y2c = oCurrentCurve[5];
+            let x3c = oCurrentCurve[6];
+            let y3c = oCurrentCurve[7];
+            let t = dWorkingParam;
+
+            //De Casteljau's algorithm
+            let x01 = x0c + (x1c - x0c) * t;
+            let y01 = y0c + (y1c - y0c) * t;
+            let x12 = x1c + (x2c - x1c) * t;
+            let y12 = y1c + (y2c - y1c) * t;
+            let x23 = x2c + (x3c - x2c) * t;
+            let y23 = y2c + (y3c - y2c) * t;
+            let x0112 = x01 + (x12 - x01) * t;
+            let y0112 = y01 + (y12 - y01) * t;
+            let x1223 = x12 + (x23 - x12) * t;
+            let y1223 = y12 + (y23 - y12) * t;
+            let x01121223 = x0112 + (x1223 - x0112) * t;
+            let y01121223 = y0112 + (y1223 - y0112) * t;
+            let oCurve1 = [x0c, y0c, x01, y01,  x0112, y0112, x01121223, y01121223];
+            let oCurve2 = [x01121223, y01121223, x1223, y1223, x23, y23, x3c, y3c];
+            aResult.splice(0, 1, oCurve1, oCurve2);
+            dLastParam = dParam;
+        }
+        return aResult;
+    }
+    function splitBezier4OnParts(x0, y0, x1, y1, x2, y2, x3, y3, nPartsCount) {
+        if(!AscFormat.isRealNumber(nPartsCount) || nPartsCount < 2) {
+            return splitBezier4(x0, y0, x1, y1, x2, y2, x3, y3, []);
+        }
+        let aParameters = [];
+        const dDist = 1/nPartsCount;
+        for(let nPartIdx = 1; nPartIdx < nPartsCount; ++nPartIdx) {
+            aParameters.push(nPartIdx*dDist);
+        }
+        return splitBezier4(x0, y0, x1, y1, x2, y2, x3, y3, aParameters);
+    }
+
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
     window['AscFormat'].moveTo = moveTo;
@@ -2417,4 +2610,6 @@ function partition_bezier4(x0, y0, x1, y1, x2, y2, x3, y3, epsilon)
     window['AscFormat'].CPathCmd = CPathCmd;
     window['AscFormat'].partition_bezier3 = partition_bezier3;
     window['AscFormat'].partition_bezier4 = partition_bezier4;
+    window['AscFormat'].splitBezier4 = splitBezier4;
+    window['AscFormat'].splitBezier4OnParts = splitBezier4OnParts;
 })(window);

@@ -2628,13 +2628,49 @@ function CTransitionAnimation(htmlpage)
 			oThis.Morph = new CSlideMorphEffect(oSlide1, oSlide2, oThis.Params)
 		}
 		const oCanvas = oThis.DemonstrationObject.Canvas;
-	    oThis.Morph.draw(oCanvas, oThis.Rect)
+        oThis.Morph.morph(_part);
+	    oThis.Morph.draw(oCanvas, oThis.Rect, _part)
 
         oThis.TimerId = __nextFrame(oThis._startMorph);
     };
-
-
 }
+
+
+
+function gcd(n, m) {
+    return m === 0 ? n : gcd(m, n % m);
+}
+
+function lcm(n, m) {
+    return n * m / gcd(n, m);
+}
+
+function CPathMorph(oPath1, oBrush1, oPen1, oPath2, oBrush2, oPen2)
+{
+    this.path1 = oPath1;
+    this.brush1 = oBrush1;
+    this.pen1 = oPen1;
+    this.path2 = oPath2;
+    this.brush2 = oBrush2;
+    this.pen2 = oPen2;
+
+    this.path = null;
+    this.brush = null;
+    this.pen = null;
+}
+
+CPathMorph.prototype.morph = function (dRelTime) {
+
+};
+CPathMorph.prototype.morphBrush = function () {
+
+};
+CPathMorph.prototype.morphPen = function () {
+
+};
+CPathMorph.prototype.morphUniFill = function (oUniFill1, oUniFill2) {
+
+};
 
 
 function CMorphObjectBase(nRelH1, nRelH2) {
@@ -2655,7 +2691,6 @@ CMorphObjectBase.prototype.morph = function (dRelTime) {
     else {
         this.relHeight = this.relHeight2;
     }
-    this.morphObjects(dRelTime);
 };
 CMorphObjectBase.prototype.morphObjects = function (dRelTime) {
 
@@ -2667,6 +2702,285 @@ CMorphObjectBase.prototype.draw = function (oGraphics) {
 function CMorphedGeometryObject(oDrawing1, nRelH1, oDrawing2, nRelH2) {
 	CMorphObjectBase.call(this, nRelH1, nRelH2);
 }
+
+
+
+function CMorphedPath(oPath1, nRelH1, oBrush1, oPen1, oTransform1,
+                      oPath2, nRelH2, oBrush2, oPen2, oTransform2) {
+    CMorphObjectBase.call(this, nRelH1, nRelH2);
+    this.path1 = oPath1;
+    this.brush1 = oBrush1;
+    this.pen1 = oPen1;
+    this.transform1 = oTransform1;
+
+    this.path2 = oPath2;
+    this.brush2 = oBrush2;
+    this.pen2 = oPen2;
+    this.transform2 = oTransform2;
+    this.path1T = null;
+    this.path2T = null;
+    AscFormat.ExecuteNoHistory(function() {
+
+        this.path1T = new AscFormat.Path();
+        this.path1T.setParent(this.path1.parent);
+        this.path1.convertToBezierCurves(this.path1T, this.transform1);
+
+        this.path2T = new AscFormat.Path();
+        this.path2T.setParent(this.path2.parent);
+        this.path2.convertToBezierCurves(this.path2T, this.transform2);
+    }, this, [])
+
+
+    this.path = null;
+    this.pen = null;
+    this.brush = null;
+
+    this.valid = false;
+    this.contours1 = [];
+    this.contours2 = [];
+
+    let aContours1 = [];
+    let aContours2 = [];
+    const aCommands1 = this.path1T.ArrPathCommand;
+    const aCommands2 = this.path2T.ArrPathCommand;
+
+
+    for(let nCmd = 0; nCmd < aCommands1.length; ++nCmd) {
+        let oCmd = aCommands1[nCmd];
+        if(oCmd.id === AscFormat.moveTo) {
+            aContours1.push([]);
+        }
+        if(aContours1.length === 0) {
+            aContours1.push([]);
+        }
+        let aContour = aContours1[aContours1.length - 1];
+        aContour.push(oCmd);
+    }
+    for(let nCmd = 0; nCmd < aCommands2.length; ++nCmd) {
+        let oCmd = aCommands2[nCmd];
+        if(oCmd.id === AscFormat.moveTo) {
+            aContours2.push([]);
+        }
+        if(aContours2.length === 0) {
+            aContours2.push([]);
+        }
+        let aContour = aContours2[aContours2.length - 1];
+        aContour.push(oCmd);
+    }
+    if(aContours1.length === aContours2.length) {
+        const nContoursCount = aContours1.length;
+        for(let nCnt = 0; nCnt < nContoursCount; ++nCnt) {
+            let aContour1 = aContours1[nCnt];
+            let aContour2 = aContours2[nCnt];
+            let oFirstCmd1 = aContour1[0];
+            let oFirstCmd2 = aContour2[0];
+            let oLastCmd1 = aContour1[aContour1.length - 1];
+            let oLastCmd2 = aContour2[aContour2.length - 1];
+            if(oLastCmd1.id !== oLastCmd2.id) {
+                return;
+            }
+
+            if(oFirstCmd1.id !== AscFormat.moveTo) {
+                return;
+            }
+            if(oFirstCmd2.id !== AscFormat.moveTo) {
+                return;
+            }
+            let n = aContour1.length - 1;
+            if(oLastCmd1.id === AscFormat.close) {
+                n--;
+            }
+            let m = aContour2.length - 1;
+            if(oLastCmd2.id === AscFormat.close) {
+                m--;
+            }
+            const nLCM = lcm(n, m);
+            const n1 = nLCM / n;
+            const m1 = nLCM / m;
+            function getBezierCommands(aCommands, nSplitCount) {
+                let aBezier = [];
+                let oLastCommand = aCommands[aCommands.length - 1];
+                let nLastIdx = aCommands.length - 1;
+                if(oLastCommand.id === AscFormat.close) {
+                    --nLastIdx;
+                }
+                let dLastX, dLastY;
+                for(let nCmd = 0; nCmd <= nLastIdx; ++nCmd) {
+                    let oCmd = aCommands[nCmd];
+                    if(oCmd.id === AscFormat.moveTo) {
+                        dLastX = oCmd.X;
+                        dLastY = oCmd.Y;
+                    }
+                    else if(oCmd.id === AscFormat.bezier4) {
+                        let dX0 = dLastX;
+                        let dY0 = dLastY;
+                        let dX1 = oCmd.X0;
+                        let dY1 = oCmd.Y0;
+                        let dX2 = oCmd.X1;
+                        let dY2 = oCmd.Y1;
+                        let dX3 = oCmd.X2;
+                        let dY3 = oCmd.Y2;
+                        let aSplitCommand = AscFormat.splitBezier4OnParts(dX0, dY0, dX1, dY1, dX2, dY2, dX3, dY3, nSplitCount);
+                        if(!aSplitCommand) {
+                            return;
+                        }
+                        aBezier = aBezier.concat(aSplitCommand);
+
+                        dLastX = oCmd.X2;
+                        dLastY = oCmd.Y2;
+                    }
+                    else {
+                        return null;
+                    }
+                }
+                return aBezier;
+            }
+            let aBezier1 = getBezierCommands(aCommands1, n1);
+            let aBezier2 = getBezierCommands(aCommands2, m1);
+            if(!aBezier1 || !aBezier2 || aBezier1.length !== aBezier2.length) {
+                return;
+            }
+
+            function fillContour(aContourT, oFirstCommand, oLastCommand, aBezier, oT) {
+                let oCmd = oFirstCommand;
+                let dX = oCmd.X;
+                let dY = oCmd.Y;
+                aContourT.push([dX, dY]);
+                for(let nCmd = 0; nCmd < aBezier1.length; ++nCmd) {
+                    let aBezier4 =  aBezier[nCmd];
+                    let dX0 = aBezier4[2];
+                    let dY0 = aBezier4[3];
+                    let dX1 = aBezier4[4];
+                    let dY1 = aBezier4[5];
+                    let dX2 = aBezier4[6];
+                    let dY2 = aBezier4[7];
+                    aContourT.push([dX0, dY0, dX1, dY1, dX2, dY2]);
+                }
+                if(oLastCommand.id === AscFormat.close) {
+                    aContourT.push([]);
+                }
+
+            }
+
+            let aContourT1 = [];
+            this.contours1.push(aContourT1);
+            fillContour(aContourT1, oFirstCmd1, oLastCmd1, aBezier1, this.transform1);
+
+            let aContourT2 = [];
+            this.contours2.push(aContourT2);
+            fillContour(aContourT2, oFirstCmd2, oLastCmd2, aBezier2, this.transform2);
+        }
+    }
+
+
+    const oPath = AscFormat.ExecuteNoHistory(function() {
+
+        let oPath = new AscFormat.Path();
+        return oPath;
+
+    }, this, []);
+    let aPathCommands = oPath.ArrPathCommand;
+    for(let nContour = 0; nContour < this.contours1.length; ++nContour) {
+        let aContour1 = this.contours1[nContour];
+        let aContour2 = this.contours2[nContour];
+        if(aContour1.length !== aContour2.length) {
+            return;
+        }
+        for(let nCmd = 0; nCmd < aContour1.length; ++nCmd) {
+            let aCmd1 = aContour1[nCmd];
+            let aCmd2 = aContour2[nCmd];
+            if(aCmd1.length !== aCmd2.length) {
+                return;
+            }
+            if(aCmd1.length === 2) {
+                aPathCommands.push({
+                    id: AscFormat.moveTo,
+                    X: aCmd1[0],
+                    Y: aCmd1[1],
+
+                    cmd1: aCmd1,
+                    cmd2: aCmd2
+                });
+            }
+            else if (aCmd1.length === 6) {
+                aPathCommands.push({
+                    id: AscFormat.bezier4,
+                    X0: aCmd1[0],
+                    Y0: aCmd1[1],
+                    X1: aCmd1[2],
+                    Y1: aCmd1[3],
+                    X2: aCmd1[4],
+                    Y2: aCmd1[5],
+
+                    cmd1: aCmd1,
+                    cmd2: aCmd2
+                });
+            }
+            else if (aCmd1.length === 0) {
+                aPathCommands.push({
+                    id: AscFormat.close,
+                    cmd1: aCmd1,
+                    cmd2: aCmd2
+                });
+            }
+        }
+    }
+    this.path = oPath;
+
+    let oGeometry = new AscFormat.ExecuteNoHistory(function() {return new AscFormat.Geometry();}, this, []);
+    oGeometry.pathLst.push(this.path);
+    this.drawObject = new AscFormat.OverlayObject(oGeometry, 100, 100, this.brush1, this.pen1, new AscCommon.CMatrix());
+    this.valid = true;
+    this.morph(1);
+}
+
+CMorphedPath.prototype.morph = function (dTime) {
+    if(!this.valid) {
+        return;
+    }
+    if(!this.path) {
+        return;
+    }
+
+    CMorphObjectBase.prototype.morph.call(this, dTime);
+    let aCommands = this.path.ArrPathCommand;
+    for(let nCmd = 0; nCmd < aCommands.length; ++nCmd) {
+        let oCmd = aCommands[nCmd];
+        let aCmd1 = oCmd.cmd1;
+        let aCmd2 = oCmd.cmd2;
+        if(!aCmd1 || !aCmd2) {
+            return;
+        }
+        if(oCmd.id === AscFormat.moveTo) {
+            oCmd.X = aCmd1[0] + (aCmd2[0] - aCmd1[0])*dTime;
+            oCmd.Y = aCmd1[1] + (aCmd2[1] - aCmd1[1])*dTime;
+        }
+        else if(oCmd.id === AscFormat.bezier4) {
+            oCmd.X0 = aCmd1[0] + (aCmd2[0] - aCmd1[0])*dTime;
+            oCmd.Y0 = aCmd1[1] + (aCmd2[1] - aCmd1[1])*dTime;
+            oCmd.X1 = aCmd1[2] + (aCmd2[2] - aCmd1[2])*dTime;
+            oCmd.Y1 = aCmd1[3] + (aCmd2[3] - aCmd1[3])*dTime;
+            oCmd.X2 = aCmd1[4] + (aCmd2[4] - aCmd1[4])*dTime;
+            oCmd.Y2 = aCmd1[5] + (aCmd2[5] - aCmd1[5])*dTime;
+        }
+        else if(oCmd.id === AscFormat.close) {
+
+        }
+        else {
+            return;
+        }
+    }
+};
+
+CMorphedPath.prototype.draw = function(oGraphics) {
+    if(!this.valid) {
+        return;
+    }
+    this.drawObject.draw(oGraphics);
+};
+
+
+
 function CMorphedFadeObject(oTexturesCache, oDrawing1, nRelH1, oDrawing2, nRelH2) {
 	CMorphObjectBase.call(this, nRelH1, nRelH2);
     this.texturesCache = oTexturesCache;
@@ -2683,12 +2997,34 @@ function CSlideMorphEffect(oSlide1, oSlide2, nType) {
 	this.morphObjects = [];
 	this.init();
 }
-CSlideMorphEffect.prototype.draw = function(oCanvas, oRect) {
+CSlideMorphEffect.prototype.draw = function(oCanvas, oRect, dTime) {
 	if(!this.slide1 || !this.slide2) {
 		return;
 	}
-	//draw background
 
+    var wPix = oRect.w;
+    var hPix = oRect.h;
+    var wMM = this.slide1.Width;
+    var hMM = this.slide1.Height;
+    var oGraphics = new AscCommon.CGraphics();
+    var oCtx = oCanvas.getContext('2d');
+
+   // oCtx.clearRect(oRect.x, oRect.y, oRect.w, oRect.h);
+    oGraphics.init(oCtx, wPix, hPix, wMM, hMM);
+    oGraphics.m_oCoordTransform.tx = oRect.x;
+    oGraphics.m_oCoordTransform.ty = oRect.y;
+    oGraphics.m_oFontManager = AscCommon.g_fontManager;
+    oGraphics.transform(1, 0, 0, 1, 0, 0);
+    oGraphics.IsNoDrawingEmptyPlaceholder = true;
+    oGraphics.IsDemonstrationMode = true;
+	//draw background
+    oGraphics.put_GlobalAlpha(1 - dTime);
+    DrawBackground(oGraphics, this.slide1.backgroundFill, this.slide1.Width, this.slide1.Height);
+    oGraphics.put_GlobalAlpha(dTime);
+    DrawBackground(oGraphics, this.slide2.backgroundFill, this.slide2.Width, this.slide2.Height);
+    for(let nIdx = 0; nIdx < this.morphObjects.length; ++nIdx) {
+        this.morphObjects[nIdx].draw(oGraphics);
+    }
 };
 CSlideMorphEffect.prototype.init = function() {
 	if(!this.slide1 || !this.slide2) {
@@ -2714,7 +3050,25 @@ CSlideMorphEffect.prototype.pushMorphObject = function (oMorph) {
 };
 
 CSlideMorphEffect.prototype.addShapeMorphs = function (oShape1, nRelH1, oShape2, nRelH2) {
-
+    const oGeometry1 = oShape1.getGeometry();
+    const oGeometry2 = oShape2.getGeometry();
+    if(!oGeometry1 || !oGeometry2) {
+        return;
+    }
+    const aPaths1 = oGeometry1.pathLst;
+    const aPaths2 = oGeometry2.pathLst;
+    if(aPaths1.length !== aPaths2.length) {
+        return;
+    }
+    for(let nPath = aPaths1.length - 1; nPath > -1; --nPath) {
+        let oPath1 = aPaths1[nPath];
+        let oPath2 = aPaths2[nPath];
+        let nRelPathH1 = nRelH1 + nPath / (aPaths1.length);
+        let nRelPathH2 = nRelH2 + nPath / (aPaths2.length);
+        this.pushMorphObject(new CMorphedPath(
+            oPath1, nRelPathH1, oShape1.brush, oShape1.pen, oShape1.transform,
+            oPath2, nRelPathH2, oShape2.brush, oShape2.pen, oShape2.transform));
+    }
 };
 CSlideMorphEffect.prototype.addObjectMorphs = function(oDrawing1, nRelH1, oDrawing2, nRelH2) {
     if(!oDrawing1 || !oDrawing2) {
@@ -2742,13 +3096,19 @@ CSlideMorphEffect.prototype.generateObjectBasedMorphs = function() {
 	for(let nDrawing1 = 0; nDrawing1 < nDrawingsCount1; ++nDrawing1) {
 		let oDrawing1 = aDrawings1[nDrawing1];
 		let sName1 = oDrawing1.getOwnName();
+        let nDrawingType = oDrawing1.getObjectType();
 		if(sName1) {
 			for(let nDrawing2 = 0; nDrawing2 < nDrawingsCount2; ++nDrawing2) {
 				let oDrawing2 = aDrawings2[nDrawing2];
-				let sName2 = oDrawing2.getOwnName();
-				if(sName2 === sName1) {
-					
-				}
+                if(oDrawing2.getObjectType() === nDrawingType) {
+                    let sName2 = oDrawing2.getOwnName();
+                    if(sName2 === sName1) {
+                        if(oDrawing1.isShape()) {
+                            this.addShapeMorphs(oDrawing1, nDrawing1, oDrawing2, nDrawing2);
+                            break;
+                        }
+                    }
+                }
 			}
 		}
 	}
@@ -2760,6 +3120,14 @@ CSlideMorphEffect.prototype.generateWordBasedMorphs = function() {
 CSlideMorphEffect.prototype.generateLetterBasedMorphs = function() {
 	//TODO: implement
 	this.generateObjectBasedMorphs();
+};
+CSlideMorphEffect.prototype.morph = function(dTime) {
+    for(let nIdx = 0; nIdx < this.morphObjects.length; ++nIdx) {
+        this.morphObjects[nIdx].morph(dTime);
+    }
+    this.morphObjects.sort(function (a, b) {
+        return a.relHeight - b.relativeHeight;
+    });
 };
 
 function CDemonstrationManager(htmlpage)
