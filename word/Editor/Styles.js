@@ -6395,14 +6395,14 @@ CStyle.prototype.SetParaPr = function(oParaPr)
 };
 /**
  * Связываем данный стиль с заданной нумерацией
- * @param {string} [numId=null] если не задано, тогда, наоборот, удаляем нумерацию
+ * @param {string} numId Для удаления используем null
  * @param {number} iLvl
  */
 CStyle.prototype.SetNumPr = function(numId, iLvl)
 {
 	let paraPr = this.GetParaPr().Copy();
 	
-	if (undefined !== numId && null !== numId)
+	if (null !== numId)
 		paraPr.NumPr = new AscWord.CNumPr(numId, iLvl);
 	else
 		paraPr.NumPr = undefined;
@@ -16167,10 +16167,10 @@ CParaSpacing.prototype.SetLineTwips = function (val) {
 	}
 };
 
-function CNumPr(sNumId, nLvl)
+function CNumPr(numId, iLvl)
 {
-    this.NumId = undefined !== sNumId ? sNumId : "-1";
-    this.Lvl   = undefined !== nLvl ? nLvl : 0;
+    this.NumId = numId;
+    this.Lvl   = undefined !== iLvl ? iLvl : 0;
 }
 
 CNumPr.prototype =

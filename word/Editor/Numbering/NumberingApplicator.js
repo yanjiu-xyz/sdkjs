@@ -684,7 +684,7 @@
 				let paragraph = this.Paragraphs[index];
 				let numPr     = paragraph.GetNumPr();
 				let iLvl      = numPr ? numPr.Lvl : 0;
-				paragraph.SetNumPr(undefined);
+				paragraph.SetNumPr(null);
 
 				let pStyle = paragraph.GetParagraphStyle();
 				if (!pStyle || -1 === styleManager.GetHeadingLevelById(pStyle))

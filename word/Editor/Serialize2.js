@@ -17432,11 +17432,15 @@ DocReadResult.prototype = {
 		for(let i = 0, count = this.paraNumPrs.length; i < count; ++i) {
 			let numPr = this.paraNumPrs[i].numPr;
 			let elem  = this.paraNumPrs[i].elem;
-			if (!elem || !numPr || null === numPr.NumId || undefined === numPr.NumId)
+			if (!elem || !numPr || null === numPr.NumId)
 				continue;
 			
-			let num = this.numToNumClass[numPr.NumId];
-			elem.SetNumPr(num && 0 !== numPr.NumId ? num.GetId() : "0", numPr.Lvl);
+			if (undefined === numPr.NumId) {
+				elem.SetNumPr(undefined, numPr.Lvl);
+			} else {
+				let num = this.numToNumClass[numPr.NumId];
+				elem.SetNumPr(num && 0 !== numPr.NumId ? num.GetId() : "0", numPr.Lvl);
+			}
 		}
 	}
 };
