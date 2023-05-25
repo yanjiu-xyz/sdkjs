@@ -415,7 +415,7 @@
 		if (!numLvl)
 			return false;
 
-		let commonNumPr = this.NumPr ? this.NumPr : this.GetCommonNumPr();
+		let commonNumPr = this.NumPr ? this.NumPr : null;
 		if (commonNumPr && commonNumPr.NumId)
 		{
 			let num = this.Numbering.GetNum(commonNumPr.NumId);
@@ -434,7 +434,7 @@
 			let numId = num.GetId();
 			let ilvl  = !commonNumPr || !commonNumPr.Lvl ? 0 : commonNumPr.Lvl;
 			
-			this.MergePrToLvl(num.GetLvl(commonNumPr.Lvl), numLvl);
+			this.MergePrToLvl(num.GetLvl(ilvl), numLvl);
 
 			numLvl.ResetNumberedText(ilvl);
 			num.SetLvl(numLvl, ilvl);
