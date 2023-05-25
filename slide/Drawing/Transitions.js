@@ -2602,13 +2602,13 @@ function CTransitionAnimation(htmlpage)
         oThis.CurrentTime = new Date().getTime();
 
 
+        oThis.SetBaseTransform();
+
         if (oThis.CurrentTime >= oThis.EndTime)
         {
             oThis.End(false);
             return;
         }
-
-        oThis.SetBaseTransform();
 
         var _xDst = oThis.Rect.x;
         var _yDst = oThis.Rect.y;
