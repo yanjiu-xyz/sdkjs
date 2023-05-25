@@ -5136,6 +5136,7 @@
 		toER.initFromObj(to);
 
 		this.model.changeExternalReference(index, toER);
+		this.model.handlers && this.model.handlers.trigger("asc_onUpdateExternalReferenceList");
 	};
 
 	//external requests
