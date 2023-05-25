@@ -6311,9 +6311,42 @@ CDocument.prototype.AddToParagraph = function(oParaItem, bRecalculate)
 		return;
 
 	if (this.IsNumberingSelection() && para_TextPr !== oParaItem.Type)
-		this.RemoveSelection();
-
+		this.RemoveSelectedNumberingOnTextAdd();
+	
 	this.Controller.AddToParagraph(oParaItem, bRecalculate);
+};
+CDocument.prototype.RemoveSelectedNumberingOnTextAdd = function()
+{
+	if (!this.IsNumberingSelection())
+		return;
+	
+	this.RemoveSelection();
+	
+	let paragraph = this.GetCurrentParagraph();
+	if (!paragraph)
+		return;
+	
+	let numPr = paragraph.GetNumPr();
+	if (!numPr)
+		return;
+	
+	let num = this.Numbering.GetNum(numPr.NumId);
+	if (!num)
+		return;
+	
+	let numLvl = num.GetLvl(numPr.Lvl);
+	let paraPr = numLvl.GetParaPr();
+	if (!paraPr
+		|| !paraPr.Ind
+		|| undefined === paraPr.Ind.FirstLine
+		|| undefined === paraPr.Ind.Left)
+		return;
+	
+	if (this.Styles.Get_Default_ParaList() === paragraph.GetParagraphStyle())
+		paragraph.SetParagraphStyleById(null);
+
+	paragraph.RemoveNumPr();
+	paragraph.SetParagraphIndent({FirstLine : 0, Left : paraPr.Ind.FirstLine + paraPr.Ind.Left});
 };
 /**
  * Очищаем форматирование внутри селекта
