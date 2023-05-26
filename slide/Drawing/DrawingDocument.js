@@ -801,7 +801,15 @@ function CDrawingDocument()
 		let oApi = this.m_oWordControl.m_oApi;
 		if ("" === this.m_sLockedCursorType)
 		{
-			elem.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
+			if(oApi.isInkDrawerOn())
+			{
+				let oInkPen = oApi.getInkPen();
+				//Draw Cursor for INK
+			}
+			else
+			{
+				elem.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
+			}
 		}
 		else
 			elem.style.cursor = AscCommon.g_oHtmlCursor.value(this.m_sLockedCursorType);

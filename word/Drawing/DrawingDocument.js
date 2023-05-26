@@ -2028,7 +2028,12 @@ function CDrawingDocument()
 		{
 			if ("text" === sType)
 			{
-				if (oAPI.isFormatPainterOn())
+				if(oAPI.isInkDrawerOn())
+				{
+					let oInkPen = oAPI.getInkPen();
+					//Draw Cursor for INK
+				}
+				else if (oAPI.isFormatPainterOn())
 				{
 					let oData = oAPI.getFormatPainterData();
 					if(!oData.isDrawingData())
@@ -2051,7 +2056,12 @@ function CDrawingDocument()
 			}
 			else
 			{
-				if (oAPI.isFormatPainterOn())
+				if(oAPI.isInkDrawerOn())
+				{
+					let oInkPen = oAPI.getInkPen();
+					//Draw Cursor for INK
+				}
+				else if (oAPI.isFormatPainterOn())
 				{
 					let oData = oAPI.getFormatPainterData();
 					if(oData.isDrawingData())
