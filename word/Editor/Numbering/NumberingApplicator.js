@@ -239,7 +239,8 @@
 				ilvl  = result.Lvl;
 			}
 		}
-
+		
+		this.MergeTextPrFromCommonNum(numId, ilvl);
 		this.SetLastBulleted(numId, ilvl);
 		this.ApplyNumPr(numId, ilvl);
 		return true;
@@ -266,7 +267,7 @@
 		{
 			lvl = num.GetLvl(numPr.Lvl).Copy();
 
-			let textPr = new AscWord.CTextPr();
+			let textPr = lvl.GetTextPr().Copy();
 			textPr.RFonts.SetAll("Symbol");
 			lvl.SetByType(c_oAscNumberingLevel.Bullet, numPr.Lvl, String.fromCharCode(0x00B7), textPr);
 		}
@@ -358,7 +359,8 @@
 				ilvl  = result.Lvl;
 			}
 		}
-
+		
+		this.MergeTextPrFromCommonNum(numId, ilvl);
 		this.SetLastNumbered(numId, ilvl);
 		this.ApplyNumPr(numId, ilvl);
 		return true;
@@ -382,9 +384,9 @@
 			if (lastNum.IsHaveRelatedLvlText())
 			{
 				// В этом случае мы не можем подменить просто текущий уровень, меняем целиком весь список
-				for (let ilvl = 0; ilvl < 9; ++ilvl)
+				for (let iLvl = 0; iLvl < 9; ++iLvl)
 				{
-					num.SetLvl(lastNum.GetLvl(nLvl).Copy(), ilvl);
+					num.SetLvl(lastNum.GetLvl(iLvl).Copy(), iLvl);
 				}
 			}
 			else
@@ -419,10 +421,8 @@
 			let num = this.Numbering.GetNum(commonNumPr.NumId);
 			if (num)
 			{
-				let oldNumLvl = num.GetLvl(commonNumPr.Lvl);
-				const oNewParaPr = oldNumLvl.GetParaPr().Copy();
-				oNewParaPr.Merge(numLvl.GetParaPr());
-				numLvl.SetParaPr(oNewParaPr);
+				this.MergePrToLvl(num.GetLvl(commonNumPr.Lvl), numLvl);
+
 				numLvl.ResetNumberedText(commonNumPr.Lvl);
 				num.SetLvl(numLvl, commonNumPr.Lvl);
 				this.SetLastSingleLevel(commonNumPr.NumId, commonNumPr.Lvl);
@@ -433,11 +433,9 @@
 			let num   = this.CreateBaseNum();
 			let numId = num.GetId();
 			let ilvl  = !commonNumPr || !commonNumPr.Lvl ? 0 : commonNumPr.Lvl;
+			
+			this.MergePrToLvl(num.GetLvl(commonNumPr.Lvl), numLvl);
 
-			let oldNumLvl = num.GetLvl(commonNumPr.Lvl);
-			const oNewParaPr = oldNumLvl.GetParaPr().Copy();
-			oNewParaPr.Merge(numLvl.GetParaPr());
-			numLvl.SetParaPr(oNewParaPr);
 			numLvl.ResetNumberedText(ilvl);
 			num.SetLvl(numLvl, ilvl);
 
@@ -463,7 +461,7 @@
 	};
 	CNumberingApplicator.prototype.ApplyMultilevel = function()
 	{
-		let commonNumId = this.NumPr ? this.NumPr.NumId : this.GetCommonNumId();
+		let commonNumId = this.NumPr ? this.NumPr.NumId : null;
 
 		let num, numId;
 		if (commonNumId)
@@ -479,11 +477,17 @@
 		if (!num)
 			return false;
 
-		for (let ilvl = 0; ilvl < 9; ++ilvl)
+		for (let iLvl = 0; iLvl < 9; ++iLvl)
 		{
-			let numLvl = this.CreateSingleNumberingLvl(ilvl);
+			let numLvl = this.CreateSingleNumberingLvl(iLvl);
 			if (numLvl)
-				num.SetLvl(numLvl, ilvl);
+			{
+				let pStyle = num.GetLvl(iLvl).GetPStyle();
+				if (pStyle)
+					numLvl.SetPStyle(pStyle);
+				
+				num.SetLvl(numLvl, iLvl);
+			}
 		}
 
 		if (numId)
@@ -540,7 +544,24 @@
 
 		return new AscWord.CNumPr(numId, ilvl);
 	};
-	CNumberingApplicator.prototype.GetCommonNumPr = function()
+	CNumberingApplicator.prototype.MergeTextPrFromCommonNum = function(numId, iLvl)
+	{
+		let commonNumPr = this.NumPr ? this.NumPr : this.GetCommonNumPr(true);
+		if (!commonNumPr || !commonNumPr.NumId)
+			return;
+		
+		let num       = this.Numbering.GetNum(numId);
+		let commonNum = this.Numbering.GetNum(commonNumPr.NumId);
+		if (!num || !commonNum)
+			return;
+		
+		let numLvl = num.GetLvl(iLvl);
+		
+		numLvl = numLvl.Copy();
+		this.MergePrToLvl(commonNum.GetLvl(commonNumPr.Lvl), numLvl);
+		num.SetLvl(numLvl, iLvl);
+	};
+	CNumberingApplicator.prototype.GetCommonNumPr = function(skipBulletedCheck)
 	{
 		let isDiffLvl = false;
 		let isDiffId  = false;
@@ -582,7 +603,9 @@
 		}
 		else if (numId)
 		{
-			if (NumberingType.Bullet === this.NumInfo.Type
+			// TODO: Проверить нужна ли эта проверка, если да, то написать тесты (если нет - тоже)
+			if (!skipBulletedCheck &&
+				this.NumInfo.IsBulleted()
 				&& !this.Numbering.CheckFormat(numId, ilvl, Asc.c_oAscNumberingFormat.Bullet))
 			{
 				numId = null;
@@ -687,6 +710,20 @@
 		{
 			this.Paragraphs[index].UpdateDocumentOutline();
 		}
+	};
+	CNumberingApplicator.prototype.MergePrToLvl = function(oldLvl, newLvl)
+	{
+		if (!oldLvl || !newLvl)
+			return;
+		
+		let textPr = oldLvl.GetTextPr().Copy();
+		textPr.Merge(newLvl.GetTextPr());
+		textPr.RFonts = newLvl.GetTextPr().RFonts.Copy();
+		newLvl.SetTextPr(textPr);
+		
+		let paraPr = oldLvl.GetParaPr().Copy();
+		paraPr.Merge(newLvl.GetParaPr());
+		newLvl.SetParaPr(paraPr);
 	};
 	//---------------------------------------------------------export---------------------------------------------------
 	window["AscWord"].CNumberingApplicator = CNumberingApplicator;

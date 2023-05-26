@@ -1361,7 +1361,7 @@
       this.lastOwnSaveTime = data['time'];
     }
 
-    if (data['syncChangesIndex'] && -1 !== data['syncChangesIndex']) {
+    if (undefined !== data['syncChangesIndex'] && -1 !== data['syncChangesIndex']) {
       this.syncChangesIndex = data['syncChangesIndex'];
     }
 	
@@ -1373,7 +1373,7 @@
   DocsCoApi.prototype._updateChanges = function(allServerChanges, changesIndex, syncChangesIndex, bFirstLoad) {
     if (this.onSaveChanges) {
       this.changesIndex = changesIndex;
-      if (syncChangesIndex && -1 !== syncChangesIndex) {
+      if (undefined !== syncChangesIndex && -1 !== syncChangesIndex) {
         this.syncChangesIndex = syncChangesIndex;
       }
       if (allServerChanges) {
@@ -1415,7 +1415,7 @@
       this.changesIndex = data['changesIndex'];
     }
 
-    if (data['syncChangesIndex'] && -1 !== data['syncChangesIndex']) {
+    if (undefined !== data['syncChangesIndex'] && -1 !== data['syncChangesIndex']) {
       this.syncChangesIndex = data['syncChangesIndex'];
     }
 

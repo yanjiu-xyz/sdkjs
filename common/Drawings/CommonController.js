@@ -1874,7 +1874,7 @@
 							tx = invert_transform_text.TransformPointX(x, y);
 							ty = invert_transform_text.TransformPointY(x, y);
 							if (!this.isSlideShow() && (this.document || (this.drawingObjects.cSld && !(this.noNeedUpdateCursorType === true)))) {
-								if (this.document && this.document.IsDocumentEditor() && object instanceof CShape && object.isForm()) {
+								if (this.document && this.document.IsDocumentEditor() && object instanceof AscFormat.CShape && object.isForm()) {
 									var oForm = object.getInnerForm();
 									if (oForm)
 										oForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Hover, tx, ty, 0, false);
@@ -2261,8 +2261,11 @@
 					} else if (oChart) {
 						oChart.drawSelect(drawingDocument, pageIndex);
 					} else if (oWrp) {
-						if (oWrp.selectStartPage === pageIndex)
-							oWrp.DrawEditWrapPointsPolygon(oWrp.parent.wrappingPolygon.calculatedPoints, new AscCommon.CMatrix());
+						if (oWrp.selectStartPage === pageIndex) {
+							if(oTrackDrawer.DrawEditWrapPointsPolygon) {
+								oTrackDrawer.DrawEditWrapPointsPolygon(oWrp.parent.wrappingPolygon.calculatedPoints, new AscCommon.CMatrix());
+							}
+						}
 					} else {
 						for (i = 0; i < this.selectedObjects.length; ++i) {
 							let oDrawing = this.selectedObjects[i];
@@ -7122,7 +7125,7 @@
 										textFitType: drawing.getTextFitType(),
 										vertOverflowType: drawing.getVertOverflowType(),
 										signatureId: drawing.getSignatureLineGuid(),
-										shadow: drawing.getOuterShdw(),
+										shadow: drawing.getOuterShdwAsc(),
 										anchor: drawing.getDrawingBaseType(),
 										protectionLockText: (bGroupSelection || !drawing.group) ? drawing.getProtectionLockText() : null,
 										protectionLocked: drawing.getProtectionLocked(),
@@ -7223,7 +7226,7 @@
 										textFitType: null,
 										vertOverflowType: null,
 										signatureId: null,
-										shadow: drawing.getOuterShdw(),
+										shadow: drawing.getOuterShdwAsc(),
 										anchor: drawing.getDrawingBaseType(),
 										protectionLockText: (bGroupSelection || !drawing.group) ? drawing.getProtectionLockText() : null,
 										protectionLocked: drawing.getProtectionLocked(),
@@ -9187,6 +9190,11 @@
 					oAPI.stopInkDrawer();
 				},
 				checkInkState: function () {
+					if (typeof AscCommonSlide !== "undefined" &&
+						AscCommonSlide.CNotes &&
+						this.drawingObjects instanceof AscCommonSlide.CNotes) {
+						return;
+					}
 					const oAPI = this.getEditorApi();
 					if(oAPI.isInkDrawerOn()) {
 						if(oAPI.isDrawInkMode()) {
@@ -10783,7 +10791,7 @@
 					let bDocStartAction = false;
 					for(let nIdx = aDrawings.length - 1; nIdx > -1; --nIdx) {
 						let oDrawing = aDrawings[nIdx];
-						if(oDrawing.isShape() && !oDrawing.getPresetGeom())  {
+						if(oDrawing.isInk())  {
 							if(oDrawing.hit(x, y)) {
 								this.controller.resetSelection();
 								this.controller.selectObject(oDrawing, pageIndex);

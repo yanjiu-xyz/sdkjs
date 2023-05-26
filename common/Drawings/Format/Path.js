@@ -1285,9 +1285,9 @@ AscFormat.InitClass(Path, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_P
             return this.bEmpty;
         },
 
-        isInk: function() {
-            return false;
-        },
+	    isInk: function() {
+			return false;
+	    },
 
         checkArray: function(nSize){
             this.bEmpty = false;

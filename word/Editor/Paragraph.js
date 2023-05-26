@@ -1260,7 +1260,7 @@ Paragraph.prototype.ClearContent = function()
 					oComment.SetRangeEnd(null);
 			}
 
-			arrCommentsToDelete.push(CommentId);
+			arrCommentsToDelete.push(sCommentId);
 		}
 
 		if (oItem.PreDelete)
@@ -8297,7 +8297,8 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 			if (1 >= MouseEvent.ClickCount)
 			{
 				// Убираем селект. Позицию курсора можно не выставлять, т.к. она у нас установлена на конец селекта
-				this.RemoveSelection();
+				if (this.Selection.Flag !== selectionflag_Numbering && this.Selection.Flag !== selectionflag_NumberingCur)
+					this.RemoveSelection();
 			}
 			else if (0 == ClickCounter)
 			{
@@ -9782,7 +9783,7 @@ Paragraph.prototype.ApplyNumPr = function(sNumId, nLvl)
 			}
 
 			if (-1 === LvlFound)
-				LvlFound = 8;
+				LvlFound = 0;
 
 			if (this.Pr.Ind && (undefined !== this.Pr.Ind || undefined !== this.Pr.Ind.Left))
 			{
@@ -9887,34 +9888,38 @@ Paragraph.prototype.SetNumPr = function(sNumId, nLvl)
 };
 /**
  * Изменяем уровень нумерации
- * @param bIncrease {boolean}
+ * @param isIncrease {boolean}
  */
-Paragraph.prototype.IndDecNumberingLevel = function(bIncrease)
+Paragraph.prototype.IndDecNumberingLevel = function(isIncrease)
 {
-	var NumPr = this.GetNumPr();
-	if (undefined != NumPr)
-	{
-		this.private_AddPrChange();
-
-		var oNumPrOld = this.Pr.NumPr;
-
-		var NewLvl;
-		if (true === bIncrease)
-			NewLvl = Math.min(8, NumPr.Lvl + 1);
-		else
-			NewLvl = Math.max(0, NumPr.Lvl - 1);
-
-		this.Pr.NumPr = new CNumPr();
-		this.Pr.NumPr.Set(NumPr.NumId, NewLvl);
-
-		History.Add(new CChangesParagraphNumbering(this, oNumPrOld, this.Pr.NumPr));
-		this.private_RefreshNumbering(NumPr);
-		this.private_RefreshNumbering(this.Pr.NumPr);
-
-		// Надо пересчитать конечный стиль
-		this.CompiledPr.NeedRecalc = true;
-		this.private_UpdateTrackRevisionOnChangeParaPr(true);
-	}
+	let numPr = this.GetNumPr();
+	if (!numPr)
+		return;
+	
+	let oldLvl = numPr.Lvl;
+	let newLvl = isIncrease ? Math.min(8, oldLvl + 1) : Math.max(0, oldLvl - 1);
+	if (newLvl === oldLvl)
+		return;
+	
+	this.private_AddPrChange();
+	
+	let change = new CChangesParagraphNumbering(this, this.Pr.NumPr, new CNumPr(numPr.NumId, newLvl));
+	AscCommon.History.Add(change);
+	change.Redo();
+	
+	this.private_UpdateTrackRevisionOnChangeParaPr(true);
+	
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return;
+	
+	let num = logicDocument.GetNumbering().GetNum(numPr.NumId);
+	if (!num)
+		return;
+	
+	let pStyle = num.GetLvl(newLvl).GetPStyle();
+	if (pStyle)
+		this.Style_Add(pStyle);
 };
 /**
  * Получаем настройку нумерации у данного параграфа, если она есть
@@ -10662,33 +10667,48 @@ Paragraph.prototype.Internal_CompileParaPr2 = function()
 				Pr.ParaPr.Ind.FirstLine = 0;
 			}
 		}
-		else if (undefined != Pr.ParaPr.NumPr)
+		else if (Pr.ParaPr.NumPr && Pr.ParaPr.NumPr.IsValid())
 		{
-			if (undefined != Pr.ParaPr.NumPr.NumId && 0 != Pr.ParaPr.NumPr.NumId)
+			let num = Numbering.GetNum(Pr.ParaPr.NumPr.NumId);
+
+			let _styleId = StyleId;
+			
+			// MSWord не следует спецификации, и не ищет номер уровня по стилю
+			// Lvl = oNum.GetLvlByStyle(_StyleId);
+			let _Lvl = Pr.ParaPr.NumPr.Lvl ? Pr.ParaPr.NumPr.Lvl : 0;
+
+			let lvlPStyle = num.GetLvl(_Lvl).GetPStyle();
+			if (lvlPStyle === _styleId)
 			{
-				var oNum = Numbering.GetNum(Pr.ParaPr.NumPr.NumId);
-
-				var _StyleId            = StyleId;
-				Lvl                     = oNum.GetLvlByStyle(_StyleId);
-				var PassedStyleId       = {};
-				PassedStyleId[_StyleId] = true;
-				while (-1 === Lvl)
-				{
-					var Style = Styles.Get(_StyleId);
-					if (!Style)
-						break;
-
-					_StyleId = Style.Get_BasedOn();
-					if (!_StyleId || true === PassedStyleId[_StyleId])
-						break;
-
-					PassedStyleId[_StyleId] = true;
-					Lvl                     = oNum.GetLvlByStyle(_StyleId);
-				}
-
-				if (-1 === Lvl)
-					Pr.ParaPr.NumPr = undefined;
+				Lvl = _Lvl;
 			}
+			else
+			{
+				let passedStyles       = {};
+				passedStyles[_styleId] = true;
+				while (true)
+				{
+					let style = Styles.Get(_styleId);
+					if (!style)
+						break;
+					
+					_styleId = style.GetBasedOn();
+					if (!_styleId || passedStyles[_styleId])
+						break;
+					
+					passedStyles[_styleId] = true;
+					
+					// Lvl = oNum.GetLvlByStyle(_StyleId);
+					if (lvlPStyle === _styleId)
+					{
+						Lvl = _Lvl;
+						break;
+					}
+				}
+			}
+
+			if (-1 === Lvl)
+				Pr.ParaPr.NumPr = undefined;
 		}
 
 		Pr.ParaPr.StyleTabs = ( undefined != Pr.ParaPr.Tabs ? Pr.ParaPr.Tabs.Copy() : new CParaTabs() );
@@ -10935,6 +10955,7 @@ Paragraph.prototype.Style_Add = function(Id, bDoNotDeleteProps)
 		this.Pr.PStyle = Id;
 		this.private_UpdateTrackRevisionOnChangeParaPr(true);
 		this.UpdateDocumentOutline();
+		this.private_RefreshNumbering();
 	}
 
 	if (true === bDoNotDeleteProps)
@@ -10989,6 +11010,7 @@ Paragraph.prototype.Style_Remove = function()
 		History.Add(new CChangesParagraphPStyle(this, this.Pr.PStyle, undefined));
 		this.Pr.PStyle = undefined;
 		this.UpdateDocumentOutline();
+		this.private_RefreshNumbering();
 	}
 
 	// Надо пересчитать конечный стиль

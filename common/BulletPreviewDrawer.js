@@ -61,6 +61,8 @@
 		this.m_oBackgroundColor = new AscCommonWord.CDocumentColor(255, 255, 255);
 
 		this.m_nAmountOfLvls = 9;
+
+		this.m_bIsMobile = AscCommon.AscBrowser.isMobile;
 	}
 
 	CBulletPreviewDrawerBase.prototype.cleanTextPr = function (oTextPr)
@@ -107,12 +109,12 @@
 	CBulletPreviewDrawerBase.prototype.getFirstLineIndent = function (oLvl, nCustomNumberPosition, nCustomIndentSize, nCustomStopTab)
 	{
 		const nSuff = oLvl.GetSuff();
-		const nNumberPosition = AscFormat.isRealNumber(nCustomNumberPosition) ? nCustomNumberPosition : oLvl.GetNumberPosition();
+		const nNumberPosition = (AscFormat.isRealNumber(nCustomNumberPosition) ? nCustomNumberPosition : oLvl.GetNumberPosition()) || 0;
 		let nXPositionOfLine;
 		if (nSuff === Asc.c_oAscNumberingSuff.Tab)
 		{
 			const nStopTab = AscFormat.isRealNumber(nCustomStopTab) || nCustomStopTab === null ? nCustomStopTab : oLvl.GetStopTab();
-			const nIndentSize = AscFormat.isRealNumber(nCustomIndentSize) ? nCustomIndentSize : oLvl.GetIndentSize();
+			const nIndentSize = (AscFormat.isRealNumber(nCustomIndentSize) ? nCustomIndentSize : oLvl.GetIndentSize()) || 0;
 			if (AscFormat.isRealNumber(nStopTab))
 			{
 				nXPositionOfLine = Math.max(nStopTab, nNumberPosition);
@@ -133,7 +135,7 @@
 
 	CBulletPreviewDrawerBase.prototype.getFontSizeByLineHeight = function (nLineHeight)
 	{
-		return ((2 * nLineHeight * 72 / 96) >> 0) / 2;
+		return ((2 * nLineHeight * AscCommonExcel.sizePxinPt) >> 0) / 2;
 	};
 
 	CBulletPreviewDrawerBase.prototype.getLvlTextWidth = function (sText, oTextPr)
@@ -451,9 +453,18 @@
 		this.m_oApi = editor || Asc.editor || window["Asc"]["editor"];
 		this.m_arrNumberingLvl = arrLvlInfo.map(function (oDrawingInfo) {return oDrawingInfo.arrLvls});
 		this.m_arrNumberingInfo = arrLvlInfo;
-		this.m_nSingleBulletFontSizeCoefficient = 0.6;
-		this.m_nSingleBulletNoneFontSizeCoefficient = 0.225;
-		this.m_nLvlWithLinesNoneFontSizeCoefficient = 0.1375;
+		if (this.m_bIsMobile)
+		{
+			this.m_nSingleBulletNoneFontSizeCoefficient = 0.21;
+			this.m_nLvlWithLinesNoneFontSizeCoefficient = 0.21;
+			this.m_nSingleBulletFontSizeCoefficient = 6 / 17;
+		}
+		else
+		{
+			this.m_nSingleBulletFontSizeCoefficient = 0.6;
+			this.m_nSingleBulletNoneFontSizeCoefficient = 0.225;
+			this.m_nLvlWithLinesNoneFontSizeCoefficient = 0.1375;
+		}
 
 		this.m_nMultiLvlIndentCoefficient = 1 / AscCommon.AscBrowser.retinaPixelRatio;
 	}
@@ -586,11 +597,14 @@
 				}
 			}
 
-			if (oSumInformation.Ascent + oSumInformation.rasterOffsetY < oInfo.Ascent + oInfo.rasterOffsetY)
+			if (oSumInformation.Ascent < oInfo.Ascent)
+			{
+				oSumInformation.Ascent = oInfo.Ascent;
+			}
+			if (oSumInformation.Ascent - oSumInformation.Height > oInfo.Ascent - oInfo.Height)
 			{
 				oSumInformation.rasterOffsetY = oInfo.rasterOffsetY;
-				oSumInformation.Ascent = oInfo.Ascent;
-				oSumInformation.Height = oInfo.Height;
+				oSumInformation.Height = oSumInformation.Ascent - (oInfo.Ascent - oInfo.Height);
 			}
 		}
 		oSumInformation.Width -= nRemoveRightOffset;

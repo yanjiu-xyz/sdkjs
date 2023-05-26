@@ -323,6 +323,7 @@ var editor;
         this.wbModel.rebuildColors();
         if (this.isDocumentLoadComplete) {
           AscCommon.checkCultureInfoFontPicker();
+          this.wb && this.wb.cleanCache();
           this._loadFonts([], function () {
             this._onUpdateAfterApplyChanges();
           });
@@ -1428,6 +1429,19 @@ var editor;
 
   spreadsheet_api.prototype._downloadAs = function(actionType, options, oAdditionalData, dataContainer, downloadType) {
     var fileType = options.fileType;
+
+	if (this.isCloudSaveAsLocalToDrawingFormat(actionType, fileType)) {
+	  var printPagesData, pdfPrinterMemory;
+      this.wb._executeWithoutZoom(function () {
+        t.wb.printPreviewState.advancedOptions = options.advancedOptions;
+        printPagesData = t.wb.calcPagesPrint(options.advancedOptions);
+        pdfPrinterMemory = t.wb.printSheets(printPagesData, null, options.advancedOptions).DocumentRenderer.Memory;
+		t.wb.printPreviewState.advancedOptions = null;
+	  });
+      this.localSaveToDrawingFormat(pdfPrinterMemory.GetBase64Memory(), fileType);
+	  return true;
+	}
+
     if (c_oAscFileType.PDF === fileType || c_oAscFileType.PDFA === fileType) {
       var printPagesData, pdfPrinterMemory, t = this;
       this.wb._executeWithoutZoom(function () {
@@ -3358,6 +3372,7 @@ var editor;
 	};
 	spreadsheet_api.prototype._addWorksheetsWithoutLock = function (arrNames, where) {
 		var res = [];
+		this.inkDrawer.startSilentMode();
 		History.Create_NewPoint();
 		History.StartTransaction();
 		for (var i = arrNames.length - 1; i >= 0; --i) {
@@ -3369,6 +3384,7 @@ var editor;
 		History.EndTransaction();
 		// Посылаем callback об изменении списка листов
 		this.sheetsChanged();
+		this.inkDrawer.endSilentMode();
 		return res;
 	};
 
@@ -4363,6 +4379,29 @@ var editor;
     }
     return false;
   };
+
+	spreadsheet_api.prototype._createSmartArt = function (oSmartArt, oPlaceholder)
+	{
+		const oController = this.getGraphicController();
+		const oDrawingObjects = this.getDrawingObjects();
+		if (!oDrawingObjects || !oController)
+		{
+			return;
+		}
+		oSmartArt.setDrawingObjects(oDrawingObjects);
+		const oWS = oDrawingObjects.getWorksheet();
+		const oWSModel = oWS.model;
+		oSmartArt.setWorksheet(oWSModel);
+		oSmartArt.addToDrawingObjects(undefined, AscCommon.c_oAscCellAnchorType.cellanchorTwoCell);
+		oSmartArt.checkDrawingBaseCoords();
+		oSmartArt.fitFontSize();
+		oController.checkChartTextSelection();
+		oController.resetSelection();
+		oSmartArt.select(oController, 0);
+		oWS.setSelectionShape(true);
+		oController.startRecalculate();
+		oDrawingObjects.sendGraphicObjectProps();
+	};
 
   spreadsheet_api.prototype.asc_getChartObject = function(bNoLock) {		// Return new or existing chart. For image return null
 
@@ -6422,7 +6461,7 @@ var editor;
 		AscCommon.build_local_rx(oLocalizedData ? oLocalizedData["LocalFormulaOperands"] : null);
 		if (this.wb) {
 			this.wb.initFormulasList();
-			this.wb._onWSSelectionChanged()
+			this.wb._onWSSelectionChanged();
 		}
 		if (this.wbModel) {
 			this.wbModel.rebuildColors();
@@ -8407,6 +8446,16 @@ var editor;
 		this.wb.updateExternalReferences(arr);
 	};
 
+	spreadsheet_api.prototype.asc_openExternalReference = function(externalReference) {
+		let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
+		if (isLocalDesktop) {
+			alert("NEED SUPPORT LOCAL OPEN FILE");
+			return null;
+		} else {
+			return externalReference;
+		}
+	};
+
 	spreadsheet_api.prototype.asc_removeExternalReferences = function(arr) {
 		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 			return;
@@ -9115,6 +9164,8 @@ var editor;
   prot["asc_getExternalReferences"] = prot.asc_getExternalReferences;
   prot["asc_updateExternalReferences"] = prot.asc_updateExternalReferences;
   prot["asc_removeExternalReferences"] = prot.asc_removeExternalReferences;
+  prot["asc_openExternalReference"] = prot.asc_openExternalReference;
+
 
   prot["asc_fillHandleDone"] = prot.asc_fillHandleDone;
   prot["asc_canFillHandle"]  = prot.asc_canFillHandle;

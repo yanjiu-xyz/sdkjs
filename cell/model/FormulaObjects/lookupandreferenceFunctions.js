@@ -226,13 +226,15 @@ function (window, undefined) {
 			bidirectionalSearch(true, isReverse);
 		}
 
-		return index;	
+		return index;
 	}
 
 	// these functions are made and used specifically for SORT & SORTBY functions
 	function sortWithIndices (arr, sortOrder, isByCol) {
 		const indexedArray = isByCol
-			? arr[0].map(function (item, index) { return { item, index } })
+			? arr[0].map(function (item, index) {
+				return { item, index };
+			})
 			: arr.map(function (item, index) {
 				item = item[0];
 				return { item, index };
@@ -280,6 +282,127 @@ function (window, undefined) {
 		}
 
 		return resultArr;
+	}
+
+	function sortByArrayWrapper (array, args, isByCol) {
+		let colsRowArr = [], sortOrderArr = [], colsRowIndexesArr = [], rowCol;
+
+		for (let i = 1; i < args.length; i += 2) {
+			let by_array = args[i],
+				sortOrder = args[i+1];
+
+			let dim = by_array.getDimensions();
+			// check column or row
+			if (dim.bbox) {
+				rowCol = isByCol ? dim.bbox.r1 : dim.bbox.c1;
+			} else {
+				// add array/range check for mainArray and by_array args
+				rowCol = isByCol ? dim.col : dim.row;
+			}
+
+			// if there is no such column/row yet, push into the array
+			if (colsRowIndexesArr.indexOf(rowCol) === -1) {
+				colsRowIndexesArr.push(rowCol);
+				sortOrderArr.push(sortOrder);
+				colsRowArr.push(isByCol ? by_array._getRow(0) : by_array._getCol(0));
+			}
+		}
+
+		let tempArrIndicies = sortByArray(colsRowArr, sortOrderArr, isByCol);
+
+		let resultArr = new cArray();
+		for (let i = 0; i < tempArrIndicies.length; i++) {
+			let target = isByCol ? array._getCol(tempArrIndicies[i].index) : array._getRow(tempArrIndicies[i].index);
+			isByCol ? resultArr.pushCol(target, 0) : resultArr.pushRow(target, 0);
+		}
+
+		return resultArr;
+	}
+
+	function sortByArray (colsRowsArr, sortOrderArr, isByCol) {
+		let by_array1 = colsRowsArr[0],
+			tempArrIndicies = [];
+
+		tempArrIndicies = indicesBy(by_array1, isByCol);
+
+		tempArrIndicies.sort(function (a, b) {
+			let res = 0;
+
+			const compareFunc = function (_a, _b, _sortOrder) {
+				let itemA = _a.item ? _a.item : _a,
+					itemB = _b.item ? _b.item : _b;
+
+				if (cElementType.string === itemA.type && cElementType.string === itemB.type) {
+					res = (itemA.value.localeCompare(itemB.value)) * _sortOrder;
+				} else if (cElementType.number === itemA.type && cElementType.number === itemB.type) {
+					res = (itemA.value - itemB.value) * _sortOrder;
+				} else if (cElementType.string === itemA.type) {
+					// check itemB.type and make decision
+					if (cElementType.number === itemB.type) {
+						res = 1 * _sortOrder;
+					} else if (cElementType.bool === itemB.type || cElementType.error === itemB.type) {
+						res = -1 * _sortOrder;
+					}
+				} else if (cElementType.string === itemB.type) {
+					// check itemA.type and make decision
+					if (cElementType.number === itemA.type) {
+						res = -1 * _sortOrder;
+					} else if (cElementType.bool === itemA.type || cElementType.error === itemA.type) {
+						res = -1 * _sortOrder;
+					}
+				} else if (cElementType.bool === itemA.type) {
+					if (cElementType.error === itemB.type) {
+						res = -1 * _sortOrder;
+					} else {
+						res = 1 *_sortOrder;
+					}
+				} else if (cElementType.bool === itemB.type) {
+					if (cElementType.error === itemA.type) {
+						res = 1 * _sortOrder;
+					} else {
+						res = -1 *_sortOrder;
+					}
+				} else if (cElementType.error === itemA.type) {
+					res = 1 * _sortOrder;
+				} else if (cElementType.error === itemA.type) {
+					res = 1 * _sortOrder;
+				} else {
+					res = 0;
+				}
+			}
+
+			compareFunc(a, b, sortOrderArr[0]);
+
+			if (res === 0) {
+				for (let i = 1; i < colsRowsArr.length; i++) {
+					let tempA = isByCol ? colsRowsArr[i][0][a.index] : colsRowsArr[i][a.index][0];
+					let tempB = isByCol ? colsRowsArr[i][0][b.index] : colsRowsArr[i][b.index][0];
+
+					compareFunc(tempA, tempB, sortOrderArr[i]);
+
+					if (res !== 0) {
+						break;
+					}
+				}
+			}
+
+			return res;
+		});
+
+		return tempArrIndicies;
+	}
+
+	function indicesBy (arr, isByCol) {
+		const indexedArray = isByCol
+			? arr[0].map(function (item, index) {
+				return { item, index };
+			})
+			: arr.map(function (item, index) {
+				item = item[0];
+				return { item, index };
+			});
+
+		return indexedArray;
 	}
 
 	/**
@@ -2061,174 +2184,239 @@ function (window, undefined) {
 	cSORTBY.prototype.name = 'SORTBY';
 	cSORTBY.prototype.argumentsMin = 2;
 	cSORTBY.prototype.isXLFN = true;
-	cSORTBY.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
+	// TODO infinite arrayIndexes for even/odd arguments
+	cSORTBY.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1, 4: 1, 5: 1, 6: 1, 7: 1, 8: 1, 9: 1, 10: 1, 11: 1};
 	cSORTBY.prototype.argumentsType = [argType.array, argType.array, argType.number, [argType.array, argType.number]];
 	cSORTBY.prototype.Calculate = function (arg) {
-		// TODO add multiple argument handling
-		function arrayHelper (arr, byArr, sortOrder) {
-			let resArr = new cArray(),
-				resDimensoins = sortOrder.getDimensions(), sortOrderFirst, sortOrderRegular, isByCol;
+		function arrayHelper (arr, args) {
+			// Helper logic:
+			// We are looking for the maximum size of the array, which will later become the result
+			// Create the resulting array after 2 cycles (i < row, j < col)
+			// When creating each element, iterate through all elements with the same row col value and return the value according to the condition
+			// If the "correct" element has already been written at least once (true/false flag), then in this case we return 0 or #VALUE! ?
+			let resArr = new cArray(), resCol = 1, resRow = 1,
+				sort_order1, by_array1, sortOrderArr = [], isByCol, isFirstElemReceived;
 
-			for (let i = 0; i < resDimensoins.row; i++) {
+			// get max row & col
+			for (let i = 1; i < args.length; i += 2) {
+				let by_array = args[i],
+					sortOrder = args[i+1];
+
+				by_array1 = i === 1 ? by_array : by_array1;
+
+				if (sortOrder.type === cElementType.array || sortOrder.type === cElementType.cellsRange || sortOrder.type === cElementType.cellsRange3D) {
+					// if single element in array, fill array with it element?
+					let resDimensoins = sortOrder.getDimensions();
+					if (resRow < resDimensoins.row) {
+						resRow = resDimensoins.row;
+					}
+					if (resCol < resDimensoins.col) {
+						resCol = resDimensoins.col;
+					}
+				} else {
+					// create array with single element
+					let tempArr = new cArray();
+					tempArr.addElement(sortOrder);
+					sortOrder = tempArr;
+				}
+				
+				sortOrderArr.push(sortOrder);
+			}
+
+			// fill resArr, go through sortOrderArr
+			for (let i = 0; i < resRow; i++) {
 				resArr.addRow();
-				for (let j = 0; j < resDimensoins.col; j++) {
+				for (let j = 0; j < resCol; j++) {
 					let elem;
-					if (!sortOrderFirst) {
-						sortOrderFirst = sortOrder.getElementRowCol ? sortOrder.getElementRowCol(i, j) : sortOrder.getValueByRowCol(i, j);
 
-						if (!sortOrderFirst) {
-							sortOrderFirst = new cNumber(0);
-						} else {
-							sortOrderFirst = sortOrderFirst.tocNumber();
+					for (let k = 0; k < sortOrderArr.length; k++) {
+						elem = sortOrderArr[k].getElementRowCol ? sortOrderArr[k].getElementRowCol(i, j) : sortOrderArr[k].getValueByRowCol(i, j);
+
+						// check element
+						if (!elem) {
+							elem = new cError(cErrorType.not_available);
+						} else if (elem.type === cElementType.error) {
+							// if any error break the cycle
+							break;
 						}
 
-						if (sortOrderFirst.type === cElementType.error) {
-							elem = sortOrderFirst;
-							sortOrderFirst = undefined;
-						} else {
-							sortOrderFirst = Math.floor(sortOrderFirst.toNumber());
-							if (arr.isOneElement() && by_arrayRows === 1 && (sortOrderFirst === -1 || sortOrderFirst === 1)) {
-								elem = arr.getFirstElement();
-							} else if ((by_arrayRows === 1 && by_arrayCols !== maxCols) || (by_arrayCols === 1 && by_arrayRows !== maxRows) || (by_arrayCols > 1 && by_arrayRows > 1) || (sortOrderFirst !== -1 && sortOrderFirst !== 1)) {
-								elem = new cError(cErrorType.wrong_value_type);
-								sortOrderFirst = undefined;
-							} else if (by_arrayRows === 1 && by_arrayCols === maxCols) {
-								isByCol = true;
-							} else if (by_arrayCols === 1 && by_arrayRows === maxRows) {
-								isByCol = false;
-							}
-							if (!elem) {
-								elem = sortArray(arr, byArr, sortOrderFirst, isByCol).getFirstElement();
-							}
+						if (elem.type !== cElementType.number) {
+							elem = elem.tocNumber();
 						}
-					} else {
-						sortOrderRegular = sortOrder.getElementRowCol ? sortOrder.getElementRowCol(i, j) : sortOrder.getValueByRowCol(i, j);
-
-						if (!sortOrderRegular) {
-							sortOrderRegular = new cNumber(0);
-						} else {
-							sortOrderRegular = sortOrderRegular.tocNumber();
-						}
-
-						if (sortOrderRegular.type === cElementType.error) {
-							elem = sortOrderRegular;
-						} else {
-							sortOrderRegular = Math.floor(sortOrderRegular.toNumber());
-							if (!(sortOrderRegular === -1 || sortOrderRegular === 1)) {
+						
+						if (elem.type === cElementType.number) {
+							// matching number check
+							let value = Math.floor(elem.getValue());
+							if (value !== -1 && value !== 1) {
 								elem = new cError(cErrorType.wrong_value_type);
 							} else {
-								elem = new cNumber(0);
+								elem = new cNumber(value);
 							}
 						}
+
+						sort_order1 = k === 0 ? elem : sort_order1;
 					}
-					resArr.addElement(elem);
+
+					// if elem is "truthy", do sort and get first element from sorted array
+					if (elem.type !== cElementType.error) {
+						if (isFirstElemReceived) {
+							elem = new cNumber(0);
+							resArr.addElement(elem);
+						} 
+						// TODO need more research
+						// else if (isFirstElemReceived && args.length > 3) {
+						// 	elem = new cError(cErrorType.wrong_value_type);
+						// 	resArr.addElement(elem);
+						// }
+						else {
+							let firstElem;
+							firstElem = sortArray(arr, by_array1, sort_order1.getValue(), isByCol).getFirstElement();
+							resArr.addElement(firstElem);
+							isFirstElemReceived = true;
+						}
+					} else {
+						resArr.addElement(elem);
+					}
 				}
 			}
 
 			return resArr;
 		}
 
-		let arg0 = arg[0], 	// array
-			arg1 = arg[1],	// by_array1
-			arg2 = arg[2] ? arg[2] : new cNumber(1);  // sort_order
+		let args = arg.slice();
+		let array, by_array, sort_order, maxRows, maxCols, arrayDimensions, isByCol, isSortOrderArray;
 
-		// check args err
-		if (cElementType.error === arg0.type) {
-			return arg0;
-		} else if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
-			if (cElementType.error === arg0.getValue().type) {
-				return arg0;
-			}
-		}
-		if (cElementType.error === arg1.type) {
-			return arg1;
-		} else if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
-			if (cElementType.error === arg1.getValue().type) {
-				return arg1;
-			}
-		}
-		if (cElementType.error === arg2.type) {
-			return arg2;
-		} else if (cElementType.cell === arg2.type || cElementType.cell3D === arg2.type) {
-			if (cElementType.error === arg2.getValue().type) {
-				return arg2;
+		// check arg0
+		if (cElementType.error === args[0].type) {
+			return args[0];
+		} else if (cElementType.cell === args[0].type || cElementType.cell3D === args[0].type) {
+			if (cElementType.error === args[0].getValue().type) {
+				return args[0];
 			}
 		}
 
-		// check arg empty
-		if (cElementType.empty === arg2.type) {
-			arg2 = new cNumber(1);
-		}
-
-		let array, by_array1, sort_order, maxRows, maxCols, arrayDimensions, by_arrayDimensions, by_arrayRows, by_arrayCols, isByCol, isArg2Array;
-
-		// check arg0(array)
-		if (cElementType.array !== arg0.type && cElementType.cellsRange !== arg0.type && cElementType.cellsRange3D !== arg0.type) {
+		if (cElementType.array !== args[0].type && cElementType.cellsRange !== args[0].type && cElementType.cellsRange3D !== args[0].type) {
 			let elem;
-			if (cElementType.cell === arg0.type || cElementType.cell3D === arg0.type) {
-				elem = arg0.getValue();
+			if (cElementType.cell === args[0].type || cElementType.cell3D === args[0].type) {
+				elem = args[0].getValue();
 			} else {
-				elem = arg0;
+				elem = args[0];
 			}
 			array = new cArray();
 			array.addElement(elem);
 		} else {
-			array = arg0;
+			array = args[0];
 		}
 
 		arrayDimensions = array.getDimensions();
 		maxRows = arrayDimensions.row;
 		maxCols = arrayDimensions.col;
 
-		// check arg1(by_array1)
-		if (cElementType.array !== arg1.type && cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type) {
-			let elem;
-			if (cElementType.cell === arg1.type || cElementType.cell3D === arg1.type) {
-				elem = arg1.getValue();
-			} else {
-				elem = arg1;
+		if (args.length < 3) {
+			// add default sort_by
+			args[2] = new cNumber(1);
+		}
+ 
+		// check args err&empty
+		for (let i = 1; i < args.length; i++) {
+			// check errors
+			if (cElementType.error === args[i].type) {
+				return args[i];
+			} else if (cElementType.cell === args[i].type || cElementType.cell3D === args[i].type) {
+				if (cElementType.error === args[i].getValue().type) {
+					return args[i];
+				}
 			}
-			by_array1 = new cArray();
-			by_array1.addElement(elem);
+
+			// check by_arrays and make single values arrays
+			if (i % 2 !== 0) {
+				if (cElementType.array !== args[i].type && cElementType.cellsRange !== args[i].type && cElementType.cellsRange3D !== args[i].type) {
+					let elem;
+					
+					if (cElementType.cell === args[i].type || cElementType.cell3D === args[i].type) {
+						elem = args[i].getValue();
+					} else {
+						elem = args[i];
+					}
+
+					by_array = new cArray();
+					by_array.addElement(elem);
+
+					args[i] = by_array;
+				}
+			}
+
+			// check sort_orders
+			if (i % 2 === 0) {
+				// empty check
+				if (cElementType.empty === args[i].type && (i % 2 === 0)) {
+					args[i] = new cNumber(1);
+				}
+
+				// variable typing
+				if (cElementType.array !== args[i].type && cElementType.cellsRange !== args[i].type && cElementType.cellsRange3D !== args[i].type) {
+					if (cElementType.cell === args[i].type || cElementType.cell3D === args[i].type) {
+						sort_order = args[i].getValue().tocNumber();
+					} else {
+						sort_order = args[i].tocNumber();
+					}
+				} else if (args[i].isOneElement()) {
+					sort_order = args[i].getFirstElement();
+				} else {
+					sort_order = args[i];
+					isSortOrderArray = true;
+				}
+
+				// check after typing and round
+				if (cElementType.error === sort_order.type) {
+					return sort_order;
+				} else if (!isSortOrderArray) {
+					sort_order = Math.floor(sort_order.getValue());
+				}
+
+				// check sort_order value
+				if ((sort_order !== 1 && sort_order !== -1) && !isSortOrderArray) {
+					return new cError(cErrorType.wrong_value_type);
+				} else {
+					args[i] = sort_order;
+				}
+			}
+		}
+
+		if (isSortOrderArray) {
+			return arrayHelper(array, args);
 		} else {
-			by_array1 = arg1;
-		}
-		
-		by_arrayDimensions = by_array1.getDimensions();
-		by_arrayRows = by_arrayDimensions.row;
-		by_arrayCols = by_arrayDimensions.col;
+			// dimensions check
+			for (let i = 1; i < args.length; i += 2) {
+				let byArrDimensions = args[i].getDimensions();
 
-		// check arg2(sort_order)
-		if (cElementType.array !== arg2.type && cElementType.cellsRange !== arg2.type && cElementType.cellsRange3D !== arg2.type) {
-			sort_order = arg2.tocNumber();
-		} else if (arg2.isOneElement()) {
-			sort_order = arg2.getFirstElement();
-		} else {
-			sort_order = arg2;
-			isArg2Array = true;
-		}
+				// TODO if the main array have single row, return the main array
+				if (maxRows === 1 || maxCols === 1) {
+					// single row/col with elements
+					if (maxRows === 1 && byArrDimensions.row === 1) {
+						// area to array
+						if (cElementType.cellsRange === array.type || cElementType.cellsRange3D === array.type) {
+							let arr = array.getFullArray();
+							return arr;
+						}
+						return array;
+					} 
+				}
 
-		if (cElementType.error === sort_order.type) {
-			return sort_order;
-		} else if (!isArg2Array) {
-			sort_order = Math.floor(sort_order.getValue());
-		}
-
-		if (isArg2Array) {
-			return arrayHelper(array, by_array1, sort_order);
-		}
-
-		if (array.isOneElement() && by_arrayRows === 1 && (sort_order === -1 || sort_order === 1)) {
-			return array;
-		} else if ((by_arrayRows === 1 && by_arrayCols !== maxCols) || (by_arrayCols === 1 && by_arrayRows !== maxRows) || (by_arrayCols > 1 && by_arrayRows > 1) || (sort_order !== -1 && sort_order !== 1)) {
-			return new cError(cErrorType.wrong_value_type);
-		} else if (by_arrayRows === 1 && by_arrayCols === maxCols) {
-			isByCol = true;
-		} else if (by_arrayCols === 1 && by_arrayRows === maxRows) {
-			isByCol = false;
+				// isByCol or not determined by the first byarray arg
+				if ((byArrDimensions.row === 1 && byArrDimensions.col !== maxCols) || 
+					(byArrDimensions.col === 1 && byArrDimensions.row !== maxRows) || 
+					(byArrDimensions.col > 1 && byArrDimensions.row > 1)) {
+					return new cError(cErrorType.wrong_value_type);
+				} else if (byArrDimensions.row === 1 && byArrDimensions.col === maxCols) {
+					isByCol = i === 1 ? true : isByCol;
+				} else if (byArrDimensions.col === 1 && byArrDimensions.row === maxRows) {
+					isByCol = i === 1 ? false : isByCol;
+				}
+			}
 		}
 
-		return sortArray(array, by_array1, sort_order, isByCol);
+		return sortByArrayWrapper(array, args, isByCol);
 	};
 	cSORTBY.prototype.checkArguments = function (countArguments) {
 		return countArguments === 2 ? true : 1 === countArguments % 2 && cBaseFunction.prototype.checkArguments.apply(this, arguments);
@@ -3156,8 +3344,7 @@ function (window, undefined) {
 
 		if (cElementType.cellsRange3D === arg0.type || cElementType.cellsRange === arg0.type) {
 			// TODO пересмотреть поведение функции при получении массива первым аргументом
-			// arg0 = arg0.cross(_arg1);
-			arg0 = arg0.getFullArray().getElementRowCol(0,0);
+			arg0 = isXMatch ? arg0.getFullArray().getElementRowCol(0,0) : arg0.cross(_arg1);
 
 			if (cElementType.empty === arg0.type) {
 				return new cError(cErrorType.not_available);
@@ -3729,8 +3916,8 @@ function (window, undefined) {
 	cXLOOKUP.prototype.isXLFN = true;
 	cXLOOKUP.prototype.Calculate = function (arg) {
 
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
-		var arg3 = arg[3], arg4 = arg[4], arg5 = arg[5];
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
+		let arg3 = arg[3], arg4 = arg[4], arg5 = arg[5];
 
 		if (cElementType.error === arg0.type) {
 			return arg0;
@@ -3790,9 +3977,9 @@ function (window, undefined) {
 		}
 
 		//массив arg1 должен содержать 1 строку или 1 столбец
-		var dimensions1 = arg1.getDimensions();
-		var dimensions2 = arg2.getDimensions();
-		var bVertical = null;
+		let dimensions1 = arg1.getDimensions();
+		let dimensions2 = arg2.getDimensions();
+		let bVertical = null;
 		if (dimensions1 && dimensions2) {
 			if (dimensions1.col === 1 && dimensions2.row === dimensions1.row) {
 				bVertical = true;
@@ -3804,7 +3991,7 @@ function (window, undefined) {
 		if (bVertical === null) {
 			return new cError(cErrorType.wrong_value_type);
 		} else {
-			var res;
+			let res, arrayOffset = 0;
 			if (bVertical) {
 				res = g_oVLOOKUPCache.calculate([arg0, arg1, null, null, arg4, arg5], arguments[1]);
 			} else {
@@ -3814,8 +4001,14 @@ function (window, undefined) {
 			if (res === -1) {
 				return arg3;
 			} else {
+				if (arg1.type === cElementType.array) {
+					if (dimensions2.bbox) {
+						arrayOffset = bVertical ? dimensions2.bbox.r1 : dimensions2.bbox.c1;
+						res += arrayOffset;
+					}
+				}
 				//возвращаем из arg2 строку или столбец
-				var _startRange = 0;
+				let _startRange = 0;
 				if (dimensions2.bbox) {
 					_startRange = bVertical ? dimensions2.bbox.r1 : dimensions2.bbox.c1;
 				} else if (dimensions1.bbox) {
@@ -3823,14 +4016,14 @@ function (window, undefined) {
 				}
 
 				if (cElementType.cellsRange === arg2.type || cElementType.cellsRange3D === arg2.type) {
-					var _r1 = !bVertical ? dimensions2.bbox.r1 : res - _startRange + dimensions2.bbox.r1;
-					var _cl = bVertical ? dimensions2.bbox.c1 : res - _startRange + dimensions2.bbox.c1;
-					var _r2 = !bVertical ? dimensions2.bbox.r2 : res - _startRange + dimensions2.bbox.r1;
-					var _c2 = bVertical ? dimensions2.bbox.c2 : res - _startRange + dimensions2.bbox.c1;
-					var _range = new Asc.Range(_cl, _r1, _c2, _r2);
+					let _r1 = !bVertical ? dimensions2.bbox.r1 : res - _startRange + dimensions2.bbox.r1;
+					let _cl = bVertical ? dimensions2.bbox.c1 : res - _startRange + dimensions2.bbox.c1;
+					let _r2 = !bVertical ? dimensions2.bbox.r2 : res - _startRange + dimensions2.bbox.r1;
+					let _c2 = bVertical ? dimensions2.bbox.c2 : res - _startRange + dimensions2.bbox.c1;
+					let _range = new Asc.Range(_cl, _r1, _c2, _r2);
 
-					var _res;
-					var rangeName;
+					let _res;
+					let rangeName;
 					AscCommonExcel.executeInR1C1Mode(false, function () {
 						rangeName = _range.getName();
 					});
@@ -3846,12 +4039,12 @@ function (window, undefined) {
 
 					return _res;
 				} else {
-					var _length = !bVertical ? dimensions2.row : dimensions2.col;
-					var _array = new cArray();
-					for (var i = 0; i < _length; i++) {
-						var _row = !bVertical ? i : res - _startRange;
-						var _col = bVertical ? i : res - _startRange;
-						var _elem = arg2.getElementRowCol ? arg2.getElementRowCol(_row, _col) : arg2.getValueByRowCol(_row, _col);
+					let _length = !bVertical ? dimensions2.row : dimensions2.col;
+					let _array = new cArray();
+					for (let i = 0; i < _length; i++) {
+						let _row = !bVertical ? i : res - _startRange;
+						let _col = bVertical ? i : res - _startRange;
+						let _elem = arg2.getElementRowCol ? arg2.getElementRowCol(_row, _col) : arg2.getValueByRowCol(_row, _col);
 						if (!bVertical) {
 							_array.addRow();
 							_array.addElement(_elem);
@@ -3859,9 +4052,9 @@ function (window, undefined) {
 							_array.addElement(_elem);
 						}
 					}
-				}
 
-				return _array;
+					return _array;
+				}
 			}
 		}
 	};

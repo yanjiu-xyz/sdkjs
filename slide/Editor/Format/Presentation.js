@@ -4418,6 +4418,13 @@ CPresentation.prototype.CancelEyedropper = function() {
 	}
 	return false;
 };
+CPresentation.prototype.CancelInkDrawer = function() {
+	if(this.Api.isInkDrawerOn()) {
+		this.Api.stopInkDrawer();
+		return true;
+	}
+	return false;
+};
 
 CPresentation.prototype.Recalculate = function (RecalcData) {
 	this.DrawingDocument.OnStartRecalculate(this.Slides.length);
@@ -6960,8 +6967,9 @@ CPresentation.prototype.OnKeyDown = function (e) {
 		} else if (e.KeyCode === 27) // Esc
 		{
 			const bCancelEyedropper = this.CancelEyedropper();
+			const bCancelInkDrawer = this.CancelInkDrawer();
 			if (oController && !this.FocusOnNotes) {
-				if(!bCancelEyedropper) {
+				if(!bCancelEyedropper && !bCancelInkDrawer) {
 					var oDrawingObjects = oController;
 					if (oDrawingObjects.checkTrackDrawings()) {
 						this.Api.sync_EndAddShape();
@@ -7038,7 +7046,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
 			if (true === this.DrawingDocument.IsTrackText()) {
 				this.DrawingDocument.CancelTrackText();
 			}
-			if(bCancelEyedropper) {
+			if(bCancelEyedropper || bCancelInkDrawer) {
 				this.OnMouseMove(global_mouseEvent, 0, 0, this.CurPage);
 			} else if (this.Api.isFormatPainterOn()) {
 				this.Api.sync_PaintFormatCallback(AscCommon.c_oAscFormatPainterState.kOff);
@@ -7703,9 +7711,14 @@ CPresentation.prototype.IsFocusOnNotes = function () {
 	return this.FocusOnNotes;
 };
 
+CPresentation.prototype.IsFocusOnThumbnails = function () {
+	return this.GetFocusObjType() === FOCUS_OBJECT_THUMBNAILS;
+};
+
 CPresentation.prototype.Notes_OnMouseDown = function (e, X, Y) {
 	// Сбрасываем текущий элемент в поиске
 	this.CancelEyedropper();
+	this.CancelInkDrawer();
 	if (this.SearchEngine.Count > 0)
 		this.SearchEngine.ResetCurrent();
 	var bFocusOnSlide = !this.FocusOnNotes;
@@ -12133,6 +12146,8 @@ window['AscCommonSlide'].CPresentation = CPresentation;
 window['AscCommonSlide'].CPrSection = CPrSection;
 window['AscCommonSlide'].CSlideSize = CSlideSize;
 window['AscCommonSlide'].IdList = IdList;
+window['AscCommonSlide'].CONFORMANCE_STRICT = CONFORMANCE_STRICT;
+window['AscCommonSlide'].CONFORMANCE_TRANSITIONAL = CONFORMANCE_TRANSITIONAL;
 
 
 window['AscFormat'] = window['AscFormat'] || {};

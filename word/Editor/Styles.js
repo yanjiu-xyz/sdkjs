@@ -6326,6 +6326,22 @@ CStyle.prototype =
     }
 };
 /**
+ * Устанавливаем стиль, от которого данный наследуется
+ * @param styleId
+ */
+CStyle.prototype.SetBasedOn = function(styleId)
+{
+	return this.Set_BasedOn(styleId);
+};
+/**
+ * Получаем родительский стиль в иерархии наследования
+ * @returns {null | string}
+ */
+CStyle.prototype.GetBasedOn = function()
+{
+	return this.BasedOn;
+};
+/**
  * Устаналиваем форматный идентификатор стиля
  * @param styleId
  * @constructor
@@ -6365,6 +6381,22 @@ CStyle.prototype.GetTextPr = function()
 CStyle.prototype.SetParaPr = function(oParaPr)
 {
 	this.Set_ParaPr(oParaPr);
+};
+/**
+ * Связываем данный стиль с заданной нумерацией
+ * @param {string} [numId=null] если не задано, тогда, наоборот, удаляем нумерацию
+ * @param {number} iLvl
+ */
+CStyle.prototype.SetNumPr = function(numId, iLvl)
+{
+	let paraPr = this.GetParaPr().Copy();
+	
+	if (undefined !== numId && null !== numId)
+		paraPr.NumPr = new AscWord.CNumPr(numId, iLvl);
+	else
+		paraPr.NumPr = undefined;
+	
+	this.SetParaPr(paraPr);
 };
 /**
  * Получаем настройки параграфа
@@ -18184,6 +18216,7 @@ window["AscWord"].CStyle  = CStyle;
 window["AscWord"].CNumPr  = CNumPr;
 window["AscWord"].CBorder = CDocumentBorder;
 window["AscWord"].CShd    = CDocumentShd;
+window["AscWord"].CStyles = CStyles;
 
 
 // Создаем глобальные дефолтовые стили, чтобы быстро можно было отдать дефолтовые настройки
