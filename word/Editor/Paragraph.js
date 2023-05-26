@@ -9927,6 +9927,8 @@ Paragraph.prototype.IndDecNumberingLevel = function(isIncrease)
 	let pStyle = num.GetLvl(newLvl).GetPStyle();
 	if (pStyle)
 		this.Style_Add(pStyle);
+	
+	this.Set_Ind({Left : undefined, Right : this.Pr.Ind.Right, FirstLine : undefined}, true);
 };
 /**
  * Получаем настройку нумерации у данного параграфа, если она есть
