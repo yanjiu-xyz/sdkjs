@@ -778,7 +778,7 @@ function(window, undefined) {
 			var oLabel = aLabelsSource[0];
 			var i = 1;
 			while (!oLabel && i < aLabelsSource.length) {
-				oLabel = aLabelsSource[i];
+				oLabel = aLabelsSource[i++];
 			}
 			if (oLabel) {
 				var oContent = oLabel.tx.rich.content;
