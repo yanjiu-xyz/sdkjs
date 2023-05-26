@@ -2030,8 +2030,7 @@ function CDrawingDocument()
 			{
 				if(oAPI.isInkDrawerOn())
 				{
-					let oInkPen = oAPI.getInkPen();
-					//Draw Cursor for INK
+					oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.getDrawCursor(oAPI.getInkPen());
 				}
 				else if (oAPI.isFormatPainterOn())
 				{
@@ -2058,8 +2057,7 @@ function CDrawingDocument()
 			{
 				if(oAPI.isInkDrawerOn())
 				{
-					let oInkPen = oAPI.getInkPen();
-					//Draw Cursor for INK
+					oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.getDrawCursor(oAPI.getInkPen());
 				}
 				else if (oAPI.isFormatPainterOn())
 				{

@@ -803,8 +803,7 @@ function CDrawingDocument()
 		{
 			if(oApi.isInkDrawerOn())
 			{
-				let oInkPen = oApi.getInkPen();
-				//Draw Cursor for INK
+				elem.style.cursor = AscCommon.g_oHtmlCursor.getDrawCursor(oApi.getInkPen());
 			}
 			else
 			{

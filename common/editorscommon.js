@@ -393,44 +393,169 @@
 	};
 	var g_oDocumentUrls = new DocumentUrls();
 
+	function CHTMLCursorItemBase(_name, _hotspot, _default)
+	{
+		this.name = _name;
+		this.hotspot = _hotspot;
+		this.default = _default;
+	}
+	CHTMLCursorItemBase.prototype.baseUrl = "../../../../sdkjs/common/Images/cursors/";
+	CHTMLCursorItemBase.prototype.getValue = function() { return this.default; };
+
+	/**
+	 * @extends {CHTMLCursorItemBase}
+	 */
+	function CHTMLCursorCur()
+	{
+		CHTMLCursorItemBase.apply(this, arguments);
+	}
+	CHTMLCursorCur.prototype = Object.create(CHTMLCursorItemBase.prototype);
+	CHTMLCursorCur.prototype.getValue = function(globalCursors)
+	{
+		if (AscCommon.AscBrowser.isCustomScalingAbove2())
+			return "url(" + this.baseUrl + this.name + "_2x.cur), " + this.default;
+		return "url(" + this.baseUrl + this.name + ".cur), " + this.default;
+	}
+
+	/**
+	 * @extends {CHTMLCursorItemBase}
+	 */
+	function CHTMLCursorSvgExternal()
+	{
+		CHTMLCursorItemBase.apply(this, arguments);
+	}
+	CHTMLCursorSvgExternal.prototype = Object.create(CHTMLCursorItemBase.prototype);
+	CHTMLCursorSvgExternal.prototype.getValue = function(globalCursors)
+	{
+		return "url(" + this.baseUrl + this.name + ".svg) " + this.hotspot + ", " + this.default;
+	}
+
+	/**
+	 * @extends {CHTMLCursorItemBase}
+	 */
+	function CHTMLCursorPng()
+	{
+		CHTMLCursorItemBase.apply(this, arguments);
+	}
+	CHTMLCursorPng.prototype = Object.create(CHTMLCursorItemBase.prototype);
+	CHTMLCursorPng.prototype.getValue = function(globalCursors)
+	{
+		return "-webkit-image-set(url(" + this.baseUrl + this.name + ".png) 1x," + " url(" + this.baseUrl + this.name + "_2x.png) 2x) " + this.hotspot + ", " + this.default;
+	}
+
+	/**
+	 * @extends {CHTMLCursorItemBase}
+	 */
+	function CHTMLCursorModern()
+	{
+		CHTMLCursorItemBase.apply(this, arguments);
+	}
+	CHTMLCursorModern.prototype = Object.create(CHTMLCursorItemBase.prototype);
+	CHTMLCursorModern.prototype.getValue = function(globalCursors)
+	{
+		if (1 === AscCommon.AscBrowser.retinaPixelRatio)
+			return "url(" + this.baseUrl + this.name + ".png) " + this.hotspot + ", " + this.default;
+
+		if (globalCursors.mapSvg && globalCursors.mapSvg[this.name])
+		{
+			return "url(\"data:image/svg+xml;utf8," + globalCursors.mapSvg[this.name]+ "\") " + this.hotspot + ", " + this.default;
+		}
+
+		if (!AscCommon.AscBrowser.isChrome && !AscCommon.AscBrowser.isSafari)
+		{
+			return "url(" + this.baseUrl + this.name + ".svg) " + this.hotspot + ", " + "url(" + this.baseUrl + this.name + ".png) " + this.hotspot + ", " + this.default;
+		}
+
+		return "-webkit-image-set(url(" + this.baseUrl + this.name + ".png) 1x," + " url(" + this.baseUrl + this.name + "_2x.png) 2x) " + this.hotspot + ", " + this.default;
+	}
+
 	function CHTMLCursor()
 	{
-		this.map = {};
-		this.mapRetina = {};
+		this.cursors = {};
+		this.mapSvg = null;
 
 		this.value = function(param)
 		{
-			var ret = this.map[param];
-			if (AscCommon.AscBrowser.isCustomScalingAbove2() && this.mapRetina[param])
-				ret = this.mapRetina[param];
-			return ret ? ret : param;
+			if (this.cursors[param])
+				return this.cursors[param].getValue(this);
+			return param;
 		};
 
 		this.register = function(type, name, target, default_css_value)
 		{
 			if (AscBrowser.isIE || AscBrowser.isIeEdge)
 			{
-				this.map[type] = ("url(../../../../sdkjs/common/Images/cursors/" + name + ".cur), " + default_css_value);
-				this.mapRetina[type] = ("url(../../../../sdkjs/common/Images/cursors/" + name + "_2x.cur), " + default_css_value);
+				this.cursors[type] = new CHTMLCursorCur(name, target, default_css_value);
 			}
 			else if (window.opera)
 			{
-				this.map[type] = default_css_value;
+				this.cursors[type] = new CHTMLCursorItemBase(name, target, default_css_value);
 			}
 			else
 			{
-				if (!AscCommon.AscBrowser.isChrome && !AscCommon.AscBrowser.isSafari)
-				{
-					this.map[type] = "url('../../../../sdkjs/common/Images/cursors/" + name + ".svg') " + target +
-						", url('../../../../sdkjs/common/Images/cursors/" + name + ".png') " + target + ", " + default_css_value;
-				}
-				else
-				{
-					this.map[type] = "-webkit-image-set(url(../../../../sdkjs/common/Images/cursors/" + name + ".png) 1x," +
-						" url(../../../../sdkjs/common/Images/cursors/" + name + "_2x.png) 2x) " + target + ", " + default_css_value;
-				}
+				this.cursors[type] = new CHTMLCursorModern(name, target, default_css_value);
 			}
 		};
+
+		this.loadAllSvg = function()
+		{
+			try
+			{
+				var xhr = new XMLHttpRequest();
+				xhr.open("GET", "../../../../sdkjs/common/Images/cursors/svg.json", true);
+				var t = this;
+				xhr.onload = function()
+				{
+					if (this.status === 200 || location.href.indexOf("file:") === 0)
+					{
+						try
+						{
+							t.mapSvg = JSON.parse(this.responseText);
+						}
+						catch (err) {}
+					}
+				};
+				xhr.send('');
+			}
+			catch (e) {}
+		};
+
+		this.getDrawCursor = function(ln)
+		{
+			if (!ln.Fill)
+				return "default";
+			let color = ln.Fill.fill.color.RGBA;
+			let w = (ln.w == null) ? 12700 : ln.w;
+			w = (w / 9525) >> 0;
+			if (w < 4) w = 4;
+			if (w & 0x01) w += 1;
+
+			if (ln && ln.Fill && ln.Fill.transparent !== null)
+				color.A = ln.Fill.transparent;
+
+			let isRect = (254 < color.A) ? false : true;
+			let h = w;
+
+			if (isRect)
+				w = 10;
+
+			let url = "<svg width='" + w + "' height='" + h + "' viewBox='0 0 10 10' xmlns='http://www.w3.org/2000/svg' preserveAspectRatio='none'>";
+			if (!isRect)
+			{
+				url = url + "<circle cx='5' cy='5' r='5' stroke='none' fill='rgb(" +
+					color.R + "," + color.G + "," + color.B + ")'/></svg>";
+			}
+			else
+			{
+				url = url + "<rect x='0' y='0' width='10' height='10' stroke='none' fill='rgb(" +
+					color.R + "," + color.G + "," + color.B + ")' fill-opacity='" + (color.A / 255) + "'/></svg>";
+			}
+			console.log(url);
+
+			return "url(\"data:image/svg+xml;utf8," + url + "\") " + (w >> 1) + " " + (h >> 1) + ", default";
+		}
+
+		this.loadAllSvg();
 	}
 
 	function OpenFileResult()
