@@ -3242,6 +3242,7 @@ function(window, undefined) {
 			oPr.drawingDocument = document.DrawingDocument;
 		}
 		var oCopy = this.copy(oPr);
+		oCopy.removePlaceholder();
 		oCopy.setBDeleted(false);
 		return oCopy;
 	};

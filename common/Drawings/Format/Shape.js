@@ -1044,6 +1044,7 @@
 			if (this.signatureLine) {
 				c.setSignature(this.signatureLine.copy());
 			}
+			c.removePlaceholder();
 			return c;
 		};
 

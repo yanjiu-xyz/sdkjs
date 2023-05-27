@@ -1553,6 +1553,17 @@
 		_ret.idx = oConnectorInfo.idx;
 		return _ret;
 	};
+	CGraphicObjectBase.prototype.convertToWord = function() {
+		return this;
+	};
+	CGraphicObjectBase.prototype.removePlaceholder = function () {
+		let oUniPr = this.getUniNvProps();
+		if (oUniPr) {
+			if(isRealObject(oUniPr.nvPr) && isRealObject(oUniPr.nvPr.ph)) {
+				oUniPr.nvPr.setPh(null);
+			}
+		}
+	};
 	CGraphicObjectBase.prototype.getGeom = function () {
 
 		var _geom;
