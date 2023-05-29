@@ -7672,10 +7672,10 @@
 					return dShift;
 				},
 
-				getFormatPainterData: function () {
+				getFormatPainterData: function (bCalcPr) {
 					let oTargetDocContent = this.getTargetDocContent();
 					if (oTargetDocContent)
-						return oTargetDocContent.GetFormattingPasteData();
+						return oTargetDocContent.GetFormattingPasteData(bCalcPr);
 
 					let aSelectedObjects = this.getSelectedArray();
 					if (aSelectedObjects.length === 1) {
@@ -7687,13 +7687,13 @@
 							let oTable = oDrawing.graphicObject;
 							let oCell = oTable.GetCurCell();
 							if (oCell)
-								return oCell.GetContent().GetFormattingPasteData();
+								return oCell.GetContent().GetFormattingPasteData(bCalcPr);
 						} else if (oDrawing.isChart()) {
 							let oChartTitle = oDrawing.getChartTitle();
 							if (oChartTitle) {
 								let oContent = oChartTitle.getDocContent();
 								if (oContent)
-									return oContent.GetFormattingPasteData();
+									return oContent.GetFormattingPasteData(bCalcPr);
 							}
 						}
 					}
