@@ -1792,7 +1792,7 @@ function CEditorPage(api)
 				oWordControl.MouseHandObject.Active = true;
 				oWordControl.MouseHandObject.ScrollX = oWordControl.m_dScrollX;
 				oWordControl.MouseHandObject.ScrollY = oWordControl.m_dScrollY;
-				oWordControl.m_oDrawingDocument.SetCursorType("grabbing");
+				oWordControl.m_oDrawingDocument.SetCursorType(AscCommon.Cursors.Grabbing);
 
 				oWordControl.m_oLogicDocument && oWordControl.m_oLogicDocument.EndFormEditing();
 				return;
@@ -1896,7 +1896,7 @@ function CEditorPage(api)
 		{
 			if (oWordControl.MouseHandObject.Active)
 			{
-				oWordControl.m_oDrawingDocument.SetCursorType("grabbing");
+				oWordControl.m_oDrawingDocument.SetCursorType(AscCommon.Cursors.Grabbing);
 
 				var scrollX = global_mouseEvent.X - oWordControl.MouseHandObject.X;
 				var scrollY = global_mouseEvent.Y - oWordControl.MouseHandObject.Y;
@@ -1917,7 +1917,7 @@ function CEditorPage(api)
 					oThis.m_oApi.sync_MouseMoveCallback(new AscCommon.CMouseMoveData());
 					oThis.m_oApi.sync_MouseMoveEndCallback();
 
-					oWordControl.m_oDrawingDocument.SetCursorType("grab");
+					oWordControl.m_oDrawingDocument.SetCursorType(AscCommon.Cursors.Grab);
 
 					oWordControl.m_oLogicDocument && oWordControl.m_oLogicDocument.UpdateCursorType();
 					oWordControl.StartUpdateOverlay();
@@ -1962,7 +1962,7 @@ function CEditorPage(api)
 			MMData.Y_abs = Coords.Y;
 			MMData.EyedropperColor = oThis.m_oApi.getEyedropperColor();
 			MMData.Type = Asc.c_oAscMouseMoveDataTypes.Eyedropper;
-			oWordControl.m_oDrawingDocument.SetCursorType("eyedropper", MMData);
+			oWordControl.m_oDrawingDocument.SetCursorType(AscCommon.Cursors.Eyedropper, MMData);
 			oThis.m_oApi.sync_MouseMoveEndCallback();
 			return;
 		}
@@ -2039,7 +2039,7 @@ function CEditorPage(api)
 		{
 			AscCommon.check_MouseUpEvent(e);
 			oWordControl.MouseHandObject.Active = false;
-			oWordControl.m_oDrawingDocument.SetCursorType("grab");
+			oWordControl.m_oDrawingDocument.SetCursorType(AscCommon.Cursors.Grab);
 			oWordControl.m_bIsMouseLock = false;
 			return;
 		}
@@ -2162,7 +2162,7 @@ function CEditorPage(api)
 		if (oWordControl.MouseHandObject && oWordControl.MouseHandObject.Active)
 		{
 			oWordControl.MouseHandObject.Active = false;
-			oWordControl.m_oDrawingDocument.SetCursorType("grab");
+			oWordControl.m_oDrawingDocument.SetCursorType(AscCommon.Cursors.Grab);
 			return;
 		}
 
@@ -2217,7 +2217,7 @@ function CEditorPage(api)
 		if (oWordControl.MouseHandObject && oWordControl.MouseHandObject.Active)
 		{
 			oWordControl.MouseHandObject.Active = false;
-			oWordControl.m_oDrawingDocument.SetCursorType("grab");
+			oWordControl.m_oDrawingDocument.SetCursorType(AscCommon.Cursors.Grab);
 			return;
 		}
 

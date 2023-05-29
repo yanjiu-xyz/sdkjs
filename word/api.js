@@ -8550,7 +8550,7 @@ background-repeat: no-repeat;\
 
         this.WordControl.m_oDrawingDocument.UnlockCursorType();
         if (this.isDrawTablePen)
-            this.WordControl.m_oDrawingDocument.LockCursorType("de-tablepen");
+            this.WordControl.m_oDrawingDocument.LockCursorType(AscCommon.Cursors.TablePen);
     };
     asc_docs_api.prototype.sync_TableDrawModeCallback = function(value)
     {
@@ -8577,7 +8577,7 @@ background-repeat: no-repeat;\
 
         this.WordControl.m_oDrawingDocument.UnlockCursorType();
         if (this.isDrawTableErase)
-            this.WordControl.m_oDrawingDocument.LockCursorType("de-tableeraser");
+            this.WordControl.m_oDrawingDocument.LockCursorType(AscCommon.Cursors.TableEraser);
     };
     asc_docs_api.prototype.sync_TableEraseModeCallback = function(value)
     {

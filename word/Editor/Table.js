@@ -3555,15 +3555,15 @@ CTable.prototype.UpdateCursorType = function(X, Y, CurPage)
 		var oHitInfo = this.private_CheckHitInBorder(X, Y, CurPage);
 		if (true === oHitInfo.RowSelection)
 		{
-			return this.DrawingDocument.SetCursorType("select-table-row", new CMouseMoveData());
+			return this.DrawingDocument.SetCursorType(AscCommon.Cursors.SelectTableRow, new CMouseMoveData());
 		}
 		else if (true === oHitInfo.ColumnSelection)
 		{
-			return this.DrawingDocument.SetCursorType("select-table-column", new CMouseMoveData());
+			return this.DrawingDocument.SetCursorType(AscCommon.Cursors.SelectTableColumn, new CMouseMoveData());
 		}
 		else if (true === oHitInfo.CellSelection)
 		{
-			return this.DrawingDocument.SetCursorType("select-table-cell", new CMouseMoveData());
+			return this.DrawingDocument.SetCursorType(AscCommon.Cursors.SelectTableCell, new CMouseMoveData());
 		}
 		else if (-1 !== oHitInfo.Border)
 		{

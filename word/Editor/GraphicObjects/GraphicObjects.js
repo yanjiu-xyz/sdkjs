@@ -286,7 +286,7 @@ CGraphicObjects.prototype =
 						let oData = oAPI.getFormatPainterData();
 						if(oData.isDrawingData())
 						{
-							sCursorType = AscCommon.kCurFormatPainterDrawing;
+							sCursorType = AscCommon.Cursors.ShapeCopy;
 						}
 					}
 				}

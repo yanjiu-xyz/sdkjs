@@ -131,11 +131,11 @@ function CDrawingDocument()
 {
     this.IsLockObjectsEnable = false;
 
-    AscCommon.g_oHtmlCursor.register("de-markerformat", "marker_format", "14 8", "pointer");
-    AscCommon.g_oHtmlCursor.register("select-table-row", "select_row", "10 5", "default");
-    AscCommon.g_oHtmlCursor.register("select-table-column", "select_column", "5 10", "default");
-    AscCommon.g_oHtmlCursor.register("select-table-content", "select_table", "10 10", "default");
-    AscCommon.g_oHtmlCursor.register("de-tableeraser", "eraser", "8 19", "pointer");
+    AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.MarkerFormat, "14 8", "pointer");
+    AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.SelectTableRow, "10 5", "default");
+    AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.SelectTableColumn, "5 10", "default");
+    AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.SelectTableContent, "10 10", "default");
+    AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.TableEraser, "8 19", "pointer");
 
     this.m_oWordControl     = null;
     this.m_oLogicDocument   = null;

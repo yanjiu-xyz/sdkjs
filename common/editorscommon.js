@@ -469,6 +469,31 @@
 		return "-webkit-image-set(url(" + this.baseUrl + this.name + ".png) 1x," + " url(" + this.baseUrl + this.name + "_2x.png) 2x) " + this.hotspot + ", " + this.default;
 	}
 
+	var Cursors = {
+		MarkerFormat        : "marker-format",
+
+		SelectTableRow      : "select-table-row",
+		SelectTableColumn   : "select-table-column",
+		SelectTableCell     : "select-table-cell",
+		SelectTableContent  : "select-table-content",
+
+		TableEraser         : "table-eraser",
+		TablePen            : "table-pen",
+
+		Grab                : "grab",
+		Grabbing            : "grabbing",
+
+		MoveBorderHor       : "move-border-horizontally",
+		MoveBorderVer       : "move-border-vertically",
+
+		CellCur             : "plus",
+		CellFormatPainter   : "plus-copy",
+
+		TextCopy            : "text-copy",
+		ShapeCopy           : "shape-copy",
+		Eyedropper          : "eyedropper"
+	};
+
 	function CHTMLCursor()
 	{
 		this.cursors = {};
@@ -481,19 +506,19 @@
 			return param;
 		};
 
-		this.register = function(type, name, target, default_css_value)
+		this.register = function(type, target, default_css_value)
 		{
 			if (AscBrowser.isIE || AscBrowser.isIeEdge)
 			{
-				this.cursors[type] = new CHTMLCursorCur(name, target, default_css_value);
+				this.cursors[type] = new CHTMLCursorCur(type, target, default_css_value);
 			}
 			else if (window.opera)
 			{
-				this.cursors[type] = new CHTMLCursorItemBase(name, target, default_css_value);
+				this.cursors[type] = new CHTMLCursorItemBase(type, target, default_css_value);
 			}
 			else
 			{
-				this.cursors[type] = new CHTMLCursorModern(name, target, default_css_value);
+				this.cursors[type] = new CHTMLCursorModern(type, target, default_css_value);
 			}
 		};
 
@@ -3663,12 +3688,9 @@
 	var parserHelp = new parserHelper();
 
 	var g_oHtmlCursor = new CHTMLCursor();
-	var kCurFormatPainterWord = 'de-formatpainter';
-	g_oHtmlCursor.register(kCurFormatPainterWord, "text_copy", "2 11", "pointer");
-	var kCurFormatPainterDrawing = 'drawing-formatpainter';
-	g_oHtmlCursor.register(kCurFormatPainterDrawing, "shape_copy", "0 3", "pointer");
-	var kCurEyedropper = 'eyedropper';
-	g_oHtmlCursor.register(kCurEyedropper, "eyedropper", "1 17", "pointer");
+	g_oHtmlCursor.register(AscCommon.Cursors.TextCopy, "2 11", "pointer");
+	g_oHtmlCursor.register(AscCommon.Cursors.ShapeCopy, "0 3", "pointer");
+	g_oHtmlCursor.register(AscCommon.Cursors.Eyedropper, "1 17", "pointer");
 
 	function asc_ajax(obj)
 	{
@@ -13278,13 +13300,11 @@
 	window["AscCommon"].rx_r1c1DefError = rx_r1c1DefError;
 	window["AscCommon"].rx_allowedProtocols = rx_allowedProtocols;
 
-	window["AscCommon"].kCurFormatPainterWord = kCurFormatPainterWord;
-	window["AscCommon"].kCurFormatPainterDrawing = kCurFormatPainterDrawing;
-	window["AscCommon"].kCurEyedropper = kCurEyedropper;
 	window["AscCommon"].parserHelp = parserHelp;
 	window["AscCommon"].g_oIdCounter = g_oIdCounter;
 
 	window["AscCommon"].g_oHtmlCursor = g_oHtmlCursor;
+	window["AscCommon"].Cursors = Cursors;
 
 	window["AscCommon"].g_oBackoffDefaults = g_oBackoffDefaults;
 	window["AscCommon"].Backoff = Backoff;

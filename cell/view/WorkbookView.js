@@ -1338,7 +1338,7 @@
                 var arrClose = [];
                 arrClose.push(new asc_CMM({type: c_oAscMouseMoveType.None}));
                 t.handlers.trigger("asc_onMouseMove", arrClose);
-                t._onUpdateCursor(AscCommonExcel.kCurCells);
+                t._onUpdateCursor(AscCommon.Cursors.CellCur);
                 t.timerId = null;
                 t.timerEnd = true;
             }, 1000);
@@ -1565,7 +1565,7 @@
 				  hyperlink: ct.hyperlink
 			  }));
 		  } else {
-			  ct.cursor = AscCommonExcel.kCurCells;
+			  ct.cursor = AscCommon.Cursors.CellCur;
 		  }
 	  }
 

@@ -116,10 +116,6 @@
      */
     var kCurDefault = "default";
     var kCurCorner = "pointer";
-    var kCurColSelect = "select-table-column";
-    var kCurColResize = "move-border-horizontally";
-    var kCurRowSelect = "select-table-row";
-    var kCurRowResize = "move-border-vertically";
     // Курсор для автозаполнения
     var kCurFillHandle = "crosshair";
     // Курсор для гиперссылки
@@ -132,12 +128,10 @@
     var kCurEWResize = "ew-resize";
     var kCurNSResize = "ns-resize";
 
-
-    var kCurFormatPainterExcel = "se-formatpainter";
-    AscCommon.g_oHtmlCursor.register(AscCommonExcel.kCurCells, "plus", "6 6", "cell");
-	AscCommon.g_oHtmlCursor.register(kCurFormatPainterExcel, "plus_copy", "6 12", "pointer");
-	AscCommon.g_oHtmlCursor.register("move-border-vertically", "move_border_vertically", "9 9", "default");
-	AscCommon.g_oHtmlCursor.register("move-border-horizontally", "move_border_horizontally", "9 9", "default");
+    AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.CellCur, "6 6", "cell");
+	AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.CellFormatPainter, "6 12", "pointer");
+	AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.MoveBorderVer, "9 9", "default");
+	AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.MoveBorderHor, "9 9", "default");
 
     var kNewLine = "\n";
 
@@ -8747,17 +8741,17 @@
 			if (onCol && onRow) {
 				res = true;
 				type = c_oAscChangeSelectionFormatTable.data;
-				cursor = "select-table-content";
+				cursor = AscCommon.Cursors.SelectTableContent;
 				break;
 			} else if (onCol) {
 				res = true;
 				type = c_oAscChangeSelectionFormatTable.dataColumn;
-				cursor = "select-table-column";
+				cursor = AscCommon.Cursors.SelectTableColumn;
 				break;
 			} else if (onRow) {
 				res = true;
 				type = c_oAscChangeSelectionFormatTable.row;
-				cursor = "select-table-row";
+				cursor = AscCommon.Cursors.SelectTableRow;
 				break;
 			}
 		}
@@ -8787,7 +8781,7 @@
 		var t = this;
 
 		if(this.workbook.Api.isEyedropperStarted()) {
-			return {cursor: AscCommon.kCurEyedropper, target: c_oTargetType.Cells, color: this.workbook.Api.getEyedropperColor(x, y)};
+			return {cursor: AscCommon.Cursors.Eyedropper, target: c_oTargetType.Cells, color: this.workbook.Api.getEyedropperColor(x, y)};
 		}
 		const oPlaceholderCursor = this.objectRender.checkCursorPlaceholder(x, y);
 		if (oPlaceholderCursor) {
@@ -8800,7 +8794,7 @@
 					return (null === (res = this._hitCursorSelectionVisibleArea(_vr, x, y, _offsetX, _offsetY)));
 				});
 				if (res) return res;
-				return {cursor: AscCommonExcel.kCurCells, target: c_oTargetType.Cells, col: -1, row: -1};
+				return {cursor: AscCommon.Cursors.CellCur, target: c_oTargetType.Cells, col: -1, row: -1};
 			} else {
 				return oResDefault;
 			}
@@ -8953,7 +8947,7 @@
 				readyMode && !this.model.getSheetProtection(Asc.c_oAscSheetProtectType.formatRows);
 			// ToDo В Excel зависимость epsilon от размера ячейки (у нас фиксированный 3)
 			return {
-				cursor: f ? kCurRowResize : kCurRowSelect,
+				cursor: f ? AscCommon.Cursors.MoveBorderVer : AscCommon.Cursors.SelectTableRow,
 				target: f ? c_oTargetType.RowResize : c_oTargetType.RowHeader,
 				col: -1,
 				row: r.row + (isNotFirst && f && y < r.top + 3 ? -1 : 0),
@@ -8971,7 +8965,7 @@
 				readyMode && !this.model.getSheetProtection(Asc.c_oAscSheetProtectType.formatColumns);
 			// ToDo В Excel зависимость epsilon от размера ячейки (у нас фиксированный 3)
 			return {
-				cursor: f ? kCurColResize : kCurColSelect,
+				cursor: f ? AscCommon.Cursors.MoveBorderHor : AscCommon.Cursors.SelectTableColumn,
 				target: f ? c_oTargetType.ColumnResize : c_oTargetType.ColumnHeader,
 				col: c.col + (isNotFirst && f && x < c.left + 3 ? -1 : 0),
 				row: -1,
@@ -8995,9 +8989,9 @@
 				}
 			}
 			let oData = this.workbook.Api.getFormatPainterData();
-			let sCursor = kCurFormatPainterExcel;
+			let sCursor = AscCommon.Cursors.CellFormatPainter;
 			if(oData && oData.isDrawingData()) {
-				sCursor = AscCommon.kCurFormatPainterDrawing;
+				sCursor = AscCommon.Cursors.ShapeCopy;
 			}
 			return {cursor: sCursor, target: target, col: col, row: row};
 		}
@@ -9197,7 +9191,7 @@
 			// Проверим, может мы в гиперлинке
 			oHyperlink = readyMode && this.model.getHyperlinkByCell(r.row, c.col);
 			cellCursor = {
-				cursor: AscCommonExcel.kCurCells,
+				cursor: AscCommon.Cursors.CellCur,
 				target: c_oTargetType.Cells,
 				col: (c ? c.col : -1),
 				row: (r ? r.row : -1),

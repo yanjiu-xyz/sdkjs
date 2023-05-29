@@ -1849,12 +1849,12 @@ function CDrawingDocument()
 	this.IsLockObjectsEnable = false;
 
 	// cursors
-	AscCommon.g_oHtmlCursor.register("de-markerformat", "marker_format", "14 8", "pointer");
-	AscCommon.g_oHtmlCursor.register("select-table-row", "select_row", "10 5", "default");
-	AscCommon.g_oHtmlCursor.register("select-table-column", "select_column", "5 10", "default");
-	AscCommon.g_oHtmlCursor.register("select-table-cell", "select_cell", "9 0", "default");
-    AscCommon.g_oHtmlCursor.register("de-tablepen", "pen", "1 16", "pointer");
-    AscCommon.g_oHtmlCursor.register("de-tableeraser", "eraser", "8 19", "pointer");
+	AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.MarkerFormat, "14 8", "pointer");
+	AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.SelectTableRow, "10 5", "default");
+	AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.SelectTableColumn, "5 10", "default");
+	AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.SelectTableCell, "9 0", "default");
+    AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.TablePen, "1 16", "pointer");
+    AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.TableEraser, "8 19", "pointer");
 
 	this.m_oWordControl = null;
 	this.m_oLogicDocument = null;
@@ -2033,19 +2033,19 @@ function CDrawingDocument()
 					let oData = oAPI.getFormatPainterData();
 					if(!oData.isDrawingData())
 					{
-						oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.kCurFormatPainterWord);
+						oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.Cursors.TextCopy);
 					}
 					else
 					{
-						oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.kCurFormatPainterDrawing);
+						oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.Cursors.ShapeCopy);
 					}
 				}
 				else if (oAPI.isMarkerFormat)
-					oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-markerformat");
+					oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.Cursors.MarkerFormat);
 				else if (oAPI.isDrawTablePen)
-					oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-tablepen");
+					oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.Cursors.TablePen);
 				else if (oAPI.isDrawTableErase)
-					oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value("de-tableeraser");
+					oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.Cursors.TableEraser);
 				else
 					oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
 			}
@@ -2056,7 +2056,7 @@ function CDrawingDocument()
 					let oData = oAPI.getFormatPainterData();
 					if(oData.isDrawingData())
 					{
-						oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.kCurFormatPainterDrawing);
+						oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.value(AscCommon.Cursors.ShapeCopy);
 					}
 					else
 					{

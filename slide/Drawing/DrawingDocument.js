@@ -651,8 +651,8 @@ CDrawingCollaborativeTarget.prototype.CheckNeedDraw = function()
 
 function CDrawingDocument()
 {
-	AscCommon.g_oHtmlCursor.register("de-markerformat", "marker_format", "14 8", "pointer");
-	AscCommon.g_oHtmlCursor.register("de-tableeraser", "eraser", "8 19", "pointer");
+	AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.MarkerFormat, "14 8", "pointer");
+	AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.TableEraser, "8 19", "pointer");
 
 	this.IsLockObjectsEnable = false;
 
