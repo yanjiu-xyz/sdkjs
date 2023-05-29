@@ -6120,6 +6120,11 @@ var editor;
 
 
 	spreadsheet_api.prototype.changeFormatPainterState = function(formatPainterState, bLockDraw) {
+        if (this.isStartAddShape) {
+            this.asc_endAddShape();
+        }
+        this.stopInkDrawer();
+        this.cancelEyedropper();
 		this.formatPainter.putState(formatPainterState);
 		if (this.wb) {
 			this.wb.formatPainter(formatPainterState, bLockDraw);
