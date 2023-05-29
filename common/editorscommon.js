@@ -453,12 +453,12 @@
 	CHTMLCursorModern.prototype = Object.create(CHTMLCursorItemBase.prototype);
 	CHTMLCursorModern.prototype.getValue = function(globalCursors)
 	{
-		if (1 === AscCommon.AscBrowser.retinaPixelRatio)
+		if (1.8 > AscCommon.AscBrowser.retinaPixelRatio)
 			return "url(" + this.baseUrl + this.name + ".png) " + this.hotspot + ", " + this.default;
 
 		if (globalCursors.mapSvg && globalCursors.mapSvg[this.name])
 		{
-			return "url(\"data:image/svg+xml;utf8," + globalCursors.mapSvg[this.name]+ "\") " + this.hotspot + ", " + this.default;
+			return "url(\"data:image/svg+xml;utf8," + globalCursors.mapSvg[this.name] + "\") " + this.hotspot + ", " + this.default;
 		}
 
 		if (!AscCommon.AscBrowser.isChrome && !AscCommon.AscBrowser.isSafari)

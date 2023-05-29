@@ -13,7 +13,7 @@ content = "{\n"
 for file in glob.glob(base_dir + "/*.svg"):
   basename = os.path.basename(file)[:-4]
   file_content = base.readFile(file)
-  file_content = file_content.replace("\"", "'")
+  file_content = file_content.replace("\"", "\\\\\"")
   file_content = file_content.replace("\n", "")
   content += "    \"" + basename + "\" : \"" + file_content + "\",\n"
 
