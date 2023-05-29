@@ -1881,9 +1881,12 @@
 	};
 	asc_ChartSettings.prototype.cancelEdit = function() {
 		this.bStartEdit = false;
+		const bLastPointEmpty = AscCommon.History.Is_LastPointEmpty();
 		AscCommon.History.EndTransaction();
-		AscCommon.History.Undo();
-		AscCommon.History.Clear_Redo();
+		if(!bLastPointEmpty) {
+			AscCommon.History.Undo();
+			AscCommon.History.Clear_Redo();
+		}
 		AscCommon.History._sendCanUndoRedo();
 		this.updateChart();
 		this.updateInterface();
