@@ -6830,6 +6830,12 @@ function CDrawingDocument()
 		return false;
 	};
 
+	this.isButtonsDisabled = function()
+	{
+		return Asc.editor.isEyedropperStarted() || Asc.editor.isDrawInkMode();
+	};
+
+
 	// mouse events
 	this.checkMouseDown_Drawing = function (pos)
 	{
@@ -6925,11 +6931,11 @@ function CDrawingDocument()
 			}
 		}
 
-		if (this.contentControls.onPointerDown(pos))
+		if (!this.isButtonsDisabled() && this.contentControls.onPointerDown(pos))
 			return true;
 
         var _page = this.m_arrPages[pos.Page];
-		if (this.placeholders.onPointerDown(pos, _page.drawingPage, _page.width_mm, _page.height_mm))
+		if (!this.isButtonsDisabled() && this.placeholders.onPointerDown(pos, _page.drawingPage, _page.width_mm, _page.height_mm))
 		{
 			this.m_oWordControl.onMouseUpMainSimple();
 			return true;
@@ -7050,11 +7056,11 @@ function CDrawingDocument()
 			}
 		}
 
-		if (this.contentControls.onPointerMove(pos, isWithoutCoords))
+		if (!this.isButtonsDisabled() && this.contentControls.onPointerMove(pos, isWithoutCoords))
 			return true;
 
         var _page = this.m_arrPages[pos.Page];
-        if (this.placeholders.onPointerMove(pos, _page.drawingPage, _page.width_mm, _page.height_mm))
+        if (!this.isButtonsDisabled() && this.placeholders.onPointerMove(pos, _page.drawingPage, _page.width_mm, _page.height_mm))
 			return true;
 
 		return false;
@@ -7112,11 +7118,11 @@ function CDrawingDocument()
 			return true;
 		}
 
-		if (this.contentControls.onPointerUp(pos))
+		if (!this.isButtonsDisabled() && this.contentControls.onPointerUp(pos))
 			return true;
 
         var _page = this.m_arrPages[pos.Page];
-        if (this.placeholders.onPointerUp(pos, _page.drawingPage, _page.width_mm, _page.height_mm))
+        if (!this.isButtonsDisabled() && this.placeholders.onPointerUp(pos, _page.drawingPage, _page.width_mm, _page.height_mm))
             return true;
 
 		return false;
