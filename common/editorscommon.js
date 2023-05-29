@@ -583,6 +583,15 @@
 		this.loadAllSvg();
 	}
 
+	var g_oHtmlCursor = new CHTMLCursor();
+
+	AscCommon.g_oHtmlCursor = g_oHtmlCursor;
+	AscCommon.Cursors = Cursors;
+
+	g_oHtmlCursor.register(AscCommon.Cursors.TextCopy, "2 11", "pointer");
+	g_oHtmlCursor.register(AscCommon.Cursors.ShapeCopy, "0 3", "pointer");
+	g_oHtmlCursor.register(AscCommon.Cursors.Eyedropper, "1 17", "pointer");
+
 	function OpenFileResult()
 	{
 		this.bSerFormat = false;
@@ -3686,11 +3695,6 @@
 	};
 
 	var parserHelp = new parserHelper();
-
-	var g_oHtmlCursor = new CHTMLCursor();
-	g_oHtmlCursor.register(AscCommon.Cursors.TextCopy, "2 11", "pointer");
-	g_oHtmlCursor.register(AscCommon.Cursors.ShapeCopy, "0 3", "pointer");
-	g_oHtmlCursor.register(AscCommon.Cursors.Eyedropper, "1 17", "pointer");
 
 	function asc_ajax(obj)
 	{
@@ -13302,9 +13306,6 @@
 
 	window["AscCommon"].parserHelp = parserHelp;
 	window["AscCommon"].g_oIdCounter = g_oIdCounter;
-
-	window["AscCommon"].g_oHtmlCursor = g_oHtmlCursor;
-	window["AscCommon"].Cursors = Cursors;
 
 	window["AscCommon"].g_oBackoffDefaults = g_oBackoffDefaults;
 	window["AscCommon"].Backoff = Backoff;
