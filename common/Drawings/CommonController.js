@@ -1602,39 +1602,6 @@
 					return null;
 				},
 
-				handleChartTitleMoveHit: function (title, e, x, y, drawing, group, pageIndex) {
-					var selector = group ? group : this;
-					if (this.handleEventMode === HANDLE_EVENT_MODE_HANDLE) {
-						this.checkChartTextSelection();
-						selector.resetSelection(this);
-						selector.selectObject(drawing, pageIndex);
-						selector.selection.chartSelection = drawing;
-						if (title.select) {
-							drawing.selectTitle(title, pageIndex);
-						}
-
-						this.arrPreTrackObjects.length = 0;
-						this.arrPreTrackObjects.push(new AscFormat.MoveChartObjectTrack(title, drawing));
-						this.changeCurrentState(new AscFormat.PreMoveState(this, x, y, false, false, drawing, true, true));
-						this.checkFormatPainterOnMouseEvent();
-						this.updateSelectionState();
-						this.updateOverlay();
-
-						if (Asc["editor"] && Asc["editor"].wb) {
-							var ws = Asc["editor"].wb.getWorksheet();
-							if (ws) {
-								var ct = ws.getCursorTypeFromXY(ws.objectRender.lastX, ws.objectRender.lastY);
-								if (ct) {
-									Asc["editor"].wb._onUpdateCursor(ct.cursor);
-								}
-							}
-						}
-						return true;
-					} else {
-						return {objectId: drawing.Get_Id(), cursorType: "move", bMarker: false};
-					}
-				},
-
 				checkSendCursorInfo: function () {
 					var oTargetInfo = this.getDocumentPositionForCollaborative();
 					var bSend = false;
@@ -9214,8 +9181,23 @@
 				},
 				onInkDrawerChangeState: function() {
 					const oAPI = this.getEditorApi();
+					let oDrawingDocument = null;
+					switch (oAPI.editorId) {
+						case AscCommon.c_oEditorId.Word:
+						case AscCommon.c_oEditorId.Presentation: {
+							oDrawingDocument = Asc.editor.WordControl.m_oDrawingDocument;
+							break;
+						}
+						case AscCommon.c_oEditorId.Spreadsheet: {
+							oDrawingDocument = Asc.editor.wbModel.DrawingDocument;
+							break;
+						}
+					}
 					if(oAPI.isInkDrawerOn()) {
 						this.checkInkState();
+						if(oDrawingDocument) {
+							oDrawingDocument.LockCursorType(oAPI.getInkCursorType());
+						}
 					}
 					else {
 						this.clearTrackObjects();
@@ -9224,6 +9206,9 @@
 							this.loadStartDocState();
 						}
 						this.changeCurrentState(new AscFormat.NullState(this));
+						if(oDrawingDocument) {
+							oDrawingDocument.UnlockCursorType();
+						}
 						this.updateOverlay();
 					}
 				},

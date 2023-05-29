@@ -550,7 +550,7 @@
 				url = url + "<rect x='0' y='0' width='10' height='10' stroke='none' fill='rgb(" +
 					color.R + "," + color.G + "," + color.B + ")' fill-opacity='" + (color.A / 255) + "'/></svg>";
 			}
-			console.log(url);
+			//console.log(url);
 
 			return "url(\"data:image/svg+xml;utf8," + url + "\") " + (w >> 1) + " " + (h >> 1) + ", default";
 		}
@@ -12216,12 +12216,13 @@
 	};
 	CInkDrawer.prototype.startDraw = function(oAscPen) {
 		this.pen = AscFormat.CorrectUniStroke(oAscPen);
-		if(!this.pen) {
+		if(!this.pen || !this.pen.Fill || !this.pen.Fill) {
 			this.pen = new AscFormat.CLn();
 			this.pen.w = 180000;
 			this.pen.Fill = AscFormat.CreateSolidFillRGB(255, 255, 0);
 			this.pen.Fill.transparent = 127;
 		}
+		this.pen.Fill.check(AscFormat.GetDefaultTheme(), AscFormat.GetDefaultColorMap());
 		this.setState(INK_DRAWER_STATE_DRAW);
 	};
 	CInkDrawer.prototype.startErase = function() {
@@ -12270,6 +12271,17 @@
 		this.state = oState.state;
 		this.pen = oState.pen;
 		this.silentMode = oState.silentMode;
+	};
+	CInkDrawer.prototype.getCursorType = function() {
+		if(this.isOn()) {
+			if(this.isDraw()) {
+				return AscCommon.g_oHtmlCursor.getDrawCursor(this.getPen());
+			}
+			else if(this.isErase()) {
+				return "de-tableeraser";
+			}
+		}
+		return null;
 	};
 
 	//------------------------------------------------------------fill polyfill--------------------------------------------

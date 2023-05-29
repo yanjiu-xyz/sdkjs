@@ -2028,11 +2028,7 @@ function CDrawingDocument()
 		{
 			if ("text" === sType)
 			{
-				if(oAPI.isInkDrawerOn())
-				{
-					oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.getDrawCursor(oAPI.getInkPen());
-				}
-				else if (oAPI.isFormatPainterOn())
+				if (oAPI.isFormatPainterOn())
 				{
 					let oData = oAPI.getFormatPainterData();
 					if(!oData.isDrawingData())
@@ -2055,11 +2051,7 @@ function CDrawingDocument()
 			}
 			else
 			{
-				if(oAPI.isInkDrawerOn())
-				{
-					oHTMLElement.style.cursor = AscCommon.g_oHtmlCursor.getDrawCursor(oAPI.getInkPen());
-				}
-				else if (oAPI.isFormatPainterOn())
+				if (oAPI.isFormatPainterOn())
 				{
 					let oData = oAPI.getFormatPainterData();
 					if(oData.isDrawingData())

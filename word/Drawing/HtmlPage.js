@@ -3636,7 +3636,7 @@ function CEditorPage(api)
 
 	this.UnlockCursorTypeOnMouseUp = function()
 	{
-		if (this.m_oApi.isDrawTablePen || this.m_oApi.isDrawTableErase)
+		if (this.m_oApi.isDrawTablePen || this.m_oApi.isDrawTableErase || this.m_oApi.isInkDrawerOn())
 			return;
 		this.m_oDrawingDocument.UnlockCursorType();
 	};

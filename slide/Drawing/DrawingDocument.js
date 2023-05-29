@@ -652,6 +652,8 @@ CDrawingCollaborativeTarget.prototype.CheckNeedDraw = function()
 function CDrawingDocument()
 {
 	AscCommon.g_oHtmlCursor.register("de-markerformat", "marker_format", "14 8", "pointer");
+	AscCommon.g_oHtmlCursor.register("de-tableeraser", "eraser", "8 19", "pointer");
+
 	this.IsLockObjectsEnable = false;
 
 	// presentation
@@ -798,17 +800,9 @@ function CDrawingDocument()
 		if (this.m_oWordControl.DemonstrationManager.Mode)
 			elem = this.m_oWordControl.DemonstrationManager.Canvas;
 
-		let oApi = this.m_oWordControl.m_oApi;
 		if ("" === this.m_sLockedCursorType)
 		{
-			if(oApi.isInkDrawerOn())
-			{
-				elem.style.cursor = AscCommon.g_oHtmlCursor.getDrawCursor(oApi.getInkPen());
-			}
-			else
-			{
-				elem.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
-			}
+			elem.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
 		}
 		else
 			elem.style.cursor = AscCommon.g_oHtmlCursor.value(this.m_sLockedCursorType);

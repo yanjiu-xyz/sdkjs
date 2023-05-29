@@ -4595,6 +4595,9 @@
 	baseEditorsApi.prototype.getInkPen = function() {
 		return this.inkDrawer.getPen();
 	};
+	baseEditorsApi.prototype.getInkCursorType = function() {
+		return this.inkDrawer.getCursorType();
+	};
 
 	// methods for desktop:
 	baseEditorsApi.prototype.isCloudSaveAsLocalToDrawingFormat = function(actionType, fileType) {
