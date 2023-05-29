@@ -548,7 +548,7 @@
 			else
 			{
 				url = url + "<rect x='0' y='0' width='10' height='10' stroke='none' fill='rgb(" +
-					color.R + "," + color.G + "," + color.B + ")' fill-opacity='" + (color.A / 255) + "'/></svg>";
+					color.R + "," + color.G + "," + color.B + ")'/></svg>";
 			}
 			//console.log(url);
 
