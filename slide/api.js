@@ -7203,13 +7203,17 @@ background-repeat: no-repeat;\
 		if (window.g_asc_plugins)
 			window.g_asc_plugins.stopWorked();
 
-		this.cancelEyedropper();
-		if(slidestart_num !== this.WordControl.m_oLogicDocument.CurPage)
+		const bIsReporter = (reporterStartObject && !this.isReporterMode);
+
+		if (!bIsReporter)
 		{
-			this.WordControl.GoToPage(slidestart_num);
+			this.cancelEyedropper();
+			if (this.WordControl.m_oLogicDocument && slidestart_num !== this.WordControl.m_oLogicDocument.CurPage)
+			{
+				this.WordControl.GoToPage(slidestart_num);
+			}
 		}
 
-		const bIsReporter = (reporterStartObject && !this.isReporterMode);
 		if (bIsReporter)
 			this.DemonstrationReporterStart(reporterStartObject);
 
