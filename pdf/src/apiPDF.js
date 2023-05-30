@@ -133,18 +133,7 @@
     
     // default availible colors
     let color = {
-        "transparent":  [ "T" ],
-        "black":        [ "G", 0 ],
-        "white":        [ "G", 1 ],
-        "red":          [ "RGB", 1,0,0 ],
-        "green":        [ "RGB", 0,1,0 ],
-        "blue":         [ "RGB", 0, 0, 1 ],
-        "cyan":         [ "CMYK", 1,0,0,0 ],
-        "magenta":      [ "CMYK", 0,1,0,0 ],
-        "yellow":       [ "CMYK", 0,0,1,0 ],
-        "dkGray":       [ "G", 0.25 ],  // version 4.0
-        "gray":         [ "G", 0.5 ],   // version 4.0
-        "ltGray":       [ "G", 0.75 ]   // version 4.0
+        
     }
 
     // please use copy of this object
@@ -246,12 +235,12 @@
     }
     Object.defineProperties(ApiBaseField.prototype, {
         // private
-        "_parent": {
+        "parent": {
             enumerable: false,
             writable: true,
             value: null
         },
-        "_pagePos": {
+        "pagePos": {
             writable: true,
             enumerable: false,
             value: {
@@ -261,11 +250,11 @@
                 h: 0
             }
         },
-        "_kids": {
+        "kids": {
             enumerable: false,
             value: [],
         },
-        "_partialName": {
+        "partialName": {
             writable: true,
             enumerable: false
         },
@@ -371,7 +360,7 @@
         },
         "page": {
             get() {
-                return this._page;
+                return this.GetPage();
             }
         },
         "print": {
@@ -472,10 +461,10 @@
         "textColor": {
             set (aColor) {
                 if (Array.isArray(aColor))
-                    this._textColor = aColor;
+                    this.field.SetApiTextColor(aColor);
             },
             get () {
-                return this._textColor;
+                return this.field.GetApiTextColor();
             }
         },
         "fgColor": {
@@ -798,7 +787,7 @@
             get() {
                 let aFields = this.field.GetDocument().GetFields(this.name);
                 for (let i = 0; i < aFields.length; i++) {
-                    if (aFields[i]._value != "Off" && aFields[i].IsNeedApplyToAll()) {
+                    if (aFields[i]._value != "Off" && aFields[i].IsNeedCommit()) {
                         return aFields[i]._value;
                     }
                 }
@@ -1014,24 +1003,17 @@
                 else
                     return;
                 
-                let oTextFormat = new AscWord.CTextFormFormat();
-                let arrBuffer = oTextFormat.GetBuffer(value);
-                this.field.content.GetElement(0).GetElement(0).ClearContent();
-                let isCanEnter = this.field.EnterText(arrBuffer);
-                if (!isCanEnter) {
-                    return; // to do вызвать ошибку формата
-                }
-                this.field._value = value;
-                this.field.Apply(true);
+                this.field.SetValue(value);
+                this.field.Commit();
             },
             get() {
-                // изменения еще могли быть не применены ко всем с таким именем, поэтому находим измененное и возвращаем его значение
+                // ищем то поле, которое не нужно применять, это текущее значение для всех с таким именем
                 let aFields = this.field.GetDocument().GetFields(this.name);
-                let oNotAppliedField = aFields.find(function(field) {
-                    return field.IsNeedApplyToAll();
+                let oAppliedField = aFields.find(function(field) {
+                    return !field.IsNeedCommit();
                 });
 
-                return oNotAppliedField ? oNotAppliedField.GetValue() : this.field.GetValue();
+                return oAppliedField ? oAppliedField.GetValue() : aFields[0].GetValue();
             }
         },
         "defaultValue": {
@@ -1092,14 +1074,14 @@
         if (typeof(bExportValue) != "boolean")
             bExportValue = true;
 
-        if (this._options[nIdx]) {
-            if (typeof(this._options[nIdx]) == "string")
-                return this._options[nIdx];
+        if (this.field._options[nIdx]) {
+            if (typeof(this.field._options[nIdx]) == "string")
+                return this.field._options[nIdx];
             else {
                 if (bExportValue)
-                    return this._options[nIdx][1];
+                    return this.field._options[nIdx][1];
 
-                return this._options[nIdx][0];
+                return this.field._options[nIdx][0];
             } 
         }
     };
@@ -1159,7 +1141,7 @@
                     });
 
                     this.SelectOption(value);
-                    this.Apply();
+                    this.Commit();
                 }
             },
             get() {
@@ -1173,24 +1155,17 @@
                 else
                     return;
                     
-                let oTextFormat = new AscWord.CTextFormFormat();
-                let arrBuffer = oTextFormat.GetBuffer(value);
-                this.content.GetElement(0).GetElement(0).ClearContent();
-                let isCanEnter = this.EnterText(arrBuffer, true);
-                if (!isCanEnter) {
-                    return; // to do вызвать ошибку формата
-                }
-                this._value = value;
-                this.Apply(true);
+                this.field.SetValue(value);
+                this.field.Commit();
             },
             get() {
-               // изменения еще могли быть не применены ко всем с таким именем, поэтому находим измененное и возвращаем его значение
+               // ищем то поле, которое не нужно применять, это текущее значение для всех с таким именем
                let aFields = this.field.GetDocument().GetFields(this.name);
-               let oNotAppliedField = aFields.find(function(field) {
-                   return field.IsNeedApplyToAll();
+               let oAppliedField = aFields.find(function(field) {
+                   return !field.IsNeedCommit();
                });
 
-               return oNotAppliedField ? oNotAppliedField.GetValue() : this.field.GetValue();
+               return oAppliedField ? oAppliedField.GetValue() : aFields[0].GetValue();
             }
         }
     });
@@ -1228,7 +1203,7 @@
             if (field == oThis) {
                 field.SelectOption(0, true);
                 field.UnionLastHistoryPoints();
-                field._needApplyToAll = false;
+                field.SetNeedCommit(false);
             }
             else
                 field.SelectOption(0, false);
@@ -1288,13 +1263,13 @@
                             }
                         }
                         this._currentValueIndices = value.sort();
-                        this.Apply();
+                        this.Commit();
                     }
                 }
                 else if (this.multipleSelection === false && typeof(value) === "number" && this.getItemAt(value, false) !== undefined) {
                     this._currentValueIndices = value;
                     this.SelectOption(value, true);
-                    this.Apply();
+                    this.Commit();
                 }
             },
             get() {
@@ -1304,20 +1279,16 @@
         "value": {
             set(value) {
                 this.field.SetValue(value);
+                this.field.Commit();
             },
             get() {
-                if (Array.isArray(this.currentValueIndices)) {
-                    let oThis = this;
-                    let aValues = [];
-                    this.currentValueIndices.forEach(function(idx) {
-                        aValues.push(oThis.field._options[idx][1] ? oThis.field._options[idx][1] : oThis.field._options[idx])
-                    });
-                    
-                    return aValues;
-                }
-                else {
-                    return this.field._options[this.currentValueIndices][1] ? this.field._options[this.currentValueIndices][1] : this.field._options[this.currentValueIndices]
-                }
+                // ищем то поле, которое не нужно применять, это текущее значение для всех с таким именем
+               let aFields = this.field.GetDocument().GetFields(this.name);
+               let oAppliedField = aFields.find(function(field) {
+                   return !field.IsNeedCommit();
+               });
+
+               return oAppliedField ? oAppliedField.GetValue() : aFields[0].GetValue();
             }
         }
     });
@@ -1380,7 +1351,7 @@
             this._currentValueIndices = 0;
 
         if (aFields.length > 1)
-            this.Apply(this, false);
+            this.Commit(this);
     };
     /**
 	 * Inserts a new item into a list box

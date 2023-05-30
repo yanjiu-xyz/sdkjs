@@ -1478,7 +1478,7 @@ ParaRun.prototype.RemoveTextCluster = function(nPos)
 	}
 
 	let oNextInfo = oCurRun.GetNextRunElementEx(nPos);
-	let oNext     = oNextInfo.Element;
+	let oNext     = oNextInfo ? oNextInfo.Element : null;
 	if (!oNext || !oNext.IsText() || !oNext.IsCombiningMark())
 		return new CRunWithPosition(oCurRun, nPos);
 
@@ -2325,6 +2325,13 @@ ParaRun.prototype.Recalculate_CurPos = function(X, Y, CurrentRun, _CurRange, _Cu
 				Para.DrawingDocument.SetTargetSize(Height, Ascender);
 
                 var PageAbs = Para.Get_AbsolutePage(CurPage);
+				let oFormPDF = this.GetFormPDF();
+				
+				// загрушка для обновления target (курсора)
+				// т.к. у любой формы у объекта CDocumentContent page == 0
+				if (oFormPDF)
+					PageAbs = oFormPDF.GetPage();
+
                 // TODO: Тут делаем, чтобы курсор не выходил за границы буквицы. На самом деле, надо делать, чтобы
                 //       курсор не выходил за границы строки, но для этого надо делать обрезку по строкам, а без нее
                 //       такой вариант будет смотреться плохо.
@@ -3466,7 +3473,7 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 	var nMaxComb    = -1;
 	var nCombWidth  = null;
 	var oTextForm   = this.GetTextForm();
-	let oTextFormPDF = this.GetTextFormPDF();
+	let oTextFormPDF = this.GetFormPDF();
 	let isKeepWidth = false;
 	if (oTextForm && oTextForm.IsComb())
 	{
@@ -12918,7 +12925,7 @@ ParaRun.prototype.GetTextForm = function()
 
 	return oTextFormPr;
 };
-ParaRun.prototype.GetTextFormPDF = function()
+ParaRun.prototype.GetFormPDF = function()
 {
 	let oPara = this.GetParagraph();
 	let oParaParent = oPara.GetParent();

@@ -21790,6 +21790,7 @@ CDocument.prototype.GetAllFormTextFields = function()
 };
 CDocument.prototype.IsFillingFormMode = function()
 {
+	return true;
 	return this.Api && this.Api.isRestrictionForms();
 };
 CDocument.prototype.IsFillingOFormMode = function()

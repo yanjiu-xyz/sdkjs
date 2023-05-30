@@ -37,7 +37,8 @@
     function CCalculateInfo(oDoc) {
         this.calculateFields = [];
         this.document = oDoc;
-        this.fieldsToApply = [];
+        this.fieldsToCommit = [];
+        this.isInProgress = false;
     };
 
     CCalculateInfo.prototype.AddToCalculateField = function(oField) {
@@ -61,28 +62,30 @@
         this.actionsInfo = new CActionQueue(this);
         this.api = this.GetDocumentApi();
         this.CalculateInfo = new CCalculateInfo(this);
-        this.fieldsToApply = [];
-        window.formsEvent = {};
+        this.fieldsToCommit = [];
+        this.formsEvent = {};
     }
 
-    CPDFDoc.prototype.ApplyFields = function() {
-        this.fieldsToApply.forEach(function(field) {
-            field.Apply();
+    CPDFDoc.prototype.CommitFields = function() {
+        this.fieldsToCommit.forEach(function(field) {
+            field.Commit();
         });
-        this.fieldsToApply = [];
+        
+        this.ClearFieldsToCommit();
     };
-    CPDFDoc.prototype.AddFieldToApply = function(oField) {
-        this.fieldsToApply.push(oField);
+    CPDFDoc.prototype.AddFieldToCommit = function(oField) {
+        this.fieldsToCommit.push(oField);
     };
-    CPDFDoc.prototype.ClearFieldsToApply = function() {
-        this.fieldsToApply = [];
+    CPDFDoc.prototype.ClearFieldsToCommit = function() {
+        this.fieldsToCommit = [];
     };
 
     CPDFDoc.prototype.DoCalculateFields = function() {
         // смысл такой, что когда изменяем какое-либо поле, вызываем этот метод, который делает calculate
-        // для всех необходимых полей и добавляет их в массив fieldsToApply,
+        // для всех необходимых полей и добавляет их в массив fieldsToCommit,
         // далее вызываем ApplyFields чтобы применить значения для всех связных полей
         let oThis = this;
+        this.CalculateInfo.SetIsInProgress(true);
         this.CalculateInfo.calculateFields.forEach(function(field) {
             let oFormatTrigger = field.GetTrigger(AscPDFEditor.FORMS_TRIGGERS_TYPES.Calculate);
             let oActionRunScript = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
@@ -90,10 +93,13 @@
             if (oActionRunScript) {
                 oThis.activeForm = field;
                 oActionRunScript.RunScript();
-                field.SetNeedRecalc(true);
-                oThis.fieldsToApply.push(field);
+                if (field.IsNeedCommit()) {
+                    field.SetNeedRecalc(true);
+                    oThis.fieldsToCommit.push(field);
+                }
             }
         });
+        this.CalculateInfo.SetIsInProgress(false);
     };
 
     CPDFDoc.prototype.GetCalculateInfo = function() {
@@ -103,28 +109,7 @@
     CPDFDoc.prototype.GetActionsQueue = function() {
         return this.actionsInfo;
     };
-    CPDFDoc.prototype.DoValidateAction = function(oField, value) {
-        if (window.formsEvent["target"] != oField.GetFormApi()) {
-            window.formsEvent = {
-                "target": oField.GetFormApi(),
-                "value": value
-            };
-        }
-
-        let oValidateTrigger = oField.GetTrigger(AscPDFEditor.FORMS_TRIGGERS_TYPES.Validate);
-        let oValidateScript = oValidateTrigger ? oValidateTrigger.GetActions()[0] : null;
-
-        if (oValidateScript == null)
-            return true;
-
-        let isValid = oValidateScript.RunScript();
-        if (isValid == false) {
-            editor.sendEvent("asc_onValidateErrorPdfForm", window.formsEvent);
-        }
-
-        return isValid;
-    };
-    
+        
     /**
 	 * Adds an interactive field to document.
 	 * @memberof CPDFDoc
@@ -237,7 +222,7 @@
         for (let i = 0; i < viewer.pageDetector.pages.length; i++) {
             if (viewer.pageDetector.pages[i].num == nPageNum) {
                 oField.Draw(viewer.canvasForms.getContext('2d'), viewer.pageDetector.pages[i].x, viewer.pageDetector.pages[i].y);
-                if (oField._needDrawHighlight == true)
+                if (oField.IsNeedDrawHighlight())
                     oField.DrawHighlight(viewer.canvasFormsHighlight.getContext("2d"));
                 break;
             }
@@ -457,11 +442,13 @@
         if (aForms.length > 0) {
             aForms.forEach(function(field) {
                 field.SetHidden(bHidden);
+                field.AddToRedraw();
             });
         }
         else {
             this.widgets.forEach(function(field) {
                 field.SetHidden(bHidden);
+                field.AddToRedraw();
             });
         }
 

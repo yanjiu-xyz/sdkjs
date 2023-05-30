@@ -11199,18 +11199,22 @@ background-repeat: no-repeat;\
 			return;
 
 		oField.SelectOption(nIdx);
-		if (oField._commitOnSelChange) {
-			oField.Apply();
-			this.WordControl.m_oDrawingDocument.TargetEnd();
-			oField._needApplyToAll		= false;
-			oField._needDrawHighlight	= true;
-			oField.activeForm = null;
+		let isNeedRedraw = oField.IsNeedCommit();
+		if (oField._commitOnSelChange && oField.IsNeedCommit()) {
+			oField.Commit();
+			isNeedRedraw = true;
 			
+			oViewer.activeForm = null;
+			oField.SetDrawHighlight(true);
+			
+			this.WordControl.m_oDrawingDocument.TargetEnd();
+		}
+		
+
+		if (isNeedRedraw) {
+			oViewer._paintForms();
 			oViewer._paintFormsHighlight();
 		}
-		else
-			oField.UnionLastHistoryPoints(false);
-		oViewer._paintForms();
 	};
 	asc_docs_api.prototype.sync_OnDocumentOutlineUpdate = function()
 	{
