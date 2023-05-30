@@ -453,7 +453,7 @@
 	CHTMLCursorModern.prototype = Object.create(CHTMLCursorItemBase.prototype);
 	CHTMLCursorModern.prototype.getValue = function(globalCursors)
 	{
-		if (1.8 > AscCommon.AscBrowser.retinaPixelRatio)
+		if (1.2 > AscCommon.AscBrowser.retinaPixelRatio)
 			return "url(" + this.baseUrl + this.name + ".png) " + this.hotspot + ", " + this.default;
 
 		if (globalCursors.mapSvg && globalCursors.mapSvg[this.name])
