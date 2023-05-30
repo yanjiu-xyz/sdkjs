@@ -588,8 +588,8 @@
 	AscCommon.g_oHtmlCursor = g_oHtmlCursor;
 	AscCommon.Cursors = Cursors;
 
-	g_oHtmlCursor.register(AscCommon.Cursors.TextCopy, "2 11", "pointer");
-	g_oHtmlCursor.register(AscCommon.Cursors.ShapeCopy, "0 3", "pointer");
+	g_oHtmlCursor.register(AscCommon.Cursors.TextCopy, "2 2", "pointer");
+	g_oHtmlCursor.register(AscCommon.Cursors.ShapeCopy, "1 1", "pointer");
 	g_oHtmlCursor.register(AscCommon.Cursors.Eyedropper, "1 17", "pointer");
 
 	function OpenFileResult()

@@ -129,7 +129,7 @@
     var kCurNSResize = "ns-resize";
 
     AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.CellCur, "6 6", "cell");
-	AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.CellFormatPainter, "6 12", "pointer");
+	AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.CellFormatPainter, "1 1", "pointer");
 	AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.MoveBorderVer, "9 9", "default");
 	AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.MoveBorderHor, "9 9", "default");
 
