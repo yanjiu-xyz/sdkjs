@@ -8663,9 +8663,38 @@ background-repeat: no-repeat;\
 	};
 
 	asc_docs_api.prototype.onInkDrawerChangeState = function() {
-		if (!this.WordControl.m_oLogicDocument)
+		const oLogicDocument = this.private_GetLogicDocument();
+		if (!oLogicDocument)
 			return;
-		this.WordControl.m_oLogicDocument.DrawingObjects.onInkDrawerChangeState();
+		if(this.isDrawTablePen)
+		{
+			this.sync_TableDrawModeCallback(false);
+		}
+		if (this.isDrawTableErase)
+		{
+			this.sync_TableEraseModeCallback(false);
+		}
+		if (this.isMarkerFormat)
+		{
+			this.sync_MarkerFormatCallback(false);
+		}
+		if (this.isFormatPainterOn())
+		{
+			this.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
+		}
+		if (this.isStartAddShape)
+		{
+			this.sync_StartAddShapeCallback(false);
+			this.sync_EndAddShape();
+			oLogicDocument.DrawingObjects.endTrackNewShape();
+		}
+		if(this.isEyedropperStarted())
+		{
+			this.cancelEyedropper();
+		}
+		oLogicDocument.DrawingObjects.onInkDrawerChangeState();
+		oLogicDocument.UpdateCursorType(oLogicDocument.CurPos.RealX, oLogicDocument.CurPos.RealY, oLogicDocument.CurPage, new AscCommon.CMouseEventHandler());
+
 	};
 
 	asc_docs_api.prototype.sync_StartAddShapeCallback = function(value)
@@ -13204,6 +13233,12 @@ background-repeat: no-repeat;\
 		else if(this.isInkDrawerOn())
 		{
 			this.stopInkDrawer();
+			oLogicDocument.UpdateCursorType(oLogicDocument.CurPos.RealX, oLogicDocument.CurPos.RealY, oLogicDocument.CurPage, new AscCommon.CMouseEventHandler());
+		}
+		else if(this.isEyedropperStarted())
+		{
+			this.cancelEyedropper();
+			oLogicDocument.UpdateCursorType(oLogicDocument.CurPos.RealX, oLogicDocument.CurPos.RealY, oLogicDocument.CurPage, new AscCommon.CMouseEventHandler());
 		}
 		
 		if (!oLogicDocument.IsFillingFormMode() && oLogicDocument.FocusCC && oLogicDocument.FocusCC.IsForm())

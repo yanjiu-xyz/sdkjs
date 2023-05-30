@@ -5032,6 +5032,18 @@ var editor;
 		if(!oController) {
 			return;
 		}
+        if (this.isStartAddShape) {
+            this.asc_endAddShape();
+        }
+        this.cancelEyedropper();
+
+        if (this.isFormatPainterOn())
+        {
+            this.formatPainter.putState(AscCommon.c_oAscFormatPainterState.kOff);
+            if (this.wb) {
+                this.wb.formatPainter(AscCommon.c_oAscFormatPainterState.kOff, undefined);
+            }
+        }
 		oController.onInkDrawerChangeState();
 	};
 

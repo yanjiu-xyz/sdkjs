@@ -6861,7 +6861,22 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.onInkDrawerChangeState = function()
 	{
-		this.WordControl.m_oLogicDocument.OnInkDrawerChangeState();
+		const oPresentation = this.WordControl.m_oLogicDocument;
+		if(!oPresentation)
+			return;
+		const oDrawingObjects = oPresentation.GetCurrentController();
+		if(!oDrawingObjects)
+			return;
+		if (oDrawingObjects.checkTrackDrawings()) {
+			oDrawingObjects.endTrackNewShape();
+			this.sync_EndAddShape();
+		}
+		this.cancelEyedropper();
+		if (this.isFormatPainterOn())
+		{
+			this.sync_PaintFormatCallback(AscCommon.c_oAscFormatPainterState.kOff);
+		}
+		oPresentation.OnInkDrawerChangeState();
 	};
 
 	asc_docs_api.prototype.sync_PaintFormatCallback = function(value)
