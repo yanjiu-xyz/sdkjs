@@ -12304,7 +12304,7 @@
 				return AscCommon.g_oHtmlCursor.getDrawCursor(this.getPen());
 			}
 			else if(this.isErase()) {
-				return "de-tableeraser";
+				return "table-eraser";
 			}
 		}
 		return null;

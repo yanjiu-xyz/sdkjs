@@ -1335,7 +1335,7 @@ function CEditorPage(api)
 		AscCommon.check_MouseUpEvent(e, true);
 
 		var oWordControl = oThis;
-		oWordControl.m_oDrawingDocument.UnlockCursorType();
+		oWordControl.UnlockCursorTypeOnMouseUp();
 
 		if (oWordControl.m_oMainParent && oWordControl.m_oMainParent.HtmlElement)
 			oWordControl.m_oMainParent.HtmlElement.style.pointerEvents = "";
@@ -3491,7 +3491,7 @@ function CEditorPage(api)
 		if (pos.Page == -1)
 			return;
 
-		oWordControl.m_oDrawingDocument.UnlockCursorType();
+		oWordControl.UnlockCursorTypeOnMouseUp();
 		oWordControl.m_bIsMouseLock = false;
 		if (oWordControl.m_oDrawingDocument.TableOutlineDr.bIsTracked)
 		{
@@ -3598,7 +3598,7 @@ function CEditorPage(api)
 		if (pos.Page == -1)
 			return;
 
-		oWordControl.m_oDrawingDocument.UnlockCursorType();
+		oWordControl.UnlockCursorTypeOnMouseUp();
 
 		oWordControl.m_bIsMouseLock = false;
 
@@ -4161,6 +4161,14 @@ function CEditorPage(api)
 		}
 		return false;
 	};
+
+	this.UnlockCursorTypeOnMouseUp = function()
+	{
+		if (this.m_oApi.isInkDrawerOn())
+			return;
+		this.m_oDrawingDocument.UnlockCursorType();
+	};
+
 
 	// resize
 	this.OnResize = function(isAttack)
