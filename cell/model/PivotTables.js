@@ -6551,6 +6551,9 @@ CT_pivotTableDefinition.prototype.getSlicerCaption = function () {
 CT_pivotTableDefinition.prototype.getFieldGroupType = function (fld) {
 	return this.cacheDefinition.getFieldGroupType(fld);
 };
+CT_pivotTableDefinition.prototype.asc_getFieldGroupType = function (fld) {
+	return this.getFieldGroupType(fld);
+};
 CT_pivotTableDefinition.prototype.getGroupBase = function(fld) {
 	return this.cacheDefinition.getGroupBase(fld);
 };
@@ -17768,6 +17771,7 @@ prot["asc_moveColField"] = prot.asc_moveColField;
 prot["asc_moveDataField"] = prot.asc_moveDataField;
 prot["asc_refresh"] = prot.asc_refresh;
 prot["asc_setVisibleFieldItemByCell"] = prot.asc_setVisibleFieldItemByCell;
+prot["asc_getFieldGroupType"] = prot.asc_getFieldGroupType;
 
 window["Asc"]["CT_PivotTableStyle"] = window['Asc'].CT_PivotTableStyle = CT_PivotTableStyle;
 prot = CT_PivotTableStyle.prototype;
@@ -17879,3 +17883,4 @@ window["Asc"]["PivotRecords"] = window['Asc'].PivotRecords = PivotRecords;
 
 window["Asc"]["c_oAscAllocationMethod"] = window['Asc'].c_oAscAllocationMethod = c_oAscAllocationMethod;
 window["Asc"]["c_oAscPivotRecType"] = window['Asc'].c_oAscPivotRecType = c_oAscPivotRecType;
+window["Asc"]["c_oAscGroupType"] = window['Asc'].c_oAscGroupType = c_oAscGroupType;
