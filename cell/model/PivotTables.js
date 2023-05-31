@@ -17920,3 +17920,7 @@ window["Asc"]["PivotRecords"] = window['Asc'].PivotRecords = PivotRecords;
 window["Asc"]["c_oAscAllocationMethod"] = window['Asc'].c_oAscAllocationMethod = c_oAscAllocationMethod;
 window["Asc"]["c_oAscPivotRecType"] = window['Asc'].c_oAscPivotRecType = c_oAscPivotRecType;
 window["Asc"]["c_oAscGroupType"] = window['Asc'].c_oAscGroupType = c_oAscGroupType;
+prot = c_oAscGroupType;
+prot['Text'] = prot.Text;
+prot['Number'] = prot.Number;
+prot['Date'] = prot.Date;
