@@ -1960,9 +1960,17 @@ function CEditorPage(api)
 			let Coords = oWordControl.m_oDrawingDocument.ConvertCoordsToCursorWR(pos.X, pos.Y, pos.Page, null);
 			MMData.X_abs = Coords.X;
 			MMData.Y_abs = Coords.Y;
-			MMData.EyedropperColor = oThis.m_oApi.getEyedropperColor();
-			MMData.Type = Asc.c_oAscMouseMoveDataTypes.Eyedropper;
-			oWordControl.m_oDrawingDocument.SetCursorType(AscCommon.Cursors.Eyedropper, MMData);
+			const oEyedropperColor = oThis.m_oApi.getEyedropperColor();
+			if(oEyedropperColor)
+			{
+				MMData.EyedropperColor = oEyedropperColor;
+				MMData.Type = Asc.c_oAscMouseMoveDataTypes.Eyedropper;
+				oWordControl.m_oDrawingDocument.SetCursorType(AscCommon.Cursors.Eyedropper, MMData);
+			}
+			else
+			{
+				oWordControl.m_oDrawingDocument.SetCursorType("default");
+			}
 			oThis.m_oApi.sync_MouseMoveEndCallback();
 			return;
 		}
