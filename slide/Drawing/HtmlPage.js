@@ -2384,10 +2384,7 @@ function CEditorPage(api)
 			this.m_oDrawingDocument.UpdateTargetNoAttack();
 			this.m_bIsUpdateTargetNoAttack = false;
 		}
-		if(this.m_oApi.isEyedropperStarted())
-		{
-			this.m_oApi.clearEyedropperImgData();
-		}
+		this.m_oApi.clearEyedropperImgData();
 	};
 
 	this.OnScroll = function()

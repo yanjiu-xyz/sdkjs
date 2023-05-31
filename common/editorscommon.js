@@ -12177,7 +12177,10 @@
 	};
 	CEyedropper.prototype.clearImageData = function()
 	{
-		this.imgData = null;
+		if(this.imgData !== null)
+		{
+			this.imgData = null;
+		}
 	};
 	CEyedropper.prototype.finish = function()
 	{
