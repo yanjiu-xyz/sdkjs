@@ -10760,6 +10760,7 @@ function CT_PivotField(setDefaults) {
 
 	this.ascSubtotals = null;
 	this.ascFillDownLabels = null;
+	this.ascNumFormat = null;
 	if (setDefaults) {
 		this.setDefaults();
 	}
@@ -11651,6 +11652,9 @@ CT_PivotField.prototype.asc_set = function (api, pivot, index, newVal) {
 			if (null !== newVal.ascSubtotals) {
 				field.setSubtotals(newVal.ascSubtotals, pivot, index, true);
 			}
+			if (null !== newVal.ascNumFormat) {
+				field.setNumFormat(newVal.ascNumFormat, pivot, index, true);
+			}
 			field.checkSubtotal();
 		});
 	}
@@ -11749,6 +11753,26 @@ CT_PivotField.prototype.setSubtotals = function (newVals, pivot, index, addToHis
 				break;
 		}
 	}
+};
+CT_PivotField.prototype.asc_getNumFormat = function(){
+	return this.num && this.num.getFormat() || null;
+};
+CT_PivotField.prototype.asc_getNumFormatInfo = function(){
+	return this.num && this.num.getNumFormat().getTypeInfo() || null;
+};
+CT_PivotField.prototype.asc_setNumFormat = function(newVal){
+	this.ascNumFormat = newVal;
+};
+CT_PivotField.prototype.setNumFormat = function(newVal, pivot, index, addToHistory){
+	let num = null;
+	if (newVal && "General" !== newVal) {
+		num = AscCommonExcel.Num.prototype.initFromParams(null, newVal);
+	} else {
+		num = newVal = null;
+	}
+	let oldVal = this.num && this.num.getFormat() || null;
+	setFieldProperty(pivot, index, oldVal, newVal, addToHistory, AscCH.historyitem_PivotTable_PivotFieldSetNumFormat, true);
+	this.num = num;
 };
 CT_PivotField.prototype.setSortType = function(sortVal, sortDataIndex) {
 	this.sortType = c_oAscFieldSortType.Manual;
@@ -12090,6 +12114,7 @@ function CT_DataField(setDefaults) {
 	this.baseItem = null;
 	this.numFmtId = null;
 	this.num = null;
+
 	this.ascNumFormat = null;
 //Members
 	if (setDefaults) {
@@ -12265,6 +12290,12 @@ CT_DataField.prototype.asc_setBaseField = function(newVal, pivot, index, addToHi
 CT_DataField.prototype.asc_setBaseItem = function(newVal, pivot, index, addToHistory) {
 	setFieldProperty(pivot, index, this.baseItem, newVal, addToHistory, AscCH.historyitem_PivotTable_DataFieldSetBaseItem, true);
 	this.baseItem = newVal;
+};
+CT_DataField.prototype.asc_getNumFormat = function(){
+	return this.num && this.num.getFormat() || null;
+};
+CT_DataField.prototype.asc_getNumFormatInfo = function(){
+	return this.num && this.num.getNumFormat().getTypeInfo() || null;
 };
 CT_DataField.prototype.asc_setNumFormat = function(newVal){
 	this.ascNumFormat = newVal;
@@ -17812,6 +17843,9 @@ prot["asc_setSubtotalTop"] = prot.asc_setSubtotalTop;
 prot["asc_setShowAll"] = prot.asc_setShowAll;
 prot["asc_setSubtotals"] = prot.asc_setSubtotals;
 prot["asc_getBaseItemObject"] = prot.asc_getBaseItemObject;
+prot["asc_getNumFormat"] = prot.asc_getNumFormat;
+prot["asc_getNumFormatInfo"] = prot.asc_getNumFormatInfo;
+prot["asc_setNumFormat"] = prot.asc_setNumFormat;
 
 prot = CT_Field.prototype;
 prot["asc_getIndex"] = prot.asc_getIndex;
@@ -17834,6 +17868,8 @@ prot["asc_setSubtotal"] = prot.asc_setSubtotal;
 prot["asc_setShowDataAs"] = prot.asc_setShowDataAs;
 prot["asc_setBaseField"] = prot.asc_setBaseField;
 prot["asc_setBaseItem"] = prot.asc_setBaseItem;
+prot["asc_getNumFormat"] = prot.asc_getNumFormat;
+prot["asc_getNumFormatInfo"] = prot.asc_getNumFormatInfo;
 prot["asc_setNumFormat"] = prot.asc_setNumFormat;
 prot["asc_setShowAs"] = prot.asc_setShowAs;
 
