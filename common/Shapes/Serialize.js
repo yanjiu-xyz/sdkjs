@@ -8508,9 +8508,12 @@ function BinaryPPTYLoader()
                 case 10:
                 {
                     var lang = s.GetString2();
-                    var nLcid = Asc.g_oLcidNameToIdMap[lang];
-                    if(nLcid)
-                        rPr.Lang.Val = nLcid;
+                    if(!this.IsThemeLoader)
+                    {
+                        var nLcid = Asc.g_oLcidNameToIdMap[lang];
+                        if(nLcid)
+                            rPr.Lang.Val = nLcid;
+                    }
                     break;
                 }
                 case 11:

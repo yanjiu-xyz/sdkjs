@@ -1352,13 +1352,21 @@
 					point.setT(pointsCopy[idx])
 				});
 			}
-		}
+		};
 
 		CShape.prototype.clearContent = function () {
 			var content = this.getDocContent();
 			if (content) {
 				content.SetApplyToAll(true);
 				content.Remove(-1);
+				content.AddToParagraph(new AscCommonWord.ParaTextPr({Lang: {Val: undefined}}), false);
+				content.SetApplyToAll(false);
+			}
+		};
+		CShape.prototype.clearLang = function () {
+			var content = this.getDocContent();
+			if (content) {
+				content.SetApplyToAll(true);
 				content.AddToParagraph(new AscCommonWord.ParaTextPr({Lang: {Val: undefined}}), false);
 				content.SetApplyToAll(false);
 			}

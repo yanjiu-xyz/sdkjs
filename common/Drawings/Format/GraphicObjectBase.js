@@ -1061,6 +1061,8 @@
 	CGraphicObjectBase.prototype.handleObject = function (fCallback) {
 		fCallback(this);
 	};
+	CGraphicObjectBase.prototype.clearLang = function () {
+	};
 
 	CGraphicObjectBase.prototype.isObjectInSmartArt = function () {
 		if (this.group && this.group.isSmartArtObject()) {

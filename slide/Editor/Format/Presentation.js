@@ -3402,6 +3402,7 @@ CPresentation.prototype.setHFProperties = function (oProps, bAll) {
 								oSp = oLayout.getMatchingShape(AscFormat.phType_sldNum, null, false, {});
 								if (oSp) {
 									oSp = oSp.copy(undefined);
+									oSp.clearLang();
 									oSlide.addToSpTreeToPos(undefined, oSp);
 									oSp.setParent(oSlide);
 								}
@@ -3450,6 +3451,7 @@ CPresentation.prototype.setHFProperties = function (oProps, bAll) {
 								oSp = oLayout.getMatchingShape(AscFormat.phType_ftr, null, false, {});
 								if (oSp) {
 									oSp = oSp.copy(undefined);
+									oSp.clearLang();
 									oSlide.addToSpTreeToPos(undefined, oSp);
 									oSp.setParent(oSlide);
 								}
@@ -3505,6 +3507,7 @@ CPresentation.prototype.setHFProperties = function (oProps, bAll) {
 								oSp = oLayout.getMatchingShape(AscFormat.phType_hdr, null, false, {});
 								if (oSp) {
 									oSp = oSp.copy(undefined);
+									oSp.clearLang();
 									oSlide.addToSpTreeToPos(undefined, oSp);
 									oSp.setParent(oSlide);
 								}
@@ -3608,6 +3611,7 @@ CPresentation.prototype.setHFProperties = function (oProps, bAll) {
 								oSp = oLayout.getMatchingShape(AscFormat.phType_dt, null, false, {});
 								if (oSp) {
 									oSp = oSp.copy(undefined);
+									oSp.clearLang();
 									oSlide.addToSpTreeToPos(undefined, oSp);
 									oSp.setParent(oSlide);
 								}
@@ -3673,6 +3677,7 @@ CPresentation.prototype.setHFProperties = function (oProps, bAll) {
 							oSp = oLayout.getMatchingShape(AscFormat.phType_sldNum, null, false, {});
 							if (oSp) {
 								oSp = oSp.copy(undefined);
+								oSp.clearLang();
 								oSlide.addToSpTreeToPos(undefined, oSp);
 								oSp.setParent(oSlide);
 							}
@@ -3692,6 +3697,7 @@ CPresentation.prototype.setHFProperties = function (oProps, bAll) {
 							oSp = oLayout.getMatchingShape(AscFormat.phType_ftr, null, false, {});
 							if (oSp) {
 								oSp = oSp.copy(undefined);
+								oSp.clearLang();
 								oSlide.addToSpTreeToPos(undefined, oSp);
 								oSp.setParent(oSlide);
 							}
@@ -3717,6 +3723,7 @@ CPresentation.prototype.setHFProperties = function (oProps, bAll) {
 							oSp = oLayout.getMatchingShape(AscFormat.phType_hdr, null, false, {});
 							if (oSp) {
 								oSp = oSp.copy(undefined);
+								oSp.clearLang();
 								oSlide.addToSpTreeToPos(undefined, oSp);
 								oSp.setParent(oSlide);
 							}
@@ -3756,6 +3763,7 @@ CPresentation.prototype.setHFProperties = function (oProps, bAll) {
 							oSp = oLayout.getMatchingShape(AscFormat.phType_dt, null, false, {});
 							if (oSp) {
 								oSp = oSp.copy(undefined);
+								oSp.clearLang();
 								oSlide.addToSpTreeToPos(undefined, oSp);
 								oSp.setParent(oSlide);
 							}
