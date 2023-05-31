@@ -11754,11 +11754,12 @@ CT_PivotField.prototype.setSubtotals = function (newVals, pivot, index, addToHis
 		}
 	}
 };
-CT_PivotField.prototype.asc_getNumFormat = function(){
-	return this.num && this.num.getFormat() || null;
+CT_PivotField.prototype.asc_getNumFormat = function() {
+	return this.num && this.num.getFormat() || "General";
 };
-CT_PivotField.prototype.asc_getNumFormatInfo = function(){
-	return this.num && this.num.getNumFormat().getTypeInfo() || null;
+CT_PivotField.prototype.asc_getNumFormatInfo = function() {
+	const numFormat = this.num && this.num.getNumFormat() || AscCommon.oNumFormatCache.get("General");
+	return numFormat.getTypeInfo();
 };
 CT_PivotField.prototype.asc_setNumFormat = function(newVal){
 	this.ascNumFormat = newVal;
@@ -12292,10 +12293,11 @@ CT_DataField.prototype.asc_setBaseItem = function(newVal, pivot, index, addToHis
 	this.baseItem = newVal;
 };
 CT_DataField.prototype.asc_getNumFormat = function(){
-	return this.num && this.num.getFormat() || null;
+	return this.num && this.num.getFormat() || "General";
 };
 CT_DataField.prototype.asc_getNumFormatInfo = function(){
-	return this.num && this.num.getNumFormat().getTypeInfo() || null;
+	const numFormat = this.num && this.num.getNumFormat() || AscCommon.oNumFormatCache.get("General");
+	return numFormat.getTypeInfo();
 };
 CT_DataField.prototype.asc_setNumFormat = function(newVal){
 	this.ascNumFormat = newVal;
