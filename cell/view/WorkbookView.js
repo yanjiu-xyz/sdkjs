@@ -4127,7 +4127,7 @@
 		if (props) {
 			//None style
 			var emptyStyle = new Asc.CTableStyle();
-			emptyStyle.displayName = "None";
+			emptyStyle.displayName = AscCommon.translateManager.getValue("None");
 			emptyStyle.pivot = bPivotTable;
 			addStyles({null: emptyStyle}, AscCommon.c_oAscStyleImage.Default, true);
 		}
