@@ -1257,7 +1257,6 @@
 		}
 		if (endPtr - idx > 16 && u8Array.subarray && UTF8Decoder) {
 			return UTF8Decoder.decode(u8Array.subarray(idx, endPtr));
-			return UTF8Decoder.decode(u8Array.subarray(idx, endPtr));
 		} else {
 			var str = "";
 			while (idx < endPtr) {
