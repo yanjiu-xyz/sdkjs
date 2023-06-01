@@ -387,6 +387,10 @@ ParaTextPr.prototype.Set_RStyle = function(Value)
 	History.Add(new CChangesParaTextPrRStyle(this, this.Value.RStyle, Value));
 	this.Value.RStyle = Value;
 };
+ParaTextPr.prototype.SetRStyle = function(styleId)
+{
+	this.Set_RStyle(styleId);
+};
 ParaTextPr.prototype.Set_Spacing = function(Value)
 {
 	if (null === Value)
