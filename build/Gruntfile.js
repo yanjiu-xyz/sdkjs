@@ -265,10 +265,8 @@ module.exports = function(grunt) {
 		`--chunk_output_path_prefix=${pathPrefix}`,
 		`--chunk_wrapper=${outall}:${license}\n(function(window, undefined) {%s})(window);`);
 		if (grunt.option('map')) {
-			grunt.file.mkdir(path.join('./maps'));
-			grunt.file.mkdir(path.join(`./maps/${name}`));
-			args.push('--property_renaming_report=' + path.join(`maps/${name}/sdk-all.props.js.map`));
-			args.push('--variable_renaming_report=' + path.join(`maps/${name}/sdk-all.vars.js.map`));
+			args.push('--property_renaming_report=' + path.join(`maps/${name}.props.js.map`));
+			args.push('--variable_renaming_report=' + path.join(`maps/${name}.vars.js.map`));
 			args.push('--create_source_map=' + path.join(`%outname%.map`));
 			args.push('--source_map_format=V3');
 			args.push('--source_map_include_content=true');
@@ -307,7 +305,10 @@ module.exports = function(grunt) {
 								'sdk-all-min.js.map',
 								'sdk-all.js.map',
 							],
-							dest: 'maps/word'
+							dest: 'maps',
+							rename: function (dest, src) {
+								return path.join(dest , src.replace('sdk', 'word'));
+							}
 						}
 					]
 				},
@@ -320,7 +321,10 @@ module.exports = function(grunt) {
 								'sdk-all-min.js.map',
 								'sdk-all.js.map',
 							],
-							dest: 'maps/cell'
+							dest: 'maps',
+							rename: function (dest, src) {
+								return path.join(dest , src.replace('sdk', 'cell'));
+							}
 						}
 					]
 				},
@@ -333,7 +337,10 @@ module.exports = function(grunt) {
 								'sdk-all-min.js.map',
 								'sdk-all.js.map',
 							],
-							dest: 'maps/slide'
+							dest: 'maps',
+							rename: function (dest, src) {
+								return path.join(dest , src.replace('sdk', 'slide'));
+							}
 						}
 					]
 				}
