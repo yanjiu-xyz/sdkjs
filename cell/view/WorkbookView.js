@@ -1931,6 +1931,11 @@
         asc_applyFunction(callback);
         return;
       }
+      var pivotTable = ws.model.getPivotTable(ct.col, ct.row);
+      if (pivotTable && pivotTable.asc_canShowDetails(ct.row, ct.col)) {
+        this.Api.asc_pivotShowDetails(pivotTable);
+        return;
+      }
 
       // При dbl клике фокус выставляем в зависимости от наличия текста в ячейке
       var enterOptions = new AscCommonExcel.CEditorEnterOptions();

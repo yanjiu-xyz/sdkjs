@@ -3362,11 +3362,21 @@ var editor;
 			AscCommonExcel.c_oAscLockAddSheet, AscCommonExcel.c_oAscLockAddSheet);
 		this.collaborativeEditing.lock([lockInfo], callback);
 	};
-	spreadsheet_api.prototype._addWorksheets = function(arrNames, where) {
+	spreadsheet_api.prototype._addWorksheets = function(arrNames, where, opt_callback) {
+		if (this.asc_isProtectedWorkbook()) {
+			if (opt_callback) {
+				opt_callback([]);
+			}
+			return false;
+		}
 		var t = this;
-		this._isLockedAddWorksheets(function(res) {
+		this._isLockedAddWorksheets(function (res) {
+			var worksheets = [];
 			if (res) {
-				t._addWorksheetsWithoutLock(arrNames, where);
+				worksheets = t._addWorksheetsWithoutLock(arrNames, where);
+			}
+			if (opt_callback) {
+				opt_callback(worksheets);
 			}
 		});
 	};
@@ -3719,19 +3729,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_addWorksheet = function (name) {
-    if (this.asc_isProtectedWorkbook()) {
-      return false;
-    }
-
     var i = this.wbModel.getActive();
     this._addWorksheets([name], i + 1);
   };
 
   spreadsheet_api.prototype.asc_insertWorksheet = function (arrNames) {
-    if (this.asc_isProtectedWorkbook()) {
-      return false;
-    }
-
   	// Support old versions
     if (!Array.isArray(arrNames)) {
       arrNames = [arrNames];
@@ -6890,13 +6892,13 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_getPivotInfo = function(opt_pivotTable) {
-		var ws = this.wbModel.getActiveWs();
-		var activeCell = ws.selectionRange.activeCell;
-		var pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
-		if (pivotTable) {
-			return pivotTable.getContextMenuInfo(ws.selectionRange);
-		}
-		return null;
+    var ws = this.wbModel.getActiveWs();
+    var activeCell = ws.selectionRange.activeCell;
+    var pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
+    if (pivotTable) {
+      return pivotTable.getContextMenuInfo(ws.selectionRange);
+    }
+    return null;
 	};
   // Uses for % of, difference from, % difference from, running total in, % running total in, % of parent
   spreadsheet_api.prototype.asc_getPivotShowValueAsInfo = function(showAs, opt_pivotTable) {
@@ -6952,6 +6954,59 @@ var editor;
     }
     return res;
   }
+	spreadsheet_api.prototype.asc_createSheetName = function () {
+		let sheetNames = [];
+		let wc = this.asc_getWorksheetsCount();
+		for(let i = 0; i < wc; i += 1) {
+			sheetNames.push(this.asc_getWorksheetName(i).toLowerCase());
+		}
+		let name = 'Sheet';
+		let i = 0;
+		while (i += 1) {
+			name = AscCommon.translateManager.getValue("Sheet") + i;
+			if (sheetNames.indexOf(name.toLowerCase()) < 0) {
+				break;
+			}
+		}
+		return name;
+	};
+	/**
+	* @param {CT_pivotTableDefinition} opt_pivotTable 
+	* @return {boolean} Success
+	*/
+	spreadsheet_api.prototype.asc_pivotShowDetails = function(opt_pivotTable) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return false;
+		}
+		let t = this;
+		let ws = this.wbModel.getActiveWs();
+		let activeCell = ws.selectionRange.activeCell;
+		let pivotTable = opt_pivotTable || ws.getPivotTable(activeCell.col, activeCell.row);
+		if (!pivotTable) {
+			return false;
+		}
+		this._addWorksheets([this.asc_createSheetName()],  this.wbModel.getActive(), function(worksheets){
+			let ws = worksheets[0];
+			if (!ws) {
+				return;
+			}
+			History.Create_NewPoint();
+			History.StartTransaction();
+
+			let lengths = pivotTable.showDetails(ws, activeCell.row, activeCell.col);
+
+			let range = new Asc.Range(0, 0, lengths.colLength, lengths.rowLength);
+			let ref = range.getAbsName();
+			let options = t.asc_getAddFormatTableOptions(ref);
+			let tableStyle = t.asc_getDefaultTableStyle();
+			t.asc_addAutoFilter(tableStyle, options);
+
+			History.EndTransaction();
+
+			t.handlers.trigger("setSelection", range.clone());
+		});
+		return true;
+	};
 
 	spreadsheet_api.prototype.asc_getAddPivotTableOptions = function(range) {
 		var ws = this.wb.getWorksheet();
@@ -9079,6 +9134,7 @@ var editor;
   prot["asc_refreshAllPivots"] = prot.asc_refreshAllPivots;
   prot["asc_getPivotInfo"] = prot.asc_getPivotInfo;
   prot["asc_getPivotShowValueAsInfo"] = prot.asc_getPivotShowValueAsInfo;
+  prot["asc_pivotShowDetails"] = prot.asc_pivotShowDetails;
 	// signatures
   prot["asc_addSignatureLine"] 		     = prot.asc_addSignatureLine;
   prot["asc_CallSignatureDblClickEvent"] = prot.asc_CallSignatureDblClickEvent;
