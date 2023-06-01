@@ -1159,6 +1159,9 @@ var editor;
     if (this.collaborativeEditing) {
       this.collaborativeEditing.setViewerMode(isViewMode);
     }
+    if(this.isViewMode) {
+        this.turnOffSpecialModes();
+    }
   };
 
 	  spreadsheet_api.prototype.asc_setFilteringMode = function (mode) {

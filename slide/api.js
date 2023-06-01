@@ -6950,6 +6950,7 @@ background-repeat: no-repeat;\
 			{
 				this.WordControl.m_oLogicDocument.viewMode = true;
 			}
+			this.turnOffSpecialModes();
 		}
 		else
 		{
