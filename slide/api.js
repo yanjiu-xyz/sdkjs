@@ -6864,13 +6864,6 @@ background-repeat: no-repeat;\
 		const oPresentation = this.WordControl.m_oLogicDocument;
 		if(!oPresentation)
 			return;
-		const oDrawingObjects = oPresentation.GetCurrentController();
-		if(!oDrawingObjects)
-			return;
-		if (oDrawingObjects.checkTrackDrawings()) {
-			oDrawingObjects.endTrackNewShape();
-			this.sync_EndAddShape();
-		}
 		this.cancelEyedropper();
 		if (this.isFormatPainterOn())
 		{
