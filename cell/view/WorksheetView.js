@@ -5811,6 +5811,11 @@
 			} else if(args[4] === 2){
 				drawTopSide = false;
 				drawBottomSide = false;
+			} else if (args[4] === 3) {
+				drawLeftSide = false;
+				drawRightSide = false;
+				drawTopSide = false;
+				drawBottomSide = false;
 			}
 		}
 
@@ -5840,27 +5845,30 @@
 			thinLineDiff = isDashLine ? 0 : 1;
 		}
 
-		//TODO проверить на следующих версиях. сдвиг, который получился опытным путём. проблема только в safari.
-		var _diff = 0;
-		if (AscBrowser.isSafari) {
-			_diff = 1;
-		}
-		ctx.setLineWidth(widthLine).setStrokeStyle(strokeColor);
+        //TODO проверить на следующих версиях. сдвиг, который получился опытным путём. проблема только в safari.
+        var notStroke = AscCommonExcel.selectionLineType.NotStroke & selectionLineType;
+        if (!notStroke) {
+            var _diff = 0;
+            if (AscBrowser.isSafari) {
+                _diff = 1;
+            }
+            ctx.setLineWidth(widthLine).setStrokeStyle(strokeColor);
 
-        ctx.beginPath();
-        if (drawTopSide && !firstRow) {
-            fHorLine.apply(ctx, [x1 - !isDashLine * (2 + isRetina * 1) + _diff, y1, x2 + !isDashLine * (1 + isRetina * 1) - _diff]);
-        }
-        if (drawBottomSide) {
-            fHorLine.apply(ctx, [x1, y2 + !isDashLine * 1 - thinLineDiff, x2]);
-        }
-        if (drawLeftSide && !firstCol) {
-            fVerLine.apply(ctx, [x1, y1, y2 + !isDashLine * (1 + isRetina * 1) - _diff]);
-        }
-        if (drawRightSide) {
-            fVerLine.apply(ctx, [x2 + !isDashLine * 1 - thinLineDiff, y1, y2 + !isDashLine * (1 + isRetina * 1)]);
-        }
-        ctx.closePath().stroke();
+            ctx.beginPath();
+            if (drawTopSide && !firstRow) {
+                fHorLine.apply(ctx, [x1 - !isDashLine * (2 + isRetina * 1) + _diff, y1, x2 + !isDashLine * (1 + isRetina * 1) - _diff]);
+            }
+            if (drawBottomSide) {
+                fHorLine.apply(ctx, [x1, y2 + !isDashLine * 1 - thinLineDiff, x2]);
+            }
+            if (drawLeftSide && !firstCol) {
+                fVerLine.apply(ctx, [x1, y1, y2 + !isDashLine * (1 + isRetina * 1) - _diff]);
+            }
+            if (drawRightSide) {
+                fVerLine.apply(ctx, [x2 + !isDashLine * 1 - thinLineDiff, y1, y2 + !isDashLine * (1 + isRetina * 1)]);
+            }
+            ctx.closePath().stroke();
+		}
 
 		// draw active cell in selection
 		var isActive = AscCommonExcel.selectionLineType.ActiveCell & selectionLineType;
@@ -6081,8 +6089,29 @@
                     this._drawFormatPainterRange();
                 }
                 if (null !== this.activeMoveRange) {
-                    this._drawElements(this._drawSelectionElement, this.activeMoveRange,
-                      AscCommonExcel.selectionLineType.None, new CColor(0, 0, 0));
+                    let fullColumnRowProps = this.startCellMoveRange.colRowMoveProps;
+                    if (fullColumnRowProps) {
+                        let shift = fullColumnRowProps.shiftKey;
+                        if (shift) {
+                            let insertToCol = fullColumnRowProps.colByX;
+                            let insertToRow = fullColumnRowProps.rowByY;
+                            var selectionRange = (this.dragAndDropRange || this.model.selectionRange.getLast());
+
+                            if (insertToCol != null && insertToCol >= selectionRange.c1 && insertToCol <= selectionRange.c2) {
+                                insertToCol = Math.max(0, selectionRange.c1 - 1);
+                            }
+                            if (insertToRow != null && insertToRow >= selectionRange.r1 && insertToRow <= selectionRange.r2) {
+                                insertToRow = Math.max(0, selectionRange.r1 - 1);
+                            }
+                            this._drawElements(this._drawLineBetweenRowCol, insertToCol != null ? insertToCol + 1 : null, insertToRow != null ? insertToRow + 1 : null, this.settings.activeCellBorderColor);
+                        } else {
+                            this._drawElements(this._drawSelectionElement, this.activeMoveRange, AscCommonExcel.selectionLineType.Selection,
+                                this.settings.activeCellBorderColor, null, 3);
+                        }
+                    } else {
+                        this._drawElements(this._drawSelectionElement, this.activeMoveRange,
+                            AscCommonExcel.selectionLineType.None, new CColor(0, 0, 0));
+                    }
                 }
 
                 this._drawElements(this.drawOverlayButtons);
@@ -6140,8 +6169,14 @@
             } else if (i === selection.activeCellId) {
                 selectionLineType |= AscCommonExcel.selectionLineType.ActiveCell;
             }
-            this._drawElements(this._drawSelectionElement, range, selectionLineType,
-              this.settings.activeCellBorderColor);
+
+            let fullColumnProps = this.startCellMoveRange && this.startCellMoveRange.colRowMoveProps;
+            if (null !== this.activeMoveRange && fullColumnProps && i === l - 1) {
+                this._drawElements(this._drawSelectionElement, range, !fullColumnProps.ctrlKey ? AscCommonExcel.selectionLineType.DashThick : AscCommonExcel.selectionLineType.ActiveCell, this.settings.activeCellBorderColor);
+            } else {
+                this._drawElements(this._drawSelectionElement, range, selectionLineType,
+                    this.settings.activeCellBorderColor);
+            }
         }
 		this.handlers.trigger("drawMobileSelection", this.workbook.mainOverlay, this.settings.activeCellBorderColor);
     };
@@ -6234,6 +6269,51 @@
               strokeColor, null, null, true);
         }
     };
+
+	WorksheetView.prototype._drawLineBetweenRowCol = function (visibleRange, offsetX, offsetY, args) {
+		let col = args[0];
+		let row = args[1];
+		let strokeColor = args[2];
+		let ctx = this.overlayCtx;
+
+		let fHorLine, fVerLine;
+
+		fHorLine = ctx.lineHorPrevPx;
+		fVerLine = ctx.lineVerPrevPx;
+
+		let widthLine = 2;
+
+		if (AscBrowser.retinaPixelRatio === 2) {
+			widthLine = AscCommon.AscBrowser.convertToRetinaValue(widthLine, true);
+		}
+
+		if (col != null) {
+			if (!visibleRange.containsCol(col)) {
+				return;
+			}
+			let x1 = this._getColLeft(col) - offsetX;
+			let y1 = this._getRowTop(visibleRange.r1) - offsetY;
+			let y2 = this._getRowTop(visibleRange.r2 + 1) - offsetY;
+
+			ctx.setLineWidth(widthLine).setStrokeStyle(strokeColor);
+			fVerLine.apply(ctx, [x1, y1, y2]);
+			ctx.closePath().stroke();
+		} else if (row != null) {
+			if (!visibleRange.containsRow(row)) {
+				return;
+			}
+			let y = this._getRowTop(row) - offsetY;
+			let x1 = this._getColLeft(visibleRange.c1) - offsetX;
+			let x2 = this._getColLeft(visibleRange.c2 + 1) - offsetX;
+
+			ctx.setLineWidth(widthLine).setStrokeStyle(strokeColor);
+			fHorLine.apply(ctx, [x1, y, x2]);
+			ctx.closePath().stroke();
+		}
+
+
+		return true;
+	};
 
     WorksheetView.prototype.cleanSelection = function (range, isFrozen) {
 		var api = window["Asc"]["editor"];
@@ -6423,8 +6503,18 @@
 			}
 		}
 
-        if (null !== this.activeMoveRange) {
-			arnIntersection = this.activeMoveRange.intersectionSimple(range);
+		if (null !== this.activeMoveRange) {
+			let activeMoveRange = this.activeMoveRange;
+			let colRowMoveProps = this.startCellMoveRange && this.startCellMoveRange.colRowMoveProps;
+			if (colRowMoveProps && colRowMoveProps.shiftKey) {
+				if (colRowMoveProps.colByX != null) {
+					activeMoveRange = new Asc.Range(colRowMoveProps.colByX, activeMoveRange.r1, colRowMoveProps.colByX + 1, activeMoveRange.r2);
+				} else if (colRowMoveProps.rowByY != null) {
+					activeMoveRange = new Asc.Range(activeMoveRange.c1, colRowMoveProps.rowByY, activeMoveRange.c2, colRowMoveProps.rowByY + 1);
+				}
+			}
+
+			arnIntersection = activeMoveRange.intersectionSimple(range);
 			if (arnIntersection) {
 				// Координаты для перемещения диапазона
 				_x1 = this._getColLeft(arnIntersection.c1) - offsetX - 2;
@@ -8956,10 +9046,30 @@
 			isNotFirst = (r.row !== (-1 !== rFrozen ? 0 : this.visibleRange.r1));
 			f = (canEdit || viewMode) && (isNotFirst && y < r.top + epsChangeSize || y >= r.bottom - epsChangeSize) &&
 				readyMode && !this.model.getSheetProtection(Asc.c_oAscSheetProtectType.formatRows);
+
+
+			let _target = c_oTargetType.RowHeader;
+			if (!f) {
+				let selection = this._getSelection();
+				if (selection && selection.ranges) {
+					for (let i = 0 ; i < selection.ranges.length; i++) {
+						let curSelection = selection.ranges[i];
+						if (curSelection.getType() === Asc.c_oAscSelectionType.RangeRow && curSelection.r1 <= r.row && curSelection.r2 >= r.row) {
+							_target = c_oTargetType.ColumnRowHeaderMove;
+						}
+					}
+				}
+			}
+
+			let _cursor = f ? kCurRowResize : kCurRowSelect;
+			if (_target === c_oTargetType.ColumnRowHeaderMove) {
+				_cursor = t.startCellMoveRange && t.startCellMoveRange.colRowMoveProps ? "grabbing" : "grab";
+			}
+
 			// ToDo В Excel зависимость epsilon от размера ячейки (у нас фиксированный 3)
 			return {
-				cursor: f ? kCurRowResize : kCurRowSelect,
-				target: f ? c_oTargetType.RowResize : c_oTargetType.RowHeader,
+				cursor: _cursor,
+				target: f ? c_oTargetType.RowResize : _target,
 				col: -1,
 				row: r.row + (isNotFirst && f && y < r.top + 3 ? -1 : 0),
 				mouseY: f ? (((y < r.top + 3) ? r.top : r.bottom) - y - 1) : null
@@ -8975,9 +9085,27 @@
 			f = (canEdit || viewMode) && (isNotFirst && x < c.left + epsChangeSize || x >= c.right - epsChangeSize) &&
 				readyMode && !this.model.getSheetProtection(Asc.c_oAscSheetProtectType.formatColumns);
 			// ToDo В Excel зависимость epsilon от размера ячейки (у нас фиксированный 3)
+
+			let _target = c_oTargetType.ColumnHeader;
+			if (!f) {
+				let selection = this._getSelection();
+				if (selection && selection.ranges) {
+					for (let i = 0 ; i < selection.ranges.length; i++) {
+						let curSelection = selection.ranges[i];
+						if (curSelection.getType() === Asc.c_oAscSelectionType.RangeCol && curSelection.c1 <= c.col && curSelection.c2 >= c.col) {
+							_target = c_oTargetType.ColumnRowHeaderMove;
+						}
+					}
+				}
+			}
+
+			let _cursor = f ? kCurColResize : kCurColSelect;
+			if (_target === c_oTargetType.ColumnRowHeaderMove) {
+				_cursor = t.startCellMoveRange && t.startCellMoveRange.colRowMoveProps ? "grabbing" : "grab";
+			}
 			return {
-				cursor: f ? kCurColResize : kCurColSelect,
-				target: f ? c_oTargetType.ColumnResize : c_oTargetType.ColumnHeader,
+				cursor: _cursor,
+				target: f ? c_oTargetType.ColumnResize : _target,
 				col: c.col + (isNotFirst && f && x < c.left + 3 ? -1 : 0),
 				row: -1,
 				mouseX: f ? (((x < c.left + 3) ? c.left : c.right) - x - 1) : null
@@ -11602,7 +11730,7 @@
     /* Функция для работы перемещения диапазона (selection). (x, y) - координаты точки мыши на области
      *  ToDo нужно переделать, чтобы moveRange появлялся только после сдвига от текущей ячейки
      */
-    WorksheetView.prototype.changeSelectionMoveRangeHandle = function (x, y) {
+    WorksheetView.prototype.changeSelectionMoveRangeHandle = function (x, y, colRowMoveProps) {
         // Возвращаемый результат
         var ret = null;
 
@@ -11642,6 +11770,11 @@
             }
             this.startCellMoveRange = new asc_Range(colByX, rowByY, colByX, rowByY);
             this.startCellMoveRange.isChanged = false;	// Флаг, сдвигались ли мы от первоначального диапазона
+			//added new options for move all colls/rows
+			if (colRowMoveProps) {
+				this.startCellMoveRange.colRowMoveProps = colRowMoveProps;
+			}
+
             return ret;
         }
 
@@ -11712,6 +11845,14 @@
         } else if (type === c_oAscSelectionType.RangeMax) {
             d.col = 0;
             d.row = 0;
+        }
+
+        if (this.startCellMoveRange.colRowMoveProps && this.startCellMoveRange.colRowMoveProps.shiftKey && this.activeMoveRange) {
+            if (this.activeMoveRange.getType() === Asc.c_oAscSelectionType.RangeCol) {
+                this.startCellMoveRange.colRowMoveProps.colByX = colByX;
+            } else if (this.activeMoveRange.getType() === Asc.c_oAscSelectionType.RangeRow) {
+                this.startCellMoveRange.colRowMoveProps.rowByY = rowByY;
+            }
         }
 
         return d;
@@ -12226,8 +12367,8 @@
 		this.model.workbook.handlers.trigger("cleanCutData", null, true);
 		this.model.workbook.handlers.trigger("cleanCopyData");
 
-        var arnFrom = this.model.selectionRange.getLast();
-        var arnTo = this.activeMoveRange.clone(true);
+        let arnFrom = this.model.selectionRange.getLast();
+        let arnTo = this.activeMoveRange.clone(true);
         if (arnFrom.isEqual(arnTo)) {
             this._cleanSelectionMoveRange();
             return;
@@ -12242,41 +12383,82 @@
 			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
 			return;
 		}
-		var errorPivot = this.model.checkMovePivotTable(arnFrom, arnTo, ctrlKey);
+		let errorPivot = this.model.checkMovePivotTable(arnFrom, arnTo, ctrlKey);
 		if (c_oAscError.ID.No !== errorPivot) {
 			this._cleanSelectionMoveRange();
 			this.model.workbook.handlers.trigger("asc_onError", errorPivot, c_oAscError.Level.NoCritical);
 			return;
 		}
 
-		//***array-formula***
-		//теперь не передаю 3 параметром в функцию checkMoveFormulaArray ctrlKey, поскольку undo/redo для
-		//клонирования части формулы работает некорректно
-		//при undo созданную формулу обходимо не переносить, а удалять
-		//TODO пересомтреть!
-		if (!this.checkMoveFormulaArray(arnFrom, arnTo)) {
-			this._cleanSelectionMoveRange();
-			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
-			return;
-		}
+		let t = this;
+		let doMove = function (success) {
+			if (!success) {
+				shiftMove && History.EndTransaction();
+				return;
+			}
 
-        var resmove = this.model._prepareMoveRange(arnFrom, arnTo);
-        if (resmove === -2) {
-            this.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotMoveRange, c_oAscError.Level.NoCritical);
-            this._cleanSelectionMoveRange();
-        } else if (resmove === -1) {
-            var t = this;
-            this.model.workbook.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmReplaceRange,
-              function (can) {
-                  if (can) {
-                      t.moveRangeHandle(arnFrom, arnTo, ctrlKey);
-                  } else {
-                      t._cleanSelectionMoveRange();
-                  }
-              });
-        } else {
-            this.moveRangeHandle(arnFrom, arnTo, ctrlKey);
-        }
+			if (shiftMove) {
+				arnFrom = lastSelection;
+				arnTo = t.model.selectionRange.getLast().clone();
+			}
+
+			//***array-formula***
+			//теперь не передаю 3 параметром в функцию checkMoveFormulaArray ctrlKey, поскольку undo/redo для
+			//клонирования части формулы работает некорректно
+			//при undo созданную формулу обходимо не переносить, а удалять
+			//TODO пересомтреть!
+			if (!t.checkMoveFormulaArray(arnFrom, arnTo)) {
+				t._cleanSelectionMoveRange();
+				t.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.CannotChangeFormulaArray, c_oAscError.Level.NoCritical);
+				shiftMove && History.EndTransaction();
+				return;
+			}
+
+			let resmove = t.model._prepareMoveRange(arnFrom, arnTo);
+			if (resmove === -2) {
+				t.handlers.trigger("onErrorEvent", c_oAscError.ID.CannotMoveRange, c_oAscError.Level.NoCritical);
+				t._cleanSelectionMoveRange();
+			} else if (resmove === -1) {
+				t.model.workbook.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmReplaceRange,
+					function (can) {
+						if (can) {
+							t.moveRangeHandle(arnFrom, arnTo, ctrlKey, null, shiftMove && function () {History.EndTransaction();});
+						} else {
+							t._cleanSelectionMoveRange();
+						}
+					});
+			} else {
+				t.moveRangeHandle(arnFrom, arnTo, ctrlKey, null, shiftMove && function () {History.EndTransaction();});
+			}
+		};
+
+		//shift cols/rows and move
+		let lastSelection;
+		let shiftMove = this.startCellMoveRange.colRowMoveProps && this.startCellMoveRange.colRowMoveProps.shiftKey;
+		if (shiftMove) {
+			lastSelection = t.model.selectionRange.getLast().clone();
+
+			let colByX = this.startCellMoveRange.colRowMoveProps.colByX;
+			let rowByY = this.startCellMoveRange.colRowMoveProps.rowByY;
+			if (colByX != null) {
+				let colStart = colByX + 1;
+				let colEnd = colStart + lastSelection.c2 - lastSelection.c1;
+				t.model.selectionRange.getLast().assign(colStart, lastSelection.r1, colEnd, lastSelection.r2);
+			} else if (rowByY != null) {
+				let rowStart = rowByY + 1;
+				let rowEnd = rowStart + lastSelection.r2 - lastSelection.r1;
+				t.model.selectionRange.getLast().assign(lastSelection.c1, rowStart, lastSelection.c2, rowEnd);
+			}
+
+			if (colByX != null || rowByY != null) {
+				History.Create_NewPoint();
+				History.StartTransaction();
+				let insProp = colByX ? c_oAscInsertOptions.InsertCellsAndShiftRight : c_oAscInsertOptions.InsertCellsAndShiftDown;
+				this.changeWorksheet("insCell", insProp, doMove, true);
+			}
+		} else {
+			doMove(true);
+		}
     };
 
 	WorksheetView.prototype.applyCutRange = function (arnFrom, arnTo, opt_wsTo) {
@@ -12350,7 +12532,7 @@
 	};
 
 
-    WorksheetView.prototype.moveRangeHandle = function (arnFrom, arnTo, copyRange, opt_wsTo) {
+    WorksheetView.prototype.moveRangeHandle = function (arnFrom, arnTo, copyRange, opt_wsTo, callback) {
 		//opt_wsTo - for test reasons only
         var t = this;
 		var wsTo = opt_wsTo ? opt_wsTo : this;
@@ -12359,6 +12541,7 @@
             if (false === isSuccess) {
 				wsTo.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedAllError, c_oAscError.Level.NoCritical);
                 wsTo._cleanSelectionMoveRange();
+                callback && callback(false);
                 return;
             }
 
@@ -12366,6 +12549,7 @@
                 if (false === isSuccess) {
 					wsTo.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedAllError, c_oAscError.Level.NoCritical);
                     wsTo._cleanSelectionMoveRange();
+                    callback && callback(false);
                     return;
                 }
 
@@ -12426,6 +12610,7 @@
 				}
 				t.workbook.Api.onWorksheetChange(arnFrom);
 				t.workbook.Api.onWorksheetChange(arnTo);
+				callback && callback(true);
             };
 
             if (t.model.autoFilters._searchFiltersInRange(arnFrom, true)) {
@@ -12442,6 +12627,7 @@
         if (this.model.isUserProtectedRangesIntersection([arnFrom, arnTo])) {
 			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			this._cleanSelectionMoveRange();
+			callback && callback(false);
 			return;
 		}
 
@@ -15736,7 +15922,7 @@
 		this._isLockedAll(onChangeSheetViewSettings);
 	};
 
-	WorksheetView.prototype.changeWorksheet = function (prop, val) {
+	WorksheetView.prototype.changeWorksheet = function (prop, val, callback, lockDraw) {
 		// Проверка глобального лока
 		if (this.collaborativeEditing.getGlobalLock() || (!window["Asc"]["editor"].canEdit() && !this.workbook.Api.VersionHistory)) {
 			return;
@@ -15754,12 +15940,12 @@
 		var isUpdateCols = false, isUpdateRows = false;
 		var isCheckChangeAutoFilter;
 		var functionModelAction = null;
-		var lockDraw = false;	// Параметр, при котором не будет отрисовки (т.к. мы просто обновляем информацию на неактивном листе)
 		var lockRange, arrChangedRanges = [];
 		var isError;
 
 		var onChangeWorksheetCallback = function (isSuccess) {
 			if (false === isSuccess) {
+				callback && callback(false);
 				return;
 			}
 
@@ -15835,6 +16021,7 @@
 				t.handlers.trigger("selectionMathInfoChanged", info);
 			});
 			t._cleanPagesModeData();
+			callback && callback(true);
 		};
 
 		var checkDeleteCellsFilteringMode = function () {

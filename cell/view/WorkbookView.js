@@ -1624,6 +1624,10 @@
         ct.cursor = "copy";
       }
 
+      if (ws.startCellMoveRange && ws.startCellMoveRange.colRowMoveProps) {
+        ct.cursor = "grabbing";
+      }
+
       this._onUpdateCursor(ct.cursor);
       if (ct.target === c_oTargetType.ColumnHeader || ct.target === c_oTargetType.RowHeader) {
         ws.drawHighlightedHeaders(ct.col, ct.row);
@@ -1702,9 +1706,9 @@
 
 
   // Обработка перемещения диапазона
-  WorkbookView.prototype._onMoveRangeHandle = function(x, y, callback) {
+  WorkbookView.prototype._onMoveRangeHandle = function(x, y, callback, colRowMoveProps) {
     var ws = this.getWorksheet();
-    var d = ws.changeSelectionMoveRangeHandle(x, y);
+    var d = ws.changeSelectionMoveRangeHandle(x, y, colRowMoveProps);
     asc_applyFunction(callback, d);
   };
 
