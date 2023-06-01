@@ -768,7 +768,10 @@
 				const oDrawingInfo = this.m_arrNumberingInfo[i];
 				const sId = oDrawingInfo.divId;
 				const arrLvls = oDrawingInfo.arrLvls;
-
+				
+				if (!arrLvls || !arrLvls.length)
+					continue;
+				
 				if (this.m_nType === 0)
 				{
 					if (oDrawingInfo.isRemoving)

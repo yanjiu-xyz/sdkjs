@@ -13054,10 +13054,13 @@ background-repeat: no-repeat;\
 			for (let i = 0; i < arrDrawingInfo.length; i += 1)
 			{
 				const oDrawInfo = arrDrawingInfo[i];
-				const oNumberingInfo = oDrawInfo["numberingInfo"];
-				if (!oNumberingInfo) continue;
+				const numInfo = AscWord.CNumInfo.Parse(oDrawInfo["numberingInfo"]);
+				
+				if (!numInfo)
+					continue;
+				
 				const sDivId = oDrawInfo["divId"];
-				if (oNumberingInfo["Type"] === Asc.c_oAscJSONNumberingType.Remove)
+				if (numInfo.IsRemove())
 				{
 					const oLvl = new AscCommonWord.CNumberingLvl();
 					const oTextPr = oLvl.GetTextPr();
@@ -13070,7 +13073,7 @@ background-repeat: no-repeat;\
 				else
 				{
 					const arrNumberingLvl = [];
-					const arrLvls = oNumberingInfo["Lvl"];
+					const arrLvls = numInfo.Lvl;
 					for (let j = 0; j < arrLvls.length; j += 1)
 					{
 						const oLvl = AscCommonWord.CNumberingLvl.FromJson(arrLvls[j]);
@@ -13078,7 +13081,7 @@ background-repeat: no-repeat;\
 						{
 							oLvl.TextPr.RFonts.SetAll("Arial");
 						}
-						if (oNumberingInfo["Headings"])
+						if (numInfo.IsHeadings())
 						{
 							const oLogicDocument = this.private_GetLogicDocument();
 							const oStyles = oLogicDocument.GetStyles();
