@@ -1229,6 +1229,28 @@
 			fAfterSaveChanges();
 		}
 	};
+	/**
+	 * This callback is displayed as a global member.
+	 * @callback saveRelativeFromChangesCallback
+	 * @param {boolean} timeout
+	 * @param {Object} data description
+	 * @param {number} data.errorCode from AscCommon.c_oAscServerCommandErrors {NoError, NotModified, Token, UnknownError}
+	 * @param {boolean} data.inProgress
+	 * @param {string} data.url
+	 */
+	/**
+	 * Сохранение документа с указанием относительного пути
+	 * @param docId external document id
+	 * @param token from intergation
+	 * @param timeout in ms
+	 * @param callback {saveRelativeFromChangesCallback}
+	 */
+	baseEditorsApi.prototype.saveRelativeFromChanges = function(docId, token, timeout, callback) {
+		if (!this.CoAuthoringApi.callPRC({'type': 'saveRelativeFromChanges', 'docId': docId, 'token': token}, timeout, callback)) {
+			callback(true, undefined);
+		}
+	};
+
 	baseEditorsApi.prototype.asc_setIsForceSaveOnUserSave = function(val)
 	{
 		this.isForceSaveOnUserSave = val;
