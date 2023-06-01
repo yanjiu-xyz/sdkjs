@@ -551,7 +551,26 @@
 				return "default";
 			let color = ln.Fill.fill.color.RGBA;
 			let w = (ln.w == null) ? 12700 : ln.w;
-			w = (w / 9525) >> 0;
+
+			var scale = 1;
+			switch (Asc.editor.editorId)
+			{
+				case AscCommon.c_oEditorId.Word:
+				case AscCommon.c_oEditorId.Presentation:
+				{
+					scale = Asc.editor.WordControl.m_nZoomValue / 100;
+					break;
+				}
+				case AscCommon.c_oEditorId.Spreadsheet:
+				{
+					scale = Asc.editor.asc_getZoom();
+					break;
+				}
+				default:
+					break;
+			}
+
+			w = (scale * w / 9525) >> 0;
 			if (w < 4) w = 4;
 			if (w & 0x01) w += 1;
 
@@ -1237,6 +1256,7 @@
 			++endPtr;
 		}
 		if (endPtr - idx > 16 && u8Array.subarray && UTF8Decoder) {
+			return UTF8Decoder.decode(u8Array.subarray(idx, endPtr));
 			return UTF8Decoder.decode(u8Array.subarray(idx, endPtr));
 		} else {
 			var str = "";
