@@ -8997,7 +8997,7 @@ background-repeat: no-repeat;\
 				if (actionType) {
 					t.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, actionType);
 				}
-			}, fileType);
+			}, fileType, options);
 			return true;
 		} else {
 			if (options.advancedOptions instanceof Asc.asc_CTextOptions)
