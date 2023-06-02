@@ -1384,6 +1384,9 @@
 			if (this.disabledPaintOnScroll == false && this.activeForm && this.pageDetector.pages.map(function(item) {
 				return item.num;
 			}).includes(this.activeForm.GetPage()) == false) {
+				if (this.activeForm.IsChanged() == false) {
+					this.activeForm.SetDrawFromStream(true);
+				}
 				this.activeForm.SetDrawHighlight(true);
 				this.activeForm = null;
 			}
@@ -1634,7 +1637,7 @@
 						}
 
 						oThis.activeForm.SetDrawHighlight(true);
-						oThis.activeForm = null;
+						oThis.activeForm.Blur;
 						oThis._paintForms();
 					}
 					else {
@@ -1646,18 +1649,18 @@
 							oDoc.AddFieldToCommit(oThis.activeForm);
 							oDoc.CommitFields();
 							oThis.activeForm.SetNeedCommit(false);
-							oThis.activeForm = null;
+							oThis.activeForm.Blur();
 							oThis._paintForms();
 						}
 						else if (oThis.activeForm.IsNeedRevertShiftView()) {
 							oThis.activeForm.RevertContentViewToOriginal();
 							
-							oThis.activeForm = null;
+							oThis.activeForm.Blur();
 							oThis._paintForms();
 						}
 						else if (oThis.activeForm._triggers.Format && oThis.activeForm.GetValue() != "") {
 							oThis.activeForm.AddToRedraw();
-							oThis.activeForm = null;
+							oThis.activeForm.Blur();
 							oThis._paintForms();
 						}
 					}
@@ -1734,8 +1737,8 @@
 						break;
 				}
 			}
-			else {
-				oThis.activeForm = null;
+			else if (oThis.activeForm) {
+				oThis.activeForm.Blur();
 			}
 
 			// нажали мышь - запомнили координаты и находимся ли на ссылке
@@ -2708,6 +2711,9 @@
 			if (this.activeForm && this.pageDetector.pages.map(function(item) {
 				return item.num;
 			}).includes(this.activeForm.GetPage()) == false) {
+				if (this.activeForm.IsChanged() == false) {
+					this.activeForm.SetDrawFromStream(true);
+				}
 				this.activeForm.SetDrawHighlight(true);
 				this.activeForm = null;
 			}
@@ -2864,55 +2870,13 @@
 				YLimit: H * g_dKoef_pix_to_mm / scaleCoef
 			}
 		};
-		this.SelectNextForm = function()
+		this.SelectNextField = function()
 		{
-			let aWidgetForms = this.doc.widgets;
-			if (aWidgetForms.length == 0)
-				return;
-
-			let nCurForm = this.doc.widgets.indexOf(this.activeForm);
-			
-			if (nCurForm == -1)
-			{
-				this.activeForm = this.doc.widgets[0];
-				this.activeForm.SetDrawHighlight(false);
-			}
-			else
-			{
-				let oNextForm = this.doc.widgets[nCurForm + 1] || this.doc.widgets[nCurForm - 1];
-				if (!oNextForm)
-					return;
-
-				if (this.activeForm.Commit)
-				{
-					this.activeForm.Commit();
-					this._paintForms();
-				}
-				
-				this.activeForm.SetDrawHighlight(true);
-
-				this.activeForm = oNextForm;
-				this.activeForm.SetDrawHighlight(false);
-				switch (this.activeForm.type)
-				{
-					case "text":
-					case "combobox":
-						this.fieldFillingMode = true;
-						this.Api.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
-        				this.Api.WordControl.m_oDrawingDocument.m_lCurrentPage = 0;
-        				this.Api.WordControl.m_oDrawingDocument.m_lPagesCount = 1;
-						this.Api.WordControl.m_oDrawingDocument.TargetStart();
-						this.activeForm.content.GetElement(0).MoveCursorToStartPos();
-						this.activeForm.content.RecalculateCurPos();
-						break;
-					default:
-						this.Api.WordControl.m_oDrawingDocument.TargetEnd();
-						this.fieldFillingMode = false;
-						break;
-				}
-
-				this._paintFormsHighlight();
-			}
+			this.doc.SelectNextField();
+		};
+		this.SelectPrevField = function()
+		{
+			this.doc.SelectPrevField();
 		};
 		
 		this.checkPagesLinks = function()
@@ -3243,10 +3207,11 @@
 			}
 			else if (e.KeyCode === 9) // Tab
 			{
-				if (this.activeForm)
-				{
-					this.SelectNextForm();
-				}
+				window.event.preventDefault();
+				if (true == e.ShiftKey)
+					this.SelectPrevField();
+				else
+					this.SelectNextField();
 			}
 			else if (e.KeyCode === 13) // Enter
 			{

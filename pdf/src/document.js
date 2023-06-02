@@ -43,7 +43,7 @@
 
     CCalculateInfo.prototype.AddToCalculateField = function(oField) {
         if (null == this.calculateFields.find(function(field) {
-            return field.api.name == oField.api.name;
+            return field.GetFullName() == oField.GetFullName();
         })) {
             this.calculateFields.push(oField);
         }
@@ -67,17 +67,209 @@
     }
 
     CPDFDoc.prototype.CommitFields = function() {
+        this.skipHistoryOnCommit = true;
         this.fieldsToCommit.forEach(function(field) {
             field.Commit();
         });
         
         this.ClearFieldsToCommit();
+        this.skipHistoryOnCommit = false;
+    };
+    CPDFDoc.prototype.IsNeedSkipHistory = function() {
+        return !!this.skipHistoryOnCommit;
     };
     CPDFDoc.prototype.AddFieldToCommit = function(oField) {
         this.fieldsToCommit.push(oField);
     };
     CPDFDoc.prototype.ClearFieldsToCommit = function() {
         this.fieldsToCommit = [];
+    };
+    CPDFDoc.prototype.SelectNextField = function() {
+        let oViewer         = editor.getDocumentRenderer();
+        let aWidgetForms    = this.widgets;
+        let oActionsQueue   = this.GetActionsQueue();
+        let isNeedRedraw    = false;
+
+        if (aWidgetForms.length == 0)
+            return;
+
+        let nCurIdx = this.widgets.indexOf(oViewer.activeForm);
+        let oCurForm = this.widgets[nCurIdx];
+        let oNextForm = this.widgets[nCurIdx + 1] || this.widgets[0];
+
+        if (oCurForm && oNextForm) {
+            if (oCurForm.IsNeedCommit()) {
+                isNeedRedraw = true;
+                oCurForm.Commit();
+            }
+            else if (oCurForm.IsChanged() == false) {
+                isNeedRedraw = true;
+                oCurForm.SetDrawFromStream(true);
+            }
+
+            oCurForm.SetDrawHighlight(true);
+        }
+        
+        if (!oNextForm)
+            return;
+
+        oViewer.activeForm = oNextForm;
+        
+        oNextForm.SetDrawHighlight(false);
+        
+        if (oNextForm.IsNeedDrawFromStream() == true && oNextForm.type != "button") {
+            isNeedRedraw = true;
+            oNextForm.SetDrawFromStream(false);
+            oNextForm.AddToRedraw();
+        }
+        
+        oNextForm.onFocus();
+
+        let callBackAfterFocus = function() {
+            switch (oNextForm.type) {
+                case "text":
+                case "combobox":
+                    oViewer.fieldFillingMode = true;
+                    oViewer.Api.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
+                    oViewer.Api.WordControl.m_oDrawingDocument.m_lCurrentPage = 0;
+                    oViewer.Api.WordControl.m_oDrawingDocument.m_lPagesCount = oViewer.file.pages.length;
+                    oViewer.Api.WordControl.m_oDrawingDocument.showTarget(true);
+                    oViewer.Api.WordControl.m_oDrawingDocument.TargetStart();
+                    if (oNextForm.content.IsSelectionUse())
+                        oNextForm.content.RemoveSelection();
+    
+                    oNextForm.content.GetElement(0).MoveCursorToStartPos();
+                    oNextForm.content.RecalculateCurPos();
+                    
+                    break;
+                default:
+                    oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
+                    oViewer.fieldFillingMode = false;
+                    break;
+            }
+        };
+
+        
+        if (false == oNextForm.IsInSight())
+            this.NavigateToField(oNextForm);
+        else {
+            // если нужна перерисовка формы и onFocus не запустил действие, тогда перерисовываем
+            if (isNeedRedraw && oActionsQueue.IsInProgress() == false) {
+                oViewer._paintForms();
+                oViewer._paintFormsHighlight();
+            }
+            // если не нужна перерисовка и не запущено действие, то перерисовываем только highligt
+            else if (oActionsQueue.IsInProgress() == false)
+                oViewer._paintFormsHighlight();
+        }
+        
+        if (oActionsQueue.IsInProgress() == true)
+            oActionsQueue.callBackAfterFocus = callBackAfterFocus;
+        else
+            callBackAfterFocus();
+    };
+    CPDFDoc.prototype.SelectPrevField = function() {
+        let oViewer         = editor.getDocumentRenderer();
+        let aWidgetForms    = this.widgets;
+        let oActionsQueue   = this.GetActionsQueue();
+        let isNeedRedraw    = false;
+
+        if (aWidgetForms.length == 0)
+            return;
+
+        let nCurIdx = this.widgets.indexOf(oViewer.activeForm);
+        let oCurForm = this.widgets[nCurIdx];
+        let oNextForm = this.widgets[nCurIdx - 1] || this.widgets[this.widgets.length - 1];
+
+        if (oCurForm && oNextForm) {
+            if (oCurForm.IsNeedCommit()) {
+                isNeedRedraw = true;
+                oCurForm.Commit();
+            }
+            else if (oCurForm.IsChanged() == false) {
+                isNeedRedraw = true;
+                oCurForm.SetDrawFromStream(true);
+            }
+
+            oCurForm.SetDrawHighlight(true);
+        }
+        
+        if (!oNextForm)
+            return;
+        
+        oViewer.activeForm = oNextForm;
+        oNextForm.SetDrawHighlight(false);
+        
+        if (oNextForm.IsNeedDrawFromStream() == true && oNextForm.type != "button") {
+            isNeedRedraw = true;
+            oNextForm.SetDrawFromStream(false);
+            oNextForm.AddToRedraw();
+        }
+        
+        oNextForm.onFocus();
+
+        let callBackAfterFocus = function() {
+            switch (oNextForm.type) {
+                case "text":
+                case "combobox":
+                    oViewer.fieldFillingMode = true;
+                    oViewer.Api.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
+                    oViewer.Api.WordControl.m_oDrawingDocument.m_lCurrentPage = 0;
+                    oViewer.Api.WordControl.m_oDrawingDocument.m_lPagesCount = oViewer.file.pages.length;
+                    oViewer.Api.WordControl.m_oDrawingDocument.showTarget(true);
+                    oViewer.Api.WordControl.m_oDrawingDocument.TargetStart();
+                    if (oNextForm.content.IsSelectionUse())
+                        oNextForm.content.RemoveSelection();
+    
+                    oNextForm.content.GetElement(0).MoveCursorToStartPos();
+                    oNextForm.content.RecalculateCurPos();
+                    
+                    break;
+                default:
+                    oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
+                    oViewer.fieldFillingMode = false;
+                    break;
+            }
+        };
+
+        
+        if (false == oNextForm.IsInSight())
+            this.NavigateToField(oNextForm);
+        else {
+            // если нужна перерисовка формы и onFocus не запустил действие, тогда перерисовываем
+            if (isNeedRedraw && oActionsQueue.IsInProgress() == false) {
+                oViewer._paintForms();
+                oViewer._paintFormsHighlight();
+            }
+            // если не нужна перерисовка и не запущено действие, то перерисовываем только highligt
+            else if (oActionsQueue.IsInProgress() == false)
+                oViewer._paintFormsHighlight();
+        }
+        
+        if (oActionsQueue.IsInProgress() == true)
+            oActionsQueue.callBackAfterFocus = callBackAfterFocus;
+        else
+            callBackAfterFocus();
+    };
+    CPDFDoc.prototype.NavigateToField = function(oField) {
+        let oViewer = editor.getDocumentRenderer();
+        let aOrigRect = oField.GetOrigRect();
+        let nPage = oField.GetPage();
+        
+        let nBetweenPages = oViewer.betweenPages / (oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H);
+
+        let nPageHpx = (oViewer.drawingPages[nPage].H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let nPageWpx = (oViewer.drawingPages[nPage].W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+
+        // находим видимый размер от страницы в исходных размерах 
+        let nViewedH = (oViewer.canvas.height / nPageHpx) * oViewer.file.pages[nPage].H;
+        let nViewedW = (oViewer.canvas.width / nPageWpx) * oViewer.file.pages[nPage].W;
+        
+        // выставляем смещение до формы страницу
+        let yOffset = aOrigRect[1] + (aOrigRect[3] - aOrigRect[1]) / 2 - nViewedH / 2 + nBetweenPages;
+        let xOffset = aOrigRect[0] + (aOrigRect[2] - aOrigRect[0]) / 2 - nViewedW / 2;
+
+        oViewer.navigateToPage(nPage, yOffset > 0 ? yOffset : undefined, xOffset > 0 ? xOffset : undefined);
     };
 
     CPDFDoc.prototype.DoCalculateFields = function() {
@@ -481,7 +673,7 @@
     CPDFDoc.prototype.GetFields = function(sName) {
         let aFields = [];
         for (let i = 0; i < this.widgets.length; i++) {
-            if (this.widgets[i].api.name == sName)
+            if (this.widgets[i].GetFullName() == sName)
                 aFields.push(this.widgets[i]);
         }
 
@@ -517,7 +709,7 @@
         let sPartName = aPartNames[0];
         for (let i = 0; i < aPartNames.length; i++) {
             for (let j = 0; j < this.widgets.length; j++) {
-                if (this.widgets[j].api.name == sPartName) // checks by fully name
+                if (this.widgets[j].GetFullName() == sPartName) // checks by fully name
                     return this.widgets[j];
             }
             sPartName += "." + aPartNames[i + 1];

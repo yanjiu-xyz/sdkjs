@@ -221,7 +221,7 @@
 	 */
     ApiDocument.prototype.getField = function(sName) {
         for (let i = 0; i < this.doc.widgets.length; i++) {
-            if (this.doc.widgets[i].api.name == sName)
+            if (this.doc.widgets[i].GetFullName() == sName)
                 return this.doc.widgets[i].GetFormApi();
         }
 
@@ -1007,13 +1007,7 @@
                 this.field.Commit();
             },
             get() {
-                // ищем то поле, которое не нужно применять, это текущее значение для всех с таким именем
-                let aFields = this.field.GetDocument().GetFields(this.name);
-                let oAppliedField = aFields.find(function(field) {
-                    return !field.IsNeedCommit();
-                });
-
-                return oAppliedField ? oAppliedField.GetValue() : aFields[0].GetValue();
+                return this.field.GetApiValue();
             }
         },
         "defaultValue": {
@@ -1159,13 +1153,7 @@
                 this.field.Commit();
             },
             get() {
-               // ищем то поле, которое не нужно применять, это текущее значение для всех с таким именем
-               let aFields = this.field.GetDocument().GetFields(this.name);
-               let oAppliedField = aFields.find(function(field) {
-                   return !field.IsNeedCommit();
-               });
-
-               return oAppliedField ? oAppliedField.GetValue() : aFields[0].GetValue();
+                return this.field.GetApiValue();
             }
         }
     });
