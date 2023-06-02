@@ -3241,14 +3241,13 @@
 						this.flipV = false;
 					} else if (this.spPr && this.spPr.xfrm && this.spPr.xfrm.isNotNull()) {
 						var xfrm = this.spPr.xfrm;
-						var bAlign = false;
+						let bDoNotUseOffset = false;
 						if (this.parent) {
-							if (this.parent.PositionH && this.parent.PositionH.Align
-								|| this.parent.PositionV && this.parent.PositionV.Align) {
-								bAlign = true;
+							if (this.parent.PositionH && this.parent.PositionV) {
+								bDoNotUseOffset = true;
 							}
 						}
-						if (bAlign) {
+						if (bDoNotUseOffset) {
 							this.x = 0;
 							this.y = 0;
 						} else {
