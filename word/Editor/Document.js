@@ -12677,7 +12677,13 @@ CDocument.prototype.AddHyperlink = function(HyperProps)
 		this.RemoveTextSelection();
 	}
 
-	this.Controller.AddHyperlink(HyperProps);
+	let hyperlink = this.Controller.AddHyperlink(HyperProps);
+	if (hyperlink)
+	{
+		this.RemoveSelection();
+		hyperlink.MoveCursorOutsideElement(false);
+	}
+	
 	this.Recalculate();
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateSelectionState();
@@ -21589,8 +21595,10 @@ CDocument.prototype.controller_AddHyperlink = function(Props)
 	if (false === this.Selection.Use || this.Selection.StartPos === this.Selection.EndPos)
 	{
 		var Pos = ( true == this.Selection.Use ? this.Selection.StartPos : this.CurPos.ContentPos );
-		this.Content[Pos].AddHyperlink(Props);
+		return this.Content[Pos].AddHyperlink(Props);
 	}
+	
+	return null;
 };
 CDocument.prototype.controller_ModifyHyperlink = function(Props)
 {

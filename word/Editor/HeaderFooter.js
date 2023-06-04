@@ -1236,7 +1236,7 @@ CHeaderFooter.prototype =
 //-----------------------------------------------------------------------------------
 	AddHyperlink : function(HyperProps)
 	{
-		this.Content.AddHyperlink(HyperProps);
+		return this.Content.AddHyperlink(HyperProps);
 	},
 
 	ModifyHyperlink : function(HyperProps)
@@ -2672,7 +2672,9 @@ CHeaderFooterController.prototype =
 	AddHyperlink : function(HyperProps)
 	{
 		if (null != this.CurHdrFtr)
-			this.CurHdrFtr.AddHyperlink(HyperProps);
+			return this.CurHdrFtr.AddHyperlink(HyperProps);
+		
+		return null;
 	},
 
 	ModifyHyperlink : function(HyperProps)
