@@ -15191,6 +15191,30 @@ Paragraph.prototype.SetPrChange = function(PrChange, ReviewInfo)
     this.Pr.SetPrChange(PrChange, ReviewInfo);
     this.private_UpdateTrackRevisions();
 };
+Paragraph.prototype.SetPStyleToPrChange = function(styleId)
+{
+	this.private_AddPrChange();
+	if (!this.HavePrChange())
+		return;
+	
+	let prChange   = this.Pr.PrChange.Copy();
+	let reviewInfo = this.Pr.ReviewInfo ? this.Pr.ReviewInfo.Copy() : undefined;
+	prChange.SetPStyle(styleId);
+	
+	this.SetPrChange(prChange, reviewInfo);
+};
+Paragraph.prototype.SetNumPrToPrChange = function(numId, iLvl)
+{
+	this.private_AddPrChange();
+	if (!this.HavePrChange())
+		return;
+	
+	let prChange   = this.Pr.PrChange.Copy();
+	let reviewInfo = this.Pr.ReviewInfo ? this.Pr.ReviewInfo.Copy() : undefined;
+	prChange.NumPr = new AscWord.CNumPr(numId, iLvl);
+	
+	this.SetPrChange(prChange, reviewInfo);
+};
 Paragraph.prototype.RemovePrChange = function()
 {
     if (true === this.HavePrChange())

@@ -1533,7 +1533,7 @@ function ReadTrackRevision(type, length, stream, reviewInfo, options) {
         } else if(c_oSerProp_RevisionType.rPrChange == type) {
             res = options.brPrr.Read(length, options.rPr, null);
         } else if(c_oSerProp_RevisionType.pPrChange == type) {
-            res = options.bpPrr.Read(length, options.pPr, null);
+            res = options.bpPrr.Read(length, options.pPr, options.paragraph);
 		} else if(c_oSerProp_RevisionType.tblGridChange == type) {
 			res = options.btblPrr.bcr.Read2(length, function(t, l){
 				return options.btblPrr.Read_tblGrid(t,l, options.grid);
@@ -9070,9 +9070,10 @@ InheritBinaryStyleUpdater(BinaryRunStyleUpdater,
 		this.element.SetRStyle(styleId);
 	}
 );
-function BinaryParagraphStyleUpdater()
+function BinaryParagraphStyleUpdater(element, style, isPrChange)
 {
-	BinaryStyleUpdaterBase.apply(this, arguments);
+	this.isPrChange = !!isPrChange;
+	BinaryStyleUpdaterBase.call(this, element, style);
 }
 InheritBinaryStyleUpdater(BinaryParagraphStyleUpdater,
 	function(styleId)
@@ -9080,7 +9081,10 @@ InheritBinaryStyleUpdater(BinaryParagraphStyleUpdater,
 		if (!this.element)
 			return;
 
-		this.element.SetPStyle(styleId);
+		if (!this.isPrChange)
+			this.element.SetPStyle(styleId);
+		else if (this.element.HavePrChange())
+			this.element.SetPStyleToPrChange(styleId);
 	}
 );
 BinaryParagraphStyleUpdater.prototype.isParagraphStyle = function() {
@@ -9151,6 +9155,7 @@ function Binary_pPrReader(doc, oReadResult, stream)
     this.pPr;
     this.paragraph;
 	this.style;
+	this.isPrChange = false;
     this.bcr = new Binary_CommonReader(this.stream);
     this.brPrr = new Binary_rPrReader(this.Document, this.oReadResult, this.stream);
     this.Read = function(stLen, pPr, par, style)
@@ -9213,7 +9218,7 @@ function Binary_pPrReader(doc, oReadResult, stream)
             case c_oSerProp_pPrType.ParaStyle:
                 var ParaStyle = this.stream.GetString2LE(length);
 				if (this.paragraph)
-					this.oReadResult.styleLinks.push(new BinaryParagraphStyleUpdater(this.paragraph, ParaStyle));
+					this.oReadResult.styleLinks.push(new BinaryParagraphStyleUpdater(this.paragraph, ParaStyle, this.isPrChange));
                 break;
             case c_oSerProp_pPrType.numPr:
                 var numPr = new CNumPr();
@@ -9222,7 +9227,7 @@ function Binary_pPrReader(doc, oReadResult, stream)
                     return oThis.ReadNumPr(t, l, numPr);
                 });
                 if ((null != numPr.NumId || null != numPr.Lvl) && (this.paragraph || this.style)) {
-					this.oReadResult.paraNumPrs.push({elem : this.paragraph || this.style, numPr : numPr});
+					this.oReadResult.paraNumPrs.push({elem : this.paragraph || this.style, numPr : numPr, isPrChange: this.paragraph && this.isPrChange});
 				}
                 break;
             case c_oSerProp_pPrType.pBdr:
@@ -9265,14 +9270,15 @@ function Binary_pPrReader(doc, oReadResult, stream)
                 res = c_oSerConstants.ReadUnknown;//todo
                 break;
             case c_oSerProp_pPrType.pPrChange:
-                if(null != this.paragraph && this.oReadResult.checkReadRevisions() && (!this.oReadResult.bCopyPaste || this.oReadResult.isDocumentPasting())) {
+                if(null != this.paragraph && !this.isPrChange && this.oReadResult.checkReadRevisions() && (!this.oReadResult.bCopyPaste || this.oReadResult.isDocumentPasting())) {
                     var pPrChange = new CParaPr();
                     var reviewInfo = new CReviewInfo();
                     var bpPrr = new Binary_pPrReader(this.Document, this.oReadResult, this.stream);
+					bpPrr.isPrChange = true;
                     res = this.bcr.Read1(length, function(t, l){
-                        return ReadTrackRevision(t, l, oThis.stream, reviewInfo, {bpPrr: bpPrr, pPr: pPrChange});
+                        return ReadTrackRevision(t, l, oThis.stream, reviewInfo, {bpPrr: bpPrr, pPr: pPrChange, paragraph: oThis.paragraph});
                     });
-                    this.paragraph.SetPrChange(pPrChange, reviewInfo);
+					this.pPr.SetPrChange(pPrChange, reviewInfo);
                 } else {
                     res = c_oSerConstants.ReadUnknown;
                 }
@@ -17438,12 +17444,17 @@ DocReadResult.prototype = {
 			if (!elem || !numPr || null === numPr.NumId)
 				continue;
 			
-			if (undefined === numPr.NumId) {
-				elem.SetNumPr(undefined, numPr.Lvl);
-			} else {
+			let numId = undefined;
+			let iLvl  = numPr.Lvl;
+			if (undefined !== numPr.NumId) {
 				let num = this.numToNumClass[numPr.NumId];
-				elem.SetNumPr(num && 0 !== numPr.NumId ? num.GetId() : "0", numPr.Lvl);
+				numId   = num && 0 !== numPr.NumId ? num.GetId() : "0";
 			}
+			
+			if (this.paraNumPrs[i].isPrChange)
+				elem.SetNumPrToPrChange(numId, iLvl);
+			else
+				elem.SetNumPr(numId, iLvl);
 		}
 	}
 };
