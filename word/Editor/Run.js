@@ -6417,7 +6417,7 @@ ParaRun.prototype.Draw_HighLights = function(PDSH)
 
         var DrawColl = this.CollaborativeMarks.Check( Pos );
 
-        if ( true === bDrawShd )
+        if ( true === bDrawShd && !Item.IsParaEnd() )
             aShd.Add( Y0, Y1, X, X + ItemWidthVisible, 0, ShdColor.r, ShdColor.g, ShdColor.b, undefined, oShd );
 
 		if (PDSH.ComplexFields.IsComplexField()
