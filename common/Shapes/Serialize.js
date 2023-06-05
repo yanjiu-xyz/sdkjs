@@ -3128,7 +3128,20 @@ function BinaryPPTYLoader()
                     }
 
                     if (this.ImageMapChecker != null)
-                        this.ImageMapChecker[sReadPath] = true;
+                    {
+                        let bAddToMap = true;
+                        if(oImageShape && oImageShape instanceof AscFormat.COleObject)
+                        {
+                            if(sReadPath.indexOf(".") === -1)
+                            {
+                                bAddToMap = false;
+                            }
+                        }
+                        if(bAddToMap)
+                        {
+                            this.ImageMapChecker[sReadPath] = true;
+                        }
+                    }
 
                     if (this.IsUseFullUrl)
                         this.RebuildImages.push(new CBuilderImages(uni_fill.fill, sReadPath, oImageShape, oSpPr, oLn, undefined, undefined, undefined, oParagraph, oBullet));
