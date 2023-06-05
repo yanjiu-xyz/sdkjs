@@ -352,6 +352,9 @@
 	 * @param {string} sName - The name of a new worksheet.
 	 */
 	Api.prototype.AddSheet = function (sName) {
+		if (this.GetSheet(sName)) {
+			return new Error('Worksheet with such a name already exists.');
+		}
 		this.asc_addWorksheet(sName);
 	};
 
