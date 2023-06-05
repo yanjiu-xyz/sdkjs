@@ -619,10 +619,12 @@ var editor;
 		var t = this;
 
 		function wrapper_callback(data) {
+			var bom = AscCommon.getEncodingByBOM(data);
 			var cp = {
-				'codepage': AscCommon.c_oAscCodePageUtf8, "delimiter": AscCommon.c_oAscCsvDelimiter.Comma,
+				'codepage': AscCommon.c_oAscCodePageNone !== bom.encoding ? bom.encoding : AscCommon.c_oAscCodePageUtf8,
+				"delimiter": AscCommon.c_oAscCsvDelimiter.Comma,
 				'encodings': AscCommon.getEncodingParams(),
-				'data': data
+				'data': data.subarray(bom.size)
 			};
 			callback(new AscCommon.asc_CAdvancedOptions(cp));
 		}
@@ -654,14 +656,14 @@ var editor;
 
 			var reader = new FileReader();
 			reader.onload = function () {
-				wrapper_callback(reader.result);
+				wrapper_callback(new Uint8Array(reader.result));
 			};
 
 			reader.onerror = function () {
 				t.sendEvent("asc_onError", Asc.c_oAscError.ID.Unknown, Asc.c_oAscError.Level.NoCritical);
 			};
-			//readAsText - works as an opening csv, readAsArrayBuffer - differs from opening
-			reader.readAsText(files[0]);
+
+			reader.readAsArrayBuffer(files[0]);
 		});
 	};
 
@@ -1157,6 +1159,9 @@ var editor;
     if (this.collaborativeEditing) {
       this.collaborativeEditing.setViewerMode(isViewMode);
     }
+    if(this.isViewMode) {
+        this.turnOffSpecialModes();
+    }
   };
 
 	  spreadsheet_api.prototype.asc_setFilteringMode = function (mode) {
@@ -1431,12 +1436,10 @@ var editor;
     var fileType = options.fileType;
 
 	if (this.isCloudSaveAsLocalToDrawingFormat(actionType, fileType)) {
-	  var printPagesData, pdfPrinterMemory;
+	  var printPagesData, pdfPrinterMemory, t = this;
       this.wb._executeWithoutZoom(function () {
-        t.wb.printPreviewState.advancedOptions = options.advancedOptions;
         printPagesData = t.wb.calcPagesPrint(options.advancedOptions);
         pdfPrinterMemory = t.wb.printSheets(printPagesData, null, options.advancedOptions).DocumentRenderer.Memory;
-		t.wb.printPreviewState.advancedOptions = null;
 	  });
       this.localSaveToDrawingFormat(pdfPrinterMemory.GetBase64Memory(), fileType);
 	  return true;
@@ -1758,6 +1761,7 @@ var editor;
 		this.openingEnd = {bin: false, xlsxStart: false, xlsx: false, data: null};
 		this.isApplyChangesOnOpenEnabled = true;
 		this.isDocumentLoadComplete = false;
+        this.turnOffSpecialModes();
 
 		//удаляю весь handlersList, добавленный при инициализации wbView
 		//потому что старый при открытии использовать нельзя(в случае с истрией версий при повторном открытии файла там остаются старые функции от предыдущего workbookview)
@@ -2906,7 +2910,10 @@ var editor;
 		  };
 
 	  }
+
+    this.inkDrawer.startSilentMode();
     this.wbModel.DeserializeHistory(changes, callback);
+    this.inkDrawer.endSilentMode();
   };
 
   spreadsheet_api.prototype._onUpdateAfterApplyChanges = function() {
@@ -5057,6 +5064,18 @@ var editor;
 		if(!oController) {
 			return;
 		}
+        if (this.isStartAddShape) {
+            this.asc_endAddShape();
+        }
+        this.cancelEyedropper();
+
+        if (this.isFormatPainterOn())
+        {
+            this.formatPainter.putState(AscCommon.c_oAscFormatPainterState.kOff);
+            if (this.wb) {
+                this.wb.formatPainter(AscCommon.c_oAscFormatPainterState.kOff, undefined);
+            }
+        }
 		oController.onInkDrawerChangeState();
 	};
 
@@ -6145,6 +6164,11 @@ var editor;
 
 
 	spreadsheet_api.prototype.changeFormatPainterState = function(formatPainterState, bLockDraw) {
+        if (this.isStartAddShape) {
+            this.asc_endAddShape();
+        }
+        this.stopInkDrawer();
+        this.cancelEyedropper();
 		this.formatPainter.putState(formatPainterState);
 		if (this.wb) {
 			this.wb.formatPainter(formatPainterState, bLockDraw);
@@ -6352,7 +6376,7 @@ var editor;
   ////////////////////////////AutoSave api/////////////////////////////////
   /////////////////////////////////////////////////////////////////////////
 	spreadsheet_api.prototype._autoSaveInner = function () {
-		if (this.asc_getCellEditMode() || this.asc_getIsTrackShape() || this.isInkDrawerOn()) {
+		if (this.asc_getCellEditMode() || this.asc_getIsTrackShape()) {
 		  return;
         }
 
@@ -6467,6 +6491,14 @@ var editor;
 		}
 		if (this.wbModel) {
 			this.wbModel.rebuildColors();
+		}
+
+		//on change formula language need load fonts
+		const constError = oLocalizedData &&  oLocalizedData["LocalFormulaOperands"] && oLocalizedData["LocalFormulaOperands"]["CONST_ERROR"];
+		if (constError && constError["nil"]) {
+			if (AscFonts.FontPickerByCharacter.getFontsByString(constError["nil"])) {
+				this._loadFonts([], function() {});
+			}
 		}
 	};
 
@@ -6947,6 +6979,16 @@ var editor;
         }
       }
       if (cellLayout !== null) {
+        if (cellLayout.fld === null) {
+          let rowFields = pivotTable.asc_getRowFields();
+          let colFields = pivotTable.asc_getColumnFields();
+          let rowFieldsFirstIndex = rowFields && rowFields[0].asc_getIndex();
+          let firstIndex = rowFieldsFirstIndex;
+          if (rowFieldsFirstIndex === null) {
+            firstIndex = colFields && colFields[0].asc_getIndex();
+          }
+          cellLayout.fld = firstIndex;
+        }
         res = new Asc.CT_DataField();
         res.baseField = cellLayout.fld;
         res.baseItem = cellLayout.v;
@@ -8004,8 +8046,33 @@ var editor;
     }
   };
 
+  spreadsheet_api.prototype.turnOffSpecialModes = function() {
+      let bResult = false;
+      if (this.isStartAddShape) {
+          this.asc_endAddShape();
+          bResult = true;
+      }
+      if(this.isEyedropperStarted())
+      {
+          this.cancelEyedropper();
+          bResult = true;
+      }
+      if (this.isFormatPainterOn()) {
+          this.formatPainter.putState(AscCommon.c_oAscFormatPainterState.kOff);
+          if (this.wb) {
+              this.wb.formatPainter(AscCommon.c_oAscFormatPainterState.kOff, undefined);
+          }
+          bResult = true;
+      }
+      if(this.isInkDrawerOn()) {
+          this.stopInkDrawer();
+          bResult = true;
+      }
+      return bResult;
+  };
   spreadsheet_api.prototype.onUpdateRestrictions = function () {
     this._onUpdateDocumentCanUndoRedo();
+    this.turnOffSpecialModes();
   };
   spreadsheet_api.prototype.isShowShapeAdjustments = function()
   {
@@ -9148,6 +9215,7 @@ var editor;
   prot["asc_getSignatures"] 		     = prot.asc_getSignatures;
   prot["asc_isSignaturesSupport"] 	     = prot.asc_isSignaturesSupport;
   prot["asc_isProtectionSupport"] 		 = prot.asc_isProtectionSupport;
+  prot["asc_isAnonymousSupport"] 		 = prot.asc_isAnonymousSupport;
   prot["asc_RemoveSignature"] 		= prot.asc_RemoveSignature;
   prot["asc_RemoveAllSignatures"] 	= prot.asc_RemoveAllSignatures;
   prot["asc_gotoSignature"] 	    = prot.asc_gotoSignature;

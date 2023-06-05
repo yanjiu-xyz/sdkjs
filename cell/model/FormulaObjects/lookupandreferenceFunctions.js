@@ -232,9 +232,7 @@ function (window, undefined) {
 	// these functions are made and used specifically for SORT & SORTBY functions
 	function sortWithIndices (arr, sortOrder, isByCol) {
 		const indexedArray = isByCol
-			? arr[0].map(function (item, index) {
-				return { item, index };
-			})
+			? arr[0].map(function (item, index) { return { item, index } })
 			: arr.map(function (item, index) {
 				item = item[0];
 				return { item, index };
@@ -244,17 +242,60 @@ function (window, undefined) {
 			const itemA = a.item;
 			const itemB = b.item;
 
+			let res = 0;
 			if (cElementType.string === itemA.type && cElementType.string === itemB.type) {
-				return (itemA.value.localeCompare(itemB.value)) * sortOrder;
+				res = (itemA.value.localeCompare(itemB.value)) * sortOrder;
 			} else if (cElementType.number === itemA.type && cElementType.number === itemB.type) {
-				return (itemA.value - itemB.value) * sortOrder;
+				res = (itemA.value - itemB.value) * sortOrder;
 			} else if (cElementType.string === itemA.type) {
-				return 1 * sortOrder;
+				// check itemB.type and make decision
+				if (cElementType.number === itemB.type) {
+					res = 1 * sortOrder;
+				} else if (cElementType.bool === itemB.type || cElementType.error === itemB.type || cElementType.empty === itemB.type) {
+					res = -1 * sortOrder;
+				}
 			} else if (cElementType.string === itemB.type) {
-				return -1 * sortOrder;
+				// check itemA.type and make decision
+				if (cElementType.number === itemA.type) {
+					res = -1 * sortOrder;
+				} else if (cElementType.bool === itemA.type || cElementType.error === itemA.type || cElementType.empty === itemA.type) {
+					res = 1 * sortOrder;
+				}
+			} else if (cElementType.bool === itemA.type) {
+				if (cElementType.error === itemB.type || cElementType.empty === itemB.type) {
+					res = -1 * sortOrder;
+				} else {
+					res = 1 *sortOrder;
+				}
+			} else if (cElementType.bool === itemB.type) {
+				if (cElementType.error === itemA.type || cElementType.empty === itemA.type) {
+					res = 1 * sortOrder;
+				} else {
+					res = -1 *sortOrder;
+				}
+			} else if (cElementType.error === itemA.type) {
+				if (cElementType.error === itemB.type) {
+					res = 1 * sortOrder;
+				} else if (cElementType.empty === itemB.type) {
+					res = -1 * sortOrder;
+				} else {
+					res = 1 * sortOrder;
+				}
+			} else if (cElementType.error === itemB.type) {
+				if (cElementType.error === itemA.type) {
+					res = -1 * sortOrder;
+				} else if (cElementType.empty === itemA.type) {
+					res = 1 * sortOrder;
+				} else {
+					res = -1 * sortOrder;
+				}
+			} else if (cElementType.empty === itemA.type || cElementType.empty === itemB.type) {
+				res = 1 * sortOrder;
 			} else {
-				return 0;
+				res = 0;
 			}
+
+			return res;
 		});
 		
 		return indexedArray;
@@ -264,7 +305,6 @@ function (window, undefined) {
 	function sortArray (array, by_array1, sortOrder, isByCol, sortIndex) {
 		let resultArr = new cArray(),
 			tempArrIndicies = [],
-			// byRowColArr = isByCol ? by_array1._getRow(0) : by_array1._getCol(0);
 			byRowColArr, targetElem;
 
 		if (by_array1) {
@@ -282,127 +322,6 @@ function (window, undefined) {
 		}
 
 		return resultArr;
-	}
-
-	function sortByArrayWrapper (array, args, isByCol) {
-		let colsRowArr = [], sortOrderArr = [], colsRowIndexesArr = [], rowCol;
-
-		for (let i = 1; i < args.length; i += 2) {
-			let by_array = args[i],
-				sortOrder = args[i+1];
-
-			let dim = by_array.getDimensions();
-			// check column or row
-			if (dim.bbox) {
-				rowCol = isByCol ? dim.bbox.r1 : dim.bbox.c1;
-			} else {
-				// add array/range check for mainArray and by_array args
-				rowCol = isByCol ? dim.col : dim.row;
-			}
-
-			// if there is no such column/row yet, push into the array
-			if (colsRowIndexesArr.indexOf(rowCol) === -1) {
-				colsRowIndexesArr.push(rowCol);
-				sortOrderArr.push(sortOrder);
-				colsRowArr.push(isByCol ? by_array._getRow(0) : by_array._getCol(0));
-			}
-		}
-
-		let tempArrIndicies = sortByArray(colsRowArr, sortOrderArr, isByCol);
-
-		let resultArr = new cArray();
-		for (let i = 0; i < tempArrIndicies.length; i++) {
-			let target = isByCol ? array._getCol(tempArrIndicies[i].index) : array._getRow(tempArrIndicies[i].index);
-			isByCol ? resultArr.pushCol(target, 0) : resultArr.pushRow(target, 0);
-		}
-
-		return resultArr;
-	}
-
-	function sortByArray (colsRowsArr, sortOrderArr, isByCol) {
-		let by_array1 = colsRowsArr[0],
-			tempArrIndicies = [];
-
-		tempArrIndicies = indicesBy(by_array1, isByCol);
-
-		tempArrIndicies.sort(function (a, b) {
-			let res = 0;
-
-			const compareFunc = function (_a, _b, _sortOrder) {
-				let itemA = _a.item ? _a.item : _a,
-					itemB = _b.item ? _b.item : _b;
-
-				if (cElementType.string === itemA.type && cElementType.string === itemB.type) {
-					res = (itemA.value.localeCompare(itemB.value)) * _sortOrder;
-				} else if (cElementType.number === itemA.type && cElementType.number === itemB.type) {
-					res = (itemA.value - itemB.value) * _sortOrder;
-				} else if (cElementType.string === itemA.type) {
-					// check itemB.type and make decision
-					if (cElementType.number === itemB.type) {
-						res = 1 * _sortOrder;
-					} else if (cElementType.bool === itemB.type || cElementType.error === itemB.type) {
-						res = -1 * _sortOrder;
-					}
-				} else if (cElementType.string === itemB.type) {
-					// check itemA.type and make decision
-					if (cElementType.number === itemA.type) {
-						res = -1 * _sortOrder;
-					} else if (cElementType.bool === itemA.type || cElementType.error === itemA.type) {
-						res = -1 * _sortOrder;
-					}
-				} else if (cElementType.bool === itemA.type) {
-					if (cElementType.error === itemB.type) {
-						res = -1 * _sortOrder;
-					} else {
-						res = 1 *_sortOrder;
-					}
-				} else if (cElementType.bool === itemB.type) {
-					if (cElementType.error === itemA.type) {
-						res = 1 * _sortOrder;
-					} else {
-						res = -1 *_sortOrder;
-					}
-				} else if (cElementType.error === itemA.type) {
-					res = 1 * _sortOrder;
-				} else if (cElementType.error === itemA.type) {
-					res = 1 * _sortOrder;
-				} else {
-					res = 0;
-				}
-			}
-
-			compareFunc(a, b, sortOrderArr[0]);
-
-			if (res === 0) {
-				for (let i = 1; i < colsRowsArr.length; i++) {
-					let tempA = isByCol ? colsRowsArr[i][0][a.index] : colsRowsArr[i][a.index][0];
-					let tempB = isByCol ? colsRowsArr[i][0][b.index] : colsRowsArr[i][b.index][0];
-
-					compareFunc(tempA, tempB, sortOrderArr[i]);
-
-					if (res !== 0) {
-						break;
-					}
-				}
-			}
-
-			return res;
-		});
-
-		return tempArrIndicies;
-	}
-
-	function indicesBy (arr, isByCol) {
-		const indexedArray = isByCol
-			? arr[0].map(function (item, index) {
-				return { item, index };
-			})
-			: arr.map(function (item, index) {
-				item = item[0];
-				return { item, index };
-			});
-
-		return indexedArray;
 	}
 
 	/**
@@ -1993,22 +1912,46 @@ function (window, undefined) {
 	cSORT.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1};
 	cSORT.prototype.argumentsType = [argType.reference, argType.number, argType.number, argType.logical];
 	cSORT.prototype.Calculate = function (arg) {
-		function arrayHelper (byColArray, by_col) {
+
+		function arrayHelper (byColArray) {
 			let dimensions = byColArray.getDimensions(),
-				fElem = sortArray(array, null, sort_order, by_col, sort_index).getFirstElement(),
-				resArr = new cArray();
-			
+				resArr = new cArray(),
+				errVal = new cError(cErrorType.wrong_value_type),
+				byColVal, isFirstValRecieved = false, isSecondValRecieved = false;
+
+			// find the "truthy" values
 			for (let i = 0; i < dimensions.row; i++) {
 				resArr.addRow();
 				for (let j = 0; j < dimensions.col; j++) {
-					if (i === 0 && j === 0) {
-						resArr.addElement(fElem);
+					let elem = byColArray.getValueByRowCol ? byColArray.getValueByRowCol(i, j) : byColArray.getElementRowCol(i, j);
+					if (!elem) {
+						elem = new cEmpty();
+					}
+
+					if (cElementType.bool === elem.type || cElementType.number === elem.type || cElementType.empty === elem.type) {
+						byColVal = elem.tocBool();
+					} else {
+						elem.type === cElementType.error ? resArr.addElement(elem) : resArr.addElement(errVal);
 						continue;
 					}
-					let el = new cError(cErrorType.wrong_value_type);
-					resArr.addElement(el);
+
+					if (cElementType.error === byColVal.type || (isFirstValRecieved && isSecondValRecieved)) {
+						resArr.addElement(errVal);
+						continue;
+					} else if (!isFirstValRecieved) {
+						let fValue = sortArray(array, null, sort_order, byColVal.toBool(), sort_index).getFirstElement();
+						resArr.addElement(fValue);
+						isFirstValRecieved = true;
+						continue;
+					} else if (!isSecondValRecieved) {
+						let sValue = new cNumber(0);
+						resArr.addElement(sValue);
+						isSecondValRecieved = true;
+						continue;
+					}
 				}
 			}
+			
 			return resArr;
 		}
 
@@ -2113,7 +2056,7 @@ function (window, undefined) {
 		// arg2(sort_order) check
 		if (cElementType.array !== arg2.type && cElementType.cellsRange !== arg2.type && cElementType.cellsRange3D !== arg2.type) {
 			sort_order = arg2.tocNumber();
-		} else if (arg2.isOneElement()){
+		} else if (arg2.isOneElement()) {
 			sort_order = arg2.getFirstElement();
 		} else {
 			return new cError(cErrorType.wrong_value_type);
@@ -2123,10 +2066,9 @@ function (window, undefined) {
 		if (cElementType.array !== arg3.type && cElementType.cellsRange !== arg3.type && cElementType.cellsRange3D !== arg3.type) {
 			by_col = arg3.tocBool();
 		} else {
-			by_col = arg3.getFirstElement();
 			if (!by_col) {
 				by_col = new cBool(false);
-			}	
+			}
 			isArg3Array = true;
 		}
 
@@ -2144,9 +2086,9 @@ function (window, undefined) {
 
 		if (cElementType.error === by_col.type) {
 			return by_col;
-		} else if (cElementType.bool !== by_col.type) {
+		} else if (!isArg3Array && cElementType.bool !== by_col.type) {
 			return new cError(cErrorType.wrong_value_type);
-		} else {
+		} else if (!isArg3Array) {
 			by_col = by_col.toBool();
 		}
 
@@ -2166,7 +2108,7 @@ function (window, undefined) {
 
 		if (isArg3Array) {
 			// TODO it is not completely clear how the function works when receiving an array as the last argument
-			return arrayHelper(arg3, by_col);
+			return arrayHelper(arg3);
 		}
 
 		return sortArray(array, null, sort_order, by_col, sort_index);

@@ -7035,7 +7035,7 @@
 		return this.Document.GetPagesCount();
 	};
 	/**
-	 * Returns all styles of current document.
+	 * Returns all styles of the current document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
 	 * @returns {ApiStyle[]}
@@ -18416,7 +18416,7 @@
 	/**
 	 * Returns the full name of the currently opened file.
 	 * @memberof Api
-	 * @typeofeditors ["CDE, CPE, CSE"]
+	 * @typeofeditors ["CDE", "CPE", "CSE"]
 	 * @returns {string}
 	 */
 	Api.prototype.GetFullName = function () {
