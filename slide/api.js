@@ -6850,7 +6850,7 @@ background-repeat: no-repeat;\
 		const oDrawingObjects = oPresentation.GetCurrentController();
 		if(!oDrawingObjects)
 			return;
-		if (oDrawingObjects.checkTrackDrawings()) {
+		if (oDrawingObjects.isTrackingDrawings()) {
 			oDrawingObjects.endTrackNewShape();
 			this.sync_EndAddShape();
 		}
@@ -8697,7 +8697,7 @@ background-repeat: no-repeat;\
 		const oDrawingObjects = oPresentation.GetCurrentController();
 		if(!oDrawingObjects)
 			return;
-		if (oDrawingObjects.checkTrackDrawings()) {
+		if (oDrawingObjects.isTrackingDrawings()) {
 			oDrawingObjects.endTrackNewShape();
 			this.sync_EndAddShape();
 		}

@@ -5916,12 +5916,17 @@
 				},
 
 				checkTrackDrawings: function () {
+					return this.isTrackingDrawings()
+						|| this.curState instanceof AscFormat.CInkDrawState
+						|| this.curState instanceof AscFormat.CInkEraseState;
+				},
+
+
+				isTrackingDrawings: function () {
 					return this.curState instanceof AscFormat.StartAddNewShape
 						|| this.curState instanceof AscFormat.SplineBezierState
 						|| this.curState instanceof AscFormat.PolyLineAddState
 						|| this.curState instanceof AscFormat.AddPolyLine2State
-						|| this.curState instanceof AscFormat.CInkDrawState
-						|| this.curState instanceof AscFormat.CInkEraseState
 						|| this.haveTrackedObjects();
 				},
 

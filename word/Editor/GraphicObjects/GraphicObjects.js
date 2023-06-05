@@ -1427,6 +1427,7 @@ CGraphicObjects.prototype =
     OnMouseDown: function(e, x, y, pageIndex)
     {
         //console.log("down " + this.curState.id);
+        this.checkInkState();
         this.curState.onMouseDown(e, x, y, pageIndex);
     },
 
@@ -4179,6 +4180,7 @@ CGraphicObjects.prototype =
 
     loadDocumentStateAfterLoadChanges:  DrawingObjectsController.prototype.loadDocumentStateAfterLoadChanges,
     checkTrackDrawings:  DrawingObjectsController.prototype.checkTrackDrawings,
+    isTrackingDrawings:  DrawingObjectsController.prototype.isTrackingDrawings,
 
     canChangeWrapPolygon: function()
     {

@@ -4349,7 +4349,7 @@ CPresentation.prototype.Continue_FastCollaborativeEditing = function () {
 
 	var oController = this.GetCurrentController();
 	if (oController) {
-		if (oController.checkTrackDrawings() || this.Api.isOpenedChartFrame) {
+		if (oController.isTrackingDrawings() || this.Api.isOpenedChartFrame) {
 			return;
 		}
 	}
@@ -6979,7 +6979,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
 			if (oController && !this.FocusOnNotes) {
 				if(!bCancelEyedropper && !bCancelInkDrawer) {
 					var oDrawingObjects = oController;
-					if (oDrawingObjects.checkTrackDrawings()) {
+					if (oDrawingObjects.isTrackingDrawings()) {
 						this.Api.sync_EndAddShape();
 						oDrawingObjects.endTrackNewShape();
 						this.UpdateCursorType(0, 0, new AscCommon.CMouseEventHandler());
