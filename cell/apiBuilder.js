@@ -1903,16 +1903,14 @@
 	 */
 	ApiRange.prototype.GetRows = function (nRow) {
 		if (typeof nRow === "undefined") {
-			return new ApiRange(this.range.worksheet.getRange3(this.range.bbox.r1, 0, this.range.bbox.r2, AscCommon.gc_nMaxCol0));
-			// return new ApiWorksheet(this.range.worksheet).GetRows();	// return all rows from current sheet
+			return this;
 		} else {
-			if (typeof nRow === "number" && nRow > 0 && nRow <= AscCommon.gc_nMaxRow0 + 1) {
+			if (typeof nRow === "number") {
 				nRow--;
-				if ( (nRow >= this.range.bbox.r1) && (nRow <= this.range.bbox.r2) ) {
-					return new ApiRange(this.range.worksheet.getRange3(nRow, 0, nRow, AscCommon.gc_nMaxCol0));
-				} else {
-					return new ApiRange(this.range.worksheet.getRange3(nRow, this.range.bbox.c1, nRow, this.range.bbox.c2));
-				}
+				let r = this.range.bbox.r1 + nRow;
+				if (r > AscCommon.gc_nMaxRow0) r = AscCommon.gc_nMaxRow0;
+				if (r < 0) r = 0;
+				return new ApiRange(this.range.worksheet.getRange3(r, this.range.bbox.c1, r, this.range.bbox.c2));
 			} else {
 				return new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1));
 			}
@@ -1931,19 +1929,17 @@
 	 * @param {number} nCol - The column number. * 
 	 * @returns {ApiRange | Error}
 	 */
-	 ApiRange.prototype.GetCols = function (nCol) {
+	ApiRange.prototype.GetCols = function (nCol) {
 		if (typeof nCol === "undefined") {
-			return new ApiRange(this.range.worksheet.getRange3(0, this.range.bbox.c1, AscCommon.gc_nMaxRow0, this.range.bbox.c2));
+			return this;
 		} else {
-			if (typeof nCol === "number" && nCol > 0 && nCol <= AscCommon.gc_nMaxCol0 + 1)
+			if (typeof nCol === "number")
 			{
 				nCol--;
-				if ( (nCol >= this.range.bbox.c1) && (nCol <= this.range.bbox.c2) ) {
-					return new ApiRange(this.range.worksheet.getRange3(0, nCol, AscCommon.gc_nMaxRow0, nCol));
-				}
-				else {
-					return new ApiRange(this.range.worksheet.getRange3(this.range.bbox.r1, nCol, this.range.bbox.r2, nCol));
-				}
+				let c = this.range.bbox.c1 + nCol;
+				if (c > AscCommon.gc_nMaxCol0) c = AscCommon.gc_nMaxCol0;
+				if (c < 0) c = 0;
+				return new ApiRange(this.range.worksheet.getRange3(this.range.bbox.r1, c, this.range.bbox.r2, c));
 			} else {
 				return new Error('The nCol must be greater than 0 and less then ' + (AscCommon.gc_nMaxCol0 + 1));
 			}
