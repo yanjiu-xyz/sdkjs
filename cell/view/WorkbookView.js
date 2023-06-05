@@ -3835,8 +3835,8 @@
         this.onShowDrawingObjects();
     };
 
-  WorkbookView.prototype.insertHyperlink = function(options) {
-    var ws = this.getWorksheet();
+  WorkbookView.prototype.insertHyperlink = function(options, sheetId) {
+    var ws = this.getWorksheet(sheetId);
     if (ws.objectRender.selectedGraphicObjectsExists()) {
       if (ws.objectRender.controller.canAddHyperlink()) {
         ws.objectRender.controller.insertHyperlink(options);

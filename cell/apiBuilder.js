@@ -1524,7 +1524,7 @@
 				Hyperlink.asc_setRange(address[1]);
 				Hyperlink.asc_setSheet(address[0]);
 			}
-			this.worksheet.workbook.oApi.wb.insertHyperlink(Hyperlink);
+			this.worksheet.workbook.oApi.wb.insertHyperlink(Hyperlink, this.GetIndex());
 		}
 	};
 
