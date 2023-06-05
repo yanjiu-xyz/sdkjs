@@ -2221,7 +2221,7 @@
 						for (let indR = 0; indR < nRow; indR++) {
 							let value = (maxDepth == 1 ? data[indC] : data[indR]? data[indR][indC]: null);
 							if (value === undefined || value === null)
-								value = AscCommon.cErrorLocal.na;
+								value = AscCommon.cErrorLocal["na"];
 
 							let cell = this.range.worksheet.getRange3( (bbox.r1 + indR), (bbox.c1 + indC), (bbox.r1 + indR), (bbox.c1 + indC) );
 							value = checkFormat(value.toString());
