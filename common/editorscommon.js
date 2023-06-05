@@ -1868,21 +1868,6 @@
 							if (!window.g_asc_plugins.api.licenseResult || !window.g_asc_plugins.api.licenseResult['advancedApi'])
 								return;
 
-							if (data["subType"] === "internalCommand")
-							{
-								// такие команды перечисляем здесь и считаем их функционалом
-								switch (data.data.type)
-								{
-									case "onbeforedrop":
-									case "ondrop":
-									{
-										window.g_asc_plugins.api["plugin_Method_OnDropEvent"](data.data);
-										return;
-									}
-									default:
-										break;
-								}
-							}
 							if (data["subType"] === "connector")
 							{
 								window.g_asc_plugins.externalConnectorMessage(data["data"]);
