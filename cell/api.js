@@ -6577,7 +6577,7 @@ var editor;
 	};
 
   spreadsheet_api.prototype.asc_nativeGetFile = function() {
-    var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(this.wbModel);
+	  var oBinaryFileWriter = new AscCommonExcel.BinaryFileWriter(this.wbModel);
     return oBinaryFileWriter.Write();
   };
   spreadsheet_api.prototype.asc_nativeGetFile3 = function()
@@ -6587,6 +6587,8 @@ var editor;
       return { data: oBinaryFileWriter.Write(true, true), header: oBinaryFileWriter.WriteFileHeader(oBinaryFileWriter.Memory.GetCurPosition(), Asc.c_nVersionNoBase64) };
   };
   spreadsheet_api.prototype.asc_nativeGetFileData = function() {
+	  //calc to fix case where file has formulas with no cache values and no changes
+	  this.wbModel.dependencyFormulas.calcTree();
 	  if (this.isOpenOOXInBrowser && this.saveDocumentToZip) {
 		  let res;
 		  this.saveDocumentToZip(this.wb.model, this.editorId, function(data) {
