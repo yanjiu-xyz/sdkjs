@@ -8532,7 +8532,7 @@ PasteProcessor.prototype =
 						nCurSum += dWidth;
 						if (null == oRowSums[nCurColWidth + nColSpan]) {
 							oRowSums[nCurColWidth + nColSpan] = nCurSum;
-						} else if (null != oRowSums[nCurColWidth + nColSpan - 1] && oRowSums[nCurColWidth + nColSpan - 1] >= oRowSums[nCurColWidth + nColSpan]) {
+						} else if (null != oRowSums[nCurColWidth + nColSpan - 1] && oRowSums[nCurColWidth + nColSpan - 1] >= oRowSums[nCurColWidth + nColSpan] && dWidth !== 0) {
 							oRowSums[nCurColWidth + nColSpan] += nCurSum;
 						}
 						nCurColWidth += nColSpan;
@@ -9079,6 +9079,27 @@ PasteProcessor.prototype =
 			var spans = oRowSpans[nCellIndexSpan];
 			while (null != spans) {
 				var oCurCell = row.Add_Cell(row.Get_CellsCount(), row, null, false);
+				if (spans.cell && spans.cell.Pr && spans.cell.Pr.TableCellBorders) {
+					//copy props from main cell
+					//TODO other options
+					let tableCellBorders = spans.cell.Pr.TableCellBorders;
+					let border = tableCellBorders.Left;
+					if (null != border) {
+						oCurCell.Set_Border(border, 3);
+					}
+					border = tableCellBorders.Top;
+					if (null != border) {
+						oCurCell.Set_Border(border, 0);
+					}
+					border = tableCellBorders.Right;
+					if (null != border) {
+						oCurCell.Set_Border(border, 1);
+					}
+					border = tableCellBorders.Bottom;
+					if (null != border) {
+						oCurCell.Set_Border(border, 2);
+					}
+				}
 				oCurCell.SetVMerge(vmerge_Continue);
 				if (spans.col > 1)
 					oCurCell.Set_GridSpan(spans.col);
@@ -9145,7 +9166,7 @@ PasteProcessor.prototype =
 					else
 						nRowSpan = 1;
 					if (nRowSpan > 1)
-						oRowSpans[nCellIndexSpan] = {row: nRowSpan - 1, col: nColSpan};
+						oRowSpans[nCellIndexSpan] = {row: nRowSpan - 1, col: nColSpan, cell: oCurCell};
 					this._ExecuteTableCell(tc, oCurCell, bUseScaleKoef, dScaleKoef, spacing, arrShapes, arrImages, arrTables);
 				}
 				nCellIndexSpan += nColSpan;
