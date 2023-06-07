@@ -15039,7 +15039,7 @@ CDocument.prototype.private_StoreViewPositions = function(state)
 				cursorY    = selectionBounds.Start.Y;
 				cursorH    = selectionBounds.Start.H;
 				cursorPage = selectionBounds.Start.Page;
-				anchorType = AscWord.ViewPositionType.SelectionStart;
+				anchorType = AscWord.ViewPositionType.SelectionEnd;
 			}
 		}
 		else
