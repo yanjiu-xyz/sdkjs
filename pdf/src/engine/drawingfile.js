@@ -662,7 +662,7 @@ else
 
 	CFile.prototype["getInteractiveFormsInfo"] = function()
 	{
-		var res = [];
+		var res = {};
 		var ext = Module["_GetInteractiveFormsInfo"](this.nativeFile);
 		if (ext == 0)
 			return res;
@@ -679,6 +679,13 @@ else
 		var buffer = new Uint8Array(Module["HEAP8"].buffer, ext + 4, len);
 		var reader = new CBinaryReader(buffer, 0, len);
 
+		let n = reader.readInt();
+		if (n > 0)
+			res["CO"] = [];
+		for (let i = 0; i < n; ++i)
+			res["CO"].push(reader.readInt());
+
+		res["Fields"] = [];
 		while (reader.isValid())
 		{
 			var rec = {};
@@ -874,7 +881,7 @@ else
 				readAction(reader, rec["AA"][AAType]);
 			}
 
-			res.push(rec);
+			res["Fields"].push(rec);
 		}
 
 		Module["_free"](ext);
