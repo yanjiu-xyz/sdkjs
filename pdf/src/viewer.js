@@ -1611,131 +1611,17 @@
 			oThis.isMouseMoveBetweenDownUp = false;
 			oThis.mouseDownLinkObject = oThis.getPageLinkByMouse();
 			
-			// выход из формы кликом
 			let oMouseDownField = oThis.getPageFieldByMouse();
 			oThis.onMouseDownField = oMouseDownField;
 
+			// если попали в другую форму или никуда, то выход из текущей формы
 			if (oThis.activeForm && oMouseDownField != oThis.activeForm) {
-				
-				// убираем скролл
-				if (oThis.activeForm.type == "listbox") {
-					if (oMouseDownField && oMouseDownField.GetFullName() == oThis.activeForm.GetFullName() && oMouseDownField._multipleSelection == false) {
-						oFieldToSkip = oMouseDownField;
-					}
-					oThis.activeForm.UpdateScroll(false);
-				}
-				else if (oThis.activeForm.UpdateScroll)
-					oThis.activeForm.UpdateScroll(false)
-
-				if (oThis.activeForm.type !== "checkbox" && oThis.activeForm.type !== "radiobutton") {
-					if (oThis.activeForm.IsNeedCommit() == false && oThis.activeForm.IsChanged() == false) {
-						oThis.activeForm.SetDrawFromStream(true);
-
-						if (oThis.activeForm.IsNeedRevertShiftView()) {
-							oThis.activeForm.RevertContentViewToOriginal();
-							oThis.activeForm.AddToRedraw();
-						}
-
-						oThis.activeForm.SetDrawHighlight(true);
-						oThis.activeForm.Blur;
-						oThis._paintForms();
-					}
-					else {
-						oThis.activeForm.SetDrawHighlight(true);
-						if (oThis.activeForm.IsNeedCommit()) {
-							let oDoc = oThis.activeForm.GetDocument();
-							oThis.activeForm.Commit();
-							oDoc.DoCalculateFields();
-							oDoc.AddFieldToCommit(oThis.activeForm);
-							oDoc.CommitFields();
-							oThis.activeForm.SetNeedCommit(false);
-							oThis.activeForm.Blur();
-							oThis._paintForms();
-						}
-						else if (oThis.activeForm.IsNeedRevertShiftView()) {
-							oThis.activeForm.RevertContentViewToOriginal();
-							
-							oThis.activeForm.Blur();
-							oThis._paintForms();
-						}
-						else if (oThis.activeForm._triggers.Format && oThis.activeForm.GetValue() != "") {
-							oThis.activeForm.AddToRedraw();
-							oThis.activeForm.Blur();
-							oThis._paintForms();
-						}
-					}
-					oThis.Api.WordControl.m_oDrawingDocument.TargetEnd();
-					oThis._paintFormsHighlight();
-				}
-
-				if (oThis.activeForm && oThis.activeForm.content && oThis.activeForm.content.IsSelectionEmpty()) {
-					oThis.activeForm.content.RemoveSelection();
-					oThis.onUpdateOverlay();
-				}
+				oThis.doc.OnExitFieldByClick();		
 			}
 			
 			if (oMouseDownField)
 			{
-				let oFieldBefore = oThis.activeForm;
-				let isDrawedFromStream = oMouseDownField.IsNeedDrawFromStream();
-
-				switch (oMouseDownField.type)
-				{
-					case "text":
-						oThis.fieldFillingMode = true;
-						cursorType = "text";
-						oMouseDownField.SetDrawHighlight(false);
-						oThis._paintFormsHighlight();
-						oMouseDownField.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
-						if ((oMouseDownField._triggers.Format || isDrawedFromStream) && oMouseDownField != oFieldBefore) {
-							/*
-								to do
-								при щелчке по форме с установленным форматом, чтобы отобразить неформатированный, перерисоываются все формы
-								нужно переделать чтобы можно было увидеть неформатированный контент не отрисовывая заново все формы
-							*/
-							oMouseDownField.AddToRedraw();
-							oThis._paintForms();
-						}
-							
-						oThis.Api.WordControl.m_oDrawingDocument.TargetStart();
-						oThis.Api.WordControl.m_oDrawingDocument.showTarget(true);
-						oThis.onUpdateOverlay();
-						break;
-					case "combobox":
-						oMouseDownField.SetDrawHighlight(false);
-						oThis._paintFormsHighlight();
-						oMouseDownField.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
-						if ((oMouseDownField._triggers.Format || isDrawedFromStream) && oMouseDownField != oFieldBefore) {
-							/*
-								to do
-								при щелчке по форме с установленным форматом, чтобы отобразить неформатированный, перерисоываются все формы
-								нужно переделать чтобы можно было увидеть неформатированный контент не отрисовывая заново все формы
-							*/
-							oMouseDownField.AddToRedraw();
-							oThis._paintForms();
-						}
-
-						oThis.Api.WordControl.m_oDrawingDocument.TargetStart();
-						oThis.Api.WordControl.m_oDrawingDocument.showTarget(true);
-						oThis.onUpdateOverlay();
-						if (oMouseDownField._editable)
-							oThis.fieldFillingMode = true;
-						cursorType = "text";
-						break;
-					case "listbox":
-						oThis.Api.WordControl.m_oDrawingDocument.TargetEnd();
-						oMouseDownField.SetDrawHighlight(false);
-						oThis._paintFormsHighlight();
-						oMouseDownField.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
-						oThis.onUpdateOverlay();
-						cursorType = "pointer";
-						break;
-					case "button":
-					case "radiobutton":
-					case "checkbox":
-						oMouseDownField.onMouseDown(e);
-						break;
-				}
+				oThis.doc.OnMouseDownField(oMouseDownField, e); 
 			}
 			else if (oThis.activeForm) {
 				oThis.activeForm.Blur();
@@ -1848,53 +1734,12 @@
 
 			AscCommon.check_MouseUpEvent(e);
 
-			
 			let oMouseUpField = oThis.getPageFieldByMouse();
 			if (oThis.MouseHandObject)
 			{
 				if (oMouseUpField && oThis.onMouseDownField == oMouseUpField)
 				{
-					if (global_mouseEvent.ClickCount == 2 && (oThis.onMouseDownField.type == "text" || oThis.onMouseDownField.type == "combobox"))
-					{
-						oThis.onMouseDownField.content.SelectAll();
-						if (oThis.onMouseDownField.content.IsSelectionEmpty() == false)
-							oThis.Api.WordControl.m_oDrawingDocument.TargetEnd();
-						else
-							oThis.onMouseDownField.content.RemoveSelection();
-
-						oThis.onUpdateOverlay();
-					}
-					else if (!oThis.isMouseMoveBetweenDownUp && oThis.onMouseDownField.content && oThis.onMouseDownField.content.IsSelectionUse())
-					{
-						oThis.onMouseDownField.content.RemoveSelection();
-						oThis.onUpdateOverlay();
-					}
-
-					switch (oThis.onMouseDownField.type)
-					{
-						case "checkbox":
-						case "radiobutton":
-							oThis.Api.WordControl.m_oDrawingDocument.TargetEnd();
-							if (oMouseUpField == oThis.onMouseDownField) {
-								oThis.onMouseDownField.onMouseUp();
-
-								if (oThis.onMouseDownField.IsNeedCommit()) {
-									let oDoc = oThis.onMouseDownField.GetDocument();
-									oDoc.DoCalculateFields();
-									oDoc.AddFieldToCommit(oThis.onMouseDownField);
-									oDoc.CommitFields();
-									
-									oThis._paintForms();
-								}
-							}
-							cursorType = "pointer";
-							oThis.fieldFillingMode = false;
-							break;
-						default:
-							if (oMouseUpField == oThis.onMouseDownField)
-								oThis.onMouseDownField.onMouseUp();
-							break;
-					}
+					oThis.doc.OnMouseUpField(oMouseUpField, e);
 				}
 				else if (oThis.mouseDownLinkObject)
 				{
@@ -1933,52 +1778,7 @@
 			else {
 				if (oMouseUpField && oThis.onMouseDownField == oMouseUpField)
 				{
-					if (global_mouseEvent.ClickCount == 2 && oThis.onMouseDownField.type == "text" || oThis.onMouseDownField.type == "combobox")
-					{
-						oThis.onMouseDownField.content.SelectAll();
-						if (oThis.onMouseDownField.content.IsSelectionEmpty() == false)
-							oThis.Api.WordControl.m_oDrawingDocument.TargetEnd();
-						else
-							oThis.onMouseDownField.content.RemoveSelection();
-
-						oThis.onUpdateOverlay();
-					}
-					else if (!oThis.isMouseMoveBetweenDownUp && oThis.onMouseDownField.content && oThis.onMouseDownField.content.IsSelectionUse())
-					{
-						oThis.onMouseDownField.content.RemoveSelection();
-						oThis.onUpdateOverlay();
-					}
-
-					switch (oThis.onMouseDownField.type)
-					{
-						case "checkbox":
-						case "radiobutton":
-							oThis.Api.WordControl.m_oDrawingDocument.TargetEnd();
-							if (oMouseUpField == oThis.onMouseDownField) {
-								oThis.onMouseDownField.onMouseUp();
-
-								if (oThis.onMouseDownField.IsNeedCommit()) {
-									let oDoc = oThis.onMouseDownField.GetDocument();
-									oDoc.DoCalculateFields();
-									oDoc.AddFieldToCommit(oThis.onMouseDownField);
-									oDoc.CommitFields();
-									
-									oThis._paintForms();
-								}
-							}
-								
-							cursorType = "pointer";
-							oThis.fieldFillingMode = false;
-							break;
-						case "button":
-							if (oMouseUpField == oThis.onMouseDownField)
-								oThis.onMouseDownField.onMouseUp();
-							break;
-					}
-
-					oThis.isMouseMoveBetweenDownUp = false;
-					oThis.mouseDownLinkObject = null;
-					return;
+					oThis.doc.OnMouseUpField(oMouseUpField, e);
 				}
 			}
 
@@ -3215,57 +3015,8 @@
 			}
 			else if (e.KeyCode === 13) // Enter
 			{
-				if (this.activeForm)
-				{
-					window.event.stopPropagation();
-					switch (this.activeForm.type)
-					{
-						case "checkbox":
-						case "radiobutton":
-							this.activeForm.onMouseUp();
-							break;
-						default:
-							this.activeForm.SetDrawHighlight(true);
-							if (this.activeForm.UpdateScroll)
-								this.activeForm.UpdateScroll(false);
-
-							if (this.activeForm.IsNeedCommit()) {
-								this.fieldFillingMode = false;
-								let oDoc = this.activeForm.GetDocument();
-
-								let isCanCommit = true;
-								if (["text", "combobox"].includes(this.activeForm.type)) {
-									isCanCommit = this.activeForm.DoValidateAction(this.activeForm.GetValue());
-								}
-								if (isCanCommit) {
-									this.activeForm.needValidate = false; 
-									this.activeForm.Commit();
-									oDoc.DoCalculateFields();
-									oDoc.AddFieldToCommit(this.activeForm);
-									oDoc.CommitFields();
-								}
-								else {
-									this.activeForm.UndoNotAppliedChanges();
-									if (this.activeForm.IsChanged() == false) {
-										this.activeForm.SetDrawFromStream(true);
-									}
-								}
-								
-								this.activeForm = null;
-								this._paintForms();
-							}
-							else if (this.activeForm._triggers.Format && this.activeForm.GetValue() != "") {
-								this.activeForm.AddToRedraw();
-								this.activeForm = null;
-								this._paintForms();
-							}
-							
-							this.Api.WordControl.m_oDrawingDocument.TargetEnd();
-							break;
-					}
-
-					this._paintFormsHighlight();
-				}
+				window.event.stopPropagation();
+				this.doc.EnterDownActiveField(this.activeForm);
 			}
 			else if (e.KeyCode === 27) // Esc
 			{
@@ -3551,119 +3302,16 @@
 			}
 			else if ( e.KeyCode == 89 && true === e.CtrlKey ) // Ctrl + Y
 			{
-				this.DoRedo();
+				this.doc.DoRedo();
 				bRetValue = true;
 			}
 			else if ( e.KeyCode == 90 && true === e.CtrlKey ) // Ctrl + Z
 			{
-				this.DoUndo();
+				this.doc.DoUndo();
 				bRetValue = true;
 			}
 
 			return bRetValue;
-		};
-		this.DoUndo = function()
-		{
-			if (AscCommon.History.Can_Undo())
-			{
-				let oCurPoint = AscCommon.History.Points[AscCommon.History.Index];
-				let nCurPoindIdx = AscCommon.History.Index;
-
-				// if (this.activeForm && oCurPoint.Additional.FormFilling != this.activeForm)
-				// 	return;
-					
-				this.isOnUndoRedo = true;
-				
-				AscCommon.History.Undo();
-				let oParentForm = oCurPoint.Additional.FormFilling;
-				if (oParentForm) {
-					// если форма активна, то изменения (undo) применяются только для неё
-					// иначе для всех с таким именем (для checkbox и radiobutton всегда применяем для всех)
-					// так же применяем для всех, если добрались до точки, общей для всех форм, а не примененнёые изменения удаляем (для всех кроме checkbox и radiobutton)
-					if ((this.activeForm == null || oCurPoint.Additional && oCurPoint.Additional.CanUnion === false || nCurPoindIdx == 0) || 
-						(oParentForm.type == "checkbox" || oParentForm.type == "radiobutton")) {
-							this.Api.WordControl.m_oDrawingDocument.TargetEnd(); // убираем курсор
-							
-							if (oParentForm.type == "listbox") {
-								oParentForm.Commit(null);
-							}
-							// для радиокнопок храним все изменения, т.к. значения не идентичны для каждой формы из группы
-							// восстанавлием все состояния из истории полностью, поэтому значение формы не нужно применять.
-							else if ("radiobutton" != oParentForm.type)
-								oParentForm.Commit();
-	
-							// вызываем calculate actions
-							let oDoc = oParentForm.GetDocument();
-							oDoc.DoCalculateFields();
-							oDoc.CommitFields();
-	
-							// выход из формы
-							if (this.activeForm)
-							{
-								this.activeForm.SetDrawHighlight(true);
-								this._paintFormsHighlight();
-								this.activeForm = null;
-							}
-					}
-
-					oParentForm.SetNeedRecalc(true);
-					oParentForm.AddToRedraw();
-
-					// Перерисуем страницу, на которой произошли изменения
-					this._paintForms();
-				}
-				
-				this.isOnUndoRedo = false;
-			}
-		};
-		this.DoRedo = function()
-		{
-			if (AscCommon.History.Can_Redo())
-			{
-				this.isOnUndoRedo = true;
-
-				AscCommon.History.Redo();
-				let nCurPoindIdx = AscCommon.History.Index;
-				let oCurPoint = AscCommon.History.Points[nCurPoindIdx];
-
-				let oParentForm = oCurPoint.Additional.FormFilling;
-				if (oParentForm) {
-					// если мы в форме, то изменения (undo) применяются только для неё
-					// иначе для всех с таким именем
-					if (this.activeForm == null || oCurPoint.Additional && oCurPoint.Additional.CanUnion === false) {
-						this.Api.WordControl.m_oDrawingDocument.TargetEnd(); // убираем курсор
-							
-						if (oParentForm.type == "listbox") {
-							oParentForm.Commit(null);
-						}
-						// для радиокнопок храним все изменения, т.к. значения не идентичны для каждой формы из группы
-						// восстанавлием все состояния из истории полностью, поэтому значение формы не нужно применять.
-						else if ("radiobutton" != oParentForm.type)
-							oParentForm.Commit();
-
-						// вызываем calculate actions
-						let oDoc = oParentForm.GetDocument();
-						oDoc.DoCalculateFields();
-						oDoc.CommitFields();
-
-						// выход из формы
-						if (this.activeForm)
-						{
-							this.activeForm.SetDrawHighlight(true);
-							this._paintFormsHighlight();
-							this.activeForm = null;
-						}
-					}
-
-					oParentForm.SetNeedRecalc(true);
-					oParentForm.AddToRedraw()
-					
-					// Перерисуем страницу, на которой произошли изменения
-					this._paintForms();
-				}
-
-				this.isOnUndoRedo = false;
-			}
 		};
 		this.showTextMessage = function()
 		{

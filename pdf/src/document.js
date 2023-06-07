@@ -32,6 +32,22 @@
 
 (function(){
 
+    /**
+	 * event properties.
+	 * @typedef {Object} oEventPr
+	 * @property {string} [change=""] - A string specifying the change in value that the user has just typed. A JavaScript may replace part or all of this string with different characters. The change may take the form of an individual keystroke or a string of characters (for example, if a paste into the field is performed).
+	 * @property {boolean} [rc=true] - Used for validation. Indicates whether a particular event in the event chain should succeed. Set to false to prevent a change from occurring or a value from committing. The default is true.
+	 * @property {object} [target=undefined] - The target object that triggered the event. In all mouse, focus, blur, calculate, validate, and format events, it is the Field object that triggered the event. In other events, such as page open and close, it is the Doc or this object.
+	 * @property {any} value ->
+     *  This property has different meanings for different field events:
+     *    For the Field/Validate event, it is the value that the field contains when it is committed. For a combo box, it is the face value, not the export value.  
+     *    For a Field/Calculate event, JavaScript should set this property. It is the value that the field should take upon completion of the event.    
+     *    For a Field/Format event, JavaScript should set this property. It is the value used when generating the appearance for the field. By default, it contains the value that the user has committed. For a combo box, this is the face value, not the export value.   
+     *    For a Field/Keystroke event, it is the current value of the field. If modifying a text field, for example, this is the text in the text field before the keystroke is applied.
+     *    For Field/Blur and Field/Focus events, it is the current value of the field. During these two events, event.value is read only. That is, the field value cannot be changed by setting event.value.
+     * @property {boolean} willCommit -  Verifies the current keystroke event before the data is committed. It can be used to check target form field values to verify, for example, whether character data was entered instead of numeric data. JavaScript sets this property to true after the last keystroke event and before the field is validated.
+	 */
+
     let AscPDFEditor = window["AscPDFEditor"];
 
     function CCalculateInfo(oDoc) {
@@ -63,7 +79,7 @@
         this.api = this.GetDocumentApi();
         this.CalculateInfo = new CCalculateInfo(this);
         this.fieldsToCommit = [];
-        this.formsEvent = {};
+        this.event = {};
     }
 
     CPDFDoc.prototype.CommitFields = function() {
@@ -100,7 +116,30 @@
         if (oCurForm && oNextForm) {
             if (oCurForm.IsNeedCommit()) {
                 isNeedRedraw = true;
-                oCurForm.Commit();
+
+                let isValid = true;
+                if (["text", "combobox"].includes(oCurForm.type)) {
+                    isValid = oCurForm.DoValidateAction(oCurForm.GetValue());
+                }
+
+                if (isValid) {
+                    oCurForm.needValidate = false; 
+                    oCurForm.Commit();
+                    if (this.event["rc"] == true) {
+                        this.DoCalculateFields();
+                        this.AddFieldToCommit(oCurForm);
+                        this.CommitFields();
+                    }
+                }
+                else {
+                    oNextForm = null;
+                    oCurForm.UndoNotAppliedChanges();
+                    if (oCurForm.IsChanged() == false) {
+                        oCurForm.SetDrawFromStream(true);
+                    }
+                }
+
+                oCurForm.SetNeedCommit(false);
             }
             else if (oCurForm.IsChanged() == false) {
                 isNeedRedraw = true;
@@ -270,6 +309,337 @@
         let xOffset = aOrigRect[0] + (aOrigRect[2] - aOrigRect[0]) / 2 - nViewedW / 2;
 
         oViewer.navigateToPage(nPage, yOffset > 0 ? yOffset : undefined, xOffset > 0 ? xOffset : undefined);
+    };
+    CPDFDoc.prototype.EnterDownActiveField = function() {
+        let oViewer = editor.getDocumentRenderer();
+        let oField = oViewer.activeForm;
+
+        if (["checkbox", "radiobutton"].includes(oField.type)) {
+            oField.onMouseUp();
+        }
+        else {
+            oField.SetDrawHighlight(true);
+            oField.UpdateScroll && oField.UpdateScroll(false); // убираем скролл
+
+            if (oField.IsNeedCommit()) {
+                oViewer.fieldFillingMode = false;
+
+                let isValid = true;
+                if (["text", "combobox"].includes(oField.type)) {
+                    isValid = oField.DoValidateAction(oField.GetValue());
+                }
+                if (isValid) {
+                    oField.needValidate = false; 
+                    oField.Commit();
+                    if (this.event["rc"] == true) {
+                        this.DoCalculateFields();
+                        this.AddFieldToCommit(oField);
+                        this.CommitFields();
+                    }
+                }
+                else {
+                    oNextForm = null;
+                    oField.UndoNotAppliedChanges();
+                    if (oField.IsChanged() == false) {
+                        oField.SetDrawFromStream(true);
+                    }
+                }
+
+                oField.SetNeedCommit(false);
+                
+                oViewer._paintForms();
+            }
+            else if (oField.GetTrigger(AscPDFEditor.FORMS_TRIGGERS_TYPES.Format) && oField.GetValue() != "") {
+                oField.AddToRedraw();
+                oViewer._paintForms();
+            }
+            
+            oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd(); // убираем курсор
+        }
+
+        oViewer._paintFormsHighlight();
+    };
+    CPDFDoc.prototype.OnExitFieldByClick = function(bSkipRedraw) {
+        let oViewer         = editor.getDocumentRenderer();
+        let oActiveForm     = oViewer.activeForm;
+        let oActionsQueue   = this.GetActionsQueue();
+
+        oActiveForm.UpdateScroll && oActiveForm.UpdateScroll(false); // убираем скрол
+        oActiveForm.SetDrawHighlight(true);
+
+        // если чекбокс то выходим сразу
+        if (["checkbox", "radiobutton"].includes(oActiveForm.type)) {
+            oActiveForm.Blur();
+            
+            if (oActionsQueue.IsInProgress() == false)
+                oViewer._paintFormsHighlight();
+
+            return;
+        }
+        
+        if (oActiveForm.IsNeedCommit()) {
+            let isValid = true;
+            if (["text", "combobox"].includes(oActiveForm.type)) {
+                isValid = oActiveForm.DoValidateAction(oActiveForm.GetValue());
+            }
+
+            if (isValid) {
+                oActiveForm.needValidate = false; 
+                oActiveForm.Commit();
+                if (this.event["rc"] == true) {
+                    this.DoCalculateFields();
+                    this.AddFieldToCommit(oActiveForm);
+                    this.CommitFields();
+                }
+            }
+            else {
+                oNextForm = null;
+                oActiveForm.UndoNotAppliedChanges();
+                if (oActiveForm.IsChanged() == false) {
+                    oActiveForm.SetDrawFromStream(true);
+                }
+            }
+
+            oActiveForm.SetNeedCommit(false);
+        }
+        else {
+            if (oActiveForm.IsChanged() == false) {
+                oActiveForm.SetDrawFromStream(true);
+    
+                if (oActiveForm.IsNeedRevertShiftView()) {
+                    oActiveForm.RevertContentViewToOriginal();
+                    oActiveForm.AddToRedraw();
+                }
+            }
+
+            if (oActiveForm.IsNeedRevertShiftView()) {
+                oActiveForm.RevertContentViewToOriginal();
+            }
+            
+            if (oActiveForm.curContent === oActiveForm.contentFormat) {
+                oActiveForm.AddToRedraw();
+            }
+        }
+        
+        oActiveForm.Blur();
+        oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
+        if (oActionsQueue.IsInProgress() == false) {
+            oViewer._paintForms();
+            oViewer._paintFormsHighlight();
+        }
+
+        if (oActiveForm && oActiveForm.content && oActiveForm.content.IsSelectionEmpty()) {
+            oActiveForm.content.RemoveSelection();
+            oViewer.onUpdateOverlay();
+        }
+    };
+    CPDFDoc.prototype.OnMouseDownField = function(oField, event) {
+        let oViewer         = editor.getDocumentRenderer();
+        let oActionsQueue   = this.GetActionsQueue();
+
+        switch (oField.type)
+        {
+            case "text":
+            case "combobox":
+                oField.SetDrawHighlight(false);
+                oViewer._paintFormsHighlight();
+                oField.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, event);
+                    
+                oViewer.onUpdateOverlay();
+                if (oField._editable != false)
+                    oViewer.fieldFillingMode = true;
+                break;
+            case "listbox":
+                oField.SetDrawHighlight(false);
+                oViewer._paintFormsHighlight();
+                oField.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, event);
+                
+                oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
+                oViewer.onUpdateOverlay();
+                break;
+            case "button":
+            case "radiobutton":
+            case "checkbox":
+                oField.onMouseDown(event);
+                break;
+        }
+
+        if (oActionsQueue.IsInProgress() == false && oViewer.pagesInfo.pages[oField.GetPage()].needRedrawForms)
+            oViewer._paintForms();
+    };
+    CPDFDoc.prototype.OnMouseUpField = function(oField, event) {
+        let oViewer         = editor.getDocumentRenderer();
+        let oActionsQueue   = this.GetActionsQueue();
+
+        if (global_mouseEvent.ClickCount == 2 && (oField.type == "text" || oField.type == "combobox"))
+        {
+            oField.content.SelectAll();
+            if (oField.content.IsSelectionEmpty() == false)
+                oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
+            else
+                oField.content.RemoveSelection();
+
+            oViewer.onUpdateOverlay();
+        }
+        else if (!oViewer.isMouseMoveBetweenDownUp && oField.content && oField.content.IsSelectionUse())
+        {
+            oField.content.RemoveSelection();
+            oViewer.onUpdateOverlay();
+        }
+
+        switch (oField.type)
+        {
+            case "checkbox":
+            case "radiobutton":
+                oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
+                if (oMouseUpField == oField) {
+                    oField.onMouseUp();
+
+                    if (oField.IsNeedCommit()) {
+                        let oDoc = oField.GetDocument();
+                        oDoc.DoCalculateFields();
+                        oDoc.AddFieldToCommit(oField);
+                        oDoc.CommitFields();
+                        
+                        oViewer._paintForms();
+                    }
+                }
+                cursorType = "pointer";
+                oViewer.fieldFillingMode = false;
+                break;
+            default:
+                oField.onMouseUp();
+                break;
+        }
+
+        if (oActionsQueue.IsInProgress() == false && oViewer.pagesInfo.pages[oField.GetPage()].needRedrawForms)
+            oViewer._paintForms();
+    };
+    CPDFDoc.prototype.DoUndo = function() {
+        let oViewer = editor.getDocumentRenderer();
+
+        if (AscCommon.History.Can_Undo())
+        {
+            let oCurPoint = AscCommon.History.Points[AscCommon.History.Index];
+            let nCurPoindIdx = AscCommon.History.Index;
+
+            oViewer.isOnUndoRedo = true;
+            
+            AscCommon.History.Undo();
+            let oParentForm = oCurPoint.Additional.FormFilling;
+            if (oParentForm) {
+                // если форма активна, то изменения (undo) применяются только для неё
+                // иначе для всех с таким именем (для checkbox и radiobutton всегда применяем для всех)
+                // так же применяем для всех, если добрались до точки, общей для всех форм, а не примененнёые изменения удаляем (для всех кроме checkbox и radiobutton)
+                if ((oViewer.activeForm == null || oCurPoint.Additional && oCurPoint.Additional.CanUnion === false || nCurPoindIdx == 0) || 
+                    (oParentForm.type == "checkbox" || oParentForm.type == "radiobutton")) {
+                        oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd(); // убираем курсор
+                        
+                        if (oParentForm.type == "listbox") {
+                            oParentForm.Commit(null);
+                        }
+                        // для радиокнопок храним все изменения, т.к. значения не идентичны для каждой формы из группы
+                        // восстанавлием все состояния из истории полностью, поэтому значение формы не нужно применять.
+                        else if ("radiobutton" != oParentForm.type)
+                            oParentForm.Commit();
+
+                        // вызываем calculate actions
+                        let oDoc = oParentForm.GetDocument();
+                        oDoc.DoCalculateFields();
+                        oDoc.CommitFields();
+
+                        // выход из формы
+                        if (oViewer.activeForm)
+                        {
+                            oViewer.activeForm.SetDrawHighlight(true);
+                            oViewer._paintFormsHighlight();
+                            oViewer.activeForm = null;
+                        }
+                }
+
+                oParentForm.SetNeedRecalc(true);
+                oParentForm.AddToRedraw();
+
+                // Перерисуем страницу, на которой произошли изменения
+                oViewer._paintForms();
+            }
+            
+            oViewer.isOnUndoRedo = false;
+        }
+    };
+    CPDFDoc.prototype.DoRedo = function() {
+        let oViewer = editor.getDocumentRenderer();
+
+        if (AscCommon.History.Can_Redo())
+        {
+            oViewer.isOnUndoRedo = true;
+
+            AscCommon.History.Redo();
+            let nCurPoindIdx = AscCommon.History.Index;
+            let oCurPoint = AscCommon.History.Points[nCurPoindIdx];
+
+            let oParentForm = oCurPoint.Additional.FormFilling;
+            if (oParentForm) {
+                // если мы в форме, то изменения (undo) применяются только для неё
+                // иначе для всех с таким именем
+                if (oViewer.activeForm == null || oCurPoint.Additional && oCurPoint.Additional.CanUnion === false) {
+                    oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd(); // убираем курсор
+                        
+                    if (oParentForm.type == "listbox") {
+                        oParentForm.Commit(null);
+                    }
+                    // для радиокнопок храним все изменения, т.к. значения не идентичны для каждой формы из группы
+                    // восстанавлием все состояния из истории полностью, поэтому значение формы не нужно применять.
+                    else if ("radiobutton" != oParentForm.type)
+                        oParentForm.Commit();
+
+                    // вызываем calculate actions
+                    let oDoc = oParentForm.GetDocument();
+                    oDoc.DoCalculateFields();
+                    oDoc.CommitFields();
+
+                    // выход из формы
+                    if (oViewer.activeForm)
+                    {
+                        oViewer.activeForm.SetDrawHighlight(true);
+                        oViewer._paintFormsHighlight();
+                        oViewer.activeForm = null;
+                    }
+                }
+
+                oParentForm.SetNeedRecalc(true);
+                oParentForm.AddToRedraw()
+                
+                // Перерисуем страницу, на которой произошли изменения
+                oViewer._paintForms();
+            }
+
+            oViewer.isOnUndoRedo = false;
+        }
+    };
+    CPDFDoc.prototype.SetEvent = function(oEventPr) {
+        if (oEventPr["target"] != null && oEventPr["target"] != this.event["target"])
+            this.event["target"] = oEventPr["target"];
+
+        if (oEventPr["rc"] != null)
+            this.event["rc"] = oEventPr["rc"];
+        else
+            this.event["rc"] = true;
+
+        if (oEventPr["change"] != null && oEventPr["change"] != this.event["change"])
+            this.event["change"] = oEventPr["change"];
+            
+        if (oEventPr["value"] != null && oEventPr["value"] != this.event["value"])
+            this.event["value"] = oEventPr["value"];
+
+        if (oEventPr["willCommit"] != null)
+            this.event["willCommit"] = oEventPr["willCommit"];
+    };
+    CPDFDoc.prototype.SetWarningInfo = function(oInfo) {
+        this.warningInfo = oInfo;
+    };
+    CPDFDoc.prototype.GetWarningInfo = function() {
+        return this.warningInfo;
     };
 
     CPDFDoc.prototype.DoCalculateFields = function() {
