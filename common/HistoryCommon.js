@@ -3209,7 +3209,7 @@
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений класса CDocumentMacros
 	//------------------------------------------------------------------------------------------------------------------
-	window['AscDFH'].historyitem_DocumentMacros_Data = window['Asc'].historyitem_type_DocumentMacros | 1;
+	window['AscDFH'].historyitem_DocumentMacros_Data = window['AscDFH'].historyitem_type_DocumentMacros | 1;
 
 
 
