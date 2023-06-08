@@ -592,7 +592,6 @@
 			}
 			graphics.reset();
 			graphics.SetIntegerGrid(true);
-			this.drawAnimLabels && this.drawAnimLabels(graphics);
 		};
 
 
