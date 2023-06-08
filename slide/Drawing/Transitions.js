@@ -2645,32 +2645,7 @@ function lcm(n, m) {
     return n * m / gcd(n, m);
 }
 
-function CPathMorph(oPath1, oBrush1, oPen1, oPath2, oBrush2, oPen2)
-{
-    this.path1 = oPath1;
-    this.brush1 = oBrush1;
-    this.pen1 = oPen1;
-    this.path2 = oPath2;
-    this.brush2 = oBrush2;
-    this.pen2 = oPen2;
 
-    this.path = null;
-    this.brush = null;
-    this.pen = null;
-}
-
-CPathMorph.prototype.morph = function (dRelTime) {
-
-};
-CPathMorph.prototype.morphBrush = function () {
-
-};
-CPathMorph.prototype.morphPen = function () {
-
-};
-CPathMorph.prototype.morphUniFill = function (oUniFill1, oUniFill2) {
-
-};
 
 
 function CMorphObjectBase(nRelH1, nRelH2) {
@@ -3048,7 +3023,6 @@ CSlideMorphEffect.prototype.init = function() {
 CSlideMorphEffect.prototype.pushMorphObject = function (oMorph) {
     this.morphObjects.push(oMorph);
 };
-
 CSlideMorphEffect.prototype.addShapeMorphs = function (oShape1, nRelH1, oShape2, nRelH2) {
     const oGeometry1 = oShape1.getGeometry();
     const oGeometry2 = oShape2.getGeometry();
