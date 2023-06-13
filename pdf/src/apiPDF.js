@@ -263,18 +263,14 @@
         "borderStyle": {
             set(sValue) {
                 if (Object.values(border).includes(sValue)) {
-                    let aFields = this._doc.GetFields(this.name);
+                    let aFields = this.field.GetDocument().GetFields(this.name);
                     aFields.forEach(function(field) {
-                        field._borderStyle = sValue;
-                        field.SetNeedRecalc(true);
-                        field.content.GetElement(0).Content.forEach(function(run) {
-                            run.RecalcInfo.Measure = true;
-                        });
+                        field.SetBorderStyle(private_GetIntBorderStyle(sValue));
                     });
                 }
             },
             get() {
-                return this._borderStyle;
+                return private_GetStrBorderStyle(this.field._borderStyle);
             }
         },
         "delay": {
@@ -589,20 +585,28 @@
         },
         "buttonFitBounds": {
             set(bValue) {
-                if (typeof(bValue) == "boolean")
-                    this._buttonFitBounds = bValue;
+                if (typeof(bValue) == "boolean") {
+                    let aFields = this.field.GetDocument().GetFields(this.name);
+                    aFields.forEach(function(field) {
+                        field.SetButtonFitBounds(bValue);
+                    });
+                }
             },
             get() {
-                return this._buttonFitBounds;
+                return this.field.GetButtonFitBound();
             }
         },
         "buttonPosition": {
             set(nValue) {
-                if (Object.values(position).includes(nValue))
-                    this._buttonPosition = nValue;
+                if (Object.values(position).includes(nValue)) {
+                    let aFields = this.field.GetDocument().GetFields(this.name);
+                    aFields.forEach(function(field) {
+                        field.SetButtonPosition(nValue);
+                    });
+                }
             },
             get() {
-                return this._buttonPosition;
+                return this.field.GetButtonPosition();
             }
         },
         "buttonScaleHow": {
@@ -812,7 +816,7 @@
             set(sValue) {
                 if (Object.values(ALIGN_TYPE).includes(sValue)) {
                     this._alignment = sValue;
-                    var nJcType = private_GetFieldAlign(sValue);
+                    var nJcType = private_GetIntAlign(sValue);
 
                     let aFields = this.field._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
@@ -821,7 +825,7 @@
                 }
             },
             get() {
-                return this._alignment;
+                return private_GetStrAlign(this.field.GetAlign());
             }
         },
         "calcOrderIndex": {
@@ -839,26 +843,14 @@
         },
         "charLimit": {
             set(nValue) {
-                if (typeof(nValue) == "number" && nValue <= 500 && nValue > 0 && this.fileSelect === false) {
-                    let aFields = this._doc.GetFields(this.name);
-                    nValue = Math.round(nValue);
-                    if (this._charLimit != nValue) {
-                        let aChars = [];
-                        let sText = this.content.GetElement(0).GetText({ParaEndToSpace: false});
-                        for (let i = 0; i < sText.length; i++) {
-                            aChars.push(sText[i].charCodeAt(0));
-                        }
+                let aFields = this.field.GetDocument().GetFields(this.name);
 
-                        aFields.forEach(function(field) {
-                            field._charLimit = nValue;
-                            field.content.SelectAll();
-                            field.EnterText(aChars);
-                        });
-                    }
-                }
+                aFields.forEach(function(field) {
+                    field.SetCharLimit(nValue);
+                });
             },
             get() {
-                return this._charLimit;
+                return this.field.GetCharLimit();
             }
         },
         "comb": {
@@ -866,14 +858,13 @@
                 if (typeof(bValue) != "boolean")
                     return;
 
-                let aFields = this._doc.GetFields(this.name);
+                let aFields = this.field.GetDocument().GetFields(this.name);
                 aFields.forEach(function(field) {
                     field.SetComb(bValue);
-                    field.SetNeedRecalc(true);
                 });
             },
             get() {
-                return this._comb;
+                return this.field.IsComb();
             }
         },
         "doNotScroll": {
@@ -1459,17 +1450,58 @@
         });
     }
 
-    function private_GetFieldAlign(sJc)
+    function private_GetIntAlign(sType)
 	{
-		if ("left" === sJc)
-			return align_Left;
-		else if ("right" === sJc)
-			return align_Right;
-		else if ("center" === sJc)
-			return align_Center;
+		if ("left" === sType)
+			return AscPDFEditor.ALIGN_TYPE.left;
+		else if ("right" === sType)
+			return AscPDFEditor.ALIGN_TYPE.right;
+		else if ("center" === sType)
+			return AscPDFEditor.ALIGN_TYPE.center;
 
 		return undefined;
 	}
+    function private_GetStrAlign(nType) {
+        if (AscPDFEditor.ALIGN_TYPE.left === nType)
+            return "left";
+        else if (AscPDFEditor.ALIGN_TYPE.right === nType)
+            return "right";
+        else if (AscPDFEditor.ALIGN_TYPE.center === nType)
+            return "center";
+
+        return undefined;
+    }
+
+    function private_GetIntBorderStyle(sType) {
+        switch (sType) {
+            case "solid":
+                return AscPDFEditor.BORDER_TYPES.solid;
+            case "dashed":
+                return AscPDFEditor.BORDER_TYPES.dashed;
+            case "beveled":
+                return AscPDFEditor.BORDER_TYPES.beveled;
+            case "inset":
+                return AscPDFEditor.BORDER_TYPES.inset;
+            case "underline":
+                return AscPDFEditor.BORDER_TYPES.underline;
+            
+        }
+    }
+    function private_GetStrBorderStyle(nType) {
+        switch (nType) {
+            case AscPDFEditor.BORDER_TYPES.solid:
+                return "solid";
+            case AscPDFEditor.BORDER_TYPES.dashed:
+                return "dashed";
+            case AscPDFEditor.BORDER_TYPES.beveled:
+                return "beveled";
+            case AscPDFEditor.BORDER_TYPES.inset:
+                return "inset";
+            case AscPDFEditor.BORDER_TYPES.underline:
+                return "underline";
+            
+        }
+    }
 
     if (!window["AscPDFEditor"])
 	    window["AscPDFEditor"] = {};

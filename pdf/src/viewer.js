@@ -960,9 +960,9 @@
 			let aFormsInfo = this.file.nativeFile.getInteractiveFormsInfo();
 			
 			let oFormInfo, oForm, aRect;
-			for (let i = 0; i < aFormsInfo.length; i++)
+			for (let i = 0; i < aFormsInfo["Fields"].length; i++)
 			{
-				oFormInfo = aFormsInfo[i];
+				oFormInfo = aFormsInfo["Fields"][i];
 
 				let oRect	= oFormInfo["rect"];
 				let nScaleY = this.drawingPages[oFormInfo["page"]].H / this.file.pages[oFormInfo["page"]].H;
@@ -981,7 +981,7 @@
 				// appearance
 				if (oFormInfo["borderStyle"] != null)
 				{
-					oForm.SetBorderType(oFormInfo["borderStyle"]);
+					oForm.SetBorderStyle(oFormInfo["borderStyle"]);
 				}
 
 				if (oFormInfo["borderWidth"] != null)
@@ -1022,10 +1022,14 @@
 
 				// button
 				if (oFormInfo["positionCaption"] != null) {
-					oForm.SetLayout(oFormInfo["positionCaption"]);
+					oForm.SetButtonPosition(oFormInfo["positionCaption"]);
 				}
 				if (oFormInfo["caption"] != null && oForm["type"] == "button") {
 					oForm.SetCaption(oFormInfo["caption"]);
+				}
+				if (oFormInfo["IF"] != null) {
+					if (oFormInfo["IF"]["FB"] != null)
+						oForm.SetButtonFitBounds(Boolean(oFormInfo["IF"]["FB"]));
 				}
 
 				// combobox - listbox
@@ -3077,7 +3081,7 @@
 						this.Api.WordControl.m_oDrawingDocument.TargetEnd();
 						
 					let nCursorH = g_oTextMeasurer.GetHeight();
-					if ((oCurPos.X < oFieldBounds.X || oCurPos.Y - nCursorH < oFieldBounds.Y) && this.activeForm._doNotScroll == false)
+					if ((oCurPos.X < oFieldBounds.X || oCurPos.Y - nCursorH < oFieldBounds.Y) && this.activeForm._doNotScroll != true)
 					{
 						this.activeForm.AddToRedraw();
 						this._paintForms();
@@ -3120,7 +3124,7 @@
 								this.Api.WordControl.m_oDrawingDocument.TargetEnd();
 
 							let nCursorH = g_oTextMeasurer.GetHeight();
-							if (oCurPos.Y - nCursorH < oFieldBounds.Y && this.activeForm._doNotScroll == false)
+							if (oCurPos.Y - nCursorH < oFieldBounds.Y && this.activeForm._doNotScroll != true)
 							{
 								this.activeForm.AddToRedraw();
 								this._paintForms();
@@ -3165,7 +3169,7 @@
 					if (this.activeForm.content.IsSelectionUse())
 						this.Api.WordControl.m_oDrawingDocument.TargetEnd();
 
-					if ((oCurPos.X > oFieldBounds.X + oFieldBounds.W || oCurPos.Y > oFieldBounds.Y + oFieldBounds.H) && this.activeForm._doNotScroll == false)
+					if ((oCurPos.X > oFieldBounds.X + oFieldBounds.W || oCurPos.Y > oFieldBounds.Y + oFieldBounds.H) && this.activeForm._doNotScroll != true)
 					{
 						this.activeForm.AddToRedraw();
 						this._paintForms();
@@ -3207,7 +3211,7 @@
 							if (this.activeForm.content.IsSelectionUse())
 								this.Api.WordControl.m_oDrawingDocument.TargetEnd();
 								
-							if (oCurPos.Y > oFieldBounds.Y + oFieldBounds.H && this.activeForm._doNotScroll == false)
+							if (oCurPos.Y > oFieldBounds.Y + oFieldBounds.H && this.activeForm._doNotScroll != true)
 							{
 								this.activeForm.AddToRedraw();
 								this._paintForms();

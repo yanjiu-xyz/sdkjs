@@ -416,8 +416,10 @@
                 oActiveForm.RevertContentViewToOriginal();
             }
             
-            if (oActiveForm.curContent === oActiveForm.contentFormat) {
-                oActiveForm.AddToRedraw();
+            if (["text", "combobox"].includes(oActiveForm.type)) {
+                if (oActiveForm.GetTrigger(AscPDFEditor.FORMS_TRIGGERS_TYPES.Format)) {
+                    oActiveForm.AddToRedraw();
+                }
             }
         }
         
@@ -1056,7 +1058,7 @@
 	 * @typeofeditors ["PDF"]
 	 * @returns {boolean}
 	 */
-    CPDFDoc.prototype.GetDocumentApi = function(sName) {
+    CPDFDoc.prototype.GetDocumentApi = function() {
         if (this.api)
             return this.api;
 
