@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -295,19 +295,31 @@ function NativeOpenFileData(data, version, xlsx_file_path, options)
     if (options && options["printOptions"] && options["printOptions"]["retina"])
         AscBrowser.isRetina = true;
 
-	if (window.NATIVE_DOCUMENT_TYPE == "presentation" || window.NATIVE_DOCUMENT_TYPE == "document")
+	var configApi = {};
+	if (options && undefined !== options["translate"])
+		configApi["translate"] = options["translate"];
+
+	if (window.NATIVE_DOCUMENT_TYPE === "presentation" || window.NATIVE_DOCUMENT_TYPE === "document")
 	{
-        Api = new window["Asc"]["asc_docs_api"]({});
+        Api = new window["Asc"]["asc_docs_api"](configApi);
 		if (options && options["documentLayout"] && undefined !== options["documentLayout"]["openedAt"])
 			Api.setOpenedAt(options["documentLayout"]["openedAt"]);
-        Api.asc_nativeOpenFile(data, version);
 	}
 	else
 	{
-        Api = new window["Asc"]["spreadsheet_api"]({});
-        if (options && undefined !== options["locale"])
-            Api.asc_setLocale(options["locale"]);
-        Api.asc_nativeOpenFile(data, version, undefined, xlsx_file_path);
+        Api = new window["Asc"]["spreadsheet_api"](configApi);
+	}
+
+	if (options && undefined !== options["locale"])
+		Api.asc_setLocale(options["locale"]);
+
+	if (window.NATIVE_DOCUMENT_TYPE === "presentation" || window.NATIVE_DOCUMENT_TYPE === "document")
+	{
+		Api.asc_nativeOpenFile(data, version);
+	}
+	else
+	{
+		Api.asc_nativeOpenFile(data, version, undefined, xlsx_file_path);
 	}
 }
 
@@ -333,6 +345,7 @@ var performance = window.performance = (function(){
 (function(window, undefined){
 	function ZLib()
 	{
+		/** @suppress {checkVars} */
 		this.engine = CreateNativeZip();
 		this.files = {};
 	}

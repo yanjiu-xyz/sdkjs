@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2020
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -975,7 +975,7 @@ CEndnotesController.prototype.GetAllTables = function(oProps, arrTables)
 	for (var sId in this.Endnote)
 	{
 		var oEndnote = this.Endnote[sId];
-		oEndnote.GetAllTables(oProps, ParaArray);
+		oEndnote.GetAllTables(oProps, arrTables);
 	}
 
 	return arrTables;
@@ -2673,11 +2673,11 @@ CEndnotesController.prototype.UpdateCursorType = function(X, Y, PageAbs, MouseEv
 		oEndnote.UpdateCursorType(X, Y, oResult.EndnotePageIndex, MouseEvent);
 	}
 };
-CEndnotesController.prototype.PasteFormatting = function(TextPr, ParaPr)
+CEndnotesController.prototype.PasteFormatting = function(oData)
 {
 	for (var sId in this.Selection.Endnotes)
 	{
-		this.Selection.Endnotes[sId].PasteFormatting(TextPr, ParaPr, true);
+		this.Selection.Endnotes[sId].PasteFormatting(oData);
 	}
 };
 CEndnotesController.prototype.IsSelectionUse = function()
@@ -2930,7 +2930,9 @@ CEndnotesController.prototype.SetSelectionState = function(State, StateIndex)
 CEndnotesController.prototype.AddHyperlink = function(oProps)
 {
 	if (true !== this.IsSelectionUse() || true === this.private_IsOneEndnoteSelected())
-		this.CurEndnote.AddHyperlink(oProps);
+		return this.CurEndnote.AddHyperlink(oProps);
+	
+	return null;
 };
 CEndnotesController.prototype.ModifyHyperlink = function(oProps)
 {

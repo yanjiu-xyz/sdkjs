@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -2357,10 +2357,10 @@ ParaDrawing.prototype.isTextSelectionUse = function()
 		return this.GraphicObj.isTextSelectionUse();
 	return false;
 };
-ParaDrawing.prototype.paragraphFormatPaste = function( CopyTextPr, CopyParaPr, Bool )
+ParaDrawing.prototype.pasteFormatting = function(oData)
 {
-	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.isTextSelectionUse === "function")
-		return this.GraphicObj.paragraphFormatPaste(CopyTextPr, CopyParaPr, Bool);
+	if (AscCommon.isRealObject(this.GraphicObj) && typeof this.GraphicObj.pasteFormatting === "function")
+		return this.GraphicObj.pasteFormatting(oData);
 };
 ParaDrawing.prototype.getNearestPos = function(x, y, pageIndex)
 {
@@ -3200,22 +3200,28 @@ ParaDrawing.prototype.Document_Is_SelectionLocked = function(CheckType)
 
 ParaDrawing.prototype.CheckDeletingLock = function()
 {
-	if (this.LogicDocument
-		&& this.LogicDocument.IsDocumentEditor()
-		&& (!this.LogicDocument.CanEdit() || this.LogicDocument.IsFillingFormMode()))
+	let logicDocument = this.LogicDocument;
+	let form          = this.GetInnerForm();
+	
+	if (logicDocument && logicDocument.IsDocumentEditor())
 	{
-		// В формах мы не удаляем ничего, а чистим форму, если нужно
-		var oInnerForm = null;
-		if (this.IsForm() && (oInnerForm = this.GetInnerForm()) && !oInnerForm.IsPlaceHolder())
+		// Если в форму зайти нельзя, то и не проверяем можно ли удалять её внутреннюю часть
+		if (form && this.IsForm() && !form.CanPlaceCursorInside())
 			return;
-
-		return AscCommon.CollaborativeEditing.Add_CheckLock(true);
+		
+		if (!this.LogicDocument.CanEdit() || this.LogicDocument.IsFillingFormMode())
+		{
+			// В формах мы не удаляем ничего, а чистим форму, если нужно
+			if (this.IsForm() && form && !form.IsPlaceHolder())
+				return;
+			
+			return AscCommon.CollaborativeEditing.Add_CheckLock(true);
+		}
 	}
-
-	var oForm = this.GetInnerForm();
-	if (oForm)
-		oForm.SkipSpecialContentControlLock(true);
-
+	
+	if (form)
+		form.SkipSpecialContentControlLock(true);
+	
 	var arrDocContents = this.GetAllDocContents();
 	for (var nIndex = 0, nCount = arrDocContents.length; nIndex < nCount; ++nIndex)
 	{
@@ -3223,9 +3229,9 @@ ParaDrawing.prototype.CheckDeletingLock = function()
 		arrDocContents[nIndex].Document_Is_SelectionLocked(AscCommon.changestype_Remove);
 		arrDocContents[nIndex].SetApplyToAll(false);
 	}
-
-	if (oForm)
-		oForm.SkipSpecialContentControlLock(false);
+	
+	if (form)
+		form.SkipSpecialContentControlLock(false);
 };
 ParaDrawing.prototype.GetAllFields = function(isUseSelection, arrFields)
 {

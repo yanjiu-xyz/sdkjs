@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1063,17 +1063,20 @@
 			 sCandName.MakeLower(); sReqName.MakeLower();
 			 */
 
-			if ( 0 == sReqName.length )
+			if ( 0 === sReqName.length )
 				return 0;
 
-			if ( 0 == sMyName.length )
+			if ( 0 === sMyName.length )
 				return 10000;
 
 			if ( sReqName == sMyName )
 				return 0;
 
+			let cand1 = sReqName.replace(/[\s-,]/g, '').toLowerCase();
+			let cand2 = sMyName.replace(/[\s-,]/g, '').toLowerCase();
+
 			// check equals, inst
-			if (sReqName.replace(/[\s-,]/g, '').toLowerCase() == sMyName.replace(/[\s-,]/g, '').toLowerCase())
+			if (cand1 === cand2)
 				return 100;
 
 			if (-1 !== sReqName.indexOf(sMyName) || -1 !== sMyName.indexOf(sReqName))
@@ -1089,7 +1092,14 @@
 				return 999;
 			}
 
-			return this.CheckEqualFonts2(sReqName, sMyName);
+			// TODO:
+			// MS не так подбирает. На стандартных шрифтах работает. на всех - нет
+			if (0 === cand1.indexOf(cand2))
+			{
+				return 2000 + 10 * Math.abs(cand1.length - cand2.length);
+			}
+
+			return 10000;
 		},
 
 		GetFaceNamePenalty : function(sReqName)

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1125,6 +1125,8 @@ ParaMath.prototype.Get_Text = function(Text)
 {
 	if (true === Text.BreakOnNonText)
 		Text.Text = null;
+    else if (true === Text.Math)
+        Text.Text += this.GetText();
 };
 
 ParaMath.prototype.Is_Empty = function(oPr)
@@ -2618,9 +2620,20 @@ ParaMath.prototype.ConvertToInlineMode = function()
 
 	if (this.IsInlineMode())
 		return true;
-
-	let oParent      = this.GetParent();
-	let nPosInParent = this.GetPosInParent(oParent);
+	
+	let oParent = this.GetParent();
+	let oInlineLevel, nPosInParent;
+	if (oParent instanceof AscWord.CInlineLevelSdt && oParent.IsContentControlEquation())
+	{
+		oInlineLevel = oParent;
+		oParent      = oParent.GetParent();
+		nPosInParent = oInlineLevel.GetPosInParent(oParent);
+	}
+	else
+	{
+		nPosInParent = this.GetPosInParent(oParent);
+	}
+	
 	if (!oParent || -1 === nPosInParent)
 		return false;
 
@@ -2667,12 +2680,23 @@ ParaMath.prototype.ConvertToDisplayMode = function()
 
 	if (!this.IsInlineMode())
 		return true;
-
-	let oParent      = this.GetParent();
-	let nPosInParent = this.GetPosInParent(oParent);
+	
+	let oParent = this.GetParent();
+	let oInlineLevel, nPosInParent;
+	if (oParent instanceof AscWord.CInlineLevelSdt && oParent.IsContentControlEquation())
+	{
+		oInlineLevel = oParent;
+		oParent      = oParent.GetParent();
+		nPosInParent = oInlineLevel.GetPosInParent(oParent);
+	}
+	else
+	{
+		nPosInParent = this.GetPosInParent(oParent);
+	}
+	
 	if (!oParent || -1 === nPosInParent)
 		return false;
-
+	
 	let oContentPos = this.GetStartPosInParagraph();
 
     let oRunElementsBefore = new CParagraphRunElements(oContentPos, 1, null, false);
@@ -2712,18 +2736,23 @@ ParaMath.prototype.ConvertToDisplayMode = function()
 };
 ParaMath.prototype.IsInlineMode = function()
 {
-	// TODO: Сейчас у нас формула может быть только на верхнем уровне параграфа, когда это изменится тут
-	//       надо переделать проверку
-
-	let oParagraph = this.GetParagraph();
-	if (!oParagraph)
+	let paragraph = this.GetParagraph();
+	if (!paragraph)
 		return false;
-
-	let oParaPos = oParagraph.GetPosByElement(this);
-	if (!oParaPos)
+	
+	let paraPos = paragraph.GetPosByElement(this);
+	if (!paraPos)
 		return false;
-
-	return !oParagraph.CheckMathPara(oParaPos.Get(0));
+	
+	let startPos = this.GetStartPosInParagraph();
+	let endPos   = this.GetEndPosInParagraph();
+	
+	let prev = paragraph.GetPrevRunElement(startPos);
+	let next = paragraph.GetNextRunElement(endPos);
+	
+	return ((prev && !prev.IsBreak())
+		|| (!prev && paragraph.HaveNumbering())
+		|| (next && !next.IsBreak() && !next.IsParaEnd()));
 };
 ParaMath.prototype.NeedDispOperators = function(Line)
 {

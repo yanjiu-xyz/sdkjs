@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1328,9 +1328,16 @@ Because of this, the display is sometimes not correct.
 
     changesFactory[AscDFH.historyitem_BgFormatFill] = CChangeObjectNoId;
     changesFactory[AscDFH.historyitem_BgFormatEffect] = CChangeObjectNoId;
-    drawingsChangesMap[AscDFH.historyitem_BgFormatFill] = function (oClass, value) {
+    drawingsChangesMap[AscDFH.historyitem_BgFormatFill] = function (oClass, value, bFromLoad) {
       oClass.fill = value;
       oClass.handleUpdateFill();
+	    if (bFromLoad) {
+		    if (typeof AscCommon.CollaborativeEditing !== "undefined") {
+			    if (oClass.fill && oClass.fill.fill && oClass.fill.fill.type ===  Asc.c_oAscFill.FILL_TYPE_BLIP && typeof oClass.fill.fill.RasterImageId === "string" && oClass.fill.fill.RasterImageId.length > 0) {
+				    AscCommon.CollaborativeEditing.Add_NewImage(oClass.fill.fill.RasterImageId);
+			    }
+		    }
+	    }
     };
     drawingsChangesMap[AscDFH.historyitem_BgFormatEffect] = function (oClass, value) {
       oClass.effect = value;
@@ -5714,7 +5721,7 @@ Because of this, the display is sometimes not correct.
             break;
           case Constr_type_primFontSz:
           case Constr_type_secFontSz:
-            //return shape.setFontSizeInSmartArt;
+            //return shape.setFontSizeForAllContent;
             break;
           case Constr_type_pyraAcctRatio:
             break;
@@ -11669,6 +11676,16 @@ Because of this, the display is sometimes not correct.
         editor.ShowParaMarks = oldParaMarks;
       }
     };
+		SmartArt.prototype.check_bounds = function (oChecker)
+		{
+			oChecker._s();
+			oChecker._m(0, 0);
+			oChecker._l(this.extX, 0);
+			oChecker._l(this.extX, this.extY);
+			oChecker._l(0, this.extY);
+			oChecker._z();
+			oChecker._e();
+		}
     SmartArt.prototype.getBg = function() {
       var oDataModel = this.getDataModel() && this.getDataModel().getDataModel();
       if(!oDataModel) {
@@ -11874,6 +11891,7 @@ Because of this, the display is sometimes not correct.
     SmartArt.prototype.convertToWord = function(document) {
       var oCopy = this.copy();
       oCopy.setBDeleted2(false);
+      oCopy.removePlaceholder();
       return oCopy;
     };
     SmartArt.prototype.convertToPPTX = function(drawingDocument, worksheet) {

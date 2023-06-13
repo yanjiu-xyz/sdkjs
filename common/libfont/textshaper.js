@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2022
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -58,13 +58,14 @@
 	 */
 	function CTextShaper()
 	{
-		this.Buffer      = [];
-		this.BufferIndex = 0;
-		this.Script      = -1;
-		this.FontId      = -1;
-		this.FontSubst   = false;
-		this.FontSlot    = AscWord.fontslot_None;
-		this.FontSize    = 10;
+		this.Buffer         = [];
+		this.BufferIndex    = 0;
+		this.Script         = -1;
+		this.FontId         = -1;
+		this.FontSubst      = false;
+		this.FontSlot       = AscWord.fontslot_None;
+		this.FontSize       = 10;
+		this.ForceCheckFont = false;
 	}
 	CTextShaper.prototype.ClearBuffer = function()
 	{
@@ -111,9 +112,12 @@
 
 		AscFonts.HB_ShapeString(this, nFontId, oFontInfo.Style, this.FontId, this.GetLigaturesType(), nScript, nDirection, "en");
 
-		// Значит шрифт был подобран, вовзвращаем назад состояние отрисовщика
+		// Значит шрифт был подобран, возвращаем назад состояние отрисовщика
 		if (this.FontId.m_pFaceInfo.family_name !== oFontInfo.Name)
+		{
 			AscCommon.g_oTextMeasurer.SetFontInternal(oFontInfo.Name, AscFonts.MEASURE_FONTSIZE, oFontInfo.Style);
+			this.ForceCheckFont = true;
+		}
 
 		this.ClearBuffer();
 	};
@@ -193,11 +197,12 @@
 	};
 	CTextShaper.prototype.private_CheckFont = function(nFontSlot)
 	{
-		if (this.FontSlot !== nFontSlot)
-		{
-			let oFontInfo = this.GetFontInfo(nFontSlot);
-			AscCommon.g_oTextMeasurer.SetFontInternal(oFontInfo.Name, AscFonts.MEASURE_FONTSIZE, oFontInfo.Style);
-		}
+		if (this.FontSlot === nFontSlot && !this.ForceCheckFont)
+			return;
+		
+		let oFontInfo = this.GetFontInfo(nFontSlot);
+		AscCommon.g_oTextMeasurer.SetFontInternal(oFontInfo.Name, AscFonts.MEASURE_FONTSIZE, oFontInfo.Style);
+		this.ForceCheckFont = false;
 	};
 	CTextShaper.prototype.private_CheckBufferInFont = function(nFontId)
 	{

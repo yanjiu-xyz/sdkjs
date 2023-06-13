@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -292,6 +292,8 @@ DrawingObjectsController.prototype.onMouseDown = function(e, x, y)
     e.CtrlKey = e.metaKey || e.ctrlKey;
     e.Button = e.button;
     e.Type = AscCommon.g_mouse_event_type_down;
+	e.IsLocked = e.isLocked;
+    this.checkInkState();
     var ret = this.curState.onMouseDown(e, x, y, 0);
     if(e.ClickCount < 2)
     {
@@ -315,6 +317,7 @@ DrawingObjectsController.prototype.onMouseMove = function(e, x, y)
     e.CtrlKey = e.metaKey || e.ctrlKey;
     e.Button = e.button;
     e.Type = AscCommon.g_mouse_event_type_move;
+	e.IsLocked = e.isLocked;
     this.curState.onMouseMove(e, x, y, 0);
 };
 DrawingObjectsController.prototype.OnMouseMove = DrawingObjectsController.prototype.onMouseMove;
@@ -353,6 +356,7 @@ DrawingObjectsController.prototype.createGroup = function()
         group.addToRecalculate();
         this.startRecalculate();
     }
+		return group;
 };
 DrawingObjectsController.prototype.handleChartDoubleClick = function()
 {
@@ -480,6 +484,7 @@ DrawingObjectsController.prototype.addChartDrawingObject = function(options)
 DrawingObjectsController.prototype.isPointInDrawingObjects = function(x, y, e)
 {
     this.handleEventMode = AscFormat.HANDLE_EVENT_MODE_CURSOR;
+    this.checkInkState();
     var ret = this.curState.onMouseDown(e || {}, x, y, 0);
     this.handleEventMode = AscFormat.HANDLE_EVENT_MODE_HANDLE;
     return ret;

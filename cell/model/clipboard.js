@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -403,7 +403,7 @@
 						ws.workbook.cutIdSheet = ws.model.Id;
 						ws.copyCutRange = [ws.model.selectionRange.getLast()];
 					}
-				} else {
+				} else if (!ws.objectRender.selectedGraphicObjectsExists()) {
 					ws.copyCutRange = ws.model.selectionRange.ranges;
 				}
 			}
@@ -412,7 +412,8 @@
 		Clipboard.prototype.pasteData = function (ws, _format, data1, data2, text_data, bIsSpecialPaste, doNotShowButton, isPasteAll) {
 			var t = this;
 			var wb = window["Asc"]["editor"].wb;
-			if (wb.selectionDialogMode) {
+			//if open range dialog - return
+			if (ws.getSelectionDialogMode() && (!wb.getCellEditMode() || wb.isWizardMode)) {
 				return;
 			}
 			var cellEditor = wb.cellEditor;
@@ -1871,6 +1872,12 @@
 							ws.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ChangeOnProtectedSheet, c_oAscError.Level.NoCritical);
 							ws.handlers.trigger("cleanCutData", true);
 							return true;
+						}
+
+						if (ws.model.isUserProtectedRangesIntersection(toRange)) {
+							ws.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
+							ws.handlers.trigger("cleanCutData", true);
+							return;
 						}
 
 						var wsTo = ws.model.Id !== wsFrom.model.Id ? ws : null;
@@ -3860,7 +3867,7 @@
 
 				var documentContentBounds = new DocumentContentBounds();
 				var coverDocument = documentContentBounds.getBounds(0, 0, documentContent);
-				this._parseChildren(coverDocument);
+				AscFormat.ExecuteNoHistory(this._parseChildren, this, [coverDocument]);
 
 				//не вставляем графику в редактор диаграмм
 				//если кроме графики есть ещё данные, то убираем только графику
@@ -4032,9 +4039,12 @@
 				paragraph.elem.CompiledPr.NeedRecalc = true;
 				var paraPr = paragraph.elem.Get_CompiledPr();
 
-				var firstLine = paraPr && paraPr.ParaPr && paraPr.ParaPr.Ind && paraPr.ParaPr.Ind.FirstLine;
+				var firstLine = paraPr && paraPr.ParaPr && paraPr.ParaPr.Ind && paraPr.ParaPr.Ind.Left;
 				if (firstLine) {
 					oNewItem.indent = parseInt(firstLine / AscCommon.koef_mm_to_indent);
+					if (oNewItem.indent < 0) {
+						oNewItem.indent = null;
+					}
 				}
 
 				//горизонтальное выравнивание
@@ -4277,7 +4287,9 @@
 							break;
 						}
 						case para_NewLine: {
-							if(AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Excel) {
+							//on feature: read ms style comments and use only sameCell flag
+							if(AscCommon.g_clipboardBase.pastedFrom === AscCommon.c_oClipboardPastedFrom.Excel ||
+								(paraRunContent[pR].Flags && paraRunContent[pR].Flags.sameCell)) {
 								text += newLine;
 							} else {
 								pushData();
@@ -4434,37 +4446,47 @@
 					return backgroundColor;
 				};
 
-				var formatBorders = oldBorders ? oldBorders : new AscCommonExcel.Border();
+				var formatBorders;
+				if (oldBorders) {
+					formatBorders = oldBorders;
+				} else {
+					formatBorders = new AscCommonExcel.Border();
+					formatBorders.initDefault();
+				}
 				//top border for cell
-				if (top === cellTable.top && !formatBorders.t.s && borders.Top.Value !== 0/*border_None*/) {
+				if (top === cellTable.top && (!formatBorders.t || formatBorders.t.isEmpty()) && borders.Top.Value !== 0/*border_None*/) {
 					borderStyleName = this.clipboard._getBorderStyleName(defaultStyle, this.ws.objectRender.convertMetric(borders.Top.Size, 3, 1));
 					if (null !== borderStyleName) {
+						formatBorders.t = new AscCommonExcel.BorderProp();
 						formatBorders.t.setStyle(borderStyleName);
 						formatBorders.t.c = getBorderColor(borders.Top);
 					}
 				}
 				//left border for cell
-				if (left === cellTable.left && !formatBorders.l.s && borders.Left.Value !== 0/*border_None*/) {
+				if (left === cellTable.left && (!formatBorders.l || formatBorders.l.isEmpty()) && borders.Left.Value !== 0/*border_None*/) {
 					borderStyleName = this.clipboard._getBorderStyleName(defaultStyle, this.ws.objectRender.convertMetric(borders.Left.Size, 3, 1));
 					if (null !== borderStyleName) {
+						formatBorders.l = new AscCommonExcel.BorderProp();
 						formatBorders.l.setStyle(borderStyleName);
 						formatBorders.l.c = getBorderColor(borders.Left);
 					}
 				}
 				//bottom border for cell
-				if (top === cellTable.top + heightCell - 1 && !formatBorders.b.s &&
+				if (top === cellTable.top + heightCell - 1 && (!formatBorders.b || formatBorders.b.isEmpty()) &&
 					borders.Bottom.Value !== 0/*border_None*/) {
 					borderStyleName = this.clipboard._getBorderStyleName(defaultStyle, this.ws.objectRender.convertMetric(borders.Bottom.Size, 3, 1));
 					if (null !== borderStyleName) {
+						formatBorders.b = new AscCommonExcel.BorderProp();
 						formatBorders.b.setStyle(borderStyleName);
 						formatBorders.b.c = getBorderColor(borders.Bottom);
 					}
 				}
 				//right border for cell
-				if (left === cellTable.left + widthCell - 1 && !formatBorders.r.s &&
+				if (left === cellTable.left + widthCell - 1 && (!formatBorders.r || formatBorders.r.isEmpty()) &&
 					borders.Right.Value !== 0/*border_None*/) {
 					borderStyleName = this.clipboard._getBorderStyleName(defaultStyle, this.ws.objectRender.convertMetric(borders.Right.Size, 3, 1));
 					if (null !== borderStyleName) {
+						formatBorders.r = new AscCommonExcel.BorderProp();
 						formatBorders.r.setStyle(borderStyleName);
 						formatBorders.r.c = getBorderColor(borders.Right);
 					}
@@ -4739,8 +4761,12 @@
 				for (var i = 0, length = elem.Content.length; i < length; i++) {
 					if (elem.Content[i] && elem.Content[i].Content) {
 						for (var j = 0; j < elem.Content[i].Content.length; j++) {
-							if (elem.Content[i].Content[j] && para_NewLine === elem.Content[i].Content[j].GetType()  && AscCommon.g_clipboardBase.pastedFrom !== AscCommon.c_oClipboardPastedFrom.Excel) {
-								oNewElem.height++;
+							let innerElem = elem.Content[i].Content[j];
+							if (innerElem && para_NewLine === innerElem.GetType()) {
+								//on feature: read ms style comments and use only sameCell flag 
+								if (AscCommon.g_clipboardBase.pastedFrom !== AscCommon.c_oClipboardPastedFrom.Excel && !(innerElem.Flags && innerElem.Flags.sameCell === true)) {
+									oNewElem.height++;
+								}
 							}
 						}
 					}

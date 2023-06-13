@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -1006,14 +1006,32 @@ CShapeDrawer.prototype =
                     gradObj = _ctx.createLinearGradient(points.x0, points.y0, points.x1, points.y1);
                 }
 
-                for (var i = 0; i < _fill.colors.length; i++)
+                const nTransparent = this.UniFill.transparent;
+                let bUseGlobalAlpha = (null !== nTransparent && undefined !== nTransparent);
+                const aColors = _fill.colors;
+                const nClrCount = aColors.length;
+                if(_fill.path && AscCommon.AscBrowser.isMozilla && bUseGlobalAlpha)
                 {
-                    gradObj.addColorStop(_fill.colors[i].pos / 100000, _fill.colors[i].color.getCSSColor(this.UniFill.transparent));
+                    bUseGlobalAlpha = false;
+                    const dTransparent = nTransparent / 255.0;
+                    for (let nClr = 0; nClr < nClrCount; nClr++)
+                    {
+                        let oClr = aColors[nClr];
+                        gradObj.addColorStop(oClr.pos / 100000, oClr.color.getCSSWithTransparent(dTransparent));
+                    }
+                }
+                else
+                {
+                    for (let nClr = 0; nClr < nClrCount; nClr++)
+                    {
+                        let oClr = aColors[nClr];
+                        gradObj.addColorStop(oClr.pos / 100000, oClr.color.getCSSColor(nTransparent));
+                    }
                 }
 
                 _ctx.fillStyle = gradObj;
 
-                if (null !== this.UniFill.transparent && undefined !== this.UniFill.transparent)
+                if (bUseGlobalAlpha)
                 {
                     var _old_global_alpha = this.Graphics.m_oContext.globalAlpha;
                     _ctx.globalAlpha = this.UniFill.transparent / 255;
@@ -1778,7 +1796,7 @@ CShapeDrawer.prototype =
     }
 };
 
-function ShapeToImageConverter(shape, pageIndex)
+function ShapeToImageConverter(shape, pageIndex, sImageFormat)
 {
     AscCommon.IsShapeToImageConverter = true;
     var _bounds_cheker = new AscFormat.CSlideBoundsChecker();
@@ -1856,7 +1874,8 @@ function ShapeToImageConverter(shape, pageIndex)
     var _ret = { ImageNative : _canvas, ImageUrl : "" };
     try
     {
-        _ret.ImageUrl = _canvas.toDataURL("image/png");
+        const sFormat = sImageFormat || "image/png";
+        _ret.ImageUrl = _canvas.toDataURL(sFormat);
     }
     catch (err)
     {

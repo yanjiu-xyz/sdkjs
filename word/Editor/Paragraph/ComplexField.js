@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -49,6 +49,7 @@ function ParaFieldChar(Type, LogicDocument)
 	this.Use           = true;
 	this.CharType      = undefined === Type ? fldchartype_Begin : Type;
 	this.ComplexField  = (this.CharType === fldchartype_Begin) ? new CComplexField(LogicDocument) : null;
+	this.fldData   = null;
 	this.Run           = null;
 	this.X             = 0;
 	this.Y             = 0;
@@ -84,6 +85,7 @@ ParaFieldChar.prototype.Copy = function()
 		oChar.SetComplexField(oComplexField);
 		oComplexField.ReplaceChar(oChar);
 	}
+	//todo fldData
 
 	return oChar;
 };
@@ -154,11 +156,13 @@ ParaFieldChar.prototype.Write_ToBinary = function(Writer)
 	// Long : CharType
 	Writer.WriteLong(this.Type);
 	Writer.WriteLong(this.CharType);
+	//todo fldData
 };
 ParaFieldChar.prototype.Read_FromBinary = function(Reader)
 {
 	// Long : CharType
 	this.Init(Reader.GetLong(), editor.WordControl.m_oLogicDocument);
+	//todo fldData
 };
 ParaFieldChar.prototype.SetParent = function(oParent)
 {
@@ -376,7 +380,16 @@ CComplexField.prototype.IsCurrent = function()
 };
 CComplexField.prototype.IsUpdate = function()
 {
-	return this.StartUpdate;
+	return (this.StartUpdate > 0);
+};
+CComplexField.prototype.StartCharsUpdate = function()
+{
+	++this.StartUpdate;
+};
+CComplexField.prototype.FinishCharsUpdate = function()
+{
+	if (this.StartUpdate > 0)
+		--this.StartUpdate;
 };
 CComplexField.prototype.SetInstruction = function(oParaInstr)
 {
@@ -459,7 +472,7 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 		this.LogicDocument.StartAction();
 	}
 
-	this.StartUpdate = true;
+	this.StartCharsUpdate();
 	switch (this.Instruction.GetType())
 	{
 		case fieldtype_PAGE:
@@ -498,7 +511,7 @@ CComplexField.prototype.Update = function(isCreateHistoryPoint, isNeedRecalculat
 		case fieldtype_ADDIN:
 			break;
 	}
-	this.StartUpdate = false;
+	this.FinishCharsUpdate();
 
 	if (false !== isNeedRecalculate)
 		this.LogicDocument.Recalculate();
@@ -871,7 +884,7 @@ CComplexField.prototype.private_UpdateTOC = function()
 				nContainerPos = oPara.Content.length - 1;
 			}
 
-			var isAddTabForNumbering = false;
+			let numTabPos = null;
 			if (oSrcParagraph.HaveNumbering() && oSrcParagraph.GetParent())
 			{
 				var oNumPr     = oSrcParagraph.GetNumPr();
@@ -902,8 +915,12 @@ CComplexField.prototype.private_UpdateTOC = function()
 				}
 				else if (Asc.c_oAscNumberingSuff.Tab === nNumSuff)
 				{
+					numTabPos = 0;
+					AscWord.ParagraphTextShaper.ShapeRun(oNumberingRun);
+					for (let runItemIndex = 0; runItemIndex < oNumberingRun.GetElementsCount(); ++runItemIndex)
+						numTabPos += oNumberingRun.GetElement(runItemIndex).GetWidth();
+					
 					oNumTabRun.Add_ToContent(0, new AscWord.CRunTab());
-					isAddTabForNumbering = true;
 					oContainer.Add_ToContent(1, oNumTabRun);
 					nContainerPos++;
 				}
@@ -913,11 +930,8 @@ CComplexField.prototype.private_UpdateTOC = function()
 			oTabs = new CParaTabs();
 			oTabs.Add(oTab);
 
-			if ((!isPreserveTabs && oPara.RemoveTabsForTOC()) || isAddTabForNumbering)
+			if ((!isPreserveTabs && oPara.RemoveTabsForTOC()) || null !== numTabPos)
 			{
-				// TODO: Табы для нумерации как-то зависят от самой нумерации и не совсем такие, как без нумерации
-
-
 				// В данной ситуации ворд делает следующим образом: он пробегает по параграфу и смотрит, если там есть
 				// табы (в контенте, а не в свойствах), тогда он первый таб оставляет, а остальные заменяет на пробелы,
 				// при этом в список табов добавляется новый левый таб без заполнителя, отступающий на 1,16 см от левого
@@ -927,10 +941,13 @@ CComplexField.prototype.private_UpdateTOC = function()
 				var sTOCStyleId  = this.LogicDocument.GetStyles().GetDefaultTOC(arrOutline[nIndex].Lvl);
 				if (sTOCStyleId)
 				{
-					var oParaPr  = this.LogicDocument.GetStyles().Get_Pr(sTOCStyleId, styletype_Paragraph, null, null).ParaPr;
-					nFirstTabPos = 11.6 + (oParaPr.Ind.Left + oParaPr.Ind.FirstLine);
+					let paraPr = this.LogicDocument.GetStyles().Get_Pr(sTOCStyleId, styletype_Paragraph, null, null).ParaPr;
+					if (null !== numTabPos)
+						nFirstTabPos = Math.trunc((paraPr.Ind.Left + paraPr.Ind.FirstLine + numTabPos + 4.9) / 5 + 1) * 5;
+					else
+						nFirstTabPos = 1.6 + (paraPr.Ind.Left + paraPr.Ind.FirstLine);
 				}
-
+				
 				oTabs.Add(new CParaTab(tab_Left, nFirstTabPos, Asc.c_oAscTabLeader.None));
 			}
 
@@ -1080,13 +1097,13 @@ CComplexField.prototype.private_CalculateTIME = function(ms)
 		if (undefined !== ms)
 		{
 			var oDateTime = new Asc.cDate(ms);
-			sDate         = oFormat.formatToWord(oDateTime.getExcelDate() + (oDateTime.getUTCHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
+			sDate         = oFormat.formatToWord(oDateTime.getExcelDate(true) + (oDateTime.getUTCHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
 
 		}
 		else
 		{
 			let oDateTime = new Asc.cDate();
-			sDate         = oFormat.formatToWord(oDateTime.getExcelDate() + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
+			sDate         = oFormat.formatToWord(oDateTime.getExcelDate(true) + (oDateTime.getHours() * 60 * 60 + oDateTime.getMinutes() * 60 + oDateTime.getSeconds()) / AscCommonExcel.c_sPerDay, 15, oCultureInfo);
 		}
 	}
 
