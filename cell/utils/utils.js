@@ -3563,6 +3563,9 @@
 				return new cDate(dateStr + "Z");
 			}
 		};
+		cDate.prototype.getCurrentDate = function () {
+			return this;
+		}
 
 		function getIconsForLoad() {
 			return AscCommonExcel.getCFIconsForLoad().concat(AscCommonExcel.getSlicerIconsForLoad()).concat(AscCommonExcel.getPivotButtonsForLoad());

@@ -9785,7 +9785,7 @@
 
 	Worksheet.prototype.getRowColColors = function (columnRange, byRow, notCheckOneColor) {
 		var ws = this;
-		var res = {text: true, colors: [], fontColors: []};
+		var res = {text: true, colors: [], fontColors: [], date: false};
 		var alreadyAddColors = {}, alreadyAddFontColors = {};
 
 		var getAscColor = function (color) {
@@ -9834,7 +9834,7 @@
 		};
 
 		//TODO automaticRange ?
-		var tempText = 0, tempDigit = 0;
+		var tempText = 0, tempDigit = 0, tempDate = 0;
 		var r1 = byRow ? columnRange.r1 : columnRange.r1;
 		var r2 = byRow ? columnRange.r1 : columnRange.r2;
 		var c1 = byRow ? columnRange.c1 : columnRange.c1;
@@ -9852,8 +9852,12 @@
 			if (false === cell.isNullText()) {
 				var type = cell.getType();
 
-				if (type === 0) {
-					tempDigit++;
+				if (type === window["AscCommon"].CellValueType.Number) {
+					if (cell.getNumFormat().isDateTimeFormat()) {
+						tempDate++;
+					} else {
+						tempDigit++;
+					}
 				} else {
 					tempText++;
 				}
@@ -9890,7 +9894,12 @@
 			res.fontColors = [];
 		}
 
-		res.text = tempDigit <= tempText;
+		if (tempDate > tempDigit && tempDate > tempText) {
+			res.date = true;
+			res.text = false;
+		} else {
+			res.text = tempDigit <= tempText;
+		}
 
 		return res;
 	};

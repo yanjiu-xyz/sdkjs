@@ -36,6 +36,7 @@ const allTests = [
 	'cell/spreadsheet-calculation/FormulaTests.html',
 	'cell/spreadsheet-calculation/PivotTests.html',
 	'cell/spreadsheet-calculation/CopyPasteTests.html',
+	'cell/spreadsheet-calculation/AutoFilterTests.html',
 	'word/unit-tests/paragraphContentPos.html',
 	'word/content-control/block-level/cursorAndSelection.html',
 	'word/content-control/inline-level/cursorAndSelection.html',
