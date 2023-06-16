@@ -467,12 +467,12 @@
 	function CBaseField(sName, sType, nPage, aRect)
     {
         this.type = sType;
-        
+
         this._kids          = [];
         this._borderStyle   = BORDER_TYPES.solid;
         this._delay         = false;
         this._display       = display["visible"];
-        this._doc           = null;
+        this._doc           = private_getViewer().doc;
         this._fillColor     = [1,1,1];
         this._bgColor       = undefined;          // prop for old versions (fillColor)
         this._hidden        = false;             // This property has been superseded by the display property and its use is discouraged.
@@ -501,6 +501,8 @@
 
         // internal
         this._id = AscCommon.g_oIdCounter.Get_NewId();
+        
+        this._isAnnot = aRect.length == 4 ? true : false;
 
         this.contentRect = {
             X: 0,
@@ -648,6 +650,9 @@
 
         return this._partialName ? this._partialName : "";
     };
+    CBaseField.prototype.GetPartialName = function() {
+        return this._partialName;
+    };
     /**
 	 * Sets the action of the field for a given trigger.
      * Note: This method will overwrite any action already defined for the chosen trigger.
@@ -791,7 +796,9 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CBaseField.prototype.GetApiValue = function() {
-        return this._value;
+        let isNumber = !isNaN(this._value) && isFinite(this._value)
+        
+        return isNumber ? parseFloat(this._value) : this._value;
     };
     /**
 	 * Sets api value of form.
@@ -817,23 +824,6 @@
         if (oTrigger && oTrigger.Actions.length > 0) {
             oActionsQueue.AddActions(oTrigger.Actions);
             oActionsQueue.Start();
-        }
-    };
-
-    /**
-     * Does the actions setted for specifed trigger type.
-	 * @memberof CBaseField
-     * @param {number} nType - trigger type (FORMS_TRIGGERS_TYPES)
-	 * @typeofeditors ["PDF"]
-     * @returns {canvas}
-	 */
-    CBaseField.prototype.DoActions = function(nType) {
-        let oTrigger = this.GetTrigger(nType);
-
-        if (oTrigger && oTrigger.Actions.length > 0) {
-            for (let i = 0; i < oTrigger.Actions.length; i++) {
-                oTrigger.Actions[i].Do();
-            }
         }
     };
 
@@ -3101,36 +3091,65 @@
         this._richText = bRichText;
     };
     CTextField.prototype.SetValue = function(sValue) {
-        let oPara = this.content.GetElement(0);
-        oPara.RemoveFromContent(1, oPara.GetElementsCount() - 1);
-        let oRun = oPara.GetElement(0);
-        oRun.ClearContent();
+        if (this.IsAnnot()) {
+            let oPara   = this.content.GetElement(0);
+            let oRun    = oPara.GetElement(0);
+            oPara.RemoveFromContent(1, oPara.GetElementsCount() - 1);
+            oRun.ClearContent();
 
-        let oTextFormat = new AscWord.CTextFormFormat();
-        let arrBuffer = oTextFormat.GetBuffer(sValue);
-
-        if (sValue) {
-            for (let index = 0; index < arrBuffer.length; ++index) {
-                let codePoint = arrBuffer[index];
-                if (9 === codePoint) // \t
-                    oRun.AddToContent(index, new AscWord.CRunTab(), true);
-                else if (10 === codePoint || 13 === codePoint) // \n \r
-                    oRun.AddToContent(index, new AscWord.CRunBreak(AscWord.break_Line), true);
-                else if (AscCommon.IsSpace(codePoint)) // space
-                    oRun.AddToContent(index, new AscWord.CRunSpace(codePoint), true);
-                else
-                    oRun.AddToContent(index, new AscWord.CRunText(codePoint), true);
-            }
+            let oTextFormat = new AscWord.CTextFormFormat();
+            let arrBuffer   = oTextFormat.GetBuffer(sValue);
             
-            this.content.MoveCursorToStartPos();
+            if (sValue) {
+                for (let index = 0; index < arrBuffer.length; ++index) {
+                    let codePoint = arrBuffer[index];
+                    if (9 === codePoint) // \t
+                        oRun.AddToContent(index, new AscWord.CRunTab(), true);
+                    else if (10 === codePoint || 13 === codePoint) // \n \r
+                        oRun.AddToContent(index, new AscWord.CRunBreak(AscWord.break_Line), true);
+                    else if (AscCommon.IsSpace(codePoint)) // space
+                        oRun.AddToContent(index, new AscWord.CRunSpace(codePoint), true);
+                    else
+                        oRun.AddToContent(index, new AscWord.CRunText(codePoint), true);
+                }
+                
+                this.content.MoveCursorToStartPos();
+            }
+
+            this.SetNeedRecalc(true);
+            this.SetWasChanged(true);
+
+            if (private_getViewer().IsOpenFormsInProgress)
+                this.SetApiValue(sValue);
         }
-
-        this.SetNeedRecalc(true);
-        this.SetWasChanged(true);
-
-        if (private_getViewer().IsOpenFormsInProgress)
+        else
             this.SetApiValue(sValue);
     };
+
+    // /**
+	//  * Sets the value to childs fields.
+	//  * @memberof CTextField
+	//  * @typeofeditors ["PDF"]
+	//  */
+    // CTextField.prototype.SetValueToKids = function(sValue) {
+    //     let oField, sName;
+    //     let aDoneFields = [];
+    //     for (let i = 0; i < this._kids.length; i++) {
+    //         oField = this._kids[i];
+    //         sName = oField.GetPartialName();
+
+    //         if (oField.IsAnnot()) {
+    //             if (aDoneFields.includes(sName) == false) {
+    //                 aDoneFields.push(oField.GetFullName());
+    //                 oField.SetValue(sValue);
+    //                 oField.Commit();
+    //             }
+    //         }
+    //         else
+    //             oField.SetValueToKids(sValue);
+    //     }
+    // };
+
     /**
 	 * Gets the value of current form (can be not commited).
 	 * @memberof CTextField
@@ -3490,7 +3509,7 @@
                 oFieldRun.ClearContent();
 
                 for (let nRunPos = 0; nRunPos < oThisRun.Content.length; nRunPos++) {
-                    oFieldRun.AddToContent(nRunPos, AscCommon.IsSpace(oThisRun.Content[nRunPos].Value) ? new AscWord.CRunSpace(oThisRun.Content[nRunPos].Value) : new AscWord.CRunText(oThisRun.Content[nRunPos].Value));
+                    oFieldRun.AddToContent(nRunPos, oThisRun.Content[nRunPos].Copy());
                 }
             }
 
@@ -3510,7 +3529,7 @@
                 oFieldRun.ClearContent();
 
                 for (let nRunPos = 0; nRunPos < oThisRun.Content.length; nRunPos++) {
-                    oFieldRun.AddToContent(nRunPos, AscCommon.IsSpace(oThisRun.Content[nRunPos].Value) ? new AscWord.CRunSpace(oThisRun.Content[nRunPos].Value) : new AscWord.CRunText(oThisRun.Content[nRunPos].Value));
+                    oFieldRun.AddToContent(nRunPos, oThisRun.Content[nRunPos].Copy());
                 }
             }
 
@@ -3596,9 +3615,9 @@
         
         let isCanEnter = true;
         this.GetDocument().SetEvent({
-            "target": this.GetFormApi(),
-            "value": this.GetValue(),
-            "change": aChars.map(function(char) {
+            "target":   this.GetFormApi(),
+            "value":    this.GetValue(),
+            "change":   aChars.map(function(char) {
                 return String.fromCharCode(char);
             }).join(),
             "willCommit": !!isOnCommit
@@ -3633,16 +3652,19 @@
         if (oValidateScript == null)
             return true;
 
+        oDoc.isOnValidate = true;
         oValidateScript.RunScript();
         let isValid = oDoc.event["rc"];
+        oDoc.isOnValidate = false;
 
         if (isValid == false) {
-            if ((oDoc.event["greater"] != null || oDoc.event["less"] != null))
-                editor.sendEvent("asc_onValidateErrorPdfForm", oDoc.event);
+            let oWarningInfo = oDoc.GetWarningInfo();
+            if ((oWarningInfo["greater"] != null || oWarningInfo["less"] != null))
+                editor.sendEvent("asc_onValidateErrorPdfForm", oWarningInfo);
             
             return isValid;
         }
-
+        
         return isValid;
     };
 
@@ -3882,7 +3904,7 @@
                 nDx = oFormBounds.X + oFormBounds.W - oCursorPos.X;
         }
 
-        if (this.IsMultiline()) {
+        if (this.IsMultiline && this.IsMultiline()) {
             // если высота контента больше чем высота формы
             if (oParagraph.IsSelectionUse()) {
                 if (oParagraph.GetSelectDirection() == 1) {
@@ -4406,7 +4428,7 @@
                 oFieldRun.ClearContent();
 
                 for (let nRunPos = 0; nRunPos < oThisRun.Content.length; nRunPos++) {
-                    oFieldRun.AddToContent(nRunPos, AscCommon.IsSpace(oThisRun.Content[nRunPos].Value) ? new AscWord.CRunSpace(oThisRun.Content[nRunPos].Value) : new AscWord.CRunText(oThisRun.Content[nRunPos].Value));
+                    oFieldRun.AddToContent(nRunPos, oThisRun.Content[nRunPos].Copy());
                 }
             }
 
@@ -4427,7 +4449,7 @@
                 oFieldRun.ClearContent();
 
                 for (let nRunPos = 0; nRunPos < oThisRun.Content.length; nRunPos++) {
-                    oFieldRun.AddToContent(nRunPos, AscCommon.IsSpace(oThisRun.Content[nRunPos].Value) ? new AscWord.CRunSpace(oThisRun.Content[nRunPos].Value) : new AscWord.CRunText(oThisRun.Content[nRunPos].Value));
+                    oFieldRun.AddToContent(nRunPos, oThisRun.Content[nRunPos].Copy());
                 }
             }
 
@@ -5647,6 +5669,9 @@
             this._scrollInfo.scrollCoeff    = Math.abs(this._curShiftView.y / nMaxShiftY);
         }
     };
+    CBaseField.prototype.IsAnnot = function() {
+        return this._isAnnot;
+    };
     CBaseField.prototype.IsNeedRevertShiftView = function() {
         if (this._curShiftView.y != this._originShiftView.y ||
             this._curShiftView.x != this._originShiftView.x)
@@ -5656,7 +5681,7 @@
         let oViewer = private_getViewer();
         let nLineWidth = bScaled == true ? 1.25 * this._lineWidth * AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom : 1.25 * this._lineWidth;
 
-        if (nLineWidth == 0 || this._borderColor == null) {
+        if (nLineWidth == 0) {
             return {
                 left:     0,
                 top:      0,
@@ -5832,10 +5857,6 @@
         let oPageInfo   = oViewer.pagesInfo.pages[this.GetPage()];
         let oPage       = oViewer.drawingPages[this.GetPage()];
 
-        // function rgbToHex(r, g, b) {
-        //     return "" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
-        // }
-
         let w = (oPage.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         let h = (oPage.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
@@ -5887,6 +5908,20 @@
             if (this.type == "combobox")
                 this.DrawMarker();
         }
+    };
+    CBaseField.prototype.GetParent = function() {
+        return this._parent;
+    };
+    CBaseField.prototype.GetTopParent = function() {
+        if (this._parent) 
+        {
+            if (this._parent._parent)
+                return this._parent.GetTopParent();
+            else
+                return this._parent;
+        }
+
+        return null;
     };
 
     CBaseField.prototype.GetApiTextColor = function() {
@@ -7048,7 +7083,7 @@
                 oDoc.SetWarningInfo({
                     "greater": nGreaterThan,
                     "less": nLessThan,
-                    "target": oForm
+                    "target": oDoc.event["target"].field
                 });
             }
         }
@@ -7057,7 +7092,7 @@
             if (oDoc.event["rc"] == false) {
                 oDoc.SetWarningInfo({
                     "greater": nGreaterThan,
-                    "target": oForm
+                    "target": oDoc.event["target"].field
                 });
             }
         }
@@ -7066,7 +7101,7 @@
             if (oDoc.event["rc"] == false) {
                 oDoc.SetWarningInfo({
                     "less": nLessThan,
-                    "target": oForm
+                    "target": oDoc.event["target"].field
                 });
             }
         }

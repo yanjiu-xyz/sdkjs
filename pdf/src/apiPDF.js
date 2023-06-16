@@ -220,12 +220,27 @@
 	 * @returns {ApiBaseField}
 	 */
     ApiDocument.prototype.getField = function(sName) {
-        for (let i = 0; i < this.doc.widgets.length; i++) {
-            if (this.doc.widgets[i].GetFullName() == sName)
-                return this.doc.widgets[i].GetFormApi();
+        sName = sName != null && sName.toString ? sName.toString() : undefined;
+        if (!sName)
+            return null;
+
+        let aPartNames = sName.split('.').filter(function(item) {
+            if (item != "")
+                return item;
+        })
+
+        let oRootField = this.doc.rootFields.get(aPartNames[0]);
+        if (!oRootField)
+            return null;
+
+        for (let i = 1; i < aPartNames.length; i++) {
+            if (!oRootField)
+                return null;
+            
+            oRootField = oRootField.GetField(aPartNames[i]);
         }
 
-        return null;
+        return oRootField.GetFormApi();
     };
 
     // base form class with attributes and method for all types of forms
@@ -736,6 +751,16 @@
     Object.defineProperties(ApiCheckBoxField.prototype, {
         "value": {
             set(sValue) {
+                let oDoc = this.field.GetDocument();
+                let oCalcInfo = oDoc.GetCalculateInfo();
+                let oSourceField = oCalcInfo.GetSourceField();
+
+                if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.name)
+                    throw Error('InvalidSetError: Set not possible, invalid or unknown.');;
+
+                if (oDoc.isOnValidate)
+                    return;
+
                 let aFields = this.field.GetDocument().GetFields(this.name);
                 if (this._exportValues.includes(sValue)) {
                     aFields.forEach(function(field) {
@@ -746,6 +771,11 @@
                     aFields.forEach(function(field) {
                         field._value = "Off";
                     });
+                }
+
+                if (oCalcInfo.IsInProgress() == false) {
+                    oDoc.DoCalculateFields(this.field);
+                    oDoc.CommitFields();
                 }
             },
             get() {
@@ -776,6 +806,16 @@
         },
         "value": {
             set(sValue) {
+                let oDoc = this.field.GetDocument();
+                let oCalcInfo = oDoc.GetCalculateInfo();
+                let oSourceField = oCalcInfo.GetSourceField();
+
+                if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.name)
+                    throw Error('InvalidSetError: Set not possible, invalid or unknown.');
+ 
+                if (oDoc.isOnValidate)
+                    return;
+
                 let aFields = this._doc.GetFields(this.name);
                 if (this._exportValues.includes(sValue)) {
                     aFields.forEach(function(field) {
@@ -786,6 +826,11 @@
                     aFields.forEach(function(field) {
                         field._value = "Off";
                     });
+                }
+
+                if (oCalcInfo.IsInProgress() == false) {
+                    oDoc.DoCalculateFields(this.field);
+                    oDoc.CommitFields();
                 }
             },
             get() {
@@ -989,13 +1034,40 @@
         },
         "value": {
             set(value) {
-                if (value.toString)
-                    value = value.toString();
-                else
+                let oDoc = this.field.GetDocument();
+                let oCalcInfo = oDoc.GetCalculateInfo();
+                let oSourceField = oCalcInfo.GetSourceField();
+
+                if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.name)
+                    throw Error('InvalidSetError: Set not possible, invalid or unknown.');
+
+                if (oDoc.isOnValidate)
                     return;
-                
-                this.field.SetValue(value);
-                this.field.Commit();
+
+                if (value != null && value.toString)
+                    value = value.toString();
+                    
+                if (this.value == value)
+                    return;
+
+                isValid = this.field.DoValidateAction(value);
+
+                if (isValid) {
+                    this.field.SetValue(value);
+                    if (this.field.IsAnnot() == false)
+                        return;
+
+                    this.field.needValidate = false; 
+                    this.field.Commit();
+                    if (oCalcInfo.IsInProgress() == false) {
+                        if (oDoc.event["rc"] == true) {
+                            oDoc.DoCalculateFields(this.field);
+                            oDoc.AddFieldToCommit(this.field);
+                            oDoc.CommitFields();
+                        }
+                    }
+                    
+                }
             },
             get() {
                 return this.field.GetApiValue();
@@ -1135,13 +1207,39 @@
         },
         "value": {
             set(value) {
-                if (value.toString)
+                let oDoc = this.field.GetDocument();
+                let oCalcInfo = oDoc.GetCalculateInfo();
+                let oSourceField = oCalcInfo.GetSourceField();
+
+                if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.name)
+                    throw Error('InvalidSetError: Set not possible, invalid or unknown.');;
+
+                if (oDoc.isOnValidate)
+                    return;
+
+                if (value != null && value.toString)
                     value = value.toString();
-                else
+                    
+                if (this.value == value)
                     return;
                     
-                this.field.SetValue(value);
-                this.field.Commit();
+                isValid = this.field.DoValidateAction(value);
+
+                if (isValid) {
+                    this.field.SetValue(value);
+                    if (this.field.IsAnnot() == false)
+                        return;
+
+                    this.field.needValidate = false; 
+                    this.field.Commit();
+                    if (oCalcInfo.IsInProgress() == false) {
+                        if (oDoc.event["rc"] == true) {
+                            oDoc.DoCalculateFields(this.field);
+                            oDoc.AddFieldToCommit(this.field);
+                            oDoc.CommitFields();
+                        }
+                    }
+                }
             },
             get() {
                 return this.field.GetApiValue();
@@ -1257,17 +1355,32 @@
         },
         "value": {
             set(value) {
+                let oDoc = this.field.GetDocument();
+                let oCalcInfo = oDoc.GetCalculateInfo();
+                let oSourceField = oCalcInfo.GetSourceField();
+
+                if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.name)
+                    throw Error('InvalidSetError: Set not possible, invalid or unknown.');;
+
+                if (oDoc.isOnValidate)
+                    return;
+
+                if (value != null && value.toString)
+                    value = value.toString();
+                
+                if (this.value == value)
+                    return;
+                
                 this.field.SetValue(value);
                 this.field.Commit();
+
+                if (oCalcInfo.IsInProgress() == false) {
+                    oDoc.DoCalculateFields(this.field);
+                    oDoc.CommitFields();
+                }
             },
             get() {
-                // ищем то поле, которое не нужно применять, это текущее значение для всех с таким именем
-               let aFields = this.field.GetDocument().GetFields(this.name);
-               let oAppliedField = aFields.find(function(field) {
-                   return !field.IsNeedCommit();
-               });
-
-               return oAppliedField ? oAppliedField.GetValue() : aFields[0].GetValue();
+                return this.field.GetApiValue();
             }
         }
     });

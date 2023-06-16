@@ -55,6 +55,7 @@
         this.document = oDoc;
         this.fieldsToCommit = [];
         this.isInProgress = false;
+        this.sourceField = null;
     };
 
     CCalculateInfo.prototype.AddToCalculateField = function(oField) {
@@ -69,6 +70,18 @@
     };
     CCalculateInfo.prototype.IsInProgress = function() {
         return this.isInProgress;
+    };
+    /**
+	 * Sets field to calc info, which caused the recalculation.
+     * Note: This field cannot be changed in scripts.
+	 * @memberof CBaseField
+	 * @typeofeditors ["PDF"]
+	 */
+    CCalculateInfo.prototype.SetSourceField = function(oField) {
+        this.sourceField = oField;
+    };
+    CCalculateInfo.prototype.GetSourceField = function() {
+        return this.sourceField;
     };
 
     function CPDFDoc() {
@@ -126,7 +139,7 @@
                     oCurForm.needValidate = false; 
                     oCurForm.Commit();
                     if (this.event["rc"] == true) {
-                        this.DoCalculateFields();
+                        this.DoCalculateFields(oCurForm);
                         this.AddFieldToCommit(oCurForm);
                         this.CommitFields();
                     }
@@ -332,7 +345,7 @@
                     oField.needValidate = false; 
                     oField.Commit();
                     if (this.event["rc"] == true) {
-                        this.DoCalculateFields();
+                        this.DoCalculateFields(oField);
                         this.AddFieldToCommit(oField);
                         this.CommitFields();
                     }
@@ -387,7 +400,7 @@
                 oActiveForm.needValidate = false; 
                 oActiveForm.Commit();
                 if (this.event["rc"] == true) {
-                    this.DoCalculateFields();
+                    this.DoCalculateFields(oActiveForm);
                     this.AddFieldToCommit(oActiveForm);
                     this.CommitFields();
                 }
@@ -644,12 +657,13 @@
         return this.warningInfo;
     };
 
-    CPDFDoc.prototype.DoCalculateFields = function() {
+    CPDFDoc.prototype.DoCalculateFields = function(oSourceField) {
         // смысл такой, что когда изменяем какое-либо поле, вызываем этот метод, который делает calculate
         // для всех необходимых полей и добавляет их в массив fieldsToCommit,
         // далее вызываем ApplyFields чтобы применить значения для всех связных полей
         let oThis = this;
         this.CalculateInfo.SetIsInProgress(true);
+        this.CalculateInfo.SetSourceField(oSourceField);
         this.CalculateInfo.calculateFields.forEach(function(field) {
             let oFormatTrigger = field.GetTrigger(AscPDFEditor.FORMS_TRIGGERS_TYPES.Calculate);
             let oActionRunScript = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
@@ -664,6 +678,7 @@
             }
         });
         this.CalculateInfo.SetIsInProgress(false);
+        this.CalculateInfo.SetSourceField(null);
     };
 
     CPDFDoc.prototype.GetCalculateInfo = function() {
@@ -740,7 +755,7 @@
         // создаем родительские поля, последнее будет виджет-полем
         if (aPartNames.length > 1) {
             if (this.rootFields.get(aPartNames[0]) == null) { // если нет root поля, то создаем
-                this.rootFields.set(aPartNames[0], private_createField(aPartNames[0], "", "", []));
+                this.rootFields.set(aPartNames[0], private_createField(aPartNames[0], cFieldType, nPageNum, []));
             }
 
             let oParentField = this.rootFields.get(aPartNames[0]);
@@ -754,12 +769,13 @@
                 }
                 else {
                     // если есть поле с таким именем (part name), то двигаемся дальше, если нет, то создаем
-                    let oExistsField = oParentField.private_getField(aPartNames[i]);
+                    let oExistsField = oParentField.GetField(aPartNames[i]);
                     if (oExistsField)
                         oParentField = oExistsField;
                     else {
-                        oExistsField.AddKid(private_createField(aPartNames[i], "", "", []));
-                        oParentField = oExistsField;
+                        let oNewParent = private_createField(aPartNames[i], cFieldType, nPageNum, []);
+                        oParentField.AddKid(oNewParent);
+                        oParentField = oNewParent;
                     }
                 }
             }
@@ -775,8 +791,6 @@
         }
         
         oPagesInfo.pages[nPageNum].fields.push(oField);
-
-        oField._doc = this;
 
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();
@@ -861,7 +875,7 @@
         // создаем родительские поля, последнее будет виджет-полем
         if (aPartNames.length > 1) {
             if (this.rootFields.get(aPartNames[0]) == null) { // если нет root поля, то создаем
-                this.rootFields.set(aPartNames[0], private_createField(aPartNames[0], "", "", []));
+                this.rootFields.set(aPartNames[0], private_createField(aPartNames[0], cFieldType, nPageNum, []));
             }
 
             let oParentField = this.rootFields.get(aPartNames[0]);
@@ -875,12 +889,13 @@
                 }
                 else {
                     // если есть поле с таким именем (part name), то двигаемся дальше, если нет, то создаем
-                    let oExistsField = oParentField.private_getField(aPartNames[i]);
+                    let oExistsField = oParentField.GetField(aPartNames[i]);
                     if (oExistsField)
                         oParentField = oExistsField;
                     else {
-                        oExistsField.AddKid(private_createField(aPartNames[i], "", "", []));
-                        oParentField = oExistsField;
+                        let oNewParent = private_createField(aPartNames[i], cFieldType, nPageNum, []);
+                        oParentField.AddKid(oNewParent);
+                        oParentField = oNewParent;
                     }
                 }
             }
@@ -895,8 +910,6 @@
             oPagesInfo.pages[nPageNum].fields = [];
 
         oPagesInfo.pages[nPageNum].fields.push(oField);
-
-        oField._doc = this;
 
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();
@@ -941,7 +954,7 @@
         // создаем родительские поля, последнее будет виджет-полем
         if (aPartNames.length > 1) {
             if (this.rootFields.get(aPartNames[0]) == null) { // root поле
-                this.rootFields.set(aPartNames[0], private_createField(aPartNames[0], "", "", []));
+                this.rootFields.set(aPartNames[0], private_createField(aPartNames[0], cFieldType, nPageNum, []));
             }
 
             let oParentField = this.rootFields.get(aPartNames[0]);
@@ -953,12 +966,13 @@
                 }
                 else {
                     // если есть поле с таким именем (part name), то двигаемся дальше, если нет, то создаем
-                    let oExistsField = oParentField.private_getField(aPartNames[i]);
+                    let oExistsField = oParentField.GetField(aPartNames[i]);
                     if (oExistsField)
                         oParentField = oExistsField;
                     else {
-                        oExistsField.AddKid(private_createField(aPartNames[i], "", "", []));
-                        oParentField = oExistsField;
+                        let oNewParent = private_createField(aPartNames[i], cFieldType, nPageNum, []);
+                        oParentField.AddKid(oNewParent);
+                        oParentField = oNewParent;
                     }
                 }
             }
