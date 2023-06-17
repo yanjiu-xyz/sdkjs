@@ -240,7 +240,7 @@ function CTransitionAnimation(htmlpage)
             }
             else
             {
-                _currentSlide = this.GetPrevVisibleSlide(true);
+                _currentSlide = this.DemonstrationObject.GetPrevVisibleSlide(true);
             }
 
             this.DrawImage1(_currentSlide, false);
