@@ -6186,6 +6186,9 @@
 				&& (this.tailEnd == null ? ln.tailEnd == null : this.tailEnd.IsIdentical(ln.headEnd)) &&
 				this.algn == ln.algn && this.cap == ln.cap && this.cmpd == ln.cmpd && this.w == ln.w && this.prstDash === ln.prstDash;
 		};
+		CLn.prototype.isEqual = function (ln) {
+			return this.isEqual(ln);
+		};
 		CLn.prototype.setFill = function (fill) {
 			this.Fill = fill;
 		};
@@ -15241,6 +15244,7 @@
 			builder_SetAxisMinorGridlines(oChartSpace.chart.plotArea.getHorizontalAxis(), oLn);
 		}
 
+		const OBJECT_MORPH_MARKER = "!!";
 //----------------------------------------------------------export----------------------------------------------------
 		window['AscFormat'] = window['AscFormat'] || {};
 		window['AscFormat'].CreateFontRef = CreateFontRef;
@@ -15569,5 +15573,6 @@
 		window['AscFormat'].MAP_AUTONUM_TYPES = MAP_AUTONUM_TYPES;
 		window['AscFormat'].CLR_NAME_MAP = CLR_NAME_MAP;
 		window['AscFormat'].LINE_PRESETS_MAP = LINE_PRESETS_MAP;
+		window['AscFormat'].OBJECT_MORPH_MARKER = OBJECT_MORPH_MARKER;
 	})
 (window);

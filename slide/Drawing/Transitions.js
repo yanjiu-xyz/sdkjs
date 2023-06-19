@@ -250,8 +250,7 @@ function CTransitionAnimation(htmlpage)
         this.StartTime = new Date().getTime();
         this.EndTime = this.StartTime + this.Duration;
 
-		const nType = c_oAscSlideTransitionTypes.Morph;
-		//const nType = this.Type;
+		const nType = this.Type;
         switch (nType)
         {
             case c_oAscSlideTransitionTypes.Fade:
@@ -2609,12 +2608,6 @@ function CTransitionAnimation(htmlpage)
             oThis.End(false);
             return;
         }
-
-        var _xDst = oThis.Rect.x;
-        var _yDst = oThis.Rect.y;
-        var _wDst = oThis.Rect.w;
-        var _hDst = oThis.Rect.h;
-
         var _part = (oThis.CurrentTime - oThis.StartTime) / oThis.Duration;
         if (oThis.IsBackward)
             _part = 1 - _part;
@@ -2648,12 +2641,15 @@ function lcm(n, m) {
 
 
 
-function CMorphObjectBase(nRelH1, nRelH2) {
+function CMorphObjectBase(oTexturesCache, nRelH1, nRelH2) {
+    this.cache = oTexturesCache;
     const isN = AscFormat.isRealNumber;
 	this.relHeight1 = isN(nRelH1) ? nRelH1 : null;
 	this.relHeight2 = isN(nRelH2) ? nRelH2 : null;
 
     this.relHeight = null;
+
+    this.relTime = 0.0;
 }
 
 CMorphObjectBase.prototype.morph = function (dRelTime) {
@@ -2666,6 +2662,7 @@ CMorphObjectBase.prototype.morph = function (dRelTime) {
     else {
         this.relHeight = this.relHeight2;
     }
+    this.relTime = dRelTime;
 };
 CMorphObjectBase.prototype.morphObjects = function (dRelTime) {
 
@@ -2674,15 +2671,9 @@ CMorphObjectBase.prototype.draw = function (oGraphics) {
 
 };
 
-function CMorphedGeometryObject(oDrawing1, nRelH1, oDrawing2, nRelH2) {
-	CMorphObjectBase.call(this, nRelH1, nRelH2);
-}
-
-
-
-function CMorphedPath(oPath1, nRelH1, oBrush1, oPen1, oTransform1,
+function CMorphedPath(oTexturesCache, oPath1, nRelH1, oBrush1, oPen1, oTransform1,
                       oPath2, nRelH2, oBrush2, oPen2, oTransform2) {
-    CMorphObjectBase.call(this, nRelH1, nRelH2);
+    CMorphObjectBase.call(this, oTexturesCache, nRelH1, nRelH2);
     this.path1 = oPath1;
     this.brush1 = oBrush1;
     this.pen1 = oPen1;
@@ -2908,7 +2899,7 @@ function CMorphedPath(oPath1, nRelH1, oBrush1, oPen1, oTransform1,
     this.valid = true;
     this.morph(1);
 }
-
+AscFormat.InitClassWithoutType(CMorphedPath, CMorphObjectBase);
 CMorphedPath.prototype.morph = function (dTime) {
     if(!this.valid) {
         return;
@@ -2946,7 +2937,6 @@ CMorphedPath.prototype.morph = function (dTime) {
         }
     }
 };
-
 CMorphedPath.prototype.draw = function(oGraphics) {
     if(!this.valid) {
         return;
@@ -2954,12 +2944,72 @@ CMorphedPath.prototype.draw = function(oGraphics) {
     this.drawObject.draw(oGraphics);
 };
 
-
-
-function CMorphedFadeObject(oTexturesCache, oDrawing1, nRelH1, oDrawing2, nRelH2) {
-	CMorphObjectBase.call(this, nRelH1, nRelH2);
-    this.texturesCache = oTexturesCache;
+function CComplexMorphObject(oTexturesCache, nRelH1, nRelH2) {
+    CMorphObjectBase.call(this, oTexturesCache, nRelH1, nRelH2);
+    this.morphedObjects = [];
 }
+AscFormat.InitClassWithoutType(CComplexMorphObject, CMorphObjectBase);
+CComplexMorphObject.prototype.morph = function (dTime) {
+    for(let nIdx = 0; nIdx < this.morphedObjects.length; ++ nIdx) {
+        this.morphedObjects[nIdx].morph(dTime);
+    }
+};
+CComplexMorphObject.prototype.draw = function (oGraphics) {
+    for(let nIdx = 0; nIdx < this.morphedObjects.length; ++ nIdx) {
+        this.morphedObjects[nIdx].draw(oGraphics);
+    }
+};
+
+function CGeometryMorphObject(oTexturesCache, nRelH1, nRelH2, oGeometry1, oGeometry2) {
+    CMorphObjectBase.call(this, oTexturesCache, nRelH1, nRelH2);
+    this.geometry1 = oGeometry1;
+    this.geometry2 = oGeometry2;
+    this.geometry = AscFormat.ExecuteNoHistory(function () {AscFormat.Geometry();}, this, []);
+
+}
+AscFormat.InitClassWithoutType(CGeometryMorphObject, CMorphObjectBase);
+
+
+function CDrawingTextureMorphObject(oTexturesCache, oDrawing1, nRelH1, oDrawing2, nRelH2) {
+    CMorphObjectBase.call(this, oTexturesCache, nRelH1, nRelH2);
+    this.drawing1 = oDrawing1;
+    this.drawing2 = oDrawing2;
+}
+AscFormat.InitClassWithoutType(CDrawingTextureMorphObject, CMorphObjectBase);
+
+function CTextureMorph(oTexturesCache, oTexture1, nRelH1, dXC1, dYC1, oTexture2, nRelH2, dXC2, dYC2) {
+    CMorphObjectBase.call(this, oTexturesCache, nRelH1, nRelH2);
+    this.texture1 = oTexture1;
+    this.texture2 = oTexture2;
+    this.xc1 = dXC1;
+    this.yc1 = dYC1;
+    this.xc2 = dXC2;
+    this.yc2 = dYC2;
+    this.xc = this.xc1;
+    this.yc = this.yc1;
+    this.w = this.texture1.getWidth();
+    this.h = this.texture1.getHeight();
+    this.time = 0.0;
+}
+AscFormat.InitClassWithoutType(CTextureMorph, CMorphObjectBase);
+CTextureMorph.prototype.morph = function(dTime) {
+    this.xc = (this.xc2 - this.xc1) * dTime + this.xc1;
+    this.yc = (this.yc2 - this.yc1) * dTime + this.yc1;
+    this.w = (this.texture2.getWidth() - this.texture1.getWidth()) * dTime + this.texture1.getWidth();
+    this.h = (this.texture2.getHeight() - this.texture1.getHeight()) * dTime + this.texture1.getHeight();
+    this.time = dTime;
+};
+CTextureMorph.prototype.draw = function(oGraphics) {
+    const dAlpha1 = this.time;
+    const dAlpha2 = 1 - this.time;
+    const nX = this.xc - this.w / 2 + 0.5 >> 0;
+    const nY = this.yc - this.h / 2 + 0.5 >> 0;
+    const nW = this.w;
+    const nH = this.h;
+    this.texture1.drawInRect(oGraphics, dAlpha1, nX, nY, nW, nH);
+    this.texture2.drawInRect(oGraphics, dAlpha2, nX, nY, nW, nH);
+};
+
 
 function CSlideMorphEffect(oSlide1, oSlide2, nType) {
 	this.slide1 = oSlide1;
@@ -3039,24 +3089,23 @@ CSlideMorphEffect.prototype.addShapeMorphs = function (oShape1, nRelH1, oShape2,
         let oPath2 = aPaths2[nPath];
         let nRelPathH1 = nRelH1 + nPath / (aPaths1.length);
         let nRelPathH2 = nRelH2 + nPath / (aPaths2.length);
-        this.pushMorphObject(new CMorphedPath(
+        this.pushMorphObject(new CMorphedPath(this.texturesCache,
             oPath1, nRelPathH1, oShape1.brush, oShape1.pen, oShape1.transform,
             oPath2, nRelPathH2, oShape2.brush, oShape2.pen, oShape2.transform));
     }
 };
 CSlideMorphEffect.prototype.addObjectMorphs = function(oDrawing1, nRelH1, oDrawing2, nRelH2) {
     if(!oDrawing1 || !oDrawing2) {
-        this.pushMorphObject(new CMorphedFadeObject(this.texturesCache, oDrawing1, nRelH1, oDrawing2, nRelH2));
         return;
     }
     const nType1 = oDrawing1.getObjectType();
     const nType2 = oDrawing2.getObjectType();
     if(nType1 !== nType2) {
-        this.pushMorphObject(new CMorphedFadeObject(this.texturesCache, oDrawing1, nRelH1, oDrawing2, nRelH2));
         return;
     }
     switch (nType1) {
-        case AscFormat.historyitem_type_Shape: {
+        case AscDFH.historyitem_type_Shape: {
+            this.addShapeMorphs(oDrawing1, nRelH1, oDrawing2, nRelH2)
             break;
         }
     }
@@ -3067,25 +3116,34 @@ CSlideMorphEffect.prototype.generateObjectBasedMorphs = function() {
 	const aDrawings2 = this.slide2.getDrawingObjects();
 	const nDrawingsCount1 = aDrawings1.length;
 	const nDrawingsCount2 = aDrawings2.length;
+    const oMapPaired = {};
 	for(let nDrawing1 = 0; nDrawing1 < nDrawingsCount1; ++nDrawing1) {
 		let oDrawing1 = aDrawings1[nDrawing1];
-		let sName1 = oDrawing1.getOwnName();
-        let nDrawingType = oDrawing1.getObjectType();
-		if(sName1) {
-			for(let nDrawing2 = 0; nDrawing2 < nDrawingsCount2; ++nDrawing2) {
-				let oDrawing2 = aDrawings2[nDrawing2];
-                if(oDrawing2.getObjectType() === nDrawingType) {
-                    let sName2 = oDrawing2.getOwnName();
-                    if(sName2 === sName1) {
-                        if(oDrawing1.isShape()) {
-                            this.addShapeMorphs(oDrawing1, nDrawing1, oDrawing2, nDrawing2);
-                            break;
-                        }
-                    }
+        let oPairedDrawing = null;
+        let nParedRelH = null;
+        for(let nDrawing2 = 0; nDrawing2 < nDrawingsCount2; ++nDrawing2) {
+            let oDrawing2 = aDrawings2[nDrawing2];
+            if(!oMapPaired[oDrawing2.Id]) {
+                oPairedDrawing = oDrawing1.compareForMorph(oDrawing2, oPairedDrawing);
+                if(oDrawing2 === oPairedDrawing) {
+                    nParedRelH = nDrawing2;
                 }
-			}
-		}
+            }
+        }
+        if(oPairedDrawing) {
+            oMapPaired[oPairedDrawing.Id] = true;
+            this.addObjectMorphs(oDrawing1, nDrawing1, oPairedDrawing, nParedRelH);
+        }
+        else {
+            this.pushMorphObject(new CMorphedDisappearObject(this.texturesCache, oDrawing1, nDrawing1));
+        }
 	}
+    for(let nDrawing2 = 0; nDrawing2 < nDrawingsCount2; ++nDrawing2) {
+        let oDrawing2 = aDrawings2[nDrawing2];
+        if(!oMapPaired[oDrawing2.Id]) {
+            this.pushMorphObject(new CMorphedAppearObject(this.texturesCache, oDrawing2, nDrawing2));
+        }
+    }
 };
 CSlideMorphEffect.prototype.generateWordBasedMorphs = function() {
 	//TODO: implement
@@ -3102,6 +3160,56 @@ CSlideMorphEffect.prototype.morph = function(dTime) {
     this.morphObjects.sort(function (a, b) {
         return a.relHeight - b.relativeHeight;
     });
+};
+
+function CMorphedFadeObject(oTexturesCache, oDrawing, nRelH) {
+    CMorphObjectBase.call(this, oTexturesCache, nRelH, null);
+    this.drawing = oDrawing;
+}
+AscFormat.InitClassWithoutType(CMorphedFadeObject, CMorphObjectBase);
+CMorphedFadeObject.prototype.morph = function(dRelTime) {
+    CMorphObjectBase.prototype.morph.call(this, dRelTime);
+};
+CMorphedFadeObject.prototype.drawWithAlpha = function(oGraphics, dAlpha) {
+    const dScale = oGraphics.m_oCoordTransform.sx;
+    const oTexture = this.cache.checkTexture(this.drawing.GetId(), dScale);
+    if(!oTexture) {
+        return;
+    }
+    const oFadeTexture = oTexture.createFadeIn(dAlpha);
+    if(!oFadeTexture) {
+        return;
+    }
+    oFadeTexture.draw(oGraphics, null);
+};
+
+function CMorphedAppearObject(oTexturesCache, oDrawing, nRelH) {
+    CMorphedFadeObject.call(this, oTexturesCache, oDrawing, nRelH)
+}
+AscFormat.InitClassWithoutType(CMorphedAppearObject, CMorphedFadeObject);
+CMorphedAppearObject.prototype.draw = function(oGraphics) {
+    let dAlpha;
+    if(this.relTime < 0.5) {
+        dAlpha = 0.0;
+    }
+    else {
+        dAlpha = 2 * this.relTime - 1.0;
+    }
+    this.drawWithAlpha(oGraphics, dAlpha);
+};
+function CMorphedDisappearObject(oTexturesCache, oDrawing, nRelH) {
+    CMorphedFadeObject.call(this, oTexturesCache, oDrawing, nRelH)
+}
+AscFormat.InitClassWithoutType(CMorphedDisappearObject, CMorphedFadeObject);
+CMorphedDisappearObject.prototype.draw = function(oGraphics) {
+    let dAlpha;
+    if(this.relTime < 0.5) {
+        dAlpha = 1.0 - 2 * this.relTime;
+    }
+    else {
+        dAlpha = 0.0;
+    }
+    this.drawWithAlpha(oGraphics, dAlpha);
 };
 
 function CDemonstrationManager(htmlpage)

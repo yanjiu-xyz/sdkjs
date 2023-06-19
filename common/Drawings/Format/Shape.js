@@ -6681,6 +6681,95 @@
 			}
 		};
 
+		CShape.prototype.getText = function() {
+			const oContent = this.getDocContent();
+			if(!oContent) {
+				return "";
+			}
+			oContent.SetApplyToAll(true);
+			const sText = oContent.GetSelectedText(true, {});
+			oContent.SetApplyToAll(false);
+			return sText;
+		};
+
+		CShape.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
+			if(!oDrawingToCheck || !oDrawingToCheck.isShape()) {
+				return oCurCandidate;
+			}
+			const sName = this.getOwnName();
+			const sText = this.getText();
+			const sPreset = this.getPresetGeom();
+			if(sName && sName.startsWith(AscFormat.OBJECT_MORPH_MARKER)) {
+				const sCheckName = oDrawingToCheck.getOwnName();
+				if(sName !== sCheckName) {
+					return oCurCandidate;
+				}
+			}
+			else {
+				if(oDrawingToCheck.getText() !== sText) {
+					return oCurCandidate;
+				}
+				if(sPreset !== oDrawingToCheck.getPresetGeom()) {
+					return oCurCandidate;
+				}
+			}
+			if(!oCurCandidate) {
+				return oDrawingToCheck;
+			}
+			if(oDrawingToCheck.getText() !== sText && oCurCandidate.getText() === sText) {
+				return oCurCandidate;
+			}
+			if(oDrawingToCheck.getText() === sText && oCurCandidate.getText() !== sText) {
+				return oDrawingToCheck;
+			}
+
+			if(sPreset) {
+				if(oDrawingToCheck.getPresetGeom() !== sPreset && oCurCandidate.getPresetGeom() === sPreset) {
+					return oCurCandidate;
+				}
+				if(oDrawingToCheck.getPresetGeom() === sPreset && oCurCandidate.getPresetGeom() !== sPreset) {
+					return oDrawingToCheck;
+				}
+			}
+
+			const oBrush = this.brush;
+			const oPen = this.pen;
+			const oBrushCheck = oDrawingToCheck.brush;
+			const oPenCheck = oDrawingToCheck.pen;
+			const oBrushCandidate = oCurCandidate.brush;
+			const oPenCandidate = oCurCandidate.pen;
+			const bBrushCheckEqual = !oBrush && !oBrushCheck || oBrush && oBrush.isEqual(oBrushCheck);
+			const bPenCheckEqual = !oPen && !oPenCheck || oPen && oPen.isEqual(oPenCheck);
+			const bBrushPenCheckEqual = bBrushCheckEqual && bPenCheckEqual;
+
+			const bBrushCandidateEqual = !oBrush && !oBrushCandidate || oBrush && oBrush.isEqual(oBrushCandidate);
+			const bPenCandidateEqual = !oPen && !oPenCandidate || oPen && oPen.isEqual(oPenCandidate);
+			const bBrushPenCandidateEqual = bBrushCandidateEqual && bPenCandidateEqual;
+			if(bBrushPenCheckEqual && !bBrushPenCandidateEqual) {
+				return oDrawingToCheck;
+			}
+			if(!bBrushPenCheckEqual && bBrushPenCandidateEqual) {
+				return oCurCandidate;
+			}
+			if(bBrushCheckEqual && !bBrushCandidateEqual) {
+				return oDrawingToCheck;
+			}
+			if(!bBrushCheckEqual && bBrushCandidateEqual) {
+				return oCurCandidate;
+			}
+			if(bPenCheckEqual && !bPenCandidateEqual) {
+				return oDrawingToCheck;
+			}
+			if(!bPenCheckEqual && bPenCandidateEqual) {
+				return oCurCandidate;
+			}
+			const dDistCheck = this.getDistanceL1(oDrawingToCheck);
+			const dDistCur = this.getDistanceL1(oCurCandidate);
+			if(dDistCur < dDistCheck) {
+				return  oCurCandidate;
+			}
+			return oDrawingToCheck;
+		};
 
 		function CreateBinaryReader(szSrc, offset, srcLen) {
 			var memoryData = AscCommon.Base64.decode(szSrc, true, srcLen, offset);
