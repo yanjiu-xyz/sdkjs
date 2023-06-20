@@ -729,6 +729,10 @@ else
 			rec["rect"]["y1"] = parseFloat(reader.readString());
 			rec["rect"]["x2"] = parseFloat(reader.readString());
 			rec["rect"]["y2"] = parseFloat(reader.readString());
+			rec["textColor"] = {};
+			rec["textColor"]["R"] = reader.readDouble();
+			rec["textColor"]["G"] = reader.readDouble();
+			rec["textColor"]["B"] = reader.readDouble();
 			rec["alignment"] = reader.readInt();
 			rec["type"] = reader.readString();
 			rec["flag"] = reader.readInt();
