@@ -54,6 +54,8 @@ var UndoRedoData_Layout = AscCommonExcel.UndoRedoData_Layout;
 var c_oAscCustomAutoFilter = Asc.c_oAscCustomAutoFilter;
 var c_oAscAutoFilterTypes = Asc.c_oAscAutoFilterTypes;
 
+let cDate = Asc.cDate;
+
 var c_maxOutlineLevel = 7;
 
 var g_oColorManager = null;
