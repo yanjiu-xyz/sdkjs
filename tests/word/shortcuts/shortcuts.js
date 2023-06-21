@@ -39,8 +39,6 @@
 	// 	addPropertyToDocument,
 	// 	getLogicDocumentWithParagraphs,
 	// 	checkTextAfterKeyDownHelperEmpty,
-	// 	checkDirectTextPrAfterKeyDown,
-	// 	checkDirectParaPrAfterKeyDown,
 	// 	oGlobalLogicDocument,
 	// 	addParagraphToDocumentWithText,
 	// 	remove,
@@ -109,8 +107,9 @@
 	}
 	function ClearDocumentAndAddParagraph(text)
 	{
-		let p = AscTest.CreateParagraph();
+		logicDocument.RemoveSelection();
 		AscTest.ClearDocument();
+		let p = AscTest.CreateParagraph();
 		logicDocument.AddToContent(0, p);
 		
 		if (text)
@@ -140,6 +139,10 @@
 	function GetDirectTextPr()
 	{
 		return logicDocument.GetDirectTextPr();
+	}
+	function GetDirectParaPr()
+	{
+		return logicDocument.GetDirectParaPr();
 	}
 
 	$(function ()
@@ -176,7 +179,7 @@
 			assert.strictEqual(logicDocument.GetPagesCount(), 4, 'Check page break shortcut');
 			TurnOffRecalculate();
 		});
-
+		
 		QUnit.test('Check line break shortcut', (assert) =>
 		{
 			TurnOnRecalculate();
@@ -189,7 +192,7 @@
 			assert.strictEqual(p.GetLinesCount(), 4, 'Check line break shortcut');
 			TurnOffRecalculate();
 		});
-
+		
 		QUnit.test('Check column break shortcut', (assert) =>
 		{
 			TurnOnRecalculate();
@@ -218,7 +221,7 @@
 			sectionPr.SetColumnsNum(1);
 			TurnOffRecalculate();
 		});
-
+		
 		QUnit.test('Check reset char shortcut', (assert) =>
 		{
 			ClearDocumentAndAddParagraph('Hello world');
@@ -235,7 +238,7 @@
 		QUnit.test('Check adding various characters', (assert) =>
 		{
 			let p = ClearDocumentAndAddParagraph();
-
+			
 			ExecuteShortcut(c_oAscDocumentShortcutType.NonBreakingSpace);
 			assert.strictEqual(AscTest.GetParagraphText(p), String.fromCharCode(0x00A0), 'Check add non breaking space');
 			ExecuteShortcut(c_oAscDocumentShortcutType.CopyrightSign);
@@ -256,7 +259,7 @@
 			assert.strictEqual(AscTest.GetParagraphText(p), String.fromCharCode(0x00A0, 0x00A9, 0x20AC, 0x00AE, 0x2122, 0x2013, 0x2014, 0x002D, 0x2026), 'Check add HorizontalEllipsis');
 		});
 		
-		QUnit.test('Check changing text properties', (assert) =>
+		QUnit.test('Check text property change', (assert) =>
 		{
 			ClearDocumentAndAddParagraph('Hello world');
 			logicDocument.SelectAll();
@@ -309,7 +312,6 @@
 		
 		QUnit.test('Check select all shortcut', (assert) =>
 		{
-			logicDocument.RemoveSelection();
 			let p = ClearDocumentAndAddParagraph('Hello world');
 			let table = AscTest.CreateTable(2, 2);
 			logicDocument.AddToContent(1, table);
@@ -319,6 +321,47 @@
 			assert.strictEqual(p.IsSelectedAll(), true, 'Check paragraph selection');
 			assert.strictEqual(table.IsSelectedAll(), true, 'Check table selection');
 		});
+		
+		QUnit.test('Check paragraph property change', (assert) =>
+		{
+			let p = ClearDocumentAndAddParagraph('Hello world');
+			function GetStyleName()
+			{
+				return logicDocument.GetStyleManager().GetName(p.GetParagraphStyle());
+			}
+			
+			assert.strictEqual(GetStyleName(), "", "Check style");
+			ExecuteShortcut(c_oAscDocumentShortcutType.ApplyHeading1);
+			assert.strictEqual(GetStyleName(), "Heading 1", "Check apply heading 1");
+			ExecuteShortcut(c_oAscDocumentShortcutType.ApplyHeading2);
+			assert.strictEqual(GetStyleName(), "Heading 2", "Check apply heading 2");
+			ExecuteShortcut(c_oAscDocumentShortcutType.ApplyHeading3);
+			assert.strictEqual(GetStyleName(), "Heading 3", "Check apply heading 3");
+			
+			assert.strictEqual(GetDirectParaPr().GetJc(), undefined, "Check justification");
+			ExecuteShortcut(c_oAscDocumentShortcutType.CenterPara);
+			assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Center, "Check turn on center para");
+			ExecuteShortcut(c_oAscDocumentShortcutType.CenterPara);
+			assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Left, "Check turn off center para");
+			
+			ExecuteShortcut(c_oAscDocumentShortcutType.JustifyPara);
+			assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Justify, "Check turn on justify para");
+			ExecuteShortcut(c_oAscDocumentShortcutType.JustifyPara);
+			assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Left, "Check turn off justify para");
+			
+			ExecuteShortcut(c_oAscDocumentShortcutType.JustifyPara);
+			assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Justify, "Check turn on justify para");
+			ExecuteShortcut(c_oAscDocumentShortcutType.LeftPara);
+			assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Left, "Check turn on left para");
+			ExecuteShortcut(c_oAscDocumentShortcutType.LeftPara);
+			assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Justify, "Check turn off left para");
+			
+			ExecuteShortcut(c_oAscDocumentShortcutType.RightPara);
+			assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Right, "Check turn on right para");
+			ExecuteShortcut(c_oAscDocumentShortcutType.RightPara);
+			assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Left, "Check turn off right para");
+		});
+		
 		
 		//
 		// QUnit.test('Check show non printing characters shortcut', (oAssert) =>
@@ -360,21 +403,6 @@
 		// 	oAssert.deepEqual(arrEndnotes.length, 1, 'Check insert endnote shortcut');
 		// });
 		//
-		// QUnit.test('Check center para shortcut', (oAssert) =>
-		// {
-		// 	editor.getShortcut = function () {return c_oAscDocumentShortcutType.CenterPara};
-		// 	const fAnotherCheck = checkDirectParaPrAfterKeyDown((oParaPr) => oParaPr.Get_Jc(), align_Center, 'Check center para shortcut', createNativeEvent(), oAssert);
-		// 	fAnotherCheck((oParaPr) => oParaPr.Get_Jc(), align_Left, 'Check center para shortcut', createNativeEvent(), oAssert);
-		// });
-		//
-		//
-		//
-		// QUnit.test('Check justify para shortcut', (oAssert) =>
-		// {
-		// 	editor.getShortcut = function () {return c_oAscDocumentShortcutType.JustifyPara};
-		// 	const fAnotherCheck = checkDirectParaPrAfterKeyDown((oParaPr) => oParaPr.Get_Jc(), align_Justify, 'Check justify para shortcut', createNativeEvent(), oAssert);
-		// 	fAnotherCheck((oParaPr) => oParaPr.Get_Jc(), align_Left, 'Check justify para shortcut', createNativeEvent(), oAssert);
-		// });
 		//
 		// QUnit.test('Check bullet list shortcut', (oAssert) =>
 		// {
@@ -386,12 +414,6 @@
 		// 	oAssert.true(oParagraph.IsBulletedNumbering(), 'check apply bullet list');
 		// });
 		//
-		// QUnit.test('Check left para shortcut', (oAssert) =>
-		// {
-		// 	editor.getShortcut = function () {return c_oAscDocumentShortcutType.LeftPara};
-		// 	const fAnotherCheck = checkDirectParaPrAfterKeyDown((oParaPr) => oParaPr.Get_Jc(), align_Justify, 'Check center para shortcut', createNativeEvent(), oAssert);
-		// 	fAnotherCheck((oParaPr) => oParaPr.Get_Jc(), align_Left, 'Check center para shortcut', createNativeEvent(), oAssert);
-		// });
 		//
 		// QUnit.test('Check indent shortcut', (oAssert) =>
 		// {
@@ -421,12 +443,6 @@
 		// 	checkInsertElementByType(para_PageNum, 'Check insert page number shortcut', oAssert, createNativeEvent());
 		// });
 		//
-		// QUnit.test('Check right para shortcut', (oAssert) =>
-		// {
-		// 	editor.getShortcut = function () {return c_oAscDocumentShortcutType.RightPara};
-		// 	const fAnotherCheck = checkDirectParaPrAfterKeyDown((oParaPr) => oParaPr.Get_Jc(), align_Right, 'Check center para shortcut', createNativeEvent(), oAssert);
-		// 	fAnotherCheck((oParaPr) => oParaPr.Get_Jc(), align_Left, 'Check center para shortcut', createNativeEvent(), oAssert);
-		// });
 		//
 		//
 		//
@@ -533,22 +549,6 @@
 		// });
 		//
 		//
-		// QUnit.test('Check apply heading 1', (oAssert) =>
-		// {
-		// 	editor.getShortcut = function () {return c_oAscDocumentShortcutType.ApplyHeading1};
-		// 	checkApplyParagraphStyle('Heading 1', 'Check apply heading 1 shortcut', createNativeEvent(), oAssert);
-		// });
-		// QUnit.test('Check apply heading 2', (oAssert) =>
-		// {
-		// 	editor.getShortcut = function () {return c_oAscDocumentShortcutType.ApplyHeading2};
-		// 	checkApplyParagraphStyle('Heading 2', 'Check apply heading 2 shortcut', createNativeEvent(), oAssert);
-		// });
-		//
-		// QUnit.test('Check apply heading 3', (oAssert) =>
-		// {
-		// 	editor.getShortcut = function () {return c_oAscDocumentShortcutType.ApplyHeading3};
-		// 	checkApplyParagraphStyle('Heading 3', 'Check apply heading 3 shortcut', createNativeEvent(), oAssert);
-		// });
 		//
 		// QUnit.test('Check insert footnotes now', (oAssert) =>
 		// {
