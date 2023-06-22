@@ -11130,10 +11130,9 @@
 
     CTexturesCache.prototype.checkTexture = function (sId, fScale) {
         if (!this.map[sId] || !this.map[sId].checkScale(fScale)) {
-            this.map[sId] = this.createDrawingTexture(sId, fScale);
-            if (!this.map[sId]) {
-                this.removeTexture(sId);
-                return undefined;
+            const oTexture = this.createDrawingTexture(sId, fScale);
+            if(oTexture) {
+                this.map[sId] = oTexture;
             }
         }
         return this.map[sId];

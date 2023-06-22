@@ -2670,10 +2670,18 @@ CMorphObjectBase.prototype.morphObjects = function (dRelTime) {
 CMorphObjectBase.prototype.draw = function (oGraphics) {
 
 };
+CMorphObjectBase.prototype.getValBetween = function(dVal1, dVal2) {
+    return dVal1 + (dVal2 - dVal1)* this.relTime;
+};
 
 function CMorphedPath(oTexturesCache, oPath1, nRelH1, oBrush1, oPen1, oTransform1,
                       oPath2, nRelH2, oBrush2, oPen2, oTransform2) {
     CMorphObjectBase.call(this, oTexturesCache, nRelH1, nRelH2);
+
+
+    if(oPath1.fill !== oPath2.fill || oPath1.stroke !== oPath2.stroke) {
+        return;
+    }
     this.path1 = oPath1;
     this.brush1 = oBrush1;
     this.pen1 = oPen1;
@@ -2694,14 +2702,13 @@ function CMorphedPath(oTexturesCache, oPath1, nRelH1, oBrush1, oPen1, oTransform
         this.path2T = new AscFormat.Path();
         this.path2T.setParent(this.path2.parent);
         this.path2.convertToBezierCurves(this.path2T, this.transform2);
-    }, this, [])
+    }, this, []);
 
 
     this.path = null;
     this.pen = null;
     this.brush = null;
 
-    this.valid = false;
     this.contours1 = [];
     this.contours2 = [];
 
@@ -2845,6 +2852,8 @@ function CMorphedPath(oTexturesCache, oPath1, nRelH1, oBrush1, oPen1, oTransform
         return oPath;
 
     }, this, []);
+    oPath.fill = oPath1.fill;
+    oPath.stroke = oPath1.stroke;
     let aPathCommands = oPath.ArrPathCommand;
     for(let nContour = 0; nContour < this.contours1.length; ++nContour) {
         let aContour1 = this.contours1[nContour];
@@ -2896,12 +2905,11 @@ function CMorphedPath(oTexturesCache, oPath1, nRelH1, oBrush1, oPen1, oTransform
     let oGeometry = new AscFormat.ExecuteNoHistory(function() {return new AscFormat.Geometry();}, this, []);
     oGeometry.pathLst.push(this.path);
     this.drawObject = new AscFormat.OverlayObject(oGeometry, 100, 100, this.brush1, this.pen1, new AscCommon.CMatrix());
-    this.valid = true;
     this.morph(1);
 }
 AscFormat.InitClassWithoutType(CMorphedPath, CMorphObjectBase);
 CMorphedPath.prototype.morph = function (dTime) {
-    if(!this.valid) {
+    if(!this.isValid()) {
         return;
     }
     if(!this.path) {
@@ -2918,16 +2926,16 @@ CMorphedPath.prototype.morph = function (dTime) {
             return;
         }
         if(oCmd.id === AscFormat.moveTo) {
-            oCmd.X = aCmd1[0] + (aCmd2[0] - aCmd1[0])*dTime;
-            oCmd.Y = aCmd1[1] + (aCmd2[1] - aCmd1[1])*dTime;
+            oCmd.X = this.getValBetween(aCmd1[0], aCmd2[0]);
+            oCmd.Y = this.getValBetween(aCmd1[1], aCmd2[1]);
         }
         else if(oCmd.id === AscFormat.bezier4) {
-            oCmd.X0 = aCmd1[0] + (aCmd2[0] - aCmd1[0])*dTime;
-            oCmd.Y0 = aCmd1[1] + (aCmd2[1] - aCmd1[1])*dTime;
-            oCmd.X1 = aCmd1[2] + (aCmd2[2] - aCmd1[2])*dTime;
-            oCmd.Y1 = aCmd1[3] + (aCmd2[3] - aCmd1[3])*dTime;
-            oCmd.X2 = aCmd1[4] + (aCmd2[4] - aCmd1[4])*dTime;
-            oCmd.Y2 = aCmd1[5] + (aCmd2[5] - aCmd1[5])*dTime;
+            oCmd.X0 = this.getValBetween(aCmd1[0], aCmd2[0]);
+            oCmd.Y0 = this.getValBetween(aCmd1[1], aCmd2[1]);
+            oCmd.X1 = this.getValBetween(aCmd1[2], aCmd2[2]);
+            oCmd.Y1 = this.getValBetween(aCmd1[3], aCmd2[3]);
+            oCmd.X2 = this.getValBetween(aCmd1[4], aCmd2[4]);
+            oCmd.Y2 = this.getValBetween(aCmd1[5], aCmd2[5]);
         }
         else if(oCmd.id === AscFormat.close) {
 
@@ -2938,10 +2946,16 @@ CMorphedPath.prototype.morph = function (dTime) {
     }
 };
 CMorphedPath.prototype.draw = function(oGraphics) {
-    if(!this.valid) {
+    if(!this.isValid()) {
         return;
     }
     this.drawObject.draw(oGraphics);
+};
+CMorphedPath.prototype.isValid = function() {
+    return !!this.path;
+};
+CMorphedPath.prototype.getPath = function() {
+    return this.path;
 };
 
 function CComplexMorphObject(oTexturesCache, nRelH1, nRelH2) {
@@ -2959,55 +2973,212 @@ CComplexMorphObject.prototype.draw = function (oGraphics) {
         this.morphedObjects[nIdx].draw(oGraphics);
     }
 };
+CComplexMorphObject.prototype.addMorphObject = function (oMorphObject) {
+    this.morphedObjects.push(oMorphObject);
+};
+function CShapeComplexMorph(oTexturesCache, nRelH1, nRelH2, oShape1, oShape2) {
+    CComplexMorphObject.call(this, oTexturesCache, nRelH1, nRelH2);
+    this.shape1 = oShape1;
+    this.shape2 = oShape2;
+    const oGeometry1 = this.shape1.getGeometry();
+    const oGeometry2 = this.shape2.getGeometry();
+    const oGeometryMorph = new CGeometryMorphObject(this.cache, this.relHeight1, this.relHeight2,
+        oGeometry1, this.shape1.brush, this.shape1.pen, this.shape1.transform,
+        oGeometry2, this.shape2.brush, this.shape2.pen, this.shape2.transform);
+    this.addMorphObject(oGeometryMorph);
 
-function CGeometryMorphObject(oTexturesCache, nRelH1, nRelH2, oGeometry1, oGeometry2) {
+}
+AscFormat.InitClassWithoutType(CShapeComplexMorph, CComplexMorphObject);
+
+function CGeometryMorphObject(oTexturesCache, nRelH1, nRelH2,
+                              oGeometry1, oBrush1, oPen1, oTransform1,
+                              oGeometry2, oBrush2, oPen2, oTransform2) {
     CMorphObjectBase.call(this, oTexturesCache, nRelH1, nRelH2);
     this.geometry1 = oGeometry1;
+    this.brush1 = oBrush1;
+    this.pen1 = oPen1;
+    this.transform1 = oTransform1;
     this.geometry2 = oGeometry2;
-    this.geometry = AscFormat.ExecuteNoHistory(function () {AscFormat.Geometry();}, this, []);
+    this.brush2 = oBrush2;
+    this.pen2 = oPen2;
+    this.transform2 = oTransform2;
+    this.geometry = null;
+    this.morphedPaths = [];
+    this.textureShape1 = null;
+    this.textureShape2 = null;
 
+    this.textureMorph = null;
+
+    this.init();
 }
 AscFormat.InitClassWithoutType(CGeometryMorphObject, CMorphObjectBase);
+CGeometryMorphObject.prototype.init = function() {
+    const aPathLst1 = this.geometry1.pathLst;
+    const aPathLst2 = this.geometry2.pathLst;
 
-
-function CDrawingTextureMorphObject(oTexturesCache, oDrawing1, nRelH1, oDrawing2, nRelH2) {
-    CMorphObjectBase.call(this, oTexturesCache, nRelH1, nRelH2);
-    this.drawing1 = oDrawing1;
-    this.drawing2 = oDrawing2;
-}
-AscFormat.InitClassWithoutType(CDrawingTextureMorphObject, CMorphObjectBase);
-
-function CTextureMorph(oTexturesCache, oTexture1, nRelH1, dXC1, dYC1, oTexture2, nRelH2, dXC2, dYC2) {
-    CMorphObjectBase.call(this, oTexturesCache, nRelH1, nRelH2);
-    this.texture1 = oTexture1;
-    this.texture2 = oTexture2;
-    this.xc1 = dXC1;
-    this.yc1 = dYC1;
-    this.xc2 = dXC2;
-    this.yc2 = dYC2;
-    this.xc = this.xc1;
-    this.yc = this.yc1;
-    this.w = this.texture1.getWidth();
-    this.h = this.texture1.getHeight();
-    this.time = 0.0;
-}
-AscFormat.InitClassWithoutType(CTextureMorph, CMorphObjectBase);
-CTextureMorph.prototype.morph = function(dTime) {
-    this.xc = (this.xc2 - this.xc1) * dTime + this.xc1;
-    this.yc = (this.yc2 - this.yc1) * dTime + this.yc1;
-    this.w = (this.texture2.getWidth() - this.texture1.getWidth()) * dTime + this.texture1.getWidth();
-    this.h = (this.texture2.getHeight() - this.texture1.getHeight()) * dTime + this.texture1.getHeight();
-    this.time = dTime;
+    let bTextureMorph = true;
+    if(aPathLst1.length === aPathLst2.length) {
+        const aPaths = [];
+        const nPathCount = aPathLst1.length;
+        const aMorphs = [];
+        let nPath;
+        for(nPath = 0; nPath < nPathCount; ++nPath) {
+            let oPath1 = aPathLst1[nPath];
+            let oPath2 = aPathLst2[nPath];
+            let oPathMorph = new CMorphedPath(this.cache, oPath1, this.relHeight1, this.brush1, this.pen1, this.transform1,
+                oPath2, this.relHeight2, this.brush2, this.pen2, this.transform2);
+            if(!oPathMorph.isValid()) {
+                break;
+            }
+            aPaths.push(oPathMorph.getPath());
+            aMorphs.push(oPathMorph);
+        }
+        bTextureMorph = (nPath < nPathCount);
+        if(!bTextureMorph) {
+            this.morphedPaths = aMorphs;
+            this.geometry = AscFormat.ExecuteNoHistory(function () { return new AscFormat.Geometry();}, this, []);
+            this.geometry.pathLst = aPaths;
+            this.drawObject = new AscFormat.OverlayObject(this.geometry, 100, 100, new AscFormat.CUniFill(), new AscFormat.CLn(), new AscCommon.CMatrix());
+            this.textureShape1 = CGeometryTextureMorph.prototype.createShape.call(this, AscFormat.ExecuteNoHistory(function () { return new AscFormat.CreateGeometry("rect");}, this, []),
+                 this.brush1, this.pen1, new AscCommon.CMatrix());
+            this.textureShape2 = CGeometryTextureMorph.prototype.createShape.call(this, AscFormat.ExecuteNoHistory(function () { return new AscFormat.CreateGeometry("rect");}, this, []),
+                this.brush2, this.pen2, new AscCommon.CMatrix());
+        }
+        return;
+    }
+    if(bTextureMorph) {
+        this.textureMorph = new CGeometryTextureMorph(this.cache, this.relHeight1, this.relHeight2,
+            this.geometry1, this.brush1, this.pen1, this.transform1,
+            this.geometry2, this.brush2, this.pen2, this.transform2);
+    }
 };
-CTextureMorph.prototype.draw = function(oGraphics) {
-    const dAlpha1 = this.time;
-    const dAlpha2 = 1 - this.time;
-    const nX = this.xc - this.w / 2 + 0.5 >> 0;
-    const nY = this.yc - this.h / 2 + 0.5 >> 0;
-    const nW = this.w;
-    const nH = this.h;
-    this.texture1.drawInRect(oGraphics, dAlpha1, nX, nY, nW, nH);
-    this.texture2.drawInRect(oGraphics, dAlpha2, nX, nY, nW, nH);
+CGeometryMorphObject.prototype.morph = function(dRelTime) {
+    CMorphObjectBase.prototype.morph.call(this, dRelTime);
+    if(this.textureMorph) {
+        this.textureMorph.morph(dRelTime);
+        return;
+    }
+    const nPathsCount = this.morphedPaths.length;
+    for(let nIdx = 0; nIdx < nPathsCount; ++nIdx) {
+        this.morphedPaths[nIdx].morph(dRelTime);
+    }
+};
+CGeometryMorphObject.prototype.morphBrush = function(oBrush1, oBrush2, dScale) {
+
+    if(!oBrush1 && !oBrush2) {
+        return null;
+    }
+    let oBrush = oBrush1;
+    if(oBrush1.isSolidFill() && oBrush2.isSolidFill()) {
+        const oRGBA1 = oBrush1.getRGBAColor();
+        const oRGBA2 = oBrush2.getRGBAColor();
+        const R = this.getValBetween(oRGBA1.R, oRGBA2.R) + 0.5 >> 0;
+        const G = this.getValBetween(oRGBA1.G, oRGBA2.G) + 0.5 >> 0;
+        const B = this.getValBetween(oRGBA1.B, oRGBA2.B) + 0.5 >> 0;
+        const A = this.getValBetween(oRGBA1.A, oRGBA2.A) + 0.5 >> 0;
+        const isN = AscFormat.isRealNumber;
+        const dTransparent1 = isN(oBrush1.transparent) ? oBrush1.transparent : 255;
+        const dTransparent2 = isN(oBrush2.transparent) ? oBrush2.transparent : 255;
+        const dTransparent = this.getValBetween(dTransparent1, dTransparent2);
+        oBrush = AscFormat.CreateSolidFillRGBA(R, G, B, A);
+        oBrush.transparent = dTransparent;
+    }
+    else {
+
+        var oShapeDrawer = new AscCommon.CShapeDrawer();
+        oShapeDrawer.bIsCheckBounds = true;
+        oShapeDrawer.Graphics = new AscFormat.CSlideBoundsChecker();
+        this.drawObject.check_bounds(oShapeDrawer);
+        const dBoundsW = oShapeDrawer.max_x - oShapeDrawer.min_x;
+        const dBoundsH = oShapeDrawer.max_y - oShapeDrawer.min_y;
+        this.textureShape1.calcGeometry.Recalculate(dBoundsW, dBoundsH);
+        this.textureShape1.brush = oBrush1;
+        this.textureShape1.pen = AscFormat.CreateNoFillLine();
+        this.textureShape1.bounds.reset(3, 3, dBoundsW - 3, dBoundsH - 3);
+        this.textureShape1.extX = dBoundsW;
+        this.textureShape1.extY = dBoundsH;
+        const oTexture1 = this.cache.checkTexture(this.textureShape1.Id, dScale);
+
+        this.textureShape2.calcGeometry.Recalculate(dBoundsW, dBoundsH);
+        this.textureShape2.brush = oBrush2;
+        this.textureShape2.pen = AscFormat.CreateNoFillLine();
+        this.textureShape2.bounds.reset(3, 3, dBoundsW - 3, dBoundsH - 3);
+        this.textureShape2.extX = dBoundsW;
+        this.textureShape2.extY = dBoundsH;
+        const oTexture2 = this.cache.checkTexture(this.textureShape2.Id, dScale);
+
+        oBrush = new AscFormat.CreateBlipFillUniFillFromUrl("");
+        oBrush.IsTransitionTextures = true;
+        oBrush.alpha1 = 1 - this.relTime;
+        oBrush.alpha2 = this.relTime;
+        oBrush.canvas1 = oTexture1.canvas;
+        oBrush.canvas2 = oTexture2.canvas;
+    }
+    return oBrush;
+};
+CGeometryMorphObject.prototype.morphPen = function(oPen1, oPen2) {
+    return oPen1;
+};
+CGeometryMorphObject.prototype.draw = function(oGraphics) {
+    if(this.textureMorph) {
+        this.textureMorph.draw(oGraphics);
+        return;
+    }
+
+    const dScale = oGraphics.m_oCoordTransform.sx;
+    this.drawObject.brush = this.morphBrush(this.brush1, this.brush2, dScale);
+    this.drawObject.pen = this.morphPen(this.pen1, this.pen2);
+    this.drawObject.draw(oGraphics);
+};
+
+
+function CGeometryTextureMorph(oTexturesCache, nRelH1, nRelH2,
+                               oGeometry1, oBrush1, oPen1, oTransform1,
+                               oGeometry2, oBrush2, oPen2, oTransform2) {
+    CMorphObjectBase.call(this, oTexturesCache, nRelH1, nRelH2);
+    this.shape1 = this.createShape(oGeometry1, oBrush1, oPen1, oTransform1);
+    this.shape2 = this.createShape(oGeometry2, oBrush2, oPen2, oTransform2);
+}
+
+AscFormat.InitClassWithoutType(CGeometryTextureMorph, CMorphObjectBase);
+CGeometryTextureMorph.prototype.createShape = function (oGeometry, oBrush, oPen, oTransform) {
+    return AscFormat.ExecuteNoHistory(function() {
+        AscCommon.g_oTableId.TurnOn();
+        const oShape = new AscFormat.CShape();
+        AscCommon.g_oTableId.TurnOff();
+        oShape.checkEmptySpPrAndXfrm(null);
+        oShape.calcGeometry = oGeometry;
+        oShape.brush = oBrush;
+        oShape.pen = oPen;
+        oShape.localTransform = oTransform;
+        oShape.transform = oTransform;
+        oShape.recalculateBounds();
+        return oShape;
+    }, this, []);
+};
+CGeometryTextureMorph.prototype.draw = function (oGraphics) {
+    const dScale = oGraphics.m_oCoordTransform.sx;
+    const oTexture1 = this.cache.checkTexture(this.shape1.GetId(), dScale);
+    const oTexture2 = this.cache.checkTexture(this.shape2.GetId(), dScale);
+    const oBounds1 = this.shape1.bounds;
+    const oBounds2 = this.shape2.bounds;
+    const oCenter1 = oBounds1.getCenter();
+    const oCenter2 = oBounds2.getCenter();
+    const dW = this.getValBetween(oBounds1.w, oBounds2.w);
+    const dH = this.getValBetween(oBounds1.h, oBounds2.h);
+    const dXC = this.getValBetween(oCenter1.x, oCenter2.x);
+    const dYC = this.getValBetween(oCenter1.y, oCenter2.y);
+    const dX = dXC - dW / 2;
+    const dY = dYC - dH / 2;
+    const dAlpha1 = this.relTime;
+    const dAlpha2 = 1 - this.relTime;
+    const oT = oGraphics.m_oCoordTransform;
+    const nX = (oT.tx + dX * dScale + 0.5) >> 0;
+    const nY = (oT.ty + dY * dScale + 0.5) >> 0;
+    const nW = dW * dScale + 0.5 >> 0;
+    const nH = dH * dScale + 0.5 >> 0;
+    oTexture1.drawInRect(oGraphics, dAlpha1, nX, nY, nW, nH);
+    oTexture2.drawInRect(oGraphics, dAlpha2, nX, nY, nW, nH);
 };
 
 
@@ -3074,6 +3245,9 @@ CSlideMorphEffect.prototype.pushMorphObject = function (oMorph) {
     this.morphObjects.push(oMorph);
 };
 CSlideMorphEffect.prototype.addShapeMorphs = function (oShape1, nRelH1, oShape2, nRelH2) {
+
+    this.pushMorphObject(new CShapeComplexMorph(this.texturesCache, nRelH1, nRelH2, oShape1, oShape2));
+    return;
     const oGeometry1 = oShape1.getGeometry();
     const oGeometry2 = oShape2.getGeometry();
     if(!oGeometry1 || !oGeometry2) {
