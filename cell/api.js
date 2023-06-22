@@ -4370,6 +4370,15 @@ var editor;
 		this.wb.getWorksheet().changeSheetViewSettings(AscCH.historyitem_Worksheet_SetShowZeros, value);
 	};
 
+	spreadsheet_api.prototype.asc_setShowFormulas = function (value) {
+		this.wb.getWorksheet().changeSheetViewSettings(AscCH.historyitem_Worksheet_SetShowFormulas, value);
+	};
+
+	spreadsheet_api.prototype.asc_getShowFormulas = function () {
+		let ws = this.wb.getWorksheet();
+		return ws.model && ws.model.getShowFormulas();
+	};
+
 	spreadsheet_api.prototype.asc_setDate1904 = function (value) {
 		this.wb.setDate1904(value);
 	};
@@ -5873,6 +5882,8 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
+  	this.asc_setShowFormulas(isBold);
+  	//return;
   	var ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
@@ -8917,6 +8928,8 @@ var editor;
   prot["asc_setDisplayGridlines"] = prot.asc_setDisplayGridlines;
   prot["asc_setDisplayHeadings"] = prot.asc_setDisplayHeadings;
   prot["asc_setShowZeros"] = prot.asc_setShowZeros;
+  prot["asc_setShowFormulas"] = prot.asc_setShowFormulas;
+
 
   // Defined Names
   prot["asc_getDefinedNames"] = prot.asc_getDefinedNames;
