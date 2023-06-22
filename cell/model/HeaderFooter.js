@@ -127,6 +127,56 @@
 	var c_nPortionCenterFooter = 4;
 	var c_nPortionRightFooter = 5;
 
+	/*Documentation:
+		There is no required order in which these codes need to appear.
+		The first occurrence of the following codes turns the formatting ON, the second occurrence turns it OFF again:
+		strikethrough
+		superscript
+		subscript
+		Superscript and subscript cannot both be ON at same time. Whichever comes first wins and the other is ignored,
+		while the first is ON.
+
+		&L - code for "left section" (there are three header / footer locations, "left", "center", and "right"). When two or
+		more occurrences of this section marker exist, the contents from all markers are concatenated, in the order of
+		appearance, and placed into the left section.
+		&P - code for "current page #"
+					  &N - code for "total pages"
+									&font size - code for "text font size", where font size is a font size in points.
+		&K - code for "text font color"
+		RGB Color is specified as RRGGBB
+		Theme Color is specified as TTSNN where TT is the theme color Id, S is either "+" or "-" of the tint/shade
+		value, NN is the tint/shade value.
+
+		&S - code for "text strikethrough" on / off
+		&X - code for "text super script" on / off
+		&Y - code for "text subscript" on / off
+		&C - code for "center section". When two or more occurrences of this section marker exist, the contents from all
+		markers are concatenated, in the order of appearance, and placed into the center section.
+		&D - code for "date"
+		&T - code for "time"
+		&G - code for "picture as background"
+		&U - code for "text single underline"
+		&E - code for "double underline"
+		&R - code for "right section". When two or more occurrences of this section marker exist, the contents from all
+		markers are concatenated, in the order of appearance, and placed into the right section.
+		&Z - code for "this workbook's file path"
+		&F - code for "this workbook's file name"
+		&A - code for "sheet tab name"
+		&+ - code for add to page #.
+		&- - code for subtract from page #.
+		&"font name,font type" - code for "text font name" and "text font type", where font name and font type are
+		strings specifying the name and type of the font, separated by a comma. When a hyphen appears in font name,
+		it means "none specified". Both of font name and font type can be localized values.
+		&"-,Bold" - code for "bold font style"
+		&B - also means "bold font style".
+		&"-,Regular" - code for "regular font style"
+		&"-,Italic" - code for "italic font style"
+
+		&I - also means "italic font style"
+		&"-,Bold Italic" code for "bold italic font style"
+		&O - code for "outline style"
+		&H - code for "shadow style"
+	*/
 	HeaderFooterParser.prototype.parse = function (date) {
 		var c_nText = 0, c_nToken = 1, c_nFontName = 2, c_nFontStyle = 3, c_nFontHeight = 4;
 
@@ -255,6 +305,9 @@
 							sFontName = "";
 							sFontStyle = "";
 							nState = c_nFontName;
+							break;
+						case 'G':   //picture
+
 							break;
 						default:
 							if (('0' <= cChar) && (cChar <= '9'))    // font size
@@ -1965,6 +2018,32 @@
 	};
 
 
+	function CLegacyDrawingHF() {
+		this.drawings = [];
+		this.cfe = null;
+		this.cff = null;
+		this.cfo = null;
+		this.che = null;
+		this.chf = null;
+		this.cho = null;
+		this.lfe = null;
+		this.lff = null;
+		this.lfo = null;
+		this.lhe = null;
+		this.lhf = null;
+		this.lho = null;
+		this.rfe = null;
+		this.rff = null;
+		this.rfo = null;
+		this.rhe = null;
+		this.rhf = null;
+		this.rho = null;
+	}
+
+	CLegacyDrawingHF.prototype.init = function () {
+
+	};
+
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 
@@ -2000,6 +2079,8 @@
 	prot["getScaleWithDoc"] = prot.getScaleWithDoc;
 
 	prot["getPageType"] = prot.getPageType;
+
+	window["AscCommonExcel"].CLegacyDrawingHF = CLegacyDrawingHF;
 
 	window['AscCommonExcel'].c_oPortionPosition = c_oPortionPosition;
 

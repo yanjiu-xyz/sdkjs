@@ -8255,17 +8255,13 @@
             //     res = this.bcr.Read1(length, function (t, l) {
             //         return oThis.ReadRowColBreaks(t, l, oWorksheet.colBreaks);
             //     });
-            // } else if (c_oSerWorksheetsTypes.LegacyDrawingHF === type) {
-            //     oWorksheet.legacyDrawingHF = {
-            //         drawings: [], cfe: null, cff: null, cfo: null, che: null, chf: null, cho: null, lfe: null,
-            //         lff: null, lfo: null, lhe: null, lhf: null, lho: null, rfe: null, rff: null, rfo: null, rhe: null,
-            //         rhf: null, rho: null
-            //     };
-            //     res = this.bcr.Read1(length, function (t, l) {
-            //         return oThis.ReadLegacyDrawingHF(t, l, oWorksheet.legacyDrawingHF);
-            //     });
-            // } else if (c_oSerWorksheetsTypes.Picture === type) {
-            //     oWorksheet.picture = this.stream.GetString2LE(length);
+            } else if (c_oSerWorksheetsTypes.LegacyDrawingHF === type) {
+				oWorksheet.legacyDrawingHF = new AscCommonExcel.CLegacyDrawingHF();
+				res = this.bcr.Read1(length, function (t, l) {
+					return oThis.ReadLegacyDrawingHF(t, l, oWorksheet.legacyDrawingHF);
+				});
+			// } else if (c_oSerWorksheetsTypes.Picture === type) {
+			//     oWorksheet.picture = this.stream.GetString2LE(length);
 			} else if (c_oSerWorksheetsTypes.DataValidations === type && typeof AscCommonExcel.CDataValidations != "undefined") {
 				oWorksheet.dataValidations = new AscCommonExcel.CDataValidations();
 				res = this.bcr.Read1(length, function(t, l) {
