@@ -442,7 +442,8 @@ var c_oAscPopUpSelectorType = {
       filePath: 4,
       date: 5,
       time: 6,
-      lineBreak: 7
+      lineBreak: 7,
+	  picture: 8
   };
 
   var c_oAscPageHFType = {
@@ -848,8 +849,9 @@ var c_oAscPopUpSelectorType = {
   prot['date'] = prot.date;
   prot['time'] = prot.time;
   prot['lineBreak'] = prot.lineBreak;
+	prot['picture'] = prot.picture;
   window['Asc']['c_oAscPageHFType'] = window['Asc'].c_oAscPageHFType = c_oAscPageHFType;
-  prot = c_oAscHeaderFooterField;
+  prot = c_oAscPageHFType;
   prot['firstHeader'] = prot.firstHeader;
   prot['oddHeader'] = prot.oddHeader;
   prot['evenHeader'] = prot.evenHeader;

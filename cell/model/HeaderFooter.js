@@ -307,7 +307,7 @@
 							nState = c_nFontName;
 							break;
 						case 'G':   //picture
-
+							this.pushField(new HeaderFooterField(asc.c_oAscHeaderFooterField.picture));
 							break;
 						default:
 							if (('0' <= cChar) && (cChar <= '9'))    // font size
@@ -679,6 +679,10 @@
 
 								break;
 							}
+							case asc.c_oAscHeaderFooterField.picture: {
+								aParaText += "&G";
+								break;
+							}
 						}
 					}
 				} else {
@@ -853,6 +857,11 @@
 			}
 			case asc.c_oAscHeaderFooterField.lineBreak: {
 				textField = "\n";
+				break;
+			}
+			case asc.c_oAscHeaderFooterField.picture: {
+				//TODO translate?
+				textField = "&[Picture]";
 				break;
 			}
 		}
