@@ -216,7 +216,7 @@
 		this.isFocusOnThumbnails = false;
 		this.isDocumentContentReady = false;
 
-		this.doc = new AscPDFEditor.CPDFDoc();
+		this.doc = new AscPDF.CPDFDoc();
 		if (typeof CGraphicObjects !== "undefined")
         	this.DrawingObjects = new CGraphicObjects(this, editor.WordControl.m_oDrawingDocument, this.Api);
 
@@ -978,6 +978,11 @@
 					continue;
 				}
 
+				if (oFormInfo["Parent"] != null)
+				{
+					oForm.AddToChildsMap(oFormInfo["Parent"]);
+				}
+
 				// appearance
 				if (oFormInfo["borderStyle"] != null)
 				{
@@ -994,7 +999,9 @@
 				}
 				if (oFormInfo["BG"] != null)
 					oForm.SetBackgroundColor(oFormInfo["BG"]);
-				
+				if (oFormInfo["textColor"] != null)
+					oForm.SetTextColor(oFormInfo["textColor"]);
+
 				if (oFormInfo["AP"] != null) {
 					oForm._apIdx = oFormInfo["AP"]["i"];
 					oForm.SetDrawFromStream(true);
@@ -1070,7 +1077,7 @@
 				}
 
 				// common
-				if (oFormInfo["alignment"] != null && ["radiobutton", "checkbox", "button"].includes(oFormInfo["type"]) == false)
+				if (oFormInfo["alignment"] != null && ["combobox", "text"].includes(oFormInfo["type"]))
 				{
 					oForm.SetAlign(oFormInfo["alignment"]);
 				}
@@ -1133,59 +1140,68 @@
 					// mouseup 0
 					if (oFormInfo["AA"]["A"])
 					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDFEditor.FORMS_TRIGGERS_TYPES.MouseUp, ExtractActions(oFormInfo["AA"]["A"])));
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.MouseUp, ExtractActions(oFormInfo["AA"]["A"])));
 					}
 					// mousedown 1
 					if (oFormInfo["AA"]["D"])
 					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDFEditor.FORMS_TRIGGERS_TYPES.MouseDown, ExtractActions(oFormInfo["AA"]["D"])));
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown, ExtractActions(oFormInfo["AA"]["D"])));
 					}
 					// mouseenter 2
 					if (oFormInfo["AA"]["E"])
 					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDFEditor.FORMS_TRIGGERS_TYPES.MouseEnter, ExtractActions(oFormInfo["AA"]["E"])));
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter, ExtractActions(oFormInfo["AA"]["E"])));
 					}
 					// mouseexit 3
 					if (oFormInfo["AA"]["X"])
 					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDFEditor.FORMS_TRIGGERS_TYPES.MouseExit, ExtractActions(oFormInfo["AA"]["X"])));
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.MouseExit, ExtractActions(oFormInfo["AA"]["X"])));
 					}
 					// onFocus 4
 					if (oFormInfo["AA"]["Fo"])
 					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDFEditor.FORMS_TRIGGERS_TYPES.OnFocus, ExtractActions(oFormInfo["AA"]["Fo"])));
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus, ExtractActions(oFormInfo["AA"]["Fo"])));
 					}
 					// onBlur 5
 					if (oFormInfo["AA"]["Bl"])
 					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDFEditor.FORMS_TRIGGERS_TYPES.OnBlur, ExtractActions(oFormInfo["AA"]["Bl"])));
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.OnBlur, ExtractActions(oFormInfo["AA"]["Bl"])));
 					}
 
 					// keystroke 6
 					if (oFormInfo["AA"]["K"])
 					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDFEditor.FORMS_TRIGGERS_TYPES.Keystroke, ExtractActions(oFormInfo["AA"]["K"])));
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke, ExtractActions(oFormInfo["AA"]["K"])));
 					}
 
-					// Calculate 8
+					// Validate 7
 					if (oFormInfo["AA"]["V"])
 					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDFEditor.FORMS_TRIGGERS_TYPES.Validate, ExtractActions(oFormInfo["AA"]["V"])));
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.Validate, ExtractActions(oFormInfo["AA"]["V"])));
 					}
 
 					// Calculate 8
 					if (oFormInfo["AA"]["C"])
 					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDFEditor.FORMS_TRIGGERS_TYPES.Calculate, ExtractActions(oFormInfo["AA"]["C"])));
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.Calculate, ExtractActions(oFormInfo["AA"]["C"])));
 					}
 
 					// format 9
 					if (oFormInfo["AA"]["F"])
 					{
-						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDFEditor.FORMS_TRIGGERS_TYPES.Format, ExtractActions(oFormInfo["AA"]["F"])));
+						aActionsToCorrect = aActionsToCorrect.concat(oForm.SetActionsOnOpen(AscPDF.FORMS_TRIGGERS_TYPES.Format, ExtractActions(oFormInfo["AA"]["F"])));
 					}
 				}
 			}
+			
+			if (aFormsInfo["Parents"]) {
+				this.doc.FillParents(aFormsInfo["Parents"]);
+				this.doc.OnAfterFillParents();
+			}
+			this.doc.FillButtonsIconsOnOpen();
+
+			if (Array.isArray(aFormsInfo["CO"]) && aFormsInfo["CO"].length > 0)
+				this.doc.GetCalculateInfo().SetCalculateOrder(aFormsInfo["CO"]);
 			
 			// после открытия всех форм, заменяем apIdx в Actions на ссылки на сами поля.
 			aActionsToCorrect.forEach(function(action) {
@@ -2574,7 +2590,7 @@
 					oGraphicsWord.endGlobalAlphaColor = [255, 255, 255];
 					oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
 
-					let oGraphicsPDF = new AscPDFEditor.CPDFGraphics();
+					let oGraphicsPDF = new AscPDF.CPDFGraphics();
 					this.pagesInfo.pages[i].graphics.pdf = oGraphicsPDF;
 					oGraphicsPDF.Init(tmpCanvasCtx, widthPx * nScale, heightPx * nScale);
 

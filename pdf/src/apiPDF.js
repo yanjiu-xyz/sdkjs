@@ -230,17 +230,24 @@
         })
 
         let oRootField = this.doc.rootFields.get(aPartNames[0]);
-        if (!oRootField)
-            return null;
-
-        for (let i = 1; i < aPartNames.length; i++) {
-            if (!oRootField)
-                return null;
-            
-            oRootField = oRootField.GetField(aPartNames[i]);
+        if (oRootField) {
+            for (let i = 1; i < aPartNames.length; i++) {
+                if (!oRootField)
+                    return null;
+                
+                oRootField = oRootField.GetField(aPartNames[i]);
+            }
+    
+            return oRootField.GetFormApi();
         }
-
-        return oRootField.GetFormApi();
+        else {
+            for (let i = 0; i < this.doc.widgets.length; i++) {
+                if (this.doc.widgets[i].GetFullName() == sName)
+                    return this.doc.widgets[i].GetFormApi();
+            }
+        }
+            
+        return null;        
     };
 
     // base form class with attributes and method for all types of forms
@@ -471,8 +478,12 @@
         },
         "textColor": {
             set (aColor) {
-                if (Array.isArray(aColor))
-                    this.field.SetApiTextColor(aColor);
+                if (Array.isArray(aColor)) {
+                    let aFields = this.field.GetDocument().GetFields(this.name);
+                    aFields.forEach(function(field) {
+                        field.SetApiTextColor(aColor);
+                    });
+                }
             },
             get () {
                 return this.field.GetApiTextColor();
@@ -1066,7 +1077,6 @@
                             oDoc.CommitFields();
                         }
                     }
-                    
                 }
             },
             get() {
@@ -1566,20 +1576,20 @@
     function private_GetIntAlign(sType)
 	{
 		if ("left" === sType)
-			return AscPDFEditor.ALIGN_TYPE.left;
+			return AscPDF.ALIGN_TYPE.left;
 		else if ("right" === sType)
-			return AscPDFEditor.ALIGN_TYPE.right;
+			return AscPDF.ALIGN_TYPE.right;
 		else if ("center" === sType)
-			return AscPDFEditor.ALIGN_TYPE.center;
+			return AscPDF.ALIGN_TYPE.center;
 
 		return undefined;
 	}
     function private_GetStrAlign(nType) {
-        if (AscPDFEditor.ALIGN_TYPE.left === nType)
+        if (AscPDF.ALIGN_TYPE.left === nType)
             return "left";
-        else if (AscPDFEditor.ALIGN_TYPE.right === nType)
+        else if (AscPDF.ALIGN_TYPE.right === nType)
             return "right";
-        else if (AscPDFEditor.ALIGN_TYPE.center === nType)
+        else if (AscPDF.ALIGN_TYPE.center === nType)
             return "center";
 
         return undefined;
@@ -1588,42 +1598,42 @@
     function private_GetIntBorderStyle(sType) {
         switch (sType) {
             case "solid":
-                return AscPDFEditor.BORDER_TYPES.solid;
+                return AscPDF.BORDER_TYPES.solid;
             case "dashed":
-                return AscPDFEditor.BORDER_TYPES.dashed;
+                return AscPDF.BORDER_TYPES.dashed;
             case "beveled":
-                return AscPDFEditor.BORDER_TYPES.beveled;
+                return AscPDF.BORDER_TYPES.beveled;
             case "inset":
-                return AscPDFEditor.BORDER_TYPES.inset;
+                return AscPDF.BORDER_TYPES.inset;
             case "underline":
-                return AscPDFEditor.BORDER_TYPES.underline;
+                return AscPDF.BORDER_TYPES.underline;
             
         }
     }
     function private_GetStrBorderStyle(nType) {
         switch (nType) {
-            case AscPDFEditor.BORDER_TYPES.solid:
+            case AscPDF.BORDER_TYPES.solid:
                 return "solid";
-            case AscPDFEditor.BORDER_TYPES.dashed:
+            case AscPDF.BORDER_TYPES.dashed:
                 return "dashed";
-            case AscPDFEditor.BORDER_TYPES.beveled:
+            case AscPDF.BORDER_TYPES.beveled:
                 return "beveled";
-            case AscPDFEditor.BORDER_TYPES.inset:
+            case AscPDF.BORDER_TYPES.inset:
                 return "inset";
-            case AscPDFEditor.BORDER_TYPES.underline:
+            case AscPDF.BORDER_TYPES.underline:
                 return "underline";
             
         }
     }
 
-    if (!window["AscPDFEditor"])
-	    window["AscPDFEditor"] = {};
+    if (!window["AscPDF"])
+	    window["AscPDF"] = {};
         
-	window["AscPDFEditor"].ApiDocument          = ApiDocument;
-	window["AscPDFEditor"].ApiTextField         = ApiTextField;
-	window["AscPDFEditor"].ApiPushButtonField   = ApiPushButtonField;
-	window["AscPDFEditor"].ApiCheckBoxField     = ApiCheckBoxField;
-	window["AscPDFEditor"].ApiRadioButtonField  = ApiRadioButtonField;
-	window["AscPDFEditor"].ApiComboBoxField     = ApiComboBoxField;
-	window["AscPDFEditor"].ApiListBoxField      = ApiListBoxField;
+	window["AscPDF"].ApiDocument          = ApiDocument;
+	window["AscPDF"].ApiTextField         = ApiTextField;
+	window["AscPDF"].ApiPushButtonField   = ApiPushButtonField;
+	window["AscPDF"].ApiCheckBoxField     = ApiCheckBoxField;
+	window["AscPDF"].ApiRadioButtonField  = ApiRadioButtonField;
+	window["AscPDF"].ApiComboBoxField     = ApiComboBoxField;
+	window["AscPDF"].ApiListBoxField      = ApiListBoxField;
 })();

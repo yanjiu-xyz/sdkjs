@@ -48,28 +48,27 @@
      * @property {boolean} willCommit -  Verifies the current keystroke event before the data is committed. It can be used to check target form field values to verify, for example, whether character data was entered instead of numeric data. JavaScript sets this property to true after the last keystroke event and before the field is validated.
 	 */
 
-    let AscPDFEditor = window["AscPDFEditor"];
+    let AscPDF = window["AscPDF"];
 
     function CCalculateInfo(oDoc) {
-        this.calculateFields = [];
+        this.names = [];
         this.document = oDoc;
-        this.fieldsToCommit = [];
         this.isInProgress = false;
-        this.sourceField = null;
+        this.sourceField = null; // поле вызвавшее calculate
     };
 
-    CCalculateInfo.prototype.AddToCalculateField = function(oField) {
-        if (null == this.calculateFields.find(function(field) {
-            return field.GetFullName() == oField.GetFullName();
-        })) {
-            this.calculateFields.push(oField);
-        }
+    CCalculateInfo.prototype.AddFieldToCalculate = function(sName) {
+        if (this.names.includes(sName) == false)
+            this.names.push(sName);
     };
     CCalculateInfo.prototype.SetIsInProgress = function(bValue) {
         this.isInProgress = bValue;
     };
     CCalculateInfo.prototype.IsInProgress = function() {
         return this.isInProgress;
+    };
+    CCalculateInfo.prototype.SetCalculateOrder = function(aNames) {
+        this.names = aNames.slice();
     };
     /**
 	 * Sets field to calc info, which caused the recalculation.
@@ -93,8 +92,124 @@
         this.CalculateInfo = new CCalculateInfo(this);
         this.fieldsToCommit = [];
         this.event = {};
+
+
+        this._parentsMap = {}; // map при открытии форм
     }
 
+    /////////// методы для открытия //////////////
+    CPDFDoc.prototype.AddFieldToChildsMap = function(oField, nParentIdx) {
+        if (this._parentsMap[nParentIdx] == null)
+            this._parentsMap[nParentIdx] = [];
+
+        this._parentsMap[nParentIdx].push(oField);
+    };
+    CPDFDoc.prototype.GetParentsMap = function() {
+        return this._parentsMap;
+    };
+    CPDFDoc.prototype.FillParents = function(aParentsInfo) {
+        let oChilds = this.GetParentsMap();
+        let oParents = {};
+
+        for (let i = 0; i < aParentsInfo.length; i++) {
+            let nIdx = aParentsInfo[i]["i"];
+            let sType = oChilds[nIdx][0].GetType();
+
+            let oParent = private_createField(aParentsInfo[i]["name"], sType, undefined, undefined);
+            if (aParentsInfo[i]["value"] != null)
+                oParent.SetApiValue(aParentsInfo[i]["value"]);
+            if (aParentsInfo[i]["Parent"] != null)
+                this.AddFieldToChildsMap(oParent, aParentsInfo[i]["Parent"]);
+            if (aParentsInfo[i]["defaultValue"] != null)
+                oParent.SetDefaultValue(aParentsInfo[i]["defaultValue"]);
+            oParents[nIdx] = oParent;
+
+            this.rootFields.set(oParent.GetPartialName(), oParent);
+        }
+
+        for (let nParentIdx in oParents) {
+            oChilds[nParentIdx].forEach(function(child) {
+                oParents[nParentIdx].AddKid(child);
+            });
+        }
+    };
+    CPDFDoc.prototype.OnAfterFillParents = function() {
+        let bInberitValue = false;
+        let value;
+        for (let i = 0; i < this.widgets.length; i++) {
+            oField = this.widgets[i];
+            if ((oField.GetPartialName() == null || oField.GetApiValue(bInberitValue) == null) && oField.GetParent()) {
+                value = oField.GetParent().GetApiValue();
+                if (value != null && value.toString)
+                    value = value.toString();
+
+                oField.SetValue(value);
+            }
+        }
+    };
+    CPDFDoc.prototype.FillButtonsIconsOnOpen = function() {
+        let oViewer = editor.getDocumentRenderer();
+        let oDoc = this;
+
+        for (let i = 0; i < oViewer.pagesInfo.pages.length; i++) {
+            let oPage = oViewer.drawingPages[i];
+
+            let w = (oPage.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+            let h = (oPage.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+
+            let oFile = oViewer.file;
+            let aIconsInfo = oFile.nativeFile.getButtonIcons(i, w, h);
+
+            for (let nIcon = 0; nIcon < aIconsInfo.length; nIcon++) {
+                for (let nField = 0; nField < this.widgets.length; nField++) {
+                    if (this.widgets[nField]._apIdx == aIconsInfo[nIcon]["i"]) {
+                        let canvas  = document.createElement("canvas");
+                        let ctx     = canvas.getContext("2d");
+                        let nWidth  = aIconsInfo[nIcon]["I"]["w"];
+                        let nHeight = aIconsInfo[nIcon]["I"]["h"];
+                        
+                        canvas.width    = nWidth;
+                        canvas.height   = nHeight;
+
+                        let nRetValue = aIconsInfo[nIcon]["I"]["retValue"];
+
+                        let supportImageDataConstructor = (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge) ? false : true;
+                        let mappedBuffer    = new Uint8ClampedArray(oFile.memory().buffer, nRetValue, 4 * nWidth * nHeight);
+                        let imageData       = null;
+
+                        if (supportImageDataConstructor) {
+                            imageData = new ImageData(mappedBuffer, nWidth, nHeight);
+                        }
+                        else {
+                            imageData = ctx.createImageData(nWidth, nHeight);
+                            imageData.data.set(mappedBuffer, 0);                    
+                        }
+
+                        if (ctx) {
+                            ctx.putImageData(imageData, 0, 0);
+                        }
+                        
+                        oFile.free(nRetValue);
+
+                        let oImgData = {
+                            Image: {
+                                width: nWidth,
+                                height: nHeight,
+                            },
+                            src: canvas.toDataURL()
+                        }
+
+                        this.widgets[nField].Recalculate();
+                        editor.ImageLoader.LoadImagesWithCallback([oImgData.src], function() {
+                            oDoc.widgets[nField].AddImage(oImgData);
+                        });
+                    }
+                }
+            }
+        }
+    };
+    ////////////////////////////////////
+    
     CPDFDoc.prototype.CommitFields = function() {
         this.skipHistoryOnCommit = true;
         this.fieldsToCommit.forEach(function(field) {
@@ -160,6 +275,7 @@
             }
 
             oCurForm.SetDrawHighlight(true);
+            oCurForm.Blur();
         }
         
         if (!oNextForm)
@@ -244,6 +360,7 @@
             }
 
             oCurForm.SetDrawHighlight(true);
+            oCurForm.Blur();
         }
         
         if (!oNextForm)
@@ -362,7 +479,7 @@
                 
                 oViewer._paintForms();
             }
-            else if (oField.GetTrigger(AscPDFEditor.FORMS_TRIGGERS_TYPES.Format) && oField.GetValue() != "") {
+            else if (oField.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format) && oField.GetValue() != "") {
                 oField.AddToRedraw();
                 oViewer._paintForms();
             }
@@ -430,7 +547,7 @@
             }
             
             if (["text", "combobox"].includes(oActiveForm.type)) {
-                if (oActiveForm.GetTrigger(AscPDFEditor.FORMS_TRIGGERS_TYPES.Format)) {
+                if (oActiveForm.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format)) {
                     oActiveForm.AddToRedraw();
                 }
             }
@@ -475,12 +592,15 @@
             case "button":
             case "radiobutton":
             case "checkbox":
+                oField.SetDrawHighlight(false);
                 oField.onMouseDown(event);
                 break;
         }
 
         if (oActionsQueue.IsInProgress() == false && oViewer.pagesInfo.pages[oField.GetPage()].needRedrawForms)
             oViewer._paintForms();
+
+        oViewer._paintFormsHighlight();
     };
     CPDFDoc.prototype.OnMouseUpField = function(oField, event) {
         let oViewer         = editor.getDocumentRenderer();
@@ -507,17 +627,15 @@
             case "checkbox":
             case "radiobutton":
                 oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
-                if (oMouseUpField == oField) {
-                    oField.onMouseUp();
+                
+                oField.onMouseUp();
 
-                    if (oField.IsNeedCommit()) {
-                        let oDoc = oField.GetDocument();
-                        oDoc.DoCalculateFields();
-                        oDoc.AddFieldToCommit(oField);
-                        oDoc.CommitFields();
-                        
-                        oViewer._paintForms();
-                    }
+                if (oField.IsNeedCommit()) {
+                    let oDoc = oField.GetDocument();
+                    oDoc.DoCalculateFields();
+                    oDoc.CommitFields();
+                    
+                    oViewer._paintForms();
                 }
                 cursorType = "pointer";
                 oViewer.fieldFillingMode = false;
@@ -649,6 +767,15 @@
 
         if (oEventPr["willCommit"] != null)
             this.event["willCommit"] = oEventPr["willCommit"];
+
+        if (oEventPr["willCommit"] != null)
+            this.event["willCommit"] = oEventPr["willCommit"];
+
+        if (oEventPr["selStart"] != null)
+            this.event["selStart"] = oEventPr["selStart"];
+
+        if (oEventPr["selEnd"] != null)
+            this.event["selEnd"] = oEventPr["selEnd"];
     };
     CPDFDoc.prototype.SetWarningInfo = function(oInfo) {
         this.warningInfo = oInfo;
@@ -658,22 +785,22 @@
     };
 
     CPDFDoc.prototype.DoCalculateFields = function(oSourceField) {
-        // смысл такой, что когда изменяем какое-либо поле, вызываем этот метод, который делает calculate
-        // для всех необходимых полей и добавляет их в массив fieldsToCommit,
-        // далее вызываем ApplyFields чтобы применить значения для всех связных полей
+        // при изменении любого поля (с коммитом) вызывается calculate у всех
         let oThis = this;
         this.CalculateInfo.SetIsInProgress(true);
         this.CalculateInfo.SetSourceField(oSourceField);
-        this.CalculateInfo.calculateFields.forEach(function(field) {
-            let oFormatTrigger = field.GetTrigger(AscPDFEditor.FORMS_TRIGGERS_TYPES.Calculate);
+        this.CalculateInfo.names.forEach(function(name) {
+            let oField = oThis.GetField(name);
+
+            let oFormatTrigger = oField.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Calculate);
             let oActionRunScript = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
 
             if (oActionRunScript) {
-                oThis.activeForm = field;
+                oThis.activeForm = oField;
                 oActionRunScript.RunScript();
-                if (field.IsNeedCommit()) {
-                    field.SetNeedRecalc(true);
-                    oThis.fieldsToCommit.push(field);
+                if (oField.IsNeedCommit()) {
+                    oField.SetNeedRecalc(true);
+                    oThis.fieldsToCommit.push(oField);
                 }
             }
         });
@@ -702,13 +829,12 @@
 	 * @returns {CBaseForm}
 	 */
     CPDFDoc.prototype.addField = function(cName, cFieldType, nPageNum, oCoords) {
-        function checkValidParams(cName, cFieldType, nPageNum, oCoords) {
-            if (Object.values(AscPDFEditor.FIELD_TYPE).includes(cFieldType) == false)
+        function checkValidParams(cFieldType, nPageNum, oCoords) {
+            if (Object.values(AscPDF.FIELD_TYPE).includes(cFieldType) == false)
                 return false;
             if (typeof(nPageNum) !== "number" || nPageNum < 0)
                 return false;
-            if (typeof(cName) !== "string" || cName == "")
-                return false;
+            
             let isValidRect = true;
             if (Array.isArray(oCoords)) {
                 for (let i = 0; i < 4; i++) {
@@ -724,7 +850,7 @@
             if (!isValidRect)
                 return false;
         }
-        if (false == checkValidParams(cName, cFieldType, nPageNum, oCoords))
+        if (false == checkValidParams(cFieldType, nPageNum, oCoords))
             return null;
 
         let viewer = editor.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
@@ -822,12 +948,10 @@
 	 * @returns {CBaseForm}
 	 */
     CPDFDoc.prototype.private_addField = function(cName, cFieldType, nPageNum, oCoords) {
-        function checkValidParams(cName, cFieldType, nPageNum, oCoords) {
-            if (Object.values(AscPDFEditor.FIELD_TYPE).includes(cFieldType) == false)
+        function checkValidParams(cFieldType, nPageNum, oCoords) {
+            if (Object.values(AscPDF.FIELD_TYPE).includes(cFieldType) == false)
                 return false;
             if (typeof(nPageNum) !== "number" || nPageNum < 0)
-                return false;
-            if (typeof(cName) !== "string" || cName == "")
                 return false;
             let isValidRect = true;
             if (Array.isArray(oCoords)) {
@@ -844,7 +968,7 @@
             if (!isValidRect)
                 return false;
         }
-        if (false == checkValidParams(cName, cFieldType, nPageNum, oCoords))
+        if (false == checkValidParams(cFieldType, nPageNum, oCoords))
             return null;
 
         let viewer = editor.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
@@ -852,63 +976,12 @@
         if (!oPagesInfo.pages[nPageNum])
             return null;
         
-        let oField;
+        let oField = private_createField(cName, cFieldType, nPageNum, oCoords);
+        this.widgets.push(oField);
 
-        while (cName.indexOf('..') != -1)
-            cName = cName.replace(new RegExp("\.\.", "g"), ".");
-
-        let oExistsWidget = this.GetField(cName);
-        // если есть виджет-поле с таким именем, но другим типом, то не добавляем 
-        if (oExistsWidget && oExistsWidget.type != cFieldType)
-            return null; // to do add error (field with this name already exists)
-
-        // получаем PartNames
-        let aPartNames = cName.split('.').filter(function(item) {
-            if (item != "")
-                return item;
-        })
-
-        // по формату не больше 20 вложенностей
-        if (aPartNames.length > 20)
-            return null;
-
-        // создаем родительские поля, последнее будет виджет-полем
-        if (aPartNames.length > 1) {
-            if (this.rootFields.get(aPartNames[0]) == null) { // если нет root поля, то создаем
-                this.rootFields.set(aPartNames[0], private_createField(aPartNames[0], cFieldType, nPageNum, []));
-            }
-
-            let oParentField = this.rootFields.get(aPartNames[0]);
-            
-            for (let i = 1; i < aPartNames.length; i++) {
-                // последним добавляем виджет-поле (то, которое рисуем)
-                if (i == aPartNames.length - 1) {
-                    oField = private_createField(aPartNames[i], cFieldType, nPageNum, oCoords);
-                    oParentField.AddKid(oField);
-                    this.widgets.push(oField);
-                }
-                else {
-                    // если есть поле с таким именем (part name), то двигаемся дальше, если нет, то создаем
-                    let oExistsField = oParentField.GetField(aPartNames[i]);
-                    if (oExistsField)
-                        oParentField = oExistsField;
-                    else {
-                        let oNewParent = private_createField(aPartNames[i], cFieldType, nPageNum, []);
-                        oParentField.AddKid(oNewParent);
-                        oParentField = oNewParent;
-                    }
-                }
-            }
-        }
-        // сразу создаем виджет-поле
-        else {
-            oField = private_createField(aPartNames[0], cFieldType, nPageNum, oCoords);
-            this.widgets.push(oField);
-        }
-
-        if (oPagesInfo.pages[nPageNum].fields == null)
+        if (oPagesInfo.pages[nPageNum].fields == null) {
             oPagesInfo.pages[nPageNum].fields = [];
-
+        }
         oPagesInfo.pages[nPageNum].fields.push(oField);
 
         if (AscCommon.History.IsOn() == true)
@@ -916,7 +989,7 @@
 
         return oField;
     };
-
+    
     /**
 	 * Changes the interactive field name.
 	 * @memberof CPDFDoc
@@ -987,21 +1060,30 @@
 	 * Changes the interactive field name.
      * Note: This method used by forms actions.
 	 * @memberof CPDFDoc
-     * @param {CBaseField[]} aForms - array with forms to reset. If param is undefined or array is empty then resets all forms.
+     * @param {CBaseField[]} aNames - array with forms names to reset. If param is undefined or array is empty then resets all forms.
 	 * @typeofeditors ["PDF"]
 	 */
-    CPDFDoc.prototype.ResetForms = function(aForms) {
+    CPDFDoc.prototype.ResetForms = function(aNames) {
         let oActionsQueue = this.GetActionsQueue();
+        let oThis = this;
 
-        if (aForms.length > 0) {
-            aForms.forEach(function(field) {
-                field.Reset();
+        if (aNames.length > 0) {
+            aNames.forEach(function(name) {
+                let aFields = oThis.GetFields(name);
+                if (aFields.length > 0)
+                    AscCommon.History.Clear()
+
+                aFields.forEach(function(field) {
+                    field.Reset();
+                });
             });
         }
         else {
             this.widgets.forEach(function(field) {
                 field.Reset();
             });
+            if (this.widgets.length > 0)
+                AscCommon.History.Clear()
         }
 
         oActionsQueue.Continue();
@@ -1010,17 +1092,21 @@
 	 * Hides/shows forms by names
 	 * @memberof CPDFDoc
      * @param {boolean} bHidden
-     * @param {CBaseField[]} aForms - array with forms to reset. If param is undefined or array is empty then resets all forms.
+     * @param {CBaseField[]} aNames - array with forms names to reset. If param is undefined or array is empty then resets all forms.
 	 * @typeofeditors ["PDF"]
 	 * @returns {CBaseForm}
 	 */
-    CPDFDoc.prototype.SetHiddenForms = function(bHidden, aForms) {
-        let oActionsQueue   = this.GetActionsQueue();
+    CPDFDoc.prototype.HideShowForms = function(bHidden, aNames) {
+        let oActionsQueue = this.GetActionsQueue();
+        let oThis = this;
 
-        if (aForms.length > 0) {
-            aForms.forEach(function(field) {
-                field.SetHidden(bHidden);
-                field.AddToRedraw();
+        if (aNames.length > 0) {
+            aNames.forEach(function(name) {
+                let aFields = oThis.GetFields(name);
+                aFields.forEach(function(field) {
+                    field.SetHidden(bHidden);
+                    field.AddToRedraw();
+                });
             });
         }
         else {
@@ -1076,12 +1162,11 @@
         if (this.api)
             return this.api;
 
-        return new AscPDFEditor.ApiDocument(this);
+        return new AscPDF.ApiDocument(this);
     };
 
     /**
-	 * Сhecks if the field is a widget or not.
-     * Checks by full name.
+	 * Gets field by name
 	 * @memberof CPDFDoc
 	 * @typeofeditors ["PDF"]
 	 * @returns {?CBaseField}
@@ -1154,7 +1239,7 @@
     };
     CActionQueue.prototype.Continue = function() {
         let oNextAction = this.GetNextAction();
-        if (this.callBackAfterFocus && this.curAction.triggerType == AscPDFEditor.FORMS_TRIGGERS_TYPES.OnFocus && (!oNextAction || oNextAction.triggerType != AscPDFEditor.FORMS_TRIGGERS_TYPES.OnFocus))
+        if (this.callBackAfterFocus && this.curAction.triggerType == AscPDF.FORMS_TRIGGERS_TYPES.OnFocus && (!oNextAction || oNextAction.triggerType != AscPDF.FORMS_TRIGGERS_TYPES.OnFocus))
             this.callBackAfterFocus();
 
         if (oNextAction && this.IsInProgress()) {
@@ -1172,36 +1257,36 @@
         let oField;
         switch (cFieldType) {
             case "button":
-                oField = new AscPDFEditor.CPushButtonField(cName, nPageNum, oCoords);
+                oField = new AscPDF.CPushButtonField(cName, nPageNum, oCoords);
                 break;
             case "checkbox":
-                oField = new AscPDFEditor.CCheckBoxField(cName, nPageNum, oCoords);
+                oField = new AscPDF.CCheckBoxField(cName, nPageNum, oCoords);
                 break;
             case "combobox":
-                oField = new AscPDFEditor.CComboBoxField(cName, nPageNum, oCoords);
+                oField = new AscPDF.CComboBoxField(cName, nPageNum, oCoords);
                 break;
             case "listbox":
-                oField = new AscPDFEditor.CListBoxField(cName, nPageNum, oCoords);
+                oField = new AscPDF.CListBoxField(cName, nPageNum, oCoords);
                 break;
             case "radiobutton":
-                oField = new AscPDFEditor.CRadioButtonField(cName, nPageNum, oCoords);
+                oField = new AscPDF.CRadioButtonField(cName, nPageNum, oCoords);
                 break;
             case "signature":
                 oField = null;
                 break;
             case "text":
-                oField = new AscPDFEditor.CTextField(cName, nPageNum, oCoords);
+                oField = new AscPDF.CTextField(cName, nPageNum, oCoords);
                 break;
             case "": 
-                oField = new AscPDFEditor.CBaseField(cName, nPageNum, oCoords);
+                oField = new AscPDF.CBaseField(cName, nPageNum, oCoords);
                 break;
         }
 
         return oField;
     }
 
-    if (!window["AscPDFEditor"])
-	    window["AscPDFEditor"] = {};
+    if (!window["AscPDF"])
+	    window["AscPDF"] = {};
 
-    window["AscPDFEditor"].CPDFDoc = CPDFDoc;
+    window["AscPDF"].CPDFDoc = CPDFDoc;
 })();

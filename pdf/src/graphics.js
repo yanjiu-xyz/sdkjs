@@ -95,7 +95,7 @@ CPDFGraphics.prototype.FillRect = function(x, y, w, h) {
     this.context.fillRect(x, y, w, h);
 };
 CPDFGraphics.prototype.DrawImage = function(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
-    this.context.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
+    this.context.drawImage(...arguments);
 };
 CPDFGraphics.prototype.SetLineDash = function(dash) {
     if (this.context)
@@ -117,6 +117,6 @@ CPDFGraphics.prototype.ClearRect = function(x, y, w, h) {
 };
 
     //------------------------------------------------------------export----------------------------------------------------
-    window['AscPDFEditor'] = window['AscPDFEditor'] || {};
-    window['AscPDFEditor'].CPDFGraphics = CPDFGraphics;
+    window['AscPDF'] = window['AscPDF'] || {};
+    window['AscPDF'].CPDFGraphics = CPDFGraphics;
 })(window);

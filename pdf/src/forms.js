@@ -478,7 +478,7 @@
         this._hidden        = false;             // This property has been superseded by the display property and its use is discouraged.
         this._lineWidth     = LINE_WIDTH.thin;  // In older versions of this specification, this property was borderWidth
         this._borderWidth   = undefined;       
-        this._name          = sName;         // to do
+        this._name          = sName;         // partial field name
         this._page          = nPage;        // integer | array
         this._print         = true;        // This property has been superseded by the display property and its use is discouraged.
         this._readonly      = false;
@@ -502,7 +502,7 @@
         // internal
         this._id = AscCommon.g_oIdCounter.Get_NewId();
         
-        this._isAnnot = aRect.length == 4 ? true : false;
+        this._isAnnot = aRect && aRect.length == 4 ? true : false;
 
         this.contentRect = {
             X: 0,
@@ -529,8 +529,9 @@
             y: 0
         }
 
-        this._apIdx = -1; // индекс формы на странице в исходном файле (в массиве метода getInteractiveForms), используется для получения appearance
-        
+        this._apIdx     = undefined; // индекс формы на странице в исходном файле (в массиве метода getInteractiveForms), используется для получения appearance
+        this._parentIdx = undefined; // индекс родителя во время чтения
+
         this.needCommit             = false;
         this._needDrawHighlight     = true;
         this._needDrawHoverBorder   = false;
@@ -545,6 +546,10 @@
         this.api = this.GetFormApi();
     }
     
+    CBaseField.prototype.AddToChildsMap = function(nIdx) {
+        this.GetDocument().AddFieldToChildsMap(this, nIdx);
+    };
+
     /**
 	 * Gets the child field by the specified partial name.
 	 * @memberof CBaseField
@@ -642,7 +647,7 @@
     CBaseField.prototype.GetFullName = function() {
         if (this._parent)
         {
-            if (this._partialName != "")
+            if (this._partialName != undefined)
                 return `${this._parent.GetFullName()}.${this._partialName}`
             else
                 return this._parent.GetFullName();
@@ -739,7 +744,6 @@
                 break;
             case FORMS_TRIGGERS_TYPES.Calculate:
                 this._triggers.Calculate = new CFormTrigger(FORMS_TRIGGERS_TYPES.Calculate, aActions);
-                oDocument.GetCalculateInfo().AddToCalculateField(this); // при изменения любого поля вызывает Calculcate действие у всех полей
                 break;
             case FORMS_TRIGGERS_TYPES.Format:
                 this._triggers.Format = new CFormTrigger(FORMS_TRIGGERS_TYPES.Format, aActions);
@@ -790,15 +794,26 @@
         return this._doc;
     };
 
+    CBaseField.prototype.GetParent = function() {
+        return this._parent;
+    };
+
     /**
 	 * Gets form value (which was commited).
 	 * @memberof CBaseField
 	 * @typeofeditors ["PDF"]
 	 */
-    CBaseField.prototype.GetApiValue = function() {
-        let isNumber = !isNaN(this._value) && isFinite(this._value)
+    CBaseField.prototype.GetApiValue = function(bInherit) {
+        let oParent = this.GetParent();
+        if (oParent == null && this._value == null)
+            return "";
+        else if (bInherit === false || (this._value != null && this.GetPartialName() != null)) {
+            let isNumber = !isNaN(this._value) && isFinite(this._value) && this._value != "";
+            return isNumber ? parseFloat(this._value) : this._value;
+        }
         
-        return isNumber ? parseFloat(this._value) : this._value;
+        if (oParent)
+            return oParent.GetApiValue();
     };
     /**
 	 * Sets api value of form.
@@ -806,7 +821,11 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CBaseField.prototype.SetApiValue = function(value) {
-        this._value = value;
+        let oParent = this.GetParent();
+        if (oParent && this.IsAnnot())
+            oParent.SetApiValue(value);
+        else
+            this._value = value;
     };
 
     /**
@@ -834,11 +853,12 @@
         let oViewer = private_getViewer();
         let nScale  = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
 
-        let X       = this._pagePos.x * nScale >> 0;
-        let Y       = this._pagePos.y * nScale >> 0;
-        let nWidth  = (this._pagePos.w) * nScale >> 0;
-        let nHeight = (this._pagePos.h) * nScale >> 0;
+        let X       = this._pagePos.x * nScale;
+        let Y       = this._pagePos.y * nScale;
+        let nWidth  = (this._pagePos.w) * nScale;
+        let nHeight = (this._pagePos.h) * nScale;
         
+        oCtx.globalAlpha = 0.8;
         if (this.type == "radiobutton" && this._chStyle == CHECKBOX_STYLES.circle) {
             oCtx.beginPath();
             oCtx.fillStyle = `rgb(${FIELDS_HIGHLIGHT.r}, ${FIELDS_HIGHLIGHT.g}, ${FIELDS_HIGHLIGHT.b})`;
@@ -1218,10 +1238,10 @@
         let oViewer     = private_getViewer();
         let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
 
-        let X       = this._pagePos.x * nScale >> 0;
-        let Y       = this._pagePos.y * nScale >> 0;
-        let nWidth  = this._pagePos.w * nScale >> 0;
-        let nHeight = this._pagePos.h * nScale >> 0;
+        let X       = this._pagePos.x * nScale;
+        let Y       = this._pagePos.y * nScale;
+        let nWidth  = this._pagePos.w * nScale;
+        let nHeight = this._pagePos.h * nScale;
 
         oCtx.globalAlpha = 1;
         oCtx.setLineDash([]);
@@ -1264,7 +1284,7 @@
         return this._bDrawFromStream;
     };
     CBaseField.prototype.SetDrawFromStream = function(bFromStream) {
-        this._bDrawFromStream = bFromStream;
+        //this._bDrawFromStream = bFromStream;
     };
     CBaseField.prototype.SetDrawHighlight = function(bDraw) {
         this._needDrawHighlight = bDraw;
@@ -1275,7 +1295,8 @@
 
     CBaseField.prototype.AddToRedraw = function() {
         let oViewer = private_getViewer();
-        oViewer.pagesInfo.pages[this.GetPage()].needRedrawForms = true;
+        if (oViewer.pagesInfo.pages[this.GetPage()])
+            oViewer.pagesInfo.pages[this.GetPage()].needRedrawForms = true;
     };
 
     CBaseField.prototype.GetType = function() {
@@ -1306,6 +1327,9 @@
     };
 
     CBaseField.prototype.GetDefaultValue = function() {
+        if (this._defaultValue == null && this.GetParent())
+            return this.GetParent().GetDefaultValue();
+        
         return this._defaultValue;
     };
     CBaseField.prototype.SetDefaultValue = function(value) {
@@ -1318,8 +1342,11 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CBaseField.prototype.Reset = function() {
-        if (this.GetValue() != this.GetDefaultValue()) {
-            this.SetValue(this.GetDefaultValue());
+        let defValue = this.GetDefaultValue();
+        if (this.GetValue() != defValue) {
+            
+            this.SetValue(defValue);
+            this.SetApiValue(defValue);
             this.AddToRedraw();
         }
     };
@@ -1331,10 +1358,10 @@
         if (this._fillColor) {
             let nScale = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
 
-            let X       = this._pagePos.x * nScale >> 0;
-            let Y       = this._pagePos.y * nScale >> 0;
-            let nWidth  = (this._pagePos.w) * nScale >> 0;
-            let nHeight = (this._pagePos.h) * nScale >> 0;
+            let X       = this._pagePos.x * nScale;
+            let Y       = this._pagePos.y * nScale;
+            let nWidth  = (this._pagePos.w) * nScale;
+            let nHeight = (this._pagePos.h) * nScale;
 
             oGraphicsPDF.SetGlobalAlpha(1);
             let oColor = this.GetRGBColor(this._fillColor);
@@ -1359,17 +1386,17 @@
 
         switch (this.type) {
             case "text":
-                return new AscPDFEditor.ApiTextField(this);
+                return new AscPDF.ApiTextField(this);
             case "combobox":
-                return new AscPDFEditor.ApiComboBoxField(this);
+                return new AscPDF.ApiComboBoxField(this);
             case "listbox":
-                return new AscPDFEditor.ApiListBoxField(this);
+                return new AscPDF.ApiListBoxField(this);
             case "checkbox":
-                return new AscPDFEditor.ApiCheckBoxField(this);
+                return new AscPDF.ApiCheckBoxField(this);
             case "radiobutton":
-                return new AscPDFEditor.ApiRadioButtonField(this);
+                return new AscPDF.ApiRadioButtonField(this);
             case "button":
-                return new AscPDFEditor.ApiPushButtonField(this);
+                return new AscPDF.ApiPushButtonField(this);
         }
     };
 
@@ -1410,7 +1437,7 @@
 		if (!oImgData || this._buttonPosition == position["textOnly"]) {
 			return;
 		}
-		const oHTMLImg = oImgData.Image; m
+		const oHTMLImg = oImgData.Image;
 		if (!oHTMLImg || oHTMLImg.width === 0 || oHTMLImg.height === 0 || this._buttonPosition == position["textOnly"]) {
 			return;
 		}
@@ -1539,9 +1566,11 @@
 		this.SetNeedRecalc(true);
         this.SetWasChanged(true);
 
-        let oDoc            = this.GetDocument();
-        let oActionsQueue   = oDoc.GetActionsQueue();
-        oActionsQueue.Continue();
+        if (private_getViewer().IsOpenFormsInProgress == false) {
+            let oDoc            = this.GetDocument();
+            let oActionsQueue   = oDoc.GetActionsQueue();
+            oActionsQueue.Continue();   
+        }
 	};
     /**
 	 * Corrects the positions of the caption and image.
@@ -1735,18 +1764,34 @@
                 break;
         }
     };
+    CPushButtonField.prototype.SetValue = function() {
+        return;
+    };
     CPushButtonField.prototype.Draw = function() {
         if (this.IsHidden() == true)
             return;
 
         let oViewer = private_getViewer();
-        let aRect   = this.GetRect();
         let oGraphicsWord = oViewer.pagesInfo.pages[this.GetPage()].graphics.word;
         
-        let X = aRect[0] >> 0;
-        let Y = aRect[1] >> 0;
-        let nWidth = (aRect[2] - aRect[0]) >> 0;
-        let nHeight = (aRect[3] - aRect[1]) >> 0;
+        this.Recalculate();
+        this.DrawBackground();
+        oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
+        this.content.Draw(0, oGraphicsWord);
+        oGraphicsWord.RemoveClip();
+        this.DrawBorders();
+    };
+    CPushButtonField.prototype.Recalculate = function() {
+        if (this.IsNeedRecalc() == false)
+            return;
+
+        let oViewer = private_getViewer();
+        let aRect   = this.GetRect();
+        
+        let X = aRect[0];
+        let Y = aRect[1];
+        let nWidth = (aRect[2] - aRect[0]);
+        let nHeight = (aRect[3] - aRect[1]);
 
         // save pos in page.
         this._pagePos = {
@@ -1755,9 +1800,6 @@
             w: nWidth,
             h: nHeight
         };
-
-        this.DrawBackground();
-        this.DrawBorders();
 
         let oMargins = this.GetMarginsFromBorders(false, false);
         
@@ -1779,18 +1821,8 @@
             contentYLimit = (Y + nHeight) * g_dKoef_pix_to_mm;
         }
 
-        this._formRect.X = X * g_dKoef_pix_to_mm;
-        this._formRect.Y = Y * g_dKoef_pix_to_mm;
-        this._formRect.W = nWidth * g_dKoef_pix_to_mm;
-        this._formRect.H = nHeight * g_dKoef_pix_to_mm;
-        
-        this.contentRect.X = contentX;
-        this.contentRect.Y = contentY;
-        this.contentRect.W = contentXLimit - contentX;
-        this.contentRect.H = contentYLimit - contentY;
-
         if (contentX != this._oldContentPos.X || contentY != this._oldContentPos.Y ||
-        contentXLimit != this._oldContentPos.XLimit) {
+            contentXLimit != this._oldContentPos.XLimit) {
             this.content.X      = this._oldContentPos.X        = contentX;
             this.content.Y      = this._oldContentPos.Y        = contentY;
             this.content.XLimit = this._oldContentPos.XLimit   = contentXLimit;
@@ -1803,15 +1835,21 @@
             this.content.Recalculate_Page(0, false);
         }
 
+        this._formRect.X = X * g_dKoef_pix_to_mm;
+        this._formRect.Y = Y * g_dKoef_pix_to_mm;
+        this._formRect.W = nWidth * g_dKoef_pix_to_mm;
+        this._formRect.H = nHeight * g_dKoef_pix_to_mm;
+        
+        this.contentRect.X = contentX;
+        this.contentRect.Y = contentY;
+        this.contentRect.W = contentXLimit - contentX;
+        this.contentRect.H = contentYLimit - contentY;
+
         this.SetNeedRecalc(false);
 
-        oGraphicsWord.AddClipRect(this.content.X, this.content.Y, this.content.XLimit - this.content.X, contentYLimit - contentY);
-        this.content.Draw(0, oGraphicsWord);
         // redraw target cursor if field is selected
         if (oViewer.activeForm == this && this.content.IsSelectionUse() == false && (oViewer.fieldFillingMode || this.type == "combobox"))
             this.content.RecalculateCurPos();
-        
-        oGraphicsWord.RemoveClip();
     };
     CPushButtonField.prototype.onMouseDown = function() {
         let oViewer         = private_getViewer();
@@ -2349,6 +2387,7 @@
         this._value         = "Off";
         this._exportValue   = "Yes";
         this._chStyle       = CHECKBOX_STYLES.check;
+        this._checked       = false;
     };
     
     CBaseCheckBoxField.prototype = Object.create(CBaseField.prototype);
@@ -2360,10 +2399,10 @@
 
         let aRect = this.GetRect();
 
-        let X = aRect[0] >> 0;
-        let Y = aRect[1] >> 0;
-        let nWidth = (aRect[2] - aRect[0]) >> 0;
-        let nHeight = (aRect[3] - aRect[1]) >> 0;
+        let X = aRect[0];
+        let Y = aRect[1];
+        let nWidth = (aRect[2] - aRect[0]);
+        let nHeight = (aRect[3] - aRect[1]);
 
         // save pos in page.
         this._pagePos = {
@@ -2380,20 +2419,24 @@
             this.DrawCheckedSymbol();
     };
     CBaseCheckBoxField.prototype.IsChecked = function() {
-        return this._value == this._exportValue;
+        return this._checked;
     };
     CBaseCheckBoxField.prototype.DrawCheckedSymbol = function() {
         let oViewer         = private_getViewer();
         let oGraphicsPDF    = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
         let nScale          = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
 
-        let X       = this._pagePos.x * nScale >> 0;
-        let Y       = this._pagePos.y * nScale >> 0;
-        let nWidth  = this._pagePos.w * nScale >> 0;
-        let nHeight = this._pagePos.h * nScale >> 0;
+        let X       = this._pagePos.x * nScale;
+        let Y       = this._pagePos.y * nScale;
+        let nWidth  = this._pagePos.w * nScale;
+        let nHeight = this._pagePos.h * nScale;
 
         let oMargins = this.GetMarginsFromBorders(true, false);
+        let oRGB = this.GetRGBColor(this._textColor);
 
+        oGraphicsPDF.SetGlobalAlpha(1);
+        oGraphicsPDF.SetStrokeStyle(`rgb(${oRGB.r}, ${oRGB.g}, ${oRGB.b})`);
+        oGraphicsPDF.SetFillStyle(`rgb(${oRGB.r}, ${oRGB.g}, ${oRGB.b})`);
         oGraphicsPDF.SetLineWidth(nScale);
         oGraphicsPDF.SetLineDash([]);
 
@@ -2404,7 +2447,6 @@
                 let nRadius = Math.min(nWidth / 4 - oMargins.left / 2, nHeight / 4 - oMargins.top / 2);
                 oGraphicsPDF.BeginPath();
                 oGraphicsPDF.Arc(centerX, centerY, nRadius, 0, 2 * Math.PI, false);
-                oGraphicsPDF.SetFillStyle("black");
                 oGraphicsPDF.Fill();
                 oGraphicsPDF.ClosePath();
                 break;
@@ -2414,7 +2456,6 @@
                 let x = nWidth > nHeight ? X + (nWidth - nHeight) / 2 : X;
                 let y = nHeight > nWidth ? Y + (nHeight - nWidth) / 2 : Y;
                 let w = Math.min(nWidth, nHeight);
-                oGraphicsPDF.SetStrokeStyle("black");
 
 
                 // left to right
@@ -2450,7 +2491,6 @@
                 oGraphicsPDF.LineTo(x - nDiamondWidth/2, y + nDiamondWidth/2);
                 oGraphicsPDF.ClosePath();
 
-                oGraphicsPDF.SetFillStyle("black");
                 oGraphicsPDF.Fill();
                 break;
             }
@@ -2464,7 +2504,6 @@
 
                 oGraphicsPDF.BeginPath();
                 oGraphicsPDF.Rect(x, y, nMaxW, nMaxW);
-                oGraphicsPDF.SetFillStyle("black");
                 oGraphicsPDF.Fill();
                 oGraphicsPDF.ClosePath();
                 break;
@@ -2498,7 +2537,6 @@
                 oGraphicsPDF.ClosePath();
 
                 // fill the star with a color
-                oGraphicsPDF.SetFillStyle("black");
                 oGraphicsPDF.Fill();
                 break;
             }
@@ -2518,61 +2556,94 @@
                 let x = X + oMargins.bottom + (nInsideW - wScaled)/2;
                 let y = Y + oMargins.bottom + (nInsideH - hScaled)/2;
 
-                
+
+                var canvas = document.createElement('canvas');
+                var context = canvas.getContext('2d');
+
+                // Set the canvas dimensions to match the image
+                canvas.width = wScaled;
+                canvas.height = hScaled;
+
+                // Draw the image onto the canvas
+                context.drawImage(CHECKED_ICON, 0, 0, imgW, imgH, 0, 0, wScaled, hScaled);
+
+                // Get the pixel data of the canvas
+                var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                var data = imageData.data;
+
+                // Loop through each pixel
+                for (let i = 0; i < data.length; i += 4) {
+                    const red = data[i];
+                    const green = data[i + 1];
+                    const blue = data[i + 2];
+
+                    // Check if the pixel is black (R = 0, G = 0, B = 0)
+                    if (red === 0 && green === 0 && blue === 0) {
+                        // Change the pixel color to red (R = 255, G = 0, B = 0)
+                        data[i] = oRGB.r; // Red
+                        data[i + 1] = oRGB.g; // Green
+                        data[i + 2] = oRGB.b; // Blue
+                        // Note: The alpha channel (transparency) remains unchanged
+                    }
+                }
+
+                // Put the modified pixel data back onto the canvas
+                context.putImageData(imageData, 0, 0);
+
                 // Draw the checkmark
-                oGraphicsPDF.DrawImage(CHECKED_ICON, 0, 0, imgW, imgH, x, y, wScaled, hScaled);
+                oGraphicsPDF.DrawImage(canvas, x, y);
             }
         }
     };
 
-    /**
-	 * Corrects the positions of symbol.
-	 * @memberof CBaseCheckBoxField
-	 * @typeofeditors ["PDF"]
-	 */
-    CBaseCheckBoxField.prototype.Internal_CorrectContent = function() {
-        let oPara = this.content.GetElement(0);
+    // /**
+	//  * Corrects the positions of symbol.
+	//  * @memberof CBaseCheckBoxField
+	//  * @typeofeditors ["PDF"]
+	//  */
+    // CBaseCheckBoxField.prototype.Internal_CorrectContent = function() {
+    //     let oPara = this.content.GetElement(0);
 
-        this.content.Recalculate_Page(0, true);
+    //     this.content.Recalculate_Page(0, true);
 
-        // подгоняем размер галочки
-        let nCharH = this.ProcessAutoFitContent();
+    //     // подгоняем размер галочки
+    //     let nCharH = this.ProcessAutoFitContent();
         
-        let oRect = this.getFormRelRect();
+    //     let oRect = this.getFormRelRect();
 
-        oPara.Pr.Spacing.Before = (oRect.H - nCharH) / 2;
-        oPara.CompiledPr.NeedRecalc = true;
-    };
+    //     oPara.Pr.Spacing.Before = (oRect.H - nCharH) / 2;
+    //     oPara.CompiledPr.NeedRecalc = true;
+    // };
 
-    CBaseCheckBoxField.prototype.ProcessAutoFitContent = function() {
-        let oPara   = this.content.GetElement(0);
-        let oRun    = oPara.GetElement(0);
-        let oTextPr = oRun.Get_CompiledPr(true);
-        let oBounds = this.getFormRelRect();
+    // CBaseCheckBoxField.prototype.ProcessAutoFitContent = function() {
+    //     let oPara   = this.content.GetElement(0);
+    //     let oRun    = oPara.GetElement(0);
+    //     let oTextPr = oRun.Get_CompiledPr(true);
+    //     let oBounds = this.getFormRelRect();
 
-        g_oTextMeasurer.SetTextPr(oTextPr, null);
-	    g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
+    //     g_oTextMeasurer.SetTextPr(oTextPr, null);
+	//     g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
 
-        var nTextHeight = g_oTextMeasurer.GetHeight();
-	    var nMaxWidth   = oPara.RecalculateMinMaxContentWidth(false).Max;
-	    var nFontSize   = oTextPr.FontSize;
+    //     var nTextHeight = g_oTextMeasurer.GetHeight();
+	//     var nMaxWidth   = oPara.RecalculateMinMaxContentWidth(false).Max;
+	//     var nFontSize   = oTextPr.FontSize;
 
-        if (nMaxWidth < 0.001 || nTextHeight < 0.001 || oBounds.W < 0.001 || oBounds.H < 0.001)
-		    return nTextHeight;
+    //     if (nMaxWidth < 0.001 || nTextHeight < 0.001 || oBounds.W < 0.001 || oBounds.H < 0.001)
+	// 	    return nTextHeight;
 
-	    var nNewFontSize = nFontSize;
+	//     var nNewFontSize = nFontSize;
 
-        nNewFontSize = (oBounds.H / g_dKoef_pt_to_mm) >> 0;
-        oRun.SetFontSize(nNewFontSize);
+    //     nNewFontSize = (oBounds.H / g_dKoef_pt_to_mm) >> 0;
+    //     oRun.SetFontSize(nNewFontSize);
 
-        oTextPr.FontSize    = nNewFontSize;
-        oTextPr.FontSizeCS  = nNewFontSize;
+    //     oTextPr.FontSize    = nNewFontSize;
+    //     oTextPr.FontSizeCS  = nNewFontSize;
 
-        g_oTextMeasurer.SetTextPr(oTextPr, null);
-        g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
+    //     g_oTextMeasurer.SetTextPr(oTextPr, null);
+    //     g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
 
-        return g_oTextMeasurer.GetHeight();
-    };
+    //     return g_oTextMeasurer.GetHeight();
+    // };
     /**
      * Returns a canvas with origin view (from appearance stream) of current form.
 	 * @memberof CBaseCheckBoxField
@@ -2653,10 +2724,16 @@
         this._chStyle = nType;
     };
     CBaseCheckBoxField.prototype.SetValue = function(sValue) {
-        this._value = sValue ? sValue : "Off";
+        if (this._exportValue == sValue)
+            this.SetChecked(true);
+        else
+            this.SetChecked(false);
+        
+        if (private_getViewer().IsOpenFormsInProgress && this.GetParent() == null)
+            this.SetApiValue(sValue);
     };
     CBaseCheckBoxField.prototype.GetValue = function() {
-        return this._value;
+        return this.IsChecked() ? this._exportValue : "Off";
     };
     CBaseCheckBoxField.prototype.SetDrawFromStream = function() {
         return;
@@ -2668,17 +2745,18 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CBaseCheckBoxField.prototype.SetChecked = function(bChecked) {
-        if ((bChecked && this._value == this._exportValue) || (!bChecked && this._value != this._exportValue))
+        if (bChecked == this.IsChecked())
             return;
 
+        this.AddToRedraw();
+
         if (bChecked) {
-            AscCommon.History.Add(new CChangesPDFFormValue(this, this._value, this._exportValue));
-            this._value = this._exportValue;
+            !private_getViewer().isOnUndoRedo && AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetValue(), this._exportValue));
+            this._checked = true;
         }
         else {
-            AscCommon.History.Add(new CChangesPDFFormValue(this, this._value, "Off"));
-            this._value = "Off";
-
+            !private_getViewer().isOnUndoRedo && AscCommon.History.Add(new CChangesPDFFormValue(this, this.GetValue(), "Off"));
+            this._checked = false;
         }
     };
     
@@ -2706,7 +2784,7 @@
         this.SetNeedCommit(true);
 
         CreateNewHistoryPointForField(oThis);
-        if (this._value != "Off") {
+        if (this.IsChecked()) {
             this.SetChecked(false);
         }
         else {
@@ -2818,7 +2896,7 @@
     };
     CRadioButtonField.prototype.onMouseUp = function() {
         CreateNewHistoryPointForField(this);
-        if (this._value != "Off") {
+        if (this.IsChecked()) {
             if (this._noToggleToOff == false) {
                 this.SetChecked(false);
             }
@@ -2972,7 +3050,7 @@
         this._richValue         = [];
         this._textFont          = "ArialMT";
         this._fileSelect        = false;
-        this._value             = "";
+        this._value             = undefined;
 
         // internal
         TurnOffHistory();
@@ -3119,7 +3197,7 @@
             this.SetNeedRecalc(true);
             this.SetWasChanged(true);
 
-            if (private_getViewer().IsOpenFormsInProgress)
+            if (private_getViewer().IsOpenFormsInProgress && this.GetParent() == null)
                 this.SetApiValue(sValue);
         }
         else
@@ -3174,10 +3252,10 @@
         let aRect   = this.GetRect();
         let oGraphicsWord = oViewer.pagesInfo.pages[this.GetPage()].graphics.word;
 
-        let X       = aRect[0] >> 0;
-        let Y       = aRect[1] >> 0;
-        let nWidth  = ((aRect[2]) - (aRect[0])) >> 0;
-        let nHeight = ((aRect[3]) - (aRect[1])) >> 0;
+        let X       = aRect[0];
+        let Y       = aRect[1];
+        let nWidth  = ((aRect[2]) - (aRect[0]));
+        let nHeight = ((aRect[3]) - (aRect[1]));
 
         // save pos in page.
         this._pagePos = {
@@ -3188,8 +3266,7 @@
         };
 
         this.DrawBackground();
-        this.DrawBorders();
-        
+                
         let oMargins = this.GetMarginsFromBorders(false, false);
         
         let contentX = this.IsComb() ? (X + oMargins.left) * g_dKoef_pix_to_mm : (X + 2 * oMargins.left) * g_dKoef_pix_to_mm;
@@ -3259,6 +3336,7 @@
             oContentToDraw.RecalculateCurPos();
         
         oGraphicsWord.RemoveLastClip();
+        this.DrawBorders();
     };
     CTextField.prototype.onMouseDown = function(x, y, e) {
         let oViewer         = private_getViewer();
@@ -3277,7 +3355,6 @@
             oViewer.Api.WordControl.m_oDrawingDocument.showTarget(true);
 
             this.content.Selection_SetStart(X, Y, 0, e);
-            this.content.RemoveSelection();
             this.content.RecalculateCurPos();
 
             if (this._doNotScroll == false && this.IsMultiline())
@@ -3338,9 +3415,9 @@
     CTextField.prototype.EnterText = function(aChars)
     {
         let oDoc = this.GetDocument();
-        
-        CreateNewHistoryPointForField(this, true);
         let oPara = this.content.GetElement(0);
+        CreateNewHistoryPointForField(this, true);
+
         let nChars = 0;
         function countChars(oRun) {
             var nCurPos = oRun.Content.length;
@@ -3354,32 +3431,43 @@
         if (this._charLimit != 0)
             this.content.CheckRunContent(countChars);
 
-        let nMaxCharsToAdd = Math.min(this._charLimit != 0 ? this._charLimit - nChars : aChars.length, aChars.length);
+
+        // считаем максимум символов для вставки
+        let nSelChars = this.content.GetSelectedText(true, {NewLine: true}).length;
+        let nMaxCharsToAdd = Math.min(this._charLimit != 0 ? this._charLimit - (nChars - nSelChars) : aChars.length, aChars.length);
         if (nMaxCharsToAdd > 0) aChars.length = nMaxCharsToAdd;
         else aChars.length = 0;
 
-        // Если у нас что-то заселекчено и мы вводим текст или пробел
-        // и т.д., тогда сначала удаляем весь селект.
-        if (this.content.IsSelectionUse()) {
-            if (this.content.IsSelectionEmpty())
-                this.content.RemoveSelection();
-            else
-                this.content.Remove(1, true, false, true);
-        }
-
         if (this.DoKeystrokeAction(aChars) == false) {
+            AscCommon.History.Remove_LastPoint();
             return false;
         }
 
-        aChars = AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.event["change"].toString());
+        let nSelStart = oDoc.event["selStart"];
+        let nSelEnd = oDoc.event["selEnd"];
+
+        // убираем селект, выставляем из nSelStart/nSelEnd
+        if (this.content.IsSelectionUse())
+            this.content.RemoveSelection();
+
+        let { startPos, endPos } = private_CalcDocPos(oPara, nSelStart, nSelEnd);
+        if (nSelStart == nSelEnd) {
+            this.content.SetContentPosition(startPos, 0, 0);
+            this.content.RecalculateCurPos();
+        }
+        else
+            this.content.SetSelectionByContentPositions(startPos, endPos);
+
+        if (nSelStart != nSelEnd)
+            this.content.Remove(-1, true, false, false, false);
+
+        this.SetNeedRecalc(true);
+        aChars = AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.event["change"]);
         if (aChars.length == 0) {
             return false;
         }
 
-        CreateNewHistoryPointForField(this, true);
         this.InsertChars(aChars);
-
-        this._doNotScroll == false && this.SetNeedRecalc(true);
         this.SetNeedCommit(true); // флаг что значение будет применено к остальным формам с таким именем
         this._bAutoShiftContentView = true && this._doNotScroll == false;
 
@@ -3448,6 +3536,7 @@
         let oThisPara   = this.content.GetElement(0);
         
         if (this.DoFormatAction() == false) {
+            this.UndoNotAppliedChanges();
             if (this.IsChanged() == false)
                 this.SetDrawFromStream(true);
 
@@ -3594,18 +3683,20 @@
         let oFormatTrigger      = this.GetTrigger(FORMS_TRIGGERS_TYPES.Format);
         let oActionRunScript    = oFormatTrigger ? oFormatTrigger.GetActions()[0] : null;
         
-        let isCanFormat = this.DoKeystrokeAction(null, true);
+        let isCanFormat = this.DoKeystrokeAction(null, false, true);
         if (!isCanFormat) {
             editor.sendEvent("asc_onFormatErrorPdfForm", oDoc.GetWarningInfo());
-            return;
+            return false;
         }
 
         if (oActionRunScript) {
             this.SetNeedRecalc(true);
             oActionRunScript.RunScript();
         }
+
+        return true;
     };
-    CTextField.prototype.DoKeystrokeAction = function(aChars, isOnCommit) {
+    CTextField.prototype.DoKeystrokeAction = function(aChars, isOnRemove, isOnCommit) {
         if (!aChars)
             aChars = [];
 
@@ -3614,26 +3705,46 @@
         let oDoc = this.GetDocument();
         
         let isCanEnter = true;
+
+        function GetSelectionRange(p)
+        {
+            let selectedText = p.GetSelectedText();
+            let state = p.SaveSelectionState();
+
+            let selStart = p.Get_ParaContentPos(p.IsSelectionUse(), p.GetSelectDirection() > 0);
+
+            p.RemoveSelection();
+            p.StartSelectionFromCurPos();
+            p.SetSelectionContentPos(p.GetStartPos(), selStart);
+            let preText = p.GetSelectedText();
+
+            p.LoadSelectionState(state);
+
+            return {nSelStart : preText.length, nSelEnd : preText.length + selectedText.length};
+        }
+
+        let {nSelStart, nSelEnd} = GetSelectionRange(this.content.GetElement(0));
+        
+        // флаг что удаление
+        if (isOnRemove && nSelStart && nSelEnd) {
+            nSelStart--;
+        }
+
         this.GetDocument().SetEvent({
             "target":   this.GetFormApi(),
             "value":    this.GetValue(),
             "change":   aChars.map(function(char) {
                 return String.fromCharCode(char);
-            }).join(),
-            "willCommit": !!isOnCommit
+            }).join(""),
+            "willCommit": !!isOnCommit,
+            "selStart": nSelStart,
+            "selEnd": nSelEnd
         });
 
         if (oActionRunScript) {
             oActionRunScript.RunScript();
             isCanEnter = oDoc.event["rc"];
         }
-
-        // если просто на вводе с клавиатуры, то откатываем последнее изменени
-        // если на commit действии, то убираем все изменения в форме до предыдущего commit
-        if (!isOnCommit)
-            AscCommon.History.Undo();
-        else if (isOnCommit && isCanEnter == false)
-            this.UndoNotAppliedChanges();
 
         return isCanEnter;
     };
@@ -3646,7 +3757,7 @@
             "value": value
         });
 
-        let oValidateTrigger = this.GetTrigger(AscPDFEditor.FORMS_TRIGGERS_TYPES.Validate);
+        let oValidateTrigger = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Validate);
         let oValidateScript = oValidateTrigger ? oValidateTrigger.GetActions()[0] : null;
 
         if (oValidateScript == null)
@@ -3676,9 +3787,11 @@
         // удаляем точки
         AscCommon.History.Points.length = nPoint;
 
+        this.SetNeedRecalc(true);
         this.AddToRedraw();
         this.SetNeedCommit(false);
     };
+
     /**
 	 * Unions the last history points of this form.
 	 * @memberof CTextField
@@ -3778,18 +3891,27 @@
 
         CreateNewHistoryPointForField(this, true);
 
-        let oPara = this.content.GetElement(0);
-        let oSelState = oPara.Get_SelectionState2();
-        
-        // удаляем, делаем keystroke (после keystroke делается Undo), если успешно, то повторяем удаление
-        this.content.Remove(nDirection, true, false, false, bWord);
-        if (this.DoKeystrokeAction() == false) {
+        if (this.DoKeystrokeAction(null, true, false) == false) {
             return false;
         }
         
-        oPara.Set_SelectionState2(oSelState);
-        CreateNewHistoryPointForField(this, true);
-        this.content.Remove(nDirection, true, false, false, bWord);
+        let nSelStart = oDoc.event["selStart"];
+        let nSelEnd = oDoc.event["selEnd"];
+
+        if (this.content.IsSelectionUse())
+            this.content.RemoveSelection();
+
+        let { startPos, endPos } = private_CalcDocPos(this.content.GetElement(0), nSelStart, nSelEnd);
+        if (nSelStart == nSelEnd) {
+            this.content.SetContentPosition(startPos, 0, 0);
+            this.content.RecalculateCurPos();
+        }
+        else
+            this.content.SetSelectionByContentPositions(startPos, endPos);
+
+        if (nSelStart != nSelEnd)
+            this.content.Remove(nDirection, true, false, false, bWord);
+        
         // скрипт keystroke мог поменять change значение, поэтому
         this.InsertChars(AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.event["change"].toString()));
 
@@ -4043,10 +4165,10 @@
         let oGraphicsWord = oViewer.pagesInfo.pages[this.GetPage()].graphics.word;
         let nScale = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
 
-        let X = aRect[0] >> 0;
-        let Y = aRect[1] >> 0;
-        let nWidth = (aRect[2] - aRect[0]) >> 0;
-        let nHeight = (aRect[3] - aRect[1]) >> 0;
+        let X = aRect[0];
+        let Y = aRect[1];
+        let nWidth = (aRect[2] - aRect[0]);
+        let nHeight = (aRect[3] - aRect[1]);
 
         // save pos in page.
         this._pagePos = {
@@ -4057,8 +4179,7 @@
         };
 
         this.DrawBackground();
-        this.DrawBorders();
-
+        
         let oMargins = this.GetBordersWidth();
 
         let contentX        = (X + 2 * oMargins.left) * g_dKoef_pix_to_mm;
@@ -4113,18 +4234,23 @@
         
         oGraphicsWord.RemoveClip();
         this.DrawMarker();
+        this.DrawBorders();
     };
     CComboBoxField.prototype.DrawMarker = function() {
         let oViewer         = private_getViewer();
         let nScale          = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
         let oGraphicsPDF    = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
-        let aRect           = this.GetRect();
         let aOringRect      = this.GetOrigRect();
 
-        let X       = aRect[0] * nScale >> 0;
-        let Y       = aRect[1] * nScale >> 0;
-        let nWidth  = (aRect[2] - aRect[0]) * nScale >> 0;
-        let nHeight = (aRect[3] - aRect[1]) * nScale >> 0;
+        // let X       = aRect[0] * nScale;
+        // let Y       = aRect[1] * nScale;
+        // let nWidth  = (aRect[2] - aRect[0]) * nScale;
+        // let nHeight = (aRect[3] - aRect[1]) * nScale;
+
+        let X       = this._pagePos.x * nScale;
+        let Y       = this._pagePos.y * nScale;
+        let nWidth  = (this._pagePos.w) * nScale;
+        let nHeight = (this._pagePos.h) * nScale;
         
         let oMargins = this.GetBordersWidth(true);
         
@@ -4134,6 +4260,7 @@
         let nMarkY      = Y + oMargins.top + 1;
 
         // marker rect
+        oGraphicsPDF.SetLineDash([]);
         oGraphicsPDF.BeginPath();
         oGraphicsPDF.SetGlobalAlpha(1);
         oGraphicsPDF.SetFillStyle("rgb(240, 240, 240)");
@@ -4206,7 +4333,6 @@
             }
             else {
                 this.content.Selection_SetStart(X, Y, 0, e);
-                this.content.RemoveSelection();
             }
             
             this.content.RecalculateCurPos();
@@ -4264,41 +4390,47 @@
     };
 
     CComboBoxField.prototype.SetValue = function(sValue) {
-        let sTextToAdd = "";
-        let nIdx = -1;
-        for (let i = 0; i < this._options.length; i++) {
-            if (this._options[i][1] && this._options[i][1] == sValue) {
-                sTextToAdd = this._options[i][0];
-                nIdx = i;
-                break;
-            }
-        }
-        if (sTextToAdd == "") {
+        if (this.IsAnnot()) {
+            let sTextToAdd = "";
+            let nIdx = -1;
             for (let i = 0; i < this._options.length; i++) {
-                if (this._options[i] == sValue) {
-                    sTextToAdd = this._options[i];
+                if (this._options[i][1] && this._options[i][1] == sValue) {
+                    sTextToAdd = this._options[i][0];
                     nIdx = i;
                     break;
                 }
             }
+            if (sTextToAdd == "") {
+                for (let i = 0; i < this._options.length; i++) {
+                    if (this._options[i] == sValue) {
+                        sTextToAdd = this._options[i];
+                        nIdx = i;
+                        break;
+                    }
+                }
+            }
+            
+            if (sTextToAdd == "")
+                sTextToAdd = sValue;
+
+            let oPara = this.content.GetElement(0);
+            oPara.RemoveFromContent(1, oPara.GetElementsCount() - 1);
+            let oRun = oPara.GetElement(0);
+            oRun.ClearContent();
+
+            if (sTextToAdd) {
+                oRun.AddText(sTextToAdd);
+                this.content.MoveCursorToStartPos();
+            }
+
+            this.SetNeedRecalc(true);
+            this.SetWasChanged(true);
+
+            this._currentValueIndices = nIdx;
+            if (private_getViewer().IsOpenFormsInProgress)
+                this.SetApiValue(sValue);
         }
-        
-        if (sTextToAdd == "")
-            sTextToAdd = sValue;
-
-        let oPara = this.content.GetElement(0);
-        oPara.RemoveFromContent(1, oPara.GetElementsCount() - 1);
-        let oRun = oPara.GetElement(0);
-        oRun.ClearContent();
-
-        if (sTextToAdd) {
-            oRun.AddText(sTextToAdd);
-            this.content.MoveCursorToStartPos();
-        }
-
-        this._currentValueIndices = nIdx;
-
-        if (private_getViewer().IsOpenFormsInProgress)
+        else
             this.SetApiValue(sValue);
     };
     CComboBoxField.prototype.SetValueFormat = function(sValue) {
@@ -4346,13 +4478,22 @@
         else
             return false;
 
+        // Если у нас что-то заселекчено и мы вводим текст или пробел
+        // и т.д., тогда сначала удаляем весь селект.
         if (this.content.IsSelectionUse()) {
-            // Если у нас что-то заселекчено и мы вводим текст или пробел
-			// и т.д., тогда сначала удаляем весь селект.
-            this.content.Remove(1, true, false, true);
+            if (this.content.IsSelectionEmpty())
+                this.content.RemoveSelection();
+            else
+                this.content.Remove(1, true, false, true);
         }
         
-        if (this.DoKeystrokeAction(aChars) == false) {
+        let isCanEnter = this.DoKeystrokeAction(aChars);
+        if (isCanEnter) {
+            oPara.Set_SelectionState2(oSelState);
+            this.content.Remove(1, true, false, false);
+        }
+
+        if (isCanEnter == false) {
             return false;
         }
 
@@ -4382,6 +4523,7 @@
         let oThisPara = this.content.GetElement(0);
         
         if (this.DoFormatAction() == false) {
+            this.UndoNotAppliedChanges();
             if (this.IsChanged() == false)
                 this.SetDrawFromStream(true);
 
@@ -4576,10 +4718,10 @@
         let oGraphicsWord   = oViewer.pagesInfo.pages[this.GetPage()].graphics.word;
         let aRect           = this.GetRect();
 
-        let X = aRect[0] >> 0;
-        let Y = aRect[1] >> 0;
-        let nWidth = (aRect[2] - aRect[0]) >> 0;
-        let nHeight = (aRect[3] - aRect[1]) >> 0;
+        let X = aRect[0];
+        let Y = aRect[1];
+        let nWidth = (aRect[2] - aRect[0]);
+        let nHeight = (aRect[3] - aRect[1]);
 
         // save pos in page.
         this._pagePos = {
@@ -4590,8 +4732,7 @@
         };
 
         this.DrawBackground();
-        this.DrawBorders();
-
+        
         let oMargins = this.GetMarginsFromBorders(false, false);
 
         let contentX        = (X + oMargins.left) * g_dKoef_pix_to_mm;
@@ -4639,6 +4780,8 @@
         oGraphicsWord.AddClipRect(this.content.X, this.content.Y, this.content.XLimit - this.content.X, contentYLimit - contentY);
         this.content.Draw(0, oGraphicsWord);
         oGraphicsWord.RemoveClip();
+
+        this.DrawBorders();
     };
 
     /**
@@ -4827,64 +4970,75 @@
         }
     };
     CListBoxField.prototype.SetValue = function(value) {
-        let aIndexes = [];
-        if (Array.isArray(value)) {
-            for (let sVal of value) {
-                let isFound = false;
-                for (let i = 0; i < this._options.length; i++) {
-                    if (this._options[i][1] && this._options[i][1] == sVal) {
-                        if (aIndexes.includes(i))
-                            continue;
-                        else {
-                            isFound = true;
-                            aIndexes.push(i);
-                            break;
-                        }
-                    }
-                }
-                if (isFound == false) {
+        if (this.IsAnnot()) {
+            let aIndexes = [];
+            if (Array.isArray(value)) {
+                for (let sVal of value) {
+                    let isFound = false;
                     for (let i = 0; i < this._options.length; i++) {
-                        if (this._options[i] == sVal) {
+                        if (this._options[i][1] && this._options[i][1] == sVal) {
                             if (aIndexes.includes(i))
                                 continue;
                             else {
+                                isFound = true;
                                 aIndexes.push(i);
                                 break;
                             }
                         }
                     }
+                    if (isFound == false) {
+                        for (let i = 0; i < this._options.length; i++) {
+                            if (this._options[i] == sVal) {
+                                if (aIndexes.includes(i))
+                                    continue;
+                                else {
+                                    aIndexes.push(i);
+                                    break;
+                                }
+                            }
+                        }
+                    }
                 }
             }
-        }
-        else {
-            for (let i = 0; i < this._options.length; i++) {
-                if (this._options[i][1] && this._options[i][1] == value) {
-                    aIndexes.push(i);
-                    break;
-                }
-            }
-            if (aIndexes.length == 0) {
+            else {
                 for (let i = 0; i < this._options.length; i++) {
-                    if (this._options[i] == value) {
+                    if (this._options[i][1] && this._options[i][1] == value) {
                         aIndexes.push(i);
                         break;
                     }
                 }
+                if (aIndexes.length == 0) {
+                    for (let i = 0; i < this._options.length; i++) {
+                        if (this._options[i] == value) {
+                            aIndexes.push(i);
+                            break;
+                        }
+                    }
+                }
             }
-        }
 
-        this._currentValueIndices = this._multipleSelection == true ? aIndexes : aIndexes[0];
-        
-        if (private_getViewer().IsOpenFormsInProgress)
-            this.SetApiValue(value);
+            this._currentValueIndices = this._multipleSelection == true ? aIndexes : aIndexes[0];
+            this.content.Content.forEach(function(para) {
+                let oApiPara = editor.private_CreateApiParagraph(para);
+                if (para.Pr.Shd && para.Pr.Shd.IsNil() == false) {
+                    oApiPara.SetShd('nil');
+                    para.RecalcCompiledPr(true);
+                }
+            });
 
-        for (let idx of aIndexes) {
-            if (this._multipleSelection) {
-                this.SelectOption(idx, false);
+            for (let idx of aIndexes) {
+                if (this._multipleSelection) {
+                    this.SelectOption(idx, false);
+                }
+                else
+                    this.SelectOption(idx, true);
             }
-            else
-                this.SelectOption(idx, true);
+
+            if (private_getViewer().IsOpenFormsInProgress)
+                this.SetApiValue(value);
         }
+        else
+            this.SetApiValue(sValue);
     };
     CListBoxField.prototype.InsertOption = function(sName, sExport, nIdx) {
         let optToInsert = sExport ? [sName, sExport] : sName;
@@ -5536,10 +5690,10 @@
         this.field.GetDocument().GetActionsQueue().Continue();
     };
 
-    function CActionHideShow(bHidden, aFields) {
+    function CActionHideShow(bHidden, aFieldsNames) {
         CActionBase.call(this, ACTIONS_TYPES.HS);
         this.hidden = bHidden;
-        this.fields = aFields;
+        this.names = aFieldsNames;
     };
 
     CActionHideShow.prototype = Object.create(CActionBase.prototype);
@@ -5556,12 +5710,12 @@
         if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oViewer.activeForm)
             oActionsQueue.Continue();
 
-        oDoc.SetHiddenForms(this.hidden, this.fields);
+        oDoc.HideShowForms(this.hidden, this.names);
     };
 
-    function CActionReset(aFields) {
+    function CActionReset(aFieldsNames) {
         CActionBase.call(this, ACTIONS_TYPES.Reset);
-        this.fields = aFields;
+        this.names = aFieldsNames;
     };
     CActionReset.prototype = Object.create(CActionBase.prototype);
 	CActionReset.prototype.constructor = CActionReset;
@@ -5577,7 +5731,7 @@
         if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oViewer.activeForm)
             oActionsQueue.Continue();
             
-        oDoc.ResetForms(this.fields);
+        oDoc.ResetForms(this.names);
     };
 
     function CActionRunScript(script) {
@@ -5606,22 +5760,11 @@
             "rc": true
         });
 
-        let evalString = function(str) {
-            let event = oDoc.event;
-            try {
-                eval(str);
-            }
-            catch (err) {
-                console.log(err);
-            }
-        }
-          
-        const boundEval = evalString.bind(oDoc.GetDocumentApi());
         try {
-            boundEval.call(oDoc.GetDocumentApi(), this.script);
+            private_evalStr(this.script)();
         }
-        catch(e) {
-            console.log(e);
+        catch (err) {
+            console.log(err);
         }
 
         if (this.bContinueAfterEval == true)
@@ -5636,23 +5779,11 @@
             "rc": true
         });
 
-        let evalString = function(str) {
-            let event = oDoc.event;
-            try {
-                eval(str);
-            }
-            catch (err) {
-                console.log(err);
-            }
-        }
-          
-        const boundEval = evalString.bind(oDoc.GetDocumentApi());
         try {
-            return boundEval.call(oDoc.GetDocumentApi(), this.script);
+            private_evalStr(this.script)();
         }
-        catch(e) {
-            console.log(e);
-            return false;
+        catch (err) {
+            console.log(err);
         }
     };
 
@@ -5864,7 +5995,6 @@
             let oFile   = oViewer.file;
            
             oPageInfo.fieldsAPInfo = {
-                //icons: this.type == "button" ? oFile.nativeFile.getButtonIcons(this.GetPage(), w, h) : undefined,
                 info: oFile.nativeFile.getInteractiveFormsAP(this.GetPage(), w, h),
                 size: {
                     w: w,
@@ -5938,15 +6068,43 @@
         if (["radiobutton", "checkbox"].includes(this.type))
             return;
 
-        let oRGB        = color.convert(aColor, "RGB");
-        let oPara       = this.content.GetElement(0);
-        let oApiPara    = editor.private_CreateApiParagraph(oPara);
+        let oRGB = color.convert(aColor, "RGB");
+        if (this.content) {
+            let oPara       = this.content.GetElement(0);
+            let oApiPara    = editor.private_CreateApiParagraph(oPara);
 
-        oApiPara.SetColor(oRGB[1] * 255, oRGB[2] * 255, oRGB[3] * 255, false);
-        oPara.RecalcCompiledPr(true);
-        
+            oApiPara.SetColor(oRGB[1] * 255, oRGB[2] * 255, oRGB[3] * 255, false);
+            oPara.RecalcCompiledPr(true);
+        }
+        if (this.contentFormat) {
+            let oPara       = this.contentFormat.GetElement(0);
+            let oApiPara    = editor.private_CreateApiParagraph(oPara);
+
+            oApiPara.SetColor(oRGB[1] * 255, oRGB[2] * 255, oRGB[3] * 255, false);
+            oPara.RecalcCompiledPr(true);
+        }
+
         let oApiColor   = color.convert(oRGB, aColor[0]);
         this._textColor = oApiColor.slice(1);
+    };
+    CBaseField.prototype.SetTextColor = function(aColor) {
+        this._textColor = aColor;
+        
+        let oRGB = this.GetRGBColor(aColor);
+        if (this.content) {
+            let oPara       = this.content.GetElement(0);
+            let oApiPara    = editor.private_CreateApiParagraph(oPara);
+
+            oApiPara.SetColor(oRGB.r, oRGB.g, oRGB.b, false);
+            oPara.RecalcCompiledPr(true);
+        }
+        if (this.contentFormat) {
+            let oPara       = this.contentFormat.GetElement(0);
+            let oApiPara    = editor.private_CreateApiParagraph(oPara);
+
+            oApiPara.SetColor(oRGB.r, oRGB.g, oRGB.b, false);
+            oPara.RecalcCompiledPr(true);
+        }
     };
     /**
      * Is the field completely within the window of view.
@@ -6142,34 +6300,40 @@
 	 * @typeofeditors ["PDF"]
 	 */
     function AFNumber_Keystroke(nDec, sepStyle, negStyle, currStyle, strCurrency, bCurrencyPrepend) {
-        let oDoc = private_getViewer().doc;
-        let sValue = oDoc.event["value"];
+        let oDoc    = private_getViewer().doc;
+        let oForm   = oDoc.event["target"].field;
+        let sValue  = oDoc.event["value"];
+        let sChange = oDoc.event["change"];
+        let nSelStart = oDoc.event["selStart"];
+        let nSelEnd = oDoc.event["selEnd"];
 
         function isValidNumber(str) {
             return !isNaN(str) && isFinite(str);
         }
+
+        let sNewValue = sValue.slice(0, nSelStart) + sChange + sValue.slice(nSelEnd);
 
         // разделитель дробной части, который можно ввести
         switch (sepStyle) {
             case 0:
             case 1:
             case 4:
-                if (sValue.indexOf(",") != -1) {
+                if (sNewValue.indexOf(",") != -1) {
                     oDoc.event["rc"] = false;
                 }
 
-                if (isValidNumber(sValue) == false) {
+                if (isValidNumber(sNewValue) == false) {
                     oDoc.event["rc"] = false;
                 }
                 break;
             case 2:
             case 3:
-                if (sValue.indexOf(".") != -1) {
+                if (sNewValue.indexOf(".") != -1) {
                     oDoc.event["rc"] = false;
                 }
                 
-                sValue = sValue.replace(/\,/g, ".");
-                if (isValidNumber(sValue) == false) {
+                sNewValue = sNewValue.replace(/\,/g, ".");
+                if (isValidNumber(sNewValue) == false) {
                     oDoc.event["rc"] = false;
                 }
                 break;
@@ -6177,7 +6341,7 @@
 
         if (oDoc.event["rc"] == false && oDoc.event["willCommit"]) {
             oDoc.SetWarningInfo({
-                "target": oDoc.event["target"].field
+                "target": oForm
             });
         }
     }
@@ -6262,8 +6426,14 @@
 	 * @typeofeditors ["PDF"]
 	 */
     function AFPercent_Keystroke(nDec, sepStyle) {
-        let oDoc = private_getViewer().doc;
-        let sValue = oDoc.event["value"];
+        let oDoc    = private_getViewer().doc;
+        let oForm   = oDoc.event["target"].field;
+        let sValue  = oDoc.event["value"];
+        let sChange = oDoc.event["change"];
+        let nSelStart = oDoc.event["selStart"];
+        let nSelEnd = oDoc.event["selEnd"];
+
+        let sNewValue = sValue.slice(0, nSelStart) + sChange + sValue.slice(nSelEnd);
 
         function isValidNumber(str) {
             return !isNaN(str) && isFinite(str);
@@ -6274,22 +6444,22 @@
             case 0:
             case 1:
             case 4:
-                if (sResultText.indexOf(",") != -1) {
+                if (sNewValue.indexOf(",") != -1) {
                     oDoc.event["rc"] = false;
                 }
 
-                if (isValidNumber(sValue) == false) {
+                if (isValidNumber(sNewValue) == false) {
                     oDoc.event["rc"] = false;
                 }
                 break;
             case 2:
             case 3:
-                if (sValue.indexOf(".") != -1) {
+                if (sNewValue.indexOf(".") != -1) {
                     oDoc.event["rc"] = false;
                 }
 
-                sValue = sValue.replace(/\,/g, ".");
-                if (isValidNumber(sValue) == false) {
+                sNewValue = sNewValue.replace(/\,/g, ".");
+                if (isValidNumber(sNewValue) == false) {
                     oDoc.event["rc"] = false;
                 }
 
@@ -6298,7 +6468,7 @@
 
         if (oDoc.event["rc"] == false) {
             oDoc.SetWarningInfo({
-                "target": oDoc.event["target"].field
+                "target": oForm
             });
         }
     }
@@ -6791,8 +6961,11 @@
 	 * @typeofeditors ["PDF"]
 	 */
     function AFSpecial_Keystroke(psf) {
-        let oDoc = private_getViewer().doc;
-        let sValue = oDoc.event["value"];
+        let oDoc    = private_getViewer().doc;
+        let sValue  = oDoc.event["value"];
+        let sChange = oDoc.event["change"];
+        let nSelStart = oDoc.event["selStart"];
+        let nSelEnd = oDoc.event["selEnd"];
 
         if (oDoc.event["willCommit"]) {
             function isValidZipCode(zipCode) {
@@ -6831,19 +7004,21 @@
             }
         }
         
+        let sNewValue = sValue.slice(0, nSelStart) + sChange + sValue.slice(nSelEnd);
+
         let canAdd;
         switch (psf) {
             case 0:
-                canAdd = isValidZipCode(sValue);
+                canAdd = isValidZipCode(sNewValue);
                 break;
             case 1:
-                canAdd = isValidZipCode4(sValue);
+                canAdd = isValidZipCode4(sNewValue);
                 break;
             case 2:
-                canAdd = isValidPhoneNumber(sValue);
+                canAdd = isValidPhoneNumber(sNewValue);
                 break;
             case 3:
-                canAdd = isValidSSN(sValue);
+                canAdd = isValidSSN(sNewValue);
                 break;
         }
 
@@ -6865,111 +7040,83 @@
         let oForm   = oDoc.event["target"].field;
         let sValue  = oDoc.event["value"];
         let sChange = oDoc.event["change"];
+        let nSelStart = oDoc.event["selStart"];
+        let nSelEnd = oDoc.event["selEnd"];
 
-        let isOnRemove = false;
-
-        if (typeof(mask) == "string" && mask != "") {
-            let oFormMask   = new AscWord.CTextFormMask();
-            let oTextFormat = new AscWord.CTextFormFormat();
-            oFormMask.Set(mask);
-
-            // если текущее значение не подходит по маске, то ввод запрещаем
-            let isCanEnter;
-            if (oDoc.event["willCommit"])
-                isCanEnter = sValue != "" ? oFormMask.Check(oTextFormat.GetBuffer(sValue), true) : true;
-            else
-                isCanEnter = oFormMask.Check(oTextFormat.GetBuffer(sValue));
-
-            if (isCanEnter == false) {
-                oDoc.event["rc"] = false;
-                if (oDoc.event["willCommit"]) {
-                    oDoc.SetWarningInfo({
-                        "format": mask,
-                        "target": oForm
-                    });
-                }
-                return;
-            }
-
-            let aChangeChars = oTextFormat.GetBuffer(sChange);
-
-            let oPara = oForm.content.GetElement(0);
-            let nCharsBeforeCursor = 0;
-
-            if (oForm.content.IsSelectionUse() && aChangeChars.length > 0) {
-                oForm.content.Remove(1, true, false, true);
-            }
-
-            // считаем количество символов до курсора
-            // это нужно для того, чтобы после коррекции мы могли найти вставленные символы и обновить oDoc.event["change"] массив
-            let paraPos     = oPara.Get_ParaContentPos(oPara.Selection.Use, false, false)
-            let runElements = new CParagraphRunElements(paraPos, 10000, null, true);
-            oPara.GetPrevRunElements(runElements);
-            nCharsBeforeCursor = runElements.Elements.length;
-
-            // вставляем символы в параграф (потом сделаем undo)
-            for (let index = 0; index < aChangeChars.length ; index++) {
-                let codePoint = aChangeChars[index];
-                if (9 === codePoint) // \t
-                    oPara.AddToParagraph(new AscWord.CRunTab(), true);
-                else if (10 === codePoint || 13 === codePoint) // \n \r
-                    oPara.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Line), true);
-                else if (AscCommon.IsSpace(codePoint)) // space
-                    oPara.AddToParagraph(new AscWord.CRunSpace(codePoint), true);
-                else
-                    oPara.AddToParagraph(new AscWord.CRunText(codePoint), true);
-            }
-
-            if (aChangeChars.length == 0) {
-                isOnRemove = true;
-            }
-
-            let sNewValue = oForm.GetValue();
-            let arrBuffer = oTextFormat.GetBuffer(sNewValue);
-            
-            // проверяем подходит ли по маске, если нет пытаемся скорректировать и проверяем снова
-            isCanEnter = oFormMask.Check(arrBuffer);
-            if (!isCanEnter) {
-                if (isOnRemove == true) {
-                    oDoc.event["rc"] = false;
-                    return;
-                }
-                    
-                let sCorrected = oFormMask.Correct(sNewValue);
-                arrBuffer = oTextFormat.GetBuffer(sCorrected);
-                isCanEnter = oFormMask.Check(arrBuffer);
-
-                if (isCanEnter) {
-                    // находим скорректированные символы для вставки после коррекции
-                    let nCount = sCorrected.length - sValue.length; // кол-во вставленных скорректированных символов
-                    let sFinalChanges = sCorrected.slice(nCharsBeforeCursor, nCharsBeforeCursor + nCount);
-                    oDoc.event["rc"] = true;
-                    oDoc.event["change"] = sFinalChanges;
-                }
-                else {
-                    oDoc.event["rc"] = false;
-                    oDoc.SetWarningInfo({
-                        "format": mask,
-                        "target": oForm
-                    });
-                    return;
-                }
-            }
-            else
-                oDoc.event["rc"] = true;
-                oDoc.SetWarningInfo({
-                    "format": mask,
-                    "target": oForm
-                });
-                return;
-        }
-        else
+        if (typeof(mask) != "string" || mask == "") {
             oDoc.event["rc"] = false;
             oDoc.SetWarningInfo({
                 "format": mask,
                 "target": oForm
             });
             return;
+        }
+            
+        let oFormMask   = new AscWord.CTextFormMask();
+        let oTextFormat = new AscWord.CTextFormFormat();
+        oFormMask.Set(mask);
+
+        // если текущее значение не подходит по маске, то ввод запрещаем
+        let isCanEnter;
+        if (oDoc.event["willCommit"])
+            isCanEnter = sValue != "" ? oFormMask.Check(oTextFormat.GetBuffer(sValue), true) : true;
+        else
+            isCanEnter = oFormMask.Check(oTextFormat.GetBuffer(sValue));
+
+        if (isCanEnter == false) {
+            oDoc.event["rc"] = false;
+            if (oDoc.event["willCommit"]) {
+                oDoc.SetWarningInfo({
+                    "format": mask,
+                    "target": oForm
+                });
+
+                return;
+            }
+        }
+
+        let aChangeChars = oTextFormat.GetBuffer(sChange);
+        let inOnlyRemove = aChangeChars.length == 0 && nSelEnd != nSelStart;
+
+        let sNewValue = sValue.slice(0, nSelStart) + sChange + sValue.slice(nSelEnd);
+        let arrBuffer = oTextFormat.GetBuffer(sNewValue);
+        
+        // проверяем подходит ли по маске, если нет пытаемся скорректировать и проверяем снова
+        isCanEnter = oFormMask.Check(arrBuffer);
+        if (!isCanEnter) {
+            if (inOnlyRemove == true) {
+                oDoc.event["rc"] = false;
+                return;
+            }
+                
+            let sCorrected = oFormMask.Correct(sNewValue);
+            arrBuffer = oTextFormat.GetBuffer(sCorrected);
+            isCanEnter = oFormMask.Check(arrBuffer);
+
+            if (isCanEnter) {
+                // находим скорректированные символы для вставки после коррекции
+                let nCount = sCorrected.length - sValue.length; // кол-во вставленных скорректированных символов
+                let sFinalChanges = sCorrected.slice(nSelStart, nSelStart + nCount);
+                oDoc.event["rc"] = true;
+                oDoc.event["change"] = sFinalChanges;
+            }
+            else {
+                oDoc.event["rc"] = false;
+                oDoc.SetWarningInfo({
+                    "format": mask,
+                    "target": oForm
+                });
+                return;
+            }
+        }
+        else {
+            oDoc.event["rc"] = true;
+            oDoc.SetWarningInfo({
+                "format": mask,
+                "target": oForm
+            });
+            return;
+        }            
     }
 
     /**
@@ -7193,6 +7340,148 @@
             AscCommon.History.TurnOff();
     }
 
+    /**
+	 * Calculates doc position by selection position.
+	 * @typeofeditors ["PDF"]
+	 */
+    function private_CalcDocPos(oPara, nStart, nEnd)
+	{
+		var isStartDone = false;
+		var isEndDone	= false;
+		var StartPos    = null;
+		var EndPos      = null;
+		var nCharsCount  = 0;
+		var DocPos, DocPosInRun;
+
+		function callback(oRun)
+		{
+			var nRangePos = 0;
+
+			var nCurPos = oRun.Content.length;
+			for (var nPos = 0; nPos < nCurPos; ++nPos)
+			{
+                if (isStartDone && isEndDone)
+                    break;
+
+				nRangePos++;
+				if (nStart - nCharsCount === nRangePos - 1 && !isStartDone)
+				{
+					DocPosInRun =
+					{
+						Class : oRun,
+						Position : nPos,
+					};
+		
+					DocPos = oRun.GetDocumentPositionFromObject();
+					DocPos.push(DocPosInRun);
+		
+					StartPos = DocPos;
+					isStartDone = true;
+				}
+				
+				if (nEnd - nCharsCount === nRangePos - 1 && !isEndDone)
+				{
+					DocPosInRun =
+					{
+						Class : oRun,
+						Position : nPos,
+					};
+		
+					DocPos = oRun.GetDocumentPositionFromObject();
+					DocPos.push(DocPosInRun);
+		
+					EndPos = DocPos;
+					isEndDone = true;
+				}
+			}
+
+			if (nRangePos !== 0)
+				nCharsCount += nRangePos;
+		}
+
+		oPara.CheckRunContent(callback);
+
+        return { startPos: StartPos, endPos: EndPos }
+	};
+
+    function private_evalStr(str) {
+        let oDoc = private_getViewer().doc;
+        
+        let aArgsNamesToDelete = [
+            "window",
+            "setTimeout",
+            "setInterval",
+            "XMLHttpRequest",
+            "Promise",
+            "console"
+        ];
+
+        let oApiConsole = {
+            "println"(value) {
+                console.log("\n");
+                console.log(value);
+            },
+            "clear"() {
+                console.clear();
+            },
+            "hide"() {
+                return false;
+            },
+            "show"() {
+                return false;
+            }
+        };
+        Object.freeze(oApiConsole);
+
+        let aArgsNamesPdfApi = [
+            "event",
+            "color",
+
+            "AFNumber_Format",
+            "AFNumber_Keystroke",
+            "AFPercent_Format",
+            "AFPercent_Keystroke",
+            "AFDate_Format",
+            "AFDate_Keystroke",
+            "AFDate_FormatEx",
+            "AFDate_KeystrokeEx",
+            "AFTime_Format",
+            "AFTime_Keystroke",
+            "AFTime_FormatEx",
+            "AFTime_KeystrokeEx",
+            "AFSpecial_Format",
+            "AFSpecial_Keystroke",
+            "AFSpecial_KeystrokeEx",
+            "AFSimple_Calculate",
+            "AFRange_Validate",
+        ]
+        let aArgsPdfApi = [
+            oDoc.event,
+            color,
+
+            AFNumber_Format,
+            AFNumber_Keystroke,
+            AFPercent_Format,
+            AFPercent_Keystroke,
+            AFDate_Format,
+            AFDate_Keystroke,
+            AFDate_FormatEx,
+            AFDate_KeystrokeEx,
+            AFTime_Format,
+            AFTime_Keystroke,
+            AFTime_FormatEx,
+            AFTime_KeystrokeEx,
+            AFSpecial_Format,
+            AFSpecial_Keystroke,
+            AFSpecial_KeystrokeEx,
+            AFSimple_Calculate,
+            AFRange_Validate
+        ]
+        
+        let func = new Function(...aArgsNamesToDelete, ...aArgsNamesPdfApi, str);
+        return func.bind(oDoc.GetDocumentApi(), ...Array(aArgsNamesToDelete.length - 1), oApiConsole, ...aArgsPdfApi);
+    };
+
     CComboBoxField.prototype.Remove                 = CTextField.prototype.Remove;
     CComboBoxField.prototype.MoveCursorLeft         = CTextField.prototype.MoveCursorLeft;
     CComboBoxField.prototype.MoveCursorRight        = CTextField.prototype.MoveCursorRight;
@@ -7209,22 +7498,22 @@
     CTextField.prototype.UpdateScroll   = CListBoxField.prototype.UpdateScroll;
     CTextField.prototype.ScrollVertical = CListBoxField.prototype.ScrollVertical;
     
-    if (!window["AscPDFEditor"])
-	    window["AscPDFEditor"] = {};
+    if (!window["AscPDF"])
+	    window["AscPDF"] = {};
         
-	window["AscPDFEditor"].FIELD_TYPE           = FIELD_TYPE;
-	window["AscPDFEditor"].ALIGN_TYPE           = ALIGN_TYPE;
-	window["AscPDFEditor"].BORDER_TYPES         = BORDER_TYPES;
-	window["AscPDFEditor"].FORMS_TRIGGERS_TYPES = FORMS_TRIGGERS_TYPES;
-	window["AscPDFEditor"].CPushButtonField     = CPushButtonField;
-	window["AscPDFEditor"].CBaseField           = CBaseField;
-	window["AscPDFEditor"].CTextField           = CTextField;
-	window["AscPDFEditor"].CCheckBoxField       = CCheckBoxField;
-	window["AscPDFEditor"].CComboBoxField       = CComboBoxField;
-	window["AscPDFEditor"].CListBoxField        = CListBoxField;
-	window["AscPDFEditor"].CRadioButtonField    = CRadioButtonField;
-	window["AscPDFEditor"].CSignatureField      = CSignatureField;
-	window["AscPDFEditor"].private_getGlobalCoordsByPageCoords  = private_getGlobalCoordsByPageCoords;
+	window["AscPDF"].FIELD_TYPE           = FIELD_TYPE;
+	window["AscPDF"].ALIGN_TYPE           = ALIGN_TYPE;
+	window["AscPDF"].BORDER_TYPES         = BORDER_TYPES;
+	window["AscPDF"].FORMS_TRIGGERS_TYPES = FORMS_TRIGGERS_TYPES;
+	window["AscPDF"].CPushButtonField     = CPushButtonField;
+	window["AscPDF"].CBaseField           = CBaseField;
+	window["AscPDF"].CTextField           = CTextField;
+	window["AscPDF"].CCheckBoxField       = CCheckBoxField;
+	window["AscPDF"].CComboBoxField       = CComboBoxField;
+	window["AscPDF"].CListBoxField        = CListBoxField;
+	window["AscPDF"].CRadioButtonField    = CRadioButtonField;
+	window["AscPDF"].CSignatureField      = CSignatureField;
+	window["AscPDF"].private_getGlobalCoordsByPageCoords  = private_getGlobalCoordsByPageCoords;
 
 
 })();
