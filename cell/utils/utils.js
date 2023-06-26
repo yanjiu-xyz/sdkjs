@@ -2937,7 +2937,7 @@
 			asc_setShowRowColHeaders: function (val) { this.showRowColHeaders = val; },
 			asc_setZoomScale: function (val) { this.zoomScale = val; },
 			asc_setShowZeros: function (val) { this.showZeros = val; },
-			asc_setShowFormulas: function () { this.showFormulas = val; }
+			asc_setShowFormulas: function (val) { this.showFormulas = val; }
 		};
 
 		/** @constructor */
