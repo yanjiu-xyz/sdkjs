@@ -9974,7 +9974,7 @@
             var oThis = this;
             var res = c_oSerConstants.ReadOk;
             if (c_oSer_LegacyDrawingHF.Drawing === type) {
-                var drawing = {id: null, graphicObject: null};
+                var drawing = new AscCommonExcel.CLegacyDrawingHFDrawing();
                 res = this.bcr.Read1(length, function (t, l) {
                     return oThis.ReadLegacyDrawingHFDrawing(t, l, drawing);
                 });

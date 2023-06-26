@@ -2053,6 +2053,15 @@
 
 	};
 
+	function CLegacyDrawingHFDrawing() {
+		this.id = null;//"LH", "CH", "RH", "LF", "CF", "RF"
+		this.graphicObject = null;
+	}
+
+	CLegacyDrawingHFDrawing.prototype.init = function () {
+
+	};
+
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 
@@ -2090,6 +2099,7 @@
 	prot["getPageType"] = prot.getPageType;
 
 	window["AscCommonExcel"].CLegacyDrawingHF = CLegacyDrawingHF;
+	window["AscCommonExcel"].CLegacyDrawingHFDrawing = CLegacyDrawingHFDrawing;
 
 	window['AscCommonExcel'].c_oPortionPosition = c_oPortionPosition;
 
