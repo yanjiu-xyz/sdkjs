@@ -3793,6 +3793,8 @@
 			return;
 		}
 
+		this._drawHeaderFooterPictures(drawingCtx, printPagesData);
+
 		//new CHeaderFooter();
 		//при печати берём колонтитул либо из настроек печати(если есть), либо из модели 
 		var printPreview = this.workbook.printPreviewState;
@@ -3839,6 +3841,94 @@
 			}
 			this._drawHeaderFooterText(drawingCtx, printPagesData, curFooter.parser, indexPrintPage, countPrintPages, true, opt_headerFooter);
 		}
+	};
+
+	WorksheetView.prototype._drawHeaderFooterPictures = function (drawingCtx, printPagesData) {
+		/*this.model.legacyDrawingHF.drawings[0].graphicObject.recalculate()
+		this.model.legacyDrawingHF.drawings[0].graphicObject.draw(drawingCtx.DocumentRenderer);*/
+
+
+
+		var titleWidth = 0;
+		var titleHeight
+		var printScale = 1;
+
+		var offsetX = 0;
+		var offsetY = 0;
+
+		var clipLeft = printPagesData.pageClipRectLeft;
+		var clipTop =  printPagesData.pageClipRectTop;
+		var clipWidth = printPagesData.pageClipRectWidth;
+		var clipHeight = printPagesData.pageClipRectHeight;
+
+		var clipLeftShape = printPagesData.pageClipRectLeft;
+		var clipTopShape = printPagesData.pageClipRectTop;
+		var clipWidthShape = printPagesData.pageClipRectWidth;
+		var clipHeightShape = printPagesData.pageClipRectHeight;
+
+		var t = this;
+		var drawingPrintOptions = {
+			ctx: drawingCtx, printPagesData: printPagesData/*, titleWidth: titleWidth, titleHeight: titleHeight*/
+		};
+		var oDocRenderer = drawingCtx.DocumentRenderer;
+		var oOldBaseTransform = oDocRenderer.m_oBaseTransform;
+		var oBaseTransform = new AscCommon.CMatrix();
+		//oBaseTransform.sx = printScale;
+		//oBaseTransform.sy = printScale;
+
+		oBaseTransform.tx = asc_getcvt(0/*mm*/, 3/*px*/, t._getPPIX()) * (/*-offsetCols * printScale + */printPagesData.pageClipRectLeft + (printPagesData.leftFieldInPx - printPagesData.pageClipRectLeft + titleWidth) * printScale) /*- (t.getCellLeft(range.c1, 3) - t.getCellLeft(0, 3))*/ * printScale;
+		oBaseTransform.ty = asc_getcvt(0/*mm*/, 3/*px*/, t._getPPIX()) * (printPagesData.pageClipRectTop + (printPagesData.topFieldInPx - printPagesData.pageClipRectTop + titleHeight) * printScale) /*- (t.getCellTop(range.r1, 3) - t.getCellTop(0, 3))*/ * printScale;
+
+		var bGraphics = !!(oDocRenderer instanceof AscCommon.CGraphics);
+		var clipL, clipT, clipR, clipB;
+		if (bGraphics) {
+			if (oDocRenderer.m_oCoordTransform) {
+				oDocRenderer.m_oCoordTransform.tx = (t.getCellLeft(0) - offsetX);
+				oDocRenderer.m_oCoordTransform.ty = (t.getCellTop(0) - offsetY);
+			}
+			oDocRenderer.SaveGrState();
+			oDocRenderer.RestoreGrState();
+			oDocRenderer.PrintPreview = true;
+			var oInvertBaseTransform = AscCommon.global_MatrixTransformer.Invert(oDocRenderer.m_oCoordTransform);
+			clipLeftShape = (printPagesData.pageClipRectLeft) >> 0;
+			clipTopShape = (printPagesData.pageClipRectTop) >> 0;
+			var clipRightShape = (clipLeftShape + printPagesData.pageClipRectWidth + 0.5 - offsetX) >> 0;
+			var clipBottomShape = (clipTopShape + printPagesData.pageClipRectHeight +  0.5 - offsetY) >> 0;
+			clipL = oInvertBaseTransform.TransformPointX(clipLeftShape, clipTopShape);
+			clipT = oInvertBaseTransform.TransformPointY(clipLeftShape, clipTopShape);
+			clipR = oInvertBaseTransform.TransformPointX(clipRightShape, clipBottomShape);
+			clipB = oInvertBaseTransform.TransformPointY(clipRightShape, clipBottomShape);
+			oDocRenderer.SaveGrState();
+			oDocRenderer.AddClipRect(clipL, clipT, clipR - clipL, clipB - clipT);
+
+			this.model.legacyDrawingHF.drawings[0].graphicObject.recalculate()
+			this.model.legacyDrawingHF.drawings[0].graphicObject.draw(drawingCtx.DocumentRenderer);
+
+			delete oDocRenderer.PrintPreview;
+			oDocRenderer.RestoreGrState();
+			if (oDocRenderer.m_oCoordTransform) {
+				oDocRenderer.m_oCoordTransform.tx = oOldBaseTransform.tx * oDocRenderer.m_oCoordTransform.sx;
+				oDocRenderer.m_oCoordTransform.ty = oOldBaseTransform.ty * oDocRenderer.m_oCoordTransform.sy;
+			}
+		} else {
+			clipL = clipLeftShape >> 0;
+			clipT = clipTopShape >> 0;
+			clipR = (clipLeftShape + clipWidthShape + 0.5) >> 0;
+			clipB = (clipTopShape + clipHeightShape + 0.5) >> 0;
+			drawingCtx.AddClipRect && drawingCtx.AddClipRect(clipL, clipT, clipR - clipL, clipB - clipT);
+			if (oDocRenderer.SetBaseTransform) {
+				oDocRenderer.SetBaseTransform(oBaseTransform);
+			}
+
+			//this.model.legacyDrawingHF.drawings[0].graphicObject.recalculate()
+			//this.model.legacyDrawingHF.drawings[0].graphicObject.draw(drawingCtx.DocumentRenderer);
+
+			if (oDocRenderer.SetBaseTransform) {
+				oDocRenderer.SetBaseTransform(oOldBaseTransform);
+			}
+			drawingCtx.RemoveClipRect && drawingCtx.RemoveClipRect();
+		}
+
 	};
 
 	/** Рисует текст ячейки */
