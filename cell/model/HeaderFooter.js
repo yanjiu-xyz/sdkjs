@@ -2047,6 +2047,8 @@
 		this.rhe = null;
 		this.rhf = null;
 		this.rho = null;
+
+		this.id = null;
 	}
 
 	CLegacyDrawingHF.prototype.init = function () {
