@@ -781,7 +781,7 @@
 		cellFlags.textAlign = this.getAlign();
 
 		//не зависит от зума страницы
-		var realZoom = ws.stringRender.drawingCtx.getZoom()
+		var realZoom = ws.stringRender.drawingCtx.getZoom();
 		ws.stringRender.drawingCtx.changeZoom(1);
 
 		var cellEditorWidth = width - 2 * wb.defaults.worksheetView.cells.padding + 1 + 2 * correctCanvasDiff;
@@ -825,6 +825,7 @@
 		var dateTag = "&[" + tM.getValue("Date") + "]";
 		var fileTag = "&[" + tM.getValue("File") + "]";
 		var timeTag = "&[" + tM.getValue("Time") + "]";
+		var pictureTag = "&[" + tM.getValue("Picture") + "]";
 
 		switch (val){
 			case asc.c_oAscHeaderFooterField.pageNumber: {
@@ -861,7 +862,7 @@
 			}
 			case asc.c_oAscHeaderFooterField.picture: {
 				//TODO translate?
-				textField = "&[Picture]";
+				textField = pictureTag;
 				break;
 			}
 		}
@@ -1871,6 +1872,11 @@
 								text = "";
 								break;
 							}
+							case tM.getValue("Picture").toLowerCase(): {
+								text = "";
+								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.picture), format: tokenFormat});
+								break;
+							}
 							default: {
 								if("" !== text && j ===  fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
 									res.push({text: text, format: fragments[j].format});
@@ -1951,6 +1957,12 @@
 							{
 								text = "";
 								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.time), format: tokenFormat});
+								break;
+							}
+							case 'g':   //picture
+							{
+								text = "";
+								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.picture), format: tokenFormat});
 								break;
 							}
 							default: {
