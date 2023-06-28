@@ -3821,6 +3821,8 @@
 				curHeader.parser = new AscCommonExcel.HeaderFooterParser();
 				curHeader.parser.parse(curHeader.str);
 			}
+			curHeader.parser.calculateTokens(this, indexPrintPage, countPrintPages);
+
 			//get current tokens -> curHeader.parser -> getTokensByPosition(AscCommomExcel.c_oPortionPosition)
 			this._drawHeaderFooterText(drawingCtx, printPagesData, curHeader.parser, indexPrintPage, countPrintPages, false, opt_headerFooter);
 		}
@@ -3840,6 +3842,7 @@
 				curFooter.parser = new AscCommonExcel.HeaderFooterParser();
 				curFooter.parser.parse(curFooter.str);
 			}
+			curFooter.parser.calculateTokens(this, indexPrintPage, countPrintPages);
 			//get current tokens -> curHeader.parser -> getTokensByPosition(AscCommomExcel.c_oPortionPosition)
 			this._drawHeaderFooterText(drawingCtx, printPagesData, curFooter.parser, indexPrintPage, countPrintPages, true, opt_headerFooter);
 		}

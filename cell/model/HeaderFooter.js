@@ -53,8 +53,9 @@
 		this.format = format;
 
 		this.textField = text;
+		this._calculatedText = null;
 	}
-	HeaderFooterField.prototype.getText = function (ws, indexPrintPage, countPrintPages) {
+	HeaderFooterField.prototype.calculateText = function (ws, indexPrintPage, countPrintPages) {
 		let res = "";
 		let api = window["Asc"]["editor"];
 		let printPreviewState = ws && ws.workbook && ws.workbook.printPreviewState;
@@ -106,7 +107,12 @@
 				break;
 			}
 		}
+		this._calculatedText = res;
 		return res;
+	};
+
+	HeaderFooterField.prototype.getText = function (ws, indexPrintPage, countPrintPages) {
+		return this._calculatedText ? this._calculatedText : this.calculateText(ws, indexPrintPage, countPrintPages);
 	};
 
 	HeaderFooterField.prototype.pushFormat = function (val) {
@@ -124,6 +130,8 @@
 		this.date = null;
 
 		this.allFontsMap = [];
+
+		this.isCalc = null;
 	}
 
 	var c_oPortionPosition = {
@@ -382,6 +390,19 @@
 		}
 
 		this.endPortion();
+	};
+
+	HeaderFooterParser.prototype.calculateTokens = function (ws, indexPrintPage, countPrintPages, forceCalc) {
+		if (this.isCalc && !forceCalc) {
+			return;
+		}
+		for (let i = 0; i < this.tokens.length; i++) {
+			for (let j = 0; j < this.tokens[i].length; j++) {
+				let token = this.tokens[i][j];
+				token.calculateText(ws, indexPrintPage, countPrintPages);
+			}
+		}
+		this.isCalc = true;
 	};
 
 	HeaderFooterParser.prototype.convertFontColor = function(rColor) {
