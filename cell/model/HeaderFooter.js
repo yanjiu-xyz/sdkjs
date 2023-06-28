@@ -48,8 +48,11 @@
 	var c_oAscError = asc.c_oAscError;
 
 	//HEADER/FOOTER
-	function HeaderFooterField(val) {
+	function HeaderFooterField(val, format, text) {
 		this.field = val;
+		this.format = format;
+
+		this.textField = text;
 	}
 	HeaderFooterField.prototype.getText = function (ws, indexPrintPage, countPrintPages) {
 		let res = "";
@@ -98,14 +101,23 @@
 				res = "\n";
 				break;
 			}
+			case asc.c_oAscHeaderFooterField.text: {
+				res = this.textField;
+				break;
+			}
 		}
 		return res;
 	};
 
+	HeaderFooterField.prototype.pushFormat = function (val) {
+		this.format = val;
+	};
+
+
 
 	function HeaderFooterParser() {
-		this.portions = [];
-		this.currPortion = null;
+		this.tokens = [];
+		this.curTokenPosition = null;
 		this.str = null;
 		this.font = null;
 
@@ -183,7 +195,7 @@
 		this.date = date;
 
 		this.font = new AscCommonExcel.Font();
-		this.currPortion = c_oPortionPosition.center;
+		this.curTokenPosition = c_oPortionPosition.center;
 		this.str = "";
 
 		var nState = c_nText;
@@ -374,7 +386,7 @@
 
 	HeaderFooterParser.prototype.convertFontColor = function(rColor) {
 		var color;
-		if( (rColor[ 2 ] == '+') || (rColor[ 2 ] == '-') ) {
+		if( (rColor[ 2 ] === '+') || (rColor[ 2 ] === '-') ) {
 			var theme = rColor.substr(0, 2) - 0;
 			var tint = rColor.substr(2) - 0;
 			color = AscCommonExcel.g_oColorManager.getThemeColor(theme, tint / 100);
@@ -404,7 +416,7 @@
 
 			var toHex = function componentToHex(c) {
 				var res = c.toString(16);
-				return res.length == 1 ? "0" + res : res;
+				return res.length === 1 ? "0" + res : res;
 			};
 
 			color = toHex(obj.getR()) + toHex(obj.getG()) + toHex(obj.getB());
@@ -417,10 +429,11 @@
 
 	HeaderFooterParser.prototype.pushText = function () {
 		if (0 !== this.str.length) {
-			if (!this.portions[this.currPortion]) {
-				this.portions[this.currPortion] = [{format: this.font.clone(), text: this.str}];
+			let newTextField = new HeaderFooterField(asc.c_oAscHeaderFooterField.text, this.font.clone(), this.str);
+			if (!this.tokens[this.curTokenPosition]) {
+				this.tokens[this.curTokenPosition] = [newTextField];
 			} else {
-				this.portions[this.currPortion].push({format: this.font.clone(), text: this.str});
+				this.tokens[this.curTokenPosition].push(newTextField);
 			}
 
 			this.str = [];
@@ -428,10 +441,13 @@
 	};
 
 	HeaderFooterParser.prototype.pushField = function (field) {
-		if (!this.portions[this.currPortion]) {
-			this.portions[this.currPortion] = [{format: this.font.clone(), text: field}];
+		if (field) {
+			field.pushFormat(this.font.clone());
+		}
+		if (!this.tokens[this.curTokenPosition]) {
+			this.tokens[this.curTokenPosition] = [field];
 		} else {
-			this.portions[this.currPortion].push({format: this.font.clone(), text: field});
+			this.tokens[this.curTokenPosition].push(field);
 		}
 	};
 
@@ -472,10 +488,14 @@
 	};
 
 	HeaderFooterParser.prototype.setPortion = function (val) {
-		if (val != this.currPortion) {
+		if (val != this.curTokenPosition) {
 			this.endPortion();
-			this.currPortion = val;
+			this.curTokenPosition = val;
 		}
+	};
+
+	HeaderFooterParser.prototype.getTokensByPosition = function (val) {
+		return this.tokens && this.tokens[val];
 	};
 
 	HeaderFooterParser.prototype.getAllFonts = function (oFontMap) {
@@ -507,9 +527,9 @@
 	HeaderFooterParser.prototype.splitByParagraph = function (cPortionCode) {
 		var res = [];
 
-		if(this.portions[cPortionCode]) {
+		if(this.tokens[cPortionCode]) {
 			var index = 0;
-			var curPortion = this.portions[cPortionCode];
+			var curPortion = this.tokens[cPortionCode];
 			for(var i = 0; i < curPortion.length; i++) {
 				if(!res[index]) {
 					res[index] = [];
@@ -648,9 +668,9 @@
 
 				prevFont = newFont;
 
-				if (aPosList[i].text instanceof HeaderFooterField) {
-					if (aPosList[i].text.field !== undefined) {
-						switch(aPosList[i].text.field) {
+				if (aPosList[i] instanceof HeaderFooterField) {
+					if (aPosList[i].field !== undefined) {
+						switch(aPosList[i].field) {
 							case asc.c_oAscHeaderFooterField.pageNumber: {
 								aParaText += "&P";
 								break;
@@ -683,18 +703,20 @@
 								aParaText += "&G";
 								break;
 							}
+							case asc.c_oAscHeaderFooterField.text: {
+								let aPortionText = aPosList[i].getText();
+								if (bFontHtChanged && aParaText.length && "" !== aPortionText) {
+									let cLast = aParaText[aParaText.length - 1];
+									let cFirst = aPortionText[0];
+									if (('0' <= cLast) && (cLast <= '9') && ('0' <= cFirst) && (cFirst <= '9')) {
+										aParaText += " ";
+									}
+								}
+								aParaText += aPortionText;
+								break;
+							}
 						}
 					}
-				} else {
-					var aPortionText = aPosList[i].text;
-					if (bFontHtChanged && aParaText.length && "" !== aPortionText) {
-						var cLast = aParaText[aParaText.length - 1];
-						var cFirst = aPortionText[0];
-						if (('0' <= cLast) && (cLast <= '9') && ('0' <= cFirst) && (cFirst <= '9')) {
-							aParaText += " ";
-						}
-					}
-					aParaText += aPortionText;
 				}
 			}
 
@@ -1196,29 +1218,29 @@
 			var curHeaderFooter = new Asc.CHeaderFooterData();
 			curHeaderFooter.parser = new window["AscCommonExcel"].HeaderFooterParser();
 			if(prevHeaderFooter && prevHeaderFooter.parser) {
-				var newPortions = [];
-				for(var i in prevHeaderFooter.parser.portions) {
-					if(prevHeaderFooter.parser.portions[i]) {
-						newPortions[i] = [];
-						for(var j in prevHeaderFooter.parser.portions[i]) {
-							var curPortion = prevHeaderFooter.parser.portions[i][j];
+				var newTokens = [];
+				for(var i in prevHeaderFooter.parser.tokens) {
+					if(prevHeaderFooter.parser.tokens[i]) {
+						newTokens[i] = [];
+						for(var j in prevHeaderFooter.parser.tokens[i]) {
+							var curPortion = prevHeaderFooter.parser.tokens[i][j];
 							if(curPortion) {
-								newPortions[i][j] = {text: curPortion.text, format: curPortion.format.clone()}
+								newTokens[i][j] = curPortion.clone();
 							}
 						}
 					}
 				}
-				curHeaderFooter.parser.portions = newPortions;
+				curHeaderFooter.parser.tokens = newTokens;
 			}
 
 			if(t.sections[type][c_oPortionPosition.left] && t.sections[type][c_oPortionPosition.left].changed) {
-				curHeaderFooter.parser.portions[c_oPortionPosition.left] = t._convertFragments(t.sections[type][c_oPortionPosition.left].fragments);
+				curHeaderFooter.parser.tokens[c_oPortionPosition.left] = t._convertFragments(t.sections[type][c_oPortionPosition.left].fragments);
 			}
 			if(t.sections[type][c_oPortionPosition.center] && t.sections[type][c_oPortionPosition.center].changed) {
-				curHeaderFooter.parser.portions[c_oPortionPosition.center] = t._convertFragments(t.sections[type][c_oPortionPosition.center].fragments);
+				curHeaderFooter.parser.tokens[c_oPortionPosition.center] = t._convertFragments(t.sections[type][c_oPortionPosition.center].fragments);
 			}
 			if(t.sections[type][c_oPortionPosition.right] && t.sections[type][c_oPortionPosition.right].changed) {
-				curHeaderFooter.parser.portions[c_oPortionPosition.right] = t._convertFragments(t.sections[type][c_oPortionPosition.right].fragments);
+				curHeaderFooter.parser.tokens[c_oPortionPosition.right] = t._convertFragments(t.sections[type][c_oPortionPosition.right].fragments);
 			}
 
 			var oData = curHeaderFooter.parser.assembleText();
@@ -1340,15 +1362,15 @@
 
 			var isChanged = false;
 			if(this.sections[i][c_oPortionPosition.left] && (this.sections[i][c_oPortionPosition.left].changed || reWrite)) {
-				curHeaderFooter.parser.portions[c_oPortionPosition.left] = this._convertFragments(this.sections[i][c_oPortionPosition.left].fragments);
+				curHeaderFooter.parser.tokens[c_oPortionPosition.left] = this._convertFragments(this.sections[i][c_oPortionPosition.left].fragments);
 				isChanged = true;
 			}
 			if(this.sections[i][c_oPortionPosition.center] && (this.sections[i][c_oPortionPosition.center].changed || reWrite)) {
-				curHeaderFooter.parser.portions[c_oPortionPosition.center] = this._convertFragments(this.sections[i][c_oPortionPosition.center].fragments);
+				curHeaderFooter.parser.tokens[c_oPortionPosition.center] = this._convertFragments(this.sections[i][c_oPortionPosition.center].fragments);
 				isChanged = true;
 			}
 			if(this.sections[i][c_oPortionPosition.right] && (this.sections[i][c_oPortionPosition.right].changed || reWrite)) {
-				curHeaderFooter.parser.portions[c_oPortionPosition.right] = this._convertFragments(this.sections[i][c_oPortionPosition.right].fragments);
+				curHeaderFooter.parser.tokens[c_oPortionPosition.right] = this._convertFragments(this.sections[i][c_oPortionPosition.right].fragments);
 				isChanged = true;
 			}
 			//нужно добавлять в историю
@@ -1486,17 +1508,13 @@
 		}
 
 		var getFragmentText = function(val) {
-			if ( asc_typeof(val) === "string" ){
-				return val;
-			} else {
-				return val.getText(ws, 0, 1);
-			}
+			return val.getText(ws, 0, 1);
 		};
 
 		var getFragmentsText = function(fragments) {
 			var res = "";
 			for(var n = 0; n < fragments.length; n++) {
-				res += getFragmentText(fragments[n].text);
+				res += getFragmentText(fragments[n]);
 			}
 			return res;
 		};
@@ -1623,7 +1641,7 @@
 			var res = [];
 			for(var i = 0; i < textPropsArr.length; i++) {
 				var curProps = textPropsArr[i];
-				var text = asc_typeof(curProps.text) === "string" ? curProps.text : convertFieldToMenuText(curProps.text.field);
+				var text = convertFieldToMenuText(curProps.field);
 				if(null !== text) {
 					var tempFragment = new AscCommonExcel.Fragment();
 					tempFragment.setFragmentText(text);
@@ -1662,7 +1680,7 @@
 					if(!curPageHF.parser) {
 						curPageHF.parse();
 					}
-					parser = curPageHF.parser.portions;
+					parser = curPageHF.parser.tokens;
 					leftFragments = getFragments(parser[0]);
 					if(null !== leftFragments) {
 						this.sections[pageHeaderType][c_oPortionPosition.left].fragments = leftFragments;
@@ -1706,7 +1724,7 @@
 					if(!curPageHF.parser) {
 						curPageHF.parse();
 					}
-					parser = curPageHF.parser.portions;
+					parser = curPageHF.parser.tokens;
 					leftFragments = getFragments(parser[0]);
 					if(null !== leftFragments) {
 						this.sections[pageFooterType][c_oPortionPosition.left].fragments = leftFragments;
@@ -1811,7 +1829,7 @@
 			return null;
 		}
 
-		//TODO возможно стоит созадавать portions внутри парсера с элементами Fragments
+		//TODO возможно стоит созадавать tokens внутри парсера с элементами Fragments
 		var res = [];
 
 		var tM = AscCommon.translateManager;
@@ -1829,7 +1847,7 @@
 				//пока игнорируем данную ситуацию
 				if(symbol === "&") {
 					if("" !== text) {
-						res.push({text: text, format: fragments[j].format});
+						res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
 						text = "";
 					}
 
@@ -1840,32 +1858,32 @@
 						switch(tokenText.toLowerCase()) {
 							case tM.getValue("Page").toLowerCase(): {
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.pageNumber), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.pageNumber, tokenFormat));
 								break;
 							}
 							case tM.getValue("Pages").toLowerCase(): {
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.pageCount), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.pageCount, tokenFormat));
 								break;
 							}
 							case tM.getValue("Date").toLowerCase(): {
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.date), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.date, tokenFormat));
 								break;
 							}
 							case tM.getValue("Time").toLowerCase(): {
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.time), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.time, tokenFormat));
 								break;
 							}
 							case tM.getValue("Tab").toLowerCase(): {
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.sheetName), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.sheetName, tokenFormat));
 								break;
 							}
 							case tM.getValue("File").toLowerCase(): {
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.fileName), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.fileName, tokenFormat));
 								break;
 							}
 							case "&[Path]&[File]": {
@@ -1874,12 +1892,12 @@
 							}
 							case tM.getValue("Picture").toLowerCase(): {
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.picture), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.picture, tokenFormat));
 								break;
 							}
 							default: {
 								if("" !== text && j ===  fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
-									res.push({text: text, format: fragments[j].format});
+									res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
 									text = "";
 								}
 								break;
@@ -1892,7 +1910,7 @@
 					}
 
 					if("" !== text && j ===  fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
-						res.push({text: text, format: fragments[j].format});
+						res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
 					}
 				} else if(bToken) {
 					//начинаем просматривать аргумент
@@ -1920,25 +1938,25 @@
 							case 'p':   //page number
 							{
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.pageNumber), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.pageNumber, tokenFormat));
 								break;
 							}
 							case 'n':   //total page count
 							{
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.pageCount), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.pageCount, tokenFormat));
 								break;
 							}
 							case 'a':   //current sheet name
 							{
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.sheetName), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.sheetName, tokenFormat));
 								break;
 							}
 							case 'f':   //file name
 							{
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.fileName), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.fileName, tokenFormat));
 								break;
 							}
 							case 'z':   //file path
@@ -1950,24 +1968,24 @@
 							case 'd':   //date
 							{
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.date), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.date, tokenFormat));
 								break;
 							}
 							case 't':   //time
 							{
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.time), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.time, tokenFormat));
 								break;
 							}
 							case 'g':   //picture
 							{
 								text = "";
-								res.push({text: new HeaderFooterField(asc.c_oAscHeaderFooterField.picture), format: tokenFormat});
+								res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.picture, tokenFormat));
 								break;
 							}
 							default: {
 								if("" !== text && j ===  fragments.length - 1 && n === fragments[j].getFragmentText().length - 1) {
-									res.push({text: text, format: fragments[j].format});
+									res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
 									text = "";
 								}
 								break;
@@ -1976,7 +1994,7 @@
 						bToken = false;
 					}
 				} else if("" !== text && n === fragments[j].getFragmentText().length - 1) {
-					res.push({text: text, format: fragments[j].format});
+					res.push(new HeaderFooterField(asc.c_oAscHeaderFooterField.text, fragments[j].format, text));
 				}
 			}
 		}

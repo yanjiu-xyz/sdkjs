@@ -3821,6 +3821,7 @@
 				curHeader.parser = new AscCommonExcel.HeaderFooterParser();
 				curHeader.parser.parse(curHeader.str);
 			}
+			//get current tokens -> curHeader.parser -> getTokensByPosition(AscCommomExcel.c_oPortionPosition)
 			this._drawHeaderFooterText(drawingCtx, printPagesData, curHeader.parser, indexPrintPage, countPrintPages, false, opt_headerFooter);
 		}
 
@@ -3839,6 +3840,7 @@
 				curFooter.parser = new AscCommonExcel.HeaderFooterParser();
 				curFooter.parser.parse(curFooter.str);
 			}
+			//get current tokens -> curHeader.parser -> getTokensByPosition(AscCommomExcel.c_oPortionPosition)
 			this._drawHeaderFooterText(drawingCtx, printPagesData, curFooter.parser, indexPrintPage, countPrintPages, true, opt_headerFooter);
 		}
 	};
@@ -3949,7 +3951,7 @@
 			var res = [];
 			for(var i = 0; i < portion.length; i++){
 				var str = new AscCommonExcel.Fragment();
-				str.setFragmentText(getFragmentText(portion[i].text));
+				str.setFragmentText(getFragmentText(portion[i]));
 				str.format = portion[i].format.clone();
 				//TODO уменьшаю только размер текста. пересмотреть!
 				var fSize = str.format.fs ? str.format.fs : AscCommonExcel.g_oDefaultFormat.Font.fs;
@@ -4012,7 +4014,7 @@
 		var footerStartPos = height - bottom;
 
 		var drawPortion = function(index) {
-			var portion = headerFooterParser.portions[index];
+			var portion = headerFooterParser.tokens[index];
 			if(!portion) {
 				return;
 			}
@@ -4060,7 +4062,7 @@
 		}
 
 		this._setDefaultFont(drawingCtx);
-		for(var i = 0; i < headerFooterParser.portions.length; i++) {
+		for(var i = 0; i < headerFooterParser.tokens.length; i++) {
 			drawPortion(i);
 		}
 
