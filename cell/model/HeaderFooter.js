@@ -111,12 +111,20 @@
 		return res;
 	};
 
+	HeaderFooterField.prototype.pushFormat = function (val) {
+		this.format = val;
+	};
+
 	HeaderFooterField.prototype.getText = function (ws, indexPrintPage, countPrintPages) {
 		return this._calculatedText ? this._calculatedText : this.calculateText(ws, indexPrintPage, countPrintPages);
 	};
 
-	HeaderFooterField.prototype.pushFormat = function (val) {
-		this.format = val;
+	HeaderFooterField.prototype.getFormat = function (val) {
+		return this.format;
+	};
+
+	HeaderFooterField.prototype.getField = function () {
+		return this.field;
 	};
 
 
