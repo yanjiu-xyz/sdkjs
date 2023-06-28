@@ -57,13 +57,13 @@
 	HeaderFooterField.prototype.getText = function (ws, indexPrintPage, countPrintPages) {
 		let res = "";
 		let api = window["Asc"]["editor"];
-		let printPreviewState = ws.workbook && ws.workbook.printPreviewState;
+		let printPreviewState = ws && ws.workbook && ws.workbook.printPreviewState;
 		let pageSetup;
 		if (printPreviewState && printPreviewState.isStart()) {
 			pageSetup = printPreviewState.getActivePageSetup();
 		}
 		if (!pageSetup) {
-			pageSetup = ws.model && ws.model.PagePrintOptions && ws.model.PagePrintOptions.pageSetup;
+			pageSetup = ws && ws.model && ws.model.PagePrintOptions && ws.model.PagePrintOptions.pageSetup;
 		}
 
 		switch(this.field) {
@@ -77,7 +77,7 @@
 				break;
 			}
 			case asc.c_oAscHeaderFooterField.sheetName: {
-				res = ws.model.sName;
+				res = ws && ws.model && ws.model.sName;
 				break;
 			}
 			case asc.c_oAscHeaderFooterField.fileName: {
@@ -838,7 +838,7 @@
 	};
 
 
-	function convertFieldToMenuText(val) {
+	function convertFieldToMenuText(val, _text) {
 		var textField = null;
 		var tM = AscCommon.translateManager;
 		var pageTag = "&[" + tM.getValue("Page") + "]";
@@ -885,6 +885,11 @@
 			case asc.c_oAscHeaderFooterField.picture: {
 				//TODO translate?
 				textField = pictureTag;
+				break;
+			}
+			case asc.c_oAscHeaderFooterField.text: {
+				//TODO translate?
+				textField = _text;
 				break;
 			}
 		}
@@ -1641,7 +1646,7 @@
 			var res = [];
 			for(var i = 0; i < textPropsArr.length; i++) {
 				var curProps = textPropsArr[i];
-				var text = convertFieldToMenuText(curProps.field);
+				var text = convertFieldToMenuText(curProps.field, curProps.textField);
 				if(null !== text) {
 					var tempFragment = new AscCommonExcel.Fragment();
 					tempFragment.setFragmentText(text);
@@ -2086,7 +2091,7 @@
 	};
 
 	function CLegacyDrawingHFDrawing() {
-		this.id = null;//"LH", "CH", "RH", "LF", "CF", "RF"
+		this.id = null;//"LH", "CH", "RH", "LF", "CF", "RF", "LHEVEN",..., "LHFIRST"
 		this.graphicObject = null;
 	}
 
