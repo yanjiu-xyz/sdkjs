@@ -1996,7 +1996,7 @@
 
 		function trim(val)
 		{
-			if(!String.prototype.trim)
+			if(String.prototype.trim)
 				return val.trim();
 			else
 				return val.replace(/^\s+|\s+$/g,'');
