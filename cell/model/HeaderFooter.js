@@ -55,6 +55,17 @@
 		this.textField = text;
 		this._calculatedText = null;
 	}
+	HeaderFooterField.prototype.clone = function () {
+		var res = new HeaderFooterField();
+
+		res.filed = this.filed;
+		res.format = this.format.clone();
+
+		res.textField = this.textField;
+		res._calculatedText = this._calculatedText;
+
+		return res;
+	};
 	HeaderFooterField.prototype.calculateText = function (ws, indexPrintPage, countPrintPages) {
 		let res = "";
 		let api = window["Asc"]["editor"];
