@@ -13201,6 +13201,17 @@
 			this["guid"] = sOlePluginGuid;
 		}
 	}
+
+
+	function deg2rad(deg)
+	{
+		return deg * Math.PI / 180.0;
+	}
+
+	function rad2deg(rad)
+	{
+		return rad * 180.0 / Math.PI;
+	}
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
@@ -13415,8 +13426,9 @@
 	window["AscCommon"].CEyedropper = CEyedropper;
 	window["AscCommon"].CInkDrawer = CInkDrawer;
 	window["AscCommon"].CPluginCtxMenuInfo = CPluginCtxMenuInfo;
+	window['AscCommon'].deg2rad = deg2rad;
+	window['AscCommon'].rad2deg = rad2deg;
 	window["AscCommon"].c_oAscImageUploadProp = c_oAscImageUploadProp;
-
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)
