@@ -19791,7 +19791,7 @@
 		let autoFilterObject = this.model.autoFilters.getAutoFiltersOptions(this.model, filterProp, function (r, c) {
 			rowButton = r;
 			colButton = c;
-		});
+		}, isReturnProps);
 		if (autoFilterObject) {
 			let cellCoord = this.getCellCoord(colButton, rowButton);
 			autoFilterObject.asc_setCellCoord(cellCoord);

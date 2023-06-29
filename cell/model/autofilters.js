@@ -877,14 +877,13 @@
 							str+= j + ":" + autoFiltersObject.values[i][j] + ","
 						}
 					}
-					str = str.slice(0, -1)
-					str+= "}"
+					str = str.slice(0, -1);
+					str+= "}";
 					if (i  !== autoFiltersObject.values.length - 1) {
 						str += ","
 					}
 				}
 				str += "]";
-				console.log(str)
 
 				//**get filter**
 				var filterObj = this._getPressedFilter(ar, autoFiltersObject.cellId);
@@ -4734,7 +4733,7 @@
 				}
 			},
 
-			getOpenAndClosedValues: function (filter, colId, doOpenHide, sortObj) {
+			getOpenAndClosedValues: function (filter, colId, doOpenHide, sortObj, isReturnProps) {
 				let isTablePart = !filter.isAutoFilter(), autoFilter = filter.getAutoFilter(), ref = filter.Ref;
 				let worksheet = this.worksheet, textIndexMap = {}, isDateTimeFormat, dataValue, values = [];
 				let _hideValues = [], textIndexMapHideValues = {};
@@ -4827,6 +4826,10 @@
 				for (let i = ref.r1 + 1; i <= maxFilterRow; i++) {
 					//max strings
 					if (individualCount >= Asc.c_oAscMaxFilterListLength) {
+						break;
+					}
+					//isReturnProps - on move mouse, if currentFilterColumn === null -> all open
+					if (isReturnProps && currentFilterColumn === null) {
 						break;
 					}
 
@@ -6412,7 +6415,7 @@
 				this.applyCollaborativeChangedRowsArr = [];
 			},
 
-			getAutoFiltersOptions: function (ws, filterProp, setViewProps) {
+			getAutoFiltersOptions: function (ws, filterProp, setViewProps, isReturnProps) {
 				//get filter
 				var filter, autoFilter, displayName = null;
 				if (filterProp.id === null) {
@@ -6430,7 +6433,7 @@
 					colId = ws.autoFilters._getTrueColId(filter, colId, true);
 				}
 
-				var openAndClosedValues = ws.autoFilters.getOpenAndClosedValues(filter, colId);
+				var openAndClosedValues = ws.autoFilters.getOpenAndClosedValues(filter, colId, null, null, isReturnProps);
 				var values = openAndClosedValues.values;
 				var automaticRowCount = openAndClosedValues.automaticRowCount;
 				//для случае когда скрыто только пустое значение не отображаем customfilter
