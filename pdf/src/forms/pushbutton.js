@@ -254,13 +254,12 @@
 
         oRunForImg.Add_ToContent(oRunForImg.Content.length, oDrawing);
         oDrawing.Set_Parent(oRunForImg);
-
         oShape.recalculate();
         
-        this.SetNeedRecalc(true);
-        this.SetWasChanged(true);
-
         if (editor.getDocumentRenderer().IsOpenFormsInProgress == false) {
+            this.SetNeedRecalc(true);
+            this.SetWasChanged(true);
+            
             let oDoc            = this.GetDocument();
             let oActionsQueue   = oDoc.GetActionsQueue();
             oActionsQueue.Continue();   

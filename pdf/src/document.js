@@ -223,12 +223,14 @@
                 return info.src;
             }), function() {
 
+                oViewer.IsOpenFormsInProgress = true;
                 for (let nInfo = 0; nInfo < aIconsMap.length; nInfo++) {
                     for (let nField = 0; nField < aIconsMap[nInfo].fields.length; nField++) {
                         aIconsMap[nInfo].fields[nField].Recalculate();
                         aIconsMap[nInfo].fields[nField].AddImage(aIconsMap[nInfo]);
                     }
                 }
+                oViewer.IsOpenFormsInProgress = false;
                 oViewer._paintForms();
             });
         }
@@ -944,6 +946,7 @@
         oField._origRect = aCoords;
 
         this.widgets.push(oField);
+        oField.SetNeedRecalc(true);
 
         if (oPagesInfo.pages[nPageNum].fields == null) {
             oPagesInfo.pages[nPageNum].fields = [];
