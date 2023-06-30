@@ -4733,7 +4733,7 @@
 				}
 			},
 
-			getOpenAndClosedValues: function (filter, colId, doOpenHide, sortObj, isReturnProps) {
+			getOpenAndClosedValues: function (filter, colId, doOpenHide, sortObj, tooltipPreview) {
 				let isTablePart = !filter.isAutoFilter(), autoFilter = filter.getAutoFilter(), ref = filter.Ref;
 				let worksheet = this.worksheet, textIndexMap = {}, isDateTimeFormat, dataValue, values = [];
 				let _hideValues = [], textIndexMapHideValues = {};
@@ -4823,13 +4823,14 @@
 
 				let findDateTimeFormat;
 				let individualCount = 0, count = 0;
+				let visibleCount = 0, maxVisibleCountTooltip = 100;
 				for (let i = ref.r1 + 1; i <= maxFilterRow; i++) {
 					//max strings
 					if (individualCount >= Asc.c_oAscMaxFilterListLength) {
 						break;
 					}
-					//isReturnProps - on move mouse, if currentFilterColumn === null -> all open
-					if (isReturnProps && currentFilterColumn === null) {
+					//tooltipPreview - on move mouse, if currentFilterColumn === null -> all open
+					if (tooltipPreview && currentFilterColumn === null) {
 						break;
 					}
 
@@ -4885,16 +4886,13 @@
 					}
 
 					//apply filter by current button
-					let visible;
+					let visible = true;
 					if (null !== currentFilterColumn) {
 						if (!autoFilter.hiddenByAnotherFilter(worksheet, colId, i, ref.c1, nsvFilter ? nsvFilter.columnsFilter : null))//filter another button
 						{
 							//filter current button
 							let checkValue = isDateTimeFormat ? val : text;
-							visible = false;
-							if (!isCustomFilter && !currentFilterColumn.isHideValue(checkValue, isDateTimeFormat, null, cell)) {
-								visible = true;
-							}
+							visible = !isCustomFilter && !currentFilterColumn.isHideValue(checkValue, isDateTimeFormat, null, cell);
 							hideValue(false, i);
 
 							if (textIndexMapHideValues.hasOwnProperty(textLowerCase)) {
@@ -4911,16 +4909,13 @@
 								continue;
 							}
 
-							visible = false;
-							if (!currentFilterColumn.isHideValue(isDateTimeFormat ? val : text, isDateTimeFormat, null, cell)) {
-								visible = true;
-							}
+							visible = !currentFilterColumn.isHideValue(isDateTimeFormat ? val : text, isDateTimeFormat, null, cell);
 							textIndexMapHideValues[textLowerCase] = _hideValues.length;
 							addValueToMenuObj(val, text, visible, _hideValues.length, _hideValues, indicateItemsWithNoData);
 						}
 					} else {
 						hideValue(false, i);
-						addValueToMenuObj(val, text, true, count, values);
+						addValueToMenuObj(val, text, visible, count, values);
 
 						if (textIndexMapHideValues.hasOwnProperty(textLowerCase)) {
 							delete _hideValues[textIndexMapHideValues[textLowerCase]];
@@ -4931,6 +4926,14 @@
 					}
 
 					individualCount++;
+					if (tooltipPreview) {
+						if (visible) {
+							visibleCount++;
+						}
+						if (visibleCount > maxVisibleCountTooltip) {
+							break;
+						}
+					}
 				}
 
 				if (doOpenHide) {
@@ -6415,7 +6418,7 @@
 				this.applyCollaborativeChangedRowsArr = [];
 			},
 
-			getAutoFiltersOptions: function (ws, filterProp, setViewProps, isReturnProps) {
+			getAutoFiltersOptions: function (ws, filterProp, setViewProps, tooltipPreview) {
 				//get filter
 				var filter, autoFilter, displayName = null;
 				if (filterProp.id === null) {
@@ -6433,7 +6436,7 @@
 					colId = ws.autoFilters._getTrueColId(filter, colId, true);
 				}
 
-				var openAndClosedValues = ws.autoFilters.getOpenAndClosedValues(filter, colId, null, null, isReturnProps);
+				var openAndClosedValues = ws.autoFilters.getOpenAndClosedValues(filter, colId, null, null, tooltipPreview);
 				var values = openAndClosedValues.values;
 				var automaticRowCount = openAndClosedValues.automaticRowCount;
 				//для случае когда скрыто только пустое значение не отображаем customfilter
