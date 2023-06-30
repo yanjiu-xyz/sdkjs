@@ -973,7 +973,7 @@
         return this._bDrawFromStream;
     };
     CBaseField.prototype.SetDrawFromStream = function(bFromStream) {
-        //this._bDrawFromStream = bFromStream;
+        this._bDrawFromStream = bFromStream;
     };
     CBaseField.prototype.SetDrawHighlight = function(bDraw) {
         this._needDrawHighlight = bDraw;
