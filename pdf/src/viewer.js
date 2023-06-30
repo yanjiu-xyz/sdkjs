@@ -939,6 +939,7 @@
 		this.openForms = function() {
 			let oThis = this;
 
+			this.scrollCount = 0;
 			this.IsOpenFormsInProgress = true;
 
 			function ExtractActions(oPanentAction) {
@@ -959,20 +960,16 @@
 			let aActionsToCorrect = []; // параметры поля в actions указаны как ссылки на ap, после того, как все формы будут созданы, заменим их на ссылки на сами поля. 
 			let aFormsInfo = this.file.nativeFile.getInteractiveFormsInfo();
 			
-			let oFormInfo, oForm, aRect;
+			let oFormInfo, oForm, oRect;
 			for (let i = 0; i < aFormsInfo["Fields"].length; i++)
 			{
-				oFormInfo = aFormsInfo["Fields"][i];
+				oFormInfo	= aFormsInfo["Fields"][i];
+				oRect		= oFormInfo["rect"];
 
-				let oRect	= oFormInfo["rect"];
-				let nScaleY = this.drawingPages[oFormInfo["page"]].H / this.file.pages[oFormInfo["page"]].H;
-				let nScaleX = this.drawingPages[oFormInfo["page"]].W / this.file.pages[oFormInfo["page"]].W;
+				oForm = this.doc.AddField(oFormInfo["name"], oFormInfo["type"], oFormInfo["page"], [oRect["x1"], oRect["y1"], oRect["x2"], oRect["y2"]]);
 
-				aRect = [oRect["x1"] * nScaleX, oRect["y1"] * nScaleY, oRect["x2"] * nScaleX, oRect["y2"] * nScaleY];
+				oForm.SetOriginPage(oFormInfo["page"]);
 				
-				oForm = this.doc.private_addField(oFormInfo["name"], oFormInfo["type"], oFormInfo["page"], aRect);
-				oForm._origRect = [oRect["x1"], oRect["y1"], oRect["x2"], oRect["y2"]];
-
 				if (!oForm) {
 					console.log(Error("Error while reading form, index " + i));
 					continue;
@@ -1037,6 +1034,12 @@
 				if (oFormInfo["IF"] != null) {
 					if (oFormInfo["IF"]["FB"] != null)
 						oForm.SetButtonFitBounds(Boolean(oFormInfo["IF"]["FB"]));
+					if (oFormInfo["IF"]["SW"] != null)
+						oForm.SetScaleWhen(oFormInfo["IF"]["SW"]);
+					if (oFormInfo["IF"]["A"] != null)
+						oForm.SetIconPosition(oFormInfo["IF"]["A"][0], oFormInfo["IF"]["A"][1]);
+					if (oFormInfo["IF"]["S"] != null)
+						oForm.SetScaleHow(oFormInfo["IF"]["S"]);
 				}
 
 				// combobox - listbox
@@ -1195,8 +1198,8 @@
 			}
 			
 			if (aFormsInfo["Parents"]) {
-				this.doc.FillParents(aFormsInfo["Parents"]);
-				this.doc.OnAfterFillParents();
+				this.doc.FillFormsParents(aFormsInfo["Parents"]);
+				this.doc.OnAfterFillFormsParents();
 			}
 			this.doc.FillButtonsIconsOnOpen();
 
@@ -3451,5 +3454,10 @@
 	AscCommon.CViewer = CHtmlPage;
 	AscCommon.ViewerZoomMode = ZoomMode;
 	AscCommon.CCacheManager = CCacheManager;
+
+	if (!window["AscPDF"])
+	    window["AscPDF"] = {};
+
+	window["AscPDF"].CPageInfo = CPageInfo;
 
 })();

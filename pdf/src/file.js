@@ -222,7 +222,7 @@
     {
         if (!this.nativeFile)
             return null;
-        if (pageIndex < 0 || pageIndex >= this.pages.length)
+        if (pageIndex < 0 || pageIndex >= this.pages.length || this.pages[pageIndex].isFromFile != true)
             return null;
 
         if (!width) width = this.pages[pageIndex].W;
@@ -2416,6 +2416,7 @@ void main() {\n\
                 page.W = page["W"];
                 page.H = page["H"];
                 page.Dpi = page["Dpi"];
+                page.isFromFile = true; // флаг, что страница из файла, а не созданная нами
             }
 
             file.prepareSearch();

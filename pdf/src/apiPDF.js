@@ -54,18 +54,6 @@
         text:           "text"
     }
 
-    let FORMS_TRIGGERS_TYPES = {
-        MouseUp:    0,
-        MouseDown:  1,
-        MouseEnter: 2,
-        MouseExit:  3,
-        OnFocus:    4,
-        OnBlur:     5,
-        Keystroke:  6,
-        Validate:   7,
-        Calculate:  8,
-        Format:     9
-    }
     //------------------------------------------------------------------------------------------------------------------
 	//
 	// pdf api types
@@ -198,7 +186,6 @@
     Object.freeze(highlight);
     Object.freeze(VALID_ROTATIONS);
     Object.freeze(style);
-    Object.freeze(FORMS_TRIGGERS_TYPES);
 
     /**
 	 * A string that sets the trigger for the action. Values are:
@@ -546,34 +533,34 @@
         let nInternalType;
         switch (cTrigger) {
             case "MouseUp":
-                nInternalType = FORMS_TRIGGERS_TYPES.MouseUp;
+                nInternalType = AscPDF.FORMS_TRIGGERS_TYPES.MouseUp;
                 break;
             case "MouseDown":
-                nInternalType = FORMS_TRIGGERS_TYPES.MouseDown;
+                nInternalType = AscPDF.FORMS_TRIGGERS_TYPES.MouseDown;
                 break;
             case "MouseEnter":
-                nInternalType = FORMS_TRIGGERS_TYPES.MouseEnter;
+                nInternalType = AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter;
                 break;
             case "MouseExit":
-                nInternalType = FORMS_TRIGGERS_TYPES.MouseExit;
+                nInternalType = AscPDF.FORMS_TRIGGERS_TYPES.MouseExit;
                 break;
             case "OnFocus":
-                nInternalType = FORMS_TRIGGERS_TYPES.OnFocus;
+                nInternalType = AscPDF.FORMS_TRIGGERS_TYPES.OnFocus;
                 break;
             case "OnBlur":
-                nInternalType = FORMS_TRIGGERS_TYPES.OnBlur;
+                nInternalType = AscPDF.FORMS_TRIGGERS_TYPES.OnBlur;
                 break;
             case "Keystroke":
-                nInternalType = FORMS_TRIGGERS_TYPES.Keystroke;
+                nInternalType = AscPDF.FORMS_TRIGGERS_TYPES.Keystroke;
                 break;
             case "Validate":
-                nInternalType = FORMS_TRIGGERS_TYPES.Validate;
+                nInternalType = AscPDF.FORMS_TRIGGERS_TYPES.Validate;
                 break;
             case "Calculate":
-                nInternalType = FORMS_TRIGGERS_TYPES.Calculate;
+                nInternalType = AscPDF.FORMS_TRIGGERS_TYPES.Calculate;
                 break;
             case "Format":
-                nInternalType = FORMS_TRIGGERS_TYPES.Format;
+                nInternalType = AscPDF.FORMS_TRIGGERS_TYPES.Format;
                 break;
         }
 
@@ -619,7 +606,7 @@
                 }
             },
             get() {
-                return this.field.GetButtonFitBound();
+                return this.field.GetButtonFitBounds();
             }
         },
         "buttonPosition": {
