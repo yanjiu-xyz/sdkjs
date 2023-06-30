@@ -2477,7 +2477,9 @@
 		let CPrime1 = Math.sqrt((a1Prime * a1Prime) + (b1 * b1));
 		let CPrime2 = Math.sqrt((a2Prime * a2Prime) + (b2 * b2));
 		let hPrime1;
-		const fAE = AscFormat.fApproxEqual;
+		const fAE = function (a, b) {
+			return Math.abs(a - b) < 1e-15;
+		};
 		if (fAE(b1, 0.0) && fAE(a1Prime, 0.0))
 			hPrime1 = 0.0;
 		else {
