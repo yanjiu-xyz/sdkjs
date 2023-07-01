@@ -105,6 +105,15 @@
 		let perfEnd = performance.now();
 		AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onOpenDocument", perfEnd - perfStart), this);
 	};
+	PDFEditorApi.prototype.isPdfEditor = function() {
+		return true;
+	};
+	PDFEditorApi.prototype.isFieldFillingMode = function() {
+		return this.DocumentRenderer ? this.DocumentRenderer.fieldFillingMode : false;
+	};
+	PDFEditorApi.prototype.getDocumentRenderer = function() {
+		return this.DocumentRenderer;
+	};
 	PDFEditorApi.prototype["asc_setViewerThumbnailsZoom"] = function(value) {
 		if (this.haveThumbnails())
 			this.DocumentRenderer.Thumbnails.setZoom(value);
@@ -358,6 +367,42 @@
 		
 		return true;
 	};
+	PDFEditorApi.prototype.asc_GetSelectedText = function() {
+		if (!this.DocumentRenderer)
+			return "";
+
+		var textObj = {Text : ""};
+		this.DocumentRenderer.Copy(textObj);
+		if (textObj.Text.trim() === "")
+			return "";
+		
+		return textObj.Text;
+	};
+	PDFEditorApi.prototype.asc_SelectPDFFormListItem = function(sId) {
+		let nIdx = parseInt(sId);
+		let oViewer = this.DocumentRenderer;
+		let oField = oViewer.activeForm;
+		if (!oField)
+			return;
+		
+		oField.SelectOption(nIdx);
+		let isNeedRedraw = oField.IsNeedCommit();
+		if (oField._commitOnSelChange && oField.IsNeedCommit()) {
+			oField.Commit();
+			isNeedRedraw = true;
+			
+			oViewer.activeForm = null;
+			oField.SetDrawHighlight(true);
+			
+			this.WordControl.m_oDrawingDocument.TargetEnd();
+		}
+		
+		
+		if (isNeedRedraw) {
+			oViewer._paintForms();
+			oViewer._paintFormsHighlight();
+		}
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -492,6 +537,12 @@
 		if (this.DocumentRenderer)
 			this.WordControl.m_oDrawingDocument.MoveTargetInInputContext();
 	};
+	PDFEditorApi.prototype.OnMouseUp = function(x, y) {
+		if (!this.DocumentRenderer)
+			return;
+		
+		this.DocumentRenderer.onMouseUp(x, y);
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -513,6 +564,9 @@
 	PDFEditorApi.prototype['getCountPages']                = PDFEditorApi.prototype.getCountPages;
 	PDFEditorApi.prototype['getCurrentPage']               = PDFEditorApi.prototype.getCurrentPage;
 	PDFEditorApi.prototype['asc_getPdfProps']              = PDFEditorApi.prototype.asc_getPdfProps;
+	PDFEditorApi.prototype['asc_enterText']                = PDFEditorApi.prototype.asc_enterText;
+	PDFEditorApi.prototype['asc_GetSelectedText']          = PDFEditorApi.prototype.asc_GetSelectedText;
+	PDFEditorApi.prototype['asc_SelectPDFFormListItem']    = PDFEditorApi.prototype.asc_SelectPDFFormListItem;
 	
 	
 })(window, window.document);

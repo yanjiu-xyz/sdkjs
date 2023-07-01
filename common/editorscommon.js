@@ -1773,14 +1773,14 @@
 				}
 				else
 				{
-					if (editor.isDocumentRenderer() && e.canceled == true)
+					if (editor.isPdfEditor() && e.canceled == true)
 						callback(e);
 					else
 						callback(Asc.c_oAscError.ID.Unknown);
 				}
 			});
 
-			if (editor.isDocumentRenderer()) {
+			if (editor.isPdfEditor()) {
 				let oViewer = editor.getDocumentRenderer();
 				let oDoc = oViewer.doc;
 				let oActionsQueue = oDoc.GetActionsQueue();

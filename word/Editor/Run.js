@@ -5423,9 +5423,11 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
 					LD_PageLimits = LogicDocument.Get_PageLimits(PageAbs);
 					LD_PageFields = LogicDocument.Get_PageFields(PageAbs, isInHdrFtr);
 				}
-				else if (editor.isDocumentRenderer())
+				else if (editor.isPdfEditor())
 				{
-					LD_PageLimits = LD_PageFields = editor.getDocumentRenderer().Get_PageLimits();
+					// TODO: Надо переделать, чтобы родительские DocContent возвращал такие Limits, тогда
+					//       эта заглушка не нужна будет
+					LD_PageLimits = LD_PageFields = editor.DocumentRenderer.Get_PageLimits();
 				}
 
                 var Page_Width  = LD_PageLimits.XLimit;

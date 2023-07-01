@@ -169,8 +169,8 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 	this.drawingDocument = DrawingDocument;
 	if (editor.WordControl.m_oLogicDocument)
 		this.graphicObjects  = editor.WordControl.m_oLogicDocument.DrawingObjects;
-	else if (editor.isDocumentRenderer()) {
-		this.graphicObjects = editor.getDocumentRenderer().DrawingObjects;
+	else if (editor.isPdfEditor()) {
+		this.graphicObjects = editor.DocumentRenderer.DrawingObjects;
 	}
 	this.selected        = false;
 
@@ -1457,8 +1457,8 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	var OtherFlowObjects;
 	if (editor.WordControl.m_oLogicDocument)
 		OtherFlowObjects = editor.WordControl.m_oLogicDocument.DrawingObjects.getAllFloatObjectsOnPage(PageNum, this.Parent.Parent);
-	else if (editor.isDocumentRenderer())
-		OtherFlowObjects = editor.getDocumentRenderer().DrawingObjects.getAllFloatObjectsOnPage(PageNum, this.Parent.Parent);
+	else if (editor.isPdfEditor())
+		OtherFlowObjects = editor.DocumentRenderer.DrawingObjects.getAllFloatObjectsOnPage(PageNum, this.Parent.Parent);
 		
 	var bInline          = this.Is_Inline();
 	this.Internal_Position.SetScaleFactor(this.GetScaleCoefficient());

@@ -233,7 +233,7 @@
 					}
 					case AscCommon.c_oEditorId.Word:
 					{
-						if (this.Api.isDocumentRenderer() && this.Api.WordControl.m_oDrawingDocument.m_oDocumentRenderer.fieldFillingMode)
+						if (this.Api.isPdfEditor() && this.Api.isFieldFillingMode())
 							isSpaceAsText = false;
 						break;
 					}

@@ -373,6 +373,10 @@
 	{
 		return this.editorId;
 	};
+	baseEditorsApi.prototype.isPdfEditor = function()
+	{
+		return false;
+	};
 	baseEditorsApi.prototype.getEditorErrorInfo = function()
 	{
 		return "";
@@ -593,7 +597,7 @@
 		this.isLockScrollToTarget = isLock;
 	};
 	// Просмотр PDF
-	baseEditorsApi.prototype.isPdfViewer                     = function()
+	baseEditorsApi.prototype.isPdfEditor                     = function()
 	{
 		return false;
 	};
@@ -3484,8 +3488,7 @@
 		if (!this.canSave || !this._saveCheck())
 			return 0;
 
-		//pdf viewer
-		if (this.isUseNativeViewer && this.isDocumentRenderer && this.isDocumentRenderer())
+		if (this.isPdfEditor())
 			return 0;
 
 		//viewer
