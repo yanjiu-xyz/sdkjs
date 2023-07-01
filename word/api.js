@@ -2957,7 +2957,7 @@ background-repeat: no-repeat;\
 			//this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.DownloadAs);
 		}
 	};
-	asc_docs_api.prototype.startGetDocInfo              = function()
+	asc_docs_api.prototype.startGetDocInfo = function()
 	{
 		/*
 		 Возвращаем объект следующего вида:
@@ -2972,15 +2972,10 @@ background-repeat: no-repeat;\
 		this.sync_GetDocInfoStartCallback();
 		this.WordControl.m_oLogicDocument.Statistics_Start();
 	};
-	asc_docs_api.prototype.stopGetDocInfo               = function()
+	asc_docs_api.prototype.stopGetDocInfo = function()
 	{
 		this.sync_GetDocInfoStopCallback();
-
-		if (this.isUseNativeViewer && this.isDocumentRenderer())
-			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.endStatistics();
-
-		if (null != this.WordControl.m_oLogicDocument)
-			this.WordControl.m_oLogicDocument.Statistics_Stop();
+		this.WordControl.m_oLogicDocument.Statistics_Stop();
 	};
 	asc_docs_api.prototype.sync_CanUndoCallback         = function(canUndo)
 	{
@@ -3000,11 +2995,6 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.can_CopyCut = function()
 	{
-		if (this.isUseNativeViewer && this.isDocumentRenderer())
-		{
-			return this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.isCanCopy();
-		}
-
 		return this.WordControl.m_oLogicDocument.Can_CopyCut();
 	};
 
@@ -3129,79 +3119,33 @@ background-repeat: no-repeat;\
 	 Y: 0//координаты по OY начала последовательности на данной страницы
 	 }
 	 */
-
-	asc_docs_api.prototype.asc_searchEnabled = function(bIsEnabled)
+	asc_docs_api.prototype.asc_findText = function(props, isNext, callback)
 	{
-		if (null != this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
-		{
-			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.SearchResults.IsSearch = bIsEnabled;
-			this.WordControl.OnUpdateOverlay();
-		}
-	};
-	asc_docs_api.prototype.asc_findText = function(oProps, isNext, callback)
-	{
-		var result = 0;
-		var CurMatchIdx = 0;
-		var isAsync = false;
-		var oViewer;
-
-		if (null != this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
-		{
-			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.SearchResults.IsSearch = true;
-			oProps.SetText(oProps.GetText().trim());
-			oViewer = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
-			isAsync = (true === oViewer.findText(oProps.GetText(), oProps.IsMatchCase(), oProps.IsWholeWords(), isNext, this.sync_setSearchCurrent)) ? true : false;
-			result = oViewer.SearchResults.Count;
-
-			if (oViewer.SearchResults.CurrentPage === 0)
-				CurMatchIdx = oViewer.SearchResults.Current;
-			else
-			{
-				// чтобы узнать, под каким номером в списке текущее совпадение
-				// нужно посчитать сколько совпадений было до текущего на текущей странице
-				for (var nPage = 0; nPage <= oViewer.SearchResults.CurrentPage; nPage++)
-				{
-					for (var nMatch = 0; nMatch < oViewer.SearchResults.Pages[nPage].length; nMatch++)
-					{
-						if (nPage == oViewer.SearchResults.CurrentPage && nMatch == oViewer.SearchResults.Current)
-							break;
-						CurMatchIdx++;
-					}
-				}
-			}
-
-			oViewer.SearchResults.CurMatchIdx = CurMatchIdx;
-			this.sync_setSearchCurrent(CurMatchIdx, result);
-		}
-		else
-		{
-			var SearchEngine = editor.WordControl.m_oLogicDocument.Search(oProps);
-
-			var Id = this.WordControl.m_oLogicDocument.GetSearchElementId(isNext);
-
-			if (null != Id)
-				this.WordControl.m_oLogicDocument.SelectSearchElement(Id);
-
-			result = SearchEngine.Count;
-		}
-
-		if (!isAsync && callback)
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return 0;
+		
+		var SearchEngine = logicDocument.Search(props);
+		
+		var Id = logicDocument.GetSearchElementId(isNext);
+		
+		if (null != Id)
+			logicDocument.SelectSearchElement(Id);
+		
+		let result = SearchEngine.Count;
+		
+		if (callback)
 			callback(result);
-
+		
 		return result;
 	};
 	asc_docs_api.prototype.asc_endFindText = function()
 	{
-		let oLogicDocument = this.private_GetLogicDocument();
-		if (oLogicDocument && oLogicDocument.SearchEngine)
-		{
-			return oLogicDocument.ClearSearch();
-		}
-		else if (this.isDocumentRenderer())
-		{
-			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.file.SearchResults.IsSearch = false;
-			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.file.onUpdateOverlay();
-		}
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return 0;
+		
+		logicDocument.ClearSearch();
 	};
 	asc_docs_api.prototype.asc_replaceText = function(oProps, replaceWith, isReplaceAll)
 	{
@@ -3238,28 +3182,12 @@ background-repeat: no-repeat;\
 		return (new AscCommonWord.CSearchPatternEngine()).GetErrorForReplaceString(sString);
 	};
 
-	asc_docs_api.prototype._selectSearchingResults = function(bShow)
+	asc_docs_api.prototype._selectSearchingResults = function(isShow)
 	{
-		if (null != this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
-		{
-			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.SearchResults.Show = bShow;
-			if (this.isUseNativeViewer)
-			{
-				this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.onUpdateOverlay();
-				return;
-			}
-
-			this.WordControl.OnUpdateOverlay();
-			return;
-		}
-		this.WordControl.m_oLogicDocument.HighlightSearchResults(bShow);
+		this.WordControl.m_oLogicDocument.HighlightSearchResults(isShow);
 	};
 	asc_docs_api.prototype.asc_isSelectSearchingResults = function()
 	{
-		if (null != this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
-		{
-			return this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.SearchResults.Show;
-		}
 		return this.WordControl.m_oLogicDocument.IsHighlightSearchResults();
 	};
 	asc_docs_api.prototype.sync_ReplaceAllCallback = function(ReplaceCount, OverallCount)
@@ -3270,49 +3198,21 @@ background-repeat: no-repeat;\
 	{
 		this.sendEvent("asc_onSearchEnd");
 	};
-	asc_docs_api.prototype.sync_setSearchCurrent = function(nCurrent, nOverallCount)
-	{
-		this.sendEvent("asc_onSetSearchCurrent", nCurrent, nOverallCount);
-	};
 	asc_docs_api.prototype.asc_StartTextAroundSearch = function()
 	{
-		let oLogicDocument = this.private_GetLogicDocument();
-		if (oLogicDocument && oLogicDocument.SearchEngine)
-		{
-			oLogicDocument.SearchEngine.StartTextAround();
-		}
-		else if (this.isDocumentRenderer())
-		{
-			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.file.startTextAround();
-		}
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		logicDocument.SearchEngine.StartTextAround();
 	};
 	asc_docs_api.prototype.asc_SelectSearchElement = function(sId)
 	{
-		let oLogicDocument = this.private_GetLogicDocument();
-		if (oLogicDocument && oLogicDocument.SearchEngine)
-		{
-			oLogicDocument.SelectSearchElement(sId);
-		}
-		else if (this.isDocumentRenderer())
-		{
-			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.SelectSearchElement(sId);
-		}
-	};
-	asc_docs_api.prototype.sync_startTextAroundSearch = function()
-	{
-		this.sendEvent("asc_onStartTextAroundSearch");
-	};
-	asc_docs_api.prototype.sync_endTextAroundSearch = function()
-	{
-		this.sendEvent("asc_onEndTextAroundSearch");
-	};
-	asc_docs_api.prototype.sync_getTextAroundSearchPack = function(arrElements)
-	{
-		this.sendEvent("asc_onGetTextAroundSearchPack", arrElements);
-	};
-	asc_docs_api.prototype.sync_removeTextAroundSearch = function(sId)
-	{
-		this.sendEvent("asc_onRemoveTextAroundSearch", [sId]);
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return;
+		
+		logicDocument.SelectSearchElement(sId);
 	};
 	/*----------------------------------------------------------------*/
 	/*functions for working with font*/
@@ -13670,7 +13570,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['gotoHeader']                                = asc_docs_api.prototype.gotoHeader;
 	asc_docs_api.prototype['sync_ChangeActiveHeaderCallback']           = asc_docs_api.prototype.sync_ChangeActiveHeaderCallback;
 	asc_docs_api.prototype['sync_ReturnHeadersCallback']                = asc_docs_api.prototype.sync_ReturnHeadersCallback;
-	asc_docs_api.prototype['asc_searchEnabled']                         = asc_docs_api.prototype.asc_searchEnabled;
 	asc_docs_api.prototype['asc_findText']                              = asc_docs_api.prototype.asc_findText;
 	asc_docs_api.prototype['asc_endFindText']                           = asc_docs_api.prototype.asc_endFindText;
 	asc_docs_api.prototype['asc_replaceText']                           = asc_docs_api.prototype.asc_replaceText;

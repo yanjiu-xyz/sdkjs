@@ -210,6 +210,12 @@
 		
 		this.DocumentRenderer.open(null, option.asc_getPassword());
 	};
+	PDFEditorApi.prototype.can_CopyCut = function() {
+		if (!this.DocumentRenderer)
+			return false;
+		
+		return this.DocumentRenderer.isCanCopy();
+	};
 	PDFEditorApi.prototype.startGetDocInfo = function() {
 		let renderer = this.DocumentRenderer;
 		if (!renderer)
@@ -226,6 +232,73 @@
 	PDFEditorApi.prototype.stopGetDocInfo = function() {
 		this.sync_GetDocInfoStopCallback();
 		this.DocumentRenderer.endStatistics();
+	};
+	PDFEditorApi.prototype.asc_searchEnabled = function(isEnabled) {
+		if (!this.DocumentRenderer)
+			return;
+		
+		this.DocumentRenderer.SearchResults.IsSearch = isEnabled;
+		this.WordControl.OnUpdateOverlay();
+	};
+	PDFEditorApi.prototype.asc_findText = function(props, isNext, callback) {
+		if (!this.DocumentRenderer)
+			return 0;
+		
+		this.DocumentRenderer.SearchResults.IsSearch = true;
+
+		let isAsync = (true === this.DocumentRenderer.findText(props.GetText().trim(), props.IsMatchCase(), props.IsWholeWords(), isNext, this.sync_setSearchCurrent));
+		let result = this.DocumentRenderer.SearchResults.Count;
+		
+		var CurMatchIdx = 0;
+		if (this.DocumentRenderer.SearchResults.CurrentPage === 0) {
+			CurMatchIdx = this.DocumentRenderer.SearchResults.Current;
+		}
+		else {
+			// чтобы узнать, под каким номером в списке текущее совпадение
+			// нужно посчитать сколько совпадений было до текущего на текущей странице
+			for (var nPage = 0; nPage <= this.DocumentRenderer.SearchResults.CurrentPage; nPage++) {
+				for (var nMatch = 0; nMatch < this.DocumentRenderer.SearchResults.Pages[nPage].length; nMatch++) {
+					if (nPage === this.DocumentRenderer.SearchResults.CurrentPage && nMatch === this.DocumentRenderer.SearchResults.Current)
+						break;
+					
+					CurMatchIdx++;
+				}
+			}
+		}
+		
+		this.DocumentRenderer.SearchResults.CurMatchIdx = CurMatchIdx;
+		
+		this.sync_setSearchCurrent(CurMatchIdx, result);
+		
+		if (!isAsync && callback)
+			callback(result);
+		
+		return result;
+	};
+	PDFEditorApi.prototype.asc_endFindText = function() {
+		if (!this.DocumentRenderer)
+			return;
+		
+		this.DocumentRenderer.file.SearchResults.IsSearch = false;
+		this.DocumentRenderer.file.onUpdateOverlay();
+	};
+	PDFEditorApi.prototype.asc_isSelectSearchingResults = function() {
+		if (!this.DocumentRenderer)
+			return false;
+		
+		return this.DocumentRenderer.SearchResults.Show;
+	};
+	PDFEditorApi.prototype.asc_StartTextAroundSearch = function() {
+		if (!this.DocumentRenderer)
+			return false;
+		
+		this.DocumentRenderer.file.startTextAround();
+	};
+	PDFEditorApi.prototype.asc_SelectSearchElement = function(id) {
+		if (!this.DocumentRenderer)
+			return false;
+		
+		this.DocumentRenderer.SelectSearchElement(id);
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
@@ -301,13 +374,29 @@
 		
 		this.DocumentRenderer.updateSkin();
 	};
+	PDFEditorApi.prototype._selectSearchingResults = function(isShow) {
+		if (!this.DocumentRenderer)
+			return;
+		
+		this.DocumentRenderer.SearchResults.Show = isShow;
+		this.DocumentRenderer.onUpdateOverlay();
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	window['Asc']['PDFEditorApi'] = PDFEditorApi;
 	AscCommon.PDFEditorApi        = PDFEditorApi;
 	
-	PDFEditorApi.prototype["asc_setAdvancedOptions"] = PDFEditorApi.prototype.asc_setAdvancedOptions;
+	PDFEditorApi.prototype["asc_setAdvancedOptions"]       = PDFEditorApi.prototype.asc_setAdvancedOptions;
+	PDFEditorApi.prototype['startGetDocInfo']              = PDFEditorApi.prototype.startGetDocInfo;
+	PDFEditorApi.prototype['stopGetDocInfo']               = PDFEditorApi.prototype.stopGetDocInfo;
+	PDFEditorApi.prototype["can_CopyCut"]                  = PDFEditorApi.prototype.can_CopyCut;
+	PDFEditorApi.prototype["asc_searchEnabled"]            = PDFEditorApi.prototype.asc_searchEnabled;
+	PDFEditorApi.prototype['asc_findText']                 = PDFEditorApi.prototype.asc_findText;
+	PDFEditorApi.prototype['asc_endFindText']              = PDFEditorApi.prototype.asc_endFindText;
+	PDFEditorApi.prototype['asc_isSelectSearchingResults'] = PDFEditorApi.prototype.asc_isSelectSearchingResults;
+	PDFEditorApi.prototype['asc_StartTextAroundSearch']    = PDFEditorApi.prototype.asc_StartTextAroundSearch;
+	PDFEditorApi.prototype['asc_SelectSearchElement']      = PDFEditorApi.prototype.asc_SelectSearchElement;
 	
 	
 })(window, window.document);

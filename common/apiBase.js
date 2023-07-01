@@ -2421,16 +2421,6 @@
 	{
 	};
 
-	baseEditorsApi.prototype.asc_selectSearchingResults = function(value)
-	{
-		if (this.selectSearchingResults === value)
-		{
-			return;
-		}
-		this.selectSearchingResults = value;
-		this._selectSearchingResults(value);
-	};
-
 
 	baseEditorsApi.prototype.asc_startEditCurrentOleObject = function(){
 
@@ -4242,26 +4232,54 @@
 		this.sendEvent("asc_onGetDocInfoEnd");
 	};
 	//---------------------------------------------------------search-----------------------------------------------------
+	baseEditorsApi.prototype.asc_searchEnabled = function(isEnabled)
+	{
+	};
 	baseEditorsApi.prototype.asc_findText = function(oProps, isNext, callback)
 	{
+		return 0;
 	};
 	baseEditorsApi.prototype.asc_endFindText = function()
 	{
 	};
+	baseEditorsApi.prototype.asc_selectSearchingResults = function(isShow)
+	{
+		if (this.selectSearchingResults === isShow)
+			return;
+		
+		this.selectSearchingResults = isShow;
+		
+		this._selectSearchingResults(isShow);
+	};
+	baseEditorsApi.prototype.asc_isSelectSearchingResults = function()
+	{
+		return this.selectSearchingResults;
+	};
+	baseEditorsApi.prototype._selectSearchingResults = function()
+	{
+	};
+	baseEditorsApi.prototype.asc_StartTextAroundSearch = function()
+	{
+	};
 	baseEditorsApi.prototype.sync_setSearchCurrent = function(nCurrent, nOverallCount)
 	{
+		this.sendEvent("asc_onSetSearchCurrent", nCurrent, nOverallCount);
 	};
 	baseEditorsApi.prototype.sync_startTextAroundSearch = function()
 	{
+		this.sendEvent("asc_onStartTextAroundSearch");
 	};
 	baseEditorsApi.prototype.sync_endTextAroundSearch = function()
 	{
+		this.sendEvent("asc_onEndTextAroundSearch");
 	};
 	baseEditorsApi.prototype.sync_getTextAroundSearchPack = function(arrElements)
 	{
+		this.sendEvent("asc_onGetTextAroundSearchPack", arrElements);
 	};
 	baseEditorsApi.prototype.sync_removeTextAroundSearch = function(sId)
 	{
+		this.sendEvent("asc_onRemoveTextAroundSearch", [sId]);
 	};
 	//---------------------------------------------------------version----------------------------------------------------
 	baseEditorsApi.prototype["GetVersion"] = baseEditorsApi.prototype.GetVersion = function()
@@ -4599,6 +4617,7 @@
 	prot['asc_addRestriction'] = prot.asc_addRestriction;
 	prot['asc_removeRestriction'] = prot.asc_removeRestriction;
 	prot['asc_selectSearchingResults'] = prot.asc_selectSearchingResults;
+	prot['asc_isSelectSearchingResults'] = prot.asc_isSelectSearchingResults;
 	prot['asc_showRevision'] = prot.asc_showRevision;
 	prot['asc_getAdvancedOptions'] = prot.asc_getAdvancedOptions;
 	prot['asc_Print'] = prot.asc_Print;
@@ -4651,5 +4670,9 @@
 	prot['asc_StopInkDrawer'] = prot.asc_StopInkDrawer;
 	prot['startGetDocInfo'] = prot.startGetDocInfo;
 	prot['stopGetDocInfo'] = prot.stopGetDocInfo;
+	prot["can_CopyCut"] = prot.can_CopyCut;
+	prot["asc_searchEnabled"] = prot.asc_searchEnabled;
+	prot['asc_findText'] = prot.asc_findText;
+	prot['asc_endFindText'] = prot.asc_endFindText;
 
 })(window);

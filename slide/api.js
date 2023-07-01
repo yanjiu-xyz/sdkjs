@@ -2568,12 +2568,6 @@ background-repeat: no-repeat;\
 		}
 	};
 
-
-	asc_docs_api.prototype.asc_searchEnabled = function(bIsEnabled)
-	{
-		// пустой метод
-	};
-
 	asc_docs_api.prototype.asc_findText = function(oProps, isNext, callback)
 	{
 		var SearchEngine = editor.WordControl.m_oLogicDocument.Search(oProps);
@@ -2610,10 +2604,6 @@ background-repeat: no-repeat;\
 	{
 		this.sendEvent("asc_onSearchEnd");
 	};
-	asc_docs_api.prototype.sync_setSearchCurrent = function(nCurrent, nOverallCount)
-	{
-		this.sendEvent("asc_onSetSearchCurrent", nCurrent, nOverallCount);
-	};
 	asc_docs_api.prototype.asc_StartTextAroundSearch = function()
 	{
 		let oLogicDocument = this.private_GetLogicDocument();
@@ -2629,22 +2619,6 @@ background-repeat: no-repeat;\
 			return;
 
 		oLogicDocument.SelectSearchElement(sId);
-	};
-	asc_docs_api.prototype.sync_startTextAroundSearch = function()
-	{
-		this.sendEvent("asc_onStartTextAroundSearch");
-	};
-	asc_docs_api.prototype.sync_endTextAroundSearch = function()
-	{
-		this.sendEvent("asc_onEndTextAroundSearch");
-	};
-	asc_docs_api.prototype.sync_getTextAroundSearchPack = function(arrElements)
-	{
-		this.sendEvent("asc_onGetTextAroundSearchPack", arrElements);
-	};
-	asc_docs_api.prototype.sync_removeTextAroundSearch = function(sId)
-	{
-		this.sendEvent("asc_onRemoveTextAroundSearch", [sId]);
 	};
 	/*----------------------------------------------------------------*/
 	/*functions for working with font*/
@@ -8753,7 +8727,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['goToNextSearchResult']                = asc_docs_api.prototype.goToNextSearchResult;
 	asc_docs_api.prototype['gotoSearchResultText']                = asc_docs_api.prototype.gotoSearchResultText;
 	asc_docs_api.prototype['stopSearchText']                      = asc_docs_api.prototype.stopSearchText;
-	asc_docs_api.prototype['asc_searchEnabled']                   = asc_docs_api.prototype.asc_searchEnabled;
 	asc_docs_api.prototype['asc_findText']                        = asc_docs_api.prototype.asc_findText;
 	asc_docs_api.prototype['asc_endFindText']                     = asc_docs_api.prototype.asc_endFindText;
 	asc_docs_api.prototype['asc_replaceText']                     = asc_docs_api.prototype.asc_replaceText;

@@ -4012,9 +4012,6 @@ var editor;
     return res;
   };
 
-  spreadsheet_api.prototype.asc_searchEnabled = function(bIsEnabled) {
-  };
-
   spreadsheet_api.prototype.asc_findText = function(options, callback) {
     var result = null;
 
@@ -4074,22 +4071,6 @@ var editor;
   };
 
 	//***searchEngine
-  spreadsheet_api.prototype.sync_setSearchCurrent = function (nCurrent, nOverallCount) {
-    this.sendEvent("asc_onSetSearchCurrent", nCurrent, nOverallCount);
-  };
-
-	spreadsheet_api.prototype.sync_startTextAroundSearch = function () {
-		this.sendEvent("asc_onStartTextAroundSearch");
-	};
-	spreadsheet_api.prototype.sync_endTextAroundSearch = function () {
-		this.sendEvent("asc_onEndTextAroundSearch");
-	};
-	spreadsheet_api.prototype.sync_getTextAroundSearchPack = function (arrElements) {
-		this.sendEvent("asc_onGetTextAroundSearchPack", arrElements);
-	};
-	spreadsheet_api.prototype.sync_removeTextAroundSearch = function (sId) {
-		this.sendEvent("asc_onRemoveTextAroundSearch", [sId]);
-	};
 	spreadsheet_api.prototype.sync_SearchEndCallback = function () {
 		this.sendEvent("asc_onSearchEnd");
 	};
@@ -8644,7 +8625,6 @@ var editor;
   prot["asc_getZoom"] = prot.asc_getZoom;
   prot["asc_setZoom"] = prot.asc_setZoom;
   prot["asc_enableKeyEvents"] = prot.asc_enableKeyEvents;
-  prot["asc_searchEnabled"] = prot.asc_searchEnabled;
   prot["asc_findText"] = prot.asc_findText;
   prot["asc_replaceText"] = prot.asc_replaceText;
   prot["asc_endFindText"] = prot.asc_endFindText;
