@@ -300,6 +300,64 @@
 		
 		this.DocumentRenderer.SelectSearchElement(id);
 	};
+	PDFEditorApi.prototype.ContentToHTML = function() {
+		if (!this.DocumentRenderer)
+			return "";
+		
+		this.DocumentReaderMode = new AscCommon.CDocumentReaderMode();
+		
+		this.DocumentRenderer.selectAll();
+		
+		var text_data = {
+			data : "",
+			pushData : function(format, value) { this.data = value; }
+		};
+		
+		this.asc_CheckCopy(text_data, 2);
+		
+		this.DocumentRenderer.removeSelection();
+		
+		return text_data.data;
+	};
+	PDFEditorApi.prototype.goToPage = function(pageNum) {
+		if (!this.DocumentRenderer)
+			return;
+		
+		return this.DocumentRenderer.navigateToPage(pageNum);
+	};
+	PDFEditorApi.prototype.getCountPages = function() {
+		return this.DocumentRenderer ? this.DocumentRenderer.getPagesCount() : 0;
+	};
+	PDFEditorApi.prototype.getCurrentPage = function() {
+		return this.DocumentRenderer ? this.DocumentRenderer.currentPage : 0;
+	};
+	PDFEditorApi.prototype.asc_getPdfProps = function() {
+		return  this.DocumentRenderer ? this.DocumentRenderer.getDocumentInfo() : null;
+	};
+	PDFEditorApi.prototype.asc_enterText = function(text) {
+		if (!this.DocumentRenderer)
+			return false;
+		
+		let viewer = this.DocumentRenderer;
+		if (!viewer
+			|| !viewer.activeForm
+			|| !viewer.fieldFillingMode) {
+			
+			return false;
+		}
+		
+		viewer.activeForm.EnterText(text);
+		if (viewer.pagesInfo.pages[viewer.activeForm._page].needRedrawForms) {
+			viewer._paintForms();
+			viewer.onUpdateOverlay();
+		}
+		
+		this.WordControl.m_oDrawingDocument.TargetStart();
+		// Чтобы при зажатой клавише курсор не пропадал
+		this.WordControl.m_oDrawingDocument.showTarget(true);
+		
+		return true;
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -381,22 +439,80 @@
 		this.DocumentRenderer.SearchResults.Show = isShow;
 		this.DocumentRenderer.onUpdateOverlay();
 	};
+	PDFEditorApi.prototype._printDesktop = function(options) {
+		if (!this.DocumentRenderer)
+			return false;
+		
+		let desktopOptions = {};
+		if (options && options.advancedOptions)
+			desktopOptions["nativeOptions"] = options.advancedOptions.asc_getNativeOptions();
+		
+		let viewer = this.DocumentRenderer;
+		if (window["AscDesktopEditor"] && !window["AscDesktopEditor"]["IsLocalFile"]() && window["AscDesktopEditor"]["SetPdfCloudPrintFileInfo"])
+		{
+			if (!window["AscDesktopEditor"]["IsCachedPdfCloudPrintFileInfo"]())
+				window["AscDesktopEditor"]["SetPdfCloudPrintFileInfo"](AscCommon.Base64.encode(viewer.getFileNativeBinary()));
+		}
+		window["AscDesktopEditor"]["Print"](JSON.stringify(desktopOptions), viewer.savedPassword ? viewer.savedPassword : "");
+		return true;
+	};
+	PDFEditorApi.prototype.asyncImagesDocumentEndLoaded = function() {
+		this.ImageLoader.bIsLoadDocumentFirst = false;
+		
+		if (!this.DocumentRenderer)
+			return;
+		
+		if (this.EndActionLoadImages === 1) {
+			this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.LoadDocumentImages);
+		}
+		else if (this.EndActionLoadImages === 2) {
+			if (this.isPasteFonts_Images)
+				this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.LoadImage);
+			else
+				this.sync_EndAction(c_oAscAsyncActionType.Information, c_oAscAsyncAction.LoadImage);
+		}
+		
+		this.EndActionLoadImages = 0;
+		
+		this.WordControl.m_oDrawingDocument.OpenDocument();
+		
+		this.LoadedObject = null;
+		
+		this.bInit_word_control = true;
+		
+		if (false === this.isPasteFonts_Images)
+			this.onDocumentContentReady();
+		
+		this.WordControl.InitControl();
+		
+		if (this.isViewMode)
+			this.asc_setViewMode(true);
+	};
+	PDFEditorApi.prototype.Input_UpdatePos = function() {
+		if (this.DocumentRenderer)
+			this.WordControl.m_oDrawingDocument.MoveTargetInInputContext();
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	window['Asc']['PDFEditorApi'] = PDFEditorApi;
 	AscCommon.PDFEditorApi        = PDFEditorApi;
 	
-	PDFEditorApi.prototype["asc_setAdvancedOptions"]       = PDFEditorApi.prototype.asc_setAdvancedOptions;
+	PDFEditorApi.prototype['asc_setAdvancedOptions']       = PDFEditorApi.prototype.asc_setAdvancedOptions;
 	PDFEditorApi.prototype['startGetDocInfo']              = PDFEditorApi.prototype.startGetDocInfo;
 	PDFEditorApi.prototype['stopGetDocInfo']               = PDFEditorApi.prototype.stopGetDocInfo;
-	PDFEditorApi.prototype["can_CopyCut"]                  = PDFEditorApi.prototype.can_CopyCut;
-	PDFEditorApi.prototype["asc_searchEnabled"]            = PDFEditorApi.prototype.asc_searchEnabled;
+	PDFEditorApi.prototype['can_CopyCut']                  = PDFEditorApi.prototype.can_CopyCut;
+	PDFEditorApi.prototype['asc_searchEnabled']            = PDFEditorApi.prototype.asc_searchEnabled;
 	PDFEditorApi.prototype['asc_findText']                 = PDFEditorApi.prototype.asc_findText;
 	PDFEditorApi.prototype['asc_endFindText']              = PDFEditorApi.prototype.asc_endFindText;
 	PDFEditorApi.prototype['asc_isSelectSearchingResults'] = PDFEditorApi.prototype.asc_isSelectSearchingResults;
 	PDFEditorApi.prototype['asc_StartTextAroundSearch']    = PDFEditorApi.prototype.asc_StartTextAroundSearch;
 	PDFEditorApi.prototype['asc_SelectSearchElement']      = PDFEditorApi.prototype.asc_SelectSearchElement;
+	PDFEditorApi.prototype['ContentToHTML']                = PDFEditorApi.prototype.ContentToHTML;
+	PDFEditorApi.prototype['goToPage']                     = PDFEditorApi.prototype.goToPage;
+	PDFEditorApi.prototype['getCountPages']                = PDFEditorApi.prototype.getCountPages;
+	PDFEditorApi.prototype['getCurrentPage']               = PDFEditorApi.prototype.getCurrentPage;
+	PDFEditorApi.prototype['asc_getPdfProps']              = PDFEditorApi.prototype.asc_getPdfProps;
 	
 	
 })(window, window.document);

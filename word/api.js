@@ -1340,26 +1340,26 @@ background-repeat: no-repeat;\
 			return this.WordControl.Name;
 		return "";
 	};
-
-	asc_docs_api.prototype.ContentToHTML = function(bIsRet)
+	
+	asc_docs_api.prototype.ContentToHTML = function()
 	{
-		this.DocumentReaderMode            = new AscCommon.CDocumentReaderMode();
-
-		this.WordControl.m_oLogicDocument && this.WordControl.m_oLogicDocument.SelectAll();
-		if (this.isUseNativeViewer && this.isDocumentRenderer())
-			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.selectAll();
-
-		var text_data = {
-			data : "",
-			pushData : function(format, value) { this.data = value; }
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return "";
+		
+		this.DocumentReaderMode = new AscCommon.CDocumentReaderMode();
+		
+		logicDocument.SelectAll();
+		
+		let text_data = {
+			data     : "",
+			pushData : function(format, value) {this.data = value;}
 		};
-
+		
 		this.asc_CheckCopy(text_data, 2);
-
-		this.WordControl.m_oLogicDocument && this.WordControl.m_oLogicDocument.RemoveSelection();
-		if (this.isUseNativeViewer && this.isDocumentRenderer())
-			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.removeSelection();
-
+		
+		logicDocument.RemoveSelection();
+		
 		return text_data.data;
 	};
 
@@ -2292,26 +2292,13 @@ background-repeat: no-repeat;\
 		let desktopOptions = {};
 		if (options && options.advancedOptions)
 			desktopOptions["nativeOptions"] = options.advancedOptions.asc_getNativeOptions();
-
-		if (null != this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
+		
+		if (options && options.advancedOptions && (Asc.c_oAscPrintType.Selection === options.advancedOptions.asc_getPrintType()))
 		{
-			var viewer = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer;
-			if (window["AscDesktopEditor"] && !window["AscDesktopEditor"]["IsLocalFile"]() && window["AscDesktopEditor"]["SetPdfCloudPrintFileInfo"])
-			{
-				if (!window["AscDesktopEditor"]["IsCachedPdfCloudPrintFileInfo"]())
-					window["AscDesktopEditor"]["SetPdfCloudPrintFileInfo"](AscCommon.Base64.encode(viewer.getFileNativeBinary()));
-			}
-			window["AscDesktopEditor"]["Print"](JSON.stringify(desktopOptions), viewer.savedPassword ? viewer.savedPassword : "");
+			desktopOptions["printOptions"] = { "selection" : 1 };
 		}
-		else
-		{
-			if (options && options.advancedOptions && (Asc.c_oAscPrintType.Selection === options.advancedOptions.asc_getPrintType()))
-			{
-				desktopOptions["printOptions"] = { "selection" : 1 };
-			}
-			desktopOptions["documentLayout"] = {"drawPlaceHolders":false,"drawFormHighlight":false,"isPrint":true};
-			window["AscDesktopEditor"]["Print"](JSON.stringify(desktopOptions));
-		}
+		desktopOptions["documentLayout"] = {"drawPlaceHolders":false,"drawFormHighlight":false,"isPrint":true};
+		window["AscDesktopEditor"]["Print"](JSON.stringify(desktopOptions));
 		return true;
 	};
 	asc_docs_api.prototype.Undo           = function()
@@ -7178,20 +7165,14 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.goToPage       = function(number)
 	{
-		if (this.isUseNativeViewer && this.isDocumentRenderer())
-			return this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.navigateToPage(number);
 		this.WordControl.GoToPage(number);
 	};
 	asc_docs_api.prototype.getCountPages  = function()
 	{
-		if (this.isUseNativeViewer && this.isDocumentRenderer())
-			return this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.getPagesCount();
 		return this.WordControl.m_oDrawingDocument.m_lPagesCount;
 	};
 	asc_docs_api.prototype.getCurrentPage = function()
 	{
-		if (this.isUseNativeViewer && this.isDocumentRenderer())
-			return this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.currentPage;
 		return this.WordControl.m_oDrawingDocument.m_lCurrentPage;
 	};
 	/*callbacks*/
@@ -7529,37 +7510,6 @@ background-repeat: no-repeat;\
 	{
 		this.ImageLoader.bIsLoadDocumentFirst = false;
 		var _bIsOldPaste                      = this.isPasteFonts_Images;
-
-		if (null != this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
-		{
-			if (this.EndActionLoadImages == 1)
-			{
-				this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.LoadDocumentImages);
-			}
-			else if (this.EndActionLoadImages == 2)
-			{
-				if (this.isPasteFonts_Images)
-					this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.LoadImage);
-				else
-					this.sync_EndAction(c_oAscAsyncActionType.Information, c_oAscAsyncAction.LoadImage);
-			}
-			this.EndActionLoadImages = 0;
-
-			this.WordControl.m_oDrawingDocument.OpenDocument();
-
-			this.LoadedObject = null;
-
-			this.bInit_word_control = true;
-
-			if (false === this.isPasteFonts_Images)
-				this.onDocumentContentReady();
-
-			this.WordControl.InitControl();
-
-			if (this.isViewMode)
-				this.asc_setViewMode(true);
-			return;
-		}
 
 		// на методе _openDocumentEndCallback может поменяться this.EndActionLoadImages
 		if (this.EndActionLoadImages == 1)
@@ -11714,25 +11664,10 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.asc_enterText = function(value)
 	{
 		let logicDocument = this.private_GetLogicDocument();
-		let oViewer = this.getDocumentRenderer();
-
-		if (logicDocument)
-			return logicDocument.EnterText(value);
-		else if (oViewer.activeForm && oViewer.fieldFillingMode) {
-			oViewer.activeForm.EnterText(value);
-			if (oViewer.pagesInfo.pages[oViewer.activeForm._page].needRedrawForms) {
-				oViewer._paintForms();
-				oViewer.onUpdateOverlay();
-			}
-
-			this.WordControl.m_oDrawingDocument.TargetStart();
-			// Чтобы при зажатой клавише курсор не пропадал
-			this.WordControl.m_oDrawingDocument.showTarget(true);
-			
-			return true;
-		}
+		if (!logicDocument)
+			return false;
 		
-		return false;
+		return logicDocument.EnterText(value);
 	};
 	asc_docs_api.prototype.asc_correctEnterText = function(oldValue, newValue)
 	{
@@ -11794,7 +11729,7 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.Input_UpdatePos = function()
 	{
-		if (this.WordControl.m_oLogicDocument || this.isDocumentRenderer())
+		if (this.WordControl.m_oLogicDocument)
 			this.WordControl.m_oDrawingDocument.MoveTargetInInputContext();
 	};
 
@@ -12943,13 +12878,6 @@ background-repeat: no-repeat;\
 		return defaultSize;
 	};
 
-	asc_docs_api.prototype.asc_getPdfProps = function()
-	{
-		if (this.isUseNativeViewer && this.isDocumentRenderer())
-			return this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.getDocumentInfo();
-		return null;
-	};
-
 	asc_docs_api.prototype.asc_getAppProps = function()
 	{
 		return this.WordControl && this.WordControl.m_oLogicDocument && this.WordControl.m_oLogicDocument.App || null;
@@ -13496,7 +13424,6 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['asc_getAppProps']                           = asc_docs_api.prototype.asc_getAppProps;
 	asc_docs_api.prototype['asc_getCoreProps']                          = asc_docs_api.prototype.asc_getCoreProps;
 	asc_docs_api.prototype['asc_setCoreProps']                          = asc_docs_api.prototype.asc_setCoreProps;
-	asc_docs_api.prototype['asc_getPdfProps']                           = asc_docs_api.prototype.asc_getPdfProps;
 	asc_docs_api.prototype['asc_isCompatibilityMode']                   = asc_docs_api.prototype.asc_isCompatibilityMode;
 	asc_docs_api.prototype['asc_registerCallback']                      = asc_docs_api.prototype.asc_registerCallback;
 	asc_docs_api.prototype['asc_unregisterCallback']                    = asc_docs_api.prototype.asc_unregisterCallback;
