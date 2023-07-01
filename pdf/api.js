@@ -32,7 +32,7 @@
 
 "use strict";
 
-(function(window)
+(function(window, document)
 {
 	// TODO: Пока тут идет наследование от класса asc_docs_api для документов
 	//       По логике нужно от этого уйти и сделать наследование от базового класса и добавить тип AscCommon.c_oEditorId.PDF
@@ -142,6 +142,91 @@
 			"H": 25.4 * page.H / page.Dpi
 		}
 	};
+	PDFEditorApi.prototype.asc_CheckCopy = function(_clipboard /* CClipboardData */, _formats) {
+		if (!this.DocumentRenderer)
+			return;
+		
+		var _text_object = (AscCommon.c_oAscClipboardDataFormat.Text & _formats) ? {Text : ""} : null;
+		var _html_data;
+		var oActiveForm = this.DocumentRenderer.activeForm;
+		if (oActiveForm && oActiveForm.content.IsSelectionUse()) {
+			let sText = oActiveForm.content.GetSelectedText(true);
+			if (!sText)
+				return;
+			
+			_text_object.Text = sText;
+			_html_data = "<div><p><span>" + sText + "</span></p></div>";
+		}
+		else {
+			_html_data = this.DocumentRenderer.Copy(_text_object)
+		}
+
+		if (AscCommon.c_oAscClipboardDataFormat.Text & _formats)
+			_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Text, _text_object.Text);
+
+		if (AscCommon.c_oAscClipboardDataFormat.Html & _formats)
+			_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, _html_data);
+	};
+	PDFEditorApi.prototype.asc_SelectionCut = function() {
+		if (!this.DocumentRenderer)
+			return;
+		
+		let oField = this.DocumentRenderer.activeForm;
+		if (oField && (oField.type === "text" || (oField.type === "combobox" && oField._editable))) {
+			if (oField.content.IsSelectionUse()) {
+				oField.Remove(-1);
+				this.DocumentRenderer._paintForms();
+				this.DocumentRenderer.onUpdateOverlay();
+				this.WordControl.m_oDrawingDocument.TargetStart();
+				this.WordControl.m_oDrawingDocument.showTarget(true);
+			}
+		}
+	};
+	PDFEditorApi.prototype.asc_PasteData = function(_format, data1, data2, text_data, useCurrentPoint, callback, checkLocks) {
+		if (!this.DocumentRenderer)
+			return;
+		
+		let oField = this.DocumentRenderer.activeForm;
+		if (text_data.length === 0)
+			return;
+		
+		if (oField && (oField.type === "text" || (oField.type === "combobox" && oField._editable))) {
+			let aChars = [];
+			for (let i = 0; i < text_data.length; i++)
+				aChars.push(text_data[i].charCodeAt(0));
+			
+			oField.EnterText(aChars);
+			this.WordControl.m_oDrawingDocument.showTarget(true);
+			this.WordControl.m_oDrawingDocument.TargetStart();
+			this.DocumentRenderer._paintForms();
+			this.DocumentRenderer.onUpdateOverlay();
+		}
+	};
+	PDFEditorApi.prototype.asc_setAdvancedOptions = function(idOption, option) {
+		if (this.advancedOptionsAction !== AscCommon.c_oAscAdvancedOptionsAction.Open
+			|| AscCommon.EncryptionWorker.asc_setAdvancedOptions(this, idOption, option)
+			|| !this.DocumentRenderer)
+			return;
+		
+		this.DocumentRenderer.open(null, option.asc_getPassword());
+	};
+	PDFEditorApi.prototype.startGetDocInfo = function() {
+		let renderer = this.DocumentRenderer;
+		if (!renderer)
+			return;
+		
+		this.sync_GetDocInfoStartCallback();
+		
+		this.DocumentRenderer.startStatistics();
+		this.DocumentRenderer.onUpdateStatistics(0, 0, 0, 0);
+		
+		if (this.DocumentRenderer.isFullText)
+			this.sync_GetDocInfoEndCallback();
+	};
+	PDFEditorApi.prototype.stopGetDocInfo = function() {
+		this.sync_GetDocInfoStopCallback();
+		this.DocumentRenderer.endStatistics();
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -202,14 +287,27 @@
 		
 		this.DocumentRenderer.updateDarkMode();
 	};
+	PDFEditorApi.prototype.updateSkin = function() {
+		let obj_id_main = document.getElementById("id_main");
+		if (obj_id_main) {
+			obj_id_main.style.backgroundColor = AscCommon.GlobalSkin.BackgroundColor;
+			document.getElementById("id_viewer").style.backgroundColor = AscCommon.GlobalSkin.BackgroundColor;
+			document.getElementById("id_panel_right").style.backgroundColor = AscCommon.GlobalSkin.ScrollBackgroundColor;
+			document.getElementById("id_horscrollpanel").style.backgroundColor = AscCommon.GlobalSkin.ScrollBackgroundColor;
+		}
+		
+		if (!this.DocumentRenderer)
+			return;
+		
+		this.DocumentRenderer.updateSkin();
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	window['Asc']['PDFEditorApi'] = PDFEditorApi;
 	AscCommon.PDFEditorApi        = PDFEditorApi;
 	
-	PDFEditorApi.prototype['SetCollaborativeMarksShowType'] = PDFEditorApi.prototype.SetCollaborativeMarksShowType;
-	PDFEditorApi.prototype['GetCollaborativeMarksShowType'] = PDFEditorApi.prototype.GetCollaborativeMarksShowType;
+	PDFEditorApi.prototype["asc_setAdvancedOptions"] = PDFEditorApi.prototype.asc_setAdvancedOptions;
 	
 	
 })(window, window.document);

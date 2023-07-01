@@ -2458,7 +2458,7 @@
 	
 	baseEditorsApi.prototype.asc_setShapeNames = function(oShapeNames)
 	{
-		if(oShapeNames !== null && typeof oShapeNames === "object") 
+		if(oShapeNames !== null && typeof oShapeNames === "object")
 		{
 			this.shapeNames = oShapeNames;
 		}
@@ -2467,7 +2467,7 @@
 	baseEditorsApi.prototype.getShapeName = function(sPreset)
 	{
 		var sShapeName = this.shapeNames[sPreset];
-		if(typeof sShapeName !== "string" || sShapeName.length === 0) 
+		if(typeof sShapeName !== "string" || sShapeName.length === 0)
 		{
 			sShapeName = "Shape";
 		}
@@ -4158,7 +4158,12 @@
 		this.Shortcuts.Add(nActionType, sShortcut[0], sShortcut[1], sShortcut[2], sShortcut[3]);
 		return nActionType;
 	};
-	baseEditorsApi.prototype.asc_setSkin = function(obj)
+	baseEditorsApi.prototype.asc_setSkin = baseEditorsApi.prototype["asc_setSkin"] = function(skin)
+	{
+		AscCommon.updateGlobalSkin(skin);
+		this.updateSkin(skin);
+	};
+	baseEditorsApi.prototype.updateSkin = function()
 	{
 	};
 	baseEditorsApi.prototype.isLocalMode = function()
@@ -4209,6 +4214,32 @@
 	};
 	baseEditorsApi.prototype.updateDarkMode = function()
 	{
+	};
+	//---------------------------------------------------------statistics-----------------------------------------------
+	baseEditorsApi.prototype.startGetDocInfo = function()
+	{
+		this.sync_GetDocInfoStartCallback();
+		this.sync_GetDocInfoEndCallback();
+	};
+	baseEditorsApi.prototype.stopGetDocInfo = function()
+	{
+		this.sync_GetDocInfoStopCallback();
+	};
+	baseEditorsApi.prototype.sync_DocInfoCallback = function(obj)
+	{
+		this.sendEvent("asc_onDocInfo", new AscCommon.CDocInfoProp(obj));
+	};
+	baseEditorsApi.prototype.sync_GetDocInfoStartCallback = function()
+	{
+		this.sendEvent("asc_onGetDocInfoStart");
+	};
+	baseEditorsApi.prototype.sync_GetDocInfoStopCallback = function()
+	{
+		this.sendEvent("asc_onGetDocInfoStop");
+	};
+	baseEditorsApi.prototype.sync_GetDocInfoEndCallback = function()
+	{
+		this.sendEvent("asc_onGetDocInfoEnd");
 	};
 	//---------------------------------------------------------search-----------------------------------------------------
 	baseEditorsApi.prototype.asc_findText = function(oProps, isNext, callback)
@@ -4618,5 +4649,7 @@
 	prot['asc_StartDrawInk'] = prot.asc_StartDrawInk;
 	prot['asc_StartInkEraser'] = prot.asc_StartInkEraser;
 	prot['asc_StopInkDrawer'] = prot.asc_StopInkDrawer;
+	prot['startGetDocInfo'] = prot.startGetDocInfo;
+	prot['stopGetDocInfo'] = prot.stopGetDocInfo;
 
 })(window);

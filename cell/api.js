@@ -7841,9 +7841,7 @@ var editor;
 		return true;
 	};
 
-  spreadsheet_api.prototype.asc_setSkin = function (theme) {
-    AscCommon.updateGlobalSkin(theme);
-
+  spreadsheet_api.prototype.updateSkin = function () {
     var elem = document.getElementById("ws-v-scrollbar");
     if (elem) {
       elem.style.backgroundColor = AscCommon.GlobalSkin.ScrollBackgroundColor;
@@ -9023,8 +9021,6 @@ var editor;
   //data validation
   prot["asc_setDataValidation"] = prot.asc_setDataValidation;
   prot["asc_getDataValidationProps"] = prot.asc_getDataValidationProps;
-
-  prot["asc_setSkin"] = prot.asc_setSkin;
 
   prot["asc_getEscapeSheetName"] = prot.asc_getEscapeSheetName;
 
