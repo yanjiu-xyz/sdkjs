@@ -34,7 +34,8 @@
 			"common/spell/spell.js",
 			"common/zlib/zlib.js",
 			"word/Editor/Table/TableLook.js",
-			"cell/utils/utils.js"
+			"cell/utils/utils.js",
+			"pdf/api.js"
 		],
 		"common": [
 			"common/api/actionOnTimer.js",

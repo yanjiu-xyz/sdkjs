@@ -212,6 +212,7 @@
 		this.internalEvents = {};
 
 		this.skinObject = config['skin'];
+		this.isDarkMode = false;
 
 		this.Shortcuts = new AscCommon.CShortcuts();
 		this.initDefaultShortcuts();
@@ -4195,6 +4196,18 @@
 	{
 	};
 	baseEditorsApi.prototype.asc_correctEnterText = function(oldValue, newValue)
+	{
+	};
+	baseEditorsApi.prototype.asc_setContentDarkMode = baseEditorsApi.prototype["asc_setContentDarkMode"] = function(isDarkMode)
+	{
+		if (this.isDarkMode === isDarkMode)
+			return;
+		
+		this.isDarkMode = isDarkMode;
+		
+		this.updateDarkMode();
+	};
+	baseEditorsApi.prototype.updateDarkMode = function()
 	{
 	};
 	//---------------------------------------------------------search-----------------------------------------------------
