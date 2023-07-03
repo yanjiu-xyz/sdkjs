@@ -2369,143 +2369,6 @@
 			this._paintForms();
 			this._paintFormsHighlight();
 		};
-		this._paintForms = function()
-		{
-			const ctx = this.canvasForms.getContext('2d');
-			ctx.clearRect(0, 0, this.canvasForms.width, this.canvasForms.height);
-
-			let xCenter = this.width >> 1;
-			let yPos = this.scrollY >> 0;
-			if (this.documentWidth > this.width)
-			{
-				xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
-			}
-
-			for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
-			{
-				let aForms = this.pagesInfo.pages[i].fields != null ? this.pagesInfo.pages[i].fields : null;
-				if (this.pagesInfo.pages[i].graphics == null)
-					this.pagesInfo.pages[i].graphics = {};
-
-				if (!aForms)
-					continue;
-
-				// рисуем на отдельном канвасе, кешируем
-				let tmpCanvas = document.createElement('canvas');
-				let page = this.drawingPages[i];
-				if (!page)
-					break;
-
-				let cachedImg = page.ImageForms;
-				let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-				let h = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-
-				if (!cachedImg || this.pagesInfo.pages[i].needRedrawForms || cachedImg.width != w || cachedImg.height != h)
-				{
-					tmpCanvas.width = w;
-					tmpCanvas.height = h;
-					let tmpCanvasCtx = tmpCanvas.getContext('2d');
-
-					let nScale		= AscCommon.AscBrowser.retinaPixelRatio * this.zoom;
-					let widthPx		= this.canvas.width;
-        			let heightPx	= this.canvas.height;
-
-					
-					let oGraphicsWord = new AscCommon.CGraphics();
-					this.pagesInfo.pages[i].graphics.word = oGraphicsWord;
-					oGraphicsWord.init(tmpCanvasCtx, widthPx * nScale, heightPx * nScale, widthPx * g_dKoef_pix_to_mm, heightPx * g_dKoef_pix_to_mm);
-					oGraphicsWord.m_oFontManager = AscCommon.g_fontManager;
-					oGraphicsWord.endGlobalAlphaColor = [255, 255, 255];
-					oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
-
-					let oGraphicsPDF = new AscPDF.CPDFGraphics();
-					this.pagesInfo.pages[i].graphics.pdf = oGraphicsPDF;
-					oGraphicsPDF.Init(tmpCanvasCtx, widthPx * nScale, heightPx * nScale);
-
-					if (this.pagesInfo.pages[i].fields != null) {
-						this.pagesInfo.pages[i].fields.forEach(function(field) {
-							field.Draw();
-						});
-					}
-
-					page.ImageForms = tmpCanvas;
-					this.pagesInfo.pages[i].needRedrawForms = false;
-				}
-				
-				if (this.pagesInfo.pages[i].fields != null) {
-					let bFromStream = this.pagesInfo.pages[i].fields.find(function(field) {
-						if (field.IsNeedDrawFromStream() == true)
-							return true;
-					});
-					
-					if (bFromStream) {
-						this.pagesInfo.pages[i].fields.forEach(function(field) {
-							// если форма не менялась, рисуем внешний вид из потока
-							if (field.IsNeedDrawFromStream() == true)
-								field.DrawOriginView();
-						});
-					}
-				}
-
-				let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
-				let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-
-				ctx.drawImage(page.ImageForms, 0, 0, page.ImageForms.width, page.ImageForms.height, x, y, w, h);
-			}
-
-			if (this.activeForm && this.activeForm.UpdateScroll)
-				this.activeForm.UpdateScroll(true);
-			if (this.activeForm && ["combobox", "text"].includes(this.activeForm.type))
-				this.activeForm.content.RecalculateCurPos();
-		};
-		this._paintFormsHighlight = function()
-		{
-			let canvas = this.canvasFormsHighlight;
-			const ctx = canvas.getContext('2d');
-			ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-			let xCenter = this.width >> 1;
-			let yPos = this.scrollY >> 0;
-			if (this.documentWidth > this.width)
-			{
-				xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
-			}
-
-			for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
-			{
-				let aForms = this.pagesInfo.pages[i].fields != null ? this.pagesInfo.pages[i].fields : null;
-				
-				if (!aForms)
-					continue;
-
-				// рисуем на отдельном канвасе
-				let tmpCanvas = document.createElement('canvas');
-				let page = this.drawingPages[i];
-				if (!page)
-					break;
-
-				let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-				let h = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-				
-				tmpCanvas.width = w;
-				tmpCanvas.height = h;
-
-				let tmpCanvasCtx = tmpCanvas.getContext('2d');
-				let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
-				let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-
-				if (this.pagesInfo.pages[i].fields != null) {
-					this.pagesInfo.pages[i].fields.forEach(function(field) {
-						if (field.IsNeedDrawHighlight())
-							field.DrawHighlight(tmpCanvasCtx);
-						if (field._needDrawHoverBorder)
-							field.DrawHoverBorder(tmpCanvasCtx);
-					});
-				}
-
-				ctx.drawImage(tmpCanvas, 0, 0, page.ImageForms.width, page.ImageForms.height, x, y, w, h);
-			}
-		};
 		this.Get_PageLimits = function() {
 			let W = this.width;
 			let H = this.height;
@@ -3201,6 +3064,143 @@
 			}
 		};
 		this.createComponents();
+	};
+	CHtmlPage.prototype._paintForms = function()
+	{
+		const ctx = this.canvasForms.getContext('2d');
+		ctx.clearRect(0, 0, this.canvasForms.width, this.canvasForms.height);
+		
+		let xCenter = this.width >> 1;
+		let yPos = this.scrollY >> 0;
+		if (this.documentWidth > this.width)
+		{
+			xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
+		}
+		
+		for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
+		{
+			let aForms = this.pagesInfo.pages[i].fields != null ? this.pagesInfo.pages[i].fields : null;
+			if (this.pagesInfo.pages[i].graphics == null)
+				this.pagesInfo.pages[i].graphics = {};
+			
+			if (!aForms)
+				continue;
+			
+			// рисуем на отдельном канвасе, кешируем
+			let tmpCanvas = document.createElement('canvas');
+			let page = this.drawingPages[i];
+			if (!page)
+				break;
+			
+			let cachedImg = page.ImageForms;
+			let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+			let h = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+			
+			if (!cachedImg || this.pagesInfo.pages[i].needRedrawForms || cachedImg.width != w || cachedImg.height != h)
+			{
+				tmpCanvas.width = w;
+				tmpCanvas.height = h;
+				let tmpCanvasCtx = tmpCanvas.getContext('2d');
+				
+				let nScale		= AscCommon.AscBrowser.retinaPixelRatio * this.zoom;
+				let widthPx		= this.canvas.width;
+				let heightPx	= this.canvas.height;
+				
+				
+				let oGraphicsWord = new AscCommon.CGraphics();
+				this.pagesInfo.pages[i].graphics.word = oGraphicsWord;
+				oGraphicsWord.init(tmpCanvasCtx, widthPx * nScale, heightPx * nScale, widthPx * g_dKoef_pix_to_mm, heightPx * g_dKoef_pix_to_mm);
+				oGraphicsWord.m_oFontManager = AscCommon.g_fontManager;
+				oGraphicsWord.endGlobalAlphaColor = [255, 255, 255];
+				oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
+				
+				let oGraphicsPDF = new AscPDF.CPDFGraphics();
+				this.pagesInfo.pages[i].graphics.pdf = oGraphicsPDF;
+				oGraphicsPDF.Init(tmpCanvasCtx, widthPx * nScale, heightPx * nScale);
+				
+				if (this.pagesInfo.pages[i].fields != null) {
+					this.pagesInfo.pages[i].fields.forEach(function(field) {
+						field.Draw();
+					});
+				}
+				
+				page.ImageForms = tmpCanvas;
+				this.pagesInfo.pages[i].needRedrawForms = false;
+			}
+			
+			if (this.pagesInfo.pages[i].fields != null) {
+				let bFromStream = this.pagesInfo.pages[i].fields.find(function(field) {
+					if (field.IsNeedDrawFromStream() == true)
+						return true;
+				});
+				
+				if (bFromStream) {
+					this.pagesInfo.pages[i].fields.forEach(function(field) {
+						// если форма не менялась, рисуем внешний вид из потока
+						if (field.IsNeedDrawFromStream() == true)
+							field.DrawOriginView();
+					});
+				}
+			}
+			
+			let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
+			let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+			
+			ctx.drawImage(page.ImageForms, 0, 0, page.ImageForms.width, page.ImageForms.height, x, y, w, h);
+		}
+		
+		if (this.activeForm && this.activeForm.UpdateScroll)
+			this.activeForm.UpdateScroll(true);
+		if (this.activeForm && ["combobox", "text"].includes(this.activeForm.type))
+			this.activeForm.content.RecalculateCurPos();
+	};
+	CHtmlPage.prototype._paintFormsHighlight = function()
+	{
+		let canvas = this.canvasFormsHighlight;
+		const ctx = canvas.getContext('2d');
+		ctx.clearRect(0, 0, canvas.width, canvas.height);
+		
+		let xCenter = this.width >> 1;
+		let yPos = this.scrollY >> 0;
+		if (this.documentWidth > this.width)
+		{
+			xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
+		}
+		
+		for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
+		{
+			let aForms = this.pagesInfo.pages[i].fields != null ? this.pagesInfo.pages[i].fields : null;
+			
+			if (!aForms)
+				continue;
+			
+			// рисуем на отдельном канвасе
+			let tmpCanvas = document.createElement('canvas');
+			let page = this.drawingPages[i];
+			if (!page)
+				break;
+			
+			let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+			let h = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+			
+			tmpCanvas.width = w;
+			tmpCanvas.height = h;
+			
+			let tmpCanvasCtx = tmpCanvas.getContext('2d');
+			let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
+			let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+			
+			if (this.pagesInfo.pages[i].fields != null) {
+				this.pagesInfo.pages[i].fields.forEach(function(field) {
+					if (field.IsNeedDrawHighlight())
+						field.DrawHighlight(tmpCanvasCtx);
+					if (field._needDrawHoverBorder)
+						field.DrawHoverBorder(tmpCanvasCtx);
+				});
+			}
+			
+			ctx.drawImage(tmpCanvas, 0, 0, page.ImageForms.width, page.ImageForms.height, x, y, w, h);
+		}
 	};
 	CHtmlPage.prototype.createComponents = function()
 	{

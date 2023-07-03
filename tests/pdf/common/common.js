@@ -40,6 +40,9 @@ var AscTest = AscTest || {};
 	
 	AscCommon.CViewer.prototype.createComponents = function(){};
 	AscCommon.CViewer.prototype.resize = function(){};
+	AscCommon.CViewer.prototype._paintForms = function(){};
+	AscCommon.CViewer.prototype._paintFormsHighlight = function(){};
+	AscCommon.CViewer.prototype.resize = function(){};
 	
 	let viewer = new AscCommon.CViewer(null, AscTest.Editor);
 	viewer.file = window["AscViewer"].createEmptyFile();
@@ -57,61 +60,5 @@ var AscTest = AscTest || {};
 		
 		return pdfDoc = new AscPDF.CPDFDoc();
 	};
-	const Letter = {
-		f : 102,
-		i : 105,
-		
-		x : 120,
-		y : 121,
-		z : 122
-	};
-	
-	AscCommon.g_oTableId = {
-		map : {},
-		Add : function(c, id)
-		{
-			this.map[id] = c;
-		},
-		Get_ById : function(id)
-		{
-			if (!this.map[id])
-				return null;
-			
-			return this.map[id];
-		},
-		GetById : function(id)
-		{
-			return this.Get_ById(id);
-		},
-		TurnOff : function(){},
-		TurnOn : function(){}
-	};
-	
-	AscCommon.g_oIdCounter.m_bLoad = false;
-	AscCommon.g_oIdCounter.m_bRead = false;
-	
-	function AddTextToInlineSdt(control, text)
-	{
-		AscWord.TextToRunElements(text, function(runElement)
-		{
-			control.Add(runElement);
-		});
-	}
-	
-	function GetBinaryWriter()
-	{
-		return new AscCommon.CMemory();
-	}
-	function GetBinaryReader(binaryWriter)
-	{
-		return new AscCommon.FT_Stream2(binaryWriter.GetData(), binaryWriter.GetCurPosition());
-	}
-	
-	//--------------------------------------------------------export----------------------------------------------------
-	AscTest.Letter = Letter;
-	
-	AscTest.AddTextToInlineSdt = AddTextToInlineSdt;
-	AscTest.GetBinaryWriter    = GetBinaryWriter;
-	AscTest.GetBinaryReader    = GetBinaryReader;
 	
 })();

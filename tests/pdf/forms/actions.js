@@ -36,18 +36,53 @@ $(function ()
 	let pdfDoc = AscTest.CreatePdfDocument();
 	pdfDoc.AddPage();
 	
+	AscPDF.CTextField.prototype.UpdateScroll = function(){};
+	
 	function CreateTextForm(name)
 	{
 		return pdfDoc.AddField(name, "text", 0, [20, 20, 50, 20]);
 	}
+	function EnterTextToForm(form, text)
+	{
+		let chars = text.codePointsArray();
+		AscTest.Editor.DocumentRenderer.activeForm = form;
+		form.EnterText(chars);
+		pdfDoc.EnterDownActiveField();
+	}
+	function AddJsAction(form, trigger, script)
+	{
+		form.SetActionsOnOpen(trigger, [{"S" : "JavaScript", "JS" : script}]);
+	}
 	
 	QUnit.module("PDF form actions test");
 	
-	QUnit.test("Actions", function (assert)
+	QUnit.test("Test calculate action", function (assert)
 	{
 		let textForm1 = CreateTextForm("TextForm1");
+		let textForm2 = CreateTextForm("TextForm2");
+		let textForm3 = CreateTextForm("TextForm3");
 		
-		assert.true(!!pdfDoc, "Pdf document created");
+		textForm1.SetValue("1");
+		textForm2.SetValue("2");
+		textForm3.SetValue("3");
 		
+		assert.strictEqual(textForm1.GetValue(), "1", "Check form1 value");
+		assert.strictEqual(textForm2.GetValue(), "2", "Check form2 value");
+		assert.strictEqual(textForm3.GetValue(), "3", "Check form3 value");
+		
+		AddJsAction(textForm1, AscPDF.FORMS_TRIGGERS_TYPES.Calculate, "this.getField('TextForm2').value += 1");
+		AddJsAction(textForm2, AscPDF.FORMS_TRIGGERS_TYPES.Calculate, "this.getField('TextForm3').value += 1");
+		AddJsAction(textForm3, AscPDF.FORMS_TRIGGERS_TYPES.Calculate, "this.getField('TextForm1').value += 1");
+		
+		EnterTextToForm(textForm2, "2");
+		assert.strictEqual(textForm1.GetValue(), "2", "Check form1 value");
+		assert.strictEqual(textForm2.GetValue(), "22", "Check form2 value");
+		assert.strictEqual(textForm3.GetValue(), "4", "Check form3 value");
+
+		EnterTextToForm(textForm3, "3");
+		
+		assert.strictEqual(textForm1.GetValue(), "3", "Check form1 value");
+		assert.strictEqual(textForm2.GetValue(), "23", "Check form2 value");
+		assert.strictEqual(textForm3.GetValue(), "43", "Check form3 value");
 	});
 });

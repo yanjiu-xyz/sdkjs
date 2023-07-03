@@ -918,7 +918,7 @@
      * @param {Array} aCoords - An array of four numbers in rotated user space that specifies the size and placement
         of the form field. These four numbers are the coordinates of the bounding rectangle,
         in the following order: upper-left x, upper-left y, lower-right x and lower-right y 
-	 * @returns {CBaseForm}
+	 * @returns {AscPDF.CBaseField}
 	 */
     CPDFDoc.prototype.AddField = function(cName, cFieldType, nPageNum, aCoords) {
         function checkValidParams(cFieldType, nPageNum, aCoords) {
@@ -980,9 +980,9 @@
 	 * Changes the interactive field name.
 	 * @memberof CPDFDoc
 	 * @typeofeditors ["PDF"]
-     * @param {CBaseForm} oField - source field.
+     * @param {AscPDF.CBaseField} oField - source field.
      * @param {String} cName - the new field name.
-	 * @returns {CBaseForm}
+	 * @returns {AscPDF.CBaseField}
 	 */
     CPDFDoc.prototype.private_changeFieldName = function(oField, cName) {
         while (cName.indexOf('..') != -1)
@@ -1078,9 +1078,9 @@
 	 * Hides/shows forms by names
 	 * @memberof CPDFDoc
      * @param {boolean} bHidden
-     * @param {CBaseField[]} aNames - array with forms names to reset. If param is undefined or array is empty then resets all forms.
+     * @param {AscPDF.CBaseField[]} aNames - array with forms names to reset. If param is undefined or array is empty then resets all forms.
 	 * @typeofeditors ["PDF"]
-	 * @returns {CBaseForm}
+	 * @returns {AscPDF.CBaseField}
 	 */
     CPDFDoc.prototype.HideShowForms = function(bHidden, aNames) {
         let oActionsQueue = this.GetActionsQueue();
