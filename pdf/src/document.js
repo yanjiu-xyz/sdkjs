@@ -82,7 +82,11 @@
     CCalculateInfo.prototype.GetSourceField = function() {
         return this.sourceField;
     };
-
+	
+	/**
+	 * Main class for working with PDF structure
+	 * @constructor
+	 */
     function CPDFDoc() {
         this.rootFields = new Map(); // root поля форм
         this.widgets    = []; // непосредственно сами поля, которые отрисовываем (дочерние без потомков)
@@ -868,11 +872,11 @@
         let oViewer = editor.getDocumentRenderer();
         let oFile   = oViewer.file;
 
-        if (nPos == undefined)
+        if (nPos === undefined || -1 === nPos)
             nPos = oFile.pages.length;
-        if (nWidth == undefined)
+        if (nWidth === undefined)
             nWidth = 612;
-        if (nHeight == undefined)
+        if (nHeight === undefined)
             nHeight = 792;
 
         oFile.pages.splice(nPos, 0, {
@@ -881,6 +885,14 @@
             fonts: [],
             Dpi: 72
         });
+	
+		oViewer.drawingPages.splice(nPos, 0, {
+			X : 0,
+			Y : 0,
+			W : (oFile.pages[nPos].W * 96 / oFile.pages[nPos].Dpi) >> 0,
+			H : (oFile.pages[nPos].H * 96 / oFile.pages[nPos].Dpi) >> 0,
+			Image : undefined
+		});
 
         if (oViewer.pagesInfo.pages.length == 0)
             oViewer.pagesInfo.setCount(1);

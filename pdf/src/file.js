@@ -2457,5 +2457,9 @@ void main() {\n\
             //file.cacheManager = new AscCommon.CCacheManager();
         }
     };
+	window["AscViewer"].createEmptyFile = function()
+	{
+		return new CFile();
+	};
 
 })(window, undefined);

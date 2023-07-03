@@ -262,38 +262,6 @@
 				this.resize();
 		};
 
-		this.createComponents = function()
-		{
-			var elements = "";
-			elements += "<canvas id=\"id_viewer\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
-			elements += "<canvas id=\"id_overlay\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
-			elements += "<canvas id=\"id_formsHighlight\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
-			elements += "<canvas id=\"id_forms\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
-			elements += "<div id=\"id_vertical_scroll\" class=\"block_elem\" style=\"display:none;left:0px;top:0px;width:0px;height:0px;\"></div>";
-			elements += "<div id=\"id_horizontal_scroll\" class=\"block_elem\" style=\"display:none;left:0px;top:0px;width:0px;height:0px;\"></div>";
-			elements += "<div id=\"id_target_cursor\" class=\"block_elem\" width=\"1\" height=\"1\" style=\"touch-action:none;-ms-touch-action: none;-webkit-user-select: none;width:2px;height:13px;z-index:4;\"></div>"
-			
-			//this.parent.style.backgroundColor = this.backgroundColor; <= this color from theme
-			this.parent.innerHTML = elements;
-
-			this.canvas = document.getElementById("id_viewer");
-			this.canvas.style.backgroundColor = this.backgroundColor;
-
-			this.canvasOverlay = document.getElementById("id_overlay");
-			this.canvasOverlay.style.pointerEvents = "none";
-
-			this.canvasForms = document.getElementById("id_forms");
-			this.canvasFormsHighlight = document.getElementById("id_formsHighlight");
-
-			this.Api.WordControl.m_oDrawingDocument.TargetHtmlElement = document.getElementById('id_target_cursor');
-
-			this.overlay = new AscCommon.COverlay();
-			this.overlay.m_oControl = { HtmlElement : this.canvasOverlay };
-			this.overlay.m_bIsShow = true;
-
-			this.updateSkin();
-		};
-
 		this.setThumbnailsControl = function(thumbnails)
 		{
 			this.thumbnails = thumbnails;
@@ -483,149 +451,6 @@
 
 			if (this.disabledPaintOnScroll != true)
 				this.paint();
-		};
-
-		this.resize = function(isDisablePaint)
-		{
-			this.isFocusOnThumbnails = false;
-
-			var rect = this.canvas.getBoundingClientRect();
-			this.x = rect.left;
-			this.y = rect.top;
-
-			var oldsize = {w: this.width, h: this.height};
-			this.width = this.parent.offsetWidth - this.scrollWidth;
-			this.height = this.parent.offsetHeight;
-
-			if (this.zoomMode === ZoomMode.Width)
-				this.zoom = this.calculateZoomToWidth();
-			else if (this.zoomMode === ZoomMode.Page)
-				this.zoom = this.calculateZoomToHeight();
-
-			// в мобильной версии мы будем получать координаты от MobileTouchManager (до этого момента они уже должны быть) и не нужно их запоминать, так как мы перетрём нужные нам значения
-			// ну а если их нет и зум произошёл не от тача, то запоминаем их как при обычном зуме
-			if (!this.zoomCoordinate)
-				this.fixZoomCoord( (this.width >> 1), (this.height >> 1) );
-
-			this.sendEvent("onZoom", this.zoom, this.zoomMode);
-
-			this.recalculatePlaces();
-
-			this.isVisibleHorScroll = (this.documentWidth > this.width) ? true : false;
-			if (this.isVisibleHorScroll)
-				this.height -= this.scrollWidth;
-			
-			this.canvas.style.width = this.width + "px";
-			this.canvas.style.height = this.height + "px";
-			AscCommon.calculateCanvasSize(this.canvas);
-
-			this.canvasOverlay.style.width = this.width + "px";
-			this.canvasOverlay.style.height = this.height + "px";
-			AscCommon.calculateCanvasSize(this.canvasOverlay);
-			
-			this.canvasForms.style.width = this.width + "px";
-			this.canvasForms.style.height = this.height + "px";
-			AscCommon.calculateCanvasSize(this.canvasForms);
-
-			this.canvasFormsHighlight.style.width = this.width + "px";
-			this.canvasFormsHighlight.style.height = this.height + "px";
-			AscCommon.calculateCanvasSize(this.canvasFormsHighlight);
-			
-			var scrollV = document.getElementById("id_vertical_scroll");
-			scrollV.style.display = "block";
-			scrollV.style.left = this.width + "px";
-			scrollV.style.top = "0px";
-			scrollV.style.width = this.scrollWidth + "px";
-			scrollV.style.height = this.height + "px";
-
-			var scrollH = document.getElementById("id_horizontal_scroll");
-			scrollH.style.display = this.isVisibleHorScroll ? "block" : "none";
-			scrollH.style.left = "0px";
-			scrollH.style.top = this.height + "px";
-			scrollH.style.width = this.width + "px";
-			scrollH.style.height = this.scrollWidth + "px";
-
-			var settings = this.CreateScrollSettings();
-			settings.isHorizontalScroll = true;
-			settings.isVerticalScroll = false;
-			settings.contentW = this.documentWidth;
-			
-			if (this.m_oScrollHorApi)
-				this.m_oScrollHorApi.Repos(settings, this.isVisibleHorScroll);
-			else
-			{
-				this.m_oScrollHorApi = new AscCommon.ScrollObject("id_horizontal_scroll", settings);
-
-				this.m_oScrollHorApi.onLockMouse  = function(evt) {
-					AscCommon.check_MouseDownEvent(evt, true);
-					AscCommon.global_mouseEvent.LockMouse();
-				};
-				this.m_oScrollHorApi.offLockMouse = function(evt) {
-					AscCommon.check_MouseUpEvent(evt);
-				};
-				this.m_oScrollHorApi.bind("scrollhorizontal", function(evt) {
-					oThis.scrollHorizontal(evt.scrollD, evt.maxScrollX);
-				});
-			}
-
-			settings = this.CreateScrollSettings();
-			settings.isHorizontalScroll = false;
-			settings.isVerticalScroll = true;
-			settings.contentH = this.documentHeight;
-			if (this.m_oScrollVerApi)
-				this.m_oScrollVerApi.Repos(settings, undefined, true);
-			else
-			{
-				this.m_oScrollVerApi = new AscCommon.ScrollObject("id_vertical_scroll", settings);
-
-				this.m_oScrollVerApi.onLockMouse  = function(evt) {
-					AscCommon.check_MouseDownEvent(evt, true);
-					AscCommon.global_mouseEvent.LockMouse();
-				};
-				this.m_oScrollVerApi.offLockMouse = function(evt) {
-					AscCommon.check_MouseUpEvent(evt);
-				};
-				this.m_oScrollVerApi.bind("scrollvertical", function(evt) {
-					oThis.scrollVertical(evt.scrollD, evt.maxScrollY);
-				});
-			}
-
-			this.scrollMaxX = this.m_oScrollHorApi.getMaxScrolledX();
-			this.scrollMaxY = this.m_oScrollVerApi.getMaxScrolledY();
-
-			if (this.scrollX >= this.scrollMaxX)
-				this.scrollX = this.scrollMaxX;
-			if (this.scrollY >= this.scrollMaxY)
-				this.scrollY = this.scrollMaxY;
-
-			if (this.zoomCoordinate && this.isDocumentContentReady)
-			{
-				var newPoint = this.ConvertCoordsToCursor(this.zoomCoordinate.x, this.zoomCoordinate.y, this.zoomCoordinate.index);
-				// oldsize используется чтобы при смене ориентации экрана был небольшой скролл
-				var shiftX = this.Api.isMobileVersion ? ( (oldsize.w - this.width) >> 1) : 0;
-				var shiftY = this.Api.isMobileVersion ? ( (oldsize.h - this.height) >> 1) : 0;
-				var newScrollX = this.scrollX + newPoint.x - this.zoomCoordinate.xShift + shiftX;
-				var newScrollY = this.scrollY + newPoint.y - this.zoomCoordinate.yShift + shiftY;
-				newScrollX = Math.max(0, Math.min(newScrollX, this.scrollMaxX) );
-				newScrollY = Math.max(0, Math.min(newScrollY, this.scrollMaxY) );
-				if (this.scrollY == 0 && !this.Api.isMobileVersion)
-					newScrollY = 0;
-
-				this.m_oScrollVerApi.scrollToY(newScrollY);
-				this.m_oScrollHorApi.scrollToX(newScrollX);
-			}
-
-			if (this.thumbnails)
-				this.thumbnails.resize();
-
-			if (true !== isDisablePaint)
-				this.timerSync();
-
-			if (this.Api.WordControl.MobileTouchManager)
-				this.Api.WordControl.MobileTouchManager.Resize();
-
-			if (!this.Api.isMobileVersion || !this.skipClearZoomCoord)
-				this.clearZoomCoord();
 		};
 
 		this.onLoadModule = function()
@@ -3376,7 +3201,180 @@
 			}
 		};
 		this.createComponents();
-	}
+	};
+	CHtmlPage.prototype.createComponents = function()
+	{
+		var elements = "";
+		elements += "<canvas id=\"id_viewer\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
+		elements += "<canvas id=\"id_overlay\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
+		elements += "<canvas id=\"id_formsHighlight\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
+		elements += "<canvas id=\"id_forms\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
+		elements += "<div id=\"id_vertical_scroll\" class=\"block_elem\" style=\"display:none;left:0px;top:0px;width:0px;height:0px;\"></div>";
+		elements += "<div id=\"id_horizontal_scroll\" class=\"block_elem\" style=\"display:none;left:0px;top:0px;width:0px;height:0px;\"></div>";
+		elements += "<div id=\"id_target_cursor\" class=\"block_elem\" width=\"1\" height=\"1\" style=\"touch-action:none;-ms-touch-action: none;-webkit-user-select: none;width:2px;height:13px;z-index:4;\"></div>"
+		
+		//this.parent.style.backgroundColor = this.backgroundColor; <= this color from theme
+		this.parent.innerHTML = elements;
+		
+		this.canvas = document.getElementById("id_viewer");
+		this.canvas.style.backgroundColor = this.backgroundColor;
+		
+		this.canvasOverlay = document.getElementById("id_overlay");
+		this.canvasOverlay.style.pointerEvents = "none";
+		
+		this.canvasForms = document.getElementById("id_forms");
+		this.canvasFormsHighlight = document.getElementById("id_formsHighlight");
+		
+		this.Api.WordControl.m_oDrawingDocument.TargetHtmlElement = document.getElementById('id_target_cursor');
+		
+		this.overlay = new AscCommon.COverlay();
+		this.overlay.m_oControl = { HtmlElement : this.canvasOverlay };
+		this.overlay.m_bIsShow = true;
+		
+		this.updateSkin();
+	};
+	CHtmlPage.prototype.resize = function(isDisablePaint)
+	{
+		this.isFocusOnThumbnails = false;
+		
+		var rect = this.canvas.getBoundingClientRect();
+		this.x = rect.left;
+		this.y = rect.top;
+		
+		var oldsize = {w: this.width, h: this.height};
+		this.width = this.parent.offsetWidth - this.scrollWidth;
+		this.height = this.parent.offsetHeight;
+		
+		if (this.zoomMode === ZoomMode.Width)
+			this.zoom = this.calculateZoomToWidth();
+		else if (this.zoomMode === ZoomMode.Page)
+			this.zoom = this.calculateZoomToHeight();
+		
+		// в мобильной версии мы будем получать координаты от MobileTouchManager (до этого момента они уже должны быть) и не нужно их запоминать, так как мы перетрём нужные нам значения
+		// ну а если их нет и зум произошёл не от тача, то запоминаем их как при обычном зуме
+		if (!this.zoomCoordinate)
+			this.fixZoomCoord( (this.width >> 1), (this.height >> 1) );
+		
+		this.sendEvent("onZoom", this.zoom, this.zoomMode);
+		
+		this.recalculatePlaces();
+		
+		this.isVisibleHorScroll = (this.documentWidth > this.width) ? true : false;
+		if (this.isVisibleHorScroll)
+			this.height -= this.scrollWidth;
+		
+		this.canvas.style.width = this.width + "px";
+		this.canvas.style.height = this.height + "px";
+		AscCommon.calculateCanvasSize(this.canvas);
+		
+		this.canvasOverlay.style.width = this.width + "px";
+		this.canvasOverlay.style.height = this.height + "px";
+		AscCommon.calculateCanvasSize(this.canvasOverlay);
+		
+		this.canvasForms.style.width = this.width + "px";
+		this.canvasForms.style.height = this.height + "px";
+		AscCommon.calculateCanvasSize(this.canvasForms);
+		
+		this.canvasFormsHighlight.style.width = this.width + "px";
+		this.canvasFormsHighlight.style.height = this.height + "px";
+		AscCommon.calculateCanvasSize(this.canvasFormsHighlight);
+		
+		var scrollV = document.getElementById("id_vertical_scroll");
+		scrollV.style.display = "block";
+		scrollV.style.left = this.width + "px";
+		scrollV.style.top = "0px";
+		scrollV.style.width = this.scrollWidth + "px";
+		scrollV.style.height = this.height + "px";
+		
+		var scrollH = document.getElementById("id_horizontal_scroll");
+		scrollH.style.display = this.isVisibleHorScroll ? "block" : "none";
+		scrollH.style.left = "0px";
+		scrollH.style.top = this.height + "px";
+		scrollH.style.width = this.width + "px";
+		scrollH.style.height = this.scrollWidth + "px";
+		
+		var settings = this.CreateScrollSettings();
+		settings.isHorizontalScroll = true;
+		settings.isVerticalScroll = false;
+		settings.contentW = this.documentWidth;
+		
+		if (this.m_oScrollHorApi)
+			this.m_oScrollHorApi.Repos(settings, this.isVisibleHorScroll);
+		else
+		{
+			this.m_oScrollHorApi = new AscCommon.ScrollObject("id_horizontal_scroll", settings);
+			
+			this.m_oScrollHorApi.onLockMouse  = function(evt) {
+				AscCommon.check_MouseDownEvent(evt, true);
+				AscCommon.global_mouseEvent.LockMouse();
+			};
+			this.m_oScrollHorApi.offLockMouse = function(evt) {
+				AscCommon.check_MouseUpEvent(evt);
+			};
+			this.m_oScrollHorApi.bind("scrollhorizontal", function(evt) {
+				oThis.scrollHorizontal(evt.scrollD, evt.maxScrollX);
+			});
+		}
+		
+		settings = this.CreateScrollSettings();
+		settings.isHorizontalScroll = false;
+		settings.isVerticalScroll = true;
+		settings.contentH = this.documentHeight;
+		if (this.m_oScrollVerApi)
+			this.m_oScrollVerApi.Repos(settings, undefined, true);
+		else
+		{
+			this.m_oScrollVerApi = new AscCommon.ScrollObject("id_vertical_scroll", settings);
+			
+			this.m_oScrollVerApi.onLockMouse  = function(evt) {
+				AscCommon.check_MouseDownEvent(evt, true);
+				AscCommon.global_mouseEvent.LockMouse();
+			};
+			this.m_oScrollVerApi.offLockMouse = function(evt) {
+				AscCommon.check_MouseUpEvent(evt);
+			};
+			this.m_oScrollVerApi.bind("scrollvertical", function(evt) {
+				oThis.scrollVertical(evt.scrollD, evt.maxScrollY);
+			});
+		}
+		
+		this.scrollMaxX = this.m_oScrollHorApi.getMaxScrolledX();
+		this.scrollMaxY = this.m_oScrollVerApi.getMaxScrolledY();
+		
+		if (this.scrollX >= this.scrollMaxX)
+			this.scrollX = this.scrollMaxX;
+		if (this.scrollY >= this.scrollMaxY)
+			this.scrollY = this.scrollMaxY;
+		
+		if (this.zoomCoordinate && this.isDocumentContentReady)
+		{
+			var newPoint = this.ConvertCoordsToCursor(this.zoomCoordinate.x, this.zoomCoordinate.y, this.zoomCoordinate.index);
+			// oldsize используется чтобы при смене ориентации экрана был небольшой скролл
+			var shiftX = this.Api.isMobileVersion ? ( (oldsize.w - this.width) >> 1) : 0;
+			var shiftY = this.Api.isMobileVersion ? ( (oldsize.h - this.height) >> 1) : 0;
+			var newScrollX = this.scrollX + newPoint.x - this.zoomCoordinate.xShift + shiftX;
+			var newScrollY = this.scrollY + newPoint.y - this.zoomCoordinate.yShift + shiftY;
+			newScrollX = Math.max(0, Math.min(newScrollX, this.scrollMaxX) );
+			newScrollY = Math.max(0, Math.min(newScrollY, this.scrollMaxY) );
+			if (this.scrollY == 0 && !this.Api.isMobileVersion)
+				newScrollY = 0;
+			
+			this.m_oScrollVerApi.scrollToY(newScrollY);
+			this.m_oScrollHorApi.scrollToX(newScrollX);
+		}
+		
+		if (this.thumbnails)
+			this.thumbnails.resize();
+		
+		if (true !== isDisablePaint)
+			this.timerSync();
+		
+		if (this.Api.WordControl.MobileTouchManager)
+			this.Api.WordControl.MobileTouchManager.Resize();
+		
+		if (!this.Api.isMobileVersion || !this.skipClearZoomCoord)
+			this.clearZoomCoord();
+	};
 
 	function CCurrentPageDetector(w, h)
 	{
