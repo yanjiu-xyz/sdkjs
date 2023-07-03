@@ -10575,6 +10575,7 @@
                     this.InitOpenManager.InitStyleManager(oStyleObject, aCellXfs);
                     this.InitOpenManager.Dxfs = oStyleObject.aDxfs;
                     wb.oNumFmtsOpen = oStyleObject.oNumFmts;
+                    wb.dxfsOpen = oStyleObject.aDxfs;
                 }
             }
 

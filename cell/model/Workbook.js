@@ -8867,7 +8867,7 @@
 		var c1 = pivotRange.c1 + location.firstDataCol;
 		let traversal = new AscCommonExcel.DataRowTraversal(pivotFields, dataFields, rowItems, colItems, rowFields, colFields);
 		traversal.initRow(dataRow);
-		
+		pivotTable.formatsManager.update();
 		var fieldIndex;
 		let props = {rowFieldSubtotal: undefined, itemSd: undefined};
 		var oCellValue;
@@ -8888,6 +8888,7 @@
 					}
 				}
 			} else {
+				traversal.rowValueCache = [];
 				traversal.rowFieldItemCache = [];
 			}
 			//todo
@@ -8899,14 +8900,21 @@
 				for (var colItemsIndex = 0; colItemsIndex < colItems.length; ++colItemsIndex) {
 					var colItem = colItems[colItemsIndex];
 					var colR = colItem.getR();
-					traversal.setStartColIndex(pivotFields, fieldIndex, colItem, colR, colFields, rowItem);
+					traversal.setStartColIndex(pivotFields, colItem, colR, colFields);
 					oCellValue = traversal.getCellValue(dataFields, rowItem, colItem, props, dataRow, rowItemsIndex, colItemsIndex);
 					if (oCellValue) {
-						var cells = this.getRange4(r1 + rowItemsIndex, c1 + colItemsIndex);
-						if (traversal.dataField && traversal.dataField.num) {
-							cells.setNum(traversal.dataField.num);
+						var dataIndex = Math.max(colItem.i, rowItem.i)
+						var cell = this.getRange4(r1 + rowItemsIndex, c1 + colItemsIndex);
+						var num = pivotTable.getNum({
+							values: traversal.getCurrentFieldValues(),
+							isGrandRow: rowItem.t === Asc.c_oAscItemType.Grand,
+							isGrandCol: colItem.t === Asc.c_oAscItemType.Grand,
+							field: Asc.c_oAscItemType.Grand !== rowItem.t ? fieldIndex : traversal.fieldIndex
+						}, dataIndex);
+						if (num) {
+							cell.setNum(num);
 						}
-						cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
+						cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 					}
 				}
 			}
