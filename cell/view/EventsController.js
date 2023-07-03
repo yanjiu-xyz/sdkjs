@@ -691,7 +691,7 @@
 		 * @param event {MouseEvent}
 		 * @param callback {Function}
 		 */
-		asc_CEventsController.prototype._moveRangeHandle = function (event, callback) {
+		asc_CEventsController.prototype._moveRangeHandle = function (event, callback, colRowMoveProps) {
 			var t = this;
 			// Обновляемся в режиме перемещения диапазона
 			var coord = this._getCoordinates(event);
@@ -700,7 +700,7 @@
 					if (!d) return;
 					t.scroll(d);
 					asc_applyFunction(callback);
-				});
+				}, colRowMoveProps);
 		};
 
 		/**
@@ -1577,7 +1577,7 @@
 			AscCommon.global_mouseEvent.LockMouse();
 
 			if(t.view.Api.isEyedropperStarted()) {
-				return ;
+				return;
 			}
 			if (t.handlers.trigger("isGlobalLockEditCell")) {
 				return;
@@ -1651,7 +1651,7 @@
 
 			if (!t.getCellEditMode() && !t.getSelectionDialogMode()) {
 				this.gotFocus(true);
-				if (event.shiftKey) {
+				if (event.shiftKey && !(t.targetInfo.target === c_oTargetType.ColumnRowHeaderMove && this.canEdit())) {
 					t.isSelectMode = true;
 					t._changeSelection(event);
 					return;
@@ -1757,9 +1757,16 @@
 					this.isFillHandleMode = true;
 					this._changeFillHandle(event, null, t.targetInfo.tableIndex);
 				} else {
-					this.isSelectMode = true;
-					this.handlers.trigger("changeSelection", /*isStartPoint*/true, coord.x, coord.y, /*isCoord*/true,
-						ctrlKey);
+					if (this.targetInfo && this.targetInfo.target === c_oTargetType.ColumnRowHeaderMove) {
+						this.isMoveRangeMode = true;
+						t._moveRangeHandle(event, null, {ctrlKey: ctrlKey, shiftKey: event.shiftKey});
+						t.handlers.trigger("updateWorksheet", coord.x, coord.y);
+						//t.handlers.trigger("updateWorksheet", coord.x, coord.y, ctrlKey, function(info){t.targetInfo = info;});
+					} else {
+						this.isSelectMode = true;
+						this.handlers.trigger("changeSelection", /*isStartPoint*/true, coord.x, coord.y, /*isCoord*/true,
+							ctrlKey);
+					}
 				}
 			}
 		};
@@ -1847,6 +1854,10 @@
 				return;
 			}
 
+			if (this.targetInfo && this.targetInfo.target === c_oTargetType.ColumnHeader) {
+				this._onMouseMove(event);
+			}
+
 			// Мы можем dblClick и не отработать, если вышли из области и отпустили кнопку мыши, нужно отработать
 			this.showCellEditorCursor();
 		};
@@ -1908,7 +1919,7 @@
 				return true;
 			}
 
-			if (t.isShapeAction || graphicsInfo) {
+			if (t.isShapeAction || graphicsInfo || asc["editor"].isInkDrawerOn()) {
 				event.isLocked = t.isMousePressed;
 				t.handlers.trigger("graphicObjectMouseMove", event, coord.x, coord.y);
 				t.handlers.trigger("updateWorksheet", coord.x, coord.y, ctrlKey, function(info){t.targetInfo = info;});

@@ -10272,16 +10272,16 @@ Because of this, the display is sometimes not correct.
           const curPage = logicDocument.Pages[logicDocument.controller_GetCurPage()];
           const heightPage = curPage.Height - curPage.Margins.Top - (curPage.Height - curPage.Margins.Bottom);
           const widthPage = curPage.Width - curPage.Margins.Left - (curPage.Width - curPage.Margins.Right);
-          const cH = widthPage / this.extX;
-          const cW = heightPage / this.extY;
-          if (cH < 1 || cW < 1) {
-            const minCoefficient = Math.min(cH, cW);
-            this.changeSize(minCoefficient, minCoefficient);
-          }
+					this.fitForSizes(heightPage, widthPage);
         }
       }
     };
-
+	  SmartArt.prototype.fitForSizes = function (nFitHeight, nFitWidth) {
+		  const cH = nFitWidth / this.extX;
+		  const cW = nFitHeight / this.extY;
+			  const minCoefficient = Math.min(cH, cW);
+			  this.changeSize(minCoefficient, minCoefficient);
+	  };
     SmartArt.prototype.fitFontSize = function () {
       this.spTree[0] && this.spTree[0].spTree.forEach(function (oShape) {
         oShape.recalculateContentWitCompiledPr();
@@ -11891,6 +11891,7 @@ Because of this, the display is sometimes not correct.
     SmartArt.prototype.convertToWord = function(document) {
       var oCopy = this.copy();
       oCopy.setBDeleted2(false);
+      oCopy.removePlaceholder();
       return oCopy;
     };
     SmartArt.prototype.convertToPPTX = function(drawingDocument, worksheet) {

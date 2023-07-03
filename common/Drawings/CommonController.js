@@ -1602,39 +1602,6 @@
 					return null;
 				},
 
-				handleChartTitleMoveHit: function (title, e, x, y, drawing, group, pageIndex) {
-					var selector = group ? group : this;
-					if (this.handleEventMode === HANDLE_EVENT_MODE_HANDLE) {
-						this.checkChartTextSelection();
-						selector.resetSelection(this);
-						selector.selectObject(drawing, pageIndex);
-						selector.selection.chartSelection = drawing;
-						if (title.select) {
-							drawing.selectTitle(title, pageIndex);
-						}
-
-						this.arrPreTrackObjects.length = 0;
-						this.arrPreTrackObjects.push(new AscFormat.MoveChartObjectTrack(title, drawing));
-						this.changeCurrentState(new AscFormat.PreMoveState(this, x, y, false, false, drawing, true, true));
-						this.checkFormatPainterOnMouseEvent();
-						this.updateSelectionState();
-						this.updateOverlay();
-
-						if (Asc["editor"] && Asc["editor"].wb) {
-							var ws = Asc["editor"].wb.getWorksheet();
-							if (ws) {
-								var ct = ws.getCursorTypeFromXY(ws.objectRender.lastX, ws.objectRender.lastY);
-								if (ct) {
-									Asc["editor"].wb._onUpdateCursor(ct.cursor);
-								}
-							}
-						}
-						return true;
-					} else {
-						return {objectId: drawing.Get_Id(), cursorType: "move", bMarker: false};
-					}
-				},
-
 				checkSendCursorInfo: function () {
 					var oTargetInfo = this.getDocumentPositionForCollaborative();
 					var bSend = false;
@@ -1874,7 +1841,7 @@
 							tx = invert_transform_text.TransformPointX(x, y);
 							ty = invert_transform_text.TransformPointY(x, y);
 							if (!this.isSlideShow() && (this.document || (this.drawingObjects.cSld && !(this.noNeedUpdateCursorType === true)))) {
-								if (this.document && this.document.IsDocumentEditor() && object instanceof CShape && object.isForm()) {
+								if (this.document && this.document.IsDocumentEditor() && object instanceof AscFormat.CShape && object.isForm()) {
 									var oForm = object.getInnerForm();
 									if (oForm)
 										oForm.DrawContentControlsTrack(AscCommon.ContentControlTrack.Hover, tx, ty, 0, false);
@@ -2261,8 +2228,11 @@
 					} else if (oChart) {
 						oChart.drawSelect(drawingDocument, pageIndex);
 					} else if (oWrp) {
-						if (oWrp.selectStartPage === pageIndex)
-							oWrp.DrawEditWrapPointsPolygon(oWrp.parent.wrappingPolygon.calculatedPoints, new AscCommon.CMatrix());
+						if (oWrp.selectStartPage === pageIndex) {
+							if(oTrackDrawer.DrawEditWrapPointsPolygon) {
+								oTrackDrawer.DrawEditWrapPointsPolygon(oWrp.parent.wrappingPolygon.calculatedPoints, new AscCommon.CMatrix());
+							}
+						}
 					} else {
 						for (i = 0; i < this.selectedObjects.length; ++i) {
 							let oDrawing = this.selectedObjects[i];
@@ -5946,12 +5916,17 @@
 				},
 
 				checkTrackDrawings: function () {
+					return this.isTrackingDrawings()
+						|| this.curState instanceof AscFormat.CInkDrawState
+						|| this.curState instanceof AscFormat.CInkEraseState;
+				},
+
+
+				isTrackingDrawings: function () {
 					return this.curState instanceof AscFormat.StartAddNewShape
 						|| this.curState instanceof AscFormat.SplineBezierState
 						|| this.curState instanceof AscFormat.PolyLineAddState
 						|| this.curState instanceof AscFormat.AddPolyLine2State
-						|| this.curState instanceof AscFormat.CInkDrawState
-						|| this.curState instanceof AscFormat.CInkEraseState
 						|| this.haveTrackedObjects();
 				},
 
@@ -7122,7 +7097,7 @@
 										textFitType: drawing.getTextFitType(),
 										vertOverflowType: drawing.getVertOverflowType(),
 										signatureId: drawing.getSignatureLineGuid(),
-										shadow: drawing.getOuterShdw(),
+										shadow: drawing.getOuterShdwAsc(),
 										anchor: drawing.getDrawingBaseType(),
 										protectionLockText: (bGroupSelection || !drawing.group) ? drawing.getProtectionLockText() : null,
 										protectionLocked: drawing.getProtectionLocked(),
@@ -7223,7 +7198,7 @@
 										textFitType: null,
 										vertOverflowType: null,
 										signatureId: null,
-										shadow: drawing.getOuterShdw(),
+										shadow: drawing.getOuterShdwAsc(),
 										anchor: drawing.getDrawingBaseType(),
 										protectionLockText: (bGroupSelection || !drawing.group) ? drawing.getProtectionLockText() : null,
 										protectionLocked: drawing.getProtectionLocked(),
@@ -7702,10 +7677,10 @@
 					return dShift;
 				},
 
-				getFormatPainterData: function () {
+				getFormatPainterData: function (bCalcPr) {
 					let oTargetDocContent = this.getTargetDocContent();
 					if (oTargetDocContent)
-						return oTargetDocContent.GetFormattingPasteData();
+						return oTargetDocContent.GetFormattingPasteData(bCalcPr);
 
 					let aSelectedObjects = this.getSelectedArray();
 					if (aSelectedObjects.length === 1) {
@@ -7717,13 +7692,13 @@
 							let oTable = oDrawing.graphicObject;
 							let oCell = oTable.GetCurCell();
 							if (oCell)
-								return oCell.GetContent().GetFormattingPasteData();
+								return oCell.GetContent().GetFormattingPasteData(bCalcPr);
 						} else if (oDrawing.isChart()) {
 							let oChartTitle = oDrawing.getChartTitle();
 							if (oChartTitle) {
 								let oContent = oChartTitle.getDocContent();
 								if (oContent)
-									return oContent.GetFormattingPasteData();
+									return oContent.GetFormattingPasteData(bCalcPr);
 							}
 						}
 					}
@@ -9187,6 +9162,11 @@
 					oAPI.stopInkDrawer();
 				},
 				checkInkState: function () {
+					if (typeof AscCommonSlide !== "undefined" &&
+						AscCommonSlide.CNotes &&
+						this.drawingObjects instanceof AscCommonSlide.CNotes) {
+						return;
+					}
 					const oAPI = this.getEditorApi();
 					if(oAPI.isInkDrawerOn()) {
 						if(oAPI.isDrawInkMode()) {
@@ -9206,8 +9186,23 @@
 				},
 				onInkDrawerChangeState: function() {
 					const oAPI = this.getEditorApi();
+					let oDrawingDocument = null;
+					switch (oAPI.editorId) {
+						case AscCommon.c_oEditorId.Word:
+						case AscCommon.c_oEditorId.Presentation: {
+							oDrawingDocument = Asc.editor.WordControl.m_oDrawingDocument;
+							break;
+						}
+						case AscCommon.c_oEditorId.Spreadsheet: {
+							oDrawingDocument = Asc.editor.wbModel.DrawingDocument;
+							break;
+						}
+					}
 					if(oAPI.isInkDrawerOn()) {
 						this.checkInkState();
+						if(oDrawingDocument) {
+							oDrawingDocument.LockCursorType(oAPI.getInkCursorType());
+						}
 					}
 					else {
 						this.clearTrackObjects();
@@ -9216,6 +9211,9 @@
 							this.loadStartDocState();
 						}
 						this.changeCurrentState(new AscFormat.NullState(this));
+						if(oDrawingDocument) {
+							oDrawingDocument.UnlockCursorType();
+						}
 						this.updateOverlay();
 					}
 				},
@@ -10783,7 +10781,7 @@
 					let bDocStartAction = false;
 					for(let nIdx = aDrawings.length - 1; nIdx > -1; --nIdx) {
 						let oDrawing = aDrawings[nIdx];
-						if(oDrawing.isShape() && !oDrawing.getPresetGeom())  {
+						if(oDrawing.isInk())  {
 							if(oDrawing.hit(x, y)) {
 								this.controller.resetSelection();
 								this.controller.selectObject(oDrawing, pageIndex);

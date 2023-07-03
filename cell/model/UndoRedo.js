@@ -3317,6 +3317,8 @@ function (window, undefined) {
 			}
 		} else if (AscCH.historyitem_Worksheet_SetShowZeros === Type) {
 			ws.setShowZeros(bUndo ? Data.from : Data.to);
+		} else if (AscCH.historyitem_Worksheet_SetShowFormulas === Type) {
+			ws.setShowFormulas(bUndo ? Data.from : Data.to);
 		} else if (AscCH.historyitem_Worksheet_SetTopLeftCell === Type) {
 			//накатываем только при открытии
 			if (!bUndo && this.wb.bCollaborativeChanges) {
@@ -4127,7 +4129,8 @@ function (window, undefined) {
 			Type === AscCH.historyitem_PivotTable_DataFieldSetSubtotal   ||
 			Type === AscCH.historyitem_PivotTable_DataFieldSetShowDataAs ||
 			Type === AscCH.historyitem_PivotTable_DataFieldSetBaseField  ||
-			Type === AscCH.historyitem_PivotTable_DataFieldSetBaseItem ) {
+			Type === AscCH.historyitem_PivotTable_DataFieldSetBaseItem   ||
+			Type === AscCH.historyitem_PivotTable_DataFieldSetNumFormat) {
 			fields = pivotTable.asc_getDataFields();
 		} else {
 			fields = pivotTable.asc_getPivotFields();
@@ -4173,6 +4176,9 @@ function (window, undefined) {
 				field.setSubtotals(value, pivotTable, index);
 				field.checkSubtotal();
 				break;
+			case AscCH.historyitem_PivotTable_PivotFieldSetNumFormat:
+				field.setNumFormat(value, pivotTable, index);
+				break;
 			case AscCH.historyitem_PivotTable_DataFieldSetName:
 				field.asc_setName(value, pivotTable, index);
 				break;
@@ -4187,7 +4193,10 @@ function (window, undefined) {
 				break;
 			case AscCH.historyitem_PivotTable_DataFieldSetBaseItem:
 				field.asc_setBaseItem(value, pivotTable, index);
-				break; 
+				break;
+			case AscCH.historyitem_PivotTable_DataFieldSetNumFormat:
+				field.setNumFormat(value, pivotTable, index);
+				break;
 		}
 	};
 
