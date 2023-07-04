@@ -243,6 +243,7 @@ var c_oAscGroupType = {
 var st_VALUES = -2;
 var st_BASE_ITEM_PREV = 1048828;
 var st_BASE_ITEM_NEXT = 1048829;
+var st_DATAFIELD_REFERENCE_FIELD = 4294967294;
 var DATA_CAPTION = 'Values';
 var BLANK_CAPTION = '(blank)';
 var GRAND_TOTAL_CAPTION = 'Grand Total';
@@ -7033,12 +7034,12 @@ CT_pivotTableDefinition.prototype.asc_canShowDetails = function(row, col) {
 };
 /**
  * @param {FormatsManagerQuery} query
- * @param {number} dataIndex 
  * @param {CellXfs[]} dxfsOpen
  * @return {number}
  */
-CT_pivotTableDefinition.prototype.getNum = function(query, dataIndex, optDxfsOpen) {
+CT_pivotTableDefinition.prototype.getNum = function(query, optDxfsOpen) {
 	const dataFields = this.asc_getDataFields();
+	const dataIndex = query.dataIndex;
 	const dxfsOpen = optDxfsOpen || (this.worksheet && this.worksheet.workbook.dxfsOpen);
 	const format = this.formatsManager.get(query);
 	let result = null;
@@ -7074,7 +7075,14 @@ function PivotFormatsManager(pivot) {
 	this.uniqueFormatsCollection = new Map();
 }
 
+PivotFormatsManager.prototype.setDefaults = function() {
+	this.formats = [];
+	this.formatsCollection = new Map();
+	this.uniqueFormatsCollection = new Map();
+	return;
+};
 PivotFormatsManager.prototype.update = function() {
+	this.setDefaults();
 	this.formats = this.pivot.asc_getFormats();
 	if (this.formats) {
 		for (let i = 0; i < this.formats.length; i += 1) {
@@ -7128,6 +7136,7 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
  * @property {boolean} isGrandRow
  * @property {boolean} isGrandCol
  * @property {number?} field
+ * @property {number} dataIndex
  */
 
 /**
@@ -7138,7 +7147,8 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
 PivotFormatsManager.prototype.checkFormatsCollectionItemValues = function(formatsCollectionItem, query) {
 	const values = query.values;
 	const fieldValuesMap = formatsCollectionItem.fieldValuesMap;
-	if (values.length < fieldValuesMap.size || !this.checkFormatsCollectionAttributes(formatsCollectionItem, query)) {
+	const fieldValuesCount = fieldValuesMap.has(AscCommon.st_DATAFIELD_REFERENCE_FIELD) ? fieldValuesMap.size - 1: fieldValuesMap.size;
+	if (values.length < fieldValuesCount || !this.checkFormatsCollectionAttributes(formatsCollectionItem, query)) {
 		return 0;
 	}
 	let score = 0;
@@ -7226,6 +7236,7 @@ PivotFormatsManager.prototype.getUniqueFormatsCollectionItem = function(query) {
  */
 PivotFormatsManager.prototype.get = function(query) {
 	let resultItem = null;
+	query.values.push([AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD, query.dataIndex]);
 	const formatsCollectionItems = this.formatsCollection.get(query.field);
 	if (formatsCollectionItems) {
 		const bestFormatsCollectionItems = this.getBestFormatsCollectionItems(formatsCollectionItems, query);
@@ -12198,7 +12209,7 @@ CT_PivotField.prototype.setSortType = function(sortVal, sortDataIndex) {
 		var x = new CT_Index();
 		x.v = sortDataIndex;
 		var reference = new CT_PivotAreaReference();
-		reference.field = 4294967294;
+		reference.field = AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD;
 		reference.selected = false;
 		reference.x.push(x);
 		var references = new CT_PivotAreaReferences();
@@ -16729,12 +16740,18 @@ DataRowTraversal.prototype.getCurrentFieldValues = function() {
 	const result = [];
 	if (this.rowFields) {
 		for (let i = 0; i < this.rowValueCache.length; i += 1) {
-			result.push([this.rowFields[i].asc_getIndex(), this.rowValueCache[i]]);
+			const fieldIndex = this.rowFields[i].asc_getIndex();
+			if (fieldIndex !== AscCommonExcel.st_VALUES) {
+				result.push([fieldIndex,  this.rowValueCache[i]])
+			}
 		}
 	}
 	if (this.colFields) {
 		for (let i = 0; i < this.colValueCache.length; i += 1) {
-			result.push([this.colFields[i].asc_getIndex(), this.colValueCache[i]]);
+			const fieldIndex = this.colFields[i].asc_getIndex();
+			if (fieldIndex !== AscCommonExcel.st_VALUES) {
+				result.push([fieldIndex,  this.colValueCache[i]])
+			}
 		}
 	}
 	return result;
@@ -16765,6 +16782,8 @@ DataRowTraversal.prototype.setStartColIndex = function(pivotFields, colItem, col
 
 				this.colValueCache.length = colR + colItemsXIndex + 1;
 				this.colValueCache[colR + colItemsXIndex] = valueIndex;
+			} else {
+				this.fieldIndex = colFields[colR + colItemsXIndex - 1] && colFields[colR + colItemsXIndex - 1].asc_getIndex();
 			}
 			this.saveCacheCol(colR, colItemsXIndex);
 		}
@@ -18215,6 +18234,7 @@ prot['FiveQuarters'] = prot.FiveQuarters;
 window['Asc']['st_VALUES'] = window['AscCommonExcel'].st_VALUES = st_VALUES;
 window['Asc']['st_BASE_ITEM_PREV'] = window['AscCommonExcel'].st_BASE_ITEM_PREV = st_BASE_ITEM_PREV;
 window['Asc']['st_BASE_ITEM_NEXT'] = window['AscCommonExcel'].st_BASE_ITEM_NEXT = st_BASE_ITEM_NEXT;
+window['Asc']['st_DATAFIELD_REFERENCE_FIELD'] = window['AscCommonExcel'].st_DATAFIELD_REFERENCE_FIELD = st_DATAFIELD_REFERENCE_FIELD;
 window['AscCommonExcel'].DATA_CAPTION = DATA_CAPTION;
 window['AscCommonExcel'].BLANK_CAPTION = BLANK_CAPTION;
 window['AscCommonExcel'].GRAND_TOTAL_CAPTION = GRAND_TOTAL_CAPTION;

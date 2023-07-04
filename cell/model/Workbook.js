@@ -8909,8 +8909,9 @@
 							values: traversal.getCurrentFieldValues(),
 							isGrandRow: rowItem.t === Asc.c_oAscItemType.Grand,
 							isGrandCol: colItem.t === Asc.c_oAscItemType.Grand,
-							field: Asc.c_oAscItemType.Grand !== rowItem.t ? fieldIndex : traversal.fieldIndex
-						}, dataIndex);
+							field: Asc.c_oAscItemType.Grand !== rowItem.t ? fieldIndex : traversal.fieldIndex,
+							dataIndex: dataIndex
+						});
 						if (num) {
 							cell.setNum(num);
 						}
