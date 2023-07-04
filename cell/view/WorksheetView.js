@@ -3793,7 +3793,6 @@
 			return;
 		}
 
-		this._drawHeaderFooterPictures(drawingCtx, printPagesData);
 
 		//new CHeaderFooter();
 		//при печати берём колонтитул либо из настроек печати(если есть), либо из модели 
@@ -3848,93 +3847,6 @@
 		}
 	};
 
-	WorksheetView.prototype._drawHeaderFooterPictures = function (drawingCtx, printPagesData) {
-		/*this.model.legacyDrawingHF.drawings[0].graphicObject.recalculate()
-		this.model.legacyDrawingHF.drawings[0].graphicObject.draw(drawingCtx.DocumentRenderer);*/
-
-
-
-		var titleWidth = 0;
-		var titleHeight
-		var printScale = 1;
-
-		var offsetX = 0;
-		var offsetY = 0;
-
-		var clipLeft = printPagesData.pageClipRectLeft;
-		var clipTop =  printPagesData.pageClipRectTop;
-		var clipWidth = printPagesData.pageClipRectWidth;
-		var clipHeight = printPagesData.pageClipRectHeight;
-
-		var clipLeftShape = printPagesData.pageClipRectLeft;
-		var clipTopShape = printPagesData.pageClipRectTop;
-		var clipWidthShape = printPagesData.pageClipRectWidth;
-		var clipHeightShape = printPagesData.pageClipRectHeight;
-
-		var t = this;
-		var drawingPrintOptions = {
-			ctx: drawingCtx, printPagesData: printPagesData/*, titleWidth: titleWidth, titleHeight: titleHeight*/
-		};
-		var oDocRenderer = drawingCtx.DocumentRenderer;
-		var oOldBaseTransform = oDocRenderer.m_oBaseTransform;
-		var oBaseTransform = new AscCommon.CMatrix();
-		//oBaseTransform.sx = printScale;
-		//oBaseTransform.sy = printScale;
-
-		oBaseTransform.tx = asc_getcvt(0/*mm*/, 3/*px*/, t._getPPIX()) * (/*-offsetCols * printScale + */printPagesData.pageClipRectLeft + (printPagesData.leftFieldInPx - printPagesData.pageClipRectLeft + titleWidth) * printScale) /*- (t.getCellLeft(range.c1, 3) - t.getCellLeft(0, 3))*/ * printScale;
-		oBaseTransform.ty = asc_getcvt(0/*mm*/, 3/*px*/, t._getPPIX()) * (printPagesData.pageClipRectTop + (printPagesData.topFieldInPx - printPagesData.pageClipRectTop + titleHeight) * printScale) /*- (t.getCellTop(range.r1, 3) - t.getCellTop(0, 3))*/ * printScale;
-
-		var bGraphics = !!(oDocRenderer instanceof AscCommon.CGraphics);
-		var clipL, clipT, clipR, clipB;
-		if (bGraphics) {
-			if (oDocRenderer.m_oCoordTransform) {
-				oDocRenderer.m_oCoordTransform.tx = (t.getCellLeft(0) - offsetX);
-				oDocRenderer.m_oCoordTransform.ty = (t.getCellTop(0) - offsetY);
-			}
-			oDocRenderer.SaveGrState();
-			oDocRenderer.RestoreGrState();
-			oDocRenderer.PrintPreview = true;
-			var oInvertBaseTransform = AscCommon.global_MatrixTransformer.Invert(oDocRenderer.m_oCoordTransform);
-			clipLeftShape = (printPagesData.pageClipRectLeft) >> 0;
-			clipTopShape = (printPagesData.pageClipRectTop) >> 0;
-			var clipRightShape = (clipLeftShape + printPagesData.pageClipRectWidth + 0.5 - offsetX) >> 0;
-			var clipBottomShape = (clipTopShape + printPagesData.pageClipRectHeight +  0.5 - offsetY) >> 0;
-			clipL = oInvertBaseTransform.TransformPointX(clipLeftShape, clipTopShape);
-			clipT = oInvertBaseTransform.TransformPointY(clipLeftShape, clipTopShape);
-			clipR = oInvertBaseTransform.TransformPointX(clipRightShape, clipBottomShape);
-			clipB = oInvertBaseTransform.TransformPointY(clipRightShape, clipBottomShape);
-			oDocRenderer.SaveGrState();
-			oDocRenderer.AddClipRect(clipL, clipT, clipR - clipL, clipB - clipT);
-
-			this.model.legacyDrawingHF.drawings[0].graphicObject.recalculate()
-			this.model.legacyDrawingHF.drawings[0].graphicObject.draw(drawingCtx.DocumentRenderer);
-
-			delete oDocRenderer.PrintPreview;
-			oDocRenderer.RestoreGrState();
-			if (oDocRenderer.m_oCoordTransform) {
-				oDocRenderer.m_oCoordTransform.tx = oOldBaseTransform.tx * oDocRenderer.m_oCoordTransform.sx;
-				oDocRenderer.m_oCoordTransform.ty = oOldBaseTransform.ty * oDocRenderer.m_oCoordTransform.sy;
-			}
-		} else {
-			clipL = clipLeftShape >> 0;
-			clipT = clipTopShape >> 0;
-			clipR = (clipLeftShape + clipWidthShape + 0.5) >> 0;
-			clipB = (clipTopShape + clipHeightShape + 0.5) >> 0;
-			drawingCtx.AddClipRect && drawingCtx.AddClipRect(clipL, clipT, clipR - clipL, clipB - clipT);
-			if (oDocRenderer.SetBaseTransform) {
-				oDocRenderer.SetBaseTransform(oBaseTransform);
-			}
-
-			//this.model.legacyDrawingHF.drawings[0].graphicObject.recalculate()
-			//this.model.legacyDrawingHF.drawings[0].graphicObject.draw(drawingCtx.DocumentRenderer);
-
-			if (oDocRenderer.SetBaseTransform) {
-				oDocRenderer.SetBaseTransform(oOldBaseTransform);
-			}
-			drawingCtx.RemoveClipRect && drawingCtx.RemoveClipRect();
-		}
-
-	};
 
 	/** Рисует текст ячейки */
 	WorksheetView.prototype._drawHeaderFooterText = function (drawingCtx, printPagesData, headerFooterParser, indexPrintPage, countPrintPages, bFooter, opt_headerFooter) {
@@ -3991,26 +3903,26 @@
 		}
 
 		var margins = this.model.PagePrintOptions.asc_getPageMargins();
-		var width = printPagesData.pageWidth / vector_koef;
-		var height = printPagesData.pageHeight / vector_koef;
+		var width = printPagesData.pageWidth;
+		var height = printPagesData.pageHeight;
 
 		//это стандартный маргин для случая, если alignWithMargins = true
 		//TODO необходимо перепроверить размер маргина
 		var defaultMargin = 17.8;
 		var alignWithMargins = hF.getAlignWithMargins();
-		var left =  alignWithMargins ? margins.left / vector_koef : defaultMargin / vector_koef;
-		var right = alignWithMargins ? margins.right / vector_koef : defaultMargin / vector_koef;
+		var left =  alignWithMargins ? margins.left : defaultMargin;
+		var right = alignWithMargins ? margins.right  : defaultMargin;
 		//для превью - делю на zoom
-		var top = margins.header / (AscCommonExcel.vector_koef / (this.getZoom() / printScaleForPrintPreview));
-		var bottom = margins.footer / (AscCommonExcel.vector_koef / (this.getZoom() / printScaleForPrintPreview));
+		var top = margins.header;
+		var bottom = margins.footer;
 
-		if (!isPrintPreview) {
-			top = top / printScale;
-			bottom = bottom / printScale;
-		}
+		//if (!isPrintPreview) {
+		//	top = top / printScale;
+		//	bottom = bottom / printScale;
+		//}
 
 		//TODO пересмотреть минимальный отступ
-		var rowTop = (this._getRowTop(0) - this.groupHeight) / printScaleForPrintPreview;
+		var rowTop = (this._getRowTop(0) - this.groupHeight) ;
 		if(top < rowTop) {
 			top = rowTop;
 		}
@@ -4022,36 +3934,174 @@
 				return;
 			}
 
-			//добавляю флаги для учета переноса строки
-			var cellFlags = new AscCommonExcel.CellFlags();
-			cellFlags.wrapText = true;
-			cellFlags.textAlign = window["AscCommonExcel"].CHeaderFooterEditorSection.prototype.getAlign.call(null, index);
-			var fragments = getFragments(portion);
-			t.stringRender.setString(fragments, cellFlags);
+			const nAlign = window["AscCommonExcel"].CHeaderFooterEditorSection.prototype.getAlign.call(null, index);
+            const aFragments = portion;
+		//	var fragments = getFragments(portion);
+		//	t.stringRender.setString(fragments, cellFlags);
 
 			var maxWidth = width - left - right;
-			var textMetrics = t.stringRender._measureChars(maxWidth);
-			var x, y;
-			switch(index) {
-				case window["AscCommonExcel"].c_oPortionPosition.left: {
-					x = left;
-					y = !bFooter ? top : footerStartPos - textMetrics.height;
-					break;
-				}
-				case window["AscCommonExcel"].c_oPortionPosition.center: {
-					x = ((width - left - right) / 2 + left) - textMetrics.width / 2;
-					y = !bFooter ? top : footerStartPos - textMetrics.height;
-					break;
-				}
-				case window["AscCommonExcel"].c_oPortionPosition.right: {
-					x = width - right - textMetrics.width;
-					y = !bFooter ? top : footerStartPos - textMetrics.height;
-					break;
-				}
-			}
 
-			t.stringRender.fontNeedUpdate = true;
-			t.stringRender.render(drawingCtx, x, y, textMetrics.width, t.settings.activeCellBorderColor);
+            const oShape = AscFormat.ExecuteNoHistory(function() {
+
+                const oMockLogicDoc = {
+                    Get_PageLimits : function(PageAbs) {
+                        return {X: 0, Y: 0, XLimit: Page_Width, YLimit: Page_Height};
+                    },
+                    Get_PageFields : function (PageAbs, isInHdrFtr) {
+                        return {X: 0, Y: 0, XLimit: 2000, YLimit: 2000};
+                    },
+
+                    IsTrackRevisions: function() {
+                        return false;
+                    },
+
+                    IsDocumentEditor: function() {
+                        return false;
+                    },
+                    Spelling: {
+                        AddParagraphToCheck: function(Para) {}
+                    },
+
+                    IsSplitPageBreakAndParaMark: function () {
+                        return false;
+                    },
+                    IsDoNotExpandShiftReturn: function () {
+                        return false;
+                    },
+
+                    SearchEngine: {
+                        Selection: []
+                    }
+                };
+
+                const oShape = new AscFormat.CShape();
+               // oShape.setWordShape(true);
+                oShape.setWorksheet(t.model);
+                oShape.createTextBody();
+                let oBodyPr = oShape.txBody.bodyPr;
+                oBodyPr.bIns = 0;
+                oBodyPr.tIns = 0;
+                oBodyPr.lIns = 0;
+                oBodyPr.rIns = 0;
+                oBodyPr.anchor = 4;//top
+                let oContent = oShape.txBody.content;
+                const oParagraph = oContent.GetAllParagraphs()[0];
+                oParagraph.LogicDocument = oMockLogicDoc;
+                oParagraph.MoveCursorToStartPos();
+                oParagraph.Set_Align(nAlign);
+                let oImage;
+                if(t.model.legacyDrawingHF && t.model.legacyDrawingHF.drawings[0]) {
+                    oImage = t.model.legacyDrawingHF.drawings[0].graphicObject;
+                }
+                for(let nFragment = 0; nFragment < aFragments.length; ++nFragment) {
+                    let oFragment = aFragments[nFragment];
+                    let sText = oFragment._calculatedText;
+
+                    let oFormat = oFragment.format.clone();
+                    oFormat.merge(AscCommonExcel.g_oDefaultFormat.Font);
+                    let oParaRun = new AscCommonWord.ParaRun(oParagraph);
+                    let oTextPr = new CTextPr();
+                    oTextPr.FillFromExcelFont(oFormat);
+                    oParaRun.Set_Pr(oTextPr);
+                    if(oFragment.field === asc.c_oAscHeaderFooterField.picture) {
+                        if(oImage) {
+                            let dW = oImage.getXfrmExtX();
+                            let dH = oImage.getXfrmExtY();
+                            oImage.recalculate();
+                            let oDrawing = new ParaDrawing(dW, dH, oImage, oShape.getDrawingDocument(), oContent, oParaRun);
+                            oImage.setParent(oDrawing);
+                            oParaRun.AddToContent(0, oDrawing, true);
+                        }
+                    }
+                    else if(sText) {
+                        oParaRun.AddText(sText);
+                    }
+                    oParagraph.AddToContent(nFragment, oParaRun);
+                }
+                oShape.setTransformParams(0, 0, maxWidth, 2000, 0, false, false);
+                oShape.setBDeleted(false);
+                oShape.recalculate();
+
+                let x, y;
+                switch(index) {
+                	case window["AscCommonExcel"].c_oPortionPosition.left: {
+                		x = left;
+                		y = !bFooter ? top : footerStartPos - oShape.contentHeight;
+                		break;
+                	}
+                	case window["AscCommonExcel"].c_oPortionPosition.center: {
+                		x = ((width - left - right) / 2 + left) - oShape.contentWidth / 2;
+                		y = !bFooter ? top : footerStartPos - oShape.contentHeight;
+                		break;
+                	}
+                	case window["AscCommonExcel"].c_oPortionPosition.right: {
+                		x = width - right - oShape.contentWidth;
+                		y = !bFooter ? top : footerStartPos - oShape.contentHeight;
+                		break;
+                	}
+                }
+                oShape.posX += x;
+                oShape.posY += y;
+                oShape.updateTransformMatrix();
+                if(oImage) {
+                    oImage.updateTransformMatrix();
+                }
+                return oShape;
+
+            }, this, []);
+
+
+            let oGraphics;
+            if(drawingCtx instanceof AscCommonExcel.CPdfPrinter) {
+                oGraphics = drawingCtx.DocumentRenderer;
+                oGraphics.SaveGrState();
+                var _baseTransform;
+                if (!drawingCtx.Transform) {
+                    _baseTransform = new AscCommon.CMatrix();
+                } else {
+                    _baseTransform = drawingCtx.Transform;
+                }
+                oGraphics.SetBaseTransform(_baseTransform);
+            }
+            else {
+                oGraphics = new AscCommon.CGraphics();
+                oGraphics.init(drawingCtx.ctx, drawingCtx.getWidth(0), drawingCtx.getHeight(0),
+                    drawingCtx.getWidth(3), drawingCtx.getHeight(3));
+                oGraphics.m_oFontManager = AscCommon.g_fontManager;
+            }
+
+            oGraphics.SaveGrState();
+
+            oShape.draw(oGraphics);
+
+            oGraphics.RestoreGrState();
+            if (drawingCtx instanceof AscCommonExcel.CPdfPrinter) {
+                oGraphics.SetBaseTransform(null);
+                oGraphics.RestoreGrState();
+            }
+
+			// var textMetrics = t.stringRender._measureChars(maxWidth);
+			// var x, y;
+			// switch(index) {
+			// 	case window["AscCommonExcel"].c_oPortionPosition.left: {
+			// 		x = left;
+			// 		y = !bFooter ? top : footerStartPos - textMetrics.height;
+			// 		break;
+			// 	}
+			// 	case window["AscCommonExcel"].c_oPortionPosition.center: {
+			// 		x = ((width - left - right) / 2 + left) - textMetrics.width / 2;
+			// 		y = !bFooter ? top : footerStartPos - textMetrics.height;
+			// 		break;
+			// 	}
+			// 	case window["AscCommonExcel"].c_oPortionPosition.right: {
+			// 		x = width - right - textMetrics.width;
+			// 		y = !bFooter ? top : footerStartPos - textMetrics.height;
+			// 		break;
+			// 	}
+			// }
+            //
+			// t.stringRender.fontNeedUpdate = true;
+			// t.stringRender.render(drawingCtx, x, y, textMetrics.width, t.settings.activeCellBorderColor);
 		};
 
 		//добавил аналогично другим отрисовка.
