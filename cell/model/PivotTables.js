@@ -7212,25 +7212,25 @@ PivotFormatsManager.prototype.getFormatsCollectionItems = function(formatsCollec
  */
 PivotFormatsManager.prototype.compareFormatsCollectionItems = function(item1, item2) {
 	if (item1.fieldValuesMap.size > item2.fieldValuesMap.size) {
-		return 1;
-	} else if (item1.fieldValuesMap.size < item2.fieldValuesMap.size) {
 		return -1;
+	} else if (item1.fieldValuesMap.size < item2.fieldValuesMap.size) {
+		return 1;
 	} else {
 		if (item1.fieldValuesMap.get(item1.selectedField) && item2.fieldValuesMap.get(item2.selectedField)) {
 			if (item1.fieldValuesMap.get(item1.selectedField).size > item2.fieldValuesMap.get(item2.selectedField).size) {
-				return 1;
-			} else if (item1.fieldValuesMap.get(item1.selectedField).size < item2.fieldValuesMap.get(item2.selectedField).size) {
 				return -1;
+			} else if (item1.fieldValuesMap.get(item1.selectedField).size < item2.fieldValuesMap.get(item2.selectedField).size) {
+				return 1;
 			}
 		}
 		if (item1.isGrandCol && !item2.isGrandCol) {
-			return 1;
+			return -1;
 		} else if (item1.isGrandRow && !item2.isGrandRow) {
+			return -1;
+		} else if (!item1.isGrandRow && item2.isGrandRow) {
 			return 1;
 		} else if (!item1.isGrandRow && item2.isGrandRow) {
-			return -1;
-		} else if (!item1.isGrandRow && item2.isGrandRow) {
-			return -1;
+			return 1;
 		}
 	}
 	return 0;
@@ -7255,16 +7255,16 @@ PivotFormatsManager.prototype.get = function(query, dxfsOpen) {
 		for (let i = 0; i < suitableFormatsCollectionItems.length; i += 1) {
 			const formatsCollectionItem = suitableFormatsCollectionItems[i];
 			const dxfId = formatsCollectionItem.format.dxfId;
-			if (!result.num && dxfsOpen[dxfId].num) {
+			if (!result.num && dxfsOpen[dxfId] && dxfsOpen[dxfId].num) {
 				result.num = dxfsOpen[dxfId].num;
 			}
-			if (!result.font && dxfsOpen[dxfId].font) {
+			if (!result.font && dxfsOpen[dxfId] && dxfsOpen[dxfId].font) {
 				result.font = dxfsOpen[dxfId].font;
 			}
-			if (!result.fill && dxfsOpen[dxfId].fill) {
+			if (!result.fill && dxfsOpen[dxfId] && dxfsOpen[dxfId].fill) {
 				result.fill = dxfsOpen[dxfId].fill;
 			}
-			if (!result.border && dxfsOpen[dxfId].border) {
+			if (!result.border && dxfsOpen[dxfId] && dxfsOpen[dxfId].border) {
 				result.border = dxfsOpen[dxfId].border;
 			}
 		}

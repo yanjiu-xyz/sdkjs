@@ -8912,18 +8912,7 @@
 							field: Asc.c_oAscItemType.Grand !== rowItem.t ? fieldIndex : traversal.fieldIndex,
 							dataIndex: dataIndex
 						});
-						if (formatting.num) {
-							cell.setNum(formatting.num);
-						}
-						if (formatting.font) {
-							cell.setFont(formatting.font)
-						}
-						if (formatting.fill) {
-							cell.setFill(formatting.fill);
-						}
-						if (formatting.border) {
-							cell.setBorder(formatting.border);
-						}
+						cell.setFormatting(formatting);
 						cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 					}
 				}
@@ -18563,6 +18552,24 @@
 	Range.prototype.move = function (oBBoxTo, copyRange, wsTo) {
 		this.worksheet._moveRange(this.bbox, oBBoxTo, copyRange, wsTo);
 	};
+	/**
+	 * @param {PivotFormatsManagerResponse} formatting
+	 */
+	Range.prototype.setFormatting = function(formatting) {
+		if (formatting.num) {
+			this.setNum(formatting.num);
+		}
+		if (formatting.font) {
+			this.setFont(formatting.font)
+		}
+		if (formatting.fill) {
+			this.setFill(formatting.fill);
+		}
+		if (formatting.border) {
+			this.setBorder(formatting.border);
+		}
+		return;
+	}
 
 	function RowIterator() {
 	}
