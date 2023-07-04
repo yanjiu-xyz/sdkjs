@@ -617,15 +617,19 @@
             switch (type) {
                 case "A":
                     this._buttonScaleWhen = scaleWhen["always"];
+                    this.SetWasChanged(true);
                     break;
                 case "B":
                     this._buttonScaleWhen = scaleWhen["tooBig"];
+                    this.SetWasChanged(true);
                     break;
                 case "S":
                     this._buttonScaleWhen = scaleWhen["tooSmall"];
+                    this.SetWasChanged(true);
                     break;
                 case "N":
                     this._buttonScaleWhen = scaleWhen["never"];
+                    this.SetWasChanged(true);
                     break;
             }
         }
@@ -641,9 +645,11 @@
             switch (type) {
                 case "A":
                     this._buttonScaleHow = scaleHow["anamorphic"];
+                    this.SetWasChanged(true);
                     break;
                 case "P":
                     this._buttonScaleHow = scaleHow["proportional"];
+                    this.SetWasChanged(true);
                     break;
             }
         }
@@ -713,6 +719,9 @@
             oDrawing.Set_PositionH(Asc.c_oAscRelativeFromH.Column, Asc.c_oAscXAlign.Outside, nPosX, false);
             oDrawing.Set_PositionV(Asc.c_oAscRelativeFromH.Page, Asc.c_oAscXAlign.Outside, nPosY, false);
         }
+    };
+    CPushButtonField.prototype.GetIconPosition = function() {
+        return {X: this._buttonAlignX, Y: this._buttonAlignY};
     };
     CPushButtonField.prototype.SetTextOnly = function() {
         if (this._buttonPosition == position["textOnly"])

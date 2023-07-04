@@ -415,6 +415,9 @@
         editor.getDocumentRenderer()._paintForms();
     };
     CTextField.prototype.UpdateScroll = function(bShow) {
+        if (this.IsMultiline() == false)
+            return;
+            
         let oContentBounds  = this.content.GetContentBounds(0);
         let oContentRect    = this.getFormRelRect();
         let oFormRect       = this.getFormRect();

@@ -291,7 +291,7 @@
 			"pdf/src/forms/formActions.js",
 			"pdf/src/forms/base/base.js",
 			"pdf/src/forms/apiFunctions.js",
-			"pdf/src/forms/apiObjects.js",
+			"pdf/src/forms/apiGlogalObjects.js",
 			"pdf/src/forms/base/basecheckbox.js",
 			"pdf/src/forms/base/baselist.js",
 			"pdf/src/forms/listbox.js",

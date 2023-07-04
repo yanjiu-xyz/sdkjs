@@ -412,7 +412,7 @@
         });
 
         try {
-            EvalScript(this.script);
+            EvalScript(this.script, oDoc);
         }
         catch (err) {
             console.log(err);
@@ -431,16 +431,14 @@
         });
 
         try {
-            EvalScript(this.script);
+            EvalScript(this.script, oDoc);
         }
         catch (err) {
             console.log(err);
         }
     };
 	
-    function EvalScript(str) {
-        let oDoc = editor.getDocumentRenderer().doc;
-        
+    function EvalScript(str, oParentDoc) {
         let aArgsNamesToDelete = [
             "window",
             "setTimeout",
@@ -492,7 +490,7 @@
         ]
         let oApiFunc = AscPDF.Api.Functions;
         let aArgsPdfApi = [
-            oDoc.event,
+            oParentDoc.event,
             oApiObjects.color,
 
             oApiFunc.AFNumber_Format,
@@ -515,7 +513,7 @@
         ]
         
         let func = new Function(...aArgsNamesToDelete, ...aArgsNamesPdfApi, str);
-        func.bind(oDoc.GetDocumentApi(), ...Array(aArgsNamesToDelete.length - 1), oApiConsole, ...aArgsPdfApi)();
+        func.bind(oParentDoc.GetDocumentApi(), ...Array(aArgsNamesToDelete.length - 1), oApiConsole, ...aArgsPdfApi)();
     };
     
 

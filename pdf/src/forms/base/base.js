@@ -131,7 +131,7 @@
         this._borderStyle   = BORDER_TYPES.solid;
         this._delay         = false;
         this._display       = AscPDF.Api.Objects.display["visible"];
-        this._doc           = editor.getDocumentRenderer().doc;
+        this._doc           = null;
         this._fillColor     = [1,1,1];
         this._bgColor       = undefined;          // prop for old versions (fillColor)
         this._hidden        = false;             // This property has been superseded by the display property and its use is discouraged.
@@ -259,6 +259,9 @@
     CBaseField.prototype.AddKid = function(oField) {
         this._kids.push(oField);
         oField._parent = this;
+    };
+    CBaseField.prototype.GetKids = function() {
+        return this._kids;
     };
     /**
 	 * Removes field from kids.
@@ -429,6 +432,56 @@
 
         return aActions;
     };
+
+    /**
+	 * Sets the JavaScript action of the field for a given trigger.
+     * Note: This method will overwrite any action already defined for the chosen trigger.
+	 * @memberof CBaseField
+     * @param {number} nTriggerType - A string that sets the trigger for the action.
+     * @param {string} sScript - The JavaScript code to be executed when the trigger is activated.
+	 * @typeofeditors ["PDF"]
+	 */
+    CBaseField.prototype.SetAction = function(nTriggerType, sScript) {
+        let oCalcInfo = this.GetDocument().GetCalculateInfo();
+        let oAction = new AscPDF.CActionRunScript(sScript);
+        oAction.SetField(this);
+
+        switch (nTriggerType) {
+            case AscPDF.FORMS_TRIGGERS_TYPES.MouseUp:
+                this._triggers.MouseUp = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+                break;
+            case AscPDF.FORMS_TRIGGERS_TYPES.MouseDown:
+                this._triggers.MouseDown = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+                break;
+            case AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter:
+                this._triggers.MouseEnter = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+                break;
+            case AscPDF.FORMS_TRIGGERS_TYPES.MouseExit:
+                this._triggers.MouseExit = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+                break;
+            case AscPDF.FORMS_TRIGGERS_TYPES.OnFocus:
+                this._triggers.OnFocus = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+                break;
+            case AscPDF.FORMS_TRIGGERS_TYPES.OnBlur:
+                this._triggers.OnBlur = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+                break;
+            case AscPDF.FORMS_TRIGGERS_TYPES.Keystroke:
+                this._triggers.Keystroke = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+                break;
+            case AscPDF.FORMS_TRIGGERS_TYPES.Validate:
+                this._triggers.Validate = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+                break;
+            case AscPDF.FORMS_TRIGGERS_TYPES.Calculate:
+                this._triggers.Calculate = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+                oCalcInfo.RemoveFieldFromOrder(this.GetFullName());
+                oCalcInfo.AddFieldToOrder(this.GetFullName());
+                break;
+            case AscPDF.FORMS_TRIGGERS_TYPES.Format:
+                this._triggers.Format = new AscPDF.CFormTrigger(nTriggerType, [oAction]);
+                break;
+        }
+    };
+
     /**
 	 * Gets the JavaScript action of the field for a given trigger.
 	 * @memberof CBaseField
@@ -1205,6 +1258,9 @@
 
             this.AddToRedraw();
         }
+    };
+    CBaseField.prototype.GetBorderStyle = function() {
+        return this._borderStyle;
     };
     CBaseField.prototype.SetBorderWidth = function(nWidth) {
         if (this._borderWidth != nWidth) {

@@ -51,7 +51,7 @@ $(function ()
 	}
 	function AddJsAction(form, trigger, script)
 	{
-		form.SetActionsOnOpen(trigger, [{"S" : "JavaScript", "JS" : script}]);
+		form.SetAction(trigger, script);
 	}
 	
 	QUnit.module("PDF form actions test");
@@ -62,9 +62,9 @@ $(function ()
 		let textForm2 = CreateTextForm("TextForm2");
 		let textForm3 = CreateTextForm("TextForm3");
 		
-		textForm1.SetValue("1");
-		textForm2.SetValue("2");
-		textForm3.SetValue("3");
+		textForm1.GetFormApi().value = "1";
+		textForm2.GetFormApi().value = "2";
+		textForm3.GetFormApi().value = "3";
 		
 		assert.strictEqual(textForm1.GetValue(), "1", "Check form1 value");
 		assert.strictEqual(textForm2.GetValue(), "2", "Check form2 value");
@@ -74,11 +74,13 @@ $(function ()
 		AddJsAction(textForm2, AscPDF.FORMS_TRIGGERS_TYPES.Calculate, "this.getField('TextForm3').value += 1");
 		AddJsAction(textForm3, AscPDF.FORMS_TRIGGERS_TYPES.Calculate, "this.getField('TextForm1').value += 1");
 		
+		textForm2.MoveCursorRight();
 		EnterTextToForm(textForm2, "2");
 		assert.strictEqual(textForm1.GetValue(), "2", "Check form1 value");
 		assert.strictEqual(textForm2.GetValue(), "22", "Check form2 value");
 		assert.strictEqual(textForm3.GetValue(), "4", "Check form3 value");
 
+		textForm3.MoveCursorRight();
 		EnterTextToForm(textForm3, "3");
 		
 		assert.strictEqual(textForm1.GetValue(), "3", "Check form1 value");

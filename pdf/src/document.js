@@ -57,9 +57,15 @@
         this.sourceField = null; // поле вызвавшее calculate
     };
 
-    CCalculateInfo.prototype.AddFieldToCalculate = function(sName) {
+    CCalculateInfo.prototype.AddFieldToOrder = function(sName) {
         if (this.names.includes(sName) == false)
             this.names.push(sName);
+    };
+    CCalculateInfo.prototype.RemoveFieldFromOrder = function(sName) {
+        let nIdx = this.names.indexOf(sName);
+        if (nIdx != -1) {
+            this.names.splice(nIdx, 1);
+        }
     };
     CCalculateInfo.prototype.SetIsInProgress = function(bValue) {
         this.isInProgress = bValue;
@@ -945,8 +951,8 @@
             return null;
 
         let oViewer = editor.getDocumentRenderer();
-        let nScaleY = oViewer.drawingPages[nPageNum].H / oViewer.file.pages[nPageNum].H;
-        let nScaleX = oViewer.drawingPages[nPageNum].W / oViewer.file.pages[nPageNum].W;
+        let nScaleY = oViewer.drawingPages[nPageNum].H / oViewer.file.pages[nPageNum].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPageNum].W / oViewer.file.pages[nPageNum].W / oViewer.zoom;
 
         let aScaledCoords = [aCoords[0] * nScaleX, aCoords[1] * nScaleY, aCoords[2] * nScaleX, aCoords[3] * nScaleY];
 
@@ -973,6 +979,8 @@
             oField.SetDrawFromStream(false);
         }
 
+        oField._doc = this;
+        
         return oField;
     };
     
@@ -1041,6 +1049,51 @@
         oField.SyncField();
         return oField;
     };
+    CPDFDoc.prototype.DoTest = function() {
+        let pdfDoc = this;
+        let oViewer = editor.getDocumentRenderer();
+	    	
+        function CreateTextForm(name, aRect)
+        {
+            return pdfDoc.AddField(name, "text", 0, aRect);
+        }
+        function EnterTextToForm(form, text)
+        {
+            let chars = text.codePointsArray();
+            oViewer.activeForm = form;
+            form.EnterText(chars);
+            pdfDoc.EnterDownActiveField();
+        }
+        function AddJsAction(form, trigger, script)
+        {
+            form.SetAction(trigger, script);
+        }
+	
+        let textForm1 = CreateTextForm("TextForm1", [0, 0, 50, 50]);
+		let textForm2 = CreateTextForm("TextForm2", [60, 0, 110, 50]);
+		let textForm3 = CreateTextForm("TextForm3", [120, 0, 170, 50]);
+		
+		textForm1.GetFormApi().value = "1";
+		textForm2.GetFormApi().value = "2";
+		textForm3.GetFormApi().value = "3";
+		
+		AddJsAction(textForm1, AscPDF.FORMS_TRIGGERS_TYPES.Calculate, "this.getField('TextForm2').value += 1");
+		AddJsAction(textForm2, AscPDF.FORMS_TRIGGERS_TYPES.Calculate, "this.getField('TextForm3').value += 1");
+		AddJsAction(textForm3, AscPDF.FORMS_TRIGGERS_TYPES.Calculate, "this.getField('TextForm1').value += 1");
+		
+        textForm2.MoveCursorRight();
+		EnterTextToForm(textForm2, "2");
+		console.log(textForm1.GetValue(), "2", "Check form1 value");
+		console.log(textForm2.GetValue(), "22", "Check form2 value");
+		console.log(textForm3.GetValue(), "4", "Check form3 value");
+
+        textForm3.MoveCursorRight();
+		EnterTextToForm(textForm3, "3");
+		
+		console.log(textForm1.GetValue(), "3", "Check form1 value");
+		console.log(textForm2.GetValue(), "23", "Check form2 value");
+		console.log(textForm3.GetValue(), "43", "Check form3 value");
+    }
 
     /**
 	 * Changes the interactive field name.

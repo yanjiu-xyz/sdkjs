@@ -506,7 +506,7 @@
         this.SetNeedCommit(false);
         this.needValidate = true;
     };
-    CComboBoxField.prototype.InsertChars = function() {
+    CComboBoxField.prototype.InsertChars = function(aChars) {
         let oPara = this.content.GetElement(0);
 
         for (let index = 0; index < aChars.length; ++index) {
@@ -621,6 +621,7 @@
     CComboBoxField.prototype.DoValidateAction       = AscPDF.CTextField.prototype.DoValidateAction;
     CComboBoxField.prototype.DoKeystrokeAction      = AscPDF.CTextField.prototype.DoKeystrokeAction;
     CComboBoxField.prototype.DoFormatAction         = AscPDF.CTextField.prototype.DoFormatAction;
+    CComboBoxField.prototype.CalcDocPos             = AscPDF.CTextField.prototype.CalcDocPos;
 
 	window["AscPDF"].CComboBoxField = CComboBoxField;
 })();

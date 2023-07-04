@@ -786,6 +786,11 @@
 			let aFormsInfo = this.file.nativeFile.getInteractiveFormsInfo();
 			
 			let oFormInfo, oForm, oRect;
+			if (aFormsInfo["Fields"] == null) {
+				this.IsOpenFormsInProgress = false;
+				return;
+			}
+				
 			for (let i = 0; i < aFormsInfo["Fields"].length; i++)
 			{
 				oFormInfo	= aFormsInfo["Fields"][i];
@@ -3235,6 +3240,7 @@
 	};
 	CHtmlPage.prototype.resize = function(isDisablePaint)
 	{
+		let oThis = this;
 		this.isFocusOnThumbnails = false;
 		
 		var rect = this.canvas.getBoundingClientRect();

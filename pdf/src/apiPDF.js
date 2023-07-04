@@ -32,96 +32,42 @@
 
 (function(){
 
+    /**
+	 * Controls how the icon is scaled (if necessary) to fit inside the button face. The convenience scaleHow object defines all
+     * of the valid alternatives:
+	 * @typedef {Object} scaleHow
+	 * @property {number} proportional
+	 * @property {number} anamorphic
+	 */
+
+    /**
+	 * Controls when an icon is scaled to fit inside the button face. The convenience scaleWhen object defines all of the valid
+     * alternatives:
+	 * @typedef {Object} scaleWhen
+	 * @property {number} always
+	 * @property {number} never
+	 * @property {number} tooBig
+	 * @property {number} tooSmall
+	 */
+
     //------------------------------------------------------------------------------------------------------------------
 	//
 	// Internal
 	//
 	//------------------------------------------------------------------------------------------------------------------
 
-    let FIELDS_HIGHLIGHT = {
-        r: 201, 
-        g: 200,
-        b: 255
-    }
-    
-    let FIELD_TYPE = {
-        button:         "button",
-        checkbox:       "checkbox",
-        combobox:       "combobox",
-        listbox:        "listbox",
-        radiobutton:    "radiobutton",
-        signature:      "signature",
-        text:           "text"
-    }
-
-    //------------------------------------------------------------------------------------------------------------------
-	//
-	// pdf api types
-	//
-	//------------------------------------------------------------------------------------------------------------------
-    
+    // types without source object
     let ALIGN_TYPE = {
         left:   "left",
         center: "center",
         right:  "right"
     }
 
-    let border = {
-        "s": "solid",
-        "b": "beveled",
-        "d": "dashed",
-        "i": "inset",
-        "u": "underline"
-    }
-
-    let position = {
-        "textOnly":   0,
-        "iconOnly":   1,
-        "iconTextV":  2,
-        "textIconV":  3,
-        "iconTextH":  4,
-        "textIconH":  5,
-        "overlay":    6
-    }
-
-    let scaleHow = {
-        "proportional":   0,
-        "anamorphic":     1
-    }
-
-    let scaleWhen = {
-        "always":     0,
-        "never":      1,
-        "tooBig":     2,
-        "tooSmall":   3
-    }
-
-    const CHAR_LIM_MAX = 500; // to do проверить
-
-    let display = {
-        "visible":  0,
-        "hidden":   1,
-        "noPrint":  2,
-        "noView":   3
-    }
-
-    // For Span attributes (start)
-    let FONT_STRETCH = ["ultra-condensed", "extra-condensed", "condensed", "semi-condensed", "normal",
-        "semi-expanded", "expanded", "extra-expanded", "ultra-expanded"];
-
-    let FONT_STYLE = {
-        italic: "italic",
-        normal: "normal"
-    }
-
-    let FONT_WEIGHT = [100, 200, 300, 400, 500, 600, 700, 800, 900];
-
-    // for CSpan (end)
-
-    
-    // default availible colors
-    let color = {
-        
+    let LINE_WIDTH = {
+        "none":   0,
+        "thin":   1,
+        "medium": 2,
+        "thick":  3
     }
 
     // please use copy of this object
@@ -135,57 +81,10 @@
         "subscript":        false,
         "superscript":      false,
         "text":             "",
-        "color":            color["black"],
+        "color":            AscPDF.Api.Objects.color["black"],
         "textSize":         12.0,
         "underline":        false
     }
-
-    // Defines how a button reacts when a user clicks it.
-    // The four highlight modes supported are:
-    let highlight = {
-        "n": "none",
-        "i": "invert",
-        "p": "push",
-        "o": "outline"
-    }
-    
-    let LINE_WIDTH = {
-        "none":   0,
-        "thin":   1,
-        "medium": 2,
-        "thick":  3
-    }
-
-    let VALID_ROTATIONS = [0, 90, 180, 270];
-
-    // Allows the user to set the glyph style of a check box or radio button.
-    // The glyph style is the graphic used to indicate that the item has been selected.
-    let style = {
-        "ch": "check",
-        "cr": "cross",
-        "di": "diamond",
-        "ci": "circle",
-        "st": "star",
-        "sq": "square"
-    }
-
-    const MAX_TEXT_SIZE = 32767;
-
-    // freeze objects
-    Object.freeze(FIELDS_HIGHLIGHT);
-    Object.freeze(FIELD_TYPE);
-    Object.freeze(ALIGN_TYPE);
-    Object.freeze(border);
-    Object.freeze(position);
-    Object.freeze(scaleHow);
-    Object.freeze(scaleWhen);
-    Object.freeze(FONT_STRETCH);
-    Object.freeze(FONT_STYLE);
-    Object.freeze(FONT_WEIGHT);
-    Object.freeze(color);
-    Object.freeze(highlight);
-    Object.freeze(VALID_ROTATIONS);
-    Object.freeze(style);
 
     /**
 	 * A string that sets the trigger for the action. Values are:
@@ -242,6 +141,36 @@
     {
         this.field = oField;
     }
+
+    /**
+	 * The border style for a field. Valid border styles are solid/dashed/beveled/inset/underline.
+	 * @memberof ApiBaseField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiBaseField.prototype, "borderStyle", {
+        set(sValue) {
+            if (Object.values(border).includes(sValue)) {
+                if (this.field.IsAnnot()) {
+                    let aFields = this.field.GetDocument().GetFields(this.name);
+                    aFields.forEach(function(field) {
+                        field.SetBorderStyle(private_GetIntBorderStyle(sValue));
+                    });
+                }
+                else {
+                    this.field.GetKids().forEach(function(field) {
+                        field.GetFormApi()["borderStyle"] = sValue;
+                    });
+                }
+            }
+        },
+        get() {
+            if (this.IsAnnot())
+                return private_GetStrBorderStyle(this.field.GetBorderStyle());
+            else
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+        }
+	});
+
     Object.defineProperties(ApiBaseField.prototype, {
         // private
         "parent": {
@@ -268,20 +197,7 @@
             enumerable: false
         },
 
-        // common
-        "borderStyle": {
-            set(sValue) {
-                if (Object.values(border).includes(sValue)) {
-                    let aFields = this.field.GetDocument().GetFields(this.name);
-                    aFields.forEach(function(field) {
-                        field.SetBorderStyle(private_GetIntBorderStyle(sValue));
-                    });
-                }
-            },
-            get() {
-                return private_GetStrBorderStyle(this.field._borderStyle);
-            }
-        },
+        
         "delay": {
             set(bValue) {
                 if (typeof(bValue) == "boolean")
@@ -577,51 +493,225 @@
     }
     ApiPushButtonField.prototype = Object.create(ApiBaseField.prototype);
 	ApiPushButtonField.prototype.constructor = ApiPushButtonField;
-    Object.defineProperties(ApiPushButtonField.prototype, {
-        "buttonAlignX": {
-            set(nValue) {
-                if (typeof(nValue) == "number")
-                    this._buttonAlignX = Math.round(nValue);
-            },
-            get() {
-                return this._buttonAlignX;
-            },
-        },
-        "buttonAlignY": {
-            set(nValue) {
-                if (typeof(nValue) == "number")
-                    this._buttonAlignY = Math.round(nValue);
-            },
-            get() {
-                return this._buttonAlignY;
+
+    /**
+	 * Controls how space is distributed from the left of the button face with respect to the icon. It is expressed as a percentage
+     * between 0 and 100, inclusive. The default value is 50.
+     * If the icon is scaled anamorphically (which results in no space differences), this property is not used.
+	 * @memberof ApiTextField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiTextField.prototype, "buttonAlignX", {
+        set(nValue) {
+            if (typeof(nValue) == "number") {
+                nValue = Math.round(nValue);
+                let aFields = this.field.GetDocument().GetField(this.name);
+
+                if (aFields[0].IsAnnot()) {
+                    aFields.forEach(function(field) {
+                        field.SetIconPosition(nValue, field.GetIconPosition().Y);
+                    });
+                }
+                else {
+                    throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                }
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        "buttonFitBounds": {
-            set(bValue) {
-                if (typeof(bValue) == "boolean") {
-                    let aFields = this.field.GetDocument().GetFields(this.name);
+        get() {
+            if (this.field.IsAnnot()) {
+                return this.field.GetIconPosition().X;
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
+    /**
+	 * Controls how unused space is distributed from the bottom of the button face with respect to the icon. It is expressed as a
+     * percentage between 0 and 100, inclusive. The default value is 50.
+     * If the icon is scaled anamorphically (which results in no space differences), this property is not used.
+	 * @memberof ApiTextField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiTextField.prototype, "buttonAlignY", {
+        set(nValue) {
+            if (typeof(nValue) == "number") {
+                nValue = Math.round(nValue);
+                let aFields = this.field.GetDocument().GetField(this.name);
+
+                if (aFields[0].IsAnnot()) {
+                    aFields.forEach(function(field) {
+                        field.SetIconPosition(field.GetIconPosition().X, nValue);
+                    });
+                }
+                else {
+                    throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                }
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+            }
+        },
+        get() {
+            if (this.field.IsAnnot()) {
+                return this.field.GetIconPosition().Y;
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
+
+    /**
+	 * If true, the extent to which the icon may be scaled is set to the bounds of the button field. The additional icon
+     * placement properties are still used to scale and position the icon within the button face.
+	 * @memberof ApiTextField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiTextField.prototype, "buttonFitBounds", {
+        set(bValue) {
+            if (typeof(bValue) == "boolean") {
+                let aFields = this.field.GetDocument().GetField(this.name);
+
+                if (aFields[0].IsAnnot()) {
                     aFields.forEach(function(field) {
                         field.SetButtonFitBounds(bValue);
                     });
                 }
-            },
-            get() {
+                else {
+                    throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                }
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+            }
+        },
+        get() {
+            if (this.field.IsAnnot()) {
                 return this.field.GetButtonFitBounds();
             }
-        },
-        "buttonPosition": {
-            set(nValue) {
-                if (Object.values(position).includes(nValue)) {
-                    let aFields = this.field.GetDocument().GetFields(this.name);
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
+
+    /**
+	 * Controls how the text and the icon of the button are positioned with respect to each other within the button face. The
+     * convenience position object defines all of the valid alternatives.
+	 * @memberof ApiTextField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiTextField.prototype, "buttonPosition", {
+        set(bValue) {
+            if (typeof(bValue) == "boolean") {
+                let aFields = this.field.GetDocument().GetField(this.name);
+
+                if (aFields[0].IsAnnot()) {
                     aFields.forEach(function(field) {
-                        field.SetButtonPosition(nValue);
+                        field.SetButtonPosition(bValue);
                     });
                 }
-            },
-            get() {
-                return this.field.GetButtonPosition();
+                else {
+                    throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                }
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
+        get() {
+            if (this.field.IsAnnot()) {
+                return this.field.GetButtonPosition();
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
+
+    /**
+	 * Controls how the icon is scaled (if necessary) to fit inside the button face. he convenience scaleHow object defines all
+     * of the valid alternatives:
+     * Proportionally:      scaleHow.proportional
+     * Non-proportionally:  scaleHow.anamorphic
+     * @param {number}
+	 * @memberof ApiTextField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiTextField.prototype, "buttonScaleHow", {
+        set(nType) {
+            if (typeof(nType) == "number") {
+                nType = Math.round(nType);
+                let aFields = this.field.GetDocument().GetField(this.name);
+
+                if (aFields[0].IsAnnot()) {
+                    aFields.forEach(function(field) {
+                        field.SetScaleHow(nType);
+                    });
+                }
+                else {
+                    throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                }
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+            }
+        },
+        get() {
+            if (this.field.IsAnnot()) {
+                return this.field.GetScaleHow();
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
+
+    /**
+	 * Controls when an icon is scaled to fit inside the button face. The convenience scaleWhen object defines all of the valid 
+     * alternatives:
+     * Always:                  scaleWhen.always
+     * Never:                   scaleWhen.never
+     * If icon is too big:      scaleWhen.tooBig
+     * If icon is too small:    scaleWhen.tooSmall
+     * @param {number} - scaleHow.proportional or scaleHow.anamorphic
+	 * @memberof ApiTextField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiTextField.prototype, "buttonScaleWhen", {
+        set(nType) {
+            if (typeof(nType) == "number") {
+                nType = Math.round(nType);
+                let aFields = this.field.GetDocument().GetField(this.name);
+
+                if (aFields[0].IsAnnot()) {
+                    aFields.forEach(function(field) {
+                        field.SetScaleWhen(nType);
+                    });
+                }
+                else {
+                    throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                }
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+            }
+        },
+        get() {
+            if (this.field.IsAnnot()) {
+                return this.field.GetScaleWhen();
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
+
+    Object.defineProperties(ApiPushButtonField.prototype, {
         "buttonScaleHow": {
             set(nValue) {
                 if (Object.values(scaleHow).includes(nValue))
@@ -854,23 +944,41 @@
     }
     ApiTextField.prototype = Object.create(ApiBaseField.prototype);
 	ApiTextField.prototype.constructor = ApiTextField;
-    Object.defineProperties(ApiTextField.prototype, {
-        "alignment": {
-            set(sValue) {
-                if (Object.values(ALIGN_TYPE).includes(sValue)) {
-                    this._alignment = sValue;
-                    var nJcType = private_GetIntAlign(sValue);
 
-                    let aFields = this.field._doc.GetFields(this.name);
-                    aFields.forEach(function(field) {
-                        field.SetAlign(nJcType);
-                    });
-                }
-            },
-            get() {
-                return private_GetStrAlign(this.field.GetAlign());
+    /**
+	 * Controls how the text is laid out within the text field. Values are left/center/right.
+	 * @memberof ApiTextField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiTextField.prototype, "alignment", {
+        set(sValue) {
+            if (Object.values(ALIGN_TYPE).includes(sValue) == false)
+                return;
+
+            let aFields = this.field.GetDocument().GetField(this.name);
+
+            if (aFields[0].IsAnnot()) {
+                var nJcType = private_GetIntAlign(sValue);
+                aFields.forEach(function(field) {
+                    field.SetAlign(nJcType);
+                });
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
+        get() {
+            if (this.field.IsAnnot()) {
+                return private_GetStrAlign(this.field.GetAlign());
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
+
+    Object.defineProperties(ApiTextField.prototype, {
+       
         "calcOrderIndex": {
             set(nValue) {
                 if (typeof(nValue) == "number") {
