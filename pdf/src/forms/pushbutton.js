@@ -63,12 +63,8 @@
 
         // internal
         TurnOffHistory();
-        this.content           = new AscWord.CDocumentContent(null, editor.WordControl.m_oDrawingDocument, 0, 0, 0, 0, undefined, undefined, false);
-        this.content.ParentPDF = this;
-        this.content.SetUseXLimit(false);
-        this.content.MoveCursorToStartPos();
-
-        AscPDF.CTextField.prototype.SetAlign.call(this, AscPDF.ALIGN_TYPE.center);
+		this.content = new AscPDF.CTextBoxContent(this, editor.getPDFDoc());
+		this.content.SetAlign(AscPDF.ALIGN_TYPE.center);
 
         this._captionRun            = null;
         this._downCaptionRun        = null;
@@ -287,9 +283,9 @@
             if ((this._buttonPosition == position["iconTextH"] || this._buttonPosition == position["textIconH"])  && this.content.GetElementsCount() == 1) {
                 
                 if (this._buttonPosition == position["iconTextH"])
-                    AscPDF.CTextField.prototype.SetAlign.call(this, AscPDF.ALIGN_TYPE.right);
+                    this.content.SetAlign(AscPDF.ALIGN_TYPE.right);
                 else if (this._buttonPosition == position["textIconH"])
-                    AscPDF.CTextField.prototype.SetAlign.call(this, AscPDF.ALIGN_TYPE.left);
+                    this.content.SetAlign(AscPDF.ALIGN_TYPE.left);
 
                 let nFreeHorSpace = oRect.W - (oContentBounds.Right - oContentBounds.Left);
                 if (nFreeHorSpace > 0) {

@@ -114,6 +114,12 @@
 	PDFEditorApi.prototype.getDocumentRenderer = function() {
 		return this.DocumentRenderer;
 	};
+	PDFEditorApi.prototype.getPDFDoc = function() {
+		if (!this.DocumentRenderer)
+			return null;
+		
+		return this.DocumentRenderer.getPDFDoc();
+	};
 	PDFEditorApi.prototype["asc_setViewerThumbnailsZoom"] = function(value) {
 		if (this.haveThumbnails())
 			this.DocumentRenderer.Thumbnails.setZoom(value);

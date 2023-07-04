@@ -57,17 +57,11 @@
 
         // internal
         TurnOffHistory();
-        this.content = new AscWord.CDocumentContent(null, editor.WordControl.m_oDrawingDocument, 0, 0, 0, 0, undefined, undefined, false);
-        this.content.ParentPDF = this;
-        this.content.SetUseXLimit(false);
-        this.content.MoveCursorToStartPos();
+		this.content = new AscPDF.CTextBoxContent(this, editor.getPDFDoc());
 
         // content for formatting value
         // Note: draw this content instead of main if form has a "format" action
-        this.contentFormat = new AscWord.CDocumentContent(null, editor.WordControl.m_oDrawingDocument, 0, 0, 0, 0, undefined, undefined, false);
-        this.contentFormat.ParentPDF = this;
-        this.contentFormat.SetUseXLimit(false);
-        this.contentFormat.MoveCursorToStartPos();
+		this.contentFormat = new AscPDF.CTextBoxContent(this, editor.getPDFDoc());
 
         this._scrollInfo = null;
     }
@@ -768,55 +762,16 @@
         this.SetNeedCommit(false);
         this.needValidate = true;
     };
-    CTextField.prototype.SetAlign = function(nAlgnType) {
-        let nGlobalType;
-        switch (nAlgnType) {
-            case AscPDF.ALIGN_TYPE.left:
-                nGlobalType = align_Left;
-                break;
-            case AscPDF.ALIGN_TYPE.center:
-                nGlobalType = align_Center;
-                break;
-            case AscPDF.ALIGN_TYPE.right:
-                nGlobalType = align_Right;
-                break;
-        }
-
-        this.content.SetApplyToAll(true);
-        this.content.SetParagraphAlign(nGlobalType);
-        this.content.GetElement(0).RecalcCompiledPr(true);
-        this.content.SetApplyToAll(false);
-
-        if (this.contentFormat) {
-            this.contentFormat.SetApplyToAll(true);
-            this.contentFormat.SetParagraphAlign(nGlobalType);
-            this.contentFormat.SetApplyToAll(false);
-            this.contentFormat.GetElement(0).RecalcCompiledPr(true);
-        }
-
-        this.SetNeedRecalc(true);
-    };
-    CTextField.prototype.GetAlign = function() {
-        let nParaAlign = this.content.GetElement(0).GetParagraphAlign();
-        let nFormAlignType;
-
-        switch (nParaAlign) {
-            case align_Left:
-                nFormAlignType = AscPDF.ALIGN_TYPE.left;
-                break;
-            case align_Center:
-                nFormAlignType = AscPDF.ALIGN_TYPE.center;
-                break;
-            case align_Right:
-                nFormAlignType = AscPDF.ALIGN_TYPE.right;
-                break;
-            default:
-                nFormAlignType = AscPDF.ALIGN_TYPE.left;
-                break;
-        }
-
-        return nFormAlignType;
-    };
+	CTextField.prototype.SetAlign = function(nAlignType) {
+		this.content.SetAlign(nAlignType);
+		if (this.contentFormat)
+			this.contentFormat.SetAlign(nAlignType);
+		
+		this.SetNeedRecalc(true);
+	};
+	CTextField.prototype.GetAlign = function() {
+		return this.content.GetAlign();
+	};
 
     CTextField.prototype.DoFormatAction = function() {
         let oDoc                = this.GetDocument();

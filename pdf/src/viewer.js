@@ -3070,6 +3070,10 @@
 		};
 		this.createComponents();
 	};
+	CHtmlPage.prototype.getPDFDoc = function()
+	{
+		return this.doc;
+	};
 	CHtmlPage.prototype._paintForms = function()
 	{
 		const ctx = this.canvasForms.getContext('2d');

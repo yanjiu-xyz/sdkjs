@@ -50,10 +50,8 @@
         this._currentValueIndices   = undefined;
         this._textFont              = "ArialMT";
         this._options               = [];
-        
-        this.content = new AscWord.CDocumentContent(null, editor.WordControl.m_oDrawingDocument, 0, 0, 0, 0, undefined, undefined, false);
-        this.content.ParentPDF = this;
-        this.content.SetUseXLimit(false);
+
+		this.content = new AscPDF.CTextBoxContent(this, editor.getPdfDoc());
     }
     CBaseListField.prototype = Object.create(AscPDF.CBaseField.prototype);
 	CBaseListField.prototype.constructor = CBaseListField;

@@ -46,13 +46,10 @@
 
         // content for formatting value
         // Note: draw this content instead of main if form has a "format" action
-        this.contentFormat = new AscWord.CDocumentContent(null, editor.WordControl.m_oDrawingDocument, 0, 0, 0, 0, undefined, undefined, false);
-        this.contentFormat.ParentPDF = this;
-        this.contentFormat.SetUseXLimit(false);
-        this.content.MoveCursorToStartPos();
+		this.contentFormat = new AscPDF.CTextBoxContent(this, editor.getPdfDoc());
 
         this._markRect = null;
-    };
+    }
     CComboBoxField.prototype = Object.create(AscPDF.CBaseListField.prototype);
 	CComboBoxField.prototype.constructor = CComboBoxField;
 

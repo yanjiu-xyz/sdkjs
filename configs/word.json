@@ -300,6 +300,7 @@
 			"pdf/src/forms/radiobutton.js",
 			"pdf/src/forms/pushbutton.js",
 			"pdf/src/forms/combobox.js",
+			"pdf/src/forms/textBoxContent.js",
 			"pdf/src/graphics.js",
 			"pdf/src/formsChanges.js",
 			"pdf/src/apiPDF.js",

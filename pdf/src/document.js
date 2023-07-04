@@ -115,6 +115,8 @@
 
         this._parentsMap = {}; // map при открытии форм
         this.api = this.GetDocumentApi();
+		
+		this.Spelling = new AscCommonWord.CDocumentSpellChecker();
     }
 
     /////////// методы для открытия //////////////
@@ -253,7 +255,18 @@
         }
     };
     ////////////////////////////////////
-    
+    CPDFDoc.prototype.GetDrawingDocument = function() {
+		if (!editor || !editor.WordControl)
+			return null;
+		
+		return editor.WordControl.m_oDrawingDocument;
+	};
+	CPDFDoc.prototype.GetDocumentRenderer = function() {
+		if (!editor)
+			return null;
+		
+		return editor.getDocumentRenderer();
+	};
     CPDFDoc.prototype.CommitFields = function() {
         this.skipHistoryOnCommit = true;
         this.fieldsToCommit.forEach(function(field) {
@@ -1227,6 +1240,35 @@
 
         return null;
     };
+	
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Extension required for CTextBoxContent
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	CPDFDoc.prototype.IsTrackRevisions = function() {
+		return false;
+	};
+	CPDFDoc.prototype.IsDocumentEditor = function() {
+		return false;
+	};
+	CPDFDoc.prototype.Get_Styles = function() {
+		return AscWord.DEFAULT_STYLES;
+	};
+	CPDFDoc.prototype.Get_Numbering = function() {
+		return AscWord.DEFAULT_NUMBERING;
+	};
+	CPDFDoc.prototype.IsDoNotExpandShiftReturn = function() {
+		return false;
+	};
+	CPDFDoc.prototype.GetCompatibilityMode = function() {
+		return AscCommon.document_compatibility_mode_Word12;
+	};
+	CPDFDoc.prototype.Get_PageLimits = function(pageIndex) {
+		let documentRenderer = this.GetDocumentRenderer();
+		return documentRenderer.Get_PageLimits(pageIndex);
+	};
+	CPDFDoc.prototype.Get_PageFields = function(pageIndex) {
+		return this.Get_PageLimits(pageIndex);
+	};
 
     function CActionQueue(oDoc) {
         this.doc            = oDoc;
