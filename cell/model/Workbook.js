@@ -8905,15 +8905,24 @@
 					if (oCellValue) {
 						var dataIndex = Math.max(colItem.i, rowItem.i)
 						var cell = this.getRange4(r1 + rowItemsIndex, c1 + colItemsIndex);
-						var num = pivotTable.getNum({
+						var formatting = pivotTable.getFormatting({
 							values: traversal.getCurrentFieldValues(),
 							isGrandRow: rowItem.t === Asc.c_oAscItemType.Grand,
 							isGrandCol: colItem.t === Asc.c_oAscItemType.Grand,
 							field: Asc.c_oAscItemType.Grand !== rowItem.t ? fieldIndex : traversal.fieldIndex,
 							dataIndex: dataIndex
 						});
-						if (num) {
-							cell.setNum(num);
+						if (formatting.num) {
+							cell.setNum(formatting.num);
+						}
+						if (formatting.font) {
+							cell.setFont(formatting.font)
+						}
+						if (formatting.fill) {
+							cell.setFill(formatting.fill);
+						}
+						if (formatting.border) {
+							cell.setBorder(formatting.border);
 						}
 						cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 					}
