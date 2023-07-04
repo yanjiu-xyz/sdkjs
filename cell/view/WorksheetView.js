@@ -9303,7 +9303,7 @@
 			}
 			
 			if (canEdit && readyMode) {
-				var _range = new asc_Range(c.col, r.row, c.col, r.row)
+				var _range = new asc_Range(c.col, r.row, c.col, r.row);
 				var pivotButtons = !this.model.inTopAutoFilter(_range) && this.model.getPivotTableButtons(_range);
 				var pivotButton = pivotButtons && pivotButtons.find(function (element) {
 					return element.row === r.row && element.col === c.col;

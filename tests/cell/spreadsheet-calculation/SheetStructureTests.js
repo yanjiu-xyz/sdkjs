@@ -153,19 +153,11 @@ $(function () {
 	var getRange = function (c1, r1, c2, r2) {
 		return new window["Asc"].Range(c1, r1, c2, r2);
 	};
-	const getRangeWithData = function (ws, data) {
-		let range = ws.getRange4(0, 0);
-
-		range.fillData(data);
-		ws.selectionRange.ranges = [getRange(0, 0, 0, 0)];
-
-		return ws;
-	};
 	const clearData = function (c1, r1, c2, r2) {
 		ws.autoFilters.deleteAutoFilter(getRange(0,0,0,0));
 		ws.removeRows(r1, r2, false);
 		ws.removeCols(c1, c2);
-	}
+	};
 
 	function checkUndoRedo(fBefore, fAfter, desc) {
 		fAfter("after_" + desc);
