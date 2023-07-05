@@ -37,9 +37,9 @@
 	 * @constructor
      * @extends {CBaseField}
 	 */
-    function CSignatureField(sName, nPage, aRect)
+    function CSignatureField(sName, nPage, aRect, oDoc)
     {
-        AscPDF.CBaseField.call(this, sName, AscPDF.FIELD_TYPE.signature, nPage, aRect);
+        AscPDF.CBaseField.call(this, sName, AscPDF.FIELD_TYPE.signature, nPage, aRect, oDoc);
     };
 
     if (!window["AscPDF"])

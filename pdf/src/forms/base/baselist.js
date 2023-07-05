@@ -42,16 +42,16 @@
 	 * @constructor
      * @extends {CBaseField}
 	 */
-    function CBaseListField(sName, sType, nPage, aRect)
+    function CBaseListField(sName, sType, nPage, aRect, oDoc)
     {
-        AscPDF.CBaseField.call(this, sName, sType, nPage, aRect);
+        AscPDF.CBaseField.call(this, sName, sType, nPage, aRect, oDoc);
 
         this._commitOnSelChange     = false;
         this._currentValueIndices   = undefined;
         this._textFont              = "ArialMT";
         this._options               = [];
 
-		this.content = new AscPDF.CTextBoxContent(this, editor.getPdfDoc());
+		this.content = new AscPDF.CTextBoxContent(this, oDoc);
     }
     CBaseListField.prototype = Object.create(AscPDF.CBaseField.prototype);
 	CBaseListField.prototype.constructor = CBaseListField;

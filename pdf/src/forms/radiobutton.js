@@ -36,9 +36,9 @@
 	 * @constructor
      * @extends {CBaseCheckBoxField}
 	 */
-    function CRadioButtonField(sName, nPage, aRect)
+    function CRadioButtonField(sName, nPage, aRect, oDoc)
     {
-        AscPDF.CBaseCheckBoxField.call(this, sName, AscPDF.FIELD_TYPE.radiobutton, nPage, aRect);
+        AscPDF.CBaseCheckBoxField.call(this, sName, AscPDF.FIELD_TYPE.radiobutton, nPage, aRect, oDoc);
         
         this._radiosInUnison = false;
         this._noToggleToOff = true;

@@ -1175,7 +1175,9 @@
                 }
             },
             get() {
-                return this.field.GetApiValue();
+                let value = this.field.GetApiValue();
+                let isNumber = !isNaN(value) && isFinite(value) && value != "";
+                return isNumber ? parseFloat(value) : value;
             }
         },
         "defaultValue": {
@@ -1347,7 +1349,9 @@
                 }
             },
             get() {
-                return this.field.GetApiValue();
+                let value = this.field.GetApiValue();
+                let isNumber = !isNaN(value) && isFinite(value) && value != "";
+                return isNumber ? parseFloat(value) : value;
             }
         }
     });
@@ -1485,7 +1489,9 @@
                 }
             },
             get() {
-                return this.field.GetApiValue();
+                let value = this.field.GetApiValue();
+                let isNumber = !isNaN(value) && isFinite(value) && value != "";
+                return isNumber ? parseFloat(value) : value;
             }
         }
     });

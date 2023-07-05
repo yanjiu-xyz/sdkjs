@@ -36,9 +36,9 @@
 	 * @constructor
      * @extends {CBaseCheckBoxField}
 	 */
-    function CCheckBoxField(sName, nPage, aRect)
+    function CCheckBoxField(sName, nPage, aRect, oDoc)
     {
-        AscPDF.CBaseCheckBoxField.call(this, sName, AscPDF.FIELD_TYPE.checkbox, nPage, aRect);
+        AscPDF.CBaseCheckBoxField.call(this, sName, AscPDF.FIELD_TYPE.checkbox, nPage, aRect, oDoc);
 
         this._style     = style.ch;
         this._caption   = undefined;

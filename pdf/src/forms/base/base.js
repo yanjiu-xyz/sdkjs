@@ -123,7 +123,7 @@
 	 * Class representing a base field class.
 	 * @constructor
     */
-    function CBaseField(sName, sType, nPage, aRect)
+    function CBaseField(sName, sType, nPage, aRect, oDoc)
     {
         this.type = sType;
 
@@ -131,7 +131,7 @@
         this._borderStyle   = BORDER_TYPES.solid;
         this._delay         = false;
         this._display       = AscPDF.Api.Objects.display["visible"];
-        this._doc           = null;
+        this._doc           = oDoc;
         this._fillColor     = [1,1,1];
         this._bgColor       = undefined;          // prop for old versions (fillColor)
         this._hidden        = false;             // This property has been superseded by the display property and its use is discouraged.
@@ -534,8 +534,7 @@
         if (oParent == null && this._value == null)
             return "";
         else if (bInherit === false || (this._value != null && this.GetPartialName() != null)) {
-            let isNumber = !isNaN(this._value) && isFinite(this._value) && this._value != "";
-            return isNumber ? parseFloat(this._value) : this._value;
+            return this._value;
         }
         
         if (oParent)

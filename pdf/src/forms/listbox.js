@@ -42,9 +42,9 @@
 	 * @constructor
      * @extends {CBaseListField}
 	 */
-    function CListBoxField(sName, nPage, aRect)
+    function CListBoxField(sName, nPage, aRect, oDoc)
     {
-        AscPDF.CBaseListField.call(this, sName, AscPDF.FIELD_TYPE.listbox, nPage, aRect);
+        AscPDF.CBaseListField.call(this, sName, AscPDF.FIELD_TYPE.listbox, nPage, aRect, oDoc);
 
         this._multipleSelection = false;
 

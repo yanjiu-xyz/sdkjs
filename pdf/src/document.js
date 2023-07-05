@@ -104,6 +104,7 @@ var CPresentation = CPresentation || function(){};
         this.calculateInfo = new CCalculateInfo(this);
         this.fieldsToCommit = [];
         this.event = {};
+        this.AutoCorrectSettings = new AscCommon.CAutoCorrectSettings();
         Object.defineProperties(this.event, {
             "change": {
                 set(value) {
@@ -976,7 +977,7 @@ var CPresentation = CPresentation || function(){};
         if (!oPagesInfo.pages[nPageNum])
             return null;
         
-        let oField = private_createField(cName, cFieldType, nPageNum, aScaledCoords);
+        let oField = private_createField(cName, cFieldType, nPageNum, aScaledCoords, this);
         oField._origRect = aCoords;
 
         this.widgets.push(oField);
@@ -1259,6 +1260,17 @@ var CPresentation = CPresentation || function(){};
 	CPDFDoc.prototype.GetStyles = function() {
 		return this.Get_Styles();
 	};
+    /**
+     * Запрашиваем настройку автозамены двух дефисов на тире
+     * @returns {boolean}
+     */
+    CPDFDoc.prototype.IsAutoCorrectHyphensWithDash = function()
+    {
+        return this.AutoCorrectSettings.IsHyphensWithDash();
+    };
+    CPDFDoc.prototype.GetHistory = function() {
+        return AscCommon.History;
+    };
 	CPDFDoc.prototype.Get_Numbering = function() {
 		return AscWord.DEFAULT_NUMBERING;
 	};
@@ -1352,32 +1364,32 @@ var CPresentation = CPresentation || function(){};
         }
     };
 
-    function private_createField(cName, cFieldType, nPageNum, oCoords) {
+    function private_createField(cName, cFieldType, nPageNum, oCoords, oPdfDoc) {
         let oField;
         switch (cFieldType) {
             case "button":
-                oField = new AscPDF.CPushButtonField(cName, nPageNum, oCoords);
+                oField = new AscPDF.CPushButtonField(cName, nPageNum, oCoords, oPdfDoc);
                 break;
             case "checkbox":
-                oField = new AscPDF.CCheckBoxField(cName, nPageNum, oCoords);
+                oField = new AscPDF.CCheckBoxField(cName, nPageNum, oCoords, oPdfDoc);
                 break;
             case "combobox":
-                oField = new AscPDF.CComboBoxField(cName, nPageNum, oCoords);
+                oField = new AscPDF.CComboBoxField(cName, nPageNum, oCoords, oPdfDoc);
                 break;
             case "listbox":
-                oField = new AscPDF.CListBoxField(cName, nPageNum, oCoords);
+                oField = new AscPDF.CListBoxField(cName, nPageNum, oCoords, oPdfDoc);
                 break;
             case "radiobutton":
-                oField = new AscPDF.CRadioButtonField(cName, nPageNum, oCoords);
+                oField = new AscPDF.CRadioButtonField(cName, nPageNum, oCoords, oPdfDoc);
                 break;
             case "signature":
                 oField = null;
                 break;
             case "text":
-                oField = new AscPDF.CTextField(cName, nPageNum, oCoords);
+                oField = new AscPDF.CTextField(cName, nPageNum, oCoords, oPdfDoc);
                 break;
             case "": 
-                oField = new AscPDF.CBaseField(cName, nPageNum, oCoords);
+                oField = new AscPDF.CBaseField(cName, nPageNum, oCoords, oPdfDoc);
                 break;
         }
 

@@ -36,9 +36,9 @@
 	 * @constructor
      * @extends {CBaseField}
 	 */
-    function CTextField(sName, nPage, aRect)
+    function CTextField(sName, nPage, aRect, oDoc)
     {
-        AscPDF.CBaseField.call(this, sName, AscPDF. FIELD_TYPE.text, nPage, aRect);
+        AscPDF.CBaseField.call(this, sName, AscPDF. FIELD_TYPE.text, nPage, aRect, oDoc);
         
         this._alignment         = AscPDF.ALIGN_TYPE.left;
         this._calcOrderIndex    = 0;
@@ -57,11 +57,11 @@
 
         // internal
         TurnOffHistory();
-		this.content = new AscPDF.CTextBoxContent(this, editor.getPDFDoc());
+		this.content = new AscPDF.CTextBoxContent(this, oDoc);
 
         // content for formatting value
         // Note: draw this content instead of main if form has a "format" action
-		this.contentFormat = new AscPDF.CTextBoxContent(this, editor.getPDFDoc());
+		this.contentFormat = new AscPDF.CTextBoxContent(this, oDoc);
 
         this._scrollInfo = null;
     }

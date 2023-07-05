@@ -97,9 +97,9 @@
 	 * @constructor
      * @extends {CBaseField}
 	 */
-    function CBaseCheckBoxField(sName, sType, nPage, aRect)
+    function CBaseCheckBoxField(sName, sType, nPage, aRect, oDoc)
     {
-        AscPDF.CBaseField.call(this, sName, sType, nPage, aRect);
+        AscPDF.CBaseField.call(this, sName, sType, nPage, aRect, oDoc);
 
         this._value         = "Off";
         this._exportValue   = "Yes";

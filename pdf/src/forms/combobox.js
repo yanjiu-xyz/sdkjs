@@ -36,9 +36,9 @@
 	 * @constructor
      * @extends {CBaseListField}
 	 */
-    function CComboBoxField(sName, nPage, aRect)
+    function CComboBoxField(sName, nPage, aRect, oDoc)
     {
-        AscPDF.CBaseListField.call(this, sName, AscPDF.FIELD_TYPE.combobox, nPage, aRect);
+        AscPDF.CBaseListField.call(this, sName, AscPDF.FIELD_TYPE.combobox, nPage, aRect, oDoc);
 
         this._calcOrderIndex    = 0;
         this._doNotSpellCheck   = false;
@@ -46,7 +46,7 @@
 
         // content for formatting value
         // Note: draw this content instead of main if form has a "format" action
-		this.contentFormat = new AscPDF.CTextBoxContent(this, editor.getPdfDoc());
+		this.contentFormat = new AscPDF.CTextBoxContent(this, oDoc);
 
         this._markRect = null;
     }
