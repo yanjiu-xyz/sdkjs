@@ -33,7 +33,7 @@
 "use strict";
 
 var AscTest = AscTest || {};
-var CPresentation = CPresentation || function(){};
+
 (function()
 {
 	AscCommon.CViewer.prototype.createComponents = function(){};

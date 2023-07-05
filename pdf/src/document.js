@@ -30,6 +30,9 @@
  *
  */
 
+// TODO: Временно
+var CPresentation = CPresentation || function(){};
+
 (function(){
 
     /**
@@ -1251,10 +1254,16 @@
 		return false;
 	};
 	CPDFDoc.prototype.Get_Styles = function() {
-		return AscWord.DEFAULT_STYLES;
+		return AscCommonWord.DEFAULT_STYLES;
+	};
+	CPDFDoc.prototype.GetStyles = function() {
+		return this.Get_Styles();
 	};
 	CPDFDoc.prototype.Get_Numbering = function() {
 		return AscWord.DEFAULT_NUMBERING;
+	};
+	CPDFDoc.prototype.GetNumbering = function() {
+		return this.Get_Numbering();
 	};
 	CPDFDoc.prototype.IsDoNotExpandShiftReturn = function() {
 		return false;
@@ -1271,6 +1280,12 @@
 	};
 	CPDFDoc.prototype.GetApi = function() {
 		return editor;
+	};
+	CPDFDoc.prototype.CanEdit = function() {
+		return true;
+	};
+	CPDFDoc.prototype.IsFillingFormMode = function() {
+		return false;
 	};
 
     function CActionQueue(oDoc) {
