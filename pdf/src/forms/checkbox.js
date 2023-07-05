@@ -40,7 +40,7 @@
     {
         AscPDF.CBaseCheckBoxField.call(this, sName, AscPDF.FIELD_TYPE.checkbox, nPage, aRect, oDoc);
 
-        this._style     = style.ch;
+        this._chStyle   = AscPDF.CHECKBOX_STYLES.check;
         this._caption   = undefined;
     }
     CCheckBoxField.prototype = Object.create(AscPDF.CBaseCheckBoxField.prototype);
