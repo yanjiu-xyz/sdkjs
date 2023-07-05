@@ -89,6 +89,13 @@
 		
 		return AscPDF.ALIGN_TYPE.left;
 	};
+	CTextBoxContent.prototype.IsUseInDocument = function() {
+		// TODO: Временно, потом надо будет запрашивать у родительского класса
+		return true;
+	};
+	CTextBoxContent.prototype.OnContentReDraw = function() {
+		// TODO: Реализовать
+	};
 	
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscPDF'] = window['AscPDF'] || {};
