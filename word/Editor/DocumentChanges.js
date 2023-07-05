@@ -134,8 +134,10 @@ CChangesDocumentAddItem.prototype.Redo = function()
 
 		oDocument.private_UpdateSelectionPosOnAdd(Pos, 1);
 
+
 		if (Pos > 0)
 		{
+			debugger
 			oDocument.Content[Pos - 1].Next = Element;
 			Element.Prev                    = oDocument.Content[Pos - 1];
 		}

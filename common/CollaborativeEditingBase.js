@@ -360,12 +360,12 @@
             this.OnStart_Load_Objects(fEndCallBack);
             AscFonts.IsCheckSymbols = false;
 
-            // При отображении ревизии
-            this.CoHistory.InitRevision();
-            if (this.CoHistory.GetIsShowDelText())
-            {
-                this.CoHistory.ShowDel();
-            }
+			let revision = new AscCommon.DeletedTextRecovery();
+			revision.InitRevision();
+			if (revision.GetIsShowDelText())
+			{
+				revision.ShowDel()
+			}
         }
 		else
 		{
