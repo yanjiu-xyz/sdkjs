@@ -1008,11 +1008,13 @@
 
             let fieldValue = field.GetValue();
             
+            // multi select listbox
             if (Array.isArray(fieldValue)) {
                 aValues = aValues.concat(fieldValue);
             }
-            else
-                aValues.push(fieldValue !== "Off" ? fieldValue : "0");
+            else {
+                aValues.push(fieldValue !== "Off" && fieldValue != "" ? fieldValue : "0");
+            }
         });
 
         let nResult;
