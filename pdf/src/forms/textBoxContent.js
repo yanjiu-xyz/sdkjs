@@ -63,13 +63,13 @@
 		let _alignType = AscCommon.align_Left;
 		switch (alignType) {
 			case AscPDF.ALIGN_TYPE.left:
-				_alignType = align_Left;
+				_alignType = AscCommon.align_Left;
 				break;
 			case AscPDF.ALIGN_TYPE.center:
-				_alignType = align_Center;
+				_alignType = AscCommon.align_Center;
 				break;
 			case AscPDF.ALIGN_TYPE.right:
-				_alignType = align_Right;
+				_alignType = AscCommon.align_Right;
 				break;
 		}
 		

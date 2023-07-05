@@ -1269,6 +1269,9 @@
 	CPDFDoc.prototype.Get_PageFields = function(pageIndex) {
 		return this.Get_PageLimits(pageIndex);
 	};
+	CPDFDoc.prototype.GetApi = function() {
+		return editor;
+	};
 
     function CActionQueue(oDoc) {
         this.doc            = oDoc;

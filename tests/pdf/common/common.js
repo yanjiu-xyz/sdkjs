@@ -33,11 +33,9 @@
 "use strict";
 
 var AscTest = AscTest || {};
-
+var CPresentation = CPresentation || function(){};
 (function()
 {
-	let pdfDoc = null;
-	
 	AscCommon.CViewer.prototype.createComponents = function(){};
 	AscCommon.CViewer.prototype.resize = function(){};
 	AscCommon.CViewer.prototype._paintForms = function(){};
@@ -47,10 +45,15 @@ var AscTest = AscTest || {};
 	let viewer = new AscCommon.CViewer(null, AscTest.Editor);
 	viewer.file = window["AscViewer"].createEmptyFile();
 	
+	let pdfDoc = viewer.doc;
+	
 	AscTest.Editor.DocumentRenderer = viewer;
 	AscTest.Editor.getDocumentRenderer = function()
 	{
 		return viewer;
+	};
+	AscTest.Editor.getPDFDoc = function() {
+		return pdfDoc;
 	};
 	
 	AscTest.CreatePdfDocument = function()
