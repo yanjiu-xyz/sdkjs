@@ -602,17 +602,20 @@ CGraphicObjects.prototype =
 			let shape   = drawing ? drawing.GraphicObj : null;
 			if (!shape)
 				continue;
-			
 			if (shape.recalcText)
 				shape.recalcText();
-			
 			if (shape.handleUpdateExtents)
 				shape.handleUpdateExtents();
-			
 			shape.recalculate();
-			
-			if (shape.recalculateText)
-				shape.recalculateText();
+		}
+		for (let iDrawing = 0; iDrawing < this.drawingObjects.length; ++iDrawing)
+		{
+			let drawing = this.drawingObjects[iDrawing];
+			let shape   = drawing ? drawing.GraphicObj : null;
+			if (!shape)
+				continue;
+            if (shape.recalculateText)
+                shape.recalculateText();
 		}
 	},
 	
@@ -622,6 +625,8 @@ CGraphicObjects.prototype =
 			return this.recalculateAll();
 		
 		let shapeMap = data.Map;
+        //recalculate drawings and text in drawings separately
+        //to be assured that all internal drawings have calculated sizes to be correctly measured
 		for (let id in shapeMap)
 		{
 			if (!shapeMap.hasOwnProperty(id))
@@ -632,7 +637,17 @@ CGraphicObjects.prototype =
 				continue;
 			
 			shape.recalculate();
-			
+
+		}
+		for (let id in shapeMap)
+		{
+			if (!shapeMap.hasOwnProperty(id))
+				continue;
+
+			let shape = shapeMap[id];
+			if (!shape.IsUseInDocument())
+				continue;
+
 			if (shape.recalculateText)
 				shape.recalculateText();
 		}
