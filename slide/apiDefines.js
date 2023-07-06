@@ -543,6 +543,7 @@ prot['UnCover'] = c_oAscSlideTransitionTypes.UnCover;
 prot['Cover']   = c_oAscSlideTransitionTypes.Cover;
 prot['Clock']   = c_oAscSlideTransitionTypes.Clock;
 prot['Zoom']    = c_oAscSlideTransitionTypes.Zoom;
+prot['Morph']   = c_oAscSlideTransitionTypes.Morph;
 
 prot = window['Asc']['c_oAscSlideTransitionParams'] = c_oAscSlideTransitionParams;
 prot['Fade_Smoothly']          = c_oAscSlideTransitionParams.Fade_Smoothly;
@@ -565,6 +566,9 @@ prot['Clock_Wedge']            = c_oAscSlideTransitionParams.Clock_Wedge;
 prot['Zoom_In']                = c_oAscSlideTransitionParams.Zoom_In;
 prot['Zoom_Out']               = c_oAscSlideTransitionParams.Zoom_Out;
 prot['Zoom_AndRotate']         = c_oAscSlideTransitionParams.Zoom_AndRotate;
+prot['Morph_Objects']          = c_oAscSlideTransitionParams.Morph_Objects;
+prot['Morph_Words']            = c_oAscSlideTransitionParams.Morph_Words;
+prot['Morph_Letters']          = c_oAscSlideTransitionParams.Morph_Letters;
 
 prot = window['Asc']['c_oAscPresentationShortcutType'] = window['Asc'].c_oAscPresentationShortcutType = c_oAscPresentationShortcutType;
 prot['EditSelectAll']                 = c_oAscPresentationShortcutType.EditSelectAll;
