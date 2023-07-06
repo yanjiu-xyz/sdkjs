@@ -4009,6 +4009,7 @@
                             let dH = oImage.getXfrmExtY();
                             oImage.recalculate();
                             let oDrawing = new ParaDrawing(dW, dH, oImage, oShape.getDrawingDocument(), oContent, oParaRun);
+                            oDrawing.bCellHF = true;
                             oImage.setParent(oDrawing);
                             oParaRun.AddToContent(0, oDrawing, true);
                         }
@@ -4023,29 +4024,19 @@
                 oShape.recalculate();
 
                 let x, y;
-                switch(index) {
-                	case window["AscCommonExcel"].c_oPortionPosition.left: {
-                		x = left;
-                		y = !bFooter ? top : footerStartPos - oShape.contentHeight;
-                		break;
-                	}
-                	case window["AscCommonExcel"].c_oPortionPosition.center: {
-                		x = ((width - left - right) / 2 + left) - oShape.contentWidth / 2;
-                		y = !bFooter ? top : footerStartPos - oShape.contentHeight;
-                		break;
-                	}
-                	case window["AscCommonExcel"].c_oPortionPosition.right: {
-                		x = width - right - oShape.contentWidth;
-                		y = !bFooter ? top : footerStartPos - oShape.contentHeight;
-                		break;
-                	}
-                }
+                x = left;
+                y = !bFooter ? top : footerStartPos - oShape.contentHeight;
                 oShape.posX += x;
                 oShape.posY += y;
                 oShape.updateTransformMatrix();
                 if(oImage) {
                     oImage.updateTransformMatrix();
                 }
+                oShape.clipRect = null;
+                //oShape.clipRect.x = 0;
+                //oShape.clipRect.y = 0;
+                //oShape.clipRect.w = oShape.extX;
+                //oShape.clipRect.h = height - (bottom - top);
                 return oShape;
 
             }, this, []);
@@ -4065,7 +4056,8 @@
             }
 
             oGraphics.SaveGrState();
-
+            oGraphics.transform3(new AscCommon.CMatrix())
+            oGraphics.AddClipRect(left, top, width - (left + right), height - (top + bottom));
             oShape.draw(oGraphics);
 
             oGraphics.RestoreGrState();

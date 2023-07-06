@@ -191,6 +191,7 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 		if (History.CanRegisterClasses())
 			this.graphicObjects.addGraphicObject(this);
 	}
+	this.bCellHF = false;
 }
 ParaDrawing.prototype = Object.create(AscWord.CRunElementBase.prototype);
 ParaDrawing.prototype.constructor = ParaDrawing;
@@ -1605,7 +1606,37 @@ ParaDrawing.prototype.updatePosition3 = function(pageIndex, x, y, oldPageNum)
 		}
 	}
 
-
+	if(this.bCellHF)
+	{
+		let oDocContent = this.DocumentContent;
+		let oParagraph = this.GetParagraph();
+		if(oDocContent && oParagraph)
+		{
+			let dExtX = this.getXfrmExtX();
+			if(dExtX > oDocContent.XLimit)
+			{
+				let nAlign = oParagraph.GetParagraphAlign();
+				switch (nAlign)
+				{
+					case AscCommon.align_Center:
+					{
+						_x = oDocContent.X + oDocContent.XLimit / 2 - dExtX / 2;
+						break;
+					}
+					case AscCommon.align_Right:
+					{
+						_x = oDocContent.X + oDocContent.XLimit - dExtX;
+						break;
+					}
+					case AscCommon.align_Left:
+					{
+						_x = oDocContent.X;
+						break;
+					}
+				}
+			}
+		}
+	}
 
 	if (this.GraphicObj.bNeedUpdatePosition || !(AscFormat.isRealNumber(this.GraphicObj.posX) && AscFormat.isRealNumber(this.GraphicObj.posY)) || !(Math.abs(this.GraphicObj.posX - _x) < MOVE_DELTA && Math.abs(this.GraphicObj.posY - _y) < MOVE_DELTA))
 		this.GraphicObj.updatePosition(_x, _y);
