@@ -8910,7 +8910,8 @@
 							isGrandRow: rowItem.t === Asc.c_oAscItemType.Grand,
 							isGrandCol: colItem.t === Asc.c_oAscItemType.Grand,
 							field: Asc.c_oAscItemType.Grand !== rowItem.t ? fieldIndex : traversal.fieldIndex,
-							dataIndex: dataIndex
+							dataIndex: dataIndex,
+							isData: true
 						});
 						cell.setFormatting(formatting);
 						cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));

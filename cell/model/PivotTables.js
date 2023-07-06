@@ -7058,6 +7058,8 @@ CT_pivotTableDefinition.prototype.getFormatting = function(query, optDxfsOpen) {
  * @property {CT_Format} format
  * @property {boolean} isGrandRow
  * @property {boolean} isGrandCol
+ * @property {boolean} isLabelOnly
+ * @property {boolean} isDataOnly
  */
 
 /**
@@ -7106,7 +7108,9 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
 		format: format,
 		isGrandCol: pivotArea.grandCol,
 		isGrandRow: pivotArea.grandRow,
-		selectedField: selectedField
+		selectedField: selectedField,
+		isLabelOnly: pivotArea.labelOnly,
+		isDataOnly: pivotArea.dataOnly
 	};
 	const field = selectedField !== null ? selectedField : pivotAreaField;
 	if (field === null) {
@@ -7126,6 +7130,7 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
  * @property {boolean} isGrandCol
  * @property {number?} field
  * @property {number} dataIndex
+ * @property {boolean} isData
  */
 
 /**
@@ -7168,6 +7173,12 @@ PivotFormatsManager.prototype.checkFormatsCollectionItem = function(formatsColle
  * @return {boolean}
  */
 PivotFormatsManager.prototype.checkFormatsCollectionItemAttributes = function(formatsCollectionItem, query) {
+	if (formatsCollectionItem.isLabelOnly && query.isData) {
+		return false;
+	}
+	if (formatsCollectionItem.isDataOnly && !query.isData) {
+		return false;
+	}
 	if (formatsCollectionItem.isGrandRow && !query.isGrandRow) {
 		return false;
 	}
@@ -7215,23 +7226,32 @@ PivotFormatsManager.prototype.compareFormatsCollectionItems = function(item1, it
 		return -1;
 	} else if (item1.fieldValuesMap.size < item2.fieldValuesMap.size) {
 		return 1;
-	} else {
-		if (item1.fieldValuesMap.get(item1.selectedField) && item2.fieldValuesMap.get(item2.selectedField)) {
-			if (item1.fieldValuesMap.get(item1.selectedField).size > item2.fieldValuesMap.get(item2.selectedField).size) {
-				return -1;
-			} else if (item1.fieldValuesMap.get(item1.selectedField).size < item2.fieldValuesMap.get(item2.selectedField).size) {
-				return 1;
-			}
-		}
-		if (item1.isGrandCol && !item2.isGrandCol) {
+	}
+	if (item1.fieldValuesMap.get(item1.selectedField) && item2.fieldValuesMap.get(item2.selectedField)) {
+		if (item1.fieldValuesMap.get(item1.selectedField).size > item2.fieldValuesMap.get(item2.selectedField).size) {
 			return -1;
-		} else if (item1.isGrandRow && !item2.isGrandRow) {
-			return -1;
-		} else if (!item1.isGrandRow && item2.isGrandRow) {
-			return 1;
-		} else if (!item1.isGrandRow && item2.isGrandRow) {
+		} else if (item1.fieldValuesMap.get(item1.selectedField).size < item2.fieldValuesMap.get(item2.selectedField).size) {
 			return 1;
 		}
+	}
+	if (item1.isGrandCol && !item2.isGrandCol) {
+		return -1;
+	} else if (item1.isGrandRow && !item2.isGrandRow) {
+		return -1;
+	} else if (!item1.isGrandRow && item2.isGrandRow) {
+		return 1;
+	} else if (!item1.isGrandRow && item2.isGrandRow) {
+		return 1;
+	}
+	if (item1.isDataOnly && !item2.isDataOnly) {
+		return -1;
+	} else if (!item1.isDataOnly && item2.isDataOnly) {
+		return 1;
+	}
+	if (item1.isLabelOnly && !item2.isLabelOnly) {
+		return -1;
+	} else if (!item1.isLabelOnly && item2.isLabelOnly) {
+		return 1;
 	}
 	return 0;
 };
