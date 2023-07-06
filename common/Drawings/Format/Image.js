@@ -833,15 +833,15 @@
 				}
 			}
 		};
-
-
 		CImageShape.prototype.pasteFormatting = function (oFormatData) {
 			if (!oFormatData) {
 				return;
 			}
 			this.pasteDrawingFormatting(oFormatData.Drawing);
 		};
-
+		CImageShape.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
+			return AscFormat.CShape.prototype.compareForMorph.call(this, oDrawingToCheck, oCurCandidate);
+		};
 		function CreateBrushFromBlipFill(oBlipFill) {
 			if (!oBlipFill) {
 				return null;

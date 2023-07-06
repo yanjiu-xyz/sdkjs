@@ -185,7 +185,7 @@ function OverlayObject(geometry, extX, extY, brush, pen, transform )
     };
 }
 
-function ObjectToDraw(brush, pen, extX, extY, geometry, transform, x, y, oComment)
+function ObjectToDraw(brush, pen, extX, extY, geometry, transform, x, y, oComment, Code)
 {
     this.extX = extX;
     this.extY = extY;
@@ -194,6 +194,7 @@ function ObjectToDraw(brush, pen, extX, extY, geometry, transform, x, y, oCommen
     this.geometry = geometry;
     this.parentShape = null;
     this.Comment = oComment;
+    this.Code = Code;
     this.pen = pen;
     this.brush = brush;
 
@@ -221,7 +222,7 @@ ObjectToDraw.prototype =
         }
     },
 
-    resetBrushPen: function(brush, pen, x, y)
+    resetBrushPen: function(brush, pen, x, y, Code)
     {
         this.brush = brush;
         this.pen = pen;
@@ -230,6 +231,10 @@ ObjectToDraw.prototype =
         {
             this.x = x;
             this.y = y;
+        }
+        if(AscFormat.isRealNumber(Code))
+        {
+            this.Code = Code;
         }
     },
 
@@ -346,6 +351,13 @@ ObjectToDraw.prototype =
 
     createDuplicate: function()
     {
+    },
+
+    compareForMorph: function(oDrawingToCheck, oCurCandidate) {
+        if(AscFormat.isRealNumber(this.Code) && oDrawingToCheck.Code === this.Code) {
+            return oDrawingToCheck;
+        }
+        return oCurCandidate;
     }
 };
 function RotateTrackShapeImage(originalObject)

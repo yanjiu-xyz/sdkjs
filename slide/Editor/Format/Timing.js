@@ -11128,21 +11128,40 @@
         this.map = {};
     }
 
-    CTexturesCache.prototype.checkTexture = function (sId, fScale) {
-        if (!this.map[sId] || !this.map[sId].checkScale(fScale)) {
-            const oTexture = this.createDrawingTexture(sId, fScale);
+    CTexturesCache.prototype.checkTexture = function (sId, fScale, bMorph, bCheckSize) {
+        let bCreate = false;
+        if(!this.map[sId] || !this.map[sId].checkScale(fScale)) {
+            bCreate = true;
+        }
+        else if(bMorph && bCheckSize) {
+            const oDrawing = AscCommon.g_oTableId.Get_ById(sId);
+            if (!oDrawing) {
+                return undefined;
+            }
+            let oTexture = this.map[sId];
+            let oPixSize = oDrawing.bounds.getPixSize(fScale);
+            if(oPixSize.w !== oTexture.getWidth() || oPixSize.h !== oTexture.getHeight()) {
+                this.removeTexture(sId);
+                bCreate = true;
+            }
+        }
+        if (bCreate) {
+            const oTexture = this.createDrawingTexture(sId, fScale, bMorph);
             if(oTexture) {
                 this.map[sId] = oTexture;
             }
         }
         return this.map[sId];
     };
-    CTexturesCache.prototype.createDrawingTexture = function (sId, fScale) {
+    CTexturesCache.prototype.checkMorphTexture = function (sId, fScale, bCheckSize) {
+        return this.checkTexture(sId, fScale, true, bCheckSize);
+    };
+    CTexturesCache.prototype.createDrawingTexture = function (sId, fScale, bMorph) {
         var oDrawing = AscCommon.g_oTableId.Get_ById(sId);
         if (!oDrawing) {
             return undefined;
         }
-        var oBaseTexture = oDrawing.getAnimTexture(fScale);
+        var oBaseTexture = oDrawing.getAnimTexture(fScale, bMorph);
 		if(!oBaseTexture) {
 			return undefined;
 		}

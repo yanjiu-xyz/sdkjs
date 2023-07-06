@@ -2854,14 +2854,25 @@
 		}
 		return (oParentContent.GetTopDocumentContent() === oParentContent.GetLogicDocument());
 	};
-	CGraphicObjectBase.prototype.getBoundsByDrawing = function () {
-		var oCopy = this.bounds.copy();
-		oCopy.l -= 3;
-		oCopy.r += 3;
-		oCopy.t -= 3;
-		oCopy.b += 3;
+	CGraphicObjectBase.prototype.getBoundsByDrawing = function (bMorph) {
+		const oCopy = this.bounds.copy();
+		if(!bMorph) {
+			oCopy.l -= 3;
+			oCopy.r += 3;
+			oCopy.t -= 3;
+			oCopy.b += 3;
+			oCopy.checkWH();
+			return oCopy;//TODO: do not count shape rect
+		}
+		if(this.pen) {
+			const dCorrection = this.pen.getWidthMM() / 2;
+			oCopy.l -= dCorrection;
+			oCopy.r += dCorrection;
+			oCopy.t -= dCorrection;
+			oCopy.b += dCorrection;
+		}
 		oCopy.checkWH();
-		return oCopy;//TODO: do not count shape rect
+		return oCopy;
 	};
 	CGraphicObjectBase.prototype.getPresentationSize = function () {
 		var oPresentation = editor.WordControl.m_oLogicDocument;
@@ -2870,8 +2881,8 @@
 			h: oPresentation.GetHeightMM()
 		}
 	};
-	CGraphicObjectBase.prototype.getAnimTexture = function (scale) {
-		const oBounds = this.getBoundsByDrawing();
+	CGraphicObjectBase.prototype.getAnimTexture = function (scale, bMorph) {
+		const oBounds = this.getBoundsByDrawing(bMorph);
 		const oCanvas = oBounds.createCanvas(scale);
 		const oGraphics = oBounds.createGraphicsFromCanvas(oCanvas, scale)
 		const nX = oBounds.x * oGraphics.m_oCoordTransform.sx;
@@ -3058,9 +3069,20 @@
 			}
 		}
 	};
-
-	CGraphicObjectBase.prototype.compareForMorph = function(oDrawingToCompare, oCandidate) {
-		return oCandidate || null;
+	CGraphicObjectBase.prototype.compareForMorph = function(oDrawingToCheck, oCandidate) {
+		if(oCandidate) {
+			return oCandidate;
+		}
+		if(oDrawingToCheck.getObjectType() === this.getObjectType()) {
+			const sName = this.getOwnName();
+			if(sName && sName.startsWith(AscFormat.OBJECT_MORPH_MARKER)) {
+				const sCheckName = oDrawingToCheck.getOwnName();
+				if(sName === sCheckName) {
+					return oDrawingToCheck;
+				}
+			}
+		}
+		return null;
 	};
 	CGraphicObjectBase.prototype.getTypeName = function () {
 		return AscCommon.translateManager.getValue("Graphic Object");

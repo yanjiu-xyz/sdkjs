@@ -6204,17 +6204,10 @@
 		};
 
 		CShape.prototype.recalculateBounds = function () {
-			var boundsChecker = new AscFormat.CSlideBoundsChecker();
-			this.draw(boundsChecker, this.localTransform, this.localTransformText, undefined, {transformText2: this.localTransformText2});
-			this.bounds.l = boundsChecker.Bounds.min_x;
-			this.bounds.t = boundsChecker.Bounds.min_y;
-			this.bounds.r = boundsChecker.Bounds.max_x;
-			this.bounds.b = boundsChecker.Bounds.max_y;
-
-			this.bounds.x = this.bounds.l;
-			this.bounds.y = this.bounds.t;
-			this.bounds.w = this.bounds.r - this.bounds.l;
-			this.bounds.h = this.bounds.b - this.bounds.t;
+			const oBoundsChecker = new AscFormat.CSlideBoundsChecker();
+			this.draw(oBoundsChecker, this.localTransform, this.localTransformText, undefined, {transformText2: this.localTransformText2});
+			const oBounds = oBoundsChecker.Bounds;
+			this.bounds.reset(oBounds.min_x, oBounds.min_y, oBounds.max_x, oBounds.max_y);
 		};
 
 		CShape.prototype.checkContentWordArt = function (oContent) {

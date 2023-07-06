@@ -2615,6 +2615,7 @@
     };
     CDLbl.prototype.hitInPath = CShape.prototype.hitInPath;
     CDLbl.prototype.hitInInnerArea = CShape.prototype.hitInInnerArea;
+    CDLbl.prototype.getGeometry = CShape.prototype.getGeometry;
     CDLbl.prototype.hitInBoundingRect = CShape.prototype.hitInBoundingRect;
     CDLbl.prototype.hitInTextRect = function(x, y) {
         var content = this.getDocContent && this.getDocContent();
@@ -5169,6 +5170,7 @@
     };
     CPlotArea.prototype.hitInBoundingRect = CShape.prototype.hitInBoundingRect;
     CPlotArea.prototype.hitInInnerArea = CShape.prototype.hitInInnerArea;
+    CPlotArea.prototype.getGeometry = CShape.prototype.getGeometry;
     CPlotArea.prototype.hitInPath = CShape.prototype.hitInPath;
     CPlotArea.prototype.checkHitToBounds = function(x, y) {
         CDLbl.prototype.checkHitToBounds.call(this, x, y);
@@ -10109,6 +10111,7 @@
     CLegend.prototype.getTrackGeometry = CShape.prototype.getTrackGeometry;
     CLegend.prototype.hitInBoundingRect = CShape.prototype.hitInBoundingRect;
     CLegend.prototype.hitInInnerArea = CShape.prototype.hitInInnerArea;
+    CLegend.prototype.getGeometry = CShape.prototype.getGeometry;
     CLegend.prototype.hitInPath = CShape.prototype.hitInPath;
     CLegend.prototype.Refresh_RecalcData = function() {
         this.Refresh_RecalcData2();
@@ -13579,6 +13582,7 @@
     InitClass(CTitle, CBaseChartObject, AscDFH.historyitem_type_Title);
     CTitle.prototype.hitInPath = CShape.prototype.hitInPath;
     CTitle.prototype.hitInInnerArea = CShape.prototype.hitInInnerArea;
+    CTitle.prototype.getGeometry = CShape.prototype.getGeometry;
     CTitle.prototype.hitInBoundingRect = CShape.prototype.hitInBoundingRect;
     CTitle.prototype.hitInTextRect = CDLbl.prototype.hitInTextRect;
     CTitle.prototype.recalculateGeometry = CShape.prototype.recalculateGeometry;
@@ -15679,6 +15683,7 @@
     }
 
     CalcLegendEntry.prototype.updatePosition = CShape.prototype.updatePosition;
+    CalcLegendEntry.prototype.getGeometry = CShape.prototype.getGeometry;
     CalcLegendEntry.prototype.getChartSpace = function() {
         return this.chart;
     };
@@ -15768,6 +15773,7 @@
     }
 
     CompiledMarker.prototype.draw = CShape.prototype.draw;
+    CompiledMarker.prototype.getGeometry = CShape.prototype.getGeometry;
     CompiledMarker.prototype.check_bounds = CShape.prototype.check_bounds;
     CompiledMarker.prototype.isEmptyPlaceholder = function() {
         return false;
