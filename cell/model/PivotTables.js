@@ -7210,20 +7210,6 @@ PivotFormatsManager.prototype.checkFormatsCollectionItemAttributes = function(fo
 /**
  * @param {PivotFormatsCollectionItem[]} formatsCollectionItems
  * @param {PivotFormatsManagerQuery} query
- * @return {PivotFormatsCollectionItem}
- */
-PivotFormatsManager.prototype.getBestFormatsCollectionItemByAttributes = function(formatsCollectionItems, query) {
-	for (let i = 0; i < formatsCollectionItems.length; i += 1) {
-		const formatsCollectionItem = formatsCollectionItems[i];
-		if (formatsCollectionItem.isGrandCol === query.isGrandCol && formatsCollectionItem.isGrandRow === query.isGrandRow) {
-			return formatsCollectionItem;
-		}
-	}
-	return null;
-};
-/**
- * @param {PivotFormatsCollectionItem[]} formatsCollectionItems
- * @param {PivotFormatsManagerQuery} query
  * @return {PivotFormatsCollectionItem[]}
  */
 PivotFormatsManager.prototype.getFormatsCollectionItems = function(formatsCollectionItems, query) {
@@ -7242,6 +7228,12 @@ PivotFormatsManager.prototype.getFormatsCollectionItems = function(formatsCollec
  * @return {boolean}
  */
 PivotFormatsManager.prototype.compareFormatsCollectionItems = function(item1, item2) {
+	if (item1.fieldValuesMap && !item2.fieldValuesMap) {
+		return -1;
+	}
+	if (!item1.fieldValuesMap && item2.fieldValuesMap) {
+		return 1;
+	}
 	if (item1.fieldValuesMap.size > item2.fieldValuesMap.size) {
 		return -1;
 	}
