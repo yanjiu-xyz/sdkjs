@@ -7152,7 +7152,10 @@ PivotFormatsManager.prototype.checkFormatsCollectionItem = function(formatsColle
 	if (!fieldValuesMap) {
 		return this.checkFormatsCollectionItemAttributes(formatsCollectionItem, query);
 	}
-	const fieldValuesCount = fieldValuesMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) ? fieldValuesMap.size: fieldValuesMap.size + 1;
+	if (fieldValuesMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) && !fieldValuesMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD).has(query.dataIndex)) {
+		return false;
+	}
+	const fieldValuesCount = fieldValuesMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) ? fieldValuesMap.size - 1: fieldValuesMap.size;
 	if (values.length < fieldValuesCount || !this.checkFormatsCollectionItemAttributes(formatsCollectionItem, query)) {
 		return false;
 	}
@@ -7224,23 +7227,28 @@ PivotFormatsManager.prototype.getFormatsCollectionItems = function(formatsCollec
 PivotFormatsManager.prototype.compareFormatsCollectionItems = function(item1, item2) {
 	if (item1.fieldValuesMap.size > item2.fieldValuesMap.size) {
 		return -1;
-	} else if (item1.fieldValuesMap.size < item2.fieldValuesMap.size) {
+	}
+	if (item1.fieldValuesMap.size < item2.fieldValuesMap.size) {
 		return 1;
 	}
 	if (item1.fieldValuesMap.get(item1.selectedField) && item2.fieldValuesMap.get(item2.selectedField)) {
-		if (item1.fieldValuesMap.get(item1.selectedField).size > item2.fieldValuesMap.get(item2.selectedField).size) {
-			return -1;
-		} else if (item1.fieldValuesMap.get(item1.selectedField).size < item2.fieldValuesMap.get(item2.selectedField).size) {
+		if (item1.fieldValuesMap.get(item1.selectedField).size === 0 && item2.fieldValuesMap.get(item2.selectedField).size !== 0) {
 			return 1;
+		}
+		if (item1.fieldValuesMap.get(item1.selectedField).size !== 0 && item2.fieldValuesMap.get(item2.selectedField).size === 0) {
+			return -1;
 		}
 	}
 	if (item1.isGrandCol && !item2.isGrandCol) {
 		return -1;
-	} else if (item1.isGrandRow && !item2.isGrandRow) {
+	}
+	if (item1.isGrandRow && !item2.isGrandRow) {
 		return -1;
-	} else if (!item1.isGrandRow && item2.isGrandRow) {
+	}
+	if (!item1.isGrandRow && item2.isGrandRow) {
 		return 1;
-	} else if (!item1.isGrandRow && item2.isGrandRow) {
+	}
+	if (!item1.isGrandRow && item2.isGrandRow) {
 		return 1;
 	}
 	if (item1.isDataOnly && !item2.isDataOnly) {
@@ -7253,7 +7261,7 @@ PivotFormatsManager.prototype.compareFormatsCollectionItems = function(item1, it
 	} else if (!item1.isLabelOnly && item2.isLabelOnly) {
 		return 1;
 	}
-	return 0;
+	return item1.format.dxfId - item2.format.dxfId;
 };
 /**
  * @param {PivotFormatsManagerQuery} query
@@ -7266,7 +7274,6 @@ PivotFormatsManager.prototype.get = function(query, dxfsOpen) {
 		fill: null,
 		border: null
 	}
-	query.values.push([AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD, query.dataIndex]);
 	const formatsCollectionItemsSelectedField = this.formatsCollection.get(query.field) || [];
 	const formatsCollectionItems = formatsCollectionItemsSelectedField.concat(this.uniqueFormatsCollection);
 	if (formatsCollectionItems.length > 0) {
