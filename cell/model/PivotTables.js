@@ -7147,7 +7147,7 @@ PivotFormatsManager.prototype.checkFormatsCollectionItem = function(formatsColle
 	if (!fieldValuesMap) {
 		return this.checkFormatsCollectionItemAttributes(formatsCollectionItem, query);
 	}
-	const fieldValuesCount = fieldValuesMap.has(AscCommon.st_DATAFIELD_REFERENCE_FIELD) ? fieldValuesMap.size - 1: fieldValuesMap.size;
+	const fieldValuesCount = fieldValuesMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) ? fieldValuesMap.size: fieldValuesMap.size + 1;
 	if (values.length < fieldValuesCount || !this.checkFormatsCollectionItemAttributes(formatsCollectionItem, query)) {
 		return false;
 	}

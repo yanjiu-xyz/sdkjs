@@ -18553,6 +18553,7 @@
 		this.worksheet._moveRange(this.bbox, oBBoxTo, copyRange, wsTo);
 	};
 	/**
+	 * Set styles in cell. Uses while setting styles in Pivot tables.
 	 * @param {PivotFormatsManagerResponse} formatting
 	 */
 	Range.prototype.setFormatting = function(formatting) {
@@ -18560,6 +18561,9 @@
 			this.setNum(formatting.num);
 		}
 		if (formatting.font) {
+			if (!formatting.font.b) {
+				formatting.font.b = null;
+			}
 			this.setFont(formatting.font)
 		}
 		if (formatting.fill) {
