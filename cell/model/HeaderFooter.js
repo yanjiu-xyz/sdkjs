@@ -416,9 +416,11 @@
 			return;
 		}
 		for (let i = 0; i < this.tokens.length; i++) {
-			for (let j = 0; j < this.tokens[i].length; j++) {
-				let token = this.tokens[i][j];
-				token.calculateText(ws, indexPrintPage, countPrintPages);
+			if (this.tokens[i]) {
+				for (let j = 0; j < this.tokens[i].length; j++) {
+					let token = this.tokens[i][j];
+					token && token.calculateText(ws, indexPrintPage, countPrintPages);
+				}
 			}
 		}
 		this.isCalc = true;
