@@ -3922,10 +3922,10 @@
 		//}
 
 		//TODO пересмотреть минимальный отступ
-		var rowTop = (this._getRowTop(0) - this.groupHeight) ;
-		if(top < rowTop) {
-			top = rowTop;
-		}
+		// var rowTop = (this._getRowTop(0) - this.groupHeight) ;
+		// if(top < rowTop) {
+		// 	top = rowTop;
+		// }
 		var footerStartPos = height - bottom;
 
 		var drawPortion = function(index) {
@@ -4055,18 +4055,12 @@
             if(drawingCtx instanceof AscCommonExcel.CPdfPrinter) {
                 oGraphics = drawingCtx.DocumentRenderer;
                 oGraphics.SaveGrState();
-                var _baseTransform;
-                if (!drawingCtx.Transform) {
-                    _baseTransform = new AscCommon.CMatrix();
-                } else {
-                    _baseTransform = drawingCtx.Transform;
-                }
-                oGraphics.SetBaseTransform(_baseTransform);
+                oGraphics.SetBaseTransform(new AscCommon.CMatrix());
             }
             else {
                 oGraphics = new AscCommon.CGraphics();
                 oGraphics.init(drawingCtx.ctx, drawingCtx.getWidth(0), drawingCtx.getHeight(0),
-                    drawingCtx.getWidth(3), drawingCtx.getHeight(3));
+                    width, height);
                 oGraphics.m_oFontManager = AscCommon.g_fontManager;
             }
 
@@ -4079,29 +4073,6 @@
                 oGraphics.SetBaseTransform(null);
                 oGraphics.RestoreGrState();
             }
-
-			// var textMetrics = t.stringRender._measureChars(maxWidth);
-			// var x, y;
-			// switch(index) {
-			// 	case window["AscCommonExcel"].c_oPortionPosition.left: {
-			// 		x = left;
-			// 		y = !bFooter ? top : footerStartPos - textMetrics.height;
-			// 		break;
-			// 	}
-			// 	case window["AscCommonExcel"].c_oPortionPosition.center: {
-			// 		x = ((width - left - right) / 2 + left) - textMetrics.width / 2;
-			// 		y = !bFooter ? top : footerStartPos - textMetrics.height;
-			// 		break;
-			// 	}
-			// 	case window["AscCommonExcel"].c_oPortionPosition.right: {
-			// 		x = width - right - textMetrics.width;
-			// 		y = !bFooter ? top : footerStartPos - textMetrics.height;
-			// 		break;
-			// 	}
-			// }
-            //
-			// t.stringRender.fontNeedUpdate = true;
-			// t.stringRender.render(drawingCtx, x, y, textMetrics.width, t.settings.activeCellBorderColor);
 		};
 
 		//добавил аналогично другим отрисовка.
