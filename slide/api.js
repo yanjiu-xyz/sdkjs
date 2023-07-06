@@ -172,6 +172,7 @@
 
 			this.title = obj.title != undefined ? obj.title : undefined;
 			this.description = obj.description != undefined ? obj.description : undefined;
+			this.name = obj.name != undefined ? obj.name : undefined;
 		}
 		else
 		{
@@ -450,9 +451,13 @@
 		this.Position = v;
 	};
 
-	CAscChartProp.prototype.asc_getDescription  = function()
+	CAscChartProp.prototype.asc_getName  = function()
 	{
-		return this.description;
+		return this.name;
+	};
+	CAscChartProp.prototype.asc_putName  = function(v)
+	{
+		this.name = v;
 	};
 
 	CAscChartProp.prototype.getType = function()
@@ -4923,6 +4928,7 @@ background-repeat: no-repeat;\
 
 		ImagePr.title       = obj.title;
 		ImagePr.description = obj.description;
+		ImagePr.name = obj.name;
 		ImagePr.rot = obj.rot;
 		ImagePr.rotAdd = obj.rotAdd;
 		ImagePr.flipH = obj.flipH;
@@ -9520,6 +9526,8 @@ background-repeat: no-repeat;\
 	CAscChartProp.prototype['asc_getDescription']     = CAscChartProp.prototype.asc_getDescription;
 	CAscChartProp.prototype['asc_getPosition']     = CAscChartProp.prototype.asc_getPosition;
 	CAscChartProp.prototype['asc_putPosition']     = CAscChartProp.prototype.asc_putPosition;
+	CAscChartProp.prototype['asc_getName']     = CAscChartProp.prototype.asc_getName;
+	CAscChartProp.prototype['asc_putName']     = CAscChartProp.prototype.asc_putName;
 	CAscChartProp.prototype['getType']                = CAscChartProp.prototype.getType;
 	CAscChartProp.prototype['putType']                = CAscChartProp.prototype.putType;
 	CAscChartProp.prototype['getStyle']               = CAscChartProp.prototype.getStyle;
