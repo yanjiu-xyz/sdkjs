@@ -1544,6 +1544,15 @@
 			oNvPr.setDescr(sDescription ? sDescription : null);
 		}
 	};
+	CGraphicObjectBase.prototype.setName = function (sName) {
+		if (undefined === sName || null === sName) {
+			return;
+		}
+		var oNvPr = this.getCNvProps();
+		if (oNvPr) {
+			oNvPr.setName(sName ? sName : null);
+		}
+	};
 	CGraphicObjectBase.prototype.getTitle = function () {
 		var oNvPr = this.getCNvProps();
 		if (oNvPr) {

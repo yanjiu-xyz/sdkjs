@@ -3716,7 +3716,23 @@
 							objects_by_type.smartArts[i].setDescription(props.description);
 						}
 					}
-
+					if (props.name !== null && props.name !== undefined) {
+						for (i = 0; i < objects_by_type.shapes.length; ++i) {
+							objects_by_type.shapes[i].setName(props.name);
+						}
+						for (i = 0; i < objects_by_type.groups.length; ++i) {
+							objects_by_type.groups[i].setName(props.name);
+						}
+						for (i = 0; i < objects_by_type.charts.length; ++i) {
+							objects_by_type.charts[i].setName(props.name);
+						}
+						for (i = 0; i < objects_by_type.images.length; ++i) {
+							objects_by_type.images[i].setName(props.name);
+						}
+						for (i = 0; i < objects_by_type.smartArts.length; ++i) {
+							objects_by_type.smartArts[i].setName(props.name);
+						}
+					}
 					if (props.anchor !== null && props.anchor !== undefined) {
 						for (i = 0; i < this.selectedObjects.length; ++i) {
 							var oSelectedObject = this.selectedObjects[i];
@@ -7063,6 +7079,7 @@
 						}
 						var lockAspect = drawing.getNoChangeAspect();
 						var oMainGroup = drawing.getMainGroup();
+						let sOwnName = drawing.getOwnName();
 						switch (drawing.getObjectType()) {
 							case AscDFH.historyitem_type_Shape:
 							case AscDFH.historyitem_type_Cnx:
@@ -7091,6 +7108,7 @@
 										textArtProperties: drawing.getTextArtProperties(),
 										lockAspect: lockAspect,
 										title: drawing.getTitle(),
+										name: sOwnName,
 										description: drawing.getDescription(),
 										columnNumber: drawing.getColumnNumber(),
 										columnSpace: drawing.getColumnSpace(),
@@ -7126,6 +7144,7 @@
 										y: drawing.y,
 										lockAspect: lockAspect,
 										title: drawing.getTitle(),
+										name: sOwnName,
 										description: drawing.getDescription(),
 										anchor: drawing.getDrawingBaseType(),
 										protectionLockText: (bGroupSelection || !drawing.group) ? drawing.getProtectionLockText() : null,
@@ -7192,6 +7211,7 @@
 										textArtProperties: null,
 										lockAspect: lockAspect,
 										title: drawing.getTitle(),
+										name: sOwnName,
 										description: drawing.getDescription(),
 										columnNumber: null,
 										columnSpace: null,
@@ -7234,6 +7254,7 @@
 										pluginGuid: drawing.m_sApplicationId,
 										pluginData: pluginData,
 										title: drawing.getTitle(),
+										name: sOwnName,
 										description: drawing.getDescription(),
 										anchor: drawing.getDrawingBaseType(),
 										protectionLockText: (bGroupSelection || !drawing.group) ? drawing.getProtectionLockText() : null,
@@ -7281,6 +7302,7 @@
 										locked: locked,
 										lockAspect: lockAspect,
 										title: drawing.getTitle(),
+										name: sOwnName,
 										description: drawing.getDescription(),
 										anchor: drawing.getDrawingBaseType(),
 										protectionLockText: (bGroupSelection || !drawing.group) ? drawing.getProtectionLockText() : null,
@@ -7347,6 +7369,7 @@
 										textArtProperties: null,
 										lockAspect: lockAspect,
 										title: drawing.getTitle(),
+										name: sOwnName,
 										description: drawing.getDescription(),
 										signatureId: drawing.getSignatureLineGuid(),
 										anchor: drawing.getDrawingBaseType(),
@@ -7384,6 +7407,7 @@
 										locked: locked,
 										lockAspect: lockAspect,
 										title: drawing.getTitle(),
+										name: sOwnName,
 										description: drawing.getDescription(),
 										anchor: drawing.getDrawingBaseType(),
 										slicerProps: oSlicerCopy,

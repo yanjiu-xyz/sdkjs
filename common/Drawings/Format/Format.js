@@ -5748,6 +5748,9 @@
 			if (shapeProp1.description === shapeProp2.description) {
 				_result_shape_prop.description = shapeProp1.description;
 			}
+			if (shapeProp1.name === shapeProp2.name) {
+				_result_shape_prop.name = shapeProp1.name;
+			}
 			if (shapeProp1.columnNumber === shapeProp2.columnNumber) {
 				_result_shape_prop.columnNumber = shapeProp1.columnNumber;
 			}
@@ -14384,6 +14387,7 @@
 			}
 			obj.title = shapeProp.title;
 			obj.description = shapeProp.description;
+			obj.name = shapeProp.name;
 			obj.columnNumber = shapeProp.columnNumber;
 			obj.columnSpace = shapeProp.columnSpace;
 			obj.textFitType = shapeProp.textFitType;
