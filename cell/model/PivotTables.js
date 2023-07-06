@@ -7129,7 +7129,7 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
  * @property {boolean} isGrandRow
  * @property {boolean} isGrandCol
  * @property {number?} field
- * @property {number} dataIndex
+ * @property {number?} dataIndex
  * @property {boolean} isData
  */
 
@@ -7142,6 +7142,24 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
  */
 
 /**
+ * @param {[number, number][]} values 
+ * @param {Map<number, Map<number, number>>} fieldValuesMap 
+ * @return {boolean}
+ */
+PivotFormatsManager.prototype.checkFormatsCollectionItemValues = function(values, fieldValuesMap) {
+	for (let i = 0; i < values.length; i += 1) {
+		const value = values[i];
+		const fieldIndex = value[0];
+		const v = value[1];
+		const fieldValues = fieldValuesMap.get(fieldIndex);
+		if (fieldValues && fieldValues.size > 0 && !fieldValues.has(v)) {
+			return false;
+		}
+	}
+	return true;
+};
+
+/**
  * @param {PivotFormatsCollectionItem} formatsCollectionItem
  * @param {PivotFormatsManagerQuery} query
  * @return {boolean}
@@ -7149,22 +7167,21 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
 PivotFormatsManager.prototype.checkFormatsCollectionItem = function(formatsCollectionItem, query) {
 	const values = query.values;
 	const fieldValuesMap = formatsCollectionItem.fieldValuesMap;
-	if (!fieldValuesMap) {
-		return this.checkFormatsCollectionItemAttributes(formatsCollectionItem, query);
-	}
-	if (fieldValuesMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) && !fieldValuesMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD).has(query.dataIndex)) {
+	if (!this.checkFormatsCollectionItemAttributes(formatsCollectionItem, query)) {
 		return false;
 	}
-	const fieldValuesCount = fieldValuesMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) ? fieldValuesMap.size - 1: fieldValuesMap.size;
-	if (values.length < fieldValuesCount || !this.checkFormatsCollectionItemAttributes(formatsCollectionItem, query)) {
-		return false;
-	}
-	for (let i = 0; i < values.length; i += 1) {
-		const value = values[i];
-		const fieldIndex = value[0];
-		const v = value[1];
-		const fieldValues = fieldValuesMap.get(fieldIndex);
-		if (fieldValues && fieldValues.size > 0 && !fieldValues.has(v)) {
+	if (fieldValuesMap) {
+		if (!query.isData && fieldValuesMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD)) {
+			return false;
+		}
+		if (fieldValuesMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) && !fieldValuesMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD).has(query.dataIndex)) {
+			return false;
+		}
+		const fieldValuesCount = fieldValuesMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) ? fieldValuesMap.size - 1: fieldValuesMap.size;
+		if (values.length < fieldValuesCount) {
+			return false;
+		}
+		if (!this.checkFormatsCollectionItemValues(values, fieldValuesMap)) {
 			return false;
 		}
 	}
