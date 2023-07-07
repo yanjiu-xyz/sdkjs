@@ -55,8 +55,10 @@ $(function () {
 		let nLengthOfPoints = AscCommon.History.Points.length - 1;
 		let arr = [];
 
-		for (let i = 0; i <= nLengthOfPoints; i++)
+		for (let i = 0; i <= nLengthOfPoints; i++) {
+			//AscCommon.History.ConvertPointItemsToSimpleChanges(i);
 			AscCommon.History.GetChangesFromPoint(i, arr);
+		}
 
 		oDeletedText.oColloborativeHistory.Changes = arr;
 		oDeletedText.Changes = arr;
@@ -209,20 +211,22 @@ $(function () {
 		let run = CreateRun(strStartText);
 		p.AddToContentToEnd(run);
 		assert.ok(true, "Create run with '" + strStartText+"' text.");
+		AscTest.MoveCursorToParagraph(p, false);
 
 		AscTest.MoveCursorLeft(false, false, 2);
-		DelLast(2);
+		AscTest.MoveCursorLeft(true, false, 2);
+		DelLast(1);
 		assert.ok(true, "Delete 'or'");
 		let strDeletedText = AscTest.GetParagraphText(p);
 		assert.strictEqual(strDeletedText, "Hello Wld", "Text in run is 'Hello Wld'");
 
 		AscTest.MoveCursorLeft(false, false, 4);
-		DelLast(2);
+		AscTest.MoveCursorLeft(true, false, 2);
+		DelLast(1);
 		assert.ok(true, "Delete 'el'");
 		strDeletedText = AscTest.GetParagraphText(p);
 		assert.strictEqual(strDeletedText, "Hlo Wld", "Text in run is 'Hlo Wld'");
 
-		debugger
 		Recover();
 		assert.ok(true, "Recover deleted text");
 		let strResultText = AscTest.GetParagraphText(p);

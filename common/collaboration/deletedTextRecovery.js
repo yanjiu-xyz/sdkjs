@@ -191,6 +191,14 @@
 	// подготавливаем данные для отображения удаленного текста
 	DeletedTextRecovery.prototype.PrepareDelChanges = function ()
 	{
+		let arr = [];
+		for (let i = 0; i < this.m_RewiewDelPoints.length; i++)
+		{
+			arr.push(this.m_RewiewDelPoints[i][1]);
+		}
+		this.m_PreparedData = arr;
+		return;
+
 		let arrDel 				= [];
 		let arrTempSaver 		= [];
 
@@ -281,40 +289,13 @@
 		if (arrTempSaver.length > 0)
 			arrDel.push(arrTempSaver);
 
-		//нам нужно убедится что позиции идут от малого к большему
-		const quickSort = function (arr) {
-			// Условие остановки, выхода из рекурсии, возвращем массив с 1 элементом
-			if (arr.length < 2) return arr;
-
-			// Выбираем опорный элемент
-			let pivot = arr[0][arr[0].length - 1].PosArray[0];
-			// Выбираем след опорный элемент
-			let newPivot = arr[1][arr[1].length - 1].PosArray[0];
-
-			// Определяем массивы для тех, что меньше и больше опорного
-			const left = [];
-			const right = [];
-
-			// Проходим циклом по всем элементам из массива и разносим их в массивы созданные ранее согласно условию, больше опорного - в правый, меньше - в левый
-			for (let i = 1; i < arr.length; i++) {
-				if (pivot > newPivot) {
-					left.push(arr[i]);
-				} else {
-					right.push(arr[i]);
-				}
-			}
-			// Рекурсивно повторяем процесс для новых двух массивов, текущий опорный элемент - кладем как первый в правый массив.
-			return quickSort(left).concat([arr[0]], quickSort(right));
-		}
-
-		this.m_PreparedData = quickSort(arrDel);
+		this.m_PreparedData = arrDel;
 	};
 	DeletedTextRecovery.prototype.ShowDel = function ()
 	{
 		this.UndoPoints();
 		AscCommon.History.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_DeletedTextRecovery);
 
-		debugger
 		this.PrepareDelChanges();
 		this.ShowDelText();
 
@@ -329,7 +310,7 @@
 			AscCommon.History.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_DeletedTextRecovery);
 		}
 		let arrCurrentPoint 	= localHistory.Points[0].Items;
-		let arrSplits 	= [];
+		let arrSplits = [];
 		let historyStore 		= this.oCollaborativeEditingBase.m_oLogicDocument.Api.VersionHistory;
 
 		if (!historyStore && !this.isDebug)
@@ -379,114 +360,194 @@
 			oCurrentReviewType.DateTime 	= timeOfRevision;
 			oReviewInfoParent.SetReviewTypeWithInfo(1,oCurrentReviewType);
 		}
-		const FindPosInParent = function(oClass)
-		{
-			let oParent = oClass.GetParent();
-			let arrParentContent = oParent.Content;
 
-			for (let i = 0; i < arrParentContent.length; i++)
-			{
-				if (arrParentContent[i] === oClass)
-					return i;
-			}
-		}
+		debugger
 
 		for (let nCounter = this.m_PreparedData.length - 1; nCounter >= 0; nCounter--)
 		{
 			let arrCurrentDel 		= this.m_PreparedData[nCounter];
-			let nStartPos 	= 0;
-			let nEndPos	 	= 0;
+			if (arrCurrentDel.Items.length > 1)
+			{
+				arrCurrentDel = arrCurrentDel.ConvertToSimpleChanges();
+			}
+			else{
+				arrCurrentDel = [arrCurrentDel]
+			}
+
 
 			for (let nCount = arrCurrentDel.length - 1; nCount >= 0; nCount--)
 			{
 				let oCurrDel = arrCurrentDel[nCount];
 				let oDelChange 	= oCurrDel.CreateReverseChange();
-
-				if (nCount === arrCurrentDel.length - 1)
-					nEndPos = arrCurrentDel.length ;
-
-				if (nCount === 0)
-					if (oDelChange.PosArray.length === 0 && !isNaN(oDelChange.Pos))
-						nStartPos = oDelChange.Pos
-					else
-						nStartPos = oDelChange.PosArray[0];
-
-
-				// иногда у изменений позиция больше чем реальная позиция - куда они будут добавлены
-				// изменяем позицию на длину контента
-				// if (oDelChange.PosArray[0] > oDelChange.Class.Content.length)
-				// {
-				// 	oDelChange.PosArray[0] = nStartPos = oDelChange.Class.Content.length;
-				// }
-
 				this.RedoUndoChange(oDelChange, true, arrCurrentPoint);
+			}
+		}
 
-				if (nCount === 0)
+		function convertArray(inputArray) {
+			let resultArray = [];
+			let currentStart = null;
+			let currentClass = null;
+			var currentLen = 0;
+
+			for (var i = 0; i < inputArray.length; i++) {
+				var item = inputArray[i];
+
+				if (currentStart === null && currentClass === null)
 				{
-					if (nStartPos > nEndPos)
+					currentStart = item.Data.Pos;
+					currentClass = item.Data.Class;
+					currentLen = 1;
+				}
+				else if (item.Data.Pos === currentStart + currentLen && item.Data.Class === currentClass)
+				{
+					currentLen++;
+				}
+				else if (item.Data.Pos === currentStart - currentLen && item.Data.Class === currentClass)
+				{
+					currentLen++;
+				}
+				else if (item.Data.Pos === currentStart && item.Data.Class === currentClass)
+				{
+					currentLen++;
+				}
+				else
+				{
+					resultArray.push({ Start: currentStart, Len: currentLen, Class: currentClass });
+					currentStart = item.Data.Pos;
+					currentClass = item.Data.Class;
+					currentLen = 1;
+				}
+			}
+
+			// Добавляем последний результирующий элемент
+			if (currentStart !== null && currentClass !== null) {
+				resultArray.push({ Start: currentStart, Len: currentLen, Class: currentClass });
+			}
+
+			return resultArray;
+		}
+
+		let arr = convertArray(arrCurrentPoint);
+
+		debugger
+		const quickSort = function (arr)
+		{
+			if (arr.length < 2) return arr;
+			let pivot = arr[0].Start;
+			let newPivot = arr[1].Start;
+			let isRunIsSame = arr[0].Class === arr[1].Class;
+
+			const left = [];
+			const right = [];
+
+			for (let i = 1; i < arr.length; i++)
+			{
+				if (pivot > newPivot && isRunIsSame)
+				{
+					left.push(arr[i]);
+				} else
+				{
+					right.push(arr[i]);
+				}
+			}
+			return quickSort(left).concat([arr[0]], quickSort(right));
+		}
+
+
+		for (let i = 0; i < arr.length; i++)
+		{
+			let NextRun = null;
+			let CurrentDel = arr[i];
+			let nCurrentPos = CurrentDel.Start;
+			let nCurrentLen = CurrentDel.Len;
+			let oCurrentRun = CurrentDel.Class;
+
+			for (let j = i + 1; j <  i + 2; j++)
+			{
+				let oNextDel = arr[j];
+				if (oNextDel)
+				{
+					let nNextPos = oNextDel.Start;
+					let nNextLen = oNextDel.Len;
+					let oNextRun = oNextDel.Class;
+
+					if (oNextRun === oCurrentRun && nCurrentPos > nNextPos)
 					{
-						let nTemp = nStartPos;
-						nStartPos = nEndPos;
-						nEndPos = nTemp;
+						nCurrentPos += nNextLen;
 					}
+				}
+			}
 
-					if (oDelChange.Class instanceof CDocument)
+			if (oCurrentRun instanceof CDocument)
+			{
+				let oContent = oCurrentRun.Content;
+				for (let j = nCurrentPos; j < nCurrentPos + nCurrentLen; j++)
+				{
+					let oCurrentParagraph = oContent[j];
+					SetReviewInfo(oCurrentParagraph);
+
+					let arrRunsInParagraph = oCurrentParagraph.Content;
+					for (let nCounterRuns = 0; nCounterRuns < arrRunsInParagraph.length; nCounterRuns++)
 					{
-						let arrParagraphsInDocument = oDelChange.Items;
-						for (let nCounterParagraph = 0; nCounterParagraph < arrParagraphsInDocument.length; nCounterParagraph++)
-						{
-							let oCurrentParagraph = arrParagraphsInDocument[nCounterParagraph];
-							SetReviewInfo(oCurrentParagraph);
-
-							let arrRunsInParagraph = oCurrentParagraph.Content;
-							for (let nCounterRuns = 0; nCounterRuns < arrRunsInParagraph.length; nCounterRuns++)
-							{
-								let oCurrentRun = arrRunsInParagraph[nCounterRuns];
-								SetReviewInfo(oCurrentRun);
-							}
-						}
+						let oCurrentRun = arrRunsInParagraph[nCounterRuns];
+						SetReviewInfo(oCurrentRun);
 					}
-					else if (oDelChange.Class instanceof Paragraph)
-					{
-						//nEndPos	+= nStartPos;
+				}
+			}
+			else if (oCurrentRun instanceof Paragraph)
+			{
+				for (let i = 0; i < oCurrentRun.Content.length; i++)
+				{
+					SetReviewInfo(oCurrentRun.Content[i]);
+				}
+			}
+			else if (oCurrentRun instanceof ParaRun)
+			{
+				if (nCurrentPos === 0 && nCurrentLen >= oCurrentRun.Content.length)
+				{
+					SetReviewInfo(oCurrentRun);
+				}
+				else if (nCurrentLen === 1)
+				{
+					let oParent = oCurrentRun.GetParent();
+					let RunPos = this.FindPosInParent(oCurrentRun)
+					let RightRun = oCurrentRun.Split2AndSpreadCollaborativeMark(arrSplits, nCurrentPos);
 
-						for (let i = nStartPos; i < nEndPos; i++)
-						{
-							SetReviewInfo(oDelChange.Class.Content[i]);
-						}
+					oParent.Add_ToContent(RunPos + 1, RightRun);
+					let oNewer = RightRun.Split2AndSpreadCollaborativeMark(arrSplits, 1);
+					oParent.Add_ToContent(RunPos + 2, oNewer);
+					NextRun = oNewer;
+					SetReviewInfo(RightRun);
+				}
+				else
+				{
+					let oParent 	= oCurrentRun.GetParent();
+					let RunPos = this.FindPosInParent(oCurrentRun);
+					let RightRun 	= oCurrentRun.Split2AndSpreadCollaborativeMark(arrSplits, nCurrentPos);
+					oParent.Add_ToContent(RunPos + 1, RightRun);
+					NextRun = RightRun;
+
+					if (RightRun.Content.length > 1 && RightRun.Content.length > nCurrentLen) {
+						let oNewer = RightRun.Split2AndSpreadCollaborativeMark(arrSplits, nCurrentLen);
+						oParent.Add_ToContent(RunPos + 2, oNewer);
+						NextRun = oNewer;
 					}
-					else if (oDelChange.Class instanceof ParaRun)
+					SetReviewInfo(RightRun);
+				}
+
+				for (let j = i + 1; j <  i + 2; j++)
+				{
+					let oNextDel = arr[j];
+					if (oNextDel)
 					{
-						//nEndPos	+= nStartPos;
+						let nNextPos = oNextDel.Start;
+						let nNextLen = oNextDel.Len;
+						let oNextRun = oNextDel.Class;
 
-						if (nStartPos === 0 && nEndPos === oDelChange.Class.Content.length)
+						if (oNextRun === oCurrentRun && nCurrentPos < nNextPos)
 						{
-							SetReviewInfo(oDelChange.Class);
-						}
-						else if (nStartPos === nEndPos)
-						{
-							let oParent = oDelChange.Class.GetParent();
-							let RunPos = FindPosInParent(oDelChange.Class)
-							let RightRun = oDelChange.Class.Split2AndSpreadCollaborativeMark(arrSplits, nStartPos);
-
-							oParent.Add_ToContent(RunPos + 1, RightRun);
-							let oNewer = RightRun.Split2AndSpreadCollaborativeMark(arrSplits, 1);
-							oParent.Add_ToContent(RunPos + 2, oNewer);
-							SetReviewInfo(RightRun);
-						}
-						else
-						{
-							let oParent 	= oDelChange.Class.GetParent();
-							let RunPos = FindPosInParent(oDelChange.Class);
-							let RightRun 	= oDelChange.Class.Split2AndSpreadCollaborativeMark(arrSplits, nStartPos);
-							oParent.Add_ToContent(RunPos + 1, RightRun);
-
-							if (RightRun.Content.length > 1 && RightRun.Content.length > nEndPos - nStartPos) {
-								let oNewer = RightRun.Split2AndSpreadCollaborativeMark(arrSplits, nEndPos - nStartPos);
-								oParent.Add_ToContent(RunPos + 2, oNewer);
-							}
-
-							SetReviewInfo(RightRun);
+							oNextDel.Start -= nCurrentLen + nCurrentPos ;
+							oNextDel.Class = NextRun;
 						}
 					}
 				}
@@ -501,25 +562,36 @@
 				oFirstRange.PosE = oParaRun.Content.length;
 		}
 
-		for (let i = 0; i < arrSplits.length; i++)
-		{
-			let oCurrentElement = arrSplits[i];
-
-			if (oCurrentElement instanceof ParaRun)
-			{
-				ProceedParaRun(oCurrentElement);
-			}
-			// else if (oCurrentElement instanceof Paragraph)
-			// {
-			// 	let arrContent = oCurrentElement.Content;
-			// 	for (let i = 0; i < arrContent; i++)
-			// 	{
-			// 		let oCurrentRun = arrContent[i];
-			// 		ProceedParaRun(oCurrentRun);
-			// 	}
-			// }
-		}
+		// for (let i = 0; i < arrSplits.length; i++)
+		// {
+		// 	let oCurrentElement = arrSplits[i];
+		//
+		// 	if (oCurrentElement instanceof ParaRun)
+		// 	{
+		// 		ProceedParaRun(oCurrentElement);
+		// 	}
+		// 	// else if (oCurrentElement instanceof Paragraph)
+		// 	// {
+		// 	// 	let arrContent = oCurrentElement.Content;
+		// 	// 	for (let i = 0; i < arrContent; i++)
+		// 	// 	{
+		// 	// 		let oCurrentRun = arrContent[i];
+		// 	// 		ProceedParaRun(oCurrentRun);
+		// 	// 	}
+		// 	// }
+		// }
 	};
+	DeletedTextRecovery.prototype.FindPosInParent = function(oClass)
+	{
+		let oParent = oClass.GetParent();
+		let arrParentContent = oParent.Content;
+
+		for (let i = 0; i < arrParentContent.length; i++)
+		{
+			if (arrParentContent[i] === oClass)
+				return i;
+		}
+	}
 	// проверяем правильность окрашивания ранов
 	DeletedTextRecovery.prototype.Check = function ()
 	{
