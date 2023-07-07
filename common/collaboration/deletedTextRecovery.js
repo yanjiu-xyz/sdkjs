@@ -197,99 +197,6 @@
 			arr.push(this.m_RewiewDelPoints[i][1]);
 		}
 		this.m_PreparedData = arr;
-		return;
-
-		let arrDel 				= [];
-		let arrTempSaver 		= [];
-
-		let arrCurrentPoint 	= undefined;
-		let nCurrentPoint		= undefined;
-		let oCurrentDelPoint	= undefined;
-		let nCurrentPos		= undefined;
-
-		let arrPreviousPoint 	= undefined;
-		let nPrevPoint		= undefined;
-		let oPrevDelPoint		= undefined;
-		let nPrevPos			= undefined;
-
-		let arrNextPoint 		= undefined;
-		let nNextPoint		= undefined;
-		let oNextDelPoint		= undefined;
-		let nNextPos			= undefined;
-
-		let GetCurrent = function (context, nCounter)
-		{
-			arrCurrentPoint 	= context.m_RewiewDelPoints[nCounter];
-			nCurrentPoint		= arrCurrentPoint ? arrCurrentPoint[0] 				: undefined;
-			oCurrentDelPoint	= arrCurrentPoint ? arrCurrentPoint[1] 				: undefined;
-			nCurrentPos			= arrCurrentPoint ? oCurrentDelPoint.PosArray[0] 	: undefined;
-
-			if (arrCurrentPoint && nCurrentPos === undefined)
-			{
-				nCurrentPos = oCurrentDelPoint.Pos;
-			}
-		}
-		let GetPrev = function (context, nCounter)
-		{
-			arrPreviousPoint 	= (nCounter - 1 >= 0) ? context.m_RewiewDelPoints[nCounter - 1] : undefined;
-			nPrevPoint			= arrPreviousPoint ? arrPreviousPoint[0] 						: undefined;
-			oPrevDelPoint		= arrPreviousPoint ? arrPreviousPoint[1] 						: undefined;
-			nPrevPos			= arrPreviousPoint ? oPrevDelPoint.PosArray[0] 					: undefined;
-
-			if (arrPreviousPoint && nPrevPos === undefined)
-			{
-				nPrevPos = oPrevDelPoint.Pos;
-			}
-
-		}
-		let GetNext = function (context, nCounter)
-		{
-			arrNextPoint 	= (nCounter + 1 < context.m_RewiewDelPoints.length) ? context.m_RewiewDelPoints[nCounter + 1] : undefined;
-			nNextPoint			= arrNextPoint ? arrNextPoint[0] 						: undefined;
-			oNextDelPoint		= arrNextPoint ? arrNextPoint[1] 						: undefined;
-			nNextPos			= arrNextPoint ? oNextDelPoint.PosArray[0] 					: undefined;
-
-			if (arrNextPoint && nNextPos === undefined)
-			{
-				nNextPos = oNextDelPoint.Pos;
-			}
-
-		}
-
-		for (let nCounter = 0; nCounter < this.m_RewiewDelPoints.length; nCounter++)
-		{
-			GetCurrent(this, nCounter);
-			GetPrev(this, nCounter);
-			GetNext(this, nCounter);
-
-			if (this.m_RewiewIndex <= nCurrentPoint - 1 && oNextDelPoint && oCurrentDelPoint.Class === oNextDelPoint.Class)
-			{
-				this.m_PreparedData = arrDel;
-				return
-			}
-
-			if (this.m_RewiewIndex <= nCurrentPoint - 1)
-				break;
-
-			if (arrPreviousPoint && oCurrentDelPoint.Class === oPrevDelPoint.Class && nPrevPos === nCurrentPos + 1)
-			{
-				arrTempSaver.push(arrCurrentPoint[1]);
-			}
-			else
-			{
-				if (arrTempSaver.length > 0)
-				{
-					arrDel.push(arrTempSaver);
-					arrTempSaver = [];
-				}
-				arrTempSaver = [arrCurrentPoint[1]];
-			}
-		}
-
-		if (arrTempSaver.length > 0)
-			arrDel.push(arrTempSaver);
-
-		this.m_PreparedData = arrDel;
 	};
 	DeletedTextRecovery.prototype.ShowDel = function ()
 	{
@@ -350,7 +257,6 @@
 		}
 
 		let arr = this.ConvertArray(arrCurrentPoint);
-
 		for (let i = 0; i < arr.length; i++)
 		{
 			let NextRun = null;
