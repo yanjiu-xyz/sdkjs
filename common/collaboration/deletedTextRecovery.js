@@ -304,14 +304,13 @@
 	};
 	DeletedTextRecovery.prototype.ShowDelText = function ()
 	{
-		let localHistory 		= AscCommon.History;
+		let localHistory = AscCommon.History;
 		if (localHistory.Points.length === 0)
-		{
 			AscCommon.History.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_DeletedTextRecovery);
-		}
-		let arrCurrentPoint 	= localHistory.Points[0].Items;
+
+		let arrCurrentPoint = localHistory.Points[0].Items;
 		let arrSplits = [];
-		let historyStore 		= this.oCollaborativeEditingBase.m_oLogicDocument.Api.VersionHistory;
+		let historyStore = this.oCollaborativeEditingBase.m_oLogicDocument.Api.VersionHistory;
 
 		if (!historyStore && !this.isDebug)
 			return;
@@ -330,50 +329,17 @@
 		let strDateOFRevision 	= historyStore.dateOfRevision;
 		let timeOfRevision= new Date(strDateOFRevision).getTime();
 
-		let SetReviewInfo = function (oReviewInfoParent)
-		{
-			if (!oReviewInfoParent || !oReviewInfoParent.ReviewInfo)
-			{
-				if (oReviewInfoParent instanceof ParaMath)
-				{
-					let oRootContent = oReviewInfoParent.Root.Content;
-					for (let i = 0; i < oRootContent.length; i++)
-					{
-						let oCurrentContent = oRootContent[i];
-						SetReviewInfo(oCurrentContent);
-					}
-				}
-				else if (oReviewInfoParent.Content.length > 0)
-				{
-					for (let i = 0; i < oReviewInfoParent.Content.length; i++)
-					{
-						let oCurrentContent = oReviewInfoParent.Content[i];
-						SetReviewInfo(oCurrentContent);
-					}
-				}
-				return;
-			}
-
-			let oCurrentReviewType = oReviewInfoParent.GetReviewInfo().Copy();
-			oCurrentReviewType.UserId 		= strUserId;
-			oCurrentReviewType.UserName 	= strUserName;
-			oCurrentReviewType.DateTime 	= timeOfRevision;
-			oReviewInfoParent.SetReviewTypeWithInfo(1,oCurrentReviewType);
-		}
-
-		debugger
+		this.userId = strUserId;
+		this.userName = strUserName;
+		this.userTime = timeOfRevision
 
 		for (let nCounter = this.m_PreparedData.length - 1; nCounter >= 0; nCounter--)
 		{
 			let arrCurrentDel 		= this.m_PreparedData[nCounter];
 			if (arrCurrentDel.Items.length > 1)
-			{
 				arrCurrentDel = arrCurrentDel.ConvertToSimpleChanges();
-			}
-			else{
-				arrCurrentDel = [arrCurrentDel]
-			}
-
+			else
+				arrCurrentDel = [arrCurrentDel];
 
 			for (let nCount = arrCurrentDel.length - 1; nCount >= 0; nCount--)
 			{
@@ -383,76 +349,7 @@
 			}
 		}
 
-		function convertArray(inputArray) {
-			let resultArray = [];
-			let currentStart = null;
-			let currentClass = null;
-			var currentLen = 0;
-
-			for (var i = 0; i < inputArray.length; i++) {
-				var item = inputArray[i];
-
-				if (currentStart === null && currentClass === null)
-				{
-					currentStart = item.Data.Pos;
-					currentClass = item.Data.Class;
-					currentLen = 1;
-				}
-				else if (item.Data.Pos === currentStart + currentLen && item.Data.Class === currentClass)
-				{
-					currentLen++;
-				}
-				else if (item.Data.Pos === currentStart - currentLen && item.Data.Class === currentClass)
-				{
-					currentLen++;
-				}
-				else if (item.Data.Pos === currentStart && item.Data.Class === currentClass)
-				{
-					currentLen++;
-				}
-				else
-				{
-					resultArray.push({ Start: currentStart, Len: currentLen, Class: currentClass });
-					currentStart = item.Data.Pos;
-					currentClass = item.Data.Class;
-					currentLen = 1;
-				}
-			}
-
-			// Добавляем последний результирующий элемент
-			if (currentStart !== null && currentClass !== null) {
-				resultArray.push({ Start: currentStart, Len: currentLen, Class: currentClass });
-			}
-
-			return resultArray;
-		}
-
-		let arr = convertArray(arrCurrentPoint);
-
-		debugger
-		const quickSort = function (arr)
-		{
-			if (arr.length < 2) return arr;
-			let pivot = arr[0].Start;
-			let newPivot = arr[1].Start;
-			let isRunIsSame = arr[0].Class === arr[1].Class;
-
-			const left = [];
-			const right = [];
-
-			for (let i = 1; i < arr.length; i++)
-			{
-				if (pivot > newPivot && isRunIsSame)
-				{
-					left.push(arr[i]);
-				} else
-				{
-					right.push(arr[i]);
-				}
-			}
-			return quickSort(left).concat([arr[0]], quickSort(right));
-		}
-
+		let arr = this.ConvertArray(arrCurrentPoint);
 
 		for (let i = 0; i < arr.length; i++)
 		{
@@ -462,50 +359,46 @@
 			let nCurrentLen = CurrentDel.Len;
 			let oCurrentRun = CurrentDel.Class;
 
-			for (let j = i + 1; j <  i + 2; j++)
-			{
-				let oNextDel = arr[j];
-				if (oNextDel)
-				{
-					let nNextPos = oNextDel.Start;
-					let nNextLen = oNextDel.Len;
-					let oNextRun = oNextDel.Class;
-
-					if (oNextRun === oCurrentRun && nCurrentPos > nNextPos)
-					{
-						nCurrentPos += nNextLen;
-					}
-				}
-			}
-
 			if (oCurrentRun instanceof CDocument)
 			{
 				let oContent = oCurrentRun.Content;
 				for (let j = nCurrentPos; j < nCurrentPos + nCurrentLen; j++)
 				{
 					let oCurrentParagraph = oContent[j];
-					SetReviewInfo(oCurrentParagraph);
+					this.SetReviewInfo(oCurrentParagraph);
 
 					let arrRunsInParagraph = oCurrentParagraph.Content;
 					for (let nCounterRuns = 0; nCounterRuns < arrRunsInParagraph.length; nCounterRuns++)
 					{
 						let oCurrentRun = arrRunsInParagraph[nCounterRuns];
-						SetReviewInfo(oCurrentRun);
+						this.SetReviewInfo(oCurrentRun);
 					}
 				}
 			}
 			else if (oCurrentRun instanceof Paragraph)
 			{
-				for (let i = 0; i < oCurrentRun.Content.length; i++)
-				{
-					SetReviewInfo(oCurrentRun.Content[i]);
-				}
+				for (let i = nCurrentPos; i < nCurrentPos + nCurrentLen; i++)
+					this.SetReviewInfo(oCurrentRun.Content[i]);
 			}
 			else if (oCurrentRun instanceof ParaRun)
 			{
+				for (let j = i + 1; j < arr.length; j++)
+				{
+					let oNextDel = arr[j];
+					if (oNextDel) {
+						let nNextPos = oNextDel.Start;
+						let nNextLen = oNextDel.Len;
+						let oNextRun = oNextDel.Class;
+
+						if (oNextRun === oCurrentRun && nCurrentPos > nNextPos) {
+							nCurrentPos += nNextLen;
+						}
+					}
+				}
+
 				if (nCurrentPos === 0 && nCurrentLen >= oCurrentRun.Content.length)
 				{
-					SetReviewInfo(oCurrentRun);
+					this.SetReviewInfo(oCurrentRun);
 				}
 				else if (nCurrentLen === 1)
 				{
@@ -517,7 +410,7 @@
 					let oNewer = RightRun.Split2AndSpreadCollaborativeMark(arrSplits, 1);
 					oParent.Add_ToContent(RunPos + 2, oNewer);
 					NextRun = oNewer;
-					SetReviewInfo(RightRun);
+					this.SetReviewInfo(RightRun);
 				}
 				else
 				{
@@ -532,10 +425,10 @@
 						oParent.Add_ToContent(RunPos + 2, oNewer);
 						NextRun = oNewer;
 					}
-					SetReviewInfo(RightRun);
+					this.SetReviewInfo(RightRun);
 				}
 
-				for (let j = i + 1; j <  i + 2; j++)
+				for (let j = i + 1; j < arr.length; j++)
 				{
 					let oNextDel = arr[j];
 					if (oNextDel)
@@ -554,33 +447,98 @@
 			}
 		}
 
-		let ProceedParaRun = function(oParaRun)
+		for (let i = 0; i < arrSplits.length; i++)
 		{
-			let CurrentRanges = oParaRun.CollaborativeMarks.Ranges;
-			let oFirstRange = CurrentRanges[0];
-			if (oFirstRange)
-				oFirstRange.PosE = oParaRun.Content.length;
+			let oCurrentElement = arrSplits[i];
+
+			if (oCurrentElement instanceof ParaRun)
+			{
+				this.ProceedParaRun(oCurrentElement);
+			}
+		}
+	};
+	DeletedTextRecovery.prototype.SetReviewInfo = function (oReviewInfoParent)
+	{
+		if (!oReviewInfoParent || !oReviewInfoParent.ReviewInfo)
+		{
+			if (oReviewInfoParent instanceof ParaMath)
+			{
+				let oRootContent = oReviewInfoParent.Root.Content;
+				for (let i = 0; i < oRootContent.length; i++)
+				{
+					let oCurrentContent = oRootContent[i];
+					this.SetReviewInfo(oCurrentContent);
+				}
+			}
+			else if (oReviewInfoParent.Content.length > 0)
+			{
+				for (let i = 0; i < oReviewInfoParent.Content.length; i++)
+				{
+					let oCurrentContent = oReviewInfoParent.Content[i];
+					this.SetReviewInfo(oCurrentContent);
+				}
+			}
+			return;
 		}
 
-		// for (let i = 0; i < arrSplits.length; i++)
-		// {
-		// 	let oCurrentElement = arrSplits[i];
-		//
-		// 	if (oCurrentElement instanceof ParaRun)
-		// 	{
-		// 		ProceedParaRun(oCurrentElement);
-		// 	}
-		// 	// else if (oCurrentElement instanceof Paragraph)
-		// 	// {
-		// 	// 	let arrContent = oCurrentElement.Content;
-		// 	// 	for (let i = 0; i < arrContent; i++)
-		// 	// 	{
-		// 	// 		let oCurrentRun = arrContent[i];
-		// 	// 		ProceedParaRun(oCurrentRun);
-		// 	// 	}
-		// 	// }
-		// }
-	};
+		let oCurrentReviewType = oReviewInfoParent.GetReviewInfo().Copy();
+		oCurrentReviewType.UserId 		= this.userId;
+		oCurrentReviewType.UserName 	= this.userName;
+		oCurrentReviewType.DateTime 	= this.userTime;
+		oReviewInfoParent.SetReviewTypeWithInfo(1,oCurrentReviewType);
+	}
+
+	DeletedTextRecovery.prototype.ConvertArray = function (inputArray)
+	{
+		let resultArray = [];
+		let currentStart = null;
+		let currentClass = null;
+		let currentLen = 0;
+
+		for (let i = 0; i < inputArray.length; i++) {
+			let item = inputArray[i];
+
+			if (currentStart === null && currentClass === null)
+			{
+				currentStart = item.Data.Pos;
+				currentClass = item.Data.Class;
+				currentLen = 1;
+			}
+			else if (item.Data.Pos === currentStart + currentLen && item.Data.Class === currentClass)
+			{
+				currentLen++;
+			}
+			else if (item.Data.Pos === currentStart - currentLen && item.Data.Class === currentClass)
+			{
+				currentLen++;
+			}
+			else if (item.Data.Pos === currentStart && item.Data.Class === currentClass)
+			{
+				currentLen++;
+			}
+			else
+			{
+				resultArray.push({ Start: currentStart, Len: currentLen, Class: currentClass });
+				currentStart = item.Data.Pos;
+				currentClass = item.Data.Class;
+				currentLen = 1;
+			}
+		}
+
+		// Добавляем последний результирующий элемент
+		if (currentStart !== null && currentClass !== null) {
+			resultArray.push({ Start: currentStart, Len: currentLen, Class: currentClass });
+		}
+
+		return resultArray;
+	}
+	DeletedTextRecovery.prototype.ProceedParaRun = function (oParaRun)
+	{
+		let CurrentRanges = oParaRun.CollaborativeMarks.Ranges;
+		let oFirstRange = CurrentRanges[0];
+		if (oFirstRange)
+			oFirstRange.PosE = oParaRun.Content.length;
+	}
 	DeletedTextRecovery.prototype.FindPosInParent = function(oClass)
 	{
 		let oParent = oClass.GetParent();
