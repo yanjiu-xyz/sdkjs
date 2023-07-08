@@ -6142,7 +6142,7 @@
 			"height" : 100, // mm
 			"rotate" : -45, // degrees
 			"margins" : [ 10, 10, 10, 10 ], // text margins
-			"fill" : [255, 0, 0], // [] => none
+			"fill" : [255, 0, 0], // [] => none // "image_url"
 			"stroke-width" : 1, // mm
 			"stroke" : [0, 0, 255], // [] => none
 			"align" : 1, // vertical text align (4 - top, 1 - center, 0 - bottom)
@@ -6186,6 +6186,9 @@
 		this.imageBase64 = undefined;
 		this.width = 0;
 		this.height = 0;
+
+		this.imageBackgroundUrl = "";
+		this.imageBackground = null;
 
 		this.transparent = 0.3;
 		this.zoom = 1;
@@ -6337,6 +6340,10 @@
 				if(obj['fill'] && obj['fill'].length === 3){
 					oShape.spPr.setFill(AscFormat.CreateSolidFillRGB(obj['fill'][0], obj['fill'][1], obj['fill'][2]));
 				}
+				else if (this.imageBackground) {
+					oApi.ImageLoader.map_image_index[this.imageBackgroundUrl] = { Image : this.imageBackground, Status : AscFonts.ImageLoadStatus.Complete };
+					oShape.spPr.setFill(AscFormat.builder_CreateBlipFill(this.imageBackgroundUrl, "stretch"));
+				}
 				if(AscFormat.isRealNumber(obj['stroke-width']) || Array.isArray(obj['stroke']) && obj['stroke'].length === 3){
 					var oUnifill;
 					if(Array.isArray(obj['stroke']) && obj['stroke'].length === 3){
@@ -6363,7 +6370,7 @@
 					oShape.setPaddings({Left: obj['margins'][0], Top: obj['margins'][1], Right: obj['margins'][2], Bottom: obj['margins'][3]});
 				}
 				var oContent = oShape.getDocContent();
-				var aParagraphsS = obj['paragraphs'];
+				var aParagraphsS = obj['paragraphs'] || [];
 				if(aParagraphsS.length > 0){
                     oContent.Content.length = 0;
 				}
@@ -6496,6 +6503,9 @@
 				if (false !== _oldTrackRevision)
 					oApi.WordControl.m_oLogicDocument.SetLocalTrackRevisions(_oldTrackRevision);
 
+				if (this.imageBackground)
+					delete oApi.ImageLoader.map_image_index[this.imageBackgroundUrl];
+
 			}, this, [obj]);
 
 		};
@@ -6553,7 +6563,7 @@
             this.CheckParams();
 
             var fonts = [];
-            var pars = this.contentObjects['paragraphs'];
+            var pars = this.contentObjects['paragraphs'] || [];
             var i, j;
             for (i = 0; i < pars.length; i++)
             {
@@ -6571,19 +6581,43 @@
                 fonts[i] = new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(fonts[i]), 0, "", 0, null);
             }
 
+			if ("string" === typeof this.contentObjects["fill"])
+				this.imageBackgroundUrl = this.contentObjects["fill"];
+
 			if (false === AscCommon.g_font_loader.CheckFontsNeedLoading(fonts))
             {
-                this.onReady();
-                return false;
+                this.loadBackgroundImage();
+                return;
             }
 
             this.api.asyncMethodCallback = function() {
                 var oApi = Asc['editor'] || editor;
-                oApi.watermarkDraw.onReady();
+                oApi.watermarkDraw.loadBackgroundImage();
             };
 
             AscCommon.g_font_loader.LoadDocumentFonts2(fonts);
-		}
+		};
+
+		this.loadBackgroundImage = function()
+		{
+			if ("" === this.imageBackgroundUrl)
+			{
+				this.onReady();
+				return;
+			}
+
+			this.imageBackground = new Image();
+			this.imageBackground.onload = function()
+			{
+				Asc["editor"].watermarkDraw.onReady();
+			};
+			this.imageBackground.onerror = function()
+			{
+				Asc["editor"].watermarkDraw.imageBackground = null;
+				Asc["editor"].watermarkDraw.onReady();
+			};
+			this.imageBackground.src = this.imageBackgroundUrl;
+		};
 	}
 
 	// ----------------------------- plugins ------------------------------- //
