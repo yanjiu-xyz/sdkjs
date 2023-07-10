@@ -2624,7 +2624,24 @@ function CTransitionAnimation(htmlpage)
 			const oSlide2 = oPr.Slides[1];
 			oThis.Morph = new CSlideMorphEffect(oSlide1, oSlide2, oThis.Param)
 		}
-		const oCanvas = oThis.DemonstrationObject.Canvas;
+        let oCanvas;
+        if(oThis.DemonstrationObject)
+        {
+            oCanvas = oThis.DemonstrationObject.Canvas;
+        }
+        else
+        {
+
+            oCanvas = oThis.HtmlPage.m_oOverlayApi.m_oControl.HtmlElement;
+        }
+
+
+
+        oThis.HtmlPage.m_oOverlayApi.Clear();
+        oThis.HtmlPage.m_oOverlayApi.CheckRect(oThis.Rect.x, oThis.Rect.y, oThis.Rect.w, oThis.Rect.h);
+
+
+
         oThis.Morph.morph(_part);
 	    oThis.Morph.draw(oCanvas, oThis.Rect, _part)
 
