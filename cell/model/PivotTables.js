@@ -2853,7 +2853,7 @@ CT_pivotTableDefinition.prototype.setDefaults = function () {
 	this.mdxSubqueries = false;
 	this.customListSort = true;
 };
-CT_pivotTableDefinition.prototype.initPostOpenZip = function (oNumFmts) {
+CT_pivotTableDefinition.prototype.initPostOpenZip = function (oNumFmts, dxfsOpen) {
 	if(this.cacheDefinition) {
 		this.cacheDefinition.initPostOpenZip(oNumFmts);
 	}
@@ -2867,6 +2867,12 @@ CT_pivotTableDefinition.prototype.initPostOpenZip = function (oNumFmts) {
 	if (dataFields) {
 		dataFields.forEach(function(dataField) {
 			dataField.initPostOpenZip(oNumFmts);
+		});
+	}
+	var formats = this.asc_getFormats();
+	if (formats) {
+		formats.forEach(function(format) {
+			format.initPostOpenZip(dxfsOpen);
 		});
 	}
 };
@@ -7032,14 +7038,12 @@ CT_pivotTableDefinition.prototype.asc_canShowDetails = function(row, col) {
 };
 /**
  * @param {PivotFormatsManagerQuery} query
- * @param {CellXfs[]} dxfsOpen
  * @return {PivotFormatsManagerResponse}
  */
-CT_pivotTableDefinition.prototype.getFormatting = function(query, optDxfsOpen) {
+CT_pivotTableDefinition.prototype.getFormatting = function(query) {
 	const dataFields = this.asc_getDataFields();
 	const dataIndex = query.dataIndex;
-	const dxfsOpen = optDxfsOpen || (this.worksheet && this.worksheet.workbook.dxfsOpen);
-	const response = this.formatsManager.get(query, dxfsOpen);
+	const response = this.formatsManager.get(query);
 	const result = {
 		num: (response.num) || (dataFields && dataFields[dataIndex] && dataFields[dataIndex].num),
 		font: response.font,
@@ -7272,13 +7276,14 @@ PivotFormatsManager.prototype.compareFormatsCollectionItems = function(item1, it
 	} else if (!item1.isLabelOnly && item2.isLabelOnly) {
 		return 1;
 	}
-	return item1.format.dxfId - item2.format.dxfId;
+	// return item1.format.dxfId - item2.format.dxfId;
+	return 0;
 };
 /**
  * @param {PivotFormatsManagerQuery} query
  * @return {PivotFormatsManagerResponse}
  */
-PivotFormatsManager.prototype.get = function(query, dxfsOpen) {
+PivotFormatsManager.prototype.get = function(query) {
 	const result = {
 		num: null,
 		font: null,
@@ -7292,18 +7297,18 @@ PivotFormatsManager.prototype.get = function(query, dxfsOpen) {
 		suitableFormatsCollectionItems.sort(this.compareFormatsCollectionItems);
 		for (let i = 0; i < suitableFormatsCollectionItems.length; i += 1) {
 			const formatsCollectionItem = suitableFormatsCollectionItems[i];
-			const dxfId = formatsCollectionItem.format.dxfId;
-			if (!result.num && dxfsOpen[dxfId] && dxfsOpen[dxfId].num) {
-				result.num = dxfsOpen[dxfId].num;
+			const dxf = formatsCollectionItem.format.dxf;
+			if (!result.num && dxf && dxf.num) {
+				result.num = dxf.num;
 			}
-			if (!result.font && dxfsOpen[dxfId] && dxfsOpen[dxfId].font) {
-				result.font = dxfsOpen[dxfId].font;
+			if (!result.font && dxf && dxf.font) {
+				result.font = dxf.font;
 			}
-			if (!result.fill && dxfsOpen[dxfId] && dxfsOpen[dxfId].fill) {
-				result.fill = dxfsOpen[dxfId].fill;
+			if (!result.fill && dxf && dxf.fill) {
+				result.fill = dxf.fill;
 			}
-			if (!result.border && dxfsOpen[dxfId] && dxfsOpen[dxfId].border) {
-				result.border = dxfsOpen[dxfId].border;
+			if (!result.border && dxf && dxf.border) {
+				result.border = dxf.border;
 			}
 		}
 	}
@@ -12828,6 +12833,8 @@ function CT_Format() {
 //Attributes
 	this.action = c_oAscFormatAction.Formatting;
 	this.dxfId = null;
+	/** @type {CellXfs} */
+	this.dxf = null;
 //Members
 	/** @type {CT_PivotArea} */
 	this.pivotArea = null;
@@ -12887,6 +12894,12 @@ CT_Format.prototype.toXml = function(writer, name) {
 	}
 	writer.WriteXmlNodeEnd(name);
 };
+CT_Format.prototype.initPostOpenZip = function (dxfsOpen) {
+	if (null !== this.dxfId) {
+		this.dxf = dxfsOpen[this.dxfId] || null;
+		this.dxfId = null;
+	}
+}
 function CT_ConditionalFormat() {
 //Attributes
 	this.scope = c_oAscScope.Selection;

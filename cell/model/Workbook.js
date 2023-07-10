@@ -2413,7 +2413,7 @@
 	Workbook.prototype.initPostOpenZip=function(pivotCaches, xmlParserContext){
 		var t = this;
 		this.forEach(function (ws) {
-			ws.initPostOpenZip(pivotCaches, t.oNumFmtsOpen);
+			ws.initPostOpenZip(pivotCaches, t.oNumFmtsOpen, t.dxfsOpen);
 		});
 		if (xmlParserContext) {
 			AscCommon.pptx_content_loader.Reader.ImageMapChecker = AscCommon.pptx_content_loader.ImageMapChecker;
@@ -4978,6 +4978,7 @@
 		this.bExcludeCollapsed = false;
 
 		this.oNumFmtsOpen = {};
+		this.dxfsOpen = [];//todo move to InitOpenManager
 
 		/*handlers*/
 		this.handlers = null;
@@ -5405,9 +5406,9 @@
 			elem.initPostOpen(t);
 		});
 	};
-	Worksheet.prototype.initPostOpenZip = function (pivotCaches, oNumFmts) {
+	Worksheet.prototype.initPostOpenZip = function (pivotCaches, oNumFmts, dxfsOpen) {
 		this.pivotTables.forEach(function(pivotTable){
-			pivotTable.initPostOpenZip(oNumFmts);
+			pivotTable.initPostOpenZip(oNumFmts, dxfsOpen);
 		});
 		this.aSlicers.forEach(function(slicer){
 			slicer.initPostOpenZip(pivotCaches);
