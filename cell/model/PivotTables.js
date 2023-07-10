@@ -1153,39 +1153,37 @@ function ToXml_ST_SortType(val) {
 }
 
 function FromXml_ST_PivotAreaType(val) {
-	var res = -1;
+	// Normal is default.
+	var res = Asc.c_oAscPivotAreaType.Normal;
 	if ("none" === val) {
-		res = c_oAscPivotAreaType.None;
-	} else if ("normal" === val) {
-		res = c_oAscPivotAreaType.Normal;
+		res = Asc.c_oAscPivotAreaType.None;
 	} else if ("data" === val) {
-		res = c_oAscPivotAreaType.Data;
+		res = Asc.c_oAscPivotAreaType.Data;
 	} else if ("all" === val) {
-		res = c_oAscPivotAreaType.All;
+		res = Asc.c_oAscPivotAreaType.All;
 	} else if ("origin" === val) {
-		res = c_oAscPivotAreaType.Origin;
+		res = Asc.c_oAscPivotAreaType.Origin;
 	} else if ("button" === val) {
-		res = c_oAscPivotAreaType.Button;
+		res = Asc.c_oAscPivotAreaType.Button;
 	} else if ("topEnd" === val) {
-		res = c_oAscPivotAreaType.TopEnd;
+		res = Asc.c_oAscPivotAreaType.TopEnd;
 	}
 	return res;
 }
+
 function ToXml_ST_PivotAreaType(val) {
 	var res = "";
-	if (c_oAscPivotAreaType.None === val) {
+	if (Asc.c_oAscPivotAreaType.None === val) {
 		res = "none";
-	} else if (c_oAscPivotAreaType.Normal === val) {
-		res = "normal";
-	} else if (c_oAscPivotAreaType.Data === val) {
+	} else if (Asc.c_oAscPivotAreaType.Data === val) {
 		res = "data";
-	} else if (c_oAscPivotAreaType.All === val) {
+	} else if (Asc.c_oAscPivotAreaType.All === val) {
 		res = "all";
-	} else if (c_oAscPivotAreaType.Origin === val) {
+	} else if (Asc.c_oAscPivotAreaType.Origin === val) {
 		res = "origin";
-	} else if (c_oAscPivotAreaType.Button === val) {
+	} else if (Asc.c_oAscPivotAreaType.Button === val) {
 		res = "button";
-	} else if (c_oAscPivotAreaType.TopEnd === val) {
+	} else if (Asc.c_oAscPivotAreaType.TopEnd === val) {
 		res = "topEnd";
 	}
 	return res;
@@ -7056,6 +7054,7 @@ CT_pivotTableDefinition.prototype.getFormatting = function(query, optDxfsOpen) {
  * @property {Map<number, Map<number, number>>?} fieldValuesMap
  * @property {number} selectedField
  * @property {CT_Format} format
+ * @property {number} type one of c_oAscPivotAreaType
  * @property {boolean} isGrandRow
  * @property {boolean} isGrandCol
  * @property {boolean} isLabelOnly
@@ -7110,7 +7109,8 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
 		isGrandRow: pivotArea.grandRow,
 		selectedField: selectedField,
 		isLabelOnly: pivotArea.labelOnly,
-		isDataOnly: pivotArea.dataOnly
+		isDataOnly: pivotArea.dataOnly,
+		type: pivotArea.type
 	};
 	const field = selectedField !== null ? selectedField : pivotAreaField;
 	if (field === null) {
@@ -7131,6 +7131,7 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
  * @property {number?} field
  * @property {number?} dataIndex
  * @property {boolean} isData
+ * @property {number | undefined} type one of c_oAscPivotAreaType
  */
 
 /**
@@ -7205,6 +7206,7 @@ PivotFormatsManager.prototype.checkFormatsCollectionItemAttributes = function(fo
 	if (formatsCollectionItem.isGrandCol && !query.isGrandCol) {
 		return false;
 	}
+	if (formatsCollectionItem.type !== query.type)
 	return true;
 };
 /**
