@@ -842,6 +842,9 @@
 		CImageShape.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
 			return AscFormat.CShape.prototype.compareForMorph.call(this, oDrawingToCheck, oCurCandidate);
 		};
+		CImageShape.prototype.getText = function() {
+			return null;
+		};
 		function CreateBrushFromBlipFill(oBlipFill) {
 			if (!oBlipFill) {
 				return null;
