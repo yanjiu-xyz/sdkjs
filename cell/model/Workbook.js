@@ -8912,7 +8912,8 @@
 							isGrandCol: colItem.t === Asc.c_oAscItemType.Grand,
 							field: Asc.c_oAscItemType.Grand !== rowItem.t ? fieldIndex : traversal.fieldIndex,
 							dataIndex: dataIndex,
-							isData: true
+							isData: true,
+							type: Asc.c_oAscPivotAreaType.Normal
 						});
 						cell.setFormatting(formatting);
 						cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));

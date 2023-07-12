@@ -7058,6 +7058,7 @@ CT_pivotTableDefinition.prototype.getFormatting = function(query) {
  * @property {Map<number, Map<number, number>>?} fieldValuesMap
  * @property {number} selectedField
  * @property {CT_Format} format
+ * @property {number} index
  * @property {number} type one of c_oAscPivotAreaType
  * @property {boolean} isGrandRow
  * @property {boolean} isGrandCol
@@ -7093,7 +7094,7 @@ PivotFormatsManager.prototype.update = function() {
 	if (this.formats) {
 		for (let i = 0; i < this.formats.length; i += 1) {
 			const format = this.formats[i];
-			this.addToCollection(format);
+			this.addToCollection(format, i);
 		}
 	}
 	return;
@@ -7101,7 +7102,7 @@ PivotFormatsManager.prototype.update = function() {
 /**
  * @param {CT_Format} format 
  */
-PivotFormatsManager.prototype.addToCollection = function(format) {
+PivotFormatsManager.prototype.addToCollection = function(format, index) {
 	const pivotArea = format.pivotArea;
 	const referencesInfo = pivotArea.getReferencesInfo();
 	const selectedField = referencesInfo.selectedField;
@@ -7114,7 +7115,8 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
 		selectedField: selectedField,
 		isLabelOnly: pivotArea.labelOnly,
 		isDataOnly: pivotArea.dataOnly,
-		type: pivotArea.type
+		type: pivotArea.type,
+		index: index
 	};
 	const field = selectedField !== null ? selectedField : pivotAreaField;
 	if (field === null) {
@@ -7210,7 +7212,9 @@ PivotFormatsManager.prototype.checkFormatsCollectionItemAttributes = function(fo
 	if (formatsCollectionItem.isGrandCol && !query.isGrandCol) {
 		return false;
 	}
-	if (formatsCollectionItem.type !== query.type)
+	if (formatsCollectionItem.type !== query.type) {
+		return false;
+	}
 	return true;
 };
 /**
@@ -7276,8 +7280,7 @@ PivotFormatsManager.prototype.compareFormatsCollectionItems = function(item1, it
 	} else if (!item1.isLabelOnly && item2.isLabelOnly) {
 		return 1;
 	}
-	// return item1.format.dxfId - item2.format.dxfId;
-	return 0;
+	return item2.index - item1.index;
 };
 /**
  * @param {PivotFormatsManagerQuery} query
@@ -14150,7 +14153,7 @@ CT_ServerFormat.prototype.toXml = function(writer, name) {
 function CT_PivotArea() {
 //Attributes
 	this.field = null;
-	this.type = c_oAscPivotAreaType.None;
+	this.type = c_oAscPivotAreaType.Normal;
 	this.dataOnly = true;
 	this.labelOnly = false;
 	this.grandRow = false;
