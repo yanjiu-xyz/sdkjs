@@ -8657,15 +8657,20 @@
 			}
 		}
 	};
+	/**
+	 * @param {CT_pivotTableDefinition} pivotTable 
+	 * @param {number[]} rowFieldsOffset 
+	 */
 	Worksheet.prototype._updatePivotTableCellsRowColLables = function(pivotTable, rowFieldsOffset) {
 		//CT_pivotTableDefinition.prototype.getLayoutByCellHeaderRowColLables
-		var items, fields, field, oCellValue, fieldIndex, cells, r1, c1, i, j, valuesIndex;
+		var items, fields, field, oCellValue, fieldIndex, cells, r1, c1, i, j, valuesIndex, isRowItems = false;
 		var pivotRange = pivotTable.getRange();
 		var location = pivotTable.location;
 		var hasLeftAlignInRowLables = false;
 		var outlines = [0];
 		if (rowFieldsOffset) {
 			items = pivotTable.getRowItems();
+			isRowItems = true;
 			fields = pivotTable.asc_getRowFields();
 			r1 = pivotRange.r1 + location.firstDataRow;
 			c1 = pivotRange.c1;
@@ -8705,12 +8710,15 @@
 		var pivotFields = pivotTable.asc_getPivotFields();
 
 		var totalTitleRange = [];
+		var valuesCache = [];
 		for (i = 0; i < items.length; ++i) {
 			var item = items[i];
+			var fieldValues = [];
 			var r = item.getR();
 			for (j = 0; j < r; ++j) {
 				fieldIndex = fields[j].asc_getIndex();
 				field = pivotFields[fieldIndex];
+				fieldValues.push(valuesCache[j]);
 				if (AscCommonExcel.st_VALUES !== fieldIndex && field.asc_getFillDownLabelsDefault() && totalTitleRange[j]) {
 					if (rowFieldsOffset) {
 						cells = this.getRange4(r1 + i, c1 + rowFieldsOffset[j]);
@@ -8722,6 +8730,16 @@
 				}
 			}
 			for (j = 0; j < item.x.length; ++j) {
+				/** @type {PivotFormatsManagerQuery} */
+				const query = {
+					values: fieldValues,
+					dataIndex: item.i,
+					isData: false,
+					isGrandRow: isRowItems && item.t === Asc.c_oAscItemType.Grand,
+					isGrandCol: !isRowItems && item.t === Asc.c_oAscItemType.Grand,
+					type: Asc.c_oAscPivotAreaType.Normal,
+					field: null
+				};
 				fieldIndex = null;
 				var outline = 0;
 				if (rowFieldsOffset) {
@@ -8736,6 +8754,8 @@
 					fieldIndex = fields[r + j].asc_getIndex();
 					if (AscCommonExcel.st_VALUES !== fieldIndex) {
 						oCellValue = pivotTable.getPivotFieldCellValue(fieldIndex, item.x[j].getV());
+						fieldValues.push([fieldIndex, item.x[j].getV()]);
+						query.field = fieldIndex;
 					} else {
 						oCellValue = new AscCommonExcel.CCellValue();
 						oCellValue.type = AscCommon.CellValueType.String;
@@ -8788,6 +8808,9 @@
 					cells.setIndent(outline);
 				}
 				cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
+				var formatting = pivotTable.getFormatting(query);
+				cells.setFormatting(formatting);
+				valuesCache = fieldValues;
 			}
 		}
 	};
@@ -8868,7 +8891,6 @@
 		var c1 = pivotRange.c1 + location.firstDataCol;
 		let traversal = new AscCommonExcel.DataRowTraversal(pivotFields, dataFields, rowItems, colItems, rowFields, colFields);
 		traversal.initRow(dataRow);
-		pivotTable.formatsManager.update();
 		var fieldIndex;
 		let props = {rowFieldSubtotal: undefined, itemSd: undefined};
 		var oCellValue;
@@ -8906,11 +8928,18 @@
 					if (oCellValue) {
 						var dataIndex = Math.max(colItem.i, rowItem.i)
 						var cell = this.getRange4(r1 + rowItemsIndex, c1 + colItemsIndex);
+						let fieldIndexForFormatting = null;
+						if (Asc.c_oAscItemType.Grand !== rowItem.t) {
+							fieldIndexForFormatting = fieldIndex;
+						} else if (Asc.c_oAscItemType.Grand !== colItem.t) {
+							fieldIndexForFormatting = traversal.fieldIndex;
+						}
+						fieldIndexForFormatting = Asc.c_oAscItemType.Grand !== rowItem.t ? fieldIndex : null;
 						var formatting = pivotTable.getFormatting({
 							values: traversal.getCurrentFieldValues(),
 							isGrandRow: rowItem.t === Asc.c_oAscItemType.Grand,
 							isGrandCol: colItem.t === Asc.c_oAscItemType.Grand,
-							field: Asc.c_oAscItemType.Grand !== rowItem.t ? fieldIndex : traversal.fieldIndex,
+							field: fieldIndexForFormatting,
 							dataIndex: dataIndex,
 							isData: true,
 							type: Asc.c_oAscPivotAreaType.Normal
@@ -8922,7 +8951,12 @@
 			}
 		}
 	};
+	/**
+	 * @param {CT_pivotTableDefinition} pivotTable 
+	 * @param {PivotDataElem} dataRow 
+	 */
 	Worksheet.prototype._updatePivotTableCells = function (pivotTable, dataRow) {
+		pivotTable.formatsManager.update();
 		this._updatePivotTableCellsPage(pivotTable);
 		this._updatePivotTableCellsHeader(pivotTable);
 		this._updatePivotTableCellsRowColLables(pivotTable);

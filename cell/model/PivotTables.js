@@ -7203,7 +7203,7 @@ PivotFormatsManager.prototype.checkFormatsCollectionItemAttributes = function(fo
 	if (formatsCollectionItem.isGrandCol && !query.isGrandCol) {
 		return false;
 	}
-	if (formatsCollectionItem.type !== query.type) {
+	if (formatsCollectionItem.type !== Asc.c_oAscPivotAreaType.All && formatsCollectionItem.type !== query.type) {
 		return false;
 	}
 	return true;
