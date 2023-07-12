@@ -2624,6 +2624,7 @@ function CEditorPage(api)
 
 		// remove media
 		this.m_oApi.hideVideoControl();
+		AscCommon.g_specialPasteHelper.SpecialPasteButton_Update_Position();
 	};
 
 	// scrolls
