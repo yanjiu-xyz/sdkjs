@@ -7058,7 +7058,6 @@ CT_pivotTableDefinition.prototype.getFormatting = function(query) {
  * @property {Map<number, Map<number, number>>?} fieldValuesMap
  * @property {number} selectedField
  * @property {CT_Format} format
- * @property {number} index
  * @property {number} type one of c_oAscPivotAreaType
  * @property {boolean} isGrandRow
  * @property {boolean} isGrandCol
@@ -7075,17 +7074,13 @@ function PivotFormatsManager(pivot) {
 	this.pivot = pivot;
 	/** @type {CT_Format[]} */
 	this.formats = [];
-	/** @typedef {Map<number, PivotFormatsCollectionItem[]>} PivotFormatsCollection */
-	/** @type {PivotFormatsCollection} */
-	this.formatsCollection = new Map();
 	/** @type {PivotFormatsCollectionItem[]} */
-	this.uniqueFormatsCollection = [];
+	this.formatsCollection = [];
 }
 
 PivotFormatsManager.prototype.setDefaults = function() {
 	this.formats = [];
-	this.formatsCollection = new Map();
-	this.uniqueFormatsCollection = [];
+	this.formatsCollection = [];
 	return;
 };
 PivotFormatsManager.prototype.update = function() {
@@ -7094,39 +7089,32 @@ PivotFormatsManager.prototype.update = function() {
 	if (this.formats) {
 		for (let i = 0; i < this.formats.length; i += 1) {
 			const format = this.formats[i];
-			this.addToCollection(format, i);
+			this.addToCollection(format);
 		}
 	}
+	this.formatsCollection.reverse();
 	return;
 };
 /**
- * @param {CT_Format} format 
+ * @param {CT_Format} format
  */
-PivotFormatsManager.prototype.addToCollection = function(format, index) {
+PivotFormatsManager.prototype.addToCollection = function(format) {
 	const pivotArea = format.pivotArea;
 	const referencesInfo = pivotArea.getReferencesInfo();
 	const selectedField = referencesInfo.selectedField;
 	const pivotAreaField = pivotArea.field;
+	const field = selectedField !== null ? selectedField : pivotAreaField;
 	const formatsCollectionItem = {
 		fieldValuesMap: referencesInfo.fieldValuesMap,
 		format: format,
 		isGrandCol: pivotArea.grandCol,
 		isGrandRow: pivotArea.grandRow,
-		selectedField: selectedField,
+		selectedField: field,
 		isLabelOnly: pivotArea.labelOnly,
 		isDataOnly: pivotArea.dataOnly,
 		type: pivotArea.type,
-		index: index
 	};
-	const field = selectedField !== null ? selectedField : pivotAreaField;
-	if (field === null) {
-		this.uniqueFormatsCollection.push(formatsCollectionItem);
-		return;
-	}
-	if (!this.formatsCollection.has(field)) {
-		this.formatsCollection.set(field, []);
-	}
-	this.formatsCollection.get(field).push(formatsCollectionItem);
+	this.formatsCollection.push(formatsCollectionItem);
 	return;
 };
 /**
@@ -7174,6 +7162,9 @@ PivotFormatsManager.prototype.checkFormatsCollectionItemValues = function(values
 PivotFormatsManager.prototype.checkFormatsCollectionItem = function(formatsCollectionItem, query) {
 	const values = query.values;
 	const fieldValuesMap = formatsCollectionItem.fieldValuesMap;
+	if (formatsCollectionItem.selectedField !== null && formatsCollectionItem.selectedField !== query.field) {
+		return false;
+	} 
 	if (!this.checkFormatsCollectionItemAttributes(formatsCollectionItem, query)) {
 		return false;
 	}
@@ -7218,14 +7209,13 @@ PivotFormatsManager.prototype.checkFormatsCollectionItemAttributes = function(fo
 	return true;
 };
 /**
- * @param {PivotFormatsCollectionItem[]} formatsCollectionItems
  * @param {PivotFormatsManagerQuery} query
  * @return {PivotFormatsCollectionItem[]}
  */
-PivotFormatsManager.prototype.getFormatsCollectionItems = function(formatsCollectionItems, query) {
+PivotFormatsManager.prototype.getSuitableFormatsCollectionItems = function(query) {
 	const result = [];
-	for (let i = 0; i < formatsCollectionItems.length; i += 1) {
-		const formatsCollectionItem = formatsCollectionItems[i];
+	for (let i = 0; i < this.formatsCollection.length; i += 1) {
+		const formatsCollectionItem = this.formatsCollection[i];
 		if (this.checkFormatsCollectionItem(formatsCollectionItem, query)) {
 			result.push(formatsCollectionItem);
 		}
@@ -7280,7 +7270,7 @@ PivotFormatsManager.prototype.compareFormatsCollectionItems = function(item1, it
 	} else if (!item1.isLabelOnly && item2.isLabelOnly) {
 		return 1;
 	}
-	return item2.index - item1.index;
+	return 0;
 };
 /**
  * @param {PivotFormatsManagerQuery} query
@@ -7293,26 +7283,22 @@ PivotFormatsManager.prototype.get = function(query) {
 		fill: null,
 		border: null
 	}
-	const formatsCollectionItemsSelectedField = this.formatsCollection.get(query.field) || [];
-	const formatsCollectionItems = formatsCollectionItemsSelectedField.concat(this.uniqueFormatsCollection);
-	if (formatsCollectionItems.length > 0) {
-		const suitableFormatsCollectionItems = this.getFormatsCollectionItems(formatsCollectionItems, query);
-		suitableFormatsCollectionItems.sort(this.compareFormatsCollectionItems);
-		for (let i = 0; i < suitableFormatsCollectionItems.length; i += 1) {
-			const formatsCollectionItem = suitableFormatsCollectionItems[i];
-			const dxf = formatsCollectionItem.format.dxf;
-			if (!result.num && dxf && dxf.num) {
-				result.num = dxf.num;
-			}
-			if (!result.font && dxf && dxf.font) {
-				result.font = dxf.font;
-			}
-			if (!result.fill && dxf && dxf.fill) {
-				result.fill = dxf.fill;
-			}
-			if (!result.border && dxf && dxf.border) {
-				result.border = dxf.border;
-			}
+	const suitableFormatsCollectionItems = this.getSuitableFormatsCollectionItems(query);
+	suitableFormatsCollectionItems.sort(this.compareFormatsCollectionItems);
+	for (let i = 0; i < suitableFormatsCollectionItems.length; i += 1) {
+		const formatsCollectionItem = suitableFormatsCollectionItems[i];
+		const dxf = formatsCollectionItem.format.dxf;
+		if (!result.num && dxf && dxf.num) {
+			result.num = dxf.num;
+		}
+		if (!result.font && dxf && dxf.font) {
+			result.font = dxf.font;
+		}
+		if (!result.fill && dxf && dxf.fill) {
+			result.fill = dxf.fill;
+		}
+		if (!result.border && dxf && dxf.border) {
+			result.border = dxf.border;
 		}
 	}
 	return result;
