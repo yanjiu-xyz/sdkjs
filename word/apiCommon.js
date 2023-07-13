@@ -430,6 +430,7 @@
 			this.PercentFullWidth = tblProp.PercentFullWidth;
 			this.TableDescription = tblProp.TableDescription;
 			this.TableCaption = tblProp.TableCaption;
+			this.TableName = tblProp.TableName;
 
 			this.ColumnWidth = tblProp.ColumnWidth;
 			this.RowHeight   = tblProp.RowHeight;
@@ -758,6 +759,14 @@
 	{
 		this.TableCaption = v;
 	};
+	CTableProp.prototype.get_TableName = function ()
+	{
+		return this.TableName;
+	};
+	CTableProp.prototype.put_TableName = function (v)
+	{
+		this.TableName = v;
+	};
 	CTableProp.prototype.get_ColumnWidth = function()
 	{
 		return this.ColumnWidth;
@@ -838,6 +847,8 @@
 	CTableProp.prototype['put_TableDescription'] = CTableProp.prototype.put_TableDescription;
 	CTableProp.prototype['get_TableCaption'] = CTableProp.prototype.get_TableCaption;
 	CTableProp.prototype['put_TableCaption'] = CTableProp.prototype.put_TableCaption;
+	CTableProp.prototype['get_TableName'] = CTableProp.prototype.get_TableName;
+	CTableProp.prototype['put_TableName'] = CTableProp.prototype.put_TableName;
 	CTableProp.prototype['get_ColumnWidth'] = CTableProp.prototype.get_ColumnWidth;
 	CTableProp.prototype['put_ColumnWidth'] = CTableProp.prototype.put_ColumnWidth;
 	CTableProp.prototype['get_RowHeight'] = CTableProp.prototype.get_RowHeight;
