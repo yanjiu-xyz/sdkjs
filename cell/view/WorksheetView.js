@@ -4190,26 +4190,27 @@
 		if (!printScale) {
 			printScale = this.getPrintScale();
 		}
-		var ctx = drawingCtx || this.drawingCtx;
-		var widthCtx = (width) ? width / printScale : ctx.getWidth() / printScale;
-		var heightCtx = (height) ? height / printScale : ctx.getHeight() / printScale;
-		var offsetX = (undefined !== leftFieldInPx) ? leftFieldInPx : this._getColLeft(this.visibleRange.c1) - this.cellsLeft;
-		var offsetY = (undefined !== topFieldInPx) ? topFieldInPx : this._getRowTop(this.visibleRange.r1) - this.cellsTop;
+		let ctx = drawingCtx || this.drawingCtx;
+		let widthCtx = (width) ? width / printScale : ctx.getWidth() / printScale;
+		let heightCtx = (height) ? height / printScale : ctx.getHeight() / printScale;
+		let offsetX = (undefined !== leftFieldInPx) ? leftFieldInPx : this._getColLeft(this.visibleRange.c1) - this.cellsLeft;
+		let offsetY = (undefined !== topFieldInPx) ? topFieldInPx : this._getRowTop(this.visibleRange.r1) - this.cellsTop;
 		if (!drawingCtx && this.topLeftFrozenCell) {
 			if (undefined === leftFieldInPx) {
-				var cFrozen = this.topLeftFrozenCell.getCol0();
+				let cFrozen = this.topLeftFrozenCell.getCol0();
 				offsetX -= this._getColLeft(cFrozen) - this._getColLeft(0);
 			}
 			if (undefined === topFieldInPx) {
-				var rFrozen = this.topLeftFrozenCell.getRow0();
+				let rFrozen = this.topLeftFrozenCell.getRow0();
 				offsetY -= this._getRowTop(rFrozen) - this._getRowTop(0);
 			}
 		}
-		var x1 = this._getColLeft(range.c1) - offsetX;
-		var y1 = this._getRowTop(range.r1) - offsetY;
-		var x2 = Math.min(this._getColLeft(range.c2 + 1) - offsetX, widthCtx);
-		var y2 = Math.min(this._getRowTop(range.r2 + 1) - offsetY, heightCtx);
-		if (!ctx.isNotDrawBackground) {
+		let x1 = this._getColLeft(range.c1) - offsetX;
+		let y1 = this._getRowTop(range.r1) - offsetY;
+		let x2 = Math.min(this._getColLeft(range.c2 + 1) - offsetX, widthCtx);
+		let y2 = Math.min(this._getRowTop(range.r2 + 1) - offsetY, heightCtx);
+		let isPrint = this.usePrintScale;
+		if (!ctx.isNotDrawBackground && !isPrint) {
 			ctx.setFillStyle(this.settings.cells.defaultState.background)
 				.fillRect(x1, y1, x2 - x1, y2 - y1);
 		}
@@ -4220,7 +4221,7 @@
 		ctx.setStrokeStyle(this.settings.cells.defaultState.border)
 			.setLineWidth(1).beginPath();
 
-		var i, d, l;
+		let i, d, l;
 		if (ctx.isPreviewOleObjectContext) {
 			ctx.lineVerPrevPx(1, y1, y2);
 		}
@@ -4251,7 +4252,7 @@
 		ctx.stroke();
 
 		// Clear grid for pivot tables with classic and outline layout
-		var clearRange, pivotRange, clearRanges = this.model.getPivotTablesClearRanges(range);
+		let clearRange, pivotRange, clearRanges = this.model.getPivotTablesClearRanges(range);
 		ctx.setFillStyle(this.settings.cells.defaultState.background);
 		for (i = 0; i < clearRanges.length; i += 2) {
 			clearRange = clearRanges[i];
