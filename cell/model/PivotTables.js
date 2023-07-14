@@ -7169,9 +7169,6 @@ PivotFormatsManager.prototype.checkFormatsCollectionItem = function(formatsColle
 		return false;
 	}
 	if (fieldValuesMap) {
-		if (!query.isData && fieldValuesMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD)) {
-			return false;
-		}
 		if (fieldValuesMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) && !fieldValuesMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD).has(query.dataIndex)) {
 			return false;
 		}

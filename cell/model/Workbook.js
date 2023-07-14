@@ -8757,6 +8757,7 @@
 						fieldValues.push([fieldIndex, item.x[j].getV()]);
 						query.field = fieldIndex;
 					} else {
+						query.field = AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD
 						oCellValue = new AscCommonExcel.CCellValue();
 						oCellValue.type = AscCommon.CellValueType.String;
 						oCellValue.text = pivotTable.getDataFieldName(item.i);
@@ -8928,18 +8929,11 @@
 					if (oCellValue) {
 						var dataIndex = Math.max(colItem.i, rowItem.i)
 						var cell = this.getRange4(r1 + rowItemsIndex, c1 + colItemsIndex);
-						let fieldIndexForFormatting = null;
-						if (Asc.c_oAscItemType.Grand !== rowItem.t) {
-							fieldIndexForFormatting = fieldIndex;
-						} else if (Asc.c_oAscItemType.Grand !== colItem.t) {
-							fieldIndexForFormatting = traversal.fieldIndex;
-						}
-						fieldIndexForFormatting = Asc.c_oAscItemType.Grand !== rowItem.t ? fieldIndex : null;
 						var formatting = pivotTable.getFormatting({
 							values: traversal.getCurrentFieldValues(),
 							isGrandRow: rowItem.t === Asc.c_oAscItemType.Grand,
 							isGrandCol: colItem.t === Asc.c_oAscItemType.Grand,
-							field: fieldIndexForFormatting,
+							field: Asc.c_oAscItemType.Grand !== rowItem.t ? fieldIndex : traversal.fieldIndex,
 							dataIndex: dataIndex,
 							isData: true,
 							type: Asc.c_oAscPivotAreaType.Normal
