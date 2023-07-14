@@ -3579,7 +3579,7 @@ CSlideMorphEffect.prototype.morph = function(dTime) {
         this.morphObjects[nIdx].morph(dTime);
     }
     this.morphObjects.sort(function (a, b) {
-        return a.relHeight - b.relativeHeight;
+        return a.relHeight - b.relHeight;
     });
 };
 
