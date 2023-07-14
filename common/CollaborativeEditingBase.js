@@ -364,8 +364,9 @@
 			revision.InitRevision();
 			if (revision.GetIsShowDelText())
 			{
-				revision.ShowDel()
+				revision.NavigationRevisionHistory();
 			}
+			this.Next = revision;
         }
 		else
 		{
