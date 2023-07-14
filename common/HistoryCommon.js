@@ -1278,6 +1278,9 @@
 			case AscDFH.historydescription_OForm_ChangeRoleOrder:
 				sString = "OForm_ChangeRoleOrder";
 				break;
+			case AscDFH.historydescription_Document_FillContentControlPlaceholderOnBlur:
+				sString = "Document_FillContentControlPlaceholderOnBlur";
+				break;
 		}
 		return sString;
 	}
@@ -4408,6 +4411,7 @@
 	window['AscDFH'].historydescription_Document_UpdateAddinFields                  = 0x01a2;
 	window['AscDFH'].historydescription_Document_RemoveComplexFieldWrapper          = 0x01a3;
 	window['AscDFH'].historydescription_Document_MergeDocuments                     = 0x01a4;
+	window['AscDFH'].historydescription_Document_FillContentControlPlaceholderOnBlur= 0x01a5;
 	window['AscDFH'].historydescription_Collaborative_DeletedTextRecovery           = 0x01a5;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
