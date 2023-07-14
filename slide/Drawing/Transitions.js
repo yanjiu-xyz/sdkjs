@@ -3343,7 +3343,7 @@ function CSlideMorphEffect(oSlide1, oSlide2, nType) {
 	this.morphObjects = [];
 	this.init();
 }
-CSlideMorphEffect.prototype.draw = function(oCanvas, oRect, dTime) {
+CSlideMorphEffect.prototype.draw = function(oCanvas, oRect) {
 	if(!this.slide1 || !this.slide2) {
 		return;
 	}
@@ -3362,10 +3362,14 @@ CSlideMorphEffect.prototype.draw = function(oCanvas, oRect, dTime) {
     oGraphics.transform(1, 0, 0, 1, 0, 0);
     oGraphics.IsNoDrawingEmptyPlaceholder = true;
     oGraphics.IsDemonstrationMode = true;
+
+    oGraphics.SaveGrState();
+    oGraphics.AddClipRect(0, 0, wMM, hMM);
     DrawBackground(oGraphics, AscFormat.CreateSolidFillRGBA(255, 255, 255, 255), wMM, hMM);
     for(let nIdx = 0; nIdx < this.morphObjects.length; ++nIdx) {
         this.morphObjects[nIdx].draw(oGraphics);
     }
+    oGraphics.RestoreGrState();
 };
 CSlideMorphEffect.prototype.init = function() {
 	if(!this.slide1 || !this.slide2) {
@@ -3463,7 +3467,6 @@ CSlideMorphEffect.prototype.generateWordBasedMorphs = function() {
 CSlideMorphEffect.prototype.generateLetterBasedMorphs = function() {
 	this.generateTextBasedMorph(true);
 };
-
 CSlideMorphEffect.prototype.generateTextBasedMorph = function(bLetter) {
     this.pushMorphObject(new COrigSizeTextureTransform(this.texturesCache, -2, -1, new CBackgroundWrapper(this.slide1), new CBackgroundWrapper(this.slide2)));
 
