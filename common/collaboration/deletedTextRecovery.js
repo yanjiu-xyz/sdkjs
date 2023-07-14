@@ -97,39 +97,39 @@
 			arrTemp = [];
 		}
 
-		// убираем из массива изменения, которые добавляют удаленный текст (до того как его удалили)
-		if (arrCurrent.length >= 1)
-		{
-			for (let i = 0; i < arrCurrent.length; i++)
-			{
-				let arrCurrentElement = arrCurrent[i];
-				for (let j = 0; j < arrCurrentElement.length; j++)
-				{
-					let oCurrentChange = arrCurrentElement[j];
-
-					if (oCurrentChange instanceof AscCommon.CChangesTableIdDescription)
-						continue;
-
-					if (true === this.IsRemovedAfter(arrCurrent, i, oCurrentChange))
-					{
-						arrCurrentElement.splice(j, 1);
-						j--;
-					}
-				}
-			}
-		}
-
-		// убираем изменения состоящие только из AscCommon.CChangesTableIdDescription (так как эти изменения этого блока были удалены)
-		for (let i = 0; i < arrCurrent.length; i++)
-		{
-			let arrCurrentElement = arrCurrent[i];
-
-			if (arrCurrentElement === undefined)
-				i++;
-
-			if (arrCurrentElement.length === 1)
-				arrCurrentElement.length = 0;
-		}
+		// // убираем из массива изменения, которые добавляют удаленный текст (до того как его удалили)
+		// if (arrCurrent.length >= 1)
+		// {
+		// 	for (let i = 0; i < arrCurrent.length; i++)
+		// 	{
+		// 		let arrCurrentElement = arrCurrent[i];
+		// 		for (let j = 0; j < arrCurrentElement.length; j++)
+		// 		{
+		// 			let oCurrentChange = arrCurrentElement[j];
+		//
+		// 			if (oCurrentChange instanceof AscCommon.CChangesTableIdDescription)
+		// 				continue;
+		//
+		// 			if (true === this.IsRemovedAfter(arrCurrent, i, oCurrentChange))
+		// 			{
+		// 				arrCurrentElement.splice(j, 1);
+		// 				j--;
+		// 			}
+		// 		}
+		// 	}
+		// }
+		//
+		// // убираем изменения состоящие только из AscCommon.CChangesTableIdDescription (так как эти изменения этого блока были удалены)
+		// for (let i = 0; i < arrCurrent.length; i++)
+		// {
+		// 	let arrCurrentElement = arrCurrent[i];
+		//
+		// 	if (arrCurrentElement === undefined)
+		// 		i++;
+		//
+		// 	if (arrCurrentElement.length === 1)
+		// 		arrCurrentElement.length = 0;
+		// }
 
 		this.m_RewiewPoints		= arrCurrent;
 		this.m_RewiewIndex		= this.m_RewiewPoints.length;
@@ -194,15 +194,19 @@
 		let arr = [];
 		for (let i = 0; i < this.m_RewiewDelPoints.length; i++)
 		{
-			arr.push(this.m_RewiewDelPoints[i][1]);
+			let oCur = this.m_RewiewDelPoints[i];
+			let nPos = oCur[0];
+			let oContent = oCur[1];
+			if (this.m_RewiewIndex > nPos)
+			{
+				arr.push(oContent);
+			}
 		}
 		this.m_PreparedData = arr;
+		console.log(arr.length)
 	};
 	DeletedTextRecovery.prototype.ShowDel = function ()
 	{
-		this.UndoPoints();
-		AscCommon.History.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_DeletedTextRecovery);
-
 		this.PrepareDelChanges();
 		this.ShowDelText();
 
@@ -238,7 +242,7 @@
 
 		this.userId = strUserId;
 		this.userName = strUserName;
-		this.userTime = timeOfRevision
+		this.userTime = timeOfRevision;
 
 		for (let nCounter = this.m_PreparedData.length - 1; nCounter >= 0; nCounter--)
 		{
@@ -393,7 +397,6 @@
 		oCurrentReviewType.DateTime 	= this.userTime;
 		oReviewInfoParent.SetReviewTypeWithInfo(1,oCurrentReviewType);
 	}
-
 	DeletedTextRecovery.prototype.ConvertArray = function (inputArray)
 	{
 		let resultArray = [];
@@ -503,11 +506,12 @@
 	// перемещаемся по истории ревизии на заданное количество изменений относительно текущей позиции
 	DeletedTextRecovery.prototype.NavigationRevisionHistoryByStep = function (intCount, isMore)
 	{
+		debugger
 		if (this.m_RewiewIndex + intCount < 0)
 		{
 			return false;
 		}
-		else if (this.m_RewiewIndex + intCount >= this.GetCountOfNavigationPoints() + 1)
+		else if (this.m_RewiewIndex + intCount >= this.GetCountOfNavigationPoints() + 1 && isMore)
 		{
 			return false;
 		}
@@ -517,7 +521,6 @@
 			this.UndoPoints();
 			AscCommon.History.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_DeletedTextRecovery);
 		}
-
 
 		let FindRules = function (context, isMore, i)
 		{
@@ -548,7 +551,7 @@
 		}
 
 		let arrChange = [];
-
+		console.log(this.m_RewiewPoints	)
 		if (intCount < 0)
 		{
 			intCount = this.m_RewiewIndex + intCount;
@@ -570,7 +573,7 @@
 			{
 				let arrChanges 		= oRule[0];
 				this.m_RewiewIndex 	= oRule[1];
-				this.RedoReviewBlock(arrChanges.slice(0, arrChanges.length).reverse(), arrChange);
+				this.RedoReviewBlock(arrChanges.reverse(), arrChange);
 			}
 		}
 
@@ -717,6 +720,7 @@
 		return arrReverseChanges;
 	};
 
+	debugger
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].DeletedTextRecovery = DeletedTextRecovery;
