@@ -12758,7 +12758,7 @@ ParaRun.prototype.ChangeUnicodeText = function(ListForUnicode, oSettings)
                         if (oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator)
                             oSettings.IsForMathPart = -1;
                     }
-                    else
+                    else if (!oItem.IsParaEnd())
                     {
                         oSettings.bBreak = true;
                     }
@@ -12783,7 +12783,7 @@ ParaRun.prototype.ChangeUnicodeText = function(ListForUnicode, oSettings)
                         if (oItem.Type === para_Math_Text || oItem.Type === para_Math_BreakOperator)
                             oSettings.IsForMathPart = -1;
                     }
-                    else
+                    else if (!oItem.IsParaEnd())
                     {
                         oSettings.bBreak = true;
                     }

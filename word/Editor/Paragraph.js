@@ -166,12 +166,14 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
 
     this.NearPosArray  = [];
 
-    // Добавляем в контент элемент "конец параграфа"
     this.Content = [];
-    var EndRun = new ParaRun(this);
-    EndRun.Add_ToContent( 0, new AscWord.CRunParagraphMark() );
-
-    this.Content[0] = EndRun;
+	
+	// Добавляем в контент элемент "конец параграфа"
+	let endRun = new AscWord.CRun();
+	endRun.SetParagraph(this);
+	endRun.SetParent(this);
+	endRun.AddToContent(0, new AscWord.CRunParagraphMark());
+	this.Content[0] = endRun;
 
     this.m_oPRSW = new CParagraphRecalculateStateWrap(this);
     this.m_oPRSC = new CParagraphRecalculateStateCounter();
