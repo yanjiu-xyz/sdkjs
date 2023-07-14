@@ -8757,7 +8757,7 @@
 						fieldValues.push([fieldIndex, item.x[j].getV()]);
 						query.field = fieldIndex;
 					} else {
-						query.field = AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD
+						query.field = AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD;
 						oCellValue = new AscCommonExcel.CCellValue();
 						oCellValue.type = AscCommon.CellValueType.String;
 						oCellValue.text = pivotTable.getDataFieldName(item.i);
@@ -8769,6 +8769,7 @@
 					if (-1 === valuesIndex) {
 						oCellValue.text = pivotTable.grandTotalCaption || AscCommon.translateManager.getValue(AscCommonExcel.GRAND_TOTAL_CAPTION);
 					} else {
+						query.field = fields[0].asc_getIndex();
 						oCellValue.text = AscCommon.translateManager.getValue(AscCommonExcel.ToName_ST_ItemType(item.t));
 						oCellValue.text += ' ' + pivotTable.getDataFieldName(item.i);
 					}
