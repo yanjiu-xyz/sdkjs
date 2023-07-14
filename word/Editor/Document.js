@@ -9554,7 +9554,7 @@ CDocument.prototype.OnKeyDown = function(e)
 					if ((oItemRun.Get_Type() === 49 || oItemRun.Get_Type() === 39) && (oItemRun.Parent === oItemParent || oItemParent == null))
 					{
 						var oItemParent = oItemRun.Parent;
-						oItemRun.ChangeUnicodeText(ListForUnicode, oSettings);
+						oItemRun.CollectTextToUnicode(ListForUnicode, oSettings);
 						if (ListForUnicode.length > 6) break;
 						if (oItemRun.Selection.EndPos === oItemRun.Content.length && oItemRun.Selection.Use === true && (oSettings.nDirection === 0 || oSettings.nDirection === 1))
 						{
