@@ -4461,7 +4461,16 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 		recalcMap = this.GetRecalculateMaps();
 		for (key in recalcMap.masters) {
 			if (recalcMap.masters.hasOwnProperty(key)) {
-				recalcMap.masters[key].recalculate();
+				bAttack = recalcMap.masters[key].needRecalc();
+				if (recalcMap.masters[key].recalcInfo.recalculateSlideLayouts) {
+					recalcMap.masters[key].recalculate();
+					for (key in this.Slides) {
+						this.Slides[key].checkSlideColorScheme();
+						this.Slides[key].recalculate();
+					}
+				} else {
+					recalcMap.masters[key].recalculate();
+				}
 			}
 		}
 		for (key in recalcMap.layouts) {
@@ -4521,6 +4530,14 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 			if (_RecalcData.Drawings.Map.hasOwnProperty(key)) {
 				var oDrawingObject = _RecalcData.Drawings.Map[key];
 				if (AscCommon.g_oTableId.Get_ById(key) === oDrawingObject) {
+					if (oDrawingObject instanceof MasterSlide) {
+						if(oDrawingObject.recalcInfo.recalculateSlideLayouts) {
+							for (key in this.Slides) {
+								this.Slides[key].checkSlideColorScheme();
+								this.Slides[key].recalculate();
+							}
+						}
+					}
 					oDrawingObject.recalculate();
 					if (oDrawingObject.parent instanceof AscCommonSlide.SlideLayout) {
 						oDrawingObject.parent.ImageBase64 = "";

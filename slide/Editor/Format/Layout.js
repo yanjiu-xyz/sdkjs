@@ -492,6 +492,11 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
                     this.addToRecalculate();
                     break;
                 }
+                case AscDFH.historyitem_SlideLayoutSetBg:
+                {
+                    this.addToRecalculate();
+                    break;
+                }
             }
         }
     };
