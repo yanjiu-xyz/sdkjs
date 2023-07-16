@@ -24565,9 +24565,10 @@ CDocument.prototype.AddCaption = function(oPr)
             var oDrawing = this.DrawingObjects.selectedObjects[0].parent;
             if(oDrawing.Is_Inline())
             {
-                NewParagraph = new Paragraph(this.DrawingDocument, oDrawing.DocumentContent);
+                let oDocContent = oDrawing.GetDocumentContent();
+                NewParagraph = new Paragraph(this.DrawingDocument, oDocContent);
                 NewParagraph.SetParagraphStyle("Caption");
-                oDrawing.DocumentContent.Internal_Content_Add(oPr.get_Before() ? oDrawing.Get_ParentParagraph().Index : (oDrawing.Get_ParentParagraph().Index + 1), NewParagraph, true);
+                oDocContent.Internal_Content_Add(oPr.get_Before() ? oDrawing.Get_ParentParagraph().Index : (oDrawing.Get_ParentParagraph().Index + 1), NewParagraph, true);
             }
             else
             {
