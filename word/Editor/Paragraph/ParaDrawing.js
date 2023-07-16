@@ -2484,10 +2484,10 @@ ParaDrawing.prototype.isShapeChild = function(bRetShape)
 	{
 		oCurDocContent = oCell.Row.Table.Parent;
 	}
-
-	if (AscCommon.isRealObject(oCurDocContent.Parent) && typeof oCurDocContent.Parent.getObjectType === "function" && cur_doc_content.Parent.getObjectType() === AscDFH.historyitem_type_Shape)
-		return bRetShape ? oCurDocContent.Parent : true;
-
+	if(oCurDocContent && oCurDocContent.Is_DrawingShape)
+	{
+		return oCurDocContent.Is_DrawingShape(bRetShape);
+	}
 	return bRetShape ? null : false;
 };
 ParaDrawing.prototype.isHdrFtrChild = function(bRetHdrFtr)
