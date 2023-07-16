@@ -69,11 +69,22 @@
 			let oCurrentChange = arrChanges[i];
 			let oPrevChange = i === 0 ? undefined : arrChanges[i - 1];
 
+			if (oCurrentChange instanceof AscCommon.CChangesTableIdDescription)
+			{
+				if (arrDelChanges.length > 0 && arrDelChanges[arrDelChanges.length - 1].length === 1)
+				{
+					arrDelChanges.length = arrDelChanges.length - 1;
+				}
+
+				arrDelChanges.push([oCurrentChange]);
+			}
+
 			if (oCurrentChange instanceof CChangesRunRemoveItem
 				|| oCurrentChange instanceof CChangesParagraphRemoveItem
 				|| oCurrentChange instanceof CChangesDocumentRemoveItem)
 			{
-				arrDelChanges.push([arrCurrent.length, oCurrentChange]);
+				let oLast = arrDelChanges[arrDelChanges.length - 1];
+				oLast.push(oCurrentChange);
 			}
 
 			if (oPrevChange && (oPrevChange instanceof AscCommon.CChangesTableIdDescription || oPrevChange.IsDescriptionChange() === oCurrentChange.IsDescriptionChange()))
@@ -207,7 +218,7 @@
 	};
 	DeletedTextRecovery.prototype.ShowDel = function ()
 	{
-		this.PrepareDelChanges();
+		//this.PrepareDelChanges();
 		this.ShowDelText();
 
 		let changes = this.GetChangesFormHistory();
@@ -244,67 +255,75 @@
 		this.userName = strUserName;
 		this.userTime = timeOfRevision;
 
-		for (let nCounter = this.m_PreparedData.length - 1; nCounter >= 0; nCounter--)
+		for (let nCounter = this.m_RewiewDelPoints.length - 1; nCounter >= 0; nCounter--)
 		{
-			let arrCurrentDel 		= this.m_PreparedData[nCounter];
-			if (arrCurrentDel.Items.length > 1)
-				arrCurrentDel = arrCurrentDel.ConvertToSimpleChanges();
-			else
-				arrCurrentDel = [arrCurrentDel];
-
-			for (let nCount = arrCurrentDel.length - 1; nCount >= 0; nCount--)
+			let arrCurrentDel 		= this.m_RewiewDelPoints[nCounter];
+			for (let nIndex = 0; nIndex < arrCurrentDel.length; nIndex++)
 			{
-				let oCurrDel = arrCurrentDel[nCount];
-				let oDelChange 	= oCurrDel.CreateReverseChange();
-				this.RedoUndoChange(oDelChange, true, arrCurrentPoint);
+				let oCurrentDel = arrCurrentDel[nIndex];
+				if (oCurrentDel instanceof CChangesRunRemoveItem || oCurrentDel instanceof CChangesParagraphRemoveItem || oCurrentDel instanceof CChangesDocumentRemoveItem)
+				{
+					if (oCurrentDel.Items.length > 1)
+						oCurrentDel = oCurrentDel.ConvertToSimpleChanges();
+					else
+						oCurrentDel = [oCurrentDel];
+
+					for (let nCount = oCurrentDel.length - 1; nCount >= 0; nCount--)
+					{
+						let oCurrDel = oCurrentDel[nCount];
+						let oDelChange 	= oCurrDel.CreateReverseChange();
+						this.RedoUndoChange(oDelChange, true, arrCurrentPoint);
+					}
+				}
 			}
 		}
 
-		let arr = this.ConvertArray(arrCurrentPoint);
+		let arr = this.ConvertArray(this.m_RewiewDelPoints.reverse());
+		arr = this.QuickSort(arr);
+
 		for (let i = 0; i < arr.length; i++)
 		{
 			let NextRun = null;
 			let CurrentDel = arr[i];
-			let nCurrentPos = CurrentDel.Start;
-			let nCurrentLen = CurrentDel.Len;
-			let oCurrentRun = CurrentDel.Class;
+			let nCurrentPos = CurrentDel.nStartPos;
+			let nCurrentLen = CurrentDel.nLength;
+			let oCurrentRun = CurrentDel.class;
 
 			if (oCurrentRun instanceof CDocument)
 			{
-				let oContent = oCurrentRun.Content;
-				for (let j = nCurrentPos; j < nCurrentPos + nCurrentLen; j++)
+				let oContent = CurrentDel.content[0];
+				let CurrentPos = oContent.PosArray[0];
+				let CurrentLen = oContent.Items.length;
+				let arrContent = oContent.Class.Content;
+				for (let j = CurrentPos; j < CurrentPos + CurrentLen; j++)
 				{
-					let oCurrentParagraph = oContent[j];
+					let oCurrentParagraph = arrContent[j];
 					this.SetReviewInfo(oCurrentParagraph);
-
-					let arrRunsInParagraph = oCurrentParagraph.Content;
-					for (let nCounterRuns = 0; nCounterRuns < arrRunsInParagraph.length; nCounterRuns++)
-					{
-						let oCurrentRun = arrRunsInParagraph[nCounterRuns];
-						this.SetReviewInfo(oCurrentRun);
-					}
 				}
 			}
 			else if (oCurrentRun instanceof Paragraph)
 			{
-				for (let i = nCurrentPos; i < nCurrentPos + nCurrentLen; i++)
-					this.SetReviewInfo(oCurrentRun.Content[i]);
+				let oContent = CurrentDel.content[0];
+				let arrContent = oContent.Items;
+
+				for (let i = 0; i < arrContent.length; i++)
+					this.SetReviewInfo(arrContent[i]);
 			}
 			else if (oCurrentRun instanceof ParaRun)
 			{
-				for (let j = i + 1; j < arr.length; j++)
-				{
-					let oNextDel = arr[j];
-					if (oNextDel) {
-						let nNextPos = oNextDel.Start;
-						let nNextLen = oNextDel.Len;
-						let oNextRun = oNextDel.Class;
-
-						if (oNextRun === oCurrentRun && nCurrentPos > nNextPos) {
-							nCurrentPos += nNextLen;
-						}
-					}
-				}
+				// for (let j = i + 1; j < arr.length; j++)
+				// {
+				// 	let oNextDel = arr[j];
+				// 	if (oNextDel) {
+				// 		let nNextPos = oNextDel.Start;
+				// 		let nNextLen = oNextDel.Len;
+				// 		let oNextRun = oNextDel.Class;
+				//
+				// 		if (oNextRun === oCurrentRun && nCurrentPos > nNextPos) {
+				// 			nCurrentPos += nNextLen;
+				// 		}
+				// 	}
+				// }
 
 				if (nCurrentPos === 0 && nCurrentLen >= oCurrentRun.Content.length)
 				{
@@ -338,22 +357,22 @@
 					this.SetReviewInfo(RightRun);
 				}
 
-				for (let j = i + 1; j < arr.length; j++)
-				{
-					let oNextDel = arr[j];
-					if (oNextDel)
-					{
-						let nNextPos = oNextDel.Start;
-						let nNextLen = oNextDel.Len;
-						let oNextRun = oNextDel.Class;
-
-						if (oNextRun === oCurrentRun && nCurrentPos < nNextPos)
-						{
-							oNextDel.Start -= nCurrentLen + nCurrentPos ;
-							oNextDel.Class = NextRun;
-						}
-					}
-				}
+				// for (let j = i + 1; j < arr.length; j++)
+				// {
+				// 	let oNextDel = arr[j];
+				// 	if (oNextDel)
+				// 	{
+				// 		let nNextPos = oNextDel.Start;
+				// 		let nNextLen = oNextDel.Len;
+				// 		let oNextRun = oNextDel.Class;
+				//
+				// 		if (oNextRun === oCurrentRun && nCurrentPos < nNextPos)
+				// 		{
+				// 			oNextDel.Start -= nCurrentLen + nCurrentPos ;
+				// 			oNextDel.Class = NextRun;
+				// 		}
+				// 	}
+				// }
 			}
 		}
 
@@ -367,6 +386,24 @@
 			}
 		}
 	};
+	DeletedTextRecovery.prototype.QuickSort = function (array)
+	{
+			if (array.length <= 1)
+				return array;
+
+			let pivot = array[0].nStartPos;
+			let left = [];
+			let right = [];
+
+			for (let i = 1; i < array.length; i++)
+			{
+				array[i].nStartPos > pivot || !(array[i].class instanceof ParaRun)
+					? left.push(array[i])
+					: right.push(array[i]);
+			}
+
+			return this.QuickSort(left).concat(array[0], this.QuickSort(right));
+	}
 	DeletedTextRecovery.prototype.SetReviewInfo = function (oReviewInfoParent)
 	{
 		if (!oReviewInfoParent || !oReviewInfoParent.ReviewInfo)
@@ -399,47 +436,158 @@
 	}
 	DeletedTextRecovery.prototype.ConvertArray = function (inputArray)
 	{
-		let resultArray = [];
-		let currentStart = null;
-		let currentClass = null;
-		let currentLen = 0;
+		function Arr()
+		{
+			this.content = [];
+			this.isFromEnd = false;
+			this.nStartPos = null;
+			this.nLength = 0;
+			this.counter = 0;
+			this.class = null;
 
-		for (let i = 0; i < inputArray.length; i++) {
-			let item = inputArray[i];
+			this.AddContent = function (oChange)
+			{
+				if (oChange instanceof CChangesParagraphRemoveItem)
+				{
+					this.content.push(oChange);
+					this.class = this.content[0].Class;
+					this.nStartPos = oChange.PosArray[0];
+					this.nLength++;
+				}
+				else if (oChange instanceof CChangesDocumentRemoveItem)
+				{
+					this.content.push(oChange);
+					this.class = this.content[0].Class;
+					this.nStartPos = oChange.PosArray[0];
+					this.nLength++;
+				}
+				else if (oChange instanceof CChangesRunRemoveItem)
+				{
+					if (this.class === oChange.Class || this.class === null)
+					{
+						if (oChange.PosArray[0] < this.nStartPos || this.nStartPos === null)
+						{
+							this.nStartPos = oChange.PosArray[0];
+						}
+						this.content.push(oChange);
+						this.nLength += oChange.Items.length;
+						this.counter++;
+					}
+					else
+					{
+						return false;
+					}
 
-			if (currentStart === null && currentClass === null)
-			{
-				currentStart = item.Data.Pos;
-				currentClass = item.Data.Class;
-				currentLen = 1;
+					if (this.counter === 1)
+					{
+						this.nStartPos = this.content[0].PosArray[0];
+						this.class = this.content[0].Class;
+					}
+				}
 			}
-			else if (item.Data.Pos === currentStart + currentLen && item.Data.Class === currentClass)
+			this.SetIsFromEnd = function (isFromEnd)
 			{
-				currentLen++;
+				this.isFromEnd =  isFromEnd;
 			}
-			else if (item.Data.Pos === currentStart - currentLen && item.Data.Class === currentClass)
+			this.IsHastContent = function ()
 			{
-				currentLen++;
+				return this.content.length > 0;
 			}
-			else if (item.Data.Pos === currentStart && item.Data.Class === currentClass)
+			this.IsAdd = function (arr)
 			{
-				currentLen++;
+				return arr[1].Class === this.class;
+			}
+		}
+
+		let table = [];
+		let nCurrentIndex = null;
+		let nClose = null;
+		let oCon = new Arr();
+
+		let result = []
+
+		for (let nCount = 0; nCount < inputArray.length; nCount++) {
+			let oCur = inputArray[nCount];
+			for (let j = 0; j < oCur.length; j++)
+			{
+				table.push(oCur[j]);
+			}
+		}
+
+		for (let i = 0; i < table.length; i++)
+		{
+			let oChange = table[i];
+
+			if (oChange instanceof  CChangesParagraphRemoveItem)
+			{
+				if (oCon.IsHastContent())
+				{
+					result.push(oCon);
+					oCon = new Arr();
+				}
+
+				oCon.AddContent(oChange);
+
+				if (oCon.IsHastContent())
+				{
+					result.push(oCon);
+					oCon = new Arr();
+				}
+
+			}
+			else if (oChange instanceof CChangesDocumentRemoveItem)
+			{
+				if (oCon.IsHastContent())
+				{
+					result.push(oCon);
+					oCon = new Arr();
+				}
+
+				oCon.AddContent(oChange);
+
+				if (oCon.IsHastContent())
+				{
+					result.push(oCon);
+					oCon = new Arr();
+				}
+			}
+			else if (oChange instanceof AscCommon.CChangesTableIdDescription)
+			{
+				if (oCon.IsHastContent())
+				{
+					result.push(oCon);
+					oCon = new Arr();
+				}
+
+				oCon.SetIsFromEnd(oChange.PointIndex === oChange.LastPoint);
+
+				nCurrentIndex = oChange.PointIndex;
+				nClose = oChange.LastPoint;
+				continue;
 			}
 			else
 			{
-				resultArray.push({ Start: currentStart, Len: currentLen, Class: currentClass });
-				currentStart = item.Data.Pos;
-				currentClass = item.Data.Class;
-				currentLen = 1;
+				oCon.AddContent(oChange);
 			}
 		}
 
-		// Добавляем последний результирующий элемент
-		if (currentStart !== null && currentClass !== null) {
-			resultArray.push({ Start: currentStart, Len: currentLen, Class: currentClass });
+		if (oCon.IsHastContent())
+			result.push(oCon);
+
+		for (let i = 0; i < result.length; i++)
+		{
+			let oCurrentArr = result[i];
+			for (let j = i + 1; j < result.length; j++)
+			{
+				let oNextArr = result[j];
+				if (oCurrentArr.class === oNextArr.class && oCurrentArr.nStartPos > oNextArr.nStartPos)
+				{
+					oCurrentArr.nStartPos += oNextArr.nLength;
+				}
+			}
 		}
 
-		return resultArray;
+		return result.reverse();
 	}
 	DeletedTextRecovery.prototype.ProceedParaRun = function (oParaRun)
 	{
@@ -506,7 +654,6 @@
 	// перемещаемся по истории ревизии на заданное количество изменений относительно текущей позиции
 	DeletedTextRecovery.prototype.NavigationRevisionHistoryByStep = function (intCount, isMore)
 	{
-		debugger
 		if (this.m_RewiewIndex + intCount < 0)
 		{
 			return false;
@@ -720,7 +867,6 @@
 		return arrReverseChanges;
 	};
 
-	debugger
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].DeletedTextRecovery = DeletedTextRecovery;
