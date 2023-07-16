@@ -947,8 +947,7 @@
 		let oParaAnchorPos = this.ParaAnchorPos;
 
 		let oInlineLeveLSdt = this.Run.GetParent();
-		if (oInlineLeveLSdt instanceof CInlineLevelSdt
-			&& (oInlineLeveLSdt.IsPlaceHolder() || oInlineLeveLSdt.IsContentControlTemporary()))
+		if (oInlineLeveLSdt instanceof CInlineLevelSdt && oInlineLeveLSdt.IsPlaceHolder())
 		{
 			if (oInlineLeveLSdt.IsContentControlTemporary())
 			{
@@ -982,6 +981,7 @@
 				oParaAnchorPos.NearPos.ContentPos.Update(0, oParaAnchorPos.Classes.length - 2);
 				oParaAnchorPos.NearPos.ContentPos.Update(0, oParaAnchorPos.Classes.length - 1);
 			}
+			oInlineLeveLSdt = null;
 		}
 
 		let oRun    = oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 1];
@@ -1038,6 +1038,9 @@
 
 		if (this.LogicDocument && this.LogicDocument.IsDocumentEditor())
 			this.private_AdjustSizeForInlineDrawing();
+		
+		if (oInlineLeveLSdt && oInlineLeveLSdt.IsContentControlTemporary())
+			oInlineLeveLSdt.RemoveContentControlWrapper()
 
 		this.private_CheckInsertSignatures();
 	};

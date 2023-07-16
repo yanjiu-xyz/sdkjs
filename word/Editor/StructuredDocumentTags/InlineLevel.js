@@ -155,6 +155,9 @@ CInlineLevelSdt.prototype.Add = function(Item)
 		oNextForm.SetThisElementCurrentInParagraph();
 		oNextForm.MoveCursorToStartPos();
 	}
+	
+	if (!this.IsForm() && this.IsContentControlTemporary())
+		this.RemoveContentControlWrapper();
 };
 CInlineLevelSdt.prototype.Copy = function(isUseSelection, oPr)
 {
@@ -881,6 +884,12 @@ CInlineLevelSdt.prototype.Remove = function(nDirection, bOnAddText)
 	{
 		this.RemoveThisFromParent(true);
 		result = true;
+	}
+	else if (result
+		&& !this.IsForm()
+		&& this.IsContentControlTemporary())
+	{
+		this.RemoveContentControlWrapper();
 	}
 	else if (this.Is_Empty()
 		&& logicDocument

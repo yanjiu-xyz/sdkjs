@@ -1051,3 +1051,4 @@ CSdtBase.prototype.CanPlaceCursorInside = function()
 CSdtBase.prototype.SkipFillingFormModeCheck = function(isSkip)
 {
 };
+
