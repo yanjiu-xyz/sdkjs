@@ -3475,32 +3475,12 @@ CSlideMorphEffect.prototype.generateTextBasedMorph = function(bLetter) {
     const aMorphedDrawings1 = this.createMatchArray(aDrawings1, bLetter);
     const aMorphedDrawings2 = this.createMatchArray(aDrawings2, bLetter);
 
+    //------------------------
     const oCompareResult = compareDrawings(aMorphedDrawings1, aMorphedDrawings2);
     const aBaseNode = oCompareResult[0].children;
     const aCompareNode = oCompareResult[1].children;
-    const aSecondBase = [];
-    const aSecondCompare = [];
     for(let nIdx = 0; nIdx < aBaseNode.length; ++nIdx) {
         let oBaseNode = aBaseNode[nIdx];
-        let oPartner = oBaseNode.partner;
-        if(oBaseNode.partner) {
-            this.addObjectMorphs(oBaseNode.element, oBaseNode.idx, oPartner.element, oPartner.idx, true);
-        }
-        else {
-            aSecondBase.push(oBaseNode);
-        }
-    }
-    for(let nIdx = 0; nIdx < aCompareNode.length; ++nIdx) {
-        let oNode = aCompareNode[nIdx];
-        if(!oNode.partner) {
-            aSecondCompare.push(oNode);
-        }
-    }
-    const oSecondCompareResult = compareDrawings(aSecondBase, aSecondCompare);
-    const aSecondBaseNode = oSecondCompareResult[0].children;
-    const aSecondCompareNode = oSecondCompareResult[1].children;
-    for(let nIdx = 0; nIdx < aSecondBaseNode.length; ++nIdx) {
-        let oBaseNode = aSecondBaseNode[nIdx];
         let oPartner = oBaseNode.partner;
         if(oBaseNode.partner) {
             this.addObjectMorphs(oBaseNode.element, oBaseNode.idx, oPartner.element, oPartner.idx, true);
@@ -3509,8 +3489,8 @@ CSlideMorphEffect.prototype.generateTextBasedMorph = function(bLetter) {
             this.pushMorphObject(new CMorphedDisappearObject(this.texturesCache, oBaseNode.element, oBaseNode.idx, true));
         }
     }
-    for(let nIdx = 0; nIdx < aSecondCompareNode.length; ++nIdx) {
-        let oNode = aSecondCompareNode[nIdx];
+    for(let nIdx = 0; nIdx < aCompareNode.length; ++nIdx) {
+        let oNode = aCompareNode[nIdx];
         if(!oNode.partner) {
             this.pushMorphObject(new CMorphedAppearObject(this.texturesCache, oNode.element, oNode.idx, true));
         }
@@ -3600,8 +3580,10 @@ function CDrawingNode(element, par, idx) {
         for(let nIdx = 0; nIdx < element.length; ++nIdx) {
             let oElement = element[nIdx];
             if(oElement instanceof CDrawingNode) {
-                oElement.par = this;
-                this.children.push(oElement);
+                if(!oElement.partner) {
+                    oElement.par = this;
+                    this.children.push(oElement);
+                }
             }
             else {
                 this.children.push(new CDrawingNode(oElement, this, nIdx));
@@ -3630,6 +3612,7 @@ CDrawingNode.prototype.forEach = function(callback, T) {
 };
 
 function CDiffMatching() {
+    this.clear = true;
 }
 CDiffMatching.prototype.get = function(oNode) {
     return oNode.partner;
@@ -3637,6 +3620,7 @@ CDiffMatching.prototype.get = function(oNode) {
 CDiffMatching.prototype.put = function(oNode1, oNode2) {
     oNode1.partner = oNode2;
     oNode2.partner = oNode1;
+    this.clear = false;
 };
 function CDiffChange(oOperation) {
     this.pos = -1;
@@ -3659,14 +3643,7 @@ function CDiffChange(oOperation) {
 CDiffChange.prototype.getPos = function() {
     return this.pos;
 };
-CDiffChange.prototype.getDeleteCount = function() {
-    return this.deleteCount;
-};
-CDiffChange.prototype.getInsertSymbols = function() {
-    return this.insert;
-};
 function compareDrawings(aDrawings1, aDrawings2) {
-    let aDelta = [];
     let oBaseNode = new CDrawingNode(aDrawings1, null);
     let oReplaceNode = new CDrawingNode(aDrawings2, null);
     let oMatching = new CDiffMatching();
@@ -3676,12 +3653,13 @@ function compareDrawings(aDrawings1, aDrawings2) {
     {
         return a.equals(b);
     };
+    oDiff.clear = true;
     oDiff.matchTrees(oMatching);
-    var oDeltaCollector = new AscCommon.DeltaCollector(oMatching, oBaseNode, oReplaceNode);
-    oDeltaCollector.forEachChange(function(oOperation){
-        aDelta.push(new CDiffChange(oOperation));
-    });
-    return [oBaseNode, oReplaceNode, aDelta];
+    if(!oDiff.clear) {
+        compareDrawings(oBaseNode.children, oReplaceNode.children);
+    }
+
+    return [oBaseNode, oReplaceNode];
 }
 
 
