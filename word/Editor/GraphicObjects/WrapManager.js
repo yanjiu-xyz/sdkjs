@@ -929,7 +929,7 @@ CWrapManager.prototype =
                     var aDrawings = hdr_footer_objects.behindDocObjects;
                     for(index = 0; index < aDrawings.length; ++index)
                     {
-                        if(aDrawings[index].parent && aDrawings[index].parent.GetDocContent() === docContent)
+                        if(aDrawings[index].parent && aDrawings[index].parent.GetDocumentContent() === docContent)
                         {
                             aDrawings[index].getArrayWrapIntervals(x0,y0, x1, y1, Y0sp, Y1Ssp, LeftField, RightField, arr_intervals, bMathWrap);
                         }
@@ -937,7 +937,7 @@ CWrapManager.prototype =
                     aDrawings = hdr_footer_objects.beforeTextObjects;
                     for(index = 0; index < aDrawings.length; ++index)
                     {
-                        if(aDrawings[index].parent && aDrawings[index].parent.GetDocContent() === docContent)
+                        if(aDrawings[index].parent && aDrawings[index].parent.GetDocumentContent() === docContent)
                         {
                             aDrawings[index].getArrayWrapIntervals(x0,y0, x1, y1, Y0sp, Y1Ssp, LeftField, RightField, arr_intervals, bMathWrap);
                         }

@@ -977,7 +977,7 @@ CShape.prototype.CheckTableCoincidence = function(table)
     const oParaDrawing = this.GetParaDrawing();
     if(oParaDrawing)
     {
-        const oDocContent = oParaDrawing.GetDocContent();
+        const oDocContent = oParaDrawing.GetDocumentContent();
         if(oDocContent)
         {
             return oDocContent.CheckTableCoincidence(table);
