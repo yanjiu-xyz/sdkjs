@@ -350,6 +350,11 @@ MasterSlide.prototype.shapeAdd = function (pos, item) {
     History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideMasterAddToSpTree, pos, [item], true));
     this.cSld.spTree.splice(pos, 0, item);
     item.setParent2(this);
+    var _slideLayout_index;
+    for (_slideLayout_index = 0; _slideLayout_index < this.sldLayoutLst.length; _slideLayout_index++) {
+        this.sldLayoutLst[_slideLayout_index].changeBackground(this.cSld.Bg);
+        this.sldLayoutLst[_slideLayout_index].ImageBase64 = "";
+    }
 };
 MasterSlide.prototype.addToSpTreeToPos = function(pos, obj)
 {
