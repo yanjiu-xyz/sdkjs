@@ -391,10 +391,6 @@
             }
         }
         this.path = oPath;
-
-        let oGeometry = new AscFormat.ExecuteNoHistory(function() {return new AscFormat.Geometry();}, this, []);
-        oGeometry.pathLst.push(this.path);
-        this.drawObject = new AscFormat.OverlayObject(oGeometry, 100, 100, this.brush1, this.pen1, new AscCommon.CMatrix());
         this.morph(1);
     }
     AscFormat.InitClassWithoutType(CMorphedPath, CMorphObjectBase);
@@ -436,10 +432,6 @@
         }
     };
     CMorphedPath.prototype.draw = function(oGraphics) {
-        if(!this.isValid()) {
-            return;
-        }
-        this.drawObject.draw(oGraphics);
     };
     CMorphedPath.prototype.isValid = function() {
         return !!this.path;
@@ -541,7 +533,7 @@
                 this.morphedPaths = aMorphs;
                 this.geometry = AscFormat.ExecuteNoHistory(function () { return new AscFormat.Geometry();}, this, []);
                 this.geometry.pathLst = aPaths;
-                this.drawObject = new AscFormat.OverlayObject(this.geometry, 100, 100, new AscFormat.CUniFill(), new AscFormat.CLn(), new AscCommon.CMatrix());
+                this.drawObject = new AscFormat.ObjectToDraw(new AscFormat.CUniFill(), new AscFormat.CLn(), 100, 100, this.geometry, new AscCommon.CMatrix(), 0, 0, null, null);
                 this.textureShape1 = CGeometryTextureMorph.prototype.createShape.call(this, AscFormat.ExecuteNoHistory(function () { return new AscFormat.CreateGeometry("rect");}, this, []),
                     this.brush1, this.pen1, new AscCommon.CMatrix());
                 this.textureShape2 = CGeometryTextureMorph.prototype.createShape.call(this, AscFormat.ExecuteNoHistory(function () { return new AscFormat.CreateGeometry("rect");}, this, []),
