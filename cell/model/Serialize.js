@@ -5588,7 +5588,7 @@
             if (null !== headerFooter.differentOddEven) {
                 this.bs.WriteItem(c_oSer_HeaderFooter.DifferentOddEven, function() {oThis.memory.WriteBool(headerFooter.differentOddEven);});
             }
-            if (null !== headerFooter.scaleWithDoc) {
+            if (true !== headerFooter.scaleWithDoc) {
                 this.bs.WriteItem(c_oSer_HeaderFooter.ScaleWithDoc, function() {oThis.memory.WriteBool(headerFooter.scaleWithDoc);});
             }
             if (null !== headerFooter.evenFooter) {

@@ -13380,7 +13380,7 @@ QueryTableField.prototype.clone = function() {
 		this.alignWithMargins = null;
 		this.differentFirst = null;
 		this.differentOddEven = null;
-		this.scaleWithDoc = null;
+		this.scaleWithDoc = true;
 		this.evenFooter = null;
 		this.evenHeader = null;
 		this.firstFooter = null;
@@ -13542,9 +13542,8 @@ QueryTableField.prototype.clone = function() {
 
 	CHeaderFooter.prototype.setScaleWithDoc = function (newVal) {
 		var oldVal = this.scaleWithDoc;
-		var defaultVal = null === oldVal && (newVal === 1 || newVal === true);
 
-		if(!compareValues(oldVal, newVal) && !defaultVal) {
+		if(!compareValues(oldVal, newVal)) {
 			this.scaleWithDoc = newVal;
 
 			if (this.ws && History.Is_On()) {
