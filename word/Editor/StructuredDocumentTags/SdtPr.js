@@ -467,7 +467,7 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 	this.Id         = oContentControl.Pr.Id;
 	this.Lock       = oContentControl.Pr.Lock;
 	this.InternalId = oContentControl.GetId();
-	this.Tag        = oContentControl.GetTag();
+	this.Tag        = oContentControl.IsContentControlTemporary() ? "temp" : "";//oContentControl.GetTag();
 	this.Alias      = oContentControl.GetAlias();
 	this.Appearance = oContentControl.GetAppearance();
 	this.Color      = oContentControl.GetColor();
@@ -524,7 +524,14 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 
 
 	if (undefined !== this.Tag)
+	{
+		if ("temp" === this.Tag)
+			oContentControl.SetContentControlTemporary(true);
+		else
+			oContentControl.SetContentControlTemporary(false);
+		
 		oContentControl.SetTag(this.Tag);
+	}
 
 	if (undefined !== this.Id)
 		oContentControl.SetContentControlId(this.Id);

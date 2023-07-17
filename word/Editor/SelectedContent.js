@@ -843,13 +843,28 @@
 		let oMathContent      = oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 2];
 		let nInMathContentPos = oParaAnchorPos.NearPos.ContentPos.Data[oParaAnchorPos.Classes.length - 2];
 
-		let oInsertMath = this.ConvertToMath();
-		if (oInsertMath)
+		let paraMath = oMathContent.ParaMath;
+		let insertMath = this.ConvertToMath();
+		let paragraph = paraMath ? paraMath.GetParagraph() : null;
+		if (!insertMath || !paraMath || !paragraph)
+			return;
+		
+		if (paraMath.GetParent() instanceof AscWord.CInlineLevelSdt && paraMath.GetParent().IsContentControlEquation())
+		{
+			let contentControl = paraMath.GetParent();
+			paraMath = contentControl.ReplacePlaceholderEquation();
+			contentControl.RemoveContentControlWrapper();
+			
+			oMathContent = paraMath.Root;
+			oMathContent.AddToContent(0, new AscWord.CRun(paragraph, true));
+			oMathContent.InsertMathContent(insertMath.Root, 0, this.Select);
+		}
+		else
 		{
 			let oRun = oParaAnchorPos.Classes[oParaAnchorPos.Classes.length - 1];
 			let oNewRun = oRun.Split(oParaAnchorPos.NearPos.ContentPos, oParaAnchorPos.Classes.length - 1);
 			oMathContent.AddToContent(nInMathContentPos + 1, oNewRun);
-			oMathContent.InsertMathContent(oInsertMath.Root, nInMathContentPos + 1, this.Select);
+			oMathContent.InsertMathContent(insertMath.Root, nInMathContentPos + 1, this.Select);
 		}
 	};
 	CSelectedContent.prototype.private_InsertToPictureCC = function()
