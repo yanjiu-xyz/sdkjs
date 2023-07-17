@@ -155,6 +155,9 @@ CInlineLevelSdt.prototype.Add = function(Item)
 		oNextForm.SetThisElementCurrentInParagraph();
 		oNextForm.MoveCursorToStartPos();
 	}
+	
+	if (!this.IsForm() && this.IsContentControlTemporary())
+		this.RemoveContentControlWrapper();
 };
 CInlineLevelSdt.prototype.Copy = function(isUseSelection, oPr)
 {
@@ -858,6 +861,14 @@ CInlineLevelSdt.prototype.Remove = function(nDirection, bOnAddText)
 		
 		return true;
 	}
+	
+	if ((this.IsCheckBox() || this.IsDropDownList() || this.IsPicture())
+		&& this.IsSelectedOnlyThis()
+		&& !bOnAddText)
+	{
+		this.RemoveThisFromParent(true);
+		return true;
+	}
 
 	let result = CParagraphContentWithParagraphLikeContent.prototype.Remove.call(this, nDirection, bOnAddText);
 	
@@ -873,6 +884,12 @@ CInlineLevelSdt.prototype.Remove = function(nDirection, bOnAddText)
 	{
 		this.RemoveThisFromParent(true);
 		result = true;
+	}
+	else if (result
+		&& !this.IsForm()
+		&& this.IsContentControlTemporary())
+	{
+		this.RemoveContentControlWrapper();
 	}
 	else if (this.Is_Empty()
 		&& logicDocument

@@ -879,37 +879,53 @@ CAscHFProps.prototype['put_ShowDateTime'] = CAscHFProps.prototype.put_ShowDateTi
 
 CAscHFProps.prototype['put_DivId'] = CAscHFProps.prototype.put_DivId = function(v){this.DivId = v;};
 CAscHFProps.prototype['updateView'] = CAscHFProps.prototype.updateView = function(){
+    if(!this.api) {
+        return;
+    }
     var oCanvas = AscCommon.checkCanvasInDiv(this.DivId);
     if(!oCanvas) {
         return;
     }
+    const oPresentation = this.api.private_GetLogicDocument();
     var oContext = oCanvas.getContext('2d');
     oContext.clearRect(0, 0, oCanvas.width, oCanvas.height);
     var oSp, nPhType, aSpTree, oSlideObject = null, l, t, r, b;
     var i;
+    let dWidth, dHeight;
     if(this.slide) {
         oSlideObject = this.slide.Layout;
+        dWidth = oPresentation.GetWidthMM();
+        dHeight = oPresentation.GetHeightMM();
     }
     else if(this.notes) {
         oSlideObject = this.notes.Master;
+        dWidth = oPresentation.GetNotesWidthMM();
+        dHeight = oPresentation.GetNotesHeightMM();
     }
     if(oSlideObject) {
         aSpTree = oSlideObject.cSld.spTree;
 
         oContext.fillStyle = "#FFFFFF";
         oContext.fillRect(0, 0, oCanvas.width, oCanvas.height);
-        var rPR = AscCommon.AscBrowser.retinaPixelRatio;
-        oContext.lineWidth = Math.round(rPR);
+        const rPR = AscCommon.AscBrowser.retinaPixelRatio;
+        const nLineWidth = Math.round(rPR);
+        oContext.lineWidth = nLineWidth;
         oContext.fillStyle = "#000000";
         if(Array.isArray(aSpTree)) {
             for(i = 0; i < aSpTree.length; ++i) {
                 oSp = aSpTree[i];
                 if(oSp.isPlaceholder()) {
                     oSp.recalculate();
-                    l = ((oSp.x / oSlideObject.Width * oCanvas.width) >> 0) + Math.round(rPR);
-                    t = ((oSp.y / oSlideObject.Height * oCanvas.height) >> 0) + Math.round(rPR);
-                    r = (((oSp.x + oSp.extX)/ oSlideObject.Width * oCanvas.width) >> 0);
-                    b = (((oSp.y + oSp.extY)/ oSlideObject.Height * oCanvas.height) >> 0);
+                    l = ((oSp.x / dWidth * oCanvas.width) >> 0) + nLineWidth;
+                    t = ((oSp.y / dHeight * oCanvas.height) >> 0) + nLineWidth;
+                    r = (((oSp.x + oSp.extX)/ dWidth * oCanvas.width) >> 0);
+                    b = (((oSp.y + oSp.extY)/ dHeight * oCanvas.height) >> 0);
+                    if(r <= oCanvas.width && r + nLineWidth > oCanvas.width) {
+                        r = oCanvas.width - nLineWidth;
+                    }
+                    if(b <= oCanvas.height && b + nLineWidth > oCanvas.height) {
+                        b = oCanvas.height - nLineWidth;
+                    }
                     nPhType = oSp.getPhType();
                     oContext.beginPath();
                     if(nPhType === AscFormat.phType_dt ||

@@ -391,23 +391,25 @@ function CContentControlPr(nType)
 	this.Lock       = undefined;
 	this.InternalId = undefined;
 	this.CCType     = undefined !== nType ? nType : c_oAscSdtLevelType.Inline;
-
-    // section property
+	
+	this.Temporary  = undefined;
+	
+	// section property
 	this.SectionBreak = undefined;
-	this.PageSizeW	  = undefined;
-	this.PageSizeH	  = undefined;
-	this.Orient 	  = undefined;
-
+	this.PageSizeW    = undefined;
+	this.PageSizeH    = undefined;
+	this.Orient       = undefined;
+	
 	// Margins 
-	this.MarginT	 		 = undefined;
-	this.MarginL	 		 = undefined;
-	this.MarginR	 		 = undefined;
-	this.MarginB	 		 = undefined;
+	this.MarginT = undefined;
+	this.MarginL = undefined;
+	this.MarginR = undefined;
+	this.MarginB = undefined;
 	
 	
 	this.Appearance = Asc.c_oAscSdtAppearance.Frame;
 	this.Color      = undefined;
-
+	
 	this.CheckBoxPr    = undefined;
 	this.ComboBoxPr    = undefined;
 	this.DropDownPr    = undefined;
@@ -415,9 +417,9 @@ function CContentControlPr(nType)
 	this.TextFormPr    = undefined;
 	this.PictureFormPr = undefined;
 	this.ComplexFormPr = undefined;
-
+	
 	this.PlaceholderText = undefined;
-
+	
 	this.FormPr = undefined;
 }
 CContentControlPr.prototype.GetEventObject = function()
@@ -469,6 +471,7 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 	this.Alias      = oContentControl.GetAlias();
 	this.Appearance = oContentControl.GetAppearance();
 	this.Color      = oContentControl.GetColor();
+	this.Temporary  = oContentControl.IsContentControlTemporary();
 
 	if (oContentControl.IsCheckBox())
 		this.CheckBoxPr = oContentControl.GetCheckBoxPr().Copy();
@@ -543,6 +546,9 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 		else
 			oContentControl.SetColor(new CDocumentColor(this.Color.r, this.Color.g, this.Color.b));
 	}
+	
+	if (undefined !== this.Temporary)
+		oContentControl.SetContentControlTemporary(this.Temporary);
 
 	if (undefined !== this.CheckBoxPr)
 	{

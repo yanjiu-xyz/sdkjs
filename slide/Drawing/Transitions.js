@@ -170,7 +170,12 @@ function CTransitionAnimation(htmlpage)
         CacheImage.SlideNum = slide_num;
         var oSlide = this.HtmlPage.m_oLogicDocument.GetSlide(slide_num);
         var oPlayer = oSlide.getAnimationPlayer();
+
+        // не кэшируем вотермарк никогда
+        let oldWatermark = this.HtmlPage.m_oApi.watermarkDraw;
+        this.HtmlPage.m_oApi.watermarkDraw = null;
         oPlayer.drawFrame(CacheImage.Image, {x: 0, y: 0, w: _w, h: _h});
+        this.HtmlPage.m_oApi.watermarkDraw = oldWatermark;
     };
 
     this.DrawImage1 = function(slide_num, _not_use_prev)
@@ -355,6 +360,11 @@ function CTransitionAnimation(htmlpage)
         _im.width = w;
         _im.height = h;
         return _im;
+    };
+
+    this.OnAfterAnimationDraw = function()
+    {
+        this.HtmlPage.DemonstrationManager.CheckWatermark(this);
     };
 
     // animations
@@ -560,6 +570,7 @@ function CTransitionAnimation(htmlpage)
         }
 
         oThis.TimerId = __nextFrame(oThis._startFade);
+        oThis.OnAfterAnimationDraw();
     };
 
     this._startPush = function()
@@ -702,6 +713,7 @@ function CTransitionAnimation(htmlpage)
         }
 
         oThis.TimerId = __nextFrame(oThis._startPush);
+        oThis.OnAfterAnimationDraw();
     };
 
     this._startWipe = function()
@@ -1253,7 +1265,9 @@ function CTransitionAnimation(htmlpage)
         }
 
         _ctx2.globalCompositeOperation = "source-over";
+
         oThis.TimerId = __nextFrame(oThis._startWipe);
+        oThis.OnAfterAnimationDraw();
     };
 
     this._startSplit = function()
@@ -1606,7 +1620,9 @@ function CTransitionAnimation(htmlpage)
         }
 
         _ctx2.globalCompositeOperation = "source-over";
+
         oThis.TimerId = __nextFrame(oThis._startSplit);
+        oThis.OnAfterAnimationDraw();
     };
 
     this._startUnCover = function()
@@ -1758,6 +1774,7 @@ function CTransitionAnimation(htmlpage)
         }
 
         oThis.TimerId = __nextFrame(oThis._startUnCover);
+        oThis.OnAfterAnimationDraw();
     };
 
     this._startCover = function()
@@ -1909,6 +1926,7 @@ function CTransitionAnimation(htmlpage)
         }
 
         oThis.TimerId = __nextFrame(oThis._startCover);
+        oThis.OnAfterAnimationDraw();
     };
 
     this._startClock = function()
@@ -2371,6 +2389,7 @@ function CTransitionAnimation(htmlpage)
         _ctx2.restore();
 
         oThis.TimerId = __nextFrame(oThis._startClock);
+        oThis.OnAfterAnimationDraw();
     };
 
     this._startZoom = function()
@@ -2603,8 +2622,8 @@ function CTransitionAnimation(htmlpage)
                 break;
         }
 
-
         oThis.TimerId = __nextFrame(oThis._startZoom);
+        oThis.OnAfterAnimationDraw();
     };
     this._startMorph = function()
     {
@@ -2724,7 +2743,12 @@ function CDemonstrationManager(htmlpage)
         const _image = this.CacheImagesManager.Lock(_w, _h);
         const oSlide = this.HtmlPage.m_oLogicDocument.GetSlide(slide_num);
         const oPlayer = oSlide.getAnimationPlayer();
+
+        // не кэшируем вотермарк никогда
+        let oldWatermark = this.HtmlPage.m_oApi.watermarkDraw;
+        this.HtmlPage.m_oApi.watermarkDraw = null;
         oPlayer.drawFrame(_image.image, {x:0, y: 0, w: _w, h: _h});
+        this.HtmlPage.m_oApi.watermarkDraw = oldWatermark;
         const oSlideImage = new CCacheSlideImage();
         oSlideImage.Image = _image;
         oSlideImage.SlideNum = slide_num;
@@ -3150,6 +3174,50 @@ function CDemonstrationManager(htmlpage)
         oThis.StartAnimation(oThis.SlideNum);
     };
 
+    this.CheckWatermark = function(transition)
+    {
+        if (this.HtmlPage.m_oApi.watermarkDraw)
+        {
+            if (undefined === transition)
+                transition = this.Transition;
+            let rect = transition.Rect;
+
+            let ctx = null;
+
+            if (transition.IsPlaying())
+            {
+                if (transition.DemonstrationObject == null)
+                {
+                    ctx = this.HtmlPage.m_oOverlayApi.m_oContext;
+                }
+                else
+                {
+                    ctx = transition.DemonstrationObject.Overlay.getContext('2d');
+                }
+            }
+            else
+            {
+                if (this.Canvas == null)
+                {
+                    ctx = this.HtmlPage.m_oEditor.HtmlElement.getContext('2d');
+                }
+                else
+                {
+                    ctx = this.Canvas.getContext('2d');
+                }
+            }
+
+            this.CheckWatermarkInternal(ctx, rect);
+        }
+    };
+    this.CheckWatermarkInternal = function(ctx, rect)
+    {
+        if (this.HtmlPage.m_oApi.watermarkDraw)
+        {
+            this.HtmlPage.m_oApi.watermarkDraw.Draw(ctx, rect.x, rect.y, rect.w, rect.h);
+        }
+    };
+
     this.OnPaintSlide = function(is_clear_overlay)
     {
         if (is_clear_overlay && oThis.Overlay)
@@ -3172,6 +3240,8 @@ function CDemonstrationManager(htmlpage)
         if (null != _image)
         {
             _ctx1.drawImage(_image, oThis.Transition.Rect.x, oThis.Transition.Rect.y, oThis.Transition.Rect.w, oThis.Transition.Rect.h);
+
+            oThis.CheckWatermark(oThis.Transition);
         }
 
         // теперь запустим функцию
@@ -3727,6 +3797,10 @@ function CDemonstrationManager(htmlpage)
         {
             var oApi = oThis.HtmlPage.m_oApi;
             oThis.HtmlPage.m_oApi.disableReporterEvents = true;
+
+            // после fullscreen возможно изменение X, Y после вызова Resize.
+            oThis.HtmlPage.checkBodyOffset();
+
             if(oThis.CheckMouseDown(documentMI.x, documentMI.y, documentMI.page))
             {
                 oThis.HtmlPage.m_oApi.disableReporterEvents = false;
