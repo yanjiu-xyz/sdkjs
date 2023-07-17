@@ -870,11 +870,11 @@ CAscHFProps.prototype['updateView'] = CAscHFProps.prototype.updateView = functio
                     t = ((oSp.y / dHeight * oCanvas.height) >> 0) + nLineWidth;
                     r = (((oSp.x + oSp.extX)/ dWidth * oCanvas.width) >> 0);
                     b = (((oSp.y + oSp.extY)/ dHeight * oCanvas.height) >> 0);
-                    if(r <= oCanvas.width && r + nLineWidth > oCanvas.width) {
-                        r = oCanvas.width - nLineWidth;
+                    if(r <= oCanvas.width && r + nLineWidth >= oCanvas.width) {
+                        r = oCanvas.width - nLineWidth - 1;
                     }
-                    if(b <= oCanvas.height && b + nLineWidth > oCanvas.height) {
-                        b = oCanvas.height - nLineWidth;
+                    if(b <= oCanvas.height && b + nLineWidth >= oCanvas.height) {
+                        b = oCanvas.height - nLineWidth - 1;
                     }
                     nPhType = oSp.getPhType();
                     oContext.beginPath();
