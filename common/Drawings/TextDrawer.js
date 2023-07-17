@@ -83,9 +83,10 @@ CDocContentStructure.prototype.Recalculate = function(oTheme, oColorMap, dWidth,
 };
 CDocContentStructure.prototype.CheckContentStructs = function(aContentStructs)
 {
-    for(var i = 0; i < this.m_aContent.length; ++i)
+    for(let nElement = 0; nElement < this.m_aContent.length; ++nElement)
     {
-        this.m_aContent[i].CheckContentStructs(aContentStructs);
+        let oElement = this.m_aContent[nElement];
+        oElement.CheckContentStructs(aContentStructs);
     }
 };
 CDocContentStructure.prototype.draw = function(graphics, transform, oTheme, oColorMap)
@@ -740,10 +741,14 @@ CLineStructure.prototype.Recalculate = function(oTheme, oColorMap, dWidth, dHeig
 
 CLineStructure.prototype.CheckContentStructs = function(aContentStructs)
 {
-    var i;
-    for(i = 0; i < this.m_aContent.length; ++i)
+    const isN = AscFormat.isRealNumber;
+    for(let nElement = 0; nElement < this.m_aContent.length; ++nElement)
     {
-        aContentStructs.push(this.m_aContent[i]);
+        let oElement = this.m_aContent[nElement];
+        if(isN(oElement.Code))
+        {
+            aContentStructs.push(oElement);
+        }
     }
 };
 

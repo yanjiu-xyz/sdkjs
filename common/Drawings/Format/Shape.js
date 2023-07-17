@@ -6686,12 +6686,30 @@
 		};
 
 		CShape.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
-			if(!oDrawingToCheck || !oDrawingToCheck.isShape()) {
+
+			if(!oDrawingToCheck) {
+				return oCurCandidate;
+			}
+			const nOwnType = this.getObjectType();
+			const nCheckType = oDrawingToCheck.getObjectType();
+			if(nOwnType !== nCheckType) {
 				return oCurCandidate;
 			}
 			const sName = this.getOwnName();
 			const sText = this.getText();
 			const sPreset = this.getPresetGeom();
+			let sOwnImageId, sCheckImageId, sCandidateImageId;
+			if(this.blipFill) {
+				sOwnImageId = this.blipFill.RasterImageId;
+			}
+			if(oDrawingToCheck.blipFill) {
+				sCheckImageId = oDrawingToCheck.blipFill.RasterImageId;
+			}
+			if(oCurCandidate) {
+				if(oCurCandidate.blipFill) {
+					sCandidateImageId = oCurCandidate.blipFill.RasterImageId;
+				}
+			}
 			if(sName && sName.startsWith(AscFormat.OBJECT_MORPH_MARKER)) {
 				const sCheckName = oDrawingToCheck.getOwnName();
 				if(sName !== sCheckName) {
@@ -6699,6 +6717,9 @@
 				}
 			}
 			else {
+				if(sOwnImageId && sOwnImageId !== sCheckImageId) {
+					return oCurCandidate;
+				}
 				if(oDrawingToCheck.getText() !== sText) {
 					return oCurCandidate;
 				}
@@ -6708,6 +6729,15 @@
 			}
 			if(!oCurCandidate) {
 				return oDrawingToCheck;
+			}
+
+			if(sOwnImageId) {
+				if(sCheckImageId !== sOwnImageId && sCandidateImageId === sOwnImageId) {
+					return oCurCandidate;
+				}
+				if(sCheckImageId === sOwnImageId && sCandidateImageId !== sOwnImageId) {
+					return oDrawingToCheck;
+				}
 			}
 			if(oDrawingToCheck.getText() !== sText && oCurCandidate.getText() === sText) {
 				return oCurCandidate;
@@ -6724,6 +6754,7 @@
 					return oDrawingToCheck;
 				}
 			}
+
 
 			const oBrush = this.brush;
 			const oPen = this.pen;
