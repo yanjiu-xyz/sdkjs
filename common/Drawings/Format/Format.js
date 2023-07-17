@@ -6191,7 +6191,7 @@
 				this.algn == ln.algn && this.cap == ln.cap && this.cmpd == ln.cmpd && this.w == ln.w && this.prstDash === ln.prstDash;
 		};
 		CLn.prototype.isEqual = function (ln) {
-			return this.isEqual(ln);
+			return this.IsIdentical(ln);
 		};
 		CLn.prototype.setFill = function (fill) {
 			this.Fill = fill;
