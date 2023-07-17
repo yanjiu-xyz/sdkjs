@@ -559,7 +559,10 @@
         }
         let oBrush = oBrush1;
 
-        if(oBrush1 && oBrush1.isSolidFill() &&  oBrush2 && oBrush2.isSolidFill()) {
+        if(oBrush1 && oBrush1.isEqual(oBrush2)) {
+            return oBrush1;
+        }
+        else if(oBrush1 && oBrush1.isSolidFill() &&  oBrush2 && oBrush2.isSolidFill()) {
             const oRGBA1 = oBrush1.getRGBAColor();
             const oRGBA2 = oBrush2.getRGBAColor();
             const R = this.getValBetween(oRGBA1.R, oRGBA2.R) + 0.5 >> 0;

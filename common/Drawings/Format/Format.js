@@ -5337,6 +5337,11 @@
 				return true;
 			}
 		};
+		CUniFill.prototype.isGradientFill = function() {
+			if(this.fill && this.fill.type === c_oAscFill.FILL_TYPE_GRAD) {
+				return true;
+			}
+		};
 		CUniFill.prototype.checkTransparent = function() {
 			let oFill = this.fill;
 			if(oFill) {
