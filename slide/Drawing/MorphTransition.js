@@ -612,6 +612,9 @@
         return oBrush;
     };
     CGeometryMorphObject.prototype.morphPen = function(oPen1, oPen2) {
+        if(oPen1 && oPen1.isEqual(oPen2)) {
+            return oPen1;
+        }
         const  oResultPen1 = oPen1 ? oPen1 : AscFormat.CreateNoFillLine();
         const  oResultPen2 = oPen2 ? oPen2 : AscFormat.CreateNoFillLine();
         const oComparePen = oResultPen1.compare(oResultPen2);
