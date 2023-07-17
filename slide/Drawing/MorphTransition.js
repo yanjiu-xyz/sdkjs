@@ -767,17 +767,17 @@
                             let oTextStruct1 = aTextStructs1[nText];
                             let oTextStruct2 = aTextStructs2[nText];
                             if(oTextStruct1.Code === oTextStruct2.Code) {
-                                let oGeomMorph = new CGeometryMorphObject(oTexturesCache, nRelH1, nRelH2,
-                                    oTextStruct1.geometry, oTextStruct1.brush, oTextStruct1.pen, oTransform1,
-                                    oTextStruct2.geometry, oTextStruct2.brush, oTextStruct2.pen, oTransform2);
-                                if(oGeomMorph.isValid()) {
-                                    this.addMorphObject(oGeomMorph);
-                                }
-                                else {
+                                //let oGeomMorph = new CGeometryMorphObject(oTexturesCache, nRelH1, nRelH2,
+                                //    oTextStruct1.geometry, oTextStruct1.brush, oTextStruct1.pen, oTransform1,
+                                //    oTextStruct2.geometry, oTextStruct2.brush, oTextStruct2.pen, oTransform2);
+                                //if(oGeomMorph.isValid()) {
+                                //    this.addMorphObject(oGeomMorph);
+                                //}
+                                //else {
                                     let oWrapper1 = new CObjectForDrawWrapper(oTextStruct1, oTransform1, oContent1.Get_Theme(), oContent1.Get_ColorMap());
                                     let oWrapper2 = new CObjectForDrawWrapper(oTextStruct2, oTransform2, oContent2.Get_Theme(), oContent2.Get_ColorMap());
                                     this.addMorphObject(new CStretchTextureTransform(oTexturesCache, nRelH1, nRelH2, oWrapper1, oWrapper2));
-                                }
+                                //}
                             }
                         }
                     }
