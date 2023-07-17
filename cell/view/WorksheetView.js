@@ -3879,7 +3879,6 @@
 
 
 		const footerStartPos = height - bottom;
-
 		let drawPortion = function(index) {
 			var portion = headerFooterParser.tokens[index];
 			if(!portion) {
@@ -4001,7 +4000,7 @@
             }
 
             oGraphics.SaveGrState();
-            oGraphics.transform3(new AscCommon.CMatrix())
+            oGraphics.transform3(new AscCommon.CMatrix());
             oGraphics.AddClipRect(left, top, width - (left + right), height - (top + bottom));
             oShape.draw(oGraphics);
 
