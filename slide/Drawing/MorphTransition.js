@@ -445,6 +445,7 @@
     }
     AscFormat.InitClassWithoutType(CComplexMorphObject, CMorphObjectBase);
     CComplexMorphObject.prototype.morph = function (dTime) {
+        CMorphObjectBase.prototype.morph.call(this, dTime);
         for(let nIdx = 0; nIdx < this.morphedObjects.length; ++ nIdx) {
             this.morphedObjects[nIdx].morph(dTime);
         }
@@ -1280,8 +1281,9 @@
         }
     };
     CSlideMorphEffect.prototype.generateObjectBasedMorphs = function() {
+
         //match objects
-        this.pushMorphObject(new COrigSizeTextureTransform(this.texturesCache, -2, -1, new CBackgroundWrapper(this.slide1), new CBackgroundWrapper(this.slide2)));
+        this.pushMorphObject(new COrigSizeTextureTransform(this.texturesCache, -1, -1, new CBackgroundWrapper(this.slide1), new CBackgroundWrapper(this.slide2)));
         const aDrawings1 = this.slide1.getDrawingObjects();
         const aDrawings2 = this.slide2.getDrawingObjects();
         const nDrawingsCount1 = aDrawings1.length;
@@ -1322,7 +1324,7 @@
         this.generateTextBasedMorph(true);
     };
     CSlideMorphEffect.prototype.generateTextBasedMorph = function(bLetter) {
-        this.pushMorphObject(new COrigSizeTextureTransform(this.texturesCache, -2, -1, new CBackgroundWrapper(this.slide1), new CBackgroundWrapper(this.slide2)));
+        this.pushMorphObject(new COrigSizeTextureTransform(this.texturesCache, -1, -1, new CBackgroundWrapper(this.slide1), new CBackgroundWrapper(this.slide2)));
 
         const aDrawings1 = this.slide1.getDrawingObjects();
         const aDrawings2 = this.slide2.getDrawingObjects();
