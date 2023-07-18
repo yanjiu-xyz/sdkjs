@@ -258,6 +258,8 @@
 		{
 			this.private_InsertCommon();
 		}
+		
+		this.CheckTemporaryContentControl();
 
 		if (false !== isLocalTrack)
 			oLogicDocument.SetLocalTrackRevisions(isLocalTrack);
@@ -1213,6 +1215,24 @@
 		blockSdt.ReplacePlaceHolderWithContent();
 		let docContent = blockSdt.GetContent();
 		this.ReplaceContent(docContent, true);
+	};
+	CSelectedContent.prototype.CheckTemporaryContentControl = function()
+	{
+		let paragraph = this.Run.GetParagraph();
+		if (!paragraph)
+			return;
+		
+		let paraIndex  = paragraph.GetIndex();
+		let docContent = paragraph.GetParent();
+		
+		if (!docContent
+			|| paragraph !== docContent.GetElement(paraIndex)
+			|| !docContent.IsBlockLevelSdtContent())
+			return;
+		
+		let blockSdt = docContent.GetParent();
+		if (blockSdt.IsContentControlTemporary())
+			blockSdt.RemoveContentControlWrapper();
 	};
 
 	/**
