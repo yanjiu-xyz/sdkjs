@@ -7785,8 +7785,8 @@
 	 */
 	ApiParagraph.prototype.SetHighlight = function(sColor)
 	{
-		if (!editor || Asc.editor)
-			return this;
+		if (!editor && Asc.editor)
+		 	return this;
 
 		this.Paragraph.SetApplyToAll(true);
 		if ("none" === sColor)
@@ -12067,8 +12067,8 @@
 	 */
 	ApiTextPr.prototype.SetHighlight = function(sColor)
 	{
-		if (!editor || Asc.editor)
-			return this;
+		if (!editor && Asc.editor)
+		 	return this;
 
 		if ("none" === sColor)
 		{
