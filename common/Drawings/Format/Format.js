@@ -2867,6 +2867,24 @@
 			}
 			return false;
 		};
+		CSrcRect.prototype.isEqual = function(r) {
+			if(!r) {
+				return false;
+			}
+			if(r.l !== this.l) {
+				return false;
+			}
+			if(r.t !== this.t) {
+				return false;
+			}
+			if(r.r !== this.r) {
+				return false;
+			}
+			if(r.b !== this.v) {
+				return false;
+			}
+			return true;
+		};
 
 		function CBlipFillTile() {
 			CBaseNoIdObject.call(this)
@@ -3097,6 +3115,14 @@
 				}
 			} else {
 				if (fill.tile) {
+					return false;
+				}
+			}
+			if(fill.srcRect && !this.srcRect || this.srcRect && !fill.srcRect) {
+				return false;
+			}
+			if(fill.srcRect) {
+				if(!fill.srcRect.isEqual(this.srcRect)) {
 					return false;
 				}
 			}

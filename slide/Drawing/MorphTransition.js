@@ -463,12 +463,27 @@
         this.shape2 = oShape2;
         const oGeometry1 = this.shape1.getGeometry();
         const oGeometry2 = this.shape2.getGeometry();
+        let oBrush1, oBrush2;
+        if(this.shape1.blipFill) {
+            oBrush1 = new AscFormat.CUniFill();
+            oBrush1.fill = this.shape1.blipFill;
+        }
+        else {
+            oBrush1 = this.shape1.brush;
+        }
+        if(this.shape2.blipFill) {
+            oBrush2 = new AscFormat.CUniFill();
+            oBrush2.fill = this.shape2.blipFill;
+        }
+        else {
+            oBrush2 = this.shape2.brush;
+        }
         const oGeometryMorph = new CGeometryMorphObject(this.cache, this.relHeight1, this.relHeight2,
-            oGeometry1, this.shape1.brush, this.shape1.pen, this.shape1.transform,
-            oGeometry2, this.shape2.brush, this.shape2.pen, this.shape2.transform);
+            oGeometry1, oBrush1, this.shape1.pen, this.shape1.transform,
+            oGeometry2, oBrush2, this.shape2.pen, this.shape2.transform);
         if(oGeometryMorph.isValid()) {
             this.addMorphObject(oGeometryMorph);
-            if(!bNoText) {
+            if(!bNoText && this.shape1.getObjectType() === AscDFH.historyitem_type_Shape) {
                 const oContent1 = this.shape1.getDocContent();
                 const oTransform1 = this.shape1.transformText;
                 const oContent2 = this.shape2.getDocContent();
@@ -562,53 +577,104 @@
         if(oBrush1 && oBrush1.isEqual(oBrush2)) {
             return oBrush1;
         }
-        else if(oBrush1 && oBrush1.isSolidFill() &&  oBrush2 && oBrush2.isSolidFill()) {
+        const isN = AscFormat.isRealNumber;
+        if(oBrush1 && oBrush1.isSolidFill() &&  oBrush2 && oBrush2.isSolidFill()) {
             const oRGBA1 = oBrush1.getRGBAColor();
             const oRGBA2 = oBrush2.getRGBAColor();
             const R = this.getValBetween(oRGBA1.R, oRGBA2.R) + 0.5 >> 0;
             const G = this.getValBetween(oRGBA1.G, oRGBA2.G) + 0.5 >> 0;
             const B = this.getValBetween(oRGBA1.B, oRGBA2.B) + 0.5 >> 0;
             const A = this.getValBetween(oRGBA1.A, oRGBA2.A) + 0.5 >> 0;
-            const isN = AscFormat.isRealNumber;
             const dTransparent1 = isN(oBrush1.transparent) ? oBrush1.transparent : 255;
             const dTransparent2 = isN(oBrush2.transparent) ? oBrush2.transparent : 255;
             const dTransparent = this.getValBetween(dTransparent1, dTransparent2);
             oBrush = AscFormat.CreateSolidFillRGBA(R, G, B, A);
             oBrush.transparent = dTransparent;
+            return oBrush;
         }
         else if(oBrush1 && oBrush1.isNoFill() &&  oBrush2 && oBrush2.isNoFill()) {
             return oBrush1;
         }
-        else {
-            var oShapeDrawer = new AscCommon.CShapeDrawer();
-            oShapeDrawer.bIsCheckBounds = true;
-            oShapeDrawer.Graphics = new AscFormat.CSlideBoundsChecker();
-            this.drawObject.check_bounds(oShapeDrawer);
-            const dBoundsW = oShapeDrawer.max_x - oShapeDrawer.min_x;
-            const dBoundsH = oShapeDrawer.max_y - oShapeDrawer.min_y;
-            this.textureShape1.calcGeometry.Recalculate(dBoundsW, dBoundsH);
-            this.textureShape1.brush = oBrush1;
-            this.textureShape1.pen = AscFormat.CreateNoFillLine();
-            this.textureShape1.bounds.reset(0, 0, dBoundsW, dBoundsH);
-            this.textureShape1.extX = dBoundsW;
-            this.textureShape1.extY = dBoundsH;
-            const oTexture1 = this.cache.checkMorphTexture(this.textureShape1.Id, dScale, oBrush1 && oBrush1.isBlipFill());
+        else if(oBrush1 && oBrush1.isBlipFill() && oBrush2 && oBrush2.isBlipFill()) {
+            const sRasterImageId1 = oBrush1.fill.RasterImageId;
+            const sRasterImageId2 = oBrush2.fill.RasterImageId;
+            if(sRasterImageId1 === sRasterImageId2) {
+                if(!oBrush1.fill.tile && !oBrush2.fill.tile) {
 
-            this.textureShape2.calcGeometry.Recalculate(dBoundsW, dBoundsH);
-            this.textureShape2.brush = oBrush2;
-            this.textureShape2.pen = AscFormat.CreateNoFillLine();
-            this.textureShape2.bounds.reset(0, 0, dBoundsW, dBoundsH);
-            this.textureShape2.extX = dBoundsW;
-            this.textureShape2.extY = dBoundsH;
-            const oTexture2 = this.cache.checkMorphTexture(this.textureShape2.Id, dScale, oBrush2 && oBrush2.isBlipFill());
+                    oBrush = oBrush1.createDuplicate();
+                    if(oBrush1.fill.srcRect || oBrush2.fill.srcRect) {
+                        let l1, t1, r1, b1;
+                        let l2, t2, r2, b2;
+                        if(oBrush1.fill.srcRect) {
+                            let oR = oBrush1.fill.srcRect;
+                            l1 = isN(oR.l) ? oR.l : 0;
+                            t1 = isN(oR.t) ? oR.t : 0;
+                            r1 = isN(oR.r) ? oR.r : 100;
+                            b1 = isN(oR.b) ? oR.b : 100;
+                        }
+                        else {
+                            l1 = 0;
+                            t1 = 0;
+                            r1 = 100;
+                            b1 = 100;
+                        }
+                        if(oBrush2.fill.srcRect) {
+                            let oR = oBrush2.fill.srcRect;
+                            l2 = isN(oR.l) ? oR.l : 0;
+                            t2 = isN(oR.t) ? oR.t : 0;
+                            r2 = isN(oR.r) ? oR.r : 100;
+                            b2 = isN(oR.b) ? oR.b : 100;
+                        }
+                        else {
+                            l2 = 0;
+                            t2 = 0;
+                            r2 = 100;
+                            b2 = 100;
+                        }
+                        oBrush.fill.srcRect = new AscFormat.CSrcRect();
+                        oBrush.fill.srcRect.l = this.getValBetween(l1, l2);
+                        oBrush.fill.srcRect.t = this.getValBetween(t1, t2);
+                        oBrush.fill.srcRect.r = this.getValBetween(r1, r2);
+                        oBrush.fill.srcRect.b = this.getValBetween(b1, b2);
+                    }
 
-            oBrush = new AscFormat.CreateBlipFillUniFillFromUrl("");
-            oBrush.IsTransitionTextures = true;
-            oBrush.alpha1 = 1 - this.relTime;
-            oBrush.alpha2 = this.relTime;
-            oBrush.canvas1 = oTexture1.canvas;
-            oBrush.canvas2 = oTexture2.canvas;
+                    const dTransparent1 = isN(oBrush1.transparent) ? oBrush1.transparent : 255;
+                    const dTransparent2 = isN(oBrush2.transparent) ? oBrush2.transparent : 255;
+                    const dTransparent = this.getValBetween(dTransparent1, dTransparent2);
+                    oBrush.transparent = dTransparent;
+                    return oBrush;
+                }
+            }
         }
+
+        const oShapeDrawer = new AscCommon.CShapeDrawer();
+        oShapeDrawer.bIsCheckBounds = true;
+        oShapeDrawer.Graphics = new AscFormat.CSlideBoundsChecker();
+        this.drawObject.check_bounds(oShapeDrawer);
+        const dBoundsW = oShapeDrawer.max_x - oShapeDrawer.min_x;
+        const dBoundsH = oShapeDrawer.max_y - oShapeDrawer.min_y;
+        this.textureShape1.calcGeometry.Recalculate(dBoundsW, dBoundsH);
+        this.textureShape1.brush = oBrush1;
+        this.textureShape1.pen = AscFormat.CreateNoFillLine();
+        this.textureShape1.bounds.reset(0, 0, dBoundsW, dBoundsH);
+        this.textureShape1.extX = dBoundsW;
+        this.textureShape1.extY = dBoundsH;
+        const oTexture1 = this.cache.checkMorphTexture(this.textureShape1.Id, dScale, oBrush1 && oBrush1.isBlipFill());
+
+        this.textureShape2.calcGeometry.Recalculate(dBoundsW, dBoundsH);
+        this.textureShape2.brush = oBrush2;
+        this.textureShape2.pen = AscFormat.CreateNoFillLine();
+        this.textureShape2.bounds.reset(0, 0, dBoundsW, dBoundsH);
+        this.textureShape2.extX = dBoundsW;
+        this.textureShape2.extY = dBoundsH;
+        const oTexture2 = this.cache.checkMorphTexture(this.textureShape2.Id, dScale, oBrush2 && oBrush2.isBlipFill());
+
+        oBrush = new AscFormat.CreateBlipFillUniFillFromUrl("");
+        oBrush.IsTransitionTextures = true;
+        oBrush.alpha1 = 1 - this.relTime;
+        oBrush.alpha2 = this.relTime;
+        oBrush.canvas1 = oTexture1.canvas;
+        oBrush.canvas2 = oTexture2.canvas;
         return oBrush;
     };
     CGeometryMorphObject.prototype.morphPen = function(oPen1, oPen2) {
@@ -1198,7 +1264,8 @@
             return;
         }
         switch (nType1) {
-            case AscDFH.historyitem_type_Shape: {
+            case AscDFH.historyitem_type_Shape:
+            case AscDFH.historyitem_type_ImageShape: {
                 this.addShapeMorphs(oDrawing1, nRelH1, oDrawing2, nRelH2, bNoText)
                 break;
             }
