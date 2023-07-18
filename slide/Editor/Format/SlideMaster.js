@@ -271,7 +271,6 @@ MasterSlide.prototype.recalculate = function () {
     }
     if (bRecalculateSlideLayouts) {
         for (_slideLayout_index = 0; _slideLayout_index < this.sldLayoutLst.length; _slideLayout_index++) {
-            this.sldLayoutLst[_slideLayout_index].changeBackground(this.cSld.Bg);
             this.sldLayoutLst[_slideLayout_index].ImageBase64 = "";
             this.sldLayoutLst[_slideLayout_index].recalculate();
         }
@@ -350,11 +349,7 @@ MasterSlide.prototype.shapeAdd = function (pos, item) {
     History.Add(new AscDFH.CChangesDrawingsContent(this, AscDFH.historyitem_SlideMasterAddToSpTree, pos, [item], true));
     this.cSld.spTree.splice(pos, 0, item);
     item.setParent2(this);
-    var _slideLayout_index;
-    for (_slideLayout_index = 0; _slideLayout_index < this.sldLayoutLst.length; _slideLayout_index++) {
-        this.sldLayoutLst[_slideLayout_index].changeBackground(this.cSld.Bg);
-        this.sldLayoutLst[_slideLayout_index].ImageBase64 = "";
-    }
+    this.recalcInfo.recalculateSlideLayouts = true;
 };
 MasterSlide.prototype.addToSpTreeToPos = function(pos, obj)
 {
@@ -430,9 +425,18 @@ MasterSlide.prototype.Refresh_RecalcData = function (data) {
             case AscDFH.historyitem_SlideMasterSetBg:
             {
                 this.recalcInfo.recalculateSlideLayouts = true;
+                for (var _slideLayout_index = 0; _slideLayout_index < this.sldLayoutLst.length; _slideLayout_index++) {
+                    this.sldLayoutLst[_slideLayout_index].addToRecalculate();
+                }
                 this.addToRecalculate();
                 break;
             }
+            case AscDFH.historyitem_SlideMasterAddToSpTree:
+                this.recalcInfo.recalculateSlideLayouts = true;
+                for (var _slideLayout_index = 0; _slideLayout_index < this.sldLayoutLst.length; _slideLayout_index++) {
+                    this.sldLayoutLst[_slideLayout_index].addToRecalculate();
+                }
+                break;
         }
     }
 };

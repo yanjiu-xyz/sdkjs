@@ -4450,32 +4450,26 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 		this.SearchEngine.Clear();
 		this.SearchEngine.ClearOnRecalc = false;
 	}
-	var _RecalcData = RecalcData ? RecalcData : History.Get_RecalcData(), key, recalcMap, bSync = true, i,
-		bRedrawAllSlides = false, aToRedrawSlides = [], redrawSlideIndexMap = {}, slideIndex;
+	var _RecalcData = RecalcData ? RecalcData : History.Get_RecalcData(), key, bSync = true, i,
+		bRedrawAllSlides = false, aToRedrawSlides = [], redrawSlideIndexMap = {}, slideIndex, isUpdateThemes = false;
 	var bAttack = undefined;
 	this.updateSlideIndexes();
 	var b_check_layout = false;
 	var bRedrawNotes = false;
 	if (_RecalcData.Drawings.All || _RecalcData.Drawings.ThemeInfo) {
 		b_check_layout = true;
-		recalcMap = this.GetRecalculateMaps();
-		for (key in recalcMap.masters) {
-			if (recalcMap.masters.hasOwnProperty(key)) {
-				bAttack = recalcMap.masters[key].needRecalc();
-				if (recalcMap.masters[key].recalcInfo.recalculateSlideLayouts) {
-					recalcMap.masters[key].recalculate();
+		for (key in this.slideMasters) {
+			if (this.slideMasters.hasOwnProperty(key)) {
+				bAttack = this.slideMasters[key].needRecalc();
+				if (this.slideMasters[key].recalcInfo.recalculateSlideLayouts) {
+					isUpdateThemes = true;
+					this.slideMasters[key].recalculate();
 					for (key in this.Slides) {
 						this.Slides[key].checkSlideColorScheme();
-						this.Slides[key].recalculate();
 					}
 				} else {
-					recalcMap.masters[key].recalculate();
+					this.slideMasters[key].recalculate();
 				}
-			}
-		}
-		for (key in recalcMap.layouts) {
-			if (recalcMap.layouts.hasOwnProperty(key)) {
-				recalcMap.layouts[key].recalculate();
 			}
 		}
 		this.bNeedUpdateChartPreview = true;
@@ -4553,6 +4547,7 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 						}
 					}
 					if (oDrawingObject instanceof AscCommonSlide.SlideLayout) {
+						isUpdateThemes = true;
 						oDrawingObject.ImageBase64 = "";
 						b_check_layout = true;
 						bAttack = true;
@@ -4564,6 +4559,9 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 								}
 							}
 						}
+					}
+					if (oDrawingObject instanceof AscFormat.CImageShape) {
+						isUpdateThemes = true;
 					}
 					if (oDrawingObject.getSlideIndex) {
 						slideIndex = oDrawingObject.getSlideIndex();
@@ -4650,7 +4648,9 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 			this.DrawingDocument.placeholders.update(this.Slides[this.CurPage].getPlaceholdersControls());
 	}
 	this.MathTrackHandler.Update();
-	this.SendThemesThumbnails();
+	if (isUpdateThemes) {
+		this.SendThemesThumbnails();
+	}
 };
 
 CPresentation.prototype.private_RecalculateFastRunRange = function (arrChanges, nStartIndex, nEndIndex) {
