@@ -1065,7 +1065,6 @@ CSdtBase.prototype.IsHideContentControlTrack = function()
 	if (logicDocument && logicDocument.IsForceHideContentControlTrack())
 		return true;
 	
-	let gallery = this.Pr.GetDocPartGallery();
 	if (this.GetBuiltInGallery()
 		&& !this.IsBuiltInTableOfContents())
 		return true;
