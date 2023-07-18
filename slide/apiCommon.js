@@ -383,6 +383,27 @@ CAscSlideTransition.prototype.parseXmlParameters = function (_type, _paramNames,
             this.TransitionType = c_oAscSlideTransitionTypes.Zoom;
             this.TransitionOption = c_oAscSlideTransitionParams.Zoom_AndRotate;
         }
+        else if ("p159:morph" === _type)
+        {
+
+            this.TransitionType = c_oAscSlideTransitionTypes.Morph;
+            this.TransitionOption = c_oAscSlideTransitionParams.Morph_Objects;
+            if(_paramNames[0] === "option")
+            {
+                if ("byObject" === _paramValues[0])
+                {
+                    this.TransitionOption = c_oAscSlideTransitionParams.Morph_Objects;
+                }
+                else if("byWord" === _paramValues[0])
+                {
+                    this.TransitionOption = c_oAscSlideTransitionParams.Morph_Words;
+                }
+                else if("byChar" === _paramValues[0])
+                {
+                    this.TransitionOption = c_oAscSlideTransitionParams.Morph_Letters;
+                }
+            }
+        }
         else if ("p:none" !== _type)
         {
             this.TransitionType = c_oAscSlideTransitionTypes.Fade;
@@ -673,6 +694,35 @@ CAscSlideTransition.prototype.fillXmlParams = function (aAttrNames, aAttrValues)
                 }
                 default:
                     break;
+            }
+            break;
+        }
+        case c_oAscSlideTransitionTypes.Morph:
+        {
+            sNodeName = "p159:morph";
+            aAttrNames.push("option");
+            switch (this.TransitionOption)
+            {
+                case c_oAscSlideTransitionParams.Morph_Objects:
+                {
+                    aAttrValues.push("byObject");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Morph_Words:
+                {
+                    aAttrValues.push("byWord");
+                    break;
+                }
+                case c_oAscSlideTransitionParams.Morph_Letters:
+                {
+                    aAttrValues.push("byChar");
+                    break;
+                }
+                default:
+                {
+                    aAttrValues.push("byObject");
+                    break;
+                }
             }
             break;
         }
