@@ -3718,7 +3718,7 @@
 							objects_by_type.smartArts[i].setDescription(props.description);
 						}
 					}
-					if (props.name !== null && props.name !== undefined) {
+					if (props.name !== null && props.name !== undefined && props.name !== "") {
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
 							objects_by_type.shapes[i].setName(props.name);
 						}
@@ -7081,7 +7081,7 @@
 						}
 						var lockAspect = drawing.getNoChangeAspect();
 						var oMainGroup = drawing.getMainGroup();
-						let sOwnName = drawing.getOwnName();
+						let sOwnName = drawing.getObjectName();
 						switch (drawing.getObjectType()) {
 							case AscDFH.historyitem_type_Shape:
 							case AscDFH.historyitem_type_Cnx:
