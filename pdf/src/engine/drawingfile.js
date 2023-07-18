@@ -798,7 +798,7 @@ else
 				rec["border"] = reader.readByte();
 				rec["borderWidth"] = reader.readDouble();
 				// Dash Pattern границы
-				if (rec["borderStyle"] == 1)
+				if (rec["border"] == 2)
 				{
 					rec["dashed"] = [];
 					rec["dashed"].push(reader.readDouble());
