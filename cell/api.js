@@ -5813,8 +5813,21 @@ var editor;
           return oWorksheet.getActiveCellCoord(useUpRightMerge);
       }
     }
-
   };
+
+	// Получить координаты активной ячейки
+	spreadsheet_api.prototype.asc_getActiveCell = function() {
+		var oWorksheet = this.wb.getWorksheet();
+		if(oWorksheet){
+			if(oWorksheet.isSelectOnShape){
+				return null;
+			}
+			else{
+				return oWorksheet.getActiveCell();
+			}
+		}
+
+	};
 
   // Получить координаты для каких-либо действий (для общей схемы)
   spreadsheet_api.prototype.asc_getAnchorPosition = function() {
@@ -5886,7 +5899,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellBold = function(isBold) {
-  	var ws = this.wb.getWorksheet();
+  	if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return;
+  	}
+
+  	let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellBold) {
       ws.objectRender.controller.setCellBold(isBold);
     } else {
@@ -5896,7 +5913,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellItalic = function(isItalic) {
-    var ws = this.wb.getWorksheet();
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return;
+    }
+
+    let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellItalic) {
       ws.objectRender.controller.setCellItalic(isItalic);
     } else {
@@ -5906,7 +5927,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellUnderline = function(isUnderline) {
-    var ws = this.wb.getWorksheet();
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return;
+    }
+
+    let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellUnderline) {
       ws.objectRender.controller.setCellUnderline(isUnderline);
     } else {
@@ -5916,7 +5941,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellStrikeout = function(isStrikeout) {
-    var ws = this.wb.getWorksheet();
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return;
+    }
+
+    let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellStrikeout) {
       ws.objectRender.controller.setCellStrikeout(isStrikeout);
     } else {
@@ -5926,7 +5955,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellSubscript = function(isSubscript) {
-    var ws = this.wb.getWorksheet();
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return;
+    }
+
+    let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellSubscript) {
       ws.objectRender.controller.setCellSubscript(isSubscript);
     } else {
@@ -5936,7 +5969,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellSuperscript = function(isSuperscript) {
-    var ws = this.wb.getWorksheet();
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return;
+    }
+
+    let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellSuperscript) {
       ws.objectRender.controller.setCellSuperscript(isSuperscript);
     } else {
@@ -5946,7 +5983,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellAlign = function(align) {
-    var ws = this.wb.getWorksheet();
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return;
+    }
+
+    let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellAlign) {
       ws.objectRender.controller.setCellAlign(align);
     } else {
@@ -5956,7 +5997,11 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_setCellVertAlign = function(align) {
-    var ws = this.wb.getWorksheet();
+    if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+      return;
+    }
+
+    let ws = this.wb.getWorksheet();
     if (ws.objectRender.selectedGraphicObjectsExists() && ws.objectRender.controller.setCellVertAlign) {
       ws.objectRender.controller.setCellVertAlign(align);
     } else {
@@ -8775,6 +8820,70 @@ var editor;
 		return res == null ? AscCommonExcel.ESheetViewType.normal : res;
 	};
 
+	spreadsheet_api.prototype.asc_InsertPageBreak = function() {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
+		}
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		var ws = this.wb.getWorksheet();
+		return ws && ws.insertPageBreak();
+	};
+
+	spreadsheet_api.prototype.asc_RemovePageBreak = function() {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
+		}
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		var ws = this.wb.getWorksheet();
+		return ws.removePageBreak();
+	};
+
+	spreadsheet_api.prototype.asc_ResetAllPageBreaks = function() {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
+		}
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		var ws = this.wb.getWorksheet();
+		return ws.resetAllPageBreaks();
+	};
+
+	spreadsheet_api.prototype.asc_GetPageBreaksDisableType = function (index) {
+		if (!this.wbModel) {
+			return;
+		}
+		let sheetIndex = (undefined !== index && null !== index) ? index : this.wbModel.getActive();
+		let ws = this.wbModel.getWorksheet(sheetIndex);
+		let res = Asc.c_oAscPageBreaksDisableType.none;
+		if (ws) {
+			let isPageBreaks = ws && ((ws.colBreaks && ws.colBreaks.getCount()) || (ws.rowBreaks && ws.rowBreaks.getCount()));
+			let activeCell = ws.selectionRange && ws.selectionRange.activeCell;
+			let isFirstActiveCell = activeCell && activeCell.col === 0 && activeCell.row === 0;
+
+			if (isFirstActiveCell && !isPageBreaks) {
+				//disable all
+				res = Asc.c_oAscPageBreaksDisableType.all;
+			} else if (isFirstActiveCell && isPageBreaks) {
+				//disable insert/remove
+				res = Asc.c_oAscPageBreaksDisableType.insertRemove;
+			} else if (!isFirstActiveCell && !isPageBreaks) {
+				//disable reset
+				res = Asc.c_oAscPageBreaksDisableType.reset;
+			}
+		}
+
+		return res;
+	};
+
+
   /*
    * Export
    * -----------------------------------------------------------------------------
@@ -9339,6 +9448,11 @@ var editor;
   prot["asc_GetSheetViewType"]   = prot.asc_GetSheetViewType;
 
   prot["asc_ChangeTextCase"]   = prot.asc_ChangeTextCase;
+
+  prot["asc_InsertPageBreak"]         = prot.asc_InsertPageBreak;
+  prot["asc_RemovePageBreak"]         = prot.asc_RemovePageBreak;
+  prot["asc_ResetAllPageBreaks"]      = prot.asc_ResetAllPageBreaks;
+  prot["asc_GetPageBreaksDisableType"]= prot.asc_GetPageBreaksDisableType;
 
 
 
