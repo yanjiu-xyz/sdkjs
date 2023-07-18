@@ -467,7 +467,7 @@ CContentControlPr.prototype.FillFromContentControl = function(oContentControl)
 	this.Id         = oContentControl.Pr.Id;
 	this.Lock       = oContentControl.Pr.Lock;
 	this.InternalId = oContentControl.GetId();
-	this.Tag        = oContentControl.IsContentControlTemporary() ? "temp" : "";//oContentControl.GetTag();
+	this.Tag        = oContentControl.GetTag();
 	this.Alias      = oContentControl.GetAlias();
 	this.Appearance = oContentControl.GetAppearance();
 	this.Color      = oContentControl.GetColor();
@@ -521,18 +521,10 @@ CContentControlPr.prototype.SetToContentControl = function(oContentControl)
 	{
 		oContentControl.GetLogicDocument().OnChangeRadioRequired(oContentControl.GetRadioButtonGroupKey(), this.FormPr.GetRequired());
 	}
-
-
+	
 	if (undefined !== this.Tag)
-	{
-		if ("temp" === this.Tag)
-			oContentControl.SetContentControlTemporary(true);
-		else
-			oContentControl.SetContentControlTemporary(false);
-		
 		oContentControl.SetTag(this.Tag);
-	}
-
+	
 	if (undefined !== this.Id)
 		oContentControl.SetContentControlId(this.Id);
 
@@ -786,6 +778,14 @@ CContentControlPr.prototype.SetColor = function(r, g, b)
 	else
 		this.Color = new CDocumentColor(r, g, b);
 };
+CContentControlPr.prototype.GetTemporary = function()
+{
+	return this.Temporary;
+};
+CContentControlPr.prototype.SetTemporary = function(isTemporary)
+{
+	this.Temporary = isTemporary;
+};
 CContentControlPr.prototype.GetSpecificType = function()
 {
 	if (this.CC)
@@ -1021,6 +1021,8 @@ CContentControlPr.prototype['get_Appearance']         = CContentControlPr.protot
 CContentControlPr.prototype['put_Appearance']         = CContentControlPr.prototype.SetAppearance;
 CContentControlPr.prototype['get_Color']              = CContentControlPr.prototype.GetColor;
 CContentControlPr.prototype['put_Color']              = CContentControlPr.prototype.SetColor;
+CContentControlPr.prototype['get_Temporary']          = CContentControlPr.prototype.GetTemporary;
+CContentControlPr.prototype['put_Temporary']          = CContentControlPr.prototype.SetTemporary;
 CContentControlPr.prototype['get_SpecificType']       = CContentControlPr.prototype.GetSpecificType;
 CContentControlPr.prototype['get_CheckBoxPr']         = CContentControlPr.prototype.GetCheckBoxPr;
 CContentControlPr.prototype['put_CheckBoxPr']         = CContentControlPr.prototype.SetCheckBoxPr;
