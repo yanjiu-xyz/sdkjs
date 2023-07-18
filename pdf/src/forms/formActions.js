@@ -44,12 +44,25 @@
         Format:     9
     }
     let ACTIONS_TYPES = {
-        JS:     0,
-        Reset:  1,
-        URI:    2,
-        HS:     3, // Hide-Show
-        GT:     4, // GoTo
-        Named:  5
+        Unknown:        0,
+        GoTo:           1,
+        GoToR:          2,
+        GoToE:          3,
+        Launch:         4,
+        Thread:         5,
+        URI:            6,
+        Sound:          7,
+        Movie:          8,
+        HideShow:       9,
+        Named:          10,
+        SubmitForm:     11,
+        ResetForm:      12,
+        ImportData:     13,
+        JavaScript:     14,
+        SetOCGState:    15,
+        Rendition:      16,
+        Trans:          17,
+        GoTo3DView:     18
     }
 
     let ACTION_NAMED_TYPES = {
@@ -137,7 +150,7 @@
     };
 
     function CActionGoTo(nPage, nGoToType, nZoom, oRect) {
-        CActionBase.call(this, ACTIONS_TYPES.GT);
+        CActionBase.call(this, ACTIONS_TYPES.GoTo);
         this.page       = nPage;
         this.goToType   = nGoToType;
         this.zoom       = nZoom;
@@ -342,7 +355,7 @@
     };
 
     function CActionHideShow(bHidden, aFieldsNames) {
-        CActionBase.call(this, ACTIONS_TYPES.HS);
+        CActionBase.call(this, ACTIONS_TYPES.HideShow);
         this.hidden = bHidden;
         this.names = aFieldsNames;
     };
@@ -386,7 +399,7 @@
     };
 
     function CActionRunScript(script) {
-        CActionBase.call(this, ACTIONS_TYPES.JS);
+        CActionBase.call(this, ACTIONS_TYPES.JavaScript);
         this.script = script;
         this.bContinueAfterEval = true; // выключаем на асинхронных операциях
     };
@@ -528,7 +541,8 @@
     window["AscPDF"].CActionHideShow    = CActionHideShow;
     window["AscPDF"].CActionReset       = CActionReset;
     window["AscPDF"].CActionRunScript   = CActionRunScript;
-
+    
+    window["AscPDF"].ACTIONS_TYPES   = ACTIONS_TYPES;
     window["AscPDF"].FORMS_TRIGGERS_TYPES   = FORMS_TRIGGERS_TYPES;
 
 })();

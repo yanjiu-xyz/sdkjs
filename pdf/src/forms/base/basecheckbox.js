@@ -428,8 +428,45 @@
 
         return canvas;
     };
+    CBaseCheckBoxField.prototype.onMouseDown = function() {
+        let oViewer = editor.getDocumentRenderer();
+
+        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
+        if (oViewer.activeForm != this)
+            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
+        oViewer.activeForm = this;
+    };
+    CBaseCheckBoxField.prototype.onMouseUp = function() {
+        this.CreateNewHistoryPoint();
+        if (this.IsChecked()) {
+            if (this._noToggleToOff == false) {
+                this.SetChecked(false);
+                this.SetApiValue("Off");
+            }
+        }
+        else {
+            this.SetChecked(true);
+            this.SetApiValue(this.GetExportValue());
+        }
+        
+        if (AscCommon.History.Is_LastPointEmpty())
+            AscCommon.History.Remove_LastPoint();
+        else {
+            this.SetNeedCommit(true);
+            this.Commit2();
+        }
+    };
     CBaseCheckBoxField.prototype.SetExportValue = function(sValue) {
         this._exportValue = sValue;
+    };
+    CBaseCheckBoxField.prototype.GetExportValue = function() {
+        return this._exportValue;
+    };
+    CBaseCheckBoxField.prototype.SetNoToggleToOff = function(bValue) {
+        this._noToggleToOff = bValue;
+    };
+    CBaseCheckBoxField.prototype.IsNoToggleToOff = function() {
+        return this._noToggleToOff;
     };
     /**
      * Sets the checkbox style

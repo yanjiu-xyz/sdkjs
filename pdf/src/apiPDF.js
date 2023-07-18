@@ -151,7 +151,7 @@
         set(sValue) {
             if (Object.values(border).includes(sValue)) {
                 if (this.field.IsAnnot()) {
-                    let aFields = this.field.GetDocument().GetFields(this.name);
+                    let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
                     aFields.forEach(function(field) {
                         field.SetBorderStyle(private_GetIntBorderStyle(sValue));
                     });
@@ -168,6 +168,177 @@
                 return private_GetStrBorderStyle(this.field.GetBorderStyle());
             else
                 throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+        }
+	});
+
+    /**
+	 * The default value of a field—that is, the value that the field is set to when the form is reset. For combo boxes and list
+	 * boxes, either an export or a user value can be used to set the default. A conflict can occur, for example, when the field has
+	 * an export value and a user value with the same value but these apply to different items in the list. In such cases, the
+	 * export value is matched against first.
+	 * @memberof ApiBaseField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiBaseField.prototype, "defaultValue", {
+        set(bValue) {
+            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+
+            if (aFields[0] && aFields[0].IsAnnot()) {
+                aFields.forEach(function(field) {
+                    field.SetDefaultValue(bValue);
+                });
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+            }
+        },
+        get() {
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return oField.GetDefaultValue();
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
+
+    /**
+	 * Controls whether the field is hidden or visible on screen and in print. The values for the display property are listed in
+	 * the table below.
+	 * @memberof ApiBaseField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiBaseField.prototype, "display", {
+        set(bValue) {
+            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+
+            if (aFields[0] && aFields[0].IsAnnot()) {
+                aFields.forEach(function(field) {
+                    field.SetHidden(!bValue);
+                });
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+            }
+        },
+        get() {
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return !oField.IsHidden();
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
+
+    /**
+	 * Note: This property has been superseded by the display property and its use is discouraged.
+	 * If the value is false, the field is visible to the user; if true, the field is invisible. The default value is false.
+	 * @memberof ApiBaseField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiBaseField.prototype, "hidden", {
+        set(bValue) {
+            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+
+            if (aFields[0] && aFields[0].IsAnnot()) {
+                aFields.forEach(function(field) {
+                    field.SetHidden(bValue);
+                });
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+            }
+        },
+        get() {
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return oField.IsHidden();
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
+
+    /**
+	 * Specifies the background color for a field. The background color is used to fill the rectangle of the field. Values are
+	 * defined by using transparent, gray, RGB or CMYK color. See Color arrays for information on defining color arrays and
+	 * how values are used with this property.
+	 * In older versions of this specification, this property was named bgColor. The use of bgColor is now discouraged,
+	 * although it is still valid for backward compatibility.
+	 * @memberof ApiBaseField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiBaseField.prototype, "fillColor", {
+        set(value) {
+            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+
+            if (aFields[0] && aFields[0].IsAnnot()) {
+                let aColor = private_correctApiColor(value).slice(1);
+                aFields.forEach(function(field) {
+                    field.SetBackgroundColor(aColor);
+                });
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+            }
+        },
+        get() {
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return private_getApiColor(oField.GetBackgroundColor());
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
+
+    /**
+	 * Specifies the background color for a field. The background color is used to fill the rectangle of the field. Values are
+	 * defined by using transparent, gray, RGB or CMYK color. See Color arrays for information on defining color arrays and
+	 * how values are used with this property.
+	 * Note: The use of bgColor is now discouraged,
+	 * although it is still valid for backward compatibility.
+	 * @memberof ApiBaseField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiBaseField.prototype, "bgColor", {
+        set(value) {
+            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+
+            if (aFields[0] && aFields[0].IsAnnot()) {
+                let aColor = private_correctApiColor(value).slice(1);
+                aFields.forEach(function(field) {
+                    field.SetBackgroundColor(aColor);
+                });
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+            }
+        },
+        get() {
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return private_getApiColor(oField.GetBackgroundColor());
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
+
+    /**
+	 * Returns the Doc of the document to which the field belongs.
+	 * @memberof ApiBaseField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiBaseField.prototype, "doc", {
+        get() {
+            return this.field.GetDocument().GetDocumentApi();
         }
 	});
 
@@ -205,47 +376,6 @@
             },
             get() {
                 return this._delay;
-            }
-        },
-        "display": {
-            set(nValue) {
-                if (Object.values(display).includes(nValue))
-                    this._display = nValue;
-            },
-            get() {
-                return this._display;
-            }
-        },
-        "doc": {
-            get() {
-                return this._doc;
-            }
-        },
-        "fillColor": {
-            set (aColor) {
-                if (Array.isArray(aColor))
-                    this._fillColor = aColor;
-            },
-            get () {
-                return this._fillColor;
-            }
-        },
-        "bgColor": {
-            set (aColor) {
-                if (Array.isArray(aColor))
-                    this._bgColor = aColor;
-            },
-            get () {
-                return this._bgColor;
-            }
-        },
-        "hidden": {
-            set(bValue) {
-                if (typeof(bValue) == "boolean")
-                    this._hidden = bValue;
-            },
-            get() {
-                return this._hidden;
             }
         },
         "lineWidth": {
@@ -328,7 +458,7 @@
         },
         "required": {
             set(bValue) {
-                if (typeof(bValue) == "boolean" && this.type != "button") {
+                if (typeof(bValue) == "boolean" && this.GetType() != AscPDF.FIELD_TYPES.button) {
                     let aFields = this._doc.GetFields(this.name);
 
                     aFields.forEach(function(field) {
@@ -337,7 +467,7 @@
                 }
             },
             get() {
-                if (this.type != "button")
+                if (this.GetType() != AscPDF.FIELD_TYPES.button)
                     return this._required;
 
                 return undefined;
@@ -389,7 +519,7 @@
                 }
             },
             get () {
-                return this.field.GetApiTextColor();
+                return private_getApiColor(this.field.GetTextColor());
             }
         },
         "fgColor": {
@@ -498,16 +628,16 @@
 	 * Controls how space is distributed from the left of the button face with respect to the icon. It is expressed as a percentage
      * between 0 and 100, inclusive. The default value is 50.
      * If the icon is scaled anamorphically (which results in no space differences), this property is not used.
-	 * @memberof ApiTextField
+	 * @memberof ApiPushButtonField
 	 * @typeofeditors ["PDF"]
 	 */
-    Object.defineProperty(ApiTextField.prototype, "buttonAlignX", {
+    Object.defineProperty(ApiPushButtonField.prototype, "buttonAlignX", {
         set(nValue) {
             if (typeof(nValue) == "number") {
                 nValue = Math.round(nValue);
-                let aFields = this.field.GetDocument().GetField(this.name);
+                let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-                if (aFields[0].IsAnnot()) {
+                if (aFields[0] && aFields[0].IsAnnot()) {
                     aFields.forEach(function(field) {
                         field.SetIconPosition(nValue, field.GetIconPosition().Y);
                     });
@@ -521,8 +651,9 @@
             }
         },
         get() {
-            if (this.field.IsAnnot()) {
-                return this.field.GetIconPosition().X;
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return oField.GetIconPosition().X;
             }
             else {
                 throw Error("InvalidGetError: Get not possible, invalid or unknown.");
@@ -533,16 +664,16 @@
 	 * Controls how unused space is distributed from the bottom of the button face with respect to the icon. It is expressed as a
      * percentage between 0 and 100, inclusive. The default value is 50.
      * If the icon is scaled anamorphically (which results in no space differences), this property is not used.
-	 * @memberof ApiTextField
+	 * @memberof ApiPushButtonField
 	 * @typeofeditors ["PDF"]
 	 */
-    Object.defineProperty(ApiTextField.prototype, "buttonAlignY", {
+    Object.defineProperty(ApiPushButtonField.prototype, "buttonAlignY", {
         set(nValue) {
             if (typeof(nValue) == "number") {
                 nValue = Math.round(nValue);
-                let aFields = this.field.GetDocument().GetField(this.name);
+                let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-                if (aFields[0].IsAnnot()) {
+                if (aFields[0] && aFields[0].IsAnnot()) {
                     aFields.forEach(function(field) {
                         field.SetIconPosition(field.GetIconPosition().X, nValue);
                     });
@@ -556,8 +687,9 @@
             }
         },
         get() {
-            if (this.field.IsAnnot()) {
-                return this.field.GetIconPosition().Y;
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return oField.GetIconPosition().Y;
             }
             else {
                 throw Error("InvalidGetError: Get not possible, invalid or unknown.");
@@ -568,15 +700,15 @@
     /**
 	 * If true, the extent to which the icon may be scaled is set to the bounds of the button field. The additional icon
      * placement properties are still used to scale and position the icon within the button face.
-	 * @memberof ApiTextField
+	 * @memberof ApiPushButtonField
 	 * @typeofeditors ["PDF"]
 	 */
-    Object.defineProperty(ApiTextField.prototype, "buttonFitBounds", {
+    Object.defineProperty(ApiPushButtonField.prototype, "buttonFitBounds", {
         set(bValue) {
             if (typeof(bValue) == "boolean") {
-                let aFields = this.field.GetDocument().GetField(this.name);
+                let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-                if (aFields[0].IsAnnot()) {
+                if (aFields[0] && aFields[0].IsAnnot()) {
                     aFields.forEach(function(field) {
                         field.SetButtonFitBounds(bValue);
                     });
@@ -590,8 +722,9 @@
             }
         },
         get() {
-            if (this.field.IsAnnot()) {
-                return this.field.GetButtonFitBounds();
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return oField.GetButtonFitBounds();
             }
             else {
                 throw Error("InvalidGetError: Get not possible, invalid or unknown.");
@@ -602,15 +735,15 @@
     /**
 	 * Controls how the text and the icon of the button are positioned with respect to each other within the button face. The
      * convenience position object defines all of the valid alternatives.
-	 * @memberof ApiTextField
+	 * @memberof ApiPushButtonField
 	 * @typeofeditors ["PDF"]
 	 */
-    Object.defineProperty(ApiTextField.prototype, "buttonPosition", {
+    Object.defineProperty(ApiPushButtonField.prototype, "buttonPosition", {
         set(bValue) {
             if (typeof(bValue) == "boolean") {
-                let aFields = this.field.GetDocument().GetField(this.name);
+                let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-                if (aFields[0].IsAnnot()) {
+                if (aFields[0] && aFields[0].IsAnnot()) {
                     aFields.forEach(function(field) {
                         field.SetButtonPosition(bValue);
                     });
@@ -624,8 +757,9 @@
             }
         },
         get() {
-            if (this.field.IsAnnot()) {
-                return this.field.GetButtonPosition();
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return oField.GetButtonPosition();
             }
             else {
                 throw Error("InvalidGetError: Get not possible, invalid or unknown.");
@@ -639,16 +773,16 @@
      * Proportionally:      scaleHow.proportional
      * Non-proportionally:  scaleHow.anamorphic
      * @param {number}
-	 * @memberof ApiTextField
+	 * @memberof ApiPushButtonField
 	 * @typeofeditors ["PDF"]
 	 */
-    Object.defineProperty(ApiTextField.prototype, "buttonScaleHow", {
+    Object.defineProperty(ApiPushButtonField.prototype, "buttonScaleHow", {
         set(nType) {
             if (typeof(nType) == "number") {
                 nType = Math.round(nType);
-                let aFields = this.field.GetDocument().GetField(this.name);
+                let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-                if (aFields[0].IsAnnot()) {
+                if (aFields[0] && aFields[0].IsAnnot()) {
                     aFields.forEach(function(field) {
                         field.SetScaleHow(nType);
                     });
@@ -662,8 +796,9 @@
             }
         },
         get() {
-            if (this.field.IsAnnot()) {
-                return this.field.GetScaleHow();
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return oField.GetScaleHow();
             }
             else {
                 throw Error("InvalidGetError: Get not possible, invalid or unknown.");
@@ -679,16 +814,16 @@
      * If icon is too big:      scaleWhen.tooBig
      * If icon is too small:    scaleWhen.tooSmall
      * @param {number} - scaleHow.proportional or scaleHow.anamorphic
-	 * @memberof ApiTextField
+	 * @memberof ApiPushButtonField
 	 * @typeofeditors ["PDF"]
 	 */
-    Object.defineProperty(ApiTextField.prototype, "buttonScaleWhen", {
+    Object.defineProperty(ApiPushButtonField.prototype, "buttonScaleWhen", {
         set(nType) {
             if (typeof(nType) == "number") {
                 nType = Math.round(nType);
-                let aFields = this.field.GetDocument().GetField(this.name);
+                let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-                if (aFields[0].IsAnnot()) {
+                if (aFields[0] && aFields[0].IsAnnot()) {
                     aFields.forEach(function(field) {
                         field.SetScaleWhen(nType);
                     });
@@ -702,8 +837,53 @@
             }
         },
         get() {
-            if (this.field.IsAnnot()) {
-                return this.field.GetScaleWhen();
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return oField.GetScaleWhen();
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
+
+    /**
+	 * Defines how a button reacts when a user clicks it. The four highlight modes supported are:
+	 * none — No visual indication that the button has been clicked.
+	 * invert — The region encompassing the button’s rectangle inverts momentarily.
+	 * push — The down face for the button (if any) is displayed momentarily.
+	 * outline — The border of the rectangle inverts momentarily.
+	 * The convenience highlight object defines each state, as follows:
+     * none - highlight.n
+     * invert - highlight.i
+     * push - highlight.p
+     * outline - highlight.o
+	 * @memberof ApiPushButtonField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiPushButtonField.prototype, "highlight", {
+        set(sType) {
+            if (typeof(sType) == "string" && highlight.includes(sType)) {
+                sType = Math.round(sType);
+                let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+
+                if (aFields[0] && aFields[0].IsAnnot()) {
+                    aFields.forEach(function(field) {
+                        field.SetHighlight(private_GetIntHighlight(sType));
+                    });
+                }
+                else {
+                    throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+                }
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+            }
+        },
+        get() {
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return private_GetStrHighlight(oField.GetHighlight());
             }
             else {
                 throw Error("InvalidGetError: Get not possible, invalid or unknown.");
@@ -712,35 +892,6 @@
 	});
 
     Object.defineProperties(ApiPushButtonField.prototype, {
-        "buttonScaleHow": {
-            set(nValue) {
-                if (Object.values(scaleHow).includes(nValue))
-                    this._buttonScaleHow = nValue;
-            },
-            get() {
-                return this._buttonScaleHow;
-            }
-                
-        },
-        "buttonScaleWhen": {
-            set(nValue) {
-                if (Object.values(scaleWhen).includes(nValue))
-                    this._buttonScaleWhen = nValue;
-            },
-            get() {
-                return this._buttonScaleWhen;
-            }
-                
-        },
-        "highlight": {
-            set(sValue) {
-                if (Object.values(highlight).includes(sValue))
-                    this._highlight = sValue;
-            },
-            get() {
-                return this._highlight;
-            }
-        },
         "textFont": {
             set(sValue) {
                 if (typeof(sValue) == "string" && sValue !== "")
@@ -768,28 +919,56 @@
     
     ApiBaseCheckBoxField.prototype = Object.create(ApiBaseField.prototype);
 	ApiBaseCheckBoxField.prototype.constructor = ApiBaseCheckBoxField;
-    Object.defineProperties(ApiBaseCheckBoxField.prototype, {
-        "exportValues": {
-            set(arrValues) {
-                for (let i = 0; i < arrValues.length; i++)
+
+    /**
+	 * An array of strings representing the export values for the field. The array has as many elements as there are annotations
+	 * in the field. The elements are mapped to the annotations in the order of creation (unaffected by tab-order).
+	 * For radio button fields, this property is required to make the field work properly as a group. The button that is checked at any time gives its value to the field as a whole.
+	 * For check box fields, unless an export value is specified, “Yes” (or the corresponding localized string) is the default when the field is checked. “Off” is the default when the field is unchecked (the same as for a radio button field when none of its buttons are checked).
+	 * @memberof ApiBaseCheckBoxField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiBaseCheckBoxField.prototype, "exportValues", {
+        set(arrValues) {
+            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+
+            if (aFields[0] && aFields[0].IsAnnot()) {
+                for (let i = 0; i < arrValues.length; i++) {
                     if (typeof(arrValues[i]) !== "string")
                         arrValues[i] = String(arrValues[i]);
-                    else if (arrValues[i] === "")
-                        arrValues[i] = "Yes";
-
-                let aFields = this._doc.GetFields(this.name);
-                for (var i = 0; i < aFields.length; i++) {
-                    aFields[i]._exportValues = arrValues;
-                    if (arrValues[i])
-                        aFields[i]._exportValue = arrValues[i];
-                    else
-                        aFields[i]._exportValue = "Yes";
                 }
-            },
-            get() {
-                return this._exportValues;
+
+                for (let i = 0; i < aFields.length; i++) {
+                    if (arrValues[i] != "" && arrValues[i] != undefined) {
+                        aFields[i].SetExportValue(arrValues[i]);
+                        if (aFields[i].GetExportValue() == this.field.GetApiValue())
+                            aFields[i].SetChecked(true);
+                        else
+                            aFields[i].SetChecked(false);
+                    }
+                }
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
+        get() {
+            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+            if (aFields[0] && aFields[0].IsAnnot()) {
+                let aExpValues = [];
+                for (let i = 0; i < aFields.length; i++) {
+                    aExpValues.push(aFields[i].GetExportValue())
+                }
+
+                return aExpValues;
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
+
+    Object.defineProperties(ApiBaseCheckBoxField.prototype, {
         "style": {
             set(sStyle) {
                 if (Object.values(style).includes(sStyle))
@@ -850,7 +1029,7 @@
                     return;
 
                 let aFields = this.field.GetDocument().GetFields(this.name);
-                if (this._exportValues.includes(sValue)) {
+                if (this.exportValues.includes(sValue)) {
                     aFields.forEach(function(field) {
                         field._value = sValue;
                     });
@@ -955,9 +1134,9 @@
             if (Object.values(ALIGN_TYPE).includes(sValue) == false)
                 return;
 
-            let aFields = this.field.GetDocument().GetField(this.name);
+            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-            if (aFields[0].IsAnnot()) {
+            if (aFields[0] && aFields[0].IsAnnot()) {
                 var nJcType = private_GetIntAlign(sValue);
                 aFields.forEach(function(field) {
                     field.SetAlign(nJcType);
@@ -968,8 +1147,9 @@
             }
         },
         get() {
-            if (this.field.IsAnnot()) {
-                return private_GetStrAlign(this.field.GetAlign());
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return private_GetStrAlign(oField.GetAlign());
             }
             else {
                 throw Error("InvalidGetError: Get not possible, invalid or unknown.");
@@ -977,95 +1157,204 @@
         }
 	});
 
-    Object.defineProperties(ApiTextField.prototype, {
-       
-        "calcOrderIndex": {
-            set(nValue) {
-                if (typeof(nValue) == "number") {
-                    let aFields = this._doc.GetFields(this.name);
-                    aFields.forEach(function(field) {
-                        field._calcOrderIndex = nValue;
-                    });
-                }
-            },
-            get() {
-                return this._calcOrderIndex;
+    /**
+	 * Changes the calculation order of fields in the document. When a computable text or combo box field is added to a
+	 * document, the field’s name is appended to the calculation order array. The calculation order array determines in what
+	 * order the fields are calculated. The calcOrderIndex property works similarly to the Calculate tab used by the Acrobat
+	 * Form tool.
+	 * @memberof ApiTextField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiTextField.prototype, "calcOrderIndex", {
+        set(nValue) {
+            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+
+            if (aFields[0] && aFields[0].IsAnnot()) {
+                aFields[0].SetCalcOrderIndex(nValue);
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        "charLimit": {
-            set(nValue) {
-                let aFields = this.field.GetDocument().GetFields(this.name);
+        get() {
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return oField.GetCalcOrderIndex();
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
 
+    /**
+	 * Limits the number of characters that a user can type into a text field.
+	 * @memberof ApiTextField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiTextField.prototype, "charLimit", {
+        set(nValue) {
+            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+
+            if (aFields[0] && aFields[0].IsAnnot()) {
                 aFields.forEach(function(field) {
                     field.SetCharLimit(nValue);
                 });
-            },
-            get() {
-                return this.field.GetCharLimit();
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        "comb": {
-            set(bValue) {
-                if (typeof(bValue) != "boolean")
-                    return;
+        get() {
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return oField.GetCharLimit();
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
 
-                let aFields = this.field.GetDocument().GetFields(this.name);
+    /**
+	 * If set to true, the field background is drawn as series of boxes (one for each character in the value of the field) and each
+	 * character of the content is drawn within those boxes. The number of boxes drawn is determined from the charLimit
+	 * property.
+	 * It applies only to text fields. The setter will also raise if any of the following field properties are also set multiline,
+	 * password, and fileSelect. A side-effect of setting this property is that the doNotScroll property is also set.
+	 * @memberof ApiTextField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiTextField.prototype, "comb", {
+        set(bValue) {
+            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+
+            if (aFields[0] && aFields[0].IsAnnot()) {
                 aFields.forEach(function(field) {
                     field.SetComb(bValue);
                 });
-            },
-            get() {
-                return this.field.IsComb();
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
-        "doNotScroll": {
-            set(bValue) {
-                if (typeof(bValue) !== "boolean") {
-                    return;
-                }
+        get() {
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return oField.IsComb();
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
 
-                let aFields = this._doc.GetFields(this.name);
+    /**
+	 * If true, the text field does not scroll and the user, therefore, is limited by the rectangular region designed for the field.
+	 * Setting this property to true or false corresponds to checking or unchecking the Scroll Long Text field in the Options
+	 * tab of the field.
+	 * @memberof ApiTextField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiTextField.prototype, "doNotScroll", {
+        set(bValue) {
+            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+
+            if (aFields[0] && aFields[0].IsAnnot()) {
                 aFields.forEach(function(field) {
-                    field._doNotScroll = bValue;
-                    if (editor.getDocumentRenderer().activeForm == field) {
-                        if (bValue == true)
-                            editor.getDocumentRenderer().activeForm.UpdateScroll(false, false);
-                        else
-                            editor.getDocumentRenderer().activeForm.UpdateScroll();
-                    }
+                    field.SetDoNotScroll(bValue);
                 });
-            },
-            get() {
-                return this._doNotScroll;
-            }
-        },
-        "doNotSpellCheck": {
-            set(bValue) {
-                if (typeof(bValue) === "boolean") {
-                    let aFields = this._doc.GetFields(this.name);
-                    aFields.forEach(function(field) {
-                        field._doNotSpellCheck = bValue;
-                    });
-                }
-            },
-            get() {
-                return this._doNotSpellCheckl;
-            }
-        },
-        "fileSelect": {
-            set(bValue) {
-                if (typeof(bValue) != "boolean")
-                    return;
 
-                let aFields = this._doc.GetFields(this.name);
+                if (editor.getDocumentRenderer().activeForm == aFields[0]) {
+                    if (bValue == true)
+                        editor.getDocumentRenderer().activeForm.UpdateScroll(false, false);
+                    else
+                        editor.getDocumentRenderer().activeForm.UpdateScroll();
+                }
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+            }
+        },
+        get() {
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return oField.GetDoNotScroll();
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+    });
+
+    /**
+	 * If true, spell checking is not performed on this editable text field. Setting this property to true or false corresponds
+	 * to unchecking or checking the Check Spelling attribute in the Options tab of the Field Properties dialog box.
+	 * @memberof ApiTextField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiTextField.prototype, "doNotSpellCheck", {
+        set(bValue) {
+            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+
+            if (aFields[0] && aFields[0].IsAnnot()) {
+                aFields.forEach(function(field) {
+                    field.SetDoNotSpellCheck(bValue);
+                });
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+            }
+        },
+        get() {
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return oField.IsDoNotSpellCheck();
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+    });
+
+    /**
+	 * If true, sets the file-select flag in the Options tab of the text field (Field is Used for File Selection). This indicates that the
+	 * value of the field represents a path of a file whose contents may be submitted with the form.
+	 * The path may be entered directly into the field by the user, or the user can browse for the file. (See the
+	 * browseForFileToSubmit method.)
+	 * Note: The file select flag is mutually exclusive with the multiline, charLimit, password, and defaultValue
+	 * properties. Also, on the Mac OS platform, when setting the file select flag, the field gets treated as read-only.
+	 * Therefore, the user must browse for the file to enter into the field. (See browseForFileToSubmit.)
+	 * This property can only be set during a batch or console event. See Privileged versus non-privileged context for
+	 * details. The event object contains a discussion of JavaScript events.
+	 * @memberof ApiTextField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiTextField.prototype, "fileSelect", {
+        set(bValue) {
+            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+
+            if (aFields[0] && aFields[0].IsAnnot()) {
                 aFields.forEach(function(field) {
                     field.SetFileSelect(bValue);
                 });
-            },
-            get() {
-                return this._fileSelect;
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
+        get() {
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return oField.GetFileSelect();
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+    });
+
+    Object.defineProperties(ApiTextField.prototype, {
         "multiline": {
             set(bValue) {
                 if (typeof(bValue) != "boolean")
@@ -1180,14 +1469,6 @@
                 return isNumber ? parseFloat(value) : value;
             }
         },
-        "defaultValue": {
-            set(value) {
-                this.field._defaultValue = value;
-            },
-            get() {
-                return this.field._defaultValue = value;
-            }
-        }
     });
     
     function ApiBaseListField(oField)
@@ -1196,20 +1477,40 @@
     }
     ApiBaseListField.prototype = Object.create(ApiBaseField.prototype);
 	ApiBaseListField.prototype.constructor = ApiBaseListField;
-    Object.defineProperties(ApiBaseListField.prototype, {
-        "commitOnSelChange": {
-            set(bValue) {
-                if (typeof(bValue) == "boolean") {
-                    let aFields = this._doc.GetFields(this.name);
-                    aFields.forEach(function(field) {
-                        field.SetCommitOnSelChange(bValue);
-                    })
-                }
-            },
-            get() {
-                return this._commitOnSelChange;
+
+    /**
+	 * Controls whether a field value is committed after a selection change:
+	 * If true, the field value is committed immediately when the selection is made.
+	 * If false, the user can change the selection multiple times without committing the field value. The value is
+	 * committed only when the field loses focus, that is, when the user clicks outside the field.
+	 * @memberof ApiBaseListField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiBaseListField.prototype, "commitOnSelChange", {
+        set(bValue) {
+            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+
+            if (aFields[0] && aFields[0].IsAnnot()) {
+                aFields.forEach(function(field) {
+                    field.SetCommitOnSelChange(bValue);
+                });
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
+        get() {
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return oField.GetCommitOnSelChange();
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
+
+    Object.defineProperties(ApiBaseListField.prototype, {
         "numItems": {
             get() {
                 return this._options.length;
@@ -1256,62 +1557,104 @@
     };
     ApiComboBoxField.prototype = Object.create(ApiBaseListField.prototype);
 	ApiComboBoxField.prototype.constructor = ApiComboBoxField;
-    Object.defineProperties(ApiComboBoxField.prototype, {
-        "calcOrderIndex": {
-            set(nValue) {
-                if (typeof(nValue) == "number") {
-                    let aFields = this._doc.GetFields(this.name);
-                    aFields.forEach(function(field) {
-                        field._calcOrderIndex = nValue;
-                    });
-                }
-            },
-            get() {
-                return this._calcOrderIndex;
-            }
-        },
-        "doNotSpellCheck": {
-            set(bValue) {
-                if (typeof(bValue) === "boolean") {
-                    let aFields = this._doc.GetFields(this.name);
-                    aFields.forEach(function(field) {
-                        field.SetDoNotSpellCheck(bValue);
-                    });
-                }
-            },
-            get() {
-                return this._doNotSpellCheckl;
-            }
-        },
-        "editable": {
-            set(bValue) {
-                if (typeof(bValue) === "boolean") {
-                    let aFields = this._doc.GetFields(this.name);
-                    aFields.forEach(function(field) {
-                        this.SetEditable(bValue);
-                    });
-                }
-            },
-            get() {
-                return this._editable;
-            }
-        },
-        "currentValueIndices": {
-            set(value) {
-                if (typeof(value) === "number" && this.getItemAt(value, false) !== undefined) {
-                    let aFields = this._doc.GetFields(this.name);
-                    aFields.forEach(function(field) {
-                        field._currentValueIndices = value;
-                    });
 
-                    this.SelectOption(value);
-                    this.Commit();
-                }
-            },
-            get() {
-                return this.field._currentValueIndices;
+    /**
+	 * Changes the calculation order of fields in the document. When a computable text or combo box field is added to a
+	 * document, the field’s name is appended to the calculation order array. The calculation order array determines in what
+	 * order the fields are calculated. The calcOrderIndex property works similarly to the Calculate tab used by the Acrobat
+	 * Form tool.
+	 * @memberof ApiComboBoxField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiComboBoxField.prototype, "calcOrderIndex", {
+        set(nValue) {
+            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+
+            if (aFields[0] && aFields[0].IsAnnot()) {
+                aFields[0].SetCalcOrderIndex(nValue);
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
             }
         },
+        get() {
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return oField.GetCalcOrderIndex();
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
+
+    /**
+	 * Reads and writes value index of a combo box.
+	 * @memberof ApiComboBoxField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiComboBoxField.prototype, "currentValueIndices", {
+        set(nValue) {
+            if (typeof(nValue) !== "number" || this.getItemAt(nValue, false) == undefined)
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+
+            let oDoc = this.field.GetDocument();
+            let oCalcInfo = oDoc.GetCalculateInfo();
+            let oSourceField = oCalcInfo.GetSourceField();
+            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+
+            if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.field.GetFullName() || aFields[0].IsAnnot() == false)
+                throw Error('InvalidSetError: Set not possible, invalid or unknown.');
+
+            aFields[0].SelectOption(nValue);
+            aFields[0].Commit();
+
+            if (oCalcInfo.IsInProgress() == false) {
+                oDoc.DoCalculateFields(this.field);
+                oDoc.AddFieldToCommit(this.field);
+                oDoc.CommitFields();
+            }
+        },
+        get() {
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return oField.GetCurIdxs(true);
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
+
+    /**
+	 * Controls whether a combo box is editable. If true, the user can type in a selection. If false, the user must choose one
+	 * of the provided selections.
+	 * @memberof ApiComboBoxField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiComboBoxField.prototype, "editable", {
+        set(bValue) {
+            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+
+            if (aFields[0] && aFields[0].IsAnnot()) {
+                aFields[0].SetEditable(bValue);
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+            }
+        },
+        get() {
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return oField.IsEditable();
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
+
+    Object.defineProperties(ApiComboBoxField.prototype, {
         "value": {
             set(value) {
                 let oDoc = this.field.GetDocument();
@@ -1319,7 +1662,7 @@
                 let oSourceField = oCalcInfo.GetSourceField();
 
                 if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.name)
-                    throw Error('InvalidSetError: Set not possible, invalid or unknown.');;
+                    throw Error('InvalidSetError: Set not possible, invalid or unknown.');
 
                 if (oDoc.isOnValidate)
                     return;
@@ -1352,6 +1695,36 @@
                 let value = this.field.GetApiValue();
                 let isNumber = !isNaN(value) && isFinite(value) && value != "";
                 return isNumber ? parseFloat(value) : value;
+            }
+        }
+    });
+
+    /**
+	 * If true, spell checking is not performed on this editable text field. Setting this property to true or false corresponds
+	 * to unchecking or checking the Check Spelling attribute in the Options tab of the Field Properties dialog box.
+	 * @memberof ApiComboBoxField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiComboBoxField.prototype, "doNotSpellCheck", {
+        set(bValue) {
+            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+
+            if (aFields[0] && aFields[0].IsAnnot()) {
+                aFields.forEach(function(field) {
+                    field.SetDoNotSpellCheck(bValue);
+                });
+            }
+            else {
+                throw Error("InvalidSetError: Set not possible, invalid or unknown.");
+            }
+        },
+        get() {
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return oField.IsDoNotSpellCheck();
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
             }
         }
     });
@@ -1403,6 +1776,76 @@
     
     ApiListBoxField.prototype = Object.create(ApiBaseListField.prototype);
 	ApiListBoxField.prototype.constructor = ApiListBoxField;
+
+    /**
+	 * Reads and writes single or multiply value index of a listbox.
+	 * @memberof ApiListBoxField
+	 * @typeofeditors ["PDF"]
+	 */
+    Object.defineProperty(ApiListBoxField.prototype, "currentValueIndices", {
+        set(value) {
+            let oDoc = this.field.GetDocument();
+            let oCalcInfo = oDoc.GetCalculateInfo();
+            let oSourceField = oCalcInfo.GetSourceField();
+            let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
+            let curValues = this.field.GetCurIdxs(true);
+
+            if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.field.GetFullName() || aFields[0].IsAnnot() == false)
+                throw Error('InvalidSetError: Set not possible, invalid or unknown.');
+
+            if (Array.isArray(value) && this.multipleSelection === true) {
+                let isValid = true;
+                for (let i = 0; i < value.length; i++) {
+                    if (typeof(value[i]) != "number" || this.getItemAt(value[i], false) === undefined) {
+                        isValid = false;
+                        break;
+                    }
+                }
+
+                if (isValid == false)
+                    throw Error('InvalidSetError: Set not possible, invalid or unknown.');
+
+                // снимаем выделение с тех, которые не присутсвуют в новых значениях (value)
+                for (let i = 0; i < curValues.length; i++) {
+                    if (value.includes(curValues[i]) == false) {
+                        this.UnselectOption(curValues[i]);
+                    }
+                }
+                
+                for (let i = 0; i < value.length; i++) {
+                    // добавляем выделение тем, которые не присутсвуют в текущем поле
+                    if (this.curValues.includes(value[i]) == false) {
+                        this.SelectOption(value[i], false);
+                    }
+                }
+
+                this.Commit();
+            }
+            else if (this.multipleSelection === false && typeof(value) === "number" && this.getItemAt(value, false) !== undefined) {
+                this.SelectOption(value, true);
+                this.Commit();
+            }
+            else
+                return;
+
+            aFields[0].Commit();
+            if (oCalcInfo.IsInProgress() == false) {
+                oDoc.DoCalculateFields(this.field);
+                oDoc.AddFieldToCommit(this.field);
+                oDoc.CommitFields();
+            }
+        },
+        get() {
+            let oField = this.field.GetDocument().GetField(this.field.GetFullName());
+            if (oField && oField.IsAnnot()) {
+                return oField.GetCurIdxs(true);
+            }
+            else {
+                throw Error("InvalidGetError: Get not possible, invalid or unknown.");
+            }
+        }
+	});
+
     Object.defineProperties(ApiListBoxField.prototype, {
         "multipleSelection": {
             set(bValue) {
@@ -1418,48 +1861,6 @@
             },
             get() {
                 return this._multipleSelection;
-            }
-        },
-        "currentValueIndices": {
-            set(value) {
-                if (Array.isArray(value) && this.multipleSelection === true)
-                {
-                    let isValid = true;
-                    for (let i = 0; i < value.length; i++) {
-                        if (typeof(value[i]) != "number" || this.getItemAt(value[i], false) === undefined) {
-                            isValid = false;
-                            break;
-                        }
-                    }
-
-                    if (isValid) {
-                        this._bAutoShiftContentView = true;
-
-                        // снимаем выделение с тех, которые не присутсвуютв новых значениях (value)
-                        for (let i = 0; i < this._currentValueIndices.length; i++) {
-                            if (value.includes(this._currentValueIndices[i]) == false) {
-                                this.UnselectOption(this._currentValueIndices[i]);
-                            }
-                        }
-                        
-                        for (let i = 0; i < value.length; i++) {
-                            // добавляем выделение тем, которые не присутсвуют в текущем поле
-                            if (this._currentValueIndices.includes(value[i]) == false) {
-                                this.SelectOption(value[i], false);
-                            }
-                        }
-                        this._currentValueIndices = value.sort();
-                        this.Commit();
-                    }
-                }
-                else if (this.multipleSelection === false && typeof(value) === "number" && this.getItemAt(value, false) !== undefined) {
-                    this._currentValueIndices = value;
-                    this.SelectOption(value, true);
-                    this.Commit();
-                }
-            },
-            get() {
-                return this.field._currentValueIndices;
             }
         },
         "value": {
@@ -1696,6 +2097,35 @@
         return undefined;
     }
 
+    function private_GetStrHighlight(nType) {
+        switch (nType) {
+            case AscPDF.BUTTON_HIGHLIGHT_TYPES.push:
+                return highlight["p"];
+            case AscPDF.BUTTON_HIGHLIGHT_TYPES.invert:
+                return highlight["i"];
+            case AscPDF.BUTTON_HIGHLIGHT_TYPES.outline:
+                return highlight["o"];
+            case AscPDF.BUTTON_HIGHLIGHT_TYPES.none:
+                return highlight["n"];
+        }
+
+        return undefined;
+    }
+
+    function private_GetIntHighlight(sType) {
+        switch (sType) {
+            case highlight["p"]:
+                return AscPDF.BUTTON_HIGHLIGHT_TYPES.push;
+            case highlight["i"]:
+                return AscPDF.BUTTON_HIGHLIGHT_TYPES.invert;
+            case highlight["o"]:
+                return AscPDF.BUTTON_HIGHLIGHT_TYPES.outline;
+            case highlight["n"]:
+                return AscPDF.BUTTON_HIGHLIGHT_TYPES.none;
+        }
+
+        return undefined;
+    }
     function private_GetIntBorderStyle(sType) {
         switch (sType) {
             case "solid":
@@ -1725,6 +2155,55 @@
                 return "underline";
             
         }
+    }
+
+    function private_getApiColor(oInternalColor) {
+        if (oInternalColor.length == 1)
+            return ["G", oInternalColor[0]]
+        else if (oInternalColor.length == 3)
+            return ["RGB", oInternalColor[0], oInternalColor[1], oInternalColor[2]];
+        else if (oInternalColor.length == 4)
+            return ["CMYK", oInternalColor[0], oInternalColor[1], oInternalColor[2], oInternalColor[3]];
+
+        return ["T"];
+    }
+
+    function private_correctApiColor(aApiColor) {
+        let [sColorSpace, ...aComponents] = aApiColor;
+
+        function correctComponent(component) {
+            if (typeof(component) != "number" || component < 0)
+                component = 0;
+            else if (component > 1)
+                component = 1;
+
+            return component;
+        }
+
+        if (sColorSpace == "T")
+            return ["T"];
+        if (sColorSpace == "RGB") {
+            aComponents[0] = correctComponent(aComponents[0]);
+            aComponents[1] = correctComponent(aComponents[1]);
+            aComponents[2] = correctComponent(aComponents[2]);
+
+            return ["RGB", aComponents[0], aComponents[1], aComponents[2]];
+        }
+        if (sColorSpace == "G") {
+            aComponents[0] = correctComponent[aComponents[0]];
+
+            return ["G", aComponents[0]];
+        }
+        if (sColorSpace == "CMYK") {
+            aComponents[0] = correctComponent(aComponents[0]);
+            aComponents[1] = correctComponent(aComponents[1]);
+            aComponents[2] = correctComponent(aComponents[2]);
+            aComponents[3] = correctComponent(aComponents[3]);
+
+            return ["CMYK", aComponents[0], aComponents[1], aComponents[2], aComponents[3]];
+        }
+
+        return ["T"];
     }
 
     if (!window["AscPDF"])

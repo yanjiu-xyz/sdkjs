@@ -855,8 +855,8 @@
 				}
 
 				// button
-				if (oFormInfo["positionCaption"] != null) {
-					oForm.SetButtonPosition(oFormInfo["positionCaption"]);
+				if (oFormInfo["position"] != null) {
+					oForm.SetButtonPosition(oFormInfo["position"]);
 				}
 				if (oFormInfo["caption"] != null && oForm["type"] == "button") {
 					oForm.SetCaption(oFormInfo["caption"]);
@@ -900,9 +900,9 @@
 				{
 					oForm.SetRadiosInUnison(Boolean(oFormInfo["radiosInUnison"]));
 				}
-				if (oFormInfo["NoToggleToOff"])
+				if (oFormInfo["NoToggleToOff"] != null && oFormInfo["type"] != AscPDF.FIELD_TYPES.button)
 				{
-					oForm.SetNoTogleToOff(Boolean(oFormInfo["NoToggleToOff"]));
+					oForm.SetNoToggleToOff(Boolean(oFormInfo["NoToggleToOff"]));
 				}
 				if (oFormInfo["style"] != null)
 				{
@@ -910,7 +910,7 @@
 				}
 
 				// common
-				if (oFormInfo["alignment"] != null && ["combobox", "text"].includes(oFormInfo["type"]))
+				if (oFormInfo["alignment"] != null && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oFormInfo["type"]))
 				{
 					oForm.SetAlign(oFormInfo["alignment"]);
 				}
@@ -922,7 +922,7 @@
 				{
 					oForm.SetDoNotScroll(Boolean(oFormInfo["doNotScroll"]));
 				}
-				if (oFormInfo["doNotSpellCheck"] != null && ["text", "combobox"].includes(oFormInfo["type"]))
+				if (oFormInfo["doNotSpellCheck"] != null && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(oFormInfo["type"]))
 				{
 					// to do
 					oForm.SetDoNotSpellCheck(Boolean(oFormInfo["doNotSpellCheck"]));
@@ -950,7 +950,7 @@
 					// to do
 					oForm.SetRequired(Boolean(oFormInfo["required"]));
 				}
-				if (oFormInfo["value"] != null && oForm.type != "button")
+				if (oFormInfo["value"] != null && oForm.GetType() != AscPDF.FIELD_TYPES.button)
 				{
 					oForm.SetValue(oFormInfo["value"]);
 				}
@@ -1049,16 +1049,6 @@
 
 			this.IsOpenFormsInProgress = false;
 			return;
-		};
-		this.onEndFormsActions = function() {
-            if (this.needRedraw == true) { // отключали отрисовку на скроле из ActionToGo, поэтому рисуем тут
-				this._paint();
-				this.needRedraw = false;
-			}
-            else {
-                this._paintForms();
-                this._paintFormsHighlight();
-            }
 		};
 		this.setZoom = function(value, isDisablePaint)
 		{
@@ -1487,12 +1477,12 @@
 			var cursorType;
 			if (oThis.activeForm)
 			{
-				switch (oThis.activeForm.type)
+				switch (oThis.activeForm.GetType())
 				{
-					case "text":
+					case AscPDF.FIELD_TYPES.text:
 						cursorType = "text";
 						break;
-					case "combobox":
+					case AscPDF.FIELD_TYPES.combobox:
 						cursorType = "text";
 						break;
 					default:
@@ -1716,7 +1706,7 @@
 					{
 						if (oThis.activeForm)
 						{
-							if (oThis.activeForm.type == "text" || oThis.activeForm.type == "combobox")
+							if (oThis.activeForm.GetType() == AscPDF.FIELD_TYPES.text || oThis.activeForm.GetType() == AscPDF.FIELD_TYPES.combobox)
 							{
 								oThis.activeForm.SelectionSetEnd(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
 								if (oThis.activeForm.content.IsSelectionEmpty() == false) {
@@ -1770,12 +1760,12 @@
 							cursorType = "pointer";
 						else if (mouseMoveFieldObject)
 						{
-							switch (mouseMoveFieldObject.type)
+							switch (mouseMoveFieldObject.GetType())
 							{
-								case "text":
+								case AscPDF.FIELD_TYPES.text:
 									cursorType = "text";
 									break;
-								case "combobox":
+								case AscPDF.FIELD_TYPES.combobox:
 									var pageObject = oThis.getPageByCoords(AscCommon.global_mouseEvent.X - oThis.x, AscCommon.global_mouseEvent.Y - oThis.y);
 									if (!pageObject)
 										return null;
@@ -1817,7 +1807,7 @@
 				{
 					if (oThis.activeForm)
 					{
-						if (oThis.activeForm.type == "text" || oThis.activeForm.type == "combobox")
+						if (oThis.activeForm.GetType() == AscPDF.FIELD_TYPES.text || oThis.activeForm.GetType() == AscPDF.FIELD_TYPES.combobox)
 						{
 							oThis.activeForm.SelectionSetEnd(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
 							oThis.Api.WordControl.m_oDrawingDocument.TargetEnd();
@@ -1867,12 +1857,12 @@
 						cursorType = "default";
 					else if (mouseMoveFieldObject)
 					{
-						switch (mouseMoveFieldObject.type)
+						switch (mouseMoveFieldObject.GetType())
 						{
-							case "text":
+							case AscPDF.FIELD_TYPES.text:
 								cursorType = "text";
 								break;
-							case "combobox":
+							case AscPDF.FIELD_TYPES.combobox:
 								let X = (AscCommon.global_mouseEvent.X - oThis.x) * AscCommon.AscBrowser.retinaPixelRatio;
 								   let Y = (AscCommon.global_mouseEvent.Y - oThis.y) * AscCommon.AscBrowser.retinaPixelRatio;
 								if (X >= mouseMoveFieldObject._markRect.x1 && X <= mouseMoveFieldObject._markRect.x2 && Y >= mouseMoveFieldObject._markRect.y1 && Y <= mouseMoveFieldObject._markRect.y2 && mouseMoveFieldObject._options.length != 0) {
@@ -2779,7 +2769,7 @@
 			}
 			else if ( e.KeyCode == 37 ) // Left Arrow
 			{
-				if (this.activeForm && (this.fieldFillingMode || this.activeForm.type == "combobox"))
+				if (this.activeForm && (this.fieldFillingMode || this.activeForm.GetType() == AscPDF.FIELD_TYPES.combobox))
 				{
 					// сбрасываем счетчик до появления курсора
 					if (true !== e.ShiftKey)
@@ -2818,12 +2808,12 @@
 			{
 				if (this.activeForm)
 				{
-					switch (this.activeForm.type)
+					switch (this.activeForm.GetType())
 					{
-						case "listbox":
+						case AscPDF.FIELD_TYPES.listbox:
 							this.activeForm.MoveSelectUp();
 							break;
-						case "text":
+						case AscPDF.FIELD_TYPES.text:
 							// сбрасываем счетчик до появления курсора
 							if (true !== e.ShiftKey)
 								oThis.Api.WordControl.m_oDrawingDocument.TargetStart();
@@ -2867,7 +2857,7 @@
 			}
 			else if ( e.KeyCode == 39 ) // Right Arrow
 			{	
-				if (this.activeForm && (this.fieldFillingMode || this.activeForm.type == "combobox"))
+				if (this.activeForm && (this.fieldFillingMode || this.activeForm.GetType() == AscPDF.FIELD_TYPES.combobox))
 				{
 					// сбрасываем счетчик до появления курсора
 					if (true !== e.ShiftKey)
@@ -2906,12 +2896,12 @@
 			{
 				if (this.activeForm)
 				{
-					switch (this.activeForm.type)
+					switch (this.activeForm.GetType())
 					{
-						case "listbox":
+						case AscPDF.FIELD_TYPES.listbox:
 							this.activeForm.MoveSelectDown();
 							break;
-						case "text":
+						case AscPDF.FIELD_TYPES.text:
 							// сбрасываем счетчик до появления курсора
 							if (true !== e.ShiftKey)
 								oThis.Api.WordControl.m_oDrawingDocument.TargetStart();
@@ -2977,7 +2967,7 @@
 			}
 			else if ( e.KeyCode == 65 && true === e.CtrlKey ) // Ctrl + A
 			{
-				if (this.activeForm && ["text", "combobox"].includes(this.activeForm.type))
+				if (this.activeForm && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(this.activeForm.GetType()))
 				{
 					this.activeForm.content.SelectAll();
 					if (this.activeForm.content.IsSelectionUse())
@@ -3147,7 +3137,7 @@
 					this.pagesInfo.pages[i].fields.forEach(function(field) {
 						// если форма не менялась, рисуем внешний вид из потока
 						if (field.IsNeedDrawFromStream() == true)
-							field.DrawOriginView();
+							field.DrawFromStream();
 					});
 				}
 			}
@@ -3160,7 +3150,7 @@
 		
 		if (this.activeForm && this.activeForm.UpdateScroll)
 			this.activeForm.UpdateScroll(true);
-		if (this.activeForm && ["combobox", "text"].includes(this.activeForm.type))
+		if (this.activeForm && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(this.activeForm.GetType()))
 			this.activeForm.content.RecalculateCurPos();
 	};
 	CHtmlPage.prototype._paintFormsHighlight = function()

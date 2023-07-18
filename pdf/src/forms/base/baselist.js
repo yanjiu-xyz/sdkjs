@@ -100,6 +100,9 @@
     CBaseListField.prototype.SetCommitOnSelChange = function(bValue) {
         this._commitOnSelChange = bValue;
     };
+    CBaseListField.prototype.GetCommitOnSelChange = function() {
+        return this._commitOnSelChange;
+    };
     CBaseListField.prototype.GetApiCurIdxs = function() {
         // значение здесь всегда обновлено после commit
         return this._currentValueIndices;

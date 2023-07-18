@@ -38,7 +38,7 @@
 	 */
     function CCheckBoxField(sName, nPage, aRect, oDoc)
     {
-        AscPDF.CBaseCheckBoxField.call(this, sName, AscPDF.FIELD_TYPE.checkbox, nPage, aRect, oDoc);
+        AscPDF.CBaseCheckBoxField.call(this, sName, AscPDF.FIELD_TYPES.checkbox, nPage, aRect, oDoc);
 
         this._chStyle   = AscPDF.CHECKBOX_STYLES.check;
         this._caption   = undefined;
@@ -46,46 +46,42 @@
     CCheckBoxField.prototype = Object.create(AscPDF.CBaseCheckBoxField.prototype);
 	CCheckBoxField.prototype.constructor = CCheckBoxField;
 
-    CCheckBoxField.prototype.onMouseDown = function() {
-        let oViewer = editor.getDocumentRenderer();
-        
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
-        if (oViewer.activeForm != this)
-            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
-
-        oViewer.activeForm = this;
-    };
-    CCheckBoxField.prototype.onMouseUp = function() {
-        let oThis = this;
-        this.SetNeedCommit(true);
-
-        this.CreateNewHistoryPoint();
-        if (this.IsChecked()) {
-            this.SetChecked(false);
-        }
-        else {
-            this.SetChecked(true);
-        }
-
-        this.Commit();
-    };
     /**
-	 * Applies value of this field to all field with the same name.
+	 * The value application logic for all fields with the same name has been changed for this field type.
+     * The method was left for compatibility.
 	 * @memberof CCheckBoxField
 	 * @typeofeditors ["PDF"]
 	 */
     CCheckBoxField.prototype.Commit = function() {
-        let oThis = this;
+        this.SetNeedCommit(false);
+    };
+
+    /**
+	 * Applies value of this field to all field with the same name
+     * Note: Uses after mouseUp action.
+	 * @memberof CCheckBoxField
+	 * @typeofeditors ["PDF"]
+	 */
+    CCheckBoxField.prototype.Commit2 = function() {
         let aFields = this._doc.GetFields(this.GetFullName());
-        TurnOffHistory();
+        let oThis = this;
 
         aFields.forEach(function(field) {
-            if (field == oThis) {
+            if (field == oThis)
                 return;
-            }
 
-            field.SetChecked(oThis.IsChecked());
-            field.AddToRedraw();
+            if (field.GetExportValue() != oThis.GetExportValue() && field.IsChecked() == true) {
+                field.SetChecked(false);
+                field.SetNeedRecalc(true);
+            }
+            else if (field.GetExportValue() == oThis.GetExportValue() && oThis.IsChecked() == false) {
+                field.SetChecked(false);
+                field.SetNeedRecalc(true);
+            }
+            else if (field.GetExportValue() == oThis.GetExportValue() && field.IsChecked() == false) {
+                field.SetChecked(true);
+                field.SetNeedRecalc(true);
+            }
         });
     };
 

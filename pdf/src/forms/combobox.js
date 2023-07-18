@@ -38,7 +38,7 @@
 	 */
     function CComboBoxField(sName, nPage, aRect, oDoc)
     {
-        AscPDF.CBaseListField.call(this, sName, AscPDF.FIELD_TYPE.combobox, nPage, aRect, oDoc);
+        AscPDF.CBaseListField.call(this, sName, AscPDF.FIELD_TYPES.combobox, nPage, aRect, oDoc);
 
         this._calcOrderIndex    = 0;
         this._doNotSpellCheck   = false;
@@ -352,9 +352,9 @@
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i] != this) {
 
-                this._calcOrderIndex    = aFields[i]._calcOrderIndex;
-                this._doNotSpellCheck   = aFields[i]._doNotSpellCheck;
-                this._editable          = aFields[i]._editable;
+                this.SetCalcOrderIndex(aFields[i].GetCalcOrderIndex());
+                this.SetDoNotSpellCheck(aFields[i].IsDoNotSpellCheck());
+                this.SetEditable(aFields[i].IsEditable());
 
                 let oPara = this.content.GetElement(0);
                 let oParaToCopy = aFields[i].content.GetElement(0);
@@ -372,7 +372,7 @@
     };
     CComboBoxField.prototype.EnterText = function(aChars, bForce)
     {
-        if (this._editable == false && !bForce)
+        if (this.IsEditable() == false && !bForce)
             return false;
 
         if (aChars.length > 0)
@@ -548,6 +548,9 @@
     CComboBoxField.prototype.SetEditable = function(bValue) {
         this._editable = bValue;
     };
+    CComboBoxField.prototype.IsEditable = function() {
+        return this._editable;
+    };
     CComboBoxField.prototype.SetOptions = function(aOpt) {
         let aOptToPush = [];
         for (let i = 0; i < aOpt.length; i++) {
@@ -582,11 +585,15 @@
     
 
     /**
-	 * Gets current index (can be not commited to all with the same name).
+	 * Gets current index.
 	 * @memberof CComboBoxField
+     * @param {boolean} [bApiValue=false] - if true -> returns api value (if false -> current value of this field)
 	 * @typeofeditors ["PDF"]
 	 */
-    CComboBoxField.prototype.GetCurIdxs = function() {
+    CComboBoxField.prototype.GetCurIdxs = function(bApiValue) {
+        if (bApiValue)
+            return this._currentValueIndices;
+
         let sValue = this.content.GetElement(0).GetText({ParaEndToSpace: false});
         for (let i = 0; i < this._options.length; i++) {
             if (Array.isArray(this._options[i])) {
@@ -619,6 +626,8 @@
     CComboBoxField.prototype.DoKeystrokeAction      = AscPDF.CTextField.prototype.DoKeystrokeAction;
     CComboBoxField.prototype.DoFormatAction         = AscPDF.CTextField.prototype.DoFormatAction;
     CComboBoxField.prototype.CalcDocPos             = AscPDF.CTextField.prototype.CalcDocPos;
+    CComboBoxField.prototype.GetCalcOrderIndex      = AscPDF.CTextField.prototype.GetCalcOrderIndex;
+    CComboBoxField.prototype.SetCalcOrderIndex      = AscPDF.CTextField.prototype.SetCalcOrderIndex;
 
 	window["AscPDF"].CComboBoxField = CComboBoxField;
 })();

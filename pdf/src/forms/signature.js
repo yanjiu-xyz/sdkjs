@@ -39,7 +39,7 @@
 	 */
     function CSignatureField(sName, nPage, aRect, oDoc)
     {
-        AscPDF.CBaseField.call(this, sName, AscPDF.FIELD_TYPE.signature, nPage, aRect, oDoc);
+        AscPDF.CBaseField.call(this, sName, AscPDF.FIELD_TYPES.signature, nPage, aRect, oDoc);
     };
 
     if (!window["AscPDF"])

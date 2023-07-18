@@ -43,20 +43,23 @@
         g: 228,
         b: 255
     }
+
     let BUTTON_PRESSED = {
         r: 153,
         g: 193,
         b: 218
     }
 
-    let FIELD_TYPE = {
-        button:         "button",
-        checkbox:       "checkbox",
-        combobox:       "combobox",
-        listbox:        "listbox",
-        radiobutton:    "radiobutton",
-        signature:      "signature",
-        text:           "text"
+    let FIELD_TYPES = {
+        unknown:        0,
+        button:         1,
+        radiobutton:    2,
+        checkbox:       3,
+        text:           4,
+        combobox:       5,
+        listbox:        6,
+        signature:      7
+        
     }
 
     let BORDER_TYPES = {
@@ -111,7 +114,7 @@
 
     // freeze objects
     Object.freeze(FIELDS_HIGHLIGHT);
-    Object.freeze(FIELD_TYPE);
+    Object.freeze(FIELD_TYPES);
     Object.freeze(ALIGN_TYPE);
     Object.freeze(FONT_STRETCH);
     Object.freeze(FONT_STYLE);
@@ -123,9 +126,9 @@
 	 * Class representing a base field class.
 	 * @constructor
     */
-    function CBaseField(sName, sType, nPage, aRect, oDoc)
+    function CBaseField(sName, nType, nPage, aRect, oDoc)
     {
-        this.type = sType;
+        this.type = nType;
 
         this._kids          = [];
         this._borderStyle   = BORDER_TYPES.solid;
@@ -197,6 +200,11 @@
         this._needRecalc            = true;
         this._wasChanged            = false; // была ли изменена форма
         this._bDrawFromStream       = false; // нужно ли рисовать из стрима
+        this._originView = {
+            normal:     null,
+            mouseDown:  null,
+            rollover:   null
+        }
 
         editor.getDocumentRenderer().ImageMap = {};
         editor.getDocumentRenderer().InitDocument = function() {return};
@@ -349,27 +357,27 @@
             let oAction;
             let aFields = [];
             switch (aActionsInfo[i]["S"]) {
-                case "JavaScript":
+                case AscPDF.ACTIONS_TYPES.JavaScript:
                     oAction = new AscPDF.CActionRunScript(aActionsInfo[i]["JS"]);
                     aActions.push(oAction);
                     oAction.SetField(this);
                     break;
-                case "ResetForm":
+                case AscPDF.ACTIONS_TYPES.ResetForm:
                     oAction = new AscPDF.CActionReset(aFields, aActionsInfo[i]["Fields"]);
                     aActions.push(oAction);
                     oAction.SetField(this);
                     break;
-                case "URI":
+                case AscPDF.ACTIONS_TYPES.URI:
                     oAction = new AscPDF.CActionURI(aActionsInfo[i]["URI"]);
                     aActions.push(oAction);
                     oAction.SetField(this);
                     break;
-                case "Hide":
+                case AscPDF.ACTIONS_TYPES.HideShow:
                     oAction = new AscPDF.CActionHideShow(Boolean(aActionsInfo[i]["H"]), aActionsInfo[i]["T"]);
                     aActions.push(oAction);
                     oAction.SetField(this);
                     break;
-                case "GoTo":
+                case AscPDF.ACTIONS_TYPES.GoTo:
                     let oRect = {
                         top:    aActionsInfo[i]["top"],
                         right:  aActionsInfo[i]["right"],
@@ -385,7 +393,7 @@
                     aActions.push(oAction);
                     oAction.SetField(this);
                     break;
-                case "Named":
+                case AscPDF.ACTIONS_TYPES.Named:
                     oAction = new AscPDF.CActionNamed(AscPDF.CActionNamed.GetInternalType(aActionsInfo[i]["N"]));
                     aActions.push(oAction);
                     oAction.SetField(this);
@@ -584,7 +592,7 @@
         let nHeight = (this._pagePos.h) * nScale;
         
         oCtx.globalAlpha = 0.8;
-        if (this.type == "radiobutton" && this._chStyle == AscPDF.CHECKBOX_STYLES.circle) {
+        if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this._chStyle == AscPDF.CHECKBOX_STYLES.circle) {
             oCtx.beginPath();
             oCtx.fillStyle = `rgb(${FIELDS_HIGHLIGHT.r}, ${FIELDS_HIGHLIGHT.g}, ${FIELDS_HIGHLIGHT.b})`;
             // выставляем в центр круга
@@ -595,13 +603,7 @@
             oCtx.fill();
             oCtx.closePath();
         }
-        else if (this.type == "button" && this._buttonPressed) {
-            oCtx.beginPath();
-            oCtx.fillStyle = `rgb(${BUTTON_PRESSED.r}, ${BUTTON_PRESSED.g}, ${BUTTON_PRESSED.b})`;
-            oCtx.fillRect(X, Y, nWidth, nHeight);
-            oCtx.closePath();
-        }
-        else if (this.type != "button"){
+        else if (this.GetType() != AscPDF.FIELD_TYPES.button){
             oCtx.beginPath();
             oCtx.fillStyle = `rgb(${FIELDS_HIGHLIGHT.r}, ${FIELDS_HIGHLIGHT.g}, ${FIELDS_HIGHLIGHT.b})`;
             oCtx.fillRect(X, Y, nWidth, nHeight);
@@ -613,9 +615,9 @@
         let aRect       = this.GetRect();
         let aOringRect  = this.GetOrigRect();
 
-        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
-        let nLineWidth  = aRect[0] / aOringRect[0] * nScale * this._lineWidth;
-        let oGraphicsPDF = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
+        let nScale          = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
+        let nLineWidth      = aRect[0] / aOringRect[0] * nScale * this._lineWidth;
+        let oGraphicsPDF    = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
 
         if (nLineWidth == 0) {
             return;
@@ -634,7 +636,7 @@
             oGraphicsPDF.SetStrokeStyle(`rgb(${color.r}, ${color.g}, ${color.b})`);
         }
 
-        if (this.type == "radiobutton" && this._chStyle == AscPDF.CHECKBOX_STYLES.circle) {
+        if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this._chStyle == AscPDF.CHECKBOX_STYLES.circle) {
             // выставляем в центр круга
             let centerX = X + nWidth / 2;
             let centerY = Y + nHeight / 2;
@@ -720,7 +722,6 @@
                     X += nLineWidth / 2;
                     nWidth  -= nLineWidth;
                     nHeight -= nLineWidth;
-
                     break;
                 case BORDER_TYPES.beveled:
                     Y += nLineWidth / 2;
@@ -907,7 +908,7 @@
         }
 
         // draw comb cells
-        if (this._borderColor != null && (this._borderStyle == BORDER_TYPES.solid || this._borderStyle == BORDER_TYPES.dashed) && (this.type == "text" && this._comb == true)) {
+        if (this._borderColor != null && (this._borderStyle == BORDER_TYPES.solid || this._borderStyle == BORDER_TYPES.dashed) && (this.GetType() == AscPDF.FIELD_TYPES.text && this.IsComb() == true)) {
             let nCombWidth = (nWidth / this._charLimit);
             let nIndentX = nCombWidth;
             
@@ -1015,6 +1016,7 @@
 
         if (oViewer.IsOpenFormsInProgress == false) {
             this._wasChanged = isChanged;
+            this._originView = null;
             this.SetDrawFromStream(!isChanged);
         }
     };
@@ -1025,6 +1027,7 @@
         return this._bDrawFromStream;
     };
     CBaseField.prototype.SetDrawFromStream = function(bFromStream) {
+        //return;
         this._bDrawFromStream = bFromStream;
     };
     CBaseField.prototype.SetDrawHighlight = function(bDraw) {
@@ -1043,13 +1046,33 @@
     CBaseField.prototype.GetType = function() {
         return this.type;
     };
+    CBaseField.prototype.GetStrType = function() {
+        switch (this.GetType()) {
+            case AscPDF.FIELD_TYPES.button:
+                return "button";
+            case AscPDF.FIELD_TYPES.checkbox:
+                return "checkbox";
+            case AscPDF.FIELD_TYPES.combobox:
+                return "combobox";
+            case AscPDF.FIELD_TYPES.listbox:
+                return "listbox";
+            case AscPDF.FIELD_TYPES.radiobutton:
+                return "radiobutton";
+            case AscPDF.FIELD_TYPES.signature:
+                return "signature";
+            case AscPDF.FIELD_TYPES.text:
+                return "text";
+            case AscPDF.FIELD_TYPES.unknown: 
+                return "unknown";
+        }
+    };
 
     CBaseField.prototype.SetReadOnly = function(bReadOnly) {
         this._readonly = bReadOnly;
     };
     
     CBaseField.prototype.SetRequired = function(bRequired) {
-        if (this.type != "button")
+        if (this.GetType() != AscPDF.FIELD_TYPES.button)
             this._required = bRequired;
     };
     CBaseField.prototype.SetBorderColor = function(aColor) {
@@ -1058,9 +1081,13 @@
     CBaseField.prototype.SetBackgroundColor = function(aColor) {
         this._fillColor = this._bgColor = aColor;
     };
+    CBaseField.prototype.GetBackgroundColor = function() {
+        return this._fillColor;
+    };
     CBaseField.prototype.SetHidden = function(bHidden) {
         if (this._hidden != bHidden) {
             this._hidden = bHidden;
+            this._display = !bHidden;
         }
     };
     CBaseField.prototype.IsHidden = function() {
@@ -1096,7 +1123,7 @@
         let oViewer = editor.getDocumentRenderer();
         let oGraphicsPDF = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
 
-        if (this._fillColor) {
+        if (this._fillColor && this._fillColor.length != 0) {
             let nScale = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
 
             let X       = this._pagePos.x * nScale;
@@ -1125,18 +1152,18 @@
         if (this.api)
             return this.api;
 
-        switch (this.type) {
-            case "text":
+        switch (this.GetType()) {
+            case AscPDF.FIELD_TYPES.text:
                 return new AscPDF.ApiTextField(this);
-            case "combobox":
+            case AscPDF.FIELD_TYPES.combobox:
                 return new AscPDF.ApiComboBoxField(this);
-            case "listbox":
+            case AscPDF.FIELD_TYPES.listbox:
                 return new AscPDF.ApiListBoxField(this);
-            case "checkbox":
+            case AscPDF.FIELD_TYPES.checkbox:
                 return new AscPDF.ApiCheckBoxField(this);
-            case "radiobutton":
+            case AscPDF.FIELD_TYPES.radiobutton:
                 return new AscPDF.ApiRadioButtonField(this);
-            case "button":
+            case AscPDF.FIELD_TYPES.button:
                 return new AscPDF.ApiPushButtonField(this);
         }
     };
@@ -1286,11 +1313,41 @@
         let oFile   = oViewer.file;
         
         let oApearanceInfo  = this.GetOriginViewInfo();
-        
-        if (this.originView && this.originView.width == oApearanceInfo["w"] && this.originView.height == oApearanceInfo["h"])
-            return this.originView;
+        let oSavedView, oApInfoTmp;
+        switch (nAPType) {
+            case APPEARANCE_TYPE.normal:
+                oApInfoTmp = oApearanceInfo["N"];
+                oSavedView = this._originView.normal;
+                break;
+            case APPEARANCE_TYPE.rollover:
+                if (oApearanceInfo["R"]) {
+                    oApInfoTmp = oApearanceInfo["R"]
+                    oSavedView = this._originView.rollover;
+                }
+                else {
+                    oApInfoTmp = oApearanceInfo["N"]
+                    oSavedView = this._originView.normal;
+                }
+                break;
+            case APPEARANCE_TYPE.mouseDown:
+                if (oApearanceInfo["D"]) {
+                    oApInfoTmp = oApearanceInfo["D"]
+                    oSavedView = this._originView.mouseDown;
+                }
+                else {
+                    oApInfoTmp = oApearanceInfo["N"]
+                    oSavedView = this._originView.normal;
+                }
+                break;
+            default:
+                oApInfoTmp = oApearanceInfo["N"];
+                oSavedView = this._originView.normal;
+                break;
+        }
 
-        let oApInfoTmp;
+        if (oSavedView && oSavedView.width == oApearanceInfo["w"] && oSavedView.height == oApearanceInfo["h"])
+            return oSavedView;
+        
         let canvas  = document.createElement("canvas");
         let nWidth  = oApearanceInfo["w"];
         let nHeight = oApearanceInfo["h"];
@@ -1301,21 +1358,6 @@
         canvas.x    = oApearanceInfo["x"];
         canvas.y    = oApearanceInfo["y"];
         
-        switch (nAPType) {
-            case APPEARANCE_TYPE.normal:
-                oApInfoTmp = oApearanceInfo["N"];
-                break;
-            case APPEARANCE_TYPE.rollover:
-                oApInfoTmp = oApearanceInfo["R"] ? oApearanceInfo["R"] : oApearanceInfo["N"];
-                break;
-            case APPEARANCE_TYPE.mouseDown:
-                oApInfoTmp = oApearanceInfo["D"] ? oApearanceInfo["D"] : oApearanceInfo["N"];
-                break;
-            default:
-                oApInfoTmp = oApearanceInfo["N"];
-                break;
-        }
-
         if (!oApInfoTmp)
             return null;
 
@@ -1339,7 +1381,31 @@
         
         oViewer.file.free(oApInfoTmp["retValue"]);
 
-        this.originView = canvas;
+        switch (nAPType) {
+            case APPEARANCE_TYPE.normal:
+                this._originView.normal = canvas;
+                break;
+            case APPEARANCE_TYPE.rollover:
+                if (oApearanceInfo["R"]) {
+                    this._originView.rollover = canvas;
+                }
+                else {
+                    this._originView.normal = canvas;
+                }
+                break;
+            case APPEARANCE_TYPE.mouseDown:
+                if (oApearanceInfo["D"]) {
+                    this._originView.mouseDown = canvas;
+                }
+                else {
+                    this._originView.normal = canvas;
+                }
+                break;
+            default:
+                this._originView.normal = canvas;
+                break;
+        }
+
         return canvas;
     };
     /**
@@ -1376,12 +1442,12 @@
         return null;
     };
 
-    CBaseField.prototype.DrawOriginView = function() {
+    CBaseField.prototype.DrawFromStream = function() {
         if (this.IsHidden() == true)
             return;
             
         let oViewer         = editor.getDocumentRenderer();
-        let originView      = this.GetOriginView();
+        let originView      = this.GetOriginView(this._buttonHovered ? AscPDF.APPEARANCE_TYPE.rollover : undefined);
         let oGraphicsPDF    = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
         let nScale          = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
         let aRect           = this.GetRect();
@@ -1400,7 +1466,7 @@
             let h = Math.round(((nHeight + 1) * nScale));
 
             oGraphicsPDF.DrawImage(originView, 0, 0, originView.width, originView.height, originView.x, originView.y, originView.width, originView.height);
-            if (this.type == "combobox")
+            if (this.GetType() == AscPDF.FIELD_TYPES.combobox)
                 this.DrawMarker();
         }
     };
@@ -1419,18 +1485,8 @@
         return null;
     };
 
-    CBaseField.prototype.GetApiTextColor = function() {
-        if (this._textColor.length == 1)
-            return ["G", this._textColor[0]]
-        else if (this._textColor.length == 3)
-            return ["RGB", this._textColor[0], this._textColor[1], this._textColor[2]];
-        else if (this._textColor.length == 4)
-            return ["CMYK", this._textColor[0], this._textColor[1], this._textColor[2], this._textColor[3]];
-
-        return ["T"];
-    };
     CBaseField.prototype.SetApiTextColor = function(aColor) {
-        if (["radiobutton", "checkbox"].includes(this.type))
+        if ([AscPDF.FIELD_TYPES.radiobutton, AscPDF.FIELD_TYPES.checkbox].includes(this.GetType()))
             return;
 
         let color = AscPDF.Api.Objects.color;
@@ -1473,6 +1529,9 @@
             oApiPara.SetColor(oRGB.r, oRGB.g, oRGB.b, false);
             oPara.RecalcCompiledPr(true);
         }
+    };
+    CBaseField.prototype.GetTextColor = function() {
+        return this._textColor;
     };
     /**
      * Is the field completely within the window of view.
@@ -1620,18 +1679,22 @@
     }
 
 
+    function invertRGB(oColor) {
+        // Calculate the inverted components
+        const invertedR = 255 - oColor.r;
+        const invertedG = 255 - oColor.g;
+        const invertedB = 255 - oColor.b;
+      
+        return {r: invertedR, g: invertedG, b: invertedB}
+      }
+
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
     
-	window["AscPDF"].FIELD_TYPE     = FIELD_TYPE;
-	window["AscPDF"].ALIGN_TYPE     = ALIGN_TYPE;
-	window["AscPDF"].BORDER_TYPES   = BORDER_TYPES;
-	
-    window["AscPDF"].BORDER_TYPES   = BORDER_TYPES;
-	window["AscPDF"].BORDER_TYPES   = BORDER_TYPES;
-	window["AscPDF"].BORDER_TYPES   = BORDER_TYPES;
-	window["AscPDF"].BORDER_TYPES   = BORDER_TYPES;
-	
+	window["AscPDF"].FIELD_TYPES        = FIELD_TYPES;
+	window["AscPDF"].ALIGN_TYPE         = ALIGN_TYPE;
+	window["AscPDF"].BORDER_TYPES       = BORDER_TYPES;
+    window["AscPDF"].APPEARANCE_TYPE    = APPEARANCE_TYPE;
     
 	window["AscPDF"].CBaseField = CBaseField;
 	window["AscPDF"].GetGlobalCoordsByPageCoords  = GetGlobalCoordsByPageCoords;

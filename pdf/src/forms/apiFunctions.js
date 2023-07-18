@@ -84,9 +84,9 @@
         let oTargetRun = oCurForm.contentFormat.GetElement(0).GetElement(0);
 
         let sCurValue;
-        if (oCurForm.type == "text")
+        if (oCurForm.GetType() == AscPDF.FIELD_TYPES.text)
             sCurValue = oCurForm.GetValue();
-        else if (oCurForm.type == "combobox") {
+        else if (oCurForm.GetType() == AscPDF.FIELD_TYPES.combobox) {
             let nCurIdx = oCurForm.GetCurIdxs();
             sCurValue = nCurIdx == -1 ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
         }
@@ -244,9 +244,9 @@
         let oTargetRun = oCurForm.contentFormat.GetElement(0).GetElement(0);
 
         let sCurValue;
-        if (oCurForm.type == "text")
+        if (oCurForm.GetType() == AscPDF.FIELD_TYPES.text)
             sCurValue = oCurForm.GetValue();
-        else if (oCurForm.type == "combobox") {
+        else if (oCurForm.GetType() == AscPDF.FIELD_TYPES.combobox) {
             let nCurIdx = oCurForm.GetCurIdxs();
             sCurValue = nCurIdx == -1 ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
         }
@@ -339,9 +339,9 @@
         let oTargetRun = oCurForm.contentFormat.GetElement(0).GetElement(0);
 
         let sCurValue;
-        if (oCurForm.type == "text")
+        if (oCurForm.GetType() == AscPDF.FIELD_TYPES.text)
             sCurValue = oCurForm.GetValue();
-        else if (oCurForm.type == "combobox") {
+        else if (oCurForm.GetType() == AscPDF.FIELD_TYPES.combobox) {
             let nCurIdx = oCurForm.GetCurIdxs();
             sCurValue = nCurIdx == -1 ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
         }
@@ -437,9 +437,9 @@
         oNumFormat.oNegativeFormat.bAddMinusIfNes = false;
         
         let sCurValue;
-        if (oForm.type == "text")
+        if (oForm.GetType() == AscPDF.FIELD_TYPES.text)
             sCurValue = oForm.GetValue();
-        else if (oForm.type == "combobox") {
+        else if (oForm.GetType() == AscPDF.FIELD_TYPES.combobox) {
             let nCurIdx = oForm.GetCurIdxs();
             sCurValue = nCurIdx == -1 ? oForm.GetValue() : oForm.GetFormApi().getItemAt(nCurIdx, false);
         }
@@ -571,9 +571,9 @@
         let oTargetRun = oForm.contentFormat.GetElement(0).GetElement(0);
 
         let sCurValue;
-        if (oForm.type == "text")
+        if (oForm.GetType() == AscPDF.FIELD_TYPES.text)
             sCurValue = oForm.GetValue();
-        else if (oForm.type == "combobox") {
+        else if (oForm.GetType() == AscPDF.FIELD_TYPES.combobox) {
             let nCurIdx = oForm.GetCurIdxs();
             sCurValue = nCurIdx == -1 ? oForm.GetValue() : oForm.api.getItemAt(nCurIdx, false);
         }
@@ -662,9 +662,9 @@
         oNumFormat.oNegativeFormat.bAddMinusIfNes = false;
         
         let sCurValue;
-        if (oForm.type == "text")
+        if (oForm.GetType() == AscPDF.FIELD_TYPES.text)
             sCurValue = oForm.GetValue();
-        else if (oForm.type == "combobox") {
+        else if (oForm.GetType() == AscPDF.FIELD_TYPES.combobox) {
             let nCurIdx = oForm.GetCurIdxs();
             sCurValue = nCurIdx == -1 ? oForm.GetValue() : oForm.api.getItemAt(nCurIdx, false);
         }
@@ -709,9 +709,9 @@
         let oCurForm = oDoc.event["target"].field;
         
         let sCurValue;
-        if (oCurForm.type == "text")
+        if (oCurForm.GetType() == AscPDF.FIELD_TYPES.text)
             sCurValue = oCurForm.GetValue();
-        else if (oCurForm.type == "combobox") {
+        else if (oCurForm.GetType() == AscPDF.FIELD_TYPES.combobox) {
             let nCurIdx = oCurForm.GetCurIdxs();
             sCurValue = nCurIdx == -1 ? oCurForm.GetValue() : oCurForm.api.getItemAt(nCurIdx, false);
         }
@@ -1003,7 +1003,7 @@
 
         let aValues = [];
         aFields.forEach(function(field) {
-            if (field.type == AscPDF.FIELD_TYPE.button)
+            if (field.GetType() == AscPDF.FIELD_TYPES.button)
                 return;
 
             let fieldValue = field.GetValue();

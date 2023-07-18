@@ -38,7 +38,7 @@
 	 */
     function CRadioButtonField(sName, nPage, aRect, oDoc)
     {
-        AscPDF.CBaseCheckBoxField.call(this, sName, AscPDF.FIELD_TYPE.radiobutton, nPage, aRect, oDoc);
+        AscPDF.CBaseCheckBoxField.call(this, sName, AscPDF.FIELD_TYPES.radiobutton, nPage, aRect, oDoc);
         
         this._radiosInUnison = false;
         this._noToggleToOff = true;
@@ -56,32 +56,7 @@
     CRadioButtonField.prototype.SyncField = function() {
         // to do
     };
-    CRadioButtonField.prototype.onMouseDown = function() {
-        let oViewer = editor.getDocumentRenderer();
-
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
-        if (oViewer.activeForm != this)
-            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
-        oViewer.activeForm = this;
-    };
-    CRadioButtonField.prototype.onMouseUp = function() {
-        this.CreateNewHistoryPoint();
-        if (this.IsChecked()) {
-            if (this._noToggleToOff == false) {
-                this.SetChecked(false);
-            }
-        }
-        else {
-            this.SetChecked(true);
-        }
-        
-        if (AscCommon.History.Is_LastPointEmpty())
-            AscCommon.History.Remove_LastPoint();
-        else {
-            this.SetNeedCommit(true);
-            this.Commit2();
-        }
-    };
+    
     /**
 	 * Updates all field with this field name.
 	 * @memberof CRadioButtonField
@@ -147,7 +122,7 @@
 	 * @typeofeditors ["PDF"]
 	 */
     CRadioButtonField.prototype.Commit2 = function() {
-        let aFields = this._doc.GetFields(this.GetFullName());
+        let aFields = this.GetDocument().GetFields(this.GetFullName());
         let oThis = this;
 
         if (false == this._radiosInUnison) {
@@ -162,17 +137,6 @@
             }); 
         }
         else {
-            if (this.IsChecked() == true) {
-                if (this._noToggleToOff == false) {
-                    this.SetChecked(false);
-                    this.SetNeedRecalc(true);
-                }
-            }
-            else {
-                this.SetChecked(true);
-                this.SetNeedRecalc(true);
-            }
-
             aFields.forEach(function(field) {
                 if (field == oThis)
                     return;
@@ -196,9 +160,6 @@
         }
     };
     
-    CRadioButtonField.prototype.SetNoTogleToOff = function(bValue) {
-        this._noToggleToOff = bValue;
-    };
     CRadioButtonField.prototype.SetRadiosInUnison = function(bValue) {
         this._radiosInUnison = bValue;
     };

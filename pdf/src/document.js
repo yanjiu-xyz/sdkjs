@@ -133,6 +133,17 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.GetParentsMap = function() {
         return this._parentsMap;
     };
+    CPDFDoc.prototype.OnEndFormsActions = function() {
+        let oViewer = editor.getDocumentRenderer();
+        if (oViewer.needRedraw == true) { // отключали отрисовку на скроле из ActionToGo, поэтому рисуем тут
+            oViewer._paint();
+            oViewer.needRedraw = false;
+        }
+        else {
+            oViewer._paintForms();
+            oViewer._paintFormsHighlight();
+        }
+    };
     CPDFDoc.prototype.FillFormsParents = function(aParentsInfo) {
         let oChilds = this.GetParentsMap();
         let oParents = {};
@@ -141,7 +152,7 @@ var CPresentation = CPresentation || function(){};
             let nIdx = aParentsInfo[i]["i"];
             let sType = oChilds[nIdx][0].GetType();
 
-            let oParent = private_createField(aParentsInfo[i]["name"], sType, undefined, undefined);
+            let oParent = private_createField(aParentsInfo[i]["name"], sType, undefined, undefined, this);
             if (aParentsInfo[i]["value"] != null)
                 oParent.SetApiValue(aParentsInfo[i]["value"]);
             if (aParentsInfo[i]["Parent"] != null)
@@ -175,6 +186,7 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.FillButtonsIconsOnOpen = function() {
         let oViewer = editor.getDocumentRenderer();
+        let oDoc = this;
 
         oViewer.IsOpenFormsInProgress = true;
         for (let i = 0; i < oViewer.pagesInfo.pages.length; i++) {
@@ -189,7 +201,9 @@ var CPresentation = CPresentation || function(){};
             if (aIconsInfo["View"] == null)
                 return;
                 
-            let aIconsMap = [];
+            let aIconsToLoad = [];
+            let oIconsMap = {};
+
             // load images
             for (let nIcon = 0; nIcon < aIconsInfo["View"].length; nIcon++) {
                 let canvas  = document.createElement("canvas");
@@ -220,34 +234,49 @@ var CPresentation = CPresentation || function(){};
                 
                 oFile.free(nRetValue);
 
-                aIconsMap.push({
+                aIconsToLoad.push({
                     Image: {
                         width: nWidth,
                         height: nHeight,
                     },
-                    src: canvas.toDataURL(),
-                    fields: []
-                })
+                    src: canvas.toDataURL()
+                });
 
                 for (let nField = 0; nField < aIconsInfo["MK"].length; nField++) {
-                    if (aIconsInfo["MK"][nField]["I"] == aIconsInfo["View"][nIcon]["j"])
-                        aIconsMap[aIconsMap.length - 1].fields.push(this.GetFieldBySourceIdx(aIconsInfo["MK"][nField]["i"]));
+                    if (aIconsInfo["MK"][nField]["I"] == aIconsInfo["View"][nIcon]["j"]) {
+                        aIconsInfo["MK"][nField]["I"] = aIconsToLoad[aIconsToLoad.length - 1];
+                    }
+                    else if (aIconsInfo["MK"][nField]["RI"] == aIconsInfo["View"][nIcon]["j"]) {
+                        aIconsInfo["MK"][nField]["RI"] = aIconsToLoad[aIconsToLoad.length - 1];
+                    }
+                    else if (aIconsInfo["MK"][nField]["IX"] == aIconsInfo["View"][nIcon]["j"]) {
+                        aIconsInfo["MK"][nField]["IX"] = aIconsToLoad[aIconsToLoad.length - 1];
+                    }
+                        //aIconsToLoad[aIconsToLoad.length - 1].fields.push(this.GetFieldBySourceIdx(aIconsInfo["MK"][nField]["i"]));
                 }
             }
 
-            editor.ImageLoader.LoadImagesWithCallback(aIconsMap.map(function(info) {
+            editor.ImageLoader.LoadImagesWithCallback(aIconsToLoad.map(function(info) {
                 return info.src;
             }), function() {
 
                 oViewer.IsOpenFormsInProgress = true;
-                for (let nInfo = 0; nInfo < aIconsMap.length; nInfo++) {
-                    for (let nField = 0; nField < aIconsMap[nInfo].fields.length; nField++) {
-                        aIconsMap[nInfo].fields[nField].Recalculate();
-                        aIconsMap[nInfo].fields[nField].AddImage(aIconsMap[nInfo]);
+                for (let nField = 0; nField < aIconsInfo["MK"].length; nField++) {
+                    let oField = oDoc.GetFieldBySourceIdx(aIconsInfo["MK"][nField]["i"]);
+
+                    oField.Recalculate();
+                    if (aIconsInfo["MK"][nField]["I"]) {
+                        oField.AddImage(aIconsInfo["MK"][nField]["I"]);
+                    }
+                    if (aIconsInfo["MK"][nField]["RI"]) {
+                        oField.AddImage(aIconsInfo["MK"][nField]["RI"], AscPDF.APPEARANCE_TYPE.rollover);
+                    }
+                    if (aIconsInfo["MK"][nField]["IX"]) {
+                        oField.AddImage(aIconsInfo["MK"][nField]["IX"], AscPDF.APPEARANCE_TYPE.mouseDown);
                     }
                 }
+
                 oViewer.IsOpenFormsInProgress = false;
-                oViewer._paintForms();
             });
         }
     };
@@ -307,7 +336,7 @@ var CPresentation = CPresentation || function(){};
                 isNeedRedraw = true;
 
                 let isValid = true;
-                if (["text", "combobox"].includes(oCurForm.type)) {
+                if ([AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oCurForm.GetType())) {
                     isValid = oCurForm.DoValidateAction(oCurForm.GetValue());
                 }
 
@@ -346,7 +375,7 @@ var CPresentation = CPresentation || function(){};
         
         oNextForm.SetDrawHighlight(false);
         
-        if (oNextForm.IsNeedDrawFromStream() == true && oNextForm.type != "button") {
+        if (oNextForm.IsNeedDrawFromStream() == true && oNextForm.GetType() != AscPDF.FIELD_TYPES.button) {
             isNeedRedraw = true;
             oNextForm.SetDrawFromStream(false);
             oNextForm.AddToRedraw();
@@ -355,9 +384,9 @@ var CPresentation = CPresentation || function(){};
         oNextForm.onFocus();
 
         let callBackAfterFocus = function() {
-            switch (oNextForm.type) {
-                case "text":
-                case "combobox":
+            switch (oNextForm.GetType()) {
+                case AscPDF.FIELD_TYPES.text:
+                case AscPDF.FIELD_TYPES.combobox:
                     oViewer.fieldFillingMode = true;
                     oViewer.Api.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
                     oViewer.Api.WordControl.m_oDrawingDocument.m_lCurrentPage = 0;
@@ -430,7 +459,7 @@ var CPresentation = CPresentation || function(){};
         oViewer.activeForm = oNextForm;
         oNextForm.SetDrawHighlight(false);
         
-        if (oNextForm.IsNeedDrawFromStream() == true && oNextForm.type != "button") {
+        if (oNextForm.IsNeedDrawFromStream() == true && oNextForm.GetType() != AscPDF.FIELD_TYPES.button) {
             isNeedRedraw = true;
             oNextForm.SetDrawFromStream(false);
             oNextForm.AddToRedraw();
@@ -439,9 +468,9 @@ var CPresentation = CPresentation || function(){};
         oNextForm.onFocus();
 
         let callBackAfterFocus = function() {
-            switch (oNextForm.type) {
-                case "text":
-                case "combobox":
+            switch (oNextForm.GetType()) {
+                case AscPDF.FIELD_TYPES.text:
+                case AscPDF.FIELD_TYPES.combobox:
                     oViewer.fieldFillingMode = true;
                     oViewer.Api.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
                     oViewer.Api.WordControl.m_oDrawingDocument.m_lCurrentPage = 0;
@@ -505,7 +534,7 @@ var CPresentation = CPresentation || function(){};
         let oViewer = editor.getDocumentRenderer();
         let oField = oViewer.activeForm;
 
-        if (["checkbox", "radiobutton"].includes(oField.type)) {
+        if ([AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(oField.GetType())) {
             oField.onMouseUp();
         }
         else {
@@ -521,7 +550,7 @@ var CPresentation = CPresentation || function(){};
                 oViewer.fieldFillingMode = false;
 
                 let isValid = true;
-                if (["text", "combobox"].includes(oField.type)) {
+                if ([AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oField.GetType())) {
                     isValid = oField.DoValidateAction(oField.GetValue());
                 }
                 if (isValid) {
@@ -562,7 +591,7 @@ var CPresentation = CPresentation || function(){};
         oActiveForm.SetDrawHighlight(true);
 
         // если чекбокс то выходим сразу
-        if (["checkbox", "radiobutton"].includes(oActiveForm.type)) {
+        if ([AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(oActiveForm.GetType())) {
             oActiveForm.Blur();
             
             if (oActionsQueue.IsInProgress() == false)
@@ -573,7 +602,7 @@ var CPresentation = CPresentation || function(){};
         
         if (oActiveForm.IsNeedCommit()) {
             let isValid = true;
-            if (["text", "combobox"].includes(oActiveForm.type)) {
+            if ([AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oActiveForm.GetType())) {
                 isValid = oActiveForm.DoValidateAction(oActiveForm.GetValue());
             }
 
@@ -610,7 +639,7 @@ var CPresentation = CPresentation || function(){};
                 oActiveForm.RevertContentViewToOriginal();
             }
             
-            if (["text", "combobox"].includes(oActiveForm.type)) {
+            if ([AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oActiveForm.GetType())) {
                 if (oActiveForm.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format)) {
                     oActiveForm.AddToRedraw();
                 }
@@ -633,19 +662,19 @@ var CPresentation = CPresentation || function(){};
         let oViewer         = editor.getDocumentRenderer();
         let oActionsQueue   = this.GetActionsQueue();
 
-        switch (oField.type)
+        switch (oField.GetType())
         {
-            case "text":
-            case "combobox":
+            case AscPDF.FIELD_TYPES.text:
+            case AscPDF.FIELD_TYPES.combobox:
                 oField.SetDrawHighlight(false);
                 oViewer._paintFormsHighlight();
                 oField.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, event);
                     
                 oViewer.onUpdateOverlay();
-                if (oField._editable != false)
+                if (oField.IsEditable() != false)
                     oViewer.fieldFillingMode = true;
                 break;
-            case "listbox":
+            case AscPDF.FIELD_TYPES.listbox:
                 oField.SetDrawHighlight(false);
                 oViewer._paintFormsHighlight();
                 oField.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, event);
@@ -653,9 +682,9 @@ var CPresentation = CPresentation || function(){};
                 oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
                 oViewer.onUpdateOverlay();
                 break;
-            case "button":
-            case "radiobutton":
-            case "checkbox":
+            case AscPDF.FIELD_TYPES.button:
+            case AscPDF.FIELD_TYPES.radiobutton:
+            case AscPDF.FIELD_TYPES.checkbox:
                 oField.SetDrawHighlight(false);
                 oField.onMouseDown(event);
                 break;
@@ -670,7 +699,7 @@ var CPresentation = CPresentation || function(){};
         let oViewer         = editor.getDocumentRenderer();
         let oActionsQueue   = this.GetActionsQueue();
 
-        if (global_mouseEvent.ClickCount == 2 && (oField.type == "text" || oField.type == "combobox"))
+        if (global_mouseEvent.ClickCount == 2 && (oField.GetType() == AscPDF.FIELD_TYPES.text || oField.GetType() == AscPDF.FIELD_TYPES.combobox))
         {
             oField.content.SelectAll();
             if (oField.content.IsSelectionEmpty() == false)
@@ -686,10 +715,10 @@ var CPresentation = CPresentation || function(){};
             oViewer.onUpdateOverlay();
         }
 
-        switch (oField.type)
+        switch (oField.GetType())
         {
-            case "checkbox":
-            case "radiobutton":
+            case AscPDF.FIELD_TYPES.checkbox:
+            case AscPDF.FIELD_TYPES.radiobutton:
                 oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
                 
                 oField.onMouseUp();
@@ -729,15 +758,15 @@ var CPresentation = CPresentation || function(){};
                 // иначе для всех с таким именем (для checkbox и radiobutton всегда применяем для всех)
                 // так же применяем для всех, если добрались до точки, общей для всех форм, а не примененнёые изменения удаляем (для всех кроме checkbox и radiobutton)
                 if ((oViewer.activeForm == null || oCurPoint.Additional && oCurPoint.Additional.CanUnion === false || nCurPoindIdx == 0) || 
-                    (oParentForm.type == "checkbox" || oParentForm.type == "radiobutton")) {
+                    (oParentForm.GetType() == AscPDF.FIELD_TYPES.checkbox || oParentForm.GetType() == AscPDF.FIELD_TYPES.radiobutton)) {
                         oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd(); // убираем курсор
                         
-                        if (oParentForm.type == "listbox") {
+                        if (oParentForm.GetType() == AscPDF.FIELD_TYPES.listbox) {
                             oParentForm.Commit(null);
                         }
                         // для радиокнопок храним все изменения, т.к. значения не идентичны для каждой формы из группы
                         // восстанавлием все состояния из истории полностью, поэтому значение формы не нужно применять.
-                        else if ("radiobutton" != oParentForm.type)
+                        else if (AscPDF.FIELD_TYPES.radiobutton != oParentForm.GetType())
                             oParentForm.Commit();
 
                         // вызываем calculate actions
@@ -782,12 +811,12 @@ var CPresentation = CPresentation || function(){};
                 if (oViewer.activeForm == null || oCurPoint.Additional && oCurPoint.Additional.CanUnion === false) {
                     oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd(); // убираем курсор
                         
-                    if (oParentForm.type == "listbox") {
+                    if (oParentForm.GetType() == AscPDF.FIELD_TYPES.listbox) {
                         oParentForm.Commit(null);
                     }
                     // для радиокнопок храним все изменения, т.к. значения не идентичны для каждой формы из группы
                     // восстанавлием все состояния из истории полностью, поэтому значение формы не нужно применять.
-                    else if ("radiobutton" != oParentForm.type)
+                    else if (AscPDF.FIELD_TYPES.radiobutton != oParentForm.GetType())
                         oParentForm.Commit();
 
                     // вызываем calculate actions
@@ -945,7 +974,7 @@ var CPresentation = CPresentation || function(){};
 	 */
     CPDFDoc.prototype.AddField = function(cName, cFieldType, nPageNum, aCoords) {
         function checkValidParams(cFieldType, nPageNum, aCoords) {
-            if (Object.values(AscPDF.FIELD_TYPE).includes(cFieldType) == false)
+            if (Object.values(AscPDF.FIELD_TYPES).includes(cFieldType) == false)
                 return false;
             if (typeof(nPageNum) !== "number" || nPageNum < 0)
                 return false;
@@ -1015,7 +1044,7 @@ var CPresentation = CPresentation || function(){};
 
         let oExistsWidget = this.GetField(cName);
         // если есть виджет-поле с таким именем то не добавляем 
-        if (oExistsWidget && oExistsWidget.type != oField.type)
+        if (oExistsWidget && oExistsWidget.GetType() != oField.GetType())
             return null; // to do выдавать ошибку создания поля
 
         // получаем partial names
@@ -1359,7 +1388,7 @@ var CPresentation = CPresentation || function(){};
         }
         else {
             this.Stop();
-            editor.getDocumentRenderer().onEndFormsActions();
+            this.doc.OnEndFormsActions();
             this.Clear();
         }
     };
@@ -1367,28 +1396,28 @@ var CPresentation = CPresentation || function(){};
     function private_createField(cName, cFieldType, nPageNum, oCoords, oPdfDoc) {
         let oField;
         switch (cFieldType) {
-            case "button":
+            case AscPDF.FIELD_TYPES.button:
                 oField = new AscPDF.CPushButtonField(cName, nPageNum, oCoords, oPdfDoc);
                 break;
-            case "checkbox":
+            case AscPDF.FIELD_TYPES.checkbox:
                 oField = new AscPDF.CCheckBoxField(cName, nPageNum, oCoords, oPdfDoc);
                 break;
-            case "combobox":
+            case AscPDF.FIELD_TYPES.combobox:
                 oField = new AscPDF.CComboBoxField(cName, nPageNum, oCoords, oPdfDoc);
                 break;
-            case "listbox":
+            case AscPDF.FIELD_TYPES.listbox:
                 oField = new AscPDF.CListBoxField(cName, nPageNum, oCoords, oPdfDoc);
                 break;
-            case "radiobutton":
+            case AscPDF.FIELD_TYPES.radiobutton:
                 oField = new AscPDF.CRadioButtonField(cName, nPageNum, oCoords, oPdfDoc);
                 break;
-            case "signature":
+            case AscPDF.FIELD_TYPES.signature:
                 oField = null;
                 break;
-            case "text":
+            case AscPDF.FIELD_TYPES.text:
                 oField = new AscPDF.CTextField(cName, nPageNum, oCoords, oPdfDoc);
                 break;
-            case "": 
+            case AscPDF.FIELD_TYPES.unknown: 
                 oField = new AscPDF.CBaseField(cName, nPageNum, oCoords, oPdfDoc);
                 break;
         }

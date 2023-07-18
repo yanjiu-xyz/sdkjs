@@ -38,10 +38,9 @@
 	 */
     function CTextField(sName, nPage, aRect, oDoc)
     {
-        AscPDF.CBaseField.call(this, sName, AscPDF. FIELD_TYPE.text, nPage, aRect, oDoc);
+        AscPDF.CBaseField.call(this, sName, AscPDF. FIELD_TYPES.text, nPage, aRect, oDoc);
         
         this._alignment         = AscPDF.ALIGN_TYPE.left;
-        this._calcOrderIndex    = 0;
         this._charLimit         = 0; // to do
         this._comb              = false;
         this._defaultStyle      = Object.assign({}, {}); // to do (must not be fileSelect flag)
@@ -124,8 +123,14 @@
     CTextField.prototype.SetDoNotScroll = function(bNot) {
         this._doNotScroll = bNot;
     };
+    CTextField.prototype.GetDoNotScroll = function() {
+        return this._doNotScroll;
+    };
     CTextField.prototype.SetDoNotSpellCheck = function(bNot) {
         this._doNotSpellCheck = bNot;
+    };
+    CTextField.prototype.IsDoNotSpellCheck = function() {
+        return this._doNotSpellCheck;
     };
     CTextField.prototype.SetFileSelect = function(bFileSelect) {
         if (bFileSelect === true && this.IsMultiline() != true && this._charLimit === 0
@@ -199,6 +204,28 @@
         }
         else
             this.SetApiValue(sValue);
+    };
+    
+    CTextField.prototype.GetCalcOrderIndex = function() {
+        return this.field.GetDocument().GetCalculateInfo().names.indexOf(this.field.GetFullName());
+    };
+    CTextField.prototype.SetCalcOrderIndex = function(nIdx) {
+        let oCalcInfo = this.GetDocument().GetCalculateInfo();
+        let oCalcTrigget = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Calculate);
+        if (oCalcTrigget == null || nIdx < 0)
+            return false;
+
+        let nCurIdx = oCalcInfo.names.indexOf(this.GetFullName());
+        if (nCurIdx == nIdx)
+            return true;
+
+        oCalcInfo.names.splice(nCurIdx, 1);
+        if (nIdx > oCalcInfo.names.length)
+            oCalcInfo.names.splice(nIdx, 0, this.GetFullName());
+        else
+            oCalcInfo.names.push(this.GetFullName());
+
+        return true;
     };
 
     // /**
@@ -469,7 +496,7 @@
                 oThis.ScrollVertical(evt.scrollD, evt.maxScrollY);
             });
             oScroll.bind("mouseup", function(evt) {
-                if (oThis.type == "listbox")
+                if (oThis.GetType() == AscPDF.FIELD_TYPES.listbox)
                     oThis.ScrollVerticalEnd();
             });
 
@@ -1030,7 +1057,6 @@
         for (let i = 0; i < aFields.length; i++) {
             if (aFields[i] != this) {
                 this._alignment         = aFields[i]._alignment;
-                this._calcOrderIndex    = aFields[i]._calcOrderIndex;
                 this._charLimit         = aFields[i]._charLimit;
                 this._comb              = aFields[i]._comb;
                 this._doNotScroll       = aFields[i]._doNotScroll;

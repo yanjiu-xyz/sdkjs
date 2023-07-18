@@ -44,7 +44,7 @@
 	 */
     function CListBoxField(sName, nPage, aRect, oDoc)
     {
-        AscPDF.CBaseListField.call(this, sName, AscPDF.FIELD_TYPE.listbox, nPage, aRect, oDoc);
+        AscPDF.CBaseListField.call(this, sName, AscPDF.FIELD_TYPES.listbox, nPage, aRect, oDoc);
 
         this._multipleSelection = false;
 
@@ -565,7 +565,7 @@
                 oThis.ScrollVertical(evt.scrollD, evt.maxScrollY);
             });
             oScroll.bind("mouseup", function(evt) {
-                if (oThis.type == "listbox")
+                if (oThis.GetType() == AscPDF.FIELD_TYPES.listbox)
                     oThis.ScrollVerticalEnd();
             });
 
@@ -743,7 +743,10 @@
             }
         }
     };
-    CListBoxField.prototype.GetCurIdxs = function() {
+    CListBoxField.prototype.GetCurIdxs = function(bApiValue) {
+        if (bApiValue)
+            return this._currentValueIndices;
+            
         let oPara, oShd;
         if (this._multipleSelection) {
             let aIndexes = [];

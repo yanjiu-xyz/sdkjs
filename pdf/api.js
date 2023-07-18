@@ -187,7 +187,7 @@
 			return;
 		
 		let oField = this.DocumentRenderer.activeForm;
-		if (oField && (oField.type === "text" || (oField.type === "combobox" && oField._editable))) {
+		if (oField && (oField.GetType() === AscPDF.FIELD_TYPES.text || (oField.GetType() === AscPDF.FIELD_TYPES.combobox && oField.IsEditable()))) {
 			if (oField.content.IsSelectionUse()) {
 				oField.Remove(-1);
 				this.DocumentRenderer._paintForms();
@@ -205,7 +205,7 @@
 		if (text_data.length === 0)
 			return;
 		
-		if (oField && (oField.type === "text" || (oField.type === "combobox" && oField._editable))) {
+		if (oField && (oField.GetType() === AscPDF.FIELD_TYPES.text || (oField.GetType() === AscPDF.FIELD_TYPES.combobox && oField.IsEditable()))) {
 			let aChars = [];
 			for (let i = 0; i < text_data.length; i++)
 				aChars.push(text_data[i].charCodeAt(0));
