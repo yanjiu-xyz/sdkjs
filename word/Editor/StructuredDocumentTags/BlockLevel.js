@@ -948,7 +948,7 @@ CBlockLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurPa
 		return;
 	}
 
-	if (Asc.c_oAscSdtAppearance.Hidden === this.GetAppearance() || (this.LogicDocument && this.LogicDocument.IsForceHideContentControlTrack()))
+	if (this.IsHideContentControlTrack())
 	{
 		oDrawingDocument.OnDrawContentControl(null, nType);
 		return;

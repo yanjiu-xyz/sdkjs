@@ -905,6 +905,10 @@ CSdtBase.prototype.IsBuiltInUnique = function()
 {
 	return (this.Pr && this.Pr.DocPartObj && true === this.Pr.DocPartObj.Unique);
 };
+CSdtBase.prototype.GetBuiltInGallery = function()
+{
+	return (this.Pr && this.Pr.DocPartObj && this.Pr.DocPartObj.Gallery ? this.Pr.DocPartObj.Gallery : undefined)
+};
 CSdtBase.prototype.GetInnerText = function()
 {
 	return "";
@@ -1050,5 +1054,22 @@ CSdtBase.prototype.CanPlaceCursorInside = function()
 };
 CSdtBase.prototype.SkipFillingFormModeCheck = function(isSkip)
 {
+};
+/**
+ * Нужно ли рисовать рамку вокруг контрола
+ * @returns {boolean}
+ */
+CSdtBase.prototype.IsHideContentControlTrack = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsForceHideContentControlTrack())
+		return true;
+	
+	let gallery = this.Pr.GetDocPartGallery();
+	if (this.GetBuiltInGallery()
+		&& !this.IsBuiltInTableOfContents())
+		return true;
+	
+	return Asc.c_oAscSdtAppearance.Hidden === this.GetAppearance();
 };
 

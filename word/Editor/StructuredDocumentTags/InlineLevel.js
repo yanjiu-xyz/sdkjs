@@ -1168,7 +1168,7 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 		return;
 	}
 
-	if (Asc.c_oAscSdtAppearance.Hidden === this.GetAppearance() || this.Paragraph.LogicDocument.IsForceHideContentControlTrack())
+	if (this.IsHideContentControlTrack())
 	{
 		oDrawingDocument.OnDrawContentControl(null, nType);
 		return;

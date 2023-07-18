@@ -381,6 +381,10 @@ CSdtPr.prototype.IsBuiltInDocPart = function()
 
 	return false;
 };
+CSdtPr.prototype.GetDocPartGallery = function()
+{
+	return this.DocPartObj ? this.DocPartObj.Gallery : undefined;
+}
 
 function CContentControlPr(nType)
 {
