@@ -3057,6 +3057,7 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function(nW, nH)
 	let oParaDrawing = this.private_ConvertFormToFixed(nW, nH);
 	oParaDrawing.Set_PositionH(Asc.c_oAscRelativeFromH.Page, false, X, false);
 	oParaDrawing.Set_PositionV(Asc.c_oAscRelativeFromV.Page, false, Y, false);
+	oParaDrawing.Set_Distance(0, 0, 0, 0);
 	
 	var oRun = new ParaRun(oParagraph, false);
 	oRun.AddToContent(0, oParaDrawing);
