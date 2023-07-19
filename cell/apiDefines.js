@@ -573,13 +573,13 @@ var c_oAscPopUpSelectorType = {
 
   var c_oAscPageBreaksDisableType = {
     none: 0,
-  	all: 1,
+    all: 1,
     insertRemove: 2,
     reset: 3
   };
 
 
-	//----------------------------------------------------------export----------------------------------------------------
+  //----------------------------------------------------------export----------------------------------------------------
   window['AscCommonExcel'] = window['AscCommonExcel'] || {};
   window['AscCommonExcel'].c_oAscDrawDepOptions = c_oAscDrawDepOptions;
   window['AscCommonExcel'].c_oAscScrollType = c_oAscScrollType;
