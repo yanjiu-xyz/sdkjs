@@ -155,6 +155,9 @@ CInlineLevelSdt.prototype.Add = function(Item)
 		oNextForm.SetThisElementCurrentInParagraph();
 		oNextForm.MoveCursorToStartPos();
 	}
+	
+	if (!this.IsForm() && this.IsContentControlTemporary())
+		this.RemoveContentControlWrapper();
 };
 CInlineLevelSdt.prototype.Copy = function(isUseSelection, oPr)
 {
@@ -882,6 +885,12 @@ CInlineLevelSdt.prototype.Remove = function(nDirection, bOnAddText)
 		this.RemoveThisFromParent(true);
 		result = true;
 	}
+	else if (result
+		&& !this.IsForm()
+		&& this.IsContentControlTemporary())
+	{
+		this.RemoveContentControlWrapper();
+	}
 	else if (this.Is_Empty()
 		&& logicDocument
 		&& this.CanBeEdited()
@@ -1159,7 +1168,7 @@ CInlineLevelSdt.prototype.DrawContentControlsTrack = function(nType, X, Y, nCurP
 		return;
 	}
 
-	if (Asc.c_oAscSdtAppearance.Hidden === this.GetAppearance() || this.Paragraph.LogicDocument.IsForceHideContentControlTrack())
+	if (this.IsHideContentControlTrack())
 	{
 		oDrawingDocument.OnDrawContentControl(null, nType);
 		return;
@@ -1418,13 +1427,7 @@ CInlineLevelSdt.prototype.private_ReplacePlaceHolderWithContent = function(bMath
 
 	if (this.IsContentControlEquation())
 	{
-		let textPr = this.GetDefaultTextPr();
-		
-		var oParaMath = new ParaMath();
-		oParaMath.Root.Load_FromMenu(c_oAscMathType.Default_Text, this.GetParagraph(), textPr.Copy());
-		oParaMath.Root.Correct_Content(true);
-		oParaMath.ApplyTextPr(textPr.Copy(), undefined, true);
-		this.AddToContent(0, oParaMath);
+		this.ReplacePlaceholderEquation();
 	}
 	else
 	{
@@ -1441,6 +1444,22 @@ CInlineLevelSdt.prototype.private_ReplacePlaceHolderWithContent = function(bMath
 
 	if (this.IsContentControlTemporary())
 		this.RemoveContentControlWrapper();
+};
+CInlineLevelSdt.prototype.ReplacePlaceholderEquation = function()
+{
+	this.RemoveSelection();
+	this.MoveCursorToStartPos();
+	
+	let textPr = this.GetDefaultTextPr();
+	
+	let paraMath = new ParaMath();
+	paraMath.Root.Load_FromMenu(c_oAscMathType.Default_Text, this.GetParagraph(), textPr.Copy());
+	paraMath.Root.Correct_Content(true);
+	paraMath.ApplyTextPr(textPr.Copy(), undefined, true);
+	this.RemoveFromContent(0, this.GetElementsCount());
+	this.AddToContent(0, paraMath);
+	
+	return paraMath;
 };
 CInlineLevelSdt.prototype.private_ReplaceContentWithPlaceHolder = function(isSelect, isForceUpdate)
 {
@@ -3038,6 +3057,7 @@ CInlineLevelSdt.prototype.ConvertFormToFixed = function(nW, nH)
 	let oParaDrawing = this.private_ConvertFormToFixed(nW, nH);
 	oParaDrawing.Set_PositionH(Asc.c_oAscRelativeFromH.Page, false, X, false);
 	oParaDrawing.Set_PositionV(Asc.c_oAscRelativeFromV.Page, false, Y, false);
+	oParaDrawing.Set_Distance(0, 0, 0, 0);
 	
 	var oRun = new ParaRun(oParagraph, false);
 	oRun.AddToContent(0, oParaDrawing);
