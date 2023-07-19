@@ -3869,12 +3869,6 @@
 		scaleWithDoc =  scaleWithDoc === null || scaleWithDoc === true;
 		let printScale = scaleWithDoc ? _printScale : 1;
 
-		//посольку в данном случае printScale уже включен в zoom, то меняем printScale
-		const isPrintPreview = this.workbook.printPreviewState && this.workbook.printPreviewState.isStart();
-		if (isPrintPreview) {
-			printScale = scaleWithDoc ? 1 : 1 / _printScale;
-		}
-
 
 		const margins = this.model.PagePrintOptions.asc_getPageMargins();
 		const width = printPagesData.pageWidth;
@@ -3889,18 +3883,16 @@
 		const top = margins.header;
 		const bottom = margins.footer;
 
-
 		const footerStartPos = height - bottom;
 		let drawPortion = function(index) {
-			var portion = headerFooterParser.tokens[index];
+			let portion = headerFooterParser.tokens[index];
 			if(!portion) {
 				return;
 			}
 
 			const nAlign = window["AscCommonExcel"].CHeaderFooterEditorSection.prototype.getAlign.call(null, index);
             const aFragments = portion;
-
-			let maxWidth = width - left - right;
+			const maxWidth = (width - left - right) / printScale;
 
             const oShape = AscFormat.ExecuteNoHistory(function() {
 
@@ -3979,14 +3971,15 @@
                     }
                     oParagraph.AddToContent(nFragment, oParaRun);
                 }
-                oShape.setTransformParams(0, 0, maxWidth, 2000, 0, false, false);
+
+                oShape.setTransformParams(-1.6, 0, maxWidth + 3.2, 2000, 0, false, false);
                 oShape.setBDeleted(false);
                 oShape.recalculate();
 
                 let x, y;
-                x = left;
-                y = !bFooter ? top : footerStartPos - oShape.contentHeight;
-                oShape.posX += x;
+                x = left  / printScale;
+                y = (!bFooter ? top : footerStartPos - oShape.contentHeight) / printScale;
+                oShape.posX += x ;
                 oShape.posY += y;
                 oShape.updateTransformMatrix();
                 if(oImage) {
@@ -4007,13 +4000,13 @@
             else {
                 oGraphics = new AscCommon.CGraphics();
                 oGraphics.init(drawingCtx.ctx, drawingCtx.getWidth(0), drawingCtx.getHeight(0),
-                    width, height);
+                    width  / printScale, height / printScale);
                 oGraphics.m_oFontManager = AscCommon.g_fontManager;
             }
 
             oGraphics.SaveGrState();
             oGraphics.transform3(new AscCommon.CMatrix());
-            oGraphics.AddClipRect(left, top, width - (left + right), height - (top + bottom));
+            oGraphics.AddClipRect(left / printScale, top / printScale, (width - (left + right)) / printScale, (height - (top + bottom)) / printScale);
             oShape.draw(oGraphics);
 
             oGraphics.RestoreGrState();
@@ -4023,24 +4016,8 @@
             }
 		};
 
-		//добавил аналогично другим отрисовка.
-		//без этого отсутвует drawingCtx.DocumentRenderer.m_arrayPages[0].FontPicker.LastPickFont
-		//пока добавляю зум от printScale не для предварительного просмотра. пп - проверить и сделать аналогично
-		var transformMatrix;
-		if (!isPrintPreview && printScale !== 1 && drawingCtx.Transform) {
-			transformMatrix = drawingCtx.Transform.CreateDublicate();
-
-			drawingCtx.setTransform(printScale, drawingCtx.Transform.shy, drawingCtx.Transform.shx, printScale, 0, 0);
-		}
-
-		this._setDefaultFont(drawingCtx);
-		for(var i = 0; i < headerFooterParser.tokens.length; i++) {
-			drawPortion(i);
-		}
-
-		if (transformMatrix) {
-			drawingCtx.setTransform(transformMatrix.sx, transformMatrix.shy, transformMatrix.shx,
-				transformMatrix.sy, transformMatrix.tx, transformMatrix.ty);
+		for(let nTokeIdx = 0; nTokeIdx < headerFooterParser.tokens.length; nTokeIdx++) {
+			drawPortion(nTokeIdx);
 		}
 	};
 
