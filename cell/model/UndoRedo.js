@@ -617,6 +617,8 @@ function (window, undefined) {
 					return new AscCommonExcel.UndoRedoData_UserProtectedRange();
 				case this.UserProtectedRangeUserInfo:
 					return new Asc.CUserProtectedRangeUserInfo();
+				case this.RowColBreaks:
+					return new AscCommonExcel.UndoRedoData_RowColBreaks();
 			}
 			return null;
 		};
