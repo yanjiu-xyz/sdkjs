@@ -15601,7 +15601,9 @@ QueryTableField.prototype.clone = function() {
 	CRowColBreaks.prototype.changeBreak = function (idFrom, idTo, min, max, man, pt) {
 		let breakElem = this.getBreak(idFrom);
 		if (breakElem) {
-			return breakElem.set(idTo, min, max, man, pt);
+			let res = breakElem.set(idTo, min, max, man, pt);
+			this.reSortingBreaks();
+			return res;
 		}
 	};
 
@@ -15611,7 +15613,10 @@ QueryTableField.prototype.clone = function() {
 		}
 		let newBreak = new CBreak();
 		newBreak.set(id, min, max, man, pt);
-		return this._addBreak(newBreak);
+
+		let res = this._addBreak(newBreak);
+		this.reSortingBreaks();
+		return res;
 	};
 
 	CRowColBreaks.prototype._addBreak = function (newBreak) {
@@ -15638,7 +15643,14 @@ QueryTableField.prototype.clone = function() {
 				break;
 			}
 		}
+		this.reSortingBreaks();
 		return isDeleted;
+	};
+
+	CRowColBreaks.prototype.reSortingBreaks = function () {
+		this.breaks.sort(function sortArr(a, b) {
+			return a.id - b.id;
+		});
 	};
 
 

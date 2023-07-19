@@ -11837,7 +11837,7 @@
 
 	Worksheet.prototype.changeRowColBreaks = function (from, to, range, byCol, addToHistory) {
 		let min = null;
-		let max = byCol ? gc_nMaxCol0 : gc_nMaxRow0;
+		let max = !byCol ? gc_nMaxCol0 : gc_nMaxRow0;
 		let man = true, pt = null;
 
 		let printArea = this.workbook.getDefinesNames("Print_Area", this.getId());
