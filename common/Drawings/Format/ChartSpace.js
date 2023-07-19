@@ -494,7 +494,7 @@ function(window, undefined) {
 
 	function CPathMemory() {
 		this.size = 1000;
-		this.ArrPathCommand = new Float64Array(this.size);
+		this.ArrPathCommand = new Float64Array(1000);
 		this.curPos = -1;
 
 		this.path = new AscFormat.Path2(this);
@@ -8355,6 +8355,10 @@ function(window, undefined) {
 	CChartSpace.prototype.collectRefsInsideRange = function (oRange, aRefs) {
 		var oDataRange = this.getDataRefs();
 		oDataRange.collectRefsInsideRange(oRange, aRefs);
+	};
+	CChartSpace.prototype.collectRefsInsideRangeForInsertColRow = function (oRange, aRefs, isInsertCol) {
+		var oDataRange = this.getDataRefs();
+		oDataRange.collectRefsInsideRangeForInsertColRow(oRange, aRefs, isInsertCol);
 	};
 	CChartSpace.prototype.collectIntersectionRefs = function (aRanges, aRefs) {
 		if (!Array.isArray(aRanges) || aRanges.length === 0) {
