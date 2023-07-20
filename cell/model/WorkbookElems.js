@@ -13408,7 +13408,7 @@ QueryTableField.prototype.clone = function() {
 		return oRes;
 	};
 
-	CHeaderFooter.prototype.getAlignWithMargins = function () { return this.alignWithMargins; };
+	CHeaderFooter.prototype.getAlignWithMargins = function () { return true === this.alignWithMargins || null === this.alignWithMargins; };
 	CHeaderFooter.prototype.getDifferentFirst = function () { return this.differentFirst; };
 	CHeaderFooter.prototype.getDifferentOddEven = function () { return this.differentOddEven; };
 	CHeaderFooter.prototype.getScaleWithDoc = function () { return this.scaleWithDoc; };
