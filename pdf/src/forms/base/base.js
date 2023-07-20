@@ -64,8 +64,8 @@
 
     let BORDER_TYPES = {
         solid:      0,
-        dashed:     1,
-        beveled:    2,
+        beveled:    1,
+        dashed:     2,
         inset:      3,
         underline:  4
     }
@@ -614,7 +614,12 @@
         let oViewer     = editor.getDocumentRenderer();
         let aRect       = this.GetRect();
         let aOringRect  = this.GetOrigRect();
+        let aBgColor    = this.GetBackgroundColor();
+        let oBgRGBColor;
 
+        if (aBgColor && aBgColor.length != 0)
+            oBgRGBColor = AscPDF.MakeColorMoreGray(this.GetRGBColor(aBgColor), 50);
+        
         let nScale          = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
         let nLineWidth      = aRect[0] / aOringRect[0] * nScale * this._lineWidth;
         let oGraphicsPDF    = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
@@ -636,11 +641,17 @@
             oGraphicsPDF.SetStrokeStyle(`rgb(${color.r}, ${color.g}, ${color.b})`);
         }
 
+        // корректировка координат по бордеру
+        Y += nLineWidth / 2;
+        X += nLineWidth / 2;
+        nWidth  -= nLineWidth;
+        nHeight -= nLineWidth;
+
         if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this._chStyle == AscPDF.CHECKBOX_STYLES.circle) {
             // выставляем в центр круга
             let centerX = X + nWidth / 2;
             let centerY = Y + nHeight / 2;
-            let nRadius = Math.min(nWidth / 2, nHeight / 2) - nLineWidth / 2;
+            let nRadius = Math.min(nWidth / 2, nHeight / 2);
 
             // отрисовка
             switch (this._borderStyle) {
@@ -714,44 +725,18 @@
             return;
         }
         else {
-            // корректировка координат по бордеру
-            switch (this._borderStyle) {
-                case BORDER_TYPES.solid:
-                case BORDER_TYPES.dashed:
-                    Y += nLineWidth / 2;
-                    X += nLineWidth / 2;
-                    nWidth  -= nLineWidth;
-                    nHeight -= nLineWidth;
-                    break;
-                case BORDER_TYPES.beveled:
-                    Y += nLineWidth / 2;
-                    X += nLineWidth / 2;
-                    nWidth  -= nLineWidth;
-                    nHeight -= nLineWidth;
-                    break;
-                case BORDER_TYPES.inset:
-                    Y += nLineWidth / 2;
-                    X += nLineWidth / 2;
-                    nWidth  -= nLineWidth;
-                    nHeight -= nLineWidth;
-                    break;
-                case BORDER_TYPES.underline:
-                    Y -= nLineWidth / 2;
-                    //nWidth /= 2;
-                    break;
-            }
-            
             // отрисовка
             switch (this._borderStyle) {
                 case BORDER_TYPES.solid:
                     if (color == null)
                         break;
-                        
+                    
                     oGraphicsPDF.SetLineDash([]);
                     oGraphicsPDF.BeginPath();
                     oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
                     oGraphicsPDF.Stroke();
                     oGraphicsPDF.ClosePath();
+
                     break;
                 case BORDER_TYPES.beveled:
                     if (color) {
@@ -772,7 +757,13 @@
                     oGraphicsPDF.LineTo(X + nLineWidth / 2, Y + nLineWidth / 2);
                     oGraphicsPDF.LineTo(X + nLineWidth + nLineWidth / 2, Y + nLineWidth / 2);
 
-                    oGraphicsPDF.SetFillStyle("#fff");
+                    if (this.GetType() == AscPDF.FIELD_TYPES.button && this.IsPressed() && this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push) {
+                        oGraphicsPDF.SetFillStyle(`rgb(${oBgRGBColor.r}, ${oBgRGBColor.g}, ${oBgRGBColor.b})`);
+                    }
+                    else {
+                        oGraphicsPDF.SetFillStyle(`#fff`);
+                    }
+
                     oGraphicsPDF.ClosePath();
                     oGraphicsPDF.Fill();
 
@@ -786,7 +777,6 @@
                     oGraphicsPDF.LineTo(X + nLineWidth / 2, Y + nLineWidth / 2);
                     oGraphicsPDF.LineTo(X + nLineWidth / 2, Y + nLineWidth + nLineWidth / 2);
 
-                    oGraphicsPDF.SetFillStyle("#fff");
                     oGraphicsPDF.ClosePath();
                     oGraphicsPDF.Fill();
 
@@ -800,7 +790,13 @@
                     oGraphicsPDF.LineTo(X + nWidth - nLineWidth / 2, Y + nHeight - nLineWidth / 2);
                     oGraphicsPDF.LineTo(X + nWidth - nLineWidth / 2, Y + nHeight - nLineWidth - nLineWidth / 2);
 
-                    oGraphicsPDF.SetFillStyle("rgb(192, 192, 192)");
+                    if (this.GetType() == AscPDF.FIELD_TYPES.button && this.IsPressed() && this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push) {
+                        oGraphicsPDF.SetFillStyle("#fff");
+                    }
+                    else {
+                        oGraphicsPDF.SetFillStyle(`rgb(${oBgRGBColor.r}, ${oBgRGBColor.g}, ${oBgRGBColor.b})`);
+                    }
+
                     oGraphicsPDF.ClosePath();
                     oGraphicsPDF.Fill();
 
@@ -814,7 +810,6 @@
                     oGraphicsPDF.LineTo(X + nWidth - nLineWidth / 2, Y + nHeight - nLineWidth);
                     oGraphicsPDF.LineTo(X + nWidth - nLineWidth - nLineWidth / 2, Y + nHeight - nLineWidth);
 
-                    oGraphicsPDF.SetFillStyle("rgb(192, 192, 192)");
                     oGraphicsPDF.ClosePath();
                     oGraphicsPDF.Fill();
 
@@ -847,7 +842,13 @@
                     oGraphicsPDF.LineTo(X + nLineWidth / 2, Y + nLineWidth / 2);
                     oGraphicsPDF.LineTo(X + nLineWidth + nLineWidth / 2, Y + nLineWidth / 2);
 
-                    oGraphicsPDF.SetFillStyle("gray");
+                    if (this.GetType() == AscPDF.FIELD_TYPES.button && this.IsPressed() && this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push) {
+                        oGraphicsPDF.SetFillStyle("black");
+                    }
+                    else {
+                        oGraphicsPDF.SetFillStyle("gray");
+                    }
+
                     oGraphicsPDF.ClosePath();
                     oGraphicsPDF.Fill();
 
@@ -861,7 +862,6 @@
                     oGraphicsPDF.LineTo(X + nLineWidth / 2, Y + nLineWidth / 2);
                     oGraphicsPDF.LineTo(X + nLineWidth / 2, Y + nLineWidth + nLineWidth / 2);
 
-                    oGraphicsPDF.SetFillStyle("gray");
                     oGraphicsPDF.ClosePath();
                     oGraphicsPDF.Fill();
 
@@ -875,7 +875,13 @@
                     oGraphicsPDF.LineTo(X + nWidth - nLineWidth / 2, Y + nHeight - nLineWidth / 2);
                     oGraphicsPDF.LineTo(X + nWidth - nLineWidth / 2, Y + nHeight - nLineWidth - nLineWidth / 2);
 
-                    oGraphicsPDF.SetFillStyle("rgb(191, 191, 191)");
+                    if (this.GetType() == AscPDF.FIELD_TYPES.button && this.IsPressed() && this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push) {
+                        oGraphicsPDF.SetFillStyle("white");
+                    }
+                    else {
+                        oGraphicsPDF.SetFillStyle("rgb(191, 191, 191)");
+                    }
+                    
                     oGraphicsPDF.ClosePath();
                     oGraphicsPDF.Fill();
 
@@ -889,7 +895,6 @@
                     oGraphicsPDF.LineTo(X + nWidth - nLineWidth / 2, Y + nHeight - nLineWidth);
                     oGraphicsPDF.LineTo(X + nWidth - nLineWidth - nLineWidth / 2, Y + nHeight - nLineWidth);
 
-                    oGraphicsPDF.SetFillStyle("rgb(191, 191, 191)");
                     oGraphicsPDF.ClosePath();
                     oGraphicsPDF.Fill();
 
@@ -897,18 +902,53 @@
                 case BORDER_TYPES.underline:
                     if (color == null)
                         break;
-                        
+                    
                     oGraphicsPDF.SetLineDash([]);
                     oGraphicsPDF.BeginPath();
-                    oGraphicsPDF.MoveTo(X, Y + nHeight);
-                    oGraphicsPDF.LineTo(X + nWidth, Y + nHeight);
+                    oGraphicsPDF.MoveTo(X - nLineWidth / 2, Y + nHeight);
+                    oGraphicsPDF.LineTo(X + nWidth + nLineWidth / 2, Y + nHeight);
                     oGraphicsPDF.Stroke();
                     break;
             }
+        }        
+
+        // pressed border
+        if (this.GetType() == AscPDF.FIELD_TYPES.button && this.IsPressed() && this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push) {
+            switch (this._borderStyle) {
+                case BORDER_TYPES.solid:
+                case BORDER_TYPES.dashed:
+                case BORDER_TYPES.underline: {
+                    
+                        // left part
+                        oGraphicsPDF.SetFillStyle(`rgb(${oBgRGBColor.r}, ${oBgRGBColor.g}, ${oBgRGBColor.b})`);
+
+                        oGraphicsPDF.BeginPath();
+                        oGraphicsPDF.MoveTo(X + nLineWidth + nLineWidth / 2, Y + nHeight - nLineWidth - nLineWidth / 2);
+                        oGraphicsPDF.LineTo(X + nLineWidth + nLineWidth / 2, Y + nLineWidth / 2);
+                        oGraphicsPDF.LineTo(X + nLineWidth / 2, Y + nHeight - nLineWidth / 2);
+                        oGraphicsPDF.MoveTo(X + nLineWidth / 2, Y + nHeight - nLineWidth / 2);
+                        oGraphicsPDF.LineTo(X + nLineWidth / 2, Y + nLineWidth / 2);
+                        oGraphicsPDF.LineTo(X + nLineWidth + nLineWidth / 2, Y + nLineWidth / 2);
+                        oGraphicsPDF.ClosePath();
+                        oGraphicsPDF.Fill();
+
+                        // top part
+                        oGraphicsPDF.BeginPath();
+                        oGraphicsPDF.MoveTo(X + nWidth - nLineWidth - nLineWidth / 2, Y + nLineWidth + nLineWidth / 2);
+                        oGraphicsPDF.LineTo(X + nLineWidth / 2, Y + nLineWidth + nLineWidth / 2);
+                        oGraphicsPDF.LineTo(X + nWidth - nLineWidth / 2, Y + nLineWidth / 2);
+                        oGraphicsPDF.MoveTo(X + nWidth - nLineWidth / 2, Y + nLineWidth / 2);
+                        oGraphicsPDF.LineTo(X + nLineWidth / 2, Y + nLineWidth / 2);
+                        oGraphicsPDF.LineTo(X + nLineWidth / 2, Y + nLineWidth + nLineWidth / 2);
+                        oGraphicsPDF.ClosePath();
+                        oGraphicsPDF.Fill();
+                    }
+                    break;
+                }
         }
 
         // draw comb cells
-        if (this._borderColor != null && (this._borderStyle == BORDER_TYPES.solid || this._borderStyle == BORDER_TYPES.dashed) && (this.GetType() == AscPDF.FIELD_TYPES.text && this.IsComb() == true)) {
+        if ((this.GetType() == AscPDF.FIELD_TYPES.text && this.IsComb() == true) && this._borderColor != null && (this.GetBorderStyle() == BORDER_TYPES.solid || this.GetBorderStyle() == BORDER_TYPES.dashed)) {
             let nCombWidth = (nWidth / this._charLimit);
             let nIndentX = nCombWidth;
             
@@ -1027,7 +1067,6 @@
         return this._bDrawFromStream;
     };
     CBaseField.prototype.SetDrawFromStream = function(bFromStream) {
-        //return;
         this._bDrawFromStream = bFromStream;
     };
     CBaseField.prototype.SetDrawHighlight = function(bDraw) {
@@ -1122,20 +1161,54 @@
     CBaseField.prototype.DrawBackground = function() {
         let oViewer = editor.getDocumentRenderer();
         let oGraphicsPDF = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
+        let aBgColor = this.GetBackgroundColor();
+        let oBgRGBColor;
 
-        if (this._fillColor && this._fillColor.length != 0) {
-            let nScale = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
+        if (aBgColor && aBgColor.length != 0)
+            oBgRGBColor = this.GetRGBColor(aBgColor);
+
+        if (oBgRGBColor) {
+            let nScale  = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
 
             let X       = this._pagePos.x * nScale;
             let Y       = this._pagePos.y * nScale;
             let nWidth  = (this._pagePos.w) * nScale;
             let nHeight = (this._pagePos.h) * nScale;
-
+            
             oGraphicsPDF.SetGlobalAlpha(1);
-            let oColor = this.GetRGBColor(this._fillColor);
-            if (oColor.r != 255 || oColor.g != 255 || oColor.b != 255) {
-                oGraphicsPDF.SetFillStyle(`rgb(${oColor.r}, ${oColor.g}, ${oColor.b})`);
-                oGraphicsPDF.FillRect(X, Y, nWidth, nHeight);
+
+            if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this._chStyle == AscPDF.CHECKBOX_STYLES.circle) {
+                if (this.IsPressed() == false && this.IsHovered() == false)
+                    return;
+                
+                let aRect       = this.GetRect();
+                let aOringRect  = this.GetOrigRect();
+                let nLineWidth  = aRect[0] / aOringRect[0] * nScale * this._lineWidth;
+
+                if (this.IsHovered() && this.IsPressed()) {
+                    if (aBgColor.length == 1 && aBgColor[0] == 1) {
+                        oBgRGBColor = {r: 191, g: 0, b: 0};
+                    }
+                    else {
+                        oBgRGBColor = AscPDF.MakeColorMoreGray(this.GetRGBColor(aBgColor), 50);
+                    }
+                }
+
+                oGraphicsPDF.BeginPath();
+                oGraphicsPDF.SetFillStyle(`rgb(${oBgRGBColor.r}, ${oBgRGBColor.g}, ${oBgRGBColor.b})`);
+                // выставляем в центр круга
+                let centerX = X + nWidth / 2;
+                let centerY = Y + nHeight / 2;
+                let nRadius = Math.min(nWidth / 2, nHeight / 2);
+                oGraphicsPDF.Arc(centerX, centerY, nRadius, 0, 2 * Math.PI, false);
+                oGraphicsPDF.Fill();
+                oGraphicsPDF.ClosePath();
+            }
+            else {
+                if (oBgRGBColor.r != 255 || oBgRGBColor.g != 255 || oBgRGBColor.b != 255) {
+                    oGraphicsPDF.SetFillStyle(`rgb(${oBgRGBColor.r}, ${oBgRGBColor.g}, ${oBgRGBColor.b})`);
+                    oGraphicsPDF.FillRect(X, Y, nWidth, nHeight);
+                }
             }
         }
     };
@@ -1447,7 +1520,7 @@
             return;
             
         let oViewer         = editor.getDocumentRenderer();
-        let originView      = this.GetOriginView(this._buttonHovered ? AscPDF.APPEARANCE_TYPE.rollover : undefined);
+        let originView      = this.GetOriginView(this.IsHovered() ? AscPDF.APPEARANCE_TYPE.rollover : undefined);
         let oGraphicsPDF    = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
         let nScale          = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
         let aRect           = this.GetRect();

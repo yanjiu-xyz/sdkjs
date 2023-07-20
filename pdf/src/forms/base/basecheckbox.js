@@ -33,12 +33,12 @@
 (function(){
 
     let CHECKBOX_STYLES = {
-        circle:     0,
-        check:      1,
-        cross:      2,
-        diamond:    3,
-        square:     4,
-        star:       5
+        check:      0,
+        cross:      1,
+        diamond:    2,
+        circle:     3,
+        star:       4,
+        square:     5
     }
     
     let CHECK_SVG = `<svg
@@ -105,6 +105,10 @@
         this._exportValue   = "Yes";
         this._chStyle       = CHECKBOX_STYLES.check;
         this._checked       = false;
+
+        // states
+        this._pressed = false;
+        this._hovered = false;
     };
     
     CBaseCheckBoxField.prototype = Object.create(AscPDF.CBaseField.prototype);
@@ -137,6 +141,18 @@
     };
     CBaseCheckBoxField.prototype.IsChecked = function() {
         return this._checked;
+    };
+    CBaseCheckBoxField.prototype.SetPressed = function(bValue) {
+        this._pressed = bValue;
+    };
+    CBaseCheckBoxField.prototype.IsPressed = function() {
+        return this._pressed;
+    };
+    CBaseCheckBoxField.prototype.IsHovered = function() {
+        return this._hovered;
+    };
+    CBaseCheckBoxField.prototype.SetHovered = function(bValue) {
+        this._hovered = bValue;
     };
     CBaseCheckBoxField.prototype.DrawCheckedSymbol = function() {
         let oViewer         = editor.getDocumentRenderer();
@@ -431,10 +447,104 @@
     CBaseCheckBoxField.prototype.onMouseDown = function() {
         let oViewer = editor.getDocumentRenderer();
 
+        this.SetPressed(true);
+        this.DrawPressed();
+
         this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
         if (oViewer.activeForm != this)
             this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
         oViewer.activeForm = this;
+    };
+    CBaseCheckBoxField.prototype.onMouseEnter = function() {
+        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter);
+
+        this.SetHovered(true);
+    };
+    CBaseCheckBoxField.prototype.onMouseExit = function() {
+        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseExit);
+
+        this.SetHovered(false);
+    };
+    CBaseCheckBoxField.prototype.DrawPressed = function() {
+        let oViewer     = editor.getDocumentRenderer();
+        let oCtx        = oViewer.canvasForms.getContext("2d");
+        
+        let aRect       = this.GetRect();
+        let aOringRect  = this.GetOrigRect();
+        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
+        let nLineWidth  = aRect[0] / aOringRect[0] * nScale * this._lineWidth;
+        oCtx.lineWidth  = nLineWidth;
+
+        let X = this._pagePos.x * nScale;
+        let Y = this._pagePos.y * nScale;
+        let nWidth = this._pagePos.w * nScale;
+        let nHeight = this._pagePos.h * nScale;
+
+        let xCenter = oViewer.width >> 1;
+        if (oViewer.documentWidth > oViewer.width)
+		{
+			xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
+		}
+		let yPos    = oViewer.scrollY >> 0;
+        let page    = oViewer.drawingPages[this.GetPage()];
+        let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
+        let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        
+        // Create a new canvas element for the cropped area
+        var croppedCanvas       = document.createElement('canvas');
+        croppedCanvas.width     = nWidth;
+        croppedCanvas.height    = nHeight;
+
+        let oGraphicsPDF    = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
+        let oGraphicsCanvas = oGraphicsPDF.context.canvas;
+        oGraphicsPDF.ClearRect(0, 0, oGraphicsCanvas.width, oGraphicsCanvas.height);
+        
+        this.Draw();
+        oCtx.drawImage(oGraphicsCanvas, 0, 0, oGraphicsCanvas.width, oGraphicsCanvas.height, indLeft, indTop, w, h);
+    };
+    CBaseCheckBoxField.prototype.OnEndPressed = function() {
+        this.DrawActive();
+    };
+    CBaseCheckBoxField.prototype.DrawActive = function() {
+        let oViewer     = editor.getDocumentRenderer();
+        let oCtx        = oViewer.canvasForms.getContext("2d");
+        
+        let aRect       = this.GetRect();
+        let aOringRect  = this.GetOrigRect();
+        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
+        let nLineWidth  = aRect[0] / aOringRect[0] * nScale * this._lineWidth;
+        oCtx.lineWidth  = nLineWidth;
+
+        let X = this._pagePos.x * nScale;
+        let Y = this._pagePos.y * nScale;
+        let nWidth = this._pagePos.w * nScale;
+        let nHeight = this._pagePos.h * nScale;
+
+        let xCenter = oViewer.width >> 1;
+        if (oViewer.documentWidth > oViewer.width)
+		{
+			xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
+		}
+		let yPos    = oViewer.scrollY >> 0;
+        let page    = oViewer.drawingPages[this.GetPage()];
+        let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
+        let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        
+        // Create a new canvas element for the cropped area
+        var croppedCanvas       = document.createElement('canvas');
+        croppedCanvas.width     = nWidth;
+        croppedCanvas.height    = nHeight;
+
+        let oGraphicsPDF    = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
+        let oGraphicsCanvas = oGraphicsPDF.context.canvas;
+        oGraphicsPDF.ClearRect(0, 0, oGraphicsCanvas.width, oGraphicsCanvas.height);
+        
+        this.Draw();
+        oCtx.drawImage(oGraphicsCanvas, 0, 0, oGraphicsCanvas.width, oGraphicsCanvas.height, indLeft, indTop, w, h);
     };
     CBaseCheckBoxField.prototype.onMouseUp = function() {
         this.CreateNewHistoryPoint();
@@ -449,6 +559,10 @@
             this.SetApiValue(this.GetExportValue());
         }
         
+        this.SetPressed(false);
+        //this.OnEndPressed();
+        this.AddToRedraw();
+
         if (AscCommon.History.Is_LastPointEmpty())
             AscCommon.History.Remove_LastPoint();
         else {
@@ -490,7 +604,6 @@
         return this.IsChecked() ? this._exportValue : "Off";
     };
     CBaseCheckBoxField.prototype.SetDrawFromStream = function() {
-        return;
     };
 
     /**

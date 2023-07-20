@@ -592,10 +592,15 @@ var CPresentation = CPresentation || function(){};
 
         // если чекбокс то выходим сразу
         if ([AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(oActiveForm.GetType())) {
+            oActiveForm.SetPressed(false);
+            oActiveForm.SetHovered(false);
+            oActiveForm.AddToRedraw();
             oActiveForm.Blur();
             
-            if (oActionsQueue.IsInProgress() == false)
+            if (oActionsQueue.IsInProgress() == false) {
                 oViewer._paintFormsHighlight();
+                oViewer._paintForms();
+            }
 
             return;
         }

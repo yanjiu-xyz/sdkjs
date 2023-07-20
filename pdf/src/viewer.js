@@ -811,9 +811,9 @@
 				}
 
 				// appearance
-				if (oFormInfo["borderStyle"] != null)
+				if (oFormInfo["border"] != null)
 				{
-					oForm.SetBorderStyle(oFormInfo["borderStyle"]);
+					oForm.SetBorderStyle(oFormInfo["border"]);
 				}
 
 				if (oFormInfo["borderWidth"] != null)
@@ -858,8 +858,18 @@
 				if (oFormInfo["position"] != null) {
 					oForm.SetButtonPosition(oFormInfo["position"]);
 				}
-				if (oFormInfo["caption"] != null && oForm["type"] == "button") {
+				if (oFormInfo["caption"] != null && oForm["type"] == AscPDF.FIELD_TYPES.button) {
 					oForm.SetCaption(oFormInfo["caption"]);
+				}
+				if (oFormInfo["alternateCaption"] != null && oForm["type"] == AscPDF.FIELD_TYPES.button) {
+					oForm.SetCaption(oFormInfo["alternateCaption"], AscPDF.CAPTION_TYPES.mouseDown);
+				}
+				if (oFormInfo["rolloverCaption"] != null && oForm["type"] == AscPDF.FIELD_TYPES.button) {
+					oForm.SetCaption(oFormInfo["rolloverCaption"], AscPDF.CAPTION_TYPES.rollover);
+				}
+				
+				if (oFormInfo["highlight"] != null) {
+					oForm.SetHighlight(oFormInfo["highlight"]);
 				}
 				if (oFormInfo["IF"] != null) {
 					if (oFormInfo["IF"]["FB"] != null)
@@ -1514,7 +1524,7 @@
 		{
 			if (oThis.MouseHandObject)
 			{
-				if (oThis.mouseDownLinkObject)
+				if (oThis.mouseDownLinkObject || oThis.onMouseDownField)
 				{
 					// если нажали на ссылке - то не зажимаем лапу
 					oThis.setCursorType("pointer");
@@ -1718,6 +1728,17 @@
 								}
 								
 								oThis.onUpdateOverlay();
+							}
+							else if ([AscPDF.FIELD_TYPES.button, AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(oThis.activeForm.GetType()) && oThis.activeForm.IsPressed()) {
+								let mouseMoveFieldObject = oThis.getPageFieldByMouse();
+								if (mouseMoveFieldObject != oThis.activeForm && oThis.activeForm.IsHovered()) {
+									oThis.activeForm.SetHovered(false);
+									oThis.activeForm.OnEndPressed();
+								}
+								else if (mouseMoveFieldObject == oThis.activeForm && oThis.activeForm.IsHovered() == false) {
+									oThis.activeForm.SetHovered(true);
+									oThis.activeForm.DrawPressed();
+								}
 							}
 						}
 						else if (oThis.mouseDownLinkObject)
