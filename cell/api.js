@@ -6972,7 +6972,7 @@ var editor;
 			}
 		});
 	};
-	spreadsheet_api.prototype._updatePivotTable = function(pivot, changed, wsModel, ws, dataRow, needUpdateView, canModifyDocument) {
+	spreadsheet_api.prototype._updatePivotTable = function(pivot, changed, wsModel, ws, dataRow, needUpdateView, canModifyDocument, doNotAutoFitColumnsWidth) {
 		var ranges = wsModel.updatePivotTable(pivot, changed, dataRow, canModifyDocument);
 		if (needUpdateView) {
 			if (changed.oldRanges) {
@@ -6980,7 +6980,7 @@ var editor;
 			}
 			if (ranges) {
 				ws.updateRanges(ranges);
-				if (pivot.useAutoFormatting) {
+				if (pivot.useAutoFormatting && !doNotAutoFitColumnsWidth) {
 					ws._autoFitColumnsWidth(ranges);
 				}
 			}
@@ -7116,6 +7116,19 @@ var editor;
 			t.handlers.trigger("setSelection", range.clone());
 		});
 		return true;
+	};
+	spreadsheet_api.prototype.asc_pivotShowDetailsHeader = function(fld, isAll) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return false;
+		}
+		let t = this;
+		let ws = this.wbModel.getActiveWs();
+		let activeCell = ws.selectionRange.activeCell;
+		let pivotTable = ws.getPivotTable(activeCell.col, activeCell.row);
+		if (!pivotTable) {
+			return false;
+		}
+		pivotTable.showDetailsHeaderByCell(this, activeCell.row, activeCell.col, fld,  isAll);
 	};
 
 	spreadsheet_api.prototype.asc_getAddPivotTableOptions = function(range) {
@@ -7268,10 +7281,10 @@ var editor;
 		});
 		this.collaborativeEditing.lock(lockInfos, callback);
 	};
-	spreadsheet_api.prototype._changePivotWithLock = function (pivot, onAction, doNotCheckUnderlyingData) {
-		this._changePivotWithLockExt(pivot, false, true, onAction, doNotCheckUnderlyingData);
+	spreadsheet_api.prototype._changePivotWithLock = function (pivot, onAction, doNotCheckUnderlyingData, doNotAutoFitColumnsWidth) {
+		this._changePivotWithLockExt(pivot, false, true, onAction, doNotCheckUnderlyingData, doNotAutoFitColumnsWidth);
 	};
-	spreadsheet_api.prototype._changePivotWithLockExt = function (pivot, confirmation, updateSelection, onAction, doNotCheckUnderlyingData) {
+	spreadsheet_api.prototype._changePivotWithLockExt = function (pivot, confirmation, updateSelection, onAction, doNotCheckUnderlyingData, doNotAutoFitColumnsWidth) {
 		// Проверка глобального лока
 		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 			return;
@@ -7285,7 +7298,7 @@ var editor;
 			History.Create_NewPoint();
 			History.StartTransaction();
 			t.wbModel.dependencyFormulas.lockRecal();
-			var changeRes = t._changePivot(pivot, confirmation, updateSelection, onAction, doNotCheckUnderlyingData);
+			var changeRes = t._changePivot(pivot, confirmation, updateSelection, onAction, doNotCheckUnderlyingData, doNotAutoFitColumnsWidth);
 			t.wbModel.dependencyFormulas.unlockRecal();
 			History.EndTransaction();
 			t._changePivotEndCheckError(changeRes, function () {
@@ -7326,7 +7339,7 @@ var editor;
 			t._changePivotEndCheckError(changeRes, onRepeat);
 		});
 	};
-	spreadsheet_api.prototype._changePivot = function(pivot, confirmation, updateSelection, onAction, doNotCheckUnderlyingData) {
+	spreadsheet_api.prototype._changePivot = function(pivot, confirmation, updateSelection, onAction, doNotCheckUnderlyingData, doNotAutoFitColumnsWidth) {
 		if (!doNotCheckUnderlyingData && !pivot.checkPivotUnderlyingData()) {
 			return {error: c_oAscError.ID.PivotWithoutUnderlyingData, warning: c_oAscError.ID.No, updateRes: undefined};
 		}
@@ -7354,7 +7367,7 @@ var editor;
 		var isSuccess = c_oAscError.ID.No === error && c_oAscError.ID.No === warning;
 		if (isSuccess) {
 			var ws = this.wb.getWorksheet(wsModel.getIndex());
-			this._updatePivotTable(pivot, pivotChanged, wsModel, ws, updateRes && updateRes.dataRow, true, true);
+			this._updatePivotTable(pivot, pivotChanged, wsModel, ws, updateRes && updateRes.dataRow, true, true, doNotAutoFitColumnsWidth);
 			if (updateSelection) {
 				pivot.updateSelection(ws);
 			}
@@ -9336,6 +9349,7 @@ var editor;
   prot["asc_getPivotInfo"] = prot.asc_getPivotInfo;
   prot["asc_getPivotShowValueAsInfo"] = prot.asc_getPivotShowValueAsInfo;
   prot["asc_pivotShowDetails"] = prot.asc_pivotShowDetails;
+  prot["asc_pivotShowDetailsHeader"] = prot.asc_pivotShowDetailsHeader;
 	// signatures
   prot["asc_addSignatureLine"] 		     = prot.asc_addSignatureLine;
   prot["asc_CallSignatureDblClickEvent"] = prot.asc_CallSignatureDblClickEvent;
