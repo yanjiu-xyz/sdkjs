@@ -4456,19 +4456,50 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 	this.updateSlideIndexes();
 	var b_check_layout = false;
 	var bRedrawNotes = false;
+	var oCurSlide = null;
+	var oCurMaster = null;
+	if (this.Slides.length > 0 && this.CurPage >= 0) {
+		oCurSlide = this.Slides[this.CurPage];
+		oCurMaster = this.Slides[this.CurPage].Layout.Master;
+	} else if (this.slideMasters.length > 0) {
+		oCurMaster = this.slideMasters[0];
+	}
 	if (_RecalcData.Drawings.All || _RecalcData.Drawings.ThemeInfo) {
 		b_check_layout = true;
 		for (key in this.slideMasters) {
 			if (this.slideMasters.hasOwnProperty(key)) {
-				bAttack = this.slideMasters[key].needRecalc();
-				if (this.slideMasters[key].recalcInfo.recalculateSlideLayouts) {
-					isUpdateThemes = true;
+				if (oCurMaster == this.slideMasters[key]) {
+					bAttack = this.slideMasters[key].needRecalc();
+					isUpdateThemes = this.slideMasters[key].needRecalc();
+				}
+				
+				if (this.slideMasters[key].needRecalc()) {
 					this.slideMasters[key].recalculate();
 					for (key in this.Slides) {
-						this.Slides[key].checkSlideColorScheme();
+						if (this.Slides[key].Layout.Master == oCurMaster) {
+							this.Slides[key].checkSlideTheme();
+						}
 					}
 				} else {
 					this.slideMasters[key].recalculate();
+				}
+			}
+		}
+		if (oCurMaster) {
+			for (key in oCurMaster.sldLayoutLst) { 
+				let oSlideLayout = oCurMaster.sldLayoutLst[key];
+				if (oSlideLayout.needRecalc()) {
+					if (key == 0) {
+						isUpdateThemes = true;
+					}
+					bAttack = true;
+					for (key in this.Slides) {
+						if (this.Slides[key].Layout == oSlideLayout) {
+							this.Slides[key].checkSlideTheme();
+						}
+					}
+					oSlideLayout.ImageBase64 = "";
+					oSlideLayout.recalculate();
 				}
 			}
 		}
@@ -4517,18 +4548,23 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 		}
 	} else {
 		var oCurNotesShape = null;
-		if (this.Slides[this.CurPage]) {
-			oCurNotesShape = this.Slides[this.CurPage].notesShape;
+		if (oCurSlide) {
+			oCurNotesShape = oCurSlide.notesShape;
 		}
 		for (key in _RecalcData.Drawings.Map) {
 			if (_RecalcData.Drawings.Map.hasOwnProperty(key)) {
 				var oDrawingObject = _RecalcData.Drawings.Map[key];
 				if (AscCommon.g_oTableId.Get_ById(key) === oDrawingObject) {
-					if (oDrawingObject instanceof MasterSlide) {
-						if(oDrawingObject.recalcInfo.recalculateSlideLayouts) {
+					if (oDrawingObject instanceof AscCommonSlide.MasterSlide) {
+						if (oDrawingObject === oCurMaster) {
+							isUpdateThemes = true;
+						}
+						if(oDrawingObject.needRecalc()) {
 							for (key in this.Slides) {
-								this.Slides[key].checkSlideColorScheme();
-								this.Slides[key].recalculate();
+								if (this.Slides[key].Layout.Master === oCurMaster) {
+									this.Slides[key].checkSlideTheme();
+									this.Slides[key].recalculate();
+								}
 							}
 						}
 					}
@@ -4547,21 +4583,24 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 						}
 					}
 					if (oDrawingObject instanceof AscCommonSlide.SlideLayout) {
-						isUpdateThemes = true;
+						if (oCurMaster && oCurMaster.sldLayoutLst[0] == oDrawingObject) {
+							isUpdateThemes = true;
+						}
 						oDrawingObject.ImageBase64 = "";
 						b_check_layout = true;
 						bAttack = true;
 						for (i = 0; i < this.Slides.length; ++i) {
 							if (this.Slides[i].Layout === oDrawingObject) {
+								if (oCurMaster && oDrawingObject.Master === oCurMaster) {
+									this.Slides[i].checkSlideTheme();
+									this.Slides[i].recalculate();
+								}
 								if (redrawSlideIndexMap[i] !== true) {
 									redrawSlideIndexMap[i] = true;
 									aToRedrawSlides.push(i);
 								}
 							}
 						}
-					}
-					if (oDrawingObject instanceof AscFormat.CImageShape) {
-						isUpdateThemes = true;
 					}
 					if (oDrawingObject.getSlideIndex) {
 						slideIndex = oDrawingObject.getSlideIndex();
@@ -4572,7 +4611,9 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 							}
 						} else {
 							if (oCurNotesShape && oCurNotesShape === oDrawingObject) {
-								this.Slides[this.CurPage].recalculateNotesShape();
+								if (oCurSlide) {
+									oCurSlide.recalculateNotesShape();
+								}
 								bRedrawNotes = true;
 							}
 						}
@@ -4621,6 +4662,9 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 	}
 	if (!this.Slides[this.CurPage]) {
 		this.DrawingDocument.m_oWordControl.GoToPage(this.Slides.length - 1);
+		if (b_check_layout) {
+			this.DrawingDocument.m_oWordControl.CheckLayouts(bAttack);
+		}
 	} else {
 		if (this.bGoToPage) {
 			this.DrawingDocument.m_oWordControl.GoToPage(this.CurPage);
