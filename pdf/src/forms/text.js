@@ -92,6 +92,9 @@
     CTextField.prototype.IsComb = function() {
         return this._comb;
     };
+    CTextField.prototype.IsEditable = function() {
+        return true;
+    };
     CTextField.prototype.SetCharLimit = function(nChars) {
         let oViewer = editor.getDocumentRenderer();
 

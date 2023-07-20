@@ -1520,7 +1520,7 @@
             return;
             
         let oViewer         = editor.getDocumentRenderer();
-        let originView      = this.GetOriginView(this.IsHovered() ? AscPDF.APPEARANCE_TYPE.rollover : undefined);
+        let originView      = this.GetOriginView(this.IsHovered && this.IsHovered() ? AscPDF.APPEARANCE_TYPE.rollover : undefined);
         let oGraphicsPDF    = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
         let nScale          = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
         let aRect           = this.GetRect();
