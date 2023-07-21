@@ -7038,7 +7038,8 @@ var editor;
 		if (!pivotTable) {
 			return false;
 		}
-		this._addWorksheets([this.asc_createSheetName()],  this.wbModel.getActive(), function(worksheets){
+    const indexes = pivotTable.getItemsIndexesByActiveCell(activeCell.row, activeCell.col);
+		this._addWorksheets([pivotTable.asc_getShowDetailsSheetName(indexes.rowItemIndex, indexes.colItemIndex)],  this.wbModel.getActive(), function(worksheets){
 			let ws = worksheets[0];
 			if (!ws) {
 				return;
@@ -7046,7 +7047,7 @@ var editor;
 			History.Create_NewPoint();
 			History.StartTransaction();
 
-			let lengths = pivotTable.showDetails(ws, activeCell.row, activeCell.col);
+			let lengths = pivotTable.asc_showDetails(ws, activeCell.row, activeCell.col);
 
 			let range = new Asc.Range(0, 0, lengths.colLength, lengths.rowLength);
 			let ref = range.getAbsName();
