@@ -169,7 +169,7 @@ StartAddNewShape.prototype =
                     this.drawingObjects.clearTrackObjects();
                     this.drawingObjects.clearPreTrackObjects();
                     this.drawingObjects.updateOverlay();
-                    if(Asc["editor"])
+                    if(Asc["editor"] && Asc["editor"].wb)
                     {
                         if(!e.fromWindow || this.bStart)
                         {
@@ -252,7 +252,7 @@ StartAddNewShape.prototype =
                                 oEffect.cTn.setPresetSubtype(0);
                             }
                             oPresentation.FinalizeAction();
-                            if(Asc["editor"])
+                            if(Asc["editor"] && Asc["editor"].wb)
                             {
                                 if(!e.fromWindow || this.bStart)
                                 {
@@ -331,7 +331,7 @@ StartAddNewShape.prototype =
 						oThis.drawingObjects.drawingObjects.sendGraphicObjectProps();
 					}
                 }
-
+	            oThis.drawingObjects.updateOverlay();
             };
             if(Asc.editor && Asc.editor.checkObjectsLock)
             {
@@ -344,8 +344,7 @@ StartAddNewShape.prototype =
         }
         this.drawingObjects.clearTrackObjects();
         this.drawingObjects.clearPreTrackObjects();
-        this.drawingObjects.updateOverlay();
-        if(Asc["editor"])
+        if(Asc["editor"] && Asc["editor"].wb)
         {
             if(!e.fromWindow || this.bStart)
             {
@@ -445,11 +444,11 @@ NullState.prototype =
 					{
 						if(oPainterData.isDrawingData())
 						{
-							sType = AscCommon.kCurFormatPainterDrawing;
+							sType = AscCommon.Cursors.ShapeCopy;
 						}
 						else
 						{
-							sType = AscCommon.kCurFormatPainterWord;
+							sType = AscCommon.Cursors.TextCopy;
 						}
 					}
 					return {cursorType: sType, objectId: "1"};
@@ -990,7 +989,7 @@ RotateState.prototype =
             var bIsChartFrame = Asc["editor"] && Asc["editor"].isChartEditor === true;
             var bIsTrackInChart = (tracks.length > 0 && (tracks[0] instanceof AscFormat.MoveChartObjectTrack));
             var bCopyOnMove = e.CtrlKey && bIsMoveState && !bIsChartFrame && !bIsTrackInChart;
-            var bCopyOnMoveInGroup = (e.CtrlKey && oThis instanceof MoveInGroupState);
+            var bCopyOnMoveInGroup = (e.CtrlKey && oThis instanceof MoveInGroupState && !oThis.hasObjectInSmartArt);
             var i, j;
             var copy;
             if(bCopyOnMove)
@@ -1737,20 +1736,26 @@ function MoveInGroupState(drawingObjects, majorObject, group, startX, startY)
     this.startX = startX;
     this.startY = startY;
     this.bSamePos = true;
+	this.hasObjectInSmartArt = false;
 
     var arr_x = [], arr_y = [];
     for(var i = 0; i < this.drawingObjects.arrTrackObjects.length; ++i)
     {
         var track = this.drawingObjects.arrTrackObjects[i];
-        var transform = track.originalObject.transform;
+	    const oOriginalObject = track.originalObject;
+	    var transform = oOriginalObject.transform;
         arr_x.push(transform.TransformPointX(0, 0));
         arr_y.push(transform.TransformPointY(0, 0));
-        arr_x.push(transform.TransformPointX(track.originalObject.extX, 0));
-        arr_y.push(transform.TransformPointY(track.originalObject.extX, 0));
-        arr_x.push(transform.TransformPointX(track.originalObject.extX, track.originalObject.extY));
-        arr_y.push(transform.TransformPointY(track.originalObject.extX, track.originalObject.extY));
-        arr_x.push(transform.TransformPointX(0, track.originalObject.extY));
-        arr_y.push(transform.TransformPointY(0, track.originalObject.extY));
+        arr_x.push(transform.TransformPointX(oOriginalObject.extX, 0));
+        arr_y.push(transform.TransformPointY(oOriginalObject.extX, 0));
+        arr_x.push(transform.TransformPointX(oOriginalObject.extX, oOriginalObject.extY));
+        arr_y.push(transform.TransformPointY(oOriginalObject.extX, oOriginalObject.extY));
+        arr_x.push(transform.TransformPointX(0, oOriginalObject.extY));
+        arr_y.push(transform.TransformPointY(0, oOriginalObject.extY));
+				if (!this.hasObjectInSmartArt)
+				{
+					this.hasObjectInSmartArt = oOriginalObject.isObjectInSmartArt();
+				}
     }
     this.rectX = Math.min.apply(Math, arr_x);
     this.rectY = Math.min.apply(Math, arr_y);
@@ -2052,7 +2057,7 @@ TextAddState.prototype =
                 if(oApi.isFormatPainterOn())
                 {
                     this.drawingObjects.paragraphFormatPaste2();
-                    if (oApi.isFormatPainterOn())
+                    if (oApi.canTurnOffFormatPainter())
                     {
                         oApi.sync_PaintFormatCallback(c_oAscFormatPainterState.kOff);
                         if(oPresentation)
@@ -2119,7 +2124,7 @@ SplineBezierState.prototype =
 
     onMouseUp: function(e, X, Y, pageIndex)
     {
-        if(Asc["editor"])
+        if(Asc["editor"] && Asc["editor"].wb)
         {
             Asc["editor"].asc_endAddShape();
         }
@@ -2621,7 +2626,7 @@ PolyLineAddState.prototype =
     onMouseUp: function()
     {
 
-        if(Asc["editor"])
+        if(Asc["editor"] && Asc["editor"].wb)
         {
             Asc["editor"].asc_endAddShape();
         }
@@ -2654,6 +2659,11 @@ PolyLineAddState2.prototype =
 
     onMouseMove: function(e, x, y, pageIndex)
     {
+	    if(!e.IsLocked)
+	    {
+		    //todo: implement inheritance from AscCommon.CDrawingControllerStateBase
+		    return AscCommon.CDrawingControllerStateBase.prototype.emulateMouseUp.call(this, e, x, y, pageIndex);
+	    }
         var tr_x, tr_y;
         if(pageIndex === this.drawingObjects.startTrackPos.pageIndex)
         {
@@ -2684,7 +2694,7 @@ PolyLineAddState2.prototype =
             this.drawingObjects.updateOverlay();
             this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
 
-            if(Asc["editor"])
+            if(Asc["editor"] && Asc["editor"].wb)
             {
                 Asc["editor"].asc_endAddShape();
             }
@@ -2753,7 +2763,7 @@ AddPolyLine2State2.prototype =
             return {objectId: "1", bMarker: true, cursorType: "crosshair"};
         if(e.ClickCount > 1)
         {
-            if(Asc["editor"])
+            if(Asc["editor"] && Asc["editor"].wb)
             {
                 Asc["editor"].asc_endAddShape();
             }

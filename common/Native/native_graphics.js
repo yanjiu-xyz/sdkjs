@@ -33,7 +33,8 @@
 "use strict";
 function CNativeGraphics()
 {
-    this.Native = CreateNativeGraphics();
+    /** @suppress {checkVars} */
+    this.Native = CreateEmbedObject("CGraphicsEmbed");
 
     this.isNativeGraphics = true;
 
@@ -754,5 +755,9 @@ CNativeGraphics.prototype =
     Destroy : function()
     {
         this.Native["Destroy"]();
-    }
+    },
+	IsPdfRenderer : function()
+	{
+		return this.RENDERER_PDF_FLAG;
+	}
 };

@@ -216,7 +216,7 @@
 		if (this.ref) {
 			result = this.ref.getAbsName();
 			if (this._ws) {
-				result = this._ws.getName() + "!" + result;
+				result = AscCommon.parserHelp.get3DRef(this._ws.getName(), result);
 			}
 		}
 
@@ -258,7 +258,7 @@
 		}
 	};
 	CUserProtectedRange.prototype.asc_setName = function (val) {
-		this.name = val;
+		this.name = val.trim && val.trim();
 	};
 	CUserProtectedRange.prototype.asc_setUsers = function (val) {
 		this.users = val;

@@ -134,6 +134,8 @@
 		this.parent = document.getElementById(id);
 		this.thumbnails = null;
 
+		this.offsetTop = 0;
+
 		this.x = 0;
 		this.y = 0;
 		this.width 	= 0;
@@ -226,8 +228,8 @@
 
 		if (this.isXP)
 		{
-			AscCommon.g_oHtmlCursor.register("grab", "grab", "7 8", "pointer");
-			AscCommon.g_oHtmlCursor.register("grabbing", "grabbing", "6 6", "pointer");
+			AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.Grab, "7 8", "pointer");
+			AscCommon.g_oHtmlCursor.register(AscCommon.Cursors.Grabbing, "6 6", "pointer");
 		}
 
 		var oThis = this;
@@ -733,6 +735,9 @@
 		};
 		this.close = function()
 		{
+			if (!this.file || !this.file.isValid())
+				return;
+
 			this.file.close();
 
 			this.structure = null;
@@ -1311,6 +1316,13 @@
 					this.drawingPages[i].W = (this.file.pages[i].W * 96 * this.zoom / this.file.pages[i].Dpi) >> 0;
 					this.drawingPages[i].H = (this.file.pages[i].H * 96 * this.zoom / this.file.pages[i].Dpi) >> 0;
 				}
+
+				if (this.getPageRotate(i) & 1)
+				{
+					let tmp = this.drawingPages[i].W;
+					this.drawingPages[i].W = this.drawingPages[i].H;
+					this.drawingPages[i].H = tmp;
+				}
 			}
 
 			this.documentWidth = 0;
@@ -1322,7 +1334,7 @@
 			// прибавим немного
 			this.documentWidth += (4 * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
-			var curTop = this.betweenPages;
+			var curTop = this.betweenPages + this.offsetTop;
 			for (let i = 0, len = this.drawingPages.length; i < len; i++)
 			{
 				this.drawingPages[i].X = (this.documentWidth - this.drawingPages[i].W) >> 1;
@@ -1505,7 +1517,7 @@
 			{
 				oThis.Api.WordControl.m_oDrawingDocument.TargetEnd();
 				if (oThis.MouseHandObject)
-					cursorType = "grabbing";
+					cursorType = AscCommon.Cursors.Grabbing;
 				else
 					cursorType = "default";
 			}
@@ -1531,7 +1543,7 @@
 					return;
 				}
 				// режим лапы. просто начинаем режим Active - зажимаем лапу
-				oThis.setCursorType("grabbing");
+				oThis.setCursorType(AscCommon.Cursors.Grabbing);
 				oThis.MouseHandObject.X = oThis.mouseDownCoords.X;
 				oThis.MouseHandObject.Y = oThis.mouseDownCoords.Y;
 				oThis.MouseHandObject.Active = true;
@@ -1607,11 +1619,11 @@
 					if (mouseUpLinkObject)
 						oThis.setCursorType("pointer");
 					else
-						oThis.setCursorType("grab");
+						oThis.setCursorType(AscCommon.Cursors.Grab);
 				}
 				else if (!oThis.isMouseMoveBetweenDownUp)
 				{
-					oThis.setCursorType("grab");
+					oThis.setCursorType(AscCommon.Cursors.Grab);
 
 					// делаем клик в логическом документе, чтобы сбросить селект, если он был
 					var pageObjectLogic = oThis.getPageByCoords2(AscCommon.global_mouseEvent.X - oThis.x, AscCommon.global_mouseEvent.Y - oThis.y);
@@ -1620,7 +1632,7 @@
 				}
 				else
 				{
-					oThis.setCursorType("grab");
+					oThis.setCursorType(AscCommon.Cursors.Grab);
 				}
 
 				oThis.isMouseMoveBetweenDownUp = false;
@@ -1688,7 +1700,7 @@
 				if (oThis.MouseHandObject.Active && !oThis.fieldFillingMode)
 				{
 					// двигаем рукой
-					oThis.setCursorType("grabbing");
+					oThis.setCursorType(AscCommon.Cursors.Grabbing);
 
 					var scrollX = AscCommon.global_mouseEvent.X - oThis.MouseHandObject.X;
 					var scrollY = AscCommon.global_mouseEvent.Y - oThis.MouseHandObject.Y;
@@ -1749,7 +1761,7 @@
 						else
 						{
 							// даже если не двигали еще и ждем eps, все равно курсор меняем на зажатый
-							oThis.setCursorType("grabbing");
+							oThis.setCursorType(AscCommon.Cursors.Grabbing);
 						}
 					}
 					else
@@ -2324,16 +2336,25 @@
 				let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 				let h = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
+				let rotateAngle = this.getPageRotate(i);
+				let natW = w;
+				let natH = h;
+				if (rotateAngle & 1)
+				{
+					natW = h;
+					natH = w;
+				}
+
 				if (!isStretchPaint)
 				{
 					if (!this.file.cacheManager)
 					{
-						if (this.isClearPages || (page.Image && ((page.Image.requestWidth != w) || (page.Image.requestHeight != h))))
+						if (this.isClearPages || (page.Image && ((page.Image.requestWidth !== natW) || (page.Image.requestHeight !== natH))))
 							delete page.Image;
 					}
 					else
 					{
-						if (this.isClearPages || (page.Image && ((page.Image.requestWidth < w) || (page.Image.requestHeight < h))))
+						if (this.isClearPages || (page.Image && ((page.Image.requestWidth < natW) || (page.Image.requestHeight < natH))))
 						{
 							if (this.file.cacheManager)
 								this.file.cacheManager.unlock(page.Image);
@@ -2345,9 +2366,11 @@
 
 				if (!page.Image && !isStretchPaint)
 				{
-					page.Image = this.file.getPage(i, w, h, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
-					if (this.Api.watermarkDraw)
-						this.Api.watermarkDraw.Draw(page.Image.getContext("2d"), w, h);
+					page.Image = this.file.getPage(i, natW, natH, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
+
+					// нельзя кэшировать с вотермарком - так как есть поворот
+					//if (this.Api.watermarkDraw)
+					//	this.Api.watermarkDraw.Draw(page.Image.getContext("2d"), w, h);
 				}
 
 				let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
@@ -2355,7 +2378,21 @@
 
 				if (page.Image)
 				{
-					ctx.drawImage(page.Image, 0, 0, page.Image.width, page.Image.height, x, y, w, h);
+					if (0 === rotateAngle)
+					{
+						ctx.drawImage(page.Image, 0, 0, page.Image.width, page.Image.height, x, y, w, h);
+					}
+					else
+					{
+						let cx = x + 0.5 * w;
+						let cy = y + 0.5 * h;
+
+						ctx.save();
+						ctx.translate(cx, cy);
+						ctx.rotate(rotateAngle * Math.PI / 2);
+						ctx.drawImage(page.Image, -0.5 * natW, -0.5 * natH, natW, natH);
+						ctx.restore();
+					}
 					this.pagesInfo.setPainted(i);
 				}
 				else
@@ -2364,6 +2401,9 @@
 					ctx.fillRect(x, y, w, h);
 				}
 				ctx.strokeRect(x + lineW / 2, y + lineW / 2, w - lineW, h - lineW);
+
+				if (this.Api.watermarkDraw)
+					this.Api.watermarkDraw.Draw(ctx, x, y, w, h);
 
 				this.pageDetector.addPage(i, x, y, w, h);
 			}
@@ -3073,13 +3113,60 @@
 			return result;
 		};
 
+
 		this.Get_AllFontNames = function()
 		{
 			return {
 				// to do
 			}
 		};
-		this.createComponents();
+
+		this.setRotatePage = function(pageNum, angle, ismultiply)
+		{
+			if (!this.file || !this.file.isValid())
+				return;
+
+			if (undefined === pageNum)
+				pageNum = this.currentPage;
+
+			let page = this.file.pages[pageNum];
+			if (!page)
+				return;
+
+			angle = (angle / 90) >> 0;
+
+			if (page.angle && ismultiply)
+				page.angle += angle;
+			else
+				page.angle = angle;
+
+			page.angle += 4;
+			page.angle &= 0x03;
+
+			if (0 === page.angle)
+				delete page.angle;
+
+			this.resize();
+			this.thumbnails && this.thumbnails.resize();
+		};
+
+		this.getPageRotate = function(pageNum)
+		{
+			if (!this.file || !this.file.isValid())
+				return 0;
+
+			if (!this.file.pages[pageNum])
+				return 0;
+
+			let value = this.file.pages[pageNum].angle;
+			return (undefined === value) ? 0 : value;
+		};
+
+		this.setOffsetTop = function(offset)
+		{
+			this.offsetTop = offset;
+			this.resize();
+		};		this.createComponents();
 	};
 	CHtmlPage.prototype.getPDFDoc = function()
 	{
