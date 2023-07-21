@@ -2198,7 +2198,7 @@ function CDrawingDocument()
 				y += this.TextMatrix.ty;
 			}
 
-			var pos = this.ConvertCoordsToCursor4(x, y, this.m_lCurrentPage, true);
+			var pos = this.m_oDocumentRenderer == null ? this.ConvertCoordsToCursor4(x, y, this.m_lCurrentPage, true) :  this.ConvertCoordsToCursor5(x, y, this.m_lCurrentPage, true);
 			this.TargetHtmlElementLeft = pos.X >> 0;
 			this.TargetHtmlElementTop = (pos.Y + 0.5) >> 0;
 
@@ -2299,7 +2299,7 @@ function CDrawingDocument()
 			this.m_lTimerUpdateTargetID = -1;
 		}
 
-		if (pageIndex >= this.m_arrPages.length)
+		if (this.m_oWordControl.m_oLogicDocument && pageIndex >= this.m_arrPages.length)
 			return;
 
 		var bIsPageChanged = false;
