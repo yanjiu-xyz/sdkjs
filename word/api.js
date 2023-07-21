@@ -14599,4 +14599,6 @@ background-repeat: no-repeat;\
         AscCommon.g_font_loader.LoadDocumentFonts2(_fonts);
 	};
 
+	AscCommon['DocumentEditorApi'] = AscCommon.DocumentEditorApi = asc_docs_api;
+	
 })(window, window.document);

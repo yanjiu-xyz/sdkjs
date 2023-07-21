@@ -2271,7 +2271,8 @@ function CDrawingDocument()
 		if (this.m_oWordControl)
 			this.m_oWordControl.m_oApi.checkLastWork();
 
-		this.m_oWordControl.m_oLogicDocument.Set_TargetPos(x, y, pageIndex);
+		if (this.m_oWordControl.m_oLogicDocument)
+			this.m_oWordControl.m_oLogicDocument.Set_TargetPos(x, y, pageIndex);
 
 		if(window["NATIVE_EDITOR_ENJINE"])
 			return;
@@ -6753,16 +6754,26 @@ function CDrawingDocument()
 	// при загрузке документа - нужно понять какие шрифты используются
 	this.CheckFontNeeds = function()
 	{
-		var map_keys = this.m_oWordControl.m_oLogicDocument.Document_Get_AllFontNames();
+		var map_keys;
+		if (this.m_oWordControl.m_oLogicDocument)
+			map_keys = this.m_oWordControl.m_oLogicDocument.Document_Get_AllFontNames();
+		else if (this.m_oDocumentRenderer)
+			map_keys = this.m_oDocumentRenderer.Get_AllFontNames();
+
 		var dstfonts = [];
 		for (var i in map_keys)
 		{
 			dstfonts[dstfonts.length] = new AscFonts.CFont(i, 0, "", 0, null);
 		}
-		AscFonts.FontPickerByCharacter.getFontsByString(AscCommon.translateManager.getValue("Heading" + " 123"));
-        AscFonts.FontPickerByCharacter.extendFonts(dstfonts);
-		this.m_oWordControl.m_oLogicDocument.Fonts = dstfonts;
-		return;
+
+		if (this.m_oWordControl.m_oLogicDocument)
+		{
+			AscFonts.FontPickerByCharacter.getFontsByString(AscCommon.translateManager.getValue("Heading" + " 123"));
+			AscFonts.FontPickerByCharacter.extendFonts(dstfonts);
+			this.m_oWordControl.m_oLogicDocument.Fonts = dstfonts;
+		}
+
+		return dstfonts;
 
 		/*
 		 var map_used = this.m_oWordControl.m_oLogicDocument.Document_CreateFontMap();
