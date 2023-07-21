@@ -8285,6 +8285,20 @@ CPresentation.prototype.Get_AllImageUrls = function (aImages) {
 			}
 		}
 	}
+	if (this.Slides.length === 0) {
+		for (let i = 0; i < this.slideMasters.length; ++i) {
+			let oMaster = this.slideMasters[i];
+			oObjectsToCheck[oMaster.Id] = oMaster; 
+			for (let j = 0; j < oMaster.sldLayoutLst.length; ++j) {
+				let oLayout = oMaster.sldLayoutLst[j];
+				oObjectsToCheck[oLayout.Id] = oLayout;
+			}
+			let oTheme = oMaster.Theme;
+			if (oTheme) {
+				oObjectsToCheck[oTheme.Id] = oTheme;
+			}
+		}
+	}
 	for (let sKey in oObjectsToCheck) {
 		if (oObjectsToCheck.hasOwnProperty(sKey)) {
 			oObjectsToCheck[sKey].getAllRasterImages(aImages);
@@ -8308,6 +8322,20 @@ CPresentation.prototype.Reassign_ImageUrls = function (images_rename) {
 				if (oTheme) {
 					oObjectsToCheck[oTheme.Id] = oTheme;
 				}
+			}
+		}
+	}
+	if (this.Slides.length === 0) {
+		for (let i = 0; i < this.slideMasters.length; ++i) {
+			let oMaster = this.slideMasters[i];
+			oObjectsToCheck[oMaster.Id] = oMaster; 
+			for (let j = 0; j < oMaster.sldLayoutLst.length; ++j) {
+				let oLayout = oMaster.sldLayoutLst[j];
+				oObjectsToCheck[oLayout.Id] = oLayout;
+			}
+			let oTheme = oMaster.Theme;
+			if (oTheme) {
+				oObjectsToCheck[oTheme.Id] = oTheme;
 			}
 		}
 	}
