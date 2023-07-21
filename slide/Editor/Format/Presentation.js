@@ -4581,7 +4581,7 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 						}
 					}
 					if (oDrawingObject instanceof AscCommonSlide.SlideLayout) {
-						if (oCurMaster && oCurMaster.sldLayoutLst[0] == oDrawingObject) {
+						if (oCurMaster && oCurMaster.sldLayoutLst[0].type == AscFormat.nSldLtTTitle) {
 							isUpdateThemes = true;
 						}
 						oDrawingObject.ImageBase64 = "";
