@@ -60,7 +60,7 @@ $(function () {
 			AscCommon.History.GetChangesFromPoint(i, arr);
 		}
 
-		oDeletedText.oColloborativeHistory.Changes = arr;
+		oDeletedText.oColloborativeHistory.Changes = arr.reverse();
 		oDeletedText.Changes = arr;
 		oDeletedText.InitRevision();
 		oDeletedText.ShowDel();
