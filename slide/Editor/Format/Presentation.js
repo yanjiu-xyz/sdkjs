@@ -4556,9 +4556,7 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 				var oDrawingObject = _RecalcData.Drawings.Map[key];
 				if (AscCommon.g_oTableId.Get_ById(key) === oDrawingObject) {
 					if (oDrawingObject instanceof AscCommonSlide.MasterSlide) {
-						if (oDrawingObject === oCurMaster) {
-							isUpdateThemes = true;
-						}
+						isUpdateThemes = true;
 						if(oDrawingObject.needRecalc()) {
 							for (key in this.Slides) {
 								if (this.Slides[key].Layout.Master === oCurMaster) {
