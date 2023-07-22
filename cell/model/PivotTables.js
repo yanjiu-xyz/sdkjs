@@ -5948,6 +5948,11 @@ CT_pivotTableDefinition.prototype._removePageField = function(fld) {
 		return deleteIndex;
 	}
 };
+/**
+ * @param {spreadsheet_api} api
+ * @param {boolean} isAll expand/collapse all
+ * @param {boolean} visible true to expand,false to collapse
+ */
 CT_pivotTableDefinition.prototype.asc_setExpandCollapseByActiveCell = function (api, isAll, visible) {
 	let ws = api.wbModel.getActiveWs();
 	let activeCell = ws.selectionRange.activeCell;
@@ -5962,9 +5967,15 @@ CT_pivotTableDefinition.prototype.asc_setExpandCollapseByActiveCell = function (
 	if (isAll) {
 		this.setVisibleField(api, visible, cellLayout.fld);
 	} else {
-		this.setVisibleFieldItem(api, visible, cellLayout.fld, cellLayout.v);
+		this.setVisibleFieldItem(api, visible, cellLayout.fld, cellLayout.v, layout);
 	}
 };
+/**
+ * @param {spreadsheet_api} api
+ * @param {number} row index of cell
+ * @param {number} col index of cell
+ * @param {number} isAll expand/collapse all
+ */
 CT_pivotTableDefinition.prototype.toggleExpandCollapseByActiveCell = function (api, row, col, isAll) {
 	let ws = api.wbModel.getActiveWs();
 	let activeCell = ws.selectionRange.activeCell;
@@ -5984,9 +5995,15 @@ CT_pivotTableDefinition.prototype.toggleExpandCollapseByActiveCell = function (a
 	if (isAll) {
 		this.setVisibleField(api, visible, cellLayout.fld);
 	} else {
-		this.setVisibleFieldItem(api, visible, cellLayout.fld, cellLayout.v);
+		this.setVisibleFieldItem(api, visible, cellLayout.fld, cellLayout.v, layout);
 	}
 };
+/**
+ * @param {spreadsheet_api} api
+ * @param {number} fld pivotFields index
+ * @param {number} isAll expand/collapse all
+ * @return {boolean} true if dialog was shown
+ */
 CT_pivotTableDefinition.prototype.checkHeaderDetailsDialog = function (api, fld, isAll) {
 	let insertIndexRow = this.rowFields && this.rowFields.find(fld);
 	let insertIndexCol = this.colFields && this.colFields.find(fld);
@@ -5999,9 +6016,60 @@ CT_pivotTableDefinition.prototype.checkHeaderDetailsDialog = function (api, fld,
 	}
 	return false;
 }
-CT_pivotTableDefinition.prototype.setVisibleFieldItem = function (api, visible, fld, index) {
-	if (this.checkHeaderDetailsDialog(api, fld, false)) {
-		return;
+/**
+ * @param {number} fld pivotFields index
+ * @param {number} opt_index cache field index {CT_PivotField}.x
+ * @param {PivotLayout} opt_layout 
+ * @return {Object}
+ */
+CT_pivotTableDefinition.prototype.modifyLastCollapseField = function (fld, opt_index, opt_layout) {
+	let pivotFields = this.asc_getPivotFields();
+	let rowsCount = this.rowFields.getCount();
+	let colsCount = this.colFields.getCount();
+	let insertIndexRow = this.rowFields && this.rowFields.find(fld);
+	let insertIndexCol = this.colFields && this.colFields.find(fld);
+	if (insertIndexRow > 0 && rowsCount > 1 ) {
+		if (undefined !== opt_index && undefined !== opt_layout) {
+			if (opt_layout.rows[insertIndexRow - 1] && (insertIndexRow === rowsCount - 1 || !pivotFields[fld].asc_getVisible(opt_index))) {
+				fld = this.rowFields.get(insertIndexRow - 1).asc_getIndex();
+				opt_index = opt_layout.rows[insertIndexRow - 1].v;
+			}
+		} else {
+			if (insertIndexRow === rowsCount - 1 || pivotFields[fld].asc_isAllHidden()) {
+				fld = this.rowFields.get(insertIndexRow - 1).asc_getIndex();
+			}
+		}
+
+	} else if (insertIndexCol > 0 && colsCount > 1) {
+		if (undefined !== opt_index && undefined !== opt_layout) {
+			if (opt_layout.cols[insertIndexCol - 1] && (insertIndexCol === colsCount - 1 || !pivotFields[fld].asc_getVisible(opt_index))) {
+				fld = this.colFields.get(insertIndexCol - 1).asc_getIndex();
+				opt_index = opt_layout.cols[insertIndexCol - 1].v;
+			}
+		} else {
+			if (insertIndexCol === colsCount - 1 || pivotFields[fld].asc_isAllHidden()) {
+				fld = this.colFields.get(insertIndexCol - 1).asc_getIndex();
+			}
+		}
+	}
+	return {fld: fld, index: opt_index};
+}
+/**
+ * @param {spreadsheet_api} api
+ * @param {boolean} visible true to expand,false to collapse
+ * @param {number} fld pivotFields index
+ * @param {number} index cache field index {CT_PivotField}.x
+ * @param {PivotLayout} layout
+ */
+CT_pivotTableDefinition.prototype.setVisibleFieldItem = function (api, visible, fld, index, layout) {
+	if (visible) {
+		if (this.checkHeaderDetailsDialog(api, fld, false)) {
+			return;
+		}
+	} else {
+		let mod = this.modifyLastCollapseField(fld, index, layout);
+		fld = mod.fld;
+		index = mod.index;
 	}
 	api._changePivotWithLock(this, function (ws, pivot) {
 		pivot._setVisibleFieldItem(visible, fld, index);
@@ -6013,9 +6081,19 @@ CT_pivotTableDefinition.prototype._setVisibleFieldItem = function (visible, fld,
 		pivotField.asc_setVisibleItem(visible, this, fld, index, true);
 	}
 };
+/**
+ * @param {spreadsheet_api} api
+ * @param {boolean} visible true to expand,false to collapse
+ * @param {number} fld pivotFields index
+ */
 CT_pivotTableDefinition.prototype.setVisibleField = function (api, visible, fld) {
-	if (this.checkHeaderDetailsDialog(api, fld, true)) {
-		return;
+	if (visible) {
+		if (this.checkHeaderDetailsDialog(api, fld, true)) {
+			return;
+		}
+	} else {
+		let mod = this.modifyLastCollapseField(fld);
+		fld = mod.fld;
 	}
 	api._changePivotWithLock(this, function (ws, pivot) {
 		pivot._setVisibleField(visible, fld);
@@ -7069,6 +7147,13 @@ CT_pivotTableDefinition.prototype.showDetails = function(ws, row, col) {
 	let records = this.getRecords();
 	return records.fillPivotDetails(ws, itemMap, cacheFields);
 };
+/**
+ * @param {spreadsheet_api} api
+ * @param {number} row index of cell
+ * @param {number} col index of cell
+ * @param {number} fld pivotFields index
+ * @param {boolean} isAll expand/collapse all
+ */
 CT_pivotTableDefinition.prototype.showDetailsHeaderByCell = function(api, row, col, fld, isAll) {
 	let layout = this.getLayoutByCell(row, col);
 	if (st_VALUES === layout.fld || !layout.canExpandCollapse()) {
@@ -7116,7 +7201,11 @@ CT_pivotTableDefinition.prototype.asc_canShowDetails = function(row, col) {
 	}
 	return true;
 };
-
+/**
+ * @param {number} row index of cell
+ * @param {number} col index of cell
+ * @return {boolean}
+ */
 CT_pivotTableDefinition.prototype.asc_canExpandCollapse = function(row, col) {
 	let layout = this.getLayoutByCell(row, col);
 	return layout && layout.canExpandCollapse() || false;
@@ -8797,6 +8886,9 @@ CT_RowFields.prototype.remove = function (index) {
 CT_RowFields.prototype.find = function (index) {
 	return findFieldBase(index, this.field);
 };
+CT_RowFields.prototype.get = function (index) {
+	return this.field[index];
+};
 CT_RowFields.prototype.getCount = function () {
 	return this.field.length;
 };
@@ -8913,6 +9005,9 @@ CT_ColFields.prototype.remove = function (index) {
 CT_ColFields.prototype.find = function (index) {
 	return findFieldBase(index, this.field);
 };
+CT_ColFields.prototype.get = function (index) {
+	return this.field[index];
+};
 CT_ColFields.prototype.getCount = function () {
 	return this.field.length;
 };
@@ -8994,6 +9089,9 @@ CT_PageFields.prototype.remove = function (index) {
 CT_PageFields.prototype.find = function (index) {
 	return findFieldBase(index, this.pageField);
 };
+CT_PageFields.prototype.get = function (index) {
+	return this.pageField[index];
+};
 CT_PageFields.prototype.getCount = function () {
 	return this.pageField.length;
 };
@@ -9047,6 +9145,9 @@ CT_DataFields.prototype.remove = function(index, dataIndex) {
 };
 CT_DataFields.prototype.find = function (index) {
 	return findFieldBase(index, this.dataField);
+};
+CT_DataFields.prototype.get = function (index) {
+	return this.dataField[index];
 };
 CT_DataFields.prototype.getCount = function () {
 	return this.dataField.length;
@@ -11627,6 +11728,15 @@ CT_PivotField.prototype.asc_getVisible = function (index) {
 		return items[index].sd;
 	}
 	return false;
+};
+CT_PivotField.prototype.asc_isAllHidden = function () {
+	var items = this.getItems();
+	if (!items) {
+		return true;
+	}
+	return items.every(function(item) {
+		return !item.sd;
+	});
 };
 CT_PivotField.prototype.asc_getSubtotals = function(withDefault) {
 	var res = [];
@@ -16410,7 +16520,16 @@ PivotLayout.prototype.getGroupCellLayout = function() {
 	return null;
 };
 PivotLayout.prototype.canExpandCollapse = function() {
-	return PivotLayoutType.rowField === this.type || PivotLayoutType.colField === this.type;
+	if (PivotLayoutType.rowField !== this.type && PivotLayoutType.colField !== this.type) {
+		return false;
+	}
+	if (this.rows && this.rows.length > 0 && this.rows[this.rows.length - 1].t !== Asc.c_oAscItemType.Data) {
+		return false;
+	}
+	if (this.cols && this.cols.length > 0 && this.cols[this.cols.length - 1].t !== Asc.c_oAscItemType.Data) {
+		return false;
+	}
+	return true;
 };
 
 function DataRowTraversal(pivotFields, dataFields, rowItems, colItems, rowFields, colFields) {
@@ -18164,6 +18283,8 @@ prot["asc_getInsertBlankRow"] = prot.asc_getInsertBlankRow;
 prot["asc_getDefaultSubtotal"] = prot.asc_getDefaultSubtotal;
 prot["asc_getSubtotalTop"] = prot.asc_getSubtotalTop;
 prot["asc_getShowAll"] = prot.asc_getShowAll;
+prot["asc_getVisible"] = prot.asc_getVisible;
+prot["asc_isAllHidden"] = prot.asc_isAllHidden;
 prot["asc_getSubtotals"] = prot.asc_getSubtotals;
 prot["asc_set"] = prot.asc_set;
 prot["asc_setName"] = prot.asc_setName;

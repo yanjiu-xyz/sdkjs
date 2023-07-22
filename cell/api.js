@@ -7117,6 +7117,10 @@ var editor;
 		});
 		return true;
 	};
+	/**
+	 * @param {number} fld pivotFields index
+	 * @param {boolean} isAll expand/collapse all
+	 */
 	spreadsheet_api.prototype.asc_pivotShowDetailsHeader = function(fld, isAll) {
 		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 			return false;
