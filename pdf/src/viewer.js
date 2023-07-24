@@ -1602,9 +1602,13 @@
 			let oMouseUpField = oThis.getPageFieldByMouse();
 			if (oThis.MouseHandObject)
 			{
-				if (oMouseUpField && oThis.onMouseDownField == oMouseUpField)
+				if (oThis.onMouseDownField)
 				{
-					oThis.doc.OnMouseUpField(oMouseUpField, e);
+					if (oMouseUpField == oThis.onMouseDownField)
+						oThis.doc.OnMouseUpField(oMouseUpField, e);
+					else if (oThis.onMouseDownField.GetType() == AscPDF.FIELD_TYPES.button) {
+						oThis.onMouseDownField.SetPressed(false);
+					}
 				}
 				else if (oThis.mouseDownLinkObject)
 				{

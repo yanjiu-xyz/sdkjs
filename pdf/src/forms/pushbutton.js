@@ -642,10 +642,17 @@
                 else {
                     let oGraphicsPDF    = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
                     let oGraphicsCanvas = oGraphicsPDF.context.canvas;
+
+                    X       = this._pagePos.x * nScale;
+                    Y       = this._pagePos.y * nScale;
+                    nWidth  = this._pagePos.w * nScale;
+                    nHeight = this._pagePos.h * nScale;
+
+                    oGraphicsPDF.ClearRect(X, Y, nWidth, nHeight);
+
                     let oDrawing        = this.GetDrawing();
                     let oCaptionRun     = this.GetCaptionRun();
                     let sDownCaption    = this.GetCaption(CAPTION_TYPES.mouseDown);
-                    oGraphicsPDF.ClearRect(0, 0, oGraphicsCanvas.width, oGraphicsCanvas.height);
                     
                     if (oDrawing) {
                         if (this._images.mouseDown) {
@@ -670,9 +677,10 @@
                         oCaptionRun.AddText(sDownCaption);
                     }
 
-                    this.SetNeedRecalc(true);
+                    this.SetNeedRecalc(true, true);
                     this.Draw();
 
+                    oCtx.clearRect(X + indLeft, Y + indTop, nWidth, nHeight);
                     oCtx.drawImage(oGraphicsCanvas, 0, 0, oGraphicsCanvas.width, oGraphicsCanvas.height, indLeft, indTop, w, h);
                 }
                 
@@ -722,7 +730,14 @@
         else {
             let oGraphicsPDF = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
             let oGraphicsCanvas = oGraphicsPDF.context.canvas;
-            oGraphicsPDF.ClearRect(0, 0, oGraphicsCanvas.width, oGraphicsCanvas.height);
+            
+            X       = this._pagePos.x * nScale;
+            Y       = this._pagePos.y * nScale;
+            nWidth  = this._pagePos.w * nScale;
+            nHeight = this._pagePos.h * nScale;
+
+            oGraphicsPDF.ClearRect(X, Y, nWidth, nHeight);
+
             let oDrawing = this.GetDrawing();
             if (oDrawing && this._images.rollover) {
                 let oFill   = new AscFormat.CUniFill();
@@ -743,9 +758,10 @@
                 oCaptionRun.AddText(sDownCaption);
             }
 
-            this.SetNeedRecalc(true);
+            this.SetNeedRecalc(true, true);
             this.Draw();
 
+            oCtx.clearRect(X + indLeft, Y + indTop, nWidth, nHeight);
             oCtx.drawImage(oGraphicsCanvas, 0, 0, oGraphicsCanvas.width, oGraphicsCanvas.height, indLeft, indTop, w, h);
         }
     };
@@ -791,7 +807,14 @@
         else {
             let oGraphicsPDF = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
             let oGraphicsCanvas = oGraphicsPDF.context.canvas;
-            oGraphicsPDF.ClearRect(0, 0, oGraphicsCanvas.width, oGraphicsCanvas.height);
+            
+            X       = this._pagePos.x * nScale;
+            Y       = this._pagePos.y * nScale;
+            nWidth  = this._pagePos.w * nScale;
+            nHeight = this._pagePos.h * nScale;
+
+            oGraphicsPDF.ClearRect(X, Y, nWidth, nHeight);
+            
             let oDrawing = this.GetDrawing();
             if (oDrawing && this._images.rollover && this._images.normal) {
                 let oFill   = new AscFormat.CUniFill();
@@ -812,9 +835,10 @@
                 oCaptionRun.AddText(sDownCaption);
             }
 
-            this.SetNeedRecalc(true);
+            this.SetNeedRecalc(true, true);
             this.Draw();
 
+            oCtx.clearRect(X + indLeft, Y + indTop, nWidth, nHeight);
             oCtx.drawImage(oGraphicsCanvas, 0, 0, oGraphicsCanvas.width, oGraphicsCanvas.height, indLeft, indTop, w, h);
         }
     };
@@ -828,7 +852,7 @@
         if (aBgColor && aBgColor.length != 0)
             oBgRGBColor = this.GetRGBColor(aBgColor);
 
-        if (this.IsPressed()) {
+        if (this.IsPressed() && this.IsHovered()) {
             switch (this.GetBorderStyle()) {
                 case AscPDF.BORDER_TYPES.inset:
                     oBgRGBColor = MakeColorMoreGray(oBgRGBColor || {r: 255, g: 255, b: 255}, 50);
@@ -883,7 +907,7 @@
         let nHeight;
 
         if (this.IsNeedDrawFromStream() == true) {
-            let originView = this.GetOriginView(AscPDF.APPEARANCE_TYPE.normal);
+            let originView = this.IsHovered() ? this.GetOriginView(AscPDF.APPEARANCE_TYPE.rollover) : this.GetOriginView(AscPDF.APPEARANCE_TYPE.normal);
 
             X = originView.x;
             Y = originView.y;
@@ -905,8 +929,7 @@
             let oDrawing        = this.GetDrawing();
             let oCaptionRun     = this.GetCaptionRun();
             let sDownCaption    =  this.IsHovered() ? this.GetCaption(CAPTION_TYPES.rollover) : this.GetCaption(CAPTION_TYPES.normal);
-            oGraphicsPDF.ClearRect(0, 0, oGraphicsCanvas.width, oGraphicsCanvas.height);
-            
+            oGraphicsPDF.ClearRect(X, Y, nWidth, nHeight);
 
             if (oDrawing) {
                 let sRasterId;
@@ -915,7 +938,6 @@
                         sRasterId = this._images.rollover;
                     else {
                         this.SetNeedRecalc(true);
-                        return;
                     }
                 }
                 else {
@@ -923,19 +945,20 @@
                         sRasterId = this._images.normal;
                     else {
                         this.SetNeedRecalc(true);
-                        return;
                     }
                 }
 
-                let oFill   = new AscFormat.CUniFill();
-                oFill.fill  = new AscFormat.CBlipFill();
-                oFill.fill.setRasterImageId(sRasterId);
-                oFill.fill.tile     = null;
-                oFill.fill.srcRect  = null;
-                oFill.fill.stretch  = true;
-                oFill.convertToPPTXMods();
-                oDrawing.GraphicObj.setFill(oFill);
-                oDrawing.GraphicObj.recalculate();
+                if (sRasterId) {
+                    let oFill   = new AscFormat.CUniFill();
+                    oFill.fill  = new AscFormat.CBlipFill();
+                    oFill.fill.setRasterImageId(sRasterId);
+                    oFill.fill.tile     = null;
+                    oFill.fill.srcRect  = null;
+                    oFill.fill.stretch  = true;
+                    oFill.convertToPPTXMods();
+                    oDrawing.GraphicObj.setFill(oFill);
+                    oDrawing.GraphicObj.recalculate();
+                }
             }
 
             if (sDownCaption) {
@@ -943,7 +966,7 @@
                 oCaptionRun.AddText(sDownCaption);
             }
 
-            this.SetNeedRecalc(true);
+            this.SetNeedRecalc(true, true);
             this.Draw();
 
             oCtx.clearRect(X + indLeft, Y + indTop, nWidth, nHeight);
@@ -992,16 +1015,29 @@
             contentYLimit = (Y + nHeight) * g_dKoef_pix_to_mm;
         }
 
-        if (this.IsPressed()) {
+        if (this.IsPressed() && this.IsHovered()) {
             if (this._buttonFitBounds == true) {
                 contentX += oMargins.left * g_dKoef_pix_to_mm;
                 contentY += oMargins.top * g_dKoef_pix_to_mm;
             }
             else {
-                contentX += oMargins.left * g_dKoef_pix_to_mm / 2;
-                contentY += oMargins.top * g_dKoef_pix_to_mm / 2;
-                contentXLimit += oMargins.left * g_dKoef_pix_to_mm / 2;
-                contentYLimit += oMargins.top * g_dKoef_pix_to_mm / 2;
+                switch (this.GetBorderStyle()) {
+                    case AscPDF.BORDER_TYPES.solid:
+                    case AscPDF.BORDER_TYPES.dashed:
+                    case AscPDF.BORDER_TYPES.underline:
+                        contentX += oMargins.left * g_dKoef_pix_to_mm;
+                        contentY += oMargins.top * g_dKoef_pix_to_mm;
+                        contentXLimit += oMargins.left * g_dKoef_pix_to_mm;
+                        contentYLimit += oMargins.top * g_dKoef_pix_to_mm;
+                        break;
+                    case AscPDF.BORDER_TYPES.beveled:
+                    case AscPDF.BORDER_TYPES.inset:
+                        contentX += oMargins.left * g_dKoef_pix_to_mm / 2;
+                        contentY += oMargins.top * g_dKoef_pix_to_mm / 2;
+                        contentXLimit += oMargins.left * g_dKoef_pix_to_mm / 2;
+                        contentYLimit += oMargins.top * g_dKoef_pix_to_mm / 2;
+                        break;
+                }
             }
         }
 

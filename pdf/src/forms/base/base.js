@@ -913,7 +913,7 @@
         }        
 
         // pressed border
-        if (this.GetType() == AscPDF.FIELD_TYPES.button && this.IsPressed() && this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push) {
+        if (this.GetType() == AscPDF.FIELD_TYPES.button && this.IsPressed() && this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push && this._images.mouseDown == undefined) {
             switch (this._borderStyle) {
                 case BORDER_TYPES.solid:
                 case BORDER_TYPES.dashed:
@@ -1039,13 +1039,14 @@
     CBaseField.prototype.Get_Id = function() {
         return this._id;
     };
-    CBaseField.prototype.SetNeedRecalc = function(bRecalc) {
+    CBaseField.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) {
         if (bRecalc == false) {
             this._needRecalc = false;
         }
         else {
             this._needRecalc = true;
-            this.AddToRedraw();
+            if (bSkipAddToRedraw != true)
+                this.AddToRedraw();
         }
     };
     CBaseField.prototype.IsNeedRecalc = function() {
