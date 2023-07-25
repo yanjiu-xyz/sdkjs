@@ -2624,7 +2624,7 @@ CT_PivotCacheRecords.prototype.getRowMapByItemMap = function(itemMap, cacheField
  * @param {Worksheet} ws
  * @param {Map<number, number>} rowMap rows to copy
  * @param {CT_CacheFields} cacheFields
- * @return {Object}
+ * @return {FillPivotDetailsLengths}
  */
 CT_PivotCacheRecords.prototype.copyRowsToWorksheet = function(ws, rowMap, cacheFields) {
 	let rowsAddedByMap = 0;
@@ -2658,11 +2658,16 @@ CT_PivotCacheRecords.prototype.copyRowsToWorksheet = function(ws, rowMap, cacheF
 		colLength: this._cols.length - 1,
 	};
 };
+/** 
+ * @typedef FillPivotDetailsLengths
+ * @property {number} rowLength
+ * @property {number} colLength
+ */
 /**
  * @param {Worksheet} ws 
  * @param {PivotItemFieldsMap} itemMap
  * @param {CT_CacheFields} cacheFields
- * @return {Object} lengths
+ * @return {FillPivotDetailsLengths} lengths
  */
 CT_PivotCacheRecords.prototype.fillPivotDetails = function(ws, itemMap, cacheFields) {
 	let cacheFieldsWithoutGroups = cacheFields.filter(function(field, index) {
@@ -3882,7 +3887,7 @@ CT_pivotTableDefinition.prototype.getPivotTableButtons = function (range, button
  * @param {number} col cell's col in editor
  * @return {ItemsIndexesByActiveCell | null}
  */
-CT_pivotTableDefinition.prototype.asc_getItemsIndexesByActiveCell = function(row, col) {
+CT_pivotTableDefinition.prototype.getItemsIndexesByActiveCell = function(row, col) {
 	let pivotRange = this.getRange();
 	let location = this.location;
 	let baseCol = pivotRange.c1 + location.firstDataCol;
@@ -3905,7 +3910,7 @@ CT_pivotTableDefinition.prototype.getDataFieldIndexByCell = function (row, col, 
 	let colItems = this.getColItems();
 	let dataFields = this.asc_getDataFields();
 	if (dataFields) {
-		let indexes = this.asc_getItemsIndexesByActiveCell(row, col);
+		let indexes = this.getItemsIndexesByActiveCell(row, col);
 		if (indexes !== null) {
 			let rowItem = rowItems[indexes.rowItemIndex];
 			let colItem = colItems[indexes.colItemIndex];
@@ -7022,7 +7027,7 @@ CT_pivotTableDefinition.prototype.getItemFieldsMap = function(itemFieldsMapArray
  * @param {number} col 
  * @return {Object}
  */
-CT_pivotTableDefinition.prototype.asc_showDetails = function(ws, rowItemIndex, colItemIndex) {
+CT_pivotTableDefinition.prototype.showDetails = function(ws, rowItemIndex, colItemIndex) {
 	const arrayFieldItemsMap = this.getNoFilterItemFieldsMapArray(rowItemIndex, colItemIndex)
 	const itemMap = this.getItemFieldsMap(arrayFieldItemsMap);
 	const cacheFields = this.asc_getCacheFields();
@@ -7034,12 +7039,12 @@ CT_pivotTableDefinition.prototype.asc_showDetails = function(ws, rowItemIndex, c
  * @param {number} searchColItemIndex
  * @return {string} sheetName
  */
-CT_pivotTableDefinition.prototype.asc_getShowDetailsSheetName = function(searchRowItemIndex, searchColItemIndex) {
+CT_pivotTableDefinition.prototype.getShowDetailsSheetName = function(searchRowItemIndex, searchColItemIndex) {
 	const cacheFields = this.asc_getCacheFields();
 	const workbook = this.worksheet.workbook;
 	const api = workbook.oApi;
 	const arrayFieldItemsMap = this.getNoFilterItemFieldsMapArray(searchRowItemIndex, searchColItemIndex)
-	let prefix = AscCommon.translateManager.getValue('Info') + '1';
+	let prefix = AscCommon.translateManager.getValue('Info') + workbook.pivotDetailsLastSheetId;
 	let postfix = '';
 	arrayFieldItemsMap.forEach(function(value) {
 		const fieldIndex = value[0];
@@ -7056,13 +7061,19 @@ CT_pivotTableDefinition.prototype.asc_getShowDetailsSheetName = function(searchR
 	for(let i = 0; i < wc; i += 1) {
 		sheetNames.push(api.asc_getWorksheetName(i).toLowerCase());
 	}
-	for(let i = 1; sheetNames.indexOf((prefix + postfix).toLowerCase()) !== -1; i += 1) {
+	for(let i = workbook.pivotDetailsLastSheetId + 1; sheetNames.indexOf((prefix + postfix).toLowerCase()) !== -1; i += 1) {
 		prefix = AscCommon.translateManager.getValue('Info') + i;
+		workbook.pivotDetailsLastSheetId = i;
 	}
-	return prefix + postfix;
+	workbook.pivotDetailsLastSheetId += 1;
+	let result = prefix + postfix;
+	if (result.length > AscCommonExcel.g_nSheetNameMaxLength) {
+		result = result.substring(0, AscCommonExcel.g_nSheetNameMaxLength);
+	}
+	return result;
 }
 CT_pivotTableDefinition.prototype.asc_canShowDetails = function(row, col) {
-	let indexes = this.asc_getItemsIndexesByActiveCell(row, col);
+	let indexes = this.getItemsIndexesByActiveCell(row, col);
 	if (indexes === null) {
 		return false;
 	}
@@ -18081,9 +18092,6 @@ prot["asc_moveDataField"] = prot.asc_moveDataField;
 prot["asc_refresh"] = prot.asc_refresh;
 prot["asc_setVisibleFieldItemByCell"] = prot.asc_setVisibleFieldItemByCell;
 prot["asc_getFieldGroupType"] = prot.asc_getFieldGroupType;
-prot["asc_showDetails"] = prot.asc_showDetails;
-prot["asc_getShowDetailsSheetName"] = prot.asc_getShowDetailsSheetName;
-prot["asc_getItemsIndexesByActiveCell"] = prot.asc_getItemsIndexesByActiveCell;
 
 window["Asc"]["CT_PivotTableStyle"] = window['Asc'].CT_PivotTableStyle = CT_PivotTableStyle;
 prot = CT_PivotTableStyle.prototype;
