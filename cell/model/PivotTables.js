@@ -7040,11 +7040,25 @@ CT_pivotTableDefinition.prototype.showDetails = function(ws, rowItemIndex, colIt
  * @return {string} sheetName
  */
 CT_pivotTableDefinition.prototype.getShowDetailsSheetName = function(searchRowItemIndex, searchColItemIndex) {
+	/**
+	 * @param {RegExp} re 
+	 * @param {string[]} arr 
+	 * @return {number}
+	 */
+	function reIndexOf(re, arr) {
+		for(let i = 0; i < arr.length; i += 1) {
+			const str = arr[i];
+			if (re.test(str)) {
+				return i;
+			}
+		}
+		return -1;
+	}
 	const cacheFields = this.asc_getCacheFields();
 	const workbook = this.worksheet.workbook;
 	const api = workbook.oApi;
 	const arrayFieldItemsMap = this.getNoFilterItemFieldsMapArray(searchRowItemIndex, searchColItemIndex)
-	let prefix = AscCommon.translateManager.getValue('Info') + workbook.pivotDetailsLastSheetId;
+	const translatedInfoString = AscCommon.translateManager.getValue('Info');
 	let postfix = '';
 	arrayFieldItemsMap.forEach(function(value) {
 		const fieldIndex = value[0];
@@ -7059,13 +7073,16 @@ CT_pivotTableDefinition.prototype.getShowDetailsSheetName = function(searchRowIt
 	const sheetNames = [];
 	const wc = api.asc_getWorksheetsCount();
 	for(let i = 0; i < wc; i += 1) {
-		sheetNames.push(api.asc_getWorksheetName(i).toLowerCase());
+		sheetNames.push(api.asc_getWorksheetName(i));
 	}
-	for(let i = workbook.pivotDetailsLastSheetId + 1; sheetNames.indexOf((prefix + postfix).toLowerCase()) !== -1; i += 1) {
-		prefix = AscCommon.translateManager.getValue('Info') + i;
-		workbook.pivotDetailsLastSheetId = i;
+	let prefix;
+	for (let i = 1; ; i += 1) {
+		prefix = translatedInfoString + String(i);
+		const re = new RegExp('^' + prefix + '(-|$)');
+		if (reIndexOf(re, sheetNames) === -1) {
+			break;
+		}
 	}
-	workbook.pivotDetailsLastSheetId += 1;
 	let result = prefix + postfix;
 	if (result.length > AscCommonExcel.g_nSheetNameMaxLength) {
 		result = result.substring(0, AscCommonExcel.g_nSheetNameMaxLength);

@@ -2269,7 +2269,6 @@
 		this.CustomProperties = null;
 		this.theme = null;
 		this.clrSchemeMap = null;
-		this.pivotDetailsLastSheetId = 1;
 
 		this.CellStyles = new AscCommonExcel.CCellStyles();
 		this.TableStyles = new Asc.CTableStyles();
