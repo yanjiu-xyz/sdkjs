@@ -10292,7 +10292,7 @@ CPresentation.prototype.Get_NearestPos = function (Page, X, Y, bNotes) {
 };
 
 CPresentation.prototype.SendThemesThumbnails = function () {
-	if (window["NATIVE_EDITOR_ENJINE"]) {
+	if (window['IS_NATIVE_EDITOR']) {
 		this.DrawingDocument.CheckThemes();
 		return;
 	}
