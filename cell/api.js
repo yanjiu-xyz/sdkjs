@@ -7152,7 +7152,11 @@ var editor;
 			this.sendEvent('asc_onError', c_oAscError.ID.PivotLabledColumns, c_oAscError.Level.NoCritical);
 		}
 	};
-	spreadsheet_api.prototype.asc_insertPivotExistingWorksheet = function(dataRef, pivotRef, confirmation) {
+	spreadsheet_api.prototype.asc_insertPivotExistingWorksheet = function(dataRef, pivotRef) {
+		if (!Asc.CT_pivotTableDefinition.prototype.isValidDataRef(dataRef)) {
+			this.sendEvent('asc_onError', c_oAscError.ID.PivotLabledColumns, c_oAscError.Level.NoCritical);
+			return;
+		}
 		var location = AscFormat.ExecuteNoHistory(function() {
 			return Asc.CT_pivotTableDefinition.prototype.parseDataRef(pivotRef);
 		}, this, []);
