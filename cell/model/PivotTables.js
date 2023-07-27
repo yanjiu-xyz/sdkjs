@@ -7061,7 +7061,7 @@ CT_pivotTableDefinition.prototype.getFormatting = function(query) {
  * @property {number} selectedField
  * @property {CT_Format} format
  * @property {number} type one of c_oAscPivotAreaType
- * @property {PivotAreaOffset}
+ * @property {PivotAreaOffset} offset
  * @property {boolean} isGrandRow
  * @property {boolean} isGrandCol
  * @property {boolean} isLabelOnly
@@ -7208,6 +7208,11 @@ PivotFormatsManager.prototype.checkFormatsCollectionItemAttributes = function(fo
 	if (formatsCollectionItem.type !== Asc.c_oAscPivotAreaType.All && formatsCollectionItem.type !== query.type) {
 		return false;
 	}
+	if (formatsCollectionItem.offset !== null && query.offset) {
+		if (formatsCollectionItem.offset.col !== query.offset.col || formatsCollectionItem.offset.row !== query.offset.row) {
+			return false;
+		}
+	}
 	return true;
 };
 /**
@@ -7270,6 +7275,11 @@ PivotFormatsManager.prototype.compareFormatsCollectionItems = function(item1, it
 	if (item1.isLabelOnly && !item2.isLabelOnly) {
 		return -1;
 	} else if (!item1.isLabelOnly && item2.isLabelOnly) {
+		return 1;
+	}
+	if (item1.offset !== null && item2.offset === null) {
+		return -1;
+	} else if (item2.offset !== null && item1.offset === null) {
 		return 1;
 	}
 	return 0;
