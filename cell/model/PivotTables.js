@@ -14324,7 +14324,7 @@ CT_PivotArea.prototype.getNumberOffset = function() {
 		if (rowPart === AscCommonExcel.st_PIVOT_AREA_ZERO_ROW_OFFSET) {
 			result.row = 0;
 		} else {
-			result.row = +rowPart;
+			result.row = Number(rowPart);
 		}
 		if (colPart === AscCommonExcel.st_PIVOT_AREA_ZERO_COL_OFFSET) {
 			result.col = 0;
