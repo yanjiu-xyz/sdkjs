@@ -2809,7 +2809,7 @@
 		return -1;
 	};
 	Workbook.prototype.checkValidSheetName=function(name){
-		return (name && name.length < g_nSheetNameMaxLength);
+		return (name && name.length <= g_nSheetNameMaxLength);
 	};
 	Workbook.prototype.getUniqueSheetNameFrom=function(name, bCopy){
 		var nIndex = 1;
