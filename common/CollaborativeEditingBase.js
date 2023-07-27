@@ -235,6 +235,8 @@
 		this.m_nExternalIndex0  = -1;
 		this.m_nExternalIndex1  = -1;
 		this.m_nExternalCounter = 0;
+
+		this.oDeletedTextRecovery = null;
     }
 
     CCollaborativeEditingBase.prototype.GetEditorApi = function()
@@ -360,14 +362,13 @@
             this.OnStart_Load_Objects(fEndCallBack);
             AscFonts.IsCheckSymbols = false;
 
-			let revision = new AscCommon.DeletedTextRecovery();
-			revision.InitRevision();
-			if (revision.GetIsShowDelText())
+			this.oDeletedTextRecovery = new AscCommon.DeletedTextRecovery();
+			this.oDeletedTextRecovery.InitRevision();
+			if (this.oDeletedTextRecovery.GetIsShowDelText())
 			{
-				revision.NavigationRevisionHistoryByStep(0);
+				this.oDeletedTextRecovery.ShowDelText();
 			}
-			this.Next = revision;
-        }
+		}
 		else
 		{
 			if (fEndCallBack)

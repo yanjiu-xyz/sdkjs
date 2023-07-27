@@ -32,6 +32,7 @@
 
 $(function () {
 	let logicDocument = AscTest.CreateLogicDocument();
+	let oCurDelRecover = null;
 	function AddParagraph(pos)
 	{
 		let p = AscTest.CreateParagraph();
@@ -49,21 +50,37 @@ $(function () {
 		for (let i = 0; i < nCount; i++)
 			AscTest.PressKey(AscTest.Key.backspace);
 	}
-	function Recover()
+
+	function Init()
 	{
 		let oDeletedText = new AscCommon.DeletedTextRecovery(true);
 		let nLengthOfPoints = AscCommon.History.Points.length - 1;
 		let arr = [];
 
-		for (let i = 0; i <= nLengthOfPoints; i++) {
-			//AscCommon.History.ConvertPointItemsToSimpleChanges(i);
+		for (let i = 0; i <= nLengthOfPoints; i++)
+		{
 			AscCommon.History.GetChangesFromPoint(i, arr);
 		}
 
-		oDeletedText.oColloborativeHistory.Changes = arr.reverse();
+		oDeletedText.oColloborativeHistory.Changes = arr;
 		oDeletedText.Changes = arr;
 		oDeletedText.InitRevision();
-		oDeletedText.ShowDel();
+		oCurDelRecover = oDeletedText;
+	}
+
+	function ShowDelText()
+	{
+		oCurDelRecover.ShowDel();
+	}
+
+	function Prev()
+	{
+		oCurDelRecover.NavigationRevisionHistory(true);
+	}
+
+	function Next()
+	{
+		oCurDelRecover.NavigationRevisionHistory(false);
 	}
 
 	function CheckRuns(assert, paragraph, arr)
@@ -80,19 +97,14 @@ $(function () {
 		}
 	}
 
-	QUnit.testStart (function (){
+	QUnit.testStart(function (){
 		AscCommon.History.Clear();
 		AscTest.ClearDocument();
-		//AscCommon.History.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_Undo);
 	})
-	QUnit.testDone(function () {
-		//AscCommon.History.Remove_LastPoint();
-	})
-
 
 	QUnit.module("Unit-tests for recover deleted text");
 
-	QUnit.test("Del one letter", function (assert)
+	QUnit.test("Delete one letter", function (assert)
 	{
 		let strStartText = "abc";
 		let p = AddParagraph(0);
@@ -105,7 +117,8 @@ $(function () {
 		let strDeletedText = AscTest.GetParagraphText(p);
 		assert.strictEqual(strDeletedText, "ab", "Text in run is 'ab'");
 
-		Recover();
+		Init();
+		ShowDelText()
 		assert.ok(true, "Recover deleted text");
 		let recoverRun = p.Content[1];
 		assert.strictEqual(recoverRun.ReviewType, reviewtype_Remove, "New ParaRun ReviewType is delete");
@@ -120,7 +133,7 @@ $(function () {
 		]);
 	});
 
-	QUnit.test("Del many letter", function (assert)
+	QUnit.test("Delete letter block (with selection)", function (assert)
 	{
 		let strStartText = "Hello World";
 		let p = AddParagraph(0);
@@ -133,7 +146,8 @@ $(function () {
 		let strDeletedText = AscTest.GetParagraphText(p);
 		assert.strictEqual(strDeletedText, "Hello", "Text in run is 'Hello'");
 
-		Recover();
+		Init();
+		ShowDelText()
 		assert.ok(true, "Recover deleted text");
 		let strResultText = AscTest.GetParagraphText(p);
 		assert.strictEqual(strResultText, "Hello World", "Text in run is 'Hello World'");
@@ -144,7 +158,7 @@ $(function () {
 		]);
 	});
 
-	QUnit.test("Del many letter in middle", function (assert)
+	QUnit.test("Delete many letter as one block", function (assert)
 	{
 		let strStartText = "Hello World";
 		let p = AddParagraph(0);
@@ -158,7 +172,8 @@ $(function () {
 		let strDeletedText = AscTest.GetParagraphText(p);
 		assert.strictEqual(strDeletedText, "H World", "Text in run is 'H World'");
 
-		Recover();
+		Init();
+		ShowDelText()
 		assert.ok(true, "Recover deleted text");
 		let strResultText = AscTest.GetParagraphText(p);
 		assert.strictEqual(strResultText, "Hello World", "Text in run is 'Hello World'");
@@ -170,7 +185,7 @@ $(function () {
 		]);
 	});
 
-	QUnit.test("Del many letter in middle 2", function (assert)
+	QUnit.test("Delete letter blocks (from left to right)", function (assert)
 	{
 		let strStartText = "Hello World";
 		let p = AddParagraph(0);
@@ -190,7 +205,8 @@ $(function () {
 		strDeletedText = AscTest.GetParagraphText(p);
 		assert.strictEqual(strDeletedText, "Hlo Wld", "Text in run is 'Hlo Wld'");
 
-		Recover();
+		Init();
+		ShowDelText()
 		assert.ok(true, "Recover deleted text");
 		let strResultText = AscTest.GetParagraphText(p);
 		assert.strictEqual(strResultText, "Hello World", "Text in run is 'Hello World'");
@@ -204,7 +220,7 @@ $(function () {
 		]);
 	});
 
-	QUnit.test("Del many letter in middle 3", function (assert)
+	QUnit.test("Delete letter blocks (from right to left)", function (assert)
 	{
 		let strStartText = "Hello World";
 		let p = AddParagraph(0);
@@ -227,7 +243,8 @@ $(function () {
 		strDeletedText = AscTest.GetParagraphText(p);
 		assert.strictEqual(strDeletedText, "Hlo Wld", "Text in run is 'Hlo Wld'");
 
-		Recover();
+		Init();
+		ShowDelText()
 		assert.ok(true, "Recover deleted text");
 		let strResultText = AscTest.GetParagraphText(p);
 		assert.strictEqual(strResultText, "Hello World", "Text in run is 'Hello World'");
@@ -241,7 +258,7 @@ $(function () {
 		]);
 	});
 
-	QUnit.test("Del paragraph", function (assert)
+	QUnit.test("Delete paragraph", function (assert)
 	{
 		let strOne = "One";
 		let p = AddParagraph(0);
@@ -254,7 +271,8 @@ $(function () {
 		let strDeletedText = AscTest.GetParagraphText(p);
 		assert.strictEqual(strDeletedText, "", "Text in document is ''");
 
-		Recover();
+		Init();
+		ShowDelText()
 		assert.ok(true, "Recover deleted text");
 		let strResultText = AscTest.GetParagraphText(p);
 		assert.strictEqual(strResultText, "One", "Text in run is 'One'");
@@ -262,6 +280,161 @@ $(function () {
 		CheckRuns(assert, p, [
 			["One", reviewtype_Remove],
 		]);
-		console.log(p);
 	});
+
+
+
+	QUnit.test("Going back and forth through history - one letter", function (assert)
+	{
+		let strStartText = "abc";
+		let p = AddParagraph(0);
+		let run = CreateRun(strStartText);
+		p.AddToContentToEnd(run);
+		assert.ok(true, "Create run with 'abc' text.");
+
+		DelLast(1);
+		assert.ok(true, "Delete one last letter");
+		let strDeletedText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strDeletedText, "ab", "Text in run is 'ab'");
+
+		Init();
+		Prev();
+		assert.ok(true, "Prev in history");
+
+		let strResultText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strResultText, "abc", "Text in run is 'abc'");
+
+		Next();
+		assert.ok(true, "Next in history");
+
+		let strResultText2 = AscTest.GetParagraphText(p);
+		assert.strictEqual(strResultText2, "ab", "Text in run is 'ab'");
+	});
+
+	QUnit.test("Going back and forth through history - letter block", function (assert)
+	{
+		let strStartText = "Hello World";
+		let p = AddParagraph(0);
+		let run = CreateRun(strStartText);
+		p.AddToContentToEnd(run);
+		assert.ok(true, "Create run with '" + strStartText+"' text.");
+
+		DelLast(6);
+		assert.ok(true, "Delete ' World'");
+		let strDeletedText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strDeletedText, "Hello", "Text in run is 'Hello'");
+
+		Init();
+		Prev();
+		assert.ok(true, "Prev in history");
+
+		let strResultText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strResultText, "Hello World", "Text in run is 'Hello World'");
+
+		Next();
+		assert.ok(true, "Next in history");
+
+		let strResultText2 = AscTest.GetParagraphText(p);
+		assert.strictEqual(strResultText2, "Hello", "Text in run is 'Hello'");
+	});
+
+	QUnit.test("Going back and forth through history - letter blocks (deleted from left to right)", function (assert)
+	{
+		let strStartText = "Hello World";
+		let p = AddParagraph(0);
+		let run = CreateRun(strStartText);
+		p.AddToContentToEnd(run);
+		assert.ok(true, "Create run with '" + strStartText+"' text.");
+
+		AscTest.MoveCursorLeft(false, false, 8);
+		DelLast(2);
+		assert.ok(true, "Delete 'el'");
+		let strDeletedText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strDeletedText, "Hlo World", "Text in run is 'Hlo World'");
+
+		AscTest.MoveCursorRight(false, false, 6);
+		DelLast(2);
+		assert.ok(true, "Delete 'or'");
+		strDeletedText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strDeletedText, "Hlo Wld", "Text in run is 'Hlo Wld'");
+
+		Init();
+		Prev();
+		assert.ok(true, "Prev in history");
+
+		let strResultText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strResultText, "Hello World", "Text in run is 'Hello World'");
+
+		Next();
+		assert.ok(true, "Next in history");
+
+		let strResultText2 = AscTest.GetParagraphText(p);
+		assert.strictEqual(strResultText2, "Hlo Wld", "Text in run is 'Hlo Wld'");
+
+	});
+
+	QUnit.test("Going back and forth through history - letter blocks (from right to left)", function (assert)
+	{
+		let strStartText = "Hello World";
+		let p = AddParagraph(0);
+		let run = CreateRun(strStartText);
+		p.AddToContentToEnd(run);
+		assert.ok(true, "Create run with '" + strStartText+"' text.");
+		AscTest.MoveCursorToParagraph(p, false);
+
+		AscTest.MoveCursorLeft(false, false, 2);
+		AscTest.MoveCursorLeft(true, false, 2);
+		DelLast(1);
+		assert.ok(true, "Delete 'or'");
+		let strDeletedText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strDeletedText, "Hello Wld", "Text in run is 'Hello Wld'");
+
+		AscTest.MoveCursorLeft(false, false, 4);
+		AscTest.MoveCursorLeft(true, false, 2);
+		DelLast(1);
+		assert.ok(true, "Delete 'el'");
+		strDeletedText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strDeletedText, "Hlo Wld", "Text in run is 'Hlo Wld'");
+
+		Init();
+		Prev();
+		assert.ok(true, "Prev in history");
+
+		let strResultText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strResultText, "Hello World", "Text in run is 'Hello World'");
+
+		Next();
+		assert.ok(true, "Next in history");
+
+		let strResultText2 = AscTest.GetParagraphText(p);
+		assert.strictEqual(strResultText2, "Hlo Wld", "Text in run is 'Hlo Wld'");
+	});
+
+	QUnit.test("Going back and forth through history - paragraph", function (assert)
+	{
+		let strOne = "One";
+		let p = AddParagraph(0);
+		let run = CreateRun(strOne);
+		p.AddToContentToEnd(run);
+
+		DelLast(5);
+		assert.ok(true, "Delete 'One'");
+
+		let strDeletedText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strDeletedText, "", "Text in document is ''");
+
+		Init();
+		Prev();
+		assert.ok(true, "Prev in history");
+
+		let strResultText = AscTest.GetParagraphText(p);
+		assert.strictEqual(strResultText, "One", "Text in run is 'One'");
+
+		Next();
+		assert.ok(true, "Next in history");
+
+		let strResultText2 = AscTest.GetParagraphText(p);
+		assert.strictEqual(strResultText2, "", "Text in run is ''");
+	});
+
 });
