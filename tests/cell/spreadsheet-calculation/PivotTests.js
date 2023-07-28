@@ -5982,7 +5982,8 @@ var wb, ws, wsData, pivotStyle, tableName, defNameName, defNameLocalName, report
 				}
 				let res = checkHistoryOperation2(assert, pivot, standard, message, undoStandard, function () {
 					const indexes = pivot.getItemsIndexesByActiveCell(row, col);
-					pivot.showDetails(wsDetails, indexes.rowItemIndex, indexes.colItemIndex);
+					const arrayItemFieldsMap = pivot.getNoFilterItemFieldsMapArray(indexes.rowItemIndex, indexes.colItemIndex)
+					pivot.showDetails(wsDetails, arrayItemFieldsMap);
 				}, function (assert, pivot, standard, message) {
 					let cells = [];
 					for (let i = 0; i < standard.length; i += 1) {
