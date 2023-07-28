@@ -7039,7 +7039,7 @@ var editor;
 			return false;
 		}
 		const indexes = pivotTable.getItemsIndexesByActiveCell(activeCell.row, activeCell.col);
-    const itemMapArray = pivotTable.getNoFilterItemFieldsMapArray(indexes.rowItemIndex, indexes.colItemIndex)
+		const itemMapArray = pivotTable.getNoFilterItemFieldsMapArray(indexes.rowItemIndex, indexes.colItemIndex)
 		this._addWorksheets([pivotTable.getShowDetailsSheetName(itemMapArray)],  this.wbModel.getActive(), function(worksheets){
 			let ws = worksheets[0];
 			if (!ws) {
