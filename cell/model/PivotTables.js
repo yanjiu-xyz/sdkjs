@@ -6949,13 +6949,13 @@ CT_pivotTableDefinition.prototype._groupDiscreteAddFields = function(fld, parFld
 	}
 };
 /** 
- * @typedef {[number, number][]} ItemFieldsMapArray 
+ * @typedef {[number, number][]} PivotItemFieldsMapArray 
  * [pivotFieldIndex, fieldItemIndex] array which describes the item by the all fields of the pivot table
  */
 /**
  * @param {number} rowItemIndex 
  * @param {number} colItemIndex 
- * @return {ItemFieldsMapArray} [pivotFieldIndex, fieldItem.x] array
+ * @return {PivotItemFieldsMapArray} [pivotFieldIndex, fieldItem.x] array
  */
 CT_pivotTableDefinition.prototype.getNoFilterItemFieldsMapArray = function(rowItemIndex, colItemIndex) {
 	const rowItems = this.getRowItems();
@@ -7002,7 +7002,7 @@ CT_pivotTableDefinition.prototype.getNoFilterItemFieldsMapArray = function(rowIt
 /**
  * Returns Map<pivotFieldIndex, Map<fieldItem.x, number>(Set-like map)>, 
  * which describes the values of this item in each field with filters.
- * @param {ItemFieldsMapArray} itemFieldsMapArray
+ * @param {PivotItemFieldsMapArray} itemFieldsMapArray
  * @return {PivotItemFieldsMap}
  */
 CT_pivotTableDefinition.prototype.getItemFieldsMap = function(itemFieldsMapArray) {
@@ -7023,23 +7023,20 @@ CT_pivotTableDefinition.prototype.getItemFieldsMap = function(itemFieldsMapArray
 };
 /**
  * @param {Worksheet} ws 
- * @param {number} row 
- * @param {number} col 
+ * @param {PivotItemFieldsMapArray} arrayFieldItemsMap 
  * @return {Object}
  */
-CT_pivotTableDefinition.prototype.showDetails = function(ws, rowItemIndex, colItemIndex) {
-	const arrayFieldItemsMap = this.getNoFilterItemFieldsMapArray(rowItemIndex, colItemIndex)
+CT_pivotTableDefinition.prototype.showDetails = function(ws, arrayFieldItemsMap) {
 	const itemMap = this.getItemFieldsMap(arrayFieldItemsMap);
 	const cacheFields = this.asc_getCacheFields();
 	const records = this.getRecords();
 	return records.fillPivotDetails(ws, itemMap, cacheFields);
 };
 /**
- * @param {number} searchRowItemIndex
- * @param {number} searchColItemIndex
+ * @param {PivotItemFieldsMapArray} arrayFieldItemsMap
  * @return {string} sheetName
  */
-CT_pivotTableDefinition.prototype.getShowDetailsSheetName = function(searchRowItemIndex, searchColItemIndex) {
+CT_pivotTableDefinition.prototype.getShowDetailsSheetName = function(arrayFieldItemsMap) {
 	/**
 	 * @param {RegExp} re 
 	 * @param {string[]} arr 
@@ -7057,7 +7054,6 @@ CT_pivotTableDefinition.prototype.getShowDetailsSheetName = function(searchRowIt
 	const cacheFields = this.asc_getCacheFields();
 	const workbook = this.worksheet.workbook;
 	const api = workbook.oApi;
-	const arrayFieldItemsMap = this.getNoFilterItemFieldsMapArray(searchRowItemIndex, searchColItemIndex)
 	const translatedInfoString = AscCommon.translateManager.getValue('Info');
 	let postfix = '';
 	arrayFieldItemsMap.forEach(function(value) {
@@ -7066,8 +7062,13 @@ CT_pivotTableDefinition.prototype.getShowDetailsSheetName = function(searchRowIt
 		const cacheField = cacheFields[fieldIndex];
 		const sharedItem = cacheField.getGroupOrSharedItem(itemIndex);
 		if (sharedItem) {
-			const str = sharedItem.getCellValue().getTextValue();
-			postfix += '-' + str;
+			const cellValue = sharedItem.getCellValue();
+			const numFormat = cacheField.num && cacheField.num.getNumFormat();
+			let res = cellValue.getTextValue();
+			if (numFormat && cellValue.type === AscCommon.CellValueType.Number) {
+				res = numFormat.formatToMathInfo(cellValue.number, AscCommon.CellValueType.Number, AscCommon.gc_nMaxDigCountView);
+			}
+			postfix += '-' + res;
 		}
 	});
 	const sheetNames = [];
