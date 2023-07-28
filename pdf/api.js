@@ -432,6 +432,39 @@
 		if (!bIsFreeze)
 			this.WordControl.OnScroll();
 	};
+	
+
+	// for comments
+	PDFEditorApi.prototype.can_AddQuotedComment = function()
+	{
+		return true;
+	};
+	PDFEditorApi.prototype.asc_addComment = function(AscCommentData)
+	{
+		var oDoc = this.getPDFDoc();
+		let oViewer = editor.getDocumentRenderer();
+
+		if (!oDoc)
+			return null;
+
+		let oCommentData = new AscCommon.CCommentData();
+		oCommentData.Read_FromAscCommentData(AscCommentData);
+
+		let oComment = oDoc.AddComment(AscCommentData);
+		this.sync_AddComment(oComment.GetId(), oCommentData);
+
+		oComment.AddToRedraw();
+		oViewer._paintAnnots();
+
+		return oComment.GetId()
+	};
+	PDFEditorApi.prototype.asc_getAnchorPosition = function()
+	{
+		let oViewer = editor.getDocumentRenderer();
+
+		let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(40, 20, oViewer.currentPage, true);
+		return new AscCommon.asc_CRect(X, Y, 0, 0);
+	};
 	PDFEditorApi.prototype.asc_removeComment = function(Id)
 	{
 		let oDoc = this.getPDFDoc();

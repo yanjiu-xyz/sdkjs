@@ -1110,6 +1110,22 @@ var CPresentation = CPresentation || function(){};
 
         return oAnnot;
     };
+    CPDFDoc.prototype.AddComment = function(AscCommentData) {
+        let oViewer = editor.getDocumentRenderer();
+
+        let oProps = {
+            rect:       [10, 10, 30, 30],
+            page:       oViewer.currentPage,
+            name:       AscCommon.CreateGUID(),
+            type:       AscPDF.ANNOTATIONS_TYPES.Text,
+            author:     AscCommentData.m_sUserName,
+            modDate:    AscCommentData.m_sTime,
+            contents:   AscCommentData.m_sText,
+            hidden:     false
+        }
+
+        return this.AddAnnot(oProps);
+    };
     CPDFDoc.prototype.EditComment = function(Id, CommentData) {
         let oAnnotToEdit = this.annots.find(function(annot) {
             return annot.GetId() === Id;
