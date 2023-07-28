@@ -365,7 +365,27 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
     }
     return ret;
 }
-    
+
+function handlePDFObjects(drawingObjectsController, drawingArr, e, x, y, group, pageIndex) {
+    var ret = null, drawing;
+    for(var i = drawingArr.length-1; i > -1; --i)
+    {
+        drawing = drawingArr[i];
+        if (drawing.IsAnnot && drawing.IsAnnot()) {
+            switch (drawing.GetType()) {
+                case AscPDF.ANNOTATIONS_TYPES.Text:
+                    ret = handleAnnot(drawing, drawingObjectsController, e, x, y, group, pageIndex);
+                    break;
+            }
+        }
+    }
+    return ret;
+}
+function handleAnnot(drawing, drawingObjectsController, e, x, y, group, pageIndex) {
+    drawingObjectsController.changeCurrentState(new AscFormat.PreMoveState(drawingObjectsController, x, y, e.ShiftKey, e.CtrlKey, drawing, true, false, false));
+}
+
+
     function handleSlicer(drawing, drawingObjectsController, e, x, y, group, pageIndex, bWord)
     {
         if(drawingObjectsController.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
@@ -2102,6 +2122,7 @@ function handleFloatTable(drawing, drawingObjectsController, e, x, y, group, pag
     window['AscFormat'].CheckCoordsNeedPage = CheckCoordsNeedPage;
     window['AscFormat'].handleSelectedObjects = handleSelectedObjects;
     window['AscFormat'].handleFloatObjects = handleFloatObjects;
+    window['AscFormat'].handlePDFObjects = handlePDFObjects;
     window['AscFormat'].handleInlineObjects = handleInlineObjects;
     window['AscFormat'].handleMouseUpPreMoveState = handleMouseUpPreMoveState;
 })(window);

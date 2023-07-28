@@ -651,6 +651,110 @@ function MoveComment(comment)
     };
 }
 
+function MoveAnnotationTrack(annot)
+{
+    this.bIsTracked = false;
+    this.annot      = annot;
+    this.x          = annot._pagePos.x;
+    this.y          = annot._pagePos.y;
+    this.viewer     = editor.getDocumentRenderer();
+
+    this.track = function(dx, dy)
+    {
+        this.bIsTracked = true;
+        this.x = this.annot._pagePos.x + dx / this.viewer.zoom;
+        this.y = this.annot._pagePos.y + dy / this.viewer.zoom;
+    };
+    this.initCanvas = function() {
+        let nPage   = this.annot.GetPage();
+
+        let page = this.viewer.drawingPages[nPage];
+        let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let h = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+
+        this.tmpCanvas = document.createElement('canvas');
+        this.tmpCanvas.width = w;
+        this.tmpCanvas.height = h;
+    };
+
+    this.draw = function(oCtx)
+    {
+        // рисуем на отдельном канвасе
+        let page = this.viewer.drawingPages[this.annot.GetPage()];
+        if (!page)
+            return;
+        
+        let xCenter = this.viewer.width >> 1;
+		let yPos = this.viewer.scrollY >> 0;
+		if (this.viewer.documentWidth > this.viewer.width)
+		{
+			xCenter = (this.viewer.documentWidth >> 1) - (this.viewer.scrollX) >> 0;
+		}
+
+        let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let h = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        
+        let tmpCanvasCtx = this.tmpCanvas.getContext('2d');
+        tmpCanvasCtx.clearRect(0, 0, this.tmpCanvas.width, this.tmpCanvas.height);
+
+        let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
+        let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        
+        let oGraphicsPDF = new AscPDF.CPDFGraphics();
+        oGraphicsPDF.Init(tmpCanvasCtx, this.tmpCanvas.width, this.tmpCanvas.height);
+        oGraphicsPDF.SetGlobalAlpha(1);
+
+        this.annot.SetPosition(this.x, this.y);
+        this.annot.Draw(oGraphicsPDF);
+
+        oCtx.drawImage(this.tmpCanvas, 0, 0, w, h, x, y, w, h);
+    };
+
+    this.trackEnd = function()
+    {
+        if(!this.bIsTracked){
+            return;
+        }
+
+        let nPage       = this.annot.GetPage();
+        let nPageHeight = this.viewer.drawingPages[nPage].H / this.viewer.zoom;
+        let nPageWidth  = this.viewer.drawingPages[nPage].W / this.viewer.zoom;
+
+        // не даем выйти за границы листа
+        let X = Math.max(this.x, 0);
+        let Y = Math.max(this.y, 0);
+
+        if (X + this.annot._pagePos.w > nPageWidth) {
+            X = nPageWidth - this.annot._pagePos.w;
+        }
+        if (Y + this.annot._pagePos.h > nPageHeight) {
+            Y = nPageHeight - this.annot._pagePos.h;
+        }
+
+        this.annot.SetPosition(X, Y);
+
+        let aRect = this.annot.GetRect();
+        this.annot._pagePos = {
+            x: aRect[0],
+            y: aRect[1],
+            w: (aRect[2] - aRect[0]),
+            h: (aRect[3] - aRect[1])
+        };
+
+        this.annot.AddToRedraw();
+        this.viewer._paintAnnots();
+
+    };
+
+    this.getBounds = function()
+    {
+        return {x: this.x, y: this.y};
+    };
+
+    this.initCanvas();
+}
+
+
 function MoveChartObjectTrack(oObject, oChartSpace)
 {
     this.bIsTracked = false;
@@ -853,4 +957,5 @@ function MoveChartObjectTrack(oObject, oChartSpace)
     window['AscFormat'].MoveComment = MoveComment;
     window['AscFormat'].MoveChartObjectTrack = MoveChartObjectTrack;
     window['AscFormat'].CGuideTrack = CGuideTrack;
+    window['AscFormat'].MoveAnnotationTrack = MoveAnnotationTrack;
 })(window);

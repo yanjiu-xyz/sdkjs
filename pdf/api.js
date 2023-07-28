@@ -409,6 +409,56 @@
 			oViewer._paintFormsHighlight();
 		}
 	};
+	PDFEditorApi.prototype.SetDrawingFreeze = function(bIsFreeze)
+	{
+		if (!this.WordControl)
+			return;
+
+		this.WordControl.DrawingFreeze = bIsFreeze;
+
+		var elem = document.getElementById("id_main");
+		if (elem)
+		{
+			if (bIsFreeze)
+			{
+				elem.style.display = "none";
+			}
+			else
+			{
+				elem.style.display = "block";
+			}
+		}
+
+		if (!bIsFreeze)
+			this.WordControl.OnScroll();
+	};
+	PDFEditorApi.prototype.asc_removeComment = function(Id)
+	{
+		let oDoc = this.getPDFDoc();
+		if (!oDoc)
+			return;
+
+		oDoc.RemoveComment(Id);
+	};
+	PDFEditorApi.prototype.asc_changeComment = function(Id, AscCommentData)
+	{
+		var oDoc = this.getDocumentRenderer().getPDFDoc();
+		if (!oDoc)
+			return;
+
+		var CommentData = new AscCommon.CCommentData();
+		CommentData.Read_FromAscCommentData(AscCommentData);
+		oDoc.EditComment(Id, CommentData);
+
+		this.sync_ChangeCommentData(Id, CommentData);
+	};
+	PDFEditorApi.prototype.asc_showComment = function(Id)
+	{
+		if (Id instanceof Array)
+			this.getPDFDoc().ShowComment(Id);
+		else
+			this.getPDFDoc().ShowComment([Id]);
+	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

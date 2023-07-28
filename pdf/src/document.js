@@ -99,6 +99,7 @@ var CPresentation = CPresentation || function(){};
     function CPDFDoc() {
         this.rootFields = new Map(); // root поля форм
         this.widgets    = []; // непосредственно сами поля, которые отрисовываем (дочерние без потомков)
+        this.annots     = [];
 
         this.actionsInfo = new CActionQueue(this);
         this.calculateInfo = new CCalculateInfo(this);
@@ -700,6 +701,44 @@ var CPresentation = CPresentation || function(){};
 
         oViewer._paintFormsHighlight();
     };
+    CPDFDoc.prototype.OnMouseDownAnnot = function(oAnnot, event) {
+        oAnnot.onMouseDown(event);
+    };
+    CPDFDoc.prototype.OnMouseMove = function(x, y, e) {
+        let oViewer = editor.getDocumentRenderer();
+        let oDrawingObjects = oViewer.DrawingObjects;
+    
+        e.IsLocked = true;
+        oDrawingObjects.OnMouseMove(e, x, y, oViewer.currentPage);
+        oViewer.overlay.ClearAll = true;
+        oViewer.overlay.max_x = 0;
+        oViewer.overlay.max_y = 0;
+        oViewer.onUpdateOverlay();
+    };
+    CPDFDoc.prototype.OnMouseUp = function(x, y, e) {
+        let oViewer = editor.getDocumentRenderer();
+        let oDrawingObjects = oViewer.DrawingObjects;
+     
+        let bMouseUpAnnot = true;
+        if (oDrawingObjects.arrTrackObjects.length != 0) {
+            bMouseUpAnnot = false;
+        }
+
+        e.IsLocked = false;
+        oDrawingObjects.OnMouseUp(e, x, y, oViewer.currentPage);
+        if (bMouseUpAnnot == false) {
+            oViewer.overlay.ClearAll = true;
+            oViewer.overlay.max_x = 0;
+            oViewer.overlay.max_y = 0;
+            oViewer.onUpdateOverlay();
+        }
+        
+        let oMouseUpAnnot = oViewer.getPageAnnotByMouse();
+        if (bMouseUpAnnot && oViewer.mouseDownAnnot == oMouseUpAnnot) {
+            oMouseUpAnnot.onMouseUp();
+        }
+    };
+
     CPDFDoc.prototype.OnMouseUpField = function(oField, event) {
         let oViewer         = editor.getDocumentRenderer();
         let oActionsQueue   = this.GetActionsQueue();
@@ -1030,9 +1069,113 @@ var CPresentation = CPresentation || function(){};
             oField.SetDrawFromStream(false);
         }
 
-        oField._doc = this;
-        
         return oField;
+    };
+
+    /**
+	 * Adds an interactive field to document.
+	 * @memberof CPDFDoc
+	 * @typeofeditors ["PDF"]
+     * @param {object} oProps - Annot props 
+	 * @returns {AscPDF.CAnnotationBase}
+	 */
+    CPDFDoc.prototype.AddAnnot = function(oProps) {
+        let oViewer = editor.getDocumentRenderer();
+        let nPageNum = oProps.page;
+
+        let oPagesInfo = oViewer.pagesInfo;
+        if (!oPagesInfo.pages[nPageNum])
+            return null;
+        
+        let oAnnot = private_createAnnot(oProps, this);
+
+        this.annots.push(oAnnot);
+        oAnnot.SetNeedRecalc && oAnnot.SetNeedRecalc(true);
+
+        if (oPagesInfo.pages[nPageNum].annots == null) {
+            oPagesInfo.pages[nPageNum].annots = [];
+        }
+        oPagesInfo.pages[nPageNum].annots.push(oAnnot);
+
+        if (AscCommon.History.IsOn() == true)
+            AscCommon.History.TurnOff();
+
+        if (oAnnot.GetType() == AscPDF.ANNOTATIONS_TYPES.Text) {
+            editor.sendEvent("asc_onAddComment", oAnnot.GetId(), oAnnot.GetAscCommentData());
+            // editor.asc_addComment();
+        }
+        // if (oViewer.IsOpenFormsInProgress == false) {
+        //     oAnnot.SetDrawFromStream(false);
+        // }
+
+        return oAnnot;
+    };
+    CPDFDoc.prototype.EditComment = function(Id, CommentData) {
+        let oAnnotToEdit = this.annots.find(function(annot) {
+            return annot.GetId() === Id;
+        });
+
+        oAnnotToEdit.SetContents(CommentData.Get_Text());
+        oAnnotToEdit.SetModDate(CommentData.m_sTime);
+
+        oAnnotToEdit.ClearReplies();
+        CommentData.m_aReplies.forEach(function(reply) {
+            oAnnotToEdit.AddReply(reply);
+        });
+    };
+    CPDFDoc.prototype.ShowComment = function(arrId)
+    {
+        var CommentsX     = null;
+        var CommentsY     = null;
+        var arrCommentsId = [];
+
+        for (var nIndex = 0, nCount = arrId.length; nIndex < nCount; ++nIndex)
+        {
+            var Comment = this.GetCommentById(arrId[nIndex]);
+            if (Comment)
+            {
+                if (null === CommentsX || null === CommentsY)
+                {
+                    ({CommentsX, CommentsY} = AscPDF.GetGlobalCoordsByPageCoords(Comment._pagePos.x + Comment._pagePos.w, Comment._pagePos.y + Comment._pagePos.h / 2, Comment.GetPage(), true));
+                }
+
+                arrCommentsId.push(Comment.GetId());
+            }
+
+        }
+
+        if (null !== CommentsX && null !== CommentsY && arrCommentsId.length > 0)
+        {
+            editor.sync_ShowComment(arrCommentsId, CommentsX, CommentsY);
+        }
+        else
+        {
+            editor.sync_HideComment();
+        }
+    };
+    CPDFDoc.prototype.RemoveComment = function(Id) {
+        let oViewer = editor.getDocumentRenderer();
+        let oAnnot = this.annots.find(function(annot) {
+            return annot.GetId() === Id;
+        });
+
+        if (!oAnnot)
+            return;
+
+        let nPage = oAnnot.GetPage();
+        oAnnot.AddToRedraw();
+        this.annots.splice(this.annots.indexOf(oAnnot), 1);
+        oViewer.pagesInfo.pages[nPage].annots.splice(oViewer.pagesInfo.pages[nPage].annots.indexOf(oAnnot), 1);
+        editor.sync_RemoveComment(Id);
+        oViewer._paintAnnots();
+    };
+    CPDFDoc.prototype.HideComments = function() {
+        editor.sync_HideComment();
+    };
+    CPDFDoc.prototype.GetCommentById = function(sId) {
+        return this.annots.find(function(annot) {
+            return annot.GetId() == sId;
+        });
     };
     
     /**
@@ -1429,6 +1572,46 @@ var CPresentation = CPresentation || function(){};
 
         return oField;
     }
+
+    function private_createAnnot(oProps, oPdfDoc) {
+        let aRect       = oProps.rect;
+        let nPageNum    = oProps.page;
+        let sName       = oProps.name ? oProps.name : AscCommon.CreateGUID();
+        let nAnnotType  = oProps.type;
+        let sAuthor     = oProps.author ? oProps.author : AscCommon.UserInfoParser.getCurrentName();
+        let sDate       = oProps.modDate ? oProps.modDate : (new Date().getTime()).toString();
+        let sText       = oProps.contents;
+        let isHidden    = !!oProps.hidden;
+        
+        let oAnnot;
+
+        let oViewer = editor.getDocumentRenderer();
+        let nScaleY = oViewer.drawingPages[nPageNum].H / oViewer.file.pages[nPageNum].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPageNum].W / oViewer.file.pages[nPageNum].W / oViewer.zoom;
+
+        let aScaledCoords = [aRect[0] * nScaleX, aRect[1] * nScaleY, aRect[2] * nScaleX, aRect[3] * nScaleY];
+        switch (nAnnotType) {
+            case AscPDF.ANNOTATIONS_TYPES.Text:
+                oAnnot = new AscPDF.CAnnotationText(sName, nPageNum, aScaledCoords, oPdfDoc);
+                break;
+        }
+
+        oAnnot.SetContents(sText);
+        oAnnot.SetModDate(sDate);
+        oAnnot.SetAuthor(sAuthor);
+        oAnnot.SetHidden(isHidden);
+
+        oAnnot._origRect = aRect;
+        oAnnot._pagePos = {
+            x: aScaledCoords[0],
+            y: aScaledCoords[1],
+            w: (aScaledCoords[2] - aScaledCoords[0]),
+            h: (aScaledCoords[3] - aScaledCoords[1])
+        };
+
+        return oAnnot;
+    }
+
     function private_PtToMM(pt)
 	{
 		return 25.4 / 72.0 * pt;

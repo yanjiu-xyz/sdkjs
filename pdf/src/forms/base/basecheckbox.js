@@ -165,7 +165,7 @@
         let nHeight = this._pagePos.h * nScale;
 
         let oMargins = this.GetMarginsFromBorders(true, false);
-        let oRGB = this.GetRGBColor(this._textColor);
+        let oRGB    = this.GetRGBColor(this._textColor);
 
         oGraphicsPDF.SetGlobalAlpha(1);
         oGraphicsPDF.SetStrokeStyle(`rgb(${oRGB.r}, ${oRGB.g}, ${oRGB.b})`);

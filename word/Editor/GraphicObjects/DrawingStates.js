@@ -323,7 +323,7 @@ NullState.prototype =
         {}
 
 
-        if(!b_no_handle_selected)
+        if(!b_no_handle_selected && editor.isDocumentRenderer() == false)
         {
             ret = AscFormat.handleSelectedObjects(this.drawingObjects, e, x, y, null, pageIndex, true);
             if(ret)
@@ -340,60 +340,66 @@ NullState.prototype =
             }
         }
 
-        var drawing_page = this.drawingObjects.getGraphicPage && this.drawingObjects.getGraphicPage(pageIndex);
-        if(drawing_page)
-        {
-            ret = AscFormat.handleFloatObjects(this.drawingObjects, drawing_page.beforeTextObjects, e, x, y, null, pageIndex, true);
-            if(ret)
+        if (editor.isDocumentRenderer() == false) {
+            var drawing_page = this.drawingObjects.getGraphicPage && this.drawingObjects.getGraphicPage(pageIndex);
+            if(drawing_page)
             {
-                if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
-                {
-                    end_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
-                    if ((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content))
-                    {
-                        fRecalculatePages();
-                    }
-                }
-                return ret;
-            }
-
-            var no_shape_child_array = [];
-            for(var i = 0; i < drawing_page.inlineObjects.length; ++i)
-            {
-                if(!(drawing_page.inlineObjects[i].parent && drawing_page.inlineObjects[i].parent.isShapeChild()))
-                    no_shape_child_array.push(drawing_page.inlineObjects[i]);
-            }
-            ret = AscFormat.handleInlineObjects(this.drawingObjects, no_shape_child_array, e, x, y, pageIndex, true);
-            if(ret)
-            {
-                if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
-                {
-                    end_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
-                    if ((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content))
-                    {
-                        fRecalculatePages();
-                    }
-                }
-                return ret;
-            }
-
-            if(!bTextFlag)
-            {
-                ret = AscFormat.handleFloatObjects(this.drawingObjects, drawing_page.behindDocObjects, e, x, y, null, pageIndex, true);
+                ret = AscFormat.handleFloatObjects(this.drawingObjects, drawing_page.beforeTextObjects, e, x, y, null, pageIndex, true);
                 if(ret)
                 {
                     if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
                     {
                         end_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
-                        if ((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content)) {
-
+                        if ((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content))
+                        {
                             fRecalculatePages();
                         }
                     }
                     return ret;
                 }
+
+                var no_shape_child_array = [];
+                for(var i = 0; i < drawing_page.inlineObjects.length; ++i)
+                {
+                    if(!(drawing_page.inlineObjects[i].parent && drawing_page.inlineObjects[i].parent.isShapeChild()))
+                        no_shape_child_array.push(drawing_page.inlineObjects[i]);
+                }
+                ret = AscFormat.handleInlineObjects(this.drawingObjects, no_shape_child_array, e, x, y, pageIndex, true);
+                if(ret)
+                {
+                    if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
+                    {
+                        end_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
+                        if ((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content))
+                        {
+                            fRecalculatePages();
+                        }
+                    }
+                    return ret;
+                }
+
+                if(!bTextFlag)
+                {
+                    ret = AscFormat.handleFloatObjects(this.drawingObjects, drawing_page.behindDocObjects, e, x, y, null, pageIndex, true);
+                    if(ret)
+                    {
+                        if(this.drawingObjects.handleEventMode === HANDLE_EVENT_MODE_HANDLE)
+                        {
+                            end_target_doc_content = checkEmptyPlaceholderContent(this.drawingObjects.getTargetDocContent());
+                            if ((start_target_doc_content || end_target_doc_content) && (start_target_doc_content !== end_target_doc_content)) {
+
+                                fRecalculatePages();
+                            }
+                        }
+                        return ret;
+                    }
+                }
             }
         }
+        else {
+            ret = AscFormat.handlePDFObjects(this.drawingObjects, this.drawingObjects.selectedObjects, e, x, y, null, pageIndex, true);
+        }
+        
         if(start_target_doc_content)
         {
             fRecalculatePages();
@@ -729,6 +735,20 @@ RotateState.prototype =
         else
         {
             var bounds;
+
+            if (editor.isDocumentRenderer()) {
+                for(i = 0; i < this.drawingObjects.arrTrackObjects.length; ++i)
+                {
+                    var oTrack = this.drawingObjects.arrTrackObjects[i];
+                    oTrack.trackEnd(true);
+                }
+
+                this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));
+                this.drawingObjects.clearTrackObjects();
+
+                return;
+            }
+            
             if(this.majorObject.parent.Is_Inline && this.majorObject.parent.Is_Inline())
             {
                 if(this.drawingObjects.document.Document_Is_SelectionLocked(changestype_Drawing_Props) === false)
@@ -1085,7 +1105,7 @@ PreMoveState.prototype =
 
     onMouseMove: function(e, x, y, pageIndex)
     {
-        if(!e.IsLocked || (this.majorObject && this.majorObject.isForm() && this.majorObject.getInnerForm() && this.majorObject.getInnerForm().IsFormLocked()))
+        if(!e.IsLocked || (this.majorObject && this.majorObject.isForm && this.majorObject.isForm() && this.majorObject.getInnerForm() && this.majorObject.getInnerForm().IsFormLocked()))
         {
             this.onMouseUp(e, x, y, pageIndex);
             return;
@@ -1170,13 +1190,16 @@ MoveState.prototype =
 
         var snapHorArray = [], snapVerArray = [];
 
-        var page = this.drawingObjects.document.Pages[pageIndex];
-        snapHorArray.push(page.Margins.Left);
-        snapHorArray.push(page.Margins.Right);
-        snapHorArray.push(page.Width/2);
-        snapVerArray.push(page.Margins.Top);
-        snapVerArray.push(page.Margins.Bottom);
-        snapVerArray.push(page.Height/2);
+        var page = this.drawingObjects.document.Pages ? this.drawingObjects.document.Pages[pageIndex] : null;
+        if (page) {
+            snapHorArray.push(page.Margins.Left);
+            snapHorArray.push(page.Margins.Right);
+            snapHorArray.push(page.Width/2);
+            snapVerArray.push(page.Margins.Top);
+            snapVerArray.push(page.Margins.Bottom);
+            snapVerArray.push(page.Height/2);
+        }
+        
         if(result_x === this.startX)
         {
             min_dx = 0;
@@ -1186,7 +1209,7 @@ MoveState.prototype =
             for(var track_index = 0; track_index < _arr_track_objects.length; ++track_index)
             {
                 var cur_track_original_shape = _arr_track_objects[track_index].originalObject;
-                var trackSnapArrayX = cur_track_original_shape.snapArrayX;
+                var trackSnapArrayX = cur_track_original_shape ? cur_track_original_shape.snapArrayX : null;
                 if(!trackSnapArrayX)
                 {
                     continue;
@@ -1258,7 +1281,7 @@ MoveState.prototype =
             for(track_index = 0; track_index < _arr_track_objects.length; ++track_index)
             {
                 cur_track_original_shape = _arr_track_objects[track_index].originalObject;
-                var trackSnapArrayY = cur_track_original_shape.snapArrayY;
+                var trackSnapArrayY = cur_track_original_shape ? cur_track_original_shape.snapArrayY : null;
                 if(!trackSnapArrayY)
                 {
                     continue;
