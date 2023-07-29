@@ -7100,10 +7100,12 @@ var editor;
 			}
 			History.Create_NewPoint();
 			History.StartTransaction();
-			let worksheets = t._addWorksheetsWithoutLock([this.asc_createSheetName()], this.wbModel.getActive());
+			const indexes = pivotTable.getItemsIndexesByActiveCell(activeCell.row, activeCell.col);
+			const itemMapArray = pivotTable.getNoFilterItemFieldsMapArray(indexes.rowItemIndex, indexes.colItemIndex)
+			let worksheets = t._addWorksheetsWithoutLock([pivotTable.getShowDetailsSheetName(itemMapArray)], this.wbModel.getActive());
 			let ws = worksheets[0];			
 
-			let lengths = pivotTable.showDetails(ws, activeCell.row, activeCell.col);
+			let lengths = pivotTable.showDetails(ws, itemMapArray);
 
 			let range = new Asc.Range(0, 0, lengths.colLength, lengths.rowLength);
 			let ref = range.getAbsName();
