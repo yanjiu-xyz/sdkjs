@@ -1874,6 +1874,13 @@ CT_PivotCacheDefinition.prototype.getGroupRangePr = function (fld) {
 	var cacheFields = this.getFields();
 	var cacheField = cacheFields[fld];
 	var rangePr = cacheField.getGroupRangePr();
+	if (!rangePr) {
+		//some files have external rangePr like discrete
+		let cacheFieldsWithBase = this.getFieldsWithBase(fld);
+		if (cacheFieldsWithBase.length > 0) {
+			rangePr = cacheFields[cacheFieldsWithBase[0]].getGroupRangePr();
+		}
+	}
 	if (rangePr) {
 		var dateTypes = null;
 		if (c_oAscGroupBy.Range !== rangePr.groupBy) {
@@ -1940,7 +1947,7 @@ CT_PivotCacheDefinition.prototype.ungroupDiscrete = function(layoutGroupCache) {
 	var baseCacheField = cacheField && cacheFields[baseFld];
 	if (baseCacheField) {
 		res = cacheField.ungroupDiscrete(baseFld, baseCacheField, layoutGroupCache.groupMap);
-		if (layoutGroupCache.fld !== baseFld && cacheField.getGroupOrSharedSize() === baseCacheField.getGroupOrSharedSize()) {
+		if (res && layoutGroupCache.fld !== baseFld && cacheField.getGroupOrSharedSize() === baseCacheField.getGroupOrSharedSize()) {
 			baseCacheField.initGroupPar(cacheField.getGroupPar());
 			cacheFields.splice(layoutGroupCache.fld, 1);
 			res.removeField = true;
@@ -5656,10 +5663,9 @@ CT_pivotTableDefinition.prototype._updateCacheDataUpdatePivotFieldsIndexesGroup 
 			if (oldBaseCacheField) {
 				var newBaseIndex = cacheDefinitionMap.get(oldBaseCacheField.asc_getName());
 				var newBaseCacheField = newCacheFields[newBaseIndex];
-				var newBaseRangePr = newBaseCacheField && newBaseCacheField.getGroupRangePr();
 				var oldRangePr = oldCacheField.getGroupRangePr();
 				if (newBaseCacheField && discretePrMaps[newBaseIndex] &&
-					(!oldRangePr || (oldRangePr.getFieldGroupType() === (newBaseRangePr && newBaseRangePr.getFieldGroupType())))) {
+					(!oldRangePr || oldBaseCacheField.isEqualByContains(newBaseCacheField))) {
 					var newIndexPar = newCacheFields.length;
 					var newCacheField = oldCacheField.clone();
 					if (-1 !== newCacheDefinition.cacheFields.getIndexByName(newCacheField.name)) {
@@ -9975,6 +9981,12 @@ CT_CacheField.prototype.isNumType = function () {
 CT_CacheField.prototype.containsDate = function () {
 	return this.sharedItems && this.sharedItems.containsDate;
 };
+CT_CacheField.prototype.isEqualByContains = function (cacheField) {
+	if (!this.sharedItems || !cacheField.sharedItems) {
+		return false;
+	}
+	return this.sharedItems.isEqualByContains(cacheField.sharedItems);
+};
 CT_CacheField.prototype.getNumFormat = function () {
 	if (this.num) {
 		return this.num;
@@ -10096,11 +10108,12 @@ CT_CacheField.prototype.refreshGroupDiscrete = function (sharedItems, discretePr
 	return this.fieldGroup.refreshGroupDiscrete(sharedItems, discretePrMap);
 };
 CT_CacheField.prototype.refreshGroupRangePr = function (baseFld, rangePr, rangePrAuto) {
-	if (rangePr.autoStart) {
+	//rangePrAuto can contain only par index
+	if (rangePr.autoStart && (null !== rangePrAuto.startNum || null !== rangePrAuto.startDate)) {
 		rangePr.startNum = rangePrAuto.startNum;
 		rangePr.startDate = rangePrAuto.startDate;
 	}
-	if (rangePr.autoEnd) {
+	if (rangePr.autoEnd && (null !== rangePrAuto.endNum || null !== rangePrAuto.endDate)) {
 		rangePr.endNum = rangePrAuto.endNum;
 		rangePr.endDate = rangePrAuto.endDate;
 	}
@@ -13475,6 +13488,16 @@ CT_SharedItems.prototype.getMinMaxDate = function () {
 		maxDate: Asc.cDate.prototype.getDateFromExcelWithTime2(res.maxValue)
 	};
 };
+CT_SharedItems.prototype.isEqualByContains = function (sharedItems) {
+	return this.containsSemiMixedTypes === sharedItems.containsSemiMixedTypes
+		&& this.containsNonDate === sharedItems.containsNonDate
+		&& this.containsDate === sharedItems.containsDate
+		&& this.containsString === sharedItems.containsString
+		&& this.containsBlank === sharedItems.containsBlank
+		&& this.containsMixedTypes === sharedItems.containsMixedTypes
+		&& this.containsNumber === sharedItems.containsNumber
+		&& this.containsInteger === sharedItems.containsInteger;
+};
 
 function CT_FieldGroup() {
 //Attributes
@@ -13632,6 +13655,9 @@ CT_FieldGroup.prototype.convertToDiscreteGroupMembers = function (groupMembers) 
 	}
 };
 CT_FieldGroup.prototype.ungroupDiscrete = function (base, baseCacheField, groupMap) {
+	if (!this.discretePr) {
+		return;
+	}
 	var groupMembers = this.discretePr.getGroupMembers(groupMap);
 	groupMembers = baseCacheField.convertToDiscreteGroupMembers(groupMembers);
 	var ungroupRes = this._ungroupDiscrete(baseCacheField, groupMembers);
@@ -14627,7 +14653,7 @@ CT_RangePr.prototype.getGroupIndex = function(val, maxIndex) {
 				//c_oAscGroupBy.Days
 				if (1 === this.groupInterval) {
 					res = val.getDayOfYear();
-					if (res >= 60 && !val.isLeapYear()) {
+					if (res >= 60 && !val.isLeapYear1900()) {
 						res += 1;
 					}
 					res -= 1;//day of year starts with 1
