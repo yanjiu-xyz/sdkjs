@@ -11189,19 +11189,17 @@
             return;
         }
         var oGraphics = this.createGraphics(oCanvas, oRect);
-        oGraphics.m_oContext.clearRect(0, 0, oRect.width, oRect.height);
-        var bClip = false;
+        oGraphics.m_oContext.clearRect(oRect.x, oRect.y, oRect.w, oRect.h);
+
+        oGraphics.SaveGrState();
         if (oRect.x !== 0 || oRect.y !== 0 ||
-            oRect.width !== oCanvas.width || oRect.height !== oCanvas.height) {
-            oGraphics.SaveGrState();
+            oRect.w !== oCanvas.width || oRect.h !== oCanvas.height) {
             oGraphics.AddClipRect(0, 0, this.getSlideWidth(), this.getSlideHeight());
-            bClip = true;
         }
         oGraphics.animationDrawer = this;
         oSlide.draw(oGraphics);
-        if (bClip) {
-            oGraphics.RestoreGrState();
-        }
+        oGraphics.RestoreGrState();
+        oSlide.getDrawingDocument().m_oWordControl.DemonstrationManager.CheckWatermarkInternal(oGraphics.m_oContext, oRect);
     };
     CAnimationDrawer.prototype.drawObject = function (oDrawing, oGraphics) {
         var sDrawingId = oDrawing.Get_Id();

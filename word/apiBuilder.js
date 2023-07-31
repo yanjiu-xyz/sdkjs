@@ -5648,12 +5648,37 @@
 		oParagraph.Clear_NearestPosArray();
 		return true;
 	};
-
+	
+	/**
+	 * Record of one comment
+	 * @typedef {Object} CommentReportRecord
+	 * @property {boolean} [IsAnswer=false] - Is this an initial comment or a reply to another comment
+	 * @property {string} CommentMessage - The text of the current comment.
+	 * @property {number} Date - The time when this change was made in local time.
+	 * @property {number} DateUTC - The time when this change was made in UTC.
+	 * @property {string} [QuoteText=undefined] - The text to which this comment related.
+	 */
+	
+	/**
+	 * Report on all review changes.
+	 * This is a dictionary where the keys are usernames.
+	 * @typedef {Object.<string, Array.<CommentReportRecord>>} CommentReport
+	 * @example
+	 *  {
+	 *    "John Smith" : [{IsAnswer: false, CommentMessage: 'Good text', Date: 1688588002698, DateUTC: 1688570002698, QuoteText: 'Some text'},
+	 *      {IsAnswer: true, CommentMessage: "I don't think so", Date: 1688588012661, DateUTC: 1688570012661}],
+	 *
+	 *    "Mark Pottato" : [{IsAnswer: false, CommentMessage: 'Need to change this part', Date: 1688587967245, DateUTC: 1688569967245, QuoteText: 'The quick brown fox jumps over the lazy dog'},
+	 *      {IsAnswer: false, CommentMessage: 'We need to add a link', Date: 1688587967245, DateUTC: 1688569967245, QuoteText: 'OnlyOffice'}]
+	 *  }
+	 */
+	
+	
 	/**
 	 * Returns a report about all the comments added to the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @returns {object}
+	 * @returns {CommentReport}
 	 */
 	ApiDocument.prototype.GetCommentsReport = function()
 	{

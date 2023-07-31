@@ -1232,13 +1232,15 @@
 
 				checkFormatPainterOnMouseEvent: function () {
 					let oAPI = this.getEditorApi();
-					if (oAPI.isFormatPainterOn()) {
+					if (oAPI.isFormatPainterOn() ) {
 						let oData = oAPI.getFormatPainterData();
 						if (oData) {
 							if (oData.isDrawingData()) {
 								this.pasteFormattingWithPoint(oData.getDocData());
 								this.resetTracking();
-								oAPI.sendPaintFormatEvent(AscCommon.c_oAscFormatPainterState.kOff);
+								if(oAPI.canTurnOffFormatPainter()) {
+									oAPI.sendPaintFormatEvent(AscCommon.c_oAscFormatPainterState.kOff);
+								}
 								return true;
 							}
 						}
@@ -4962,8 +4964,9 @@
 						var i, graphic_page;
 						if (direction > 0) {
 							var selectNext = function (oThis, last_selected_object) {
+								let oParaDrawing = last_selected_object.GetParaDrawing();
 								var search_array = oThis.getAllObjectsOnPage(last_selected_object.selectStartPage,
-									last_selected_object.parent && last_selected_object.parent.DocumentContent && last_selected_object.parent.DocumentContent.IsHdrFtr(false));
+									oParaDrawing && oParaDrawing.isHdrFtrChild(false));
 
 								if (search_array.length > 0) {
 									for (var i = search_array.length - 1; i > -1; --i) {
@@ -5013,8 +5016,9 @@
 							}
 						} else {
 							var selectPrev = function (oThis, first_selected_object) {
+								let oParaDrawing = first_selected_object.GetParaDrawing();
 								var search_array = oThis.getAllObjectsOnPage(first_selected_object.selectStartPage,
-									first_selected_object.parent && first_selected_object.parent.DocumentContent && first_selected_object.parent.DocumentContent.IsHdrFtr(false));
+									oParaDrawing && oParaDrawing.isHdrFtrChild(false));
 
 								if (search_array.length > 0) {
 									for (var i = 0; i < search_array.length; ++i) {
@@ -8953,19 +8957,20 @@
 				putImageToSelection: function (sImageUrl, nWidth, nHeight, replaceMode) {
 					let spTree;
 					let selectedObjects = this.getSelectedArray();
-					let oFirstSelectedObject = selectedObjects[0];
-					if(!oFirstSelectedObject) {
-						return;
-					}
-					if(!oFirstSelectedObject.group) {
-						spTree = this.getDrawingArray();
-					}
-					else {
-						spTree = oFirstSelectedObject.group.spTree;
-					}
+
 					const nPageIndex = 0;
 					let oController = this;
-					if (selectedObjects.length > 0 && !this.getTargetDocContent()) {
+					if (selectedObjects.length > 0) {
+						let oFirstSelectedObject = selectedObjects[0];
+						if(!oFirstSelectedObject) {
+							return;
+						}
+						if(!oFirstSelectedObject.group) {
+							spTree = this.getDrawingArray();
+						}
+						else {
+							spTree = oFirstSelectedObject.group.spTree;
+						}
 						this.checkSelectedObjectsAndCallback(function () {
 
 							let _w = nWidth * AscCommon.g_dKoef_pix_to_mm;
@@ -9028,6 +9033,7 @@
 					}
 					AscCommon.History.Create_NewPoint(0);
 					this.addImage(sImageUrl, nWidth, nHeight, null, null);
+					this.startRecalculate();
 				},
 				getSelectionImageData: function () {
 					let sImageUrl;
