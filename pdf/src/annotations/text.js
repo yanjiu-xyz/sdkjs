@@ -221,7 +221,9 @@
     };
     
     CAnnotationText.prototype.onMouseUp = function() {
-        let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(this._pagePos.x + this._pagePos.w, this._pagePos.y + this._pagePos.h / 2, this.GetPage(), true);
+        let oViewer = editor.getDocumentRenderer();
+
+        let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(this._pagePos.x + this._pagePos.w / oViewer.zoom, this._pagePos.y + this._pagePos.h / (2 * oViewer.zoom), this.GetPage(), true);
         editor.sync_ShowComment([this.GetId()], X, Y)
     };
 

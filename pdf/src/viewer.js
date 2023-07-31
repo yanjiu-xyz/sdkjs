@@ -1423,8 +1423,14 @@
 			{
 				for (var i = 0, len = page.annots.length; i < len; i++)
 				{
-					if (pageObject.x >= page.annots[i]._origRect[0] && pageObject.x <= page.annots[i]._origRect[2] &&
-						pageObject.y >= page.annots[i]._origRect[1] && pageObject.y <= page.annots[i]._origRect[3])
+					// пояснение: размер аннотации всегда один и тот же, вне зависимости от зума. 
+					// Поэтому ширина ректа в который попадает мышка не должна увеличиваться
+					// поэтому ширину и высоту делить на зум, для того чтобы невилировать это увеличение
+					let nAnnotWidth = (page.annots[i]._origRect[2] - page.annots[i]._origRect[0]) / this.zoom;
+					let nAnnotHeight = (page.annots[i]._origRect[3] - page.annots[i]._origRect[1]) / this.zoom;
+
+					if (pageObject.x >= page.annots[i]._origRect[0] && pageObject.x <= page.annots[i]._origRect[0] + nAnnotWidth &&
+						pageObject.y >= page.annots[i]._origRect[1] && pageObject.y <= page.annots[i]._origRect[1] + nAnnotHeight)
 					{
 						if (bGetHidden) {
 							return page.annots[i];

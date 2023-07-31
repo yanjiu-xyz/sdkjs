@@ -1108,9 +1108,10 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.AddComment = function(AscCommentData) {
         let oViewer = editor.getDocumentRenderer();
-
+        let posToAdd = this.anchorPositionToAdd ? this.anchorPositionToAdd : {x: 10, y: 10};
+        
         let oProps = {
-            rect:       [10, 10, 43, 43],
+            rect:       [posToAdd.x, posToAdd.y, posToAdd.x + 33, posToAdd.y + 33],
             page:       oViewer.currentPage,
             name:       AscCommon.CreateGUID(),
             type:       AscPDF.ANNOTATIONS_TYPES.Text,
@@ -1119,6 +1120,8 @@ var CPresentation = CPresentation || function(){};
             contents:   AscCommentData.m_sText,
             hidden:     false
         }
+
+        this.anchorPositionToAdd = null;
 
         let oAnnot = this.AddAnnot(oProps);
         editor.sendEvent("asc_onAddComment", oAnnot.GetId(), AscCommentData);

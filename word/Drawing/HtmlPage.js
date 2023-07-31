@@ -746,15 +746,18 @@ function CEditorPage(api)
 			return;
 
 		var _left = 0;
-		var lPage = this.m_oDrawingDocument.m_lCurrentPage;
-		if (0 <= lPage && lPage < this.m_oDrawingDocument.m_lPagesCount)
-		{
-			_left = this.m_oDrawingDocument.m_arrPages[lPage].drawingPage.left;
+		if (editor.isDocumentRenderer()) {
+			var lPage = this.m_oDrawingDocument.m_lCurrentPage;
+			if (0 <= lPage && lPage < this.m_oDrawingDocument.m_lPagesCount)
+			{
+				_left = this.m_oDrawingDocument.m_arrPages[lPage].drawingPage.left;
+			}
+			else if (this.m_oDrawingDocument.m_lPagesCount != 0)
+			{
+				_left = this.m_oDrawingDocument.m_arrPages[this.m_oDrawingDocument.m_lPagesCount - 1].drawingPage.left;
+			}
 		}
-		else if (this.m_oDrawingDocument.m_lPagesCount != 0)
-		{
-			_left = this.m_oDrawingDocument.m_arrPages[this.m_oDrawingDocument.m_lPagesCount - 1].drawingPage.left;
-		}
+		
 		this.m_oHorRuler.BlitToMain(_left, 0, this.m_oTopRuler_horRuler.HtmlElement);
 	};
 	this.UpdateVerRuler = function()
@@ -763,15 +766,18 @@ function CEditorPage(api)
 			return;
 
 		var _top  = 0;
-		var lPage = this.m_oDrawingDocument.m_lCurrentPage;
-		if (0 <= lPage && lPage < this.m_oDrawingDocument.m_lPagesCount)
-		{
-			_top = this.m_oDrawingDocument.m_arrPages[lPage].drawingPage.top;
+		if (editor.isDocumentRenderer()) {
+			var lPage = this.m_oDrawingDocument.m_lCurrentPage;
+			if (0 <= lPage && lPage < this.m_oDrawingDocument.m_lPagesCount)
+			{
+				_top = this.m_oDrawingDocument.m_arrPages[lPage].drawingPage.top;
+			}
+			else if (this.m_oDrawingDocument.m_lPagesCount != 0)
+			{
+				_top = this.m_oDrawingDocument.m_arrPages[this.m_oDrawingDocument.m_lPagesCount - 1].drawingPage.top;
+			}
 		}
-		else if (this.m_oDrawingDocument.m_lPagesCount != 0)
-		{
-			_top = this.m_oDrawingDocument.m_arrPages[this.m_oDrawingDocument.m_lPagesCount - 1].drawingPage.top;
-		}
+		
 		this.m_oVerRuler.BlitToMain(0, _top, this.m_oLeftRuler_vertRuler.HtmlElement);
 	};
 

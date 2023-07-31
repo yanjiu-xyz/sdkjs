@@ -460,10 +460,31 @@
 	};
 	PDFEditorApi.prototype.asc_getAnchorPosition = function()
 	{
-		let oViewer = editor.getDocumentRenderer();
+		let oViewer		= editor.getDocumentRenderer();
+		let pageObject	= oViewer.getPageByCoords(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+		let nPage		= pageObject ? pageObject.index : oViewer.currentPage;
 
-		let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(40, 20, oViewer.currentPage, true);
-		return new AscCommon.asc_CRect(X, Y, 0, 0);
+		let nScaleY			= oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H;
+        let nScaleX			= oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W;
+		let nCommentWidth	= 33 * nScaleX;
+		let nCommentHeight	= 33 * nScaleY;
+		let oDoc			= oViewer.getPDFDoc();
+
+		if (!pageObject) {
+			let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(10, 10, nPage, true);
+			oDoc.anchorPositionToAdd = {
+				x: 10,
+				y: 10
+			};
+			return new AscCommon.asc_CRect(X + nCommentWidth, Y + nCommentHeight / 2, 0, 0);;
+		}
+
+		oDoc.anchorPositionToAdd = {
+			x: pageObject.x,
+			y: pageObject.y
+		};
+
+		return new AscCommon.asc_CRect(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y, 0, 0);
 	};
 	PDFEditorApi.prototype.asc_removeComment = function(Id)
 	{
