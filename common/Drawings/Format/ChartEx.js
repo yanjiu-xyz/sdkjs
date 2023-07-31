@@ -88,11 +88,12 @@
         this.isoCountryCode = pr;
     };
 
+    // Aggregation todo
     drawingsChangesMap[AscDFH.historyitem_Aggregation_SetTest] = function(oClass, value) {
         oClass.test = value;
     };
     AscDFH.changesFactory[AscDFH.historyitem_Aggregation_SetTest] = window['AscDFH'].CChangesDrawingsString;
-    function CAggregation() { // todo
+    function CAggregation() {
         CBaseChartObject.call(this);
         this.test = null;
     }
@@ -317,15 +318,15 @@
 
     InitClass(CAxisUnits, CBaseChartObject, AscDFH.historyitem_type_AxisUnits);
 
-    CAxisUnits.prototype.setTest = function(pr) {
+    CAxisUnits.prototype.setUnitsLabel = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_AxisUnit_SetUnitsLabel, this.unitsLabel, pr));
         this.unitsLabel = pr;
     };
-    CAxisUnits.prototype.setTest = function(pr) {
+    CAxisUnits.prototype.setExtLst = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_AxisUnit_SetExtLst, this.extLst, pr));
         this.extLst = pr;
     };
-    CAxisUnits.prototype.setTest = function(pr) {
+    CAxisUnits.prototype.setUnit = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_AxisUnit_SetUnit, this.unit, pr));
         this.unit = pr;
     };
@@ -356,7 +357,7 @@
         this.extLst = null;
     }
 
-    InitClass(CAxisUnitsLabel, CBaseChartObject, AscDFH.historyitem_type_Test);
+    InitClass(CAxisUnitsLabel, CBaseChartObject, AscDFH.historyitem_type_AxisUnitsLabel);
 
     CAxisUnitsLabel.prototype.setTx = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_AxisUnitsLabel_SetTx, this.tx, pr));
@@ -377,10 +378,26 @@
     window['AscFormat'].CAxisUnitsLabel = CAxisUnitsLabel;
 
     // Binning
-    drawingsChangesMap[AscDFH.historyitem_Binning_SetTest] = function(oClass, value) {
-        oClass.test = value;
+    drawingsChangesMap[AscDFH.historyitem_Binning_SetBinSize] = function(oClass, value) {
+        oClass.binSize = value;
     };
-    AscDFH.changesFactory[AscDFH.historyitem_Binning_SetTest] = window['AscDFH'].CChangesDrawingsString;
+    drawingsChangesMap[AscDFH.historyitem_Binning_SetBinCount] = function(oClass, value) {
+        oClass.binCount = value;
+    };
+    drawingsChangesMap[AscDFH.historyitem_Binning_SetIntervalClosed] = function(oClass, value) {
+        oClass.intervalClosed = value;
+    };
+    drawingsChangesMap[AscDFH.historyitem_Binning_SetUnderflow] = function(oClass, value) {
+        oClass.underflow = value;
+    };
+    drawingsChangesMap[AscDFH.historyitem_Binning_SetOverflow] = function(oClass, value) {
+        oClass.overflow = value;
+    };
+    AscDFH.changesFactory[AscDFH.historyitem_Binning_SetBinSize] = window['AscDFH'].CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_Binning_SetBinCount] = window['AscDFH'].CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_Binning_SetIntervalClosed] = window['AscDFH'].CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_Binning_SetUnderflow] = window['AscDFH'].CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_Binning_SetOverflow] = window['AscDFH'].CChangesDrawingsString;
     function CBinning() {
         CBaseChartObject.call(this);
         this.binSize = null;
@@ -1598,7 +1615,7 @@
 
     InitClass(CGeoDataPointToEntityQueryResults, CBaseChartObject, AscDFH.historyitem_type_GeoDataPointToEntityQueryResults);
 
-    CGeoDataPointToEntityQueryResults.prototype.setTest = function(pr) {
+    CGeoDataPointToEntityQueryResults.prototype.setGeoDataPointToEntityQueryResult = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_GeoDataPointToEntityQueryResults_SetGeoDataPointToEntityQueryResult, this.geoDataPointToEntityQueryResult, pr));
         this.geoDataPointToEntityQueryResult = pr;
     };
@@ -1850,7 +1867,7 @@
 
     InitClass(CGeoLocationQueryResults, CBaseChartObject, AscDFH.historyitem_type_GeoLocationQueryResults);
 
-    CGeoLocationQueryResults.prototype.setTest = function(pr) {
+    CGeoLocationQueryResults.prototype.setGeoLocationQueryResult = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_GeoLocationQueryResults_SetGeoLocationQueryResult, this.geoLocationQueryResult, pr));
         this.geoLocationQueryResult = pr;
     };
@@ -1869,7 +1886,7 @@
     InitClass(CGeoLocations, CBaseChartObject, AscDFH.historyitem_type_GeoLocations);
 
     CGeoLocations.prototype.setGeoLocation = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_GeoLocations_SetGeoLocation, this.test, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_GeoLocations_SetGeoLocation, this.geoLocation, pr));
         this.geoLocation = pr;
     };
     window['AscFormat'].CGeoLocations = CGeoLocations;
@@ -1983,7 +2000,15 @@
     drawingsChangesMap[AscDFH.historyitem_HeaderFooter_SetDifferentFirst] = function(oClass, value) {
         oClass.differentFirst = value;
     };
-    AscDFH.changesFactory[AscDFH.historyitem_Address_SetTest] = window['AscDFH'].CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_HeaderFooter_SetOddHeader] = window['AscDFH'].CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_HeaderFooter_SetOddFooter] = window['AscDFH'].CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_HeaderFooter_SetEvenHeader] = window['AscDFH'].CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_HeaderFooter_SetEvenFooter] = window['AscDFH'].CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_HeaderFooter_SetFirstHeader] = window['AscDFH'].CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_HeaderFooter_SetFirstFooter] = window['AscDFH'].CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_HeaderFooter_SetAlignWithMargins] = window['AscDFH'].CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_HeaderFooter_SetDifferentOddEven] = window['AscDFH'].CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_HeaderFooter_SetDifferentFirst] = window['AscDFH'].CChangesDrawingsString;
     function CHeaderFooter() {
         CBaseChartObject.call(this);
         this.oddHeader = null;
