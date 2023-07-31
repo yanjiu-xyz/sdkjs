@@ -451,7 +451,7 @@
 		oCommentData.Read_FromAscCommentData(AscCommentData);
 
 		let oComment = oDoc.AddComment(AscCommentData);
-		this.sync_AddComment(oComment.GetId(), oCommentData);
+		//this.sync_AddComment(oComment.GetId(), oCommentData);
 
 		oComment.AddToRedraw();
 		oViewer._paintAnnots();

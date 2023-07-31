@@ -138,7 +138,7 @@
 
         let oViewer         = editor.getDocumentRenderer();
         // let oRGB            = this.GetRGBColor(this._textColor);
-        let oRGB            = {r: 255, g: 0, b: 0};
+        let oRGB            = {r: 255, g: 255, b: 255};
         let oGraphicsPDF    = oGraphics ? oGraphics : oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
         let nScale          = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
         
@@ -148,8 +148,8 @@
 
         let X = aRect[0] * nScale;
         let Y = aRect[1] * nScale;
-        let nWidth = (aRect[2] - aRect[0]);
-        let nHeight = (aRect[3] - aRect[1]);
+        let nWidth = (aRect[2] - aRect[0]) * AscCommon.AscBrowser.retinaPixelRatio;
+        let nHeight = (aRect[3] - aRect[1]) * AscCommon.AscBrowser.retinaPixelRatio;
         
         let imgW = ICON_COMMENT.width;
         let imgH = ICON_COMMENT.height;
@@ -170,11 +170,15 @@
         canvas.width = wScaled;
         canvas.height = hScaled;
 
-        // oGraphicsPDF.SetFillStyle(`yellow`);
-        // oGraphicsPDF.FillRect(X, Y, nWidth, nHeight);
+        // oGraphicsPDF.BeginPath();
+        // oGraphicsPDF.SetFillStyle(`rgb(255, 209, 0)`);
+        // // oGraphicsPDF.FillRect(X, Y, nWidth, nHeight);
+        // oGraphicsPDF.RoundRect(X, Y, nWidth, nHeight, [3,3,3,3]);
+        // oGraphicsPDF.Fill();
+        // oGraphicsPDF.ClosePath();
 
         // Draw the image onto the canvas
-        context.drawImage(ICON_TO_DRAW, 0, 0, imgW, imgH, 0, 0, wScaled, hScaled);
+        context.drawImage(ICON_TO_DRAW, 0, 0, imgW, imgH, 0, 0, wScaled >> 0, hScaled >> 0);
 
         // Get the pixel data of the canvas
         var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
@@ -253,8 +257,12 @@
     const ICON_CIRCLE = new Image();
     ICON_CIRCLE.src = `data:image/svg+xml;utf8,${encodeURIComponent(SVG_ICON_CIRCLE)}`;
 
+    // let SVG_ICON_COMMENT = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    // <path fill-rule="evenodd" clip-rule="evenodd" d="M7.5 16.0858L5.41421 14H3V4H17V14H9.58579L7.5 16.0858ZM5 15L7.5 17.5L10 15H17C17.5523 15 18 14.5523 18 14V4C18 3.44772 17.5523 3 17 3H3C2.44772 3 2 3.44772 2 4V14C2 14.5523 2.44772 15 3 15H5ZM5 6H15V7H5V6ZM5 8H15V9H5V8ZM12 10H5V11H12V10Z" fill="black"/>
+    // </svg>`;
     let SVG_ICON_COMMENT = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <path fill-rule="evenodd" clip-rule="evenodd" d="M7.5 16.0858L5.41421 14H3V4H17V14H9.58579L7.5 16.0858ZM5 15L7.5 17.5L10 15H17C17.5523 15 18 14.5523 18 14V4C18 3.44772 17.5523 3 17 3H3C2.44772 3 2 3.44772 2 4V14C2 14.5523 2.44772 15 3 15H5ZM5 6H15V7H5V6ZM5 8H15V9H5V8ZM12 10H5V11H12V10Z" fill="black"/>
+    <path d="M2 4C2 3.44772 2.44772 3 3 3H17C17.5523 3 18 3.44772 18 4V14C18 14.5523 17.5523 15 17 15H10L7.5 17.5L5 15H3C2.44772 15 2 14.5523 2 14V4Z" fill="#FFD100"/>
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M17 15H10L8.20711 16.7929L7.5 17.5L6.79289 16.7929L5 15H3C2.44772 15 2 14.5523 2 14V4C2 3.44772 2.44772 3 3 3H17C17.5523 3 18 3.44772 18 4V14C18 14.5523 17.5523 15 17 15ZM9.29289 14.2929L7.5 16.0858L5.70711 14.2929L5.41421 14H5H3V4H17V14H10H9.58579L9.29289 14.2929ZM15 6H5V7H15V6ZM5 8H15V9H5V8ZM12 10H5V11H12V10Z" fill="#333333"/>
     </svg>`;
     const ICON_COMMENT = new Image();
     ICON_COMMENT.src = `data:image/svg+xml;utf8,${encodeURIComponent(SVG_ICON_COMMENT)}`;

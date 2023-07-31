@@ -1491,7 +1491,11 @@
 						oThis.Api.sync_BeginCatchSelectedElements();
 						oThis.Api.sync_EndCatchSelectedElements();
 						oThis.removeSelection();
-						oThis.Api.sendEvent("asc_onContextMenu", undefined);
+						oThis.Api.sync_ContextMenuCallback({
+							Type  : Asc.c_oAscContextMenuTypes.ChangeHdrFtr,
+							X_abs : x,
+							Y_abs : y
+						});
 					}
 				}
 				return;

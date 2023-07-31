@@ -1100,10 +1100,6 @@ var CPresentation = CPresentation || function(){};
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();
 
-        if (oAnnot.GetType() == AscPDF.ANNOTATIONS_TYPES.Text) {
-            editor.sendEvent("asc_onAddComment", oAnnot.GetId(), oAnnot.GetAscCommentData());
-            // editor.asc_addComment();
-        }
         // if (oViewer.IsOpenFormsInProgress == false) {
         //     oAnnot.SetDrawFromStream(false);
         // }
@@ -1114,7 +1110,7 @@ var CPresentation = CPresentation || function(){};
         let oViewer = editor.getDocumentRenderer();
 
         let oProps = {
-            rect:       [10, 10, 30, 30],
+            rect:       [10, 10, 43, 43],
             page:       oViewer.currentPage,
             name:       AscCommon.CreateGUID(),
             type:       AscPDF.ANNOTATIONS_TYPES.Text,
@@ -1124,7 +1120,9 @@ var CPresentation = CPresentation || function(){};
             hidden:     false
         }
 
-        return this.AddAnnot(oProps);
+        let oAnnot = this.AddAnnot(oProps);
+        editor.sendEvent("asc_onAddComment", oAnnot.GetId(), AscCommentData);
+        return oAnnot; 
     };
     CPDFDoc.prototype.EditComment = function(Id, CommentData) {
         let oAnnotToEdit = this.annots.find(function(annot) {

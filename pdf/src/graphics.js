@@ -97,6 +97,9 @@ CPDFGraphics.prototype.FillRect = function(x, y, w, h) {
 CPDFGraphics.prototype.DrawImage = function(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
     this.context.drawImage(...arguments);
 };
+CPDFGraphics.prototype.RoundRect = function() {
+    this.context.roundRect(...arguments);
+};
 CPDFGraphics.prototype.SetLineDash = function(dash) {
     if (this.context)
         this.context.setLineDash(dash);
@@ -104,7 +107,6 @@ CPDFGraphics.prototype.SetLineDash = function(dash) {
 CPDFGraphics.prototype.SetGlobalAlpha = function(value) {
     if (this.context)
         this.context.globalAlpha = value;
-    this.globalAlpha = value;
 };
 CPDFGraphics.prototype.Arc = function(x, y, radius, startAng, endAng, counterClockwise) {
     this.context.arc(x, y, radius, startAng, endAng, counterClockwise);

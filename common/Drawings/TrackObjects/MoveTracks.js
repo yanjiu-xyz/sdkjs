@@ -704,6 +704,8 @@ function MoveAnnotationTrack(annot)
         oGraphicsPDF.Init(tmpCanvasCtx, this.tmpCanvas.width, this.tmpCanvas.height);
         oGraphicsPDF.SetGlobalAlpha(1);
 
+        oCtx.globalAlpha = 0.5;
+
         this.annot.SetPosition(this.x, this.y);
         this.annot.Draw(oGraphicsPDF);
 
@@ -721,8 +723,8 @@ function MoveAnnotationTrack(annot)
         let nPageWidth  = this.viewer.drawingPages[nPage].W / this.viewer.zoom;
 
         // не даем выйти за границы листа
-        let X = Math.max(this.x, 0);
-        let Y = Math.max(this.y, 0);
+        let X = Math.max(this.x, 5);
+        let Y = Math.max(this.y, 5);
 
         if (X + this.annot._pagePos.w > nPageWidth) {
             X = nPageWidth - this.annot._pagePos.w;
