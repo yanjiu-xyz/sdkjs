@@ -1,20 +1,27 @@
-name: check
-on: [push]
+name: dev_check
+on:
+  push:
+    branches:
+      - develop
+  pull_request:
+    branches:
+      - develop
 jobs:
   code-style:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Set up Ruby 2.7
-        uses: ruby/setup-ruby@v1
+      - name: check out repository
+        uses: actions/checkout@v3
+      - name: setup python
+        uses: actions/setup-python@v4
         with:
-          ruby-version: 2.7
-      - name: Run rake task
-        run: rake check_source_files
+          python-version: '3.9'
+      - name: execute check styles
+        run: python tests/code-style/check.py
   unit-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Use Node.js 14
         uses: actions/setup-node@v1
         with:
@@ -57,7 +64,7 @@ jobs:
   builder-tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v3
       - name: Use Node.js 12
         uses: actions/setup-node@v1
         with:
@@ -71,4 +78,4 @@ jobs:
                       -v $PWD/deploy/sdkjs/word:/opt/onlyoffice/documentbuilder/sdkjs/word \
                       -v $PWD/deploy/sdkjs/cell:/opt/onlyoffice/documentbuilder/sdkjs/cell \
                       -v $PWD/deploy/sdkjs/slide:/opt/onlyoffice/documentbuilder/sdkjs/slide \
-                      onlyofficeqa/doc-builder-testing:next-release rake rspec_critical
+                      onlyoffice/doc-builder-testing:develop-latest rake rspec_critical
