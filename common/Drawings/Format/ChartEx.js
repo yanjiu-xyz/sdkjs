@@ -9,6 +9,14 @@
     var drawingsChangesMap = window['AscDFH'].drawingsChangesMap;
     var drawingContentChanges = window['AscDFH'].drawingContentChanges;
 
+    var CChangesDrawingsBool = AscDFH.CChangesDrawingsBool;
+    var CChangesDrawingsLong = AscDFH.CChangesDrawingsLong;
+    var CChangesDrawingsString = AscDFH.CChangesDrawingsString;
+    var CChangesDrawingsContent = AscDFH.CChangesDrawingsContent;
+    var CChangesDrawingsObject = AscDFH.CChangesDrawingsObject;
+    var CChangesDrawingsObjectNoId = AscDFH.CChangesDrawingsObjectNoId;
+    var CChangesDrawingsDouble2 = AscDFH.CChangesDrawingsDouble2;
+
     // CAddress
     drawingsChangesMap[AscDFH.historyitem_Address_SetAddress1] = function(oClass, value) {
         oClass.address1 = value;
@@ -88,24 +96,6 @@
         this.isoCountryCode = pr;
     };
 
-    // Aggregation todo
-    drawingsChangesMap[AscDFH.historyitem_Aggregation_SetTest] = function(oClass, value) {
-        oClass.test = value;
-    };
-    AscDFH.changesFactory[AscDFH.historyitem_Aggregation_SetTest] = window['AscDFH'].CChangesDrawingsString;
-    function CAggregation() {
-        CBaseChartObject.call(this);
-        this.test = null;
-    }
-
-    InitClass(CAggregation, CBaseChartObject, AscDFH.historyitem_type_Aggregation);
-
-    CAggregation.prototype.setTest = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Address_SetTest, this.test, pr));
-        this.test = pr;
-    };
-    window['AscFormat'].CAggregation = CAggregation;
-
     // Axis
     drawingsChangesMap[AscDFH.historyitem_Axis_SetCatScaling] = function(oClass, value) {
         oClass.catScaling = value;
@@ -152,21 +142,21 @@
     drawingsChangesMap[AscDFH.historyitem_Axis_SetHidden] = function(oClass, value) {
         oClass.hidden = value;
     };
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetCatScaling] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetValScaling] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetTitle] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetUnits] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetMajorGridlines] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetMinorGridlines] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetMajorTickMarks] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetMinorTickMarks] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetTickLabels] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetNumFmt] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetSpPr] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetTxPr] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetExtLst] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetId] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetHidden] = window['AscDFH'].CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetCatScaling] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetValScaling] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetTitle] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetUnits] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetMajorGridlines] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetMinorGridlines] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetMajorTickMarks] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetMinorTickMarks] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetTickLabels] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetNumFmt] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetSpPr] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetTxPr] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetExtLst] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetId] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetHidden] = window['AscDFH'].CChangesDrawingsBool;
 
     function CAxis() {
         CBaseChartObject.call(this);
@@ -190,63 +180,63 @@
     InitClass(CAxis, CBaseChartObject, AscDFH.historyitem_type_Axis);
 
     CAxis.prototype.setCatScaling = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Axis_SetCatScaling, this.catScaling, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Axis_SetCatScaling, this.catScaling, pr));
         this.catScaling = pr;
     };
     CAxis.prototype.setValScaling = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Axis_SetValScaling, this.valScaling, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Axis_SetValScaling, this.valScaling, pr));
         this.valScaling = pr;
     };
     CAxis.prototype.setTitle = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Axis_SetTitle, this.title, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Axis_SetTitle, this.title, pr));
         this.title = pr;
     };
     CAxis.prototype.setUnits = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Axis_SetUnits, this.units, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Axis_SetUnits, this.units, pr));
         this.units = pr;
     };
     CAxis.prototype.setMajorGridlines = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Axis_SetMajorGridlines, this.majorGridlines, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Axis_SetMajorGridlines, this.majorGridlines, pr));
         this.majorGridlines = pr;
     };
     CAxis.prototype.setMinorGridlines = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Axis_SetMinorGridlines, this.minorGridlines, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Axis_SetMinorGridlines, this.minorGridlines, pr));
         this.minorGridlines = pr;
     };
     CAxis.prototype.setMajorTickMarks = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Axis_SetMajorTickMarks, this.majorTickMarks, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Axis_SetMajorTickMarks, this.majorTickMarks, pr));
         this.majorTickMarks = pr;
     };
     CAxis.prototype.setMinorTickMarks = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Axis_SetMinorTickMarks, this.minorTickMarks, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Axis_SetMinorTickMarks, this.minorTickMarks, pr));
         this.minorTickMarks = pr;
     };
     CAxis.prototype.setTickLabels = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Axis_SetTickLabels, this.tickLabels, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Axis_SetTickLabels, this.tickLabels, pr));
         this.tickLabels = pr;
     };
     CAxis.prototype.setNumFmt = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Axis_SetNumFmt, this.numFmt, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Axis_SetNumFmt, this.numFmt, pr));
         this.numFmt = pr;
     };
     CAxis.prototype.setSpPr = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Axis_SetSpPr, this.spPr, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Axis_SetSpPr, this.spPr, pr));
         this.spPr = pr;
     };
     CAxis.prototype.setTxPr = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Axis_SetTxPr, this.txPr, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Axis_SetTxPr, this.txPr, pr));
         this.txPr = pr;
     };
     CAxis.prototype.setExtLst = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Axis_SetExtLst, this.extLst, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Axis_SetExtLst, this.extLst, pr));
         this.extLst = pr;
     };
     CAxis.prototype.setId = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Axis_SetId, this.id, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Axis_SetId, this.id, pr));
         this.id = pr;
     };
     CAxis.prototype.setHidden = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Axis_SetHidden, this.hidden, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_Axis_SetHidden, this.hidden, pr));
         this.hidden = pr;
     };
     window['AscFormat'].CAxis = CAxis;
@@ -264,10 +254,10 @@
     drawingsChangesMap[AscDFH.historyitem_AxisTitle_SetExtLst] = function(oClass, value) {
         oClass.extLst = value;
     };
-    AscDFH.changesFactory[AscDFH.historyitem_AxisTitle_SetTx] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_AxisTitle_SetSpPr] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_AxisTitle_SetTxPr] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_AxisTitle_SetExtLst] = window['AscDFH'].CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_AxisTitle_SetTx] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_AxisTitle_SetSpPr] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_AxisTitle_SetTxPr] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_AxisTitle_SetExtLst] = window['AscDFH'].CChangesDrawingsObject;
     function CAxisTitle() {
         CBaseChartObject.call(this);
         this.tx = null;
@@ -279,19 +269,19 @@
     InitClass(CAxisTitle, CBaseChartObject, AscDFH.historyitem_type_AxisTitle);
 
     CAxisTitle.prototype.setTx = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_AxisTitle_SetTx, this.tx, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_AxisTitle_SetTx, this.tx, pr));
         this.tx = pr;
     };
     CAxisTitle.prototype.setSpPr = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_AxisTitle_SetSpPr, this.spPr, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_AxisTitle_SetSpPr, this.spPr, pr));
         this.spPr = pr;
     };
     CAxisTitle.prototype.setTxPr = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_AxisTitle_SetTxPr, this.txPr, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_AxisTitle_SetTxPr, this.txPr, pr));
         this.txPr = pr;
     };
     CAxisTitle.prototype.setExtLst = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_AxisTitle_SetExtLst, this.extLst, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_AxisTitle_SetExtLst, this.extLst, pr));
         this.extLst = pr;
     };
     window['AscFormat'].CAxisTitle = CAxisTitle;
@@ -306,8 +296,8 @@
     drawingsChangesMap[AscDFH.historyitem_AxisUnit_SetUnit] = function(oClass, value) {
         oClass.unit = value;
     };
-    AscDFH.changesFactory[AscDFH.historyitem_AxisUnit_SetUnitsLabel] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_AxisUnit_SetExtLst] = window['AscDFH'].CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_AxisUnit_SetUnitsLabel] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_AxisUnit_SetExtLst] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_AxisUnit_SetUnit] = window['AscDFH'].CChangesDrawingsString;
     function CAxisUnits() {
         CBaseChartObject.call(this);
@@ -319,11 +309,11 @@
     InitClass(CAxisUnits, CBaseChartObject, AscDFH.historyitem_type_AxisUnits);
 
     CAxisUnits.prototype.setUnitsLabel = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_AxisUnit_SetUnitsLabel, this.unitsLabel, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_AxisUnit_SetUnitsLabel, this.unitsLabel, pr));
         this.unitsLabel = pr;
     };
     CAxisUnits.prototype.setExtLst = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_AxisUnit_SetExtLst, this.extLst, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_AxisUnit_SetExtLst, this.extLst, pr));
         this.extLst = pr;
     };
     CAxisUnits.prototype.setUnit = function(pr) {
@@ -345,10 +335,10 @@
     drawingsChangesMap[AscDFH.historyitem_AxisUnitsLabel_SetExtLst] = function(oClass, value) {
         oClass.extLst = value;
     };
-    AscDFH.changesFactory[AscDFH.historyitem_AxisUnitsLabel_SetTx] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_AxisUnitsLabel_SetSpPr] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_AxisUnitsLabel_SetTxPr] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_AxisUnitsLabel_SetExtLst] = window['AscDFH'].CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_AxisUnitsLabel_SetTx] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_AxisUnitsLabel_SetSpPr] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_AxisUnitsLabel_SetTxPr] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_AxisUnitsLabel_SetExtLst] = window['AscDFH'].CChangesDrawingsObject;
     function CAxisUnitsLabel() {
         CBaseChartObject.call(this);
         this.tx = null;
@@ -360,19 +350,19 @@
     InitClass(CAxisUnitsLabel, CBaseChartObject, AscDFH.historyitem_type_AxisUnitsLabel);
 
     CAxisUnitsLabel.prototype.setTx = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_AxisUnitsLabel_SetTx, this.tx, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_AxisUnitsLabel_SetTx, this.tx, pr));
         this.tx = pr;
     };
     CAxisUnitsLabel.prototype.setSpPr = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_AxisUnitsLabel_SetSpPr, this.spPr, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_AxisUnitsLabel_SetSpPr, this.spPr, pr));
         this.spPr = pr;
     };
     CAxisUnitsLabel.prototype.setTxPr = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_AxisUnitsLabel_SetTxPr, this.txPr, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_AxisUnitsLabel_SetTxPr, this.txPr, pr));
         this.txPr = pr;
     };
     CAxisUnitsLabel.prototype.setExtLst = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_AxisUnitsLabel_SetExtLst, this.extLst, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_AxisUnitsLabel_SetExtLst, this.extLst, pr));
         this.extLst = pr;
     };
     window['AscFormat'].CAxisUnitsLabel = CAxisUnitsLabel;
@@ -410,11 +400,11 @@
     InitClass(CBinning, CBaseChartObject, AscDFH.historyitem_type_Binning);
 
     CBinning.prototype.setBinSize = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Binning_SetBinSize, this.binSize, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsDouble2(this, AscDFH.historyitem_Binning_SetBinSize, this.binSize, pr));
         this.binSize = pr;
     };
     CBinning.prototype.setBinCount = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Binning_SetBinCount, this.binCount, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_Binning_SetBinCount, this.binCount, pr));
         this.binCount = pr;
     };
     CBinning.prototype.setIntervalClosed = function(pr) {
@@ -1125,24 +1115,6 @@
         this.autoUpdate = pr;
     };
     window['AscFormat'].CExternalData = CExternalData;
-
-    // ExtremeValueColorPosition todo
-    drawingsChangesMap[AscDFH.historyitem_Address_SetTest] = function(oClass, value) {
-        oClass.test = value;
-    };
-    AscDFH.changesFactory[AscDFH.historyitem_Address_SetTest] = window['AscDFH'].CChangesDrawingsString;
-    function CExtremeValueColorPosition() {
-        CBaseChartObject.call(this);
-        this.test = null;
-    }
-
-    InitClass(CExtremeValueColorPosition, CBaseChartObject, AscDFH.historyitem_type_ExtremeValueColorPosition);
-
-    CExtremeValueColorPosition.prototype.setTest = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_ExtremeValueColorPosition_SetTest, this.test, pr));
-        this.test = pr;
-    };
-    window['AscFormat'].CExtremeValueColorPosition = CExtremeValueColorPosition;
 
     // FormatOverride
     drawingsChangesMap[AscDFH.historyitem_FormatOverride_SetSpPr] = function(oClass, value) {
@@ -2876,7 +2848,7 @@
     AscDFH.changesFactory[AscDFH.historyitem_SeriesLayoutProperties_SetParentLabelLayout] = window['AscDFH'].CChangesDrawingsString;
     AscDFH.changesFactory[AscDFH.historyitem_SeriesLayoutProperties_SetRegionLabelLayout] = window['AscDFH'].CChangesDrawingsString;
     AscDFH.changesFactory[AscDFH.historyitem_SeriesLayoutProperties_SetVisibility] = window['AscDFH'].CChangesDrawingsString;
-    AscDFH.changesFactory[AscDFH.historyitem_SeriesLayoutProperties_SetAggregation] = window['AscDFH'].CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_SeriesLayoutProperties_SetAggregation] = window['AscDFH'].CChangesDrawingsBool;
     AscDFH.changesFactory[AscDFH.historyitem_SeriesLayoutProperties_SetBinning] = window['AscDFH'].CChangesDrawingsString;
     AscDFH.changesFactory[AscDFH.historyitem_SeriesLayoutProperties_SetGeography] = window['AscDFH'].CChangesDrawingsString;
     AscDFH.changesFactory[AscDFH.historyitem_SeriesLayoutProperties_SetStatistics] = window['AscDFH'].CChangesDrawingsString;
@@ -2910,7 +2882,7 @@
         this.visibility = pr;
     };
     CSeriesLayoutProperties.prototype.setAggregation = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_SeriesLayoutProperties_SetAggregation, this.aggregation, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_SeriesLayoutProperties_SetAggregation, this.aggregation, pr));
         this.aggregation = pr;
     };
     CSeriesLayoutProperties.prototype.setBinning = function(pr) {
@@ -3224,7 +3196,7 @@
     drawingsChangesMap[AscDFH.historyitem_ValueColorEndPosition_SetPercent] = function(oClass, value) {
         oClass.percent = value;
     };
-    AscDFH.changesFactory[AscDFH.historyitem_ValueColorEndPosition_SetExtremeValue] = window['AscDFH'].CChangesDrawingsString;
+    AscDFH.changesFactory[AscDFH.historyitem_ValueColorEndPosition_SetExtremeValue] = window['AscDFH'].CChangesDrawingsBool;
     AscDFH.changesFactory[AscDFH.historyitem_ValueColorEndPosition_SetNumber] = window['AscDFH'].CChangesDrawingsString;
     AscDFH.changesFactory[AscDFH.historyitem_ValueColorEndPosition_SetPercent] = window['AscDFH'].CChangesDrawingsString;
     function CValueColorEndPosition() {
@@ -3237,7 +3209,7 @@
     InitClass(CValueColorEndPosition, CBaseChartObject, AscDFH.historyitem_type_ValueColorEndPosition);
 
     CValueColorEndPosition.prototype.setExtremeValue = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_ValueColorEndPosition_SetExtremeValue, this.extremeValue, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_ValueColorEndPosition_SetExtremeValue, this.extremeValue, pr));
         this.extremeValue = pr;
     };
     CValueColorEndPosition.prototype.setNumber = function(pr) {
