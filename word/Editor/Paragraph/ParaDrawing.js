@@ -1596,8 +1596,8 @@ ParaDrawing.prototype.updatePosition3 = function(pageIndex, x, y, oldPageNum)
 	{
 		// TODO: ситуацию в колонтитуле с привязкой к полю нужно отдельно обрабатывать через дополнительные пересчеты
 		if (!oDocContent || !bIsHfdFtr || this.GetPositionV().RelativeFrom !== Asc.c_oAscRelativeFromV.Margin)
+		{
 			this.graphicObjects.addObjectOnPage(pageIndex, this.GraphicObj);
-
 			this.bNoNeedToAdd = false;
 		}
 		else
