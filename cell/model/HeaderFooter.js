@@ -1696,7 +1696,7 @@ function (window, undefined) {
 		if (bSectionContainsPictures) {
 			//confirm dialog
 			//replace/keep options
-			t.api.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmReplaceRange, function (can) {
+			t.api.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmReplaceHeaderFooterPicture, function (can) {
 				if (can) {
 					showFileDialog();
 				}
