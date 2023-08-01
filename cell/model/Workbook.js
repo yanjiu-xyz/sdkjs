@@ -2367,12 +2367,12 @@
 			this.snapshot = this._getSnapshot();
 		}
 	};
-	Workbook.prototype.addImages = function (aImages, oPlaceholder) {
+	Workbook.prototype.addImages = function (aImages, obj) {
 		const oApi = Asc.editor;
-		if (oPlaceholder && undefined !== oPlaceholder.id && aImages.length === 1 && aImages[0].Image) {
+		if (obj && undefined !== obj.id && aImages.length === 1 && aImages[0].Image) {
 			const oController = oApi.getGraphicController();
 			const oDrawingObjects = oApi.getDrawingObjects();
-			const oPlaceholderTarget = AscCommon.g_oTableId.Get_ById(oPlaceholder.id);
+			const oPlaceholderTarget = AscCommon.g_oTableId.Get_ById(obj.id);
 			if (oPlaceholderTarget) {
 				if (oPlaceholderTarget.isObjectInSmartArt && oPlaceholderTarget.isObjectInSmartArt()) {
 					const oSmartArtGroup = oPlaceholderTarget.group.getMainGroup();
@@ -2381,7 +2381,7 @@
 						if (bLock) {
 							History.Create_NewPoint();
 							oController.resetSelection();
-							oPlaceholderTarget.applyImagePlaceholderCallback && oPlaceholderTarget.applyImagePlaceholderCallback(aImages, oPlaceholder);
+							oPlaceholderTarget.applyImagePlaceholderCallback && oPlaceholderTarget.applyImagePlaceholderCallback(aImages, obj);
 							oController.selectObject(oSmartArtGroup, 0);
 							oController.selection.groupSelection = oSmartArtGroup;
 							oSmartArtGroup.selectObject(oPlaceholderTarget, 0);
@@ -2403,6 +2403,8 @@
 					});
 				}
 			}
+		} else if (obj && obj.callback && aImages.length === 1 && aImages[0].Image) {
+			obj.callback(aImages[0]);
 		}
 	};
 	Workbook.prototype.getOleSize = function () {
@@ -12244,6 +12246,20 @@
 		this.nColsCount = val;
 	};
 
+	Worksheet.prototype.changeLegacyDrawingHFPictures = function(picturesMap) {
+		if (!this.legacyDrawingHF) {
+			this.legacyDrawingHF = new AscCommonExcel.CLegacyDrawingHF(this);
+		}
+		this.legacyDrawingHF.addPictures(picturesMap);
+	};
+
+	Worksheet.prototype.removeLegacyDrawingHFPictures = function(aPictures) {
+		if (!this.legacyDrawingHF) {
+			this.legacyDrawingHF = new AscCommonExcel.CLegacyDrawingHF(this);
+		}
+		this.legacyDrawingHF.removePictures(aPictures);
+	};
+
 
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
@@ -19300,43 +19316,43 @@
 	}
 	cDataRow.prototype.getCol = function() {
 		return this.nCol;
-	}
+	};
 	cDataRow.prototype.getVal = function() {
 		return this.nVal;
-	}
+	};
 	cDataRow.prototype.getDelimiter = function() {
 		return this.bDelimiter;
-	}
+	};
 	cDataRow.prototype.getPrefix = function () {
 		return this.sPrefix;
-	}
+	};
 	cDataRow.prototype.getPadding = function() {
 		return this.nPadding;
-	}
+	};
 	cDataRow.prototype.setPadding = function(nPadding) {
 		this.nPadding = nPadding;
-	}
+	};
 	cDataRow.prototype.getIsDate = function() {
 		return this.bDate;
-	}
+	};
 	cDataRow.prototype.getAdditional = function() {
 		return this.oAdditional;
-	}
+	};
 	cDataRow.prototype.getTimePeriods = function () {
 		return this.aTimePeriods;
-	}
+	};
 	cDataRow.prototype.getSequence = function() {
 		return this.oSequence;
-	}
+	};
 	cDataRow.prototype.setSequence = function (oSequence) {
 		this.oSequence = oSequence;
-	}
+	};
 	cDataRow.prototype.getCurValue = function() {
 		return this.nCurValue;
-	}
+	};
 	cDataRow.prototype.setCurValue = function(nCurValue) {
 		this.nCurValue = nCurValue;
-	}
+	};
 	cDataRow.prototype.compare = function(oComparedRowData) {
 		let sComparedTimePeriods =  oComparedRowData.getTimePeriods() ? oComparedRowData.getTimePeriods().join() : null;
 		let sTimePeriods = this.getTimePeriods() ? this.getTimePeriods().join() : null;
@@ -19348,7 +19364,7 @@
 		let bDate = this.getIsDate();
 
 		return bComparedDelimiter === bDelimiter && sComparedPrefix === sPrefix && bComparedDate === bDate && sComparedTimePeriods === sTimePeriods;
-	}
+	};
 
 	cDataRow.prototype.prefixDataCompare = function(oComparedRowData) {
 		let sComparedPrefix = oComparedRowData.getPrefix();
@@ -19357,7 +19373,7 @@
 		let bDate = this.getIsDate();
 
 		return sComparedPrefix === sPrefix && bComparedDate === bDate;
-	}
+	};
 
 
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
