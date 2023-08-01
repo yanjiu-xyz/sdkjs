@@ -1592,17 +1592,20 @@ ParaDrawing.prototype.updatePosition3 = function(pageIndex, x, y, oldPageNum)
 	{
 		this.GraphicObj.setStartPage(pageIndex, bIsHfdFtr, bIsHfdFtr || bChangePageIndex);
 	}
-	if (!(bIsHfdFtr && oDocContent && oDocContent.Get_StartPage_Absolute() !== pageIndex))
+	if(this.graphicObjects)
 	{
-		// TODO: ситуацию в колонтитуле с привязкой к полю нужно отдельно обрабатывать через дополнительные пересчеты
-		if (!oDocContent || !bIsHfdFtr || this.GetPositionV().RelativeFrom !== Asc.c_oAscRelativeFromV.Margin)
+		if (!(bIsHfdFtr && oDocContent && oDocContent.Get_StartPage_Absolute() !== pageIndex))
 		{
-			this.graphicObjects.addObjectOnPage(pageIndex, this.GraphicObj);
-			this.bNoNeedToAdd = false;
-		}
-		else
-		{
-			this.bNoNeedToAdd = true;
+			// TODO: ситуацию в колонтитуле с привязкой к полю нужно отдельно обрабатывать через дополнительные пересчеты
+			if (!oDocContent || !bIsHfdFtr || this.GetPositionV().RelativeFrom !== Asc.c_oAscRelativeFromV.Margin)
+			{
+				this.graphicObjects.addObjectOnPage(pageIndex, this.GraphicObj);
+				this.bNoNeedToAdd = false;
+			}
+			else
+			{
+				this.bNoNeedToAdd = true;
+			}
 		}
 	}
 
