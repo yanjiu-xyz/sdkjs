@@ -83,7 +83,7 @@
         let oReply = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), this.GetDocument());
 
         oReply.SetContents(CommentData.m_sText);
-        oReply.SetModDate(CommentData.m_sTime);
+        oReply.SetModDate(CommentData.m_sOOTime);
         oReply.SetAuthor(CommentData.m_sUserName);
         oReply.SetHidden(false);
 
@@ -230,13 +230,27 @@
     CAnnotationText.prototype.GetAscCommentData = function() {
         let oAscCommData = new Asc.asc_CCommentDataWord(null);
         oAscCommData.asc_putText(this.GetContents());
-        oAscCommData.asc_putTime(this.GetModDate());
         oAscCommData.asc_putOnlyOfficeTime(this.GetModDate());
         oAscCommData.asc_putUserId(editor.documentUserId);
         oAscCommData.asc_putUserName(this.GetAuthor());
         oAscCommData.asc_putSolved(false);
         oAscCommData.asc_putQuoteText("");
+
+        this._replies.forEach(function(reply) {
+            oAscCommData.m_aReplies.push(reply.GetAscCommentData());
+        });
+
         return oAscCommData;
+    };
+    CAnnotationText.prototype.EditCommentData = function(oCommentData) {
+        let oThis = this;
+        this.SetContents(oCommentData.m_sText);
+        this.SetModDate(oCommentData.m_sOOTime);
+
+        this.ClearReplies();
+        oCommentData.m_aReplies.forEach(function(reply) {
+            oThis.AddReply(reply);
+        });
     };
     
     function TurnOffHistory() {

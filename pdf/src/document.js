@@ -101,6 +101,7 @@ var CPresentation = CPresentation || function(){};
         this.widgets    = []; // непосредственно сами поля, которые отрисовываем (дочерние без потомков)
         this.annots     = [];
 
+        this.theme = new AscFormat.CTheme();
         this.actionsInfo = new CActionQueue(this);
         this.calculateInfo = new CCalculateInfo(this);
         this.fieldsToCommit = [];
@@ -121,7 +122,11 @@ var CPresentation = CPresentation || function(){};
         this._parentsMap = {}; // map при открытии форм
         this.api = this.GetDocumentApi();
 		
-		this.Spelling = new AscCommonWord.CDocumentSpellChecker();
+        // internal
+        this._id = AscCommon.g_oIdCounter.Get_NewId();
+
+        this.History    = AscCommon.History;
+		this.Spelling   = new AscCommonWord.CDocumentSpellChecker();
     }
 
     /////////// методы для открытия //////////////
@@ -289,6 +294,14 @@ var CPresentation = CPresentation || function(){};
         }
     };
     ////////////////////////////////////
+
+
+    CPDFDoc.prototype.GetId = function() {
+        return this._id;
+    };
+    CPDFDoc.prototype.Get_Id = function() {
+        return this._id;
+    };
     CPDFDoc.prototype.GetDrawingDocument = function() {
 		if (!editor || !editor.WordControl)
 			return null;
@@ -704,16 +717,28 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.OnMouseDownAnnot = function(oAnnot, event) {
         oAnnot.onMouseDown(event);
     };
-    CPDFDoc.prototype.OnMouseMove = function(x, y, e) {
-        let oViewer = editor.getDocumentRenderer();
+    CPDFDoc.prototype.OnMouseDown = function(x, y, e) {
+        let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
-    
+        let oDrDoc          = this.GetDrawingDocument();
+
+        let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(x, y);
+        oDrawingObjects.OnMouseDown(e, X, Y, oViewer.currentPage);
+    };
+
+    CPDFDoc.prototype.OnMouseMove = function(x, y, e) {
+        let oViewer         = editor.getDocumentRenderer();
+        let oDrawingObjects = oViewer.DrawingObjects;
+        let oDrDoc          = this.GetDrawingDocument();
+
         e.IsLocked = true;
-        oDrawingObjects.OnMouseMove(e, x, y, oViewer.currentPage);
-        oViewer.overlay.ClearAll = true;
-        oViewer.overlay.max_x = 0;
-        oViewer.overlay.max_y = 0;
-        oViewer.onUpdateOverlay();
+        let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(x, y);
+        
+        oDrawingObjects.OnMouseMove(e, X, Y, oViewer.currentPage);
+        // oViewer.overlay.ClearAll = true;
+        // oViewer.overlay.max_x = 0;
+        // oViewer.overlay.max_y = 0;
+        
     };
     CPDFDoc.prototype.OnMouseUp = function(x, y, e) {
         let oViewer = editor.getDocumentRenderer();
@@ -834,6 +859,7 @@ var CPresentation = CPresentation || function(){};
                 oViewer._paintForms();
             }
             
+            oViewer._paintAnnots();
             oViewer.isOnUndoRedo = false;
         }
     };
@@ -884,6 +910,7 @@ var CPresentation = CPresentation || function(){};
                 oViewer._paintForms();
             }
 
+            oViewer._paintAnnots();
             oViewer.isOnUndoRedo = false;
         }
     };
@@ -1116,7 +1143,7 @@ var CPresentation = CPresentation || function(){};
             name:       AscCommon.CreateGUID(),
             type:       AscPDF.ANNOTATIONS_TYPES.Text,
             author:     AscCommentData.m_sUserName,
-            modDate:    AscCommentData.m_sTime,
+            modDate:    AscCommentData.m_sOOTime,
             contents:   AscCommentData.m_sText,
             hidden:     false
         }
@@ -1125,20 +1152,30 @@ var CPresentation = CPresentation || function(){};
 
         let oAnnot = this.AddAnnot(oProps);
         editor.sendEvent("asc_onAddComment", oAnnot.GetId(), AscCommentData);
-        return oAnnot; 
+
+        this.CreateNewHistoryPoint();
+
+        this.History.Add(new CChangesPDFDocumentAddItem(this, this.annots.length - 1, [oAnnot]));
+        return oAnnot;
+    };
+    CPDFDoc.prototype.CreateNewHistoryPoint = function() {
+        if (AscCommon.History.IsOn() == false)
+            AscCommon.History.TurnOn();
+        AscCommon.History.Create_NewPoint();
     };
     CPDFDoc.prototype.EditComment = function(Id, CommentData) {
         let oAnnotToEdit = this.annots.find(function(annot) {
             return annot.GetId() === Id;
         });
 
-        oAnnotToEdit.SetContents(CommentData.Get_Text());
-        oAnnotToEdit.SetModDate(CommentData.m_sTime);
+        let oCurData = oAnnotToEdit.GetAscCommentData();
 
-        oAnnotToEdit.ClearReplies();
-        CommentData.m_aReplies.forEach(function(reply) {
-            oAnnotToEdit.AddReply(reply);
-        });
+        this.CreateNewHistoryPoint();
+        this.History.Add(new CChangesPDFCommentData(oAnnotToEdit, oCurData, CommentData));
+        
+        oAnnotToEdit.EditCommentData(CommentData);
+
+        editor.sync_ChangeCommentData(Id, CommentData);
     };
     CPDFDoc.prototype.ShowComment = function(arrId)
     {
@@ -1610,6 +1647,9 @@ var CPresentation = CPresentation || function(){};
         switch (nAnnotType) {
             case AscPDF.ANNOTATIONS_TYPES.Text:
                 oAnnot = new AscPDF.CAnnotationText(sName, nPageNum, aScaledCoords, oPdfDoc);
+                break;
+            case AscPDF.ANNOTATIONS_TYPES.Ink:
+                oAnnot = new AscPDF.CAnnotationInk(sName, nPageNum, aScaledCoords, oPdfDoc);
                 break;
         }
 

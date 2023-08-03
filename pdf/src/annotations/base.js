@@ -117,6 +117,9 @@
     CAnnotationBase.prototype.GetId = function() {
         return this._id;
     };
+    CAnnotationBase.prototype.Get_Id = function() {
+        return this.GetId();
+    };
     CAnnotationBase.prototype.GetType = function() {
         return this.type;
     };

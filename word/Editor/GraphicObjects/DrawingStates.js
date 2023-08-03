@@ -151,45 +151,76 @@ StartAddNewShape.prototype =
             }
             var oLogicDocument = this.drawingObjects.document;
 
-			oLogicDocument.StartAction(AscDFH.historydescription_Document_AddNewShape);
-            var bounds = oTrack.getBounds();
-            var shape = oTrack.getShape(true, this.drawingObjects.drawingDocument);
-            var drawing = new ParaDrawing(shape.spPr.xfrm.extX, shape.spPr.xfrm.extY, shape, this.drawingObjects.drawingDocument, this.drawingObjects.document, null);
-            var nearest_pos = this.drawingObjects.document.Get_NearestPos(this.pageIndex, bounds.min_x, bounds.min_y, true, drawing);
-            if(nearest_pos && false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_None, {Type : AscCommon.changestype_2_Element_and_Type , Element : nearest_pos.Paragraph, CheckType : AscCommon.changestype_Paragraph_Content} ))
+            if (false == oLogicDocument instanceof AscPDF.CPDFDoc) {
+                oLogicDocument.StartAction(AscDFH.historydescription_Document_AddNewShape);
+                var bounds = oTrack.getBounds();
+                var shape = oTrack.getShape(true, this.drawingObjects.drawingDocument);
+                var drawing = new ParaDrawing(shape.spPr.xfrm.extX, shape.spPr.xfrm.extY, shape, this.drawingObjects.drawingDocument, oLogicDocument, null);
+                var nearest_pos = this.drawingObjects.document.Get_NearestPos(this.pageIndex, bounds.min_x, bounds.min_y, true, drawing);
+                if(nearest_pos && false === oLogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_None, {Type : AscCommon.changestype_2_Element_and_Type , Element : nearest_pos.Paragraph, CheckType : AscCommon.changestype_Paragraph_Content} ))
+                {
+                    drawing.Set_DrawingType(drawing_Anchor);
+                    drawing.Set_GraphicObject(shape);
+                    shape.setParent(drawing);
+                    drawing.Set_WrappingType(WRAPPING_TYPE_NONE);
+                    drawing.Set_Distance( 3.2,  0,  3.2, 0 );
+                    nearest_pos.Paragraph.Check_NearestPos(nearest_pos);
+                    nearest_pos.Page = this.pageIndex;
+
+                    drawing.Set_XYForAdd(shape.x, shape.y, nearest_pos, this.pageIndex);
+                    drawing.AddToDocument(nearest_pos);
+                    drawing.CheckWH();
+                    let oAPI = this.drawingObjects.getEditorApi();
+                    if(!oAPI.isDrawInkMode())
+                    {
+                        this.drawingObjects.resetSelection();
+                        shape.select(this.drawingObjects, this.pageIndex);
+                    }
+                    this.drawingObjects.document.Recalculate();
+                    oLogicDocument.FinalizeAction();
+                    if(this.preset && (this.preset.indexOf("textRect") === 0))
+                    {
+                        this.drawingObjects.selection.textSelection = shape;
+                        shape.selectionSetStart(e, x, y, pageIndex);
+                        shape.selectionSetEnd(e, x, y, pageIndex);
+                    }
+                    bRet = true;
+                }
+                else
+                {
+                    this.drawingObjects.document.Document_Undo();
+                    oLogicDocument.FinalizeAction(false);
+                }
+            }
+            else
             {
+                var bounds = oTrack.getBounds();
+                var shape = oTrack.getShape(true, this.drawingObjects.drawingDocument);
+                var drawing = new ParaDrawing(shape.spPr.xfrm.extX, shape.spPr.xfrm.extY, shape, this.drawingObjects.drawingDocument, oLogicDocument, null);
                 drawing.Set_DrawingType(drawing_Anchor);
                 drawing.Set_GraphicObject(shape);
                 shape.setParent(drawing);
                 drawing.Set_WrappingType(WRAPPING_TYPE_NONE);
                 drawing.Set_Distance( 3.2,  0,  3.2, 0 );
-                nearest_pos.Paragraph.Check_NearestPos(nearest_pos);
-                nearest_pos.Page = this.pageIndex;
 
-                drawing.Set_XYForAdd(shape.x, shape.y, nearest_pos, this.pageIndex);
-                drawing.AddToDocument(nearest_pos);
                 drawing.CheckWH();
-				let oAPI = this.drawingObjects.getEditorApi();
-	            if(!oAPI.isDrawInkMode())
-	            {
-		            this.drawingObjects.resetSelection();
-		            shape.select(this.drawingObjects, this.pageIndex);
-	            }
-                this.drawingObjects.document.Recalculate();
-				oLogicDocument.FinalizeAction();
-                if(this.preset && (this.preset.indexOf("textRect") === 0))
-                {
-                    this.drawingObjects.selection.textSelection = shape;
-                    shape.selectionSetStart(e, x, y, pageIndex);
-                    shape.selectionSetEnd(e, x, y, pageIndex);
-                }
-                bRet = true;
+                let aRect = [bounds.min_x * g_dKoef_mm_to_pix, bounds.min_y * g_dKoef_mm_to_pix, bounds.max_x * g_dKoef_mm_to_pix, bounds.max_y * g_dKoef_mm_to_pix];
+
+                let oInkAnnot = oLogicDocument.AddAnnot({
+                    rect: aRect,
+                    page: editor.getDocumentRenderer().currentPage,
+                    contents: "",
+                    type: AscPDF.ANNOTATIONS_TYPES.Ink
+                });
+
+                oInkAnnot.SetDrawing(drawing);
+                oInkAnnot.AddToRedraw();
+                
+                shape.recalculate();
+
+                editor.getDocumentRenderer()._paintAnnots();
             }
-            else
-            {
-                this.drawingObjects.document.Document_Undo();
-				oLogicDocument.FinalizeAction(false);
-            }
+			
         }
         this.drawingObjects.clearTrackObjects();
         this.drawingObjects.clearPreTrackObjects();

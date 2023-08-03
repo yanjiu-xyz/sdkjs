@@ -1713,8 +1713,10 @@
 	window['AscDFH'].historyitem_type_OForm_Document         = 2203 << 16;
 	window['AscDFH'].historyitem_type_OForm_FieldGroup       = 2204 << 16;
 	
-	window['AscDFH'].historyitem_type_Pdf_Form               = 2210 << 16;
-
+	window['AscDFH'].historyitem_type_PDF_Document			= 2210 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Form				= 2211 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Comment			= 2212 << 16;
+	
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3981,7 +3983,24 @@
 
 	AscDFH.historyitem_ViewPrGuideOrient         = AscDFH.historyitem_type_ViewPrGuide | 1;
 	AscDFH.historyitem_ViewPrGuidePos            = AscDFH.historyitem_type_ViewPrGuide | 2;
-	AscDFH.historyitem_Pdf_Form_Value = AscDFH.historyitem_type_Pdf_Form | 1;
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Типы изменений в PDF Forms 
+	//------------------------------------------------------------------------------------------------------------------
+
+	AscDFH.historyitem_Pdf_Form_Value			= AscDFH.historyitem_type_Pdf_Form | 1;
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Типы изменений в PDF Annots 
+	//------------------------------------------------------------------------------------------------------------------
+
+	AscDFH.historyitem_Pdf_Comment_Data			= AscDFH.historyitem_type_Pdf_Comment | 1;
+
+	//------------------------------------------------------------------------------------------------------------------
+	// Типы изменений в классе CPDFDoc
+	//------------------------------------------------------------------------------------------------------------------
+	window['AscDFH'].historyitem_PDF_Document_AddItem                    = window['AscDFH'].historyitem_type_PDF_Document | 1;
+	window['AscDFH'].historyitem_PDF_Document_RemoveItem                 = window['AscDFH'].historyitem_type_PDF_Document | 2;
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

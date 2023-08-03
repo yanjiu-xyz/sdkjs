@@ -224,7 +224,6 @@
 
             editor.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
             editor.WordControl.m_oDrawingDocument.m_lCurrentPage = 0;
-            editor.WordControl.m_oDrawingDocument.m_lPagesCount = oViewer.file.pages.length;
 
             oViewer.Api.WordControl.m_oDrawingDocument.TargetStart();
             oViewer.Api.WordControl.m_oDrawingDocument.showTarget(true);

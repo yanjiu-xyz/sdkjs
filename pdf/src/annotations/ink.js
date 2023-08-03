@@ -36,7 +36,7 @@
 	 * Class representing a Ink annotation.
 	 * @constructor
     */
-    function CAnnotationLine(sName, nPage, aRect, oDoc)
+    function CAnnotationInk(sName, nPage, aRect, oDoc)
     {
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Text, nPage, aRect, oDoc);
 
@@ -53,10 +53,10 @@
         TurnOffHistory();
         this.content        = new AscPDF.CTextBoxContent(this, oDoc);
     }
-    CAnnotationLine.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
-	CAnnotationLine.prototype.constructor = CAnnotationLine;
+    CAnnotationInk.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
+	CAnnotationInk.prototype.constructor = CAnnotationInk;
 
-    CAnnotationLine.prototype.Draw = function(oGraphics) {
+    CAnnotationInk.prototype.Draw = function(oGraphics) {
         if (this.IsHidden() == true)
             return;
 
@@ -71,7 +71,7 @@
         this.content.Draw(0, oGraphicsWord);
         oGraphicsWord.RemoveClip();
     };
-    CAnnotationLine.prototype.Recalculate = function() {
+    CAnnotationInk.prototype.Recalculate = function() {
         // if (this.IsNeedRecalc() == false)
         //     return;
 
@@ -121,7 +121,7 @@
         //     this.content.Recalculate_Page(0, false);
         // }
     };
-    CAnnotationLine.prototype.onMouseDown = function(e) {
+    CAnnotationInk.prototype.onMouseDown = function(e) {
         let oViewer = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
 
@@ -131,15 +131,15 @@
         this.selectStartPage = this.GetPage();
         oDrawingObjects.OnMouseDown(e, e.clientX, e.clientY, oViewer.currentPage);
     };
-    CAnnotationLine.prototype.CreateMoveTrack = function() {
+    CAnnotationInk.prototype.CreateMoveTrack = function() {
         return new AscFormat.MoveAnnotationTrack(this);
     };
-    CAnnotationLine.prototype.SetDrawing = function(oDrawing) {
+    CAnnotationInk.prototype.SetDrawing = function(oDrawing) {
         let oRun = this.content.GetElement(0).GetElement(0);
         oRun.Add_ToContent(oRun.Content.length, oDrawing);
     };
     
-    CAnnotationLine.prototype.onMouseUp = function() {
+    CAnnotationInk.prototype.onMouseUp = function() {
         let oViewer = editor.getDocumentRenderer();
 
         let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(this._pagePos.x + this._pagePos.w / oViewer.zoom, this._pagePos.y + this._pagePos.h / (2 * oViewer.zoom), this.GetPage(), true);
@@ -151,6 +151,6 @@
             AscCommon.History.TurnOff();
     }
 
-    window["AscPDF"].CAnnotationLine = CAnnotationLine;
+    window["AscPDF"].CAnnotationInk = CAnnotationInk;
 })();
 

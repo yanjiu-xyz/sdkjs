@@ -32,7 +32,7 @@
 
 "use strict";
 
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Value] = CChangesRunBold;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Form_Value] = CChangesPDFFormValue;
 
 /**
  * @constructor

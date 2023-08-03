@@ -220,7 +220,8 @@
 
 		this.doc = new AscPDF.CPDFDoc();
 		if (typeof CGraphicObjects !== "undefined") {
-			this.DrawingObjects = new CGraphicObjects(this, editor.WordControl.m_oDrawingDocument, this.Api);
+			this.DrawingObjects = new CGraphicObjects(this.doc, editor.WordControl.m_oDrawingDocument, this.Api);
+			this.DrawingObjects.saveDocumentState = null;
 		}
 
 		this.isXP = ((AscCommon.AscBrowser.userAgent.indexOf("windowsxp") > -1) || (AscCommon.AscBrowser.userAgent.indexOf("chrome/49") > -1)) ? true : false;
@@ -728,6 +729,8 @@
 				this.savedPassword = password;
 
 			this.pagesInfo.setCount(this.file.pages.length);
+            this.getPDFDoc().GetDrawingDocument().m_lPagesCount = this.file.pages.length;
+
 			for (let i = 0; i < this.file.pages.length; i++) {
 				this.DrawingObjects.mergeDrawings(i);
 			}
@@ -1353,11 +1356,42 @@
 			}
 
 			this.documentHeight = curTop;
+
+			let xCenter = this.width >> 1;
+			let yPos = this.scrollY >> 0;
+			if (this.documentWidth > this.width)
+				xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
+
+			this.getPDFDoc().GetDrawingDocument().m_arrPages = this.drawingPages.map(function(page, index) {
+				
+				let w = (page.W) >> 0;
+				let h = (page.H) >> 0;
+
+				let x = ((xCenter) >> 0) - (w >> 1);
+				let y = ((page.Y - yPos)) >> 0;
+
+				return {
+					width_mm: page.W * g_dKoef_pix_to_mm,
+					height_mm: page.H * g_dKoef_pix_to_mm,
+					drawingPage: {
+						left: x,
+						top: y,
+						right: x + page.W,
+						bottom: y + page.H
+					}
+				}
+			});
+			
 			this.paint();			
 		};
 
 		this.setCursorType = function(cursor)
 		{
+			if (this.Api.isInkDrawerOn()) {
+				this.canvasAnnots.style.cursor = "";
+				return;
+			}
+
 			if (this.isXP)
 			{
 				this.canvasAnnots.style.cursor = AscCommon.g_oHtmlCursor.value(cursor);
@@ -1527,22 +1561,28 @@
 			let oMouseDownAnnot = oThis.getPageAnnotByMouse();
 			oThis.mouseDownAnnot = oMouseDownAnnot;
 
-			// если попали в другую форму или никуда, то выход из текущей формы
-			if (oThis.activeForm && oMouseDownField != oThis.activeForm) {
-				oThis.doc.OnExitFieldByClick();		
+			if (!oThis.Api.isInkDrawerOn()) {
+				// если попали в другую форму или никуда, то выход из текущей формы
+				if (oThis.activeForm && oMouseDownField != oThis.activeForm) {
+					oThis.doc.OnExitFieldByClick();		
+				}
+				
+				if (oMouseDownField)
+				{
+					oThis.doc.OnMouseDownField(oMouseDownField, e); 
+				}
+				else if (null == oMouseDownField && oThis.activeForm) {
+					oThis.activeForm.Blur();
+				}
+
+				if (oMouseDownAnnot) {
+					oThis.doc.OnMouseDownAnnot(oMouseDownAnnot, e);
+				}
+			}
+			else {
+				oThis.doc.OnMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
 			}
 			
-			if (oMouseDownField)
-			{
-				oThis.doc.OnMouseDownField(oMouseDownField, e); 
-			}
-			else if (oThis.activeForm) {
-				oThis.activeForm.Blur();
-			}
-
-			if (oMouseDownAnnot) {
-				oThis.doc.OnMouseDownAnnot(oMouseDownAnnot, e);
-			}
 			// нажали мышь - запомнили координаты и находимся ли на ссылке
 			// при выходе за epsilon на mouseMove - сэмулируем нажатие
 			// так что тут только курсор
@@ -1656,6 +1696,9 @@
 			let oMouseUpField = oThis.getPageFieldByMouse();
 			if (oThis.MouseHandObject)
 			{
+				if (oThis.Api.isInkDrawerOn()) {
+					oThis.doc.OnMouseUp(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+				}
 				if (oThis.onMouseDownField)
 				{
 					if (oMouseUpField == oThis.onMouseDownField)
@@ -1747,7 +1790,7 @@
 
 			// если мышка нажата и еще не вышли за eps - то проверяем, модет вышли сейчас?
 			// и, если вышли - то эмулируем
-			if (oThis.isMouseDown && !oThis.isMouseMoveBetweenDownUp)
+			if (oThis.isMouseDown && !oThis.isMouseMoveBetweenDownUp )
 			{
 				var offX = Math.abs(oThis.mouseDownCoords.X - AscCommon.global_mouseEvent.X);
 				var offY = Math.abs(oThis.mouseDownCoords.Y - AscCommon.global_mouseEvent.Y);
@@ -1761,7 +1804,7 @@
 
 			if (oThis.MouseHandObject)
 			{
-				if (oThis.MouseHandObject.Active && !oThis.fieldFillingMode && !oThis.mouseDownAnnot)
+				if (oThis.MouseHandObject.Active && !oThis.fieldFillingMode && !oThis.mouseDownAnnot && !oThis.Api.isInkDrawerOn())
 				{
 					// двигаем рукой
 					oThis.setCursorType(AscCommon.Cursors.Grabbing);
@@ -1790,7 +1833,10 @@
 				{
 					if (oThis.isMouseDown)
 					{
-						if (oThis.activeForm)
+						if (oThis.Api.isInkDrawerOn()) {
+							oThis.getPDFDoc().OnMouseMove(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+						}
+						else if (oThis.activeForm)
 						{
 							if (oThis.activeForm.GetType() == AscPDF.FIELD_TYPES.text || oThis.activeForm.GetType() == AscPDF.FIELD_TYPES.combobox)
 							{
@@ -2345,7 +2391,8 @@
 				ctx.fill();
 			}
 			
-			this.DrawingObjects.drawOnOverlay(ctx);
+			
+			this.DrawingObjects.drawOnOverlay(this.DrawingObjects.drawingDocument.AutoShapesTrack);
 			ctx.globalAlpha = 1.0;
 		};
 
@@ -2401,6 +2448,9 @@
 
 			this.pageDetector = new CCurrentPageDetector(this.canvas.width, this.canvas.height);
 
+			let oDrDoc = this.getPDFDoc().GetDrawingDocument();
+			oDrDoc.m_lDrawingFirst = lStartPage;
+			oDrDoc.m_lDrawingEnd = lEndPage;
 			this.startVisiblePage = lStartPage;
 			this.endVisiblePage = lEndPage;
 
@@ -3523,7 +3573,11 @@
 		this.overlay = new AscCommon.COverlay();
 		this.overlay.m_oControl = { HtmlElement : this.canvasOverlay };
 		this.overlay.m_bIsShow = true;
-		
+		this.DrawingObjects.drawingDocument.AutoShapesTrack.m_oOverlay = this.overlay;
+		this.overlay.Clear();
+		this.DrawingObjects.drawingDocument.AutoShapesTrack.m_oContext = this.overlay.m_oContext;
+		this.overlay.m_oHtmlPage = this.Api.WordControl;
+		this.Api.WordControl.m_bIsRuler = false;
 		this.updateSkin();
 	};
 	CHtmlPage.prototype.resize = function(isDisablePaint)

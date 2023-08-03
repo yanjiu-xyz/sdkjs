@@ -422,7 +422,6 @@
             
             editor.WordControl.m_oDrawingDocument.UpdateTargetFromPaint = true;
             editor.WordControl.m_oDrawingDocument.m_lCurrentPage = 0;
-            editor.WordControl.m_oDrawingDocument.m_lPagesCount = oViewer.file.pages.length;
 
             let nPos = this.content.Internal_GetContentPosByXY(X, Y, 0);
             let oPara = this.content.GetElement(nPos);

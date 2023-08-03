@@ -503,8 +503,6 @@
 		var CommentData = new AscCommon.CCommentData();
 		CommentData.Read_FromAscCommentData(AscCommentData);
 		oDoc.EditComment(Id, CommentData);
-
-		this.sync_ChangeCommentData(Id, CommentData);
 	};
 	PDFEditorApi.prototype.asc_showComment = function(Id)
 	{
@@ -513,6 +511,17 @@
 		else
 			this.getPDFDoc().ShowComment([Id]);
 	};
+	// drawing pen
+	PDFEditorApi.prototype.onInkDrawerChangeState = function() {
+		let oViewer = this.getDocumentRenderer();
+		const oDoc = this.getDocumentRenderer().getPDFDoc();
+		if(!oDoc)
+			return;
+
+		oViewer.DrawingObjects.onInkDrawerChangeState();
+		oDoc.GetDrawingDocument().LockCursorType(this.getInkCursorType());
+	};
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

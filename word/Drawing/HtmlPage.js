@@ -746,7 +746,7 @@ function CEditorPage(api)
 			return;
 
 		var _left = 0;
-		if (editor.isDocumentRenderer()) {
+		if (!editor.isDocumentRenderer()) {
 			var lPage = this.m_oDrawingDocument.m_lCurrentPage;
 			if (0 <= lPage && lPage < this.m_oDrawingDocument.m_lPagesCount)
 			{
@@ -766,7 +766,7 @@ function CEditorPage(api)
 			return;
 
 		var _top  = 0;
-		if (editor.isDocumentRenderer()) {
+		if (!editor.isDocumentRenderer()) {
 			var lPage = this.m_oDrawingDocument.m_lCurrentPage;
 			if (0 <= lPage && lPage < this.m_oDrawingDocument.m_lPagesCount)
 			{
@@ -3492,59 +3492,8 @@ function CEditorPage(api)
 		}
 		else
 		{
-			ctx.globalAlpha = 0.2;
-
-			if (drDoc.m_oDocumentRenderer.SearchResults.IsSearch)
-			{
-				this.m_oOverlayApi.Show();
-
-				if (drDoc.m_oDocumentRenderer.SearchResults.Show)
-				{
-					ctx.globalAlpha = 0.5;
-					ctx.fillStyle   = "rgba(255,200,0,1)";
-					ctx.beginPath();
-					for (var i = drDoc.m_lDrawingFirst; i <= drDoc.m_lDrawingEnd; i++)
-					{
-						var _searching = drDoc.m_oDocumentRenderer.SearchResults.Pages[i];
-
-						if (0 != _searching.length)
-						{
-							var drawPage = drDoc.m_arrPages[i].drawingPage;
-							drDoc.m_arrPages[i].DrawSearch2(overlay, drawPage.left, drawPage.top, drawPage.right - drawPage.left, drawPage.bottom - drawPage.top, _searching);
-						}
-					}
-					ctx.fill();
-					ctx.globalAlpha = 0.2;
-				}
-				ctx.beginPath();
-
-				if (drDoc.CurrentSearchNavi && drDoc.m_oDocumentRenderer.SearchResults.Show)
-				{
-					var _pageNum  = drDoc.CurrentSearchNavi[0].PageNum;
-					ctx.fillStyle = "rgba(51,102,204,255)";
-					if (_pageNum >= drDoc.m_lDrawingFirst && _pageNum <= drDoc.m_lDrawingEnd)
-					{
-						var drawPage = drDoc.m_arrPages[_pageNum].drawingPage;
-						drDoc.m_arrPages[_pageNum].DrawSearchCur(overlay, drawPage.left, drawPage.top, drawPage.right - drawPage.left, drawPage.bottom - drawPage.top, drDoc.CurrentSearchNavi);
-					}
-				}
-			}
-
-			ctx.fillStyle = "rgba(51,102,204,255)";
-			ctx.beginPath();
-
-			for (var i = drDoc.m_lDrawingFirst; i <= drDoc.m_lDrawingEnd; i++)
-			{
-				var drawPage = drDoc.m_arrPages[i].drawingPage;
-				drDoc.m_oDocumentRenderer.DrawSelection(i, overlay, drawPage.left, drawPage.top, drawPage.right - drawPage.left, drawPage.bottom - drawPage.top);
-			}
-
-			ctx.fill();
-			ctx.beginPath();
-			ctx.globalAlpha = 1.0;
+			drDoc.m_oDocumentRenderer.onUpdateOverlay();
 		}
-
-		return true;
 	};
 
 	this.OnScroll       = function(isFromLA)
