@@ -341,6 +341,9 @@
     {
         if (this.m_aChanges.length > 0)
         {
+			if (this.oDeletedTextRecovery){
+				this.oDeletedTextRecovery.UndoAllDeletedTextRecoveryChanges();
+			}
             AscFonts.IsCheckSymbols = true;
             editor.WordControl.m_oLogicDocument.PauseRecalculate();
             editor.WordControl.m_oLogicDocument.EndPreview_MailMergeResult();
@@ -360,10 +363,11 @@
 
 			this.oDeletedTextRecovery = new AscCommon.DeletedTextRecovery();
 			this.oDeletedTextRecovery.InitRevision();
-			if (this.oDeletedTextRecovery.GetIsShowDelText())
-			{
-				this.oDeletedTextRecovery.ShowDelText();
-			}
+			//
+			// if (this.oDeletedTextRecovery.GetIsShowDelText())
+			// {
+			// 	//this.oDeletedTextRecovery.ShowDelText();
+			// }
 		}
 		else
 		{
