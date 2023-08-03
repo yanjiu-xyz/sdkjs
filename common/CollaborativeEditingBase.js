@@ -341,10 +341,6 @@
     {
         if (this.m_aChanges.length > 0)
         {
-			//TODO need to ask can it be cleared here
-			this.CoHistory.Changes = [];
-			//==================================
-
             AscFonts.IsCheckSymbols = true;
             editor.WordControl.m_oLogicDocument.PauseRecalculate();
             editor.WordControl.m_oLogicDocument.EndPreview_MailMergeResult();

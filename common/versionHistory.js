@@ -38,20 +38,20 @@
   function(window, undefined) {
   /** @constructor */
   function asc_CVersionHistory(newObj) {
-    this.docId            = null;
-    this.url              = null;
-    this.urlChanges       = null;
-    this.currentChangeId  = -1;
-    this.newChangeId      = -1;
-    this.colors           = null;
-    this.changes          = null;
-    this.token            = null;
-    this.isRequested      = null;
-    this.serverVersion    = null;
-    this.userId           = null;
-    this.userName         = null;
-    this.userColor        = null;
-    this.dateOfRevision   = null;
+    this.docId = null;
+    this.url = null;
+    this.urlChanges = null;
+    this.currentChangeId = -1;
+    this.newChangeId = -1;
+    this.colors = null;
+    this.changes = null;
+    this.token = null;
+    this.isRequested = null;
+    this.serverVersion = null;
+    this.userId = null;
+    this.userName = null;
+    this.userColor = null;
+    this.dateOfRevision = null;
 
     if (newObj) {
       this.update(newObj);

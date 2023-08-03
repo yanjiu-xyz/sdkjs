@@ -47,6 +47,7 @@
 		this.OwnRanges = []; // Диапазоны собственных изменений
 
 		this.SyncIndex = -1; // Позиция в массиве изменений, которые согласованы с сервером
+
 	}
 
 	CCollaborativeHistory.prototype.AddChange = function(change)
@@ -187,14 +188,29 @@
 
 			let data = AscCommon.CCollaborativeChanges.ToBase64(historyItem.Binary.Pos, historyItem.Binary.Len);
 			changesToSend.push(data);
+
 			changesToRecalc.push(historyChange);
 		}
 		AscCommon.History.Remove_LastPoint();
 		this.CoEditing.Clear_DCChanges();
+
 		editor.CoAuthoringApi.saveChanges(changesToSend, null, null, false, this.CoEditing.getCollaborativeEditing());
 
 		return changesToRecalc;
 	};
+	CCollaborativeHistory.prototype.GetEmptyContentChanges = function()
+	{
+		let changes = [];
+		for (let index = this.Changes.length - 1; index >= 0; --index)
+		{
+			let tempChange = this.Changes[index];
+
+			if (tempChange.IsContentChange() && tempChange.GetItemsCount() <= 0)
+				changes.push(tempChange);
+		}
+		return changes;
+	};
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
