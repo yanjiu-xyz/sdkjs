@@ -279,7 +279,7 @@
 			t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical);
 		});
 
-		AscCommon.loadSmartArtBinary(function (err) {
+		AscCommon.loadSmartArtBinary(function (){}, function (err) {
 			t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingBinError, c_oAscError.Level.NoCritical);
 		});
 
@@ -1391,7 +1391,7 @@
 			return;
 		}
 		let api = this;
-		let localSize = History.GetLocalChangesSize ? History.GetLocalChangesSize() : 0;
+		let localSize = AscCommon.History.GetLocalChangesSize ? AscCommon.History.GetLocalChangesSize() : 0;
 		let serverSize = api.CoAuthoringApi.get_serverChangesSize();
 		if (localSize + serverSize > api.maxChangesSize) {
 			api.asc_stopSaving();
@@ -4482,6 +4482,12 @@
 	};
 	baseEditorsApi.prototype.isFormatPainterOn = function() {
 		return this.formatPainter.isOn();
+	};
+	baseEditorsApi.prototype.isFormatPainterMultiple = function() {
+		return this.formatPainter.isMultiple();
+	};
+	baseEditorsApi.prototype.canTurnOffFormatPainter = function() {
+		return this.isFormatPainterOn() && !this.isFormatPainterMultiple();
 	};
 	baseEditorsApi.prototype.checkFormatPainterData = function() {
 		return this.formatPainter.checkData();

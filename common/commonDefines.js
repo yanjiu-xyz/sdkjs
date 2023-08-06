@@ -584,9 +584,9 @@ window.AscCommon.g_cIsBeta = "false";
 		OnlyForms      : 0x01,
 		OnlyComments   : 0x02,
 		OnlySignatures : 0x04,
-		View           : 0x80 // Отличие данного ограничения от обычного ViewMode в том, что редактор открывается
-		                      // как полноценный редактор, просто мы запрещаем ЛЮБОЕ редактирование. А во ViewMode
-		                      // открывается именно просмотрщик.
+		View           : 0x80 // the difference between this restriction and the simple ViewMode -
+		                      // the editor opens as a full editor, but we forbid ANY editing
+		                      // in the ViewMode - opens viewer
 	};
 
 	var c_oAscLocalRestrictionType = {
@@ -3696,7 +3696,8 @@ window.AscCommon.g_cIsBeta = "false";
 		ConfirmReplaceFormulaInTable: 2,
 		ConfirmChangeProtectRange: 3,
 		ConfirmMaxChangesSize: 4,
-		ConfirmAddCellWatches: 5
+		ConfirmAddCellWatches: 5,
+		ConfirmReplaceHeaderFooterPicture: 6
 	};
 
 
@@ -5719,6 +5720,7 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['ConfirmChangeProtectRange'] = prot.ConfirmChangeProtectRange;
 	prot['ConfirmMaxChangesSize'] = prot.ConfirmMaxChangesSize;
 	prot['ConfirmAddCellWatches'] = prot.ConfirmAddCellWatches;
+	prot['ConfirmReplaceHeaderFooterPicture'] = prot.ConfirmReplaceHeaderFooterPicture;
 
 	window['Asc'].c_oAscSmartArtSections = c_oAscSmartArtSections;
 
