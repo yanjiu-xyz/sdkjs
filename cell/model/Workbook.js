@@ -8738,7 +8738,8 @@
 					isGrandRow: isRowItems && item.t === Asc.c_oAscItemType.Grand,
 					isGrandCol: !isRowItems && item.t === Asc.c_oAscItemType.Grand,
 					type: Asc.c_oAscPivotAreaType.Normal,
-					field: null
+					field: null,
+					isDefaultSubtotal: false,
 				};
 				fieldIndex = null;
 				var outline = 0;

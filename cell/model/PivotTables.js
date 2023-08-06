@@ -7057,14 +7057,14 @@ CT_pivotTableDefinition.prototype.getFormatting = function(query) {
 
 /**
  * @typedef PivotFormatsCollectionItem
- * @property {Map<number, Map<number, number>>?} fieldValuesMap
- * @property {number} selectedField
+ * @property {PivotAreaReferencesInfo} referencesInfo
  * @property {CT_Format} format
  * @property {number} type one of c_oAscPivotAreaType
  * @property {PivotAreaOffset} offset
  * @property {boolean} isGrandRow
  * @property {boolean} isGrandCol
  * @property {boolean} isLabelOnly
+ * @property {boolean} isDefaultSubtotal
  * @property {boolean} isDataOnly
  */
 
@@ -7108,11 +7108,10 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
 	const pivotAreaField = pivotArea.field;
 	const field = selectedField !== null ? selectedField : pivotAreaField;
 	const formatsCollectionItem = {
-		fieldValuesMap: referencesInfo.fieldValuesMap,
+		referencesInfo: referencesInfo,
 		format: format,
 		isGrandCol: pivotArea.grandCol,
 		isGrandRow: pivotArea.grandRow,
-		selectedField: field,
 		isLabelOnly: pivotArea.labelOnly,
 		isDataOnly: pivotArea.dataOnly,
 		type: pivotArea.type,
@@ -7129,6 +7128,7 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
  * @property {number?} field
  * @property {number?} dataIndex
  * @property {boolean} isData
+ * @property {boolean} isDefaultSubtotal
  * @property {number | undefined} type one of c_oAscPivotAreaType
  * @property {PivotAreaOffset | undefined} offset
  */
@@ -7143,17 +7143,20 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
 
 /**
  * @param {[number, number][]} values 
- * @param {Map<number, Map<number, number>>} fieldValuesMap 
+ * @param {PivotAreaReferencesInfo} referencesInfo
  * @return {boolean}
  */
-PivotFormatsManager.prototype.checkFormatsCollectionItemValues = function(values, fieldValuesMap) {
-	for (let i = 0; i < values.length; i += 1) {
-		const value = values[i];
-		const fieldIndex = value[0];
-		const v = value[1];
-		const fieldValues = fieldValuesMap.get(fieldIndex);
-		if (fieldValues && fieldValues.size > 0 && !fieldValues.has(v)) {
-			return false;
+PivotFormatsManager.prototype.checkFormatsCollectionItemValues = function(values, referencesInfo) {
+	const referencesInfoMap = referencesInfo.referencesInfoMap;
+	if (referencesInfoMap) {
+		for (let i = 0; i < values.length; i += 1) {
+			const value = values[i];
+			const fieldIndex = value[0];
+			const v = value[1];
+			const fieldValues = referencesInfoMap.get(fieldIndex) &&  referencesInfoMap.get(fieldIndex).fieldValuesMap;
+			if (fieldValues && fieldValues.size > 0 && !fieldValues.has(v)) {
+				return false;
+			}
 		}
 	}
 	return true;
@@ -7213,6 +7216,9 @@ PivotFormatsManager.prototype.checkFormatsCollectionItemAttributes = function(fo
 			return false;
 		}
 	}
+	if (formatsCollectionItem.isDefaultSubtotal && !query.isDefaultSubtotal) {
+		return false;
+	}
 	return true;
 };
 /**
@@ -7241,18 +7247,20 @@ PivotFormatsManager.prototype.compareFormatsCollectionItems = function(item1, it
 	if (!item1.fieldValuesMap && item2.fieldValuesMap) {
 		return 1;
 	}
-	if (item1.fieldValuesMap.size > item2.fieldValuesMap.size) {
-		return -1;
-	}
-	if (item1.fieldValuesMap.size < item2.fieldValuesMap.size) {
-		return 1;
-	}
-	if (item1.fieldValuesMap.get(item1.selectedField) && item2.fieldValuesMap.get(item2.selectedField)) {
-		if (item1.fieldValuesMap.get(item1.selectedField).size === 0 && item2.fieldValuesMap.get(item2.selectedField).size !== 0) {
+	if (item1.fieldValuesMap && item2.fieldValuesMap) {
+		if (item1.fieldValuesMap.size > item2.fieldValuesMap.size) {
+			return -1;
+		}
+		if (item1.fieldValuesMap.size < item2.fieldValuesMap.size) {
 			return 1;
 		}
-		if (item1.fieldValuesMap.get(item1.selectedField).size !== 0 && item2.fieldValuesMap.get(item2.selectedField).size === 0) {
-			return -1;
+		if (item1.fieldValuesMap.get(item1.selectedField) && item2.fieldValuesMap.get(item2.selectedField)) {
+			if (item1.fieldValuesMap.get(item1.selectedField).size === 0 && item2.fieldValuesMap.get(item2.selectedField).size !== 0) {
+				return 1;
+			}
+			if (item1.fieldValuesMap.get(item1.selectedField).size !== 0 && item2.fieldValuesMap.get(item2.selectedField).size === 0) {
+				return -1;
+			}
 		}
 	}
 	if (item1.isGrandCol && !item2.isGrandCol) {
@@ -14352,18 +14360,28 @@ CT_PivotArea.prototype.getNumberOffset = function() {
 /**
  * @return {CT_PivotAreaReference[]}
  */
-CT_PivotArea.prototype.asc_getReferences = function() {
+CT_PivotArea.prototype.getReferences = function() {
 	return this.references && this.references.reference.length > 0 && this.references.reference;
 }
+/**
+ * @typedef PivotAreaReferencesInfo
+ * @property {Map<number, PivotAreaReferenceInfo} referencesInfoMap
+ * @property {number?} selectedField
+ */
+/**
+ * @typedef PivotAreaReferenceInfo
+ * @property {Map<number, number>} fieldValuesMap
+ * @property {boolean} isDefaultSubtotal
+ */
 /**
  * @return {PivotAreaReferencesInfo}
  */
 CT_PivotArea.prototype.getReferencesInfo = function() {
 	let selectedField = null;
-	let fieldValuesMap = null;
-	const references = this.asc_getReferences();
+	let referencesInfoMap = null;
+	const references = this.getReferences();
 	if (references) {
-		fieldValuesMap = new Map();
+		referencesInfoMap = new Map();
 		references.forEach(function(reference) {
 			if (reference.selected) {
 				selectedField = reference.field;
@@ -14373,20 +14391,18 @@ CT_PivotArea.prototype.getReferencesInfo = function() {
 				reference.x.forEach(function(x) {
 					values.set(x.getV(), 1);
 				});
-				fieldValuesMap.set(reference.field, values);
+				referencesInfoMap.set(reference.field, {
+					fieldValuesMap: values,
+					isDefaultSubtotal: reference.defaultSubtotal
+				});
 			}
 		});
 	}
 	return {
-		fieldValuesMap: fieldValuesMap,
+		referencesInfoMap: referencesInfoMap,
 		selectedField: selectedField
 	};
 };
-/**
- * @typedef PivotAreaReferencesInfo
- * @property {Map<number, Map<number, number>>} fieldValuesMap
- * @property {number?} selectedField
- */
 
 function CT_Tuple() {
 //Attributes
