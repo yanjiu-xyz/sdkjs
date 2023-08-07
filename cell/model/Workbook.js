@@ -8740,6 +8740,7 @@
 		var valuesCache = [];
 		for (i = 0; i < items.length; ++i) {
 			var item = items[i];
+			/** @type {PivotItemFieldsInfo[]} */
 			var fieldValues = [];
 			var r = item.getR();
 			for (j = 0; j < r; ++j) {
@@ -8759,14 +8760,13 @@
 			for (j = 0; j < item.x.length; ++j) {
 				/** @type {PivotFormatsManagerQuery} */
 				const query = {
-					values: fieldValues,
+					valuesInfo: fieldValues,
 					dataIndex: item.i,
 					isData: false,
 					isGrandRow: isRowItems && item.t === Asc.c_oAscItemType.Grand,
 					isGrandCol: !isRowItems && item.t === Asc.c_oAscItemType.Grand,
 					type: Asc.c_oAscPivotAreaType.Normal,
 					field: null,
-					isDefaultSubtotal: false,
 				};
 				fieldIndex = null;
 				var outline = 0;
@@ -8782,7 +8782,11 @@
 					fieldIndex = fields[r + j].asc_getIndex();
 					if (AscCommonExcel.st_VALUES !== fieldIndex) {
 						oCellValue = pivotTable.getPivotFieldCellValue(fieldIndex, item.x[j].getV());
-						fieldValues.push([fieldIndex, item.x[j].getV()]);
+						fieldValues.push({
+							fieldIndex: fieldIndex,
+							value: item.x[j].getV(),
+							type: Asc.c_oAscItemType.Data
+						});
 						query.field = fieldIndex;
 					} else {
 						query.field = AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD;
@@ -8959,7 +8963,7 @@
 						var dataIndex = Math.max(colItem.i, rowItem.i)
 						var cell = this.getRange4(r1 + rowItemsIndex, c1 + colItemsIndex);
 						var formatting = pivotTable.getFormatting({
-							values: traversal.getCurrentFieldValues(),
+							valuesInfo: traversal.getCurrentItemFieldsInfo(rowItem, colItem),
 							isGrandRow: rowItem.t === Asc.c_oAscItemType.Grand,
 							isGrandCol: colItem.t === Asc.c_oAscItemType.Grand,
 							field: Asc.c_oAscItemType.Grand !== rowItem.t ? fieldIndex : traversal.fieldIndex,

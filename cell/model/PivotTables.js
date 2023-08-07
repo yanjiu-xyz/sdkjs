@@ -7043,7 +7043,7 @@ CT_pivotTableDefinition.prototype.getItemFieldsMap = function(itemFieldsMapArray
 };
 /**
  * @param {Worksheet} ws 
- * @param {PivotItemFieldsMapArray} arrayFieldItemsMap 
+ * @param {PivotItemFieldsMapArray} arrayFieldItemsMap
  * @return {Object}
  */
 CT_pivotTableDefinition.prototype.showDetails = function(ws, arrayFieldItemsMap) {
@@ -7145,13 +7145,13 @@ CT_pivotTableDefinition.prototype.getFormatting = function(query) {
 /**
  * @typedef PivotFormatsCollectionItem
  * @property {PivotAreaReferencesInfo} referencesInfo
+ * @property {number | null} pivotAreaField
  * @property {CT_Format} format
  * @property {number} type one of c_oAscPivotAreaType
  * @property {PivotAreaOffset} offset
  * @property {boolean} isGrandRow
  * @property {boolean} isGrandCol
  * @property {boolean} isLabelOnly
- * @property {boolean} isDefaultSubtotal
  * @property {boolean} isDataOnly
  */
 
@@ -7191,11 +7191,9 @@ PivotFormatsManager.prototype.update = function() {
 PivotFormatsManager.prototype.addToCollection = function(format) {
 	const pivotArea = format.pivotArea;
 	const referencesInfo = pivotArea.getReferencesInfo();
-	const selectedField = referencesInfo.selectedField;
-	const pivotAreaField = pivotArea.field;
-	const field = selectedField !== null ? selectedField : pivotAreaField;
 	const formatsCollectionItem = {
 		referencesInfo: referencesInfo,
+		pivotAreaField: pivotArea.field,
 		format: format,
 		isGrandCol: pivotArea.grandCol,
 		isGrandRow: pivotArea.grandRow,
@@ -7208,14 +7206,20 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
 	return;
 };
 /**
+ * @typedef PivotItemFieldsInfo
+ * @property {number} fieldIndex
+ * @property {number} value
+ * @property {number} type one of Asc.c_oAscItemType
+ */
+
+/**
  * @typedef PivotFormatsManagerQuery
- * @property {[number, number][]} values
+ * @property {PivotItemFieldsInfo[]} valuesInfo
  * @property {boolean} isGrandRow
  * @property {boolean} isGrandCol
  * @property {number?} field
  * @property {number?} dataIndex
  * @property {boolean} isData
- * @property {boolean} isDefaultSubtotal
  * @property {number | undefined} type one of c_oAscPivotAreaType
  * @property {PivotAreaOffset | undefined} offset
  */
@@ -7229,19 +7233,113 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
  */
 
 /**
- * @param {[number, number][]} values 
- * @param {PivotAreaReferencesInfo} referencesInfo
+ * @param {PivotItemFieldsInfo} valueInfo
+ * @param {PivotAreaReferenceInfo} referenceInfo
  * @return {boolean}
  */
-PivotFormatsManager.prototype.checkFormatsCollectionItemValues = function(values, referencesInfo) {
+PivotFormatsManager.prototype.checkReferenceValues = function(referenceInfo, valueInfo) {
+	if (referenceInfo) {
+		const v = valueInfo.value;
+		const valuesMap = referenceInfo && referenceInfo.valuesMap;
+		if (valuesMap && valuesMap.size > 0 && !valuesMap.has(v)) {
+			return false;
+		}
+	}
+	return true;
+};
+
+/**
+ * @param {PivotItemFieldsInfo} valueInfo
+ * @param {PivotAreaReferenceInfo} referenceInfo
+ * @return {boolean}
+ */
+PivotFormatsManager.prototype.checkReferenceAttributes = function(referenceInfo, valueInfo) {
+	if (referenceInfo) {
+		const reference = referenceInfo.reference;
+		if (valueInfo.type === Asc.c_oAscItemType.Data) {
+			if (reference.defaultSubtotal ||
+				reference.avgSubtotal ||
+				reference.countSubtotal ||
+				reference.countASubtotal ||
+				reference.maxSubtotal ||
+				reference.minSubtotal ||
+				reference.productSubtotal ||
+				reference.stdDevSubtotal ||
+				reference.stdDevPSubtotal ||
+				reference.sumSubtotal ||
+				reference.varSubtotal ||
+				reference.varPSubtotal) {
+				return false;
+			} else {
+				return true;
+			}
+		}
+		if (reference.defaultSubtotal && valueInfo.type === Asc.c_oAscItemType.Default) {
+			return true;
+		}
+		if (reference.avgSubtotal && valueInfo.type === Asc.c_oAscItemType.Avg) {
+			return true;
+		}
+		if (reference.countSubtotal && valueInfo.type === Asc.c_oAscItemType.Count) {
+			return true;
+		}
+		if (reference.countASubtotal && valueInfo.type === Asc.c_oAscItemType.CountA) {
+			return true;
+		}
+		if (reference.maxSubtotal && valueInfo.type === Asc.c_oAscItemType.Max) {
+			return true;
+		}
+		if (reference.minSubtotal && valueInfo.type === Asc.c_oAscItemType.Min) {
+			return true;
+		}
+		if (reference.productSubtotal && valueInfo.type === Asc.c_oAscItemType.Product) {
+			return true;
+		}
+		if (reference.stdDevSubtotal && valueInfo.type === Asc.c_oAscItemType.StdDev) {
+			return true;
+		}
+		if (reference.stdDevPSubtotal && valueInfo.type === Asc.c_oAscItemType.StdDevP) {
+			return true;
+		}
+		if (reference.sumSubtotal && valueInfo.type === Asc.c_oAscItemType.Sum) {
+			return true;
+		}
+		if (reference.varSubtotal && valueInfo.type === Asc.c_oAscItemType.Var) {
+			return true;
+		}
+		if (reference.varPSubtotal && valueInfo.type === Asc.c_oAscItemType.VarP) {
+			return true;
+		}
+		return false;
+	}
+	return true;
+};
+/**
+ * @param {PivotFormatsCollectionItem} formatsCollectionItem
+ * @param {PivotFormatsManagerQuery} query
+ * @return {boolean}
+ */
+PivotFormatsManager.prototype.checkReferences = function(formatsCollectionItem, query) {
+	const valuesInfo = query.valuesInfo;
+	const referencesInfo = formatsCollectionItem.referencesInfo;
 	const referencesInfoMap = referencesInfo.referencesInfoMap;
 	if (referencesInfoMap) {
-		for (let i = 0; i < values.length; i += 1) {
-			const value = values[i];
-			const fieldIndex = value[0];
-			const v = value[1];
-			const fieldValues = referencesInfoMap.get(fieldIndex) &&  referencesInfoMap.get(fieldIndex).fieldValuesMap;
-			if (fieldValues && fieldValues.size > 0 && !fieldValues.has(v)) {
+		if (referencesInfoMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) &&
+			!referencesInfoMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD).valuesMap.has(query.dataIndex)) {
+			return false;
+		}
+		const fieldValuesCount = referencesInfoMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) ? referencesInfoMap.size - 1: referencesInfoMap.size;
+		if (valuesInfo.length < fieldValuesCount) {
+			return false;
+		}
+		for (let i = 0; i < valuesInfo.length; i += 1) {
+			const valueInfo = valuesInfo[i];
+			const fieldIndex = valueInfo.fieldIndex;
+			const referenceInfo = referencesInfoMap.get(fieldIndex);
+			if (!this.checkReferenceValues(referenceInfo, valueInfo)) {
+				return false;
+			}
+			if (!this.checkReferenceAttributes(referenceInfo, valueInfo)) {
 				return false;
 			}
 		}
@@ -7255,25 +7353,18 @@ PivotFormatsManager.prototype.checkFormatsCollectionItemValues = function(values
  * @return {boolean}
  */
 PivotFormatsManager.prototype.checkFormatsCollectionItem = function(formatsCollectionItem, query) {
-	const values = query.values;
-	const fieldValuesMap = formatsCollectionItem.fieldValuesMap;
-	if (formatsCollectionItem.selectedField !== null && formatsCollectionItem.selectedField !== query.field) {
+	const referencesInfo = formatsCollectionItem.referencesInfo;
+	const refField = referencesInfo.selectedField;
+	const pivotAreaField = formatsCollectionItem.pivotAreaField;
+	const selectedField = refField !== null ? refField : pivotAreaField;
+	if (selectedField !== null && selectedField !== query.field) {
 		return false;
 	} 
-	if (!this.checkFormatsCollectionItemAttributes(formatsCollectionItem, query)) {
+	if (!this.checkAttributes(formatsCollectionItem, query)) {
 		return false;
 	}
-	if (fieldValuesMap) {
-		if (fieldValuesMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) && !fieldValuesMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD).has(query.dataIndex)) {
-			return false;
-		}
-		const fieldValuesCount = fieldValuesMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) ? fieldValuesMap.size - 1: fieldValuesMap.size;
-		if (values.length < fieldValuesCount) {
-			return false;
-		}
-		if (!this.checkFormatsCollectionItemValues(values, fieldValuesMap)) {
-			return false;
-		}
+	if (!this.checkReferences(formatsCollectionItem, query)) {
+		return false;
 	}
 	return true;
 };
@@ -7282,7 +7373,7 @@ PivotFormatsManager.prototype.checkFormatsCollectionItem = function(formatsColle
  * @param {PivotFormatsManagerQuery} query
  * @return {boolean}
  */
-PivotFormatsManager.prototype.checkFormatsCollectionItemAttributes = function(formatsCollectionItem, query) {
+PivotFormatsManager.prototype.checkAttributes = function(formatsCollectionItem, query) {
 	if (formatsCollectionItem.isLabelOnly && query.isData) {
 		return false;
 	}
@@ -7303,9 +7394,6 @@ PivotFormatsManager.prototype.checkFormatsCollectionItemAttributes = function(fo
 			return false;
 		}
 	}
-	if (formatsCollectionItem.isDefaultSubtotal && !query.isDefaultSubtotal) {
-		return false;
-	}
 	return true;
 };
 /**
@@ -7323,63 +7411,6 @@ PivotFormatsManager.prototype.getSuitableFormatsCollectionItems = function(query
 	return result;
 };
 /**
- * @param {PivotFormatsCollectionItem} item1 
- * @param {PivotFormatsCollectionItem} item2
- * @return {boolean}
- */
-PivotFormatsManager.prototype.compareFormatsCollectionItems = function(item1, item2) {
-	if (item1.fieldValuesMap && !item2.fieldValuesMap) {
-		return -1;
-	}
-	if (!item1.fieldValuesMap && item2.fieldValuesMap) {
-		return 1;
-	}
-	if (item1.fieldValuesMap && item2.fieldValuesMap) {
-		if (item1.fieldValuesMap.size > item2.fieldValuesMap.size) {
-			return -1;
-		}
-		if (item1.fieldValuesMap.size < item2.fieldValuesMap.size) {
-			return 1;
-		}
-		if (item1.fieldValuesMap.get(item1.selectedField) && item2.fieldValuesMap.get(item2.selectedField)) {
-			if (item1.fieldValuesMap.get(item1.selectedField).size === 0 && item2.fieldValuesMap.get(item2.selectedField).size !== 0) {
-				return 1;
-			}
-			if (item1.fieldValuesMap.get(item1.selectedField).size !== 0 && item2.fieldValuesMap.get(item2.selectedField).size === 0) {
-				return -1;
-			}
-		}
-	}
-	if (item1.isGrandCol && !item2.isGrandCol) {
-		return -1;
-	}
-	if (item1.isGrandRow && !item2.isGrandRow) {
-		return -1;
-	}
-	if (!item1.isGrandRow && item2.isGrandRow) {
-		return 1;
-	}
-	if (!item1.isGrandRow && item2.isGrandRow) {
-		return 1;
-	}
-	if (item1.isDataOnly && !item2.isDataOnly) {
-		return -1;
-	} else if (!item1.isDataOnly && item2.isDataOnly) {
-		return 1;
-	}
-	if (item1.isLabelOnly && !item2.isLabelOnly) {
-		return -1;
-	} else if (!item1.isLabelOnly && item2.isLabelOnly) {
-		return 1;
-	}
-	if (item1.offset !== null && item2.offset === null) {
-		return -1;
-	} else if (item2.offset !== null && item1.offset === null) {
-		return 1;
-	}
-	return 0;
-};
-/**
  * @param {PivotFormatsManagerQuery} query
  * @return {PivotFormatsManagerResponse}
  */
@@ -7391,7 +7422,6 @@ PivotFormatsManager.prototype.get = function(query) {
 		border: null
 	}
 	const suitableFormatsCollectionItems = this.getSuitableFormatsCollectionItems(query);
-	suitableFormatsCollectionItems.sort(this.compareFormatsCollectionItems);
 	for (let i = 0; i < suitableFormatsCollectionItems.length; i += 1) {
 		const formatsCollectionItem = suitableFormatsCollectionItems[i];
 		const dxf = formatsCollectionItem.format.dxf;
@@ -14483,9 +14513,10 @@ CT_PivotArea.prototype.getReferences = function() {
  */
 /**
  * @typedef PivotAreaReferenceInfo
- * @property {Map<number, number>} fieldValuesMap
- * @property {boolean} isDefaultSubtotal
+ * @property {Map<number, number>} valuesMap
+ * @property {CT_PivotAreaReference} reference
  */
+
 /**
  * @return {PivotAreaReferencesInfo}
  */
@@ -14505,8 +14536,8 @@ CT_PivotArea.prototype.getReferencesInfo = function() {
 					values.set(x.getV(), 1);
 				});
 				referencesInfoMap.set(reference.field, {
-					fieldValuesMap: values,
-					isDefaultSubtotal: reference.defaultSubtotal
+					valuesMap: values,
+					reference: reference
 				});
 			}
 		});
@@ -16974,15 +17005,21 @@ DataRowTraversal.prototype.initCol = function(dataRow) {
 	this.colValueCache = [];
 };
 /**
- * @return {[number, number][]}
+ * @param {CT_I} rowItem
+ * @param {CT_I} colItem
+ * @return {PivotItemFieldsInfo[]}
  */
-DataRowTraversal.prototype.getCurrentFieldValues = function() {
+DataRowTraversal.prototype.getCurrentItemFieldsInfo = function(rowItem, colItem) {
 	const result = [];
 	if (this.rowFields) {
 		for (let i = 0; i < this.rowValueCache.length; i += 1) {
 			const fieldIndex = this.rowFields[i].asc_getIndex();
 			if (fieldIndex !== AscCommonExcel.st_VALUES) {
-				result.push([fieldIndex,  this.rowValueCache[i]])
+				result.push({
+					fieldIndex: fieldIndex,
+					value: this.rowValueCache[i],
+					type: i === this.rowValueCache.length - 1 ? rowItem.t : Asc.c_oAscItemType.Data,
+				});
 			}
 		}
 	}
@@ -16990,7 +17027,11 @@ DataRowTraversal.prototype.getCurrentFieldValues = function() {
 		for (let i = 0; i < this.colValueCache.length; i += 1) {
 			const fieldIndex = this.colFields[i].asc_getIndex();
 			if (fieldIndex !== AscCommonExcel.st_VALUES) {
-				result.push([fieldIndex,  this.colValueCache[i]])
+				result.push({
+					fieldIndex: fieldIndex,
+					value: this.colValueCache[i],
+					type: i === this.colValueCache.length - 1 ? colItem.t : Asc.c_oAscItemType.Data,
+				});
 			}
 		}
 	}
