@@ -101,6 +101,12 @@
     drawingsChangesMap[AscDFH.historyitem_PlotArea_SetDateAx] = function(oClass, value) {
         oClass.dateAx = value;
     };
+    drawingsChangesMap[AscDFH.historyitem_PlotArea_SetPlotAreaRegion] = function(oClass, value) {
+        oClass.plotAreaRegion = value;
+    };
+    drawingsChangesMap[AscDFH.historyitem_PlotArea_SetExtLst] = function(oClass, value) {
+        oClass.extLst = value;
+    };
     drawingsChangesMap[AscDFH.historyitem_PlotArea_SetDTable] = function(oClass, value) {
         oClass.dTable = value;
     };
@@ -1710,6 +1716,8 @@
     AscDFH.changesFactory[AscDFH.historyitem_DLbl_SetTx] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_DLbl_SetTxPr] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_DLbl_SetParent] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetPlotAreaRegion] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetExtLst] = window['AscDFH'].CChangesDrawingsObjectNoId;
     AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetDTable] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetLayout] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetSpPr] = window['AscDFH'].CChangesDrawingsObject;
@@ -4739,6 +4747,8 @@
 
     function CPlotArea() {
         CBaseChartObject.call(this);
+        this.plotAreaRegion = null;
+        this.extLst = null;
         this.charts = [];
         this.dTable = null;
         this.layout = null;
@@ -4769,6 +4779,14 @@
     InitClass(CPlotArea, CBaseChartObject, AscDFH.historyitem_type_PlotArea);
     CPlotArea.prototype.Refresh_RecalcData = function(data) {
         switch(data.Type) {
+            case AscDFH.historyitem_PlotArea_SetPlotAreaRegion:
+            {
+                break;
+            }
+            case AscDFH.historyitem_PlotArea_SetExtLst:
+            {
+                break;
+            }
             case AscDFH.historyitem_CommonChartFormat_SetParent:
             {
                 break;
@@ -5071,6 +5089,14 @@
                 this.removeAxisByPos(i);
             }
         }
+    };
+    CPlotArea.prototype.setPlotAreaRegion = function(pr) {
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_PlotArea_SetPlotAreaRegion, this.plotAreaRegion, pr));
+        this.plotAreaRegion = pr;
+    };
+    CPlotArea.prototype.setExtLst = function(pr) {
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_PlotArea_SetExtLst, this.extLst, pr));
+        this.extLst = pr;
     };
     CPlotArea.prototype.setDTable = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_PlotArea_SetDTable, this.dTable, pr));
