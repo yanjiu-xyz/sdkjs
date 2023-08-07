@@ -879,11 +879,11 @@
 		isLockRecal: function() {
 			return this.lockCounter > 0;
 		},
-		unlockRecal: function() {
+		unlockRecal: function(notCalc) {
 			if (0 < this.lockCounter) {
 				--this.lockCounter;
 			}
-			if (0 >= this.lockCounter) {
+			if (!notCalc && 0 >= this.lockCounter) {
 				this.calcTree();
 			}
 		},
@@ -10699,14 +10699,16 @@
 	};
 
 	Worksheet.prototype.checkCorrectTables = function () {
-		for (var i = 0; i < this.TableParts.length; ++i) {
-			var table = this.TableParts[i];
+		for (let i = 0; i < this.TableParts.length; ++i) {
+			let table = this.TableParts[i];
 			if (table.isHeaderRow()) {
-				for (var j = 0; j < table.TableColumns.length; j++) {
+
+				this.workbook.dependencyFormulas.lockRecal();
+				for (let j = 0; j < table.TableColumns.length; j++) {
+					let tableColName = table.TableColumns[j].Name;
 					this._getCell(table.Ref.r1, table.Ref.c1 + j, function(cell) {
-						var tableColName = table.TableColumns[j].Name;
-						var valueData = cell.getValueData();
-						var val = valueData && valueData.value && valueData.value.text;
+						let valueData = cell.getValueData();
+						let val = valueData && valueData.value && valueData.value.text;
 						if (val !== tableColName){
 							cell.setValueData(
 								new AscCommonExcel.UndoRedoData_CellValueData(null, new AscCommonExcel.CCellValue({
@@ -10716,6 +10718,8 @@
 						}
 					});
 				}
+				this.workbook.dependencyFormulas.unlockRecal(true);
+
 				if (table.TableColumns.length < (table.Ref.c2 - table.Ref.c1 + 1)) {
 					table.Ref.c2 = table.Ref.c1 + table.TableColumns.length - 1;
 				}
