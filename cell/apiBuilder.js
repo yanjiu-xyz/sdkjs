@@ -950,8 +950,12 @@
 	 * @returns {ApiRange}
 	 */
 	ApiWorksheet.prototype.GetActiveCell = function () {
-		var cell = this.worksheet.selectionRange.activeCell;
-		return new ApiRange(this.worksheet.getCell3(cell.row, cell.col));
+		let cell = this.worksheet.getCell3(this.worksheet.selectionRange.activeCell.row, this.worksheet.selectionRange.activeCell.col);
+		let merged = cell.hasMerged();
+		if (merged)
+			cell = this.worksheet.getCell3(merged.r1, merged.c1);
+
+		return new ApiRange(cell);
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "ActiveCell", {
 		get: function () {
