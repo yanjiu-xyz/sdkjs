@@ -2304,6 +2304,10 @@
 								value = AscCommon.cErrorLocal["na"];
 
 							let cell = this.range.worksheet.getRange3( (bbox.r1 + indR), (bbox.c1 + indC), (bbox.r1 + indR), (bbox.c1 + indC) );
+							let merged = cell.hasMerged();
+							if (merged)
+								cell = this.range.worksheet.getRange3(merged.r1, merged.c1, merged.r1, merged.c1);
+
 							value = checkFormat(value.toString());
 							cell.setValue(value.toString());
 							if (value.type === AscCommonExcel.cElementType.number)
@@ -2317,12 +2321,17 @@
 			}
 		}
 		data = checkFormat(data || 0);
-		this.range.setValue(data.toString());
-		if (data.type === AscCommonExcel.cElementType.number)
-			this.SetNumberFormat(AscCommon.getShortDateFormat());
+		let range = this.range;
+		let merged = range.hasMerged();
+		if (merged)
+			range = this.range.worksheet.getRange3(merged.r1, merged.c1, merged.r1, merged.c1);
 
-		worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [this.range.bbox], true);
-		worksheet.workbook.oApi.onWorksheetChange(this.range.bbox);
+		range.setValue(data.toString());
+		if (data.type === AscCommonExcel.cElementType.number)
+			range.setNumFormat(AscCommon.getShortDateFormat());
+
+		worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [range.bbox], true);
+		worksheet.workbook.oApi.onWorksheetChange(range.bbox);
 		return true;
 	};
 
