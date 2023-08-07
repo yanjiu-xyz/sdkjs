@@ -868,6 +868,21 @@
 	};
 
 	/**
+	 * Returns a comment from the current document by its ID.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sId - The comment ID.
+	 * @returns {?ApiComment}
+	 */
+	Api.prototype.GetCommentById = function(sId) {
+		let comment = this.asc_findComment(sId);
+		if (!comment)
+			comment = this.wb.cellCommentator.findComment(sId);
+
+		return comment ? new ApiComment(comment, Asc['editor'].wb) : null;
+	};
+
+	/**
 	 * Returns an array of ApiComment objects.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
@@ -6353,6 +6368,7 @@
 	Api.prototype["RecalculateAllFormulas"] = Api.prototype.RecalculateAllFormulas;
 	Api.prototype["AddComment"]  = Api.prototype.AddComment;
 	Api.prototype["GetComments"] = Api.prototype.GetComments;
+	Api.prototype["GetCommentById"] = Api.prototype.GetCommentById;
 
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
@@ -6765,18 +6781,6 @@
 		}
 
 		return nLockType;
-	}
-
-	function private_CheckValidType(data, type) {
-		/*
-			'boolean'
-			'number'
-			'string'
-			'object'
-			'array'
-		*/
-		let result = type === 'array' ? Array.isArray(data) : typeof(data) === type;
-		return result;
 	}
 
 }(window, null));
