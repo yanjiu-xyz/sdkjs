@@ -7042,9 +7042,9 @@ CT_pivotTableDefinition.prototype.getItemFieldsMap = function(itemFieldsMapArray
 	return result;
 };
 /**
- * @param {Worksheet} ws 
+ * @param {Worksheet} ws
  * @param {PivotItemFieldsMapArray} arrayFieldItemsMap
- * @return {Object}
+ * @return {FillPivotDetailsLengths}
  */
 CT_pivotTableDefinition.prototype.showDetails = function(ws, arrayFieldItemsMap) {
 	const itemMap = this.getItemFieldsMap(arrayFieldItemsMap);
@@ -7148,7 +7148,7 @@ CT_pivotTableDefinition.prototype.getFormatting = function(query) {
  * @property {number | null} pivotAreaField
  * @property {CT_Format} format
  * @property {number} type one of c_oAscPivotAreaType
- * @property {PivotAreaOffset} offset
+ * @property {Range | null} offset
  * @property {boolean} isGrandRow
  * @property {boolean} isGrandCol
  * @property {boolean} isLabelOnly
@@ -7200,7 +7200,7 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
 		isLabelOnly: pivotArea.labelOnly,
 		isDataOnly: pivotArea.dataOnly,
 		type: pivotArea.type,
-		offset: pivotArea.getNumberOffset()
+		offset: pivotArea.getRangeOffset()
 	};
 	this.formatsCollection.push(formatsCollectionItem);
 	return;
@@ -7373,6 +7373,16 @@ PivotFormatsManager.prototype.checkFormatsCollectionItem = function(formatsColle
  * @param {PivotFormatsManagerQuery} query
  * @return {boolean}
  */
+PivotFormatsManager.prototype.checkOffset = function(formatsCollectionItem, query) {
+	const itemOffset = formatsCollectionItem.offset;
+	const queryOffset = query.offset;
+	return itemOffset.containsRange(queryOffset);
+};
+/**
+ * @param {PivotFormatsCollectionItem} formatsCollectionItem
+ * @param {PivotFormatsManagerQuery} query
+ * @return {boolean}
+ */
 PivotFormatsManager.prototype.checkAttributes = function(formatsCollectionItem, query) {
 	if (formatsCollectionItem.isLabelOnly && query.isData) {
 		return false;
@@ -7390,7 +7400,7 @@ PivotFormatsManager.prototype.checkAttributes = function(formatsCollectionItem, 
 		return false;
 	}
 	if (formatsCollectionItem.offset !== null && query.offset) {
-		if (formatsCollectionItem.offset.col !== query.offset.col || formatsCollectionItem.offset.row !== query.offset.row) {
+		if (!this.checkOffset(formatsCollectionItem, query)) {
 			return false;
 		}
 	}
@@ -14463,40 +14473,13 @@ CT_PivotArea.prototype.toXml = function(writer, name) {
 	}
 	writer.WriteXmlNodeEnd(name);
 };
-/** 
- * @typedef PivotAreaOffset
- * @property {number} row
- * @property {number} col
 /**
- * Returns the offset represented as PivotAreaOffset
- * @return {PivotAreaOffset | null}
+ * Returns the offset represented as Range
+ * @return {Range | null}
  */
-CT_PivotArea.prototype.getNumberOffset = function() {
-	let rowPart = '', colPart = '';
-	const result = {};
+CT_PivotArea.prototype.getRangeOffset = function() {
 	if (this.offset) {
-		for (let i = 0; i < this.offset.length; i += 1) {
-			if (isNaN(this.offset[i])) {
-				colPart += this.offset[i];
-			} else {
-				rowPart += this.offset[i];
-			}
-		}
-		if (rowPart === AscCommonExcel.st_PIVOT_AREA_ZERO_ROW_OFFSET) {
-			result.row = 0;
-		} else {
-			result.row = Number(rowPart);
-		}
-		if (colPart === AscCommonExcel.st_PIVOT_AREA_ZERO_COL_OFFSET) {
-			result.col = 0;
-		} else {
-			result.col = 0;
-			for (let i = 0, j = colPart.length - 1; i < colPart.length; i += 1, j -= 1) {
-				const num = colPart.charCodeAt(j) - 'A'.charCodeAt(0) + 1;
-				result.col += Math.pow(num, i);
-			}
-		}
-		return result;
+		return AscCommonExcel.g_oRangeCache.getAscRange(this.offset);
 	}
 	return null;
 };
