@@ -7177,12 +7177,11 @@ PivotFormatsManager.prototype.update = function() {
 	this.setDefaults();
 	this.formats = this.pivot.asc_getFormats();
 	if (this.formats) {
-		for (let i = 0; i < this.formats.length; i += 1) {
+		for (let i = this.formats.length - 1; i >= 0; i -= 1) {
 			const format = this.formats[i];
 			this.addToCollection(format);
 		}
 	}
-	this.formatsCollection.reverse();
 	return;
 };
 /**
@@ -7221,7 +7220,7 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
  * @property {number?} dataIndex
  * @property {boolean} isData
  * @property {number | undefined} type one of c_oAscPivotAreaType
- * @property {PivotAreaOffset | undefined} offset
+ * @property {Range | undefined} offset
  */
 
 /**
