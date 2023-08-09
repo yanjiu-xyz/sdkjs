@@ -1134,12 +1134,13 @@
 	 * @param {string} sName - The name which will be displayed for the current sheet at the sheet tab.
 	 */
 	ApiWorksheet.prototype.SetName = function (sName) {
-		var sOldName = this.worksheet.getName();
+		let sOldName = this.worksheet.getName();
 		this.worksheet.setName(sName);
-		var oWorkbook = this.worksheet.workbook;
-		if(oWorkbook) {
-			oWorkbook.handleChartsOnChangeSheetName(this.worksheet, sOldName, sName)
-		}
+		let oWorkbookView = this.worksheet.workbook.oApi.wb;
+		// now we do it as method in Api
+		this.worksheet.workbook.oApi.sheetsChanged();
+		if(oWorkbookView)
+			oWorkbookView.handleChartsOnChangeSheetName(this.worksheet, sOldName, sName);
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "Name", {
 		get: function () {
