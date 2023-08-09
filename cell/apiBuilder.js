@@ -1521,7 +1521,7 @@
 	 * @returns {boolean} - returns false if sName or sRef are invalid.
 	 */
 	ApiWorksheet.prototype.AddDefName = function (sName, sRef, isHidden) {
-		return private_AddDefName(this.worksheet.workbook, sName, sRef, this.worksheet.getId(), isHidden);
+		return private_AddDefName(this.worksheet.workbook, sName, sRef, this.worksheet.getIndex(), isHidden);
 	};
 
 	Object.defineProperty(ApiWorksheet.prototype, "DefNames", {
@@ -6720,8 +6720,8 @@
 		return border;
 	}
 
-	function private_AddDefName(wb, name, ref, sheetId, hidden) {
-		var res = wb.checkDefName(name);
+	function private_AddDefName(wb, name, ref, sheetInd, hidden) {
+		let res = wb.checkDefName(name);
 		if (!res.status) {
 			console.error(new Error('Invalid name.'));
 			return false;
@@ -6731,10 +6731,11 @@
 			console.error(new Error('Invalid range.'));
 			return false;
 		}
-		if (sheetId) {
-			sheetId = (wb.getWorksheetById(sheetId)) ? sheetId : undefined;
+		if (sheetInd) {
+			sheetInd = (wb.getWorksheet(sheetInd)) ? sheetInd : undefined;
 		}
-		wb.addDefName(name, ref, sheetId, hidden, false)
+		let defName = new Asc.asc_CDefName(name, ref, sheetInd, undefined, hidden, undefined, undefined, true);
+		wb.oApi.asc_setDefinedNames(defName);
 
 		return true;
 	}
