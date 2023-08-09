@@ -1136,11 +1136,12 @@
 	ApiWorksheet.prototype.SetName = function (sName) {
 		let sOldName = this.worksheet.getName();
 		this.worksheet.setName(sName);
-		let oWorkbookView = this.worksheet.workbook.oApi.wb;
-		// now we do it as method in Api
-		this.worksheet.workbook.oApi.sheetsChanged();
-		if(oWorkbookView)
-			oWorkbookView.handleChartsOnChangeSheetName(this.worksheet, sOldName, sName);
+		// let oWorkbookView = this.worksheet.workbook.oApi.wb;
+		// it's temporary solution (we should use oWorkbookView instead of oWorkbook)
+		let oWorkbook = this.worksheet.workbook;
+		oWorkbook.oApi.sheetsChanged();
+		if(oWorkbook)
+			oWorkbook.handleChartsOnChangeSheetName(this.worksheet, sOldName, sName);
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "Name", {
 		get: function () {
