@@ -35,111 +35,204 @@
 
 (function (window)
 {
-	// const {
-	// 	addPropertyToDocument,
-	// 	getLogicDocumentWithParagraphs,
-	// 	checkTextAfterKeyDownHelperEmpty,
-	// 	oGlobalLogicDocument,
-	// 	addParagraphToDocumentWithText,
-	// 	remove,
-	// 	clean,
-	// 	recalculate,
-	// 	onKeyDown,
-	// 	moveToParagraph,
-	// 	createNativeEvent,
-	// 	moveCursorDown,
-	// 	moveCursorLeft,
-	// 	moveCursorRight,
-	// 	selectAll,
-	// 	getSelectedText,
-	// 	executeTestWithCatchEvent,
-	// 	startTest,
-	// 	createChart,
-	// 	createEvent,
-	// 	checkInsertElementByType,
-	// 	createParagraphWithText,
-	// 	checkApplyParagraphStyle,
-	// 	createHyperlink,
-	// 	createTable,
-	// 	moveToTable,
-	// 	createShape,
-	// 	createGroup,
-	// 	selectOnlyObjects,
-	// 	selectParaDrawing,
-	// 	drawingObjects,
-	// 	logicContent,
-	// 	directParaPr,
-	// 	directTextPr,
-	// 	addBreakPage,
-	// 	createMath,
-	// 	resetLogicDocument,
-	// 	addText,
-	// 	moveShapeHelper,
-	// 	setFillingFormsMode,
-	// 	createCheckBox,
-	// 	createComboBox,
-	// 	createComplexForm,
-	// 	contentPosition,
-	// 	oTestTypes,
-	// 	mouseMove,
-	// 	mouseDown,
-	// 	mouseUp,
-	// 	insertManualBreak
-	// } = AscTestShortcut;
-	
+	const oEvents = AscTestShortcut.oTestEvents;
+	const oTestTypes = AscTestShortcut.oTestTypes;
+
 	let logicDocument = AscTest.CreateLogicDocument();
-	editor.getShortcut = function(e)
+	logicDocument.UpdateAllSectionsInfo();
+	const pageWidth = 100;
+	const pageHeight = 100;
+	logicDocument.Set_DocumentPageSize(pageWidth, pageHeight);
+	var props = new Asc.CDocumentSectionProps();
+	props.put_TopMargin(0);
+	props.put_LeftMargin(0);
+	props.put_BottomMargin(0);
+	props.put_RightMargin(0);
+	logicDocument.Set_SectionProps(props);
+	logicDocument.UpdateAllSectionsInfo();
+	editor.WordControl.m_oDrawingDocument.GetVisibleMMHeight = function ()
 	{
-		return e;
+		return 100;
 	};
-	editor.FontSizeIn = function()
+	editor.WordControl.m_oDrawingDocument.SetCursorType = function ()
+	{
+
+	};
+	let bStartTrackText = false;
+	editor.WordControl.m_oDrawingDocument.StartTrackText  = function () {bStartTrackText = true};
+	editor.WordControl.m_oDrawingDocument.EndTrackText  = function () {bStartTrackText = false};
+	editor.WordControl.m_oDrawingDocument.CancelTrackText  = function () {return bStartTrackText};
+	AscFormat.CHART_STYLE_MANAGER.init();
+
+
+
+	editor.getShortcut = function (e)
+	{
+		if (typeof e === 'number')
+		{
+			return e;
+		}
+	};
+	editor.FontSizeIn = function ()
 	{
 		logicDocument.IncreaseDecreaseFontSize(true);
 	};
-	editor.FontSizeOut = function()
+	editor.FontSizeOut = function ()
 	{
 		logicDocument.IncreaseDecreaseFontSize(false);
 	};
-	
+	editor.StartAddShape = function ()
+	{
+		this.isStartAddShape = true;
+	};
+
+
+
+	function GoToHeader(nPage)
+	{
+		logicDocument.SetDocPosType(AscCommonWord.docpostype_HdrFtr);
+		const oEvent = new AscCommon.CMouseEventHandler();
+		oEvent.ClickCount = 1;
+		oEvent.Button = 0;
+		oEvent.Type = AscCommon.g_mouse_event_type_down;
+
+		logicDocument.OnMouseDown(oEvent, 0, 0, nPage);
+
+		oEvent.Type = AscCommon.g_mouse_event_type_up;
+		logicDocument.OnMouseUp(oEvent, 0, 0, nPage);
+		logicDocument.MoveCursorLeft();
+	}
+
+	function GoToFooter(nPage)
+	{
+		logicDocument.SetDocPosType(AscCommonWord.docpostype_HdrFtr);
+		const oEvent = new AscCommon.CMouseEventHandler();
+		oEvent.ClickCount = 1;
+		oEvent.Button = 0;
+		oEvent.Type = AscCommon.g_mouse_event_type_down;
+
+		logicDocument.OnMouseDown(oEvent, 0, pageHeight, nPage);
+
+		oEvent.Type = AscCommon.g_mouse_event_type_up;
+		logicDocument.OnMouseUp(oEvent, 0, pageHeight, nPage);
+		logicDocument.MoveCursorLeft();
+	}
+
+	function RemoveHeader(nPage)
+	{
+		logicDocument.RemoveHdrFtr(nPage, true);
+	}
+
+	function RemoveFooter(nPage)
+	{
+		logicDocument.RemoveHdrFtr(nPage, false);
+	}
+
+	AscFonts.FontPickerByCharacter.checkText = function (text, _this, _callback, isCodes, isOnlyAsync, isCheckSymbols)
+	{
+		_callback.call(_this);
+	}
+
+	editor.WordControl.m_oApi = editor;
+	editor.retrieveFormatPainterData = Asc.asc_docs_api.prototype.retrieveFormatPainterData.bind(editor);
+	editor.get_ShowParaMarks = Asc.asc_docs_api.prototype.get_ShowParaMarks.bind(editor);
+	editor.put_ShowParaMarks = Asc.asc_docs_api.prototype.put_ShowParaMarks.bind(editor);
+	editor.sync_ShowParaMarks = Asc.asc_docs_api.prototype.sync_ShowParaMarks.bind(editor);
+	editor.private_GetLogicDocument = Asc.asc_docs_api.prototype.private_GetLogicDocument.bind(editor);
+	editor.asc_AddTableOfContents  = Asc.asc_docs_api.prototype.asc_AddTableOfContents.bind(editor);
+	editor.asc_registerCallback  = Asc.asc_docs_api.prototype.asc_registerCallback.bind(editor);
+	editor.asc_unregisterCallback  = Asc.asc_docs_api.prototype.asc_unregisterCallback.bind(editor);
+	editor.sendEvent  = Asc.asc_docs_api.prototype.sendEvent.bind(editor);
+	editor.sync_DialogAddHyperlink   = Asc.asc_docs_api.prototype.sync_DialogAddHyperlink.bind(editor);
+	editor.sync_ParaStyleName   = Asc.asc_docs_api.prototype.sync_ParaStyleName.bind(editor);
+	editor.sync_MouseMoveStartCallback    = Asc.asc_docs_api.prototype.sync_MouseMoveStartCallback.bind(editor);
+	editor.sync_MouseMoveCallback    = Asc.asc_docs_api.prototype.sync_MouseMoveCallback .bind(editor);
+	editor.sync_MouseMoveEndCallback     = Asc.asc_docs_api.prototype.sync_MouseMoveEndCallback.bind(editor);
+	editor.sync_HideComment      = Asc.asc_docs_api.prototype.sync_HideComment .bind(editor);
+	editor.sync_ContextMenuCallback      = Asc.asc_docs_api.prototype.sync_ContextMenuCallback .bind(editor);
+	editor.asc_AddMath  = Asc.asc_docs_api.prototype.asc_AddMath2.bind(editor);
+	editor._onEndLoadSdk  = Asc.asc_docs_api.prototype._onEndLoadSdk.bind(editor);
+	editor.sync_StartAddShapeCallback   = Asc.asc_docs_api.prototype.sync_StartAddShapeCallback .bind(editor);
+	editor.SetPaintFormat   = Asc.asc_docs_api.prototype.SetPaintFormat.bind(editor);
+	editor.SetMarkerFormat    = Asc.asc_docs_api.prototype.SetMarkerFormat .bind(editor);
+	editor.sync_MarkerFormatCallback     = Asc.asc_docs_api.prototype.sync_MarkerFormatCallback.bind(editor);
+	editor.sync_PaintFormatCallback     = Asc.asc_docs_api.prototype.sync_PaintFormatCallback.bind(editor);
+	editor.sync_EndAddShape    = function () {};
+
+	editor.isDocumentEditor = true;
+
 	function ExecuteShortcut(type)
 	{
-		logicDocument.OnKeyDown(type);
+		return logicDocument.OnKeyDown(type);
 	}
+	function ExecuteShortcut2(nType, nEventIndex)
+	{
+		const oEvent = oEvents[nType][nEventIndex || 0];
+		return ExecuteShortcut(oEvent);
+	}
+
+
+	AscCommon.CDocsCoApi.prototype.askSaveChanges = function(callback)
+	{
+		window.setTimeout(function() {
+				callback({"saveLock": false});
+		}, 0);
+	};
 	function ClearDocumentAndAddParagraph(text)
 	{
 		logicDocument.RemoveSelection();
 		AscTest.ClearDocument();
-		let p = AscTest.CreateParagraph();
+		const p = CreateParagraphWithText(text);
 		logicDocument.AddToContent(0, p);
-		
+		return p;
+	}
+
+	function CreateParagraphWithText(text)
+	{
+		let p = AscTest.CreateParagraph();
+
 		if (text)
 		{
 			let run = AscTest.CreateRun();
 			run.AddText(text);
 			p.AddToContentToEnd(run);
 		}
-		
+
 		return p;
 	}
-	
+
 	logicDocument.Start_SilentMode();
+
 	function TurnOnRecalculate()
 	{
 		logicDocument.TurnOn_Recalculate();
 	}
+
 	function TurnOffRecalculate()
 	{
 		logicDocument.TurnOff_Recalculate();
 	}
-	
+
+	function TurnOnRecalculateCurPos()
+	{
+		logicDocument.TurnOn_RecalculateCurPos();
+	}
+
+	function TurnOffRecalculateCurPos()
+	{
+		logicDocument.TurnOff_RecalculateCurPos();
+	}
+
 	function ApplyTextPrToDocument(textPr)
 	{
 		logicDocument.AddToParagraph(new AscCommonWord.ParaTextPr(textPr));
 	}
+
 	function GetDirectTextPr()
 	{
 		return logicDocument.GetDirectTextPr();
 	}
+
 	function GetDirectParaPr()
 	{
 		return logicDocument.GetDirectParaPr();
@@ -179,7 +272,7 @@
 			assert.strictEqual(logicDocument.GetPagesCount(), 4, 'Check page break shortcut');
 			TurnOffRecalculate();
 		});
-		
+
 		QUnit.test('Check line break shortcut', (assert) =>
 		{
 			TurnOnRecalculate();
@@ -192,7 +285,7 @@
 			assert.strictEqual(p.GetLinesCount(), 4, 'Check line break shortcut');
 			TurnOffRecalculate();
 		});
-		
+
 		QUnit.test('Check column break shortcut', (assert) =>
 		{
 			TurnOnRecalculate();
@@ -200,7 +293,7 @@
 			let sectionPr = AscTest.GetFinalSection();
 			sectionPr.SetColumnsNum(3);
 			AscTest.Recalculate();
-			
+
 			function CheckColumns(colCount)
 			{
 				assert.strictEqual(logicDocument.GetPagesCount(), 1, 'Check logic document page count');
@@ -211,34 +304,34 @@
 					assert.strictEqual(p.GetAbsolutePage(i), 0, 'Check paragraph page index');
 				}
 			}
-			
+
 			CheckColumns(1);
 			ExecuteShortcut(c_oAscDocumentShortcutType.InsertColumnBreak);
 			CheckColumns(2);
 			ExecuteShortcut(c_oAscDocumentShortcutType.InsertColumnBreak);
 			CheckColumns(3);
-			
+
 			sectionPr.SetColumnsNum(1);
 			TurnOffRecalculate();
 		});
-		
+
 		QUnit.test('Check reset char shortcut', (assert) =>
 		{
 			ClearDocumentAndAddParagraph('Hello world');
 			logicDocument.SelectAll();
 			ApplyTextPrToDocument({Bold: true, Italic: true, Underline: true});
-			
+
 			let textPr = GetDirectTextPr();
 			assert.true(true === textPr.GetBold() && true === textPr.GetItalic() && true === textPr.GetUnderline(), 'Check before reset');
 			ExecuteShortcut(c_oAscDocumentShortcutType.ResetChar);
 			textPr = GetDirectTextPr();
 			assert.true(undefined === textPr.GetBold() && undefined === textPr.GetItalic() && undefined === textPr.GetUnderline(), 'Check after reset');
 		});
-		
+
 		QUnit.test('Check adding various characters', (assert) =>
 		{
 			let p = ClearDocumentAndAddParagraph();
-			
+
 			ExecuteShortcut(c_oAscDocumentShortcutType.NonBreakingSpace);
 			assert.strictEqual(AscTest.GetParagraphText(p), String.fromCharCode(0x00A0), 'Check add non breaking space');
 			ExecuteShortcut(c_oAscDocumentShortcutType.CopyrightSign);
@@ -257,38 +350,45 @@
 			assert.strictEqual(AscTest.GetParagraphText(p), String.fromCharCode(0x00A0, 0x00A9, 0x20AC, 0x00AE, 0x2122, 0x2013, 0x2014, 0x002D), 'Check add NonBreakingHyphen');
 			ExecuteShortcut(c_oAscDocumentShortcutType.HorizontalEllipsis);
 			assert.strictEqual(AscTest.GetParagraphText(p), String.fromCharCode(0x00A0, 0x00A9, 0x20AC, 0x00AE, 0x2122, 0x2013, 0x2014, 0x002D, 0x2026), 'Check add HorizontalEllipsis');
+			ExecuteShortcut2(oTestTypes.addSJKSpace);
+			assert.strictEqual(AscTest.GetParagraphText(p), String.fromCharCode(0x00A0, 0x00A9, 0x20AC, 0x00AE, 0x2122, 0x2013, 0x2014, 0x002D, 0x2026, 0x0020), 'Check add HorizontalEllipsis');
 		});
-		
+
 		QUnit.test('Check text property change', (assert) =>
 		{
 			ClearDocumentAndAddParagraph('Hello world');
 			logicDocument.SelectAll();
-			
+
 			ExecuteShortcut(c_oAscDocumentShortcutType.Bold);
 			assert.strictEqual(GetDirectTextPr().GetBold(), true, 'Check turn on bold');
 			ExecuteShortcut(c_oAscDocumentShortcutType.Bold);
 			assert.strictEqual(GetDirectTextPr().GetBold(), false, 'Check turn off bold');
-			
+
 			ExecuteShortcut(c_oAscDocumentShortcutType.Italic);
 			assert.strictEqual(GetDirectTextPr().GetItalic(), true, 'Check turn on italic');
 			ExecuteShortcut(c_oAscDocumentShortcutType.Italic);
 			assert.strictEqual(GetDirectTextPr().GetItalic(), false, 'Check turn off italic');
-			
+
 			ExecuteShortcut(c_oAscDocumentShortcutType.Strikeout);
 			assert.strictEqual(GetDirectTextPr().GetStrikeout(), true, 'Check turn on strikeout');
 			ExecuteShortcut(c_oAscDocumentShortcutType.Strikeout);
 			assert.strictEqual(GetDirectTextPr().GetStrikeout(), false, 'Check turn off strikeout');
-			
+
 			ExecuteShortcut(c_oAscDocumentShortcutType.Underline);
 			assert.strictEqual(GetDirectTextPr().GetUnderline(), true, 'Check turn on underline');
 			ExecuteShortcut(c_oAscDocumentShortcutType.Underline);
 			assert.strictEqual(GetDirectTextPr().GetUnderline(), false, 'Check turn off underline');
-			
+
 			ExecuteShortcut(c_oAscDocumentShortcutType.Superscript);
 			assert.strictEqual(GetDirectTextPr().GetVertAlign(), AscCommon.vertalign_SuperScript, 'Check turn on superscript');
 			ExecuteShortcut(c_oAscDocumentShortcutType.Superscript);
 			assert.strictEqual(GetDirectTextPr().GetVertAlign(), AscCommon.vertalign_Baseline, 'Check turn off superscript');
-			
+
+			ExecuteShortcut(c_oAscDocumentShortcutType.Subscript);
+			assert.strictEqual(GetDirectTextPr().GetVertAlign(), AscCommon.vertalign_SubScript, 'Check turn on subscript');
+			ExecuteShortcut(c_oAscDocumentShortcutType.Subscript);
+			assert.strictEqual(GetDirectTextPr().GetVertAlign(), AscCommon.vertalign_Baseline, 'Check turn off subscript');
+
 			// defaultSize = 10
 			// 10 -> 11 -> 12 -> 14 -> 16 -> 14 -> 12 -> 11 -> 10
 			ExecuteShortcut(c_oAscDocumentShortcutType.IncreaseFontSize);
@@ -299,7 +399,7 @@
 			assert.strictEqual(GetDirectTextPr().GetFontSize(), 14, 'Check increase font size');
 			ExecuteShortcut(c_oAscDocumentShortcutType.IncreaseFontSize);
 			assert.strictEqual(GetDirectTextPr().GetFontSize(), 16, 'Check increase font size');
-			
+
 			ExecuteShortcut(c_oAscDocumentShortcutType.DecreaseFontSize);
 			assert.strictEqual(GetDirectTextPr().GetFontSize(), 14, 'Check decrease font size');
 			ExecuteShortcut(c_oAscDocumentShortcutType.DecreaseFontSize);
@@ -309,7 +409,7 @@
 			ExecuteShortcut(c_oAscDocumentShortcutType.DecreaseFontSize);
 			assert.strictEqual(GetDirectTextPr().GetFontSize(), 10, 'Check decrease font size');
 		});
-		
+
 		QUnit.test('Check select all shortcut', (assert) =>
 		{
 			let p = ClearDocumentAndAddParagraph('Hello world');
@@ -321,15 +421,16 @@
 			assert.strictEqual(p.IsSelectedAll(), true, 'Check paragraph selection');
 			assert.strictEqual(table.IsSelectedAll(), true, 'Check table selection');
 		});
-		
+
 		QUnit.test('Check paragraph property change', (assert) =>
 		{
 			let p = ClearDocumentAndAddParagraph('Hello world');
+
 			function GetStyleName()
 			{
 				return logicDocument.GetStyleManager().GetName(p.GetParagraphStyle());
 			}
-			
+
 			assert.strictEqual(GetStyleName(), "", "Check style");
 			ExecuteShortcut(c_oAscDocumentShortcutType.ApplyHeading1);
 			assert.strictEqual(GetStyleName(), "Heading 1", "Check apply heading 1");
@@ -337,32 +438,1021 @@
 			assert.strictEqual(GetStyleName(), "Heading 2", "Check apply heading 2");
 			ExecuteShortcut(c_oAscDocumentShortcutType.ApplyHeading3);
 			assert.strictEqual(GetStyleName(), "Heading 3", "Check apply heading 3");
-			
+
 			assert.strictEqual(GetDirectParaPr().GetJc(), undefined, "Check justification");
 			ExecuteShortcut(c_oAscDocumentShortcutType.CenterPara);
 			assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Center, "Check turn on center para");
 			ExecuteShortcut(c_oAscDocumentShortcutType.CenterPara);
 			assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Left, "Check turn off center para");
-			
+
 			ExecuteShortcut(c_oAscDocumentShortcutType.JustifyPara);
 			assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Justify, "Check turn on justify para");
 			ExecuteShortcut(c_oAscDocumentShortcutType.JustifyPara);
 			assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Left, "Check turn off justify para");
-			
+
 			ExecuteShortcut(c_oAscDocumentShortcutType.JustifyPara);
 			assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Justify, "Check turn on justify para");
 			ExecuteShortcut(c_oAscDocumentShortcutType.LeftPara);
 			assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Left, "Check turn on left para");
 			ExecuteShortcut(c_oAscDocumentShortcutType.LeftPara);
 			assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Justify, "Check turn off left para");
-			
+
 			ExecuteShortcut(c_oAscDocumentShortcutType.RightPara);
 			assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Right, "Check turn on right para");
 			ExecuteShortcut(c_oAscDocumentShortcutType.RightPara);
 			assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Left, "Check turn off right para");
+
+			ExecuteShortcut(c_oAscDocumentShortcutType.Indent);
+			assert.strictEqual(GetDirectParaPr().GetIndLeft(), 12.5);
+
+			ExecuteShortcut(c_oAscDocumentShortcutType.UnIndent);
+			assert.strictEqual(GetDirectParaPr().GetIndLeft(), 0);
+
+			const p2 = CreateParagraphWithText('Hello');
+
+			logicDocument.SelectAll();
+
+			ExecuteShortcut2(oTestTypes.testIndent);
+			assert.strictEqual(GetDirectParaPr().GetIndLeft(), 12.5);
+
+			ExecuteShortcut2(oTestTypes.testUnIndent);
+			assert.strictEqual(GetDirectParaPr().GetIndLeft(), 0);
 		});
-		
-		
+
+		QUnit.test('Check insert document elements', (assert) =>
+		{
+			let p = ClearDocumentAndAddParagraph('');
+			ExecuteShortcut(c_oAscDocumentShortcutType.InsertFootnoteNow);
+			const arrFootnotes = logicDocument.GetFootnotesList();
+			assert.equal(arrFootnotes.length, 1, 'Check insert footnote shortcut');
+
+			p.SetThisElementCurrent();
+			ExecuteShortcut(c_oAscDocumentShortcutType.InsertEndnoteNow);
+			const arrEndNotes = logicDocument.GetEndnotesList();
+			assert.equal(arrEndNotes.length, 1, 'Check insert endnote shortcut');
+			logicDocument.MoveCursorToStartPos();
+		});
+
+
+		QUnit.test('Check shortcuts with sending event to interface', (assert) =>
+		{
+			function checkSendingEvent(sSendEvent, oEvent, fCustomCheck, customExpectedValue)
+			{
+				let bCheck = false;
+				const fCheck = function (...args)
+				{
+					if (fCustomCheck)
+					{
+						bCheck = fCustomCheck(...args);
+					} else
+					{
+						bCheck = true;
+					}
+				}
+				editor.asc_registerCallback(sSendEvent, fCheck);
+
+				ExecuteShortcut(oEvent);
+				assert.strictEqual(bCheck, customExpectedValue === undefined ? true : customExpectedValue, 'Check catch ' + sSendEvent + ' event');
+				editor.asc_unregisterCallback(sSendEvent, fCheck);
+			}
+
+			checkSendingEvent("asc_onDialogAddHyperlink", c_oAscDocumentShortcutType.InsertHyperlink);
+			checkSendingEvent("asc_onPrint", c_oAscDocumentShortcutType.PrintPreviewAndPrint);
+
+			checkSendingEvent('asc_onMouseMoveStart', oEvents[oTestTypes.closeAllWindowsPopups][0]);
+			checkSendingEvent('asc_onMouseMove', oEvents[oTestTypes.closeAllWindowsPopups][0]);
+			checkSendingEvent('asc_onMouseMoveEnd', oEvents[oTestTypes.closeAllWindowsPopups][0]);
+
+			checkSendingEvent('asc_onContextMenu', oEvents[oTestTypes.showContextMenu][0]);
+			AscCommon.AscBrowser.isOpera = true;
+			checkSendingEvent('asc_onContextMenu', oEvents[oTestTypes.showContextMenu][1]);
+			AscCommon.AscBrowser.isOpera = false;
+			checkSendingEvent('asc_onContextMenu', oEvents[oTestTypes.showContextMenu][2]);
+		});
+
+		QUnit.test('Check insert equation shortcut', (assert) =>
+		{
+			ClearDocumentAndAddParagraph('');
+			ExecuteShortcut(c_oAscDocumentShortcutType.InsertEquation);
+			const oMath = logicDocument.GetCurrentMath();
+			assert.true(!!oMath, 'Check insert equation shortcut');
+		});
+
+		QUnit.test('Check insert elements shortcut', (assert) =>
+		{
+			const p = ClearDocumentAndAddParagraph('');
+			ExecuteShortcut(c_oAscDocumentShortcutType.InsertPageNumber);
+
+			const r = p.Content[0];
+			assert.strictEqual(r.Content[0].Type, para_PageNum);
+		});
+
+		QUnit.test('Check bullet list shortcut', (assert) =>
+		{
+			const p = ClearDocumentAndAddParagraph('');
+			assert.false(p.IsBulletedNumbering(), 'check apply bullet list');
+			ExecuteShortcut(c_oAscDocumentShortcutType.ApplyListBullet);
+			assert.true(p.IsBulletedNumbering(), 'check apply bullet list');
+		});
+
+		QUnit.test('Check copy/paste format shortcuts', (assert) =>
+		{
+			let p = ClearDocumentAndAddParagraph('Hello');
+			ApplyTextPrToDocument({Bold: true, Italic: true, Underline: true});
+			GetDirectTextPr();
+			ExecuteShortcut(c_oAscDocumentShortcutType.CopyFormat);
+			let tPr = editor.getFormatPainterData().TextPr;
+			assert.true(tPr.Get_Bold());
+			assert.true(tPr.Get_Italic());
+			assert.true(tPr.Get_Underline());
+
+			p = ClearDocumentAndAddParagraph('');
+			ExecuteShortcut(c_oAscDocumentShortcutType.PasteFormat);
+			tPr = GetDirectTextPr();
+			assert.true(tPr.Get_Bold());
+			assert.true(tPr.Get_Italic());
+			assert.true(tPr.Get_Underline());
+		});
+
+		QUnit.test('Check history shortcuts', (assert) =>
+		{
+			let p = ClearDocumentAndAddParagraph('Hello');
+			p.MoveCursorToEndPos();
+			logicDocument.AddTextWithPr(' World');
+			ExecuteShortcut(c_oAscDocumentShortcutType.EditUndo);
+			assert.strictEqual(AscTest.GetParagraphText(p), 'Hello');
+
+			ExecuteShortcut(c_oAscDocumentShortcutType.EditRedo);
+			assert.strictEqual(AscTest.GetParagraphText(p), 'Hello World');
+		});
+
+		QUnit.test('Check show paramarks shortcut', (assert) =>
+		{
+			ExecuteShortcut(c_oAscDocumentShortcutType.ShowAll);
+			assert.true(editor.ShowParaMarks, 'Check show non printing characters shortcut');
+		});
+
+		QUnit.test('Check save shortcut', (assert) =>
+		{
+			assert.timeout(100);
+			const done = assert.async();
+
+			const fOldSave = editor._onSaveCallbackInner;
+			editor._onSaveCallbackInner = function ()
+			{
+				assert.true(true, 'Check save shortcut');
+				done();
+				editor._onSaveCallbackInner = fOldSave;
+			};
+			editor._saveCheck  = () => true;
+			editor.asc_isDocumentCanSave = () => true;
+			ExecuteShortcut(c_oAscDocumentShortcutType.Save);
+		});
+
+		//todo
+		// QUnit.test.todo('Check update fields shortcut', (assert) =>
+		// {
+		// 	const p = ClearDocumentAndAddParagraph('Hello');
+		// 	const p2 = CreateParagraphWithText('Hello');
+		// 	const p3 = CreateParagraphWithText('Hello');
+		// 	logicDocument.AddToContent(logicDocument.Content.length, p2);
+		// 	logicDocument.AddToContent(logicDocument.Content.length, p3);
+		// 		for (let i = 0; i < logicDocument.Content.length; i += 1)
+		// 		{
+		// 			logicDocument.Set_CurrentElement(i, true);
+		// 			logicDocument.SetParagraphStyle("Heading 1");
+		// 		}
+		// 		logicDocument.MoveCursorToStartPos();
+		// 		const props = new Asc.CTableOfContentsPr();
+		// 		props.put_OutlineRange(1, 9);
+		// 		props.put_Hyperlink(true);
+		// 		props.put_ShowPageNumbers(true);
+		// 		props.put_RightAlignTab(true);
+		// 		props.put_TabLeader(Asc.c_oAscTabLeader.Dot);
+		// 		editor.asc_AddTableOfContents(null, props);
+		//
+		// 		logicDocument.MoveCursorToEndPos();
+		// 		const p4 = CreateParagraphWithText('Hello');
+		// 		logicDocument.AddToContent(logicDocument.Content.length, p4);
+		// 		p4.SetThisElementCurrent(true);
+		// 		logicDocument.SetParagraphStyle("Heading 1");
+		//
+		// 		logicDocument.Content[0].SetThisElementCurrent();
+		// 		logicDocument.Content[0].MoveCursorToEndPos();
+		//
+		// 		ExecuteShortcut(c_oAscDocumentShortcutType.UpdateFields);
+		// 		assert.strictEqual(logicDocument.Content[0].Content.Content.length, 5, 'Check update fields shortcut');
+		// });
+
+		QUnit.test('Check remove hotkeys', (assert) =>
+		{
+			const p = ClearDocumentAndAddParagraph('Hello Hello Hello Hello');
+
+			ExecuteShortcut2(oTestTypes.removeBackSymbol);
+			assert.strictEqual(AscTest.GetParagraphText(p), 'Hello Hello Hello Hell');
+
+			ExecuteShortcut2(oTestTypes.removeBackWord);
+			assert.strictEqual(AscTest.GetParagraphText(p), 'Hello Hello Hello ');
+
+			logicDocument.MoveCursorToStartPos();
+			ExecuteShortcut2(oTestTypes.removeFrontSymbol);
+			assert.strictEqual(AscTest.GetParagraphText(p), 'ello Hello Hello ');
+			ExecuteShortcut2(oTestTypes.removeFrontWord);
+			assert.strictEqual(AscTest.GetParagraphText(p), 'Hello Hello ');
+		});
+		QUnit.test('Check move/select in text hotkeys', (assert) =>
+		{
+			function CheckCursorPosition(nExpected)
+			{
+				const pos = logicDocument.GetContentPosition();
+				assert.strictEqual(pos[pos.length - 1].Position, nExpected);
+			}
+
+			const p = ClearDocumentAndAddParagraph(
+				'Hello World Hello ' +
+				'World Hello World ' +
+				'Hello World Hello ' +
+				'World Hello World ' +
+				'Hello World Hello ' +
+				'Hello World Hello ' +
+				'Hello World Hello ' +
+				'Hello World Hello ' +
+				'World Hello World');
+
+			logicDocument.MoveCursorToStartPos();
+			TurnOnRecalculate();
+			TurnOnRecalculateCurPos();
+			AscTest.Recalculate();
+			TurnOffRecalculate();
+			TurnOffRecalculateCurPos();
+
+			ExecuteShortcut2(oTestTypes.moveToEndLine);
+			CheckCursorPosition(18);
+
+			ExecuteShortcut2(oTestTypes.moveToRightChar);
+			CheckCursorPosition(19);
+
+			ExecuteShortcut2(oTestTypes.moveToLeftChar);
+			CheckCursorPosition(18);
+
+			ExecuteShortcut2(oTestTypes.moveToLeftWord);
+			CheckCursorPosition(12);
+
+			ExecuteShortcut2(oTestTypes.moveToRightWord);
+			CheckCursorPosition(18);
+
+			ExecuteShortcut2(oTestTypes.moveToRightWord);
+			CheckCursorPosition(24);
+
+
+			ExecuteShortcut2(oTestTypes.moveToStartLine);
+			CheckCursorPosition(18);
+
+			ExecuteShortcut2(oTestTypes.moveDown);
+			CheckCursorPosition(36);
+
+			ExecuteShortcut2(oTestTypes.moveUp);
+			CheckCursorPosition(18);
+
+			ExecuteShortcut2(oTestTypes.moveToEndDocument);
+			CheckCursorPosition(161);
+
+			ExecuteShortcut2(oTestTypes.moveToStartDocument);
+			CheckCursorPosition(0);
+
+			AscTest.MoveCursorRight();
+
+			ExecuteShortcut2(oTestTypes.moveToNextPage);
+			CheckCursorPosition(91);
+
+			ExecuteShortcut2(oTestTypes.moveToPreviousPage);
+			CheckCursorPosition(1);
+
+			ExecuteShortcut2(oTestTypes.moveToStartNextPage);
+			CheckCursorPosition(90);
+
+			ExecuteShortcut2(oTestTypes.moveToStartPreviousPage);
+			CheckCursorPosition(0);
+
+			function CheckSelectedText(sExpectedText)
+			{
+				const sSelectedText = logicDocument.GetSelectedText();
+				assert.strictEqual(sSelectedText, sExpectedText);
+			}
+
+			ExecuteShortcut2(oTestTypes.selectToEndLine);
+			CheckSelectedText('Hello World Hello ');
+
+
+			ExecuteShortcut2(oTestTypes.selectRightChar);
+			CheckSelectedText('Hello World Hello W');
+
+			ExecuteShortcut2(oTestTypes.selectLeftChar);
+			CheckSelectedText('Hello World Hello ');
+
+			ExecuteShortcut2(oTestTypes.selectLeftWord);
+			CheckSelectedText('Hello World ');
+
+			ExecuteShortcut2(oTestTypes.selectRightWord);
+			CheckSelectedText('Hello World Hello ');
+
+			ExecuteShortcut2(oTestTypes.selectRightWord);
+			CheckSelectedText('Hello World Hello World ');
+
+			ExecuteShortcut2(oTestTypes.selectRightWord);
+			CheckSelectedText('Hello World Hello World Hello ');
+
+			ExecuteShortcut2(oTestTypes.selectToStartLine);
+			CheckSelectedText('Hello World Hello ');
+
+			ExecuteShortcut2(oTestTypes.selectDown);
+			CheckSelectedText('Hello World Hello World Hello World ');
+
+			ExecuteShortcut2(oTestTypes.selectUp);
+			CheckSelectedText('Hello World Hello ');
+
+			ExecuteShortcut2(oTestTypes.selectToEndDocument);
+			CheckSelectedText('Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello Hello World Hello Hello World Hello Hello World Hello World Hello World');
+
+			ExecuteShortcut2(oTestTypes.selectToStartDocument);
+			CheckSelectedText('');
+
+			logicDocument.MoveCursorToEndPos();
+			ExecuteShortcut2(oTestTypes.selectLeftChar);
+			CheckSelectedText('d');
+
+			ExecuteShortcut2(oTestTypes.selectLeftWord);
+			CheckSelectedText('World');
+
+			logicDocument.MoveCursorToStartPos();
+			AscTest.MoveCursorRight();
+			ExecuteShortcut2(oTestTypes.selectToNextPage);
+			CheckSelectedText('ello World Hello World Hello World Hello World Hello World Hello World Hello World Hello H');
+			AscTest.MoveCursorRight();
+
+			ExecuteShortcut2(oTestTypes.selectToPreviousPage);
+			CheckSelectedText('ello World Hello World Hello World Hello World Hello World Hello World Hello World Hello H');
+			AscTest.MoveCursorLeft();
+			ExecuteShortcut2(oTestTypes.selectToStartNextPage);
+			CheckSelectedText('ello World Hello World Hello World Hello World Hello World Hello World Hello World Hello ');
+			AscTest.MoveCursorRight();
+			ExecuteShortcut2(oTestTypes.selectToStartPreviousPage);
+			CheckSelectedText('Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello ');
+		});
+
+		function createShape(x, y, h, w)
+		{
+			const oDrawing = new ParaDrawing(w, h, null, logicDocument.GetDrawingDocument(), logicDocument, null);
+			const oShapeTrack = new AscFormat.NewShapeTrack('rect', 0, 0, logicDocument.theme, null, null, null, 0);
+			oShapeTrack.track({}, x, y);
+			const oShape = oShapeTrack.getShape(true, logicDocument.GetDrawingDocument(), null);
+			oShape.spPr.xfrm.setExtX(w);
+			oShape.spPr.xfrm.setExtY(h);
+			oShape.setBDeleted(false);
+
+			oShape.setParent(oDrawing);
+			oDrawing.Set_GraphicObject(oShape);
+			oDrawing.Set_DrawingType(drawing_Anchor);
+			oDrawing.Set_WrappingType(WRAPPING_TYPE_NONE);
+			oDrawing.Set_Distance(0, 0, 0, 0);
+			const oNearestPos = logicDocument.Get_NearestPos(0, oShape.x, oShape.y, true, oDrawing);
+			oDrawing.Set_XYForAdd(oShape.x, oShape.y, oNearestPos, 0);
+			oDrawing.AddToDocument(oNearestPos);
+			AscTest.Recalculate();
+			return oDrawing;
+		}
+
+		function selectDrawing(arrDrawings)
+		{
+			logicDocument.SelectDrawings(arrDrawings, logicDocument);
+		}
+
+		function GetDrawingObjects()
+		{
+			return logicDocument.DrawingObjects;
+		}
+
+		function round(nNumber, nAmount)
+		{
+			const nPower = Math.pow(10, nAmount);
+			return Math.round(nNumber * nPower) / nPower;
+		}
+		QUnit.test('Check move/select drawings', (assert) =>
+		{
+			TurnOnRecalculate();
+			const p = ClearDocumentAndAddParagraph('');
+			p.SetThisElementCurrent();
+			AscTest.Recalculate();
+			const drawing1 = createShape(0, 0, 100, 200);
+
+			const dotsPerMM = logicDocument.DrawingDocument.GetDotsPerMM();
+			function CheckShapePosition(X, Y)
+			{
+				assert.deepEqual([round(drawing1.X * dotsPerMM, 10), round(drawing1.Y * dotsPerMM, 10), drawing1.Extent.W, drawing1.Extent.H], [X, Y, 200, 100]);
+			}
+
+			selectDrawing([drawing1]);
+
+			ExecuteShortcut2(oTestTypes.bigMoveGraphicObjectLeft);
+			CheckShapePosition(-5, 0);
+
+			ExecuteShortcut2(oTestTypes.littleMoveGraphicObjectLeft);
+			CheckShapePosition(-6, 0);
+
+			ExecuteShortcut2(oTestTypes.bigMoveGraphicObjectRight);
+			CheckShapePosition(-1, 0);
+
+			ExecuteShortcut2(oTestTypes.littleMoveGraphicObjectRight);
+			CheckShapePosition(0, 0);
+
+			ExecuteShortcut2(oTestTypes.bigMoveGraphicObjectDown);
+			CheckShapePosition(0, 5);
+
+			ExecuteShortcut2(oTestTypes.littleMoveGraphicObjectDown);
+			CheckShapePosition(0, 6);
+
+			ExecuteShortcut2(oTestTypes.bigMoveGraphicObjectUp);
+			CheckShapePosition(0, 1);
+
+			ExecuteShortcut2(oTestTypes.littleMoveGraphicObjectUp);
+			CheckShapePosition(0, 0);
+
+
+			function CheckSelectedObjects(arrOfDrawings)
+			{
+				const nLength = Math.max(arrOfDrawings.length, GetDrawingObjects().selectedObjects.length);
+				for (let i = 0; i < nLength; i++)
+				{
+					assert.true(GetDrawingObjects().selectedObjects[i] === arrOfDrawings[i].GraphicObj);
+				}
+			}
+
+			const drawing2 = createShape(0, 0, 10, 10);
+			const drawing3 = createShape(0, 0, 10, 10);
+			selectDrawing([drawing3]);
+
+			ExecuteShortcut2(oTestTypes.selectNextObject);
+			CheckSelectedObjects([drawing1]);
+
+			ExecuteShortcut2(oTestTypes.selectNextObject);
+			CheckSelectedObjects([drawing2]);
+
+			ExecuteShortcut2(oTestTypes.selectNextObject);
+			CheckSelectedObjects([drawing3]);
+
+			ExecuteShortcut2(oTestTypes.selectPreviousObject);
+			CheckSelectedObjects([drawing2]);
+
+			ExecuteShortcut2(oTestTypes.selectPreviousObject);
+			CheckSelectedObjects([drawing1]);
+
+			ExecuteShortcut2(oTestTypes.selectPreviousObject);
+			CheckSelectedObjects([drawing3]);
+			TurnOffRecalculate();
+		});
+
+		QUnit.test('Check actions with selected shape', (assert) =>
+		{
+			TurnOnRecalculate();
+			const p = CreateParagraphWithText('');
+			AscTest.Recalculate();
+			let sp = createShape(0, 0, 10, 10);
+			selectDrawing([sp]);
+
+			ExecuteShortcut2(oTestTypes.createTextBoxContent);
+			assert.true(!!sp.GraphicObj.textBoxContent);
+
+			sp = createShape(0, 0, 10, 10);
+			sp.GraphicObj.setWordShape(false);
+			selectDrawing([sp]);
+
+			ExecuteShortcut2(oTestTypes.createTextBody);
+			assert.true(!!sp.GraphicObj.txBody);
+
+			selectDrawing([sp]);
+			ExecuteShortcut2(oTestTypes.moveCursorToStartPositionShapeEnter);
+			assert.true(sp.GraphicObj.getDocContent().IsCursorAtBegin());
+
+			AscTest.EnterText('Hello');
+			selectDrawing([sp]);
+
+			ExecuteShortcut2(oTestTypes.selectAllShapeEnter);
+			assert.strictEqual(logicDocument.GetSelectedText(), 'Hello');
+			TurnOffRecalculate();
+		});
+
+
+		QUnit.test('Check move in headers/footers', (assert) =>
+		{
+			TurnOnRecalculate();
+			TurnOnRecalculateCurPos();
+			const p = ClearDocumentAndAddParagraph("Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World");
+			AscTest.Recalculate();
+
+
+			logicDocument.GoToPage(2);
+			GoToFooter(2);
+			GoToHeader(2);
+			TurnOffRecalculateCurPos();
+			TurnOffRecalculate();
+
+			ExecuteShortcut2(oTestTypes.moveToPreviousHeaderFooter);
+			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[1].Footer);
+			ExecuteShortcut2(oTestTypes.moveToPreviousHeaderFooter);
+			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[1].Header);
+
+			ExecuteShortcut2(oTestTypes.moveToNextHeaderFooter);
+			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[1].Footer);
+			ExecuteShortcut2(oTestTypes.moveToNextHeaderFooter);
+			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[2].Header);
+
+			ExecuteShortcut2(oTestTypes.moveToPreviousHeader);
+			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[1].Header);
+			ExecuteShortcut2(oTestTypes.moveToPreviousHeader);
+			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[0].Header);
+
+			ExecuteShortcut2(oTestTypes.moveToNextHeader);
+			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[1].Header);
+			ExecuteShortcut2(oTestTypes.moveToNextHeader);
+			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[2].Header);
+
+			RemoveHeader(2);
+			RemoveFooter(2);
+		});
+
+		QUnit.test('Check reset selection shortcut', (assert) =>
+		{
+			TurnOnRecalculate();
+			const p = ClearDocumentAndAddParagraph("");
+			AscTest.Recalculate();
+
+			const dr1 = createShape(0, 0, 10, 10);
+			const dr2 = createShape(0, 0, 10, 10);
+
+			selectDrawing([dr1, dr2]);
+
+			const group = GetDrawingObjects().groupSelectedObjects();
+			group.GraphicObj.selectObject(dr1.GraphicObj, 0);
+			GetDrawingObjects().selection.groupSelection = group.GraphicObj;
+
+			ExecuteShortcut2(oTestTypes.resetShapeSelection);
+			assert.strictEqual(GetDrawingObjects().selectedObjects.length, 0);
+			TurnOffRecalculate();
+		});
+
+		QUnit.test('Check reset actions shortcut', (assert) =>
+		{
+			TurnOnRecalculate();
+			const p = ClearDocumentAndAddParagraph("");
+			AscTest.Recalculate()
+			editor.StartAddShape('rect');
+			ExecuteShortcut2(oTestTypes.resetStartAddShape);
+			assert.strictEqual(editor.isStartAddShape, false, "Test reset add shape");
+			TurnOffRecalculate();
+			editor.SetPaintFormat(AscCommon.c_oAscFormatPainterState.kOn);
+			ExecuteShortcut2(oTestTypes.resetFormattingByExample);
+			assert.strictEqual(editor.isFormatPainterOn(), false, "Test reset formatting by example");
+
+			editor.SetMarkerFormat(true, true, 0, 0, 0);
+			ExecuteShortcut2(oTestTypes.resetMarkerFormat);
+			assert.strictEqual(editor.isMarkerFormat, false, "Test reset marker");
+		});
+
+		QUnit.test('Check disable shortcuts', (assert) =>
+		{
+			assert.strictEqual(ExecuteShortcut2(oTestTypes.disableNumLock) & keydownresult_PreventAll, keydownresult_PreventAll);
+			assert.strictEqual(ExecuteShortcut2(oTestTypes.disableScrollLock) & keydownresult_PreventAll, keydownresult_PreventAll);
+		});
+
+		let nKeyId = 0;
+		function AddCheckBox()
+		{
+			const oCheckBox = logicDocument.AddContentControlCheckBox();
+			var specProps = new AscCommon.CSdtCheckBoxPr();
+			oCheckBox.ApplyCheckBoxPr(specProps);
+			oCheckBox.SetFormPr(new AscCommon.CSdtFormPr('key' + nKeyId++, '', '', false));
+			return oCheckBox;
+		}
+
+		function AddComboBox(arrItems)
+		{
+			const oComboBox = logicDocument.AddContentControlComboBox();
+			var specProps = new AscCommon.CSdtComboBoxPr();
+			specProps.clear();
+			for (let i = 0; i < arrItems.length; i++)
+			{
+				specProps.add_Item(arrItems[i], arrItems[i]);
+			}
+
+			oComboBox.ApplyComboBoxPr(specProps);
+			oComboBox.SetFormPr(new AscCommon.CSdtFormPr('key' + nKeyId++, '', '', false));
+
+			return oComboBox;
+		}
+
+		QUnit.test('Check boxes shortcuts', (assert) =>
+		{
+			AscTest.SetFillingFormMode(false);
+			let p = ClearDocumentAndAddParagraph('');
+
+			const checkBox = AddCheckBox();
+			AscTest.SetFillingFormMode(true);
+			ExecuteShortcut2(oTestTypes.toggleCheckBox);
+			assert.true(checkBox.IsCheckBoxChecked());
+
+			ExecuteShortcut2(oTestTypes.toggleCheckBox);
+			assert.false(checkBox.IsCheckBoxChecked());
+			AscTest.SetFillingFormMode(false);
+
+			ClearDocumentAndAddParagraph('');
+			const oComboBox = AddComboBox(['Hello', 'World', 'yo']);
+			AscTest.SetFillingFormMode(true);
+			ExecuteShortcut2(oTestTypes.nextOptionComboBox);
+			assert.strictEqual(logicDocument.GetSelectedText(), 'Hello');
+
+			ExecuteShortcut2(oTestTypes.nextOptionComboBox);
+			assert.strictEqual(logicDocument.GetSelectedText(), 'World');
+
+			ExecuteShortcut2(oTestTypes.nextOptionComboBox);
+			assert.strictEqual(logicDocument.GetSelectedText(), 'yo');
+
+			ExecuteShortcut2(oTestTypes.previousOptionComboBox);
+			assert.strictEqual(logicDocument.GetSelectedText(), 'World');
+
+			ExecuteShortcut2(oTestTypes.previousOptionComboBox);
+			assert.strictEqual(logicDocument.GetSelectedText(), 'Hello');
+
+			ExecuteShortcut2(oTestTypes.previousOptionComboBox);
+			assert.strictEqual(logicDocument.GetSelectedText(), 'yo');
+			AscTest.SetEditingMode();
+		});
+
+		QUnit.test('Check remove objects shortcut', (assert) =>
+		{
+			console.log(!!(editor.restrictions & Asc.c_oAscRestrictionType.OnlyForms))
+			TurnOnRecalculate();
+			const p = ClearDocumentAndAddParagraph('');
+			AscTest.Recalculate();
+			let dr = createShape(0, 0 , 10, 10);
+			selectDrawing([dr]);
+
+			ExecuteShortcut2(oTestTypes.removeShape, 0);
+			assert.strictEqual(p.GetRunByElement(dr), null, 'Test remove shape');
+
+			dr = createShape(0, 0 , 10, 10);
+			selectDrawing([dr]);
+
+			ExecuteShortcut2(oTestTypes.removeShape, 1);
+			assert.strictEqual(p.GetRunByElement(dr), null, 'Test remove shape');
+			TurnOffRecalculate();
+		});
+
+		QUnit.test('Check move on forms', (assert) =>
+		{
+			const p = ClearDocumentAndAddParagraph('');
+			let oCC1 = AddCheckBox();
+			AscTest.MoveCursorRight();
+			let oCC2 = AddCheckBox();
+			AscTest.MoveCursorRight();
+			let oCC3 = AddCheckBox();
+			AscTest.SetFillingFormMode(true);
+
+
+			ExecuteShortcut2(oTestTypes.moveToNextForm);
+			assert.true(logicDocument.GetSelectedElementsInfo().GetInlineLevelSdt() === oCC1, 'Test move to next form');
+
+			ExecuteShortcut2(oTestTypes.moveToNextForm);
+			assert.true(logicDocument.GetSelectedElementsInfo().GetInlineLevelSdt() === oCC2, 'Test move to next form');
+
+			ExecuteShortcut2(oTestTypes.moveToNextForm);
+			assert.true(logicDocument.GetSelectedElementsInfo().GetInlineLevelSdt() === oCC3, 'Test move to next form');
+
+			ExecuteShortcut2(oTestTypes.moveToPreviousForm);
+			assert.true(logicDocument.GetSelectedElementsInfo().GetInlineLevelSdt() === oCC2, 'Test move to previous form');
+			ExecuteShortcut2(oTestTypes.moveToPreviousForm);
+			assert.true(logicDocument.GetSelectedElementsInfo().GetInlineLevelSdt() === oCC1, 'Test move to previous form');
+			ExecuteShortcut2(oTestTypes.moveToPreviousForm);
+			assert.true(logicDocument.GetSelectedElementsInfo().GetInlineLevelSdt() === oCC3, 'Test move to previous form');
+
+			AscTest.SetEditingMode();
+		});
+
+		function AddTable(row, column)
+		{
+			let table = AscTest.CreateTable(row, column);
+			logicDocument.PushToContent(table);
+			return table;
+		}
+
+		QUnit.test('Check move in table shortcuts', (assert) =>
+		{
+			ClearDocumentAndAddParagraph();
+			const table = AddTable(3, 4);
+			table.Document_SetThisElementCurrent();
+			table.MoveCursorToStartPos();
+			ExecuteShortcut2(oTestTypes.moveToNextCell);
+			assert.strictEqual(table.CurCell.Index, 1);
+			ExecuteShortcut2(oTestTypes.moveToNextCell);
+			assert.strictEqual(table.CurCell.Index, 2);
+			ExecuteShortcut2(oTestTypes.moveToNextCell);
+			assert.strictEqual(table.CurCell.Index, 3);
+
+			ExecuteShortcut2(oTestTypes.moveToPreviousCell);
+			assert.strictEqual(table.CurCell.Index, 2);
+			ExecuteShortcut2(oTestTypes.moveToPreviousCell);
+			assert.strictEqual(table.CurCell.Index, 1);
+			ExecuteShortcut2(oTestTypes.moveToPreviousCell);
+			assert.strictEqual(table.CurCell.Index, 0);
+		});
+
+		function AddChart()
+		{
+				const oDrawingDocument = editor.WordControl.m_oDrawingDocument;
+				const oDrawing = new ParaDrawing(100, 100, null, oDrawingDocument, null, null);
+				const oChartSpace = logicDocument.GetChartObject(Asc.c_oAscChartTypeSettings.lineNormal);
+				oChartSpace.spPr.setXfrm(new AscFormat.CXfrm());
+				oChartSpace.spPr.xfrm.setOffX(0);
+				oChartSpace.spPr.xfrm.setOffY(0);
+				oChartSpace.spPr.xfrm.setExtX(100);
+				oChartSpace.spPr.xfrm.setExtY(100);
+
+				oChartSpace.setParent(oDrawing);
+				oDrawing.Set_GraphicObject(oChartSpace);
+				oDrawing.setExtent(oChartSpace.spPr.xfrm.extX, oChartSpace.spPr.xfrm.extY);
+
+				oDrawing.Set_DrawingType(drawing_Anchor);
+				oDrawing.Set_WrappingType(WRAPPING_TYPE_NONE);
+				oDrawing.Set_Distance(0, 0, 0, 0);
+			const oNearestPos = logicDocument.Get_NearestPos(0, oChartSpace.x, oChartSpace.y, true, oDrawing);
+			oDrawing.Set_XYForAdd(oChartSpace.x, oChartSpace.y, oNearestPos, 0);
+			oDrawing.AddToDocument(oNearestPos);
+			AscTest.Recalculate();
+				return oDrawing;
+		}
+		QUnit.test('Check Select all in chart title', (assert) =>
+		{
+			TurnOnRecalculate();
+			const p = ClearDocumentAndAddParagraph('');
+			AscTest.Recalculate();
+			const dr = AddChart();
+
+			const oChart = dr.GraphicObj;
+			selectDrawing([dr]);
+			const oTitles = oChart.getAllTitles();
+			const oController = GetDrawingObjects();
+			oController.selection.chartSelection = oChart;
+			oChart.selectTitle(oTitles[0], 0);
+
+			ExecuteShortcut2(oTestTypes.selectAllInChartTitle);
+			assert.strictEqual(logicDocument.GetSelectedText(), 'Diagram Title', 'Check select all title');
+			TurnOffRecalculate();
+		});
+
+		QUnit.test('add new paragraph content', (assert) =>
+		{
+			const p = ClearDocumentAndAddParagraph('Hello text');
+			ExecuteShortcut2(oTestTypes.addNewParagraphContent);
+			assert.strictEqual(logicDocument.Content.length, 2);
+		});
+
+		QUnit.test('Check add new paragraph math', (assert) =>
+		{
+			const p = ClearDocumentAndAddParagraph('Hello text');
+			logicDocument.AddParaMath();
+			AscTest.EnterText('abcd');
+			AscTest.MoveCursorLeft();
+			ExecuteShortcut2(oTestTypes.addNewParagraphMath)
+			assert.strictEqual(logicDocument.Content.length, 2, 'Test add new paragraph with math');
+		});
+
+		QUnit.test("Test add new line to math", (oAssert) =>
+		{
+				const p = ClearDocumentAndAddParagraph('');
+				logicDocument.AddParaMath(c_oAscMathType.FractionVertical);
+				AscTest.MoveCursorLeft();
+				AscTest.MoveCursorLeft();
+				AscTest.EnterText('Hello');
+				AscTest.MoveCursorLeft();
+				AscTest.MoveCursorLeft();
+				ExecuteShortcut2(oTestTypes.addNewLineToMath);
+				const oParaMath = p.GetAllParaMaths()[0];
+				const oFraction = oParaMath.Root.GetFirstElement();
+				const oNumerator = oFraction.getNumerator();
+				const oEqArray = oNumerator.GetFirstElement();
+				oAssert.strictEqual(oEqArray.getRowsCount(), 2, 'Check add new line math');
+		});
+
+		function AddComplexForm()
+		{
+			let complexForm = logicDocument.AddComplexForm();
+			const formPr = new AscWord.CSdtFormPr();
+			var formTextPr = new AscCommon.CSdtTextFormPr();
+			formTextPr.put_MultiLine(true);
+			complexForm.SetFormPr(formPr);
+			complexForm.SetTextFormPr(formTextPr);
+			return complexForm;
+		}
+
+		// todo
+		// QUnit.test("Test remove form", (assert) =>
+		// {
+		// 	AscTest.SetFillingFormMode(false)
+		// 	const p = ClearDocumentAndAddParagraph('');
+		// 	const form = AddComboBox(['hdfh']);
+		// 	ExecuteShortcut2(oTestTypes.removeForm);
+		// 	assert.strictEqual(p.GetPosByElement(form), null, 'Check add new line math');
+		// 	AscTest.SetEditingMode()
+		// });
+
+		QUnit.test("Add tab to paragraph", (assert) =>
+		{
+			const p = ClearDocumentAndAddParagraph('');
+			ExecuteShortcut2(oTestTypes.addTabToParagraph);
+			assert.true(p.GetPrevRunElement().IsTab());
+		});
+
+
+		QUnit.test("Test add break line to inlinelvlsdt", (assert) =>
+		{
+			TurnOnRecalculate();
+			const p = ClearDocumentAndAddParagraph('');
+			const oInlineSdt = AddComplexForm();
+			ExecuteShortcut2(oTestTypes.addBreakLineInlineLvlSdt);
+			assert.strictEqual(oInlineSdt.Lines[0], 2);
+			TurnOffRecalculate();
+		});
+
+		QUnit.test("Test visit hyperlink", (assert) =>
+		{
+			TurnOnRecalculate()
+			const p = ClearDocumentAndAddParagraph('');
+
+			logicDocument.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Page))
+			logicDocument.AddHyperlink(new Asc.CHyperlinkProperty({Anchor: '_top', Text: "Beginning of document"}));
+			AscTest.MoveCursorLeft();
+			AscTest.MoveCursorLeft();
+			ExecuteShortcut2(oTestTypes.visitHyperlink);
+			AscTest.Recalculate()
+			assert.strictEqual(logicDocument.GetCurrentParagraph(), logicDocument.Content[0]);
+			assert.strictEqual(logicDocument.Get_CurPage(), 0);
+			TurnOffRecalculate();
+		});
+
+		QUnit.test("Test handle tab in math", (oAssert) =>
+		{
+
+				const p = ClearDocumentAndAddParagraph('');
+				logicDocument.AddParaMath();
+				AscTest.EnterText('abcd+abcd+abcd');
+				logicDocument.MoveCursorToEndPos();
+				AscTest.MoveCursorLeft();
+				AscTest.MoveCursorLeft();
+				AscTest.MoveCursorLeft();
+				AscTest.MoveCursorLeft();
+				AscTest.MoveCursorLeft();
+
+			const oProps = new CMathMenuBase();
+			oProps.insert_ManualBreak();
+			logicDocument.Set_MathProps(oProps);
+			ExecuteShortcut2(oTestTypes.handleTab);
+			AscTest.MoveCursorRight();
+			const oContentPosition = logicDocument.GetContentPosition();
+			const oCurRun = oContentPosition[oContentPosition.length - 1].Class;
+			oAssert.strictEqual(oCurRun.MathPrp.Get_AlnAt(), 1, 'Test move to next form');
+		});
+
+		// todo
+		// QUnit.test("Test end editing", (assert) =>
+		// {
+		// 	TurnOnRecalculate();
+		// 	AscTest.SetFillingFormMode(false);
+		// 		const p = ClearDocumentAndAddParagraph('');
+		// 		const oCheckBox = AddCheckBox();
+		// 	AscTest.SetFillingFormMode(true);
+		// 		oCheckBox.MoveCursorToContentControl(true);
+		// 		ExecuteShortcut2(oTestTypes.endEditing);
+		// 		const oSelectedInfo = logicDocument.GetSelectedElementsInfo();
+		// 		assert.strictEqual(!!oSelectedInfo.GetInlineLevelSdt(), false, "Test end editing form");
+		// 	AscTest.SetEditingMode();
+		//
+		// 		GoToHeader(0);
+		// 		ExecuteShortcut2(oTestTypes.endEditing);
+		// 		assert.strictEqual(logicDocument.GetDocPosType(), AscCommonWord.docpostype_Content, "Test end editing footer");
+		// 		RemoveHeader(0);
+		//
+		// 		GoToFooter(0);
+		// 		ExecuteShortcut2(oTestTypes.endEditing);
+		// 		assert.strictEqual(logicDocument.GetDocPosType(), AscCommonWord.docpostype_Content, "Test end editing footer");
+		// 		RemoveFooter(0);
+		// 	TurnOffRecalculate();
+		// });
+
+		QUnit.test("Test unicode to char hotkeys", (assert) =>
+		{
+			const p = ClearDocumentAndAddParagraph('2601');
+			AscTest.MoveCursorLeft(true, true);
+			ExecuteShortcut2(oTestTypes.unicodeToChar);
+			assert.strictEqual(logicDocument.GetSelectedText(), '☁', 'Test replace unicode code to symbol');
+		});
+		function mouseDown(x, y, page, isRight, count)
+		{
+			if (!logicDocument)
+				return;
+
+			let e = new AscCommon.CMouseEventHandler();
+
+			e.Button = isRight ? AscCommon.g_mouse_button_right : AscCommon.g_mouse_button_left;
+			e.ClickCount = count ? count : 1;
+
+			e.Type = AscCommon.g_mouse_event_type_down;
+			logicDocument.OnMouseDown(e, x, y, page);
+		}
+
+		function mouseUp(x, y, page, isRight, count)
+		{
+			if (!logicDocument)
+				return;
+
+			let e = new AscCommon.CMouseEventHandler();
+
+			e.Button = isRight ? AscCommon.g_mouse_button_right : AscCommon.g_mouse_button_left;
+			e.ClickCount = count ? count : 1;
+
+			e.Type = AscCommon.g_mouse_event_type_up;
+			logicDocument.OnMouseUp(e, x, y, page);
+		}
+
+		function mouseMove(x, y, page, isRight, count)
+		{
+			if (!logicDocument)
+				return;
+
+			let e = new AscCommon.CMouseEventHandler();
+
+			e.Button = isRight ? AscCommon.g_mouse_button_right : AscCommon.g_mouse_button_left;
+			e.ClickCount = count ? count : 1;
+
+			e.Type = AscCommon.g_mouse_event_type_move;
+			logicDocument.OnMouseMove(e, x, y, page);
+		}
+		// todo
+		// QUnit.test("Test reset drag'n'drop", (oAssert) =>
+		// {
+		// 	TurnOnRecalculate();
+		// 		const p = ClearDocumentAndAddParagraph('Hello Hello');
+		// 		AscTest.Recalculate();
+		// 		logicDocument.MoveCursorToStartPos();
+		// 		AscTest.MoveCursorRight(true, true);
+		// 		mouseDown(5, 10, 0, false, 1);
+		// 		mouseMove(15, 10, 0, false, 1);
+		// 		//ExecuteShortcut2(oTestTypes.resetDragNDrop);
+		// 	mouseUp(15, 10, 0, false, 1);
+		// 		logicDocument.SelectAll()
+		// 		oAssert.strictEqual(logicDocument.GetSelectedText(), 'Hello Hello', "Test reset drag'n'drop");
+		// 	TurnOffRecalculate();
+		//
+		// });
+
+		// QUnit.test("test visit hyperlink", (oAssert) =>
+		// {
+		// 	startTest((oEvent) =>
+		// 	{
+		// 		const {oParagraph} = getLogicDocumentWithParagraphs(['']);
+		// 		addBreakPage();
+		// 		createHyperlink();
+		// 		moveCursorLeft();
+		// 		moveCursorLeft();
+		// 		onKeyDown(oEvent);
+		// 		oAssert.strictEqual(oGlobalLogicDocument.GetCurrentParagraph(), logicContent()[0]);
+		// 		oAssert.strictEqual(oGlobalLogicDocument.Get_CurPage(), 0);
+		// 	}, oTestTypes.visitHyperlink);
+		// });
+
+
+		// QUnit.test("Test add new paragraph", (oAssert) =>
+		// {
+		// 	startTest((oEvent) =>
+		// 	{
+		// 		getLogicDocumentWithParagraphs(['']);
+		// 		createMath();
+		// 		addText('abcd');
+		// 		moveCursorLeft();
+		// 		onKeyDown(oEvent);
+		// 		oAssert.strictEqual(logicContent().length, 2, 'Test add new paragraph with math');
+		// 	}, oTestTypes.addNewParagraphMath);
+		// });
+
+		// QUnit.test("Test add new paragraph", (oAssert) =>
+		// {
+		// 	startTest((oEvent) =>
+		// 	{
+		// 		const {oParagraph} = getLogicDocumentWithParagraphs(['Hello Text']);
+		// 		moveToParagraph(oParagraph);
+		// 		onKeyDown(oEvent);
+		// 		oAssert.strictEqual(logicContent().length, 2, 'Test add new paragraph to content');
+		// 	}, oTestTypes.addNewParagraphContent);
+		// });
+
 		//
 		// QUnit.test('Check show non printing characters shortcut', (oAssert) =>
 		// {

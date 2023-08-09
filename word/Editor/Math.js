@@ -1069,7 +1069,7 @@ function ParaMath()
     this.DefaultTextPr.RFonts.SetAll("Cambria Math", -1);
 
     // Добавляем данный класс в таблицу Id (обязательно в конце конструктора)
-	g_oTableId.Add( this, this.Id );
+	AscCommon.g_oTableId.Add( this, this.Id );
 }
 
 ParaMath.prototype = Object.create(CParagraphContentWithContentBase.prototype);

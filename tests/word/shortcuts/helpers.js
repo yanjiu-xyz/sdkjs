@@ -689,18 +689,18 @@
 	let fOldCheckOFormUserMaster;
 	function setFillingFormsMode(bState)
 	{
-		if (bState)
-		{
-			fOldCheckOFormUserMaster = oGlobalLogicDocument.CheckOFormUserMaster;
-			oGlobalLogicDocument.CheckOFormUserMaster = function ()
-			{
-				return true;
-			}
-		}
-		else
-		{
-			oGlobalLogicDocument.CheckOFormUserMaster = fOldCheckOFormUserMaster;
-		}
+		// if (bState)
+		// {
+		// 	fOldCheckOFormUserMaster = oGlobalLogicDocument.CheckOFormUserMaster;
+		// 	oGlobalLogicDocument.CheckOFormUserMaster = function ()
+		// 	{
+		// 		return true;
+		// 	}
+		// }
+		// else
+		// {
+		// 	oGlobalLogicDocument.CheckOFormUserMaster = fOldCheckOFormUserMaster;
+		// }
 		var oRole = new AscCommon.CRestrictionSettings();
 		oRole.put_OFormRole("Anyone");
 		editor.asc_setRestriction(bState ? Asc.c_oAscRestrictionType.OnlyForms : Asc.c_oAscRestrictionType.None, oRole);
