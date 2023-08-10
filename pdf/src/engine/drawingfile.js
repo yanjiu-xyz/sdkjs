@@ -865,7 +865,7 @@ else
 			// 4 - text, 5 - combobox, 6 - listbox, 7 - signature
 			rec["type"] = reader.readByte();
 			rec["flag"] = reader.readInt();
-			flags = reader.readInt();
+			var flags = reader.readInt();
 			// Альтернативное имя поля, используется во всплывающей подсказке и сообщениях об ошибке - TU
 			if (flags & (1 << 0))
 				rec["userName"] = reader.readString();
