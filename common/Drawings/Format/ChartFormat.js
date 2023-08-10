@@ -738,6 +738,12 @@
     drawingsChangesMap[AscDFH.historyitem_Legend_SetSpPr] = function(oClass, value) {
         oClass.spPr = value;
     };
+    drawingsChangesMap[AscDFH.historyitem_Legend_SetExtLst] = function(oClass, value) {
+        oClass.extLst = value;
+    };
+    drawingsChangesMap[AscDFH.historyitem_Legend_SetAlign] = function(oClass, value) {
+        oClass.align = value;
+    };
     drawingsChangesMap[AscDFH.historyitem_Legend_SetTxPr] = function(oClass, value) {
         oClass.txPr = value;
     };
@@ -1110,6 +1116,9 @@
     drawingsChangesMap[AscDFH.historyitem_Title_SetTxPr] = function(oClass, value) {
         oClass.txPr = value;
     };
+    drawingsChangesMap[AscDFH.historyitem_Title_SetAlign] = function(oClass, value) {
+        oClass.align = value;
+    };
     drawingsChangesMap[AscDFH.historyitem_Trendline_SetBackward] = function(oClass, value) {
         oClass.backward = value;
     };
@@ -1194,6 +1203,9 @@
     drawingsChangesMap[AscDFH.historyitem_Chart_SetView3D] = function(oClass, value) {
         oClass.view3D = value;
         oClass.Refresh_RecalcData();
+    };
+    drawingsChangesMap[AscDFH.historyitem_Chart_SetExtLst] = function(oClass, value) {
+        oClass.extLst = value;
     };
     drawingsChangesMap[AscDFH.historyitem_ChartWall_SetPictureOptions] = function(oClass, value) {
         oClass.pictureOptions = value;
@@ -1560,6 +1572,7 @@
     AscDFH.changesFactory[AscDFH.historyitem_Chart_SetAutoTitleDeleted] = window['AscDFH'].CChangesDrawingsBool;
     AscDFH.changesFactory[AscDFH.historyitem_Chart_SetPlotVisOnly] = window['AscDFH'].CChangesDrawingsBool;
     AscDFH.changesFactory[AscDFH.historyitem_Chart_SetShowDLblsOverMax] = window['AscDFH'].CChangesDrawingsBool;
+    AscDFH.changesFactory[AscDFH.historyitem_Chart_SetExtLst] = window['AscDFH'].CChangesDrawingsObjectNoId;
     AscDFH.changesFactory[AscDFH.historyitem_View3d_SetRAngAx] = window['AscDFH'].CChangesDrawingsBool;
     AscDFH.changesFactory[AscDFH.historyitem_ExternalData_SetAutoUpdate] = window['AscDFH'].CChangesDrawingsBool;
 
@@ -1810,6 +1823,8 @@
     AscDFH.changesFactory[AscDFH.historyitem_ErrBars_SetSpPr] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_Legend_SetLayout] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_Legend_SetSpPr] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_Legend_SetExtLst] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    AscDFH.changesFactory[AscDFH.historyitem_Legend_SetAlign] = window['AscDFH'].CChangesDrawingsObjectNoId;
     AscDFH.changesFactory[AscDFH.historyitem_Legend_SetTxPr] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_LegendEntry_SetTxPr] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_LineChart_SetDLbls] = window['AscDFH'].CChangesDrawingsObject;
@@ -1874,6 +1889,7 @@
     AscDFH.changesFactory[AscDFH.historyitem_Title_SetSpPr] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_Title_SetTx] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_Title_SetTxPr] = window['AscDFH'].CChangesDrawingsObject;
+    AscDFH.changesFactory[AscDFH.historyitem_Title_SetAlign] = window['AscDFH'].CChangesDrawingsObjectNoId;
     AscDFH.changesFactory[AscDFH.historyitem_Trendline_SetSpPr] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_Trendline_SetTrendlineLbl] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_UpDownBars_SetDownBars] = window['AscDFH'].CChangesDrawingsObject;
@@ -10103,6 +10119,8 @@
         this.overlay = false;
         this.spPr = null;
         this.txPr = null;
+        this.extLst = null;
+        this.align = null;
 
         this.rot = 0;
         this.flipH = false;
@@ -10380,6 +10398,14 @@
         History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Legend_SetSpPr, this.spPr, spPr));
         this.spPr = spPr;
         this.setParentToChild(spPr);
+    };
+    CLegend.prototype.setExtLst = function(pr) {
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Legend_SetExtLst, this.extLst, pr));
+        this.extLst = pr;
+    };
+    CLegend.prototype.setAlign = function(pr) {
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Legend_SetAlign, this.align, pr));
+        this.align = pr;
     };
     CLegend.prototype.setTxPr = function(txPr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Legend_SetTxPr, this.txPr, txPr));
@@ -13592,6 +13618,9 @@
         this.localTransform = new CMatrix();
         this.localTransformText = new CMatrix();
 
+        //for chart title only (but not axis title)
+        this.align = null;
+
         this.recalcInfo =
         {
             recalculateTxBody: true,
@@ -13893,6 +13922,10 @@
         this.invertTransform = global_MatrixTransformer.Invert(this.transform);
         this.invertTransformText = global_MatrixTransformer.Invert(this.transformText);
 
+    };
+    CTitle.prototype.setAlign = function(pr) {
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Title_SetAlign, this.align, pr));
+        this.align = pr;
     };
     CTitle.prototype.getParentObjects = function() {
         if(this.chart) {
@@ -14718,6 +14751,7 @@
         this.sideWall = null;
         this.title = null;
         this.view3D = null;
+        this.extLst = null;
     }
 
     InitClass(CChart, CBaseChartObject, AscDFH.historyitem_type_Chart);
@@ -15053,6 +15087,10 @@
         if(this.title) {
             this.title.applyChartStyle(oChartStyle, oColors, oAdditionalData, bReset);
         }
+    };
+    CChart.prototype.setExtLst = function(pr) {
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Chart_SetExtLst, this.extLst, pr));
+        this.extLst = pr;
     };
 
     function CChartWall() {
