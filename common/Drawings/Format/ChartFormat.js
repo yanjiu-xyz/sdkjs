@@ -13713,7 +13713,7 @@
                 }
                 if(bDocument && para_drawing instanceof AscCommonWord.ParaDrawing) {
 
-                    var hdr_ftr = para_drawing.DocumentContent.IsHdrFtr(true);
+                    var hdr_ftr = para_drawing.isHdrFtrChild(true);
                     if(hdr_ftr) {
                         hdr_ftr.Content.SetDocPosType(docpostype_DrawingObjects);
                         hdr_ftr.Set_CurrentElement(bUpdate);

@@ -565,9 +565,10 @@
 
 	var g_FCI = {row: null, col: null};
 
-	function getFromCellIndex(cellIndex) {
+	function getFromCellIndex(cellIndex, returnDuplicate) {
 		g_FCI.row = Math.floor(cellIndex / AscCommon.gc_nMaxCol);
 		g_FCI.col = cellIndex % AscCommon.gc_nMaxCol;
+		return returnDuplicate ? {row: g_FCI.row, col: g_FCI.col} : null;
 	}
 
 	function getVertexIndex(bbox) {
@@ -2367,12 +2368,12 @@
 			this.snapshot = this._getSnapshot();
 		}
 	};
-	Workbook.prototype.addImages = function (aImages, oPlaceholder) {
+	Workbook.prototype.addImages = function (aImages, obj) {
 		const oApi = Asc.editor;
-		if (oPlaceholder && undefined !== oPlaceholder.id && aImages.length === 1 && aImages[0].Image) {
+		if (obj && undefined !== obj.id && aImages.length === 1 && aImages[0].Image) {
 			const oController = oApi.getGraphicController();
 			const oDrawingObjects = oApi.getDrawingObjects();
-			const oPlaceholderTarget = AscCommon.g_oTableId.Get_ById(oPlaceholder.id);
+			const oPlaceholderTarget = AscCommon.g_oTableId.Get_ById(obj.id);
 			if (oPlaceholderTarget) {
 				if (oPlaceholderTarget.isObjectInSmartArt && oPlaceholderTarget.isObjectInSmartArt()) {
 					const oSmartArtGroup = oPlaceholderTarget.group.getMainGroup();
@@ -2381,7 +2382,7 @@
 						if (bLock) {
 							History.Create_NewPoint();
 							oController.resetSelection();
-							oPlaceholderTarget.applyImagePlaceholderCallback && oPlaceholderTarget.applyImagePlaceholderCallback(aImages, oPlaceholder);
+							oPlaceholderTarget.applyImagePlaceholderCallback && oPlaceholderTarget.applyImagePlaceholderCallback(aImages, obj);
 							oController.selectObject(oSmartArtGroup, 0);
 							oController.selection.groupSelection = oSmartArtGroup;
 							oSmartArtGroup.selectObject(oPlaceholderTarget, 0);
@@ -2403,6 +2404,8 @@
 					});
 				}
 			}
+		} else if (obj && obj.callback && aImages.length === 1 && aImages[0].Image) {
+			obj.callback(aImages[0]);
 		}
 	};
 	Workbook.prototype.getOleSize = function () {
@@ -5889,7 +5892,7 @@
 				this.workbook.handlers && this.workbook.handlers.trigger("updateCellWatches");
 			}
 			if (this.workbook.handlers) {
-				this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetRename, this.index, name);
+				this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetRename, this.index, name, this.getId());
 			}
 		} else {
 			console.log(new Error('The sheet name must be less than 31 characters.'));
@@ -6192,7 +6195,7 @@
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
 
 		if (this.workbook.handlers) {
-			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
+			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this, null, this.getId());
 		}
 
 		this.workbook.dependencyFormulas.unlockRecal();
@@ -6283,7 +6286,7 @@
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
 		if (this.workbook.handlers) {
-			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
+			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this, null, this.getId());
 		}
 
 		this.workbook.dependencyFormulas.unlockRecal();
@@ -6374,7 +6377,7 @@
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
 		if (this.workbook.handlers) {
-			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
+			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this, null, this.getId());
 		}
 
 		this.workbook.dependencyFormulas.unlockRecal();
@@ -6464,7 +6467,7 @@
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
 		if (this.workbook.handlers) {
-			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
+			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this, null, this.getId());
 		}
 
 		this.workbook.dependencyFormulas.unlockRecal();
@@ -7741,7 +7744,7 @@
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
 		if (this.workbook.handlers) {
-			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
+			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this, null, this.getId());
 		}
 		//todo проверить не уменьшились ли границы таблицы
 	};
@@ -7784,7 +7787,7 @@
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
 		if (this.workbook.handlers) {
-			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
+			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this, null, this.getId());
 		}
 		//todo проверить не уменьшились ли границы таблицы
 	};
@@ -7849,7 +7852,7 @@
 
 		this.autoFilters.redrawStylesTables(redrawTablesArr);
 		if (this.workbook.handlers) {
-			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
+			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this, null, this.getId());
 		}
 	};
 	Worksheet.prototype._shiftCellsBottom=function(oBBox, displayNameFormatTable){
@@ -7924,13 +7927,13 @@
 		{
 			this.autoFilters.redrawStylesTables(redrawTablesArr);
 			if (this.workbook.handlers) {
-				this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this);
+				this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this, null, this.getId());
 			}
 		}
 	};
 	Worksheet.prototype._setIndex=function(ind){
 		if (this.workbook.handlers) {
-			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetChangeIndex, this.index, ind);
+			this.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetChangeIndex, this.index, ind, this.getId());
 		}
 		this.index = ind;
 	};
@@ -11470,55 +11473,66 @@
 	};
 
 	Worksheet.prototype.isLockedRange = function (range) {
-		var rangeType = range.getType();
-		var oRange = this.getRange3(range.r1, range.c1, range.r2, range.c2);
-		var res = true;
-		var unLockedRowIndex = range.r1 - 1;
+		let oRange = this.getRange3(range.r1, range.c1, range.r2, range.c2);
+		let res = true;
+
+		let _getLocked = function (_xfs) {
+			let _res = null;
+			if (_xfs && _xfs.applyProtection) {
+				_res = true;//null/true
+				if (_xfs.getLocked() === false) {
+					_res = false;
+				}
+			}
+			return _res;
+		};
+
+		//1. init default value
+		//all cells
+		if (null != this.oAllCol && this.oAllCol.xfs && this.oAllCol.xfs.locked != null) {
+			res = _getLocked(this.oAllCol.xfs);
+		}
+
+		//all selected rows
+		let unLockedRowIndex = range.r1 - 1;
 		oRange._foreachRowNoEmpty(function(row){
-			if(null != row && row.xfs && false === row.xfs.getLocked()) {
+			if(null != row && row.xfs && !res === _getLocked(row.xfs)) {
 				if (unLockedRowIndex + 1 === row.index) {
 					unLockedRowIndex++;
 				}
 			}
 		});
 		if (unLockedRowIndex === range.r2) {
-			//если все строки разлочены, далее можно не проверять
-			return false;
-		} else if (rangeType === Asc.c_oAscSelectionType.RangeMax || rangeType === Asc.c_oAscSelectionType.RangeRow) {
-			//если выделены все строки, но среди них не все разлочены - далее не проверяем и возвращаем true
-			return true;
+			res = !res;
 		}
 
-		var unLockedColndex = range.c1 - 1;
+		//all selected cols
+		let unLockedColIndex = range.c1 - 1;
 		oRange._foreachColNoEmpty(function(col){
-			if(null != col && col.xfs && false === col.xfs.getLocked()) {
-				if (unLockedColndex + 1 === col.index) {
-					unLockedColndex++;
+			if(null != col && col.xfs && !res === _getLocked(col.xfs)) {
+				if (unLockedColIndex + 1 === col.index) {
+					unLockedColIndex++;
 				}
 			}
 		});
-		if (unLockedColndex === range.c2) {
-			//если все столбцы разлочены, далее можно не проверять
-			return false;
-		} else if (rangeType === Asc.c_oAscSelectionType.RangeMax || rangeType === Asc.c_oAscSelectionType.RangeCol) {
-			//если выделены все столбцы, но среди них не все разлочены - далее не проверяем и возвращаем true
-			return true;
+		if (unLockedColIndex === range.c2) {
+			res = !res;
 		}
 
-		oRange._foreach2(function(cell){
+		oRange._foreachNoEmpty(function(cell){
 			if (!cell) {
-				res = true;
-				return true;
+				return;
 			}
-			var cellxfs = cell.xfs;
-			var isLocked = cellxfs && cellxfs.asc_getLocked();
-			if (isLocked === null || isLocked === true) {
+
+			var isLocked = _getLocked(cell.xfs);
+			if (isLocked === true) {
 				res = true;
 				return true;
-			} else {
+			} else if (isLocked === false) {
 				res = false;
 			}
 		});
+
 		return res;
 	};
 
@@ -12244,6 +12258,27 @@
 		this.nColsCount = val;
 	};
 
+	Worksheet.prototype.changeLegacyDrawingHFPictures = function(picturesMap) {
+		if (!this.legacyDrawingHF) {
+			this.legacyDrawingHF = new AscCommonExcel.CLegacyDrawingHF(this);
+		}
+		this.legacyDrawingHF.addPictures(picturesMap);
+	};
+
+	Worksheet.prototype.removeLegacyDrawingHFPictures = function(aPictures) {
+		if (!this.legacyDrawingHF) {
+			this.legacyDrawingHF = new AscCommonExcel.CLegacyDrawingHF(this);
+		}
+		this.legacyDrawingHF.removePictures(aPictures);
+	};
+
+	Worksheet.prototype.getLegacyDrawingHFById = function(val) {
+		if (!this.legacyDrawingHF) {
+			return null;
+		}
+		return this.legacyDrawingHF.getDrawingById(val);
+	};
+
 
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
@@ -12611,7 +12646,7 @@
 				wb.dependencyFormulas.addToBuildDependencyCell(this);
 			}
 			if (this.ws.workbook.handlers) {
-				this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this);
+				this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this, null, this.ws.getId());
 			}
 		} else if (val) {
 			this._setValue(val, ignoreHyperlink);
@@ -12622,7 +12657,7 @@
 		} else {
 			wb.dependencyFormulas.addToChangedCell(this);
 			if (this.ws.workbook.handlers) {
-				this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this);
+				this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this, null, this.ws.getId());
 			}
 		}
 
@@ -13398,7 +13433,7 @@
 			this.setValue("");
 
 		if (this.ws.workbook.handlers) {
-			this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this);
+			this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this, null, this.ws.getId());
 		}
 	};
 	Cell.prototype._checkDirty = function(){
@@ -13770,7 +13805,7 @@
 
 		if("" == val) {
 			if (this.ws.workbook.handlers) {
-				this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this);
+				this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this, null, this.ws.getId());
 			}
 			return;
 		}
@@ -13841,7 +13876,7 @@
 			}
 		}
 		if (this.ws.workbook.handlers) {
-			this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this);
+			this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this, null, this.ws.getId());
 		}
 	};
 	Cell.prototype._autoformatHyperlink = function(val){
@@ -17738,7 +17773,7 @@
 		this.worksheet.workbook.dependencyFormulas.addToChangedRange(this.worksheet.getId(), new Asc.Range(oBBox.c1, oBBox.r1, oBBox.c2, oBBox.r2));
 		this.worksheet.workbook.dependencyFormulas.calcTree();
 		if (this.worksheet.workbook.handlers) {
-			this.worksheet.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this.worksheet);
+			this.worksheet.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.sheetContent, this.worksheet, null, this.ws.getId());
 		}
 
 		if (false == this.worksheet.workbook.bUndoChanges && (false == this.worksheet.workbook.bRedoChanges || this.worksheet.workbook.bCollaborativeChanges)) {
@@ -19300,43 +19335,43 @@
 	}
 	cDataRow.prototype.getCol = function() {
 		return this.nCol;
-	}
+	};
 	cDataRow.prototype.getVal = function() {
 		return this.nVal;
-	}
+	};
 	cDataRow.prototype.getDelimiter = function() {
 		return this.bDelimiter;
-	}
+	};
 	cDataRow.prototype.getPrefix = function () {
 		return this.sPrefix;
-	}
+	};
 	cDataRow.prototype.getPadding = function() {
 		return this.nPadding;
-	}
+	};
 	cDataRow.prototype.setPadding = function(nPadding) {
 		this.nPadding = nPadding;
-	}
+	};
 	cDataRow.prototype.getIsDate = function() {
 		return this.bDate;
-	}
+	};
 	cDataRow.prototype.getAdditional = function() {
 		return this.oAdditional;
-	}
+	};
 	cDataRow.prototype.getTimePeriods = function () {
 		return this.aTimePeriods;
-	}
+	};
 	cDataRow.prototype.getSequence = function() {
 		return this.oSequence;
-	}
+	};
 	cDataRow.prototype.setSequence = function (oSequence) {
 		this.oSequence = oSequence;
-	}
+	};
 	cDataRow.prototype.getCurValue = function() {
 		return this.nCurValue;
-	}
+	};
 	cDataRow.prototype.setCurValue = function(nCurValue) {
 		this.nCurValue = nCurValue;
-	}
+	};
 	cDataRow.prototype.compare = function(oComparedRowData) {
 		let sComparedTimePeriods =  oComparedRowData.getTimePeriods() ? oComparedRowData.getTimePeriods().join() : null;
 		let sTimePeriods = this.getTimePeriods() ? this.getTimePeriods().join() : null;
@@ -19348,7 +19383,7 @@
 		let bDate = this.getIsDate();
 
 		return bComparedDelimiter === bDelimiter && sComparedPrefix === sPrefix && bComparedDate === bDate && sComparedTimePeriods === sTimePeriods;
-	}
+	};
 
 	cDataRow.prototype.prefixDataCompare = function(oComparedRowData) {
 		let sComparedPrefix = oComparedRowData.getPrefix();
@@ -19357,7 +19392,7 @@
 		let bDate = this.getIsDate();
 
 		return sComparedPrefix === sPrefix && bComparedDate === bDate;
-	}
+	};
 
 
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
@@ -19372,6 +19407,7 @@
 	window['AscCommonExcel'].oFormulaLocaleInfo = oFormulaLocaleInfo;
 	window['AscCommonExcel'].getDefNameIndex = getDefNameIndex;
 	window['AscCommonExcel'].getCellIndex = getCellIndex;
+	window['AscCommonExcel'].getFromCellIndex = getFromCellIndex;
 	window['AscCommonExcel'].angleFormatToInterface2 = angleFormatToInterface2;
 	window['AscCommonExcel'].angleInterfaceToFormat = angleInterfaceToFormat;
 	window['AscCommonExcel'].Workbook = Workbook;
