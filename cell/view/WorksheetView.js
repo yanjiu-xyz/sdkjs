@@ -2218,6 +2218,9 @@
 
 		let startPrintPreview = this.workbook.printPreviewState && this.workbook.printPreviewState.isStart();
 
+		let pageWidthWithoutFieldsHeadings = ((pageWidth - pageRightField - pageLeftField) / vector_koef);
+		let pageHeightWithoutFieldsHeadings = ((pageHeight - pageBottomField - pageTopField) / vector_koef);
+
 		let _retinaPixelRatio = this.getRetinaPixelRatio();
 		if (pageHeadings) {
 			// Рисуем заголовки, нужно чуть сдвинуться
@@ -2285,6 +2288,23 @@
 			}
 		}
 
+		let recalculatePageMargins = function (_page) {
+			let horizontalCentered = pageOptions && pageOptions.asc_getHorizontalCentered();
+			let verticalCentered = pageOptions && pageOptions.asc_getVerticalCentered();
+			if (horizontalCentered) {
+				let _offset = (pageWidthWithoutFieldsHeadings - realPageWidth) / 2;
+				_page.pageClipRectLeft += _offset;
+				_page.leftFieldInPx += _offset;
+			}
+
+			if (verticalCentered) {
+				let _offset = (pageHeightWithoutFieldsHeadings - realPageHeight) / 2;
+				_page.pageClipRectTop += _offset;
+				_page.topFieldInPx += _offset;
+			}
+		};
+
+		let realPageWidth, realPageHeight;
 		let currentColIndex = range.c1;
 		let currentWidth = 0;
 		let currentRowIndex = range.r1;
@@ -2422,6 +2442,7 @@
 					} else {
 						newPagePrint.pageClipRectWidth = Math.min(currentWidth, newPagePrint.pageClipRectWidth);
 					}
+					realPageWidth = currentWidth;
 				}
 
 				currentHeight += currentRowHeight;
@@ -2443,6 +2464,7 @@
 			} else {
 				newPagePrint.pageClipRectHeight = Math.min(currentHeight, newPagePrint.pageClipRectHeight);
 			}
+			realPageHeight = currentHeight;
 
 			// Нужно будет пересчитывать колонки
 			isCalcColumnsWidth = true;
@@ -2474,6 +2496,7 @@
 			} else if(scale) {
 				newPagePrint.scale = scale;
 			}
+			recalculatePageMargins(newPagePrint);
 			arrPages.push(newPagePrint);
 			nCountPages++;
 
