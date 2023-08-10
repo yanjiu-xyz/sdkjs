@@ -63,13 +63,7 @@
 		GetDotsPerMM : function(value) {return 72;},
 		EndTrackTable : function() {},
 		SetCurrentPage : function(pageNum) {},
-		SelectClear : function() {},
-		OnRePaintAttack : function() {},
-		IsFreezePage : function() {},
-		Set_RulerState_HdrFtr : function() {},
-		IsTrackText  : function() {},
-		ConvertCoordsToCursorWR  : function(X, Y) {return {X: X, Y: Y}},
-		OnUpdateOverlay : function() {}
+		SelectClear : function() {}
 	};
 
 	drawingDocument.CanvasHit = document.createElement('canvas');
@@ -81,7 +75,7 @@
 	editor.WordControl = drawingDocument;
 	editor.WordControl.m_oDrawingDocument = drawingDocument;
 	editor.WordControl.m_oDrawingDocument.m_oWordControl = drawingDocument;
-	editor.WordControl.m_oDrawingDocument.m_oWordControl.m_oApi = editor;
+	editor.WordControl.m_oApi = editor;
 	editor.sync_BeginCatchRevisionsChanges = function(){};
 	editor.sync_EndCatchRevisionsChanges = function(){};
 	editor.sync_ChangeCommentLogicalPosition = function(){};
