@@ -111,6 +111,28 @@
         this._origRect[2] = this._rect[2] / nScaleX;
         this._origRect[3] = this._rect[3] / nScaleY;
     };
+    CAnnotationBase.prototype.SetRect = function(aRect) {
+        let oViewer = editor.getDocumentRenderer();
+        let nPage = this.GetPage();
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+        this._rect = aRect;
+
+        this._pagePos = {
+            x: aRect[0],
+            y: aRect[1],
+            w: (aRect[2] - aRect[0]),
+            h: (aRect[3] - aRect[1])
+        };
+
+        this._origRect[0] = this._rect[0] / nScaleX;
+        this._origRect[1] = this._rect[1] / nScaleY;
+        this._origRect[2] = this._rect[2] / nScaleX;
+        this._origRect[3] = this._rect[3] / nScaleY;
+    };
+    
     CAnnotationBase.prototype.GetRect = function() {
         return this._rect;
     };
@@ -166,6 +188,20 @@
             oViewer.pagesInfo.pages[this.GetPage()].needRedrawAnnots = true;
     };
     
+
+    // аналоги методов Drawings
+    CAnnotationBase.prototype.getObjectType = function() {
+        return -1;
+    };
+    CAnnotationBase.prototype.hitInTextRect = function() {
+        let oViewer = editor.getDocumentRenderer();
+
+        if (oViewer.getPageAnnotByMouse() == this)
+            return true;
+
+        return false;
+    };
+
     // // заглушки для трекинга
     // CAnnotationBase.prototype.canChangeAdjustments = function() {
     //     return true;

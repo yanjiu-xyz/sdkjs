@@ -207,16 +207,16 @@
         oGraphicsPDF.DrawImage(canvas, x, y);
     };
     CAnnotationText.prototype.onMouseDown = function(e) {
-        let oViewer = editor.getDocumentRenderer();
+        let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
+        let oDoc            = this.GetDocument();
+        let oDrDoc          = oDoc.GetDrawingDocument();
 
-        oDrawingObjects.arrPreTrackObjects.push(this.CreateMoveTrack());
-        oDrawingObjects.selectedObjects.push(this);
-        
         this.selectStartPage = this.GetPage();
-        oDrawingObjects.OnMouseDown(e, e.clientX, e.clientY, oViewer.currentPage);
+        let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
+        oDrawingObjects.OnMouseDown(e, X, Y, oViewer.currentPage);
     };
-    CAnnotationText.prototype.CreateMoveTrack = function() {
+    CAnnotationText.prototype.createMoveTrack = function() {
         return new AscFormat.MoveAnnotationTrack(this);
     };
     
@@ -241,6 +241,9 @@
         });
 
         return oAscCommData;
+    };
+    CAnnotationText.prototype.IsComment = function() {
+        return true;
     };
     CAnnotationText.prototype.EditCommentData = function(oCommentData) {
         let oThis = this;

@@ -38,7 +38,7 @@
     */
     function CAnnotationInk(sName, nPage, aRect, oDoc)
     {
-        AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Text, nPage, aRect, oDoc);
+        AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Ink, nPage, aRect, oDoc);
 
         this._point         = undefined;
         this._popupOpen     = false;
@@ -55,21 +55,106 @@
     }
     CAnnotationInk.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
 	CAnnotationInk.prototype.constructor = CAnnotationInk;
+    Object.defineProperties(CAnnotationInk.prototype, {
+        extX: {
+            get() {
+                return this.GetDrawing().GraphicObj.extX;
+            }
+        },
+        extY: {
+            get() {
+                return this.GetDrawing().GraphicObj.extY;
+            }
+        },
+        transform: {
+            get() {
+                return this.GetDrawing().GraphicObj.transform;
+            }
+        },
+        spPr: {
+            get() {
+                return this.GetDrawing().GraphicObj.spPr;
+            }
+        },
+        rot: {
+            get() {
+                return this.GetDrawing().GraphicObj.rot;
+            }
+        },
+        x: {
+            get() {
+                return this.GetDrawing().GraphicObj.x;
+            }
+        },
+        y: {
+            get() {
+                return this.GetDrawing().GraphicObj.y;
+            }
+        },
+        brush: {
+            get() {
+                return this.GetDrawing().GraphicObj.brush;
+            }
+        },
+        pen: {
+            get() {
+                return this.GetDrawing().GraphicObj.pen;
+            }
+        },
+        txXfrm: {
+            get() {
+                return this.GetDrawing().GraphicObj.txXfrm;
+            }
+        },
+        flipV: {
+            get() {
+                return this.GetDrawing().GraphicObj.flipV;
+            }
+        },
+        flipH: {
+            get() {
+                return this.GetDrawing().GraphicObj.flipH;
+            }
+        },
+
+    });
 
     CAnnotationInk.prototype.Draw = function(oGraphics) {
         if (this.IsHidden() == true)
             return;
 
-        let oViewer = editor.getDocumentRenderer();
-        let oGraphicsWord = oViewer.pagesInfo.pages[this.GetPage()].graphics.word;
+        let oViewer         = editor.getDocumentRenderer();
+        let oGraphicsWord   = oGraphics ? oGraphics : oViewer.pagesInfo.pages[this.GetPage()].graphics.word;
         
         this.Recalculate();
         //this.DrawBackground();
 
-        oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
+        let oDrawing = this.GetDrawing();
+        if (oDrawing)
+            oDrawing.GraphicObj.draw(oGraphicsWord);
+    };
+    CAnnotationInk.prototype.DrawBackground = function() {
+        let oViewer = editor.getDocumentRenderer();
+        let oGraphicsPDF = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
+        let oBgRGBColor = {r: 255, g: 255, b: 150};
 
-        this.content.Draw(0, oGraphicsWord);
-        oGraphicsWord.RemoveClip();
+        let aRect = this.GetRect();
+        if (oBgRGBColor) {
+            let nScale  = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
+
+            let X = aRect[0] * nScale;
+            let Y = aRect[1] * nScale;
+            let nWidth = (aRect[2] - aRect[0]) * nScale;
+            let nHeight = (aRect[3] - aRect[1]) * nScale;
+            
+            oGraphicsPDF.SetGlobalAlpha(1);
+
+            oGraphicsPDF.SetFillStyle(`rgb(${oBgRGBColor.r}, ${oBgRGBColor.g}, ${oBgRGBColor.b})`);
+            oGraphicsPDF.FillRect(X, Y, nWidth, nHeight);
+        }
+    };
+    CAnnotationInk.prototype.GetDrawing = function() {
+        return this.content.GetAllDrawingObjects()[0];
     };
     CAnnotationInk.prototype.Recalculate = function() {
         // if (this.IsNeedRecalc() == false)
@@ -109,30 +194,36 @@
         if (!this._oldContentPos)
             this._oldContentPos = {};
 
-        if (contentX != this._oldContentPos.X || contentY != this._oldContentPos.Y ||
-            contentXLimit != this._oldContentPos.XLimit) {
-            this.content.X      = this._oldContentPos.X        = contentX;
-            this.content.Y      = this._oldContentPos.Y        = contentY;
-            this.content.XLimit = this._oldContentPos.XLimit   = contentXLimit;
-            this.content.YLimit = this._oldContentPos.YLimit   = 20000;
-            this.content.Recalculate_Page(0, true);
-        }
-        // else if (this.IsNeedRecalc()) {
-        //     this.content.Recalculate_Page(0, false);
-        // }
+        this.content.X      = this._oldContentPos.X        = contentX;
+        this.content.Y      = this._oldContentPos.Y        = contentY;
+        this.content.XLimit = this._oldContentPos.XLimit   = contentXLimit;
+        this.content.YLimit = this._oldContentPos.YLimit   = 20000;
+        this.content.Recalculate_Page(0, true);
     };
     CAnnotationInk.prototype.onMouseDown = function(e) {
-        let oViewer = editor.getDocumentRenderer();
+        let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
+        let oDoc            = this.GetDocument();
+        let oDrDoc          = oDoc.GetDrawingDocument();
 
-        oDrawingObjects.arrPreTrackObjects.push(this.CreateMoveTrack());
-        oDrawingObjects.selectedObjects.push(this);
-        
         this.selectStartPage = this.GetPage();
-        oDrawingObjects.OnMouseDown(e, e.clientX, e.clientY, oViewer.currentPage);
+        let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
+
+        oDrawingObjects.OnMouseDown(e, X, Y, oViewer.currentPage);
+
+        if (this.IsSelected()) {
+            oDrawingObjects.handleEventMode = HANDLE_EVENT_MODE_CURSOR;
+        }
+        else {
+            oDrawingObjects.handleEventMode = HANDLE_EVENT_MODE_HANDLE;
+        }
+
+        oDrawingObjects.OnMouseDown(e, X, Y, oViewer.currentPage);
     };
-    CAnnotationInk.prototype.CreateMoveTrack = function() {
-        return new AscFormat.MoveAnnotationTrack(this);
+    CAnnotationInk.prototype.IsSelected = function() {
+        let oViewer         = editor.getDocumentRenderer();
+        let oDrawingObjects = oViewer.DrawingObjects;
+        return oDrawingObjects.selectedObjects.includes(this);
     };
     CAnnotationInk.prototype.SetDrawing = function(oDrawing) {
         let oRun = this.content.GetElement(0).GetElement(0);
@@ -141,10 +232,141 @@
     
     CAnnotationInk.prototype.onMouseUp = function() {
         let oViewer = editor.getDocumentRenderer();
-
-        let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(this._pagePos.x + this._pagePos.w / oViewer.zoom, this._pagePos.y + this._pagePos.h / (2 * oViewer.zoom), this.GetPage(), true);
-        editor.sync_ShowComment([this.GetId()], X, Y)
+        oViewer.onUpdateOverlay();
     };
+    
+    /**
+	 * Updates rect of a annot after resize.
+	 * @memberof CAnnotationInk
+	 * @typeofeditors ["PDF"]
+	 */
+    CAnnotationInk.prototype.UpdateRect = function() {
+        let oDrawing = this.GetDrawing();
+
+        let nWidth = oDrawing.Extent.W;
+        let nHeight = oDrawing.Extent.W;
+
+
+    };
+
+    // переопределения методов CShape
+    CAnnotationInk.prototype.getTransformMatrix = function() {
+        return this.GetDrawing().GraphicObj.getTransformMatrix();
+    };
+    CAnnotationInk.prototype.canRotate = function() {
+        return false; // to сделать вращение
+    };
+    CAnnotationInk.prototype.canEdit = function() {
+        true;
+    };
+    CAnnotationInk.prototype.canChangeAdjustments = function() {
+        return this.GetDrawing().GraphicObj.canChangeAdjustments();
+    };
+    CAnnotationInk.prototype.hitToAdjustment = function() {
+        return this.GetDrawing().GraphicObj.hitToAdjustment();
+    };
+    CAnnotationInk.prototype.getObjectType = function() {
+        return this.GetDrawing().GraphicObj.getObjectType();
+    };
+    CAnnotationInk.prototype.hitToHandles = function(x, y) {
+        return this.GetDrawing().GraphicObj.hitToHandles(x, y);
+    };
+    CAnnotationInk.prototype.hitInBoundingRect = function() {
+        return this.GetDrawing().GraphicObj.hitInBoundingRect();
+    };
+    CAnnotationInk.prototype.getCardDirectionByNum = function(num) {
+        return this.GetDrawing().GraphicObj.getCardDirectionByNum(num);
+    };
+    CAnnotationInk.prototype.hitInInnerArea = function(x, y) {
+        return this.GetDrawing().GraphicObj.hitInInnerArea(x, y);
+    };
+    CAnnotationInk.prototype.hitInPath = function(x, y) {
+        return this.GetDrawing().GraphicObj.hitInPath(x, y);
+    };
+    CAnnotationInk.prototype.hitInTextRect = function(x, y) {
+        return this.GetDrawing().GraphicObj.hitInTextRect(x, y);
+    };
+    CAnnotationInk.prototype.getCNvProps = function(x, y) {
+        return this.GetDrawing().GraphicObj.getCNvProps(x, y);
+    };
+    CAnnotationInk.prototype.canResize = function() {
+        return true;
+    };
+    CAnnotationInk.prototype.select = function(drawingObjectsController, pageIndex) {
+        this.selected = true;
+		this.selectStartPage = pageIndex;
+		var content = this.getDocContent && this.getDocContent();
+		if (content)
+			content.Set_StartPage(pageIndex);
+		var selected_objects;
+		if (!AscCommon.isRealObject(this.group))
+			selected_objects = drawingObjectsController ? drawingObjectsController.selectedObjects : [];
+		else
+			selected_objects = this.group.getMainGroup().selectedObjects;
+		for (var i = 0; i < selected_objects.length; ++i) {
+			if (selected_objects[i] === this)
+				break;
+		}
+		if (i === selected_objects.length)
+			selected_objects.push(this);
+
+
+		if (drawingObjectsController) {
+			drawingObjectsController.onChangeDrawingsSelection();
+		}
+    };
+    CAnnotationInk.prototype.canMove = function() {
+        return true;
+    };
+    CAnnotationInk.prototype.createResizeTrack = function (cardDirection, oController) {
+        return new AscFormat.ResizeTrackShapeImage(this, cardDirection, oController);
+    };
+    CAnnotationInk.prototype.getNumByCardDirection = function (cardDirection) {
+        return this.GetDrawing().GraphicObj.getNumByCardDirection(cardDirection);
+    };
+    CAnnotationInk.prototype.getTrackGeometry = function () {
+        return this.GetDrawing().GraphicObj.getTrackGeometry();
+    };
+    CAnnotationInk.prototype.createMoveTrack = function() {
+        return new AscFormat.MoveAnnotationTrack(this);
+    };
+    CAnnotationInk.prototype.getResizeCoefficients = function() {
+        return this.GetDrawing().GraphicObj.getResizeCoefficients(...arguments);
+    };
+    CAnnotationInk.prototype.isObjectInSmartArt = function() {
+        return false;
+    };
+    CAnnotationInk.prototype.getNoChangeAspect = function() {
+        return this.GetDrawing().GraphicObj.getNoChangeAspect();
+    };
+    CAnnotationInk.prototype.setSpPr = function(oPr) {
+        return this.GetDrawing().GraphicObj.setSpPr(oPr);
+    };
+    CAnnotationInk.prototype.ResetParametersWithResize = function() {
+        return this.GetDrawing().GraphicObj.ResetParametersWithResize();
+    };
+    CAnnotationInk.prototype.checkDrawingBaseCoords = function() {
+        return this.GetDrawing().GraphicObj.checkDrawingBaseCoords();
+    };
+    CAnnotationInk.prototype.getAspect = function() {
+        return this.GetDrawing().GraphicObj.getAspect();
+    };
+    CAnnotationInk.prototype.createRotateTrack = function() {
+        return new AscFormat.RotateTrackShapeImage(this);
+    };
+    CAnnotationInk.prototype.getRotateAngle = function() {
+        return this.GetDrawing().GraphicObj.getRotateAngle();
+    };
+    CAnnotationInk.prototype.getFullFlipH = function() {
+        return this.GetDrawing().GraphicObj.getFullFlipH();
+    };
+    CAnnotationInk.prototype.getFullFlipV = function() {
+        return this.GetDrawing().GraphicObj.getFullFlipV();
+    };
+    CAnnotationInk.prototype.changeRot = function(angle, bWord) {
+        return this.GetDrawing().GraphicObj.changeRot(angle, bWord);
+    };
+    
 
     function TurnOffHistory() {
         if (AscCommon.History.IsOn() == true)

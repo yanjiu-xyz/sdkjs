@@ -194,6 +194,10 @@ StartAddNewShape.prototype =
             }
             else
             {
+                let oViewer = editor.getDocumentRenderer();
+                let nScaleY = oViewer.drawingPages[oViewer.currentPage].H / oViewer.file.pages[oViewer.currentPage].H / oViewer.zoom;
+                let nScaleX = oViewer.drawingPages[oViewer.currentPage].W / oViewer.file.pages[oViewer.currentPage].W / oViewer.zoom;
+
                 var bounds = oTrack.getBounds();
                 var shape = oTrack.getShape(true, this.drawingObjects.drawingDocument);
                 var drawing = new ParaDrawing(shape.spPr.xfrm.extX, shape.spPr.xfrm.extY, shape, this.drawingObjects.drawingDocument, oLogicDocument, null);
@@ -204,21 +208,22 @@ StartAddNewShape.prototype =
                 drawing.Set_Distance( 3.2,  0,  3.2, 0 );
 
                 drawing.CheckWH();
-                let aRect = [bounds.min_x * g_dKoef_mm_to_pix, bounds.min_y * g_dKoef_mm_to_pix, bounds.max_x * g_dKoef_mm_to_pix, bounds.max_y * g_dKoef_mm_to_pix];
+                
+                let aRect = [bounds.min_x * g_dKoef_mm_to_pix / nScaleX, bounds.min_y * g_dKoef_mm_to_pix / nScaleY, bounds.max_x * g_dKoef_mm_to_pix / nScaleX, bounds.max_y * g_dKoef_mm_to_pix / nScaleY];
 
                 let oInkAnnot = oLogicDocument.AddAnnot({
                     rect: aRect,
-                    page: editor.getDocumentRenderer().currentPage,
+                    page: oViewer.currentPage,
                     contents: "",
                     type: AscPDF.ANNOTATIONS_TYPES.Ink
                 });
 
                 oInkAnnot.SetDrawing(drawing);
                 oInkAnnot.AddToRedraw();
-                
+
                 shape.recalculate();
 
-                editor.getDocumentRenderer()._paintAnnots();
+                oViewer._paintAnnots();
             }
 			
         }
@@ -354,7 +359,7 @@ NullState.prototype =
         {}
 
 
-        if(!b_no_handle_selected && editor.isDocumentRenderer() == false)
+        if(!b_no_handle_selected)
         {
             ret = AscFormat.handleSelectedObjects(this.drawingObjects, e, x, y, null, pageIndex, true);
             if(ret)
@@ -428,7 +433,10 @@ NullState.prototype =
             }
         }
         else {
-            ret = AscFormat.handlePDFObjects(this.drawingObjects, this.drawingObjects.selectedObjects, e, x, y, null, pageIndex, true);
+            let oDoc = editor.getDocumentRenderer().getPDFDoc();
+
+            let aDrawings = oDoc.annots;
+            return AscFormat.handleFloatObjects(this.drawingObjects, aDrawings, e, x, y, null, pageIndex, true);
         }
         
         if(start_target_doc_content)
@@ -768,10 +776,22 @@ RotateState.prototype =
             var bounds;
 
             if (editor.isDocumentRenderer()) {
+                
                 for(i = 0; i < this.drawingObjects.arrTrackObjects.length; ++i)
-                {
-                    var oTrack = this.drawingObjects.arrTrackObjects[i];
+                {   
+                    var oTrack  = this.drawingObjects.arrTrackObjects[i];
+                    bounds      = oTrack.getBounds();
                     oTrack.trackEnd(true);
+
+                    
+                    if (oTrack instanceof AscFormat.ResizeTrackShapeImage) {
+                        let aRect = [bounds.min_x * g_dKoef_mm_to_pix, bounds.min_y * g_dKoef_mm_to_pix, bounds.max_x * g_dKoef_mm_to_pix, bounds.max_y * g_dKoef_mm_to_pix];
+                        oTrack.originalObject.GetDrawing().CheckWH();
+                        oTrack.originalObject.SetRect(aRect);
+                    }
+                    
+                    oTrack.originalObject.AddToRedraw();
+                    editor.getDocumentRenderer()._paintAnnots();
                 }
 
                 this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));

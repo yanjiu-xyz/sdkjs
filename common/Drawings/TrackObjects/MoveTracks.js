@@ -651,22 +651,22 @@ function MoveComment(comment)
     };
 }
 
-function MoveAnnotationTrack(annot)
+function MoveAnnotationTrack(originalObject)
 {
     this.bIsTracked = false;
-    this.annot      = annot;
-    this.x          = annot._pagePos.x;
-    this.y          = annot._pagePos.y;
+    this.originalObject      = originalObject;
+    this.x          = originalObject._pagePos.x;
+    this.y          = originalObject._pagePos.y;
     this.viewer     = editor.getDocumentRenderer();
 
     this.track = function(dx, dy)
     {
         this.bIsTracked = true;
-        this.x = this.annot._pagePos.x + dx / this.viewer.zoom;
-        this.y = this.annot._pagePos.y + dy / this.viewer.zoom;
+        this.x = this.originalObject._pagePos.x + dx * g_dKoef_mm_to_pix / this.viewer.zoom;
+        this.y = this.originalObject._pagePos.y + dy * g_dKoef_mm_to_pix / this.viewer.zoom;
     };
     this.initCanvas = function() {
-        let nPage   = this.annot.GetPage();
+        let nPage   = this.originalObject.GetPage();
 
         let page = this.viewer.drawingPages[nPage];
         let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
@@ -677,12 +677,17 @@ function MoveAnnotationTrack(annot)
         this.tmpCanvas.height = h;
     };
 
-    this.draw = function(oCtx)
+    this.draw = function(oDrawer)
     {
         // рисуем на отдельном канвасе
-        let page = this.viewer.drawingPages[this.annot.GetPage()];
+        let page = this.viewer.drawingPages[this.originalObject.GetPage()];
         if (!page)
             return;
+
+        if(AscFormat.isRealNumber(this.originalObject.GetPage()) && oDrawer.SetCurrentPage)
+        {
+            oDrawer.SetCurrentPage(this.originalObject.GetPage());
+        }
         
         let xCenter = this.viewer.width >> 1;
 		let yPos = this.viewer.scrollY >> 0;
@@ -700,16 +705,33 @@ function MoveAnnotationTrack(annot)
         let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
         let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         
-        let oGraphicsPDF = new AscPDF.CPDFGraphics();
-        oGraphicsPDF.Init(tmpCanvasCtx, this.tmpCanvas.width, this.tmpCanvas.height);
-        oGraphicsPDF.SetGlobalAlpha(1);
+        let oGraphics;
+        switch (this.originalObject.GetType()) {
+            case AscPDF.ANNOTATIONS_TYPES.Ink: {
+                let nScale  = AscCommon.AscBrowser.retinaPixelRatio * this.viewer.zoom;
+                oGraphics   = new AscCommon.CGraphics();
 
-        oCtx.globalAlpha = 0.5;
+				this.viewer.pagesInfo.pages[this.originalObject.GetPage()].graphics.word = oGraphics;
+				oGraphics.init(tmpCanvasCtx, this.tmpCanvas.width * nScale, this.tmpCanvas.height * nScale, this.tmpCanvas.width * g_dKoef_pix_to_mm, this.tmpCanvas.height * g_dKoef_pix_to_mm);
+				oGraphics.m_oFontManager = AscCommon.g_fontManager;
+				oGraphics.endGlobalAlphaColor = [255, 255, 255];
+				oGraphics.transform(1, 0, 0, 1, 0, 0);
+                break;
+            }
+            default: {
+                oGraphics = new AscPDF.CPDFGraphics();
+                oGraphics.Init(tmpCanvasCtx, this.tmpCanvas.width, this.tmpCanvas.height);
+                oGraphics.SetGlobalAlpha(1);
+            }
+        }
+        
 
-        this.annot.SetPosition(this.x, this.y);
-        this.annot.Draw(oGraphicsPDF);
+        oDrawer.m_oContext.globalAlpha = 0.5;
 
-        oCtx.drawImage(this.tmpCanvas, 0, 0, w, h, x, y, w, h);
+        this.originalObject.SetPosition(this.x, this.y);
+        this.originalObject.Draw(oGraphics);
+
+        oDrawer.m_oContext.drawImage(this.tmpCanvas, 0, 0, w, h, x, y, w, h);
     };
 
     this.trackEnd = function()
@@ -718,7 +740,7 @@ function MoveAnnotationTrack(annot)
             return;
         }
 
-        let nPage       = this.annot.GetPage();
+        let nPage       = this.originalObject.GetPage();
         let nPageHeight = this.viewer.drawingPages[nPage].H / this.viewer.zoom;
         let nPageWidth  = this.viewer.drawingPages[nPage].W / this.viewer.zoom;
 
@@ -726,26 +748,22 @@ function MoveAnnotationTrack(annot)
         let X = Math.max(this.x, 5);
         let Y = Math.max(this.y, 5);
 
-        if (X + this.annot._pagePos.w > nPageWidth) {
-            X = nPageWidth - this.annot._pagePos.w;
+        if (X + this.originalObject._pagePos.w > nPageWidth) {
+            X = nPageWidth - this.originalObject._pagePos.w;
         }
-        if (Y + this.annot._pagePos.h > nPageHeight) {
-            Y = nPageHeight - this.annot._pagePos.h;
+        if (Y + this.originalObject._pagePos.h > nPageHeight) {
+            Y = nPageHeight - this.originalObject._pagePos.h;
         }
 
-        this.annot.SetPosition(X, Y);
+        this.originalObject.SetPosition(X, Y);
 
-        let aRect = this.annot.GetRect();
-        this.annot._pagePos = {
+        let aRect = this.originalObject.GetRect();
+        this.originalObject._pagePos = {
             x: aRect[0],
             y: aRect[1],
             w: (aRect[2] - aRect[0]),
             h: (aRect[3] - aRect[1])
         };
-
-        this.annot.AddToRedraw();
-        this.viewer._paintAnnots();
-
     };
 
     this.getBounds = function()

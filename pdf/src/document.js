@@ -598,7 +598,7 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.OnExitFieldByClick = function(bSkipRedraw) {
         let oViewer         = editor.getDocumentRenderer();
-        let oActiveForm     = oViewer.activeForm;
+        let oActiveForm     = this.activeForm;
         let oActionsQueue   = this.GetActionsQueue();
 
         oActiveForm.UpdateScroll && oActiveForm.UpdateScroll(false); // убираем скрол
@@ -713,55 +713,270 @@ var CPresentation = CPresentation || function(){};
             oViewer._paintForms();
 
         oViewer._paintFormsHighlight();
+
+        // нажали мышь - запомнили координаты и находимся ли на ссылке
+        // при выходе за epsilon на mouseMove - сэмулируем нажатие
+        // так что тут только курсор
+        var cursorType;
+        if (this.activeForm)
+        {
+            switch (oViewer.activeForm.GetType())
+            {
+                case AscPDF.FIELD_TYPES.text:
+                    cursorType = "text";
+                    break;
+                case AscPDF.FIELD_TYPES.combobox:
+                    cursorType = "text";
+                    break;
+                default:
+                    cursorType = "pointer";
+                    break;
+            }
+        }
+
+        oViewer.setCursorType(cursorType);
     };
-    CPDFDoc.prototype.OnMouseDownAnnot = function(oAnnot, event) {
-        oAnnot.onMouseDown(event);
-    };
-    CPDFDoc.prototype.OnMouseDown = function(x, y, e) {
+    CPDFDoc.prototype.OnMouseDown = function(e) {
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
         let oDrDoc          = this.GetDrawingDocument();
+        let IsOnDrawer      = oViewer.Api.isInkDrawerOn();
 
-        let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        oDrawingObjects.OnMouseDown(e, X, Y, oViewer.currentPage);
+        oViewer.mouseDownLinkObject = oViewer.getPageLinkByMouse();
+        let oMouseDownField         = oViewer.getPageFieldByMouse();
+        let oMouseDownAnnot         = oViewer.getPageAnnotByMouse();
+
+        // если курсор меняется на resize, то клик по нему выходит за область поля или аннотации, отслеживаем этот момент и не убираем поле/аннотацию из активных
+        let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
+        let bInResizeRect = oDrawingObjects.updateCursorType(oViewer.currentPage, X, Y, e, false);
+        if (bInResizeRect) {
+            if (!oDrawingObjects.selectedObjects.includes(this.mouseDownAnnot))
+                this.mouseDownAnnot = oMouseDownAnnot;
+            if (!oDrawingObjects.selectedObjects.includes(this.mouseDownField))
+                this.mouseDownField = oMouseDownField;
+        }
+        else {
+            this.mouseDownAnnot = oMouseDownAnnot;
+            this.mouseDownField = oMouseDownField;
+        }
+
+        if (IsOnDrawer == true) {
+            oDrawingObjects.OnMouseDown(e, X, Y, oViewer.currentPage);
+            return;
+        }
+        
+        // если попали в другую форму или никуда, то выход из текущей формы
+        if (this.activeForm && this.mouseDownField != this.activeForm) {
+            this.OnExitFieldByClick();
+        }
+        
+        if (this.mouseDownField)
+            this.OnMouseDownField(this.mouseDownField, e); 
+        else if (this.mouseDownAnnot)
+            this.mouseDownAnnot.onMouseDown(e);
+        else
+            oDrawingObjects.OnMouseDown(e, X, Y, oViewer.currentPage);
+
+        if (!oViewer.MouseHandObject && (!oViewer.mouseDownLinkObject))
+        {
+            // ждать смысла нет
+            oViewer.isMouseMoveBetweenDownUp = true;
+            oViewer.onMouseDownEpsilon();
+        }
+
+        
+        if (this.mouseDownAnnot == null) {
+            oDrawingObjects.resetSelection();
+        }
+    };
+    CPDFDoc.prototype.OnMouseDownAnnot = function(e) {
+
     };
 
     CPDFDoc.prototype.OnMouseMove = function(x, y, e) {
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
         let oDrDoc          = this.GetDrawingDocument();
-
-        e.IsLocked = true;
+        let oAPI            = oViewer.Api;
+        
         let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(x, y);
-        
-        oDrawingObjects.OnMouseMove(e, X, Y, oViewer.currentPage);
-        // oViewer.overlay.ClearAll = true;
-        // oViewer.overlay.max_x = 0;
-        // oViewer.overlay.max_y = 0;
-        
+        if (oViewer.isMouseDown)
+        {
+            if (oAPI.isInkDrawerOn() || this.mouseDownAnnot) {
+                e.IsLocked = true;
+                oViewer.overlay.ClearAll = true;
+                oViewer.overlay.max_x = 0;
+                oViewer.overlay.max_y = 0;
+                
+
+                if (this.mouseDownAnnot && null == this.mouseDownAnnot.IsComment)
+                    oDrawingObjects.updateCursorType(oViewer.currentPage, X, Y, e, false);
+
+                oDrawingObjects.OnMouseMove(e, X, Y, oViewer.currentPage);
+            }
+            else if (this.activeForm)
+            {
+                if (this.activeForm.GetType() == AscPDF.FIELD_TYPES.text || this.activeForm.GetType() == AscPDF.FIELD_TYPES.combobox)
+                {
+                    this.activeForm.SelectionSetEnd(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
+                    if (this.activeForm.content.IsSelectionEmpty() == false) {
+                        oAPI.WordControl.m_oDrawingDocument.TargetEnd();
+                    }
+                    else {
+                        oAPI.WordControl.m_oDrawingDocument.TargetStart();
+                        oAPI.WordControl.m_oDrawingDocument.showTarget(true);
+                    }
+                    
+                    oViewer.onUpdateOverlay();
+                }
+                else if ([AscPDF.FIELD_TYPES.button, AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(this.activeForm.GetType()) && this.activeForm.IsPressed()) {
+                    let mouseMoveFieldObject = oViewer.getPageFieldByMouse();
+                    if (mouseMoveFieldObject != this.activeForm && this.activeForm.IsHovered()) {
+                        this.activeForm.SetHovered(false);
+                        this.activeForm.OnEndPressed();
+                    }
+                    else if (mouseMoveFieldObject == this.activeForm && this.activeForm.IsHovered() == false) {
+                        this.activeForm.SetHovered(true);
+                        this.activeForm.DrawPressed();
+                    }
+                }
+            }
+            else if (oViewer.mouseDownLinkObject)
+            {
+                // не меняем курсор с "ссылочного", если зажимали на ссылке
+                oViewer.setCursorType("pointer");
+            }
+            else
+            {
+                // даже если не двигали еще и ждем eps, все равно курсор меняем на зажатый
+                oViewer.setCursorType(AscCommon.Cursors.Grabbing);
+            }
+        }
+        else
+        {
+            // просто водим мышкой - тогда смотрим, на ссылке или поле, чтобы выставить курсор
+            var mouseMoveLinkObject = oViewer.getPageLinkByMouse();
+            var mouseMoveFieldObject = oViewer.getPageFieldByMouse();
+            var mouseMoveAnnotObject = oViewer.getPageAnnotByMouse();
+            
+            if (mouseMoveFieldObject && mouseMoveFieldObject != oViewer.mouseMoveFieldObject) {
+                mouseMoveFieldObject._needDrawHoverBorder = true;
+                if (oViewer.mouseMoveFieldObject)
+                    oViewer.mouseMoveFieldObject._needDrawHoverBorder = false;
+
+                oViewer.mouseMoveFieldObject && oViewer.mouseMoveFieldObject.onMouseExit();
+                oViewer.mouseMoveFieldObject = mouseMoveFieldObject;
+                mouseMoveFieldObject.onMouseEnter();
+
+                oViewer._paintFormsHighlight();
+            }
+            else if (mouseMoveFieldObject == null && oViewer.mouseMoveFieldObject) {
+                oViewer.mouseMoveFieldObject.onMouseExit();
+                oViewer.mouseMoveFieldObject._needDrawHoverBorder = false;
+                oViewer.mouseMoveFieldObject = null;
+                oViewer._paintFormsHighlight();
+            }
+
+
+            let cursorType = "pointer";
+            if (mouseMoveLinkObject)
+                cursorType = "pointer";
+            else if (mouseMoveFieldObject)
+            {
+                switch (mouseMoveFieldObject.GetType())
+                {
+                    case AscPDF.FIELD_TYPES.text:
+                        cursorType = "text";
+                        break;
+                    case AscPDF.FIELD_TYPES.combobox:
+                        var pageObject = oViewer.getPageByCoords(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+                        if (!pageObject)
+                            return null;
+
+                        if (pageObject.x >= mouseMoveFieldObject._markRect.x1 && pageObject.x <= mouseMoveFieldObject._markRect.x2 && pageObject.y >= mouseMoveFieldObject._markRect.y1 && pageObject.y <= mouseMoveFieldObject._markRect.y2 && mouseMoveFieldObject._options.length != 0) {
+                            cursorType = "pointer";
+                        }
+                        else
+                            cursorType = "text";
+                        break;
+                    default:
+                        cursorType = "pointer";
+                }
+            }
+            else if (mouseMoveAnnotObject && mouseMoveAnnotObject.GetType() == AscPDF.ANNOTATIONS_TYPES.Text) {
+            	cursorType = "move";
+            }
+
+            oViewer.setCursorType(cursorType);
+
+            if (!mouseMoveAnnotObject || null == mouseMoveAnnotObject.IsComment)
+                oDrawingObjects.updateCursorType(oViewer.currentPage, X, Y, e, false);
+        }
     };
-    CPDFDoc.prototype.OnMouseUp = function(x, y, e) {
-        let oViewer = editor.getDocumentRenderer();
+    CPDFDoc.prototype.OnMouseUp = function(e) {
+        let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
-     
-        let bMouseUpAnnot = true;
+        let oDrDoc          = this.GetDrawingDocument();
+
+        let bUpdateOverlay = false;
         if (oDrawingObjects.arrTrackObjects.length != 0) {
-            bMouseUpAnnot = false;
+            bUpdateOverlay = true;
         }
 
-        e.IsLocked = false;
-        oDrawingObjects.OnMouseUp(e, x, y, oViewer.currentPage);
-        if (bMouseUpAnnot == false) {
-            oViewer.overlay.ClearAll = true;
-            oViewer.overlay.max_x = 0;
-            oViewer.overlay.max_y = 0;
-            oViewer.onUpdateOverlay();
+        let oMouseUpField = oViewer.getPageFieldByMouse();
+		let oMouseUpAnnot = oViewer.getPageAnnotByMouse();
+        
+        let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
+        // если рисование, то просто заканчиваем его
+        if (oViewer.Api.isInkDrawerOn()) {
+            oDrawingObjects.OnMouseUp(e, X, Y, oViewer.currentPage);
+            if (true == bUpdateOverlay) {
+                oViewer.overlay.ClearAll = true;
+                oViewer.overlay.max_x = 0;
+                oViewer.overlay.max_y = 0;
+                oViewer.onUpdateOverlay();
+            }
+            return;
+        }
+
+        // в приоритете обрабатываем формы или аннотации, потом уже ссылки
+        if (this.mouseDownAnnot || this.mouseDownField) {
+            oViewer.isMouseMoveBetweenDownUp = false;
+            oViewer.MouseHandObject.Active = false;
+            oViewer.mouseDownLinkObject = null;
+        }
+
+        oDrawingObjects.OnMouseUp(e, X, Y, oViewer.currentPage);
+
+        if (this.mouseDownField)
+        {
+            if (oMouseUpField == this.mouseDownField)
+                this.OnMouseUpField(oMouseUpField, e);
+            else if (this.mouseDownField.GetType() == AscPDF.FIELD_TYPES.button) {
+                this.mouseDownField.SetPressed(false);
+            }
+        }
+        else if (this.mouseDownAnnot) {
+            if (bUpdateOverlay == true) {
+                oViewer.overlay.ClearAll = true;
+                oViewer.overlay.max_x = 0;
+                oViewer.overlay.max_y = 0;
+                oViewer.onUpdateOverlay();
+            }
+            if (this.mouseDownAnnot == oMouseUpAnnot)
+                this.mouseDownAnnot.onMouseUp();
+        }
+        else if (!oViewer.isMouseMoveBetweenDownUp)
+        {
+            oViewer.setCursorType(AscCommon.Cursors.Grab);
+
+            // делаем клик в логическом документе, чтобы сбросить селект, если он был
+            var pageObjectLogic = oViewer.getPageByCoords2(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+            oViewer.file.onMouseDown(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+            oViewer.file.onMouseUp(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
         }
         
-        let oMouseUpAnnot = oViewer.getPageAnnotByMouse();
-        if (bMouseUpAnnot && oViewer.mouseDownAnnot == oMouseUpAnnot) {
-            oMouseUpAnnot.onMouseUp();
-        }
+        e.IsLocked = false;
     };
 
     CPDFDoc.prototype.OnMouseUpField = function(oField, event) {

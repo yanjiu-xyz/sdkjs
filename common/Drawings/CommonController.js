@@ -2239,7 +2239,7 @@
 						for (i = 0; i < this.selectedObjects.length; ++i) {
 							let oDrawing = this.selectedObjects[i];
 							if (oDrawing.selectStartPage === pageIndex) {
-								let nType = oDrawing.isForm() ? AscFormat.TYPE_TRACK.FORM : AscFormat.TYPE_TRACK.SHAPE
+								let nType = oDrawing.isForm && oDrawing.isForm() ? AscFormat.TYPE_TRACK.FORM : AscFormat.TYPE_TRACK.SHAPE
 								drawingDocument.DrawTrack(
 									nType,
 									oDrawing.getTransformMatrix(),
