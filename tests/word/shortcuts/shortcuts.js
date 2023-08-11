@@ -79,11 +79,33 @@
 
 	drawingDocument.SetCursorType = function () {};
 	drawingDocument.OnRePaintAttack = function() {};
-	drawingDocument.IsFreezePage = function() {};
-	drawingDocument.Set_RulerState_HdrFtr = function() {};
-	drawingDocument.IsTrackText  = function() {};
 	drawingDocument.ConvertCoordsToCursorWR  = function(X, Y) {return {X: X, Y: Y}};
 	drawingDocument.OnUpdateOverlay = function() {};
+
+	editor.retrieveFormatPainterData = Asc.asc_docs_api.prototype.retrieveFormatPainterData.bind(editor);
+	editor.get_ShowParaMarks = Asc.asc_docs_api.prototype.get_ShowParaMarks.bind(editor);
+	editor.put_ShowParaMarks = Asc.asc_docs_api.prototype.put_ShowParaMarks.bind(editor);
+	editor.sync_ShowParaMarks = Asc.asc_docs_api.prototype.sync_ShowParaMarks.bind(editor);
+	editor.private_GetLogicDocument = Asc.asc_docs_api.prototype.private_GetLogicDocument.bind(editor);
+	editor.asc_AddTableOfContents = Asc.asc_docs_api.prototype.asc_AddTableOfContents.bind(editor);
+	editor.asc_registerCallback = Asc.asc_docs_api.prototype.asc_registerCallback.bind(editor);
+	editor.asc_unregisterCallback = Asc.asc_docs_api.prototype.asc_unregisterCallback.bind(editor);
+	editor.sendEvent = Asc.asc_docs_api.prototype.sendEvent.bind(editor);
+	editor.sync_DialogAddHyperlink = Asc.asc_docs_api.prototype.sync_DialogAddHyperlink.bind(editor);
+	editor.sync_ParaStyleName = Asc.asc_docs_api.prototype.sync_ParaStyleName.bind(editor);
+	editor.sync_MouseMoveStartCallback = Asc.asc_docs_api.prototype.sync_MouseMoveStartCallback.bind(editor);
+	editor.sync_MouseMoveCallback = Asc.asc_docs_api.prototype.sync_MouseMoveCallback.bind(editor);
+	editor.sync_MouseMoveEndCallback = Asc.asc_docs_api.prototype.sync_MouseMoveEndCallback.bind(editor);
+	editor.sync_HideComment = Asc.asc_docs_api.prototype.sync_HideComment.bind(editor);
+	editor.sync_ContextMenuCallback = Asc.asc_docs_api.prototype.sync_ContextMenuCallback.bind(editor);
+	editor.asc_AddMath = Asc.asc_docs_api.prototype.asc_AddMath2.bind(editor);
+	editor.sync_StartAddShapeCallback = Asc.asc_docs_api.prototype.sync_StartAddShapeCallback.bind(editor);
+	editor.SetPaintFormat = Asc.asc_docs_api.prototype.SetPaintFormat.bind(editor);
+	editor.SetMarkerFormat = Asc.asc_docs_api.prototype.SetMarkerFormat.bind(editor);
+	editor.sync_MarkerFormatCallback = Asc.asc_docs_api.prototype.sync_MarkerFormatCallback.bind(editor);
+	editor.sync_PaintFormatCallback = Asc.asc_docs_api.prototype.sync_PaintFormatCallback.bind(editor);
+	editor.sync_EndAddShape = function () {};
+	editor.isDocumentEditor = true;
 
 	editor.getShortcut = function (e)
 	{
@@ -104,32 +126,6 @@
 	{
 		this.isStartAddShape = true;
 	};
-
-	editor.retrieveFormatPainterData = Asc.asc_docs_api.prototype.retrieveFormatPainterData.bind(editor);
-	editor.get_ShowParaMarks = Asc.asc_docs_api.prototype.get_ShowParaMarks.bind(editor);
-	editor.put_ShowParaMarks = Asc.asc_docs_api.prototype.put_ShowParaMarks.bind(editor);
-	editor.sync_ShowParaMarks = Asc.asc_docs_api.prototype.sync_ShowParaMarks.bind(editor);
-	editor.private_GetLogicDocument = Asc.asc_docs_api.prototype.private_GetLogicDocument.bind(editor);
-	editor.asc_AddTableOfContents = Asc.asc_docs_api.prototype.asc_AddTableOfContents.bind(editor);
-	editor.asc_registerCallback = Asc.asc_docs_api.prototype.asc_registerCallback.bind(editor);
-	editor.asc_unregisterCallback = Asc.asc_docs_api.prototype.asc_unregisterCallback.bind(editor);
-	editor.sendEvent = Asc.asc_docs_api.prototype.sendEvent.bind(editor);
-	editor.sync_DialogAddHyperlink = Asc.asc_docs_api.prototype.sync_DialogAddHyperlink.bind(editor);
-	editor.sync_ParaStyleName = Asc.asc_docs_api.prototype.sync_ParaStyleName.bind(editor);
-	editor.sync_MouseMoveStartCallback = Asc.asc_docs_api.prototype.sync_MouseMoveStartCallback.bind(editor);
-	editor.sync_MouseMoveCallback = Asc.asc_docs_api.prototype.sync_MouseMoveCallback.bind(editor);
-	editor.sync_MouseMoveEndCallback = Asc.asc_docs_api.prototype.sync_MouseMoveEndCallback.bind(editor);
-	editor.sync_HideComment = Asc.asc_docs_api.prototype.sync_HideComment.bind(editor);
-	editor.sync_ContextMenuCallback = Asc.asc_docs_api.prototype.sync_ContextMenuCallback.bind(editor);
-	editor.asc_AddMath = Asc.asc_docs_api.prototype.asc_AddMath2.bind(editor);
-	editor._onEndLoadSdk = Asc.asc_docs_api.prototype._onEndLoadSdk.bind(editor);
-	editor.sync_StartAddShapeCallback = Asc.asc_docs_api.prototype.sync_StartAddShapeCallback.bind(editor);
-	editor.SetPaintFormat = Asc.asc_docs_api.prototype.SetPaintFormat.bind(editor);
-	editor.SetMarkerFormat = Asc.asc_docs_api.prototype.SetMarkerFormat.bind(editor);
-	editor.sync_MarkerFormatCallback = Asc.asc_docs_api.prototype.sync_MarkerFormatCallback.bind(editor);
-	editor.sync_PaintFormatCallback = Asc.asc_docs_api.prototype.sync_PaintFormatCallback.bind(editor);
-	editor.sync_EndAddShape = function () {};
-	editor.isDocumentEditor = true;
 
 	AscCommon.CDocsCoApi.prototype.askSaveChanges = function (callback)
 	{
@@ -628,9 +624,9 @@
 		QUnit.test('Check toggle bullet list', (assert) =>
 		{
 			const paragraph = ClearDocumentAndAddParagraph('');
-			assert.false(paragraph.IsBulletedNumbering(), 'check apply bullet list');
+			assert.false(paragraph.IsBulletedNumbering(), 'check disable bullet list');
 			ExecuteShortcut(c_oAscDocumentShortcutType.ApplyListBullet);
-			assert.true(paragraph.IsBulletedNumbering(), 'check disable bullet list');
+			assert.true(paragraph.IsBulletedNumbering(), 'check apply bullet list');
 		});
 
 		QUnit.test('Check copy/paste format', (assert) =>
@@ -962,7 +958,8 @@
 
 			SelectDrawings([drawing2]);
 			ExecuteHotkey(testHotkeyActions.moveCursorToStartPositionShapeEnter);
-			assert.true(drawing2.GraphicObj.getDocContent().IsCursorAtBegin(), 'Check movement to start position in empty content');
+			const para = drawing2.GraphicObj.getDocContent().Content[0];
+			assert.true(para.IsThisElementCurrent() && para.IsCursorAtBegin(), 'Check movement to start position in empty content');
 
 			AscTest.EnterText('Hello');
 			SelectDrawings([drawing2]);
