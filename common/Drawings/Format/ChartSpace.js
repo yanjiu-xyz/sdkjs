@@ -373,6 +373,8 @@ function(window, undefined) {
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetNvGrFrProps] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetThemeOverride] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ShapeSetBDeleted] = CChangesDrawingsBool;
+	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetChartData] = CChangesDrawingsObjectNoId;
+	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetExtLst] = CChangesDrawingsObjectNoId;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetParent] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetChart] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetClrMapOvr] = CChangesDrawingsObject;
@@ -535,6 +537,12 @@ function(window, undefined) {
 	drawingsChangesMap[AscDFH.historyitem_ShapeSetBDeleted] = function (oClass, value) {
 		oClass.bDeleted = value;
 	};
+	drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetChartData] = function(oClass, value) {
+        oClass.chartData = value;
+    };
+	drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetExtLst] = function(oClass, value) {
+        oClass.extLst = value;
+    };
 	drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetParent] = function (oClass, value) {
 		oClass.oldParent = oClass.parent;
 		oClass.parent = value;
@@ -1323,6 +1331,8 @@ function(window, undefined) {
 		this.userShapes = [];//userShapes
 		this.chartStyle = null;
 		this.chartColors = null;
+		this.chartData = null;
+		this.extLst = null;
 
 		this.dataRefs = null;
 		this.pathMemory = new CPathMemory();
@@ -1363,6 +1373,14 @@ function(window, undefined) {
 		}
 		return this.dataRefs;
 	};
+	CChartSpace.prototype.setChartData = function(pr) {
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetChartData, this.chartData, pr));
+        this.chartData = pr;
+    };
+	CChartData.prototype.setExtLst = function(pr) {
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartData_SetExtLst, this.extLst, pr));
+        this.extLst = pr;
+    };
 	CChartSpace.prototype.clearDataRefs = function () {
 		if (this.dataRefs) {
 			this.dataRefs = null;

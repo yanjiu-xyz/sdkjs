@@ -218,6 +218,7 @@ var c_oserct_chartspaceTHEMEOVERRIDE = 15;
 var c_oserct_chartspaceXLSX = 16;
 var c_oserct_chartspaceSTYLES = 17;
 var c_oserct_chartspaceCOLORS = 18;
+var c_oserct_chartspaceCHARTDATA = 19;
 
 
 var c_oserct_usershapes_COUNT = 0;
@@ -285,6 +286,7 @@ var c_oserct_legendOVERLAY = 3;
 var c_oserct_legendSPPR = 4;
 var c_oserct_legendTXPR = 5;
 var c_oserct_legendEXTLST = 6;
+var c_oserct_legendALIGN = 7;
 
 var c_oserct_layoutMANUALLAYOUT = 0;
 var c_oserct_layoutEXTLST = 1;
@@ -354,6 +356,7 @@ var c_oserct_titleOVERLAY = 2;
 var c_oserct_titleSPPR = 3;
 var c_oserct_titleTXPR = 4;
 var c_oserct_titleEXTLST = 5;
+var c_oserct_titleALIGN = 6;
 
 var c_oserct_txRICH = 0;
 var c_oserct_txSTRREF = 1;
@@ -927,6 +930,7 @@ var c_oserct_plotareaVALAX = 22;
 var c_oserct_plotareaDTABLE = 23;
 var c_oserct_plotareaSPPR = 24;
 var c_oserct_plotareaEXTLST = 25;
+var c_oserct_plotareaPLOTAREAREGION = 26;
 
 var c_oserct_thicknessVAL = 0;
 
@@ -1391,6 +1395,11 @@ BinaryChartWriter.prototype.WriteCT_ChartSpace = function (oVal) {
     if(null != oVal.chartColors) {
         this.bs.WriteItem(c_oserct_chartspaceCOLORS, function() {
            oThis.WriteCT_ChartColors(oVal.chartColors);
+        });
+    }
+    if(null != oVal.chartData) {
+        this.bs.WriteItem(c_oserct_chartspaceCHARTDATA, function() {
+           oThis.WriteCT_ChartData(oVal.chartData); // todoo this class
         });
     }
 };
@@ -1908,6 +1917,11 @@ BinaryChartWriter.prototype.WriteCT_Legend = function (oVal) {
             oThis.WriteTxPr(oVal.txPr);
         });
     }
+    if (null != oVal.align) {
+        this.bs.WriteItem(c_oserct_legendALIGN, function () {
+            oThis.WriteCT_PosAlign(oVal.align); // todoo this class
+        });
+    }
     // var oCurVal = oVal.m_extLst;
     // if (null != oCurVal) {
     // this.bs.WriteItem(c_oserct_legendEXTLST, function () {
@@ -2259,6 +2273,11 @@ BinaryChartWriter.prototype.WriteCT_Title = function (oVal) {
     if (null != oVal.txPr) {
         this.bs.WriteItem(c_oserct_titleTXPR, function () {
             oThis.WriteTxPr(oVal.txPr);
+        });
+    }
+    if (null != oVal.align) {
+        this.bs.WriteItem(c_oserct_titleALIGN, function () {
+            oThis.WriteCT_PosAlign(oVal.align); // todoo this class
         });
     }
     // var oCurVal = oVal.m_extLst;
@@ -5462,6 +5481,11 @@ BinaryChartWriter.prototype.WriteCT_PlotArea = function (oVal, oChart) {
             oThis.WriteSpPr(oVal.spPr);
         });
     }
+    if (null != oVal.plotAreaRegion) {
+        this.bs.WriteItem(c_oserct_plotareaPLOTAREAREGION, function () {
+            oThis.WriteCT_PlotAreaRegion(oVal.plotAreaRegion); // todoo this class
+        });
+    }
     // var oCurVal = oVal.m_extLst;
     // if (null != oCurVal) {
     // this.bs.WriteItem(c_oserct_plotareaEXTLST, function () {
@@ -6203,6 +6227,12 @@ BinaryChartReader.prototype.ReadCT_ChartSpace = function (type, length, val, cur
             val.setChartColors(oNewVal);
         }
     }
+    else if(c_oserct_chartspaceCHARTDATA === type) {
+        oNewVal = {};
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_ChartData(t, l, oNewVal); // todoo this class
+        });
+    }
     else {
         res = c_oSerConstants.ReadUnknown;
     }
@@ -6844,6 +6874,13 @@ BinaryChartReader.prototype.ReadCT_Legend = function (type, length, val) {
         val.setTxPr(this.ReadTxPr(length));
         val.txPr.setParent(val);
     }
+    else if (c_oserct_legendALIGN === type) {
+        var oNewVal;
+        oNewVal = {};
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_PosAlign(t, l, oNewVal);
+        });
+    }
     else if (c_oserct_legendEXTLST === type) {
         var oNewVal;
         oNewVal = {};
@@ -7350,6 +7387,13 @@ BinaryChartReader.prototype.ReadCT_Title = function (type, length, val) {
     else if (c_oserct_titleTXPR === type) {
         val.setTxPr(this.ReadTxPr(length));
         val.txPr.setParent(val);
+    }
+    else if (c_oserct_titleALIGN === type) { 
+        var oNewVal;
+        oNewVal = {};
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_PosAlign(t, l, oNewVal); // todoo this class
+        });
     }
     else if (c_oserct_titleEXTLST === type) {
         var oNewVal;
@@ -11631,6 +11675,12 @@ BinaryChartReader.prototype.ReadCT_PlotArea = function (type, length, val, aChar
             return oThis.ReadCT_extLst(t, l, oNewVal);
         });
         // val.m_extLst = oNewVal;
+    }
+    else if (c_oserct_plotareaPLOTAREAREGION === type) {
+        var oNewVal = {};
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_PlotAreaRegion(t, l, oNewVal); // todoo this class
+        });
     }
     else
         res = c_oSerConstants.ReadUnknown;

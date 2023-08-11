@@ -615,88 +615,88 @@
     };
     window['AscFormat'].CChartData = CChartData;
 
-    // ChartSpace
-    drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetChartData] = function(oClass, value) {
-        oClass.chartData = value;
-    };
-    drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetChart] = function(oClass, value) {
-        oClass.chart = value;
-    };
-    drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetSpPr] = function(oClass, value) {
-        oClass.spPr = value;
-    };
-    drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetTxPr] = function(oClass, value) {
-        oClass.txPr = value;
-    };
-    drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetClrMapOvr] = function(oClass, value) {
-        oClass.clrMapOvr = value;
-    };
-    drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetExtLst] = function(oClass, value) {
-        oClass.extLst = value;
-    };
-    // drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetFmtOvrs] = function(oClass, value) {
-    //     oClass.fmtOvrs = value;
+    // // ChartSpace (constains in ChartSpace.js)
+    // drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetChartData] = function(oClass, value) {
+    //     oClass.chartData = value;
     // };
-    // drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetPrintSettings] = function(oClass, value) {
-    //     oClass.printSettings = value;
+    // drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetChart] = function(oClass, value) {
+    //     oClass.chart = value;
     // };
-    AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetChartData] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetChart] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetSpPr] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetTxPr] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetClrMapOvr] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetExtLst] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    // AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetFmtOvrs] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    // AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetPrintSettings] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    function CChartSpace() {
-        CBaseChartObject.call(this);
-        this.chartData = null;
-        this.chart = null;
-        this.spPr = null;
-        this.txPr = null;
-        this.clrMapOvr = null;
-        this.extLst = null;
-        // unused in ChartSerializeEx.h
-        // this.fmtOvrs = null;
-        // this.printSettings = null;
+    // drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetSpPr] = function(oClass, value) {
+    //     oClass.spPr = value;
+    // };
+    // drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetTxPr] = function(oClass, value) {
+    //     oClass.txPr = value;
+    // };
+    // drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetClrMapOvr] = function(oClass, value) {
+    //     oClass.clrMapOvr = value;
+    // };
+    // drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetExtLst] = function(oClass, value) {
+    //     oClass.extLst = value;
+    // };
+    // // drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetFmtOvrs] = function(oClass, value) {
+    // //     oClass.fmtOvrs = value;
+    // // };
+    // // drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetPrintSettings] = function(oClass, value) {
+    // //     oClass.printSettings = value;
+    // // };
+    // AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetChartData] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    // AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetChart] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    // AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetSpPr] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    // AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetTxPr] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    // AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetClrMapOvr] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    // AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetExtLst] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    // // AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetFmtOvrs] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    // // AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetPrintSettings] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    // function CChartSpace() {
+    //     CBaseChartObject.call(this);
+    //     this.chartData = null;
+    //     this.chart = null;
+    //     this.spPr = null;
+    //     this.txPr = null;
+    //     this.clrMapOvr = null;
+    //     this.extLst = null;
+    //     // unused in ChartSerializeEx.h
+    //     // this.fmtOvrs = null;
+    //     // this.printSettings = null;
         
-    }
+    // }
 
-    InitClass(CChartSpace, CBaseChartObject, AscDFH.historyitem_type_ChartSpace);
+    // InitClass(CChartSpace, CBaseChartObject, AscDFH.historyitem_type_ChartSpace);
 
-    CChartSpace.prototype.setChartData = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetChartData, this.chartData, pr));
-        this.chartData = pr;
-    };
-    CChartSpace.prototype.setChart = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetChart, this.chart, pr));
-        this.chart = pr;
-    };
-    CChartSpace.prototype.setSpPr = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetSpPr, this.spPr, pr));
-        this.spPr = pr;
-    };
-    CChartSpace.prototype.setTxPr = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetTxPr, this.txPr, pr));
-        this.txPr = pr;
-    };
-    CChartSpace.prototype.setClrMapOvr = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetClrMapOvr, this.clrMapOvr, pr));
-        this.clrMapOvr = pr;
-    };
-    CChartSpace.prototype.setExtLst = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetExtLst, this.extLst, pr));
-        this.extLst = pr;
-    };
-    // CChartSpace.prototype.setFmtOvrs = function(pr) {
-    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetFmtOvrs, this.fmtOvrs, pr));
-    //     this.fmtOvrs = pr;
+    // CChartSpace.prototype.setChartData = function(pr) {
+    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetChartData, this.chartData, pr));
+    //     this.chartData = pr;
     // };
-    // CChartSpace.prototype.setPrintSettings = function(pr) {
-    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetPrintSettings, this.printSettings, pr));
-    //     this.printSettings = pr;
+    // CChartSpace.prototype.setChart = function(pr) {
+    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetChart, this.chart, pr));
+    //     this.chart = pr;
     // };
-    window['AscFormat'].CChartSpace = CChartSpace;
+    // CChartSpace.prototype.setSpPr = function(pr) {
+    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetSpPr, this.spPr, pr));
+    //     this.spPr = pr;
+    // };
+    // CChartSpace.prototype.setTxPr = function(pr) {
+    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetTxPr, this.txPr, pr));
+    //     this.txPr = pr;
+    // };
+    // CChartSpace.prototype.setClrMapOvr = function(pr) {
+    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetClrMapOvr, this.clrMapOvr, pr));
+    //     this.clrMapOvr = pr;
+    // };
+    // CChartSpace.prototype.setExtLst = function(pr) {
+    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetExtLst, this.extLst, pr));
+    //     this.extLst = pr;
+    // };
+    // // CChartSpace.prototype.setFmtOvrs = function(pr) {
+    // //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetFmtOvrs, this.fmtOvrs, pr));
+    // //     this.fmtOvrs = pr;
+    // // };
+    // // CChartSpace.prototype.setPrintSettings = function(pr) {
+    // //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetPrintSettings, this.printSettings, pr));
+    // //     this.printSettings = pr;
+    // // };
+    // window['AscFormat'].CChartSpace = CChartSpace;
 
     // // ChartTitle (CTitle instead of CChartTitle)
     // drawingsChangesMap[AscDFH.historyitem_ChartTitle_SetTx] = function(oClass, value) {
