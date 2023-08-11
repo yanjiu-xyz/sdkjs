@@ -142,31 +142,13 @@
 	function GoToHeader(page)
 	{
 		logicDocument.SetDocPosType(AscCommonWord.docpostype_HdrFtr);
-		const event = new AscCommon.CMouseEventHandler();
-		event.ClickCount = 1;
-		event.Button = 0;
-		event.Type = AscCommon.g_mouse_event_type_down;
-
-		logicDocument.OnMouseDown(event, 0, 0, page);
-
-		event.Type = AscCommon.g_mouse_event_type_up;
-		logicDocument.OnMouseUp(event, 0, 0, page);
-		logicDocument.MoveCursorLeft();
+		logicDocument.Create_SectionHdrFtr( AscCommon.hdrftr_Header, page );
 	}
 
 	function GoToFooter(page)
 	{
 		logicDocument.SetDocPosType(AscCommonWord.docpostype_HdrFtr);
-		const event = new AscCommon.CMouseEventHandler();
-		event.ClickCount = 1;
-		event.Button = 0;
-		event.Type = AscCommon.g_mouse_event_type_down;
-
-		logicDocument.OnMouseDown(event, 0, pageHeight, page);
-
-		event.Type = AscCommon.g_mouse_event_type_up;
-		logicDocument.OnMouseUp(event, 0, pageHeight, page);
-		logicDocument.MoveCursorLeft();
+		logicDocument.Create_SectionHdrFtr( AscCommon.hdrftr_Footer, page );
 	}
 
 	function RemoveHeader(page)
@@ -267,10 +249,7 @@
 		drawing.Set_DrawingType(drawing_Anchor);
 		drawing.Set_WrappingType(WRAPPING_TYPE_NONE);
 		drawing.Set_Distance(0, 0, 0, 0);
-		const nearestPos = logicDocument.Get_NearestPos(0, x, y, true, drawing);
-		drawing.Set_XYForAdd(x, y, nearestPos, 0);
-		drawing.AddToDocument(nearestPos);
-		AscTest.Recalculate();
+		logicDocument.AddToParagraph(drawing);
 		return drawing;
 	}
 
@@ -333,10 +312,8 @@
 		drawing.Set_DrawingType(drawing_Anchor);
 		drawing.Set_WrappingType(WRAPPING_TYPE_NONE);
 		drawing.Set_Distance(0, 0, 0, 0);
-		const nearestPos = logicDocument.Get_NearestPos(0, chartSpace.x, chartSpace.y, true, drawing);
-		drawing.Set_XYForAdd(chartSpace.x, chartSpace.y, nearestPos, 0);
-		drawing.AddToDocument(nearestPos);
-		AscTest.Recalculate();
+		logicDocument.RemoveSelection();
+		logicDocument.AddToParagraph(drawing);
 		return drawing;
 	}
 
@@ -451,7 +428,7 @@
 			ExecuteShortcut(c_oAscDocumentShortcutType.HorizontalEllipsis);
 			assert.strictEqual(AscTest.GetParagraphText(paragraph), String.fromCharCode(0x00A0, 0x00A9, 0x20AC, 0x00AE, 0x2122, 0x2013, 0x2014, 0x002D, 0x2026), 'Check add HorizontalEllipsis');
 			ExecuteHotkey(testHotkeyActions.addSJKSpace);
-			assert.strictEqual(AscTest.GetParagraphText(paragraph), String.fromCharCode(0x00A0, 0x00A9, 0x20AC, 0x00AE, 0x2122, 0x2013, 0x2014, 0x002D, 0x2026, 0x0020), 'Check add HorizontalEllipsis');
+			assert.strictEqual(AscTest.GetParagraphText(paragraph), String.fromCharCode(0x00A0, 0x00A9, 0x20AC, 0x00AE, 0x2122, 0x2013, 0x2014, 0x002D, 0x2026, 0x0020), 'Check add SJK space');
 		});
 
 		QUnit.test('Check text property change', (assert) =>
@@ -563,38 +540,38 @@
 			assert.strictEqual(GetDirectParaPr().GetJc(), AscCommon.align_Left, "Check turn off right para");
 
 			ExecuteShortcut(c_oAscDocumentShortcutType.Indent);
-			assert.strictEqual(GetDirectParaPr().GetIndLeft(), 12.5);
+			assert.strictEqual(GetDirectParaPr().GetIndLeft(), 12.5, "Check indent");
 
 			ExecuteShortcut(c_oAscDocumentShortcutType.UnIndent);
-			assert.strictEqual(GetDirectParaPr().GetIndLeft(), 0);
+			assert.strictEqual(GetDirectParaPr().GetIndLeft(), 0, "Check indent");
 
 			const paragraph2 = CreateParagraphWithText('Hello');
 
 			logicDocument.SelectAll();
 
 			ExecuteHotkey(testHotkeyActions.testIndent);
-			assert.strictEqual(GetDirectParaPr().GetIndLeft(), 12.5);
+			assert.strictEqual(GetDirectParaPr().GetIndLeft(), 12.5, "Check multi indent");
 
 			ExecuteHotkey(testHotkeyActions.testUnIndent);
-			assert.strictEqual(GetDirectParaPr().GetIndLeft(), 0);
+			assert.strictEqual(GetDirectParaPr().GetIndLeft(), 0, "Check multi unindent");
 		});
 
-		QUnit.test('Check insert document elements', (assert) =>
+		QUnit.test('Check insert note elements', (assert) =>
 		{
 			let paragraph = ClearDocumentAndAddParagraph('');
 			ExecuteShortcut(c_oAscDocumentShortcutType.InsertFootnoteNow);
 			const footnotes = logicDocument.GetFootnotesList();
-			assert.equal(footnotes.length, 1, 'Check insert footnote shortcut');
+			assert.equal(footnotes.length, 1, 'Check insert footnote');
 
 			paragraph.SetThisElementCurrent();
 			ExecuteShortcut(c_oAscDocumentShortcutType.InsertEndnoteNow);
 			const endNotes = logicDocument.GetEndnotesList();
-			assert.equal(endNotes.length, 1, 'Check insert endnote shortcut');
+			assert.equal(endNotes.length, 1, 'Check insert endnote');
 			logicDocument.MoveCursorToStartPos();
 		});
 
 
-		QUnit.test('Check shortcuts with sending event to interface', (assert) =>
+		QUnit.test('Check sending event to interface', (assert) =>
 		{
 			function checkSendingEvent(sSendEvent, oEvent, fCustomCheck, customExpectedValue)
 			{
@@ -631,69 +608,72 @@
 			checkSendingEvent('asc_onContextMenu', testHotkeyEvents[testHotkeyActions.showContextMenu][2]);
 		});
 
-		QUnit.test('Check insert equation shortcut', (assert) =>
+		QUnit.test('Check insert equation', (assert) =>
 		{
 			ClearDocumentAndAddParagraph('');
 			ExecuteShortcut(c_oAscDocumentShortcutType.InsertEquation);
 			const math = logicDocument.GetCurrentMath();
-			assert.true(!!math, 'Check insert equation shortcut');
+			assert.true(!!math, 'Check insert equation');
 		});
 
-		QUnit.test('Check insert elements shortcut', (assert) =>
+		QUnit.test('Check insert page number', (assert) =>
 		{
 			const paragraph = ClearDocumentAndAddParagraph('');
 			ExecuteShortcut(c_oAscDocumentShortcutType.InsertPageNumber);
 
 			const firstRun = paragraph.Content[0];
-			assert.strictEqual(firstRun.Content[0].Type, para_PageNum);
+			assert.strictEqual(firstRun.Content[0].Type, para_PageNum, "Check insert page number");
 		});
 
-		QUnit.test('Check bullet list shortcut', (assert) =>
+		QUnit.test('Check toggle bullet list', (assert) =>
 		{
 			const paragraph = ClearDocumentAndAddParagraph('');
 			assert.false(paragraph.IsBulletedNumbering(), 'check apply bullet list');
 			ExecuteShortcut(c_oAscDocumentShortcutType.ApplyListBullet);
-			assert.true(paragraph.IsBulletedNumbering(), 'check apply bullet list');
+			assert.true(paragraph.IsBulletedNumbering(), 'check disable bullet list');
 		});
 
-		QUnit.test('Check copy/paste format shortcuts', (assert) =>
+		QUnit.test('Check copy/paste format', (assert) =>
 		{
 			let paragraph = ClearDocumentAndAddParagraph('Hello');
 			ApplyTextPrToDocument({Bold: true, Italic: true, Underline: true});
 			GetDirectTextPr();
 			ExecuteShortcut(c_oAscDocumentShortcutType.CopyFormat);
 			let textPr = editor.getFormatPainterData().TextPr;
-			assert.true(textPr.Get_Bold());
-			assert.true(textPr.Get_Italic());
-			assert.true(textPr.Get_Underline());
+			assert.true(textPr.Get_Bold(), 'Check copy bold format from paragraph');
+			assert.true(textPr.Get_Italic(), 'Check copy italic format from paragraph');
+			assert.true(textPr.Get_Underline(), 'Check copy underline format from paragraph');
 
 			paragraph = ClearDocumentAndAddParagraph('');
 			ExecuteShortcut(c_oAscDocumentShortcutType.PasteFormat);
 			textPr = GetDirectTextPr();
-			assert.true(textPr.Get_Bold());
-			assert.true(textPr.Get_Italic());
-			assert.true(textPr.Get_Underline());
+			assert.true(textPr.Get_Bold(), 'Check paste bold format from paragraph');
+			assert.true(textPr.Get_Italic(), 'Check paste italic format from paragraph');
+			assert.true(textPr.Get_Underline(), 'Check paste underline format from paragraph');
 		});
 
-		QUnit.test('Check history shortcuts', (assert) =>
+		QUnit.test('Check undo/redo history', (assert) =>
 		{
 			let paragraph = ClearDocumentAndAddParagraph('Hello');
 			paragraph.MoveCursorToEndPos();
 			logicDocument.AddTextWithPr(' World');
 			ExecuteShortcut(c_oAscDocumentShortcutType.EditUndo);
-			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello');
+			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello', 'Check undo');
 
 			ExecuteShortcut(c_oAscDocumentShortcutType.EditRedo);
-			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello World');
+			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello World', 'Check redo');
 		});
 
-		QUnit.test('Check show paramarks shortcut', (assert) =>
+		QUnit.test('Check show/hide non printing symbols', (assert) =>
 		{
 			ExecuteShortcut(c_oAscDocumentShortcutType.ShowAll);
 			assert.true(editor.ShowParaMarks, 'Check show non printing characters shortcut');
+
+			ExecuteShortcut(c_oAscDocumentShortcutType.ShowAll);
+			assert.false(editor.ShowParaMarks, 'Check hide non printing characters shortcut');
 		});
 
-		QUnit.test('Check save shortcut', (assert) =>
+		QUnit.test('Check save', (assert) =>
 		{
 			assert.timeout(100);
 			const done = assert.async();
@@ -707,10 +687,10 @@
 			};
 			editor._saveCheck = () => true;
 			editor.asc_isDocumentCanSave = () => true;
-			ExecuteShortcut(c_oAscDocumentShortcutType.Save);
+			ExecuteShortcut(c_oAscDocumentShortcutType.Save, 'Check save');
 		});
 
-		QUnit.test('Check update fields shortcut', (assert) =>
+		QUnit.test('Check update fields', (assert) =>
 		{
 			const paragraph = ClearDocumentAndAddParagraph('Hello');
 			const paragraph2 = CreateParagraphWithText('Hello');
@@ -737,31 +717,31 @@
 			AscTest.MoveCursorRight()
 
 			ExecuteShortcut(c_oAscDocumentShortcutType.UpdateFields);
-			assert.strictEqual(logicDocument.Content[0].Content.Content.length, 5, 'Check update fields shortcut');
+			assert.strictEqual(logicDocument.Content[0].Content.Content.length, 5, 'Check update fields from 3 to 4 items');
 		});
 
-		QUnit.test('Check remove hotkeys', (assert) =>
+		QUnit.test('Check remove symbols', (assert) =>
 		{
 			const paragraph = ClearDocumentAndAddParagraph('Hello Hello Hello Hello');
 
 			ExecuteHotkey(testHotkeyActions.removeBackSymbol);
-			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello Hell');
+			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello Hell', 'Check removing back symbol');
 
 			ExecuteHotkey(testHotkeyActions.removeBackWord);
-			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello ');
+			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello ', 'Check removing back word');
 
 			logicDocument.MoveCursorToStartPos();
 			ExecuteHotkey(testHotkeyActions.removeFrontSymbol);
-			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'ello Hello Hello ');
+			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'ello Hello Hello ', 'Check removing front symbol');
 			ExecuteHotkey(testHotkeyActions.removeFrontWord);
-			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello ');
+			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello ', 'Check removing front word');
 		});
-		QUnit.test('Check move/select in text hotkeys', (assert) =>
+		QUnit.test('Check move/select in text', (assert) =>
 		{
-			function CheckCursorPosition(nExpected)
+			function CheckCursorPosition(expected, description)
 			{
 				const position = logicDocument.GetContentPosition();
-				assert.strictEqual(position[position.length - 1].Position, nExpected);
+				assert.strictEqual(position[position.length - 1].Position, expected, description);
 			}
 
 			const paragraph = ClearDocumentAndAddParagraph(
@@ -783,132 +763,132 @@
 			TurnOffRecalculateCurPos();
 
 			ExecuteHotkey(testHotkeyActions.moveToEndLine);
-			CheckCursorPosition(18);
+			CheckCursorPosition(18, 'Check move to end line');
 
 			ExecuteHotkey(testHotkeyActions.moveToRightChar);
-			CheckCursorPosition(19);
+			CheckCursorPosition(19, 'Check move to right char');
 
 			ExecuteHotkey(testHotkeyActions.moveToLeftChar);
-			CheckCursorPosition(18);
+			CheckCursorPosition(18, 'Check move to left char');
 
 			ExecuteHotkey(testHotkeyActions.moveToLeftWord);
-			CheckCursorPosition(12);
+			CheckCursorPosition(12, 'Check move to left word');
 
 			ExecuteHotkey(testHotkeyActions.moveToRightWord);
-			CheckCursorPosition(18);
+			CheckCursorPosition(18, 'Check move to right word');
 
 			ExecuteHotkey(testHotkeyActions.moveToRightWord);
-			CheckCursorPosition(24);
+			CheckCursorPosition(24, 'Check move to right word');
 
 
 			ExecuteHotkey(testHotkeyActions.moveToStartLine);
-			CheckCursorPosition(18);
+			CheckCursorPosition(18, 'Check move to start line');
 
 			ExecuteHotkey(testHotkeyActions.moveDown);
-			CheckCursorPosition(36);
+			CheckCursorPosition(36, 'Check move down');
 
 			ExecuteHotkey(testHotkeyActions.moveUp);
-			CheckCursorPosition(18);
+			CheckCursorPosition(18, 'Check move up');
 
 			ExecuteHotkey(testHotkeyActions.moveToEndDocument);
-			CheckCursorPosition(161);
+			CheckCursorPosition(161, 'Check move to end document');
 
 			ExecuteHotkey(testHotkeyActions.moveToStartDocument);
-			CheckCursorPosition(0);
+			CheckCursorPosition(0, 'Check move to start document');
 
 			AscTest.MoveCursorRight();
 
 			ExecuteHotkey(testHotkeyActions.moveToNextPage);
-			CheckCursorPosition(91);
+			CheckCursorPosition(91, 'Check move to next page');
 
 			ExecuteHotkey(testHotkeyActions.moveToPreviousPage);
-			CheckCursorPosition(1);
+			CheckCursorPosition(1, 'Check move to previous page');
 
 			ExecuteHotkey(testHotkeyActions.moveToStartNextPage);
-			CheckCursorPosition(90);
+			CheckCursorPosition(90, 'Check move to start next page');
 
 			ExecuteHotkey(testHotkeyActions.moveToStartPreviousPage);
-			CheckCursorPosition(0);
+			CheckCursorPosition(0, 'Check move to start previous page');
 
-			function CheckSelectedText(sExpectedText)
+			function CheckSelectedText(expectedText, description)
 			{
 				const selectedText = logicDocument.GetSelectedText();
-				assert.strictEqual(selectedText, sExpectedText);
+				assert.strictEqual(selectedText, expectedText, description);
 			}
 
 			ExecuteHotkey(testHotkeyActions.selectToEndLine);
-			CheckSelectedText('Hello World Hello ');
+			CheckSelectedText('Hello World Hello ', 'Select to end line');
 
 
 			ExecuteHotkey(testHotkeyActions.selectRightChar);
-			CheckSelectedText('Hello World Hello W');
+			CheckSelectedText('Hello World Hello W', 'Select to right char');
 
 			ExecuteHotkey(testHotkeyActions.selectLeftChar);
-			CheckSelectedText('Hello World Hello ');
+			CheckSelectedText('Hello World Hello ', 'Select to left char');
 
 			ExecuteHotkey(testHotkeyActions.selectLeftWord);
-			CheckSelectedText('Hello World ');
+			CheckSelectedText('Hello World ', 'Select to left word');
 
 			ExecuteHotkey(testHotkeyActions.selectRightWord);
-			CheckSelectedText('Hello World Hello ');
+			CheckSelectedText('Hello World Hello ', 'Select to right word');
 
 			ExecuteHotkey(testHotkeyActions.selectRightWord);
-			CheckSelectedText('Hello World Hello World ');
+			CheckSelectedText('Hello World Hello World ', 'Select to right word');
 
 			ExecuteHotkey(testHotkeyActions.selectRightWord);
-			CheckSelectedText('Hello World Hello World Hello ');
+			CheckSelectedText('Hello World Hello World Hello ', 'Select to right word');
 
 			ExecuteHotkey(testHotkeyActions.selectToStartLine);
-			CheckSelectedText('Hello World Hello ');
+			CheckSelectedText('Hello World Hello ', 'Select to start line');
 
 			ExecuteHotkey(testHotkeyActions.selectDown);
-			CheckSelectedText('Hello World Hello World Hello World ');
+			CheckSelectedText('Hello World Hello World Hello World ', 'Select down');
 
 			ExecuteHotkey(testHotkeyActions.selectUp);
-			CheckSelectedText('Hello World Hello ');
+			CheckSelectedText('Hello World Hello ', 'Select up');
 
 			ExecuteHotkey(testHotkeyActions.selectToEndDocument);
-			CheckSelectedText('Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello Hello World Hello Hello World Hello Hello World Hello World Hello World');
+			CheckSelectedText('Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello Hello World Hello Hello World Hello Hello World Hello World Hello World', 'Select to end document');
 
 			ExecuteHotkey(testHotkeyActions.selectToStartDocument);
-			CheckSelectedText('');
+			CheckSelectedText('', 'Select to start document');
 
 			logicDocument.MoveCursorToEndPos();
 			ExecuteHotkey(testHotkeyActions.selectLeftChar);
-			CheckSelectedText('d');
+			CheckSelectedText('d', 'Select to left char');
 
 			ExecuteHotkey(testHotkeyActions.selectLeftWord);
-			CheckSelectedText('World');
+			CheckSelectedText('World', 'Select to left word');
 
 			logicDocument.MoveCursorToStartPos();
 			AscTest.MoveCursorRight();
 			ExecuteHotkey(testHotkeyActions.selectToNextPage);
-			CheckSelectedText('ello World Hello World Hello World Hello World Hello World Hello World Hello World Hello H');
+			CheckSelectedText('ello World Hello World Hello World Hello World Hello World Hello World Hello World Hello H', 'Select to next page');
 			AscTest.MoveCursorRight();
 
 			ExecuteHotkey(testHotkeyActions.selectToPreviousPage);
-			CheckSelectedText('ello World Hello World Hello World Hello World Hello World Hello World Hello World Hello H');
+			CheckSelectedText('ello World Hello World Hello World Hello World Hello World Hello World Hello World Hello H', 'Select to previous word');
 			AscTest.MoveCursorLeft();
 			ExecuteHotkey(testHotkeyActions.selectToStartNextPage);
-			CheckSelectedText('ello World Hello World Hello World Hello World Hello World Hello World Hello World Hello ');
+			CheckSelectedText('ello World Hello World Hello World Hello World Hello World Hello World Hello World Hello ', 'Select to start next page');
 			AscTest.MoveCursorRight();
 			ExecuteHotkey(testHotkeyActions.selectToStartPreviousPage);
-			CheckSelectedText('Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello ');
+			CheckSelectedText('Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello ', 'Select to start previous page');
 		});
 
-		QUnit.test('Check move/select drawings', (assert) =>
+		QUnit.test('Check actions with shapes', (assert) =>
 		{
-			TurnOnRecalculate();
 			const paragraph = ClearDocumentAndAddParagraph('');
-			paragraph.SetThisElementCurrent();
+			TurnOnRecalculate();
 			AscTest.Recalculate();
+
 			const drawing1 = AddShape(0, 0, 100, 200);
 
 			const dotsPerMM = logicDocument.DrawingDocument.GetDotsPerMM();
 
 			function CheckShapePosition(X, Y)
 			{
-				assert.deepEqual([round(drawing1.X * dotsPerMM, 10), round(drawing1.Y * dotsPerMM, 10), drawing1.Extent.W, drawing1.Extent.H], [X, Y, 200, 100]);
+				assert.deepEqual([round(drawing1.X * dotsPerMM, 10), round(drawing1.Y * dotsPerMM, 10), drawing1.Extent.W, drawing1.Extent.H], [X, Y, 200, 100], 'Check shape position after movement');
 			}
 
 			SelectDrawings([drawing1]);
@@ -943,10 +923,11 @@
 				const length = Math.max(arrOfDrawings.length, GetDrawingObjects().selectedObjects.length);
 				for (let i = 0; i < length; i++)
 				{
-					assert.true(GetDrawingObjects().selectedObjects[i] === arrOfDrawings[i].GraphicObj);
+					assert.true(GetDrawingObjects().selectedObjects[i] === arrOfDrawings[i].GraphicObj, 'Check selection movement between objects');
 				}
 			}
 
+			logicDocument.RemoveSelection();
 			const drawing2 = AddShape(0, 0, 10, 10);
 			const drawing3 = AddShape(0, 0, 10, 10);
 			SelectDrawings([drawing3]);
@@ -969,85 +950,25 @@
 			ExecuteHotkey(testHotkeyActions.selectPreviousObject);
 			CheckSelectedObjects([drawing3]);
 			TurnOffRecalculate();
-		});
-
-		QUnit.test('Check actions with selected shape', (assert) =>
-		{
-			TurnOnRecalculate();
-			const paragraph = CreateParagraphWithText('');
-			AscTest.Recalculate();
-			let paraDrawing = AddShape(0, 0, 10, 10);
-			SelectDrawings([paraDrawing]);
 
 			ExecuteHotkey(testHotkeyActions.createTextBoxContent);
-			assert.true(!!paraDrawing.GraphicObj.textBoxContent);
+			assert.true(!!drawing3.GraphicObj.textBoxContent, 'Check create textBoxContent after enter');
 
-			paraDrawing = AddShape(0, 0, 10, 10);
-			paraDrawing.GraphicObj.setWordShape(false);
-			SelectDrawings([paraDrawing]);
+			drawing2.GraphicObj.setWordShape(false);
+			SelectDrawings([drawing2]);
 
 			ExecuteHotkey(testHotkeyActions.createTextBody);
-			assert.true(!!paraDrawing.GraphicObj.txBody);
+			assert.true(!!drawing2.GraphicObj.txBody, 'Check create textBody after enter');
 
-			SelectDrawings([paraDrawing]);
+			SelectDrawings([drawing2]);
 			ExecuteHotkey(testHotkeyActions.moveCursorToStartPositionShapeEnter);
-			assert.true(paraDrawing.GraphicObj.getDocContent().IsCursorAtBegin());
+			assert.true(drawing2.GraphicObj.getDocContent().IsCursorAtBegin(), 'Check movement to start position in empty content');
 
 			AscTest.EnterText('Hello');
-			SelectDrawings([paraDrawing]);
+			SelectDrawings([drawing2]);
 
 			ExecuteHotkey(testHotkeyActions.selectAllShapeEnter);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'Hello');
-			TurnOffRecalculate();
-		});
-
-
-		QUnit.test('Check move in headers/footers', (assert) =>
-		{
-			TurnOnRecalculate();
-			TurnOnRecalculateCurPos();
-			const paragraph = ClearDocumentAndAddParagraph("Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World");
-			AscTest.Recalculate();
-
-
-			logicDocument.GoToPage(2);
-			GoToFooter(2);
-			GoToHeader(2);
-			TurnOffRecalculateCurPos();
-			TurnOffRecalculate();
-
-			ExecuteHotkey(testHotkeyActions.moveToPreviousHeaderFooter);
-			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[1].Footer);
-			ExecuteHotkey(testHotkeyActions.moveToPreviousHeaderFooter);
-			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[1].Header);
-
-			ExecuteHotkey(testHotkeyActions.moveToNextHeaderFooter);
-			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[1].Footer);
-			ExecuteHotkey(testHotkeyActions.moveToNextHeaderFooter);
-			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[2].Header);
-
-			ExecuteHotkey(testHotkeyActions.moveToPreviousHeader);
-			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[1].Header);
-			ExecuteHotkey(testHotkeyActions.moveToPreviousHeader);
-			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[0].Header);
-
-			ExecuteHotkey(testHotkeyActions.moveToNextHeader);
-			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[1].Header);
-			ExecuteHotkey(testHotkeyActions.moveToNextHeader);
-			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[2].Header);
-
-			RemoveHeader(2);
-			RemoveFooter(2);
-		});
-
-		QUnit.test('Check reset selection shortcut', (assert) =>
-		{
-			TurnOnRecalculate();
-			const paragraph = ClearDocumentAndAddParagraph("");
-			AscTest.Recalculate();
-
-			const drawing1 = AddShape(0, 0, 10, 10);
-			const drawing2 = AddShape(0, 0, 10, 10);
+			assert.strictEqual(logicDocument.GetSelectedText(), 'Hello', 'Check select non empty content');
 
 			SelectDrawings([drawing1, drawing2]);
 
@@ -1056,7 +977,59 @@
 			GetDrawingObjects().selection.groupSelection = group.GraphicObj;
 
 			ExecuteHotkey(testHotkeyActions.resetShapeSelection);
-			assert.strictEqual(GetDrawingObjects().selectedObjects.length, 0);
+			assert.strictEqual(GetDrawingObjects().selectedObjects.length, 0, 'Check reset shape selection');
+
+			SelectDrawings([group]);
+			ExecuteHotkey(testHotkeyActions.removeShape, 0);
+			assert.strictEqual(paragraph.GetRunByElement(group), null, 'Check remove shape');
+
+			SelectDrawings([drawing3]);
+
+			ExecuteHotkey(testHotkeyActions.removeShape, 1);
+			assert.strictEqual(paragraph.GetRunByElement(drawing3), null, 'Check remove shape');
+
+		});
+
+
+		QUnit.test('Check actions with headers/footers', (assert) =>
+		{
+			TurnOnRecalculate();
+			TurnOnRecalculateCurPos();
+			const paragraph = ClearDocumentAndAddParagraph("Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World");
+			AscTest.Recalculate();
+
+			GoToFooter(2);
+			GoToHeader(2);
+
+
+			ExecuteHotkey(testHotkeyActions.moveToPreviousHeaderFooter);
+			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[1].Footer, 'Check move to previous footer');
+			ExecuteHotkey(testHotkeyActions.moveToPreviousHeaderFooter);
+			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[1].Header, 'Check move to previous header');
+
+			ExecuteHotkey(testHotkeyActions.moveToNextHeaderFooter);
+			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[1].Footer, 'Check move to next footer');
+			ExecuteHotkey(testHotkeyActions.moveToNextHeaderFooter);
+			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[2].Header, 'Check move to next header');
+
+			ExecuteHotkey(testHotkeyActions.moveToPreviousHeader, 0);
+			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[1].Header, 'Check move to previous header');
+			ExecuteHotkey(testHotkeyActions.moveToPreviousHeader, 1);
+			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[0].Header, 'Check move to previous header');
+
+			ExecuteHotkey(testHotkeyActions.moveToNextHeader, 0);
+			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[1].Header, 'Check move to next header');
+			ExecuteHotkey(testHotkeyActions.moveToNextHeader, 1);
+			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[2].Header, 'Check move to next header');
+
+			ExecuteHotkey(testHotkeyActions.endEditing);
+			assert.strictEqual(logicDocument.GetDocPosType(), AscCommonWord.docpostype_Content, "Check end editing footer");
+
+			GoToFooter(0);
+			ExecuteHotkey(testHotkeyActions.endEditing);
+			assert.strictEqual(logicDocument.GetDocPosType(), AscCommonWord.docpostype_Content, "Check end editing footer");
+
+			TurnOffRecalculateCurPos();
 			TurnOffRecalculate();
 		});
 
@@ -1067,15 +1040,15 @@
 			AscTest.Recalculate()
 			editor.StartAddShape('rect');
 			ExecuteHotkey(testHotkeyActions.resetStartAddShape);
-			assert.strictEqual(editor.isStartAddShape, false, "Test reset add shape");
+			assert.strictEqual(editor.isStartAddShape, false, "Check reset add shape");
 			TurnOffRecalculate();
 			editor.SetPaintFormat(AscCommon.c_oAscFormatPainterState.kOn);
 			ExecuteHotkey(testHotkeyActions.resetFormattingByExample);
-			assert.strictEqual(editor.isFormatPainterOn(), false, "Test reset formatting by example");
+			assert.strictEqual(editor.isFormatPainterOn(), false, "Check reset formatting by example");
 
 			editor.SetMarkerFormat(true, true, 0, 0, 0);
 			ExecuteHotkey(testHotkeyActions.resetMarkerFormat);
-			assert.strictEqual(editor.isMarkerFormat, false, "Test reset marker");
+			assert.strictEqual(editor.isMarkerFormat, false, "Check reset marker");
 		});
 
 		QUnit.test('Check disable shortcuts', (assert) =>
@@ -1084,63 +1057,45 @@
 			assert.strictEqual(ExecuteHotkey(testHotkeyActions.disableScrollLock) & keydownresult_PreventAll, keydownresult_PreventAll);
 		});
 
-		QUnit.test('Check boxes shortcuts', (assert) =>
+		QUnit.test('Check filling forms', (assert) =>
 		{
 			let paragraph = ClearDocumentAndAddParagraph('');
 
 			const checkBox = AddCheckBox();
 			AscTest.SetFillingFormMode(true);
 			ExecuteHotkey(testHotkeyActions.toggleCheckBox);
-			assert.true(checkBox.IsCheckBoxChecked());
+			assert.true(checkBox.IsCheckBoxChecked(), 'Check turn on checkbox');
 
 			ExecuteHotkey(testHotkeyActions.toggleCheckBox);
-			assert.false(checkBox.IsCheckBoxChecked());
+			assert.false(checkBox.IsCheckBoxChecked(), 'Check turn off checkbox');
 			AscTest.SetEditingMode();
 
 			ClearDocumentAndAddParagraph('');
 			const comboBox = AddComboBox(['Hello', 'World', 'yo']);
 			AscTest.SetFillingFormMode(true);
 			ExecuteHotkey(testHotkeyActions.nextOptionComboBox);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'Hello');
+			assert.strictEqual(logicDocument.GetSelectedText(), 'Hello', 'Check select next option in combobox');
 
 			ExecuteHotkey(testHotkeyActions.nextOptionComboBox);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'World');
+			assert.strictEqual(logicDocument.GetSelectedText(), 'World', 'Check select next option in combobox');
 
 			ExecuteHotkey(testHotkeyActions.nextOptionComboBox);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'yo');
+			assert.strictEqual(logicDocument.GetSelectedText(), 'yo', 'Check select next option in combobox');
 
 			ExecuteHotkey(testHotkeyActions.previousOptionComboBox);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'World');
+			assert.strictEqual(logicDocument.GetSelectedText(), 'World', 'Check select previous option in combobox');
 
 			ExecuteHotkey(testHotkeyActions.previousOptionComboBox);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'Hello');
+			assert.strictEqual(logicDocument.GetSelectedText(), 'Hello', 'Check select previous option in combobox');
 
 			ExecuteHotkey(testHotkeyActions.previousOptionComboBox);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'yo');
+			assert.strictEqual(logicDocument.GetSelectedText(), 'yo', 'Check select previous option in combobox');
 			AscTest.SetEditingMode();
 		});
 
-		QUnit.test('Check remove objects shortcut', (assert) =>
-		{
-			console.log(!!(editor.restrictions & Asc.c_oAscRestrictionType.OnlyForms))
-			TurnOnRecalculate();
-			const paragraph = ClearDocumentAndAddParagraph('');
-			AscTest.Recalculate();
-			let paraDrawing = AddShape(0, 0, 10, 10);
-			SelectDrawings([paraDrawing]);
 
-			ExecuteHotkey(testHotkeyActions.removeShape, 0);
-			assert.strictEqual(paragraph.GetRunByElement(paraDrawing), null, 'Test remove shape');
 
-			paraDrawing = AddShape(0, 0, 10, 10);
-			SelectDrawings([paraDrawing]);
-
-			ExecuteHotkey(testHotkeyActions.removeShape, 1);
-			assert.strictEqual(paragraph.GetRunByElement(paraDrawing), null, 'Test remove shape');
-			TurnOffRecalculate();
-		});
-
-		QUnit.test('Check move on forms', (assert) =>
+		QUnit.test('Check movement selecting forms', (assert) =>
 		{
 			const paragraph = ClearDocumentAndAddParagraph('');
 			let checkBox1 = AddCheckBox();
@@ -1152,50 +1107,51 @@
 
 
 			ExecuteHotkey(testHotkeyActions.moveToNextForm);
-			assert.true(logicDocument.GetSelectedElementsInfo().GetInlineLevelSdt() === checkBox1, 'Test move to next form');
+			assert.true(logicDocument.GetSelectedElementsInfo().GetInlineLevelSdt() === checkBox1, 'Check move to next form');
 
 			ExecuteHotkey(testHotkeyActions.moveToNextForm);
-			assert.true(logicDocument.GetSelectedElementsInfo().GetInlineLevelSdt() === checkBox2, 'Test move to next form');
+			assert.true(logicDocument.GetSelectedElementsInfo().GetInlineLevelSdt() === checkBox2, 'Check move to next form');
 
 			ExecuteHotkey(testHotkeyActions.moveToNextForm);
-			assert.true(logicDocument.GetSelectedElementsInfo().GetInlineLevelSdt() === checkBox3, 'Test move to next form');
+			assert.true(logicDocument.GetSelectedElementsInfo().GetInlineLevelSdt() === checkBox3, 'Check move to next form');
 
 			ExecuteHotkey(testHotkeyActions.moveToPreviousForm);
-			assert.true(logicDocument.GetSelectedElementsInfo().GetInlineLevelSdt() === checkBox2, 'Test move to previous form');
+			assert.true(logicDocument.GetSelectedElementsInfo().GetInlineLevelSdt() === checkBox2, 'Check move to previous form');
 			ExecuteHotkey(testHotkeyActions.moveToPreviousForm);
-			assert.true(logicDocument.GetSelectedElementsInfo().GetInlineLevelSdt() === checkBox1, 'Test move to previous form');
+			assert.true(logicDocument.GetSelectedElementsInfo().GetInlineLevelSdt() === checkBox1, 'Check move to previous form');
 			ExecuteHotkey(testHotkeyActions.moveToPreviousForm);
-			assert.true(logicDocument.GetSelectedElementsInfo().GetInlineLevelSdt() === checkBox3, 'Test move to previous form');
+			assert.true(logicDocument.GetSelectedElementsInfo().GetInlineLevelSdt() === checkBox3, 'Check move to previous form');
 
 			AscTest.SetEditingMode();
 		});
 
-		QUnit.test('Check move in table shortcuts', (assert) =>
+		QUnit.test('Check movement in table', (assert) =>
 		{
 			ClearDocumentAndAddParagraph();
 			const table = AddTable(3, 4);
 			table.Document_SetThisElementCurrent();
 			table.MoveCursorToStartPos();
 			ExecuteHotkey(testHotkeyActions.moveToNextCell);
-			assert.strictEqual(table.CurCell.Index, 1);
+			assert.strictEqual(table.CurCell.Index, 1, 'Check move to next cell');
 			ExecuteHotkey(testHotkeyActions.moveToNextCell);
-			assert.strictEqual(table.CurCell.Index, 2);
+			assert.strictEqual(table.CurCell.Index, 2, 'Check move to next cell');
 			ExecuteHotkey(testHotkeyActions.moveToNextCell);
-			assert.strictEqual(table.CurCell.Index, 3);
+			assert.strictEqual(table.CurCell.Index, 3, 'Check move to next cell');
 
 			ExecuteHotkey(testHotkeyActions.moveToPreviousCell);
-			assert.strictEqual(table.CurCell.Index, 2);
+			assert.strictEqual(table.CurCell.Index, 2, 'Check move to previous cell');
 			ExecuteHotkey(testHotkeyActions.moveToPreviousCell);
-			assert.strictEqual(table.CurCell.Index, 1);
+			assert.strictEqual(table.CurCell.Index, 1, 'Check move to previous cell');
 			ExecuteHotkey(testHotkeyActions.moveToPreviousCell);
-			assert.strictEqual(table.CurCell.Index, 0);
+			assert.strictEqual(table.CurCell.Index, 0, 'Check move to previous cell');
 		});
 
-		QUnit.test('Check Select all in chart title', (assert) =>
+		QUnit.test('Check select all in chart title', (assert) =>
 		{
 			TurnOnRecalculate();
 			const paragraph = ClearDocumentAndAddParagraph('');
 			AscTest.Recalculate();
+			TurnOffRecalculate();
 			const paraDrawing = AddChart();
 
 			const chart = paraDrawing.GraphicObj;
@@ -1206,15 +1162,14 @@
 			chart.selectTitle(titles[0], 0);
 
 			ExecuteHotkey(testHotkeyActions.selectAllInChartTitle);
-			assert.strictEqual(logicDocument.GetSelectedText(), 'Diagram Title', 'Check select all title');
-			TurnOffRecalculate();
+			assert.strictEqual(logicDocument.GetSelectedText(), 'Diagram Title', 'Check select all in title');
 		});
 
-		QUnit.test('add new paragraph content', (assert) =>
+		QUnit.test('Check add new paragraph in content', (assert) =>
 		{
 			const paragraph = ClearDocumentAndAddParagraph('Hello text');
 			ExecuteHotkey(testHotkeyActions.addNewParagraphContent);
-			assert.strictEqual(logicDocument.Content.length, 2);
+			assert.strictEqual(logicDocument.Content.length, 2, 'Check add new paragraph');
 		});
 
 		QUnit.test('Check add new paragraph math', (assert) =>
@@ -1224,7 +1179,7 @@
 			AscTest.EnterText('abcd');
 			AscTest.MoveCursorLeft();
 			ExecuteHotkey(testHotkeyActions.addNewParagraphMath)
-			assert.strictEqual(logicDocument.Content.length, 2, 'Test add new paragraph with math');
+			assert.strictEqual(logicDocument.Content.length, 2, 'Check add new paragraph');
 		});
 
 		QUnit.test("Test add new line to math", (oAssert) =>
@@ -1241,55 +1196,57 @@
 			const fraction = paraMath.Root.GetFirstElement();
 			const numerator = fraction.getNumerator();
 			const eqArray = numerator.GetFirstElement();
-			oAssert.strictEqual(eqArray.getRowsCount(), 2, 'Check add new line math');
+			oAssert.strictEqual(eqArray.getRowsCount(), 2, 'Check add new line');
 		});
 
-		QUnit.test("Test remove form", (assert) =>
+		QUnit.test("Check remove form", (assert) =>
 		{
 			const paragraph = ClearDocumentAndAddParagraph('');
-			const form = AddComboBox(['hdfh']);
-			ExecuteHotkey(testHotkeyActions.removeForm);
-			assert.strictEqual(paragraph.GetPosByElement(form), null, 'Check add new line math');
+			let form = AddComboBox(['hdfh']);
+			ExecuteHotkey(testHotkeyActions.removeForm, 0);
+			assert.strictEqual(paragraph.GetPosByElement(form), null, 'Check remove form');
+
+			AddComboBox(['hdfh']);
+			ExecuteHotkey(testHotkeyActions.removeForm, 1);
+			assert.strictEqual(paragraph.GetPosByElement(form), null, 'Check remove form');
 			AscTest.SetEditingMode();
 		});
 
-		QUnit.test("Add tab to paragraph", (assert) =>
+		QUnit.test("Check add tab to paragraph", (assert) =>
 		{
 			const paragraph = ClearDocumentAndAddParagraph('');
 			ExecuteHotkey(testHotkeyActions.addTabToParagraph);
-			assert.true(paragraph.GetPrevRunElement().IsTab());
+			assert.true(paragraph.GetPrevRunElement().IsTab(), "Check add tab to paragraph");
 		});
 
 
-		QUnit.test("Test add break line to inlinelvlsdt", (assert) =>
+		QUnit.test("Check add break line to inlinelvlsdt", (assert) =>
 		{
 			TurnOnRecalculate();
 			const paragraph = ClearDocumentAndAddParagraph('');
 			const complexForm = AddComplexForm();
 			ExecuteHotkey(testHotkeyActions.addBreakLineInlineLvlSdt);
-			assert.strictEqual(complexForm.Lines[0], 2);
+			assert.strictEqual(complexForm.Lines[0], 2, "Check add break line");
 			TurnOffRecalculate();
 		});
 
-		QUnit.test("Test visit hyperlink", (assert) =>
+		QUnit.test("Check visit hyperlink", (assert) =>
 		{
 			TurnOnRecalculate()
 			const paragraph = ClearDocumentAndAddParagraph('');
-
+			AscTest.Recalculate()
+			TurnOffRecalculate();
 			logicDocument.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Page))
 			logicDocument.AddHyperlink(new Asc.CHyperlinkProperty({Anchor: '_top', Text: "Beginning of document"}));
 			AscTest.MoveCursorLeft();
 			AscTest.MoveCursorLeft();
 			ExecuteHotkey(testHotkeyActions.visitHyperlink);
-			AscTest.Recalculate()
-			assert.strictEqual(logicDocument.GetCurrentParagraph(), logicDocument.Content[0]);
-			assert.strictEqual(logicDocument.Get_CurPage(), 0);
-			TurnOffRecalculate();
+			assert.true(logicDocument.GetCurrentParagraph() === logicDocument.Content[0], "Check visit hyperlink");
+			assert.strictEqual(logicDocument.Get_CurPage(), 0, "Check visit hyperlink");
 		});
 
-		QUnit.test("Test handle tab in math", (oAssert) =>
+		QUnit.test("Check handle tab in math", (assert) =>
 		{
-
 			const paragraph = ClearDocumentAndAddParagraph('');
 			logicDocument.AddParaMath();
 			AscTest.EnterText('abcd+abcd+abcd');
@@ -1307,43 +1264,42 @@
 			AscTest.MoveCursorRight();
 			const contentPosition = logicDocument.GetContentPosition();
 			const currentRun = contentPosition[contentPosition.length - 1].Class;
-			oAssert.strictEqual(currentRun.MathPrp.Get_AlnAt(), 1, 'Test move to next form');
+			assert.strictEqual(currentRun.MathPrp.Get_AlnAt(), 1, "Check handle tab in math");
 		});
 
 
-		QUnit.test("Test end editing", (assert) =>
+		QUnit.test("Check end editing form", (assert) =>
 		{
-			TurnOnRecalculate();
+			logicDocument.End_SilentMode();
 			const paragraph = ClearDocumentAndAddParagraph('');
 			const checkBox = AddCheckBox();
 			AscTest.SetFillingFormMode(true);
 			checkBox.MoveCursorToContentControl(true);
 			ExecuteHotkey(testHotkeyActions.endEditing);
 			const selectedInfo = logicDocument.GetSelectedElementsInfo();
-			assert.strictEqual(!!selectedInfo.GetInlineLevelSdt(), false, "Test end editing form");
+			assert.strictEqual(!!selectedInfo.GetInlineLevelSdt(), false, "Check end editing form");
 			AscTest.SetEditingMode();
-
-			GoToHeader(0);
-			ExecuteHotkey(testHotkeyActions.endEditing);
-			assert.strictEqual(logicDocument.GetDocPosType(), AscCommonWord.docpostype_Content, "Test end editing footer");
-			RemoveHeader(0);
-
-			GoToFooter(0);
-			ExecuteHotkey(testHotkeyActions.endEditing);
-			assert.strictEqual(logicDocument.GetDocPosType(), AscCommonWord.docpostype_Content, "Test end editing footer");
-			RemoveFooter(0);
-			TurnOffRecalculate();
+			logicDocument.Start_SilentMode();
 		});
 
-		QUnit.test("Test unicode to char hotkeys", (assert) =>
+		QUnit.test("Check replace unicode to char hotkeys", (assert) =>
 		{
 			const paragraph = ClearDocumentAndAddParagraph('2601');
 			AscTest.MoveCursorLeft(true, true);
-			ExecuteHotkey(testHotkeyActions.unicodeToChar);
-			assert.strictEqual(logicDocument.GetSelectedText(), '☁', 'Test replace unicode code to symbol');
+			ExecuteHotkey(testHotkeyActions.unicodeToChar, 0);
+			assert.strictEqual(logicDocument.GetSelectedText(), '☁', 'Check replace unicode code to symbol');
+			AscTest.MoveCursorRight();
+			AscTest.EnterText(' 261d');
+
+			AscTest.MoveCursorLeft(true, true);
+
+			AscCommon.AscBrowser.isMacOs = true;
+			ExecuteHotkey(testHotkeyActions.unicodeToChar, 1);
+			assert.strictEqual(logicDocument.GetSelectedText(), '☝', 'Check replace unicode code to symbol');
+			AscCommon.AscBrowser.isMacOs = false;
 		});
 
-		QUnit.test("Test reset drag'n'drop", (oAssert) =>
+		QUnit.test("Check reset drag'n'drop", (oAssert) =>
 		{
 			TurnOnRecalculate();
 			const paragraph = ClearDocumentAndAddParagraph('Hello Hello');
@@ -1362,7 +1318,7 @@
 			logicDocument.OnMouseMove(e, 45, 10, 0);
 
 			ExecuteHotkey(testHotkeyActions.resetDragNDrop);
-			oAssert.true(!drawingDocument.IsTrackText(), "Test reset drag'n'drop");
+			oAssert.true(!drawingDocument.IsTrackText(), "Check reset drag'n'drop");
 
 			e.Type = AscCommon.g_mouse_event_type_up;
 			logicDocument.OnMouseUp(e, 45, 10, 0);
