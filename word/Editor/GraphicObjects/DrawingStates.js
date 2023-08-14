@@ -433,9 +433,9 @@ NullState.prototype =
             }
         }
         else {
-            let oDoc = editor.getDocumentRenderer().getPDFDoc();
+            let oViewer     = editor.getDocumentRenderer();
+            let aDrawings   = oViewer.pagesInfo.pages[pageIndex].annots;
 
-            let aDrawings = oDoc.annots;
             return AscFormat.handleFloatObjects(this.drawingObjects, aDrawings, e, x, y, null, pageIndex, true);
         }
         

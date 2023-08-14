@@ -962,28 +962,28 @@
     };
     /**
 	 * Gets rgb color object from internal color array.
-	 * @memberof CComboBoxField
+	 * @memberof CBaseField
 	 * @typeofeditors ["PDF"]
      * @returns {object}
 	 */
-    CBaseField.prototype.GetRGBColor = function(oInternalColor) {
+    CBaseField.prototype.GetRGBColor = function(aInternalColor) {
         let oColor = {};
 
-        if (oInternalColor.length == 1) {
+        if (aInternalColor.length == 1) {
             oColor = {
-                r: oInternalColor[0] * 255,
-                g: oInternalColor[0] * 255,
-                b: oInternalColor[0] * 255
+                r: aInternalColor[0] * 255,
+                g: aInternalColor[0] * 255,
+                b: aInternalColor[0] * 255
             }
         }
-        else if (oInternalColor.length == 3) {
+        else if (aInternalColor.length == 3) {
             oColor = {
-                r: oInternalColor[0] * 255,
-                g: oInternalColor[1] * 255,
-                b: oInternalColor[2] * 255
+                r: aInternalColor[0] * 255,
+                g: aInternalColor[1] * 255,
+                b: aInternalColor[2] * 255
             }
         }
-        else if (oInternalColor.length == 4) {
+        else if (aInternalColor.length == 4) {
             function cmykToRgb(c, m, y, k) {
                 return {
                     r: Math.round(255 * (1 - c) * (1 - k)),
@@ -992,7 +992,7 @@
                 }
             }
 
-            oColor = cmykToRgb(oInternalColor[0], oInternalColor[1], oInternalColor[2], oInternalColor[3]);
+            oColor = cmykToRgb(aInternalColor[0], aInternalColor[1], aInternalColor[2], aInternalColor[3]);
         }
 
         return oColor;
@@ -1388,6 +1388,9 @@
         
         let oApearanceInfo  = this.GetOriginViewInfo();
         let oSavedView, oApInfoTmp;
+        if (!oApearanceInfo)
+            return null;
+            
         switch (nAPType) {
             case APPEARANCE_TYPE.normal:
                 oApInfoTmp = oApearanceInfo["N"];

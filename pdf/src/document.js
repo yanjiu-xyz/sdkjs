@@ -947,7 +947,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         oDrawingObjects.OnMouseUp(e, X, Y, oViewer.currentPage);
-
+        
         if (this.mouseDownField)
         {
             if (oMouseUpField == this.mouseDownField)
@@ -957,6 +957,7 @@ var CPresentation = CPresentation || function(){};
             }
         }
         else if (this.mouseDownAnnot) {
+            
             if (bUpdateOverlay == true) {
                 oViewer.overlay.ClearAll = true;
                 oViewer.overlay.max_x = 0;
@@ -1437,6 +1438,27 @@ var CPresentation = CPresentation || function(){};
         oViewer.pagesInfo.pages[nPage].annots.splice(oViewer.pagesInfo.pages[nPage].annots.indexOf(oAnnot), 1);
         editor.sync_RemoveComment(Id);
         oViewer._paintAnnots();
+    };
+    CPDFDoc.prototype.RemoveAnnot = function(Id) {
+        let oViewer = editor.getDocumentRenderer();
+        let oAnnot = this.annots.find(function(annot) {
+            return annot.GetId() === Id;
+        });
+
+        if (!oAnnot)
+            return;
+
+        if (oAnnot.IsComment && oAnnot.IsComment())
+            return this.RemoveComment(Id);
+
+        let nPage = oAnnot.GetPage();
+        oAnnot.AddToRedraw();
+        this.annots.splice(this.annots.indexOf(oAnnot), 1);
+        oViewer.pagesInfo.pages[nPage].annots.splice(oViewer.pagesInfo.pages[nPage].annots.indexOf(oAnnot), 1);
+        oViewer._paintAnnots();
+        if (this.mouseDownAnnot == oAnnot)
+            this.mouseDownAnnot = null;
+        oViewer.onUpdateOverlay();
     };
     CPDFDoc.prototype.HideComments = function() {
         editor.sync_HideComment();

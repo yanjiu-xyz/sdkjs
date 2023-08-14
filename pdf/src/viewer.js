@@ -443,8 +443,38 @@
 			if (this.Api.WordControl.MobileTouchManager && this.Api.WordControl.MobileTouchManager.iScroll)
 				this.Api.WordControl.MobileTouchManager.iScroll.x = - Math.max(0, Math.min(pos, maxPos));
 
+			this.UpdateDrDocDrawingPages();
+
 			if (this.disabledPaintOnScroll != true)
 				this.paint();
+				
+		};
+		this.UpdateDrDocDrawingPages = function() {
+			let oThis = this;
+			let xCenter = this.width >> 1;
+			let yPos = this.scrollY >> 0;
+			if (this.documentWidth > this.width)
+				xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
+
+			this.getPDFDoc().GetDrawingDocument().m_arrPages = this.drawingPages.map(function(page, index) {
+				
+				let w = (page.W) >> 0;
+				let h = (page.H) >> 0;
+
+				let x = ((xCenter) >> 0) - (w >> 1);
+				let y = ((page.Y - yPos)) >> 0;
+
+				return {
+					width_mm: page.W / oThis.zoom * g_dKoef_pix_to_mm,
+					height_mm: page.H / oThis.zoom * g_dKoef_pix_to_mm,
+					drawingPage: {
+						left: x,
+						top: y,
+						right: x + page.W,
+						bottom: y + page.H
+					}
+				}
+			});
 		};
 		this.scrollVertical = function(pos, maxPos)
 		{
@@ -452,6 +482,8 @@
 			this.scrollMaxY = maxPos;
 			if (this.Api.WordControl.MobileTouchManager && this.Api.WordControl.MobileTouchManager.iScroll)
 				this.Api.WordControl.MobileTouchManager.iScroll.y = - Math.max(0, Math.min(pos, maxPos));
+
+			this.UpdateDrDocDrawingPages();
 
 			if (this.disabledPaintOnScroll != true)
 				this.paint();
@@ -1074,7 +1106,39 @@
 			return;
 		};
 		this.openAnnots = function() {
-			editor.sync_HideComment();
+			let oThis = this;
+
+			let oDoc = this.getPDFDoc();
+			let aAnnotsInfo = this.file.nativeFile.getAnnotationsInfo();
+			
+			let oAnnotInfo, oAnnot, aRect;
+			for (let i = 0; i < aAnnotsInfo.length; i++) {
+				oAnnotInfo = aAnnotsInfo[i];
+
+				if (oAnnotInfo["Type"] == AscPDF.ANNOTATIONS_TYPES.Popup)
+					continue;
+
+				aRect = [oAnnotInfo["rect"]["x1"], oAnnotInfo["rect"]["y1"], oAnnotInfo["rect"]["x2"], oAnnotInfo["rect"]["y2"]];
+
+				oAnnot = oDoc.AddAnnot({
+					page:			oAnnotInfo["page"],
+					name:			oAnnotInfo["UniqueName"], 
+					creationDate:	oAnnotInfo["CreationDate"],
+					modDate:		oAnnotInfo["LastModified"],
+					rect:			aRect,
+					type:			oAnnotInfo["Type"],
+				});
+
+				if (oAnnotInfo["Type"] == AscPDF.ANNOTATIONS_TYPES.Ink) {
+					oAnnot.SetInkPoints(oAnnotInfo["InkList"]);
+				}
+				if (oAnnotInfo["C"] != null) {
+					oAnnot.SetStrokeColor(oAnnotInfo["C"]);
+				}
+				if (oAnnotInfo["borderWidth"] != null) {
+					oAnnot.SetWidth(oAnnotInfo["borderWidth"]);
+				}
+			}
 		};
 		this.setZoom = function(value, isDisablePaint)
 		{
@@ -1362,6 +1426,7 @@
 			if (this.documentWidth > this.width)
 				xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
 
+			let oThis = this;
 			this.getPDFDoc().GetDrawingDocument().m_arrPages = this.drawingPages.map(function(page, index) {
 				
 				let w = (page.W) >> 0;
@@ -1371,8 +1436,8 @@
 				let y = ((page.Y - yPos)) >> 0;
 
 				return {
-					width_mm: page.W * g_dKoef_pix_to_mm,
-					height_mm: page.H * g_dKoef_pix_to_mm,
+					width_mm: page.W / oThis.zoom * g_dKoef_pix_to_mm,
+					height_mm: page.H / oThis.zoom * g_dKoef_pix_to_mm,
 					drawingPage: {
 						left: x,
 						top: y,
@@ -2152,6 +2217,20 @@
 				{
 					var pageCoords = this.pageDetector.pages[i - this.startVisiblePage];
 					this.file.drawSelection(i, this.overlay, pageCoords.x, pageCoords.y, pageCoords.w, pageCoords.h);
+
+					let oDoc = this.getPDFDoc();
+					if (this.DrawingObjects.needUpdateOverlay())
+					{
+						this.DrawingObjects.drawingDocument.AutoShapesTrack.PageIndex = -1;
+						this.DrawingObjects.drawOnOverlay(this.DrawingObjects.drawingDocument.AutoShapesTrack);
+						this.DrawingObjects.drawingDocument.AutoShapesTrack.CorrectOverlayBounds();
+					}
+					else {
+						if (oDoc.mouseDownAnnot && !oDoc.mouseDownAnnot.IsComment) {
+							this.DrawingObjects.drawingDocument.AutoShapesTrack.PageIndex = i;
+							this.DrawingObjects.drawSelect(i);
+						}
+					}
 				}
 
 				ctx.fill();
@@ -2162,19 +2241,6 @@
 				this.activeForm.content.DrawSelectionOnPage(0);
 				ctx.globalAlpha = 0.2;
 				ctx.fill();
-			}
-			
-			let oDoc = this.getPDFDoc();
-			if (this.DrawingObjects.needUpdateOverlay())
-			{
-				this.DrawingObjects.drawingDocument.AutoShapesTrack.PageIndex = -1;
-				this.DrawingObjects.drawOnOverlay(this.DrawingObjects.drawingDocument.AutoShapesTrack);
-				this.DrawingObjects.drawingDocument.AutoShapesTrack.CorrectOverlayBounds();
-			}
-			else {
-				if (oDoc.mouseDownAnnot && !oDoc.mouseDownAnnot.IsComment) {
-					this.DrawingObjects.drawSelect(0);
-				}
 			}
 			
 			ctx.globalAlpha = 1.0;
@@ -2928,6 +2994,8 @@
 			}
 			else if (e.KeyCode === 46) // Delete
 			{
+				let oDoc = this.getPDFDoc();
+
 				if (this.activeForm && this.fieldFillingMode)
 				{
 					this.activeForm.Remove(1, e.CtrlKey == true);
@@ -2941,6 +3009,9 @@
 					// Чтобы при зажатой клавише курсор не пропадал
 					oThis.Api.WordControl.m_oDrawingDocument.showTarget(true);
 					bRetValue = true;
+				}
+				else if (oDoc.mouseDownAnnot && this.isMouseDown == false) {
+					oDoc.RemoveAnnot(oDoc.mouseDownAnnot.GetId());
 				}
 			}
 			else if ( e.KeyCode == 65 && true === e.CtrlKey ) // Ctrl + A
@@ -3327,10 +3398,11 @@
 		elements += "<canvas id=\"id_formsHighlight\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
 		elements += "<canvas id=\"id_forms\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
 		elements += "<canvas id=\"id_annots\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
-		elements += "<div id=\"id_vertical_scroll\" class=\"block_elem\" style=\"display:none;left:0px;top:0px;width:0px;height:0px;\"></div>";
-		elements += "<div id=\"id_horizontal_scroll\" class=\"block_elem\" style=\"display:none;left:0px;top:0px;width:0px;height:0px;\"></div>";
 		elements += "<div id=\"id_target_cursor\" class=\"block_elem\" width=\"1\" height=\"1\" style=\"touch-action:none;-ms-touch-action: none;-webkit-user-select: none;width:2px;height:13px;z-index:4;\"></div>"
 		elements += "</div>";
+
+		elements += "<div id=\"id_vertical_scroll\" class=\"block_elem\" style=\"display:none;left:0px;top:0px;width:0px;height:0px;\"></div>";
+		elements += "<div id=\"id_horizontal_scroll\" class=\"block_elem\" style=\"display:none;left:0px;top:0px;width:0px;height:0px;\"></div>";
 		//this.parent.style.backgroundColor = this.backgroundColor; <= this color from theme
 		this.parent.innerHTML = elements;
 		

@@ -33,23 +33,32 @@
 (function(){
 
     let ANNOTATIONS_TYPES = {
-        Caret:          0,
-        Circle:         1,
-        FileAttachment: 2,
-        FreeText:       3,
-        Highlight:      4,
-        Ink:            5,
-        Line:           6,
-        Polygon:        7,
-        PolyLine:       8,
-        Redact:         9,
-        Sound:          10,
-        Square:         11,
-        Squiggly:       12,
-        Stamp:          13,
-        StrikeOut:      14,
-        Text:           15,
-        Underline:      16
+        Text:           0,
+        Link:           1,
+        FreeText:       2,
+        Line:           3,
+        Square:         4,
+        Circle:         5,
+        Polygon:        6,
+        PolyLine:       7,
+        Highlight:      8,
+        Underline:      9,
+        Squiggly:       10,
+        StrikeOut:      11,
+        Stamp:          12,
+        Caret:          13,
+        Ink:            14,
+        Popup:          15,
+        FileAttachment: 16,
+        Sound:          17,
+        Movie:          18,
+        Widget:         19,
+        Screen:         20,
+        PrinterMark:    21,
+        TrapNet:        22,
+        Watermark:      23,
+        Type3D:         24,
+        Redact:         25
     }
     
 	/**
@@ -170,6 +179,9 @@
     CAnnotationBase.prototype.SetModDate = function(sDate) {
         this._modDate = sDate;
     };
+    CAnnotationBase.prototype.SetCreationDate = function(sDate) {
+        this._creationDate = sDate;
+    };
     CAnnotationBase.prototype.GetModDate = function() {
         return this._modDate;
     };
@@ -187,7 +199,43 @@
         if (oViewer.pagesInfo.pages[this.GetPage()])
             oViewer.pagesInfo.pages[this.GetPage()].needRedrawAnnots = true;
     };
-    
+    /**
+	 * Gets rgb color object from internal color array.
+	 * @memberof CAnnotationBase
+	 * @typeofeditors ["PDF"]
+     * @returns {object}
+	 */
+    CAnnotationBase.prototype.GetRGBColor = function(aInternalColor) {
+        let oColor = {};
+
+        if (aInternalColor.length == 1) {
+            oColor = {
+                r: aInternalColor[0] * 255,
+                g: aInternalColor[0] * 255,
+                b: aInternalColor[0] * 255
+            }
+        }
+        else if (aInternalColor.length == 3) {
+            oColor = {
+                r: aInternalColor[0] * 255,
+                g: aInternalColor[1] * 255,
+                b: aInternalColor[2] * 255
+            }
+        }
+        else if (aInternalColor.length == 4) {
+            function cmykToRgb(c, m, y, k) {
+                return {
+                    r: Math.round(255 * (1 - c) * (1 - k)),
+                    g: Math.round(255 * (1 - m) * (1 - k)),
+                    b: Math.round(255 * (1 - y) * (1 - k))
+                }
+            }
+
+            oColor = cmykToRgb(aInternalColor[0], aInternalColor[1], aInternalColor[2], aInternalColor[3]);
+        }
+
+        return oColor;
+    };
 
     // аналоги методов Drawings
     CAnnotationBase.prototype.getObjectType = function() {
@@ -212,7 +260,17 @@
     // CAnnotationBase.prototype.getObjectType = function() {
     //     return -1;
     // };
+
+    function ConvertPt2Px(pt) {
+        return (96 / 72) * pt;
+    }
+    function ConvertPx2Pt(px) {
+        return px / (96 / 72);
+    }
 	window["AscPDF"].CAnnotationBase    = CAnnotationBase;
 	window["AscPDF"].ANNOTATIONS_TYPES  = ANNOTATIONS_TYPES;
+	window["AscPDF"].ConvertPt2Px       = ConvertPt2Px;
+	window["AscPDF"].ConvertPx2Pt       = ConvertPx2Pt;
+
 })();
 

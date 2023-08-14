@@ -47,7 +47,7 @@
         this._rotate        = undefined;
         this._state         = undefined;
         this._stateModel    = undefined;
-        this._width         = undefined;
+        this._width         = 1;
 
         // internal
         TurnOffHistory();
@@ -127,7 +127,7 @@
         let oGraphicsWord   = oGraphics ? oGraphics : oViewer.pagesInfo.pages[this.GetPage()].graphics.word;
         
         this.Recalculate();
-        //this.DrawBackground();
+        // this.DrawBackground();
 
         let oDrawing = this.GetDrawing();
         if (oDrawing)
@@ -220,6 +220,65 @@
 
         oDrawingObjects.OnMouseDown(e, X, Y, oViewer.currentPage);
     };
+    CAnnotationInk.prototype.SetInkPoints = function(aPaths) {
+        let oViewer         = editor.getDocumentRenderer();
+        let oDoc            = oViewer.getPDFDoc();
+        let oDrawingObjects = oViewer.DrawingObjects;
+        let oDrDoc          = oDoc.GetDrawingDocument();
+
+        let nScaleY = oViewer.drawingPages[this.GetPage()].H / oViewer.file.pages[this.GetPage()].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[this.GetPage()].W / oViewer.file.pages[this.GetPage()].W / oViewer.zoom;
+
+        let aShapes     = [];
+        let aPolyLines  = [];
+        for (let nPath = 0; nPath < aPaths.length; nPath++) {
+            let aPath       = aPaths[nPath];
+            let oPolyLine   = new AscFormat.PolyLine(oDrawingObjects, oDrawingObjects.document.theme, null, null, null, this.GetPage());
+
+            for (let i = 0; i < aPath.length - 1; i += 2) {
+                oPolyLine.addPoint(aPath[i] * g_dKoef_pix_to_mm * nScaleX, (aPath[i + 1])* g_dKoef_pix_to_mm * nScaleY);
+            }
+
+            aPolyLines.push(oPolyLine);
+        }
+        
+        let oPolyLine = aPolyLines[0];
+        var shape   = oPolyLine.getShape(true, oDrDoc);
+        var drawing = new ParaDrawing(shape.spPr.xfrm.extX, shape.spPr.xfrm.extY, shape, oDrDoc, oDoc, null);
+        drawing.Set_DrawingType(drawing_Anchor);
+        drawing.Set_GraphicObject(shape);
+        shape.setParent(drawing);
+        drawing.Set_WrappingType(WRAPPING_TYPE_NONE);
+        drawing.Set_Distance( 3.2,  0,  3.2, 0 );
+
+        drawing.CheckWH();
+        
+        this.SetDrawing(drawing);
+
+        shape.recalculate();
+    };
+    CAnnotationInk.prototype.SetStrokeColor = function(aColor) {
+        this._strokeColor = aColor;
+
+        let oDrawing = this.GetDrawing();
+        if (oDrawing) {
+            let oRGB    = this.GetRGBColor(aColor);
+            let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
+            let oLine   = oDrawing.GraphicObj.pen;
+            oLine.setFill(oFill);
+        }
+    };
+    CAnnotationInk.prototype.SetWidth = function(nWidth) {
+        this._width = nWidth;
+
+        nWidth = nWidth > 0 ? nWidth : 0.5;
+        let oDrawing = this.GetDrawing();
+        if (oDrawing) {
+            let oLine = oDrawing.GraphicObj.pen;
+            oLine.setW(nWidth * g_dKoef_pt_to_mm * 36000.0);
+        }
+    };
+    
     CAnnotationInk.prototype.IsSelected = function() {
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
@@ -235,20 +294,6 @@
         oViewer.onUpdateOverlay();
     };
     
-    /**
-	 * Updates rect of a annot after resize.
-	 * @memberof CAnnotationInk
-	 * @typeofeditors ["PDF"]
-	 */
-    CAnnotationInk.prototype.UpdateRect = function() {
-        let oDrawing = this.GetDrawing();
-
-        let nWidth = oDrawing.Extent.W;
-        let nHeight = oDrawing.Extent.W;
-
-
-    };
-
     // переопределения методов CShape
     CAnnotationInk.prototype.getTransformMatrix = function() {
         return this.GetDrawing().GraphicObj.getTransformMatrix();
