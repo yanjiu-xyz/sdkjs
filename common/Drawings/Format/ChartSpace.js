@@ -1377,8 +1377,8 @@ function(window, undefined) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetChartData, this.chartData, pr));
         this.chartData = pr;
     };
-	CChartData.prototype.setExtLst = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartData_SetExtLst, this.extLst, pr));
+	CChartSpace.prototype.setExtLst = function(pr) {
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetExtLst, this.extLst, pr));
         this.extLst = pr;
     };
 	CChartSpace.prototype.clearDataRefs = function () {
