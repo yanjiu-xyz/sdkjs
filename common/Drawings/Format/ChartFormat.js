@@ -104,9 +104,6 @@
     drawingsChangesMap[AscDFH.historyitem_PlotArea_SetPlotAreaRegion] = function(oClass, value) {
         oClass.plotAreaRegion = value;
     };
-    drawingsChangesMap[AscDFH.historyitem_PlotArea_SetExtLst] = function(oClass, value) {
-        oClass.extLst = value;
-    };
     drawingsChangesMap[AscDFH.historyitem_PlotArea_SetDTable] = function(oClass, value) {
         oClass.dTable = value;
     };
@@ -738,9 +735,6 @@
     drawingsChangesMap[AscDFH.historyitem_Legend_SetSpPr] = function(oClass, value) {
         oClass.spPr = value;
     };
-    drawingsChangesMap[AscDFH.historyitem_Legend_SetExtLst] = function(oClass, value) {
-        oClass.extLst = value;
-    };
     drawingsChangesMap[AscDFH.historyitem_Legend_SetAlign] = function(oClass, value) {
         oClass.align = value;
     };
@@ -1204,9 +1198,6 @@
         oClass.view3D = value;
         oClass.Refresh_RecalcData();
     };
-    drawingsChangesMap[AscDFH.historyitem_Chart_SetExtLst] = function(oClass, value) {
-        oClass.extLst = value;
-    };
     drawingsChangesMap[AscDFH.historyitem_ChartWall_SetPictureOptions] = function(oClass, value) {
         oClass.pictureOptions = value;
     };
@@ -1572,7 +1563,6 @@
     AscDFH.changesFactory[AscDFH.historyitem_Chart_SetAutoTitleDeleted] = window['AscDFH'].CChangesDrawingsBool;
     AscDFH.changesFactory[AscDFH.historyitem_Chart_SetPlotVisOnly] = window['AscDFH'].CChangesDrawingsBool;
     AscDFH.changesFactory[AscDFH.historyitem_Chart_SetShowDLblsOverMax] = window['AscDFH'].CChangesDrawingsBool;
-    AscDFH.changesFactory[AscDFH.historyitem_Chart_SetExtLst] = window['AscDFH'].CChangesDrawingsObjectNoId;
     AscDFH.changesFactory[AscDFH.historyitem_View3d_SetRAngAx] = window['AscDFH'].CChangesDrawingsBool;
     AscDFH.changesFactory[AscDFH.historyitem_ExternalData_SetAutoUpdate] = window['AscDFH'].CChangesDrawingsBool;
 
@@ -1730,7 +1720,6 @@
     AscDFH.changesFactory[AscDFH.historyitem_DLbl_SetTxPr] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_DLbl_SetParent] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetPlotAreaRegion] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetExtLst] = window['AscDFH'].CChangesDrawingsObjectNoId;
     AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetDTable] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetLayout] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetSpPr] = window['AscDFH'].CChangesDrawingsObject;
@@ -1823,7 +1812,6 @@
     AscDFH.changesFactory[AscDFH.historyitem_ErrBars_SetSpPr] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_Legend_SetLayout] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_Legend_SetSpPr] = window['AscDFH'].CChangesDrawingsObject;
-    AscDFH.changesFactory[AscDFH.historyitem_Legend_SetExtLst] = window['AscDFH'].CChangesDrawingsObjectNoId;
     AscDFH.changesFactory[AscDFH.historyitem_Legend_SetAlign] = window['AscDFH'].CChangesDrawingsObjectNoId;
     AscDFH.changesFactory[AscDFH.historyitem_Legend_SetTxPr] = window['AscDFH'].CChangesDrawingsObject;
     AscDFH.changesFactory[AscDFH.historyitem_LegendEntry_SetTxPr] = window['AscDFH'].CChangesDrawingsObject;
@@ -4757,7 +4745,6 @@
     function CPlotArea() {
         CBaseChartObject.call(this);
         this.plotAreaRegion = null;
-        this.extLst = null;
         this.charts = [];
         this.dTable = null;
         this.layout = null;
@@ -4789,10 +4776,6 @@
     CPlotArea.prototype.Refresh_RecalcData = function(data) {
         switch(data.Type) {
             case AscDFH.historyitem_PlotArea_SetPlotAreaRegion:
-            {
-                break;
-            }
-            case AscDFH.historyitem_PlotArea_SetExtLst:
             {
                 break;
             }
@@ -5102,10 +5085,6 @@
     CPlotArea.prototype.setPlotAreaRegion = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_PlotArea_SetPlotAreaRegion, this.plotAreaRegion, pr));
         this.plotAreaRegion = pr;
-    };
-    CPlotArea.prototype.setExtLst = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_PlotArea_SetExtLst, this.extLst, pr));
-        this.extLst = pr;
     };
     CPlotArea.prototype.setDTable = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_PlotArea_SetDTable, this.dTable, pr));
@@ -10112,7 +10091,6 @@
         this.overlay = false;
         this.spPr = null;
         this.txPr = null;
-        this.extLst = null;
         this.align = null;
 
         this.rot = 0;
@@ -10391,10 +10369,6 @@
         History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_Legend_SetSpPr, this.spPr, spPr));
         this.spPr = spPr;
         this.setParentToChild(spPr);
-    };
-    CLegend.prototype.setExtLst = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Legend_SetExtLst, this.extLst, pr));
-        this.extLst = pr;
     };
     CLegend.prototype.setAlign = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Legend_SetAlign, this.align, pr));
@@ -14744,7 +14718,6 @@
         this.sideWall = null;
         this.title = null;
         this.view3D = null;
-        this.extLst = null;
     }
 
     InitClass(CChart, CBaseChartObject, AscDFH.historyitem_type_Chart);
@@ -15080,10 +15053,6 @@
         if(this.title) {
             this.title.applyChartStyle(oChartStyle, oColors, oAdditionalData, bReset);
         }
-    };
-    CChart.prototype.setExtLst = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Chart_SetExtLst, this.extLst, pr));
-        this.extLst = pr;
     };
 
     function CChartWall() {
