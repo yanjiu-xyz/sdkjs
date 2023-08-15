@@ -430,7 +430,50 @@ class Controller {
 		const result = resultArray.join('\n');
 		fs.writeFileSync(outputFile, result, { encoding: 'utf-8' });
 	}
+
+	run2(inputFile = INPUTFILE, outputFile = OUTPUTFILE) {
+		let readProps = (file) => {
+			let props = fs.readFileSync(file, { encoding: 'utf-8' });
+			let propsLines = props.split('\n');
+			let propsMap = {};
+			propsLines.forEach(function(line) {
+				let lineElems = line.split(':');
+				propsMap[lineElems[1]] = lineElems[0]
+			});
+			return propsMap;
+		};
+		let sdkMaps = {};
+		let errors = fs.readFileSync(inputFile, { encoding: 'utf-8' });
+
+		errors = errors.split('\n').map((line) => {
+			let sdkMatchRes = line.match(/\/([a-zA-z0-9\-\.]*)\/sdkjs\/([a-zA-z0-9\-\.]*)\//);
+
+			if (!sdkMatchRes || 3 != sdkMatchRes.length) {
+				return line;
+			}
+			let maps = sdkMaps[sdkMatchRes[0]];
+			if (!maps) {
+				let pathProps = `./cache/${sdkMatchRes[1]}/${sdkMatchRes[2]}.props.js.map`;
+				let pathVars = `./cache/${sdkMatchRes[1]}/${sdkMatchRes[2]}.vars.js.map`;
+				sdkMaps[sdkMatchRes[0]] = {props: readProps(pathProps), vars: readProps(pathVars)};
+			}
+			if (maps) {
+				line = line.replace(/(new )?([a-zA-z0-9$]*)(@http| \(http)/, (match, p1, p2, p3) => {
+					let props = p1 ? maps.vars[p2] : maps.props[p2];
+					if (props) {
+						return `${p1||''}${p2}(${props})${p3}`
+					} else {
+						return match
+					}
+				});
+			}
+			return line;
+		}).join('\n');
+		
+		fs.writeFileSync(outputFile, errors, { encoding: 'utf-8' });
+		return;
+	}
 }
 const controller = new Controller();
 console.log('Running...');
-controller.run(INPUTFILE, OUTPUTFILE);
+controller.run2(process.argv[2], process.argv[3]);

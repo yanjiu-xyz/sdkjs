@@ -35,7 +35,7 @@ cache/
     or
 
     ```bash
-    node deserialize.js
+    node deserialize.js opt_input opt_output
     ```
 
     `input.txt` will be used.
