@@ -7119,7 +7119,7 @@ function BinaryPPTYLoader()
                         AscCommon.pptx_content_loader.ImageMapChecker = this.ImageMapChecker;
                         AscCommon.pptx_content_loader.Reader.ImageMapChecker = this.ImageMapChecker;
                         var oBinaryChartReader = new AscCommon.BinaryChartReader(_stream);
-                        oBinaryChartReader.ExternalReadCT_ChartSpace(_length, _chart, this.presentation);
+                        oBinaryChartReader.ExternalReadCT_ChartExSpace(_length, _chart, this.presentation);
                         if(!_chart.hasCharts())
                         {
                             _chart = null;

@@ -1403,6 +1403,44 @@ BinaryChartWriter.prototype.WriteCT_ChartSpace = function (oVal) {
         });
     }
 };
+BinaryChartWriter.prototype.WriteCT_ChartExSpace = function (oVal) {
+    var oThis = this;
+    if(oVal.chartData !== null) {
+        this.bs.WriteItem(c_oserct_chartExSpaceCHARTDATA, function() {
+           oThis.WriteCT_ChartData(oVal.chartData); // todoo this class
+        });
+    }
+    if (oVal.chart !== null) {
+        this.bs.WriteItem(c_oserct_chartExSpaceCHART, function () {
+            oThis.WriteCT_ChartEx(oVal.chart);
+        });
+    }
+    if (oVal.spPr !== null) {
+        this.bs.WriteItem(c_oserct_chartExSpaceSPPR, function () {
+            oThis.WriteSpPr(oVal.spPr);
+        });
+    }
+    if (oVal.txPr !== null) {
+        this.bs.WriteItem(c_oserct_chartExSpaceTXPR, function () {
+            oThis.WriteTxPr(oVal.txPr);
+        });
+    }
+    if (oVal.clrMapOvr !== null) {
+        this.bs.WriteItem(c_oserct_chartExSpaceCLRMAPOVR, function () {
+             oThis.WriteClrMapOverride(oCurVal);
+        });
+     }
+     if(oVal.chartStyle !== null) {
+        this.bs.WriteItem(c_oserct_chartExSpaceSTYLES, function() {
+           oThis.WriteCT_ChartStyle(oVal.chartStyle);
+        });
+    }
+     if(oVal.chartColors !== null) {
+        this.bs.WriteItem(c_oserct_chartExSpaceCOLORS, function() {
+           oThis.WriteCT_ChartColors(oVal.chartColors);
+        });
+    }
+};
 BinaryChartWriter.prototype.WriteCT_FromTo = function(oVal){
         this.memory.WriteByte(Asc.c_oSer_DrawingPosType.X);
         this.memory.WriteByte(AscCommon.c_oSerPropLenType.Double);
@@ -6082,6 +6120,31 @@ BinaryChartReader.prototype.ExternalReadCT_ChartSpace = function (length, val, c
     }*/
     return res;
 };
+BinaryChartReader.prototype.ExternalReadCT_ChartExSpace = function (length, val, curWorksheet) {
+    var res = c_oSerConstants.ReadOk;
+    this.curWorksheet = curWorksheet;
+    this.drawingDocument = null;
+    if(this.curWorksheet) {
+        if(this.curWorksheet.getDrawingDocument) {
+            this.drawingDocument = this.curWorksheet.getDrawingDocument();
+        }
+        else {
+            if(this.curWorksheet.DrawingDocument) {
+                this.drawingDocument = this.curWorksheet.DrawingDocument;
+            }
+        }
+    }
+
+    var oThis = this;
+    this.curChart = val;
+    res = this.bcr.Read1(length, function (t, l) {
+        return oThis.ReadCT_ChartExSpace(t, l, val);
+    });
+    if(val){
+		val.correctAxes();
+        }
+    return res;
+};
 BinaryChartReader.prototype.ReadCT_ChartSpace = function (type, length, val, curWorksheet) {
     var res = c_oSerConstants.ReadOk;
     var oThis = this;
@@ -6234,6 +6297,59 @@ BinaryChartReader.prototype.ReadCT_ChartSpace = function (type, length, val, cur
         });
     }
     else {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_ChartExSpace = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if(c_oserct_chartExSpaceCHARTDATA === type) 
+    {
+        oNewVal = {};
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_ChartData(t, l, oNewVal); // todoo this class
+        });
+    } else if (c_oserct_chartExSpaceCHART === type) {
+        oNewVal = new AscFormat.CChartEx();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_ChartEx(t, l, oNewVal);
+        });
+        val.setChart(oNewVal);
+    } else if (c_oserct_chartExSpaceSPPR === type) {
+        val.setSpPr(this.ReadSpPr(length));
+        val.spPr.setParent(val);
+    }
+    else if (c_oserct_chartExSpaceTXPR === type) {
+        val.setTxPr(this.ReadTxPr(length));
+        val.txPr.setParent(val);
+    } else if (c_oserct_chartExspaceCLRMAPOVR === type) {
+        val.setClrMapOvr(this.ReadClrOverride(length));
+    } else if(c_oserct_chartExSpaceXLSX === type) {
+        //todo
+        res = c_oSerConstants.ReadUnknown;
+    } else if(c_oserct_chartExSpaceCOLORS === type) {
+        this.curChart.oChartColorsData = AscCommon.fSaveStream(this.bcr.stream, length);
+        oNewVal = new AscFormat.CChartColors();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_ChartColors(t, l, oNewVal);
+        });
+        if(oNewVal) {
+            val.setChartColors(oNewVal);
+        }
+    } else if(c_oserct_chartExSpaceSTYLES === type) {
+        this.curChart.oChartStyleData = AscCommon.fSaveStream(this.bcr.stream, length);
+        oNewVal = new AscFormat.CChartStyle();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_ChartStyle(t, l, oNewVal);
+        });
+        if(oNewVal) {
+            val.setChartStyle(oNewVal);
+        }
+    }
+    else
+    {
         res = c_oSerConstants.ReadUnknown;
     }
     return res;
