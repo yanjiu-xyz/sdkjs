@@ -2504,41 +2504,41 @@
     };
     
 
-    // // PlotArea (contains in chartFormat.js)
-    // drawingsChangesMap[AscDFH.historyitem_PlotArea_SetPlotAreaRegion] = function(oClass, value) {
-    //     oClass.plotAreaRegion = value;
-    // };
-    // drawingsChangesMap[AscDFH.historyitem_PlotArea_SetAxis] = function(oClass, value) {
-    //     oClass.axis = value;
-    // };
-    // drawingsChangesMap[AscDFH.historyitem_PlotArea_SetSpPr] = function(oClass, value) {
-    //     oClass.spPr = value;
-    // };
-    // AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetPlotAreaRegion] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    // AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetAxis] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    // AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetSpPr] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    // function CPlotArea() {
-    //     CBaseChartObject.call(this);
-    //     this.plotAreaRegion = null;
-    //     this.axis = [];
-    //     this.spPr = null;
-    // }
+    // PlotArea (contains in chartFormat.js but different fields)
+    drawingsChangesMap[AscDFH.historyitem_PlotArea_SetPlotAreaRegion] = function(oClass, value) {
+        oClass.plotAreaRegion = value;
+    };
+    drawingsChangesMap[AscDFH.historyitem_PlotArea_SetAxis] = function(oClass, value) {
+        oClass.axis = value;
+    };
+    drawingsChangesMap[AscDFH.historyitem_PlotArea_SetSpPr] = function(oClass, value) {
+        oClass.spPr = value;
+    };
+    AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetPlotAreaRegion] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetAxis] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetSpPr] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    function CChartExPlotArea() {
+        CBaseChartObject.call(this);
+        this.plotAreaRegion = null;
+        this.axis = [];
+        this.spPr = null;
+    }
 
-    // InitClass(CPlotArea, CBaseChartObject, AscDFH.historyitem_type_PlotArea);
+    InitClass(CChartExPlotArea, CBaseChartObject, AscDFH.historyitem_type_PlotArea);
 
-    // CPlotArea.prototype.setPlotAreaRegion = function(pr) {
-    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_PlotArea_SetPlotAreaRegion, this.plotAreaRegion, pr));
-    //     this.plotAreaRegion = pr;
-    // };
-    // CPlotArea.prototype.setAxis = function(pr) {
-    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_PlotArea_SetAxis, this.axis, pr));
-    //     this.axis = pr;
-    // };
-    // CPlotArea.prototype.setSpPr = function(pr) {
-    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_PlotArea_SetSpPr, this.spPr, pr));
-    //     this.spPr = pr;
-    // };
-    // 
+    CChartExPlotArea.prototype.setPlotAreaRegion = function(pr) {
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_PlotArea_SetPlotAreaRegion, this.plotAreaRegion, pr));
+        this.plotAreaRegion = pr;
+    };
+    CChartExPlotArea.prototype.setAxis = function(pr) {
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_PlotArea_SetAxis, this.axis, pr));
+        this.axis = pr;
+    };
+    CChartExPlotArea.prototype.setSpPr = function(pr) {
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_PlotArea_SetSpPr, this.spPr, pr));
+        this.spPr = pr;
+    };
+    
 
     // PlotAreaRegion
     drawingsChangesMap[AscDFH.historyitem_PlotAreaRegion_SetPlotSurface] = function(oClass, value) {
@@ -3867,7 +3867,7 @@
     // window['AscFormat'].CPageSetup = CPageSetup;
     window['AscFormat'].CParentLabelLayout = CParentLabelLayout;
     window['AscFormat'].CPercentageColorPosition = CPercentageColorPosition;
-    // window['AscFormat'].CPlotArea = CPlotArea;
+    window['AscFormat'].CChartExPlotArea = CChartExPlotArea;
     window['AscFormat'].CPlotAreaRegion = CPlotAreaRegion;
     window['AscFormat'].CPlotSurface = CPlotSurface;
     // window['AscFormat'].CPrintSettings = CPrintSettings;
