@@ -13283,6 +13283,7 @@
 
         var onSelectionCallback = function (isSuccess) {
             if (false === isSuccess) {
+				AscCommonExcel.g_clipboardExcel.pasteProcessor.pasteCallBack = null;
                 return;
             }
             var hasUpdates = false;
@@ -13676,6 +13677,10 @@
                 }
             });
 
+			if (AscCommonExcel.g_clipboardExcel.pasteProcessor.pasteCallBack) {
+				AscCommonExcel.g_clipboardExcel.pasteProcessor.pasteCallBack();
+				AscCommonExcel.g_clipboardExcel.pasteProcessor.pasteCallBack = null;
+			}
 			t.model.workbook.handlers.trigger("cleanCutData", true, true);
 			if (prop !== "paste") {
 				t.model.workbook.handlers.trigger("cleanCopyData", true);
