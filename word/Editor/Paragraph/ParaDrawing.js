@@ -1597,15 +1597,15 @@ ParaDrawing.prototype.updatePosition3 = function(pageIndex, x, y, oldPageNum)
 		if (!(bIsHfdFtr && oDocContent && oDocContent.Get_StartPage_Absolute() !== pageIndex))
 		{
 			// TODO: ситуацию в колонтитуле с привязкой к полю нужно отдельно обрабатывать через дополнительные пересчеты
-			if (!oDocContent || !bIsHfdFtr || this.GetPositionV().RelativeFrom !== Asc.c_oAscRelativeFromV.Margin)
+			if (!(bIsHfdFtr && this.GetPositionV().RelativeFrom !== Asc.c_oAscRelativeFromV.Margin))
 			{
 				this.graphicObjects.addObjectOnPage(pageIndex, this.GraphicObj);
-				this.bNoNeedToAdd = false;
 			}
-			else
-			{
-				this.bNoNeedToAdd = true;
-			}
+			this.bNoNeedToAdd = false;
+		}
+		else
+		{
+			this.bNoNeedToAdd = true;
 		}
 	}
 
