@@ -2505,18 +2505,24 @@
     
 
     // PlotArea (contains in chartFormat.js but different fields)
-    drawingsChangesMap[AscDFH.historyitem_PlotArea_SetPlotAreaRegion] = function(oClass, value) {
+    drawingsChangesMap[AscDFH.historyitem_ChartExPlotArea_SetPlotAreaRegion] = function(oClass, value) {
         oClass.plotAreaRegion = value;
     };
-    drawingsChangesMap[AscDFH.historyitem_PlotArea_SetAxis] = function(oClass, value) {
+    drawingsChangesMap[AscDFH.historyitem_ChartExPlotArea_SetAxis] = function(oClass, value) {
         oClass.axis = value;
     };
-    drawingsChangesMap[AscDFH.historyitem_PlotArea_SetSpPr] = function(oClass, value) {
+    drawingsChangesMap[AscDFH.historyitem_ChartExPlotArea_SetSpPr] = function(oClass, value) {
         oClass.spPr = value;
     };
-    AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetPlotAreaRegion] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetAxis] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_PlotArea_SetSpPr] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    drawingContentChanges[AscDFH.historyitem_ChartExPlotArea_AddAxis] = 
+        drawingContentChanges[AscDFH.historyitem_ChartExPlotArea_RemoveAxis] = function(oClass) {
+            return oClass.axis;
+        };
+    AscDFH.changesFactory[AscDFH.historyitem_ChartExPlotArea_SetPlotAreaRegion] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    AscDFH.changesFactory[AscDFH.historyitem_ChartExPlotArea_SetAxis] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    AscDFH.changesFactory[AscDFH.historyitem_ChartExPlotArea_SetSpPr] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    AscDFH.changesFactory[AscDFH.historyitem_ChartExPlotArea_AddAxis] = window['AscDFH'].CChangesDrawingsContent;
+    AscDFH.changesFactory[AscDFH.historyitem_ChartExPlotArea_RemoveAxis] = window['AscDFH'].CChangesDrawingsContent;
     function CChartExPlotArea() {
         CBaseChartObject.call(this);
         this.plotAreaRegion = null;
@@ -2524,19 +2530,34 @@
         this.spPr = null;
     }
 
-    InitClass(CChartExPlotArea, CBaseChartObject, AscDFH.historyitem_type_PlotArea);
+    InitClass(CChartExPlotArea, CBaseChartObject, AscDFH.historyitem_type_ChartExPlotArea);
 
     CChartExPlotArea.prototype.setPlotAreaRegion = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_PlotArea_SetPlotAreaRegion, this.plotAreaRegion, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartExPlotArea_SetPlotAreaRegion, this.plotAreaRegion, pr));
         this.plotAreaRegion = pr;
     };
     CChartExPlotArea.prototype.setAxis = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_PlotArea_SetAxis, this.axis, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartExPlotArea_SetAxis, this.axis, pr));
         this.axis = pr;
     };
     CChartExPlotArea.prototype.setSpPr = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_PlotArea_SetSpPr, this.spPr, pr));
+        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartExPlotArea_SetSpPr, this.spPr, pr));
         this.spPr = pr;
+    };
+    CChartExPlotArea.prototype.addAxis = function(pr, idx) {
+        var pos;
+        if(AscFormat.isRealNumber(idx))
+            pos = idx;
+        else
+            pos = this.axis.length;
+        History.CanAddChanges() && History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_ChartExPlotArea_AddAxis, pos, [pr], true));
+        this.axis.splice(pos, 0, pr);
+    };
+    CChartExPlotArea.prototype.removeAxisByPos = function(pos) {
+        if(this.axis[pos]) {
+            var axis = this.axis.splice(pos, 1)[0];
+            History.CanAddChanges() && History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_ChartExPlotArea_RemoveAxis, pos, [axis], false));
+        }
     };
     
 
