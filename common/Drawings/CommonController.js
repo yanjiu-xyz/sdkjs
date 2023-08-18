@@ -4792,8 +4792,8 @@
 						drawingDocument.SelectShow();
 					}
 					let oMathTrackHandler = null;
-					if (this.drawingObjects.mathTrackHandler) {
-						oMathTrackHandler = this.drawingObjects.mathTrackHandler;
+					if (Asc.editor.wbModel && Asc.editor.wbModel.mathTrackHandler) {
+						oMathTrackHandler = Asc.editor.wbModel.mathTrackHandler;
 					} else {
 						if (this.drawingObjects.cSld) {
 							oMathTrackHandler = editor.WordControl.m_oLogicDocument.MathTrackHandler;
