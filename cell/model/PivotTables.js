@@ -7212,11 +7212,20 @@ CT_pivotTableDefinition.prototype.asc_canShowDetails = function(row, col) {
 	return true;
 };
 /**
+ * @param {spreadsheet_api} api
+ * @return {boolean}
+ */
+CT_pivotTableDefinition.prototype.asc_canExpandCollapseByActiveCell = function(api) {
+	let ws = api.wbModel.getActiveWs();
+	let activeCell = ws.selectionRange.activeCell;
+	return this.canExpandCollapse(activeCell.row, activeCell.col);
+};
+/**
  * @param {number} row index of cell
  * @param {number} col index of cell
  * @return {boolean}
  */
-CT_pivotTableDefinition.prototype.asc_canExpandCollapse = function(row, col) {
+CT_pivotTableDefinition.prototype.canExpandCollapse = function(row, col) {
 	let layout = this.getLayoutByCell(row, col);
 	return layout && layout.canExpandCollapse() || false;
 };
@@ -18263,7 +18272,7 @@ prot["asc_moveColField"] = prot.asc_moveColField;
 prot["asc_moveDataField"] = prot.asc_moveDataField;
 prot["asc_refresh"] = prot.asc_refresh;
 prot["asc_getFieldGroupType"] = prot.asc_getFieldGroupType;
-prot["asc_canExpandCollapse"] = prot.asc_canExpandCollapse;
+prot["asc_canExpandCollapseByActiveCell"] = prot.asc_canExpandCollapseByActiveCell;
 prot["asc_setExpandCollapseByActiveCell"] = prot.asc_setExpandCollapseByActiveCell;
 
 window["Asc"]["CT_PivotTableStyle"] = window['Asc'].CT_PivotTableStyle = CT_PivotTableStyle;

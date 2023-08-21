@@ -1956,7 +1956,7 @@
           this.Api.asc_pivotShowDetails(pivotTable);
           return;
         }
-        if (pivotTable.asc_canExpandCollapse(ct.row, ct.col)) {
+        if (pivotTable.canExpandCollapse(ct.row, ct.col)) {
           pivotTable.toggleExpandCollapseByActiveCell(this.Api, false);
           return;
         }
