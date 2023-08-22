@@ -3391,9 +3391,10 @@
 						}
 					}
 				} else {
+					let oOwnXfrm = this.spPr && this.spPr.xfrm;
 					var xfrm;
-					if (this.spPr && this.spPr.xfrm && this.spPr.xfrm.isNotNull()) {
-						xfrm = this.spPr.xfrm;
+					if (oOwnXfrm && oOwnXfrm.isNotNull()) {
+						xfrm = oOwnXfrm;
 					} else {
 						if (this.isPlaceholder()) {
 							var hierarchy = this.getHierarchy();
@@ -3408,15 +3409,17 @@
 								xfrm = new AscFormat.CXfrm();
 								xfrm.offX = 0;
 								xfrm.offX = 0;
-								xfrm.extX = 5;
-								xfrm.extY = 5;
+								xfrm.extX = 0;
+								xfrm.extY = 0;
+								xfrm.merge(oOwnXfrm);
 							}
 						} else {
 							xfrm = new AscFormat.CXfrm();
 							xfrm.offX = 0;
 							xfrm.offY = 0;
-							xfrm.extX = 5;
-							xfrm.extY = 5;
+							xfrm.extX = 0;
+							xfrm.extY = 0;
+							xfrm.merge(oOwnXfrm);
 						}
 					}
 
