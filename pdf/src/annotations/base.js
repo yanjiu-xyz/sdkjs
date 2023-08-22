@@ -99,7 +99,9 @@
         // internal
         this._id = AscCommon.g_oIdCounter.Get_NewId();
     }
-    
+    CAnnotationBase.prototype.GetName = function() {
+        return this._name;
+    };
     CAnnotationBase.prototype.SetPosition = function(x, y) {
         let oViewer = editor.getDocumentRenderer();
         let nPage = this.GetPage();
@@ -193,6 +195,9 @@
     };
     CAnnotationBase.prototype.IsAnnot = function() {
         return true;
+    };
+    CAnnotationBase.prototype.SetApIdx = function(nIdx) {
+        this._apIdx = nIdx;
     };
     CAnnotationBase.prototype.AddToRedraw = function() {
         let oViewer = editor.getDocumentRenderer();

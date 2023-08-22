@@ -70,8 +70,7 @@
 
         // internal
         TurnOffHistory();
-        this.content        = new AscPDF.CTextBoxContent(this, oDoc);
-        this._replies       = [];
+        this._replies = [];
     }
     CAnnotationText.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
 	CAnnotationText.prototype.constructor = CAnnotationText;

@@ -800,6 +800,7 @@ var CPresentation = CPresentation || function(){};
         let oAPI            = oViewer.Api;
         
         let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(x, y);
+        
         if (oViewer.isMouseDown)
         {
             if (oAPI.isInkDrawerOn() || this.mouseDownAnnot) {
@@ -878,7 +879,10 @@ var CPresentation = CPresentation || function(){};
             }
 
 
-            let cursorType = "pointer";
+            let cursorType = "default";
+            if (oViewer.MouseHandObject)
+                cursorType = "pointer";
+
             if (mouseMoveLinkObject)
                 cursorType = "pointer";
             else if (mouseMoveFieldObject)
@@ -942,7 +946,8 @@ var CPresentation = CPresentation || function(){};
         // в приоритете обрабатываем формы или аннотации, потом уже ссылки
         if (this.mouseDownAnnot || this.mouseDownField) {
             oViewer.isMouseMoveBetweenDownUp = false;
-            oViewer.MouseHandObject.Active = false;
+            if (oViewer.MouseHandObject)
+                oViewer.MouseHandObject.Active = false;
             oViewer.mouseDownLinkObject = null;
         }
 
@@ -1330,7 +1335,7 @@ var CPresentation = CPresentation || function(){};
         if (!oPagesInfo.pages[nPageNum])
             return null;
         
-        let oAnnot = private_createAnnot(oProps, this);
+        let oAnnot = CreateAnnotByProps(oProps, this);
 
         this.annots.push(oAnnot);
         oAnnot.SetNeedRecalc && oAnnot.SetNeedRecalc(true);
@@ -1342,6 +1347,10 @@ var CPresentation = CPresentation || function(){};
 
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();
+
+        if (oProps.contents != null) {
+            oAnnot.SetContents(oProps.contents);
+        }
 
         // if (oViewer.IsOpenFormsInProgress == false) {
         //     oAnnot.SetDrawFromStream(false);
@@ -1864,7 +1873,7 @@ var CPresentation = CPresentation || function(){};
         return oField;
     }
 
-    function private_createAnnot(oProps, oPdfDoc) {
+    function CreateAnnotByProps(oProps, oPdfDoc) {
         let aRect       = oProps.rect;
         let nPageNum    = oProps.page;
         let sName       = oProps.name ? oProps.name : AscCommon.CreateGUID();
@@ -1890,7 +1899,6 @@ var CPresentation = CPresentation || function(){};
                 break;
         }
 
-        oAnnot.SetContents(sText);
         oAnnot.SetModDate(sDate);
         oAnnot.SetAuthor(sAuthor);
         oAnnot.SetHidden(isHidden);
@@ -1915,4 +1923,6 @@ var CPresentation = CPresentation || function(){};
 	    window["AscPDF"] = {};
 
     window["AscPDF"].CPDFDoc = CPDFDoc;
+    window["AscPDF"].CreateAnnotByProps = CreateAnnotByProps;
+
 })();

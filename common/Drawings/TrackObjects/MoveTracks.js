@@ -662,8 +662,8 @@ function MoveAnnotationTrack(originalObject)
     this.track = function(dx, dy)
     {
         this.bIsTracked = true;
-        this.x = this.originalObject._pagePos.x + dx * g_dKoef_mm_to_pix / this.viewer.zoom;
-        this.y = this.originalObject._pagePos.y + dy * g_dKoef_mm_to_pix / this.viewer.zoom;
+        this.x = this.originalObject._pagePos.x + dx * g_dKoef_mm_to_pix;
+        this.y = this.originalObject._pagePos.y + dy * g_dKoef_mm_to_pix;
     };
     this.initCanvas = function() {
         let nPage   = this.originalObject.GetPage();

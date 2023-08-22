@@ -1108,6 +1108,7 @@
 		this.openAnnots = function() {
 			let oThis = this;
 
+			let oAnnotsMap = {};
 			let oDoc = this.getPDFDoc();
 			let aAnnotsInfo = this.file.nativeFile.getAnnotationsInfo();
 			
@@ -1120,24 +1121,39 @@
 
 				aRect = [oAnnotInfo["rect"]["x1"], oAnnotInfo["rect"]["y1"], oAnnotInfo["rect"]["x2"], oAnnotInfo["rect"]["y2"]];
 
-				oAnnot = oDoc.AddAnnot({
-					page:			oAnnotInfo["page"],
-					name:			oAnnotInfo["UniqueName"], 
-					creationDate:	oAnnotInfo["CreationDate"],
-					modDate:		oAnnotInfo["LastModified"],
-					rect:			aRect,
-					type:			oAnnotInfo["Type"],
-				});
+				if (oAnnotInfo["RefTo"] == null) {
+					oAnnot = oDoc.AddAnnot({
+						page:			oAnnotInfo["page"],
+						name:			oAnnotInfo["UniqueName"], 
+						creationDate:	oAnnotInfo["CreationDate"],
+						modDate:		oAnnotInfo["LastModified"],
+						contents:		oAnnotInfo["Contents"],
+						author:			oAnnotInfo["User"],
+						rect:			aRect,
+						type:			oAnnotInfo["Type"],
+					});
+	
+					oAnnot.SetApIdx(oAnnotInfo["AP"]["i"]);
+					oAnnotsMap[oAnnotInfo["AP"]["i"]] = oAnnot;
 
-				if (oAnnotInfo["Type"] == AscPDF.ANNOTATIONS_TYPES.Ink) {
-					oAnnot.SetInkPoints(oAnnotInfo["InkList"]);
+					if (oAnnotInfo["Type"] == AscPDF.ANNOTATIONS_TYPES.Ink) {
+						oAnnot.SetInkPoints(oAnnotInfo["InkList"]);
+					}
+					if (oAnnotInfo["C"] != null) {
+						oAnnot.SetStrokeColor(oAnnotInfo["C"]);
+					}
+					if (oAnnotInfo["borderWidth"] != null) {
+						oAnnot.SetWidth(oAnnotInfo["borderWidth"]);
+					}
 				}
-				if (oAnnotInfo["C"] != null) {
-					oAnnot.SetStrokeColor(oAnnotInfo["C"]);
+				else {
+					oAnnotsMap[oAnnotInfo["RefTo"]]._AddReplyOnOpen(oAnnotInfo);
 				}
-				if (oAnnotInfo["borderWidth"] != null) {
-					oAnnot.SetWidth(oAnnotInfo["borderWidth"]);
-				}
+			}
+
+			for (let apIdx in oAnnotsMap) {
+				if (oAnnotsMap[apIdx]._contents instanceof AscPDF.CAnnotationText)
+					oAnnotsMap[apIdx]._OnAfterSetContents();
 			}
 		};
 		this.setZoom = function(value, isDisablePaint)
@@ -1522,11 +1538,8 @@
 			{
 				for (var i = page.annots.length -1; i >= 0; i--)
 				{
-					// пояснение: размер аннотации всегда один и тот же, вне зависимости от зума. 
-					// Поэтому ширина ректа в который попадает мышка не должна увеличиваться
-					// поэтому ширину и высоту делить на зум, для того чтобы невилировать это увеличение
-					let nAnnotWidth = (page.annots[i]._origRect[2] - page.annots[i]._origRect[0]) / this.zoom;
-					let nAnnotHeight = (page.annots[i]._origRect[3] - page.annots[i]._origRect[1]) / this.zoom;
+					let nAnnotWidth = (page.annots[i]._origRect[2] - page.annots[i]._origRect[0]);
+					let nAnnotHeight = (page.annots[i]._origRect[3] - page.annots[i]._origRect[1]);
 
 					if (pageObject.x >= page.annots[i]._origRect[0] && pageObject.x <= page.annots[i]._origRect[0] + nAnnotWidth &&
 						pageObject.y >= page.annots[i]._origRect[1] && pageObject.y <= page.annots[i]._origRect[1] + nAnnotHeight)
@@ -1688,7 +1701,19 @@
 
 			AscCommon.check_MouseUpEvent(e);
 
-			oThis.getPDFDoc().OnMouseUp(e);
+			let oDoc = oThis.getPDFDoc();
+			oDoc.OnMouseUp(e);
+
+			if (!oThis.MouseHandObject && global_mouseEvent.ClickCount == 2 && !oDoc.mouseDownAnnot && !oDoc.mouseDownField)
+			{
+				var pageObjectLogic = oThis.getPageByCoords2(oThis.mouseDownCoords.X - oThis.x, oThis.mouseDownCoords.Y - oThis.y);
+				oThis.file.selectWholeWord(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+			}
+			else if (!oThis.MouseHandObject && global_mouseEvent.ClickCount == 3 && !oDoc.mouseDownAnnot && !oDoc.mouseDownField)
+			{
+				var pageObjectLogic = oThis.getPageByCoords2(oThis.mouseDownCoords.X - oThis.x, oThis.mouseDownCoords.Y - oThis.y);
+				oThis.file.selectWholeRow(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+			}
 
 			if (oThis.mouseDownLinkObject)
 			{
@@ -3394,11 +3419,11 @@
 	{
 		var elements = "<div id=\"id_main\" class=\"block_elem\" style=\"touch-action:none;-ms-touch-action: none;-moz-user-select:none;-khtml-user-select:none;user-select:none;background-color:" + AscCommon.GlobalSkin.BackgroundColor + ";overflow:hidden;\" UNSELECTABLE=\"on\">";
 		elements += "<canvas id=\"id_viewer\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
-		elements += "<canvas id=\"id_overlay\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
 		elements += "<canvas id=\"id_formsHighlight\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
 		elements += "<canvas id=\"id_forms\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
 		elements += "<canvas id=\"id_annots\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
 		elements += "<div id=\"id_target_cursor\" class=\"block_elem\" width=\"1\" height=\"1\" style=\"touch-action:none;-ms-touch-action: none;-webkit-user-select: none;width:2px;height:13px;z-index:4;\"></div>"
+		elements += "<canvas id=\"id_overlay\" class=\"block_elem\" style=\"left:0px;top:0px;width:100;height:100;\"></canvas>";
 		elements += "</div>";
 
 		elements += "<div id=\"id_vertical_scroll\" class=\"block_elem\" style=\"display:none;left:0px;top:0px;width:0px;height:0px;\"></div>";

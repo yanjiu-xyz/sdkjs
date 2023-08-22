@@ -597,7 +597,7 @@ void main() {\n\
         return new TextStreamReader(textCommands, textCommands.length);
     };
 
-    CFile.prototype.getNearestPos = function(pageIndex, x, y)
+    CFile.prototype.getNearestPos = function(pageIndex, x, y, bExcludeSpaces)
     {
         var stream = this.getPageTextStream(pageIndex);
         if (!stream)
@@ -648,13 +648,27 @@ void main() {\n\
                     if (0 != _lineCharCount)
                         _linePrevCharX += stream.GetDouble2();
 
-                    _arrayGlyphOffsets[_lineCharCount] = _linePrevCharX;
-
-                    _lineCharCount++;
-
-                    if (_lineGidExist)
-                        stream.Skip(4);
+                    let char = stream.GetUShort();
+                    if (bExcludeSpaces)
+                    {
+                        if (char !== 0xFFFF)
+                            _arrayGlyphOffsets[_lineCharCount] = _linePrevCharX;
+                        else
+                            _arrayGlyphOffsets[_lineCharCount] = {
+                                offset: _linePrevCharX,
+                                isSpace: true
+                            };
+                    }
                     else
+                    {
+                        _arrayGlyphOffsets[_lineCharCount] = _linePrevCharX;
+                    }
+
+                    console.log(String.fromCharCode(char));
+                    
+                    _lineCharCount++;
+                                        
+                    if (_lineGidExist)
                         stream.Skip(2);
 
                     if (0 == _lineWidth)
@@ -727,8 +741,20 @@ void main() {\n\
                                 if (_arrayGlyphOffsets[_glyph] > _distX)
                                     break;
                             }
+
                             if (_glyph > 0)
+                            {
                                 --_glyph;
+
+                                if (bExcludeSpaces && _arrayGlyphOffsets[_glyph].isSpace)
+                                {
+                                    let nToLeft     = Math.abs(_distX - _arrayGlyphOffsets[_glyph].offset);
+                                    let nToRight    = Math.abs(_distX - _arrayGlyphOffsets[_glyph + 1]);
+
+                                    if (nToRight < nToLeft)
+                                        ++_glyph;
+                                }
+                            }
 
                             return { Line : _line, Glyph : _glyph };
                         }
@@ -859,6 +885,182 @@ void main() {\n\
         }
 
         return { Line : _line, Glyph : _glyph };
+    };
+    CFile.prototype.selectWholeWord = function(pageIndex, x, y) {
+        var oNearesPos  = this.getNearestPos(pageIndex, x, y, true);
+        if (oNearesPos.Glyph < 0)
+            return;
+
+        var stream = this.getPageTextStream(pageIndex);
+        var lineCharCount = 0;
+        var lineGidExist = false;
+        var lineText = "";
+        let nLine = -1;
+
+        while (stream.pos < stream.size)
+        {
+            var command = stream.GetUChar();
+
+            switch (command)
+            {
+                case 41: // ctFontName
+                {
+                    stream.Skip(12);
+                    break;
+                }
+                case 22: // ctBrushColor1
+                {
+                    stream.Skip(4);
+                    break;
+                }
+                case 80: // ctDrawText
+                {
+                    if (0 != lineCharCount)
+                        stream.Skip(2);
+
+                    lineCharCount++;
+
+                    var char = stream.GetUShort();
+                    if (char !== 0xFFFF)
+                        lineText += String.fromCharCode(char);
+                    else
+                        lineText += " ";
+
+                    if (lineGidExist)
+                        stream.Skip(2);
+
+                    stream.Skip(2);
+                    break;
+                }
+                case 160: // ctCommandTextLine
+                {
+                    if (nLine == oNearesPos.Line)
+                    {
+                        stream.pos = stream.size;
+                        break;
+                    }
+                    lineText = "";
+                    lineCharCount = 0;
+                    nLine++;
+                    var mask = stream.GetUChar();
+                    stream.Skip(8);
+
+                    if ((mask & 0x01) == 0)
+                    {
+                        stream.Skip(8);
+                    }
+
+                    stream.Skip(8);
+
+                    if ((mask & 0x04) != 0)
+                        stream.Skip(4);
+
+                    if ((mask & 0x02) != 0)
+                        lineGidExist = true;
+                    else
+                        lineGidExist = false;
+
+                    break;
+                }
+                case 161: // ctCommandTextTransform
+                {
+                    // text transform
+                    stream.Skip(16);
+                    break;
+                }
+                case 162: // ctCommandTextLineEnd
+                {
+                    break;
+                }
+                default:
+                {
+                    stream.pos = stream.size;
+                }
+            }
+        }
+
+        let oSelectionInfo = {
+            Glyph1: -2,
+            Glyph2: -1,
+            IsSelection: true,
+            Line1: oNearesPos.Line,
+            Line2: oNearesPos.Line,
+            Page1: pageIndex,
+            Page2: pageIndex
+        }
+
+        let isOnSpace       = false;
+        let isOnPunctuation = false;
+        if (lineText[oNearesPos.Glyph] == " ")
+        {
+            isOnSpace = true;
+        }
+        else if (undefined != AscCommon.g_aPunctuation[lineText[oNearesPos.Glyph].charCodeAt(0)])
+        {
+            isOnPunctuation = true;
+        }
+
+        if (isOnPunctuation)
+        {
+            oSelectionInfo.Glyph1 = oNearesPos.Glyph;
+        }
+        else
+        {
+            for (let i = oNearesPos.Glyph - 1; i >=0; i--)
+            {
+                if (lineText[i] == "")
+                {
+                    oSelectionInfo.Glyph1 = i;
+                    if (isOnSpace)
+                        return;
+                    break;     
+                }
+                else if (lineText[i] == " " || undefined != AscCommon.g_aPunctuation[lineText[i].charCodeAt(0)])
+                {
+                    oSelectionInfo.Glyph1 = i + 1;
+                    break;   
+                }
+            }
+        }
+        
+        if (isOnSpace)
+        {
+            oSelectionInfo.Glyph2 = oNearesPos.Glyph;
+        }
+        else if (isOnPunctuation && lineText[oNearesPos.Glyph + 1])
+        {
+            oSelectionInfo.Glyph2 = oNearesPos.Glyph + 1;
+        }
+        else
+        {
+            for (let i = oNearesPos.Glyph + 1; i < lineText.length; i++)
+            {
+                if (lineText[i] == "" || lineText[i] == " " || undefined != AscCommon.g_aPunctuation[lineText[i].charCodeAt(0)])
+                {
+                    oSelectionInfo.Glyph2 = i;
+                    break;
+                }
+            }
+        }
+        
+        this.Selection = oSelectionInfo;
+        this.onUpdateOverlay();
+    };
+    CFile.prototype.selectWholeRow = function(pageIndex, x, y) {
+        var oNearesPos  = this.getNearestPos(pageIndex, x, y, true);
+
+        let oSelectionInfo = {
+            Glyph1: -2,
+            Glyph2: -1,
+            IsSelection: true,
+            Line1: oNearesPos.Line,
+            Line2: oNearesPos.Line,
+            Page1: pageIndex,
+            Page2: pageIndex
+        }
+
+        this.Selection = oSelectionInfo;
+        this.onUpdateOverlay();
     };
 
     CFile.prototype.drawSelection = function(pageIndex, overlay, x, y, width, height)

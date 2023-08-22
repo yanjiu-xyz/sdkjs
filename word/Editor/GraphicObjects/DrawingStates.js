@@ -198,29 +198,22 @@ StartAddNewShape.prototype =
                 let nScaleY = oViewer.drawingPages[oViewer.currentPage].H / oViewer.file.pages[oViewer.currentPage].H / oViewer.zoom;
                 let nScaleX = oViewer.drawingPages[oViewer.currentPage].W / oViewer.file.pages[oViewer.currentPage].W / oViewer.zoom;
 
-                var bounds = oTrack.getBounds();
-                var shape = oTrack.getShape(true, this.drawingObjects.drawingDocument);
-                var drawing = new ParaDrawing(shape.spPr.xfrm.extX, shape.spPr.xfrm.extY, shape, this.drawingObjects.drawingDocument, oLogicDocument, null);
-                drawing.Set_DrawingType(drawing_Anchor);
-                drawing.Set_GraphicObject(shape);
-                shape.setParent(drawing);
-                drawing.Set_WrappingType(WRAPPING_TYPE_NONE);
-                drawing.Set_Distance( 3.2,  0,  3.2, 0 );
-
-                drawing.CheckWH();
+                var bounds  = oTrack.getBounds();
                 
-                let aRect = [bounds.min_x * g_dKoef_mm_to_pix / nScaleX, bounds.min_y * g_dKoef_mm_to_pix / nScaleY, bounds.max_x * g_dKoef_mm_to_pix / nScaleX, bounds.max_y * g_dKoef_mm_to_pix / nScaleY];
+                let nLineW  = oTrack.pen.w / 36000 * g_dKoef_mm_to_pix;
+                let aRect   = [(bounds.min_x * g_dKoef_mm_to_pix - nLineW) / nScaleX, (bounds.min_y * g_dKoef_mm_to_pix - nLineW) / nScaleY, (bounds.max_x * g_dKoef_mm_to_pix + nLineW) / nScaleX, (bounds.max_y * g_dKoef_mm_to_pix + nLineW) / nScaleY];
 
                 let oInkAnnot = oLogicDocument.AddAnnot({
-                    rect: aRect,
-                    page: oViewer.currentPage,
-                    contents: "",
-                    type: AscPDF.ANNOTATIONS_TYPES.Ink
+                    rect:       aRect,
+                    page:       oViewer.currentPage,
+                    contents:   "",
+                    type:       AscPDF.ANNOTATIONS_TYPES.Ink
                 });
 
-                oInkAnnot.SetDrawing(drawing);
-                oInkAnnot.AddToRedraw();
+                oInkAnnot.SetWidth(oTrack.pen.w / (36000  * g_dKoef_pt_to_mm));
+                var shape = oInkAnnot.AddShapeByPoints(oTrack.arrPoint, oTrack.pen);
 
+                oInkAnnot.AddToRedraw();
                 shape.recalculate();
 
                 oViewer._paintAnnots();
@@ -434,7 +427,7 @@ NullState.prototype =
         }
         else {
             let oViewer     = editor.getDocumentRenderer();
-            let aDrawings   = oViewer.pagesInfo.pages[pageIndex].annots;
+            let aDrawings   = oViewer.pagesInfo.pages[pageIndex].annots || [];
 
             return AscFormat.handleFloatObjects(this.drawingObjects, aDrawings, e, x, y, null, pageIndex, true);
         }
@@ -786,8 +779,8 @@ RotateState.prototype =
                     
                     if (oTrack instanceof AscFormat.ResizeTrackShapeImage) {
                         let aRect = [bounds.min_x * g_dKoef_mm_to_pix, bounds.min_y * g_dKoef_mm_to_pix, bounds.max_x * g_dKoef_mm_to_pix, bounds.max_y * g_dKoef_mm_to_pix];
-                        oTrack.originalObject.GetDrawing().CheckWH();
                         oTrack.originalObject.SetRect(aRect);
+                        oTrack.originalObject.GetDrawing().CheckWH();
                     }
                     
                     oTrack.originalObject.AddToRedraw();
