@@ -3807,34 +3807,30 @@
     
 
     // DoubleOrAutomatic
-    drawingsChangesMap[AscDFH.historyitem_DoubleOrAutomatic_SetDValue] = function(oClass, value) {
-        oClass.dValue = value;
+    drawingsChangesMap[AscDFH.historyitem_DoubleOrAutomatic_SetValue] = function(oClass, value) {
+        oClass.value = value;
     };
-    drawingsChangesMap[AscDFH.historyitem_DoubleOrAutomatic_SetEValue] = function(oClass, value) {
-        oClass.eValue = value;
+    drawingsChangesMap[AscDFH.historyitem_DoubleOrAutomatic_SetType] = function(oClass, value) {
+        oClass.type = value;
     };
-    AscDFH.changesFactory[AscDFH.historyitem_DoubleOrAutomatic_SetDValue] = window['AscDFH'].CChangesDrawingsLong;
-    AscDFH.changesFactory[AscDFH.historyitem_DoubleOrAutomatic_SetEValue] = window['AscDFH'].CChangesDrawingsDouble2;
+    AscDFH.changesFactory[AscDFH.historyitem_DoubleOrAutomatic_SetValue] = window['AscDFH'].CChangesDrawingsLong;
+    AscDFH.changesFactory[AscDFH.historyitem_DoubleOrAutomatic_SetType] = window['AscDFH'].CChangesDrawingsDouble2;
 
     const EDoubleOrAutomatic = { typeAuto: 0, typeDouble: 1};
     function CDoubleOrAutomatic() {
         CBaseChartObject.call(this);
-        this.dValue = 0;
-        this.eValue = EDoubleOrAutomatic.typeDouble; 
+        this.value = 0;
+        this.type = EDoubleOrAutomatic.typeAuto;
     }
 
     InitClass(CDoubleOrAutomatic, CBaseChartObject, AscDFH.historyitem_type_DoubleOrAutomatic);
-    CDoubleOrAutomatic.prototype.setDvalue = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_DoubleOrAutomatic_SetDValue, this.dValue, pr));
-        History.CanAddChanges() && History.Add(new CChangesDrawingsDouble2(this, AscDFH.historyitem_DoubleOrAutomatic_SetEValue, this.eValue, EDoubleOrAutomatic.typeDouble));
-        this.dValue = pr;
-        this.eValue = EDoubleOrAutomatic.typeDouble;
+    CDoubleOrAutomatic.prototype.setValue = function(pr) {
+        History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_DoubleOrAutomatic_SetValue, this.value, pr));
+        this.value = pr;
     };
-    CDoubleOrAutomatic.prototype.setEValue = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsDouble2(this, AscDFH.historyitem_DoubleOrAutomatic_SetEValue, this.eValue, pr));
-        History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_DoubleOrAutomatic_SetDValue, this.dValue, 0));
-        this.eValue = pr;
-        this.dValue = 0;
+    CDoubleOrAutomatic.prototype.setType = function(pr) {
+        History.CanAddChanges() && History.Add(new CChangesDrawingsDouble2(this, AscDFH.historyitem_DoubleOrAutomatic_SetType, this.type, pr));
+        this.type = pr;
     };
     
     //--------------------------------------------------------export----------------------------------------------------
