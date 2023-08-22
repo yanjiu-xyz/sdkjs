@@ -3708,16 +3708,6 @@
 				if (isRealObject(this.group)) {
 					global_MatrixTransformer.MultiplyAppend(transform, this.group.getLocalTransform());
 				}
-				if (this.parent instanceof AscFormat.CRelSizeAnchor || this.parent instanceof AscFormat.CAbsSizeAnchor) {
-					if (this.parent.parent instanceof AscFormat.CChartSpace) {
-						if (this.parent.parent.recalcInfo.recalculateTransform) {
-							this.parent.parent.recalculateTransform();
-							this.parent.parent.rectGeometry.Recalculate(this.parent.parent.extX, this.parent.parent.extY);
-							this.parent.parent.recalcInfo.recalculateTransform = false;
-						}
-						global_MatrixTransformer.MultiplyAppend(transform, this.parent.parent.localTransform);
-					}
-				}
 				if (oParaDrawing) {
 					this.m_oSectPr = null;
 					var oParentParagraph = oParaDrawing.Get_ParentParagraph();
