@@ -2210,7 +2210,7 @@
     AscDFH.changesFactory[AscDFH.historyitem_NumericDimension_AddLevelData] = window['AscDFH'].CChangesDrawingsContent;
     AscDFH.changesFactory[AscDFH.historyitem_NumericDimension_RemoveLevelData] = window['AscDFH'].CChangesDrawingsContent;
     function CNumericDimension() {
-        CBaseChartObject.call(this);
+        CDimension.call(this);
         this.levelData = [];
     }
 
@@ -3092,7 +3092,7 @@
     AscDFH.changesFactory[AscDFH.historyitem_StringDimension_AddLevelData] = window['AscDFH'].CChangesDrawingsContent;
     AscDFH.changesFactory[AscDFH.historyitem_StringDimension_RemoveLevelData] = window['AscDFH'].CChangesDrawingsContent;
     function CStringDimension() {
-        CBaseChartObject.call(this);
+        CDimension.call(this);
         this.levelData = [];
     }
 

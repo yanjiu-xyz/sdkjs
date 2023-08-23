@@ -1036,7 +1036,7 @@ var c_oserct_chartExSpaceCLRMAPOVR = 4;
 var c_oserct_chartExSpaceXLSX = c_oserct_chartspaceXLSX;/* = 16*/
 var c_oserct_chartExSpaceSTYLES = c_oserct_chartspaceSTYLES;/* = 17*/
 var c_oserct_chartExSpaceCOLORS = c_oserct_chartspaceCOLORS;/* = 18*/
-var c_oserct_chartExSpaceXLSXEXTERNAL = c_oserct_chartspaceXLSXEXTERNAL;/* = 19*/
+// var c_oserct_chartExSpaceXLSXEXTERNAL = c_oserct_chartspaceXLSXEXTERNAL;/* = 19*/
 
 var c_oserct_chartExDATA = 0;
 var c_oserct_chartExEXTERNALDATA = 1;
@@ -5832,6 +5832,880 @@ BinaryChartWriter.prototype.WriteCT_TextLanguageID = function (oVal) {
     if (null != oVal) {
         this.bs.WriteItem(c_oserct_textlanguageidVAL, function () {
             oThis.memory.WriteString3(oVal);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_Axis = function (oVal) {
+    var oThis = this;
+    if(oVal.id !== null) {
+        this.bs.WriteItem(c_oserct_chartExAxisID, function() {
+            oThis.memory.WriteLong(oVal.id);
+        });
+    }
+    if(oVal.hidden !== null) {
+        this.bs.WriteItem(c_oserct_chartExAxisHIDDEN, function() {
+            oThis.memory.WriteBool(oVal.hidden);
+        });
+    }
+    if(oVal.catScaling !== null) {
+        this.bs.WriteItem(c_oserct_chartExAxisCATSCALING, function() {
+            oThis.WriteCT_CategoryAxisScaling(oVal.catScaling);
+        });
+    }
+    if(oVal.valScaling !== null) {
+        this.bs.WriteItem(c_oserct_chartExAxisVALSCALING, function() {
+            oThis.WriteCT_ValueAxisScaling(oVal.valScaling);
+        });
+    }
+    if(oVal.title !== null) {
+        this.bs.WriteItem(c_oserct_chartExAxisTITLE, function() {
+            oThis.WriteCT_ChartExTitle(oVal.title);
+        });
+    }
+    if(oVal.units !== null) {
+        this.bs.WriteItem(c_oserct_chartExAxisUNIT, function() {
+            oThis.WriteCT_AxisUnits(oVal.units);
+        });
+    }
+    if(oVal.numFmt !== null) {
+        this.bs.WriteItem(c_oserct_chartExAxisNUMFMT, function() {
+            oThis.WriteCT_ChartExNumFmt(oVal.numFmt);
+        });
+    }
+    if(oVal.majorTickMarks !== null) {
+        this.bs.WriteItem(c_oserct_chartExAxisMAJORTICK, function() {
+            oThis.WriteCT_TickMarks(oVal.majorTickMarks);
+        });
+    }
+    if(oVal.minorTickMarks !== null) {
+        this.bs.WriteItem(c_oserct_chartExAxisMINORTICK, function() {
+            oThis.WriteCT_TickMarks(oVal.minorTickMarks);
+        });
+    }
+    if(oVal.majorGridlines !== null) {
+        this.bs.WriteItem(c_oserct_chartExAxisMAJORGRID, function() {
+            oThis.WriteCT_Gridlines(oVal.majorGridlines);
+        });
+    }
+    if(oVal.minorGridlines !== null) {
+        this.bs.WriteItem(c_oserct_chartExAxisMINORGRID, function() {
+            oThis.WriteCT_Gridlines(oVal.minorGridlines);
+        });
+    }
+    if(oVal.tickLabels !== null) {
+        this.bs.WriteItem(c_oserct_chartExAxisTICKLABELS, function() {
+            oThis.memory.WriteBool(oVal.tickLabels);
+        });
+    }
+    if(oVal.txPr !== null) {
+        this.bs.WriteItem(c_oserct_chartExAxisTXPR, function() {
+            oThis.WriteTxPr(oVal.txPr);
+        });
+    }
+    if(oVal.spPr !== null) {
+        this.bs.WriteItem(c_oserct_chartExAxisSPPR, function() {
+            oThis.WriteSpPr(oVal.spPr);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_ChartData = function (oVal) {
+    var oThis = this;
+    if (oVal.data !== null) {
+        for (var i = 0, length = oVal.data.length; i < length; ++i) {
+            var oCurVal = oVal.data[i];
+            if (oCurVal !== null) {
+                this.bs.WriteItem(c_oserct_chartExDATA, function () {
+                    oThis.WriteCT_Data(oCurVal);
+                });
+            }
+        }
+    }
+    if(oVal.externalData !== null) {
+        this.bs.WriteItem(c_oserct_chartExEXTERNALDATA, function() {
+            oThis.WriteCT_ChartExExternalData(oVal.externalData);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_ChartExExternalData = function (oVal) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oCurVal = oVal.m_autoUpdate;
+    if (oCurVal !== null) {
+        this.bs.WriteItem(c_oserct_chartExExternalAUTOUPDATE, function () {
+            oThis.WriteCT_Boolean(oCurVal);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_ChartEx = function (oVal) {
+    var oThis = this;
+    if(oVal.plotArea !== null) {
+        this.bs.WriteItem(c_oserct_chartExChartPLOTAREA, function() {
+            oThis.WriteCT_ChartExPlotArea(oVal.plotArea);
+        });
+    }
+    if(oVal.title !== null) {
+        this.bs.WriteItem(c_oserct_chartExChartTITLE, function() {
+            oThis.WriteCT_ChartExTitle(oVal.title);
+        });
+    }
+    if(oVal.legend !== null) {
+        this.bs.WriteItem(c_oserct_chartExChartLEGEND, function() {
+            oThis.WriteCT_ChartExLegend(oVal.legend);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_ChartExPlotArea = function (oVal) {
+    var oThis = this;
+    if(oVal.plotAreaRegion !== null) {
+        this.bs.WriteItem(c_oserct_chartExChartAREAREGION, function() {
+            oThis.WriteCT_PlotAreaRegion(oVal.plotAreaRegion);
+        });
+    }
+    if (oVal.axis !== null) {
+        for (var i = 0, length = oVal.axis.length; i < length; ++i) {
+            var oCurVal = oVal.axis[i];
+            if (oCurVal !== null) {
+                this.bs.WriteItem(c_oserct_chartExChartAXIS, function () {
+                    oThis.WriteCT_Axis(oCurVal);
+                });
+            }
+        }
+    }
+    if(oVal.spPr !== null) {
+        this.bs.WriteItem(c_oserct_chartExChartSPPR, function() {
+            oThis.WriteSpPr(oVal.spPr);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_PlotAreaRegion = function (oVal) {
+    var oThis = this;
+    if(oVal.plotSurface !== null) {
+        this.bs.WriteItem(c_oserct_chartExAreaPLOTSURFACE, function() {
+            oThis.WriteCT_PlotSurface(oVal.plotSurface);
+        });
+    }
+    if (oVal.series !== null) {
+        for (var i = 0, length = oVal.series.length; i < length; ++i) {
+            var oCurVal = oVal.series[i];
+            if (null != oCurVal) {
+                this.bs.WriteItem(c_oserct_chartExAreaSERIES, function () {
+                    oThis.WriteCT_Series(oCurVal);
+                });
+            }
+        }
+    }
+};
+BinaryChartWriter.prototype.WriteCT_PlotSurface = function (oVal) {
+    var oThis = this;
+    if(oVal.spPr !== null) {
+        this.bs.WriteItem(c_oserct_chartExPlotSurfaceSPPR, function() {
+            oThis.WriteSpPr(oVal.spPr);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_Series = function (oVal) {
+    var oThis = this;
+    if (oVal.dataPt !== null) {
+        for (var i = 0, length = oVal.dataPt.length; i < length; ++i) {
+            var oCurVal = oVal.dataPt[i];
+            if (null != oCurVal) {
+                this.bs.WriteItem(c_oserct_chartExSeriesDATAPT, function () {
+                    oThis.WriteCT_DataPoint(oCurVal);
+                });
+            }
+        }
+    }
+    if(oVal.dataLabels !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesDATALABELS, function() {
+            oThis.WriteCT_DataLabels(oVal.dataLabels);
+        });
+    }
+    if(oVal.layoutPr !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesLAYOUTPROPS, function() {
+            oThis.WriteCT_SeriesLayoutProperties(oVal.layoutPr);
+        });
+    }
+    if(oVal.tx !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesTEXT, function() {
+            oThis.WriteCT_Text(oVal.tx);
+        });
+    }
+    if (oVal.axisId !== null) {
+        for (var i = 0, length = oVal.axisId.length; i < length; ++i) {
+            var oCurVal = oVal.axisId[i];
+            if (null != oCurVal) {
+                this.bs.WriteItem(c_oserct_chartExSeriesAXIS, function () {
+                    oThis.WriteCT_Axis(oCurVal);
+                });
+            }
+        }
+    }
+    if(oVal.dataId !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesDATAID, function() {
+            oThis.memory.WriteDouble2(oVal.dataId);
+        });
+    }
+    if(oVal.spPr !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesSPPR, function() {
+            oThis.WriteSpPr(oVal.spPr);
+        });
+    }
+    if(oVal.layoutId !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesLAYOUTID, function() {
+            oThis.memory.WriteByte(oVal.layoutId);
+        });
+    }
+    if(oVal.hidden !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesHIDDEN, function() {
+            oThis.memory.WriteBool(oVal.hidden);
+        });
+    }
+    if(oVal.ownerIdx !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesOWNERIDX, function() {
+            oThis.memory.WriteLong(oVal.ownerIdx);
+        });
+    }
+    if(oVal.formatIdx !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesFORMATIDX, function() {
+            oThis.memory.WriteLong(oVal.formatIdx);
+        });
+    }
+    if(oVal.uniqueId !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesUNIQUEID, function() {
+            oThis.memory.WriteString3(oVal.uniqueId);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_DataPoint = function (oVal) {
+    var oThis = this;
+    if(oVal.idx !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataPointIDX, function() {
+            oThis.memory.WriteLong(oVal.idx);
+        });
+    }
+    if(oVal.spPr !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataPointSPPR, function() {
+            oThis.WriteSpPr(oVal.spPr);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_DataLabels = function (oVal) {
+    var oThis = this;
+    if(oVal.pos !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLabelsPOS, function() {
+            oThis.memory.WriteByte(oVal.pos);
+        });
+    }
+    if(oVal.numFmt !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLabelsNUMFMT, function() {
+            oThis.WriteCT_ChartExNumFmt(oVal.numFmt);
+        });
+    }
+    if(oVal.txPr !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLabelsTXPR, function() {
+            oThis.WriteTxPr(oVal.txPr);
+        });
+    }
+    if(oVal.spPr !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLabelsSPPR, function() {
+            oThis.WriteSpPr(oVal.spPr);
+        });
+    }
+    if(oVal.visibility !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLabelsVISABILITIES, function() {
+            oThis.WriteCT_DataLabelVisibilities(oVal.visibility);
+        });
+    }
+    if(oVal.separator !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLabelsSEPARATOR, function() {
+            oThis.memory.WriteString3(oVal.separator);
+        });
+    }
+    if (oVal.dataLabel !== null) {
+        for (var i = 0, length = oVal.dataLabel.length; i < length; ++i) {
+            var oCurVal = oVal.dataLabel[i];
+            if (null != oCurVal) {
+                this.bs.WriteItem(c_oserct_chartExDataLabelsDATALABEL, function () {
+                    oThis.WriteCT_Datalabel(oCurVal);
+                });
+            }
+        }
+    }
+    if (oVal.dataLabelHidden !== null) {
+        for (var i = 0, length = oVal.dataLabelHidden.length; i < length; ++i) {
+            var oCurVal = oVal.dataLabelHidden[i];
+            if (null != oCurVal) {
+                this.bs.WriteItem(c_oserct_chartExDataLabelsDATALABELHIDDEN, function () {
+                    oThis.WriteCT_DataLabelHidden(oCurVal);
+                });
+            }
+        }
+    }
+};
+BinaryChartWriter.prototype.WriteCT_ChartExNumFmt = function (oVal) {
+    var oThis = this;
+    if (oVal.formatCode !== null) {
+        this.bs.WriteItem(c_oserct_chartExNumberFormatFORMATCODE, function () {
+            oThis.memory.WriteString3(oVal.formatCode);
+        });
+    }
+    if (oVal.sourceLinked !== null) {
+        this.bs.WriteItem(c_oserct_chartExNumberFormatSOURCELINKED, function () {
+            oThis.memory.WriteBool(oVal.sourceLinked);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_DataLabel = function (oVal) {
+    var oThis = this;
+    if(oVal.idx !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLabelIDX, function() {
+            oThis.memory.WriteLong(oVal.idx);
+        });
+    }
+    if(oVal.pos !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLabelPOS, function() {
+            oThis.memory.WriteByte(oVal.pos);
+        });
+    }
+    if(oVal.numFmt !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLabelNUMFMT, function() {
+            oThis.WriteCT_ChartExNumFmt(oVal.numFmt);
+        });
+    }
+    if(oVal.txPr !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLabelTXPR, function() {
+            oThis.WriteTxPr(oVal.txPr);
+        });
+    }
+    if(oVal.spPr !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLabelSPPR, function() {
+            oThis.WriteSpPr(oVal.spPr);
+        });
+    }
+    if(oVal.visibility !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLabelVISABILITIES, function() {
+            oThis.WriteCT_DataLabelVisibilities(oVal.visibility);
+        });
+    }
+    if(oVal.separator !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLabelSEPARATOR, function() {
+            oThis.memory.WriteString3(oVal.separator);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_DataLabelHidden = function (oVal) {
+    var oThis = this;
+    if(oVal.idx !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLabelHiddenIDX, function() {
+            oThis.memory.WriteLong(oVal.idx);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_SeriesLayoutProperties = function (oVal) {
+    var oThis = this;
+    if(oVal.parentLabelLayout !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesLayoutPARENT, function() {
+            oThis.WriteCT_ParentLabelLayout(oVal.parentLabelLayout);
+        });
+    }
+    if(oVal.regionLabelLayout !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesLayoutREGION, function() {
+            oThis.WriteCT_RegionLabelLayout(oVal.regionLabelLayout);
+        });
+    }
+    if(oVal.visibility !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesLayoutVISABILITIES, function() {
+            oThis.WriteCT_SeriesElementVisibilities(oVal.visibility);
+        });
+    }
+    if(oVal.aggregation !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesLayoutAGGREGATION, function() {
+            oThis.memory.WriteBool(oVal.aggregation);
+        });
+    }
+    if(oVal.binning !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesLayoutBINNING, function() {
+            oThis.WriteCT_Binning(oVal.binning);
+        });
+    }
+    if(oVal.statistics !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesLayoutSTATISTIC, function() {
+            oThis.WriteCT_Statistics(oVal.statistics);
+        });
+    }
+    if(oVal.subtotals !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesLayoutSUBTOTALS, function() {
+            oThis.WriteCT_Subtotals(oVal.subtotals);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_DataLabelVisibilities = function (oVal) {
+    var oThis = this;
+    if(oVal.seriesName !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLabelVisibilitiesSERIES, function() {
+            oThis.memory.WriteBool(oVal.seriesName);
+        });
+    }
+    if(oVal.categoryName !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLabelVisibilitiesCATEGORY, function() {
+            oThis.memory.WriteBool(oVal.categoryName);
+        });
+    }
+    if(oVal.value !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLabelVisibilitiesVALUE, function() {
+            oThis.memory.WriteBool(oVal.value);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_Binning = function (oVal) {
+    var oThis = this;
+    if(oVal.binSize !== null) {
+        this.bs.WriteItem(c_oserct_chartExBinningBINSIZE, function() {
+            oThis.memory.WriteDouble2(oVal.binSize);
+        });
+    }
+    if(oVal.binCount !== null) {
+        this.bs.WriteItem(c_oserct_chartExBinningBINCOUNT, function() {
+            oThis.memory.WriteLong(oVal.binCount);
+        });
+    }
+    if(oVal.intervalClosed !== null) {
+        this.bs.WriteItem(c_oserct_chartExBinningINTERVAL, function() {
+            oThis.memory.WriteByte(oVal.intervalClosed);
+        });
+    }
+    if(oVal.underflow !== null) {
+        if (typeof oVal.underflow === "undefined") {
+            this.bs.WriteItem(c_oserct_chartExBinningUNDERAUTO, function() {
+                oThis.memory.WriteByte(oVal.underflow);
+            });
+        } else {
+            this.bs.WriteItem(c_oserct_chartExBinningUNDERVAL, function() {
+                oThis.memory.WriteDouble2(oVal.underflow);
+            });
+        }
+    }
+    if(oVal.overflow !== null) {
+        if (typeof oVal.underflow === "undefined") {
+            this.bs.WriteItem(c_oserct_chartExBinningOVERAUTO, function() {
+                oThis.memory.WriteByte(oVal.overflow);
+            });
+        } else {
+            this.bs.WriteItem(c_oserct_chartExBinningOVERVAL, function() {
+                oThis.memory.WriteDouble2(oVal.overflow);
+            });
+        }
+    }
+};
+BinaryChartWriter.prototype.WriteCT_ChartExTitle = function (oVal) {
+    var oThis = this;
+    if(oVal.tx !== null) {
+        this.bs.WriteItem(c_oserct_chartExTitleTX, function() {
+            oThis.WriteCT_Text(oVal.tx);
+        });
+    }
+    if(oVal.txPr !== null) {
+        this.bs.WriteItem(c_oserct_chartExTitleTXPR, function() {
+            oThis.WriteTxPr(oVal.txPr);
+        });
+    }
+    if(oVal.spPr !== null) {
+        this.bs.WriteItem(c_oserct_chartExTitleSPPR, function() {
+            oThis.WriteSpPr(oVal.spPr);
+        });
+    }
+    if(oVal.pos !== null) {
+        this.bs.WriteItem(c_oserct_chartExTitlePOS, function() {
+            oThis.memory.WriteByte(oVal.pos);
+        });
+    }
+    if(oVal.align !== null) {
+        this.bs.WriteItem(c_oserct_chartExTitleALIGN, function() {
+            oThis.memory.WriteByte(oVal.align);
+        });
+    }
+    if(oVal.overlay !== null) {
+        this.bs.WriteItem(c_oserct_chartExTitleOVERLAY, function() {
+            oThis.memory.WriteBool(oVal.overlay);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_ChartExLegend = function (oVal) {
+    var oThis = this;
+    if(oVal.txPr !== null) {
+        this.bs.WriteItem(c_oserct_chartExLegendTXPR, function() {
+            oThis.WriteTxPr(oVal.txPr);
+        });
+    }
+    if(oVal.spPr !== null) {
+        this.bs.WriteItem(c_oserct_chartExLegendSPPR, function() {
+            oThis.WriteSpPr(oVal.spPr);
+        });
+    }
+    if(oVal.pos !== null) {
+        this.bs.WriteItem(c_oserct_chartExLegendPOS, function() {
+            oThis.memory.WriteByte(oVal.pos);
+        });
+    }
+    if(oVal.align !== null) {
+        this.bs.WriteItem(c_oserct_chartExLegendALIGN, function() {
+            oThis.memory.WriteByte(oVal.align);
+        });
+    }
+    if(oVal.overlay !== null) {
+        this.bs.WriteItem(c_oserct_chartExLegendOVERLAY, function() {
+            oThis.memory.WriteBool(oVal.overlay);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_Text = function (oVal) {
+    var oThis = this;
+    if(oVal.rich !== null) {
+        this.bs.WriteItem(c_oserct_chartExTextRICH, function() {
+            oThis.WriteCT_TextBody(oVal.rich);
+        });
+    }
+    if(oVal.txData !== null) {
+        this.bs.WriteItem(c_oserct_chartExTextDATA, function() {
+            oThis.WriteCT_TextData(oVal.txData);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_TextData = function (oVal) {
+    var oThis = this;
+    if(oVal.f !== null) {
+        this.bs.WriteItem(c_oserct_chartExTextDataFORMULA, function() {
+            oThis.WriteCT_Formula(oVal.f);
+        });
+    }
+    if(oVal.v !== null) {
+        this.bs.WriteItem(c_oserct_chartExTextDataVALUE, function() {
+            oThis.memory.WriteString3(oVal.v);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_Data = function (oVal) {
+    var oThis = this;
+    if(oVal.id !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataID, function() {
+            oThis.memory.WriteLong(oVal.id);
+        });
+    }
+    if(oVal.dimension !== null) {
+        for (var i = 0, length = oVal.dimension.length; i < length; ++i) {
+            var oDimension = oVal.dimension[i];
+            if (oDimension instanceof AscFormat.CNumericDimension) {
+                this.bs.WriteItem(c_oserct_chartExDataNUMDIMENSION, function() {
+                    oThis.WriteCT_NumericDimension(oDimension);
+                });
+            } else {
+                this.bs.WriteItem(c_oserct_chartExDataSTRDIMENSION, function() {
+                    oThis.WriteCT_StringDimension(oDimension);
+                });
+            }
+        }
+    }
+};
+BinaryChartWriter.prototype.WriteCT_Subtotals = function (oVal) {
+    var oThis = this;
+    if(oVal.idx !== null) {
+        for (var i = 0, length = oVal.idx.length; i < length; ++i) {
+            var oCurVal = oVal.idx[i];
+            if (null != oCurVal) {
+                this.bs.WriteItem(c_oserct_chartExSubtotalsIDX, function () {
+                    oThis.memory.WriteLong(oCurVal);
+                });
+            }
+        }
+    }
+};
+BinaryChartWriter.prototype.WriteCT_SeriesElementVisibilities = function (oVal) {
+    var oThis = this;
+    if(oVal.connectorLines !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesVisibilitiesCONNECTOR, function() {
+            oThis.memory.WriteBool(oVal.connectorLines);
+        });
+    }
+    if(oVal.meanLine !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesVisibilitiesMEANLINE, function() {
+            oThis.memory.WriteBool(oVal.meanLine);
+        });
+    }
+    if(oVal.meanMarker !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesVisibilitiesMEANMARKER, function() {
+            oThis.memory.WriteBool(oVal.meanMarker);
+        });
+    }
+    if(oVal.nonoutliers !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesVisibilitiesNONOUTLIERS, function() {
+            oThis.memory.WriteBool(oVal.nonoutliers);
+        });
+    }
+    if(oVal.outliers !== null) {
+        this.bs.WriteItem(c_oserct_chartExSeriesVisibilitiesOUTLIERS, function() {
+            oThis.memory.WriteBool(oVal.outliers);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_CategoryAxisScaling = function (oVal) {
+    var oThis = this;
+    if(oVal.gapWidth !== null) {
+        if (typeof oVal.gapWidth === "undefined") {
+            this.bs.WriteItem(c_oserct_chartExCatScalingGAPAUTO, function() {
+                oThis.memory.WriteByte(oVal.gapWidth);
+            });
+        } else {
+            this.bs.WriteItem(c_oserct_chartExCatScalingGAPVAL, function() {
+                oThis.memory.WriteDouble2(oVal.gapWidth);
+            });
+        }
+    }
+};
+BinaryChartWriter.prototype.WriteCT_ValueAxisScaling = function (oVal) {
+    var oThis = this;
+    if(oVal.max !== null) {
+        if (typeof oVal.max === "undefined") {
+            this.bs.WriteItem(c_oserct_chartExValScalingMAXAUTO, function() {
+                oThis.memory.WriteByte(oVal.max);
+            });
+        } else {
+            this.bs.WriteItem(c_oserct_chartExValScalingMAXVAL, function() {
+                oThis.memory.WriteDouble2(oVal.max);
+            });
+        }
+    }
+    if(oVal.min !== null) {
+        if (typeof oVal.min === "undefined") {
+            this.bs.WriteItem(c_oserct_chartExValScalingMINAUTO, function() {
+                oThis.memory.WriteByte(oVal.min);
+            });
+        } else {
+            this.bs.WriteItem(c_oserct_chartExValScalingMINVAL, function() {
+                oThis.memory.WriteDouble2(oVal.min);
+            });
+        }
+    }
+    if(oVal.majorUnit !== null) {
+        if (typeof oVal.majorUnit === "undefined") {
+            this.bs.WriteItem(c_oserct_chartExValScalingMAJUNITAUTO, function() {
+                oThis.memory.WriteByte(oVal.majorUnit);
+            });
+        } else {
+            this.bs.WriteItem(c_oserct_chartExValScalingMAJUNITVAL, function() {
+                oThis.memory.WriteDouble2(oVal.majorUnit);
+            });
+        }
+    }
+    if(oVal.minorUnit !== null) {
+        if (typeof oVal.minorUnit === "undefined") {
+            this.bs.WriteItem(c_oserct_chartExValScalingMINUNITAUTO, function() {
+                oThis.memory.WriteByte(oVal.minorUnit);
+            });
+        } else {
+            this.bs.WriteItem(c_oserct_chartExValScalingMINUNITVAL, function() {
+                oThis.memory.WriteDouble2(oVal.minorUnit);
+            });
+        }
+    }
+};
+BinaryChartWriter.prototype.WriteCT_AxisUnits = function (oVal) {
+    var oThis = this;
+    if(oVal.unitsLabel !== null) {
+        this.bs.WriteItem(c_oserct_chartExAxisUnitLABEL, function() {
+            oThis.WriteCT_AxisUnitsLabel(oVal.unitsLabel);
+        });
+    }
+    if(oVal.unit !== null) {
+        this.bs.WriteItem(c_oserct_chartExAxisUnitTYPE, function() {
+            oThis.memory.WriteByte(oVal.unit);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_AxisUnitsLabel = function (oVal) {
+    var oThis = this;
+    if(oVal.tx !== null) {
+        this.bs.WriteItem(c_oserct_chartExAxisUnitsLabelTEXT, function() {
+            oThis.WriteCT_Text(oVal.tx);
+        });
+    }
+    if(oVal.spPr !== null) {
+        this.bs.WriteItem(c_oserct_chartExAxisUnitsLabelSPPR, function() {
+            oThis.WriteSpPr(oVal.spPr);
+        });
+    }
+    if(oVal.txPr !== null) {
+        this.bs.WriteItem(c_oserct_chartExAxisUnitsLabelTXPR, function() {
+            oThis.WriteTxPr(oVal.txPr);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_TickMarks = function (oVal) {
+    var oThis = this;
+    if(oVal.type !== null) {
+        this.bs.WriteItem(c_oserct_chartExTickMarksTYPE, function() {
+            oThis.memory.WriteByte(oVal.type);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_Gridlines = function (oVal) {
+    var oThis = this;
+    if(oVal.spPr !== null) {
+        this.bs.WriteItem(c_oserct_chartExGridlinesSPPR, function() {
+            oThis.WriteSpPr(oVal.spPr);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_Statistics = function (oVal) {
+    var oThis = this;
+    if(oVal.quartileMethod !== null) {
+        this.bs.WriteItem(c_oserct_chartExStatisticsMETHOD, function() {
+            oThis.memory.WriteByte(oVal.quartileMethod);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_StringDimension = function (oVal) {
+    var oThis = this;
+    if(oVal.type !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataDimensionTYPE, function() {
+            oThis.memory.WriteBool(oVal.type.dimensionType);
+        });
+    }
+    if(oVal.f !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataDimensionFORMULA, function() {
+            oThis.WriteCT_Formula(oVal.f);
+        });
+    }
+    if(oVal.nf !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataDimensionNF, function() {
+            oThis.memory.WriteString3(oVal.nf);
+        });
+    }
+    if(oVal.levelData !== null) {
+        for (var i = 0, length = oVal.levelData.length; i < length; ++i) {
+            var oCurVal = oVal.levelData[i];
+            if (null != oCurVal) {
+                this.bs.WriteItem(c_oserct_chartExDataDimensionSTRINGLEVEL, function () {
+                    oThis.WriteCT_StringLevel(oCurVal);
+                });
+            }
+        }
+    }
+};
+BinaryChartWriter.prototype.WriteCT_NumericDimension = function (oVal) {
+    var oThis = this;
+    if(oVal.type !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataDimensionTYPE, function() {
+            oThis.memory.WriteBool(oVal.type.dimensionType);
+        });
+    }
+    if(oVal.f !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataDimensionFORMULA, function() {
+            oThis.WriteCT_Formula(oVal.f);
+        });
+    }
+    if(oVal.nf !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataDimensionNF, function() {
+            oThis.memory.WriteString3(oVal.nf);
+        });
+    }
+    if(oVal.levelData !== null) {
+        for (var i = 0, length = oVal.levelData.length; i < length; ++i) {
+            var oCurVal = oVal.levelData[i];
+            if (null != oCurVal) {
+                this.bs.WriteItem(c_oserct_chartExDataDimensionNUMERICLEVEL, function () {
+                    oThis.WriteCT_NumericLevel(oCurVal);
+                });
+            }
+        }
+    }
+};
+BinaryChartWriter.prototype.WriteCT_Formula = function (oVal) {
+    var oThis = this;
+    if(oVal.content !== null) {
+        this.bs.WriteItem(c_oserct_chartExFormulaCONTENT, function() {
+            oThis.memory.WriteString3(oVal.content);
+        });
+    }
+    if(oVal.dir !== null) {
+        this.bs.WriteItem(c_oserct_chartExFormulaDIRECTION, function() {
+            oThis.memory.WriteByte(oVal.dir);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_StringLevel = function (oVal) {
+    var oThis = this;
+    if(oVal.name !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLevelNAME, function() {
+            oThis.memory.WriteString3(oVal.name);
+        });
+    }
+    if(oVal.ptCount !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLevelCOUNT, function() {
+            oThis.memory.WriteLong(oVal.ptCount);
+        });
+    }
+    if(oVal.pt !== null) {
+        for (var i = 0, length = oVal.pt.length; i < length; ++i) {
+            var oCurVal = oVal.pt[i];
+            if (null != oCurVal) {
+                this.bs.WriteItem(c_oserct_chartExDataLevelPT, function () {
+                    oThis.WriteCT_StringValue(oCurVal);
+                });
+            }
+        }
+    }
+};
+BinaryChartWriter.prototype.WriteCT_NumericLevel = function (oVal) {
+    var oThis = this;
+    if(oVal.name !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLevelNAME, function() {
+            oThis.memory.WriteString3(oVal.name);
+        });
+    }
+    if(oVal.ptCount !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLevelCOUNT, function() {
+            oThis.memory.WriteLong(oVal.ptCount);
+        });
+    }
+    if(oVal.pt !== null) {
+        for (var i = 0, length = oVal.pt.length; i < length; ++i) {
+            var oCurVal = oVal.pt[i];
+            if (null != oCurVal) {
+                this.bs.WriteItem(c_oserct_chartExDataLevelPT, function () {
+                    oThis.WriteCT_NumericValue(oCurVal);
+                });
+            }
+        }
+    }
+    if(oVal.formatCode !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataLevelFORMATCODE, function() {
+            oThis.memory.WriteString3(oVal.formatCode);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_StringValue = function (oVal) {
+    var oThis = this;
+    if(oVal.idx !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataValueIDX, function() {
+            oThis.memory.WriteLong(oVal.idx);
+        });
+    }
+    if(oVal.content !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataValueCONTENT, function() {
+            oThis.memory.WriteString3(oVal.content);
+        });
+    }
+};
+BinaryChartWriter.prototype.WriteCT_NumericValue = function (oVal) {
+    var oThis = this;
+    if(oVal.idx !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataValueIDX, function() {
+            oThis.memory.WriteLong(oVal.idx);
+        });
+    }
+    if(oVal.content !== null) {
+        this.bs.WriteItem(c_oserct_chartExDataValueCONTENT, function() {
+            oThis.memory.WriteDouble2(oVal.content);
         });
     }
 };
@@ -12247,6 +13121,1133 @@ BinaryChartReader.prototype.ReadCT_TextLanguageID = function (type, length, val)
     }
     else
         res = c_oSerConstants.ReadUnknown;
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_Axis = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExAxisID === type)
+    {
+        val.setId(this.stream.GetULongLE());
+    }
+    else if (c_oserct_chartExAxisHIDDEN === type)
+    {
+        val.setHidden(this.stream.GetBool());
+    }
+    else if (c_oserct_chartExAxisCATSCALING === type)
+    {
+        var oNewVal = new AscFormat.CCategoryAxisScaling();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_CategoryAxisScaling(t, l, oNewVal);
+        });
+        val.setCatScaling(oNewVal);
+    }
+    else if (c_oserct_chartExAxisVALSCALING === type)
+    {
+        var oNewVal = new AscFormat.CValueAxisScaling();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_ValueAxisScaling(t, l, oNewVal);
+        });
+        val.setValScaling(oNewVal);
+    }
+    else if (c_oserct_chartExAxisTITLE === type)
+    {
+        var oNewVal = new AscFormat.CChartExTitle();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_ChartExTitle(t, l, oNewVal);
+        });
+        val.setTitle(oNewVal);
+    }
+    else if (c_oserct_chartExAxisUNIT === type)
+    {
+        var oNewVal = new AscFormat.CAxisUnits();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_AxisUnits(t, l, oNewVal);
+        });
+        val.setUnits(oNewVal);
+    }
+    else if (c_oserct_chartExAxisNUMFMT === type)
+    {
+        var oNewVal = new AscFormat.CNumFmt();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_ChartExNumFmt(t, l, oNewVal);
+        });
+        val.setNumFmt(oNewVal);
+    }
+    else if (c_oserct_chartExAxisMAJORTICK === type)
+    {
+        var oNewVal = new AscFormat.CTickMarks();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_TickMarks(t, l, oNewVal);
+        });
+        val.setMajorTickMarks(oNewVal);
+    }
+    else if (c_oserct_chartExAxisMINORTICK === type)
+    {
+        var oNewVal = new AscFormat.CTickMarks();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_TickMarks(t, l, oNewVal);
+        });
+        val.setMinorTickMarks(oNewVal);
+    }
+    else if (c_oserct_chartExAxisMAJORGRID === type)
+    {
+        var oNewVal = new AscFormat.CGridlines();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_Gridlines(t, l, oNewVal);
+        });
+        val.setMajorGridlines(oNewVal);
+    }
+    else if (c_oserct_chartExAxisMINORGRID === type)
+    {
+        var oNewVal = new AscFormat.CGridlines();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_Gridlines(t, l, oNewVal);
+        });
+        val.setMinorGridlines(oNewVal);
+    }
+    else if (c_oserct_chartExAxisTICKLABELS === type)
+    {
+        val.setTickLabels(this.stream.GetBool());
+    }
+    else if (c_oserct_chartExAxisTXPR === type)
+    {
+        val.setTxPr(this.ReadTxPr(length));
+        val.txPr.setParent(val);
+    }
+    else if (c_oserct_chartExAxisSPPR === type)
+    {
+        val.setSpPr(this.ReadSpPr(length));
+        val.spPr.setParent(val);
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_ChartData = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExDATA === type) {
+        var oNewVal = new AscFormat.CData();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_Data(t, l, oNewVal);
+        });
+        val.addData(oNewVal);
+    }
+    else if (c_oserct_chartExEXTERNALDATA === type)
+    {
+        var oNewVal = new AscFormat.CExternalData();
+        res = this.bcr.Read2(length, function (t, l) {
+            return oThis.ReadCT_ChartExExternalData(t, l, oNewVal);
+        });
+        val.setExternalData(oNewVal);
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_ChartExExternalData = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    if (c_oserct_chartExExternalAUTOUPDATE === type) {
+        var oNewVal;
+        oNewVal = {};
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_Boolean(t, l, oNewVal);
+        });
+        val.m_autoUpdate = oNewVal;
+    }
+    else
+        res = c_oSerConstants.ReadUnknown;
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_ChartEx = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExChartPLOTAREA === type)
+    {
+        var oNewVal = new AscFormat.CChartExPlotArea();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_ChartExPlotArea(t, l, oNewVal);
+        });
+        val.setPlotArea(oNewVal);
+    }
+    else if (c_oserct_chartExChartTITLE === type)
+    {
+        var oNewVal = new AscFormat.CChartExTitle();
+        res = this.bcr.Read2(length, function (t, l) {
+            return oThis.ReadCT_ChartExTitle(t, l, oNewVal);
+        });
+        val.setTitle(oNewVal);
+    }
+    else if (c_oserct_chartExChartLEGEND === type)
+    {
+        var oNewVal = new AscFormat.CChartExLegend();
+        res = this.bcr.Read2(length, function (t, l) {
+            return oThis.ReadCT_ChartExLegend(t, l, oNewVal);
+        });
+        val.setLegend(oNewVal);
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_ChartExPlotArea = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExChartAREAREGION === type)
+    {
+        var oNewVal = new AscFormat.CPlotAreaRegion();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_ChartAreaRegion(t, l, oNewVal);
+        });
+        val.setPlotAreaRegion(oNewVal);
+    }
+    else if (c_oserct_chartExChartAXIS === type) {
+        var oNewVal = new AscFormat.CAxis();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_Axis(t, l, oNewVal);
+        });
+        val.addAxis(oNewVal);
+    }
+    else if (c_oserct_chartExChartSPPR === type)
+    {
+        val.setSpPr(this.ReadSpPr(length));
+        val.spPr.setParent(val);
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_PlotAreaRegion = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExAreaPLOTSURFACE === type)
+    {
+        var oNewVal = new AscFormat.CPlotSurface();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_PlotSurface(t, l, oNewVal);
+        });
+        val.setPlotSurface(oNewVal);
+    }
+    else if (c_oserct_chartExAreaSERIES === type) {
+        var oNewVal = new AscFormat.CSeries();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_Series(t, l, oNewVal);
+        });
+        val.addSeries(oNewVal);
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_PlotSurface = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExPlotSurfaceSPPR === type)
+    {
+        val.setSpPr(this.ReadSpPr(length));
+        val.spPr.setParent(val);
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_Series = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExSeriesDATAPT === type) {
+        var oNewVal = new AscFormat.CDataPoint();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_DataPoint(t, l, oNewVal);
+        });
+        val.addDataPt(oNewVal);
+    }
+    else if (c_oserct_chartExSeriesDATALABELS === type)
+    {
+        var oNewVal = new AscFormat.CDataLabels();
+        res = this.bcr.Read2(length, function (t, l) {
+            return oThis.ReadCT_DataLabels(t, l, oNewVal);
+        });
+        val.setDataLabels(oNewVal);
+    }
+    else if (c_oserct_chartExSeriesLAYOUTPROPS === type)
+    {
+        var oNewVal = new AscFormat.CSeriesLayoutProperties();
+        res = this.bcr.Read2(length, function (t, l) {
+            return oThis.ReadCT_SeriesLayoutProperties(t, l, oNewVal);
+        });
+        val.setLayoutPr(oNewVal);
+    }
+    else if (c_oserct_chartExSeriesTEXT === type)
+    {
+        val.setTx(this.stream.GetDoubleLE());
+    }
+    else if (c_oserct_chartExSeriesAXIS === type) {
+        var oNewVal = new AscFormat.CAxis();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_Axis(t, l, oNewVal);
+        });
+        val.addAxisId(oNewVal);
+    }
+    else if (c_oserct_chartExSeriesDATAID === type)
+    {
+        val.setTx(this.stream.GetDoubleLE());
+    }
+    else if (c_oserct_chartExSeriesSPPR === type)
+    {
+        val.setSpPr(this.ReadSpPr(length));
+        val.spPr.setParent(val);
+    }
+    else if (c_oserct_chartExSeriesLAYOUTID === type)
+    {
+        val.setLayoutId(this.stream.GetUChar());
+    } 
+    else if (c_oserct_chartExSeriesHIDDEN === type)
+    {
+        val.setHidden(this.stream.GetBool());
+    } 
+    else if (c_oserct_chartExSeriesOWNERIDX === type) 
+    {
+        val.setOwnerIdx(this.stream.GetULongLE());
+    } 
+    else if (c_oserct_chartExSeriesFORMATIDX === type) 
+    {
+        val.setFormatIdx(this.stream.GetULongLE());
+    }
+    else if (c_oserct_chartExSeriesUNIQUEID === type)
+    {
+        val.setUniqueId(this.stream.GetString2LE(length));
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_DataPoint = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExDataPointIDX === type)
+    {
+        val.setId(this.stream.GetULongLE());
+    }
+    else if (c_oserct_chartExDataPointSPPR === type)
+    {
+        val.setSpPr(this.ReadSpPr(length));
+        val.spPr.setParent(val);
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_DataLabels = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExDataLabelsPOS === type)
+    {
+        val.setPos(this.stream.GetUChar());
+    }
+    else if (c_oserct_chartExDataLabelsNUMFMT === type)
+    {
+        var oNewVal = new AscFormat.CNumFmt();
+        res = this.bcr.Read2(length, function (t, l) {
+            return oThis.ReadCT_ChartExNumFmt(t, l, oNewVal);
+        });
+        val.setNumFmt(oNewVal);
+    }
+    else if (c_oserct_chartExDataLabelsTXPR === type)
+    {
+        val.setTxPr(this.ReadTxPr(length));
+        val.txPr.setParent(val);
+    }
+    else if (c_oserct_chartExDataLabelsSPPR === type)
+    {
+        val.setSpPr(this.ReadSpPr(length));
+        val.spPr.setParent(val);
+    }
+    else if (c_oserct_chartExDataLabelsVISABILITIES === type)
+    {
+        var oNewVal = new AscFormat.CDataLabelVisibilities();
+        res = this.bcr.Read2(length, function (t, l) {
+            return oThis.ReadCT_DataLabelVisibilities(t, l, oNewVal);
+        });
+        val.setVisibility(oNewVal);
+    }
+    else if (c_oserct_chartExDataLabelsSEPARATOR === type)
+    {
+        val.setSeparator(this.stream.GetString2LE(length));
+    }
+    else if (c_oserct_chartExDataLabelsDATALABEL === type) {
+        var oNewVal = new AscFormat.CDatalabel();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_Datalabel(t, l, oNewVal);
+        });
+        val.addDatalabel(oNewVal);
+    }
+    else if (c_oserct_chartExDataLabelsDATALABELHIDDEN === type) {
+        var oNewVal = new AscFormat.CDataLabelHidden();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_DataLabelHidden(t, l, oNewVal);
+        });
+        val.addDataLabelHidden(oNewVal);
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_ChartExNumFmt = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExNumberFormatFORMATCODE === type) {
+        val.setFormatCode(this.stream.GetString2LE(length));
+    }
+    else if (c_oserct_chartExNumberFormatSOURCELINKED === type) {
+        val.setSourceLinked(this.stream.GetBool());
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_DataLabel = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExDataLabelIDX === type) 
+    {
+        val.setIdx(this.stream.GetULongLE());
+    }
+    else if (c_oserct_chartExDataLabelPOS === type)
+    {
+        val.setPos(this.stream.GetUChar());
+    }
+    else if (c_oserct_chartExDataLabelNUMFMT === type)
+    {
+        var oNewVal = new AscFormat.CNumFmt();
+        res = this.bcr.Read2(length, function (t, l) {
+            return oThis.ReadCT_ChartExNumFmt(t, l, oNewVal);
+        });
+        val.setNumFmt(oNewVal);
+    }
+    else if (c_oserct_chartExDataLabelTXPR === type)
+    {
+        val.setTxPr(this.ReadTxPr(length));
+        val.txPr.setParent(val);
+    }
+    else if (c_oserct_chartExDataLabelSPPR === type)
+    {
+        val.setSpPr(this.ReadSpPr(length));
+        val.spPr.setParent(val);
+    }
+    else if (c_oserct_chartExDataLabelVISABILITIES === type)
+    {
+        var oNewVal = new AscFormat.CDataLabelVisibilities();
+        res = this.bcr.Read2(length, function (t, l) {
+            return oThis.ReadCT_DataLabelVisibilities(t, l, oNewVal);
+        });
+        val.setVisibility(oNewVal);
+    }
+    else if (c_oserct_chartExDataLabelSEPARATOR === type)
+    {
+        val.setSeparator(this.stream.GetString2LE(length));
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_DataLabelHidden = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExDataLabelHiddenIDX === type) 
+    {
+        val.setIdx(this.stream.GetULongLE());
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_SeriesLayoutProperties = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExSeriesLayoutPARENT === type)
+    {
+        var oNewVal = new AscFormat.CParentLabelLayout();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_ParentLabelLayout(t, l, oNewVal);
+        });
+        val.setParentLabelLayout(oNewVal);
+    }
+    else if (c_oserct_chartExSeriesLayoutREGION === type)
+    {
+        var oNewVal = new AscFormat.CRegionLabelLayout();
+        res = this.bcr.Read2(length, function (t, l) {
+            return oThis.ReadCT_RegionLabelLayout(t, l, oNewVal);
+        });
+        val.setRegionLabelLayout(oNewVal);
+    }
+    else if (c_oserct_chartExSeriesLayoutVISABILITIES === type)
+    {
+        var oNewVal = new AscFormat.CSeriesElementVisibilities();
+        res = this.bcr.Read2(length, function (t, l) {
+            return oThis.ReadCT_SeriesElementVisibilities(t, l, oNewVal);
+        });
+        val.setVisibility(oNewVal);
+    }
+    else if (c_oserct_chartExSeriesLayoutAGGREGATION === type)
+    {
+        val.setAggregation(this.stream.GetBool());
+    }
+    else if (c_oserct_chartExSeriesLayoutBINNING === type)
+    {
+        var oNewVal = new AscFormat.CBinning();
+        res = this.bcr.Read2(length, function (t, l) {
+            return oThis.ReadCT_Binning(t, l, oNewVal);
+        });
+        val.setBinning(oNewVal);
+    }
+    else if (c_oserct_chartExSeriesLayoutSTATISTIC === type)
+    {
+        var oNewVal = new AscFormat.CStatistics();
+        res = this.bcr.Read2(length, function (t, l) {
+            return oThis.ReadCT_Statistics(t, l, oNewVal);
+        });
+        val.setStatistics(oNewVal);
+    }
+    else if (c_oserct_chartExSeriesLayoutSUBTOTALS === type)
+    {
+        var oNewVal = new AscFormat.CSubtotals();
+        res = this.bcr.Read2(length, function (t, l) {
+            return oThis.ReadCT_Subtotals(t, l, oNewVal);
+        });
+        val.setSubtotals(oNewVal);
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_DataLabelVisibilities = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExDataLabelVisibilitiesSERIES === type)
+    {
+        val.setSeriesName(this.stream.GetBool());
+    }
+    else if (c_oserct_chartExDataLabelVisibilitiesCATEGORY === type)
+    {
+        val.setCategoryName(this.stream.GetBool());
+    }
+    else if (c_oserct_chartExDataLabelVisibilitiesVALUE === type)
+    {
+        val.setValue(this.stream.GetBool());
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_Binning = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExBinningBINSIZE === type)
+    {
+        val.setBinSize(this.stream.GetDoubleLE());
+    }
+    else if (c_oserct_chartExBinningBINCOUNT === type)
+    {
+        val.setBinCount(this.stream.GetULongLE());
+    }
+    else if (c_oserct_chartExBinningINTERVAL === type)
+    {
+        val.setIntervalClosed(this.stream.GetUChar());
+    }
+    else if (c_oserct_chartExBinningUNDERVAL === type)
+    {
+        val.setUnderflow(this.stream.GetDoubleLE());
+    }
+    else if (c_oserct_chartExBinningUNDERAUTO === type)
+    {
+        val.setUnderflow(this.stream.GetUChar());
+    }
+    else if (c_oserct_chartExBinningOVERVAL === type)
+    {
+        val.setOverflow(this.stream.GetDoubleLE());
+    }
+    else if (c_oserct_chartExBinningOVERAUTO === type)
+    {
+        val.setOverflow(this.stream.GetUChar());
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_ChartExTitle = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExTitleTX === type)
+    {
+        var oNewVal = new AscFormat.CText();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_Text(t, l, oNewVal);
+        });
+        val.setTx(oNewVal);
+    }
+    else if (c_oserct_chartExTitleTXPR === type)
+    {
+        val.setTxPr(this.ReadTxPr(length));
+        val.txPr.setParent(val);
+    }
+    else if (c_oserct_chartExTitleSPPR === type)
+    {
+        val.setSpPr(this.ReadSpPr(length));
+        val.spPr.setParent(val);
+    }
+    else if (c_oserct_chartExTitlePOS === type)
+    {
+        val.setPos(this.stream.GetUChar());
+    }
+    else if (c_oserct_chartExTitleALIGN === type)
+    {
+        val.setAlign(this.stream.GetUChar());
+    }
+    else if (c_oserct_chartExTitleOVERLAY === type)
+    {
+        val.setOverlay(this.stream.GetBool());
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_ChartExLegend = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExLegendTXPR === type)
+    {
+        val.setTxPr(this.ReadTxPr(length));
+        val.txPr.setParent(val);
+    }
+    else if (c_oserct_chartExLegendSPPR === type)
+    {
+        val.setSpPr(this.ReadSpPr(length));
+        val.spPr.setParent(val);
+    }
+    else if (c_oserct_chartExLegendPOS === type)
+    {
+        val.setPos(this.stream.GetUChar());
+    }
+    else if (c_oserct_chartExLegendALIGN === type)
+    {
+        val.setAlign(this.stream.GetUChar());
+    }
+    else if (c_oserct_chartExLegendOVERLAY === type)
+    {
+        val.setOverlay(this.stream.GetBool());
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_Text = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExTextRICH === type)
+    {
+        var oNewVal = new AscFormat.CTextBody();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_TextBody(t, l, oNewVal);
+        });
+        val.setRich(oNewVal);
+    }
+    else if (c_oserct_chartExTextDATA === type)
+    {
+        var oNewVal = new AscFormat.CTextData();
+        res = this.bcr.Read2(length, function (t, l) {
+            return oThis.ReadCT_TextData(t, l, oNewVal);
+        });
+        val.setTxData(oNewVal);
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_TextData = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExTextDataFORMULA === type)
+    {
+        var oNewVal = new AscFormat.CFormula();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_Formula(t, l, oNewVal);
+        });
+        val.setF(oNewVal);
+    }
+    else if (c_oserct_chartExTextDataVALUE === type)
+    {
+        val.setV(this.stream.GetString2LE(length));
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_Data = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExDataID === type)
+    {
+        val.setId(this.stream.GetULongLE());
+    }
+    else if (c_oserct_chartExDataSTRDIMENSION === type)
+    {
+        var oNewVal = new AscFormat.CStringDimension();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_StringDimension(t, l, oNewVal);
+        });
+        val.addDimension(oNewVal);
+    }
+    else if (c_oserct_chartExDataNUMDIMENSION === type)
+    {
+        var oNewVal = new AscFormat.CNumericDimension();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_NumericDimension(t, l, oNewVal);
+        });
+        val.addDimension(oNewVal);
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_Subtotals = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExSubtotalsIDX === type)
+    {
+        val.addIdx(this.stream.GetULongLE());
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_SeriesElementVisibilities = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExSeriesVisibilitiesCONNECTOR === type)
+    {
+        val.setConnectorLines(this.stream.GetBool());
+    }
+    else if (c_oserct_chartExSeriesVisibilitiesMEANLINE === type)
+    {
+        val.setMeanLine(this.stream.GetBool());
+    }
+    else if (c_oserct_chartExSeriesVisibilitiesMEANMARKER === type)
+    {
+        val.setMeanMarker(this.stream.GetBool());
+    }
+    else if (c_oserct_chartExSeriesVisibilitiesNONOUTLIERS === type)
+    {
+        val.setNonoutliers(this.stream.GetBool());
+    }
+    else if (c_oserct_chartExSeriesVisibilitiesOUTLIERS === type)
+    {
+        val.setOutliers(this.stream.GetBool());
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_CategoryAxisScaling = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExCatScalingGAPVAL === type)
+    {
+        val.setGapWidth(this.stream.GetDoubleLE());
+    }
+    else if (c_oserct_chartExCatScalingGAPAUTO === type)
+    {
+        val.setGapWidth(this.stream.GetUChar());
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_ValueAxisScaling = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExValScalingMAXAUTO === type)
+    {
+        val.setMax(this.stream.GetUChar());
+    }
+    else if (c_oserct_chartExValScalingMAXVAL === type)
+    {
+        val.setMax(this.stream.GetDoubleLE());
+    }
+    else if (c_oserct_chartExValScalingMINAUTO === type)
+    {
+        val.setMin(this.stream.GetUChar());
+    }
+    else if (c_oserct_chartExValScalingMINVAL === type)
+    {
+        val.setMin(this.stream.GetDoubleLE());
+    }
+    else if (c_oserct_chartExValScalingMAJUNITAUTO === type)
+    {
+        val.setMajorUnit(this.stream.GetUChar());
+    }
+    else if (c_oserct_chartExValScalingMAJUNITVAL === type)
+    {
+        val.setMajorUnit(this.stream.GetDoubleLE());
+    }
+    else if (c_oserct_chartExValScalingMINUNITAUTO === type)
+    {
+        val.setMinorUnit(this.stream.GetUChar());
+    }
+    else if (c_oserct_chartExValScalingMINUNITVAL === type)
+    {
+        val.setMinorUnit(this.stream.GetDoubleLE());
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_AxisUnits = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExAxisUnitLABEL === type)
+    {
+        var oNewVal = new AscFormat.CAxisUnitsLabel();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_AxisUnitsLabel(t, l, oNewVal);
+        });
+        val.setUnitsLabel(oNewVal);
+    }
+    else if (c_oserct_chartExAxisUnitTYPE === type)
+    {
+        val.setUnit(this.stream.GetUChar());
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_AxisUnitsLabel = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExAxisUnitsLabelTEXT === type)
+    {
+        var oNewVal = new AscFormat.CText();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_Text(t, l, oNewVal);
+        });
+        val.setTx(oNewVal);
+    }
+    else if (c_oserct_chartExAxisUnitsLabelSPPR === type)
+    {
+        val.setSpPr(this.ReadSpPr(length));
+        val.spPr.setParent(val);
+    }
+    else if (c_oserct_chartExAxisUnitsLabelTXPR === type)
+    {
+        val.setTxPr(this.ReadTxPr(length));
+        val.txPr.setParent(val);
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_TickMarks = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExTickMarksTYPE === type)
+    {
+        val.setType(this.stream.GetUChar());
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_Gridlines = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExGridlinesSPPR === type)
+    {
+        val.setSpPr(this.ReadSpPr(length));
+        val.spPr.setParent(val);
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_Statistics = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExStatisticsMETHOD === type)
+    {
+        val.setQuartileMethod(this.stream.GetUChar());
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_StringDimension = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExDataDimensionTYPE === type)
+    {
+        var oNewVal = new AscFormat.CDimensionType();
+        oNewVal.setDimensionType(this.stream.GetUChar());
+        val.addLevelData(oNewVal);
+    }
+    else if (c_oserct_chartExDataDimensionFORMULA === type)
+    {
+        var oNewVal = new AscFormat.CFormula();
+        res = this.bcr.Read2(length, function (t, l) {
+            return oThis.ReadCT_Formula(t, l, oNewVal);
+        });
+        val.setF(oNewVal);
+    }
+    else if (c_oserct_chartExDataDimensionNF === type)
+    {
+        val.setNf(this.stream.GetString2LE(length));
+    }
+    else if (c_oserct_chartExDataDimensionSTRINGLEVEL === type)
+    {
+        var oNewVal = new AscFormat.CStringLevel();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_StringLevel(t, l, oNewVal);
+        });
+        val.addLevelData(oNewVal);
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_NumericDimension = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExDataDimensionTYPE === type)
+    {
+        var oNewVal = new AscFormat.CDimensionType();
+        oNewVal.setDimensionType(this.stream.GetUChar());
+        val.addLevelData(oNewVal);
+    }
+    else if (c_oserct_chartExDataDimensionFORMULA === type)
+    {
+        var oNewVal = new AscFormat.CFormula();
+        res = this.bcr.Read2(length, function (t, l) {
+            return oThis.ReadCT_Formula(t, l, oNewVal);
+        });
+        val.setF(oNewVal);
+    }
+    else if (c_oserct_chartExDataDimensionNF === type)
+    {
+        val.setNf(this.stream.GetString2LE(length));
+    }
+    else if (c_oserct_chartExDataDimensionNUMERICLEVEL === type)
+    {
+        var oNewVal = new AscFormat.CNumericLevel();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_NumericLevel(t, l, oNewVal);
+        });
+        val.addLevelData(oNewVal);
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_Formula = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExFormulaCONTENT === type)
+    {
+        val.setContent(this.stream.GetString2LE(length));
+    }
+    else if (c_oserct_chartExFormulaDIRECTION === type)
+    {
+        val.setDir(this.stream.GetUChar());
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_StringLevel = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExDataLevelNAME === type)
+    {
+        val.setName(this.stream.GetString2LE(length));
+    }
+    else if (c_oserct_chartExDataLevelCOUNT === type)
+    {
+        val.setPtCount(this.stream.GetULongLE());
+    }
+    else if (c_oserct_chartExDataLevelPT === type)
+    {
+        var oNewVal = new AscFormat.CStringValue();
+        res = this.bcr.Read2(length, function (t, l) {
+            return oThis.ReadCT_StringValue(t, l, oNewVal);
+        });
+        val.addPt(oNewVal);
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_NumericLevel = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExDataLevelNAME === type)
+    {
+        val.setName(this.stream.GetString2LE(length));
+    }
+    else if (c_oserct_chartExDataLevelCOUNT === type)
+    {
+        val.setPtCount(this.stream.GetULongLE());
+    }
+    else if (c_oserct_chartExDataLevelPT === type)
+    {
+        var oNewVal = new AscFormat.CNumericValue();
+        res = this.bcr.Read2(length, function (t, l) {
+            return oThis.ReadCT_NumericValue(t, l, oNewVal);
+        });
+        val.addPt(oNewVal);
+    }
+    else if (c_oserct_chartExDataLevelFORMATCODE === type)
+    {
+        val.setFormatCode(this.stream.GetString2LE(length));
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_StringValue = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExDataValueIDX === type)
+    {
+        val.setIdx(this.stream.GetULongLE());
+    }
+    else if (c_oserct_chartExDataValueCONTENT === type)
+    {
+        val.setContent(this.stream.GetString2LE(length));
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
+    return res;
+};
+BinaryChartReader.prototype.ReadCT_NumericValue = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    var oNewVal;
+    if (c_oserct_chartExDataValueIDX === type)
+    {
+        val.setIdx(this.stream.GetULongLE());
+    }
+    else if (c_oserct_chartExDataValueCONTENT === type)
+    {
+        val.setContent(this.stream.GetDoubleLE());
+    }
+    else
+    {
+        res = c_oSerConstants.ReadUnknown;
+    }
     return res;
 };
 BinaryChartReader.prototype.ReadAlternateContent = function (type, length, val) {
