@@ -41,6 +41,10 @@
 	{
 		BUFFER_STRING += String.fromCodePoint(codePoint);
 	};
+	AscHyphenation.setLang = function(langCode)
+	{
+		return true;
+	};
 	AscHyphenation.hyphenate = function()
 	{
 		let checkString = BUFFER_STRING.toLowerCase();

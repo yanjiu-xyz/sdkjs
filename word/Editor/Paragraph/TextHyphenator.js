@@ -42,6 +42,10 @@ var AscHyphenation = AscHyphenation || {};
 	{
 		BUFFER_STRING += String.fromCodePoint(codePoint);
 	};
+	AscHyphenation.setLang = function(langCode)
+	{
+		return true;
+	};
 	AscHyphenation.hyphenate = function()
 	{
 		let checkString = BUFFER_STRING.toLowerCase();
@@ -138,7 +142,7 @@ var AscHyphenation = AscHyphenation || {};
 			else
 			{
 				if (!this.word)
-					this.getLang(run, item.GetFontSlot(run.Get_CompiledPr(false)));
+					this.updateLang(run, item.GetFontSlot(run.Get_CompiledPr(false)));
 				
 				this.appendToWord(item);
 				
@@ -152,7 +156,7 @@ var AscHyphenation = AscHyphenation || {};
 		this.buffer.length = 0;
 		AscHyphenation.clear();
 	};
-	TextHyphenator.prototype.getLang = function(run, fontSlot)
+	TextHyphenator.prototype.updateLang = function(run, fontSlot)
 	{
 		let textPr = run.Get_CompiledPr(false);
 		let lang;
@@ -197,6 +201,7 @@ var AscHyphenation = AscHyphenation || {};
 		if (!this.isHyphenateCaps() && this.isAllCaps())
 			return this.resetBuffer();
 		
+		AscHyphenation.setLang(this.lang);
 		let result = AscHyphenation.hyphenate();
 		for (let i = 0, len = result.length; i < len; ++i)
 		{
