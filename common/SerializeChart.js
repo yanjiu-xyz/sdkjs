@@ -1400,7 +1400,7 @@ BinaryChartWriter.prototype.WriteCT_ChartSpace = function (oVal) {
     }
     if(null != oVal.chartData) {
         this.bs.WriteItem(c_oserct_chartspaceCHARTDATA, function() {
-           oThis.WriteCT_ChartData(oVal.chartData); // todoo this class
+           oThis.WriteCT_ChartData(oVal.chartData);
         });
     }
 };
@@ -1408,7 +1408,7 @@ BinaryChartWriter.prototype.WriteCT_ChartExSpace = function (oVal) {
     var oThis = this;
     if(oVal.chartData !== null) {
         this.bs.WriteItem(c_oserct_chartExSpaceCHARTDATA, function() {
-           oThis.WriteCT_ChartData(oVal.chartData); // todoo this class
+           oThis.WriteCT_ChartData(oVal.chartData);
         });
     }
     if (oVal.chart !== null) {
@@ -1958,7 +1958,7 @@ BinaryChartWriter.prototype.WriteCT_Legend = function (oVal) {
     }
     if (null != oVal.align) {
         this.bs.WriteItem(c_oserct_legendALIGN, function () {
-            oThis.WriteCT_PosAlign(oVal.align); // todoo this class
+            oThis.memory.WriteByte(oVal.align);
         });
     }
     // var oCurVal = oVal.m_extLst;
@@ -2316,7 +2316,7 @@ BinaryChartWriter.prototype.WriteCT_Title = function (oVal) {
     }
     if (null != oVal.align) {
         this.bs.WriteItem(c_oserct_titleALIGN, function () {
-            oThis.WriteCT_PosAlign(oVal.align); // todoo this class
+            oThis.memory.WriteByte(oVal.align);
         });
     }
     // var oCurVal = oVal.m_extLst;
@@ -5522,7 +5522,7 @@ BinaryChartWriter.prototype.WriteCT_PlotArea = function (oVal, oChart) {
     }
     if (null != oVal.plotAreaRegion) {
         this.bs.WriteItem(c_oserct_plotareaPLOTAREAREGION, function () {
-            oThis.WriteCT_PlotAreaRegion(oVal.plotAreaRegion); // todoo this class
+            oThis.WriteCT_PlotAreaRegion(oVal.plotAreaRegion);
         });
     }
     // var oCurVal = oVal.m_extLst;
@@ -6567,7 +6567,7 @@ BinaryChartWriter.prototype.WriteCT_StringDimension = function (oVal) {
     var oThis = this;
     if(oVal.type !== null) {
         this.bs.WriteItem(c_oserct_chartExDataDimensionTYPE, function() {
-            oThis.memory.WriteBool(oVal.type.dimensionType);
+            oThis.memory.WriteBool(oVal.type);
         });
     }
     if(oVal.f !== null) {
@@ -6595,7 +6595,7 @@ BinaryChartWriter.prototype.WriteCT_NumericDimension = function (oVal) {
     var oThis = this;
     if(oVal.type !== null) {
         this.bs.WriteItem(c_oserct_chartExDataDimensionTYPE, function() {
-            oThis.memory.WriteBool(oVal.type.dimensionType);
+            oThis.memory.WriteBool(oVal.type);
         });
     }
     if(oVal.f !== null) {
@@ -7166,10 +7166,11 @@ BinaryChartReader.prototype.ReadCT_ChartSpace = function (type, length, val, cur
         }
     }
     else if(c_oserct_chartspaceCHARTDATA === type) {
-        oNewVal = {};
+        oNewVal = new AscFormat.CChartData();
         res = this.bcr.Read1(length, function (t, l) {
-            return oThis.ReadCT_ChartData(t, l, oNewVal); // todoo this class
+            return oThis.ReadCT_ChartData(t, l, oNewVal);
         });
+        val.setChartData(oNewVal);
     }
     else {
         res = c_oSerConstants.ReadUnknown;
@@ -7182,10 +7183,11 @@ BinaryChartReader.prototype.ReadCT_ChartExSpace = function (type, length, val) {
     var oNewVal;
     if(c_oserct_chartExSpaceCHARTDATA === type) 
     {
-        oNewVal = {};
+        oNewVal = new AscFormat.CChartData();
         res = this.bcr.Read1(length, function (t, l) {
-            return oThis.ReadCT_ChartData(t, l, oNewVal); // todoo this class
+            return oThis.ReadCT_ChartData(t, l, oNewVal);
         });
+        val.setChartData(oNewVal);
     } 
     else if (c_oserct_chartExSpaceCHART === type) {
         oNewVal = new AscFormat.CChartEx();
@@ -7868,11 +7870,7 @@ BinaryChartReader.prototype.ReadCT_Legend = function (type, length, val) {
         val.txPr.setParent(val);
     }
     else if (c_oserct_legendALIGN === type) {
-        var oNewVal;
-        oNewVal = {};
-        res = this.bcr.Read1(length, function (t, l) {
-            return oThis.ReadCT_PosAlign(t, l, oNewVal);
-        });
+        val.setPos(this.stream.GetUChar())
     }
     else if (c_oserct_legendEXTLST === type) {
         var oNewVal;
@@ -8382,11 +8380,7 @@ BinaryChartReader.prototype.ReadCT_Title = function (type, length, val) {
         val.txPr.setParent(val);
     }
     else if (c_oserct_titleALIGN === type) { 
-        var oNewVal;
-        oNewVal = {};
-        res = this.bcr.Read1(length, function (t, l) {
-            return oThis.ReadCT_PosAlign(t, l, oNewVal); // todoo this class
-        });
+        val.setAlign(this.stream.GetUChar());
     }
     else if (c_oserct_titleEXTLST === type) {
         var oNewVal;
@@ -12670,10 +12664,11 @@ BinaryChartReader.prototype.ReadCT_PlotArea = function (type, length, val, aChar
         // val.m_extLst = oNewVal;
     }
     else if (c_oserct_plotareaPLOTAREAREGION === type) {
-        var oNewVal = {};
+        var oNewVal = new AscFormat.CPlotAreaRegion();
         res = this.bcr.Read1(length, function (t, l) {
-            return oThis.ReadCT_PlotAreaRegion(t, l, oNewVal); // todoo this class
+            return oThis.ReadCT_PlotAreaRegion(t, l, oNewVal);
         });
+        val.setPlotAreaRegion(oNewVal);
     }
     else
         res = c_oSerConstants.ReadUnknown;
@@ -14074,9 +14069,7 @@ BinaryChartReader.prototype.ReadCT_StringDimension = function (type, length, val
     var oNewVal;
     if (c_oserct_chartExDataDimensionTYPE === type)
     {
-        var oNewVal = new AscFormat.CDimensionType();
-        oNewVal.setDimensionType(this.stream.GetUChar());
-        val.addLevelData(oNewVal);
+        val.setType(this.stream.GetUChar());
     }
     else if (c_oserct_chartExDataDimensionFORMULA === type)
     {
@@ -14110,9 +14103,7 @@ BinaryChartReader.prototype.ReadCT_NumericDimension = function (type, length, va
     var oNewVal;
     if (c_oserct_chartExDataDimensionTYPE === type)
     {
-        var oNewVal = new AscFormat.CDimensionType();
-        oNewVal.setDimensionType(this.stream.GetUChar());
-        val.addLevelData(oNewVal);
+        val.setType(this.stream.GetUChar());
     }
     else if (c_oserct_chartExDataDimensionFORMULA === type)
     {
