@@ -64,6 +64,7 @@
 			"common/libfont/manager.js",
 
 			"common/stringserialize.js",
+			"common/digest/sha256.js",
 			"common/random.js",
 			"common/hash/hash.js",
 			"common/keychainstorage.js",
