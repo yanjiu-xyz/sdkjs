@@ -509,11 +509,11 @@
 
 	function CMemory(bIsNoInit)
 	{
-		this.Init = function()
+		this.Init = function(len)
 		{
 			var _canvas = document.createElement('canvas');
 			var _ctx    = _canvas.getContext('2d');
-			this.len    = 1024 * 1024 * 5;
+			this.len    = (len === undefined) ? 1024 * 1024 * 5 : len;
 			this.ImData = _ctx.createImageData(this.len / 4, 1);
 			this.data   = this.ImData.data;
 			this.pos    = 0;

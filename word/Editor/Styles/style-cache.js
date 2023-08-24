@@ -35,7 +35,7 @@
 (function()
 {
 	const memory = new AscCommon.CMemory();
-	memory.Init();
+	memory.Init(1000);
 	
 	/**
 	 * @param data
