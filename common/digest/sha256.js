@@ -290,9 +290,12 @@
 
 	window.AscCommon.Digest = window.AscCommon.Digest || {};
 
-	window.AscCommon.Digest.sha256 = function(data) {
+	window.AscCommon.Digest.sha256 = function(data, offset, length) {
 		let engine = new Sha256();
-		engine.update(data);
+		if (undefined !== offset || undefined !== length)
+			engine.update(new Uint8Array(data.buffer, offset || 0, length || data.length));
+		else
+			engine.update(data);
 		return engine.getResult();
 	};
 
