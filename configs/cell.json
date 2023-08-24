@@ -323,6 +323,7 @@
 			"word/Math/accent.js",
 			"word/Math/borderBox.js",
 			"word/Math/mathTrackHandler.js",
+			"word/Editor/Styles/style-cache.js",
 			"word/Editor/Styles/FixedFormDefaults.js",
 			"word/Editor/Revisions/TrackRevisionsManager.js",
 

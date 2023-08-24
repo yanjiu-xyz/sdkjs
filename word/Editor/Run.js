@@ -85,9 +85,10 @@ function ParaRun(Paragraph, bMathRun)
 
 	this.State      = new CParaRunState();       // Положение курсора и селекта в данного run
 	this.Selection  = this.State.Selection;
-	this.CompiledPr = new CTextPr();             // Скомпилированные настройки
+	this.CompiledPr = AscWord.g_textPrCache.add(new AscWord.CTextPr());             // Скомпилированные настройки
 	this.RecalcInfo = new CParaRunRecalcInfo();  // Флаги для пересчета (там же флаг пересчета стиля)
-
+	
+	
 	this.TextAscent  = 0; // текстовый ascent + linegap
 	this.TextAscent  = 0; // текстовый ascent + linegap
 	this.TextDescent = 0; // текстовый descent
@@ -8719,21 +8720,26 @@ ParaRun.prototype.Recalc_RunsCompiledPr = function()
 {
     this.Recalc_CompiledPr(true);
 };
-
+/**
+ * @param bCopy {boolean} return a duplicate or reference to the compiled  textPr object
+ * @returns {CTextPr}
+ */
 ParaRun.prototype.Get_CompiledPr = function(bCopy)
 {
 	if (this.IsStyleHyperlink() && this.IsInHyperlinkInTOC())
 		this.RecalcInfo.TextPr = true;
-
-    if ( true === this.RecalcInfo.TextPr )
-    {
-        this.RecalcInfo.TextPr = false;
-        this.CompiledPr = this.Internal_Compile_Pr();
+	
+	if (this.RecalcInfo.TextPr)
+	{
+		AscWord.g_textPrCache.remove(this.CompiledPr);
 		
 		// Пока настройки параграфа не считаются скомпилированными, мы не можем считать скомпилированными настройки рана
-		if (this.Paragraph && !this.Paragraph.IsParaPrCompiled())
-			this.RecalcInfo.TextPr = true;
-    }
+		this.RecalcInfo.TextPr = !!(this.Paragraph && !this.Paragraph.IsParaPrCompiled());
+		
+		let textPr = this.Internal_Compile_Pr();
+		this.CompiledPr = AscWord.g_textPrCache.add(textPr);
+	}
+	
 
     if ( false === bCopy )
         return this.CompiledPr;

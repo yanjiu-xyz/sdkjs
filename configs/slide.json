@@ -301,6 +301,7 @@
 			"word/Editor/Search/Pattern.js",
 			"word/Editor/GlossaryDocument.js",
 			"word/Editor/GlossaryDocumentChanges.js",
+			"word/Editor/Styles/style-cache.js",
 			"word/Editor/Styles/FixedFormDefaults.js",
 			"word/Editor/Revisions/TrackRevisionsManager.js",
 
