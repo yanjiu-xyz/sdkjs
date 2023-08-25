@@ -321,40 +321,40 @@ $(function ()
 		]);
 	});
 	
-	// QUnit.test("Test: \"Test ConsecutiveHyphenLimit parameter for single word\"", function (assert)
-	// {
-	// 	setText("aabbbcccdddd");
-	//
-	// 	checkLines(assert, false, charWidth * 4.5, [
-	// 		"aabb",
-	// 		"bccc",
-	// 		"dddd"
-	// 	]);
-	//
-	// 	checkLines(assert, true, charWidth * 4.5, [
-	// 		"aa-",
-	// 		"bbb-",
-	// 		"ccc-",
-	// 		"dddd"
-	// 	]);
-	//
-	// 	// В этом примере важно, что ccdddd тоже переносится по второму символу
-	// 	setHyphenLimit(1);
-	// 	checkLines(assert, true, charWidth * 4.5, [
-	// 		"aa-",
-	// 		"bbbc",
-	// 		"cc-",
-	// 		"dddd"
-	// 	]);
-	//
-	// 	setHyphenLimit(2);
-	// 	checkLines(assert, true, charWidth * 4.5, [
-	// 		"aa-",
-	// 		"bbb-",
-	// 		"cccd",
-	// 		"ddd"
-	// 	]);
-	//
-	// });
+	QUnit.test("Test: \"Test ConsecutiveHyphenLimit parameter for single word\"", function(assert)
+	{
+		setText("aabbbcccdddd");
+		
+		checkLines(assert, false, charWidth * 4.5, [
+			"aabb",
+			"bccc",
+			"dddd"
+		]);
+		
+		checkLines(assert, true, charWidth * 4.5, [
+			"aa-",
+			"bbb-",
+			"ccc-",
+			"dddd"
+		]);
+		
+		// В этом примере важно, что ccdddd тоже переносится по второму символу
+		setHyphenLimit(1);
+		checkLines(assert, true, charWidth * 4.5, [
+			"aa-",
+			"bbbc",
+			"cc-",
+			"dddd"
+		]);
+		
+		setHyphenLimit(2);
+		checkLines(assert, true, charWidth * 4.5, [
+			"aa-",
+			"bbb-",
+			"cccd",
+			"ddd"
+		]);
+		
+	});
 	
 });
