@@ -62,8 +62,10 @@ CChangesPDFDocumentAddItem.prototype.Undo = function()
 			oItem.AddToRedraw();
 
 			oDocument.annots.splice(nPos, 1);
-			oViewer.pagesInfo.pages[nPage].annots.splice(nPos, 1);
-			editor.sync_RemoveComment(oItem.GetId());
+			this.PosInPage = oViewer.pagesInfo.pages[nPage].annots.indexOf(oItem);
+			oViewer.pagesInfo.pages[nPage].annots.splice(this.PosInPage, 1);
+			if (oItem.IsComment && oItem.IsComment())
+				editor.sync_RemoveComment(oItem.GetId());
 		}
 	}
 };
@@ -82,8 +84,9 @@ CChangesPDFDocumentAddItem.prototype.Redo = function()
 			oItem.AddToRedraw();
 
 			oDocument.annots.splice(nPos, 0, oItem);
-			oViewer.pagesInfo.pages[nPage].annots.splice(nPos, 0, oItem);
-			editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
+			oViewer.pagesInfo.pages[nPage].annots.splice(this.PosInPage, 0, oItem);
+			if (oItem.IsComment && oItem.IsComment())
+				editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
 		}
 	}
 };

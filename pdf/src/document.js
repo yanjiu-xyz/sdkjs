@@ -736,6 +736,21 @@ var CPresentation = CPresentation || function(){};
 
         oViewer.setCursorType(cursorType);
     };
+    CPDFDoc.prototype.UnionInkAnnots = function(oAnnots) {
+        let oViewer         = editor.getDocumentRenderer();
+        let aAllRelPaths    = [];
+
+        let oAnnot ;
+        for (let i = 0; i < oAnnots.length; i++) {
+            oAnnot      = oAnnots[i];
+            aAllRelPaths.concat(oAnnot.GetRelativePaths());
+        }
+
+        let [xMin, yMin, xMax, yMax] = getMinRect([].concat(...aPoints));
+        let nLineW  = oAnnot.GetWidth() * g_dKoef_pt_to_mm * (96 / oViewer.file.pages[oAnnot.GetPage()].Dpi);
+        let aRect   = [(xMin * g_dKoef_mm_to_pix - nLineW) / nScaleX, (yMin * g_dKoef_mm_to_pix - nLineW) / nScaleY, (xMax * g_dKoef_mm_to_pix + nLineW) / nScaleX, (yMax * g_dKoef_mm_to_pix + nLineW) / nScaleY];
+
+    };
     CPDFDoc.prototype.OnMouseDown = function(e) {
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
@@ -1352,6 +1367,12 @@ var CPresentation = CPresentation || function(){};
             oAnnot.SetContents(oProps.contents);
         }
 
+        if (oViewer.IsOpenAnnotsInProgress == false) {
+            this.CreateNewHistoryPoint();
+            this.History.Add(new CChangesPDFDocumentAddItem(this, this.annots.length - 1, [oAnnot]));
+            this.TurnOffHistory();
+        }
+        
         // if (oViewer.IsOpenFormsInProgress == false) {
         //     oAnnot.SetDrawFromStream(false);
         // }
@@ -1377,10 +1398,6 @@ var CPresentation = CPresentation || function(){};
 
         let oAnnot = this.AddAnnot(oProps);
         editor.sendEvent("asc_onAddComment", oAnnot.GetId(), AscCommentData);
-
-        this.CreateNewHistoryPoint();
-
-        this.History.Add(new CChangesPDFDocumentAddItem(this, this.annots.length - 1, [oAnnot]));
         return oAnnot;
     };
     CPDFDoc.prototype.CreateNewHistoryPoint = function() {
@@ -1402,6 +1419,10 @@ var CPresentation = CPresentation || function(){};
 
         editor.sync_ChangeCommentData(Id, CommentData);
     };
+    CPDFDoc.prototype.TurnOffHistory = function() {
+        if (AscCommon.History.IsOn() == true)
+            AscCommon.History.TurnOff();
+    }
     CPDFDoc.prototype.ShowComment = function(arrId)
     {
         var CommentsX     = null;

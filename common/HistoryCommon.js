@@ -1716,6 +1716,9 @@
 	window['AscDFH'].historyitem_type_PDF_Document			= 2210 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Form				= 2211 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Comment			= 2212 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Ink				= 2213 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Annot				= 2213 << 16;
+
 	
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -3994,7 +3997,14 @@
 	// Типы изменений в PDF Annots 
 	//------------------------------------------------------------------------------------------------------------------
 
+	// Common
+	AscDFH.historyitem_Pdf_Annot_Rect			= AscDFH.historyitem_type_Pdf_Annot | 1;
+
+	// Comment
 	AscDFH.historyitem_Pdf_Comment_Data			= AscDFH.historyitem_type_Pdf_Comment | 1;
+
+	// Ink
+	AscDFH.historyitem_Pdf_Ink_Points			= AscDFH.historyitem_type_Pdf_Ink | 1;
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CPDFDoc

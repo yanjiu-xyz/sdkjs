@@ -32,17 +32,19 @@
 
 "use strict";
 
-AscDFH.changesFactory[AscDFH.historyitem_Pdf_Comment_Data] = CChangesPDFCommentData;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Comment_Data]	= CChangesPDFCommentData;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Ink_Points]	= CChangesPDFInkPoints;
+AscDFH.changesFactory[AscDFH.historyitem_Pdf_Annot_Rect]	= CChangesPDFAnnotRect;
 
 /**
  * @constructor
- * @extends {AscDFH.CChangesBaseStringProperty}
+ * @extends {AscDFH.CChangesBaseProperty}
  */
 function CChangesPDFCommentData(Class, Old, New, Color)
 {
-	AscDFH.CChangesBaseStringProperty.call(this, Class, Old, New, Color);
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
 }
-CChangesPDFCommentData.prototype = Object.create(AscDFH.CChangesBaseStringProperty.prototype);
+CChangesPDFCommentData.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
 CChangesPDFCommentData.prototype.constructor = CChangesPDFCommentData;
 CChangesPDFCommentData.prototype.Type = AscDFH.historyitem_Pdf_Comment_Data;
 CChangesPDFCommentData.prototype.private_SetValue = function(Value)
@@ -54,4 +56,42 @@ CChangesPDFCommentData.prototype.private_SetValue = function(Value)
 	CommentData.Read_FromAscCommentData(AscCommentData);
 
 	editor.sync_ChangeCommentData(oComment.GetId(), CommentData);
+};
+
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseContentChange}
+ */
+function CChangesPDFInkPoints(Class, Pos, Items, Color)
+{
+	AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, true);
+}
+CChangesPDFInkPoints.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
+CChangesPDFInkPoints.prototype.constructor = CChangesPDFInkPoints;
+CChangesPDFInkPoints.prototype.Type = AscDFH.historyitem_Pdf_Ink_Points;
+CChangesPDFInkPoints.prototype.Undo = function()
+{
+	this.Class.RemoveLastAddedPath();
+};
+CChangesPDFInkPoints.prototype.Redo = function()
+{
+	this.Class.AddPath(...this.Items);
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseProperty}
+ */
+function CChangesPDFAnnotRect(Class, Old, New, Color)
+{
+	AscDFH.CChangesBaseProperty.call(this, Class, Old, New, Color);
+}
+CChangesPDFAnnotRect.prototype = Object.create(AscDFH.CChangesBaseProperty.prototype);
+CChangesPDFAnnotRect.prototype.constructor = CChangesPDFAnnotRect;
+CChangesPDFAnnotRect.prototype.Type = AscDFH.historyitem_Pdf_Annot_Rect;
+CChangesPDFAnnotRect.prototype.private_SetValue = function(Value)
+{
+	let oAnnot = this.Class;
+	oAnnot.SetRect(Value, true);
 };

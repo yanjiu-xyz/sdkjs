@@ -2891,7 +2891,7 @@ function CEditorPage(api)
 			delete canvas.fullRepaint;
 		}
 
-		if (this.m_oDrawingDocument.m_lDrawingFirst < 0 || this.m_oDrawingDocument.m_lDrawingEnd < 0)
+		if (this.m_oApi.isDocumentRenderer() || this.m_oDrawingDocument.m_lDrawingFirst < 0 || this.m_oDrawingDocument.m_lDrawingEnd < 0)
 			return;
 
 		// сначала посморим, изменились ли ректы страниц

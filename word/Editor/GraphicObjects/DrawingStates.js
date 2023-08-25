@@ -195,30 +195,37 @@ StartAddNewShape.prototype =
             else
             {
                 let oViewer = editor.getDocumentRenderer();
-                let nScaleY = oViewer.drawingPages[oViewer.currentPage].H / oViewer.file.pages[oViewer.currentPage].H / oViewer.zoom;
-                let nScaleX = oViewer.drawingPages[oViewer.currentPage].W / oViewer.file.pages[oViewer.currentPage].W / oViewer.zoom;
+                if (oLogicDocument.currInkInDrawingProcess) {
+                    oLogicDocument.currInkInDrawingProcess.AddPath(oTrack.arrPoint);
+                    oViewer._paintAnnots();
+                }
+                else {
+                    let nScaleY = oViewer.drawingPages[oViewer.currentPage].H / oViewer.file.pages[oViewer.currentPage].H / oViewer.zoom;
+                    let nScaleX = oViewer.drawingPages[oViewer.currentPage].W / oViewer.file.pages[oViewer.currentPage].W / oViewer.zoom;
 
-                var bounds  = oTrack.getBounds();
-                
-                let nLineW  = oTrack.pen.w / 36000 * g_dKoef_mm_to_pix;
-                let aRect   = [(bounds.min_x * g_dKoef_mm_to_pix - nLineW) / nScaleX, (bounds.min_y * g_dKoef_mm_to_pix - nLineW) / nScaleY, (bounds.max_x * g_dKoef_mm_to_pix + nLineW) / nScaleX, (bounds.max_y * g_dKoef_mm_to_pix + nLineW) / nScaleY];
+                    var bounds  = oTrack.getBounds();
+                    
+                    let nLineW  = oTrack.pen.w / 36000 * g_dKoef_mm_to_pix;
+                    let aRect   = [(bounds.min_x * g_dKoef_mm_to_pix - nLineW) / nScaleX, (bounds.min_y * g_dKoef_mm_to_pix - nLineW) / nScaleY, (bounds.max_x * g_dKoef_mm_to_pix + nLineW) / nScaleX, (bounds.max_y * g_dKoef_mm_to_pix + nLineW) / nScaleY];
 
-                let oInkAnnot = oLogicDocument.AddAnnot({
-                    rect:       aRect,
-                    page:       oViewer.currentPage,
-                    contents:   "",
-                    type:       AscPDF.ANNOTATIONS_TYPES.Ink
-                });
+                    let oInkAnnot = oLogicDocument.AddAnnot({
+                        rect:       aRect,
+                        page:       oViewer.currentPage,
+                        contents:   "",
+                        type:       AscPDF.ANNOTATIONS_TYPES.Ink
+                    });
 
-                oInkAnnot.SetWidth(oTrack.pen.w / (36000  * g_dKoef_pt_to_mm));
-                var shape = oInkAnnot.AddShapeByPoints(oTrack.arrPoint, oTrack.pen);
+                    oInkAnnot.SetWidth(oTrack.pen.w / (36000  * g_dKoef_pt_to_mm));
+                    var shape = oInkAnnot.AddShapeByPoints(oTrack.arrPoint, oTrack.pen);
 
-                oInkAnnot.AddToRedraw();
-                shape.recalculate();
+                    oInkAnnot.AddToRedraw();
+                    shape.recalculate();
 
-                oViewer._paintAnnots();
+                    oViewer._paintAnnots();
+
+                    oLogicDocument.currInkInDrawingProcess = oInkAnnot;
+                }
             }
-			
         }
         this.drawingObjects.clearTrackObjects();
         this.drawingObjects.clearPreTrackObjects();
@@ -780,7 +787,6 @@ RotateState.prototype =
                     if (oTrack instanceof AscFormat.ResizeTrackShapeImage) {
                         let aRect = [bounds.min_x * g_dKoef_mm_to_pix, bounds.min_y * g_dKoef_mm_to_pix, bounds.max_x * g_dKoef_mm_to_pix, bounds.max_y * g_dKoef_mm_to_pix];
                         oTrack.originalObject.SetRect(aRect);
-                        oTrack.originalObject.GetDrawing().CheckWH();
                     }
                     
                     oTrack.originalObject.AddToRedraw();

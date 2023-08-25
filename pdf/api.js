@@ -519,6 +519,9 @@
 			return;
 
 		oViewer.DrawingObjects.onInkDrawerChangeState();
+
+		if (this.isInkDrawerOn() == false)
+			oDoc.currInkInDrawingProcess = null;
 	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

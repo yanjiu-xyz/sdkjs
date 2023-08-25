@@ -1111,7 +1111,8 @@
 			let oAnnotsMap = {};
 			let oDoc = this.getPDFDoc();
 			let aAnnotsInfo = this.file.nativeFile.getAnnotationsInfo();
-			
+			this.IsOpenAnnotsInProgress = true;
+
 			let oAnnotInfo, oAnnot, aRect;
 			for (let i = 0; i < aAnnotsInfo.length; i++) {
 				oAnnotInfo = aAnnotsInfo[i];
@@ -1155,6 +1156,7 @@
 				if (oAnnotsMap[apIdx]._contents instanceof AscPDF.CAnnotationText)
 					oAnnotsMap[apIdx]._OnAfterSetContents();
 			}
+			this.IsOpenAnnotsInProgress = false;
 		};
 		this.setZoom = function(value, isDisablePaint)
 		{
@@ -2242,7 +2244,8 @@
 				{
 					var pageCoords = this.pageDetector.pages[i - this.startVisiblePage];
 					this.file.drawSelection(i, this.overlay, pageCoords.x, pageCoords.y, pageCoords.w, pageCoords.h);
-
+					ctx.fill();
+					ctx.closePath();
 					let oDoc = this.getPDFDoc();
 					if (this.DrawingObjects.needUpdateOverlay())
 					{
@@ -2257,12 +2260,10 @@
 						}
 					}
 				}
-
-				ctx.fill();
-				ctx.beginPath();
 			}
 			if (this.activeForm && this.activeForm.content && this.activeForm.content.IsSelectionUse() && this.activeForm.content.IsSelectionEmpty() == false)
 			{
+				ctx.beginPath();
 				this.activeForm.content.DrawSelectionOnPage(0);
 				ctx.globalAlpha = 0.2;
 				ctx.fill();
