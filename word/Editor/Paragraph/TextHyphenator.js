@@ -174,7 +174,11 @@
 		let result = AscHyphenation.hyphenate();
 		for (let i = 0, len = result.length; i < len; ++i)
 		{
-			this.buffer[result[i]].SetHyphenAfter(true);
+			let pos = result[i] - 1;
+			if (pos < 0 || pos >= this.buffer.length - 1)
+				continue;
+			
+			this.buffer[pos].SetHyphenAfter(true);
 		}
 		
 		this.resetBuffer();
