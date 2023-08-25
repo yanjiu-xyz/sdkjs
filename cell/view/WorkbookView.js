@@ -1951,9 +1951,15 @@
         return;
       }
       var pivotTable = ws.model.getPivotTable(ct.col, ct.row);
-      if (pivotTable && pivotTable.asc_canShowDetails(ct.row, ct.col)) {
-        this.Api.asc_pivotShowDetails(pivotTable);
-        return;
+      if (pivotTable) {
+        if(pivotTable.asc_canShowDetails(ct.row, ct.col)) {
+          this.Api.asc_pivotShowDetails(pivotTable);
+          return;
+        }
+        if (pivotTable.canExpandCollapse(ct.row, ct.col)) {
+          pivotTable.toggleExpandCollapseByActiveCell(this.Api, false);
+          return;
+        }
       }
 
       // При dbl клике фокус выставляем в зависимости от наличия текста в ячейке
