@@ -32,6 +32,8 @@
 
 "use strict";
 
+const AscHyphenation = {};
+
 (function(window)
 {
 	// Это тестовые функции, которые должны быть заменены на нормальные
