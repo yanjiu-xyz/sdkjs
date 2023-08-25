@@ -16327,6 +16327,41 @@ CDocument.prototype.setHyphenateCaps = function(hyphenate)
 	this.UpdateInterface();
 	this.FinalizeAction();
 };
+CDocument.prototype.getAutoHyphenationSettings = function()
+{
+	let documentSettings = this.getDocumentSettings();
+	
+	let settings = new AscCommon.AutoHyphenationSettings();
+	settings.setAutoHyphenation(documentSettings.isAutoHyphenation());
+	settings.setHyphenationLimit(documentSettings.getConsecutiveHyphenLimit());
+	settings.setHyphenationZone(documentSettings.getHyphenationZone());
+	settings.setHyphenateCaps(documentSettings.isHyphenateCaps());
+	return settings;
+};
+CDocument.prototype.setAutoHyphenationSettings = function(settings)
+{
+	let documentSettings = this.getDocumentSettings();
+	
+	if (settings.isAutoHyphenation() === documentSettings.isAutoHyphenation()
+		&& settings.getHyphenationZone() === documentSettings.getHyphenationZone()
+		&& settings.getHyphenationLimit() === documentSettings.getConsecutiveHyphenLimit()
+		&& settings.isHyphenateCaps() === documentSettings.isHyphenateCaps())
+		return;
+	
+	if (this.IsSelectionLocked(AscCommon.changestype_Document_SectPr))
+		return
+	
+	this.StartAction(AscDFH.historydescription_Document_SetHyphenateCaps);
+	
+	documentSettings.setAutoHyphenation(settings.isAutoHyphenation());
+	documentSettings.setHyphenationZone(settings.getHyphenationZone());
+	documentSettings.setConsecutiveHyphenLimit(settings.getHyphenationLimit());
+	documentSettings.setHyphenateCaps(settings.isHyphenateCaps());
+	
+	this.Recalculate();
+	this.UpdateInterface();
+	this.FinalizeAction();
+};
 CDocument.prototype.OnChangeAutoHyphenation = function()
 {
 	let paragraphs = this.GetAllParagraphs();
