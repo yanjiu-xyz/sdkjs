@@ -74,7 +74,8 @@ function CHistory(Document)
 	this.RegisterClasses = 0;
     this.MinorChanges    = false; // Данный параметр нужен, чтобы определить влияют ли добавленные изменения на пересчет
 
-    this.BinaryWriter = new AscCommon.CMemory();
+    this.BinaryWriter = new AscCommon.CMemory(true);
+	this.BinaryWriter.Init(1024*1024*1);
 
     this.FileCheckSum = 0;
     this.FileSize     = 0;

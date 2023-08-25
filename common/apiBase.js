@@ -378,9 +378,9 @@
 	// modules
 	baseEditorsApi.prototype._loadModules = function()
 	{
-		this.modulesCount = 2;
+		this.modulesCount = 1;
 		AscFonts.load(this, this._onSuccessLoadModule.bind(this), this._onErrorLoadModule.bind(this));
-		AscCommon.zlib_load(this._onSuccessLoadModule.bind(this), this._onErrorLoadModule.bind(this));
+		//AscCommon.zlib_load(this._onSuccessLoadModule.bind(this), this._onErrorLoadModule.bind(this));
 	};
 	baseEditorsApi.prototype._onSuccessLoadModule = function()
 	{
