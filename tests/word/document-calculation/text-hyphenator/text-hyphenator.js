@@ -60,6 +60,7 @@ $(function ()
 	let autoHyphenation = false;
 	let hyphenateCaps   = true;
 	let hyphenLimit     = 0;
+	let hyphenationZone = 2.5;
 	
 	AscWord.Paragraph.prototype.isAutoHyphenation = function()
 	{
@@ -89,6 +90,10 @@ $(function ()
 	function setHyphenLimit(limit)
 	{
 		hyphenLimit = limit;
+	}
+	function setHyphenationZone(mmZone)
+	{
+		hyphenationZone = AscCommon.MMToTwips(mmZone);
 	}
 	
 	function checkLines(assert, isAutoHyphenation, contentWidth, textLines)
@@ -355,6 +360,71 @@ $(function ()
 			"ddd"
 		]);
 		
+	});
+	
+	QUnit.test("Test: \"Test HyphenationZone parameter\"", function(assert)
+	{
+		// На длинном слове, единственном на строке, не работает HyphenationZone (проверял на MS2019)
+		setText("aabbbcccdddd");
+		
+		setHyphenationZone(2.5 * charWidth);
+		checkLines(assert, true, charWidth * 4.5, [
+			"aa-",
+			"bbb-",
+			"ccc-",
+			"dddd"
+		]);
+		
+		setHyphenationZone(4.5 * charWidth);
+		checkLines(assert, true, charWidth * 4.5, [
+			"aa-",
+			"bbb-",
+			"ccc-",
+			"dddd"
+		]);
+		
+		setText("a aabbbcccdddd");
+		setHyphenationZone(2.5 * charWidth);
+		checkLines(assert, true, charWidth * 5.5, [
+			"a aa-",
+			"bbb-",
+			"ccc-",
+			"dddd"
+		]);
+		
+		setHyphenationZone(4.5 * charWidth);
+		checkLines(assert, true, charWidth * 5.5, [
+			"a ",
+			"aa-",
+			"ccc-",
+			"dddd"
+		]);
+		
+		setText("abcd aabbb ABBBB abbb AABBB abbbb aabbbb abcd");
+		
+		setHyphenationZone(1.5 * charWidth);
+		checkLines(assert, true, charWidth * 8.5, [
+			"abcd aa-",
+			"bbb A-",
+			"BBBB a-",
+			"bbb AA-",
+			"BBB a-",
+			"bbbb aa-",
+			"bbbb ab-",
+			"cd"
+		]);
+		
+		setHyphenationZone(2.5 * charWidth);
+		checkLines(assert, true, charWidth * 8.5, [
+			"abcd aa-",
+			"bbb ",
+			"ABBBB ",
+			"abbb AA-",
+			"BBB ",
+			"abbbb aa-",
+			"bbbb ab-",
+			"cd"
+		]);
 	});
 	
 });
