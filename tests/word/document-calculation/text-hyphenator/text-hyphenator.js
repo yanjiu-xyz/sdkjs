@@ -60,7 +60,7 @@ $(function ()
 	let autoHyphenation = false;
 	let hyphenateCaps   = true;
 	let hyphenLimit     = 0;
-	let hyphenationZone = 2.5;
+	let hyphenationZone = 0;
 	
 	AscWord.Paragraph.prototype.isAutoHyphenation = function()
 	{
@@ -73,6 +73,10 @@ $(function ()
 	AscWord.ParagraphRecalculationWrapState.prototype.getAutoHyphenLimit = function()
 	{
 		return hyphenLimit;
+	};
+	AscWord.ParagraphRecalculationWrapState.prototype.getHyphenationZone = function()
+	{
+		return hyphenationZone;
 	};
 	AscWord.TextHyphenator.prototype.isHyphenateCaps = function()
 	{
@@ -91,9 +95,9 @@ $(function ()
 	{
 		hyphenLimit = limit;
 	}
-	function setHyphenationZone(mmZone)
+	function setHyphenationZone(zone)
 	{
-		hyphenationZone = AscCommon.MMToTwips(mmZone);
+		hyphenationZone = zone;
 	}
 	
 	function checkLines(assert, isAutoHyphenation, contentWidth, textLines)
@@ -396,35 +400,52 @@ $(function ()
 		checkLines(assert, true, charWidth * 5.5, [
 			"a ",
 			"aa-",
+			"bbb-",
 			"ccc-",
 			"dddd"
 		]);
 		
-		setText("abcd aabbb ABBBB abbb AABBB abbbb aabbbb abcd");
+		setText("abcd aabbb ABBBB abbbb ABB abbbb aabbbb abcd");
 		
 		setHyphenationZone(1.5 * charWidth);
 		checkLines(assert, true, charWidth * 8.5, [
 			"abcd aa-",
 			"bbb A-",
 			"BBBB a-",
-			"bbb AA-",
-			"BBB a-",
-			"bbbb aa-",
-			"bbbb ab-",
-			"cd"
+			"bbbb ABB ",
+			"abbbb ",
+			"aabbbb ",
+			"abcd"
 		]);
 		
-		setHyphenationZone(2.5 * charWidth);
+		setHyphenationZone(4 * charWidth);
 		checkLines(assert, true, charWidth * 8.5, [
-			"abcd aa-",
-			"bbb ",
+			"abcd ",
+			"aabbb ",
 			"ABBBB ",
-			"abbb AA-",
-			"BBB ",
-			"abbbb aa-",
-			"bbbb ab-",
-			"cd"
+			"abbbb ",
+			"ABB a-",
+			"bbbb ",
+			"aabbbb ",
+			"abcd"
 		]);
+		
+		// Делаем как в MSWord (проверено в 2019 версии)
+		// HyphenationZone расчитываерся начиная от левого поля, а не от левого края параграфа, но прибавляется
+		// текущий сдвиг относительно левого края параграфа
+		para.SetParagraphIndent({Left : 10 * charWidth, FirstLine : 0});
+		setHyphenationZone(4 * charWidth);
+		checkLines(assert, true, charWidth * 18.5, [
+			"abcd aa-",
+			"bbb A-",
+			"BBBB a-",
+			"bbbb ABB ",
+			"abbbb ",
+			"aabbbb ",
+			"abcd"
+		]);
+		
+		para.SetParagraphIndent({Left : 0, FirstLine : 0});
 	});
 	
 });
