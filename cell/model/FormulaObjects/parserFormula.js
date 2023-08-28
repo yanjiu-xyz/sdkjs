@@ -8772,6 +8772,18 @@ function parserFormula( formula, parent, _ws ) {
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
+		} else if (arg0.getCountElement() !== arg1.getCountElement()) {
+			let arrayRows = Math.min(arg0.getRowCount(), arg1.getRowCount()),
+				arrayCols = Math.min(arg0.getCountElementInRow(), arg1.getCountElementInRow());
+				retArr = new cArray();
+
+			for (iRow = 0; iRow < arrayRows; iRow++, iRow < arrayRows ? retArr.addRow() : true) {
+				for (iCol = 0; iCol < arrayCols; iCol++) {
+					_arg0 = arg0.getElementRowCol(iRow, iCol);
+					_arg1 = arg1.getElementRowCol(iRow, iCol);
+					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
+				}
+			}
 		}
 		return retArr;
 	}
