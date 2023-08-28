@@ -480,16 +480,17 @@
             oBrush2 = this.shape2.brush;
         }
 
-        const oContent1 = this.shape1.getDocContent();
-        const oTransform1 = this.shape1.transformText;
-        const oContent2 = this.shape2.getDocContent();
-        const oTransform2 = this.shape2.transformText;
+
         const oGeometryMorph = new CGeometryMorphObject(this.cache, this.relHeight1, this.relHeight2,
             oGeometry1, oBrush1, this.shape1.pen, this.shape1.transform,
             oGeometry2, oBrush2, this.shape2.pen, this.shape2.transform);
         if(oGeometryMorph.isValid()) {
             this.addMorphObject(oGeometryMorph);
             if(!bNoText && this.shape1.getObjectType() === AscDFH.historyitem_type_Shape) {
+                const oContent1 = this.shape1.getDocContent();
+                const oTransform1 = this.shape1.transformText;
+                const oContent2 = this.shape2.getDocContent();
+                const oTransform2 = this.shape2.transformText;
                 if(oContent1 || oContent2) {
                     this.addMorphObject(new CContentMorphObject(oTexturesCache, nRelH1, nRelH2,
                         oContent1, oTransform1,
