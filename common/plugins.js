@@ -84,29 +84,37 @@
 
 	function CPluginsManager(api)
 	{
+		// обычные и системные храним отдельно
 		this.plugins          = [];
 		this.systemPlugins	  = [];
 
+		// мап guid => plugin
+		this.pluginsMap = {};
+
+		// дополнитеьная информация по всем запущенным плагинам.
 		this.runnedPluginsMap = {}; // guid => { iframeId: "", currentVariation: 0, currentInit: false, isSystem: false, startData: {}, closeAttackTimer: -1, methodReturnAsync: false }
-		this.pluginsMap = {};		// guid => { isSystem: false }
 
 		this.path             = "../../../../sdkjs-plugins/";
 		this.systemPath 	  = "";
+
 		this.api              = api;
 		this["api"]			  = this.api;
 
-		this.runAndCloseData = null;
+		this.isSupportManyPlugins = true;
 
-		this.isNoSystemPluginsOnlyOne = true;
+		// используется только если this.isSupportManyPlugins === false
+		this.runAndCloseData = null;
 
 		this.guidAsyncMethod = "";
 
+		// посылать ли сообщения о плагине в интерфейс
+		// (визуальные - да, олеобъекты, обновляемые по ресайзу - нет)
 		this.sendsToInterface = {};
-
-		this.sendEncryptionDataCounter = 0;
 
 		this.language = "en-EN";
 
+		// флаг для зашифрованного режима докладчика
+		this.sendEncryptionDataCounter = 0;
 		if (this.api.isCheckCryptoReporter)
 			this.checkCryptoReporter();
 
@@ -121,11 +129,11 @@
 
 	CPluginsManager.prototype =
 	{
+		// registration
 		unregisterAll : function()
 		{
-			// удаляем все, кроме запущенного
-			var i = 0;
-			for (i = 0; i < this.plugins.length; i++)
+			// удаляем все, кроме запущенных
+			for (let i = 0; i < this.plugins.length; i++)
 			{
 				if (!this.runnedPluginsMap[this.plugins[i].guid])
 				{
@@ -138,32 +146,27 @@
 
 		unregister : function(guid)
 		{
+			// нет плагина - нечего удалять
 			if (!this.pluginsMap[guid])
 				return null;
 
-			let removedPlugin = null;
-
 			this.close(guid);
 
-			if (this.pluginsMap[guid])
-				delete this.pluginsMap[guid];
+			delete this.pluginsMap[guid];
 
-			let currentArray = this.plugins;
-			for (let indexArray = 0; indexArray < 2; indexArray++)
+			for (let arrIndex = 0; arrIndex < 2; arrIndex++)
 			{
+				let currentArray = (arrIndex === 0) ? this.plugins : this.systemPlugins;
 				for (let i = 0, len = currentArray.length; i < len; i++)
 				{
 					if (guid === currentArray[i].guid)
 					{
-						removedPlugin = currentArray[i];
 						currentArray.splice(i, 1);
-						break;
+						return currentArray[i];
 					}
 				}
-				currentArray = this.systemPlugins;
 			}
-
-			return removedPlugin;
+			return null;
 		},
 
 		register : function(basePath, plugins, isDelayRun)
@@ -172,10 +175,10 @@
 
 			for (var i = 0; i < plugins.length; i++)
 			{
-				var guid = plugins[i].guid;
-				var isSystem = false;
-				if (plugins[i].variations && plugins[i].variations[0] && plugins[i].variations[0].isSystem)
-					isSystem = true;
+				let newPlugin = plugins[i];
+
+				let guid = newPlugin.guid;
+				let isSystem = newPlugin.isSystem();
 
 				if (this.runnedPluginsMap[guid])
 				{
@@ -187,9 +190,10 @@
 					// заменяем новым
 					for (var j = 0; j < this.plugins.length; j++)
 					{
-						if (this.plugins[j].guid === guid && this.plugins[j].getIntVersion() < plugins[i].getIntVersion())
+						if (this.plugins[j].guid === guid && this.plugins[j].getIntVersion() < newPlugin.getIntVersion())
 						{
-							this.plugins[j] = plugins[i];
+							this.plugins[j] = newPlugin;
+							this.pluginsMap[j] = newPlugin;
 							break;
 						}
 					}
@@ -197,11 +201,11 @@
 				else
 				{
 					if (!isSystem)
-						this.plugins.push(plugins[i]);
+						this.plugins.push(newPlugin);
 					else
-						this.systemPlugins.push(plugins[i]);
+						this.systemPlugins.push(newPlugin);
 
-					this.pluginsMap[guid] = { isSystem : isSystem };
+					this.pluginsMap[guid] = newPlugin;
 				}
 
 				if (isSystem)
@@ -232,92 +236,183 @@
 				}
 
 				this.systemPlugins.push(plugins[i]);
-				this.pluginsMap[guid] = { isSystem : true };
+				this.pluginsMap[guid] = plugins[i];
 			}
 		},
-		runAllSystem : function()
+
+		loadExtensionPlugins : function(_plugins, isDelayRun, isNoUpdateInterface)
 		{
-			for (var i = 0; i < this.systemPlugins.length; i++)
+			if (!_plugins || _plugins.length < 1)
+				return false;
+
+			var _map = {};
+			for (let i = 0; i < this.plugins.length; i++)
+				_map[this.plugins[i].guid] = this.plugins[i].getIntVersion();
+
+			let newPlugins = [];
+			for (let i = 0; i < _plugins.length; i++)
 			{
-				this.run(this.systemPlugins[i].guid, 0, "");
+				let newPlugin = new Asc.CPlugin();
+				newPlugin["deserialize"](_plugins[i]);
+
+				let oldPlugin = this.pluginsMap[newPlugin.guid];
+
+				if (oldPlugin)
+				{
+					if (oldPlugin.getIntVersion() < newPlugin.getIntVersion())
+					{
+						// нужно обновить
+						for (let j = 0; j < this.plugins.length; j++)
+						{
+							if (this.plugins[j].guid === newPlugin.guid)
+							{
+								this.plugins.splice(j, 1);
+								break;
+							}
+						}
+						delete this.pluginsMap[newPlugin.guid];
+					}
+					else
+					{
+						continue;
+					}
+				}
+
+				newPlugins.push(newPlugin);
 			}
-		},
-		// pointer events methods -------------------
-		enablePointerEvents : function()
-		{
-			for (var guid in this.runnedPluginsMap)
+
+			if (newPlugins.length > 0)
 			{
-				var _frame = document.getElementById(this.runnedPluginsMap[guid].frameId);
-				if (_frame)
-					_frame.style.pointerEvents = "";
+				this.register(this.path, newPlugins, isDelayRun);
+
+				if (true !== isNoUpdateInterface)
+					this.updateInterface();
+
+				return true;
 			}
-		},
-		disablePointerEvents : function()
-		{
-			for (var guid in this.runnedPluginsMap)
-			{
-				var _frame = document.getElementById(this.runnedPluginsMap[guid].frameId);
-				if (_frame)
-					_frame.style.pointerEvents = "none";
-			}
-		},
-		// ------------------------------------------
-		checkRunnedFrameId : function(id)
-		{
-			for (var guid in this.runnedPluginsMap)
-			{
-				if (this.runnedPluginsMap[guid].frameId == id)
-					return true;
-			}
+
 			return false;
 		},
-		sendToAllPlugins : function(data)
-		{
-			for (var guid in this.runnedPluginsMap)
-			{
-				var _frame = document.getElementById(this.runnedPluginsMap[guid].frameId);
-				if (_frame)
-					_frame.contentWindow.postMessage(data, "*");
-			}
-		},
+
+		// common functions
 		getPluginByGuid : function(guid)
 		{
 			if (undefined === this.pluginsMap[guid])
 				return null;
 
-			var _array = (this.pluginsMap[guid].isSystem) ? this.systemPlugins : this.plugins;
-			for (var i = _array.length - 1; i >= 0; i--)
-			{
-				if (_array[i].guid == guid)
-					return _array[i];
-			}
-			return null;
+			return this.pluginsMap[guid];
 		},
-		isWorked : function()
-		{
-			for (var i in this.runnedPluginsMap)
-			{
-				if (this.pluginsMap[i] && !this.pluginsMap[i].isSystem)
-				{
-					return true;
-				}
-			}
-			return false;
-		},
-		stopWorked : function()
-		{
-		   for (var i in this.runnedPluginsMap)
-		   {
-			   if (this.pluginsMap[i] && !this.pluginsMap[i].isSystem)
-			   {
-					this.close(i);
-			   }
-		   }
-		},
+
 		isRunned : function(guid)
 		{
 			return (undefined !== this.runnedPluginsMap[guid]);
 		},
+
+		isWorked : function()
+		{
+			// запущен ли хоть один несистемный плагин
+			for (var i in this.runnedPluginsMap)
+			{
+				if (this.pluginsMap[i] && !this.pluginsMap[i].isSystem())
+					return true;
+			}
+			return false;
+		},
+
+		stopWorked : function()
+		{
+			for (var i in this.runnedPluginsMap)
+			{
+				let pluginType = this.pluginsMap[i] ? this.pluginsMap[i].type : -1;
+				if (pluginType !== Asc.PluginType.System &&
+					pluginType !== Asc.PluginType.Background)
+				{
+					this.close(i);
+				}
+			}
+		},
+
+		// sign/encryption
+		getSign : function()
+		{
+			for (let arrIndex = 0; arrIndex < 2; arrIndex++)
+			{
+				let currentArray = (arrIndex === 0) ? this.plugins : this.systemPlugins;
+				for (let i = 0, len = currentArray.length; i < len; i++)
+				{
+					var _variation = currentArray[i].variations[0];
+					if (_variation && "sign" === _variation.initDataType)
+						return currentArray[i];
+				}
+			}
+			return null;
+		},
+
+		getEncryption : function()
+		{
+			for (let arrIndex = 0; arrIndex < 2; arrIndex++)
+			{
+				let currentArray = (arrIndex === 0) ? this.plugins : this.systemPlugins;
+				for (let i = 0, len = currentArray.length; i < len; i++)
+				{
+					var _variation = currentArray[i].variations[0];
+					if (_variation && "desktop" === _variation.initDataType && "encryption" === _variation.initData)
+						return currentArray[i];
+				}
+			}
+			return null;
+		},
+
+		isRunnedEncryption : function()
+		{
+			var _plugin = this.getEncryption();
+			if (!_plugin)
+				return false;
+			return this.isRunned(_plugin.guid);
+		},
+
+		sendToEncryption : function(data)
+		{
+			var _plugin = this.getEncryption();
+			if (!_plugin)
+				return;
+			this.init(_plugin.guid, data);
+		},
+
+		checkCryptoReporter : function()
+		{
+			this.sendEncryptionDataCounter++;
+			if (2 <= this.sendEncryptionDataCounter)
+			{
+				this.sendToEncryption({
+					"type" : "setPassword",
+					"password" : this.api.currentPassword,
+					"hash" : this.api.currentDocumentHash,
+					"docinfo" : this.api.currentDocumentInfo
+				});
+			}
+		},
+
+		checkRunnedFrameId : function(id)
+		{
+			for (let guid in this.runnedPluginsMap)
+			{
+				if (this.runnedPluginsMap[guid].frameId === id)
+					return true;
+			}
+			return false;
+		},
+
+		sendToAllPlugins : function(data)
+		{
+			for (let guid in this.runnedPluginsMap)
+			{
+				let frame = document.getElementById(this.runnedPluginsMap[guid].frameId);
+				if (frame)
+					frame.contentWindow.postMessage(data, "*");
+			}
+		},
+
 		checkEditorSupport : function(plugin, variation)
 		{
 			var typeEditor = this.api.getEditorId();
@@ -343,13 +438,288 @@
 				return false;
 			return true;
 		},
-		run : function(guid, variation, data, isNoUse_isNoSystemPluginsOnlyOne)
+
+		// events to frame
+		sendMessageToFrame : function(frameId, pluginData)
 		{
-			if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["isSupportPlugins"] && !window["AscDesktopEditor"]["isSupportPlugins"]())
+			if ("" === frameId)
+			{
+				window.postMessage("{\"type\":\"onExternalPluginMessageCallback\",\"data\":" + pluginData.serialize() + "}", "*");
+				return;
+			}
+			var frame = document.getElementById(frameId);
+			if (frame)
+				frame.contentWindow.postMessage(pluginData.serialize(), "*");
+		},
+
+		enablePointerEvents : function()
+		{
+			for (let guid in this.runnedPluginsMap)
+			{
+				var _frame = document.getElementById(this.runnedPluginsMap[guid].frameId);
+				if (_frame)
+					_frame.style.pointerEvents = "";
+			}
+		},
+
+		disablePointerEvents : function()
+		{
+			for (let guid in this.runnedPluginsMap)
+			{
+				var _frame = document.getElementById(this.runnedPluginsMap[guid].frameId);
+				if (_frame)
+					_frame.style.pointerEvents = "none";
+			}
+		},
+
+		onExternalMouseUp : function()
+		{
+			for (let guid in this.runnedPluginsMap)
+			{
+				let runObject = this.runnedPluginsMap[guid];
+				let pluginData = runObject.startData;
+
+				pluginData.setAttribute("type", "onExternalMouseUp");
+				pluginData.setAttribute("guid", guid);
+				this.correctData(pluginData);
+
+				let frame = document.getElementById(runObject.frameId);
+				if (frame)
+				{
+					frame.contentWindow.postMessage(pluginData.serialize(), "*");
+				}
+			}
+		},
+
+		onEnableMouseEvents : function(isEnable)
+		{
+			for (var guid in this.runnedPluginsMap)
+			{
+				let runObject = this.runnedPluginsMap[guid];
+				let pluginData = new Asc.CPluginData();
+
+				pluginData.setAttribute("type", "enableMouseEvent");
+				pluginData.setAttribute("isEnabled", isEnable);
+				pluginData.setAttribute("guid", guid);
+				this.correctData(pluginData);
+
+				let frame = document.getElementById(runObject.frameId);
+				if (frame)
+				{
+					frame.contentWindow.postMessage(pluginData.serialize(), "*");
+				}
+			}
+		},
+
+		onThemeChanged : function(obj)
+		{
+			for (var guid in this.runnedPluginsMap)
+			{
+				let runObject = this.runnedPluginsMap[guid];
+
+				runObject.startData.setAttribute("type", "onThemeChanged");
+				runObject.startData.setAttribute("theme", obj);
+				runObject.startData.setAttribute("guid", guid);
+
+				this.correctData(runObject.startData);
+
+				let frame = document.getElementById(runObject.frameId);
+				if (frame)
+					frame.contentWindow.postMessage(runObject.startData.serialize(), "*");
+			}
+		},
+
+		onChangedSelectionData : function()
+		{
+			for (var guid in this.runnedPluginsMap)
+			{
+				var plugin = this.getPluginByGuid(guid);
+				var runObject = this.runnedPluginsMap[guid];
+
+				if (plugin && plugin.variations[runObject.currentVariation].initOnSelectionChanged === true)
+				{
+					// re-init
+					this.init(guid);
+				}
+			}
+		},
+
+		// plugin events
+		onPluginEvent : function(name, data)
+		{
+			if (this.mainEventTypes[name])
+				this.mainEvents[name] = data;
+
+			return this.onPluginEvent2(name, data, undefined);
+		},
+
+		onPluginEvent2 : function(name, data, guids)
+		{
+			let needsGuids = [];
+			for (let guid in this.runnedPluginsMap)
+			{
+				if (guids && !guids[guid])
+					continue;
+
+				let plugin = this.getPluginByGuid(guid);
+				let runObject = this.runnedPluginsMap[guid];
+
+				if (plugin && plugin.variations[runObject.currentVariation].eventsMap[name])
+				{
+					needsGuids.push(plugin.guid);
+					if (!runObject.isInitReceive)
+					{
+						if (!runObject.waitEvents)
+							runObject.waitEvents = [];
+						runObject.waitEvents.push({ n : name, d : data });
+						continue;
+					}
+					var pluginData = new CPluginData();
+					pluginData.setAttribute("guid", plugin.guid);
+					pluginData.setAttribute("type", "onEvent");
+					pluginData.setAttribute("eventName", name);
+					pluginData.setAttribute("eventData", data);
+
+					this.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginData);
+				}
+			}
+			return needsGuids;
+		},
+
+		buttonClick : function(id, guid, windowId)
+		{
+			if (guid === undefined)
+			{
+				// old version support
+				for (var i in this.runnedPluginsMap)
+				{
+					if (this.runnedPluginsMap[i].isSystem)
+						continue;
+
+					if (this.pluginsMap[i])
+					{
+						guid = i;
+						break;
+					}
+				}
+			}
+
+			if (undefined === guid)
 				return;
 
-            var isEnabled = this.api.DocInfo ? this.api.DocInfo.get_IsEnabledPlugins() : true;
-			if (false === isEnabled)
+			var plugin = this.getPluginByGuid(guid);
+			var runObject = this.runnedPluginsMap[guid];
+
+			if (!plugin || !runObject)
+				return;
+
+			if (runObject.closeAttackTimer !== -1)
+			{
+				clearTimeout(runObject.closeAttackTimer);
+				runObject.closeAttackTimer = -1;
+			}
+
+			if (-1 === id && !windowId)
+			{
+				if (!runObject.currentInit)
+				{
+					this.close(guid);
+				}
+
+				// защита от плохого плагина
+				runObject.closeAttackTimer = setTimeout(function()
+				{
+					window.g_asc_plugins.close();
+				}, 5000);
+			}
+			var iframe = document.getElementById(runObject.frameId);
+			if (iframe)
+			{
+				var pluginData = new CPluginData();
+				pluginData.setAttribute("guid", plugin.guid);
+				pluginData.setAttribute("type", "button");
+				pluginData.setAttribute("button", "" + id);
+				if (windowId)
+					pluginData.setAttribute("buttonWindowId", "" + windowId);
+				iframe.contentWindow.postMessage(pluginData.serialize(), "*");
+			}
+		},
+
+		onPluginEventWindow : function(id, name, data)
+		{
+			var pluginData = new CPluginData();
+			pluginData.setAttribute("guid", this.guidAsyncMethod);
+			pluginData.setAttribute("type", "onEvent");
+			pluginData.setAttribute("eventName", name);
+			pluginData.setAttribute("eventData", data);
+
+			this.sendMessageToFrame(id, pluginData);
+		},
+
+		// interface
+		updateInterface : function()
+		{
+			let plugins = {"url" : this.path, "pluginsData" : []};
+			for (let i = 0; i < this.plugins.length; i++)
+			{
+				plugins["pluginsData"].push(this.plugins[i].serialize());
+			}
+
+			this.api.sendEvent("asc_onPluginsInit", plugins);
+		},
+
+		startLongAction : function()
+		{
+			//console.log("startLongAction");
+			this.api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
+		},
+		endLongAction   : function()
+		{
+			//console.log("endLongAction");
+			this.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
+		},
+
+		// methods
+		onPluginMethodReturn : function(guid, _return)
+		{
+			var plugin = this.getPluginByGuid(guid);
+			var runObject = this.runnedPluginsMap[guid];
+
+			if (!plugin || !runObject)
+				return;
+
+			var pluginData = new CPluginData();
+			pluginData.setAttribute("guid", plugin.guid);
+			pluginData.setAttribute("type", "onMethodReturn");
+			pluginData.setAttribute("methodReturnData", _return);
+
+			this.sendMessageToFrame(plugin.isConnector ? "" : runObject.frameId, pluginData);
+		},
+
+		setPluginMethodReturnAsync : function()
+		{
+			if (this.runnedPluginsMap[this.guidAsyncMethod])
+				this.runnedPluginsMap[this.guidAsyncMethod].methodReturnAsync = true;
+			return this.guidAsyncMethod;
+		},
+
+		// run
+		runAllSystem : function()
+		{
+			for (var i = 0; i < this.systemPlugins.length; i++)
+			{
+				this.run(this.systemPlugins[i].guid, 0, "");
+			}
+		},
+
+		run : function(guid, variation, data, isOnlyResize)
+		{
+			if (window["AscDesktopEditor"] &&
+				window["AscDesktopEditor"]["isSupportPlugins"] &&
+				!window["AscDesktopEditor"]["isSupportPlugins"]())
+				return;
+
+			if (this.api.DocInfo && !this.api.DocInfo.get_IsEnabledPlugins())
 				return;
 
 			if (this.runAndCloseData) // run only on close!!!
@@ -358,37 +728,37 @@
 			if (this.pluginsMap[guid] === undefined)
 				return;
 
-			var plugin = this.getPluginByGuid(guid);
+			let plugin = this.getPluginByGuid(guid);
 			if (!plugin)
 				return;
 
 			if (!this.checkEditorSupport(plugin, variation))
 				return;
 
-			var isSystem = this.pluginsMap[guid].isSystem;
-			var isRunned = (this.runnedPluginsMap[guid] !== undefined) ? true : false;
+			let isSystem = this.pluginsMap[guid].isSystem();
+			let isRunned = (this.runnedPluginsMap[guid] !== undefined) ? true : false;
 
-			if (isRunned && ((variation == null) || variation == this.runnedPluginsMap[guid].currentVariation))
+			if (isRunned)
 			{
 				// запуск запущенного => закрытие
 				this.close(guid);
 				return false;
 			}
 
-			if ((isNoUse_isNoSystemPluginsOnlyOne !== true) && !isSystem && this.isNoSystemPluginsOnlyOne)
+			if (!isSystem && !this.isSupportManyPlugins && !isOnlyResize)
 			{
 				// смотрим, есть ли запущенный несистемный плагин
 				var guidOther = "";
-				for (var i in this.runnedPluginsMap)
+				for (let i in this.runnedPluginsMap)
 				{
-					if (this.pluginsMap[i] && !this.pluginsMap[i].isSystem)
+					if (this.pluginsMap[i] && !this.pluginsMap[i].isSystem())
 					{
 						guidOther = i;
 						break;
 					}
 				}
 
-				if (guidOther != "")
+				if (guidOther !== "")
 				{
 					// стопим текущий, а после закрытия - стартуем новый.
 					this.runAndCloseData = {};
@@ -401,18 +771,18 @@
 				}
 			}
 
-			var _startData = (data == null || data == "") ? new CPluginData() : data;
-			_startData.setAttribute("guid", guid);
-			this.correctData(_startData);
+			var startData = (data == null || data === "") ? new CPluginData() : data;
+			startData.setAttribute("guid", guid);
+			this.correctData(startData);
 			// set theme only on start (big object)
-			_startData.setAttribute("theme", AscCommon.GlobalSkin);
+			startData.setAttribute("theme", AscCommon.GlobalSkin);
 
 			this.runnedPluginsMap[guid] = {
 				frameId: "iframe_" + guid,
 				currentVariation: Math.min(variation, plugin.variations.length - 1),
 				currentInit: false,
 				isSystem: isSystem,
-				startData: _startData,
+				startData: startData,
 				closeAttackTimer: -1,
 				methodReturnAsync: false,
 				isConnector: plugin.isConnector
@@ -420,6 +790,7 @@
 
 			this.show(guid);
 		},
+
 		runResize : function(data)
 		{
 			var guid = data.getAttribute("guid");
@@ -433,40 +804,6 @@
 
 			data.setAttribute("resize", true);
 			return this.run(guid, 0, data, true);
-		},
-		close : function(guid)
-		{
-			var plugin = this.getPluginByGuid(guid);
-			var runObject = this.runnedPluginsMap[guid];
-			if (!plugin || !runObject)
-				return;
-
-			if (runObject.startData && runObject.startData.getAttribute("resize") === true)
-				this.endLongAction();
-
-			runObject.startData = null;
-
-			if (true)
-			{
-				if (this.sendsToInterface[plugin.guid])
-				{
-					this.api.sendEvent("asc_onPluginClose", plugin, runObject.currentVariation);
-					delete this.sendsToInterface[plugin.guid];
-				}
-				var _div = document.getElementById(runObject.frameId);
-				if (_div)
-					_div.parentNode.removeChild(_div);
-			}
-
-			delete this.runnedPluginsMap[guid];
-			this.api.onPluginCloseContextMenuItem(guid);
-
-			if (this.runAndCloseData)
-			{
-				var _tmp = this.runAndCloseData;
-				this.runAndCloseData = null;
-				this.run(_tmp.guid, _tmp.variation, _tmp.data);
-			}
 		},
 
 		show : function(guid)
@@ -498,14 +835,17 @@
 			if (runObject.startData.getAttribute("resize") === true)
 				this.startLongAction();
 
-		    if (this.api.WordControl && this.api.WordControl.m_oTimerScrollSelect != -1)
-		    {
-		        clearInterval(this.api.WordControl.m_oTimerScrollSelect);
-                this.api.WordControl.m_oTimerScrollSelect = -1;
-		    }
+			// заглушка
+			if (this.api.WordControl && this.api.WordControl.m_oTimerScrollSelect !== -1)
+			{
+				clearInterval(this.api.WordControl.m_oTimerScrollSelect);
+				this.api.WordControl.m_oTimerScrollSelect = -1;
+			}
 
 			var urlParams = "?lang=" + this.language + "&theme-type=" + AscCommon.GlobalSkin.type;
-			if (plugin.variations[runObject.currentVariation].isVisual && runObject.startData.getAttribute("resize") !== true)
+
+			if (plugin.variations[runObject.currentVariation]["get_Visual"]() &&
+				runObject.startData.getAttribute("resize") !== true)
 			{
 				this.api.sendEvent("asc_onPluginShow", plugin, runObject.currentVariation, runObject.frameId, urlParams);
 				this.sendsToInterface[plugin.guid] = true;
@@ -562,65 +902,43 @@
 			}
 		},
 
-		buttonClick : function(id, guid, windowId)
+		// close
+		close : function(guid)
 		{
-			if (guid === undefined)
-			{
-				// old version support
-				for (var i in this.runnedPluginsMap)
-				{
-					if (this.runnedPluginsMap[i].isSystem)
-						continue;
-					
-					if (this.pluginsMap[i])
-					{
-						guid = i;
-						break;
-					}
-				}
-			}
-
-			if (undefined === guid)
-				return;
-
 			var plugin = this.getPluginByGuid(guid);
 			var runObject = this.runnedPluginsMap[guid];
-
 			if (!plugin || !runObject)
 				return;
 
-			if (runObject.closeAttackTimer != -1)
-			{
-				clearTimeout(runObject.closeAttackTimer);
-				runObject.closeAttackTimer = -1;
-			}
+			if (runObject.startData && runObject.startData.getAttribute("resize") === true)
+				this.endLongAction();
 
-			if (-1 === id && !windowId)
+			runObject.startData = null;
+
+			if (true)
 			{
-				if (!runObject.currentInit)
+				if (this.sendsToInterface[plugin.guid])
 				{
-					this.close(guid);
+					this.api.sendEvent("asc_onPluginClose", plugin, runObject.currentVariation);
+					delete this.sendsToInterface[plugin.guid];
 				}
-
-				// защита от плохого плагина
-				runObject.closeAttackTimer = setTimeout(function()
-				{
-					window.g_asc_plugins.close();
-				}, 5000);
+				var div = document.getElementById(runObject.frameId);
+				if (div)
+					div.parentNode.removeChild(div);
 			}
-			var _iframe = document.getElementById(runObject.frameId);
-			if (_iframe)
+
+			delete this.runnedPluginsMap[guid];
+			this.api.onPluginCloseContextMenuItem(guid);
+
+			if (this.runAndCloseData)
 			{
-				var pluginData = new CPluginData();
-				pluginData.setAttribute("guid", plugin.guid);
-				pluginData.setAttribute("type", "button");
-				pluginData.setAttribute("button", "" + id);
-				if (windowId)
-					pluginData.setAttribute("buttonWindowId", "" + windowId);
-				_iframe.contentWindow.postMessage(pluginData.serialize(), "*");
+				var _tmp = this.runAndCloseData;
+				this.runAndCloseData = null;
+				this.run(_tmp.guid, _tmp.variation, _tmp.data);
 			}
 		},
 
+		// start data
 		init : function(guid, raw_data)
 		{
 			var plugin = this.getPluginByGuid(guid);
@@ -635,12 +953,11 @@
 				{
 					case Asc.EPluginDataType.text:
 					{
-						var text_data = {
+						let text_data = {
 							data:     "",
-							pushData: function (format, value)
-									  {
-										  this.data = value;
-									  }
+							pushData: function (format, value) {
+								this.data = value;
+							}
 						};
 
 						this.api.asc_CheckCopy(text_data, 1);
@@ -651,12 +968,11 @@
 					}
 					case Asc.EPluginDataType.html:
 					{
-						var text_data = {
+						let text_data = {
 							data:     "",
-							pushData: function (format, value)
-									  {
-										  this.data = value ? value.replace(/class="[a-zA-Z0-9-:;+"\/=]*/g,"") : "";
-									  }
+							pushData: function (format, value) {
+								this.data = value ? value.replace(/class="[a-zA-Z0-9-:;+"\/=]*/g, "") : "";
+							}
 						};
 
 						this.api.asc_CheckCopy(text_data, 2);
@@ -670,7 +986,7 @@
 					}
 					case Asc.EPluginDataType.desktop:
 					{
-						if (plugin.variations[runObject.currentVariation].initData == "encryption")
+						if (plugin.variations[runObject.currentVariation].initData === "encryption")
 						{
 							if (this.api.isReporterMode)
 							{
@@ -704,11 +1020,11 @@
 				runObject.startData.setAttribute("data", raw_data);
 			}
 
-			var _iframe = document.getElementById(runObject.frameId);
-			if (_iframe)
+			var frame = document.getElementById(runObject.frameId);
+			if (frame)
 			{
 				runObject.startData.setAttribute("type", "init");
-				_iframe.contentWindow.postMessage(runObject.startData.serialize(), "*");
+				frame.contentWindow.postMessage(runObject.startData.serialize(), "*");
 			}
 
 			runObject.currentInit = true;
@@ -718,7 +1034,7 @@
 			pluginData.setAttribute("editorType", this.api._editorNameById());
 			pluginData.setAttribute("mmToPx", AscCommon.g_dKoef_mm_to_pix);
 
-			if (undefined == pluginData.getAttribute("data"))
+			if (undefined === pluginData.getAttribute("data"))
 				pluginData.setAttribute("data", "");
 
             pluginData.setAttribute("isViewMode", this.api.isViewMode);
@@ -735,318 +1051,8 @@
                 pluginData.setAttribute("userName", this.api.User.userName);
             }
 		},
-		loadExtensionPlugins : function(_plugins, isDelayRun, isNoUpdateInterface)
-		{
-			if (!_plugins || _plugins.length < 1)
-				return false;
 
-			var _map = {};
-			for (let i = 0; i < this.plugins.length; i++)
-				_map[this.plugins[i].guid] = this.plugins[i].getIntVersion();
-
-			var _new = [];
-			for (let i = 0; i < _plugins.length; i++)
-			{
-				var _p = new Asc.CPlugin();
-				_p["deserialize"](_plugins[i]);
-
-				if (_map[_p.guid] !== undefined)
-				{
-					if (_map[_p.guid] < _p.getIntVersion())
-					{
-						// нужно обновить
-						for (let j = 0; j < this.plugins.length; j++)
-						{
-							if (this.plugins[j].guid === _p.guid)
-							{
-								if (this.pluginsMap[_p.guid])
-									delete this.pluginsMap[_p.guid];
-								this.plugins.splice(j, 1);
-							}
-						}
-					}
-					else
-					{
-						continue;
-					}
-				}
-
-
-				_new.push(_p);
-			}
-
-			if (_new.length > 0)
-			{
-				this.register(this.path, _new, isDelayRun);
-
-				if (true !== isNoUpdateInterface)
-					this.updateInterface();
-
-				return true;
-			}
-
-			return false;
-		},
-
-		updateInterface : function()
-		{
-			var _pluginsInstall = {"url" : this.path, "pluginsData" : []};
-			for (var i = 0; i < this.plugins.length; i++)
-			{
-				_pluginsInstall["pluginsData"].push(this.plugins[i].serialize());
-			}
-
-			this.api.sendEvent("asc_onPluginsInit", _pluginsInstall);
-		},
-
-		startLongAction : function()
-		{
-			//console.log("startLongAction");
-			this.api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
-		},
-		endLongAction   : function()
-		{
-			//console.log("endLongAction");
-			this.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
-		},
-
-		onChangedSelectionData : function()
-		{
-			for (var guid in this.runnedPluginsMap)
-			{
-				var plugin = this.getPluginByGuid(guid);
-				var runObject = this.runnedPluginsMap[guid];
-
-				if (plugin && plugin.variations[runObject.currentVariation].initOnSelectionChanged === true)
-				{
-					// re-init
-					this.init(guid);
-				}
-			}
-		},
-
-        onPluginEvent : function(name, data)
-        {
-			if (this.mainEventTypes[name])
-				this.mainEvents[name] = data;
-
-			let needsGuids = [];
-            for (var guid in this.runnedPluginsMap)
-            {
-                var plugin = this.getPluginByGuid(guid);
-                var runObject = this.runnedPluginsMap[guid];
-
-                if (plugin && plugin.variations[runObject.currentVariation].eventsMap[name])
-                {
-					needsGuids.push(plugin.guid);
-                    if (!runObject.isInitReceive)
-                    {
-                        if (!runObject.waitEvents)
-                            runObject.waitEvents = [];
-                        runObject.waitEvents.push({ n : name, d : data });
-                        continue;
-                    }
-                    var pluginData = new CPluginData();
-                    pluginData.setAttribute("guid", plugin.guid);
-                    pluginData.setAttribute("type", "onEvent");
-                    pluginData.setAttribute("eventName", name);
-                    pluginData.setAttribute("eventData", data);
-
-					this.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginData);
-                }
-            }
-			return needsGuids;
-        },
-
-        onPluginEvent2 : function(name, data, guids)
-        {
-            for (var guid in this.runnedPluginsMap)
-            {
-                var plugin = this.getPluginByGuid(guid);
-                var runObject = this.runnedPluginsMap[guid];
-
-                if (plugin && guids[guid])
-                {
-                    if (!runObject.isInitReceive)
-                    {
-                        if (!runObject.waitEvents)
-                            runObject.waitEvents = [];
-                        runObject.waitEvents.push({ n : name, d : data });
-                        continue;
-                    }
-                    var pluginData = new CPluginData();
-                    pluginData.setAttribute("guid", plugin.guid);
-                    pluginData.setAttribute("type", "onEvent");
-                    pluginData.setAttribute("eventName", name);
-                    pluginData.setAttribute("eventData", data);
-
-					this.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginData);
-                }
-            }
-        },
-
-		onPluginEventWindow : function(id, name, data)
-		{
-			var pluginData = new CPluginData();
-			pluginData.setAttribute("guid", this.guidAsyncMethod);
-			pluginData.setAttribute("type", "onEvent");
-			pluginData.setAttribute("eventName", name);
-			pluginData.setAttribute("eventData", data);
-
-			this.sendMessageToFrame(id, pluginData);
-		},
-
-		onExternalMouseUp : function()
-		{
-			for (var guid in this.runnedPluginsMap)
-			{
-				var runObject = this.runnedPluginsMap[guid];
-				runObject.startData.setAttribute("type", "onExternalMouseUp");
-				this.correctData(runObject.startData);
-
-				var _iframe = document.getElementById(runObject.frameId);
-				if (_iframe)
-				{
-					runObject.startData.setAttribute("guid", guid);
-					_iframe.contentWindow.postMessage(runObject.startData.serialize(), "*");
-				}
-			}
-		},
-
-		onEnableMouseEvents : function(isEnable)
-		{
-			for (var guid in this.runnedPluginsMap)
-			{
-				var runObject = this.runnedPluginsMap[guid];
-
-				var _pluginData = new Asc.CPluginData();
-				_pluginData.setAttribute("type", "enableMouseEvent");
-				_pluginData.setAttribute("isEnabled", isEnable);
-				this.correctData(_pluginData);
-
-				var _iframe = document.getElementById(runObject.frameId);
-				if (_iframe)
-				{
-					_pluginData.setAttribute("guid", guid);
-					_iframe.contentWindow.postMessage(_pluginData.serialize(), "*");
-				}
-			}
-		},
-
-		onThemeChanged : function(obj)
-		{
-			for (var guid in this.runnedPluginsMap)
-			{
-				var runObject = this.runnedPluginsMap[guid];
-				runObject.startData.setAttribute("type", "onThemeChanged");
-				runObject.startData.setAttribute("theme", obj);
-				this.correctData(runObject.startData);
-
-				var _iframe = document.getElementById(runObject.frameId);
-				if (_iframe)
-				{
-					runObject.startData.setAttribute("guid", guid);
-					_iframe.contentWindow.postMessage(runObject.startData.serialize(), "*");
-				}
-			}
-		},
-
-		onPluginMethodReturn : function(guid, _return)
-		{
-			var plugin = this.getPluginByGuid(guid);
-			var runObject = this.runnedPluginsMap[guid];
-
-			if (!plugin || !runObject)
-				return;
-
-			var pluginData = new CPluginData();
-			pluginData.setAttribute("guid", plugin.guid);
-			pluginData.setAttribute("type", "onMethodReturn");
-			pluginData.setAttribute("methodReturnData", _return);
-
-			this.sendMessageToFrame(plugin.isConnector ? "" : runObject.frameId, pluginData);
-		},
-
-		setPluginMethodReturnAsync : function()
-		{
-			if (this.runnedPluginsMap[this.guidAsyncMethod])
-				this.runnedPluginsMap[this.guidAsyncMethod].methodReturnAsync = true;
-			return this.guidAsyncMethod;
-		},
-
-		/* sign methods */
-		getSign : function()
-		{
-			let _count = this.plugins.length;
-			for (let i = 0; i < _count; i++)
-			{
-				var _variation = this.plugins[i].variations[0];
-				if (_variation)
-				{
-					if ("sign" === _variation.initDataType)
-						return this.plugins[i];
-				}
-			}
-
-			return null;
-		},
-
-        /* encryption methods ------------- */
-        getEncryption : function()
-        {
-            var _count = this.plugins.length;
-            var i = 0;
-            for (i = 0; i < _count; i++)
-            {
-                var _variation = this.plugins[i].variations[0];
-                if (_variation)
-                {
-                    if ("desktop" == _variation.initDataType && "encryption" == _variation.initData)
-                        return this.plugins[i];
-                }
-            }
-
-            _count = this.systemPlugins.length;
-            for (i = 0; i < _count; i++)
-            {
-                var _variation = this.systemPlugins[i].variations[0];
-                if (_variation)
-                {
-                    if ("desktop" == _variation.initDataType && "encryption" == _variation.initData)
-                        return this.systemPlugins[i];
-                }
-            }
-
-            return null;
-        },
-        isRunnedEncryption : function()
-        {
-            var _plugin = this.getEncryption();
-            if (!_plugin)
-            	return false;
-            return this.isRunned(_plugin.guid);
-        },
-        sendToEncryption : function(data)
-        {
-            var _plugin = this.getEncryption();
-            if (!_plugin)
-            	return;
-            this.init(_plugin.guid, data);
-        },
-        checkCryptoReporter : function()
-        {
-            this.sendEncryptionDataCounter++;
-            if (2 <= this.sendEncryptionDataCounter)
-            {
-                this.sendToEncryption({
-                    "type" : "setPassword",
-                    "password" : this.api.currentPassword,
-                    "hash" : this.api.currentDocumentHash,
-                    "docinfo" : this.api.currentDocumentInfo
-                });
-            }
-        },
-
+		// external
 		externalConnectorMessage : function(data)
 		{
 			switch (data["type"])
@@ -1063,7 +1069,7 @@
 							{
 								"isViewer"            : true,
 								"EditorsSupport"      : ["word", "cell", "slide"],
-								"isSystem"            : true,
+								"type"                : "system",
 								"buttons"             : []
 							}
 						]
@@ -1112,6 +1118,7 @@
 			}
 		},
 
+		// check origin
 		checkOrigin : function(guid, event)
 		{
 			let windowOrigin = window.origin;
@@ -1131,19 +1138,6 @@
 				return true;
 
 			return false;
-		},
-        /* -------------------------------- */
-
-		sendMessageToFrame : function(frameId, pluginData)
-		{
-			if ("" === frameId)
-			{
-				window.postMessage("{\"type\":\"onExternalPluginMessageCallback\",\"data\":" + pluginData.serialize() + "}", "*");
-				return;
-			}
-			var _iframe = document.getElementById(frameId);
-			if (_iframe)
-				_iframe.contentWindow.postMessage(pluginData.serialize(), "*");
 		}
 	};
 
@@ -1305,15 +1299,15 @@
 		}
 		else if ("close" == name || "command" == name)
 		{
-			if (runObject.closeAttackTimer != -1)
+			if (runObject.closeAttackTimer !== -1)
 			{
 				clearTimeout(runObject.closeAttackTimer);
 				runObject.closeAttackTimer = -1;
 			}
 
-			if (value && value != "")
+			if (value && value !== "")
 			{
-				var _command_callback_send = ("command" == name);
+				var _command_callback_send = ("command" === name);
 				var commandReturn = undefined;
 				try
 				{
@@ -1589,34 +1583,7 @@
         var arrPlugins = [];
         arrPluginsConfigs.forEach(function(item) {
             var plugin = new Asc.CPlugin();
-            plugin["set_Name"](item["name"]);
-            plugin["set_Guid"](item["guid"]);
-            plugin["set_BaseUrl"](item["baseUrl"]);
-            plugin["set_Loader"](item["loader"]);
-            var variations = item["variations"];
-        	var variationsArr = [];
-            variations.forEach(function(itemVar){
-                var variation = new Asc.CPluginVariation();
-                variation["set_Description"](itemVar["description"]);
-                variation["set_Url"](itemVar["url"]);
-                variation["set_Icons"](itemVar["icons"]);
-                variation["set_Visual"](itemVar["isVisual"]);
-                variation["set_CustomWindow"](itemVar["'isCustomWindow"]);
-                variation["set_System"](itemVar["isSystem"]);
-                variation["set_Viewer"](itemVar["isViewer"]);
-                variation["set_EditorsSupport"](itemVar["EditorsSupport"]);
-                variation["set_Modal"](itemVar["isModal"]);
-                variation["set_InsideMode"](itemVar["isInsideMode"]);
-                variation["set_InitDataType"](itemVar["initDataType"]);
-                variation["set_InitData"](itemVar["initData"]);
-                variation["set_UpdateOleOnResize"](itemVar["isUpdateOleOnResize"]);
-                variation["set_Buttons"](itemVar["buttons"]);
-                variation["set_Size"](itemVar["size"]);
-                variation["set_InitOnSelectionChanged"](itemVar["initOnSelectionChanged"]);
-                variation["set_Events"](itemVar["events"]);
-                variationsArr.push(variation);
-            });
-            plugin["set_Variations"](variationsArr);
+			plugin["deserialize"](item);
             arrPlugins.push(plugin);
         });
 
