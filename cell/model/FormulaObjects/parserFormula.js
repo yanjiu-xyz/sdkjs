@@ -3981,33 +3981,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cPowOperator.prototype.priority = 40;
 	cPowOperator.prototype.argumentsCurrent = 2;
 	cPowOperator.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1];
-		if (arg0 instanceof cArea) {
-			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArea3D) {
-			arg0 = arg0.cross(arguments[1], arguments[3]);
-		}
-		arg0 = arg0.tocNumber();
-		if (arg1 instanceof cArea) {
-			arg1 = arg1.cross(arguments[1]);
-		} else if (arg1 instanceof cArea3D) {
-			arg1 = arg1.cross(arguments[1], arguments[3]);
-		}
-		arg1 = arg1.tocNumber();
-		if (arg0 instanceof cError) {
-			return arg0;
-		}
-		if (arg1 instanceof cError) {
-			return arg1;
+		let res = AscCommonExcel.cFormulaFunction.POWER.prototype.Calculate(arg);
+
+		if (res) {
+			return res;
 		}
 
-		var _v = Math.pow(arg0.getValue(), arg1.getValue());
-		if (isNaN(_v)) {
-			return new cError(cErrorType.not_numeric);
-		} else if (_v === Number.POSITIVE_INFINITY) {
-			return new cError(cErrorType.division_by_zero);
-		}
-		return new cNumber(_v);
+		return new cError(cErrorType.wrong_value_type);
 	};
 
 	/**
