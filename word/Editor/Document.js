@@ -12677,6 +12677,7 @@ CDocument.prototype.Refresh_RecalcData = function(oData)
 		case AscDFH.historyitem_Document_Settings_AutoHyphenation:
 		case AscDFH.historyitem_Document_Settings_ConsecutiveHyphenLimit:
 		case AscDFH.historyitem_Document_Settings_DoNotHyphenateCaps:
+		case AscDFH.historyitem_Document_Settings_HyphenationZone:
 		{
 			nChangePos = 0;
 			break;

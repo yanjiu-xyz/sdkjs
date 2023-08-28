@@ -110,7 +110,7 @@
 	};
 	DocumentSettings.prototype.getHyphenationZone = function()
 	{
-		return undefined === this.hyphenationZone ? DEFAULT_HYPHENATION_ZONE : this.autoHyphenation;
+		return undefined === this.hyphenationZone ? DEFAULT_HYPHENATION_ZONE : this.hyphenationZone;
 	};
 	DocumentSettings.prototype.setHyphenationZone = function(zone)
 	{
