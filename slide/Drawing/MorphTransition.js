@@ -462,8 +462,8 @@
         CComplexMorphObject.call(this, oTexturesCache, nRelH1, nRelH2);
         this.shape1 = oShape1;
         this.shape2 = oShape2;
-        const oGeometry1 = this.shape1.getGeometry();
-        const oGeometry2 = this.shape2.getGeometry();
+        const oGeometry1 = this.shape1.getMorphGeometry();
+        const oGeometry2 = this.shape2.getMorphGeometry();
         let oBrush1, oBrush2;
         if(this.shape1.blipFill) {
             oBrush1 = new AscFormat.CUniFill();
@@ -479,16 +479,17 @@
         else {
             oBrush2 = this.shape2.brush;
         }
+
+        const oContent1 = this.shape1.getDocContent();
+        const oTransform1 = this.shape1.transformText;
+        const oContent2 = this.shape2.getDocContent();
+        const oTransform2 = this.shape2.transformText;
         const oGeometryMorph = new CGeometryMorphObject(this.cache, this.relHeight1, this.relHeight2,
             oGeometry1, oBrush1, this.shape1.pen, this.shape1.transform,
             oGeometry2, oBrush2, this.shape2.pen, this.shape2.transform);
         if(oGeometryMorph.isValid()) {
             this.addMorphObject(oGeometryMorph);
             if(!bNoText && this.shape1.getObjectType() === AscDFH.historyitem_type_Shape) {
-                const oContent1 = this.shape1.getDocContent();
-                const oTransform1 = this.shape1.transformText;
-                const oContent2 = this.shape2.getDocContent();
-                const oTransform2 = this.shape2.transformText;
                 if(oContent1 || oContent2) {
                     this.addMorphObject(new CContentMorphObject(oTexturesCache, nRelH1, nRelH2,
                         oContent1, oTransform1,
@@ -524,6 +525,9 @@
     }
     AscFormat.InitClassWithoutType(CGeometryMorphObject, CMorphObjectBase);
     CGeometryMorphObject.prototype.init = function() {
+        if(!this.geometry1 || !this.geometry2) {
+            return;;
+        }
         const aPathLst1 = this.geometry1.pathLst;
         const aPathLst2 = this.geometry2.pathLst;
 
