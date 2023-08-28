@@ -446,6 +446,29 @@ $(function ()
 		]);
 		
 		para.SetParagraphIndent({Left : 0, FirstLine : 0});
+		
+		// TODO: Реализовать этот случай
+		// Проверяем, что расчет HyphenationZone идет с начала слова, а не с места первого разрыва
+		// setText("abcd aabbbcccdddd");
+		//
+		// setHyphenationZone(6 * charWidth);
+		// checkLines(assert, true, charWidth * 15.5, [
+		// 	"abcd aabbbccc-",
+		// 	"dddd"
+		// ]);
+		//
+		// setHyphenationZone(9 * charWidth);
+		// checkLines(assert, true, charWidth * 15.5, [
+		// 	"abcd aabbbccc-",
+		// 	"dddd"
+		// ]);
+		//
+		// setHyphenationZone(12 * charWidth);
+		// checkLines(assert, true, charWidth * 15.5, [
+		// 	"abcd ",
+		// 	"aabbbcccdddd"
+		// ]);
+		
 	});
 	
 });
