@@ -1364,16 +1364,22 @@
 							}
 							else
 							{
-								var editorId = window.g_asc_plugins.api.getEditorId();
-								if (AscCommon.c_oEditorId.Spreadsheet === editorId)
+								switch (window.g_asc_plugins.api.getEditorId())
 								{
-									// На asc_canPaste создается точка в истории и startTransaction. Поэтому нужно ее закрыть без пересчета.
-									window.g_asc_plugins.api.asc_endPaste();
-								}
-								else if (AscCommon.c_oEditorId.Word === editorId ||
-									AscCommon.c_oEditorId.Presentation === editorId)
-								{
-									window.g_asc_plugins.api.WordControl.m_oLogicDocument.FinalizeAction();
+									case AscCommon.c_oEditorId.Word:
+									case AscCommon.c_oEditorId.Presentation:
+									{
+										window.g_asc_plugins.api.WordControl.m_oLogicDocument.FinalizeAction();
+										break;
+									}
+									case AscCommon.c_oEditorId.Spreadsheet:
+									{
+										// На asc_canPaste создается точка в истории и startTransaction. Поэтому нужно ее закрыть без пересчета.
+										window.g_asc_plugins.api.asc_endPaste();
+										break;
+									}
+									default:
+										break;
 								}
 							}
 						}
@@ -1498,24 +1504,24 @@
 
         if (window.location && window.location.search)
         {
-            var _langSearch = window.location.search;
-            var _pos1 = _langSearch.indexOf("lang=");
-            var _pos2 = (-1 !== _pos1) ? _langSearch.indexOf("&", _pos1) : -1;
-            if (_pos1 >= 0)
+            let langSearch = window.location.search;
+            let pos1 = langSearch.indexOf("lang=");
+            let pos2 = (-1 !== pos1) ? langSearch.indexOf("&", pos1) : -1;
+            if (pos1 >= 0)
             {
-                _pos1 += 5;
+                pos1 += 5;
 
-                if (_pos2 < 0)
-                    _pos2 = _langSearch.length;
+                if (pos2 < 0)
+                    pos2 = langSearch.length;
 
-                var _lang = _langSearch.substr(_pos1, _pos2 - _pos1);
-                if (_lang.length === 2)
+                let lang = langSearch.substr(pos1, pos2 - pos1);
+                if (lang.length === 2)
                 {
-                    _lang = (_lang.toLowerCase() + "-" + _lang.toUpperCase());
+                    lang = (lang.toLowerCase() + "-" + lang.toUpperCase());
                 }
 
-                if (5 === _lang.length)
-                    window.g_asc_plugins.language = _lang;
+                if (5 === lang.length)
+                    window.g_asc_plugins.language = lang;
             }
         }
 
