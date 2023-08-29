@@ -58,11 +58,11 @@
 	}
 	CParagraphSpellCheckerElement.prototype.GetStartPos = function()
 	{
-		return this.StartPos;
+		return this.getStartParaPos();
 	};
 	CParagraphSpellCheckerElement.prototype.GetEndPos = function()
 	{
-		return this.EndPos;
+		return this.getEndParaPos();
 	};
 	CParagraphSpellCheckerElement.prototype.GetPrefix = function()
 	{
@@ -92,9 +92,17 @@
 	{
 		return this.startRun;
 	};
+	CParagraphSpellCheckerElement.prototype.GetStartInRunPos = function()
+	{
+		return this.startInRunPos;
+	};
 	CParagraphSpellCheckerElement.prototype.GetEndRun = function()
 	{
 		return this.endRun;
+	};
+	CParagraphSpellCheckerElement.prototype.GetEndInRunPos = function()
+	{
+		return this.endInRunPos;
 	};
 	CParagraphSpellCheckerElement.prototype.GetWord = function()
 	{
@@ -181,21 +189,21 @@
 	CParagraphSpellCheckerElement.prototype.getStartParaPos = function()
 	{
 		let paragraph = this.getParagraph();
-		if (!paragraph)
+		let paraPos   = paragraph ? paragraph.GetPosByElement(this.startRun) : null;
+		if (!paraPos)
 			return new AscWord.CParagraphContentPos();
 		
-		let paraPos = paragraph.GetPosByElement(this.startRun);
-		paraPos.Update(this.startInRunPos, paraPos.GetDepth());
+		paraPos.Update(this.startInRunPos, paraPos.GetDepth() + 1);
 		return paraPos;
 	};
 	CParagraphSpellCheckerElement.prototype.getEndParaPos = function()
 	{
 		let paragraph = this.getParagraph();
-		if (!paragraph)
+		let paraPos   = paragraph ? paragraph.GetPosByElement(this.endRun) : null;
+		if (!paraPos)
 			return new AscWord.CParagraphContentPos();
 		
-		let paraPos = paragraph.GetPosByElement(this.endRun);
-		paraPos.Update(this.endInRunPos, paraPos.GetDepth());
+		paraPos.Update(this.endInRunPos, paraPos.GetDepth() + 1);
 		return paraPos;
 	};
 	

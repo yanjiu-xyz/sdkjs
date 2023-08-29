@@ -977,22 +977,7 @@ Paragraph.prototype.Internal_Content_Add = function(Pos, Item)
 		if (ContentPos.Data[0] >= Pos)
 			ContentPos.Data[0]++;
 	}
-
-	// Передвинем все метки слов для проверки орфографии
-	for (var nIndex = 0, nCount = this.SpellChecker.Elements.length; nIndex < nCount; ++nIndex)
-	{
-		var Element    = this.SpellChecker.Elements[nIndex];
-		var ContentPos = Element.StartPos;
-
-		if (ContentPos.Data[0] >= Pos)
-			ContentPos.Data[0]++;
-
-		ContentPos = Element.EndPos;
-
-		if (ContentPos.Data[0] >= Pos)
-			ContentPos.Data[0]++;
-	}
-
+	
 	if (Item.SetParent)
 		Item.SetParent(this);
 
@@ -1105,20 +1090,6 @@ Paragraph.prototype.Internal_Content_Remove = function(Pos)
 	// Удаляем комментарий, если это необходимо
 	if (true === this.DeleteCommentOnRemove && para_Comment === Item.Type && this.LogicDocument)
 		this.LogicDocument.RemoveComment(Item.CommentId, true, false);
-
-	for (var nIndex = 0, nCount = this.SpellChecker.Elements.length; nIndex < nCount; ++nIndex)
-	{
-		var Element    = this.SpellChecker.Elements[nIndex];
-		var ContentPos = Element.StartPos;
-
-		if (ContentPos.Data[0] > Pos)
-			ContentPos.Data[0]--;
-
-		ContentPos = Element.EndPos;
-
-		if (ContentPos.Data[0] > Pos)
-			ContentPos.Data[0]--;
-	}
 
 	this.OnContentChange();
 };
@@ -14488,20 +14459,6 @@ Paragraph.prototype.private_CheckDropCapForSpellCheck = function()
 
 	oElement.SetCorrect();
 };
-Paragraph.prototype.AddSpellCheckerElement = function(oElement)
-{
-	let oRun = this.GetClassByPos(oElement.GetStartPos());
-	if (!oRun || !oRun.IsRun())
-		return;
-
-	oRun.AddSpellCheckerElement(oElement, true);
-
-	oRun = this.GetClassByPos(oElement.GetEndPos());
-	if (!oRun || !oRun.IsRun())
-		return;
-
-	oRun.AddSpellCheckerElement(oElement, false);
-};
 Paragraph.prototype.ReplaceMisspelledWord = function(Word, oElement)
 {
 	var Element = null;
@@ -14531,16 +14488,13 @@ Paragraph.prototype.ReplaceMisspelledWord = function(Word, oElement)
 		Word = Word.substr(1);
 
 	// Сначала вставим новое слово
-	var Class = Element.StartRun;
-	if (para_Run !== Class.Type || Element.StartPos.Data.Depth <= 0)
-		return;
-
-	var RunPos = Element.StartPos.Data[Element.StartPos.Depth - 1];
-	Class.AddText(Word, RunPos);
+	var startRun = Element.GetStartRun();
+	var inRunPos = Element.GetStartInRunPos();
+	startRun.AddText(Word, inRunPos);
 
 	// Удалим старое слово
-	var StartPos = Element.StartPos;
-	var EndPos   = Element.EndPos;
+	var StartPos = Element.GetStartPos();
+	var EndPos   = Element.GetEndPos();
 
 	// Если комментарии попадают в текст, тогда сначала их надо отдельно удалить
 	var CommentsToDelete = {};
