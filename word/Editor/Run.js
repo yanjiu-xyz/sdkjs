@@ -1838,16 +1838,10 @@ ParaRun.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 	}
 
     // Обновляем позиции для орфографии
-    var SpellingMarksCount = this.SpellingMarks.length;
-    for ( var Index = 0; Index < SpellingMarksCount; Index++ )
-    {
-        var Mark       = this.SpellingMarks[Index];
-        var ContentPos = ( true === Mark.Start ? Mark.Element.StartPos : Mark.Element.EndPos );
-        var Depth      = Mark.Depth;
-
-        if ( ContentPos.Data[Depth] >= Pos )
-            ContentPos.Data[Depth]++;
-    }
+	for (let iMark = 0, nMarks = this.SpellingMarks.length; iMark < nMarks; ++iMark)
+	{
+		this.SpellingMarks[iMark].onAdd(Pos);
+	}
 
 	this.private_UpdateDocumentOutline();
     this.private_UpdateTrackRevisionOnChangeContent(true);
@@ -1913,20 +1907,12 @@ ParaRun.prototype.Remove_FromContent = function(Pos, Count, UpdatePosition)
         else if ( ContentPos.Data[Depth] > Pos )
             ContentPos.Data[Depth] = Math.max( 0 , Pos );
     }
-
-    // Обновляем позиции для орфографии
-    var SpellingMarksCount = this.SpellingMarks.length;
-    for ( var Index = 0; Index < SpellingMarksCount; Index++ )
-    {
-        var Mark       = this.SpellingMarks[Index];
-        var ContentPos = ( true === Mark.Start ? Mark.Element.StartPos : Mark.Element.EndPos );
-        var Depth      = Mark.Depth;
-
-        if ( ContentPos.Data[Depth] > Pos + Count )
-            ContentPos.Data[Depth] -= Count;
-        else if ( ContentPos.Data[Depth] > Pos )
-            ContentPos.Data[Depth] = Math.max( 0 , Pos );
-    }
+	
+	// Обновляем позиции для орфографии
+	for (let iMark = 0, nMarks = this.SpellingMarks.length; iMark < nMarks; ++iMark)
+	{
+		this.SpellingMarks[iMark].onRemove(Pos, Count);
+	}
 
 	this.private_UpdateDocumentOutline();
 	this.private_UpdateTrackRevisionOnChangeContent(true);
@@ -2827,29 +2813,16 @@ ParaRun.prototype.Split2 = function(CurPos, Parent, ParentPos)
 	}
 
 	// Если были точки орфографии, тогда переместим их в новый ран
-	var SpellingMarksCount = this.SpellingMarks.length;
-	for ( var Index = 0; Index < SpellingMarksCount; Index++ )
+	for (let iMark = 0, nMarks = this.SpellingMarks.length; iMark < nMarks; ++iMark)
 	{
-		var Mark    = this.SpellingMarks[Index];
-		var MarkPos = ( true === Mark.Start ? Mark.Element.StartPos.Get(Mark.Depth) : Mark.Element.EndPos.Get(Mark.Depth) );
-
-		if ( MarkPos >= CurPos )
+		let mark = this.SpellingMarks[iMark];
+		if (mark.getPos() >= CurPos)
 		{
-			var MarkElement = Mark.Element;
-			if ( true === Mark.Start )
-			{
-				MarkElement.StartPos.Data[Mark.Depth] -= CurPos;
-			}
-			else
-			{
-				MarkElement.EndPos.Data[Mark.Depth] -= CurPos;
-			}
-
-			NewRun.SpellingMarks.push( Mark );
-
-			this.SpellingMarks.splice( Index, 1 );
-			SpellingMarksCount--;
-			Index--;
+			mark.movePos(-CurPos);
+			NewRun.SpellingMarks.push(mark);
+			this.SpellingMarks.splice(iMark, 1);
+			--nMarks;
+			--iMark;
 		}
 	}
 
@@ -7049,31 +7022,24 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
 
     PDSL.CurPos.Update(StartPos, PDSL.CurDepth);
     var nSpellingErrorsCounter = PDSL.GetSpellingErrorsCounter();
-
-    var SpellingMarksCount = this.SpellingMarks.length;
-    var SpellDataLen = EndPos + 1;
-    var SpellData = g_oSpellCheckerMarks.Check(SpellDataLen);
-    var Mark = null, MarkIndex = 0;
-    for ( var SPos = 0; SPos < SpellingMarksCount; SPos++)
-    {
-        Mark = this.SpellingMarks[SPos];
-
-        if ( false === Mark.Element.Checked )
-        {
-            if ( true === Mark.Start )
-            {
-            	MarkIndex = Mark.Element.StartPos.Get(Mark.Depth);
-            	if (MarkIndex < SpellDataLen)
-            		SpellData[MarkIndex] += 1;
-            }
-            else
-            {
-				MarkIndex = Mark.Element.EndPos.Get(Mark.Depth);
-				if (MarkIndex < SpellDataLen)
-					SpellData[MarkIndex] -= 1;
-            }
-        }
-    }
+	
+	var SpellDataLen = EndPos + 1;
+	var SpellData    = g_oSpellCheckerMarks.Check(SpellDataLen);
+	for (var iMark = 0, nMarks = this.SpellingMarks.length; iMark < nMarks; ++iMark)
+	{
+		let mark = this.SpellingMarks[iMark];
+		if (!mark.isMisspelled())
+			continue;
+		
+		let markPos = mark.getPos();
+		if (markPos >= SpellDataLen)
+			continue;
+		
+		if (mark.isStart())
+			SpellData[markPos] += 1;
+		else
+			SpellData[markPos] -= 1;
+	}
 
 	let oLine  = Para.Lines[PDSL.Line];
 	let oRange = oLine ? oLine.Ranges[PDSL.Range] : undefined;
@@ -9250,35 +9216,20 @@ ParaRun.prototype.Split_Run = function(Pos)
     {
         NewRun.State.Selection.EndPos = 0;
     }
-
-    // Если были точки орфографии, тогда переместим их в новый ран
-    var SpellingMarksCount = this.SpellingMarks.length;
-    for ( var Index = 0; Index < SpellingMarksCount; Index++ )
-    {
-        var Mark    = this.SpellingMarks[Index];
-        var MarkPos = ( true === Mark.Start ? Mark.Element.StartPos.Get(Mark.Depth) : Mark.Element.EndPos.Get(Mark.Depth) );
-
-        if ( MarkPos >= Pos )
-        {
-            var MarkElement = Mark.Element;
-            if ( true === Mark.Start )
-            {
-                //MarkElement.ClassesS[Mark.Depth]       = NewRun;
-                MarkElement.StartPos.Data[Mark.Depth] -= Pos;
-            }
-            else
-            {
-                //MarkElement.ClassesE[Mark.Depth]     = NewRun;
-                MarkElement.EndPos.Data[Mark.Depth] -= Pos;
-            }
-
-            NewRun.SpellingMarks.push( Mark );
-
-            this.SpellingMarks.splice( Index, 1 );
-            SpellingMarksCount--;
-            Index--;
-        }
-    }
+	
+	// Если были точки орфографии, тогда переместим их в новый ран
+	for (let iMark = 0, nMarks = this.SpellingMarks.length; iMark < nMarks; ++iMark)
+	{
+		let mark = this.SpellingMarks[iMark];
+		if (mark.getPos() >= Pos)
+		{
+			mark.movePos(-Pos);
+			NewRun.SpellingMarks.push(mark);
+			this.SpellingMarks.splice(iMark, 1);
+			--nMarks;
+			--iMark;
+		}
+	}
 
     History.Add(new CChangesRunOnEndSplit(this, NewRun));
     AscCommon.CollaborativeEditing.OnEnd_SplitRun(NewRun);
@@ -13290,29 +13241,22 @@ ParaRun.prototype.CheckSpelling = function(oCollector, nDepth)
 	for (let nPos = nStartPos, nContentLen = this.Content.length; nPos < nContentLen; ++nPos)
 	{
 		oCollector.UpdatePos(nPos, nDepth);
-		oCollector.HandleRunElement(this.Content[nPos], oCurTextPr);
+		oCollector.HandleRunElement(this.Content[nPos], oCurTextPr, this, nPos);
 
 		if (oCollector.IsExceedLimit())
 			break;
 	}
 };
-ParaRun.prototype.AddSpellCheckerElement = function(oElement, isStart)
+ParaRun.prototype.AddSpellCheckerElement = function(spellMark)
 {
-	if (isStart)
-		oElement.StartRun = this;
-	else
-		oElement.EndRun = this;
-
-	// TODO: Зачем тут Depth?
-	this.SpellingMarks.push(new AscCommonWord.CParagraphSpellingMark(oElement, isStart, isStart ? oElement.GetStartPos().GetDepth() : oElement.GetEndPos().GetDepth()));
+	this.SpellingMarks.push(spellMark);
 };
-ParaRun.prototype.RemoveSpellCheckerElement = function(oElement)
+ParaRun.prototype.RemoveSpellCheckerElement = function(element)
 {
-	for (let nCount = this.SpellingMarks.length, nIndex = nCount - 1; nIndex >= 0; --nIndex)
+	for (let iMark = this.SpellingMarks.length - 1; iMark >= 0; --iMark)
 	{
-		let oMark = this.SpellingMarks[nIndex];
-		if (oElement === oMark.Element)
-			this.SpellingMarks.splice(nIndex, 1);
+		if (this.SpellingMarks[iMark].getElement() === element)
+			this.SpellingMarks.splice(iMark, 1);
 	}
 };
 ParaRun.prototype.ClearSpellingMarks = function()
