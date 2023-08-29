@@ -13204,9 +13204,6 @@
 		if (!api) {
 			return;
 		}
-		if (api.documentOpenOptions && api.documentOpenOptions["debug"]) {
-			console.log("clientLog: "+ msg);
-		}
 		api.CoAuthoringApi.sendClientLog(level, msg);
 	}
 
