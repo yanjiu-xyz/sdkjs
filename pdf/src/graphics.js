@@ -65,6 +65,9 @@ CPDFGraphics.prototype.SetLineWidth = function(width) {
         
     this.lineWidth = width;
 };
+CPDFGraphics.prototype.GetLineWidth = function() {
+    return this.lineWidth;
+};
 CPDFGraphics.prototype.Init = function(context, nWidthPx, nHeightPx) {
     this.context    = context;
     this.widthPx    = nWidthPx;
@@ -110,6 +113,9 @@ CPDFGraphics.prototype.SetGlobalAlpha = function(value) {
 };
 CPDFGraphics.prototype.Arc = function(x, y, radius, startAng, endAng, counterClockwise) {
     this.context.arc(x, y, radius, startAng, endAng, counterClockwise);
+};
+CPDFGraphics.prototype.ArcTo = function() {
+    this.context.arcTo(...arguments);
 };
 CPDFGraphics.prototype.Fill = function() {
     this.context.fill();

@@ -211,7 +211,7 @@ StartAddNewShape.prototype =
                     let oInkAnnot = oLogicDocument.AddAnnot({
                         rect:       aRect,
                         page:       oViewer.currentPage,
-                        contents:   "",
+                        contents:   null,
                         type:       AscPDF.ANNOTATIONS_TYPES.Ink
                     });
 
@@ -777,16 +777,23 @@ RotateState.prototype =
 
             if (editor.isDocumentRenderer()) {
                 
+                let oDoc = editor.getDocumentRenderer().getPDFDoc();
                 for(i = 0; i < this.drawingObjects.arrTrackObjects.length; ++i)
                 {   
                     var oTrack  = this.drawingObjects.arrTrackObjects[i];
                     bounds      = oTrack.getBounds();
                     oTrack.trackEnd(true);
 
-                    
                     if (oTrack instanceof AscFormat.ResizeTrackShapeImage) {
                         let aRect = [bounds.min_x * g_dKoef_mm_to_pix, bounds.min_y * g_dKoef_mm_to_pix, bounds.max_x * g_dKoef_mm_to_pix, bounds.max_y * g_dKoef_mm_to_pix];
+                        
+                        oDoc.CreateNewHistoryPoint();
+                        if (oTrack.originalFlipV != oTrack.resizedflipV)
+                            oDoc.History.Add(new CChangesPDFInkFlipV(oTrack.originalObject, oTrack.originalFlipV, oTrack.resizedflipV));
+                        if (oTrack.originalFlipH != oTrack.resizedflipH)
+                            oDoc.History.Add(new CChangesPDFInkFlipH(oTrack.originalObject, oTrack.originalFlipH, oTrack.resizedflipH));
                         oTrack.originalObject.SetRect(aRect);
+                        oDoc.TurnOffHistory();
                     }
                     
                     oTrack.originalObject.AddToRedraw();

@@ -1093,9 +1093,11 @@ var CPresentation = CPresentation || function(){};
 
                 // Перерисуем страницу, на которой произошли изменения
                 oViewer._paintForms();
+                oViewer.onUpdateOverlay();
             }
             
             oViewer._paintAnnots();
+            oViewer.onUpdateOverlay();
             oViewer.isOnUndoRedo = false;
         }
     };
@@ -1144,9 +1146,11 @@ var CPresentation = CPresentation || function(){};
                 
                 // Перерисуем страницу, на которой произошли изменения
                 oViewer._paintForms();
+                oViewer.onUpdateOverlay();
             }
 
             oViewer._paintAnnots();
+            oViewer.onUpdateOverlay();
             oViewer.isOnUndoRedo = false;
         }
     };
@@ -1377,7 +1381,68 @@ var CPresentation = CPresentation || function(){};
         //     oAnnot.SetDrawFromStream(false);
         // }
 
+        oAnnot.AddToRedraw();
         return oAnnot;
+    };
+    CPDFDoc.prototype.SetHighlight = function(r, g, b) {
+        let oViewer         = editor.getDocumentRenderer();
+        let oFile           = oViewer.file;
+        let oSelRect        = oFile.getSelectionRect();
+        if (oSelRect == null)
+            return;
+
+        let oProps = {
+            rect:       [oSelRect.x1 - 2, oSelRect.y1 - 2, oSelRect.x2 + 2, oSelRect.y2 + 2],
+            page:       oViewer.currentPage,
+            name:       AscCommon.CreateGUID(),
+            type:       AscPDF.ANNOTATIONS_TYPES.Highlight,
+            hidden:     false
+        }
+
+        let oAnnot = this.AddAnnot(oProps);
+
+        oAnnot.SetQuads([oSelRect.x1, oSelRect.y1, oSelRect.x2, oSelRect.y1, oSelRect.x1, oSelRect.y2, oSelRect.x2, oSelRect.y2]);
+        oAnnot.SetStrokeColor([r/255, g/255, b/255]);
+    };
+    CPDFDoc.prototype.SetUnderline = function(r, g, b) {
+        let oViewer         = editor.getDocumentRenderer();
+        let oFile           = oViewer.file;
+        let oSelRect        = oFile.getSelectionRect();
+        if (oSelRect == null)
+            return;
+
+        let oProps = {
+            rect:       [oSelRect.x1 - 2, oSelRect.y1 - 2, oSelRect.x2 + 2, oSelRect.y2 + 2],
+            page:       oViewer.currentPage,
+            name:       AscCommon.CreateGUID(),
+            type:       AscPDF.ANNOTATIONS_TYPES.Underline,
+            hidden:     false
+        }
+
+        let oAnnot = this.AddAnnot(oProps);
+
+        oAnnot.SetQuads([oSelRect.x1, oSelRect.y1, oSelRect.x2, oSelRect.y1, oSelRect.x1, oSelRect.y2, oSelRect.x2, oSelRect.y2]);
+        oAnnot.SetStrokeColor([r/255, g/255, b/255]);
+    };
+    CPDFDoc.prototype.SetStrikeout = function(r, g, b) {
+        let oViewer         = editor.getDocumentRenderer();
+        let oFile           = oViewer.file;
+        let oSelRect        = oFile.getSelectionRect();
+        if (oSelRect == null)
+            return;
+
+        let oProps = {
+            rect:       [oSelRect.x1 - 2, oSelRect.y1 - 2, oSelRect.x2 + 2, oSelRect.y2 + 2],
+            page:       oViewer.currentPage,
+            name:       AscCommon.CreateGUID(),
+            type:       AscPDF.ANNOTATIONS_TYPES.StrikeOut,
+            hidden:     false
+        }
+
+        let oAnnot = this.AddAnnot(oProps);
+
+        oAnnot.SetQuads([oSelRect.x1, oSelRect.y1, oSelRect.x2, oSelRect.y1, oSelRect.x1, oSelRect.y2, oSelRect.x2, oSelRect.y2]);
+        oAnnot.SetStrokeColor([r/255, g/255, b/255]);
     };
     CPDFDoc.prototype.AddComment = function(AscCommentData) {
         let oViewer = editor.getDocumentRenderer();
@@ -1397,6 +1462,7 @@ var CPresentation = CPresentation || function(){};
         this.anchorPositionToAdd = null;
 
         let oAnnot = this.AddAnnot(oProps);
+        
         editor.sendEvent("asc_onAddComment", oAnnot.GetId(), AscCommentData);
         return oAnnot;
     };
@@ -1917,6 +1983,15 @@ var CPresentation = CPresentation || function(){};
                 break;
             case AscPDF.ANNOTATIONS_TYPES.Ink:
                 oAnnot = new AscPDF.CAnnotationInk(sName, nPageNum, aScaledCoords, oPdfDoc);
+                break;
+            case AscPDF.ANNOTATIONS_TYPES.Highlight:
+                oAnnot = new AscPDF.CAnnotationHighlight(sName, nPageNum, aScaledCoords, oPdfDoc);
+                break;
+            case AscPDF.ANNOTATIONS_TYPES.Underline:
+                oAnnot = new AscPDF.CAnnotationUnderline(sName, nPageNum, aScaledCoords, oPdfDoc);
+                break;
+            case AscPDF.ANNOTATIONS_TYPES.StrikeOut:
+                oAnnot = new AscPDF.CAnnotationStrikeOut(sName, nPageNum, aScaledCoords, oPdfDoc);
                 break;
         }
 

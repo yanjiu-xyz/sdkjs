@@ -1146,6 +1146,12 @@
 					if (oAnnotInfo["borderWidth"] != null) {
 						oAnnot.SetWidth(oAnnotInfo["borderWidth"]);
 					}
+					if (oAnnotInfo["QuadPoints"] != null) {
+						oAnnot.SetQuads(oAnnotInfo["QuadPoints"]);
+					}
+					if (oAnnotInfo["CA"] != null) {
+						oAnnot.SetOpacity(oAnnotInfo["CA"]);
+					}
 				}
 				else {
 					oAnnotsMap[oAnnotInfo["RefTo"]]._AddReplyOnOpen(oAnnotInfo);
@@ -2254,6 +2260,9 @@
 						this.DrawingObjects.drawingDocument.AutoShapesTrack.CorrectOverlayBounds();
 					}
 					else {
+						if (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsTextMarkup) {
+							oDoc.mouseDownAnnot.DrawSelected(this.overlay);
+						}
 						if (oDoc.mouseDownAnnot && !oDoc.mouseDownAnnot.IsComment) {
 							this.DrawingObjects.drawingDocument.AutoShapesTrack.PageIndex = i;
 							this.DrawingObjects.drawSelect(i);
@@ -3334,7 +3343,12 @@
 				
 				if (this.pagesInfo.pages[i].annots != null) {
 					this.pagesInfo.pages[i].annots.forEach(function(annot) {
-						annot.Draw();
+						if (annot.IsHighlight())
+							annot.Draw();
+					});
+					this.pagesInfo.pages[i].annots.forEach(function(annot) {
+						if (annot.IsHighlight() == false)
+							annot.Draw();
 					});
 				}
 				
@@ -3409,7 +3423,7 @@
 					if (field.IsNeedDrawHighlight())
 						field.DrawHighlight(tmpCanvasCtx);
 					if (field._needDrawHoverBorder)
-						field.DrawHoverBorder(tmpCanvasCtx);
+						field.DrawSelected(tmpCanvasCtx);
 				});
 			}
 			

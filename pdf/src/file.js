@@ -664,8 +664,6 @@ void main() {\n\
                         _arrayGlyphOffsets[_lineCharCount] = _linePrevCharX;
                     }
 
-                    console.log(String.fromCharCode(char));
-                    
                     _lineCharCount++;
                                         
                     if (_lineGidExist)
@@ -1062,7 +1060,309 @@ void main() {\n\
         this.Selection = oSelectionInfo;
         this.onUpdateOverlay();
     };
+    CFile.prototype.getSelectionRect = function() {
+        let pageIndex = this.viewer.currentPage;
 
+        var stream = this.getPageTextStream(pageIndex);
+        if (!stream)
+            return;
+
+        var sel = this.Selection;
+        var Page1 = 0;
+        var Page2 = 0;
+        var Line1 = 0;
+        var Line2 = 0;
+        var Glyph1 = 0;
+        var Glyph2 = 0;
+
+        if (sel.Page2 > sel.Page1)
+        {
+            Page1 = sel.Page1;
+            Page2 = sel.Page2;
+            Line1 = sel.Line1;
+            Line2 = sel.Line2;
+            Glyph1 = sel.Glyph1;
+            Glyph2 = sel.Glyph2;
+        }
+        else if (sel.Page2 < sel.Page1)
+        {
+            Page1 = sel.Page2;
+            Page2 = sel.Page1;
+            Line1 = sel.Line2;
+            Line2 = sel.Line1;
+            Glyph1 = sel.Glyph2;
+            Glyph2 = sel.Glyph1;
+        }
+        else if (sel.Page1 === sel.Page2)
+        {
+            Page1 = sel.Page1;
+            Page2 = sel.Page2;
+
+            if (sel.Line1 < sel.Line2)
+            {
+                Line1 = sel.Line1;
+                Line2 = sel.Line2;
+                Glyph1 = sel.Glyph1;
+                Glyph2 = sel.Glyph2;
+            }
+            else if (sel.Line2 < sel.Line1)
+            {
+                Line1 = sel.Line2;
+                Line2 = sel.Line1;
+                Glyph1 = sel.Glyph2;
+                Glyph2 = sel.Glyph1;
+            }
+            else
+            {
+                Line1 = sel.Line1;
+                Line2 = sel.Line2;
+
+                if (-1 === sel.Glyph1)
+                {
+                    Glyph1 = sel.Glyph2;
+                    Glyph2 = sel.Glyph1;
+                }
+                else if (-1 === sel.Glyph2)
+                {
+                    Glyph1 = sel.Glyph1;
+                    Glyph2 = sel.Glyph2;
+                }
+                else if (sel.Glyph1 < sel.Glyph2)
+                {
+                    Glyph1 = sel.Glyph1;
+                    Glyph2 = sel.Glyph2;
+                }
+                else
+                {
+                    Glyph1 = sel.Glyph2;
+                    Glyph2 = sel.Glyph1;
+                }
+            }
+        }
+
+        if (Page1 > pageIndex || Page2 < pageIndex)
+            return;
+
+        if (Page1 < pageIndex)
+        {
+            Page1 = pageIndex;
+            Line1 = 0;
+            Glyph1 = -2;
+        }
+        var bIsFillToEnd = false;
+        if (Page2 > pageIndex)
+            bIsFillToEnd = true;
+
+        // textline parameters
+        var _lineX = 0;
+        var _lineY = 0;
+        var _lineEx = 0;
+        var _lineEy = 0;
+        var _lineAscent = 0;
+        var _lineDescent = 0;
+        var _lineWidth = 0;
+        var _lineGidExist = false;
+        var _linePrevCharX = 0;
+        var _lineCharCount = 0;
+        var _lineLastGlyphWidth = 0;
+        var _arrayGlyphOffsets = [];
+
+        var _numLine = -1;
+
+        let dKoefX = (this.pages[pageIndex].Dpi / 25.4);
+        let dKoefY = (this.pages[pageIndex].Dpi / 25.4);
+
+        while (stream.pos < stream.size)
+        {
+            var command = stream.GetUChar();
+
+            switch (command)
+            {
+                case 41:
+                {
+                    stream.Skip(12);
+                    break;
+                }
+                case 22:
+                {
+                    stream.Skip(4);
+                    break;
+                }
+                case 80:
+                {
+                    if (0 != _lineCharCount)
+                        _linePrevCharX += stream.GetDouble2();
+
+                    _arrayGlyphOffsets[_lineCharCount] = _linePrevCharX;
+
+                    _lineCharCount++;
+
+                    if (_lineGidExist)
+                        stream.Skip(4);
+                    else
+                        stream.Skip(2);
+
+                    if (0 == _lineWidth)
+                        _lineLastGlyphWidth = stream.GetDouble2();
+                    else
+                        stream.Skip(2);
+
+                    break;
+                }
+                case 160:
+                {
+                    // textline
+                    _linePrevCharX = 0;
+                    _lineCharCount = 0;
+                    _lineWidth = 0;
+
+                    _arrayGlyphOffsets.splice(0, _arrayGlyphOffsets.length);
+
+                    ++_numLine;
+
+                    var mask = stream.GetUChar();
+                    _lineX = stream.GetDouble();
+                    _lineY = stream.GetDouble();
+
+                    if ((mask & 0x01) != 0)
+                    {
+                        _lineEx = 1;
+                        _lineEy = 0;
+                    }
+                    else
+                    {
+                        _lineEx = stream.GetDouble();
+                        _lineEy = stream.GetDouble();
+                    }
+
+                    _lineAscent = stream.GetDouble();
+                    _lineDescent = stream.GetDouble();
+
+                    if ((mask & 0x04) != 0)
+                        _lineWidth = stream.GetDouble();
+
+                    if ((mask & 0x02) != 0)
+                        _lineGidExist = true;
+                    else
+                        _lineGidExist = false;
+
+                    break;
+                }
+                case 162:
+                {
+                    // textline end
+                    var off1 = 0;
+                    var off2 = 0;
+
+                    if (_numLine < Line1)
+                        break;
+                    if (_numLine > Line2 && !bIsFillToEnd)
+                        return;
+
+                    // все подсчитано
+                    if (0 == _lineWidth)
+                        _lineWidth = _linePrevCharX + _lineLastGlyphWidth;
+
+                    if (Line1 == _numLine)
+                    {
+                        if (-2 == Glyph1)
+                            off1 = 0;
+                        else if (-1 == Glyph1)
+                            off1 = _lineWidth;
+                        else
+                            off1 = _arrayGlyphOffsets[Glyph1];
+                    }
+                    if (bIsFillToEnd || Line2 != _numLine)
+                        off2 = _lineWidth;
+                    else
+                    {
+                        if (Glyph2 == -2)
+                            off2 = 0;
+                        else if (Glyph2 == -1)
+                            off2 = _lineWidth;
+                        else
+                        {
+                            off2 = _arrayGlyphOffsets[Glyph2];
+                            /*
+                            if (Glyph2 >= (_arrayGlyphOffsets.length - 1))
+                                off2 = _lineWidth;
+                            else
+                                off2 = _arrayGlyphOffsets[Glyph2 + 1];
+                            */
+                        }
+                    }
+
+                    if (off2 <= off1)
+                        break;
+
+                    // в принципе код один и тот же. Но почти всегда линии горизонтальные.
+                    // а для горизонтальной линии все можно пооптимизировать
+                    if (_lineEx == 1 && _lineEy == 0)
+                    {
+                        var _x = (dKoefX * (_lineX + off1));
+                        var _r = (dKoefX * (_lineX + off2));
+                        var _y = (dKoefY * (_lineY - _lineAscent));
+                        var _b = (dKoefY * (_lineY + _lineDescent));
+
+                        return {
+                            x1: _x,
+                            y1: _y,
+                            x2: _r,
+                            y2: _b
+                        }
+                    }
+                    else
+                    {
+                        // определяем точки descent линии
+                        var ortX = -_lineEy;
+                        var ortY = _lineEx;
+
+                        var _dx = _lineX + ortX * _lineDescent;
+                        var _dy = _lineY + ortY * _lineDescent;
+
+                        var _x1 = _dx + off1 * _lineEx;
+                        var _y1 = _dy + off1 * _lineEy;
+
+                        var _x2 = _x1 - ortX * (_lineAscent + _lineDescent);
+                        var _y2 = _y1 - ortY * (_lineAscent + _lineDescent);
+
+                        var _x3 = _x2 + (off2 - off1) * _lineEx;
+                        var _y3 = _y2 + (off2 - off1) * _lineEy;
+
+                        var _x4 = _x3 + ortX * (_lineAscent + _lineDescent);
+                        var _y4 = _y3 + ortY * (_lineAscent + _lineDescent);
+
+                        _x1 = (dKoefX * _x1);
+                        _x2 = (dKoefX * _x2);
+                        _x3 = (dKoefX * _x3);
+                        _x4 = (dKoefX * _x4);
+
+                        _y1 = (dKoefY * _y1);
+                        _y2 = (dKoefY * _y2);
+                        _y3 = (dKoefY * _y3);
+                        _y4 = (dKoefY * _y4);
+
+                        return {
+                            x1: _x1,
+                            y1: _y1,
+                            x2: _x2,
+                            y2: _y2
+                        }
+                    }
+                }
+                case 161:
+                {
+                    // text transform
+                    stream.Skip(16);
+                    break;
+                }
+                default:
+                {
+                    stream.pos = stream.size;
+                }
+            }
+        }
+    };
     CFile.prototype.drawSelection = function(pageIndex, overlay, x, y, width, height)
     {
         var stream = this.getPageTextStream(pageIndex);

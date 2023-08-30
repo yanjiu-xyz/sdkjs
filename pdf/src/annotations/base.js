@@ -83,7 +83,7 @@
         this._modDate               = undefined;
         this._name                  = sName;
         this._noView                = undefined;
-        this._opacity               = undefined;
+        this._opacity               = 1;
         this._page                  = nPage;
         this._print                 = undefined;
         this._rect                  = aRect;
@@ -104,7 +104,10 @@
     };
     CAnnotationBase.prototype.SetPosition = function(x, y) {
         let oViewer = editor.getDocumentRenderer();
+        let oDoc    = this.GetDocument();
         let nPage = this.GetPage();
+
+        oDoc.History.Add(new CChangesPDFAnnotPos(this, [this._rect[0], this._rect[1]], [x, y]));
 
         let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
         let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
@@ -121,10 +124,28 @@
         this._origRect[1] = this._rect[1] / nScaleY;
         this._origRect[2] = this._rect[2] / nScaleX;
         this._origRect[3] = this._rect[3] / nScaleY;
+
+        this._pagePos = {
+            x: this._rect[0],
+            y: this._rect[1],
+            w: (this._rect[2] - this._rect[0]),
+            h: (this._rect[3] - this._rect[1])
+        };
+
+        this.AddToRedraw();
+    };
+    CAnnotationBase.prototype.IsHighlight = function() {
+        return false;
     };
     CAnnotationBase.prototype.SetRect = function(aRect) {
         let oViewer = editor.getDocumentRenderer();
         let nPage = this.GetPage();
+
+        if (this.IsInDocument() == false || oDoc.History.UndoRedoInProgress) {
+            oDoc.CreateNewHistoryPoint();
+            oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aRect));
+            oDoc.TurnOffHistory();
+        }
 
         let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
         let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
@@ -142,6 +163,12 @@
         this._origRect[1] = this._rect[1] / nScaleY;
         this._origRect[2] = this._rect[2] / nScaleX;
         this._origRect[3] = this._rect[3] / nScaleY;
+    };
+    CAnnotationBase.prototype.IsInDocument = function() {
+        if (this.GetDocument().annots.indexOf(this) == -1)
+            return false;
+
+        return true;
     };
     
     CAnnotationBase.prototype.GetRect = function() {
@@ -181,12 +208,16 @@
     CAnnotationBase.prototype.SetModDate = function(sDate) {
         this._modDate = sDate;
     };
-    CAnnotationBase.prototype.SetCreationDate = function(sDate) {
-        this._creationDate = sDate;
-    };
     CAnnotationBase.prototype.GetModDate = function() {
         return this._modDate;
     };
+    CAnnotationBase.prototype.SetCreationDate = function(sDate) {
+        this._creationDate = sDate;
+    };
+    CAnnotationBase.prototype.GetCreationDate = function() {
+        return this._creationDate;
+    };
+    
     CAnnotationBase.prototype.SetAuthor = function(sAuthor) {
         this._author = sAuthor;
     };
@@ -240,6 +271,18 @@
         }
 
         return oColor;
+    };
+    CAnnotationBase.prototype.onMouseDown = function() {
+        return;
+    };
+    CAnnotationBase.prototype.onMouseUp = function() {
+        return;
+    };
+    CAnnotationBase.prototype.SetStrokeColor = function(aColor) {
+        this._strokeColor = aColor;
+    };
+    CAnnotationBase.prototype.GetStrokeColor = function() {
+        return this._strokeColor;
     };
 
     // аналоги методов Drawings

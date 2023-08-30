@@ -653,11 +653,12 @@ function MoveComment(comment)
 
 function MoveAnnotationTrack(originalObject)
 {
-    this.bIsTracked = false;
-    this.originalObject      = originalObject;
-    this.x          = originalObject._pagePos.x;
-    this.y          = originalObject._pagePos.y;
-    this.viewer     = editor.getDocumentRenderer();
+    this.bIsTracked     = false;
+    this.originalObject = originalObject;
+    this.x              = originalObject._pagePos.x;
+    this.y              = originalObject._pagePos.y;
+    this.viewer         = editor.getDocumentRenderer();
+    this.objectToDraw   = originalObject.Copy();
 
     this.track = function(dx, dy)
     {
@@ -680,13 +681,13 @@ function MoveAnnotationTrack(originalObject)
     this.draw = function(oDrawer)
     {
         // рисуем на отдельном канвасе
-        let page = this.viewer.drawingPages[this.originalObject.GetPage()];
+        let page = this.viewer.drawingPages[this.objectToDraw.GetPage()];
         if (!page)
             return;
 
-        if(AscFormat.isRealNumber(this.originalObject.GetPage()) && oDrawer.SetCurrentPage)
+        if(AscFormat.isRealNumber(this.objectToDraw.GetPage()) && oDrawer.SetCurrentPage)
         {
-            oDrawer.SetCurrentPage(this.originalObject.GetPage());
+            oDrawer.SetCurrentPage(this.objectToDraw.GetPage());
         }
         
         let xCenter = this.viewer.width >> 1;
@@ -706,12 +707,12 @@ function MoveAnnotationTrack(originalObject)
         let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         
         let oGraphics;
-        switch (this.originalObject.GetType()) {
+        switch (this.objectToDraw.GetType()) {
             case AscPDF.ANNOTATIONS_TYPES.Ink: {
                 let nScale  = AscCommon.AscBrowser.retinaPixelRatio * this.viewer.zoom;
                 oGraphics   = new AscCommon.CGraphics();
 
-				this.viewer.pagesInfo.pages[this.originalObject.GetPage()].graphics.word = oGraphics;
+				this.viewer.pagesInfo.pages[this.objectToDraw.GetPage()].graphics.word = oGraphics;
 				oGraphics.init(tmpCanvasCtx, this.tmpCanvas.width * nScale, this.tmpCanvas.height * nScale, this.tmpCanvas.width * g_dKoef_pix_to_mm, this.tmpCanvas.height * g_dKoef_pix_to_mm);
 				oGraphics.m_oFontManager = AscCommon.g_fontManager;
 				oGraphics.endGlobalAlphaColor = [255, 255, 255];
@@ -728,8 +729,8 @@ function MoveAnnotationTrack(originalObject)
 
         oDrawer.m_oContext.globalAlpha = 0.5;
 
-        this.originalObject.SetPosition(this.x, this.y);
-        this.originalObject.Draw(oGraphics);
+        this.objectToDraw.SetPosition(this.x, this.y, true);
+        this.objectToDraw.Draw(oGraphics);
 
         oDrawer.m_oContext.drawImage(this.tmpCanvas, 0, 0, w, h, x, y, w, h);
     };
@@ -755,15 +756,10 @@ function MoveAnnotationTrack(originalObject)
             Y = nPageHeight - this.originalObject._pagePos.h;
         }
 
+        let oDoc = this.viewer.getPDFDoc();
+        oDoc.CreateNewHistoryPoint();
         this.originalObject.SetPosition(X, Y);
-
-        let aRect = this.originalObject.GetRect();
-        this.originalObject._pagePos = {
-            x: aRect[0],
-            y: aRect[1],
-            w: (aRect[2] - aRect[0]),
-            h: (aRect[3] - aRect[1])
-        };
+        oDoc.TurnOffHistory();
     };
 
     this.getBounds = function()

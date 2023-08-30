@@ -1355,7 +1355,7 @@ ParaDrawing.prototype.CanAddNumbering = function()
 };
 ParaDrawing.prototype.Copy = function(oPr)
 {
-	var c = new ParaDrawing(this.Extent.W, this.Extent.H, null, editor.WordControl.m_oLogicDocument.DrawingDocument, null, null);
+	var c = new ParaDrawing(this.Extent.W, this.Extent.H, null, editor.WordControl.m_oDrawingDocument, null, null);
 	c.Set_DrawingType(this.DrawingType);
 	if (AscCommon.isRealObject(this.GraphicObj))
 	{

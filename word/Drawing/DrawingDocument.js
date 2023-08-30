@@ -6660,6 +6660,9 @@ function CDrawingDocument()
 
 	this.ClearCachePages = function ()
 	{
+		if (this.m_oWordControl.m_oApi.isDocumentRenderer())
+			return;
+			
 		for (var i = 0; i < this.m_lPagesCount; i++)
 		{
 			var page = this.m_arrPages[i];

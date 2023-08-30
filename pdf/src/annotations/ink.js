@@ -321,12 +321,16 @@
         });
         let shape = generateShapeByPoints([aPoints], aShapeRectInMM, this);
 
+        let oRGBPen = oPen.Fill.getRGBAColor();
+        this.SetStrokeColor([oRGBPen.R / 255, oRGBPen.G / 255, oRGBPen.B / 255]);
+
         let drawing = new ParaDrawing(shape.spPr.xfrm.extX, shape.spPr.xfrm.extY, shape, oDrDoc, oDoc, null);
         drawing.Set_DrawingType(drawing_Anchor);
         drawing.Set_GraphicObject(shape);
         shape.setParent(drawing);
         shape.spPr.setLn(oPen);
         shape.spPr.setFill(AscFormat.CreateNoFillUniFill());
+        
         drawing.Set_WrappingType(WRAPPING_TYPE_NONE);
         drawing.Set_Distance( 3.2,  0,  3.2, 0 );
 
@@ -364,15 +368,13 @@
         return shape;
     };
 
-    CAnnotationInk.prototype.SetRect = function(aRect, bSkipHistory) {
-        let oViewer = editor.getDocumentRenderer();
-        let oDoc    = oViewer.getPDFDoc();
-        let nPage   = this.GetPage();
+    CAnnotationInk.prototype.SetRect = function(aRect) {
+        let oViewer     = editor.getDocumentRenderer();
+        let oDoc        = oViewer.getPDFDoc();
+        let nPage       = this.GetPage();
+        let oGraphicObj = this.GetDrawing().GraphicObj;
 
-        if (bSkipHistory != true) {
-            oDoc.CreateNewHistoryPoint();
-            oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aRect));
-        }
+        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aRect));
 
         let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
         let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
@@ -391,9 +393,32 @@
         this._origRect[2] = this._rect[2] / nScaleX;
         this._origRect[3] = this._rect[3] / nScaleY;
 
+        oDoc.TurnOffHistory();
+        oGraphicObj.spPr.xfrm.extX = this._pagePos.w * g_dKoef_pix_to_mm;
+        oGraphicObj.spPr.xfrm.extY = this._pagePos.h * g_dKoef_pix_to_mm;
         this.GetDrawing().CheckWH();
         this.AddToRedraw();
         this.RefillGeometry(this.GetDrawing().GraphicObj.spPr.geometry, [aRect[0] * g_dKoef_pix_to_mm, aRect[1] * g_dKoef_pix_to_mm, aRect[2] * g_dKoef_pix_to_mm, aRect[3] * g_dKoef_pix_to_mm]);
+    };
+    CAnnotationInk.prototype.SetFlipV = function(bFlip) {
+        let oDoc = this.GetDocument();
+        let oGraphicObj = this.GetDrawing().GraphicObj;
+
+        if (oGraphicObj.flipV != bFlip) {
+            oDoc.History.Add(new CChangesPDFInkFlipV(this, oGraphicObj.flipV, bFlip));
+            oGraphicObj.changeFlipV(!oGraphicObj.flipV);
+            oGraphicObj.recalculate();
+        }
+    };
+    CAnnotationInk.prototype.SetFlipH = function(bFlip) {
+        let oDoc = this.GetDocument();
+        let oGraphicObj = this.GetDrawing().GraphicObj;
+
+        if (oGraphicObj.flipH != bFlip) {
+            oDoc.History.Add(new CChangesPDFInkFlipH(this, oGraphicObj.flipV, bFlip));
+            oGraphicObj.changeFlipH(!oGraphicObj.flipH);
+            oGraphicObj.recalculate();
+        }
     };
     CAnnotationInk.prototype.AddPath = function(aNewPath) {
         let oDoc = this.GetDocument();
@@ -460,11 +485,7 @@
 
         aCurRelPaths.push(aRelPointsPos);
         this._gestures.push(aNewPath);
-        let oGraphicObj = this.GetDrawing().GraphicObj;
-
-        oGraphicObj.spPr.xfrm.extX = (newMaxX + nLineW * g_dKoef_pix_to_mm) - (newMinX - nLineW * g_dKoef_pix_to_mm);
-        oGraphicObj.spPr.xfrm.extY = (newMaxY + nLineW * g_dKoef_pix_to_mm) - (newMinY - nLineW * g_dKoef_pix_to_mm);
-
+        
         this.SetRect(aNewAnnotRect, true);
     };
     
@@ -549,10 +570,43 @@
         this.GetDrawing().GraphicObj.recalcTransform()
         var transform = this.GetDrawing().GraphicObj.getTransform();
         
-        // geometry.Recalculate(nWidthMM, nHeightMM);
         geometry.Recalculate(transform.extX, transform.extY);
 
         return geometry;
+    };
+    CAnnotationInk.prototype.Copy = function() {
+        let oDoc = this.GetDocument();
+        oDoc.TurnOffHistory();
+
+        let oNewInk = new CAnnotationInk(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
+
+        oNewInk._pagePos = {
+            x: this._pagePos.x,
+            y: this._pagePos.y,
+            w: this._pagePos.w,
+            h: this._pagePos.h
+        }
+        oNewInk._origRect = this._origRect.slice();
+
+        let oDrawingCopy    = this.GetDrawing().Copy();
+        let oGraphicObjCopy = oDrawingCopy.GraphicObj;
+        oGraphicObjCopy.pen = new AscFormat.CLn();
+        oDrawingCopy.CheckWH();
+
+        oNewInk.SetAuthor(this.GetAuthor());
+        oNewInk.SetModDate(this.GetModDate());
+        oNewInk.SetCreationDate(this.GetCreationDate());
+        oNewInk.SetDrawing(oDrawingCopy);
+        oNewInk.SetWidth(this.GetWidth());
+        oNewInk.SetStrokeColor(this.GetStrokeColor().slice());
+        oNewInk._relativePaths = this.GetRelativePaths().slice();
+        oNewInk._gestures = this._gestures.slice();
+
+        let oContents = this.GetContents();
+        if (oContents)
+            oNewInk.SetContents(oContents.Copy());
+
+        return oNewInk;
     };
     CAnnotationInk.prototype.GetRelativePaths = function() {
         return this._relativePaths;
@@ -567,6 +621,9 @@
             let oLine   = oDrawing.GraphicObj.pen;
             oLine.setFill(oFill);
         }
+    };
+    CAnnotationInk.prototype.GetStrokeColor = function() {
+        return this._strokeColor;
     };
     CAnnotationInk.prototype.SetWidth = function(nWidthPt) {
         this._width = nWidthPt; 
@@ -722,15 +779,23 @@
     CAnnotationInk.prototype.convertPixToMM = function(px) {
         return this.GetDrawing().GraphicObj.convertPixToMM(px);
     };
-    CAnnotationInk.prototype.SetContents = function(sText) {
-        let oTextAnnot = new AscPDF.CAnnotationText(this.GetName(), this.GetPage(), [], this.GetDocument());
+    CAnnotationInk.prototype.SetContents = function(contents) {
+        if (typeof(contents) == "string") {
+            let oTextAnnot = new AscPDF.CAnnotationText(this.GetName(), this.GetPage(), [], this.GetDocument());
         
-        oTextAnnot.SetContents(sText);
-        oTextAnnot.SetModDate((new Date().getTime()).toString());
-        oTextAnnot.SetAuthor(this.GetAuthor());
-        oTextAnnot.SetHidden(false);
+            oTextAnnot.SetContents(contents);
+            oTextAnnot.SetModDate((new Date().getTime()).toString());
+            oTextAnnot.SetAuthor(this.GetAuthor());
+            oTextAnnot.SetHidden(false);
 
-        this._contents = oTextAnnot;
+            this._contents = oTextAnnot;
+        }
+        else {
+            this._contents = contents;
+        }
+    };
+    CAnnotationInk.prototype.GetContents = function() {
+        return this._contents;
     };
     CAnnotationInk.prototype.AddReply = function(CommentData) {
         this._contents.AddReply(CommentData);

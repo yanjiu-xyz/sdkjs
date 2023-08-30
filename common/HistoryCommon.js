@@ -3999,12 +3999,15 @@
 
 	// Common
 	AscDFH.historyitem_Pdf_Annot_Rect			= AscDFH.historyitem_type_Pdf_Annot | 1;
+	AscDFH.historyitem_Pdf_Annot_Pos			= AscDFH.historyitem_type_Pdf_Annot | 2;
 
 	// Comment
 	AscDFH.historyitem_Pdf_Comment_Data			= AscDFH.historyitem_type_Pdf_Comment | 1;
 
 	// Ink
 	AscDFH.historyitem_Pdf_Ink_Points			= AscDFH.historyitem_type_Pdf_Ink | 1;
+	AscDFH.historyitem_Pdf_Ink_FlipV			= AscDFH.historyitem_type_Pdf_Ink | 2;
+	AscDFH.historyitem_Pdf_Ink_FlipH			= AscDFH.historyitem_type_Pdf_Ink | 3;
 
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CPDFDoc

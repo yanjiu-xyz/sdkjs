@@ -129,7 +129,27 @@
 
         return null;
     };
+    CAnnotationText.prototype.Copy = function() {
+        let oDoc = this.GetDocument();
+        oDoc.TurnOffHistory();
 
+        let oNewInk = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
+
+        oNewInk._pagePos = {
+            x: this._pagePos.x,
+            y: this._pagePos.y,
+            w: this._pagePos.w,
+            h: this._pagePos.h
+        }
+        oNewInk._origRect = this._origRect.slice();
+
+        oNewInk.SetAuthor(this.GetAuthor());
+        oNewInk.SetModDate(this.GetModDate());
+        oNewInk.SetCreationDate(this.GetCreationDate());
+        oNewInk.SetContents(this.GetContents());
+
+        return oNewInk;
+    };
     CAnnotationText.prototype.Draw = function(oGraphics) {
         // note: oGraphic параметр для рисование track
         if (!this.graphicObjects)

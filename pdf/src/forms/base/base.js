@@ -1014,7 +1014,7 @@
         AscCommon.History.SetAdditionalFormFilling(this);
         AscCommon.History.Points[AscCommon.History.Points.length - 1].Additional.CanUnion = isCanUnion;
     };
-    CBaseField.prototype.DrawHoverBorder = function() {
+    CBaseField.prototype.DrawSelected = function() {
         return;
 
         let oViewer     = editor.getDocumentRenderer();
