@@ -4979,8 +4979,6 @@
 	};
 
 	WorksheetView.prototype.drawTraceArrows = function (visibleRange, offsetX, offsetY) {
-		// ? in order to avoid frozen pane, get visible range from WS
-		visibleRange = this.getVisibleRange();
 		let traceManager = this.traceDependentsManager;
 		let ctx = this.overlayCtx;
 		let widthLine = 2, 
@@ -4995,11 +4993,15 @@
 		const whiteColor = new CColor(255, 255, 255);
 
 		let t = this;
+
+		// clip by visible area
+		ctx.AddClipRect(t._getColLeft(visibleRange.c1) - offsetX, t._getRowTop(visibleRange.r1) - offsetY, Math.abs(t._getColLeft(visibleRange.c2 + 1) - t._getColLeft(visibleRange.c1)), Math.abs(t._getRowTop(visibleRange.r2 + 1) - t._getRowTop(visibleRange.r1)));
+		
 		const doDrawArrow = function (_from, _to, external, isPrecedent) {
+			// drawing line, arrow, dot, minitable as part of a whole dependency line
 			ctx.beginPath();
 			ctx.setStrokeStyle(!external ? lineColor : externalLineColor);
 			ctx.setLineDash([]);
-
 			if (isPrecedent && external) {
 				drawExternalPrecedentLine(_from);
 			} else {
@@ -5064,7 +5066,7 @@
 				let dy = (y2 - y1) / extLength;
 				let newX2 = x2 - dx * arrowSize;
 				let newY2 = y2 - dy * arrowSize;
-				
+
 				arrowSize = zoom <= 0.5 ? arrowSize * 1.25 : arrowSize;
 
 				if (external) {
@@ -5073,10 +5075,11 @@
 					drawDot(x1, y1, externalLineColor);
 					drawMiniTable(x2, y2, miniTableCol, miniTableRow, isTableLeft, isTableTop);
 				} else {
-					// ctx.lineDiag(x1, y1, newX2, newY2);
+					ctx.beginPath();
+					ctx.setStrokeStyle(!external ? lineColor : externalLineColor);
 					ctx.moveTo(x1, y1);
 					ctx.lineTo(newX2, newY2);
-					ctx.closePath().stroke(); 	// draw regular line
+					ctx.closePath().stroke();
 					drawArrowHead(newX2, newY2, arrowSize, angle, lineColor);
 					drawDot(x1, y1, lineColor);
 				}
@@ -5314,13 +5317,17 @@
 			if (from) {
 				let cellFrom = AscCommonExcel.getFromCellIndex(from, true);
 				// check if cellIndex exist in precedentExternal array
-				if (traceManager.checkPrecedentExternal(+from)) {
+				if (traceManager.checkPrecedentExternal(+from) && visibleRange.contains2(cellFrom)) {
 					doDrawArrow(cellFrom, null, true, true);
 				}
 			}
 		});
 		// draw area
 		drawAreaStroke(traceManager._getPrecedentsAreas());
+		// remove clip range
+		ctx.RemoveClipRect();
+
+		return true;
 	};
 
 	WorksheetView.prototype._drawPageBreakPreviewText = function (drawingCtx, range, leftFieldInPx, topFieldInPx) {
@@ -6418,7 +6425,6 @@
             rFrozen = this.topLeftFrozenCell.getRow0();
             offsetX -= this._getColLeft(cFrozen) - this._getColLeft(0);
             offsetY -= this._getRowTop(rFrozen) - this._getRowTop(0);
-
             var oFrozenRange;
             cFrozen -= 1;
             rFrozen -= 1;
