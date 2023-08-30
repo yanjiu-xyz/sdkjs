@@ -100,6 +100,10 @@
 				"usrLang"     : arrLangs
 			});
 		}
+		else
+		{
+			this.private_ClearMarksForCorrectWords();
+		}
 
 		return (arrWords.length || isFirst);
 	};
@@ -494,9 +498,9 @@
 			}
 		}
 
-		this.private_ClearMarksForRightWords();
+		this.private_ClearMarksForCorrectWords();
 	};
-	CParagraphSpellChecker.prototype.private_ClearMarksForRightWords = function()
+	CParagraphSpellChecker.prototype.private_ClearMarksForCorrectWords = function()
 	{
 		for (let nCount = this.Elements.length, nIndex = nCount - 1; nIndex >= 0; --nIndex)
 		{
