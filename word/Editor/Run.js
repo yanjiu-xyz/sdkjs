@@ -88,8 +88,6 @@ function ParaRun(Paragraph, bMathRun)
 	this.CompiledPr = AscWord.g_textPrCache.add(new AscWord.CTextPr());             // Скомпилированные настройки
 	this.RecalcInfo = new CParaRunRecalcInfo();  // Флаги для пересчета (там же флаг пересчета стиля)
 	
-	
-	this.TextAscent  = 0; // текстовый ascent + linegap
 	this.TextAscent  = 0; // текстовый ascent + linegap
 	this.TextDescent = 0; // текстовый descent
 	this.TextHeight  = 0; // высота текста
@@ -97,7 +95,7 @@ function ParaRun(Paragraph, bMathRun)
 	this.Ascent      = 0; // общий ascent
 	this.Descent     = 0; // общий descent
 	this.YOffset     = 0; // смещение по Y
-
+	
 	this.CollPrChangeMine   = false;
 	this.CollPrChangeOther  = false;
 	this.CollaborativeMarks = new CRunCollaborativeMarks();
@@ -4506,7 +4504,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     var NewX     = TabPos.NewX;
                     var TabValue = TabPos.TabValue;
 
-                    Item.SetLeader(TabPos.TabLeader);
+                    Item.SetLeader(TabPos.TabLeader, this.Get_CompiledPr(false));
 
 					PRS.LastTab.TabPos       = NewX;
 					PRS.LastTab.Value        = TabValue;
@@ -4521,8 +4519,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     // рассчитываем его сразу здесь
                     if (tab_Left !== TabValue)
                     {
-						Item.Width        = 0;
-						Item.WidthVisible = 0;
+						Item.Width = 0;
 
 						// В Word2013 и раньше, если не левый таб заканчивается правее правой границы, тогда у параграфа
 						// правая граница имеет максимально возможное значение (55см)
@@ -4566,9 +4563,8 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 						}
 						else
 						{
-							Item.Width        = NewX - X;
-							Item.WidthVisible = NewX - X;
-
+							Item.Width = NewX - X;
+							
 							X = NewX;
 						}
                     }
@@ -5627,7 +5623,7 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
             }
             case para_Tab:
             {
-                PRSA.X += Item.WidthVisible;
+                PRSA.X += Item.GetWidthVisible();
 
                 break;
             }
@@ -10538,7 +10534,6 @@ function CParaRunRecalcInfo()
     this.TextPr  = true; // Нужно ли пересчитать скомпилированные настройки
     this.Measure = true; // Нужно ли перемерять элементы
     this.Recalc  = true; // Нужно ли пересчитывать (только если текстовый ран)
-    this.RunLen  = 0;
 
     this.MeasurePositions = []; // Массив позиций элементов, которые нужно пересчитать
 
@@ -10553,7 +10548,6 @@ CParaRunRecalcInfo.prototype.Reset = function()
 	this.TextPr  = true;
 	this.Measure = true;
 	this.Recalc  = true;
-	this.RunLen  = 0;
 
 	this.MeasurePositions = [];
 };
