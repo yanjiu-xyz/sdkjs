@@ -32,7 +32,6 @@
 
 (function(window, undefined)
 {
-
 	function CPluginData()
 	{
 		this.privateData = {};
@@ -52,16 +51,16 @@
 
 		serialize : function()
 		{
-			var _data = "";
+			let data = "";
 			try
 			{
-				_data = JSON.stringify(this.privateData);
+				data = JSON.stringify(this.privateData);
 			}
 			catch (err)
 			{
-				_data = "{ \"data\" : \"\" }";
+				data = "{ \"data\" : \"\" }";
 			}
-			return _data;
+			return data;
 		},
 
 		deserialize : function(_data)
@@ -173,7 +172,7 @@
 		{
 			this.path = basePath;
 
-			for (var i = 0; i < plugins.length; i++)
+			for (let i = 0; i < plugins.length; i++)
 			{
 				let newPlugin = plugins[i];
 
@@ -227,7 +226,7 @@
 
 			for (var i = 0; i < plugins.length; i++)
 			{
-				var guid = plugins[i].guid;
+				let guid = plugins[i].guid;
 
 				// системные не обновляем
 				if (this.pluginsMap[guid])
@@ -245,7 +244,7 @@
 			if (!_plugins || _plugins.length < 1)
 				return false;
 
-			var _map = {};
+			let _map = {};
 			for (let i = 0; i < this.plugins.length; i++)
 				_map[this.plugins[i].guid] = this.plugins[i].getIntVersion();
 
@@ -311,7 +310,7 @@
 		isWorked : function()
 		{
 			// запущен ли хоть один несистемный плагин
-			for (var i in this.runnedPluginsMap)
+			for (let i in this.runnedPluginsMap)
 			{
 				if (this.pluginsMap[i] && !this.pluginsMap[i].isSystem())
 					return true;
@@ -321,7 +320,7 @@
 
 		stopWorked : function()
 		{
-			for (var i in this.runnedPluginsMap)
+			for (let i in this.runnedPluginsMap)
 			{
 				let pluginType = this.pluginsMap[i] ? this.pluginsMap[i].type : -1;
 				if (pluginType !== Asc.PluginType.System &&
@@ -340,8 +339,8 @@
 				let currentArray = (arrIndex === 0) ? this.plugins : this.systemPlugins;
 				for (let i = 0, len = currentArray.length; i < len; i++)
 				{
-					var _variation = currentArray[i].variations[0];
-					if (_variation && "sign" === _variation.initDataType)
+					let variation = currentArray[i].variations[0];
+					if (variation && "sign" === variation.initDataType)
 						return currentArray[i];
 				}
 			}
@@ -355,8 +354,8 @@
 				let currentArray = (arrIndex === 0) ? this.plugins : this.systemPlugins;
 				for (let i = 0, len = currentArray.length; i < len; i++)
 				{
-					var _variation = currentArray[i].variations[0];
-					if (_variation && "desktop" === _variation.initDataType && "encryption" === _variation.initData)
+					let variation = currentArray[i].variations[0];
+					if (variation && "desktop" === variation.initDataType && "encryption" === variation.initData)
 						return currentArray[i];
 				}
 			}
@@ -365,18 +364,18 @@
 
 		isRunnedEncryption : function()
 		{
-			var _plugin = this.getEncryption();
-			if (!_plugin)
+			let plugin = this.getEncryption();
+			if (!plugin)
 				return false;
-			return this.isRunned(_plugin.guid);
+			return this.isRunned(plugin.guid);
 		},
 
 		sendToEncryption : function(data)
 		{
-			var _plugin = this.getEncryption();
-			if (!_plugin)
+			let plugin = this.getEncryption();
+			if (!plugin)
 				return;
-			this.init(_plugin.guid, data);
+			this.init(plugin.guid, data);
 		},
 
 		checkCryptoReporter : function()
@@ -415,8 +414,8 @@
 
 		checkEditorSupport : function(plugin, variation)
 		{
-			var typeEditor = this.api.getEditorId();
-			var typeEditorString = "";
+			let typeEditor = this.api.getEditorId();
+			let typeEditorString = "";
 			switch (typeEditor)
 			{
 				case AscCommon.c_oEditorId.Word:
@@ -431,7 +430,7 @@
 				default:
 					break;
 			}
-			var runnedVariation = variation ? variation : 0;
+			let runnedVariation = variation ? variation : 0;
 			if (!plugin.variations[runnedVariation] ||
 				!plugin.variations[runnedVariation].EditorsSupport ||
 				!plugin.variations[runnedVariation].EditorsSupport.includes(typeEditorString))
@@ -447,7 +446,7 @@
 				window.postMessage("{\"type\":\"onExternalPluginMessageCallback\",\"data\":" + pluginData.serialize() + "}", "*");
 				return;
 			}
-			var frame = document.getElementById(frameId);
+			let frame = document.getElementById(frameId);
 			if (frame)
 				frame.contentWindow.postMessage(pluginData.serialize(), "*");
 		},
@@ -456,9 +455,9 @@
 		{
 			for (let guid in this.runnedPluginsMap)
 			{
-				var _frame = document.getElementById(this.runnedPluginsMap[guid].frameId);
-				if (_frame)
-					_frame.style.pointerEvents = "";
+				let frame = document.getElementById(this.runnedPluginsMap[guid].frameId);
+				if (frame)
+					frame.style.pointerEvents = "";
 			}
 		},
 
@@ -466,9 +465,9 @@
 		{
 			for (let guid in this.runnedPluginsMap)
 			{
-				var _frame = document.getElementById(this.runnedPluginsMap[guid].frameId);
-				if (_frame)
-					_frame.style.pointerEvents = "none";
+				let frame = document.getElementById(this.runnedPluginsMap[guid].frameId);
+				if (frame)
+					frame.style.pointerEvents = "none";
 			}
 		},
 
@@ -493,7 +492,7 @@
 
 		onEnableMouseEvents : function(isEnable)
 		{
-			for (var guid in this.runnedPluginsMap)
+			for (let guid in this.runnedPluginsMap)
 			{
 				let runObject = this.runnedPluginsMap[guid];
 				let pluginData = new Asc.CPluginData();
@@ -513,7 +512,7 @@
 
 		onThemeChanged : function(obj)
 		{
-			for (var guid in this.runnedPluginsMap)
+			for (let guid in this.runnedPluginsMap)
 			{
 				let runObject = this.runnedPluginsMap[guid];
 
@@ -531,10 +530,10 @@
 
 		onChangedSelectionData : function()
 		{
-			for (var guid in this.runnedPluginsMap)
+			for (let guid in this.runnedPluginsMap)
 			{
-				var plugin = this.getPluginByGuid(guid);
-				var runObject = this.runnedPluginsMap[guid];
+				let plugin = this.getPluginByGuid(guid);
+				let runObject = this.runnedPluginsMap[guid];
 
 				if (plugin && plugin.variations[runObject.currentVariation].initOnSelectionChanged === true)
 				{
@@ -607,8 +606,8 @@
 			if (undefined === guid)
 				return;
 
-			var plugin = this.getPluginByGuid(guid);
-			var runObject = this.runnedPluginsMap[guid];
+			let plugin = this.getPluginByGuid(guid);
+			let runObject = this.runnedPluginsMap[guid];
 
 			if (!plugin || !runObject)
 				return;
@@ -632,7 +631,7 @@
 					window.g_asc_plugins.close();
 				}, 5000);
 			}
-			var iframe = document.getElementById(runObject.frameId);
+			let iframe = document.getElementById(runObject.frameId);
 			if (iframe)
 			{
 				var pluginData = new CPluginData();
@@ -647,7 +646,7 @@
 
 		onPluginEventWindow : function(id, name, data)
 		{
-			var pluginData = new CPluginData();
+			let pluginData = new CPluginData();
 			pluginData.setAttribute("guid", this.guidAsyncMethod);
 			pluginData.setAttribute("type", "onEvent");
 			pluginData.setAttribute("eventName", name);
@@ -682,13 +681,13 @@
 		// methods
 		onPluginMethodReturn : function(guid, _return)
 		{
-			var plugin = this.getPluginByGuid(guid);
-			var runObject = this.runnedPluginsMap[guid];
+			let plugin = this.getPluginByGuid(guid);
+			let runObject = this.runnedPluginsMap[guid];
 
 			if (!plugin || !runObject)
 				return;
 
-			var pluginData = new CPluginData();
+			let pluginData = new CPluginData();
 			pluginData.setAttribute("guid", plugin.guid);
 			pluginData.setAttribute("type", "onMethodReturn");
 			pluginData.setAttribute("methodReturnData", _return);
@@ -706,7 +705,7 @@
 		// run
 		runAllSystem : function()
 		{
-			for (var i = 0; i < this.systemPlugins.length; i++)
+			for (let i = 0; i < this.systemPlugins.length; i++)
 			{
 				this.run(this.systemPlugins[i].guid, 0, "");
 			}
@@ -771,7 +770,7 @@
 				}
 			}
 
-			var startData = (data == null || data === "") ? new CPluginData() : data;
+			let startData = (data == null || data === "") ? new CPluginData() : data;
 			startData.setAttribute("guid", guid);
 			this.correctData(startData);
 			// set theme only on start (big object)
@@ -793,8 +792,8 @@
 
 		runResize : function(data)
 		{
-			var guid = data.getAttribute("guid");
-			var plugin = this.getPluginByGuid(guid);
+			let guid = data.getAttribute("guid");
+			let plugin = this.getPluginByGuid(guid);
 
 			if (!plugin)
 				return;
@@ -808,14 +807,14 @@
 
 		show : function(guid)
 		{
-			var plugin = this.getPluginByGuid(guid);
-			var runObject = this.runnedPluginsMap[guid];
+			let plugin = this.getPluginByGuid(guid);
+			let runObject = this.runnedPluginsMap[guid];
 
 			if (!plugin || !runObject)
 				return;
 
 			// приходили главные евенты. нужно их послать
-			for (var mainEventType in this.mainEvents)
+			for (let mainEventType in this.mainEvents)
 			{
 				if (plugin.variations[runObject.currentVariation].eventsMap[mainEventType])
 				{
@@ -842,7 +841,7 @@
 				this.api.WordControl.m_oTimerScrollSelect = -1;
 			}
 
-			var urlParams = "?lang=" + this.language + "&theme-type=" + AscCommon.GlobalSkin.type;
+			let urlParams = "?lang=" + this.language + "&theme-type=" + AscCommon.GlobalSkin.type;
 
 			if (plugin.variations[runObject.currentVariation]["get_Visual"]() &&
 				runObject.startData.getAttribute("resize") !== true)
@@ -852,10 +851,10 @@
 			}
 			else
 			{
-				var ifr            = document.createElement("iframe");
+				let ifr            = document.createElement("iframe");
 				ifr.name           = runObject.frameId;
 				ifr.id             = runObject.frameId;
-				var _add           = plugin.baseUrl == "" ? this.path : plugin.baseUrl;
+				let _add           = plugin.baseUrl === "" ? this.path : plugin.baseUrl;
 				ifr.src            = _add + plugin.variations[runObject.currentVariation].url + urlParams;
 				ifr.style.position = (AscCommon.AscBrowser.isIE || AscCommon.AscBrowser.isMozilla) ? 'fixed' : "absolute";
 				ifr.style.top      = '-100px';
@@ -870,7 +869,7 @@
 
 				if (runObject.startData.getAttribute("resize") !== true)
 				{
-					var isSystem = false;
+					let isSystem = false;
 					if (plugin.variations && plugin.variations[runObject.currentVariation].isSystem)
 						isSystem = true;
 
@@ -885,8 +884,8 @@
 
 			if (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge)
 			{
-				var ie_frame_id = runObject.frameId;
-				var ie_frame_message = {
+				let ie_frame_id = runObject.frameId;
+				let ie_frame_message = {
 					data : JSON.stringify({"type" : "initialize", "guid" : guid})
 				};
 
@@ -905,8 +904,8 @@
 		// close
 		close : function(guid)
 		{
-			var plugin = this.getPluginByGuid(guid);
-			var runObject = this.runnedPluginsMap[guid];
+			let plugin = this.getPluginByGuid(guid);
+			let runObject = this.runnedPluginsMap[guid];
 			if (!plugin || !runObject)
 				return;
 
@@ -932,7 +931,7 @@
 
 			if (this.runAndCloseData)
 			{
-				var _tmp = this.runAndCloseData;
+				let _tmp = this.runAndCloseData;
 				this.runAndCloseData = null;
 				this.run(_tmp.guid, _tmp.variation, _tmp.data);
 			}
@@ -941,8 +940,8 @@
 		// start data
 		init : function(guid, raw_data)
 		{
-			var plugin = this.getPluginByGuid(guid);
-			var runObject = this.runnedPluginsMap[guid];
+			let plugin = this.getPluginByGuid(guid);
+			let runObject = this.runnedPluginsMap[guid];
 
 			if (!plugin || !runObject || !runObject.startData)
 				return;
@@ -1020,7 +1019,7 @@
 				runObject.startData.setAttribute("data", raw_data);
 			}
 
-			var frame = document.getElementById(runObject.frameId);
+			let frame = document.getElementById(runObject.frameId);
 			if (frame)
 			{
 				runObject.startData.setAttribute("type", "init");
@@ -1059,7 +1058,8 @@
 			{
 				case "register":
 				{
-					var config = {
+					this.unregister(data["guid"]);
+					this.loadExtensionPlugins([{
 						"name" : "connector",
 						"guid" : data["guid"],
 						"baseUrl" : "",
@@ -1073,10 +1073,7 @@
 								"buttons"             : []
 							}
 						]
-					};
-
-					this.unregister(data["guid"]);
-					this.loadExtensionPlugins([config], false, true);
+					}], false, true);
 					break;
 				}
 				case "unregister":
@@ -1086,7 +1083,7 @@
 				}
 				case "attachEvent":
 				{
-					var plugin = this.getPluginByGuid(data["guid"]);
+					let plugin = this.getPluginByGuid(data["guid"]);
 					if (plugin && plugin.variations && plugin.variations[0])
 					{
 						plugin.variations[0].eventsMap[data["name"]] = true;
@@ -1095,7 +1092,7 @@
 				}
 				case "detachEvent":
 				{
-					var plugin = this.getPluginByGuid(data["guid"]);
+					let plugin = this.getPluginByGuid(data["guid"]);
 					if (plugin && plugin.variations && plugin.variations[0])
 					{
 						if (plugin.variations[0].eventsMap[data["name"]])
