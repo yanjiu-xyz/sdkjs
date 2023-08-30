@@ -166,6 +166,9 @@
 			if ('\'' === Word.charAt(0))
 				Word = Word.substr(1);
 		}
+
+		if (!this.HaveDictionary(Lang) || !this.IsNeedCheckWord(Word))
+			return;
 		
 		let oElement = new AscCommonWord.CParagraphSpellCheckerElement(startRun, startInRunPos, endRun, endInRunPos, Word, Lang, Prefix, Ending);
 		startRun.AddSpellCheckerElement(new AscWord.SpellMarkStart(oElement));
