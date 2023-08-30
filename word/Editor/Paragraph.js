@@ -173,12 +173,11 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
 
     this.Content[0] = EndRun;
 
-    this.m_oPRSW = new CParagraphRecalculateStateWrap(this);
-    this.m_oPRSC = new CParagraphRecalculateStateCounter();
-    this.m_oPRSA = new CParagraphRecalculateStateAlign();
-    this.m_oPRSI = new CParagraphRecalculateStateInfo();
-
-    this.m_oPDSE = new CParagraphDrawStateElements();
+    this.m_oPRSW = g_PRSW;//new CParagraphRecalculateStateWrap(this);
+    this.m_oPRSC = g_PRSC;//new CParagraphRecalculateStateCounter();
+    this.m_oPRSA = g_PRSA;//new CParagraphRecalculateStateAlign();
+    this.m_oPRSI = g_PRSI;//new CParagraphRecalculateStateInfo();
+    this.m_oPDSE = g_PDSE;//new CParagraphDrawStateElements();
     this.StartState = null;
 
     this.CollPrChange = false;
@@ -19540,6 +19539,8 @@ CParagraphDrawStateElements.prototype =
         this.BaseLine   = BaseLine;
     }
 };
+
+let g_PDSE = new CParagraphDrawStateElements();
 
 function CParagraphDrawStateLines()
 {
