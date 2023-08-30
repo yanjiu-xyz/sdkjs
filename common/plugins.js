@@ -81,6 +81,27 @@
 		}
 	};
 
+	var CommandTaskType = {
+		Command : 0,
+		Method  : 1
+	};
+
+	function CCommandTask(type, guid)
+	{
+		this.type = type;
+		this.guid = guid;
+		this.value = null;
+
+		// only for Method
+		this.name = "";
+
+		// only for commands
+		this.closed = false;
+		this.interface = false;
+		this.recalculate = false;
+		this.resize = false;
+	}
+
 	function CPluginsManager(api)
 	{
 		// обычные и системные храним отдельно
@@ -99,12 +120,12 @@
 		this.api              = api;
 		this["api"]			  = this.api;
 
-		this.isSupportManyPlugins = true;
+		this.isSupportManyPlugins = false;
 
 		// используется только если this.isSupportManyPlugins === false
 		this.runAndCloseData = null;
 
-		this.guidAsyncMethod = "";
+		this.queueCommands = [];
 
 		// посылать ли сообщения о плагине в интерфейс
 		// (визуальные - да, олеобъекты, обновляемые по ресайзу - нет)
@@ -647,7 +668,7 @@
 		onPluginEventWindow : function(id, name, data)
 		{
 			let pluginData = new CPluginData();
-			pluginData.setAttribute("guid", this.guidAsyncMethod);
+			pluginData.setAttribute("guid", this.getCurrentPluginGuid());
 			pluginData.setAttribute("type", "onEvent");
 			pluginData.setAttribute("eventName", name);
 			pluginData.setAttribute("eventData", data);
@@ -676,30 +697,6 @@
 		{
 			//console.log("endLongAction");
 			this.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.SlowOperation);
-		},
-
-		// methods
-		onPluginMethodReturn : function(guid, _return)
-		{
-			let plugin = this.getPluginByGuid(guid);
-			let runObject = this.runnedPluginsMap[guid];
-
-			if (!plugin || !runObject)
-				return;
-
-			let pluginData = new CPluginData();
-			pluginData.setAttribute("guid", plugin.guid);
-			pluginData.setAttribute("type", "onMethodReturn");
-			pluginData.setAttribute("methodReturnData", _return);
-
-			this.sendMessageToFrame(plugin.isConnector ? "" : runObject.frameId, pluginData);
-		},
-
-		setPluginMethodReturnAsync : function()
-		{
-			if (this.runnedPluginsMap[this.guidAsyncMethod])
-				this.runnedPluginsMap[this.guidAsyncMethod].methodReturnAsync = true;
-			return this.guidAsyncMethod;
 		},
 
 		// run
@@ -1130,11 +1127,202 @@
 				return true;
 
 			// external plugins
-			var plugin = this.getPluginByGuid(guid);
+			let plugin = this.getPluginByGuid(guid);
 			if (plugin && 0 === plugin.baseUrl.indexOf(event.origin))
 				return true;
 
 			return false;
+		},
+
+		// commands
+		shiftCommand : function(returnValue)
+		{
+			if (0 === this.queueCommands.length)
+			{
+				// значит был вызван плагинный метод не в плагине
+				return;
+			}
+
+			let currentCommand = this.queueCommands.shift();
+
+			// send callback
+			let pluginDataTmp = undefined;
+			if (!currentCommand.closed)
+			{
+				pluginDataTmp = new CPluginData();
+				pluginDataTmp.setAttribute("guid", currentCommand.guid);
+
+				if (currentCommand.type === CommandTaskType.Command)
+				{
+					pluginDataTmp.setAttribute("type", "onCommandCallback");
+					pluginDataTmp.setAttribute("commandReturnData", returnValue);
+				}
+				else
+				{
+					pluginDataTmp.setAttribute("type", "onMethodReturn");
+					pluginDataTmp.setAttribute("methodReturnData", returnValue);
+				}
+
+				let runObject = this.runnedPluginsMap[currentCommand.guid];
+				if (runObject)
+					this.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginDataTmp);
+			}
+
+			if (this.queueCommands.length > 0)
+			{
+				let nextCommand = this.queueCommands[0];
+				if (nextCommand.type === CommandTaskType.Command)
+				{
+					this.callCommandInternal(nextCommand.value, nextCommand);
+				}
+				else
+				{
+					this.callMethodInternal(nextCommand.guid, nextCommand.name, nextCommand.value);
+				}
+			}
+		},
+
+		callCommand : function(guid, value, isClose, isInterface, isRecalculate, isResize)
+		{
+			let task = new CCommandTask(CommandTaskType.Command, guid);
+			task.closed = isClose;
+			task.interface = isInterface;
+			task.recalculate = isRecalculate;
+			task.resize = isResize;
+
+			if (0 === this.queueCommands.length)
+			{
+				this.queueCommands.push(task);
+				this.callCommandInternal(value, task);
+				return;
+			}
+
+			task.value = value;
+			this.queueCommands.push(task);
+		},
+
+		callMethod : function(guid, name, value)
+		{
+			let task = new CCommandTask(CommandTaskType.Method, guid);
+
+			if (0 === this.queueCommands.length)
+			{
+				this.queueCommands.push(task);
+				this.callMethodInternal(guid, name, value);
+				return;
+			}
+
+			task.name = name;
+			task.value = value;
+			this.queueCommands.push(task);
+		},
+
+		getCurrentPluginGuid : function()
+		{
+			return this.queueCommands[0].guid;
+		},
+
+		callCommandInternal : function(value, task)
+		{
+			let commandReturnValue = undefined;
+			try
+			{
+				if ( !AscCommon.isValidJs(value) )
+				{
+					console.error('Invalid JS.');
+					this.shiftCommand(commandReturnValue);
+					return;
+				}
+
+				if (task.interface)
+				{
+					try
+					{
+						AscCommon.safePluginEval(value);
+					}
+					catch (err)
+					{
+						console.error(err);
+					}
+				}
+				else if (!this.api.isLongAction() && (task.resize || this.api.asc_canPaste()))
+				{
+					this.api._beforeEvalCommand();
+					AscFonts.IsCheckSymbols = true;
+					try
+					{
+						commandReturnValue = AscCommon.safePluginEval(value);
+					}
+					catch (err)
+					{
+						commandReturnValue = undefined;
+						console.error(err);
+					}
+
+					if (!checkReturnCommand(commandReturnValue))
+						commandReturnValue = undefined;
+
+					AscFonts.IsCheckSymbols = false;
+
+					if (task.recalculate === true)
+					{
+						this.api._afterEvalCommand(function() {
+							window.g_asc_plugins.shiftCommand(commandReturnValue);
+						});
+						return;
+					}
+					else
+					{
+						switch (this.api.getEditorId())
+						{
+							case AscCommon.c_oEditorId.Word:
+							case AscCommon.c_oEditorId.Presentation:
+							{
+								this.api.WordControl.m_oLogicDocument.FinalizeAction();
+								break;
+							}
+							case AscCommon.c_oEditorId.Spreadsheet:
+							{
+								// На asc_canPaste создается точка в истории и startTransaction. Поэтому нужно ее закрыть без пересчета.
+								this.api.asc_endPaste();
+								break;
+							}
+							default:
+								break;
+						}
+					}
+				}
+			}
+			catch (err)
+			{
+			}
+
+			this.shiftCommand(commandReturnValue);
+		},
+
+		setPluginMethodReturnAsync : function()
+		{
+			let currentPlugin = this.getCurrentPluginGuid();
+			if (this.runnedPluginsMap[currentPlugin])
+				this.runnedPluginsMap[currentPlugin].methodReturnAsync = true;
+		},
+
+		onPluginMethodReturn : function(returnValue)
+		{
+			this.shiftCommand(returnValue);
+		},
+
+		callMethodInternal : function(guid, name, value)
+		{
+			let methodName = "pluginMethod_" + name;
+			let methodRetValue = undefined;
+
+			if (this.api[methodName])
+				methodRetValue = this.api[methodName].apply(this.api, value);
+
+			let runObject = this.runnedPluginsMap[guid];
+			if (!runObject.methodReturnAsync)
+				this.shiftCommand(methodRetValue);
 		}
 	};
 
@@ -1306,93 +1494,10 @@
 
 				if (value && value !== "")
 				{
-					let isCallbackSend = ("command" === name);
-					let commandReturnValue = undefined;
-					try
-					{
-						if ( !AscCommon.isValidJs(value) )
-						{
-							console.error('Invalid JS.');
-							return;
-						}
-
-						if (pluginData.getAttribute("interface"))
-						{
-							try
-							{
-								AscCommon.safePluginEval(value);
-							}
-							catch (err)
-							{
-								console.error(err);
-							}
-						}
-						else if (!window.g_asc_plugins.api.isLongAction() && (pluginData.getAttribute("resize") || window.g_asc_plugins.api.asc_canPaste()))
-						{
-							window.g_asc_plugins.api._beforeEvalCommand();
-							AscFonts.IsCheckSymbols = true;
-							try
-							{
-								commandReturnValue = AscCommon.safePluginEval(value);
-							}
-							catch (err)
-							{
-								commandReturnValue = undefined;
-								console.error(err);
-							}
-
-							if (!checkReturnCommand(commandReturnValue))
-								commandReturnValue = undefined;
-
-							AscFonts.IsCheckSymbols = false;
-
-							if (pluginData.getAttribute("recalculate") === true)
-							{
-								isCallbackSend = false;
-
-								window.g_asc_plugins.api._afterEvalCommand(function(){
-									let pluginDataTmp = new CPluginData();
-									pluginDataTmp.setAttribute("guid", guid);
-									pluginDataTmp.setAttribute("type", "onCommandCallback");
-									pluginDataTmp.setAttribute("commandReturnData", commandReturnValue);
-
-									window.g_asc_plugins.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginDataTmp);
-								});
-							}
-							else
-							{
-								switch (window.g_asc_plugins.api.getEditorId())
-								{
-									case AscCommon.c_oEditorId.Word:
-									case AscCommon.c_oEditorId.Presentation:
-									{
-										window.g_asc_plugins.api.WordControl.m_oLogicDocument.FinalizeAction();
-										break;
-									}
-									case AscCommon.c_oEditorId.Spreadsheet:
-									{
-										// На asc_canPaste создается точка в истории и startTransaction. Поэтому нужно ее закрыть без пересчета.
-										window.g_asc_plugins.api.asc_endPaste();
-										break;
-									}
-									default:
-										break;
-								}
-							}
-						}
-					} catch (err)
-					{
-					}
-
-					if (isCallbackSend)
-					{
-						let pluginDataTmp = new CPluginData();
-						pluginDataTmp.setAttribute("guid", guid);
-						pluginDataTmp.setAttribute("type", "onCommandCallback");
-						pluginDataTmp.setAttribute("commandReturnData", commandReturnValue);
-
-						window.g_asc_plugins.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginDataTmp);
-					}
+					window.g_asc_plugins.callCommand(guid, value, "close" === name,
+						pluginData.getAttribute("interface"),
+						pluginData.getAttribute("recalculate"),
+						pluginData.getAttribute("resize"));
 				}
 
 				if ("close" === name)
@@ -1426,25 +1531,7 @@
 			}
 			case "method":
 			{
-				let methodName = "pluginMethod_" + pluginData.getAttribute("methodName");
-				let methodRetValue = undefined;
-
-				window.g_asc_plugins.guidAsyncMethod = guid;
-
-				if (window.g_asc_plugins.api[methodName])
-					methodRetValue = window.g_asc_plugins.api[methodName].apply(window.g_asc_plugins.api, value);
-
-				if (!runObject.methodReturnAsync)
-				{
-					let pluginDataTmp = new CPluginData();
-					pluginDataTmp.setAttribute("guid", guid);
-					pluginDataTmp.setAttribute("type", "onMethodReturn");
-					pluginDataTmp.setAttribute("methodReturnData", methodRetValue);
-
-					window.g_asc_plugins.sendMessageToFrame(runObject.isConnector ? "" : runObject.frameId, pluginDataTmp);
-				}
-				runObject.methodReturnAsync = false;
-				window.g_asc_plugins.guidAsyncMethod = "";
+				window.g_asc_plugins.callMethod(guid, pluginData.getAttribute("methodName"), value);
 				break;
 			}
 			case "messageToPlugin":
