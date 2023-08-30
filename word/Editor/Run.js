@@ -12180,9 +12180,9 @@ ParaRun.prototype.Math_UpdateLineMetrics = function(PRS, ParaPr)
     var LineRule = ParaPr.Spacing.LineRule;
 	
 	let textMetrics = this.getTextMetrics();
-	let ascent  = textMetics.Ascent + textMetrics.LineGap;
-	let ascent2 = textMetics.Ascent;
-	let descent = textMetics.Descent;
+	let ascent  = textMetrics.Ascent + textMetrics.LineGap;
+	let ascent2 = textMetrics.Ascent;
+	let descent = textMetrics.Descent;
 
     // Пересчитаем метрику строки относительно размера данного текста
     if ( PRS.LineTextAscent < ascent )
