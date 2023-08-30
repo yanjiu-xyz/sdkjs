@@ -2405,17 +2405,16 @@
 			&& AscFormat.isRealNumber(fWidthMM) && AscFormat.isRealNumber(fHeightMM)
 		)
 		{
-			let sMethodGuid;
 			if(bPlugin)
 			{
-				sMethodGuid = window.g_asc_plugins.setPluginMethodReturnAsync();
+				window.g_asc_plugins.setPluginMethodReturnAsync();
 			}
 			this.asc_checkImageUrlAndAction(sImgSrc, function(oImage)
 			{
 				oThis.asc_addOleObjectAction(AscCommon.g_oDocumentUrls.getImageLocal(oImage.src), sData, sGuid, fWidthMM, fHeightMM, nWidthPix, nHeightPix, bSelect);
 				if(bPlugin)
 				{
-					window.g_asc_plugins.onPluginMethodReturn(sMethodGuid);
+					window.g_asc_plugins.onPluginMethodReturn();
 				}
 			});
 		}
