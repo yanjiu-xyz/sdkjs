@@ -1059,6 +1059,7 @@
         CMorphObjectBase.call(this, oTexturesCache, nRelH1, nRelH2)
         this.drawing1 = oDrawing1;
         this.drawing2 = oDrawing2;
+        this.bEqual = this.drawing1.isEqual && this.drawing1.isEqual(this.drawing2);
     }
     AscFormat.InitClassWithoutType(COrigSizeTextureTransform, CMorphObjectBase);
     COrigSizeTextureTransform.prototype.draw = function(oGraphics) {
@@ -1090,8 +1091,14 @@
         const nH1 = oTexture1.getHeight();
         const nW2 = oTexture2.getWidth();
         const nH2 = oTexture2.getHeight();
-        oTexture1.drawInRect(oGraphics, dAlpha1, nX1, nY1, nW1, nH1);
-        oTexture2.drawInRect(oGraphics, dAlpha2, nX2, nY2, nW2, nH2);
+
+        if(this.bEqual) {
+            oTexture1.drawInRect(oGraphics, 1, nX1, nY1, nW1, nH1);
+        }
+        else {
+            oTexture1.drawInRect(oGraphics, dAlpha1, nX1, nY1, nW1, nH1);
+            oTexture2.drawInRect(oGraphics, dAlpha2, nX2, nY2, nW2, nH2);
+        }
     };
 
 
@@ -1264,6 +1271,9 @@
     };
     CBackgroundWrapper.prototype.getBoundsByDrawing = function (bMorph) {
         return this.bounds;
+    };
+    CBackgroundWrapper.prototype.isEqual = function(oWrapper) {
+        return this.slide.isEqualBgMasterAndLayout(oWrapper.slide);
     };
 
     function CTableComplexMorph(oTexturesCache, nRelH1, nRelH2, oGrFrame1, oGrFrame2) {
