@@ -323,6 +323,7 @@
 			"common/versionHistory.js",
 			"common/clipboard_base.js",
 			"common/text_input2.js",
+			"common/workerspeech.js",
 			"common/Drawings/Format/OleObject.js",
 			"common/Drawings/Format/DrawingContent.js",
 			"common/plugins.js",
