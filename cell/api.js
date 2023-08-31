@@ -589,32 +589,6 @@ var editor;
 		}
 	};
 
-	spreadsheet_api.prototype._getFileFromUrl = function (url, fileType, token, outputFormat, callback) {
-		if (this.canEdit()) {
-			var document = {url: url, format: fileType, token: token};
-			this.insertDocumentUrlsData = {
-				imageMap: null, documents: [document], convertCallback: function (_api, url) {
-					_api.insertDocumentUrlsData.imageMap = url;
-					if (url['output.xlsx']) {
-						callback(url['output.xlsx']);
-					} else if (url['output.xlst']) {
-						callback(url['output.xlst']);
-					} else {
-						callback(null);
-					}
-					_api.endInsertDocumentUrls();
-				}, endCallback: function (_api) {
-					callback(null);
-				}
-			};
-
-			var _options = new Asc.asc_CDownloadOptions(outputFormat);
-			_options.isNaturalDownload = true;
-			_options.isGetTextFromUrl = true;
-			this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, _options);
-		}
-	};
-
 	spreadsheet_api.prototype._getTextFromFile = function (options, callback) {
 		let t = this;
 
@@ -866,15 +840,6 @@ var editor;
 			options.errorDirect = Asc.c_oAscError.ID.DirectUrl;
 		}
 		this.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, options);
-	};
-
-	spreadsheet_api.prototype.endInsertDocumentUrls = function()
-	{
-		if (this.insertDocumentUrlsData) {
-			this.insertDocumentUrlsData.endCallback(this);
-			this.insertDocumentUrlsData = null;
-			//this.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.DownloadAs);
-		}
 	};
 
 	spreadsheet_api.prototype.asc_TextToColumns = function (options, opt_text, opt_activeRange) {
@@ -1779,6 +1744,10 @@ var editor;
 		if (this.wbModel.DrawingDocument) {
 			this.wbModel.DrawingDocument.CloseFile();
 		}
+
+        if(this.wb.MobileTouchManager) {
+            this.wb.MobileTouchManager.Destroy();
+        }
 	};
 
 	spreadsheet_api.prototype.openDocumentFromZip = function (wb, data) {
@@ -6687,6 +6656,8 @@ var editor;
 	};
 
   spreadsheet_api.prototype.asc_nativePrint = function (_printer, _page, _options) {
+    //calc to fix case where file has formulas with no cache values and no changes
+    this.wbModel.dependencyFormulas.calcTree();
     var _adjustPrint = (window.AscDesktopEditor_PrintOptions && window.AscDesktopEditor_PrintOptions.advancedOptions) || new Asc.asc_CAdjustPrint();
     window.AscDesktopEditor_PrintOptions = undefined;
 
@@ -8909,6 +8880,44 @@ var editor;
 	};
 
 
+	spreadsheet_api.prototype.asc_TracePrecedents = function() {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
+		}
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		let ws = wb.getWorksheet();
+		return ws.tracePrecedents();
+	};
+
+	spreadsheet_api.prototype.asc_TraceDependents = function() {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
+		}
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		let ws = wb.getWorksheet();
+		return ws.traceDependents();
+	};
+
+	spreadsheet_api.prototype.asc_RemoveTraceArrows = function(type) {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
+		}
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		let ws = wb.getWorksheet();
+		return ws.removeTraceArrows(type);
+	};
+
+
+
   /*
    * Export
    * -----------------------------------------------------------------------------
@@ -9073,6 +9082,7 @@ var editor;
   prot["asc_setDisplayHeadings"] = prot.asc_setDisplayHeadings;
   prot["asc_setShowZeros"] = prot.asc_setShowZeros;
   prot["asc_setShowFormulas"] = prot.asc_setShowFormulas;
+  prot["asc_getShowFormulas"] = prot.asc_getShowFormulas;
 
 
   // Defined Names
@@ -9474,6 +9484,9 @@ var editor;
   prot["asc_GetSheetViewType"]   = prot.asc_GetSheetViewType;
 
   prot["asc_ChangeTextCase"]   = prot.asc_ChangeTextCase;
+  prot["asc_TracePrecedents"]     = prot.asc_TracePrecedents;
+  prot["asc_TraceDependents"]     = prot.asc_TraceDependents;
+  prot["asc_RemoveTraceArrows"]   = prot.asc_RemoveTraceArrows;
 
   prot["asc_InsertPageBreak"]         = prot.asc_InsertPageBreak;
   prot["asc_RemovePageBreak"]         = prot.asc_RemovePageBreak;
