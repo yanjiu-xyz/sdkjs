@@ -1134,8 +1134,7 @@
 
 			this.decrementCounterLongAction();
 
-			if (guid)
-				window.g_asc_plugins.onPluginMethodReturn(true);
+			window.g_asc_plugins && window.g_asc_plugins.onPluginMethodReturn(true);
 		}
 
 		let sOverAll = "";
