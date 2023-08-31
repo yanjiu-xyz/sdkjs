@@ -236,7 +236,7 @@
 		this.m_nExternalIndex1  = -1;
 		this.m_nExternalCounter = 0;
 
-		this.oDeletedTextRecovery = null;
+		this.textRecovery = null;
     }
 
     CCollaborativeEditingBase.prototype.GetEditorApi = function()
@@ -333,6 +333,27 @@
         this.m_aNeedUnlock2.push(Lock);
         editor._onUpdateDocumentCanSave();
     };
+	CCollaborativeEditingBase.prototype.initDeletedTextRecovery = function()
+	{
+		if (this.textRecovery)
+			return;
+		
+		this.textRecovery = new AscCommon.DeletedTextRecovery(this);
+	};
+	CCollaborativeEditingBase.prototype.recoverDeletedText = function()
+	{
+		if (!this.textRecovery)
+			return;
+		
+		this.textRecovery.recover();
+	};
+	CCollaborativeEditingBase.prototype.undoDeletedTextRecovery = function()
+	{
+		if (!this.textRecovery)
+			return;
+		
+		this.textRecovery.undoRecovery();
+	};
     CCollaborativeEditingBase.prototype.Have_OtherChanges = function()
     {
         return (0 < this.m_aChanges.length);
@@ -341,9 +362,9 @@
     {
         if (this.m_aChanges.length > 0)
         {
-			if (this.oDeletedTextRecovery){
-				this.oDeletedTextRecovery.UndoAllDeletedTextRecoveryChanges();
-			}
+			if (this.textRecovery)
+				this.textRecovery.undoRecovery();
+			
             AscFonts.IsCheckSymbols = true;
             editor.WordControl.m_oLogicDocument.PauseRecalculate();
             editor.WordControl.m_oLogicDocument.EndPreview_MailMergeResult();
@@ -360,14 +381,9 @@
             this.private_RestoreDocumentState(DocState);
             this.OnStart_Load_Objects(fEndCallBack);
             AscFonts.IsCheckSymbols = false;
-
-			this.oDeletedTextRecovery = new AscCommon.DeletedTextRecovery();
-			this.oDeletedTextRecovery.InitRevision();
-			//
-			// if (this.oDeletedTextRecovery.GetIsShowDelText())
-			// {
-			// 	//this.oDeletedTextRecovery.ShowDelText();
-			// }
+			
+			if (this.textRecovery)
+				this.textRecovery.handleChanges(this.CoHistory.Changes);
 		}
 		else
 		{

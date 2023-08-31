@@ -62,15 +62,13 @@ $(function () {
 			AscCommon.History.GetChangesFromPoint(i, arr);
 		}
 
-		oDeletedText.oColloborativeHistory.Changes = arr;
-		oDeletedText.Changes = arr;
-		oDeletedText.InitRevision();
+		oDeletedText.handleChanges(arr);
 		oCurDelRecover = oDeletedText;
 	}
 
 	function ShowDelText()
 	{
-		oCurDelRecover.ShowDel();
+		oCurDelRecover.recover();
 	}
 
 	function Prev()

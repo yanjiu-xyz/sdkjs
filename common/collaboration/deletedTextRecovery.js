@@ -41,9 +41,7 @@
 	function DeletedTextRecovery(isDebug)
 	{
 		this.oCollaborativeEditingBase = AscCommon.CollaborativeEditing;
-		this.oColloborativeHistory = this.oCollaborativeEditingBase.CoHistory;
-		this.Changes = this.oColloborativeHistory.Changes;
-
+		
 		this.m_RewiewPoints 	= []; // Отсортированный по типу список изменений
 		this.m_RewiewDelPoints 	= []; // Список всех изменений связанных с удалением текста
 		this.m_RewiewIndex 		= 0;  // Текущая позиция в истории ревизии для отображения удаленного текста
@@ -57,13 +55,14 @@
 
 		this.isDebug = isDebug;
 	}
-	// Инициализация и создание промежуточных данных для отображения удаленного текста в текущей ревизии
-	DeletedTextRecovery.prototype.InitRevision = function ()
+	/**
+	 * Инициализация и создание промежуточных данных для отображения удаленного текста в текущей ревизии
+	 */
+	DeletedTextRecovery.prototype.handleChanges = function(arrChanges)
 	{
-		if (!this.Changes || this.Changes.length === 0)
+		if (!arrChanges || !arrChanges.length)
 			return;
-
-		let arrChanges 			= this.Changes;
+		
 		let arrCurrent		= [];
 		let arrTemp			= [];
 		let arrDelChanges 	= [];
@@ -143,6 +142,16 @@
 		this.m_RewiewIndex		= this.m_RewiewPoints.length;
 		this.m_RewiewDelPoints	= arrDelChanges;
 	}
+	DeletedTextRecovery.prototype.undoRecovery = function()
+	{
+		this.UndoPoints();
+		this.UndoShowDelText();
+		this.UndoStepText();
+	};
+	DeletedTextRecovery.prototype.recover = function()
+	{
+		this.ShowDelText()
+	};
 	// получаем верхнюю границу
 	DeletedTextRecovery.prototype.GetCountOfNavigationPoints =  function ()
 	{
@@ -161,16 +170,6 @@
 	{
 		return this.isShowDelText;
 	};
-	DeletedTextRecovery.prototype.ShowDel = function ()
-	{
-		this.ShowDelText();
-	};
-	DeletedTextRecovery.prototype.UndoAllDeletedTextRecoveryChanges = function ()
-	{
-		this.UndoPoints();
-		this.UndoShowDelText();
-		this.UndoStepText();
-	}
 	DeletedTextRecovery.prototype.ShowDelText = function ()
 	{
 		this.UndoShowDelText();
@@ -881,6 +880,6 @@
 		}
 	};
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscCommon'] = window['AscCommon'] || {};
-	window['AscCommon'].DeletedTextRecovery = DeletedTextRecovery;
+	AscCommon.DeletedTextRecovery = DeletedTextRecovery;
+	
 })(window);
