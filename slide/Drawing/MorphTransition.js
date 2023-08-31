@@ -1380,31 +1380,44 @@
         const nDrawingsCount1 = aDrawings1.length;
         const nDrawingsCount2 = aDrawings2.length;
         const oMapPaired = {};
+        let oPairedDrawing, oDrawing1;
         for(let nDrawing1 = 0; nDrawing1 < nDrawingsCount1; ++nDrawing1) {
-            let oDrawing1 = aDrawings1[nDrawing1];
-            let oPairedDrawing = null;
+            oDrawing1 = aDrawings1[nDrawing1];
+            oPairedDrawing = null;
             let nParedRelH = null;
             for(let nDrawing2 = 0; nDrawing2 < nDrawingsCount2; ++nDrawing2) {
                 let oDrawing2 = aDrawings2[nDrawing2];
-                if(!oMapPaired[oDrawing2.Id]) {
-                    oPairedDrawing = oDrawing1.compareForMorph(oDrawing2, oPairedDrawing);
-                    if(oDrawing2 === oPairedDrawing) {
-                        nParedRelH = nDrawing2;
-                    }
+                oPairedDrawing = oDrawing1.compareForMorph(oDrawing2, oPairedDrawing, oMapPaired);
+                if(oDrawing2 === oPairedDrawing) {
+                    nParedRelH = nDrawing2;
                 }
             }
             if(oPairedDrawing) {
-                oMapPaired[oPairedDrawing.Id] = true;
-                this.addObjectMorphs(oDrawing1, nDrawing1, oPairedDrawing, nParedRelH);
-            }
-            else {
-                this.pushMorphObject(new CMorphedDisappearObject(this.texturesCache, oDrawing1, nDrawing1));
+                oMapPaired[oPairedDrawing.Id] = {drawing: oDrawing1, relH: nDrawing1};
             }
         }
         for(let nDrawing2 = 0; nDrawing2 < nDrawingsCount2; ++nDrawing2) {
             let oDrawing2 = aDrawings2[nDrawing2];
-            if(!oMapPaired[oDrawing2.Id]) {
+            let oParedObj = oMapPaired[oDrawing2.Id];
+            if(oParedObj) {
+                this.addObjectMorphs(oParedObj.drawing, oParedObj.relH, oDrawing2, nDrawing2);
+            }
+            else {
                 this.pushMorphObject(new CMorphedAppearObject(this.texturesCache, oDrawing2, nDrawing2));
+            }
+        }
+        for(let nDrawing1 = 0; nDrawing1 < nDrawingsCount1; ++nDrawing1) {
+            oDrawing1 = aDrawings1[nDrawing1];
+            let bDisappear = true;
+            for(let sKey in oMapPaired) {
+                if(oMapPaired.hasOwnProperty(sKey)) {
+                    if(oMapPaired[sKey].drawing === oDrawing1) {
+                        bDisappear = false;
+                    }
+                }
+            }
+            if(bDisappear) {
+                this.pushMorphObject(new CMorphedDisappearObject(this.texturesCache, oDrawing1, nDrawing1));
             }
         }
     };
