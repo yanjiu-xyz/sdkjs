@@ -1611,9 +1611,9 @@ var CPresentation = CPresentation || function(){};
         }
         else {
             oAnnot = this.AddAnnot(oProps);
+            editor.sendEvent("asc_onAddComment", oAnnot.GetId(), AscCommentData);    
         }
         
-        editor.sendEvent("asc_onAddComment", oAnnot.GetId(), AscCommentData);
         return oAnnot;
     };
     CPDFDoc.prototype.CreateNewHistoryPoint = function() {
