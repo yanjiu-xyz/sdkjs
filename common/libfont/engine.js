@@ -670,7 +670,7 @@ function onLoadFontsModule(window, undefined)
 	function ZLib()
 	{
 		/** @suppress {checkVars} */
-		this.engine = new AscCommon["CZLibEngineJS"]();
+		this.engine = window["NATIVE_EDITOR_ENJINE"] ? CreateNativeZip() : new AscCommon["CZLibEngineJS"]();
 		this.files = [];
 	}
 	/**
