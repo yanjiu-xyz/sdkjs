@@ -108,7 +108,7 @@ function CBinaryFileWriter()
     {
         var _canvas = document.createElement('canvas');
         var _ctx = _canvas.getContext('2d');
-        this.len = 1024*1024*5;
+        this.len = 1024*1024*2;
         this.ImData = _ctx.createImageData(this.len / 4, 1);
         this.data = this.ImData.data;
         this.pos = 0;

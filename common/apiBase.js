@@ -280,9 +280,6 @@
 			t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical);
 		});
 
-		AscCommon.loadSmartArtBinary(function (){}, function (err) {
-			t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingBinError, c_oAscError.Level.NoCritical);
-		});
 
 
 		var oldOnError = window.onerror;
@@ -382,9 +379,9 @@
 	// modules
 	baseEditorsApi.prototype._loadModules = function()
 	{
-		this.modulesCount = 2;
+		this.modulesCount = 1;
 		AscFonts.load(this, this._onSuccessLoadModule.bind(this), this._onErrorLoadModule.bind(this));
-		AscCommon.zlib_load(this._onSuccessLoadModule.bind(this), this._onErrorLoadModule.bind(this));
+		//AscCommon.zlib_load(this._onSuccessLoadModule.bind(this), this._onErrorLoadModule.bind(this));
 	};
 	baseEditorsApi.prototype._onSuccessLoadModule = function()
 	{

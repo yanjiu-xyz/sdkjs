@@ -175,12 +175,11 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
 	endRun.AddToContent(0, new AscWord.CRunParagraphMark());
 	this.Content[0] = endRun;
 
-    this.m_oPRSW = new CParagraphRecalculateStateWrap(this);
-    this.m_oPRSC = new CParagraphRecalculateStateCounter();
-    this.m_oPRSA = new CParagraphRecalculateStateAlign();
-    this.m_oPRSI = new CParagraphRecalculateStateInfo();
-
-    this.m_oPDSE = new CParagraphDrawStateElements();
+    this.m_oPRSW = g_PRSW;//new CParagraphRecalculateStateWrap(this);
+    this.m_oPRSC = g_PRSC;//new CParagraphRecalculateStateCounter();
+    this.m_oPRSA = g_PRSA;//new CParagraphRecalculateStateAlign();
+    this.m_oPRSI = g_PRSI;//new CParagraphRecalculateStateInfo();
+    this.m_oPDSE = g_PDSE;//new CParagraphDrawStateElements();
     this.StartState = null;
 
     this.CollPrChange = false;
@@ -979,22 +978,7 @@ Paragraph.prototype.Internal_Content_Add = function(Pos, Item)
 		if (ContentPos.Data[0] >= Pos)
 			ContentPos.Data[0]++;
 	}
-
-	// Передвинем все метки слов для проверки орфографии
-	for (var nIndex = 0, nCount = this.SpellChecker.Elements.length; nIndex < nCount; ++nIndex)
-	{
-		var Element    = this.SpellChecker.Elements[nIndex];
-		var ContentPos = Element.StartPos;
-
-		if (ContentPos.Data[0] >= Pos)
-			ContentPos.Data[0]++;
-
-		ContentPos = Element.EndPos;
-
-		if (ContentPos.Data[0] >= Pos)
-			ContentPos.Data[0]++;
-	}
-
+	
 	if (Item.SetParent)
 		Item.SetParent(this);
 
@@ -1107,20 +1091,6 @@ Paragraph.prototype.Internal_Content_Remove = function(Pos)
 	// Удаляем комментарий, если это необходимо
 	if (true === this.DeleteCommentOnRemove && para_Comment === Item.Type && this.LogicDocument)
 		this.LogicDocument.RemoveComment(Item.CommentId, true, false);
-
-	for (var nIndex = 0, nCount = this.SpellChecker.Elements.length; nIndex < nCount; ++nIndex)
-	{
-		var Element    = this.SpellChecker.Elements[nIndex];
-		var ContentPos = Element.StartPos;
-
-		if (ContentPos.Data[0] > Pos)
-			ContentPos.Data[0]--;
-
-		ContentPos = Element.EndPos;
-
-		if (ContentPos.Data[0] > Pos)
-			ContentPos.Data[0]--;
-	}
 
 	this.OnContentChange();
 };
@@ -14502,20 +14472,6 @@ Paragraph.prototype.private_CheckDropCapForSpellCheck = function()
 
 	oElement.SetCorrect();
 };
-Paragraph.prototype.AddSpellCheckerElement = function(oElement)
-{
-	let oRun = this.GetClassByPos(oElement.GetStartPos());
-	if (!oRun || !oRun.IsRun())
-		return;
-
-	oRun.AddSpellCheckerElement(oElement, true);
-
-	oRun = this.GetClassByPos(oElement.GetEndPos());
-	if (!oRun || !oRun.IsRun())
-		return;
-
-	oRun.AddSpellCheckerElement(oElement, false);
-};
 Paragraph.prototype.ReplaceMisspelledWord = function(Word, oElement)
 {
 	var Element = null;
@@ -14545,16 +14501,13 @@ Paragraph.prototype.ReplaceMisspelledWord = function(Word, oElement)
 		Word = Word.substr(1);
 
 	// Сначала вставим новое слово
-	var Class = Element.StartRun;
-	if (para_Run !== Class.Type || Element.StartPos.Data.Depth <= 0)
-		return;
-
-	var RunPos = Element.StartPos.Data[Element.StartPos.Depth - 1];
-	Class.AddText(Word, RunPos);
+	var startRun = Element.GetStartRun();
+	var inRunPos = Element.GetStartInRunPos();
+	startRun.AddText(Word, inRunPos);
 
 	// Удалим старое слово
-	var StartPos = Element.StartPos;
-	var EndPos   = Element.EndPos;
+	var StartPos = Element.GetStartPos();
+	var EndPos   = Element.GetEndPos();
 
 	// Если комментарии попадают в текст, тогда сначала их надо отдельно удалить
 	var CommentsToDelete = {};
@@ -19613,6 +19566,8 @@ CParagraphDrawStateElements.prototype =
         this.BaseLine   = BaseLine;
     }
 };
+
+let g_PDSE = new CParagraphDrawStateElements();
 
 function CParagraphDrawStateLines()
 {

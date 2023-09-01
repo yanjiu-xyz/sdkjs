@@ -33,7 +33,6 @@
 			"slide/api.js",
 			"slide/api_plugins.js",
 			"common/spell/spell.js",
-			"common/zlib/zlib.js",
 			"word/Editor/Table/TableLook.js",
 			"cell/utils/utils.js"
 		],
@@ -62,6 +61,7 @@
 			"common/libfont/manager.js",
 
 			"common/stringserialize.js",
+			"common/digest/sha256.js",
 			"common/random.js",
 			"common/keychainstorage.js",
 
@@ -306,6 +306,7 @@
 			"word/Editor/Search/Pattern.js",
 			"word/Editor/GlossaryDocument.js",
 			"word/Editor/GlossaryDocumentChanges.js",
+			"word/Editor/Styles/style-cache.js",
 			"word/Editor/Styles/FixedFormDefaults.js",
 			"word/Editor/Revisions/TrackRevisionsManager.js",
 

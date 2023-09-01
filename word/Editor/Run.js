@@ -85,18 +85,9 @@ function ParaRun(Paragraph, bMathRun)
 
 	this.State      = new CParaRunState();       // Положение курсора и селекта в данного run
 	this.Selection  = this.State.Selection;
-	this.CompiledPr = new CTextPr();             // Скомпилированные настройки
+	this.CompiledPr = AscWord.g_textPrCache.add(new AscWord.CTextPr());             // Скомпилированные настройки
 	this.RecalcInfo = new CParaRunRecalcInfo();  // Флаги для пересчета (там же флаг пересчета стиля)
-
-	this.TextAscent  = 0; // текстовый ascent + linegap
-	this.TextAscent  = 0; // текстовый ascent + linegap
-	this.TextDescent = 0; // текстовый descent
-	this.TextHeight  = 0; // высота текста
-	this.TextAscent2 = 0; // текстовый ascent
-	this.Ascent      = 0; // общий ascent
-	this.Descent     = 0; // общий descent
-	this.YOffset     = 0; // смещение по Y
-
+	
 	this.CollPrChangeMine   = false;
 	this.CollPrChangeOther  = false;
 	this.CollaborativeMarks = new CRunCollaborativeMarks();
@@ -1837,16 +1828,10 @@ ParaRun.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 	}
 
     // Обновляем позиции для орфографии
-    var SpellingMarksCount = this.SpellingMarks.length;
-    for ( var Index = 0; Index < SpellingMarksCount; Index++ )
-    {
-        var Mark       = this.SpellingMarks[Index];
-        var ContentPos = ( true === Mark.Start ? Mark.Element.StartPos : Mark.Element.EndPos );
-        var Depth      = Mark.Depth;
-
-        if ( ContentPos.Data[Depth] >= Pos )
-            ContentPos.Data[Depth]++;
-    }
+	for (let iMark = 0, nMarks = this.SpellingMarks.length; iMark < nMarks; ++iMark)
+	{
+		this.SpellingMarks[iMark].onAdd(Pos);
+	}
 
 	this.private_UpdateDocumentOutline();
     this.private_UpdateTrackRevisionOnChangeContent(true);
@@ -1912,20 +1897,12 @@ ParaRun.prototype.Remove_FromContent = function(Pos, Count, UpdatePosition)
         else if ( ContentPos.Data[Depth] > Pos )
             ContentPos.Data[Depth] = Math.max( 0 , Pos );
     }
-
-    // Обновляем позиции для орфографии
-    var SpellingMarksCount = this.SpellingMarks.length;
-    for ( var Index = 0; Index < SpellingMarksCount; Index++ )
-    {
-        var Mark       = this.SpellingMarks[Index];
-        var ContentPos = ( true === Mark.Start ? Mark.Element.StartPos : Mark.Element.EndPos );
-        var Depth      = Mark.Depth;
-
-        if ( ContentPos.Data[Depth] > Pos + Count )
-            ContentPos.Data[Depth] -= Count;
-        else if ( ContentPos.Data[Depth] > Pos )
-            ContentPos.Data[Depth] = Math.max( 0 , Pos );
-    }
+	
+	// Обновляем позиции для орфографии
+	for (let iMark = 0, nMarks = this.SpellingMarks.length; iMark < nMarks; ++iMark)
+	{
+		this.SpellingMarks[iMark].onRemove(Pos, Count);
+	}
 
 	this.private_UpdateDocumentOutline();
 	this.private_UpdateTrackRevisionOnChangeContent(true);
@@ -2826,29 +2803,16 @@ ParaRun.prototype.Split2 = function(CurPos, Parent, ParentPos)
 	}
 
 	// Если были точки орфографии, тогда переместим их в новый ран
-	var SpellingMarksCount = this.SpellingMarks.length;
-	for ( var Index = 0; Index < SpellingMarksCount; Index++ )
+	for (let iMark = 0, nMarks = this.SpellingMarks.length; iMark < nMarks; ++iMark)
 	{
-		var Mark    = this.SpellingMarks[Index];
-		var MarkPos = ( true === Mark.Start ? Mark.Element.StartPos.Get(Mark.Depth) : Mark.Element.EndPos.Get(Mark.Depth) );
-
-		if ( MarkPos >= CurPos )
+		let mark = this.SpellingMarks[iMark];
+		if (mark.getPos() >= CurPos)
 		{
-			var MarkElement = Mark.Element;
-			if ( true === Mark.Start )
-			{
-				MarkElement.StartPos.Data[Mark.Depth] -= CurPos;
-			}
-			else
-			{
-				MarkElement.EndPos.Data[Mark.Depth] -= CurPos;
-			}
-
-			NewRun.SpellingMarks.push( Mark );
-
-			this.SpellingMarks.splice( Index, 1 );
-			SpellingMarksCount--;
-			Index--;
+			mark.movePos(-CurPos);
+			NewRun.SpellingMarks.push(mark);
+			this.SpellingMarks.splice(iMark, 1);
+			--nMarks;
+			--iMark;
 		}
 	}
 
@@ -3439,32 +3403,11 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 		_oTextPr = oTextPr.Copy();
 		_oTextPr.RFonts.SetAll("ASCW3");
 	}
-
-	let isMathRun = this.IsMathRun();
-
-	// TODO: Пока для формул сделаем, чтобы работало по-старому, в дальнейшем надо будет переделать на fontslot
-	let nFontsFlags = isMathRun ? AscWord.fontslot_ASCII : AscWord.fontslot_None;
-	for (let nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
-	{
-		nFontsFlags |= this.Content[nPos].GetFontSlot(_oTextPr);
-	}
-
-	if (AscWord.fontslot_Unknown === nFontsFlags)
-		nFontsFlags = oTextPr.CS || oTextPr.RTL ? AscWord.fontslot_CS : AscWord.fontslot_ASCII;
-
-	let oMetrics = _oTextPr.GetTextMetrics(nFontsFlags, oTheme);
-
-	// Под TextAscent мы будем понимать ascent + linegap (которые записаны в шрифте)
-	this.TextHeight  = oMetrics.Height;
-	this.TextDescent = oMetrics.Descent;
-	this.TextAscent  = oMetrics.Ascent + oMetrics.LineGap;
-	this.TextAscent2 = oMetrics.Ascent;
-	this.YOffset     = oTextPr.Position;
-
+	
 	g_oTextMeasurer.SetTextPr(_oTextPr, oTheme);
-
+	
 	var oInfoMathText;
-	if (isMathRun)
+	if (this.IsMathRun())
 	{
 		oInfoMathText = new CMathInfoTextPr({
 			TextPr      : oTextPr,
@@ -3480,6 +3423,9 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 	let isKeepWidth = false;
 	if (oTextForm && oTextForm.IsComb())
 	{
+		let textMetrics = this.getTextMetrics();
+		let textAscent  = textMetrics.Ascent + textMetrics.LineGap;
+		
 		const nWRule = oTextForm.GetWidthRule();
 		isKeepWidth  = Asc.CombFormWidthRule.Exact === nWRule;
 
@@ -3488,12 +3434,12 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 		if (undefined === oTextForm.Width || nWRule === Asc.CombFormWidthRule.Auto)
 			nCombWidth = 0;
 		else if (oTextForm.Width < 0)
-			nCombWidth = this.TextAscent * (Math.abs(oTextForm.Width) / 100);
+			nCombWidth = textAscent * (Math.abs(oTextForm.Width) / 100);
 		else
 			nCombWidth = AscCommon.TwipsToMM(oTextForm.Width);
 
 		if (!nCombWidth || nCombWidth < 0)
-			nCombWidth = this.TextAscent;
+			nCombWidth = textAscent;
 
 		let oParagraph = this.GetParagraph();
 		if (oParagraph
@@ -3538,6 +3484,31 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 
 	this.RecalcInfo.Recalc = true;
 	this.RecalcInfo.ResetMeasure();
+};
+ParaRun.prototype.getTextMetrics = function()
+{
+	let textPr = this.Get_CompiledPr(false);
+	if (this.IsUseAscFont(textPr))
+	{
+		textPr = textPr.Copy();
+		textPr.RFonts.SetAll("ASCW3");
+	}
+	
+	// TODO: Пока для формул сделаем, чтобы работало по-старому, в дальнейшем надо будет переделать на fontslot
+	let fontSlot = this.IsMathRun() ? AscWord.fontslot_ASCII : AscWord.fontslot_None;
+	for (let nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
+	{
+		fontSlot |= this.Content[nPos].GetFontSlot(textPr);
+	}
+	
+	if (AscWord.fontslot_Unknown === fontSlot)
+		fontSlot = textPr.CS || textPr.RTL ? AscWord.fontslot_CS : AscWord.fontslot_ASCII;
+	
+	return textPr.GetTextMetrics(fontSlot, this.Paragraph.GetTheme());
+};
+ParaRun.prototype.getYOffset = function()
+{
+	return this.Get_Position();
 };
 ParaRun.prototype.private_MeasureCombForm = function(nCombBorderW, nCombWidth, nMaxComb, oTextForm, isKeepWidth, oTextPr, oTheme, oInfoMathText)
 {
@@ -4373,7 +4344,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                         if (true === StartWord)
                             FirstItemOnLine = false;
 
-                        Item.YOffset = this.YOffset;
+                        Item.YOffset = this.getYOffset();
 
                         // Если до этого было слово, тогда не надо проверять убирается ли оно, но если стояли пробелы,
                         // тогда мы их учитываем при проверке убирается ли данный элемент, и добавляем только если
@@ -4547,7 +4518,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     var NewX     = TabPos.NewX;
                     var TabValue = TabPos.TabValue;
 
-                    Item.SetLeader(TabPos.TabLeader);
+                    Item.SetLeader(TabPos.TabLeader, this.Get_CompiledPr(false));
 
 					PRS.LastTab.TabPos       = NewX;
 					PRS.LastTab.Value        = TabValue;
@@ -4562,8 +4533,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     // рассчитываем его сразу здесь
                     if (tab_Left !== TabValue)
                     {
-						Item.Width        = 0;
-						Item.WidthVisible = 0;
+						Item.Width = 0;
 
 						// В Word2013 и раньше, если не левый таб заканчивается правее правой границы, тогда у параграфа
 						// правая граница имеет максимально возможное значение (55см)
@@ -4607,9 +4577,8 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 						}
 						else
 						{
-							Item.Width        = NewX - X;
-							Item.WidthVisible = NewX - X;
-
+							Item.Width = NewX - X;
+							
 							X = NewX;
 						}
                     }
@@ -4989,10 +4958,20 @@ ParaRun.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
 
 	var UpdateLineMetricsText = false;
 	var LineRule              = ParaPr.Spacing.LineRule;
-
+	
+	let textPr = this.Get_CompiledPr(false);
+	if (this.IsUseAscFont(textPr))
+	{
+		textPr = textPr.Copy();
+		textPr.RFonts.SetAll("ASCW3");
+	}
+	// TODO: Пока для формул сделаем, чтобы работало по-старому, в дальнейшем надо будет переделать на fontslot
+	let fontSlot = this.IsMathRun() ? AscWord.fontslot_ASCII : AscWord.fontslot_None;
+	
 	for (var CurPos = StartPos; CurPos < EndPos; CurPos++)
 	{
 		var Item = this.private_CheckInstrText(this.Content[CurPos]);
+		fontSlot |= Item.GetFontSlot(textPr);
 
 		if (Item === Para.Numbering.Item)
 		{
@@ -5040,11 +5019,12 @@ ParaRun.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
 					}
 					else
 					{
-						if (PRS.LineAscent < Item.Height + this.YOffset)
-							PRS.LineAscent = Item.Height + this.YOffset;
+						let yOffset = this.getYOffset();
+						if (PRS.LineAscent < Item.Height + yOffset)
+							PRS.LineAscent = Item.Height + yOffset;
 
-						if (PRS.LineDescent < -this.YOffset)
-							PRS.LineDescent = -this.YOffset;
+						if (PRS.LineDescent < -yOffset)
+							PRS.LineDescent = -yOffset;
 					}
 				}
 
@@ -5065,41 +5045,51 @@ ParaRun.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
 		}
 	}
 
-	if (false === UpdateLineMetricsText)
+	if (!UpdateLineMetricsText)
 	{
 		var oTextForm  = this.GetTextForm();
 		if (oTextForm && oTextForm.IsComb())
 			UpdateLineMetricsText = true;
 	}
 
-	if (true === UpdateLineMetricsText)
+	if (UpdateLineMetricsText)
 	{
+		if (AscWord.fontslot_Unknown === fontSlot)
+			fontSlot = textPr.CS || textPr.RTL ? AscWord.fontslot_CS : AscWord.fontslot_ASCII;
+		
+		let metrics = textPr.GetTextMetrics(fontSlot, this.Paragraph.GetTheme());
+		
+		let textDescent = metrics.Descent;
+		let textAscent  = metrics.Ascent + metrics.LineGap;
+		let textAscent2 = metrics.Ascent;
+		
 		// Пересчитаем метрику строки относительно размера данного текста
-		if (PRS.LineTextAscent < this.TextAscent)
-			PRS.LineTextAscent = this.TextAscent;
+		if (PRS.LineTextAscent < textAscent)
+			PRS.LineTextAscent = textAscent;
 
-		if (PRS.LineTextAscent2 < this.TextAscent2)
-			PRS.LineTextAscent2 = this.TextAscent2;
+		if (PRS.LineTextAscent2 < textAscent2)
+			PRS.LineTextAscent2 = textAscent2;
 
-		if (PRS.LineTextDescent < this.TextDescent)
-			PRS.LineTextDescent = this.TextDescent;
+		if (PRS.LineTextDescent < textDescent)
+			PRS.LineTextDescent = textDescent;
 
 		if (Asc.linerule_Exact === LineRule)
 		{
 			// Смещение не учитывается в метриках строки, когда расстояние между строк точное
-			if (PRS.LineAscent < this.TextAscent)
-				PRS.LineAscent = this.TextAscent;
+			if (PRS.LineAscent < textAscent)
+				PRS.LineAscent = textAscent;
 
-			if (PRS.LineDescent < this.TextDescent)
-				PRS.LineDescent = this.TextDescent;
+			if (PRS.LineDescent < textDescent)
+				PRS.LineDescent = textDescent;
 		}
 		else
 		{
-			if (PRS.LineAscent < this.TextAscent + this.YOffset)
-				PRS.LineAscent = this.TextAscent + this.YOffset;
+			let yOffset = this.getYOffset();
+			if (PRS.LineAscent < textAscent + yOffset)
+				PRS.LineAscent = textAscent + yOffset;
 
-			if (PRS.LineDescent < this.TextDescent - this.YOffset)
-				PRS.LineDescent = this.TextDescent - this.YOffset;
+			if (PRS.LineDescent < textDescent - yOffset)
+				PRS.LineDescent = textDescent - yOffset;
 		}
 	}
 };
@@ -5675,7 +5665,7 @@ ParaRun.prototype.Recalculate_Range_Spaces = function(PRSA, _CurLine, _CurRange,
             }
             case para_Tab:
             {
-                PRSA.X += Item.WidthVisible;
+                PRSA.X += Item.GetWidthVisible();
 
                 break;
             }
@@ -6250,9 +6240,11 @@ ParaRun.prototype.RecalculateMinMaxContentWidth = function(MinMax)
             }
         }
     }
-
-    if (true === bCheckTextHeight && nMaxHeight < this.TextAscent + this.TextDescent)
-        nMaxHeight = this.TextAscent + this.TextDescent;
+	
+	let textMetrics = this.getTextMetrics();
+	let textHeight  = textMetrics.Ascent + textMetrics.LineGap + textMetrics.Descent;
+	if (true === bCheckTextHeight && nMaxHeight < textHeight)
+		nMaxHeight = textHeight;
 
     MinMax.bWord        = bWord;
     MinMax.nWordLen     = nWordLen;
@@ -6591,6 +6583,8 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
 
     var X = PDSE.X;
     var Y = PDSE.Y;
+	
+	let yOffset = this.getYOffset();
 
     var CurTextPr = this.Get_CompiledPr( false );
 
@@ -6746,7 +6740,7 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
             {
                 if (para_Drawing != ItemType || Item.Is_Inline())
                 {
-                    Item.Draw(X, Y - this.YOffset, pGraphics, PDSE, CurTextPr);
+                    Item.Draw(X, Y - yOffset, pGraphics, PDSE, CurTextPr);
                     X += Item.GetWidthVisible();
                 }
 
@@ -6783,7 +6777,7 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
             }
             case para_Space:
             {
-                Item.Draw( X, Y - this.YOffset, pGraphics, PDSE, CurTextPr );
+                Item.Draw( X, Y - yOffset, pGraphics, PDSE, CurTextPr );
 
                 X += Item.GetWidthVisible();
 
@@ -6856,7 +6850,7 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
 						}
 					}
 
-					Item.Draw(X, Y - this.YOffset, pGraphics);
+					Item.Draw(X, Y - yOffset, pGraphics);
 				}
 
                 X += Item.GetWidth();
@@ -6865,7 +6859,7 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
             }
             case para_NewLine:
             {
-                Item.Draw( X, Y - this.YOffset, pGraphics );
+                Item.Draw( X, Y - yOffset, pGraphics );
                 X += Item.WidthVisible;
                 break;
             }
@@ -6919,7 +6913,7 @@ ParaRun.prototype.Draw_Elements = function(PDSE)
 						}
 					}
 
-					Item.Draw(X, Y - this.YOffset, pGraphics, PDSE);
+					Item.Draw(X, Y - yOffset, pGraphics, PDSE);
 					X += Item.GetWidthVisible();
 				}
 
@@ -6978,8 +6972,9 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
 			isFormPlaceHolder = true;
 	}
 
+	let yOffset = this.getYOffset();
     var CurTextPr = this.Get_CompiledPr( false );
-    var StrikeoutY = Y - this.YOffset;
+    var StrikeoutY = Y - yOffset;
 
     var fontCoeff = 1; // учтем ArgSize
     if(this.Type == para_Math_Run)
@@ -6988,7 +6983,7 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
         fontCoeff   = MatGetKoeffArgSize(CurTextPr.FontSize, ArgSize.value);
     }
 
-	var UnderlineY = Y + UndOff - this.YOffset;
+	var UnderlineY = Y + UndOff - yOffset;
 	var LineW      = (CurTextPr.FontSize / 18) * g_dKoef_pt_to_mm;
 
     switch(CurTextPr.VertAlign)
@@ -7070,31 +7065,24 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
 
     PDSL.CurPos.Update(StartPos, PDSL.CurDepth);
     var nSpellingErrorsCounter = PDSL.GetSpellingErrorsCounter();
-
-    var SpellingMarksCount = this.SpellingMarks.length;
-    var SpellDataLen = EndPos + 1;
-    var SpellData = g_oSpellCheckerMarks.Check(SpellDataLen);
-    var Mark = null, MarkIndex = 0;
-    for ( var SPos = 0; SPos < SpellingMarksCount; SPos++)
-    {
-        Mark = this.SpellingMarks[SPos];
-
-        if ( false === Mark.Element.Checked )
-        {
-            if ( true === Mark.Start )
-            {
-            	MarkIndex = Mark.Element.StartPos.Get(Mark.Depth);
-            	if (MarkIndex < SpellDataLen)
-            		SpellData[MarkIndex] += 1;
-            }
-            else
-            {
-				MarkIndex = Mark.Element.EndPos.Get(Mark.Depth);
-				if (MarkIndex < SpellDataLen)
-					SpellData[MarkIndex] -= 1;
-            }
-        }
-    }
+	
+	var SpellDataLen = EndPos + 1;
+	var SpellData    = g_oSpellCheckerMarks.Check(SpellDataLen);
+	for (var iMark = 0, nMarks = this.SpellingMarks.length; iMark < nMarks; ++iMark)
+	{
+		let mark = this.SpellingMarks[iMark];
+		if (!mark.isMisspelled())
+			continue;
+		
+		let markPos = mark.getPos();
+		if (markPos >= SpellDataLen)
+			continue;
+		
+		if (mark.isStart())
+			SpellData[markPos] += 1;
+		else
+			SpellData[markPos] -= 1;
+	}
 
 	let oLine  = Para.Lines[PDSL.Line];
 	let oRange = oLine ? oLine.Ranges[PDSL.Range] : undefined;
@@ -8749,16 +8737,18 @@ ParaRun.prototype.Get_CompiledPr = function(bCopy)
 {
 	if (this.IsStyleHyperlink() && this.IsInHyperlinkInTOC())
 		this.RecalcInfo.TextPr = true;
-
-    if ( true === this.RecalcInfo.TextPr )
-    {
-        this.RecalcInfo.TextPr = false;
-        this.CompiledPr = this.Internal_Compile_Pr();
+	
+	if (this.RecalcInfo.TextPr)
+	{
+		AscWord.g_textPrCache.remove(this.CompiledPr);
 		
 		// Пока настройки параграфа не считаются скомпилированными, мы не можем считать скомпилированными настройки рана
-		if (this.Paragraph && !this.Paragraph.IsParaPrCompiled())
-			this.RecalcInfo.TextPr = true;
-    }
+		this.RecalcInfo.TextPr = !!(this.Paragraph && !this.Paragraph.IsParaPrCompiled());
+		
+		let textPr = this.Internal_Compile_Pr();
+		this.CompiledPr = AscWord.g_textPrCache.add(textPr);
+	}
+	
 
     if ( false === bCopy )
         return this.CompiledPr;
@@ -9269,35 +9259,20 @@ ParaRun.prototype.Split_Run = function(Pos)
     {
         NewRun.State.Selection.EndPos = 0;
     }
-
-    // Если были точки орфографии, тогда переместим их в новый ран
-    var SpellingMarksCount = this.SpellingMarks.length;
-    for ( var Index = 0; Index < SpellingMarksCount; Index++ )
-    {
-        var Mark    = this.SpellingMarks[Index];
-        var MarkPos = ( true === Mark.Start ? Mark.Element.StartPos.Get(Mark.Depth) : Mark.Element.EndPos.Get(Mark.Depth) );
-
-        if ( MarkPos >= Pos )
-        {
-            var MarkElement = Mark.Element;
-            if ( true === Mark.Start )
-            {
-                //MarkElement.ClassesS[Mark.Depth]       = NewRun;
-                MarkElement.StartPos.Data[Mark.Depth] -= Pos;
-            }
-            else
-            {
-                //MarkElement.ClassesE[Mark.Depth]     = NewRun;
-                MarkElement.EndPos.Data[Mark.Depth] -= Pos;
-            }
-
-            NewRun.SpellingMarks.push( Mark );
-
-            this.SpellingMarks.splice( Index, 1 );
-            SpellingMarksCount--;
-            Index--;
-        }
-    }
+	
+	// Если были точки орфографии, тогда переместим их в новый ран
+	for (let iMark = 0, nMarks = this.SpellingMarks.length; iMark < nMarks; ++iMark)
+	{
+		let mark = this.SpellingMarks[iMark];
+		if (mark.getPos() >= Pos)
+		{
+			mark.movePos(-Pos);
+			NewRun.SpellingMarks.push(mark);
+			this.SpellingMarks.splice(iMark, 1);
+			--nMarks;
+			--iMark;
+		}
+	}
 
     History.Add(new CChangesRunOnEndSplit(this, NewRun));
     AscCommon.CollaborativeEditing.OnEnd_SplitRun(NewRun);
@@ -9982,8 +9957,6 @@ ParaRun.prototype.Set_Position = function(Value)
         History.Add(new CChangesRunPosition(this, OldValue, Value, this.private_IsCollPrChangeMine()));
         this.Recalc_CompiledPr(false);
         this.private_UpdateTrackRevisionOnChangeTextPr(true);
-
-        this.YOffset = this.Get_Position();
     }
 };
 
@@ -10609,7 +10582,6 @@ function CParaRunRecalcInfo()
     this.TextPr  = true; // Нужно ли пересчитать скомпилированные настройки
     this.Measure = true; // Нужно ли перемерять элементы
     this.Recalc  = true; // Нужно ли пересчитывать (только если текстовый ран)
-    this.RunLen  = 0;
 
     this.MeasurePositions = []; // Массив позиций элементов, которые нужно пересчитать
 
@@ -10624,7 +10596,6 @@ CParaRunRecalcInfo.prototype.Reset = function()
 	this.TextPr  = true;
 	this.Measure = true;
 	this.Recalc  = true;
-	this.RunLen  = 0;
 
 	this.MeasurePositions = [];
 };
@@ -12232,33 +12203,39 @@ ParaRun.prototype.Displace_BreakOperator = function(isForward, bBrkBefore, Count
 ParaRun.prototype.Math_UpdateLineMetrics = function(PRS, ParaPr)
 {
     var LineRule = ParaPr.Spacing.LineRule;
+	
+	let textMetrics = this.getTextMetrics();
+	let ascent  = textMetrics.Ascent + textMetrics.LineGap;
+	let ascent2 = textMetrics.Ascent;
+	let descent = textMetrics.Descent;
 
     // Пересчитаем метрику строки относительно размера данного текста
-    if ( PRS.LineTextAscent < this.TextAscent )
-        PRS.LineTextAscent = this.TextAscent;
+    if ( PRS.LineTextAscent < ascent )
+        PRS.LineTextAscent = ascent;
 
-    if ( PRS.LineTextAscent2 < this.TextAscent2 )
-        PRS.LineTextAscent2 = this.TextAscent2;
+    if ( PRS.LineTextAscent2 < ascent2 )
+        PRS.LineTextAscent2 = ascent2;
 
-    if ( PRS.LineTextDescent < this.TextDescent )
-        PRS.LineTextDescent = this.TextDescent;
+    if ( PRS.LineTextDescent < descent )
+        PRS.LineTextDescent = descent;
 
     if ( Asc.linerule_Exact === LineRule )
     {
         // Смещение не учитывается в метриках строки, когда расстояние между строк точное
-        if ( PRS.LineAscent < this.TextAscent )
-            PRS.LineAscent = this.TextAscent;
+        if ( PRS.LineAscent < ascent )
+            PRS.LineAscent = ascent;
 
-        if ( PRS.LineDescent < this.TextDescent )
-            PRS.LineDescent = this.TextDescent;
+        if ( PRS.LineDescent < descent )
+            PRS.LineDescent = descent;
     }
     else
     {
-        if ( PRS.LineAscent < this.TextAscent + this.YOffset  )
-            PRS.LineAscent = this.TextAscent + this.YOffset;
+		let yOffset = this.getYOffset();
+        if ( PRS.LineAscent < ascent + yOffset)
+            PRS.LineAscent = ascent + yOffset;
 
-        if ( PRS.LineDescent < this.TextDescent - this.YOffset )
-            PRS.LineDescent = this.TextDescent - this.YOffset;
+        if ( PRS.LineDescent < descent - yOffset)
+            PRS.LineDescent = descent - yOffset;
     }
 
 };
@@ -12929,7 +12906,8 @@ ParaRun.prototype.IsInCheckBox = function()
 ParaRun.prototype.GetTextFormAutoWidth = function()
 {
 	this.Recalculate_MeasureContent();
-	return this.TextAscent;
+	let metrics = this.getTextMetrics();
+	return metrics.Ascent + metrics.LineGap;
 };
 ParaRun.prototype.CheckParentFormKey = function()
 {
@@ -13307,29 +13285,22 @@ ParaRun.prototype.CheckSpelling = function(oCollector, nDepth)
 	for (let nPos = nStartPos, nContentLen = this.Content.length; nPos < nContentLen; ++nPos)
 	{
 		oCollector.UpdatePos(nPos, nDepth);
-		oCollector.HandleRunElement(this.Content[nPos], oCurTextPr);
+		oCollector.HandleRunElement(this.Content[nPos], oCurTextPr, this, nPos);
 
 		if (oCollector.IsExceedLimit())
 			break;
 	}
 };
-ParaRun.prototype.AddSpellCheckerElement = function(oElement, isStart)
+ParaRun.prototype.AddSpellCheckerElement = function(spellMark)
 {
-	if (isStart)
-		oElement.StartRun = this;
-	else
-		oElement.EndRun = this;
-
-	// TODO: Зачем тут Depth?
-	this.SpellingMarks.push(new AscCommonWord.CParagraphSpellingMark(oElement, isStart, isStart ? oElement.GetStartPos().GetDepth() : oElement.GetEndPos().GetDepth()));
+	this.SpellingMarks.push(spellMark);
 };
-ParaRun.prototype.RemoveSpellCheckerElement = function(oElement)
+ParaRun.prototype.RemoveSpellCheckerElement = function(element)
 {
-	for (let nCount = this.SpellingMarks.length, nIndex = nCount - 1; nIndex >= 0; --nIndex)
+	for (let iMark = this.SpellingMarks.length - 1; iMark >= 0; --iMark)
 	{
-		let oMark = this.SpellingMarks[nIndex];
-		if (oElement === oMark.Element)
-			this.SpellingMarks.splice(nIndex, 1);
+		if (this.SpellingMarks[iMark].getElement() === element)
+			this.SpellingMarks.splice(iMark, 1);
 	}
 };
 ParaRun.prototype.ClearSpellingMarks = function()

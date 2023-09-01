@@ -4152,6 +4152,8 @@ CParagraphRecalculateStateWrap.prototype.checkHyphenationZone = function(x)
 AscWord.ParagraphRecalculationWrapState = CParagraphRecalculateStateWrap;
 
 
+const g_PRSW = new CParagraphRecalculateStateWrap();
+
 function CParagraphRecalculateStateCounter()
 {
     this.Paragraph   = undefined;
@@ -4184,6 +4186,8 @@ CParagraphRecalculateStateCounter.prototype.Reset = function(Paragraph, Range)
 	this.LettersSkip = 0;
 };
 
+const g_PRSC = new CParagraphRecalculateStateCounter();
+
 function CParagraphRecalculateStateAlign()
 {
     this.X             = 0; // Текущая позиция по горизонтали
@@ -4214,6 +4218,8 @@ CParagraphRecalculateStateAlign.prototype.IsFastRangeRecalc = function()
 {
 	return this.RecalcFast;
 };
+
+const g_PRSA = new CParagraphRecalculateStateAlign();
 
 function CParagraphRecalculateStateInfo()
 {
@@ -4374,6 +4380,7 @@ CParagraphRecalculateStateInfo.prototype.ProcessInstruction = function(oInstruct
 		oComplexField.SetInstruction(oInstruction);
 };
 
+const g_PRSI = new CParagraphRecalculateStateInfo();
 
 function CParagraphRecalculateObject()
 {
