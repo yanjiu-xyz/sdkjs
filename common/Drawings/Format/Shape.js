@@ -6739,7 +6739,7 @@
 			if(!oMapPaired || !oMapPaired[oDrawingToCheck.Id] ||
 				oGeometry && oCheckGeometry && oCheckGeometry && oCheckGeometry.isEqualForMorph(oGeometry)) {
 				if(!oCurCandidate) {
-					if(oMapPaired[oDrawingToCheck.Id]) {
+					if(oMapPaired && oMapPaired[oDrawingToCheck.Id]) {
 						let oParedDrawing = oMapPaired[oDrawingToCheck.Id].drawing;
 						if(oParedDrawing.getOwnName() === oDrawingToCheck.getOwnName()) {
 							return oCurCandidate;
