@@ -38,7 +38,7 @@
 	 * Класс, восстанавливающий удаленные части документа
 	 * @constructor
 	 */
-	function DeletedTextRecovery(isDebug)
+	function DeletedTextRecovery()
 	{
 		this.oCollaborativeEditingBase = AscCommon.CollaborativeEditing;
 		
@@ -52,7 +52,10 @@
 		this.ShowDelLettersChanges = null;
 		this.StepTextPoint = null;
 		this.nIntCurrent = 0;
-
+		this.isDebug = false; //needs for correct work of tests
+	}
+	DeletedTextRecovery.prototype.SetIsDebug = function (isDebug)
+	{
 		this.isDebug = isDebug;
 	}
 	/**

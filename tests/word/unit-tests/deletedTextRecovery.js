@@ -53,7 +53,8 @@ $(function () {
 
 	function Init()
 	{
-		let oDeletedText = new AscCommon.DeletedTextRecovery(true);
+		let oDeletedText = new AscCommon.DeletedTextRecovery();
+		oDeletedText.SetIsDebug(true);
 		let nLengthOfPoints = AscCommon.History.Points.length - 1;
 		let arr = [];
 

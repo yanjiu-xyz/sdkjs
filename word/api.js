@@ -13690,6 +13690,14 @@ background-repeat: no-repeat;\
 	{
 		AscCommon.CollaborativeEditing.undoDeletedTextRecovery();
 	};
+	asc_docs_api.prototype.asc_redoDeletedText = function()
+	{
+		AscCommon.CollaborativeEditing.nextDeletedTextRecovery();
+	};
+	asc_docs_api.prototype.asc_undoDeletedText = function()
+	{
+		AscCommon.CollaborativeEditing.prevDeletedTextRecovery();
+	};
 
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};
@@ -14480,6 +14488,8 @@ background-repeat: no-repeat;\
 	
 	asc_docs_api.prototype["asc_showDeletedText"] = asc_docs_api.prototype.asc_showDeletedText;
 	asc_docs_api.prototype["asc_hideDeletedText"] = asc_docs_api.prototype.asc_hideDeletedText;
+	asc_docs_api.prototype["asc_redoDeletedText"] = asc_docs_api.prototype.asc_redoDeletedText;
+	asc_docs_api.prototype["asc_undoDeletedText"] = asc_docs_api.prototype.asc_undoDeletedText;
 
 	CDocInfoProp.prototype['get_PageCount']             = CDocInfoProp.prototype.get_PageCount;
 	CDocInfoProp.prototype['put_PageCount']             = CDocInfoProp.prototype.put_PageCount;

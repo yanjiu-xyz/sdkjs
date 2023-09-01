@@ -338,7 +338,7 @@
 		if (this.textRecovery)
 			return;
 		
-		this.textRecovery = new AscCommon.DeletedTextRecovery(this);
+		this.textRecovery = new AscCommon.DeletedTextRecovery();
 	};
 	CCollaborativeEditingBase.prototype.recoverDeletedText = function()
 	{
@@ -353,6 +353,20 @@
 			return;
 		
 		this.textRecovery.undoRecovery();
+	};
+	CCollaborativeEditingBase.prototype.nextDeletedTextRecovery = function(isShowDelText)
+	{
+		if (!this.textRecovery)
+			return;
+
+		return this.textRecovery.NavigationRevisionHistory(false, isShowDelText);
+	};
+	CCollaborativeEditingBase.prototype.prevDeletedTextRecovery = function(isShowDelText)
+	{
+		if (!this.textRecovery)
+			return;
+
+		return this.textRecovery.NavigationRevisionHistory(true, isShowDelText);
 	};
     CCollaborativeEditingBase.prototype.Have_OtherChanges = function()
     {
