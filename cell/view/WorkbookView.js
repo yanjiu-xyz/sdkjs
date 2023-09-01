@@ -1387,6 +1387,7 @@
     this.model.cleanFindResults();
 
     var ct = ws.getCursorTypeFromXY(x, y);
+    var t = this;
 
     if(!this.isFormulaEditMode && !formatPainterState) {
         if (c_oTargetType.Hyperlink === ct.target) {
@@ -1426,6 +1427,14 @@
                         // ToDo надо поправить отрисовку комментария для данной ячейки (с которой уходим)
                         this.handlers.trigger("asc_onHideComment");
                         this.Api._asc_setWorksheetRange(ct.hyperlink);
+                        break;
+                    case Asc.c_oAscHyperlinkType.FileLink:
+                        //нужно открыть файл через диалоговое окно
+                        this.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmFileOpen, function (can) {
+                            if (can) {
+                                t.handlers.trigger("asc_onFileOpenClick", ct.hyperlink.asc_getHyperlinkUrl());
+                            }
+                        });
                         break;
                 }
             }
