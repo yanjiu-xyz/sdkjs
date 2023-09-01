@@ -47,7 +47,8 @@
 		this.OwnRanges = []; // Диапазоны собственных изменений
 
 		this.SyncIndex = -1; // Позиция в массиве изменений, которые согласованы с сервером
-
+		
+		this.textRecovery = null;
 	}
 
 	CCollaborativeHistory.prototype.AddChange = function(change)
@@ -96,6 +97,8 @@
 	 */
 	CCollaborativeHistory.prototype.UndoGlobalChanges = function(count)
 	{
+		this.undoDeletedTextRecovery();
+		
 		count = Math.min(count, this.Changes.length);
 
 		if (!count)
@@ -134,6 +137,8 @@
 	 */
 	CCollaborativeHistory.prototype.UndoGlobalPoint = function()
 	{
+		this.undoDeletedTextRecovery();
+		
 		let count = 0;
 		for (let index = this.Changes.length - 1; index > 0; --index, ++count)
 		{
@@ -149,6 +154,41 @@
 		}
 
 		return count ? this.UndoGlobalChanges(count) : [];
+	};
+	CCollaborativeHistory.prototype.getGlobalPointCount = function()
+	{
+		return 0;
+	};
+	CCollaborativeHistory.prototype.getGlobalPointIndex = function()
+	{
+		return -1;
+	};
+	CCollaborativeHistory.prototype.moveToPoint = function(pointIndex)
+	{
+		let needRecover = !!this.textRecovery;
+		this.undoRecovery();
+		
+		
+		
+		if (needRecover)
+			this.recoverDeletedText();
+	};
+	CCollaborativeHistory.prototype.recoverDeletedText = function()
+	{
+		if (!this.textRecovery)
+			this.textRecovery = new AscCommon.DeletedTextRecovery();
+		
+		
+		
+		this.textRecovery.handleChanges();
+		this.textRecovery.recover();
+	};
+	CCollaborativeHistory.prototype.undoDeletedTextRecovery = function()
+	{
+		if (!this.textRecovery)
+			return;
+		
+		this.textRecovery = null;
 	};
 	/**
 	 * Отменяем собственные последние действия, прокатывая их через чужие
@@ -726,5 +766,11 @@
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].CCollaborativeHistory = CCollaborativeHistory;
-
+	
+	CCollaborativeHistory.prototype["getGlobalPointCount"]     = CCollaborativeHistory.prototype.getGlobalPointCount;
+	CCollaborativeHistory.prototype["getGlobalPointIndex"]     = CCollaborativeHistory.prototype.getGlobalPointIndex;
+	CCollaborativeHistory.prototype["moveToPoint"]             = CCollaborativeHistory.prototype.moveToPoint;
+	CCollaborativeHistory.prototype["recoverDeletedText"]      = CCollaborativeHistory.prototype.recoverDeletedText;
+	CCollaborativeHistory.prototype["undoDeletedTextRecovery"] = CCollaborativeHistory.prototype.recoverDeletedText;
+	
 })(window);

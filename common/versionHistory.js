@@ -92,7 +92,6 @@
       return;
     }
     var color;
-    AscCommon.CollaborativeEditing.initDeletedTextRecovery();
     this.newChangeId = (null == this.newChangeId) ? (this.changes.length - 1) : this.newChangeId;
     for (let i = this.currentChangeId + 1; i <= this.newChangeId && i < this.changes.length; ++i)
     {

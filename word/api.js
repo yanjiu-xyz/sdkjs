@@ -13682,21 +13682,9 @@ background-repeat: no-repeat;\
 	};
 	
 	//
-	asc_docs_api.prototype.asc_showDeletedText = function()
+	asc_docs_api.prototype.asc_getCoHistory = function()
 	{
-		AscCommon.CollaborativeEditing.recoverDeletedText();
-	};
-	asc_docs_api.prototype.asc_hideDeletedText = function()
-	{
-		AscCommon.CollaborativeEditing.undoDeletedTextRecovery();
-	};
-	asc_docs_api.prototype.asc_redoDeletedText = function()
-	{
-		AscCommon.CollaborativeEditing.nextDeletedTextRecovery();
-	};
-	asc_docs_api.prototype.asc_undoDeletedText = function()
-	{
-		AscCommon.CollaborativeEditing.prevDeletedTextRecovery();
+		return AscCommon.CollaborativeEditing.getCoHistory();
 	};
 
 	//-------------------------------------------------------------export---------------------------------------------------
@@ -14486,10 +14474,7 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype["asc_closePrintPreview"] = asc_docs_api.prototype.asc_closePrintPreview;
 	asc_docs_api.prototype["asc_getPageSize"] 		= asc_docs_api.prototype.asc_getPageSize;
 	
-	asc_docs_api.prototype["asc_showDeletedText"] = asc_docs_api.prototype.asc_showDeletedText;
-	asc_docs_api.prototype["asc_hideDeletedText"] = asc_docs_api.prototype.asc_hideDeletedText;
-	asc_docs_api.prototype["asc_redoDeletedText"] = asc_docs_api.prototype.asc_redoDeletedText;
-	asc_docs_api.prototype["asc_undoDeletedText"] = asc_docs_api.prototype.asc_undoDeletedText;
+	asc_docs_api.prototype["asc_getCoHistory"] = asc_docs_api.prototype.asc_getCoHistory;
 
 	CDocInfoProp.prototype['get_PageCount']             = CDocInfoProp.prototype.get_PageCount;
 	CDocInfoProp.prototype['put_PageCount']             = CDocInfoProp.prototype.put_PageCount;

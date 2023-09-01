@@ -235,8 +235,6 @@
 		this.m_nExternalIndex0  = -1;
 		this.m_nExternalIndex1  = -1;
 		this.m_nExternalCounter = 0;
-
-		this.textRecovery = null;
     }
 
     CCollaborativeEditingBase.prototype.GetEditorApi = function()
@@ -250,6 +248,10 @@
 	CCollaborativeEditingBase.prototype.GetLogicDocument = function()
 	{
 		return this.m_oLogicDocument;
+	};
+	CCollaborativeEditingBase.prototype.getCoHistory = function()
+	{
+		return this.CoHistory;
 	};
     CCollaborativeEditingBase.prototype.Clear = function()
     {
@@ -333,41 +335,6 @@
         this.m_aNeedUnlock2.push(Lock);
         editor._onUpdateDocumentCanSave();
     };
-	CCollaborativeEditingBase.prototype.initDeletedTextRecovery = function()
-	{
-		if (this.textRecovery)
-			return;
-		
-		this.textRecovery = new AscCommon.DeletedTextRecovery();
-	};
-	CCollaborativeEditingBase.prototype.recoverDeletedText = function()
-	{
-		if (!this.textRecovery)
-			return;
-		
-		this.textRecovery.recover();
-	};
-	CCollaborativeEditingBase.prototype.undoDeletedTextRecovery = function()
-	{
-		if (!this.textRecovery)
-			return;
-		
-		this.textRecovery.undoRecovery();
-	};
-	CCollaborativeEditingBase.prototype.nextDeletedTextRecovery = function(isShowDelText)
-	{
-		if (!this.textRecovery)
-			return;
-
-		return this.textRecovery.NavigationRevisionHistory(false, isShowDelText);
-	};
-	CCollaborativeEditingBase.prototype.prevDeletedTextRecovery = function(isShowDelText)
-	{
-		if (!this.textRecovery)
-			return;
-
-		return this.textRecovery.NavigationRevisionHistory(true, isShowDelText);
-	};
     CCollaborativeEditingBase.prototype.Have_OtherChanges = function()
     {
         return (0 < this.m_aChanges.length);
@@ -376,9 +343,6 @@
     {
         if (this.m_aChanges.length > 0)
         {
-			if (this.textRecovery)
-				this.textRecovery.undoRecovery();
-			
             AscFonts.IsCheckSymbols = true;
             editor.WordControl.m_oLogicDocument.PauseRecalculate();
             editor.WordControl.m_oLogicDocument.EndPreview_MailMergeResult();
@@ -395,9 +359,6 @@
             this.private_RestoreDocumentState(DocState);
             this.OnStart_Load_Objects(fEndCallBack);
             AscFonts.IsCheckSymbols = false;
-			
-			if (this.textRecovery)
-				this.textRecovery.handleChanges(this.CoHistory.Changes);
 		}
 		else
 		{
