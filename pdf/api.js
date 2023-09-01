@@ -499,10 +499,16 @@
 
 		return oComment.GetId()
 	};
-	PDFEditorApi.prototype.asc_hideComments = function(bHiden)
+	asc_docs_api.prototype.asc_showComments = function()
 	{
 		let oDoc = this.getPDFDoc();
-		oDoc.HideShowAnnots(bHiden);
+		oDoc.HideShowAnnots(false);
+	};
+
+	asc_docs_api.prototype.asc_hideComments = function()
+	{
+		let oDoc = this.getPDFDoc();
+		oDoc.HideShowAnnots(true);
 	};
 	PDFEditorApi.prototype.asc_getAnchorPosition = function()
 	{
