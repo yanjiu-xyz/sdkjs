@@ -642,6 +642,8 @@
             AscCommon.global_MatrixTransformer.RotateRadAppend(oT, -oXfrm.rot);
             AscCommon.global_MatrixTransformer.TranslateAppend(oT, oXfrm.offX + hc, oXfrm.offY + vc);
             this.drawObject.geometry.Recalculate(oXfrm.extX, oXfrm.extY, false);
+            this.drawObject.extX = oXfrm.extX;
+            this.drawObject.extY = oXfrm.extY;
             return;
         }
         const oT = this.drawObject.transform;
