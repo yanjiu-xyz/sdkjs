@@ -44,7 +44,7 @@
         Highlight:      8,
         Underline:      9,
         Squiggly:       10,
-        StrikeOut:      11,
+        Strikeout:      11,
         Stamp:          12,
         Caret:          13,
         Ink:            14,
@@ -137,6 +137,16 @@
     CAnnotationBase.prototype.IsHighlight = function() {
         return false;
     };
+    CAnnotationBase.prototype.IsTextMarkup = function() {
+        return false;
+    };
+    CAnnotationBase.prototype.IsComment = function() {
+        return false;
+    };
+    CAnnotationBase.prototype.IsInk = function() {
+        return false;
+    };
+    
     CAnnotationBase.prototype.SetRect = function(aRect) {
         let oViewer = editor.getDocumentRenderer();
         let nPage = this.GetPage();
@@ -199,8 +209,75 @@
     CAnnotationBase.prototype.SetHidden = function(bHidden) {
         this._hidden = bHidden;
     };
-    CAnnotationBase.prototype.SetContents = function(sText) {
-        this._contents = sText;
+    CAnnotationBase.prototype.onMouseUp = function() {
+        let oViewer = editor.getDocumentRenderer();
+        // oViewer.onUpdateOverlay();
+        let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(this._pagePos.x + this._pagePos.w, this._pagePos.y + this._pagePos.h / 2, this.GetPage(), true);
+        editor.sync_ShowComment([this.GetId()], X, Y)
+    };
+    CAnnotationBase.prototype._AddReplyOnOpen = function(oReplyInfo) {
+        let oReply = new AscPDF.CAnnotationText(oReplyInfo["UniqueName"], this.GetPage(), [], this.GetDocument());
+
+        oReply.SetContents(oReplyInfo["Contents"]);
+        oReply.SetModDate((new Date().getTime()).toString());
+        oReply.SetAuthor(oReplyInfo["User"]);
+        oReply.SetHidden(false);
+
+        this._contents._replies.push(oReply);
+    };
+    CAnnotationBase.prototype._OnAfterSetContents = function() {
+        let oAscCommData = this._contents.GetAscCommentData();
+        editor.sendEvent("asc_onAddComment", this.GetId(), oAscCommData);
+    };
+    CAnnotationBase.prototype.SetContents = function(contents) {
+        if (this.GetContents() == contents)
+            return;
+
+        let oViewer         = editor.getDocumentRenderer();
+        let oDoc            = this.GetDocument();
+        let oCurContents    = this.GetContents();
+        let oNewContents;
+
+        if (typeof(contents) == "string") {
+            let oTextAnnot = new AscPDF.CAnnotationText(this.GetName(), this.GetPage(), [], this.GetDocument());
+        
+            oTextAnnot.SetContents(contents);
+            oTextAnnot.SetModDate((new Date().getTime()).toString());
+            oTextAnnot.SetAuthor(this.GetAuthor());
+            oTextAnnot.SetHidden(false);
+
+            this._contents  = oTextAnnot;
+            oNewContents    = oTextAnnot;
+        }
+        else {
+            oNewContents    = contents;
+            this._contents  = contents;
+            
+            if (contents)
+                this._OnAfterSetContents();
+        }
+
+        if (oDoc.History.UndoRedoInProgress == false && oViewer.IsOpenAnnotsInProgress == false) {
+            oDoc.CreateNewHistoryPoint();
+            oDoc.History.Add(new CChangesPDFAnnotContents(this, oCurContents, oNewContents));
+            oDoc.TurnOffHistory();
+        }
+        
+        if (oNewContents == null)
+            editor.sync_RemoveComment(this.GetId());
+    };
+    CAnnotationBase.prototype.AddReply = function(CommentData) {
+        this._contents.AddReply(CommentData);
+    };
+    CAnnotationBase.prototype.GetAscCommentData = function() {
+        if (this._contents)
+            return this._contents.GetAscCommentData();
+
+        return null;
+    };
+    CAnnotationBase.prototype.EditCommentData = function(CommentData) {
+        if (this._contents)
+            this._contents.EditCommentData(CommentData);
     };
     CAnnotationBase.prototype.GetContents = function() {
         return this._contents;
@@ -275,9 +352,7 @@
     CAnnotationBase.prototype.onMouseDown = function() {
         return;
     };
-    CAnnotationBase.prototype.onMouseUp = function() {
-        return;
-    };
+    
     CAnnotationBase.prototype.SetStrokeColor = function(aColor) {
         this._strokeColor = aColor;
     };

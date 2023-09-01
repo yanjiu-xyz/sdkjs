@@ -3998,8 +3998,9 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	// Common
-	AscDFH.historyitem_Pdf_Annot_Rect			= AscDFH.historyitem_type_Pdf_Annot | 1;
-	AscDFH.historyitem_Pdf_Annot_Pos			= AscDFH.historyitem_type_Pdf_Annot | 2;
+	AscDFH.historyitem_Pdf_Annot_Rect				= AscDFH.historyitem_type_Pdf_Annot | 1;
+	AscDFH.historyitem_Pdf_Annot_Pos				= AscDFH.historyitem_type_Pdf_Annot | 2;
+	AscDFH.historyitem_Pdf_Annot_Contents			= AscDFH.historyitem_type_Pdf_Annot | 3;
 
 	// Comment
 	AscDFH.historyitem_Pdf_Comment_Data			= AscDFH.historyitem_type_Pdf_Comment | 1;

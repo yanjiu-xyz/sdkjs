@@ -151,6 +151,9 @@
         return oNewInk;
     };
     CAnnotationText.prototype.Draw = function(oGraphics) {
+        if (this.IsHidden() == true)
+            return;
+
         // note: oGraphic параметр для рисование track
         if (!this.graphicObjects)
             this.graphicObjects = new AscFormat.DrawingObjectsController(this);
@@ -263,6 +266,9 @@
     };
     CAnnotationText.prototype.IsComment = function() {
         return true;
+    };
+    CAnnotationText.prototype.SetContents = function(sText) {
+        this._contents = sText;
     };
     CAnnotationText.prototype.EditCommentData = function(oCommentData) {
         let oThis = this;

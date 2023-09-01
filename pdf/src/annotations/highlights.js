@@ -74,10 +74,10 @@
         let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
         let aRect       = this.GetRect();
 
-        let X       = aRect[0] * nScale - 3;
-        let Y       = aRect[1] * nScale - 3;
-        let nWidth  = (aRect[2] - aRect[0]) * nScale + 6;
-        let nHeight = (aRect[3] - aRect[1]) * nScale + 6;
+        let X       = aRect[0] * nScale;
+        let Y       = aRect[1] * nScale;
+        let nWidth  = (aRect[2] - aRect[0]) * nScale;
+        let nHeight = (aRect[3] - aRect[1]) * nScale;
 
         let xCenter = oViewer.width >> 1;
         if (oViewer.documentWidth > oViewer.width)
@@ -91,11 +91,13 @@
         let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
         let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
-        
+
+        overlay.m_oContext.beginPath();
         overlay.AddRect(X + indLeft, Y + indTop, nWidth, nHeight);
         overlay.m_oContext.lineWidth = 3;
         overlay.m_oContext.globalAlpha = 1;
         overlay.m_oContext.strokeStyle = "rgb(33, 117, 200)";
+        overlay.m_oContext.closePath();
         overlay.m_oContext.stroke();
 
     };
@@ -127,51 +129,43 @@
         let aScaledQuads = this.GetQuads().map(function(measure) {
             return measure * nScale;
         });
-        let aXMeasures = aScaledQuads.filter(function(measure, index) {
-            if (index % 2 == 0)
-                return measure;
-        });
-        let aYMeasures = aScaledQuads.filter(function(measure, index) {
-            if (index % 2 != 0)
-                return measure;
-        });
 
-        let MinX = Math.min(...aXMeasures);
-        let MaxX = Math.max(...aXMeasures);
-        let MinY = Math.min(...aYMeasures);
-        let MaxY = Math.max(...aYMeasures);
+        for (let i = 0; i < aScaledQuads.length; i+=8) {
+            let aXMeasures = aScaledQuads.slice(i, i+8).filter(function(measure, index) {
+                if (index % 2 == 0)
+                    return measure;
+            });
+            let aYMeasures = aScaledQuads.slice(i, i+8).filter(function(measure, index) {
+                if (index % 2 != 0)
+                    return measure;
+            });
 
-        
-        let xCenter = oViewer.width >> 1;
-        if (oViewer.documentWidth > oViewer.width)
-		{
-			xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
-		}
-		let yPos    = oViewer.scrollY >> 0;
-        let page    = oViewer.drawingPages[this.GetPage()];
-        let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
-        let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        
-        oGraphicsPDF.context.globalCompositeOperation = "multiply";
+            let MinX = Math.min(...aXMeasures);
+            let MaxX = Math.max(...aXMeasures);
+            let MinY = Math.min(...aYMeasures);
+            let MaxY = Math.max(...aYMeasures);
 
-        oGraphicsPDF.SetGlobalAlpha(1);
-        oGraphicsPDF.DrawImage(oViewer.canvas, MinX + indLeft - 2, MinY + indTop - 2, MaxX - MinX + 4, MaxY - MinY + 4, MinX - 2, MinY - 2, MaxX - MinX + 4, MaxY - MinY + 4);
+            
+            oGraphicsPDF.context.globalCompositeOperation = "multiply";
 
-        oGraphicsPDF.BeginPath();
-        oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
-        oGraphicsPDF.MoveTo(aScaledQuads[0], aScaledQuads[1]);
-        oGraphicsPDF.LineTo(aScaledQuads[2], aScaledQuads[3]);
-        oGraphicsPDF.LineTo(aScaledQuads[6], aScaledQuads[7]);
-        oGraphicsPDF.LineTo(aScaledQuads[4], aScaledQuads[5]);
-        oGraphicsPDF.ClosePath();
-        oGraphicsPDF.SetFillStyle(`rgb(${oRGBFill.r}, ${oRGBFill.g}, ${oRGBFill.b})`);
-        oGraphicsPDF.Fill();
+            oGraphicsPDF.BeginPath();
+            oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
+            oGraphicsPDF.MoveTo(MinX - 1, MinY);
+            oGraphicsPDF.LineTo(MaxX, MinY);
+            oGraphicsPDF.LineTo(MaxX, MaxY);
+            oGraphicsPDF.LineTo(MinX - 1, MaxY);
+            oGraphicsPDF.ClosePath();
+            oGraphicsPDF.SetFillStyle(`rgb(${oRGBFill.r}, ${oRGBFill.g}, ${oRGBFill.b})`);
+            oGraphicsPDF.Fill();
 
-        oGraphicsPDF.context.globalCompositeOperation = "source-over";
+            oGraphicsPDF.context.globalCompositeOperation = "source-over";
+        }
     };
-    
+    CAnnotationHighlight.prototype.AddToRedraw = function() {
+        let oViewer = editor.getDocumentRenderer();
+        if (oViewer.pagesInfo.pages[this.GetPage()])
+            oViewer.pagesInfo.pages[this.GetPage()].needRedrawHighlights = true;
+    };
     
     /**
 	 * Class representing a highlight annotation.
@@ -197,44 +191,46 @@
         });
         let oRGBFill = this.GetRGBColor(this.GetStrokeColor());
     
-        let aXMeasures = aScaledQuads.filter(function(measure, index) {
-            if (index % 2 == 0)
-                return measure;
-        });
-        let aYMeasures = aScaledQuads.filter(function(measure, index) {
-            if (index % 2 != 0)
-                return measure;
-        });
+        for (let i = 0; i < aScaledQuads.length; i+=8) {
+            let aXMeasures = aScaledQuads.slice(i, i+8).filter(function(measure, index) {
+                if (index % 2 == 0)
+                    return measure;
+            });
+            let aYMeasures = aScaledQuads.slice(i, i+8).filter(function(measure, index) {
+                if (index % 2 != 0)
+                    return measure;
+            });
 
-        let MinX = Math.min(...aXMeasures);
-        let MaxX = Math.max(...aXMeasures);
-        let MinY = Math.min(...aYMeasures);
-        let MaxY = Math.max(...aYMeasures);
+            let MinX = Math.min(...aXMeasures);
+            let MaxX = Math.max(...aXMeasures);
+            let MinY = Math.min(...aYMeasures);
+            let MaxY = Math.max(...aYMeasures);
 
-        let nLineW = nScale;
+            let nLineW = nScale;
 
-        oGraphicsPDF.BeginPath();
-        oGraphicsPDF.SetLineWidth(nLineW);
-        oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
-        oGraphicsPDF.MoveTo(MinX, MaxY - nLineW * 1.5);
-        oGraphicsPDF.LineTo(MaxX, MaxY - nLineW * 1.5);
-        oGraphicsPDF.ClosePath();
-        oGraphicsPDF.SetStrokeStyle(`rgb(${oRGBFill.r}, ${oRGBFill.g}, ${oRGBFill.b})`);
-        oGraphicsPDF.Stroke();
+            oGraphicsPDF.BeginPath();
+            oGraphicsPDF.SetLineWidth(nLineW);
+            oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
+            oGraphicsPDF.MoveTo(MinX - 1, MaxY - nLineW * 1.5);
+            oGraphicsPDF.LineTo(MaxX - 1, MaxY - nLineW * 1.5);
+            oGraphicsPDF.ClosePath();
+            oGraphicsPDF.SetStrokeStyle(`rgb(${oRGBFill.r}, ${oRGBFill.g}, ${oRGBFill.b})`);
+            oGraphicsPDF.Stroke();
+        }
     };
 
     /**
 	 * Class representing a highlight annotation.
 	 * @constructor
     */
-    function CAnnotationStrikeOut(sName, nPage, aRect, oDoc)
+    function CAnnotationStrikeout(sName, nPage, aRect, oDoc)
     {
         CAnnotationTextMarkup.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Ink, nPage, aRect, oDoc);
     }
-    CAnnotationStrikeOut.prototype = Object.create(CAnnotationTextMarkup.prototype);
-	CAnnotationStrikeOut.prototype.constructor = CAnnotationStrikeOut;
+    CAnnotationStrikeout.prototype = Object.create(CAnnotationTextMarkup.prototype);
+	CAnnotationStrikeout.prototype.constructor = CAnnotationStrikeout;
 
-    CAnnotationStrikeOut.prototype.Draw = function() {
+    CAnnotationStrikeout.prototype.Draw = function() {
         if (this.IsHidden() == true)
             return;
 
@@ -247,36 +243,38 @@
         });
         let oRGBFill = this.GetRGBColor(this.GetStrokeColor());
     
-        let aXMeasures = aScaledQuads.filter(function(measure, index) {
-            if (index % 2 == 0)
-                return measure;
-        });
-        let aYMeasures = aScaledQuads.filter(function(measure, index) {
-            if (index % 2 != 0)
-                return measure;
-        });
+        for (let i = 0; i < aScaledQuads.length; i+=8) {
+            let aXMeasures = aScaledQuads.slice(i, i+8).filter(function(measure, index) {
+                if (index % 2 == 0)
+                    return measure;
+            });
+            let aYMeasures = aScaledQuads.slice(i, i+8).filter(function(measure, index) {
+                if (index % 2 != 0)
+                    return measure;
+            });
+            
+            let MinX = Math.min(...aXMeasures);
+            let MaxX = Math.max(...aXMeasures);
+            let MinY = Math.min(...aYMeasures);
+            let MaxY = Math.max(...aYMeasures);
 
-        let MinX = Math.min(...aXMeasures);
-        let MaxX = Math.max(...aXMeasures);
-        let MinY = Math.min(...aYMeasures);
-        let MaxY = Math.max(...aYMeasures);
+            let nLineW =  nScale;
 
-        let nLineW =  nScale;
-
-        oGraphicsPDF.BeginPath();
-        oGraphicsPDF.SetLineWidth(nLineW);
-        oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
-        oGraphicsPDF.MoveTo(MinX, MinY + (MaxY - MinY) / 2 + nLineW / 2);
-        oGraphicsPDF.LineTo(MaxX, MinY + (MaxY - MinY) / 2 + nLineW / 2);
-        oGraphicsPDF.ClosePath();
-        oGraphicsPDF.SetStrokeStyle(`rgb(${oRGBFill.r}, ${oRGBFill.g}, ${oRGBFill.b})`);
-        oGraphicsPDF.Stroke();
+            oGraphicsPDF.BeginPath();
+            oGraphicsPDF.SetLineWidth(nLineW);
+            oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
+            oGraphicsPDF.MoveTo(MinX - 1, MinY + (MaxY - MinY) / 2 + nLineW / 2);
+            oGraphicsPDF.LineTo(MaxX - 1, MinY + (MaxY - MinY) / 2 + nLineW / 2);
+            oGraphicsPDF.ClosePath();
+            oGraphicsPDF.SetStrokeStyle(`rgb(${oRGBFill.r}, ${oRGBFill.g}, ${oRGBFill.b})`);
+            oGraphicsPDF.Stroke();
+        }
     };
 
 
     window["AscPDF"].CAnnotationTextMarkup  = CAnnotationTextMarkup;
     window["AscPDF"].CAnnotationHighlight   = CAnnotationHighlight;
     window["AscPDF"].CAnnotationUnderline   = CAnnotationUnderline;
-    window["AscPDF"].CAnnotationStrikeOut   = CAnnotationStrikeOut;
+    window["AscPDF"].CAnnotationStrikeout   = CAnnotationStrikeout;
 })();
 

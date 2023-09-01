@@ -384,6 +384,47 @@
 		
 		return textObj.Text;
 	};
+	PDFEditorApi.prototype.SetMarkerFormat          = function(nType, value, opacity, r, g, b)
+	{
+		this.isMarkerFormat	= value;
+		this.curMarkerType = nType;
+
+		if (this.isMarkerFormat) {
+			switch (this.curMarkerType) {
+				case AscPDF.ANNOTATIONS_TYPES.Highlight:
+					this.SetHighlight(r, g, b, opacity);
+					break;
+				case AscPDF.ANNOTATIONS_TYPES.Underline:
+					this.SetUnderline(r, g, b, opacity);
+					break;
+				case AscPDF.ANNOTATIONS_TYPES.Strikeout:
+					this.SetStrikeout(r, g, b, opacity);
+					break;
+			}
+		}
+	};
+	PDFEditorApi.prototype.asc_setSkin = function(theme)
+    {
+        AscCommon.updateGlobalSkin(theme);
+
+        if (this.isUseNativeViewer)
+        {
+            if (this.WordControl && this.WordControl.m_oDrawingDocument && this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
+            {
+                this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.updateSkin();
+            }
+        }
+
+        if (this.WordControl && this.WordControl.m_oBody)
+        {
+            this.WordControl.OnResize(true);
+            if (this.WordControl.m_oEditor && this.WordControl.m_oEditor.HtmlElement)
+            {
+                this.WordControl.m_oEditor.HtmlElement.fullRepaint = true;
+                this.WordControl.OnScroll();
+            }
+        }
+    };
 	PDFEditorApi.prototype.asc_SelectPDFFormListItem = function(sId) {
 		let nIdx = parseInt(sId);
 		let oViewer = this.DocumentRenderer;
@@ -458,6 +499,11 @@
 
 		return oComment.GetId()
 	};
+	PDFEditorApi.prototype.asc_hideComments = function(bHiden)
+	{
+		let oDoc = this.getPDFDoc();
+		oDoc.HideShowAnnots(bHiden);
+	};
 	PDFEditorApi.prototype.asc_getAnchorPosition = function()
 	{
 		let oViewer		= editor.getDocumentRenderer();
@@ -476,7 +522,7 @@
 				x: 10,
 				y: 10
 			};
-			return new AscCommon.asc_CRect(X + nCommentWidth, Y + nCommentHeight / 2, 0, 0);;
+			return new AscCommon.asc_CRect(X + nCommentWidth, Y + nCommentHeight / 2, 0, 0);
 		}
 
 		oDoc.anchorPositionToAdd = {
@@ -484,6 +530,12 @@
 			y: pageObject.y
 		};
 
+		if (oDoc.mouseDownAnnot) {
+			let aRect = oDoc.mouseDownAnnot.GetRect();
+			let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(aRect[2], aRect[1] + (aRect[3] - aRect[1]) / 2, nPage, true);
+			return new AscCommon.asc_CRect(X, Y, 0, 0);
+		}
+		
 		return new AscCommon.asc_CRect(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y, 0, 0);
 	};
 	PDFEditorApi.prototype.asc_removeComment = function(Id)
@@ -520,7 +572,7 @@
 
 		oViewer.DrawingObjects.onInkDrawerChangeState();
 
-		if (this.isInkDrawerOn() == false)
+		if (this.isDrawInkMode() == false)
 			oDoc.currInkInDrawingProcess = null;
 	};
 
@@ -584,10 +636,30 @@
 		
 		this.DocumentRenderer.updateDarkMode();
 	};
-	PDFEditorApi.prototype.SetHighlight = function(r, g, b) {
+	PDFEditorApi.prototype.SetHighlight = function(r, g, b, opacity) {
 		let oViewer	= this.getDocumentRenderer();
 		let oDoc	= this.getPDFDoc();
-		oDoc.SetHighlight(r, g, b);
+		oDoc.SetHighlight(r, g, b, opacity);
+
+		oViewer.file.Selection = {
+			Page1 : 0,
+			Line1 : 0,
+			Glyph1 : 0,
+
+			Page2 : 0,
+			Line2 : 0,
+			Glyph2 : 0,
+
+			IsSelection : false
+		}
+		
+		oViewer._paint();
+		oViewer.onUpdateOverlay();
+	};
+	PDFEditorApi.prototype.SetStrikeout = function(r, g, b, opacity) {
+		let oViewer	= this.getDocumentRenderer();
+		let oDoc	= this.getPDFDoc();
+		oDoc.SetStrikeout(r, g, b, opacity);
 
 		oViewer.file.Selection = {
 			Page1 : 0,
@@ -604,30 +676,10 @@
 		oViewer._paintAnnots();
 		oViewer.onUpdateOverlay();
 	};
-	PDFEditorApi.prototype.SetStrikeout = function(r, g, b) {
+	PDFEditorApi.prototype.SetUnderline = function(r, g, b, opacity) {
 		let oViewer	= this.getDocumentRenderer();
 		let oDoc	= this.getPDFDoc();
-		oDoc.SetStrikeout(r, g, b);
-
-		oViewer.file.Selection = {
-			Page1 : 0,
-			Line1 : 0,
-			Glyph1 : 0,
-
-			Page2 : 0,
-			Line2 : 0,
-			Glyph2 : 0,
-
-			IsSelection : false
-		}
-		
-		oViewer._paintAnnots();
-		oViewer.onUpdateOverlay();
-	};
-	PDFEditorApi.prototype.SetUnderline = function(r, g, b) {
-		let oViewer	= this.getDocumentRenderer();
-		let oDoc	= this.getPDFDoc();
-		oDoc.SetUnderline(r, g, b);
+		oDoc.SetUnderline(r, g, b, opacity);
 
 		oViewer.file.Selection = {
 			Page1 : 0,

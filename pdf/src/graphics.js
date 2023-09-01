@@ -111,11 +111,15 @@ CPDFGraphics.prototype.SetGlobalAlpha = function(value) {
     if (this.context)
         this.context.globalAlpha = value;
 };
+
 CPDFGraphics.prototype.Arc = function(x, y, radius, startAng, endAng, counterClockwise) {
     this.context.arc(x, y, radius, startAng, endAng, counterClockwise);
 };
 CPDFGraphics.prototype.ArcTo = function() {
     this.context.arcTo(...arguments);
+};
+CPDFGraphics.prototype.QuadraticCurveTo = function() {
+    this.context.quadraticCurveTo(...arguments);
 };
 CPDFGraphics.prototype.Fill = function() {
     this.context.fill();

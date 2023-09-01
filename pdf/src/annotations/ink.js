@@ -117,7 +117,9 @@
             }
         },
     });
-
+    CAnnotationInk.prototype.IsInk = function() {
+        return true;
+    };
     CAnnotationInk.prototype.Draw = function(oGraphics) {
         if (this.IsHidden() == true)
             return;
@@ -154,10 +156,6 @@
     };
     CAnnotationInk.prototype.GetDrawing = function() {
         return this.content.GetAllDrawingObjects()[0];
-    };
-    CAnnotationInk.prototype._OnAfterSetContents = function() {
-        let oAscCommData = this._contents.GetAscCommentData();
-        editor.sendEvent("asc_onAddComment", this.GetId(), oAscCommData);
     };
     CAnnotationInk.prototype.GetShapeInkMargins = function(bInMM) {
         let aRect = this.GetRect();
@@ -649,13 +647,6 @@
         oRun.Add_ToContent(oRun.Content.length, oDrawing);
     };
     
-    CAnnotationInk.prototype.onMouseUp = function() {
-        let oViewer = editor.getDocumentRenderer();
-        oViewer.onUpdateOverlay();
-        let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(this._pagePos.x + this._pagePos.w / oViewer.zoom, this._pagePos.y + this._pagePos.h / (2 * oViewer.zoom), this.GetPage(), true);
-        editor.sync_ShowComment([this.GetId()], X, Y)
-    };
-    
     // переопределения методов CShape
     CAnnotationInk.prototype.getTransformMatrix = function() {
         return this.GetDrawing().GraphicObj.getTransformMatrix();
@@ -779,49 +770,7 @@
     CAnnotationInk.prototype.convertPixToMM = function(px) {
         return this.GetDrawing().GraphicObj.convertPixToMM(px);
     };
-    CAnnotationInk.prototype.SetContents = function(contents) {
-        if (typeof(contents) == "string") {
-            let oTextAnnot = new AscPDF.CAnnotationText(this.GetName(), this.GetPage(), [], this.GetDocument());
         
-            oTextAnnot.SetContents(contents);
-            oTextAnnot.SetModDate((new Date().getTime()).toString());
-            oTextAnnot.SetAuthor(this.GetAuthor());
-            oTextAnnot.SetHidden(false);
-
-            this._contents = oTextAnnot;
-        }
-        else {
-            this._contents = contents;
-        }
-    };
-    CAnnotationInk.prototype.GetContents = function() {
-        return this._contents;
-    };
-    CAnnotationInk.prototype.AddReply = function(CommentData) {
-        this._contents.AddReply(CommentData);
-    };
-    CAnnotationInk.prototype.GetAscCommentData = function() {
-        if (this._contents)
-            return this._contents.GetAscCommentData();
-
-        return null;
-    };
-    CAnnotationInk.prototype.EditCommentData = function(CommentData) {
-        if (this._contents)
-            this._contents.EditCommentData(CommentData);
-    };
-    
-    CAnnotationInk.prototype._AddReplyOnOpen = function(oReplyInfo) {
-        let oReply = new AscPDF.CAnnotationText(oReplyInfo["UniqueName"], this.GetPage(), [], this.GetDocument());
-
-        oReply.SetContents(oReplyInfo["Contents"]);
-        oReply.SetModDate((new Date().getTime()).toString());
-        oReply.SetAuthor(oReplyInfo["User"]);
-        oReply.SetHidden(false);
-
-        this._contents._replies.push(oReply);
-    };
-    
     function generateShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {
         // смещаем точки для отступа внутри шейпа
         let aMinPointsRect = getMinRect([].concat(...arrOfArrPoints));

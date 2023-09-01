@@ -1476,7 +1476,7 @@
 
 		this.setCursorType = function(cursor)
 		{
-			if (this.Api.isInkDrawerOn()) {
+			if (this.Api.isDrawInkMode()) {
 				this.id_main.style.cursor = "";
 				return;
 			}
@@ -1762,7 +1762,7 @@
 
 			// если мышка нажата и еще не вышли за eps - то проверяем, модет вышли сейчас?
 			// и, если вышли - то эмулируем
-			if (oThis.isMouseDown && !oThis.isMouseMoveBetweenDownUp )
+			if (oThis.isMouseDown && !oThis.isMouseMoveBetweenDownUp && !oDoc.mouseDownAnnot && !oDoc.mouseDownField && !oThis.Api.isInkDrawerOn())
 			{
 				var offX = Math.abs(oThis.mouseDownCoords.X - AscCommon.global_mouseEvent.X);
 				var offY = Math.abs(oThis.mouseDownCoords.Y - AscCommon.global_mouseEvent.Y);
@@ -2260,10 +2260,10 @@
 						this.DrawingObjects.drawingDocument.AutoShapesTrack.CorrectOverlayBounds();
 					}
 					else {
-						if (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsTextMarkup) {
+						if (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsTextMarkup()) {
 							oDoc.mouseDownAnnot.DrawSelected(this.overlay);
 						}
-						if (oDoc.mouseDownAnnot && !oDoc.mouseDownAnnot.IsComment) {
+						else if (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsComment() == false) {
 							this.DrawingObjects.drawingDocument.AutoShapesTrack.PageIndex = i;
 							this.DrawingObjects.drawSelect(i);
 						}
@@ -2366,12 +2366,12 @@
 				{
 					if (!this.file.cacheManager)
 					{
-						if (this.isClearPages || (page.Image && ((page.Image.requestWidth !== natW) || (page.Image.requestHeight !== natH))))
+						if (this.pagesInfo.pages[i].needRedrawHighlights || this.isClearPages || (page.Image && ((page.Image.requestWidth !== natW) || (page.Image.requestHeight !== natH))))
 							delete page.Image;
 					}
 					else
 					{
-						if (this.isClearPages || (page.Image && ((page.Image.requestWidth < natW) || (page.Image.requestHeight < natH))))
+						if (this.pagesInfo.pages[i].needRedrawHighlights  || this.isClearPages || (page.Image && ((page.Image.requestWidth < natW) || (page.Image.requestHeight < natH))))
 						{
 							if (this.file.cacheManager)
 								this.file.cacheManager.unlock(page.Image);
@@ -2384,7 +2384,7 @@
 				if (!page.Image && !isStretchPaint)
 				{
 					page.Image = this.file.getPage(i, natW, natH, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
-
+					this._paintHighlightAnnotsOnPage(i, page.Image.getContext("2d"));
 					// нельзя кэшировать с вотермарком - так как есть поворот
 					//if (this.Api.watermarkDraw)
 					//	this.Api.watermarkDraw.Draw(page.Image.getContext("2d"), w, h);
@@ -3343,10 +3343,6 @@
 				
 				if (this.pagesInfo.pages[i].annots != null) {
 					this.pagesInfo.pages[i].annots.forEach(function(annot) {
-						if (annot.IsHighlight())
-							annot.Draw();
-					});
-					this.pagesInfo.pages[i].annots.forEach(function(annot) {
 						if (annot.IsHighlight() == false)
 							annot.Draw();
 					});
@@ -3381,6 +3377,50 @@
 		// 	this.activeForm.UpdateScroll(true);
 		// if (this.activeForm && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(this.activeForm.GetType()))
 		// 	this.activeForm.content.RecalculateCurPos();
+	};
+	CHtmlPage.prototype._paintHighlightAnnotsOnPage = function(pageIndex, ctx)
+	{
+		let xCenter = this.width >> 1;
+		let yPos = this.scrollY >> 0;
+		if (this.documentWidth > this.width)
+		{
+			xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
+		}
+		
+		let aAnnots = this.pagesInfo.pages[pageIndex].annots != null ? this.pagesInfo.pages[pageIndex].annots : null;
+		if (this.pagesInfo.pages[pageIndex].graphics == null)
+			this.pagesInfo.pages[pageIndex].graphics = {};
+		
+		if (!aAnnots)
+			return;
+		
+		let page = this.drawingPages[pageIndex];
+		if (!page)
+			return;
+
+		let cachedImg = page.ImageAnnots;
+		let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+		let h = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+		
+		if (!cachedImg || this.pagesInfo.pages[pageIndex].needRedrawHighlights || cachedImg.width != w || cachedImg.height != h)
+		{
+			let nScale		= AscCommon.AscBrowser.retinaPixelRatio * this.zoom;
+			let widthPx		= this.canvas.width;
+			let heightPx	= this.canvas.height;
+			
+			let oGraphicsPDF = new AscPDF.CPDFGraphics();
+			this.pagesInfo.pages[pageIndex].graphics.pdf = oGraphicsPDF;
+			oGraphicsPDF.Init(ctx, widthPx * nScale, heightPx * nScale);
+			
+			if (this.pagesInfo.pages[pageIndex].annots != null) {
+				this.pagesInfo.pages[pageIndex].annots.forEach(function(annot) {
+					if (annot.IsHighlight())
+						annot.Draw();
+				});
+			}
+			
+			this.pagesInfo.pages[pageIndex].needRedrawHighlights = false;
+		}
 	};
 	CHtmlPage.prototype._paintFormsHighlight = function()
 	{

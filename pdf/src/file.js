@@ -549,6 +549,7 @@ void main() {\n\
 
     CFile.prototype.onMouseDown = function(pageIndex, x, y)
     {
+        let oDoc = this.viewer.getPDFDoc();
         var ret = this.getNearestPos(pageIndex, x, y);
         var sel = this.Selection;
 
@@ -586,6 +587,21 @@ void main() {\n\
         this.Selection.IsSelection = false;
         this.onUpdateSelection();
         this.onUpdateOverlay();
+
+        if (this.viewer.Api.isMarkerFormat) {
+            let oColor = this.viewer.getPDFDoc().GetMarkerColor(this.viewer.Api.curMarkerType);
+            switch (this.viewer.Api.curMarkerType) {
+				case AscPDF.ANNOTATIONS_TYPES.Highlight:
+					this.viewer.Api.SetHighlight(oColor.r, oColor.g, oColor.b, oColor.a);
+					break;
+				case AscPDF.ANNOTATIONS_TYPES.Underline:
+					this.viewer.Api.SetUnderline(oColor.r, oColor.g, oColor.b, oColor.a);
+					break;
+				case AscPDF.ANNOTATIONS_TYPES.Strikeout:
+					this.viewer.Api.SetStrikeout(oColor.r, oColor.g, oColor.b, oColor.a);
+					break;
+			}
+        }
     };
 
     CFile.prototype.getPageTextStream = function(pageIndex)
@@ -1060,13 +1076,14 @@ void main() {\n\
         this.Selection = oSelectionInfo;
         this.onUpdateOverlay();
     };
-    CFile.prototype.getSelectionRect = function() {
+    CFile.prototype.getSelectionRects = function() {
         let pageIndex = this.viewer.currentPage;
 
         var stream = this.getPageTextStream(pageIndex);
         if (!stream)
             return;
 
+        let aRects = [];
         var sel = this.Selection;
         var Page1 = 0;
         var Page2 = 0;
@@ -1256,8 +1273,10 @@ void main() {\n\
 
                     if (_numLine < Line1)
                         break;
-                    if (_numLine > Line2 && !bIsFillToEnd)
-                        return;
+                    if (_numLine > Line2 && !bIsFillToEnd) {
+                        stream.pos = stream.size;
+                        break;
+                    }
 
                     // все подсчитано
                     if (0 == _lineWidth)
@@ -1304,12 +1323,13 @@ void main() {\n\
                         var _y = (dKoefY * (_lineY - _lineAscent));
                         var _b = (dKoefY * (_lineY + _lineDescent));
 
-                        return {
+                        aRects.push({
                             x1: _x,
                             y1: _y,
                             x2: _r,
                             y2: _b
-                        }
+                        });
+                        break;
                     }
                     else
                     {
@@ -1342,12 +1362,13 @@ void main() {\n\
                         _y3 = (dKoefY * _y3);
                         _y4 = (dKoefY * _y4);
 
-                        return {
+                        aRects.push({
                             x1: _x1,
                             y1: _y1,
                             x2: _x2,
                             y2: _y2
-                        }
+                        });
+                        break;
                     }
                 }
                 case 161:
@@ -1362,6 +1383,8 @@ void main() {\n\
                 }
             }
         }
+
+        return aRects;
     };
     CFile.prototype.drawSelection = function(pageIndex, overlay, x, y, width, height)
     {

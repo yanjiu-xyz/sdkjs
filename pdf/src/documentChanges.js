@@ -33,7 +33,8 @@
 "use strict";
 
 
-AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_AddItem] = CChangesPDFDocumentAddItem;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_AddItem]		= CChangesPDFDocumentAddItem;
+AscDFH.changesFactory[AscDFH.historyitem_PDF_Document_RemoveItem]	= CChangesPDFDocumentRemoveItem;
 
 /**
  * @constructor
@@ -64,7 +65,7 @@ CChangesPDFDocumentAddItem.prototype.Undo = function()
 			oDocument.annots.splice(nPos, 1);
 			this.PosInPage = oViewer.pagesInfo.pages[nPage].annots.indexOf(oItem);
 			oViewer.pagesInfo.pages[nPage].annots.splice(this.PosInPage, 1);
-			if (oItem.IsComment && oItem.IsComment())
+			if (oItem.IsComment())
 				editor.sync_RemoveComment(oItem.GetId());
 		}
 	}
@@ -85,8 +86,67 @@ CChangesPDFDocumentAddItem.prototype.Redo = function()
 
 			oDocument.annots.splice(nPos, 0, oItem);
 			oViewer.pagesInfo.pages[nPage].annots.splice(this.PosInPage, 0, oItem);
-			if (oItem.IsComment && oItem.IsComment())
+			if (oItem.IsComment())
 				editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
+		}
+	}
+};
+
+/**
+ * @constructor
+ * @extends {AscDFH.CChangesBaseContentChange}
+ */
+function CChangesPDFDocumentRemoveItem(Class, Pos, Items)
+{
+	AscDFH.CChangesBaseContentChange.call(this, Class, Pos, Items, true);
+}
+CChangesPDFDocumentRemoveItem.prototype = Object.create(AscDFH.CChangesBaseContentChange.prototype);
+CChangesPDFDocumentRemoveItem.prototype.constructor = CChangesPDFDocumentRemoveItem;
+CChangesPDFDocumentRemoveItem.prototype.Type = AscDFH.historyitem_PDF_Document_RemoveItem;
+
+CChangesPDFDocumentRemoveItem.prototype.Undo = function()
+{
+	let oDocument = this.Class;
+	let oViewer = editor.getDocumentRenderer();
+	
+	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+	{
+		let nPos = this.Pos[0];
+		let nPosInPage = this.Pos[1];
+
+		let oItem = this.Items[nIndex];
+
+		if (oItem instanceof AscPDF.CAnnotationBase) {
+			let nPage = oItem.GetPage();
+			oItem.AddToRedraw();
+
+			oDocument.annots.splice(nPos, 0, oItem);
+			oViewer.pagesInfo.pages[nPage].annots.splice(nPosInPage, 0, oItem);
+			if (oItem.IsComment())
+				editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
+		}
+	}
+};
+CChangesPDFDocumentRemoveItem.prototype.Redo = function()
+{
+	var oDocument = this.Class;
+	let oViewer = editor.getDocumentRenderer();
+	
+	for (var nIndex = 0, nCount = this.Items.length; nIndex < nCount; ++nIndex)
+	{
+		let nPos		= this.Pos[0];
+		let nPosInPage	= this.Pos[1];
+
+		let oItem = this.Items[nIndex];
+
+		if (oItem instanceof AscPDF.CAnnotationBase) {
+			let nPage = oItem.GetPage();
+			oItem.AddToRedraw();
+
+			oDocument.annots.splice(nPos, 1);
+			oViewer.pagesInfo.pages[nPage].annots.splice(nPosInPage, 1);
+			if (oItem.IsComment())
+				editor.sync_RemoveComment(oItem.GetId());
 		}
 	}
 };

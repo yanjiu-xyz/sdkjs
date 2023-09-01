@@ -755,11 +755,17 @@ var CPresentation = CPresentation || function(){};
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
         let oDrDoc          = this.GetDrawingDocument();
-        let IsOnDrawer      = oViewer.Api.isInkDrawerOn();
+        let IsOnDrawer      = oViewer.Api.isDrawInkMode();
+        let IsOnEraser      = oViewer.Api.isEraseInkMode();
 
         oViewer.mouseDownLinkObject = oViewer.getPageLinkByMouse();
         let oMouseDownField         = oViewer.getPageFieldByMouse();
         let oMouseDownAnnot         = oViewer.getPageAnnotByMouse();
+
+        if (IsOnEraser && oMouseDownAnnot && oMouseDownAnnot.IsInk()) {
+            this.EraseInk(oMouseDownAnnot);
+            return;
+        }
 
         // если курсор меняется на resize, то клик по нему выходит за область поля или аннотации, отслеживаем этот момент и не убираем поле/аннотацию из активных
         let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
@@ -804,8 +810,8 @@ var CPresentation = CPresentation || function(){};
             oDrawingObjects.resetSelection();
         }
     };
-    CPDFDoc.prototype.OnMouseDownAnnot = function(e) {
-
+    CPDFDoc.prototype.EraseInk = function(oInk) {
+        this.RemoveAnnot(oInk.GetId());
     };
 
     CPDFDoc.prototype.OnMouseMove = function(x, y, e) {
@@ -818,14 +824,21 @@ var CPresentation = CPresentation || function(){};
         
         if (oViewer.isMouseDown)
         {
-            if (oAPI.isInkDrawerOn() || this.mouseDownAnnot) {
+            if (oAPI.isEraseInkMode()) {
+                let oMouseMoveAnnot = oViewer.getPageAnnotByMouse();
+                if (oMouseMoveAnnot && oMouseMoveAnnot.IsInk()) {
+                    this.EraseInk(oMouseMoveAnnot);
+                    return;
+                }
+            }
+            else if (oAPI.isDrawInkMode() || this.mouseDownAnnot) {
                 e.IsLocked = true;
                 oViewer.overlay.ClearAll = true;
                 oViewer.overlay.max_x = 0;
                 oViewer.overlay.max_y = 0;
                 
 
-                if (this.mouseDownAnnot && null == this.mouseDownAnnot.IsComment)
+                if (oDrawingObjects.arrTrackObjects.length != 0 && this.mouseDownAnnot && this.mouseDownAnnot.IsInk() == true)
                     oDrawingObjects.updateCursorType(oViewer.currentPage, X, Y, e, false);
 
                 oDrawingObjects.OnMouseMove(e, X, Y, oViewer.currentPage);
@@ -928,7 +941,7 @@ var CPresentation = CPresentation || function(){};
 
             oViewer.setCursorType(cursorType);
 
-            if (!mouseMoveAnnotObject || null == mouseMoveAnnotObject.IsComment)
+            if (!mouseMoveAnnotObject || mouseMoveAnnotObject.IsInk() == true)
                 oDrawingObjects.updateCursorType(oViewer.currentPage, X, Y, e, false);
         }
     };
@@ -947,7 +960,7 @@ var CPresentation = CPresentation || function(){};
         
         let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
         // если рисование, то просто заканчиваем его
-        if (oViewer.Api.isInkDrawerOn()) {
+        if (oViewer.Api.isDrawInkMode()) {
             oDrawingObjects.OnMouseUp(e, X, Y, oViewer.currentPage);
             if (true == bUpdateOverlay) {
                 oViewer.overlay.ClearAll = true;
@@ -1092,11 +1105,11 @@ var CPresentation = CPresentation || function(){};
                 oParentForm.AddToRedraw();
 
                 // Перерисуем страницу, на которой произошли изменения
-                oViewer._paintForms();
+                // oViewer._paintForms();
                 oViewer.onUpdateOverlay();
             }
             
-            oViewer._paintAnnots();
+            oViewer._paint();
             oViewer.onUpdateOverlay();
             oViewer.isOnUndoRedo = false;
         }
@@ -1145,11 +1158,11 @@ var CPresentation = CPresentation || function(){};
                 oParentForm.AddToRedraw()
                 
                 // Перерисуем страницу, на которой произошли изменения
-                oViewer._paintForms();
+                // oViewer._paintForms();
                 oViewer.onUpdateOverlay();
             }
 
-            oViewer._paintAnnots();
+            oViewer._paint();
             oViewer.onUpdateOverlay();
             oViewer.isOnUndoRedo = false;
         }
@@ -1367,10 +1380,6 @@ var CPresentation = CPresentation || function(){};
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();
 
-        if (oProps.contents != null) {
-            oAnnot.SetContents(oProps.contents);
-        }
-
         if (oViewer.IsOpenAnnotsInProgress == false) {
             this.CreateNewHistoryPoint();
             this.History.Add(new CChangesPDFDocumentAddItem(this, this.annots.length - 1, [oAnnot]));
@@ -1384,15 +1393,44 @@ var CPresentation = CPresentation || function(){};
         oAnnot.AddToRedraw();
         return oAnnot;
     };
-    CPDFDoc.prototype.SetHighlight = function(r, g, b) {
+    CPDFDoc.prototype.SetHighlight = function(r, g, b, opacity) {
+        this.HighlightColor = {
+            r: r,
+            g: g,
+            b: b,
+            a: opacity
+        };
+
         let oViewer         = editor.getDocumentRenderer();
         let oFile           = oViewer.file;
-        let oSelRect        = oFile.getSelectionRect();
-        if (oSelRect == null)
+        let aSelRects       = oFile.getSelectionRects();
+        if (aSelRects.length == 0)
             return;
 
+        let aAllPoints = [];
+        aSelRects.forEach(function(rect) {
+            aAllPoints.push(rect.x1);
+            aAllPoints.push(rect.y1);
+            aAllPoints.push(rect.x2);
+            aAllPoints.push(rect.y2);
+        });
+
+        let aXMeasures = aAllPoints.filter(function(measure, index) {
+            if (index % 2 == 0)
+                return measure;
+        });
+        let aYMeasures = aAllPoints.filter(function(measure, index) {
+            if (index % 2 != 0)
+                return measure;
+        });
+
+        let MinX = Math.min(...aXMeasures);
+        let MaxX = Math.max(...aXMeasures);
+        let MinY = Math.min(...aYMeasures);
+        let MaxY = Math.max(...aYMeasures);
+
         let oProps = {
-            rect:       [oSelRect.x1 - 2, oSelRect.y1 - 2, oSelRect.x2 + 2, oSelRect.y2 + 2],
+            rect:       [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
             page:       oViewer.currentPage,
             name:       AscCommon.CreateGUID(),
             type:       AscPDF.ANNOTATIONS_TYPES.Highlight,
@@ -1401,18 +1439,55 @@ var CPresentation = CPresentation || function(){};
 
         let oAnnot = this.AddAnnot(oProps);
 
-        oAnnot.SetQuads([oSelRect.x1, oSelRect.y1, oSelRect.x2, oSelRect.y1, oSelRect.x1, oSelRect.y2, oSelRect.x2, oSelRect.y2]);
+        let aQuads = [];
+        aSelRects.forEach(function(rect) {
+            aQuads.push(rect.x1, rect.y1, rect.x2, rect.y1, rect.x1, rect.y2, rect.x2, rect.y2);
+        });
+
+        oAnnot.SetQuads(aQuads);
         oAnnot.SetStrokeColor([r/255, g/255, b/255]);
+
+        editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Highlight, false);
+        editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Highlight, false);
     };
-    CPDFDoc.prototype.SetUnderline = function(r, g, b) {
+    CPDFDoc.prototype.SetUnderline = function(r, g, b, opacity) {
+        this.UnderlineColor = {
+            r: r,
+            g: g,
+            b: b,
+            a: opacity
+        };
+
         let oViewer         = editor.getDocumentRenderer();
         let oFile           = oViewer.file;
-        let oSelRect        = oFile.getSelectionRect();
-        if (oSelRect == null)
+        let aSelRects       = oFile.getSelectionRects();
+        if (aSelRects.length == 0)
             return;
 
+        let aAllPoints = [];
+        aSelRects.forEach(function(rect) {
+            aAllPoints.push(rect.x1);
+            aAllPoints.push(rect.y1);
+            aAllPoints.push(rect.x2);
+            aAllPoints.push(rect.y2);
+        });
+
+        let aXMeasures = aAllPoints.filter(function(measure, index) {
+            if (index % 2 == 0)
+                return measure;
+        });
+        let aYMeasures = aAllPoints.filter(function(measure, index) {
+            if (index % 2 != 0)
+                return measure;
+        });
+
+        let MinX = Math.min(...aXMeasures);
+        let MaxX = Math.max(...aXMeasures);
+        let MinY = Math.min(...aYMeasures);
+        let MaxY = Math.max(...aYMeasures);
+
         let oProps = {
-            rect:       [oSelRect.x1 - 2, oSelRect.y1 - 2, oSelRect.x2 + 2, oSelRect.y2 + 2],
+            rect:       [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
             page:       oViewer.currentPage,
             name:       AscCommon.CreateGUID(),
             type:       AscPDF.ANNOTATIONS_TYPES.Underline,
@@ -1421,28 +1496,85 @@ var CPresentation = CPresentation || function(){};
 
         let oAnnot = this.AddAnnot(oProps);
 
-        oAnnot.SetQuads([oSelRect.x1, oSelRect.y1, oSelRect.x2, oSelRect.y1, oSelRect.x1, oSelRect.y2, oSelRect.x2, oSelRect.y2]);
+        let aQuads = [];
+        aSelRects.forEach(function(rect) {
+            aQuads.push(rect.x1, rect.y1, rect.x2, rect.y1, rect.x1, rect.y2, rect.x2, rect.y2);
+        });
+
+        oAnnot.SetQuads(aQuads);
         oAnnot.SetStrokeColor([r/255, g/255, b/255]);
+
+        editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Underline, false);
+        editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Underline, false);
     };
-    CPDFDoc.prototype.SetStrikeout = function(r, g, b) {
+    CPDFDoc.prototype.SetStrikeout = function(r, g, b, opacity) {
+        this.StrikeoutColor = {
+            r: r,
+            g: g,
+            b: b,
+            a: opacity
+        };
+
         let oViewer         = editor.getDocumentRenderer();
         let oFile           = oViewer.file;
-        let oSelRect        = oFile.getSelectionRect();
-        if (oSelRect == null)
+        let aSelRects       = oFile.getSelectionRects();
+        if (aSelRects.length == 0)
             return;
 
+        let aAllPoints = [];
+        aSelRects.forEach(function(rect) {
+            aAllPoints.push(rect.x1);
+            aAllPoints.push(rect.y1);
+            aAllPoints.push(rect.x2);
+            aAllPoints.push(rect.y2);
+        });
+
+        let aXMeasures = aAllPoints.filter(function(measure, index) {
+            if (index % 2 == 0)
+                return measure;
+        });
+        let aYMeasures = aAllPoints.filter(function(measure, index) {
+            if (index % 2 != 0)
+                return measure;
+        });
+
+        let MinX = Math.min(...aXMeasures);
+        let MaxX = Math.max(...aXMeasures);
+        let MinY = Math.min(...aYMeasures);
+        let MaxY = Math.max(...aYMeasures);
+
         let oProps = {
-            rect:       [oSelRect.x1 - 2, oSelRect.y1 - 2, oSelRect.x2 + 2, oSelRect.y2 + 2],
+            rect:       [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
             page:       oViewer.currentPage,
             name:       AscCommon.CreateGUID(),
-            type:       AscPDF.ANNOTATIONS_TYPES.StrikeOut,
+            type:       AscPDF.ANNOTATIONS_TYPES.Strikeout,
             hidden:     false
         }
 
         let oAnnot = this.AddAnnot(oProps);
 
-        oAnnot.SetQuads([oSelRect.x1, oSelRect.y1, oSelRect.x2, oSelRect.y1, oSelRect.x1, oSelRect.y2, oSelRect.x2, oSelRect.y2]);
+        let aQuads = [];
+        aSelRects.forEach(function(rect) {
+            aQuads.push(rect.x1, rect.y1, rect.x2, rect.y1, rect.x1, rect.y2, rect.x2, rect.y2);
+        });
+
+        oAnnot.SetQuads(aQuads);
         oAnnot.SetStrokeColor([r/255, g/255, b/255]);
+
+        editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Strikeout, false);
+        editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Strikeout, false);
+    };
+    CPDFDoc.prototype.GetMarkerColor = function(nType) {
+        switch (nType) {
+            case AscPDF.ANNOTATIONS_TYPES.Highlight:
+                return this.HighlightColor;
+            case AscPDF.ANNOTATIONS_TYPES.Underline:
+                return this.UnderlineColor;
+            case AscPDF.ANNOTATIONS_TYPES.Strikeout:
+                return this.StrikeoutColor;
+        }
+
+        return null;
     };
     CPDFDoc.prototype.AddComment = function(AscCommentData) {
         let oViewer = editor.getDocumentRenderer();
@@ -1461,7 +1593,25 @@ var CPresentation = CPresentation || function(){};
 
         this.anchorPositionToAdd = null;
 
-        let oAnnot = this.AddAnnot(oProps);
+        let oAnnot;
+        if (this.mouseDownAnnot && this.mouseDownAnnot.IsComment() == false) {
+            oAnnot = CreateAnnotByProps(oProps, this);
+            if (this.mouseDownAnnot.GetContents()) {
+                let newCommentData = new AscCommon.CCommentData();
+                newCommentData.Read_FromAscCommentData(AscCommentData);
+
+                let curCommentData = new AscCommon.CCommentData();
+                curCommentData.Read_FromAscCommentData(this.mouseDownAnnot.GetAscCommentData());
+                curCommentData.Add_Reply(newCommentData);
+
+                this.EditComment(this.mouseDownAnnot.GetId(), curCommentData);
+            }
+            else
+                this.mouseDownAnnot.SetContents(oAnnot);
+        }
+        else {
+            oAnnot = this.AddAnnot(oProps);
+        }
         
         editor.sendEvent("asc_onAddComment", oAnnot.GetId(), AscCommentData);
         return oAnnot;
@@ -1528,12 +1678,17 @@ var CPresentation = CPresentation || function(){};
         if (!oAnnot)
             return;
 
-        let nPage = oAnnot.GetPage();
-        oAnnot.AddToRedraw();
-        this.annots.splice(this.annots.indexOf(oAnnot), 1);
-        oViewer.pagesInfo.pages[nPage].annots.splice(oViewer.pagesInfo.pages[nPage].annots.indexOf(oAnnot), 1);
-        editor.sync_RemoveComment(Id);
-        oViewer._paintAnnots();
+        if (oAnnot.IsComment()) {
+            let nPage = oAnnot.GetPage();
+            oAnnot.AddToRedraw();
+            this.annots.splice(this.annots.indexOf(oAnnot), 1);
+            oViewer.pagesInfo.pages[nPage].annots.splice(oViewer.pagesInfo.pages[nPage].annots.indexOf(oAnnot), 1);
+            editor.sync_RemoveComment(Id);
+            oViewer._paintAnnots();
+        }
+        else {
+            oAnnot.SetContents(null);
+        }
     };
     CPDFDoc.prototype.RemoveAnnot = function(Id) {
         let oViewer = editor.getDocumentRenderer();
@@ -1544,16 +1699,28 @@ var CPresentation = CPresentation || function(){};
         if (!oAnnot)
             return;
 
-        if (oAnnot.IsComment && oAnnot.IsComment())
+        if (oAnnot.IsComment())
             return this.RemoveComment(Id);
 
         let nPage = oAnnot.GetPage();
         oAnnot.AddToRedraw();
-        this.annots.splice(this.annots.indexOf(oAnnot), 1);
-        oViewer.pagesInfo.pages[nPage].annots.splice(oViewer.pagesInfo.pages[nPage].annots.indexOf(oAnnot), 1);
-        oViewer._paintAnnots();
+
+        let nPos        = this.annots.indexOf(oAnnot);
+        let nPosInPage  = oViewer.pagesInfo.pages[nPage].annots.indexOf(oAnnot);
+
+        this.annots.splice(nPos, 1);
+        oViewer.pagesInfo.pages[nPage].annots.splice(nPosInPage, 1);
+        
         if (this.mouseDownAnnot == oAnnot)
             this.mouseDownAnnot = null;
+
+        if (oViewer.IsOpenAnnotsInProgress == false) {
+            this.CreateNewHistoryPoint();
+            this.History.Add(new CChangesPDFDocumentRemoveItem(this, [nPos, nPosInPage], [oAnnot]));
+            this.TurnOffHistory();
+        }
+
+        oViewer._paint();
         oViewer.onUpdateOverlay();
     };
     CPDFDoc.prototype.HideComments = function() {
@@ -1739,6 +1906,21 @@ var CPresentation = CPresentation || function(){};
         oActionsQueue.Continue();
     };
 
+    /**
+	 * Hides/shows annots by names
+	 * @memberof CPDFDoc
+     * @param {boolean} bHidden
+	 * @typeofeditors ["PDF"]
+	 * @returns {AscPDF.CAnnotationBase}
+	 */
+    CPDFDoc.prototype.HideShowAnnots = function(bHidden) {
+        this.annots.forEach(function(annot) {
+            annot.SetHidden(bHidden);
+            annot.AddToRedraw();
+        });
+
+        editor.getDocumentRenderer()._paint();
+    };
     /**
 	 * Checks the field for the field widget, if not then the field will be removed.
 	 * @memberof CPDFDoc
@@ -1990,14 +2172,15 @@ var CPresentation = CPresentation || function(){};
             case AscPDF.ANNOTATIONS_TYPES.Underline:
                 oAnnot = new AscPDF.CAnnotationUnderline(sName, nPageNum, aScaledCoords, oPdfDoc);
                 break;
-            case AscPDF.ANNOTATIONS_TYPES.StrikeOut:
-                oAnnot = new AscPDF.CAnnotationStrikeOut(sName, nPageNum, aScaledCoords, oPdfDoc);
+            case AscPDF.ANNOTATIONS_TYPES.Strikeout:
+                oAnnot = new AscPDF.CAnnotationStrikeout(sName, nPageNum, aScaledCoords, oPdfDoc);
                 break;
         }
 
         oAnnot.SetModDate(sDate);
         oAnnot.SetAuthor(sAuthor);
         oAnnot.SetHidden(isHidden);
+        oAnnot.SetContents(sText);
 
         oAnnot._origRect = aRect;
         oAnnot._pagePos = {
