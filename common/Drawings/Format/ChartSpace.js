@@ -373,6 +373,7 @@ function(window, undefined) {
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetNvGrFrProps] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetThemeOverride] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ShapeSetBDeleted] = CChangesDrawingsBool;
+	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetIsForChartEx] = CChangesDrawingsBool;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetChartData] = CChangesDrawingsObjectNoId;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetParent] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetChart] = CChangesDrawingsObject;
@@ -535,6 +536,9 @@ function(window, undefined) {
 	};
 	drawingsChangesMap[AscDFH.historyitem_ShapeSetBDeleted] = function (oClass, value) {
 		oClass.bDeleted = value;
+	};
+	drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetIsForChartEx] = function(oClass, value) {
+		oClass.isForChartEx = value;
 	};
 	drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetChartData] = function(oClass, value) {
         oClass.chartData = value;
@@ -1310,6 +1314,7 @@ function(window, undefined) {
 
 	function CChartSpace() {
 		AscFormat.CGraphicObjectBase.call(this);
+		this.isForChartEx = false;
 		this.nvGraphicFramePr = null;
 		this.chart = null;
 		this.clrMapOvr = null;
@@ -1367,6 +1372,10 @@ function(window, undefined) {
 			this.dataRefs = new AscFormat.CChartDataRefs(this);
 		}
 		return this.dataRefs;
+	};
+	CChartSpace.prototype.setIsForChartEx = function(pr) {
+		History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_ChartSpace_SetIsForChartEx, this.isForChartEx, pr));
+		this.isForChartEx = pr;
 	};
 	CChartSpace.prototype.setChartData = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetChartData, this.chartData, pr));
