@@ -475,8 +475,11 @@ CGraphicObjects.prototype =
             oXfrm.setOffY(0);
             oXfrm.setExtX(5);
             oXfrm.setExtY(5);
-            if(oProps.get_IsDiagonal() !== false){
-                oXfrm.setRot(7*Math.PI/4);
+            let dRot = oProps.getXfrmRot();
+            let bZeroAngle = AscFormat.fApproxEqual(0.0, dRot);
+            if(!bZeroAngle)
+            {
+                oXfrm.setRot(dRot);
             }
             oSpPr.setXfrm(oXfrm);
             oXfrm.setParent(oSpPr);
@@ -532,7 +535,7 @@ CGraphicObjects.prototype =
             oXfrm.setExtY(oContentSize.h);
             if(oTextPropMenu.get_FontSize() < 0)
             {
-                if(oProps.get_IsDiagonal())
+                if(!bZeroAngle)
                 {
                     extX = Math.SQRT2*Math.min(dMaxWidth, dMaxHeight) / (oContentSize.h / oContentSize.w + 1);
                 }
