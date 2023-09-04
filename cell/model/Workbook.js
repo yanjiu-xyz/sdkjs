@@ -8685,6 +8685,40 @@
 		}
 	};
 	/**
+	 * @param {CT_pivotTableDefinition} pivotTable
+	 * @param {number[]} rowFieldsOffset
+	 * @param {boolean} isRowItem
+	 * @param {number} itemIndex
+	 * @param {PivotFormatsManagerQuery} query
+	 */
+	Worksheet.prototype._updatePivotTableCellsRowColLablesOffsets = function(pivotTable, rowFieldsOffset, isRowItem, itemIndex, itemXIndex, query) {
+		const pivotRange = pivotTable.getRange();
+		const location = pivotTable.location;
+		const items = isRowItem ? pivotTable.getRowItems() : pivotTable.getColItems();
+		const itemR = items[itemIndex].getR();
+		const itemSummaryR = itemR + itemXIndex;
+
+		const r1 = isRowItem ? pivotRange.r1 + location.firstDataRow : pivotRange.r1 + location.firstHeaderRow;
+		const c1 = isRowItem ? pivotRange.c1 : pivotRange.c1 + location.firstDataCol;
+		const startRow = isRowItem ? r1 + itemIndex : r1 + itemR;
+		const startCol = isRowItem ? c1 + rowFieldsOffset[itemXIndex] : c1 + itemIndex;
+
+		for (let i = itemIndex + 1; i < items.length; i += 1) {
+			const item = items[i];
+			if (item.getR() <= itemSummaryR) {
+				break;
+			}
+			const r = isRowItem ? startRow + i - itemIndex : startRow;
+			const c = isRowItem ? startCol : startCol + i - itemIndex;
+			const nextItem = items[i + 1];
+			const offsetR = nextItem.getR() <= itemSummaryR ? Asc.st_PIVOT_AREA_OFFSET_END : r - startRow;
+			const offsetC = nextItem.getR() <= itemSummaryR ? Asc.st_PIVOT_AREA_OFFSET_END : c - startCol;
+			
+			const offset = new Asc.Range(offsetR, offsetC, offsetR, offsetC);
+			const cell = this.getRange4(r, c);
+		} 
+	};
+	/**
 	 * @param {CT_pivotTableDefinition} pivotTable 
 	 * @param {number[]} rowFieldsOffset 
 	 */
@@ -8771,6 +8805,7 @@
 				fieldIndex = null;
 				var outline = 0;
 				if (rowFieldsOffset) {
+					// todo offsets
 					cells = this.getRange4(r1 + i, c1 + rowFieldsOffset[r + j]);
 				} else {
 					cells = this.getRange4(r1 + r + j, c1 + i);
