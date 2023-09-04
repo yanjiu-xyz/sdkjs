@@ -6031,9 +6031,9 @@ BinaryChartWriter.prototype.WriteCT_ChartExPlotArea = function (oVal) {
             oThis.WriteCT_PlotAreaRegion(oVal.plotAreaRegion);
         });
     }
-    if (oVal.axis !== null) {
-        for (var i = 0, length = oVal.axis.length; i < length; ++i) {
-            var oCurVal = oVal.axis[i];
+    if (oVal.axId !== null) {
+        for (var i = 0, length = oVal.axId.length; i < length; ++i) {
+            var oCurVal = oVal.axId[i];
             if (oCurVal !== null) {
                 this.bs.WriteItem(c_oserct_chartExChartAXIS, function () {
                     oThis.WriteCT_Axis(oCurVal);
@@ -6412,9 +6412,9 @@ BinaryChartWriter.prototype.WriteCT_ChartExLegend = function (oVal) {
             oThis.WriteSpPr(oVal.spPr);
         });
     }
-    if(oVal.pos !== null) {
+    if(oVal.legendPos !== null) {
         this.bs.WriteItem(c_oserct_chartExLegendPOS, function() {
-            oThis.memory.WriteByte(oVal.pos);
+            oThis.memory.WriteByte(oVal.legendPos);
         });
     }
     if(oVal.align !== null) {
@@ -6432,7 +6432,7 @@ BinaryChartWriter.prototype.WriteCT_Text = function (oVal) {
     var oThis = this;
     if(oVal.rich !== null) {
         this.bs.WriteItem(c_oserct_chartExTextRICH, function() {
-            oThis.WriteCT_TextBody(oVal.rich);
+            oThis.WriteTxPr(oVal.rich);
         });
     }
     if(oVal.txData !== null) {
@@ -13839,7 +13839,7 @@ BinaryChartReader.prototype.ReadCT_ChartExLegend = function (type, length, val) 
     }
     else if (c_oserct_chartExLegendPOS === type)
     {
-        val.setPos(this.stream.GetUChar());
+        val.setLegendPos(this.stream.GetUChar());
     }
     else if (c_oserct_chartExLegendALIGN === type)
     {
@@ -13861,11 +13861,13 @@ BinaryChartReader.prototype.ReadCT_Text = function (type, length, val) {
     var oNewVal;
     if (c_oserct_chartExTextRICH === type)
     {
-        var oNewVal = new AscFormat.CTextBody();
-        res = this.bcr.Read1(length, function (t, l) {
-            return oThis.ReadCT_TextBody(t, l, oNewVal);
-        });
-        val.setRich(oNewVal);
+        // var oNewVal = new AscFormat.CTextBody();
+        // res = this.bcr.Read1(length, function (t, l) {
+        //     return oThis.ReadCT_TextBody(t, l, oNewVal);
+        // });
+        // val.setRich(oNewVal);
+        val.setRich(this.ReadTxPr(length));
+        val.rich.setParent(val);
     }
     else if (c_oserct_chartExTextDATA === type)
     {
