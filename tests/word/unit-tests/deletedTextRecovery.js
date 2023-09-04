@@ -32,7 +32,15 @@
 
 $(function () {
 	let logicDocument = AscTest.CreateLogicDocument();
+
+	let versionHistory = logicDocument.Api.VersionHistory = new Asc.asc_CVersionHistory();
+	versionHistory.asc_SetUserId(0);
+	versionHistory.asc_SetUserName("AnonymousUser");
+	versionHistory.asc_SetDateOfRevision(new Date().getTime());
+
 	let oCurDelRecover = null;
+	let arr = [];
+
 	function AddParagraph(pos)
 	{
 		let p = AscTest.CreateParagraph();
@@ -53,18 +61,22 @@ $(function () {
 
 	function Init()
 	{
-		let oDeletedText = new AscCommon.DeletedTextRecovery();
-		oDeletedText.SetIsDebug(true);
+		UpdateChanges();
+		logicDocument.CollaborativeEditing.CoHistory.initTextRecover();
+		oCurDelRecover = AscCommon.CollaborativeEditing.CoHistory.textRecovery;
+	}
+
+	function UpdateChanges ()
+	{
+		arr = [];
 		let nLengthOfPoints = AscCommon.History.Points.length - 1;
-		let arr = [];
 
 		for (let i = 0; i <= nLengthOfPoints; i++)
 		{
 			AscCommon.History.GetChangesFromPoint(i, arr);
 		}
 
-		oDeletedText.handleChanges(arr);
-		oCurDelRecover = oDeletedText;
+		AscCommon.CollaborativeEditing.CoHistory.Changes = arr;
 	}
 
 	function ShowDelText()
@@ -74,12 +86,12 @@ $(function () {
 
 	function Prev()
 	{
-		oCurDelRecover.NavigationRevisionHistory(true);
+		oCurDelRecover.NavigationRevisionHistoryByStep(oCurDelRecover.GetCurrentIndexNavigationPoint() - 1, true);
 	}
 
 	function Next()
 	{
-		oCurDelRecover.NavigationRevisionHistory(false);
+		oCurDelRecover.NavigationRevisionHistoryByStep(oCurDelRecover.GetCurrentIndexNavigationPoint() + 1, true);
 	}
 
 	function CheckRuns(assert, paragraph, arr)
@@ -99,6 +111,7 @@ $(function () {
 	QUnit.testStart(function (){
 		AscCommon.History.Clear();
 		AscTest.ClearDocument();
+		AscCommon.CollaborativeEditing.CoHistory.textRecovery = null;
 	})
 
 	QUnit.module("Unit-tests for recover deleted text");

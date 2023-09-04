@@ -40,8 +40,6 @@
 	 */
 	function DeletedTextRecovery()
 	{
-		this.oCollaborativeEditingBase = AscCommon.CollaborativeEditing;
-		
 		this.m_RewiewPoints 	= []; // Отсортированный по типу список изменений
 		this.m_RewiewDelPoints 	= []; // Список всех изменений связанных с удалением текста
 		this.m_RewiewIndex 		= 0;  // Текущая позиция в истории ревизии для отображения удаленного текста
@@ -52,17 +50,13 @@
 		this.ShowDelLettersChanges = null;
 		this.StepTextPoint = null;
 		this.nIntCurrent = 0;
-		this.isDebug = false; //needs for correct work of tests
-	}
-	DeletedTextRecovery.prototype.SetIsDebug = function (isDebug)
-	{
-		this.isDebug = isDebug;
 	}
 	/**
 	 * Инициализация и создание промежуточных данных для отображения удаленного текста в текущей ревизии
 	 */
-	DeletedTextRecovery.prototype.handleChanges = function(arrChanges)
+	DeletedTextRecovery.prototype.handleChanges = function()
 	{
+		let arrChanges = AscCommon.CollaborativeEditing.CoHistory.Changes;
 		if (!arrChanges || !arrChanges.length)
 			return;
 		
@@ -177,6 +171,7 @@
 	{
 		this.UndoShowDelText();
 		let localHistory = AscCommon.History;
+
 		if (localHistory.Points.length === 0)
 		{
 			AscCommon.History.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_DeletedTextRecovery);
@@ -185,22 +180,10 @@
 		{
 			AscCommon.History.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_DeletedTextRecovery);
 		}
+
 		let arrCurrentPoint = [];
 		let arrSplits = [];
-		let historyStore = this.oCollaborativeEditingBase.m_oLogicDocument.Api.VersionHistory;
-
-		if (!historyStore && !this.isDebug)
-			return;
-
-		if (this.isDebug)
-		{
-			historyStore = {
-				userId: 0,
-				userName: "DebugName",
-				dateOfRevision: new Date().getTime(),
-			}
-		}
-
+		let historyStore = AscCommon.CollaborativeEditing.CoHistory.CoEditing.m_oLogicDocument.Api.VersionHistory;
 		let strUserId = historyStore.userId;
 		let strUserName = historyStore.userName;
 		let strDateOFRevision = historyStore.dateOfRevision;
@@ -240,7 +223,15 @@
 
 		this.RedoPoints(arrCurrentPoint);
 		let arrContentForSlice = this.ConvertArray(arrInput.reverse());
-		arrContentForSlice = this.QuickSort(arrContentForSlice);
+		arrContentForSlice = arrContentForSlice.sort(
+			function (a, b)
+			{
+				if (a.nStartPos > b.nStartPos) return -1;
+				else if (a.nStartPos < b.nStartPos) return 1;
+				return 0;
+			}
+		);
+
 		this.Sort(arrContentForSlice);
 
 		for (let i = 0; i < arrContentForSlice.length; i++)
@@ -337,24 +328,6 @@
 		this.ShowDelTextPoint = AscCommon.History.Points[0];
 		this.ShowDelLettersChanges = arrCurrentPoint;
 		this.RedoPoints();
-	};
-	DeletedTextRecovery.prototype.QuickSort = function (array)
-	{
-		if (array.length <= 1)
-			return array;
-
-		let pivot = array[0].nStartPos;
-		let left = [];
-		let right = [];
-
-		for (let i = 1; i < array.length; i++)
-		{
-			(array[i].nStartPos > pivot || !(array[i].class instanceof ParaRun))
-				? left.push(array[i])
-				: right.push(array[i]);
-		}
-
-		return this.QuickSort(left).concat(array[0], this.QuickSort(right));
 	};
 	DeletedTextRecovery.prototype.Sort = function (array)
 	{
@@ -647,7 +620,7 @@
 	// проверяем правильность окрашивания ранов
 	DeletedTextRecovery.prototype.Check = function ()
 	{
-		let oChanged = this.oCollaborativeEditingBase.m_aChangedClasses;
+		let oChanged = AscCommon.CollaborativeEditing.m_aChangedClasses;
 		let arrKeys = Object.keys(oChanged);
 
 		for (let i = 0; i < arrKeys.length; i++)
@@ -662,30 +635,26 @@
 			}
 		}
 	};
-	// перемещаемся по истории ревизии
-	DeletedTextRecovery.prototype.NavigationRevisionHistory = function (isUndo, isShowDelText)
+	/**
+	 * Перемещаемся по истории ревизии на заданную точку
+	 * @param {number} intCount - Позиция на которую необходимо переместится
+	 * @param {boolean} isNotUndoPoints - Нужно, что бы перемещение по истории правильно отрабатывало, если мы не сохранили изменения
+	 * @constructor
+	 */
+	DeletedTextRecovery.prototype.NavigationRevisionHistoryByStep = function (intCount, isNotUndoPoints)
 	{
-		return this.NavigationRevisionHistoryByStep(isUndo === true ? -1 : 1, isShowDelText);
-	};
-	// перемещаемся по истории ревизии на заданное количество изменений относительно текущей позиции
-	DeletedTextRecovery.prototype.NavigationRevisionHistoryByStep = function (intCount, isShowDelText)
-	{
-		if (this.m_RewiewIndex + intCount< 0)
-		{
+		if (this.m_RewiewIndex + intCount < 0 || this.m_RewiewIndex + intCount > this.m_RewiewPoints.length)
 			return false;
-		}
-		else if (this.m_RewiewIndex + intCount > this.m_RewiewPoints.length)
-		{
-			return false;
-		}
 
-		this.UndoPoints();
+		if (!isNotUndoPoints)
+			this.UndoPoints();
+
 		this.UndoShowDelText();
 		this.UndoStepText();
 
 		AscCommon.History.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_DeletedTextRecovery);
-		this.m_RewiewIndex = this.m_RewiewIndex + intCount;
-		this.nCounter = intCount;
+		this.m_RewiewIndex = intCount;
+
 		let arrInput = this.m_RewiewPoints.slice(this.m_RewiewIndex, this.m_RewiewPoints.length);
 		let arrCurrentPoint = [];
 
@@ -693,11 +662,11 @@
 			this.Check();
 
 		if (!arrInput || arrInput.length === 0)
-			return;
+			return true;
 
 		for (let nCounter = arrInput.length - 1; nCounter >= 0; nCounter--)
 		{
-			let arrCurrentDel 		= arrInput[nCounter];
+			let arrCurrentDel = arrInput[nCounter];
 			this.UndoReviewBlock(arrCurrentDel, arrCurrentPoint);
 		}
 
@@ -706,10 +675,6 @@
 		AscCommon.History.Remove_LastPoint();
 		this.Check();
 
-		if (isShowDelText)
-		{
-			this.ShowDelText()
-		}
 		return true;
 	};
 	DeletedTextRecovery.prototype.UndoReviewBlock = function(arrBlock, arrChanges)
@@ -828,7 +793,7 @@
 	{
 		let localHistory = AscCommon.History
 
-		if (localHistory.Points.length > 0 && !this.isDebug)
+		if (localHistory.Points.length > 0)
 		{
 			let changes = []
 			let oHistoryPoint = localHistory.Points[localHistory.Points.length - 1];
@@ -855,7 +820,7 @@
 	DeletedTextRecovery.prototype.RedoPoints = function (array)
 	{
 		let localHistory = AscCommon.History;
-		if (localHistory.Points.length > 0 && localHistory.Points[0].Items.length > 0 && !this.isDebug)
+		if (localHistory.Points.length > 0 && localHistory.Points[0].Items.length > 0)
 		{
 			let oHistoryPoint 	= localHistory.Points[localHistory.Points.length - 1];
 			let changes	= oHistoryPoint.Items;

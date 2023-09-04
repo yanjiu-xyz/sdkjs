@@ -157,38 +157,45 @@
 	};
 	CCollaborativeHistory.prototype.getGlobalPointCount = function()
 	{
-		return 0;
+		this.initTextRecover();
+		return this.textRecovery.GetCountOfNavigationPoints();
 	};
 	CCollaborativeHistory.prototype.getGlobalPointIndex = function()
 	{
-		return -1;
+		this.initTextRecover();
+		return this.textRecovery.GetCurrentIndexNavigationPoint();
 	};
 	CCollaborativeHistory.prototype.moveToPoint = function(pointIndex)
 	{
+		this.initTextRecover();
+
 		let needRecover = !!this.textRecovery;
-		this.undoRecovery();
-		
-		
-		
+		this.undoDeletedTextRecovery();
+
 		if (needRecover)
-			this.recoverDeletedText();
+			return this.textRecovery.NavigationRevisionHistoryByStep(pointIndex, false);
 	};
-	CCollaborativeHistory.prototype.recoverDeletedText = function()
+	CCollaborativeHistory.prototype.initTextRecover = function ()
 	{
 		if (!this.textRecovery)
+		{
 			this.textRecovery = new AscCommon.DeletedTextRecovery();
-		
-		
-		
-		this.textRecovery.handleChanges();
-		this.textRecovery.recover();
+			this.textRecovery.handleChanges();
+		}
+	}
+	CCollaborativeHistory.prototype.delTextRecover =  function()
+	{
+		if (this.textRecovery)
+			this.textRecovery = null;
+	}
+	CCollaborativeHistory.prototype.recoverDeletedText = function()
+	{
+		this.initTextRecover();
+		return this.textRecovery.recover();
 	};
 	CCollaborativeHistory.prototype.undoDeletedTextRecovery = function()
 	{
-		if (!this.textRecovery)
-			return;
-		
-		this.textRecovery = null;
+		this.textRecovery.UndoShowDelText();
 	};
 	/**
 	 * Отменяем собственные последние действия, прокатывая их через чужие
@@ -771,6 +778,6 @@
 	CCollaborativeHistory.prototype["getGlobalPointIndex"]     = CCollaborativeHistory.prototype.getGlobalPointIndex;
 	CCollaborativeHistory.prototype["moveToPoint"]             = CCollaborativeHistory.prototype.moveToPoint;
 	CCollaborativeHistory.prototype["recoverDeletedText"]      = CCollaborativeHistory.prototype.recoverDeletedText;
-	CCollaborativeHistory.prototype["undoDeletedTextRecovery"] = CCollaborativeHistory.prototype.recoverDeletedText;
+	CCollaborativeHistory.prototype["undoDeletedTextRecovery"] = CCollaborativeHistory.prototype.undoDeletedTextRecovery;
 	
 })(window);

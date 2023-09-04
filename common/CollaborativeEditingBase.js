@@ -343,6 +343,7 @@
     {
         if (this.m_aChanges.length > 0)
         {
+			this.CoHistory.delTextRecover();
             AscFonts.IsCheckSymbols = true;
             editor.WordControl.m_oLogicDocument.PauseRecalculate();
             editor.WordControl.m_oLogicDocument.EndPreview_MailMergeResult();
