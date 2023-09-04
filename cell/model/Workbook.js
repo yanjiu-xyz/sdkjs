@@ -8702,21 +8702,26 @@
 		const c1 = isRowItem ? pivotRange.c1 : pivotRange.c1 + location.firstDataCol;
 		const startRow = isRowItem ? r1 + itemIndex : r1 + itemR;
 		const startCol = isRowItem ? c1 + rowFieldsOffset[itemXIndex] : c1 + itemIndex;
-
-		for (let i = itemIndex + 1; i < items.length; i += 1) {
+		for (let i = itemIndex; i < items.length; i += 1) {
 			const item = items[i];
-			if (item.getR() <= itemSummaryR) {
+			if (item.getR() <= itemSummaryR && i !== itemIndex) {
 				break;
 			}
 			const r = isRowItem ? startRow + i - itemIndex : startRow;
 			const c = isRowItem ? startCol : startCol + i - itemIndex;
 			const nextItem = items[i + 1];
-			const offsetR = nextItem.getR() <= itemSummaryR ? Asc.st_PIVOT_AREA_OFFSET_END : r - startRow;
-			const offsetC = nextItem.getR() <= itemSummaryR ? Asc.st_PIVOT_AREA_OFFSET_END : c - startCol;
+			const offsetR = isRowItem ? (nextItem.getR() <= itemSummaryR ? Asc.st_PIVOT_AREA_OFFSET_END : r - startRow) : Asc.st_PIVOT_AREA_OFFSET_END;
+			const offsetC = isRowItem ? Asc.st_PIVOT_AREA_OFFSET_END : (nextItem.getR() <= itemSummaryR ? Asc.st_PIVOT_AREA_OFFSET_END : c - startCol);
 			
-			const offset = new Asc.Range(offsetR, offsetC, offsetR, offsetC);
+			const offset = new Asc.Range(offsetC, offsetR, offsetC, offsetR);
 			const cell = this.getRange4(r, c);
-		} 
+
+			query.offset = offset;
+			const formatting = pivotTable.getFormatting(query);
+			cell.setFormatting(formatting);
+		}
+		query.offset = null;
+		return;
 	};
 	/**
 	 * @param {CT_pivotTableDefinition} pivotTable 
@@ -8823,6 +8828,7 @@
 							type: Asc.c_oAscItemType.Data
 						});
 						query.field = fieldIndex;
+						this._updatePivotTableCellsRowColLablesOffsets(pivotTable, rowFieldsOffset, isRowItems, i, j, query);
 					} else {
 						query.field = AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD;
 						oCellValue = new AscCommonExcel.CCellValue();
@@ -8877,8 +8883,10 @@
 					cells.setIndent(outline);
 				}
 				cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
-				var formatting = pivotTable.getFormatting(query);
-				cells.setFormatting(formatting);
+				if (!(Asc.c_oAscItemType.Data === item.t && AscCommonExcel.st_VALUES !== fieldIndex)) {
+					var formatting = pivotTable.getFormatting(query);
+					cells.setFormatting(formatting);
+				}
 				valuesCache = fieldValues;
 			}
 		}
