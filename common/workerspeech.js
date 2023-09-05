@@ -36,6 +36,32 @@
 
 	window["AscCommon"] = window.AscCommon = (window["AscCommon"] || {});
 
+	/**
+	 * 1st version:
+	 *
+	 * 0) Вводим текст - произносим его. Copy/Paste не произносим.
+	 * --- SpeechWorker.speech(AscCommon.SpeechWorkerCommands.Text, "a");
+	 * 1) Ходим курсором по тексту - произносим следующую а курсором букву. Если пробел - присылаем пустой текст.
+	 * --- SpeechWorker.speech(AscCommon.SpeechWorkerCommands.Text, "a");
+	 * 2) Ходим по тексту по словам - произносим следующее за курсором слово. Если конец - посылаем пустой текст.
+	 * --- SpeechWorker.speech(AscCommon.SpeechWorkerCommands.Text, "hello");
+	 * 3) Селект/УменьшениеСелета по клавиатуре/конец селекта мышью - произносится изменение в селекте (новый текст/тот что ушел из селекта).
+	 * --- SpeechWorker.speech(AscCommon.SpeechWorkerCommands.TextSelected, { text: "текст", isBefore: false });
+	 * --- SpeechWorker.speech(AscCommon.SpeechWorkerCommands.TextUnselected, { text: "текст", isBefore: false });
+	 * 4) Селект автофигуры/диаграммы/картинки/...
+	 * --- SpeechWorker.speech(AscCommon.SpeechWorkerCommands.DrawingSelected, { altText: "текст" });
+	 * 5) Селект слайда
+	 * --- SpeechWorker.speech(AscCommon.SpeechWorkerCommands.SlideSelected, { num: 1 });
+	 * 6) Ходим по ячейкам в Cell
+	 * --- SpeechWorker.speech(AscCommon.SpeechWorkerCommands.CellSelected, { text: "cell value", cell: "A1" });
+	 * 7) Селект/УменьшениеСелета по клавиатуре/конец селекта мышью - смотрим,
+	 * если +/- одна ячейка, то используем CellRangeSelectedChangeOne/CellRangeUnselectedChangeOne
+	 * если нет - то CellRangeSelected/CellRangeUnselected
+	 * 8) Ходим по листам - даем информацию о нем
+	 * --- SpeechWorker.speech(AscCommon.SpeechWorkerCommands.SheetSelected, { ... });
+	 *
+	 */
+
 	// types for SpeechWorker.speech method
 	var SpeechWorkerType = {
 
@@ -216,6 +242,7 @@
 	}
 
 	window.AscCommon.SpeechWorker = new CWorkerSpeech();
+	window.AscCommon.SpeechWorkerCommands = SpeechWorkerType;
 
 	window.AscCommon.SpeechWorker.testFunction = function()
 	{
