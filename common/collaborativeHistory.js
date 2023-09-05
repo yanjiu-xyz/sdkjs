@@ -46,11 +46,22 @@
 		this.Changes   = []; // Список всех изменений
 		this.OwnRanges = []; // Диапазоны собственных изменений
 
-		this.SyncIndex = -1; // Позиция в массиве изменений, которые согласованы с сервером
+		this.SyncIndex      = -1; // Позиция в массиве изменений, которые согласованы с сервером
+		this.curChangeIndex = -1; // Текущая позиция в массиве изменений
 		
 		this.textRecovery = null;
 	}
-
+	
+	CCollaborativeHistory.prototype.clear = function()
+	{
+		this.Changes   = [];
+		this.OwnRanges = [];
+		
+		this.SyncIndex      = -1;
+		this.curChangeIndex = -1;
+		
+		this.textRecovery = null;
+	};
 	CCollaborativeHistory.prototype.AddChange = function(change)
 	{
 		this.Changes.push(change);

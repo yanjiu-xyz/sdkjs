@@ -268,6 +268,8 @@
         this.m_aCheckLocksInstance = [];
         this.m_aNewObjects = [];
         this.m_aNewImages = [];
+		
+		this.CoHistory.clear();
     };
     CCollaborativeEditingBase.prototype.Set_Fast = function(bFast)
     {
