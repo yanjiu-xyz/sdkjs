@@ -6107,7 +6107,7 @@ BinaryChartWriter.prototype.WriteCT_Series = function (oVal) {
     }
     if(oVal.dataId !== null) {
         this.bs.WriteItem(c_oserct_chartExSeriesDATAID, function() {
-            oThis.memory.WriteDouble2(oVal.dataId);
+            oThis.memory.WriteLong(oVal.dataId);
         });
     }
     if(oVal.spPr !== null) {
@@ -6270,12 +6270,14 @@ BinaryChartWriter.prototype.WriteCT_SeriesLayoutProperties = function (oVal) {
     var oThis = this;
     if(oVal.parentLabelLayout !== null) {
         this.bs.WriteItem(c_oserct_chartExSeriesLayoutPARENT, function() {
-            oThis.WriteCT_ParentLabelLayout(oVal.parentLabelLayout);
+            // oThis.WriteCT_ParentLabelLayout(oVal.parentLabelLayout);
+            oThis.memory.WriteByte(oVal.parentLabelLayout);
         });
     }
     if(oVal.regionLabelLayout !== null) {
         this.bs.WriteItem(c_oserct_chartExSeriesLayoutREGION, function() {
-            oThis.WriteCT_RegionLabelLayout(oVal.regionLabelLayout);
+            // oThis.WriteCT_RegionLabelLayout(oVal.regionLabelLayout);
+            oThis.memory.WriteByte(oVal.regionLabelLayout);
         });
     }
     if(oVal.visibility !== null) {
@@ -7269,7 +7271,7 @@ BinaryChartReader.prototype.ReadCT_ChartExSpace = function (type, length, val) {
         val.setTxPr(this.ReadTxPr(length));
         val.txPr.setParent(val);
     } 
-    else if (c_oserct_chartExspaceCLRMAPOVR === type) {
+    else if (c_oserct_chartExSpaceCLRMAPOVR === type) {
         val.setClrMapOvr(this.ReadClrOverride(length));
     } 
     // else if(c_oserct_chartExSpaceXLSX === type) {
@@ -13301,7 +13303,7 @@ BinaryChartReader.prototype.ReadCT_ChartData = function (type, length, val) {
     else if (c_oserct_chartExEXTERNALDATA === type)
     {
         var oNewVal = new AscFormat.CExternalData();
-        res = this.bcr.Read2(length, function (t, l) {
+        res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_ChartExExternalData(t, l, oNewVal);
         });
         val.setExternalData(oNewVal);
@@ -13344,7 +13346,7 @@ BinaryChartReader.prototype.ReadCT_ChartEx = function (type, length, val) {
     {
         var oNewVal = new AscFormat.CTitle();
         oNewVal.setIsForChartEx(true);
-        res = this.bcr.Read2(length, function (t, l) {
+        res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_ChartExTitle(t, l, oNewVal);
         });
         val.setTitle(oNewVal);
@@ -13353,7 +13355,7 @@ BinaryChartReader.prototype.ReadCT_ChartEx = function (type, length, val) {
     {
         var oNewVal = new AscFormat.CLegend();
         oNewVal.setIsForChartEx(true);
-        res = this.bcr.Read2(length, function (t, l) {
+        res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_ChartExLegend(t, l, oNewVal);
         });
         val.setLegend(oNewVal);
@@ -13372,7 +13374,7 @@ BinaryChartReader.prototype.ReadCT_ChartExPlotArea = function (type, length, val
     {
         var oNewVal = new AscFormat.CPlotAreaRegion();
         res = this.bcr.Read1(length, function (t, l) {
-            return oThis.ReadCT_ChartAreaRegion(t, l, oNewVal);
+            return oThis.ReadCT_PlotAreaRegion(t, l, oNewVal);
         });
         val.setPlotAreaRegion(oNewVal);
     }
@@ -13446,7 +13448,7 @@ BinaryChartReader.prototype.ReadCT_Series = function (type, length, val) {
     else if (c_oserct_chartExSeriesDATALABELS === type)
     {
         var oNewVal = new AscFormat.CDataLabels();
-        res = this.bcr.Read2(length, function (t, l) {
+        res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_DataLabels(t, l, oNewVal);
         });
         val.setDataLabels(oNewVal);
@@ -13454,7 +13456,7 @@ BinaryChartReader.prototype.ReadCT_Series = function (type, length, val) {
     else if (c_oserct_chartExSeriesLAYOUTPROPS === type)
     {
         var oNewVal = new AscFormat.CSeriesLayoutProperties();
-        res = this.bcr.Read2(length, function (t, l) {
+        res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_SeriesLayoutProperties(t, l, oNewVal);
         });
         val.setLayoutPr(oNewVal);
@@ -13472,7 +13474,7 @@ BinaryChartReader.prototype.ReadCT_Series = function (type, length, val) {
     }
     else if (c_oserct_chartExSeriesDATAID === type)
     {
-        val.setTx(this.stream.GetDoubleLE());
+        val.setDataId(this.stream.GetULongLE());
     }
     else if (c_oserct_chartExSeriesSPPR === type)
     {
@@ -13510,7 +13512,7 @@ BinaryChartReader.prototype.ReadCT_DataPoint = function (type, length, val) {
     var oNewVal;
     if (c_oserct_chartExDataPointIDX === type)
     {
-        val.setId(this.stream.GetULongLE());
+        val.setIdx(this.stream.GetULongLE());
     }
     else if (c_oserct_chartExDataPointSPPR === type)
     {
@@ -13533,7 +13535,7 @@ BinaryChartReader.prototype.ReadCT_DataLabels = function (type, length, val) {
     else if (c_oserct_chartExDataLabelsNUMFMT === type)
     {
         var oNewVal = new AscFormat.CNumFmt();
-        res = this.bcr.Read2(length, function (t, l) {
+        res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_ChartExNumFmt(t, l, oNewVal);
         });
         val.setNumFmt(oNewVal);
@@ -13550,7 +13552,7 @@ BinaryChartReader.prototype.ReadCT_DataLabels = function (type, length, val) {
     else if (c_oserct_chartExDataLabelsVISABILITIES === type)
     {
         var oNewVal = new AscFormat.CDataLabelVisibilities();
-        res = this.bcr.Read2(length, function (t, l) {
+        res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_DataLabelVisibilities(t, l, oNewVal);
         });
         val.setVisibility(oNewVal);
@@ -13610,7 +13612,7 @@ BinaryChartReader.prototype.ReadCT_DataLabel = function (type, length, val) {
     else if (c_oserct_chartExDataLabelNUMFMT === type)
     {
         var oNewVal = new AscFormat.CNumFmt();
-        res = this.bcr.Read2(length, function (t, l) {
+        res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_ChartExNumFmt(t, l, oNewVal);
         });
         val.setNumFmt(oNewVal);
@@ -13627,7 +13629,7 @@ BinaryChartReader.prototype.ReadCT_DataLabel = function (type, length, val) {
     else if (c_oserct_chartExDataLabelVISABILITIES === type)
     {
         var oNewVal = new AscFormat.CDataLabelVisibilities();
-        res = this.bcr.Read2(length, function (t, l) {
+        res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_DataLabelVisibilities(t, l, oNewVal);
         });
         val.setVisibility(oNewVal);
@@ -13656,30 +13658,42 @@ BinaryChartReader.prototype.ReadCT_DataLabelHidden = function (type, length, val
     }
     return res;
 };
+BinaryChartReader.prototype.ReadCT_ParentLabelLayout = function (type, length, val) {
+    var res = c_oSerConstants.ReadOk;
+    var oThis = this;
+    switch (this.stream.GetUChar()) {
+        case st_splittypeAUTO: val = SPLIT_TYPE_AUTO; break;
+        case st_splittypeCUST: val = SPLIT_TYPE_CUST; break;
+        case st_splittypePERCENT: val = SPLIT_TYPE_PERCENT; break;
+        case st_splittypePOS: val = SPLIT_TYPE_POS; break;
+        case st_splittypeVAL: val = SPLIT_TYPE_VAL; break;
+    }
+    return val;
+};
 BinaryChartReader.prototype.ReadCT_SeriesLayoutProperties = function (type, length, val) {
     var res = c_oSerConstants.ReadOk;
     var oThis = this;
     var oNewVal;
     if (c_oserct_chartExSeriesLayoutPARENT === type)
     {
-        var oNewVal = new AscFormat.CParentLabelLayout();
-        res = this.bcr.Read1(length, function (t, l) {
-            return oThis.ReadCT_ParentLabelLayout(t, l, oNewVal);
-        });
-        val.setParentLabelLayout(oNewVal);
+        var oNewVal;// = new AscFormat.CParentLabelLayout();
+        // res = this.bcr.Read1(length, function (t, l) {
+        //     return oThis.ReadCT_ParentLabelLayout(t, l, oNewVal);
+        // });
+        val.setParentLabelLayout(oThis.ReadCT_ParentLabelLayout(type, length, oNewVal));
     }
     else if (c_oserct_chartExSeriesLayoutREGION === type)
     {
-        var oNewVal = new AscFormat.CRegionLabelLayout();
-        res = this.bcr.Read2(length, function (t, l) {
-            return oThis.ReadCT_RegionLabelLayout(t, l, oNewVal);
-        });
-        val.setRegionLabelLayout(oNewVal);
+        // var oNewVal; // = new AscFormat.CRegionLabelLayout();
+        // res = this.bcr.Read1(length, function (t, l) {
+        //     return oThis.ReadCT_RegionLabelLayout(t, l, oNewVal);
+        // });
+        val.setRegionLabelLayout(this.stream.GetUChar());
     }
     else if (c_oserct_chartExSeriesLayoutVISABILITIES === type)
     {
         var oNewVal = new AscFormat.CSeriesElementVisibilities();
-        res = this.bcr.Read2(length, function (t, l) {
+        res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_SeriesElementVisibilities(t, l, oNewVal);
         });
         val.setVisibility(oNewVal);
@@ -13691,7 +13705,7 @@ BinaryChartReader.prototype.ReadCT_SeriesLayoutProperties = function (type, leng
     else if (c_oserct_chartExSeriesLayoutBINNING === type)
     {
         var oNewVal = new AscFormat.CBinning();
-        res = this.bcr.Read2(length, function (t, l) {
+        res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_Binning(t, l, oNewVal);
         });
         val.setBinning(oNewVal);
@@ -13699,7 +13713,7 @@ BinaryChartReader.prototype.ReadCT_SeriesLayoutProperties = function (type, leng
     else if (c_oserct_chartExSeriesLayoutSTATISTIC === type)
     {
         var oNewVal = new AscFormat.CStatistics();
-        res = this.bcr.Read2(length, function (t, l) {
+        res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_Statistics(t, l, oNewVal);
         });
         val.setStatistics(oNewVal);
@@ -13707,7 +13721,7 @@ BinaryChartReader.prototype.ReadCT_SeriesLayoutProperties = function (type, leng
     else if (c_oserct_chartExSeriesLayoutSUBTOTALS === type)
     {
         var oNewVal = new AscFormat.CSubtotals();
-        res = this.bcr.Read2(length, function (t, l) {
+        res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_Subtotals(t, l, oNewVal);
         });
         val.setSubtotals(oNewVal);
@@ -13867,7 +13881,7 @@ BinaryChartReader.prototype.ReadCT_Text = function (type, length, val) {
     else if (c_oserct_chartExTextDATA === type)
     {
         var oNewVal = new AscFormat.CTextData();
-        res = this.bcr.Read2(length, function (t, l) {
+        res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_TextData(t, l, oNewVal);
         });
         val.setTxData(oNewVal);
@@ -14137,7 +14151,7 @@ BinaryChartReader.prototype.ReadCT_StringDimension = function (type, length, val
     else if (c_oserct_chartExDataDimensionFORMULA === type)
     {
         var oNewVal = new AscFormat.CFormula();
-        res = this.bcr.Read2(length, function (t, l) {
+        res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_Formula(t, l, oNewVal);
         });
         val.setF(oNewVal);
@@ -14171,7 +14185,7 @@ BinaryChartReader.prototype.ReadCT_NumericDimension = function (type, length, va
     else if (c_oserct_chartExDataDimensionFORMULA === type)
     {
         var oNewVal = new AscFormat.CFormula();
-        res = this.bcr.Read2(length, function (t, l) {
+        res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_Formula(t, l, oNewVal);
         });
         val.setF(oNewVal);
@@ -14227,7 +14241,7 @@ BinaryChartReader.prototype.ReadCT_StringLevel = function (type, length, val) {
     else if (c_oserct_chartExDataLevelPT === type)
     {
         var oNewVal = new AscFormat.CStringValue();
-        res = this.bcr.Read2(length, function (t, l) {
+        res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_StringValue(t, l, oNewVal);
         });
         val.addPt(oNewVal);
@@ -14253,7 +14267,7 @@ BinaryChartReader.prototype.ReadCT_NumericLevel = function (type, length, val) {
     else if (c_oserct_chartExDataLevelPT === type)
     {
         var oNewVal = new AscFormat.CNumericValue();
-        res = this.bcr.Read2(length, function (t, l) {
+        res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_NumericValue(t, l, oNewVal);
         });
         val.addPt(oNewVal);

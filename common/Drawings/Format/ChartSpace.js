@@ -3731,7 +3731,8 @@ function(window, undefined) {
 		this.group = group;
 	};
 	CChartSpace.prototype.hasCharts = function () {
-		if (this.chart && this.chart.plotArea && this.chart.plotArea.charts.length > 0) {
+		if (!this.isForChartEx && this.chart && this.chart.plotArea && this.chart.plotArea.charts.length > 0 ||
+			this.isForChartEx && this.chart && this.chart.plotArea) {
 			return true;
 		}
 		return false;

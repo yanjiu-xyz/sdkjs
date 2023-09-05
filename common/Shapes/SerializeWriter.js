@@ -3594,7 +3594,11 @@ function CBinaryFileWriter()
         oThis.UseContinueWriter++;
 
         var oBinaryChartWriter = new AscCommon.BinaryChartWriter(_memory);
-        oBinaryChartWriter.WriteCT_ChartSpace(grObj);
+        if (grObj.isForChartEx) {
+            oBinaryChartWriter.WriteCT_ChartExSpace(grObj);
+        } else {
+            oBinaryChartWriter.WriteCT_ChartSpace(grObj);
+        }
 
         oThis.ImData = _memory.ImData;
         oThis.data = _memory.data;

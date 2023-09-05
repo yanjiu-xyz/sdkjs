@@ -2544,22 +2544,22 @@
     // };
     // 
 
-    // ParentLabelLayout
-    drawingsChangesMap[AscDFH.historyitem_ParentLabelLayout_SetVal] = function(oClass, value) {
-        oClass.val = value;
-    };
-    AscDFH.changesFactory[AscDFH.historyitem_ParentLabelLayout_SetVal] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    function CParentLabelLayout() {
-        CBaseChartObject.call(this);
-        this.val = null;
-    }
+    // // ParentLabelLayout ( st instead ct_ParentLabelLayout )
+    // drawingsChangesMap[AscDFH.historyitem_ParentLabelLayout_SetVal] = function(oClass, value) {
+    //     oClass.val = value;
+    // };
+    // AscDFH.changesFactory[AscDFH.historyitem_ParentLabelLayout_SetVal] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    // function CParentLabelLayout() {
+    //     CBaseChartObject.call(this);
+    //     this.val = null;
+    // }
 
-    InitClass(CParentLabelLayout, CBaseChartObject, AscDFH.historyitem_type_ParentLabelLayout);
+    // InitClass(CParentLabelLayout, CBaseChartObject, AscDFH.historyitem_type_ParentLabelLayout);
 
-    CParentLabelLayout.prototype.setVal = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ParentLabelLayout_SetVal, this.val, pr));
-        this.val = pr;
-    };
+    // CParentLabelLayout.prototype.setVal = function(pr) {
+    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ParentLabelLayout_SetVal, this.val, pr));
+    //     this.val = pr;
+    // };
     
 
     // PercentageColorPosition
@@ -3925,7 +3925,7 @@
     window['AscFormat'].CNumericValue = CNumericValue;
     // window['AscFormat'].CPageMargins = CPageMargins;
     // window['AscFormat'].CPageSetup = CPageSetup;
-    window['AscFormat'].CParentLabelLayout = CParentLabelLayout;
+    // window['AscFormat'].CParentLabelLayout = CParentLabelLayout;
     window['AscFormat'].CPercentageColorPosition = CPercentageColorPosition;
     // window['AscFormat'].CChartExPlotArea = CChartExPlotArea;
     window['AscFormat'].CPlotAreaRegion = CPlotAreaRegion;
