@@ -7115,6 +7115,7 @@ function BinaryPPTYLoader()
                         _stream.cur = s.cur;
                         _stream.size = s.size;
                         _chart = new AscFormat.CChartSpace();
+                        _chart.setIsForChartEx(true);
                         _chart.setBDeleted(false);
                         AscCommon.pptx_content_loader.ImageMapChecker = this.ImageMapChecker;
                         AscCommon.pptx_content_loader.Reader.ImageMapChecker = this.ImageMapChecker;
