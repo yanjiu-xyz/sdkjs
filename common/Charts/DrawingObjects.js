@@ -2128,7 +2128,7 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
 
     _this.recalculate =  function(all)
     {
-        _this.controller.recalculate2(all);
+        // _this.controller.recalculate2(all);
     };
 
     _this.preCopy = function() {
