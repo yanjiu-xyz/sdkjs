@@ -2993,6 +2993,9 @@
 	CGraphicObjectBase.prototype.getAnimTexture = function (scale, bMorph) {
 		const oBounds = this.getBoundsByDrawing(bMorph);
 		const oCanvas = oBounds.createCanvas(scale);
+		if(!oCanvas) {
+			return null;
+		}
 		const oGraphics = oBounds.createGraphicsFromCanvas(oCanvas, scale)
 		const nX = oBounds.x * oGraphics.m_oCoordTransform.sx;
 		const nY = oBounds.y * oGraphics.m_oCoordTransform.sy;
