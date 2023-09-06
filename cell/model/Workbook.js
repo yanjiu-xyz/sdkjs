@@ -8753,8 +8753,8 @@
 			if (!isRowItem && r1 + item.getR() <= startRow && i !== itemIndex) {
 				break;
 			}
-			const offsetR = isRowItem ? (c1 + rowFieldsOffset[nextItem.getR()] <= startCol ? Asc.st_PIVOT_AREA_OFFSET_END : r - startRow) : Asc.st_PIVOT_AREA_OFFSET_END;
-			const offsetC = isRowItem ? Asc.st_PIVOT_AREA_OFFSET_END : (r1 + nextItem.getR() <= startRow ? Asc.st_PIVOT_AREA_OFFSET_END : c - startCol);
+			const offsetR = isRowItem ? ((!nextItem || (c1 + rowFieldsOffset[nextItem.getR()] <= startCol)) ? Asc.st_PIVOT_AREA_OFFSET_END : r - startRow) : Asc.st_PIVOT_AREA_OFFSET_END;
+			const offsetC = isRowItem ? Asc.st_PIVOT_AREA_OFFSET_END : ((!nextItem || (r1 + nextItem.getR() <= startRow)) ? Asc.st_PIVOT_AREA_OFFSET_END : c - startCol);
 			
 			const offset = new Asc.Range(offsetC, offsetR, offsetC, offsetR);
 			const cell = this.getRange4(r, c);
