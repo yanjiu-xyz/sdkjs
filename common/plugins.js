@@ -120,7 +120,7 @@
 		this.api              = api;
 		this["api"]			  = this.api;
 
-		this.isSupportManyPlugins = false;
+		this.isSupportManyPlugins = (this.api.isMobileVersion || this.api.isEmbedVersion) ? false : true;
 
 		// используется только если this.isSupportManyPlugins === false
 		this.runAndCloseData = null;
