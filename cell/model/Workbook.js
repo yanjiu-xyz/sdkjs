@@ -8691,27 +8691,27 @@
 	 * @param {number} itemIndex
 	 * @param {PivotFormatsManagerQuery} query
 	 */
-	Worksheet.prototype._updatePivotTableCellsRowColLablesOffsets = function(pivotTable, rowFieldsOffset, isRowItem, itemIndex, itemXIndex, query) {
+	Worksheet.prototype.updatePivotTableCellsRowColLablesSubtotalsOffsets = function(pivotTable, rowFieldsOffset, isRowItem, itemIndex, itemXIndex, query) {
 		const pivotRange = pivotTable.getRange();
 		const location = pivotTable.location;
 		const items = isRowItem ? pivotTable.getRowItems() : pivotTable.getColItems();
 		const itemR = items[itemIndex].getR();
-		const itemSummaryR = itemR + itemXIndex;
-
 		const r1 = isRowItem ? pivotRange.r1 + location.firstDataRow : pivotRange.r1 + location.firstHeaderRow;
 		const c1 = isRowItem ? pivotRange.c1 : pivotRange.c1 + location.firstDataCol;
 		const startRow = isRowItem ? r1 + itemIndex : r1 + itemR;
 		const startCol = isRowItem ? c1 + rowFieldsOffset[itemXIndex] : c1 + itemIndex;
-		for (let i = itemIndex; i < items.length; i += 1) {
-			const item = items[i];
-			if (item.getR() <= itemSummaryR && i !== itemIndex) {
-				break;
-			}
-			const r = isRowItem ? startRow + i - itemIndex : startRow;
-			const c = isRowItem ? startCol : startCol + i - itemIndex;
-			const nextItem = items[i + 1];
-			const offsetR = isRowItem ? (nextItem.getR() <= itemSummaryR ? Asc.st_PIVOT_AREA_OFFSET_END : r - startRow) : Asc.st_PIVOT_AREA_OFFSET_END;
-			const offsetC = isRowItem ? Asc.st_PIVOT_AREA_OFFSET_END : (nextItem.getR() <= itemSummaryR ? Asc.st_PIVOT_AREA_OFFSET_END : c - startCol);
+		// using for colItems Labels
+		const endRow = r1 + location.firstDataRow - 1;
+		// using for rowItems Labels
+		const endCol = c1 + location.firstDataCol;
+
+		const startIndex = isRowItem ? startCol : startRow;
+		const endIndex = isRowItem ? endCol : endRow;
+		for (let i = startIndex; i < endIndex; i += 1) {
+			const r = isRowItem ? startRow : i;
+			const c = isRowItem ? i : startCol;
+			const offsetR = isRowItem ? Asc.st_PIVOT_AREA_OFFSET_END : (i === endIndex - 1 ? Asc.st_PIVOT_AREA_OFFSET_END : i - startIndex);
+			const offsetC = isRowItem ? (i === endIndex - 1 ? Asc.st_PIVOT_AREA_OFFSET_END : i - startIndex) : Asc.st_PIVOT_AREA_OFFSET_END;
 			
 			const offset = new Asc.Range(offsetC, offsetR, offsetC, offsetR);
 			const cell = this.getRange4(r, c);
@@ -8721,6 +8721,66 @@
 			cell.setFormatting(formatting);
 		}
 		query.offset = null;
+		return;
+	};
+	/**
+	 * @param {CT_pivotTableDefinition} pivotTable
+	 * @param {number[]} rowFieldsOffset
+	 * @param {boolean} isRowItem
+	 * @param {number} itemIndex
+	 * @param {PivotFormatsManagerQuery} query
+	 */
+	Worksheet.prototype.updatePivotTableCellsRowColLablesDataOffsets = function(pivotTable, rowFieldsOffset, isRowItem, itemIndex, itemXIndex, query) {
+		const pivotRange = pivotTable.getRange();
+		const location = pivotTable.location;
+		const items = isRowItem ? pivotTable.getRowItems() : pivotTable.getColItems();
+		const itemR = items[itemIndex].getR();
+		const itemSummaryR = itemR + itemXIndex;
+
+		const r1 = isRowItem ? pivotRange.r1 + location.firstDataRow : pivotRange.r1 + location.firstHeaderRow;
+		const c1 = isRowItem ? pivotRange.c1 : pivotRange.c1 + location.firstDataCol;
+		const startRow = isRowItem ? r1 + itemIndex: r1 + itemSummaryR;
+		const startCol = isRowItem ? c1 + rowFieldsOffset[itemSummaryR] : c1 + itemIndex;
+
+		for (let i = itemIndex; i < items.length; i += 1) {
+			const item = items[i];
+			const nextItem = items[i + 1];
+			const r = isRowItem ? r1 + i : startRow;
+			const c = isRowItem ? startCol : c1 + i;
+			if (isRowItem && c1 + rowFieldsOffset[item.getR()] <= startCol && i !== itemIndex) {
+				break;
+			}
+			if (!isRowItem && r1 + item.getR() <= startRow && i !== itemIndex) {
+				break;
+			}
+			const offsetR = isRowItem ? (c1 + rowFieldsOffset[nextItem.getR()] <= startCol ? Asc.st_PIVOT_AREA_OFFSET_END : r - startRow) : Asc.st_PIVOT_AREA_OFFSET_END;
+			const offsetC = isRowItem ? Asc.st_PIVOT_AREA_OFFSET_END : (r1 + nextItem.getR() <= startRow ? Asc.st_PIVOT_AREA_OFFSET_END : c - startCol);
+			
+			const offset = new Asc.Range(offsetC, offsetR, offsetC, offsetR);
+			const cell = this.getRange4(r, c);
+
+			query.offset = offset;
+			const formatting = pivotTable.getFormatting(query);
+			cell.setFormatting(formatting);
+		}
+		query.offset = null;
+		return;
+	};
+	/**
+	 * @param {CT_pivotTableDefinition} pivotTable
+	 * @param {number[]} rowFieldsOffset
+	 * @param {boolean} isRowItem
+	 * @param {number} itemIndex
+	 * @param {PivotFormatsManagerQuery} query
+	 */
+	Worksheet.prototype._updatePivotTableCellsRowColLablesOffsets = function(pivotTable, rowFieldsOffset, isRowItem, itemIndex, itemXIndex, query) {
+		const items = isRowItem ? pivotTable.getRowItems() : pivotTable.getColItems();
+		const item = items[itemIndex];
+		if (item.t === Asc.c_oAscItemType.Data) {
+			this.updatePivotTableCellsRowColLablesDataOffsets(pivotTable, rowFieldsOffset, isRowItem, itemIndex, itemXIndex, query);
+		} else {
+			this.updatePivotTableCellsRowColLablesSubtotalsOffsets(pivotTable, rowFieldsOffset, isRowItem, itemIndex, itemXIndex, query);
+		}
 		return;
 	};
 	/**
@@ -8810,7 +8870,7 @@
 				fieldIndex = null;
 				var outline = 0;
 				if (rowFieldsOffset) {
-					// todo offsets
+					// todo offsets for subtotals / Grand Totals
 					cells = this.getRange4(r1 + i, c1 + rowFieldsOffset[r + j]);
 				} else {
 					cells = this.getRange4(r1 + r + j, c1 + i);
@@ -8827,10 +8887,10 @@
 							value: item.x[j].getV(),
 							type: Asc.c_oAscItemType.Data
 						});
-						query.field = fieldIndex;
 						this._updatePivotTableCellsRowColLablesOffsets(pivotTable, rowFieldsOffset, isRowItems, i, j, query);
 					} else {
-						query.field = AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD;
+						const formatting = pivotTable.getFormatting(query);
+						cells.setFormatting(formatting);
 						oCellValue = new AscCommonExcel.CCellValue();
 						oCellValue.type = AscCommon.CellValueType.String;
 						oCellValue.text = pivotTable.getDataFieldName(item.i);
@@ -8841,10 +8901,11 @@
 					oCellValue.type = AscCommon.CellValueType.String;
 					if (-1 === valuesIndex) {
 						oCellValue.text = pivotTable.grandTotalCaption || AscCommon.translateManager.getValue(AscCommonExcel.GRAND_TOTAL_CAPTION);
+						this._updatePivotTableCellsRowColLablesOffsets(pivotTable, rowFieldsOffset, isRowItems, i, j, query);
 					} else {
-						query.field = fields[0].asc_getIndex();
 						oCellValue.text = AscCommon.translateManager.getValue(AscCommonExcel.ToName_ST_ItemType(item.t));
 						oCellValue.text += ' ' + pivotTable.getDataFieldName(item.i);
+						this._updatePivotTableCellsRowColLablesOffsets(pivotTable, rowFieldsOffset, isRowItems, i, j, query);
 					}
 				} else if (Asc.c_oAscItemType.Blank === item.t) {
 					break;
@@ -8857,12 +8918,18 @@
 					if (r + j > valuesIndex) {
 						fieldIndex = fields[r + j].asc_getIndex();
 						field = pivotFields[fieldIndex];
+						fieldValues.push({
+							fieldIndex: fieldIndex,
+							value: item.x[j].getV(),
+							type: item.t
+						});
 						if (AscCommonExcel.st_VALUES !== fieldIndex) {
 							if (field.subtotalCaption) {
 								oCellValue.text = field.subtotalCaption;
 							} else {
 								oCellValue.text = totalTitleRange[r + j].getValueWithFormatSkipToSpace();
 								oCellValue.text += ' ' + AscCommon.translateManager.getValue(AscCommonExcel.ToName_ST_ItemType(item.t));
+								this._updatePivotTableCellsRowColLablesOffsets(pivotTable, rowFieldsOffset, isRowItems, i, j, query);
 							}
 						}
 					} else {
@@ -8883,10 +8950,6 @@
 					cells.setIndent(outline);
 				}
 				cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
-				if (!(Asc.c_oAscItemType.Data === item.t && AscCommonExcel.st_VALUES !== fieldIndex)) {
-					var formatting = pivotTable.getFormatting(query);
-					cells.setFormatting(formatting);
-				}
 				valuesCache = fieldValues;
 			}
 		}
@@ -9009,7 +9072,6 @@
 							valuesInfo: traversal.getCurrentItemFieldsInfo(rowItem, colItem),
 							isGrandRow: rowItem.t === Asc.c_oAscItemType.Grand,
 							isGrandCol: colItem.t === Asc.c_oAscItemType.Grand,
-							field: Asc.c_oAscItemType.Grand !== rowItem.t ? fieldIndex : traversal.fieldIndex,
 							dataIndex: dataIndex,
 							isData: true,
 							type: Asc.c_oAscPivotAreaType.Normal

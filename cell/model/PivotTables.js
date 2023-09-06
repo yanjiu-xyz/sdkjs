@@ -5831,7 +5831,7 @@ CT_pivotTableDefinition.prototype.asc_create = function(ws, name, cacheDefinitio
 	this.pivotTableStyleInfo.showRowStripes = false;
 	this.pivotTableStyleInfo.showColStripes = false;
 	this.pivotTableStyleInfo.showLastColumn = true;
-
+	/**@type {CT_Location} */
 	this.location = new CT_Location();
 	this.location.ref = bbox;
 	this.updateLocation();
@@ -7215,7 +7215,6 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
  * @property {PivotItemFieldsInfo[]} valuesInfo
  * @property {boolean} isGrandRow
  * @property {boolean} isGrandCol
- * @property {number?} field
  * @property {number?} dataIndex
  * @property {boolean} isData
  * @property {number | undefined} type one of c_oAscPivotAreaType
@@ -7242,6 +7241,8 @@ PivotFormatsManager.prototype.checkReferenceValues = function(referenceInfo, val
 		if (valuesMap && valuesMap.size > 0 && !valuesMap.has(v)) {
 			return false;
 		}
+	} else {
+		return false;
 	}
 	return true;
 };
@@ -7351,13 +7352,6 @@ PivotFormatsManager.prototype.checkReferences = function(formatsCollectionItem, 
  * @return {boolean}
  */
 PivotFormatsManager.prototype.checkFormatsCollectionItem = function(formatsCollectionItem, query) {
-	const referencesInfo = formatsCollectionItem.referencesInfo;
-	const refField = referencesInfo.selectedField;
-	const pivotAreaField = formatsCollectionItem.pivotAreaField;
-	const selectedField = refField !== null ? refField : pivotAreaField;
-	if (selectedField !== null && selectedField !== query.field) {
-		return false;
-	} 
 	if (!this.checkAttributes(formatsCollectionItem, query)) {
 		return false;
 	}
