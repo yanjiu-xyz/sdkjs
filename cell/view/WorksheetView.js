@@ -21539,7 +21539,7 @@
 		return this._isLockedLayoutOptions(callback);
 	};
 
-	WorksheetView.prototype.changePageMargins = function (left, right, top, bottom) {
+	WorksheetView.prototype.changePageMargins = function (oMargins, bHorCentered, bVerCentered, nHeader, nFooter) {
 		var t = this;
 		var pageOptions = t.model.PagePrintOptions;
 		var pageMargins = pageOptions.asc_getPageMargins();
@@ -21552,10 +21552,19 @@
 			History.Create_NewPoint();
 			History.StartTransaction();
 
-			pageMargins.asc_setLeft(left);
-			pageMargins.asc_setRight(right);
-			pageMargins.asc_setTop(top);
-			pageMargins.asc_setBottom(bottom);
+			if (oMargins) {
+				pageMargins.asc_setLeft(oMargins.asc_getLeft());
+				pageMargins.asc_setRight(oMargins.asc_getRight());
+				pageMargins.asc_setTop(oMargins.asc_getTop());
+				pageMargins.asc_setBottom(oMargins.asc_getBottom());
+			}
+
+			if (bHorCentered != null) {
+				pageOptions.asc_setHorizontalCentered(bHorCentered);
+			}
+			if (bVerCentered != null) {
+				pageOptions.asc_setVerticalCentered(bVerCentered);
+			}
 
 			History.EndTransaction();
 
