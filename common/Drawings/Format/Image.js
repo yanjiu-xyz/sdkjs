@@ -839,8 +839,8 @@
 			}
 			this.pasteDrawingFormatting(oFormatData.Drawing);
 		};
-		CImageShape.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
-			return AscFormat.CShape.prototype.compareForMorph.call(this, oDrawingToCheck, oCurCandidate);
+		CImageShape.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate, oMapPaired) {
+			return AscFormat.CShape.prototype.compareForMorph.call(this, oDrawingToCheck, oCurCandidate, oMapPaired);
 		};
 		CImageShape.prototype.getText = function() {
 			return null;

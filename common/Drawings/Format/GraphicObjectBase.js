@@ -3181,7 +3181,7 @@
 			}
 		}
 	};
-	CGraphicObjectBase.prototype.compareForMorph = function(oDrawingToCheck, oCandidate) {
+	CGraphicObjectBase.prototype.compareForMorph = function(oDrawingToCheck, oCandidate, oMapPaired) {
 		if(oCandidate) {
 			return oCandidate;
 		}
