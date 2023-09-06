@@ -5679,17 +5679,17 @@
 	};
 	
 	/**
-	 * Record of one comment
+	 * Record of one comment.
 	 * @typedef {Object} CommentReportRecord
-	 * @property {boolean} [IsAnswer=false] - Is this an initial comment or a reply to another comment
+	 * @property {boolean} [IsAnswer=false] - Specifies whether this is an initial comment or a reply to another comment.
 	 * @property {string} CommentMessage - The text of the current comment.
 	 * @property {number} Date - The time when this change was made in local time.
 	 * @property {number} DateUTC - The time when this change was made in UTC.
-	 * @property {string} [QuoteText=undefined] - The text to which this comment related.
+	 * @property {string} [QuoteText=undefined] - The text to which this comment is related.
 	 */
 	
 	/**
-	 * Report on all review changes.
+	 * Report on all comments.
 	 * This is a dictionary where the keys are usernames.
 	 * @typedef {Object.<string, Array.<CommentReportRecord>>} CommentReport
 	 * @example
@@ -7752,10 +7752,16 @@
 	 */
 	ApiParagraph.prototype.GetFontNames = function()
 	{
-		var fontMap = {};
-		var arrFonts = [];
-		this.Paragraph.Document_Get_AllFontNames(fontMap);
-		for (var key in fontMap)
+		let fontMap = {};
+		let arrFonts = [];
+		// this.Paragraph.Document_Get_AllFontNames(fontMap);
+		this.Paragraph.Get_CompiledPr().TextPr.Document_Get_AllFontNames(fontMap);
+		for (let i = 0; i < this.Paragraph.Content.length; i++)
+		{
+			let element = this.Paragraph.Content[i];
+			element.Get_CompiledTextPr().Document_Get_AllFontNames(fontMap);
+		}
+		for (let key in fontMap)
 		{
 			arrFonts.push(key);
 		}
@@ -9382,10 +9388,11 @@
 	 */
 	ApiRun.prototype.GetFontNames = function()
 	{
-		var fontMap = {};
-		var arrFonts = [];
-		this.Run.Get_AllFontNames(fontMap);
-		for (var key in fontMap)
+		let fontMap = {};
+		let arrFonts = [];
+		// this.Run.Get_AllFontNames(fontMap);
+		this.Run.Get_CompiledTextPr().Document_Get_AllFontNames(fontMap);
+		for (let key in fontMap)
 		{
 			arrFonts.push(key);
 		}

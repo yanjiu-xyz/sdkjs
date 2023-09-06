@@ -1690,6 +1690,16 @@
 		}
 		return null;
 	};
+	CGraphicObjectBase.prototype.getMorphGeometry = function() {
+		let oGeometry = this.getGeometry();
+		if(!oGeometry) {
+			oGeometry = AscFormat.ExecuteNoHistory(function () {
+				oGeometry = AscFormat.CreateGeometry("rect");
+				oGeometry.Recalculate(this.extX, this.extY);
+			}, this, []);
+		}
+		return oGeometry;
+	};
 	CGraphicObjectBase.prototype.getTrackGeometry = function () {
 
 		const oOwnGeometry = this.getGeometry();
@@ -2904,18 +2914,54 @@
 		return null;
 	};
 	CGraphicObjectBase.prototype.isContainedInTopDocument = function () {
-		var oParentContent = this.parent && this.parent.DocumentContent;
+		const oParaDrawing = this.GetParaDrawing();
+		if(!oParaDrawing) {
+			return true;
+		}
+		let oParentContent = oParaDrawing.GetDocumentContent();
 		if (!oParentContent) {
 			return true;
 		}
 		return (oParentContent === oParentContent.GetLogicDocument());
 	};
 	CGraphicObjectBase.prototype.isContainedInMainDoc = function () {
-		var oParentContent = this.parent && this.parent.DocumentContent;
+		const oParaDrawing = this.GetParaDrawing();
+		if(!oParaDrawing) {
+			return true;
+		}
+		let oParentContent = oParaDrawing.GetDocumentContent();
 		if (!oParentContent) {
 			return true;
 		}
 		return (oParentContent.GetTopDocumentContent() === oParentContent.GetLogicDocument());
+	};
+
+	CGraphicObjectBase.prototype.IsHdrFtr = function(bReturnHdrFtr) {
+		const oParaDrawing = this.GetParaDrawing();
+		if(oParaDrawing) {
+			return oParaDrawing.isHdrFtrChild(bReturnHdrFtr);
+		}
+		return bReturnHdrFtr ? null : false;
+	};
+
+	CGraphicObjectBase.prototype.IsFootnote = function(bReturnFootnote) {
+		const oParaDrawing = this.GetParaDrawing();
+		if(oParaDrawing) {
+			return oParaDrawing.isFootnoteChild(bReturnFootnote);
+		}
+		return bReturnFootnote ? null : false;
+	};
+
+	CGraphicObjectBase.prototype.Is_TopDocument = function(bReturn) {
+		if(!bReturn) {
+			//TODO: check this function
+			return false;
+		}
+		const oParaDrawing = this.GetParaDrawing();
+		if(oParaDrawing) {
+			return oParaDrawing.isInTopDocument(bReturn);
+		}
+		return bReturn ? null : false;
 	};
 	CGraphicObjectBase.prototype.getBoundsByDrawing = function (bMorph) {
 		const oCopy = this.bounds.copy();
