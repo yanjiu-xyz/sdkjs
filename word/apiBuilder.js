@@ -3706,9 +3706,9 @@
 	 * Class representing settings which are used for creating a watermark.
 	 * @constructor
 	 */
-	function ApiWatermarkSettings()
+	function ApiWatermarkSettings(oSettings)
 	{
-		this.Settings = new Asc.CAscWatermarkProperties();
+		this.Settings = oSettings;
 	}
 
 
@@ -19400,8 +19400,16 @@
 	ApiWatermarkSettings.prototype.GetTextPr = function ()
 	{
 		const oTextPr = new CTextPr();
-		oTextPr.Set_FromObject(this.Settings.get_TextPr());
-		return new ApiTextPr(oTextPr);
+		const oSettingsTextPr = this.Settings.get_TextPr();
+		if(oSettingsTextPr)
+		{
+			oTextPr.Set_FromObject(oSettingsTextPr);
+		}
+		else
+		{
+			oTextPr.Set_FromObject(new AscWord.CTextPr());
+		}
+		return private_GetLogicDocument().GetApi().private_CreateApiTextPr(oTextPr);
 	};
 
 	/**
@@ -19652,6 +19660,7 @@
 	ApiDocument.prototype["InsertWatermark"]             = ApiDocument.prototype.InsertWatermark;
 	ApiDocument.prototype["GetWatermarkSettings"]        = ApiDocument.prototype.GetWatermarkSettings;
 	ApiDocument.prototype["SetWatermarkSettings"]        = ApiDocument.prototype.SetWatermarkSettings;
+	ApiDocument.prototype["RemoveWatermark"]             = ApiDocument.prototype.RemoveWatermark;
 	ApiDocument.prototype["SearchAndReplace"]            = ApiDocument.prototype.SearchAndReplace;
 	ApiDocument.prototype["GetAllContentControls"]       = ApiDocument.prototype.GetAllContentControls;
 	ApiDocument.prototype["GetTagsOfAllContentControls"] = ApiDocument.prototype.GetTagsOfAllContentControls;
