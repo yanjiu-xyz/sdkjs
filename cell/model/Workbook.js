@@ -8870,7 +8870,6 @@
 				fieldIndex = null;
 				var outline = 0;
 				if (rowFieldsOffset) {
-					// todo offsets for subtotals / Grand Totals
 					cells = this.getRange4(r1 + i, c1 + rowFieldsOffset[r + j]);
 				} else {
 					cells = this.getRange4(r1 + r + j, c1 + i);
