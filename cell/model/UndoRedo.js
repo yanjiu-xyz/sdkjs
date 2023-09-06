@@ -2497,7 +2497,7 @@ function (window, undefined) {
 			} else if (!from && to) { //добавление
 				externalReferenceIndex = wb.getExternalLinkIndexByName(to.Id);
 				if (externalReferenceIndex !== null) {
-					wb.externalReferences.splice(externalReferenceIndex - 1, 1);
+					wb._removeExternalReference(externalReferenceIndex - 1);
 				}
 			} else if (from && to) { //изменение
 				//TODO нужно сохранить ссылки на текущий лист
