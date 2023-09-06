@@ -1496,16 +1496,16 @@ BinaryChartWriter.prototype.WriteCT_ChartExSpace = function (oVal) {
              oThis.WriteClrMapOverride(oVal.clrMapOvr);
         });
      }
-    //  if(oVal.chartStyle !== null) {
-    //     this.bs.WriteItem(c_oserct_chartExSpaceSTYLES, function() {
-    //        oThis.WriteCT_ChartStyle(oVal.chartStyle);
-    //     });
-    // }
-    //  if(oVal.chartColors !== null) {
-    //     this.bs.WriteItem(c_oserct_chartExSpaceCOLORS, function() {
-    //        oThis.WriteCT_ChartColors(oVal.chartColors);
-    //     });
-    // }
+     if(oVal.chartStyle !== null) {
+        this.bs.WriteItem(c_oserct_chartExSpaceSTYLES, function() {
+           oThis.WriteCT_ChartStyle(oVal.chartStyle);
+        });
+    }
+     if(oVal.chartColors !== null) {
+        this.bs.WriteItem(c_oserct_chartExSpaceCOLORS, function() {
+           oThis.WriteCT_ChartColors(oVal.chartColors);
+        });
+    }
 };
 BinaryChartWriter.prototype.WriteCT_FromTo = function(oVal){
         this.memory.WriteByte(Asc.c_oSer_DrawingPosType.X);
@@ -6270,13 +6270,11 @@ BinaryChartWriter.prototype.WriteCT_SeriesLayoutProperties = function (oVal) {
     var oThis = this;
     if(oVal.parentLabelLayout !== null) {
         this.bs.WriteItem(c_oserct_chartExSeriesLayoutPARENT, function() {
-            // oThis.WriteCT_ParentLabelLayout(oVal.parentLabelLayout);
             oThis.memory.WriteByte(oVal.parentLabelLayout);
         });
     }
     if(oVal.regionLabelLayout !== null) {
         this.bs.WriteItem(c_oserct_chartExSeriesLayoutREGION, function() {
-            // oThis.WriteCT_RegionLabelLayout(oVal.regionLabelLayout);
             oThis.memory.WriteByte(oVal.regionLabelLayout);
         });
     }
@@ -6634,7 +6632,7 @@ BinaryChartWriter.prototype.WriteCT_StringDimension = function (oVal) {
     var oThis = this;
     if(oVal.type !== null) {
         this.bs.WriteItem(c_oserct_chartExDataDimensionTYPE, function() {
-            oThis.memory.WriteBool(oVal.type);
+            oThis.memory.WriteByte(oVal.type);
         });
     }
     if(oVal.f !== null) {
@@ -6662,7 +6660,7 @@ BinaryChartWriter.prototype.WriteCT_NumericDimension = function (oVal) {
     var oThis = this;
     if(oVal.type !== null) {
         this.bs.WriteItem(c_oserct_chartExDataDimensionTYPE, function() {
-            oThis.memory.WriteBool(oVal.type);
+            oThis.memory.WriteByte(oVal.type);
         });
     }
     if(oVal.f !== null) {
@@ -7278,22 +7276,22 @@ BinaryChartReader.prototype.ReadCT_ChartExSpace = function (type, length, val) {
     //     //todo
     //     res = c_oSerConstants.ReadUnknown;
     // } 
-    // else if(c_oserct_chartExSpaceCOLORS === type) {
-    //     this.curChart.oChartColorsData = AscCommon.fSaveStream(this.bcr.stream, length);
-    //     oNewVal = new AscFormat.CChartColors();
-    //     res = this.bcr.Read1(length, function (t, l) {
-    //         return oThis.ReadCT_ChartColors(t, l, oNewVal);
-    //     });
-    //     val.setChartColors(oNewVal);
-    // } 
-    // else if(c_oserct_chartExSpaceSTYLES === type) {
-    //     this.curChart.oChartStyleData = AscCommon.fSaveStream(this.bcr.stream, length);
-    //     oNewVal = new AscFormat.CChartStyle();
-    //     res = this.bcr.Read1(length, function (t, l) {
-    //         return oThis.ReadCT_ChartStyle(t, l, oNewVal);
-    //     });
-    //     val.setChartStyle(oNewVal);
-    // }
+    else if(c_oserct_chartExSpaceCOLORS === type) {
+        this.curChart.oChartColorsData = AscCommon.fSaveStream(this.bcr.stream, length);
+        oNewVal = new AscFormat.CChartColors();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_ChartColors(t, l, oNewVal);
+        });
+        val.setChartColors(oNewVal);
+    } 
+    else if(c_oserct_chartExSpaceSTYLES === type) {
+        this.curChart.oChartStyleData = AscCommon.fSaveStream(this.bcr.stream, length);
+        oNewVal = new AscFormat.CChartStyle();
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_ChartStyle(t, l, oNewVal);
+        });
+        val.setChartStyle(oNewVal);
+    }
     else
     {
         res = c_oSerConstants.ReadUnknown;
