@@ -6366,7 +6366,7 @@
 	 */
 	ApiDocument.prototype.SetWatermarkSettings = function(Settings)
 	{
-		let oDrawing = this.Document.SetWatermarkPropsAction(Settings);
+		let oDrawing = this.Document.SetWatermarkPropsAction(Settings.Settings);
 		if(oDrawing && oDrawing.GraphicObj)
 		{
 			const oGraphic = oDrawing.GraphicObj;
@@ -19650,6 +19650,8 @@
 	ApiDocument.prototype["GetCommentsReport"]           = ApiDocument.prototype.GetCommentsReport;
 	ApiDocument.prototype["GetReviewReport"]             = ApiDocument.prototype.GetReviewReport;
 	ApiDocument.prototype["InsertWatermark"]             = ApiDocument.prototype.InsertWatermark;
+	ApiDocument.prototype["GetWatermarkSettings"]        = ApiDocument.prototype.GetWatermarkSettings;
+	ApiDocument.prototype["SetWatermarkSettings"]        = ApiDocument.prototype.SetWatermarkSettings;
 	ApiDocument.prototype["SearchAndReplace"]            = ApiDocument.prototype.SearchAndReplace;
 	ApiDocument.prototype["GetAllContentControls"]       = ApiDocument.prototype.GetAllContentControls;
 	ApiDocument.prototype["GetTagsOfAllContentControls"] = ApiDocument.prototype.GetTagsOfAllContentControls;
