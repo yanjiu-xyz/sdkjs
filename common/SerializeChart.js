@@ -1493,7 +1493,7 @@ BinaryChartWriter.prototype.WriteCT_ChartExSpace = function (oVal) {
     }
     if (oVal.clrMapOvr !== null) {
         this.bs.WriteItem(c_oserct_chartExSpaceCLRMAPOVR, function () {
-             oThis.WriteClrMapOverride(oCurVal);
+             oThis.WriteClrMapOverride(oVal.clrMapOvr);
         });
      }
     //  if(oVal.chartStyle !== null) {
