@@ -181,7 +181,8 @@ var c_oAscPivotAreaType = {
 	All: 3,
 	Origin: 4,
 	Button: 5,
-	TopEnd: 6
+	TopEnd: 6,
+	TopRight: 7
 };
 var c_oAscGroupBy = {
 	Range: 0,
@@ -1168,6 +1169,8 @@ function FromXml_ST_PivotAreaType(val) {
 		res = Asc.c_oAscPivotAreaType.Button;
 	} else if ("topEnd" === val) {
 		res = Asc.c_oAscPivotAreaType.TopEnd;
+	} else if ("topRight" === val) {
+		res = Asc.c_oAscPivotAreaType.TopRight;
 	}
 	return res;
 }
@@ -1186,6 +1189,8 @@ function ToXml_ST_PivotAreaType(val) {
 		res = "button";
 	} else if (Asc.c_oAscPivotAreaType.TopEnd === val) {
 		res = "topEnd";
+	} else if (Asc.c_oAscPivotAreaType.TopRight === val) {
+		res = "topRight";
 	}
 	return res;
 }
