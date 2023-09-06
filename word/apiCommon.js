@@ -2098,7 +2098,10 @@
 		this.Angle = dValue;
 	};
 	CAscWatermarkProperties.prototype.getXfrmRot = function () {
-		return Math.PI * (360 - this.Angle) / 180;
+		if(this.Angle > 0) {
+			return Math.PI * (360 - this.Angle) / 180;
+		}
+		return 0;
 	};
 
 	CAscWatermarkProperties.prototype['put_ImageUrl'] = CAscWatermarkProperties.prototype.put_ImageUrl = function (sUrl, token) {

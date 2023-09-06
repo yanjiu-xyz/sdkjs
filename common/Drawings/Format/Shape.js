@@ -6087,7 +6087,7 @@
 			var oProps = new Asc.CAscWatermarkProperties(), oTextPr, oRGBAColor, oInterfaceTextPr, oContent;
 			oContent = this.getDocContent();
 			oProps.put_Type(Asc.c_oAscWatermarkType.Text);
-			oProps.put_IsDiagonal(!AscFormat.fApproxEqual(this.rot, 0.0));
+			oProps.put_IsDiagonal(!AscFormat.fApproxEqual(AscFormat.normalizeRotate(this.rot), 0.0));
 			oContent.SetApplyToAll(true);
 			oProps.put_Text(oContent.GetSelectedText(true, {NewLineParagraph: false, NewLine: false}));
 			oTextPr = oContent.GetCalculatedTextPr();
