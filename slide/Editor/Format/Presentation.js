@@ -8277,6 +8277,7 @@ CPresentation.prototype.Notes_OnMouseDown = function (e, X, Y) {
 	this.CancelInkDrawer();
 	if (this.SearchEngine.Count > 0)
 		this.SearchEngine.ResetCurrent();
+	this.OnStartUserAction();
 	var bFocusOnSlide = !this.FocusOnNotes;
 	this.FocusOnNotes = true;
 	var oCurSlide = this.Slides[this.CurPage];
@@ -8328,6 +8329,9 @@ CPresentation.prototype.Notes_OnMouseDown = function (e, X, Y) {
 			this.Document_UpdateInterfaceState();
 		}
 	}
+	this.OnEndUserAction();
+
+	this.OnStartUserAction();
 };
 
 CPresentation.prototype.Notes_OnMouseUp = function (e, X, Y) {
@@ -8352,6 +8356,7 @@ CPresentation.prototype.Notes_OnMouseUp = function (e, X, Y) {
 		this.Document_UpdateInterfaceState();
 		this.Api.sendEvent("asc_onSelectionEnd");
 	}
+	this.OnEndUserAction();
 };
 
 CPresentation.prototype.Notes_OnMouseMove = function (e, X, Y) {
