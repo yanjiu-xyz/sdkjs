@@ -16531,7 +16531,9 @@ CTable.prototype.AcceptRevisionChanges = function(nType, bAll)
 	if (this.GetRowsCount() <= 0)
 		return;
 	
-	this.RemoveSelection();
+	if (isCellSelection)
+		this.RemoveSelection();
+	
 	if (arrSelectionArray.length <= 0)
 	{
 		var nCurRow = nFirstRow < this.GetRowsCount() ? nFirstRow : this.GetRowsCount() - 1;
@@ -16644,7 +16646,9 @@ CTable.prototype.RejectRevisionChanges = function(nType, bAll)
 	if (this.GetRowsCount() <= 0)
 		return;
 	
-	this.RemoveSelection();
+	if (isCellSelection)
+		this.RemoveSelection();
+	
 	if (arrSelectionArray.length <= 0)
 	{
 		var nCurRow = nFirstRow < this.GetRowsCount() ? nFirstRow : this.GetRowsCount() - 1;
