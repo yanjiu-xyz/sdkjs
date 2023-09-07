@@ -4247,11 +4247,14 @@ CT_pivotTableDefinition.prototype.asc_getColumnFields = function () {
 CT_pivotTableDefinition.prototype.asc_getRowFields = function () {
 	return this.rowFields && this.rowFields.field.length > 0 && this.rowFields.field;
 };
+/**
+ * @return {CT_DataField[] | undefined}
+ */
 CT_pivotTableDefinition.prototype.asc_getDataFields = function () {
 	return this.dataFields && this.dataFields.dataField.length > 0 && this.dataFields.dataField;
 };
 /**
- * @return {CT_Format[]}
+ * @return {CT_Format[] | undefined}
  */
 CT_pivotTableDefinition.prototype.asc_getFormats = function() {
 	return this.formats && this.formats.format.length > 0 && this.formats.format;
@@ -7356,7 +7359,23 @@ PivotFormatsManager.prototype.checkReferences = function(formatsCollectionItem, 
  * @param {PivotFormatsManagerQuery} query
  * @return {boolean}
  */
+PivotFormatsManager.prototype.checkOther = function(formatsCollectionItem, query) {
+	const referencesInfo = formatsCollectionItem.referencesInfo;
+	if (referencesInfo.selectedField && referencesInfo.selectedField !== query.field) {
+		return false;
+	}
+	return true;
+};
+
+/**
+ * @param {PivotFormatsCollectionItem} formatsCollectionItem
+ * @param {PivotFormatsManagerQuery} query
+ * @return {boolean}
+ */
 PivotFormatsManager.prototype.checkFormatsCollectionItem = function(formatsCollectionItem, query) {
+	if (!this.checkOther(formatsCollectionItem, query)) {
+		return false;
+	}
 	if (!this.checkAttributes(formatsCollectionItem, query)) {
 		return false;
 	}

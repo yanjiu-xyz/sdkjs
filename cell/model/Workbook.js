@@ -8864,7 +8864,8 @@
 					isData: false,
 					isGrandRow: isRowItems && item.t === Asc.c_oAscItemType.Grand,
 					isGrandCol: !isRowItems && item.t === Asc.c_oAscItemType.Grand,
-					type: Asc.c_oAscPivotAreaType.Normal
+					type: Asc.c_oAscPivotAreaType.Normal,
+					field: null
 				};
 				fieldIndex = null;
 				var outline = 0;
@@ -8885,8 +8886,10 @@
 							value: item.x[j].getV(),
 							type: Asc.c_oAscItemType.Data
 						});
+						query.field = fieldIndex;
 						this._updatePivotTableCellsRowColLablesOffsets(pivotTable, rowFieldsOffset, isRowItems, i, j, query);
 					} else {
+						query.field = AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD;
 						const formatting = pivotTable.getFormatting(query);
 						cells.setFormatting(formatting);
 						oCellValue = new AscCommonExcel.CCellValue();
@@ -8927,6 +8930,7 @@
 							} else {
 								oCellValue.text = totalTitleRange[r + j].getValueWithFormatSkipToSpace();
 								oCellValue.text += ' ' + AscCommon.translateManager.getValue(AscCommonExcel.ToName_ST_ItemType(item.t));
+								query.field = fieldIndex;
 								this._updatePivotTableCellsRowColLablesOffsets(pivotTable, rowFieldsOffset, isRowItems, i, j, query);
 							}
 						}
@@ -9072,7 +9076,8 @@
 							isGrandCol: colItem.t === Asc.c_oAscItemType.Grand,
 							dataIndex: dataIndex,
 							isData: true,
-							type: Asc.c_oAscPivotAreaType.Normal
+							type: Asc.c_oAscPivotAreaType.Normal,
+							field: rowItem.t === Asc.c_oAscItemType.Grand ? traversal.fieldIndex : fieldIndex,
 						});
 						cell.setFormatting(formatting);
 						cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
