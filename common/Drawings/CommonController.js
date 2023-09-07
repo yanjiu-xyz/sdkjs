@@ -11076,7 +11076,7 @@
 				if(oSelectionState1.chartObject !== oSelectionState2.chartObject) {
 					return {
 						type: AscCommon.SpeechWorkerCommands.Text,
-						obj: oSelectionState2.chartSelection.getSpeechDescription() + AscCommon.translateManager.getValue("selected")
+						obj: oSelectionState2.chartObject.getSpeechDescription() + AscCommon.translateManager.getValue("selected")
 					};
 				}
 				else {
