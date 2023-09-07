@@ -9227,6 +9227,7 @@ CPresentation.prototype.GetSelectionState = function () {
 	var s = {};
 	s.CurPage = this.CurPage;
 	s.FocusOnNotes = this.FocusOnNotes;
+	s.SelectedSlides = this.GetSelectedSlides();
 	var oController = this.GetCurrentController();
 	if (oController) {
 		s.slideSelection = oController.getSelectionState();
@@ -9447,6 +9448,81 @@ CPresentation.prototype.GetSelectedContent = function () {
 		}
 		return ret;
 	}, this, []);
+};
+
+CPresentation.prototype.OnStartUserAction = function() {
+	if(!AscCommon.SpeechWorker.isEnabled) {
+		return;
+	}
+	this.BeforeActionSelectionState = this.GetSelectionState();
+};
+
+CPresentation.prototype.OnEndUserAction = function() {
+	if(!this.BeforeActionSelectionState) {
+		return;
+	}
+
+	const oEndSelectionState = this.GetSelectionState();
+
+	if(this.BeforeActionSelectionState.CurPage !== oEndSelectionState.CurPage) {
+		AscCommon.SpeechWorker.speech(
+			AscCommon.SpeechWorkerCommands.SlidesSelected,
+		{
+				indexes: [this.CurPage]
+			}
+		);
+		return;
+	}
+
+	const aStartSelectedSlides = this.BeforeActionSelectionState.SelectedSlides;
+	const aEndSelectedSlides = oEndSelectionState.SelectedSlides;
+
+	const getIndexesDiff = function(aSlideIdx1, aSlideIdx2) {
+		let aIndexes = [];
+		if(aSlideIdx1.length < aSlideIdx2.length) {
+			for(let nEndIdx = 0; nEndIdx < aSlideIdx2.length; ++nEndIdx) {
+				let nEndSlideIdx = aSlideIdx2[nEndIdx];
+				let nStartIdx = 0;
+				for(; nStartIdx < aSlideIdx1.length; ++nStartIdx) {
+					let nStartSlideIdx = aSlideIdx1[nStartIdx];
+					if(nEndSlideIdx === nStartSlideIdx) {
+						break;
+					}
+				}
+				if(nStartIdx === aSlideIdx1.length) {
+					aIndexes.push(nEndSlideIdx);
+				}
+			}
+		}
+		return aIndexes;
+	};
+	if(aStartSelectedSlides.length < aEndSelectedSlides.length) {
+		let aIndexes = getIndexesDiff(aStartSelectedSlides, aEndSelectedSlides);
+		if(aIndexes.length > 0) {
+			AscCommon.SpeechWorker.speech(
+				AscCommon.SpeechWorkerCommands.SlidesSelected,
+				{
+					indexes: aIndexes
+				}
+			);
+			return;
+		}
+	}
+	else if(aStartSelectedSlides.length > aEndSelectedSlides.length) {
+		let aIndexes = getIndexesDiff(aEndSelectedSlides, aStartSelectedSlides);
+		if(aIndexes.length > 0) {
+			AscCommon.SpeechWorker.speech(
+				AscCommon.SpeechWorkerCommands.SlidesUnselected,
+				{
+					indexes: aIndexes
+				}
+			);
+			return;
+		}
+	}
+
+
+	this.BeforeActionSelectionState = null;
 };
 
 

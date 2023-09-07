@@ -74,29 +74,32 @@
 		// { text: "text", isBefore: true  }
 		TextUnselected : 2,
 
-		// { num: 1 }
-		SlideSelected : 3,
+		// { indexes: [1, 2, ..] }
+		SlidesSelected : 3,
+
+		// { indexes: [1, 2, ..] }
+		SlidesUnselected : 4,
 
 		// { altText: "text" }
-		DrawingSelected : 4,
+		DrawingSelected : 5,
 
 		// { text: "text", cell: "A1" }
-		CellSelected : 5,
+		CellSelected : 6,
 
 		// { start: { text: "text", cell: "A1" }, end: { text: "text", cell: "A2" }] } }
-		CellRangeSelected : 6,
+		CellRangeSelected : 7,
 
 		// { start: { text: "text", cell: "A1" }, end: { text: "text", cell: "A2" }] } }
-		CellRangeUnselected : 7,
+		CellRangeUnselected : 8,
 
 		// { text: "text", cell: "A1" }
-		CellRangeSelectedChangeOne : 8,
+		CellRangeSelectedChangeOne : 9,
 
 		// { text: "text", cell: "A1" }
-		CellRangeUnselectedChangeOne : 9,
+		CellRangeUnselectedChangeOne : 10,
 
 		// { name: "sheet 1", cell: "A1", text: "text", cellEnd: "D5", cellsCount: 10, objectsCount: 5 }
-		SheetSelected : 10
+		SheetSelected : 11
 
 	};
 
@@ -162,9 +165,30 @@
 						this.speechElement.innerHTML = ((obj.text ? (obj.text + " ") : "") + translateManager.getValue("unselected"));
 					break;
 				}
-				case SpeechWorkerType.SlideSelected:
+				case SpeechWorkerType.SlidesSelected:
 				{
-					this.speechElement.innerHTML = (translateManager.getValue("slide ") + obj.num);
+					let aIndexes = obj.indexes;
+					if(aIndexes.length === 1)
+					{
+						this.speechElement.innerHTML = (translateManager.getValue("slide ") + (aIndexes[0] + 1));
+					}
+					else
+					{
+						this.speechElement.innerHTML = (aIndexes.length + translateManager.getValue("slides added to selection"));
+					}
+					break;
+				}
+				case SpeechWorkerType.SlidesUnselected:
+				{
+					let aIndexes = obj.indexes;
+					if(aIndexes.length === 1)
+					{
+						this.speechElement.innerHTML = (translateManager.getValue("slide ") + (aIndexes[0] + 1) + translateManager.getValue("unselected"));
+					}
+					else
+					{
+						this.speechElement.innerHTML = (aIndexes.length + translateManager.getValue("slides unselected"));
+					}
 					break;
 				}
 				case SpeechWorkerType.DrawingSelected:

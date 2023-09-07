@@ -3745,6 +3745,7 @@ function CThumbnailsManager()
 		}
 		AscCommon.check_MouseDownEvent(e);
 		global_mouseEvent.LockMouse();
+		const oPresentation = oThis.m_oWordControl.m_oLogicDocument;
 
 		oThis.m_oWordControl.m_oApi.sync_EndAddShape();
 		if (global_mouseEvent.Sender != control)
@@ -3774,6 +3775,7 @@ function CThumbnailsManager()
 			return false;
 		}
 
+		oPresentation.OnStartUserAction();
 		if (global_keyboardEvent.CtrlKey && !oThis.m_oWordControl.m_oApi.isReporterMode)
 		{
 			if (oThis.m_arrPages[pos.Page].IsSelected === true)
@@ -3829,7 +3831,7 @@ function CThumbnailsManager()
 
 			oThis.OnUpdateOverlay();
 			oThis.ShowPage(pos.Page);
-			oThis.m_oWordControl.m_oLogicDocument.Document_UpdateInterfaceState();
+			oPresentation.Document_UpdateInterfaceState();
 		} else if (0 == global_mouseEvent.Button || 2 == global_mouseEvent.Button)
 		{
 			
@@ -3885,6 +3887,7 @@ function CThumbnailsManager()
 					oThis.m_oWordControl.m_oApi.sync_ContextMenuCallback(_data);
 				}
 
+				oPresentation.OnEndUserAction();
 				return false;
 			}
 
@@ -3927,7 +3930,7 @@ function CThumbnailsManager()
 			_data.Y_abs = global_mouseEvent.Y - ((oThis.m_oWordControl.m_oThumbnails.AbsolutePosition.T * g_dKoef_mm_to_pix) >> 0) - oThis.m_oWordControl.Y;
 			oThis.m_oWordControl.m_oApi.sync_ContextMenuCallback(_data);
 		}
-
+		oPresentation.OnEndUserAction();
 		return false;
 	};
 
