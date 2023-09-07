@@ -3468,7 +3468,7 @@
 							this.selection.groupSelection = main_group;
 							main_group.selectObject(this.chartForProps, 0);
 						} else {
-							this.selectObject(this.chartForProps);
+							this.selectObject(this.chartForProps, 0);
 						}
 						this.chartForProps = null;
 
@@ -5086,12 +5086,25 @@
 								}
 							}
 						}
-						this.updateOverlay();
-						if (this.drawingObjects && this.drawingObjects.sendGraphicObjectProps) {
-							this.drawingObjects.sendGraphicObjectProps();
-						} else if (this.document && this.document.Document_UpdateInterfaceState) {
-							this.document.Document_UpdateInterfaceState();
+					}
+					else {
+						if(this.drawingObjects && this.drawingObjects.cSld) {
+							let aDrawings = this.drawingObjects.getDrawingObjects();
+							if(aDrawings.length > 0) {
+								if(direction > 0) {
+									this.selectObject(aDrawings[0], 0);
+								}
+								else {
+									this.selectObject(aDrawings[aDrawings.length - 1], 0);
+								}
+							}
 						}
+					}
+					this.updateOverlay();
+					if (this.drawingObjects && this.drawingObjects.sendGraphicObjectProps) {
+						this.drawingObjects.sendGraphicObjectProps();
+					} else if (this.document && this.document.Document_UpdateInterfaceState) {
+						this.document.Document_UpdateInterfaceState();
 					}
 				},
 
@@ -11029,6 +11042,159 @@
 			return false;
 		}
 
+		function getSpeechDescription(aSelectionState1, aSelectionState2) {
+			if(!Array.isArray(aSelectionState1) || !Array.isArray(aSelectionState2)) {
+				return null;
+			}
+			const oSelectionState1 = aSelectionState1[aSelectionState1.length - 1];
+			const oSelectionState2 = aSelectionState2[aSelectionState2.length - 1];
+			if(!oSelectionState1 || !oSelectionState2) {
+				return null;
+			}
+			if(oSelectionState2.textSelection) {
+				if(oSelectionState1.textObject !== oSelectionState2.textObject) {
+					return {
+						type: AscCommon.SpeechWorkerCommands.Text,
+						obj: AscCommon.translateManager.getValue("entered text selection")
+					};
+				}
+				else {
+					//TODO: compare two text selection state
+					return null;
+				}
+				return;
+			}
+			if(oSelectionState2.groupSelection) {
+				if(oSelectionState1.groupObject !== oSelectionState2.groupObject) {
+					return {
+						type: AscCommon.SpeechWorkerCommands.Text,
+						obj: oSelectionState2.groupObject.getSpeechDescription() + AscCommon.translateManager.getValue("selected")
+					};
+				}
+				else {
+					return getSpeechDescription(oSelectionState1.groupSelection, oSelectionState2.groupSelection)
+				}
+			}
+			if (oSelectionState2.chartSelection) {
+				if(oSelectionState1.chartObject !== oSelectionState2.chartObject) {
+					return {
+						type: AscCommon.SpeechWorkerCommands.Text,
+						obj: oSelectionState2.chartSelection.getSpeechDescription() + AscCommon.translateManager.getValue("selected")
+					};
+				}
+				else {
+					return null;
+				}
+			}
+
+			if (oSelectionState2.wrapObject) {
+				if(oSelectionState1.wrapObject !== oSelectionState2.wrapObject) {
+					return {
+						type: AscCommon.SpeechWorkerCommands.Text,
+						obj: oSelectionState2.wrapObject.getSpeechDescription() + AscCommon.translateManager.getValue("selected")
+					};
+				}
+				else {
+					return null;
+				}
+			}
+			if (oSelectionState2.cropObject) {
+				if(oSelectionState1.cropObject !== oSelectionState2.cropObject) {
+					return {
+						type: AscCommon.SpeechWorkerCommands.Text,
+						obj: oSelectionState2.cropObject.getSpeechDescription() + AscCommon.translateManager.getValue("selected")
+					};
+				}
+				else {
+					return null;
+				}
+			}
+			if (oSelectionState2.geometryObject) {
+				if(oSelectionState1.geometryObject !== oSelectionState2.geometryObject) {
+					return {
+						type: AscCommon.SpeechWorkerCommands.Text,
+						obj: oSelectionState2.geometryObject.getSpeechDescription() + AscCommon.translateManager.getValue("selected")
+					};
+				}
+				else {
+					return null;
+				}
+			}
+			if(Array.isArray(oSelectionState2.selection)) {
+				if(oSelectionState2.selection.length === 0 || oSelectionState1.textSelection) {
+					return {
+						type: AscCommon.SpeechWorkerCommands.Text,
+						obj: AscCommon.translateManager.getValue("exited text selection")
+					};
+				}
+				const aObjects1 = [];
+				const aObjects2 = [];
+				if(Array.isArray(oSelectionState1.selection)) {
+					for(let nIdx = 0; nIdx < oSelectionState1.selection.length; ++nIdx) {
+						aObjects1.push(oSelectionState1.selection[nIdx].object);
+					}
+				}
+				for(let nIdx = 0; nIdx < oSelectionState2.selection.length; ++nIdx) {
+					aObjects2.push(oSelectionState2.selection[nIdx].object);
+				}
+				if(aObjects1.length < aObjects2.length) {
+					let aObjects = AscCommon.getArrayElementsDiff(aObjects1, aObjects2);
+					if(aObjects.length > 0) {
+						if(aObjects.length === 1) {
+							return {
+								type: AscCommon.SpeechWorkerCommands.Text,
+								obj: aObjects[0].getSpeechDescription() + AscCommon.translateManager.getValue("selected")
+							};
+						}
+						else {
+							return {
+								type: AscCommon.SpeechWorkerCommands.Text,
+								obj: aObjects.length + AscCommon.translateManager.getValue("objects selected")
+							};
+						}
+					}
+				}
+				else {
+					let aObjects = AscCommon.getArrayElementsDiff(aObjects2, aObjects1);
+					if(aObjects.length > 0) {
+						if(aObjects.length === 1) {
+							return {
+								type: AscCommon.SpeechWorkerCommands.Text,
+								obj: aObjects[0].getSpeechDescription() + AscCommon.translateManager.getValue("unselected")
+							};
+						}
+						else {
+							return {
+								type: AscCommon.SpeechWorkerCommands.Text,
+								obj: aObjects.length + AscCommon.translateManager.getValue("objects unselected")
+							};
+						}
+					}
+				}
+			}
+			return null;
+		}
+
+		const getArrayElementsDiff = function(aElements1, aElements2) {
+			let aDiff = [];
+			if(aElements1.length < aElements2.length) {
+				for(let nEndIdx = 0; nEndIdx < aElements2.length; ++nEndIdx) {
+					let nEndSlideIdx = aElements2[nEndIdx];
+					let nStartIdx = 0;
+					for(; nStartIdx < aElements1.length; ++nStartIdx) {
+						let nStartSlideIdx = aElements1[nStartIdx];
+						if(nEndSlideIdx === nStartSlideIdx) {
+							break;
+						}
+					}
+					if(nStartIdx === aElements1.length) {
+						aDiff.push(nEndSlideIdx);
+					}
+				}
+			}
+			return aDiff;
+		};
+
 		//--------------------------------------------------------export----------------------------------------------------
 		window['AscFormat'] = window['AscFormat'] || {};
 		window['AscFormat'].HANDLE_EVENT_MODE_HANDLE = HANDLE_EVENT_MODE_HANDLE;
@@ -11116,4 +11282,6 @@
 		window['AscCommon'] = window['AscCommon'] || {};
 		window["AscCommon"].CDrawTask = CDrawTask;
 		window["AscCommon"].CDrawingControllerStateBase = CDrawingControllerStateBase;
+		window["AscCommon"].getSpeechDescription = getSpeechDescription;
+		window["AscCommon"].getArrayElementsDiff = getArrayElementsDiff;
 	})(window);
