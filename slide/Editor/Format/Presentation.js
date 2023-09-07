@@ -7021,6 +7021,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
 	}
 	const bIsMacOs = AscCommon.AscBrowser.isMacOs;
 	var nShortcutAction = this.Api.getShortcut(e);
+	this.OnStartUserAction();
 	switch (nShortcutAction) {
 		case Asc.c_oAscPresentationShortcutType.EditSelectAll: {
 			this.SelectAll();
@@ -7785,6 +7786,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
 		}
 	}
 
+	this.OnEndUserAction();
 	if (bRetValue & keydownflags_PreventKeyPress && true === bUpdateSelection)
 		this.Document_UpdateSelectionState();
 
@@ -8035,6 +8037,8 @@ CPresentation.prototype.OnMouseDown = function (e, X, Y, PageIndex) {
 	if (_old_focus) {
 		this.CheckEmptyPlaceholderNotes();
 	}
+
+	this.OnStartUserAction();
 	if (ret) {
 		return keydownresult_PreventAll;
 	}
@@ -8066,6 +8070,8 @@ CPresentation.prototype.OnMouseUp = function (e, X, Y, PageIndex) {
 		ContextData.Guide = this.hitInGuide(X, Y);
 		this.Api.sync_ContextMenuCallback(ContextData);
 	}
+
+	this.OnEndUserAction();
 	this.noShowContextMenu = false;
 	this.Document_UpdateInterfaceState();
 	this.Api.sendEvent("asc_onSelectionEnd");
@@ -9456,11 +9462,15 @@ CPresentation.prototype.OnStartUserAction = function() {
 	if(!AscCommon.SpeechWorker.isEnabled) {
 		return;
 	}
+	this.HistoryIndex = this.History.Index;
 	this.BeforeActionSelectionState = this.GetSelectionState();
 };
 
 CPresentation.prototype.OnEndUserAction = function() {
 	if(!this.BeforeActionSelectionState) {
+		return;
+	}
+	if(this.HistoryIndex !== this.History.Index) {
 		return;
 	}
 

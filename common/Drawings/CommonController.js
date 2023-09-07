@@ -11066,13 +11066,10 @@
 			}
 			if(oSelectionState2.groupSelection) {
 				if(oSelectionState1.groupObject !== oSelectionState2.groupObject) {
-					return {
-						type: AscCommon.SpeechWorkerCommands.Text,
-						obj: oSelectionState2.groupObject.getSpeechDescription() + AscCommon.translateManager.getValue("selected")
-					};
+					return getSpeechDescription([oSelectionState1], [oSelectionState2.groupSelection])
 				}
 				else {
-					return getSpeechDescription(oSelectionState1.groupSelection, oSelectionState2.groupSelection)
+					return getSpeechDescription([oSelectionState1.groupSelection], [oSelectionState2.groupSelection])
 				}
 			}
 			if (oSelectionState2.chartSelection) {
@@ -11121,7 +11118,7 @@
 				}
 			}
 			if(Array.isArray(oSelectionState2.selection)) {
-				if(oSelectionState2.selection.length === 0 || oSelectionState1.textSelection) {
+				if(oSelectionState2.selection.length === 0 && (oSelectionState1.textSelection || oSelectionState1.groupSelection && oSelectionState1.groupSelection.textSelection)) {
 					return {
 						type: AscCommon.SpeechWorkerCommands.Text,
 						obj: AscCommon.translateManager.getValue("exited text selection")
@@ -11136,6 +11133,12 @@
 				}
 				for(let nIdx = 0; nIdx < oSelectionState2.selection.length; ++nIdx) {
 					aObjects2.push(oSelectionState2.selection[nIdx].object);
+				}
+				if(aObjects2.length === 1 && aObjects1[0] !== aObjects2[0]) {
+					return {
+						type: AscCommon.SpeechWorkerCommands.Text,
+						obj: aObjects2[0].getSpeechDescription() + AscCommon.translateManager.getValue("selected")
+					};
 				}
 				if(aObjects1.length < aObjects2.length) {
 					let aObjects = AscCommon.getArrayElementsDiff(aObjects1, aObjects2);

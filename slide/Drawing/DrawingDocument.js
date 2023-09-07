@@ -4158,6 +4158,7 @@ function CThumbnailsManager()
 		var nShortCutAction = oApi.getShortcut(oEvent);
 		var bReturnValue = false, bPreventDefault = true;
 		var sSelectedIdx;
+		oPresentation.OnStartUserAction();
 		switch (nShortCutAction)
 		{
 			case Asc.c_oAscPresentationShortcutType.EditSelectAll:
@@ -4376,6 +4377,7 @@ function CThumbnailsManager()
 					break;
 			}
 		}
+		oPresentation.OnEndUserAction();
 		if (bPreventDefault)
 		{
 			e.preventDefault();
