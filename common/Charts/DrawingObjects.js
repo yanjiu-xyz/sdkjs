@@ -4054,10 +4054,45 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
     // Graphic object mouse & keyboard events
     //-----------------------------------------------------------------------------------
 
+
+    _this.onStartUserAction = function() {
+        if(!AscCommon.SpeechWorker.isEnabled) {
+            return;
+        }
+        this.HistoryIndex = AscCommon.History.Index;
+        this.BeforeActionSelectionState = this.controller.getSelectionState();
+    };
+
+    _this.onEndUserAction = function() {
+        if(!this.BeforeActionSelectionState) {
+            return;
+        }
+        if(this.HistoryIndex !== AscCommon.History.Index) {
+            return;
+        }
+
+        const oEndSelectionState = this.controller.getSelectionState();
+        const oBeforeSelectionState = this.BeforeActionSelectionState;
+        this.BeforeActionSelectionState = null;
+
+        const oSpeechData = AscCommon.getSpeechDescription(oBeforeSelectionState, oEndSelectionState);
+        if(oSpeechData) {
+            AscCommon.SpeechWorker.speech(
+                oSpeechData.type,
+                oSpeechData.obj
+            );
+        }
+    };
+
     _this.graphicObjectMouseDown = function(e, x, y) {
+        this.onStartUserAction();
         var offsets = _this.drawingArea.getOffsets(x, y, true);
         if ( offsets )
             _this.controller.onMouseDown( e, pxToMm(x - offsets.x), pxToMm(y - offsets.y) );
+
+
+        this.onEndUserAction();
+        this.onStartUserAction();
     };
 
     _this.graphicObjectMouseMove = function(e, x, y) {
@@ -4081,6 +4116,8 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         var offsets = _this.drawingArea.getOffsets(x, y, true);
         if ( offsets )
             _this.controller.onMouseUp( e, pxToMm(x - offsets.x), pxToMm(y - offsets.y) );
+
+        this.onEndUserAction();
     };
 
     _this.isPointInDrawingObjects3 = function(x, y, page, bSelected, bText) {
@@ -4093,7 +4130,10 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
     // keyboard
 
     _this.graphicObjectKeyDown = function(e) {
-        return _this.controller.onKeyDown( e );
+        this.onStartUserAction();
+        let ret = _this.controller.onKeyDown( e );
+        this.onEndUserAction();
+        return ret;
     };
     _this.graphicObjectKeyUp = function(e) {
         return _this.controller.onKeyUp( e );
@@ -4106,7 +4146,11 @@ CSparklineView.prototype.setMinMaxValAx = function(minVal, maxVal, oSparklineGro
         e.AltKey = e.altKey;
         e.ShiftKey = e.shiftKey;
         e.Which = e.which;
-        return _this.controller.onKeyPress( e );
+
+        this.onStartUserAction();
+        let ret = _this.controller.onKeyPress( e );
+        this.onEndUserAction();
+        return ret;
     };
 
     //-----------------------------------------------------------------------------------
