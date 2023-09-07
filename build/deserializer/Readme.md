@@ -6,17 +6,35 @@
 
 ## How to use
 
-* Create any file and put the errors in the file.
+* Put files with errors in json format in any `logs-dir`
 
-* If the file contains several different versions, create the appropriate folders in the cache folder.
+* Make `unique-file` with unique errors and new-lines
 
-For example
+    ```bash
+    node parse-json-log-dir.js logs-dir unique-file
+    ```
+* Install dependencies for `download-maps.js`
+
+    ```bash
+    npm ci
+    ```
+
+* Download Closure Compiler maps into `maps-dir` for version specified in `unique-file`
+
+    ```bash
+    node download-maps.js accessKeyId, secretAccessKey unique-file maps-dir
+    ```
+* Download Closure Compiler maps into `maps-dir` for version specified in `unique-file`
+
+    ```bash
+    node download-maps.js accessKeyId, secretAccessKey unique-file maps-dir
+    ```
+
+maps-dir structure will be
 
 ```
-cache/
-    7.2.0-204
-        sdk-all.props.js.map
-    77.99.0-175
+maps-dir/
+    7.4.1-36
         word.props.js.map
         cell.props.js.map
         slide.props.js.map
@@ -24,22 +42,11 @@ cache/
         <maps>
 ```
 
-**But if only one version is missing, it can be found automatically in build folder.**
-
-* Run deserializer
+* Deserialize `unique-file` call stack into `deserialized-file`
 
     ```bash
-    node deserialize.js your-input-file
+    node deserialize.js unique-file deserialized-file maps-dir
     ```
-
-    or
-
-    ```bash
-    node deserialize.js opt_input opt_output
-    ```
-
-    `input.txt` will be used.
-
-
-* The result of the execution will be in the `output.txt`
+  
+* The result will be in the `deserialized-file`
 
