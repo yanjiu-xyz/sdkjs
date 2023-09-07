@@ -3478,21 +3478,12 @@ function CBinaryFileWriter()
 
         image.spPr.WriteXfrm = image.spPr.xfrm;
 
-        var bSetGeometry = false;
-        if (image.spPr.geometry === undefined || image.spPr.geometry == null)
-        {
-            // powerpoint!
-            bSetGeometry = true;
-            image.spPr.geometry = AscFormat.ExecuteNoHistory(function(){return AscFormat.CreateGeometry("rect");}, this, []);
-        }
+
 
         var unifill = new AscFormat.CUniFill();
         unifill.fill = image.blipFill;
         oThis.WriteRecord1(1, unifill, oThis.WriteUniFill);
         oThis.WriteRecord1(2, image.spPr, oThis.WriteSpPr);
-        if(bSetGeometry){
-            image.spPr.geometry = null;
-        }
         oThis.WriteRecord2(3, image.style, oThis.WriteShapeStyle);
         image.writeMacro(oThis);
         image.spPr.WriteXfrm = null;
