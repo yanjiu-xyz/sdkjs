@@ -170,7 +170,7 @@
 					let aIndexes = obj.indexes;
 					if(aIndexes.length === 1)
 					{
-						this.speechElement.innerHTML = (translateManager.getValue("slide ") + (aIndexes[0] + 1));
+						this.speechElement.innerHTML = (translateManager.getValue("slide ") + (aIndexes[0]));
 					}
 					else
 					{
@@ -183,7 +183,7 @@
 					let aIndexes = obj.indexes;
 					if(aIndexes.length === 1)
 					{
-						this.speechElement.innerHTML = (translateManager.getValue("slide ") + (aIndexes[0] + 1) + translateManager.getValue("unselected"));
+						this.speechElement.innerHTML = (translateManager.getValue("slide ") + (aIndexes[0]) + translateManager.getValue("unselected"));
 					}
 					else
 					{

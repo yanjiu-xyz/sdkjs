@@ -9464,11 +9464,21 @@ CPresentation.prototype.OnEndUserAction = function() {
 
 	const oEndSelectionState = this.GetSelectionState();
 
+
+	const nFirstSlideIdx = this.getFirstSlideNumber();
+	const correctSlideIndexes = function (aIndexes) {
+		for(let nIdx = 0; nIdx < aIndexes.length; ++nIdx) {
+			aIndexes[nIdx] += nFirstSlideIdx;
+		}
+	};
+
 	if(this.BeforeActionSelectionState.CurPage !== oEndSelectionState.CurPage) {
+		let aIndexes = [this.CurPage];
+		correctSlideIndexes(aIndexes);
 		AscCommon.SpeechWorker.speech(
 			AscCommon.SpeechWorkerCommands.SlidesSelected,
 		{
-				indexes: [this.CurPage]
+				indexes: aIndexes
 			}
 		);
 		return;
@@ -9499,6 +9509,7 @@ CPresentation.prototype.OnEndUserAction = function() {
 	if(aStartSelectedSlides.length < aEndSelectedSlides.length) {
 		let aIndexes = getIndexesDiff(aStartSelectedSlides, aEndSelectedSlides);
 		if(aIndexes.length > 0) {
+			correctSlideIndexes(aIndexes);
 			AscCommon.SpeechWorker.speech(
 				AscCommon.SpeechWorkerCommands.SlidesSelected,
 				{
@@ -9511,6 +9522,7 @@ CPresentation.prototype.OnEndUserAction = function() {
 	else if(aStartSelectedSlides.length > aEndSelectedSlides.length) {
 		let aIndexes = getIndexesDiff(aEndSelectedSlides, aStartSelectedSlides);
 		if(aIndexes.length > 0) {
+			correctSlideIndexes(aIndexes);
 			AscCommon.SpeechWorker.speech(
 				AscCommon.SpeechWorkerCommands.SlidesUnselected,
 				{
