@@ -102,7 +102,10 @@
 		SheetSelected : 11
 
 	};
-
+	
+	/**
+	 * @constructor
+	 */
 	function CWorkerSpeech()
 	{
 		this.isEnabled = false;
@@ -267,6 +270,91 @@
 
 	window.AscCommon.SpeechWorker = new CWorkerSpeech();
 	window.AscCommon.SpeechWorkerCommands = SpeechWorkerType;
+	
+	/**
+	 * @constructor
+	 */
+	function EditorActionSpeaker()
+	{
+		this.speechWorker = window.AscCommon.SpeechWorker;
+		this.editor = null;
+		
+		this.isLanched = false;
+		
+		this.onSelectionEnd = null;
+		this.onActionStart  = null;
+		this.onActionEnd    = null;
+		
+		this.selectionState = null;
+		this.actionInProgress = false;
+	}
+	EditorActionSpeaker.prototype.run = function()
+	{
+		this.editor = Asc.editor;
+		if (!this.editor || this.isLanched)
+			return;
+		
+		this.isLanched = true;
+		
+		this.initEvents();
+		this.editor.asc_registerCallback('asc_onSelectionEnd', this.onSelectionEnd);
+		this.editor.asc_registerCallback('asc_onUserActionStart', this.onActionStart);
+		this.editor.asc_registerCallback('asc_onUserActionEnd', this.onActionEnd);
+		
+		this.selectionState = this.editor.getSelectionState();
+		this.actionInProgress = false;
+		
+		this.speechWorker.setEnabled(true);
+	};
+	EditorActionSpeaker.prototype.stop = function()
+	{
+		if (!this.isLanched)
+			return;
+		
+		this.editor.asc_unregisterCallback('asc_onSelectionEnd', this.onSelectionEnd);
+		this.editor.asc_unregisterCallback('asc_onUserActionStart', this.onActionStart);
+		this.editor.asc_unregisterCallback('asc_onUserActionEnd', this.onActionEnd);
+		
+		this.selectionState = null;
+		this.speechWorker.setEnabled(false);
+		this.actionInProgress = false;
+		
+		this.isLanched = false;
+	};
+	EditorActionSpeaker.prototype.initEvents = function()
+	{
+		let _t = this;
+		this.onSelectionEnd = function()
+		{
+			if (_t.actionInProgress)
+				return;
+			
+			let state = _t.getSelectionState();
+			if (!_t.selectionState)
+			{
+				_t.selectionState = state;
+				return;
+			}
+			
+			let speechInfo = _t.editor.getSpeechDescription(_t.selectionState, state);
+			_t.selectionState = state;
+			_t.speechWorker.speech(speechInfo.type, speechInfo.obj);
+		};
+		
+		this.onActionStart = function()
+		{
+			_t.actionInProgress = true;
+		};
+		
+		this.onActionEnd = function()
+		{
+			_t.actionInProgress = false;
+			
+			// TODO: Если нужно, то добавить описание действия
+		};
+	};
+	
+	window.AscCommon.EditorActionSpeaker = new EditorActionSpeaker();
 
 	window.AscCommon.SpeechWorker.testFunction = function()
 	{
