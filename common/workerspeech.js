@@ -150,6 +150,7 @@
 				case SpeechWorkerType.Text:
 				{
 					this.speechElement.innerHTML = obj;
+					console.log("Text " + obj.text);
 					break;
 				}
 				case SpeechWorkerType.TextSelected:
