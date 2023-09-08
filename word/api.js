@@ -13735,6 +13735,15 @@ background-repeat: no-repeat;\
 		logicDocument.setAutoHyphenationSettings(settings);
 	};
 	
+	asc_docs_api.prototype.getSelectionState = function()
+	{
+		return this.private_GetLogicDocument().GetSelectionState();
+	};
+	asc_docs_api.prototype.getSpeechDescription = function(prevState, curState)
+	{
+		return this.private_GetLogicDocument().getSpeechDescription(prevState, curState);
+	};
+	
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};
 	CAscSection.prototype['get_PageWidth']                              = CAscSection.prototype.get_PageWidth;

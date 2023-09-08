@@ -4620,6 +4620,12 @@
 	baseEditorsApi.prototype.getInkCursorType = function() {
 		return this.inkDrawer.getCursorType();
 	};
+	
+	baseEditorsApi.prototype.getSelectionState = function() {
+	};
+	baseEditorsApi.prototype.getSpeechDescription = function(prevState, curState) {
+		return null;
+	};
 
 	// methods for desktop:
 	baseEditorsApi.prototype.isCloudSaveAsLocalToDrawingFormat = function(actionType, fileType) {

@@ -281,9 +281,9 @@
 		
 		this.isLanched = false;
 		
-		this.onSelectionEnd = null;
-		this.onActionStart  = null;
-		this.onActionEnd    = null;
+		this.onSelectionChange = null;
+		this.onActionStart     = null;
+		this.onActionEnd       = null;
 		
 		this.selectionState = null;
 		this.actionInProgress = false;
@@ -297,7 +297,8 @@
 		this.isLanched = true;
 		
 		this.initEvents();
-		this.editor.asc_registerCallback('asc_onSelectionEnd', this.onSelectionEnd);
+		this.editor.asc_registerCallback('asc_onSelectionEnd', this.onSelectionChange);
+		this.editor.asc_registerCallback('asc_onCursorMove', this.onSelectionChange);
 		this.editor.asc_registerCallback('asc_onUserActionStart', this.onActionStart);
 		this.editor.asc_registerCallback('asc_onUserActionEnd', this.onActionEnd);
 		
@@ -311,7 +312,8 @@
 		if (!this.isLanched)
 			return;
 		
-		this.editor.asc_unregisterCallback('asc_onSelectionEnd', this.onSelectionEnd);
+		this.editor.asc_unregisterCallback('asc_onSelectionEnd', this.onSelectionChange);
+		this.editor.asc_unregisterCallback('asc_onCursorMove', this.onSelectionChange);
 		this.editor.asc_unregisterCallback('asc_onUserActionStart', this.onActionStart);
 		this.editor.asc_unregisterCallback('asc_onUserActionEnd', this.onActionEnd);
 		
@@ -324,20 +326,25 @@
 	EditorActionSpeaker.prototype.initEvents = function()
 	{
 		let _t = this;
-		this.onSelectionEnd = function()
+		let editor = this.editor;
+		
+		this.onSelectionChange = function()
 		{
 			if (_t.actionInProgress)
 				return;
 			
-			let state = _t.getSelectionState();
+			let state = editor.getSelectionState();
 			if (!_t.selectionState)
 			{
 				_t.selectionState = state;
 				return;
 			}
 			
-			let speechInfo = _t.editor.getSpeechDescription(_t.selectionState, state);
+			let speechInfo = editor.getSpeechDescription(_t.selectionState, state);
 			_t.selectionState = state;
+			if (!speechInfo)
+				return;
+			
 			_t.speechWorker.speech(speechInfo.type, speechInfo.obj);
 		};
 		

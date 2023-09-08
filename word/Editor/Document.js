@@ -2544,6 +2544,8 @@ CDocument.prototype.GetColorMap = function()
  */
 CDocument.prototype.StartAction = function(nDescription, oSelectionState)
 {
+	this.Api.sendEvent("asc_onUserActionStart");
+	
 	var isNewPoint = this.History.Create_NewPoint(nDescription, oSelectionState);
 
 	if (true === this.Action.Start)
@@ -2828,6 +2830,8 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	this.Action.UpdatePlaceholders = false;
 	
 	this.Action.UpdateStates = false;
+	
+	this.Api.sendEvent("asc_onUserActionEnd");
 };
 /**
  * Сообщаем, что нужно отменить начатое действие
@@ -12730,6 +12734,11 @@ CDocument.prototype.Refresh_RecalcData2 = function(nIndex, nPageRel)
 		}
 	});
 };
+CDocument.prototype.getSpeechDescription = function(prevState, newState)
+{
+	console.log("Сравниваем")
+	return null;
+};
 //----------------------------------------------------------------------------------------------------------------------
 // Функции для работы с гиперссылками
 //----------------------------------------------------------------------------------------------------------------------
@@ -14220,6 +14229,8 @@ CDocument.prototype.private_UpdateCursorXY = function(bUpdateX, bUpdateY, isUpda
 
 	if (true === this.Selection.Use && true !== this.Selection.Start)
 		this.private_OnSelectionEnd();
+	else if (!this.Selection.Use)
+		this.private_OnCursorMove();
 
 	this.private_CheckCursorInPlaceHolder();
 };
@@ -16148,6 +16159,10 @@ CDocument.prototype.private_OnSelectionEnd = function()
 CDocument.prototype.private_OnSelectionCancel = function()
 {
 	this.Api.sendEvent("asc_onSelectionCancel");
+};
+CDocument.prototype.private_OnCursorMove = function()
+{
+	this.Api.sendEvent("asc_onCursorMove");
 };
 CDocument.prototype.AddPageCount = function()
 {
