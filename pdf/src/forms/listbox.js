@@ -55,15 +55,12 @@
     CListBoxField.prototype = Object.create(AscPDF.CBaseListField.prototype);
 	CListBoxField.prototype.constructor = CListBoxField;
 
-    CListBoxField.prototype.Draw = function() {
+    CListBoxField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
         if (this.IsHidden() == true)
             return;
 
-        let oViewer         = editor.getDocumentRenderer();
-        let oGraphicsWord   = oViewer.pagesInfo.pages[this.GetPage()].graphics.word;
-        
         this.Recalculate();
-        this.DrawBackground();
+        this.DrawBackground(oGraphicsPDF);
         
         if (this._bAutoShiftContentView)
             this.CheckFormViewWindow();
@@ -76,7 +73,7 @@
         this.content.Draw(0, oGraphicsWord);
         oGraphicsWord.RemoveClip();
 
-        this.DrawBorders();
+        this.DrawBorders(oGraphicsPDF);
     };
     CListBoxField.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
@@ -410,7 +407,6 @@
     };
 
     CListBoxField.prototype.onMouseDown = function(x, y, e) {
-        let oViewer         = editor.getDocumentRenderer();
         let oDoc            = this.GetDocument();
         let oActionsQueue   = oDoc.GetActionsQueue();
 
@@ -459,17 +455,17 @@
                 }
             }
 
-            oViewer.activeForm = this;
+            oDoc.activeForm = this;
         }
 
         // вызываем выставление курсора после onFocus, если уже в фокусе, тогда сразу.
-        if (oViewer.activeForm != this && this._triggers.OnFocus && this._triggers.OnFocus.Actions.length > 0)
+        if (oDoc.activeForm != this && this._triggers.OnFocus && this._triggers.OnFocus.Actions.length > 0)
             oActionsQueue.callBackAfterFocus = callbackAfterFocus.bind(this, x, y, e);
         else
             callbackAfterFocus.bind(this, x, y, e)();
 
         this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
-        if (oViewer.activeForm != this)
+        if (oDoc.activeForm != this)
             this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
     };
     CListBoxField.prototype.MoveSelectDown = function() {
@@ -486,7 +482,7 @@
         }
         
         this.AddToRedraw();
-        editor.getDocumentRenderer()._paintForms();
+        editor.getDocumentRenderer()._paint();
         this.UpdateScroll(true);
     };
     CListBoxField.prototype.MoveSelectUp = function() {
@@ -503,7 +499,7 @@
         }
 
         this.AddToRedraw();
-        editor.getDocumentRenderer()._paintForms();
+        editor.getDocumentRenderer()._paint();
         this.UpdateScroll(true);
     };
     CListBoxField.prototype.UpdateScroll = function(bShow) {
@@ -617,7 +613,7 @@
         this._curShiftView.y            = -nScrollCoeff * maxYscroll;
         this._scrollInfo.scrollCoeff    = nScrollCoeff;
         this.AddToRedraw();
-        editor.getDocumentRenderer()._paintForms();
+        editor.getDocumentRenderer()._paint();
     };
     CListBoxField.prototype.ScrollVerticalEnd = function() {
         let nHeightPerPara  = this.content.GetElement(1).Y - this.content.GetElement(0).Y;
@@ -631,7 +627,7 @@
         this._scrollInfo.scrollCoeff    = Math.abs(this._curShiftView.y / nMaxShiftY);
         
         this.AddToRedraw();
-        editor.getDocumentRenderer()._paintForms();
+        editor.getDocumentRenderer()._paint();
     };
     /**
 	 * Checks curValueIndices, corrects it and return.
@@ -680,7 +676,12 @@
     CListBoxField.prototype.CheckFormViewWindow = function()
     {
         let curIdx = this.GetCurIdxs();
-        let nFirstSelectedPara = Array.isArray(curIdx) ? Number(curIdx[0]) : Number(curIdx);
+        
+        let nFirstSelectedPara = 0;
+        if (curIdx != null) {
+            nFirstSelectedPara = Array.isArray(curIdx) ? Number(curIdx[0]) : Number(curIdx)
+        }
+        
         let oParagraph  = this.content.GetElement(nFirstSelectedPara);
 
         // размеры всего контента

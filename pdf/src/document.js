@@ -146,7 +146,7 @@ var CPresentation = CPresentation || function(){};
             oViewer.needRedraw = false;
         }
         else {
-            oViewer._paintForms();
+            oViewer._paint();
             oViewer._paintFormsHighlight();
         }
     };
@@ -341,7 +341,7 @@ var CPresentation = CPresentation || function(){};
         if (aWidgetForms.length == 0)
             return;
 
-        let nCurIdx = this.widgets.indexOf(oViewer.activeForm);
+        let nCurIdx = this.widgets.indexOf(this.activeForm);
         let oCurForm = this.widgets[nCurIdx];
         let oNextForm = this.widgets[nCurIdx + 1] || this.widgets[0];
 
@@ -385,7 +385,7 @@ var CPresentation = CPresentation || function(){};
         if (!oNextForm)
             return;
 
-        oViewer.activeForm = oNextForm;
+        this.activeForm = oNextForm;
         
         oNextForm.SetDrawHighlight(false);
         
@@ -427,7 +427,7 @@ var CPresentation = CPresentation || function(){};
         else {
             // если нужна перерисовка формы и onFocus не запустил действие, тогда перерисовываем
             if (isNeedRedraw && oActionsQueue.IsInProgress() == false) {
-                oViewer._paintForms();
+                oViewer._paint();
                 oViewer._paintFormsHighlight();
             }
             // если не нужна перерисовка и не запущено действие, то перерисовываем только highligt
@@ -449,7 +449,7 @@ var CPresentation = CPresentation || function(){};
         if (aWidgetForms.length == 0)
             return;
 
-        let nCurIdx = this.widgets.indexOf(oViewer.activeForm);
+        let nCurIdx = this.widgets.indexOf(this.activeForm);
         let oCurForm = this.widgets[nCurIdx];
         let oNextForm = this.widgets[nCurIdx - 1] || this.widgets[this.widgets.length - 1];
 
@@ -470,7 +470,7 @@ var CPresentation = CPresentation || function(){};
         if (!oNextForm)
             return;
         
-        oViewer.activeForm = oNextForm;
+        this.activeForm = oNextForm;
         oNextForm.SetDrawHighlight(false);
         
         if (oNextForm.IsNeedDrawFromStream() == true && oNextForm.GetType() != AscPDF.FIELD_TYPES.button) {
@@ -511,7 +511,7 @@ var CPresentation = CPresentation || function(){};
         else {
             // если нужна перерисовка формы и onFocus не запустил действие, тогда перерисовываем
             if (isNeedRedraw && oActionsQueue.IsInProgress() == false) {
-                oViewer._paintForms();
+                oViewer._paint();
                 oViewer._paintFormsHighlight();
             }
             // если не нужна перерисовка и не запущено действие, то перерисовываем только highligt
@@ -546,7 +546,7 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.EnterDownActiveField = function() {
         let oViewer = editor.getDocumentRenderer();
-        let oField = oViewer.activeForm;
+        let oField = this.activeForm;
 
         if ([AscPDF.FIELD_TYPES.checkbox, AscPDF.FIELD_TYPES.radiobutton].includes(oField.GetType())) {
             oField.onMouseUp();
@@ -593,10 +593,10 @@ var CPresentation = CPresentation || function(){};
             oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd(); // убираем курсор
         }
 
-        oViewer._paintForms();
+        oViewer._paint();
         oViewer._paintFormsHighlight();
     };
-    CPDFDoc.prototype.OnExitFieldByClick = function(bSkipRedraw) {
+    CPDFDoc.prototype.OnExitFieldByClick = function() {
         let oViewer         = editor.getDocumentRenderer();
         let oActiveForm     = this.activeForm;
         let oActionsQueue   = this.GetActionsQueue();
@@ -613,7 +613,7 @@ var CPresentation = CPresentation || function(){};
             
             if (oActionsQueue.IsInProgress() == false) {
                 oViewer._paintFormsHighlight();
-                oViewer._paintForms();
+                oViewer._paint();
             }
 
             return;
@@ -647,10 +647,10 @@ var CPresentation = CPresentation || function(){};
         else {
             if (oActiveForm.IsChanged() == false) {
                 oActiveForm.SetDrawFromStream(true);
-    
+                oActiveForm.AddToRedraw();
+
                 if (oActiveForm.IsNeedRevertShiftView()) {
                     oActiveForm.RevertContentViewToOriginal();
-                    oActiveForm.AddToRedraw();
                 }
             }
 
@@ -668,7 +668,7 @@ var CPresentation = CPresentation || function(){};
         oActiveForm.Blur();
         oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
         if (oActionsQueue.IsInProgress() == false) {
-            oViewer._paintForms();
+            oViewer._paint();
             oViewer._paintFormsHighlight();
         }
 
@@ -710,7 +710,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (oActionsQueue.IsInProgress() == false && oViewer.pagesInfo.pages[oField.GetPage()].needRedrawForms)
-            oViewer._paintForms();
+            oViewer._paint();
 
         oViewer._paintFormsHighlight();
 
@@ -720,7 +720,7 @@ var CPresentation = CPresentation || function(){};
         var cursorType;
         if (this.activeForm)
         {
-            switch (oViewer.activeForm.GetType())
+            switch (this.activeForm.GetType())
             {
                 case AscPDF.FIELD_TYPES.text:
                     cursorType = "text";
@@ -735,21 +735,6 @@ var CPresentation = CPresentation || function(){};
         }
 
         oViewer.setCursorType(cursorType);
-    };
-    CPDFDoc.prototype.UnionInkAnnots = function(oAnnots) {
-        let oViewer         = editor.getDocumentRenderer();
-        let aAllRelPaths    = [];
-
-        let oAnnot ;
-        for (let i = 0; i < oAnnots.length; i++) {
-            oAnnot      = oAnnots[i];
-            aAllRelPaths.concat(oAnnot.GetRelativePaths());
-        }
-
-        let [xMin, yMin, xMax, yMax] = getMinRect([].concat(...aPoints));
-        let nLineW  = oAnnot.GetWidth() * g_dKoef_pt_to_mm * (96 / oViewer.file.pages[oAnnot.GetPage()].Dpi);
-        let aRect   = [(xMin * g_dKoef_mm_to_pix - nLineW) / nScaleX, (yMin * g_dKoef_mm_to_pix - nLineW) / nScaleY, (xMax * g_dKoef_mm_to_pix + nLineW) / nScaleX, (yMax * g_dKoef_mm_to_pix + nLineW) / nScaleY];
-
     };
     CPDFDoc.prototype.OnMouseDown = function(e) {
         let oViewer         = editor.getDocumentRenderer();
@@ -866,7 +851,7 @@ var CPresentation = CPresentation || function(){};
                     }
                     else if (mouseMoveFieldObject == this.activeForm && this.activeForm.IsHovered() == false) {
                         this.activeForm.SetHovered(true);
-                        this.activeForm.DrawPressed();
+                        this.activeForm.onMouseDown(true);
                     }
                 }
             }
@@ -1046,7 +1031,7 @@ var CPresentation = CPresentation || function(){};
                     oDoc.DoCalculateFields();
                     oDoc.CommitFields();
                     
-                    oViewer._paintForms();
+                    oViewer._paint();
                 }
                 cursorType = "pointer";
                 oViewer.fieldFillingMode = false;
@@ -1057,7 +1042,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         if (oActionsQueue.IsInProgress() == false && oViewer.pagesInfo.pages[oField.GetPage()].needRedrawForms)
-            oViewer._paintForms();
+            oViewer._paint();
     };
     CPDFDoc.prototype.DoUndo = function() {
         let oViewer = editor.getDocumentRenderer();
@@ -1075,7 +1060,7 @@ var CPresentation = CPresentation || function(){};
                 // если форма активна, то изменения (undo) применяются только для неё
                 // иначе для всех с таким именем (для checkbox и radiobutton всегда применяем для всех)
                 // так же применяем для всех, если добрались до точки, общей для всех форм, а не примененнёые изменения удаляем (для всех кроме checkbox и radiobutton)
-                if ((oViewer.activeForm == null || oCurPoint.Additional && oCurPoint.Additional.CanUnion === false || nCurPoindIdx == 0) || 
+                if ((this.activeForm == null || oCurPoint.Additional && oCurPoint.Additional.CanUnion === false || nCurPoindIdx == 0) || 
                     (oParentForm.GetType() == AscPDF.FIELD_TYPES.checkbox || oParentForm.GetType() == AscPDF.FIELD_TYPES.radiobutton)) {
                         oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd(); // убираем курсор
                         
@@ -1093,11 +1078,11 @@ var CPresentation = CPresentation || function(){};
                         oDoc.CommitFields();
 
                         // выход из формы
-                        if (oViewer.activeForm)
+                        if (this.activeForm)
                         {
-                            oViewer.activeForm.SetDrawHighlight(true);
+                            this.activeForm.SetDrawHighlight(true);
                             oViewer._paintFormsHighlight();
-                            oViewer.activeForm = null;
+                            this.activeForm = null;
                         }
                 }
 
@@ -1105,7 +1090,7 @@ var CPresentation = CPresentation || function(){};
                 oParentForm.AddToRedraw();
 
                 // Перерисуем страницу, на которой произошли изменения
-                // oViewer._paintForms();
+                // oViewer._paint();
                 oViewer.onUpdateOverlay();
             }
             
@@ -1129,7 +1114,7 @@ var CPresentation = CPresentation || function(){};
             if (oParentForm) {
                 // если мы в форме, то изменения (undo) применяются только для неё
                 // иначе для всех с таким именем
-                if (oViewer.activeForm == null || oCurPoint.Additional && oCurPoint.Additional.CanUnion === false) {
+                if (this.activeForm == null || oCurPoint.Additional && oCurPoint.Additional.CanUnion === false) {
                     oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd(); // убираем курсор
                         
                     if (oParentForm.GetType() == AscPDF.FIELD_TYPES.listbox) {
@@ -1146,11 +1131,11 @@ var CPresentation = CPresentation || function(){};
                     oDoc.CommitFields();
 
                     // выход из формы
-                    if (oViewer.activeForm)
+                    if (this.activeForm)
                     {
-                        oViewer.activeForm.SetDrawHighlight(true);
+                        this.activeForm.SetDrawHighlight(true);
                         oViewer._paintFormsHighlight();
-                        oViewer.activeForm = null;
+                        this.activeForm = null;
                     }
                 }
 
@@ -1158,7 +1143,7 @@ var CPresentation = CPresentation || function(){};
                 oParentForm.AddToRedraw()
                 
                 // Перерисуем страницу, на которой произошли изменения
-                // oViewer._paintForms();
+                // oViewer._paint();
                 oViewer.onUpdateOverlay();
             }
 
@@ -1415,19 +1400,11 @@ var CPresentation = CPresentation || function(){};
             aAllPoints.push(rect.y2);
         });
 
-        let aXMeasures = aAllPoints.filter(function(measure, index) {
-            if (index % 2 == 0)
-                return measure;
-        });
-        let aYMeasures = aAllPoints.filter(function(measure, index) {
-            if (index % 2 != 0)
-                return measure;
-        });
-
-        let MinX = Math.min(...aXMeasures);
-        let MaxX = Math.max(...aXMeasures);
-        let MinY = Math.min(...aYMeasures);
-        let MaxY = Math.max(...aYMeasures);
+        let aMinRect = getMinRect(aAllPoints);
+        let MinX = aMinRect[0];
+        let MinY = aMinRect[1];
+        let MaxX = aMinRect[2];
+        let MaxY = aMinRect[3];
 
         let oProps = {
             rect:       [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
@@ -1472,19 +1449,11 @@ var CPresentation = CPresentation || function(){};
             aAllPoints.push(rect.y2);
         });
 
-        let aXMeasures = aAllPoints.filter(function(measure, index) {
-            if (index % 2 == 0)
-                return measure;
-        });
-        let aYMeasures = aAllPoints.filter(function(measure, index) {
-            if (index % 2 != 0)
-                return measure;
-        });
-
-        let MinX = Math.min(...aXMeasures);
-        let MaxX = Math.max(...aXMeasures);
-        let MinY = Math.min(...aYMeasures);
-        let MaxY = Math.max(...aYMeasures);
+        let aMinRect = getMinRect(aAllPoints);
+        let MinX = aMinRect[0];
+        let MinY = aMinRect[1];
+        let MaxX = aMinRect[2];
+        let MaxY = aMinRect[3];
 
         let oProps = {
             rect:       [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
@@ -1529,19 +1498,11 @@ var CPresentation = CPresentation || function(){};
             aAllPoints.push(rect.y2);
         });
 
-        let aXMeasures = aAllPoints.filter(function(measure, index) {
-            if (index % 2 == 0)
-                return measure;
-        });
-        let aYMeasures = aAllPoints.filter(function(measure, index) {
-            if (index % 2 != 0)
-                return measure;
-        });
-
-        let MinX = Math.min(...aXMeasures);
-        let MaxX = Math.max(...aXMeasures);
-        let MinY = Math.min(...aYMeasures);
-        let MaxY = Math.max(...aYMeasures);
+        let aMinRect = getMinRect(aAllPoints);
+        let MinX = aMinRect[0];
+        let MinY = aMinRect[1];
+        let MaxX = aMinRect[2];
+        let MaxY = aMinRect[3];
 
         let oProps = {
             rect:       [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
@@ -1808,7 +1769,7 @@ var CPresentation = CPresentation || function(){};
         function EnterTextToForm(form, text)
         {
             let chars = text.codePointsArray();
-            oViewer.activeForm = form;
+            pdfDoc.activeForm = form;
             form.EnterText(chars);
             pdfDoc.EnterDownActiveField();
         }
@@ -2197,6 +2158,35 @@ var CPresentation = CPresentation || function(){};
 	{
 		return 25.4 / 72.0 * pt;
 	}
+
+    function getMinRect(aPoints) {
+        let xMax = aPoints[0], yMax = aPoints[1], xMin = xMax, yMin = yMax;
+        for(let i = 1; i < aPoints.length; i++) {
+            if (i % 2 == 0) {
+                if(aPoints[i] < xMin)
+                {
+                    xMin = aPoints[i];
+                }
+                if(aPoints[i] > xMax)
+                {
+                    xMax = aPoints[i];
+                }
+            }
+            else {
+                if(aPoints[i] < yMin)
+                {
+                    yMin = aPoints[i];
+                }
+
+                if(aPoints[i] > yMax)
+                {
+                    yMax = aPoints[i];
+                }
+            }
+        }
+
+        return [xMin, yMin, xMax, yMax];
+    }
 
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};

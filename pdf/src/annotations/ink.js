@@ -124,15 +124,12 @@
         if (this.IsHidden() == true)
             return;
 
-        let oViewer         = editor.getDocumentRenderer();
-        let oGraphicsWord   = oGraphics ? oGraphics : oViewer.pagesInfo.pages[this.GetPage()].graphics.word;
-        
         this.Recalculate();
         // this.DrawBackground();
 
         let oDrawing = this.GetDrawing();
         if (oDrawing)
-            oDrawing.GraphicObj.draw(oGraphicsWord);
+            oDrawing.GraphicObj.draw(oGraphics);
     };
     CAnnotationInk.prototype.DrawBackground = function() {
         let oViewer = editor.getDocumentRenderer();
@@ -150,7 +147,7 @@
             
             oGraphicsPDF.SetGlobalAlpha(1);
 
-            oGraphicsPDF.SetFillStyle(`rgb(${oBgRGBColor.r}, ${oBgRGBColor.g}, ${oBgRGBColor.b})`);
+            oGraphicsPDF.SetFillStyle(oBgRGBColor.r, oBgRGBColor.g, oBgRGBColor.b);
             oGraphicsPDF.FillRect(X, Y, nWidth, nHeight);
         }
     };
@@ -284,8 +281,18 @@
         this.SetDrawing(drawing);
         shape.recalculate();
 
-        let aRelPointsPos   = [];
-        let [xMin, yMin, xMax, yMax]  = getMinRect([].concat(...aShapePaths));
+        let aRelPointsPos = [];
+
+        let aAllPoints = [];
+        for (let i = 0; i < aShapePaths.length; i++)
+            aAllPoints = aAllPoints.concat(aShapePaths[i]);
+
+        let aMinRect = getMinRect(aAllPoints);
+        let xMin = aMinRect[0];
+        let yMin = aMinRect[1];
+        let xMax = aMinRect[2];
+        let yMax = aMinRect[3];
+
         // считаем относительное положение точек внутри фигуры
         for (let nPath = 0; nPath < aShapePaths.length; nPath++) {
             let aPoints         = aShapePaths[nPath]
@@ -337,8 +344,13 @@
         this.SetDrawing(drawing);
         shape.recalculate();
 
-        let aRelPointsPos   = [];
-        let [xMin, yMin, xMax, yMax] = getMinRect(aPoints);
+        let aRelPointsPos = [];
+        let aMinRect = getMinRect(aPoints);
+        let xMin = aMinRect[0];
+        let yMin = aMinRect[1];
+        let xMax = aMinRect[2];
+        let yMax = aMinRect[3];
+
         // считаем относительное положение точек внутри фигуры
         for (let nPoint = 0; nPoint < aPoints.length; nPoint++) {
             let oPoint = aPoints[nPoint];
@@ -422,14 +434,30 @@
         let oDoc = this.GetDocument();
         if (oDoc.History.UndoRedoInProgress == false) {
             oDoc.CreateNewHistoryPoint();
-            oDoc.History.Add(new CChangesPDFInkPoints(this, this._gestures.length, [aNewPath]));
+            oDoc.History.Add(new CChangesPDFInkPoints(this, this._gestures.length, aNewPath));
             oDoc.TurnOffHistory();
         }
 
         let nLineW = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
 
-        let [curMinX, curMinY, curMaxX, curMaxY] = getMinRect([].concat(...this._gestures));
-        let [newMinX, newMinY, newMaxX, newMaxY] = getMinRect([].concat(aNewPath).concat(...this._gestures));
+        let aCurAllPoints = [];
+        for (let i = 0; i < this._gestures.length; i++)
+            aCurAllPoints = aCurAllPoints.concat(this._gestures[i]);
+    
+        let aNewAllPoints = aCurAllPoints.slice();
+        aNewAllPoints = aNewAllPoints.concat(aNewPath);
+        
+        let aCurMinRect = getMinRect(aCurAllPoints);
+        let curMinX = aCurMinRect[0];
+        let curMinY = aCurMinRect[1];
+        let curMaxX = aCurMinRect[2];
+        let curMaxY = aCurMinRect[3];
+
+        let aNewMinRect = getMinRect(aNewAllPoints);
+        let newMinX = aNewMinRect[0];
+        let newMinY = aNewMinRect[1];
+        let newMaxX = aNewMinRect[2];
+        let newMaxY = aNewMinRect[3]; 
         
         let aNewAnnotRect = [(newMinX * g_dKoef_mm_to_pix - nLineW), (newMinY * g_dKoef_mm_to_pix - nLineW), (newMaxX * g_dKoef_mm_to_pix + nLineW), (newMaxY * g_dKoef_mm_to_pix + nLineW)];
 
@@ -490,8 +518,25 @@
     CAnnotationInk.prototype.RemoveLastAddedPath = function() {
         let nLineW = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
 
-        let [curMinX, curMinY, curMaxX, curMaxY] = getMinRect([].concat(...this._gestures));
-        let [newMinX, newMinY, newMaxX, newMaxY] = getMinRect([].concat(...this._gestures.slice(0, this._gestures.length - 1)));
+        let aCurAllPoints = [];
+        for (let i = 0; i < this._gestures.length; i++)
+            aCurAllPoints = aCurAllPoints.concat(this._gestures[i]);
+
+        let aNewAllPoints = [];
+        for (let i = 0; i < this._gestures.length - 1; i++)
+            aNewAllPoints = aNewAllPoints.concat(this._gestures[i]);
+
+        let aCurMinRect = getMinRect(aCurAllPoints);
+        let curMinX = aCurMinRect[0];
+        let curMinY = aCurMinRect[1];
+        let curMaxX = aCurMinRect[2];
+        let curMaxY = aCurMinRect[3];
+
+        let aNewMinRect = getMinRect(aNewAllPoints);
+        let newMinX = aNewMinRect[0];
+        let newMinY = aNewMinRect[1];
+        let newMaxX = aNewMinRect[2];
+        let newMaxY = aNewMinRect[3];
         
         let aNewAnnotRect = [(newMinX * g_dKoef_mm_to_pix - nLineW), (newMinY * g_dKoef_mm_to_pix - nLineW), (newMaxX * g_dKoef_mm_to_pix + nLineW), (newMaxY * g_dKoef_mm_to_pix + nLineW)];
 
@@ -728,8 +773,8 @@
     CAnnotationInk.prototype.createMoveTrack = function() {
         return new AscFormat.MoveAnnotationTrack(this);
     };
-    CAnnotationInk.prototype.getResizeCoefficients = function() {
-        return this.GetDrawing().GraphicObj.getResizeCoefficients(...arguments);
+    CAnnotationInk.prototype.getResizeCoefficients = function(handleNum, x, y) {
+        return this.GetDrawing().GraphicObj.getResizeCoefficients(handleNum, x, y);
     };
     CAnnotationInk.prototype.isObjectInSmartArt = function() {
         return false;
@@ -773,10 +818,7 @@
         
     function generateShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {
         // смещаем точки для отступа внутри шейпа
-        let aMinPointsRect = getMinRect([].concat(...arrOfArrPoints));
-
         let xMax = arrOfArrPoints[0][0].x, yMax = arrOfArrPoints[0][0].y, xMin = xMax, yMin = yMax;
-        let i;
 
         xMax = aShapeRect[2];
         xMin = aShapeRect[0];
@@ -812,7 +854,11 @@
     }
 
     function generateGeometry(arrOfArrPoints, aBounds, oGeometry) {
-        let [xMin, yMin, xMax, yMax] = aBounds;
+        let xMin = aBounds[0];
+        let yMin = aBounds[1];
+        let xMax = aBounds[2];
+        let yMax = aBounds[3];
+
         let geometry = oGeometry ? oGeometry : new AscFormat.Geometry();
         if (oGeometry) {
             oGeometry.pathLst = [];

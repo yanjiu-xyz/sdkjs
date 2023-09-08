@@ -1051,10 +1051,21 @@
                 nResult = nResult / aValues.length;
                 break;
             case "MIN":
-                nResult = Math.min(...aValues);
+                let nMin = aValues[0];
+                for (let i = 1; i < aValues.length; i++) {
+                    if (aValues[i] < nMin)
+                        nMin = aValues[i];
+                }
+                nResult = nMin;
                 break;
             case "MAX":
-                nResult = Math.max(...aValues);
+                let nMax = aValues[0];
+                for (let i = 1; i < aValues.length; i++) {
+                    if (aValues[i] > nMax)
+                        nMax = aValues[i];
+                }
+
+                nResult = nMax;
                 break;
         }
 

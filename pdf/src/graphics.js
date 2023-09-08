@@ -45,27 +45,56 @@ function CPDFGraphics()
     this.fillStyle      = null;
     this.strokeStyle    = null;
     this.globalAlpha    = 1;
+    this.bIntegerGrid   = false;
 }
-
-CPDFGraphics.prototype.SetStrokeStyle = function(style) {
-    if (this.context)
-        this.context.strokeStyle = style;
-
-    this.strokeStyle = style;
+CPDFGraphics.prototype.SetCurPage = function(nPage) {
+    this.curPage = nPage;
 };
-CPDFGraphics.prototype.SetFillStyle = function(style) {
-    if (this.context)
-        this.context.fillStyle = style;
+CPDFGraphics.prototype.GetCurPage = function() {
+    return this.curPage;
+};
+CPDFGraphics.prototype.GetScale = function() {
+    let oViewer = editor.getDocumentRenderer();
+    return AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[this.GetCurPage()].Dpi);
+};
+CPDFGraphics.prototype.SetIntegerGrid = function() {
+    this.bIntegerGrid = true;
+};
+CPDFGraphics.prototype.GetIntegerGrid = function() {
+    return this.bIntegerGrid;
+};
 
-    this.fillStyle = style;
+CPDFGraphics.prototype.SetStrokeStyle = function(r,g,b) {
+    if (this.context)
+        this.context.strokeStyle = `rgb(${r}, ${g}, ${b})`;
+
+    this.strokeStyle = {
+        r: r,
+        g: g,
+        b: b
+    };
+};
+CPDFGraphics.prototype.SetFillStyle = function(r,g,b) {
+    if (this.context)
+        this.context.fillStyle = `rgb(${r}, ${g}, ${b})`;
+
+    this.fillStyle = {
+        r: r,
+        g: g,
+        b: b
+    };
 };
 CPDFGraphics.prototype.SetLineWidth = function(width) {
+    let nScale = this.GetScale();
     if (this.context)
-        this.context.lineWidth = width;
+        this.context.lineWidth = (nScale * width) + 0.5 >> 0;
         
     this.lineWidth = width;
 };
-CPDFGraphics.prototype.GetLineWidth = function() {
+CPDFGraphics.prototype.GetLineWidth = function(bScaled) {
+    if (bScaled)
+        return this.lineWidth * this.GetScale() + 0.5 >> 0;
+
     return this.lineWidth;
 };
 CPDFGraphics.prototype.Init = function(context, nWidthPx, nHeightPx) {
@@ -76,7 +105,9 @@ CPDFGraphics.prototype.Init = function(context, nWidthPx, nHeightPx) {
     this.heightMM   = nHeightPx * g_dKoef_pix_to_mm;
 };
 CPDFGraphics.prototype.Rect = function(x, y, w, h) {
-    this.context.rect(x, y, w, h);
+    let nScale = this.GetScale();
+
+    this.context.rect(x * nScale, y * nScale, w * nScale, h * nScale);
 };
 CPDFGraphics.prototype.BeginPath = function() {
     this.context.beginPath();
@@ -88,20 +119,66 @@ CPDFGraphics.prototype.Stroke = function() {
     this.context.stroke();
 };
 CPDFGraphics.prototype.MoveTo = function(x, y) {
-    this.context.moveTo(x, y);
+    let nScale = this.GetScale();
+
+    this.context.moveTo(x * nScale, y * nScale);
 };
 CPDFGraphics.prototype.LineTo = function(x, y) {
-    this.context.lineTo(x, y);
+    let nScale = this.GetScale();
+
+    this.context.lineTo(x * nScale, y * nScale);
 };
 CPDFGraphics.prototype.FillRect = function(x, y, w, h) {
+    let nScale = this.GetScale();
+
     this.context.beginPath();
-    this.context.fillRect(x, y, w, h);
+    this.context.fillRect(x * nScale, y * nScale, w * nScale, h * nScale);
 };
 CPDFGraphics.prototype.DrawImage = function(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
-    this.context.drawImage(...arguments);
-};
-CPDFGraphics.prototype.RoundRect = function() {
-    this.context.roundRect(...arguments);
+    let nScale          = this.GetScale();
+    let bIntegerGrid    = this.GetIntegerGrid();
+
+    if (sx != null) {
+        sx *= nScale;
+        if (bIntegerGrid)
+            sx = sx + 0.5 >> 0;
+    }
+    if (sy != null) {
+        sy *= nScale;
+        if (bIntegerGrid)
+            sy = sy + 0.5 >> 0;
+    }
+    if (sWidth != null) {
+        sWidth *= nScale;
+        if (bIntegerGrid)
+            sWidth = sWidth + 0.5 >> 0;
+    }
+    if (sHeight != null) {
+        sHeight *= nScale;
+        if (bIntegerGrid)
+            sHeight = sHeight + 0.5 >> 0;
+    }
+    if (dx != null) {
+        dx *= nScale;
+        if (bIntegerGrid)
+            dx = dx + 0.5 >> 0;
+    }
+    if (dy != null) {
+        dy *= nScale;
+        if (bIntegerGrid)
+            dy = dy + 0.5 >> 0;
+    }
+    if (dWidth != null) {
+        dWidth *= nScale;
+        if (bIntegerGrid)
+            dWidth = dWidth + 0.5 >> 0;
+    }
+    if (dHeight != null) {
+        dHeight *= nScale;
+        if (bIntegerGrid)
+            dHeight = dHeight + 0.5 >> 0;
+    }
+    this.context.drawImage(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight);
 };
 CPDFGraphics.prototype.SetLineDash = function(dash) {
     if (this.context)
@@ -113,20 +190,58 @@ CPDFGraphics.prototype.SetGlobalAlpha = function(value) {
 };
 
 CPDFGraphics.prototype.Arc = function(x, y, radius, startAng, endAng, counterClockwise) {
-    this.context.arc(x, y, radius, startAng, endAng, counterClockwise);
+    let nScale = this.GetScale();
+
+    this.context.arc(x * nScale, y * nScale, radius * nScale, startAng, endAng, counterClockwise);
 };
-CPDFGraphics.prototype.ArcTo = function() {
-    this.context.arcTo(...arguments);
-};
-CPDFGraphics.prototype.QuadraticCurveTo = function() {
-    this.context.quadraticCurveTo(...arguments);
+CPDFGraphics.prototype.ArcTo = function(x1, y1, x2, y2, r) {
+    let nScale = this.GetScale();
+
+    this.context.arcTo(x1 * nScale, y1 * nScale, x2 * nScale, y2 * nScale, r * nScale);
 };
 CPDFGraphics.prototype.Fill = function() {
     this.context.fill();
 };
 CPDFGraphics.prototype.ClearRect = function(x, y, w, h) {
-    this.context.clearRect(x, y, w, h);
+    let nScale = this.GetScale();
+
+    this.context.clearRect(x * nScale, y * nScale, w * nScale, h * nScale);
 };
+CPDFGraphics.prototype.DrawClearHorLine = function(x1, x2, y)
+{
+    let nScale          = this.GetScale();
+    let nLineW          = this.GetLineWidth(true);
+
+    let X1  = x1 * nScale >> 0;
+    let X2  = x2 * nScale >> 0;
+    let Y   = y * nScale >> 0;
+    
+    let nLineOffsetY = (0 === (nLineW % 2) ? 0 : 0.5);
+
+    this.context.beginPath();
+    this.context.moveTo(X1, nLineOffsetY + Y);
+    this.context.lineTo(X2, nLineOffsetY + Y);
+};
+CPDFGraphics.prototype.DrawClearRect = function(x1, y1, x2, y2)
+{
+    let nScale = this.GetScale();
+    let nLineW = this.GetLineWidth(true);
+
+    let X1 = x1 * nScale >> 0;
+    let Y1 = y1 * nScale >> 0;
+    let X2 = x2 * nScale >> 0;
+    let Y2 = y2 * nScale >> 0;
+
+    let nLineOffsetY = (0 === (nLineW % 2) ? 0 : 0.5);
+    let nLineOffsetX = (0 === (nLineW % 2) ? 0 : 0.5);
+
+    this.context.moveTo(nLineOffsetX + X1, nLineOffsetY + Y1);
+    this.context.lineTo(-nLineOffsetX + X2, nLineOffsetY + Y1);
+    this.context.lineTo(-nLineOffsetX + X2, -nLineOffsetY + Y2);
+    this.context.lineTo(nLineOffsetX + X1, -nLineOffsetY + Y2);
+    this.context.closePath();
+};
+CPDFGraphics.prototype.DrawClear
 
     //------------------------------------------------------------export----------------------------------------------------
     window['AscPDF'] = window['AscPDF'] || {};

@@ -45,7 +45,7 @@ $(function ()
 	function EnterTextToForm(form, text)
 	{
 		let chars = text.codePointsArray();
-		AscTest.Editor.DocumentRenderer.activeForm = form;
+		AscTest.Editor.DocumentRenderer.getPDFDoc().activeForm = form;
 		form.EnterText(chars);
 		pdfDoc.EnterDownActiveField();
 	}

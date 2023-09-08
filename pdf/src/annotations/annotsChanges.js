@@ -80,7 +80,7 @@ CChangesPDFInkPoints.prototype.Undo = function()
 };
 CChangesPDFInkPoints.prototype.Redo = function()
 {
-	this.Class.AddPath(...this.Items);
+	this.Class.AddPath(this.Items);
 };
 
 /**

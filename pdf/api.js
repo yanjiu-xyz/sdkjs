@@ -190,7 +190,7 @@
 		if (oField && (oField.GetType() === AscPDF.FIELD_TYPES.text || (oField.GetType() === AscPDF.FIELD_TYPES.combobox && oField.IsEditable()))) {
 			if (oField.content.IsSelectionUse()) {
 				oField.Remove(-1);
-				this.DocumentRenderer._paintForms();
+				this.DocumentRenderer._paint();
 				this.DocumentRenderer.onUpdateOverlay();
 				this.WordControl.m_oDrawingDocument.TargetStart();
 				this.WordControl.m_oDrawingDocument.showTarget(true);
@@ -213,7 +213,7 @@
 			oField.EnterText(aChars);
 			this.WordControl.m_oDrawingDocument.showTarget(true);
 			this.WordControl.m_oDrawingDocument.TargetStart();
-			this.DocumentRenderer._paintForms();
+			this.DocumentRenderer._paint();
 			this.DocumentRenderer.onUpdateOverlay();
 		}
 	};
@@ -353,17 +353,18 @@
 		if (!this.DocumentRenderer)
 			return false;
 		
-		let viewer = this.DocumentRenderer;
+		let viewer	= this.DocumentRenderer;
+		let oDoc	= viewer.getPDFDoc();
 		if (!viewer
-			|| !viewer.activeForm
+			|| !oDoc.activeForm
 			|| !viewer.fieldFillingMode) {
 			
 			return false;
 		}
 		
-		viewer.activeForm.EnterText(text);
-		if (viewer.pagesInfo.pages[viewer.activeForm._page].needRedrawForms) {
-			viewer._paintForms();
+		oDoc.activeForm.EnterText(text);
+		if (viewer.pagesInfo.pages[oDoc.activeForm._page].needRedrawForms) {
+			viewer._paint();
 			viewer.onUpdateOverlay();
 		}
 		
@@ -428,7 +429,8 @@
 	PDFEditorApi.prototype.asc_SelectPDFFormListItem = function(sId) {
 		let nIdx = parseInt(sId);
 		let oViewer = this.DocumentRenderer;
-		let oField = oViewer.activeForm;
+		let oDoc	= oViewer.getPDFDoc();
+		let oField = oDoc.activeForm;
 		if (!oField)
 			return;
 		
@@ -438,7 +440,7 @@
 			oField.Commit();
 			isNeedRedraw = true;
 			
-			oViewer.activeForm = null;
+			oDoc.activeForm = null;
 			oField.SetDrawHighlight(true);
 			
 			this.WordControl.m_oDrawingDocument.TargetEnd();
@@ -446,7 +448,7 @@
 		
 		
 		if (isNeedRedraw) {
-			oViewer._paintForms();
+			oViewer._paint();
 			oViewer._paintFormsHighlight();
 		}
 	};
@@ -499,13 +501,13 @@
 
 		return oComment.GetId()
 	};
-	asc_docs_api.prototype.asc_showComments = function()
+	PDFEditorApi.prototype.asc_showComments = function()
 	{
 		let oDoc = this.getPDFDoc();
 		oDoc.HideShowAnnots(false);
 	};
 
-	asc_docs_api.prototype.asc_hideComments = function()
+	PDFEditorApi.prototype.asc_hideComments = function()
 	{
 		let oDoc = this.getPDFDoc();
 		oDoc.HideShowAnnots(true);

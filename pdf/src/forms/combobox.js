@@ -58,6 +58,7 @@
             return;
 
         let oViewer         = editor.getDocumentRenderer();
+        let oDoc            = this.GetDocument();
         let oGraphicsWord   = oViewer.pagesInfo.pages[this.GetPage()].graphics.word;
         
         this.Recalculate();
@@ -66,13 +67,13 @@
         let oContentToDraw = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format) && this.IsNeedDrawHighlight() ? this.contentFormat : this.content;
         this.curContent = oContentToDraw; // запоминаем текущий контент
 
-        if (oViewer.activeForm == this)
+        if (oDoc.activeForm == this)
             this.CheckFormViewWindow();
 
         oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
         oContentToDraw.Draw(0, oGraphicsWord);
         // redraw target cursor if field is selected
-        if (oViewer.activeForm == this && oContentToDraw.IsSelectionUse() == false && oViewer.fieldFillingMode)
+        if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && oViewer.fieldFillingMode)
             oContentToDraw.RecalculateCurPos();
         
         oGraphicsWord.RemoveClip();
@@ -165,13 +166,13 @@
         oGraphicsPDF.SetLineDash([]);
         oGraphicsPDF.BeginPath();
         oGraphicsPDF.SetGlobalAlpha(1);
-        oGraphicsPDF.SetFillStyle("rgb(240, 240, 240)");
+        oGraphicsPDF.SetFillStyle(240, 240, 240);
         oGraphicsPDF.FillRect(nMarkX, nMarkY, nMarkWidth, nMarkHeight);
         oGraphicsPDF.ClosePath();
 
         // marker border right part
         oGraphicsPDF.BeginPath();
-        oGraphicsPDF.SetStrokeStyle("rgb(100, 100, 100)");
+        oGraphicsPDF.SetStrokeStyle(100, 100, 100);
         oGraphicsPDF.SetLineWidth(1);
         oGraphicsPDF.MoveTo(nMarkX, nMarkY + nMarkHeight);
         oGraphicsPDF.LineTo(nMarkX + nMarkWidth, nMarkY + nMarkHeight);
@@ -181,7 +182,7 @@
 
         // marker border left part
         oGraphicsPDF.BeginPath();
-        oGraphicsPDF.SetStrokeStyle("rgb(255, 255, 255)");
+        oGraphicsPDF.SetStrokeStyle(255, 255, 255);
         oGraphicsPDF.MoveTo(nMarkX, nMarkY + nMarkHeight);
         oGraphicsPDF.LineTo(nMarkX, nMarkY);
         oGraphicsPDF.LineTo(nMarkX + nMarkWidth, nMarkY);
@@ -195,7 +196,7 @@
         let nStartIconY = nMarkY + nMarkHeight/2 - (nIconH)/2;
 
         oGraphicsPDF.BeginPath();
-        oGraphicsPDF.SetFillStyle("black");
+        oGraphicsPDF.SetFillStyle(0, 0, 0);
         
         oGraphicsPDF.MoveTo(nStartIconX, nStartIconY);
         oGraphicsPDF.LineTo(nStartIconX + nIconW, nStartIconY);
@@ -247,16 +248,16 @@
         }
 
         // вызываем выставление курсора после onFocus, если уже в фокусе, тогда сразу.
-        if (oViewer.activeForm != this && this._triggers.OnFocus && this._triggers.OnFocus.Actions.length > 0)
+        if (oDoc.activeForm != this && this._triggers.OnFocus && this._triggers.OnFocus.Actions.length > 0)
             oActionsQueue.callBackAfterFocus = callbackAfterFocus.bind(this, x, y, e);
         else
             callbackAfterFocus.bind(this, x, y, e)();
 
         this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
-        if (oViewer.activeForm != this)
+        if (oDoc.activeForm != this)
             this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
 
-        oViewer.activeForm = this;
+        oDoc.activeForm = this;
     };
     
     /**

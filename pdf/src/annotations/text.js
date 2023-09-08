@@ -161,7 +161,6 @@
         let oViewer         = editor.getDocumentRenderer();
         // let oRGB            = this.GetRGBColor(this._textColor);
         let oRGB            = {r: 255, g: 255, b: 255};
-        let oGraphicsPDF    = oGraphics ? oGraphics : oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
         let nScale          = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
         
         let ICON_TO_DRAW    = this.GetIconImg();
@@ -192,13 +191,6 @@
         canvas.width = wScaled;
         canvas.height = hScaled;
 
-        // oGraphicsPDF.BeginPath();
-        // oGraphicsPDF.SetFillStyle(`rgb(255, 209, 0)`);
-        // // oGraphicsPDF.FillRect(X, Y, nWidth, nHeight);
-        // oGraphicsPDF.RoundRect(X, Y, nWidth, nHeight, [3,3,3,3]);
-        // oGraphicsPDF.Fill();
-        // oGraphicsPDF.ClosePath();
-
         // Draw the image onto the canvas
         context.drawImage(ICON_TO_DRAW, 0, 0, imgW, imgH, 0, 0, wScaled >> 0, hScaled >> 0);
 
@@ -226,7 +218,7 @@
         context.putImageData(imageData, 0, 0);
 
         // Draw the checkmark
-        oGraphicsPDF.DrawImage(canvas, x, y);
+        oGraphics.DrawImage(canvas, x, y);
     };
     CAnnotationText.prototype.onMouseDown = function(e) {
         let oViewer         = editor.getDocumentRenderer();

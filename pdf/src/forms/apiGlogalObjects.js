@@ -155,7 +155,8 @@
             if (nArrLenght == -1)
                 return ["T"];
 
-        let [fromSpace, ...aComponents] = colorArray;
+        let fromSpace   = colorArray[0];
+        let aComponents = colorArray.slice(1);
 
         // Convert from 'T' (Tint) to 'RGB'
         if (fromSpace === 'T') {

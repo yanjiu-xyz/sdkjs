@@ -2169,7 +2169,8 @@
     }
 
     function private_correctApiColor(aApiColor) {
-        let [sColorSpace, ...aComponents] = aApiColor;
+        let sColorSpace = aApiColor[0];
+        let aComponents = aApiColor.slice(1);
 
         function correctComponent(component) {
             if (typeof(component) != "number" || component < 0)

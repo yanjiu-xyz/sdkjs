@@ -271,15 +271,15 @@
         return sValue;
     };
         
-    CTextField.prototype.Draw = function() {
+    CTextField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
         if (this.IsHidden() == true)
             return;
 
-        let oViewer = editor.getDocumentRenderer();
-        let oGraphicsWord = oViewer.pagesInfo.pages[this.GetPage()].graphics.word;
+        let oViewer         = editor.getDocumentRenderer();
+        let oDoc            = this.GetDocument();
 
         this.Recalculate();
-        this.DrawBackground();
+        this.DrawBackground(oGraphicsPDF);
                 
         let oContentToDraw = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format) && this.IsNeedDrawHighlight() ? this.contentFormat : this.content;
         this.curContent = oContentToDraw; // запоминаем текущий контент
@@ -289,17 +289,17 @@
             oContentToDraw.ShiftView(this._curShiftView.x, this._curShiftView.y);
         }
 
-        if (this._bAutoShiftContentView && oViewer.activeForm == this)
+        if (this._bAutoShiftContentView && oDoc.activeForm == this)
             this.CheckFormViewWindow();
 
         oGraphicsWord.AddClipRect(this.contentRect.X, this.contentRect.Y, this.contentRect.W, this.contentRect.H);
         oContentToDraw.Draw(0, oGraphicsWord);
 
         oGraphicsWord.RemoveLastClip();
-        this.DrawBorders();
+        this.DrawBorders(oGraphicsPDF);
 
         // redraw target cursor if field is selected
-        if (oViewer.activeForm == this && oContentToDraw.IsSelectionUse() == false && oViewer.fieldFillingMode)
+        if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && oViewer.fieldFillingMode)
             oContentToDraw.RecalculateCurPos();
     };
     CTextField.prototype.Recalculate = function() {
@@ -402,16 +402,16 @@
         }
         
         // вызываем выставление курсора после onFocus, если уже в фокусе, тогда сразу.
-        if (oViewer.activeForm != this && this._triggers.OnFocus && this._triggers.OnFocus.Actions.length > 0)
+        if (oDoc.activeForm != this && this._triggers.OnFocus && this._triggers.OnFocus.Actions.length > 0)
             oActionsQueue.callBackAfterFocus = callbackAfterFocus.bind(this, x, y, e);
         else
             callbackAfterFocus.bind(this, x, y, e)();
 
         this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
-        if (oViewer.activeForm != this)
+        if (oDoc.activeForm != this)
             this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
 
-        oViewer.activeForm = this;
+        oDoc.activeForm = this;
     };
       
     CTextField.prototype.ScrollVertical = function(scrollY, maxYscroll) {
@@ -421,7 +421,7 @@
         this._curShiftView.y            = -nScrollCoeff * maxYscroll;
         this._scrollInfo.scrollCoeff    = nScrollCoeff;
         this.AddToRedraw();
-        editor.getDocumentRenderer()._paintForms();
+        editor.getDocumentRenderer()._paint();
     };
     CTextField.prototype.ScrollVerticalEnd = function() {
         let nHeightPerPara  = this.content.GetElement(1).Y - this.content.GetElement(0).Y;
@@ -435,7 +435,7 @@
         this._scrollInfo.scrollCoeff    = Math.abs(this._curShiftView.y / nMaxShiftY);
         
         this.AddToRedraw();
-        editor.getDocumentRenderer()._paintForms();
+        editor.getDocumentRenderer()._paint();
     };
     CTextField.prototype.UpdateScroll = function(bShow) {
         if (this.IsMultiline() == false)

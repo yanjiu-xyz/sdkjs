@@ -41,53 +41,9 @@
         square:     5
     }
     
-    let CHECK_SVG = `<svg
-    width="97.462692"
-    height="115.98789"
-    viewBox="0 0 97.462692 115.98789"
-    version="1.1"
-    id="svg5"
-    xml:space="preserve"
-    inkscape:version="1.2.2 (732a01da63, 2022-12-09)"
-    sodipodi:docname="check.svg"
-    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
-    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
-    xmlns="http://www.w3.org/2000/svg"
-    xmlns:svg="http://www.w3.org/2000/svg"><sodipodi:namedview
-      id="namedview7"
-      pagecolor="#505050"
-      bordercolor="#eeeeee"
-      borderopacity="1"
-      inkscape:showpageshadow="0"
-      inkscape:pageopacity="0"
-      inkscape:pagecheckerboard="0"
-      inkscape:deskcolor="#505050"
-      inkscape:document-units="px"
-      showgrid="false"
-      inkscape:zoom="4.7376154"
-      inkscape:cx="23.9572"
-      inkscape:cy="41.476562"
-      inkscape:window-width="1920"
-      inkscape:window-height="991"
-      inkscape:window-x="-9"
-      inkscape:window-y="-9"
-      inkscape:window-maximized="1"
-      inkscape:current-layer="layer1" /><defs
-      id="defs2" /><g
-      inkscape:label="Слой 1"
-      inkscape:groupmode="layer"
-      id="layer1"
-      transform="translate(-12.371013,-2.0611684)"><path
-        style="fill:#000000"
-        d="M 7.9153744,45.38148 32.083651,34.827647"
-        id="path242" /><path
-        style="fill:#000000"
-        d="M 35.671954,51.71378 33.139034,41.159947"
-        id="path244" /><path
-        style="opacity:1;fill:#000000"
-        d="m 12.371013,70.085234 c 0,0 9.268432,-8.566213 14.850746,-7.164179 5.582313,1.402033 13.115672,18.376865 13.115672,18.376865 0,0 6.937138,-13.800058 22.55597,-38.451492 C 78.512233,18.194994 88.548233,6.6826273 93.639669,4.3389654 101.74823,0.60647342 109.8337,2.585234 109.8337,2.585234 c 0,0 -6.6792,8.287321 -13.467357,17.858073 -6.788164,9.570753 -12.946529,20.002783 -14.96548,23.447897 -3.218556,5.492106 -23.582089,41.492537 -23.582089,41.492537 0,0 -15.314483,31.188889 -15.877804,32.317949 -0.56332,1.12906 -4.295322,-0.76079 -6.062495,-1.87019 -1.31002,-0.82241 -4.040457,-3.13776 -4.08637,-4.24678 C 31.723555,109.92887 27.50151,99.448458 22.663375,89.487549 17.82524,79.526641 12.371013,70.085234 12.371013,70.085234 Z"
-        id="path300"
-        sodipodi:nodetypes="czczscssczsssc" /></g></svg>`;
+    let CHECK_SVG = `<svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <path d="M5.2381 8.8L4 11.8L7.71429 16C12.0476 9.4 13.2857 8.2 17 4C14.5238 4 9.77778 8.8 7.71429 11.8L5.2381 8.8Z" fill="black"/>
+    </svg>`;
 
     const CHECKED_ICON = new Image();
     CHECKED_ICON.src = `data:image/svg+xml;utf8,${encodeURIComponent(CHECK_SVG)}`;
@@ -114,15 +70,15 @@
     CBaseCheckBoxField.prototype = Object.create(AscPDF.CBaseField.prototype);
     CBaseCheckBoxField.prototype.constructor = CBaseCheckBoxField;
 
-    CBaseCheckBoxField.prototype.Draw = function() {
+    CBaseCheckBoxField.prototype.Draw = function(oGraphicsPDF) {
         if (this.IsHidden() == true)
             return;
 
         let aRect = this.GetRect();
 
-        let X = aRect[0];
-        let Y = aRect[1];
-        let nWidth = (aRect[2] - aRect[0]);
+        let X       = aRect[0];
+        let Y       = aRect[1];
+        let nWidth  = (aRect[2] - aRect[0]);
         let nHeight = (aRect[3] - aRect[1]);
 
         // save pos in page.
@@ -133,11 +89,11 @@
             h: nHeight
         };
 
-        this.DrawBackground();
-        this.DrawBorders();
+        this.DrawBackground(oGraphicsPDF);
+        this.DrawBorders(oGraphicsPDF);
 
         if (true == this.IsChecked())
-            this.DrawCheckedSymbol();
+            this.DrawCheckedSymbol(oGraphicsPDF);
     };
     CBaseCheckBoxField.prototype.IsChecked = function() {
         return this._checked;
@@ -154,30 +110,28 @@
     CBaseCheckBoxField.prototype.SetHovered = function(bValue) {
         this._hovered = bValue;
     };
-    CBaseCheckBoxField.prototype.DrawCheckedSymbol = function() {
-        let oViewer         = editor.getDocumentRenderer();
-        let oGraphicsPDF    = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
-        let nScale          = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
+    CBaseCheckBoxField.prototype.DrawCheckedSymbol = function(oGraphicsPDF) {
+        let aOrigRect       = this.GetOrigRect();
 
-        let X       = this._pagePos.x * nScale;
-        let Y       = this._pagePos.y * nScale;
-        let nWidth  = this._pagePos.w * nScale;
-        let nHeight = this._pagePos.h * nScale;
+        let X       = aOrigRect[0];
+        let Y       = aOrigRect[1];
+        let nWidth  = aOrigRect[2] - aOrigRect[0];
+        let nHeight = aOrigRect[3] - aOrigRect[1];
 
-        let oMargins = this.GetMarginsFromBorders(true, false);
+        let oMargins = this.GetMarginsFromBorders(false, false);
         let oRGB    = this.GetRGBColor(this._textColor);
 
         oGraphicsPDF.SetGlobalAlpha(1);
-        oGraphicsPDF.SetStrokeStyle(`rgb(${oRGB.r}, ${oRGB.g}, ${oRGB.b})`);
-        oGraphicsPDF.SetFillStyle(`rgb(${oRGB.r}, ${oRGB.g}, ${oRGB.b})`);
-        oGraphicsPDF.SetLineWidth(nScale);
+        oGraphicsPDF.SetStrokeStyle(oRGB.r, oRGB.g, oRGB.b);
+        oGraphicsPDF.SetFillStyle(oRGB.r, oRGB.g, oRGB.b);
+        oGraphicsPDF.SetLineWidth(1);
         oGraphicsPDF.SetLineDash([]);
 
         switch (this._chStyle) {
             case CHECKBOX_STYLES.circle: {
                 let centerX = X + nWidth / 2;
                 let centerY = Y + nHeight / 2;
-                let nRadius = Math.min(nWidth / 4 - oMargins.left / 2, nHeight / 4 - oMargins.top / 2);
+                let nRadius = Math.abs(Math.min(nWidth / 4 - oMargins.left / 2, nHeight / 4 - oMargins.top / 2));
                 oGraphicsPDF.BeginPath();
                 oGraphicsPDF.Arc(centerX, centerY, nRadius, 0, 2 * Math.PI, false);
                 oGraphicsPDF.Fill();
@@ -281,10 +235,11 @@
                 let nInsideW = nWidth - 2 * oMargins.bottom;
                 let nInsideH = nHeight - 2 * oMargins.bottom;
 
+                let nGrScale = oGraphicsPDF.GetScale();
                 let nScale = Math.min((nInsideW - nInsideW * 0.2) / imgW, (nInsideH - nInsideW * 0.2) / imgH);
 
-                let wScaled = imgW * nScale ;
-                let hScaled = imgH * nScale ;
+                let wScaled = imgW * nScale;
+                let hScaled = imgH * nScale;
 
                 let x = X + oMargins.bottom + (nInsideW - wScaled)/2;
                 let y = Y + oMargins.bottom + (nInsideH - hScaled)/2;
@@ -294,11 +249,11 @@
                 var context = canvas.getContext('2d');
 
                 // Set the canvas dimensions to match the image
-                canvas.width = wScaled;
-                canvas.height = hScaled;
+                canvas.width = wScaled * nGrScale >> 0;
+                canvas.height = hScaled * nGrScale >> 0;
 
                 // Draw the image onto the canvas
-                context.drawImage(CHECKED_ICON, 0, 0, imgW, imgH, 0, 0, wScaled, hScaled);
+                context.drawImage(CHECKED_ICON, 0, 0, imgW, imgH, 0, 0, canvas.width, canvas.height);
 
                 // Get the pixel data of the canvas
                 var imageData = context.getImageData(0, 0, canvas.width, canvas.height);
@@ -324,7 +279,7 @@
                 context.putImageData(imageData, 0, 0);
 
                 // Draw the checkmark
-                oGraphicsPDF.DrawImage(canvas, x, y);
+                oGraphicsPDF.DrawImage(canvas, 0, 0, wScaled, hScaled, x, y, wScaled, hScaled);
             }
         }
     };
@@ -444,16 +399,52 @@
 
         return canvas;
     };
-    CBaseCheckBoxField.prototype.onMouseDown = function() {
+    CBaseCheckBoxField.prototype.onMouseDown = function(bSkipAction) {
+        let oDoc    = this.GetDocument();
+        let nPage   = this.GetPage();
         let oViewer = editor.getDocumentRenderer();
-
+        let page    = oViewer.drawingPages[nPage];
         this.SetPressed(true);
-        this.DrawPressed();
 
-        this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
-        if (oViewer.activeForm != this)
-            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
-        oViewer.activeForm = this;
+        let xCenter = oViewer.width >> 1;
+		let yPos    = oViewer.scrollY >> 0;
+        let nScale  = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
+		if (oViewer.documentWidth > oViewer.width)
+		{
+			xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
+		}
+
+        let canvasOverlay   = document.getElementById("id_overlay");
+        let ctxOverlay      = canvasOverlay.getContext("2d");
+
+        let tmpCanvas       = document.createElement('canvas');
+        let tmpCanvasCtx    = tmpCanvas.getContext('2d');
+        let w               = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let h               = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        tmpCanvas.width     = w;
+        tmpCanvas.height    = h;
+        let widthPx         = oViewer.canvas.width;
+        let heightPx        = oViewer.canvas.height;
+
+        let oGraphicsPDF = new AscPDF.CPDFGraphics();
+        oGraphicsPDF.Init(tmpCanvasCtx, widthPx * nScale, heightPx * nScale);
+        oGraphicsPDF.SetCurPage(this.GetPage());
+
+        this.DrawPressed(oGraphicsPDF);
+        
+        let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
+        let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+
+        ctxOverlay.globalAlpha = 1;
+        ctxOverlay.drawImage(oGraphicsPDF.context.canvas, 0, 0, tmpCanvas.width, tmpCanvas.height, x, y, w, h);
+        
+        // bSkipAction используется только для случая, когда форма зажата и мы выходим-заходим в неё, т.е. происходит отжатие-нажатие
+        if (bSkipAction !== true) {
+            this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
+            if (oDoc.activeForm != this)
+                this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
+            oDoc.activeForm = this;
+        }
     };
     CBaseCheckBoxField.prototype.onMouseEnter = function() {
         this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter);
@@ -465,49 +456,14 @@
 
         this.SetHovered(false);
     };
-    CBaseCheckBoxField.prototype.DrawPressed = function() {
-        let oViewer     = editor.getDocumentRenderer();
-        let oCtx        = oViewer.canvasForms.getContext("2d");
-        
-        let aRect       = this.GetRect();
-        let aOringRect  = this.GetOrigRect();
-        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
-        let nLineWidth  = aRect[0] / aOringRect[0] * nScale * this._lineWidth;
-        oCtx.lineWidth  = nLineWidth;
-
-        let X = this._pagePos.x * nScale;
-        let Y = this._pagePos.y * nScale;
-        let nWidth = this._pagePos.w * nScale;
-        let nHeight = this._pagePos.h * nScale;
-
-        let xCenter = oViewer.width >> 1;
-        if (oViewer.documentWidth > oViewer.width)
-		{
-			xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
-		}
-		let yPos    = oViewer.scrollY >> 0;
-        let page    = oViewer.drawingPages[this.GetPage()];
-        let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
-        let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        
-        // Create a new canvas element for the cropped area
-        var croppedCanvas       = document.createElement('canvas');
-        croppedCanvas.width     = nWidth;
-        croppedCanvas.height    = nHeight;
-
-        let oGraphicsPDF    = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
-        let oGraphicsCanvas = oGraphicsPDF.context.canvas;
-        oGraphicsPDF.ClearRect(0, 0, oGraphicsCanvas.width, oGraphicsCanvas.height);
-        
-        this.Draw();
-        oCtx.drawImage(oGraphicsCanvas, 0, 0, oGraphicsCanvas.width, oGraphicsCanvas.height, indLeft, indTop, w, h);
+    CBaseCheckBoxField.prototype.DrawPressed = function(oGraphicsPDF) {
+        this.Draw(oGraphicsPDF);
     };
     CBaseCheckBoxField.prototype.OnEndPressed = function() {
         this.DrawActive();
     };
     CBaseCheckBoxField.prototype.DrawActive = function() {
+        return;
         let oViewer     = editor.getDocumentRenderer();
         let oCtx        = oViewer.canvasForms.getContext("2d");
         
@@ -560,7 +516,6 @@
         }
         
         this.SetPressed(false);
-        //this.OnEndPressed();
         this.AddToRedraw();
 
         if (AscCommon.History.Is_LastPointEmpty())
@@ -569,6 +524,13 @@
             this.SetNeedCommit(true);
             this.Commit2();
         }
+
+        let oOverlay        = editor.getDocumentRenderer().overlay;
+        oOverlay.max_x      = 0;
+        oOverlay.max_y      = 0;
+        oOverlay.ClearAll   = true;
+
+        editor.getDocumentRenderer().onUpdateOverlay();
     };
     CBaseCheckBoxField.prototype.SetExportValue = function(sValue) {
         this._exportValue = sValue;

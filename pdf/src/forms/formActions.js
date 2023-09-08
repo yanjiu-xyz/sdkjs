@@ -222,7 +222,7 @@
         oActionsQueue.SetCurAction(this);
         
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oViewer.activeForm)
+        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm)
             oActionsQueue.Continue();
 
         if (this.page >= oViewer.pagesInfo.countTextPages) {
@@ -303,7 +303,7 @@
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oViewer.activeForm)
+        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm)
             oActionsQueue.Continue();
 
         switch (this.nameType) {
@@ -342,7 +342,7 @@
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oViewer.activeForm)
+        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm)
             oActionsQueue.Continue();
 
         editor.sendEvent("asc_onOpenLinkPdfForm", this.uri, this.OpenLink.bind(this), oActionsQueue.Continue.bind(oActionsQueue));
@@ -371,7 +371,7 @@
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oViewer.activeForm)
+        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm)
             oActionsQueue.Continue();
 
         oDoc.HideShowForms(this.hidden, this.names);
@@ -392,7 +392,7 @@
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oViewer.activeForm)
+        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm)
             oActionsQueue.Continue();
             
         oDoc.ResetForms(this.names);
@@ -414,7 +414,7 @@
         oActionsQueue.SetCurAction(this);
 
         // если onFocus но форма не активна, то скипаем дейсвтие
-        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oViewer.activeForm) {
+        if (this.triggerType == FORMS_TRIGGERS_TYPES.OnFocus && this.field != oDoc.activeForm) {
             oActionsQueue.Continue();
             return;
         }
