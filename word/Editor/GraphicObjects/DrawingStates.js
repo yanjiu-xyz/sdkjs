@@ -197,7 +197,7 @@ StartAddNewShape.prototype =
                 let oViewer = editor.getDocumentRenderer();
                 if (oLogicDocument.currInkInDrawingProcess) {
                     oLogicDocument.currInkInDrawingProcess.AddPath(oTrack.arrPoint);
-                    oViewer._paintAnnots();
+                    oViewer._paint();
                 }
                 else {
                     let nScaleY = oViewer.drawingPages[oViewer.currentPage].H / oViewer.file.pages[oViewer.currentPage].H / oViewer.zoom;
@@ -221,7 +221,7 @@ StartAddNewShape.prototype =
                     oInkAnnot.AddToRedraw();
                     shape.recalculate();
 
-                    oViewer._paintAnnots();
+                    oViewer._paint();
 
                     oLogicDocument.currInkInDrawingProcess = oInkAnnot;
                 }
@@ -797,7 +797,7 @@ RotateState.prototype =
                     }
                     
                     oTrack.originalObject.AddToRedraw();
-                    editor.getDocumentRenderer()._paintAnnots();
+                    editor.getDocumentRenderer()._paint();
                 }
 
                 this.drawingObjects.changeCurrentState(new NullState(this.drawingObjects));

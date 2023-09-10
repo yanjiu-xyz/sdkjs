@@ -69,6 +69,53 @@
     CAnnotationTextMarkup.prototype.IsTextMarkup = function() {
         return true;
     };
+    CAnnotationTextMarkup.prototype.IsInQuads = function(x, y) {
+        let oOverlayCtx = editor.getDocumentRenderer().overlay.m_oContext;
+        let aQuads      = this.GetQuads();
+
+        for (let i = 0; i < aQuads.length; i++) {
+            let aPoints = aQuads[i];
+
+            let oPoint1 = {
+                x: aPoints[0],
+                y: aPoints[1]
+            }
+            let oPoint2 = {
+                x: aPoints[2],
+                y: aPoints[3]
+            }
+
+            let oPoint3 = {
+                x: aPoints[4],
+                y: aPoints[5]
+            }
+            let oPoint4 = {
+                x: aPoints[6],
+                y: aPoints[7]
+            }
+
+            let X1 = oPoint1.x;
+            let Y1 = oPoint1.y;
+            let X2 = oPoint2.x;
+            let Y2 = oPoint2.y;
+            let X3 = oPoint3.x;
+            let Y3 = oPoint3.y;
+            let X4 = oPoint4.x;
+            let Y4 = oPoint4.y;
+
+            oOverlayCtx.beginPath();
+            oOverlayCtx.moveTo(X1, Y1);
+            oOverlayCtx.lineTo(X2, Y2);
+            oOverlayCtx.lineTo(X4, Y4);
+            oOverlayCtx.lineTo(X3, Y3);
+            oOverlayCtx.closePath();
+
+            if (oOverlayCtx.isPointInPath(x, y))
+                return true;
+        }
+
+        return false;
+    };
     CAnnotationTextMarkup.prototype.DrawSelected = function(overlay) {
         let oViewer     = editor.getDocumentRenderer();
         let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[this.GetPage()].Dpi);
@@ -252,16 +299,9 @@
 
         let aQuads      = this.GetQuads();
         let oRGBFill    = this.GetRGBColor(this.GetStrokeColor());
-        let nGrScale    = oGraphicsPDF.GetScale();
-
+        
         for (let i = 0; i < aQuads.length; i++) {
             let aPoints     = aQuads[i];
-            let aMinRect    = getMinRect(aPoints);
-
-            let MinX = aMinRect[0];
-            let MinY = aMinRect[1];
-            let MaxX = aMinRect[2];
-            let MaxY = aMinRect[3];
             
             oGraphicsPDF.SetStrokeStyle(oRGBFill.r, oRGBFill.g, oRGBFill.b);
             oGraphicsPDF.BeginPath();
@@ -299,15 +339,9 @@
             let angle2          = Math.atan2(dy2, dx2);
             let rotationAngle   = angle1;
 
-            // oGraphicsPDF.BeginPath();
-            // oGraphicsPDF.MoveTo(oPoint1.x, oPoint1.y);
-            // oGraphicsPDF.LineTo(oPoint2.x, oPoint2.y);
-            // oGraphicsPDF.LineTo(oPoint4.x, oPoint4.y);
-            // oGraphicsPDF.LineTo(oPoint3.x, oPoint3.y);
-            // oGraphicsPDF.LineTo(oPoint1.x, oPoint1.y);
-            // oGraphicsPDF.Stroke();
+            let nSide = findMaxSideWithRotation(oPoint1.x, oPoint1.y, oPoint2.x, oPoint2.y, oPoint3.x, oPoint3.y, oPoint4.x, oPoint4.y);
 
-            oGraphicsPDF.SetLineWidth(Math.max(1, (MaxY - MinY) * 0.10 + 0.5 >> 0, (MaxX - MinX) * 0.10 + 0.5 >> 0));
+            oGraphicsPDF.SetLineWidth(nSide * 0.1 >> 0);
             let nLineW = oGraphicsPDF.GetLineWidth();
             
             let nIndentX = Math.sin(rotationAngle) * nLineW * 1.5;
@@ -369,9 +403,11 @@
             let X2 = oPoint2.x + (oPoint4.x - oPoint2.x) / 2;
             let Y2 = oPoint2.y + (oPoint4.y - oPoint2.y) / 2;
 
+            let nSide = findMaxSideWithRotation(oPoint1.x, oPoint1.y, oPoint2.x, oPoint2.y, oPoint3.x, oPoint3.y, oPoint4.x, oPoint4.y);
+
+            oGraphicsPDF.SetLineWidth(nSide * 0.1 >> 0);
             oGraphicsPDF.MoveTo(X1, Y1);
             oGraphicsPDF.LineTo(X2, Y2);
-
             oGraphicsPDF.Stroke();
         }
     };
@@ -405,33 +441,40 @@
         return [xMin, yMin, xMax, yMax];
     }
 
-    function Test() {
-        var canvas = document.getElementById("myCanvas");
-        canvas.width = 1000;
-        canvas.height = 1000;
-
-        var ctx = canvas.getContext("2d");
-        ctx.fillStyle = "black";
-        ctx.fillRect(0, 0, 1000, 1000);
-
-        function clearCircularArea(x, y, radius) {
-            ctx.save(); // Сохраняем текущее состояние контекста
-
-            // Создаем окружность, которая будет служить маской
-            ctx.beginPath();
-            ctx.arc(x, y, radius, 0, 2 * Math.PI);
-            ctx.closePath();
-
-            // Используем маску для очистки круговой области
-            ctx.clip();
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-            // Восстанавливаем исходное состояние контекста
-            ctx.restore();
-        }
-
-        // Пример использования для очистки круговой области
-        clearCircularArea(100, 100, 50);
+    function findMaxSideWithRotation(x1, y1, x2, y2, x3, y3, x4, y4) {
+        // Найдите центр поворота
+        const x_center = (x1 + x3) / 2;
+        const y_center = (y1 + y3) / 2;
+      
+        // Найдите угол поворота
+        const angle = Math.atan2(y3 - y1, x3 - x1);
+      
+        // Выполните поворот вершин прямоугольника на обратный угол
+        const cosAngle = Math.cos(-angle);
+        const sinAngle = Math.sin(-angle);
+      
+        const x1_rotated = cosAngle * (x1 - x_center) - sinAngle * (y1 - y_center) + x_center;
+        const y1_rotated = sinAngle * (x1 - x_center) + cosAngle * (y1 - y_center) + y_center;
+      
+        const x2_rotated = cosAngle * (x2 - x_center) - sinAngle * (y2 - y_center) + x_center;
+        const y2_rotated = sinAngle * (x2 - x_center) + cosAngle * (y2 - y_center) + y_center;
+      
+        const x3_rotated = cosAngle * (x3 - x_center) - sinAngle * (y3 - y_center) + x_center;
+        const y3_rotated = sinAngle * (x3 - x_center) + cosAngle * (y3 - y_center) + y_center;
+      
+        const x4_rotated = cosAngle * (x4 - x_center) - sinAngle * (y4 - y_center) + x_center;
+        const y4_rotated = sinAngle * (x4 - x_center) + cosAngle * (y4 - y_center) + y_center;
+      
+        // Найдите длины сторон
+        const sideAB = Math.sqrt(Math.pow(x2_rotated - x1_rotated, 2) + Math.pow(y2_rotated - y1_rotated, 2));
+        const sideBC = Math.sqrt(Math.pow(x3_rotated - x2_rotated, 2) + Math.pow(y3_rotated - y2_rotated, 2));
+        const sideCD = Math.sqrt(Math.pow(x4_rotated - x3_rotated, 2) + Math.pow(y4_rotated - y3_rotated, 2));
+        const sideDA = Math.sqrt(Math.pow(x1_rotated - x4_rotated, 2) + Math.pow(y1_rotated - y4_rotated, 2));
+      
+        // Найдите максимальную сторону
+        const maxSide = Math.max(sideAB, sideBC, sideCD, sideDA);
+      
+        return maxSide;
     }
 
     window["AscPDF"].CAnnotationTextMarkup  = CAnnotationTextMarkup;

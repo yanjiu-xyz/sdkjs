@@ -1645,7 +1645,7 @@ var CPresentation = CPresentation || function(){};
             this.annots.splice(this.annots.indexOf(oAnnot), 1);
             oViewer.pagesInfo.pages[nPage].annots.splice(oViewer.pagesInfo.pages[nPage].annots.indexOf(oAnnot), 1);
             editor.sync_RemoveComment(Id);
-            oViewer._paintAnnots();
+            oViewer._paint();
         }
         else {
             oAnnot.SetContents(null);

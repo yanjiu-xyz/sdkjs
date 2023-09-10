@@ -1529,9 +1529,8 @@
 					if (pageObject.x >= pageFields.fields[i]._origRect[0] && pageObject.x <= pageFields.fields[i]._origRect[2] &&
 						pageObject.y >= pageFields.fields[i]._origRect[1] && pageObject.y <= pageFields.fields[i]._origRect[3])
 					{
-						if (bGetHidden) {
+						if (bGetHidden)
 							return pageFields.fields[i];
-						}
 						else
 							return pageFields.fields[i].IsHidden() == false ? pageFields.fields[i] : null;
 						
@@ -1551,17 +1550,35 @@
 			{
 				for (var i = page.annots.length -1; i >= 0; i--)
 				{
-					let nAnnotWidth = (page.annots[i]._origRect[2] - page.annots[i]._origRect[0]);
-					let nAnnotHeight = (page.annots[i]._origRect[3] - page.annots[i]._origRect[1]);
+					let oAnnot = page.annots[i];
+					let nAnnotWidth		= (page.annots[i]._origRect[2] - page.annots[i]._origRect[0]);
+					let nAnnotHeight	= (page.annots[i]._origRect[3] - page.annots[i]._origRect[1]);
+					
+					if (true !== bGetHidden && oAnnot.IsHidden() == true)
+						continue;
 
-					if (pageObject.x >= page.annots[i]._origRect[0] && pageObject.x <= page.annots[i]._origRect[0] + nAnnotWidth &&
-						pageObject.y >= page.annots[i]._origRect[1] && pageObject.y <= page.annots[i]._origRect[1] + nAnnotHeight)
+					if (oAnnot.IsComment())
 					{
-						if (bGetHidden) {
-							return page.annots[i];
+						nAnnotWidth /= this.zoom;
+						nAnnotHeight /= this.zoom;
+					}
+
+					if (pageObject.x >= oAnnot._origRect[0] && pageObject.x <= oAnnot._origRect[0] + nAnnotWidth &&
+						pageObject.y >= oAnnot._origRect[1] && pageObject.y <= oAnnot._origRect[1] + nAnnotHeight)
+					{
+						// у маркап аннотаций ищем по quads (т.к. rect too wide)
+						if (oAnnot.IsTextMarkup())
+						{
+							if (oAnnot.IsInQuads(pageObject.x, pageObject.y))
+								return oAnnot;
 						}
 						else
-							return page.annots[i].IsHidden() == false ? page.annots[i] : null;
+						{
+							if (bGetHidden)
+								return oAnnot;
+							else
+								return oAnnot.IsHidden() == false ? oAnnot : null;
+						}
 						
 					}
 				}

@@ -154,22 +154,19 @@
         if (this.IsHidden() == true)
             return;
 
+        let oViewer = editor.getDocumentRenderer();
         // note: oGraphic параметр для рисование track
         if (!this.graphicObjects)
             this.graphicObjects = new AscFormat.DrawingObjectsController(this);
 
-        let oViewer         = editor.getDocumentRenderer();
         // let oRGB            = this.GetRGBColor(this._textColor);
         let oRGB            = {r: 255, g: 255, b: 255};
-        let nScale          = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
-        
         let ICON_TO_DRAW    = this.GetIconImg();
 
-        let aRect = this.GetRect();
+        let aRect       = this.GetRect();
+        let aOrigRect   = this.GetOrigRect();
 
-        let X = aRect[0] * nScale;
-        let Y = aRect[1] * nScale;
-        let nWidth = (aRect[2] - aRect[0]) * AscCommon.AscBrowser.retinaPixelRatio;
+        let nWidth  = (aRect[2] - aRect[0]) * AscCommon.AscBrowser.retinaPixelRatio;
         let nHeight = (aRect[3] - aRect[1]) * AscCommon.AscBrowser.retinaPixelRatio;
         
         let imgW = ICON_COMMENT.width;
@@ -177,12 +174,8 @@
 
         let nScaleX = nWidth / imgW;
         let nScaleY = nHeight / imgH;
-
         let wScaled = imgW * nScaleX ;
         let hScaled = imgH * nScaleY ;
-
-        let x = X;
-        let y = Y;
 
         var canvas = document.createElement('canvas');
         var context = canvas.getContext('2d');
@@ -217,8 +210,9 @@
         // Put the modified pixel data back onto the canvas
         context.putImageData(imageData, 0, 0);
 
-        // Draw the checkmark
-        oGraphics.DrawImage(canvas, x, y);
+        // Draw the comment note
+        // oGraphics.DrawImage(canvas, 0, 0, wScaled, hScaled, x, y, wScaled, hScaled);
+        oGraphics.DrawImage(canvas, 0, 0,  canvas.width, canvas.height, aOrigRect[0], aOrigRect[1], canvas.width, canvas.height);
     };
     CAnnotationText.prototype.onMouseDown = function(e) {
         let oViewer         = editor.getDocumentRenderer();

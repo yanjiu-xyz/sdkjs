@@ -497,7 +497,7 @@
 		//this.sync_AddComment(oComment.GetId(), oCommentData);
 
 		oComment.AddToRedraw();
-		oViewer._paintAnnots();
+		oViewer._paint();
 
 		return oComment.GetId()
 	};
@@ -681,7 +681,7 @@
 			IsSelection : false
 		}
 		
-		oViewer._paintAnnots();
+		oViewer._paint();
 		oViewer.onUpdateOverlay();
 	};
 	PDFEditorApi.prototype.SetUnderline = function(r, g, b, opacity) {
@@ -701,7 +701,7 @@
 			IsSelection : false
 		}
 		
-		oViewer._paintAnnots();
+		oViewer._paint();
 		oViewer.onUpdateOverlay();
 	};
 	PDFEditorApi.prototype.updateSkin = function() {

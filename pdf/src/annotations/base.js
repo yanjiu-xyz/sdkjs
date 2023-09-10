@@ -146,6 +146,9 @@
     CAnnotationBase.prototype.IsInk = function() {
         return false;
     };
+    CAnnotationBase.prototype.GetOrigRect = function() {
+        return this._origRect;
+    };
     
     CAnnotationBase.prototype.SetRect = function(aRect) {
         let oViewer = editor.getDocumentRenderer();

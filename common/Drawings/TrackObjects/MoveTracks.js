@@ -723,6 +723,7 @@ function MoveAnnotationTrack(originalObject)
                 oGraphics = new AscPDF.CPDFGraphics();
                 oGraphics.Init(tmpCanvasCtx, this.tmpCanvas.width, this.tmpCanvas.height);
                 oGraphics.SetGlobalAlpha(1);
+                oGraphics.SetCurPage(this.objectToDraw.GetPage());
             }
         }
         
