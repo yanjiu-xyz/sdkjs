@@ -882,13 +882,13 @@ var CPresentation = CPresentation || function(){};
                 oViewer.mouseMoveFieldObject = mouseMoveFieldObject;
                 mouseMoveFieldObject.onMouseEnter();
 
-                oViewer._paintFormsHighlight();
+                // oViewer._paintFormsHighlight();
             }
             else if (mouseMoveFieldObject == null && oViewer.mouseMoveFieldObject) {
                 oViewer.mouseMoveFieldObject.onMouseExit();
                 oViewer.mouseMoveFieldObject._needDrawHoverBorder = false;
                 oViewer.mouseMoveFieldObject = null;
-                oViewer._paintFormsHighlight();
+                // oViewer._paintFormsHighlight();
             }
 
 
@@ -1012,11 +1012,11 @@ var CPresentation = CPresentation || function(){};
 
             oViewer.onUpdateOverlay();
         }
-        else if (!oViewer.isMouseMoveBetweenDownUp && oField.content && oField.content.IsSelectionUse())
-        {
-            oField.content.RemoveSelection();
-            oViewer.onUpdateOverlay();
-        }
+        // else if (!oViewer.isMouseMoveBetweenDownUp && oField.content && oField.content.IsSelectionUse())
+        // {
+        //     oField.content.RemoveSelection();
+        //     oViewer.onUpdateOverlay();
+        // }
 
         switch (oField.GetType())
         {

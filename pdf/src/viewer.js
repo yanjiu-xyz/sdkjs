@@ -1135,6 +1135,9 @@
 					});
 	
 					oAnnot.SetApIdx(oAnnotInfo["AP"]["i"]);
+					oAnnot.SetDrawFromStream(true);
+					oAnnot.SetOriginPage(oAnnotInfo["page"]);
+
 					oAnnotsMap[oAnnotInfo["AP"]["i"]] = oAnnot;
 
 					if (oAnnotInfo["Type"] == AscPDF.ANNOTATIONS_TYPES.Ink) {
@@ -1163,7 +1166,7 @@
 			}
 
 			for (let apIdx in oAnnotsMap) {
-				if (oAnnotsMap[apIdx]._contents instanceof AscPDF.CAnnotationText)
+				if (oAnnotsMap[apIdx] instanceof AscPDF.CAnnotationText || oAnnotsMap[apIdx]._contents instanceof AscPDF.CAnnotationText)
 					oAnnotsMap[apIdx]._OnAfterSetContents();
 			}
 			this.IsOpenAnnotsInProgress = false;
@@ -2409,7 +2412,7 @@
 				if (!page.Image && !isStretchPaint)
 				{
 					page.Image = this.file.getPage(i, natW, natH, undefined, this.Api.isDarkMode ? 0x3A3A3A : 0xFFFFFF);
-					this._paintHighlightAnnotsOnPage(i, page.Image.getContext("2d"));
+					this._paintMarkupAnnotsOnPage(i, page.Image.getContext("2d"));
 					// нельзя кэшировать с вотермарком - так как есть поворот
 					//if (this.Api.watermarkDraw)
 					//	this.Api.watermarkDraw.Draw(page.Image.getContext("2d"), w, h);
@@ -3321,6 +3324,7 @@
 			xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
 		}
 		
+		let time1 = performance.now();
 		for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 		{
 			let aAnnots = this.pagesInfo.pages[i].annots != null ? this.pagesInfo.pages[i].annots : null;
@@ -3365,12 +3369,23 @@
 				
 				if (this.pagesInfo.pages[i].annots != null) {
 					this.pagesInfo.pages[i].annots.forEach(function(annot) {
-						if (annot.IsHighlight() == false)
-							annot.Draw(oGraphicsPDF);
+						if (annot.IsTextMarkup() == false) {
+							if (annot.IsNeedDrawFromStream() == false) {
+								annot.Draw(oGraphicsPDF, oGraphicsWord);
+							}
+							else {
+								if (annot.IsInk())
+									annot.Recalculate();
+
+								annot.DrawFromStream(oGraphicsPDF);
+							}
+						}
 					});
 				}
 				
-				page.ImageAnnots = tmpCanvas;
+				page.ImageAnnots			= tmpCanvas;
+				page.ImageAnnots.maxRect	= oGraphicsPDF.GetDrawedRect(true);
+
 				this.pagesInfo.pages[i].needRedrawAnnots = false;
 			}
 			
@@ -3389,10 +3404,19 @@
 			// 	}
 			// }
 			
-			let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
-			let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+			let x = (((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0)) - (w >> 1);
+			let y = (((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0);
+			// let x = (((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0)) - (w >> 1) + page.ImageAnnots.maxRect.xMin;
+			// let y = (((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0) + page.ImageAnnots.maxRect.yMin;
 			
 			ctx.drawImage(page.ImageAnnots, 0, 0, page.ImageAnnots.width, page.ImageAnnots.height, x, y, w, h);
+
+			// let wCropped = page.ImageAnnots.maxRect.xMax - page.ImageAnnots.maxRect.xMin;
+			// let hCropped = page.ImageAnnots.maxRect.yMax - page.ImageAnnots.maxRect.yMin;
+
+			// ctx.drawImage(page.ImageAnnots, page.ImageAnnots.maxRect.xMin, page.ImageAnnots.maxRect.yMin, wCropped, hCropped, x, y, wCropped, hCropped);
+			let time2 = performance.now();
+			// console.log("time: " + (time2 - time1));
 		}
 		
 		// if (this.activeForm && this.activeForm.UpdateScroll)
@@ -3400,7 +3424,7 @@
 		// if (this.activeForm && [AscPDF.FIELD_TYPES.combobox, AscPDF.FIELD_TYPES.text].includes(this.activeForm.GetType()))
 		// 	this.activeForm.content.RecalculateCurPos();
 	};
-	CHtmlPage.prototype._paintHighlightAnnotsOnPage = function(pageIndex, ctx)
+	CHtmlPage.prototype._paintMarkupAnnotsOnPage = function(pageIndex, ctx)
 	{
 		let xCenter = this.width >> 1;
 		let yPos = this.scrollY >> 0;
@@ -3438,8 +3462,12 @@
 			
 			if (this.pagesInfo.pages[pageIndex].annots != null) {
 				this.pagesInfo.pages[pageIndex].annots.forEach(function(annot) {
-					if (annot.IsHighlight())
-						annot.Draw(oGraphicsPDF);
+					if (annot.IsTextMarkup()) {
+						if (false == annot.IsNeedDrawFromStream())
+							annot.Draw(oGraphicsPDF);
+						else
+							annot.DrawFromStream(oGraphicsPDF);
+					}
 				});
 			}
 			
@@ -3448,19 +3476,7 @@
 	};
 	CHtmlPage.prototype._paintFormsHighlight = function()
 	{
-		return;
-
-		let canvas = this.canvasFormsHighlight;
-		const ctx = canvas.getContext('2d');
-		ctx.clearRect(0, 0, canvas.width, canvas.height);
-		
-		let xCenter = this.width >> 1;
-		let yPos = this.scrollY >> 0;
-		if (this.documentWidth > this.width)
-		{
-			xCenter = (this.documentWidth >> 1) - (this.scrollX) >> 0;
-		}
-		
+		let oCtx = this.canvasForms.getContext("2d");
 		for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 		{
 			let aForms = this.pagesInfo.pages[i].fields != null ? this.pagesInfo.pages[i].fields : null;
@@ -3468,32 +3484,18 @@
 			if (!aForms)
 				continue;
 			
-			// рисуем на отдельном канвасе
-			let tmpCanvas = document.createElement('canvas');
 			let page = this.drawingPages[i];
 			if (!page)
 				break;
 			
-			let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-			let h = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-			
-			tmpCanvas.width = w;
-			tmpCanvas.height = h;
-			
-			let tmpCanvasCtx = tmpCanvas.getContext('2d');
-			let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
-			let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-			
 			if (this.pagesInfo.pages[i].fields != null) {
 				this.pagesInfo.pages[i].fields.forEach(function(field) {
 					if (field.IsNeedDrawHighlight())
-						field.DrawHighlight(tmpCanvasCtx);
+						field.DrawHighlight(oCtx);
 					if (field._needDrawHoverBorder)
-						field.DrawSelected(tmpCanvasCtx);
+						field.DrawSelected(oCtx);
 				});
 			}
-			
-			ctx.drawImage(tmpCanvas, 0, 0, page.ImageForms.width, page.ImageForms.height, x, y, w, h);
 		}
 	};
 	CHtmlPage.prototype.createComponents = function()

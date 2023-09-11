@@ -449,7 +449,6 @@
 		
 		if (isNeedRedraw) {
 			oViewer._paint();
-			oViewer._paintFormsHighlight();
 		}
 	};
 	PDFEditorApi.prototype.SetDrawingFreeze = function(bIsFreeze)

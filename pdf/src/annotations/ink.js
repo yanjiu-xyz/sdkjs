@@ -120,16 +120,20 @@
     CAnnotationInk.prototype.IsInk = function() {
         return true;
     };
-    CAnnotationInk.prototype.Draw = function(oGraphics) {
+    CAnnotationInk.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
         if (this.IsHidden() == true)
             return;
 
         this.Recalculate();
         // this.DrawBackground();
+        let aRect   = this.GetOrigRect();
 
+        oGraphicsPDF.CheckPoint(aRect[0], aRect[1]);
+        oGraphicsPDF.CheckPoint(aRect[2], aRect[3]);
+        
         let oDrawing = this.GetDrawing();
         if (oDrawing)
-            oDrawing.GraphicObj.draw(oGraphics);
+            oDrawing.GraphicObj.draw(oGraphicsWord);
     };
     CAnnotationInk.prototype.DrawBackground = function() {
         let oViewer = editor.getDocumentRenderer();
@@ -167,9 +171,6 @@
     };
 
     CAnnotationInk.prototype.Recalculate = function() {
-        // if (this.IsNeedRecalc() == false)
-        //     return;
-
         let oViewer = editor.getDocumentRenderer();
         let aRect   = this.GetRect();
         
@@ -187,21 +188,6 @@
         contentY        = (Y) * g_dKoef_pix_to_mm;
         contentXLimit   = (X + nWidth) * g_dKoef_pix_to_mm;
         contentYLimit   = (Y + nHeight) * g_dKoef_pix_to_mm;
-        // contentX        = (X + oMarings.left) * g_dKoef_pix_to_mm;
-        // contentY        = (Y + oMarings.top) * g_dKoef_pix_to_mm;
-        // contentXLimit   = (X + nWidth - oMarings.right) * g_dKoef_pix_to_mm;
-        // contentYLimit   = (Y + nHeight - oMarings.top) * g_dKoef_pix_to_mm;
-
-        // let oShape = this.GetDrawing().GraphicObj;
-        // oShape.spPr.xfrm.setExtX(contentXLimit - contentX);
-        // oShape.spPr.xfrm.setExtY(contentYLimit - contentY);
-        // this.GetDrawing().CheckWH();
-        // oShape.recalculate();
-
-        // this._formRect.X = X * g_dKoef_pix_to_mm;
-        // this._formRect.Y = Y * g_dKoef_pix_to_mm;
-        // this._formRect.W = nWidth * g_dKoef_pix_to_mm;
-        // this._formRect.H = nHeight * g_dKoef_pix_to_mm;
         
         if (!this.contentRect)
             this.contentRect = {};

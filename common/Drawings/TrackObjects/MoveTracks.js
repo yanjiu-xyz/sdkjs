@@ -706,32 +706,29 @@ function MoveAnnotationTrack(originalObject)
         let x = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
         let y = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         
-        let oGraphics;
+        let oGraphicsPDF, oGraphicsWord;
+        oGraphicsPDF = new AscPDF.CPDFGraphics();
+        oGraphicsPDF.Init(tmpCanvasCtx, this.tmpCanvas.width, this.tmpCanvas.height);
+        oGraphicsPDF.SetGlobalAlpha(1);
+
+        oGraphicsPDF.SetCurPage(this.objectToDraw.GetPage());
         switch (this.objectToDraw.GetType()) {
             case AscPDF.ANNOTATIONS_TYPES.Ink: {
                 let nScale  = AscCommon.AscBrowser.retinaPixelRatio * this.viewer.zoom;
-                oGraphics   = new AscCommon.CGraphics();
+                oGraphicsWord   = new AscCommon.CGraphics();
 
-				this.viewer.pagesInfo.pages[this.objectToDraw.GetPage()].graphics.word = oGraphics;
-				oGraphics.init(tmpCanvasCtx, this.tmpCanvas.width * nScale, this.tmpCanvas.height * nScale, this.tmpCanvas.width * g_dKoef_pix_to_mm, this.tmpCanvas.height * g_dKoef_pix_to_mm);
-				oGraphics.m_oFontManager = AscCommon.g_fontManager;
-				oGraphics.endGlobalAlphaColor = [255, 255, 255];
-				oGraphics.transform(1, 0, 0, 1, 0, 0);
+				oGraphicsWord.init(tmpCanvasCtx, this.tmpCanvas.width * nScale, this.tmpCanvas.height * nScale, this.tmpCanvas.width * g_dKoef_pix_to_mm, this.tmpCanvas.height * g_dKoef_pix_to_mm);
+				oGraphicsWord.m_oFontManager = AscCommon.g_fontManager;
+				oGraphicsWord.endGlobalAlphaColor = [255, 255, 255];
+				oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
                 break;
             }
-            default: {
-                oGraphics = new AscPDF.CPDFGraphics();
-                oGraphics.Init(tmpCanvasCtx, this.tmpCanvas.width, this.tmpCanvas.height);
-                oGraphics.SetGlobalAlpha(1);
-                oGraphics.SetCurPage(this.objectToDraw.GetPage());
-            }
         }
-        
 
         oDrawer.m_oContext.globalAlpha = 0.5;
 
         this.objectToDraw.SetPosition(this.x, this.y, true);
-        this.objectToDraw.Draw(oGraphics);
+        this.objectToDraw.Draw(oGraphicsPDF, oGraphicsWord);
 
         oDrawer.m_oContext.drawImage(this.tmpCanvas, 0, 0, w, h, x, y, w, h);
     };

@@ -95,12 +95,153 @@
         this._subject               = undefined;
         this._toggleNoView          = undefined;
 
-        
         // internal
-        this._id = AscCommon.g_oIdCounter.Get_NewId();
+        this._bDrawFromStream   = false; // нужно ли рисовать из стрима
+        this._id                = AscCommon.g_oIdCounter.Get_NewId();
+        this._originView = {
+            normal:     null,
+            mouseDown:  null,
+            rollover:   null
+        }
     }
     CAnnotationBase.prototype.GetName = function() {
         return this._name;
+    };
+    CAnnotationBase.prototype.SetOpacity = function(value) {
+        this._opacity = value;
+    };
+    CAnnotationBase.prototype.GetOpacity = function() {
+        return this._opacity;
+    };
+    /**
+	 * Invokes only on open forms.
+	 * @memberof CAnnotationBase
+	 * @typeofeditors ["PDF"]
+	 */
+    CAnnotationBase.prototype.SetOriginPage = function(nPage) {
+        this._origPage = nPage;
+    };
+    CAnnotationBase.prototype.GetOriginPage = function() {
+        return this._origPage;
+    };
+    CAnnotationBase.prototype.DrawFromStream = function(oGraphicsPDF) {
+        if (this.IsHidden() == true)
+            return;
+            
+        let originView      = this.GetOriginView();
+        let aOrigRect       = this.GetOrigRect();
+        let nGrScale        = oGraphicsPDF.GetScale();
+
+        let X       = aOrigRect[0];
+        let Y       = aOrigRect[1];
+        let nWidth  = aOrigRect[2] - aOrigRect[0];
+        let nHeight = aOrigRect[3] - aOrigRect[1];
+        
+        if (originView) {
+            // oGraphicsPDF.SetIntegerGrid(true);
+            // oGraphicsPDF.DrawImage(originView, 0, 0, originView.width / nGrScale, originView.height / nGrScale, originView.x / nGrScale, originView.y / nGrScale, originView.width / nGrScale, originView.height / nGrScale);
+            if (this.IsHighlight())
+                oGraphicsPDF.context.globalCompositeOperation = "multiply";
+            
+            oGraphicsPDF.DrawImage(originView, 0, 0, nWidth + 2 / nGrScale, nHeight + 2 / nGrScale, X - 1 / nGrScale, Y - 1 / nGrScale, nWidth + 2 / nGrScale, nHeight + 2 / nGrScale);
+            
+            if (this.IsHighlight())
+                oGraphicsPDF.context.globalCompositeOperation = "source-over";
+        }
+    };
+    /**
+     * Returns a canvas with origin view (from appearance stream) of current annot.
+	 * @memberof CAnnotationBase
+	 * @typeofeditors ["PDF"]
+     * @returns {canvas}
+	 */
+    CAnnotationBase.prototype.GetOriginView = function() {
+        if (this._apIdx == -1)
+            return null;
+
+        let oViewer = editor.getDocumentRenderer();
+        let oFile   = oViewer.file;
+        
+        let oApearanceInfo  = this.GetOriginViewInfo();
+        let oSavedView, oApInfoTmp;
+        if (!oApearanceInfo)
+            return null;
+            
+        oApInfoTmp = oApearanceInfo["N"];
+        oSavedView = this._originView.normal;
+
+        if (oSavedView && oSavedView.width == oApearanceInfo["w"] && oSavedView.height == oApearanceInfo["h"])
+            return oSavedView;
+        
+        let canvas  = document.createElement("canvas");
+        let nWidth  = oApearanceInfo["w"];
+        let nHeight = oApearanceInfo["h"];
+
+        canvas.width    = nWidth;
+        canvas.height   = nHeight;
+
+        canvas.x    = oApearanceInfo["x"];
+        canvas.y    = oApearanceInfo["y"];
+        
+        if (!oApInfoTmp)
+            return null;
+
+        let supportImageDataConstructor = (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge) ? false : true;
+
+        let ctx             = canvas.getContext("2d");
+        let mappedBuffer    = new Uint8ClampedArray(oFile.memory().buffer, oApInfoTmp["retValue"], 4 * nWidth * nHeight);
+        let imageData       = null;
+
+        if (supportImageDataConstructor)
+        {
+            imageData = new ImageData(mappedBuffer, nWidth, nHeight);
+        }
+        else
+        {
+            imageData = ctx.createImageData(nWidth, nHeight);
+            imageData.data.set(mappedBuffer, 0);                    
+        }
+        if (ctx)
+            ctx.putImageData(imageData, 0, 0);
+        
+        oViewer.file.free(oApInfoTmp["retValue"]);
+
+        this._originView.normal = canvas;
+
+        return canvas;
+    };
+    /**
+     * Returns AP info of this field.
+	 * @memberof CAnnotationBase
+	 * @typeofeditors ["PDF"]
+     * @returns {Object}
+	 */
+    CAnnotationBase.prototype.GetOriginViewInfo = function() {
+        let oViewer     = editor.getDocumentRenderer();
+        let oPageInfo   = oViewer.pagesInfo.pages[this.GetPage()];
+        let oPage       = oViewer.drawingPages[this.GetPage()];
+
+        let w = (oPage.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let h = (oPage.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+
+        if (oPageInfo.fieldsAPInfo == null || oPageInfo.fieldsAPInfo.size.w != w || oPageInfo.fieldsAPInfo.size.h != h) {
+            let oFile   = oViewer.file;
+           
+            oPageInfo.fieldsAPInfo = {
+                info: oFile.nativeFile.getAnnotationsAP(this.GetOriginPage(), w, h),
+                size: {
+                    w: w,
+                    h: h
+                }
+            }
+        }
+        
+        for (let i = 0; i < oPageInfo.fieldsAPInfo.info.length; i++) {
+            if (oPageInfo.fieldsAPInfo.info[i].i == this._apIdx)
+                return oPageInfo.fieldsAPInfo.info[i];
+        }
+
+        return null;
     };
     CAnnotationBase.prototype.SetPosition = function(x, y) {
         let oViewer = editor.getDocumentRenderer();
@@ -149,7 +290,12 @@
     CAnnotationBase.prototype.GetOrigRect = function() {
         return this._origRect;
     };
-    
+    CAnnotationBase.prototype.IsNeedDrawFromStream = function() {
+        return this._bDrawFromStream;
+    };
+    CAnnotationBase.prototype.SetDrawFromStream = function(bFromStream) {
+        this._bDrawFromStream = bFromStream;
+    };
     CAnnotationBase.prototype.SetRect = function(aRect) {
         let oViewer = editor.getDocumentRenderer();
         let nPage = this.GetPage();
@@ -226,10 +372,13 @@
         oReply.SetAuthor(oReplyInfo["User"]);
         oReply.SetHidden(false);
 
-        this._contents._replies.push(oReply);
+        if (this.IsComment())
+            this._replies.push(oReply);
+        else
+            this._contents._replies.push(oReply);
     };
     CAnnotationBase.prototype._OnAfterSetContents = function() {
-        let oAscCommData = this._contents.GetAscCommentData();
+        let oAscCommData = this.IsComment() ? this.GetAscCommentData() : this._contents.GetAscCommentData();
         editor.sendEvent("asc_onAddComment", this.GetId(), oAscCommData);
     };
     CAnnotationBase.prototype.SetContents = function(contents) {

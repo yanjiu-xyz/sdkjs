@@ -46,6 +46,8 @@ function CPDFGraphics()
     this.strokeStyle    = null;
     this.globalAlpha    = 1;
     this.bIntegerGrid   = false;
+
+    this.drawedRect = {};
 }
 CPDFGraphics.prototype.SetCurPage = function(nPage) {
     this.curPage = nPage;
@@ -103,27 +105,61 @@ CPDFGraphics.prototype.Init = function(context, nWidthPx, nHeightPx) {
     this.heightPx   = nHeightPx;
     this.widthMM    = nWidthPx * g_dKoef_pix_to_mm;
     this.heightMM   = nHeightPx * g_dKoef_pix_to_mm;
+
+    this.drawedRect = {
+        xMin: nWidthPx,
+        yMin: nHeightPx,
+        xMax: 0,
+        yMax: 0
+    }
 };
+CPDFGraphics.prototype.CheckPoint = function(x, y) {
+    return;
+    if (this.drawedRect.xMin > x)
+        this.drawedRect.xMin = x;
+    if (this.drawedRect.xMax < x)
+        this.drawedRect.xMax = x;
+
+    if (this.drawedRect.yMin > y)
+        this.drawedRect.yMin = y;
+    if (this.drawedRect.yMax < y)
+        this.drawedRect.yMax = y;
+};
+CPDFGraphics.prototype.GetDrawedRect = function(bScaled) {
+    if (bScaled) {
+        let nScale = this.GetScale();
+        return {
+            xMin: this.drawedRect.xMin * nScale >> 0,
+            yMin: this.drawedRect.yMin * nScale >> 0,
+            xMax: Math.round(this.drawedRect.xMax * nScale + 0.5),
+            yMax: Math.round(this.drawedRect.yMax * nScale + 0.5)
+        }
+    }
+        
+    return this.drawedRect;
+};
+
 CPDFGraphics.prototype.Rect = function(x, y, w, h) {
     let nScale          = this.GetScale();
-    let nLineW          = this.GetLineWidth(true);
+    let nLineW          = this.GetLineWidth();
     let bIntegerGrid    = this.GetIntegerGrid();
 
-    let X1 = bIntegerGrid ? x * nScale >> 0 : x;
-    let Y1 = bIntegerGrid ? y * nScale >> 0 : y;
-    let X2 = bIntegerGrid ? (x + w) * nScale >> 0 : x + w;
-    let Y2 = bIntegerGrid ? (y + h) * nScale >> 0 : y + h;
+    this.CheckPoint(x - nLineW, y - nLineW);
+    this.CheckPoint(x + w + nLineW, y + h + nLineW);
 
-    let nLineOffsetY = bIntegerGrid ? (0 === (nLineW % 2) ? 0 : 0.5) : 0;
-    let nLineOffsetX = bIntegerGrid ? (0 === (nLineW % 2) ? 0 : 0.5) : 0;
+    let X1 = bIntegerGrid ? x * nScale >> 0 : x * nScale;
+    let Y1 = bIntegerGrid ? y * nScale >> 0 : y * nScale;
+    let X2 = bIntegerGrid ? (x + w) * nScale >> 0 : (x + w) * nScale;
+    let Y2 = bIntegerGrid ? (y + h) * nScale >> 0 : (y + h) * nScale;
+
+    let nLineOffsetY = bIntegerGrid ? (0 === (nLineW * nScale % 2) ? 0 : 0.5) : 0;
+    let nLineOffsetX = bIntegerGrid ? (0 === (nLineW * nScale % 2) ? 0 : 0.5) : 0;
 
     this.context.moveTo(nLineOffsetX + X1, nLineOffsetY + Y1);
     this.context.lineTo(-nLineOffsetX + X2, nLineOffsetY + Y1);
     this.context.lineTo(-nLineOffsetX + X2, -nLineOffsetY + Y2);
     this.context.lineTo(nLineOffsetX + X1, -nLineOffsetY + Y2);
     this.context.closePath();
-
-    this.context.rect(x * nScale, y * nScale, w * nScale, h * nScale);
 };
 CPDFGraphics.prototype.BeginPath = function() {
     this.context.beginPath();
@@ -136,16 +172,23 @@ CPDFGraphics.prototype.Stroke = function() {
 };
 CPDFGraphics.prototype.MoveTo = function(x, y) {
     let nScale = this.GetScale();
+    
+    this.CheckPoint(x, y);
 
     this.context.moveTo(x * nScale, y * nScale);
 };
 CPDFGraphics.prototype.LineTo = function(x, y) {
     let nScale = this.GetScale();
 
+    this.CheckPoint(x, y);
+
     this.context.lineTo(x * nScale, y * nScale);
 };
 CPDFGraphics.prototype.FillRect = function(x, y, w, h) {
     let nScale = this.GetScale();
+
+    this.CheckPoint(x, y);
+    this.CheckPoint(x + w, y + h);
 
     this.context.beginPath();
     this.context.fillRect(x * nScale, y * nScale, w * nScale, h * nScale);
@@ -153,6 +196,9 @@ CPDFGraphics.prototype.FillRect = function(x, y, w, h) {
 CPDFGraphics.prototype.DrawImage = function(image, sx, sy, sWidth, sHeight, dx, dy, dWidth, dHeight) {
     let nScale          = this.GetScale();
     let bIntegerGrid    = this.GetIntegerGrid();
+
+    this.CheckPoint(dx, dy);
+    this.CheckPoint(dx + dWidth, dy + dHeight);
 
     if (sx != null) {
         sx *= nScale;
@@ -208,6 +254,11 @@ CPDFGraphics.prototype.SetGlobalAlpha = function(value) {
 CPDFGraphics.prototype.Arc = function(x, y, radius, startAng, endAng, counterClockwise) {
     let nScale = this.GetScale();
 
+    this.CheckPoint(x - radius, y - radius);
+    this.CheckPoint(x - radius, y + radius);
+    this.CheckPoint(x + radius, y - radius);
+    this.CheckPoint(x + radius, y + radius);
+
     this.context.arc(x * nScale, y * nScale, radius * nScale, startAng, endAng, counterClockwise);
 };
 CPDFGraphics.prototype.ArcTo = function(x1, y1, x2, y2, r) {
@@ -226,13 +277,16 @@ CPDFGraphics.prototype.ClearRect = function(x, y, w, h) {
 CPDFGraphics.prototype.HorLine = function(x1, x2, y)
 {
     let nScale          = this.GetScale();
-    let nLineW          = this.GetLineWidth(true);
+    let nLineW          = this.GetLineWidth();
     
+    this.CheckPoint(x1 - nLineW, y - nLineW);
+    this.CheckPoint(x2 + nLineW, y + nLineW);
+
     let X1  = x1 * nScale >> 0;
     let X2  = x2 * nScale >> 0;
     let Y   = y * nScale >> 0;
     
-    let nLineOffsetY = (0 === (nLineW % 2) ? 0 : 0.5);
+    let nLineOffsetY = (0 === (nLineW * nScale % 2) ? 0 : 0.5);
 
     this.context.moveTo(X1, nLineOffsetY + Y);
     this.context.lineTo(X2, nLineOffsetY + Y);
@@ -242,6 +296,9 @@ CPDFGraphics.prototype.VerLine = function(y1, y2, x)
     let nScale          = this.GetScale();
     let nLineW          = this.GetLineWidth(true);
     
+    this.CheckPoint(x, y1);
+    this.CheckPoint(x, y2);
+
     let Y1  = y1 * nScale >> 0;
     let Y2  = y2 * nScale >> 0;
     let X   = x * nScale >> 0;

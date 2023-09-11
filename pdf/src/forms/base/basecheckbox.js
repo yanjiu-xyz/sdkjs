@@ -135,7 +135,6 @@
                 oGraphicsPDF.BeginPath();
                 oGraphicsPDF.Arc(centerX, centerY, nRadius, 0, 2 * Math.PI, false);
                 oGraphicsPDF.Fill();
-                oGraphicsPDF.ClosePath();
                 break;
             }
                 
@@ -150,14 +149,12 @@
                 oGraphicsPDF.MoveTo(x + (oMargins.left + w * 0.05), y + (oMargins.top + w * 0.05));
                 oGraphicsPDF.LineTo(x + w - (oMargins.left + w * 0.05), y + w - (oMargins.top + w * 0.05));
                 oGraphicsPDF.Stroke();
-                oGraphicsPDF.ClosePath();
 
                 // right to left
                 oGraphicsPDF.BeginPath();
                 oGraphicsPDF.MoveTo(x + w - (oMargins.left + w * 0.05), y + (oMargins.top + w * 0.05));
                 oGraphicsPDF.LineTo(x + (oMargins.left + w * 0.05), y + w - (oMargins.top + w * 0.05));
                 oGraphicsPDF.Stroke();
-                oGraphicsPDF.ClosePath();
                 break;
             }
                 
@@ -192,7 +189,6 @@
                 oGraphicsPDF.BeginPath();
                 oGraphicsPDF.Rect(x, y, nMaxW, nMaxW);
                 oGraphicsPDF.Fill();
-                oGraphicsPDF.ClosePath();
                 break;
             }
                 

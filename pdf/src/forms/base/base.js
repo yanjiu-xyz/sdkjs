@@ -584,21 +584,35 @@
             return;
 
         let oViewer = editor.getDocumentRenderer();
-        let nScale  = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
+        let nScale  = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[this.GetPage()].Dpi);
 
-        let X       = this._pagePos.x * nScale;
-        let Y       = this._pagePos.y * nScale;
-        let nWidth  = (this._pagePos.w) * nScale;
-        let nHeight = (this._pagePos.h) * nScale;
+        let xCenter = oViewer.width >> 1;
+        if (oViewer.documentWidth > oViewer.width)
+        {
+            xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
+        }
+        let yPos    = oViewer.scrollY >> 0;
+        let page    = oViewer.drawingPages[this.GetPage()];
+        let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
+        let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         
-        oCtx.globalAlpha = 0.8;
+        let aOrigRect = this.GetOrigRect();
+        let X = aOrigRect[0] * nScale + indLeft;
+        let Y = aOrigRect[1] * nScale + indTop;
+        let W = (aOrigRect[2] - aOrigRect[0]) * nScale;
+        let H = (aOrigRect[3] - aOrigRect[1]) * nScale;
+
+        oCtx.globalAlpha = 1;
+        oCtx.globalCompositeOperation = "destination-over";          
         if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this._chStyle == AscPDF.CHECKBOX_STYLES.circle) {
             oCtx.beginPath();
             oCtx.fillStyle = `rgb(${FIELDS_HIGHLIGHT.r}, ${FIELDS_HIGHLIGHT.g}, ${FIELDS_HIGHLIGHT.b})`;
             // выставляем в центр круга
-            let centerX = X + nWidth / 2;
-            let centerY = Y + nHeight / 2;
-            let nRadius = Math.min(nWidth / 2, nHeight / 2);
+            let centerX = X + W / 2;
+            let centerY = Y + H / 2;
+            let nRadius = Math.min(W / 2, H / 2);
             oCtx.arc(centerX, centerY, nRadius, 0, 2 * Math.PI, false);
             oCtx.fill();
             oCtx.closePath();
@@ -606,9 +620,10 @@
         else if (this.GetType() != AscPDF.FIELD_TYPES.button){
             oCtx.beginPath();
             oCtx.fillStyle = `rgb(${FIELDS_HIGHLIGHT.r}, ${FIELDS_HIGHLIGHT.g}, ${FIELDS_HIGHLIGHT.b})`;
-            oCtx.fillRect(X, Y, nWidth, nHeight);
+            oCtx.fillRect(X, Y, W, H);
             oCtx.closePath();
         }
+        oCtx.globalCompositeOperation = "source-over";
     };
     CBaseField.prototype.DrawBorders = function(oGraphicsPDF) {
         let oViewer     = editor.getDocumentRenderer();
@@ -667,7 +682,6 @@
                         oGraphicsPDF.BeginPath();
                         oGraphicsPDF.Arc(centerX, centerY, nRadius, 0, 2 * Math.PI, false);
                         oGraphicsPDF.Stroke();
-                        oGraphicsPDF.ClosePath();
                     }
 
                     // right semicircle
@@ -675,14 +689,12 @@
                     oGraphicsPDF.Arc(centerX, centerY, nRadius - nLineWidth, - Math.PI / 4, 3 * Math.PI / 4, false);
                     oGraphicsPDF.SetStrokeStyle(140, 151, 192);
                     oGraphicsPDF.Stroke();
-                    oGraphicsPDF.ClosePath();
                     
                     // left semicircle
                     oGraphicsPDF.BeginPath();
                     oGraphicsPDF.Arc(centerX, centerY, nRadius - nLineWidth, 3 * Math.PI / 4, - Math.PI / 4, false);
                     oGraphicsPDF.SetStrokeStyle(255, 255, 255);
                     oGraphicsPDF.Stroke();
-                    oGraphicsPDF.ClosePath();
                     break;
                 case BORDER_TYPES.dashed:
                     if (color == null)
@@ -699,7 +711,6 @@
                         oGraphicsPDF.BeginPath();
                         oGraphicsPDF.Arc(centerX, centerY, nRadius, 0, 2 * Math.PI, false);
                         oGraphicsPDF.Stroke();
-                        oGraphicsPDF.ClosePath();
                     }
                     
                     // right semicircle
@@ -707,14 +718,12 @@
                     oGraphicsPDF.Arc(centerX, centerY, nRadius - nLineWidth, - Math.PI / 4, 3 * Math.PI / 4, false);
                     oGraphicsPDF.SetStrokeStyle(191, 191, 191);
                     oGraphicsPDF.Stroke();
-                    oGraphicsPDF.ClosePath();
                     
                     // left semicircle
                     oGraphicsPDF.BeginPath();
                     oGraphicsPDF.Arc(centerX, centerY, nRadius - nLineWidth, 3 * Math.PI / 4, - Math.PI / 4, false);
                     oGraphicsPDF.SetStrokeStyle(128, 128, 128);
                     oGraphicsPDF.Stroke();
-                    oGraphicsPDF.ClosePath();
 
                     break;
             }
@@ -733,7 +742,6 @@
                     // oGraphicsPDF.DrawClearRect(X, Y, aOringRect[2], aOringRect[3]);
                     oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
                     oGraphicsPDF.Stroke();
-                    oGraphicsPDF.ClosePath();
 
                     break;
                 case BORDER_TYPES.beveled:
@@ -742,7 +750,6 @@
                         oGraphicsPDF.BeginPath();
                         oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
                         oGraphicsPDF.Stroke();
-                        oGraphicsPDF.ClosePath();
                     }
                     
                     // left part
@@ -827,7 +834,6 @@
                         oGraphicsPDF.BeginPath();
                         oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
                         oGraphicsPDF.Stroke();
-                        oGraphicsPDF.ClosePath();
                     }
 
                     // left part
@@ -1158,6 +1164,9 @@
     };
 
     CBaseField.prototype.DrawBackground = function(oGraphicsPDF) {
+        // if (this.IsNeedDrawHighlight())
+        //     return;
+
         let aOrigRect       = this.GetOrigRect();
         let aBgColor        = this.GetBackgroundColor();
         let oBgRGBColor;
@@ -1530,7 +1539,7 @@
         if (originView) {
             oGraphicsPDF.ClearRect(X, Y, nWidth, nHeight);
             
-            oGraphicsPDF.SetIntegerGrid(true);
+            // oGraphicsPDF.SetIntegerGrid(true);
             // oGraphicsPDF.DrawImage(originView, 0, 0, originView.width / nGrScale, originView.height / nGrScale, originView.x / nGrScale, originView.y / nGrScale, originView.width / nGrScale, originView.height / nGrScale);
             oGraphicsPDF.DrawImage(originView, 0, 0, nWidth + 2 / nGrScale, nHeight + 2 / nGrScale, X - 1 / nGrScale, Y - 1 / nGrScale, nWidth + 2 / nGrScale, nHeight + 2 / nGrScale);
             if (this.GetType() == AscPDF.FIELD_TYPES.combobox)

@@ -168,7 +168,6 @@
         oGraphicsPDF.SetGlobalAlpha(1);
         oGraphicsPDF.SetFillStyle(240, 240, 240);
         oGraphicsPDF.FillRect(nMarkX, nMarkY, nMarkWidth, nMarkHeight);
-        oGraphicsPDF.ClosePath();
 
         // marker border right part
         oGraphicsPDF.BeginPath();

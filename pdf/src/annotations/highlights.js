@@ -60,12 +60,6 @@
     CAnnotationTextMarkup.prototype.GetWidth = function() {
         return this._width;
     }; 
-    CAnnotationTextMarkup.prototype.SetOpacity = function(value) {
-        this._opacity = value;
-    };
-    CAnnotationTextMarkup.prototype.GetOpacity = function() {
-        return this._opacity;
-    };
     CAnnotationTextMarkup.prototype.IsTextMarkup = function() {
         return true;
     };
@@ -156,8 +150,8 @@
             }
 
             aAllRegions.push({
-                inverted : false,
-                regions : [
+                "inverted" : false,
+                "regions" : [
                     [
                         [oPoint1.x, oPoint1.y],
                         [oPoint2.x, oPoint2.y],
@@ -472,9 +466,9 @@
         let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
         let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         
-        for (let i = 0, countPolygons = polygon.regions.length; i < countPolygons; i++)
+        for (let i = 0, countPolygons = polygon["regions"].length; i < countPolygons; i++)
         {
-            let region = polygon.regions[i];
+            let region = polygon["regions"][i];
             let countPoints = region.length;
 
             if (2 > countPoints)
