@@ -44,23 +44,83 @@
 		this.CoEditing = coEditing;
 
 		this.Changes   = []; // Список всех изменений
+		this.ChangesSplitByPoints = [] // Список изменений разделенных по точкам
 		this.OwnRanges = []; // Диапазоны собственных изменений
 
 		this.SyncIndex      = -1; // Позиция в массиве изменений, которые согласованы с сервером
-		this.curChangeIndex = -1; // Текущая позиция в массиве изменений
+		this.curChangeIndex = -1; // Текущая позиция в массиве изменений разделенных по точкам
+		this.StepTextPoint = undefined; //Позиция предыдущего состояния
 		
 		this.textRecovery = null;
 	}
-	
+	CCollaborativeHistory.prototype.splitChangesByPoints = function ()
+	{
+		if (!this.Changes || !this.Changes || this.ChangesSplitByPoints.length !== 0)
+			return;
+
+		let arrCurrent		= [];
+
+		for (let i = 0; i < this.Changes.length; i++)
+		{
+			let oCurrentChange = this.Changes[i];
+			let oPrevChange = i === 0 ? undefined : this.Changes[i - 1];
+
+			if (!(oPrevChange && (oPrevChange instanceof AscCommon.CChangesTableIdDescription || oPrevChange.IsDescriptionChange() === oCurrentChange.IsDescriptionChange())))
+			{
+				arrCurrent.push(i);
+			}
+		}
+
+		arrCurrent.push(this.Changes.length);
+		this.ChangesSplitByPoints = arrCurrent;
+		this.curChangeIndex = arrCurrent.length;
+	};
 	CCollaborativeHistory.prototype.clear = function()
 	{
 		this.Changes   = [];
 		this.OwnRanges = [];
+		this.ChangesSplitByPoints = [];
+		this.StepTextPoint = undefined; // позиция предыдущего состояния
 		
 		this.SyncIndex      = -1;
 		this.curChangeIndex = -1;
 		
 		this.textRecovery = null;
+	};
+	CCollaborativeHistory.prototype.undoNavigationRevision = function ()
+	{
+		let arrInput = this.RedoUndoChanges(this.StepTextPoint, false);
+		editor.WordControl.m_oLogicDocument.RecalculateByChanges(arrInput);
+	};
+	/**
+	 * Перемещаемся по истории ревизии на заданную точку
+	 * @param {number} intCount - Позиция на которую необходимо переместится
+	 * @param {boolean} isNotUndoPoints - Нужно, что бы перемещение по истории правильно отрабатывало, если мы не сохранили изменения
+	 * @constructor
+	 */
+	CCollaborativeHistory.prototype.NavigationRevisionHistoryByStep = function (intCount, isNotUndoPoints)
+	{
+		let arr = this.Changes;
+		this.splitChangesByPoints();
+
+		if (intCount <= 0 || intCount > this.ChangesSplitByPoints.length || intCount === this.curChangeIndex)
+		{
+			AscCommon.History.Remove_LastPoint();
+			return false;
+		}
+
+		this.undoNavigationRevision();
+		AscCommon.History.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_DeletedTextRecovery);
+
+		this.curChangeIndex = intCount;
+		this.StepTextPoint = this.ChangesSplitByPoints[intCount - 1];
+
+		let arrInput = this.RedoUndoChanges(this.StepTextPoint, true);
+		editor.WordControl.m_oLogicDocument.RecalculateByChanges(arrInput);
+		AscCommon.History.Remove_LastPoint();
+		AscCommon.DeletedTextRecoveryCheckRunsColor();
+
+		return true;
 	};
 	CCollaborativeHistory.prototype.AddChange = function(change)
 	{
@@ -100,6 +160,74 @@
 	CCollaborativeHistory.prototype.CanUndoOwn = function()
 	{
 		return (this.OwnRanges.length > 0)
+	};
+	/**
+	 * Накатываем/откатываем полученный массив изменений
+	 * @param {array} arr
+	 * @param {boolean} isReverse - нужно ли обратить входящие изменения
+	 * @returns {[]} возвращаем массив действий
+	 */
+	CCollaborativeHistory.prototype.RedoUndoArr = function (arr, isReverse)
+	{
+		let changeArray = [];
+
+		for (let i = 0; i < arr.length; i++)
+		{
+			let change = arr[i];
+
+			if (change.IsContentChange && change.IsContentChange())
+			{
+				let simpleChanges = change.ConvertToSimpleChanges();
+
+				for (let simpleIndex = simpleChanges.length - 1; simpleIndex >= 0; simpleIndex--)
+				{
+					let tmpChange = simpleChanges[simpleIndex];
+					if (isReverse)
+						tmpChange = tmpChange.CreateReverseChange();
+
+					tmpChange.Redo();
+					changeArray.push(tmpChange);
+				}
+			}
+			else
+			{
+				if (isReverse)
+					change = change.CreateReverseChange();
+
+				if (!change)
+					continue;
+
+				change.Redo();
+				changeArray.push(change);
+			}
+		}
+
+		return changeArray;
+	};
+	/**
+	 * Берем изменения из this.Changes накатываем/откатываем заданное количество действий без изменений для this.Changes
+	 * @param {number} count
+	 * @param {boolean} isReverse - нужно ли обратить входящие изменения
+	 * @returns {[]} возвращаем массив действий
+	 */
+	CCollaborativeHistory.prototype.RedoUndoChanges = function(count, isReverse)
+	{
+		this.undoDeletedTextRecovery();
+
+		if (isNaN(count))
+			return [];
+
+		let arr = [];
+
+		if (isReverse)
+			arr = this.Changes.slice(count, this.Changes.length).reverse();
+		else
+			arr = this.Changes.slice(count, this.Changes.length);
+
+		if (arr.length === 0)
+			return [];
+
+		return this.RedoUndoArr(arr, isReverse);
 	};
 	/**
 	 * Откатываем заданное количество действий
@@ -168,37 +296,26 @@
 	};
 	CCollaborativeHistory.prototype.getGlobalPointCount = function()
 	{
-		this.initTextRecover();
-		return this.textRecovery.GetCountOfNavigationPoints();
+		this.splitChangesByPoints();
+		return this.ChangesSplitByPoints.length;
 	};
 	CCollaborativeHistory.prototype.getGlobalPointIndex = function()
 	{
-		this.initTextRecover();
-		return this.textRecovery.GetCurrentIndexNavigationPoint();
+		this.splitChangesByPoints();
+		return this.curChangeIndex;
 	};
 	CCollaborativeHistory.prototype.moveToPoint = function(pointIndex)
 	{
-		this.initTextRecover();
-
-		let needRecover = !!this.textRecovery;
 		this.undoDeletedTextRecovery();
-
-		if (needRecover)
-			return this.textRecovery.NavigationRevisionHistoryByStep(pointIndex, false);
+		return this.NavigationRevisionHistoryByStep(pointIndex, false);
 	};
 	CCollaborativeHistory.prototype.initTextRecover = function ()
 	{
 		if (!this.textRecovery)
 		{
 			this.textRecovery = new AscCommon.DeletedTextRecovery();
-			this.textRecovery.handleChanges();
 		}
-	}
-	CCollaborativeHistory.prototype.delTextRecover =  function()
-	{
-		if (this.textRecovery)
-			this.textRecovery = null;
-	}
+	};
 	CCollaborativeHistory.prototype.recoverDeletedText = function()
 	{
 		this.initTextRecover();
@@ -206,7 +323,8 @@
 	};
 	CCollaborativeHistory.prototype.undoDeletedTextRecovery = function()
 	{
-		this.textRecovery.UndoShowDelText();
+		if (this.textRecovery)
+			this.textRecovery.UndoShowDelText();
 	};
 	/**
 	 * Отменяем собственные последние действия, прокатывая их через чужие

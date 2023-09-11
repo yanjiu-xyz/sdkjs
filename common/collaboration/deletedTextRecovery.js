@@ -40,28 +40,28 @@
 	 */
 	function DeletedTextRecovery()
 	{
-		this.m_RewiewPoints 	= []; // Отсортированный по типу список изменений
 		this.m_RewiewDelPoints 	= []; // Список всех изменений связанных с удалением текста
-		this.m_RewiewIndex 		= 0;  // Текущая позиция в истории ревизии для отображения удаленного текста
-		this.isShowDelText 		= true; // Нужно ли отображать удаленный текст при перемещении по истории ревизии
-		this.nCounter = 0;
-
-		this.ShowDelTextPoint = null;
 		this.ShowDelLettersChanges = null;
-		this.StepTextPoint = null;
-		this.nIntCurrent = 0;
+
+		this.userId = undefined;
+		this.userName = undefined;
+		this.userTime = undefined;
 	}
 	/**
 	 * Инициализация и создание промежуточных данных для отображения удаленного текста в текущей ревизии
 	 */
 	DeletedTextRecovery.prototype.handleChanges = function()
 	{
-		let arrChanges = AscCommon.CollaborativeEditing.CoHistory.Changes;
+		debugger
+		AscCommon.CollaborativeEditing.CoHistory.splitChangesByPoints();
+		let arrChangesList = AscCommon.CollaborativeEditing.CoHistory.Changes;
+		let arrPointsList =  AscCommon.CollaborativeEditing.CoHistory.ChangesSplitByPoints;
+		let nIndex = AscCommon.CollaborativeEditing.CoHistory.curChangeIndex;
+		let arrChanges = arrChangesList.slice(0, arrPointsList[nIndex]);
+
 		if (!arrChanges || !arrChanges.length)
 			return;
-		
-		let arrCurrent		= [];
-		let arrTemp			= [];
+
 		let arrDelChanges 	= [];
 
 		// разделяем по типу изменений
@@ -76,7 +76,7 @@
 				{
 					arrDelChanges.length = arrDelChanges.length - 1;
 				}
-				arrDelChanges.push([arrCurrent.length, oCurrentChange]);
+				arrDelChanges.push([oCurrentChange]);
 			}
 
 			if (oCurrentChange instanceof CChangesRunRemoveItem || oCurrentChange instanceof CChangesParagraphRemoveItem || oCurrentChange instanceof CChangesDocumentRemoveItem)
@@ -88,98 +88,35 @@
 				}
 				else
 				{
-					arrDelChanges.push([arrCurrent.length, oCurrentChange]);
+					arrDelChanges.push([oCurrentChange]);
 				}
-			}
-
-			if (oPrevChange && (oPrevChange instanceof AscCommon.CChangesTableIdDescription || oPrevChange.IsDescriptionChange() === oCurrentChange.IsDescriptionChange()))
-			{
-				arrTemp.push(oCurrentChange);
-			}
-			else
-			{
-				if (arrTemp.length > 0)
-				{
-					arrCurrent.push(arrTemp);
-					arrTemp = [];
-				}
-
-				arrTemp = [oCurrentChange]
-			}
-		}
-		if (arrTemp.length > 0)
-		{
-			arrCurrent.push(arrTemp);
-			arrTemp = [];
-		}
-
-		// убираем изменения состоящие только из AscCommon.CChangesTableIdDescription (так как эти изменения этого блока были удалены)
-		for (let i = 0; i < arrCurrent.length; i++)
-		{
-			let arrCurrentElement = arrCurrent[i];
-			if (arrCurrentElement === undefined)
-				continue
-
-			if (arrCurrentElement instanceof AscCommon.CChangesTableIdDescription)
-			{
-				if (arrCurrentElement.length === 1)
-					arrCurrentElement.length = 0;
 			}
 		}
 
 		for (let i = 0; i < arrDelChanges.length; i++)
 		{
-			if(arrDelChanges[i].length === 2 && arrDelChanges[i][1] instanceof AscCommon.CChangesTableIdDescription)
+			if(arrDelChanges[i].length === 1 && arrDelChanges[i][0] instanceof AscCommon.CChangesTableIdDescription)
 			{
-				arrDelChanges[i].length = 1;
+				arrDelChanges[i].length = 0;
 			}
 		}
 
-		this.m_RewiewPoints		= arrCurrent;
-		this.m_RewiewIndex		= this.m_RewiewPoints.length;
 		this.m_RewiewDelPoints	= arrDelChanges;
-	}
-	DeletedTextRecovery.prototype.undoRecovery = function()
-	{
-		this.UndoPoints();
-		this.UndoShowDelText();
-		this.UndoStepText();
 	};
 	DeletedTextRecovery.prototype.recover = function()
 	{
-		this.ShowDelText()
-	};
-	// получаем верхнюю границу
-	DeletedTextRecovery.prototype.GetCountOfNavigationPoints =  function ()
-	{
-		return this.m_RewiewPoints.length;
-	};
-	// получаем текущую позицию
-	DeletedTextRecovery.prototype.GetCurrentIndexNavigationPoint = function ()
-	{
-		return this.m_RewiewIndex;
-	};
-	DeletedTextRecovery.prototype.SetIsShowDelText = function (isShow)
-	{
-		this.isShowDelText = isShow;
-	};
-	DeletedTextRecovery.prototype.GetIsShowDelText = function ()
-	{
-		return this.isShowDelText;
+		this.ShowDelText();
 	};
 	DeletedTextRecovery.prototype.ShowDelText = function ()
 	{
-		this.UndoShowDelText();
 		let localHistory = AscCommon.History;
+		this.UndoShowDelText();
+		this.handleChanges();
 
 		if (localHistory.Points.length === 0)
-		{
 			AscCommon.History.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_DeletedTextRecovery);
-		}
 		else if (localHistory.Points.length > 0 && localHistory.Points[localHistory.Points.length - 1].Description !== AscDFH.historydescription_Collaborative_DeletedTextRecovery)
-		{
 			AscCommon.History.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_DeletedTextRecovery);
-		}
 
 		let arrCurrentPoint = [];
 		let arrSplits = [];
@@ -197,14 +134,16 @@
 		for (let nCounter = 0; nCounter < this.m_RewiewDelPoints.length; nCounter++)
 		{
 			let arrCurr = this.m_RewiewDelPoints[nCounter];
-			if (arrCurr[0] + 1 < this.m_RewiewIndex || (this.m_RewiewPoints.length === 1 || this.m_RewiewPoints.length === 0) && arrCurr[0] === 0 && this.m_RewiewIndex === 1)
+			if (nCounter + 1 < AscCommon.CollaborativeEditing.CoHistory.curChangeIndex)
 			{
-				let temp = []
-				for (let j = 1; j < arrCurr.length; j++)
+				let temp = [];
+				for (let j = 0; j < arrCurr.length; j++)
 				{
 					temp.push(arrCurr[j]);
 				}
-				arrInput.push(temp);
+
+				if (temp.length > 0)
+					arrInput.push(temp);
 			}
 		}
 
@@ -221,7 +160,8 @@
 			}
 		}
 
-		this.RedoPoints(arrCurrentPoint);
+		editor.WordControl.m_oLogicDocument.RecalculateByChanges(arrCurrentPoint);
+
 		let arrContentForSlice = this.ConvertArray(arrInput.reverse());
 		arrContentForSlice = arrContentForSlice.sort(
 			function (a, b)
@@ -327,7 +267,7 @@
 		this.Check();
 		this.ShowDelTextPoint = AscCommon.History.Points[0];
 		this.ShowDelLettersChanges = arrCurrentPoint;
-		this.RedoPoints();
+		this.RecalculatePointFromHistory();
 	};
 	DeletedTextRecovery.prototype.Sort = function (array)
 	{
@@ -635,72 +575,6 @@
 			}
 		}
 	};
-	/**
-	 * Перемещаемся по истории ревизии на заданную точку
-	 * @param {number} intCount - Позиция на которую необходимо переместится
-	 * @param {boolean} isNotUndoPoints - Нужно, что бы перемещение по истории правильно отрабатывало, если мы не сохранили изменения
-	 * @constructor
-	 */
-	DeletedTextRecovery.prototype.NavigationRevisionHistoryByStep = function (intCount, isNotUndoPoints)
-	{
-		if (this.m_RewiewIndex + intCount < 0 || this.m_RewiewIndex + intCount > this.m_RewiewPoints.length)
-			return false;
-
-		if (!isNotUndoPoints)
-			this.UndoPoints();
-
-		this.UndoShowDelText();
-		this.UndoStepText();
-
-		AscCommon.History.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_DeletedTextRecovery);
-		this.m_RewiewIndex = intCount;
-
-		let arrInput = this.m_RewiewPoints.slice(this.m_RewiewIndex, this.m_RewiewPoints.length);
-		let arrCurrentPoint = [];
-
-		if (intCount !== 0)
-			this.Check();
-
-		if (!arrInput || arrInput.length === 0)
-			return true;
-
-		for (let nCounter = arrInput.length - 1; nCounter >= 0; nCounter--)
-		{
-			let arrCurrentDel = arrInput[nCounter];
-			this.UndoReviewBlock(arrCurrentDel, arrCurrentPoint);
-		}
-
-		this.RedoPoints(arrCurrentPoint);
-		this.StepTextPoint = arrCurrentPoint;
-		AscCommon.History.Remove_LastPoint();
-		this.Check();
-
-		return true;
-	};
-	DeletedTextRecovery.prototype.UndoReviewBlock = function(arrBlock, arrChanges)
-	{
-		for (let j = arrBlock.length - 1; j >= 0; j--)
-		{
-			let oChange = arrBlock[j];
-
-			if (!oChange)
-				continue;
-
-			this.RedoUndoChange(oChange, false, arrChanges);
-		}
-	};
-	DeletedTextRecovery.prototype.RedoReviewBlock = function(arrBlock, arrChanges)
-	{
-		for (let j = arrBlock.length - 1; j >= 0; j--)
-		{
-			let oChange = arrBlock[j];
-
-			if (!oChange)
-				continue;
-
-			this.RedoUndoChange(oChange, true, arrChanges);
-		}
-	};
 	DeletedTextRecovery.prototype.RedoUndoChange = function (oChange, isRedo, arrToSave)
 	{
 		if (!oChange)
@@ -762,62 +636,33 @@
 			return true;
 		}
 	};
-	DeletedTextRecovery.prototype.UndoStepText = function()
+	DeletedTextRecovery.prototype.UndoReviewBlock = function(arrBlock, arrChanges)
 	{
-		if (this.StepTextPoint)
+		for (let j = arrBlock.length - 1; j >= 0; j--)
 		{
-			let changes	= this.StepTextPoint;
-			let arr = [];
+			let oChange = arrBlock[j];
 
-			for (let i = 0; i < changes.length; i++)
-			{
-				if (!(changes[i] instanceof AscDFH.CChangesBase))
-				{
-					changes[i].Class.Refresh_RecalcData(changes[i].Data);
-					arr.push(changes[i].Data);
-				}
-				else
-				{
-					arr.push(changes[i]);
-				}
-			}
-			changes = []
-			this.RedoReviewBlock(arr, changes)
-			editor.WordControl.m_oLogicDocument.RecalculateByChanges(arr);
-			this.StepTextPoint = null;
-			return true;
+			if (!oChange)
+				continue;
+
+			this.RedoUndoChange(oChange, false, arrChanges);
 		}
 	};
-	// Отменяем все изменения сделанные для показа удаленного текста
-	DeletedTextRecovery.prototype.UndoPoints = function ()
-	{
-		let localHistory = AscCommon.History
-
-		if (localHistory.Points.length > 0)
-		{
-			let changes = []
-			let oHistoryPoint = localHistory.Points[localHistory.Points.length - 1];
-			AscCommon.History.private_UndoPoint(oHistoryPoint, changes);
-			editor.WordControl.m_oLogicDocument.RecalculateByChanges(changes);
-			AscCommon.History.Remove_LastPoint();
-			return true;
-		}
-	};
-	DeletedTextRecovery.prototype.UndoArray = function (array)
+	DeletedTextRecovery.prototype.UndoArray = function (array, isredo)
 	{
 		if (array)
 		{
 			let changes = []
 			for (let i = 0; i < array.length; i++)
 			{
-				this.RedoUndoChange(array[i], true, changes);
+				this.RedoUndoChange(array[i], !isredo, changes);
 			}
 
 			editor.WordControl.m_oLogicDocument.RecalculateByChanges(changes);
 			return true;
 		}
 	};
-	DeletedTextRecovery.prototype.RedoPoints = function (array)
+	DeletedTextRecovery.prototype.RecalculatePointFromHistory = function ()
 	{
 		let localHistory = AscCommon.History;
 		if (localHistory.Points.length > 0 && localHistory.Points[0].Items.length > 0)
@@ -842,12 +687,9 @@
 			AscCommon.History.Remove_LastPoint();
 			return true;
 		}
-		else if (array !== undefined && array.length > 0)
-		{
-			editor.WordControl.m_oLogicDocument.RecalculateByChanges(array);
-		}
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscCommon.DeletedTextRecovery = DeletedTextRecovery;
+	AscCommon.DeletedTextRecoveryCheckRunsColor = DeletedTextRecovery.prototype.Check;
 	
 })(window);
