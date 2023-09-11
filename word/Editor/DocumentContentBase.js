@@ -2614,4 +2614,64 @@ CDocumentContentBase.prototype.GetSelectedParagraphs = function()
 	
 	return logicDocument.GetSelectedParagraphs();
 };
+CDocumentContentBase.prototype.getSpeechDescription = function(prevState, curState)
+{
+	if (!prevState)
+		return;
+	
+	// В данном метод предполагается, что curState равен this.GetSelectionState()
+	if (!curState)
+		curState = this.GetSelectionState();
+	
+	if (!prevState.length || !curState.length)
+		return;
+	
+	let obj = {};
+	let prevDocState = prevState[prevState.length - 1];
+	let curDocState  = curState[curState.length - 1];
+	
+	if (prevDocState.CurPos.Type !== curDocState.CurPos.Type)
+	{
+		switch (curDocState.CurPos.Type)
+		{
+			case docpostype_Content:  obj.moveToMainPart = true; break;
+			case docpostype_Endnotes:
+			case docpostype_Footnotes: obj.moveToFootnote = true; break;
+			case docpostype_DrawingObjects: obj.moveToDrawing = true; break;
+			case docpostype_HdrFtr: obj.moveToHdrFtr = true; break;
+		}
+		
+		if (curDocState.CurPos.Type === docpostype_DrawingObjects)
+		{
+			// Обработка автофигур
+		}
+		else
+		{
+			let paragraph = this.GetCurrentParagraph();
+			let runElement = paragraph.GetNextRunElement();
+			if (runElement && runElement.IsText())
+				obj.text = String.fromCodePoint(runElement.GetCodePoint());
+			else
+				obj.text = "";
+		}
+	}
+	else
+	{
+		if (curDocState.CurPos.Type === docpostype_DrawingObjects)
+		{
+			// Обработка автофигур
+		}
+		else
+		{
+			let paragraph = this.GetCurrentParagraph();
+			let runElement = paragraph.GetNextRunElement();
+			if (runElement && runElement.IsText())
+				obj.text = String.fromCodePoint(runElement.GetCodePoint());
+			else
+				obj.text = "";
+		}
+	}
+	
+	return {obj : obj, type : AscCommon.SpeechWorkerCommands.Text};
+};
 
