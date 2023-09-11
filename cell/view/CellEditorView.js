@@ -182,6 +182,7 @@
 		// Обработчик кликов
 		this.clickCounter = new AscFormat.ClickCounter();
 
+		this.speechController = new CCellEditorSpeechController(this);
 		this._init();
 
 		return this;
@@ -291,7 +292,7 @@
 		this.fKeyMouseMove = function () {
 			return t._onWindowMouseMove.apply(t, arguments);
 		};
-
+		AscCommon.SpeechWorker.setEnabled(true);
 		t.addEventListeners();
 	};
 
@@ -1691,6 +1692,7 @@
 		this.newTextFormat = null;
 		var t = this;
 		this.sAutoComplete = null;
+		this.speechController.addAction(kind);
 		switch (kind) {
 			case kPrevChar:
 				t.cursorPos = t.textRender.getPrevChar(t.cursorPos);
@@ -1737,6 +1739,8 @@
 		}
 		t._updateCursorPosition();
 		t._updateCursor();
+		this.speechController.end();
+		//t._doSpeech(kind);
 	};
 
 	CellEditor.prototype._findCursorPosition = function ( coord ) {
@@ -2043,6 +2047,7 @@
 		var t = this;
 		var begPos, endPos;
 
+		this.speechController.start(kind);
 		this.sAutoComplete = null;
 		begPos = t.selectionBegin === t.selectionEnd ? t.cursorPos : t.selectionBegin;
 		t._moveCursor(kind, pos);
@@ -2050,6 +2055,7 @@
 
 		t.selectionBegin = begPos;
 		t.selectionEnd = endPos;
+		this.speechController.end();
 		t._drawSelection();
 		if (t.isTopLineActive && !t.skipTLUpdate) {
 			t._updateTopLineCurPos();
@@ -2412,6 +2418,8 @@
 		if (this.handlers.trigger('getWizard') || !t.isOpened || (!isInput && !t.enableKeyEvents && event.emulated !== true)) {
 			return true;
 		}
+
+		this.speechController.onUserActionStart();
 
 		// для исправления Bug 15902 - Alt забирает фокус из приложения
 		if (event.which === 18) {
@@ -2776,6 +2784,7 @@
 		}
 
 		t._setSkipKeyPress(false);
+		this.speechController.skipAction();
 		t.skipTLUpdate = true;
 		return true;
 	};
@@ -2870,6 +2879,7 @@
 		if ( t.lastKeyCode === 18 && event.which === 18 ) {
 			return false;
 		}
+		this.speechController.onUserActionEnd();
 	};
 
 	/** @param event {MouseEvent} */
@@ -2956,6 +2966,7 @@
 			this.cleanSelectRange();
 		}
 		this.isSelectMode = c_oAscCellEditorSelectState.no;
+		this.speechController.onSelectionEnd();
 		return true;
 	};
 
@@ -3120,6 +3131,373 @@
 			}
 		}
 		return res;
+	};
+	CellEditor.prototype._doSpeech = function (kind) {
+		/*if(!AscCommon.SpeechWorker.isEnabled) {
+			return;
+		}*/
+
+		let type, text;
+		switch (kind) {
+			case kPrevChar:
+			case kNextChar:
+				//type = AscCommon.SpeechWorkerCommands.Text;
+				text = this.getText(this.cursorPos, 1);
+				break;
+			case kPrevWord:
+				//t.cursorPos = t.textRender.getPrevWord(t.cursorPos);
+				break;
+			case kNextWord:
+				//t.cursorPos = t.textRender.getNextWord(t.cursorPos);
+				break;
+			case kBeginOfLine:
+				//t.cursorPos = t.textRender.getBeginOfLine(t.cursorPos);
+				break;
+			case kEndOfLine:
+				//t.cursorPos = t.textRender.getEndOfLine(t.cursorPos);
+				break;
+			case kBeginOfText:
+				//t.cursorPos = t.textRender.getBeginOfText(t.cursorPos);
+				break;
+			case kEndOfText:
+				//t.cursorPos = t.textRender.getEndOfText(t.cursorPos);
+				break;
+			case kPrevLine:
+				//t.cursorPos = t.textRender.getPrevLine(t.cursorPos);
+				break;
+			case kNextLine:
+				//t.cursorPos = t.textRender.getNextLine(t.cursorPos);
+				break;
+			case kPosition:
+				//t.cursorPos = pos;
+				break;
+			case kPositionLength:
+				//t.cursorPos += pos;
+				break;
+			default:
+				return;
+		}
+
+		console.log("text: " + text + " kind: " + kind + " isSelectMode: " + this.isSelectMode)
+	};
+
+	function CCellEditorSpeechController(cellEditor) {
+		this.cellEditor = cellEditor;
+
+		this.lastSelectionBegin = null;
+		this.lastSelectionEnd = null;
+		this.action = null;
+
+		this.startIndex = 0;
+
+		this.startAction = null;
+	}
+
+	CCellEditorSpeechController.prototype.onUserActionStart = function () {
+		if(!AscCommon.SpeechWorker.isEnabled) {
+			return;
+		}
+
+		this.lastSelectionBegin = Math.min(this.cellEditor.selectionBegin, this.cellEditor.selectionEnd);
+		this.lastSelectionEnd = Math.max(this.cellEditor.selectionBegin, this.cellEditor.selectionEnd);
+		this.lastCursorPos = this.cellEditor.cursorPos;
+		this.startAction = true;
+	};
+
+	CCellEditorSpeechController.prototype.onUserActionEnd = function () {
+		if(!AscCommon.SpeechWorker.isEnabled) {
+			return;
+		}
+
+		if (!this.startAction) {
+			return;
+		}
+		this.startAction = false;
+
+		if (this.cellEditor.selectionBegin === this.lastSelectionBegin && this.cellEditor.selectionEnd === this.lastSelectionEnd && this.cellEditor.cursorPos === this.lastCursorPos) {
+			this.clean();
+			return;
+		}
+
+		let compareSelection = function () {
+			let _begin = Math.min(t.cellEditor.selectionBegin, t.cellEditor.selectionEnd);
+			let _end = Math.max(t.cellEditor.selectionBegin, t.cellEditor.selectionEnd);
+			let _start, _len;
+			if (_end === _begin) {
+				text = t.cellEditor.getText(t.cellEditor.cursorPos, 1);
+				type = AscCommon.SpeechWorkerCommands.Text;
+				return;
+			}
+
+			if (_end < t.lastSelectionBegin || t.lastSelectionEnd < _begin) {
+				//no intersection
+				//speech new select
+				_start = _begin;
+				_len = _end - _begin;
+				type = AscCommon.SpeechWorkerCommands.Text;
+			} else {
+				if (_end !== t.lastSelectionEnd) {
+					//changed end of text
+					if (_end > t.lastSelectionEnd) {
+						//added by select
+						_start = t.lastSelectionEnd;
+						_len = _end - t.lastSelectionEnd;
+						type = AscCommon.SpeechWorkerCommands.TextSelected;
+					} else {
+						//deleted from select
+						_start = _end;
+						_len = t.lastSelectionEnd - _end;
+						type = AscCommon.SpeechWorkerCommands.TextUnselected;
+					}
+				} else {
+					if (_begin < t.lastSelectionBegin) {
+						//added by select
+						_start = _begin;
+						_len = t.lastSelectionBegin - _begin;
+						type = AscCommon.SpeechWorkerCommands.TextSelected;
+					} else {
+						//deleted from select
+						_start = t.lastSelectionBegin;
+						_len = _begin - t.lastSelectionBegin;
+						type = AscCommon.SpeechWorkerCommands.TextUnselected;
+					}
+				}
+			}
+
+			text = t.cellEditor.getText(_start, _len);
+		};
+
+		let getWord = function () {
+			let _cursorPos = t.cellEditor.cursorPos;
+			type = AscCommon.SpeechWorkerCommands.Text;
+
+			let _cursorPosNextWord = t.cellEditor.textRender.getNextWord(_cursorPos);
+			text = t.cellEditor.getText(_cursorPos, _cursorPosNextWord - _cursorPos);
+		};
+
+		let type, text = null, t = this;
+		switch (this.action) {
+			case kPrevWord:
+			case kNextWord:
+				getWord();
+				break;
+			default:
+				compareSelection();
+		}
+
+		this.clean();
+		this.doSpeech(text, type);
+	};
+
+	CCellEditorSpeechController.prototype.clean = function () {
+		this.lastSelectionBegin = null;
+		this.lastSelectionEnd = null;
+		this.cursorPos = null;
+		this.action = null;
+	};
+
+	CCellEditorSpeechController.prototype.onSelectionEnd = function () {
+		if(!AscCommon.SpeechWorker.isEnabled) {
+			return;
+		}
+
+		let type, text, t = this;
+		let _begin = Math.min(t.cellEditor.selectionBegin, t.cellEditor.selectionEnd);
+		let _end = Math.max(t.cellEditor.selectionBegin, t.cellEditor.selectionEnd);
+		if (_end === _begin) {
+			text = this.cellEditor.getText(this.cellEditor.cursorPos, 1);
+			type = AscCommon.SpeechWorkerCommands.Text;
+		} else {
+			type = AscCommon.SpeechWorkerCommands.TextSelected;
+			text = t.cellEditor.getText(_begin, _end - _begin);
+			text = {text: text};
+		}
+
+		this.doSpeech(text, type);
+	};
+
+	CCellEditorSpeechController.prototype.skipAction = function () {
+		if(!AscCommon.SpeechWorker.isEnabled) {
+			return;
+		}
+
+		this.clean();
+		this.startAction = false;
+	};
+
+	CCellEditorSpeechController.prototype.doSpeech = function (text, type) {
+		if(!AscCommon.SpeechWorker.isEnabled) {
+			return;
+		}
+
+		if (text === "" || text == null) {
+			return;
+		}
+		if (text === " ") {
+			text = "";
+		}
+
+		AscCommon.SpeechWorker.speech(type, text);
+		console.log("text: " + text + " type: " + type)
+	};
+
+	CCellEditorSpeechController.prototype.addAction = function (action) {
+		if(!AscCommon.SpeechWorker.isEnabled) {
+			return;
+		}
+
+		this.action = action;
+	};
+
+
+
+
+
+	CCellEditorSpeechController.prototype.start = function (action) {
+		return;
+		AscCommon.SpeechWorker.setEnabled(true);
+		if(!AscCommon.SpeechWorker.isEnabled) {
+			return;
+		}
+
+		if (this.startIndex) {
+			this.startIndex++;
+			return;
+		}
+		this.startIndex++;
+
+		this.lastSelectionBegin = Math.min(this.cellEditor.selectionBegin, this.cellEditor.selectionEnd);
+		this.lastSelectionEnd = Math.max(this.cellEditor.selectionBegin, this.cellEditor.selectionEnd);
+
+		this.action = action;
+	};
+
+	CCellEditorSpeechController.prototype.end = function () {
+		return;
+		if(!AscCommon.SpeechWorker.isEnabled) {
+			return;
+		}
+
+		this.startIndex--;
+		if (this.startIndex !== 0) {
+			return;
+		}
+
+		let t = this;
+		let isPreviousSelection = this.lastSelectionBegin !== this.lastSelectionEnd;
+		let isNowSelection = this.cellEditor.selectionBegin !== this.cellEditor.selectionEnd;
+
+		let doCompareSelection = function () {
+			let _begin = Math.min(t.cellEditor.selectionBegin, t.cellEditor.selectionEnd);
+			let _end = Math.max(t.cellEditor.selectionBegin, t.cellEditor.selectionEnd);
+			let _start, _len;
+			if (_end === -1 && _begin === -1) {
+				text = t.cellEditor.getText(t.cellEditor.cursorPos, 1);
+				type = AscCommon.SpeechWorkerCommands.Text;
+				return;
+			}
+
+			if (_end < t.lastSelectionBegin || t.lastSelectionEnd < _begin) {
+				//no intersection
+				//speech new select
+				_start = _begin;
+				_len = _end - _begin;
+				type = AscCommon.SpeechWorkerCommands.Text;
+			} else {
+				if (_end !== t.lastSelectionEnd) {
+					//changed end of text
+					if (_end > t.lastSelectionEnd) {
+						//added by select
+						_start = t.lastSelectionEnd;
+						_len = _end - t.lastSelectionEnd;
+						type = AscCommon.SpeechWorkerCommands.TextSelected;
+					} else {
+						//deleted from select
+						_start = _end;
+						_len = t.lastSelectionEnd - _end;
+						type = AscCommon.SpeechWorkerCommands.TextUnselected;
+					}
+				} else {
+					if (_begin < t.lastSelectionBegin) {
+						//added by select
+						_start = _begin;
+						_len = t.lastSelectionBegin - _begin;
+						type = AscCommon.SpeechWorkerCommands.TextSelected;
+					} else {
+						//deleted from select
+						_start = t.lastSelectionBegin;
+						_len = _begin - t.lastSelectionBegin;
+						type = AscCommon.SpeechWorkerCommands.TextUnselected;
+					}
+				}
+			}
+
+			text = t.cellEditor.getText(_start, _len);
+		};
+
+		let type, text = null;
+		if (isNowSelection && this.action != null) {
+			doCompareSelection();
+			console.log("text: " + text + " type: " + t.action + " compare ")
+			return;
+		}
+
+		switch (this.action) {
+			case kPrevChar:
+			case kNextChar:
+			case kBeginOfLine:
+			case kEndOfLine:
+			case kBeginOfText:
+			case kEndOfText:
+			case kPrevLine:
+			case kNextLine:
+				if (isPreviousSelection) {
+					doCompareSelection();
+				} else {
+					text = this.cellEditor.getText(this.cellEditor.cursorPos, 1);
+					type = AscCommon.SpeechWorkerCommands.Text;
+				}
+				break;
+			case kPrevWord:
+			case kNextWord:
+				if (isPreviousSelection) {
+					doCompareSelection();
+				} else {
+					text = this.cellEditor.getText(this.cellEditor.cursorPos, 1);
+					type = AscCommon.SpeechWorkerCommands.Text;
+				}
+				break;
+			case kPosition:
+				if (isPreviousSelection) {
+					doCompareSelection();
+				} else {
+					text = this.cellEditor.getText(this.cellEditor.cursorPos, 1);
+					type = AscCommon.SpeechWorkerCommands.Text;
+				}
+				break;
+			case kPositionLength:
+				if (isPreviousSelection) {
+					doCompareSelection();
+				} else {
+					text = this.cellEditor.getText(this.cellEditor.cursorPos, 1);
+					type = AscCommon.SpeechWorkerCommands.Text;
+				}
+				break;
+			default:
+				//mouse change selection
+				let _begin = Math.min(t.cellEditor.selectionBegin, t.cellEditor.selectionEnd);
+				let _end = Math.max(t.cellEditor.selectionBegin, t.cellEditor.selectionEnd);
+				if (_end === _begin) {
+					text = this.cellEditor.getText(this.cellEditor.cursorPos, 1);
+					type = AscCommon.SpeechWorkerCommands.Text;
+				} else {
+					type = AscCommon.SpeechWorkerCommands.TextSelected;
+					text = t.cellEditor.getText(_begin, _end - _begin);
+				}
+		}
+
+		//AscCommon.SpeechWorker.speech(type, text);
+		console.log("text: " + text + " type: " + t.action)
 	};
 
 
