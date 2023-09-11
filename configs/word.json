@@ -311,6 +311,7 @@
 			"pdf/src/annotations/text.js",
 			"pdf/src/annotations/ink.js",
 			"pdf/src/annotations/highlights.js",
+			"common/geometry/geometry.js",
 			"pdf/src/graphics.js",
 			"pdf/src/documentChanges.js",
 			"pdf/src/annotations/annotsChanges.js",

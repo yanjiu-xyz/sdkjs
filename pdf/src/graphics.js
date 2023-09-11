@@ -105,7 +105,23 @@ CPDFGraphics.prototype.Init = function(context, nWidthPx, nHeightPx) {
     this.heightMM   = nHeightPx * g_dKoef_pix_to_mm;
 };
 CPDFGraphics.prototype.Rect = function(x, y, w, h) {
-    let nScale = this.GetScale();
+    let nScale          = this.GetScale();
+    let nLineW          = this.GetLineWidth(true);
+    let bIntegerGrid    = this.GetIntegerGrid();
+
+    let X1 = bIntegerGrid ? x * nScale >> 0 : x;
+    let Y1 = bIntegerGrid ? y * nScale >> 0 : y;
+    let X2 = bIntegerGrid ? (x + w) * nScale >> 0 : x + w;
+    let Y2 = bIntegerGrid ? (y + h) * nScale >> 0 : y + h;
+
+    let nLineOffsetY = bIntegerGrid ? (0 === (nLineW % 2) ? 0 : 0.5) : 0;
+    let nLineOffsetX = bIntegerGrid ? (0 === (nLineW % 2) ? 0 : 0.5) : 0;
+
+    this.context.moveTo(nLineOffsetX + X1, nLineOffsetY + Y1);
+    this.context.lineTo(-nLineOffsetX + X2, nLineOffsetY + Y1);
+    this.context.lineTo(-nLineOffsetX + X2, -nLineOffsetY + Y2);
+    this.context.lineTo(nLineOffsetX + X1, -nLineOffsetY + Y2);
+    this.context.closePath();
 
     this.context.rect(x * nScale, y * nScale, w * nScale, h * nScale);
 };
@@ -207,41 +223,34 @@ CPDFGraphics.prototype.ClearRect = function(x, y, w, h) {
 
     this.context.clearRect(x * nScale, y * nScale, w * nScale, h * nScale);
 };
-CPDFGraphics.prototype.DrawClearHorLine = function(x1, x2, y)
+CPDFGraphics.prototype.HorLine = function(x1, x2, y)
 {
     let nScale          = this.GetScale();
     let nLineW          = this.GetLineWidth(true);
-
+    
     let X1  = x1 * nScale >> 0;
     let X2  = x2 * nScale >> 0;
     let Y   = y * nScale >> 0;
     
     let nLineOffsetY = (0 === (nLineW % 2) ? 0 : 0.5);
 
-    this.context.beginPath();
     this.context.moveTo(X1, nLineOffsetY + Y);
     this.context.lineTo(X2, nLineOffsetY + Y);
 };
-CPDFGraphics.prototype.DrawClearRect = function(x1, y1, x2, y2)
+CPDFGraphics.prototype.VerLine = function(y1, y2, x)
 {
-    let nScale = this.GetScale();
-    let nLineW = this.GetLineWidth(true);
-
-    let X1 = x1 * nScale >> 0;
-    let Y1 = y1 * nScale >> 0;
-    let X2 = x2 * nScale >> 0;
-    let Y2 = y2 * nScale >> 0;
-
-    let nLineOffsetY = (0 === (nLineW % 2) ? 0 : 0.5);
+    let nScale          = this.GetScale();
+    let nLineW          = this.GetLineWidth(true);
+    
+    let Y1  = y1 * nScale >> 0;
+    let Y2  = y2 * nScale >> 0;
+    let X   = x * nScale >> 0;
+    
     let nLineOffsetX = (0 === (nLineW % 2) ? 0 : 0.5);
 
-    this.context.moveTo(nLineOffsetX + X1, nLineOffsetY + Y1);
-    this.context.lineTo(-nLineOffsetX + X2, nLineOffsetY + Y1);
-    this.context.lineTo(-nLineOffsetX + X2, -nLineOffsetY + Y2);
-    this.context.lineTo(nLineOffsetX + X1, -nLineOffsetY + Y2);
-    this.context.closePath();
+    this.context.moveTo(nLineOffsetX + X, Y1);
+    this.context.lineTo(nLineOffsetX + X, Y2);
 };
-CPDFGraphics.prototype.DrawClear
 
     //------------------------------------------------------------export----------------------------------------------------
     window['AscPDF'] = window['AscPDF'] || {};

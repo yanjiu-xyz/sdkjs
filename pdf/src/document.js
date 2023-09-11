@@ -1388,16 +1388,13 @@ var CPresentation = CPresentation || function(){};
 
         let oViewer         = editor.getDocumentRenderer();
         let oFile           = oViewer.file;
-        let aSelRects       = oFile.getSelectionRects();
-        if (aSelRects.length == 0)
+        let aSelQuads       = oFile.getSelectionQuads();
+        if (aSelQuads.length == 0)
             return;
 
         let aAllPoints = [];
-        aSelRects.forEach(function(rect) {
-            aAllPoints.push(rect.x1);
-            aAllPoints.push(rect.y1);
-            aAllPoints.push(rect.x2);
-            aAllPoints.push(rect.y2);
+        aSelQuads.forEach(function(rect) {
+            aAllPoints = aAllPoints.concat(rect);
         });
 
         let aMinRect = getMinRect(aAllPoints);
@@ -1416,12 +1413,7 @@ var CPresentation = CPresentation || function(){};
 
         let oAnnot = this.AddAnnot(oProps);
 
-        let aQuads = [];
-        aSelRects.forEach(function(rect) {
-            aQuads.push(rect.x1, rect.y1, rect.x2, rect.y1, rect.x1, rect.y2, rect.x2, rect.y2);
-        });
-
-        oAnnot.SetQuads(aQuads);
+        oAnnot.SetQuads(aSelQuads);
         oAnnot.SetStrokeColor([r/255, g/255, b/255]);
 
         editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Highlight, false);
@@ -1437,16 +1429,13 @@ var CPresentation = CPresentation || function(){};
 
         let oViewer         = editor.getDocumentRenderer();
         let oFile           = oViewer.file;
-        let aSelRects       = oFile.getSelectionRects();
-        if (aSelRects.length == 0)
+        let aSelQuads       = oFile.getSelectionQuads();
+        if (aSelQuads.length == 0)
             return;
 
         let aAllPoints = [];
-        aSelRects.forEach(function(rect) {
-            aAllPoints.push(rect.x1);
-            aAllPoints.push(rect.y1);
-            aAllPoints.push(rect.x2);
-            aAllPoints.push(rect.y2);
+        aSelQuads.forEach(function(rect) {
+            aAllPoints = aAllPoints.concat(rect);
         });
 
         let aMinRect = getMinRect(aAllPoints);
@@ -1465,12 +1454,7 @@ var CPresentation = CPresentation || function(){};
 
         let oAnnot = this.AddAnnot(oProps);
 
-        let aQuads = [];
-        aSelRects.forEach(function(rect) {
-            aQuads.push(rect.x1, rect.y1, rect.x2, rect.y1, rect.x1, rect.y2, rect.x2, rect.y2);
-        });
-
-        oAnnot.SetQuads(aQuads);
+        oAnnot.SetQuads(aSelQuads);
         oAnnot.SetStrokeColor([r/255, g/255, b/255]);
 
         editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Underline, false);
@@ -1486,16 +1470,13 @@ var CPresentation = CPresentation || function(){};
 
         let oViewer         = editor.getDocumentRenderer();
         let oFile           = oViewer.file;
-        let aSelRects       = oFile.getSelectionRects();
-        if (aSelRects.length == 0)
+        let aSelQuads       = oFile.getSelectionQuads();
+        if (aSelQuads.length == 0)
             return;
 
         let aAllPoints = [];
-        aSelRects.forEach(function(rect) {
-            aAllPoints.push(rect.x1);
-            aAllPoints.push(rect.y1);
-            aAllPoints.push(rect.x2);
-            aAllPoints.push(rect.y2);
+        aSelQuads.forEach(function(rect) {
+            aAllPoints = aAllPoints.concat(rect);
         });
 
         let aMinRect = getMinRect(aAllPoints);
@@ -1514,12 +1495,7 @@ var CPresentation = CPresentation || function(){};
 
         let oAnnot = this.AddAnnot(oProps);
 
-        let aQuads = [];
-        aSelRects.forEach(function(rect) {
-            aQuads.push(rect.x1, rect.y1, rect.x2, rect.y1, rect.x1, rect.y2, rect.x2, rect.y2);
-        });
-
-        oAnnot.SetQuads(aQuads);
+        oAnnot.SetQuads(aSelQuads);
         oAnnot.SetStrokeColor([r/255, g/255, b/255]);
 
         editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Strikeout, false);

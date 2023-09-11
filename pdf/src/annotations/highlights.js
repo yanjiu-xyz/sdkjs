@@ -117,123 +117,70 @@
         return false;
     };
     CAnnotationTextMarkup.prototype.DrawSelected = function(overlay) {
-        let oViewer     = editor.getDocumentRenderer();
-        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[this.GetPage()].Dpi);
-        let aQuads      = this.GetQuads();
+        overlay.m_oContext.lineWidth    = 3;
+        overlay.m_oContext.globalAlpha  = 1;
+        overlay.m_oContext.strokeStyle  = "rgb(33, 117, 200)";
+        overlay.m_oContext.beginPath();
 
-        let xCenter = oViewer.width >> 1;
-        if (oViewer.documentWidth > oViewer.width)
-		{
-			xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
-		}
-		let yPos    = oViewer.scrollY >> 0;
-        let page    = oViewer.drawingPages[this.GetPage()];
-        let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
-        let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-
-        overlay.m_oContext.lineWidth = 5;
-        overlay.m_oContext.globalAlpha = 1;
-        overlay.m_oContext.strokeStyle = "rgb(33, 117, 200)";
-
-        for (let i = 0; i < aQuads.length; i++) {
-            let aPoints = aQuads[i];
-        
-            let oPoint1 = {
-                x: aPoints[0],
-                y: aPoints[1]
-            }
-            let oPoint2 = {
-                x: aPoints[2],
-                y: aPoints[3]
-            }
-
-            let oPoint3 = {
-                x: aPoints[4],
-                y: aPoints[5]
-            }
-            let oPoint4 = {
-                x: aPoints[6],
-                y: aPoints[7]
-            }
-
-            let X1 = indLeft + oPoint1.x * nScale;
-            let Y1 = indTop + oPoint1.y * nScale;
-            let X2 = indLeft + oPoint2.x * nScale;
-            let Y2 = indTop + oPoint2.y * nScale;
-            let X3 = indLeft + oPoint3.x * nScale;
-            let Y3 = indTop + oPoint3.y * nScale;
-            let X4 = indLeft + oPoint4.x * nScale;
-            let Y4 = indTop + oPoint4.y * nScale;
-
-            overlay.CheckPoint1(X1, Y1);
-            overlay.CheckPoint1(X2, Y2);
-            overlay.CheckPoint2(X1, Y1);
-            overlay.CheckPoint2(X2, Y2);
-            overlay.CheckPoint1(X3, Y3);
-            overlay.CheckPoint1(X4, Y4);
-            overlay.CheckPoint2(X3, Y3);
-            overlay.CheckPoint2(X4, Y4);
-
-            overlay.m_oContext.beginPath();
-            overlay.m_oContext.moveTo(X1, Y1);
-            overlay.m_oContext.lineTo(X2, Y2);
-            overlay.m_oContext.lineTo(X4, Y4);
-            overlay.m_oContext.lineTo(X3, Y3);
-            overlay.m_oContext.closePath();
-            overlay.m_oContext.stroke();
-        }
-
-        for (let i = 0; i < aQuads.length; i++) {
-            let aPoints = aQuads[i];
-        
-            let oPoint1 = {
-                x: aPoints[0],
-                y: aPoints[1]
-            }
-            let oPoint2 = {
-                x: aPoints[2],
-                y: aPoints[3]
-            }
-
-            let oPoint3 = {
-                x: aPoints[4],
-                y: aPoints[5]
-            }
-            let oPoint4 = {
-                x: aPoints[6],
-                y: aPoints[7]
-            }
-
-            let X1 = indLeft + oPoint1.x * nScale;
-            let Y1 = indTop + oPoint1.y * nScale;
-            let X2 = indLeft + oPoint2.x * nScale;
-            let Y2 = indTop + oPoint2.y * nScale;
-            let X3 = indLeft + oPoint3.x * nScale;
-            let Y3 = indTop + oPoint3.y * nScale;
-            let X4 = indLeft + oPoint4.x * nScale;
-            let Y4 = indTop + oPoint4.y * nScale;
-
-            overlay.m_oContext.save(); // Сохраняем текущее состояние контекста
-
-            // Создаем область, которая будет служить маской
-            overlay.m_oContext.beginPath();
-            overlay.m_oContext.moveTo(X1, Y1);
-            overlay.m_oContext.lineTo(X2, Y2);
-            overlay.m_oContext.lineTo(X4, Y4);
-            overlay.m_oContext.lineTo(X3, Y3);
-            overlay.m_oContext.closePath();
-
-            // Используем маску для очистки области
-            overlay.m_oContext.clip();
-            overlay.m_oContext.clearRect(0, 0, overlay.m_oContext.canvas.width, overlay.m_oContext.canvas.height);
-
-            // Восстанавливаем исходное состояние контекста
-            overlay.m_oContext.restore();
-        }
+        fillRegion(this.GetUnitedRegion(), overlay, this.GetPage());
+        overlay.m_oContext.stroke();
     };
+    CAnnotationTextMarkup.prototype.GetUnitedRegion = function() {
+        if (this.unitedRegion)
+            return this.unitedRegion;
 
+        let aQuads  = this.GetQuads();
+        let fUniter = AscGeometry.PolyBool["union"];
+        let resultRegion;
+
+        let aAllRegions = [];
+        for (let i = 0; i < aQuads.length; i++) {
+            let aPoints = aQuads[i];
+        
+            let oPoint1 = {
+                x: aPoints[0],
+                y: aPoints[1]
+            }
+            let oPoint2 = {
+                x: aPoints[2],
+                y: aPoints[3]
+            }
+
+            let oPoint3 = {
+                x: aPoints[4],
+                y: aPoints[5]
+            }
+            let oPoint4 = {
+                x: aPoints[6],
+                y: aPoints[7]
+            }
+
+            aAllRegions.push({
+                inverted : false,
+                regions : [
+                    [
+                        [oPoint1.x, oPoint1.y],
+                        [oPoint2.x, oPoint2.y],
+                        [oPoint4.x, oPoint4.y],
+                        [oPoint3.x, oPoint3.y]
+                    ]
+                ]
+            });
+        }
+
+        if (aAllRegions.length > 1) {
+            resultRegion = fUniter(aAllRegions[0], aAllRegions[1]);
+            for (let i = 2; i < aAllRegions.length; i++) {
+                resultRegion = fUniter(resultRegion, aAllRegions[i]);
+            }
+        }
+        else {
+            resultRegion = aAllRegions[0];
+        }
+
+        this.unitedRegion = resultRegion;
+        return this.unitedRegion;
+    };
     /**
 	 * Class representing a highlight annotation.
 	 * @constructor
@@ -258,21 +205,55 @@
 
         let aQuads = this.GetQuads();
         for (let i = 0; i < aQuads.length; i++) {
-            let aPoints     = aQuads[i];
-            let aMinRect    = getMinRect(aPoints);
-            let MinX = aMinRect[0] - 1 / nGrScale;
-            let MinY = aMinRect[1];
-            let MaxX = aMinRect[2];
-            let MaxY = aMinRect[3];
+            let aPoints = aQuads[i];
+
+            let oPoint1 = {
+                x: aPoints[0],
+                y: aPoints[1]
+            }
+            let oPoint2 = {
+                x: aPoints[2],
+                y: aPoints[3]
+            }
+            let oPoint3 = {
+                x: aPoints[4],
+                y: aPoints[5]
+            }
+            let oPoint4 = {
+                x: aPoints[6],
+                y: aPoints[7]
+            }
+
+            let dx1 = oPoint2.x - oPoint1.x;
+            let dy1 = oPoint2.y - oPoint1.y;
+            let dx2 = oPoint4.x - oPoint3.x;
+            let dy2 = oPoint4.y - oPoint3.y;
+            let angle1          = Math.atan2(dy1, dx1);
+            let angle2          = Math.atan2(dy2, dx2);
+            let rotationAngle   = angle1;
 
             oGraphicsPDF.context.globalCompositeOperation = "multiply";
 
             oGraphicsPDF.BeginPath();
             oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
             oGraphicsPDF.SetFillStyle(oRGBFill.r, oRGBFill.g, oRGBFill.b);
-            oGraphicsPDF.DrawClearRect(MinX, MinY, MaxX, MaxY);
-            oGraphicsPDF.Fill();
 
+            if (rotationAngle == 0 || rotationAngle == 3/2 * Math.PI) {
+                let aMinRect = getMinRect(aPoints);
+
+                oGraphicsPDF.SetIntegerGrid(true);
+                oGraphicsPDF.Rect(aMinRect[0], aMinRect[1], aMinRect[2] - aMinRect[0], aMinRect[3] - aMinRect[1]);
+                oGraphicsPDF.SetIntegerGrid(false);
+            }
+            else {
+                oGraphicsPDF.MoveTo(oPoint1.x, oPoint1.y);
+                oGraphicsPDF.LineTo(oPoint2.x, oPoint2.y);
+                oGraphicsPDF.LineTo(oPoint4.x, oPoint4.y);
+                oGraphicsPDF.LineTo(oPoint3.x, oPoint3.y);
+                oGraphicsPDF.ClosePath();
+            }
+
+            oGraphicsPDF.Fill();
             oGraphicsPDF.context.globalCompositeOperation = "source-over";
         }
     };
@@ -328,9 +309,6 @@
             let X2 = oPoint4.x;
             let Y2 = oPoint4.y;
 
-            oGraphicsPDF.SetLineWidth(1);
-            
-
             let dx1 = oPoint2.x - oPoint1.x;
             let dy1 = oPoint2.y - oPoint1.y;
             let dx2 = oPoint4.x - oPoint3.x;
@@ -339,16 +317,28 @@
             let angle2          = Math.atan2(dy2, dx2);
             let rotationAngle   = angle1;
 
-            let nSide = findMaxSideWithRotation(oPoint1.x, oPoint1.y, oPoint2.x, oPoint2.y, oPoint3.x, oPoint3.y, oPoint4.x, oPoint4.y);
+            let nSide;
+            if (rotationAngle == 0 || rotationAngle == 3/2 * Math.PI) {
+                nSide = Math.abs(oPoint3.y - oPoint1.y);
+                oGraphicsPDF.SetLineWidth(nSide * 0.1 >> 0);
+            }
+            else {
+                nSide = findMaxSideWithRotation(oPoint1.x, oPoint1.y, oPoint2.x, oPoint2.y, oPoint3.x, oPoint3.y, oPoint4.x, oPoint4.y);
+                oGraphicsPDF.SetLineWidth(nSide * 0.1 >> 0);
+            }
 
-            oGraphicsPDF.SetLineWidth(nSide * 0.1 >> 0);
-            let nLineW = oGraphicsPDF.GetLineWidth();
+            let nLineW      = oGraphicsPDF.GetLineWidth();
+            let nIndentX    = Math.sin(rotationAngle) * nLineW * 1.5;
+            let nIndentY    = Math.cos(rotationAngle) * nLineW * 1.5;
+
+            if (rotationAngle == 0 || rotationAngle == 3/2 * Math.PI) {
+                oGraphicsPDF.HorLine(X1, X2, Y2 - nIndentY);
+            }
+            else {
+                oGraphicsPDF.MoveTo(X1 + nIndentX, Y1 - nIndentY);
+                oGraphicsPDF.LineTo(X2 + nIndentX, Y2 - nIndentY);
+            }
             
-            let nIndentX = Math.sin(rotationAngle) * nLineW * 1.5;
-            let nIndentY = Math.cos(rotationAngle) * nLineW * 1.5;
-
-            oGraphicsPDF.MoveTo(X1 + nIndentX, Y1 - nIndentY);
-            oGraphicsPDF.LineTo(X2 + nIndentX, Y2 - nIndentY);
             oGraphicsPDF.Stroke();
         }
     };
@@ -398,48 +388,36 @@
                 y: aPoints[7]
             }
 
+            let dx1 = oPoint2.x - oPoint1.x;
+            let dy1 = oPoint2.y - oPoint1.y;
+            let dx2 = oPoint4.x - oPoint3.x;
+            let dy2 = oPoint4.y - oPoint3.y;
+            let angle1          = Math.atan2(dy1, dx1);
+            let angle2          = Math.atan2(dy2, dx2);
+            let rotationAngle   = angle1;
+
             let X1 = oPoint1.x + (oPoint3.x - oPoint1.x) / 2;
             let Y1 = oPoint1.y + (oPoint3.y - oPoint1.y) / 2;
             let X2 = oPoint2.x + (oPoint4.x - oPoint2.x) / 2;
             let Y2 = oPoint2.y + (oPoint4.y - oPoint2.y) / 2;
 
-            let nSide = findMaxSideWithRotation(oPoint1.x, oPoint1.y, oPoint2.x, oPoint2.y, oPoint3.x, oPoint3.y, oPoint4.x, oPoint4.y);
+            let nSide;
+            if (rotationAngle == 0 || rotationAngle == 3/2 * Math.PI) {
+                nSide = Math.abs(oPoint3.y - oPoint1.y);
+                oGraphicsPDF.SetLineWidth(nSide * 0.1 >> 0);
+                oGraphicsPDF.HorLine(X1, X2, Y2);
+            }
+            else {
+                nSide = findMaxSideWithRotation(oPoint1.x, oPoint1.y, oPoint2.x, oPoint2.y, oPoint3.x, oPoint3.y, oPoint4.x, oPoint4.y);
+                oGraphicsPDF.SetLineWidth(nSide * 0.1 >> 0);
 
-            oGraphicsPDF.SetLineWidth(nSide * 0.1 >> 0);
-            oGraphicsPDF.MoveTo(X1, Y1);
-            oGraphicsPDF.LineTo(X2, Y2);
+                oGraphicsPDF.MoveTo(X1, Y1);
+                oGraphicsPDF.LineTo(X2, Y2);
+            }
+            
             oGraphicsPDF.Stroke();
         }
     };
-
-    function getMinRect(aPoints) {
-        let xMax = aPoints[0], yMax = aPoints[1], xMin = xMax, yMin = yMax;
-        for(let i = 1; i < aPoints.length; i++) {
-            if (i % 2 == 0) {
-                if(aPoints[i] < xMin)
-                {
-                    xMin = aPoints[i];
-                }
-                if(aPoints[i] > xMax)
-                {
-                    xMax = aPoints[i];
-                }
-            }
-            else {
-                if(aPoints[i] < yMin)
-                {
-                    yMin = aPoints[i];
-                }
-
-                if(aPoints[i] > yMax)
-                {
-                    yMax = aPoints[i];
-                }
-            }
-        }
-
-        return [xMin, yMin, xMax, yMax];
-    }
 
     function findMaxSideWithRotation(x1, y1, x2, y2, x3, y3, x4, y4) {
         // Найдите центр поворота
@@ -475,6 +453,81 @@
         const maxSide = Math.max(sideAB, sideBC, sideCD, sideDA);
       
         return maxSide;
+    }
+
+    function fillRegion(polygon, overlay, pageIndex)
+    {
+        let oViewer = editor.getDocumentRenderer();
+        let nScale  = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[pageIndex].Dpi);
+
+        let xCenter = oViewer.width >> 1;
+        if (oViewer.documentWidth > oViewer.width)
+		{
+			xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
+		}
+		let yPos    = oViewer.scrollY >> 0;
+        let page    = oViewer.drawingPages[pageIndex];
+        let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
+        let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        
+        for (let i = 0, countPolygons = polygon.regions.length; i < countPolygons; i++)
+        {
+            let region = polygon.regions[i];
+            let countPoints = region.length;
+
+            if (2 > countPoints)
+                continue;
+
+            let X = indLeft + region[0][0] * nScale;
+            let Y = indTop + region[0][1] * nScale;
+
+            overlay.m_oContext.moveTo(X, Y);
+
+            overlay.CheckPoint1(X, Y);
+            overlay.CheckPoint2(X, Y);
+
+            for (let j = 1, countPoints = region.length; j < countPoints; j++)
+            {
+                X = indLeft + region[j][0] * nScale;
+                Y = indTop + region[j][1] * nScale;;
+
+                overlay.m_oContext.lineTo(X, Y);
+                overlay.CheckPoint1(X, Y);
+                overlay.CheckPoint2(X, Y);
+            }
+
+            overlay.m_oContext.closePath();
+        }
+    }
+    function getMinRect(aPoints) {
+        let xMax = aPoints[0], yMax = aPoints[1], xMin = xMax, yMin = yMax;
+        for(let i = 1; i < aPoints.length; i++) {
+            if (i % 2 == 0) {
+                if(aPoints[i] < xMin)
+                {
+                    xMin = aPoints[i];
+                }
+                if(aPoints[i] > xMax)
+                {
+                    xMax = aPoints[i];
+                }
+            }
+            else {
+                if(aPoints[i] < yMin)
+                {
+                    yMin = aPoints[i];
+                }
+
+                if(aPoints[i] > yMax)
+                {
+                    yMax = aPoints[i];
+                }
+            }
+        }
+
+        return [xMin, yMin, xMax, yMax];
     }
 
     window["AscPDF"].CAnnotationTextMarkup  = CAnnotationTextMarkup;

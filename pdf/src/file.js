@@ -1076,14 +1076,14 @@ void main() {\n\
         this.Selection = oSelectionInfo;
         this.onUpdateOverlay();
     };
-    CFile.prototype.getSelectionRects = function() {
+    CFile.prototype.getSelectionQuads = function() {
         let pageIndex = this.viewer.currentPage;
 
         var stream = this.getPageTextStream(pageIndex);
         if (!stream)
             return;
 
-        let aRects = [];
+        let aQuads = [];
         var sel = this.Selection;
         var Page1 = 0;
         var Page2 = 0;
@@ -1323,12 +1323,7 @@ void main() {\n\
                         var _y = (dKoefY * (_lineY - _lineAscent));
                         var _b = (dKoefY * (_lineY + _lineDescent));
 
-                        aRects.push({
-                            x1: _x,
-                            y1: _y,
-                            x2: _r,
-                            y2: _b
-                        });
+                        aQuads.push([_x,_y,_r,_y,_x,_b,_r,_b]);
                         break;
                     }
                     else
@@ -1362,12 +1357,7 @@ void main() {\n\
                         _y3 = (dKoefY * _y3);
                         _y4 = (dKoefY * _y4);
 
-                        aRects.push({
-                            x1: _x1,
-                            y1: _y1,
-                            x2: _x2,
-                            y2: _y2
-                        });
+                        aQuads.push([_x2,_y2, _x3,_y3, _x1,_y1, _x4,_y4]);
                         break;
                     }
                 }
@@ -1384,7 +1374,7 @@ void main() {\n\
             }
         }
 
-        return aRects;
+        return aQuads;
     };
     CFile.prototype.drawSelection = function(pageIndex, overlay, x, y, width, height)
     {

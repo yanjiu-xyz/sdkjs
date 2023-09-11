@@ -730,8 +730,8 @@
                     
                     oGraphicsPDF.SetLineDash([]);
                     oGraphicsPDF.BeginPath();
-                    oGraphicsPDF.DrawClearRect(X, Y, aOringRect[2], aOringRect[3]);
-                    // oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
+                    // oGraphicsPDF.DrawClearRect(X, Y, aOringRect[2], aOringRect[3]);
+                    oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
                     oGraphicsPDF.Stroke();
                     oGraphicsPDF.ClosePath();
 
