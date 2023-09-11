@@ -277,16 +277,16 @@ CPDFGraphics.prototype.ClearRect = function(x, y, w, h) {
 CPDFGraphics.prototype.HorLine = function(x1, x2, y)
 {
     let nScale          = this.GetScale();
-    let nLineW          = this.GetLineWidth();
+    let nLineW          = this.GetLineWidth(true);
     
-    this.CheckPoint(x1 - nLineW, y - nLineW);
-    this.CheckPoint(x2 + nLineW, y + nLineW);
+    this.CheckPoint(x1, y);
+    this.CheckPoint(x2, y);
 
     let X1  = x1 * nScale >> 0;
     let X2  = x2 * nScale >> 0;
     let Y   = y * nScale >> 0;
     
-    let nLineOffsetY = (0 === (nLineW * nScale % 2) ? 0 : 0.5);
+    let nLineOffsetY = (0 === (nLineW % 2) ? 0 : 0.5);
 
     this.context.moveTo(X1, nLineOffsetY + Y);
     this.context.lineTo(X2, nLineOffsetY + Y);

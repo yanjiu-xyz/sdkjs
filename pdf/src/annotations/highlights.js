@@ -63,6 +63,11 @@
     CAnnotationTextMarkup.prototype.IsTextMarkup = function() {
         return true;
     };
+    CAnnotationTextMarkup.prototype.AddToRedraw = function() {
+        let oViewer = editor.getDocumentRenderer();
+        if (oViewer.pagesInfo.pages[this.GetPage()])
+            oViewer.pagesInfo.pages[this.GetPage()].needRedrawHighlights = true;
+    };
     CAnnotationTextMarkup.prototype.IsInQuads = function(x, y) {
         let oOverlayCtx = editor.getDocumentRenderer().overlay.m_oContext;
         let aQuads      = this.GetQuads();
@@ -251,12 +256,7 @@
             oGraphicsPDF.context.globalCompositeOperation = "source-over";
         }
     };
-    CAnnotationHighlight.prototype.AddToRedraw = function() {
-        let oViewer = editor.getDocumentRenderer();
-        if (oViewer.pagesInfo.pages[this.GetPage()])
-            oViewer.pagesInfo.pages[this.GetPage()].needRedrawHighlights = true;
-    };
-    
+        
     /**
 	 * Class representing a highlight annotation.
 	 * @constructor
@@ -314,11 +314,11 @@
             let nSide;
             if (rotationAngle == 0 || rotationAngle == 3/2 * Math.PI) {
                 nSide = Math.abs(oPoint3.y - oPoint1.y);
-                oGraphicsPDF.SetLineWidth(nSide * 0.1 >> 0);
+                oGraphicsPDF.SetLineWidth(Math.max(1, nSide * 0.1 >> 0));
             }
             else {
                 nSide = findMaxSideWithRotation(oPoint1.x, oPoint1.y, oPoint2.x, oPoint2.y, oPoint3.x, oPoint3.y, oPoint4.x, oPoint4.y);
-                oGraphicsPDF.SetLineWidth(nSide * 0.1 >> 0);
+                oGraphicsPDF.SetLineWidth(Math.max(1, nSide * 0.1 >> 0));
             }
 
             let nLineW      = oGraphicsPDF.GetLineWidth();
@@ -354,13 +354,11 @@
 
         let aQuads      = this.GetQuads();
         let oRGBFill    = this.GetRGBColor(this.GetStrokeColor());
-        let nGrScale    = oGraphicsPDF.GetScale();
 
         for (let i = 0; i < aQuads.length; i++) {
             let aPoints = aQuads[i];
 
             oGraphicsPDF.BeginPath();
-            oGraphicsPDF.SetLineWidth(1);
 
             oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
             oGraphicsPDF.SetStrokeStyle(oRGBFill.r, oRGBFill.g, oRGBFill.b);
@@ -398,12 +396,12 @@
             let nSide;
             if (rotationAngle == 0 || rotationAngle == 3/2 * Math.PI) {
                 nSide = Math.abs(oPoint3.y - oPoint1.y);
-                oGraphicsPDF.SetLineWidth(nSide * 0.1 >> 0);
+                oGraphicsPDF.SetLineWidth(Math.max(1, nSide * 0.1 >> 0));
                 oGraphicsPDF.HorLine(X1, X2, Y2);
             }
             else {
                 nSide = findMaxSideWithRotation(oPoint1.x, oPoint1.y, oPoint2.x, oPoint2.y, oPoint3.x, oPoint3.y, oPoint4.x, oPoint4.y);
-                oGraphicsPDF.SetLineWidth(nSide * 0.1 >> 0);
+                oGraphicsPDF.SetLineWidth(Math.max(1, nSide * 0.1 >> 0));
 
                 oGraphicsPDF.MoveTo(X1, Y1);
                 oGraphicsPDF.LineTo(X2, Y2);
