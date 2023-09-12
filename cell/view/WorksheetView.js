@@ -1827,8 +1827,64 @@
 		return this.model.getSelection().clone();
 	};
 
-	WorksheetView.prototype.getSpeechDescription = function () {
-		return null;
+	WorksheetView.prototype.getSpeechDescription = function (prevState, curState) {
+		let type = null, text = null, obj = null;
+		if (prevState && curState && prevState.ranges && curState.ranges) {
+			if (prevState.ranges.length === 1 && prevState.ranges.length === curState.ranges.length) {
+				//1 row/1 col and change 1 cell
+				let prevRange = prevState.ranges[0];
+				let curRange = curState.ranges[0];
+
+				let oStart, oEnd;
+				let diff1 = prevRange.difference(curRange);
+				let diff2 = curRange.difference(prevRange);
+				if (diff1.length === 0 && diff2.length === 1) {
+					if (diff2[0].isOneCell()) {
+						oStart = diff2[0];
+
+						type = AscCommon.SpeechWorkerCommands.CellRangeUnselectedChangeOne;
+					} else {
+						oStart = new Asc.Range(diff2[0].c1, diff2[0].r1, diff2[0].c1, diff2[0].r1);
+						oEnd = new Asc.Range(diff2[0].c2, diff2[0].r2, diff2[0].c2, diff2[0].r2);
+
+						type = AscCommon.SpeechWorkerCommands.CellRangeUnselected;
+					}
+				} else if (diff2.length === 0 && diff1.length === 1) {
+					if (diff1[0].isOneCell()) {
+						oStart = diff1[0];
+
+						type = AscCommon.SpeechWorkerCommands.CellRangeSelectedChangeOne;
+					} else {
+						oStart = new Asc.Range(diff1[0].c1, diff1[0].r1, diff1[0].c1, diff1[0].r1);
+						oEnd = new Asc.Range(diff1[0].c2, diff1[0].r2, diff1[0].c2, diff1[0].r2);
+
+						type = AscCommon.SpeechWorkerCommands.CellRangeSelected;
+					}
+				}
+
+				if (oStart) {
+					let startObj, endOnj, oCell;
+
+					oCell = this._getVisibleCell(oStart.c1, oStart.r1);
+					text = oCell && oCell.getValueForEdit();
+					startObj = {text: text === "" ? null : text, cell: oStart.getName()};
+
+					if (oEnd) {
+						oCell = this._getVisibleCell(oEnd.c1, oEnd.r1);
+						text = oCell && oCell.getValueForEdit();
+						endOnj = {text: text === "" ? null : text, cell: oEnd.getName()};
+
+						obj = {start: startObj, end: endOnj};
+					}
+
+					if (!obj) {
+						obj = startObj;
+					}
+				}
+			}
+		}
+
+		return obj ? {type: type, obj: obj} : null;
 	};
 
     WorksheetView.prototype._fixVisibleRange = function ( range ) {

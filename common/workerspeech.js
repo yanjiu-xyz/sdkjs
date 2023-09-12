@@ -214,6 +214,7 @@
 					result += (" " + obj.end.cell);
 
 					this.speechElement.innerHTML = result;
+					console.log(result);
 					break;
 				}
 				case SpeechWorkerType.CellRangeUnselected:
@@ -225,6 +226,7 @@
 					result += (" " + obj.end.cell);
 
 					this.speechElement.innerHTML = result;
+					console.log(result);
 					break;
 				}
 				case SpeechWorkerType.CellRangeSelectedChangeOne:
@@ -234,6 +236,7 @@
 					result += (" " + obj.cell);
 
 					this.speechElement.innerHTML = result;
+					console.log(result);
 					break;
 				}
 				case SpeechWorkerType.CellRangeUnselectedChangeOne:
@@ -243,6 +246,7 @@
 					result += (" " + obj.cell);
 
 					this.speechElement.innerHTML = result;
+					console.log(result);
 					break;
 				}
 				case SpeechWorkerType.SheetSelected:
