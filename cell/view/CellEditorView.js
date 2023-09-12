@@ -292,7 +292,7 @@
 		this.fKeyMouseMove = function () {
 			return t._onWindowMouseMove.apply(t, arguments);
 		};
-		AscCommon.SpeechWorker.setEnabled(true);
+		//AscCommon.SpeechWorker.setEnabled(true);
 		t.addEventListeners();
 	};
 
@@ -1692,7 +1692,7 @@
 		this.newTextFormat = null;
 		var t = this;
 		this.sAutoComplete = null;
-		this.speechController.addAction(kind);
+		//this.speechController.addAction(kind);
 		switch (kind) {
 			case kPrevChar:
 				t.cursorPos = t.textRender.getPrevChar(t.cursorPos);
@@ -1739,7 +1739,7 @@
 		}
 		t._updateCursorPosition();
 		t._updateCursor();
-		this.speechController.end();
+		//this.speechController.end();
 		//t._doSpeech(kind);
 	};
 
@@ -2047,7 +2047,7 @@
 		var t = this;
 		var begPos, endPos;
 
-		this.speechController.start(kind);
+		//this.speechController.start(kind);
 		this.sAutoComplete = null;
 		begPos = t.selectionBegin === t.selectionEnd ? t.cursorPos : t.selectionBegin;
 		t._moveCursor(kind, pos);
@@ -2055,7 +2055,7 @@
 
 		t.selectionBegin = begPos;
 		t.selectionEnd = endPos;
-		this.speechController.end();
+		//this.speechController.end();
 		t._drawSelection();
 		if (t.isTopLineActive && !t.skipTLUpdate) {
 			t._updateTopLineCurPos();
@@ -2419,7 +2419,7 @@
 			return true;
 		}
 
-		this.speechController.onUserActionStart();
+		//this.speechController.onUserActionStart();
 
 		// для исправления Bug 15902 - Alt забирает фокус из приложения
 		if (event.which === 18) {
@@ -2784,7 +2784,7 @@
 		}
 
 		t._setSkipKeyPress(false);
-		this.speechController.skipAction();
+		//this.speechController.skipAction();
 		t.skipTLUpdate = true;
 		return true;
 	};
@@ -2879,7 +2879,7 @@
 		if ( t.lastKeyCode === 18 && event.which === 18 ) {
 			return false;
 		}
-		this.speechController.onUserActionEnd();
+		//this.speechController.onUserActionEnd();
 	};
 
 	/** @param event {MouseEvent} */
@@ -2966,7 +2966,7 @@
 			this.cleanSelectRange();
 		}
 		this.isSelectMode = c_oAscCellEditorSelectState.no;
-		this.speechController.onSelectionEnd();
+		//this.speechController.onSelectionEnd();
 		return true;
 	};
 
@@ -3132,54 +3132,89 @@
 		}
 		return res;
 	};
-	CellEditor.prototype._doSpeech = function (kind) {
-		/*if(!AscCommon.SpeechWorker.isEnabled) {
-			return;
-		}*/
 
-		let type, text;
-		switch (kind) {
-			case kPrevChar:
-			case kNextChar:
-				//type = AscCommon.SpeechWorkerCommands.Text;
-				text = this.getText(this.cursorPos, 1);
-				break;
-			case kPrevWord:
-				//t.cursorPos = t.textRender.getPrevWord(t.cursorPos);
-				break;
-			case kNextWord:
-				//t.cursorPos = t.textRender.getNextWord(t.cursorPos);
-				break;
-			case kBeginOfLine:
-				//t.cursorPos = t.textRender.getBeginOfLine(t.cursorPos);
-				break;
-			case kEndOfLine:
-				//t.cursorPos = t.textRender.getEndOfLine(t.cursorPos);
-				break;
-			case kBeginOfText:
-				//t.cursorPos = t.textRender.getBeginOfText(t.cursorPos);
-				break;
-			case kEndOfText:
-				//t.cursorPos = t.textRender.getEndOfText(t.cursorPos);
-				break;
-			case kPrevLine:
-				//t.cursorPos = t.textRender.getPrevLine(t.cursorPos);
-				break;
-			case kNextLine:
-				//t.cursorPos = t.textRender.getNextLine(t.cursorPos);
-				break;
-			case kPosition:
-				//t.cursorPos = pos;
-				break;
-			case kPositionLength:
-				//t.cursorPos += pos;
-				break;
-			default:
-				return;
+	CellEditor.prototype.getSelectionState = function () {
+		return {start: this.selectionBegin, end: this.selectionEnd, cursor: this.cursorPos};
+	};
+
+	CellEditor.prototype.getSpeechDescription = function (prevState, curState) {
+		if (curState.start === prevState.start && curState.end === prevState.end && prevState.cursor === curState.cursor) {
+			return null;
 		}
 
-		console.log("text: " + text + " kind: " + kind + " isSelectMode: " + this.isSelectMode)
+		let type, text = null, t = this;
+
+		let compareSelection = function () {
+			let _begin = Math.min(curState.start, curState.end);
+			let _end = Math.max(curState.start, curState.end);
+			let _start, _len;
+			if (_end === _begin) {
+				text = t.getText(t.cursorPos, 1);
+				type = AscCommon.SpeechWorkerCommands.Text;
+				return;
+			}
+
+			if (_end < prevState.start || prevState.end < _begin) {
+				//no intersection
+				//speech new select
+				_start = _begin;
+				_len = _end - _begin;
+				type = AscCommon.SpeechWorkerCommands.Text;
+			} else {
+				if (_end !== prevState.end) {
+					//changed end of text
+					if (_end > prevState.end) {
+						//added by select
+						_start = prevState.end;
+						_len = _end - prevState.end;
+						type = AscCommon.SpeechWorkerCommands.TextSelected;
+					} else {
+						//deleted from select
+						_start = _end;
+						_len = prevState.end - _end;
+						type = AscCommon.SpeechWorkerCommands.TextUnselected;
+					}
+				} else {
+					if (_begin < prevState.start) {
+						//added by select
+						_start = _begin;
+						_len = prevState.start - _begin;
+						type = AscCommon.SpeechWorkerCommands.TextSelected;
+					} else {
+						//deleted from select
+						_start = prevState.start;
+						_len = _begin - prevState.start;
+						type = AscCommon.SpeechWorkerCommands.TextUnselected;
+					}
+				}
+			}
+
+			text = t.getText(_start, _len);
+		};
+
+		let getWord = function () {
+			let _cursorPos = t.cursorPos;
+			type = AscCommon.SpeechWorkerCommands.Text;
+
+			let _cursorPosNextWord = t.textRender.getNextWord(_cursorPos);
+			text = t.getText(_cursorPos, _cursorPosNextWord - _cursorPos);
+		};
+
+		//todo need type for word/sym diference
+		/*switch (this.action) {
+			case kPrevWord:
+			case kNextWord:
+				getWord();
+				break;
+			default:
+				compareSelection();
+		}*/
+
+		compareSelection();
+
+		return {type: type, obj: {text: text}};
 	};
+
 
 	function CCellEditorSpeechController(cellEditor) {
 		this.cellEditor = cellEditor;

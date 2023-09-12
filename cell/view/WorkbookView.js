@@ -5476,6 +5476,36 @@
 		}
 	};
 
+	WorkbookView.prototype.getSelectionState = function() {
+		let res = null;
+		let ws = this.getWorksheet();
+		if (ws.objectRender.selectedGraphicObjectsExists()) {
+
+		} else {
+			if (!this.getCellEditMode()) {
+				res = ws && ws.getSelectionState();
+			} else {
+				res = this.cellEditor.getSelectionState();
+			}
+		}
+		return res;
+	};
+
+	WorkbookView.prototype.getSpeechDescription = function(prevState, curState) {
+		let res = null;
+		let ws = this.getWorksheet();
+		if (ws.objectRender.selectedGraphicObjectsExists()) {
+
+		} else {
+			if (!this.getCellEditMode()) {
+				res = ws && ws.getSpeechDescription(prevState, curState);
+			} else {
+				res = this.cellEditor.getSpeechDescription(prevState, curState);
+			}
+		}
+		return res;
+	};
+
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
 	function CDocumentSearchExcel(wb) {
 		this.wb = wb;

@@ -1823,6 +1823,14 @@
         return this.model.selectionRange;
     };
 
+	WorksheetView.prototype.getSelectionState = function () {
+		return this.model.getSelection().clone();
+	};
+
+	WorksheetView.prototype.getSpeechDescription = function () {
+		return null;
+	};
+
     WorksheetView.prototype._fixVisibleRange = function ( range ) {
         var tmp;
         if ( null !== this.topLeftFrozenCell ) {
