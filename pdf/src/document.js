@@ -180,7 +180,7 @@ var CPresentation = CPresentation || function(){};
         let bInberitValue = false;
         let value;
         for (let i = 0; i < this.widgets.length; i++) {
-            oField = this.widgets[i];
+            let oField = this.widgets[i];
             if ((oField.GetPartialName() == null || oField.GetApiValue(bInberitValue) == null) && oField.GetParent()) {
                 value = oField.GetParent().GetApiValue();
                 if (value != null && value.toString)
@@ -577,7 +577,6 @@ var CPresentation = CPresentation || function(){};
                     }
                 }
                 else {
-                    oNextForm = null;
                     oField.UndoNotAppliedChanges();
                     if (oField.IsChanged() == false) {
                         oField.SetDrawFromStream(true);
@@ -635,7 +634,6 @@ var CPresentation = CPresentation || function(){};
                 }
             }
             else {
-                oNextForm = null;
                 oActiveForm.UndoNotAppliedChanges();
                 if (oActiveForm.IsChanged() == false) {
                     oActiveForm.SetDrawFromStream(true);
@@ -1033,7 +1031,7 @@ var CPresentation = CPresentation || function(){};
                     
                     oViewer._paint();
                 }
-                cursorType = "pointer";
+                let cursorType = "pointer";
                 oViewer.fieldFillingMode = false;
                 break;
             default:

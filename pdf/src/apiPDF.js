@@ -149,7 +149,7 @@
 	 */
     Object.defineProperty(ApiBaseField.prototype, "borderStyle", {
         set(sValue) {
-            if (Object.values(border).includes(sValue)) {
+            if (Object.values(AscPDF.BORDER_TYPES).includes(sValue)) {
                 if (this.field.IsAnnot()) {
                     let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
                     aFields.forEach(function(field) {
@@ -475,7 +475,7 @@
         },
         "rotation": {
             set(nValue) {
-                if (VALID_ROTATIONS.includes(nValue))
+                if (AscPDF.VALID_ROTATIONS.includes(nValue))
                     this._rotation = nValue;
             },
             get() {
@@ -533,7 +533,7 @@
         },
         "textSize": {
             set(nValue) {
-                if (typeof(nValue) == "number" && nValue >= 0 && nValue < MAX_TEXT_SIZE) {
+                if (typeof(nValue) == "number" && nValue >= 0 && nValue < AscPDF.MAX_TEXT_SIZE) {
                     let aFields = this._doc.GetFields(this.name);
                     let oField;
                     for (var i = 0; i < aFields.length; i++) {
@@ -1445,7 +1445,7 @@
                 if (this.value == value)
                     return;
 
-                isValid = this.field.DoValidateAction(value);
+                let isValid = this.field.DoValidateAction(value);
 
                 if (isValid) {
                     this.field.SetValue(value);
@@ -1673,7 +1673,7 @@
                 if (this.value == value)
                     return;
                     
-                isValid = this.field.DoValidateAction(value);
+                let isValid = this.field.DoValidateAction(value);
 
                 if (isValid) {
                     this.field.SetValue(value);
@@ -2019,7 +2019,7 @@
             },
             "fontStretch": {
                 set(sValue) {
-                    if (FONT_STRETCH.includes(sValue))
+                    if (AscPDF.FONT_STRETCH.includes(sValue))
                         this._fontStretch = sValue;
                 },
                 get() {
@@ -2028,7 +2028,7 @@
             },
             "fontStyle": {
                 set(sValue) {
-                    if (Object.values(FONT_STYLE).includes(sValue))
+                    if (Object.values(AscPDF.FONT_STYLE).includes(sValue))
                         this._fontStyle = sValue;
                 },
                 get() {
@@ -2037,7 +2037,7 @@
             },
             "fontWeight": {
                 set(nValue) {
-                    if (FONT_WEIGHT.includes(nValue))
+                    if (AscPDF.FONT_WEIGHT.includes(nValue))
                         this._fontWeight = nValue;
                 },
                 get() {

@@ -816,41 +816,43 @@
         let nSelStart = oDoc.event["selStart"];
         let nSelEnd = oDoc.event["selEnd"];
 
+        let isValidZipCode, isValidZipCode4, isValidPhoneNumber, isValidSSN;
+
         if (oDoc.event["willCommit"]) {
-            function isValidZipCode(zipCode) {
+            isValidZipCode = function(zipCode) {
                 let regex = /^\d{5}$/;
                 return regex.test(zipCode);
-            }
-            function isValidZipCode4(zip) {
+            };
+            isValidZipCode4 = function(zip) {
                 let regex = /^\d{5}[-\s.]?(\d{4})?$/;
                 return regex.test(zip);
-            }
-            function isValidPhoneNumber(number) {
+            };
+            isValidPhoneNumber = function(number) {
                 let regex = /^\(?\d{3}\)?[\s.-]?\d{3}[\s.-]?\d{4}$/;
                 return regex.test(number);
-            }
-            function isValidSSN(ssn) {
+            };
+            isValidSSN = function(ssn) {
                 let regex = /^\d{3}[-\s.]?\d{2}[-\s.]?\d{4}$/;
                 return regex.test(ssn);
-            }
+            };
         }
         else {
-            function isValidZipCode(zipCode) {
+            isValidZipCode = function(zipCode) {
                 let regex = /^\d{0,5}$/;
                 return regex.test(zipCode);
-            }
-            function isValidZipCode4(zip) {
+            };
+            isValidZipCode4 = function(zip) {
                 let regex = /^\d{0,5}[-\s.]?(\d{0,4})?$/;
                 return regex.test(zip);
-            }
-            function isValidPhoneNumber(number) {
+            };
+            isValidPhoneNumber = function(number) {
                 let regex = /^\(?\d{0,3}?\)?[\s.-]?\d{0,3}?[\s.-]?\d{0,4}?$/;
                 return regex.test(number);
-            }
-            function isValidSSN(ssn) {
+            };
+            isValidSSN = function(ssn) {
                 let regex = /^\d{0,3}?[-\s.]?\d{0,2}?[-\s.]?\d{0,4}$/;
                 return regex.test(ssn);
-            }
+            };
         }
         
         let sNewValue = sValue.slice(0, nSelStart) + sChange + sValue.slice(nSelEnd);

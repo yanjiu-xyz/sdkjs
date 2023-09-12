@@ -1114,7 +1114,7 @@
             {
                 Api.sendStartUploadImageActionToFrameEditor();
             }
-            Api.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, c_oAscAsyncAction.UploadImage);
+            Api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
         });
     };
     CPushButtonField.prototype.GetDrawing = function() {

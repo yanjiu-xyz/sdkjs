@@ -265,7 +265,7 @@
 	CActionNamed.prototype.constructor = CActionNamed;
 
     CActionNamed.prototype.GetName = function() {
-        switch (sType) {
+        switch (this.nameType) {
             case ACTION_NAMED_TYPES.NextPage:
                 return "NextPage";
             case ACTION_NAMED_TYPES.PrevPage:

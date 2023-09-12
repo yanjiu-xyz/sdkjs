@@ -293,7 +293,7 @@
         for (let i = 0; i < aOpt.length; i++) {
             if (aOpt[i] == null)
                 continue;
-            sCaption = "";
+            let sCaption = "";
             if (typeof(aOpt[i]) == "string" && aOpt[i] != "") {
                 sCaption = aOpt[i];
                 this._options.push(aOpt[i]);
@@ -309,9 +309,9 @@
                 sCaption = aOpt[i].toString();
             }
 
-            if (sCaption != "") {
-                oPara = new AscCommonWord.Paragraph(this.content.DrawingDocument, this.content, false);
-                oRun = new AscCommonWord.ParaRun(oPara, false);
+            if (sCaption !== "") {
+                let oPara = new AscCommonWord.Paragraph(this.content.DrawingDocument, this.content, false);
+                let oRun = new AscCommonWord.ParaRun(oPara, false);
                 this.content.Internal_Content_Add(i, oPara);
                 oPara.Add(oRun);
                 oRun.AddText(sCaption);
@@ -387,7 +387,7 @@
                 this.SetApiValue(value);
         }
         else
-            this.SetApiValue(sValue);
+            this.SetApiValue(value);
     };
     CListBoxField.prototype.InsertOption = function(sName, sExport, nIdx) {
         let optToInsert = sExport ? [sName, sExport] : sName;
@@ -667,7 +667,7 @@
     CListBoxField.prototype.UpdateSelection = function() {
         if (Array.isArray(this._currentValueIndices)) {
             for (let idx of this._currentValueIndices)
-                this.SelectOption(nIdx, false);
+                this.SelectOption(idx, false);
         }
         else
             this.SelectOption(this._currentValueIndices, true);
@@ -725,7 +725,7 @@
         let oPara, oShd;
         if (this._multipleSelection) {
             let aIndexes = [];
-            for (let i = 0; nCount = this.content.GetElementsCount(), i < nCount; i++) {
+            for (let i = 0, nCount = this.content.GetElementsCount(); i < nCount; i++) {
                 oPara = this.content.GetElement(i);
                 oShd = oPara.Pr.Shd;
                 if (oShd && oShd.IsNil() == false)
@@ -735,7 +735,7 @@
             return aIndexes;
         }
         else {
-            for (let i = 0; nCount = this.content.GetElementsCount(), i < nCount; i++) {
+            for (let i = 0, nCount = this.content.GetElementsCount(); i < nCount; i++) {
                 oPara = this.content.GetElement(i);
                 oShd = oPara.Pr.Shd;
                 if (oShd && oShd.IsNil() == false)
@@ -750,7 +750,7 @@
         let oPara, oShd;
         if (this._multipleSelection) {
             let aIndexes = [];
-            for (let i = 0; nCount = this.content.GetElementsCount(), i < nCount; i++) {
+            for (let i = 0, nCount = this.content.GetElementsCount(); i < nCount; i++) {
                 oPara = this.content.GetElement(i);
                 oShd = oPara.Pr.Shd;
                 if (oShd && oShd.IsNil() == false)
@@ -760,7 +760,7 @@
             return aIndexes;
         }
         else {
-            for (let i = 0; nCount = this.content.GetElementsCount(), i < nCount; i++) {
+            for (let i = 0, nCount = this.content.GetElementsCount(); i < nCount; i++) {
                 oPara = this.content.GetElement(i);
                 oShd = oPara.Pr.Shd;
                 if (oShd && oShd.IsNil() == false)

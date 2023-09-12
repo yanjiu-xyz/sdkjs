@@ -1020,7 +1020,7 @@
     };
     CBaseField.prototype.DrawSelected = function() {
         return;
-
+        /*
         let oViewer     = editor.getDocumentRenderer();
         let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
 
@@ -1038,6 +1038,7 @@
         oCtx.rect(X, Y, nWidth, nHeight);
         oCtx.stroke();
         oCtx.closePath();
+        */
     };
     
     CBaseField.prototype.Get_Id = function() {
@@ -1771,8 +1772,13 @@
 	window["AscPDF"].ALIGN_TYPE         = ALIGN_TYPE;
 	window["AscPDF"].BORDER_TYPES       = BORDER_TYPES;
     window["AscPDF"].APPEARANCE_TYPE    = APPEARANCE_TYPE;
-    
-	window["AscPDF"].CBaseField = CBaseField;
+    window["AscPDF"].VALID_ROTATIONS    = VALID_ROTATIONS;
+    window["AscPDF"].MAX_TEXT_SIZE      = MAX_TEXT_SIZE;
+    window["AscPDF"].FONT_STRETCH       = FONT_STRETCH;
+    window["AscPDF"].FONT_STYLE         = FONT_STYLE;
+    window["AscPDF"].FONT_WEIGHT        = FONT_WEIGHT;
+
+    window["AscPDF"].CBaseField = CBaseField;
 	window["AscPDF"].GetGlobalCoordsByPageCoords  = GetGlobalCoordsByPageCoords;
 	window["AscPDF"].GetPageCoordsByGlobalCoords  = GetPageCoordsByGlobalCoords;
     
