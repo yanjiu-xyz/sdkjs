@@ -3489,7 +3489,7 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 			let oViewer = editor.getDocumentRenderer();
 			let scaleCoef = oViewer.zoom * AscCommon.AscBrowser.retinaPixelRatio;
 			if (oTextFormPDF.borderStyle == "solid" || oTextFormPDF.borderStyle == "dashed")
-				nCombBorderW = oTextFormPDF.GetBordersWidth().left * g_dKoef_pix_to_mm / scaleCoef;
+				nCombBorderW = oTextFormPDF.GetBordersWidth().left * AscCommon.g_dKoef_pix_to_mm / scaleCoef;
 			else
 				nCombBorderW = 0;
 			this.private_MeasureCombForm(nCombBorderW, nCombWidth, nMaxComb, oTextFormPDF, isKeepWidth, oTextPr, oTheme, oInfoMathText);

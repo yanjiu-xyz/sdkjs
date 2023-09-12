@@ -305,6 +305,7 @@
     CAnnotationBase.prototype.SetRect = function(aRect) {
         let oViewer = editor.getDocumentRenderer();
         let nPage = this.GetPage();
+        let oDoc = this.GetDocument();
 
         if (this.IsInDocument() == false || oDoc.History.UndoRedoInProgress) {
             oDoc.CreateNewHistoryPoint();

@@ -663,8 +663,8 @@ function MoveAnnotationTrack(originalObject)
     this.track = function(dx, dy)
     {
         this.bIsTracked = true;
-        this.x = this.originalObject._pagePos.x + dx * g_dKoef_mm_to_pix;
-        this.y = this.originalObject._pagePos.y + dy * g_dKoef_mm_to_pix;
+        this.x = this.originalObject._pagePos.x + dx * AscCommon.g_dKoef_mm_to_pix;
+        this.y = this.originalObject._pagePos.y + dy * AscCommon.g_dKoef_mm_to_pix;
     };
     this.initCanvas = function() {
         let nPage   = this.originalObject.GetPage();
@@ -717,7 +717,8 @@ function MoveAnnotationTrack(originalObject)
                 let nScale  = AscCommon.AscBrowser.retinaPixelRatio * this.viewer.zoom;
                 oGraphicsWord   = new AscCommon.CGraphics();
 
-				oGraphicsWord.init(tmpCanvasCtx, this.tmpCanvas.width * nScale, this.tmpCanvas.height * nScale, this.tmpCanvas.width * g_dKoef_pix_to_mm, this.tmpCanvas.height * g_dKoef_pix_to_mm);
+				oGraphicsWord.init(tmpCanvasCtx, this.tmpCanvas.width * nScale, this.tmpCanvas.height * nScale,
+                    this.tmpCanvas.width * AscCommon.g_dKoef_pix_to_mm, this.tmpCanvas.height * AscCommon.g_dKoef_pix_to_mm);
 				oGraphicsWord.m_oFontManager = AscCommon.g_fontManager;
 				oGraphicsWord.endGlobalAlphaColor = [255, 255, 255];
 				oGraphicsWord.transform(1, 0, 0, 1, 0, 0);
