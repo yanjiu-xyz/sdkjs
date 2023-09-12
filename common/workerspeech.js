@@ -143,6 +143,10 @@
 
 			if (undefined === obj)
 				obj = {};
+			
+			if (obj.cancelSelection)
+				console.log("Text selection has been canceled");
+			
 
 			let translateManager = AscCommon.translateManager;
 			switch (type)
@@ -159,6 +163,8 @@
 						this.speechElement.innerHTML = (translateManager.getValue("select ") + obj.text);
 					else
 						this.speechElement.innerHTML = (obj.text + translateManager.getValue(" select"));
+					
+					console.log("SelectedText " + obj.text);
 					break;
 				}
 				case SpeechWorkerType.TextUnselected:
@@ -167,6 +173,8 @@
 						this.speechElement.innerHTML = (translateManager.getValue("unselected") + obj.text ? (" " + obj.text) : "");
 					else
 						this.speechElement.innerHTML = ((obj.text ? (obj.text + " ") : "") + translateManager.getValue("unselected"));
+					
+					console.log("UnselectedText " + obj.text);
 					break;
 				}
 				case SpeechWorkerType.SlidesSelected:

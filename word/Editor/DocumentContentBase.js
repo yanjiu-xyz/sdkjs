@@ -2626,13 +2626,29 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, curSta
 	if (!prevState.length || !curState.length)
 		return;
 	
-	let obj = {};
-	let prevDocState = prevState[prevState.length - 1];
-	let curDocState  = curState[curState.length - 1];
+	let obj  = {};
+	let type = AscCommon.SpeechWorkerCommands.Text;
 	
-	if (prevDocState.CurPos.Type !== curDocState.CurPos.Type)
+	let originState = this.GetSelectionState();
+	
+	this.SetSelectionState(prevState);
+	let prevInfo = this.getSelectionInfo();
+	
+	this.SetSelectionState(curState);
+	let curInfo = this.getSelectionInfo();
+	
+	this.SetSelectionState(originState);
+	
+	
+	if (curInfo.docPosType === docpostype_DrawingObjects)
 	{
-		switch (curDocState.CurPos.Type)
+		// Обработка автофигур
+		return null;
+	}
+	
+	if (prevInfo.docPosType !== curInfo.docPosType)
+	{
+		switch (curInfo.docPosType)
 		{
 			case docpostype_Content:  obj.moveToMainPart = true; break;
 			case docpostype_Endnotes:
@@ -2641,37 +2657,66 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, curSta
 			case docpostype_HdrFtr: obj.moveToHdrFtr = true; break;
 		}
 		
-		if (curDocState.CurPos.Type === docpostype_DrawingObjects)
-		{
-			// Обработка автофигур
-		}
+		let paragraph = this.GetCurrentParagraph();
+		let runElement = paragraph.GetNextRunElement();
+		if (runElement && runElement.IsText())
+			obj.text = String.fromCodePoint(runElement.GetCodePoint());
 		else
-		{
-			let paragraph = this.GetCurrentParagraph();
-			let runElement = paragraph.GetNextRunElement();
-			if (runElement && runElement.IsText())
-				obj.text = String.fromCodePoint(runElement.GetCodePoint());
-			else
-				obj.text = "";
-		}
+			obj.text = "";
 	}
 	else
 	{
-		if (curDocState.CurPos.Type === docpostype_DrawingObjects)
+		if (prevInfo.isSelection && !curInfo.isSelection)
 		{
-			// Обработка автофигур
+			obj.cancelSelection = true;
+			this.SetSelectionState(prevState);
+			let selectedText = this.getSelectionInfo();
+			this.SetSelectionState(originState);
+			
+			type     = AscCommon.SpeechWorkerCommands.TextUnselected;
+			obj.text = selectedText;
+			
+			// TODO: Нужна ли следующая буква?
 		}
-		else
+		else if (!curInfo.isSelection)
 		{
-			let paragraph = this.GetCurrentParagraph();
+			let paragraph  = this.GetCurrentParagraph();
 			let runElement = paragraph.GetNextRunElement();
 			if (runElement && runElement.IsText())
 				obj.text = String.fromCodePoint(runElement.GetCodePoint());
 			else
 				obj.text = "";
 		}
+		else
+		{
+			if (!prevInfo.isSelection)
+			{
+				type = AscCommon.SpeechWorkerCommands.TextSelected;
+				obj.text = this.GetSelectedText(false);
+			}
+			else
+			{
+				
+				let paragraph  = this.GetCurrentParagraph();
+				let runElement = paragraph.GetNextRunElement();
+				if (runElement && runElement.IsText())
+					obj.text = String.fromCodePoint(runElement.GetCodePoint());
+				else
+					obj.text = "";
+				
+			}
+		}
 	}
 	
-	return {obj : obj, type : AscCommon.SpeechWorkerCommands.Text};
+	return {obj : obj, type : type};
 };
-
+CDocumentContentBase.prototype.getSelectionInfo = function()
+{
+	return {
+		docPosType     : this.GetDocPosType(),
+		curPos         : this.GetContentPosition(false),
+		isSelection    : this.IsSelectionUse(),
+		selectionStart : this.GetContentPosition(true, true),
+		selectionEnd   : this.GetContentPosition(true, false)
+	};
+};
