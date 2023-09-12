@@ -6079,14 +6079,14 @@ BinaryChartWriter.prototype.WriteCT_SeriesLayout = function (oVal) {
     var oThis = this;
     var nVal = null;
     switch (oVal) {
-        case SERIES_LAYOUT_BOX_WHISKER: nVal = st_serieslayoutBOXWHISKER; break;
-        case SERIES_LAYOUT_CLUSTERED_COLUMN: nVal = st_serieslayoutCLUSTEREDCOLUMN; break;
-        case SERIES_LAYOUT_FUNNEL: nVal = st_serieslayoutFUNNEL; break;
-        case SERIES_LAYOUT_PARETO_LINE: nVal = st_serieslayoutPARETOLINE; break;
-        case SERIES_LAYOUT_REGION_MAP: nVal = st_serieslayoutREGIONMAP; break;
-        case SERIES_LAYOUT_SUNBURST: nVal = st_serieslayoutSUNBURST; break;
-        case SERIES_LAYOUT_TREEMAP: nVal = st_serieslayoutTREEMAP; break;
-        case SERIES_LAYOUT_WATERFALL: 
+        case AscFormat.SERIES_LAYOUT_BOX_WHISKER: nVal = st_serieslayoutBOXWHISKER; break;
+        case AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN: nVal = st_serieslayoutCLUSTEREDCOLUMN; break;
+        case AscFormat.SERIES_LAYOUT_FUNNEL: nVal = st_serieslayoutFUNNEL; break;
+        case AscFormat.SERIES_LAYOUT_PARETO_LINE: nVal = st_serieslayoutPARETOLINE; break;
+        case AscFormat.SERIES_LAYOUT_REGION_MAP: nVal = st_serieslayoutREGIONMAP; break;
+        case AscFormat.SERIES_LAYOUT_SUNBURST: nVal = st_serieslayoutSUNBURST; break;
+        case AscFormat.SERIES_LAYOUT_TREEMAP: nVal = st_serieslayoutTREEMAP; break;
+        case AscFormat.SERIES_LAYOUT_WATERFALL: 
         default: nVal = st_serieslayoutWATERFALL; break;
     }
     oThis.memory.WriteByte(nVal);
@@ -6247,15 +6247,15 @@ BinaryChartWriter.prototype.WriteCT_DataLabelPos = function (oVal) {
     var oThis = this;
     var nVal = null;
     switch (oVal) {
-        case DATA_LABEL_POS_BEST_FIT: nVal = st_datalabelposBESTFIT; break;
-        case DATA_LABEL_POS_B: nVal = st_datalabelposB; break;
-        case DATA_LABEL_POS_CTR: nVal = st_datalabelposCTR; break;
-        case DATA_LABEL_POS_IN_BASE: nVal = st_datalabelposINBASE; break;
-        case DATA_LABEL_POS_IN_END: nVal = st_datalabelposINEND; break;
-        case DATA_LABEL_POS_L: nVal = st_datalabelposL; break;
-        case DATA_LABEL_POS_OUT_END: nVal = st_datalabelposOUTEND; break;
-        case DATA_LABEL_POS_R: nVal = st_datalabelposR; break;
-        case DATA_LABEL_POS_T:
+        case AscFormat.DATA_LABEL_POS_BEST_FIT: nVal = st_datalabelposBESTFIT; break;
+        case AscFormat.DATA_LABEL_POS_B: nVal = st_datalabelposB; break;
+        case AscFormat.DATA_LABEL_POS_CTR: nVal = st_datalabelposCTR; break;
+        case AscFormat.DATA_LABEL_POS_IN_BASE: nVal = st_datalabelposINBASE; break;
+        case AscFormat.DATA_LABEL_POS_IN_END: nVal = st_datalabelposINEND; break;
+        case AscFormat.DATA_LABEL_POS_L: nVal = st_datalabelposL; break;
+        case AscFormat.DATA_LABEL_POS_OUT_END: nVal = st_datalabelposOUTEND; break;
+        case AscFormat.DATA_LABEL_POS_R: nVal = st_datalabelposR; break;
+        case AscFormat.DATA_LABEL_POS_T:
         default: nVal = st_datalabelposT; break;
     }
     oThis.memory.WriteByte(nVal);
@@ -6310,9 +6310,9 @@ BinaryChartWriter.prototype.WriteCT_ParentLabelLayout = function (oVal) {
     var oThis = this;
     var nVal = null;
     switch (oVal) {
-        case PARENT_LABEL_LAYOUT_NONE: nVal = st_parentlabellayoutNONE; break;
-        case PARENT_LABEL_LAYOUT_BANNER: nVal = st_parentlabellayoutBANNER; break;
-        case PARENT_LABEL_LAYOUT_OVERLAPPING:
+        case AscFormat.PARENT_LABEL_LAYOUT_NONE: nVal = st_parentlabellayoutNONE; break;
+        case AscFormat.PARENT_LABEL_LAYOUT_BANNER: nVal = st_parentlabellayoutBANNER; break;
+        case AscFormat.PARENT_LABEL_LAYOUT_OVERLAPPING:
         default: nVal = st_parentlabellayoutOVERLAPPING; break;
     }
     oThis.memory.WriteByte(nVal);
@@ -6321,9 +6321,9 @@ BinaryChartWriter.prototype.WriteCT_RegionLabelLayout = function (oVal) {
     var oThis = this;
     var nVal = null;
     switch (oVal) {
-        case REGION_LABEL_LAYOUT_NONE: nVal = st_regionlabellayoutNONE; break;
-        case REGION_LABEL_LAYOUT_BEST_FIT_ONLY: nVal = st_regionlabellayoutBESTFITONLY; break;
-        case REGION_LABEL_LAYOUT_SHOW_ALL:
+        case AscFormat.REGION_LABEL_LAYOUT_NONE: nVal = st_regionlabellayoutNONE; break;
+        case AscFormat.REGION_LABEL_LAYOUT_BEST_FIT_ONLY: nVal = st_regionlabellayoutBESTFITONLY; break;
+        case AscFormat.REGION_LABEL_LAYOUT_SHOW_ALL:
         default: nVal = st_regionlabellayoutSHOWALL; break;
     }
     oThis.memory.WriteByte(nVal);
@@ -6388,8 +6388,8 @@ BinaryChartWriter.prototype.WriteCT_IntervalClosedSide = function (oVal) {
     var oThis = this;
     var nVal = null;
     switch (oVal) {
-        case INTERVAL_CLOSED_SIDE_L: nVal = st_intervalclosedsideL; break;
-        case INTERVAL_CLOSED_SIDE_R:
+        case AscFormat.INTERVAL_CLOSED_SIDE_L: nVal = st_intervalclosedsideL; break;
+        case AscFormat.INTERVAL_CLOSED_SIDE_R:
         default: nVal = st_intervalclosedsideR; break;
     }
     oThis.memory.WriteByte(nVal);
@@ -6438,9 +6438,9 @@ BinaryChartWriter.prototype.WriteCT_PosAlign = function (oVal) {
     var oThis = this;
     var nVal = null;
     switch (oVal) {
-        case POS_ALIGN_MIN: nVal = st_posalignMIN; break;
-        case POS_ALIGN_CTR: nVal = st_posalignCTR; break;
-        case POS_ALIGN_MAX:
+        case AscFormat.POS_ALIGN_MIN: nVal = st_posalignMIN; break;
+        case AscFormat.POS_ALIGN_CTR: nVal = st_posalignCTR; break;
+        case AscFormat.POS_ALIGN_MAX:
         default: nVal = st_posalignMAX; break;
     }
     oThis.memory.WriteByte(nVal);
@@ -6449,10 +6449,10 @@ BinaryChartWriter.prototype.WriteCT_SidePos = function (oVal) {
     var oThis = this;
     var nVal = null;
     switch (oVal) {
-        case SIDE_POS_L: nVal = st_sideposL; break;
-        case SIDE_POS_T: nVal = st_sideposT; break;
-        case SIDE_POS_R: nVal = st_sideposR; break;
-        case SIDE_POS_B:
+        case AscFormat.SIDE_POS_L: nVal = st_sideposL; break;
+        case AscFormat.SIDE_POS_T: nVal = st_sideposT; break;
+        case AscFormat.SIDE_POS_R: nVal = st_sideposR; break;
+        case AscFormat.SIDE_POS_B:
         default: nVal = st_sideposB; break;
     }
     oThis.memory.WriteByte(nVal);
@@ -6672,16 +6672,16 @@ BinaryChartWriter.prototype.WriteCT_ChartExAxisUnit = function (oVal) {
     var oThis = this;
     var nVal = null;
     switch (oVal) {
-        case AXIS_UNIT_HUNDREDS: nVal = st_axisunitHUNDREDS; break;
-        case AXIS_UNIT_THOUSANDS: nVal = st_axisunitTHOUSANDS; break;
-        case AXIS_UNIT_TEN_THOUSANDS: nVal = st_axisunitTENTHOUSANDS; break;
-        case AXIS_UNIT_HUNDRED_THOUSANDS: nVal = st_axisunitHUNDREDTHOUSANDS; break;
-        case AXIS_UNIT_MILLIONS: nVal = st_axisunitMILLIONS; break;
-        case AXIS_UNIT_TEN_MILLIONS: nVal = st_axisunitTENMILLIONS; break;
-        case AXIS_UNIT_HUNDRED_MILLIONS: nVal = st_axisunitHUNDREDMILLIONS; break;
-        case AXIS_UNIT_BILLIONS: nVal = st_axisunitBILLIONS; break;
-        case AXIS_UNIT_TRILLIONS: nVal = st_axisunitTRILLIONS; break;
-        case AXIS_UNIT_PERCENTAGE:
+        case AscFormat.AXIS_UNIT_HUNDREDS: nVal = st_axisunitHUNDREDS; break;
+        case AscFormat.AXIS_UNIT_THOUSANDS: nVal = st_axisunitTHOUSANDS; break;
+        case AscFormat.AXIS_UNIT_TEN_THOUSANDS: nVal = st_axisunitTENTHOUSANDS; break;
+        case AscFormat.AXIS_UNIT_HUNDRED_THOUSANDS: nVal = st_axisunitHUNDREDTHOUSANDS; break;
+        case AscFormat.AXIS_UNIT_MILLIONS: nVal = st_axisunitMILLIONS; break;
+        case AscFormat.AXIS_UNIT_TEN_MILLIONS: nVal = st_axisunitTENMILLIONS; break;
+        case AscFormat.AXIS_UNIT_HUNDRED_MILLIONS: nVal = st_axisunitHUNDREDMILLIONS; break;
+        case AscFormat.AXIS_UNIT_BILLIONS: nVal = st_axisunitBILLIONS; break;
+        case AscFormat.AXIS_UNIT_TRILLIONS: nVal = st_axisunitTRILLIONS; break;
+        case AscFormat.AXIS_UNIT_PERCENTAGE:
         default: nVal = st_axisunitPERCENTAGE; break;
     }
     oThis.memory.WriteByte(nVal);
@@ -6721,10 +6721,10 @@ BinaryChartWriter.prototype.WriteCT_TickMarksType = function (oVal) {
     var oThis = this;
     var nVal = null;
     switch (oVal) {
-        case TICK_MARKS_TYPE_IN: nVal = st_tickmarkstypeIN; break;
-        case TICK_MARKS_TYPE_OUT: nVal = st_tickmarkstypeOUT; break;
-        case TICK_MARKS_TYPE_CROSS: nVal = st_tickmarkstypeCROSS; break;
-        case TICK_MARKS_TYPE_NONE:
+        case AscFormat.TICK_MARKS_TYPE_IN: nVal = st_tickmarkstypeIN; break;
+        case AscFormat.TICK_MARKS_TYPE_OUT: nVal = st_tickmarkstypeOUT; break;
+        case AscFormat.TICK_MARKS_TYPE_CROSS: nVal = st_tickmarkstypeCROSS; break;
+        case AscFormat.TICK_MARKS_TYPE_NONE:
         default: nVal = st_tickmarkstypeNONE; break;
     }
     oThis.memory.WriteByte(nVal);
@@ -6749,8 +6749,8 @@ BinaryChartWriter.prototype.WriteCT_QuartileMethod = function (oVal) {
     var oThis = this;
     var nVal = null;
     switch (oVal) {
-        case QUARTILE_METHOD_INCLUSIVE: nVal = st_quartilemethodINCLUSIVE; break;
-        case QUARTILE_METHOD_EXCLUSIVE:
+        case AscFormat.QUARTILE_METHOD_INCLUSIVE: nVal = st_quartilemethodINCLUSIVE; break;
+        case AscFormat.QUARTILE_METHOD_EXCLUSIVE:
         default: nVal = st_quartilemethodEXCLUSIVE; break;
     }
     oThis.memory.WriteByte(nVal);
@@ -6767,8 +6767,8 @@ BinaryChartWriter.prototype.WriteCT_StringDimensionType = function (oVal) {
     var oThis = this;
     var nVal = null;
     switch (oVal) {
-        case STRING_DIMENSION_TYPE_CAT: nVal = st_stringdimensiontypeCAT; break;
-        case STRING_DIMENSION_TYPE_COLOR_STR:
+        case AscFormat.STRING_DIMENSION_TYPE_CAT: nVal = st_stringdimensiontypeCAT; break;
+        case AscFormat.STRING_DIMENSION_TYPE_COLOR_STR:
         default: nVal = st_stringdimensiontypeCOLORSTR; break;
     }
     oThis.memory.WriteByte(nVal);
@@ -6805,11 +6805,11 @@ BinaryChartWriter.prototype.WriteCT_NumericDimensionType = function (oVal) {
     var oThis = this;
     var nVal = null;
     switch (oVal) {
-        case NUMERIC_DIMENSION_TYPE_VAL: nVal = st_numericdimensiontypeVAL; break;
-        case NUMERIC_DIMENSION_TYPE_X: nVal = st_numericdimensiontypeX; break;
-        case NUMERIC_DIMENSION_TYPE_Y: nVal = st_numericdimensiontypeY; break;
-        case NUMERIC_DIMENSION_TYPE_SIZE: nVal = st_numericdimensiontypeSIZE; break;
-        case NUMERIC_DIMENSION_TYPE_COLOR_VAL:
+        case AscFormat.NUMERIC_DIMENSION_TYPE_VAL: nVal = st_numericdimensiontypeVAL; break;
+        case AscFormat.NUMERIC_DIMENSION_TYPE_X: nVal = st_numericdimensiontypeX; break;
+        case AscFormat.NUMERIC_DIMENSION_TYPE_Y: nVal = st_numericdimensiontypeY; break;
+        case AscFormat.NUMERIC_DIMENSION_TYPE_SIZE: nVal = st_numericdimensiontypeSIZE; break;
+        case AscFormat.NUMERIC_DIMENSION_TYPE_COLOR_VAL:
         default: nVal = st_numericdimensiontypeCOLORVAL; break;
     }
     oThis.memory.WriteByte(nVal);
@@ -6846,8 +6846,8 @@ BinaryChartWriter.prototype.WriteCT_FormulaDirection = function (oVal) {
     var oThis = this;
     var nVal = null;
     switch (oVal) {
-        case FORMULA_DIRECTION_COL: nVal = st_formuladirectionCOL; break;
-        case FORMULA_DIRECTION_ROW:
+        case AscFormat.FORMULA_DIRECTION_COL: nVal = st_formuladirectionCOL; break;
+        case AscFormat.FORMULA_DIRECTION_ROW:
         default: nVal = st_formuladirectionROW; break;
     }
     oThis.memory.WriteByte(nVal);
@@ -13603,15 +13603,15 @@ BinaryChartReader.prototype.ReadCT_PlotSurface = function (type, length, val) {
 BinaryChartReader.prototype.ReadCT_SeriesLayout = function () {
     let val = null;
     switch (this.stream.GetUChar()) {
-        case st_serieslayoutBOXWHISKER: val = SERIES_LAYOUT_BOX_WHISKER; break;
-        case st_serieslayoutCLUSTEREDCOLUMN: val = SERIES_LAYOUT_CLUSTERED_COLUMN; break;
-        case st_serieslayoutFUNNEL: val = SERIES_LAYOUT_FUNNEL; break;
-        case st_serieslayoutPARETOLINE: val = SERIES_LAYOUT_PARETO_LINE; break;
-        case st_serieslayoutREGIONMAP: val = SERIES_LAYOUT_REGION_MAP; break;
-        case st_serieslayoutSUNBURST: val = SERIES_LAYOUT_SUNBURST; break;
-        case st_serieslayoutTREEMAP: val = SERIES_LAYOUT_TREEMAP; break;
+        case st_serieslayoutBOXWHISKER: val = AscFormat.SERIES_LAYOUT_BOX_WHISKER; break;
+        case st_serieslayoutCLUSTEREDCOLUMN: val = AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN; break;
+        case st_serieslayoutFUNNEL: val = AscFormat.SERIES_LAYOUT_FUNNEL; break;
+        case st_serieslayoutPARETOLINE: val = AscFormat.SERIES_LAYOUT_PARETO_LINE; break;
+        case st_serieslayoutREGIONMAP: val = AscFormat.SERIES_LAYOUT_REGION_MAP; break;
+        case st_serieslayoutSUNBURST: val = AscFormat.SERIES_LAYOUT_SUNBURST; break;
+        case st_serieslayoutTREEMAP: val = AscFormat.SERIES_LAYOUT_TREEMAP; break;
         case st_serieslayoutWATERFALL: 
-        default: val = SERIES_LAYOUT_WATERFALL; break;
+        default: val = AscFormat.SERIES_LAYOUT_WATERFALL; break;
     }
     return val;
 };
@@ -13781,16 +13781,16 @@ BinaryChartReader.prototype.ReadCT_ChartExNumFmt = function (type, length, val) 
 BinaryChartReader.prototype.ReadCT_DataLabelPos = function () {
     let val = null;
     switch (this.stream.GetUChar()) {
-        case st_datalabelposBESTFIT: val = DATA_LABEL_POS_BEST_FIT; break;
-        case st_datalabelposB: val = DATA_LABEL_POS_B; break;
-        case st_datalabelposCTR: val = DATA_LABEL_POS_CTR; break;
-        case st_datalabelposINBASE: val = DATA_LABEL_POS_IN_BASE; break;
-        case st_datalabelposINEND: val = DATA_LABEL_POS_IN_END; break;
-        case st_datalabelposL: val = DATA_LABEL_POS_L; break;
-        case st_datalabelposOUTEND: val = DATA_LABEL_POS_OUT_END; break;
-        case st_datalabelposR: val = DATA_LABEL_POS_R; break;
+        case st_datalabelposBESTFIT: val = AscFormat.DATA_LABEL_POS_BEST_FIT; break;
+        case st_datalabelposB: val = AscFormat.DATA_LABEL_POS_B; break;
+        case st_datalabelposCTR: val = AscFormat.DATA_LABEL_POS_CTR; break;
+        case st_datalabelposINBASE: val = AscFormat.DATA_LABEL_POS_IN_BASE; break;
+        case st_datalabelposINEND: val = AscFormat.DATA_LABEL_POS_IN_END; break;
+        case st_datalabelposL: val = AscFormat.DATA_LABEL_POS_L; break;
+        case st_datalabelposOUTEND: val = AscFormat.DATA_LABEL_POS_OUT_END; break;
+        case st_datalabelposR: val = AscFormat.DATA_LABEL_POS_R; break;
         case st_datalabelposT: 
-        default: val = DATA_LABEL_POS_T; break;
+        default: val = AscFormat.DATA_LABEL_POS_T; break;
     }
     return val;
 };
@@ -13858,20 +13858,20 @@ BinaryChartReader.prototype.ReadCT_DataLabelHidden = function (type, length, val
 BinaryChartReader.prototype.ReadCT_ParentLabelLayout = function () {
     let val = null;
     switch (this.stream.GetUChar()) {
-        case st_parentlabellayoutNONE: val = PARENT_LABEL_LAYOUT_NONE; break;
-        case st_parentlabellayoutBANNER: val = PARENT_LABEL_LAYOUT_BANNER; break;
+        case st_parentlabellayoutNONE: val = AscFormat.PARENT_LABEL_LAYOUT_NONE; break;
+        case st_parentlabellayoutBANNER: val = AscFormat.PARENT_LABEL_LAYOUT_BANNER; break;
         case st_parentlabellayoutOVERLAPPING: 
-        default: val = PARENT_LABEL_LAYOUT_OVERLAPPING; break;
+        default: val = AscFormat.PARENT_LABEL_LAYOUT_OVERLAPPING; break;
     }
     return val;
 };
 BinaryChartReader.prototype.ReadCT_RegionLabelLayout = function () {
     let val = null;
     switch (this.stream.GetUChar()) {
-        case st_regionlabellayoutNONE: val = REGION_LABEL_LAYOUT_NONE; break;
-        case st_regionlabellayoutBESTFITONLY: val = REGION_LABEL_LAYOUT_BEST_FIT_ONLY; break;
+        case st_regionlabellayoutNONE: val = AscFormat.REGION_LABEL_LAYOUT_NONE; break;
+        case st_regionlabellayoutBESTFITONLY: val = AscFormat.REGION_LABEL_LAYOUT_BEST_FIT_ONLY; break;
         case st_regionlabellayoutSHOWALL: 
-        default: val = REGION_LABEL_LAYOUT_SHOW_ALL; break;
+        default: val = AscFormat.REGION_LABEL_LAYOUT_SHOW_ALL; break;
     }
     return val;
 };
@@ -13954,9 +13954,9 @@ BinaryChartReader.prototype.ReadCT_DataLabelVisibilities = function (type, lengt
 BinaryChartReader.prototype.ReadCT_IntervalClosedSide = function () {
     let val = null;
     switch (this.stream.GetUChar()) {
-        case st_intervalclosedsideL: val = INTERVAL_CLOSED_SIDE_L; break;
+        case st_intervalclosedsideL: val = AscFormat.INTERVAL_CLOSED_SIDE_L; break;
         case st_intervalclosedsideR: 
-        default: val = INTERVAL_CLOSED_SIDE_R; break;
+        default: val = AscFormat.INTERVAL_CLOSED_SIDE_R; break;
     }
     return val;
 };
@@ -14001,21 +14001,21 @@ BinaryChartReader.prototype.ReadCT_Binning = function (type, length, val) {
 BinaryChartReader.prototype.ReadCT_PosAlign = function () {
     let val = null;
     switch (this.stream.GetUChar()) {
-        case st_posalignMIN: val = POS_ALIGN_MIN; break;
-        case st_posalignCTR: val = POS_ALIGN_CTR; break;
+        case st_posalignMIN: val = AscFormat.POS_ALIGN_MIN; break;
+        case st_posalignCTR: val = AscFormat.POS_ALIGN_CTR; break;
         case st_posalignMAX: 
-        default: val = POS_ALIGN_MAX; break;
+        default: val = AscFormat.POS_ALIGN_MAX; break;
     }
     return val;
 };
 BinaryChartReader.prototype.ReadCT_SidePos = function () {
     let val = null;
     switch (this.stream.GetUChar()) {
-        case st_sideposL: val = SIDE_POS_L; break;
-        case st_sideposT: val = SIDE_POS_T; break;
-        case st_sideposR: val = SIDE_POS_R; break;
+        case st_sideposL: val = AscFormat.SIDE_POS_L; break;
+        case st_sideposT: val = AscFormat.SIDE_POS_T; break;
+        case st_sideposR: val = AscFormat.SIDE_POS_R; break;
         case st_sideposB: 
-        default: val = SIDE_POS_B; break;
+        default: val = AscFormat.SIDE_POS_B; break;
     }
     return val;
 };
@@ -14278,17 +14278,17 @@ BinaryChartReader.prototype.ReadCT_ValueAxisScaling = function (type, length, va
 BinaryChartReader.prototype.ReadCT_ChartExAxisUnit = function () {
     let val = null;
     switch (this.stream.GetUChar()) {
-        case st_axisunitHUNDREDS: val = AXIS_UNIT_HUNDREDS; break;
-        case st_axisunitTHOUSANDS: val = AXIS_UNIT_TEN_THOUSANDS; break;
-        case st_axisunitTENTHOUSANDS: val = AXIS_UNIT_TEN_MILLIONS; break;
-        case st_axisunitHUNDREDTHOUSANDS: val = AXIS_UNIT_HUNDRED_THOUSANDS; break;
-        case st_axisunitMILLIONS: val = AXIS_UNIT_MILLIONS; break;
-        case st_axisunitTENMILLIONS: val = AXIS_UNIT_TEN_MILLIONS; break;
-        case st_axisunitHUNDREDMILLIONS: val = AXIS_UNIT_HUNDRED_MILLIONS; break;
-        case st_axisunitBILLIONS: val = AXIS_UNIT_BILLIONS; break;
-        case st_axisunitTRILLIONS: val = AXIS_UNIT_TRILLIONS; break;
+        case st_axisunitHUNDREDS: val = AscFormat.AXIS_UNIT_HUNDREDS; break;
+        case st_axisunitTHOUSANDS: val = AscFormat.AXIS_UNIT_TEN_THOUSANDS; break;
+        case st_axisunitTENTHOUSANDS: val = AscFormat.AXIS_UNIT_TEN_MILLIONS; break;
+        case st_axisunitHUNDREDTHOUSANDS: val = AscFormat.AXIS_UNIT_HUNDRED_THOUSANDS; break;
+        case st_axisunitMILLIONS: val = AscFormat.AXIS_UNIT_MILLIONS; break;
+        case st_axisunitTENMILLIONS: val = AscFormat.AXIS_UNIT_TEN_MILLIONS; break;
+        case st_axisunitHUNDREDMILLIONS: val = AscFormat.AXIS_UNIT_HUNDRED_MILLIONS; break;
+        case st_axisunitBILLIONS: val = AscFormat.AXIS_UNIT_BILLIONS; break;
+        case st_axisunitTRILLIONS: val = AscFormat.AXIS_UNIT_TRILLIONS; break;
         case st_axisunitPERCENTAGE: 
-        default: val = AXIS_UNIT_PERCENTAGE; break;
+        default: val = AscFormat.AXIS_UNIT_PERCENTAGE; break;
     }
     return val;
 };
@@ -14345,11 +14345,11 @@ BinaryChartReader.prototype.ReadCT_AxisUnitsLabel = function (type, length, val)
 BinaryChartReader.prototype.ReadCT_TickMarksType = function () {
     let val = null;
     switch (this.stream.GetUChar()) {
-        case st_tickmarkstypeIN: val = TICK_MARKS_TYPE_IN; break;
-        case st_tickmarkstypeOUT: val = TICK_MARKS_TYPE_OUT; break;
-        case st_tickmarkstypeCROSS: val = TICK_MARKS_TYPE_CROSS; break;
+        case st_tickmarkstypeIN: val = AscFormat.TICK_MARKS_TYPE_IN; break;
+        case st_tickmarkstypeOUT: val = AscFormat.TICK_MARKS_TYPE_OUT; break;
+        case st_tickmarkstypeCROSS: val = AscFormat.TICK_MARKS_TYPE_CROSS; break;
         case st_tickmarkstypeNONE: 
-        default: val = TICK_MARKS_TYPE_NONE; break;
+        default: val = AscFormat.TICK_MARKS_TYPE_NONE; break;
     }
     return val;
 };
@@ -14384,9 +14384,9 @@ BinaryChartReader.prototype.ReadCT_Gridlines = function (type, length, val) {
 BinaryChartReader.prototype.ReadCT_QuartileMethod = function () {
     let val = null;
     switch (this.stream.GetUChar()) {
-        case st_quartilemethodINCLUSIVE: val = QUARTILE_METHOD_INCLUSIVE; break;
+        case st_quartilemethodINCLUSIVE: val = AscFormat.QUARTILE_METHOD_INCLUSIVE; break;
         case st_quartilemethodEXCLUSIVE: 
-        default: val = QUARTILE_METHOD_EXCLUSIVE; break;
+        default: val = AscFormat.QUARTILE_METHOD_EXCLUSIVE; break;
     }
     return val;
 };
@@ -14407,9 +14407,9 @@ BinaryChartReader.prototype.ReadCT_Statistics = function (type, length, val) {
 BinaryChartReader.prototype.ReadCT_StringDimensionType = function () {
     let val = null;
     switch (this.stream.GetUChar()) {
-        case st_stringdimensiontypeCAT: val = STRING_DIMENSION_TYPE_CAT; break;
+        case st_stringdimensiontypeCAT: val = AscFormat.STRING_DIMENSION_TYPE_CAT; break;
         case st_stringdimensiontypeCOLORSTR: 
-        default: val = STRING_DIMENSION_TYPE_COLOR_STR; break;
+        default: val = AscFormat.STRING_DIMENSION_TYPE_COLOR_STR; break;
     }
     return val;
 };
@@ -14450,12 +14450,12 @@ BinaryChartReader.prototype.ReadCT_StringDimension = function (type, length, val
 BinaryChartReader.prototype.ReadCT_NumericDimensionType = function () {
     let val = null;
     switch (this.stream.GetUChar()) {
-        case st_numericdimensiontypeVAL: val = NUMERIC_DIMENSION_TYPE_VAL; break;
-        case st_numericdimensiontypeX: val = NUMERIC_DIMENSION_TYPE_X; break;
-        case st_numericdimensiontypeY: val = NUMERIC_DIMENSION_TYPE_Y; break;
-        case st_numericdimensiontypeSIZE: val = NUMERIC_DIMENSION_TYPE_SIZE; break;
+        case st_numericdimensiontypeVAL: val = AscFormat.NUMERIC_DIMENSION_TYPE_VAL; break;
+        case st_numericdimensiontypeX: val = AscFormat.NUMERIC_DIMENSION_TYPE_X; break;
+        case st_numericdimensiontypeY: val = AscFormat.NUMERIC_DIMENSION_TYPE_Y; break;
+        case st_numericdimensiontypeSIZE: val = AscFormat.NUMERIC_DIMENSION_TYPE_SIZE; break;
         case st_numericdimensiontypeCOLORVAL: 
-        default: val = NUMERIC_DIMENSION_TYPE_COLOR_VAL; break;
+        default: val = AscFormat.NUMERIC_DIMENSION_TYPE_COLOR_VAL; break;
     }
     return val;
 };
@@ -14496,9 +14496,9 @@ BinaryChartReader.prototype.ReadCT_NumericDimension = function (type, length, va
 BinaryChartReader.prototype.ReadCT_FormulaDirection = function () {
     let val = null;
     switch (this.stream.GetUChar()) {
-        case st_formuladirectionCOL: val = FORMULA_DIRECTION_COL; break;
+        case st_formuladirectionCOL: val = AscFormat.FORMULA_DIRECTION_COL; break;
         case st_formuladirectionROW: 
-        default: val = FORMULA_DIRECTION_ROW; break;
+        default: val = AscFormat.FORMULA_DIRECTION_ROW; break;
     }
     return val;
 };
