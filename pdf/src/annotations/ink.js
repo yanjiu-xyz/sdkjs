@@ -395,6 +395,9 @@
         this.GetDrawing().CheckWH();
         this.AddToRedraw();
         this.RefillGeometry(this.GetDrawing().GraphicObj.spPr.geometry, [aRect[0] * g_dKoef_pix_to_mm, aRect[1] * g_dKoef_pix_to_mm, aRect[2] * g_dKoef_pix_to_mm, aRect[3] * g_dKoef_pix_to_mm]);
+
+        this.SetWasChanged(true);
+        this.SetDrawFromStream(false);
     };
     CAnnotationInk.prototype.SetFlipV = function(bFlip) {
         let oDoc = this.GetDocument();
@@ -649,6 +652,15 @@
             let oFill   = AscFormat.CreateSolidFillRGBA(oRGB.r, oRGB.g, oRGB.b, 255);
             let oLine   = oDrawing.GraphicObj.pen;
             oLine.setFill(oFill);
+        }
+    };
+    CAnnotationInk.prototype.SetOpacity = function(value) {
+        this._opacity = value;
+        this.SetWasChanged(true);
+
+        let oDrawing = this.GetDrawing();
+        if (oDrawing) {
+           oDrawing.GraphicObj.pen.Fill.transparent = value * 100 * 2.55;
         }
     };
     CAnnotationInk.prototype.GetStrokeColor = function() {

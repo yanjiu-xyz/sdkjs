@@ -578,9 +578,7 @@
 			return;
 
 		oViewer.DrawingObjects.onInkDrawerChangeState();
-
-		if (this.isDrawInkMode() == false)
-			oDoc.currInkInDrawingProcess = null;
+		oDoc.currInkInDrawingProcess = null;
 	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////

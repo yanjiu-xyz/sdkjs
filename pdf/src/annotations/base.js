@@ -103,12 +103,14 @@
             mouseDown:  null,
             rollover:   null
         }
+        this._wasChanged            = false;
     }
     CAnnotationBase.prototype.GetName = function() {
         return this._name;
     };
     CAnnotationBase.prototype.SetOpacity = function(value) {
         this._opacity = value;
+        this.SetWasChanged(true);
     };
     CAnnotationBase.prototype.GetOpacity = function() {
         return this._opacity;
@@ -124,6 +126,13 @@
     CAnnotationBase.prototype.GetOriginPage = function() {
         return this._origPage;
     };
+    CAnnotationBase.prototype.SetWasChanged = function(isChanged) {
+        let oViewer = editor.getDocumentRenderer();
+
+        if (oViewer.IsOpenAnnotsInProgress == false) {
+            this._wasChanged = isChanged;
+        }
+    };
     CAnnotationBase.prototype.DrawFromStream = function(oGraphicsPDF) {
         if (this.IsHidden() == true)
             return;
@@ -138,15 +147,11 @@
         let nHeight = aOrigRect[3] - aOrigRect[1];
         
         if (originView) {
-            // oGraphicsPDF.SetIntegerGrid(true);
-            // oGraphicsPDF.DrawImage(originView, 0, 0, originView.width / nGrScale, originView.height / nGrScale, originView.x / nGrScale, originView.y / nGrScale, originView.width / nGrScale, originView.height / nGrScale);
             if (this.IsHighlight())
                 oGraphicsPDF.context.globalCompositeOperation = "multiply";
             
             oGraphicsPDF.DrawImage(originView, 0, 0, nWidth + 2 / nGrScale, nHeight + 2 / nGrScale, X - 1 / nGrScale, Y - 1 / nGrScale, nWidth + 2 / nGrScale, nHeight + 2 / nGrScale);
-            
-            if (this.IsHighlight())
-                oGraphicsPDF.context.globalCompositeOperation = "source-over";
+            oGraphicsPDF.context.globalCompositeOperation = "source-over";
         }
     };
     /**
@@ -274,6 +279,7 @@
         };
 
         this.AddToRedraw();
+        this.SetWasChanged(true);
     };
     CAnnotationBase.prototype.IsHighlight = function() {
         return false;
@@ -322,6 +328,11 @@
         this._origRect[1] = this._rect[1] / nScaleY;
         this._origRect[2] = this._rect[2] / nScaleX;
         this._origRect[3] = this._rect[3] / nScaleY;
+
+        this.SetWasChanged(true);
+        if (oViewer.IsOpenAnnotsInProgress == false) {
+            this.SetDrawFromStream(false);
+        }
     };
     CAnnotationBase.prototype.IsInDocument = function() {
         if (this.GetDocument().annots.indexOf(this) == -1)
@@ -357,6 +368,7 @@
     };
     CAnnotationBase.prototype.SetHidden = function(bHidden) {
         this._hidden = bHidden;
+        this.SetWasChanged(true);
     };
     CAnnotationBase.prototype.onMouseUp = function() {
         let oViewer = editor.getDocumentRenderer();
@@ -417,6 +429,8 @@
         
         if (oNewContents == null)
             editor.sync_RemoveComment(this.GetId());
+
+        this.SetWasChanged(true);
     };
     CAnnotationBase.prototype.AddReply = function(CommentData) {
         this._contents.AddReply(CommentData);
@@ -436,12 +450,14 @@
     };
     CAnnotationBase.prototype.SetModDate = function(sDate) {
         this._modDate = sDate;
+        this.SetWasChanged(true);
     };
     CAnnotationBase.prototype.GetModDate = function() {
         return this._modDate;
     };
     CAnnotationBase.prototype.SetCreationDate = function(sDate) {
         this._creationDate = sDate;
+        this.SetWasChanged(true);
     };
     CAnnotationBase.prototype.GetCreationDate = function() {
         return this._creationDate;
@@ -449,6 +465,7 @@
     
     CAnnotationBase.prototype.SetAuthor = function(sAuthor) {
         this._author = sAuthor;
+        this.SetWasChanged(true);
     };
     CAnnotationBase.prototype.GetAuthor = function() {
         return this._author;
@@ -506,7 +523,13 @@
     };
     
     CAnnotationBase.prototype.SetStrokeColor = function(aColor) {
+        let oViewer = editor.getDocumentRenderer();
+
         this._strokeColor = aColor;
+        this.SetWasChanged(true);
+        if (oViewer.IsOpenAnnotsInProgress == false) {
+            this.SetDrawFromStream(false);
+        }
     };
     CAnnotationBase.prototype.GetStrokeColor = function() {
         return this._strokeColor;

@@ -4774,15 +4774,19 @@ function CDrawingDocument()
 		}
 		else
 		{
+			let oViewer = this.m_oDocumentRenderer;
+			let oPdfDoc = oViewer.getPDFDoc();
+			let nPage	= oPdfDoc.activeForm.GetPage();
+
 			page = {
-				width_mm: this.m_oDocumentRenderer.drawingPages[0].W * g_dKoef_pix_to_mm,
-				height_mm: this.m_oDocumentRenderer.drawingPages[0].H * g_dKoef_pix_to_mm
+				width_mm: this.m_oDocumentRenderer.drawingPages[nPage].W / oViewer.zoom * g_dKoef_pix_to_mm,
+				height_mm: this.m_oDocumentRenderer.drawingPages[nPage].H / oViewer.zoom * g_dKoef_pix_to_mm
 			}
 			drawPage = {
 				left:	0,
-				right:	this.m_oDocumentRenderer.drawingPages[0].W,
+				right:	this.m_oDocumentRenderer.drawingPages[nPage].W,
 				top:	0,
-				bottom:	this.m_oDocumentRenderer.drawingPages[0].H
+				bottom:	this.m_oDocumentRenderer.drawingPages[nPage].H
 			}
 			this.Overlay = this.m_oDocumentRenderer.overlay;
 		}

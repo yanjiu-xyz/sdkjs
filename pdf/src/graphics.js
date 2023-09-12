@@ -47,6 +47,8 @@ function CPDFGraphics()
     this.globalAlpha    = 1;
     this.bIntegerGrid   = false;
 
+    this.m_oTransform  = new AscCommon.CMatrixL();
+
     this.drawedRect = {};
 }
 CPDFGraphics.prototype.SetCurPage = function(nPage) {
@@ -58,6 +60,21 @@ CPDFGraphics.prototype.GetCurPage = function() {
 CPDFGraphics.prototype.GetScale = function() {
     let oViewer = editor.getDocumentRenderer();
     return AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[this.GetCurPage()].Dpi);
+};
+CPDFGraphics.prototype.Transform = function(sx,shy,shx,sy,tx,ty)
+{
+    var _t = this.m_oTransform;
+    _t.sx    = sx;
+    _t.shx   = shx;
+    _t.shy   = shy;
+    _t.sy    = sy;
+    _t.tx    = tx;
+    _t.ty    = ty;
+
+    this.context.setTransform(_t.sx,_t.shy,_t.shx,_t.sy,_t.tx,_t.ty);
+};
+CPDFGraphics.prototype.Clip = function() {
+    this.context.clip();
 };
 CPDFGraphics.prototype.SetIntegerGrid = function() {
     this.bIntegerGrid = true;

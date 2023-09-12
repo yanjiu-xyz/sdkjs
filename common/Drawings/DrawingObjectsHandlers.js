@@ -313,9 +313,14 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
         drawing = drawingArr[i];
 
         if (drawing.IsAnnot && drawing.IsAnnot()) {
+            if (drawing.IsHidden()) {
+                ret = false;
+                continue;
+            }
+
             switch (drawing.GetType()) {
                 case AscPDF.ANNOTATIONS_TYPES.Text:
-                    ret = handleAnnot(drawing, drawingObjectsController, e, x, y, group, pageIndex);
+                    ret = handleTextAnnot(drawing, drawingObjectsController, e, x, y, group, pageIndex);
                     break;
             }
         }
@@ -377,7 +382,7 @@ function handleFloatObjects(drawingObjectsController, drawingArr, e, x, y, group
     return ret;
 }
 
-function handleAnnot(drawing, drawingObjectsController, e, x, y, group, pageIndex) {
+function handleTextAnnot(drawing, drawingObjectsController, e, x, y, group, pageIndex) {
     //var hit_in_inner_area = drawing.hitInInnerArea && drawing.hitInInnerArea(x, y);
     //var hit_in_path = drawing.hitInPath && drawing.hitInPath(x, y);
     var hit_in_text_rect = drawing.hitInTextRect && drawing.hitInTextRect(x, y);

@@ -1112,7 +1112,7 @@ CHistory.prototype =
 	};
 	CHistory.prototype.RemoveLastTemporaryPoint = function()
 	{
-		if (this.Index < 0
+		if (!this.Document || this.Index < 0
 			|| !this.Document.IsDocumentEditor()
 			|| !this.Points[this.Index].Temporary)
 			return;

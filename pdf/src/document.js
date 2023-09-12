@@ -127,6 +127,8 @@ var CPresentation = CPresentation || function(){};
 
         this.History    = AscCommon.History;
 		this.Spelling   = new AscCommonWord.CDocumentSpellChecker();
+
+        this.annotsHidden = false;
     }
 
     /////////// методы для открытия //////////////
@@ -753,8 +755,9 @@ var CPresentation = CPresentation || function(){};
         // если курсор меняется на resize, то клик по нему выходит за область поля или аннотации, отслеживаем этот момент и не убираем поле/аннотацию из активных
         let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
         let bInResizeRect = oDrawingObjects.updateCursorType(oViewer.currentPage, X, Y, e, false);
+        
         if (bInResizeRect) {
-            if (!oDrawingObjects.selectedObjects.includes(this.mouseDownAnnot))
+            if (!oDrawingObjects.selectedObjects.includes(this.mouseDownAnnot) || (oMouseDownAnnot))
                 this.mouseDownAnnot = oMouseDownAnnot;
             if (!oDrawingObjects.selectedObjects.includes(this.mouseDownField))
                 this.mouseDownField = oMouseDownField;
@@ -789,7 +792,7 @@ var CPresentation = CPresentation || function(){};
         }
 
         
-        if (this.mouseDownAnnot == null) {
+        if (false == oDrawingObjects.selectedObjects.includes(this.mouseDownAnnot)) {
             oDrawingObjects.resetSelection();
         }
     };
@@ -1513,10 +1516,14 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.AddComment = function(AscCommentData) {
         let oViewer = editor.getDocumentRenderer();
+        let nGrScale = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[oViewer.currentPage].Dpi);
         let posToAdd = this.anchorPositionToAdd ? this.anchorPositionToAdd : {x: 10, y: 10};
         
+        let X2 = posToAdd.x + 40 / nGrScale;
+        let Y2 = posToAdd.y + 40 / nGrScale;
+
         let oProps = {
-            rect:       [posToAdd.x, posToAdd.y, posToAdd.x + 33, posToAdd.y + 33],
+            rect:       [posToAdd.x, posToAdd.y, X2, Y2],
             page:       oViewer.currentPage,
             name:       AscCommon.CreateGUID(),
             type:       AscPDF.ANNOTATIONS_TYPES.Text,
@@ -1854,7 +1861,11 @@ var CPresentation = CPresentation || function(){};
             annot.AddToRedraw();
         });
 
+        this.annotsHidden = bHidden;
         editor.getDocumentRenderer()._paint();
+    };
+    CPDFDoc.prototype.IsAnnotsHidden = function() {
+        return this.annotsHidden;
     };
     /**
 	 * Checks the field for the field widget, if not then the field will be removed.

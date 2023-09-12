@@ -1061,8 +1061,11 @@
         let oViewer = editor.getDocumentRenderer();
 
         if (oViewer.IsOpenFormsInProgress == false) {
-            this._wasChanged = isChanged;
-            this._originView = null;
+            this._wasChanged            = isChanged;
+            this._originView.normal     = null;
+            this._originView.mouseDown  = null;
+            this._originView.rollover   = null;
+            
             this.SetDrawFromStream(!isChanged);
         }
     };
@@ -1540,9 +1543,8 @@
         if (originView) {
             oGraphicsPDF.ClearRect(X, Y, nWidth, nHeight);
             
-            // oGraphicsPDF.SetIntegerGrid(true);
-            // oGraphicsPDF.DrawImage(originView, 0, 0, originView.width / nGrScale, originView.height / nGrScale, originView.x / nGrScale, originView.y / nGrScale, originView.width / nGrScale, originView.height / nGrScale);
-            oGraphicsPDF.DrawImage(originView, 0, 0, nWidth + 2 / nGrScale, nHeight + 2 / nGrScale, X - 1 / nGrScale, Y - 1 / nGrScale, nWidth + 2 / nGrScale, nHeight + 2 / nGrScale);
+            oGraphicsPDF.DrawImage(originView, 0, 0, originView.width / nGrScale, originView.height / nGrScale, originView.x / nGrScale, originView.y / nGrScale, originView.width / nGrScale, originView.height / nGrScale);
+            // oGraphicsPDF.DrawImage(originView, 0, 0, nWidth + 2 / nGrScale, nHeight + 2 / nGrScale, X - 1 / nGrScale, Y - 1 / nGrScale, nWidth + 2 / nGrScale, nHeight + 2 / nGrScale);
             if (this.GetType() == AscPDF.FIELD_TYPES.combobox)
                 this.DrawMarker();
         }
