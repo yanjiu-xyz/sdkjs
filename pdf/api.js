@@ -805,6 +805,7 @@
 	PDFEditorApi.prototype['asc_enterText']                = PDFEditorApi.prototype.asc_enterText;
 	PDFEditorApi.prototype['asc_GetSelectedText']          = PDFEditorApi.prototype.asc_GetSelectedText;
 	PDFEditorApi.prototype['asc_SelectPDFFormListItem']    = PDFEditorApi.prototype.asc_SelectPDFFormListItem;
+	PDFEditorApi.prototype['SetDrawingFreeze']             = PDFEditorApi.prototype.SetDrawingFreeze;
 	
 	
 })(window, window.document);

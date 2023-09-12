@@ -32,35 +32,6 @@
 
 (function(){
 
-    let ANNOTATIONS_TYPES = {
-        Text:           0,
-        Link:           1,
-        FreeText:       2,
-        Line:           3,
-        Square:         4,
-        Circle:         5,
-        Polygon:        6,
-        PolyLine:       7,
-        Highlight:      8,
-        Underline:      9,
-        Squiggly:       10,
-        Strikeout:      11,
-        Stamp:          12,
-        Caret:          13,
-        Ink:            14,
-        Popup:          15,
-        FileAttachment: 16,
-        Sound:          17,
-        Movie:          18,
-        Widget:         19,
-        Screen:         20,
-        PrinterMark:    21,
-        TrapNet:        22,
-        Watermark:      23,
-        Type3D:         24,
-        Redact:         25
-    }
-    
 	/**
 	 * Class representing a base annotation.
 	 * @constructor
@@ -233,7 +204,7 @@
             let oFile   = oViewer.file;
            
             oPageInfo.annotsAPInfo = {
-                info: oFile.nativeFile.getAnnotationsAP(this.GetOriginPage(), w, h),
+                info: oFile.nativeFile["getAnnotationsAP"](this.GetOriginPage(), w, h),
                 size: {
                     w: w,
                     h: h
@@ -567,9 +538,7 @@
         return px / (96 / 72);
     }
 	window["AscPDF"].CAnnotationBase    = CAnnotationBase;
-	window["AscPDF"].ANNOTATIONS_TYPES  = ANNOTATIONS_TYPES;
 	window["AscPDF"].ConvertPt2Px       = ConvertPt2Px;
 	window["AscPDF"].ConvertPx2Pt       = ConvertPx2Pt;
-
 })();
 

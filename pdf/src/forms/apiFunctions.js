@@ -1123,8 +1123,8 @@
 		return new AscCommonWord.CDocumentColor(r, g, b, Auto ? Auto : false);
 	}
     
-    window["AscPDF"]["Api"] = {
-        "Functions": {
+    window["AscPDF"].Api = {
+        Functions: {
             AFNumber_Format,
             AFNumber_Keystroke,
             AFPercent_Format,

@@ -204,7 +204,7 @@ var CPresentation = CPresentation || function(){};
             let h = (oPage.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
             let oFile = oViewer.file;
-            let aIconsInfo = oFile.nativeFile.getButtonIcons(i, w, h);
+            let aIconsInfo = oFile.nativeFile["getButtonIcons"](i, w, h);
 
             if (aIconsInfo["View"] == null)
                 return;

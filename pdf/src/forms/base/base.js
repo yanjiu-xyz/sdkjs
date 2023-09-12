@@ -42,25 +42,13 @@
         r: 221,
         g: 228,
         b: 255
-    }
+    };
 
     let BUTTON_PRESSED = {
         r: 153,
         g: 193,
         b: 218
-    }
-
-    let FIELD_TYPES = {
-        unknown:        0,
-        button:         1,
-        radiobutton:    2,
-        checkbox:       3,
-        text:           4,
-        combobox:       5,
-        listbox:        6,
-        signature:      7
-        
-    }
+    };
 
     let BORDER_TYPES = {
         solid:      0,
@@ -68,7 +56,7 @@
         dashed:     2,
         inset:      3,
         underline:  4
-    }
+    };
 
     //------------------------------------------------------------------------------------------------------------------
 	//
@@ -80,13 +68,13 @@
         left:   0,
         center: 1,
         right:  2
-    }
+    };
 
     let APPEARANCE_TYPE = {
         normal:     0,
         rollover:   1,
         mouseDown:  2
-    }
+    };
 
     const CHAR_LIM_MAX = 500; // to do проверить
 
@@ -114,7 +102,6 @@
 
     // freeze objects
     Object.freeze(FIELDS_HIGHLIGHT);
-    Object.freeze(FIELD_TYPES);
     Object.freeze(ALIGN_TYPE);
     Object.freeze(FONT_STRETCH);
     Object.freeze(FONT_STYLE);
@@ -1511,7 +1498,7 @@
             let oFile   = oViewer.file;
            
             oPageInfo.fieldsAPInfo = {
-                info: oFile.nativeFile.getInteractiveFormsAP(this.GetOriginPage(), w, h),
+                info: oFile.nativeFile["getInteractiveFormsAP"](this.GetOriginPage(), w, h),
                 size: {
                     w: w,
                     h: h
@@ -1770,7 +1757,6 @@
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
     
-	window["AscPDF"].FIELD_TYPES        = FIELD_TYPES;
 	window["AscPDF"].ALIGN_TYPE         = ALIGN_TYPE;
 	window["AscPDF"].BORDER_TYPES       = BORDER_TYPES;
     window["AscPDF"].APPEARANCE_TYPE    = APPEARANCE_TYPE;
@@ -1781,8 +1767,8 @@
     window["AscPDF"].FONT_WEIGHT        = FONT_WEIGHT;
 
     window["AscPDF"].CBaseField = CBaseField;
-	window["AscPDF"].GetGlobalCoordsByPageCoords  = GetGlobalCoordsByPageCoords;
-	window["AscPDF"].GetPageCoordsByGlobalCoords  = GetPageCoordsByGlobalCoords;
+    window["AscPDF"]["GetGlobalCoordsByPageCoords"] = window["AscPDF"].GetGlobalCoordsByPageCoords = GetGlobalCoordsByPageCoords;
+    window["AscPDF"]["GetPageCoordsByGlobalCoords"] = window["AscPDF"].GetPageCoordsByGlobalCoords = GetPageCoordsByGlobalCoords;
     
 })();
 

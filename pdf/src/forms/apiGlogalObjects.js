@@ -258,7 +258,7 @@
         return ["T"];
     };
 
-    window["AscPDF"]["Api"]["Objects"] = {
+    window["AscPDF"].Api.Objects = {
         border,
         position,
         scaleHow,

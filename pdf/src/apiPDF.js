@@ -87,8 +87,8 @@
         "underline":        false
     }
 
-    let highlight   = window["AscPDF"]["Api"]["Objects"].highlight;
-    let style       = window["AscPDF"]["Api"]["Objects"].style;
+    let highlight   = AscPDF.Api.Objects.highlight;
+    let style       = AscPDF.Api.Objects.style;
 
     /**
 	 * A string that sets the trigger for the action. Values are:

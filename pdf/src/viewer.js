@@ -830,7 +830,7 @@
 				return aActions;
 			}
 			let aActionsToCorrect = []; // параметры поля в actions указаны как ссылки на ap, после того, как все формы будут созданы, заменим их на ссылки на сами поля. 
-			let aFormsInfo = this.file.nativeFile.getInteractiveFormsInfo();
+			let aFormsInfo = this.file.nativeFile["getInteractiveFormsInfo"]();
 			
 			let oFormInfo, oForm, oRect;
 			if (aFormsInfo["Fields"] == null) {
@@ -1112,7 +1112,7 @@
 
 			let oAnnotsMap = {};
 			let oDoc = this.getPDFDoc();
-			let aAnnotsInfo = this.file.nativeFile.getAnnotationsInfo();
+			let aAnnotsInfo = this.file.nativeFile["getAnnotationsInfo"]();
 			this.IsOpenAnnotsInProgress = true;
 
 			let oAnnotInfo, oAnnot, aRect;

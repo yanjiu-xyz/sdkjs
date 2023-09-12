@@ -35,6 +35,7 @@
 			"common/spell/spell.js",
 			"word/Editor/Table/TableLook.js",
 			"cell/utils/utils.js",
+			"pdf/src/defines.js",
 			"pdf/api.js"
 		],
 		"common": [
