@@ -139,7 +139,7 @@ CPDFGraphics.prototype.GetDrawedRect = function(bScaled) {
     return this.drawedRect;
 };
 
-CPDFGraphics.prototype.Rect = function(x, y, w, h) {
+CPDFGraphics.prototype.Rect = function(x, y, w, h, isFill) {
     let nScale          = this.GetScale();
     let nLineW          = this.GetLineWidth();
     let bIntegerGrid    = this.GetIntegerGrid();
@@ -152,8 +152,8 @@ CPDFGraphics.prototype.Rect = function(x, y, w, h) {
     let X2 = bIntegerGrid ? (x + w) * nScale >> 0 : (x + w) * nScale;
     let Y2 = bIntegerGrid ? (y + h) * nScale >> 0 : (y + h) * nScale;
 
-    let nLineOffsetY = bIntegerGrid ? (0 === (nLineW * nScale % 2) ? 0 : 0.5) : 0;
-    let nLineOffsetX = bIntegerGrid ? (0 === (nLineW * nScale % 2) ? 0 : 0.5) : 0;
+    let nLineOffsetX = (bIntegerGrid && !isFill) ? (0 === (nLineW * nScale % 2) ? 0 : 0.5) : 0;
+    let nLineOffsetY = nLineOffsetX;
 
     this.context.moveTo(nLineOffsetX + X1, nLineOffsetY + Y1);
     this.context.lineTo(-nLineOffsetX + X2, nLineOffsetY + Y1);

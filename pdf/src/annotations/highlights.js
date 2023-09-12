@@ -129,39 +129,22 @@
             return this.unitedRegion;
 
         let aQuads  = this.GetQuads();
-        let fUniter = AscGeometry.PolyBool["union"];
+        let fUniter = AscGeometry.PolyBool.union;
         let resultRegion;
 
+        let time1 = performance.now();
         let aAllRegions = [];
         for (let i = 0; i < aQuads.length; i++) {
             let aPoints = aQuads[i];
-        
-            let oPoint1 = {
-                x: aPoints[0],
-                y: aPoints[1]
-            }
-            let oPoint2 = {
-                x: aPoints[2],
-                y: aPoints[3]
-            }
-
-            let oPoint3 = {
-                x: aPoints[4],
-                y: aPoints[5]
-            }
-            let oPoint4 = {
-                x: aPoints[6],
-                y: aPoints[7]
-            }
 
             aAllRegions.push({
-                "inverted" : false,
-                "regions" : [
+                inverted : false,
+                regions : [
                     [
-                        [oPoint1.x, oPoint1.y],
-                        [oPoint2.x, oPoint2.y],
-                        [oPoint4.x, oPoint4.y],
-                        [oPoint3.x, oPoint3.y]
+                        [aPoints[0], aPoints[1]],
+                        [aPoints[2], aPoints[3]],
+                        [aPoints[6], aPoints[7]],
+                        [aPoints[4], aPoints[5]]
                     ]
                 ]
             });
@@ -176,6 +159,8 @@
         else {
             resultRegion = aAllRegions[0];
         }
+        let time2 = performance.now();
+        console.log("union: " + (time2 - time1));
 
         this.unitedRegion = resultRegion;
         return this.unitedRegion;
@@ -241,7 +226,7 @@
                 let aMinRect = getMinRect(aPoints);
 
                 oGraphicsPDF.SetIntegerGrid(true);
-                oGraphicsPDF.Rect(aMinRect[0], aMinRect[1], aMinRect[2] - aMinRect[0], aMinRect[3] - aMinRect[1]);
+                oGraphicsPDF.Rect(aMinRect[0], aMinRect[1], aMinRect[2] - aMinRect[0], aMinRect[3] - aMinRect[1], true);
                 oGraphicsPDF.SetIntegerGrid(false);
             }
             else {
@@ -463,10 +448,13 @@
         let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
         let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+
+        // рисуем всегда в пиксельной сетке. при наклонных линиях - +- 1 пиксел - ничего страшного
+        let pointOffset = (overlay.m_oContext.lineWidth & 1) ? 0.5 : 0;
         
-        for (let i = 0, countPolygons = polygon["regions"].length; i < countPolygons; i++)
+        for (let i = 0, countPolygons = polygon.regions.length; i < countPolygons; i++)
         {
-            let region = polygon["regions"][i];
+            let region = polygon.regions[i];
             let countPoints = region.length;
 
             if (2 > countPoints)
@@ -475,7 +463,7 @@
             let X = indLeft + region[0][0] * nScale;
             let Y = indTop + region[0][1] * nScale;
 
-            overlay.m_oContext.moveTo(X, Y);
+            overlay.m_oContext.moveTo((X >> 0) + pointOffset, (Y >> 0) + pointOffset);
 
             overlay.CheckPoint1(X, Y);
             overlay.CheckPoint2(X, Y);
@@ -485,7 +473,7 @@
                 X = indLeft + region[j][0] * nScale;
                 Y = indTop + region[j][1] * nScale;;
 
-                overlay.m_oContext.lineTo(X, Y);
+                overlay.m_oContext.lineTo((X >> 0) + pointOffset, (Y >> 0) + pointOffset);
                 overlay.CheckPoint1(X, Y);
                 overlay.CheckPoint2(X, Y);
             }
