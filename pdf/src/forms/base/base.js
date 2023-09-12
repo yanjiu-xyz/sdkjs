@@ -1546,7 +1546,7 @@
             oGraphicsPDF.DrawImage(originView, 0, 0, originView.width / nGrScale, originView.height / nGrScale, originView.x / nGrScale, originView.y / nGrScale, originView.width / nGrScale, originView.height / nGrScale);
             // oGraphicsPDF.DrawImage(originView, 0, 0, nWidth + 2 / nGrScale, nHeight + 2 / nGrScale, X - 1 / nGrScale, Y - 1 / nGrScale, nWidth + 2 / nGrScale, nHeight + 2 / nGrScale);
             if (this.GetType() == AscPDF.FIELD_TYPES.combobox)
-                this.DrawMarker();
+                this.DrawMarker(oGraphicsPDF);
         }
     };
     CBaseField.prototype.GetParent = function() {

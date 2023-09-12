@@ -53,16 +53,15 @@
     CComboBoxField.prototype = Object.create(AscPDF.CBaseListField.prototype);
 	CComboBoxField.prototype.constructor = CComboBoxField;
 
-    CComboBoxField.prototype.Draw = function() {
+    CComboBoxField.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
         if (this.IsHidden() == true)
             return;
 
         let oViewer         = editor.getDocumentRenderer();
         let oDoc            = this.GetDocument();
-        let oGraphicsWord   = oViewer.pagesInfo.pages[this.GetPage()].graphics.word;
         
         this.Recalculate();
-        this.DrawBackground();
+        this.DrawBackground(oGraphicsPDF);
         
         let oContentToDraw = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format) && this.IsNeedDrawHighlight() ? this.contentFormat : this.content;
         this.curContent = oContentToDraw; // запоминаем текущий контент
@@ -77,8 +76,8 @@
             oContentToDraw.RecalculateCurPos();
         
         oGraphicsWord.RemoveClip();
-        this.DrawMarker();
-        this.DrawBorders();
+        this.DrawMarker(oGraphicsPDF);
+        this.DrawBorders(oGraphicsPDF);
     };
     CComboBoxField.prototype.Recalculate = function() {
         let oViewer = editor.getDocumentRenderer();
@@ -139,10 +138,9 @@
         this.SetNeedRecalc(false);
     };
 
-    CComboBoxField.prototype.DrawMarker = function() {
+    CComboBoxField.prototype.DrawMarker = function(oGraphicsPDF) {
         let oViewer         = editor.getDocumentRenderer();
         let nScale          = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
-        let oGraphicsPDF    = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
         let aOringRect      = this.GetOrigRect();
 
         // let X       = aRect[0] * nScale;
@@ -379,6 +377,8 @@
         else
             return false;
 
+        let oDoc = this.GetDocument();
+        
         // Если у нас что-то заселекчено и мы вводим текст или пробел
         // и т.д., тогда сначала удаляем весь селект.
         if (this.content.IsSelectionUse()) {
@@ -390,7 +390,6 @@
         
         let isCanEnter = this.DoKeystrokeAction(aChars);
         if (isCanEnter) {
-            oPara.Set_SelectionState2(oSelState);
             this.content.Remove(1, true, false, false);
         }
 

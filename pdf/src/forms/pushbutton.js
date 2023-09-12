@@ -1110,10 +1110,6 @@
             {
                 Api.sendEvent("asc_onError", error, c_oAscError.Level.NoCritical);
             }
-            if (obj && obj.sendUrlsToFrameEditor && Api.isOpenedChartFrame)
-            {
-                Api.sendStartUploadImageActionToFrameEditor();
-            }
             Api.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
         });
     };

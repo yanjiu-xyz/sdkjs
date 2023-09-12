@@ -1711,7 +1711,7 @@ var CPresentation = CPresentation || function(){};
         // создаем родительские поля, последнее будет виджет-полем
         if (aPartNames.length > 1) {
             if (this.rootFields.get(aPartNames[0]) == null) { // root поле
-                this.rootFields.set(aPartNames[0], private_createField(aPartNames[0], cFieldType, nPageNum, []));
+                this.rootFields.set(aPartNames[0], private_createField(aPartNames[0], oField.GetType(), oField.GetPage(), []));
             }
 
             let oParentField = this.rootFields.get(aPartNames[0]);
@@ -1727,7 +1727,7 @@ var CPresentation = CPresentation || function(){};
                     if (oExistsField)
                         oParentField = oExistsField;
                     else {
-                        let oNewParent = private_createField(aPartNames[i], cFieldType, nPageNum, []);
+                        let oNewParent = private_createField(aPartNames[i], oField.GetType(), oField.GetPage(), []);
                         oParentField.AddKid(oNewParent);
                         oParentField = oNewParent;
                     }

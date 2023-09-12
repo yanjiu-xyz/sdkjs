@@ -229,10 +229,10 @@
         let w = (oPage.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
         let h = (oPage.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
-        if (oPageInfo.fieldsAPInfo == null || oPageInfo.fieldsAPInfo.size.w != w || oPageInfo.fieldsAPInfo.size.h != h) {
+        if (oPageInfo.annotsAPInfo == null || oPageInfo.annotsAPInfo.size.w != w || oPageInfo.annotsAPInfo.size.h != h) {
             let oFile   = oViewer.file;
            
-            oPageInfo.fieldsAPInfo = {
+            oPageInfo.annotsAPInfo = {
                 info: oFile.nativeFile.getAnnotationsAP(this.GetOriginPage(), w, h),
                 size: {
                     w: w,
@@ -241,9 +241,9 @@
             }
         }
         
-        for (let i = 0; i < oPageInfo.fieldsAPInfo.info.length; i++) {
-            if (oPageInfo.fieldsAPInfo.info[i].i == this._apIdx)
-                return oPageInfo.fieldsAPInfo.info[i];
+        for (let i = 0; i < oPageInfo.annotsAPInfo.info.length; i++) {
+            if (oPageInfo.annotsAPInfo.info[i].i == this._apIdx)
+                return oPageInfo.annotsAPInfo.info[i];
         }
 
         return null;

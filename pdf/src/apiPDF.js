@@ -56,6 +56,7 @@
 	//
 	//------------------------------------------------------------------------------------------------------------------
 
+    
     // types without source object
     let ALIGN_TYPE = {
         left:   "left",
@@ -85,6 +86,9 @@
         "textSize":         12.0,
         "underline":        false
     }
+
+    let highlight   = window["AscPDF"]["Api"]["Objects"].highlight;
+    let style       = window["AscPDF"]["Api"]["Objects"].style;
 
     /**
 	 * A string that sets the trigger for the action. Values are:
