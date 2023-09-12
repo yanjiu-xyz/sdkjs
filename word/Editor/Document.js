@@ -2221,6 +2221,10 @@ CDocument.prototype.IsSpreadSheetEditor = function()
 {
 	return false;
 };
+CDocument.prototype.IsPdfEditor = function()
+{
+	return false;
+};
 CDocument.prototype.Init                           = function()
 {
 

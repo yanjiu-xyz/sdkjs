@@ -1946,6 +1946,15 @@ var CPresentation = CPresentation || function(){};
 	CPDFDoc.prototype.IsDocumentEditor = function() {
 		return false;
 	};
+	CPDFDoc.prototype.IsPresentationEditor = function() {
+		return false;
+	};
+	CPDFDoc.prototype.IsSpreadSheetEditor = function() {
+		return false;
+	};
+	CPDFDoc.prototype.IsPdfEditor = function() {
+		return true;
+	};
 	CPDFDoc.prototype.Get_Styles = function() {
 		return AscCommonWord.DEFAULT_STYLES;
 	};

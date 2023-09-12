@@ -87,7 +87,7 @@
 			return;
 
 		let oDocument = this.Paragraph.GetLogicDocument();
-		if (!oDocument || !AscPDF || !(oDocument instanceof AscPDF.CPDFDoc) && !(oDocument instanceof AscCommonWord.CDocument) && !(oDocument instanceof AscCommonSlide.CPresentation))
+		if (!oDocument || (!oDocument.IsDocumentEditor() && !oDocument.IsPresentationEditor() && !oDocument.IsPdfEditor()))
 			return;
 
 		this.Document = oDocument;
