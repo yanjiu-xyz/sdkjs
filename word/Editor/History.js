@@ -74,7 +74,8 @@ function CHistory(Document)
 	this.RegisterClasses = 0;
     this.MinorChanges    = false; // Данный параметр нужен, чтобы определить влияют ли добавленные изменения на пересчет
 
-    this.BinaryWriter = new AscCommon.CMemory();
+    this.BinaryWriter = new AscCommon.CMemory(true);
+	this.BinaryWriter.Init(1024*1024*1);
 
     this.FileCheckSum = 0;
     this.FileSize     = 0;
@@ -317,7 +318,9 @@ CHistory.prototype =
     {
 		if ( 0 !== this.TurnOffHistory )
 			return false;
-
+		
+		this.RemoveLastTemporaryPoint();
+		
 		if (this.Document && this.Document.ClearListsCache)
 			this.Document.ClearListsCache();
 
@@ -342,6 +345,7 @@ CHistory.prototype =
             Items      : Items, // Массив изменений, начиная с текущего момента
             Time       : Time,  // Текущее время
             Additional : {},    // Дополнительная информация
+			Temporary  : false,
             Description: nDescription
         };
 
@@ -1099,6 +1103,27 @@ CHistory.prototype =
 		if (this.Points[this.Index] && this.Points[this.Index].Additional.FormFilling)
 			delete this.Points[this.Index].Additional.FormFilling;
 	};
+	CHistory.prototype.SetLastPointTemporary = function()
+	{
+		if (this.Index < 0)
+			return;
+		
+		this.Points[this.Index].Temporary = true;
+	};
+	CHistory.prototype.RemoveLastTemporaryPoint = function()
+	{
+		if (this.Index < 0
+			|| !this.Document.IsDocumentEditor()
+			|| !this.Points[this.Index].Temporary)
+			return;
+		
+		let needOn = this.Document.TurnOff_InterfaceEvents();
+		let changes = this.Undo();
+		this.Document.UpdateAfterUndoRedo(changes);
+		
+		if (needOn)
+			this.Document.TurnOn_InterfaceEvents();
+	};
 CHistory.prototype.ClearAdditional = function()
 {
 	if (this.Index >= 0)
@@ -1308,6 +1333,44 @@ CHistory.prototype.private_ClearRecalcData = function()
 		AllParagraphs     : null
 	};
 };
+	CHistory.prototype.getRecalcDataByElements = function(elements)
+	{
+		let storedRecalcData = this.RecalculateData;
+		
+		this.RecalculateData = {
+			Inline   : {
+				Pos     : -1,
+				PageNum : 0
+			},
+			Flow     : [],
+			HdrFtr   : [],
+			Drawings : {
+				All         : false,
+				Map         : {},
+				ThemeInfo   : null,
+				SlideMinIdx : null
+			},
+			
+			Tables            : [],
+			NumPr             : [],
+			NotesEnd          : false,
+			NotesEndPage      : 0,
+			Update            : true,
+			ChangedStyles     : {},
+			ChangedNums       : {},
+			LineNumbers       : false,
+			AllParagraphs     : null
+		};
+		
+		for (let i = 0, count = elements.length; i < count; ++i)
+		{
+			elements[i].Refresh_RecalcData2();
+		}
+		
+		let result = this.RecalculateData;
+		this.RecalculateData = storedRecalcData;
+		return result;
+	};
 /**
  * Обработка изменений после Undo/Redo всех изменений
  */

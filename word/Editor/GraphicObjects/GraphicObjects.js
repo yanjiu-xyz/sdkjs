@@ -1545,7 +1545,7 @@ CGraphicObjects.prototype =
         arr = this.getAllDrawingsOnPage(pageIndex, docContent.IsHdrFtr());
         for(i = 0; i < arr.length; ++i)
         {
-            if(arr[i].parent && arr[i].parent.DocumentContent === docContent)
+            if(arr[i].parent && arr[i].parent.GetDocumentContent() === docContent)
             {
                 ret.push(arr[i].parent);
             }
@@ -1663,19 +1663,19 @@ CGraphicObjects.prototype =
         this.document.OnMouseUp(e, x, y, pageIndex);
     },
 
-    addInlineImage: function( W, H, Img, Chart, bFlow )
+    addInlineImage: function( W, H, Img, GraphicObject, bFlow )
     {
         var content = this.getTargetDocContent();
         if(content)
         {
             if(!content.bPresentation){
-                content.AddInlineImage(W, H, Img, Chart, bFlow );
+                content.AddInlineImage(W, H, Img, GraphicObject, bFlow );
             }
             else{
                 if(this.selectedObjects.length > 0)
                 {
                     this.resetSelection2();
-                    this.document.AddInlineImage(W, H, Img, Chart, bFlow );
+                    this.document.AddInlineImage(W, H, Img, GraphicObject, bFlow );
                 }
             }
         }
@@ -1684,7 +1684,7 @@ CGraphicObjects.prototype =
             if(this.selectedObjects.length > 0)
             {
                 this.resetSelection2();
-                this.document.AddInlineImage(W, H, Img, Chart, bFlow );
+                this.document.AddInlineImage(W, H, Img, GraphicObject, bFlow );
             }
         }
     },
@@ -2831,7 +2831,7 @@ CGraphicObjects.prototype =
 			}
 		}
 
-		if (!object.parent.DocumentContent.IsHdrFtr(true))
+		if (!object.parent.isHdrFtrChild(false))
 		{
 			this.graphicPages[pageIndex].addObject(object);
 		}
@@ -3546,7 +3546,7 @@ CGraphicObjects.prototype =
                         parent_drawing = parent_drawing.group;
                 }
                 if(parent_drawing &&  parent_drawing.parent)
-                    return docContent === parent_drawing.parent.DocumentContent.Is_TopDocument(true);
+                    return docContent === parent_drawing.parent.isInTopDocument(true);
             }
         }
         return false;
@@ -4186,16 +4186,19 @@ CGraphicObjects.prototype =
     },
 
 
-    removeById: function(pageIndex, id)
+    removeById: function(nPageIdx, sId)
     {
-        var object = AscCommon.g_oTableId.Get_ById(id);
-        if(isRealObject(object))
+        const oDrawing = AscCommon.g_oTableId.Get_ById(sId);
+        if(isRealObject(oDrawing))
         {
-            var hdr_ftr = object.DocumentContent.IsHdrFtr(true);
-            var page = !hdr_ftr ? this.graphicPages[pageIndex] : null;
-            if(isRealObject(page))
+            let bHdrFtr = oDrawing.isHdrFtrChild(false);
+            if(!bHdrFtr)
             {
-                page.delObjectById(id);
+                let oPage = this.graphicPages[nPageIdx];
+                if(isRealObject(oPage))
+                {
+                    oPage.delObjectById(sId);
+                }
             }
         }
     },
@@ -4216,9 +4219,10 @@ CGraphicObjects.prototype =
         var obj = AscCommon.g_oTableId.Get_ById(id), nPageIndex = pageIndex;
         if(obj && obj.GraphicObj)
         {
-            if(obj.DocumentContent && obj.DocumentContent.IsHdrFtr())
+            if(obj.isHdrFtrChild(false))
             {
-                if(obj.DocumentContent.Get_StartPage_Absolute() !== obj.PageNum)
+                const oDocContent = obj.GetDocumentContent();
+                if(oDocContent && oDocContent.Get_StartPage_Absolute() !== obj.PageNum)
                 {
                     nPageIndex = obj.PageNum;
                 }

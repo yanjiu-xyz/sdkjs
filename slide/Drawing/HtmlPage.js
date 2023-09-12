@@ -310,7 +310,7 @@ function CEditorPage(api)
 			if (undefined !== pos.x)
 				this.X = pos.x;
 			else if (undefined !== pos.left)
-				this.X = pos.x;
+				this.X = pos.left;
 
 			if (undefined !== pos.y)
 				this.Y = pos.y;
@@ -736,7 +736,8 @@ function CEditorPage(api)
 					return;
 
 				var _count = window.editor.getCountPages();
-				var _current = slideNum + 1;
+				var _first_slide_number = window.editor.WordControl.m_oLogicDocument.getFirstSlideNumber();
+				var _current = slideNum + _first_slide_number;
 				if (_current > _count)
 					_current = _count;
 
@@ -744,7 +745,16 @@ function CEditorPage(api)
 				if (window.editor.WordControl.reporterTranslates)
 					_text = window.editor.WordControl.reporterTranslates[1];
 				_text = _text.replace("{0}", _current);
-				_text = _text.replace("{1}", _count);
+				var _count_string;
+				if(_first_slide_number === 1)
+				{
+					_count_string = "" + _count;
+				}
+				else
+				{
+					_count_string = _first_slide_number + ' .. ' + (_count + _first_slide_number - 1)
+				}
+				_text = _text.replace("{1}", _count_string);
 
 				_elem.innerHTML = _text;
 

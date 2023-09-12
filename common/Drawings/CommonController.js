@@ -4792,8 +4792,8 @@
 						drawingDocument.SelectShow();
 					}
 					let oMathTrackHandler = null;
-					if (this.drawingObjects.mathTrackHandler) {
-						oMathTrackHandler = this.drawingObjects.mathTrackHandler;
+					if (Asc.editor.wbModel && Asc.editor.wbModel.mathTrackHandler) {
+						oMathTrackHandler = Asc.editor.wbModel.mathTrackHandler;
 					} else {
 						if (this.drawingObjects.cSld) {
 							oMathTrackHandler = editor.WordControl.m_oLogicDocument.MathTrackHandler;
@@ -4980,8 +4980,9 @@
 						var i, graphic_page;
 						if (direction > 0) {
 							var selectNext = function (oThis, last_selected_object) {
+								let oParaDrawing = last_selected_object.GetParaDrawing();
 								var search_array = oThis.getAllObjectsOnPage(last_selected_object.selectStartPage,
-									last_selected_object.parent && last_selected_object.parent.DocumentContent && last_selected_object.parent.DocumentContent.IsHdrFtr(false));
+									oParaDrawing && oParaDrawing.isHdrFtrChild(false));
 
 								if (search_array.length > 0) {
 									for (var i = search_array.length - 1; i > -1; --i) {
@@ -5031,8 +5032,9 @@
 							}
 						} else {
 							var selectPrev = function (oThis, first_selected_object) {
+								let oParaDrawing = first_selected_object.GetParaDrawing();
 								var search_array = oThis.getAllObjectsOnPage(first_selected_object.selectStartPage,
-									first_selected_object.parent && first_selected_object.parent.DocumentContent && first_selected_object.parent.DocumentContent.IsHdrFtr(false));
+									oParaDrawing && oParaDrawing.isHdrFtrChild(false));
 
 								if (search_array.length > 0) {
 									for (var i = 0; i < search_array.length; ++i) {
@@ -5572,7 +5574,8 @@
 						}
 					} else if (e.keyCode == 8 && canEdit) // BackSpace
 					{
-						drawingObjectsController.remove(-1, undefined, undefined, undefined, ctrlKey);
+						const bIsWord = bIsMacOs ? e.altKey : ctrlKey;
+						drawingObjectsController.remove(-1, undefined, undefined, undefined, bIsWord);
 						bRetValue = true;
 					} else if (e.keyCode == 9 && canEdit) // Tab
 					{
@@ -5721,7 +5724,24 @@
 						bRetValue = true;
 					} else if (e.keyCode == 37) // Left Arrow
 					{
-						this.cursorMoveLeft(e.shiftKey, ctrlKey);
+						const oTargetTextObject = getTargetTextObject(this);
+						if (!oTargetTextObject)
+						{
+							this.cursorMoveLeft(e.shiftKey, ctrlKey);
+						}
+						else if (bIsMacOs && ctrlKey)
+						{
+							const content = this.getTargetDocContent();
+							if (content)
+							{
+								content.MoveCursorToStartOfLine(e.shiftKey);
+							}
+						}
+						else
+						{
+							const bIsWord = bIsMacOs ? e.altKey : ctrlKey;
+							this.cursorMoveLeft(e.shiftKey, bIsWord);
+						}
 
 						drawingObjectsController.updateSelectionState();
 						drawingObjectsController.updateOverlay();
@@ -5737,7 +5757,24 @@
 						bRetValue = true;
 					} else if (e.keyCode == 39) // Right Arrow
 					{
-						this.cursorMoveRight(e.shiftKey, ctrlKey);
+						const oTargetTextObject = getTargetTextObject(this);
+						if (!oTargetTextObject)
+						{
+							this.cursorMoveRight(e.shiftKey, ctrlKey);
+						}
+						else if (bIsMacOs && ctrlKey)
+						{
+							const content = this.getTargetDocContent();
+							if (content)
+							{
+								content.MoveCursorToEndOfLine(e.shiftKey);
+							}
+						}
+						else
+						{
+							const bIsWord = bIsMacOs ? e.altKey : ctrlKey;
+							this.cursorMoveRight(e.shiftKey, bIsWord);
+						}
 
 						drawingObjectsController.updateSelectionState();
 						drawingObjectsController.updateOverlay();
@@ -5868,15 +5905,20 @@
 					{
 					} else if (e.keyCode == 145) // Scroll Lock
 					{
-					} else if (e.keyCode == 187 && canEdit && true === ctrlKey) // Ctrl + Shift + +, Ctrl + = - superscript/subscript
+					} else if ((e.keyCode === 61 || e.keyCode == 187) && canEdit && true === ctrlKey) // Ctrl + Shift + +, Ctrl + = - superscript/subscript
 					{
 						var TextPr = drawingObjectsController.getParagraphTextPr();
 						if (isRealObject(TextPr)) {
 							if (true === e.shiftKey)
+							{
 								drawingObjectsController.setCellSuperscript(TextPr.VertAlign === AscCommon.vertalign_SuperScript ? false : true);
-							else
+								bRetValue = true;
+							}
+							else if (true === e.altKey)
+							{
 								drawingObjectsController.setCellSubscript(TextPr.VertAlign === AscCommon.vertalign_SubScript ? false : true);
-							bRetValue = true;
+								bRetValue = true;
+							}
 						}
 					} else if (e.keyCode == 188 && true === ctrlKey) // Ctrl + ,
 					{
@@ -5885,7 +5927,7 @@
 							drawingObjectsController.setCellSuperscript(TextPr.VertAlign === AscCommon.vertalign_SuperScript ? false : true);
 							bRetValue = true;
 						}
-					} else if (e.keyCode == 189 && canEdit) // Клавиша Num-
+					} else if ((e.keyCode == 189 || e.keyCode == 173) && canEdit && true === ctrlKey && true === e.shiftKey) // Клавиша Num-
 					{
 						if (!this.checkSelectedObjectsProtectionText()) {
 							var Item = null;
@@ -5895,10 +5937,7 @@
 								if (true === ctrlKey && true === e.shiftKey) {
 									Item = new AscWord.CRunText(0x2013);
 									Item.SpaceAfter = false;
-								} else if (true === e.shiftKey)
-									Item = new AscWord.CRunText("_".charCodeAt(0));
-								else
-									Item = new AscWord.CRunText("-".charCodeAt(0));
+								}
 								oThis.paragraphAdd(Item);
 							};
 							this.checkSelectedObjectsAndCallback(callBack, [], false, AscDFH.historydescription_Spreadsheet_AddItem, undefined, window["Asc"]["editor"].collaborativeEditing.getFast());

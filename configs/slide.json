@@ -33,7 +33,6 @@
 			"slide/api.js",
 			"slide/api_plugins.js",
 			"common/spell/spell.js",
-			"common/zlib/zlib.js",
 			"word/Editor/Table/TableLook.js",
 			"cell/utils/utils.js"
 		],
@@ -62,6 +61,7 @@
 			"common/libfont/manager.js",
 
 			"common/stringserialize.js",
+			"common/digest/sha256.js",
 			"common/random.js",
 			"common/keychainstorage.js",
 
@@ -113,6 +113,9 @@
 			"common/Drawings/TrackObjects/ConnectorTrack.js",
 			"common/Drawings/DrawingObjectsHandlers.js",
 			"common/Drawings/TextDrawer.js",
+
+			"common/PromiseIterators.js",
+			"common/ExternalDataLoader.js",
 
 			"common/Drawings/Externals.js",
 			"common/GlobalLoaders.js",
@@ -221,6 +224,7 @@
 			"word/Editor/Paragraph/DisplayStyleCalculator.js",
 			"word/Editor/Paragraph/ParaRevisionMove.js",
 			"word/Editor/Paragraph/GraphemesCounter.js",
+			"word/Editor/Paragraph/TextHyphenator.js",
 			"word/Editor/Paragraph/TextShaper.js",
 			"word/Editor/Hyperlink.js",
 			"word/Editor/HyperlinkChanges.js",
@@ -302,6 +306,7 @@
 			"word/Editor/Search/Pattern.js",
 			"word/Editor/GlossaryDocument.js",
 			"word/Editor/GlossaryDocumentChanges.js",
+			"word/Editor/Styles/style-cache.js",
 			"word/Editor/Styles/FixedFormDefaults.js",
 			"word/Editor/Revisions/TrackRevisionsManager.js",
 
@@ -319,6 +324,7 @@
 			"common/versionHistory.js",
 			"common/clipboard_base.js",
 			"common/text_input2.js",
+			"common/workerspeech.js",
 			"common/Drawings/Format/OleObject.js",
 			"common/Drawings/Format/DrawingContent.js",
 			"common/plugins.js",

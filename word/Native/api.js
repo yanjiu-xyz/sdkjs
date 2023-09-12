@@ -777,6 +777,11 @@ Asc['asc_docs_api'].prototype["Call_Menu_Event"] = function(type, _params)
                         _current.pos++;
                         break;
                     }
+                    case 6:
+                    {
+                        _current.pos++;
+                        break;
+                    }
                     case 255:
                     default:
                     {
