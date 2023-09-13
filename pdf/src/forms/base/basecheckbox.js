@@ -456,47 +456,13 @@
         this.Draw(oGraphicsPDF);
     };
     CBaseCheckBoxField.prototype.OnEndPressed = function() {
-        this.DrawActive();
-    };
-    CBaseCheckBoxField.prototype.DrawActive = function() {
-        return;
-        let oViewer     = editor.getDocumentRenderer();
-        let oCtx        = oViewer.canvasForms.getContext("2d");
+        let oViewer         = editor.getDocumentRenderer();
+        let oOverlay        = oViewer.overlay;
+        oOverlay.max_x      = 0;
+        oOverlay.max_y      = 0;
+        oOverlay.ClearAll   = true;
         
-        let aRect       = this.GetRect();
-        let aOringRect  = this.GetOrigRect();
-        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
-        let nLineWidth  = aRect[0] / aOringRect[0] * nScale * this._lineWidth;
-        oCtx.lineWidth  = nLineWidth;
-
-        let X = this._pagePos.x * nScale;
-        let Y = this._pagePos.y * nScale;
-        let nWidth = this._pagePos.w * nScale;
-        let nHeight = this._pagePos.h * nScale;
-
-        let xCenter = oViewer.width >> 1;
-        if (oViewer.documentWidth > oViewer.width)
-		{
-			xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
-		}
-		let yPos    = oViewer.scrollY >> 0;
-        let page    = oViewer.drawingPages[this.GetPage()];
-        let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
-        let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
-        
-        // Create a new canvas element for the cropped area
-        var croppedCanvas       = document.createElement('canvas');
-        croppedCanvas.width     = nWidth;
-        croppedCanvas.height    = nHeight;
-
-        let oGraphicsPDF    = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
-        let oGraphicsCanvas = oGraphicsPDF.context.canvas;
-        oGraphicsPDF.ClearRect(0, 0, oGraphicsCanvas.width, oGraphicsCanvas.height);
-        
-        this.Draw();
-        oCtx.drawImage(oGraphicsCanvas, 0, 0, oGraphicsCanvas.width, oGraphicsCanvas.height, indLeft, indTop, w, h);
+        oViewer.onUpdateOverlay();
     };
     CBaseCheckBoxField.prototype.onMouseUp = function() {
         this.CreateNewHistoryPoint();

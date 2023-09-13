@@ -174,7 +174,7 @@
         this._richText = bRichText;
     };
     CTextField.prototype.SetValue = function(sValue) {
-        if (this.IsAnnot()) {
+        if (this.IsWidget()) {
             let oPara   = this.content.GetElement(0);
             let oRun    = oPara.GetElement(0);
             oPara.RemoveFromContent(1, oPara.GetElementsCount() - 1);
@@ -243,7 +243,7 @@
     //         oField = this._kids[i];
     //         sName = oField.GetPartialName();
 
-    //         if (oField.IsAnnot()) {
+    //         if (oField.IsWidget()) {
     //             if (aDoneFields.includes(sName) == false) {
     //                 aDoneFields.push(oField.GetFullName());
     //                 oField.SetValue(sValue);

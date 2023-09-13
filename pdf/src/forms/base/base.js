@@ -122,7 +122,7 @@
         this._delay         = false;
         this._display       = AscPDF.Api.Objects.display["visible"];
         this._doc           = oDoc;
-        this._fillColor     = [1,1,1];
+        this._fillColor     = undefined;
         this._bgColor       = undefined;          // prop for old versions (fillColor)
         this._hidden        = false;             // This property has been superseded by the display property and its use is discouraged.
         this._lineWidth     = LINE_WIDTH.thin;  // In older versions of this specification, this property was borderWidth
@@ -151,7 +151,7 @@
         // internal
         this._id = AscCommon.g_oIdCounter.Get_NewId();
         
-        this._isAnnot = aRect && aRect.length == 4 ? true : false;
+        this._isWidget = aRect && aRect.length == 4 ? true : false;
 
         this.contentRect = {
             X: 0,
@@ -542,7 +542,7 @@
 	 */
     CBaseField.prototype.SetApiValue = function(value) {
         let oParent = this.GetParent();
-        if (oParent && this.IsAnnot())
+        if (oParent && this.IsWidget())
             oParent.SetApiValue(value);
         else
             this._value = value;
@@ -592,11 +592,15 @@
         let W = (aOrigRect[2] - aOrigRect[0]) * nScale;
         let H = (aOrigRect[3] - aOrigRect[1]) * nScale;
 
-        oCtx.globalAlpha = 0.8;
-        oCtx.globalCompositeOperation = "destination-over";
-        if (aBgColor && aBgColor.length != 0)
-            oCtx.globalCompositeOperation = "multiply";
+        if (null == aBgColor)
+            oCtx.globalAlpha = 0.8;
+        else
+            oCtx.globalAlpha = 1;
 
+        oCtx.globalCompositeOperation = "destination-over";
+        if (this.IsNeedDrawFromStream())
+            oCtx.globalCompositeOperation = "multiply";
+        
         if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this._chStyle == AscPDF.CHECKBOX_STYLES.circle) {
             oCtx.beginPath();
             oCtx.fillStyle = `rgb(${FIELDS_HIGHLIGHT.r}, ${FIELDS_HIGHLIGHT.g}, ${FIELDS_HIGHLIGHT.b})`;
@@ -619,11 +623,11 @@
     CBaseField.prototype.DrawBorders = function(oGraphicsPDF) {
         let oViewer     = editor.getDocumentRenderer();
         let aOringRect  = this.GetOrigRect();
-        let aBgColor    = this.GetBackgroundColor();
-        let oBgRGBColor;
+        let aBgColor    = this.IsNeedDrawHighlight() == false ? (this.GetBackgroundColor() || [1]) : [1];
+        let oBgRGBColor = this.GetRGBColor(aBgColor);
 
         if (aBgColor && aBgColor.length != 0)
-            oBgRGBColor = AscPDF.MakeColorMoreGray(this.GetRGBColor(aBgColor), 50);
+            oBgRGBColor = AscPDF.MakeColorMoreGray(oBgRGBColor, 50);
         
         let nLineWidth = this._lineWidth;
 
@@ -675,17 +679,28 @@
                         oGraphicsPDF.Stroke();
                     }
 
-                    // right semicircle
-                    oGraphicsPDF.BeginPath();
-                    oGraphicsPDF.Arc(centerX, centerY, nRadius - nLineWidth, - Math.PI / 4, 3 * Math.PI / 4, false);
-                    oGraphicsPDF.SetStrokeStyle(140, 151, 192);
-                    oGraphicsPDF.Stroke();
-                    
                     // left semicircle
                     oGraphicsPDF.BeginPath();
                     oGraphicsPDF.Arc(centerX, centerY, nRadius - nLineWidth, 3 * Math.PI / 4, - Math.PI / 4, false);
-                    oGraphicsPDF.SetStrokeStyle(255, 255, 255);
+                    if (this.IsPressed()) {
+                        oGraphicsPDF.SetStrokeStyle(oBgRGBColor.r, oBgRGBColor.g, oBgRGBColor.b);
+                    }
+                    else {
+                        oGraphicsPDF.SetStrokeStyle(255, 255, 255);
+                    }
                     oGraphicsPDF.Stroke();
+
+                    // right semicircle
+                    oGraphicsPDF.BeginPath();
+                    oGraphicsPDF.Arc(centerX, centerY, nRadius - nLineWidth, - Math.PI / 4, 3 * Math.PI / 4, false);
+                    if (this.IsPressed()) {
+                        oGraphicsPDF.SetStrokeStyle(255, 255, 255);
+                    }
+                    else {
+                        oGraphicsPDF.SetStrokeStyle(oBgRGBColor.r, oBgRGBColor.g, oBgRGBColor.b);
+                    }
+                    oGraphicsPDF.Stroke();
+
                     break;
                 case BORDER_TYPES.dashed:
                     if (color == null)
@@ -704,16 +719,22 @@
                         oGraphicsPDF.Stroke();
                     }
                     
-                    // right semicircle
-                    oGraphicsPDF.BeginPath();
-                    oGraphicsPDF.Arc(centerX, centerY, nRadius - nLineWidth, - Math.PI / 4, 3 * Math.PI / 4, false);
-                    oGraphicsPDF.SetStrokeStyle(191, 191, 191);
-                    oGraphicsPDF.Stroke();
-                    
                     // left semicircle
                     oGraphicsPDF.BeginPath();
                     oGraphicsPDF.Arc(centerX, centerY, nRadius - nLineWidth, 3 * Math.PI / 4, - Math.PI / 4, false);
-                    oGraphicsPDF.SetStrokeStyle(128, 128, 128);
+                    if (this.IsPressed())
+                        oGraphicsPDF.SetStrokeStyle(0, 0, 0);
+                    else
+                        oGraphicsPDF.SetStrokeStyle(128, 128, 128);
+                    oGraphicsPDF.Stroke();
+
+                    // right semicircle
+                    oGraphicsPDF.BeginPath();
+                    oGraphicsPDF.Arc(centerX, centerY, nRadius - nLineWidth, - Math.PI / 4, 3 * Math.PI / 4, false);
+                    if (this.IsPressed())
+                        oGraphicsPDF.SetStrokeStyle(255, 255, 255);
+                    else
+                        oGraphicsPDF.SetStrokeStyle(191, 191, 191);
                     oGraphicsPDF.Stroke();
 
                     break;
@@ -730,7 +751,6 @@
                     
                     oGraphicsPDF.SetLineDash([]);
                     oGraphicsPDF.BeginPath();
-                    // oGraphicsPDF.DrawClearRect(X, Y, aOringRect[2], aOringRect[3]);
                     oGraphicsPDF.Rect(X, Y, nWidth, nHeight);
                     oGraphicsPDF.Stroke();
 
@@ -757,7 +777,10 @@
                         oGraphicsPDF.SetFillStyle(oBgRGBColor.r, oBgRGBColor.g, oBgRGBColor.b);
                     }
                     else {
-                        oGraphicsPDF.SetFillStyle(255, 255, 255);
+                        if ((this.GetType() == AscPDF.FIELD_TYPES.radiobutton || this.GetType() == AscPDF.FIELD_TYPES.checkbox) && this.IsPressed())
+                            oGraphicsPDF.SetFillStyle(oBgRGBColor.r, oBgRGBColor.g, oBgRGBColor.b);
+                        else
+                            oGraphicsPDF.SetFillStyle(255, 255, 255);
                     }
 
                     oGraphicsPDF.ClosePath();
@@ -790,7 +813,10 @@
                         oGraphicsPDF.SetFillStyle(255, 255, 255);
                     }
                     else {
-                        oGraphicsPDF.SetFillStyle(oBgRGBColor.r, oBgRGBColor.g, oBgRGBColor.b);
+                        if ((this.GetType() == AscPDF.FIELD_TYPES.radiobutton || this.GetType() == AscPDF.FIELD_TYPES.checkbox) && this.IsPressed())
+                            oGraphicsPDF.SetFillStyle(255, 255, 255);
+                        else
+                            oGraphicsPDF.SetFillStyle(oBgRGBColor.r, oBgRGBColor.g, oBgRGBColor.b);
                     }
 
                     oGraphicsPDF.ClosePath();
@@ -841,7 +867,10 @@
                         oGraphicsPDF.SetFillStyle(0, 0, 0);
                     }
                     else {
-                        oGraphicsPDF.SetFillStyle(128, 128, 128);
+                        if ((this.GetType() == AscPDF.FIELD_TYPES.radiobutton || this.GetType() == AscPDF.FIELD_TYPES.checkbox) && this.IsPressed())
+                            oGraphicsPDF.SetFillStyle(0, 0, 0);
+                        else
+                            oGraphicsPDF.SetFillStyle(128, 128, 128);
                     }
 
                     oGraphicsPDF.ClosePath();
@@ -874,7 +903,10 @@
                         oGraphicsPDF.SetFillStyle(255, 255, 255);
                     }
                     else {
-                        oGraphicsPDF.SetFillStyle(191, 191, 191);
+                        if ((this.GetType() == AscPDF.FIELD_TYPES.radiobutton || this.GetType() == AscPDF.FIELD_TYPES.checkbox) && this.IsPressed())
+                            oGraphicsPDF.SetFillStyle(255, 255, 255);
+                        else
+                            oGraphicsPDF.SetFillStyle(191, 191, 191);
                     }
                     
                     oGraphicsPDF.ClosePath();
@@ -1162,57 +1194,54 @@
     };
 
     CBaseField.prototype.DrawBackground = function(oGraphicsPDF) {
-        // if (this.IsNeedDrawHighlight())
-        //     return;
-
         let aOrigRect       = this.GetOrigRect();
         let aBgColor        = this.GetBackgroundColor();
         let oBgRGBColor;
 
+        if (null == aBgColor && this.IsPressed && this.IsPressed())
+            aBgColor = [1];
+        
         if (aBgColor && aBgColor.length != 0)
             oBgRGBColor = this.GetRGBColor(aBgColor);
 
-        if (oBgRGBColor) {
-            let X       = aOrigRect[0];
-            let Y       = aOrigRect[1];
-            let nWidth  = aOrigRect[2] - aOrigRect[0];
-            let nHeight = aOrigRect[3] - aOrigRect[1];
+        if (!oBgRGBColor || this.IsNeedDrawHighlight())
+            return;
+
+        let X       = aOrigRect[0];
+        let Y       = aOrigRect[1];
+        let nWidth  = aOrigRect[2] - aOrigRect[0];
+        let nHeight = aOrigRect[3] - aOrigRect[1];
+        
+        oGraphicsPDF.SetGlobalAlpha(1);
+
+        if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this._chStyle == AscPDF.CHECKBOX_STYLES.circle) {
+            if (this.IsHovered() && this.IsPressed()) {
+                if (aBgColor.length == 1 && aBgColor[0] == 1) {
+                    oBgRGBColor = {r: 191, g: 0, b: 0};
+                }
+                else {
+                    if (this.GetBorderStyle() !== BORDER_TYPES.beveled)
+                        oBgRGBColor = AscPDF.MakeColorMoreGray(oBgRGBColor, 50);
+                }
+            }
+
+            oGraphicsPDF.BeginPath();
+            oGraphicsPDF.SetFillStyle(oBgRGBColor.r, oBgRGBColor.g, oBgRGBColor.b);
+            // выставляем в центр круга
+            let centerX = X + nWidth / 2;
+            let centerY = Y + nHeight / 2;
+            let nRadius = Math.min(nWidth / 2, nHeight / 2);
+            oGraphicsPDF.Arc(centerX, centerY, nRadius, 0, 2 * Math.PI, false);
+            oGraphicsPDF.Fill();
+            oGraphicsPDF.ClosePath();
+        }
+        else {
+            if ((this.GetType() == AscPDF.FIELD_TYPES.radiobutton || this.GetType() == AscPDF.FIELD_TYPES.checkbox) && this.IsPressed() && this.GetBorderStyle() !== BORDER_TYPES.beveled) {
+                oBgRGBColor = AscPDF.MakeColorMoreGray(this.GetRGBColor(aBgColor), 50);
+            }
             
-            oGraphicsPDF.SetGlobalAlpha(1);
-
-            if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this._chStyle == AscPDF.CHECKBOX_STYLES.circle) {
-                if (this.IsPressed() == false && this.IsHovered() == false)
-                    return;
-                
-                if (this.IsHovered() && this.IsPressed()) {
-                    if (aBgColor.length == 1 && aBgColor[0] == 1) {
-                        oBgRGBColor = {r: 191, g: 0, b: 0};
-                    }
-                    else {
-                        oBgRGBColor = AscPDF.MakeColorMoreGray(this.GetRGBColor(aBgColor), 50);
-                    }
-                }
-
-                oGraphicsPDF.BeginPath();
-                oGraphicsPDF.SetFillStyle(oBgRGBColor.r, oBgRGBColor.g, oBgRGBColor.b);
-                // выставляем в центр круга
-                let centerX = X + nWidth / 2;
-                let centerY = Y + nHeight / 2;
-                let nRadius = Math.min(nWidth / 2, nHeight / 2);
-                oGraphicsPDF.Arc(centerX, centerY, nRadius, 0, 2 * Math.PI, false);
-                oGraphicsPDF.Fill();
-                oGraphicsPDF.ClosePath();
-            }
-            else {
-                if (this.GetType() == AscPDF.FIELD_TYPES.checkbox && this.IsPressed()) {
-                    oBgRGBColor = AscPDF.MakeColorMoreGray(this.GetRGBColor(aBgColor), 50);
-                }
-                
-                if (oBgRGBColor.r != 255 || oBgRGBColor.g != 255 || oBgRGBColor.b != 255) {
-                    oGraphicsPDF.SetFillStyle(oBgRGBColor.r, oBgRGBColor.g, oBgRGBColor.b);
-                    oGraphicsPDF.FillRect(X, Y, nWidth, nHeight);
-                }
-            }
+            oGraphicsPDF.SetFillStyle(oBgRGBColor.r, oBgRGBColor.g, oBgRGBColor.b);
+            oGraphicsPDF.FillRect(X, Y, nWidth, nHeight);
         }
     };
 
@@ -1265,8 +1294,8 @@
             this._scrollInfo.scrollCoeff    = Math.abs(this._curShiftView.y / nMaxShiftY);
         }
     };
-    CBaseField.prototype.IsAnnot = function() {
-        return this._isAnnot;
+    CBaseField.prototype.IsWidget = function() {
+        return this._isWidget;
     };
     CBaseField.prototype.IsNeedRevertShiftView = function() {
         if (this._curShiftView.y != this._originShiftView.y ||

@@ -319,7 +319,7 @@
         }
     };
     CListBoxField.prototype.SetValue = function(value) {
-        if (this.IsAnnot()) {
+        if (this.IsWidget()) {
             let aIndexes = [];
             if (Array.isArray(value)) {
                 for (let sVal of value) {
@@ -537,6 +537,7 @@
             oScrollDocElm.style.display     = "block";
 			oScrollDocElm.style.width       = "14px";
 			oScrollDocElm.style.height      = Math.round(oGlobalCoords2.Y) - Math.round(oGlobalCoords1.Y) + "px";
+            oScrollDocElm.style.zIndex      = 0;
 
             let nMaxShiftY = oContentRect.H - nContentH;
 

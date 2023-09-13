@@ -140,7 +140,7 @@
     CComboBoxField.prototype.DrawMarker = function(oCtx) {
         if (this.IsHidden())
             return;
-        
+
         let oViewer     = editor.getDocumentRenderer();
         let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[this.GetPage()].Dpi);
         let aOrigRect   = this.GetOrigRect();
@@ -293,7 +293,7 @@
     };
 
     CComboBoxField.prototype.SetValue = function(sValue) {
-        if (this.IsAnnot()) {
+        if (this.IsWidget()) {
             let sTextToAdd = "";
             let nIdx = -1;
             for (let i = 0; i < this._options.length; i++) {

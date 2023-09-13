@@ -96,7 +96,7 @@ var CPresentation = CPresentation || function(){};
 	 * Main class for working with PDF structure
 	 * @constructor
 	 */
-    function CPDFDoc() {
+    function CPDFDoc(viewer) {
         this.rootFields = new Map(); // root поля форм
         this.widgets    = []; // непосредственно сами поля, которые отрисовываем (дочерние без потомков)
         this.annots     = [];
@@ -127,6 +127,7 @@ var CPresentation = CPresentation || function(){};
 
         this.History    = AscCommon.History;
 		this.Spelling   = new AscCommonWord.CDocumentSpellChecker();
+        this.Viewer     = viewer;
 
         this.annotsHidden = false;
     }
@@ -1842,8 +1843,11 @@ var CPresentation = CPresentation || function(){};
             annot.AddToRedraw();
         });
 
-        this.annotsHidden = bHidden;
-        editor.getDocumentRenderer()._paint();
+        this.annotsHidden   = bHidden;
+
+        this.HideComments();
+        this.mouseDownAnnot = null;
+        this.Viewer.DrawingObjects.resetSelection();
     };
     CPDFDoc.prototype.IsAnnotsHidden = function() {
         return this.annotsHidden;

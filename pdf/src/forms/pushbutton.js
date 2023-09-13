@@ -633,16 +633,6 @@
                     oGraphicsPDF.DrawImage(oCroppedCtx.canvas, 0, 0, nWidth / nScale, nHeight / nScale, X / nScale, Y / nScale, nWidth / nScale, nHeight / nScale);
                 }
                 else {
-                    let oGraphicsPDF    = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
-                    let oGraphicsCanvas = oGraphicsPDF.context.canvas;
-
-                    X       = this._pagePos.x * nScale;
-                    Y       = this._pagePos.y * nScale;
-                    nWidth  = this._pagePos.w * nScale;
-                    nHeight = this._pagePos.h * nScale;
-
-                    oGraphicsPDF.ClearRect(X, Y, nWidth, nHeight);
-
                     let oDrawing        = this.GetDrawing();
                     let oCaptionRun     = this.GetCaptionRun();
                     let sDownCaption    = this.GetCaption(CAPTION_TYPES.mouseDown);
@@ -675,6 +665,47 @@
                 }
                 
                 break;
+            }
+        }
+
+        if (this.IsNeedDrawFromStream() == false) {
+            let oDrawing        = this.GetDrawing();
+            let oCaptionRun     = this.GetCaptionRun();
+            let sDownCaption    =  this.IsHovered() ? this.GetCaption(CAPTION_TYPES.rollover) : this.GetCaption(CAPTION_TYPES.normal);
+
+            if (oDrawing) {
+                let sRasterId;
+                if (this.IsHovered()) {
+                    if (this._images.rollover)
+                        sRasterId = this._images.rollover;
+                    else {
+                        this.SetNeedRecalc(true);
+                    }
+                }
+                else {
+                    if (this._images.normal)
+                        sRasterId = this._images.normal;
+                    else {
+                        this.SetNeedRecalc(true);
+                    }
+                }
+
+                if (sRasterId) {
+                    let oFill   = new AscFormat.CUniFill();
+                    oFill.fill  = new AscFormat.CBlipFill();
+                    oFill.fill.setRasterImageId(sRasterId);
+                    oFill.fill.tile     = null;
+                    oFill.fill.srcRect  = null;
+                    oFill.fill.stretch  = true;
+                    oFill.convertToPPTXMods();
+                    oDrawing.GraphicObj.setFill(oFill);
+                    oDrawing.GraphicObj.recalculate();
+                }
+            }
+
+            if (sDownCaption) {
+                oCaptionRun.ClearContent();
+                oCaptionRun.AddText(sDownCaption);
             }
         }
     };
@@ -721,17 +752,7 @@
 
             this.SetNeedRecalc(true, true);
             this.Draw(oGraphicsPDF, oGraphicsWord);
-        }
-    };
-    CPushButtonField.prototype.OnEndRollover = function() {
-        let oViewer         = editor.getDocumentRenderer();
-        let oOverlay        = oViewer.overlay;
-        oOverlay.max_x      = 0;
-        oOverlay.max_y      = 0;
-        oOverlay.ClearAll   = true;
 
-        if (this.IsNeedDrawFromStream() == false) {
-            let oDrawing = this.GetDrawing();
             if (oDrawing && this._images.rollover && this._images.normal) {
                 let oFill   = new AscFormat.CUniFill();
                 oFill.fill  = new AscFormat.CBlipFill();
@@ -744,20 +765,25 @@
                 oDrawing.GraphicObj.recalculate();
             }
 
-            let oCaptionRun = this.GetCaptionRun();
-            let sDownCaption = this.GetCaption(CAPTION_TYPES.normal);
+            oCaptionRun = this.GetCaptionRun();
+            sDownCaption = this.GetCaption(CAPTION_TYPES.normal);
             if (sDownCaption) {
                 oCaptionRun.ClearContent();
                 oCaptionRun.AddText(sDownCaption);
             }
         }
+    };
+    CPushButtonField.prototype.OnEndRollover = function() {
+        let oViewer         = editor.getDocumentRenderer();
+        let oOverlay        = oViewer.overlay;
+        oOverlay.max_x      = 0;
+        oOverlay.max_y      = 0;
+        oOverlay.ClearAll   = true;
 
         oViewer.onUpdateOverlay();
     };
-    CPushButtonField.prototype.DrawBackground = function() {
+    CPushButtonField.prototype.DrawBackground = function(oGraphicsPDF) {
         
-        let oViewer         = editor.getDocumentRenderer();
-        let oGraphicsPDF    = oViewer.pagesInfo.pages[this.GetPage()].graphics.pdf;
         let aOrigRect       = this.GetOrigRect();
         let aBgColor        = this.GetBackgroundColor();
         let oBgRGBColor;
@@ -795,47 +821,6 @@
         oOverlay.max_x      = 0;
         oOverlay.max_y      = 0;
         oOverlay.ClearAll   = true;
-
-        if (this.IsNeedDrawFromStream() == false) {
-            let oDrawing        = this.GetDrawing();
-            let oCaptionRun     = this.GetCaptionRun();
-            let sDownCaption    =  this.IsHovered() ? this.GetCaption(CAPTION_TYPES.rollover) : this.GetCaption(CAPTION_TYPES.normal);
-
-            if (oDrawing) {
-                let sRasterId;
-                if (this.IsHovered()) {
-                    if (this._images.rollover)
-                        sRasterId = this._images.rollover;
-                    else {
-                        this.SetNeedRecalc(true);
-                    }
-                }
-                else {
-                    if (this._images.normal)
-                        sRasterId = this._images.normal;
-                    else {
-                        this.SetNeedRecalc(true);
-                    }
-                }
-
-                if (sRasterId) {
-                    let oFill   = new AscFormat.CUniFill();
-                    oFill.fill  = new AscFormat.CBlipFill();
-                    oFill.fill.setRasterImageId(sRasterId);
-                    oFill.fill.tile     = null;
-                    oFill.fill.srcRect  = null;
-                    oFill.fill.stretch  = true;
-                    oFill.convertToPPTXMods();
-                    oDrawing.GraphicObj.setFill(oFill);
-                    oDrawing.GraphicObj.recalculate();
-                }
-            }
-
-            if (sDownCaption) {
-                oCaptionRun.ClearContent();
-                oCaptionRun.AddText(sDownCaption);
-            }
-        }
 
         oViewer.onUpdateOverlay();
     };

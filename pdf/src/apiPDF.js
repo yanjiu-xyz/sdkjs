@@ -154,7 +154,7 @@
     Object.defineProperty(ApiBaseField.prototype, "borderStyle", {
         set(sValue) {
             if (Object.values(AscPDF.BORDER_TYPES).includes(sValue)) {
-                if (this.field.IsAnnot()) {
+                if (this.field.IsWidget()) {
                     let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
                     aFields.forEach(function(field) {
                         field.SetBorderStyle(private_GetIntBorderStyle(sValue));
@@ -168,7 +168,7 @@
             }
         },
         get() {
-            if (this.IsAnnot())
+            if (this.IsWidget())
                 return private_GetStrBorderStyle(this.field.GetBorderStyle());
             else
                 throw Error("InvalidGetError: Get not possible, invalid or unknown.");
@@ -187,7 +187,7 @@
         set(bValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-            if (aFields[0] && aFields[0].IsAnnot()) {
+            if (aFields[0] && aFields[0].IsWidget()) {
                 aFields.forEach(function(field) {
                     field.SetDefaultValue(bValue);
                 });
@@ -198,7 +198,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return oField.GetDefaultValue();
             }
             else {
@@ -217,7 +217,7 @@
         set(nType) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-            if (aFields[0] && aFields[0].IsAnnot()) {
+            if (aFields[0] && aFields[0].IsWidget()) {
                 aFields.forEach(function(field) {
                     field.SetDisplay(nType);
                 });
@@ -228,7 +228,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return oField.GetType();
             }
             else {
@@ -247,7 +247,7 @@
         set(bValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-            if (aFields[0] && aFields[0].IsAnnot()) {
+            if (aFields[0] && aFields[0].IsWidget()) {
                 aFields.forEach(function(field) {
                     field.SetDisplay(window["AscPDF"].Api.Objects.display["hidden"]);
                 });
@@ -258,7 +258,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return oField.GetDisplay() == window["AscPDF"].Api.Objects.display["hidden"];
             }
             else {
@@ -280,7 +280,7 @@
         set(value) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-            if (aFields[0] && aFields[0].IsAnnot()) {
+            if (aFields[0] && aFields[0].IsWidget()) {
                 let aColor = private_correctApiColor(value).slice(1);
                 aFields.forEach(function(field) {
                     field.SetBackgroundColor(aColor);
@@ -292,7 +292,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return private_getApiColor(oField.GetBackgroundColor());
             }
             else {
@@ -314,7 +314,7 @@
         set(value) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-            if (aFields[0] && aFields[0].IsAnnot()) {
+            if (aFields[0] && aFields[0].IsWidget()) {
                 let aColor = private_correctApiColor(value).slice(1);
                 aFields.forEach(function(field) {
                     field.SetBackgroundColor(aColor);
@@ -326,7 +326,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return private_getApiColor(oField.GetBackgroundColor());
             }
             else {
@@ -641,7 +641,7 @@
                 nValue = Math.round(nValue);
                 let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-                if (aFields[0] && aFields[0].IsAnnot()) {
+                if (aFields[0] && aFields[0].IsWidget()) {
                     aFields.forEach(function(field) {
                         field.SetIconPosition(nValue, field.GetIconPosition().Y);
                     });
@@ -656,7 +656,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return oField.GetIconPosition().X;
             }
             else {
@@ -677,7 +677,7 @@
                 nValue = Math.round(nValue);
                 let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-                if (aFields[0] && aFields[0].IsAnnot()) {
+                if (aFields[0] && aFields[0].IsWidget()) {
                     aFields.forEach(function(field) {
                         field.SetIconPosition(field.GetIconPosition().X, nValue);
                     });
@@ -692,7 +692,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return oField.GetIconPosition().Y;
             }
             else {
@@ -712,7 +712,7 @@
             if (typeof(bValue) == "boolean") {
                 let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-                if (aFields[0] && aFields[0].IsAnnot()) {
+                if (aFields[0] && aFields[0].IsWidget()) {
                     aFields.forEach(function(field) {
                         field.SetButtonFitBounds(bValue);
                     });
@@ -727,7 +727,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return oField.GetButtonFitBounds();
             }
             else {
@@ -747,7 +747,7 @@
             if (typeof(bValue) == "boolean") {
                 let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-                if (aFields[0] && aFields[0].IsAnnot()) {
+                if (aFields[0] && aFields[0].IsWidget()) {
                     aFields.forEach(function(field) {
                         field.SetButtonPosition(bValue);
                     });
@@ -762,7 +762,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return oField.GetButtonPosition();
             }
             else {
@@ -786,7 +786,7 @@
                 nType = Math.round(nType);
                 let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-                if (aFields[0] && aFields[0].IsAnnot()) {
+                if (aFields[0] && aFields[0].IsWidget()) {
                     aFields.forEach(function(field) {
                         field.SetScaleHow(nType);
                     });
@@ -801,7 +801,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return oField.GetScaleHow();
             }
             else {
@@ -827,7 +827,7 @@
                 nType = Math.round(nType);
                 let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-                if (aFields[0] && aFields[0].IsAnnot()) {
+                if (aFields[0] && aFields[0].IsWidget()) {
                     aFields.forEach(function(field) {
                         field.SetScaleWhen(nType);
                     });
@@ -842,7 +842,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return oField.GetScaleWhen();
             }
             else {
@@ -871,7 +871,7 @@
                 sType = Math.round(sType);
                 let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-                if (aFields[0] && aFields[0].IsAnnot()) {
+                if (aFields[0] && aFields[0].IsWidget()) {
                     aFields.forEach(function(field) {
                         field.SetHighlight(private_GetIntHighlight(sType));
                     });
@@ -886,7 +886,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return private_GetStrHighlight(oField.GetHighlight());
             }
             else {
@@ -936,7 +936,7 @@
         set(arrValues) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-            if (aFields[0] && aFields[0].IsAnnot()) {
+            if (aFields[0] && aFields[0].IsWidget()) {
                 for (let i = 0; i < arrValues.length; i++) {
                     if (typeof(arrValues[i]) !== "string")
                         arrValues[i] = String(arrValues[i]);
@@ -958,7 +958,7 @@
         },
         get() {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
-            if (aFields[0] && aFields[0].IsAnnot()) {
+            if (aFields[0] && aFields[0].IsWidget()) {
                 let aExpValues = [];
                 for (let i = 0; i < aFields.length; i++) {
                     aExpValues.push(aFields[i].GetExportValue())
@@ -1140,7 +1140,7 @@
 
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-            if (aFields[0] && aFields[0].IsAnnot()) {
+            if (aFields[0] && aFields[0].IsWidget()) {
                 var nJcType = private_GetIntAlign(sValue);
                 aFields.forEach(function(field) {
                     field.SetAlign(nJcType);
@@ -1152,7 +1152,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return private_GetStrAlign(oField.GetAlign());
             }
             else {
@@ -1173,7 +1173,7 @@
         set(nValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-            if (aFields[0] && aFields[0].IsAnnot()) {
+            if (aFields[0] && aFields[0].IsWidget()) {
                 aFields[0].SetCalcOrderIndex(nValue);
             }
             else {
@@ -1182,7 +1182,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return oField.GetCalcOrderIndex();
             }
             else {
@@ -1200,7 +1200,7 @@
         set(nValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-            if (aFields[0] && aFields[0].IsAnnot()) {
+            if (aFields[0] && aFields[0].IsWidget()) {
                 aFields.forEach(function(field) {
                     field.SetCharLimit(nValue);
                 });
@@ -1211,7 +1211,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return oField.GetCharLimit();
             }
             else {
@@ -1233,7 +1233,7 @@
         set(bValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-            if (aFields[0] && aFields[0].IsAnnot()) {
+            if (aFields[0] && aFields[0].IsWidget()) {
                 aFields.forEach(function(field) {
                     field.SetComb(bValue);
                 });
@@ -1244,7 +1244,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return oField.IsComb();
             }
             else {
@@ -1264,7 +1264,7 @@
         set(bValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-            if (aFields[0] && aFields[0].IsAnnot()) {
+            if (aFields[0] && aFields[0].IsWidget()) {
                 aFields.forEach(function(field) {
                     field.SetDoNotScroll(bValue);
                 });
@@ -1282,7 +1282,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return oField.GetDoNotScroll();
             }
             else {
@@ -1301,7 +1301,7 @@
         set(bValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-            if (aFields[0] && aFields[0].IsAnnot()) {
+            if (aFields[0] && aFields[0].IsWidget()) {
                 aFields.forEach(function(field) {
                     field.SetDoNotSpellCheck(bValue);
                 });
@@ -1312,7 +1312,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return oField.IsDoNotSpellCheck();
             }
             else {
@@ -1338,7 +1338,7 @@
         set(bValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-            if (aFields[0] && aFields[0].IsAnnot()) {
+            if (aFields[0] && aFields[0].IsWidget()) {
                 aFields.forEach(function(field) {
                     field.SetFileSelect(bValue);
                 });
@@ -1349,7 +1349,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return oField.GetFileSelect();
             }
             else {
@@ -1453,7 +1453,7 @@
 
                 if (isValid) {
                     this.field.SetValue(value);
-                    if (this.field.IsAnnot() == false)
+                    if (this.field.IsWidget() == false)
                         return;
 
                     this.field.needValidate = false; 
@@ -1494,7 +1494,7 @@
         set(bValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-            if (aFields[0] && aFields[0].IsAnnot()) {
+            if (aFields[0] && aFields[0].IsWidget()) {
                 aFields.forEach(function(field) {
                     field.SetCommitOnSelChange(bValue);
                 });
@@ -1505,7 +1505,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return oField.GetCommitOnSelChange();
             }
             else {
@@ -1574,7 +1574,7 @@
         set(nValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-            if (aFields[0] && aFields[0].IsAnnot()) {
+            if (aFields[0] && aFields[0].IsWidget()) {
                 aFields[0].SetCalcOrderIndex(nValue);
             }
             else {
@@ -1583,7 +1583,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return oField.GetCalcOrderIndex();
             }
             else {
@@ -1607,7 +1607,7 @@
             let oSourceField = oCalcInfo.GetSourceField();
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-            if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.field.GetFullName() || aFields[0].IsAnnot() == false)
+            if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.field.GetFullName() || aFields[0].IsWidget() == false)
                 throw Error('InvalidSetError: Set not possible, invalid or unknown.');
 
             aFields[0].SelectOption(nValue);
@@ -1621,7 +1621,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return oField.GetCurIdxs(true);
             }
             else {
@@ -1640,7 +1640,7 @@
         set(bValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-            if (aFields[0] && aFields[0].IsAnnot()) {
+            if (aFields[0] && aFields[0].IsWidget()) {
                 aFields[0].SetEditable(bValue);
             }
             else {
@@ -1649,7 +1649,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return oField.IsEditable();
             }
             else {
@@ -1681,7 +1681,7 @@
 
                 if (isValid) {
                     this.field.SetValue(value);
-                    if (this.field.IsAnnot() == false)
+                    if (this.field.IsWidget() == false)
                         return;
 
                     this.field.needValidate = false; 
@@ -1713,7 +1713,7 @@
         set(bValue) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
-            if (aFields[0] && aFields[0].IsAnnot()) {
+            if (aFields[0] && aFields[0].IsWidget()) {
                 aFields.forEach(function(field) {
                     field.SetDoNotSpellCheck(bValue);
                 });
@@ -1724,7 +1724,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return oField.IsDoNotSpellCheck();
             }
             else {
@@ -1794,7 +1794,7 @@
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
             let curValues = this.field.GetCurIdxs(true);
 
-            if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.field.GetFullName() || aFields[0].IsAnnot() == false)
+            if (oCalcInfo.IsInProgress() && oSourceField && oSourceField.GetFullName() == this.field.GetFullName() || aFields[0].IsWidget() == false)
                 throw Error('InvalidSetError: Set not possible, invalid or unknown.');
 
             if (Array.isArray(value) && this.multipleSelection === true) {
@@ -1841,7 +1841,7 @@
         },
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
-            if (oField && oField.IsAnnot()) {
+            if (oField && oField.IsWidget()) {
                 return oField.GetCurIdxs(true);
             }
             else {
@@ -2213,7 +2213,29 @@
 
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
-        
+    
+    
+    ApiDocument.prototype["getField"]                   = ApiDocument.prototype.getField;
+
+
+    ApiBaseField.prototype["setAction"]                 = ApiBaseField.prototype.setAction;
+    
+
+    ApiPushButtonField.prototype["buttonImportIcon"]    = ApiPushButtonField.prototype.buttonImportIcon;
+    
+
+    ApiBaseCheckBoxField.prototype["isBoxChecked"]      = ApiBaseCheckBoxField.prototype.isBoxChecked;
+    
+
+    ApiBaseListField.prototype["getItemAt"]             = ApiBaseListField.prototype.getItemAt;
+    
+    
+    ApiComboBoxField.prototype["setItems"]              = ApiComboBoxField.prototype.setItems;
+    
+
+    ApiListBoxField.prototype["setItems"]               = ApiListBoxField.prototype.setItems;
+    ApiListBoxField.prototype["insertItemAt"]           = ApiListBoxField.prototype.insertItemAt;
+
 	window["AscPDF"].ApiDocument          = ApiDocument;
 	window["AscPDF"].ApiTextField         = ApiTextField;
 	window["AscPDF"].ApiPushButtonField   = ApiPushButtonField;

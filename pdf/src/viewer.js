@@ -220,7 +220,7 @@
 		this.isFocusOnThumbnails = false;
 		this.isDocumentContentReady = false;
 
-		this.doc = new AscPDF.CPDFDoc();
+		this.doc = new AscPDF.CPDFDoc(this);
 		if (typeof CGraphicObjects !== "undefined") {
 			this.DrawingObjects = new CGraphicObjects(this.doc, editor.WordControl.m_oDrawingDocument, this.Api);
 			this.DrawingObjects.saveDocumentState = null;
@@ -1546,6 +1546,7 @@
 		};
 		this.getPageAnnotByMouse = function(bGetHidden)
 		{
+			let oDrDoc = this.getPDFDoc().GetDrawingDocument();
 			var pageObject = this.getPageByCoords(AscCommon.global_mouseEvent.X - this.x, AscCommon.global_mouseEvent.Y - this.y);
 			if (!pageObject)
 				return null;
@@ -1575,6 +1576,13 @@
 						if (oAnnot.IsTextMarkup())
 						{
 							if (oAnnot.IsInQuads(pageObject.x, pageObject.y))
+								return oAnnot;
+						}
+						// у draw аннотаций ищем по path
+						else if (oAnnot.IsInk())
+						{
+							let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+							if (oAnnot.hitInPath(X, Y))
 								return oAnnot;
 						}
 						else
@@ -1853,7 +1861,7 @@
 
 				if (oThis.isMouseDown)
 				{
-					if (oThis.isMouseMoveBetweenDownUp)
+					if (oThis.isMouseMoveBetweenDownUp && !oDoc.activeForm && !oDoc.mouseDownAnnot)
 					{
 						// нажатая мышка - курсор всегда default (так как за eps вышли)
 						oThis.setCursorType("default");
@@ -1868,54 +1876,6 @@
 				}
 				else
 				{
-					// просто водим мышкой - тогда смотрим, на ссылке или поле, чтобы выставить курсор
-					var mouseMoveLinkObject = oThis.getPageLinkByMouse();
-					var mouseMoveFieldObject = oThis.getPageFieldByMouse();
-					var mouseMoveAnnotObject = oThis.getPageAnnotByMouse();
-
-					if (mouseMoveFieldObject && mouseMoveFieldObject != oThis.mouseMoveFieldObject) {
-						mouseMoveFieldObject._needDrawHoverBorder = true;
-						if (oThis.mouseMoveFieldObject)
-							oThis.mouseMoveFieldObject._needDrawHoverBorder = false;
-
-						oThis.mouseMoveFieldObject && oThis.mouseMoveFieldObject.onMouseExit();
-						oThis.mouseMoveFieldObject = mouseMoveFieldObject;
-						mouseMoveFieldObject.onMouseEnter();
-					}
-					else if (mouseMoveFieldObject == null && oThis.mouseMoveFieldObject) {
-						oThis.mouseMoveFieldObject.onMouseExit();
-						oThis.mouseMoveFieldObject._needDrawHoverBorder = false;
-						oThis.mouseMoveFieldObject = null;
-					}
-					
-					let cursorType = "default";
-					if (mouseMoveLinkObject)
-						cursorType = "default";
-					else if (mouseMoveFieldObject)
-					{
-						switch (mouseMoveFieldObject.GetType())
-						{
-							case AscPDF.FIELD_TYPES.text:
-								cursorType = "text";
-								break;
-							case AscPDF.FIELD_TYPES.combobox:
-								let X = (AscCommon.global_mouseEvent.X - oThis.x) * AscCommon.AscBrowser.retinaPixelRatio;
-								   let Y = (AscCommon.global_mouseEvent.Y - oThis.y) * AscCommon.AscBrowser.retinaPixelRatio;
-								if (X >= mouseMoveFieldObject._markRect.x1 && X <= mouseMoveFieldObject._markRect.x2 && Y >= mouseMoveFieldObject._markRect.y1 && Y <= mouseMoveFieldObject._markRect.y2 && mouseMoveFieldObject._options.length != 0) {
-									cursorType = "default";
-								}
-								else
-									cursorType = "text";
-								break;
-							default:
-								cursorType = "pointer";
-						}
-					}
-					// else if (mouseMoveAnnotObject) {
-					// 	cursorType = "move";
-					// }
-
-					oThis.setCursorType(cursorType);
 					oThis.getPDFDoc().OnMouseMove(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, e);
 				}
 			}
@@ -3242,6 +3202,7 @@
 	{
 		const ctx = this.canvasForms.getContext('2d');
 		ctx.clearRect(0, 0, this.canvasForms.width, this.canvasForms.height);
+		ctx.globalAlpha = 1;
 		
 		let xCenter = this.width >> 1;
 		let yPos = this.scrollY >> 0;

@@ -504,12 +504,16 @@
 	{
 		let oDoc = this.getPDFDoc();
 		oDoc.HideShowAnnots(false);
+		oDoc.Viewer._paint();
+        oDoc.Viewer.onUpdateOverlay();
 	};
 
 	PDFEditorApi.prototype.asc_hideComments = function()
 	{
 		let oDoc = this.getPDFDoc();
 		oDoc.HideShowAnnots(true);
+		oDoc.Viewer._paint();
+        oDoc.Viewer.onUpdateOverlay();
 	};
 	PDFEditorApi.prototype.asc_getAnchorPosition = function()
 	{
