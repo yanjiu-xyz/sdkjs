@@ -98,8 +98,11 @@
 		// { text: "text", cell: "A1" }
 		CellRangeUnselectedChangeOne : 10,
 
+		// { text: "text", ranges: [startCell: "A1" , endCell: "A2" }] }
+		MultipleRangesSelected : 11,
+
 		// { name: "sheet 1", cell: "A1", text: "text", cellEnd: "D5", cellsCount: 10, objectsCount: 5 }
-		SheetSelected : 11
+		SheetSelected : 12
 
 	};
 	
@@ -210,7 +213,9 @@
 				}
 				case SpeechWorkerType.CellSelected:
 				{
-					this.speechElement.innerHTML = ((obj.text ? obj.text : translateManager.getValue("empty cell")) + " " + obj.cell);
+					let result = ((obj.text ? obj.text : translateManager.getValue("empty cell")) + " " + obj.cell);
+					this.speechElement.innerHTML = result;
+					console.log(result);
 					break;
 				}
 				case SpeechWorkerType.CellRangeSelected:
@@ -255,6 +260,23 @@
 
 					this.speechElement.innerHTML = result;
 					console.log(result);
+					break;
+				}
+				case SpeechWorkerType.MultipleRangesSelected:
+				{
+					if (obj.ranges) {
+						let result = translateManager.getValue("selected ");
+						result += obj.ranges.length + " " + translateManager.getValue("areas ");
+
+						for (let i = 0; i < obj.ranges.length; i++) {
+							result += obj.ranges[i].startCell + "-" +  obj.ranges[i].endCell + " ";
+						}
+						result += obj.text ? obj.text : translateManager.getValue("empty");
+
+						this.speechElement.innerHTML = result;
+						console.log(result);
+					}
+
 					break;
 				}
 				case SpeechWorkerType.SheetSelected:
