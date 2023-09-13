@@ -4623,7 +4623,7 @@
 	
 	baseEditorsApi.prototype.getSelectionState = function() {
 	};
-	baseEditorsApi.prototype.getSpeechDescription = function(prevState) {
+	baseEditorsApi.prototype.getSpeechDescription = function(prevState, action) {
 		return null;
 	};
 

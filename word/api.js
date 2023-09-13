@@ -13739,13 +13739,13 @@ background-repeat: no-repeat;\
 	{
 		return this.private_GetLogicDocument().GetSelectionState();
 	};
-	asc_docs_api.prototype.getSpeechDescription = function(prevState)
+	asc_docs_api.prototype.getSpeechDescription = function(prevState, action)
 	{
 		let logicDocument = this.private_GetLogicDocument();
 		if (!logicDocument)
 			return null;
 		
-		return logicDocument.getSpeechDescription(prevState);
+		return logicDocument.getSpeechDescription(prevState, action);
 	};
 	
 	//-------------------------------------------------------------export---------------------------------------------------

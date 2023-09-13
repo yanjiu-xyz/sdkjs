@@ -8543,6 +8543,8 @@ CDocument.prototype.IsUseInDocument = function(Id)
 };
 CDocument.prototype.OnKeyDown = function(e)
 {
+	this.Api.sendEvent("asc_onBeforeKeyDown", e);
+	
 	// if (e.KeyCode < 34 || e.KeyCode > 40)
 	// 	this.CloseAllWindowsPopups();
 
@@ -9001,8 +9003,8 @@ CDocument.prototype.OnKeyDown = function(e)
 			break;
 		}
 	}
-
-    if (!nShortcutAction)
+	
+	if (!nShortcutAction)
 	{
 		if (e.KeyCode === 8) // BackSpace
 		{
@@ -9856,8 +9858,10 @@ CDocument.prototype.OnKeyDown = function(e)
 
     if (bRetValue & keydownflags_PreventKeyPress && true === bUpdateSelection)
         this.Document_UpdateSelectionState();
-
-    return bRetValue;
+	
+	
+	this.Api.sendEvent("asc_onKeyDown", e);
+	return bRetValue;
 };
 CDocument.prototype.CompareReviewInfo = function(ReviewInfo1, ReviewInfo2)
 {
@@ -20813,12 +20817,6 @@ CDocument.prototype.controller_RemoveSelection = function(bNoCheckDrawing)
 
 				this.Selection.StartPos = 0;
 				this.Selection.EndPos   = 0;
-
-				// Убираем селект и возвращаем курсор
-				this.DrawingDocument.SelectEnabled(false);
-				this.DrawingDocument.TargetStart();
-				this.DrawingDocument.TargetShow();
-
 				break;
 			}
 			case selectionflag_Numbering:
@@ -20836,7 +20834,9 @@ CDocument.prototype.controller_RemoveSelection = function(bNoCheckDrawing)
 					this.Selection.Data.CurPara.RemoveSelection();
 					this.Selection.Data.CurPara.MoveCursorToStartPos();
 				}
-
+				
+				// TODO: Разобраться зачем делается эта очистка. У нумерации все параграфы должны быть только
+				//       в Selection.Data
 				var Start = this.Selection.StartPos;
 				var End   = this.Selection.EndPos;
 
@@ -20858,12 +20858,6 @@ CDocument.prototype.controller_RemoveSelection = function(bNoCheckDrawing)
 				this.Selection.Use   = false;
 				this.Selection.Start = false;
 				this.Selection.Flag  = selectionflag_Common;
-
-				// Убираем селект и возвращаем курсор
-				this.DrawingDocument.SelectEnabled(false);
-				this.DrawingDocument.TargetStart();
-				this.DrawingDocument.TargetShow();
-
 				break;
 			}
 		}

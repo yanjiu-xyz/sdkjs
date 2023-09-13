@@ -2614,15 +2614,18 @@ CDocumentContentBase.prototype.GetSelectedParagraphs = function()
 	
 	return logicDocument.GetSelectedParagraphs();
 };
-CDocumentContentBase.prototype.getSpeechDescription = function(prevState, actionInfo)
+CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action)
 {
 	if (!prevState)
-		return;
+		return null;
+	
+	if (action && (action.type !== AscCommon.SpeakerActionType.keyDown || action.event.KeyCode < 35 || action.event.KeyCode > 40))
+		return null;
 	
 	// В данном метод предполагается, что curState равен this.GetSelectionState()
 	let curState = this.GetSelectionState();
 	if (!prevState.length || !curState.length)
-		return;
+		return null;
 	
 	let obj  = {};
 	let type = AscCommon.SpeechWorkerCommands.Text;
@@ -2652,11 +2655,7 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 		}
 		
 		let paragraph = this.GetCurrentParagraph();
-		let runElement = paragraph.GetNextRunElement();
-		if (runElement && runElement.IsText())
-			obj.text = String.fromCodePoint(runElement.GetCodePoint());
-		else
-			obj.text = "";
+		obj.text = paragraph.getNextCharacter();
 	}
 	else
 	{
@@ -2673,21 +2672,54 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 			if (prevInfo.isSelection && 0 !== AscWord.CompareDocumentPositions(prevInfo.selectionStart, prevInfo.selectionEnd))
 				obj.cancelSelection = true;
 			
-			if (curInfo.isSelection || !actionInfo)
+			if (curInfo.isSelection || !action)
 			{
-				this.SetSelectionState(prevState);
-				type     = AscCommon.SpeechWorkerCommands.TextUnselected;
-				obj.text = this.GetSelectedText(false);
-				this.SetSelectionState(curState);
+				if (prevInfo.isSelection && 0 !== AscWord.CompareDocumentPositions(prevInfo.selectionStart, prevInfo.selectionEnd))
+				{
+					this.SetSelectionState(prevState);
+					type     = AscCommon.SpeechWorkerCommands.TextUnselected;
+					obj.text = this.GetSelectedText(false);
+					this.SetSelectionState(curState);
+				}
+				else
+				{
+					let paragraph = this.GetCurrentParagraph();
+					type     = AscCommon.SpeechWorkerCommands.Text;
+					obj.text = paragraph.getNextCharacter();
+				}
 			}
 			else
 			{
-				let paragraph  = this.GetCurrentParagraph();
-				let runElement = paragraph.GetNextRunElement();
-				if (runElement && runElement.IsText())
-					obj.text = String.fromCodePoint(runElement.GetCodePoint());
-				else
-					obj.text = "";
+				let paragraph = this.GetCurrentParagraph();
+				obj.text = paragraph.getNextCharacter();
+				if (action)
+				{
+					if (AscCommon.SpeakerActionType.keyDown !== action.type)
+						return null;
+					
+					let keyCode = action.event.KeyCode;
+					if (35 === keyCode)
+					{
+						if (action.event.CtrlKey)
+							obj.moveToStartOfDocument = true;
+						else
+							obj.moveToStartOfLine = true;
+					}
+					else if (36 === keyCode)
+					{
+						if (action.event.CtrlKey)
+							obj.moveToEndOfDocument = true;
+						else
+							obj.moveToEndOfLine = true;
+					}
+					
+					if (35 === keyCode || 38 === keyCode || 40 === keyCode)
+						obj.text = paragraph.getTextOnLine();
+					else if ((37 === keyCode || 39 === keyCode) && action.event.CtrlKey)
+						obj.text = paragraph.getNextWord();
+					else if (36 === keyCode)
+						obj.text = "";
+				}
 			}
 		}
 		else

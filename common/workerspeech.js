@@ -167,6 +167,15 @@
 					else
 						this.speechElement.innerHTML = (obj.text + translateManager.getValue(" select"));
 					
+					if (obj.moveToStartOfDocument)
+						console.log("Start of the document");
+					else if (obj.moveToStartOfLine)
+						console.log("Start of the line");
+					else if (obj.moveToEndOfDocument)
+						console.log("End of the document");
+					else if (obj.moveToEndOfLine)
+						console.log("End of the line");
+					
 					console.log("SelectedText " + obj.text);
 					break;
 				}
@@ -306,6 +315,11 @@
 	window.AscCommon.SpeechWorker = new CWorkerSpeech();
 	window.AscCommon.SpeechWorkerCommands = SpeechWorkerType;
 	
+	const SpeakerActionType = {
+		unknown : 0,
+		keyDown : 1,
+	};
+	
 	/**
 	 * @constructor
 	 */
@@ -320,8 +334,12 @@
 		this.onActionStart     = null;
 		this.onActionEnd       = null;
 		
-		this.selectionState = null;
+		this.onBeforeKeyDown = null;
+		this.onKeyDown       = null;
+		
+		this.selectionState   = null;
 		this.actionInProgress = false;
+		this.isKeyDown        = false;
 	}
 	EditorActionSpeaker.prototype.run = function()
 	{
@@ -336,6 +354,9 @@
 		this.editor.asc_registerCallback('asc_onCursorMove', this.onSelectionChange);
 		this.editor.asc_registerCallback('asc_onUserActionStart', this.onActionStart);
 		this.editor.asc_registerCallback('asc_onUserActionEnd', this.onActionEnd);
+		
+		this.editor.asc_registerCallback('asc_onBeforeKeyDown', this.onBeforeKeyDown);
+		this.editor.asc_registerCallback('asc_onKeyDown', this.onKeyDown);
 		
 		this.selectionState = this.editor.getSelectionState();
 		this.actionInProgress = false;
@@ -352,35 +373,26 @@
 		this.editor.asc_unregisterCallback('asc_onUserActionStart', this.onActionStart);
 		this.editor.asc_unregisterCallback('asc_onUserActionEnd', this.onActionEnd);
 		
+		this.editor.asc_unregisterCallback('asc_onBeforeKeyDown', this.onBeforeKeyDown);
+		this.editor.asc_unregisterCallback('asc_onKeyDown', this.onKeyDown);
+		
 		this.selectionState = null;
 		this.speechWorker.setEnabled(false);
 		this.actionInProgress = false;
+		this.isKeyDown = false;
 		
 		this.isLanched = false;
 	};
 	EditorActionSpeaker.prototype.initEvents = function()
 	{
 		let _t = this;
-		let editor = this.editor;
 		
 		this.onSelectionChange = function()
 		{
-			if (_t.actionInProgress)
+			if (_t.actionInProgress || _t.isKeyDown)
 				return;
 			
-			let state = editor.getSelectionState();
-			if (!_t.selectionState)
-			{
-				_t.selectionState = state;
-				return;
-			}
-			
-			let speechInfo = editor.getSpeechDescription(_t.selectionState);
-			_t.selectionState = state;
-			if (!speechInfo)
-				return;
-			
-			_t.speechWorker.speech(speechInfo.type, speechInfo.obj);
+			_t.handleSpeechDescription(null);
 		};
 		
 		this.onActionStart = function()
@@ -394,10 +406,39 @@
 			
 			// TODO: Если нужно, то добавить описание действия
 		};
+		
+		this.onBeforeKeyDown = function()
+		{
+			_t.isKeyDown = true;
+		};
+		
+		this.onKeyDown = function(e)
+		{
+			_t.isKeyDown = false;
+			_t.handleSpeechDescription({type: SpeakerActionType.keyDown, event : e});
+		};
+		
+	};
+	EditorActionSpeaker.prototype.handleSpeechDescription = function(action)
+	{
+		let state = this.editor.getSelectionState();
+		if (!this.selectionState)
+		{
+			this.selectionState = state;
+			return;
+		}
+		
+		let speechInfo = this.editor.getSpeechDescription(this.selectionState, action);
+		this.selectionState = state;
+		if (!speechInfo)
+			return;
+		
+		this.speechWorker.speech(speechInfo.type, speechInfo.obj);
 	};
 	
 	window.AscCommon.EditorActionSpeaker = new EditorActionSpeaker();
-
+	window.AscCommon.SpeakerActionType = SpeakerActionType;
+	
 	window.AscCommon.SpeechWorker.testFunction = function()
 	{
 		AscCommon.SpeechWorker.setEnabled(true);

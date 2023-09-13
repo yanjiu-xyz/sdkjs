@@ -6778,6 +6778,36 @@ Paragraph.prototype.RemoveRunElement = function(oParaPos)
 
 	return false;
 };
+/**
+ * Получаем один следующий текстовый символ, если следующий элемент существует и он текстовый
+ * @param {AscWord.CParagraphContentPos} [paraPos=undefined] Если не задано, то от текущей позиции
+ * @returns {string}
+ */
+Paragraph.prototype.getNextCharacter = function(paraPos)
+{
+	let runElement = this.GetNextRunElement(paraPos);
+	if (runElement && runElement.IsText())
+		return  String.fromCodePoint(runElement.GetCodePoint());
+	
+	return "";
+};
+/**
+ * Получаем текст от заданного места до конца текущего слова
+ * @param {AscWord.CParagraphContentPos} [paraPos=undefined] Если не задано, то от текущей позиции
+ * @returns {string}
+ */
+Paragraph.prototype.getNextWord = function(paraPos)
+{
+	return "next word";
+};
+/**
+ * Получаем текст на заданной строке, если строка не задана, то получаем текст на текущей строке
+ * @param line
+ */
+Paragraph.prototype.getTextOnLine = function(line)
+{
+	return "text on line";
+};
 Paragraph.prototype.MoveCursorUp = function(AddToSelect)
 {
 	var Result = true;
