@@ -1040,6 +1040,8 @@ var CPresentation = CPresentation || function(){};
 
         if (AscCommon.History.Can_Undo())
         {
+            this.currInkInDrawingProcess = null;
+
             let oCurPoint = AscCommon.History.Points[AscCommon.History.Index];
             let nCurPoindIdx = AscCommon.History.Index;
 
@@ -1094,6 +1096,7 @@ var CPresentation = CPresentation || function(){};
 
         if (AscCommon.History.Can_Redo())
         {
+            this.currInkInDrawingProcess = null;
             oViewer.isOnUndoRedo = true;
 
             AscCommon.History.Redo();
