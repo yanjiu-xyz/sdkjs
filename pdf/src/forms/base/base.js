@@ -1514,7 +1514,7 @@
         }
         
         for (let i = 0; i < oPageInfo.fieldsAPInfo.info.length; i++) {
-            if (oPageInfo.fieldsAPInfo.info[i].i == this._apIdx)
+            if (oPageInfo.fieldsAPInfo.info[i]["i"] == this._apIdx)
                 return oPageInfo.fieldsAPInfo.info[i];
         }
 
