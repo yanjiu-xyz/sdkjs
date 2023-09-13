@@ -69,7 +69,12 @@ function asc_menu_WriteHeaderFooterPr(_hdrftrPr, _stream)
     if (_hdrftrPr.Locked !== undefined && _hdrftrPr.Locked !== null)
     {
         _stream["WriteByte"](5);
-        _stream["WriteBool"](_hdrftrPr.DifferentFirst);
+        _stream["WriteBool"](_hdrftrPr.Locked);
+    }
+    if (_hdrftrPr.StartPageNumber !== undefined && _hdrftrPr.StartPageNumber !== null)
+    {
+        _stream["WriteByte"](6);
+        _stream["WriteLong"](_hdrftrPr.StartPageNumber);
     }
 
     _stream["WriteByte"](255);
