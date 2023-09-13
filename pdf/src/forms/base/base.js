@@ -1732,10 +1732,15 @@
             return {X: 0, Y: 0}
         }
 
-        let X = isNotMM ? (pageObject.x) * nScaleY : (pageObject.x) * g_dKoef_pix_to_mm * nScaleY;
-        let Y = isNotMM ? (pageObject.y) * nScaleX : (pageObject.y) * g_dKoef_pix_to_mm * nScaleX;
+        let result = {
+            X : isNotMM ? (pageObject.x) * nScaleY : (pageObject.x) * g_dKoef_pix_to_mm * nScaleY,
+            Y : isNotMM ? (pageObject.y) * nScaleX : (pageObject.y) * g_dKoef_pix_to_mm * nScaleX
+        };
 
-        return {X, Y};
+        result["X"] = result.X;
+        result["Y"] = result.Y;
+
+        return result;
     }
     /**
 	 * Converts page coords to global coords.
@@ -1761,10 +1766,15 @@
                 pageCoords = oViewer.pageDetector.pages[i];
         }
 
-        X = (X * pageCoords.w / oViewer.file.pages[nPage].W + pageCoords.x) / AscCommon.AscBrowser.retinaPixelRatio;
-        Y = (Y * pageCoords.h / oViewer.file.pages[nPage].H + pageCoords.y) / AscCommon.AscBrowser.retinaPixelRatio;
+        let result = {
+            X : (X * pageCoords.w / oViewer.file.pages[nPage].W + pageCoords.x) / AscCommon.AscBrowser.retinaPixelRatio,
+            Y : (Y * pageCoords.h / oViewer.file.pages[nPage].H + pageCoords.y) / AscCommon.AscBrowser.retinaPixelRatio
+        };
 
-        return {X, Y};
+        result["X"] = result.X;
+        result["Y"] = result.Y;
+
+        return result;
     }
 
     function invertRGB(oColor) {
