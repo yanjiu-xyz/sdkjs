@@ -80,7 +80,6 @@
         listbox:        6,
         signature:      7
     };
-    Object.freeze(FIELD_TYPES);
 
     FIELD_TYPES["unknown"]      = FIELD_TYPES.unknown;
     FIELD_TYPES["button"]       = FIELD_TYPES.button;
@@ -90,5 +89,7 @@
     FIELD_TYPES["combobox"]     = FIELD_TYPES.combobox;
     FIELD_TYPES["listbox"]      = FIELD_TYPES.listbox;
     FIELD_TYPES["signature"]    = FIELD_TYPES.signature;
+
+    Object.freeze(FIELD_TYPES);
     asc["FIELD_TYPES"] = asc.FIELD_TYPES = FIELD_TYPES;
 })();

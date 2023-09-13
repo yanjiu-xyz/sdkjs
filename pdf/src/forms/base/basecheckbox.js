@@ -584,6 +584,18 @@
             this._checked = false;
         }
     };
+
+    // export
+    CBaseCheckBoxField.prototype["getPagePos"] = function() {
+        if (!this._pagePos)
+            return null;
+        return {
+            "x" : this._pagePos.x,
+            "y" : this._pagePos.y,
+            "w" : this._pagePos.w,
+            "h" : this._pagePos.h
+        };
+    };
 	
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};

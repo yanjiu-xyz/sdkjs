@@ -1677,6 +1677,14 @@
         }
     };
 
+    // export
+    CBaseField.prototype["getType"] = function() {
+        return this.type;
+    };
+    CBaseField.prototype["getPage"] = function() {
+        return this._page;
+    };
+
     // for format
 
     // private methods
@@ -1748,7 +1756,6 @@
 
         return {X, Y};
     }
-
 
     function invertRGB(oColor) {
         // Calculate the inverted components

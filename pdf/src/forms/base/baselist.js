@@ -107,7 +107,12 @@
         // значение здесь всегда обновлено после commit
         return this._currentValueIndices;
     };
-	
+
+	// export
+	CBaseListField.prototype["getOptions"] = function() {
+		return this._options;
+	};
+
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
         
