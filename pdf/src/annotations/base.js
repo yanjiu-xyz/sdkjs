@@ -519,6 +519,9 @@
 
         return false;
     };
+    CAnnotationBase.prototype.getMediaFileName = function() {
+        return false;
+    };
 
     // // заглушки для трекинга
     // CAnnotationBase.prototype.canChangeAdjustments = function() {

@@ -132,7 +132,7 @@
         let fUniter = AscGeometry.PolyBool.union;
         let resultRegion;
 
-        let time1 = performance.now();
+        //let time1 = performance.now();
         let aAllRegions = [];
         for (let i = 0; i < aQuads.length; i++) {
             let aPoints = aQuads[i];
@@ -159,8 +159,8 @@
         else {
             resultRegion = aAllRegions[0];
         }
-        let time2 = performance.now();
-        console.log("union: " + (time2 - time1));
+        //let time2 = performance.now();
+        //console.log("union: " + (time2 - time1));
 
         this.unitedRegion = resultRegion;
         return this.unitedRegion;
