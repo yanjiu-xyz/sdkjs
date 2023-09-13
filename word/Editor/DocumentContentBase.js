@@ -2614,7 +2614,7 @@ CDocumentContentBase.prototype.GetSelectedParagraphs = function()
 	
 	return logicDocument.GetSelectedParagraphs();
 };
-CDocumentContentBase.prototype.getSpeechDescription = function(prevState, curState)
+CDocumentContentBase.prototype.getSpeechDescription = function(prevState, curState, actionInfo)
 {
 	if (!prevState)
 		return;
@@ -2675,11 +2675,12 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, curSta
 			
 			type     = AscCommon.SpeechWorkerCommands.TextUnselected;
 			obj.text = selectedText;
-			
-			// TODO: Нужна ли следующая буква?
 		}
 		else if (!curInfo.isSelection)
 		{
+			// TODO: Тут зависит от того, как был снят селект, если мы снимаем его клавой (без шифта), то
+			// сообщаем как при обычном перемещении. Если снимаем его с shift, то должны прочитать именно как снятие селекта
+			
 			let paragraph  = this.GetCurrentParagraph();
 			let runElement = paragraph.GetNextRunElement();
 			if (runElement && runElement.IsText())
@@ -2689,21 +2690,45 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, curSta
 		}
 		else
 		{
-			if (!prevInfo.isSelection)
+			if (!prevInfo.isSelection || 0 === AscWord.CompareDocumentPositions(prevInfo.selectionStart, prevInfo.selectionEnd))
 			{
 				type = AscCommon.SpeechWorkerCommands.TextSelected;
 				obj.text = this.GetSelectedText(false);
 			}
 			else
 			{
-				
-				let paragraph  = this.GetCurrentParagraph();
-				let runElement = paragraph.GetNextRunElement();
-				if (runElement && runElement.IsText())
-					obj.text = String.fromCodePoint(runElement.GetCodePoint());
+				if (0 !== AscWord.CompareDocumentPositions(prevInfo.selectionStart, curInfo.selectionStart)
+					|| ((AscWord.CompareDocumentPositions(prevInfo.selectionStart, prevInfo.selectionEnd) <= 0
+							&& AscWord.CompareDocumentPositions(prevInfo.selectionStart, curInfo.selectionEnd) > 0)
+						|| (AscWord.CompareDocumentPositions(prevInfo.selectionStart, prevInfo.selectionEnd) >= 0
+							&& AscWord.CompareDocumentPositions(prevInfo.selectionStart, curInfo.selectionEnd) < 0)))
+				{
+					// TODO: Нужно ли посылать два ивента?
+					// this.SetSelectionState(prevState);
+					// type     = AscCommon.SpeechWorkerCommands.TextUnselected;
+					// obj.text = this.GetSelectedText(false);
+					
+					this.SetSelectionState(curState);
+					type     = AscCommon.SpeechWorkerCommands.TextSelected;
+					obj.text = this.GetSelectedText(false);
+					
+					this.SetSelectionState(originState);
+				}
 				else
-					obj.text = "";
-				
+				{
+					let isAdd = ((AscWord.CompareDocumentPositions(prevInfo.selectionStart, prevInfo.selectionEnd) <= 0
+						&& AscWord.CompareDocumentPositions(curInfo.selectionEnd, prevInfo.selectionEnd) >= 0)
+					|| (AscWord.CompareDocumentPositions(prevInfo.selectionStart, prevInfo.selectionEnd) >= 0
+							&& AscWord.CompareDocumentPositions(curInfo.selectionEnd, prevInfo.selectionEnd) <= 0));
+					
+					this.SetSelectionState(curState);
+					this.SetContentSelection(curInfo.selectionEnd, prevInfo.selectionEnd, 0, 0, 0);
+					
+					type     = isAdd ? AscCommon.SpeechWorkerCommands.TextSelected : AscCommon.SpeechWorkerCommands.TextUnselected;
+					obj.text = this.GetSelectedText(false);
+
+					this.SetSelectionState(originState);
+				}
 			}
 		}
 	}
