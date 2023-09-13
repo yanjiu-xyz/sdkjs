@@ -2636,6 +2636,7 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 	this.SetSelectionState(curState);
 	let curInfo = this.getSelectionInfo();
 	
+	let isActionSelectionChange = action && action.type === AscCommon.SpeakerActionType.keyDown && action.event.ShiftKey;
 	
 	if (curInfo.docPosType === docpostype_DrawingObjects)
 	{
@@ -2659,7 +2660,7 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 	}
 	else
 	{
-		if (prevInfo.isSelection && !curInfo.isSelection)
+		if (prevInfo.isSelection && !curInfo.isSelection && isActionSelectionChange)
 		{
 			obj.cancelSelection = true;
 			this.SetSelectionState(prevState);
