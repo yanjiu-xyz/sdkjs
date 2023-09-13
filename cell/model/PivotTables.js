@@ -182,6 +182,7 @@ var c_oAscPivotAreaType = {
 	Origin: 4,
 	Button: 5,
 	TopEnd: 6,
+	// TopRight === TopEnd 2010 Excel ?
 	TopRight: 7
 };
 var c_oAscGroupBy = {
@@ -7359,6 +7360,7 @@ function PivotFormatsManager(pivot) {
 	this.formats = [];
 	/** @type {PivotFormatsCollectionItem[]} */
 	this.formatsCollection = [];
+	// todo filter formats!!
 }
 
 PivotFormatsManager.prototype.setDefaults = function() {
@@ -7406,11 +7408,11 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
 
 /**
  * @typedef PivotFormatsManagerQuery
- * @property {PivotItemFieldsInfo[]} valuesInfo
- * @property {boolean} isGrandRow
- * @property {boolean} isGrandCol
- * @property {number?} dataIndex
- * @property {boolean} isData
+ * @property {PivotItemFieldsInfo[] | undefined} valuesInfo
+ * @property {boolean | undefined} isGrandRow
+ * @property {boolean | undefined} isGrandCol
+ * @property {number | undefined} dataIndex
+ * @property {boolean | undefined} isData
  * @property {number | undefined} type one of c_oAscPivotAreaType
  * @property {Range | undefined} offset
  */
@@ -7516,6 +7518,9 @@ PivotFormatsManager.prototype.checkReferences = function(formatsCollectionItem, 
 	const valuesInfo = query.valuesInfo;
 	const referencesInfo = formatsCollectionItem.referencesInfo;
 	const referencesInfoMap = referencesInfo.referencesInfoMap;
+	if (!valuesInfo && referencesInfoMap) {
+		return false;
+	}
 	if (referencesInfoMap) {
 		if (referencesInfoMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) &&
 			!referencesInfoMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD).valuesMap.has(query.dataIndex)) {
