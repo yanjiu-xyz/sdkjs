@@ -76,7 +76,6 @@
             oContentToDraw.RecalculateCurPos();
         
         oGraphicsWord.RemoveClip();
-        this.DrawMarker(oGraphicsPDF);
         this.DrawBorders(oGraphicsPDF);
     };
     CComboBoxField.prototype.Recalculate = function() {
@@ -138,53 +137,61 @@
         this.SetNeedRecalc(false);
     };
 
-    CComboBoxField.prototype.DrawMarker = function(oGraphicsPDF) {
-        let oViewer         = editor.getDocumentRenderer();
-        let nScale          = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
-        let aOringRect      = this.GetOrigRect();
+    CComboBoxField.prototype.DrawMarker = function(oCtx) {
+        if (this.IsHidden())
+            return;
+        
+        let oViewer     = editor.getDocumentRenderer();
+        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[this.GetPage()].Dpi);
+        let aOrigRect   = this.GetOrigRect();
 
-        // let X       = aRect[0] * nScale;
-        // let Y       = aRect[1] * nScale;
-        // let nWidth  = (aRect[2] - aRect[0]) * nScale;
-        // let nHeight = (aRect[3] - aRect[1]) * nScale;
+        let xCenter = oViewer.width >> 1;
+        if (oViewer.documentWidth > oViewer.width)
+		{
+			xCenter = (oViewer.documentWidth >> 1) - (oViewer.scrollX) >> 0;
+		}
+		let yPos    = oViewer.scrollY >> 0;
+        let page    = oViewer.drawingPages[this.GetPage()];
+        let w       = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let h       = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+        let indLeft = ((xCenter * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1);
+        let indTop  = ((page.Y - yPos) * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
-        let X       = this._pagePos.x * nScale;
-        let Y       = this._pagePos.y * nScale;
-        let nWidth  = (this._pagePos.w) * nScale;
-        let nHeight = (this._pagePos.h) * nScale;
+        let X       = aOrigRect[0] * nScale + indLeft;
+        let Y       = aOrigRect[1] * nScale + indTop;
+        let nWidth  = (aOrigRect[2] - aOrigRect[0]) * nScale;
+        let nHeight = (aOrigRect[3] - aOrigRect[1]) * nScale;
         
         let oMargins = this.GetBordersWidth(true);
         
         let nMarkWidth  = 18;
-        let nMarkX      = (X + nWidth) - oMargins.left - nMarkWidth + 1;
+        let nMarkX      = (X + nWidth) - oMargins.left - nMarkWidth;
         let nMarkHeight = nHeight - 2 * oMargins.top - 2;
         let nMarkY      = Y + oMargins.top + 1;
 
         // marker rect
-        oGraphicsPDF.SetLineDash([]);
-        oGraphicsPDF.BeginPath();
-        oGraphicsPDF.SetGlobalAlpha(1);
-        oGraphicsPDF.SetFillStyle(240, 240, 240);
-        oGraphicsPDF.FillRect(nMarkX, nMarkY, nMarkWidth, nMarkHeight);
+        oCtx.setLineDash([]);
+        oCtx.beginPath();
+        oCtx.globalAlpha = 1;
+        oCtx.fillStyle = "rgb(240, 240, 240)";
+        oCtx.fillRect(nMarkX, nMarkY, nMarkWidth, nMarkHeight);
 
         // marker border right part
-        oGraphicsPDF.BeginPath();
-        oGraphicsPDF.SetStrokeStyle(100, 100, 100);
-        oGraphicsPDF.SetLineWidth(1);
-        oGraphicsPDF.MoveTo(nMarkX, nMarkY + nMarkHeight);
-        oGraphicsPDF.LineTo(nMarkX + nMarkWidth, nMarkY + nMarkHeight);
-        oGraphicsPDF.LineTo(nMarkX + nMarkWidth, nMarkY);
-        oGraphicsPDF.Stroke();
-        oGraphicsPDF.ClosePath();
+        oCtx.beginPath();
+        oCtx.strokeStyle = "rgb(100, 100, 100)";
+        oCtx.lineWidth = 1;
+        oCtx.moveTo(nMarkX, nMarkY + nMarkHeight);
+        oCtx.lineTo(nMarkX + nMarkWidth, nMarkY + nMarkHeight);
+        oCtx.lineTo(nMarkX + nMarkWidth, nMarkY);
+        oCtx.stroke();
 
         // marker border left part
-        oGraphicsPDF.BeginPath();
-        oGraphicsPDF.SetStrokeStyle(255, 255, 255);
-        oGraphicsPDF.MoveTo(nMarkX, nMarkY + nMarkHeight);
-        oGraphicsPDF.LineTo(nMarkX, nMarkY);
-        oGraphicsPDF.LineTo(nMarkX + nMarkWidth, nMarkY);
-        oGraphicsPDF.Stroke();
-        oGraphicsPDF.ClosePath();
+        oCtx.beginPath();
+        oCtx.strokeStyle = "rgb(255, 255, 255)";
+        oCtx.moveTo(nMarkX, nMarkY + nMarkHeight);
+        oCtx.lineTo(nMarkX, nMarkY);
+        oCtx.lineTo(nMarkX + nMarkWidth, nMarkY);
+        oCtx.stroke();
 
         // marker icon
         let nIconW = 5 * 1.5;
@@ -192,23 +199,20 @@
         let nStartIconX = nMarkX + nMarkWidth/2 - (nIconW)/2;
         let nStartIconY = nMarkY + nMarkHeight/2 - (nIconH)/2;
 
-        oGraphicsPDF.BeginPath();
-        oGraphicsPDF.SetFillStyle(0, 0, 0);
+        oCtx.beginPath();
+        oCtx.fillStyle = "rgb(0, 0, 0)";
         
-        oGraphicsPDF.MoveTo(nStartIconX, nStartIconY);
-        oGraphicsPDF.LineTo(nStartIconX + nIconW, nStartIconY);
-        oGraphicsPDF.LineTo(nStartIconX + nIconW/2, nStartIconY + nIconH);
-        oGraphicsPDF.LineTo(nStartIconX, nStartIconY);
-        oGraphicsPDF.Fill();
-
-        let origX       = aOringRect[0];
-        let origY       = aOringRect[1];
+        oCtx.moveTo(nStartIconX, nStartIconY);
+        oCtx.lineTo(nStartIconX + nIconW, nStartIconY);
+        oCtx.lineTo(nStartIconX + nIconW/2, nStartIconY + nIconH);
+        oCtx.lineTo(nStartIconX, nStartIconY);
+        oCtx.fill();
 
         this._markRect = {
-            x1: (nMarkX - 1) / (X / origX),
-            y1: (nMarkY - 1) / (Y / origY),
-            x2: ((nMarkX - 1) + (nMarkWidth)) / (X / origX),
-            y2: ((nMarkY - 1) + (nMarkHeight)) / (Y / origY)
+            x1: (nMarkX - indLeft) / nScale,
+            y1: (nMarkY - indTop) / nScale,
+            x2: ((nMarkX - indLeft) + (nMarkWidth)) / nScale,
+            y2: ((nMarkY - indTop) + (nMarkHeight)) / nScale
         }
     };
     CComboBoxField.prototype.onMouseDown = function(x, y, e) {

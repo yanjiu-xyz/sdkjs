@@ -214,12 +214,12 @@
 	 * @typeofeditors ["PDF"]
 	 */
     Object.defineProperty(ApiBaseField.prototype, "display", {
-        set(bValue) {
+        set(nType) {
             let aFields = this.field.GetDocument().GetFields(this.field.GetFullName());
 
             if (aFields[0] && aFields[0].IsAnnot()) {
                 aFields.forEach(function(field) {
-                    field.SetHidden(!bValue);
+                    field.SetDisplay(nType);
                 });
             }
             else {
@@ -229,7 +229,7 @@
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsAnnot()) {
-                return !oField.IsHidden();
+                return oField.GetType();
             }
             else {
                 throw Error("InvalidGetError: Get not possible, invalid or unknown.");
@@ -249,7 +249,7 @@
 
             if (aFields[0] && aFields[0].IsAnnot()) {
                 aFields.forEach(function(field) {
-                    field.SetHidden(bValue);
+                    field.SetDisplay(window["AscPDF"].Api.Objects.display["hidden"]);
                 });
             }
             else {
@@ -259,7 +259,7 @@
         get() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsAnnot()) {
-                return oField.IsHidden();
+                return oField.GetDisplay() == window["AscPDF"].Api.Objects.display["hidden"];
             }
             else {
                 throw Error("InvalidGetError: Get not possible, invalid or unknown.");

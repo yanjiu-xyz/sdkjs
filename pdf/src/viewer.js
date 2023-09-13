@@ -1011,10 +1011,10 @@
 				{
 					oForm.SetValue(oFormInfo["value"]);
 				}
-				if (oFormInfo["hidden"])
+				if (oFormInfo["display"])
 				{
 					// to do
-					oForm.SetHidden(Boolean(oFormInfo["hidden"]));
+					oForm.SetDisplay(oFormInfo["display"]);
 				}
 				
 				if (oFormInfo["sort"] != null) {
@@ -1881,14 +1881,11 @@
 						oThis.mouseMoveFieldObject && oThis.mouseMoveFieldObject.onMouseExit();
 						oThis.mouseMoveFieldObject = mouseMoveFieldObject;
 						mouseMoveFieldObject.onMouseEnter();
-							
-						oThis._paintFormsHighlight();
 					}
 					else if (mouseMoveFieldObject == null && oThis.mouseMoveFieldObject) {
 						oThis.mouseMoveFieldObject.onMouseExit();
 						oThis.mouseMoveFieldObject._needDrawHoverBorder = false;
 						oThis.mouseMoveFieldObject = null;
-						oThis._paintFormsHighlight();
 					}
 					
 					let cursorType = "default";
@@ -2486,6 +2483,7 @@
 			this._paintForms();
 			this._paintAnnots();
 			this._paintFormsHighlight();
+			this._paintComboboxesMarkers();
 		};
 		this.Get_PageLimits = function() {
 			let W = this.width;
@@ -3517,8 +3515,28 @@
 				this.pagesInfo.pages[i].fields.forEach(function(field) {
 					if (field.IsNeedDrawHighlight())
 						field.DrawHighlight(oCtx);
-					if (field._needDrawHoverBorder)
-						field.DrawSelected(oCtx);
+				});
+			}
+		}
+	};
+	CHtmlPage.prototype._paintComboboxesMarkers = function()
+	{
+		let oCtx = this.canvasForms.getContext("2d");
+		for (let i = this.startVisiblePage; i <= this.endVisiblePage; i++)
+		{
+			let aForms = this.pagesInfo.pages[i].fields != null ? this.pagesInfo.pages[i].fields : null;
+			
+			if (!aForms)
+				continue;
+			
+			let page = this.drawingPages[i];
+			if (!page)
+				break;
+			
+			if (this.pagesInfo.pages[i].fields != null) {
+				this.pagesInfo.pages[i].fields.forEach(function(field) {
+					if (field.GetType() == AscPDF.FIELD_TYPES.combobox)
+						field.DrawMarker(oCtx);
 				});
 			}
 		}

@@ -149,7 +149,6 @@ var CPresentation = CPresentation || function(){};
         }
         else {
             oViewer._paint();
-            oViewer._paintFormsHighlight();
         }
     };
     CPDFDoc.prototype.FillFormsParents = function(aParentsInfo) {
@@ -427,14 +426,7 @@ var CPresentation = CPresentation || function(){};
         if (false == oNextForm.IsInSight())
             this.NavigateToField(oNextForm);
         else {
-            // если нужна перерисовка формы и onFocus не запустил действие, тогда перерисовываем
-            if (isNeedRedraw && oActionsQueue.IsInProgress() == false) {
-                oViewer._paint();
-                oViewer._paintFormsHighlight();
-            }
-            // если не нужна перерисовка и не запущено действие, то перерисовываем только highligt
-            else if (oActionsQueue.IsInProgress() == false)
-                oViewer._paintFormsHighlight();
+            oViewer._paint();
         }
         
         if (oActionsQueue.IsInProgress() == true)
@@ -511,14 +503,7 @@ var CPresentation = CPresentation || function(){};
         if (false == oNextForm.IsInSight())
             this.NavigateToField(oNextForm);
         else {
-            // если нужна перерисовка формы и onFocus не запустил действие, тогда перерисовываем
-            if (isNeedRedraw && oActionsQueue.IsInProgress() == false) {
-                oViewer._paint();
-                oViewer._paintFormsHighlight();
-            }
-            // если не нужна перерисовка и не запущено действие, то перерисовываем только highligt
-            else if (oActionsQueue.IsInProgress() == false)
-                oViewer._paintFormsHighlight();
+            oViewer._paint();
         }
         
         if (oActionsQueue.IsInProgress() == true)
@@ -595,7 +580,6 @@ var CPresentation = CPresentation || function(){};
         }
 
         oViewer._paint();
-        oViewer._paintFormsHighlight();
     };
     CPDFDoc.prototype.OnExitFieldByClick = function() {
         let oViewer         = editor.getDocumentRenderer();
@@ -613,7 +597,6 @@ var CPresentation = CPresentation || function(){};
             oActiveForm.Blur();
             
             if (oActionsQueue.IsInProgress() == false) {
-                oViewer._paintFormsHighlight();
                 oViewer._paint();
             }
 
@@ -669,7 +652,6 @@ var CPresentation = CPresentation || function(){};
         oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
         if (oActionsQueue.IsInProgress() == false) {
             oViewer._paint();
-            oViewer._paintFormsHighlight();
         }
 
         if (oActiveForm && oActiveForm.content && oActiveForm.content.IsSelectionEmpty()) {
@@ -686,7 +668,6 @@ var CPresentation = CPresentation || function(){};
             case AscPDF.FIELD_TYPES.text:
             case AscPDF.FIELD_TYPES.combobox:
                 oField.SetDrawHighlight(false);
-                oViewer._paintFormsHighlight();
                 oField.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, event);
                     
                 oViewer.onUpdateOverlay();
@@ -695,7 +676,6 @@ var CPresentation = CPresentation || function(){};
                 break;
             case AscPDF.FIELD_TYPES.listbox:
                 oField.SetDrawHighlight(false);
-                oViewer._paintFormsHighlight();
                 oField.onMouseDown(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y, event);
                 
                 oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
@@ -711,8 +691,6 @@ var CPresentation = CPresentation || function(){};
 
         if (oActionsQueue.IsInProgress() == false && oViewer.pagesInfo.pages[oField.GetPage()].needRedrawForms)
             oViewer._paint();
-
-        oViewer._paintFormsHighlight();
 
         // нажали мышь - запомнили координаты и находимся ли на ссылке
         // при выходе за epsilon на mouseMove - сэмулируем нажатие
@@ -882,14 +860,11 @@ var CPresentation = CPresentation || function(){};
                 oViewer.mouseMoveFieldObject && oViewer.mouseMoveFieldObject.onMouseExit();
                 oViewer.mouseMoveFieldObject = mouseMoveFieldObject;
                 mouseMoveFieldObject.onMouseEnter();
-
-                // oViewer._paintFormsHighlight();
             }
             else if (mouseMoveFieldObject == null && oViewer.mouseMoveFieldObject) {
                 oViewer.mouseMoveFieldObject.onMouseExit();
                 oViewer.mouseMoveFieldObject._needDrawHoverBorder = false;
                 oViewer.mouseMoveFieldObject = null;
-                // oViewer._paintFormsHighlight();
             }
 
 
@@ -1082,7 +1057,6 @@ var CPresentation = CPresentation || function(){};
                         if (this.activeForm)
                         {
                             this.activeForm.SetDrawHighlight(true);
-                            oViewer._paintFormsHighlight();
                             this.activeForm = null;
                         }
                 }
@@ -1135,7 +1109,6 @@ var CPresentation = CPresentation || function(){};
                     if (this.activeForm)
                     {
                         this.activeForm.SetDrawHighlight(true);
-                        oViewer._paintFormsHighlight();
                         this.activeForm = null;
                     }
                 }
@@ -1833,14 +1806,22 @@ var CPresentation = CPresentation || function(){};
             aNames.forEach(function(name) {
                 let aFields = oThis.GetFields(name);
                 aFields.forEach(function(field) {
-                    field.SetHidden(bHidden);
+                    if (bHidden)
+                        field.SetDisplay(window["AscPDF"].Api.Objects.display["hidden"]);
+                    else
+                        field.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
+                    
                     field.AddToRedraw();
                 });
             });
         }
         else {
             this.widgets.forEach(function(field) {
-                field.SetHidden(bHidden);
+                if (bHidden)
+                    field.SetDisplay(window["AscPDF"].Api.Objects.display["hidden"]);
+                else
+                    field.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
+
                 field.AddToRedraw();
             });
         }

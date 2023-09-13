@@ -1029,7 +1029,6 @@
             this.OnEndPressed();
         }
 
-        oViewer._paintFormsHighlight();
         this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseUp);
     };
     CPushButtonField.prototype.onMouseEnter = function() {

@@ -109,7 +109,7 @@
     Object.freeze(VALID_ROTATIONS);
 
     
-	/**
+    /**
 	 * Class representing a base field class.
 	 * @constructor
     */
@@ -570,8 +570,9 @@
         if (this.IsHidden() == true)
             return;
 
-        let oViewer = editor.getDocumentRenderer();
-        let nScale  = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[this.GetPage()].Dpi);
+        let oViewer     = editor.getDocumentRenderer();
+        let nScale      = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom * (96 / oViewer.file.pages[this.GetPage()].Dpi);
+        let aBgColor    = this.GetBackgroundColor();
 
         let xCenter = oViewer.width >> 1;
         if (oViewer.documentWidth > oViewer.width)
@@ -591,8 +592,11 @@
         let W = (aOrigRect[2] - aOrigRect[0]) * nScale;
         let H = (aOrigRect[3] - aOrigRect[1]) * nScale;
 
-        oCtx.globalAlpha = 1;
-        oCtx.globalCompositeOperation = "destination-over";          
+        oCtx.globalAlpha = 0.8;
+        oCtx.globalCompositeOperation = "destination-over";
+        if (aBgColor && aBgColor.length != 0)
+            oCtx.globalCompositeOperation = "multiply";
+
         if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this._chStyle == AscPDF.CHECKBOX_STYLES.circle) {
             oCtx.beginPath();
             oCtx.fillStyle = `rgb(${FIELDS_HIGHLIGHT.r}, ${FIELDS_HIGHLIGHT.g}, ${FIELDS_HIGHLIGHT.b})`;
@@ -1119,16 +1123,19 @@
     CBaseField.prototype.GetBackgroundColor = function() {
         return this._fillColor;
     };
-    CBaseField.prototype.SetHidden = function(bHidden) {
-        if (this._hidden != bHidden) {
-            this._hidden = bHidden;
-            this._display = !bHidden;
-        }
-    };
     CBaseField.prototype.IsHidden = function() {
-        return this._hidden;
-    };
+        let nType = this.GetDisplay();
+        if (nType == window["AscPDF"].Api.Objects.display["hidden"] || nType == window["AscPDF"].Api.Objects.display["noView"])
+            return true;
 
+        return false;
+    };
+    CBaseField.prototype.SetDisplay = function(nType) {
+        this._display = nType;
+    };
+    CBaseField.prototype.GetDisplay = function() {
+        return this._display;''
+    };
     CBaseField.prototype.GetDefaultValue = function() {
         if (this._defaultValue == null && this.GetParent())
             return this.GetParent().GetDefaultValue();
@@ -1532,8 +1539,6 @@
             
             oGraphicsPDF.DrawImage(originView, 0, 0, originView.width / nGrScale, originView.height / nGrScale, originView.x / nGrScale, originView.y / nGrScale, originView.width / nGrScale, originView.height / nGrScale);
             // oGraphicsPDF.DrawImage(originView, 0, 0, nWidth + 2 / nGrScale, nHeight + 2 / nGrScale, X - 1 / nGrScale, Y - 1 / nGrScale, nWidth + 2 / nGrScale, nHeight + 2 / nGrScale);
-            if (this.GetType() == AscPDF.FIELD_TYPES.combobox)
-                this.DrawMarker(oGraphicsPDF);
         }
     };
     CBaseField.prototype.GetParent = function() {
