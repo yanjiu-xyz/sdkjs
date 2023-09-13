@@ -2670,23 +2670,31 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, curSta
 		{
 			obj.cancelSelection = true;
 			this.SetSelectionState(prevState);
-			let selectedText = this.getSelectionInfo();
-			this.SetSelectionState(originState);
-			
 			type     = AscCommon.SpeechWorkerCommands.TextUnselected;
-			obj.text = selectedText;
+			obj.text = this.GetSelectedText(false);
+			this.SetSelectionState(originState);
 		}
-		else if (!curInfo.isSelection)
+		else if (!curInfo.isSelection || 0 === AscWord.CompareDocumentPositions(curInfo.selectionStart, curInfo.selectionEnd))
 		{
-			// TODO: Тут зависит от того, как был снят селект, если мы снимаем его клавой (без шифта), то
-			// сообщаем как при обычном перемещении. Если снимаем его с shift, то должны прочитать именно как снятие селекта
+			if (prevInfo.isSelection && 0 !== AscWord.CompareDocumentPositions(prevInfo.selectionStart, prevInfo.selectionEnd))
+				obj.cancelSelection = true;
 			
-			let paragraph  = this.GetCurrentParagraph();
-			let runElement = paragraph.GetNextRunElement();
-			if (runElement && runElement.IsText())
-				obj.text = String.fromCodePoint(runElement.GetCodePoint());
+			if (curInfo.isSelection || !actionInfo)
+			{
+				this.SetSelectionState(prevState);
+				type     = AscCommon.SpeechWorkerCommands.TextUnselected;
+				obj.text = this.GetSelectedText(false);
+				this.SetSelectionState(originState);
+			}
 			else
-				obj.text = "";
+			{
+				let paragraph  = this.GetCurrentParagraph();
+				let runElement = paragraph.GetNextRunElement();
+				if (runElement && runElement.IsText())
+					obj.text = String.fromCodePoint(runElement.GetCodePoint());
+				else
+					obj.text = "";
+			}
 		}
 		else
 		{
