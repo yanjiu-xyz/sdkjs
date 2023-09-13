@@ -375,7 +375,7 @@
 				return;
 			}
 			
-			let speechInfo = editor.getSpeechDescription(_t.selectionState, state);
+			let speechInfo = editor.getSpeechDescription(_t.selectionState);
 			_t.selectionState = state;
 			if (!speechInfo)
 				return;

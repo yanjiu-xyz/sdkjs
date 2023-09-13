@@ -2614,30 +2614,24 @@ CDocumentContentBase.prototype.GetSelectedParagraphs = function()
 	
 	return logicDocument.GetSelectedParagraphs();
 };
-CDocumentContentBase.prototype.getSpeechDescription = function(prevState, curState, actionInfo)
+CDocumentContentBase.prototype.getSpeechDescription = function(prevState, actionInfo)
 {
 	if (!prevState)
 		return;
 	
 	// В данном метод предполагается, что curState равен this.GetSelectionState()
-	if (!curState)
-		curState = this.GetSelectionState();
-	
+	let curState = this.GetSelectionState();
 	if (!prevState.length || !curState.length)
 		return;
 	
 	let obj  = {};
 	let type = AscCommon.SpeechWorkerCommands.Text;
 	
-	let originState = this.GetSelectionState();
-	
 	this.SetSelectionState(prevState);
 	let prevInfo = this.getSelectionInfo();
 	
 	this.SetSelectionState(curState);
 	let curInfo = this.getSelectionInfo();
-	
-	this.SetSelectionState(originState);
 	
 	
 	if (curInfo.docPosType === docpostype_DrawingObjects)
@@ -2672,7 +2666,7 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, curSta
 			this.SetSelectionState(prevState);
 			type     = AscCommon.SpeechWorkerCommands.TextUnselected;
 			obj.text = this.GetSelectedText(false);
-			this.SetSelectionState(originState);
+			this.SetSelectionState(curState);
 		}
 		else if (!curInfo.isSelection || 0 === AscWord.CompareDocumentPositions(curInfo.selectionStart, curInfo.selectionEnd))
 		{
@@ -2684,7 +2678,7 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, curSta
 				this.SetSelectionState(prevState);
 				type     = AscCommon.SpeechWorkerCommands.TextUnselected;
 				obj.text = this.GetSelectedText(false);
-				this.SetSelectionState(originState);
+				this.SetSelectionState(curState);
 			}
 			else
 			{
@@ -2715,12 +2709,10 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, curSta
 					// this.SetSelectionState(prevState);
 					// type     = AscCommon.SpeechWorkerCommands.TextUnselected;
 					// obj.text = this.GetSelectedText(false);
+					// this.SetSelectionState(curState);
 					
-					this.SetSelectionState(curState);
 					type     = AscCommon.SpeechWorkerCommands.TextSelected;
 					obj.text = this.GetSelectedText(false);
-					
-					this.SetSelectionState(originState);
 				}
 				else
 				{
@@ -2729,13 +2721,12 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, curSta
 					|| (AscWord.CompareDocumentPositions(prevInfo.selectionStart, prevInfo.selectionEnd) >= 0
 							&& AscWord.CompareDocumentPositions(curInfo.selectionEnd, prevInfo.selectionEnd) <= 0));
 					
-					this.SetSelectionState(curState);
 					this.SetContentSelection(curInfo.selectionEnd, prevInfo.selectionEnd, 0, 0, 0);
 					
 					type     = isAdd ? AscCommon.SpeechWorkerCommands.TextSelected : AscCommon.SpeechWorkerCommands.TextUnselected;
 					obj.text = this.GetSelectedText(false);
 
-					this.SetSelectionState(originState);
+					this.SetSelectionState(curState);
 				}
 			}
 		}

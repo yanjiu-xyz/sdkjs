@@ -8905,7 +8905,7 @@ var editor;
 
 		return wb.getSelectionState();
 	};
-	spreadsheet_api.prototype.getSpeechDescription = function(prevState, curState) {
+	spreadsheet_api.prototype.getSpeechDescription = function(prevState) {
 		//return
 		//{obj : {text: '...'}, type: }
 		let wb = this.wb;
@@ -8913,7 +8913,7 @@ var editor;
 			return;
 		}
 
-		return wb.getSpeechDescription(prevState, curState);
+		return wb.getSpeechDescription(prevState, wb.getSelectionState());
 	};
 
   /*
