@@ -1554,21 +1554,35 @@
 			var page = this.pagesInfo.pages[pageObject.index];
 			if (page.annots)
 			{
+				// сначала ищем text annot (sticky note)
+				for (var i = page.annots.length -1; i >= 0; i--)
+				{
+					let oAnnot = page.annots[i];
+					let nAnnotWidth		= (page.annots[i]._origRect[2] - page.annots[i]._origRect[0]) / this.zoom;
+					let nAnnotHeight	= (page.annots[i]._origRect[3] - page.annots[i]._origRect[1]) / this.zoom;
+					
+					if (true !== bGetHidden && oAnnot.IsHidden() == true || false == oAnnot.IsComment())
+						continue;
+					
+					if (pageObject.x >= oAnnot._origRect[0] && pageObject.x <= oAnnot._origRect[0] + nAnnotWidth &&
+						pageObject.y >= oAnnot._origRect[1] && pageObject.y <= oAnnot._origRect[1] + nAnnotHeight)
+					{
+						if (bGetHidden)
+							return oAnnot;
+						else
+							return oAnnot.IsHidden() == false ? oAnnot : null;
+					}
+				}
+
 				for (var i = page.annots.length -1; i >= 0; i--)
 				{
 					let oAnnot = page.annots[i];
 					let nAnnotWidth		= (page.annots[i]._origRect[2] - page.annots[i]._origRect[0]);
 					let nAnnotHeight	= (page.annots[i]._origRect[3] - page.annots[i]._origRect[1]);
 					
-					if (true !== bGetHidden && oAnnot.IsHidden() == true)
+					if (true !== bGetHidden && oAnnot.IsHidden() == true || oAnnot.IsComment())
 						continue;
-
-					if (oAnnot.IsComment())
-					{
-						nAnnotWidth /= this.zoom;
-						nAnnotHeight /= this.zoom;
-					}
-
+					
 					if (pageObject.x >= oAnnot._origRect[0] && pageObject.x <= oAnnot._origRect[0] + nAnnotWidth &&
 						pageObject.y >= oAnnot._origRect[1] && pageObject.y <= oAnnot._origRect[1] + nAnnotHeight)
 					{
@@ -1592,7 +1606,6 @@
 							else
 								return oAnnot.IsHidden() == false ? oAnnot : null;
 						}
-						
 					}
 				}
 			}
@@ -1747,15 +1760,18 @@
 			let oDoc = oThis.getPDFDoc();
 			oDoc.OnMouseUp(e);
 
-			if (!oThis.MouseHandObject && global_mouseEvent.ClickCount == 2 && !oDoc.mouseDownAnnot && !oDoc.mouseDownField)
+			if (false == oThis.Api.isInkDrawerOn())
 			{
-				var pageObjectLogic = oThis.getPageByCoords2(oThis.mouseDownCoords.X - oThis.x, oThis.mouseDownCoords.Y - oThis.y);
-				oThis.file.selectWholeWord(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
-			}
-			else if (!oThis.MouseHandObject && global_mouseEvent.ClickCount == 3 && !oDoc.mouseDownAnnot && !oDoc.mouseDownField)
-			{
-				var pageObjectLogic = oThis.getPageByCoords2(oThis.mouseDownCoords.X - oThis.x, oThis.mouseDownCoords.Y - oThis.y);
-				oThis.file.selectWholeRow(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+				if (!oThis.MouseHandObject && global_mouseEvent.ClickCount == 2 && !oDoc.mouseDownAnnot && !oDoc.mouseDownField)
+				{
+					var pageObjectLogic = oThis.getPageByCoords2(oThis.mouseDownCoords.X - oThis.x, oThis.mouseDownCoords.Y - oThis.y);
+					oThis.file.selectWholeWord(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+				}
+				else if (!oThis.MouseHandObject && global_mouseEvent.ClickCount == 3 && !oDoc.mouseDownAnnot && !oDoc.mouseDownField)
+				{
+					var pageObjectLogic = oThis.getPageByCoords2(oThis.mouseDownCoords.X - oThis.x, oThis.mouseDownCoords.Y - oThis.y);
+					oThis.file.selectWholeRow(pageObjectLogic.index, pageObjectLogic.x, pageObjectLogic.y);
+				}
 			}
 
 			if (oThis.mouseDownLinkObject)
@@ -1861,7 +1877,7 @@
 
 				if (oThis.isMouseDown)
 				{
-					if (oThis.isMouseMoveBetweenDownUp && !oDoc.activeForm && !oDoc.mouseDownAnnot)
+					if (oThis.isMouseMoveBetweenDownUp && !oDoc.activeForm && (!oDoc.mouseDownAnnot || (oDoc.mouseDownAnnot && oDoc.mouseDownAnnot.IsTextMarkup() == true)) && !oThis.Api.isInkDrawerOn())
 					{
 						// нажатая мышка - курсор всегда default (так как за eps вышли)
 						oThis.setCursorType("default");

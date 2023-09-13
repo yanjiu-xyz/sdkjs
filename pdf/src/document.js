@@ -726,8 +726,9 @@ var CPresentation = CPresentation || function(){};
         let oMouseDownField         = oViewer.getPageFieldByMouse();
         let oMouseDownAnnot         = oViewer.getPageAnnotByMouse();
 
-        if (IsOnEraser && oMouseDownAnnot && oMouseDownAnnot.IsInk()) {
-            this.EraseInk(oMouseDownAnnot);
+        if (IsOnEraser) {
+            if (oMouseDownAnnot && oMouseDownAnnot.IsInk())
+                this.EraseInk(oMouseDownAnnot);
             return;
         }
 
@@ -735,18 +736,22 @@ var CPresentation = CPresentation || function(){};
         let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
         let bInResizeRect = oDrawingObjects.updateCursorType(oViewer.currentPage, X, Y, e, false);
         
-        if (bInResizeRect) {
-            if (!oDrawingObjects.selectedObjects.includes(this.mouseDownAnnot) || (oMouseDownAnnot))
+        if (IsOnDrawer == false && false == IsOnEraser) {
+            if (bInResizeRect) {
+                if (!oDrawingObjects.selectedObjects.includes(this.mouseDownAnnot) || (oMouseDownAnnot))
+                    this.mouseDownAnnot = oMouseDownAnnot;
+                if (!oDrawingObjects.selectedObjects.includes(this.mouseDownField))
+                    this.mouseDownField = oMouseDownField;
+            }
+            else {
                 this.mouseDownAnnot = oMouseDownAnnot;
-            if (!oDrawingObjects.selectedObjects.includes(this.mouseDownField))
                 this.mouseDownField = oMouseDownField;
-        }
-        else {
-            this.mouseDownAnnot = oMouseDownAnnot;
-            this.mouseDownField = oMouseDownField;
+            }
         }
 
         if (IsOnDrawer == true) {
+            this.mouseDownAnnot = null;
+            this.mouseDownField = null
             oDrawingObjects.OnMouseDown(e, X, Y, oViewer.currentPage);
             return;
         }
@@ -768,6 +773,9 @@ var CPresentation = CPresentation || function(){};
             // ждать смысла нет
             oViewer.isMouseMoveBetweenDownUp = true;
             oViewer.onMouseDownEpsilon();
+        }
+        else if (this.mouseDownAnnot) {
+            oViewer.onUpdateOverlay();
         }
 
         
@@ -848,6 +856,9 @@ var CPresentation = CPresentation || function(){};
         }
         else
         {
+            if (oAPI.isInkDrawerOn())
+                return;
+            
             // просто водим мышкой - тогда смотрим, на ссылке или поле, чтобы выставить курсор
             var mouseMoveLinkObject = oViewer.getPageLinkByMouse();
             var mouseMoveFieldObject = oViewer.getPageFieldByMouse();
@@ -911,6 +922,9 @@ var CPresentation = CPresentation || function(){};
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
         let oDrDoc          = this.GetDrawingDocument();
+
+        if (oViewer.Api.isEraseInkMode())
+            return;
 
         let bUpdateOverlay = false;
         if (oDrawingObjects.arrTrackObjects.length != 0) {
@@ -1331,6 +1345,8 @@ var CPresentation = CPresentation || function(){};
 
         this.annots.push(oAnnot);
         oAnnot.SetNeedRecalc && oAnnot.SetNeedRecalc(true);
+
+        oAnnot.SetHidden(this.IsAnnotsHidden());
 
         if (oPagesInfo.pages[nPageNum].annots == null) {
             oPagesInfo.pages[nPageNum].annots = [];

@@ -88,6 +88,8 @@ CChangesPDFDocumentAddItem.prototype.Redo = function()
 			oViewer.pagesInfo.pages[nPage].annots.splice(this.PosInPage, 0, oItem);
 			if (oItem.IsComment())
 				editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
+
+			oItem.SetHidden(oDocument.IsAnnotsHidden());
 		}
 	}
 };
@@ -124,6 +126,8 @@ CChangesPDFDocumentRemoveItem.prototype.Undo = function()
 			oViewer.pagesInfo.pages[nPage].annots.splice(nPosInPage, 0, oItem);
 			if (oItem.IsComment())
 				editor.sendEvent("asc_onAddComment", oItem.GetId(), oItem.GetAscCommentData());
+
+			oItem.SetHidden(oDocument.IsAnnotsHidden());
 		}
 	}
 };
