@@ -1354,7 +1354,7 @@ ParaDrawing.prototype.CanAddNumbering = function()
 };
 ParaDrawing.prototype.Copy = function(oPr)
 {
-	var c = new ParaDrawing(this.Extent.W, this.Extent.H, null, editor.WordControl.m_oDrawingDocument, null, null);
+	let c = new ParaDrawing(this.Extent.W, this.Extent.H, null, this.DrawingDocument, null, null);
 	c.Set_DrawingType(this.DrawingType);
 	if (AscCommon.isRealObject(this.GraphicObj))
 	{
@@ -1451,12 +1451,8 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	this.DocumentContent   = oDocumentContent;
 	let PageNum            = ParaLayout.PageNum;
 
-	var OtherFlowObjects;
-	if (editor.WordControl.m_oLogicDocument)
-		OtherFlowObjects = editor.WordControl.m_oLogicDocument.DrawingObjects.getAllFloatObjectsOnPage(PageNum, this.Parent.Parent);
-	else if (editor.isPdfEditor())
-		OtherFlowObjects = editor.DocumentRenderer.DrawingObjects.getAllFloatObjectsOnPage(PageNum, this.Parent.Parent);
-	var bInline          = this.Is_Inline();
+	let floatObjectsOnPage = this.graphicObjects ? this.graphicObjects.getAllFloatObjectsOnPage(PageNum, this.Parent.Parent) : [];
+	var bInline            = this.Is_Inline();
 	this.Internal_Position.SetScaleFactor(this.GetScaleCoefficient());
 	this.Internal_Position.Set(this.GraphicObj.extX, this.GraphicObj.extY, this.getXfrmRot(), this.EffectExtent, this.YOffset, ParaLayout, PageLimits);
 	this.Internal_Position.Calculate_X(bInline, this.PositionH.RelativeFrom, this.PositionH.Align, this.PositionH.Value, this.PositionH.Percent);
@@ -1472,7 +1468,7 @@ ParaDrawing.prototype.Update_Position = function(Paragraph, ParaLayout, PageLimi
 	{
 		bCorrect = true;
 	}
-	this.Internal_Position.Correct_Values(bInline, PageLimits, this.AllowOverlap, this.Use_TextWrap(), OtherFlowObjects, bCorrect);
+	this.Internal_Position.Correct_Values(bInline, PageLimits, this.AllowOverlap, this.Use_TextWrap(), floatObjectsOnPage, bCorrect);
 	this.GraphicObj.bounds.l = this.GraphicObj.bounds.x + this.Internal_Position.CalcX;
 	this.GraphicObj.bounds.r =  this.GraphicObj.bounds.x  + this.GraphicObj.bounds.w + this.Internal_Position.CalcX;
 	this.GraphicObj.bounds.t = this.GraphicObj.bounds.y + this.Internal_Position.CalcY;
