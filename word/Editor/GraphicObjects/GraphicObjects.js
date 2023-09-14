@@ -127,12 +127,12 @@ CGraphicObjects.prototype =
     startEditGeometry: DrawingObjectsController.prototype.startEditGeometry,
     haveTrackedObjects: DrawingObjectsController.prototype.haveTrackedObjects,
 
-    checkSelectedObjectsAndCallback: function(callback, args, bNoSendProps, nHistoryPointType, aAdditionaObjects)
+    checkSelectedObjectsAndCallback: function(callback, args, bNoSendProps, nHistoryPointType, aAdditionaObjects, bNoCheckLock)
     {
     	var oLogicDocument = editor.WordControl.m_oLogicDocument;
 
         var check_type = AscCommon.changestype_Drawing_Props;
-        if(oLogicDocument.Document_Is_SelectionLocked(check_type, null, false, false) === false)
+        if(bNoCheckLock || oLogicDocument.Document_Is_SelectionLocked(check_type, null, false, false) === false)
         {
             var nPointType = AscFormat.isRealNumber(nHistoryPointType) ? nHistoryPointType : AscDFH.historydescription_CommonControllerCheckSelected;
 			oLogicDocument.StartAction(nPointType);
@@ -1667,19 +1667,19 @@ CGraphicObjects.prototype =
         this.document.OnMouseUp(e, x, y, pageIndex);
     },
 
-    addInlineImage: function( W, H, Img, Chart, bFlow )
+    addInlineImage: function( W, H, Img, GraphicObject, bFlow )
     {
         var content = this.getTargetDocContent();
         if(content)
         {
             if(!content.bPresentation){
-                content.AddInlineImage(W, H, Img, Chart, bFlow );
+                content.AddInlineImage(W, H, Img, GraphicObject, bFlow );
             }
             else{
                 if(this.selectedObjects.length > 0)
                 {
                     this.resetSelection2();
-                    this.document.AddInlineImage(W, H, Img, Chart, bFlow );
+                    this.document.AddInlineImage(W, H, Img, GraphicObject, bFlow );
                 }
             }
         }
@@ -1688,7 +1688,7 @@ CGraphicObjects.prototype =
             if(this.selectedObjects.length > 0)
             {
                 this.resetSelection2();
-                this.document.AddInlineImage(W, H, Img, Chart, bFlow );
+                this.document.AddInlineImage(W, H, Img, GraphicObject, bFlow );
             }
         }
     },

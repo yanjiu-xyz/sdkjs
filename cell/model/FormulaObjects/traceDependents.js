@@ -283,7 +283,7 @@ function (window, undefined) {
 
 			return {col: table.Ref.c1, row: table.Ref.r1};
 		};
-		const setDefNameIndexes = function (defName, isTable) {
+		const setDefNameIndexes = function (defName, isTable, defNameRange) {
 			let tableHeader = isTable ? getTableHeader(ws.getTableByName(defName)) : false;
 			let isCurrentCellHeader = isTable ? checkIfHeader(tableHeader) : false;
 			for (const i in allDefNamesListeners) {
@@ -291,21 +291,34 @@ function (window, undefined) {
 					for (const listener in allDefNamesListeners[i].listeners) {
 						// TODO возможно стоить добавить все слушатели сразу в curListener
 						let elem = allDefNamesListeners[i].listeners[listener];
-						let isArea = elem.ref ? !elem.ref.isOneCell() : false;
+						let isArea = elem.ref ? true : false;
 						let is3D = elem.ws.Id ? elem.ws.Id !== ws.Id : false;
+						let isIntersect;
 						if (isArea && !is3D && !isCurrentCellHeader) {
-							// decompose all elements into dependencies
-							let areaIndexes = getAllAreaIndexes(elem);
-							if (areaIndexes) {
-								for (let index of areaIndexes) {
-									t._setDependents(cellIndex, index);
-									t._setPrecedents(index, cellIndex);
+							if (defNameRange) {
+								let defBBox = defNameRange.getBBox0();
+								// check clicked cell for entry into dependent areas
+								// if the cell is not included, then the dependency will not be drawn
+								let colShift = defBBox.c1 - elem.ref.c1,
+									rowShift = defBBox.r1 - elem.ref.r1;
+
+								isIntersect = elem.ref.contains(cellAddress.col - colShift, cellAddress.row - rowShift);
+							}
+							if (isIntersect) {
+								// decompose all elements into dependencies
+								let areaIndexes = getAllAreaIndexes(elem);
+								if (areaIndexes) {
+									for (let index of areaIndexes) {
+										t._setDependents(cellIndex, index);
+										t._setPrecedents(index, cellIndex);
+									}
+									continue;
 								}
-								continue;
 							}
 						}
+
 						let parentCellIndex = getParentIndex(elem.parent);
-						if (!parentCellIndex) {
+						if (parentCellIndex === null) {
 							continue;
 						}
 
@@ -352,9 +365,6 @@ function (window, undefined) {
 							}
 							t._setDependents(cellIndex, parentCellIndex);
 							t._setPrecedents(parentCellIndex, cellIndex);
-						} else {
-							t._setDependents(cellIndex, parentCellIndex);
-							t._setPrecedents(parentCellIndex, cellIndex);
 						}
 					}
 				}
@@ -375,11 +385,12 @@ function (window, undefined) {
 			return indexes;
 		};
 		const getParentIndex = function (_parent) {
+			if (!_parent || _parent.nCol == null ||  _parent.nRow == null) {
+				return null;
+			}
 			let _parentCellIndex = AscCommonExcel.getCellIndex(_parent.nRow, _parent.nCol);
-			//parent -> cell/defname
-			if (_parent.parsedRef/*parent instanceof AscCommonExcel.DefName*/) {
-				_parentCellIndex = null;
-			} else if (_parent.ws !== t.ws.model) {
+			//parent -> cell
+			if (_parent.ws !== t.ws.model) {
 				_parentCellIndex += ";" + _parent.ws.index;
 			}
 			return _parentCellIndex;
@@ -494,9 +505,19 @@ function (window, undefined) {
 							isDefName
 						};
 
+						//todo slow operation. parent not have type
+						if (parent instanceof Asc.CT_WorksheetSource) {
+							// if the listener is a pivot table, skip the iteration
+							continue;
+						}
+
 						if (isDefName) {
+							let parentInnerElementType = parent.parsedRef.outStack[0] ? parent.parsedRef.outStack[0].type : false, defNameRange;
+							if (parentInnerElementType === cElementType.cellsRange || parentInnerElementType === cElementType.cellsRange3D || parentInnerElementType === cElementType.cell3D) {
+								defNameRange = parent.parsedRef.outStack[0].getRange();
+							}
 							// TODO check external table ref
-							setDefNameIndexes(parent.name, isTable);
+							setDefNameIndexes(parent.name, isTable, defNameRange);
 							continue;
 						} else if (cellListeners[i].is3D) {
 							is3D = true;
@@ -522,9 +543,10 @@ function (window, undefined) {
 								continue;
 							}
 						}
-						let parentCellIndex = getParentIndex(parent);
 
+						let parentCellIndex = getParentIndex(parent);
 						if (parentCellIndex === null) {
+						//if (parentCellIndex === null || (typeof(parentCellIndex) === "number" && isNaN(parentCellIndex))) {
 							continue;
 						}
 						this._setDependents(cellIndex, parentCellIndex);
@@ -533,6 +555,7 @@ function (window, undefined) {
 				}
 				if (Object.keys(this.dependents[cellIndex]).length === 0) {
 					delete this.dependents[cellIndex];
+					this.ws.workbook.handlers.trigger("asc_onError", c_oAscError.ID.TraceDependentsNoFormulas, c_oAscError.Level.NoCritical);
 				}
 			} else {
 				if (this.checkCircularReference(cellIndex, true)) {
@@ -543,14 +566,14 @@ function (window, undefined) {
 				let isUpdated = false;
 				for (let i in cellListeners) {
 					if (cellListeners.hasOwnProperty(i)) {
-						let parent = cellListeners[i].parent,
-							elemCellIndex = cellListeners[i].shared !== null ? currentIndex : getParentIndex(parent),
-							formula = cellListeners[i].Formula;
-
-						if (parent.name) {
+						let parent = cellListeners[i].parent;
+						//todo slow operation. parent not have type
+						if (parent instanceof AscCommonExcel.DefName || parent instanceof Asc.CT_WorksheetSource) {
+							// if the listener is a pivot table, skip the iteration
 							continue;
 						}
 
+						let	elemCellIndex = cellListeners[i].shared !== null ? currentIndex : getParentIndex(parent), formula = cellListeners[i].Formula;
 						if (formula.includes(":") && !cellListeners[i].is3D) {
 							// call getAllAreaIndexes which return cellIndexes of each element(this will be parentCellIndex)
 							let areaIndexes = getAllAreaIndexes(cellListeners[i]);
@@ -793,10 +816,6 @@ function (window, undefined) {
 			}
 
 			let area = areas[areaName];
-			// if (area.isCalculated) {
-			// 	return indexes;
-			// }
-
 			for (let i = area.range.r1; i <= area.range.r2; i++) {
 				for (let j = area.range.c1; j <= area.range.c2; j++) {
 					// ??? check parserFormula and return indexes only with it
@@ -837,10 +856,7 @@ function (window, undefined) {
 				// go through the values and check precedents for each
 				for (let index of areaIndexes) {
 					let cellAddress = AscCommonExcel.getFromCellIndex(index, true);
-					// if (!ws.getCell3(cellAddress.row, cellAddress.col).isFormula()) {
-					// 	continue;
-					// }
-					this.calculatePrecedents(cellAddress.row, cellAddress.col, null, true);
+					this.calculatePrecedents(cellAddress.row, cellAddress.col, true, true);
 				}
 			}
 		} else if (formulaParsed) {
@@ -980,10 +996,13 @@ function (window, undefined) {
 
 						if (is3D) {
 							// TODO другой механизм отрисовки для внешних precedents
-							elemCellIndex += ";" + (elem.wsTo ? elem.wsTo.index : elem.ws.index);
+							let elemIndex = elem.wsTo ? elem.wsTo.index : elem.ws.index;
+							if (currentWsIndex !== elemIndex) {
+								elemCellIndex += ";" + elemIndex;
+								this.setPrecedentExternal(currentCellIndex);
+							}
 							this._setDependents(elemCellIndex, currentCellIndex);
 							this._setPrecedents(currentCellIndex, elemCellIndex);
-							this.setPrecedentExternal(currentCellIndex);
 						} else {
 							this._setPrecedents(currentCellIndex, elemCellIndex, false, false);
 							this._setDependents(elemCellIndex, currentCellIndex);

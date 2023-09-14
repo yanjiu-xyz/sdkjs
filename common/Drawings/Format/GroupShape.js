@@ -1626,7 +1626,7 @@
 			}
 		};
 
-		CGroupShape.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
+		CGroupShape.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate, oMapPaired) {
 			if(this.getObjectType() !== oDrawingToCheck.getObjectType()) {
 				return oCurCandidate;
 			}

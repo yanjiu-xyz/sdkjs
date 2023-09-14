@@ -81,6 +81,7 @@
 			NumLock         : 144,
 			ScrollLock      : 145,
 			Equal           : 187,
+			EqualFirefox    : 61,
 			Comma           : 188,
 			Minus           : 189,
 			Period          : 190,
@@ -191,15 +192,11 @@
 
 	const oGraphicTestEvents = {};
 	oGraphicTestEvents[oGraphicTypes.removeBackChar] = [
-		new CTestEvent(createEvent(oKeyCode.BackSpace, false, false, false, false, false)),
-		new CTestEvent(createEvent(oKeyCode.BackSpace, false, true, false, false, false)),
-		new CTestEvent(createEvent(oKeyCode.BackSpace, false, false, true, false, false)),
-		new CTestEvent(createEvent(oKeyCode.BackSpace, false, false, true, false, false))
+		new CTestEvent(createEvent(oKeyCode.BackSpace, false, false, false, false, false))
 	];
 	oGraphicTestEvents[oGraphicTypes.removeBackWord] = [
-		new CTestEvent(createEvent(oKeyCode.BackSpace, true, false, false, false, false)),
-		new CTestEvent(createEvent(oKeyCode.BackSpace, true, true, false, false, false)),
-		new CTestEvent(createEvent(oKeyCode.BackSpace, true, false, true, false, false))
+		new CTestEvent(createEvent(oKeyCode.BackSpace, true, false, false, false, false), testWindows),
+		new CTestEvent(createEvent(oKeyCode.BackSpace, false, false, true, false, false), testMacOs)
 	];
 	oGraphicTestEvents[oGraphicTypes.removeChart] = [
 		new CTestEvent(createEvent(oKeyCode.BackSpace, false, false, false, false, false)),
@@ -267,7 +264,8 @@
 
 	];
 	oGraphicTestEvents[oGraphicTypes.moveCursorToEndLine] = [
-		new CTestEvent(createEvent(oKeyCode.End, false, false, false, false, false))
+		new CTestEvent(createEvent(oKeyCode.End, false, false, false, false, false)),
+		new CTestEvent(createEvent(oKeyCode.ArrowRight, true, false, false, false, false), testMacOs)
 
 	];
 	oGraphicTestEvents[oGraphicTypes.selectToEndDocument] = [
@@ -275,7 +273,8 @@
 
 	];
 	oGraphicTestEvents[oGraphicTypes.selectToEndLine] = [
-		new CTestEvent(createEvent(oKeyCode.End, false, true, false, false, false))
+		new CTestEvent(createEvent(oKeyCode.End, false, true, false, false, false)),
+		new CTestEvent(createEvent(oKeyCode.ArrowRight, true, true, false, false, false), testMacOs)
 
 	];
 	oGraphicTestEvents[oGraphicTypes.moveCursorToStartDocument] = [
@@ -283,7 +282,8 @@
 
 	];
 	oGraphicTestEvents[oGraphicTypes.moveCursorToStartLine] = [
-		new CTestEvent(createEvent(oKeyCode.Home, false, false, false, false, false))
+		new CTestEvent(createEvent(oKeyCode.Home, false, false, false, false, false)),
+		new CTestEvent(createEvent(oKeyCode.ArrowLeft, true, false, false, false, false), testMacOs)
 
 	];
 	oGraphicTestEvents[oGraphicTypes.selectToStartDocument] = [
@@ -291,7 +291,8 @@
 
 	];
 	oGraphicTestEvents[oGraphicTypes.selectToStartLine] = [
-		new CTestEvent(createEvent(oKeyCode.Home, false, true, false, false, false))
+		new CTestEvent(createEvent(oKeyCode.Home, false, true, false, false, false)),
+		new CTestEvent(createEvent(oKeyCode.ArrowLeft, true, true, false, false, false), testMacOs)
 
 	];
 	oGraphicTestEvents[oGraphicTypes.moveCursorLeftChar] = [
@@ -302,11 +303,13 @@
 
 	];
 	oGraphicTestEvents[oGraphicTypes.moveCursorLeftWord] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowLeft, true, false, false, false, false))
+		new CTestEvent(createEvent(oKeyCode.ArrowLeft, true, false, false, false, false), testWindows),
+		new CTestEvent(createEvent(oKeyCode.ArrowLeft, false, false, true, false, false), testMacOs)
 
 	];
 	oGraphicTestEvents[oGraphicTypes.selectCursorLeftWord] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowLeft, true, true, false, false, false))
+		new CTestEvent(createEvent(oKeyCode.ArrowLeft, true, true, false, false, false), testWindows),
+		new CTestEvent(createEvent(oKeyCode.ArrowLeft, false, true, true, false, false), testMacOs)
 
 	];
 	oGraphicTestEvents[oGraphicTypes.bigMoveGraphicObjectLeft] = [
@@ -326,11 +329,13 @@
 
 	];
 	oGraphicTestEvents[oGraphicTypes.moveCursorRightWord] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowRight, true, false, false, false, false))
+		new CTestEvent(createEvent(oKeyCode.ArrowRight, true, false, false, false, false), testWindows),
+		new CTestEvent(createEvent(oKeyCode.ArrowRight, false, false, true, false, false), testMacOs)
 
 	];
 	oGraphicTestEvents[oGraphicTypes.selectCursorRightWord] = [
-		new CTestEvent(createEvent(oKeyCode.ArrowRight, true, true, false, false, false))
+		new CTestEvent(createEvent(oKeyCode.ArrowRight, true, true, false, false, false), testWindows),
+		new CTestEvent(createEvent(oKeyCode.ArrowRight, false, true, true, false, false), testMacOs),
 
 	];
 	oGraphicTestEvents[oGraphicTypes.bigMoveGraphicObjectRight] = [
@@ -424,7 +429,6 @@
 
 	];
 	oGraphicTestEvents[oGraphicTypes.superscript] = [
-		new CTestEvent(createEvent(oKeyCode.Equal, true, true, false, false, false)),
 		new CTestEvent(createEvent(oKeyCode.Comma, true, false, false, false, false))
 
 	];
@@ -433,7 +437,6 @@
 
 	];
 	oGraphicTestEvents[oGraphicTypes.subscript] = [
-		new CTestEvent(createEvent(oKeyCode.Equal, true, false, true, false, false)),
 		new CTestEvent(createEvent(oKeyCode.Period, true, false, false, false, false))
 
 	];
@@ -546,10 +549,12 @@
 		new CTestEvent(createEvent(113, false, false, false, false, false))
 	];
 	oTableEvents[oTableTypes.addDate] = [
-		new CTestEvent(createEvent(186, true, false, false, false, false))
+		new CTestEvent(createEvent(186, true, false, false, false, false)),
+		new CTestEvent(createEvent(59, true, false, false, false, false))
 	];
 	oTableEvents[oTableTypes.addTime] = [
-		new CTestEvent(createEvent(186, true, true, false, false, false))
+		new CTestEvent(createEvent(186, true, true, false, false, false)),
+		new CTestEvent(createEvent(59, true, true, false, false, false))
 	];
 	oTableEvents[oTableTypes.removeActiveCell] = [
 		new CTestEvent(createEvent(8, false, false, false, false, false))
@@ -802,31 +807,36 @@
 		new CTestEvent(createEvent(8, false, false, false, false, false))
 	];
 	oCellEditorEvents[oCellEditorTypes.removeWordBack] = [
-		new CTestEvent(createEvent(8, true, false, false, false, false))
+		new CTestEvent(createEvent(8, true, false, false, false, false), testWindows),
+		new CTestEvent(createEvent(8, false, false, true, false, false), testMacOs)
 	];
 	oCellEditorEvents[oCellEditorTypes.addSpace] = [
 		new CTestEvent(createEvent(32, true, false, false, false, false))
 	];
 	oCellEditorEvents[oCellEditorTypes.moveToEndLine] = [
-		new CTestEvent(createEvent(35, false, false, false, false, false))
+		new CTestEvent(createEvent(35, false, false, false, false, false)),
+		new CTestEvent(createEvent(oKeyCode.ArrowRight, false, false, false, false, true), testMacOs)
 	];
 	oCellEditorEvents[oCellEditorTypes.moveToEndDocument] = [
 		new CTestEvent(createEvent(35, true, false, false, false, false))
 	];
 	oCellEditorEvents[oCellEditorTypes.selectToEndLine] = [
-		new CTestEvent(createEvent(35, false, true, false, false, false))
+		new CTestEvent(createEvent(35, false, true, false, false, false)),
+		new CTestEvent(createEvent(oKeyCode.ArrowRight, false, true, false, false, true), testMacOs)
 	];
 	oCellEditorEvents[oCellEditorTypes.selectToEndDocument] = [
 		new CTestEvent(createEvent(35, true, true, false, false, false))
 	];
 	oCellEditorEvents[oCellEditorTypes.moveToStartLine] = [
-		new CTestEvent(createEvent(36, false, false, false, false, false))
+		new CTestEvent(createEvent(36, false, false, false, false, false)),
+		new CTestEvent(createEvent(oKeyCode.ArrowLeft, false, false, false, false, true), testMacOs)
 	];
 	oCellEditorEvents[oCellEditorTypes.moveToStartDocument] = [
 		new CTestEvent(createEvent(36, true, false, false, false, false))
 	];
 	oCellEditorEvents[oCellEditorTypes.selectToStartLine] = [
-		new CTestEvent(createEvent(36, false, true, false, false, false))
+		new CTestEvent(createEvent(36, false, true, false, false, false)),
+		new CTestEvent(createEvent(oKeyCode.ArrowLeft, false, true, false, false, true), testMacOs)
 	];
 	oCellEditorEvents[oCellEditorTypes.selectToStartDocument] = [
 		new CTestEvent(createEvent(36, true, true, false, false, false))
@@ -835,13 +845,15 @@
 		new CTestEvent(createEvent(37, false, false, false, false, false))
 	];
 	oCellEditorEvents[oCellEditorTypes.moveCursorLeftWord] = [
-		new CTestEvent(createEvent(37, true, false, false, false, false))
+		new CTestEvent(createEvent(37, true, false, false, false, false), testWindows),
+		new CTestEvent(createEvent(37, false, false, true, false, false), testMacOs)
 	];
 	oCellEditorEvents[oCellEditorTypes.selectLeftChar] = [
 		new CTestEvent(createEvent(37, false, true, false, false, false))
 	];
 	oCellEditorEvents[oCellEditorTypes.selectLeftWord] = [
-		new CTestEvent(createEvent(37, true, true, false, false, false))
+		new CTestEvent(createEvent(37, true, true, false, false, false), testWindows),
+		new CTestEvent(createEvent(37, false, true, true, false, false), testMacOs)
 	];
 	oCellEditorEvents[oCellEditorTypes.moveToUpLine] = [
 		new CTestEvent(createEvent(38, false, false, false, false, false))
@@ -853,13 +865,15 @@
 		new CTestEvent(createEvent(39, false, false, false, false, false))
 	];
 	oCellEditorEvents[oCellEditorTypes.moveToRightWord] = [
-		new CTestEvent(createEvent(39, true, false, false, false, false))
+		new CTestEvent(createEvent(39, true, false, false, false, false), testWindows),
+		new CTestEvent(createEvent(39, false, false, true, false, false), testMacOs),
 	];
 	oCellEditorEvents[oCellEditorTypes.selectRightChar] = [
 		new CTestEvent(createEvent(39, false, true, false, false, false))
 	];
 	oCellEditorEvents[oCellEditorTypes.selectRightWord] = [
-		new CTestEvent(createEvent(39, true, true, false, false, false))
+		new CTestEvent(createEvent(39, true, true, false, false, false), testWindows),
+		new CTestEvent(createEvent(39, false, true, true, false, false), testMacOs)
 	];
 	oCellEditorEvents[oCellEditorTypes.moveToDownLine] = [
 		new CTestEvent(createEvent(40, false, false, false, false, false))

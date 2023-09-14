@@ -517,6 +517,8 @@
 					  }
 				  }
 				  return null;
+			  }, "showFormulas": function () {
+				  self._onShowFormulas.apply(self, arguments);
 			  },
 
 
@@ -572,6 +574,10 @@
 					  }
 					  return !!list;
 				  }
+			  },
+
+			  "onShowFilterOptionsActiveCell": function () {
+				  return self.getWorksheet().showAutoFilterOptionsFromActiveCell();
 			  },
 
 			  // FormatPainter
@@ -943,7 +949,7 @@
     });
     this.model.handlers.add("changeDocument", function(prop, arg1, arg2, wsId) {
       self.SearchEngine && self.SearchEngine.changeDocument(prop, arg1, arg2);
-      let ws = wsId && self.getWorksheetById(wsId);
+      let ws = wsId && self.getWorksheetById(wsId, true);
       if (ws) {
         ws.traceDependentsManager.changeDocument(prop, arg1, arg2);
       }
@@ -1867,6 +1873,12 @@
            this._onUpdateWorksheet(oTargetInfo.coordX, oTargetInfo.coordY, false);
         }
     }
+  };
+
+  WorkbookView.prototype._onShowFormulas = function () {
+    let ws = this.getWorksheet();
+    let showFormulasVal = ws.model && ws.model.getShowFormulas();
+    ws.changeSheetViewSettings(AscCH.historyitem_Worksheet_SetShowFormulas, !showFormulasVal);
   };
 
   // Shapes
