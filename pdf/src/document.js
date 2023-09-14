@@ -733,17 +733,16 @@ var CPresentation = CPresentation || function(){};
         }
 
         // если курсор меняется на resize, то клик по нему выходит за область поля или аннотации, отслеживаем этот момент и не убираем поле/аннотацию из активных
-        let {X, Y} = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
-        let bInResizeRect = oDrawingObjects.updateCursorType(oViewer.currentPage, X, Y, e, false);
+        let {X, Y}  = oDrDoc.ConvertCoordsFromCursor2(e.clientX, e.clientY);
+        let bInRect = oDrawingObjects.updateCursorType(oViewer.currentPage, X, Y, e, false);
         
         if (IsOnDrawer == false && false == IsOnEraser) {
-            if (bInResizeRect) {
-                if (oMouseDownField && !oDrawingObjects.selectedObjects.includes(this.mouseDownField)) {
+            if (bInRect) {
+                if (oMouseDownField && (this.mouseDownAnnot != oMouseDownAnnot && !oDrawingObjects.selectedObjects.includes(this.mouseDownAnnot))) {
                     this.mouseDownField = oMouseDownField;
                     this.mouseDownAnnot = null;
                 }
-                    
-                else if (oMouseDownAnnot && !oDrawingObjects.selectedObjects.includes(this.mouseDownAnnot)) {
+                else if (oMouseDownAnnot && !oDrawingObjects.selectedObjects.includes(oMouseDownAnnot)) {
                     this.mouseDownAnnot = oMouseDownAnnot;
                     this.mouseDownField = null;
                 }

@@ -2456,8 +2456,8 @@
 				oDoc.activeForm = null;
 			}
 
-			this._paintForms();
 			this._paintAnnots();
+			this._paintForms();
 			this._paintFormsHighlight();
 			this._paintComboboxesMarkers();
 		};
@@ -3217,7 +3217,6 @@
 	CHtmlPage.prototype._paintForms = function()
 	{
 		const ctx = this.canvasForms.getContext('2d');
-		ctx.clearRect(0, 0, this.canvasForms.width, this.canvasForms.height);
 		ctx.globalAlpha = 1;
 		
 		let xCenter = this.width >> 1;
@@ -3305,7 +3304,7 @@
 	CHtmlPage.prototype._paintAnnots = function()
 	{
 		const ctx = this.canvasForms.getContext('2d');
-		// ctx.clearRect(0, 0, this.canvasForms.width, this.canvasForms.height);
+		ctx.clearRect(0, 0, this.canvasForms.width, this.canvasForms.height);
 		
 		let xCenter = this.width >> 1;
 		let yPos = this.scrollY >> 0;
