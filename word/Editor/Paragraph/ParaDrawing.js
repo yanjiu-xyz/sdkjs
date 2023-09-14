@@ -77,12 +77,11 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 	this.DocumentContent = DocumentContent;
 	this.DrawingDocument = DrawingDocument;
 	this.Parent          = Parent;
-	this.LogicDocument = DrawingDocument ? DrawingDocument.m_oLogicDocument : null;
-	if(!this.LogicDocument)
-	{
-		this.LogicDocument = Asc.editor && Asc.editor.WordControl && Asc.editor.WordControl.m_oLogicDocument || null;
-	}
-
+	this.LogicDocument   = DrawingDocument ? DrawingDocument.m_oLogicDocument : null;
+	
+	if (!this.LogicDocument && Asc.editor)
+		this.LogicDocument = Asc.editor.getLogicDocument();
+	
 	// Расстояние до окружающего текста
 	this.Distance = {
 		T : 0,
@@ -165,11 +164,8 @@ function ParaDrawing(W, H, GraphicObj, DrawingDocument, DocumentContent, Parent)
 
 	this.document        = this.LogicDocument;
 	this.drawingDocument = DrawingDocument;
-	if (editor.WordControl.m_oLogicDocument)
-		this.graphicObjects  = editor.WordControl.m_oLogicDocument.DrawingObjects;
-	else if (editor.isPdfEditor()) {
-		this.graphicObjects = editor.DocumentRenderer.DrawingObjects;
-	}
+	this.graphicObjects  = this.LogicDocument ? this.LogicDocument.getDrawingObjects() : null;
+	
 	this.selected        = false;
 
 	this.behindDoc    = false;

@@ -108,6 +108,9 @@
 	PDFEditorApi.prototype.isPdfEditor = function() {
 		return true;
 	};
+	PDFEditorApi.prototype.getLogicDocument = function() {
+		return this.getPDFDoc();
+	};
 	PDFEditorApi.prototype.isFieldFillingMode = function() {
 		return this.DocumentRenderer ? this.DocumentRenderer.fieldFillingMode : false;
 	};

@@ -15593,6 +15593,10 @@ CDocument.prototype.GetDrawingObjects = function()
 {
 	return this.DrawingObjects;
 };
+CDocument.prototype.getDrawingObjects = function()
+{
+	return this.DrawingObjects;
+};
 CDocument.prototype.Get_Api = function()
 {
 	return this.Api;

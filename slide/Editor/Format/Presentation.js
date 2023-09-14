@@ -12473,6 +12473,9 @@ CPresentation.prototype.createNecessaryObjectsIfNoPresent = function () {
 		this.checkViewPr().addHorizontalGuide();
 	}
 };
+CPresentation.prototype.getDrawingObjects = function() {
+	return null;
+};
 
 function collectSelectedObjects(aSpTree, aCollectArray, bRecursive, oIdMap, bSourceFormatting) {
 	var oSp;

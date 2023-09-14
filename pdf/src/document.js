@@ -2004,7 +2004,13 @@ var CPresentation = CPresentation || function(){};
 	CPDFDoc.prototype.IsFillingFormMode = function() {
 		return false;
 	};
-
+	CPDFDoc.prototype.getDrawingObjects = function() {
+		if (!this.Viewer)
+			return null;
+		
+		return this.Viewer.DrawingObjects;
+	};
+	
     function CActionQueue(oDoc) {
         this.doc            = oDoc;
         this.actions        = [];
