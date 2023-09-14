@@ -742,42 +742,38 @@ function CEditorPage(api)
 
 	this.UpdateHorRuler = function()
 	{
-		if (!this.m_bIsRuler)
+		if (!this.m_bIsRuler || this.m_oApi.isDocumentRenderer())
 			return;
 
 		var _left = 0;
-		if (!editor.isDocumentRenderer()) {
-			var lPage = this.m_oDrawingDocument.m_lCurrentPage;
-			if (0 <= lPage && lPage < this.m_oDrawingDocument.m_lPagesCount)
-			{
-				_left = this.m_oDrawingDocument.m_arrPages[lPage].drawingPage.left;
-			}
-			else if (this.m_oDrawingDocument.m_lPagesCount != 0)
-			{
-				_left = this.m_oDrawingDocument.m_arrPages[this.m_oDrawingDocument.m_lPagesCount - 1].drawingPage.left;
-			}
+		var lPage = this.m_oDrawingDocument.m_lCurrentPage;
+		if (0 <= lPage && lPage < this.m_oDrawingDocument.m_lPagesCount)
+		{
+			_left = this.m_oDrawingDocument.m_arrPages[lPage].drawingPage.left;
 		}
-		
+		else if (this.m_oDrawingDocument.m_lPagesCount != 0)
+		{
+			_left = this.m_oDrawingDocument.m_arrPages[this.m_oDrawingDocument.m_lPagesCount - 1].drawingPage.left;
+		}
+
 		this.m_oHorRuler.BlitToMain(_left, 0, this.m_oTopRuler_horRuler.HtmlElement);
 	};
 	this.UpdateVerRuler = function()
 	{
-		if (!this.m_bIsRuler)
+		if (!this.m_bIsRuler || this.m_oApi.isDocumentRenderer())
 			return;
 
 		var _top  = 0;
-		if (!editor.isDocumentRenderer()) {
-			var lPage = this.m_oDrawingDocument.m_lCurrentPage;
-			if (0 <= lPage && lPage < this.m_oDrawingDocument.m_lPagesCount)
-			{
-				_top = this.m_oDrawingDocument.m_arrPages[lPage].drawingPage.top;
-			}
-			else if (this.m_oDrawingDocument.m_lPagesCount != 0)
-			{
-				_top = this.m_oDrawingDocument.m_arrPages[this.m_oDrawingDocument.m_lPagesCount - 1].drawingPage.top;
-			}
+		var lPage = this.m_oDrawingDocument.m_lCurrentPage;
+		if (0 <= lPage && lPage < this.m_oDrawingDocument.m_lPagesCount)
+		{
+			_top = this.m_oDrawingDocument.m_arrPages[lPage].drawingPage.top;
 		}
-		
+		else if (this.m_oDrawingDocument.m_lPagesCount != 0)
+		{
+			_top = this.m_oDrawingDocument.m_arrPages[this.m_oDrawingDocument.m_lPagesCount - 1].drawingPage.top;
+		}
+
 		this.m_oVerRuler.BlitToMain(0, _top, this.m_oLeftRuler_vertRuler.HtmlElement);
 	};
 
