@@ -293,19 +293,23 @@
 				}
 				case SpeechWorkerType.SheetSelected:
 				{
-					let isEmpty = (0 === obj.cellsCount && 0 === obj.objectsCount) ? true : false;
+					//ms read after "objects" only selection
+					//we read selection in next command
+					let isEmpty = 0 === obj.cellsCount && 0 === obj.objectsCount;
 					let result = "";
 					if (isEmpty)
 					{
-						result = obj.name + " " + translateManager.getValue("empty sheet ") + obj.cell;
+						//ms not read it, read only else
+						result = obj.name + " " + translateManager.getValue("empty sheet ") /*+ obj.cell*/;
 					}
 					else
 					{
 						result = obj.name + " " + translateManager.getValue("end of sheet ") + obj.cellEnd + " " +
-							obj.cellsCount + " " + translateManager.getValue("cells") +
-							obj.objectsCount + " " + translateManager.getValue("objects") +
-							obj.text + " " + obj.cell;
+							obj.cellsCount + " " + translateManager.getValue("cells") + " "
+							obj.objectsCount + " " + translateManager.getValue("objects") /*+
+							obj.text + " " + obj.cell*/;
 					}
+					console.log(result);
 					this.speechElement.innerHTML = result;
 					break;
 				}
@@ -321,6 +325,7 @@
 	const SpeakerActionType = {
 		unknown : 0,
 		keyDown : 1,
+		sheetChange : 2
 	};
 	
 	/**
@@ -360,6 +365,9 @@
 		
 		this.editor.asc_registerCallback('asc_onBeforeKeyDown', this.onBeforeKeyDown);
 		this.editor.asc_registerCallback('asc_onKeyDown', this.onKeyDown);
+
+		//se
+		this.editor.asc_registerCallback('asc_onActiveSheetChanged', this.onActiveSheetChanged);
 		
 		this.selectionState = this.editor.getSelectionState();
 		this.actionInProgress = false;
@@ -378,6 +386,9 @@
 		
 		this.editor.asc_unregisterCallback('asc_onBeforeKeyDown', this.onBeforeKeyDown);
 		this.editor.asc_unregisterCallback('asc_onKeyDown', this.onKeyDown);
+
+		//se
+		this.editor.asc_unregisterCallback('asc_onActiveSheetChanged', this.onActiveSheetChanged);
 		
 		this.selectionState = null;
 		this.speechWorker.setEnabled(false);
@@ -419,6 +430,11 @@
 		{
 			_t.isKeyDown = false;
 			_t.handleSpeechDescription({type: SpeakerActionType.keyDown, event : e});
+		};
+
+		this.onActiveSheetChanged = function(index)
+		{
+			_t.handleSpeechDescription({type: SpeakerActionType.sheetChange, index : index});
 		};
 		
 	};

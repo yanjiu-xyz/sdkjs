@@ -1828,10 +1828,66 @@
 	};
 
 	WorksheetView.prototype.getSpeechDescription = function (prevState, curState, action) {
+		let res = null;
+
 		if (action) {
-			return null;
+			res = this._getSpeechDescriptionAction(prevState, curState, action);
+		} else {
+			res = this._getSpeechDescriptionSelection(prevState, curState);
 		}
 
+		return res;
+	};
+
+	WorksheetView.prototype._getSpeechDescriptionAction = function (prevState, curState, action) {
+		let obj = null, type = null;
+		if (action) {
+			switch (action.type) {
+				case AscCommon.SpeakerActionType.sheetChange: {
+					obj = {};
+
+					obj.name = this.model.sName;
+
+					let endCol = Math.max(this.model.getColsCount() - 1, 0);
+					let endRow = Math.max(this.model.getRowsCount() - 1, 0);
+					obj.cellEnd = new asc_Range(endCol, endRow, endCol, endRow).getName();
+
+					obj.cellsCount = this.model.getCountNoEmptyCells();
+					obj.objectsCount = this.model.Drawings ? this.model.Drawings.length : 0;
+
+					//read on change selection
+					/*let curRange = curState && curState.ranges && curState.ranges[0];
+					if (curRange) {
+						let oCell, text;
+						if (curRange.isOneCell()) {
+							oCell = this._getVisibleCell(curRange.c1, curRange.r1);
+							obj.text = oCell && oCell.getValueForEdit();
+							obj.cell = oCell.getName();
+						} else {
+							oCell = this._getVisibleCell(curRange.c1, curRange.r1);
+							text = oCell && oCell.getValueForEdit();
+							let startObj = {text: text === "" ? null : text, cell: oCell.getName()};
+
+							oCell = this._getVisibleCell(curRange.c2, curRange.r2);
+							text = oCell && oCell.getValueForEdit();
+							let endOnj = {text: text === "" ? null : text, cell: oCell.getName()};
+
+							obj.start = startObj;
+							obj.end = endOnj;
+						}
+					}*/
+
+					type = AscCommon.SpeechWorkerCommands.SheetSelected;
+
+					break;
+				}
+			}
+		}
+
+		return obj ? {type: type, obj: obj} : null;
+	};
+
+	WorksheetView.prototype._getSpeechDescriptionSelection = function (prevState, curState) {
 		let type = null, text = null, obj = null;
 		let oCell, oCellRange, curRange;
 		if (prevState && curState && prevState.ranges && curState.ranges && prevState.ranges.length === 1 && prevState.ranges.length === curState.ranges.length) {
