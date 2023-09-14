@@ -4649,7 +4649,7 @@ CGraphicObjects.prototype.hitInGuide = function(x, y) {
 CGraphicObjects.prototype.onInkDrawerChangeState = DrawingObjectsController.prototype.onInkDrawerChangeState;
 CGraphicObjects.prototype.setDrawingDocPosType = function() {
 	const oDoc = this.document;
-	if(oDoc) {
+	if(oDoc && false == this.api.isDocumentRenderer()) {
 		if (AscCommonWord.docpostype_HdrFtr !== oDoc.CurPos.Type) {
 			oDoc.SetDocPosType(AscCommonWord.docpostype_DrawingObjects);
 			oDoc.Selection.Use   = true;

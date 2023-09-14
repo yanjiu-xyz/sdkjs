@@ -119,7 +119,7 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
 	{
 		this.DrawingDocument = DrawingDocument;
 		this.LogicDocument   = this.DrawingDocument.m_oLogicDocument;
-		this.bFromDocument   = bFromPresentation === true ? false : !!this.LogicDocument;
+		this.bFromDocument   = bFromPresentation === true ? false : DrawingDocument.m_oDocumentRenderer ? true : !!this.LogicDocument;
 	}
     else
     {
@@ -2101,8 +2101,6 @@ Paragraph.prototype.Internal_Draw_2 = function(CurPage, pGraphics, Pr)
 Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 {
 	var LogicDocument = this.LogicDocument;
-	if (!LogicDocument)
-		return;
 
 	var bDrawBorders = this.Is_NeedDrawBorders();
 	if (true === bDrawBorders && 0 === CurPage && true === this.private_IsEmptyPageWithBreak(CurPage))
@@ -2114,19 +2112,19 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 
 	var _Page = this.Pages[CurPage];
 
-	var DocumentComments = LogicDocument.Comments;
+	var DocumentComments = LogicDocument && LogicDocument.Comments;
 	var Page_abs         = this.Get_AbsolutePage(CurPage);
 
 	var DrawComm           = DocumentComments ? DocumentComments.Is_Use() : false;
-	var DrawFind           = LogicDocument.SearchEngine.Selection;
+	var DrawFind           = LogicDocument && LogicDocument.IsDocumentEditor() && LogicDocument.SearchEngine.Selection;
 	var DrawColl           = undefined !== pGraphics.RENDERER_PDF_FLAG;
-	var DrawMMFields       = !!(this.LogicDocument && this.LogicDocument.Is_HighlightMailMergeFields && true === this.LogicDocument.Is_HighlightMailMergeFields());
+	var DrawMMFields       = LogicDocument && !!(this.LogicDocument && this.LogicDocument.Is_HighlightMailMergeFields && true === this.LogicDocument.Is_HighlightMailMergeFields());
 	var DrawSolvedComments = DocumentComments ? DocumentComments.IsUseSolved() : false;
 
-	var SdtHighlightColor  = this.LogicDocument.GetSdtGlobalShowHighlight && this.LogicDocument.GetSdtGlobalShowHighlight() ? this.LogicDocument.GetSdtGlobalColor() : null;
-	var FormsHighlight     = this.LogicDocument.GetSpecialFormsHighlight && this.LogicDocument.GetSpecialFormsHighlight() ? this.LogicDocument.GetSpecialFormsHighlight() : null;
+	var SdtHighlightColor  = LogicDocument && this.LogicDocument.GetSdtGlobalShowHighlight && this.LogicDocument.GetSdtGlobalShowHighlight() ? this.LogicDocument.GetSdtGlobalColor() : null;
+	var FormsHighlight     = LogicDocument && this.LogicDocument.GetSpecialFormsHighlight && this.LogicDocument.GetSpecialFormsHighlight() ? this.LogicDocument.GetSpecialFormsHighlight() : null;
 
-	if (false === this.LogicDocument.ForceDrawFormHighlight
+	if (!LogicDocument || false === this.LogicDocument.ForceDrawFormHighlight
 		|| (true !== this.LogicDocument.ForceDrawFormHighlight && undefined !== pGraphics.RENDERER_PDF_FLAG))
 	{
 		SdtHighlightColor = null;
@@ -2191,9 +2189,9 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 				var oSdtBounds;
 
 				let isDrawFormHighlight = !pGraphics.isPrintMode;
-				if (true === LogicDocument.ForceDrawFormHighlight)
+				if (LogicDocument && true === LogicDocument.ForceDrawFormHighlight)
 					isDrawFormHighlight = true;
-				else if (false === LogicDocument.ForceDrawFormHighlight)
+				else if (!LogicDocument || false === LogicDocument.ForceDrawFormHighlight)
 					isDrawFormHighlight = false;
 
 				for (var nSdtIndex = 0, nSdtCount = PDSH.InlineSdt.length; nSdtIndex < nSdtCount; ++nSdtIndex)
@@ -8474,6 +8472,9 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 		this.GetSelectedElementsInfo(oInfo);
 		oFillingCC = oInfo.GetInlineLevelSdt();
 	}
+	// если пдф форма
+	if (this.Parent && this.Parent.ParentPDF)
+		oFillingCC = this.Parent.ParentPDF;
 
 	switch (this.Selection.Flag)
 	{
@@ -18534,7 +18535,10 @@ Paragraph.prototype.GetInnerForm = function()
 Paragraph.prototype.IsInFixedForm = function()
 {
 	var oShape = this.Parent ? this.Parent.Is_DrawingShape(true) : null;
-	return (oShape && oShape.isForm());
+	if (oShape && oShape.isForm())
+		return true;
+
+	return false;
 };
 Paragraph.prototype.GetParentShape = function()
 {
@@ -19390,7 +19394,8 @@ CParagraphDrawStateHighlights.prototype.Reset = function(Paragraph, Graphics, Dr
 		}
 	}
 
-	this.Check_CommentsFlag();
+	if (Paragraph.LogicDocument)
+		this.Check_CommentsFlag();
 };
 CParagraphDrawStateHighlights.prototype.Reset_Range = function(Page, Line, Range, X, Y0, Y1, SpacesCount)
 {
@@ -19453,10 +19458,10 @@ CParagraphDrawStateHighlights.prototype.RemoveComment = function(Id)
 };
 CParagraphDrawStateHighlights.prototype.Check_CommentsFlag = function()
 {
-	if(!this.Paragraph.bFromDocument)
-	{
+	let logicDocument = this.Paragraph.LogicDocument;
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
 		return;
-	}
+
 	// Проверяем флаг
 	var Para             = this.Paragraph;
 	var DocumentComments = Para.LogicDocument.Comments;

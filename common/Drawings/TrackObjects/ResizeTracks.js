@@ -861,7 +861,19 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                 this.resizedflipH = false;
                 this.resizedflipV = false;
             }
-            this.geometry.Recalculate(this.resizedExtX, this.resizedExtY);
+            
+            if (editor.isPdfEditor()) {
+                let xMin = this.resizedPosX;
+                let xMax = this.resizedPosX + this.resizedExtX;
+                let yMin = this.resizedPosY;
+                let yMax = this.resizedPosY + this.resizedExtY;
+                
+                this.originalObject.RefillGeometry(this.geometry, [xMin, yMin, xMax, yMax]);
+            }
+            else {
+                this.geometry.Recalculate(this.resizedExtX, this.resizedExtY);
+            }
+
             this.overlayObject.updateExtents(this.resizedExtX, this.resizedExtY);
 
             this.recalculateTransform();

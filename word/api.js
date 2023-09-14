@@ -5819,6 +5819,14 @@ background-repeat: no-repeat;\
 						oApi.WordControl.m_oLogicDocument.AddPlaceholderImages(arrImages, oOptionObject);
 					}
 				}
+				else if (this.isPdfEditor() && oOptionObject && oOptionObject.GetType() === AscPDF.FIELD_TYPES.button)
+				{
+					const oImage = oApi.ImageLoader.LoadImage(arrUrls[0], 1);
+					if(oImage && oImage.Image)
+					{
+						oOptionObject.AddImage(oImage);
+					}
+				}
 				else if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Content))
 				{
 					const arrImages = [];
@@ -14666,4 +14674,6 @@ background-repeat: no-repeat;\
         AscCommon.g_font_loader.LoadDocumentFonts2(_fonts);
 	};
 
+	AscCommon['DocumentEditorApi'] = AscCommon.DocumentEditorApi = asc_docs_api;
+	
 })(window, window.document);

@@ -2221,6 +2221,10 @@ CDocument.prototype.IsSpreadSheetEditor = function()
 {
 	return false;
 };
+CDocument.prototype.IsPdfEditor = function()
+{
+	return false;
+};
 CDocument.prototype.Init                           = function()
 {
 
@@ -15586,6 +15590,10 @@ CDocument.prototype.GetDrawingDocument = function()
 	return this.DrawingDocument;
 };
 CDocument.prototype.GetDrawingObjects = function()
+{
+	return this.DrawingObjects;
+};
+CDocument.prototype.getDrawingObjects = function()
 {
 	return this.DrawingObjects;
 };
