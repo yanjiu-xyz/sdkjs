@@ -5105,7 +5105,6 @@ CPresentation.prototype.Recalculate = function (RecalcData) {
 		this.DrawingDocument.UnLockSlide(this.slidesToUnlock[i]);
 	}
 	this.slidesToUnlock.length = 0;
-	this.private_UpdateCursorXY(true, true);
 	if (this.Slides[this.CurPage]) {
 		if (this.DrawingDocument.placeholders)
 			this.DrawingDocument.placeholders.update(this.Slides[this.CurPage].getPlaceholdersControls());
