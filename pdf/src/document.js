@@ -738,14 +738,29 @@ var CPresentation = CPresentation || function(){};
         
         if (IsOnDrawer == false && false == IsOnEraser) {
             if (bInResizeRect) {
-                if (!oDrawingObjects.selectedObjects.includes(this.mouseDownAnnot) || (oMouseDownAnnot))
-                    this.mouseDownAnnot = oMouseDownAnnot;
-                if (!oDrawingObjects.selectedObjects.includes(this.mouseDownField))
+                if (oMouseDownField && !oDrawingObjects.selectedObjects.includes(this.mouseDownField)) {
                     this.mouseDownField = oMouseDownField;
+                    this.mouseDownAnnot = null;
+                }
+                    
+                else if (oMouseDownAnnot && !oDrawingObjects.selectedObjects.includes(this.mouseDownAnnot)) {
+                    this.mouseDownAnnot = oMouseDownAnnot;
+                    this.mouseDownField = null;
+                }
             }
             else {
-                this.mouseDownAnnot = oMouseDownAnnot;
-                this.mouseDownField = oMouseDownField;
+                if (oMouseDownField) {
+                    this.mouseDownField = oMouseDownField;
+                    this.mouseDownAnnot = null;
+                }
+                else if (oMouseDownAnnot) {
+                    this.mouseDownAnnot = oMouseDownAnnot;
+                    this.mouseDownField = null;
+                }
+                else {
+                    this.mouseDownAnnot = null;
+                    this.mouseDownField = null;
+                }
             }
         }
 

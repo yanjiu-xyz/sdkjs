@@ -276,7 +276,7 @@
 
 				if (_text_format && _text_format != "")
 				{
-					this.Api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Text, undefined, undefined, _text_format);
+					this.Api.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.Text, _text_format);
 					g_clipboardBase.Paste_End();
 					return false;
 				}

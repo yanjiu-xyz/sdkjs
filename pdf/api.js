@@ -166,7 +166,8 @@
 		
 		var _text_object = (AscCommon.c_oAscClipboardDataFormat.Text & _formats) ? {Text : ""} : null;
 		var _html_data;
-		var oActiveForm = this.DocumentRenderer.activeForm;
+		let oDoc = this.DocumentRenderer.getPDFDoc();
+		var oActiveForm = oDoc.activeForm;
 		if (oActiveForm && oActiveForm.content.IsSelectionUse()) {
 			let sText = oActiveForm.content.GetSelectedText(true);
 			if (!sText)
@@ -188,8 +189,8 @@
 	PDFEditorApi.prototype.asc_SelectionCut = function() {
 		if (!this.DocumentRenderer)
 			return;
-		
-		let oField = this.DocumentRenderer.activeForm;
+		let oDoc = this.DocumentRenderer.getPDFDoc();
+		let oField = oDoc.activeForm;
 		if (oField && (oField.GetType() === AscPDF.FIELD_TYPES.text || (oField.GetType() === AscPDF.FIELD_TYPES.combobox && oField.IsEditable()))) {
 			if (oField.content.IsSelectionUse()) {
 				oField.Remove(-1);
@@ -204,14 +205,17 @@
 		if (!this.DocumentRenderer)
 			return;
 		
-		let oField = this.DocumentRenderer.activeForm;
-		if (text_data.length === 0)
+		let oDoc = this.DocumentRenderer.getPDFDoc();
+		let oField = oDoc.activeForm;
+		let data = text_data || data1;
+
+		if (!data)
 			return;
 		
 		if (oField && (oField.GetType() === AscPDF.FIELD_TYPES.text || (oField.GetType() === AscPDF.FIELD_TYPES.combobox && oField.IsEditable()))) {
 			let aChars = [];
-			for (let i = 0; i < text_data.length; i++)
-				aChars.push(text_data[i].charCodeAt(0));
+			for (let i = 0; i < data.length; i++)
+				aChars.push(data[i].charCodeAt(0));
 			
 			oField.EnterText(aChars);
 			this.WordControl.m_oDrawingDocument.showTarget(true);
