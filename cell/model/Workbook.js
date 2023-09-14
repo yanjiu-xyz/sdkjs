@@ -3366,9 +3366,11 @@
 				oThis.snapshot = oThis._getSnapshot();
 				if(null != fCallback)
 					fCallback();
+				Asc.editor.sendEvent("asc_onSelectionEnd");
 			});
 		} else if(null != fCallback) {
 			fCallback();
+			Asc.editor.sendEvent("asc_onSelectionEnd");
 		}
 	};
 	Workbook.prototype.DeserializeHistoryNative = function(oRedoObjectParam, data, isFull){
