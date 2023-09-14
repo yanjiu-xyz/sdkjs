@@ -87,7 +87,7 @@
 			return;
 
 		let oDocument = this.Paragraph.GetLogicDocument();
-		if (!oDocument || (!oDocument.IsDocumentEditor() && !oDocument.IsPresentationEditor() && !oDocument.IsPdfEditor()))
+		if (!oDocument || (!oDocument.IsDocumentEditor() && !oDocument.IsPresentationEditor()))
 			return;
 
 		this.Document = oDocument;
