@@ -5302,13 +5302,19 @@
 				for (let i in to) {
 					let cellFrom = AscCommonExcel.getFromCellIndex(from, true);
 					if (-1 !== i.indexOf(";")) {
-						if (visibleRange.contains2(cellFrom) && !otherSheetMap[from]) {
+						if (!otherSheetMap[from]) {
 							doDrawArrow(cellFrom, null, true, false);
 						}
 					} else {
 						let cellTo = AscCommonExcel.getFromCellIndex(i, true);
 						if (visibleRange.contains2(cellFrom) || visibleRange.contains2(cellTo)) {
 							doDrawArrow(cellFrom, cellTo, false, isPrecedent);
+						} else {
+							let range = new Asc.Range(cellFrom.col, cellFrom.row, cellTo.col, cellTo.row);
+							range.normalize();
+							if (visibleRange.isIntersect(range)) {
+								doDrawArrow(cellFrom, cellTo, false, isPrecedent);
+							}
 						}
 					}
 				}
@@ -5318,8 +5324,7 @@
 		traceManager.forEachExternalPrecedent(function (from) {
 			if (from) {
 				let cellFrom = AscCommonExcel.getFromCellIndex(from, true);
-				// check if cellIndex exist in precedentExternal array
-				if (traceManager.checkPrecedentExternal(+from) && visibleRange.contains2(cellFrom)) {
+				if (traceManager.checkPrecedentExternal(+from)) {
 					doDrawArrow(cellFrom, null, true, true);
 				}
 			}
