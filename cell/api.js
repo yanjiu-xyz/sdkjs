@@ -8905,15 +8905,12 @@ var editor;
 
 		return wb.getSelectionState();
 	};
-	spreadsheet_api.prototype.getSpeechDescription = function(prevState) {
-		//return
-		//{obj : {text: '...'}, type: }
+	spreadsheet_api.prototype.getSpeechDescription = function(prevState, action) {
 		let wb = this.wb;
 		if (!wb) {
 			return;
 		}
-
-		return wb.getSpeechDescription(prevState, wb.getSelectionState());
+		return wb.getSpeechDescription(prevState, wb.getSelectionState(), action);
 	};
 
   /*

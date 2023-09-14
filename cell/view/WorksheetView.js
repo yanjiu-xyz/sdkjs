@@ -1827,7 +1827,11 @@
 		return this.model.getSelection().clone();
 	};
 
-	WorksheetView.prototype.getSpeechDescription = function (prevState, curState) {
+	WorksheetView.prototype.getSpeechDescription = function (prevState, curState, action) {
+		if (action) {
+			return null;
+		}
+
 		let type = null, text = null, obj = null;
 		let oCell, oCellRange, curRange;
 		if (prevState && curState && prevState.ranges && curState.ranges && prevState.ranges.length === 1 && prevState.ranges.length === curState.ranges.length) {

@@ -652,6 +652,7 @@
         if (self.isCellEditMode) {
           self.cellEditor._onWindowKeyDown(event, false);
         }
+        self.Api.sendEvent("asc_onKeyDown", event);
       };
       this.Api.onKeyPress = function (event) {
         self.controller._onWindowKeyPress(event);
@@ -5491,16 +5492,16 @@
 		return res;
 	};
 
-	WorkbookView.prototype.getSpeechDescription = function(prevState, curState) {
+	WorkbookView.prototype.getSpeechDescription = function(prevState, curState, action) {
 		let res = null;
 		let ws = this.getWorksheet();
 		if (ws.objectRender.selectedGraphicObjectsExists()) {
 
 		} else {
 			if (!this.getCellEditMode()) {
-				res = ws && ws.getSpeechDescription(prevState, curState);
+				res = ws && ws.getSpeechDescription(prevState, curState, action);
 			} else {
-				res = this.cellEditor.getSpeechDescription(prevState, curState);
+				res = this.cellEditor.getSpeechDescription(prevState, curState, action);
 			}
 		}
 		return res;

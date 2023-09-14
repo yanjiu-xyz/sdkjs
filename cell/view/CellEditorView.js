@@ -2434,6 +2434,7 @@
 			hieroglyph = true;
 		}
 
+		let api = window["Asc"]["editor"];
 		switch (event.which) {
 
 			case 27:  // "esc"
@@ -2745,7 +2746,6 @@
 				break;
 
 			case 110: //NumpadDecimal
-				var api = window["Asc"]["editor"];
 				t._addChars(api.asc_getDecimalSeparator());
 				event.stopPropagation();
 				event.preventDefault();
@@ -2773,7 +2773,6 @@
 			case 59:
 			case 186: // ctrl + (shift) + ;
 				if (ctrlKey) {
-					var api = window["Asc"]["editor"];
 					var oDate = new Asc.cDate();
 					t._addChars(event.shiftKey ? oDate.getTimeString(api) : oDate.getDateString(api));
 					event.stopPropagation();
@@ -2784,8 +2783,10 @@
 		}
 
 		t._setSkipKeyPress(false);
-		//this.speechController.skipAction();
 		t.skipTLUpdate = true;
+
+		api.sendEvent("asc_onKeyDown", event);
+
 		return true;
 	};
 
@@ -3137,12 +3138,12 @@
 		return {start: this.selectionBegin, end: this.selectionEnd, cursor: this.cursorPos};
 	};
 
-	CellEditor.prototype.getSpeechDescription = function (prevState, curState) {
+	CellEditor.prototype.getSpeechDescription = function (prevState, curState, action) {
 		if (curState.start === prevState.start && curState.end === prevState.end && prevState.cursor === curState.cursor) {
 			return null;
 		}
 
-		let type, text = null, t = this;
+		let type = null, text = null, t = this;
 
 		let compareSelection = function () {
 			let _begin = Math.min(curState.start, curState.end);
@@ -3200,19 +3201,74 @@
 			text = t.getText(_cursorPos, _cursorPosNextWord - _cursorPos);
 		};
 
-		//todo need type for word/sym diference
-		/*switch (this.action) {
-			case kPrevWord:
-			case kNextWord:
+		if (action) {
+			let bWord = false;
+			if (AscCommon.SpeakerActionType.keyDown === action.type) {
+				if (!this.enableKeyEvents || !t.hasFocus) {
+					return null;
+				}
+
+				let event = action.event;
+				let isWizard = this.handlers.trigger('getWizard');
+				if (!action.event || isWizard || !t.isOpened || (!t.enableKeyEvents && event.emulated !== true)) {
+					return null;
+				}
+
+				var ctrlKey = !AscCommon.getAltGr(event) && (event.metaKey || event.ctrlKey);
+				const bIsMacOs = AscCommon.AscBrowser.isMacOs;
+
+				switch (event.which) {
+					case 8:   // "backspace"
+						/*const bIsWord = bIsMacOs ? event.altKey : ctrlKey;
+						t._removeChars(bIsWord ? kPrevWord : kPrevChar);*/
+						break;
+					case 35:  // "end"
+						/*kind = ctrlKey ? kEndOfText : kEndOfLine;
+						event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);
+						return false;*/
+						break;
+					case 36:  // "home"
+						/*kind = ctrlKey ? kBeginOfText : kBeginOfLine;
+						event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);*/
+						break;
+					case 37:  // "left"
+						if (bIsMacOs && ctrlKey) {
+							//event.shiftKey ? t._selectChars(kBeginOfLine) : t._moveCursor(kBeginOfLine);
+						} else {
+							bWord = bIsMacOs ? event.altKey : ctrlKey;
+							/*kind = bWord ? kPrevWord : kPrevChar;
+							event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);*/
+						}
+
+						break;
+					case 38:  // "up"
+						//event.shiftKey ? t._selectChars(kPrevLine) : t._moveCursor(kPrevLine);
+						break;
+					case 39:  // "right"
+						if (bIsMacOs && ctrlKey) {
+							//event.shiftKey ? t._selectChars(kEndOfLine) : t._moveCursor(kEndOfLine);
+						} else {
+							bWord = bIsMacOs ? event.altKey : ctrlKey;
+							/*kind = bWord ? kNextWord : kNextChar;
+							event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);*/
+						}
+						break;
+
+					case 40:  // "down"
+						//event.shiftKey ? t._selectChars(kNextLine) : t._moveCursor(kNextLine);
+						break;
+				}
+			}
+			if (bWord) {
 				getWord();
-				break;
-			default:
+			} else {
 				compareSelection();
-		}*/
+			}
+		} else {
+			compareSelection();
+		}
 
-		compareSelection();
-
-		return {type: type, obj: {text: text}};
+		return type !== null ? {type: type, obj: {text: text}} : null;
 	};
 
 
