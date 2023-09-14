@@ -11043,11 +11043,16 @@
 		}
 
 		function getSpeechDescription(aSelectionState1, aSelectionState2, action) {
-			if(!Array.isArray(aSelectionState1) || !Array.isArray(aSelectionState2)) {
+			let aSelectionState1_ = aSelectionState1;
+			let aSelectionState2_ = aSelectionState2;
+			if(aSelectionState1_ && !Array.isArray(aSelectionState1_)) {
+				aSelectionState1_ = [{}];
+			}
+			if(!Array.isArray(aSelectionState1_) || !Array.isArray(aSelectionState2_)) {
 				return null;
 			}
-			const oSelectionState1 = aSelectionState1[aSelectionState1.length - 1];
-			const oSelectionState2 = aSelectionState2[aSelectionState2.length - 1];
+			const oSelectionState1 = aSelectionState1_[aSelectionState1_.length - 1];
+			const oSelectionState2 = aSelectionState2_[aSelectionState2_.length - 1];
 			if(!oSelectionState1 || !oSelectionState2) {
 				return null;
 			}

@@ -5481,7 +5481,7 @@
 		let res = null;
 		let ws = this.getWorksheet();
 		if (ws.objectRender.selectedGraphicObjectsExists()) {
-
+			res = ws.objectRender.controller.getSelectionState();
 		} else {
 			if (!this.getCellEditMode()) {
 				res = ws && ws.getSelectionState();
@@ -5496,7 +5496,7 @@
 		let res = null;
 		let ws = this.getWorksheet();
 		if (ws.objectRender.selectedGraphicObjectsExists()) {
-
+			return AscCommon.getSpeechDescription(prevState, curState, action);
 		} else {
 			if (!this.getCellEditMode()) {
 				res = ws && ws.getSpeechDescription(prevState, curState, action);
