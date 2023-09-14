@@ -199,8 +199,9 @@
 					}
 					else
 					{
-						this.speechElement.innerHTML = (aIndexes.length + translateManager.getValue("slides added to selection"));
+						this.speechElement.innerHTML = (aIndexes.length + " " + translateManager.getValue("slides added to selection"));
 					}
+					console.log("SlidesSelected " + this.speechElement.innerHTML);
 					break;
 				}
 				case SpeechWorkerType.SlidesUnselected:
@@ -208,12 +209,13 @@
 					let aIndexes = obj.indexes;
 					if(aIndexes.length === 1)
 					{
-						this.speechElement.innerHTML = (translateManager.getValue("slide ") + (aIndexes[0]) + translateManager.getValue("unselected"));
+						this.speechElement.innerHTML = (translateManager.getValue("slide ") + (aIndexes[0]) + " " + translateManager.getValue("unselected"));
 					}
 					else
 					{
-						this.speechElement.innerHTML = (aIndexes.length + translateManager.getValue("slides unselected"));
+						this.speechElement.innerHTML = (aIndexes.length + " " + translateManager.getValue("slides unselected"));
 					}
+					console.log("SlidesUnselected " + this.speechElement.innerHTML);
 					break;
 				}
 				case SpeechWorkerType.DrawingSelected:

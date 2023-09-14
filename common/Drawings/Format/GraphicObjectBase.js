@@ -3439,10 +3439,20 @@
 		return "";
 	};
 	CGraphicObjectBase.prototype.getSpeechDescription = function () {
-		return this.getTypeName() +
-			this.getContentText() +
-			(this.getTitle() || "") +
-			(this.getDescription() || "");
+		let sResult = this.getTypeName();
+		let sText = this.getContentText();
+		let sTitle = (this.getTitle() || "");
+		let sDescription = (this.getDescription() || "");
+		if(sText && sText.length > 0) {
+			sResult += (" " + sText)
+		}
+		if(sTitle && sTitle.length > 0) {
+			sResult += (" " + sTitle)
+		}
+		if(sDescription && sDescription.length > 0) {
+			sResult += (" " + sDescription)
+		}
+		return sResult;
 	};
 	var ANIM_LABEL_WIDTH_PIX = 22;
 	var ANIM_LABEL_HEIGHT_PIX = 17;

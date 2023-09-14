@@ -11042,7 +11042,7 @@
 			return false;
 		}
 
-		function getSpeechDescription(aSelectionState1, aSelectionState2) {
+		function getSpeechDescription(aSelectionState1, aSelectionState2, action) {
 			if(!Array.isArray(aSelectionState1) || !Array.isArray(aSelectionState2)) {
 				return null;
 			}
@@ -11051,15 +11051,32 @@
 			if(!oSelectionState1 || !oSelectionState2) {
 				return null;
 			}
+			function getTextObj(sText) {
+				return {
+					type: AscCommon.SpeechWorkerCommands.Text,
+					obj: {text: sText}
+				};
+			}
 			if(oSelectionState2.textSelection) {
 				if(oSelectionState1.textObject !== oSelectionState2.textObject) {
-					return {
-						type: AscCommon.SpeechWorkerCommands.Text,
-						obj: AscCommon.translateManager.getValue("entered text selection")
-					};
+					return getTextObj(AscCommon.translateManager.getValue("entered text selection"));
 				}
 				else {
-					//TODO: compare two text selection state
+					let oTextObject = oSelectionState1.textObject;
+					if(oTextObject) {
+						if(oTextObject instanceof AscFormat.CGraphicFrame) {
+							if(oTextObject.graphicObject) {
+								//TODO
+							}
+						}
+						else {
+							let oContent = oTextObject.getDocContent && oTextObject.getDocContent();
+							if(oContent) {
+								return oContent.getSpeechDescription(oSelectionState1.textSelection, action);
+							}
+							return null;
+						}
+					}
 					return null;
 				}
 				return;
@@ -11074,10 +11091,7 @@
 			}
 			if (oSelectionState2.chartSelection) {
 				if(oSelectionState1.chartObject !== oSelectionState2.chartObject) {
-					return {
-						type: AscCommon.SpeechWorkerCommands.Text,
-						obj: oSelectionState2.chartObject.getSpeechDescription() + AscCommon.translateManager.getValue("selected")
-					};
+					return getTextObj(oSelectionState2.chartObject.getSpeechDescription() + " " + AscCommon.translateManager.getValue("selected"));
 				}
 				else {
 					return null;
@@ -11086,10 +11100,7 @@
 
 			if (oSelectionState2.wrapObject) {
 				if(oSelectionState1.wrapObject !== oSelectionState2.wrapObject) {
-					return {
-						type: AscCommon.SpeechWorkerCommands.Text,
-						obj: oSelectionState2.wrapObject.getSpeechDescription() + AscCommon.translateManager.getValue("selected")
-					};
+					return getTextObj(oSelectionState2.wrapObject.getSpeechDescription() + " " + AscCommon.translateManager.getValue("selected"));
 				}
 				else {
 					return null;
@@ -11097,10 +11108,7 @@
 			}
 			if (oSelectionState2.cropObject) {
 				if(oSelectionState1.cropObject !== oSelectionState2.cropObject) {
-					return {
-						type: AscCommon.SpeechWorkerCommands.Text,
-						obj: oSelectionState2.cropObject.getSpeechDescription() + AscCommon.translateManager.getValue("selected")
-					};
+					return getTextObj(oSelectionState2.cropObject.getSpeechDescription() + " " + AscCommon.translateManager.getValue("selected"));
 				}
 				else {
 					return null;
@@ -11108,10 +11116,7 @@
 			}
 			if (oSelectionState2.geometryObject) {
 				if(oSelectionState1.geometryObject !== oSelectionState2.geometryObject) {
-					return {
-						type: AscCommon.SpeechWorkerCommands.Text,
-						obj: oSelectionState2.geometryObject.getSpeechDescription() + AscCommon.translateManager.getValue("selected")
-					};
+					return getTextObj(oSelectionState2.geometryObject.getSpeechDescription() + " " + AscCommon.translateManager.getValue("selected"));
 				}
 				else {
 					return null;
@@ -11119,10 +11124,7 @@
 			}
 			if(Array.isArray(oSelectionState2.selection)) {
 				if(oSelectionState2.selection.length === 0 && (oSelectionState1.textSelection || oSelectionState1.groupSelection && oSelectionState1.groupSelection.textSelection)) {
-					return {
-						type: AscCommon.SpeechWorkerCommands.Text,
-						obj: AscCommon.translateManager.getValue("exited text selection")
-					};
+					return getTextObj(AscCommon.translateManager.getValue("exited text selection"));
 				}
 				const aObjects1 = [];
 				const aObjects2 = [];
@@ -11135,25 +11137,16 @@
 					aObjects2.push(oSelectionState2.selection[nIdx].object);
 				}
 				if(aObjects2.length === 1 && aObjects1[0] !== aObjects2[0]) {
-					return {
-						type: AscCommon.SpeechWorkerCommands.Text,
-						obj: aObjects2[0].getSpeechDescription() + AscCommon.translateManager.getValue("selected")
-					};
+					return getTextObj(aObjects2[0].getSpeechDescription() + " " + AscCommon.translateManager.getValue("selected"));
 				}
 				if(aObjects1.length < aObjects2.length) {
 					let aObjects = AscCommon.getArrayElementsDiff(aObjects1, aObjects2);
 					if(aObjects.length > 0) {
 						if(aObjects.length === 1) {
-							return {
-								type: AscCommon.SpeechWorkerCommands.Text,
-								obj: aObjects[0].getSpeechDescription() + AscCommon.translateManager.getValue("selected")
-							};
+							return getTextObj(aObjects[0].getSpeechDescription() + " " + AscCommon.translateManager.getValue("selected"));
 						}
 						else {
-							return {
-								type: AscCommon.SpeechWorkerCommands.Text,
-								obj: aObjects.length + AscCommon.translateManager.getValue("objects selected")
-							};
+							return getTextObj(aObjects.length + " " + AscCommon.translateManager.getValue("objects selected"));
 						}
 					}
 				}
@@ -11161,16 +11154,10 @@
 					let aObjects = AscCommon.getArrayElementsDiff(aObjects2, aObjects1);
 					if(aObjects.length > 0) {
 						if(aObjects.length === 1) {
-							return {
-								type: AscCommon.SpeechWorkerCommands.Text,
-								obj: aObjects[0].getSpeechDescription() + AscCommon.translateManager.getValue("unselected")
-							};
+							return getTextObj(aObjects[0].getSpeechDescription() + " " + AscCommon.translateManager.getValue("unselected"));
 						}
 						else {
-							return {
-								type: AscCommon.SpeechWorkerCommands.Text,
-								obj: aObjects.length + AscCommon.translateManager.getValue("objects unselected")
-							};
+							return getTextObj(aObjects.length + " " + AscCommon.translateManager.getValue("objects unselected"));
 						}
 					}
 				}
