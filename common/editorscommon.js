@@ -9970,35 +9970,6 @@
 		loadScript('../../../../sdkjs/common/Charts/ChartStyles.js', onSuccess, onError);
 	}
 
-	function loadSmartArtBinary(fOnSuccess, fOnError) {
-		if (window["NATIVE_EDITOR_ENJINE"]) {
-			return;
-		}
-		loadFileContent('../../../../sdkjs/common/SmartArts/SmartArts.bin', function (httpRequest) {
-			if (httpRequest && httpRequest.response) {
-				const arrStream = AscCommon.initStreamFromResponse(httpRequest);
-
-				AscCommon.g_oBinarySmartArts = {
-					shifts: {},
-					stream: arrStream
-				}
-
-				const oFileStream = new AscCommon.FileStream(arrStream, arrStream.length);
-				oFileStream.GetUChar();
-				const nLength = oFileStream.GetULong();
-				while (nLength + 4 > oFileStream.cur) {
-					const nType = oFileStream.GetUChar();
-					const nPosition = oFileStream.GetULong();
-					AscCommon.g_oBinarySmartArts.shifts[nType] = nPosition;
-				}
-				fOnSuccess && fOnSuccess();
-			} else {
-				fOnError(httpRequest);
-			}
-
-		}, 'arraybuffer');
-	}
-
 	function getAltGr(e)
 	{
 		if (true === e["altGraphKey"])
@@ -13414,7 +13385,6 @@
 	window["AscCommon"].loadSdk = loadSdk;
     window["AscCommon"].loadScript = loadScript;
     window["AscCommon"].loadChartStyles = loadChartStyles;
-	window["AscCommon"].loadSmartArtBinary = loadSmartArtBinary;
 	window["AscCommon"].getAltGr = getAltGr;
 	window["AscCommon"].getColorSchemeByName = getColorSchemeByName;
 	window["AscCommon"].getColorSchemeByIdx = getColorSchemeByIdx;

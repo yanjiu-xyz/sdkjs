@@ -12319,25 +12319,31 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype.getLogicDocument = asc_docs_api.prototype.private_GetLogicDocument;
 	asc_docs_api.prototype.asc_createSmartArt = function (nSmartArtType, oPlaceholder)
 	{
-		if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+		const oThis = this;
+		AscCommon.g_oBinarySmartArts.checkLoadDrawing().then(function()
 		{
-			this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_AddSmartArt);
-			this.asc_SetSilentMode(true);
-			AscFonts.IsCheckSymbols = true;
-			const oSmartArt = new AscFormat.SmartArt();
-			oSmartArt.fillByPreset(nSmartArtType);
-			oSmartArt.fitToPageSize();
-			oSmartArt.fitFontSize();
-			oSmartArt.recalculateBounds();
-			this.WordControl.m_oLogicDocument.AddInlineImage(null, null, null, oSmartArt);
-			AscFonts.IsCheckSymbols = false;
+			return AscCommon.g_oBinarySmartArts.checkLoadData(nSmartArtType);
+		}).then(function()
+		{
+			if (false === oThis.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Content))
+			{
+				oThis.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_AddSmartArt);
+				oThis.asc_SetSilentMode(true);
+				AscFonts.IsCheckSymbols = true;
+				const oSmartArt = new AscFormat.SmartArt();
+				oSmartArt.fillByPreset(nSmartArtType);
+				oSmartArt.fitToPageSize();
+				oSmartArt.fitFontSize();
+				oSmartArt.recalculateBounds();
+				oThis.WordControl.m_oLogicDocument.AddInlineImage(null, null, null, oSmartArt);
+				AscFonts.IsCheckSymbols = false;
 
-			var oThis = this;
-			AscFonts.FontPickerByCharacter.checkText("", this, function() {
-				this.asc_SetSilentMode(false, true);
-				oThis.WordControl.m_oLogicDocument.FinalizeAction();
-			}, false, false, false);
-		}
+				AscFonts.FontPickerByCharacter.checkText("", oThis, function() {
+					oThis.asc_SetSilentMode(false, true);
+					oThis.WordControl.m_oLogicDocument.FinalizeAction();
+				}, false, false, false);
+			}
+		});
 	};
 	asc_docs_api.prototype.asc_CompareDocumentFile_local = function (oOptions) {
 		var t = this;

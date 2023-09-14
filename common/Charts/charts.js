@@ -696,24 +696,16 @@ ChartPreviewManager.prototype.getChartPreviews = function(chartType, arrId, bEmp
 		if(!oApi) {
 			return;
 		}
-		let fCallback = function (){
-			if (AscCommon.g_oBinarySmartArts) {
-				if (AscFormat.isRealNumber(nTypeOfSectionLoad)) {
-					const arrPreviewObjects = Asc.c_oAscSmartArtSections[nTypeOfSectionLoad].map(function (nTypeOfSmartArt) {
-						return new CSmartArtPreviewInfo(nTypeOfSmartArt, nTypeOfSectionLoad);
-					});
-					oThis.queue = oThis.queue.concat(arrPreviewObjects);
-					AscCommon.CActionOnTimerBase.prototype.Begin.call(oThis);
-				}
+		AscCommon.g_oBinarySmartArts.checkLoadDrawing().then(function ()
+		{
+			if (AscFormat.isRealNumber(nTypeOfSectionLoad)) {
+				const arrPreviewObjects = Asc.c_oAscSmartArtSections[nTypeOfSectionLoad].map(function (nTypeOfSmartArt) {
+					return new CSmartArtPreviewInfo(nTypeOfSmartArt, nTypeOfSectionLoad);
+				});
+				oThis.queue = oThis.queue.concat(arrPreviewObjects);
+				AscCommon.CActionOnTimerBase.prototype.Begin.call(oThis);
 			}
-		};
-		if(!AscCommon.g_oBinarySmartArts) {
-			AscCommon.loadSmartArtBinary(fCallback, function (err) {
-			});
-		}
-		else {
-			fCallback();
-		}
+		});
 	};
 	SmartArtPreviewDrawer.prototype.OnBegin = function () {
 		const oApi = Asc.editor || editor;
