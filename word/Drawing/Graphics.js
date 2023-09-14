@@ -616,6 +616,8 @@ CGraphics.prototype =
     {
         if (img.isVectorImage !== undefined)
             return img.isVectorImage;
+        if(!img.src)
+            return false;
         let fileName = AscCommon.g_oDocumentUrls.getImageLocal(img.src);
         img.isVectorImage = (fileName && fileName.endsWith(".svg")) ? true : false;
         return img.isVectorImage;
