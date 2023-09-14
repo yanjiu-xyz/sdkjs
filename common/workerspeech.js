@@ -150,13 +150,23 @@
 			if (obj.cancelSelection)
 				console.log("Text selection has been canceled");
 			
-
+			if (obj.moveToStartOfDocument)
+				console.log("Start of the document");
+			else if (obj.moveToStartOfLine)
+				console.log("Start of the line");
+			else if (obj.moveToEndOfDocument)
+				console.log("End of the document");
+			else if (obj.moveToEndOfLine)
+				console.log("End of the line");
+			
+			
 			let translateManager = AscCommon.translateManager;
 			switch (type)
 			{
 				case SpeechWorkerType.Text:
 				{
 					this.speechElement.innerHTML = obj;
+					
 					console.log("Text " + obj.text);
 					break;
 				}
@@ -166,15 +176,6 @@
 						this.speechElement.innerHTML = (translateManager.getValue("select ") + obj.text);
 					else
 						this.speechElement.innerHTML = (obj.text + translateManager.getValue(" select"));
-					
-					if (obj.moveToStartOfDocument)
-						console.log("Start of the document");
-					else if (obj.moveToStartOfLine)
-						console.log("Start of the line");
-					else if (obj.moveToEndOfDocument)
-						console.log("End of the document");
-					else if (obj.moveToEndOfLine)
-						console.log("End of the line");
 					
 					console.log("SelectedText " + obj.text);
 					break;

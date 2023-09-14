@@ -2699,14 +2699,14 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 						return null;
 					
 					let keyCode = action.event.KeyCode;
-					if (35 === keyCode)
+					if (36 === keyCode)
 					{
 						if (action.event.CtrlKey)
 							obj.moveToStartOfDocument = true;
 						else
 							obj.moveToStartOfLine = true;
 					}
-					else if (36 === keyCode)
+					else if (35 === keyCode)
 					{
 						if (action.event.CtrlKey)
 							obj.moveToEndOfDocument = true;
@@ -2714,11 +2714,11 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 							obj.moveToEndOfLine = true;
 					}
 					
-					if (35 === keyCode || 38 === keyCode || 40 === keyCode)
+					if (36 === keyCode || 38 === keyCode || 40 === keyCode)
 						obj.text = paragraph.getTextOnLine();
 					else if ((37 === keyCode || 39 === keyCode) && action.event.CtrlKey)
 						obj.text = paragraph.getNextWord();
-					else if (36 === keyCode)
+					else if (35 === keyCode)
 						obj.text = "";
 				}
 			}
