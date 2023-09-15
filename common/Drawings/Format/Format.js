@@ -7080,6 +7080,7 @@
 			CBaseNoIdObject.call(this);
 			this.idx = 0;
 			this.Color = new CUniColor();
+			this.styleClr = null;
 		}
 
 		InitClass(StyleRef, CBaseNoIdObject, 0);
@@ -7103,6 +7104,9 @@
 		};
 		StyleRef.prototype.setIdx = function (idx) {
 			this.idx = idx;
+		};
+		StyleRef.prototype.setStyleClr = function (styleClr) {
+			this.styleClr = styleClr;
 		};
 		StyleRef.prototype.setColor = function (color) {
 			this.Color = color;
