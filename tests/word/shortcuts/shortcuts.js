@@ -569,24 +569,17 @@
 
 		QUnit.test('Check sending event to interface', (assert) =>
 		{
-			function checkSendingEvent(sSendEvent, oEvent, fCustomCheck, customExpectedValue)
+			function checkSendingEvent(sSendEvent, oEvent)
 			{
 				let isCheck = false;
-				const fCheck = function (...args)
+				const fCheck = function ()
 				{
-					if (fCustomCheck)
-					{
-						isCheck = fCustomCheck(...args);
-					}
-					else
-					{
 						isCheck = true;
-					}
 				}
 				editor.asc_registerCallback(sSendEvent, fCheck);
 
 				ExecuteShortcut(oEvent);
-				assert.strictEqual(isCheck, customExpectedValue === undefined ? true : customExpectedValue, 'Check catch ' + sSendEvent + ' event');
+				assert.strictEqual(isCheck, true, 'Check catch ' + sSendEvent + ' event');
 				editor.asc_unregisterCallback(sSendEvent, fCheck);
 			}
 
