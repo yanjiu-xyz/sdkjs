@@ -338,16 +338,21 @@
 		
 		this.isLanched = false;
 		
-		this.onSelectionChange = null;
-		this.onActionStart     = null;
-		this.onActionEnd       = null;
-		
-		this.onBeforeKeyDown = null;
-		this.onKeyDown       = null;
+		this.onSelectionChange    = null;
+		this.onActionStart        = null;
+		this.onActionEnd          = null;
+		this.onBeforeKeyDown      = null;
+		this.onKeyDown            = null;
+		this.onBeforeApplyChanges = null;
+		this.onApplyChanges       = null;
+		this.onBeforeUndoRedo     = null;
+		this.onUndoRedo           = null;
 		
 		this.selectionState   = null;
 		this.actionInProgress = false;
+		this.isApplyChanges   = false;
 		this.isKeyDown        = false;
+		this.isUndoRedo       = false;
 	}
 	EditorActionSpeaker.prototype.run = function()
 	{
@@ -362,15 +367,21 @@
 		this.editor.asc_registerCallback('asc_onCursorMove', this.onSelectionChange);
 		this.editor.asc_registerCallback('asc_onUserActionStart', this.onActionStart);
 		this.editor.asc_registerCallback('asc_onUserActionEnd', this.onActionEnd);
-		
 		this.editor.asc_registerCallback('asc_onBeforeKeyDown', this.onBeforeKeyDown);
 		this.editor.asc_registerCallback('asc_onKeyDown', this.onKeyDown);
+		this.editor.asc_registerCallback('asc_onBeforeApplyChanges', this.onBeforeApplyChanges);
+		this.editor.asc_registerCallback('asc_onApplyChanges', this.onApplyChanges);
+		this.editor.asc_registerCallback('asc_onBeforeUndoRedo', this.onBeforeUndoRedo);
+		this.editor.asc_registerCallback('asc_onUndoRedo', this.onUndoRedo);
 
 		//se
 		this.editor.asc_registerCallback('asc_onActiveSheetChanged', this.onActiveSheetChanged);
 		
-		this.selectionState = this.editor.getSelectionState();
+		this.selectionState   = this.editor.getSelectionState();
 		this.actionInProgress = false;
+		this.isApplyChanges   = false;
+		this.isKeyDown        = false;
+		this.isUndoRedo       = false;
 		
 		this.speechWorker.setEnabled(true);
 	};
@@ -383,17 +394,23 @@
 		this.editor.asc_unregisterCallback('asc_onCursorMove', this.onSelectionChange);
 		this.editor.asc_unregisterCallback('asc_onUserActionStart', this.onActionStart);
 		this.editor.asc_unregisterCallback('asc_onUserActionEnd', this.onActionEnd);
-		
 		this.editor.asc_unregisterCallback('asc_onBeforeKeyDown', this.onBeforeKeyDown);
 		this.editor.asc_unregisterCallback('asc_onKeyDown', this.onKeyDown);
-
+		this.editor.asc_unregisterCallback('asc_onBeforeApplyChanges', this.onBeforeApplyChanges);
+		this.editor.asc_unregisterCallback('asc_onApplyChanges', this.onApplyChanges);
+		this.editor.asc_unregisterCallback('asc_onBeforeUndoRedo', this.onBeforeUndoRedo);
+		this.editor.asc_unregisterCallback('asc_onUndoRedo', this.onUndoRedo);
+		
 		//se
 		this.editor.asc_unregisterCallback('asc_onActiveSheetChanged', this.onActiveSheetChanged);
 		
-		this.selectionState = null;
-		this.speechWorker.setEnabled(false);
+		this.selectionState   = null;
 		this.actionInProgress = false;
-		this.isKeyDown = false;
+		this.isKeyDown        = false;
+		this.isApplyChanges   = false;
+		this.isUndoRedo       = false;
+		
+		this.speechWorker.setEnabled(false);
 		
 		this.isLanched = false;
 	};
@@ -403,7 +420,10 @@
 		
 		this.onSelectionChange = function()
 		{
-			if (_t.actionInProgress || _t.isKeyDown)
+			if (_t.actionInProgress
+				|| _t.isKeyDown
+				|| _t.isApplyChanges
+				|| _t.isUndoRedo)
 				return;
 			
 			_t.handleSpeechDescription(null);
@@ -417,7 +437,6 @@
 		this.onActionEnd = function()
 		{
 			_t.actionInProgress = false;
-			
 			// TODO: Если нужно, то добавить описание действия
 		};
 		
@@ -430,6 +449,30 @@
 		{
 			_t.isKeyDown = false;
 			_t.handleSpeechDescription({type: SpeakerActionType.keyDown, event : e});
+		};
+		
+		this.onBeforeApplyChanges = function()
+		{
+			_t.isApplyChanges = true;
+		};
+		
+		this.onApplyChanges = function()
+		{
+			_t.isApplyChanges = false;
+			_t.updateState();
+			// TODO: Если дополнительно сообщить о совместке, то добавить тут
+		};
+		
+		this.onBeforeUndoRedo = function()
+		{
+			_t.isUndoRedo = true;
+		};
+		
+		this.onUndoRedo = function()
+		{
+			_t.isUndoRedo = false;
+			_t.updateState();
+			// TODO: Если дополнительно сообщить об Undo/Redo, то добавить тут
 		};
 
 		this.onActiveSheetChanged = function(index)
@@ -453,6 +496,10 @@
 			return;
 		
 		this.speechWorker.speech(speechInfo.type, speechInfo.obj);
+	};
+	EditorActionSpeaker.prototype.updateState = function()
+	{
+		this.selectionState = this.editor.getSelectionState();
 	};
 	
 	window.AscCommon.EditorActionSpeaker = new EditorActionSpeaker();

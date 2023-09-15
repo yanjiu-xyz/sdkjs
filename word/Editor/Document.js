@@ -12556,10 +12556,12 @@ CDocument.prototype.Document_Undo = function(Options)
 	{
 		if (this.History.Can_Undo())
 		{
+			this.Api.sendEvent("asc_onBeforeUndoRedo");
 			this.StartUndoRedoAction();
 			let changes = this.History.Undo(Options);
 			this.UpdateAfterUndoRedo(changes);
 			this.FinalizeUndoRedoAction();
+			this.Api.sendEvent("asc_onUndoRedo");
 		}
 	}
 
@@ -12576,10 +12578,12 @@ CDocument.prototype.Document_Redo = function()
 
 	if (this.History.Can_Redo())
 	{
+		this.Api.sendEvent("asc_onBeforeUndoRedo");
 		this.StartUndoRedoAction();
 		let changes = this.History.Redo();
 		this.UpdateAfterUndoRedo(changes);
 		this.FinalizeUndoRedoAction();
+		this.Api.sendEvent("asc_onUndoRedo");
 	}
 
 	if (this.IsFillingFormMode())
