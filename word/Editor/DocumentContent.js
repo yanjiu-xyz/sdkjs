@@ -1438,7 +1438,7 @@ CDocumentContent.prototype.Draw                           = function(nPageIndex,
         pGraphics.Start_Command(AscFormat.DRAW_COMMAND_CONTENT);
     }
 
-	var nPixelError = this.DrawingDocument.GetMMPerDot(1);
+	var nPixelError = this.DrawingDocument && this.DrawingDocument.GetMMPerDot(1);
 
 	var ClipInfo = this.ClipInfo[CurPage];
     if (ClipInfo)

@@ -130,7 +130,7 @@
 		{
 			case AscCommon.c_oEditorId.Word:
 			{
-				let isPdf = this.api.isDocumentRenderer();
+				let isPdf = this.api.isPdfEditor();
 				if (!isPdf)
 				{
 					if (this.api.WordControl.m_oDrawingDocument.IsFreezePage(this.page))
