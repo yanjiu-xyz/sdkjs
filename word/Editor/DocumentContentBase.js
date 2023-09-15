@@ -2717,7 +2717,7 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 					if (36 === keyCode || 38 === keyCode || 40 === keyCode)
 						obj.text = paragraph.getTextOnLine();
 					else if ((37 === keyCode || 39 === keyCode) && action.event.CtrlKey)
-						obj.text = paragraph.getNextWord();
+						obj.text = paragraph.getCurrentWord(1);
 					else if (35 === keyCode)
 						obj.text = "";
 				}

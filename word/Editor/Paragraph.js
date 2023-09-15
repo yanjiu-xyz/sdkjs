@@ -1900,6 +1900,20 @@ Paragraph.prototype.GetTextOnLine = function(nCurLine)
 
 	return sResult;
 };
+/**
+ * Получаем текст на заданной строке, если строка не задана, то получаем текст на текущей строке
+ * @param {number} line
+ */
+Paragraph.prototype.getTextOnLine = function(line)
+{
+	if (undefined === line || -1 === line)
+	{
+		let posInfo = this.RecalculateCurPos();
+		line = posInfo.Internal.Line;
+	}
+	
+	return this.GetTextOnLine(line);
+};
 Paragraph.prototype.Reset_RecalculateCache = function()
 {
 
@@ -6777,36 +6791,6 @@ Paragraph.prototype.RemoveRunElement = function(oParaPos)
 	}
 
 	return false;
-};
-/**
- * Получаем один следующий текстовый символ, если следующий элемент существует и он текстовый
- * @param {AscWord.CParagraphContentPos} [paraPos=undefined] Если не задано, то от текущей позиции
- * @returns {string}
- */
-Paragraph.prototype.getNextCharacter = function(paraPos)
-{
-	let runElement = this.GetNextRunElement(paraPos);
-	if (runElement && runElement.IsText())
-		return  String.fromCodePoint(runElement.GetCodePoint());
-	
-	return "";
-};
-/**
- * Получаем текст от заданного места до конца текущего слова
- * @param {AscWord.CParagraphContentPos} [paraPos=undefined] Если не задано, то от текущей позиции
- * @returns {string}
- */
-Paragraph.prototype.getNextWord = function(paraPos)
-{
-	return "next word";
-};
-/**
- * Получаем текст на заданной строке, если строка не задана, то получаем текст на текущей строке
- * @param line
- */
-Paragraph.prototype.getTextOnLine = function(line)
-{
-	return "text on line";
 };
 Paragraph.prototype.MoveCursorUp = function(AddToSelect)
 {
@@ -17480,6 +17464,34 @@ Paragraph.prototype.isAutoHyphenation = function()
 	return false;
 };
 /**
+ * Получаем один следующий текстовый символ, если следующий элемент существует и он текстовый
+ * @param {AscWord.CParagraphContentPos} [paraPos=undefined] Если не задано, то от текущей позиции
+ * @returns {string}
+ */
+Paragraph.prototype.getNextCharacter = function(paraPos)
+{
+	let state = this.SaveSelectionState();
+	
+	this.RemoveSelection();
+	
+	if (paraPos)
+		this.Set_ParaContentPos(paraPos, false, -1, -1);
+	
+	let startPos = this.GetParaContentPos(false, false, false);
+	
+	this.MoveCursorRight(false);
+	let endPos = this.GetParaContentPos(false, false, false);
+	
+	this.StartSelectionFromCurPos();
+	this.SetSelectionContentPos(startPos, endPos, false);
+	
+	let result = this.GetSelectedText(false);
+	
+	this.LoadSelectionState(state);
+	
+	return result;
+};
+/**
  * Выделяем слово, около которого стоит курсор
  * @returns {boolean}
  */
@@ -17501,9 +17513,13 @@ Paragraph.prototype.SelectCurrentWord = function()
 };
 /**
  * Получаем текущее слово (или часть текущего слова)
- * @param nDirection {number} -1 - часть до курсора, 1 - часть после курсора, 0 (или не задано) слово целиком
+ * @param direction {number} -1 - часть до курсора, 1 - часть после курсора, 0 (или не задано) слово целиком
  * @returns {string}
  */
+Paragraph.prototype.getCurrentWord = function(direction)
+{
+	return this.GetCurrentWord(direction);
+};
 Paragraph.prototype.GetCurrentWord = function(nDirection)
 {
 	if (this.IsSelectionUse())
