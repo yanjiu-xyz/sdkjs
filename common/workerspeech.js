@@ -348,11 +348,11 @@
 		this.onBeforeUndoRedo     = null;
 		this.onUndoRedo           = null;
 		
-		this.selectionState   = null;
-		this.actionInProgress = false;
-		this.isApplyChanges   = false;
-		this.isKeyDown        = false;
-		this.isUndoRedo       = false;
+		this.selectionState = null;
+		this.isAction       = false;
+		this.isApplyChanges = false;
+		this.isKeyDown      = false;
+		this.isUndoRedo     = false;
 	}
 	EditorActionSpeaker.prototype.run = function()
 	{
@@ -377,11 +377,11 @@
 		//se
 		this.editor.asc_registerCallback('asc_onActiveSheetChanged', this.onActiveSheetChanged);
 		
-		this.selectionState   = this.editor.getSelectionState();
-		this.actionInProgress = false;
-		this.isApplyChanges   = false;
-		this.isKeyDown        = false;
-		this.isUndoRedo       = false;
+		this.selectionState = this.editor.getSelectionState();
+		this.isAction       = false;
+		this.isApplyChanges = false;
+		this.isKeyDown      = false;
+		this.isUndoRedo     = false;
 		
 		this.speechWorker.setEnabled(true);
 	};
@@ -404,11 +404,11 @@
 		//se
 		this.editor.asc_unregisterCallback('asc_onActiveSheetChanged', this.onActiveSheetChanged);
 		
-		this.selectionState   = null;
-		this.actionInProgress = false;
-		this.isKeyDown        = false;
-		this.isApplyChanges   = false;
-		this.isUndoRedo       = false;
+		this.selectionState = null;
+		this.isAction       = false;
+		this.isKeyDown      = false;
+		this.isApplyChanges = false;
+		this.isUndoRedo     = false;
 		
 		this.speechWorker.setEnabled(false);
 		
@@ -420,7 +420,7 @@
 		
 		this.onSelectionChange = function()
 		{
-			if (_t.actionInProgress
+			if (_t.isAction
 				|| _t.isKeyDown
 				|| _t.isApplyChanges
 				|| _t.isUndoRedo)
@@ -431,12 +431,12 @@
 		
 		this.onActionStart = function()
 		{
-			_t.actionInProgress = true;
+			_t.isAction = true;
 		};
 		
 		this.onActionEnd = function()
 		{
-			_t.actionInProgress = false;
+			_t.isAction = false;
 			// TODO: Если нужно, то добавить описание действия
 		};
 		
