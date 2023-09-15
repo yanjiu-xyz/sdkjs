@@ -12686,37 +12686,6 @@ QueryTableField.prototype.clone = function() {
 	return res;
 };
 
-
-	if (typeof Map === 'undefined') {
-		(function() {
-			var Map = function() {
-				this.storage = {};
-			};
-			Map.prototype = {
-				set: function(key, value) {
-					this.storage[key] = value;
-				},
-				get: function(key) {
-					return this.storage[key];
-				},
-				delete: function(key) {
-					delete this.storage[key];
-				},
-				has: function(key) {
-					return !!this.storage[key];
-				},
-				forEach: function(callback, context) {
-					for (var i in this.storage) {
-						if (this.storage.hasOwnProperty(i)) {
-							callback.call(context, this.storage[i], i, this);
-						}
-					}
-				}
-			};
-
-			window.Map = Map;
-		})();
-	}
 	/**
 	 * @constructor
 	 * @memberOf AscCommonExcel
