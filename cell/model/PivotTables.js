@@ -39,6 +39,10 @@ var c_oAscSourceType = {
 	Consolidation: 2,
 	Scenario: 3
 };
+/**
+ * @readonly
+ * @enum {number}
+ */
 var c_oAscAxis = {
 	AxisRow: 0,
 	AxisCol: 1,
@@ -174,6 +178,10 @@ var c_oAscSortType = {
 	AscendingNatural: 5,
 	DescendingNatural: 6
 };
+/**
+ * @readonly
+ * @enum {number}
+ */
 var c_oAscPivotAreaType = {
 	None: 0,
 	Normal: 1,
@@ -7341,12 +7349,13 @@ CT_pivotTableDefinition.prototype.getFormatting = function(query) {
  * @property {PivotAreaReferencesInfo} referencesInfo
  * @property {number | null} pivotAreaField
  * @property {CT_Format} format
- * @property {number} type one of c_oAscPivotAreaType
+ * @property {c_oAscPivotAreaType} type
  * @property {Range | null} offset
  * @property {boolean} isGrandRow
  * @property {boolean} isGrandCol
  * @property {boolean} isLabelOnly
  * @property {boolean} isDataOnly
+ * @property {c_oAscAxis | null} axis
  */
 
 /**
@@ -7394,7 +7403,8 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
 		isLabelOnly: pivotArea.labelOnly,
 		isDataOnly: pivotArea.dataOnly,
 		type: pivotArea.type,
-		offset: pivotArea.getRangeOffset()
+		offset: pivotArea.getRangeOffset(),
+		axis: pivotArea.axis
 	};
 	this.formatsCollection.push(formatsCollectionItem);
 	return;
@@ -7411,10 +7421,12 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
  * @property {PivotItemFieldsInfo[] | undefined} valuesInfo
  * @property {boolean | undefined} isGrandRow
  * @property {boolean | undefined} isGrandCol
- * @property {number | undefined} dataIndex
+ * @property {number | null} dataIndex
  * @property {boolean | undefined} isData
- * @property {number | undefined} type one of c_oAscPivotAreaType
+ * @property {c_oAscPivotAreaType} type
  * @property {Range | undefined} offset
+ * @property {c_oAscAxis | undefined} axis
+ * @property {number | null} field
  */
 
 /**
@@ -7552,9 +7564,10 @@ PivotFormatsManager.prototype.checkReferences = function(formatsCollectionItem, 
  */
 PivotFormatsManager.prototype.checkOther = function(formatsCollectionItem, query) {
 	const referencesInfo = formatsCollectionItem.referencesInfo;
-	if (referencesInfo.selectedField && referencesInfo.selectedField !== query.field) {
+	if (referencesInfo.selectedField !== null && referencesInfo.selectedField !== query.field) {
 		return false;
 	}
+	
 	return true;
 };
 
@@ -7591,6 +7604,9 @@ PivotFormatsManager.prototype.checkOffset = function(formatsCollectionItem, quer
  * @return {boolean}
  */
 PivotFormatsManager.prototype.checkAttributes = function(formatsCollectionItem, query) {
+	if (formatsCollectionItem.axis && formatsCollectionItem.axis !== query.axis) {
+		return false;
+	}
 	if (formatsCollectionItem.isLabelOnly && query.isData) {
 		return false;
 	}
@@ -7605,6 +7621,11 @@ PivotFormatsManager.prototype.checkAttributes = function(formatsCollectionItem, 
 	}
 	if (formatsCollectionItem.type !== Asc.c_oAscPivotAreaType.All && formatsCollectionItem.type !== query.type) {
 		return false;
+	}
+	if (formatsCollectionItem.type === Asc.c_oAscPivotAreaType.Button) {
+		if (query.field !== null && formatsCollectionItem.pivotAreaField !== query.field) {
+			return false;
+		}
 	}
 	if (formatsCollectionItem.offset !== null && query.offset) {
 		if (!this.checkOffset(formatsCollectionItem, query)) {
@@ -14747,7 +14768,7 @@ CT_PivotArea.prototype.getReferences = function() {
 /**
  * @typedef PivotAreaReferencesInfo
  * @property {Map<number, PivotAreaReferenceInfo} referencesInfoMap
- * @property {number?} selectedField
+ * @property {number | null} selectedField
  */
 /**
  * @typedef PivotAreaReferenceInfo
