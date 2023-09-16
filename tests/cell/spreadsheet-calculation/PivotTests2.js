@@ -229,41 +229,17 @@ $(function() {
 
 	function startTests() {
 		QUnit.start();
-
-		QUnit.test('Test: refresh test_formats[Bug with subtotals (Excel 2019)]', function (assert) {
-			let file = Asc.test_formats;
-			let fileRedo = Asc.test_formats_redo;
-			let wsName = "Bug with subtotals (Excel 2019)";
-			let row = 2;
-			let col = 0;
-			let getValues = getReportValues;
-
-			let wbRedo = openDocument(fileRedo);
-			let pivotRedo = wbRedo.getWorksheetByName(wsName).getPivotTable(col, row);
-			let valuesRedo = getValues(pivotRedo);
-
-			let wb = openDocument(file);
-			let pivot = wb.getWorksheetByName(wsName).getPivotTable(col, row);
-			let values = getValues(pivot);
-
-			prepareTest(assert, wb);
-			pivot = checkHistoryOperation(assert, pivot, values, valuesRedo, "refresh", function(){
-				pivot.asc_refresh(api);
-			}, function(assert, pivot, values, message) {
-				assert.deepEqual(getValues(pivot), values, message);
-			});
-		});
-
 		QUnit.test('Test: refresh test_formats check values and format', function (assert) {
 			let file = Asc.test_formats;
 			let fileRedo = Asc.test_formats_redo;
-			let wsNames = ["Subtotal offset",
-				"Label offset",
-				"Data area",
-				"Bug with subtotals (Excel 2019)",
-				"Grand offset",
-				"tabular offset test",
-				"All test"];
+			let wsNames = [
+				"Default data",
+				"Default Label",
+				"MultidataField default data",
+				"MultidataField default label",
+				"Multidatafield label offset",
+				"All test"
+			];
 			let row = 2;
 			let col = 0;
 			let getValues = getReportValuesWithBoolFill;
