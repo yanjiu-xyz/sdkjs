@@ -52,44 +52,113 @@ function readProps(file) {
 	return propsMap;
 }
 
-function run(inputFile = "unique.txt", outputFile = "deserialized.txt", mapsDir="maps")
-{
+async function run(inputFile = "unique.txt", outputFile = "deserialized.docx", mapsDir = "maps", docxTemplate = "deserialize-template.docx") {
 	let sdkMaps = {};
 	console.log('Read: ', inputFile);
+	let isDocx = outputFile.endsWith('.docx');
 	let propsReplaced = 0;
 	let text = fs.readFileSync(inputFile, {encoding: 'utf-8'});
 	let lines = text.split('\n');
 	let replaced = lines.map((line) => {
 		let sdkMatchRes = line.match(/\/([a-zA-z0-9\-\.]*)\/sdkjs\/([a-zA-z0-9\-\.]*)\//);
 
-		if (!sdkMatchRes || 3 !== sdkMatchRes.length) {
-			return line;
-		}
-		let maps = sdkMaps[sdkMatchRes[0]];
-		if (!maps) {
-			let pathProps = `${mapsDir}/${sdkMatchRes[1]}/${sdkMatchRes[2]}.props.js.map`;
-			let pathVars = `${mapsDir}/${sdkMatchRes[1]}/${sdkMatchRes[2]}.vars.js.map`;
-			console.log(`Read maps: ${pathProps} and ${pathVars}`);
-			sdkMaps[sdkMatchRes[0]] = {props: readProps(pathProps), vars: readProps(pathVars)};
-		}
-		if (maps) {
-			line = line.replace(/(new )?([a-zA-z0-9$]*)(@http| \(http)/, (match, p1, p2, p3) => {
-				let props = p1 ? maps.vars[p2] : maps.props[p2];
-				if (props) {
-					propsReplaced++;
-					return `${p1 || ''}${p2}(${props})${p3}`
-				} else {
-					return match
+		if (sdkMatchRes && 3 === sdkMatchRes.length) {
+			let maps = sdkMaps[sdkMatchRes[0]];
+			if (!maps) {
+				let pathProps = `${mapsDir}/${sdkMatchRes[1]}/${sdkMatchRes[2]}.props.js.map`;
+				let pathVars = `${mapsDir}/${sdkMatchRes[1]}/${sdkMatchRes[2]}.vars.js.map`;
+				console.log(`Read maps: ${pathProps} and ${pathVars}`);
+				sdkMaps[sdkMatchRes[0]] = {props: readProps(pathProps), vars: readProps(pathVars)};
+			}
+			if (maps) {
+				let propsReplacedOld = propsReplaced;
+				line = line.replace(/(new )?([a-zA-z0-9$]*)(@http| \(http)/, (match, p1, p2, p3) => {
+					let props = p1 ? maps.vars[p2] : maps.props[p2];
+					if (props) {
+						propsReplaced++;
+						let toReplace;
+						if (isDocx) {
+							toReplace = `<b/>(${props})<b/>`;
+						} else {
+							toReplace = `(${props})`;
+						}
+						return `${p1 || ''}${p2}${toReplace}${p3}`;
+					} else {
+						return match;
+					}
+				});
+				if (propsReplacedOld !== propsReplaced) {
+					//force 4 spaces indent
+					line = ' '.repeat(4) + line.trim();
 				}
-			});
+			}
+		}
+		if (isDocx) {
+			let toBold = ['changesError:', 'isDocumentLoadComplete:'];
+			for (let i = 0; i < toBold.length; i++) {
+				let index = line.indexOf(toBold[i]);
+				if (-1 !== index) {
+					line = line.substring(0, index) + '<b/>' + line.substring(index) + '<b/>';
+				}
+			}
+			line = makeP(line);
 		}
 		return line;
 	});
 	console.log(`Number of replaced properties: ${propsReplaced}`);
 
+	//write with utf8 BOM
 	let output = replaced.join('\n');
-	fs.writeFileSync(outputFile, output, {encoding: 'utf-8'});
+	if (isDocx) {
+		await writeDocx(docxTemplate, outputFile, output);
+	} else {
+		fs.writeFileSync(outputFile, '\ufeff' + output, {encoding: 'utf-8'});
+	}
 	console.log('Complete writeFileSync:' + outputFile);
 }
 
-run.apply(this, process.argv.slice(2));
+function escapeXml(unsafe) {
+	return unsafe.replace(/[<>&'"]/g, function (c) {
+		switch (c) {
+			case '<':
+				return '&lt;';
+			case '>':
+				return '&gt;';
+			case '&':
+				return '&amp;';
+			case '\'':
+				return '&apos;';
+			case '"':
+				return '&quot;';
+		}
+	});
+}
+
+function makeP(val) {
+	let res = '<w:p><w:pPr><w:pStyle w:val="1_634"/></w:pPr>';
+	let vals = val.split('<b/>');
+	for (let i = 0; i < vals.length; i++) {
+		res += makeBoldRun(vals[i], i % 2 === 1);
+	}
+	res += '</w:p>';
+	return res;
+}
+
+function makeBoldRun(val, isBold) {
+	let bold = isBold ? `<w:rPr><w:b/><w:bCs/><w:color w:val="FF0000"/></w:rPr>` : '';
+	return `<w:r>${bold}<w:t xml:space="preserve">${escapeXml(val)}</w:t></w:r>`;
+}
+
+async function writeDocx(templateFile, outputFile, data) {
+	const JSZip = require('jszip');
+	let zipIn = fs.readFileSync(templateFile);
+	let zip = await JSZip.loadAsync(zipIn);
+	let xml = '<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n<w:document xmlns:wpc="http://schemas.microsoft.com/office/word/2010/wordprocessingCanvas" xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" xmlns:m="http://schemas.openxmlformats.org/officeDocument/2006/math" xmlns:v="urn:schemas-microsoft-com:vml" xmlns:wp14="http://schemas.microsoft.com/office/word/2010/wordprocessingDrawing" xmlns:wp="http://schemas.openxmlformats.org/drawingml/2006/wordprocessingDrawing" xmlns:w10="urn:schemas-microsoft-com:office:word" xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main" xmlns:w14="http://schemas.microsoft.com/office/word/2010/wordml" xmlns:w15="http://schemas.microsoft.com/office/word/2012/wordml" xmlns:wpg="http://schemas.microsoft.com/office/word/2010/wordprocessingGroup" xmlns:wpi="http://schemas.microsoft.com/office/word/2010/wordprocessingInk" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:wne="http://schemas.microsoft.com/office/word/2006/wordml" xmlns:wps="http://schemas.microsoft.com/office/word/2010/wordprocessingShape" mc:Ignorable="w14 w15 wp14"><w:body>'
+	xml += data;
+	xml += '<w:sectPr><w:footnotePr></w:footnotePr><w:endnotePr></w:endnotePr><w:type w:val="nextPage"/><w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/><w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="709" w:footer="709" w:gutter="0"/><w:cols w:num="1" w:sep="0" w:space="708" w:equalWidth="1" ></w:cols><w:docGrid w:linePitch="360"/></w:sectPr></w:body></w:document>';
+	zip.file("word/document.xml", xml);
+	let zipOut = await zip.generateAsync({type: "nodebuffer", compression: "DEFLATE"});
+	fs.writeFileSync(outputFile, zipOut);
+}
+
+run.apply(this, process.argv.slice(2)).catch(console.error);

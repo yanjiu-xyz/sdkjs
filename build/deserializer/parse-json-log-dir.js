@@ -32,18 +32,18 @@
 
 const fs = require('node:fs');
 
-function run(inputDir = "logs", outputFile = "unique.txt") {
+function run(inputDir = "logs", outputFile = "unique.txt", opt_lastFile = "") {
 	let files = fs.readdirSync(inputDir);
-	files.filter((file) => {
-		return fs.statSync(`${inputDir}/${file}`).isFile();
+	files = files.filter((file) => {
+		return fs.statSync(`${inputDir}/${file}`).isFile() && file !== opt_lastFile;
 	});
-	console.log('Read inputDir - files: ' + JSON.stringify(files));
+	console.log(`Read inputDir - files without ${opt_lastFile}: ` + JSON.stringify(files));
 	let paths = files.map((file) => {
 		return `${inputDir}/${file}`;
 	});
 	//sort files by modified date
 	paths.sort((a, b) => {
-		return fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs;
+		return fs.statSync(a).mtimeMs - fs.statSync(b).mtimeMs;
 	});
 	console.log('Sort by Modified date: ' + JSON.stringify(paths));
 	//read files
@@ -53,8 +53,8 @@ function run(inputDir = "logs", outputFile = "unique.txt") {
 	}).flat(1);
 	console.log('All lines: ' + lines.length);
 	//filter duplicates
-	let unique = {};
-	let linesUnique = lines.filter((line) => {
+	let unique = {}, linesUnique;
+	let filterUnique = (line) => {
 		let indexStart = line.indexOf("Error:");
 		if (-1 !== indexStart) {
 			let key = line;
@@ -78,7 +78,7 @@ function run(inputDir = "logs", outputFile = "unique.txt") {
 				version = sdkMatchRes[1]
 			}
 			let uniqueVersion = unique[version];
-			if(!uniqueVersion) {
+			if (!uniqueVersion) {
 				uniqueVersion = {};
 				unique[version] = uniqueVersion;
 			}
@@ -88,10 +88,19 @@ function run(inputDir = "logs", outputFile = "unique.txt") {
 			}
 		}
 		return false;
-	});
+	};
+	linesUnique = lines.filter(filterUnique);
 	console.log('Found versions: ' + JSON.stringify(Object.keys(unique)));
 	console.log('Unique lines: ' + linesUnique.length);
-	//trim lines
+	if (opt_lastFile) {
+		let text = fs.readFileSync(`${inputDir}/${opt_lastFile}`, {encoding: 'utf-8'});
+		let lines = text.split('\n');
+		linesUnique = lines.filter(filterUnique);
+		console.log(`All lines in ${opt_lastFile}: ` + lines.length);
+		console.log(`Found versions with ${opt_lastFile}: ` + JSON.stringify(Object.keys(unique)));
+		console.log(`Unique lines in ${opt_lastFile}: ` + linesUnique.length);
+	}
+	//trim line
 	linesUnique = linesUnique.map((line) => {
 		let indexStart = line.indexOf('{\\"startTime\\":');
 		if (-1 !== indexStart) {
@@ -99,7 +108,7 @@ function run(inputDir = "logs", outputFile = "unique.txt") {
 		}
 		let indexUserAgent = line.indexOf("userAgent:");
 		if (-1 === indexUserAgent) {
-			line = "History.Add without Create_NewPoint or other selftriggered error:\n" + line;
+			line = "History.Add without Create_NewPoint or other self triggered error:\n" + line;
 		}
 		return line;
 	});

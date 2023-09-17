@@ -31,14 +31,16 @@
  */
 
 const fs = require('fs');
-const { writeFile, mkdir, stat } = require('fs/promises');
-const { S3Client, GetObjectCommand} = require("@aws-sdk/client-s3");
+const {writeFile, mkdir, stat} = require('fs/promises');
+const {S3Client, GetObjectCommand} = require("@aws-sdk/client-s3");
 
-async function run(accessKeyId, secretAccessKey, inputFile = "unique.txt", mapsDir="maps", region= "eu-west-1",endpoint="https://s3.eu-west-1.amazonaws.com", bucketName="repo-doc-onlyoffice-com") {
+async function run(accessKeyId, secretAccessKey, inputFile = "unique.txt", mapsDir = "maps", region = "eu-west-1",
+				   endpoint = "https://s3.eu-west-1.amazonaws.com", bucketName = "repo-doc-onlyoffice-com",
+				   keyPrefix = "closure-maps/{version}/commercial") {
 	const configS3 = {
 		region: region,
 		endpoint: endpoint,
-		credentials : {
+		credentials: {
 			accessKeyId: accessKeyId,
 			secretAccessKey: secretAccessKey
 		}
@@ -48,7 +50,7 @@ async function run(accessKeyId, secretAccessKey, inputFile = "unique.txt", mapsD
 	console.log('Read: ', inputFile);
 	let text = fs.readFileSync(inputFile, {encoding: 'utf-8'});
 	let lines = text.split('\n');
-	for(let line of lines) {
+	for (let line of lines) {
 		let sdkMatchRes = line.match(/\/([a-zA-z0-9\-\.]*)\/sdkjs\//);
 		if (!sdkMatchRes || 2 !== sdkMatchRes.length) {
 			continue;
@@ -60,19 +62,18 @@ async function run(accessKeyId, secretAccessKey, inputFile = "unique.txt", mapsD
 	const editors = ['word', 'cell', 'slide'];
 	const maps = ['.props.js.map', '.vars.js.map', '-all.js.map', '-all-min.js.map'];
 
-	const client  = new S3Client(configS3);
+	const client = new S3Client(configS3);
 	for (let version of versions) {
 		let versionS3 = version.replace(/-/g, '/');
-		await mkdir(`${mapsDir}/${version}`, { recursive: true });
+		await mkdir(`${mapsDir}/${version}`, {recursive: true});
 		for (let editor of editors) {
 			for (let map of maps) {
 				let filePath = `${mapsDir}/${version}/${editor}${map}`;
 				try {
 					await stat(filePath);
 					console.log('Skip file exists: ', filePath);
-				}
-				catch (err) {
-					const key = `closure-maps/${versionS3}/commercial/${editor}${map}`;
+				} catch (err) {
+					const key = keyPrefix.replace('{version}', versionS3) + `/${editor}${map}`;
 					const command = new GetObjectCommand({
 						Bucket: bucketName,
 						Key: key
