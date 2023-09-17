@@ -15494,12 +15494,46 @@ CDocument.prototype.Get_CursorLogicPosition = function()
 
 	return null;
 };
-CDocument.prototype.private_GetLogicDocumentPosition = function(LogicDocument)
+CDocument.prototype.getDocumentContentPosition = function(isSelection, isStart)
 {
-	if (!LogicDocument)
+	let docContent = this;
+	switch (this.GetDocPosType())
+	{
+		case docpostype_HdrFtr:
+		{
+			let hdrFtr = this.HdrFtr.Get_CurHdrFtr();
+			if (hdrFtr)
+				docContent = hdrFtr.Get_DocumentContent();
+			
+			break;
+		}
+		case docpostype_Footnotes:
+		{
+			let footnote = this.Footnotes.GetCurFootnote();
+			if (footnote)
+				docContent = footnote;
+			
+			break;
+		}
+		case docpostype_Endnotes:
+		{
+			let endnote = this.Endnotes.GetCurEndnote();
+			if (endnote)
+				docContent = endnote;
+			
+			break;
+		}
+	}
+	
+	// docpostype_DrawingObjects обрабытывается внутри private_GetLogicDocumentPosition
+	return this.private_GetLogicDocumentPosition(docContent, isSelection, isStart);
+};
+CDocument.prototype.private_GetLogicDocumentPosition = function(mainDC, isSelection, isStart)
+{
+	if (!mainDC)
 		return null;
 
-	if (docpostype_DrawingObjects === LogicDocument.GetDocPosType())
+	if (docpostype_DrawingObjects === mainDC.GetDocPosType())
 	{
 		var ParaDrawing    = this.DrawingObjects.getMajorParaDrawing();
 		var DrawingContent = this.DrawingObjects.getTargetDocContent();
@@ -15508,7 +15542,10 @@ CDocument.prototype.private_GetLogicDocumentPosition = function(LogicDocument)
 
 		if (DrawingContent)
 		{
-			return DrawingContent.GetContentPosition(DrawingContent.IsSelectionUse(), false);
+			if (undefined === isSelection)
+				return DrawingContent.GetContentPosition(DrawingContent.IsSelectionUse(), false);
+			else
+				return DrawingContent.GetContentPosition(isSelection, isStart);
 		}
 		else
 		{
@@ -15527,7 +15564,10 @@ CDocument.prototype.private_GetLogicDocumentPosition = function(LogicDocument)
 	}
 	else
 	{
-		return LogicDocument.GetContentPosition(LogicDocument.IsSelectionUse(), false);
+		if (undefined === isSelection)
+			return mainDC.GetContentPosition(mainDC.IsSelectionUse(), false);
+		else
+			return mainDC.GetContentPosition(isSelection, isStart);
 	}
 };
 CDocument.prototype.Get_DocumentPositionInfoForCollaborative = function()

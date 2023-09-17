@@ -149,6 +149,15 @@
 			
 			if (obj.cancelSelection)
 				console.log("Text selection has been canceled");
+		
+			if (obj.moveToMainPart)
+				console.log("Main document part");
+			else if (obj.moveToFootnote)
+				console.log("Footnote");
+			else if (obj.moveToFootnote)
+				console.log("Drawing");
+			else if (obj.moveToHdrFtr)
+				console.log("Header/Footer");
 			
 			if (obj.moveToStartOfDocument)
 				console.log("Start of the document");

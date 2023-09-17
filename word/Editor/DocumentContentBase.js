@@ -88,28 +88,21 @@ CDocumentContentBase.prototype.SetDocPosType = function(nType)
 	this.CurPos.Type = nType;
 
 	if (this.Controller)
-	{
-		if (docpostype_HdrFtr === nType)
-		{
-			this.Controller = this.HeaderFooterController;
-		}
-		else if (docpostype_DrawingObjects === nType)
-		{
-			this.Controller = this.DrawingsController;
-		}
-		else if (docpostype_Footnotes === nType)
-		{
-			this.Controller = this.Footnotes;
-		}
-		else if (docpostype_Endnotes === nType)
-		{
-			this.Controller = this.Endnotes;
-		}
-		else //if (docpostype_Content === nType)
-		{
-			this.Controller = this.LogicDocumentController;
-		}
-	}
+		this.Controller = this.getController(nType)
+};
+CDocumentContentBase.prototype.getController = function(type)
+{
+	let controller = this.LogicDocumentController;
+	if (docpostype_HdrFtr === type)
+		controller = this.HeaderFooterController;
+	else if (docpostype_DrawingObjects === type)
+		controller = this.DrawingsController;
+	else if (docpostype_Footnotes === type)
+		controller = this.Footnotes;
+	else if (docpostype_Endnotes === type)
+		controller = this.Endnotes;
+	
+	return controller;
 };
 /**
  * Обновляем индексы элементов.
@@ -2644,7 +2637,11 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 		return null;
 	}
 	
-	if (prevInfo.docPosType !== curInfo.docPosType)
+	if (prevInfo.docPosType !== curInfo.docPosType
+		|| !prevInfo.curPos.length
+		|| !curInfo.curPos.length
+		|| prevInfo.curPos[0].Class !== curInfo.curPos[0].Class
+		|| (!(curInfo.curPos[0].Class instanceof CDocument) && !(curInfo.curPos[0].Class instanceof CDocumentContent)))
 	{
 		switch (curInfo.docPosType)
 		{
@@ -2660,6 +2657,7 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 	}
 	else
 	{
+		let mainDC = curInfo.curPos[0].Class;
 		if (prevInfo.isSelection && !curInfo.isSelection && isActionSelectionChange)
 		{
 			obj.cancelSelection = true;
@@ -2754,7 +2752,7 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 					|| (AscWord.CompareDocumentPositions(prevInfo.selectionStart, prevInfo.selectionEnd) >= 0
 							&& AscWord.CompareDocumentPositions(curInfo.selectionEnd, prevInfo.selectionEnd) <= 0));
 					
-					this.SetContentSelection(curInfo.selectionEnd, prevInfo.selectionEnd, 0, 0, 0);
+					mainDC.SetContentSelection(curInfo.selectionEnd, prevInfo.selectionEnd, 0, 0, 0);
 					
 					type     = isAdd ? AscCommon.SpeechWorkerCommands.TextSelected : AscCommon.SpeechWorkerCommands.TextUnselected;
 					obj.text = this.GetSelectedText(false);
@@ -2771,9 +2769,20 @@ CDocumentContentBase.prototype.getSelectionInfo = function()
 {
 	return {
 		docPosType     : this.GetDocPosType(),
-		curPos         : this.GetContentPosition(false),
+		curPos         : this.getDocumentContentPosition(false),
 		isSelection    : this.IsSelectionUse(),
-		selectionStart : this.GetContentPosition(true, true),
-		selectionEnd   : this.GetContentPosition(true, false)
+		selectionStart : this.getDocumentContentPosition(true, true),
+		selectionEnd   : this.getDocumentContentPosition(true, false)
 	};
+};
+/**
+ * Данный метод отличается от обычного GetContentPosition, тем что для класса CDocument он возвращает полную позицию
+ * с учетом того, где находится содержимое (основная часть, колонтитул, сноска)
+ * @param {boolean} isSelection
+ * @param {boolean} isStart
+ * @returns {Array}
+ */
+CDocumentContentBase.prototype.getDocumentContentPosition = function(isSelection, isStart)
+{
+	return this.GetContentPosition(isSelection, isStart);
 };
