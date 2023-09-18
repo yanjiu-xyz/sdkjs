@@ -7449,10 +7449,9 @@ PivotFormatsManager.prototype.checkReferenceValues = function(referenceInfo, val
 		if (valuesMap && valuesMap.size > 0 && !valuesMap.has(v)) {
 			return false;
 		}
-	} else {
-		return false;
+		return true;
 	}
-	return true;
+	return false;
 };
 
 /**
@@ -7539,20 +7538,22 @@ PivotFormatsManager.prototype.checkReferences = function(formatsCollectionItem, 
 			return false;
 		}
 		const fieldValuesCount = referencesInfoMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) ? referencesInfoMap.size - 1: referencesInfoMap.size;
-		if (valuesInfo.length < fieldValuesCount) {
-			return false;
+		let count = fieldValuesCount;
+		if (count === 0) {
+			return true;
 		}
 		for (let i = 0; i < valuesInfo.length; i += 1) {
 			const valueInfo = valuesInfo[i];
 			const fieldIndex = valueInfo.fieldIndex;
 			const referenceInfo = referencesInfoMap.get(fieldIndex);
-			if (!this.checkReferenceValues(referenceInfo, valueInfo)) {
-				return false;
+			if (this.checkReferenceValues(referenceInfo, valueInfo) && this.checkReferenceAttributes(referenceInfo, valueInfo)) {
+				count -= 1;
 			}
-			if (!this.checkReferenceAttributes(referenceInfo, valueInfo)) {
-				return false;
+			if (count === 0) {
+				return true;
 			}
 		}
+		return false;
 	}
 	return true;
 };
@@ -7567,7 +7568,6 @@ PivotFormatsManager.prototype.checkOther = function(formatsCollectionItem, query
 	if (referencesInfo.selectedField !== null && referencesInfo.selectedField !== query.field) {
 		return false;
 	}
-	
 	return true;
 };
 
