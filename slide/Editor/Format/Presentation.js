@@ -9216,12 +9216,14 @@ CPresentation.prototype.Document_Undo = function (Options) {
 			this.Api.forceSaveUndoRequest = true;
 		}
 	} else {
+		this.Api.sendEvent("asc_onBeforeUndoRedo");
 		this.clearThemeTimeouts();
 		var arrChanges = this.History.Undo(Options);
 		this.Recalculate(this.History.Get_RecalcData(null, arrChanges));
 
 		this.Document_UpdateSelectionState();
 		this.Document_UpdateInterfaceState();
+		this.Api.sendEvent("asc_onUndoRedo");
 	}
 };
 
@@ -9229,6 +9231,7 @@ CPresentation.prototype.Document_Redo = function () {
 	if (true === AscCommon.CollaborativeEditing.Get_GlobalLock())
 		return;
 
+	this.Api.sendEvent("asc_onBeforeUndoRedo");
 	this.clearThemeTimeouts();
 	var arrChanges = this.History.Redo();
 	this.Recalculate(this.History.Get_RecalcData(null, arrChanges));
@@ -9236,6 +9239,7 @@ CPresentation.prototype.Document_Redo = function () {
 
 	this.Document_UpdateSelectionState();
 	this.Document_UpdateInterfaceState();
+	this.Api.sendEvent("asc_onUndoRedo");
 };
 
 CPresentation.prototype.Set_FastCollaborativeEditing = function (isOn) {
