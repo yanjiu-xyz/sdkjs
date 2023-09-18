@@ -3272,6 +3272,7 @@
 		this.aCollaborativeActions = this.aCollaborativeActions.concat(History.GetSerializeArray());
 		if(aChanges.length > 0)
 		{
+			oThis.oApi.sendEvent("asc_onBeforeApplyChanges");
 			this.bCollaborativeChanges = true;
 			//собираем общую длину
 			var i, length = aChanges.length;
@@ -3366,11 +3367,10 @@
 				oThis.snapshot = oThis._getSnapshot();
 				if(null != fCallback)
 					fCallback();
-				Asc.editor.sendEvent("asc_onSelectionEnd");
+				oThis.oApi.sendEvent("asc_onApplyChanges");
 			});
 		} else if(null != fCallback) {
 			fCallback();
-			Asc.editor.sendEvent("asc_onSelectionEnd");
 		}
 	};
 	Workbook.prototype.DeserializeHistoryNative = function(oRedoObjectParam, data, isFull){

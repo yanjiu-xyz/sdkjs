@@ -1123,7 +1123,6 @@
             LogicDocument.Load_DocumentStateAfterLoadChanges(DocState);
             this.Refresh_ForeignCursors();
         }
-        Asc.editor.sendEvent('asc_onSelectionEnd');
     };
     CCollaborativeEditingBase.prototype.WatchDocumentPositionsByState = function(DocState)
 	{
