@@ -2032,6 +2032,8 @@
 
 		this.ImageUrl = null;
 		this.Scale = null;
+		this.ImageW = null;
+		this.ImageH = null;
 
 		this.DivId = null;
 		this.Api = null;
@@ -2134,6 +2136,17 @@
 	};
 	CAscWatermarkProperties.prototype['get_Scale'] = CAscWatermarkProperties.prototype.get_Scale = function () {
 		return this.Scale;
+	};
+	CAscWatermarkProperties.prototype['put_ImageSize'] = CAscWatermarkProperties.prototype.put_ImageSize = function (w, h) {
+		this.ImageW = w;
+		this.ImageH = h;
+		this.Scale = -1;
+	};
+	CAscWatermarkProperties.prototype['get_ImageWidth'] = CAscWatermarkProperties.prototype.get_ImageWidth = function () {
+		return this.ImageW;
+	};
+	CAscWatermarkProperties.prototype['get_ImageHeight'] = CAscWatermarkProperties.prototype.get_ImageHeight = function () {
+		return this.ImageH;
 	};
 	CAscWatermarkProperties.prototype['put_BackgroundColor'] = CAscWatermarkProperties.prototype.put_BackgroundColor = function (v) {
 		this.BackgroundColor = v;

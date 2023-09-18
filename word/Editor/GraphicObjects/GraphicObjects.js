@@ -445,14 +445,30 @@ CGraphicObjects.prototype =
             oImgP.ImageUrl = oProps.get_ImageUrl();
             var oSize = oImgP.asc_getOriginSize(this.getEditorApi());
             var dScale = oProps.get_Scale();
-            if(dScale < 0)
+            let nImageW = oProps.get_ImageWidth();
+            let nImageH = oProps.get_ImageWidth();
+            if(AscFormat.isRealNumber(nImageW) && AscFormat.isRealNumber(nImageH) &&
+                nImageW > 0 && nImageH > 0) {
+                extX = nImageW / 36000;
+                extY = nImageH / 36000;
+            }
+            else if(dScale < 0)
             {
-                extX = dMaxWidth;
-                extY = oSize.asc_getImageHeight() * (extX / oSize.asc_getImageWidth());
-                if(extY > dMaxHeight)
-                {
-                    extY = dMaxHeight;
-                    extX = oSize.asc_getImageWidth() * (extY / oSize.asc_getImageHeight());
+                let nImageW = oProps.get_ImageWidth();
+                let nImageH = oProps.get_ImageWidth();
+                if(AscFormat.isRealNumber(nImageW) && AscFormat.isRealNumber(nImageH) &&
+                    nImageW > 0 && nImageH > 0) {
+                    extX = nImageW / 36000;
+                    extY = nImageH / 36000;
+                }
+                else {
+                    extX = dMaxWidth;
+                    extY = oSize.asc_getImageHeight() * (extX / oSize.asc_getImageWidth());
+                    if(extY > dMaxHeight)
+                    {
+                        extY = dMaxHeight;
+                        extX = oSize.asc_getImageWidth() * (extY / oSize.asc_getImageHeight());
+                    }
                 }
             }
             else

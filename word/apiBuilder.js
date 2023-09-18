@@ -19543,7 +19543,39 @@
 	{
 		return this.Settings.get_Scale();
 	};
+	/**
+	 * Returns the width of the image watermark.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @returns {EMU | null} - The image with in EMU. Returns null if Scale was set.
+	 */
+	ApiWatermarkSettings.prototype.GetImageWidth = function ()
+	{
+		return this.Settings.get_ImageWidth();
+	};
+	/**
+	 * Returns the height of the image watermark.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @returns {EMU | null} - The image height in EMU. Returns null if Scale was set.
+	 */
+	ApiWatermarkSettings.prototype.GetImageHeight = function ()
+	{
+		return this.Settings.get_ImageHeight();
+	};
 
+
+	/**
+	 * Sets the size of the image.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @param {EMU} nWidth - The width of the image
+	 * @param {EMU} nHeight - The width of the image
+	 */
+	ApiWatermarkSettings.prototype.SetImageSize = function (nWidth, nHeight)
+	{
+		this.Settings.put_ImageSize(nWidth, nHeight);
+	};
 
 
 
@@ -20388,21 +20420,38 @@
 	ApiCommentReply.prototype["GetUserId"]		= ApiCommentReply.prototype.GetUserId;
 	ApiCommentReply.prototype["SetUserId"]		= ApiCommentReply.prototype.SetUserId;
 
-	ApiWatermarkSettings.prototype["GetClassType"]       =  ApiWatermarkSettings.prototype.GetClassType;
-	ApiWatermarkSettings.prototype["SetType"]       =  ApiWatermarkSettings.prototype.SetType;
-	ApiWatermarkSettings.prototype["GetType"]       =  ApiWatermarkSettings.prototype.GetType;
-	ApiWatermarkSettings.prototype["SetText"]       =  ApiWatermarkSettings.prototype.SetText;
-	ApiWatermarkSettings.prototype["GetText"]       =  ApiWatermarkSettings.prototype.GetText;
-	ApiWatermarkSettings.prototype["SetTextPr"]       =  ApiWatermarkSettings.prototype.SetTextPr;
-	ApiWatermarkSettings.prototype["GetTextPr"]       =  ApiWatermarkSettings.prototype.GetTextPr;
-	ApiWatermarkSettings.prototype["SetOpacity"]       =  ApiWatermarkSettings.prototype.SetOpacity;
-	ApiWatermarkSettings.prototype["GetOpacity"]       =  ApiWatermarkSettings.prototype.GetOpacity;
-	ApiWatermarkSettings.prototype["SetDirection"]       =  ApiWatermarkSettings.prototype.SetDirection;
-	ApiWatermarkSettings.prototype["GetDirection"]       =  ApiWatermarkSettings.prototype.GetDirection;
-	ApiWatermarkSettings.prototype["SetImageURL"]       =  ApiWatermarkSettings.prototype.SetImageURL;
-	ApiWatermarkSettings.prototype["GetImageURL"]       =  ApiWatermarkSettings.prototype.GetImageURL;
+	ApiWatermarkSettings.prototype["GetClassType"]   =  ApiWatermarkSettings.prototype.GetClassType;
+	ApiWatermarkSettings.prototype["SetType"]        =  ApiWatermarkSettings.prototype.SetType;
+	ApiWatermarkSettings.prototype["GetType"]        =  ApiWatermarkSettings.prototype.GetType;
+	ApiWatermarkSettings.prototype["SetText"]        =  ApiWatermarkSettings.prototype.SetText;
+	ApiWatermarkSettings.prototype["GetText"]        =  ApiWatermarkSettings.prototype.GetText;
+	ApiWatermarkSettings.prototype["SetTextPr"]      =  ApiWatermarkSettings.prototype.SetTextPr;
+	ApiWatermarkSettings.prototype["GetTextPr"]      =  ApiWatermarkSettings.prototype.GetTextPr;
+	ApiWatermarkSettings.prototype["SetOpacity"]     =  ApiWatermarkSettings.prototype.SetOpacity;
+	ApiWatermarkSettings.prototype["GetOpacity"]     =  ApiWatermarkSettings.prototype.GetOpacity;
+	ApiWatermarkSettings.prototype["SetDirection"]   =  ApiWatermarkSettings.prototype.SetDirection;
+	ApiWatermarkSettings.prototype["GetDirection"]   =  ApiWatermarkSettings.prototype.GetDirection;
+	ApiWatermarkSettings.prototype["SetImageURL"]    =  ApiWatermarkSettings.prototype.SetImageURL;
+	ApiWatermarkSettings.prototype["GetImageURL"]    =  ApiWatermarkSettings.prototype.GetImageURL;
 	ApiWatermarkSettings.prototype["SetScale"]       =  ApiWatermarkSettings.prototype.SetScale;
 	ApiWatermarkSettings.prototype["GetScale"]       =  ApiWatermarkSettings.prototype.GetScale;
+	ApiWatermarkSettings.prototype["GetImageWidth"]  =  ApiWatermarkSettings.prototype.GetImageWidth;
+	ApiWatermarkSettings.prototype["GetImageHeight"] =  ApiWatermarkSettings.prototype.GetImageHeight;
+	ApiWatermarkSettings.prototype["SetImageSize"]   =  ApiWatermarkSettings.prototype.SetImageSize;
+
+
+
+	/**
+	 * Sets the size of the image.
+	 * @memberof ApiWatermarkSettings
+	 * @typeofeditors ["CDE"]
+	 * @param {EMU} nWidth - The width of the image
+	 * @param {EMU} nHeight - The width of the image
+	 */
+	ApiWatermarkSettings.prototype.SetScale = function (nWidth, nHeight)
+	{
+		this.Settings.put_ImageSize(nWidth, nHeight);
+	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export for internal usage
