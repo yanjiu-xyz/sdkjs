@@ -60,15 +60,19 @@ async function run(inputFile = "unique.txt", outputFile = "deserialized.docx", m
 	let text = fs.readFileSync(inputFile, {encoding: 'utf-8'});
 	let lines = text.split('\n');
 	let replaced = lines.map((line) => {
-		let sdkMatchRes = line.match(/\/([a-zA-z0-9\-\.]*)\/sdkjs\/([a-zA-z0-9\-\.]*)\//);
+		let sdkMatchRes = line.match(/\/([a-zA-z0-9\-\.]*)\/(sdkjs|web-apps)\/([a-zA-z0-9\-\.]*)\//);
 
-		if (sdkMatchRes && 3 === sdkMatchRes.length) {
+		if (sdkMatchRes && 4 === sdkMatchRes.length) {
 			let maps = sdkMaps[sdkMatchRes[0]];
 			if (!maps) {
-				let pathProps = `${mapsDir}/${sdkMatchRes[1]}/${sdkMatchRes[2]}.props.js.map`;
-				let pathVars = `${mapsDir}/${sdkMatchRes[1]}/${sdkMatchRes[2]}.vars.js.map`;
-				console.log(`Read maps: ${pathProps} and ${pathVars}`);
-				sdkMaps[sdkMatchRes[0]] = {props: readProps(pathProps), vars: readProps(pathVars)};
+				let pathProps = `${mapsDir}/${sdkMatchRes[1]}/${sdkMatchRes[3]}.props.js.map`;
+				let pathVars = `${mapsDir}/${sdkMatchRes[1]}/${sdkMatchRes[3]}.vars.js.map`;
+				try {
+					maps = {props: readProps(pathProps), vars: readProps(pathVars)};
+					sdkMaps[sdkMatchRes[0]] = maps;
+					console.log(`Read maps: ${pathProps} and ${pathVars}`);
+				} catch (e){
+				}
 			}
 			if (maps) {
 				let propsReplacedOld = propsReplaced;
@@ -87,11 +91,12 @@ async function run(inputFile = "unique.txt", outputFile = "deserialized.docx", m
 						return match;
 					}
 				});
-				if (propsReplacedOld !== propsReplaced) {
-					//force 4 spaces indent
-					line = ' '.repeat(4) + line.trim();
-				}
 			}
+			if (isDocx) {
+				line = line.replace(`/`+sdkMatchRes[3], `/<b/>${sdkMatchRes[3]}<b/>`)
+			}
+			//force 8 spaces indent
+			line = ' '.repeat(8) + line.trim();
 		}
 		if (isDocx) {
 			let toBold = ['changesError:', 'isDocumentLoadComplete:'];
@@ -145,7 +150,25 @@ function makeP(val) {
 }
 
 function makeBoldRun(val, isBold) {
-	let bold = isBold ? `<w:rPr><w:b/><w:bCs/><w:color w:val="FF0000"/></w:rPr>` : '';
+	let bold = '';
+	if (isBold) {
+		switch (val) {
+			case 'word':
+				bold = `<w:rPr><w:b/><w:bCs/><w:color w:val="0000FF"/></w:rPr>`;
+				break;
+			case 'cell':
+				bold = `<w:rPr><w:b/><w:bCs/><w:color w:val="7FBC00"/></w:rPr>`;
+				break;
+			case 'slide':
+				bold = `<w:rPr><w:b/><w:bCs/><w:color w:val="FFA500"/></w:rPr>`;
+				break;
+			case 'apps':
+				bold = `<w:rPr><w:b/><w:bCs/><w:color w:val="7030A0"/></w:rPr>`;
+				break;
+			default:
+				bold = `<w:rPr><w:b/><w:bCs/><w:color w:val="FF0000"/></w:rPr>`;
+		}
+	}
 	return `<w:r>${bold}<w:t xml:space="preserve">${escapeXml(val)}</w:t></w:r>`;
 }
 
