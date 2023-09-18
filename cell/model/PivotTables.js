@@ -7332,13 +7332,13 @@ CT_pivotTableDefinition.prototype.asc_canShowDetails = function(row, col) {
  * @return {PivotFormatsManagerResponse}
  */
 CT_pivotTableDefinition.prototype.getFormatting = function(query) {
-	const dataFields = this.asc_getDataFields();
 	const response = this.formatsManager.get(query);
 	const result = {
 		num: response.num,
 		font: response.font,
 		fill: response.fill,
 		border: response.border,
+		align: response.align,
 	}
 	return result;
 };
@@ -7435,6 +7435,7 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
  * @property {Font} font
  * @property {Fill} fill
  * @property {Border} border
+ * @property {Align} align
  */
 
 /**
@@ -7676,6 +7677,9 @@ PivotFormatsManager.prototype.get = function(query) {
 		}
 		if (!result.border && dxf && dxf.border) {
 			result.border = dxf.border;
+		}
+		if (!result.align && dxf && dxf.align) {
+			result.align = dxf.align;
 		}
 	}
 	return result;

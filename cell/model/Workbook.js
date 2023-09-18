@@ -19095,8 +19095,22 @@
 		if (formatting.border) {
 			this.setBorder(formatting.border);
 		}
+		if (formatting.align) {
+			this.setAlign(formatting.align)
+		}
 		return;
-	}
+	};
+	/**
+	 * @param {Align} align 
+	 */
+	Range.prototype.setAlign = function(align) {
+		this.setAlignHorizontal(align.hor);
+		this.setAlignVertical(align.ver);
+		this.setIndent(align.indent);
+		this.setAngle(align.angle);
+		this.setShrinkToFit(align.shrink);
+		this.setWrap(align.wrap);
+	};
 
 	function RowIterator() {
 	}
