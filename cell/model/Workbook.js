@@ -8699,16 +8699,8 @@
 			if (pivotTable.compact) {
 				let caption;
 				if (1 === colFields.length && AscCommonExcel.st_VALUES === colFields[0].asc_getIndex()) {
-					// todo formatting
 					caption = pivotTable.dataCaption || AscCommon.translateManager.getValue(AscCommonExcel.DATA_CAPTION)
 				} else {
-					const formatting = pivotTable.getFormatting({
-						type: Asc.c_oAscPivotAreaType.Button,
-						axis: Asc.c_oAscAxis.AxisCol,
-						isData: false,
-						field: colFields[0].asc_getIndex()
-					});
-					cells.setFormatting(formatting);
 					caption = pivotTable.colHeaderCaption || AscCommon.translateManager.getValue(AscCommonExcel.COL_HEADER_CAPTION);
 				}
 				this._updatePivotTableSetCellValue(cells, caption);
@@ -8724,17 +8716,28 @@
 					cells.setOffset(offset);
 				}
 			}
-			// update topRight pivot area
+			// update all col buttons area formats
+			for(let i = 0; i < colFields.length; i += 1) {
+				const cells = this.getRange4(pivotRange.r1, pivotRange.c1 + location.firstDataCol + i);
+				const index = colFields[i].asc_getIndex();
+				const formatting = pivotTable.getFormatting({
+					type: Asc.c_oAscPivotAreaType.Button,
+					axis: Asc.c_oAscAxis.AxisCol,
+					isData: false,
+					field: index
+				});
+				cells.setFormatting(formatting);
+			}
+			// update topRight pivot area formats
 			const pivotTableLenC = pivotRange.c2 - pivotRange.c1;
 			const lenC = pivotTableLenC - location.firstDataCol;
-			// todo buttons
 			this.updatePivotTableCellsLablesOriginOffsets(pivotTable, {
 				isData: false,
 				type: Asc.c_oAscPivotAreaType.TopRight,
 				field: null
 			},  pivotRange.r1, pivotRange.c1 + location.firstDataCol + colFields.length, 1, lenC);
 		}
-		// update origin pivot area
+		// update origin pivot area formats
 		this.updatePivotTableCellsLablesOriginOffsets(pivotTable, {
 			isData: false,
 			type: Asc.c_oAscPivotAreaType.Origin,
@@ -9059,16 +9062,9 @@
 		if (pivotTable.showHeaders) {
 			if (pivotTable.compact || location.firstDataCol !== rowFields.length) {
 				if(1 === rowFields.length && AscCommonExcel.st_VALUES === rowFields[0].asc_getIndex()){
-					this._updatePivotTableSetCellValue(this.getRange4(r1, c1), pivotTable.dataCaption || AscCommon.translateManager.getValue(AscCommonExcel.DATA_CAPTION));
+					this._updatePivotTableSetCellValue(cells, pivotTable.dataCaption || AscCommon.translateManager.getValue(AscCommonExcel.DATA_CAPTION));
 				} else {
-					const formatting = pivotTable.getFormatting({
-						type: Asc.c_oAscPivotAreaType.Button,
-						axis: Asc.c_oAscAxis.AxisRow,
-						isData: false,
-						field: rowFields[0].asc_getIndex()
-					});
-					cells.setFormatting(formatting);
-					this._updatePivotTableSetCellValue(this.getRange4(r1, c1), pivotTable.rowHeaderCaption || AscCommon.translateManager.getValue(AscCommonExcel.ROW_HEADER_CAPTION));
+					this._updatePivotTableSetCellValue(cells, pivotTable.rowHeaderCaption || AscCommon.translateManager.getValue(AscCommonExcel.ROW_HEADER_CAPTION));
 				}
 			} else {
 				index = rowFields[0].asc_getIndex();
@@ -9101,6 +9097,31 @@
 				}
 			}
 			rowFieldsOffset[i] = c1 - pivotRange.c1;
+		}
+		r1 = pivotRange.r1 + location.firstDataRow - 1;
+		c1 =  pivotRange.c1;
+		if (pivotTable.compact) {
+			const cells = this.getRange4(r1, c1);
+			const index = rowFields[0].asc_getIndex();
+			const formatting = pivotTable.getFormatting({
+				type: Asc.c_oAscPivotAreaType.Button,
+				axis: Asc.c_oAscAxis.AxisRow,
+				isData: false,
+				field: index
+			});
+			cells.setFormatting(formatting);
+		} else {
+			for (let i = 0; i < rowFields.length; i += 1) {
+				const cells = this.getRange4(r1, c1 + i);
+				const index = rowFields[i].asc_getIndex();
+				const formatting = pivotTable.getFormatting({
+					type: Asc.c_oAscPivotAreaType.Button,
+					axis: Asc.c_oAscAxis.AxisRow,
+					isData: false,
+					field: index
+				});
+				cells.setFormatting(formatting);
+			}
 		}
 		return rowFieldsOffset;
 	};
