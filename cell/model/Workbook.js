@@ -9195,6 +9195,7 @@
 					traversal.setStartColIndex(pivotFields, colItem, colR, colFields);
 					const oCellValue = traversal.getCellValue(dataFields, rowItem, colItem, props, dataRow, rowItemsIndex, colItemsIndex);
 					if (oCellValue) {
+						const dataIndex = Math.max(rowItem.i, colItem.i);
 						const cell = this.getRange4(r1 + rowItemsIndex, c1 + colItemsIndex);
 						const isGrandRow = rowItem.t === Asc.c_oAscItemType.Grand;
 						const isGrandCol = colItem.t === Asc.c_oAscItemType.Grand;
@@ -9208,6 +9209,7 @@
 							field: isGrandRow ? traversal.fieldIndex : fieldIndex,
 							axis: axis,
 						});
+						formatting.num = formatting.num || (dataFields && dataFields[dataIndex] && dataFields[dataIndex].num)
 						cell.setFormatting(formatting);
 						cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 					}

@@ -7333,10 +7333,9 @@ CT_pivotTableDefinition.prototype.asc_canShowDetails = function(row, col) {
  */
 CT_pivotTableDefinition.prototype.getFormatting = function(query) {
 	const dataFields = this.asc_getDataFields();
-	const dataIndex = query.dataIndex;
 	const response = this.formatsManager.get(query);
 	const result = {
-		num: (response.num) || (dataFields && dataFields[dataIndex] && dataFields[dataIndex].num),
+		num: response.num,
 		font: response.font,
 		fill: response.fill,
 		border: response.border,
