@@ -6675,9 +6675,7 @@
 				},
 
 				resetTracking: function () {
-					this.changeCurrentState(new AscFormat.NullState(this));
-					this.clearTrackObjects();
-					this.clearPreTrackObjects();
+					this.resetTrackState();
 					this.updateOverlay();
 				},
 
@@ -6872,7 +6870,16 @@
 					if (oTiming) {
 						selection_state.timingSelection = oTiming.getSelectionState();
 					}
+					selection_state.curState = this.curState;
+					selection_state.arrPreTrackObjects = [].concat(this.arrPreTrackObjects);
+					selection_state.arrTrackObjects = [].concat(this.arrTrackObjects);
 					return [selection_state];
+				},
+
+				resetTrackState: function () {
+					this.clearTrackObjects();
+					this.clearPreTrackObjects();
+					this.changeCurrentState(new AscFormat.NullState(this));
 				},
 
 				Save_DocumentStateBeforeLoadChanges: function (oState) {
@@ -11051,8 +11058,8 @@
 			if(!Array.isArray(aSelectionState1_) || !Array.isArray(aSelectionState2_)) {
 				return null;
 			}
-			const oSelectionState1 = aSelectionState1_[aSelectionState1_.length - 1];
-			const oSelectionState2 = aSelectionState2_[aSelectionState2_.length - 1];
+			const oSelectionState1 = aSelectionState1_[0];
+			const oSelectionState2 = aSelectionState2_[0];
 			if(!oSelectionState1 || !oSelectionState2) {
 				return null;
 			}

@@ -2633,8 +2633,7 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 	
 	if (curInfo.docPosType === docpostype_DrawingObjects)
 	{
-		// Обработка автофигур
-		return null;
+		return AscCommon.getSpeechDescription(prevState, curState, action);
 	}
 	
 	if (prevInfo.docPosType !== curInfo.docPosType
