@@ -8940,7 +8940,6 @@
 				/** @type {PivotFormatsManagerQuery} */
 				const query = {
 					valuesInfo: fieldValues,
-					dataIndex: item.i,
 					isData: false,
 					isGrandRow: isRowItems && item.t === Asc.c_oAscItemType.Grand,
 					isGrandCol: !isRowItems && item.t === Asc.c_oAscItemType.Grand,
@@ -8969,6 +8968,11 @@
 						query.field = fieldIndex;
 						this._updatePivotTableCellsRowColLablesOffsets(pivotTable, rowFieldsOffset, isRowItems, i, j, query);
 					} else {
+						fieldValues.push({
+							fieldIndex: AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD,
+							value: item.i,
+							type: Asc.c_oAscItemType.Data
+						});
 						query.field = AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD;
 						const formatting = pivotTable.getFormatting(query);
 						cells.setFormatting(formatting);
@@ -8986,6 +8990,11 @@
 					} else {
 						oCellValue.text = AscCommon.translateManager.getValue(AscCommonExcel.ToName_ST_ItemType(item.t));
 						oCellValue.text += ' ' + pivotTable.getDataFieldName(item.i);
+						fieldValues.push({
+							fieldIndex: AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD,
+							value: item.i,
+							type: Asc.c_oAscItemType.Data
+						});
 						this._updatePivotTableCellsRowColLablesOffsets(pivotTable, rowFieldsOffset, isRowItems, i, j, query);
 					}
 				} else if (Asc.c_oAscItemType.Blank === item.t) {
@@ -9021,6 +9030,10 @@
 							fieldIndex: fieldIndex,
 							value: item.x[j].getV(),
 							type: item.t
+						}, {
+							fieldIndex: AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD,
+							value: item.i,
+							type: Asc.c_oAscItemType.Data
 						});
 						query.field = fieldIndex;
 						oCellValue.text = totalTitleRange[r + j].getValueWithFormatSkipToSpace();
@@ -9131,36 +9144,37 @@
 	 * @param {PivotDataElem} dataRow
 	 */
 	Worksheet.prototype._updatePivotTableCellsData = function(pivotTable, dataRow) {
-		var rowFields = pivotTable.asc_getRowFields();
-		var rowItems = pivotTable.getRowItems();
-		var colFields = pivotTable.asc_getColumnFields();
-		var colItems = pivotTable.getColItems();
-		var pivotFields = pivotTable.asc_getPivotFields();
-		var dataFields = pivotTable.asc_getDataFields();
+		const rowFields = pivotTable.asc_getRowFields();
+		const rowItems = pivotTable.getRowItems();
+		const colFields = pivotTable.asc_getColumnFields();
+		const colItems = pivotTable.getColItems();
+		const pivotFields = pivotTable.asc_getPivotFields();
+		const dataFields = pivotTable.asc_getDataFields();
 		if (!rowItems || !colItems || !dataFields) {
 			return;
 		}
-		var valuesIndex = pivotTable.getRowFieldsValuesIndex();
-		var pivotRange = pivotTable.getRange();
-		var location = pivotTable.location;
-		var r1 = pivotRange.r1 + location.firstDataRow;
-		var c1 = pivotRange.c1 + location.firstDataCol;
-		let traversal = new AscCommonExcel.DataRowTraversal(pivotFields, dataFields, rowItems, colItems, rowFields, colFields);
+		const valuesIndex = pivotTable.getRowFieldsValuesIndex();
+		const pivotRange = pivotTable.getRange();
+		const location = pivotTable.location;
+		const r1 = pivotRange.r1 + location.firstDataRow;
+		const c1 = pivotRange.c1 + location.firstDataCol;
+
+		const traversal = new AscCommonExcel.DataRowTraversal(pivotFields, dataFields, rowItems, colItems, rowFields, colFields);
 		traversal.initRow(dataRow);
-		var fieldIndex;
-		let props = {rowFieldSubtotal: undefined, itemSd: undefined};
-		var oCellValue;
-		for (var rowItemsIndex = 0; rowItemsIndex < rowItems.length; ++rowItemsIndex) {
-			var rowItem = rowItems[rowItemsIndex];
+
+		const props = {rowFieldSubtotal: undefined, itemSd: undefined};
+		let fieldIndex;
+		for (let rowItemsIndex = 0; rowItemsIndex < rowItems.length; ++rowItemsIndex) {
+			const rowItem = rowItems[rowItemsIndex];
 			if (Asc.c_oAscItemType.Blank === rowItem.t) {
 				continue;
 			}
-			var rowR = rowItem.getR();
+			const rowR = rowItem.getR();
 			traversal.setStartRowIndex(rowR);
 			props.rowFieldSubtotal = Asc.c_oAscItemType.Default;
 			props.itemSd = true;
 			if (Asc.c_oAscItemType.Grand !== rowItem.t && rowFields) {
-				for (var rowItemsXIndex = 0; rowItemsXIndex < rowItem.x.length; ++rowItemsXIndex) {
+				for (let rowItemsXIndex = 0; rowItemsXIndex < rowItem.x.length; ++rowItemsXIndex) {
 					fieldIndex = rowFields[rowR + rowItemsXIndex].asc_getIndex();
 					if (!traversal.setRowIndex(pivotFields, fieldIndex, rowItem, rowR, rowItemsXIndex, props)) {
 						break;
@@ -9170,28 +9184,25 @@
 				traversal.rowValueCache = [];
 				traversal.rowFieldItemCache = [];
 			}
-			//todo
 			if (Asc.c_oAscItemType.Data !== rowItem.t || !rowFields || rowR + rowItem.x.length === rowFields.length ||
 				(AscCommonExcel.st_VALUES !== fieldIndex && pivotFields[fieldIndex] &&
 				(pivotFields[fieldIndex].checkSubtotalTop() || !props.itemSd) && rowR > valuesIndex)) {
-				traversal.initCol(dataRow);
 
-				for (var colItemsIndex = 0; colItemsIndex < colItems.length; ++colItemsIndex) {
-					var colItem = colItems[colItemsIndex];
-					var colR = colItem.getR();
+				traversal.initCol(dataRow);
+				for (let colItemsIndex = 0; colItemsIndex < colItems.length; ++colItemsIndex) {
+					const colItem = colItems[colItemsIndex];
+					const colR = colItem.getR();
 					traversal.setStartColIndex(pivotFields, colItem, colR, colFields);
-					oCellValue = traversal.getCellValue(dataFields, rowItem, colItem, props, dataRow, rowItemsIndex, colItemsIndex);
+					const oCellValue = traversal.getCellValue(dataFields, rowItem, colItem, props, dataRow, rowItemsIndex, colItemsIndex);
 					if (oCellValue) {
-						var dataIndex = Math.max(colItem.i, rowItem.i)
-						var cell = this.getRange4(r1 + rowItemsIndex, c1 + colItemsIndex);
-						let isGrandRow = rowItem.t === Asc.c_oAscItemType.Grand;
-						let isGrandCol = colItem.t === Asc.c_oAscItemType.Grand;
-						let axis = isGrandRow ? Asc.c_oAscAxis.AxisCol : Asc.c_oAscAxis.AxisRow;
-						var formatting = pivotTable.getFormatting({
+						const cell = this.getRange4(r1 + rowItemsIndex, c1 + colItemsIndex);
+						const isGrandRow = rowItem.t === Asc.c_oAscItemType.Grand;
+						const isGrandCol = colItem.t === Asc.c_oAscItemType.Grand;
+						const axis = isGrandRow ? Asc.c_oAscAxis.AxisCol : Asc.c_oAscAxis.AxisRow;
+						const formatting = pivotTable.getFormatting({
 							valuesInfo: traversal.getCurrentItemFieldsInfo(rowItem, colItem),
 							isGrandRow: isGrandRow,
 							isGrandCol: isGrandCol,
-							dataIndex: dataIndex,
 							isData: true,
 							type: Asc.c_oAscPivotAreaType.Normal,
 							field: isGrandRow ? traversal.fieldIndex : fieldIndex,

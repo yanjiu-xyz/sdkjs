@@ -7356,6 +7356,7 @@ CT_pivotTableDefinition.prototype.getFormatting = function(query) {
  * @property {boolean} isLabelOnly
  * @property {boolean} isDataOnly
  * @property {c_oAscAxis | null} axis
+ * @property {boolean} isOutline
  */
 
 /**
@@ -7404,7 +7405,8 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
 		isDataOnly: pivotArea.dataOnly,
 		type: pivotArea.type,
 		offset: pivotArea.getRangeOffset(),
-		axis: pivotArea.axis
+		axis: pivotArea.axis,
+		isOutline: pivotArea.outline
 	};
 	this.formatsCollection.push(formatsCollectionItem);
 	return;
@@ -7421,7 +7423,6 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
  * @property {PivotItemFieldsInfo[] | undefined} valuesInfo
  * @property {boolean | undefined} isGrandRow
  * @property {boolean | undefined} isGrandCol
- * @property {number | null} dataIndex
  * @property {boolean | undefined} isData
  * @property {c_oAscPivotAreaType} type
  * @property {Range | undefined} offset
@@ -7533,15 +7534,7 @@ PivotFormatsManager.prototype.checkReferences = function(formatsCollectionItem, 
 		return false;
 	}
 	if (referencesInfoMap) {
-		if (referencesInfoMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) &&
-			!referencesInfoMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD).valuesMap.has(query.dataIndex)) {
-			return false;
-		}
-		const fieldValuesCount = referencesInfoMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) ? referencesInfoMap.size - 1: referencesInfoMap.size;
-		let count = fieldValuesCount;
-		if (count === 0) {
-			return true;
-		}
+		let count = referencesInfoMap.size;
 		for (let i = 0; i < valuesInfo.length; i += 1) {
 			const valueInfo = valuesInfo[i];
 			const fieldIndex = valueInfo.fieldIndex;
@@ -7565,8 +7558,18 @@ PivotFormatsManager.prototype.checkReferences = function(formatsCollectionItem, 
  */
 PivotFormatsManager.prototype.checkOther = function(formatsCollectionItem, query) {
 	const referencesInfo = formatsCollectionItem.referencesInfo;
-	if (referencesInfo.selectedField !== null && referencesInfo.selectedField !== query.field) {
-		return false;
+	if (query.isData && formatsCollectionItem.isOutline) {
+		if (referencesInfo.selectedField !== null) {
+			if (referencesInfo.selectedField !== query.field) {
+				return false;
+			}
+		}
+	} else if (!query.isData) {
+		if (referencesInfo.selectedField !== null) {
+			if (referencesInfo.selectedField !== query.field) {
+				return false;
+			}
+		}
 	}
 	return true;
 };
@@ -17309,6 +17312,11 @@ DataRowTraversal.prototype.getCurrentItemFieldsInfo = function(rowItem, colItem)
 			}
 		}
 	}
+	result.push({
+		fieldIndex: AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD,
+		value: Math.max(rowItem.i, colItem.i),
+		type: Asc.c_oAscItemType.Data,
+	});
 	return result;
 };
 DataRowTraversal.prototype.setStartColIndex = function(pivotFields, colItem, colR, colFields) {
