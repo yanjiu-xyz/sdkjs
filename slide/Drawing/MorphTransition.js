@@ -551,6 +551,13 @@
         if(!this.geometry1 || !this.geometry2) {
             return;
         }
+        if(this.pen1 && this.pen2) {
+            const nDash1 = this.pen1.prstDash !== 0 ? this.pen1.prstDash : 6;
+            const nDash2 = this.pen2.prstDash !== 0 ? this.pen2.prstDash : 6;
+            if(nDash1 !== nDash2) {
+                return;
+            }
+        }
         if(this.geometry1.isEqualForMorph(this.geometry2)) {
 
             let oParent1 =  this.geometry1.parent && this.geometry1.parent.parent;
