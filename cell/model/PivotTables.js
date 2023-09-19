@@ -7332,7 +7332,7 @@ CT_pivotTableDefinition.prototype.asc_canShowDetails = function(row, col) {
 };
 /**
  * @param {PivotFormatsManagerQuery} query
- * @return {CellXfs}
+ * @return {CellXfs | null}
  */
 CT_pivotTableDefinition.prototype.getFormatting = function(query) {
 	return this.formatsManager.get(query);
