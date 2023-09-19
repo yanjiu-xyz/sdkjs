@@ -82,26 +82,9 @@
 		}
 		
 		this.WordControl.OnResize(true);
-		
-		
-		let CHECKBOX_STYLES_CODES = {
-			check:      10003,
-			cross:      10005,
-			diamond:    11201,
-			circle:     11044,
-			star:       128969,
-			square:     11200
-		}
-		
+
 		this.FontLoader.LoadDocumentFonts(this.WordControl.m_oDrawingDocument.CheckFontNeeds(), false);
-		let sText = Object.values(CHECKBOX_STYLES_CODES).reduce(function(accum, curValue) {
-			return accum + String.fromCharCode(curValue);
-		}, "")
-		
-		let LoadTimer = setInterval(function() {
-			AscFonts.FontPickerByCharacter.checkText(sText, editor, function() {clearInterval(LoadTimer)}, false, true, true);
-		}, 1000);
-		
+
 		let perfEnd = performance.now();
 		AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onOpenDocument", perfEnd - perfStart), this);
 	};
