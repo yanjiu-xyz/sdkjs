@@ -238,9 +238,14 @@ $(function() {
 				"MultidataField default data",
 				"MultidataField default label",
 				"Multidatafield label offset",
+				"TopRight&Origin",
+				"Buttons compact test",
+				"Buttons tabular test",
+				"Buttons outline test",
+				"Filter test",
 				"All test"
 			];
-			let row = 2;
+			let row = 4;
 			let col = 0;
 			let getValues = getReportValuesWithBoolFill;
 

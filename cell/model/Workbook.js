@@ -8643,6 +8643,7 @@
 	Worksheet.prototype._updatePivotTableCellsPage = function (pivotTable) {
 		//CT_pivotTableDefinition.prototype.getLayoutByCellPage
 		if (pivotTable.pageFieldsPositions) {
+			const fieldValuesCache = [];
 			for (let i = 0; i < pivotTable.pageFieldsPositions.length; ++i) {
 				const pos = pivotTable.pageFieldsPositions[i];
 				let cells = this.getRange4(pos.row, pos.col);
@@ -8664,21 +8665,24 @@
 				if (oCellValue.type !== AscCommon.CellValueType.String) {
 					cells.setAlignHorizontal(AscCommon.align_Left);
 				}
-				/**@type {PivotItemFieldsInfo | undefined} */
-				let fieldValues;
+				const fieldValues = {
+					fieldIndex: index,
+					value: pageField.item,
+					type: Asc.c_oAscItemType.Data
+				};
+				let valuesInfo;
 				if (pageField.item !== null) {
-					fieldValues = [{
-						fieldIndex: index,
-						value: pageField.item,
-						type: Asc.c_oAscItemType.Data
-					}];
+					fieldValuesCache.push(fieldValues);
+					valuesInfo = fieldValuesCache;
+				} else {
+					valuesInfo = fieldValuesCache.concat([fieldValues]);
 				}
 				cells.setFormatting(pivotTable.getFormatting({
 					axis: Asc.c_oAscAxis.AxisPage,
 					type: Asc.c_oAscPivotAreaType.Normal,
 					isData: false,
 					field: index,
-					valuesInfo: fieldValues
+					valuesInfo: valuesInfo
 				}));
 				cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 			}
