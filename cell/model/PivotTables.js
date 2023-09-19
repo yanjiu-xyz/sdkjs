@@ -2902,6 +2902,7 @@ CT_pivotTableDefinition.prototype.initPostOpenZip = function (oNumFmts, dxfsOpen
 			format.initPostOpenZip(dxfsOpen);
 		});
 	}
+	this.init();
 };
 CT_pivotTableDefinition.prototype.getObjectType = function () {
 	return AscDFH.historyitem_type_PivotTableDefinition;

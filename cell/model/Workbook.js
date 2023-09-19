@@ -8592,11 +8592,6 @@
 		}
 		return res;
 	};
-	Worksheet.prototype.initPivotTables = function () {
-		for (var i = 0; i < this.pivotTables.length; ++i) {
-			this.pivotTables[i].init();
-		}
-	};
 	Worksheet.prototype.updatePivotTable = function(pivotTable, changed, dataRow, canModifyDocument) {
 		if (!changed.data && !changed.style) {
 			return;
