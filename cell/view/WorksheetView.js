@@ -4260,6 +4260,12 @@
 		//draw after other
 		//this._drawPageBreakPreviewLines(drawingCtx, range, offsetXForDraw, offsetYForDraw);
 
+		let isPrint = this.usePrintScale;
+
+		if (isPrint) {
+			this.drawTraceArrows(range, offsetX, offsetY, [drawingCtx]);
+		}
+
 		if (!drawingCtx && !window['IS_NATIVE_EDITOR']) {
 			// restore canvas' original clipping range
 			this.drawingCtx.restore();
@@ -4980,9 +4986,9 @@
 		}
 	};
 
-	WorksheetView.prototype.drawTraceArrows = function (visibleRange, offsetX, offsetY) {
+	WorksheetView.prototype.drawTraceArrows = function (visibleRange, offsetX, offsetY, args) {
 		let traceManager = this.traceDependentsManager;
-		let ctx = this.overlayCtx;
+		let ctx = args[0] ? args[0] : this.overlayCtx;
 		let widthLine = 2, 
 			customScale = AscBrowser.retinaPixelRatio,
 			zoom = this.getZoom();
@@ -5060,7 +5066,7 @@
 			if (extLength === 0 && angle === 0) {
 				// temporary exception
 				ctx.lineDiag(x1, y1, x2, y2);
-				ctx.closePath().stroke();
+				ctx.stroke();
 
 				!external ? drawDot(x1, y1, lineColor) : drawDot(x1, y1, externalLineColor);
 			} else {
@@ -5081,7 +5087,7 @@
 					ctx.setStrokeStyle(!external ? lineColor : externalLineColor);
 					ctx.moveTo(x1, y1);
 					ctx.lineTo(newX2, newY2);
-					ctx.closePath().stroke();
+					ctx.stroke();
 					drawArrowHead(newX2, newY2, arrowSize, angle, lineColor);
 					drawDot(x1, y1, lineColor);
 				}
@@ -5140,13 +5146,9 @@
 
 			arrowSize = zoom <= 0.5 ? arrowSize * 1.25 : arrowSize;
 
-			// draw dotted line 
 			drawDottedLine(x1, y1, newX2, newY2);
-			// draw arrowhead
 			drawArrowHead(newX2, newY2, arrowSize, angle, externalLineColor);
-			// draw dot
 			drawDot(x1, y1, externalLineColor);
-			// draw mini table
 			drawMiniTable(x1, y1, miniTableCol, miniTableRow, isTableLeft, isTableTop);
 		};
 
@@ -5166,7 +5168,6 @@
 			ctx.setStrokeStyle(externalLineColor);
 			ctx.lineDiag(x1, y1, x2, y2);
 			ctx.stroke();
-			ctx.closePath();
 
 			ctx.setStrokeStyle(whiteColor);
 			for (let i = 0; i < dashCount; i++) {
@@ -5175,7 +5176,6 @@
 				ctx.stroke();
 				x1 += xStep;
 				y1 += yStep;
-				ctx.closePath();
 			}
 		};
 		const drawArrowHead = function (x2, y2, arrowSize, angle, color) {
@@ -5211,11 +5211,17 @@
 		};
 		const drawDot = function (x, y, color) {
 			const dotRadius = 2.75 * zoom * customScale;
+
 			ctx.beginPath();
-			ctx.arc(x, y, dotRadius, 0, 2 * Math.PI);
+			let dx = Math.round(x);
+			let dy = Math.round(y);
+
+			window['AscFormat'].EllipseOnCanvas(ctx, dx, dy, dotRadius, dotRadius);
+
 			ctx.setFillStyle(color);
-			ctx.closePath().fill();
+			ctx.fill();
 		};
+
 		const drawMiniTable = function (x, y, destCol, destRow, isTableLeft, isTableTop) {
 			const paddingX = 8 * zoom * customScale;
 			const paddingY = 4 * zoom * customScale;
@@ -5234,7 +5240,6 @@
 			ctx.setFillStyle(whiteColor);
 			ctx.beginPath();
 			ctx.fillRect(x1, y1 - lineWidth, tableWidth, tableHeight + (lineWidth * 2));
-			ctx.closePath().stroke();
 
 			ctx.setLineWidth(lineWidth);
 			ctx.setFillStyle(cellStrokesColor);
@@ -5243,18 +5248,11 @@
 			// draw main rectangle
 			ctx.beginPath();
 			ctx.strokeRect(x1, y1, tableWidth, tableHeight);
-			ctx.stroke();
 
+			let isEven = lineWidth % 2 !== 0 ? 0.5 : 0;
 			ctx.beginPath();
-			let multiplier = zoom < 3 ? 1.5 : 1.2;
-			if (zoom > 1.8) {
-				ctx.fillRect(x1 - 0.5, y1 - lineWidth, tableWidth + (lineWidth * 0.5), lineWidth * multiplier);
-			} else {
-				ctx.fillRect(x1, y1 - lineWidth, tableWidth + 0.5, lineWidth * multiplier);
-			}
+			ctx.fillRect(x1, y1 - lineWidth, tableWidth + isEven, lineWidth + isEven);
 			ctx.strokeRect(x1, y1 - lineWidth, tableWidth, tableHeight + lineWidth);
-			ctx.stroke();
-			ctx.closePath().fill();
 
 			// Vertical lines
 			for (let i = 1; i < 3; i++) {
@@ -5291,7 +5289,6 @@
 				ctx.setStrokeStyle(lineColor);
 				ctx.setLineWidth(1);
 				ctx.strokeRect(x1, y1, Math.abs(x2 - x1), Math.abs(y2 - y1));
-				ctx.closePath().stroke();
 				// then go to the next area
 			}
 		};
