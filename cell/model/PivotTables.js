@@ -4247,6 +4247,9 @@ CT_pivotTableDefinition.prototype.asc_getCacheFields = function () {
 CT_pivotTableDefinition.prototype.asc_getPivotFields = function () {
 	return this.pivotFields && this.pivotFields.pivotField;
 };
+/**
+ * @return {CT_PageField[] | undefined}
+ */
 CT_pivotTableDefinition.prototype.asc_getPageFields = function () {
 	return this.pageFields && this.pageFields.pageField.length > 0 && this.pageFields.pageField;
 };
@@ -7660,7 +7663,8 @@ PivotFormatsManager.prototype.get = function(query) {
 		num: null,
 		font: null,
 		fill: null,
-		border: null
+		border: null,
+		align: null
 	}
 	const suitableFormatsCollectionItems = this.getSuitableFormatsCollectionItems(query);
 	for (let i = 0; i < suitableFormatsCollectionItems.length; i += 1) {

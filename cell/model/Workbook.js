@@ -8637,22 +8637,49 @@
 		oCellValue.text = text.toString();
 		cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 	};
+	/**
+	 * @param {CT_pivotTableDefinition} pivotTable 
+	 */
 	Worksheet.prototype._updatePivotTableCellsPage = function (pivotTable) {
 		//CT_pivotTableDefinition.prototype.getLayoutByCellPage
 		if (pivotTable.pageFieldsPositions) {
-			for (var i = 0; i < pivotTable.pageFieldsPositions.length; ++i) {
-				var pos = pivotTable.pageFieldsPositions[i];
-				var cells = this.getRange4(pos.row, pos.col);
+			for (let i = 0; i < pivotTable.pageFieldsPositions.length; ++i) {
+				const pos = pivotTable.pageFieldsPositions[i];
+				let cells = this.getRange4(pos.row, pos.col);
 				this._updatePivotTableSetCellValue(cells, pivotTable.getPageFieldName(i));
+				const pageField = pivotTable.asc_getPageFields()[i];
+				const index = pageField.asc_getIndex();
+				cells.setFormatting(pivotTable.getFormatting({
+					axis: Asc.c_oAscAxis.AxisPage,
+					type: Asc.c_oAscPivotAreaType.Button,
+					isData: false,
+					field: index
+				}));
 				cells = this.getRange4(pos.row, pos.col + 1);
-				var num = pivotTable.getPivotFieldNum(pos.pageField.fld);
+				const num = pivotTable.getPivotFieldNum(pos.pageField.fld);
 				if (num) {
 					cells.setNum(num);
 				}
-				var oCellValue = pivotTable.getPageFieldCellValue(i);
+				const oCellValue = pivotTable.getPageFieldCellValue(i);
 				if (oCellValue.type !== AscCommon.CellValueType.String) {
 					cells.setAlignHorizontal(AscCommon.align_Left);
 				}
+				/**@type {PivotItemFieldsInfo | undefined} */
+				let fieldValues;
+				if (pageField.item !== null) {
+					fieldValues = [{
+						fieldIndex: index,
+						value: pageField.item,
+						type: Asc.c_oAscItemType.Data
+					}];
+				}
+				cells.setFormatting(pivotTable.getFormatting({
+					axis: Asc.c_oAscAxis.AxisPage,
+					type: Asc.c_oAscPivotAreaType.Normal,
+					isData: false,
+					field: index,
+					valuesInfo: fieldValues
+				}));
 				cells.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 			}
 		}
