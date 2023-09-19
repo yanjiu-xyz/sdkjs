@@ -7332,18 +7332,10 @@ CT_pivotTableDefinition.prototype.asc_canShowDetails = function(row, col) {
 };
 /**
  * @param {PivotFormatsManagerQuery} query
- * @return {PivotFormatsManagerResponse}
+ * @return {CellXfs}
  */
 CT_pivotTableDefinition.prototype.getFormatting = function(query) {
-	const response = this.formatsManager.get(query);
-	const result = {
-		num: response.num,
-		font: response.font,
-		fill: response.fill,
-		border: response.border,
-		align: response.align,
-	}
-	return result;
+	return this.formatsManager.get(query);
 };
 
 /**
@@ -7430,15 +7422,6 @@ PivotFormatsManager.prototype.addToCollection = function(format) {
  * @property {Range | undefined} offset
  * @property {c_oAscAxis | undefined} axis
  * @property {number | null} field
- */
-
-/**
- * @typedef PivotFormatsManagerResponse
- * @property {Num} num
- * @property {Font} font
- * @property {Fill} fill
- * @property {Border} border
- * @property {Align} align
  */
 
 /**
@@ -7656,34 +7639,35 @@ PivotFormatsManager.prototype.getSuitableFormatsCollectionItems = function(query
 };
 /**
  * @param {PivotFormatsManagerQuery} query
- * @return {PivotFormatsManagerResponse}
+ * @return {CellXfs | null}
  */
 PivotFormatsManager.prototype.get = function(query) {
-	const result = {
-		num: null,
-		font: null,
-		fill: null,
-		border: null,
-		align: null
-	}
 	const suitableFormatsCollectionItems = this.getSuitableFormatsCollectionItems(query);
+	let result = null;
 	for (let i = 0; i < suitableFormatsCollectionItems.length; i += 1) {
+		result = new AscCommonExcel.CellXfs();
 		const formatsCollectionItem = suitableFormatsCollectionItems[i];
-		const dxf = formatsCollectionItem.format.dxf;
-		if (!result.num && dxf && dxf.num) {
+		const format = formatsCollectionItem.format;
+		const dxf = format.dxf;
+		/**@type {CellXfs} */
+		if (result.num === null && dxf && dxf.num) {
 			result.num = dxf.num;
+			result.setNum(dxf.getNum());
 		}
-		if (!result.font && dxf && dxf.font) {
-			result.font = dxf.font;
+		if (result.font === null && dxf && dxf.font) {
+			result.setFont(dxf.getFont());
+			if (!dxf.font.b) {
+				result.font.b = null;
+			}
 		}
-		if (!result.fill && dxf && dxf.fill) {
-			result.fill = dxf.fill;
+		if (result.fill === null && dxf && dxf.fill) {
+			result.setFill(dxf.getFill());
 		}
-		if (!result.border && dxf && dxf.border) {
-			result.border = dxf.border;
+		if (result.border === null && dxf && dxf.border) {
+			result.setBorder(dxf.getBorder());
 		}
-		if (!result.align && dxf && dxf.align) {
-			result.align = dxf.align;
+		if (result.align === null && dxf && dxf.align) {
+			result.setAlign(dxf.getAlign());
 		}
 	}
 	return result;

@@ -8650,7 +8650,7 @@
 				this._updatePivotTableSetCellValue(cells, pivotTable.getPageFieldName(i));
 				const pageField = pivotTable.asc_getPageFields()[i];
 				const index = pageField.asc_getIndex();
-				cells.setFormatting(pivotTable.getFormatting({
+				cells.setStyle(pivotTable.getFormatting({
 					axis: Asc.c_oAscAxis.AxisPage,
 					type: Asc.c_oAscPivotAreaType.Button,
 					isData: false,
@@ -8677,7 +8677,7 @@
 				} else {
 					valuesInfo = fieldValuesCache.concat([fieldValues]);
 				}
-				cells.setFormatting(pivotTable.getFormatting({
+				cells.setStyle(pivotTable.getFormatting({
 					axis: Asc.c_oAscAxis.AxisPage,
 					type: Asc.c_oAscPivotAreaType.Normal,
 					isData: false,
@@ -8723,7 +8723,7 @@
 				isData: false,
 				field: null
 			});
-			cells.setFormatting(formatting);
+			cells.setStyle(formatting);
 		}
 		if (pivotTable.showHeaders && colFields) {
 			cells = this.getRange4(pivotRange.r1, pivotRange.c1 + location.firstDataCol);
@@ -8757,7 +8757,7 @@
 					isData: false,
 					field: index
 				});
-				cells.setFormatting(formatting);
+				cells.setStyle(formatting);
 			}
 			// update topRight pivot area formats
 			const pivotTableLenC = pivotRange.c2 - pivotRange.c1;
@@ -8790,7 +8790,7 @@
 				const cell = this.getRange4(startR + i, startC + j);
 				query.offset = offset;
 				const formatting = pivotTable.getFormatting(query);
-				cell.setFormatting(formatting);
+				cell.setStyle(formatting);
 			}
 		}
 		query.offset = null;
@@ -8829,7 +8829,7 @@
 
 			query.offset = offset;
 			const formatting = pivotTable.getFormatting(query);
-			cell.setFormatting(formatting);
+			cell.setStyle(formatting);
 		}
 		query.offset = null;
 		return;
@@ -8871,7 +8871,7 @@
 
 			query.offset = offset;
 			const formatting = pivotTable.getFormatting(query);
-			cell.setFormatting(formatting);
+			cell.setStyle(formatting);
 		}
 		query.offset = null;
 		return;
@@ -9006,7 +9006,7 @@
 						});
 						query.field = AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD;
 						const formatting = pivotTable.getFormatting(query);
-						cells.setFormatting(formatting);
+						cells.setStyle(formatting);
 						oCellValue = new AscCommonExcel.CCellValue();
 						oCellValue.type = AscCommon.CellValueType.String;
 						oCellValue.text = pivotTable.getDataFieldName(item.i);
@@ -9153,7 +9153,7 @@
 				isData: false,
 				field: index
 			});
-			cells.setFormatting(formatting);
+			cells.setStyle(formatting);
 		} else {
 			for (let i = 0; i < rowFields.length; i += 1) {
 				const cells = this.getRange4(r1, c1 + i);
@@ -9164,7 +9164,7 @@
 					isData: false,
 					field: index
 				});
-				cells.setFormatting(formatting);
+				cells.setStyle(formatting);
 			}
 		}
 		return rowFieldsOffset;
@@ -9240,8 +9240,10 @@
 							field: isGrandRow ? traversal.fieldIndex : fieldIndex,
 							axis: axis,
 						});
-						formatting.num = formatting.num || (dataFields && dataFields[dataIndex] && dataFields[dataIndex].num)
-						cell.setFormatting(formatting);
+						if (formatting !== null) {
+							formatting.num = formatting.num || (dataFields && dataFields[dataIndex] && dataFields[dataIndex].num)
+						}
+						cell.setStyle(formatting);
 						cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 					}
 				}
@@ -15584,6 +15586,9 @@
 						  });
 	};
 	Range.prototype.setStyle=function(val){
+		if (val === null) {
+			return;
+		}
 		History.Create_NewPoint();
 		this.createCellOnRowColCross();
 		var fSetProperty = this._setProperty;
@@ -19105,42 +19110,6 @@
 
 	Range.prototype.move = function (oBBoxTo, copyRange, wsTo) {
 		this.worksheet._moveRange(this.bbox, oBBoxTo, copyRange, wsTo);
-	};
-	/**
-	 * Set styles in cell. Uses while setting styles in Pivot tables.
-	 * @param {PivotFormatsManagerResponse} formatting
-	 */
-	Range.prototype.setFormatting = function(formatting) {
-		if (formatting.num) {
-			this.setNum(formatting.num);
-		}
-		if (formatting.font) {
-			if (!formatting.font.b) {
-				formatting.font.b = null;
-			}
-			this.setFont(formatting.font)
-		}
-		if (formatting.fill) {
-			this.setFill(formatting.fill);
-		}
-		if (formatting.border) {
-			this.setBorder(formatting.border);
-		}
-		if (formatting.align) {
-			this.setAlign(formatting.align)
-		}
-		return;
-	};
-	/**
-	 * @param {Align} align 
-	 */
-	Range.prototype.setAlign = function(align) {
-		this.setAlignHorizontal(align.hor);
-		this.setAlignVertical(align.ver);
-		this.setIndent(align.indent);
-		this.setAngle(align.angle);
-		this.setShrinkToFit(align.shrink);
-		this.setWrap(align.wrap);
 	};
 
 	function RowIterator() {
