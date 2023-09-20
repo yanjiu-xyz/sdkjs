@@ -481,8 +481,8 @@
 		this.onUndoRedo = function()
 		{
 			_t.isUndoRedo = false;
-			_t.updateState();
 			_t.handleSpeechDescription({type: SpeakerActionType.undoRedo});
+			_t.updateState();
 			// TODO: Если дополнительно сообщить об Undo/Redo, то добавить тут
 		};
 
