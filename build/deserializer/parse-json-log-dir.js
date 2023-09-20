@@ -59,6 +59,9 @@ function run(inputDir = "logs", outputFile = "unique.txt", opt_lastFile = "") {
 		if (-1 !== indexStart) {
 			let key = line;
 			key = key.substring(indexStart);
+			//replace host (diff .com .co)
+			key = key.replace(/https?:\/\/.*?\//, '/');
+
 			let indexUserAgent = key.indexOf("userAgent:");
 			if (-1 !== indexUserAgent) {
 				key = key.substring(0, indexUserAgent);
@@ -67,9 +70,12 @@ function run(inputDir = "logs", outputFile = "unique.txt", opt_lastFile = "") {
 				let indexNewLine = key.indexOf("\\n");
 				if (-1 !== indexNewLine) {
 					indexNewLine = key.indexOf("\\n", indexNewLine + 1);
-					if (-1 !== indexNewLine) {
-						key = key.substring(0, indexNewLine);
-					}
+				}
+				if (-1 === indexNewLine) {
+					indexNewLine = key.indexOf("}");
+				}
+				if (-1 !== indexNewLine) {
+					key = key.substring(0, indexNewLine);
 				}
 			}
 			let version = "no-version";
