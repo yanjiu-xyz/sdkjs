@@ -1400,7 +1400,10 @@ CGraphicObjects.prototype =
         //console.log("down " + this.curState.id);
         this.checkInkState();
         this.curState.onMouseDown(e, x, y, pageIndex);
-        this.document.GetApi().sendEvent("asc_onSelectionEnd");
+        if(this.arrTrackObjects.length === 0)
+        {
+            this.document.GetApi().sendEvent("asc_onSelectionEnd");
+        }
     },
 
     OnMouseMove: function(e, x, y, pageIndex)
