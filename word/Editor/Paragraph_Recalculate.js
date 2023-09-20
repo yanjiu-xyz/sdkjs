@@ -1309,23 +1309,29 @@ Paragraph.prototype.private_RecalculateLineMetrics     = function(CurLine, CurPa
 		}
 		else if (undefined !== LastItem)
 		{
-			var LastRun = LastItem.Get_LastRunInRange(PRS.Line, PRS.Range);
-			if (undefined !== LastRun && null !== LastRun)
+			let lastRun = LastItem.Get_LastRunInRange(PRS.Line, PRS.Range);
+			if (lastRun && lastRun instanceof AscWord.CRun)
 			{
-				if (PRS.LineTextAscent < LastRun.TextAscent)
-					PRS.LineTextAscent = LastRun.TextAscent;
+				let metrics = lastRun.getTextMetrics();
+				
+				let textDescent = metrics.Descent;
+				let textAscent  = metrics.Ascent + metrics.LineGap;
+				let textAscent2 = metrics.Ascent;
+				
+				if (PRS.LineTextAscent < textAscent)
+					PRS.LineTextAscent = textAscent;
 
-				if (PRS.LineTextAscent2 < LastRun.TextAscent2)
-					PRS.LineTextAscent2 = LastRun.TextAscent2;
+				if (PRS.LineTextAscent2 < textAscent2)
+					PRS.LineTextAscent2 = textAscent2;
 
-				if (PRS.LineTextDescent < LastRun.TextDescent)
-					PRS.LineTextDescent = LastRun.TextDescent;
+				if (PRS.LineTextDescent < textDescent)
+					PRS.LineTextDescent = textDescent;
 
-				if (PRS.LineAscent < LastRun.TextAscent)
-					PRS.LineAscent = LastRun.TextAscent;
+				if (PRS.LineAscent < textAscent)
+					PRS.LineAscent = textAscent;
 
-				if (PRS.LineDescent < LastRun.TextDescent)
-					PRS.LineDescent = LastRun.TextDescent;
+				if (PRS.LineDescent < textDescent)
+					PRS.LineDescent = textDescent;
 			}
 		}
 	}
