@@ -477,6 +477,8 @@
 		if (this.isFormula()) {
 			return;
 		}
+		this.startAction();
+
 		var t = this, opt = t.options, begin, end, i, first, last;
 
 		if (t.selectionBegin !== t.selectionEnd) {
@@ -526,6 +528,7 @@
 				t._update();
 			}
 		}
+		this.endAction();
 	};
 
 	CellEditor.prototype.changeTextCase = function (val) {
@@ -547,6 +550,7 @@
 
 	CellEditor.prototype._changeFragments = function (fragmentsMap) {
 		let opt = this.options;
+		this.startAction();
 		if (fragmentsMap) {
 			let _undoFragments = {};
 			for (let i in fragmentsMap) {
@@ -566,6 +570,7 @@
 			this._cleanSelection();
 			this._drawSelection();
 		}
+		this.endAction();
 	};
 
 	CellEditor.prototype.empty = function ( options ) {
@@ -784,6 +789,7 @@
 		if (!(fragments.length > 0)) {
 			return;
 		}
+		this.startAction();
 
 		var noUpdateMode = this.noUpdateMode;
 		this.noUpdateMode = true;
@@ -817,6 +823,7 @@
 		if (undefined !== cursorPos) {
 			this._moveCursor(kPosition, cursorPos);
 		}
+		this.endAction();
 	};
 
 	/** @param flag {Boolean} */
@@ -1884,6 +1891,7 @@
 		if (!isRange) {
 			this.cleanSelectRange();
 		}
+		this.startAction();
 
 		var opt = this.options, f, l, s;
 
@@ -1953,7 +1961,7 @@
 		if (!this.noUpdateMode) {
 			this._update();
 		}
-
+		this.endAction();
 		return length;
 	};
 
@@ -2006,6 +2014,8 @@
 			return;
 		}
 
+		this.startAction();
+
 		// search for begin and end positions
 		first = t._findFragment(b);
 		last = t._findFragment(e - 1);
@@ -2041,6 +2051,7 @@
 		if (!t.noUpdateMode) {
 			t._update();
 		}
+		this.endAction();
 	};
 
 	CellEditor.prototype._selectChars = function (kind, pos) {
@@ -3195,62 +3206,65 @@
 
 		if (action) {
 			let bWord = false;
-			if (AscCommon.SpeakerActionType.keyDown === action.type) {
-				if (!this.enableKeyEvents || !t.hasFocus) {
-					return null;
-				}
-
-				let event = action.event;
-				let isWizard = this.handlers.trigger('getWizard');
-				if (!action.event || isWizard || !t.isOpened || (!t.enableKeyEvents && event.emulated !== true)) {
-					return null;
-				}
-
-				var ctrlKey = !AscCommon.getAltGr(event) && (event.metaKey || event.ctrlKey);
-				const bIsMacOs = AscCommon.AscBrowser.isMacOs;
-
-				switch (event.which) {
-					case 8:   // "backspace"
-						/*const bIsWord = bIsMacOs ? event.altKey : ctrlKey;
-						t._removeChars(bIsWord ? kPrevWord : kPrevChar);*/
-						break;
-					case 35:  // "end"
-						/*kind = ctrlKey ? kEndOfText : kEndOfLine;
-						event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);
-						return false;*/
-						break;
-					case 36:  // "home"
-						/*kind = ctrlKey ? kBeginOfText : kBeginOfLine;
-						event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);*/
-						break;
-					case 37:  // "left"
-						if (bIsMacOs && ctrlKey) {
-							//event.shiftKey ? t._selectChars(kBeginOfLine) : t._moveCursor(kBeginOfLine);
-						} else {
-							bWord = bIsMacOs ? event.altKey : ctrlKey;
-							/*kind = bWord ? kPrevWord : kPrevChar;
-							event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);*/
-						}
-
-						break;
-					case 38:  // "up"
-						//event.shiftKey ? t._selectChars(kPrevLine) : t._moveCursor(kPrevLine);
-						break;
-					case 39:  // "right"
-						if (bIsMacOs && ctrlKey) {
-							//event.shiftKey ? t._selectChars(kEndOfLine) : t._moveCursor(kEndOfLine);
-						} else {
-							bWord = bIsMacOs ? event.altKey : ctrlKey;
-							/*kind = bWord ? kNextWord : kNextChar;
-							event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);*/
-						}
-						break;
-
-					case 40:  // "down"
-						//event.shiftKey ? t._selectChars(kNextLine) : t._moveCursor(kNextLine);
-						break;
-				}
+			if (action.type !== AscCommon.SpeakerActionType.keyDown || action.event.keyCode < 35 || action.event.keyCode > 40) {
+				return null;
 			}
+
+			if (!this.enableKeyEvents || !t.hasFocus) {
+				return null;
+			}
+
+			let event = action.event;
+			let isWizard = this.handlers.trigger('getWizard');
+			if (!action.event || isWizard || !t.isOpened || (!t.enableKeyEvents && event.emulated !== true)) {
+				return null;
+			}
+
+			var ctrlKey = !AscCommon.getAltGr(event) && (event.metaKey || event.ctrlKey);
+			const bIsMacOs = AscCommon.AscBrowser.isMacOs;
+
+			switch (event.keyCode) {
+				case 8:   // "backspace"
+					/*const bIsWord = bIsMacOs ? event.altKey : ctrlKey;
+					t._removeChars(bIsWord ? kPrevWord : kPrevChar);*/
+					break;
+				case 35:  // "end"
+					/*kind = ctrlKey ? kEndOfText : kEndOfLine;
+					event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);
+					return false;*/
+					break;
+				case 36:  // "home"
+					/*kind = ctrlKey ? kBeginOfText : kBeginOfLine;
+					event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);*/
+					break;
+				case 37:  // "left"
+					if (bIsMacOs && ctrlKey) {
+						//event.shiftKey ? t._selectChars(kBeginOfLine) : t._moveCursor(kBeginOfLine);
+					} else {
+						bWord = bIsMacOs ? event.altKey : ctrlKey;
+						/*kind = bWord ? kPrevWord : kPrevChar;
+						event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);*/
+					}
+
+					break;
+				case 38:  // "up"
+					//event.shiftKey ? t._selectChars(kPrevLine) : t._moveCursor(kPrevLine);
+					break;
+				case 39:  // "right"
+					if (bIsMacOs && ctrlKey) {
+						//event.shiftKey ? t._selectChars(kEndOfLine) : t._moveCursor(kEndOfLine);
+					} else {
+						bWord = bIsMacOs ? event.altKey : ctrlKey;
+						/*kind = bWord ? kNextWord : kNextChar;
+						event.shiftKey ? t._selectChars(kind) : t._moveCursor(kind);*/
+					}
+					break;
+
+				case 40:  // "down"
+					//event.shiftKey ? t._selectChars(kNextLine) : t._moveCursor(kNextLine);
+					break;
+			}
+
 			if (bWord) {
 				getWord();
 			} else {
@@ -3261,6 +3275,22 @@
 		}
 
 		return type !== null ? {type: type, obj: {text: text}} : null;
+	};
+
+	CellEditor.prototype.startAction = function () {
+		var api = window["Asc"]["editor"];
+		if (!api) {
+			return;
+		}
+		api.sendEvent('asc_onUserActionStart');
+	};
+
+	CellEditor.prototype.endAction = function () {
+		var api = window["Asc"]["editor"];
+		if (!api) {
+			return;
+		}
+		api.sendEvent('asc_onUserActionEnd');
 	};
 
 

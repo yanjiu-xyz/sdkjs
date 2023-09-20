@@ -244,7 +244,7 @@
 					let result = translateManager.getValue("selected range select ");
 					result += obj.start.text ? obj.start.text : translateManager.getValue("empty");
 					result += (" " + obj.start.cell);
-					result += obj.end.text ? obj.end.text : translateManager.getValue("empty");
+					result += obj.end.text ? " " + obj.end.text : " " + translateManager.getValue("empty");
 					result += (" " + obj.end.cell);
 
 					this.speechElement.innerHTML = result;
@@ -256,7 +256,7 @@
 					let result = translateManager.getValue("unselected range select ");
 					result += obj.start.text ? obj.start.text : translateManager.getValue("empty");
 					result += (" " + obj.start.cell);
-					result += obj.end.text ? obj.end.text : translateManager.getValue("empty");
+					result += obj.end.text ? " " + obj.end.text : " " + translateManager.getValue("empty");
 					result += (" " + obj.end.cell);
 
 					this.speechElement.innerHTML = result;

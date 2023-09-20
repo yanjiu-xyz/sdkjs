@@ -1881,6 +1881,12 @@
 
 					break;
 				}
+				case AscCommon.SpeakerActionType.keyDown: {
+					if ((action.event.keyCode >= 35 && action.event.keyCode <= 40) || (action.event.keyCode === 9 || action.event.keyCode === 13)) {
+						return this._getSpeechDescriptionSelection(prevState, curState);
+					}
+					break;
+				}
 			}
 		}
 
