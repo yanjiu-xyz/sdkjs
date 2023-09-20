@@ -696,6 +696,7 @@ ChartPreviewManager.prototype.getChartPreviews = function(chartType, arrId, bEmp
 		if(!oApi) {
 			return;
 		}
+		const oThis = this;
 		AscCommon.g_oBinarySmartArts.checkLoadDrawing().then(function ()
 		{
 			if (AscFormat.isRealNumber(nTypeOfSectionLoad)) {
