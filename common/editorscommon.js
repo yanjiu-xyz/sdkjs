@@ -2043,10 +2043,25 @@
 				}
 				else
 				{
-					callback(Asc.c_oAscError.ID.Unknown);
+					if (editor.isPdfEditor() && e.canceled == true)
+						callback(e);
+					else
+						callback(Asc.c_oAscError.ID.Unknown);
 				}
 			});
-			fileName.click();
+
+			if (editor.isPdfEditor()) {
+				let oViewer = editor.getDocumentRenderer();
+				let oDoc = oViewer.doc;
+				let oActionsQueue = oDoc.GetActionsQueue();
+				if (oActionsQueue.IsInProgress()) {
+					editor.sendEvent("asc_onOpenFilePdfForm", fileName.click.bind(fileName), oActionsQueue.Continue.bind(oActionsQueue));
+				}
+				else 
+					fileName.click();
+			}
+			else
+				fileName.click();
 		}
 		else
 		{
@@ -2546,11 +2561,27 @@
 		input.setAttribute('type', 'file');
 		input.setAttribute('accept', accept);
 		input.setAttribute('style', 'position:absolute;left:-2px;top:-2px;width:1px;height:1px;z-index:-1000;cursor:pointer;');
+		
 		if (allowMultiple) {
 			input.setAttribute('multiple', true);
 		}
-		input.onchange = onchange;
 		document.body.appendChild(input);
+
+		input.addEventListener('click', () => {
+			document.body.onfocus = checkCanceled;
+		});
+
+		function checkCanceled() {
+			if (input.files.length === 0) {
+				onchange({canceled: true});
+			}
+			document.body.onfocus = null;
+		}    
+	
+		input.addEventListener('change', function(e) {
+			onchange(e);
+		});
+
 		return input;
 	}
 

@@ -2979,6 +2979,9 @@ CPresentation.prototype.IsPresentationEditor = function () {
 CPresentation.prototype.IsSpreadSheetEditor = function () {
 	return false;
 };
+CPresentation.prototype.IsPdfEditor = function() {
+	return false;
+};
 CPresentation.prototype.GetWidthMM = function () {
 	return this.GetWidthEMU() / g_dKoef_mm_to_emu;
 };
@@ -7736,8 +7739,9 @@ CPresentation.prototype.OnKeyDown = function (e) {
 		{
 			if (true != e.ShiftKey) {
 				if (this.CanEdit()) {
+					const bIsWord = bIsMacOs ? e.AltKey : e.CtrlKey;
 					//this.Create_NewHistoryPoint();
-					this.Remove(1, true, undefined, undefined, e.CtrlKey);
+					this.Remove(1, true, undefined, undefined, bIsWord);
 				}
 				bRetValue = keydownresult_PreventAll;
 			}
@@ -12469,6 +12473,9 @@ CPresentation.prototype.createNecessaryObjectsIfNoPresent = function () {
 		this.checkViewPr().addVerticalGuide();
 		this.checkViewPr().addHorizontalGuide();
 	}
+};
+CPresentation.prototype.getDrawingObjects = function() {
+	return null;
 };
 
 function collectSelectedObjects(aSpTree, aCollectArray, bRecursive, oIdMap, bSourceFormatting) {

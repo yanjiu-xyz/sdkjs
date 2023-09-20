@@ -6010,10 +6010,9 @@
 				this.getId(), new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxRow0), new UndoRedoData_FromTo(view.showFormulas, value));
 			view.showFormulas = value;
 
-			//TODO
 			this.workbook.handlers.trigger("changeSheetViewSettings", this.getId(), AscCH.historyitem_Worksheet_SetShowFormulas);
-			if (!this.workbook.bUndoChanges && !this.workbook.bRedoChanges) {
-				this.workbook.handlers.trigger("asc_onUpdateSheetViewSettings");
+			if (!this.workbook.bCollaborativeChanges) {
+				this.workbook.handlers.trigger("asc_onUpdateFormulasViewSettings");
 			}
 		}
 	};
@@ -11486,7 +11485,7 @@
 
 		let _getLocked = function (_xfs) {
 			let _res = null;
-			if (_xfs && _xfs.applyProtection) {
+			if (_xfs/* && _xfs.applyProtection*/) {
 				_res = true;//null/true
 				if (_xfs.getLocked() === false) {
 					_res = false;
@@ -16445,6 +16444,9 @@
 				return;
 			}
 		}
+
+		this.worksheet.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.mergeRange, true, this.bbox, this.worksheet.getId());
+
 		//пробегаемся по границе диапазона, чтобы посмотреть какие границы нужно оставлять
 		var oLeftBorder = null;
 		var oTopBorder = null;
@@ -16537,7 +16539,7 @@
 
 									 }
 									 if(nRow0 == nRowStart && nCol0 == nColStart)
-										 oLeftTopCellStyle = cell.getStyle();
+										 oLeftTopCellStyle = cell.getStyle();									
 								 });
 		//правила работы с гиперссылками во время merge(отличются от Excel в случаем областей, например hyperlink: C3:D3 мержим C2:C3)
 		// 1)оставляем все ссылки, которые не полностью лежат в merge области
@@ -16749,6 +16751,7 @@
 		if (dataValidationRanges) {
 			this.worksheet.clearDataValidation(dataValidationRanges, true);
 		}
+		this.worksheet.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.mergeRange, null, this.bbox, this.worksheet.getId());
 
 		History.EndTransaction();
 	};

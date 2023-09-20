@@ -232,10 +232,10 @@ function (window, undefined) {
 	// these functions are made and used specifically for SORT & SORTBY functions
 	function sortWithIndices (arr, sortOrder, isByCol) {
 		const indexedArray = isByCol
-			? arr[0].map(function (item, index) { return { item, index } })
+			? arr[0].map(function (item, index) { return { item: item, index: index } })
 			: arr.map(function (item, index) {
 				item = item[0];
-				return { item, index };
+				return { item: item, index: index };
 			});
 
 		indexedArray.sort(function (a, b) {
@@ -435,11 +435,11 @@ function (window, undefined) {
 	function indicesBy (arr, isByCol) {
 		const indexedArray = isByCol
 			? arr[0].map(function (item, index) {
-				return { item, index };
+				return { item: item, index: index };
 			})
 			: arr.map(function (item, index) {
 				item = item[0];
-				return { item, index };
+				return { item: item, index: index };
 			});
 
 		return indexedArray;

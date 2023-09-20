@@ -1152,6 +1152,9 @@ ParaRun.prototype.IsCurPosNearFootEndnoteReference = function()
 		var oStyles = this.Paragraph.LogicDocument.Get_Styles();
 		var nCurPos = this.State.ContentPos;
 
+		if (!oStyles)
+			return false;
+			
 		if ((this.GetRStyle() === oStyles.GetDefaultFootnoteReference()
 			&& ((nCurPos > 0 && this.Content[nCurPos - 1] && (para_FootnoteRef === this.Content[nCurPos - 1].Type || para_FootnoteReference === this.Content[nCurPos - 1].Type))
 				|| (nCurPos < this.Content.length && this.Content[nCurPos] && (para_FootnoteRef === this.Content[nCurPos].Type || para_FootnoteReference === this.Content[nCurPos].Type))))
@@ -1377,7 +1380,7 @@ ParaRun.prototype.Remove = function(Direction, bOnAddText)
 					return true;
 				}
 
-				var oStyles = (this.Paragraph && this.Paragraph.bFromDocument) ? this.Paragraph.LogicDocument.GetStyles() : null;
+				var oStyles = (this.Paragraph && this.Paragraph.bFromDocument && this.Paragraph.LogicDocument) ? this.Paragraph.LogicDocument.GetStyles() : null;
 				if (oStyles && 1 === this.Content.length && ((para_FootnoteReference === this.Content[0].Type && this.GetRStyle() === oStyles.GetDefaultFootnoteReference()) || (para_EndnoteReference === this.Content[0].Type && this.GetRStyle() === oStyles.GetDefaultEndnoteReference())))
 					this.SetRStyle(undefined);
 
@@ -1412,7 +1415,7 @@ ParaRun.prototype.Remove = function(Direction, bOnAddText)
 					return true;
 				}
 
-				var oStyles = (this.Paragraph && this.Paragraph.bFromDocument) ? this.Paragraph.LogicDocument.GetStyles() : null;
+				var oStyles = (this.Paragraph && this.Paragraph.bFromDocument && this.Paragraph.LogicDocument) ? this.Paragraph.LogicDocument.GetStyles() : null;
 				if (oStyles && 1 === this.Content.length && ((para_FootnoteReference === this.Content[0].Type && this.GetRStyle() === oStyles.GetDefaultFootnoteReference()) || (para_EndnoteReference === this.Content[0].Type && this.GetRStyle() === oStyles.GetDefaultEndnoteReference())))
 					this.SetRStyle(undefined);
 
@@ -1477,7 +1480,7 @@ ParaRun.prototype.RemoveTextCluster = function(nPos)
 	}
 
 	let oNextInfo = oCurRun.GetNextRunElementEx(nPos);
-	let oNext     = oNextInfo.Element;
+	let oNext     = oNextInfo ? oNextInfo.Element : null;
 	if (!oNext || !oNext.IsText() || !oNext.IsCombiningMark())
 		return new CRunWithPosition(oCurRun, nPos);
 
@@ -2310,6 +2313,13 @@ ParaRun.prototype.Recalculate_CurPos = function(X, Y, CurrentRun, _CurRange, _Cu
 				Para.DrawingDocument.SetTargetSize(Height, Ascender);
 
                 var PageAbs = Para.Get_AbsolutePage(CurPage);
+				let oFormPDF = this.GetFormPDF();
+				
+				// загрушка для обновления target (курсора)
+				// т.к. у любой формы у объекта CDocumentContent page == 0
+				if (oFormPDF)
+					PageAbs = oFormPDF.GetPage();
+
                 // TODO: Тут делаем, чтобы курсор не выходил за границы буквицы. На самом деле, надо делать, чтобы
                 //       курсор не выходил за границы строки, но для этого надо делать обрезку по строкам, а без нее
                 //       такой вариант будет смотреться плохо.
@@ -3420,6 +3430,7 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 	var nMaxComb    = -1;
 	var nCombWidth  = null;
 	var oTextForm   = this.GetTextForm();
+	let oTextFormPDF = this.GetFormPDF();
 	let isKeepWidth = false;
 	if (oTextForm && oTextForm.IsComb())
 	{
@@ -3456,12 +3467,33 @@ ParaRun.prototype.Recalculate_MeasureContent = function()
 		}
 
 	}
-
-	if (nCombWidth && nMaxComb > 0)
+	// for pdf text forms
+	else if (oTextFormPDF && oTextFormPDF._comb == true)
 	{
-		var oCombBorder  = oTextForm.GetCombBorder();
-		var nCombBorderW = oCombBorder? oCombBorder.GetWidth() : 0;
-		this.private_MeasureCombForm(nCombBorderW, nCombWidth, nMaxComb, oTextForm, isKeepWidth, oTextPr, oTheme, oInfoMathText);
+		isKeepWidth = true;
+		nMaxComb = oTextFormPDF._charLimit;
+		nCombWidth = oTextFormPDF.getFormRelRect().W / nMaxComb;
+	}
+
+	if (nCombWidth && nMaxComb > 1)
+	{
+		var oCombBorder, nCombBorderW;
+		if (oTextForm)
+		{
+			oCombBorder = oTextForm.GetCombBorder();
+			nCombBorderW = oCombBorder? oCombBorder.GetWidth() : 0;
+			this.private_MeasureCombForm(nCombBorderW, nCombWidth, nMaxComb, oTextForm, isKeepWidth, oTextPr, oTheme, oInfoMathText);
+		}
+		else if (oTextFormPDF)
+		{
+			let oViewer = editor.getDocumentRenderer();
+			let scaleCoef = oViewer.zoom * AscCommon.AscBrowser.retinaPixelRatio;
+			if (oTextFormPDF.borderStyle == "solid" || oTextFormPDF.borderStyle == "dashed")
+				nCombBorderW = oTextFormPDF.GetBordersWidth().left * AscCommon.g_dKoef_pix_to_mm / scaleCoef;
+			else
+				nCombBorderW = 0;
+			this.private_MeasureCombForm(nCombBorderW, nCombWidth, nMaxComb, oTextFormPDF, isKeepWidth, oTextPr, oTheme, oInfoMathText);
+		}
 	}
 	else if (this.RecalcInfo.Measure)
 	{
@@ -12891,6 +12923,15 @@ ParaRun.prototype.GetTextForm = function()
 		return null;
 
 	return oTextFormPr;
+};
+ParaRun.prototype.GetFormPDF = function()
+{
+	let oPara = this.GetParagraph();
+	let oParaParent = oPara.GetParent();
+	if (oParaParent && oParaParent.ParentPDF)
+		return oParaParent.ParentPDF;
+
+	return null;
 };
 ParaRun.prototype.IsInCheckBox = function()
 {

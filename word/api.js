@@ -1374,7 +1374,6 @@ background-repeat: no-repeat;\
 			[c_oAscDocumentShortcutType.InsertColumnBreak, 13, true, true, false],
 			[c_oAscDocumentShortcutType.ResetChar, 32, true, false, false],
 			[c_oAscDocumentShortcutType.NonBreakingSpace, 32, true, true, false],
-			[c_oAscDocumentShortcutType.Strikeout, 53, true, false, false],
 			[c_oAscDocumentShortcutType.ShowAll, 56, true, true, false],
 			[c_oAscDocumentShortcutType.EditSelectAll, 65, true, false, false],
 			[c_oAscDocumentShortcutType.Bold, 66, true, false, false],
@@ -1406,7 +1405,6 @@ background-repeat: no-repeat;\
 			[c_oAscDocumentShortcutType.Superscript, 188, true, false, false],
 			[c_oAscDocumentShortcutType.NonBreakingHyphen, 189, true, true, false],
 			[c_oAscDocumentShortcutType.NonBreakingHyphen, 173, true, true, false],
-			[c_oAscDocumentShortcutType.HorizontalEllipsis, 190, true, false, true],
 			[c_oAscDocumentShortcutType.Subscript, 190, true, false, false],
 			[c_oAscDocumentShortcutType.IncreaseFontSize, 221, true, false, false],
 			[c_oAscDocumentShortcutType.DecreaseFontSize, 219, true, false, false]
@@ -1420,11 +1418,13 @@ background-repeat: no-repeat;\
 			[c_oAscDocumentShortcutType.ApplyHeading1, 49, false, false, true],
 			[c_oAscDocumentShortcutType.ApplyHeading2, 50, false, false, true],
 			[c_oAscDocumentShortcutType.ApplyHeading3, 51, false, false, true],
+			[c_oAscDocumentShortcutType.Strikeout, 53, true, false, false],
 			[c_oAscDocumentShortcutType.InsertFootnoteNow, 70, true, false, true],
 			[c_oAscDocumentShortcutType.InsertEquation, 187, false, false, true],
 			[c_oAscDocumentShortcutType.InsertEquation, 61, false, false, true],
 			[c_oAscDocumentShortcutType.SoftHyphen, 189, false, false, true],
-			[c_oAscDocumentShortcutType.SoftHyphen, 173, false, false, true]
+			[c_oAscDocumentShortcutType.SoftHyphen, 173, false, false, true],
+			[c_oAscDocumentShortcutType.HorizontalEllipsis, 190, true, false, true]
 		]);
 	}
 
@@ -1434,6 +1434,7 @@ background-repeat: no-repeat;\
 			[c_oAscDocumentShortcutType.ApplyHeading1, 49, true, false, true],
 			[c_oAscDocumentShortcutType.ApplyHeading2, 50, true, false, true],
 			[c_oAscDocumentShortcutType.ApplyHeading3, 51, true, false, true],
+			[c_oAscDocumentShortcutType.Strikeout, 88, true, true, false],
 			[c_oAscDocumentShortcutType.InsertEquation, 187, true, false, true],
 			[c_oAscDocumentShortcutType.InsertEquation, 61, true, false, true],
 			[c_oAscDocumentShortcutType.SoftHyphen, 189, true, false, true],
@@ -5816,6 +5817,14 @@ background-repeat: no-repeat;\
 					if(arrImages.length)
 					{
 						oApi.WordControl.m_oLogicDocument.AddPlaceholderImages(arrImages, oOptionObject);
+					}
+				}
+				else if (this.isPdfEditor() && oOptionObject && oOptionObject.GetType() === AscPDF.FIELD_TYPES.button)
+				{
+					const oImage = oApi.ImageLoader.LoadImage(arrUrls[0], 1);
+					if(oImage && oImage.Image)
+					{
+						oOptionObject.AddImage(oImage);
 					}
 				}
 				else if (false === this.WordControl.m_oLogicDocument.Document_Is_SelectionLocked(changestype_Paragraph_Content))
@@ -14671,4 +14680,6 @@ background-repeat: no-repeat;\
         AscCommon.g_font_loader.LoadDocumentFonts2(_fonts);
 	};
 
+	AscCommon['DocumentEditorApi'] = AscCommon.DocumentEditorApi = asc_docs_api;
+	
 })(window, window.document);

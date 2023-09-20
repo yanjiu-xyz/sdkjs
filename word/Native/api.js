@@ -69,7 +69,12 @@ function asc_menu_WriteHeaderFooterPr(_hdrftrPr, _stream)
     if (_hdrftrPr.Locked !== undefined && _hdrftrPr.Locked !== null)
     {
         _stream["WriteByte"](5);
-        _stream["WriteBool"](_hdrftrPr.DifferentFirst);
+        _stream["WriteBool"](_hdrftrPr.Locked);
+    }
+    if (_hdrftrPr.StartPageNumber !== undefined && _hdrftrPr.StartPageNumber !== null)
+    {
+        _stream["WriteByte"](6);
+        _stream["WriteLong"](_hdrftrPr.StartPageNumber);
     }
 
     _stream["WriteByte"](255);
@@ -2565,24 +2570,38 @@ Asc['asc_docs_api'].prototype.ImgApply = function(obj)
         else
         {
             ImagePr.ImageUrl = null;
-
-
-            if(!this.noCreatePoint || this.exucuteHistory)
+            if (!this.noCreatePoint || this.exucuteHistory)
             {
-                if( !this.noCreatePoint && !this.exucuteHistory && this.exucuteHistoryEnd)
+                if (!this.noCreatePoint && !this.exucuteHistory && this.exucuteHistoryEnd)
                 {
-                    this.WordControl.m_oLogicDocument.SetImageProps( ImagePr );
-                    this.exucuteHistoryEnd = false;
+                    if (-1 !== this.nCurPointItemsLength)
+                    {
+                        History.UndoLastPoint();
+                    }
+                    else
+                    {
+                        this.WordControl.m_oLogicDocument.Create_NewHistoryPoint(AscDFH.historydescription_Document_ApplyImagePr);
+                    }
+                    this.WordControl.m_oLogicDocument.SetImageProps(ImagePr);
+                    this.exucuteHistoryEnd    = false;
+                    this.nCurPointItemsLength = -1;
                 }
                 else
                 {
-                    this.WordControl.m_oLogicDocument.StartAction();
-                    this.WordControl.m_oLogicDocument.SetImageProps( ImagePr );
-					this.WordControl.m_oLogicDocument.FinalizeAction();
+                    this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_ApplyImagePr);
+                    this.WordControl.m_oLogicDocument.SetImageProps(ImagePr);
+                    this.WordControl.m_oLogicDocument.UpdateInterface();
+                    this.WordControl.m_oLogicDocument.UpdateSelection();
+                    this.WordControl.m_oLogicDocument.FinalizeAction();
                 }
-                if(this.exucuteHistory)
+                if (this.exucuteHistory)
                 {
                     this.exucuteHistory = false;
+                    var oPoint          = History.Points[History.Index];
+                    if (oPoint)
+                    {
+                        this.nCurPointItemsLength = oPoint.Items.length;
+                    }
                 }
                 if(this.exucuteHistoryEnd)
                 {
@@ -2591,12 +2610,27 @@ Asc['asc_docs_api'].prototype.ImgApply = function(obj)
             }
             else
             {
-                AscFormat.ExecuteNoHistory(function(){
-                                           this.WordControl.m_oLogicDocument.SetImageProps( ImagePr );
-                                           }, this, []);
+                var bNeedCheckChangesCount = false;
+                if (-1 !== this.nCurPointItemsLength)
+                {
+                    History.UndoLastPoint();
+                }
+                else
+                {
+                    bNeedCheckChangesCount = true;
+                    this.WordControl.m_oLogicDocument.Create_NewHistoryPoint(AscDFH.historydescription_Document_ApplyImagePr);
+                }
+                this.WordControl.m_oLogicDocument.SetImageProps(ImagePr);
+                if (bNeedCheckChangesCount)
+                {
+                    var oPoint = History.Points[History.Index];
+                    if (oPoint)
+                    {
+                        this.nCurPointItemsLength = oPoint.Items.length;
+                    }
+                }
             }
-
-            this.WordControl.m_oLogicDocument.SetImageProps( ImagePr );
+            this.exucuteHistoryEnd = false;
         }
     }
 };

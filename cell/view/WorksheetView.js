@@ -4260,6 +4260,12 @@
 		//draw after other
 		//this._drawPageBreakPreviewLines(drawingCtx, range, offsetXForDraw, offsetYForDraw);
 
+		let isPrint = this.usePrintScale;
+
+		if (isPrint) {
+			this.drawTraceArrows(range, offsetX, offsetY, [drawingCtx]);
+		}
+
 		if (!drawingCtx && !window['IS_NATIVE_EDITOR']) {
 			// restore canvas' original clipping range
 			this.drawingCtx.restore();
@@ -4980,9 +4986,9 @@
 		}
 	};
 
-	WorksheetView.prototype.drawTraceArrows = function (visibleRange, offsetX, offsetY) {
+	WorksheetView.prototype.drawTraceArrows = function (visibleRange, offsetX, offsetY, args) {
 		let traceManager = this.traceDependentsManager;
-		let ctx = this.overlayCtx;
+		let ctx = args[0] ? args[0] : this.overlayCtx;
 		let widthLine = 2, 
 			customScale = AscBrowser.retinaPixelRatio,
 			zoom = this.getZoom();
@@ -5060,7 +5066,7 @@
 			if (extLength === 0 && angle === 0) {
 				// temporary exception
 				ctx.lineDiag(x1, y1, x2, y2);
-				ctx.closePath().stroke();
+				ctx.stroke();
 
 				!external ? drawDot(x1, y1, lineColor) : drawDot(x1, y1, externalLineColor);
 			} else {
@@ -5081,7 +5087,7 @@
 					ctx.setStrokeStyle(!external ? lineColor : externalLineColor);
 					ctx.moveTo(x1, y1);
 					ctx.lineTo(newX2, newY2);
-					ctx.closePath().stroke();
+					ctx.stroke();
 					drawArrowHead(newX2, newY2, arrowSize, angle, lineColor);
 					drawDot(x1, y1, lineColor);
 				}
@@ -5140,13 +5146,9 @@
 
 			arrowSize = zoom <= 0.5 ? arrowSize * 1.25 : arrowSize;
 
-			// draw dotted line 
 			drawDottedLine(x1, y1, newX2, newY2);
-			// draw arrowhead
 			drawArrowHead(newX2, newY2, arrowSize, angle, externalLineColor);
-			// draw dot
 			drawDot(x1, y1, externalLineColor);
-			// draw mini table
 			drawMiniTable(x1, y1, miniTableCol, miniTableRow, isTableLeft, isTableTop);
 		};
 
@@ -5166,7 +5168,6 @@
 			ctx.setStrokeStyle(externalLineColor);
 			ctx.lineDiag(x1, y1, x2, y2);
 			ctx.stroke();
-			ctx.closePath();
 
 			ctx.setStrokeStyle(whiteColor);
 			for (let i = 0; i < dashCount; i++) {
@@ -5175,7 +5176,6 @@
 				ctx.stroke();
 				x1 += xStep;
 				y1 += yStep;
-				ctx.closePath();
 			}
 		};
 		const drawArrowHead = function (x2, y2, arrowSize, angle, color) {
@@ -5211,11 +5211,17 @@
 		};
 		const drawDot = function (x, y, color) {
 			const dotRadius = 2.75 * zoom * customScale;
+
 			ctx.beginPath();
-			ctx.arc(x, y, dotRadius, 0, 2 * Math.PI);
+			let dx = Math.round(x);
+			let dy = Math.round(y);
+
+			window['AscFormat'].EllipseOnCanvas(ctx, dx, dy, dotRadius, dotRadius);
+
 			ctx.setFillStyle(color);
-			ctx.closePath().fill();
+			ctx.fill();
 		};
+
 		const drawMiniTable = function (x, y, destCol, destRow, isTableLeft, isTableTop) {
 			const paddingX = 8 * zoom * customScale;
 			const paddingY = 4 * zoom * customScale;
@@ -5234,7 +5240,6 @@
 			ctx.setFillStyle(whiteColor);
 			ctx.beginPath();
 			ctx.fillRect(x1, y1 - lineWidth, tableWidth, tableHeight + (lineWidth * 2));
-			ctx.closePath().stroke();
 
 			ctx.setLineWidth(lineWidth);
 			ctx.setFillStyle(cellStrokesColor);
@@ -5243,18 +5248,11 @@
 			// draw main rectangle
 			ctx.beginPath();
 			ctx.strokeRect(x1, y1, tableWidth, tableHeight);
-			ctx.stroke();
 
+			let isEven = lineWidth % 2 !== 0 ? 0.5 : 0;
 			ctx.beginPath();
-			let multiplier = zoom < 3 ? 1.5 : 1.2;
-			if (zoom > 1.8) {
-				ctx.fillRect(x1 - 0.5, y1 - lineWidth, tableWidth + (lineWidth * 0.5), lineWidth * multiplier);
-			} else {
-				ctx.fillRect(x1, y1 - lineWidth, tableWidth + 0.5, lineWidth * multiplier);
-			}
+			ctx.fillRect(x1, y1 - lineWidth, tableWidth + isEven, lineWidth + isEven);
 			ctx.strokeRect(x1, y1 - lineWidth, tableWidth, tableHeight + lineWidth);
-			ctx.stroke();
-			ctx.closePath().fill();
 
 			// Vertical lines
 			for (let i = 1; i < 3; i++) {
@@ -5275,7 +5273,7 @@
 
 		// draw stroke for precedent cArea
 		const drawAreaStroke = function (areas) {
-			for (const area in areas) {
+			for (let area in areas) {
 				const range = areas[area].range,
 					// write top left and bottom right cell coords to draw a rectangle around the range
 					topLeftCoords = {row: range.r1, col: range.c1},
@@ -5291,7 +5289,6 @@
 				ctx.setStrokeStyle(lineColor);
 				ctx.setLineWidth(1);
 				ctx.strokeRect(x1, y1, Math.abs(x2 - x1), Math.abs(y2 - y1));
-				ctx.closePath().stroke();
 				// then go to the next area
 			}
 		};
@@ -5302,13 +5299,19 @@
 				for (let i in to) {
 					let cellFrom = AscCommonExcel.getFromCellIndex(from, true);
 					if (-1 !== i.indexOf(";")) {
-						if (visibleRange.contains2(cellFrom) && !otherSheetMap[from]) {
+						if (!otherSheetMap[from]) {
 							doDrawArrow(cellFrom, null, true, false);
 						}
 					} else {
 						let cellTo = AscCommonExcel.getFromCellIndex(i, true);
 						if (visibleRange.contains2(cellFrom) || visibleRange.contains2(cellTo)) {
 							doDrawArrow(cellFrom, cellTo, false, isPrecedent);
+						} else {
+							let range = new Asc.Range(cellFrom.col, cellFrom.row, cellTo.col, cellTo.row);
+							range.normalize();
+							if (visibleRange.isIntersect(range)) {
+								doDrawArrow(cellFrom, cellTo, false, isPrecedent);
+							}
 						}
 					}
 				}
@@ -5318,8 +5321,7 @@
 		traceManager.forEachExternalPrecedent(function (from) {
 			if (from) {
 				let cellFrom = AscCommonExcel.getFromCellIndex(from, true);
-				// check if cellIndex exist in precedentExternal array
-				if (traceManager.checkPrecedentExternal(+from) && visibleRange.contains2(cellFrom)) {
+				if (traceManager.checkPrecedentExternal(+from)) {
 					doDrawArrow(cellFrom, null, true, true);
 				}
 			}
@@ -13072,58 +13074,61 @@
 	};
 
 
-    WorksheetView.prototype.moveRangeHandle = function (arnFrom, arnTo, copyRange, opt_wsTo, callback) {
+	WorksheetView.prototype.moveRangeHandle = function (arnFrom, arnTo, copyRange, opt_wsTo, callback) {
 		//opt_wsTo - for test reasons only
-        var t = this;
+		var t = this;
 		var wsTo = opt_wsTo ? opt_wsTo : this;
 
-        var onApplyMoveRangeHandleCallback = function (isSuccess) {
-            if (false === isSuccess) {
+		var onApplyMoveRangeHandleCallback = function (isSuccess) {
+			if (false === isSuccess) {
 				wsTo.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedAllError, c_oAscError.Level.NoCritical);
-                wsTo._cleanSelectionMoveRange();
-                callback && callback(false);
-                return;
-            }
+				wsTo._cleanSelectionMoveRange();
+				callback && callback(false);
+				return;
+			}
 
-            var onApplyMoveAutoFiltersCallback = function (isSuccess) {
-                if (false === isSuccess) {
+			var onApplyMoveAutoFiltersCallback = function (isSuccess) {
+				if (false === isSuccess) {
 					wsTo.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.LockedAllError, c_oAscError.Level.NoCritical);
-                    wsTo._cleanSelectionMoveRange();
-                    callback && callback(false);
-                    return;
-                }
+					wsTo._cleanSelectionMoveRange();
+					callback && callback(false);
+					return;
+				}
 
 				var hasMerged = t.model.getRange3(arnFrom.r1, arnFrom.c1, arnFrom.r2, arnFrom.c2).hasMerged();
 
-                // Очищаем выделение
-                wsTo.cleanSelection();
+				// Очищаем выделение
+				wsTo.cleanSelection();
+				// clear traces
+				if (t.traceDependentsManager) {
+					t.traceDependentsManager.clearAll();
+				}
 
-                //ToDo t.cleanDepCells();
-                History.Create_NewPoint();
-                if(opt_wsTo === undefined) {
-                    History.SetSelection(arnFrom.clone());
-                }
-                History.SetSelectionRedo(arnTo.clone());
-                History.StartTransaction();
+				//ToDo t.cleanDepCells();
+				History.Create_NewPoint();
+				if (opt_wsTo === undefined) {
+					History.SetSelection(arnFrom.clone());
+				}
+				History.SetSelectionRedo(arnTo.clone());
+				History.StartTransaction();
 
-                t.model.autoFilters._preMoveAutoFilters(arnFrom, arnTo, copyRange, opt_wsTo);
-
-                t.model._moveRange(arnFrom, arnTo, copyRange, opt_wsTo && opt_wsTo.model);
-                t.cellCommentator.moveRangeComments(arnFrom, arnTo, copyRange, opt_wsTo);
+				t.model.autoFilters._preMoveAutoFilters(arnFrom, arnTo, copyRange, opt_wsTo);
+				t.model._moveRange(arnFrom, arnTo, copyRange, opt_wsTo && opt_wsTo.model);
+				t.cellCommentator.moveRangeComments(arnFrom, arnTo, copyRange, opt_wsTo);
 				t.moveCellWatches(arnFrom, arnTo, copyRange, opt_wsTo);
 
-                var oRangeFrom = new AscCommonExcel.Range(t.model, arnFrom.r1, arnFrom.c1, arnFrom.r2, arnFrom.c2);
-                var oRangeTo = new AscCommonExcel.Range(t.model, arnTo.r1, arnTo.c1, arnTo.r2, arnTo.c2);
-                Asc.editor.wbModel.handleChartsOnMoveRange(oRangeFrom, oRangeTo);
+				var oRangeFrom = new AscCommonExcel.Range(t.model, arnFrom.r1, arnFrom.c1, arnFrom.r2, arnFrom.c2);
+				var oRangeTo = new AscCommonExcel.Range(t.model, arnTo.r1, arnTo.c1, arnTo.r2, arnTo.c2);
+				Asc.editor.wbModel.handleChartsOnMoveRange(oRangeFrom, oRangeTo);
 
-                // Вызываем функцию пересчета для заголовков форматированной таблицы
-                t.model.checkChangeTablesContent(arnFrom);
-                wsTo.model.checkChangeTablesContent(arnTo);
-                t.model.autoFilters.reDrawFilter(arnFrom);
+				// Вызываем функцию пересчета для заголовков форматированной таблицы
+				t.model.checkChangeTablesContent(arnFrom);
+				wsTo.model.checkChangeTablesContent(arnTo);
+				t.model.autoFilters.reDrawFilter(arnFrom);
 
-                t.model.autoFilters.afterMoveAutoFilters(arnFrom, arnTo, opt_wsTo);
+				t.model.autoFilters.afterMoveAutoFilters(arnFrom, arnTo, opt_wsTo);
 
-				if(opt_wsTo) {
+				if (opt_wsTo) {
 					History.SetSheetUndo(wsTo.model.getId());
 				}
 				History.EndTransaction();
@@ -13144,43 +13149,42 @@
 				if (hasMerged && false !== t.model.autoFilters._intersectionRangeWithTableParts(arnTo)) {
 					//не делаем действий в asc_onConfirmAction, потому что во время диалога может выполниться autosave и новые измения добавятся в точку, которую уже отправили
 					//тем более результат диалога ни на что не влияет
-					wsTo.model.workbook.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmPutMergeRange,
-						function () {
-						});
+					wsTo.model.workbook.handlers.trigger("asc_onConfirmAction", Asc.c_oAscConfirm.ConfirmPutMergeRange, function () {
+					});
 				}
 				t.workbook.Api.onWorksheetChange(arnFrom);
 				t.workbook.Api.onWorksheetChange(arnTo);
 				callback && callback(true);
-            };
+			};
 
-            if (t.model.autoFilters._searchFiltersInRange(arnFrom, true)) {
-                t._isLockedAll(onApplyMoveAutoFiltersCallback);
-				if(copyRange){
+			if (t.model.autoFilters._searchFiltersInRange(arnFrom, true)) {
+				t._isLockedAll(onApplyMoveAutoFiltersCallback);
+				if (copyRange) {
 					//TODO перепроверить лок
 					t._isLockedDefNames(null, null);
 				}
-            } else {
-                onApplyMoveAutoFiltersCallback();
-            }
-        };
+			} else {
+				onApplyMoveAutoFiltersCallback();
+			}
+		};
 
-        if (this.model.isUserProtectedRangesIntersection([arnFrom, arnTo])) {
+		if (this.model.isUserProtectedRangesIntersection([arnFrom, arnTo])) {
 			this.model.workbook.handlers.trigger("asc_onError", c_oAscError.ID.ProtectedRangeByOtherUser, c_oAscError.Level.NoCritical);
 			this._cleanSelectionMoveRange();
 			callback && callback(false);
 			return;
 		}
 
-        if (this.af_isCheckMoveRange(arnFrom, arnTo, opt_wsTo)) {
-            if(opt_wsTo) {
-                this._isLockedCells([arnFrom], null, opt_wsTo._isLockedCells([arnTo], null, onApplyMoveRangeHandleCallback));
-            } else {
-                this._isLockedCells([arnFrom, arnTo], null, onApplyMoveRangeHandleCallback);
-            }
-        } else {
-            this._cleanSelectionMoveRange();
-        }
-    };
+		if (this.af_isCheckMoveRange(arnFrom, arnTo, opt_wsTo)) {
+			if (opt_wsTo) {
+				this._isLockedCells([arnFrom], null, opt_wsTo._isLockedCells([arnTo], null, onApplyMoveRangeHandleCallback));
+			} else {
+				this._isLockedCells([arnFrom, arnTo], null, onApplyMoveRangeHandleCallback);
+			}
+		} else {
+			this._cleanSelectionMoveRange();
+		}
+	};
 
     WorksheetView.prototype.isEmptyCellsSheet = function () {
       return !(this.rows.length || this.cols.length);

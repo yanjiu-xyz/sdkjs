@@ -1123,7 +1123,7 @@
 				return true;
 
 			// allow chrome extensions
-			if (0 === event.origin.indexOf("chrome-extension://"))
+			if (event.origin && (0 === event.origin.indexOf("chrome-extension://")))
 				return true;
 
 			// external plugins

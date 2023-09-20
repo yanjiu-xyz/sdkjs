@@ -685,13 +685,13 @@ ChartPreviewManager.prototype.getChartPreviews = function(chartType, arrId, bEmp
 		this.index = 0;
 		this.cache = {};
 		this.queue = [];
+		this.typeOfSectionLoad = null;
 	}
 	SmartArtPreviewDrawer.prototype = Object.create(AscCommon.CActionOnTimerBase.prototype);
 	SmartArtPreviewDrawer.prototype.constructor = SmartArtPreviewDrawer;
 
 	SmartArtPreviewDrawer.prototype.Begin = function (nTypeOfSectionLoad) {
 
-		let oThis = this;
 		const oApi = Asc.editor || editor;
 		if(!oApi) {
 			return;
