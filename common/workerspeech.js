@@ -334,7 +334,8 @@
 	const SpeakerActionType = {
 		unknown : 0,
 		keyDown : 1,
-		sheetChange : 2
+		sheetChange : 2,
+		undoRedo: 3
 	};
 	
 	/**
@@ -481,6 +482,7 @@
 		{
 			_t.isUndoRedo = false;
 			_t.updateState();
+			_t.handleSpeechDescription({type: SpeakerActionType.undoRedo});
 			// TODO: Если дополнительно сообщить об Undo/Redo, то добавить тут
 		};
 

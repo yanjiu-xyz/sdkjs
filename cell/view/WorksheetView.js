@@ -1887,16 +1887,24 @@
 					}
 					break;
 				}
+				case AscCommon.SpeakerActionType.undoRedo: {
+					return this._getSpeechDescriptionSelection(prevState, curState, true);
+				}
 			}
 		}
 
 		return obj ? {type: type, obj: obj} : null;
 	};
 
-	WorksheetView.prototype._getSpeechDescriptionSelection = function (prevState, curState) {
+	WorksheetView.prototype._getSpeechDescriptionSelection = function (prevState, curState, notTrySearchDifference) {
 		let type = null, text = null, obj = null;
 		let oCell, oCellRange, curRange;
-		if (prevState && curState && prevState.ranges && curState.ranges && prevState.ranges.length === 1 && prevState.ranges.length === curState.ranges.length) {
+
+		if (prevState && curState && prevState.ranges && curState.ranges && prevState.isEqual(curState)) {
+			return null;
+		}
+
+		if (!notTrySearchDifference && prevState && curState && prevState.ranges && curState.ranges && prevState.ranges.length === 1 && prevState.ranges.length === curState.ranges.length) {
 			//1 row/1 col and change 1 cell
 			let prevRange = prevState.ranges[0];
 			curRange = curState.ranges[0];
@@ -1972,7 +1980,7 @@
 					obj.ranges.push(elem);
 				}
 
-				type = AscCommon.SpeechWorkerCommands.MultipleRangesSelected
+				type = AscCommon.SpeechWorkerCommands.MultipleRangesSelected;
 			} else {
 				curRange = curState && curState.ranges && curState.ranges[0];
 			}
