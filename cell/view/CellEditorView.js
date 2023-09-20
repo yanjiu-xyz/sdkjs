@@ -291,7 +291,6 @@
 		this.fKeyMouseMove = function () {
 			return t._onWindowMouseMove.apply(t, arguments);
 		};
-		//AscCommon.SpeechWorker.setEnabled(true);
 		t.addEventListeners();
 	};
 
@@ -2791,7 +2790,6 @@
 
 		t._setSkipKeyPress(false);
 		t.skipTLUpdate = true;
-
 		return true;
 	};
 
