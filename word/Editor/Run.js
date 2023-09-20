@@ -4546,7 +4546,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     SpaceLen = 0;
                     WordLen = 0;
 
-                    var TabPos   = Para.private_RecalculateGetTabPos(X, ParaPr, PRS.Page, false);
+                    var TabPos   = Para.private_RecalculateGetTabPos(PRS, X, ParaPr, PRS.Page, false);
                     var NewX     = TabPos.NewX;
                     var TabValue = TabPos.TabValue;
 
@@ -5296,7 +5296,7 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
             }
 			case para_FieldChar:
 			{
-				if (this.Paragraph && this.Paragraph.m_oPRSW.IsFastRecalculate())
+				if (PRSC.isFastRecalculation())
 					PRSC.ComplexFields.ProcessFieldChar(Item);
 				else
 					PRSC.ComplexFields.ProcessFieldCharAndCollectComplexField(Item);
@@ -5324,14 +5324,11 @@ ParaRun.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRange)
 			}
 			case para_InstrText:
 			{
-				if (this.Paragraph && this.Paragraph.m_oPRSW.IsFastRecalculate())
-					break;
-
-				if (reviewtype_Remove === this.GetReviewType())
+				if (PRSC.isFastRecalculation()
+					|| reviewtype_Remove === this.GetReviewType())
 					break;
 
 				PRSC.ComplexFields.ProcessInstruction(Item);
-
 				break;
 			}
         }
@@ -5752,11 +5749,11 @@ ParaRun.prototype.Recalculate_PageEndInfo = function(PRSI, _CurLine, _CurRange)
 		}
 	}
 };
-ParaRun.prototype.RecalculateEndInfo = function(oPRSI)
+ParaRun.prototype.RecalculateEndInfo = function(PRSI)
 {
 	var isRemovedInReview = (reviewtype_Remove === this.GetReviewType());
 
-	if (this.Paragraph && (this.Paragraph.m_oPRSW.IsFastRecalculate() || this.Paragraph.bFromDocument === false))
+	if (PRSI.isFastRecalculation() || (this.Paragraph && this.Paragraph.bFromDocument === false))
 		return;
 
 	for (var nCurPos = 0, nCount = this.Content.length; nCurPos < nCount; ++nCurPos)
@@ -5764,11 +5761,11 @@ ParaRun.prototype.RecalculateEndInfo = function(oPRSI)
 		var oItem = this.Content[nCurPos];
 		if (para_FieldChar === oItem.Type)
 		{
-			oPRSI.ProcessFieldCharAndCollectComplexField(oItem);
+			PRSI.ProcessFieldCharAndCollectComplexField(oItem);
 		}
 		else if (para_InstrText === oItem.Type && !isRemovedInReview)
 		{
-			oPRSI.ProcessInstruction(oItem);
+			PRSI.ProcessInstruction(oItem);
 		}
 	}
 };

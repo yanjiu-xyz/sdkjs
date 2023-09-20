@@ -175,11 +175,6 @@ function Paragraph(DrawingDocument, Parent, bFromPresentation)
 	endRun.AddToContent(0, new AscWord.CRunParagraphMark());
 	this.Content[0] = endRun;
 
-    this.m_oPRSW = g_PRSW;//new CParagraphRecalculateStateWrap(this);
-    this.m_oPRSC = g_PRSC;//new CParagraphRecalculateStateCounter();
-    this.m_oPRSA = g_PRSA;//new CParagraphRecalculateStateAlign();
-    this.m_oPRSI = g_PRSI;//new CParagraphRecalculateStateInfo();
-    this.m_oPDSE = g_PDSE;//new CParagraphDrawStateElements();
     this.StartState = null;
 
     this.CollPrChange = false;
@@ -1456,7 +1451,7 @@ Paragraph.prototype.CheckNotInlineObject = function(nMathPos, nDirection)
 
 	return true;
 };
-Paragraph.prototype.RecalculateEndInfo = function()
+Paragraph.prototype.RecalculateEndInfo = function(isFast)
 {
 	let logicDocument = this.GetLogicDocument();
 	if (!logicDocument || !logicDocument.GetRecalcId)
@@ -1470,8 +1465,9 @@ Paragraph.prototype.RecalculateEndInfo = function()
 	if (prevEndInfo && !prevEndInfo.CheckRecalcId(recalcId))
 		return;
 	
-	let prsi = this.m_oPRSI;
+	let prsi = AscWord.ParagraphRecalculateStateManager.getEndInfoState();
 	prsi.Reset(prevEndInfo);
+	prsi.setFast(!!isFast);
 	
 	for (let pos = 0, count = this.Content.length; pos < count; ++pos)
 	{
@@ -1480,6 +1476,8 @@ Paragraph.prototype.RecalculateEndInfo = function()
 	
 	this.EndInfo.SetFromPRSI(prsi);
 	this.EndInfo.SetRecalcId(recalcId);
+	
+	AscWord.ParagraphRecalculateStateManager.release(prsi);
 };
 /**
  * Данная функция вызывается, когда с данным элементом, и с элементами до него не произошло никаких изменений и мы
@@ -1509,7 +1507,7 @@ Paragraph.prototype.Recalculate_PageEndInfo = function(PRSW, CurPage)
 {
 	var PrevInfo = ( 0 === CurPage ? this.Parent.GetPrevElementEndInfo(this) : this.Pages[CurPage - 1].EndInfo.Copy() );
 
-	var PRSI = this.m_oPRSI;
+	var PRSI = AscWord.ParagraphRecalculateStateManager.getEndInfoState();
 
 	PRSI.Reset(PrevInfo);
 
@@ -1534,6 +1532,8 @@ Paragraph.prototype.Recalculate_PageEndInfo = function(PRSW, CurPage)
 
 	if (PRSW)
 		this.Pages[CurPage].EndInfo.RunRecalcInfo = PRSW.RunRecalcInfoBreak;
+	
+	AscWord.ParagraphRecalculateStateManager.release(PRSI)
 };
 Paragraph.prototype.UpdateEndInfo = function()
 {
@@ -2106,7 +2106,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 	if (true === bDrawBorders && 0 === CurPage && true === this.private_IsEmptyPageWithBreak(CurPage))
 		bDrawBorders = false;
 
-	var PDSH = g_oPDSH;
+	var PDSH = g_PDSH;
 
 	PDSH.ComplexFields.ResetPage(this, CurPage);
 
@@ -2823,7 +2823,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 };
 Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, BgColor, Theme, ColorMap)
 {
-	var PDSE = this.m_oPDSE;
+	var PDSE = g_PDSE;
 	PDSE.Reset(this, pGraphics, BgColor, Theme, ColorMap);
 	PDSE.ComplexFields.ResetPage(this, CurPage);
 
@@ -3129,7 +3129,7 @@ Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, BgColor, 
 };
 Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 {
-	var PDSL = g_oPDSL;
+	var PDSL = g_PDSL;
 	PDSL.Reset(this, pGraphics, BgColor);
 	PDSL.ComplexFields.ResetPage(this, CurPage);
 
@@ -19572,8 +19572,6 @@ CParagraphDrawStateElements.prototype =
     }
 };
 
-let g_PDSE = new CParagraphDrawStateElements();
-
 function CParagraphDrawStateLines()
 {
     this.Paragraph = undefined;
@@ -19689,9 +19687,9 @@ CParagraphDrawStateLines.prototype.IsUnderlineTrailSpace = function()
 	return this.UlTrailSpace;
 };
 
-var g_oPDSH = new CParagraphDrawStateHighlights();
-//var g_oPDSE = new CParagraphDrawStateElements();
-var g_oPDSL = new CParagraphDrawStateLines();
+let g_PDSH = new CParagraphDrawStateHighlights();
+let g_PDSE = new CParagraphDrawStateElements();
+let g_PDSL = new CParagraphDrawStateLines();
 
 //----------------------------------------------------------------------------------------------------------------------
 // Классы для работы с курсором
