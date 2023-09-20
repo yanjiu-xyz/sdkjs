@@ -3140,6 +3140,7 @@
 	};
 
   WorkbookView.prototype.undo = function(Options) {
+    this.Api.sendEvent("asc_onBeforeUndoRedo");
     var oFormulaLocaleInfo = AscCommonExcel.oFormulaLocaleInfo;
     oFormulaLocaleInfo.Parse = false;
     oFormulaLocaleInfo.DigitSep = false;
@@ -3155,9 +3156,11 @@
     }
     oFormulaLocaleInfo.Parse = true;
     oFormulaLocaleInfo.DigitSep = true;
+    this.Api.sendEvent("asc_onUndoRedo");
   };
 
   WorkbookView.prototype.redo = function() {
+	  this.Api.sendEvent("asc_onBeforeUndoRedo");
 	  if (this.Api.isEditVisibleAreaOleEditor) {
 		  const oOleSize = this.getOleSize();
 		  oOleSize.redo();
@@ -3166,6 +3169,7 @@
 	  } else {
 		  this.cellEditor.redo();
 	  }
+	  this.Api.sendEvent("asc_onUndoRedo");
   };
 
   WorkbookView.prototype.setFontAttributes = function(prop, val) {

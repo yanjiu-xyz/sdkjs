@@ -583,7 +583,9 @@
 		if (api && !api.canUndoRedoByRestrictions()) {
 			return;
 		}
+		api.sendEvent("asc_onBeforeUndoRedo");
 		this._performAction( this.undoList, this.redoList );
+		api.sendEvent("asc_onUndoRedo");
 	};
 
 	CellEditor.prototype.redo = function () {
@@ -591,7 +593,9 @@
 		if (api && !api.canUndoRedoByRestrictions()) {
 			return;
 		}
+		api.sendEvent("asc_onBeforeUndoRedo");
 		this._performAction( this.redoList, this.undoList );
+		api.sendEvent("asc_onUndoRedo");
 	};
 
 	CellEditor.prototype.getZoom = function () {
