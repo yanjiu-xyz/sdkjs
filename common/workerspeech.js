@@ -74,32 +74,41 @@
 		// { text: "text", isBefore: true  }
 		TextUnselected : 2,
 
-		// { num: 1 }
-		SlideSelected : 3,
+		// { indexes: [1, 2, ..] }
+		SlidesSelected : 3,
+
+		// { indexes: [1, 2, ..] }
+		SlidesUnselected : 4,
 
 		// { altText: "text" }
-		DrawingSelected : 4,
+		DrawingSelected : 5,
 
 		// { text: "text", cell: "A1" }
-		CellSelected : 5,
+		CellSelected : 6,
 
 		// { start: { text: "text", cell: "A1" }, end: { text: "text", cell: "A2" }] } }
-		CellRangeSelected : 6,
+		CellRangeSelected : 7,
 
 		// { start: { text: "text", cell: "A1" }, end: { text: "text", cell: "A2" }] } }
-		CellRangeUnselected : 7,
+		CellRangeUnselected : 8,
 
 		// { text: "text", cell: "A1" }
-		CellRangeSelectedChangeOne : 8,
+		CellRangeSelectedChangeOne : 9,
 
 		// { text: "text", cell: "A1" }
-		CellRangeUnselectedChangeOne : 9,
+		CellRangeUnselectedChangeOne : 10,
+
+		// { text: "text", ranges: [startCell: "A1" , endCell: "A2" }] }
+		MultipleRangesSelected : 11,
 
 		// { name: "sheet 1", cell: "A1", text: "text", cellEnd: "D5", cellsCount: 10, objectsCount: 5 }
-		SheetSelected : 10
+		SheetSelected : 12
 
 	};
-
+	
+	/**
+	 * @constructor
+	 */
 	function CWorkerSpeech()
 	{
 		this.isEnabled = false;
@@ -137,13 +146,37 @@
 
 			if (undefined === obj)
 				obj = {};
-
+			
+			if (obj.cancelSelection)
+				console.log("Text selection has been canceled");
+		
+			if (obj.moveToMainPart)
+				console.log("Main document part");
+			else if (obj.moveToFootnote)
+				console.log("Footnote");
+			else if (obj.moveToFootnote)
+				console.log("Drawing");
+			else if (obj.moveToHdrFtr)
+				console.log("Header/Footer");
+			
+			if (obj.moveToStartOfDocument)
+				console.log("Start of the document");
+			else if (obj.moveToStartOfLine)
+				console.log("Start of the line");
+			else if (obj.moveToEndOfDocument)
+				console.log("End of the document");
+			else if (obj.moveToEndOfLine)
+				console.log("End of the line");
+			
+			
 			let translateManager = AscCommon.translateManager;
 			switch (type)
 			{
 				case SpeechWorkerType.Text:
 				{
 					this.speechElement.innerHTML = obj;
+					
+					console.log("Text " + obj.text);
 					break;
 				}
 				case SpeechWorkerType.TextSelected:
@@ -152,6 +185,8 @@
 						this.speechElement.innerHTML = (translateManager.getValue("select ") + obj.text);
 					else
 						this.speechElement.innerHTML = (obj.text + translateManager.getValue(" select"));
+					
+					console.log("SelectedText " + obj.text);
 					break;
 				}
 				case SpeechWorkerType.TextUnselected:
@@ -160,11 +195,36 @@
 						this.speechElement.innerHTML = (translateManager.getValue("unselected") + obj.text ? (" " + obj.text) : "");
 					else
 						this.speechElement.innerHTML = ((obj.text ? (obj.text + " ") : "") + translateManager.getValue("unselected"));
+					
+					console.log("UnselectedText " + obj.text);
 					break;
 				}
-				case SpeechWorkerType.SlideSelected:
+				case SpeechWorkerType.SlidesSelected:
 				{
-					this.speechElement.innerHTML = (translateManager.getValue("slide ") + obj.num);
+					let aIndexes = obj.indexes;
+					if(aIndexes.length === 1)
+					{
+						this.speechElement.innerHTML = (translateManager.getValue("slide ") + (aIndexes[0]));
+					}
+					else
+					{
+						this.speechElement.innerHTML = (aIndexes.length + " " + translateManager.getValue("slides added to selection"));
+					}
+					console.log("SlidesSelected " + this.speechElement.innerHTML);
+					break;
+				}
+				case SpeechWorkerType.SlidesUnselected:
+				{
+					let aIndexes = obj.indexes;
+					if(aIndexes.length === 1)
+					{
+						this.speechElement.innerHTML = (translateManager.getValue("slide ") + (aIndexes[0]) + " " + translateManager.getValue("unselected"));
+					}
+					else
+					{
+						this.speechElement.innerHTML = (aIndexes.length + " " + translateManager.getValue("slides unselected"));
+					}
+					console.log("SlidesUnselected " + this.speechElement.innerHTML);
 					break;
 				}
 				case SpeechWorkerType.DrawingSelected:
@@ -174,7 +234,9 @@
 				}
 				case SpeechWorkerType.CellSelected:
 				{
-					this.speechElement.innerHTML = ((obj.text ? obj.text : translateManager.getValue("empty cell")) + " " + obj.cell);
+					let result = ((obj.text ? obj.text : translateManager.getValue("empty cell")) + " " + obj.cell);
+					this.speechElement.innerHTML = result;
+					console.log(result);
 					break;
 				}
 				case SpeechWorkerType.CellRangeSelected:
@@ -182,10 +244,11 @@
 					let result = translateManager.getValue("selected range select ");
 					result += obj.start.text ? obj.start.text : translateManager.getValue("empty");
 					result += (" " + obj.start.cell);
-					result += obj.end.text ? obj.end.text : translateManager.getValue("empty");
+					result += obj.end.text ? " " + obj.end.text : " " + translateManager.getValue("empty");
 					result += (" " + obj.end.cell);
 
 					this.speechElement.innerHTML = result;
+					console.log(result);
 					break;
 				}
 				case SpeechWorkerType.CellRangeUnselected:
@@ -193,10 +256,11 @@
 					let result = translateManager.getValue("unselected range select ");
 					result += obj.start.text ? obj.start.text : translateManager.getValue("empty");
 					result += (" " + obj.start.cell);
-					result += obj.end.text ? obj.end.text : translateManager.getValue("empty");
+					result += obj.end.text ? " " + obj.end.text : " " + translateManager.getValue("empty");
 					result += (" " + obj.end.cell);
 
 					this.speechElement.innerHTML = result;
+					console.log(result);
 					break;
 				}
 				case SpeechWorkerType.CellRangeSelectedChangeOne:
@@ -206,6 +270,7 @@
 					result += (" " + obj.cell);
 
 					this.speechElement.innerHTML = result;
+					console.log(result);
 					break;
 				}
 				case SpeechWorkerType.CellRangeUnselectedChangeOne:
@@ -215,23 +280,45 @@
 					result += (" " + obj.cell);
 
 					this.speechElement.innerHTML = result;
+					console.log(result);
+					break;
+				}
+				case SpeechWorkerType.MultipleRangesSelected:
+				{
+					if (obj.ranges) {
+						let result = translateManager.getValue("selected ");
+						result += obj.ranges.length + " " + translateManager.getValue("areas ");
+
+						for (let i = 0; i < obj.ranges.length; i++) {
+							result += obj.ranges[i].startCell + "-" +  obj.ranges[i].endCell + " ";
+						}
+						result += obj.text ? obj.text : translateManager.getValue("empty");
+
+						this.speechElement.innerHTML = result;
+						console.log(result);
+					}
+
 					break;
 				}
 				case SpeechWorkerType.SheetSelected:
 				{
-					let isEmpty = (0 === obj.cellsCount && 0 === obj.objectsCount) ? true : false;
+					//ms read after "objects" only selection
+					//we read selection in next command
+					let isEmpty = 0 === obj.cellsCount && 0 === obj.objectsCount;
 					let result = "";
 					if (isEmpty)
 					{
-						result = obj.name + " " + translateManager.getValue("empty sheet ") + obj.cell;
+						//ms not read it, read only else
+						result = obj.name + " " + translateManager.getValue("empty sheet ") /*+ obj.cell*/;
 					}
 					else
 					{
 						result = obj.name + " " + translateManager.getValue("end of sheet ") + obj.cellEnd + " " +
-							obj.cellsCount + " " + translateManager.getValue("cells") +
-							obj.objectsCount + " " + translateManager.getValue("objects") +
-							obj.text + " " + obj.cell;
+							obj.cellsCount + " " + translateManager.getValue("cells") + " "
+							obj.objectsCount + " " + translateManager.getValue("objects") /*+
+							obj.text + " " + obj.cell*/;
 					}
+					console.log(result);
 					this.speechElement.innerHTML = result;
 					break;
 				}
@@ -243,7 +330,192 @@
 
 	window.AscCommon.SpeechWorker = new CWorkerSpeech();
 	window.AscCommon.SpeechWorkerCommands = SpeechWorkerType;
+	
+	const SpeakerActionType = {
+		unknown : 0,
+		keyDown : 1,
+		sheetChange : 2,
+		undoRedo: 3
+	};
+	
+	/**
+	 * @constructor
+	 */
+	function EditorActionSpeaker()
+	{
+		this.speechWorker = window.AscCommon.SpeechWorker;
+		this.editor = null;
+		
+		this.isLanched = false;
+		
+		this.onSelectionChange    = null;
+		this.onActionStart        = null;
+		this.onActionEnd          = null;
+		this.onBeforeKeyDown      = null;
+		this.onKeyDown            = null;
+		this.onBeforeApplyChanges = null;
+		this.onApplyChanges       = null;
+		this.onBeforeUndoRedo     = null;
+		this.onUndoRedo           = null;
+		
+		this.selectionState = null;
+		this.isAction       = false;
+		this.isApplyChanges = false;
+		this.isKeyDown      = false;
+		this.isUndoRedo     = false;
+	}
+	EditorActionSpeaker.prototype.run = function()
+	{
+		this.editor = Asc.editor;
+		if (!this.editor || this.isLanched)
+			return;
+		
+		this.isLanched = true;
+		
+		this.initEvents();
+		this.editor.asc_registerCallback('asc_onSelectionEnd', this.onSelectionChange);
+		this.editor.asc_registerCallback('asc_onCursorMove', this.onSelectionChange);
+		this.editor.asc_registerCallback('asc_onUserActionStart', this.onActionStart);
+		this.editor.asc_registerCallback('asc_onUserActionEnd', this.onActionEnd);
+		this.editor.asc_registerCallback('asc_onBeforeKeyDown', this.onBeforeKeyDown);
+		this.editor.asc_registerCallback('asc_onKeyDown', this.onKeyDown);
+		this.editor.asc_registerCallback('asc_onBeforeApplyChanges', this.onBeforeApplyChanges);
+		this.editor.asc_registerCallback('asc_onApplyChanges', this.onApplyChanges);
+		this.editor.asc_registerCallback('asc_onBeforeUndoRedo', this.onBeforeUndoRedo);
+		this.editor.asc_registerCallback('asc_onUndoRedo', this.onUndoRedo);
 
+		//se
+		this.editor.asc_registerCallback('asc_onActiveSheetChanged', this.onActiveSheetChanged);
+		
+		this.selectionState = this.editor.getSelectionState();
+		this.isAction       = false;
+		this.isApplyChanges = false;
+		this.isKeyDown      = false;
+		this.isUndoRedo     = false;
+		
+		this.speechWorker.setEnabled(true);
+	};
+	EditorActionSpeaker.prototype.stop = function()
+	{
+		if (!this.isLanched)
+			return;
+		
+		this.editor.asc_unregisterCallback('asc_onSelectionEnd', this.onSelectionChange);
+		this.editor.asc_unregisterCallback('asc_onCursorMove', this.onSelectionChange);
+		this.editor.asc_unregisterCallback('asc_onUserActionStart', this.onActionStart);
+		this.editor.asc_unregisterCallback('asc_onUserActionEnd', this.onActionEnd);
+		this.editor.asc_unregisterCallback('asc_onBeforeKeyDown', this.onBeforeKeyDown);
+		this.editor.asc_unregisterCallback('asc_onKeyDown', this.onKeyDown);
+		this.editor.asc_unregisterCallback('asc_onBeforeApplyChanges', this.onBeforeApplyChanges);
+		this.editor.asc_unregisterCallback('asc_onApplyChanges', this.onApplyChanges);
+		this.editor.asc_unregisterCallback('asc_onBeforeUndoRedo', this.onBeforeUndoRedo);
+		this.editor.asc_unregisterCallback('asc_onUndoRedo', this.onUndoRedo);
+		
+		//se
+		this.editor.asc_unregisterCallback('asc_onActiveSheetChanged', this.onActiveSheetChanged);
+		
+		this.selectionState = null;
+		this.isAction       = false;
+		this.isKeyDown      = false;
+		this.isApplyChanges = false;
+		this.isUndoRedo     = false;
+		
+		this.speechWorker.setEnabled(false);
+		
+		this.isLanched = false;
+	};
+	EditorActionSpeaker.prototype.initEvents = function()
+	{
+		let _t = this;
+		
+		this.onSelectionChange = function()
+		{
+			if (_t.isAction
+				|| _t.isKeyDown
+				|| _t.isApplyChanges
+				|| _t.isUndoRedo)
+				return;
+			
+			_t.handleSpeechDescription(null);
+		};
+		
+		this.onActionStart = function()
+		{
+			_t.isAction = true;
+		};
+		
+		this.onActionEnd = function()
+		{
+			_t.isAction = false;
+			// TODO: Если нужно, то добавить описание действия
+		};
+		
+		this.onBeforeKeyDown = function()
+		{
+			_t.isKeyDown = true;
+		};
+		
+		this.onKeyDown = function(e)
+		{
+			_t.isKeyDown = false;
+			_t.handleSpeechDescription({type: SpeakerActionType.keyDown, event : e});
+		};
+		
+		this.onBeforeApplyChanges = function()
+		{
+			_t.isApplyChanges = true;
+		};
+		
+		this.onApplyChanges = function()
+		{
+			_t.isApplyChanges = false;
+			_t.updateState();
+			// TODO: Если дополнительно сообщить о совместке, то добавить тут
+		};
+		
+		this.onBeforeUndoRedo = function()
+		{
+			_t.isUndoRedo = true;
+		};
+		
+		this.onUndoRedo = function()
+		{
+			_t.isUndoRedo = false;
+			_t.handleSpeechDescription({type: SpeakerActionType.undoRedo});
+			_t.updateState();
+			// TODO: Если дополнительно сообщить об Undo/Redo, то добавить тут
+		};
+
+		this.onActiveSheetChanged = function(index)
+		{
+			_t.handleSpeechDescription({type: SpeakerActionType.sheetChange, index : index});
+		};
+		
+	};
+	EditorActionSpeaker.prototype.handleSpeechDescription = function(action)
+	{
+		let state = this.editor.getSelectionState();
+		if (!this.selectionState)
+		{
+			this.selectionState = state;
+			return;
+		}
+		
+		let speechInfo = this.editor.getSpeechDescription(this.selectionState, action);
+		this.selectionState = state;
+		if (!speechInfo)
+			return;
+		
+		this.speechWorker.speech(speechInfo.type, speechInfo.obj);
+	};
+	EditorActionSpeaker.prototype.updateState = function()
+	{
+		this.selectionState = this.editor.getSelectionState();
+	};
+	
+	window.AscCommon.EditorActionSpeaker = new EditorActionSpeaker();
+	window.AscCommon.SpeakerActionType = SpeakerActionType;
+	
 	window.AscCommon.SpeechWorker.testFunction = function()
 	{
 		AscCommon.SpeechWorker.setEnabled(true);

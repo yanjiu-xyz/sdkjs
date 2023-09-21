@@ -1823,6 +1823,185 @@
         return this.model.selectionRange;
     };
 
+	WorksheetView.prototype.getSelectionState = function () {
+		return this.model.getSelection().clone();
+	};
+
+	WorksheetView.prototype.getSpeechDescription = function (prevState, curState, action) {
+		let res = null;
+
+		if (action) {
+			res = this._getSpeechDescriptionAction(prevState, curState, action);
+		} else {
+			res = this._getSpeechDescriptionSelection(prevState, curState);
+		}
+
+		return res;
+	};
+
+	WorksheetView.prototype._getSpeechDescriptionAction = function (prevState, curState, action) {
+		let obj = null, type = null;
+		if (action) {
+			switch (action.type) {
+				case AscCommon.SpeakerActionType.sheetChange: {
+					obj = {};
+
+					obj.name = this.model.sName;
+
+					let endCol = Math.max(this.model.getColsCount() - 1, 0);
+					let endRow = Math.max(this.model.getRowsCount() - 1, 0);
+					obj.cellEnd = new asc_Range(endCol, endRow, endCol, endRow).getName();
+
+					obj.cellsCount = this.model.getCountNoEmptyCells();
+					obj.objectsCount = this.model.Drawings ? this.model.Drawings.length : 0;
+
+					//read on change selection
+					/*let curRange = curState && curState.ranges && curState.ranges[0];
+					if (curRange) {
+						let oCell, text;
+						if (curRange.isOneCell()) {
+							oCell = this._getVisibleCell(curRange.c1, curRange.r1);
+							obj.text = oCell && oCell.getValueForEdit();
+							obj.cell = oCell.getName();
+						} else {
+							oCell = this._getVisibleCell(curRange.c1, curRange.r1);
+							text = oCell && oCell.getValueForEdit();
+							let startObj = {text: text === "" ? null : text, cell: oCell.getName()};
+
+							oCell = this._getVisibleCell(curRange.c2, curRange.r2);
+							text = oCell && oCell.getValueForEdit();
+							let endOnj = {text: text === "" ? null : text, cell: oCell.getName()};
+
+							obj.start = startObj;
+							obj.end = endOnj;
+						}
+					}*/
+
+					type = AscCommon.SpeechWorkerCommands.SheetSelected;
+
+					break;
+				}
+				case AscCommon.SpeakerActionType.keyDown: {
+					if ((action.event.keyCode >= 35 && action.event.keyCode <= 40) || (action.event.keyCode === 9 || action.event.keyCode === 13)) {
+						return this._getSpeechDescriptionSelection(prevState, curState);
+					}
+					break;
+				}
+				case AscCommon.SpeakerActionType.undoRedo: {
+					return this._getSpeechDescriptionSelection(prevState, curState, true);
+				}
+			}
+		}
+
+		return obj ? {type: type, obj: obj} : null;
+	};
+
+	WorksheetView.prototype._getSpeechDescriptionSelection = function (prevState, curState, notTrySearchDifference) {
+		let type = null, text = null, obj = null;
+		let oCell, oCellRange, curRange;
+
+		if (prevState && curState && prevState.ranges && curState.ranges && prevState.isEqual(curState)) {
+			return null;
+		}
+
+		if (!notTrySearchDifference && prevState && curState && prevState.ranges && curState.ranges && prevState.ranges.length === 1 && prevState.ranges.length === curState.ranges.length) {
+			//1 row/1 col and change 1 cell
+			let prevRange = prevState.ranges[0];
+			curRange = curState.ranges[0];
+
+			if (curRange.isOneCell()) {
+				type = AscCommon.SpeechWorkerCommands.CellSelected;
+
+				oCellRange = this._getVisibleCell(curRange.c1, curRange.r1);
+				text = oCellRange && oCellRange.getValueForEdit();
+				obj = {text: text === "" ? null : text, cell: curRange.getName()};
+			} else {
+				let oStart, oEnd;
+				let diff1 = prevRange.difference(curRange);
+				let diff2 = curRange.difference(prevRange);
+				if (diff1.length === 0 && diff2.length === 1) {
+					if (diff2[0].isOneCell()) {
+						oStart = diff2[0];
+
+						type = AscCommon.SpeechWorkerCommands.CellRangeUnselectedChangeOne;
+					} else {
+						//todo ms - only current selection
+						oStart = new Asc.Range(diff2[0].c1, diff2[0].r1, diff2[0].c1, diff2[0].r1);
+						oEnd = new Asc.Range(diff2[0].c2, diff2[0].r2, diff2[0].c2, diff2[0].r2);
+
+						type = AscCommon.SpeechWorkerCommands.CellRangeUnselected;
+					}
+				} else if (diff2.length === 0 && diff1.length === 1) {
+					if (diff1[0].isOneCell()) {
+						oStart = diff1[0];
+
+						type = AscCommon.SpeechWorkerCommands.CellRangeSelectedChangeOne;
+					} else {
+						//todo ms - only current selection
+						oStart = new Asc.Range(diff1[0].c1, diff1[0].r1, diff1[0].c1, diff1[0].r1);
+						oEnd = new Asc.Range(diff1[0].c2, diff1[0].r2, diff1[0].c2, diff1[0].r2);
+
+						type = AscCommon.SpeechWorkerCommands.CellRangeSelected;
+					}
+				}
+
+				if (oStart) {
+					let startObj, endOnj, oCell;
+
+					oCell = this._getVisibleCell(oStart.c1, oStart.r1);
+					text = oCell && oCell.getValueForEdit();
+					startObj = {text: text === "" ? null : text, cell: oStart.getName()};
+
+					if (oEnd) {
+						oCell = this._getVisibleCell(oEnd.c1, oEnd.r1);
+						text = oCell && oCell.getValueForEdit();
+						endOnj = {text: text === "" ? null : text, cell: oEnd.getName()};
+
+						obj = {start: startObj, end: endOnj};
+					}
+					if (!obj) {
+						obj = startObj;
+					}
+				}
+			}
+		} else {
+			if (curState && curState.ranges && curState.ranges.length > 1) {
+				//multiple selection
+				obj = {};
+				obj.ranges = [];
+
+				oCell = this._getVisibleCell(curState.activeCell.col, curState.activeCell.row);
+				text = oCell && oCell.getValueForEdit();
+				obj.text = text === "" ? null : text;
+
+				for (let i = 0; i < curState.ranges.length; i++) {
+					let _range = curState.ranges[i];
+					let elem = {startCell: new Asc.Range(_range.c1, _range.r1, _range.c1, _range.r1).getName(), endCell: new Asc.Range(_range.c2, _range.r2, _range.c2, _range.r2).getName()};
+					obj.ranges.push(elem);
+				}
+
+				type = AscCommon.SpeechWorkerCommands.MultipleRangesSelected;
+			} else {
+				curRange = curState && curState.ranges && curState.ranges[0];
+			}
+		}
+
+		if (!obj && curRange) {
+			oCell = this._getVisibleCell(curRange.c1, curRange.r1);
+			text = oCell && oCell.getValueForEdit();
+			let startObj = {text: text === "" ? null : text, cell: oCell.getName()};
+
+			oCell = this._getVisibleCell(curRange.c2, curRange.r2);
+			text = oCell && oCell.getValueForEdit();
+			let endOnj = {text: text === "" ? null : text, cell: oCell.getName()};
+
+			obj = {start: startObj, end: endOnj};
+			type = AscCommon.SpeechWorkerCommands.CellRangeSelected;
+		}
+
+		return obj ? {type: type, obj: obj} : null;
+	};
+
     WorksheetView.prototype._fixVisibleRange = function ( range ) {
         var tmp;
         if ( null !== this.topLeftFrozenCell ) {

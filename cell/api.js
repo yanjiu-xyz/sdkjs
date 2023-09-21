@@ -8876,7 +8876,21 @@ var editor;
 		return ws.removeTraceArrows(type);
 	};
 
+	spreadsheet_api.prototype.getSelectionState = function() {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
 
+		return wb.getSelectionState();
+	};
+	spreadsheet_api.prototype.getSpeechDescription = function(prevState, action) {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		return wb.getSpeechDescription(prevState, wb.getSelectionState(), action);
+	};
 
   /*
    * Export

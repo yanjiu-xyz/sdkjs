@@ -6075,6 +6075,11 @@
 		};
 
 
+		CShape.prototype.getContentText = function () {
+			return this.getText();
+		};
+
+
 		CShape.prototype.remove = function (Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord) {
 			if (this.txBody) {
 				this.txBody.content.Remove(Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord);

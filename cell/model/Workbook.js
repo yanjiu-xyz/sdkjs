@@ -12305,6 +12305,17 @@
 		return this.legacyDrawingHF.getDrawingById(val);
 	};
 
+	Worksheet.prototype.getCountNoEmptyCells = function() {
+		if (this.nRowsCount === 0 || this.nColsCount === 0) {
+			return 0;
+		}
+		let count = 0;
+		let range = this.getRange3(0, 0, this.nRowsCount - 1, this.nColsCount - 1);
+		range._foreachNoEmptyByCol(function () {
+			count++;
+		});
+		return count;
+	};
 
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;

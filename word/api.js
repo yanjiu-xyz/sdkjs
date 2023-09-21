@@ -13751,6 +13751,19 @@ background-repeat: no-repeat;\
 		logicDocument.setAutoHyphenationSettings(settings);
 	};
 	
+	asc_docs_api.prototype.getSelectionState = function()
+	{
+		return this.private_GetLogicDocument().GetSelectionState();
+	};
+	asc_docs_api.prototype.getSpeechDescription = function(prevState, action)
+	{
+		let logicDocument = this.private_GetLogicDocument();
+		if (!logicDocument)
+			return null;
+		
+		return logicDocument.getSpeechDescription(prevState, action);
+	};
+	
 	//-------------------------------------------------------------export---------------------------------------------------
 	window['Asc']                                                       = window['Asc'] || {};
 	CAscSection.prototype['get_PageWidth']                              = CAscSection.prototype.get_PageWidth;
