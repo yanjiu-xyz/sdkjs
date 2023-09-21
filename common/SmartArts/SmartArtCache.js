@@ -192,9 +192,10 @@
 		this.dataBin = {};
 		this.drawingBin = {
 			shifts: {},
-			bin: null
+			bin   : undefined
 		};
 	}
+
 	CSmartArtBinCache.prototype.getDataBinary = function (nSmartArtType)
 	{
 		return this.dataBin[nSmartArtType];
@@ -213,22 +214,27 @@
 		const oThis = this;
 		return new Promise(function (resolve, reject)
 		{
-			if (window["NATIVE_EDITOR_ENJINE"]) {
+			if (window["NATIVE_EDITOR_ENJINE"] || oThis.drawingBin.bin === null)
+			{
 				reject();
-				return;
 			}
-			if (oThis.drawingBin.bin)
+			else if (oThis.drawingBin.bin)
 			{
 				resolve();
 			}
 			else
 			{
-				AscCommon.loadFileContent('../../../../sdkjs/common/SmartArts/SmartArtDrawing/SmartArtDrawings.bin', function (httpRequest) {
-					if (httpRequest && httpRequest.response) {
+				oThis.drawingBin.bin = null;
+				AscCommon.loadFileContent('../../../../sdkjs/common/SmartArts/SmartArtDrawing/SmartArtDrawings.bin', function (httpRequest)
+				{
+					if (httpRequest && httpRequest.response)
+					{
 						const arrStream = AscCommon.initStreamFromResponse(httpRequest);
 						AscCommon.g_oBinarySmartArts.initDrawingFromBin(arrStream);
 						resolve();
-					} else {
+					}
+					else
+					{
 						reject();
 					}
 				}, 'arraybuffer');
@@ -263,23 +269,28 @@
 		const oThis = this;
 		return new Promise(function (resolve, reject)
 		{
-			if (window["NATIVE_EDITOR_ENJINE"]) {
+			if (window["NATIVE_EDITOR_ENJINE"] || oThis.dataBin[nSmartArtType] === null)
+			{
 				reject();
-				return;
 			}
-			if (oThis.dataBin[nSmartArtType])
+			else if (oThis.dataBin[nSmartArtType])
 			{
 				resolve();
 			}
 			else
 			{
+				oThis.dataBin[nSmartArtType] = null;
 				const sFileName = c_oAscSmartArtTypesToNameBinRelationShip[nSmartArtType];
-				AscCommon.loadFileContent('../../../../sdkjs/common/SmartArts/SmartArtData/' + sFileName + '.bin', function (httpRequest) {
-					if (httpRequest && httpRequest.response) {
+				AscCommon.loadFileContent('../../../../sdkjs/common/SmartArts/SmartArtData/' + sFileName + '.bin', function (httpRequest)
+				{
+					if (httpRequest && httpRequest.response)
+					{
 						const arrStream = AscCommon.initStreamFromResponse(httpRequest);
 						AscCommon.g_oBinarySmartArts.initDataFromBin(nSmartArtType, arrStream);
 						resolve();
-					} else {
+					}
+					else
+					{
 						reject();
 					}
 				}, 'arraybuffer');
