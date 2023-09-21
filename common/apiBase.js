@@ -1204,20 +1204,24 @@
 	baseEditorsApi.prototype.getLogicDocument = function () {};
 	baseEditorsApi.prototype._createSmartArt = function () {};
 	baseEditorsApi.prototype.asc_createSmartArt = function (nSmartArtType, oPlaceholderObject) {
-		if (!AscCommon.g_oBinarySmartArts) {
-			return;
-		}
-		AscCommon.History.Create_NewPoint(AscDFH.historydescription_Document_AddSmartArt);
-		const oSmartArt = new AscFormat.SmartArt();
-		oSmartArt.fillByPreset(nSmartArtType);
-		const oController = this.getGraphicController();
-		this._createSmartArt(oSmartArt, oPlaceholderObject);
-		oController.clearTrackObjects();
-		oController.clearPreTrackObjects();
-		oController.updateOverlay();
-		oController.changeCurrentState(new AscFormat.NullState(oController));
-		oController.updateSelectionState();
-		return oSmartArt;
+		const oThis = this;
+		AscCommon.g_oBinarySmartArts.checkLoadDrawing().then(function()
+		{
+			return AscCommon.g_oBinarySmartArts.checkLoadData(nSmartArtType);
+		}).then(function()
+		{
+			AscCommon.History.Create_NewPoint(AscDFH.historydescription_Document_AddSmartArt);
+			const oSmartArt = new AscFormat.SmartArt();
+			oSmartArt.fillByPreset(nSmartArtType);
+			const oController = oThis.getGraphicController();
+			oThis._createSmartArt(oSmartArt, oPlaceholderObject);
+			oController.clearTrackObjects();
+			oController.clearPreTrackObjects();
+			oController.updateOverlay();
+			oController.changeCurrentState(new AscFormat.NullState(oController));
+			oController.updateSelectionState();
+			return oSmartArt;
+		});
 	};
 	baseEditorsApi.prototype.forceSave = function()
 	{
