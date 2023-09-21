@@ -8992,6 +8992,12 @@ CDocument.prototype.OnKeyDown = function(e)
 			bRetValue = keydownresult_PreventAll;
 			break;
 		}
+		case Asc.c_oAscDocumentShortcutType.SpeechWorker:
+		{
+			AscCommon.EditorActionSpeaker.isLanched ? AscCommon.EditorActionSpeaker.stop() : AscCommon.EditorActionSpeaker.run();
+			bRetValue = keydownresult_PreventAll;
+			break;
+		}
 		default:
 		{
 			var oCustom = this.Api.getCustomShortcutAction(nShortcutAction);

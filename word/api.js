@@ -1407,7 +1407,8 @@ background-repeat: no-repeat;\
 			[c_oAscDocumentShortcutType.NonBreakingHyphen, 173, true, true, false],
 			[c_oAscDocumentShortcutType.Subscript, 190, true, false, false],
 			[c_oAscDocumentShortcutType.IncreaseFontSize, 221, true, false, false],
-			[c_oAscDocumentShortcutType.DecreaseFontSize, 219, true, false, false]
+			[c_oAscDocumentShortcutType.DecreaseFontSize, 219, true, false, false],
+			[c_oAscDocumentShortcutType.SpeechWorker, 90, true, false, true]
 		]);
 	}
 
@@ -1444,7 +1445,6 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.initDefaultShortcuts = function()
 	{
-
 		this._InitCommonShortcuts();
 		if (AscCommon.AscBrowser.isMacOs) 
 		{

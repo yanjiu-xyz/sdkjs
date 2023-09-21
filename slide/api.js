@@ -1489,7 +1489,8 @@ background-repeat: no-repeat;\
 			[Asc.c_oAscPresentationShortcutType.EnDash, 189, true, true, false],
 			[Asc.c_oAscPresentationShortcutType.EnDash, 173, true, true, false],
 			[Asc.c_oAscPresentationShortcutType.DecreaseFont, 219, true, false, false],
-			[Asc.c_oAscPresentationShortcutType.IncreaseFont, 221, true, false, false]
+			[Asc.c_oAscPresentationShortcutType.IncreaseFont, 221, true, false, false],
+			[Asc.c_oAscPresentationShortcutType.SpeechWorker, 90, true, false, true]
 		];
 		this.initShortcuts(aShortcuts, false)
 	};

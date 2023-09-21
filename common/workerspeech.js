@@ -113,6 +113,8 @@
 	{
 		this.isEnabled = false;
 		this.speechElement = null;
+		this.isLogEnabled = true;
+		this.timerEqualValue = -1;
 
 		this.setEnabled = function(isEnabled)
 		{
@@ -139,6 +141,41 @@
 			}
 		};
 
+		this._log = function(message)
+		{
+			if (!this.isLogEnabled)
+				return;
+			console.log(message);
+		};
+
+		this._setValue = function(value)
+		{
+			if (-1 !== this.timerEqualValue)
+			{
+				clearTimeout(this.timerEqualValue);
+				this.timerEqualValue = -1;
+			}
+
+			if (value !== this.speechElement.innerHTML)
+			{
+				this.speechElement.innerHTML = value;
+				if (this.isLogEnabled)
+					console.log("[speech]: " + value);
+			}
+			else
+			{
+				this.speechElement.innerHTML = "";
+
+				if ("" !== value)
+				{
+					this.timerEqualValue = setTimeout(function(){
+						AscCommon.SpeechWorker.timerEqualValue = -1;
+						AscCommon.SpeechWorker._setValue(value);
+					}, 50);
+				}
+			}
+		};
+
 		this.speech = function(type, obj)
 		{
 			if (!this.isEnabled)
@@ -148,156 +185,152 @@
 				obj = {};
 			
 			if (obj.cancelSelection)
-				console.log("Text selection has been canceled");
+				this._log("Text selection has been canceled");
 		
 			if (obj.moveToMainPart)
-				console.log("Main document part");
+				this._log("Main document part");
 			else if (obj.moveToFootnote)
-				console.log("Footnote");
+				this._log("Footnote");
 			else if (obj.moveToFootnote)
-				console.log("Drawing");
+				this._log("Drawing");
 			else if (obj.moveToHdrFtr)
-				console.log("Header/Footer");
+				this._log("Header/Footer");
 			
 			if (obj.moveToStartOfDocument)
-				console.log("Start of the document");
+				this._log("Start of the document");
 			else if (obj.moveToStartOfLine)
-				console.log("Start of the line");
+				this._log("Start of the line");
 			else if (obj.moveToEndOfDocument)
-				console.log("End of the document");
+				this._log("End of the document");
 			else if (obj.moveToEndOfLine)
-				console.log("End of the line");
-			
-			
+				this._log("End of the line");
+
 			let translateManager = AscCommon.translateManager;
 			switch (type)
 			{
 				case SpeechWorkerType.Text:
+				case SpeechWorkerType.TextSelected:
+				case SpeechWorkerType.TextUnselected:
 				{
-					this.speechElement.innerHTML = obj;
-					
-					console.log("Text " + obj.text);
+					if (obj.text === " ")
+						obj.text = translateManager.getValue("space");
+					break;
+				}
+				default:
+					break;
+			}
+
+			switch (type)
+			{
+				case SpeechWorkerType.Text:
+				{
+					this._setValue(obj.text);
 					break;
 				}
 				case SpeechWorkerType.TextSelected:
 				{
 					if (obj.isBefore)
-						this.speechElement.innerHTML = (translateManager.getValue("select ") + obj.text);
+						this._setValue(translateManager.getValue("select") + " " + obj.text);
 					else
-						this.speechElement.innerHTML = (obj.text + translateManager.getValue(" select"));
-					
-					console.log("SelectedText " + obj.text);
+						this._setValue(obj.text + " " + translateManager.getValue("select"));
 					break;
 				}
 				case SpeechWorkerType.TextUnselected:
 				{
 					if (obj.isBefore)
-						this.speechElement.innerHTML = (translateManager.getValue("unselected") + obj.text ? (" " + obj.text) : "");
+						this._setValue(translateManager.getValue("unselected") + " " + obj.text);
 					else
-						this.speechElement.innerHTML = ((obj.text ? (obj.text + " ") : "") + translateManager.getValue("unselected"));
-					
-					console.log("UnselectedText " + obj.text);
+						this._setValue(obj.text + " " + translateManager.getValue("unselected"));
 					break;
 				}
 				case SpeechWorkerType.SlidesSelected:
 				{
-					let aIndexes = obj.indexes;
-					if(aIndexes.length === 1)
+					if (obj.indexes.length === 1)
 					{
-						this.speechElement.innerHTML = (translateManager.getValue("slide ") + (aIndexes[0]));
+						this._setValue(translateManager.getValue("slide") + " " + (obj.indexes[0]));
 					}
 					else
 					{
-						this.speechElement.innerHTML = (aIndexes.length + " " + translateManager.getValue("slides added to selection"));
+						this._setValue(obj.indexes.length + " " + translateManager.getValue("slides added to selection"));
 					}
-					console.log("SlidesSelected " + this.speechElement.innerHTML);
 					break;
 				}
 				case SpeechWorkerType.SlidesUnselected:
 				{
-					let aIndexes = obj.indexes;
-					if(aIndexes.length === 1)
+					if (obj.indexes.length === 1)
 					{
-						this.speechElement.innerHTML = (translateManager.getValue("slide ") + (aIndexes[0]) + " " + translateManager.getValue("unselected"));
+						this._setValue(translateManager.getValue("slide") + " " + (obj.indexes[0]) + " " + translateManager.getValue("unselected"));
 					}
 					else
 					{
-						this.speechElement.innerHTML = (aIndexes.length + " " + translateManager.getValue("slides unselected"));
+						this._setValue(obj.indexes.length + " " + translateManager.getValue("slides unselected"));
 					}
-					console.log("SlidesUnselected " + this.speechElement.innerHTML);
 					break;
 				}
 				case SpeechWorkerType.DrawingSelected:
 				{
-					this.speechElement.innerHTML = (translateManager.getValue("drawing select") + (obj.altText ? (" " + obj.altText) : ""));
+					this._setValue(translateManager.getValue("drawing select") + (obj.altText ? (" " + obj.altText) : ""));
 					break;
 				}
 				case SpeechWorkerType.CellSelected:
 				{
-					let result = ((obj.text ? obj.text : translateManager.getValue("empty cell")) + " " + obj.cell);
-					this.speechElement.innerHTML = result;
-					console.log(result);
+					this._setValue((obj.text ? obj.text : translateManager.getValue("empty cell")) + " " + obj.cell);
 					break;
 				}
 				case SpeechWorkerType.CellRangeSelected:
 				{
-					let result = translateManager.getValue("selected range select ");
+					let result = translateManager.getValue("selected range select") + " ";
 					result += obj.start.text ? obj.start.text : translateManager.getValue("empty");
 					result += (" " + obj.start.cell);
 					result += obj.end.text ? " " + obj.end.text : " " + translateManager.getValue("empty");
 					result += (" " + obj.end.cell);
 
-					this.speechElement.innerHTML = result;
-					console.log(result);
+					this._setValue(result);
 					break;
 				}
 				case SpeechWorkerType.CellRangeUnselected:
 				{
-					let result = translateManager.getValue("unselected range select ");
+					let result = translateManager.getValue("unselected range select") + " ";
 					result += obj.start.text ? obj.start.text : translateManager.getValue("empty");
 					result += (" " + obj.start.cell);
 					result += obj.end.text ? " " + obj.end.text : " " + translateManager.getValue("empty");
 					result += (" " + obj.end.cell);
 
-					this.speechElement.innerHTML = result;
-					console.log(result);
+					this._setValue(result);
 					break;
 				}
 				case SpeechWorkerType.CellRangeSelectedChangeOne:
 				{
-					let result = translateManager.getValue("select ");
+					let result = translateManager.getValue("select") + " ";
 					result += obj.text ? obj.text : translateManager.getValue("empty");
 					result += (" " + obj.cell);
 
-					this.speechElement.innerHTML = result;
-					console.log(result);
+					this._setValue(result);
 					break;
 				}
 				case SpeechWorkerType.CellRangeUnselectedChangeOne:
 				{
-					let result = translateManager.getValue("unselected ");
+					let result = translateManager.getValue("unselected") + " ";
 					result += obj.text ? obj.text : translateManager.getValue("empty");
 					result += (" " + obj.cell);
 
-					this.speechElement.innerHTML = result;
-					console.log(result);
+					this._setValue(result);
 					break;
 				}
 				case SpeechWorkerType.MultipleRangesSelected:
 				{
-					if (obj.ranges) {
-						let result = translateManager.getValue("selected ");
-						result += obj.ranges.length + " " + translateManager.getValue("areas ");
+					if (obj.ranges)
+					{
+						let result = translateManager.getValue("selected") + " ";
+						result += obj.ranges.length + " " + translateManager.getValue("areas") + " ";
 
 						for (let i = 0; i < obj.ranges.length; i++) {
 							result += obj.ranges[i].startCell + "-" +  obj.ranges[i].endCell + " ";
 						}
 						result += obj.text ? obj.text : translateManager.getValue("empty");
 
-						this.speechElement.innerHTML = result;
-						console.log(result);
+						this._setValue(result);
 					}
-
 					break;
 				}
 				case SpeechWorkerType.SheetSelected:
@@ -309,17 +342,16 @@
 					if (isEmpty)
 					{
 						//ms not read it, read only else
-						result = obj.name + " " + translateManager.getValue("empty sheet ") /*+ obj.cell*/;
+						result = obj.name + " " + translateManager.getValue("empty sheet") + " "/*+ obj.cell*/;
 					}
 					else
 					{
-						result = obj.name + " " + translateManager.getValue("end of sheet ") + obj.cellEnd + " " +
+						result = obj.name + " " + translateManager.getValue("end of sheet") + " " + obj.cellEnd + " " +
 							obj.cellsCount + " " + translateManager.getValue("cells") + " "
 							obj.objectsCount + " " + translateManager.getValue("objects") /*+
 							obj.text + " " + obj.cell*/;
 					}
-					console.log(result);
-					this.speechElement.innerHTML = result;
+					this._setValue(result);
 					break;
 				}
 				default:
