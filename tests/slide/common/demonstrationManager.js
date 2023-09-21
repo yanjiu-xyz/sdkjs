@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2022
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -30,41 +30,30 @@
  *
  */
 
-"use strict";
+'use strict';
 
-const AscTest = window.AscTest || {};
-
-(function(window)
+(function (window)
 {
-  const Letter = {
-    f : 102,
-    i : 105,
+	editor.WordControl.DemonstrationManager = new CDemonstrationManager(editor.WordControl);
+	editor.WordControl.DemonstrationManager.HtmlPage = editor.WordControl;
+	editor.WordControl.DemonstrationManager.DemonstrationDiv = document.createElement('div');
+	editor.WordControl.DemonstrationManager.Canvas = document.createElement('canvas');
+	editor.WordControl.DemonstrationManager.DemonstrationDiv.appendChild(editor.WordControl.DemonstrationManager.Canvas);
+	editor.WordControl.DemonstrationManager.Start = function (main_div_id, start_slide_num, is_play_mode, is_no_fullscreen)
+	{
+		this.StartSlideNum = start_slide_num;
+		if (-1 === start_slide_num)
+			start_slide_num = 0;
 
-    x : 120,
-    y : 121,
-    z : 122
-  };
+		this.SlidesCount = this.HtmlPage.m_oDrawingDocument.SlidesCount;
+		this.Mode = true;
+		this.SlideNum = start_slide_num;
+	}
 
-  AscCommon.g_oTableId = {
-    map : {},
-    Add : function(c, id)
-    {
-      this.map[id] = c;
-    },
-    Get_ById : function(id)
-    {
-      if (!this.map[id])
-        return null;
-
-      return this.map[id];
-    },
-    TurnOff : function(){},
-    TurnOn : function(){},
-    init : function () {},
-  };
-
-  AscCommon.g_oIdCounter.m_bLoad = false;
-  AscCommon.g_oIdCounter.m_bRead = false;
-  AscTest.Letter = Letter;
-
+	editor.WordControl.DemonstrationManager.End = function (isNoUseFullScreen)
+	{
+		this.Mode = false;
+		this.HtmlPage.m_oApi.sync_endDemonstration();
+		this.HtmlPage.GoToPage(this.SlideNum);
+	};
 })(window);
