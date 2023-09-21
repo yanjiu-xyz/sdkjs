@@ -1214,6 +1214,10 @@
      */
 	Api.prototype["pluginMethod_PutImageDataToSelection"] = function(oImageData)
 	{
+		if(this.isViewMode || this.isPdfEditor())
+		{
+			return;
+		}
 		window.g_asc_plugins.setPluginMethodReturnAsync();
 		let sImgSrc = oImageData["src"];
 		this.asc_checkImageUrlAndAction(sImgSrc, function(oImage)

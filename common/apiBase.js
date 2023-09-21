@@ -599,11 +599,6 @@
 	{
 		this.isLockScrollToTarget = isLock;
 	};
-	// Просмотр PDF
-	baseEditorsApi.prototype.isPdfEditor                     = function()
-	{
-		return false;
-	};
 	baseEditorsApi.prototype.isLiveViewer                     = function()
 	{
 		return this.isViewMode && AscCommon.CollaborativeEditing.Is_Fast() && !this.VersionHistory;
@@ -2396,7 +2391,8 @@
 
 	baseEditorsApi.prototype.asc_addOleObject = function(oPluginData)
 	{
-		if(this.isViewMode) {
+		if(this.isViewMode || this.isPdfEditor())
+		{
 			return;
 		}
 		let oThis      = this;
@@ -2433,7 +2429,8 @@
 
 	baseEditorsApi.prototype.asc_editOleObject = function(oPluginData)
 	{
-		if(this.isViewMode){
+		if(this.isViewMode || this.isPdfEditor())
+		{
 			return;
 		}
 		var oThis      = this;
