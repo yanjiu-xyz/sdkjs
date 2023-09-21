@@ -3149,6 +3149,8 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 	var arrFormAreas       = [];
 	var arrFormRects       = [];
 	var arrFormAreasWidths = [];
+	
+	let drawRunPrReview = !pGraphics.isPrintMode && (!pGraphics.IsPdfRenderer || !pGraphics.IsPdfRenderer());
 
 	for (var CurLine = StartLine; CurLine <= EndLine; CurLine++)
 	{
@@ -3257,7 +3259,7 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
 			Element = aDUnderline.Get_Next();
 		}
 
-		if (pGraphics.RENDERER_PDF_FLAG !== true)
+		if (drawRunPrReview)
 		{
 			// Рисуем красный рект вокруг измененных ранов
 			var arrRunReviewRectsLine = [];
