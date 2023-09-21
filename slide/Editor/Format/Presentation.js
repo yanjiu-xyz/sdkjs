@@ -11110,7 +11110,7 @@ CPresentation.prototype.moveSlidesPrevPos = function () {
 	if (can_move) {
 		History.Create_NewPoint(AscDFH.historydescription_Presentation_MoveSlidesPrevPos);
 		let aNewSelected = [];
-		for (i = first_index; i > -1; --i) {
+		for (i = first_index; i < _selected_array.length; ++i) {
 			let nOldIdx = _selected_array[i];
 			let nNewIdx = nOldIdx - 1;
 			this.moveSlides([nOldIdx], nNewIdx);
