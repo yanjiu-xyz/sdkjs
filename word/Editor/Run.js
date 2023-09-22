@@ -4699,7 +4699,8 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 						if (true === PRS.MathNotInline)
 							PRS.ForceNewLine = true;
 					}
-
+	
+					PRS.onEndRecalculateLineRange();
                     RangeEndPos = Pos + 1;
 
                     break;
@@ -4727,8 +4728,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
                     NewRange = true;
                     End      = true;
 	
-					PRS.OnEndRecalculateLineRanges();
-
+					PRS.onEndRecalculateLineRange();
                     RangeEndPos = Pos + 1;
 
                     break;

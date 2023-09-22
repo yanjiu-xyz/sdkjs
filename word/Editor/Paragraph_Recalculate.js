@@ -4165,8 +4165,10 @@ CParagraphRecalculateStateWrap.prototype.getHyphenationZone = function()
 {
 	return this.hyphenationZone;
 };
-CParagraphRecalculateStateWrap.prototype.OnEndRecalculateLineRanges = function()
+CParagraphRecalculateStateWrap.prototype.onEndRecalculateLineRange = function()
 {
+	// Сюда заходим, если закончили пересчиытывать отрезок насильно, а не из-за того, что какой-то элемент не убрался
+	// (перенос строк или конец параграфа)
 	this.ResetLastAutoHyphen();
 };
 /**
