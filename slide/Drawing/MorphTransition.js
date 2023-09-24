@@ -648,6 +648,18 @@
                         oXfrm.rot = AscFormat.normalizeRotate(this.getValBetween(nRot1, nRot2 - 2*Math.PI));
                     }
                 }
+                const oAvLst = this.geometry1.avLst;
+                const oGdLst1 = this.geometry1.gdLst;
+                const oGdLst2 = this.geometry2.gdLst;
+                for(let sKey in oAvLst) {
+                    if(oAvLst.hasOwnProperty(sKey)) {
+                        let nVal1 = parseInt(oGdLst1[sKey]);
+                        let nVal2 = parseInt(oGdLst2[sKey]);
+                        if(AscFormat.isRealNumber(nVal1) && AscFormat.isRealNumber(nVal2)) {
+                            this.drawObject.geometry.setAdjValue(sKey, this.getValBetween(nVal1, nVal2) + 0.5 >> 0);
+                        }
+                    }
+                }
             }, this, []);
 
             const oT = this.drawObject.transform;
@@ -662,18 +674,7 @@
             AscCommon.global_MatrixTransformer.RotateRadAppend(oT, -oXfrm.rot);
             AscCommon.global_MatrixTransformer.TranslateAppend(oT, oXfrm.offX + hc, oXfrm.offY + vc);
 
-            const oAvLst = this.geometry1.avLst;
-            const oGdLst1 = this.geometry1.gdLst;
-            const oGdLst2 = this.geometry2.gdLst;
-            for(let sKey in oAvLst) {
-                if(oAvLst.hasOwnProperty(sKey)) {
-                    let nVal1 = parseInt(oGdLst1[sKey]);
-                    let nVal2 = parseInt(oGdLst2[sKey]);
-                    if(AscFormat.isRealNumber(nVal1) && AscFormat.isRealNumber(nVal2)) {
-                        this.drawObject.geometry.setAdjValue(sKey, this.getValBetween(nVal1, nVal2) + 0.5 >> 0);
-                    }
-                }
-            }
+
             this.drawObject.geometry.Recalculate(oXfrm.extX, oXfrm.extY, false);
             this.drawObject.extX = oXfrm.extX;
             this.drawObject.extY = oXfrm.extY;
