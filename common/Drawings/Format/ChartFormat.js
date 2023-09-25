@@ -18650,6 +18650,7 @@
 
     //--------------------------------------------------------export----------------------------------------------------
     window['AscFormat'] = window['AscFormat'] || {};
+    window['AscFormat'].CAxisBase = CAxisBase;
     window['AscFormat'].CDLbl = CDLbl;
     window['AscFormat'].CPlotArea = CPlotArea;
     window['AscFormat'].CBarChart = CBarChart;

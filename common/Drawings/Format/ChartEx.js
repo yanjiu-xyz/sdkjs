@@ -154,6 +154,7 @@
     const History = AscCommon.History;
     var InitClass = AscFormat.InitClass;
     var CBaseChartObject = AscFormat.CBaseChartObject;
+    var CAxisBase = AscFormat.CAxisBase;
     
     function CAddress() {
         CBaseChartObject.call(this);
@@ -198,135 +199,135 @@
     };
 
     // Axis
-    drawingsChangesMap[AscDFH.historyitem_Axis_SetCatScaling] = function(oClass, value) {
-        oClass.catScaling = value;
-    };
-    drawingsChangesMap[AscDFH.historyitem_Axis_SetValScaling] = function(oClass, value) {
-        oClass.valScaling = value;
-    };
-    drawingsChangesMap[AscDFH.historyitem_Axis_SetTitle] = function(oClass, value) {
-        oClass.title = value;
-    };
+    // drawingsChangesMap[AscDFH.historyitem_Axis_SetCatScaling] = function(oClass, value) {
+    //     oClass.catScaling = value;
+    // };
+    // drawingsChangesMap[AscDFH.historyitem_Axis_SetValScaling] = function(oClass, value) {
+    //     oClass.valScaling = value;
+    // };
+    // drawingsChangesMap[AscDFH.historyitem_Axis_SetTitle] = function(oClass, value) {
+    //     oClass.title = value;
+    // };
     drawingsChangesMap[AscDFH.historyitem_Axis_SetUnits] = function(oClass, value) {
         oClass.units = value;
     };
-    drawingsChangesMap[AscDFH.historyitem_Axis_SetMajorGridlines] = function(oClass, value) {
-        oClass.majorGridlines = value;
-    };
-    drawingsChangesMap[AscDFH.historyitem_Axis_SetMinorGridlines] = function(oClass, value) {
-        oClass.minorGridlines = value;
-    };
-    drawingsChangesMap[AscDFH.historyitem_Axis_SetMajorTickMarks] = function(oClass, value) {
-        oClass.majorTickMarks = value;
-    };
-    drawingsChangesMap[AscDFH.historyitem_Axis_SetMinorTickMarks] = function(oClass, value) {
-        oClass.minorTickMarks = value;
-    };
+    // drawingsChangesMap[AscDFH.historyitem_Axis_SetMajorGridlines] = function(oClass, value) {
+    //     oClass.majorGridlines = value;
+    // };
+    // drawingsChangesMap[AscDFH.historyitem_Axis_SetMinorGridlines] = function(oClass, value) {
+    //     oClass.minorGridlines = value;
+    // };
+    // drawingsChangesMap[AscDFH.historyitem_Axis_SetMajorTickMarks] = function(oClass, value) {
+    //     oClass.majorTickMarks = value;
+    // };
+    // drawingsChangesMap[AscDFH.historyitem_Axis_SetMinorTickMarks] = function(oClass, value) {
+    //     oClass.minorTickMarks = value;
+    // };
     drawingsChangesMap[AscDFH.historyitem_Axis_SetTickLabels] = function(oClass, value) {
         oClass.tickLabels = value;
     };
-    drawingsChangesMap[AscDFH.historyitem_Axis_SetNumFmt] = function(oClass, value) {
-        oClass.numFmt = value;
-    };
-    drawingsChangesMap[AscDFH.historyitem_Axis_SetSpPr] = function(oClass, value) {
-        oClass.spPr = value;
-    };
-    drawingsChangesMap[AscDFH.historyitem_Axis_SetTxPr] = function(oClass, value) {
-        oClass.txPr = value;
-    };
-    drawingsChangesMap[AscDFH.historyitem_Axis_SetId] = function(oClass, value) {
-        oClass.id = value;
-    };
+    // drawingsChangesMap[AscDFH.historyitem_Axis_SetNumFmt] = function(oClass, value) {
+    //     oClass.numFmt = value;
+    // };
+    // drawingsChangesMap[AscDFH.historyitem_Axis_SetSpPr] = function(oClass, value) {
+    //     oClass.spPr = value;
+    // };
+    // drawingsChangesMap[AscDFH.historyitem_Axis_SetTxPr] = function(oClass, value) {
+    //     oClass.txPr = value;
+    // };
+    // drawingsChangesMap[AscDFH.historyitem_Axis_SetId] = function(oClass, value) {
+    //     oClass.id = value;
+    // };
     drawingsChangesMap[AscDFH.historyitem_Axis_SetHidden] = function(oClass, value) {
         oClass.hidden = value;
     };
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetCatScaling] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetValScaling] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetTitle] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    // AscDFH.changesFactory[AscDFH.historyitem_Axis_SetCatScaling] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    // AscDFH.changesFactory[AscDFH.historyitem_Axis_SetValScaling] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    // AscDFH.changesFactory[AscDFH.historyitem_Axis_SetTitle] = window['AscDFH'].CChangesDrawingsObjectNoId;
     AscDFH.changesFactory[AscDFH.historyitem_Axis_SetUnits] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetMajorGridlines] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetMinorGridlines] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetMajorTickMarks] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetMinorTickMarks] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    // AscDFH.changesFactory[AscDFH.historyitem_Axis_SetMajorGridlines] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    // AscDFH.changesFactory[AscDFH.historyitem_Axis_SetMinorGridlines] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    // AscDFH.changesFactory[AscDFH.historyitem_Axis_SetMajorTickMarks] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    // AscDFH.changesFactory[AscDFH.historyitem_Axis_SetMinorTickMarks] = window['AscDFH'].CChangesDrawingsObjectNoId;
     AscDFH.changesFactory[AscDFH.historyitem_Axis_SetTickLabels] = window['AscDFH'].CChangesDrawingsBool;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetNumFmt] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetSpPr] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetTxPr] = window['AscDFH'].CChangesDrawingsObjectNoId;
-    AscDFH.changesFactory[AscDFH.historyitem_Axis_SetId] = window['AscDFH'].CChangesDrawingsLong;
+    // AscDFH.changesFactory[AscDFH.historyitem_Axis_SetNumFmt] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    // AscDFH.changesFactory[AscDFH.historyitem_Axis_SetSpPr] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    // AscDFH.changesFactory[AscDFH.historyitem_Axis_SetTxPr] = window['AscDFH'].CChangesDrawingsObjectNoId;
+    // AscDFH.changesFactory[AscDFH.historyitem_Axis_SetId] = window['AscDFH'].CChangesDrawingsLong;
     AscDFH.changesFactory[AscDFH.historyitem_Axis_SetHidden] = window['AscDFH'].CChangesDrawingsBool;
 
     function CAxis() {
-        CBaseChartObject.call(this);
-        this.catScaling = null;
-        this.valScaling = null;
-        this.title = null;
+        CAxisBase.call(this);
+        // this.catScaling = null;
+        // this.valScaling = null;
+        // this.title = null;
         this.units = null;
-        this.majorGridlines = null;
-        this.minorGridlines = null;
-        this.majorTickMarks = null;
-        this.minorTickMarks = null;
-        this.tickLabels = null;
-        this.numFmt = null;
-        this.spPr = null;
-        this.txPr = null;
-        this.id = null;
+        // this.majorGridlines = null;
+        // this.minorGridlines = null;
+        // this.majorTickMarks = null;
+        // this.minorTickMarks = null;
+        // this.tickLabels = null;
+        // this.numFmt = null;
+        // this.spPr = null;
+        // this.txPr = null;
+        // this.id = null;
         this.hidden = null;
     }
 
-    InitClass(CAxis, CBaseChartObject, AscDFH.historyitem_type_Axis);
+    InitClass(CAxis, CAxisBase, AscDFH.historyitem_type_Axis);
 
-    CAxis.prototype.setCatScaling = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetCatScaling, this.catScaling, pr));
-        this.catScaling = pr;
-    };
-    CAxis.prototype.setValScaling = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetValScaling, this.valScaling, pr));
-        this.valScaling = pr;
-    };
-    CAxis.prototype.setTitle = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetTitle, this.title, pr));
-        this.title = pr;
-    };
+    // CAxis.prototype.setCatScaling = function(pr) {
+    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetCatScaling, this.catScaling, pr));
+    //     this.catScaling = pr;
+    // };
+    // CAxis.prototype.setValScaling = function(pr) {
+    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetValScaling, this.valScaling, pr));
+    //     this.valScaling = pr;
+    // };
+    // CAxis.prototype.setTitle = function(pr) {
+    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetTitle, this.title, pr));
+    //     this.title = pr;
+    // };
     CAxis.prototype.setUnits = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetUnits, this.units, pr));
         this.units = pr;
     };
-    CAxis.prototype.setMajorGridlines = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetMajorGridlines, this.majorGridlines, pr));
-        this.majorGridlines = pr;
-    };
-    CAxis.prototype.setMinorGridlines = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetMinorGridlines, this.minorGridlines, pr));
-        this.minorGridlines = pr;
-    };
-    CAxis.prototype.setMajorTickMarks = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetMajorTickMarks, this.majorTickMarks, pr));
-        this.majorTickMarks = pr;
-    };
-    CAxis.prototype.setMinorTickMarks = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetMinorTickMarks, this.minorTickMarks, pr));
-        this.minorTickMarks = pr;
-    };
+    // CAxis.prototype.setMajorGridlines = function(pr) {
+    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetMajorGridlines, this.majorGridlines, pr));
+    //     this.majorGridlines = pr;
+    // };
+    // CAxis.prototype.setMinorGridlines = function(pr) {
+    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetMinorGridlines, this.minorGridlines, pr));
+    //     this.minorGridlines = pr;
+    // };
+    // CAxis.prototype.setMajorTickMarks = function(pr) {
+    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetMajorTickMarks, this.majorTickMarks, pr));
+    //     this.majorTickMarks = pr;
+    // };
+    // CAxis.prototype.setMinorTickMarks = function(pr) {
+    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetMinorTickMarks, this.minorTickMarks, pr));
+    //     this.minorTickMarks = pr;
+    // };
     CAxis.prototype.setTickLabels = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_Axis_SetTickLabels, this.tickLabels, pr));
         this.tickLabels = pr;
     };
-    CAxis.prototype.setNumFmt = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetNumFmt, this.numFmt, pr));
-        this.numFmt = pr;
-    };
-    CAxis.prototype.setSpPr = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetSpPr, this.spPr, pr));
-        this.spPr = pr;
-    };
-    CAxis.prototype.setTxPr = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetTxPr, this.txPr, pr));
-        this.txPr = pr;
-    };
-    CAxis.prototype.setId = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_Axis_SetId, this.id, pr));
-        this.id = pr;
-    };
+    // CAxis.prototype.setNumFmt = function(pr) {
+    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetNumFmt, this.numFmt, pr));
+    //     this.numFmt = pr;
+    // };
+    // CAxis.prototype.setSpPr = function(pr) {
+    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetSpPr, this.spPr, pr));
+    //     this.spPr = pr;
+    // };
+    // CAxis.prototype.setTxPr = function(pr) {
+    //     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetTxPr, this.txPr, pr));
+    //     this.txPr = pr;
+    // };
+    // CAxis.prototype.setId = function(pr) {
+    //     History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_Axis_SetId, this.id, pr));
+    //     this.id = pr;
+    // };
     CAxis.prototype.setHidden = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_Axis_SetHidden, this.hidden, pr));
         this.hidden = pr;

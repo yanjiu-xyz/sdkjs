@@ -5909,9 +5909,9 @@ BinaryChartWriter.prototype.WriteCT_TextLanguageID = function (oVal) {
 };
 BinaryChartWriter.prototype.WriteCT_Axis = function (oVal) {
     var oThis = this;
-    if(oVal.id !== null) {
+    if(oVal.axId !== null) {
         this.bs.WriteItem(c_oserct_chartExAxisID, function() {
-            oThis.memory.WriteLong(oVal.id);
+            oThis.memory.WriteLong(oVal.axId);
         });
     }
     if(oVal.hidden !== null) {
@@ -5919,15 +5919,16 @@ BinaryChartWriter.prototype.WriteCT_Axis = function (oVal) {
             oThis.memory.WriteBool(oVal.hidden);
         });
     }
-    if(oVal.catScaling !== null) {
-        this.bs.WriteItem(c_oserct_chartExAxisCATSCALING, function() {
-            oThis.WriteCT_CategoryAxisScaling(oVal.catScaling);
-        });
-    }
-    if(oVal.valScaling !== null) {
-        this.bs.WriteItem(c_oserct_chartExAxisVALSCALING, function() {
-            oThis.WriteCT_ValueAxisScaling(oVal.valScaling);
-        });
+    if(oVal.scaling !== null) {
+        if (typeof oVal.scaling.gapWidth === "undefined") {
+            this.bs.WriteItem(c_oserct_chartExAxisCATSCALING, function() {
+                oThis.WriteCT_CategoryAxisScaling(oVal.scaling);
+            });
+        } else {
+            this.bs.WriteItem(c_oserct_chartExAxisVALSCALING, function() {
+                oThis.WriteCT_ValueAxisScaling(oVal.valScaling);
+            });
+        }
     }
     if(oVal.title !== null) {
         this.bs.WriteItem(c_oserct_chartExAxisTITLE, function() {
@@ -5944,14 +5945,14 @@ BinaryChartWriter.prototype.WriteCT_Axis = function (oVal) {
             oThis.WriteCT_ChartExNumFmt(oVal.numFmt);
         });
     }
-    if(oVal.majorTickMarks !== null) {
+    if(oVal.majorTickMark !== null) {
         this.bs.WriteItem(c_oserct_chartExAxisMAJORTICK, function() {
-            oThis.WriteCT_TickMarks(oVal.majorTickMarks);
+            oThis.WriteCT_TickMarks(oVal.majorTickMark);
         });
     }
-    if(oVal.minorTickMarks !== null) {
+    if(oVal.minorTickMark !== null) {
         this.bs.WriteItem(c_oserct_chartExAxisMINORTICK, function() {
-            oThis.WriteCT_TickMarks(oVal.minorTickMarks);
+            oThis.WriteCT_TickMarks(oVal.minorTickMark);
         });
     }
     if(oVal.majorGridlines !== null) {
@@ -13357,7 +13358,7 @@ BinaryChartReader.prototype.ReadCT_Axis = function (type, length, val) {
     var oNewVal;
     if (c_oserct_chartExAxisID === type)
     {
-        val.setId(this.stream.GetULongLE());
+        val.setAxId(this.stream.GetULongLE());
     }
     else if (c_oserct_chartExAxisHIDDEN === type)
     {
@@ -13369,7 +13370,7 @@ BinaryChartReader.prototype.ReadCT_Axis = function (type, length, val) {
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_CategoryAxisScaling(t, l, oNewVal);
         });
-        val.setCatScaling(oNewVal);
+        val.setScaling(oNewVal);
     }
     else if (c_oserct_chartExAxisVALSCALING === type)
     {
@@ -13377,7 +13378,7 @@ BinaryChartReader.prototype.ReadCT_Axis = function (type, length, val) {
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_ValueAxisScaling(t, l, oNewVal);
         });
-        val.setValScaling(oNewVal);
+        val.setScaling(oNewVal);
     }
     else if (c_oserct_chartExAxisTITLE === type)
     {
@@ -13410,7 +13411,7 @@ BinaryChartReader.prototype.ReadCT_Axis = function (type, length, val) {
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_TickMarks(t, l, oNewVal);
         });
-        val.setMajorTickMarks(oNewVal);
+        val.setMajorTickMark(oNewVal);
     }
     else if (c_oserct_chartExAxisMINORTICK === type)
     {
@@ -13418,7 +13419,7 @@ BinaryChartReader.prototype.ReadCT_Axis = function (type, length, val) {
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_TickMarks(t, l, oNewVal);
         });
-        val.setMinorTickMarks(oNewVal);
+        val.setMinorTickMark(oNewVal);
     }
     else if (c_oserct_chartExAxisMAJORGRID === type)
     {
