@@ -6749,6 +6749,11 @@
 						if(oParedDrawing.getOwnName() === oDrawingToCheck.getOwnName()) {
 							return oCurCandidate;
 						}
+						let dSizeMCandidate = Math.abs(oParedDrawing.extX - oDrawingToCheck.extX) + Math.abs(oParedDrawing.extY - oDrawingToCheck.extY);
+						let dSizeMCheck = Math.abs(oDrawingToCheck.extX - this.extX) + Math.abs(oDrawingToCheck.extY - this.extY);
+						if(dSizeMCandidate < dSizeMCheck) {
+							return oCurCandidate;
+						}
 					}
 					return oDrawingToCheck;
 				}

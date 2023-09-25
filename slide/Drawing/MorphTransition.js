@@ -1449,8 +1449,10 @@
         const nDrawingsCount2 = aDrawings2.length;
         const oMapPaired = {};
         let oPairedDrawing, oDrawing1;
+        let oCandidates = {};
         for(let nDrawing1 = 0; nDrawing1 < nDrawingsCount1; ++nDrawing1) {
             oDrawing1 = aDrawings1[nDrawing1];
+            oCandidates[oDrawing1.Id] = [];
             oPairedDrawing = null;
             let nParedRelH = null;
             for(let nDrawing2 = 0; nDrawing2 < nDrawingsCount2; ++nDrawing2) {
@@ -1458,9 +1460,23 @@
                 oPairedDrawing = oDrawing1.compareForMorph(oDrawing2, oPairedDrawing, oMapPaired);
                 if(oDrawing2 === oPairedDrawing) {
                     nParedRelH = nDrawing2;
+                    oCandidates[oDrawing1.Id].push([oPairedDrawing, nDrawing1]);
                 }
             }
             if(oPairedDrawing) {
+                if(oMapPaired[oPairedDrawing.Id]) {
+                    let oOldDrawing1 = oMapPaired[oPairedDrawing.Id].drawing;
+                    let aCandidates = oCandidates[oOldDrawing1.Id];
+                    for(let nCandidate = 0; nCandidate < aCandidates.length; ++nCandidate) {
+                        let aPair = aCandidates[nCandidate];
+                        let sPairedId = aPair[0].Id;
+                        let nOld1RelH = aPair[1];
+                        if(!oMapPaired[sPairedId]) {
+                            oMapPaired[sPairedId] = {drawing: oOldDrawing1, relH: nOld1RelH};
+                        }
+                    }
+
+                }
                 oMapPaired[oPairedDrawing.Id] = {drawing: oDrawing1, relH: nDrawing1};
             }
         }
