@@ -1352,6 +1352,7 @@
             this.type = nType;
         }
         this.texturesCache = new AscCommon.CTexturesCache();
+        this.texturesCache.parent = this;
         this.morphObjects = [];
         this.init();
     }
@@ -1388,17 +1389,21 @@
             return;
         }
         AscFormat.ExecuteNoHistory(function() {
+            this.player1 = new AscFormat.CAnimationPlayer(this.slide1, null);
+            this.player1.goToEnd();
+            this.player2 = new AscFormat.CAnimationPlayer(this.slide2, null);
+            this.player2.start();
             switch(this.type) {
-                case c_oAscSlideTransitionParams.Morph_Objects: {
-                    this.generateObjectBasedMorphs();
-                    break;
-                }
                 case c_oAscSlideTransitionParams.Morph_Words: {
                     this.generateWordBasedMorphs();
                     break;
                 }
                 case c_oAscSlideTransitionParams.Morph_Letters: {
                     this.generateLetterBasedMorphs();
+                    break;
+                }
+                default: {
+                    this.generateObjectBasedMorphs();
                     break;
                 }
             }
@@ -1439,12 +1444,29 @@
             }
         }
     };
+    CSlideMorphEffect.prototype.isDrawingHidden = function(oDrawing, oPlayer) {
+        if(!oPlayer) {
+            return false;
+        }
+        const sDrawingId = oDrawing.Id;
+        if(oPlayer.isDrawingHidden(sDrawingId)) {
+            return true;
+        }
+        const oSandwich = oPlayer.animationDrawer.getSandwich(sDrawingId);
+        const oAttributes = oSandwich && oSandwich.getAttributesMap();
+        if(oAttributes && oAttributes["style.visibility"] === "hidden") {
+            return true;
+        }
+        return false;
+    };
     CSlideMorphEffect.prototype.generateObjectBasedMorphs = function() {
 
         //match objects
         this.pushMorphObject(new COrigSizeTextureTransform(this.texturesCache, -1, -1, new CBackgroundWrapper(this.slide1), new CBackgroundWrapper(this.slide2)));
         const aDrawings1 = this.slide1.getDrawingObjects();
         const aDrawings2 = this.slide2.getDrawingObjects();
+        const oPlayer1 = this.player1;
+        const oPlayer2 = this.player2;
         const nDrawingsCount1 = aDrawings1.length;
         const nDrawingsCount2 = aDrawings2.length;
         const oMapPaired = {};
@@ -1452,11 +1474,17 @@
         let oCandidates = {};
         for(let nDrawing1 = 0; nDrawing1 < nDrawingsCount1; ++nDrawing1) {
             oDrawing1 = aDrawings1[nDrawing1];
+            if(this.isDrawingHidden(oDrawing1, this.player1)) {
+                continue;
+            }
             oCandidates[oDrawing1.Id] = [];
             oPairedDrawing = null;
             let nParedRelH = null;
             for(let nDrawing2 = 0; nDrawing2 < nDrawingsCount2; ++nDrawing2) {
                 let oDrawing2 = aDrawings2[nDrawing2];
+                if(this.isDrawingHidden(oDrawing2, this.player2)) {
+                    continue;
+                }
                 oPairedDrawing = oDrawing1.compareForMorph(oDrawing2, oPairedDrawing, oMapPaired);
                 if(oDrawing2 === oPairedDrawing) {
                     nParedRelH = nDrawing2;
@@ -1482,6 +1510,9 @@
         }
         for(let nDrawing2 = 0; nDrawing2 < nDrawingsCount2; ++nDrawing2) {
             let oDrawing2 = aDrawings2[nDrawing2];
+            if(this.isDrawingHidden(oDrawing2, this.player2)) {
+                continue;
+            }
             let oParedObj = oMapPaired[oDrawing2.Id];
             if(oParedObj) {
                 this.addObjectMorphs(oParedObj.drawing, oParedObj.relH, oDrawing2, nDrawing2);
@@ -1492,6 +1523,9 @@
         }
         for(let nDrawing1 = 0; nDrawing1 < nDrawingsCount1; ++nDrawing1) {
             oDrawing1 = aDrawings1[nDrawing1];
+            if(this.isDrawingHidden(oDrawing1, this.player1)) {
+                continue;
+            }
             let bDisappear = true;
             for(let sKey in oMapPaired) {
                 if(oMapPaired.hasOwnProperty(sKey)) {
