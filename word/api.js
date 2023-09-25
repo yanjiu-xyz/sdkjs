@@ -4978,14 +4978,14 @@ background-repeat: no-repeat;\
 			if (bIsFreeze)
 			{
 				_elem1.style.display = "none";
-				_elem2.style.display = "none";
-				_elem3.style.display = "none";
+				if (_elem2) _elem2.style.display = "none";
+				if (_elem3) _elem3.style.display = "none";
 			}
 			else
 			{
 				_elem1.style.display = "block";
-				_elem2.style.display = "block";
-				_elem3.style.display = "block";
+				if (_elem2) _elem2.style.display = "block";
+				if (_elem3) _elem3.style.display = "block";
 			}
 		}
 
