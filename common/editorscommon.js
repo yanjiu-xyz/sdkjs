@@ -2043,8 +2043,11 @@
 				}
 				else
 				{
-					if (Asc.editor.isPdfEditor() && e.canceled == true)
-						callback(e);
+					if (e.canceled == true)
+					{
+						if (Asc.editor.isPdfEditor())
+							callback(e);
+					}
 					else
 						callback(Asc.c_oAscError.ID.Unknown);
 				}
@@ -2567,21 +2570,59 @@
 		}
 		document.body.appendChild(input);
 
-		input.addEventListener('click', function () {
-			document.body.onfocus = checkCanceled;
-		});
+		function addDialogClosedListener(input, callback) {
+			var id = null;
+			var active = false;
+			var wrapper = function() {
+				if (active) {
+					active = false;
+					callback(input);
 
-		function checkCanceled() {
+					// remove handlers
+					window.removeEventListener('focus', onFocus);
+					window.removeEventListener('blur', onBlur);
+				}
+			};
+			var cleanup = function() {
+				clearTimeout(id);
+			};
+			var shedule = function(delay) {
+				id = setTimeout(wrapper, delay);
+			};
+			var onFocus = function() {
+				cleanup();
+				shedule(1000);
+			};
+			var onBlur = function() {
+				cleanup();
+			};
+			var onClick = function() {
+				cleanup();
+				active = true;
+			};
+			var onChange = function() {
+				cleanup();
+				shedule(0);
+			};
+			input.addEventListener('click', onClick);
+			input.addEventListener('change', onChange);
+			window.addEventListener('focus', onFocus);
+			window.addEventListener('blur', onBlur);
+		}
+
+		addDialogClosedListener(input, checkCanceled);
+
+		function checkCanceled(input) {
+			let e = {};
 			if (input.files.length === 0) {
-				onchange({canceled: true});
+				e.canceled = true;
 			}
-			document.body.onfocus = null;
-		}    
-	
-		input.addEventListener('change', function(e) {
+			else {
+				e.target = input;
+			}
 			onchange(e);
-		});
-
+		}
+	
 		return input;
 	}
 
