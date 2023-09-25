@@ -4124,8 +4124,12 @@
                 oParagraph.MoveCursorToStartPos();
                 oParagraph.Set_Align(nAlign);
 
+                let isPrintPreview = t.workbook.printPreviewState.isStart();
                 let legacyDrawingId = AscCommonExcel.CHeaderFooterEditorSection.prototype.getStringName(index, headerFooterData.type);
-                let oDrawing = t.model.legacyDrawingHF && t.model.legacyDrawingHF.getDrawingById(legacyDrawingId);
+                let legacyDrawingHF = t.model.legacyDrawingHF;
+                let oDrawingTemp = isPrintPreview && opt_headerFooter && opt_headerFooter.legacyDrawingHF && opt_headerFooter.legacyDrawingHF.getDrawingById(legacyDrawingId);
+                let oDrawing = oDrawingTemp ? oDrawingTemp : legacyDrawingHF && legacyDrawingHF.getDrawingById(legacyDrawingId);
+
                 let oImage = oDrawing && oDrawing.obj && oDrawing.obj.graphicObject;
 
                 for(let nFragment = 0; nFragment < aFragments.length; ++nFragment) {
