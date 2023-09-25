@@ -2597,6 +2597,9 @@
 				cleanup();
 			};
 			var onClick = function() {
+				window.addEventListener('focus', onFocus);
+				window.addEventListener('blur', onBlur);
+
 				cleanup();
 				active = true;
 			};
@@ -2606,8 +2609,6 @@
 			};
 			input.addEventListener('click', onClick);
 			input.addEventListener('change', onChange);
-			window.addEventListener('focus', onFocus);
-			window.addEventListener('blur', onBlur);
 		}
 
 		addDialogClosedListener(input, checkCanceled);
