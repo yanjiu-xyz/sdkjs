@@ -775,9 +775,9 @@ RotateState.prototype =
             if (editor.isDocumentRenderer()) {
                 
                 let oDoc = editor.getDocumentRenderer().getPDFDoc();
-                for(i = 0; i < this.drawingObjects.arrTrackObjects.length; ++i)
+                for(i = 0; i < aTracks.length; ++i)
                 {   
-                    var oTrack  = this.drawingObjects.arrTrackObjects[i];
+                    var oTrack  = aTracks[i];
                     bounds      = oTrack.getBounds();
                     oTrack.trackEnd(true);
 
