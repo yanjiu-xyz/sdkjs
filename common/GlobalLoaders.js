@@ -35,8 +35,8 @@
 (function(window, document){
     // Import
     var g_fontApplication = AscFonts.g_fontApplication;
-    var ImageLoadStatus = AscFonts.ImageLoadStatus;
-    var CImage = AscFonts.CImage;
+    var ImageLoadStatus   = AscFonts.ImageLoadStatus;
+    var CImage            = AscFonts.CImage;
 
     function CGlobalFontLoader()
     {
@@ -56,13 +56,14 @@
         this.ThemeLoader = null;
         this.Api = null;
         this.fonts_loading = [];
-        this.fonts_loading_after_style = [];
         this.bIsLoadDocumentFirst = false;
-        this.currentInfoLoaded = null;
 
+        // информация для загрузки по одному шрифту
+        this.currentInfoLoaded = null;
         this.loadFontCallBack     = null;
         this.loadFontCallBackArgs = null;
 
+        // при переоткрытиях файла - заменить на LoadDocumentFonts2
         this.IsLoadDocumentFonts2 = false;
 
         this.check_loaded_timer_id = -1;
@@ -74,19 +75,49 @@
         {
             this.Api = api;
         };
-                
+
+        // добавляем шрифт в список для загрузки
         this.AddLoadFonts = function(name, need_styles)
         {
             var fontinfo = g_fontApplication.GetFontInfo(name);
             this.fonts_loading[this.fonts_loading.length] = fontinfo;
-            this.fonts_loading[this.fonts_loading.length - 1].NeedStyles = (need_styles == undefined) ? 0x0F : need_styles;
+            this.fonts_loading[this.fonts_loading.length - 1].NeedStyles = (need_styles === undefined) ? 0x0F : need_styles;
 			return fontinfo;
         };
-
         this.AddLoadFontsNotPick = function(info, need_styles)
         {
             this.fonts_loading[this.fonts_loading.length] = info;
-            this.fonts_loading[this.fonts_loading.length - 1].NeedStyles = (need_styles == undefined) ? 0x0F : need_styles;
+            this.fonts_loading[this.fonts_loading.length - 1].NeedStyles = (need_styles === undefined) ? 0x0F : need_styles;
+        };
+
+        // проверить все fontinfo из fonts_loading на нужность загрузки, и вернуть есть ли хоть один заново запущенный
+        this.CheckFontsNeedLoadingLoad = function()
+        {
+            let fonts = this.fonts_loading;
+            let isNeed = false;
+            for (let i = 0, len = fonts.length; i < len; i++)
+            {
+                if (true === fonts[i].CheckFontLoadStyles(this))
+                    isNeed = true;
+            }
+            return isNeed;
+        };
+
+        // нужно ли грузить хоть один из списка (без запуска загрузки)
+        this.CheckFontsNeedLoading = function(fonts)
+        {
+            for (let i in fonts)
+            {
+                let info = g_fontApplication.GetFontInfo(fonts[i].name);
+                if (true === info.CheckFontLoadStylesNoLoad(this))
+                    return true;
+            }
+            return false;
+        };
+
+        this.isWorking = function()
+        {
+            return (this.check_loaded_timer_id !== -1) ? true : false;
         };
 
         this.LoadDocumentFonts = function(fonts)
@@ -130,45 +161,20 @@
             this._LoadFonts();
         };
 
-        this.CheckFontsNeedLoadingLoad = function()
-        {
-            var _fonts = this.fonts_loading;
-            var _fonts_len = _fonts.length;
-
-            var _need = false;
-            for (var i = 0; i < _fonts_len; i++)
-            {
-                if (true == _fonts[i].CheckFontLoadStyles(this))
-                    _need = true;
-            }
-            return _need;
-        };
-
-        this.CheckFontsNeedLoading = function(_fonts)
-        {
-            for (var i in _fonts)
-            {
-                var info = g_fontApplication.GetFontInfo(_fonts[i].name);
-                var _isNeed = info.CheckFontLoadStylesNoLoad(this);
-                if (_isNeed === true)
-                    return true;
-            }
-            return false;
-        };
-
-        this.LoadDocumentFonts2 = function(_fonts, _blockType, _callback)
+        this.LoadDocumentFonts2 = function(fonts, blockType, callback)
         {
             if (this.isWorking())
-                return;
-
-            this.endLoadingCallback = (undefined !== _callback) ? _callback : null;
-
-            this.BlockOperationType = _blockType;
-            // сначала заполняем массив this.fonts_loading объекстами fontinfo
-            for (var i in _fonts)
             {
-                this.AddLoadFonts(_fonts[i].name, 0x0F);
+                // такого быть не должно
+                return;
             }
+
+            this.endLoadingCallback = (undefined !== callback) ? callback : null;
+            this.BlockOperationType = blockType;
+
+            // сначала заполняем массив this.fonts_loading объекстами fontinfo
+            for (var i in fonts)
+                this.AddLoadFonts(fonts[i].name, 0x0F);
 
             if (null == this.ThemeLoader)
                 this.Api.asyncFontsDocumentStartLoaded(this.BlockOperationType);
@@ -179,19 +185,20 @@
             this._LoadFonts();
         };
 
-        var oThis = this;
         this._LoadFonts = function()
         {
-            if (this.bIsLoadDocumentFirst === true && 0 === this.perfStart && this.fonts_loading.length > 0) {
+            if (this.bIsLoadDocumentFirst === true && 0 === this.perfStart && this.fonts_loading.length > 0)
                 this.perfStart = performance.now();
-            }
-            if (0 == this.fonts_loading.length)
+
+            if (0 === this.fonts_loading.length)
             {
-                if (this.perfStart > 0) {
+                if (this.perfStart > 0)
+                {
                     let perfEnd = performance.now();
                     AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onLoadFonts", perfEnd - this.perfStart), this.Api);
                     this.perfStart = 0;
                 }
+
                 if (null != this.endLoadingCallback)
                 {
                     this.endLoadingCallback.call(this.Api);
@@ -203,29 +210,16 @@
                     this.ThemeLoader.asyncFontsEndLoaded();
 
                 this.BlockOperationType = undefined;
-
-                if (this.bIsLoadDocumentFirst === true)
-                {
-                    var _count = this.fonts_loading_after_style.length;
-                    for (var i = 0; i < _count; i++)
-                    {
-                        var _info = this.fonts_loading_after_style[i];
-                        _info.NeedStyles = 0x0F;
-                        _info.CheckFontLoadStyles(this);
-                    }
-                    this.fonts_loading_after_style.splice(0, this.fonts_loading_after_style.length);
-
-                    this.bIsLoadDocumentFirst = false;
-                }
+                this.bIsLoadDocumentFirst = false;
                 return;
             }
 
-            var fontinfo = this.fonts_loading[0];
-            var IsNeed = fontinfo.CheckFontLoadStyles(this);
-
-            if (IsNeed)
+            if (this.fonts_loading[0].CheckFontLoadStyles(this))
             {
-                this.check_loaded_timer_id = setTimeout(oThis._check_loaded, 50);
+                let _t = this;
+                this.check_loaded_timer_id = setTimeout(function(){
+                    _t.check_loaded_list();
+                }, 50);
             }
             else
             {
@@ -235,55 +229,50 @@
                     this.Api.SendOpenProgress();
                 }
 
-                this.fonts_loading_after_style[this.fonts_loading_after_style.length] = this.fonts_loading[0];
                 this.fonts_loading.shift();
                 this._LoadFonts();
             }
         };
 
-        this.isWorking = function()
+        this.check_loaded_list = function()
         {
-            return (this.check_loaded_timer_id !== -1) ? true : false;
-        };
-
-        this._check_loaded = function()
-        {
-            oThis.check_loaded_timer_id = -1;
-            if (0 == oThis.fonts_loading.length)
+            this.check_loaded_timer_id = -1;
+            if (0 === this.fonts_loading.length)
             {
                 // значит асинхронно удалилось
-                oThis._LoadFonts();
+                this._LoadFonts();
                 return;
             }
 
-            var current = oThis.fonts_loading[0];
-            var IsNeed = current.CheckFontLoadStyles(oThis);
-            if (true === IsNeed)
+            let current = this.fonts_loading[0];
+            let isNeed = current.CheckFontLoadStyles(this);
+            if (true === isNeed)
             {
-                oThis.check_loaded_timer_id = setTimeout(oThis._check_loaded, 50);
+                let _t = this;
+                this.check_loaded_timer_id = setTimeout(function(){
+                    _t.check_loaded_list();
+                }, 50);
             }
             else
             {
-                if (oThis.bIsLoadDocumentFirst === true)
+                if (this.bIsLoadDocumentFirst === true)
                 {
-                    oThis.Api.OpenDocumentProgress.CurrentFont++;
-                    oThis.Api.SendOpenProgress();
+                    this.Api.OpenDocumentProgress.CurrentFont++;
+                    this.Api.SendOpenProgress();
                 }
-                
-                oThis.fonts_loading_after_style[oThis.fonts_loading_after_style.length] = oThis.fonts_loading[0];
-                oThis.fonts_loading.shift();
-                oThis._LoadFonts();
+
+                this.fonts_loading.shift();
+                this._LoadFonts();
             }
         };
 
+        // одиночная загрузка шрифта
         this.LoadFont = function(fontinfo, loadFontCallBack, loadFontCallBackArgs)
         {
             this.currentInfoLoaded = fontinfo;
-
-            this.currentInfoLoaded = fontinfo;
             this.currentInfoLoaded.NeedStyles = 15; // все стили
 
-            var IsNeed = this.currentInfoLoaded.CheckFontLoadStyles(this);
+            let isNeed = this.currentInfoLoaded.CheckFontLoadStyles(this);
 
             if ( undefined === loadFontCallBack )
             {
@@ -296,10 +285,13 @@
                 this.loadFontCallBackArgs = loadFontCallBackArgs;
             }
 
-            if (IsNeed)
+            if (isNeed)
             {
                 this.Api.asyncFontStartLoaded();
-                setTimeout(this.check_loaded, 20);
+                let _t = this;
+                setTimeout(function() {
+                    _t.check_loaded();
+                }, 20);
                 return true;
             }
             else
@@ -310,32 +302,34 @@
         };
         this.check_loaded = function()
         {
-            var current = oThis.currentInfoLoaded;
-
-            if (null == current)
+            if (!this.currentInfoLoaded)
                 return;
 
-            var IsNeed = current.CheckFontLoadStyles(oThis);
-            if (IsNeed)
+            let isNeed = this.currentInfoLoaded.CheckFontLoadStyles(this);
+            if (isNeed)
             {
-                setTimeout(oThis.check_loaded, 50);
+                let _t = this;
+                setTimeout(function() {
+                    _t.check_loaded();
+                }, 50);
             }
             else
             {
-                oThis.loadFontCallBack.call( oThis.Api, oThis.loadFontCallBackArgs );
-                oThis.currentInfoLoaded = null;
+                this.loadFontCallBack.call( this.Api, this.loadFontCallBackArgs );
+                this.currentInfoLoaded = null;
             }
         };
 
+        // используется только в тестовом примере (предзагрузка в кэш браузера)
         this.LoadFontsFromServer = function(fonts)
         {
             let count = fonts.length;
             for (let i = 0; i < count; i++)
             {
-                let info = g_fontApplication.GetFontInfo(_fonts[i]);
+                let info = g_fontApplication.GetFontInfo(fonts[i]);
                 info && info.LoadFontsFromServer(this);
             }
-        }
+        };
     }
 
     function CGlobalImageLoader()
