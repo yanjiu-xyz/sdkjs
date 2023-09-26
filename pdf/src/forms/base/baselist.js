@@ -48,7 +48,7 @@
 
         this._commitOnSelChange     = false;
         this._currentValueIndices   = undefined;
-        this._textFont              = "ArialMT";
+        this._textFont              = AscPDF.DEFAULT_FIELD_FONT;
         this._options               = [];
 
 		this.content = new AscPDF.CTextBoxContent(this, oDoc);

@@ -103,6 +103,9 @@
 		
 		return this.DocumentRenderer.getPDFDoc();
 	};
+	PDFEditorApi.prototype.IsNeedDefaultFonts = function() {
+		return false;
+	};
 	PDFEditorApi.prototype["asc_setViewerThumbnailsZoom"] = function(value) {
 		if (this.haveThumbnails())
 			this.DocumentRenderer.Thumbnails.setZoom(value);
@@ -345,9 +348,9 @@
 		let viewer	= this.DocumentRenderer;
 		let oDoc	= viewer.getPDFDoc();
 		if (!viewer
+			|| !oDoc.checkDefaultFieldFonts()
 			|| !oDoc.activeForm
 			|| !oDoc.activeForm.IsEditable()) {
-			
 			return false;
 		}
 		

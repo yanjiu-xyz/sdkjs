@@ -51,6 +51,7 @@
 		
 		this.SetUseXLimit(false);
 		this.MoveCursorToStartPos();
+		this.SetFont(AscPDF.DEFAULT_FIELD_FONT);
 	}
 	
 	CTextBoxContent.prototype = Object.create(AscWord.CDocumentContent.prototype);
@@ -95,6 +96,11 @@
 	};
 	CTextBoxContent.prototype.OnContentReDraw = function() {
 		// TODO: Реализовать
+	};
+	CTextBoxContent.prototype.SetFont = function(fontName) {
+		this.SetApplyToAll(true);
+		this.AddToParagraph(new AscWord.ParaTextPr({RFonts : {Ascii : {Name : fontName, Index : -1}}}));
+		this.SetApplyToAll(false);
 	};
 	
 	//--------------------------------------------------------export----------------------------------------------------

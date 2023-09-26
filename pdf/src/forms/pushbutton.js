@@ -74,7 +74,7 @@
         this._buttonScaleHow    = scaleHow["proportional"];
         this._buttonScaleWhen   = scaleWhen["always"];
         this._highlight         = BUTTON_HIGHLIGHT_TYPES.invert;
-        this._textFont          = "ArialMT";
+        this._textFont          = AscPDF.DEFAULT_FIELD_FONT;
 
         this._buttonCaption     = undefined;
         this._downCaption       = undefined;

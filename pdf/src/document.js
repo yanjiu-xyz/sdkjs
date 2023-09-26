@@ -130,6 +130,9 @@ var CPresentation = CPresentation || function(){};
         this.Viewer     = viewer;
 
         this.annotsHidden = false;
+		
+		this.fontLoader = AscCommon.g_font_loader;
+		this.defaultFontsLoaded = -1; // -1 не загружены и не грузим, 0 - грузим, 1 - загружены
     }
 
     /////////// методы для открытия //////////////
@@ -359,7 +362,11 @@ var CPresentation = CPresentation || function(){};
         let aWidgetForms    = this.widgets;
         let oActionsQueue   = this.GetActionsQueue();
         let isNeedRedraw    = false;
-
+		
+		let _t = this;
+		if (!this.checkDefaultFieldFonts(function(){_t.SelectNextField();}))
+			return;
+		
         if (aWidgetForms.length == 0)
             return;
 
@@ -458,7 +465,11 @@ var CPresentation = CPresentation || function(){};
         let aWidgetForms    = this.widgets;
         let oActionsQueue   = this.GetActionsQueue();
         let isNeedRedraw    = false;
-
+		
+		let _t = this;
+		if (!this.checkDefaultFieldFonts(function(){_t.SelectNextField();}))
+			return;
+		
         if (aWidgetForms.length == 0)
             return;
 
@@ -695,6 +706,10 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.OnMouseDownField = function(oField, event) {
         let oViewer         = editor.getDocumentRenderer();
         let oActionsQueue   = this.GetActionsQueue();
+		
+		let _t = this;
+		if (!this.checkDefaultFieldFonts(function(){_t.OnMouseDownField(oField, event)}))
+			return;
 
         // суть в том, что мы рисуем background только когда форма активна, если неактивна - рисуем highlight вместо него.
         if (oField.GetBackgroundColor())
@@ -2098,6 +2113,28 @@ var CPresentation = CPresentation || function(){};
 			return null;
 		
 		return this.Viewer.DrawingObjects;
+	};
+	CPDFDoc.prototype.checkDefaultFieldFonts = function(callback) {
+		
+		if (1 === this.defaultFontsLoaded)
+			return true;
+		
+		if (0 === this.defaultFontsLoaded)
+			return false;
+		
+		this.defaultFontsLoaded = 0;
+		let _t = this;
+		this.fontLoader.LoadDocumentFonts2([{name : AscPDF.DEFAULT_FIELD_FONT}],
+			Asc.c_oAscAsyncActionType.Empty,
+			function()
+			{
+				_t.defaultFontsLoaded = 1;
+				if (callback)
+					callback();
+			}
+		);
+
+		return 1 === this.defaultFontsLoaded;
 	};
 	
     function CActionQueue(oDoc) {

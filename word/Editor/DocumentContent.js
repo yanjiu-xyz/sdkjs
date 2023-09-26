@@ -2210,14 +2210,19 @@ CDocumentContent.prototype.Document_CreateFontCharMap = function(FontCharMap)
 		Element.Document_CreateFontCharMap(FontCharMap);
 	}
 };
-CDocumentContent.prototype.Document_Get_AllFontNames = function(AllFonts)
+CDocumentContent.prototype.Document_Get_AllFontNames = function(fontNames)
 {
+	if (!fontNames)
+		fontNames = [];
+		
 	var Count = this.Content.length;
 	for (var Index = 0; Index < Count; Index++)
 	{
 		var Element = this.Content[Index];
-		Element.Document_Get_AllFontNames(AllFonts);
+		Element.Document_Get_AllFontNames(fontNames);
 	}
+	
+	return fontNames;
 };
 CDocumentContent.prototype.Document_UpdateInterfaceState = function()
 {

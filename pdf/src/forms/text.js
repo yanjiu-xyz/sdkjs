@@ -50,7 +50,7 @@
         this._password          = false;
         this._richText          = false; // to do связанные свойства, методы
         this._richValue         = [];
-        this._textFont          = "ArialMT";
+        this._textFont          = AscPDF.DEFAULT_FIELD_FONT;
         this._fileSelect        = false;
         this._value             = undefined;
 

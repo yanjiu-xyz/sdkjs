@@ -99,8 +99,11 @@
     let VALID_ROTATIONS = [0, 90, 180, 270];
 
     const MAX_TEXT_SIZE = 32767;
-
-    // freeze objects
+	
+	const DEFAULT_FIELD_FONT = "Arial";
+	
+	
+	// freeze objects
     Object.freeze(FIELDS_HIGHLIGHT);
     Object.freeze(ALIGN_TYPE);
     Object.freeze(FONT_STRETCH);
@@ -211,6 +214,13 @@
     CBaseField.prototype.IsEditable = function() {
         return false;
     };
+	/**
+	 * Check if fonts are available, if not then we download them
+	 * @returns {boolean}
+	 */
+	CBaseField.prototype.checkFonts = function() {
+		return true;
+	};
     /**
 	 * Invokes only on open forms.
 	 * @memberof CBaseField
@@ -1863,6 +1873,7 @@
     window["AscPDF"].FONT_STRETCH       = FONT_STRETCH;
     window["AscPDF"].FONT_STYLE         = FONT_STYLE;
     window["AscPDF"].FONT_WEIGHT        = FONT_WEIGHT;
+	window["AscPDF"].DEFAULT_FIELD_FONT = DEFAULT_FIELD_FONT;
 
     window["AscPDF"].CBaseField = CBaseField;
     window["AscPDF"]["GetGlobalCoordsByPageCoords"] = window["AscPDF"].GetGlobalCoordsByPageCoords = GetGlobalCoordsByPageCoords;
