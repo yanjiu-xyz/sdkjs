@@ -219,7 +219,7 @@
 	 * @returns {boolean}
 	 */
 	CBaseField.prototype.checkFonts = function() {
-		return true;
+		return this._doc && 1 === this._doc.defaultFontsLoaded;
 	};
     /**
 	 * Invokes only on open forms.
@@ -1113,7 +1113,7 @@
     };
     CBaseField.prototype.SetNeedRecalc = function(bRecalc, bSkipAddToRedraw) {
         if (bRecalc == false) {
-            this._needRecalc = false;
+            this._needRecalc = !this.checkFonts();
         }
         else {
             this._needRecalc = true;
