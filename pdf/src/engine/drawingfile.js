@@ -1523,7 +1523,7 @@ else
 		let fileId = file.GetID();
 		let fileStatus = file.GetStatus();
 
-		if (fileStatus == 0)
+		if (fileStatus === 0)
 		{
 			// шрифт загружен.
 			fontToMemory(file, true);
@@ -1539,11 +1539,11 @@ else
 				addToArrayAsDictionary(self.drawingFile.pages[self.drawingFileCurrentPageIndex].fonts, fileId);
 			}
 
-			if (fileStatus != 2)
+			// шрифт может грузиться в редакторе
+			if (undefined === file.externalCallback)
 			{
-				// шрифт не грузится - надо загрузить
 				let _t = file;
-				file.LoadFontAsync(baseFontsPath, function(){
+				file.externalCallback = function() {
 					fontToMemory(_t, true);
 
 					let pages = self.fontStreams[fileId].pages;
@@ -1571,7 +1571,12 @@ else
 						if (self.drawingFile.onRepaintPages)
 							self.drawingFile.onRepaintPages(pagesRepaint);
 					}
-				});
+
+					delete _t.externalCallback;
+				};
+
+				if (2 !== file.LoadFontAsync)
+					file.LoadFontAsync(baseFontsPath, null);
 			}
 		}
 

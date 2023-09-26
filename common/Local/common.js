@@ -108,7 +108,7 @@
 /////////////////////////////////////////////////////////
 //////////////       FONTS       ////////////////////////
 /////////////////////////////////////////////////////////
-AscFonts.CFontFileLoader.prototype.LoadFontAsync = function(basePath, _callback)
+AscFonts.CFontFileLoader.prototype.LoadFontAsync = function(basePath, callback)
 {
 	this.callback = callback;
     if (-1 !== this.Status)
