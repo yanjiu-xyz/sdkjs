@@ -41,6 +41,7 @@ function onLoadFontsModule(window, undefined)
 	AscFonts.TT_INTERPRETER_VERSION_40 = 40;
 
 	AscFonts.CopyStreamToMemory = AscFonts["CopyStreamToMemory"];
+	AscFonts.GetUint8ArrayFromPointer = AscFonts["GetUint8ArrayFromPointer"];
 
 	AscFonts.AllocString2 = AscFonts["AllocString"];
 	AscFonts.AllocString = function(size)
