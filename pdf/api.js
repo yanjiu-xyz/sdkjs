@@ -82,26 +82,9 @@
 		}
 		
 		this.WordControl.OnResize(true);
-		
-		
-		let CHECKBOX_STYLES_CODES = {
-			check:      10003,
-			cross:      10005,
-			diamond:    11201,
-			circle:     11044,
-			star:       128969,
-			square:     11200
-		}
-		
+
 		this.FontLoader.LoadDocumentFonts(this.WordControl.m_oDrawingDocument.CheckFontNeeds(), false);
-		let sText = Object.values(CHECKBOX_STYLES_CODES).reduce(function(accum, curValue) {
-			return accum + String.fromCharCode(curValue);
-		}, "")
-		
-		let LoadTimer = setInterval(function() {
-			AscFonts.FontPickerByCharacter.checkText(sText, editor, function() {clearInterval(LoadTimer)}, false, true, true);
-		}, 1000);
-		
+
 		let perfEnd = performance.now();
 		AscCommon.sendClientLog("debug", AscCommon.getClientInfoString("onOpenDocument", perfEnd - perfStart), this);
 	};
@@ -111,9 +94,6 @@
 	PDFEditorApi.prototype.getLogicDocument = function() {
 		return this.getPDFDoc();
 	};
-	PDFEditorApi.prototype.isFieldFillingMode = function() {
-		return this.DocumentRenderer ? this.DocumentRenderer.fieldFillingMode : false;
-	};
 	PDFEditorApi.prototype.getDocumentRenderer = function() {
 		return this.DocumentRenderer;
 	};
@@ -122,6 +102,9 @@
 			return null;
 		
 		return this.DocumentRenderer.getPDFDoc();
+	};
+	PDFEditorApi.prototype.IsNeedDefaultFonts = function() {
+		return false;
 	};
 	PDFEditorApi.prototype["asc_setViewerThumbnailsZoom"] = function(value) {
 		if (this.haveThumbnails())
@@ -198,6 +181,7 @@
 				this.DocumentRenderer.onUpdateOverlay();
 				this.WordControl.m_oDrawingDocument.TargetStart();
 				this.WordControl.m_oDrawingDocument.showTarget(true);
+				oDoc.UpdateCopyCutState();
 			}
 		}
 	};
@@ -222,6 +206,7 @@
 			this.WordControl.m_oDrawingDocument.TargetStart();
 			this.DocumentRenderer._paint();
 			this.DocumentRenderer.onUpdateOverlay();
+			oDoc.UpdateCopyCutState();
 		}
 	};
 	PDFEditorApi.prototype.asc_setAdvancedOptions = function(idOption, option) {
@@ -363,9 +348,9 @@
 		let viewer	= this.DocumentRenderer;
 		let oDoc	= viewer.getPDFDoc();
 		if (!viewer
+			|| !oDoc.checkDefaultFieldFonts()
 			|| !oDoc.activeForm
-			|| !viewer.fieldFillingMode) {
-			
+			|| !oDoc.activeForm.IsEditable()) {
 			return false;
 		}
 		
@@ -395,7 +380,11 @@
 	PDFEditorApi.prototype.SetMarkerFormat          = function(nType, value, opacity, r, g, b)
 	{
 		this.isMarkerFormat	= value;
-		this.curMarkerType = nType;
+		this.curMarkerType	= nType;
+		let oDoc			= this.getPDFDoc();
+		
+		if (value == true && oDoc.activeForm)
+			oDoc.OnExitFieldByClick();
 
 		if (this.isMarkerFormat) {
 			switch (this.curMarkerType) {
@@ -535,12 +524,12 @@
 		let oDoc			= oViewer.getPDFDoc();
 
 		if (!pageObject) {
-			let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(10, 10, nPage, true);
+			let oPos = AscPDF.GetGlobalCoordsByPageCoords(10, 10, nPage, true);
 			oDoc.anchorPositionToAdd = {
 				x: 10,
 				y: 10
 			};
-			return new AscCommon.asc_CRect(X + nCommentWidth, Y + nCommentHeight / 2, 0, 0);
+			return new AscCommon.asc_CRect(oPos["X"] + nCommentWidth, oPos["Y"] + nCommentHeight / 2, 0, 0);
 		}
 
 		oDoc.anchorPositionToAdd = {
@@ -550,8 +539,8 @@
 
 		if (oDoc.mouseDownAnnot) {
 			let aRect = oDoc.mouseDownAnnot.GetRect();
-			let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(aRect[2], aRect[1] + (aRect[3] - aRect[1]) / 2, nPage, true);
-			return new AscCommon.asc_CRect(X, Y, 0, 0);
+			let oPos = AscPDF.GetGlobalCoordsByPageCoords(aRect[2], aRect[1] + (aRect[3] - aRect[1]) / 2, nPage, true);
+			return new AscCommon.asc_CRect(oPos["X"], oPos["Y"], 0, 0);
 		}
 		
 		return new AscCommon.asc_CRect(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y, 0, 0);
@@ -574,6 +563,14 @@
 		CommentData.Read_FromAscCommentData(AscCommentData);
 		oDoc.EditComment(Id, CommentData);
 	};
+	PDFEditorApi.prototype.asc_EditSelectAll = function()
+	{
+		let oViewer = this.getDocumentRenderer();
+		let oDoc = oViewer.getPDFDoc();
+
+		oViewer.file.selectAll();
+		oDoc.UpdateCopyCutState();
+	};
 	PDFEditorApi.prototype.asc_showComment = function(Id)
 	{
 		if (Id instanceof Array)
@@ -588,6 +585,19 @@
 		if(!oDoc)
 			return;
 
+		oViewer.file.Selection = {
+			Page1 : 0,
+			Line1 : 0,
+			Glyph1 : 0,
+
+			Page2 : 0,
+			Line2 : 0,
+			Glyph2 : 0,
+
+			IsSelection : false
+		}
+
+		oViewer.onUpdateOverlay();
 		oViewer.DrawingObjects.onInkDrawerChangeState();
 		oDoc.currInkInDrawingProcess = null;
 	};

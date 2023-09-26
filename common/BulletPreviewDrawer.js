@@ -411,7 +411,7 @@
 		const arrFonts = [];
 		for (let sFamilyName in oFontsDict)
 		{
-			arrFonts.push(new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(sFamilyName), 0, "", 0, null));
+			arrFonts.push(new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(sFamilyName)));
 		}
 		AscFonts.FontPickerByCharacter.extendFonts(arrFonts);
 

@@ -4639,7 +4639,9 @@ function CDrawingDocument()
 			return {X: 0, Y: 0, Error: true};
 		}
 
-		let {X, Y} = AscPDF.GetGlobalCoordsByPageCoords(x, y, pageIndex);
+		let oPos	= AscPDF.GetGlobalCoordsByPageCoords(x, y, pageIndex);
+		let X		= oPos["X"];
+		let Y		= oPos["Y"];
 
 		if (true !== isNoRound)
 		{
@@ -6021,11 +6023,7 @@ function CDrawingDocument()
 		this.InlineTextTrackEnabled = false;
 
 		if (true !== isOnlyMoveTarget)
-		{
-			const bIsMac = AscCommon.AscBrowser.isMacOs;
-			const bCopy = bIsMac ? AscCommon.global_keyboardEvent.AltKey : AscCommon.global_keyboardEvent.CtrlKey;
-			this.m_oWordControl.m_oLogicDocument.OnEndTextDrag(this.InlineTextTrack, bCopy);
-		}
+			this.m_oWordControl.m_oLogicDocument.OnEndTextDrag(this.InlineTextTrack, AscCommon.global_keyboardEvent.CtrlKey);
 		else if (this.InlineTextTrack)
 		{
 			var Paragraph = this.InlineTextTrack.Paragraph;
@@ -6792,7 +6790,7 @@ function CDrawingDocument()
 		var dstfonts = [];
 		for (var i in map_keys)
 		{
-			dstfonts[dstfonts.length] = new AscFonts.CFont(i, 0, "", 0, null);
+			dstfonts[dstfonts.length] = new AscFonts.CFont(i);
 		}
 
 		if (this.m_oWordControl.m_oLogicDocument)

@@ -232,10 +232,10 @@ function (window, undefined) {
 	// these functions are made and used specifically for SORT & SORTBY functions
 	function sortWithIndices (arr, sortOrder, isByCol) {
 		const indexedArray = isByCol
-			? arr[0].map(function (item, index) { return { item, index } })
+			? arr[0].map(function (item, index) { return { item: item, index: index } })
 			: arr.map(function (item, index) {
 				item = item[0];
-				return { item, index };
+				return { item: item, index: index };
 			});
 
 		indexedArray.sort(function (a, b) {
@@ -435,11 +435,11 @@ function (window, undefined) {
 	function indicesBy (arr, isByCol) {
 		const indexedArray = isByCol
 			? arr[0].map(function (item, index) {
-				return { item, index };
+				return { item: item, index: index };
 			})
 			: arr.map(function (item, index) {
 				item = item[0];
-				return { item, index };
+				return { item: item, index: index };
 			});
 
 		return indexedArray;
@@ -2378,8 +2378,7 @@ function (window, undefined) {
 			array = new cArray();
 			array.addElement(elem);
 		} else if (cElementType.cellsRange === args[0].type || cElementType.cellsRange3D === args[0].type) {
-			array = new cArray();
-			array.fillFromArray(args[0].getMatrix());
+			array = args[0].getFullArray();
 		} else {
 			array = args[0];
 		}
@@ -3638,7 +3637,7 @@ function (window, undefined) {
 		if (a3Value === 1 || a3Value === -1) {
 			if (isArray) {
 				// make array universal
-				tempArr = tempArr.map((item, index) => {
+				tempArr = tempArr.map(function (item, index) {
 					return {
 						v: item,
 						i: index,

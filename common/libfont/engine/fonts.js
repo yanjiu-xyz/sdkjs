@@ -262,6 +262,11 @@ AscFonts.CopyStreamToMemory = function(data, size)
 	return fontStreamPointer;
 };
 
+AscFonts.GetUint8ArrayFromPointer = function(pointer, size)
+{
+	return new Uint8Array(Module["HEAP8"].buffer, pointer, size);
+};
+
 function CShapeString(size)
 {
 	this.size = size;
@@ -798,7 +803,7 @@ AscFonts.Hyphen_Word = function(lang, word)
 		{
 			if (1 === (vector[pos] & 1))
 			{
-				while (posUtf8 < pos)
+				while (posUtf8 < (pos + 1))
 				{
 					++posUnicode;
 					posUtf8 += GetUtf8SymbolLen(curUnicode[posUtf8]);

@@ -1696,7 +1696,7 @@ var editor;
     this.asyncMethodCallback = callback;
     var arrLoadFonts = [];
     for (var i in fonts)
-      arrLoadFonts.push(new AscFonts.CFont(i, 0, "", 0));
+      arrLoadFonts.push(new AscFonts.CFont(i));
     AscFonts.FontPickerByCharacter.extendFonts(arrLoadFonts);
     this.FontLoader.LoadDocumentFonts2(arrLoadFonts);
   };
@@ -8876,7 +8876,21 @@ var editor;
 		return ws.removeTraceArrows(type);
 	};
 
+	spreadsheet_api.prototype.getSelectionState = function() {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
 
+		return wb.getSelectionState();
+	};
+	spreadsheet_api.prototype.getSpeechDescription = function(prevState, action) {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		return wb.getSpeechDescription(prevState, wb.getSelectionState(), action);
+	};
 
   /*
    * Export

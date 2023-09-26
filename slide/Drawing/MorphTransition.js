@@ -551,11 +551,18 @@
         if(!this.geometry1 || !this.geometry2) {
             return;
         }
+        if(this.pen1 && this.pen2) {
+            const nDash1 = this.pen1.prstDash !== 0 ? this.pen1.prstDash : 6;
+            const nDash2 = this.pen2.prstDash !== 0 ? this.pen2.prstDash : 6;
+            if(nDash1 !== nDash2) {
+                return;
+            }
+        }
         if(this.geometry1.isEqualForMorph(this.geometry2)) {
 
-            let oXfrm1 =  this.geometry1.parent && this.geometry1.parent.xfrm;
-            let oXfrm2 =  this.geometry2.parent && this.geometry2.parent.xfrm;
-            if(oXfrm1 && oXfrm2 && oXfrm1.flipH === oXfrm2.flipH && oXfrm1.flipV === oXfrm2.flipV) {
+            let oParent1 =  this.geometry1.parent && this.geometry1.parent.parent;
+            let oParent2 =  this.geometry2.parent && this.geometry2.parent.parent;
+            if(oParent1 && oParent2 && oParent1.flipH === oParent2.flipH && oParent1.flipV === oParent2.flipV) {
                 this.geometry = AscFormat.ExecuteNoHistory(function() {return this.geometry1.createDuplicate();}, this, []);
                 this.drawObject = new AscFormat.ObjectToDraw(new AscFormat.CUniFill(), new AscFormat.CLn(), 100, 100, this.geometry, new AscCommon.CMatrix(), 0, 0, null, null);
                 this.textureShape1 = CGeometryTextureMorph.prototype.createShape.call(this, AscFormat.ExecuteNoHistory(function () { return new AscFormat.CreateGeometry("rect");}, this, []),
@@ -609,25 +616,25 @@
             let oXfrm;
             AscFormat.ExecuteNoHistory(function() {
                 oXfrm = new AscFormat.CXfrm();
-                let oXfrm1 = this.geometry1.parent.xfrm;
-                let oXfrm2 = this.geometry2.parent.xfrm;
+                let oParent1 = this.geometry1.parent && this.geometry1.parent.parent;
+                let oParent2 = this.geometry2.parent && this.geometry2.parent.parent;
                 let iN = AscFormat.isRealNumber;
-                if(iN(oXfrm1.offX) && iN(oXfrm2.offX)) {
-                    oXfrm.offX = this.getValBetween(oXfrm1.offX, oXfrm2.offX);
+                if(iN(oParent1.x) && iN(oParent2.x)) {
+                    oXfrm.offX = this.getValBetween(oParent1.x, oParent2.x);
                 }
-                if(iN(oXfrm1.offY) && iN(oXfrm2.offY)) {
-                    oXfrm.offY = this.getValBetween(oXfrm1.offY, oXfrm2.offY);
+                if(iN(oParent1.y) && iN(oParent2.y)) {
+                    oXfrm.offY = this.getValBetween(oParent1.y, oParent2.y);
                 }
-                if(iN(oXfrm1.extX) && iN(oXfrm2.extX)) {
-                    oXfrm.extX = this.getValBetween(oXfrm1.extX, oXfrm2.extX);
+                if(iN(oParent1.extX) && iN(oParent2.extX)) {
+                    oXfrm.extX = this.getValBetween(oParent1.extX, oParent2.extX);
                 }
-                if(iN(oXfrm1.extY) && iN(oXfrm2.extY)) {
-                    oXfrm.extY = this.getValBetween(oXfrm1.extY, oXfrm2.extY);
+                if(iN(oParent1.extY) && iN(oParent2.extY)) {
+                    oXfrm.extY = this.getValBetween(oParent1.extY, oParent2.extY);
                 }
-                oXfrm.flipH = oXfrm1.flipH;
-                oXfrm.flipV = oXfrm1.flipV;
-                let nRot1 = AscFormat.normalizeRotate(oXfrm1.rot || 0);
-                let nRot2 = AscFormat.normalizeRotate(oXfrm2.rot || 0);
+                oXfrm.flipH = oParent1.flipH;
+                oXfrm.flipV = oParent1.flipV;
+                let nRot1 = AscFormat.normalizeRotate(oParent1.rot || 0);
+                let nRot2 = AscFormat.normalizeRotate(oParent2.rot || 0);
                 let nAbsDiff1 = Math.abs(nRot2 - nRot1);
                 if(nAbsDiff1 <= Math.PI) {
                     oXfrm.rot = this.getValBetween(nRot1, nRot2);
@@ -639,6 +646,18 @@
                     else {
 
                         oXfrm.rot = AscFormat.normalizeRotate(this.getValBetween(nRot1, nRot2 - 2*Math.PI));
+                    }
+                }
+                const oAvLst = this.geometry1.avLst;
+                const oGdLst1 = this.geometry1.gdLst;
+                const oGdLst2 = this.geometry2.gdLst;
+                for(let sKey in oAvLst) {
+                    if(oAvLst.hasOwnProperty(sKey)) {
+                        let nVal1 = parseInt(oGdLst1[sKey]);
+                        let nVal2 = parseInt(oGdLst2[sKey]);
+                        if(AscFormat.isRealNumber(nVal1) && AscFormat.isRealNumber(nVal2)) {
+                            this.drawObject.geometry.setAdjValue(sKey, this.getValBetween(nVal1, nVal2) + 0.5 >> 0);
+                        }
                     }
                 }
             }, this, []);
@@ -654,6 +673,8 @@
                 AscCommon. global_MatrixTransformer.ScaleAppend(oT, 1, -1);
             AscCommon.global_MatrixTransformer.RotateRadAppend(oT, -oXfrm.rot);
             AscCommon.global_MatrixTransformer.TranslateAppend(oT, oXfrm.offX + hc, oXfrm.offY + vc);
+
+
             this.drawObject.geometry.Recalculate(oXfrm.extX, oXfrm.extY, false);
             this.drawObject.extX = oXfrm.extX;
             this.drawObject.extY = oXfrm.extY;
@@ -1331,6 +1352,7 @@
             this.type = nType;
         }
         this.texturesCache = new AscCommon.CTexturesCache();
+        this.texturesCache.parent = this;
         this.morphObjects = [];
         this.init();
     }
@@ -1367,17 +1389,21 @@
             return;
         }
         AscFormat.ExecuteNoHistory(function() {
+            this.player1 = new AscFormat.CAnimationPlayer(this.slide1, null);
+            this.player1.goToEnd();
+            this.player2 = new AscFormat.CAnimationPlayer(this.slide2, null);
+            this.player2.start();
             switch(this.type) {
-                case c_oAscSlideTransitionParams.Morph_Objects: {
-                    this.generateObjectBasedMorphs();
-                    break;
-                }
                 case c_oAscSlideTransitionParams.Morph_Words: {
                     this.generateWordBasedMorphs();
                     break;
                 }
                 case c_oAscSlideTransitionParams.Morph_Letters: {
                     this.generateLetterBasedMorphs();
+                    break;
+                }
+                default: {
+                    this.generateObjectBasedMorphs();
                     break;
                 }
             }
@@ -1403,6 +1429,7 @@
         }
         switch (nType1) {
             case AscDFH.historyitem_type_Shape:
+            case AscDFH.historyitem_type_Cnx:
             case AscDFH.historyitem_type_ImageShape: {
                 this.addShapeMorphs(oDrawing1, nRelH1, oDrawing2, nRelH2, bNoText)
                 break;
@@ -1417,33 +1444,75 @@
             }
         }
     };
+    CSlideMorphEffect.prototype.isDrawingHidden = function(oDrawing, oPlayer) {
+        if(!oPlayer) {
+            return false;
+        }
+        const sDrawingId = oDrawing.Id;
+        if(oPlayer.isDrawingHidden(sDrawingId)) {
+            return true;
+        }
+        const oSandwich = oPlayer.animationDrawer.getSandwich(sDrawingId);
+        const oAttributes = oSandwich && oSandwich.getAttributesMap();
+        if(oAttributes && oAttributes["style.visibility"] === "hidden") {
+            return true;
+        }
+        return false;
+    };
     CSlideMorphEffect.prototype.generateObjectBasedMorphs = function() {
 
         //match objects
         this.pushMorphObject(new COrigSizeTextureTransform(this.texturesCache, -1, -1, new CBackgroundWrapper(this.slide1), new CBackgroundWrapper(this.slide2)));
         const aDrawings1 = this.slide1.getDrawingObjects();
         const aDrawings2 = this.slide2.getDrawingObjects();
+        const oPlayer1 = this.player1;
+        const oPlayer2 = this.player2;
         const nDrawingsCount1 = aDrawings1.length;
         const nDrawingsCount2 = aDrawings2.length;
         const oMapPaired = {};
         let oPairedDrawing, oDrawing1;
+        let oCandidates = {};
         for(let nDrawing1 = 0; nDrawing1 < nDrawingsCount1; ++nDrawing1) {
             oDrawing1 = aDrawings1[nDrawing1];
+            if(this.isDrawingHidden(oDrawing1, this.player1)) {
+                continue;
+            }
+            oCandidates[oDrawing1.Id] = [];
             oPairedDrawing = null;
             let nParedRelH = null;
             for(let nDrawing2 = 0; nDrawing2 < nDrawingsCount2; ++nDrawing2) {
                 let oDrawing2 = aDrawings2[nDrawing2];
+                if(this.isDrawingHidden(oDrawing2, this.player2)) {
+                    continue;
+                }
                 oPairedDrawing = oDrawing1.compareForMorph(oDrawing2, oPairedDrawing, oMapPaired);
                 if(oDrawing2 === oPairedDrawing) {
                     nParedRelH = nDrawing2;
+                    oCandidates[oDrawing1.Id].push([oPairedDrawing, nDrawing1]);
                 }
             }
             if(oPairedDrawing) {
+                if(oMapPaired[oPairedDrawing.Id]) {
+                    let oOldDrawing1 = oMapPaired[oPairedDrawing.Id].drawing;
+                    let aCandidates = oCandidates[oOldDrawing1.Id];
+                    for(let nCandidate = 0; nCandidate < aCandidates.length; ++nCandidate) {
+                        let aPair = aCandidates[nCandidate];
+                        let sPairedId = aPair[0].Id;
+                        let nOld1RelH = aPair[1];
+                        if(!oMapPaired[sPairedId]) {
+                            oMapPaired[sPairedId] = {drawing: oOldDrawing1, relH: nOld1RelH};
+                        }
+                    }
+
+                }
                 oMapPaired[oPairedDrawing.Id] = {drawing: oDrawing1, relH: nDrawing1};
             }
         }
         for(let nDrawing2 = 0; nDrawing2 < nDrawingsCount2; ++nDrawing2) {
             let oDrawing2 = aDrawings2[nDrawing2];
+            if(this.isDrawingHidden(oDrawing2, this.player2)) {
+                continue;
+            }
             let oParedObj = oMapPaired[oDrawing2.Id];
             if(oParedObj) {
                 this.addObjectMorphs(oParedObj.drawing, oParedObj.relH, oDrawing2, nDrawing2);
@@ -1454,6 +1523,9 @@
         }
         for(let nDrawing1 = 0; nDrawing1 < nDrawingsCount1; ++nDrawing1) {
             oDrawing1 = aDrawings1[nDrawing1];
+            if(this.isDrawingHidden(oDrawing1, this.player1)) {
+                continue;
+            }
             let bDisappear = true;
             for(let sKey in oMapPaired) {
                 if(oMapPaired.hasOwnProperty(sKey)) {

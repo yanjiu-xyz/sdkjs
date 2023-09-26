@@ -293,7 +293,6 @@ DrawingObjectsController.prototype.onMouseDown = function(e, x, y)
 {
     e.ShiftKey = e.shiftKey;
     e.CtrlKey = e.metaKey || e.ctrlKey;
-    e.AltKey = e.altKey;
     e.Button = e.button;
     e.Type = AscCommon.g_mouse_event_type_down;
 	e.IsLocked = e.isLocked;
@@ -319,7 +318,6 @@ DrawingObjectsController.prototype.onMouseMove = function(e, x, y)
 {
     e.ShiftKey = e.shiftKey;
     e.CtrlKey = e.metaKey || e.ctrlKey;
-	e.AltKey = e.altKey;
     e.Button = e.button;
     e.Type = AscCommon.g_mouse_event_type_move;
 	e.IsLocked = e.isLocked;
@@ -332,7 +330,6 @@ DrawingObjectsController.prototype.onMouseUp = function(e, x, y)
 {
     e.ShiftKey = e.shiftKey;
     e.CtrlKey = e.metaKey || e.ctrlKey;
-	e.AltKey = e.altKey;
     e.Button = e.button;
     e.Type = AscCommon.g_mouse_event_type_up;
     this.curState.onMouseUp(e, x, y, 0);

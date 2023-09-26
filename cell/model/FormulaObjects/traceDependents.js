@@ -72,6 +72,8 @@ function (window, undefined) {
 			// isCalculated: null
 			// }
 		};
+
+		this._lockChangeDocument = null;
 	}
 
 	TraceDependentsManager.prototype.setPrecedentsCall = function () {
@@ -126,6 +128,11 @@ function (window, undefined) {
 			let activeCell = selection.activeCell;
 			row = activeCell.row;
 			col = activeCell.col;
+			let mergedRange = ws.getMergedByCell(row, col);
+			if (mergedRange) {
+				row = mergedRange.r1;
+				col = mergedRange.c1;
+			}
 		}
 
 		const findMaxNesting = function (row, col) {
@@ -286,9 +293,9 @@ function (window, undefined) {
 		const setDefNameIndexes = function (defName, isTable, defNameRange) {
 			let tableHeader = isTable ? getTableHeader(ws.getTableByName(defName)) : false;
 			let isCurrentCellHeader = isTable ? checkIfHeader(tableHeader) : false;
-			for (const i in allDefNamesListeners) {
+			for (let i in allDefNamesListeners) {
 				if (allDefNamesListeners.hasOwnProperty(i) && i.toLowerCase() === defName.toLowerCase()) {
-					for (const listener in allDefNamesListeners[i].listeners) {
+					for (let listener in allDefNamesListeners[i].listeners) {
 						// TODO возможно стоить добавить все слушатели сразу в curListener
 						let elem = allDefNamesListeners[i].listeners[listener];
 						let isArea = elem.ref ? true : false;
@@ -308,9 +315,11 @@ function (window, undefined) {
 								// decompose all elements into dependencies
 								let areaIndexes = getAllAreaIndexes(elem);
 								if (areaIndexes) {
-									for (let index of areaIndexes) {
-										t._setDependents(cellIndex, index);
-										t._setPrecedents(index, cellIndex);
+									for (let index in areaIndexes) {
+										if (areaIndexes.hasOwnProperty(index)) {
+											t._setDependents(cellIndex, areaIndexes[index]);
+											t._setPrecedents(areaIndexes[index], cellIndex);
+										}
 									}
 									continue;
 								}
@@ -402,10 +411,22 @@ function (window, undefined) {
 				for (let j in curListener.areaMap) {
 					if (curListener.areaMap.hasOwnProperty(j)) {
 						if (curListener.areaMap[j] && curListener.areaMap[j].bbox.contains(cellAddress.col, cellAddress.row)) {
-							let res = curListener.areaMap[j].bbox.getSharedIntersect(shared.ref, currentRange.bbox);
+							let isNotSharedRange;
+							for (let listener in curListener.areaMap[j].listeners) {
+								if (curListener.areaMap[j].listeners[listener].shared === null) {
+									isNotSharedRange = true;
+								}
+								break;
+							}
+							let res = isNotSharedRange ? null : curListener.areaMap[j].bbox.getSharedIntersect(shared.ref, currentRange.bbox);
 							// draw dependents to coords from res
-							if (res && (res.r1 === res.r2 && res.c1 === res.c2)) {
+							if (res) {
 								let index = AscCommonExcel.getCellIndex(res.r1, res.c1);
+								if (res.r1 === res.r2 && res.c1 !== res.c2) {
+									index = res.containsCol(currentRange.bbox.c1) ? AscCommonExcel.getCellIndex(res.r1, currentRange.bbox.c1) : AscCommonExcel.getCellIndex(res.r1, res.c1);
+								} else if (res.c1 === res.c2 && res.r1 !== res.r2) {
+									index = res.containsRow(currentRange.bbox.r1) ? AscCommonExcel.getCellIndex(currentRange.bbox.r1, res.c1) : AscCommonExcel.getCellIndex(res.r1, res.c1);
+								}
 								t._setDependents(cellIndex, index);
 								t._setPrecedents(index, cellIndex);
 							}
@@ -472,9 +493,11 @@ function (window, undefined) {
 							}
 						}
 						if (indexes.length > 0) {
-							for (let index of indexes) {
-								t._setDependents(cellIndex, index);
-								t._setPrecedents(index, cellIndex);
+							for (let index in indexes) {
+								if (indexes.hasOwnProperty(index)) {
+									t._setDependents(cellIndex, indexes[index]);
+									t._setPrecedents(indexes[index], cellIndex);
+								}
 							}
 						}
 					}
@@ -498,12 +521,6 @@ function (window, undefined) {
 						let isDefName = !!parent.name;
 						let formula = cellListeners[i].Formula;
 						let is3D = false;
-						const parentInfo = {
-							parent,
-							parentWsId,
-							isTable,
-							isDefName
-						};
 
 						//todo slow operation. parent not have type
 						if (parent instanceof Asc.CT_WorksheetSource) {
@@ -536,9 +553,11 @@ function (window, undefined) {
 							// go through the values and set dependents for each
 							let areaIndexes = getAllAreaIndexes(cellListeners[i]);
 							if (areaIndexes) {
-								for (let index of areaIndexes) {
-									this._setDependents(cellIndex, index);
-									this._setPrecedents(index, cellIndex);
+								for (let index in areaIndexes) {
+									if (areaIndexes.hasOwnProperty(index)) {
+										this._setDependents(cellIndex, areaIndexes[index]);
+										this._setPrecedents(areaIndexes[index], cellIndex);
+									}
 								}
 								continue;
 							}
@@ -579,8 +598,11 @@ function (window, undefined) {
 							let areaIndexes = getAllAreaIndexes(cellListeners[i]);
 							if (areaIndexes) {
 								// go through the values and set dependents for each
-								for (let index of areaIndexes) {
-									this._setDependents(cellIndex, index);
+								for (let index in areaIndexes) {
+									if (areaIndexes.hasOwnProperty(index)) {
+										this._setDependents(cellIndex, areaIndexes[index]);
+										this._setPrecedents(areaIndexes[index], cellIndex, true);
+									}
 								}
 								continue;
 							}
@@ -589,6 +611,7 @@ function (window, undefined) {
 						// if the child cell does not yet have a dependency with listeners, create it
 						if (!this._getDependents(cellIndex, elemCellIndex)) {
 							this._setDependents(cellIndex, elemCellIndex);
+							this._setPrecedents(elemCellIndex, cellIndex, true);
 							isUpdated = true;
 						}
 					}
@@ -638,13 +661,16 @@ function (window, undefined) {
 		}
 
 		const t = this;
-
-		// TODO merged range
 		if (row == null || col == null) {
 			let selection = ws.getSelection();
 			let activeCell = selection.activeCell;
 			row = activeCell.row;
 			col = activeCell.col;
+			let mergedRange = ws.getMergedByCell(row, col);
+			if (mergedRange) {
+				row = mergedRange.r1;
+				col = mergedRange.c1;
+			}
 		}
 
 		const checkCircularReference = function (index) {
@@ -710,16 +736,19 @@ function (window, undefined) {
 				if (areaIndexes.length > 0) {
 					fork = true;
 					interLevel = t.data.recLevel;
-					for (let index of areaIndexes) {
-						let cellAddress = AscCommonExcel.getFromCellIndex(index, true);
-						if (index === currentCellIndex) {
-							t.data.lastHeaderIndex = index;
+					for (let index in areaIndexes) {
+						if (areaIndexes.hasOwnProperty(index)) {
+							let _index = areaIndexes[index];
+							let cellAddress = AscCommonExcel.getFromCellIndex(_index, true);
+							if (_index === currentCellIndex) {
+								t.data.lastHeaderIndex = _index;
+							}
+							if (!t.precedents[_index] && _index !== currentCellIndex) {
+								continue;
+							}
+							findMaxNesting(cellAddress.row, cellAddress.col, true);
+							t.data.recLevel = fork ? interLevel : t.data.recLevel;
 						}
-						if (!t.precedents[index] && index !== currentCellIndex) {
-							continue;
-						}
-						findMaxNesting(cellAddress.row, cellAddress.col, true);
-						t.data.recLevel = fork ? interLevel : t.data.recLevel;
 					}
 				}
 			} else if (t.precedents[currentCellIndex]) {
@@ -854,9 +883,11 @@ function (window, undefined) {
 			if (!this.currentCalculatedPrecedentAreas[areaName]) {
 				this.currentCalculatedPrecedentAreas[areaName] = {};
 				// go through the values and check precedents for each
-				for (let index of areaIndexes) {
-					let cellAddress = AscCommonExcel.getFromCellIndex(index, true);
-					this.calculatePrecedents(cellAddress.row, cellAddress.col, true, true);
+				for (let index in areaIndexes) {
+					if (areaIndexes.hasOwnProperty(index)) {
+						let cellAddress = AscCommonExcel.getFromCellIndex(areaIndexes[index], true);
+						this.calculatePrecedents(cellAddress.row, cellAddress.col, true, true);
+					}
 				}
 			}
 		} else if (formulaParsed) {
@@ -886,7 +917,12 @@ function (window, undefined) {
 				let currentWsIndex = formulaParsed.ws.index;
 				let ref = formulaParsed.ref;
 				// iterate and find all reference
-				for (const elem of formulaParsed.outStack) {
+				for (let index in formulaParsed.outStack) {
+					if (!formulaParsed.outStack.hasOwnProperty(index)) {
+						continue;
+					}
+
+					let elem = formulaParsed.outStack[index];
 					let elemType = elem.type ? elem.type : null;
 
 					let is3D = elemType === cElementType.cell3D || elemType === cElementType.cellsRange3D || elemType === cElementType.name3D,
@@ -1045,7 +1081,11 @@ function (window, undefined) {
 				base = shared.base;
 			}
 
-			for (const elem of formulaParsed.outStack) {
+			for (let index in formulaParsed.outStack) {
+				if (!formulaParsed.outStack.hasOwnProperty(index)) {
+					continue;
+				}
+				let elem = formulaParsed.outStack[index];
 				let elemType = elem.type ? elem.type : null;
 
 				let is3D = elemType === cElementType.cell3D || elemType === cElementType.cellsRange3D || elemType === cElementType.name3D,
@@ -1213,6 +1253,10 @@ function (window, undefined) {
 		}
 	};
 	TraceDependentsManager.prototype.clearAll = function (needDraw) {
+		if (needDraw && this.ws) {
+			// need to call cleanSelection before any data is removed from the traceManager, because otherwise, isHaveData inside cleanSelection will return false, and the cleaning won't occur
+			this.ws.cleanSelection();
+		}
 		this.precedents = null;
 		this.precedentsExternal = null;
 		this.dependents = null;
@@ -1226,6 +1270,7 @@ function (window, undefined) {
 
 		if (needDraw) {
 			if (this.ws && this.ws.overlayCtx) {
+				// on the other hand, drawSelection should be called after removing data from traceManager because there is a dependency drawing call inside it
 				this.ws._drawSelection();
 			}
 		}
@@ -1233,6 +1278,9 @@ function (window, undefined) {
 	TraceDependentsManager.prototype.changeDocument = function (prop, arg1, arg2) {
 		switch (prop) {
 			case AscCommonExcel.docChangedType.cellValue:
+				if (this._lockChangeDocument) {
+					return;
+				}
 				if (arg1) {
 					this.clearCellTraces(arg1.nRow, arg1.nCol);
 				}
@@ -1240,6 +1288,9 @@ function (window, undefined) {
 			case AscCommonExcel.docChangedType.rangeValues:
 				break;
 			case AscCommonExcel.docChangedType.sheetContent:
+				if (this._lockChangeDocument) {
+					return;
+				}
 				this.clearAll();
 				break;
 			case AscCommonExcel.docChangedType.sheetRemove:
@@ -1249,6 +1300,23 @@ function (window, undefined) {
 			case AscCommonExcel.docChangedType.sheetChangeIndex:
 				break;
 			case AscCommonExcel.docChangedType.markModifiedSearch:
+				break;
+			case AscCommonExcel.docChangedType.mergeRange:
+				if (arg1 === true) {
+					this._lockChangeDocument = true;
+				} else {
+					this._lockChangeDocument = null;
+					let t = this;
+					if (arg2) {
+						for (let col = arg2.c1; col <= arg2.c2; col++) {
+							for (let row = arg2.r1; row <= arg2.r2; row++) {
+								if (!(arg2.c1 === col && arg2.r1 === row)) {
+									t.clearCellTraces(row, col);
+								}
+							}
+						}
+					}
+				}
 				break;
 		}
 	};
