@@ -14613,7 +14613,7 @@ background-repeat: no-repeat;\
 
 		var _fonts = [];
 		for (var i = 0; i < AscFonts.g_font_infos.length; i++)
-			_fonts.push(new AscFonts.CFont(AscFonts.g_font_infos[i].Name, 0, "", 0, null));
+			_fonts.push(new AscFonts.CFont(AscFonts.g_font_infos[i].Name));
 
 		console.log("start...");
 

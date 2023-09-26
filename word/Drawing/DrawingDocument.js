@@ -6790,7 +6790,7 @@ function CDrawingDocument()
 		var dstfonts = [];
 		for (var i in map_keys)
 		{
-			dstfonts[dstfonts.length] = new AscFonts.CFont(i, 0, "", 0, null);
+			dstfonts[dstfonts.length] = new AscFonts.CFont(i);
 		}
 
 		if (this.m_oWordControl.m_oLogicDocument)

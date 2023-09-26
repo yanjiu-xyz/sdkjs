@@ -2698,7 +2698,6 @@
 		this.ImageLoader = AscCommon.g_image_loader;
 		this.FontLoader.put_Api(this);
 		this.ImageLoader.put_Api(this);
-		this.FontLoader.SetStandartFonts();
 
 		this.chartPreviewManager   = new AscCommon.ChartPreviewManager();
 		this.smartArtPreviewManager   = new AscCommon.SmartArtPreviewDrawer();
@@ -3005,7 +3004,7 @@
 		var arrCharCodes = [code];
         AscFonts.FontPickerByCharacter.checkTextLight(arrCharCodes, true);
 
-        var fonts = [new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(familyName), 0, "", 0, null)];
+        var fonts = [new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(familyName))];
         AscFonts.FontPickerByCharacter.extendFonts(fonts);
 
         this.asyncMethodCallback = function() {

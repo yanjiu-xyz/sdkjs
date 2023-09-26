@@ -2905,7 +2905,7 @@
 
 		var aRes = [];
 		for(var i in oFontMap)
-			aRes.push(new AscFonts.CFont(i, 0, "", 0));
+			aRes.push(new AscFonts.CFont(i));
 		AscFonts.FontPickerByCharacter.extendFonts(aRes);
 		return aRes;
 	};

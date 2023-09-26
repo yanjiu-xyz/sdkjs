@@ -407,7 +407,7 @@ window.addEventListener("load", function() {
         }
 
         var currentFont = document.getElementById("id_fonts").value;
-        var fonts = [new AscFonts.CFont(currentFont, 0, "", 0)];
+        var fonts = [new AscFonts.CFont(currentFont)];
         AscFonts.FontPickerByCharacter.checkTextLight(codes, true);
         AscFonts.FontPickerByCharacter.extendFonts(fonts);
         AscCommon.g_font_loader.LoadDocumentFonts2(fonts);

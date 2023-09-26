@@ -6599,7 +6599,7 @@
 
             for (i = 0; i < fonts.length; i++)
             {
-                fonts[i] = new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(fonts[i]), 0, "", 0, null);
+                fonts[i] = new AscFonts.CFont(AscFonts.g_fontApplication.GetFontInfoName(fonts[i]));
             }
 
 			if ("string" === typeof this.contentObjects["fill"])

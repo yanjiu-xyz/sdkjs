@@ -4043,7 +4043,7 @@ PasteProcessor.prototype =
 			var fonts = [];
 			//грузим картинки и фонты
 			for (var i in font_map) {
-				fonts.push(new CFont(i, 0, "", 0));
+				fonts.push(new CFont(i));
 			}
 
 			//images
@@ -4371,7 +4371,7 @@ PasteProcessor.prototype =
 		//перебираем шрифты
 		var fonts = [];
 		for (var i in font_map)
-			fonts.push(new CFont(i, 0, "", 0));
+			fonts.push(new CFont(i));
 
 		var oObjectsForDownload = GetObjectsForImageDownload(aContent.aPastedImages);
 		if (oObjectsForDownload.aUrls.length > 0) {
@@ -4474,7 +4474,7 @@ PasteProcessor.prototype =
 
 					//перебираем шрифты
 					for (var i in font_map) {
-						fonts.push(new CFont(i, 0, "", 0));
+						fonts.push(new CFont(i));
 					}
 
 					//TODO стиль не прокидывается. в будущем нужно реализовать
@@ -5049,7 +5049,7 @@ PasteProcessor.prototype =
 					}
 				}
 				for (var key in oFontMap) {
-					fonts.push(new CFont(key, 0, "", 0));
+					fonts.push(new CFont(key));
 				}
 			}
 			if (bIsEmptyContent) {
@@ -5673,7 +5673,7 @@ PasteProcessor.prototype =
 
 			fonts = [];
 			for (var i in font_map) {
-				fonts.push(new CFont(i, 0, "", 0));
+				fonts.push(new CFont(i));
 			}
 
 			if (tempParagraph)
@@ -5734,7 +5734,7 @@ PasteProcessor.prototype =
 
 			if (!t.oFonts[fontFamily]) {
 				t.oFonts[fontFamily] = {Name: fontFamily, Index: -1};
-				fonts.push(new CFont(fontFamily, 0, "", 0));
+				fonts.push(new CFont(fontFamily));
 			}
 		};
 
@@ -5973,7 +5973,7 @@ PasteProcessor.prototype =
 
 			if (!t.oFonts[fontFamily]) {
 				t.oFonts[fontFamily] = {Name: fontFamily, Index: -1};
-				fonts.push(new CFont(fontFamily, 0, "", 0));
+				fonts.push(new CFont(fontFamily));
 			}
 		};
 
@@ -6613,7 +6613,7 @@ PasteProcessor.prototype =
 				var oFontItem = this.oFonts[font_family];
 				//Ищем среди наших шрифтов
 				this.oFonts[font_family].Index = -1;
-				aPrepeareFonts.push(new CFont(oFontItem.Name, 0, "", 0));
+				aPrepeareFonts.push(new CFont(oFontItem.Name));
 			}
 
 			return aPrepeareFonts;
@@ -11029,7 +11029,7 @@ function Check_LoadingDataBeforePrepaste(_api, _fonts, _images, _callback)
     let aPrepeareFonts = [];
     for (var font_family in _fonts)
     {
-        aPrepeareFonts.push(new CFont(font_family, 0, "", 0));
+        aPrepeareFonts.push(new CFont(font_family));
     }
     AscFonts.FontPickerByCharacter.extendFonts(aPrepeareFonts);
 
