@@ -12316,62 +12316,7 @@ CDocument.prototype.SetWatermarkProps = function(oProps)
 		return;
 
 	this.StartAction(AscDFH.historydescription_Document_AddWatermark);
-	const SectionPageInfo = this.Get_SectionPageNumInfo(this.CurPage);
-	const bFirst = SectionPageInfo.bFirst;
-	const bEven  = SectionPageInfo.bEven;
-	const HdrFtr = this.Get_SectionHdrFtr(this.CurPage, bFirst, bEven);
-	let Header = HdrFtr.Header;
-	if(null === Header)
-	{
-		if(Asc.c_oAscWatermarkType.None === oProps.get_Type())
-		{
-			this.FinalizeAction(true);
-			return;
-		}
-		Header = this.Create_SectionHdrFtr(hdrftr_Header, this.CurPage);
-	}
-	let oWatermark = Header.FindWatermark();
-	if(oWatermark)
-	{
-		if(oWatermark.GraphicObj.selected)
-		{
-			this.RemoveSelection(true);
-		}
-		oWatermark.Remove_FromDocument(false);
-	}
-	oWatermark = this.DrawingObjects.createWatermark(oProps);
-	if(oWatermark)
-	{
-		const oDocState = this.Get_SelectionState2();
-		const oContent = Header.Content;
-		let oWatermarkCC = null;
-		const aAllContentControls = oContent.GetAllContentControls();
-		const nCount = aAllContentControls.length;
-		for(let nContentControl = 0; nContentControl < nCount; ++nContentControl)
-		{
-			let oContentControl = aAllContentControls[nContentControl];
-			let oDocPart = oContentControl.Pr.DocPartObj;
-			if(oDocPart.Gallery === "Watermarks" && oDocPart.Unique)
-			{
-				oWatermarkCC = oContentControl;
-				break;
-			}
-		}
-		if(!oWatermarkCC)
-		{
-			oWatermarkCC = oContent.AddContentControl(c_oAscSdtLevelType.Inline);
-			oWatermarkCC.SetDocPartObj(undefined, "Watermarks", true);
-		}
-		if(oWatermarkCC.IsBlockLevel())
-		{
-			oWatermarkCC.AddToParagraph(oWatermark);
-		}
-		else
-		{
-			oWatermarkCC.Add(oWatermark);
-		}
-		this.Set_SelectionState2(oDocState);
-	}
+	this.SetWatermarkPropsAction(oProps);
 	this.Recalculate();
 	this.Document_UpdateInterfaceState();
 	this.Document_UpdateSelectionState();
@@ -12379,6 +12324,66 @@ CDocument.prototype.SetWatermarkProps = function(oProps)
 	this.FinalizeAction(true);
 };
 
+CDocument.prototype.SetWatermarkPropsAction = function(oProps)
+{
+    const SectionPageInfo = this.Get_SectionPageNumInfo(this.CurPage);
+    const bFirst = SectionPageInfo.bFirst;
+    const bEven  = SectionPageInfo.bEven;
+    const HdrFtr = this.Get_SectionHdrFtr(this.CurPage, bFirst, bEven);
+    let Header = HdrFtr.Header;
+    if(null === Header)
+    {
+        if(Asc.c_oAscWatermarkType.None === oProps.get_Type())
+        {
+            this.FinalizeAction(true);
+            return;
+        }
+        Header = this.Create_SectionHdrFtr(hdrftr_Header, this.CurPage);
+    }
+    let oWatermark = Header.FindWatermark();
+    if(oWatermark)
+    {
+        if(oWatermark.GraphicObj.selected)
+        {
+            this.RemoveSelection(true);
+        }
+        oWatermark.Remove_FromDocument(false);
+    }
+    oWatermark = this.DrawingObjects.createWatermark(oProps);
+    if(oWatermark)
+    {
+        const oDocState = this.Get_SelectionState2();
+        const oContent = Header.Content;
+        let oWatermarkCC = null;
+        const aAllContentControls = oContent.GetAllContentControls();
+        const nCount = aAllContentControls.length;
+        for(let nContentControl = 0; nContentControl < nCount; ++nContentControl)
+        {
+            let oContentControl = aAllContentControls[nContentControl];
+            let oDocPart = oContentControl.Pr.DocPartObj;
+            if(oDocPart.Gallery === "Watermarks" && oDocPart.Unique)
+            {
+                oWatermarkCC = oContentControl;
+                break;
+            }
+        }
+        if(!oWatermarkCC)
+        {
+            oWatermarkCC = oContent.AddContentControl(c_oAscSdtLevelType.Inline);
+            oWatermarkCC.SetDocPartObj(undefined, "Watermarks", true);
+        }
+        if(oWatermarkCC.IsBlockLevel())
+        {
+            oWatermarkCC.AddToParagraph(oWatermark);
+        }
+        else
+        {
+            oWatermarkCC.Add(oWatermark);
+        }
+        this.Set_SelectionState2(oDocState);
+        return oWatermark;
+    }
+};
 /**
  * Отключаем отсылку сообщений в интерфейс.
  */

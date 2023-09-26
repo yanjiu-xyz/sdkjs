@@ -428,31 +428,48 @@ CGraphicObjects.prototype =
             return null;
         }
 
-		var bTrackRevisions = false;
+		let bTrackRevisions = false;
 		if (this.document.IsTrackRevisions())
 		{
 			bTrackRevisions = this.document.GetLocalTrackRevisions();
 			this.document.SetLocalTrackRevisions(false);
 		}
 
-        var oDrawing, extX, extY;
-        var oSectPr = this.document.Get_SectionProps();
-        var dMaxWidth = oSectPr.get_W() - oSectPr.get_LeftMargin() - oSectPr.get_RightMargin();
-        var dMaxHeight = oSectPr.get_H() - oSectPr.get_TopMargin() - oSectPr.get_BottomMargin();
+        let oDrawing, extX, extY;
+        let oSectPr = this.document.Get_SectionProps();
+        let dMaxWidth = oSectPr.get_W() - oSectPr.get_LeftMargin() - oSectPr.get_RightMargin();
+        let dMaxHeight = oSectPr.get_H() - oSectPr.get_TopMargin() - oSectPr.get_BottomMargin();
+        let nOpacity = oProps.get_Opacity();
         if(oProps.get_Type() === Asc.c_oAscWatermarkType.Image)
         {
             var oImgP = new Asc.asc_CImgProperty();
             oImgP.ImageUrl = oProps.get_ImageUrl();
             var oSize = oImgP.asc_getOriginSize(this.getEditorApi());
             var dScale = oProps.get_Scale();
-            if(dScale < 0)
+            let nImageW = oProps.get_ImageWidth();
+            let nImageH = oProps.get_ImageHeight();
+            if(AscFormat.isRealNumber(nImageW) && AscFormat.isRealNumber(nImageH) &&
+                nImageW > 0 && nImageH > 0) {
+                extX = nImageW / 36000;
+                extY = nImageH / 36000;
+            }
+            else if(dScale < 0)
             {
-                extX = dMaxWidth;
-                extY = oSize.asc_getImageHeight() * (extX / oSize.asc_getImageWidth());
-                if(extY > dMaxHeight)
-                {
-                    extY = dMaxHeight;
-                    extX = oSize.asc_getImageWidth() * (extY / oSize.asc_getImageHeight());
+                let nImageW = oProps.get_ImageWidth();
+                let nImageH = oProps.get_ImageWidth();
+                if(AscFormat.isRealNumber(nImageW) && AscFormat.isRealNumber(nImageH) &&
+                    nImageW > 0 && nImageH > 0) {
+                    extX = nImageW / 36000;
+                    extY = nImageH / 36000;
+                }
+                else {
+                    extX = dMaxWidth;
+                    extY = oSize.asc_getImageHeight() * (extX / oSize.asc_getImageWidth());
+                    if(extY > dMaxHeight)
+                    {
+                        extY = dMaxHeight;
+                        extX = oSize.asc_getImageWidth() * (extY / oSize.asc_getImageHeight());
+                    }
                 }
             }
             else
@@ -460,7 +477,25 @@ CGraphicObjects.prototype =
                 extX = oSize.asc_getImageWidth() * dScale;
                 extY = oSize.asc_getImageHeight() * dScale;
             }
-            oDrawing = this.createImage(oProps.get_ImageUrl(), 0, 0, extX, extY, null, null)
+            oDrawing = this.createImage(oProps.get_ImageUrl(), 0, 0, extX, extY, null, null);
+            let dRot = oProps.getXfrmRot();
+            let bZeroAngle = AscFormat.fApproxEqual(0.0, dRot);
+            if(!bZeroAngle)
+            {
+                oDrawing.spPr.xfrm.setRot(dRot);
+            }
+            if(AscFormat.isRealNumber(nOpacity) && nOpacity < 255)
+            {
+                if(oDrawing.blipFill)
+                {
+                    let oBlipFill = oDrawing.blipFill.createDuplicate();
+                    let oEffect = new AscFormat.CAlphaModFix();
+                    let nAmt = ((255 - nOpacity) / 255) * 100000 + 0.5 >> 0;
+                    oEffect.amt = Math.max(0, Math.min(100000, nAmt));
+                    oBlipFill.Effects.push(oEffect);
+                    oDrawing.setBlipFill(oBlipFill);
+                }
+            }
         }
         else
         {
@@ -475,8 +510,11 @@ CGraphicObjects.prototype =
             oXfrm.setOffY(0);
             oXfrm.setExtX(5);
             oXfrm.setExtY(5);
-            if(oProps.get_IsDiagonal() !== false){
-                oXfrm.setRot(7*Math.PI/4);
+            let dRot = oProps.getXfrmRot();
+            let bZeroAngle = AscFormat.fApproxEqual(0.0, dRot);
+            if(!bZeroAngle)
+            {
+                oXfrm.setRot(dRot);
             }
             oSpPr.setXfrm(oXfrm);
             oXfrm.setParent(oSpPr);
@@ -491,6 +529,7 @@ CGraphicObjects.prototype =
             oTextPr.FontSize = (oTextPropMenu.get_FontSize() > 0 ? oTextPropMenu.get_FontSize() : 20);
             oTextPr.RFonts.SetAll(oTextPropMenu.get_FontFamily().get_Name(), -1);
             oTextPr.Bold = oTextPropMenu.get_Bold();
+            oTextPr.HighLight = oTextPropMenu.get_HighLight();
             oTextPr.Italic = oTextPropMenu.get_Italic();
             oTextPr.Underline = oTextPropMenu.get_Underline();
             oTextPr.Strikeout = oTextPropMenu.get_Strikeout();
@@ -532,7 +571,7 @@ CGraphicObjects.prototype =
             oXfrm.setExtY(oContentSize.h);
             if(oTextPropMenu.get_FontSize() < 0)
             {
-                if(oProps.get_IsDiagonal())
+                if(!bZeroAngle)
                 {
                     extX = Math.SQRT2*Math.min(dMaxWidth, dMaxHeight) / (oContentSize.h / oContentSize.w + 1);
                 }
