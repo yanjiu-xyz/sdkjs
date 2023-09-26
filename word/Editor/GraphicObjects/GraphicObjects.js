@@ -428,17 +428,18 @@ CGraphicObjects.prototype =
             return null;
         }
 
-		var bTrackRevisions = false;
+		let bTrackRevisions = false;
 		if (this.document.IsTrackRevisions())
 		{
 			bTrackRevisions = this.document.GetLocalTrackRevisions();
 			this.document.SetLocalTrackRevisions(false);
 		}
 
-        var oDrawing, extX, extY;
-        var oSectPr = this.document.Get_SectionProps();
-        var dMaxWidth = oSectPr.get_W() - oSectPr.get_LeftMargin() - oSectPr.get_RightMargin();
-        var dMaxHeight = oSectPr.get_H() - oSectPr.get_TopMargin() - oSectPr.get_BottomMargin();
+        let oDrawing, extX, extY;
+        let oSectPr = this.document.Get_SectionProps();
+        let dMaxWidth = oSectPr.get_W() - oSectPr.get_LeftMargin() - oSectPr.get_RightMargin();
+        let dMaxHeight = oSectPr.get_H() - oSectPr.get_TopMargin() - oSectPr.get_BottomMargin();
+        let nOpacity = oProps.get_Opacity();
         if(oProps.get_Type() === Asc.c_oAscWatermarkType.Image)
         {
             var oImgP = new Asc.asc_CImgProperty();
@@ -446,7 +447,7 @@ CGraphicObjects.prototype =
             var oSize = oImgP.asc_getOriginSize(this.getEditorApi());
             var dScale = oProps.get_Scale();
             let nImageW = oProps.get_ImageWidth();
-            let nImageH = oProps.get_ImageWidth();
+            let nImageH = oProps.get_ImageHeight();
             if(AscFormat.isRealNumber(nImageW) && AscFormat.isRealNumber(nImageH) &&
                 nImageW > 0 && nImageH > 0) {
                 extX = nImageW / 36000;
@@ -476,7 +477,25 @@ CGraphicObjects.prototype =
                 extX = oSize.asc_getImageWidth() * dScale;
                 extY = oSize.asc_getImageHeight() * dScale;
             }
-            oDrawing = this.createImage(oProps.get_ImageUrl(), 0, 0, extX, extY, null, null)
+            oDrawing = this.createImage(oProps.get_ImageUrl(), 0, 0, extX, extY, null, null);
+            let dRot = oProps.getXfrmRot();
+            let bZeroAngle = AscFormat.fApproxEqual(0.0, dRot);
+            if(!bZeroAngle)
+            {
+                oDrawing.spPr.xfrm.setRot(dRot);
+            }
+            if(AscFormat.isRealNumber(nOpacity) && nOpacity < 255)
+            {
+                if(oDrawing.blipFill)
+                {
+                    let oBlipFill = oDrawing.blipFill.createDuplicate();
+                    let oEffect = new AscFormat.CAlphaModFix();
+                    let nAmt = ((255 - nOpacity) / 255) * 100000 + 0.5 >> 0;
+                    oEffect.amt = Math.max(0, Math.min(100000, nAmt));
+                    oBlipFill.Effects.push(oEffect);
+                    oDrawing.setBlipFill(oBlipFill);
+                }
+            }
         }
         else
         {
