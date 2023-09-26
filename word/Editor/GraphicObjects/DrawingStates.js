@@ -566,8 +566,7 @@ MoveInlineObject.prototype =
     onMouseUp: function(e, x,y,pageIndex)
     {
         var check_paragraphs = [];
-	    const bIsMac = AscCommon.AscBrowser.isMacOs;
-	    const bIsCopyKey = bIsMac ? e.AltKey : e.CtrlKey;
+
 		if (this.majorObject.parent.CanInsertToPos(this.InlinePos))
 		{
 			var oDstRun = null;
@@ -626,7 +625,7 @@ MoveInlineObject.prototype =
 					this.drawingObjects.document.FinalizeAction();
 				}
 			}
-			else if(!bIsCopyKey)
+			else if(!e.CtrlKey)
 			{
 				var arrCheckTypes = [];
 
@@ -823,9 +822,7 @@ RotateState.prototype =
                 {
                     var aCheckParagraphs = [], aNearestPos = [], aParentParagraphs = [], aBounds = [], aDrawings = [], bMoveState = (this instanceof MoveState), nearest_pos;
                     var i, j, page_index, para_drawing;
-										const bIsMac = AscCommon.AscBrowser.isMacOs;
-	                const bIsCopyKey = bIsMac ? e.AltKey : e.CtrlKey;
-	                for(i = 0; i < aTracks.length; ++i)
+                    for(i = 0; i < aTracks.length; ++i)
                     {
                         aDrawings[i] = aTracks[i].originalObject.parent;
                         bounds = aTracks[i].getBounds();
@@ -835,7 +832,7 @@ RotateState.prototype =
                         aNearestPos.push(nearest_pos);
                         aParentParagraphs.push(aDrawings[i].Get_ParentParagraph());
                     }
-                    if(bMoveState && bIsCopyKey && !this.drawingObjects.selection.cropSelection)
+                    if(bMoveState && e.CtrlKey && !this.drawingObjects.selection.cropSelection)
                     {
                         for(i = 0; i < aNearestPos.length; ++i)
                         {
@@ -1545,9 +1542,7 @@ MoveInGroupState.prototype =
             var i;
             var tracks = [].concat(this.drawingObjects.arrTrackObjects);
             this.drawingObjects.resetTrackState();
-            const bIsMac = AscCommon.AscBrowser.isMacOs;
-            const bIsCopyKey = bIsMac ? e.AltKey : e.CtrlKey;
-            if(this instanceof MoveInGroupState && bIsCopyKey && !this.hasObjectInSmartArt)
+            if(this instanceof MoveInGroupState && e.CtrlKey && !this.hasObjectInSmartArt)
             {
                 this.group.resetSelection();
                 for(i = 0; i < tracks.length; ++i)

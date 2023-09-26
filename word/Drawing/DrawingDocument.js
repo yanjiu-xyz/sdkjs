@@ -6023,11 +6023,7 @@ function CDrawingDocument()
 		this.InlineTextTrackEnabled = false;
 
 		if (true !== isOnlyMoveTarget)
-		{
-			const bIsMac = AscCommon.AscBrowser.isMacOs;
-			const bCopy = bIsMac ? AscCommon.global_keyboardEvent.AltKey : AscCommon.global_keyboardEvent.CtrlKey;
-			this.m_oWordControl.m_oLogicDocument.OnEndTextDrag(this.InlineTextTrack, bCopy);
-		}
+			this.m_oWordControl.m_oLogicDocument.OnEndTextDrag(this.InlineTextTrack, AscCommon.global_keyboardEvent.CtrlKey);
 		else if (this.InlineTextTrack)
 		{
 			var Paragraph = this.InlineTextTrack.Paragraph;
