@@ -136,6 +136,8 @@
 
             if (null != this.fontFile.callback)
                 this.fontFile.callback();
+            if (this.fontFile["externalCallback"])
+                this.fontFile["externalCallback"]();
         };
         xhr.onerror = function()
         {

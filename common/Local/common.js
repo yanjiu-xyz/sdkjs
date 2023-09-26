@@ -134,7 +134,7 @@ AscFonts.CFontFileLoader.prototype.LoadFontAsync = function(basePath, _callback)
 			return;
 		}
 
-		xhr.fontFile.Status = 0;
+		this.fontFile.Status = 0;
 
 		let fontStreams = AscFonts.g_fonts_streams;
 		let streamIndex = fontStreams.length;
@@ -148,10 +148,12 @@ AscFonts.CFontFileLoader.prototype.LoadFontAsync = function(basePath, _callback)
 			fontStreams[streamIndex] = AscFonts.CreateFontData3(this.responseText);
 		}
 
-		xhr.fontFile.SetStreamIndex(streamIndex);
+		this.fontFile.SetStreamIndex(streamIndex);
 
-		if (null != xhr.fontFile.callback)
-			xhr.fontFile.callback();
+		if (null != this.fontFile.callback)
+			this.fontFile.callback();
+		if (this.fontFile["externalCallback"])
+			this.fontFile["externalCallback"]();
 	};
 
 	xhr.send(null);
