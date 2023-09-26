@@ -34,6 +34,16 @@
 
 (function(window)
 {
+	let STYLES = new AscWord.CStyles(false);
+	STYLES.Default.TextPr.Merge({
+		RFonts : {
+			Ascii : AscPDF.DEFAULT_FIELD_FONT,
+			EastAsia : AscPDF.DEFAULT_FIELD_FONT,
+			HAnsi : AscPDF.DEFAULT_FIELD_FONT,
+			CS : AscPDF.DEFAULT_FIELD_FONT
+		}
+	});
+	
 	/**
 	 * Class for working with rich text
 	 * @param parent - parent class in PDF structure
@@ -51,7 +61,6 @@
 		
 		this.SetUseXLimit(false);
 		this.MoveCursorToStartPos();
-		this.SetFont(AscPDF.DEFAULT_FIELD_FONT);
 	}
 	
 	CTextBoxContent.prototype = Object.create(AscWord.CDocumentContent.prototype);
@@ -97,15 +106,24 @@
 	CTextBoxContent.prototype.OnContentReDraw = function() {
 		// TODO: Реализовать
 	};
+	CTextBoxContent.prototype.GetStyles = function() {
+		return STYLES;
+	};
 	CTextBoxContent.prototype.SetFont = function(fontName) {
 		this.SetApplyToAll(true);
 		this.AddToParagraph(new AscWord.ParaTextPr({RFonts : {Ascii : {Name : fontName, Index : -1}}}));
+		this.SetApplyToAll(false);
+	};
+	CTextBoxContent.prototype.SetFontSize = function(fontSize) {
+		this.SetApplyToAll(true);
+		this.AddToParagraph(new AscWord.ParaTextPr({FontSize : fontSize}));
 		this.SetApplyToAll(false);
 	};
 	
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscPDF'] = window['AscPDF'] || {};
 	window['AscPDF'].CTextBoxContent = CTextBoxContent;
+	
 	
 })(window);
 

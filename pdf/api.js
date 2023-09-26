@@ -784,9 +784,6 @@
 		
 		this.bInit_word_control = true;
 		
-		if (false === this.isPasteFonts_Images)
-			this.onDocumentContentReady();
-		
 		this.WordControl.InitControl();
 		
 		if (this.isViewMode)

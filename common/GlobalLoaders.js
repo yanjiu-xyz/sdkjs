@@ -467,7 +467,7 @@
             }
 			let count_images = this.images_loading.length;
 
-            if (0 === _count_images)
+            if (0 === count_images)
             {
 				this.nNoByOrderCounter = 0;
 
