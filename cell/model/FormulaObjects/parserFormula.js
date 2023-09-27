@@ -467,8 +467,6 @@ var cErrorType = {
 		not_available       : 7,
 		getting_data        : 8
   };
-
-
 //добавляю константу cReturnFormulaType для корректной обработки формул массива
 // value - функция умеет возвращать только значение(не массив)
 // в этом случае данная функция вызывается множество раз для каждого элемента внутренних массивов
@@ -505,6 +503,13 @@ var cNumFormatNull = -3;
 var g_nFormulaStringMaxLength = 255;
 
 
+// set type weight of base types
+let cElementTypeWeight =  new Map();
+	cElementTypeWeight.set(cElementType.number, 0);
+	cElementTypeWeight.set(cElementType.empty, 0);
+	cElementTypeWeight.set(cElementType.string, 1);
+	cElementTypeWeight.set(cElementType.bool, 2);
+	cElementTypeWeight.set(cElementType.error, 3);
 
 
 
@@ -5134,9 +5139,9 @@ _func[cElementType.number][cElementType.array] = _func[cElementType.string][cEle
 
 
 _func.binarySearch = function ( sElem, arrTagert, regExp ) {
-	var first = 0, /* Номер первого элемента в массиве */
-		last = arrTagert.length - 1, /* Номер элемента в массиве, СЛЕДУЮЩЕГО ЗА последним */
-		/* Если просматриваемый участок непустой, first<last */
+	var first = 0, /* The number of the first element in the array */
+		last = arrTagert.length - 1, /* The number of the element in the array that comes AFTER the last one */
+		/* If the viewed segment is not empty, first<last */
 		mid;
 
 	var arrTagertOneType = [], isString = false;
@@ -5154,31 +5159,49 @@ _func.binarySearch = function ( sElem, arrTagert, regExp ) {
 		}
 	}
 
+	// comparing the lengths of arrays and the first and last element
 	if (arrTagert.length === 0) {
 		return -1;
-		/* массив пуст */
+		/* array empty */
 	} else if (arrTagert[0].value > sElem.value) {
 		return -2;
 	} else if (arrTagert[arrTagert.length - 1].value < sElem.value) {
 		return arrTagert.length - 1;
 	}
 
+	// according to the sorting in MS, the comparison will be like this: cError > cBool > cText > (cNumber == cEmpty)
 	while (first < last) {
 		mid = Math.floor(first + (last - first) / 2);
-		if (sElem.value <= arrTagert[mid].value || ( regExp && regExp.test(arrTagert[mid].value) )) {
-			last = mid;
+		if (sElem.type !== arrTagert[mid].type) {
+			if (sElem.type === cElementType.empty || arrTagert[mid].type === cElementType.empty) {
+				if (sElem.value <= arrTagert[mid].value) {
+					// cEmpty.tocNumber() ?
+					last = mid;
+				}
+			} else {
+				if (cElementTypeWeight.get(sElem.type) < cElementTypeWeight.get(arrTagert[mid].type)) {
+					last = mid;
+				} else {
+					first = mid + 1;
+				}
+			}
 		} else {
-			first = mid + 1;
+			// if cError && cError ?
+			if (sElem.value < arrTagert[mid].value || ( regExp && regExp.test(arrTagert[mid].value) )) {
+				last = mid;
+			} else {
+				first = mid + 1;
+			}
 		}
 	}
 
-	/* Если условный оператор if(n==0) и т.д. в начале опущен - значит, тут раскомментировать!    */
+	/* If the conditional operator if(n==0) and so on is omitted at the beginning - then uncomment it here!    */
 	if (/* last<n &&*/ arrTagert[last].value === sElem.value) {
 		return last;
-		/* Искомый элемент найден. last - искомый индекс */
+		/* The desired element is found. last is the desired index */
 	} else {
 		return last - 1;
-		/* Искомый элемент не найден. Но если вам вдруг надо его вставить со сдвигом, то его место - last.    */
+		/* The desired element is not found. But if you suddenly need to insert it with a shift, its place is at last.    */
 	}
 
 };
@@ -5193,9 +5216,9 @@ _func.binarySearchByRange = function ( sElem, area, regExp ) {
 		ws = area.ws;
 	}
 	var bVertical = bbox.r2 - bbox.r1 >= bbox.c2 - bbox.c1;//r>=c
-	var first = 0, /* Номер первого элемента в массиве */
-		last = bVertical ? bbox.r2 - bbox.r1 : bbox.c2 - bbox.c1, /* Номер элемента в массиве, СЛЕДУЮЩЕГО ЗА последним */
-		/* Если просматриваемый участок непустой, first<last */
+	var first = 0, /* The number of the first element in the array */
+		last = bVertical ? bbox.r2 - bbox.r1 : bbox.c2 - bbox.c1, /* The number of the element in the array that comes AFTER the last one */
+		/* If the viewed segment is not empty, first<last */
 		mid;
 
 	var getValuesNoEmpty = function () {
@@ -5220,7 +5243,6 @@ _func.binarySearchByRange = function ( sElem, area, regExp ) {
 
 	if (noEmptyValues.length === 0) {
 		return -1;
-		/* массив пуст */
 	} else if (noEmptyValues[0].value > sElem.value) {
 		return -2;
 	} else if (noEmptyValues[last].value < sElem.value) {
@@ -5238,15 +5260,28 @@ _func.binarySearchByRange = function ( sElem, area, regExp ) {
 		}
 	}
 
-	/* Если условный оператор if(n==0) и т.д. в начале опущен - значит, тут раскомментировать!    */
+	/* If the conditional operator if(n==0) and so on is omitted at the beginning - then uncomment it here!    */
 	if (/* last<n &&*/ noEmptyValues[last].value === sElem.value) {
 		return mapEmptyFullValues[last];
-		/* Искомый элемент найден. last - искомый индекс */
+		/* The desired element is found. last is the desired index */
 	} else {
 		return mapEmptyFullValues[last - 1];
-		/* Искомый элемент не найден. Но если вам вдруг надо его вставить со сдвигом, то его место - last.    */
+		/* The desired element is not found. But if you suddenly need to insert it with a shift, its place is at last.    */
 	}
 
+};
+
+
+_func.getLastMatch = function (index, value, array) {
+	let resIndex = index;
+	for (let i = index; i < array.length; i++) {
+		if (array[i].type === value.type && array[i].value === value.value) {
+			resIndex = i;
+		} else {
+			break;
+		}
+	}
+	return resIndex;
 };
 
 _func[cElementType.number][cElementType.cell] = function ( arg0, arg1, what, bbox ) {
@@ -8791,6 +8826,7 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].cElementType = cElementType;
 	window['AscCommonExcel'].cErrorType = cErrorType;
+	window['AscCommonExcel'].cElementTypeWeight = cElementTypeWeight;
 	window['AscCommonExcel'].cExcelSignificantDigits = cExcelSignificantDigits;
 	window['AscCommonExcel'].cExcelMaxExponent = cExcelMaxExponent;
 	window['AscCommonExcel'].cExcelMinExponent = cExcelMinExponent;
