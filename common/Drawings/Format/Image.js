@@ -193,6 +193,7 @@
 		CImageShape.prototype.getWatermarkProps = function () {
 			var oProps = new Asc.CAscWatermarkProperties();
 			oProps.put_Type(Asc.c_oAscWatermarkType.Image);
+			oProps.setXfrmRot(AscFormat.normalizeRotate(this.getXfrmRot() || 0));
 			oProps.put_ImageUrl2(this.blipFill.RasterImageId);
 			oProps.put_Scale(-1);
 			oProps.put_ImageSize(this.extX * 36000 + 0.5 >> 0, this.extY * 36000 + 0.5 >> 0);

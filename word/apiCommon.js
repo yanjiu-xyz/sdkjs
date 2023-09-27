@@ -2105,6 +2105,11 @@
 		}
 		return 0;
 	};
+	CAscWatermarkProperties.prototype.setXfrmRot = function (dRot) {
+		if(AscFormat.isRealNumber(dRot) && dRot > 0) {
+			this.Angle = (360 - 180 * (dRot / Math.PI)) + 0.5 >> 0;
+		}
+	};
 
 	CAscWatermarkProperties.prototype['put_ImageUrl'] = CAscWatermarkProperties.prototype.put_ImageUrl = function (sUrl, token) {
 		var _this = this;
