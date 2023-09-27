@@ -4428,7 +4428,7 @@
 
 		for (let nPos = 1; nPos < nLen; ++nPos)
 		{
-			if (sLetters.charCodeAt(0) !== nFirstCharCode)
+			if (sLetters.charCodeAt(nPos) !== nFirstCharCode)
 				return NaN;
 		}
 		return nFirstCharCode - nSub + 29 * (nLen - 1);
