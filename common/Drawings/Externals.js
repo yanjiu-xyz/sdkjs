@@ -162,10 +162,17 @@
             if (-1 !== this.Status)
                 return true;
 
-            this.callback = callback;
-            this.Status = 2;
             window["AscDesktopEditor"]["LoadFontBase64"](this.Id);
-            this._callback_font_load();
+
+            let streams_count = g_fonts_streams.length;
+            g_fonts_streams[streams_count] = AscFonts.CreateFontData4(window[this.Id]);
+            this.SetStreamIndex(streams_count);
+
+            this.Status = 0;
+            delete window[this.Id];
+
+            if (callback)
+                callback();
             return;
         }
 
