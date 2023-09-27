@@ -534,7 +534,11 @@ CGraphicObjects.prototype =
             oTextPr.Underline = oTextPropMenu.get_Underline();
             oTextPr.Strikeout = oTextPropMenu.get_Strikeout();
             oTextPr.TextFill = AscFormat.CreateUnifillFromAscColor(oTextPropMenu.get_Color(), 1);
-            oTextPr.TextFill.transparent = (oProps.get_Opacity() < 255 ? 127.5 : null);
+            let nOpacity = oProps.get_Opacity();
+            if(AscFormat.isRealNumber(nOpacity) && nOpacity < 255)
+            {
+                oTextPr.TextFill.transparent = (nOpacity >> 0);
+            }
             if(null !== oTextPropMenu.get_Lang())
             {
                 oTextPr.SetLang(oTextPropMenu.get_Lang());
