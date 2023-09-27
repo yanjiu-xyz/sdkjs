@@ -3330,17 +3330,7 @@
 				
 				if (this.pagesInfo.pages[i].fields != null) {
 					this.pagesInfo.pages[i].fields.forEach(function(field) {
-						if (field.IsNeedDrawFromStream() == false)
-							field.Draw(oGraphicsPDF, oGraphicsWord);
-						else
-							field.Recalculate();
-					});
-				}
-				if (this.pagesInfo.pages[i].fields != null) {
-					this.pagesInfo.pages[i].fields.forEach(function(field) {
-						// если форма не менялась, рисуем внешний вид из потока
-						if (field.IsNeedDrawFromStream() == true)
-							field.DrawFromStream(oGraphicsPDF);
+						field.DrawOnPage(oGraphicsPDF, oGraphicsWord, i);
 					});
 				}
 				
@@ -3761,6 +3751,14 @@
 		
 		if (!this.Api.isMobileVersion || !this.skipClearZoomCoord)
 			this.clearZoomCoord();
+	};
+	CHtmlPage.prototype.repaintFormsOnPage = function(pageIndex)
+	{
+		if (this.pagesInfo.pages.length > pageIndex)
+		{
+			this.pagesInfo.pages[pageIndex].needRedrawForms = true;
+			this.isRepaint = true;
+		}
 	};
 
 	function CCurrentPageDetector(w, h)

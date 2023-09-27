@@ -1599,11 +1599,18 @@
 
         return null;
     };
+	
+	CBaseField.prototype.DrawOnPage = function(pdfGraphics, textBoxGraphics, pageIndex) {
+		if (this.IsHidden())
+			return;
+		
+		if (this.IsNeedDrawFromStream())
+			this.DrawFromStream(pdfGraphics);
+		else
+			this.DrawFromTextBox(pdfGraphics, textBoxGraphics, pageIndex);
+	};
 
     CBaseField.prototype.DrawFromStream = function(oGraphicsPDF) {
-        if (this.IsHidden() == true)
-            return;
-            
         let originView      = this.GetOriginView(this.IsHovered && this.IsHovered() ? AscPDF.APPEARANCE_TYPE.rollover : undefined);
         let nGrScale        = oGraphicsPDF.GetScale();
 
@@ -1611,6 +1618,20 @@
             oGraphicsPDF.DrawImage(originView, 0, 0, originView.width / nGrScale, originView.height / nGrScale, originView.x / nGrScale, originView.y / nGrScale, originView.width / nGrScale, originView.height / nGrScale);
         }
     };
+	CBaseField.prototype.DrawFromTextBox = function(pdfGraphics, textBoxGraphics, pageIndex) {
+		let _t = this;
+		if (!this._doc.checkDefaultFieldFonts(function() {
+			let viewer = _t._doc.GetDocumentRenderer();
+			if (!viewer)
+				return;
+			
+			viewer.repaintFormsOnPage(pageIndex);
+		})) {
+			return;
+		}
+		
+		this.Draw(pdfGraphics, textBoxGraphics);
+	};
     CBaseField.prototype.GetParent = function() {
         return this._parent;
     };

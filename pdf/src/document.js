@@ -133,6 +133,7 @@ var CPresentation = CPresentation || function(){};
 		
 		this.fontLoader = AscCommon.g_font_loader;
 		this.defaultFontsLoaded = -1; // -1 не загружены и не грузим, 0 - грузим, 1 - загружены
+		this.fontLoaderCallbacks = [];
     }
 
     /////////// методы для открытия //////////////
@@ -2119,6 +2120,9 @@ var CPresentation = CPresentation || function(){};
 		if (1 === this.defaultFontsLoaded)
 			return true;
 		
+		if (callback)
+			this.fontLoaderCallbacks.push(callback);
+
 		if (0 === this.defaultFontsLoaded)
 			return false;
 		
@@ -2129,8 +2133,11 @@ var CPresentation = CPresentation || function(){};
 			function()
 			{
 				_t.defaultFontsLoaded = 1;
-				if (callback)
+				_t.fontLoaderCallbacks.forEach(function(callback) {
 					callback();
+				});
+				
+				_t.fontLoaderCallbacks = [];
 			}
 		);
 
