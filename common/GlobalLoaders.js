@@ -410,7 +410,7 @@
         {
             if (isCheckExists)
             {
-                for (let i = _images.length - 1; i >= 0; i--)
+                for (let i = images.length - 1; i >= 0; i--)
                 {
                     let id = AscCommon.getFullImageSrc2(images[i]);
                     if (this.map_image_index[id] && (this.map_image_index[id].Status === ImageLoadStatus.Complete))
