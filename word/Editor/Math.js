@@ -3286,6 +3286,9 @@ ParaMath.prototype.ConvertView = function(isToLinear, nInputType)
 		nInputType = oApi ? oApi.getMathInputType() : Asc.c_oAscMathInputType.Unicode;
 	}
 
+	if (this.IsEmpty())
+		return;
+
 	if (isToLinear)
 	{
 		if (Asc.c_oAscMathInputType.Unicode === nInputType)
