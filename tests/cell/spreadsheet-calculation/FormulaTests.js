@@ -5879,6 +5879,10 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "02 00");
 
+		oParser = new parserFormula("TEXT(123,\"aaa-aaaa\")", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "Wed-Wednesday");
+
 		AscCommon.setCurrentCultureInfo(culturelciddefault);
 
 		//__________________________________fi________________________________________________
@@ -5927,6 +5931,10 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "00 qq");
 
+		oParser = new parserFormula("TEXT(123,\"aaa-aaaa\")", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "ke-keskiviikko");
+
 		AscCommon.setCurrentCultureInfo(culturelciddefault);
 
 		//__________________________________fy________________________________________________
@@ -5963,6 +5971,10 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "00 qq");
 
+		oParser = new parserFormula("TEXT(123,\"aaa-aaaa\")", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "wo-woensdag");
+
 		AscCommon.setCurrentCultureInfo(culturelciddefault);
 
 		//__________________________________es________________________________________________
@@ -5994,6 +6006,10 @@ $(function () {
 		oParser = new parserFormula("TEXT(123,\"hh qq\")", "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "00 qq");
+
+		oParser = new parserFormula("TEXT(123,\"ooo-oooo\")", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "mi.-miércoles");
 
 		AscCommon.setCurrentCultureInfo(culturelciddefault);
 
@@ -6088,6 +6104,10 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "05 00");
 
+		oParser = new parserFormula("TEXT(123,\"aaa-aaaa\")", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "Ср-среда");
+
 		AscCommon.setCurrentCultureInfo(culturelciddefault);
 
 		//__________________________________fr________________________________________________
@@ -6123,6 +6143,10 @@ $(function () {
 		oParser = new parserFormula("TEXT(123,\"hh qq\")", "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "00 qq");
+
+		oParser = new parserFormula("TEXT(123,\"ooo-oooo\")", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "mer.-mercredi");
 
 		AscCommon.setCurrentCultureInfo(culturelciddefault);
 
@@ -6168,6 +6192,10 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "0 2");
 
+		oParser = new parserFormula("TEXT(123,\"aaa-aaaa\")", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "Mi-Mittwoch");
+
 		AscCommon.setCurrentCultureInfo(culturelciddefault);
 
 		//_______________________________it___________________________________________________
@@ -6207,6 +6235,10 @@ $(function () {
 		oParser = new parserFormula("TEXT(123,\"hh qq\")", "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "00 qq");
+
+		oParser = new parserFormula("TEXT(123,\"ooo-oooo\")", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "mer-mercoledì");
 
 		AscCommon.setCurrentCultureInfo(culturelciddefault);
 
@@ -6252,6 +6284,10 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "00 qq");
 
+		oParser = new parserFormula("TEXT(123,\"aaa-aaaa\")", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "ons-onsdag");
+
 		AscCommon.setCurrentCultureInfo(culturelciddefault);
 		//_____________________________ch________________________________________________
 		AscCommon.setCurrentCultureInfo(1028);
@@ -6266,6 +6302,10 @@ $(function () {
 		oParser = new parserFormula("TEXT(123,\"dd hh\")", "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "02 00");
+
+		oParser = new parserFormula("TEXT(123,\"aaa-aaaa\")", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "週三-星期三");
 
 		AscCommon.setCurrentCultureInfo(culturelciddefault);
 		//_____________________________el________________________________________________
@@ -6306,6 +6346,10 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "00 02");
 
+		oParser = new parserFormula("TEXT(123,\"aaa-aaaa\")", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "Τετ-Τετάρτη");
+
 		AscCommon.setCurrentCultureInfo(culturelciddefault);
 
 		//_____________________________hu________________________________________________
@@ -6337,6 +6381,11 @@ $(function () {
 		oParser = new parserFormula("TEXT(123123123,\"# ###\")", "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "123 123 123");
+
+		oParser = new parserFormula("TEXT(123,\"aaa-aaaa\")", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "Sze-szerda");
+
 		AscCommon.setCurrentCultureInfo(culturelciddefault);
 		//_____________________________tr________________________________________________
 		AscCommon.setCurrentCultureInfo(1055);
@@ -6367,6 +6416,11 @@ $(function () {
 		oParser = new parserFormula("TEXT(123123123,\"#.###\")", "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "123.123.123");
+
+		oParser = new parserFormula("TEXT(123,\"aaa-aaaa\")", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "May-Mayıs");
+
 		AscCommon.setCurrentCultureInfo(culturelciddefault);
 		//_____________________________pl________________________________________________
 		AscCommon.setCurrentCultureInfo(1045);
@@ -6389,6 +6443,11 @@ $(function () {
 		oParser = new parserFormula("TEXT(123123123,\"# ###\")", "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "123 123 123");
+
+		oParser = new parserFormula("TEXT(123,\"aaa-aaaa\")", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "śr.-środa");
+
 		AscCommon.setCurrentCultureInfo(culturelciddefault);
 		//_____________________________cs________________________________________________
 		AscCommon.setCurrentCultureInfo(1029);
@@ -6424,6 +6483,10 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "00 qq");
 
+		oParser = new parserFormula("TEXT(123,\"aaa-aaaa\")", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "st-středa");
+
 		AscCommon.setCurrentCultureInfo(culturelciddefault);
 		//_____________________________ja________________________________________________
 		AscCommon.setCurrentCultureInfo(1041);
@@ -6451,6 +6514,11 @@ $(function () {
 		oParser = new parserFormula("TEXT(123123123,\"#,###\")", "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "123,123,123");
+
+		oParser = new parserFormula("TEXT(123,\"aaa-aaaa\")", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "수-수요일");
+
 		AscCommon.setCurrentCultureInfo(culturelciddefault);
 	});
 	QUnit.test("Test: \"TEXTJOIN\"", function (assert) {
