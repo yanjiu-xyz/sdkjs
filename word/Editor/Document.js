@@ -24087,6 +24087,7 @@ CDocument.prototype.ContinueNumbering = function()
 	var bFind                 = false;
 	var arrParagraphs         = this.GetAllParagraphsByNumbering(new CNumPr(oNumPr.NumId, null));
 	var arrParagraphsToChange = [];
+	AscWord.sortByDocumentPosition(arrParagraphs);
 
 	var isRelated = this.GetNumbering().GetNum(oNumPr.NumId).IsHaveRelatedLvlText();
 
@@ -24163,7 +24164,8 @@ CDocument.prototype.RestartNumbering = function(nRestartValue)
 	var arrParagraphs         = this.GetAllParagraphsByNumbering(new CNumPr(oNumPr.NumId, null));
 	var arrParagraphsToChange = [];
 	var isRelated             = this.Numbering.GetNum(oNumPr.NumId).IsHaveRelatedLvlText();
-
+	AscWord.sortByDocumentPosition(arrParagraphs);
+	
 	for (var nIndex = 0, nCount = arrParagraphs.length; nIndex < nCount; ++nIndex)
 	{
 		var oPara = arrParagraphs[nIndex];
