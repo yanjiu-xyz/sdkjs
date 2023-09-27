@@ -7959,7 +7959,7 @@ function BinaryPPTYLoader()
                 case 3:
                 {
                     var bIsHMerge = s.GetBool();
-                    if (bIsHMerge)
+                    if (bIsHMerge && cell.Index > 0)
                     {
                         s.Seek2(_end_rec);
                         return false;
