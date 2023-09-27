@@ -1463,31 +1463,34 @@ var CPresentation = CPresentation || function(){};
         if (aSelQuads.length == 0)
             return;
 
-        let aAllPoints = [];
-        aSelQuads.forEach(function(rect) {
-            aAllPoints = aAllPoints.concat(rect);
-        });
+        for (let nInfo = 0; nInfo < aSelQuads.length; nInfo++) {
+            let nPage   = aSelQuads[nInfo].page;
+            let aQuads  = aSelQuads[nInfo].quads;
 
-        let aMinRect = getMinRect(aAllPoints);
-        let MinX = aMinRect[0];
-        let MinY = aMinRect[1];
-        let MaxX = aMinRect[2];
-        let MaxY = aMinRect[3];
+            let aAllPoints = [];
+            aQuads.forEach(function(rect) {
+                aAllPoints = aAllPoints.concat(rect);
+            });
 
-        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+            let aMinRect = getMinRect(aAllPoints);
+            let MinX = aMinRect[0];
+            let MinY = aMinRect[1];
+            let MaxX = aMinRect[2];
+            let MaxY = aMinRect[3];
 
-        let oProps = {
-            rect:       [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
-            page:       pageObject.index,
-            name:       AscCommon.CreateGUID(),
-            type:       AscPDF.ANNOTATIONS_TYPES.Highlight,
-            hidden:     false
+            let oProps = {
+                rect:       [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
+                page:       nPage,
+                name:       AscCommon.CreateGUID(),
+                type:       AscPDF.ANNOTATIONS_TYPES.Highlight,
+                hidden:     false
+            }
+
+            let oAnnot = this.AddAnnot(oProps);
+
+            oAnnot.SetQuads(aQuads);
+            oAnnot.SetStrokeColor([r/255, g/255, b/255]);
         }
-
-        let oAnnot = this.AddAnnot(oProps);
-
-        oAnnot.SetQuads(aSelQuads);
-        oAnnot.SetStrokeColor([r/255, g/255, b/255]);
 
         editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Highlight, false);
         editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Highlight, false);
@@ -1506,31 +1509,34 @@ var CPresentation = CPresentation || function(){};
         if (aSelQuads.length == 0)
             return;
 
-        let aAllPoints = [];
-        aSelQuads.forEach(function(rect) {
-            aAllPoints = aAllPoints.concat(rect);
-        });
+        for (let nInfo = 0; nInfo < aSelQuads.length; nInfo++) {
+            let nPage   = aSelQuads[nInfo].page;
+            let aQuads  = aSelQuads[nInfo].quads;
 
-        let aMinRect = getMinRect(aAllPoints);
-        let MinX = aMinRect[0];
-        let MinY = aMinRect[1];
-        let MaxX = aMinRect[2];
-        let MaxY = aMinRect[3];
+            let aAllPoints = [];
+            aQuads.forEach(function(rect) {
+                aAllPoints = aAllPoints.concat(rect);
+            });
 
-        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+            let aMinRect = getMinRect(aAllPoints);
+            let MinX = aMinRect[0];
+            let MinY = aMinRect[1];
+            let MaxX = aMinRect[2];
+            let MaxY = aMinRect[3];
 
-        let oProps = {
-            rect:       [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
-            page:       pageObject.index,
-            name:       AscCommon.CreateGUID(),
-            type:       AscPDF.ANNOTATIONS_TYPES.Underline,
-            hidden:     false
+            let oProps = {
+                rect:       [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
+                page:       nPage,
+                name:       AscCommon.CreateGUID(),
+                type:       AscPDF.ANNOTATIONS_TYPES.Underline,
+                hidden:     false
+            }
+
+            let oAnnot = this.AddAnnot(oProps);
+
+            oAnnot.SetQuads(aQuads);
+            oAnnot.SetStrokeColor([r/255, g/255, b/255]);
         }
-
-        let oAnnot = this.AddAnnot(oProps);
-
-        oAnnot.SetQuads(aSelQuads);
-        oAnnot.SetStrokeColor([r/255, g/255, b/255]);
 
         editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Underline, false);
         editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Underline, false);
@@ -1549,31 +1555,34 @@ var CPresentation = CPresentation || function(){};
         if (aSelQuads.length == 0)
             return;
 
-        let aAllPoints = [];
-        aSelQuads.forEach(function(rect) {
-            aAllPoints = aAllPoints.concat(rect);
-        });
+        for (let nInfo = 0; nInfo < aSelQuads.length; nInfo++) {
+            let nPage   = aSelQuads[nInfo].page;
+            let aQuads  = aSelQuads[nInfo].quads;
 
-        let aMinRect = getMinRect(aAllPoints);
-        let MinX = aMinRect[0];
-        let MinY = aMinRect[1];
-        let MaxX = aMinRect[2];
-        let MaxY = aMinRect[3];
+            let aAllPoints = [];
+            aQuads.forEach(function(rect) {
+                aAllPoints = aAllPoints.concat(rect);
+            });
 
-        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+            let aMinRect = getMinRect(aAllPoints);
+            let MinX = aMinRect[0];
+            let MinY = aMinRect[1];
+            let MaxX = aMinRect[2];
+            let MaxY = aMinRect[3];
 
-        let oProps = {
-            rect:       [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
-            page:       pageObject.index,
-            name:       AscCommon.CreateGUID(),
-            type:       AscPDF.ANNOTATIONS_TYPES.Strikeout,
-            hidden:     false
+            let oProps = {
+                rect:       [MinX - 3, MinY - 1, MaxX + 3, MaxY + 1],
+                page:       nPage,
+                name:       AscCommon.CreateGUID(),
+                type:       AscPDF.ANNOTATIONS_TYPES.Strikeout,
+                hidden:     false
+            }
+
+            let oAnnot = this.AddAnnot(oProps);
+
+            oAnnot.SetQuads(aQuads);
+            oAnnot.SetStrokeColor([r/255, g/255, b/255]);
         }
-
-        let oAnnot = this.AddAnnot(oProps);
-
-        oAnnot.SetQuads(aSelQuads);
-        oAnnot.SetStrokeColor([r/255, g/255, b/255]);
 
         editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Strikeout, false);
         editor.SetMarkerFormat(AscPDF.ANNOTATIONS_TYPES.Strikeout, false);
