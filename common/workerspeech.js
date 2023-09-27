@@ -113,7 +113,7 @@
 	{
 		this.isEnabled = false;
 		this.speechElement = null;
-		this.isLogEnabled = true;
+		this.isLogEnabled = false;
 		this.timerEqualValue = -1;
 
 		this.setEnabled = function(isEnabled)
@@ -130,6 +130,11 @@
 				this.speechElement = document.createElement("div");
 				this.speechElement.innerHTML = "";
 				this.speechElement.id = "area_id_screen_reader";
+				if (AscCommon.AscBrowser.isMacOs)
+				{
+					this.speechElement.setAttribute("aria-live", "polite");
+					this.speechElement.setAttribute("aria-atomic", "false");
+				}
 				AscCommon.g_inputContext.HtmlArea.setAttribute("aria-describedby", "area_id_screen_reader");
 				AscCommon.g_inputContext.HtmlDiv.appendChild(this.speechElement);
 			}
