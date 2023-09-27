@@ -19511,43 +19511,10 @@
 	};
 
 	/**
-	 * Sets the scaling of the image.
-	 * @memberof ApiWatermarkSettings
-	 * @typeofeditors ["CDE"]
-	 * @param {"auto" | number} scale - The numbered value is the scale of the image which multiplies on the original size. The original size of the picture in the document is calculated at 96 pix per inch. The value "auto" sets the with of the image equal to the column width.
-	 */
-	ApiWatermarkSettings.prototype.SetScale = function (scale)
-	{
-		let nScale = 1.0;
-		if(scale === "auto")
-		{
-			nScale = -1;
-		}
-		else
-		{
-			if(AscFormat.isRealNumber(scale))
-			{
-				nScale = Math.min(1.0, Math.max(0.1, scale));
-			}
-		}
-		this.Settings.put_Scale(nScale);
-	};
-
-	/**
-	 * Returns the scale value of the image watermark.
-	 * @memberof ApiWatermarkSettings
-	 * @typeofeditors ["CDE"]
-	 * @returns {"auto" | number} - The scale value of the watermark.
-	 */
-	ApiWatermarkSettings.prototype.GetScale = function ()
-	{
-		return this.Settings.get_Scale();
-	};
-	/**
 	 * Returns the width of the image watermark.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @returns {EMU | null} - The image with in EMU. Returns null if Scale was set.
+	 * @returns {EMU | null} - The image with in EMU.
 	 */
 	ApiWatermarkSettings.prototype.GetImageWidth = function ()
 	{
@@ -19557,7 +19524,7 @@
 	 * Returns the height of the image watermark.
 	 * @memberof ApiWatermarkSettings
 	 * @typeofeditors ["CDE"]
-	 * @returns {EMU | null} - The image height in EMU. Returns null if Scale was set.
+	 * @returns {EMU | null} - The image height in EMU.
 	 */
 	ApiWatermarkSettings.prototype.GetImageHeight = function ()
 	{
@@ -20433,25 +20400,11 @@
 	ApiWatermarkSettings.prototype["GetDirection"]   =  ApiWatermarkSettings.prototype.GetDirection;
 	ApiWatermarkSettings.prototype["SetImageURL"]    =  ApiWatermarkSettings.prototype.SetImageURL;
 	ApiWatermarkSettings.prototype["GetImageURL"]    =  ApiWatermarkSettings.prototype.GetImageURL;
-	ApiWatermarkSettings.prototype["SetScale"]       =  ApiWatermarkSettings.prototype.SetScale;
-	ApiWatermarkSettings.prototype["GetScale"]       =  ApiWatermarkSettings.prototype.GetScale;
 	ApiWatermarkSettings.prototype["GetImageWidth"]  =  ApiWatermarkSettings.prototype.GetImageWidth;
 	ApiWatermarkSettings.prototype["GetImageHeight"] =  ApiWatermarkSettings.prototype.GetImageHeight;
 	ApiWatermarkSettings.prototype["SetImageSize"]   =  ApiWatermarkSettings.prototype.SetImageSize;
 
 
-
-	/**
-	 * Sets the size of the image.
-	 * @memberof ApiWatermarkSettings
-	 * @typeofeditors ["CDE"]
-	 * @param {EMU} nWidth - The width of the image
-	 * @param {EMU} nHeight - The width of the image
-	 */
-	ApiWatermarkSettings.prototype.SetScale = function (nWidth, nHeight)
-	{
-		this.Settings.put_ImageSize(nWidth, nHeight);
-	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export for internal usage
