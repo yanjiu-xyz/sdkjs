@@ -196,7 +196,7 @@
 			oProps.setXfrmRot(AscFormat.normalizeRotate(this.getXfrmRot() || 0));
 			oProps.put_ImageUrl2(this.blipFill.RasterImageId);
 			oProps.put_Scale(-1);
-			oProps.put_ImageSize(this.extX * 36000 + 0.5 >> 0, this.extY * 36000 + 0.5 >> 0);
+			oProps.put_ImageSize(this.getXfrmExtX() * 36000 + 0.5 >> 0, this.getXfrmExtY() * 36000 + 0.5 >> 0);
 			var oApi;
 			if (window["Asc"] && window["Asc"]["editor"]) {
 				oApi = window["Asc"]["editor"];
