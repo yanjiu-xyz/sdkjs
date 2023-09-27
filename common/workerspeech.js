@@ -130,11 +130,18 @@
 				this.speechElement = document.createElement("div");
 				this.speechElement.innerHTML = "";
 				this.speechElement.id = "area_id_screen_reader";
-				if (AscCommon.AscBrowser.isMacOs)
-				{
-					this.speechElement.setAttribute("aria-live", "polite");
-					this.speechElement.setAttribute("aria-atomic", "false");
-				}
+				this.speechElement.style.zIndex = -2;
+
+				if (AscCommon.AscBrowser.isWindows || (AscCommon.AscBrowser.isChrome && !AscCommon.AscBrowser.isMacOs))
+					this.speechElement.style.display = "none";
+				else
+					this.speechElement.style.opacity = 0;
+
+				this.speechElement.setAttribute("role", "region");
+				this.speechElement.setAttribute("aria-live", "polite");
+				this.speechElement.setAttribute("aria-atomic", "true");
+				this.speechElement.setAttribute("aria-hidden", "false");
+
 				AscCommon.g_inputContext.HtmlArea.setAttribute("aria-describedby", "area_id_screen_reader");
 				AscCommon.g_inputContext.HtmlDiv.appendChild(this.speechElement);
 			}
