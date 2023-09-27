@@ -608,6 +608,7 @@ $(function () {
 	if (AscCommon.c_oSerFormat.Signature === sData.substring(0, AscCommon.c_oSerFormat.Signature.length)) {
 
 		Asc.spreadsheet_api.prototype._init = function() {
+			this.isLoadFullApi = true;
 		};
 		
 		let api = new Asc.spreadsheet_api({
@@ -4851,6 +4852,32 @@ $(function () {
 		oParser = new parserFormula("DOLLAR(-1234.567,4)", "A2", ws);
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "($1,234.5670)");
+
+		oParser = new parserFormula("DOLLAR(-1234.567,0)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "($1,235)");
+
+		//set russia locale
+		window["Asc"]["editor"].asc_setLocale(1049);
+
+		oParser = new parserFormula("DOLLAR(1234.567)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "1 234,57 ₽");
+
+		oParser = new parserFormula("DOLLAR(1234.567,-2)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "1 200 ₽");
+
+		oParser = new parserFormula("DOLLAR(-1234.567,4)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "-1 234,5670 ₽");
+
+		oParser = new parserFormula("DOLLAR(-1234.567,0)", "A2", ws);
+		assert.ok(oParser.parse());
+		assert.strictEqual(oParser.calculate().getValue(), "-1 235 ₽");
+
+		//set default locale
+		window["Asc"]["editor"].asc_setLocale(1033);
 
 		testArrayFormula2(assert, "DOLLAR", 2, 2);
 	});
