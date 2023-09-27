@@ -222,12 +222,13 @@
     {
         if (!this.nativeFile)
             return null;
-        if (pageIndex < 0 || pageIndex >= this.pages.length || this.pages[pageIndex].isFromFile != true)
+        if (pageIndex < 0 || pageIndex >= this.pages.length || this.pages[pageIndex].originIndex == undefined)
             return null;
 
         if (!width) width = this.pages[pageIndex].W;
         if (!height) height = this.pages[pageIndex].H;
 
+        pageIndex = this.pages[pageIndex].originIndex;
         var requestW = width;
         var requestH = height;
 
@@ -2948,7 +2949,7 @@ void main() {\n\
                 page.W = page["W"];
                 page.H = page["H"];
                 page.Dpi = page["Dpi"];
-                page.isFromFile = true; // флаг, что страница из файла, а не созданная нами
+                page.originIndex = i; // исходный индекс в файле
             }
 
             file.prepareSearch();
@@ -2983,6 +2984,7 @@ void main() {\n\
                 page.W = page["W"];
                 page.H = page["H"];
                 page.Dpi = page["Dpi"];
+                page.originIndex = i; // исходный индекс в файле
             }
 
             file.prepareSearch();
