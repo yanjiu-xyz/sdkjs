@@ -498,6 +498,7 @@
 		this.onActionEnd = function()
 		{
 			_t.isAction = false;
+			_t.updateState();
 			// TODO: Если нужно, то добавить описание действия
 		};
 		
