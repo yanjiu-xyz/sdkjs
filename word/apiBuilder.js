@@ -4137,13 +4137,13 @@
 	 * */
 
 	/**
-	 * The type of the watermark in the document
+	 * The type of the watermark in the document.
 	 * @returns {("none" | "text" | "image")} WatermarkType
 	 * @constructor
 	 */
 
 	/**
-	 * The directionof the watermark in the document
+	 * The direction of the watermark in the document.
 	 * @returns {("horizontal" | "clockwise45" | "counterclockwise45")} WatermarkDirection
 	 * @constructor
 	 */
