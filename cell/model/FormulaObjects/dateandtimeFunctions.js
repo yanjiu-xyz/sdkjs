@@ -2232,31 +2232,25 @@
 	cYEAR.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cYEAR.prototype.argumentsType = [argType.number];
 	cYEAR.prototype.Calculate = function (arg) {
-		var t = this;
-		var bIsSpecialFunction = arguments[4];
+		let t = this;
+		let bIsSpecialFunction = arguments[4];
 
-		var calculateFunc = function(curArg) {
-			var val;
-
-			if (curArg instanceof cError) {
+		let calculateFunc = function(curArg) {
+			let val;
+			if (curArg.type === cElementType.cell || curArg.type === cElementType.cell3D) {
+				curArg = curArg.getValue();
+			}
+			
+			if (curArg.type === cElementType.error) {
 				return curArg;
-			} else if (curArg instanceof cNumber || curArg instanceof cBool  || curArg instanceof cEmpty) {
+			} else if (curArg.type === cElementType.number || curArg.type === cElementType.bool || curArg.type === cElementType.empty) {
 				val = curArg.tocNumber().getValue();
-			} else if (curArg instanceof cArea || curArg instanceof cArea3D) {
+			} else if (curArg.type === cElementType.cellsRange || curArg.type === cElementType.cellsRange3D) {
 				return new cError(cErrorType.wrong_value_type);
-			} else if (curArg instanceof cRef || curArg instanceof cRef3D) {
-				val = curArg.getValue();
-				if (val instanceof cError) {
-					return val;
-				} else if (val instanceof cNumber || val instanceof cBool || val instanceof cEmpty) {
-					val = curArg.tocNumber().getValue();
-				} else {
-					return new cError(cErrorType.wrong_value_type);
-				}
-			} else if (curArg instanceof cString) {
+ 			} else if (curArg.type === cElementType.string) {
 				val = curArg.tocNumber();
-				if (val instanceof cError || val instanceof cEmpty) {
-					var d = new cDate(curArg.getValue());
+				if (val.type === cElementType.error || val.type === cElementType.empty) {
+					let d = new cDate(curArg.getValue());
 					if (isNaN(d)) {
 						return new cError(cErrorType.wrong_value_type);
 					} else {
@@ -2266,19 +2260,22 @@
 					val = curArg.tocNumber().getValue();
 				}
 			}
+
 			if (val < 0) {
 				return t.setCalcValue(new cError(cErrorType.not_numeric), 0);
 			} else {
+				if (AscCommon.bDate1904 && val === 0) {
+					val += 1;
+				}
 				return t.setCalcValue(new cNumber((new cDate((val - (AscCommonExcel.c_DateCorrectConst + 1)) * c_msPerDay)).getUTCFullYear()), 0);
 			}
 		};
 
-		var arg0 = arg[0], res;
+		let arg0 = arg[0], res;
 		if(!bIsSpecialFunction) {
-
-			if (arg0 instanceof cArray) {
+			if (arg0.type === cElementType.array) {
 				arg0 = arg0.getElement(0);
-			} else if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+			} else if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 				arg0 = arg0.cross(arguments[1]).tocNumber();
 			}
 			res = calculateFunc(arg0);
