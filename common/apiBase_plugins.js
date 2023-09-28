@@ -281,7 +281,7 @@
 		if (_elem)
 			return;
 
-		let guidAsync = window.g_asc_plugins ? window.g_asc_plugins.setPluginMethodReturnAsync() : null;
+		window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
 		_elem = document.createElement("div");
 		_elem.id = "pmpastehtml";
 		_elem.style.color = "rgb(0,0,0)";
@@ -331,9 +331,7 @@
 				if (_t.checkLongActionCallback(fCallback, null)) {
 					fCallback();
 				}
-				if (guidAsync) {
-					window.g_asc_plugins.onPluginMethodReturn(guidAsync, true);
-				}
+				window.g_asc_plugins &&	window.g_asc_plugins.onPluginMethodReturn(true);
 			}
 		);
 	};
