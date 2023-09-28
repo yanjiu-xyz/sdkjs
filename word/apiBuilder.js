@@ -6358,10 +6358,10 @@
 
 
 	/**
-	 * Sets the settings of watermark in the document
+	 * Sets the settings of watermark in the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @param {ApiWatermarkSettings} Settings - Settings The object which represents the watermark settings.
+	 * @param {ApiWatermarkSettings} Settings - The object which represents the watermark settings.
 	 * @returns {?ApiDrawing} - The object which represents the watermark drawing if the type of Settings is not equal "none".
 	 */
 	ApiDocument.prototype.SetWatermarkSettings = function(Settings)
@@ -6387,7 +6387,6 @@
 	 * Removes the watermark in the document.
 	 * @memberof ApiDocument
 	 * @typeofeditors ["CDE"]
-	 * @returns {?ApiDrawing} - The object which represents the watermark drawing if the type of Settings is not equal "none".
 	 */
 	ApiDocument.prototype.RemoveWatermark = function()
 	{
