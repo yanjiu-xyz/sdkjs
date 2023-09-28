@@ -408,6 +408,13 @@
 		this.isKeyDown      = false;
 		this.isUndoRedo     = false;
 	}
+	EditorActionSpeaker.prototype.toggle = function()
+	{
+		if (this.isLanched)
+			this.stop();
+		else
+			this.run();
+	};
 	EditorActionSpeaker.prototype.run = function()
 	{
 		this.editor = Asc.editor;

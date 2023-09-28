@@ -8994,7 +8994,7 @@ CDocument.prototype.OnKeyDown = function(e)
 		}
 		case Asc.c_oAscDocumentShortcutType.SpeechWorker:
 		{
-			AscCommon.EditorActionSpeaker.isLanched ? AscCommon.EditorActionSpeaker.stop() : AscCommon.EditorActionSpeaker.run();
+			AscCommon.EditorActionSpeaker.toggle();
 			bRetValue = keydownresult_PreventAll;
 			break;
 		}

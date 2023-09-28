@@ -7302,7 +7302,7 @@ CPresentation.prototype.OnKeyDown = function (e) {
 			break;
 		}
 		case Asc.c_oAscPresentationShortcutType.SpeechWorker: {
-			AscCommon.EditorActionSpeaker.isLanched ? AscCommon.EditorActionSpeaker.stop() : AscCommon.EditorActionSpeaker.run();
+			AscCommon.EditorActionSpeaker.toggle();
 			bRetValue = keydownresult_PreventAll;
 			break;
 		}

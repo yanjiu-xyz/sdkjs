@@ -1210,7 +1210,7 @@
 							break;
 						case 90:
 							if (event.altKey) {
-								AscCommon.EditorActionSpeaker.isLanched ? AscCommon.EditorActionSpeaker.stop() : AscCommon.EditorActionSpeaker.run();
+								AscCommon.EditorActionSpeaker.toggle();
 							} else {
 								t.handlers.trigger("undo");
 							}
