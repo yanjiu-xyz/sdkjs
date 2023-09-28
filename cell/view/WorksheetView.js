@@ -15749,6 +15749,10 @@
 					if (_p_.parse()) {
 						assemb = _p_.changeOffset(offset, null, true).assemble(true);
 						rangeStyle.formula = {range: range, val: "=" + assemb};
+					} else {
+						rangeStyle.cellValueData = new AscCommonExcel.UndoRedoData_CellValueData(null, new AscCommonExcel.CCellValue({
+							text: "=" + sFormula, type: CellValueType.String
+						}));
 					}
 				}
 			}
