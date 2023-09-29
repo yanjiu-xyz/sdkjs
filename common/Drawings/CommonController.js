@@ -7551,6 +7551,11 @@
 
 								if (group_drawing_props.shapeProps) {
 									group_drawing_props.shapeProps.anchor = anchor;
+									if(!bGroupSelection) {
+										group_drawing_props.shapeProps.title = drawing.getTitle();
+										group_drawing_props.shapeProps.name = sOwnName;
+										group_drawing_props.shapeProps.description = drawing.getDescription();
+									}
 									if (!shape_props)
 										shape_props = group_drawing_props.shapeProps;
 									else {
@@ -7560,6 +7565,11 @@
 
 								if (group_drawing_props.shapeChartProps) {
 									group_drawing_props.shapeChartProps.anchor = anchor;
+									if(!bGroupSelection) {
+										group_drawing_props.shapeChartProps.title = drawing.getTitle();
+										group_drawing_props.shapeChartProps.name = sOwnName;
+										group_drawing_props.shapeChartProps.description = drawing.getDescription();
+									}
 									if (!shape_chart_props) {
 										shape_chart_props = group_drawing_props.shapeChartProps;
 									} else {
@@ -7568,6 +7578,11 @@
 								}
 								if (group_drawing_props.imageProps) {
 									group_drawing_props.imageProps.anchor = anchor;
+									if(!bGroupSelection) {
+										group_drawing_props.imageProps.title = drawing.getTitle();
+										group_drawing_props.imageProps.name = sOwnName;
+										group_drawing_props.imageProps.description = drawing.getDescription();
+									}
 									if (!image_props)
 										image_props = group_drawing_props.imageProps;
 									else {
@@ -7606,6 +7621,11 @@
 								}
 								if (group_drawing_props.chartProps) {
 									group_drawing_props.chartProps.anchor = anchor;
+									if(!bGroupSelection) {
+										group_drawing_props.chartProps.title = drawing.getTitle();
+										group_drawing_props.chartProps.name = sOwnName;
+										group_drawing_props.chartProps.description = drawing.getDescription();
+									}
 									if (!chart_props) {
 										chart_props = group_drawing_props.chartProps;
 									} else {
@@ -7689,10 +7709,7 @@
 				},
 
 				getDrawingProps: function () {
-					if (this.selection.groupSelection) {
-						return this.getDrawingPropsFromArray(this.selection.groupSelection.selectedObjects);
-					}
-					return this.getDrawingPropsFromArray(this.selectedObjects);
+					return this.getDrawingPropsFromArray(this.getSelectedArray());
 				},
 
 				getDrawingsPasteShift: function (aDrawings) {
