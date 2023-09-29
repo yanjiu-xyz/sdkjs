@@ -1550,7 +1550,7 @@
 									return null;
 								}
 							}
-							this.checkSelectedObjectsForMove(group, pageIndex);
+							this.checkSelectedObjectsForMove(pageIndex);
 							if (!isRealObject(group)) {
 								var bGroupSelection = AscCommon.isRealObject(this.selection.groupSelection);
 								if (!object.isCrop && !object.cropObject) {
@@ -1674,12 +1674,13 @@
 					}
 				},
 
-				checkSelectedObjectsForMove: function (group, pageIndex) {
-					var selected_object = group ? group.selectedObjects : this.selectedObjects;
-					var b_check_page = AscFormat.isRealNumber(pageIndex);
-					for (var i = 0; i < selected_object.length; ++i) {
-						if (selected_object[i].canMove() && (!b_check_page || selected_object[i].selectStartPage === pageIndex)) {
-							this.arrPreTrackObjects.push(selected_object[i].createMoveTrack());
+				checkSelectedObjectsForMove: function (nPageIndex) {
+					const aSelectedObjects = this.getSelectedArray();
+					const bCheckPage = AscFormat.isRealNumber(nPageIndex);
+					for (let nIdx = 0; nIdx < aSelectedObjects.length; ++nIdx) {
+						let oDrawing = aSelectedObjects[nIdx];
+						if (oDrawing.canMove() && (!bCheckPage || oDrawing.selectStartPage === nPageIndex)) {
+							this.arrPreTrackObjects.push(oDrawing.createMoveTrack());
 						}
 					}
 				},
@@ -5179,7 +5180,7 @@
 						return;
 
 					var oldCurState = this.curState;
-					this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
+					this.checkSelectedObjectsForMove();
 					this.swapTrackObjects();
 					var move_state;
 					if (!this.selection.groupSelection)
@@ -8614,7 +8615,7 @@
 						} else {
 							leftPos = 0;
 						}
-						this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
+						this.checkSelectedObjectsForMove();
 						this.swapTrackObjects();
 						var move_state, oTrack, oDrawing, oBounds;
 						if (!this.selection.groupSelection) {
@@ -8643,7 +8644,7 @@
 						} else {
 							rightPos = this.drawingObjects.Width;
 						}
-						this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
+						this.checkSelectedObjectsForMove();
 						this.swapTrackObjects();
 						var move_state, oTrack, oDrawing, oBounds;
 						if (!this.selection.groupSelection) {
@@ -8673,7 +8674,7 @@
 						} else {
 							topPos = 0;
 						}
-						this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
+						this.checkSelectedObjectsForMove();
 						this.swapTrackObjects();
 						var move_state, oTrack, oDrawing, oBounds;
 						if (!this.selection.groupSelection) {
@@ -8703,7 +8704,7 @@
 						} else {
 							bottomPos = this.drawingObjects.Height;
 						}
-						this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
+						this.checkSelectedObjectsForMove();
 						this.swapTrackObjects();
 						var move_state, oTrack, oDrawing, oBounds;
 						if (!this.selection.groupSelection) {
@@ -8733,7 +8734,7 @@
 						} else {
 							centerPos = this.drawingObjects.Width / 2;
 						}
-						this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
+						this.checkSelectedObjectsForMove();
 						this.swapTrackObjects();
 						var move_state, oTrack, oDrawing, oBounds;
 						if (!this.selection.groupSelection) {
@@ -8762,7 +8763,7 @@
 						} else {
 							middlePos = this.drawingObjects.Height / 2;
 						}
-						this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
+						this.checkSelectedObjectsForMove();
 						this.swapTrackObjects();
 						var move_state, oTrack, oDrawing, oBounds;
 						if (!this.selection.groupSelection) {
@@ -8787,7 +8788,7 @@
 					var oTrack, oDrawing, oBounds, oSortObject;
 					if (selected_objects.length > 0) {
 						boundsObject = getAbsoluteRectBoundsArr(selected_objects);
-						this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
+						this.checkSelectedObjectsForMove();
 						this.swapTrackObjects();
 						sortObjects = [];
 						for (i = 0; i < selected_objects.length; ++i) {
@@ -8839,7 +8840,7 @@
 					var oTrack, oDrawing, oBounds, oSortObject;
 					if (selected_objects.length > 0) {
 						boundsObject = getAbsoluteRectBoundsArr(selected_objects);
-						this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
+						this.checkSelectedObjectsForMove();
 						this.swapTrackObjects();
 						sortObjects = [];
 						for (i = 0; i < selected_objects.length; ++i) {

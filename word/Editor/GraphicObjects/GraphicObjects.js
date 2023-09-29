@@ -3931,7 +3931,7 @@ CGraphicObjects.prototype =
         var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i, boundsObject, leftPos;
         if(selected_objects.length > 0)
         {
-            this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
+            this.checkSelectedObjectsForMove();
             this.swapTrackObjects();
             var move_state;
             if(!this.selection.groupSelection)
@@ -3951,7 +3951,7 @@ CGraphicObjects.prototype =
         var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i, boundsObject, leftPos;
         if(selected_objects.length > 0)
         {
-            this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
+            this.checkSelectedObjectsForMove();
             this.swapTrackObjects();
             var move_state;
             if(!this.selection.groupSelection)
@@ -3971,7 +3971,7 @@ CGraphicObjects.prototype =
         var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i, boundsObject, leftPos;
         if(selected_objects.length > 0)
         {
-            this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
+            this.checkSelectedObjectsForMove();
             this.swapTrackObjects();
             var move_state;
             if(!this.selection.groupSelection)
@@ -3991,7 +3991,7 @@ CGraphicObjects.prototype =
         var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i, boundsObject, leftPos;
         if(selected_objects.length > 0)
         {
-            this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
+            this.checkSelectedObjectsForMove();
             this.swapTrackObjects();
             var move_state;
             if(!this.selection.groupSelection)
@@ -4011,7 +4011,7 @@ CGraphicObjects.prototype =
         var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i;
         if(selected_objects.length > 0)
         {
-            this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
+            this.checkSelectedObjectsForMove();
             this.swapTrackObjects();
             var move_state;
             if(!this.selection.groupSelection)
@@ -4031,7 +4031,7 @@ CGraphicObjects.prototype =
         var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, i;
         if(selected_objects.length > 0)
         {
-            this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
+            this.checkSelectedObjectsForMove();
             this.swapTrackObjects();
             var move_state;
             if(!this.selection.groupSelection)
@@ -4054,7 +4054,7 @@ CGraphicObjects.prototype =
         {
             boundsObject = AscFormat.getAbsoluteRectBoundsArr(selected_objects);
             arrBounds = boundsObject.arrBounds;
-            this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
+            this.checkSelectedObjectsForMove();
             this.swapTrackObjects();
             sortObjects = [];
             for(i = 0; i < selected_objects.length; ++i)
@@ -4124,7 +4124,7 @@ CGraphicObjects.prototype =
         {
             boundsObject = AscFormat.getAbsoluteRectBoundsArr(selected_objects);
             arrBounds = boundsObject.arrBounds;
-            this.checkSelectedObjectsForMove(this.selection.groupSelection ? this.selection.groupSelection : null);
+            this.checkSelectedObjectsForMove();
             this.swapTrackObjects();
             sortObjects = [];
             for(i = 0; i < selected_objects.length; ++i)
