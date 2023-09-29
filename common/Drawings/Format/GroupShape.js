@@ -835,7 +835,9 @@
 		CGroupShape.prototype.getPhIndex = function () {
 			return this.isPlaceholder() ? this.nvGrpSpPr.nvPr.ph.idx : null;
 		};
-
+		CGroupShape.prototype.getSelectedArray = function () {
+			return this.selectedObjects;
+		};
 		CGroupShape.prototype.getSelectionState = function () {
 			var selection_state = {};
 			if (this.selection.textSelection) {

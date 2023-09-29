@@ -1087,7 +1087,7 @@
 				},
 
 				getObjectForCrop: function () {
-					var selectedObjects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects;
+					var selectedObjects = this.getSelectedArray();
 					if (selectedObjects.length === 1) {
 						var oBlipFill = selectedObjects[0].getBlipFill();
 						if (oBlipFill) {
@@ -2106,25 +2106,7 @@
 					const oChart = this.selection.chartSelection;
 					const oWrp = this.selection.wrapPolygonSelection;
 					const oTrackDrawer = drawingDocument.AutoShapesTrack;
-					if (oTx) {
-						if (oTx.selectStartPage === pageIndex) {
-							if (!oTx.isForm()) {
-								drawingDocument.DrawTrack(
-									AscFormat.TYPE_TRACK.TEXT,
-									oTx.getTransformMatrix(),
-									0,
-									0,
-									oTx.extX,
-									oTx.extY,
-									AscFormat.CheckObjectLine(oTx),
-									oTx.canRotate(),
-									undefined,
-									isDrawHandles && oTx.canEdit()
-								);
-								oTx.drawAdjustments(drawingDocument);
-							}
-						}
-					} else if (oCrop) {
+					if (oCrop) {
 						if (this.arrTrackObjects.length === 0) {
 							if (oCrop.selectStartPage === pageIndex) {
 								const cropObject = oCrop.getCropObject();
@@ -2174,6 +2156,24 @@
 						}
 					} else if (oGm) {
 						oGm.drawSelect(pageIndex, drawingDocument);
+					} else if (oTx) {
+						if (oTx.selectStartPage === pageIndex) {
+							if (!oTx.isForm()) {
+								drawingDocument.DrawTrack(
+									AscFormat.TYPE_TRACK.TEXT,
+									oTx.getTransformMatrix(),
+									0,
+									0,
+									oTx.extX,
+									oTx.extY,
+									AscFormat.CheckObjectLine(oTx),
+									oTx.canRotate(),
+									undefined,
+									isDrawHandles && oTx.canEdit()
+								);
+								oTx.drawAdjustments(drawingDocument);
+							}
+						}
 					} else if (oGrp) {
 						if (oGrp.selectStartPage === pageIndex) {
 							drawingDocument.DrawTrack(
@@ -3498,7 +3498,7 @@
 				},
 
 				getConnectorsForCheck: function () {
-					var aSelectedObjects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects;
+					var aSelectedObjects = this.getSelectedArray();
 					var aAllConnectors = this.getAllConnectorsByDrawings(aSelectedObjects, [], undefined, true);
 					var _ret = [];
 					for (var i = 0; i < aAllConnectors.length; ++i) {
@@ -3747,7 +3747,7 @@
 							oSelectedObject.checkDrawingBaseCoords();
 						}
 					}
-					var aSelectedObjects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects;
+					var aSelectedObjects = this.getSelectedArray();
 					if (props.protectionLocked !== null && props.protectionLocked !== undefined) {
 						for (i = 0; i < aSelectedObjects.length; ++i) {
 							aSelectedObjects[i].setProtectionLocked(props.protectionLocked);
@@ -4194,7 +4194,7 @@
 				},
 
 				getSelectedObjectsByTypes: function (bGroupedObjects) {
-					var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects;
+					var selected_objects = this.getSelectedArray();
 					return getObjectsByTypesFromArr(selected_objects, bGroupedObjects);
 				},
 
@@ -4422,7 +4422,7 @@
 
 				getChartForRangesDrawing: function () {
 					var chart;
-					var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects;
+					var selected_objects = this.getSelectedArray();
 					if (selected_objects.length === 1 && selected_objects[0].getObjectType() === AscDFH.historyitem_type_ChartSpace) {
 						return selected_objects[0];
 					}
@@ -4745,7 +4745,7 @@
 
 				},
 				getOleObject: function () {
-					var by_types = getObjectsByTypesFromArr(this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, true);
+					var by_types = getObjectsByTypesFromArr(this.getSelectedArray(), true);
 					if (by_types.oleObjects.length === 1) {
 						return by_types.charts[0];
 					}
@@ -5520,11 +5520,7 @@
 				},
 
 				canEditGeometry: function () {
-					var oTargetTextObject = getTargetTextObject(this);
-					if (oTargetTextObject) {
-						return false;
-					}
-					var aSelectedObjects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects;
+					const aSelectedObjects = this.getSelectedArray();
 					if (aSelectedObjects.length === 1) {
 						if (aSelectedObjects[0].canEditGeometry()) {
 							return true;
@@ -5534,7 +5530,7 @@
 				},
 
 				canEditTableOleObject: function (bReturnOle) {
-					var aSelectedObjects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects;
+					var aSelectedObjects = this.getSelectedArray();
 					if (aSelectedObjects.length === 1) {
 						if (aSelectedObjects[0].canEditTableOleObject) {
 							return aSelectedObjects[0].canEditTableOleObject(bReturnOle);
@@ -5544,8 +5540,7 @@
 				},
 
 				startEditGeometry: function () {
-					var selectedObject = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects[0] :
-						this.selectedObjects[0];
+					var selectedObject = this.getSelectedArray()[0];
 
 					if (selectedObject && (selectedObject instanceof AscFormat.CShape)) {
 						this.selection.geometrySelection = new CGeometryEditSelection(this, selectedObject, null, null);
@@ -6001,7 +5996,7 @@
 				},
 
 				onMouseWheel: function (deltaX, deltaY) {
-					var aSelection = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects;
+					var aSelection = this.getSelectedArray();
 					if (aSelection.length === 1
 						&& aSelection[0].getObjectType() === AscDFH.historyitem_type_SlicerView) {
 						return aSelection[0].onWheel(deltaX, deltaY);
@@ -6139,7 +6134,7 @@
 							return ret;
 						}, this, []);
 					} else {
-						var by_types = getObjectsByTypesFromArr(this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects, true);
+						var by_types = getObjectsByTypesFromArr(this.getSelectedArray(), true);
 						if (by_types.charts.length === 1) {
 							by_types.charts[0].theme = this.getTheme();
 							by_types.charts[0].colorMapOverride = this.getColorMapOverride();
@@ -8610,7 +8605,7 @@
 
 
 				alignLeft: function (bSelected) {
-					var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects,
+					var selected_objects = this.getSelectedArray(),
 						i, boundsObject, leftPos;
 					if (selected_objects.length > 0) {
 						if (bSelected && selected_objects.length > 1) {
@@ -8639,7 +8634,7 @@
 				},
 
 				alignRight: function (bSelected) {
-					var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects,
+					var selected_objects = this.getSelectedArray(),
 						i, boundsObject, rightPos;
 					if (selected_objects.length > 0) {
 						if (bSelected && selected_objects.length > 1) {
@@ -8669,7 +8664,7 @@
 
 
 				alignTop: function (bSelected) {
-					var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects,
+					var selected_objects = this.getSelectedArray(),
 						i, boundsObject, topPos;
 					if (selected_objects.length > 0) {
 						if (bSelected && selected_objects.length > 1) {
@@ -8699,7 +8694,7 @@
 
 
 				alignBottom: function (bSelected) {
-					var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects,
+					var selected_objects = this.getSelectedArray(),
 						i, boundsObject, bottomPos;
 					if (selected_objects.length > 0) {
 						if (bSelected && selected_objects.length > 1) {
@@ -8729,7 +8724,7 @@
 
 
 				alignCenter: function (bSelected) {
-					var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects,
+					var selected_objects = this.getSelectedArray(),
 						i, boundsObject, centerPos;
 					if (selected_objects.length > 0) {
 						if (bSelected && selected_objects.length > 1) {
@@ -8758,7 +8753,7 @@
 				},
 
 				alignMiddle: function (bSelected) {
-					var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects,
+					var selected_objects = this.getSelectedArray(),
 						i, boundsObject, middlePos;
 					if (selected_objects.length > 0) {
 						if (bSelected && selected_objects.length > 1) {
@@ -8787,7 +8782,7 @@
 				},
 
 				distributeHor: function (bSelected) {
-					var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects,
+					var selected_objects = this.getSelectedArray(),
 						i, boundsObject, pos1, pos2, gap, sortObjects, lastPos;
 					var oTrack, oDrawing, oBounds, oSortObject;
 					if (selected_objects.length > 0) {
@@ -8839,7 +8834,7 @@
 					}
 				},
 				distributeVer: function (bSelected) {
-					var selected_objects = this.selection.groupSelection ? this.selection.groupSelection.selectedObjects : this.selectedObjects,
+					var selected_objects = this.getSelectedArray(),
 						i, boundsObject, pos1, pos2, gap, sortObjects, lastPos;
 					var oTrack, oDrawing, oBounds, oSortObject;
 					if (selected_objects.length > 0) {
@@ -9107,8 +9102,8 @@
 				},
 				getSelectionImageData: function () {
 					let sImageUrl;
+					let aSelectedObjects = this.getSelectedArray();
 					if (this.selectedObjects.length > 0) {
-						let oController2 = this.selection.groupSelection ? this.selection.groupSelection : this;
 						let _bounds_cheker = new AscFormat.CSlideBoundsChecker();
 						let dKoef = AscCommon.g_dKoef_mm_to_pix;
 						let w_mm = 210;
@@ -9120,8 +9115,8 @@
 						_bounds_cheker.transform(1, 0, 0, 1, 0, 0);
 
 						_bounds_cheker.AutoCheckLineWidth = true;
-						for (let i = 0; i < oController2.selectedObjects.length; ++i) {
-							oController2.selectedObjects[i].draw(_bounds_cheker);
+						for (let i = 0; i < aSelectedObjects.length; ++i) {
+							aSelectedObjects[i].draw(_bounds_cheker);
 						}
 
 						var _need_pix_width = _bounds_cheker.Bounds.max_x - _bounds_cheker.Bounds.min_x + 1;
@@ -9145,8 +9140,8 @@
 
 
 								AscCommon.IsShapeToImageConverter = true;
-								for (let i = 0; i < oController2.selectedObjects.length; ++i) {
-									oController2.selectedObjects[i].draw(g);
+								for (let i = 0; i < aSelectedObjects.length; ++i) {
+									aSelectedObjects[i].draw(g);
 								}
 								if (AscCommon.g_fontManager) {
 									AscCommon.g_fontManager.m_pFont = null;
