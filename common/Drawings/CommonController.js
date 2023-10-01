@@ -3701,6 +3701,9 @@
 						for (i = 0; i < objects_by_type.smartArts.length; ++i) {
 							objects_by_type.smartArts[i].setTitle(props.title);
 						}
+						for (i = 0; i < objects_by_type.oleObjects.length; ++i) {
+							objects_by_type.oleObjects[i].setTitle(props.title);
+						}
 					}
 					if (props.description !== null && props.description !== undefined) {
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
@@ -3718,6 +3721,9 @@
 						for (i = 0; i < objects_by_type.smartArts.length; ++i) {
 							objects_by_type.smartArts[i].setDescription(props.description);
 						}
+						for (i = 0; i < objects_by_type.oleObjects.length; ++i) {
+							objects_by_type.oleObjects[i].setDescription(props.description);
+						}
 					}
 					if (props.name !== null && props.name !== undefined && props.name !== "") {
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
@@ -3734,6 +3740,9 @@
 						}
 						for (i = 0; i < objects_by_type.smartArts.length; ++i) {
 							objects_by_type.smartArts[i].setName(props.name);
+						}
+						for (i = 0; i < objects_by_type.oleObjects.length; ++i) {
+							objects_by_type.oleObjects[i].setName(props.name);
 						}
 					}
 					if (props.anchor !== null && props.anchor !== undefined) {
