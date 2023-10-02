@@ -97,25 +97,14 @@
 	function AddShape(x, y, height, width)
 	{
 		AscCommon.History.Create_NewPoint();
-		const shapeTrack = new AscFormat.NewShapeTrack('rect', 0, 0, AscFormat.GetDefaultTheme(), null, null, null, 0);
-		shapeTrack.track({}, x, y);
+		const shapeTrack = new AscFormat.NewShapeTrack('rect', x, y, AscFormat.GetDefaultTheme(), null, null, null, 0);
+		shapeTrack.track({}, x+ width, y + height);
 		const shape = shapeTrack.getShape(false, AscTest.DrawingDocument, null);
 		shape.setBDeleted(false);
-		shape.spPr.xfrm.setExtX(width);
-		shape.spPr.xfrm.setExtY(height);
 		shape.setParent(logicDocument.Slides[0]);
 		shape.addToDrawingObjects();
 		shape.select(GetDrawingObjects(), 0);
 		return shape;
-	}
-
-	function SelectTitle(chart)
-	{
-		SelectDrawings([chart]);
-		const titles = chart.getAllTitles();
-		const controller = GetDrawingObjects();
-		controller.selection.chartSelection = chart;
-		chart.selectTitle(titles[0], 0);
 	}
 
 	function AddChart()
@@ -166,9 +155,9 @@
 	function ClearShapeAndAddParagraph(sText)
 	{
 		const textShape = AddShape(0, 0, 100, 100);
-		textShape.setPaddings({Left: 0, Top: 0, Right: 0, Bottom: 0});
 		const txBody = AscFormat.CreateTextBodyFromString(sText, editor.WordControl.m_oDrawingDocument, textShape)
 		textShape.setTxBody(txBody);
+		textShape.setPaddings({Left: 0, Top: 0, Right: 0, Bottom: 0});
 		const content = txBody.content;
 		content.SetThisElementCurrent();
 		content.MoveCursorToStartPos();
@@ -952,7 +941,11 @@
 	{
 		AscTest.TurnOnRecalculate();
 		const chart = AddChart();
-		SelectTitle(chart);
+		SelectDrawings([chart]);
+		const titles = chart.getAllTitles();
+		const controller = GetDrawingObjects();
+		controller.selection.chartSelection = chart;
+		chart.selectTitle(titles[0], 0);
 		ExecuteMainHotkey(mainShortcutTypes.checkSelectAllContentChartTitle);
 		assert.strictEqual(logicDocument.GetSelectedText(), 'Diagram Title', 'Check select all content in chart title');
 		logicDocument.Remove();
