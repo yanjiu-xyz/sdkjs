@@ -231,13 +231,9 @@
 	function AddShape(x, y, h, w)
 	{
 		const drawing = new ParaDrawing(w, h, null, logicDocument.GetDrawingDocument(), logicDocument, null);
-		const shapeTrack = new AscFormat.NewShapeTrack('rect', 0, 0, logicDocument.theme, null, null, null, 0);
-		shapeTrack.track({}, x, y);
+		const shapeTrack = new AscFormat.NewShapeTrack('rect', x, y, logicDocument.theme, null, null, null, 0);
+		shapeTrack.track({}, x+ w, y + h);
 		const shape = shapeTrack.getShape(true, logicDocument.GetDrawingDocument(), null);
-		shape.spPr.xfrm.setExtX(w);
-		shape.spPr.xfrm.setExtY(h);
-		shape.spPr.xfrm.setOffX(0);
-		shape.spPr.xfrm.setOffY(0);
 		shape.setBDeleted(false);
 
 		shape.setParent(drawing);
