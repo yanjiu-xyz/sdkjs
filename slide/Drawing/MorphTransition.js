@@ -936,36 +936,12 @@
             this.addMorphObject(new CMorphedAppearObject(oTexturesCache, oDrawWrapper2, nRelH2));
         }
         else if(oDrawWrapper1 && oDrawWrapper2) {
-
-            const aParStructs1 = oDocStruct1.getParagraphStructures();
-            const aParStructs2 = oDocStruct2.getParagraphStructures();
             let bTexture = true;
-            if(aParStructs1.length === aParStructs2.length) {
-                let nPar;
-                for(nPar = 0; nPar < aParStructs1.length; ++nPar) {
-                    let oParStruct1 = aParStructs1[nPar];
-                    let oParStruct2 = aParStructs2[nPar];
-                    let aTextStructs1 = oParStruct1.getTextStructures();
-                    let aTextStructs2 = oParStruct2.getTextStructures();
-                    if(aTextStructs1.length !== aTextStructs2.length) {
-                        break;
-                    }
-                    let nText;
-                    for(nText = 0; nText < aTextStructs1.length; ++nText) {
-                        let oTextStruct1 = aTextStructs1[nText];
-                        let oTextStruct2 = aTextStructs2[nText];
-                        if(!isN(oTextStruct1.Code) || oTextStruct1.Code !== oTextStruct2.Code) {
-                            break;
-                        }
-                    }
-                    if(nText < aTextStructs1.length) {
-                        break;
-                    }
-                }
-                if(nPar === aParStructs1.length) {
-                    bTexture = false;
-
-
+            if(oContent1.GetAllMaths().length === 0 && oContent2.GetAllMaths() === 0) {
+                const aParStructs1 = oDocStruct1.getParagraphStructures();
+                const aParStructs2 = oDocStruct2.getParagraphStructures();
+                if(aParStructs1.length === aParStructs2.length) {
+                    let nPar;
                     for(nPar = 0; nPar < aParStructs1.length; ++nPar) {
                         let oParStruct1 = aParStructs1[nPar];
                         let oParStruct2 = aParStructs2[nPar];
@@ -978,18 +954,43 @@
                         for(nText = 0; nText < aTextStructs1.length; ++nText) {
                             let oTextStruct1 = aTextStructs1[nText];
                             let oTextStruct2 = aTextStructs2[nText];
-                            if(oTextStruct1.Code === oTextStruct2.Code) {
-                                //let oGeomMorph = new CGeometryMorphObject(oTexturesCache, nRelH1, nRelH2,
-                                //    oTextStruct1.geometry, oTextStruct1.brush, oTextStruct1.pen, oTransform1,
-                                //    oTextStruct2.geometry, oTextStruct2.brush, oTextStruct2.pen, oTransform2);
-                                //if(oGeomMorph.isValid()) {
-                                //    this.addMorphObject(oGeomMorph);
-                                //}
-                                //else {
+                            if(!isN(oTextStruct1.Code) || oTextStruct1.Code !== oTextStruct2.Code) {
+                                break;
+                            }
+                        }
+                        if(nText < aTextStructs1.length) {
+                            break;
+                        }
+                    }
+                    if(nPar === aParStructs1.length) {
+                        bTexture = false;
+
+
+                        for(nPar = 0; nPar < aParStructs1.length; ++nPar) {
+                            let oParStruct1 = aParStructs1[nPar];
+                            let oParStruct2 = aParStructs2[nPar];
+                            let aTextStructs1 = oParStruct1.getTextStructures();
+                            let aTextStructs2 = oParStruct2.getTextStructures();
+                            if(aTextStructs1.length !== aTextStructs2.length) {
+                                break;
+                            }
+                            let nText;
+                            for(nText = 0; nText < aTextStructs1.length; ++nText) {
+                                let oTextStruct1 = aTextStructs1[nText];
+                                let oTextStruct2 = aTextStructs2[nText];
+                                if(oTextStruct1.Code === oTextStruct2.Code) {
+                                    //let oGeomMorph = new CGeometryMorphObject(oTexturesCache, nRelH1, nRelH2,
+                                    //    oTextStruct1.geometry, oTextStruct1.brush, oTextStruct1.pen, oTransform1,
+                                    //    oTextStruct2.geometry, oTextStruct2.brush, oTextStruct2.pen, oTransform2);
+                                    //if(oGeomMorph.isValid()) {
+                                    //    this.addMorphObject(oGeomMorph);
+                                    //}
+                                    //else {
                                     let oWrapper1 = new CObjectForDrawWrapper(oTextStruct1, oTransform1, oContent1.Get_Theme(), oContent1.Get_ColorMap());
                                     let oWrapper2 = new CObjectForDrawWrapper(oTextStruct2, oTransform2, oContent2.Get_Theme(), oContent2.Get_ColorMap());
                                     this.addMorphObject(new CStretchTextureTransform(oTexturesCache, nRelH1, nRelH2, oWrapper1, oWrapper2));
-                                //}
+                                    //}
+                                }
                             }
                         }
                     }
