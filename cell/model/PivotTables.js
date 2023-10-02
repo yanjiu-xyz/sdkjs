@@ -2793,6 +2793,7 @@ function CT_pivotTableDefinition(setDefaults) {
 	this.colItems = null;
 	this.pageFields = null;
 	this.dataFields = null;
+	/**@type {CT_Formats} */
 	this.formats = null;
 	this.conditionalFormats = null;
 	this.chartFormats = null;
@@ -2896,7 +2897,7 @@ CT_pivotTableDefinition.prototype.initPostOpenZip = function (oNumFmts, dxfsOpen
 			dataField.initPostOpenZip(oNumFmts);
 		});
 	}
-	var formats = this.asc_getFormats();
+	var formats = this.getFormats();
 	if (formats) {
 		formats.forEach(function(format) {
 			format.initPostOpenZip(dxfsOpen);
@@ -4269,7 +4270,7 @@ CT_pivotTableDefinition.prototype.asc_getDataFields = function () {
 /**
  * @return {CT_Format[] | undefined}
  */
-CT_pivotTableDefinition.prototype.asc_getFormats = function() {
+CT_pivotTableDefinition.prototype.getFormats = function() {
 	return this.formats && this.formats.format.length > 0 && this.formats.format;
 };
 CT_pivotTableDefinition.prototype.asc_getPivotFilters = function () {
@@ -4590,25 +4591,47 @@ CT_pivotTableDefinition.prototype.calculateDataRow = function () {
 	return res;
 };
 CT_pivotTableDefinition.prototype.updateRowColItems = function () {
-	var res = this.calculateDataRow();
-	var dataRow = res.dataRow;
-	var pivotFields, rowFields, colFields, dataFields, cacheRecords, indexValues, cacheFieldsWithData = {};
-	pivotFields = this.asc_getPivotFields();
-	rowFields = this.asc_getRowFields();
-	colFields = this.asc_getColumnFields();
-	dataFields = this.asc_getDataFields();
-	var rowItems = null;
-	var colItems = null;
+	const res = this.calculateDataRow();
+	const dataRow = res.dataRow;
+	const pivotFields = this.asc_getPivotFields();
+	const rowFields = this.asc_getRowFields();
+	const colFields = this.asc_getColumnFields();
+	const dataFields = this.asc_getDataFields();
+	let rowItems = null;
+	let colItems = null;
+	let indexValues = null;
 	if (rowFields) {
 		rowItems = new CT_rowItems();
 		indexValues = this.getRowFieldsValuesIndex();
-		this._updateRowColItemsRecursively(0, dataRow, undefined, rowItems.i, rowFields, false, pivotFields, 0, dataFields, indexValues, false, true);
+		this._updateRowColItemsRecursively({
+			index: 0,
+			dataMap: dataRow,
+			items: rowItems.i,
+			fields: rowFields,
+			isCol: false,
+			pivotFields: pivotFields,
+			dataIndex: 0,
+			dataFields: dataFields,
+			indexValues: indexValues,
+			showAll: false
+		});
 		this._updateRowColItemsGrandTotal(this.rowGrandTotals, indexValues, rowItems.i, rowFields, dataFields);
 	}
 	if (colFields) {
 		colItems = new CT_colItems();
 		indexValues = this.getColumnFieldsValuesIndex();
-		this._updateRowColItemsRecursively(0, {vals: dataRow.subtotal}, undefined, colItems.i, colFields, true, pivotFields, 0, dataFields, indexValues, false, true);
+		this._updateRowColItemsRecursively({
+			index: 0,
+			dataMap: {vals: dataRow.subtotal},
+			items: colItems.i,
+			fields: colFields,
+			isCol: true,
+			pivotFields: pivotFields,
+			dataIndex: 0,
+			dataFields: dataFields,
+			indexValues: indexValues,
+			showAll: false
+		});
 		this._updateRowColItemsGrandTotal(this.colGrandTotals, indexValues, colItems.i, colFields, dataFields);
 	}
 	if (rowFields || colFields || dataFields) {
@@ -4625,43 +4648,86 @@ CT_pivotTableDefinition.prototype.updateRowColItems = function () {
 	this.setColItems(colItems, true);
 	return res;
 };
-CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(index, dataMap, parentI, items, fields, isCol, pivotFields, dataIndex, dataFields, indexValues, showAll) {
+/**
+ * @typedef UpdateRowColItemsRecursivelyOptions
+ * @property {CT_Field[]} fields 
+ * @property {CT_PivotField[]} pivotFields 
+ * @property {CT_DataField[]} dataFields 
+ * @property {CT_I[]} items 
+ * @property {CT_I} parentI 
+ * @property {PivotDataElem} dataMap 
+ * @property {number} index 
+ * @property {number} dataIndex 
+ * @property {number} indexValues 
+ * @property {boolean} isCol 
+ * @property {boolean} showAll
+ */
+/**
+ * Updates row and col items recursively
+ * @param {UpdateRowColItemsRecursivelyOptions} options 
+ */
+CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(options) {
+	const fields = options.fields;
+	const pivotFields = options.pivotFields;
+	const dataFields = options.dataFields;
+	const items = options.items;
+	const dataMap = options.dataMap;
+	const index = options.index;
+	const dataIndex = options.dataIndex;
+	const indexValues = options.indexValues;
+	const isCol = options.isCol;
+	let showAll = options.showAll;
+	let parentI = options.parentI;
 	if (index >= fields.length) {
 		return;
 	}
-	var pivotField, indexItem, item, subDataMap, dataField;
-	var x = fields[index].x;
-	var dataFieldsLength = (dataFields && dataFields.length) || 0;
+	const x = fields[index].x;
+	const dataFieldsLength = (dataFields && dataFields.length) || 0;
 	if (st_VALUES === x) {
 		if (dataFields) {
-			for (indexItem = 0; indexItem < dataFieldsLength; ++indexItem) {
-				dataField = dataFields[indexItem];
+			for (let indexItem = 0; indexItem < dataFieldsLength; ++indexItem) {
+				const dataField = dataFields[indexItem];
 				if (dataField) {
-					pivotField = pivotFields[dataField.asc_getIndex()];
+					let pivotField = pivotFields[dataField.asc_getIndex()];
 					if (pivotField) {
-						this._updateRowColItemsRecursivelyElem(index, dataMap, items, fields, isCol, pivotField, pivotFields, indexItem, dataFields, indexItem, parentI, indexValues, showAll, true);
+						this._updateRowColItemsRecursivelyElem({
+							index: index,
+							dataMap: dataMap,
+							items: items,
+							fields: fields,
+							isCol: isCol,
+							parentPivotField: pivotField,
+							pivotFields: pivotFields,
+							dataIndex: indexItem,
+							dataFields: dataFields,
+							indexItem: indexItem,
+							parentI: parentI,
+							indexValues: indexValues,
+							showAll: showAll,
+							sd: true
+						});
 						parentI = null;
 					}
 				}
 			}
 		}
 	} else {
-		pivotField = pivotFields[x];
+		let pivotField = pivotFields[x];
 		if (pivotField && pivotField.items) {
-			var sortDataIndex = pivotField.getSortDataIndex();
+			const sortDataIndex = pivotField.getSortDataIndex();
 			if (c_oAscFieldSortType.Manual !== pivotField.sortType && 0 <= sortDataIndex && sortDataIndex < dataFieldsLength) {
 				pivotField = pivotField.clone();
-				dataField = dataFields[sortDataIndex];
-				var sortedPivotItems = pivotField.items.item.map(function(currentValue, index) {
+				const dataField = dataFields[sortDataIndex];
+				const sortedPivotItems = pivotField.items.item.map(function(currentValue, index) {
 					return {item: currentValue, index: index};
 				});
-				var sign = Asc.c_oAscSortOptions.Ascending == pivotField.sortType ? 1 : -1;
+				const sign = Asc.c_oAscSortOptions.Ascending == pivotField.sortType ? 1 : -1;
 				sortedPivotItems.sort(function(a, b) {
-					var aDataMap = dataMap.vals[a.item.x];
+					let aDataMap = dataMap.vals[a.item.x];
 					aDataMap = aDataMap && aDataMap.total[sortDataIndex].getCellValue(dataField.subtotal, Asc.c_oAscItemType.Default, Asc.c_oAscItemType.Default, Asc.c_oAscItemType.Default);
-					var bDataMap = dataMap.vals[b.item.x];
+					let bDataMap = dataMap.vals[b.item.x];
 					bDataMap = bDataMap && bDataMap.total[sortDataIndex].getCellValue(dataField.subtotal, Asc.c_oAscItemType.Default, Asc.c_oAscItemType.Default, Asc.c_oAscItemType.Default);
-					var res = 0;
+					let res = 0;
 					if (aDataMap && aDataMap.type === AscCommon.CellValueType.Number && bDataMap && bDataMap.type === AscCommon.CellValueType.Number) {
 						res = aDataMap.number - bDataMap.number;
 					} else if (aDataMap && aDataMap.type === AscCommon.CellValueType.Number) {
@@ -4671,12 +4737,12 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(index
 					}
 					return sign * res;
 				});
-				for (indexItem = 0; indexItem < sortedPivotItems.length; ++indexItem) {
-					var sortedPivotItem = sortedPivotItems[indexItem];
-					item = sortedPivotItem.item;
-					var itemIndex = sortedPivotItem.index;
+				for (let indexItem = 0; indexItem < sortedPivotItems.length; ++indexItem) {
+					const sortedPivotItem = sortedPivotItems[indexItem];
+					const itemIndex = sortedPivotItem.index;
+					const item = sortedPivotItem.item;
 					if (Asc.c_oAscItemType.Data === item.t) {
-						subDataMap = dataMap.vals[item.x];
+						let subDataMap = dataMap.vals[item.x];
 						if (!subDataMap && (showAll || pivotField.showAll)) {
 							showAll = showAll || pivotField.showAll;
 							subDataMap = new PivotDataElem(dataFieldsLength);
@@ -4684,16 +4750,31 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(index
 							showAll = false;
 						}
 						if (subDataMap) {
-							this._updateRowColItemsRecursivelyElem(index, subDataMap, items, fields, isCol, pivotField, pivotFields, dataIndex, dataFields, itemIndex, parentI, indexValues, showAll, item.sd);
+							this._updateRowColItemsRecursivelyElem({
+								index: index,
+								dataMap: subDataMap,
+								items: items,
+								fields: fields,
+								isCol: isCol,
+								parentPivotField: pivotField,
+								pivotFields: pivotFields,
+								dataIndex: dataIndex,
+								dataFields: dataFields,
+								indexItem: itemIndex,
+								parentI: parentI,
+								indexValues: indexValues,
+								showAll: showAll,
+								sd: item.sd
+							});
 							parentI = null;
 						}
 					}
 				}
 			} else {
-				for (indexItem = 0; indexItem < pivotField.items.item.length; ++indexItem) {
-					item = pivotField.items.item[indexItem];
+				for (let indexItem = 0; indexItem < pivotField.items.item.length; ++indexItem) {
+					const item = pivotField.items.item[indexItem];
 					if (Asc.c_oAscItemType.Data === item.t) {
-						subDataMap = dataMap.vals[item.x];
+						let subDataMap = dataMap.vals[item.x];
 						if (!subDataMap && (showAll || pivotField.showAll)) {
 							showAll = showAll || pivotField.showAll;
 							subDataMap = new PivotDataElem(dataFieldsLength);
@@ -4701,7 +4782,22 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(index
 							showAll = false;
 						}
 						if (subDataMap) {
-							this._updateRowColItemsRecursivelyElem(index, subDataMap, items, fields, isCol, pivotField, pivotFields, dataIndex, dataFields, indexItem, parentI, indexValues, showAll, item.sd);
+							this._updateRowColItemsRecursivelyElem({
+								index: index,
+								dataMap: subDataMap,
+								items: items,
+								fields: fields,
+								isCol: isCol,
+								parentPivotField: pivotField,
+								pivotFields: pivotFields,
+								dataIndex: dataIndex,
+								dataFields: dataFields,
+								indexItem: indexItem,
+								parentI: parentI,
+								indexValues: indexValues,
+								showAll: showAll,
+								sd: item.sd
+							});
 							parentI = null;
 						}
 					}
@@ -4710,16 +4806,50 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursively = function(index
 		}
 	}
 };
-CT_pivotTableDefinition.prototype._updateRowColItemsRecursivelyElem = function(index, dataMap, items, fields, isCol, parentPivotField, pivotFields, dataIndex, dataFields, indexItem, parentI, indexValues, showAll, sd) {
-	var newI, newParentI, i, j;
-	var newX = new CT_X();
+/**
+ * @typedef UpdateRowColItemsRecursivelyElemOptions
+ * @property {CT_Field[]} fields 
+ * @property {CT_PivotField[]} pivotFields 
+ * @property {CT_DataField[]} dataFields 
+ * @property {CT_I[]} items 
+ * @property {CT_I} parentI 
+ * @property {PivotDataElem} dataMap 
+ * @property {CT_PivotField} parentPivotField
+ * @property {number} index 
+ * @property {number} dataIndex 
+ * @property {number} indexValues
+ * @property {number} indexItem
+ * @property {boolean} isCol 
+ * @property {boolean} showAll
+ * @property {boolean} sd
+ */
+/**
+ * @param {UpdateRowColItemsRecursivelyElemOptions} options
+ */
+CT_pivotTableDefinition.prototype._updateRowColItemsRecursivelyElem = function(options) {
+	const fields = options.fields;
+	const pivotFields = options.pivotFields;
+	const dataFields = options.dataFields;
+	const items = options.items;
+	const dataMap = options.dataMap;
+	const index = options.index;
+	const dataIndex = options.dataIndex;
+	const indexValues = options.indexValues;
+	const isCol = options.isCol;
+	const parentPivotField = options.parentPivotField;
+	const indexItem = options.indexItem;
+	let showAll = options.showAll;
+	let parentI = options.parentI;
+	let sd = options.sd; 
+	const isTabular = isCol || !parentPivotField.outline;
+	const newX = new CT_X();
 	newX.v = indexItem;
-	var isTabular = isCol || !parentPivotField.outline;
+	let newParentI;
 	if (parentI) {
 		parentI.x.push(newX);
 		newParentI = isTabular ? parentI : undefined;
 	} else {
-		newI = new CT_I();
+		const newI = new CT_I();
 		newI.i = dataIndex;
 		newI.r = index;
 		newI.x.push(newX);
@@ -4729,8 +4859,19 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursivelyElem = function(i
 	if (!sd) {
 		return;
 	}
-	this._updateRowColItemsRecursively(index + 1, dataMap, newParentI, items,
-			fields,	isCol, pivotFields, dataIndex, dataFields, indexValues, showAll);
+	this._updateRowColItemsRecursively({
+		index: index + 1,
+		dataMap: dataMap,
+		parentI: newParentI,
+		items: items,
+		fields: fields,
+		isCol: isCol,
+		pivotFields: pivotFields,
+		dataIndex: dataIndex,
+		dataFields: dataFields,
+		indexValues: indexValues,
+		showAll: showAll
+	});
 	var subtotals;
 	var subtotalTop = true;
 	var x = fields[index].x;
@@ -4746,11 +4887,11 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursivelyElem = function(i
 			to = dataFields.length - 1;
 		}
 		if (subtotals.length + to - from + 1 > 2 || isTabular || !subtotalTop) {
-			for (i = 0; i < subtotals.length; ++i) {
-				for (j = from; j <= to; ++j) {
-					newX = new CT_X();
+			for (let i = 0; i < subtotals.length; ++i) {
+				for (let j = from; j <= to; ++j) {
+					const newX = new CT_X();
 					newX.v = indexItem;
-					newI = new CT_I();
+					const newI = new CT_I();
 					newI.i = j;
 					newI.t = subtotals[i];
 					newI.r = index;
@@ -4761,9 +4902,9 @@ CT_pivotTableDefinition.prototype._updateRowColItemsRecursivelyElem = function(i
 		}
 	}
 	if (!isCol && parentPivotField.insertBlankRow && index !== indexValues && index < fields.length - 1) {
-		newX = new CT_X();
+		const newX = new CT_X();
 		newX.v = indexItem;
-		newI = new CT_I();
+		const newI = new CT_I();
 		newI.t = Asc.c_oAscItemType.Blank;
 		newI.r = index;
 		newI.x.push(newX);
@@ -4784,6 +4925,7 @@ CT_pivotTableDefinition.prototype._updateRowColItemsGrandTotal = function(grandT
 };
 CT_pivotTableDefinition.prototype.updateAfterEdit = function() {
 	var res = this.updateRowColItems();
+	this.formatsManager.update();
 	this.updateLocation();
 	return res;
 };
@@ -5642,7 +5784,9 @@ CT_pivotTableDefinition.prototype.updateIndexesForNewPivotFields = function (new
 	var newCTColFields = this._updateCacheDataUpdateRowColFieldsIndexes(this.asc_getColumnFields(), new CT_ColFields(), newCTDataFields, pivotFieldsMap);
 
 	this._updateCacheDataUpdateSlicers(newCacheDefinition, pivotFieldsMap);
+	var newFormats = this.formatsManager.updateFieldIndexes(this.getFormats(), new CT_Formats(), pivotFieldsMap);
 
+	this.formats = newFormats;
 	this.cacheDefinition = newCacheDefinition;
 	this.pivotFields = newCTPivotFields;
 	this.pageFields = newCTPageFields;
@@ -7373,9 +7517,69 @@ PivotFormatsManager.prototype.setDefaults = function() {
 	this.formatsCollection = [];
 	return;
 };
+/**
+ * @param {CT_Format} format
+ * @param {Map<number, number>} pivotFieldsMap 
+ */
+PivotFormatsManager.prototype.checkValidFields = function(format, pivotFieldsMap) {
+	const pivotArea = format.pivotArea;
+	if(pivotArea.field !== null) {
+		if (!pivotFieldsMap.has(pivotArea.field)) {
+			return false;
+		}
+	}
+	const references = pivotArea.getReferences();
+	if (references) {
+		for(let i = 0; i < references.length; i += 1) {
+			const reference = references[i];
+			if (reference.field !== null) {
+				if (!pivotFieldsMap.has(reference.field)) {
+					return false;
+				}
+			}
+		}
+	}
+	return true;
+};
+/**
+ * @param {CT_Formats} oldFormats
+ * @param {CT_Formats} newFormats
+ * @param {Map<number, number>} pivotFieldsMap 
+ */
+PivotFormatsManager.prototype.updateFieldIndexes = function(oldFormats, newFormats, pivotFieldsMap) {
+	const formats = newFormats.format;
+	if (oldFormats) {
+		for(let i = 0; i < oldFormats.length; i += 1) {
+			const format = oldFormats[i];
+			if (this.checkValidFields(format, pivotFieldsMap)) {
+				const pivotArea = format.pivotArea;
+				if(pivotArea.field !== null) {
+					pivotArea.field = pivotFieldsMap.get(pivotArea.field)
+				}
+				const references = pivotArea.getReferences();
+				if (references) {
+					for(let j = 0; j < references.length; j += 1) {
+						const reference = references[j];
+						if (reference.field !== null) {
+							reference.field = pivotFieldsMap.get(reference.field);
+						}
+					}
+				}
+				formats.push(format);
+			}
+		}
+	}
+	newFormats.format = formats;
+	return newFormats;
+};
 PivotFormatsManager.prototype.update = function() {
+	this.updateFormats();
+	this.updateCollection();
+	return;
+};
+PivotFormatsManager.prototype.updateCollection = function() {
 	this.setDefaults();
-	this.formats = this.pivot.asc_getFormats();
+	this.formats = this.pivot.getFormats();
 	if (this.formats) {
 		for (let i = this.formats.length - 1; i >= 0; i -= 1) {
 			const format = this.formats[i];
@@ -14759,7 +14963,7 @@ CT_PivotArea.prototype.getRangeOffset = function() {
  */
 CT_PivotArea.prototype.getReferences = function() {
 	return this.references && this.references.reference.length > 0 && this.references.reference;
-}
+};
 /**
  * @typedef PivotAreaReferencesInfo
  * @property {Map<number, PivotAreaReferenceInfo} referencesInfoMap
@@ -18836,7 +19040,7 @@ prot["asc_getPageFields"] = prot.asc_getPageFields;
 prot["asc_getColumnFields"] = prot.asc_getColumnFields;
 prot["asc_getRowFields"] = prot.asc_getRowFields;
 prot["asc_getDataFields"] = prot.asc_getDataFields;
-prot["asc_getFormats"] = prot.asc_getFormats;
+prot["getFormats"] = prot.getFormats;
 prot["asc_select"] = prot.asc_select;
 prot["getCacheFieldName"] = prot.getCacheFieldName;
 prot["getPivotFieldName"] = prot.getPivotFieldName;
