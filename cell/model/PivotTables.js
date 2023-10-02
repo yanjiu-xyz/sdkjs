@@ -4918,7 +4918,6 @@ CT_pivotTableDefinition.prototype._updateRowColItemsGrandTotal = function(grandT
 };
 CT_pivotTableDefinition.prototype.updateAfterEdit = function() {
 	var res = this.updateRowColItems();
-	this.formatsManager.update();
 	this.updateLocation();
 	return res;
 };
@@ -5752,7 +5751,7 @@ CT_pivotTableDefinition.prototype.updateCacheData = function (dataRef) {
 	this._updateCacheDataUpdatePivotFieldsIndexes(newCacheDefinition, newCTPivotFields, pivotFieldsMap, cacheFieldsIndexesMap);
 
 	var pivotFieldsIndexesMap = this._updateCacheDataUpdatePivotFieldsMap(oldPivotField, newCTPivotFields.pivotField, pivotFieldsMap, cacheFieldsIndexesMap);
-	this.updateIndexesForNewPivotFields(newCacheDefinition, newCTPivotFields, pivotFieldsMap);
+	this.updateIndexesForNewPivotFields(newCacheDefinition, newCTPivotFields, pivotFieldsMap, pivotFieldsIndexesMap);
 
 	this.setChanged(true);
 	var newPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(this);
@@ -5785,7 +5784,7 @@ CT_pivotTableDefinition.prototype._updateCacheDataUpdatePivotFieldsMap = functio
 	}
 	return pivotFieldsIndexesMap;
 };
-CT_pivotTableDefinition.prototype.updateIndexesForNewPivotFields = function (newCacheDefinition, newCTPivotFields, pivotFieldsMap) {
+CT_pivotTableDefinition.prototype.updateIndexesForNewPivotFields = function (newCacheDefinition, newCTPivotFields, pivotFieldsMap, pivotFieldsIndexesMap) {
 	var newCTPageFields = null;
 	if (this.asc_getPageFields()) {
 		newCTPageFields = new CT_PageFields();
@@ -5805,9 +5804,8 @@ CT_pivotTableDefinition.prototype.updateIndexesForNewPivotFields = function (new
 	var newCTColFields = this._updateCacheDataUpdateRowColFieldsIndexes(this.asc_getColumnFields(), new CT_ColFields(), newCTDataFields, pivotFieldsMap);
 
 	this._updateCacheDataUpdateSlicers(newCacheDefinition, pivotFieldsMap);
-	var newFormats = this.formatsManager.updateFieldIndexes(this.getFormats(), new CT_Formats(), pivotFieldsMap);
+	this.formatsManager.updateIndexes(pivotFieldsMap, pivotFieldsIndexesMap);
 
-	this.formats = newFormats;
 	this.cacheDefinition = newCacheDefinition;
 	this.pivotFields = newCTPivotFields;
 	this.pageFields = newCTPageFields;
@@ -7531,15 +7529,11 @@ CT_pivotTableDefinition.prototype.getFormatting = function(query) {
 function PivotFormatsManager(pivot) {
 	/** @type {CT_pivotTableDefinition} */
 	this.pivot = pivot;
-	/** @type {CT_Format[]} */
-	this.formats = [];
 	/** @type {PivotFormatsCollectionItem[]} */
 	this.formatsCollection = [];
-	// todo filter formats!!
 }
 
 PivotFormatsManager.prototype.setDefaults = function() {
-	this.formats = [];
 	this.formatsCollection = [];
 	return;
 };
@@ -7568,15 +7562,64 @@ PivotFormatsManager.prototype.checkValidFields = function(format, pivotFieldsMap
 	return true;
 };
 /**
+ * @param {Map<number, number>} pivotFieldsMap
+ * @param {Map<number, Map<number, number>>} pivotFieldsIndexesMap
+ */
+PivotFormatsManager.prototype.updateIndexes = function(pivotFieldsMap, pivotFieldsIndexesMap) {
+	// todo datafields
+	this.updateFields(pivotFieldsMap);
+	this.updateFieldIndexes(pivotFieldsIndexesMap);
+};
+/**
+ * @param {Map<number, Map<number, number>>} pivotFieldsIndexesMap 
+ */
+PivotFormatsManager.prototype.updateFieldIndexes = function(pivotFieldsIndexesMap) {
+	const formats = this.pivot.getFormats();
+	const result = [];
+	if (formats) {
+		for (let i = 0; i < formats.length; i += 1) {
+			const format = formats[i];
+			const pivotArea = format.pivotArea;
+			let isBadFormat = false;
+			if (pivotArea) {
+				const references = pivotArea.getReferences();
+				if (references) {
+					for(let j = 0; j < references.length && !isBadFormat; j += 1) {
+						const reference = references[j];
+						const x = reference.x;
+						const newIndexes = pivotFieldsIndexesMap.get(reference.field);
+						if (newIndexes) {
+							for(let k = 0; k < x.length; k += 1) {
+								if (newIndexes.has(x[k].v)) {
+									x[k].v = newIndexes.get(x[k].v)
+								} else {
+									isBadFormat = true;
+									break;
+								}
+							}
+						}
+					}
+				}
+			}
+			if (!isBadFormat) {
+				result.push(format);
+			}
+		}
+		this.pivot.formats.format = result;
+	}
+	return;
+};
+/**
  * @param {CT_Formats} oldFormats
  * @param {CT_Formats} newFormats
  * @param {Map<number, number>} pivotFieldsMap 
  */
-PivotFormatsManager.prototype.updateFieldIndexes = function(oldFormats, newFormats, pivotFieldsMap) {
-	const formats = newFormats.format;
-	if (oldFormats) {
-		for(let i = 0; i < oldFormats.length; i += 1) {
-			const format = oldFormats[i];
+PivotFormatsManager.prototype.updateFields = function(pivotFieldsMap) {
+	const result = [];
+	const formats = this.pivot.getFormats();
+	if (formats) {
+		for(let i = 0; i < formats.length; i += 1) {
+			const format = formats[i];
 			if (this.checkValidFields(format, pivotFieldsMap)) {
 				const pivotArea = format.pivotArea;
 				if(pivotArea.field !== null) {
@@ -7591,24 +7634,20 @@ PivotFormatsManager.prototype.updateFieldIndexes = function(oldFormats, newForma
 						}
 					}
 				}
-				formats.push(format);
+				result.push(format);
 			}
 		}
+		this.pivot.formats.format = result;
 	}
-	newFormats.format = formats;
-	return newFormats;
-};
-PivotFormatsManager.prototype.update = function() {
-	this.updateFormats();
-	this.updateCollection();
 	return;
 };
+
 PivotFormatsManager.prototype.updateCollection = function() {
 	this.setDefaults();
-	this.formats = this.pivot.getFormats();
-	if (this.formats) {
-		for (let i = this.formats.length - 1; i >= 0; i -= 1) {
-			const format = this.formats[i];
+	const formats = this.pivot.getFormats();
+	if (formats) {
+		for (let i = formats.length - 1; i >= 0; i -= 1) {
+			const format = formats[i];
 			this.addToCollection(format);
 		}
 	}
@@ -15038,7 +15077,7 @@ CT_PivotArea.prototype.getRangeOffset = function() {
 	return null;
 };
 /**
- * @return {CT_PivotAreaReference[]}
+ * @return {CT_PivotAreaReference[] | undefined}
  */
 CT_PivotArea.prototype.getReferences = function() {
 	return this.references && this.references.reference.length > 0 && this.references.reference;
@@ -16361,6 +16400,7 @@ function CT_PivotAreaReference() {
 	this.varSubtotal = false;
 	this.varPSubtotal = false;
 //Members
+	/**@type {CT_Index[]} */
 	this.x = [];
 	this.extLst = null;
 }

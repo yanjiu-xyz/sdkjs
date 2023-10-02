@@ -9250,7 +9250,7 @@
 	 * @param {PivotDataElem} dataRow 
 	 */
 	Worksheet.prototype._updatePivotTableCells = function (pivotTable, dataRow) {
-		pivotTable.formatsManager.update();
+		pivotTable.formatsManager.updateCollection();
 		this._updatePivotTableCellsPage(pivotTable);
 		this._updatePivotTableCellsHeader(pivotTable);
 		this._updatePivotTableCellsRowColLables(pivotTable);
