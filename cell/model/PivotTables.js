@@ -4363,7 +4363,7 @@ CT_pivotTableDefinition.prototype.refreshBaseItemIndexes = function (oldFieldIte
 };
 
 CT_pivotTableDefinition.prototype.refreshPivotFieldItem = function(index, pivotField, cacheRecords, cacheField, oldCacheField) {
-	var item, i, j, newItem, equalMap = {}, discretePrMap= {};
+	var item, i, j, newItem, equalMap = {}, pivotFieldIndexesMap= new Map();
 	var pivotFieldOld = pivotField.clone();
 	var newItems = new CT_Items();
 	cacheField.checkSharedItems(this, index, cacheRecords);
@@ -4388,7 +4388,7 @@ CT_pivotTableDefinition.prototype.refreshPivotFieldItem = function(index, pivotF
 								newItem.x = j;
 								newItems.item.push(newItem);
 								equalMap[newItem.x] = 1;
-								discretePrMap[item.x] = newItem.x;
+								pivotFieldIndexesMap.set(item.x, newItem.x);
 								break;
 							}
 						}
@@ -4410,7 +4410,7 @@ CT_pivotTableDefinition.prototype.refreshPivotFieldItem = function(index, pivotF
 	History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_PivotField,
 		this.worksheet ? this.worksheet.getId() : null, null,
 		new AscCommonExcel.UndoRedoData_PivotField(this.Get_Id(), index, pivotFieldOld, pivotField.clone()));
-	return discretePrMap;
+	return pivotFieldIndexesMap;
 };
 CT_pivotTableDefinition.prototype.getFilterMaps = function(cacheFieldsWithData) {
 	var t = this;
@@ -5753,8 +5753,9 @@ CT_pivotTableDefinition.prototype.updateCacheData = function (dataRef) {
 	newCacheDefinition.setPivotCacheId(this.cacheDefinition.getPivotCacheId());
 
 	var pivotFieldsMap = new Map();
+	var pivotFieldsIndexesMap = new Map();
 	var newCTPivotFields = new CT_PivotFields();
-	this._updateCacheDataUpdatePivotFieldsIndexes(newCacheDefinition, newCTPivotFields, pivotFieldsMap);
+	this._updateCacheDataUpdatePivotFieldsIndexes(newCacheDefinition, newCTPivotFields, pivotFieldsMap, pivotFieldsIndexesMap);
 	this.updateIndexesForNewPivotFields(newCacheDefinition, newCTPivotFields, pivotFieldsMap);
 
 	this.setChanged(true);
@@ -5795,8 +5796,8 @@ CT_pivotTableDefinition.prototype.updateIndexesForNewPivotFields = function (new
 	this.rowFields = newCTRowFields;
 	this.colFields = newCTColFields;
 };
-CT_pivotTableDefinition.prototype._updateCacheDataUpdatePivotFieldsIndexes = function (newCacheDefinition, newCTPivotFields, pivotFieldsMap) {
-	var i, discretePrMaps = {};
+CT_pivotTableDefinition.prototype._updateCacheDataUpdatePivotFieldsIndexes = function (newCacheDefinition, newCTPivotFields, pivotFieldsMap, pivotFieldsIndexesMap) {
+	var i;
 	var cacheDefinitionMap = new Map();
 	var newCacheFields = newCacheDefinition.getFields();
 	for (i = 0; i < newCacheFields.length; ++i) {
@@ -5816,18 +5817,18 @@ CT_pivotTableDefinition.prototype._updateCacheDataUpdatePivotFieldsIndexes = fun
 		}
 		var newIndex = cacheDefinitionMap.get(oldCacheField.asc_getName());
 		if (undefined !== newIndex && oldPivotField) {
-			var discretePrMap = this._updateCacheDataUpdatePivotFieldsIndexesItems(oldCacheField, oldPivotField, newIndex, newCacheDefinition);
+			let pivotFieldIndexesMap = this._updateCacheDataUpdatePivotFieldsIndexesItems(oldCacheField, oldPivotField, newIndex, newCacheDefinition);
 			//oldPivotField.items = null;
 			newPivotFields[newIndex] = oldPivotField;
 			pivotFieldsMap.set(i, newIndex);
-			if (discretePrMap) {
-				discretePrMaps[i] = discretePrMap;
+			if (pivotFieldIndexesMap) {
+				pivotFieldsIndexesMap.set(i, pivotFieldIndexesMap);
 			}
 		}
 	}
-	this._updateCacheDataUpdatePivotFieldsIndexesGroup(newCacheDefinition, newCTPivotFields, pivotFieldsMap, cacheDefinitionMap, discretePrMaps);
+	this._updateCacheDataUpdatePivotFieldsIndexesGroup(newCacheDefinition, newCTPivotFields, pivotFieldsMap, pivotFieldsIndexesMap, cacheDefinitionMap);
 };
-CT_pivotTableDefinition.prototype._updateCacheDataUpdatePivotFieldsIndexesGroup = function (newCacheDefinition, newCTPivotFields, pivotFieldsMap, cacheDefinitionMap, discretePrMaps) {
+CT_pivotTableDefinition.prototype._updateCacheDataUpdatePivotFieldsIndexesGroup = function (newCacheDefinition, newCTPivotFields, pivotFieldsMap, pivotFieldsIndexesMap, cacheDefinitionMap) {
 	var i;
 	var newCacheFields = newCacheDefinition.getFields();
 	var newPivotFields = newCTPivotFields.pivotField;
@@ -5842,7 +5843,7 @@ CT_pivotTableDefinition.prototype._updateCacheDataUpdatePivotFieldsIndexesGroup 
 				var newBaseIndex = cacheDefinitionMap.get(oldBaseCacheField.asc_getName());
 				var newBaseCacheField = newCacheFields[newBaseIndex];
 				var oldRangePr = oldCacheField.getGroupRangePr();
-				if (newBaseCacheField && discretePrMaps[newBaseIndex] &&
+				if (newBaseCacheField && pivotFieldsIndexesMap.has(newBaseIndex) &&
 					(!oldRangePr || oldBaseCacheField.isEqualByContains(newBaseCacheField))) {
 					var newIndexPar = newCacheFields.length;
 					var newCacheField = oldCacheField.clone();
@@ -5851,7 +5852,7 @@ CT_pivotTableDefinition.prototype._updateCacheDataUpdatePivotFieldsIndexesGroup 
 					}
 					var newPivotField = oldPivotField.clone();
 					if (c_oAscGroupType.Text === newCacheField.getFieldGroupType()) {
-						var groupItemsMap = newCacheField.refreshGroupDiscrete(newBaseCacheField.getGroupOrSharedItems(), discretePrMaps[newBaseIndex]);
+						var groupItemsMap = newCacheField.refreshGroupDiscrete(newBaseCacheField.getGroupOrSharedItems(), pivotFieldsIndexesMap.get(newBaseIndex));
 						//todo add getGroupOrSharedItems param
 						newPivotField.refreshGroupDiscrete(groupItemsMap, newCacheField.getGroupOrSharedSize());
 						var topCacheField = newCacheFields[newCacheDefinition.getFieldsTopParWithBase(newBaseIndex)];
@@ -10903,8 +10904,8 @@ CT_CacheField.prototype.ungroupDiscrete = function (base, baseCacheField, groupM
 CT_CacheField.prototype.ungroupRangePr = function () {
 	this.fieldGroup = null;
 };
-CT_CacheField.prototype.refreshGroupDiscrete = function (sharedItems, discretePrMap) {
-	return this.fieldGroup.refreshGroupDiscrete(sharedItems, discretePrMap);
+CT_CacheField.prototype.refreshGroupDiscrete = function (sharedItems, pivotFieldIndexesMap) {
+	return this.fieldGroup.refreshGroupDiscrete(sharedItems, pivotFieldIndexesMap);
 };
 CT_CacheField.prototype.refreshGroupRangePr = function (baseFld, rangePr, rangePrAuto) {
 	//rangePrAuto can contain only par index
@@ -14490,8 +14491,8 @@ CT_FieldGroup.prototype.ungroupDiscrete = function (base, baseCacheField, groupM
 	this.discretePr.ungroup(ungroupRes.reorderArray, groupMembers, ungroupRes.groupMembersPos);
 	return {base: base, reorderArray: ungroupRes.reorderArray, groupMembersPos: ungroupRes.groupMembersPos};
 };
-CT_FieldGroup.prototype.refreshGroupDiscrete = function (sharedItems, discretePrMap) {
-	var groupItemsMap = this.discretePr.refreshGroupDiscrete(sharedItems.getCount(), discretePrMap);
+CT_FieldGroup.prototype.refreshGroupDiscrete = function (sharedItems, pivotFieldIndexesMap) {
+	var groupItemsMap = this.discretePr.refreshGroupDiscrete(sharedItems.getCount(), pivotFieldIndexesMap);
 	var groupItemsIndexReverse = new Array(Object.keys(groupItemsMap).length);
 	var i, item;
 	for (i in groupItemsMap) {
@@ -14505,7 +14506,7 @@ CT_FieldGroup.prototype.refreshGroupDiscrete = function (sharedItems, discretePr
 		newGroupItems.addItem(item);
 	}
 	for (i = 0; i < sharedItems.getCount(); ++i) {
-		if(undefined === discretePrMap[i]) {
+		if(pivotFieldIndexesMap.has(i)) {
 			newGroupItems.addItem(sharedItems.getItem(i));
 		}
 	}
@@ -15825,25 +15826,19 @@ CT_DiscretePr.prototype.ungroup = function (reorderArray, groupMembers, groupMem
 		}
 	}
 };
-CT_DiscretePr.prototype.refreshGroupDiscrete = function (size, discretePrMap) {
-	var i, newX = [], groupItemsMap = {}, groupItemsIndex = 0, discretePrMapNewToOld = {};
-	for (i in discretePrMap) {
-		if (discretePrMap.hasOwnProperty(i)) {
-			discretePrMapNewToOld[discretePrMap[i]] = parseInt(i);
+CT_DiscretePr.prototype.refreshGroupDiscrete = function (size, pivotFieldIndexesMap) {
+	var t = this, i, newX = [], groupItemsMap = {}, groupItemsIndex = 0, pivotFieldIndexesNewToOld = {};
+	pivotFieldIndexesMap.forEach(function(value, key) {
+		pivotFieldIndexesNewToOld[value] = parseInt(key);
+		var index = t.x[parseInt(key)].v;
+		if (undefined === groupItemsMap[index]) {
+			groupItemsMap[index] = groupItemsIndex++;
 		}
-	}
-	for (i in discretePrMap) {
-		if (discretePrMap.hasOwnProperty(i)) {
-			var index = this.x[parseInt(i)].v;
-			if (undefined === groupItemsMap[index]) {
-				groupItemsMap[index] = groupItemsIndex++;
-			}
-		}
-	}
+	});
 	for (i = 0; i < size; ++i) {
 		var x = new CT_Index();
-		if(undefined !== discretePrMapNewToOld[i]) {
-			x.v = groupItemsMap[this.x[discretePrMapNewToOld[i]].v];
+		if(undefined !== pivotFieldIndexesNewToOld[i]) {
+			x.v = groupItemsMap[this.x[pivotFieldIndexesNewToOld[i]].v];
 		} else {
 			x.v = groupItemsIndex++;
 		}
