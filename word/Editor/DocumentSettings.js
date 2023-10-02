@@ -51,7 +51,8 @@
 		this.SdtSettings          = new CSdtGlobalSettings();
 		this.SpecialFormsSettings = new CSpecialFormsGlobalSettings();
 		this.WriteProtection      = undefined;
-		this.DocumentProtection   = undefined !== AscCommonWord.CDocProtect ? new AscCommonWord.CDocProtect() : null;
+		this.DocumentProtection   = undefined !== AscCommonWord.CDocProtect && logicDocument ? new AscCommonWord.CDocProtect() : null;
+		// TODO: Переделать AscCommonWord.CDocProtect. Класс с Id внутри класса без Id - очень плохо
 		
 		// Параметры, связанные с автоматической расстановкой переносов
 		this.autoHyphenation        = undefined;
@@ -125,7 +126,8 @@
 		AscCommon.AddAndExecuteChange(new CChangesDocumentSettingsHyphenationZone(this.LogicDocument, this.hyphenationZone, zone));
 	};
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscWord'].DocumentSettings         = DocumentSettings;
-	window['AscWord'].DEFAULT_HYPHENATION_ZONE = DEFAULT_HYPHENATION_ZONE;
+	window['AscWord'].DocumentSettings          = DocumentSettings;
+	window['AscWord'].DEFAULT_DOCUMENT_SETTINGS = new DocumentSettings(null);
+	window['AscWord'].DEFAULT_HYPHENATION_ZONE  = DEFAULT_HYPHENATION_ZONE;
 
 })(window);

@@ -71,7 +71,9 @@
 			"common/Drawings/Metafile.js",
 			"common/libfont/textmeasurer.js",
 			"common/Drawings/WorkEvents.js",
-
+			
+			"word/Math/mathTypes.js",
+			"word/Editor/StructuredDocumentTags/SdtPr.js",
 			"cell/model/History.js",
 
 			"common/Shapes/EditorSettings.js",
@@ -288,7 +290,6 @@
 			"word/Editor/StructuredDocumentTags/FormsManager.js",
 			"word/Editor/StructuredDocumentTags/FormToJson.js",
 			"word/Editor/StructuredDocumentTags/InlineLevel.js",
-			"word/Editor/StructuredDocumentTags/SdtPr.js",
 			"word/Editor/StructuredDocumentTags/SdtPrChanges.js",
 			"word/Editor/StructuredDocumentTags/Custom/CheckBox.js",
 			"word/Editor/StructuredDocumentTags/Custom/ComboBox.js",
@@ -316,7 +317,6 @@
 			"word/Math/NamesOfLiterals.js",
 			"word/Math/LaTeXParser.js",
 			"word/Math/UnicodeParser.js",
-			"word/Math/mathTypes.js",
 			"word/Math/mathText.js",
 			"word/Math/mathContent.js",
 			"word/Math/base.js",
