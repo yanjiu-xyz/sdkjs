@@ -3909,7 +3909,7 @@ function(window, undefined) {
 		}
 		return null;
 	};
-	CChartSpace.prototype.calculatePosByLayout = function (fPos, nLayoutMode, fLayoutValue, fSize, fChartSize, bYPos) {
+	CChartSpace.prototype.calculatePosByLayout = function (fPos, nLayoutMode, fLayoutValue, fSize, fChartSize) {
 		if (!AscFormat.isRealNumber(fLayoutValue)) {
 			return fPos;
 		}
@@ -3917,12 +3917,7 @@ function(window, undefined) {
 		if (nLayoutMode === AscFormat.LAYOUT_MODE_EDGE) {
 			fRetPos = fChartSize * fLayoutValue;
 		} else {
-			if(bYPos) {
-				fRetPos = fPos - fChartSize * fLayoutValue;
-			}
-			else {
-				fRetPos = fPos + fChartSize * fLayoutValue;
-			}
+			fRetPos = fPos + fChartSize * fLayoutValue;
 		}
 		if (fRetPos + fSize > fChartSize) {
 			fRetPos -= (fRetPos + fSize - fChartSize);
@@ -3963,24 +3958,29 @@ function(window, undefined) {
 		return fRetLayout;
 	};
 	CChartSpace.prototype.calculateLabelsPositions = function (b_recalc_labels, b_recalc_legend) {
-		var layout;
-		for (var i = 0; i < this.recalcInfo.dataLbls.length; ++i) {
-			var series = this.getAllSeries();
-			if (this.recalcInfo.dataLbls[i].series && this.recalcInfo.dataLbls[i].pt) {
+		let layout;
+		let aDLbls = this.recalcInfo.dataLbls;
+		for (let i = 0; i < aDLbls.length; ++i) {
+			let series = this.getAllSeries();
+			let oLbl = aDLbls[i];
+			if (oLbl && oLbl.series && oLbl.pt) {
 
-				var ser_idx = this.recalcInfo.dataLbls[i].series.idx; //сделаем проверку лежит ли серия с индексом this.recalcInfo.dataLbls[i].series.idx в сериях первой диаграммы
+				let ser_idx = oLbl.series.idx; //сделаем проверку лежит ли серия с индексом this.recalcInfo.dataLbls[i].series.idx в сериях первой диаграммы
 				for (var j = 0; j < series.length; ++j) {
-					if (series[j].idx === this.recalcInfo.dataLbls[i].series.idx) {
-						var bLayout = AscCommon.isRealObject(this.recalcInfo.dataLbls[i].layout) && (AscFormat.isRealNumber(this.recalcInfo.dataLbls[i].layout.x) || AscFormat.isRealNumber(this.recalcInfo.dataLbls[i].layout.y));
-						var pos = this.chartObj.recalculatePositionText(this.recalcInfo.dataLbls[i]);
-						var oLbl = this.recalcInfo.dataLbls[i];
+					if (series[j].idx === ser_idx) {
+						let pos = this.chartObj.recalculatePositionText(oLbl);
+
 						if (oLbl.layout) {
 							layout = oLbl.layout;
 							if (AscFormat.isRealNumber(layout.x)) {
-								pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, this.recalcInfo.dataLbls[i].extX, this.extX, false);
+								pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, oLbl.extX, this.extX);
 							}
 							if (AscFormat.isRealNumber(layout.y)) {
-								pos.y = this.calculatePosByLayout(pos.y, layout.yMode, layout.y, this.recalcInfo.dataLbls[i].extY, this.extY, true);
+								let bReverse = false;
+								if(AscFormat.isRealNumber(oLbl.pt.val) && oLbl.pt.val < 0) {
+									bReverse = true;
+								}
+								pos.y = this.calculatePosByLayout(pos.y, layout.yMode, bReverse ? -layout.y : layout.y, oLbl.extY, this.extY);
 							}
 						}
 						if (pos.x + oLbl.extX > this.extX) {
@@ -4009,10 +4009,10 @@ function(window, undefined) {
 				if (this.chart.title.layout) {
 					layout = this.chart.title.layout;
 					if (AscFormat.isRealNumber(layout.x)) {
-						pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, this.chart.title.extX, this.extX, false);
+						pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, this.chart.title.extX, this.extX);
 					}
 					if (AscFormat.isRealNumber(layout.y)) {
-						pos.y = this.calculatePosByLayout(pos.y, layout.yMode, layout.y, this.chart.title.extY, this.extY, true);
+						pos.y = this.calculatePosByLayout(pos.y, layout.yMode, layout.y, this.chart.title.extY, this.extY);
 					}
 				}
 				this.chart.title.setPosition(pos.x, pos.y);
@@ -4028,10 +4028,10 @@ function(window, undefined) {
 						if (oAxis.title.layout) {
 							layout = oAxis.title.layout;
 							if (AscFormat.isRealNumber(layout.x)) {
-								pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, oAxis.title.extX, this.extX, false);
+								pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, oAxis.title.extX, this.extX);
 							}
 							if (AscFormat.isRealNumber(layout.y)) {
-								pos.y = this.calculatePosByLayout(pos.y, layout.yMode, layout.y, oAxis.title.extY, this.extY, true);
+								pos.y = this.calculatePosByLayout(pos.y, layout.yMode, layout.y, oAxis.title.extY, this.extY);
 							}
 						}
 						oAxis.title.setPosition(pos.x, pos.y);
@@ -4052,10 +4052,10 @@ function(window, undefined) {
 			if (this.chart.legend.layout) {
 				layout = this.chart.legend.layout;
 				if (AscFormat.isRealNumber(layout.x)) {
-					pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, this.chart.legend.extX, this.extX, false);
+					pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, this.chart.legend.extX, this.extX);
 				}
 				if (AscFormat.isRealNumber(layout.y)) {
-					pos.y = this.calculatePosByLayout(pos.y, layout.yMode, layout.y, this.chart.legend.extY, this.extY, true);
+					pos.y = this.calculatePosByLayout(pos.y, layout.yMode, layout.y, this.chart.legend.extY, this.extY);
 				}
 			}
 			this.chart.legend.setPosition(pos.x, pos.y);
@@ -5732,10 +5732,10 @@ function(window, undefined) {
 					var pos = this.chartObj.recalculatePositionText(this.chart.legend);
 					if (this.chart.legend.layout) {
 						if (AscFormat.isRealNumber(legend.layout.x)) {
-							pos.x = this.calculatePosByLayout(pos.x, legend.layout.xMode, legend.layout.x, this.chart.legend.extX, this.extX, false);
+							pos.x = this.calculatePosByLayout(pos.x, legend.layout.xMode, legend.layout.x, this.chart.legend.extX, this.extX);
 						}
 						if (AscFormat.isRealNumber(legend.layout.y)) {
-							pos.y = this.calculatePosByLayout(pos.y, legend.layout.yMode, legend.layout.y, this.chart.legend.extY, this.extY, true);
+							pos.y = this.calculatePosByLayout(pos.y, legend.layout.yMode, legend.layout.y, this.chart.legend.extY, this.extY);
 						}
 					}
 					if (bResetLegendPos) {
@@ -6682,16 +6682,16 @@ function(window, undefined) {
 		var oLayout = this.chart.plotArea.layout;
 		if (oLayout) {
 
-			oChartSize.startX = this.calculatePosByLayout(oChartSize.startX, oLayout.xMode, oLayout.x, oChartSize.w, this.extX, false);
-			oChartSize.startY = this.calculatePosByLayout(oChartSize.startY, oLayout.yMode, oLayout.y, oChartSize.h, this.extY, true);
+			oChartSize.startX = this.calculatePosByLayout(oChartSize.startX, oLayout.xMode, oLayout.x, oChartSize.w, this.extX);
+			oChartSize.startY = this.calculatePosByLayout(oChartSize.startY, oLayout.yMode, oLayout.y, oChartSize.h, this.extY);
 			var fSize = this.calculateSizeByLayout(oChartSize.startX, this.extX, oLayout.w, oLayout.wMode);
 			if (AscFormat.isRealNumber(fSize) && fSize > 0) {
 				var fSize2 = this.calculateSizeByLayout(oChartSize.startY, this.extY, oLayout.h, oLayout.hMode);
 				if (AscFormat.isRealNumber(fSize2) && fSize2 > 0) {
 					oChartSize.w = fSize;
 					oChartSize.h = fSize2;
-					oChartSize.startX = this.calculatePosByLayout(oChartSize.startX, oLayout.xMode, oLayout.x, oChartSize.w, this.extX, false);
-					oChartSize.startY = this.calculatePosByLayout(oChartSize.startY, oLayout.yMode, oLayout.y, oChartSize.h, this.extY, true);
+					oChartSize.startX = this.calculatePosByLayout(oChartSize.startX, oLayout.xMode, oLayout.x, oChartSize.w, this.extX);
+					oChartSize.startY = this.calculatePosByLayout(oChartSize.startY, oLayout.yMode, oLayout.y, oChartSize.h, this.extY);
 					var aCharts = this.chart.plotArea.charts;
 					for (var i = 0; i < aCharts.length; ++i) {
 						var nChartType = aCharts[i].getObjectType();
