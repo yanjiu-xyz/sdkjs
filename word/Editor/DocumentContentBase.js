@@ -2749,11 +2749,12 @@ CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action
 					|| (AscWord.CompareDocumentPositions(prevInfo.selectionStart, prevInfo.selectionEnd) >= 0
 							&& AscWord.CompareDocumentPositions(curInfo.selectionEnd, prevInfo.selectionEnd) <= 0));
 					
+					mainDC.RemoveSelection();
 					mainDC.SetContentSelection(curInfo.selectionEnd, prevInfo.selectionEnd, 0, 0, 0);
 					
 					type     = isAdd ? AscCommon.SpeechWorkerCommands.TextSelected : AscCommon.SpeechWorkerCommands.TextUnselected;
 					obj.text = this.GetSelectedText(false);
-
+					
 					this.SetSelectionState(curState);
 				}
 			}
