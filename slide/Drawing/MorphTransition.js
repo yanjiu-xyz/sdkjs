@@ -507,15 +507,26 @@
             oGeometry2, oBrush2, this.shape2.pen, this.shape2.transform);
         if(oGeometryMorph.isValid()) {
             this.addMorphObject(oGeometryMorph);
-            if(!bNoText && this.shape1.getObjectType() === AscDFH.historyitem_type_Shape) {
+            if(this.shape1.getObjectType() === AscDFH.historyitem_type_Shape) {
                 const oContent1 = this.shape1.getDocContent();
-                const oTransform1 = this.shape1.transformText;
                 const oContent2 = this.shape2.getDocContent();
-                const oTransform2 = this.shape2.transformText;
-                if(oContent1 || oContent2) {
-                    this.addMorphObject(new CContentMorphObject(oTexturesCache, nRelH1, nRelH2,
-                        oContent1, oTransform1,
-                        oContent2, oTransform2));
+                let bNoText_ = bNoText;
+                if(bNoText_) {
+                    if(oContent1 && oContent1.GetAllMaths().length > 0) {
+                        bNoText_ = false;
+                    }
+                    else if(oContent2 && oContent2.GetAllMaths().length > 0) {
+                        bNoText_ = false;
+                    }
+                }
+                if(!bNoText_) {
+                    const oTransform1 = this.shape1.transformText;
+                    const oTransform2 = this.shape2.transformText;
+                    if(oContent1 || oContent2) {
+                        this.addMorphObject(new CContentMorphObject(oTexturesCache, nRelH1, nRelH2,
+                            oContent1, oTransform1,
+                            oContent2, oTransform2));
+                    }
                 }
             }
         }
@@ -1067,6 +1078,18 @@
         this.drawing1 = oDrawing1;
         this.drawing2 = oDrawing2;
         this.bNoText = !!bNoText;
+        if(this.bNoText) {
+            let oContent1 = this.drawing1.getDocContent && this.drawing1.getDocContent();
+            if(oContent1 && oContent1.GetAllMaths().length > 0) {
+                this.bNoText = false;
+            }
+            if(this.bNoText) {
+                let oContent2 = this.drawing2.getDocContent && this.drawing2.getDocContent();
+                if(oContent2 && oContent2.GetAllMaths().length > 0) {
+                    this.bNoText = false;
+                }
+            }
+        }
     }
     AscFormat.InitClassWithoutType(CStretchTextureTransform, CMorphObjectBase);
     CStretchTextureTransform.prototype.draw = function(oGraphics) {
@@ -1587,7 +1610,7 @@
                 case AscDFH.historyitem_type_Shape: {
                     aRet.push(oSp);
                     let oDocContent = oSp.getDocContent();
-                    if(oDocContent) {
+                    if(oDocContent && oDocContent.GetAllMaths().length === 0) {
                         const oTextDrawer = new AscFormat.CTextDrawer(oDocContent.XLimit, oDocContent.YLimit, false, oDocContent.Get_Theme(), true);
                         oDocContent.Draw(oDocContent.StartPage, oTextDrawer);
                         const oDocStruct = oTextDrawer.m_oDocContentStructure;
