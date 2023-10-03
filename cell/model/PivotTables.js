@@ -7543,7 +7543,7 @@ PivotFormatsManager.prototype.setDefaults = function() {
  */
 PivotFormatsManager.prototype.checkValidFields = function(format, pivotFieldsMap) {
 	const pivotArea = format.pivotArea;
-	if(pivotArea.field !== null) {
+	if(pivotArea.field !== null && pivotArea.field !== AscCommonExcel.st_VALUES) {
 		if (!pivotFieldsMap.has(pivotArea.field)) {
 			return false;
 		}
@@ -7552,7 +7552,7 @@ PivotFormatsManager.prototype.checkValidFields = function(format, pivotFieldsMap
 	if (references) {
 		for(let i = 0; i < references.length; i += 1) {
 			const reference = references[i];
-			if (reference.field !== null) {
+			if (reference.field !== null && reference.field !== AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) {
 				if (!pivotFieldsMap.has(reference.field)) {
 					return false;
 				}
@@ -7615,21 +7615,22 @@ PivotFormatsManager.prototype.updateFieldIndexes = function(pivotFieldsIndexesMa
  * @param {Map<number, number>} pivotFieldsMap 
  */
 PivotFormatsManager.prototype.updateFields = function(pivotFieldsMap) {
-	const result = [];
 	const formats = this.pivot.getFormats();
+	const dataFields = this.pivot.asc_getDataFields();
+	const result = [];
 	if (formats) {
 		for(let i = 0; i < formats.length; i += 1) {
 			const format = formats[i];
 			if (this.checkValidFields(format, pivotFieldsMap)) {
 				const pivotArea = format.pivotArea;
-				if(pivotArea.field !== null) {
+				if(pivotArea.field !== null && pivotArea.field !== AscCommonExcel.st_VALUES) {
 					pivotArea.field = pivotFieldsMap.get(pivotArea.field)
 				}
 				const references = pivotArea.getReferences();
 				if (references) {
 					for(let j = 0; j < references.length; j += 1) {
 						const reference = references[j];
-						if (reference.field !== null) {
+						if (reference.field !== null && reference.field !== AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) {
 							reference.field = pivotFieldsMap.get(reference.field);
 						}
 					}
