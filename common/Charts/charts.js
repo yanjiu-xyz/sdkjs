@@ -711,7 +711,8 @@ ChartPreviewManager.prototype.getChartPreviews = function(chartType, arrId, bEmp
 	SmartArtPreviewDrawer.prototype.OnBegin = function () {
 		const oApi = Asc.editor || editor;
 		this.index = 0;
-		if (oApi) oApi.sendEvent("asc_onBeginSmartArtPreview");
+		if (oApi)
+			oApi.sendEvent("asc_onBeginSmartArtPreview", this.typeOfSectionLoad);
 	}
 
 	SmartArtPreviewDrawer.prototype.OnEnd = function() {
