@@ -82,6 +82,7 @@
 	drawingDocument.OnRePaintAttack = function() {};
 	drawingDocument.ConvertCoordsToCursorWR  = function(X, Y) {return {X: X, Y: Y}};
 	drawingDocument.OnUpdateOverlay = function() {};
+	drawingDocument.Set_RulerState_HdrFtr = function() {};
 
 	editor.retrieveFormatPainterData = Asc.asc_docs_api.prototype.retrieveFormatPainterData.bind(editor);
 	editor.get_ShowParaMarks = Asc.asc_docs_api.prototype.get_ShowParaMarks.bind(editor);
@@ -136,16 +137,27 @@
 		}, 0);
 	};
 
-	function GoToHeader(page)
+	function GoToHeaderFooter(page, isHeader)
 	{
 		logicDocument.SetDocPosType(AscCommonWord.docpostype_HdrFtr);
-		logicDocument.Create_SectionHdrFtr( AscCommon.hdrftr_Header, page );
+		const mouseEvent = new AscCommon.CMouseEventHandler();
+		mouseEvent.Button     = 0;
+		mouseEvent.ClickCount = 1;
+
+		logicDocument.OnMouseDown(mouseEvent, 0, isHeader ? 0 : pageHeight, page);
+		logicDocument.OnMouseUp(mouseEvent, 0, isHeader ? 0 : pageHeight, page);
+		logicDocument.OnMouseMove(mouseEvent, 0, 0, page);
+		logicDocument.MoveCursorLeft();
 	}
 
-	function GoToFooter(page)
+	function RemoveHeader(page)
 	{
-		logicDocument.SetDocPosType(AscCommonWord.docpostype_HdrFtr);
-		logicDocument.Create_SectionHdrFtr( AscCommon.hdrftr_Footer, page );
+		logicDocument.RemoveHdrFtr(page, true);
+	}
+
+	function RemoveFooter(page)
+	{
+		logicDocument.RemoveHdrFtr(page, false);
 	}
 
 	function ClearDocumentAndAddParagraph(text)
@@ -1011,37 +1023,50 @@
 			ClearDocumentAndAddParagraph("Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World");
 			AscTest.Recalculate();
 
-			GoToFooter(2);
-			GoToHeader(2);
-
+			GoToHeaderFooter(2);
+			GoToHeaderFooter(2, true);
 
 			ExecuteHotkey(testHotkeyActions.moveToPreviousHeaderFooter);
+			assert.strictEqual(logicDocument.Get_CurPage(), 1, 'Check current page');
+			assert.true(!!logicDocument.Controller.HdrFtr.Pages[1].Footer, 'Footer exists');
 			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[1].Footer, 'Check move to previous footer');
 			ExecuteHotkey(testHotkeyActions.moveToPreviousHeaderFooter);
+			assert.strictEqual(logicDocument.Get_CurPage(), 1, 'Check current page');
+			assert.true(!!logicDocument.Controller.HdrFtr.Pages[1].Header, 'Header exists');
 			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[1].Header, 'Check move to previous header');
 
 			ExecuteHotkey(testHotkeyActions.moveToNextHeaderFooter);
+			assert.strictEqual(logicDocument.Get_CurPage(), 1, 'Check current page');
 			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[1].Footer, 'Check move to next footer');
 			ExecuteHotkey(testHotkeyActions.moveToNextHeaderFooter);
+			assert.strictEqual(logicDocument.Get_CurPage(), 2, 'Check current page');
+			assert.true(!!logicDocument.Controller.HdrFtr.Pages[2].Header, 'Header exists');
 			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[2].Header, 'Check move to next header');
 
 			ExecuteHotkey(testHotkeyActions.moveToPreviousHeader, 0);
+			assert.strictEqual(logicDocument.Get_CurPage(), 1, 'Check current page');
 			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[1].Header, 'Check move to previous header');
 			ExecuteHotkey(testHotkeyActions.moveToPreviousHeader, 1);
+			assert.strictEqual(logicDocument.Get_CurPage(), 0, 'Check current page');
+			assert.true(!!logicDocument.Controller.HdrFtr.Pages[0].Header, 'Header exists');
 			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[0].Header, 'Check move to previous header');
 
 			ExecuteHotkey(testHotkeyActions.moveToNextHeader, 0);
+			assert.strictEqual(logicDocument.Get_CurPage(), 1, 'Check current page');
 			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[1].Header, 'Check move to next header');
 			ExecuteHotkey(testHotkeyActions.moveToNextHeader, 1);
+			assert.strictEqual(logicDocument.Get_CurPage(), 2, 'Check current page');
 			assert.true(logicDocument.Controller.HdrFtr.CurHdrFtr === logicDocument.Controller.HdrFtr.Pages[2].Header, 'Check move to next header');
 
 			ExecuteHotkey(testHotkeyActions.endEditing);
 			assert.strictEqual(logicDocument.GetDocPosType(), AscCommonWord.docpostype_Content, "Check end editing footer");
 
-			GoToFooter(0);
+			GoToHeaderFooter(0);
 			ExecuteHotkey(testHotkeyActions.endEditing);
 			assert.strictEqual(logicDocument.GetDocPosType(), AscCommonWord.docpostype_Content, "Check end editing footer");
 
+			RemoveHeader(0);
+			RemoveFooter(0);
 			TurnOffRecalculateCurPos();
 			TurnOffRecalculate();
 		});
