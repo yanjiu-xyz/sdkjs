@@ -43,7 +43,8 @@
 		ExecuteThumbnailShortcut,
 		ExecuteMainShortcut,
 		ExecuteThumbnailHotkey,
-		ExecuteMainHotkey
+		ExecuteMainHotkey,
+		CNativeEvent
 	} = AscTest;
 
 	const logicDocument = AscTest.CreateLogicDocument();
@@ -419,6 +420,12 @@
 		CreateSlide();
 		CreateSlide();
 		CreateSlide();
+		CreateSlide();
+		CreateSlide();
+		CreateSlide();
+		CreateSlide();
+		CreateSlide();
+		CreateSlide();
 
 		let Execute;
 
@@ -458,8 +465,18 @@
 
 		ExecuteTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 0, demonstrationEvents[demonstrationTypes.moveToFirstSlide][0]);
 
-		ExecuteTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 5, demonstrationEvents[demonstrationTypes.moveToLastSlide][0]);
+		ExecuteTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 11, demonstrationEvents[demonstrationTypes.moveToLastSlide][0]);
 
+		ExecuteDemonstrationShortcut(new CNativeEvent(53));
+		ExecuteTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 4, demonstrationEvents[demonstrationTypes.moveToNumberSlide][0]);
+		ExecuteDemonstrationShortcut(new CNativeEvent(56));
+		ExecuteTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 7, demonstrationEvents[demonstrationTypes.moveToNumberSlide][0]);
+		ExecuteDemonstrationShortcut(new CNativeEvent(49));
+		ExecuteDemonstrationShortcut(new CNativeEvent(48));
+		ExecuteTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 9, demonstrationEvents[demonstrationTypes.moveToNumberSlide][0]);
+		ExecuteTestWithCatchEvent('asc_onDemonstrationSlideChanged', (nSlideNum) => nSlideNum, 10, demonstrationEvents[demonstrationTypes.moveToNumberSlide][0]);
+
+		
 		ExecuteTestWithCatchEvent('asc_onEndDemonstration', () => true, true, demonstrationEvents[demonstrationTypes.exitFromDemonstrationMode][0]);
 
 		Execute = ExecuteMainShortcut;

@@ -122,5 +122,6 @@
 	AscTest.Editor = editor;
 
 	window.editor = editor;
+	Asc.editor = editor;
 
 })(window);

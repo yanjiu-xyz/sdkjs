@@ -228,7 +228,8 @@
 		moveToPreviousSlide      : 1,
 		moveToFirstSlide         : 2,
 		moveToLastSlide          : 3,
-		exitFromDemonstrationMode: 4
+		exitFromDemonstrationMode: 4,
+		moveToNumberSlide        : 5
 	};
 	const demonstrationEvents = {};
 	demonstrationEvents[demonstrationTypes.moveToNextSlide] = [
@@ -237,6 +238,9 @@
 		new CNativeEvent(34, false, false, false, false),
 		new CNativeEvent(39, false, false, false, false),
 		new CNativeEvent(40, false, false, false, false)
+	];
+	demonstrationEvents[demonstrationTypes.moveToNumberSlide] = [
+		new CNativeEvent(13, false, false, false, false),
 	];
 	demonstrationEvents[demonstrationTypes.moveToPreviousSlide] = [
 		new CNativeEvent(33, false, false, false, false),
@@ -421,4 +425,5 @@
 	AscTest.ExecuteMainShortcut = ExecuteMainShortcut;
 	AscTest.ExecuteThumbnailHotkey = ExecuteThumbnailHotkey;
 	AscTest.ExecuteMainHotkey = ExecuteMainHotkey;
+	AscTest.CNativeEvent = CNativeEvent;
 })(window);
