@@ -1172,6 +1172,38 @@ QUnit.config.autostart = false;
 			ResetData(0, 0, 49, 49);
 		}
 	});
+	QUnit.test('Check drop down menu', (assert) =>
+	{
+		let check = false;
+		const ShowAutoComplete = function () {check = true;};
+		wbView.handlers.add("asc_onEntriesListMenu", ShowAutoComplete);
+		Select(0, 0, 0, 0, 0, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.showAutoComplete);
+		assert.true(check);
+		wbView.handlers.remove("asc_onEntriesListMenu", ShowAutoComplete);
+		check = false;
+
+		const props = ws.getDataValidationProps();
+		props.setType(Asc.EDataValidationType.List);
+		props.setFormula1(new Asc.CDataFormula('"1"'));
+		ws.setDataValidationProps(props);
+		const ShowDataValidations = function () {check = true;};
+		wbView.handlers.add("asc_onValidationListMenu", ShowDataValidations);
+		Select(0, 0, 0, 0, 0, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.showDataValidation);
+		assert.true(check);
+		ws.deleteDataValidationById(props.Get_Id());
+		wbView.handlers.remove("asc_onValidationListMenu", ShowDataValidations);
+		check = false;
+
+		const SetAutoFiltersDialog = function () {check = true;};
+		wbView.handlers.add("setAutoFiltersDialog", SetAutoFiltersDialog);
+		CreateTable();
+		Select(0, 0, 0, 0, 0, 0);
+		ExecuteTableHotkey(tableHotkeyTypes.showFilterOptions);
+		assert.true(check);
+		wbView.handlers.remove("setAutoFiltersDialog", SetAutoFiltersDialog);
+	});
 	QUnit.test('Check cell movement', (assert) =>
 	{
 		function CheckActiveCell(expectedRow, expectedColumn, description)

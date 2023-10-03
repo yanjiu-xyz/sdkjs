@@ -535,7 +535,10 @@
 		contextMenu               : 63,
 		moveToLowerCell           : 64,
 		selectToLowerCell         : 65,
-		selectToUpperCell         : 66
+		selectToUpperCell         : 66,
+		showFilterOptions         : 67,
+		showAutoComplete          : 68,
+		showDataValidation        : 69
 	};
 
 	const tableEvents = {};
@@ -741,9 +744,10 @@
 		new CNativeEvent(keyCodes.Equal, false, false, true, false),
 		new CNativeEvent(keyCodes.Equal, true, false, true, false, testFlags.macOs)
 	];
-	tableEvents[tableHotkeyTypes.contextMenu] = [
-		new CNativeEvent(keyCodes.ContextMenu, false, false, false, false)
-	];
+	tableEvents[tableHotkeyTypes.contextMenu] = [new CNativeEvent(keyCodes.ContextMenu, false, false, false, false)];
+	tableEvents[tableHotkeyTypes.showFilterOptions] = [new CNativeEvent(keyCodes.ArrowBottom, false, false, true, false)];
+	tableEvents[tableHotkeyTypes.showAutoComplete] = [new CNativeEvent(keyCodes.ArrowBottom, false, false, true, false)];
+	tableEvents[tableHotkeyTypes.showDataValidation] = [new CNativeEvent(keyCodes.ArrowBottom, false, false, true, false)];
 
 	const cellEditorHotkeyTypes = {
 		closeWithoutSave     : 0,
