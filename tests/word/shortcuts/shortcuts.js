@@ -44,7 +44,7 @@
 	const pageWidth = 100;
 	const pageHeight = 100;
 	logicDocument.Set_DocumentPageSize(pageWidth, pageHeight);
-	var props = new Asc.CDocumentSectionProps();
+	const props = new Asc.CDocumentSectionProps();
 	props.put_TopMargin(0);
 	props.put_LeftMargin(0);
 	props.put_BottomMargin(0);
@@ -148,16 +148,6 @@
 		logicDocument.Create_SectionHdrFtr( AscCommon.hdrftr_Footer, page );
 	}
 
-	function RemoveHeader(page)
-	{
-		logicDocument.RemoveHdrFtr(page, true);
-	}
-
-	function RemoveFooter(page)
-	{
-		logicDocument.RemoveHdrFtr(page, false);
-	}
-
 	function ClearDocumentAndAddParagraph(text)
 	{
 		logicDocument.RemoveSelection();
@@ -248,7 +238,7 @@
 	function AddCheckBox()
 	{
 		const checkBox = logicDocument.AddContentControlCheckBox();
-		var specProps = new AscCommon.CSdtCheckBoxPr();
+		const specProps = new AscCommon.CSdtCheckBoxPr();
 		checkBox.ApplyCheckBoxPr(specProps);
 		checkBox.SetFormPr(new AscCommon.CSdtFormPr());
 		return checkBox;
@@ -257,7 +247,7 @@
 	function AddComboBox(items)
 	{
 		const comboBox = logicDocument.AddContentControlComboBox();
-		var specProps = new AscCommon.CSdtComboBoxPr();
+		const specProps = new AscCommon.CSdtComboBoxPr();
 		specProps.clear();
 		for (let i = 0; i < items.length; i++)
 		{
@@ -303,7 +293,7 @@
 	{
 		let complexForm = logicDocument.AddComplexForm();
 		const formPr = new AscWord.CSdtFormPr();
-		var formTextPr = new AscCommon.CSdtTextFormPr();
+		const formTextPr = new AscCommon.CSdtTextFormPr();
 		formTextPr.put_MultiLine(true);
 		complexForm.SetFormPr(formPr);
 		complexForm.SetTextFormPr(formTextPr);
@@ -527,7 +517,7 @@
 			ExecuteShortcut(c_oAscDocumentShortcutType.UnIndent);
 			assert.strictEqual(GetDirectParaPr().GetIndLeft(), 0, "Check indent");
 
-			const paragraph2 = CreateParagraphWithText('Hello');
+			CreateParagraphWithText('Hello');
 
 			logicDocument.SelectAll();
 
@@ -610,7 +600,7 @@
 
 		QUnit.test('Check copy/paste format', (assert) =>
 		{
-			let paragraph = ClearDocumentAndAddParagraph('Hello');
+			ClearDocumentAndAddParagraph('Hello');
 			ApplyTextPrToDocument({Bold: true, Italic: true, Underline: true});
 			GetDirectTextPr();
 			ExecuteShortcut(c_oAscDocumentShortcutType.CopyFormat);
@@ -619,7 +609,7 @@
 			assert.true(textPr.Get_Italic(), 'Check copy italic format from paragraph');
 			assert.true(textPr.Get_Underline(), 'Check copy underline format from paragraph');
 
-			paragraph = ClearDocumentAndAddParagraph('');
+			ClearDocumentAndAddParagraph('');
 			ExecuteShortcut(c_oAscDocumentShortcutType.PasteFormat);
 			textPr = GetDirectTextPr();
 			assert.true(textPr.Get_Bold(), 'Check paste bold format from paragraph');
@@ -667,7 +657,7 @@
 
 		QUnit.test('Check update fields', (assert) =>
 		{
-			const paragraph = ClearDocumentAndAddParagraph('Hello');
+			ClearDocumentAndAddParagraph('Hello');
 			const paragraph2 = CreateParagraphWithText('Hello');
 			const paragraph3 = CreateParagraphWithText('Hello');
 
@@ -725,7 +715,7 @@
 				assert.strictEqual(position[position.length - 1].Position, expected, description);
 			}
 
-			const paragraph = ClearDocumentAndAddParagraph(
+			ClearDocumentAndAddParagraph(
 				'Hello World Hello ' +
 				'World Hello World ' +
 				'Hello World Hello ' +
@@ -1018,7 +1008,7 @@
 		{
 			TurnOnRecalculate();
 			TurnOnRecalculateCurPos();
-			const paragraph = ClearDocumentAndAddParagraph("Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World");
+			ClearDocumentAndAddParagraph("Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello World");
 			AscTest.Recalculate();
 
 			GoToFooter(2);
@@ -1059,7 +1049,7 @@
 		QUnit.test('Check reset actions shortcut', (assert) =>
 		{
 			TurnOnRecalculate();
-			const paragraph = ClearDocumentAndAddParagraph("");
+			ClearDocumentAndAddParagraph("");
 			AscTest.Recalculate()
 			editor.StartAddShape('rect');
 			ExecuteHotkey(testHotkeyActions.resetStartAddShape);
@@ -1082,7 +1072,7 @@
 
 		QUnit.test('Check filling forms', (assert) =>
 		{
-			let paragraph = ClearDocumentAndAddParagraph('');
+			ClearDocumentAndAddParagraph('');
 
 			const checkBox = AddCheckBox();
 			AscTest.SetFillingFormMode(true);
@@ -1094,7 +1084,7 @@
 			AscTest.SetEditingMode();
 
 			ClearDocumentAndAddParagraph('');
-			const comboBox = AddComboBox(['Hello', 'World', 'yo']);
+			AddComboBox(['Hello', 'World', 'yo']);
 			AscTest.SetFillingFormMode(true);
 			ExecuteHotkey(testHotkeyActions.nextOptionComboBox);
 			assert.strictEqual(logicDocument.GetSelectedText(), 'Hello', 'Check select next option in combobox');
@@ -1120,7 +1110,7 @@
 
 		QUnit.test('Check movement selecting forms', (assert) =>
 		{
-			const paragraph = ClearDocumentAndAddParagraph('');
+			ClearDocumentAndAddParagraph('');
 			let checkBox1 = AddCheckBox();
 			AscTest.MoveCursorRight();
 			let checkBox2 = AddCheckBox();
@@ -1172,7 +1162,7 @@
 		QUnit.test('Check select all in chart title', (assert) =>
 		{
 			TurnOnRecalculate();
-			const paragraph = ClearDocumentAndAddParagraph('');
+			ClearDocumentAndAddParagraph('');
 			AscTest.Recalculate();
 			TurnOffRecalculate();
 			const paraDrawing = AddChart();
@@ -1190,14 +1180,14 @@
 
 		QUnit.test('Check add new paragraph in content', (assert) =>
 		{
-			const paragraph = ClearDocumentAndAddParagraph('Hello text');
+			ClearDocumentAndAddParagraph('Hello text');
 			ExecuteHotkey(testHotkeyActions.addNewParagraphContent);
 			assert.strictEqual(logicDocument.Content.length, 2, 'Check add new paragraph');
 		});
 
 		QUnit.test('Check add new paragraph math', (assert) =>
 		{
-			const paragraph = ClearDocumentAndAddParagraph('Hello text');
+			ClearDocumentAndAddParagraph('Hello text');
 			logicDocument.AddParaMath();
 			AscTest.EnterText('abcd');
 			AscTest.MoveCursorLeft();
@@ -1246,7 +1236,7 @@
 		QUnit.test("Check add break line to inlinelvlsdt", (assert) =>
 		{
 			TurnOnRecalculate();
-			const paragraph = ClearDocumentAndAddParagraph('');
+			ClearDocumentAndAddParagraph('');
 			const complexForm = AddComplexForm();
 			ExecuteHotkey(testHotkeyActions.addBreakLineInlineLvlSdt);
 			assert.strictEqual(complexForm.Lines[0], 2, "Check add break line");
@@ -1256,7 +1246,7 @@
 		QUnit.test("Check visit hyperlink", (assert) =>
 		{
 			TurnOnRecalculate()
-			const paragraph = ClearDocumentAndAddParagraph('');
+			ClearDocumentAndAddParagraph('');
 			AscTest.Recalculate()
 			TurnOffRecalculate();
 			logicDocument.AddToParagraph(new AscWord.CRunBreak(AscWord.break_Page))
@@ -1270,7 +1260,7 @@
 
 		QUnit.test("Check handle tab in math", (assert) =>
 		{
-			const paragraph = ClearDocumentAndAddParagraph('');
+			ClearDocumentAndAddParagraph('');
 			logicDocument.AddParaMath();
 			AscTest.EnterText('abcd+abcd+abcd');
 			logicDocument.MoveCursorToEndPos();
@@ -1294,7 +1284,7 @@
 		QUnit.test("Check end editing form", (assert) =>
 		{
 			logicDocument.End_SilentMode();
-			const paragraph = ClearDocumentAndAddParagraph('');
+			ClearDocumentAndAddParagraph('');
 			const checkBox = AddCheckBox();
 			AscTest.SetFillingFormMode(true);
 			checkBox.MoveCursorToContentControl(true);
@@ -1307,7 +1297,7 @@
 
 		QUnit.test("Check replace unicode to char hotkeys", (assert) =>
 		{
-			const paragraph = ClearDocumentAndAddParagraph('2601');
+			ClearDocumentAndAddParagraph('2601');
 			AscTest.MoveCursorLeft(true, true);
 			ExecuteHotkey(testHotkeyActions.unicodeToChar, 0);
 			assert.strictEqual(logicDocument.GetSelectedText(), '☁', 'Check replace unicode code to symbol');
@@ -1323,7 +1313,7 @@
 		QUnit.test("Check reset drag'n'drop", (oAssert) =>
 		{
 			TurnOnRecalculate();
-			const paragraph = ClearDocumentAndAddParagraph('Hello Hello');
+			ClearDocumentAndAddParagraph('Hello Hello');
 			AscTest.Recalculate();
 			logicDocument.MoveCursorToStartPos();
 			AscTest.MoveCursorRight(true, true);
