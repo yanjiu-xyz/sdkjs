@@ -8756,7 +8756,7 @@
 			}
 			// update topRight pivot area formats
 			const pivotTableLenC = pivotRange.c2 - pivotRange.c1;
-			const lenC = pivotTableLenC - location.firstDataCol;
+			const lenC = pivotTableLenC - location.firstDataCol - colFields.length + 1;
 			this.updatePivotTableCellsLablesOriginOffsets(pivotTable, {
 				isData: false,
 				type: Asc.c_oAscPivotAreaType.TopRight,
