@@ -108,6 +108,7 @@
 			Digit4          : 52,
 			Digit5          : 53,
 			Digit6          : 54,
+			SemicolonFirefox: 59,
 			Delete          : 46,
 			EqualFirefox    : 61,
 			A               : 65,
@@ -136,6 +137,7 @@
 			F10             : 121,
 			NumLock         : 144,
 			ScrollLock      : 145,
+			MinusFirefox    : 173,
 			Semicolon       : 186,
 			Equal           : 187,
 			Comma           : 188,
@@ -454,7 +456,8 @@
 
 	];
 	graphicEvents[graphicHotkeyTypes.enDash] = [
-		new CNativeEvent(keyCodes.Minus, true, true, false, false)
+		new CNativeEvent(keyCodes.Minus, true, true, false, false),
+		new CNativeEvent(keyCodes.MinusFirefox, true, true, false, false),
 
 	];
 	graphicEvents[graphicHotkeyTypes.subscript] = [
@@ -564,10 +567,12 @@
 		new CNativeEvent(keyCodes.F2, false, false, false, false)
 	];
 	tableEvents[tableHotkeyTypes.addDate] = [
-		new CNativeEvent(keyCodes.Semicolon, true, false, false, false)
+		new CNativeEvent(keyCodes.Semicolon, true, false, false, false),
+		new CNativeEvent(keyCodes.SemicolonFirefox, true, false, false, false),
 	];
 	tableEvents[tableHotkeyTypes.addTime] = [
-		new CNativeEvent(keyCodes.Semicolon, true, true, false, false)
+		new CNativeEvent(keyCodes.Semicolon, true, true, false, false),
+		new CNativeEvent(keyCodes.SemicolonFirefox, true, true, false, false),
 	];
 	tableEvents[tableHotkeyTypes.removeActiveCell] = [
 		new CNativeEvent(keyCodes.BackSpace, false, false, false, false)
@@ -942,10 +947,12 @@
 		new CNativeEvent(keyCodes.F4, false, false, false, false)
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.addTime] = [
-		new CNativeEvent(keyCodes.Semicolon, true, true, false, false)
+		new CNativeEvent(keyCodes.Semicolon, true, true, false, false),
+		new CNativeEvent(keyCodes.SemicolonFirefox, true, true, false, false),
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.addDate] = [
-		new CNativeEvent(keyCodes.Semicolon, true, false, false, false)
+		new CNativeEvent(keyCodes.Semicolon, true, false, false, false),
+		new CNativeEvent(keyCodes.SemicolonFirefox, true, false, false, false),
 	];
 
 	function ExecuteGraphicHotkey(type, eventIndex)

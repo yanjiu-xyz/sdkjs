@@ -527,18 +527,28 @@ QUnit.config.autostart = false;
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addDate);
 		CloseCellEditor(true);
 		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getDateString(editor), 'Check add date');
-
 		EnterText('');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addTime, 1);
+		CloseCellEditor(true);
+		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getTimeString(editor).split(' ').join(':00 '), 'Check add time');
+		EnterText('');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addDate, 1);
+		CloseCellEditor(true);
+		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getDateString(editor), 'Check add date');
+		EnterText('');
+
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addSeparator);
 		CloseCellEditor(true);
 		assert.strictEqual(GetCellText(0, 0), '.', 'Check add separator');
-
 		EnterText('');
+
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addSpace);
 		CloseCellEditor(true);
 		assert.strictEqual(GetCellText(0, 0), ' ', 'Check add space');
-
 		EnterText('');
+
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addNewLine);
 		assert.strictEqual(cellEditor.textRender.getLinesCount(), 2, 'Check add new line');
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addNewLine);
@@ -1060,6 +1070,9 @@ QUnit.config.autostart = false;
 		const {paragraph} = ClearShapeAndAddParagraph('');
 		ExecuteGraphicHotkey(graphicHotkeyTypes.enDash);
 		assert.strictEqual(GetParagraphText(paragraph), String.fromCharCode(0x2013), 'Check add en dash');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.enDash, 1);
+		assert.strictEqual(GetParagraphText(paragraph), String.fromCharCode(0x2013, 0x2013), 'Check add en dash');
 	});
 
 	QUnit.test('Check select all', (assert) =>
@@ -1469,6 +1482,14 @@ QUnit.config.autostart = false;
 		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getDateString(editor), 'Check add date');
 
 		ExecuteTableHotkey(tableHotkeyTypes.addTime);
+		CloseCellEditor(true);
+		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getTimeString(editor).split(' ').join(':00 '), 'Check add time');
+
+		ExecuteTableHotkey(tableHotkeyTypes.addDate, 1);
+		CloseCellEditor(true);
+		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getDateString(editor), 'Check add date');
+
+		ExecuteTableHotkey(tableHotkeyTypes.addTime, 1);
 		CloseCellEditor(true);
 		assert.strictEqual(GetCellText(0, 0), (new Asc.cDate()).getTimeString(editor).split(' ').join(':00 '), 'Check add time');
 		
