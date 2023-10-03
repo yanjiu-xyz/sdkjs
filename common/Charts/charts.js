@@ -696,12 +696,13 @@ ChartPreviewManager.prototype.getChartPreviews = function(chartType, arrId, bEmp
 		if(!oApi) {
 			return;
 		}
+		this.typeOfSectionLoad = nTypeOfSectionLoad;
 		const oThis = this;
 		AscCommon.g_oBinarySmartArts.checkLoadDrawing().then(function ()
 		{
-			if (AscFormat.isRealNumber(nTypeOfSectionLoad)) {
-				const arrPreviewObjects = Asc.c_oAscSmartArtSections[nTypeOfSectionLoad].map(function (nTypeOfSmartArt) {
-					return new CSmartArtPreviewInfo(nTypeOfSmartArt, nTypeOfSectionLoad);
+			if (AscFormat.isRealNumber(oThis.typeOfSectionLoad)) {
+				const arrPreviewObjects = Asc.c_oAscSmartArtSections[oThis.typeOfSectionLoad].map(function (nTypeOfSmartArt) {
+					return new CSmartArtPreviewInfo(nTypeOfSmartArt, oThis.typeOfSectionLoad);
 				});
 				oThis.queue = oThis.queue.concat(arrPreviewObjects);
 				AscCommon.CActionOnTimerBase.prototype.Begin.call(oThis);
