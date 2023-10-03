@@ -243,6 +243,7 @@ $(function() {
 				"Buttons tabular test",
 				"Buttons outline test",
 				"Filter test",
+				"TypeAll test",
 				"All test"
 			];
 			let row = 4;
