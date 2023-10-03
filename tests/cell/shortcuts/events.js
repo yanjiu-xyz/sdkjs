@@ -220,7 +220,8 @@
 		new CNativeEvent(keyCodes.BackSpace, false, false, false, false)
 	];
 	graphicEvents[graphicHotkeyTypes.removeBackWord] = [
-		new CNativeEvent(keyCodes.BackSpace, true, false, false, false)
+		new CNativeEvent(keyCodes.BackSpace, true, false, false, false),
+		new CNativeEvent(keyCodes.BackSpace, false, false, true, false, testFlags.macOs)
 	];
 	graphicEvents[graphicHotkeyTypes.removeChart] = [
 		new CNativeEvent(keyCodes.BackSpace, false, false, false, false),
@@ -284,7 +285,8 @@
 
 	];
 	graphicEvents[graphicHotkeyTypes.moveCursorToEndLine] = [
-		new CNativeEvent(keyCodes.End, false, false, false, false)
+		new CNativeEvent(keyCodes.End, false, false, false, false),
+		new CNativeEvent(keyCodes.ArrowRight, false, false, false, true, testFlags.macOs)
 
 	];
 	graphicEvents[graphicHotkeyTypes.selectToEndDocument] = [
@@ -292,7 +294,8 @@
 
 	];
 	graphicEvents[graphicHotkeyTypes.selectToEndLine] = [
-		new CNativeEvent(keyCodes.End, false, true, false, false)
+		new CNativeEvent(keyCodes.End, false, true, false, false),
+		new CNativeEvent(keyCodes.ArrowRight, false, true, false, true, testFlags.macOs),
 
 	];
 	graphicEvents[graphicHotkeyTypes.moveCursorToStartDocument] = [
@@ -300,7 +303,8 @@
 
 	];
 	graphicEvents[graphicHotkeyTypes.moveCursorToStartLine] = [
-		new CNativeEvent(keyCodes.Home, false, false, false, false)
+		new CNativeEvent(keyCodes.Home, false, false, false, false),
+		new CNativeEvent(keyCodes.ArrowLeft, false, false, false, true, testFlags.macOs),
 
 	];
 	graphicEvents[graphicHotkeyTypes.selectToStartDocument] = [
@@ -308,7 +312,8 @@
 
 	];
 	graphicEvents[graphicHotkeyTypes.selectToStartLine] = [
-		new CNativeEvent(keyCodes.Home, false, true, false, false)
+		new CNativeEvent(keyCodes.Home, false, true, false, false),
+		new CNativeEvent(keyCodes.ArrowLeft, false, true, false, true, testFlags.macOs),
 
 	];
 	graphicEvents[graphicHotkeyTypes.moveCursorLeftChar] = [
@@ -319,11 +324,13 @@
 
 	];
 	graphicEvents[graphicHotkeyTypes.moveCursorLeftWord] = [
-		new CNativeEvent(keyCodes.ArrowLeft, true, false, false, false)
+		new CNativeEvent(keyCodes.ArrowLeft, true, false, false, false),
+		new CNativeEvent(keyCodes.ArrowLeft, false, false, true, false, testFlags.macOs),
 
 	];
 	graphicEvents[graphicHotkeyTypes.selectCursorLeftWord] = [
-		new CNativeEvent(keyCodes.ArrowLeft, true, true, false, false)
+		new CNativeEvent(keyCodes.ArrowLeft, true, true, false, false),
+		new CNativeEvent(keyCodes.ArrowLeft, false, true, true, false, testFlags.macOs),
 
 	];
 	graphicEvents[graphicHotkeyTypes.bigMoveGraphicObjectLeft] = [
@@ -343,11 +350,12 @@
 
 	];
 	graphicEvents[graphicHotkeyTypes.moveCursorRightWord] = [
-		new CNativeEvent(keyCodes.ArrowRight, true, false, false, false)
-
+		new CNativeEvent(keyCodes.ArrowRight, true, false, false, false),
+		new CNativeEvent(keyCodes.ArrowRight, false, false, true, false, testFlags.macOs)
 	];
 	graphicEvents[graphicHotkeyTypes.selectCursorRightWord] = [
-		new CNativeEvent(keyCodes.ArrowRight, true, true, false, false)
+		new CNativeEvent(keyCodes.ArrowRight, true, true, false, false),
+		new CNativeEvent(keyCodes.ArrowRight, false, true, true, false, testFlags.macOs),
 
 	];
 	graphicEvents[graphicHotkeyTypes.bigMoveGraphicObjectRight] = [
@@ -390,7 +398,8 @@
 
 	];
 	graphicEvents[graphicHotkeyTypes.removeFrontWord] = [
-		new CNativeEvent(keyCodes.Delete, true, false, false, false)
+		new CNativeEvent(keyCodes.Delete, true, false, false, false),
+		new CNativeEvent(keyCodes.Delete, false, false, true, false, testFlags.macOs),
 
 	];
 	graphicEvents[graphicHotkeyTypes.removeFrontChar] = [
@@ -808,31 +817,36 @@
 		new CNativeEvent(keyCodes.BackSpace, false, false, false, false)
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.removeWordBack] = [
-		new CNativeEvent(keyCodes.BackSpace, true, false, false, false)
+		new CNativeEvent(keyCodes.BackSpace, true, false, false, false),
+		new CNativeEvent(keyCodes.BackSpace, false, false, true, false, testFlags.macOs),
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.addSpace] = [
 		new CNativeEvent(keyCodes.Space, true, false, false, false)
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.moveToEndLine] = [
-		new CNativeEvent(keyCodes.End, false, false, false, false)
+		new CNativeEvent(keyCodes.End, false, false, false, false),
+		new CNativeEvent(keyCodes.ArrowRight, false, false, false, true, testFlags.macOs),
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.moveToEndDocument] = [
 		new CNativeEvent(keyCodes.End, true, false, false, false)
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.selectToEndLine] = [
-		new CNativeEvent(keyCodes.End, false, true, false, false)
+		new CNativeEvent(keyCodes.End, false, true, false, false),
+		new CNativeEvent(keyCodes.ArrowRight, false, true, false, true, testFlags.macOs),
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.selectToEndDocument] = [
 		new CNativeEvent(keyCodes.End, true, true, false, false)
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.moveToStartLine] = [
-		new CNativeEvent(keyCodes.Home, false, false, false, false)
+		new CNativeEvent(keyCodes.Home, false, false, false, false),
+		new CNativeEvent(keyCodes.ArrowLeft, false, false, false, true, testFlags.macOs),
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.moveToStartDocument] = [
 		new CNativeEvent(keyCodes.Home, true, false, false, false)
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.selectToStartLine] = [
-		new CNativeEvent(keyCodes.Home, false, true, false, false)
+		new CNativeEvent(keyCodes.Home, false, true, false, false),
+		new CNativeEvent(keyCodes.ArrowLeft, false, true, false, true, testFlags.macOs),
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.selectToStartDocument] = [
 		new CNativeEvent(keyCodes.Home, true, true, false, false)
@@ -841,13 +855,15 @@
 		new CNativeEvent(keyCodes.ArrowLeft, false, false, false, false)
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.moveCursorLeftWord] = [
-		new CNativeEvent(keyCodes.ArrowLeft, true, false, false, false)
+		new CNativeEvent(keyCodes.ArrowLeft, true, false, false, false),
+		new CNativeEvent(keyCodes.ArrowLeft, false, false, true, false, testFlags.macOs),
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.selectLeftChar] = [
 		new CNativeEvent(keyCodes.ArrowLeft, false, true, false, false)
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.selectLeftWord] = [
-		new CNativeEvent(keyCodes.ArrowLeft, true, true, false, false)
+		new CNativeEvent(keyCodes.ArrowLeft, true, true, false, false),
+		new CNativeEvent(keyCodes.ArrowLeft, false, true, true, false, testFlags.macOs),
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.moveToUpLine] = [
 		new CNativeEvent(keyCodes.ArrowTop, false, false, false, false)
@@ -859,13 +875,15 @@
 		new CNativeEvent(keyCodes.ArrowRight, false, false, false, false)
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.moveToRightWord] = [
-		new CNativeEvent(keyCodes.ArrowRight, true, false, false, false)
+		new CNativeEvent(keyCodes.ArrowRight, true, false, false, false),
+		new CNativeEvent(keyCodes.ArrowRight, false, false, true, false, testFlags.macOs),
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.selectRightChar] = [
 		new CNativeEvent(keyCodes.ArrowRight, false, true, false, false)
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.selectRightWord] = [
-		new CNativeEvent(keyCodes.ArrowRight, true, true, false, false)
+		new CNativeEvent(keyCodes.ArrowRight, true, true, false, false),
+		new CNativeEvent(keyCodes.ArrowRight, false, true, true, false, testFlags.macOs),
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.moveToDownLine] = [
 		new CNativeEvent(keyCodes.ArrowBottom, false, false, false, false)
@@ -877,7 +895,8 @@
 		new CNativeEvent(keyCodes.Delete, false, false, false, false)
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.deleteFrontWord] = [
-		new CNativeEvent(keyCodes.Delete, true, false, false, false)
+		new CNativeEvent(keyCodes.Delete, true, false, false, false),
+		new CNativeEvent(keyCodes.Delete, false, false, true, false, testFlags.macOs),
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.setStrikethrough] = [
 		new CNativeEvent(keyCodes.Digit5, true, false, false, false)

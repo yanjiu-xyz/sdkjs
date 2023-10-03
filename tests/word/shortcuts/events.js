@@ -33,6 +33,10 @@
 (function (window)
 {
 	window.AscTestShortcut = {};
+	const testFlags = {
+		nothing: 0x0000,
+		macOs: 0x0001
+	};
 	const testHotkeyActions = {
 		removeBackSymbol                   : 0,
 		removeBackWord                     : 1,
@@ -129,7 +133,10 @@
 	testHotkeyEvents[testHotkeyActions.bigMoveGraphicObjectUp] = [CreateTestEvent(38, false, false, false, false, false)];
 	testHotkeyEvents[testHotkeyActions.littleMoveGraphicObjectUp] = [CreateTestEvent(38, true, false, false, false, false)];
 	testHotkeyEvents[testHotkeyActions.removeBackSymbol] = [CreateTestEvent(8, false, false, false, false)];
-	testHotkeyEvents[testHotkeyActions.removeBackWord] = [CreateTestEvent(8, true, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.removeBackWord] = [
+		CreateTestEvent(8, true, false, false, false),
+		CreateTestEvent(8, false, false, true, false, testFlags.macOs),
+	];
 	testHotkeyEvents[testHotkeyActions.removeShape] = [
 		CreateTestEvent(8, false, false, false, false, false),
 		CreateTestEvent(46, false, false, false, false, false)
@@ -167,21 +174,45 @@
 	testHotkeyEvents[testHotkeyActions.endEditing] = [CreateTestEvent(27, false, false, false, false, false)];
 	testHotkeyEvents[testHotkeyActions.toggleCheckBox] = [CreateTestEvent(32, false, false, false, false, false)];
 	testHotkeyEvents[testHotkeyActions.moveToEndDocument] = [CreateTestEvent(35, true, false, false)];
-	testHotkeyEvents[testHotkeyActions.moveToEndLine] = [CreateTestEvent(35, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.moveToEndLine] = [
+		CreateTestEvent(35, false, false, false, false),
+		CreateTestEvent(39, true, false, false, false, testFlags.macOs),
+	];
 	testHotkeyEvents[testHotkeyActions.selectToEndDocument] = [CreateTestEvent(35, true, true, false, false)];
-	testHotkeyEvents[testHotkeyActions.selectToEndLine] = [CreateTestEvent(35, false, true, false, false)];
-	testHotkeyEvents[testHotkeyActions.selectToStartLine] = [CreateTestEvent(36, false, true, false, false)];
+	testHotkeyEvents[testHotkeyActions.selectToEndLine] = [
+		CreateTestEvent(35, false, true, false, false),
+		CreateTestEvent(39, true, true, false, false, testFlags.macOs),
+	];
+	testHotkeyEvents[testHotkeyActions.selectToStartLine] = [
+		CreateTestEvent(36, false, true, false, false),
+		CreateTestEvent(37, true, true, false, false, testFlags.macOs),
+	];
 	testHotkeyEvents[testHotkeyActions.selectToStartDocument] = [CreateTestEvent(36, true, true, false, false)];
-	testHotkeyEvents[testHotkeyActions.moveToStartLine] = [CreateTestEvent(36, false, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.moveToStartLine] = [
+		CreateTestEvent(36, false, false, false, false),
+		CreateTestEvent(37, true, false, false, false, testFlags.macOs),
+	];
 	testHotkeyEvents[testHotkeyActions.moveToStartDocument] = [CreateTestEvent(36, true, false, false)];
-	testHotkeyEvents[testHotkeyActions.selectLeftWord] = [CreateTestEvent(37, true, true, false, false)];
-	testHotkeyEvents[testHotkeyActions.moveToLeftWord] = [CreateTestEvent(37, true, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.selectLeftWord] = [
+		CreateTestEvent(37, true, true, false, false),
+		CreateTestEvent(37, false, true, true, false, testFlags.macOs),
+	];
+	testHotkeyEvents[testHotkeyActions.moveToLeftWord] = [
+		CreateTestEvent(37, true, false, false, false),
+		CreateTestEvent(37, false, false, true, false, testFlags.macOs),
+	];
 	testHotkeyEvents[testHotkeyActions.selectLeftChar] = [CreateTestEvent(37, false, true, false, false)];
 	testHotkeyEvents[testHotkeyActions.moveToLeftChar] = [CreateTestEvent(37, false, false, false, false)];
 	testHotkeyEvents[testHotkeyActions.moveToRightChar] = [CreateTestEvent(39, false, false, false, false)];
 	testHotkeyEvents[testHotkeyActions.selectRightChar] = [CreateTestEvent(39, false, true, false, false)];
-	testHotkeyEvents[testHotkeyActions.moveToRightWord] = [CreateTestEvent(39, true, false, false, false)];
-	testHotkeyEvents[testHotkeyActions.selectRightWord] = [CreateTestEvent(39, true, true, false, false)];
+	testHotkeyEvents[testHotkeyActions.moveToRightWord] = [
+		CreateTestEvent(39, true, false, false, false),
+		CreateTestEvent(39, false, false, true, false, testFlags.macOs)
+	];
+	testHotkeyEvents[testHotkeyActions.selectRightWord] = [
+		CreateTestEvent(39, true, true, false, false),
+		CreateTestEvent(39, false, true, true, false, testFlags.macOs),
+	];
 	testHotkeyEvents[testHotkeyActions.moveUp] = [CreateTestEvent(38, false, false, false, false)];
 	testHotkeyEvents[testHotkeyActions.selectUp] = [CreateTestEvent(38, false, true, false, false)];
 	testHotkeyEvents[testHotkeyActions.previousOptionComboBox] = [CreateTestEvent(38, false, false, false, false, false)];
@@ -189,10 +220,13 @@
 	testHotkeyEvents[testHotkeyActions.selectDown] = [CreateTestEvent(40, false, true, false, false)];
 	testHotkeyEvents[testHotkeyActions.nextOptionComboBox] = [CreateTestEvent(40, false, false, false, false, false)];
 	testHotkeyEvents[testHotkeyActions.removeFrontSymbol] = [CreateTestEvent(46, false, false, false, false)];
-	testHotkeyEvents[testHotkeyActions.removeFrontWord] = [CreateTestEvent(46, true, false, false, false)];
+	testHotkeyEvents[testHotkeyActions.removeFrontWord] = [
+		CreateTestEvent(46, true, false, false, false),
+		CreateTestEvent(46, false, false, true, false, testFlags.macOs),
+	];
 	testHotkeyEvents[testHotkeyActions.unicodeToChar] = [
 		CreateTestEvent(88, false, false, true, false),
-		CreateTestEvent(88, true, false, true, false)
+		CreateTestEvent(88, true, false, true, false, testFlags.macOs)
 	];
 	testHotkeyEvents[testHotkeyActions.showContextMenu] = [
 		CreateTestEvent(93, false, false, false, false),
@@ -221,19 +255,48 @@
 	testHotkeyEvents[testHotkeyActions.selectToStartNextPage] = [CreateTestEvent(34, true, true, false, false)];
 	testHotkeyEvents[testHotkeyActions.selectToNextPage] = [CreateTestEvent(34, false, true, false, false)];
 
-function CreateTestEvent(nKeyCode, bIsCtrl, bIsShift, bIsAlt, bIsMetaKey)
+function CreateTestEvent(nKeyCode, bIsCtrl, bIsShift, bIsAlt, bIsMetaKey, flags)
 {
+	flags = flags || testFlags.nothing;
 	const event = new AscCommon.CKeyboardEvent();
 	event.KeyCode = nKeyCode;
 	event.CtrlKey = !!bIsCtrl;
 	event.ShiftKey = !!bIsShift;
 	event.AltKey = !!bIsAlt;
 	event.MacCmdKey = !!bIsMetaKey;
+	event.enableFlags = function ()
+	{
+		if (flags & testFlags.macOs)
+		{
+			AscCommon.AscBrowser.isMacOs = true;
+		}
+	}
+	event.disableFlags = function ()
+	{
+		if (flags & testFlags.macOs)
+		{
+			AscCommon.AscBrowser.isMacOs = false;
+		}
+	}
 	return event;
 }
 
+	function ExecuteShortcut(e)
+	{
+		e.enableFlags && e.enableFlags();
+		const res = editor.WordControl.m_oLogicDocument.OnKeyDown(e);
+		e.disableFlags && e.disableFlags();
+		return res;
+	}
 
+	function ExecuteHotkey(type, eventIndex)
+	{
+		const event = testHotkeyEvents[type][eventIndex || 0];
+		return ExecuteShortcut(event);
+	}
 
 	AscTestShortcut.testHotkeyActions = testHotkeyActions;
 	AscTestShortcut.testHotkeyEvents = testHotkeyEvents;
+	AscTestShortcut.ExecuteShortcut = ExecuteShortcut;
+	AscTestShortcut.ExecuteHotkey = ExecuteHotkey;
 })(window);

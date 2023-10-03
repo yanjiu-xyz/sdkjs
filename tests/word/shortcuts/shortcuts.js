@@ -37,7 +37,8 @@
 {
 	const testHotkeyEvents = AscTestShortcut.testHotkeyEvents;
 	const testHotkeyActions = AscTestShortcut.testHotkeyActions;
-
+	const ExecuteShortcut = AscTestShortcut.ExecuteShortcut;
+	const ExecuteHotkey = AscTestShortcut.ExecuteHotkey;
 	let logicDocument = AscTest.CreateLogicDocument();
 
 	const pageWidth = 100;
@@ -155,17 +156,6 @@
 	function RemoveFooter(page)
 	{
 		logicDocument.RemoveHdrFtr(page, false);
-	}
-
-	function ExecuteShortcut(type)
-	{
-		return logicDocument.OnKeyDown(type);
-	}
-
-	function ExecuteHotkey(type, eventIndex)
-	{
-		const event = testHotkeyEvents[type][eventIndex || 0];
-		return ExecuteShortcut(event);
 	}
 
 	function ClearDocumentAndAddParagraph(text)
@@ -707,19 +697,25 @@
 
 		QUnit.test('Check remove symbols', (assert) =>
 		{
-			const paragraph = ClearDocumentAndAddParagraph('Hello Hello Hello Hello');
+			const paragraph = ClearDocumentAndAddParagraph('Hello Hello Hello Hello Hello Hello Hello');
 
 			ExecuteHotkey(testHotkeyActions.removeBackSymbol);
-			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello Hell', 'Check removing back symbol');
+			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello Hello Hello Hello Hell', 'Check removing back symbol');
 
 			ExecuteHotkey(testHotkeyActions.removeBackWord);
-			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello ', 'Check removing back word');
+			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello Hello Hello Hello ', 'Check removing back word');
+
+			ExecuteHotkey(testHotkeyActions.removeBackWord, 1);
+			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello Hello Hello ', 'Check removing back word');
 
 			logicDocument.MoveCursorToStartPos();
 			ExecuteHotkey(testHotkeyActions.removeFrontSymbol);
-			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'ello Hello Hello ', 'Check removing front symbol');
+			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'ello Hello Hello Hello Hello ', 'Check removing front symbol');
 			ExecuteHotkey(testHotkeyActions.removeFrontWord);
-			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello ', 'Check removing front word');
+			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello Hello ', 'Check removing front word');
+
+			ExecuteHotkey(testHotkeyActions.removeFrontWord, 1);
+			assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello ', 'Check removing front word');
 		});
 		QUnit.test('Check move/select in text', (assert) =>
 		{
@@ -753,11 +749,32 @@
 			ExecuteHotkey(testHotkeyActions.moveToRightChar);
 			CheckCursorPosition(19, 'Check move to right char');
 
+			ExecuteHotkey(testHotkeyActions.moveToEndLine, 1);
+			CheckCursorPosition(36, 'Check move to end line');
+
+			ExecuteHotkey(testHotkeyActions.moveToEndLine, 1);
+			CheckCursorPosition(36, 'Check move to end line');
+
+			ExecuteHotkey(testHotkeyActions.moveToStartLine, 1);
+			CheckCursorPosition(18, 'Check move to start line');
+
+			ExecuteHotkey(testHotkeyActions.moveToStartLine, 1);
+			CheckCursorPosition(18, 'Check move to start line');
+
+			ExecuteHotkey(testHotkeyActions.moveToRightChar);
+			CheckCursorPosition(19, 'Check move to right char');
+
 			ExecuteHotkey(testHotkeyActions.moveToLeftChar);
 			CheckCursorPosition(18, 'Check move to left char');
 
 			ExecuteHotkey(testHotkeyActions.moveToLeftWord);
 			CheckCursorPosition(12, 'Check move to left word');
+
+			ExecuteHotkey(testHotkeyActions.moveToLeftWord, 1);
+			CheckCursorPosition(6, 'Check move to left word');
+
+			ExecuteHotkey(testHotkeyActions.moveToRightWord, 1);
+			CheckCursorPosition(12, 'Check move to right word');
 
 			ExecuteHotkey(testHotkeyActions.moveToRightWord);
 			CheckCursorPosition(18, 'Check move to right word');
@@ -804,8 +821,22 @@
 			ExecuteHotkey(testHotkeyActions.selectToEndLine);
 			CheckSelectedText('Hello World Hello ', 'Select to end line');
 
-
 			ExecuteHotkey(testHotkeyActions.selectRightChar);
+			CheckSelectedText('Hello World Hello W', 'Select to right char');
+
+			ExecuteHotkey(testHotkeyActions.selectToEndLine, 1);
+			CheckSelectedText('Hello World Hello World Hello World ', 'Select to end line content');
+
+			ExecuteHotkey(testHotkeyActions.selectToEndLine, 1);
+			CheckSelectedText('Hello World Hello World Hello World ', 'Select to end line content');
+
+			ExecuteHotkey(testHotkeyActions.selectToStartLine, 1);
+			CheckSelectedText('Hello World Hello ', 'Select to start line content');
+
+			ExecuteHotkey(testHotkeyActions.selectToStartLine, 1);
+			CheckSelectedText('Hello World Hello ', 'Select to start line content');
+
+			ExecuteHotkey(testHotkeyActions.checkSelectCursorRight);
 			CheckSelectedText('Hello World Hello W', 'Select to right char');
 
 			ExecuteHotkey(testHotkeyActions.selectLeftChar);
@@ -815,6 +846,12 @@
 			CheckSelectedText('Hello World ', 'Select to left word');
 
 			ExecuteHotkey(testHotkeyActions.selectRightWord);
+			CheckSelectedText('Hello World Hello ', 'Select to right word');
+
+			ExecuteHotkey(testHotkeyActions.selectLeftWord, 1);
+			CheckSelectedText('Hello World ', 'Select to left word');
+
+			ExecuteHotkey(testHotkeyActions.selectRightWord, 1);
 			CheckSelectedText('Hello World Hello ', 'Select to right word');
 
 			ExecuteHotkey(testHotkeyActions.selectRightWord);
@@ -1279,10 +1316,8 @@
 
 			AscTest.MoveCursorLeft(true, true);
 
-			AscCommon.AscBrowser.isMacOs = true;
 			ExecuteHotkey(testHotkeyActions.unicodeToChar, 1);
 			assert.strictEqual(logicDocument.GetSelectedText(), '☝', 'Check replace unicode code to symbol');
-			AscCommon.AscBrowser.isMacOs = false;
 		});
 
 		QUnit.test("Check reset drag'n'drop", (oAssert) =>

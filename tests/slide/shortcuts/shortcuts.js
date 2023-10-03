@@ -535,11 +535,32 @@
 		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorRight);
 		CheckCursorPosition(19, 'Check move to right char');
 
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveToEndLineContent, 1);
+		CheckCursorPosition(36, 'Check move to end line');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveToEndLineContent, 1);
+		CheckCursorPosition(36, 'Check move to end line');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveToStartLineContent, 1);
+		CheckCursorPosition(18, 'Check move to start line');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveToStartLineContent, 1);
+		CheckCursorPosition(18, 'Check move to start line');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorRight);
+		CheckCursorPosition(19, 'Check move to right char');
+
 		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorLeft);
 		CheckCursorPosition(18, 'Check move to left char');
 
 		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorWordLeft);
 		CheckCursorPosition(12, 'Check move to left word');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorWordLeft, 1);
+		CheckCursorPosition(6, 'Check move to left word');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorWordRight, 1);
+		CheckCursorPosition(12, 'Check move to right word');
 
 		ExecuteMainHotkey(mainShortcutTypes.checkMoveCursorWordRight);
 		CheckCursorPosition(18, 'Check move to right word');
@@ -575,6 +596,21 @@
 		ExecuteMainHotkey(mainShortcutTypes.checkSelectCursorRight);
 		CheckSelectedText('Hello World Hello W', 'Select to right char');
 
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectToEndLineContent, 1);
+		CheckSelectedText('Hello World Hello World Hello World ', 'Select to end line content');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectToEndLineContent, 1);
+		CheckSelectedText('Hello World Hello World Hello World ', 'Select to end line content');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectToStartLineContent, 1);
+		CheckSelectedText('Hello World Hello ', 'Select to start line content');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectToStartLineContent, 1);
+		CheckSelectedText('Hello World Hello ', 'Select to start line content');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectCursorRight);
+		CheckSelectedText('Hello World Hello W', 'Select to right char');
+
 		ExecuteMainHotkey(mainShortcutTypes.checkSelectCursorLeft);
 		CheckSelectedText('Hello World Hello ', 'Select to left char');
 
@@ -582,6 +618,12 @@
 		CheckSelectedText('Hello World ', 'Select to left word');
 
 		ExecuteMainHotkey(mainShortcutTypes.checkSelectWordCursorRight);
+		CheckSelectedText('Hello World Hello ', 'Select to right word');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectWordCursorLeft, 1);
+		CheckSelectedText('Hello World ', 'Select to left word');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkSelectWordCursorRight, 1);
 		CheckSelectedText('Hello World Hello ', 'Select to right word');
 
 		ExecuteMainHotkey(mainShortcutTypes.checkSelectWordCursorRight);
@@ -610,20 +652,26 @@
 
 	QUnit.test('Check remove parts of text', (assert) =>
 	{
-		const {paragraph} = ClearShapeAndAddParagraph('Hello Hello Hello Hello');
+		const {paragraph} = ClearShapeAndAddParagraph('Hello Hello Hello Hello Hello Hello Hello');
 		logicDocument.MoveCursorToEndPos();
 
 		ExecuteMainHotkey(mainShortcutTypes.checkDeleteBack);
-		assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello Hell', 'Check removing back symbol');
+		assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello Hello Hello Hello Hell', 'Check removing back symbol');
 
 		ExecuteMainHotkey(mainShortcutTypes.checkDeleteWordBack);
-		assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello ', 'Check removing back word');
+		assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello Hello Hello Hello ', 'Check removing back word');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkDeleteWordBack, 1);
+		assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello Hello Hello ', 'Check removing back word');
 
 		logicDocument.MoveCursorToStartPos();
 		ExecuteMainHotkey(mainShortcutTypes.checkDeleteFront);
-		assert.strictEqual(AscTest.GetParagraphText(paragraph), 'ello Hello Hello ', 'Check removing front symbol');
+		assert.strictEqual(AscTest.GetParagraphText(paragraph), 'ello Hello Hello Hello Hello ', 'Check removing front symbol');
 		ExecuteMainHotkey(mainShortcutTypes.checkDeleteWordFront);
-		assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello ', 'Check removing front word');
+		assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello Hello ', 'Check removing front word');
+
+		ExecuteMainHotkey(mainShortcutTypes.checkDeleteWordFront, 1);
+		assert.strictEqual(AscTest.GetParagraphText(paragraph), 'Hello Hello Hello ', 'Check removing front word');
 	});
 
 	QUnit.test('Check text property change', (assert) =>

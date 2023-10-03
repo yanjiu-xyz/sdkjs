@@ -295,11 +295,32 @@ QUnit.config.autostart = false;
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToRightChar);
 		CheckCursorPosition(19, 'Check move to right char');
 
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToEndLine, 1);
+		CheckCursorPosition(36, 'Check move to end line');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToEndLine, 1);
+		CheckCursorPosition(36, 'Check move to end line');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToStartLine, 1);
+		CheckCursorPosition(18, 'Check move to start line');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToStartLine, 1);
+		CheckCursorPosition(18, 'Check move to start line');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToRightChar);
+		CheckCursorPosition(19, 'Check move to right char');
+
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveCursorLeftChar);
 		CheckCursorPosition(18, 'Check move to left char');
 
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveCursorLeftWord);
 		CheckCursorPosition(12, 'Check move to left word');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveCursorLeftWord, 1);
+		CheckCursorPosition(6, 'Check move to left word');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToRightWord, 1);
+		CheckCursorPosition(12, 'Check move to right word');
 
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToRightWord);
 		CheckCursorPosition(18, 'Check move to right word');
@@ -334,6 +355,21 @@ QUnit.config.autostart = false;
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectRightChar);
 		CheckSelectedText('Hello World Hello W', 'Select to right char');
 
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectToEndLine, 1);
+		CheckSelectedText('Hello World Hello World Hello World ', 'Select to end line content');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectToEndLine, 1);
+		CheckSelectedText('Hello World Hello World Hello World ', 'Select to end line content');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectToStartLine, 1);
+		CheckSelectedText('Hello World Hello ', 'Select to start line content');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectToStartLine, 1);
+		CheckSelectedText('Hello World Hello ', 'Select to start line content');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectRightChar);
+		CheckSelectedText('Hello World Hello W', 'Select to right char');
+
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectLeftChar);
 		CheckSelectedText('Hello World Hello ', 'Select to left char');
 
@@ -341,6 +377,12 @@ QUnit.config.autostart = false;
 		CheckSelectedText('Hello World ', 'Select to left word');
 
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectRightWord);
+		CheckSelectedText('Hello World Hello ', 'Select to right word');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectLeftWord, 1);
+		CheckSelectedText('Hello World ', 'Select to left word');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectRightWord, 1);
 		CheckSelectedText('Hello World Hello ', 'Select to right word');
 
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectRightWord);
@@ -375,33 +417,38 @@ QUnit.config.autostart = false;
 
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.selectToEndDocument);
 		CheckSelectedText('Hello World Hello World Hello World Hello World Hello World Hello World Hello World Hello Hello World Hello Hello World Hello Hello World Hello World Hello World', 'Select to end content');
-		// todo unlock
-		// cellEditor._moveCursor(-4);
-		//
-		// ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToStartLine);
-		// CheckCursorPosition(144, 'Check move to start line');
-		// ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToStartLine);
-		// CheckCursorPosition(144, 'Check move to start line');
+		cellEditor._moveCursor(-4);
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToStartLine);
+		CheckCursorPosition(144, 'Check move to start line');
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.moveToStartLine);
+		CheckCursorPosition(144, 'Check move to start line');
 	});
 
 	QUnit.test('Check remove parts of text', (assert) =>
 	{
 		Select(0, 0, 0, 0, 0, 0);
 		OpenCellEditor();
-		EnterText('Hello Hello Hello Hello');
+		EnterText('Hello Hello Hello Hello Hello Hello Hello');
 		cellEditor._moveCursor(-4);
 
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.removeCharBack);
-		assert.strictEqual(GetCellEditorText(), 'Hello Hello Hello Hell', 'Check removing back symbol');
+		assert.strictEqual(GetCellEditorText(), 'Hello Hello Hello Hello Hello Hello Hell', 'Check removing back symbol');
 
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.removeWordBack);
-		assert.strictEqual(GetCellEditorText(), 'Hello Hello Hello ', 'Check removing back word');
+		assert.strictEqual(GetCellEditorText(), 'Hello Hello Hello Hello Hello Hello ', 'Check removing back word');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.removeWordBack, 1);
+		assert.strictEqual(GetCellEditorText(), 'Hello Hello Hello Hello Hello ', 'Check removing back word');
 
 		cellEditor._moveCursor(-2);
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.deleteFrontChar);
-		assert.strictEqual(GetCellEditorText(), 'ello Hello Hello ', 'Check removing front symbol');
+		assert.strictEqual(GetCellEditorText(), 'ello Hello Hello Hello Hello ', 'Check removing front symbol');
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.deleteFrontWord);
-		assert.strictEqual(GetCellEditorText(), 'Hello Hello ', 'Check removing front word');
+		assert.strictEqual(GetCellEditorText(), 'Hello Hello Hello Hello ', 'Check removing front word');
+
+		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.deleteFrontWord, 1);
+		assert.strictEqual(GetCellEditorText(), 'Hello Hello Hello ', 'Check removing front word');
 	});
 
 	QUnit.test('Check save and moving from cell', (assert) =>
@@ -605,20 +652,26 @@ QUnit.config.autostart = false;
 	});
 	QUnit.test('Check remove parts of text', (assert) =>
 	{
-		const {paragraph} = ClearShapeAndAddParagraph('Hello Hello Hello Hello');
+		const {paragraph} = ClearShapeAndAddParagraph('Hello Hello Hello Hello Hello Hello Hello');
 		GetDrawingObjects().cursorMoveToEndPos();
 
 		ExecuteGraphicHotkey(graphicHotkeyTypes.removeBackChar);
-		assert.strictEqual(GetParagraphText(paragraph), 'Hello Hello Hello Hell', 'Check removing back symbol');
+		assert.strictEqual(GetParagraphText(paragraph), 'Hello Hello Hello Hello Hello Hello Hell', 'Check removing back symbol');
 
 		ExecuteGraphicHotkey(graphicHotkeyTypes.removeBackWord);
-		assert.strictEqual(GetParagraphText(paragraph), 'Hello Hello Hello ', 'Check removing back word');
+		assert.strictEqual(GetParagraphText(paragraph), 'Hello Hello Hello Hello Hello Hello ', 'Check removing back word');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.removeBackWord, 1);
+		assert.strictEqual(GetParagraphText(paragraph), 'Hello Hello Hello Hello Hello ', 'Check removing back word');
 
 		GetDrawingObjects().cursorMoveToStartPos();
 		ExecuteGraphicHotkey(graphicHotkeyTypes.removeFrontChar);
-		assert.strictEqual(GetParagraphText(paragraph), 'ello Hello Hello ', 'Check removing front symbol');
+		assert.strictEqual(GetParagraphText(paragraph), 'ello Hello Hello Hello Hello ', 'Check removing front symbol');
 		ExecuteGraphicHotkey(graphicHotkeyTypes.removeFrontWord);
-		assert.strictEqual(GetParagraphText(paragraph), 'Hello Hello ', 'Check removing front word');
+		assert.strictEqual(GetParagraphText(paragraph), 'Hello Hello Hello Hello ', 'Check removing front word');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.removeFrontWord, 1);
+		assert.strictEqual(GetParagraphText(paragraph), 'Hello Hello Hello ', 'Check removing front word');
 	});
 
 	QUnit.test('Check remove graphic objects', (assert) =>
@@ -796,11 +849,32 @@ QUnit.config.autostart = false;
 		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorRightChar);
 		CheckCursorPosition(19, 'Check move to right char');
 
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorToEndLine, 1);
+		CheckCursorPosition(36, 'Check move to end line');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorToEndLine, 1);
+		CheckCursorPosition(36, 'Check move to end line');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorToStartLine, 1);
+		CheckCursorPosition(18, 'Check move to start line');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorToStartLine, 1);
+		CheckCursorPosition(18, 'Check move to start line');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorRightChar);
+		CheckCursorPosition(19, 'Check move to right char');
+
 		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorLeftChar);
 		CheckCursorPosition(18, 'Check move to left char');
 
 		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorLeftWord);
 		CheckCursorPosition(12, 'Check move to left word');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorLeftWord, 1);
+		CheckCursorPosition(6, 'Check move to left word');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorRightWord, 1);
+		CheckCursorPosition(12, 'Check move to right word');
 
 		ExecuteGraphicHotkey(graphicHotkeyTypes.moveCursorRightWord);
 		CheckCursorPosition(18, 'Check move to right word');
@@ -836,6 +910,21 @@ QUnit.config.autostart = false;
 		ExecuteGraphicHotkey(graphicHotkeyTypes.selectCursorRightChar);
 		CheckSelectedText('Hello World Hello W', 'Select to right char');
 
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectToEndLine, 1);
+		CheckSelectedText('Hello World Hello World Hello World ', 'Select to end line content');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectToEndLine, 1);
+		CheckSelectedText('Hello World Hello World Hello World ', 'Select to end line content');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectToStartLine, 1);
+		CheckSelectedText('Hello World Hello ', 'Select to start line content');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectToStartLine, 1);
+		CheckSelectedText('Hello World Hello ', 'Select to start line content');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectCursorRightChar);
+		CheckSelectedText('Hello World Hello W', 'Select to right char');
+
 		ExecuteGraphicHotkey(graphicHotkeyTypes.selectCursorLeftChar);
 		CheckSelectedText('Hello World Hello ', 'Select to left char');
 
@@ -843,6 +932,12 @@ QUnit.config.autostart = false;
 		CheckSelectedText('Hello World ', 'Select to left word');
 
 		ExecuteGraphicHotkey(graphicHotkeyTypes.selectCursorRightWord);
+		CheckSelectedText('Hello World Hello ', 'Select to right word');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectCursorLeftWord, 1);
+		CheckSelectedText('Hello World ', 'Select to left word');
+
+		ExecuteGraphicHotkey(graphicHotkeyTypes.selectCursorRightWord, 1);
 		CheckSelectedText('Hello World Hello ', 'Select to right word');
 
 		ExecuteGraphicHotkey(graphicHotkeyTypes.selectCursorRightWord);

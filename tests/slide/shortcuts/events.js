@@ -33,6 +33,11 @@
 
 (function (window)
 {
+	const testFlags = {
+		nothing: 0x0000,
+		macOs: 0x0001
+	};
+
 	const mainShortcutTypes = {
 		checkDeleteBack                                  : 0,
 		checkDeleteWordBack                              : 1,
@@ -113,114 +118,144 @@
 		selectToLastSlide                                : 77
 	};
 	const mainEvents = {};
-	mainEvents[mainShortcutTypes.checkDeleteBack] = [CreateKeyboardEvent(8, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkDeleteWordBack] = [CreateKeyboardEvent(8, true, false, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkDeleteBack] = [CreateKeyboardEvent(8, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkDeleteWordBack] = [
+		CreateKeyboardEvent(8, true, false, false, false),
+		CreateKeyboardEvent(8, false, false, true, false, testFlags.macOs),
+	];
 	mainEvents[mainShortcutTypes.checkRemoveAnimation] = [
-		CreateKeyboardEvent(8, false, false, false, false, false),
-		CreateKeyboardEvent(46, false, false, false, false, false, false)];
+		CreateKeyboardEvent(8, false, false, false, false),
+		CreateKeyboardEvent(46, false, false, false, false)];
 	mainEvents[mainShortcutTypes.checkRemoveChart] = [
-		CreateKeyboardEvent(8, false, false, false, false, false),
-		CreateKeyboardEvent(46, false, false, false, false, false, false)];
+		CreateKeyboardEvent(8, false, false, false, false),
+		CreateKeyboardEvent(46, false, false, false, false)];
 	mainEvents[mainShortcutTypes.checkRemoveShape] = [
-		CreateKeyboardEvent(8, false, false, false, false, false),
-		CreateKeyboardEvent(46, false, false, false, false, false, false)];
+		CreateKeyboardEvent(8, false, false, false, false),
+		CreateKeyboardEvent(46, false, false, false, false)];
 	mainEvents[mainShortcutTypes.checkRemoveTable] = [
 		CreateKeyboardEvent(8, false, false, false, false, false),
-		CreateKeyboardEvent(46, false, false, false, false, false, false)];
+		CreateKeyboardEvent(46, false, false, false, false)];
 	mainEvents[mainShortcutTypes.checkRemoveGroup] = [
 		CreateKeyboardEvent(8, false, false, false, false, false),
-		CreateKeyboardEvent(46, false, false, false, false, false, false)];
+		CreateKeyboardEvent(46, false, false, false, false)];
 	mainEvents[mainShortcutTypes.checkRemoveShapeInGroup] = [
-		CreateKeyboardEvent(8, false, false, false, false, false),
-		CreateKeyboardEvent(46, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkMoveToNextCell] = [CreateKeyboardEvent(9, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkMoveToPreviousCell] = [CreateKeyboardEvent(9, false, true, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkIncreaseBulletIndent] = [CreateKeyboardEvent(9, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkDecreaseBulletIndent] = [CreateKeyboardEvent(9, false, true, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkAddTab] = [CreateKeyboardEvent(9, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkSelectNextObject] = [CreateKeyboardEvent(9, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkSelectPreviousObject] = [CreateKeyboardEvent(9, false, true, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkVisitHyperlink] = [CreateKeyboardEvent(13, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkSelectNextObjectWithPlaceholder] = [CreateKeyboardEvent(13, true, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkAddNextSlideAfterSelectLastPlaceholderObject] = [CreateKeyboardEvent(13, true, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkAddBreakLine] = [CreateKeyboardEvent(13, false, true, false, false, false, false)];
+		CreateKeyboardEvent(8, false, false, false, false),
+		CreateKeyboardEvent(46, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveToNextCell] = [CreateKeyboardEvent(9, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveToPreviousCell] = [CreateKeyboardEvent(9, false, true, false, false)];
+	mainEvents[mainShortcutTypes.checkIncreaseBulletIndent] = [CreateKeyboardEvent(9, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkDecreaseBulletIndent] = [CreateKeyboardEvent(9, false, true, false, false)];
+	mainEvents[mainShortcutTypes.checkAddTab] = [CreateKeyboardEvent(9, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectNextObject] = [CreateKeyboardEvent(9, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectPreviousObject] = [CreateKeyboardEvent(9, false, true, false, false)];
+	mainEvents[mainShortcutTypes.checkVisitHyperlink] = [CreateKeyboardEvent(13, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectNextObjectWithPlaceholder] = [CreateKeyboardEvent(13, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkAddNextSlideAfterSelectLastPlaceholderObject] = [CreateKeyboardEvent(13, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkAddBreakLine] = [CreateKeyboardEvent(13, false, true, false, false)];
 	mainEvents[mainShortcutTypes.checkAddMathBreakLine] = [
-		CreateKeyboardEvent(13, false, true, false, false, false, false),
-		CreateKeyboardEvent(13, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkAddTitleBreakLine] = [CreateKeyboardEvent(13, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkAddParagraph] = [CreateKeyboardEvent(13, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkAddTxBodyShape] = [CreateKeyboardEvent(13, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkMoveCursorToStartPosShape] = [CreateKeyboardEvent(13, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkSelectAllContentShape] = [CreateKeyboardEvent(13, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkSelectAllContentChartTitle] = [CreateKeyboardEvent(13, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkRemoveAndMoveToStartPosTable] = [CreateKeyboardEvent(13, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkSelectFirstCellContent] = [CreateKeyboardEvent(13, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkResetAddShape] = [CreateKeyboardEvent(27, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkResetAllDrawingSelection] = [CreateKeyboardEvent(27, false, true, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkResetStepDrawingSelection] = [CreateKeyboardEvent(27, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkNonBreakingSpace] = [CreateKeyboardEvent(32, true, true, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkClearParagraphFormatting] = [CreateKeyboardEvent(32, true, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkAddSpace] = [CreateKeyboardEvent(32, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkMoveToEndPosContent] = [CreateKeyboardEvent(35, true, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkMoveToEndLineContent] = [CreateKeyboardEvent(35, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkSelectToEndLineContent] = [CreateKeyboardEvent(35, false, true, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkMoveToStartPosContent] = [CreateKeyboardEvent(36, true, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkMoveToStartLineContent] = [CreateKeyboardEvent(36, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkSelectToStartLineContent] = [CreateKeyboardEvent(36, false, true, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkMoveCursorLeft] = [CreateKeyboardEvent(37, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkSelectCursorLeft] = [CreateKeyboardEvent(37, false, true, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkSelectWordCursorLeft] = [CreateKeyboardEvent(37, true, true, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkMoveCursorWordLeft] = [CreateKeyboardEvent(37, true, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkMoveCursorLeftTable] = [CreateKeyboardEvent(37, true, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkMoveCursorRight] = [CreateKeyboardEvent(39, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkMoveCursorRightTable] = [CreateKeyboardEvent(39, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkSelectCursorRight] = [CreateKeyboardEvent(39, false, true, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkSelectWordCursorRight] = [CreateKeyboardEvent(39, true, true, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkMoveCursorWordRight] = [CreateKeyboardEvent(39, true, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkMoveCursorTop] = [CreateKeyboardEvent(38, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkMoveCursorTopTable] = [CreateKeyboardEvent(38, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkSelectCursorTop] = [CreateKeyboardEvent(38, false, true, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkMoveCursorBottom] = [CreateKeyboardEvent(40, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkMoveCursorBottomTable] = [CreateKeyboardEvent(40, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkSelectCursorBottom] = [CreateKeyboardEvent(40, false, true, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkMoveShapeBottom] = [CreateKeyboardEvent(40, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkLittleMoveShapeBottom] = [CreateKeyboardEvent(40, true, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkMoveShapeTop] = [CreateKeyboardEvent(38, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkLittleMoveShapeTop] = [CreateKeyboardEvent(38, true, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkMoveShapeRight] = [CreateKeyboardEvent(39, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkLittleMoveShapeRight] = [CreateKeyboardEvent(39, true, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkMoveShapeLeft] = [CreateKeyboardEvent(37, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkLittleMoveShapeLeft] = [CreateKeyboardEvent(37, true, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkDeleteFront] = [CreateKeyboardEvent(46, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkDeleteWordFront] = [CreateKeyboardEvent(46, true, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkIncreaseIndent] = [CreateKeyboardEvent(77, true, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkDecreaseIndent] = [CreateKeyboardEvent(77, true, true, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkNumLock] = [CreateKeyboardEvent(144, false, false, false, false, false, false)];
-	mainEvents[mainShortcutTypes.checkScrollLock] = [CreateKeyboardEvent(145, false, false, false, false, false, false)];
+		CreateKeyboardEvent(13, false, true, false, false),
+		CreateKeyboardEvent(13, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkAddTitleBreakLine] = [CreateKeyboardEvent(13, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkAddParagraph] = [CreateKeyboardEvent(13, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkAddTxBodyShape] = [CreateKeyboardEvent(13, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveCursorToStartPosShape] = [CreateKeyboardEvent(13, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectAllContentShape] = [CreateKeyboardEvent(13, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectAllContentChartTitle] = [CreateKeyboardEvent(13, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkRemoveAndMoveToStartPosTable] = [CreateKeyboardEvent(13, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectFirstCellContent] = [CreateKeyboardEvent(13, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkResetAddShape] = [CreateKeyboardEvent(27, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkResetAllDrawingSelection] = [CreateKeyboardEvent(27, false, true, false, false)];
+	mainEvents[mainShortcutTypes.checkResetStepDrawingSelection] = [CreateKeyboardEvent(27, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkNonBreakingSpace] = [CreateKeyboardEvent(32, true, true, false, false)];
+	mainEvents[mainShortcutTypes.checkClearParagraphFormatting] = [CreateKeyboardEvent(32, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkAddSpace] = [CreateKeyboardEvent(32, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveToEndPosContent] = [CreateKeyboardEvent(35, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveToEndLineContent] = [
+		CreateKeyboardEvent(35, false, false, false, false),
+		CreateKeyboardEvent(39, true, false, false, false, testFlags.macOs),
+	];
+	mainEvents[mainShortcutTypes.checkSelectToEndLineContent] = [
+		CreateKeyboardEvent(35, false, true, false, false),
+		CreateKeyboardEvent(39, true, true, false, false, testFlags.macOs),
+	];
+	mainEvents[mainShortcutTypes.checkMoveToStartPosContent] = [CreateKeyboardEvent(36, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveToStartLineContent] = [
+		CreateKeyboardEvent(36, false, false, false, false),
+		CreateKeyboardEvent(37, true, false, false, false, testFlags.macOs)
+	];
+	mainEvents[mainShortcutTypes.checkSelectToStartLineContent] = [
+		CreateKeyboardEvent(36, false, true, false, false),
+		CreateKeyboardEvent(37, true, true, false, false, testFlags.macOs)
+	];
+	mainEvents[mainShortcutTypes.checkMoveCursorLeft] = [CreateKeyboardEvent(37, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectCursorLeft] = [CreateKeyboardEvent(37, false, true, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectWordCursorLeft] = [
+		CreateKeyboardEvent(37, true, true, false, false),
+		CreateKeyboardEvent(37, false, true, true, false, testFlags.macOs)
+	];
+	mainEvents[mainShortcutTypes.checkMoveCursorWordLeft] = [
+		CreateKeyboardEvent(37, true, false, false, false),
+		CreateKeyboardEvent(37, false, false, true, false, testFlags.macOs)
+	];
+	mainEvents[mainShortcutTypes.checkMoveCursorLeftTable] = [CreateKeyboardEvent(37, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveCursorRight] = [CreateKeyboardEvent(39, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveCursorRightTable] = [CreateKeyboardEvent(39, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectCursorRight] = [CreateKeyboardEvent(39, false, true, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectWordCursorRight] = [
+		CreateKeyboardEvent(39, true, true, false, false),
+		CreateKeyboardEvent(39, false, true, true, false, testFlags.macOs),
+	];
+	mainEvents[mainShortcutTypes.checkMoveCursorWordRight] = [
+		CreateKeyboardEvent(39, true, false, false, false),
+		CreateKeyboardEvent(39, false, false, true, false, testFlags.macOs),
+	];
+	mainEvents[mainShortcutTypes.checkMoveCursorTop] = [CreateKeyboardEvent(38, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveCursorTopTable] = [CreateKeyboardEvent(38, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectCursorTop] = [CreateKeyboardEvent(38, false, true, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveCursorBottom] = [CreateKeyboardEvent(40, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveCursorBottomTable] = [CreateKeyboardEvent(40, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkSelectCursorBottom] = [CreateKeyboardEvent(40, false, true, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveShapeBottom] = [CreateKeyboardEvent(40, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkLittleMoveShapeBottom] = [CreateKeyboardEvent(40, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveShapeTop] = [CreateKeyboardEvent(38, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkLittleMoveShapeTop] = [CreateKeyboardEvent(38, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveShapeRight] = [CreateKeyboardEvent(39, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkLittleMoveShapeRight] = [CreateKeyboardEvent(39, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkMoveShapeLeft] = [CreateKeyboardEvent(37, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkLittleMoveShapeLeft] = [CreateKeyboardEvent(37, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkDeleteFront] = [CreateKeyboardEvent(46, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkDeleteWordFront] = [
+		CreateKeyboardEvent(46, true, false, false, false),
+		CreateKeyboardEvent(46, false, false, true, false, testFlags.macOs),
+	];
+	mainEvents[mainShortcutTypes.checkIncreaseIndent] = [CreateKeyboardEvent(77, true, false, false, false)];
+	mainEvents[mainShortcutTypes.checkDecreaseIndent] = [CreateKeyboardEvent(77, true, true, false, false)];
+	mainEvents[mainShortcutTypes.checkNumLock] = [CreateKeyboardEvent(144, false, false, false, false)];
+	mainEvents[mainShortcutTypes.checkScrollLock] = [CreateKeyboardEvent(145, false, false, false, false)];
 	mainEvents[mainShortcutTypes.addNextSlide] = [
-		CreateKeyboardEvent(77, true, false, false, false, false, false)
+		CreateKeyboardEvent(77, true, false, false, false)
 	];
 	mainEvents[mainShortcutTypes.moveToPreviousSlide] = [
-		CreateKeyboardEvent(38, false, false, false, false, false, false),
-		CreateKeyboardEvent(37, false, false, false, false, false, false),
-		CreateKeyboardEvent(33, false, false, false, false, false, false)
+		CreateKeyboardEvent(38, false, false, false, false),
+		CreateKeyboardEvent(37, false, false, false, false),
+		CreateKeyboardEvent(33, false, false, false, false)
 	];
 	mainEvents[mainShortcutTypes.moveToNextSlide] = [
-		CreateKeyboardEvent(39, false, false, false, false, false, false),
-		CreateKeyboardEvent(40, false, false, false, false, false, false),
-		CreateKeyboardEvent(34, false, false, false, false, false, false)
+		CreateKeyboardEvent(39, false, false, false, false),
+		CreateKeyboardEvent(40, false, false, false, false),
+		CreateKeyboardEvent(34, false, false, false, false)
 	];
 	mainEvents[mainShortcutTypes.moveToFirstSlide] = [
-		CreateKeyboardEvent(36, false, false, false, false, false, false)
+		CreateKeyboardEvent(36, false, false, false, false)
 	];
 	mainEvents[mainShortcutTypes.selectToFirstSlide] = [
-		CreateKeyboardEvent(36, false, true, false, false, false, false)
+		CreateKeyboardEvent(36, false, true, false, false)
 	];
 	mainEvents[mainShortcutTypes.moveToLastSlide] = [
-		CreateKeyboardEvent(35, false, false, false, false, false, false)
+		CreateKeyboardEvent(35, false, false, false, false)
 	];
 	mainEvents[mainShortcutTypes.selectToLastSlide] = [
-		CreateKeyboardEvent(35, false, true, false, false, false, false)
+		CreateKeyboardEvent(35, false, true, false, false)
 	];
 
 	const demonstrationTypes = {
@@ -328,8 +363,9 @@
 	];
 
 
-	function CreateKeyboardEvent(nKeyCode, bIsCtrl, bIsShift, bIsAlt, bIsMetaKey)
+	function CreateKeyboardEvent(nKeyCode, bIsCtrl, bIsShift, bIsAlt, bIsMetaKey, flags)
 	{
+		flags = flags || testFlags.nothing;
 		const event = new AscCommon.CKeyboardEvent();
 		event.KeyCode = nKeyCode;
 		event.CtrlKey = !!bIsCtrl;
@@ -345,6 +381,20 @@
 		event.stopPropagation = function ()
 		{
 			event.isPropagationStopped = true;
+		}
+		event.enableFlags = function ()
+		{
+			if (flags & testFlags.macOs)
+			{
+				AscCommon.AscBrowser.isMacOs = true;
+			}
+		}
+		event.disableFlags = function ()
+		{
+			if (flags & testFlags.macOs)
+			{
+				AscCommon.AscBrowser.isMacOs = false;
+			}
 		}
 		return event;
 	}
@@ -391,7 +441,10 @@
 
 	function ExecuteMainShortcut(e)
 	{
-		return editor.WordControl.m_oLogicDocument.OnKeyDown(e);
+		e.enableFlags && e.enableFlags();
+		const res = editor.WordControl.m_oLogicDocument.OnKeyDown(e);
+		e.disableFlags && e.disableFlags();
+		return res;
 	}
 
 	function ExecuteThumbnailShortcut(e)
