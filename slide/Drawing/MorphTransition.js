@@ -507,15 +507,26 @@
             oGeometry2, oBrush2, this.shape2.pen, this.shape2.transform);
         if(oGeometryMorph.isValid()) {
             this.addMorphObject(oGeometryMorph);
-            if(!bNoText && this.shape1.getObjectType() === AscDFH.historyitem_type_Shape) {
+            if(this.shape1.getObjectType() === AscDFH.historyitem_type_Shape) {
                 const oContent1 = this.shape1.getDocContent();
-                const oTransform1 = this.shape1.transformText;
                 const oContent2 = this.shape2.getDocContent();
-                const oTransform2 = this.shape2.transformText;
-                if(oContent1 || oContent2) {
-                    this.addMorphObject(new CContentMorphObject(oTexturesCache, nRelH1, nRelH2,
-                        oContent1, oTransform1,
-                        oContent2, oTransform2));
+                let bNoText_ = bNoText;
+                if(bNoText_) {
+                    if(oContent1 && oContent1.GetAllMaths().length > 0) {
+                        bNoText_ = false;
+                    }
+                    else if(oContent2 && oContent2.GetAllMaths().length > 0) {
+                        bNoText_ = false;
+                    }
+                }
+                if(!bNoText_) {
+                    const oTransform1 = this.shape1.transformText;
+                    const oTransform2 = this.shape2.transformText;
+                    if(oContent1 || oContent2) {
+                        this.addMorphObject(new CContentMorphObject(oTexturesCache, nRelH1, nRelH2,
+                            oContent1, oTransform1,
+                            oContent2, oTransform2));
+                    }
                 }
             }
         }
@@ -936,36 +947,12 @@
             this.addMorphObject(new CMorphedAppearObject(oTexturesCache, oDrawWrapper2, nRelH2));
         }
         else if(oDrawWrapper1 && oDrawWrapper2) {
-
-            const aParStructs1 = oDocStruct1.getParagraphStructures();
-            const aParStructs2 = oDocStruct2.getParagraphStructures();
             let bTexture = true;
-            if(aParStructs1.length === aParStructs2.length) {
-                let nPar;
-                for(nPar = 0; nPar < aParStructs1.length; ++nPar) {
-                    let oParStruct1 = aParStructs1[nPar];
-                    let oParStruct2 = aParStructs2[nPar];
-                    let aTextStructs1 = oParStruct1.getTextStructures();
-                    let aTextStructs2 = oParStruct2.getTextStructures();
-                    if(aTextStructs1.length !== aTextStructs2.length) {
-                        break;
-                    }
-                    let nText;
-                    for(nText = 0; nText < aTextStructs1.length; ++nText) {
-                        let oTextStruct1 = aTextStructs1[nText];
-                        let oTextStruct2 = aTextStructs2[nText];
-                        if(!isN(oTextStruct1.Code) || oTextStruct1.Code !== oTextStruct2.Code) {
-                            break;
-                        }
-                    }
-                    if(nText < aTextStructs1.length) {
-                        break;
-                    }
-                }
-                if(nPar === aParStructs1.length) {
-                    bTexture = false;
-
-
+            if(oContent1.GetAllMaths().length === 0 && oContent2.GetAllMaths() === 0) {
+                const aParStructs1 = oDocStruct1.getParagraphStructures();
+                const aParStructs2 = oDocStruct2.getParagraphStructures();
+                if(aParStructs1.length === aParStructs2.length) {
+                    let nPar;
                     for(nPar = 0; nPar < aParStructs1.length; ++nPar) {
                         let oParStruct1 = aParStructs1[nPar];
                         let oParStruct2 = aParStructs2[nPar];
@@ -978,18 +965,43 @@
                         for(nText = 0; nText < aTextStructs1.length; ++nText) {
                             let oTextStruct1 = aTextStructs1[nText];
                             let oTextStruct2 = aTextStructs2[nText];
-                            if(oTextStruct1.Code === oTextStruct2.Code) {
-                                //let oGeomMorph = new CGeometryMorphObject(oTexturesCache, nRelH1, nRelH2,
-                                //    oTextStruct1.geometry, oTextStruct1.brush, oTextStruct1.pen, oTransform1,
-                                //    oTextStruct2.geometry, oTextStruct2.brush, oTextStruct2.pen, oTransform2);
-                                //if(oGeomMorph.isValid()) {
-                                //    this.addMorphObject(oGeomMorph);
-                                //}
-                                //else {
+                            if(!isN(oTextStruct1.Code) || oTextStruct1.Code !== oTextStruct2.Code) {
+                                break;
+                            }
+                        }
+                        if(nText < aTextStructs1.length) {
+                            break;
+                        }
+                    }
+                    if(nPar === aParStructs1.length) {
+                        bTexture = false;
+
+
+                        for(nPar = 0; nPar < aParStructs1.length; ++nPar) {
+                            let oParStruct1 = aParStructs1[nPar];
+                            let oParStruct2 = aParStructs2[nPar];
+                            let aTextStructs1 = oParStruct1.getTextStructures();
+                            let aTextStructs2 = oParStruct2.getTextStructures();
+                            if(aTextStructs1.length !== aTextStructs2.length) {
+                                break;
+                            }
+                            let nText;
+                            for(nText = 0; nText < aTextStructs1.length; ++nText) {
+                                let oTextStruct1 = aTextStructs1[nText];
+                                let oTextStruct2 = aTextStructs2[nText];
+                                if(oTextStruct1.Code === oTextStruct2.Code) {
+                                    //let oGeomMorph = new CGeometryMorphObject(oTexturesCache, nRelH1, nRelH2,
+                                    //    oTextStruct1.geometry, oTextStruct1.brush, oTextStruct1.pen, oTransform1,
+                                    //    oTextStruct2.geometry, oTextStruct2.brush, oTextStruct2.pen, oTransform2);
+                                    //if(oGeomMorph.isValid()) {
+                                    //    this.addMorphObject(oGeomMorph);
+                                    //}
+                                    //else {
                                     let oWrapper1 = new CObjectForDrawWrapper(oTextStruct1, oTransform1, oContent1.Get_Theme(), oContent1.Get_ColorMap());
                                     let oWrapper2 = new CObjectForDrawWrapper(oTextStruct2, oTransform2, oContent2.Get_Theme(), oContent2.Get_ColorMap());
                                     this.addMorphObject(new CStretchTextureTransform(oTexturesCache, nRelH1, nRelH2, oWrapper1, oWrapper2));
-                                //}
+                                    //}
+                                }
                             }
                         }
                     }
@@ -1066,6 +1078,18 @@
         this.drawing1 = oDrawing1;
         this.drawing2 = oDrawing2;
         this.bNoText = !!bNoText;
+        if(this.bNoText) {
+            let oContent1 = this.drawing1.getDocContent && this.drawing1.getDocContent();
+            if(oContent1 && oContent1.GetAllMaths().length > 0) {
+                this.bNoText = false;
+            }
+            if(this.bNoText) {
+                let oContent2 = this.drawing2.getDocContent && this.drawing2.getDocContent();
+                if(oContent2 && oContent2.GetAllMaths().length > 0) {
+                    this.bNoText = false;
+                }
+            }
+        }
     }
     AscFormat.InitClassWithoutType(CStretchTextureTransform, CMorphObjectBase);
     CStretchTextureTransform.prototype.draw = function(oGraphics) {
@@ -1586,7 +1610,7 @@
                 case AscDFH.historyitem_type_Shape: {
                     aRet.push(oSp);
                     let oDocContent = oSp.getDocContent();
-                    if(oDocContent) {
+                    if(oDocContent && oDocContent.GetAllMaths().length === 0) {
                         const oTextDrawer = new AscFormat.CTextDrawer(oDocContent.XLimit, oDocContent.YLimit, false, oDocContent.Get_Theme(), true);
                         oDocContent.Draw(oDocContent.StartPage, oTextDrawer);
                         const oDocStruct = oTextDrawer.m_oDocContentStructure;

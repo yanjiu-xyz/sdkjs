@@ -1989,7 +1989,7 @@ Paragraph.prototype.Draw = function(CurPage, pGraphics)
 
 	if (pGraphics.Start_Command)
 	{
-		pGraphics.Start_Command(AscFormat.DRAW_COMMAND_PARAGRAPH);
+		pGraphics.Start_Command(AscFormat.DRAW_COMMAND_PARAGRAPH, this);
 	}
 
 	var Pr = this.Get_CompiledPr();
