@@ -1148,57 +1148,6 @@
         oGraphics.m_oContext.drawImage(oDrawCanvas, nX, nY, nW, nH);
     };
 
-    function COrigSizeTextureTransform(oTexturesCache, nRelH1, nRelH2, oDrawing1, oDrawing2) {
-        CMorphObjectBase.call(this, oTexturesCache, nRelH1, nRelH2)
-        this.drawing1 = oDrawing1;
-        this.drawing2 = oDrawing2;
-        this.bEqual = this.drawing1.isEqual && this.drawing1.isEqual(this.drawing2);
-    }
-    AscFormat.InitClassWithoutType(COrigSizeTextureTransform, CMorphObjectBase);
-    COrigSizeTextureTransform.prototype.draw = function(oGraphics) {
-        const dScale = oGraphics.m_oCoordTransform.sx;
-        const oTexture1 = this.cache.checkMorphTexture(this.drawing1.GetId(), dScale);
-        if(!oTexture1) {
-            return;
-        }
-        const oTexture2 = this.cache.checkMorphTexture(this.drawing2.GetId(), dScale);
-        if(!oTexture2) {
-            return;
-        }
-        const oBounds1 = this.drawing1.bounds;
-        const oBounds2 = this.drawing2.bounds;
-        const oCenter1 = oBounds1.getCenter();
-        const oCenter2 = oBounds2.getCenter();
-        const dXC = this.getValBetween(oCenter1.x, oCenter2.x);
-        const dYC = this.getValBetween(oCenter1.y, oCenter2.y);
-        const dW1 = oBounds1.w;
-        const dH1 = oBounds1.h;
-        const dW2 = oBounds2.w;
-        const dH2 = oBounds2.h;
-        const dX1 = dXC - dW1 / 2;
-        const dY1 = dYC - dH1 / 2;
-        const dX2 = dXC - dW2 / 2;
-        const dY2 = dYC - dH2 / 2;
-        const dAlpha1 = 1 - this.relTime;
-        const dAlpha2 = this.relTime;
-        const oT = oGraphics.m_oCoordTransform;
-        const nX1 = (oT.tx + dX1 * dScale + 0.5) >> 0;
-        const nY1 = (oT.ty + dY1 * dScale + 0.5) >> 0;
-        const nX2 = (oT.tx + dX2 * dScale + 0.5) >> 0;
-        const nY2 = (oT.ty + dY2 * dScale + 0.5) >> 0;
-        const nW1 = oTexture1.getWidth();
-        const nH1 = oTexture1.getHeight();
-        const nW2 = oTexture2.getWidth();
-        const nH2 = oTexture2.getHeight();
-
-        if(this.bEqual) {
-            oTexture1.drawInRect(oGraphics, 1, nX1, nY1, nW1, nH1);
-        }
-        else {
-            oTexture1.drawInRect(oGraphics, dAlpha1, nX1, nY1, nW1, nH1);
-            oTexture2.drawInRect(oGraphics, dAlpha2, nX2, nY2, nW2, nH2);
-        }
-    };
 
 
     function CTextDrawerStructureWrapper(oTextDrawerStructure, oTransform, oTheme, oColorMap) {
@@ -1588,7 +1537,7 @@
         this.generateTextBasedMorph(true);
     };
     CSlideMorphEffect.prototype.generateTextBasedMorph = function(bLetter) {
-        this.pushMorphObject(new COrigSizeTextureTransform(this.texturesCache, -1, -1, new CBackgroundWrapper(this.slide1), new CBackgroundWrapper(this.slide2)));
+        this.pushMorphObject(new CStretchTextureTransform(this.texturesCache, -1, -1, new CBackgroundWrapper(this.slide1), new CBackgroundWrapper(this.slide2)));
 
         const aDrawings1 = this.slide1.getDrawingObjects();
         const aDrawings2 = this.slide2.getDrawingObjects();
