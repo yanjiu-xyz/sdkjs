@@ -10278,11 +10278,11 @@
         }
         return this;
     };
-    CAnimTexture.prototype.createTexture = function () {
+    CAnimTexture.prototype.createTexture = function (nWidth, nHeight) {
         if (!this.effectTexture) {
             var oCanvas = document.createElement('canvas');
-            oCanvas.width = this.canvas.width;
-            oCanvas.height = this.canvas.height;
+            oCanvas.width = nWidth || this.canvas.width;
+            oCanvas.height = nHeight || this.canvas.height;
             this.effectTexture = new CAnimTexture(this.cache, oCanvas, this.scale, this.x, this.y);
         } else {
             //this.effectTexture.canvas.width = this.effectTexture.canvas.width;

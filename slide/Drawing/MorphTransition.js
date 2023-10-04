@@ -162,7 +162,7 @@
 
     };
     CMorphObjectBase.prototype.getValBetween = function(dVal1, dVal2) {
-        return dVal1 + (dVal2 - dVal1)* this.relTime;
+        return dVal1 + (dVal2 - dVal1) * this.relTime;
     };
     function CMorphedPath(oTexturesCache, oPath1, nRelH1, oBrush1, oPen1, oTransform1,
                           oPath2, nRelH2, oBrush2, oPen2, oTransform2) {
@@ -512,10 +512,10 @@
                 const oContent2 = this.shape2.getDocContent();
                 let bNoText_ = bNoText;
                 if(bNoText_) {
-                    if(oContent1 && oContent1.GetAllMaths().length > 0) {
+                    if(oContent1 && oContent1.HaveMaths()) {
                         bNoText_ = false;
                     }
-                    else if(oContent2 && oContent2.GetAllMaths().length > 0) {
+                    else if(oContent2 && oContent2.HaveMaths()) {
                         bNoText_ = false;
                     }
                 }
@@ -731,8 +731,13 @@
             oBrush.transparent = dTransparent;
             return oBrush;
         }
-        else if(oBrush1 && oBrush1.isNoFill() &&  oBrush2 && oBrush2.isNoFill()) {
-            return oBrush1;
+        else if(oBrush1 && oBrush1.isNoFill() ||  oBrush2 && oBrush2.isNoFill()) {
+            if(this.relTime < 0.5) {
+                return oBrush1;
+            }
+            else {
+                return oBrush2;
+            }
         }
         else if(oBrush1 && oBrush1.isBlipFill() && oBrush2 && oBrush2.isBlipFill()) {
             const sRasterImageId1 = oBrush1.fill.RasterImageId;
@@ -948,7 +953,7 @@
         }
         else if(oDrawWrapper1 && oDrawWrapper2) {
             let bTexture = true;
-            if(oContent1.GetAllMaths().length === 0 && oContent2.GetAllMaths() === 0) {
+            if(!oContent1.HaveMaths() && !oContent2.HaveMaths()) {
                 const aParStructs1 = oDocStruct1.getParagraphStructures();
                 const aParStructs2 = oDocStruct2.getParagraphStructures();
                 if(aParStructs1.length === aParStructs2.length) {
@@ -1008,7 +1013,7 @@
                 }
             }
             if(bTexture) {
-                this.addMorphObject(new COrigSizeTextureTransform(oTexturesCache, nRelH1, nRelH2, oDrawWrapper1, oDrawWrapper2));
+                this.addMorphObject(new CStretchTextureTransform(oTexturesCache, nRelH1, nRelH2, oDrawWrapper1, oDrawWrapper2));
             }
         }
     }
@@ -1078,14 +1083,15 @@
         this.drawing1 = oDrawing1;
         this.drawing2 = oDrawing2;
         this.bNoText = !!bNoText;
+        this.texture = null;
         if(this.bNoText) {
             let oContent1 = this.drawing1.getDocContent && this.drawing1.getDocContent();
-            if(oContent1 && oContent1.GetAllMaths().length > 0) {
+            if(oContent1 && !oContent1.HaveMaths()) {
                 this.bNoText = false;
             }
             if(this.bNoText) {
                 let oContent2 = this.drawing2.getDocContent && this.drawing2.getDocContent();
-                if(oContent2 && oContent2.GetAllMaths().length > 0) {
+                if(oContent2 && !oContent2.HaveMaths()) {
                     this.bNoText = false;
                 }
             }
@@ -1093,7 +1099,8 @@
     }
     AscFormat.InitClassWithoutType(CStretchTextureTransform, CMorphObjectBase);
     CStretchTextureTransform.prototype.draw = function(oGraphics) {
-        const dScale = oGraphics.m_oCoordTransform.sx;
+        const oT = oGraphics.m_oCoordTransform;
+        const dScale = oT.sx;
         let oOldTxBody1 = this.drawing1.txBody;
         let oOldTxBody2 = this.drawing2.txBody;
         if(this.bNoText) {
@@ -1111,23 +1118,34 @@
         }
         const oBounds1 = this.drawing1.bounds;
         const oBounds2 = this.drawing2.bounds;
-        const oCenter1 = oBounds1.getCenter();
-        const oCenter2 = oBounds2.getCenter();
-        const dW = this.getValBetween(oBounds1.w, oBounds2.w);
-        const dH = this.getValBetween(oBounds1.h, oBounds2.h);
-        const dXC = this.getValBetween(oCenter1.x, oCenter2.x);
-        const dYC = this.getValBetween(oCenter1.y, oCenter2.y);
-        const dX = dXC - dW / 2;
-        const dY = dYC - dH / 2;
         const dAlpha1 = 1 - this.relTime;
         const dAlpha2 = this.relTime;
-        const oT = oGraphics.m_oCoordTransform;
-        const nX = (oT.tx + dX * dScale + 0.5) >> 0;
-        const nY = (oT.ty + dY * dScale + 0.5) >> 0;
-        const nW = dW * dScale + 0.5 >> 0;
-        const nH = dH * dScale + 0.5 >> 0;
-        oTexture1.drawInRect(oGraphics, dAlpha1, nX, nY, nW, nH);
-        oTexture2.drawInRect(oGraphics, dAlpha2, nX, nY, nW, nH);
+        const nX = (this.getValBetween(oBounds1.x, oBounds2.x) * dScale) + oT.tx >> 0;
+        const nY = (this.getValBetween(oBounds1.y, oBounds2.y) * dScale) + oT.ty >> 0;
+        const nR = (this.getValBetween(oBounds1.r, oBounds2.r) * dScale) + oT.tx + 0.5 >> 0;
+        const nB = (this.getValBetween(oBounds1.b, oBounds2.b) * dScale) + oT.ty + 0.5 >> 0;
+
+        const nW = nR - nX;
+        const nH = nB - nY;
+        if(!this.texture) {
+            const nTextureWidth = Math.max(oTexture1.canvas.width, oTexture2.canvas.width);
+            const nTextureHeight = Math.max(oTexture1.canvas.height, oTexture2.canvas.height);
+            this.texture = oTexture1.createTexture(nTextureWidth, nTextureHeight);
+        }
+        const oDrawCanvas = this.texture.canvas;
+        let oCtx = oDrawCanvas.getContext("2d");
+        oCtx.clearRect(0, 0, oDrawCanvas.width, oDrawCanvas.height);
+        let sOldOperation = oCtx.globalCompositeOperation;
+        oCtx.globalCompositeOperation = "lighter";
+        oCtx.globalAlpha = dAlpha1;
+        oCtx.drawImage(oTexture1.canvas, 0, 0, oDrawCanvas.width, oDrawCanvas.height);
+        oCtx.globalAlpha = dAlpha2;
+        oCtx.drawImage(oTexture2.canvas, 0, 0, oDrawCanvas.width, oDrawCanvas.height);
+        oCtx.globalCompositeOperation = sOldOperation;
+        if(!oGraphics.GetIntegerGrid()) {
+            oGraphics.SetIntegerGrid(true);
+        }
+        oGraphics.m_oContext.drawImage(oDrawCanvas, nX, nY, nW, nH);
     };
 
     function COrigSizeTextureTransform(oTexturesCache, nRelH1, nRelH2, oDrawing1, oDrawing2) {
@@ -1486,7 +1504,7 @@
     CSlideMorphEffect.prototype.generateObjectBasedMorphs = function() {
 
         //match objects
-        this.pushMorphObject(new COrigSizeTextureTransform(this.texturesCache, -1, -1, new CBackgroundWrapper(this.slide1), new CBackgroundWrapper(this.slide2)));
+        this.pushMorphObject(new CStretchTextureTransform(this.texturesCache, -1, -1, new CBackgroundWrapper(this.slide1), new CBackgroundWrapper(this.slide2)));
         const aDrawings1 = this.slide1.getDrawingObjects();
         const aDrawings2 = this.slide2.getDrawingObjects();
         const oPlayer1 = this.player1;
@@ -1610,7 +1628,7 @@
                 case AscDFH.historyitem_type_Shape: {
                     aRet.push(oSp);
                     let oDocContent = oSp.getDocContent();
-                    if(oDocContent && oDocContent.GetAllMaths().length === 0) {
+                    if(oDocContent && !oDocContent.HaveMaths()) {
                         const oTextDrawer = new AscFormat.CTextDrawer(oDocContent.XLimit, oDocContent.YLimit, false, oDocContent.Get_Theme(), true);
                         oDocContent.Draw(oDocContent.StartPage, oTextDrawer);
                         const oDocStruct = oTextDrawer.m_oDocContentStructure;
@@ -1661,9 +1679,10 @@
         }
         return aRet;
     };
-    CSlideMorphEffect.prototype.morph = function(dTime) {
+    CSlideMorphEffect.prototype.morph = function(t) {
+        let dTime_ = t*t*t - 2*t*t + 2*t;
         for(let nIdx = 0; nIdx < this.morphObjects.length; ++nIdx) {
-            this.morphObjects[nIdx].morph(dTime);
+            this.morphObjects[nIdx].morph(dTime_);
         }
         this.morphObjects.sort(function (a, b) {
             return a.relHeight - b.relHeight;

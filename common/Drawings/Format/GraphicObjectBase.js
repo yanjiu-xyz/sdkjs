@@ -428,7 +428,7 @@
 			AscFormat.fApproxEqual(this.b, oBounds.b);
 	};
 	CGraphicBounds.prototype.getPixSize = function(dScale) {
-		return {w: this.w * dScale + 0.5 >> 0, h: this.h * dScale + 0.5};
+		return {w: this.w * dScale + 0.5 >> 0, h: this.h * dScale + 0.5 >> 0};
 	};
 	CGraphicBounds.prototype.getCenter = function() {
 		return {x: (this.l + this.r) / 2.0, y: (this.t + this.b) / 2.0};
