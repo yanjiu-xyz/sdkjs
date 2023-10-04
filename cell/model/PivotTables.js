@@ -7543,24 +7543,35 @@ PivotFormatsManager.prototype.setDefaults = function() {
  */
 PivotFormatsManager.prototype.reIndexDataFields = function(reindex) {
 	const formats = this.pivot.getFormats();
+	const result = [];
 	if (formats) {
 		for(let i = 0; i < formats.length; i += 1) {
 			const format = formats[i];
 			const pivotArea = format.pivotArea;
 			const references = pivotArea.getReferences();
+			let isBadFormat = false;
 			if (references) {
-				for(let j = 0; j < references.length; j += 1) {
+				for(let j = 0; j < references.length && !isBadFormat; j += 1) {
 					const reference = references[j];
 					if (reference.field === AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) {
 						const indexes = reference.x;
 						for (let k = 0; k < indexes.length; k += 1) {
 							const x = indexes[k];
-							x.v = reindex[x.v];
+							if (reindex[x.v] !== undefined) {
+								x.v = reindex[x.v];
+							} else {
+								isBadFormat = true;
+								break;
+							}
 						}
 					}
 				}
 			}
+			if (!isBadFormat) {
+				result.push(format);
+			}
 		}
+		this.pivot.formats.format = result;
 	}
 	return;
 };
