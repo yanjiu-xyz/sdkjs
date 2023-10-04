@@ -416,7 +416,7 @@ var CPresentation = CPresentation || function(){};
             return;
 
         this.activeForm = oNextForm;
-        
+        oNextForm.Recalculate();
         oNextForm.SetDrawHighlight(false);
         
         if (oNextForm.IsNeedDrawFromStream() == true && oNextForm.GetType() != AscPDF.FIELD_TYPES.button) {
@@ -496,6 +496,7 @@ var CPresentation = CPresentation || function(){};
             return;
         
         this.activeForm = oNextForm;
+        oNextForm.Recalculate();
         oNextForm.SetDrawHighlight(false);
         
         if (oNextForm.IsNeedDrawFromStream() == true && oNextForm.GetType() != AscPDF.FIELD_TYPES.button) {
@@ -711,6 +712,8 @@ var CPresentation = CPresentation || function(){};
 		let _t = this;
 		if (!this.checkDefaultFieldFonts(function(){_t.OnMouseDownField(oField, event)}))
 			return;
+		
+		oField.Recalculate();
 
         // суть в том, что мы рисуем background только когда форма активна, если неактивна - рисуем highlight вместо него.
         if (oField.GetBackgroundColor())
@@ -862,7 +865,6 @@ var CPresentation = CPresentation || function(){};
         let Y       = oPos.Y;
 
         let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
-        console.log(pageObject);
         
         if (oViewer.isMouseDown)
         {
@@ -1253,6 +1255,11 @@ var CPresentation = CPresentation || function(){};
     };
 
     CPDFDoc.prototype.DoCalculateFields = function(oSourceField) {
+		
+		let _t = this;
+		if (!this.checkDefaultFieldFonts(function(){_t.DoCalculateFields(oSourceField);}))
+			return;
+		
         // при изменении любого поля (с коммитом) вызывается calculate у всех
         let oThis = this;
         this.calculateInfo.SetIsInProgress(true);
@@ -1265,6 +1272,7 @@ var CPresentation = CPresentation || function(){};
 
             if (oActionRunScript) {
                 oThis.activeForm = oField;
+                oField.Recalculate();
                 oActionRunScript.RunScript();
                 if (oField.IsNeedCommit()) {
                     oField.SetNeedRecalc(true);
