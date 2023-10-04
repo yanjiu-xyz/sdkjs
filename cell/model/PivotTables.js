@@ -5657,6 +5657,7 @@ CT_pivotTableDefinition.prototype.asc_moveDataField = function(api, from, to) {
 CT_pivotTableDefinition.prototype.reIndexDataFields = function(reindex) {
 	var i, newIndex;
 	var pivotFields = this.asc_getPivotFields();
+	this.formatsManager.reIndexDataFields(reindex);
 	if (pivotFields) {
 		for (i = 0; i < pivotFields.length; ++i) {
 			var pivotField = pivotFields[i];
@@ -7535,6 +7536,32 @@ function PivotFormatsManager(pivot) {
 
 PivotFormatsManager.prototype.setDefaults = function() {
 	this.formatsCollection = [];
+	return;
+};
+/**
+ * @param {number[]} reindex
+ */
+PivotFormatsManager.prototype.reIndexDataFields = function(reindex) {
+	const formats = this.pivot.getFormats();
+	if (formats) {
+		for(let i = 0; i < formats.length; i += 1) {
+			const format = formats[i];
+			const pivotArea = format.pivotArea;
+			const references = pivotArea.getReferences();
+			if (references) {
+				for(let j = 0; j < references.length; j += 1) {
+					const reference = references[j];
+					if (reference.field === AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) {
+						const indexes = reference.x;
+						for (let k = 0; k < indexes.length; k += 1) {
+							const x = indexes[k];
+							x.v = reindex[x.v];
+						}
+					}
+				}
+			}
+		}
+	}
 	return;
 };
 /**
