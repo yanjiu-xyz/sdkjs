@@ -1034,9 +1034,13 @@
 	CGraphicObjectBase.prototype.getOuterShdwAsc = function () {
 		const oShdw = this.getOuterShdw();
 		if(!oShdw) {
-			return oShdw;
+			return null;
 		}
-		return oShdw.getAscShdw();
+		let oAscShdw = oShdw.getAscShdw();
+		if(oAscShdw) {
+			oAscShdw.checkColor(this.Get_Theme(), this.Get_ColorMap());
+		}
+		return oAscShdw;
 	};
 	CGraphicObjectBase.prototype.recalculateShdw = function () {
 

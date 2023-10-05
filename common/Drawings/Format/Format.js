@@ -4255,6 +4255,13 @@
 			this.color = AscFormat.CorrectUniColor(oAscColor, this.color, nFlag);
 			this.putTransparency(nTransparency);
 		};
+		asc_CShadowProperty.prototype.checkColor = function(oTheme, oColorMap) {
+			if(this.color) {
+				if(oTheme && oColorMap) {
+					this.color.check(oTheme, oColorMap);
+				}
+			}
+		};
 
 
 		asc_CShadowProperty.prototype["getTransparency"] = asc_CShadowProperty.prototype.getTransparency;
