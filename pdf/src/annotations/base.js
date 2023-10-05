@@ -801,7 +801,7 @@
         memory.WriteLong(annotFlas);
 
         // page
-        memory.WriteLong(this.GetPage());
+        memory.WriteLong(this.GetOriginPage());
 
         // rect
         let aOrigRect = this.GetOrigRect();

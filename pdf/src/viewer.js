@@ -3837,15 +3837,16 @@
 
 		for (let i = 0; i < aPages.length; i++)
 		{
+			if (aPages[i].annots != null)
+				continue;
+
 			let nStartPos = oMemory.GetCurPosition();
 			oMemory.Skip(4);
 			oMemory.WriteByte(0); // Annotation
 			oMemory.WriteLong(i);
 			
-			if (aPages[i].annots != null) {
-				for (let nAnnot = 0; nAnnot < aPages[i].annots.length; nAnnot++) {
-					aPages[i].annots[nAnnot].WriteToBinary(oMemory);
-				}
+			for (let nAnnot = 0; nAnnot < aPages[i].annots.length; nAnnot++) {
+				aPages[i].annots[nAnnot].WriteToBinary(oMemory);
 			}
 
 			let nEndPos = oMemory.GetCurPosition();
