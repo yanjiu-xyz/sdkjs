@@ -178,6 +178,8 @@
 
             if (callback)
                 callback();
+            if (this["externalCallback"])
+                this["externalCallback"]();
             return;
         }
 
