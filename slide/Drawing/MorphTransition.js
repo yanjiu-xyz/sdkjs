@@ -990,6 +990,34 @@
                             if(aTextStructs1.length !== aTextStructs2.length) {
                                 break;
                             }
+
+
+                            let aContent1 = oParStruct1.m_aContent;
+                            for(let nIdx = 0; nIdx < aContent1.length; ++nIdx) {
+                                let oLine = aContent1[nIdx];
+                                let aBg = oLine.m_aBackgrounds;
+                                let aBorders = oLine.m_aBorders;
+                                let aPBg = oLine.m_aParagraphBackgrounds;
+                                let aUS = oLine.m_aUnderlinesStrikeouts;
+                                let aDisappear = [].concat(aBg).concat(aBorders).concat(aPBg).concat(aUS);
+                                for(let nObj = 0; nObj < aDisappear.length; ++nObj) {
+                                    let oWrapper = new CObjectForDrawWrapper(aDisappear[nObj], oTransform1, oContent1.Get_Theme(), oContent1.Get_ColorMap());
+                                    this.addMorphObject(new CMorphedDisappearObject(oTexturesCache, oWrapper, nRelH1, false))
+                                }
+                            }
+                            let aContent2 = oParStruct2.m_aContent;
+                            for(let nIdx = 0; nIdx < aContent2.length; ++nIdx) {
+                                let oLine = aContent1[nIdx];
+                                let aBg = oLine.m_aBackgrounds;
+                                let aBorders = oLine.m_aBorders;
+                                let aPBg = oLine.m_aParagraphBackgrounds;
+                                let aUS = oLine.m_aUnderlinesStrikeouts;
+                                let aAppear = [].concat(aBg).concat(aBorders).concat(aPBg).concat(aUS);
+                                for(let nObj = 0; nObj < aAppear.length; ++nObj) {
+                                    let oWrapper = new CObjectForDrawWrapper(aAppear[nObj], oTransform2, oContent2.Get_Theme(), oContent2.Get_ColorMap());
+                                    this.addMorphObject(new CMorphedAppearObject(oTexturesCache, oWrapper, nRelH2, false))
+                                }
+                            }
                             let nText;
                             for(nText = 0; nText < aTextStructs1.length; ++nText) {
                                 let oTextStruct1 = aTextStructs1[nText];
@@ -1004,7 +1032,7 @@
                                     //else {
                                     let oWrapper1 = new CObjectForDrawWrapper(oTextStruct1, oTransform1, oContent1.Get_Theme(), oContent1.Get_ColorMap());
                                     let oWrapper2 = new CObjectForDrawWrapper(oTextStruct2, oTransform2, oContent2.Get_Theme(), oContent2.Get_ColorMap());
-                                    this.addMorphObject(new CStretchTextureTransform(oTexturesCache, nRelH1, nRelH2, oWrapper1, oWrapper2));
+                                    this.addMorphObject(new CStretchTextureTransform(oTexturesCache, nRelH1 + 0.5, nRelH2 + 0.5, oWrapper1, oWrapper2));
                                     //}
                                 }
                             }
