@@ -1147,13 +1147,14 @@
 						author:			oAnnotInfo["User"],
 						rect:			aRect,
 						type:			oAnnotInfo["Type"],
+						apIdx:			oAnnotInfo["AP"]["i"]
 					});
 	
-					oAnnot.SetApIdx(oAnnotInfo["AP"]["i"]);
 					oAnnot.SetDrawFromStream(true);
 					oAnnot.SetOriginPage(oAnnotInfo["page"]);
 
-					oAnnotsMap[oAnnotInfo["AP"]["i"]] = oAnnot;
+					if (oAnnotInfo["RefTo"] == null)
+						oAnnotsMap[oAnnotInfo["AP"]["i"]] = oAnnot;
 
 					if (oAnnotInfo["InkList"]) {
 						oAnnot.SetInkPoints(oAnnotInfo["InkList"]);
@@ -1176,6 +1177,8 @@
 
 					if (oAnnotInfo["RefToReason"] != null)
 						oAnnot.SetRefType(oAnnotInfo["RefToReason"]);
+					if (oAnnotInfo["Popup"] != null)
+						oAnnot.SetPopupIdx(oAnnotInfo["Popup"]);
 					if (oAnnotInfo["Subj"])
 						oAnnot.SetSubject(oAnnotInfo["Subj"]);
 					if (oAnnotInfo["CL"])
@@ -3829,7 +3832,7 @@
 	};
 	CHtmlPage.prototype.Save = function()
 	{
-		let oMemory	= new CMemory();
+		let oMemory	= new AscCommon.CMemory();
 		let aPages	= this.pagesInfo.pages;
 
 		for (let i = 0; i < aPages.length; i++)
@@ -3839,9 +3842,9 @@
 			oMemory.WriteByte(0); // Annotation
 			oMemory.WriteLong(i);
 			
-			if (aPages.annots != null) {
-				for (let nAnnot = 0; nAnnot < aPages.annots.length; nAnnot++) {
-					this.annots[nAnnot].WriteToBinary(oMemory);
+			if (aPages[i].annots != null) {
+				for (let nAnnot = 0; nAnnot < aPages[i].annots.length; nAnnot++) {
+					aPages[i].annots[nAnnot].WriteToBinary(oMemory);
 				}
 			}
 

@@ -79,6 +79,7 @@
         this._fillColor             = undefined;
         this._dash                  = undefined;
         this._rectDiff              = undefined;
+        this._popupIdx              = undefined;
 
         // internal
         this._bDrawFromStream   = false; // нужно ли рисовать из стрима
@@ -113,6 +114,9 @@
     };
     CAnnotationBase.prototype.SetDash = function(aDash) {
         this._dash = aDash;
+    };
+    CAnnotationBase.prototype.GetDash = function() {
+        return this._dash;
     };
     CAnnotationBase.prototype.SetFillColor = function(aColor) {
         this._fillColor = aColor;
@@ -404,7 +408,7 @@
         return false;
     };
     CAnnotationBase.prototype.GetOrigRect = function() {
-        return this._origRect;
+        return this._origRect || this.GetReplyTo().GetOrigRect();
     };
     CAnnotationBase.prototype.IsNeedDrawFromStream = function() {
         return this._bDrawFromStream;
@@ -463,6 +467,12 @@
     };
     CAnnotationBase.prototype.GetType = function() {
         return this.type;
+    };
+    CAnnotationBase.prototype.SetPopupIdx = function(nIdx) {
+        this._popupIdx = nIdx;
+    };
+    CAnnotationBase.prototype.GetPopupIdx = function() {
+        return this._popupIdx;
     };
     CAnnotationBase.prototype.SetPage = function(nPage) {
         let nCurPage = this.GetPage();
@@ -526,6 +536,8 @@
         oReply.SetModDate(AscPDF.ParsePDFDate(oReplyInfo["LastModified"]).getTime());
         oReply.SetAuthor(oReplyInfo["User"]);
         oReply.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
+        oReply.SetPopupIdx(oReplyInfo["SetPopupIdx"]);
+        oReply.SetSubject(oReplyInfo["Subj"]);
 
         oReply.SetReplyTo(this);
         oReply.SetApIdx(this.GetDocument().GetMaxApIdx() + 2);
@@ -598,14 +610,22 @@
         this._modDate = sDate;
         this.SetWasChanged(true);
     };
-    CAnnotationBase.prototype.GetModDate = function() {
+    CAnnotationBase.prototype.GetModDate = function(bPDF) {
+        if (bPDF) {
+            return formatTimestampToPDF(this._modDate); 
+        }
+
         return this._modDate;
     };
     CAnnotationBase.prototype.SetCreationDate = function(sDate) {
         this._creationDate = sDate;
         this.SetWasChanged(true);
     };
-    CAnnotationBase.prototype.GetCreationDate = function() {
+    CAnnotationBase.prototype.GetCreationDate = function(bPDF) {
+        if (bPDF) {
+            return formatTimestampToPDF(this._creationDate); 
+        }
+
         return this._creationDate;
     };
     
@@ -754,8 +774,8 @@
         // type
         memory.WriteByte(this.GetType());
 
-        // ap idx
-        memory.WriteLing(this._apIdx);
+        // apidx
+        memory.WriteLong(this.GetApIdx());
 
         // annont flags
         let bHidden = bPrint = bNoView = ToggleNoView = locked = lockedC = noZoom = noRotate = false;
@@ -799,7 +819,7 @@
         let aStrokeColor    = this.GetStrokeColor();
         let nBorder         = this.GetBorder();
         let nBorderW        = this.GetWidth();
-        let sModDate        = this.GetModDate();
+        let sModDate        = this.GetModDate(true);
 
         if (sName != null)
             Flags |= (1 << 0);
@@ -817,7 +837,8 @@
         memory.WriteLong(Flags);
 
         // name
-        memory.WriteString(this.GetName());
+        if (sName)
+            memory.WriteString(sName);
 
         // contents
         if (sContents != null && typeof(sContents) != "string") {
@@ -830,18 +851,44 @@
             memory.WriteByte(BES);
             memory.WriteDouble(BEI);
         }
+
+        if (aStrokeColor != null) {
+            memory.WriteLong(aStrokeColor.length);
+            for (let i = 0; i < aStrokeColor.length; i++)
+                memory.WriteDouble(aStrokeColor[i]);
+        }
+
+        if (nBorder != null || nBorderW != null) {
+            memory.WriteByte(nBorder);
+            memory.WriteDouble(nBorderW);
+
+            if (nBorder == 2) {
+                let aDash = this.GetDash();
+                memory.WriteDouble(aDash[0]);
+                memory.WriteDouble(aDash[1]);
+            }
+        }
+
+        if (sModDate != null) {
+            memory.WriteString(sModDate);
+        }
     };
     CAnnotationBase.prototype.WriteToBinaryBase2 = function(memory) {
-        if ((rec["Type"] < 18 && rec["Type"] != 1 && rec["Type"] != 15) || rec["Type"] == 25) {
+        let nType = this.GetType();
+        if ((nType < 18 && nType != 1 && nType != 15) || nType == 25) {
             let Flags = 0;
+            let nPopupIdx       = this.GetPopupIdx();
             let sAuthor         = this.GetAuthor();
             let nOpacity        = this.GetOpacity();
             let sRC             = this.GetRichContents();
-            let CrDate          = this.GetCreationDate();
+            let CrDate          = this.GetCreationDate(true);
             let oRefTo          = this.GetReplyTo();
             let nRefToReason    = this.GetRefType();
             let sSubject        = this.GetSubject();
 
+            if (nPopupIdx != null)
+                Flags |= (1 << 0);
+            
             if (sAuthor != null)
                 Flags |= (1 << 1);
 
@@ -857,7 +904,7 @@
             if (oRefTo != null)
                 Flags |= (1 << 5);
 
-            if (RefToReason != null)
+            if (nRefToReason != null)
                 Flags |= (1 << 6);
 
             if (sSubject != null)
@@ -926,6 +973,45 @@
         }
 
         return null;
+    }
+
+    function formatTimestampToPDF(timestamp) {
+        const date = new Date(timestamp);
+        
+        const year      = date.getFullYear();
+        const month     = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day       = date.getDate().toString().padStart(2, '0');
+        const hours     = date.getHours().toString().padStart(2, '0');
+        const minutes   = date.getMinutes().toString().padStart(2, '0');
+        const seconds   = date.getSeconds().toString().padStart(2, '0');
+      
+        // Calculate timezone offset
+        let timezoneOffsetMinutes = date.getTimezoneOffset();
+        
+        let timezoneOffsetSign;
+        if (timezoneOffsetMinutes < 0)
+            timezoneOffsetSign = '+';
+        else if (timezoneOffsetMinutes > 0)
+            timezoneOffsetSign = '-';
+        else if (timezoneOffsetMinutes == 0)
+            timezoneOffsetSign = '=';
+
+        
+        let timezoneOffsetHours = Math.abs(Math.floor(timezoneOffsetMinutes / 60)) >> 0;
+        if (timezoneOffsetHours < 10)
+            timezoneOffsetHours = '0' + timezoneOffsetHours.toString();
+        else
+            timezoneOffsetHours = timezoneOffsetHours.toString();
+        
+        let timezoneOffsetMinutesLeft = timezoneOffsetMinutes % 60;
+        if (timezoneOffsetMinutesLeft < 10)
+            timezoneOffsetMinutesLeft = '0' + timezoneOffsetMinutesLeft.toString();
+        else
+            timezoneOffsetMinutesLeft = timezoneOffsetMinutesLeft.toString();
+
+        const formattedTimestamp = `D:${year}${month}${day}${hours}${minutes}${seconds}${timezoneOffsetSign}${timezoneOffsetHours}'${timezoneOffsetMinutesLeft}'`;
+        
+        return formattedTimestamp;
     }
 
 	window["AscPDF"].CAnnotationBase    = CAnnotationBase;

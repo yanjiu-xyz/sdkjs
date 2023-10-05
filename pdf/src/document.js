@@ -1465,7 +1465,11 @@ var CPresentation = CPresentation || function(){};
             this.TurnOffHistory();
         }
         
-        oAnnot.SetApIdx(this.GetMaxApIdx() + 2);
+        if (oProps.apIdx == null)
+            oAnnot.SetApIdx(this.GetMaxApIdx() + 2);
+        else
+            oAnnot.SetApIdx(oProps.apIdx);
+
         oAnnot.AddToRedraw();
         return oAnnot;
     };
