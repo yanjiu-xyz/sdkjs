@@ -1426,6 +1426,9 @@
                     break;
                 }
             }
+
+            this.player1.stop();
+            this.player2.stop();
         }, this, []);
     };
     CSlideMorphEffect.prototype.pushMorphObject = function (oMorph) {
