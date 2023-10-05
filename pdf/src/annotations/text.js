@@ -86,6 +86,8 @@
         oReply.SetAuthor(CommentData.m_sUserName);
         oReply.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
 
+        oReply.SetApIdx(this.GetDocument().GetMaxApIdx() + 2);
+
         this._replies.push(oReply);
     };
 
@@ -263,7 +265,29 @@
             oThis.AddReply(reply);
         });
     };
-    
+    CAnnotationText.prototype.WriteToBinary = function(memory) {
+        memory.WriteByte(AscCommon.CommandType.ctAnnotField);
+
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+
+        this.WriteToBinaryBase(memory);
+        this.WriteToBinaryBase2(memory);
+        
+        // icon
+        memory.WriteByte(this.GetIconType());
+
+        // state model
+        memory.WriteByte(1);
+
+        // state
+        memory.WriteByte(6);
+
+        memory.Seek(nStartPos);
+        memory.WriteLong(nEndPos - nStartPos);
+        memory.Seek(nEndPos);
+    };
+
     function TurnOffHistory() {
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();

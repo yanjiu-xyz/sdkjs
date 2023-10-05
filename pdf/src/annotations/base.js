@@ -36,6 +36,12 @@
         None:   0,
         Cloud:  1
     }
+
+    let REF_TO_REASON = {
+        Reply: 0,
+        Group: 1
+    }
+
 	/**
 	 * Class representing a base annotation.
 	 * @constructor
@@ -84,6 +90,18 @@
         }
         this._wasChanged            = false;
     }
+    CAnnotationBase.prototype.SetReplyTo = function(oAnnot) {
+        this._inReplyTo = oAnnot;
+    };
+    CAnnotationBase.prototype.GetReplyTo = function() {
+        return this._inReplyTo;
+    };
+    CAnnotationBase.prototype.SetRefType = function(nType) {
+        this._refType = nType;
+    };
+    CAnnotationBase.prototype.GetRefType = function() {
+        return this._refType;
+    };
     CAnnotationBase.prototype.SetReqtangleDiff = function(aDiff) {
         this._rectDiff = aDiff;
     };
@@ -102,8 +120,14 @@
     CAnnotationBase.prototype.SetWidth = function(nWidth) {
         this._width = nWidth;
     };
+    CAnnotationBase.prototype.GetWidth = function() {
+        return this._width;
+    };
     CAnnotationBase.prototype.SetRichContents = function(sText) {
         this._richContents = sText;
+    };
+    CAnnotationBase.prototype.GetRichContents = function() {
+        return this._richContents;
     };
     CAnnotationBase.prototype.SetIntent = function(nType) {
         this._intent = nType;
@@ -117,11 +141,20 @@
     CAnnotationBase.prototype.SetBorder = function(nType) {
         this._border = nType;
     };
+    CAnnotationBase.prototype.GetBorder = function() {
+        return this._border;
+    };
     CAnnotationBase.prototype.SetBorderEffectIntensity = function(nValue) {
         this._borderEffectIntensity = nValue;
     };
+    CAnnotationBase.prototype.GetBorderEffectIntensity = function() {
+        return this._borderEffectIntensity;
+    };
     CAnnotationBase.prototype.SetBorderEffectStyle = function(nStyle) {
         this._borderEffectIntensity = nStyle;
+    };
+    CAnnotationBase.prototype.GetBorderEffectStyle = function() {
+        return this._borderEffectIntensity;
     };
 
     CAnnotationBase.prototype.DrawSelected = function(overlay) {
@@ -216,9 +249,11 @@
             oGraphicsPDF.context.globalCompositeOperation = "source-over";
         }
     };
-    // CAnnotationBase.prototype.SetCaptionPositioning
     CAnnotationBase.prototype.SetSubject = function(sSubject) {
         this._subject = sSubject;
+    };
+    CAnnotationBase.prototype.GetSubject = function() {
+        return this._subject;
     };
     /**
      * Returns a canvas with origin view (from appearance stream) of current annot.
@@ -492,6 +527,9 @@
         oReply.SetAuthor(oReplyInfo["User"]);
         oReply.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
 
+        oReply.SetReplyTo(this);
+        oReply.SetApIdx(this.GetDocument().GetMaxApIdx() + 2);
+        
         if (this.IsComment())
             this._replies.push(oReply);
         else
@@ -582,7 +620,11 @@
         return true;
     };
     CAnnotationBase.prototype.SetApIdx = function(nIdx) {
+        this.GetDocument().UpdateApIdx(nIdx);
         this._apIdx = nIdx;
+    };
+    CAnnotationBase.prototype.GetApIdx = function() {
+        return this._apIdx;
     };
     CAnnotationBase.prototype.AddToRedraw = function() {
         let oViewer = editor.getDocumentRenderer();
@@ -708,16 +750,137 @@
     CAnnotationBase.prototype.canEdit = function() {
         return false;
     };
-    // // заглушки для трекинга
-    // CAnnotationBase.prototype.canChangeAdjustments = function() {
-    //     return true;
-    // };
-    // CAnnotationBase.prototype.hitToAdjustment = function () {
-    //     return {hit: false, adjPolarFlag: null, adjNum: null, warp: false};
-    // };
-    // CAnnotationBase.prototype.getObjectType = function() {
-    //     return -1;
-    // };
+    CAnnotationBase.prototype.WriteToBinaryBase = function(memory) {
+        // type
+        memory.WriteByte(this.GetType());
+
+        // ap idx
+        memory.WriteLing(this._apIdx);
+
+        // annont flags
+        let bHidden = bPrint = bNoView = ToggleNoView = locked = lockedC = noZoom = noRotate = false;
+        let nDisplayType = this.GetDisplay();
+        if (nDisplayType == 1) {
+            bHidden = true;
+        }
+        else if (nDisplayType == 0 || nDisplayType == 3) {
+            bPrint = true;
+            if (nDisplayType == 3) {
+                bNoView = true;
+            }
+        }
+        let annotFlas = (bHidden << 1) |
+        (bPrint << 2) |
+        (noZoom << 3) |
+        (noRotate << 4) |
+        (bNoView << 5) |
+        (locked << 7) |
+        (ToggleNoView << 8) |
+        (lockedC << 9);
+
+        memory.WriteLong(annotFlas);
+
+        // page
+        memory.WriteLong(this.GetPage());
+
+        // rect
+        let aOrigRect = this.GetOrigRect();
+        memory.WriteDouble(aOrigRect[0]); // x1
+        memory.WriteDouble(aOrigRect[1]); // y1
+        memory.WriteDouble(aOrigRect[2]); // x2
+        memory.WriteDouble(aOrigRect[3]); // y2
+
+        // new flags
+        let Flags = 0;
+        let sName           = this.GetName();
+        let sContents       = this.GetContents();
+        let BES             = this.GetBorderEffectStyle();
+        let BEI             = this.GetBorderEffectIntensity();
+        let aStrokeColor    = this.GetStrokeColor();
+        let nBorder         = this.GetBorder();
+        let nBorderW        = this.GetWidth();
+        let sModDate        = this.GetModDate();
+
+        if (sName != null)
+            Flags |= (1 << 0);
+        if (sContents != null)
+            Flags |= (1 << 1);
+        if (BES != null || BEI != null)
+            Flags |= (1 << 2);
+        if (aStrokeColor != null)
+            Flags |= (1 << 3);
+        if (nBorder != null || nBorderW != null)
+            Flags |= (1 << 4);
+        if (sModDate != null)
+            Flags |= (1 << 5);
+        
+        memory.WriteLong(Flags);
+
+        // name
+        memory.WriteString(this.GetName());
+
+        // contents
+        if (sContents != null && typeof(sContents) != "string") {
+            sContents = sContents.GetContents();
+            memory.WriteString(sContents);
+        }
+
+        // border effect
+        if (BES != null || BEI != null) {
+            memory.WriteByte(BES);
+            memory.WriteDouble(BEI);
+        }
+    };
+    CAnnotationBase.prototype.WriteToBinaryBase2 = function(memory) {
+        if ((rec["Type"] < 18 && rec["Type"] != 1 && rec["Type"] != 15) || rec["Type"] == 25) {
+            let Flags = 0;
+            let sAuthor         = this.GetAuthor();
+            let nOpacity        = this.GetOpacity();
+            let sRC             = this.GetRichContents();
+            let CrDate          = this.GetCreationDate();
+            let oRefTo          = this.GetReplyTo();
+            let nRefToReason    = this.GetRefType();
+            let sSubject        = this.GetSubject();
+
+            if (sAuthor != null)
+                Flags |= (1 << 1);
+
+            if (nOpacity != null)
+                Flags |= (1 << 2);
+
+            if (sRC != null)
+                Flags |= (1 << 3);
+
+            if (CrDate != null)
+                Flags |= (1 << 4);
+
+            if (oRefTo != null)
+                Flags |= (1 << 5);
+
+            if (RefToReason != null)
+                Flags |= (1 << 6);
+
+            if (sSubject != null)
+                Flags |= (1 << 7);
+
+            memory.WriteLong(Flags);
+
+            if (sAuthor != null)
+                memory.WriteString(sAuthor);
+            if (nOpacity != null)
+                memory.WriteDouble(sAuthor);
+            if (sRC != null)
+                memory.WriteString(sRC);
+            if (CrDate != null)
+                memory.WriteString(CrDate);
+            if (oRefTo != null)
+                memory.WriteLong(oRefTo.GetApIdx());
+            if (nRefToReason != null)
+                memory.WriteByte(nRefToReason);
+            if (sSubject != null)
+                memory.WriteString(sSubject);
+        }
+    };
 
     function ConvertPt2Px(pt) {
         return (96 / 72) * pt;

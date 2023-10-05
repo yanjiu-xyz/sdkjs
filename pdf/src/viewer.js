@@ -106,7 +106,9 @@
 		this.isPainted = false;
 		this.links = null;
 		this.fields = null;
+		this.annots = null;
 	}
+	
 	function CDocumentPagesInfo()
 	{
 		this.pages = [];
@@ -1129,11 +1131,10 @@
 			for (let i = 0; i < aAnnotsInfo.length; i++) {
 				oAnnotInfo = aAnnotsInfo[i];
 
-				if (oAnnotInfo["Type"] == AscPDF.ANNOTATIONS_TYPES.Popup)
+				if (oAnnotInfo["Type"] == AscPDF.ANNOTATIONS_TYPES.Popup) {
 					continue;
+				}
 
-				console.log(oAnnotInfo);
-				
 				aRect = [oAnnotInfo["rect"]["x1"], oAnnotInfo["rect"]["y1"], oAnnotInfo["rect"]["x2"], oAnnotInfo["rect"]["y2"]];
 
 				if (oAnnotInfo["RefTo"] == null || oAnnotInfo["Type"] != AscPDF.ANNOTATIONS_TYPES.Text) {
@@ -1173,6 +1174,8 @@
 							oAnnot.SetLineEnd(oAnnotInfo["LE"]);
 					}
 
+					if (oAnnotInfo["RefToReason"] != null)
+						oAnnot.SetRefType(oAnnotInfo["RefToReason"]);
 					if (oAnnotInfo["Subj"])
 						oAnnot.SetSubject(oAnnotInfo["Subj"]);
 					if (oAnnotInfo["CL"])
@@ -3823,6 +3826,32 @@
 			this.pagesInfo.pages[pageIndex].needRedrawForms = true;
 			this.isRepaint = true;
 		}
+	};
+	CHtmlPage.prototype.Save = function()
+	{
+		let oMemory	= new CMemory();
+		let aPages	= this.pagesInfo.pages;
+
+		for (let i = 0; i < aPages.length; i++)
+		{
+			let nStartPos = oMemory.GetCurPosition();
+			oMemory.Skip(4);
+			oMemory.WriteByte(0); // Annotation
+			oMemory.WriteLong(i);
+			
+			if (aPages.annots != null) {
+				for (let nAnnot = 0; nAnnot < aPages.annots.length; nAnnot++) {
+					this.annots[nAnnot].WriteToBinary(oMemory);
+				}
+			}
+
+			let nEndPos = oMemory.GetCurPosition();
+			oMemory.Seek(nStartPos);
+			oMemory.WriteLong(nEndPos - nStartPos);
+			oMemory.Seek(nEndPos);
+		}
+
+		return oMemory;
 	};
 
 	function CCurrentPageDetector(w, h)

@@ -101,6 +101,7 @@ var CPresentation = CPresentation || function(){};
         this.widgets    = []; // непосредственно сами поля, которые отрисовываем (дочерние без потомков)
         this.annots     = [];
 
+        this.maxApIdx = -1;
         this.theme = new AscFormat.CTheme();
         this.actionsInfo = new CActionQueue(this);
         this.calculateInfo = new CCalculateInfo(this);
@@ -357,6 +358,13 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.ClearFieldsToCommit = function() {
         this.fieldsToCommit = [];
+    };
+    CPDFDoc.prototype.UpdateApIdx = function(newApIdx) {
+        if (this.maxApIdx < newApIdx)
+            this.maxApIdx = newApIdx;
+    };
+    CPDFDoc.prototype.GetMaxApIdx = function() {
+        return this.maxApIdx;
     };
     CPDFDoc.prototype.SelectNextField = function() {
         let oViewer         = editor.getDocumentRenderer();
@@ -1457,10 +1465,7 @@ var CPresentation = CPresentation || function(){};
             this.TurnOffHistory();
         }
         
-        // if (oViewer.IsOpenFormsInProgress == false) {
-        //     oAnnot.SetDrawFromStream(false);
-        // }
-
+        oAnnot.SetApIdx(this.GetMaxApIdx() + 2);
         oAnnot.AddToRedraw();
         return oAnnot;
     };
@@ -2300,6 +2305,10 @@ var CPresentation = CPresentation || function(){};
                 break;
             case AscPDF.ANNOTATIONS_TYPES.Squiggly:
                 oAnnot = new AscPDF.CAnnotationSquiggly(sName, nPageNum, aScaledCoords, oPdfDoc);
+                break;
+            case AscPDF.ANNOTATIONS_TYPES.Caret:
+                oAnnot = new AscPDF.CAnnotationCaret(sName, nPageNum, aScaledCoords, oPdfDoc);
+                oAnnot.SetQuads([[aRect[0], aRect[1], aRect[2], aRect[1], aRect[0], aRect[3], aRect[2], aRect[3]]]);
                 break;
             case AscPDF.ANNOTATIONS_TYPES.Line:
                 oAnnot = new AscPDF.CAnnotationLine(sName, nPageNum, aScaledCoords, oPdfDoc);
