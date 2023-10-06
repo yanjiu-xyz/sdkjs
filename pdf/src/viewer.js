@@ -696,7 +696,8 @@
 
 			this.resize(true);
 			
-			this.doc.FillButtonsIconsOnOpen();
+			this.openForms();
+			this.openAnnots();
 			
 			if (this.thumbnails)
 				this.thumbnails.init(this);
@@ -770,9 +771,6 @@
 			for (let i = 0; i < this.file.pages.length; i++) {
 				this.DrawingObjects.mergeDrawings(i);
 			}
-			
-			this.openForms();
-			this.openAnnots();
 			
 			this.checkLoadCMap();
 			
@@ -1101,7 +1099,9 @@
 				this.doc.FillFormsParents(aFormsInfo["Parents"]);
 				this.doc.OnAfterFillFormsParents();
 			}
-
+			
+			this.doc.FillButtonsIconsOnOpen();
+			
 			if (Array.isArray(aFormsInfo["CO"]) && aFormsInfo["CO"].length > 0)
 				this.doc.GetCalculateInfo().SetCalculateOrder(aFormsInfo["CO"]);
 			
