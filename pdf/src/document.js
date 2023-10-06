@@ -1021,6 +1021,8 @@ var CPresentation = CPresentation || function(){};
         let Y       = oPos.Y;
 
         let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+		if (!pageObject)
+			return;
 
         // если рисование, то просто заканчиваем его
         if (oViewer.Api.isDrawInkMode()) {
