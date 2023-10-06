@@ -203,7 +203,6 @@ var CPresentation = CPresentation || function(){};
         let oViewer = editor.getDocumentRenderer();
         let oDoc = this;
 
-        oViewer.IsOpenFormsInProgress = true;
         for (let i = 0; i < oViewer.pagesInfo.pages.length; i++) {
             let oPage = oViewer.drawingPages[i];
 

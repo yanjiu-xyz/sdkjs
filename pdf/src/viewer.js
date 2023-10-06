@@ -695,7 +695,9 @@
 			this.structure = this.file.getStructure();
 
 			this.resize(true);
-
+			
+			this.doc.FillButtonsIconsOnOpen();
+			
 			if (this.thumbnails)
 				this.thumbnails.init(this);
 
@@ -769,11 +771,12 @@
 				this.DrawingObjects.mergeDrawings(i);
 			}
 			
-			this.checkLoadCMap();
-
-			AscCommon.g_oIdCounter.Set_Load(false); // to do возможно не тут стоит выключать флаг
 			this.openForms();
 			this.openAnnots();
+			
+			this.checkLoadCMap();
+			
+			AscCommon.g_oIdCounter.Set_Load(false); // to do возможно не тут стоит выключать флаг
 		};
 		this.close = function()
 		{
@@ -1098,7 +1101,6 @@
 				this.doc.FillFormsParents(aFormsInfo["Parents"]);
 				this.doc.OnAfterFillFormsParents();
 			}
-			this.doc.FillButtonsIconsOnOpen();
 
 			if (Array.isArray(aFormsInfo["CO"]) && aFormsInfo["CO"].length > 0)
 				this.doc.GetCalculateInfo().SetCalculateOrder(aFormsInfo["CO"]);
@@ -1115,7 +1117,6 @@
 			});
 
 			this.IsOpenFormsInProgress = false;
-			return;
 		};
 		this.openAnnots = function() {
 			let oThis = this;
@@ -1551,7 +1552,7 @@
 				}
 			});
 			
-			this.paint();			
+			this.paint();
 		};
 
 		this.setCursorType = function(cursor)
