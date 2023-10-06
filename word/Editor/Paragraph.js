@@ -4115,8 +4115,12 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 			{
 				this.Content[StartPos].Remove(nCount, bOnAddText);
 
-				// Мы не удаляем последний элемент с ParaEnd
-				if (StartPos <= this.Content.length - 2 && true === this.Content[StartPos].Is_Empty() && true !== this.Content[StartPos].Is_CheckingNearestPos() && ((nCount > -1 && true !== bOnAddText) || para_Run !== this.Content[StartPos].Type))
+				// Всегда держим Run с ParaEnd и Run для ввода текста
+				if (StartPos <= this.Content.length - 2
+					&& this.Content.length > 2
+					&& true === this.Content[StartPos].Is_Empty()
+					&& true !== this.Content[StartPos].Is_CheckingNearestPos()
+					&& ((nCount > -1 && true !== bOnAddText) || para_Run !== this.Content[StartPos].Type))
 				{
 					this.RemoveFromContent(StartPos, 1);
 					isStartDeleted = true;
