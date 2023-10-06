@@ -218,6 +218,10 @@ CMathBase.prototype.setDimension = function(countRow, countCol)
     }
 
 };
+CMathBase.prototype.SetParent = function(parent)
+{
+	this.Parent = parent;
+};
 CMathBase.prototype.NeedBreakContent = function(Number)
 {
     this.bCanBreak       = true;
