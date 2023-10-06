@@ -2355,10 +2355,6 @@ CMathBase.prototype.RecalculateMinMaxContentWidth = function(MinMax)
                 {
                     this.MeasureJustDraw(Item);
                 }
-                else
-                {
-                    Item.RecalculateMinMaxContentWidth(MinMax);
-                }
             }
         }
 
