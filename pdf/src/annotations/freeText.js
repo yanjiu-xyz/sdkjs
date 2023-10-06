@@ -70,14 +70,26 @@
     CAnnotationFreeText.prototype.SetDefaultStyle = function(sStyle) {
         this._defaultStyle = sStyle;
     };
+    CAnnotationFreeText.prototype.GetDefaultStyle = function() {
+        return this._defaultStyle;
+    };
     CAnnotationFreeText.prototype.SetAlign = function(nType) {
         this._alignment = nType;
+    }
+    CAnnotationFreeText.prototype.GetAlign = function() {
+        return this._alignment;
     }
     CAnnotationFreeText.prototype.SetLineEnd = function(nType) {
         this._lineEnd = nType;
     };
+    CAnnotationFreeText.prototype.GetLineEnd = function() {
+        return this._lineEnd;
+    };
     CAnnotationFreeText.prototype.SetCallout = function(aCallout) {
         this._callout = aCallout;
+    };
+    CAnnotationFreeText.prototype.GetCallout = function() {
+        return this._callout;
     };
     CAnnotationFreeText.prototype.Draw = function(oGraphics) {
         if (this.IsHidden() == true)
@@ -134,6 +146,71 @@
             this.content.YLimit = this._oldContentPos.YLimit   = 20000;
             this.content.Recalculate_Page(0, true);
         }
+    };
+    CAnnotationFreeText.prototype.WriteToBinary = function(memory) {
+        memory.WriteByte(AscCommon.CommandType.ctAnnotField);
+
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+
+        this.WriteToBinaryBase(memory);
+        this.WriteToBinaryBase2(memory);
+        
+        // alignment
+        let nAlign = this.GetAlign();
+        if (nAlign != null)
+            memory.WriteByte(nAlign);
+
+        // rectangle diff
+        let aRD = this.GetReqtangleDiff();
+        if (aRD) {
+            memory.annotFlags |= (1 << 15);
+            for (let i = 0; i < 4; i++) {
+                memory.WriteDouble(aRD[i]);
+            }
+        }
+
+        // callout
+        let aCallout = this.GetCallout();
+        if (aCallout != null) {
+            memory.annotFlags |= (1 << 16);
+            memory.WriteLong(aCallout.length);
+            for (let i = 0; i < aCallout.length; i++)
+                memory.WriteDouble(aCallout[i]);
+        }
+
+        // default style
+        let sDefaultStyle = this.GetDefaultStyle();
+        if (sDefaultStyle != null) {
+            memory.annotFlags |= (1 << 17);
+            memory.WriteString(sDefaultStyle);
+        }
+
+        // line end
+        let nLE = this.GetLineEnd();
+        if (nLE != null) {
+            memory.annotFlags |= (1 << 18);
+            memory.WriteByte(nLE);
+        }
+            
+        // intent
+        let nIntent = this.GetIntent();
+        if (nIntent != null) {
+            memory.annotFlags |= (1 << 20);
+            memory.WriteDouble(nIntent);
+        }
+
+        let nEndPos = memory.GetCurPosition();
+        memory.Seek(memory.posForFlags);
+        memory.WriteLong(memory.annotFlags);
+        
+        memory.Seek(nStartPos);
+        memory.WriteLong(nEndPos - nStartPos);
+        memory.Seek(nEndPos);
+
+        let oContents = this.GetContents();
+        if (oContents)
+            oContents.WriteToBinary(memory);
     };
 
     function TurnOffHistory() {

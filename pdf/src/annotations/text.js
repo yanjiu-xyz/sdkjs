@@ -82,9 +82,11 @@
         let oReply = new CAnnotationText(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), this.GetDocument());
 
         oReply.SetContents(CommentData.m_sText);
+        oReply.SetCreationDate(CommentData.m_sOOTime);
         oReply.SetModDate(CommentData.m_sOOTime);
         oReply.SetAuthor(CommentData.m_sUserName);
         oReply.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
+        oReply.SetReplyTo(this);
 
         oReply.SetApIdx(this.GetDocument().GetMaxApIdx() + 2);
 
@@ -284,6 +286,9 @@
         memory.WriteByte(6);
 
         let nEndPos = memory.GetCurPosition();
+        memory.Seek(memory.posForFlags);
+        memory.WriteLong(memory.annotFlags);
+        
         memory.Seek(nStartPos);
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);

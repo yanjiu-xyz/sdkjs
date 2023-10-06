@@ -1199,11 +1199,19 @@
 						oAnnot.SetDash(oAnnotInfo["dashed"]);
 					if (oAnnotInfo["border"] != null)
 						oAnnot.SetBorder(oAnnotInfo["border"]);
-
+					
 					if (oAnnotInfo["noRotate"] != null)
 						oAnnot.SetNoRotate(Boolean(oAnnotInfo["noRotate"]));
 					if (oAnnotInfo["noZoom"] != null)
 						oAnnot.SetNoZoom(Boolean(oAnnotInfo["noZoom"]));
+					if (oAnnotInfo["Sy"] != null)
+						oAnnot.SetCaretSymbol(oAnnotInfo["Sy"]);
+					if (oAnnotInfo["LL"] != null)
+						oAnnot.SetLeaderLength(oAnnotInfo["LL"]);
+					if (oAnnotInfo["LLE"] != null)
+						oAnnot.SetLeaderExtend(oAnnotInfo["LLE"]);
+					if (oAnnotInfo["Cap"] != null)
+						oAnnot.SetDoCaption(Boolean(oAnnotInfo["Cap"]));
 
 					// FreeText/Redact
 					if (oAnnotInfo["alignment"] != null)
@@ -3837,7 +3845,7 @@
 
 		for (let i = 0; i < aPages.length; i++)
 		{
-			if (aPages[i].annots != null)
+			if (aPages[i].annots == null || aPages[i].annots.length == 0)
 				continue;
 
 			let nStartPos = oMemory.GetCurPosition();

@@ -106,6 +106,9 @@
     CAnnotationBase.prototype.SetReqtangleDiff = function(aDiff) {
         this._rectDiff = aDiff;
     };
+    CAnnotationBase.prototype.GetReqtangleDiff = function() {
+        return this._rectDiff;
+    };
     CAnnotationBase.prototype.SetNoRotate = function(bValue) {
         this._noRotate = bValue;
     };
@@ -121,6 +124,9 @@
     CAnnotationBase.prototype.SetFillColor = function(aColor) {
         this._fillColor = aColor;
     };
+    CAnnotationBase.prototype.GetFillColor = function() {
+        return this._fillColor;
+    };
     CAnnotationBase.prototype.SetWidth = function(nWidth) {
         this._width = nWidth;
     };
@@ -135,6 +141,9 @@
     };
     CAnnotationBase.prototype.SetIntent = function(nType) {
         this._intent = nType;
+    };
+    CAnnotationBase.prototype.GetIntent = function() {
+        return this._intent;
     };
     CAnnotationBase.prototype.SetLock = function(bValue) {
         this._lock = bValue;
@@ -533,10 +542,11 @@
         let oReply = new AscPDF.CAnnotationText(oReplyInfo["UniqueName"], this.GetPage(), [], this.GetDocument());
 
         oReply.SetContents(oReplyInfo["Contents"]);
+        oReply.SetCreationDate(AscPDF.ParsePDFDate(oReplyInfo["CreationDate"]).getTime());
         oReply.SetModDate(AscPDF.ParsePDFDate(oReplyInfo["LastModified"]).getTime());
         oReply.SetAuthor(oReplyInfo["User"]);
         oReply.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
-        oReply.SetPopupIdx(oReplyInfo["SetPopupIdx"]);
+        oReply.SetPopupIdx(oReplyInfo["Popup"]);
         oReply.SetSubject(oReplyInfo["Subj"]);
 
         oReply.SetReplyTo(this);
@@ -789,7 +799,7 @@
                 bNoView = true;
             }
         }
-        let annotFlas = (bHidden << 1) |
+        let annotFlags = (bHidden << 1) |
         (bPrint << 2) |
         (noZoom << 3) |
         (noRotate << 4) |
@@ -798,7 +808,7 @@
         (ToggleNoView << 8) |
         (lockedC << 9);
 
-        memory.WriteLong(annotFlas);
+        memory.WriteLong(annotFlags);
 
         // page
         memory.WriteLong(this.GetOriginPage());
@@ -841,8 +851,10 @@
             memory.WriteString(sName);
 
         // contents
-        if (sContents != null && typeof(sContents) != "string") {
-            sContents = sContents.GetContents();
+        if (sContents != null) {
+            if (typeof(sContents) != "string")
+                sContents = sContents.GetContents();
+
             memory.WriteString(sContents);
         }
 
@@ -876,7 +888,11 @@
     CAnnotationBase.prototype.WriteToBinaryBase2 = function(memory) {
         let nType = this.GetType();
         if ((nType < 18 && nType != 1 && nType != 15) || nType == 25) {
-            let Flags = 0;
+            // запишем флаги в конце
+            memory.annotFlags   = 0;
+            memory.posForFlags  = memory.GetCurPosition();
+            memory.Skip(4);
+
             let nPopupIdx       = this.GetPopupIdx();
             let sAuthor         = this.GetAuthor();
             let nOpacity        = this.GetOpacity();
@@ -886,46 +902,45 @@
             let nRefToReason    = this.GetRefType();
             let sSubject        = this.GetSubject();
 
-            if (nPopupIdx != null)
+            if (nPopupIdx != null) {
                 Flags |= (1 << 0);
-            
-            if (sAuthor != null)
+                memory.WriteLong(nPopupIdx);
+            }
+
+            if (sAuthor != null) {
                 Flags |= (1 << 1);
-
-            if (nOpacity != null)
-                Flags |= (1 << 2);
-
-            if (sRC != null)
-                Flags |= (1 << 3);
-
-            if (CrDate != null)
-                Flags |= (1 << 4);
-
-            if (oRefTo != null)
-                Flags |= (1 << 5);
-
-            if (nRefToReason != null)
-                Flags |= (1 << 6);
-
-            if (sSubject != null)
-                Flags |= (1 << 7);
-
-            memory.WriteLong(Flags);
-
-            if (sAuthor != null)
                 memory.WriteString(sAuthor);
-            if (nOpacity != null)
+            }
+
+            if (nOpacity != null) {
+                Flags |= (1 << 2);
                 memory.WriteDouble(sAuthor);
-            if (sRC != null)
+            }
+                
+            if (sRC != null) {
+                Flags |= (1 << 3);
                 memory.WriteString(sRC);
-            if (CrDate != null)
+            }
+
+            if (CrDate != null) {
+                Flags |= (1 << 4);
                 memory.WriteString(CrDate);
-            if (oRefTo != null)
+            }
+
+            if (oRefTo != null) {
+                Flags |= (1 << 5);
                 memory.WriteLong(oRefTo.GetApIdx());
-            if (nRefToReason != null)
+            }
+
+            if (nRefToReason != null) {
+                Flags |= (1 << 6);
                 memory.WriteByte(nRefToReason);
-            if (sSubject != null)
+            }
+
+            if (sSubject != null) {
+                Flags |= (1 << 7);
                 memory.WriteString(sSubject);
+            }
         }
     };
 
@@ -976,7 +991,7 @@
     }
 
     function formatTimestampToPDF(timestamp) {
-        const date = new Date(timestamp);
+        const date = new Date(parseInt(timestamp));
         
         const year      = date.getFullYear();
         const month     = (date.getMonth() + 1).toString().padStart(2, '0');

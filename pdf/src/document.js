@@ -2280,7 +2280,8 @@ var CPresentation = CPresentation || function(){};
         let sName       = oProps.name ? oProps.name : AscCommon.CreateGUID();
         let nAnnotType  = oProps.type;
         let sAuthor     = oProps.author ? oProps.author : AscCommon.UserInfoParser.getCurrentName();
-        let sDate       = oProps.modDate ? oProps.modDate : (new Date().getTime()).toString();
+        let sCrDate     = oProps.creationDate ? oProps.creationDate : (new Date().getTime()).toString();
+        let sModDate    = oProps.modDate ? oProps.modDate : (new Date().getTime()).toString();
         let sText       = oProps.contents;
         let isHidden    = !!oProps.hidden;
         
@@ -2337,7 +2338,8 @@ var CPresentation = CPresentation || function(){};
                 break;
         }
 
-        oAnnot.SetModDate(sDate);
+        oAnnot.SetCreationDate(sCrDate);
+        oAnnot.SetModDate(sModDate);
         oAnnot.SetAuthor(sAuthor);
         oAnnot.SetDisplay(isHidden ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
         oAnnot.SetContents(sText);
