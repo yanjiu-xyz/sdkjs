@@ -2696,25 +2696,34 @@
 		{
 			if (this.startVisiblePage < 0 || this.endVisiblePage < 0)
 				return null;
-
+			
 			var x = xInp * AscCommon.AscBrowser.retinaPixelRatio;
 			var y = yInp * AscCommon.AscBrowser.retinaPixelRatio;
+			
+			let pageIndex = this.endVisiblePage;
+			let page = this.pageDetector.pages[pageIndex - this.startVisiblePage];
 			for (var i = this.startVisiblePage; i <= this.endVisiblePage; i++)
 			{
-				var pageCoords = this.pageDetector.pages[i - this.startVisiblePage];
-				if (!pageCoords)
+				let _page = this.pageDetector.pages[i - this.startVisiblePage];
+				if (!_page)
 					continue;
 				
-				if (pageCoords.y + pageCoords.h + this.betweenPages * AscCommon.AscBrowser.retinaPixelRatio > y)
+				if (_page.y + _page.h + this.betweenPages * AscCommon.AscBrowser.retinaPixelRatio > y)
 				{
-					return {
-						index : i,
-						x : this.file.pages[i].W * (x - pageCoords.x) / pageCoords.w,
-						y : this.file.pages[i].H * (y - pageCoords.y) / pageCoords.h
-					};
+					pageIndex = i;
+					page = _page;
+					break;
 				}
 			}
-			return null;
+			
+			if (!page)
+				return null;
+			
+			return {
+				index : pageIndex,
+				x : this.file.pages[pageIndex].W * (x - page.x) / page.w,
+				y : this.file.pages[pageIndex].H * (y - page.y) / page.h
+			};
 		};
 
 		this.ConvertCoordsToCursor = function(x, y, pageIndex)
