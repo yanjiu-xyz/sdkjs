@@ -143,6 +143,12 @@
     CAnnotationLine.prototype.SetLineEnd = function(nType) {
         this._lineEnd = nType;
     };
+    CAnnotationLine.prototype.GetLineStart = function() {
+        return this._lineStart;
+    };
+    CAnnotationLine.prototype.GetLineEnd = function() {
+        return this._lineEnd;
+    };
 
     CAnnotationLine.prototype.Draw = function(oGraphics) {
         if (this.IsHidden() == true)
@@ -291,9 +297,9 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
 
-        let oContents = this.GetContents();
-        if (oContents)
-            oContents.WriteToBinary(memory);
+        let oReply = this.GetReply();
+        if (oReply)
+            oReply.WriteToBinary(memory);
     };
 
     function TurnOffHistory() {

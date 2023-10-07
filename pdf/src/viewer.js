@@ -1260,7 +1260,7 @@
 
 			for (let apIdx in oAnnotsMap) {
 				if (oAnnotsMap[apIdx] instanceof AscPDF.CAnnotationText || oAnnotsMap[apIdx]._contents instanceof AscPDF.CAnnotationText)
-					oAnnotsMap[apIdx]._OnAfterSetContents();
+					oAnnotsMap[apIdx]._OnAfterSetReply();
 			}
 			this.IsOpenAnnotsInProgress = false;
 		};
@@ -3882,7 +3882,7 @@
 			oMemory.WriteLong(i);
 			
 			for (let nAnnot = 0; nAnnot < aPages[i].annots.length; nAnnot++) {
-				aPages[i].annots[nAnnot].WriteToBinary(oMemory);
+				aPages[i].annots[nAnnot].WriteToBinary && aPages[i].annots[nAnnot].WriteToBinary(oMemory);
 			}
 
 			let nEndPos = oMemory.GetCurPosition();

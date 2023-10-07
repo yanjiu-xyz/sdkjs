@@ -195,9 +195,9 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
 
-        let oContents = this.GetContents();
-        if (oContents)
-            oContents.WriteToBinary(memory);
+        let oReply = this.GetReply();
+        if (oReply)
+            oReply.WriteToBinary(memory);
     };
     /**
 	 * Class representing a highlight annotation.
@@ -634,9 +634,9 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
 
-        let oContents = this.GetContents();
-        if (oContents)
-            oContents.WriteToBinary(memory);
+        let oReply = this.GetReply();
+        if (oReply)
+            oReply.WriteToBinary(memory);
     };
 
     function findMaxSideWithRotation(x1, y1, x2, y2, x3, y3, x4, y4) {

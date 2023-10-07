@@ -208,9 +208,9 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
 
-        let oContents = this.GetContents();
-        if (oContents)
-            oContents.WriteToBinary(memory);
+        let oReply = this.GetReply();
+        if (oReply)
+            oReply.WriteToBinary(memory);
     };
 
     function TurnOffHistory() {

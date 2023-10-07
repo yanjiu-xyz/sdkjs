@@ -134,6 +134,9 @@
     CAnnotationPolyLine.prototype.SetVertices = function(aVertices) {
         this._vertices = aVertices;
     };
+    CAnnotationPolyLine.prototype.GetVertices = function() {
+        return this._vertices;
+    };
     CAnnotationPolyLine.prototype.SetLineStart = function(nType) {
         this._lineStart = nType;
     };
@@ -197,9 +200,9 @@
         memory.WriteLong(nEndPos - nStartPos);
         memory.Seek(nEndPos);
 
-        let oContents = this.GetContents();
-        if (oContents)
-            oContents.WriteToBinary(memory);
+        let oReply = this.GetReply();
+        if (oReply)
+            oReply.WriteToBinary(memory);
     };
     function TurnOffHistory() {
         if (AscCommon.History.IsOn() == true)

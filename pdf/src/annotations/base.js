@@ -81,6 +81,8 @@
         this._rectDiff              = undefined;
         this._popupIdx              = undefined;
 
+        this._reply                 = undefined; // тут будут храниться ответы (text аннотация)
+
         // internal
         this._bDrawFromStream   = false; // нужно ли рисовать из стрима
         this._id                = AscCommon.g_oIdCounter.Get_NewId();
@@ -557,8 +559,8 @@
         else
             this._contents._replies.push(oReply);
     };
-    CAnnotationBase.prototype._OnAfterSetContents = function() {
-        let oAscCommData = this.IsComment() ? this.GetAscCommentData() : this._contents.GetAscCommentData();
+    CAnnotationBase.prototype._OnAfterSetReply = function() {
+        let oAscCommData = this.IsComment() ? this.GetAscCommentData() : this._reply.GetAscCommentData();
         editor.sendEvent("asc_onAddComment", this.GetId(), oAscCommData);
     };
     CAnnotationBase.prototype.SetContents = function(contents) {
@@ -568,50 +570,33 @@
         let oViewer         = editor.getDocumentRenderer();
         let oDoc            = this.GetDocument();
         let oCurContents    = this.GetContents();
-        let oNewContents;
 
-        if (typeof(contents) == "string") {
-            let oTextAnnot = new AscPDF.CAnnotationText(this.GetName(), this.GetPage(), [], this.GetDocument());
+        this._contents  = contents;
         
-            oTextAnnot.SetContents(contents);
-            oTextAnnot.SetModDate(this.GetModDate());
-            oTextAnnot.SetAuthor(this.GetAuthor());
-            oTextAnnot.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
-
-            this._contents  = oTextAnnot;
-            oNewContents    = oTextAnnot;
-        }
-        else {
-            oNewContents    = contents;
-            this._contents  = contents;
-            
-            if (contents)
-                this._OnAfterSetContents();
-        }
-
         if (oDoc.History.UndoRedoInProgress == false && oViewer.IsOpenAnnotsInProgress == false) {
             oDoc.CreateNewHistoryPoint();
-            oDoc.History.Add(new CChangesPDFAnnotContents(this, oCurContents, oNewContents));
+            oDoc.History.Add(new CChangesPDFAnnotContents(this, oCurContents, contents));
             oDoc.TurnOffHistory();
         }
         
-        if (oNewContents == null)
-            editor.sync_RemoveComment(this.GetId());
-
         this.SetWasChanged(true);
     };
-    CAnnotationBase.prototype.AddReply = function(CommentData) {
-        this._contents.AddReply(CommentData);
+    CAnnotationBase.prototype.AddReply = function(oReply) {
+        this._reply = oReply;
+        this._OnAfterSetReply();
+    };
+    CAnnotationBase.prototype.GetReply = function() {
+        return this._reply;
     };
     CAnnotationBase.prototype.GetAscCommentData = function() {
-        if (this._contents)
-            return this._contents.GetAscCommentData();
+        if (this._reply)
+            return this._reply.GetAscCommentData();
 
         return null;
     };
     CAnnotationBase.prototype.EditCommentData = function(CommentData) {
-        if (this._contents)
-            this._contents.EditCommentData(CommentData);
+        if (this._reply)
+            this._reply.EditCommentData(CommentData);
     };
     CAnnotationBase.prototype.GetContents = function() {
         return this._contents;
@@ -903,42 +888,42 @@
             let sSubject        = this.GetSubject();
 
             if (nPopupIdx != null) {
-                Flags |= (1 << 0);
+                memory.annotFlags |= (1 << 0);
                 memory.WriteLong(nPopupIdx);
             }
 
             if (sAuthor != null) {
-                Flags |= (1 << 1);
+                memory.annotFlags |= (1 << 1);
                 memory.WriteString(sAuthor);
             }
 
             if (nOpacity != null) {
-                Flags |= (1 << 2);
+                memory.annotFlags |= (1 << 2);
                 memory.WriteDouble(sAuthor);
             }
                 
             if (sRC != null) {
-                Flags |= (1 << 3);
+                memory.annotFlags |= (1 << 3);
                 memory.WriteString(sRC);
             }
 
             if (CrDate != null) {
-                Flags |= (1 << 4);
+                memory.annotFlags |= (1 << 4);
                 memory.WriteString(CrDate);
             }
 
             if (oRefTo != null) {
-                Flags |= (1 << 5);
+                memory.annotFlags |= (1 << 5);
                 memory.WriteLong(oRefTo.GetApIdx());
             }
 
             if (nRefToReason != null) {
-                Flags |= (1 << 6);
+                memory.annotFlags |= (1 << 6);
                 memory.WriteByte(nRefToReason);
             }
 
             if (sSubject != null) {
-                Flags |= (1 << 7);
+                memory.annotFlags |= (1 << 7);
                 memory.WriteString(sSubject);
             }
         }

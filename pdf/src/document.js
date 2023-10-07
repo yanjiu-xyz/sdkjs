@@ -1648,6 +1648,8 @@ var CPresentation = CPresentation || function(){};
         let oAnnot;
         if (this.mouseDownAnnot && this.mouseDownAnnot.IsComment() == false) {
             oAnnot = CreateAnnotByProps(oProps, this);
+            oAnnot.SetApIdx(this.GetMaxApIdx() + 2);
+            
             if (this.mouseDownAnnot.GetContents()) {
                 let newCommentData = new AscCommon.CCommentData();
                 newCommentData.Read_FromAscCommentData(AscCommentData);
@@ -1659,7 +1661,7 @@ var CPresentation = CPresentation || function(){};
                 this.EditComment(this.mouseDownAnnot.GetId(), curCommentData);
             }
             else
-                this.mouseDownAnnot.SetContents(oAnnot);
+                this.mouseDownAnnot.AddReply(oAnnot);
         }
         else {
             oAnnot = this.AddAnnot(oProps);
