@@ -899,7 +899,7 @@
 
             if (nOpacity != null) {
                 memory.annotFlags |= (1 << 2);
-                memory.WriteDouble(sAuthor);
+                memory.WriteDouble(nOpacity);
             }
                 
             if (sRC != null) {

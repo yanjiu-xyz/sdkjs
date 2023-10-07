@@ -33,21 +33,23 @@
 (function(){
 
     let NOTE_ICONS_TYPES = {
-        Check:          0,
-        Circle:         1,
-        Comment:        2,
-        Cross:          3,
-        Help:           4,
-        Insert:         5,
-        Key:            6,
-        NewParagraph:   7,
-        Note:           8,
-        Paragraph:      9,
-        RightArrow:     10,
-        RightPointer:   11,
-        Star:           12,
-        UpArrow:        13,
-        UpLeftArrow:    14
+        Check1:         0,
+        Check2:         1,
+        Circle:         2,
+        Comment:        3,
+        Cross:          4,
+        CrossH:         5,
+        Help:           6,
+        Insert:         7,
+        Key:            8,
+        NewParagraph:   9,
+        Note:           10,
+        Paragraph:      11,
+        RightArrow:     12,
+        RightPointer:   13,
+        Star:           14,
+        UpArrow:        15,
+        UpLeftArrow:    16
     }
 
     /**
@@ -99,14 +101,18 @@
     CAnnotationText.prototype.GetIconImg = function() {
         let nType = this.GetIconType();
         switch (nType) {
-            case NOTE_ICONS_TYPES.Check:
-                return NOTE_ICONS_IMAGES.Check;
+            case NOTE_ICONS_TYPES.Check1:
+                return NOTE_ICONS_IMAGES.Check1;
+            case NOTE_ICONS_TYPES.Check2:
+                return NOTE_ICONS_IMAGES.Check2;
             case NOTE_ICONS_TYPES.Circle:
                 return NOTE_ICONS_IMAGES.Circle;
             case NOTE_ICONS_TYPES.Comment:
                 return NOTE_ICONS_IMAGES.Comment;
             case NOTE_ICONS_TYPES.Cross:
                 return NOTE_ICONS_IMAGES.Cross;
+            case NOTE_ICONS_TYPES.CrossH:
+                return NOTE_ICONS_IMAGES.CrossH;
             case NOTE_ICONS_TYPES.Help:
                 return NOTE_ICONS_IMAGES.Help;
             case NOTE_ICONS_TYPES.Insert:
@@ -297,12 +303,18 @@
         this.WriteToBinaryBase2(memory);
         
         // icon
-        memory.WriteByte(this.GetIconType());
-
+        let nIconType = this.GetIconType();
+        if (nIconType != null) {
+            memory.annotFlags |= (1 << 16);
+            memory.WriteByte(this.GetIconType());
+        }
+        
         // state model
+        memory.annotFlags |= (1 << 17);
         memory.WriteByte(1);
 
         // state
+        memory.annotFlags |= (1 << 18);
         memory.WriteByte(6);
 
         let nEndPos = memory.GetCurPosition();
