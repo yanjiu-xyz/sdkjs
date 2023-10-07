@@ -2865,7 +2865,10 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_DownloadOrigin = function(bIsDownloadEvent)
 	{
-		let changes;// = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8, 9, 10]);
+		let changes = null;
+		if (this.isUseNativeViewer && this.isDocumentRenderer())
+			changes = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.Save();
+
 		if (changes) {
 			let options = new Asc.asc_CDownloadOptions(Asc.c_oAscFileType.PDF);
 			options.pdfChanges = changes;

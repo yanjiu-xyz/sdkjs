@@ -3850,13 +3850,20 @@
 	};
 	CHtmlPage.prototype.Save = function()
 	{
-		let oMemory	= new AscCommon.CMemory();
+		let memoryInitSize = 1024 * 500; // 500Kb
+		let oMemory	= null;
 		let aPages	= this.pagesInfo.pages;
 
 		for (let i = 0; i < aPages.length; i++)
 		{
-			if (aPages[i].annots == null || aPages[i].annots.length == 0)
+			if (aPages[i].annots == null || aPages[i].annots.length === 0)
 				continue;
+
+			if (!oMemory)
+			{
+				oMemory = new AscCommon.CMemory(true);
+				oMemory.Init(memoryInitSize);
+			}
 
 			let nStartPos = oMemory.GetCurPosition();
 			oMemory.Skip(4);
@@ -3873,7 +3880,9 @@
 			oMemory.Seek(nEndPos);
 		}
 
-		return oMemory;
+		if (oMemory)
+			return new Uint8Array(oMemory.data.buffer, 0, oMemory.GetCurPosition());
+		return null;
 	};
 
 	function CCurrentPageDetector(w, h)
