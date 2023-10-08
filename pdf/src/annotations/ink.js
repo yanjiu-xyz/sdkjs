@@ -213,7 +213,6 @@
     CAnnotationInk.prototype.SetInkPoints = function(aSourcePaths) {
         let oViewer         = editor.getDocumentRenderer();
         let oDoc            = oViewer.getPDFDoc();
-        let oDrawingObjects = oViewer.DrawingObjects;
         let oDrDoc          = oDoc.GetDrawingDocument();
 
         let nScaleY = oViewer.drawingPages[this.GetPage()].H / oViewer.file.pages[this.GetPage()].H / oViewer.zoom;
@@ -800,7 +799,66 @@
     CAnnotationInk.prototype.convertPixToMM = function(px) {
         return this.GetDrawing().GraphicObj.convertPixToMM(px);
     };
+    CAnnotationInk.prototype.WriteToBinary = function(memory) {
+        memory.WriteByte(AscCommon.CommandType.ctAnnotField);
+
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+
+        this.WriteToBinaryBase(memory);
+        this.WriteToBinaryBase2(memory);
         
+        // считаем точки
+        let aRelPointsPos   = this._relativePaths;
+        let aShapePaths     = [];
+        let nLineW          = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
+        let aBounds         = this.GetOrigRect();
+
+        let xMin = aBounds[0] + nLineW;
+        let yMin = aBounds[1] + nLineW;
+        let xMax = aBounds[2] - nLineW;
+        let yMax = aBounds[3] - nLineW;
+
+        let nWidthMM    = (xMax - xMin);
+        let nHeightMM   = (yMax - yMin);
+
+        for (let nPath = 0; nPath < aRelPointsPos.length; nPath++) {
+            let aPath       = aRelPointsPos[nPath];
+            let aShapePath  = [];
+
+            for (let nPoint = 0; nPoint < aPath.length; nPoint++) {
+                aShapePath.push({
+                    x: (nWidthMM) * aPath[nPoint].relX + xMin,
+                    y: (nHeightMM) * aPath[nPoint].relY + yMin
+                });
+            }
+            
+            aShapePaths.push(aShapePath);
+        }
+
+        memory.WriteLong(aShapePaths.length);
+        for (let i = 0; i < aShapePaths.length; i++) {
+            memory.WriteLong(aShapePaths[i].length * 2);
+
+            for (let j = 0; j < aShapePaths[i].length; j++) {
+                memory.WriteDouble(aShapePaths[i][j].x);
+                memory.WriteDouble(aShapePaths[i][j].y);
+            }
+        }
+
+        let nEndPos = memory.GetCurPosition();
+        memory.Seek(memory.posForFlags);
+        memory.WriteLong(memory.annotFlags);
+        
+        memory.Seek(nStartPos);
+        memory.WriteLong(nEndPos - nStartPos);
+        memory.Seek(nEndPos);
+
+        let oReply = this.GetReply();
+        if (oReply)
+            oReply.WriteToBinary(memory);
+    };
+
     function generateShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {
         // смещаем точки для отступа внутри шейпа
         let xMax = arrOfArrPoints[0][0].x, yMax = arrOfArrPoints[0][0].y, xMin = xMax, yMin = yMax;
