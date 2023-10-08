@@ -868,11 +868,6 @@
         yMin = aShapeRect[1];
         yMax = aShapeRect[3];
 
-        // xMax = aMinPointsRect[2];
-        // xMin = aMinPointsRect[0];
-        // yMin = aMinPointsRect[1];
-        // yMax = aMinPointsRect[3];
-
         let shape = new AscFormat.CShape();
         shape.setSpPr(new AscFormat.CSpPr());
         shape.spPr.setParent(shape);

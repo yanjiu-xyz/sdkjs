@@ -985,10 +985,10 @@ var CPresentation = CPresentation || function(){};
                         cursorType = "pointer";
                 }
             }
-            else if (mouseMoveAnnotObject && (mouseMoveAnnotObject.GetType() != AscPDF.ANNOTATIONS_TYPES.Ink && mouseMoveAnnotObject.IsTextMarkup() == false)) {
+            else if (mouseMoveAnnotObject && mouseMoveAnnotObject.GetType() == AscPDF.ANNOTATIONS_TYPES.Text) {
             	cursorType = "move";
             }
-            else if (mouseMoveAnnotObject && mouseMoveAnnotObject.IsTextMarkup()) {
+            else if (mouseMoveAnnotObject && (mouseMoveAnnotObject.IsTextMarkup() || mouseMoveAnnotObject.GetType() != AscPDF.ANNOTATIONS_TYPES.Ink)) {
             	cursorType = "default";
             }
 
@@ -1649,7 +1649,7 @@ var CPresentation = CPresentation || function(){};
         if (this.mouseDownAnnot && this.mouseDownAnnot.IsComment() == false) {
             oAnnot = CreateAnnotByProps(oProps, this);
             oAnnot.SetApIdx(this.GetMaxApIdx() + 2);
-            
+
             if (this.mouseDownAnnot.GetContents()) {
                 let newCommentData = new AscCommon.CCommentData();
                 newCommentData.Read_FromAscCommentData(AscCommentData);

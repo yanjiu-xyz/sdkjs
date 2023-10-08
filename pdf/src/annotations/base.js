@@ -716,6 +716,8 @@
     };
 
     CAnnotationBase.prototype.onMouseDown = function(e) {
+        return;
+        
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
         let oDoc            = this.GetDocument();
