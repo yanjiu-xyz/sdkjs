@@ -106,7 +106,9 @@
 		this.isPainted = false;
 		this.links = null;
 		this.fields = null;
+		this.annots = null;
 	}
+	
 	function CDocumentPagesInfo()
 	{
 		this.pages = [];
@@ -1136,11 +1138,10 @@
 			for (let i = 0; i < aAnnotsInfo.length; i++) {
 				oAnnotInfo = aAnnotsInfo[i];
 
-				if (oAnnotInfo["Type"] == AscPDF.ANNOTATIONS_TYPES.Popup)
+				if (oAnnotInfo["Type"] == AscPDF.ANNOTATIONS_TYPES.Popup) {
 					continue;
+				}
 
-				console.log(oAnnotInfo);
-				
 				aRect = [oAnnotInfo["rect"]["x1"], oAnnotInfo["rect"]["y1"], oAnnotInfo["rect"]["x2"], oAnnotInfo["rect"]["y2"]];
 
 				if (oAnnotInfo["RefTo"] == null || oAnnotInfo["Type"] != AscPDF.ANNOTATIONS_TYPES.Text) {
@@ -1153,13 +1154,14 @@
 						author:			oAnnotInfo["User"],
 						rect:			aRect,
 						type:			oAnnotInfo["Type"],
+						apIdx:			oAnnotInfo["AP"]["i"]
 					});
 	
-					oAnnot.SetApIdx(oAnnotInfo["AP"]["i"]);
 					oAnnot.SetDrawFromStream(true);
 					oAnnot.SetOriginPage(oAnnotInfo["page"]);
 
-					oAnnotsMap[oAnnotInfo["AP"]["i"]] = oAnnot;
+					if (oAnnotInfo["RefTo"] == null)
+						oAnnotsMap[oAnnotInfo["AP"]["i"]] = oAnnot;
 
 					if (oAnnotInfo["InkList"]) {
 						oAnnot.SetInkPoints(oAnnotInfo["InkList"]);
@@ -1180,6 +1182,10 @@
 							oAnnot.SetLineEnd(oAnnotInfo["LE"]);
 					}
 
+					if (oAnnotInfo["RefToReason"] != null)
+						oAnnot.SetRefType(oAnnotInfo["RefToReason"]);
+					if (oAnnotInfo["Popup"] != null)
+						oAnnot.SetPopupIdx(oAnnotInfo["Popup"]);
 					if (oAnnotInfo["Subj"])
 						oAnnot.SetSubject(oAnnotInfo["Subj"]);
 					if (oAnnotInfo["CL"])
@@ -1200,11 +1206,19 @@
 						oAnnot.SetDash(oAnnotInfo["dashed"]);
 					if (oAnnotInfo["border"] != null)
 						oAnnot.SetBorder(oAnnotInfo["border"]);
-
+					
 					if (oAnnotInfo["noRotate"] != null)
 						oAnnot.SetNoRotate(Boolean(oAnnotInfo["noRotate"]));
 					if (oAnnotInfo["noZoom"] != null)
 						oAnnot.SetNoZoom(Boolean(oAnnotInfo["noZoom"]));
+					if (oAnnotInfo["Sy"] != null)
+						oAnnot.SetCaretSymbol(oAnnotInfo["Sy"]);
+					if (oAnnotInfo["LL"] != null)
+						oAnnot.SetLeaderLength(oAnnotInfo["LL"]);
+					if (oAnnotInfo["LLE"] != null)
+						oAnnot.SetLeaderExtend(oAnnotInfo["LLE"]);
+					if (oAnnotInfo["Cap"] != null)
+						oAnnot.SetDoCaption(Boolean(oAnnotInfo["Cap"]));
 
 					// FreeText/Redact
 					if (oAnnotInfo["alignment"] != null)
@@ -1246,7 +1260,7 @@
 
 			for (let apIdx in oAnnotsMap) {
 				if (oAnnotsMap[apIdx] instanceof AscPDF.CAnnotationText || oAnnotsMap[apIdx]._contents instanceof AscPDF.CAnnotationText)
-					oAnnotsMap[apIdx]._OnAfterSetContents();
+					oAnnotsMap[apIdx]._OnAfterSetReply();
 			}
 			this.IsOpenAnnotsInProgress = false;
 		};
@@ -3844,6 +3858,42 @@
 			this.pagesInfo.pages[pageIndex].needRedrawForms = true;
 			this.isRepaint = true;
 		}
+	};
+	CHtmlPage.prototype.Save = function()
+	{
+		let memoryInitSize = 1024 * 500; // 500Kb
+		let oMemory	= null;
+		let aPages	= this.pagesInfo.pages;
+
+		for (let i = 0; i < aPages.length; i++)
+		{
+			if (aPages[i].annots == null || aPages[i].annots.length === 0)
+				continue;
+
+			if (!oMemory)
+			{
+				oMemory = new AscCommon.CMemory(true);
+				oMemory.Init(memoryInitSize);
+			}
+
+			let nStartPos = oMemory.GetCurPosition();
+			oMemory.Skip(4);
+			oMemory.WriteByte(0); // Annotation
+			oMemory.WriteLong(i);
+			
+			for (let nAnnot = 0; nAnnot < aPages[i].annots.length; nAnnot++) {
+				aPages[i].annots[nAnnot].WriteToBinary && aPages[i].annots[nAnnot].WriteToBinary(oMemory);
+			}
+
+			let nEndPos = oMemory.GetCurPosition();
+			oMemory.Seek(nStartPos);
+			oMemory.WriteLong(nEndPos - nStartPos);
+			oMemory.Seek(nEndPos);
+		}
+
+		if (oMemory)
+			return new Uint8Array(oMemory.data.buffer, 0, oMemory.GetCurPosition());
+		return null;
 	};
 
 	function CCurrentPageDetector(w, h)

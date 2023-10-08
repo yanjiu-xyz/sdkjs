@@ -36,6 +36,12 @@
         None:   0,
         Cloud:  1
     }
+
+    let REF_TO_REASON = {
+        Reply: 0,
+        Group: 1
+    }
+
 	/**
 	 * Class representing a base annotation.
 	 * @constructor
@@ -73,6 +79,9 @@
         this._fillColor             = undefined;
         this._dash                  = undefined;
         this._rectDiff              = undefined;
+        this._popupIdx              = undefined;
+
+        this._reply                 = undefined; // тут будут храниться ответы (text аннотация)
 
         // internal
         this._bDrawFromStream   = false; // нужно ли рисовать из стрима
@@ -84,8 +93,23 @@
         }
         this._wasChanged            = false;
     }
+    CAnnotationBase.prototype.SetReplyTo = function(oAnnot) {
+        this._inReplyTo = oAnnot;
+    };
+    CAnnotationBase.prototype.GetReplyTo = function() {
+        return this._inReplyTo;
+    };
+    CAnnotationBase.prototype.SetRefType = function(nType) {
+        this._refType = nType;
+    };
+    CAnnotationBase.prototype.GetRefType = function() {
+        return this._refType;
+    };
     CAnnotationBase.prototype.SetReqtangleDiff = function(aDiff) {
         this._rectDiff = aDiff;
+    };
+    CAnnotationBase.prototype.GetReqtangleDiff = function() {
+        return this._rectDiff;
     };
     CAnnotationBase.prototype.SetNoRotate = function(bValue) {
         this._noRotate = bValue;
@@ -96,17 +120,32 @@
     CAnnotationBase.prototype.SetDash = function(aDash) {
         this._dash = aDash;
     };
+    CAnnotationBase.prototype.GetDash = function() {
+        return this._dash;
+    };
     CAnnotationBase.prototype.SetFillColor = function(aColor) {
         this._fillColor = aColor;
+    };
+    CAnnotationBase.prototype.GetFillColor = function() {
+        return this._fillColor;
     };
     CAnnotationBase.prototype.SetWidth = function(nWidth) {
         this._width = nWidth;
     };
+    CAnnotationBase.prototype.GetWidth = function() {
+        return this._width;
+    };
     CAnnotationBase.prototype.SetRichContents = function(sText) {
         this._richContents = sText;
     };
+    CAnnotationBase.prototype.GetRichContents = function() {
+        return this._richContents;
+    };
     CAnnotationBase.prototype.SetIntent = function(nType) {
         this._intent = nType;
+    };
+    CAnnotationBase.prototype.GetIntent = function() {
+        return this._intent;
     };
     CAnnotationBase.prototype.SetLock = function(bValue) {
         this._lock = bValue;
@@ -117,11 +156,20 @@
     CAnnotationBase.prototype.SetBorder = function(nType) {
         this._border = nType;
     };
+    CAnnotationBase.prototype.GetBorder = function() {
+        return this._border;
+    };
     CAnnotationBase.prototype.SetBorderEffectIntensity = function(nValue) {
         this._borderEffectIntensity = nValue;
     };
+    CAnnotationBase.prototype.GetBorderEffectIntensity = function() {
+        return this._borderEffectIntensity;
+    };
     CAnnotationBase.prototype.SetBorderEffectStyle = function(nStyle) {
         this._borderEffectIntensity = nStyle;
+    };
+    CAnnotationBase.prototype.GetBorderEffectStyle = function() {
+        return this._borderEffectIntensity;
     };
 
     CAnnotationBase.prototype.DrawSelected = function(overlay) {
@@ -216,9 +264,11 @@
             oGraphicsPDF.context.globalCompositeOperation = "source-over";
         }
     };
-    // CAnnotationBase.prototype.SetCaptionPositioning
     CAnnotationBase.prototype.SetSubject = function(sSubject) {
         this._subject = sSubject;
+    };
+    CAnnotationBase.prototype.GetSubject = function() {
+        return this._subject;
     };
     /**
      * Returns a canvas with origin view (from appearance stream) of current annot.
@@ -369,7 +419,7 @@
         return false;
     };
     CAnnotationBase.prototype.GetOrigRect = function() {
-        return this._origRect;
+        return this._origRect || this.GetReplyTo().GetOrigRect();
     };
     CAnnotationBase.prototype.IsNeedDrawFromStream = function() {
         return this._bDrawFromStream;
@@ -428,6 +478,12 @@
     };
     CAnnotationBase.prototype.GetType = function() {
         return this.type;
+    };
+    CAnnotationBase.prototype.SetPopupIdx = function(nIdx) {
+        this._popupIdx = nIdx;
+    };
+    CAnnotationBase.prototype.GetPopupIdx = function() {
+        return this._popupIdx;
     };
     CAnnotationBase.prototype.SetPage = function(nPage) {
         let nCurPage = this.GetPage();
@@ -488,17 +544,23 @@
         let oReply = new AscPDF.CAnnotationText(oReplyInfo["UniqueName"], this.GetPage(), [], this.GetDocument());
 
         oReply.SetContents(oReplyInfo["Contents"]);
+        oReply.SetCreationDate(AscPDF.ParsePDFDate(oReplyInfo["CreationDate"]).getTime());
         oReply.SetModDate(AscPDF.ParsePDFDate(oReplyInfo["LastModified"]).getTime());
         oReply.SetAuthor(oReplyInfo["User"]);
         oReply.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
+        oReply.SetPopupIdx(oReplyInfo["Popup"]);
+        oReply.SetSubject(oReplyInfo["Subj"]);
 
+        oReply.SetReplyTo(this);
+        oReply.SetApIdx(this.GetDocument().GetMaxApIdx() + 2);
+        
         if (this.IsComment())
             this._replies.push(oReply);
         else
             this._contents._replies.push(oReply);
     };
-    CAnnotationBase.prototype._OnAfterSetContents = function() {
-        let oAscCommData = this.IsComment() ? this.GetAscCommentData() : this._contents.GetAscCommentData();
+    CAnnotationBase.prototype._OnAfterSetReply = function() {
+        let oAscCommData = this.IsComment() ? this.GetAscCommentData() : this._reply.GetAscCommentData();
         editor.sendEvent("asc_onAddComment", this.GetId(), oAscCommData);
     };
     CAnnotationBase.prototype.SetContents = function(contents) {
@@ -508,50 +570,33 @@
         let oViewer         = editor.getDocumentRenderer();
         let oDoc            = this.GetDocument();
         let oCurContents    = this.GetContents();
-        let oNewContents;
 
-        if (typeof(contents) == "string") {
-            let oTextAnnot = new AscPDF.CAnnotationText(this.GetName(), this.GetPage(), [], this.GetDocument());
+        this._contents  = contents;
         
-            oTextAnnot.SetContents(contents);
-            oTextAnnot.SetModDate(this.GetModDate());
-            oTextAnnot.SetAuthor(this.GetAuthor());
-            oTextAnnot.SetDisplay(window["AscPDF"].Api.Objects.display["visible"]);
-
-            this._contents  = oTextAnnot;
-            oNewContents    = oTextAnnot;
-        }
-        else {
-            oNewContents    = contents;
-            this._contents  = contents;
-            
-            if (contents)
-                this._OnAfterSetContents();
-        }
-
         if (oDoc.History.UndoRedoInProgress == false && oViewer.IsOpenAnnotsInProgress == false) {
             oDoc.CreateNewHistoryPoint();
-            oDoc.History.Add(new CChangesPDFAnnotContents(this, oCurContents, oNewContents));
+            oDoc.History.Add(new CChangesPDFAnnotContents(this, oCurContents, contents));
             oDoc.TurnOffHistory();
         }
         
-        if (oNewContents == null)
-            editor.sync_RemoveComment(this.GetId());
-
         this.SetWasChanged(true);
     };
-    CAnnotationBase.prototype.AddReply = function(CommentData) {
-        this._contents.AddReply(CommentData);
+    CAnnotationBase.prototype.AddReply = function(oReply) {
+        this._reply = oReply;
+        this._OnAfterSetReply();
+    };
+    CAnnotationBase.prototype.GetReply = function() {
+        return this._reply;
     };
     CAnnotationBase.prototype.GetAscCommentData = function() {
-        if (this._contents)
-            return this._contents.GetAscCommentData();
+        if (this._reply)
+            return this._reply.GetAscCommentData();
 
         return null;
     };
     CAnnotationBase.prototype.EditCommentData = function(CommentData) {
-        if (this._contents)
-            this._contents.EditCommentData(CommentData);
+        if (this._reply)
+            this._reply.EditCommentData(CommentData);
     };
     CAnnotationBase.prototype.GetContents = function() {
         return this._contents;
@@ -560,14 +605,22 @@
         this._modDate = sDate;
         this.SetWasChanged(true);
     };
-    CAnnotationBase.prototype.GetModDate = function() {
+    CAnnotationBase.prototype.GetModDate = function(bPDF) {
+        if (bPDF) {
+            return formatTimestampToPDF(this._modDate); 
+        }
+
         return this._modDate;
     };
     CAnnotationBase.prototype.SetCreationDate = function(sDate) {
         this._creationDate = sDate;
         this.SetWasChanged(true);
     };
-    CAnnotationBase.prototype.GetCreationDate = function() {
+    CAnnotationBase.prototype.GetCreationDate = function(bPDF) {
+        if (bPDF) {
+            return formatTimestampToPDF(this._creationDate); 
+        }
+
         return this._creationDate;
     };
     
@@ -582,7 +635,11 @@
         return true;
     };
     CAnnotationBase.prototype.SetApIdx = function(nIdx) {
+        this.GetDocument().UpdateApIdx(nIdx);
         this._apIdx = nIdx;
+    };
+    CAnnotationBase.prototype.GetApIdx = function() {
+        return this._apIdx;
     };
     CAnnotationBase.prototype.AddToRedraw = function() {
         let oViewer = editor.getDocumentRenderer();
@@ -659,6 +716,8 @@
     };
 
     CAnnotationBase.prototype.onMouseDown = function(e) {
+        return;
+        
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
         let oDoc            = this.GetDocument();
@@ -708,16 +767,177 @@
     CAnnotationBase.prototype.canEdit = function() {
         return false;
     };
-    // // заглушки для трекинга
-    // CAnnotationBase.prototype.canChangeAdjustments = function() {
-    //     return true;
-    // };
-    // CAnnotationBase.prototype.hitToAdjustment = function () {
-    //     return {hit: false, adjPolarFlag: null, adjNum: null, warp: false};
-    // };
-    // CAnnotationBase.prototype.getObjectType = function() {
-    //     return -1;
-    // };
+    CAnnotationBase.prototype.WriteToBinaryBase = function(memory) {
+        // type
+        memory.WriteByte(this.GetType());
+
+        // apidx
+        memory.WriteLong(this.GetApIdx());
+
+        // annont flags
+        let bHidden      = false;
+        let bPrint       = false;
+        let bNoView      = false;
+        let ToggleNoView = false;
+        let locked       = false;
+        let lockedC      = false;
+        let noZoom       = false;
+        let noRotate     = false;
+
+        let nDisplayType = this.GetDisplay();
+        if (nDisplayType == 1) {
+            bHidden = true;
+        }
+        else if (nDisplayType == 0 || nDisplayType == 3) {
+            bPrint = true;
+            if (nDisplayType == 3) {
+                bNoView = true;
+            }
+        }
+        let annotFlags = (bHidden << 1) |
+        (bPrint << 2) |
+        (noZoom << 3) |
+        (noRotate << 4) |
+        (bNoView << 5) |
+        (locked << 7) |
+        (ToggleNoView << 8) |
+        (lockedC << 9);
+
+        memory.WriteLong(annotFlags);
+
+        // page
+        memory.WriteLong(this.GetOriginPage());
+
+        // rect
+        let aOrigRect = this.GetOrigRect();
+        memory.WriteDouble(aOrigRect[0]); // x1
+        memory.WriteDouble(aOrigRect[1]); // y1
+        memory.WriteDouble(aOrigRect[2]); // x2
+        memory.WriteDouble(aOrigRect[3]); // y2
+
+        // new flags
+        let Flags = 0;
+        let sName           = this.GetName();
+        let sContents       = this.GetContents();
+        let BES             = this.GetBorderEffectStyle();
+        let BEI             = this.GetBorderEffectIntensity();
+        let aStrokeColor    = this.GetStrokeColor();
+        let nBorder         = this.GetBorder();
+        let nBorderW        = this.GetWidth();
+        let sModDate        = this.GetModDate(true);
+
+        if (sName != null)
+            Flags |= (1 << 0);
+        if (sContents != null)
+            Flags |= (1 << 1);
+        if (BES != null || BEI != null)
+            Flags |= (1 << 2);
+        if (aStrokeColor != null)
+            Flags |= (1 << 3);
+        if (nBorder != null || nBorderW != null)
+            Flags |= (1 << 4);
+        if (sModDate != null)
+            Flags |= (1 << 5);
+        
+        memory.WriteLong(Flags);
+
+        // name
+        if (sName)
+            memory.WriteString(sName);
+
+        // contents
+        if (sContents != null) {
+            if (typeof(sContents) != "string")
+                sContents = sContents.GetContents();
+
+            memory.WriteString(sContents);
+        }
+
+        // border effect
+        if (BES != null || BEI != null) {
+            memory.WriteByte(BES);
+            memory.WriteDouble(BEI);
+        }
+
+        if (aStrokeColor != null) {
+            memory.WriteLong(aStrokeColor.length);
+            for (let i = 0; i < aStrokeColor.length; i++)
+                memory.WriteDouble(aStrokeColor[i]);
+        }
+
+        if (nBorder != null || nBorderW != null) {
+            memory.WriteByte(nBorder);
+            memory.WriteDouble(nBorderW);
+
+            if (nBorder == 2) {
+                let aDash = this.GetDash();
+                memory.WriteDouble(aDash[0]);
+                memory.WriteDouble(aDash[1]);
+            }
+        }
+
+        if (sModDate != null) {
+            memory.WriteString(sModDate);
+        }
+    };
+    CAnnotationBase.prototype.WriteToBinaryBase2 = function(memory) {
+        let nType = this.GetType();
+        if ((nType < 18 && nType != 1 && nType != 15) || nType == 25) {
+            // запишем флаги в конце
+            memory.annotFlags   = 0;
+            memory.posForFlags  = memory.GetCurPosition();
+            memory.Skip(4);
+
+            let nPopupIdx       = this.GetPopupIdx();
+            let sAuthor         = this.GetAuthor();
+            let nOpacity        = this.GetOpacity();
+            let sRC             = this.GetRichContents();
+            let CrDate          = this.GetCreationDate(true);
+            let oRefTo          = this.GetReplyTo();
+            let nRefToReason    = this.GetRefType();
+            let sSubject        = this.GetSubject();
+
+            if (nPopupIdx != null) {
+                memory.annotFlags |= (1 << 0);
+                memory.WriteLong(nPopupIdx);
+            }
+
+            if (sAuthor != null) {
+                memory.annotFlags |= (1 << 1);
+                memory.WriteString(sAuthor);
+            }
+
+            if (nOpacity != null) {
+                memory.annotFlags |= (1 << 2);
+                memory.WriteDouble(nOpacity);
+            }
+                
+            if (sRC != null) {
+                memory.annotFlags |= (1 << 3);
+                memory.WriteString(sRC);
+            }
+
+            if (CrDate != null) {
+                memory.annotFlags |= (1 << 4);
+                memory.WriteString(CrDate);
+            }
+
+            if (oRefTo != null) {
+                memory.annotFlags |= (1 << 5);
+                memory.WriteLong(oRefTo.GetApIdx());
+            }
+
+            if (nRefToReason != null) {
+                memory.annotFlags |= (1 << 6);
+                memory.WriteByte(nRefToReason);
+            }
+
+            if (sSubject != null) {
+                memory.annotFlags |= (1 << 7);
+                memory.WriteString(sSubject);
+            }
+        }
+    };
 
     function ConvertPt2Px(pt) {
         return (96 / 72) * pt;
@@ -763,6 +983,45 @@
         }
 
         return null;
+    }
+
+    function formatTimestampToPDF(timestamp) {
+        const date = new Date(parseInt(timestamp));
+        
+        const year      = date.getFullYear();
+        const month     = (date.getMonth() + 1).toString().padStart(2, '0');
+        const day       = date.getDate().toString().padStart(2, '0');
+        const hours     = date.getHours().toString().padStart(2, '0');
+        const minutes   = date.getMinutes().toString().padStart(2, '0');
+        const seconds   = date.getSeconds().toString().padStart(2, '0');
+      
+        // Calculate timezone offset
+        let timezoneOffsetMinutes = date.getTimezoneOffset();
+        
+        let timezoneOffsetSign;
+        if (timezoneOffsetMinutes < 0)
+            timezoneOffsetSign = '+';
+        else if (timezoneOffsetMinutes > 0)
+            timezoneOffsetSign = '-';
+        else if (timezoneOffsetMinutes == 0)
+            timezoneOffsetSign = '=';
+
+        
+        let timezoneOffsetHours = Math.abs(Math.floor(timezoneOffsetMinutes / 60)) >> 0;
+        if (timezoneOffsetHours < 10)
+            timezoneOffsetHours = '0' + timezoneOffsetHours.toString();
+        else
+            timezoneOffsetHours = timezoneOffsetHours.toString();
+        
+        let timezoneOffsetMinutesLeft = timezoneOffsetMinutes % 60;
+        if (timezoneOffsetMinutesLeft < 10)
+            timezoneOffsetMinutesLeft = '0' + timezoneOffsetMinutesLeft.toString();
+        else
+            timezoneOffsetMinutesLeft = timezoneOffsetMinutesLeft.toString();
+
+        const formattedTimestamp = `D:${year}${month}${day}${hours}${minutes}${seconds}${timezoneOffsetSign}${timezoneOffsetHours}'${timezoneOffsetMinutesLeft}'`;
+        
+        return formattedTimestamp;
     }
 
 	window["AscPDF"].CAnnotationBase    = CAnnotationBase;

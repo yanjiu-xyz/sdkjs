@@ -101,6 +101,7 @@ var CPresentation = CPresentation || function(){};
         this.widgets    = []; // непосредственно сами поля, которые отрисовываем (дочерние без потомков)
         this.annots     = [];
 
+        this.maxApIdx = -1;
         this.theme = new AscFormat.CTheme();
         this.actionsInfo = new CActionQueue(this);
         this.calculateInfo = new CCalculateInfo(this);
@@ -356,6 +357,13 @@ var CPresentation = CPresentation || function(){};
     };
     CPDFDoc.prototype.ClearFieldsToCommit = function() {
         this.fieldsToCommit = [];
+    };
+    CPDFDoc.prototype.UpdateApIdx = function(newApIdx) {
+        if (this.maxApIdx < newApIdx)
+            this.maxApIdx = newApIdx;
+    };
+    CPDFDoc.prototype.GetMaxApIdx = function() {
+        return this.maxApIdx;
     };
     CPDFDoc.prototype.SelectNextField = function() {
         let oViewer         = editor.getDocumentRenderer();
@@ -977,10 +985,10 @@ var CPresentation = CPresentation || function(){};
                         cursorType = "pointer";
                 }
             }
-            else if (mouseMoveAnnotObject && (mouseMoveAnnotObject.GetType() != AscPDF.ANNOTATIONS_TYPES.Ink && mouseMoveAnnotObject.IsTextMarkup() == false)) {
+            else if (mouseMoveAnnotObject && mouseMoveAnnotObject.GetType() == AscPDF.ANNOTATIONS_TYPES.Text) {
             	cursorType = "move";
             }
-            else if (mouseMoveAnnotObject && mouseMoveAnnotObject.IsTextMarkup()) {
+            else if (mouseMoveAnnotObject && (mouseMoveAnnotObject.IsTextMarkup() || mouseMoveAnnotObject.GetType() != AscPDF.ANNOTATIONS_TYPES.Ink)) {
             	cursorType = "default";
             }
 
@@ -1456,9 +1464,10 @@ var CPresentation = CPresentation || function(){};
             this.TurnOffHistory();
         }
         
-        // if (oViewer.IsOpenFormsInProgress == false) {
-        //     oAnnot.SetDrawFromStream(false);
-        // }
+        if (oProps.apIdx == null)
+            oAnnot.SetApIdx(this.GetMaxApIdx() + 2);
+        else
+            oAnnot.SetApIdx(oProps.apIdx);
 
         oAnnot.AddToRedraw();
         return oAnnot;
@@ -1639,6 +1648,8 @@ var CPresentation = CPresentation || function(){};
         let oAnnot;
         if (this.mouseDownAnnot && this.mouseDownAnnot.IsComment() == false) {
             oAnnot = CreateAnnotByProps(oProps, this);
+            oAnnot.SetApIdx(this.GetMaxApIdx() + 2);
+
             if (this.mouseDownAnnot.GetContents()) {
                 let newCommentData = new AscCommon.CCommentData();
                 newCommentData.Read_FromAscCommentData(AscCommentData);
@@ -1650,7 +1661,7 @@ var CPresentation = CPresentation || function(){};
                 this.EditComment(this.mouseDownAnnot.GetId(), curCommentData);
             }
             else
-                this.mouseDownAnnot.SetContents(oAnnot);
+                this.mouseDownAnnot.AddReply(oAnnot);
         }
         else {
             oAnnot = this.AddAnnot(oProps);
@@ -2270,7 +2281,8 @@ var CPresentation = CPresentation || function(){};
         let sName       = oProps.name ? oProps.name : AscCommon.CreateGUID();
         let nAnnotType  = oProps.type;
         let sAuthor     = oProps.author ? oProps.author : AscCommon.UserInfoParser.getCurrentName();
-        let sDate       = oProps.modDate ? oProps.modDate : (new Date().getTime()).toString();
+        let sCrDate     = oProps.creationDate ? oProps.creationDate : (new Date().getTime()).toString();
+        let sModDate    = oProps.modDate ? oProps.modDate : (new Date().getTime()).toString();
         let sText       = oProps.contents;
         let isHidden    = !!oProps.hidden;
         
@@ -2300,6 +2312,10 @@ var CPresentation = CPresentation || function(){};
             case AscPDF.ANNOTATIONS_TYPES.Squiggly:
                 oAnnot = new AscPDF.CAnnotationSquiggly(sName, nPageNum, aScaledCoords, oPdfDoc);
                 break;
+            case AscPDF.ANNOTATIONS_TYPES.Caret:
+                oAnnot = new AscPDF.CAnnotationCaret(sName, nPageNum, aScaledCoords, oPdfDoc);
+                oAnnot.SetQuads([[aRect[0], aRect[1], aRect[2], aRect[1], aRect[0], aRect[3], aRect[2], aRect[3]]]);
+                break;
             case AscPDF.ANNOTATIONS_TYPES.Line:
                 oAnnot = new AscPDF.CAnnotationLine(sName, nPageNum, aScaledCoords, oPdfDoc);
                 break;
@@ -2323,7 +2339,8 @@ var CPresentation = CPresentation || function(){};
                 break;
         }
 
-        oAnnot.SetModDate(sDate);
+        oAnnot.SetCreationDate(sCrDate);
+        oAnnot.SetModDate(sModDate);
         oAnnot.SetAuthor(sAuthor);
         oAnnot.SetDisplay(isHidden ? window["AscPDF"].Api.Objects.display["hidden"] : window["AscPDF"].Api.Objects.display["visible"]);
         oAnnot.SetContents(sText);
