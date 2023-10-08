@@ -775,7 +775,15 @@
         memory.WriteLong(this.GetApIdx());
 
         // annont flags
-        let bHidden = bPrint = bNoView = ToggleNoView = locked = lockedC = noZoom = noRotate = false;
+        let bHidden      = false;
+        let bPrint       = false;
+        let bNoView      = false;
+        let ToggleNoView = false;
+        let locked       = false;
+        let lockedC      = false;
+        let noZoom       = false;
+        let noRotate     = false;
+
         let nDisplayType = this.GetDisplay();
         if (nDisplayType == 1) {
             bHidden = true;
