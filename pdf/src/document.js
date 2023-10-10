@@ -1665,6 +1665,7 @@ var CPresentation = CPresentation || function(){};
         }
         else {
             oAnnot = this.AddAnnot(oProps);
+            AscCommentData.m_sUserData = oAnnot.GetApIdx();
             editor.sendEvent("asc_onAddComment", oAnnot.GetId(), AscCommentData);    
         }
         
@@ -1762,7 +1763,7 @@ var CPresentation = CPresentation || function(){};
             oViewer._paint();
         }
         else {
-            oAnnot.SetContents(null);
+            oAnnot.RemoveComment();
         }
     };
     CPDFDoc.prototype.RemoveAnnot = function(Id) {
