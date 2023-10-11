@@ -20522,10 +20522,21 @@ function CParagraphMinMaxContentWidth()
     this.nMinWidth    = 0;
     this.nMaxWidth    = 0;
     this.nCurMaxWidth = 0;
-    this.bMath_OneLine = false; // for ParaMath
     this.nMaxHeight    = 0;
     this.nEndHeight    = 0;
 }
+
+CParagraphMinMaxContentWidth.prototype.addLetter = function(width)
+{
+	if (!this.bWord)
+	{
+		this.bWord    = true;
+		this.nWordLen = 0;
+	}
+	
+	this.nWordLen += width;
+	this.nCurMaxWidth += width;
+};
 
 function CParagraphRangeVisibleWidth()
 {

@@ -2073,6 +2073,7 @@ ParaMath.prototype.RecalculateMinMaxContentWidth = function(MinMax)
     RPI.MergeMathInfo(this.ParaMathRPI);
 
     this.Root.PreRecalc(null, this, new CMathArgSize(), RPI);
+	this.Root.recalculateAllSize(AscCommon.g_oTextMeasurer);
     this.Root.RecalculateMinMaxContentWidth(MinMax);
 };
 

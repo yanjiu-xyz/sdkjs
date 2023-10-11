@@ -4956,48 +4956,48 @@ CMathContent.prototype.Recalculate_Range_Width = function(PRSC, _CurLine, _CurRa
 
     this.Bounds.SetWidth(CurLine, CurRange, PRSC.Range.W - RangeW);
 };
+CMathContent.prototype.recalculateAllSize = function(textMeasurer)
+{
+	var ascent = 0, descent = 0;
+	this.size.width = 0;
+	
+	if (this.RecalcInfo.bEqArray)
+		this.InfoPoints.SetDefault();
+	
+	for (let pos = 0, count = this.Content.length; pos < count; ++pos)
+	{
+		let item = this.Content[pos];
+		if (para_Math_Run === item.Type)
+		{
+			item.Math_RecalculateContent();
+		}
+		else
+		{
+			item.recalculateAllSize(textMeasurer);
+			
+			if (this.RecalcInfo.bEqArray)
+				this.InfoPoints.ContentPoints.UpdatePoint(item.size.width);
+		}
+		
+		
+		this.size.width += item.size.width;
+		
+		if (ascent < item.size.ascent)
+			ascent = item.size.ascent;
+		
+		if (descent < item.size.height - item.size.ascent)
+			descent = item.size.height - item.size.ascent;
+		
+		this.size.ascent = ascent;
+		this.size.height = ascent + descent;
+	}
+};
 CMathContent.prototype.RecalculateMinMaxContentWidth = function(MinMax)
 {
-    if(this.RecalcInfo.bEqArray)
-        this.InfoPoints.SetDefault();
-
-    var ascent = 0, descent = 0;
-    this.size.width = 0;
-
-    var Lng = this.Content.length;
-
-    for(var Pos = 0; Pos < Lng; Pos++)
-    {
-        var Item = this.Content[Pos],
-            Type = Item.Type;
-
-        if(MinMax.bMath_OneLine)
-        {
-            if(Type == para_Math_Run)
-                Item.Math_RecalculateContent();
-            else
-                Item.RecalculateMinMaxContentWidth(MinMax);
-
-            if(this.RecalcInfo.bEqArray && Type == para_Math_Composition)
-                this.InfoPoints.ContentPoints.UpdatePoint(this.Content[Pos].size.width);
-
-            this.size.width += Item.size.width;
-
-            if(ascent < Item.size.ascent)
-                ascent = Item.size.ascent;
-
-            if(descent < Item.size.height - Item.size.ascent)
-                descent = Item.size.height - Item.size.ascent;
-
-            this.size.ascent = ascent;
-            this.size.height = ascent + descent;
-        }
-        else
-        {
-            Item.RecalculateMinMaxContentWidth(MinMax);
-        }
-    }
-
+	for (let pos = 0, count = this.Content.length; pos < count; ++pos)
+	{
+		this.Content[pos].RecalculateMinMaxContentWidth(MinMax);
+	}
 };
 CMathContent.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _CurRange, ContentMetrics)
 {
