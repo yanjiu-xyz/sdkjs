@@ -7455,8 +7455,13 @@ Paragraph.prototype.Correct_Content = function(_StartPos, _EndPos, bDoNotDeleteE
 
 		if (CurElement.CorrectContent)
 			CurElement.CorrectContent();
-
-		if ((para_Hyperlink === CurElement.Type || para_Math === CurElement.Type || para_Field === CurElement.Type || para_InlineLevelSdt === CurElement.Type) && true === CurElement.Is_Empty() && true !== CurElement.Is_CheckingNearestPos())
+		
+		if ((para_Hyperlink === CurElement.Type
+				|| para_Math === CurElement.Type
+				|| para_Field === CurElement.Type
+				|| (para_InlineLevelSdt === CurElement.Type && !CurElement.IsPlaceHolder()))
+			&& true === CurElement.Is_Empty()
+			&& true !== CurElement.Is_CheckingNearestPos())
 		{
 			this.Internal_Content_Remove(CurPos);
 		}
