@@ -6074,7 +6074,8 @@ CT_pivotTableDefinition.prototype.removeNoDataField = function (pivotIndex, addT
 	if (st_VALUES === pivotIndex) {
 		return this.removeValuesField(addToHistory);
 	}
-	var deleteIndex, t = this;
+	this.formatsManager.removeField(pivotIndex);
+	var deleteIndex;
 	var pivotField = this.asc_getPivotFields()[pivotIndex];
 	var historyType;
 	switch (pivotField.axis) {
@@ -7542,38 +7543,27 @@ PivotFormatsManager.prototype.setDefaults = function() {
  * @param {number[]} reindex
  */
 PivotFormatsManager.prototype.reIndexDataFields = function(reindex) {
-	const formats = this.pivot.getFormats();
-	const result = [];
-	if (formats) {
-		for(let i = 0; i < formats.length; i += 1) {
-			const format = formats[i];
-			const pivotArea = format.pivotArea;
-			const references = pivotArea.getReferences();
-			let isBadFormat = false;
-			if (references) {
-				for(let j = 0; j < references.length && !isBadFormat; j += 1) {
-					const reference = references[j];
-					if (reference.field === AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) {
-						const indexes = reference.x;
-						for (let k = 0; k < indexes.length; k += 1) {
-							const x = indexes[k];
-							if (reindex[x.v] !== undefined) {
-								x.v = reindex[x.v];
-							} else {
-								isBadFormat = true;
-								break;
-							}
+	this.changeFormats(function(format) {
+		const pivotArea = format.pivotArea;
+		const references = pivotArea.getReferences();
+		if (references) {
+			for(let i = 0; i < references.length; i += 1) {
+				const reference = references[i];
+				if (reference.field === AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) {
+					const indexes = reference.x;
+					for (let j = 0; j < indexes.length; j += 1) {
+						const x = indexes[j];
+						if (reindex[x.v] !== void 0) {
+							x.v = reindex[x.v];
+						} else {
+							return false;
 						}
 					}
 				}
 			}
-			if (!isBadFormat) {
-				result.push(format);
-			}
 		}
-		this.pivot.formats.format = result;
-	}
-	return;
+		return true;
+	});
 };
 /**
  * @param {CT_Format} format
@@ -7597,8 +7587,8 @@ PivotFormatsManager.prototype.checkValidFields = function(format, pivotFieldsMap
 				const x = reference.x;
 				const newIndexes = pivotFieldIndexesMap.get(reference.field);
 				if (newIndexes) {
-					for(let k = 0; k < x.length; k += 1) {
-						if (!newIndexes.has(x[k].v)) {
+					for(let j = 0; j < x.length; j += 1) {
+						if (!newIndexes.has(x[j].v)) {
 							return false;
 						}
 					}
@@ -7609,36 +7599,73 @@ PivotFormatsManager.prototype.checkValidFields = function(format, pivotFieldsMap
 	return true;
 };
 /**
- * @param {Map<number, number>} pivotFieldsMap
- * @param {Map<number, Map<number, number>>} pivotFieldsIndexesMap
+ * @callback ChangeFormatsCallback
+ * @param {CT_Format} format - each format
+ * @return {boolean} should the format be added
  */
-PivotFormatsManager.prototype.updateIndexes = function(pivotFieldsMap, pivotFieldsIndexesMap) {
+/**
+ * Changes formats in PivotTable. Works like Array.forEach.
+ * onAction are used for each format if formats defined in PivotTable.
+ * @param {ChangeFormatsCallback} onAction 
+ */
+PivotFormatsManager.prototype.changeFormats = function(onAction) {
 	const formats = this.pivot.getFormats();
+	/**@type {CT_Format[]} */
 	const result = [];
 	if (formats) {
 		for (let i = 0; i < formats.length; i += 1) {
 			const format = formats[i];
-			const pivotArea = format.pivotArea;
-			if (this.checkValidFields(format, pivotFieldsMap, pivotFieldsIndexesMap)) {
-				const references = pivotArea.getReferences();
-				if (references) {
-					for(let j = 0; j < references.length; j += 1) {
-						const reference = references[j];
-						const x = reference.x;
-						const newIndexes = pivotFieldsIndexesMap.get(reference.field);
-						if (newIndexes) {
-							for(let k = 0; k < x.length; k += 1) {
-								x[k].v = newIndexes.get(x[k].v)
-							}
-						}
-					}
-				}
+			if (onAction(format)) {
 				result.push(format);
 			}
 		}
 		this.pivot.formats.format = result;
 	}
-	return;
+};
+PivotFormatsManager.prototype.removeField = function(index) {
+	this.changeFormats(function(format) {
+		const pivotArea = format.pivotArea;
+		if (pivotArea.field !== index) {
+			const references = pivotArea.getReferences();
+			if (references) {
+				for(let i = 0; i < references.length; i += 1) {
+					const reference = references[i];
+					if (reference.field === index) {
+						return false;
+					}
+				}
+			}
+			return true;
+		}
+		return false;
+	});
+};
+/**
+ * @param {Map<number, number>} pivotFieldsMap
+ * @param {Map<number, Map<number, number>>} pivotFieldsIndexesMap
+ */
+PivotFormatsManager.prototype.updateIndexes = function(pivotFieldsMap, pivotFieldsIndexesMap) {
+	const t = this;
+	this.changeFormats(function(format) {
+		const pivotArea = format.pivotArea;
+		if (t.checkValidFields(format, pivotFieldsMap, pivotFieldsIndexesMap)) {
+			const references = pivotArea.getReferences();
+			if (references) {
+				for(let i = 0; i < references.length; i += 1) {
+					const reference = references[i];
+					const x = reference.x;
+					const newIndexes = pivotFieldsIndexesMap.get(reference.field);
+					if (newIndexes) {
+						for(let j = 0; j < x.length; j += 1) {
+							x[j].v = newIndexes.get(x[j].v)
+						}
+					}
+				}
+			}
+			return true;
+		}
+		return false;
+	});
 };
 PivotFormatsManager.prototype.updateCollection = function() {
 	this.setDefaults();
