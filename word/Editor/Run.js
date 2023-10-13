@@ -11493,6 +11493,9 @@ ParaRun.prototype.AddMathPlaceholder = function()
     var oPlaceholder = new CMathText(false);
 	oPlaceholder.SetPlaceholder();
     this.Add_ToContent(0, oPlaceholder, false);
+	
+	// TODO: Расчет стилей разный для плейсхолдера и для текса (разобраться почему)
+	this.Recalc_CompiledPr();
 };
 ParaRun.prototype.RemoveMathPlaceholder = function()
 {
@@ -11504,6 +11507,9 @@ ParaRun.prototype.RemoveMathPlaceholder = function()
 			nPos--;
 		}
 	}
+	
+	// TODO: Расчет стилей разный для плейсхолдера и для текса (разобраться почему)
+	this.Recalc_CompiledPr();
 };
 ParaRun.prototype.Set_MathPr = function(MPrp)
 {
