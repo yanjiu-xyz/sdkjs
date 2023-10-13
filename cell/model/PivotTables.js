@@ -7625,19 +7625,16 @@ PivotFormatsManager.prototype.changeFormats = function(onAction) {
 PivotFormatsManager.prototype.removeField = function(index) {
 	this.changeFormats(function(format) {
 		const pivotArea = format.pivotArea;
-		if (pivotArea.field !== index) {
-			const references = pivotArea.getReferences();
-			if (references) {
-				for(let i = 0; i < references.length; i += 1) {
-					const reference = references[i];
-					if (reference.field === index) {
-						return false;
-					}
+		const references = pivotArea.getReferences();
+		if (references) {
+			for(let i = 0; i < references.length; i += 1) {
+				const reference = references[i];
+				if (reference.field === index) {
+					return false;
 				}
 			}
-			return true;
 		}
-		return false;
+		return true;
 	});
 };
 /**
