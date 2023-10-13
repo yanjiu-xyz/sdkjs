@@ -763,7 +763,6 @@
 		saveAndMoveLeft      : 5,
 		removeCharBack       : 6,
 		removeWordBack       : 7,
-		addSpace             : 8,
 		moveToEndLine        : 9,
 		moveToEndDocument    : 10,
 		selectToEndLine      : 11,
@@ -828,9 +827,6 @@
 	oCellEditorEvents[cellEditorHotkeyTypes.removeWordBack] = [
 		new CNativeEvent(keyCodes.BackSpace, true, false, false, false),
 		new CNativeEvent(keyCodes.BackSpace, false, false, true, false, testFlags.macOs),
-	];
-	oCellEditorEvents[cellEditorHotkeyTypes.addSpace] = [
-		new CNativeEvent(keyCodes.Space, true, false, false, false)
 	];
 	oCellEditorEvents[cellEditorHotkeyTypes.moveToEndLine] = [
 		new CNativeEvent(keyCodes.End, false, false, false, false),

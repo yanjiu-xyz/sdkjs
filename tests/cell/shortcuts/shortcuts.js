@@ -544,11 +544,6 @@ QUnit.config.autostart = false;
 		assert.strictEqual(GetCellText(0, 0), '.', 'Check add separator');
 		EnterText('');
 
-		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addSpace);
-		CloseCellEditor(true);
-		assert.strictEqual(GetCellText(0, 0), ' ', 'Check add space');
-		EnterText('');
-
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addNewLine);
 		assert.strictEqual(cellEditor.textRender.getLinesCount(), 2, 'Check add new line');
 		ExecuteCellEditorHotkey(cellEditorHotkeyTypes.addNewLine);
