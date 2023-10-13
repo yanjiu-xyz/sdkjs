@@ -3680,7 +3680,7 @@
     page.scale = 1;
     return page;
   };
-  
+
   WorkbookView.prototype.printForOleObject = function (ws, oRange) {
     var sizes = ws.getRangePosition(oRange);
     var page = this.getSimulatePageForOleObject(sizes, oRange);
@@ -5469,7 +5469,7 @@
 
 		//lock only ranges by id
 		this._isLockedUserProtectedRange(doEdit, aLockInfo);
-		
+
 	};
 
 	WorkbookView.prototype.unlockUserProtectedRanges = function() {
@@ -5532,6 +5532,90 @@
 		}
 		return res;
 	};
+
+	//******GOAL SEEK******
+	WorkbookView.prototype.startGoalSeek = function(sFormulaCell, sExpectedValue, sChangingCell) {
+		let sSheetName;
+		let wsFormula = this.model.getActiveWs();
+		let wsChangingCell = wsFormula;
+
+		if (~sFormulaCell.indexOf(",")) {
+			sFormulaCell = sFormulaCell.slice(0, sFormulaCell.indexOf(","));
+		}
+		if (~sFormulaCell.indexOf("!")) {
+			sSheetName = sFormulaCell.split("!")[0].replace(/'/g, "");
+			sFormulaCell = sFormulaCell.split("!")[1];
+			if (sSheetName !== ws.getName()) {
+				wsFormula = this.model.getWorksheetByName(sSheetName);
+			}
+		}
+		if (~sChangingCell.indexOf(",")) {
+			sChangingCell = sChangingCell.slice(0, sChangingCell.indexOf(","));
+		}
+		sSheetName = sChangingCell.split("!")[0].replace(/'/g, "");
+		sChangingCell = sChangingCell.split("!")[1];
+		if (sSheetName !== wsChangingCell.getName()) {
+			wsChangingCell = this.model.getWorksheetByName(sSheetName);
+		}
+
+		let t = this;
+		let callback = function (isSuccess) {
+			if (!isSuccess) {
+				t.handlers.trigger("asc_onError", c_oAscError.ID.LockedCellGoalSeek, c_oAscError.Level.NoCritical);
+				return;
+			}
+			//open history point
+			History.Create_NewPoint();
+			History.StartTransaction();
+			t.model.startGoalSeek(sFormulaCell, sExpectedValue, sChangingCell, wsFormula, wsChangingCell);
+		};
+
+		//need lock
+		let aLocksInfo = [];
+		//cells locks info
+		let oChangingCell = wsChangingCell && wsChangingCell.getRange2(sChangingCell);
+		if (oChangingCell) {
+			aLocksInfo.push(this.collaborativeEditing.getLockInfo(AscCommonExcel.c_oAscLockTypeElem.Range, null, wsChangingCell.getId(),
+				new AscCommonExcel.asc_CCollaborativeRange(oChangingCell.bbox.c1, oChangingCell.bbox.r1, oChangingCell.bbox.c2, oChangingCell.bbox.r2)));
+		}
+
+		let oFormulaCell = wsFormula && wsFormula.getRange2(sFormulaCell);
+		if (oFormulaCell) {
+			aLocksInfo.push(this.collaborativeEditing.getLockInfo(AscCommonExcel.c_oAscLockTypeElem.Range, null, wsFormula.getId(),
+				new AscCommonExcel.asc_CCollaborativeRange(oFormulaCell.bbox.c1, oFormulaCell.bbox.r1, oFormulaCell.bbox.c2, oFormulaCell.bbox.r2)));
+		}
+
+		this.collaborativeEditing.lock(aLocksInfo, callback);
+	};
+
+	WorkbookView.prototype.closeGoalSeek = function (bSave) {
+		let oGoalSeek = this.model.getGoalSeek();
+		let oChangedCell = oGoalSeek && oGoalSeek.getChangingCell();
+
+		bSave ? this.model.saveGoalSeek() : this.model.closeGoalSeek();
+		//close history point
+		History.EndTransaction();
+
+		if (oChangedCell) {
+			//update
+			let ws = this.getWorksheetById(oChangedCell.worksheet.Id);
+			ws._updateRange(oChangedCell.bbox);
+			ws.draw();
+		}
+	};
+
+	WorkbookView.prototype.pauseGoalSeek = function() {
+		this.model.pauseGoalSeek();
+	};
+
+	WorkbookView.prototype.continueGoalSeek = function() {
+		this.model.continueGoalSeek();
+	};
+
+	WorkbookView.prototype.stepGoalSeek = function() {
+		this.model.stepGoalSeek();
+	};
+
 
 	//временно добавляю сюда. в идеале - использовать общий класс из документов(или сделать базовый, от него наследоваться) - CDocumentSearch
 	function CDocumentSearchExcel(wb) {

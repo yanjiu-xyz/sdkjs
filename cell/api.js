@@ -8858,6 +8858,41 @@ var editor;
 		return res;
 	};
 
+	//goal seek
+	spreadsheet_api.prototype.asc_StartGoalSeek = function (sFormulaCell, nExpectedValue, sChangingCell) {
+		if (!this.wb) {
+			return;
+		}
+		return this.wb.startGoalSeek(sFormulaCell, nExpectedValue, sChangingCell);
+	};
+
+	spreadsheet_api.prototype.asc_CloseGoalClose = function (bSave) {
+		if (!this.wb) {
+			return;
+		}
+		return this.wb.closeGoalSeek(bSave);
+	};
+
+	spreadsheet_api.prototype.asc_PauseGoalSeek = function () {
+		if (!this.wb) {
+			return;
+		}
+		return this.wb.pauseGoalSeek();
+	};
+
+	spreadsheet_api.prototype.asc_ContinueGoalSeek = function () {
+		if (!this.wb) {
+			return;
+		}
+		return this.wb.continueGoalSeek();
+	};
+
+	spreadsheet_api.prototype.asc_StepGoalSeek = function () {
+		if (!this.wb) {
+			return;
+		}
+		return this.wb.stepGoalSeek();
+	};
 
 	spreadsheet_api.prototype.asc_TracePrecedents = function() {
 		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
@@ -9483,6 +9518,11 @@ var editor;
   prot["asc_ResetAllPageBreaks"]      = prot.asc_ResetAllPageBreaks;
   prot["asc_GetPageBreaksDisableType"]= prot.asc_GetPageBreaksDisableType;
 
+  prot["asc_StartGoalSeek"]= prot.asc_StartGoalSeek;
+  prot["asc_CloseGoalClose"]= prot.asc_CloseGoalClose;
+  prot["asc_PauseGoalSeek"]= prot.asc_PauseGoalSeek;
+  prot["asc_ContinueGoalSeek"]= prot.asc_ContinueGoalSeek;
+  prot["asc_StepGoalSeek"]= prot.asc_StepGoalSeek;
 
 
 
