@@ -5545,7 +5545,7 @@
 		if (~sFormulaCell.indexOf("!")) {
 			sSheetName = sFormulaCell.split("!")[0].replace(/'/g, "");
 			sFormulaCell = sFormulaCell.split("!")[1];
-			if (sSheetName !== ws.getName()) {
+			if (sSheetName !== wsFormula.getName()) {
 				wsFormula = this.model.getWorksheetByName(sSheetName);
 			}
 		}
