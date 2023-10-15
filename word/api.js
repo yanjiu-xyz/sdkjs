@@ -7698,7 +7698,7 @@ background-repeat: no-repeat;\
 		for (var i in _loader_object.ImageMap)
 			++_count;
 
-		if (!this.isOnlyReaderMode)
+		if (!this.isOnlyReaderMode && !this.isPdfEditor())
 		{
 			// add const textures
 			var _st_count = AscCommon.g_oUserTexturePresets.length;
