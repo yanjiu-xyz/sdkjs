@@ -1273,6 +1273,13 @@
 			this.zoom = value;
 			this.zoomMode = ZoomMode.Custom;
 			this.sendEvent("onZoom", this.zoom);
+
+			if (this.Api.watermarkDraw)
+			{
+				this.Api.watermarkDraw.zoom = this.zoom;
+				this.Api.watermarkDraw.Generate();
+			}
+
 			this.resize(isDisablePaint);
 		};
 		this.setZoomMode = function(value)
