@@ -277,11 +277,12 @@
 
 		this._loadModules();
 
-		AscCommon.loadChartStyles(function() {}, function(err) {
-			t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical);
-		});
-
-
+		if (!this.isPdfEditor())
+		{
+			AscCommon.loadChartStyles(function() {}, function(err) {
+				t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical);
+			});
+		}
 
 		var oldOnError = window.onerror;
 		window.onerror = function(errorMsg, url, lineNumber, column, errorObj) {

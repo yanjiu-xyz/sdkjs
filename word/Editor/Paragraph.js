@@ -4008,7 +4008,7 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 					this.CurPos.ContentPos = StartPos;
 				}
 				
-				if (this.LogicDocument && true === this.LogicDocument.IsTrackRevisions() && this.IsSelectionUse())
+				if (this.LogicDocument && true === this.LogicDocument.IsTrackRevisions() && this.IsSelectionUse() && !this.GetPlaceHolderObject())
 				{
 					// TODO: Используем данные функции для сброса селекта, по-хорошему надо сделать для
 					//       этого отдельные методы
@@ -4115,8 +4115,12 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 			{
 				this.Content[StartPos].Remove(nCount, bOnAddText);
 
-				// Мы не удаляем последний элемент с ParaEnd
-				if (StartPos <= this.Content.length - 2 && true === this.Content[StartPos].Is_Empty() && true !== this.Content[StartPos].Is_CheckingNearestPos() && ((nCount > -1 && true !== bOnAddText) || para_Run !== this.Content[StartPos].Type))
+				// Всегда держим Run с ParaEnd и Run для ввода текста
+				if (StartPos <= this.Content.length - 2
+					&& this.Content.length > 2
+					&& true === this.Content[StartPos].Is_Empty()
+					&& true !== this.Content[StartPos].Is_CheckingNearestPos()
+					&& ((nCount > -1 && true !== bOnAddText) || para_Run !== this.Content[StartPos].Type))
 				{
 					this.RemoveFromContent(StartPos, 1);
 					isStartDeleted = true;
@@ -6792,6 +6796,37 @@ Paragraph.prototype.RemoveRunElement = function(oParaPos)
 
 	return false;
 };
+/**
+ * Получаем либо текущую формулу, либо формулу, находяющуюся слева или справа от курсора
+ * @returns {ParaMath|null}
+ */
+Paragraph.prototype.getAdjacentMath = function()
+{
+	let math = this.GetSelectedElementsInfo().GetMath();
+	if (math)
+		return math;
+	
+	let state = this.SaveSelectionState();
+	this.MoveCursorLeft(false, false);
+	math = this.GetSelectedElementsInfo().GetMath();
+	this.LoadSelectionState(state);
+	if (math)
+	{
+		math.MoveCursorToEndPos();
+		return math;
+	}
+	
+	this.MoveCursorRight(false, false);
+	math = this.GetSelectedElementsInfo().GetMath();
+	this.LoadSelectionState(state);
+	if (math)
+	{
+		math.MoveCursorToStartPos();
+		return math;
+	}
+	
+	return null;
+};
 Paragraph.prototype.MoveCursorUp = function(AddToSelect)
 {
 	var Result = true;
@@ -7413,12 +7448,20 @@ Paragraph.prototype.Correct_Content = function(_StartPos, _EndPos, bDoNotDeleteE
 
 	for (var CurPos = EndPos; CurPos >= StartPos; CurPos--)
 	{
+		if (CurPos === this.CurPos.ContentPos)
+			continue;
+		
 		var CurElement = this.Content[CurPos];
 
 		if (CurElement.CorrectContent)
 			CurElement.CorrectContent();
-
-		if ((para_Hyperlink === CurElement.Type || para_Math === CurElement.Type || para_Field === CurElement.Type || para_InlineLevelSdt === CurElement.Type) && true === CurElement.Is_Empty() && true !== CurElement.Is_CheckingNearestPos())
+		
+		if ((para_Hyperlink === CurElement.Type
+				|| para_Math === CurElement.Type
+				|| para_Field === CurElement.Type
+				|| (para_InlineLevelSdt === CurElement.Type && !CurElement.IsPlaceHolder()))
+			&& true === CurElement.Is_Empty()
+			&& true !== CurElement.Is_CheckingNearestPos())
 		{
 			this.Internal_Content_Remove(CurPos);
 		}
@@ -9224,6 +9267,9 @@ Paragraph.prototype.GetSelectedText = function(bClearText, oPr)
 };
 Paragraph.prototype.GetSelectedElementsInfo = function(oInfo, ContentPos, Depth)
 {
+	if (!oInfo)
+		oInfo = new CSelectedElementsInfo();
+		
 	oInfo.SetParagraph(this);
 
 	if (ContentPos)
@@ -9283,6 +9329,8 @@ Paragraph.prototype.GetSelectedElementsInfo = function(oInfo, ContentPos, Depth)
 	var arrComplexFields = this.GetComplexFieldsByPos(ContentPos ? ContentPos : (this.Selection.Use === true ? this.Get_ParaContentPos(false, false) : this.Get_ParaContentPos(false)), false);
 	if (arrComplexFields.length > 0)
 		oInfo.SetComplexFields(arrComplexFields);
+	
+	return oInfo;
 };
 Paragraph.prototype.GetElementsInfoByXY = function(oInfo, X, Y, CurPage)
 {
@@ -20474,10 +20522,21 @@ function CParagraphMinMaxContentWidth()
     this.nMinWidth    = 0;
     this.nMaxWidth    = 0;
     this.nCurMaxWidth = 0;
-    this.bMath_OneLine = false; // for ParaMath
     this.nMaxHeight    = 0;
     this.nEndHeight    = 0;
 }
+
+CParagraphMinMaxContentWidth.prototype.addLetter = function(width)
+{
+	if (!this.bWord)
+	{
+		this.bWord    = true;
+		this.nWordLen = 0;
+	}
+	
+	this.nWordLen += width;
+	this.nCurMaxWidth += width;
+};
 
 function CParagraphRangeVisibleWidth()
 {
