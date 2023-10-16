@@ -1670,8 +1670,10 @@ CT_PivotCacheDefinition.prototype.onEndNode = function(prevContext, elem) {
 	}
 };
 CT_PivotCacheDefinition.prototype.toXml = function(writer, stylesForWrite) {
-	if(!stylesForWrite && writer.context && writer.context.stylesForWrite) {
-		stylesForWrite = writer.context.stylesForWrite;
+	if (writer.context && writer.context) {
+		if (!stylesForWrite && writer.context.stylesForWrite) {
+			stylesForWrite = writer.context.stylesForWrite;
+		}
 	}
 	writer.WriteXmlString("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
 	writer.WriteXmlNodeStart("pivotCacheDefinition");
@@ -3405,7 +3407,15 @@ CT_pivotTableDefinition.prototype.onEndNode = function(prevContext, elem) {
 		}
 	}
 };
-CT_pivotTableDefinition.prototype.toXml = function(writer, stylesForWrite) {
+CT_pivotTableDefinition.prototype.toXml = function(writer, stylesForWrite, dxfs) {
+	if (writer.context && writer.context) {
+		if (!stylesForWrite && writer.context.stylesForWrite) {
+			stylesForWrite = writer.context.stylesForWrite;
+		}
+		if (!dxfs && writer.context.InitSaveManager) {
+			dxfs = writer.context.InitSaveManager.getDxfs();
+		}
+	}
 	writer.WriteXmlString("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>");
 	writer.WriteXmlNodeStart("pivotTableDefinition");
 	writer.WriteXmlString(
@@ -3640,7 +3650,7 @@ CT_pivotTableDefinition.prototype.toXml = function(writer, stylesForWrite) {
 		this.dataFields.toXml(writer, "dataFields", stylesForWrite);
 	}
 	if (null !== this.formats) {
-		this.formats.toXml(writer, "formats");
+		this.formats.toXml(writer, "formats", dxfs);
 	}
 	if (null !== this.conditionalFormats) {
 		this.conditionalFormats.toXml(writer, "conditionalFormats");
@@ -9958,7 +9968,7 @@ CT_Formats.prototype.onStartNode = function(elem, attr, uq) {
 	}
 	return newContext;
 };
-CT_Formats.prototype.toXml = function(writer, name) {
+CT_Formats.prototype.toXml = function(writer, name, dxfs) {
 	writer.WriteXmlNodeStart(name);
 	if (this.format.length > 0) {
 		writer.WriteXmlAttributeNumber("count", this.format.length);
@@ -9966,7 +9976,7 @@ CT_Formats.prototype.toXml = function(writer, name) {
 	writer.WriteXmlAttributesEnd();
 	for (var i = 0; i < this.format.length; ++i) {
 		var elem = this.format[i];
-		elem.toXml(writer, "format");
+		elem.toXml(writer, "format", dxfs);
 	}
 	writer.WriteXmlNodeEnd(name);
 };
@@ -13642,13 +13652,18 @@ CT_Format.prototype.onStartNode = function(elem, attr, uq) {
 	}
 	return newContext;
 };
-CT_Format.prototype.toXml = function(writer, name) {
+CT_Format.prototype.toXml = function(writer, name, dxfs) {
 	writer.WriteXmlNodeStart(name);
 	if (c_oAscFormatAction.Formatting !== this.action) {
 		writer.WriteXmlAttributeStringEncode("action", ToXml_ST_FormatAction(this.action));
 	}
-	//todo
-	if (null !== this.dxfId) {
+	if (dxfs) {
+		if (null !== this.dxf) {
+			let dxfId = dxfs.length;
+			writer.WriteXmlAttributeNumber("dxfId", dxfId);
+			dxfs.push(this.dxf);
+		}
+	} else if (null !== this.dxfId) {
 		writer.WriteXmlAttributeNumber("dxfId", this.dxfId);
 	}
 	writer.WriteXmlAttributesEnd();
@@ -13662,7 +13677,7 @@ CT_Format.prototype.toXml = function(writer, name) {
 };
 CT_Format.prototype.initPostOpenZip = function (dxfsOpen) {
 	if (null !== this.dxfId) {
-		this.dxf = dxfsOpen[this.dxfId] || null;
+		this.dxf = dxfsOpen && dxfsOpen[this.dxfId] || null;
 		this.dxfId = null;
 	}
 }

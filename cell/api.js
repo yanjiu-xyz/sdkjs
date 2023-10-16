@@ -1931,6 +1931,7 @@ var editor;
 						xmlParserContext.InitOpenManager.InitStyleManager(oStyleObject, aCellXfs);
 						dxfs = oStyleObject.aDxfs;
 						wb.oNumFmtsOpen = oStyleObject.oNumFmts;
+						wb.dxfsOpen = oStyleObject.aDxfs;
 					}
 				}
 				xmlParserContext.InitOpenManager.aCellXfs = aCellXfs;
