@@ -5817,6 +5817,21 @@
 			}
 		}
 
+		let _checkLastMergedRow = function (_mc, _row) {
+			let _res = _mc && _row === _mc.r2;
+			if (!_res) {
+				for (let i = _row + 1; i <= _mc.r2; i++) {
+					if (t._getRowHeight(i) !== 0) {
+						_res = false;
+						break;
+					} else {
+						_res = true;
+					}
+				}
+			}
+			return _res;
+		};
+
 		var arrPrevRow = [], arrCurrRow = [], arrNextRow = [];
 		var objMCPrevRow = null, objMCRow = null, objMCNextRow = null;
 		var bCur, bPrev, bNext, bTopCur, bTopPrev, bTopNext, bBotCur, bBotPrev, bBotNext;
@@ -6034,7 +6049,7 @@
 					continue;
 				}
 				
-				if (!mc || row === mc.r2) {
+				if (!mc || (_checkLastMergedRow(mc, row))) {
 					// draw bottom border
 					drawHorizontalBorder(bCur, bBotCur, x1, y2, x2);
 				}
