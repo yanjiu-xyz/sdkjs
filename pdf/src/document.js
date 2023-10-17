@@ -1506,7 +1506,7 @@ var CPresentation = CPresentation || function(){};
             r: r != undefined ? r : 0,
             g: g != undefined ? g : 0,
             b: b != undefined ? b : 0,
-            a: opacity / 100
+            a: opacity
         };
 
         let oViewer         = editor.getDocumentRenderer();
@@ -1545,7 +1545,7 @@ var CPresentation = CPresentation || function(){};
 
             oAnnot.SetQuads(aQuads);
             oAnnot.SetStrokeColor([r/255, g/255, b/255]);
-            oAnnot.SetOpacity(opacity);
+            oAnnot.SetOpacity(opacity / 100);
         }
 
         editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Highlight, false);
@@ -1556,7 +1556,7 @@ var CPresentation = CPresentation || function(){};
             r: r != undefined ? r : 0,
             g: g != undefined ? g : 0,
             b: b != undefined ? b : 0,
-            a: opacity / 100
+            a: opacity
         };
 
         let oViewer         = editor.getDocumentRenderer();
@@ -1594,7 +1594,7 @@ var CPresentation = CPresentation || function(){};
 
             oAnnot.SetQuads(aQuads);
             oAnnot.SetStrokeColor([r/255, g/255, b/255]);
-            oAnnot.SetOpacity(opacity);
+            oAnnot.SetOpacity(opacity / 100);
         }
 
         editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Underline, false);
@@ -1605,7 +1605,7 @@ var CPresentation = CPresentation || function(){};
             r: r != undefined ? r : 0,
             g: g != undefined ? g : 0,
             b: b != undefined ? b : 0,
-            a: opacity / 100
+            a: opacity
         };
 
         let oViewer         = editor.getDocumentRenderer();
@@ -1643,7 +1643,7 @@ var CPresentation = CPresentation || function(){};
 
             oAnnot.SetQuads(aQuads);
             oAnnot.SetStrokeColor([r/255, g/255, b/255]);
-            oAnnot.SetOpacity(opacity);
+            oAnnot.SetOpacity(opacity / 100);
         }
 
         editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Strikeout, false);
