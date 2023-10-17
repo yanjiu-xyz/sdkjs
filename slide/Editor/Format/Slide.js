@@ -1286,15 +1286,29 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         return this.showMasterSp !== false;
     };
 
-    Slide.prototype.draw = function(graphics) {
-        let bCheckBounds = graphics.IsSlideBoundsCheckerType;
-        let bSlideShow = this.graphicObjects.isSlideShow();
-        let bClipBySlide = !this.graphicObjects.canEdit();
-        if (bCheckBounds && (bSlideShow || bClipBySlide)) {
-            graphics.rect(0, 0, this.Width, this.Height);
-            return;
+    Slide.prototype.isEqualBgMasterAndLayout = function(oSlide) {
+        if(!(this.backgroundFill === oSlide.backgroundFill ||
+            this.backgroundFill && this.backgroundFill.isEqual(oSlide.backgroundFill))) {
+            return false;
         }
-        let _bounds, i;
+        if(this.needMasterSpDraw() && !oSlide.needMasterSpDraw() || oSlide.needMasterSpDraw() && !this.needMasterSpDraw()) {
+            return false;
+        }
+        if(this.needMasterSpDraw()) {
+            if(this.Layout.Master !== oSlide.Layout.Master) {
+               return false;
+            }
+        }
+        if(this.needLayoutSpDraw()) {
+            if(this.Layout !== oSlide.Layout) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    Slide.prototype.drawBgMasterAndLayout = function(graphics, bClipBySlide, bCheckBounds) {
+        let _bounds;
         DrawBackground(graphics, this.backgroundFill, this.Width, this.Height);
         if(bClipBySlide) {
             graphics.SaveGrState();
@@ -1318,6 +1332,17 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
                 this.Layout.draw(graphics, this);
             }
         }
+    };
+    Slide.prototype.draw = function(graphics) {
+        let bCheckBounds = graphics.IsSlideBoundsCheckerType;
+        let bSlideShow = this.graphicObjects.isSlideShow();
+        let bClipBySlide = !this.graphicObjects.canEdit();
+        if (bCheckBounds && (bSlideShow || bClipBySlide)) {
+            graphics.rect(0, 0, this.Width, this.Height);
+            return;
+        }
+        let _bounds, i;
+        this.drawBgMasterAndLayout(graphics, bClipBySlide, bCheckBounds);
         this.collaborativeMarks.Init_Drawing();
         let oCollColor;
         let fDist = 3;
@@ -1727,7 +1752,32 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 
     Slide.prototype.getColorMap = function()
     {
-
+        if(this.clrMap)
+        {
+            return this.clrMap;
+        }
+        else if(this.Layout)
+        {
+            if(this.Layout.clrMap)
+            {
+                return this.Layout.clrMap;
+            }
+            else if(this.Layout.Master)
+            {
+                if(this.Layout.Master.clrMap)
+                {
+                    return this.Layout.Master.clrMap;
+                }
+            }
+        }
+        else if(this.Master)
+        {
+            if(this.Master.clrMap)
+            {
+                return this.Master.clrMap;
+            }
+        }
+        return AscFormat.GetDefaultColorMap();
     };
 
 

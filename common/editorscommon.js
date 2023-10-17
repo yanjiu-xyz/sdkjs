@@ -180,6 +180,105 @@
 		return (v - v % 1)   ||   (!isFinite(v) || v === 0 ? v : v < 0 ? -0 : 0);
 	};
 
+	// https://tc39.github.io/ecma262/#sec-array.prototype.includes
+	if (!Array.prototype.includes) {
+		Object.defineProperty(Array.prototype, 'includes', {
+			value: function(searchElement, fromIndex) {
+
+				if (this == null) {
+					throw new TypeError('"this" is null or not defined');
+				}
+
+				// 1. Let O be ? ToObject(this value).
+				var o = Object(this);
+
+				// 2. Let len be ? ToLength(? Get(O, "length")).
+				var len = o.length >>> 0;
+
+				// 3. If len is 0, return false.
+				if (len === 0) {
+					return false;
+				}
+
+				// 4. Let n be ? ToInteger(fromIndex).
+				//    (If fromIndex is undefined, this step produces the value 0.)
+				var n = fromIndex | 0;
+
+				// 5. If n ≥ 0, then
+				//  a. Let k be n.
+				// 6. Else n < 0,
+				//  a. Let k be len + n.
+				//  b. If k < 0, let k be 0.
+				var k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
+
+				function sameValueZero(x, y) {
+					return x === y || (typeof x === 'number' && typeof y === 'number' && isNaN(x) && isNaN(y));
+				}
+
+				// 7. Repeat, while k < len
+				while (k < len) {
+					// a. Let elementK be the result of ? Get(O, ! ToString(k)).
+					// b. If SameValueZero(searchElement, elementK) is true, return true.
+					if (sameValueZero(o[k], searchElement)) {
+						return true;
+					}
+					// c. Increase k by 1.
+					k++;
+				}
+
+				// 8. Return false
+				return false;
+			}
+		});
+	}
+
+	// https://tc39.github.io/ecma262/#sec-array.prototype.find
+	if (!Array.prototype.find) {
+		Object.defineProperty(Array.prototype, 'find', {
+			value: function(predicate) {
+				// 1. Let O be ? ToObject(this value).
+				if (this == null) {
+					throw new TypeError('"this" is null or not defined');
+				}
+
+				var o = Object(this);
+
+				// 2. Let len be ? ToLength(? Get(O, "length")).
+				var len = o.length >>> 0;
+
+				// 3. If IsCallable(predicate) is false, throw a TypeError exception.
+				if (typeof predicate !== 'function') {
+					throw new TypeError('predicate must be a function');
+				}
+
+				// 4. If thisArg was supplied, let T be thisArg; else let T be undefined.
+				var thisArg = arguments[1];
+
+				// 5. Let k be 0.
+				var k = 0;
+
+				// 6. Repeat, while k < len
+				while (k < len) {
+					// a. Let Pk be ! ToString(k).
+					// b. Let kValue be ? Get(O, Pk).
+					// c. Let testResult be ToBoolean(? Call(predicate, T, « kValue, k, O »)).
+					// d. If testResult is true, return kValue.
+					var kValue = o[k];
+					if (predicate.call(thisArg, kValue, k, o)) {
+						return kValue;
+					}
+					// e. Increase k by 1.
+					k++;
+				}
+
+				// 7. Return undefined.
+				return undefined;
+			},
+			configurable: true,
+			writable: true
+		});
+	}
+
 	if (typeof require === 'function' && !window['XRegExp'])
 	{
 		window['XRegExp'] = require('xregexp');
@@ -773,7 +872,7 @@
 	}
 	function getEditorByBinSignature(stream, Signature) {
 		if (stream.length > 4) {
-			let signature = AscCommon.UTF8ArrayToString(stream, 0, 4);
+			let signature = typeof stream === 'string' ? stream.slice(0, 4) : AscCommon.UTF8ArrayToString(stream, 0, 4);
 			switch(signature) {
 				case "DOCY":
 					return AscCommon.c_oEditorId.Word;
@@ -1574,7 +1673,7 @@
 	//todo get from server config
 	var c_oAscImageUploadProp = {//Не все браузеры позволяют получить информацию о файле до загрузки(например ie9), меняя параметры здесь надо поменять аналогичные параметры в web.common
 		MaxFileSize:      25000000, //25 mb
-		SupportedFormats: ["jpg", "jpeg", "jpe", "png", "gif", "bmp"]
+		SupportedFormats: ["jpg", "jpeg", "jpe", "png", "gif", "bmp", "svg"]
 	};
 
 	var c_oAscDocumentUploadProp = {
@@ -1944,10 +2043,28 @@
 				}
 				else
 				{
-					callback(Asc.c_oAscError.ID.Unknown);
+					if (e.canceled == true)
+					{
+						if (Asc.editor.isPdfEditor())
+							callback(e);
+					}
+					else
+						callback(Asc.c_oAscError.ID.Unknown);
 				}
 			});
-			fileName.click();
+
+			if (Asc.editor.isPdfEditor()) {
+				let oViewer = Asc.editor.getDocumentRenderer();
+				let oDoc = oViewer.doc;
+				let oActionsQueue = oDoc.GetActionsQueue();
+				if (oActionsQueue.IsInProgress()) {
+					Asc.editor.sendEvent("asc_onOpenFilePdfForm", fileName.click.bind(fileName), oActionsQueue.Continue.bind(oActionsQueue));
+				}
+				else 
+					fileName.click();
+			}
+			else
+				fileName.click();
 		}
 		else
 		{
@@ -2447,11 +2564,66 @@
 		input.setAttribute('type', 'file');
 		input.setAttribute('accept', accept);
 		input.setAttribute('style', 'position:absolute;left:-2px;top:-2px;width:1px;height:1px;z-index:-1000;cursor:pointer;');
+		
 		if (allowMultiple) {
 			input.setAttribute('multiple', true);
 		}
-		input.onchange = onchange;
 		document.body.appendChild(input);
+
+		function addDialogClosedListener(input, callback) {
+			var id = null;
+			var active = false;
+			var wrapper = function() {
+				if (active) {
+					active = false;
+					callback(input);
+
+					// remove handlers
+					window.removeEventListener('focus', onFocus);
+					window.removeEventListener('blur', onBlur);
+				}
+			};
+			var cleanup = function() {
+				clearTimeout(id);
+			};
+			var shedule = function(delay) {
+				id = setTimeout(wrapper, delay);
+			};
+			var onFocus = function() {
+				cleanup();
+				shedule(1000);
+			};
+			var onBlur = function() {
+				cleanup();
+			};
+			var onClick = function() {
+				window.addEventListener('focus', onFocus);
+				window.addEventListener('blur', onBlur);
+
+				cleanup();
+				active = true;
+			};
+			var onChange = function() {
+				cleanup();
+				shedule(0);
+			};
+			input.addEventListener('click', onClick);
+			input.addEventListener('change', onChange);
+		}
+
+		addDialogClosedListener(input, checkCanceled);
+
+		function checkCanceled(input) {
+			let e = {};
+			if (input.files.length === 0) {
+				e.canceled = true;
+			}
+			else {
+				e.target = input;
+			}
+			onchange(e);
+		}
+	
 		return input;
 	}
 
@@ -2542,6 +2714,7 @@
 
 		//'path/[name]Sheet1'!A1
 		var path, name, startLink, i;
+		url = url && url.split(FormulaSeparators.functionArgumentSeparator)[0];
 		if (url && url[0] === "'"/*url.match(/('[^\[]*\[[^\]]+\]([^'])+'!)/g)*/) {
 			for (i = url.length - 1; i >= 0; i--) {
 				if (url[i] === "!" && url[i - 1] === "'") {
@@ -9270,7 +9443,7 @@
 				|| 0x2611 === nUnicode
 				|| 0x2610 === nUnicode));
 	}
-
+	
 	function ExecuteNoHistory(f, oLogicDocument, oThis, args)
 	{
 		// TODO: Надо перевести все редакторы на StartNoHistoryMode/EndNoHistoryMode
@@ -9305,6 +9478,27 @@
 		}
 
 		return result;
+	}
+	
+	function executeNoRevisions(f, logicDocument, t, args)
+	{
+		if (!logicDocument
+			|| !logicDocument.IsDocumentEditor
+			|| !logicDocument.IsDocumentEditor()
+			|| !logicDocument.IsTrackRevisions())
+			return f.apply(t, args);
+		
+		let localFlag = logicDocument.GetLocalTrackRevisions();
+		logicDocument.SetLocalTrackRevisions(false);
+		let result = f.apply(t, args);
+		logicDocument.SetLocalTrackRevisions(localFlag);
+		return result;
+	}
+	
+	function AddAndExecuteChange(change)
+	{
+		AscCommon.History.Add(change);
+		change.Redo();
 	}
 
 	/**
@@ -9863,35 +10057,6 @@
 
 	function loadChartStyles(onSuccess, onError) {
 		loadScript('../../../../sdkjs/common/Charts/ChartStyles.js', onSuccess, onError);
-	}
-
-	function loadSmartArtBinary(fOnSuccess, fOnError) {
-		if (window["NATIVE_EDITOR_ENJINE"]) {
-			return;
-		}
-		loadFileContent('../../../../sdkjs/common/SmartArts/SmartArts.bin', function (httpRequest) {
-			if (httpRequest && httpRequest.response) {
-				const arrStream = AscCommon.initStreamFromResponse(httpRequest);
-
-				AscCommon.g_oBinarySmartArts = {
-					shifts: {},
-					stream: arrStream
-				}
-
-				const oFileStream = new AscCommon.FileStream(arrStream, arrStream.length);
-				oFileStream.GetUChar();
-				const nLength = oFileStream.GetULong();
-				while (nLength + 4 > oFileStream.cur) {
-					const nType = oFileStream.GetUChar();
-					const nPosition = oFileStream.GetULong();
-					AscCommon.g_oBinarySmartArts.shifts[nType] = nPosition;
-				}
-				fOnSuccess && fOnSuccess();
-			} else {
-				fOnError(httpRequest);
-			}
-
-		}, 'arraybuffer');
 	}
 
 	function getAltGr(e)
@@ -12785,7 +12950,30 @@
 			return;
 		}
 
-		var rect = element.getBoundingClientRect();
+		
+		var rect;
+		if (!AscBrowser.isIE)
+			rect = element.getBoundingClientRect();
+		else {
+			function getCanvasBoundingClientRect(canvas) {
+				const offsetLeft	= canvas.offsetLeft;
+				const offsetTop		= canvas.offsetTop;
+				const offsetWidth	= canvas.offsetWidth;
+				const offsetHeight	= canvas.offsetHeight;
+			
+				return {
+					top:	offsetTop,
+					right:	offsetLeft + offsetWidth,
+					bottom:	offsetTop + offsetHeight,
+					left:	offsetLeft,
+					width:	offsetWidth,
+					height:	offsetHeight,
+				};
+			}
+
+			rect = getCanvasBoundingClientRect(element);
+		}
+
 		var isCorrectRect = (rect.width === 0 && rect.height === 0) ? false : true;
 		if (is_wait_correction || !isCorrectRect)
 		{
@@ -13102,6 +13290,9 @@
 		if (!api) {
 			return;
 		}
+		if (api.documentOpenOptions && api.documentOpenOptions["debug"]) {
+			console.log("[speed]: "+ msg);
+		}
 		api.CoAuthoringApi.sendClientLog(level, msg);
 	}
 
@@ -13298,6 +13489,8 @@
 	window["AscCommon"].CorrectFontSize = CorrectFontSize;
 	window["AscCommon"].IsAscFontSupport = IsAscFontSupport;
 	window["AscCommon"].ExecuteNoHistory = ExecuteNoHistory;
+	window["AscCommon"].executeNoRevisions = executeNoRevisions;
+	window["AscCommon"].AddAndExecuteChange = AddAndExecuteChange;
 	window["AscCommon"].CompareStrings = CompareStrings;
 	window["AscCommon"].IsSupportAscFeature = IsSupportAscFeature;
 	window["AscCommon"].IsSupportOFormFeature = IsSupportOFormFeature;
@@ -13305,7 +13498,6 @@
 	window["AscCommon"].loadSdk = loadSdk;
     window["AscCommon"].loadScript = loadScript;
     window["AscCommon"].loadChartStyles = loadChartStyles;
-	window["AscCommon"].loadSmartArtBinary = loadSmartArtBinary;
 	window["AscCommon"].getAltGr = getAltGr;
 	window["AscCommon"].getColorSchemeByName = getColorSchemeByName;
 	window["AscCommon"].getColorSchemeByIdx = getColorSchemeByIdx;

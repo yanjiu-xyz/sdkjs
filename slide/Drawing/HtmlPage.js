@@ -736,7 +736,8 @@ function CEditorPage(api)
 					return;
 
 				var _count = window.editor.getCountPages();
-				var _current = slideNum + 1;
+				var _first_slide_number = window.editor.WordControl.m_oLogicDocument.getFirstSlideNumber();
+				var _current = slideNum + _first_slide_number;
 				if (_current > _count)
 					_current = _count;
 
@@ -744,12 +745,21 @@ function CEditorPage(api)
 				if (window.editor.WordControl.reporterTranslates)
 					_text = window.editor.WordControl.reporterTranslates[1];
 				_text = _text.replace("{0}", _current);
-				_text = _text.replace("{1}", _count);
+				var _count_string;
+				if(_first_slide_number === 1)
+				{
+					_count_string = "" + _count;
+				}
+				else
+				{
+					_count_string = _first_slide_number + ' .. ' + (_count + _first_slide_number - 1)
+				}
+				_text = _text.replace("{1}", _count_string);
 
 				_elem.innerHTML = _text;
 
 				//window.editor.WordControl.Thumbnails.SelectPage(_current - 1);
-				window.editor.WordControl.GoToPage(_current - 1, false, false, true);
+				window.editor.WordControl.GoToPage(slideNum, false, false, true);
 
 				window.editor.WordControl.OnResizeReporter();
 			});
@@ -2637,6 +2647,7 @@ function CEditorPage(api)
 
 		// remove media
 		this.m_oApi.hideVideoControl();
+		AscCommon.g_specialPasteHelper.SpecialPasteButton_Update_Position();
 	};
 
 	// scrolls
@@ -4530,6 +4541,9 @@ function CEditorPage(api)
 
 		if (this.m_oDrawingDocument.TransitionSlide.IsPlaying())
 			this.m_oDrawingDocument.TransitionSlide.End(true);
+
+		if (this.m_oLogicDocument.IsStartedPreview())
+			this.m_oApi.asc_StopAnimationPreview();
 
 		if (lPageNum != -1 && (lPageNum < 0 || lPageNum >= drDoc.SlidesCount))
 			return;

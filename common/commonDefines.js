@@ -1825,7 +1825,8 @@ window.AscCommon.g_cIsBeta = "false";
 		Footnote     : 3,
 		Form         : 4,
 		Review       : 5,
-		Eyedropper   : 6
+		Eyedropper   : 6,
+		Placeholder  : 7
 	};
 
 	// selection type
@@ -3695,7 +3696,8 @@ window.AscCommon.g_cIsBeta = "false";
 		ConfirmReplaceFormulaInTable: 2,
 		ConfirmChangeProtectRange: 3,
 		ConfirmMaxChangesSize: 4,
-		ConfirmAddCellWatches: 5
+		ConfirmAddCellWatches: 5,
+		ConfirmReplaceHeaderFooterPicture: 6
 	};
 
 
@@ -4821,6 +4823,7 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['Form']         = prot.Form;
 	prot['Review']       = prot.Review;
 	prot['Eyedropper']   = prot.Eyedropper;
+	prot['Placeholder']   = prot.Placeholder;
 
 	window['Asc']['c_oAscMaxTooltipLength'] = window['Asc'].c_oAscMaxTooltipLength = c_oAscMaxTooltipLength;
 	window['Asc']['c_oAscMaxCellOrCommentLength'] = window['Asc'].c_oAscMaxCellOrCommentLength = c_oAscMaxCellOrCommentLength;
@@ -5717,8 +5720,9 @@ window.AscCommon.g_cIsBeta = "false";
 	prot['ConfirmChangeProtectRange'] = prot.ConfirmChangeProtectRange;
 	prot['ConfirmMaxChangesSize'] = prot.ConfirmMaxChangesSize;
 	prot['ConfirmAddCellWatches'] = prot.ConfirmAddCellWatches;
+	prot['ConfirmReplaceHeaderFooterPicture'] = prot.ConfirmReplaceHeaderFooterPicture;
 
-	window['Asc'].c_oAscSmartArtSections = c_oAscSmartArtSections;
+	window['Asc']['c_oAscSmartArtSections'] = window['Asc'].c_oAscSmartArtSections = c_oAscSmartArtSections;
 
 
 

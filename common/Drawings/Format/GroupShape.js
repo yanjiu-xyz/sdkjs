@@ -835,7 +835,9 @@
 		CGroupShape.prototype.getPhIndex = function () {
 			return this.isPlaceholder() ? this.nvGrpSpPr.nvPr.ph.idx : null;
 		};
-
+		CGroupShape.prototype.getSelectedArray = function () {
+			return this.selectedObjects;
+		};
 		CGroupShape.prototype.getSelectionState = function () {
 			var selection_state = {};
 			if (this.selection.textSelection) {
@@ -1624,6 +1626,31 @@
 			for (let nSp = 0; nSp < this.spTree.length; ++nSp) {
 				this.spTree[nSp].pasteFormatting(oFormatData);
 			}
+		};
+
+		CGroupShape.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate, oMapPaired) {
+			if(this.getObjectType() !== oDrawingToCheck.getObjectType()) {
+				return oCurCandidate;
+			}
+			const sName = this.getOwnName();
+			if(sName && sName.startsWith(AscFormat.OBJECT_MORPH_MARKER)) {
+				const sCheckName = oDrawingToCheck.getOwnName();
+				if(sName !== sCheckName) {
+					return oCurCandidate;
+				}
+				return oDrawingToCheck;
+			}
+			if(this.spTree.length !== oDrawingToCheck.spTree.length) {
+				return oCurCandidate;
+			}
+			for(let nSp = 0; nSp < this.spTree.length; ++nSp) {
+				let oSp = this.spTree[nSp];
+				let oSpCheck = oDrawingToCheck.spTree[nSp];
+				if(!oSp.compareForMorph(oSpCheck, null)) {
+					return oCurCandidate;
+				}
+			}
+			return oDrawingToCheck;
 		};
 
 		//--------------------------------------------------------export----------------------------------------------------

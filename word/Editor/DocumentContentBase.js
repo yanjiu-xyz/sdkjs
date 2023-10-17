@@ -88,28 +88,21 @@ CDocumentContentBase.prototype.SetDocPosType = function(nType)
 	this.CurPos.Type = nType;
 
 	if (this.Controller)
-	{
-		if (docpostype_HdrFtr === nType)
-		{
-			this.Controller = this.HeaderFooterController;
-		}
-		else if (docpostype_DrawingObjects === nType)
-		{
-			this.Controller = this.DrawingsController;
-		}
-		else if (docpostype_Footnotes === nType)
-		{
-			this.Controller = this.Footnotes;
-		}
-		else if (docpostype_Endnotes === nType)
-		{
-			this.Controller = this.Endnotes;
-		}
-		else //if (docpostype_Content === nType)
-		{
-			this.Controller = this.LogicDocumentController;
-		}
-	}
+		this.Controller = this.getController(nType)
+};
+CDocumentContentBase.prototype.getController = function(type)
+{
+	let controller = this.LogicDocumentController;
+	if (docpostype_HdrFtr === type)
+		controller = this.HeaderFooterController;
+	else if (docpostype_DrawingObjects === type)
+		controller = this.DrawingsController;
+	else if (docpostype_Footnotes === type)
+		controller = this.Footnotes;
+	else if (docpostype_Endnotes === type)
+		controller = this.Endnotes;
+	
+	return controller;
 };
 /**
  * Обновляем индексы элементов.
@@ -1654,6 +1647,7 @@ CDocumentContentBase.prototype.GetAllParagraphs = function(oProps, arrParagraphs
 };
 /**
  * Получаем массив всех параграфов с заданной нумерацией
+ * NB: массив НЕ отсортирован по позиции в документе (для сортировки, если нужно, вызывать метод AscWord.sortByDocumentPosition)
  * @param oNumPr {CNumPr | CNumPr[]}
  * @returns {Paragraph[]}
  */
@@ -2386,12 +2380,69 @@ CDocumentContentBase.prototype.UpdateInterfaceTextPr = function()
 	if (!oApi)
 		return;
 
-	let oTextPr = this.GetCalculatedTextPr();
-	if (oTextPr)
+	let textPr = this.GetCalculatedTextPr();
+	if (textPr)
+		oApi.UpdateTextPr(textPr);
+};
+CDocumentContentBase.prototype.UpdateInterfaceParaPr = function()
+{
+	let api = this.GetApi();
+	if (!api)
+		return;
+	
+	let paraPr = this.GetCalculatedParaPr();
+	if (!paraPr)
+		return;
+	
+	paraPr.CanAddDropCap = this.CanAddDropCap();
+	
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument)
 	{
-		AscWord.FontCalculator.Calculate(this, oTextPr);
-		oApi.UpdateTextPr(oTextPr);
+		let selectedInfo = logicDocument.GetSelectedElementsInfo({CheckAllSelection : true});
+
+		let math = selectedInfo.GetMath();
+		if (math)
+			paraPr.CanAddImage = false;
+		else if (false !== paraPr.CanAddImage)
+			paraPr.CanAddImage = true;
+		
+		if (math && !math.IsInline())
+			paraPr.Jc = math.GetAlign();
+		
+		paraPr.CanDeleteBlockCC  = selectedInfo.CanDeleteBlockSdts();
+		paraPr.CanEditBlockCC    = selectedInfo.CanEditBlockSdts();
+		paraPr.CanDeleteInlineCC = selectedInfo.CanDeleteInlineSdts();
+		paraPr.CanEditInlineCC   = selectedInfo.CanEditInlineSdts();
 	}
+	
+	if (paraPr.Tabs)
+	{
+		let defaultTab = paraPr.DefaultTab != null ? paraPr.DefaultTab : AscCommonWord.Default_Tab_Stop;
+		api.Update_ParaTab(defaultTab, paraPr.Tabs);
+	}
+	
+	if (paraPr.Shd && paraPr.Shd.Unifill)
+		paraPr.Shd.Unifill.check(this.GetTheme(), this.GetColorMap());
+	
+	// Если мы находимся внутри автофигуры, тогда нам надо проверить лок параграфа, в котором находится автофигура
+	if (logicDocument
+		&& logicDocument.IsDocumentEditor()
+		&& docpostype_DrawingObjects === logicDocument.GetDocPosType()
+		&& true !== paraPr.Locked)
+	{
+		let drawing = logicDocument.GetDrawingObjects().getMajorParaDrawing();
+		if (drawing)
+			paraPr.Locked = drawing.Lock.Is_Locked();
+	}
+	
+	paraPr.StyleName = AscWord.DisplayStyleCalculator.CalculateName(this);
+	api.sync_ParaStyleName(paraPr.StyleName);
+	api.UpdateParagraphProp(paraPr);
+};
+CDocumentContentBase.prototype.CanAddDropCap = function()
+{
+	return false;
 };
 /**
  * Считаем количество элементов в рамке, начиная с заданного
@@ -2518,4 +2569,218 @@ CDocumentContentBase.prototype.private_RecalculateNumbering = function(elements)
 		}
 	}
 };
-
+CDocumentContentBase.prototype.Get_Theme = function()
+{
+	if (this.Parent)
+		return this.Parent.Get_Theme();
+	
+	if (this.LogicDocument)
+		return this.LogicDocument.GetTheme();
+	
+	return AscFormat.GetDefaultTheme();
+};
+CDocumentContentBase.prototype.Get_ColorMap = function()
+{
+	if (this.Parent)
+		return this.Parent.Get_ColorMap();
+	
+	if (this.LogicDocument)
+		return this.LogicDocument.GetColorMap();
+	
+	return AscFormat.GetDefaultColorMap();
+};
+CDocumentContentBase.prototype.GetTheme = function()
+{
+	return this.Get_Theme();
+};
+CDocumentContentBase.prototype.GetColorMap = function()
+{
+	return this.Get_ColorMap();
+};
+CDocumentContentBase.prototype.GetSelectedParagraphs = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument)
+		return [];
+	
+	return logicDocument.GetSelectedParagraphs();
+};
+CDocumentContentBase.prototype.getSpeechDescription = function(prevState, action)
+{
+	if (!prevState)
+		return null;
+	
+	if (action && (action.type !== AscCommon.SpeakerActionType.keyDown || action.event.KeyCode < 35 || action.event.KeyCode > 40))
+		return null;
+	
+	// В данном метод предполагается, что curState равен this.GetSelectionState()
+	let curState = this.GetSelectionState();
+	if (!prevState.length || !curState.length)
+		return null;
+	
+	let obj  = {};
+	let type = AscCommon.SpeechWorkerCommands.Text;
+	
+	this.SetSelectionState(prevState);
+	let prevInfo = this.getSelectionInfo();
+	
+	this.SetSelectionState(curState);
+	let curInfo = this.getSelectionInfo();
+	
+	let isActionSelectionChange = action && action.type === AscCommon.SpeakerActionType.keyDown && action.event.ShiftKey;
+	
+	if (curInfo.docPosType === docpostype_DrawingObjects)
+	{
+		return AscCommon.getSpeechDescription(prevState, curState, action);
+	}
+	
+	if (prevInfo.docPosType !== curInfo.docPosType
+		|| !prevInfo.curPos.length
+		|| !curInfo.curPos.length
+		|| prevInfo.curPos[0].Class !== curInfo.curPos[0].Class
+		|| (!(curInfo.curPos[0].Class instanceof CDocument) && !(curInfo.curPos[0].Class instanceof CDocumentContent)))
+	{
+		switch (curInfo.docPosType)
+		{
+			case docpostype_Content:  obj.moveToMainPart = true; break;
+			case docpostype_Endnotes:
+			case docpostype_Footnotes: obj.moveToFootnote = true; break;
+			case docpostype_DrawingObjects: obj.moveToDrawing = true; break;
+			case docpostype_HdrFtr: obj.moveToHdrFtr = true; break;
+		}
+		
+		let paragraph = this.GetCurrentParagraph();
+		obj.text = paragraph.getNextCharacter();
+	}
+	else
+	{
+		let mainDC = curInfo.curPos[0].Class;
+		if (prevInfo.isSelection && !curInfo.isSelection && isActionSelectionChange)
+		{
+			obj.cancelSelection = true;
+			this.SetSelectionState(prevState);
+			type     = AscCommon.SpeechWorkerCommands.TextUnselected;
+			obj.text = this.GetSelectedText(false);
+			this.SetSelectionState(curState);
+		}
+		else if (!curInfo.isSelection || 0 === AscWord.CompareDocumentPositions(curInfo.selectionStart, curInfo.selectionEnd))
+		{
+			if (prevInfo.isSelection && 0 !== AscWord.CompareDocumentPositions(prevInfo.selectionStart, prevInfo.selectionEnd))
+				obj.cancelSelection = true;
+			
+			if (curInfo.isSelection || !action)
+			{
+				if (prevInfo.isSelection && 0 !== AscWord.CompareDocumentPositions(prevInfo.selectionStart, prevInfo.selectionEnd))
+				{
+					this.SetSelectionState(prevState);
+					type     = AscCommon.SpeechWorkerCommands.TextUnselected;
+					obj.text = this.GetSelectedText(false);
+					this.SetSelectionState(curState);
+				}
+				else
+				{
+					let paragraph = this.GetCurrentParagraph();
+					type     = AscCommon.SpeechWorkerCommands.Text;
+					obj.text = paragraph.getNextCharacter();
+				}
+			}
+			else
+			{
+				let paragraph = this.GetCurrentParagraph();
+				obj.text = paragraph.getNextCharacter();
+				if (action)
+				{
+					if (AscCommon.SpeakerActionType.keyDown !== action.type)
+						return null;
+					
+					let keyCode = action.event.KeyCode;
+					if (36 === keyCode)
+					{
+						if (action.event.CtrlKey)
+							obj.moveToStartOfDocument = true;
+						else
+							obj.moveToStartOfLine = true;
+					}
+					else if (35 === keyCode)
+					{
+						if (action.event.CtrlKey)
+							obj.moveToEndOfDocument = true;
+						else
+							obj.moveToEndOfLine = true;
+					}
+					
+					if (36 === keyCode || 38 === keyCode || 40 === keyCode)
+						obj.text = paragraph.getTextOnLine();
+					else if ((37 === keyCode || 39 === keyCode) && action.event.CtrlKey)
+						obj.text = paragraph.getCurrentWord(1);
+					else if (35 === keyCode)
+						obj.text = "";
+				}
+			}
+		}
+		else
+		{
+			if (!prevInfo.isSelection || 0 === AscWord.CompareDocumentPositions(prevInfo.selectionStart, prevInfo.selectionEnd))
+			{
+				type = AscCommon.SpeechWorkerCommands.TextSelected;
+				obj.text = this.GetSelectedText(false);
+			}
+			else
+			{
+				if (0 !== AscWord.CompareDocumentPositions(prevInfo.selectionStart, curInfo.selectionStart)
+					|| ((AscWord.CompareDocumentPositions(prevInfo.selectionStart, prevInfo.selectionEnd) <= 0
+							&& AscWord.CompareDocumentPositions(prevInfo.selectionStart, curInfo.selectionEnd) > 0)
+						|| (AscWord.CompareDocumentPositions(prevInfo.selectionStart, prevInfo.selectionEnd) >= 0
+							&& AscWord.CompareDocumentPositions(prevInfo.selectionStart, curInfo.selectionEnd) < 0)))
+				{
+					// TODO: Нужно ли посылать два ивента?
+					// this.SetSelectionState(prevState);
+					// type     = AscCommon.SpeechWorkerCommands.TextUnselected;
+					// obj.text = this.GetSelectedText(false);
+					// this.SetSelectionState(curState);
+					
+					type     = AscCommon.SpeechWorkerCommands.TextSelected;
+					obj.text = this.GetSelectedText(false);
+				}
+				else
+				{
+					let isAdd = ((AscWord.CompareDocumentPositions(prevInfo.selectionStart, prevInfo.selectionEnd) <= 0
+						&& AscWord.CompareDocumentPositions(curInfo.selectionEnd, prevInfo.selectionEnd) >= 0)
+					|| (AscWord.CompareDocumentPositions(prevInfo.selectionStart, prevInfo.selectionEnd) >= 0
+							&& AscWord.CompareDocumentPositions(curInfo.selectionEnd, prevInfo.selectionEnd) <= 0));
+					
+					mainDC.RemoveSelection();
+					mainDC.SetContentSelection(curInfo.selectionEnd, prevInfo.selectionEnd, 0, 0, 0);
+					
+					type     = isAdd ? AscCommon.SpeechWorkerCommands.TextSelected : AscCommon.SpeechWorkerCommands.TextUnselected;
+					obj.text = this.GetSelectedText(false);
+					
+					this.SetSelectionState(curState);
+				}
+			}
+		}
+	}
+	
+	return {obj : obj, type : type};
+};
+CDocumentContentBase.prototype.getSelectionInfo = function()
+{
+	return {
+		docPosType     : this.GetDocPosType(),
+		curPos         : this.getDocumentContentPosition(false),
+		isSelection    : this.IsSelectionUse(),
+		selectionStart : this.getDocumentContentPosition(true, true),
+		selectionEnd   : this.getDocumentContentPosition(true, false)
+	};
+};
+/**
+ * Данный метод отличается от обычного GetContentPosition, тем что для класса CDocument он возвращает полную позицию
+ * с учетом того, где находится содержимое (основная часть, колонтитул, сноска)
+ * @param {boolean} isSelection
+ * @param {boolean} isStart
+ * @returns {Array}
+ */
+CDocumentContentBase.prototype.getDocumentContentPosition = function(isSelection, isStart)
+{
+	return this.GetContentPosition(isSelection, isStart);
+};

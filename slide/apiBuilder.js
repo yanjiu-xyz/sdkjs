@@ -1034,6 +1034,7 @@
 
     /**
 	 * Subscribes to the specified event and calls the callback function when the event fires.
+     * @function
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
 	 * @param {string} eventName - The event name.
@@ -1043,6 +1044,7 @@
 
 	/**
 	 * Unsubscribes from the specified event.
+     * @function
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
 	 * @param {string} eventName - The event name.
@@ -1285,7 +1287,7 @@
      */
      ApiPresentation.prototype.GetWidth = function() {
         if(this.Presentation){
-            this.Presentation.GetWidthEMU();
+            return this.Presentation.GetWidthEMU();
         }
     };
 
@@ -1297,7 +1299,7 @@
      */
     ApiPresentation.prototype.GetHeight = function() {
         if(this.Presentation){
-            this.Presentation.GetHeightEMU();
+            return this.Presentation.GetHeightEMU();
         }
     };
 
@@ -2664,6 +2666,35 @@
             bg.bgPr.Fill = oApiFill.UniFill;
             this.Slide.changeBackground(bg);
             this.Slide.recalculateBackground();
+            return true;
+        }
+        return false;
+    };
+
+
+    /**
+     * Returns the visibility of the current presentation slide.
+     * @memberOf ApiSlide
+     * @typeofeditors ["CPE"]
+     * @returns {boolean}
+     * */
+    ApiSlide.prototype.GetVisible = function(){
+        if(this.Slide){
+            return this.Slide.isVisible();
+        }
+        return false;
+    };
+
+    /**
+     * Sets the visibility to the current presentation slide.
+     * @memberOf ApiSlide
+     * @typeofeditors ["CPE"]
+     * @param {boolean} value - Slide visibility.
+     * @returns {boolean}
+     * */
+    ApiSlide.prototype.SetVisible = function(value){
+        if(this.Slide){
+            this.Slide.setShow(value);
             return true;
         }
         return false;
@@ -4933,6 +4964,8 @@
     ApiSlide.prototype["AddObject"]                       = ApiSlide.prototype.AddObject;
     ApiSlide.prototype["RemoveObject"]                    = ApiSlide.prototype.RemoveObject;
     ApiSlide.prototype["SetBackground"]                   = ApiSlide.prototype.SetBackground;
+    ApiSlide.prototype["GetVisible"]                      = ApiSlide.prototype.GetVisible;
+    ApiSlide.prototype["SetVisible"]                      = ApiSlide.prototype.SetVisible;
     ApiSlide.prototype["GetWidth"]                        = ApiSlide.prototype.GetWidth;
     ApiSlide.prototype["GetHeight"]                       = ApiSlide.prototype.GetHeight;
     ApiSlide.prototype["ApplyLayout"]                     = ApiSlide.prototype.ApplyLayout;

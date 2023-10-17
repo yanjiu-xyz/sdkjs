@@ -1076,7 +1076,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return v;
 	};
 	cArea.prototype.tocString = function () {
-		return this.getValue()[0].tocString();
+		let val = this.getValue()[0];
+		if (!val) {
+			return new cString("");
+		}
+		return val.tocString();
 	};
 	cArea.prototype.tocBool = function () {
 		return new cError(cErrorType.wrong_value_type);
@@ -1197,16 +1201,16 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (!emptyReplaceOn) {
 			emptyReplaceOn = new cEmpty();
 		}
-		let elem;
 		for (let i = bbox.r1; i <= Math.min(bbox.r2, maxRowCount != null ? bbox.r1 + maxRowCount : bbox.r2); i++) {
 			if ( !arr.array[i - bbox.r1] ) {
 				arr.addRow();
 			}
 			for (let j = bbox.c1; j <= Math.min(bbox.c2, maxColCount != null ? bbox.c1 + maxColCount : bbox.c2); j++) {
+				let elem = null;
 				if (elemsNoEmpty && elemsNoEmpty[i - bbox.r1] && elemsNoEmpty[i - bbox.r1][j - bbox.c1]) {
 					elem = elemsNoEmpty[i - bbox.r1][j - bbox.c1];
 				}
-				if (!elem || elem.type === cElementType.empty) {
+				if (elem === null || elem.type === cElementType.empty) {
 					elem = emptyReplaceOn;
 				}
 
@@ -1271,12 +1275,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return this.getValueByRowCol(0, 0);
 	};
 	cArea.prototype._getCol = function (colIndex) {
-		if (colIndex < 0 || colIndex > this.getDimensions().col) {
+		let dimensions = this.getDimensions();
+		if (colIndex < 0 || colIndex > dimensions.col) {
 			return null;
 		}
 
 		let col = [];
-		for (let i = 0; i < this.getDimensions().row; i++) {
+		for (let i = 0; i < dimensions.row; i++) {
+			let valInRow = this.getValueByRowCol(i, colIndex);
 			let elem = this.getValueByRowCol(i, colIndex);
 			if (!elem) {
 				elem = new cEmpty();
@@ -1287,7 +1293,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return col;
 	};
 	cArea.prototype._getRow = function (rowIndex) {
-		if (rowIndex < 0 || rowIndex > this.getDimensions().row) {
+		let dimensions = this.getDimensions();
+		if (rowIndex < 0 || rowIndex > dimensions.row) {
 			return null;
 		}
 
@@ -1471,7 +1478,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return this.getValue()[0].tocNumber();
 	};
 	cArea3D.prototype.tocString = function () {
-		return this.getValue()[0].tocString();
+		let val = this.getValue()[0];
+		if (!val) {
+			return new cString("");
+		}
+		return val.tocString();
 	};
 	cArea3D.prototype.tocBool = function () {
 		return new cError(cErrorType.wrong_value_type);
@@ -1602,16 +1613,16 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		if (!emptyReplaceOn) {
 			emptyReplaceOn = new cEmpty();
 		}
-		let elem;
 		for (let i = bbox.r1; i <= Math.min(bbox.r2, maxRowCount != null ? bbox.r1 + maxRowCount : bbox.r2); i++) {
 			if (!arr.array[i - bbox.r1]) {
 				arr.addRow();
 			}
 			for (let j = bbox.c1; j <= Math.min(bbox.c2, maxColCount != null ? bbox.c1 + maxColCount : bbox.c2); j++) {
+				let elem = null;
 				if (elemsNoEmpty && elemsNoEmpty[0] && elemsNoEmpty[0][i - bbox.r1] && elemsNoEmpty[0][i - bbox.r1][j - bbox.c1]) {
 					elem = elemsNoEmpty[0][i - bbox.r1][j - bbox.c1];
 				}
-				if (!elem || elem.type === cElementType.empty) {
+				if (elem === null || elem.type === cElementType.empty) {
 					elem = emptyReplaceOn;
 				}
 
@@ -1674,12 +1685,14 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return this.getValueByRowCol(0, 0);
 	};
 	cArea3D.prototype._getCol = function (colIndex) {
-		if (colIndex < 0 || colIndex > this.getDimensions().col) {
+		let dimensions = this.getDimensions();
+		if (colIndex < 0 || colIndex > dimensions.col) {
 			return null;
 		}
 
 		let col = [];
-		for (let i = 0; i < this.getDimensions().row; i++) {
+		for (let i = 0; i < dimensions.row; i++) {
+			let valInRow = this.getValueByRowCol(i, colIndex);
 			let elem = this.getValueByRowCol(i, colIndex);
 			if (!elem) {
 				elem = new cEmpty();
@@ -1690,7 +1703,8 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return col;
 	};
 	cArea3D.prototype._getRow = function (rowIndex) {
-		if (rowIndex < 0 || rowIndex > this.getDimensions().row) {
+		let dimensions = this.getDimensions();
+		if (rowIndex < 0 || rowIndex > dimensions.row) {
 			return null;
 		}
 
@@ -2877,7 +2891,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	};
 	cArray.prototype.getFirstElement = function () {
 		return this.getElementRowCol(0,0);	
-	}
+	};
 
 
 
@@ -6652,6 +6666,11 @@ function parserFormula( formula, parent, _ws ) {
 
 				var wsF, wsT;
 				var externalLink = _3DRefTmp[3];
+				//check on add to this document
+				let thisTitle = externalLink && window["Asc"]["editor"] && window["Asc"]["editor"].DocInfo && window["Asc"]["editor"].DocInfo.get_Title();
+				if (thisTitle === externalLink) {
+					externalLink = null;
+				}
 				if (externalLink) {
 					if (local) {
 						externalLink = t.wb.getExternalLinkIndexByName(externalLink);
@@ -8030,7 +8049,7 @@ function parserFormula( formula, parent, _ws ) {
 			if (ref && opt_ws) {
 				// TODO check behaviour when row === 1
 				row = 1 === val.array.length ? 0 : opt_row - ref.r1;
-				col = 1 === val.array[0].length ? 0 : opt_col - ref.c1;
+				col = (val.array[0] && 1 === val.array[0].length) ? 0 : opt_col - ref.c1;
 				if (val.array[row] && val.array[row][col]) {
 					val = val.getElementRowCol(row, col);
 				} else {
@@ -8207,7 +8226,7 @@ function parserFormula( formula, parent, _ws ) {
 		return res;
 	}
 
-	function matching(x, matchingInfo, doNotParseNum) {
+	function matching(x, matchingInfo, doNotParseNum, doNotParseFormat) {
 		var y = matchingInfo.val;
 		var operator = matchingInfo.op;
 		var res = false, rS;
@@ -8269,7 +8288,7 @@ function parserFormula( formula, parent, _ws ) {
 							res = true;
 							break;
 						}
-						var parseRes = AscCommon.g_oFormatParser.parse(x.value);
+						var parseRes = !doNotParseFormat && AscCommon.g_oFormatParser.parse(x.value);
 						if (parseRes && parseRes.value === y.value) {
 							res = true;
 							break;
@@ -8435,7 +8454,7 @@ function parserFormula( formula, parent, _ws ) {
 					values.push(value);
 				}
 
-				resultArr.addElement(func(true, values));
+				resultArr.addElement(func(values, true));
 			}
 		}
 

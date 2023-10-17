@@ -119,13 +119,17 @@ function (window, undefined) {
 		let instance_num = newArgs[2] && !(newArgs[2].type === cElementType.empty) ? newArgs[2] : new cNumber(1);
 		let match_mode = newArgs[3] && !(newArgs[3].type === cElementType.empty) ? newArgs[3] : new cBool(false);
 		let match_end = newArgs[4] && !(newArgs[4].type === cElementType.empty) ? newArgs[4] : new cBool(false);
+
+		match_mode = match_mode.tocBool();
+		match_end = match_end.tocBool();
+
 		if (instance_num.type === cElementType.error) {
 			return instance_num;
 		}
-		if (match_mode.type === match_mode.error) {
+		if (match_mode.type === cElementType.error) {
 			return match_mode;
 		}
-		if (match_end.type === match_end.error) {
+		if (match_end.type === cElementType.error) {
 			return match_end;
 		}
 
@@ -187,7 +191,7 @@ function (window, undefined) {
 	cARRAYTOTEXT.prototype.arrayIndexes = {0: 1, 1: 1};
 	cARRAYTOTEXT.prototype.argumentsType = [argType.reference, argType.number];
 	cARRAYTOTEXT.prototype.Calculate = function (arg) {
-		function arrayToTextGeneral (isRange, args) {
+		function arrayToTextGeneral (args, isRange) {
 			let array = args[0],
 				format = args[1];
 			let resStr = "", arg0Dimensions;
@@ -271,7 +275,7 @@ function (window, undefined) {
 
 		if (cElementType.array !== arg1.type && cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type) {
 			// arg1 is not array/cellsRange
-			return arrayToTextGeneral(false, [arg0, arg1]);
+			return arrayToTextGeneral([arg0, arg1], false);
 		} else {
 			return AscCommonExcel.getArrayHelper([arg0, arg1], arrayToTextGeneral, exceptions);
 		}
@@ -2433,7 +2437,7 @@ function (window, undefined) {
 	cTEXTBEFORE.prototype.argumentsMin = 2;
 	cTEXTBEFORE.prototype.argumentsMax = 6;
 	cTEXTBEFORE.prototype.numFormat = AscCommonExcel.cNumFormatNone;
-	cTEXTBEFORE.prototype.argumentsType = [argType.text, argType.text, argType.number, argType.logical, argType.logical, argType.any];
+	cTEXTBEFORE.prototype.argumentsType = [argType.text, argType.text, argType.number, argType.number, argType.number, argType.any];
 	cTEXTBEFORE.prototype.isXLFN = true;
 	cTEXTBEFORE.prototype.arrayIndexes = {1: 1};
 	cTEXTBEFORE.prototype.Calculate = function (arg) {
@@ -2454,7 +2458,7 @@ function (window, undefined) {
 	cTEXTAFTER.prototype.argumentsMin = 2;
 	cTEXTAFTER.prototype.argumentsMax = 6;
 	cTEXTAFTER.prototype.numFormat = AscCommonExcel.cNumFormatNone;
-	cTEXTAFTER.prototype.argumentsType = [argType.text, argType.text, argType.number, argType.logical, argType.logical, argType.any];
+	cTEXTAFTER.prototype.argumentsType = [argType.text, argType.text, argType.number, argType.number, argType.number, argType.any];
 	cTEXTAFTER.prototype.isXLFN = true;
 	cTEXTAFTER.prototype.arrayIndexes = {1: 1};
 	cTEXTAFTER.prototype.Calculate = function (arg) {
