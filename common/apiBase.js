@@ -4257,6 +4257,12 @@
 	baseEditorsApi.prototype.asc_setContentDarkMode = baseEditorsApi.prototype["asc_setContentDarkMode"] = function(isDarkMode)
 	{
 		//TODO: empty for bug 64713
+		// if (this.isDarkMode === isDarkMode)
+		// 	return;
+		//
+		// this.isDarkMode = isDarkMode;
+		//
+		// this.updateDarkMode();
 	};
 	baseEditorsApi.prototype.updateDarkMode = function()
 	{
