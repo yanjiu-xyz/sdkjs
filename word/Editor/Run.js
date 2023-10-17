@@ -532,10 +532,28 @@ ParaRun.prototype.GetText = function(oText)
 
 ParaRun.prototype.GetTextOfElement = function(isLaTeX)
 {
-    var str = "";
-	for (var i = 0; i < this.Content.length; i++) {
-		if (this.Content[i]) {
-			str += this.Content[i].GetTextOfElement(isLaTeX);
+    let str = "";
+	for (let i = 0; i < this.Content.length; i++)
+	{
+		if (this.Content[i])
+		{
+			let strTemp = this.Content[i].GetTextOfElement(isLaTeX);
+
+			if (isLaTeX)
+			{
+				let value = AscMath.GetLaTeXFromValue(strTemp);
+				if (value)
+				{
+					str += value;
+				}
+				else
+				{
+					str += strTemp;
+				}
+			}
+			else{
+				str += strTemp;
+			}
 		}
 	}
 	return str;
@@ -6134,16 +6152,19 @@ ParaRun.prototype.RecalculateMinMaxContentWidth = function(MinMax)
             }
             case para_Math_BreakOperator:
             {
-                if ( true === bWord )
-                {
-                    if ( nMinWidth < nWordLen )
-                        nMinWidth = nWordLen;
+				let itemWidth = Item.GetWidth() / AscWord.TEXTWIDTH_DIVIDER;
+				if (!bWord)
+					nWordLen = itemWidth;
+				else
+					nWordLen += itemWidth;
+	
+				if (nMinWidth < nWordLen)
+					nMinWidth = nWordLen;
+	
+				bWord    = false;
+				nWordLen = 0;
 
-                    bWord    = false;
-                    nWordLen = 0;
-                }
-
-                nCurMaxWidth += Item.GetWidth() / AscWord.TEXTWIDTH_DIVIDER;
+                nCurMaxWidth += itemWidth;
                 bCheckTextHeight = true;
                 break;
             }
@@ -10591,7 +10612,16 @@ ParaRun.prototype.RemoveTrackMoveMarks = function(oTrackManager)
 		}
 	}
 };
-
+ParaRun.prototype.IsContainMathOperators = function ()
+{
+	for (let i = 0; i < this.Content.length; i++)
+	{
+		let oCurrentMathText = this.Content[i];
+		if (oCurrentMathText.IsBreakOperator())
+			return true;
+	}
+	return false;
+};
 ParaRun.prototype.private_RecalcCtrPrp = function()
 {
     if (para_Math_Run === this.Type && undefined !== this.Parent && null !== this.Parent && null !== this.Parent.ParaMath)
@@ -11463,6 +11493,9 @@ ParaRun.prototype.AddMathPlaceholder = function()
     var oPlaceholder = new CMathText(false);
 	oPlaceholder.SetPlaceholder();
     this.Add_ToContent(0, oPlaceholder, false);
+	
+	// TODO: Расчет стилей разный для плейсхолдера и для текса (разобраться почему)
+	this.Recalc_CompiledPr();
 };
 ParaRun.prototype.RemoveMathPlaceholder = function()
 {
@@ -11474,6 +11507,9 @@ ParaRun.prototype.RemoveMathPlaceholder = function()
 			nPos--;
 		}
 	}
+	
+	// TODO: Расчет стилей разный для плейсхолдера и для текса (разобраться почему)
+	this.Recalc_CompiledPr();
 };
 ParaRun.prototype.Set_MathPr = function(MPrp)
 {

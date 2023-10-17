@@ -5489,6 +5489,9 @@ function CSlideDrawer()
 {
 	this.m_oWordControl             = null;
 	this.CONST_MAX_SLIDE_CACHE_SIZE = 104857600; // 100 megabytes
+	if (AscCommon.AscBrowser.isAppleDevices)
+		this.CONST_MAX_SLIDE_CACHE_SIZE = 16777216;
+
 	this.CONST_BORDER               = 10; // in px
 
 	this.IsCached        = false;

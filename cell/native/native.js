@@ -5215,6 +5215,7 @@ window["Asc"]["spreadsheet_api"].prototype.openDocument = function(file) {
 
                _s.asc_WriteAllWorksheets(true);
                _s.asc_WriteCurrentCell();
+               t.asc_setZoom(_s.zoom);
 
                return;
                }
@@ -5259,6 +5260,10 @@ window["Asc"]["spreadsheet_api"].prototype.openDocument = function(file) {
 
                           _s.asc_WriteAllWorksheets(true);
                           _s.asc_WriteCurrentCell();
+
+                          // до этого зум если вызывался - то не применился (см. реализацию asc_setZoom)
+                          // но нужно ПОСЛЕ onEndLoadingFile (headersWidth & headersHeight должны прийти без зума)
+                          t.asc_setZoom(_s.zoom);
 
                           setInterval(function() {
 

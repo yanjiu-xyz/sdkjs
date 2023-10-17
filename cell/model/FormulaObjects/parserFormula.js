@@ -1081,7 +1081,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return v;
 	};
 	cArea.prototype.tocString = function () {
-		return this.getValue()[0].tocString();
+		let val = this.getValue()[0];
+		if (!val) {
+			return new cString("");
+		}
+		return val.tocString();
 	};
 	cArea.prototype.tocBool = function () {
 		return new cError(cErrorType.wrong_value_type);
@@ -1479,7 +1483,11 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 		return this.getValue()[0].tocNumber();
 	};
 	cArea3D.prototype.tocString = function () {
-		return this.getValue()[0].tocString();
+		let val = this.getValue()[0];
+		if (!val) {
+			return new cString("");
+		}
+		return val.tocString();
 	};
 	cArea3D.prototype.tocBool = function () {
 		return new cError(cErrorType.wrong_value_type);

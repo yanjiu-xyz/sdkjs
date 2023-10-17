@@ -773,7 +773,7 @@
 	}
 	function getEditorByBinSignature(stream, Signature) {
 		if (stream.length > 4) {
-			let signature = AscCommon.UTF8ArrayToString(stream, 0, 4);
+			let signature = typeof stream === 'string' ? stream.slice(0, 4) : AscCommon.UTF8ArrayToString(stream, 0, 4);
 			switch(signature) {
 				case "DOCY":
 					return AscCommon.c_oEditorId.Word;
@@ -9486,6 +9486,21 @@
 		return result;
 	}
 	
+	function executeNoRevisions(f, logicDocument, t, args)
+	{
+		if (!logicDocument
+			|| !logicDocument.IsDocumentEditor
+			|| !logicDocument.IsDocumentEditor()
+			|| !logicDocument.IsTrackRevisions())
+			return f.apply(t, args);
+		
+		let localFlag = logicDocument.GetLocalTrackRevisions();
+		logicDocument.SetLocalTrackRevisions(false);
+		let result = f.apply(t, args);
+		logicDocument.SetLocalTrackRevisions(localFlag);
+		return result;
+	}
+	
 	function AddAndExecuteChange(change)
 	{
 		AscCommon.History.Add(change);
@@ -12944,7 +12959,30 @@
 			return;
 		}
 
-		var rect = element.getBoundingClientRect();
+		
+		var rect;
+		if (!AscBrowser.isIE)
+			rect = element.getBoundingClientRect();
+		else {
+			function getCanvasBoundingClientRect(canvas) {
+				const offsetLeft	= canvas.offsetLeft;
+				const offsetTop		= canvas.offsetTop;
+				const offsetWidth	= canvas.offsetWidth;
+				const offsetHeight	= canvas.offsetHeight;
+			
+				return {
+					top:	offsetTop,
+					right:	offsetLeft + offsetWidth,
+					bottom:	offsetTop + offsetHeight,
+					left:	offsetLeft,
+					width:	offsetWidth,
+					height:	offsetHeight,
+				};
+			}
+
+			rect = getCanvasBoundingClientRect(element);
+		}
+
 		var isCorrectRect = (rect.width === 0 && rect.height === 0) ? false : true;
 		if (is_wait_correction || !isCorrectRect)
 		{
@@ -13461,6 +13499,7 @@
 	window["AscCommon"].CorrectFontSize = CorrectFontSize;
 	window["AscCommon"].IsAscFontSupport = IsAscFontSupport;
 	window["AscCommon"].ExecuteNoHistory = ExecuteNoHistory;
+	window["AscCommon"].executeNoRevisions = executeNoRevisions;
 	window["AscCommon"].AddAndExecuteChange = AddAndExecuteChange;
 	window["AscCommon"].CompareStrings = CompareStrings;
 	window["AscCommon"].IsSupportAscFeature = IsSupportAscFeature;

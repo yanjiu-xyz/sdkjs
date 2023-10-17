@@ -43,6 +43,11 @@
         g: 228,
         b: 255
     };
+    let FIELDS_HIGHLIGHT_REQ = {
+        r: 176,
+        g: 176,
+        b: 255
+    };
 
     let BUTTON_PRESSED = {
         r: 153,
@@ -365,7 +370,7 @@
         if (this._parent)
         {
             if (this._partialName != undefined)
-                return `${this._parent.GetFullName()}.${this._partialName}`
+                return this._parent.GetFullName() + "." + this._partialName;
             else
                 return this._parent.GetFullName();
         }
@@ -643,11 +648,14 @@
 
         oCtx.globalCompositeOperation = "destination-over";
         if (this.IsNeedDrawFromStream())
-            oCtx.globalCompositeOperation = "multiply";
+            AscPDF.startMultiplyMode(oCtx);
         
         if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton && this._chStyle == AscPDF.CHECKBOX_STYLES.circle) {
             oCtx.beginPath();
-            oCtx.fillStyle = `rgb(${FIELDS_HIGHLIGHT.r}, ${FIELDS_HIGHLIGHT.g}, ${FIELDS_HIGHLIGHT.b})`;
+            if (this.IsRequired())
+                oCtx.fillStyle = 'rgb(' + FIELDS_HIGHLIGHT_REQ.r + ', ' + FIELDS_HIGHLIGHT_REQ.g + ', ' + FIELDS_HIGHLIGHT_REQ.b + ')';
+            else 
+                oCtx.fillStyle = 'rgb(' + FIELDS_HIGHLIGHT.r + ', ' + FIELDS_HIGHLIGHT.g + ', ' + FIELDS_HIGHLIGHT.b + ')';
             // выставляем в центр круга
             let centerX = X + W / 2;
             let centerY = Y + H / 2;
@@ -658,11 +666,14 @@
         }
         else if (this.GetType() != AscPDF.FIELD_TYPES.button){
             oCtx.beginPath();
-            oCtx.fillStyle = `rgb(${FIELDS_HIGHLIGHT.r}, ${FIELDS_HIGHLIGHT.g}, ${FIELDS_HIGHLIGHT.b})`;
+            if (this.IsRequired())
+                oCtx.fillStyle = 'rgb(' + FIELDS_HIGHLIGHT_REQ.r + ', ' + FIELDS_HIGHLIGHT_REQ.g + ', ' + FIELDS_HIGHLIGHT_REQ.b + ')';
+            else 
+                oCtx.fillStyle = 'rgb(' + FIELDS_HIGHLIGHT.r + ', ' + FIELDS_HIGHLIGHT.g + ', ' + FIELDS_HIGHLIGHT.b + ')';
             oCtx.fillRect(X, Y, W, H);
             oCtx.closePath();
         }
-        oCtx.globalCompositeOperation = "source-over";
+        AscPDF.endMultiplyMode(oCtx);
     };
     CBaseField.prototype.DrawBorders = function(oGraphicsPDF) {
         let oViewer     = editor.getDocumentRenderer();
@@ -1191,6 +1202,9 @@
         if (this.GetType() != AscPDF.FIELD_TYPES.button)
             this._required = bRequired;
     };
+    CBaseField.prototype.IsRequired = function() {
+        return this._required;
+    };
     CBaseField.prototype.SetBorderColor = function(aColor) {
         this._strokeColor = this._borderColor = aColor;
     };
@@ -1199,6 +1213,12 @@
     };
     CBaseField.prototype.GetBackgroundColor = function() {
         return this._fillColor;
+    };
+    CBaseField.prototype.SetHighlight = function(nType) {
+        this._highlight = nType;
+    };
+    CBaseField.prototype.GetHighlight = function() {
+        return this._highlight;
     };
     CBaseField.prototype.IsHidden = function() {
         let nType = this.GetDisplay();
@@ -1600,17 +1620,15 @@
         return null;
     };
 	
-    CBaseField.prototype.DrawOnPage = function(pdfGraphics, textBoxGraphics, pageIndex) {
-        if (this.IsHidden())
-            return;
+	CBaseField.prototype.DrawOnPage = function(pdfGraphics, textBoxGraphics, pageIndex) {
+		if (this.IsHidden())
+			return;
 		
-        if (this.IsNeedDrawFromStream()) {
-            this.Recalculate();
-            this.DrawFromStream(pdfGraphics);
-        }
-        else
-            this.DrawFromTextBox(pdfGraphics, textBoxGraphics, pageIndex);
-    };
+		if (this.IsNeedDrawFromStream())
+			this.DrawFromStream(pdfGraphics);
+		else
+			this.DrawFromTextBox(pdfGraphics, textBoxGraphics, pageIndex);
+	};
 
     CBaseField.prototype.DrawFromStream = function(oGraphicsPDF) {
         let originView      = this.GetOriginView(this.IsHovered && this.IsHovered() ? AscPDF.APPEARANCE_TYPE.rollover : undefined);

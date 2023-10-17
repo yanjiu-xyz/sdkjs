@@ -277,11 +277,12 @@
 
 		this._loadModules();
 
-		AscCommon.loadChartStyles(function() {}, function(err) {
-			t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical);
-		});
-
-
+		if (!this.isPdfEditor())
+		{
+			AscCommon.loadChartStyles(function() {}, function(err) {
+				t.sendEvent("asc_onError", Asc.c_oAscError.ID.LoadingScriptError, c_oAscError.Level.NoCritical);
+			});
+		}
 
 		var oldOnError = window.onerror;
 		window.onerror = function(errorMsg, url, lineNumber, column, errorObj) {
@@ -4259,12 +4260,7 @@
 	};
 	baseEditorsApi.prototype.asc_setContentDarkMode = baseEditorsApi.prototype["asc_setContentDarkMode"] = function(isDarkMode)
 	{
-		if (this.isDarkMode === isDarkMode)
-			return;
-		
-		this.isDarkMode = isDarkMode;
-		
-		this.updateDarkMode();
+		//TODO: empty for bug 64713
 	};
 	baseEditorsApi.prototype.updateDarkMode = function()
 	{
