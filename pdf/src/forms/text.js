@@ -825,7 +825,14 @@
         
         let isCanFormat = oViewer.isOnUndoRedo != true ? this.DoKeystrokeAction(null, false, true) : true;
         if (!isCanFormat) {
-            editor.sendEvent("asc_onFormatErrorPdfForm", oDoc.GetWarningInfo());
+            let oWarningInfo = oDoc.GetWarningInfo();
+            if (!oWarningInfo) {
+                oWarningInfo = {
+                    "format": "",
+                    "target": this
+                };
+            }
+            editor.sendEvent("asc_onFormatErrorPdfForm", oWarningInfo);
             return false;
         }
 
@@ -917,7 +924,12 @@
 
         if (isValid == false) {
             let oWarningInfo = oDoc.GetWarningInfo();
-            if ((oWarningInfo["greater"] != null || oWarningInfo["less"] != null))
+            if (!oWarningInfo) {
+                oWarningInfo = {
+                    "target": this
+                };
+            }
+            if (oWarningInfo["greater"] != null || oWarningInfo["less"] != null)
                 editor.sendEvent("asc_onValidateErrorPdfForm", oWarningInfo);
             
             return isValid;
