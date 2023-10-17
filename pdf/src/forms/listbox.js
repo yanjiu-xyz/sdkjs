@@ -779,7 +779,13 @@
             }
         }
     };
-	
+	CListBoxField.prototype.UndoNotAppliedChanges = function() {
+        this.SetValue(this.GetApiValue());
+        this.SetNeedRecalc(true);
+        this.AddToRedraw();
+        this.SetNeedCommit(false);
+    };
+
     function TurnOffHistory() {
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();
