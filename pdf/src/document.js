@@ -1120,6 +1120,7 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.DoUndo = function() {
         let oViewer = editor.getDocumentRenderer();
 
+        this.TurnOffHistory();
         if (AscCommon.History.Can_Undo())
         {
             this.currInkInDrawingProcess = null;
@@ -1176,6 +1177,7 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.DoRedo = function() {
         let oViewer = editor.getDocumentRenderer();
 
+        this.TurnOffHistory();
         if (AscCommon.History.Can_Redo())
         {
             this.currInkInDrawingProcess = null;
@@ -1301,7 +1303,31 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.GetActionsQueue = function() {
         return this.actionsInfo;
     };
-        
+    
+    CPDFDoc.prototype.EscapeForm = function() {
+        let oViewer = editor.getDocumentRenderer();
+
+        if (this.activeForm && this.activeForm.IsNeedDrawHighlight() == false) {
+            if (this.activeForm.GetType() == AscPDF.FIELD_TYPES.listbox) {
+                this.activeForm.UndoNotAppliedChanges();
+            }
+            else if (this.History.Index != -1) {
+                let oHistoryPoint = this.History.Points[this.History.Index];
+                if (oHistoryPoint.Additional.FormFilling == this.activeForm && oHistoryPoint.Additional.CanUnion != false) {
+                    this.activeForm.UndoNotAppliedChanges();
+                }
+            }
+
+            if (this.activeForm.IsChanged() == false)
+                this.activeForm.SetDrawFromStream(true);
+
+            this.activeForm.AddToRedraw();
+            this.activeForm.SetDrawHighlight(true);
+            oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
+            oViewer._paint();
+        }
+    };
+
     /**
 	 * Adds a new page to the active document.
 	 * @memberof CPDFDoc

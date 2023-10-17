@@ -3017,11 +3017,9 @@
 				{
 					this.Api.sync_MarkerFormatCallback(false);
 				}
-				else if (oDoc.activeForm)
-				{
-					// to do отмена ввода
-				}
-
+				
+				oDoc.EscapeForm();
+				
 				editor.sync_HideComment();
 			}
 			else if (e.KeyCode === 32) // Space
