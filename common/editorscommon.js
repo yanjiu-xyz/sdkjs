@@ -198,6 +198,10 @@
 			return;
 		}
 		var result = [];
+		if (number === 0)
+		{
+			return [0];
+		}
 		while (number > 0) {
 			var remainder = number % base;
 			if (remainder === 0) {
@@ -6875,6 +6879,10 @@
 		var addFirstDegreeSymbol = true;
 		if (nFormat === Asc.c_oAscNumberingFormat.KoreanCounting)
 		{
+			if (nValue === 0)
+			{
+				return String.fromCharCode(0xC601);
+			}
 			addFirstDegreeSymbol = false;
 			var digits = [
 				String.fromCharCode(0xC77C),
@@ -6895,6 +6903,10 @@
 			];
 		} else if (nFormat === Asc.c_oAscNumberingFormat.JapaneseLegal)
 		{
+			if (nValue === 0)
+			{
+				return String.fromCharCode(0x3007);
+			}
 			digits = [
 				String.fromCharCode(0x58F1),
 				String.fromCharCode(0x5F10),
@@ -6914,6 +6926,10 @@
 			];
 		} else if (nFormat === Asc.c_oAscNumberingFormat.JapaneseCounting)
 		{
+			if (nValue === 0)
+			{
+				return String.fromCharCode(0x3007);
+			}
 			addFirstDegreeSymbol = false;
 			digits = [
 				String.fromCharCode(0x4E00),
@@ -7065,6 +7081,10 @@
 
 	function IntToAiueo(nValue)
 	{
+		if (nValue === 0)
+		{
+			return '0';
+		}
 		var sResult = '';
 		var count = 1, numberOfLetters = 46;
 		nValue = repeatNumberingLvl(nValue, 46);
@@ -7092,34 +7112,47 @@
 			++count;
 			nValue -= numberOfLetters;
 		}
-		if (nValue >= 1 && nValue <= 5)
+		if (nValue === 0)
+		{
+			letter = 0x0030;
+		}
+		else if (nValue >= 1 && nValue <= 5)
 		{
 			letter = 0x30A2 + (nValue - 1) * 2;
-		} else if (nValue >= 6 && nValue <= 17)
+		}
+		else if (nValue >= 6 && nValue <= 17)
 		{
 			letter = 0x30AB + (nValue - 6) * 2;
-		} else if (nValue >= 18 && nValue <= 21)
+		}
+		else if (nValue >= 18 && nValue <= 21)
 		{
 			letter = 0x30C4 + (nValue - 18) * 2;
-		} else if (nValue >= 22 && nValue <= 26)
+		}
+		else if (nValue >= 22 && nValue <= 26)
 		{
 			letter = 0x30CB + nValue - 22;
-		} else if (nValue >= 27 && nValue <= 31)
+		}
+		else if (nValue >= 27 && nValue <= 31)
 		{
 			letter = 0x30D2 + (nValue - 27) * 3;
-		} else if (nValue >= 32 && nValue <= 35)
+		}
+		else if (nValue >= 32 && nValue <= 35)
 		{
 			letter = 0x30DF + nValue - 32;
-		} else if (nValue >= 36 && nValue <= 38)
+		}
+		else if (nValue >= 36 && nValue <= 38)
 		{
 			letter = 0x30E4 + nValue - 36;
-		} else if (nValue >= 39 && nValue <= 43)
+		}
+		else if (nValue >= 39 && nValue <= 43)
 		{
 			letter = 0x30E9 + nValue - 39;
-		} else if (nValue === 44)
+		}
+		else if (nValue === 44)
 		{
 			letter = 0x30EF + nValue - 44;
-		} else if (nValue >= 45 && nValue <= 46)
+		}
+		else if (nValue >= 45 && nValue <= 46)
 		{
 			letter = 0x30F2 + nValue - 45;
 		}
@@ -7165,6 +7198,10 @@
 			charArr = [0x002A, 0x2020, 0x2021, 0x00A7]
 		} else if(nFormat === Asc.c_oAscNumberingFormat.Chosung)
 		{
+			if (nValue === 0)
+			{
+				return '0';
+			}
 			nValue = repeatNumberingLvl(nValue, 14);
 			charArr = [
 				0x3131, 0x3134, 0x3137, 0x3139,
@@ -7174,6 +7211,10 @@
 			]
 		} else if (nFormat === Asc.c_oAscNumberingFormat.Ganada)
 		{
+			if (nValue === 0)
+			{
+				return '0';
+			}
 			nValue = repeatNumberingLvl(nValue, 14);
 			charArr = [
 				0xAC00, 0xB098, 0xB2E4, 0xB77C,
@@ -7333,12 +7374,16 @@
 				0x7533, 0x9149, 0x620C, 0x4EA5
 			];
 
-		sResult += nValue <= digits.length ? String.fromCharCode(digits[nValue - 1]) : nValue;
+		sResult += (nValue >= 1 && nValue <= digits.length) ? String.fromCharCode(digits[nValue - 1]) : nValue;
 		return sResult;
 	}
 
 	function IntToIdeographZodiacTraditional(nValue)
 	{
+		if (nValue === 0)
+		{
+			return '0';
+		}
 		var sResult = '';
 		var digits = [
 			0x7532, 0x5B50, 0x4E59, 0x4E11, 0x4E19, 0x5BC5,
@@ -7374,6 +7419,10 @@
 
 	function IntToIroha(nValue, nFormat)
 	{
+		if (nValue === 0)
+		{
+			return '0';
+		}
 		var sResult = '';
 		var digits = [];
 		if (nFormat === Asc.c_oAscNumberingFormat.Iroha)
@@ -7485,7 +7534,11 @@
 			1000  : String.fromCharCode(0x5343),
 			10000 : String.fromCharCode(0x4E07)
 		};
-		if (nValue < 1000000)
+		if (nValue === 0)
+		{
+			sResult += arrChinese[0];
+		}
+		else if (nValue < 1000000)
 		{
 			var nRemValue = nValue;
 
@@ -7610,7 +7663,11 @@
 			1000  : String.fromCharCode(0x4EDF),
 			10000 : String.fromCharCode(0x842C)
 		};
-		if (nValue < 1000000)
+		if (nValue === 0)
+		{
+			sResult += arrChinese[0];
+		}
+		else if (nValue < 1000000)
 		{
 			var nRemValue = nValue;
 
@@ -7790,7 +7847,11 @@
 			'拾'
 		];
 
-		if (nValue < 10000)
+		if (nValue === 0)
+		{
+			sResult = String.fromCharCode(0x96F6);
+		}
+		else if (nValue < 10000)
 		{
 			sResult = IdeographLegalTraditionalSplitting(digits, degrees, nValue).join('');
 		} else {
@@ -7879,7 +7940,7 @@
 			String.fromCharCode(0x4E5D)
 		];
 		var conv = decimalNumberConversion(nValue, digits.length);
-		if(nValue >= digits.length * 10)
+		if(nValue >= digits.length * 10 || nValue === 0)
 		{
 			digits[0] = String.fromCharCode(0x25CB);
 			sResult = conv.map(function (num)
@@ -8202,8 +8263,11 @@
 			'百',
 			'十'
 		];
-
-		if (nValue < 100000)
+		if (nValue === 0)
+		{
+			return String.fromCharCode(0x96F6);
+		}
+		else if (nValue < 100000)
 		{
 			sResult = taiwaneseCountingSplitting(digits, degrees, nValue).join('');
 		} else if (nValue >= 100000 && nValue < 1000000)
@@ -8216,7 +8280,11 @@
 	function IntToKoreanLegal(nValue, nFormat)
 	{
 		var sResult = '';
-		if (nValue < 100)
+		if (nValue === 0)
+		{
+			return '0';
+		}
+		else if (nValue < 100)
 		{
 			var answer = [];
 			var digits = {
@@ -8742,6 +8810,10 @@
 
 	function IntToHindiCounting(nValue)
 	{
+		if (nValue === 0)
+		{
+			return "शून्य";
+		}
 		var alphaBet = [
 			"एक","दो","तीन","चार","पांच","छह","सात","आठ","नौ","दस","ग्यारह",
 			"बारह","तेरह","चौदह","पंद्रह","सोलह","सत्रह","अठारह","उन्नीस","बीस",
@@ -8815,7 +8887,7 @@
 
 	function splitThaiCounting(num, digits)
 	{
-		if (num >= 1000000000)
+		if (num >= 1000000000 || num === 0)
 		{
 			return ['ศูนย์'];
 		}
@@ -8945,6 +9017,10 @@
 
 	function IntToVietnameseCounting(nValue)
 	{
+		if (nValue === 0)
+		{
+			return 'không';
+		}
 		var digits = ['một', 'hai', 'ba', 'bốn', 'năm', 'sáu', 'bảy', 'tám', 'chín', 'mười'];
 
 		return vietnameseCounting(nValue, digits).join(' ');
@@ -8974,6 +9050,67 @@
 
 		return sResult.join('');
 	}
+	
+	function IsLessMinimumNumberingFormat(nFormat, nValue)
+	{
+		switch (nFormat)
+		{
+			case Asc.c_oAscNumberingFormat.Decimal:
+			case Asc.c_oAscNumberingFormat.CustomDecimalFourZero:
+			case Asc.c_oAscNumberingFormat.CustomDecimalThreeZero:
+			case Asc.c_oAscNumberingFormat.CustomDecimalTwoZero:
+			case Asc.c_oAscNumberingFormat.DecimalZero:
+			case Asc.c_oAscNumberingFormat.DecimalEnclosedCircleChinese:
+			case Asc.c_oAscNumberingFormat.DecimalEnclosedCircle:
+			case Asc.c_oAscNumberingFormat.Aiueo:
+			case Asc.c_oAscNumberingFormat.AiueoFullWidth:
+			case Asc.c_oAscNumberingFormat.Chosung:
+			case Asc.c_oAscNumberingFormat.Ganada:
+			case Asc.c_oAscNumberingFormat.DecimalEnclosedFullstop:
+			case Asc.c_oAscNumberingFormat.DecimalEnclosedParen:
+			case Asc.c_oAscNumberingFormat.DecimalFullWidth:
+			case Asc.c_oAscNumberingFormat.DecimalFullWidth2:
+			case Asc.c_oAscNumberingFormat.DecimalHalfWidth:
+			case Asc.c_oAscNumberingFormat.Hex:
+			case Asc.c_oAscNumberingFormat.HindiNumbers:
+			case Asc.c_oAscNumberingFormat.IdeographDigital:
+			case Asc.c_oAscNumberingFormat.JapaneseDigitalTenThousand:
+			case Asc.c_oAscNumberingFormat.IdeographEnclosedCircle:
+			case Asc.c_oAscNumberingFormat.IdeographTraditional:
+			case Asc.c_oAscNumberingFormat.IdeographZodiac:
+			case Asc.c_oAscNumberingFormat.IdeographZodiacTraditional:
+			case Asc.c_oAscNumberingFormat.Iroha:
+			case Asc.c_oAscNumberingFormat.IrohaFullWidth:
+			case Asc.c_oAscNumberingFormat.ChineseCounting:
+			case Asc.c_oAscNumberingFormat.ChineseCountingThousand:
+			case Asc.c_oAscNumberingFormat.ChineseLegalSimplified:
+			case Asc.c_oAscNumberingFormat.IdeographLegalTraditional:
+			case Asc.c_oAscNumberingFormat.JapaneseLegal:
+			case Asc.c_oAscNumberingFormat.KoreanCounting:
+			case Asc.c_oAscNumberingFormat.JapaneseCounting:
+			case Asc.c_oAscNumberingFormat.KoreanDigital:
+			case Asc.c_oAscNumberingFormat.ThaiNumbers:
+			case Asc.c_oAscNumberingFormat.KoreanDigital2:
+			case Asc.c_oAscNumberingFormat.TaiwaneseDigital:
+			case Asc.c_oAscNumberingFormat.None:
+			case Asc.c_oAscNumberingFormat.NumberInDash:
+			case Asc.c_oAscNumberingFormat.TaiwaneseCounting:
+			case Asc.c_oAscNumberingFormat.CardinalText:
+			case Asc.c_oAscNumberingFormat.Custom:
+			case Asc.c_oAscNumberingFormat.Ordinal:
+			case Asc.c_oAscNumberingFormat.TaiwaneseCountingThousand:
+			case Asc.c_oAscNumberingFormat.KoreanLegal:
+			case Asc.c_oAscNumberingFormat.OrdinalText:
+			case Asc.c_oAscNumberingFormat.HindiCounting:
+			case Asc.c_oAscNumberingFormat.ThaiCounting:
+			case Asc.c_oAscNumberingFormat.DollarText:
+			case Asc.c_oAscNumberingFormat.BahtText:
+			case Asc.c_oAscNumberingFormat.VietnameseCounting:
+				return nValue < 0;
+			default:
+				return nValue < 1;
+		}
+	}
 
 	/**
 	 * Переводим числовое значение в строку с заданным форматом нумерации
@@ -8997,6 +9134,10 @@
 			}
 		}
 		var sResult = "";
+		if (IsLessMinimumNumberingFormat(nFormat, nValue))
+		{
+			return sResult;
+		}
 
 		switch (nFormat)
 		{
@@ -9049,7 +9190,7 @@
 
 			case Asc.c_oAscNumberingFormat.DecimalEnclosedCircleChinese:
 			{
-				if (nValue <= 10)
+				if (nValue >= 1 && nValue <= 10)
 				{
 					sResult = String.fromCharCode(0x2460 + nValue - 1);
 				}
@@ -9062,7 +9203,7 @@
 
 			case Asc.c_oAscNumberingFormat.DecimalEnclosedCircle:
 			{
-				if (nValue <= 20)
+				if (nValue >= 1 && nValue <= 20)
 				{
 					sResult = String.fromCharCode(0x2460 + nValue - 1);
 				}
@@ -9133,11 +9274,11 @@
 			case Asc.c_oAscNumberingFormat.DecimalFullWidth2:
 			case Asc.c_oAscNumberingFormat.DecimalHalfWidth:
 			{
-				var zeroInHex = nFormat === Asc.c_oAscNumberingFormat.DecimalFullWidth ? 0xFF10 : 0x0030;
+				var zero = (nFormat === Asc.c_oAscNumberingFormat.DecimalFullWidth || nFormat === Asc.c_oAscNumberingFormat.DecimalFullWidth2) ? 0xFF10 : 0x0030;
 				var strValue = String(nValue);
 				for(var i = 0; i < strValue.length; i++)
 				{
-					sResult += String.fromCharCode(zeroInHex + parseInt(strValue[i]));
+					sResult += String.fromCharCode(zero + parseInt(strValue[i]));
 				}
 				break;
 			}
@@ -9150,7 +9291,11 @@
 
 			case Asc.c_oAscNumberingFormat.Hex:
 			{
-				if (nValue <= 0xFFFF)
+				if (nValue === 0)
+				{
+					sResult = '0';
+				}
+				else if (nValue <= 0xFFFF)
 				{
 					sResult = (nValue+0x10000).toString(16).substr(-4).toUpperCase();
 					sResult = sResult.replace(/^0+/, '');
@@ -9180,7 +9325,7 @@
 
 			case Asc.c_oAscNumberingFormat.IdeographEnclosedCircle:
 			{
-				sResult += nValue <= 10 ? String.fromCharCode(0x3220 + nValue - 1) : nValue;
+				sResult += (nValue >= 1 && nValue <= 10) ? String.fromCharCode(0x3220 + nValue - 1) : nValue;
 				break;
 			}
 
