@@ -4445,6 +4445,7 @@
 		{
 			case "bg-BG":
 				alphaBet = {
+					0: ['нулевят'],
 					1:
 						{
 						'един': 'първият',
@@ -4473,6 +4474,7 @@
 				break;
 			case "cs-CZ":
 				alphaBet = {
+					'nula': 'nultý',
 					'jedna': 'první',
 					'dva': 'druhý',
 					'tři': 'třetí',
@@ -4515,6 +4517,7 @@
 				break;
 			case "de-DE":
 				alphaBet = {
+					'null': 'nullte',
 					'eins': 'erste',
 					'zwei': 'zweite',
 					'drei': 'dritte',
@@ -4538,6 +4541,7 @@
 				break;
 			case "el-GR":
 				alphaBet = {
+					0: ['μηδενικό'],
 					1: [
 						'πρώτο',
 						'δεύτερο',
@@ -4606,6 +4610,7 @@
 				break;
 			case "es-ES":
 				alphaBet = {
+					'cero': 'cero',
 					'uno': 'primero',
 					'dos': 'segundo',
 					'tres': 'tercero',
@@ -4653,6 +4658,7 @@
 				break;
 			case "it-IT":
 				alphaBet = {
+					'zero': 'zero',
 					'uno': 'primo',
 					'due': 'secondo',
 					'tre': 'terzo',
@@ -4667,6 +4673,7 @@
 				break;
 			case "lv-LV":
 				alphaBet = {
+					'nulle': 'nultais',
 					'viens': 'pirmais',
 					'divi': 'otrais',
 					'trīs': 'trešais',
@@ -4707,6 +4714,7 @@
 					},
 					'numbers':
 					{
+						'zero': 'zerowy',
 						'jeden': 'pierwszy',
 						'dwa': 'drugi',
 						'trzy': 'trzeci',
@@ -4795,6 +4803,7 @@
 			case "pt-BR":
 			case "pt-PT":
 				alphaBet = {
+					'zero': 'zero',
 					'um': 'primeiro',
 					'dois': 'segundo',
 					'três': 'terceiro',
@@ -4839,6 +4848,7 @@
 				alphaBet = {
 					'numbers':
 					{
+						'ноль': 'нулевой',
 						'один': 'первый',
 						'два': 'второй',
 						'три': 'третий',
@@ -4927,6 +4937,7 @@
 				break;
 			case "sk-SK":
 				alphaBet = {
+					'nula': 'nultý',
 					'jeden': 'prvý',
 					'dva': 'druhý',
 					'tri': 'tretí',
@@ -4991,6 +5002,7 @@
 				break;
 			case "sv-SE":
 				alphaBet = {
+					'noll': 'nollte',
 					'ett': 'första',
 					'två': 'andra',
 					'tre': 'tredje',
@@ -5009,6 +5021,7 @@
 				alphaBet = {
 					'numbers':
 					{
+						"нуль": "нульовий",
 						"один": "перший",
 						"два": "другий",
 						"три": "третій",
@@ -5129,6 +5142,7 @@
 		{
 			case"bg-BG":
 				alphaBet = {
+					0: ['нула'],
 					1: [
 						'един',
 						'два',
@@ -5184,6 +5198,7 @@
 				break;
 			case"cs-CZ":
 				alphaBet = {
+					0: ['nula'],
 					1: [
 						'jedna',
 						'dva',
@@ -5239,6 +5254,7 @@
 				break;
 			case"de-DE":
 				alphaBet = {
+					0: ['null'],
 					1: [
 						'eins',
 						'zwei',
@@ -5274,6 +5290,7 @@
 				break;
 			case"el-GR":
 				alphaBet = {
+					0: ['μηδέν'],
 					1: [
 						'ένα',
 						'δύο',
@@ -5329,6 +5346,7 @@
 				break;
 			case"es-ES":
 				alphaBet = {
+					0: ['cero'],
 					1: [
 						'uno',
 						'dos',
@@ -5381,6 +5399,7 @@
 				break;
 			case"fr-FR":
 				alphaBet = {
+					0: ['zéro'],
 					1: [
 						'un',
 						'deux',
@@ -5416,6 +5435,7 @@
 				break;
 			case"it-IT":
 				alphaBet = {
+					0: ['zero'],
 					1: [
 						'uno',
 						'due',
@@ -5451,6 +5471,7 @@
 				break;
 			case"lv-LV":
 				alphaBet = {
+					0: ['nulle'],
 					1: [
 						'viens',
 						'divi',
@@ -5506,6 +5527,7 @@
 				break;
 			case"nl-NL":
 				alphaBet = {
+					0: ['nul'],
 					1: [
 						'één',
 						'twee',
@@ -5541,6 +5563,7 @@
 				break;
 			case"pl-PL":
 				alphaBet = {
+					0: ['zero'],
 					1: [
 						'jeden',
 						'dwa',
@@ -5597,6 +5620,7 @@
 			case"pt-BR":
 			case"pt-PT":
 				alphaBet = {
+					0: ['zero'],
 					1: [
 						'um',
 						'dois',
@@ -5643,6 +5667,7 @@
 				break;
 			case"ru-RU":
 				alphaBet = {
+					0: ['ноль'],
 					1: [
 						'один',
 						'два',
@@ -5698,6 +5723,7 @@
 				break;
 			case"sk-SK":
 				alphaBet = {
+					0: ['nula'],
 					1: [
 						'jeden',
 						'dva',
@@ -5733,6 +5759,7 @@
 				break;
 			case"sv-SE":
 				alphaBet = {
+					0: ['noll'],
 					1: [
 						'ett',
 						'två',
@@ -5768,6 +5795,7 @@
 				break;
 			case"uk-UA":
 				alphaBet = {
+					0: ['нуль'],
 					1: [
 						"один",
 						"два",
@@ -5830,6 +5858,7 @@
 			case 'ko-KR':
 			default:
 				alphaBet = {
+					0: ['zero'],
 					1: [
 						'one',
 						'two',
@@ -5874,6 +5903,11 @@
 		var getConcatStringByRule = function (array)
 		{
 			return array.join(' ');
+		}
+
+		if (nValue === 0)
+		{
+			return {arrAnswer: [alphaBet[0][0]], getConcatStringByRule: getConcatStringByRule};
 		}
 
 		switch (lang)
@@ -8091,7 +8125,7 @@
 				if (nValue === 1)
 				{
 					sResult += 'er';
-				} else {
+				} else if (nValue !== 0) {
 					sResult += 'e';
 				}
 				break;
@@ -8329,8 +8363,15 @@
 	function IntToOrdinalText(nValue, nLang)
 	{
 		var textLang = languages[nLang];
-		var ordinalText = getCardinalTextFromValue(textLang, nValue);
 		var alphaBet = getAlphaBetForOrdinalText(textLang);
+		if (nValue === 0)
+		{
+			if (alphaBet[0] && alphaBet[0][0])
+			{
+				return alphaBet[0][0].sentenceCase();
+			}
+		}
+		var ordinalText = getCardinalTextFromValue(textLang, nValue);
 		switch (textLang)
 		{
 			case 'de-DE':
@@ -8474,7 +8515,7 @@
 					{
 						switchingValue[switchingValue.length - 1] = lastWord.slice(0, lastWord.length - 1);
 					}
-					if (switchingValue[switchingValue.length - 1] !== 'premier')
+					if (lastWord !== 'premier' && lastWord !== 'zéro')
 					{
 						switchingValue[switchingValue.length - 1] += 'ième';
 					}
