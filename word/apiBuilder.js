@@ -5564,16 +5564,16 @@
 	 * @typeofeditors ["CDE"]
 	 * @param {ApiParagraph} oParagraph - The paragraph after which a new document section will be inserted.
 	 * Paragraph must be in a document.
-	 * @returns {ApiSection | null}
+	 * @returns {ApiSection | null} Returns null if parametr is invalid.
 	 */
 	ApiDocument.prototype.CreateSection = function(oParagraph)
 	{
 		if (!(oParagraph instanceof ApiParagraph)) {
-			console.error(new Error('Parameter is invalid.'));
+			private_makeError('Parameter is invalid.', false);
 			return null;
 		}
 		if (!oParagraph.Paragraph.CanAddSectionPr()) {
-			console.error(new Error('Paragraph must be in a document.'));
+			private_makeError('Paragraph must be in a document.', false);
 			return null;
 		}
 
@@ -9010,7 +9010,7 @@
 			return false;
 
 		if (!this.Paragraph.CanAddSectionPr()) {
-			console.error(new Error('Paragraph must be in a document.'));
+			private_makeError('Paragraph must be in a document.', false);
 			return false;
 		}
 
@@ -16357,7 +16357,7 @@
 	ApiInlineLvlSdt.prototype.GetDropdownList = function()
 	{
 		if (!this.Sdt.IsComboBox() && !this.Sdt.IsDropDownList())
-			throw "Not a drop down content control";
+			private_makeError("Not a drop down content control", true);
 		
 		return new ApiContentControlList(this);
 	};
@@ -16476,9 +16476,9 @@
 		
 		nIndex = AscBuilder.GetNumberParameter(nIndex, null);
 		if (null === nIndex)
-			throw "Index must be a number";
+			private_makeError("Index must be a number", true);
 		else if (nIndex < 0 || nIndex >= listPr.GetItemsCount())
-			throw "Index out of list range";
+			private_makeError("Index out of list range", true);
 		
 		return new ApiContentControlListEntry(this.Sdt, this, listPr.GetItemDisplayText(nIndex), listPr.GetItemValue(nIndex));
 	};
@@ -17437,7 +17437,7 @@
 	ApiBlockLvlSdt.prototype.GetDropdownList = function()
 	{
 		if (!this.Sdt.IsComboBox() && !this.Sdt.IsDropDownList())
-			throw "Not a drop down content control";
+			private_makeError("Not a drop down content control", true);
 		
 		return new ApiContentControlList(this);
 	};
@@ -20996,6 +20996,17 @@
 		return oColor;
 	}
 
+	function private_makeError(message, bMakeThrow) {
+		let err = new Error(message);
+		if (!console.error)
+			console.log(err);
+		
+		if (!bMakeThrow && console.error)
+			console.error(err)
+		else if (bMakeThrow)
+			throw err;
+	};;
+
 	ApiDocument.prototype.OnChangeParaPr = function(oApiParaPr)
 	{
 		var oStyles = this.Document.Get_Styles();
@@ -21510,6 +21521,3 @@
 	};
 
 }(window, null));
-
-
-
