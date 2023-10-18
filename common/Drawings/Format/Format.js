@@ -4229,7 +4229,7 @@
 			let oMod = this.color.Mods.getMod("alpha");
 			if(!oMod) {
 				oMod = new CColorMod("alpha", (100 - nVal) * 1000 + 0.5 >> 0);
-				this.color.addMod(oMod);
+				this.color.Mods.addMod(oMod);
 			}
 			else {
 				oMod.setVal((100 - nVal) * 1000 + 0.5 >> 0);
