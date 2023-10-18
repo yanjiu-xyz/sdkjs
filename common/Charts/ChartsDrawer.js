@@ -10146,10 +10146,7 @@ drawHBarChart.prototype = {
 	_applyColorModeByBrush: function (brushFill, val) {
 		var props = this.cChartSpace.getParentObjects();
 		var duplicateBrush = brushFill.createDuplicate();
-		var cColorMod = new AscFormat.CColorMod;
-		cColorMod.val = val;
-
-		cColorMod.name = "shade";
+		var cColorMod = new AscFormat.CColorMod("shade", val);
 		duplicateBrush.addColorMod(cColorMod);
 		duplicateBrush.calculate(props.theme, props.slide, props.layout, props.master, new AscFormat.CUniColor().RGBA, this.cChartSpace.clrMapOvr);
 
@@ -11310,11 +11307,7 @@ drawPieChart.prototype = {
 				if (brush) {
 					var props = t.cChartSpace.getParentObjects();
 					var duplicateBrush = brush.createDuplicate();
-					var cColorMod = new AscFormat.CColorMod;
-
-					cColorMod.val = shadeValue;
-					cColorMod.name = shade;
-
+					var cColorMod = new AscFormat.CColorMod(shade, shadeValue);
 					if (duplicateBrush) {
 						duplicateBrush.addColorMod(cColorMod);
 						duplicateBrush.calculate(props.theme, props.slide, props.layout, props.master, new AscFormat.CUniColor().RGBA, t.cChartSpace.clrMapOvr);
@@ -11905,10 +11898,7 @@ drawPieChart.prototype = {
 				var duplicateBrush = brush;
 				if (n !== this.paths.series.length - 1) {
 					duplicateBrush = brush.createDuplicate();
-					var cColorMod = new AscFormat.CColorMod;
-
-					cColorMod.val = 35000;
-					cColorMod.name = "shade";
+					var cColorMod = new AscFormat.CColorMod("shade", 35000);
 
 					duplicateBrush.addColorMod(cColorMod);
 					duplicateBrush.calculate(props.theme, props.slide, props.layout, props.master, new AscFormat.CUniColor().RGBA, this.cChartSpace.clrMapOvr);
