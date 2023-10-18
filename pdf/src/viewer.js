@@ -890,7 +890,7 @@
 					oForm.SetTextColor(oFormInfo["textColor"]);
 
 				if (oFormInfo["AP"] != null) {
-					oForm._apIdx = oFormInfo["AP"]["i"];
+					oForm.SetApIdx(oFormInfo["AP"]["i"]);
 					oForm.SetDrawFromStream(Boolean(oFormInfo["AP"]["have"]));
 				}
 
@@ -3910,7 +3910,7 @@
 
 		for (let i = 0; i < aPages.length; i++)
 		{
-			if (aPages[i].annots == null || aPages[i].annots.length === 0 && !aDeleted[i])
+			if ((aPages[i].annots == null || aPages[i].annots.length === 0) && (aPages[i].fields == null || aPages[i].fields.length === 0) && !aDeleted[i])
 				continue;
 
 			if (!oMemory)
@@ -3924,8 +3924,10 @@
 			oMemory.WriteByte(0); // Annotation
 			oMemory.WriteLong(i);
 			
-			for (let nAnnot = 0; nAnnot < aPages[i].annots.length; nAnnot++) {
-				aPages[i].annots[nAnnot].WriteToBinary && aPages[i].annots[nAnnot].IsChanged() && aPages[i].annots[nAnnot].WriteToBinary(oMemory);
+			if (aPages[i].annots) {
+				for (let nAnnot = 0; nAnnot < aPages[i].annots.length; nAnnot++) {
+					aPages[i].annots[nAnnot].WriteToBinary && aPages[i].annots[nAnnot].IsChanged() && aPages[i].annots[nAnnot].WriteToBinary(oMemory);
+				}
 			}
 
 			if (aDeleted[i]) {
@@ -3934,6 +3936,11 @@
 					oMemory.WriteLong(8);
 					oMemory.WriteLong(aDeleted[i][j]);
 				}
+			}
+
+			// forms
+			for (let nForm = 0; nForm < aPages[i].fields.length; nForm++) {
+				aPages[i].fields[nForm].WriteToBinary && aPages[i].fields[nForm].IsChanged() && aPages[i].fields[nForm].WriteToBinary(oMemory);
 			}
 
 			let nEndPos = oMemory.GetCurPosition();

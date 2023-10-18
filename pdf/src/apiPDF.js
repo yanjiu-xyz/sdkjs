@@ -1283,7 +1283,7 @@
         get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
-                return oField.GetDoNotScroll();
+                return oField.IsDoNotScroll();
             }
             else {
                 throw Error("InvalidGetError: Get not possible, invalid or unknown.");
@@ -1350,7 +1350,7 @@
         get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
-                return oField.GetFileSelect();
+                return oField.IsFileSelect();
             }
             else {
                 throw Error("InvalidGetError: Get not possible, invalid or unknown.");

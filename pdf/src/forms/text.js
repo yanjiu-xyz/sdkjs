@@ -41,7 +41,7 @@
         AscPDF.CBaseField.call(this, sName, AscPDF. FIELD_TYPES.text, nPage, aRect, oDoc);
         
         this._alignment         = AscPDF.ALIGN_TYPE.left;
-        this._charLimit         = 0; // to do
+        this._charLimit         = 0;
         this._comb              = false;
         this._defaultStyle      = Object.assign({}, {}); // to do (must not be fileSelect flag)
         this._doNotScroll       = false;
@@ -126,7 +126,7 @@
     CTextField.prototype.SetDoNotScroll = function(bNot) {
         this._doNotScroll = bNot;
     };
-    CTextField.prototype.GetDoNotScroll = function() {
+    CTextField.prototype.IsDoNotScroll = function() {
         return this._doNotScroll;
     };
     CTextField.prototype.SetDoNotSpellCheck = function(bNot) {
@@ -144,7 +144,7 @@
             this._fileSelect = false;
         }
     };
-    CTextField.prototype.GetFileSelect = function() {
+    CTextField.prototype.IsFileSelect = function() {
         return this._fileSelect;
     };
     CTextField.prototype.SetMultiline = function(bMultiline) {
@@ -170,8 +170,14 @@
             this._password = false;
         }
     };
+    CTextField.prototype.IsPassword = function() {
+        return this._password;
+    };
     CTextField.prototype.SetRichText = function(bRichText) {
         this._richText = bRichText;
+    };
+    CTextField.prototype.IsRichText = function() {
+        return this._richText;
     };
     CTextField.prototype.SetValue = function(sValue) {
         if (this.IsWidget()) {
@@ -1286,6 +1292,67 @@
 		oPara.CheckRunContent(callback);
 
         return { startPos: StartPos, endPos: EndPos }
+    };
+    CTextField.prototype.WriteToBinary = function(memory) {
+        memory.WriteByte(AscCommon.CommandType.ctAnnotField);
+
+        // длина комманд
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+
+        this.WriteToBinaryBase(memory);
+        this.WriteToBinaryBase2(memory);
+
+        let sValue = this.GetValue();
+        if (sValue != null) {
+            memory.fieldFlags2 |= (1 << 9);
+            memory.WriteString(sValue);
+        }
+
+        let nCharLimit = this.GetCharLimit();
+        if (nCharLimit != 0) {
+            memory.fieldFlags2 |= (1 << 10);
+            memory.WriteLong(nCharLimit);
+        }
+
+        //
+        // rich value
+        //
+
+        if (this.IsMultiline()) {
+            memory.fieldFlags2 |= (1 << 12);
+        }
+        // if (this.IsPassword()) {
+        //     memory.fieldFlags2 |= (1 << 13);
+        // }
+        // if (this.IsFileSelect()) {
+        //     memory.fieldFlags2 |= (1 << 20);
+        // }
+        // if (this.IsDoNotSpellCheck()) {
+        //     memory.fieldFlags2 |= (1 << 22);
+        // }
+        if (this.IsDoNotScroll()) {
+            memory.fieldFlags2 |= (1 << 23);
+        }
+        if (this.IsComb()) {
+            memory.fieldFlags2 |= (1 << 24);
+        }
+        // if (this.IsRichText()) {
+        //     memory.fieldFlags2 |= (1 << 25);
+        // }
+
+        let nEndPos = memory.GetCurPosition();
+
+        // запись флагов
+        memory.Seek(memory.posForFlags1);
+        memory.WriteLong(memory.fieldFlags1);
+        memory.Seek(memory.posForFlags2);
+        memory.WriteLong(memory.fieldFlags2);
+
+        // запись длины комманд
+        memory.Seek(nStartPos);
+        memory.WriteLong(nEndPos - nStartPos);
+        memory.Seek(nEndPos);
     };
 	
     function TurnOffHistory() {

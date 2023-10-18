@@ -209,6 +209,14 @@
         this["api"] = this.api;
     }
     
+    CBaseField.prototype.SetApIdx = function(nIdx) {
+        this.GetDocument().UpdateApIdx(nIdx);
+        this._apIdx = nIdx;
+    };
+    CBaseField.prototype.GetApIdx = function() {
+        return this._apIdx;
+    };
+
     CBaseField.prototype.AddToChildsMap = function(nIdx) {
         this.GetDocument().AddFieldToChildsMap(this, nIdx);
     };
@@ -1197,6 +1205,9 @@
     CBaseField.prototype.SetReadOnly = function(bReadOnly) {
         this._readonly = bReadOnly;
     };
+    CBaseField.prototype.IsReadOnly = function() {
+        return this._readonly;
+    };
     
     CBaseField.prototype.SetRequired = function(bRequired) {
         if (this.GetType() != AscPDF.FIELD_TYPES.button)
@@ -1207,6 +1218,9 @@
     };
     CBaseField.prototype.SetBorderColor = function(aColor) {
         this._strokeColor = this._borderColor = aColor;
+    };
+    CBaseField.prototype.GetBorderColor = function() {
+        return this._strokeColor;
     };
     CBaseField.prototype.SetBackgroundColor = function(aColor) {
         this._fillColor = this._bgColor = aColor;
@@ -1810,6 +1824,166 @@
             "w" : this._pagePos.w,
             "h" : this._pagePos.h
         };
+    };
+    CBaseField.prototype.WriteToBinaryBase = function(memory) {
+        // type
+        memory.WriteByte(this.GetType());
+
+        // apidx
+        memory.WriteLong(this.GetApIdx());
+
+        // annont flags
+        let bHidden      = false;
+        let bPrint       = false;
+        let bNoView      = false;
+        let ToggleNoView = false;
+        let locked       = false;
+        let lockedC      = false;
+        let noZoom       = false;
+        let noRotate     = false;
+
+        let nDisplayType = this.GetDisplay();
+        if (nDisplayType == 1) {
+            bHidden = true;
+        }
+        else if (nDisplayType == 0 || nDisplayType == 3) {
+            bPrint = true;
+            if (nDisplayType == 3) {
+                bNoView = true;
+            }
+        }
+        let annotFlags = (bHidden << 1) |
+        (bPrint << 2) |
+        (noZoom << 3) |
+        (noRotate << 4) |
+        (bNoView << 5) |
+        (locked << 7) |
+        (ToggleNoView << 8) |
+        (lockedC << 9);
+
+        memory.WriteLong(annotFlags);
+
+        // page
+        memory.WriteLong(this.GetOriginPage());
+
+        // rect
+        let aOrigRect = this.GetOrigRect();
+        memory.WriteDouble(aOrigRect[0]); // x1
+        memory.WriteDouble(aOrigRect[1]); // y1
+        memory.WriteDouble(aOrigRect[2]); // x2
+        memory.WriteDouble(aOrigRect[3]); // y2
+
+        // pos for flags
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+        
+        annotFlags = 0;
+        let nBorder = this.GetBorderStyle();
+        let nBorderW = this.GetBordersWidth();
+        if (nBorder != null || nBorderW != null) {
+            annotFlags |= (1 << 4);
+            memory.WriteByte(nBorder);
+            memory.WriteDouble(nBorderW);
+        }
+        
+        // write flags
+        let nEndPos = memory.GetCurPosition();
+        memory.Seek(nStartPos);
+        memory.WriteLong(annotFlags);
+        memory.Seek(nEndPos);
+    };
+
+    CBaseField.prototype.WriteToBinaryBase2 = function(memory) {
+        let aTextColor = this.GetTextColor();
+        if (aTextColor && aTextColor.length != 0) {
+            memory.WriteLong(aTextColor.length);
+
+            for (let i = 0; i < aTextColor.length; i++) {
+                memory.WriteDouble(aTextColor[i]);
+            }
+        }
+        
+        if (this.GetType() == AscPDF.FIELD_TYPES.text) {
+            let nAlignType = this.GetAlign();
+            memory.WriteByte(nAlignType);
+        }
+
+        // сюда пойдут 1ые флаги полей
+        memory.fieldFlags1   = 0;
+        memory.posForFlags1  = memory.GetCurPosition();
+        memory.Skip(4);
+        
+        // if (this.IsReadOnly()) {
+        //     memory.fieldFlags1 |= (1 << 0);
+        // }
+
+        if (this.IsRequired()) {
+            memory.fieldFlags1 |= (1 << 1);
+        }
+
+        // if (this.IsNoExport()) {
+        //     memory.fieldFlags1 |= (1 << 2);
+        // }
+
+        // сюда пойдут 2ые флаги полей
+        memory.fieldFlags2   = 0;
+        memory.posForFlags2  = memory.GetCurPosition();
+        memory.Skip(4);
+        
+        //
+        // username
+        //
+
+        //
+        // default style
+        //
+
+        // highlight
+        let nHighlightType = this.GetHighlight();
+        if (nHighlightType != null)
+            memory.fieldFlags2 |= (1 << 3);
+
+        let aBorderColor = this.GetBorderColor();
+        if (aBorderColor && aBorderColor.length != 0) {
+            memory.fieldFlags2 |= (1 << 5);
+            memory.WriteLong(aBorderColor.length);
+            for (let i = 0; i < aBorderColor.length; i++) {
+                memory.WriteDouble(aBorderColor[i]);
+            }
+        }
+
+        //
+        // rotate
+        //
+
+        let aBgColor = this.GetBackgroundColor();
+        if (aBgColor && aBgColor.length != 0) {
+            memory.fieldFlags2 |= (1 << 7);
+            memory.WriteLong(aBgColor.length);
+            for (let i = 0; i < aBgColor.length; i++) {
+                memory.WriteDouble(aBgColor[i]);;
+            }
+        }
+
+        let defValue = this.GetDefaultValue();
+        if (defValue != null) {
+            memory.fieldFlags2 |= (1 << 8);
+            memory.WriteString(defValue);
+        }
+
+        //
+        // parent
+        //
+
+        let sName = this.GetPartialName();
+        if (sName != null) {
+            memory.fieldFlags2 |= (1 << 18);
+            memory.WriteString(sName);
+        }
+
+        // actions to do
+        memory.WriteLong(0);
+        
     };
 
     // for format
