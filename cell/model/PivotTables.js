@@ -5797,7 +5797,7 @@ CT_pivotTableDefinition.prototype.updateCacheData = function (dataRef) {
  * @param {CT_PivotField[]} oldFields
  * @param {CT_PivotField[]} newFields
  * @param {Map<number, number>} pivotFieldsMap old index to new index of pivotFields
- * @param {Map}<number, number>} cacheFieldsIndexesMap old index to new index cacheFields
+ * @param {Map<number, Map<number, number>>} cacheFieldsIndexesMap old index to new index cacheFields
  * @return {Map<number, number>} old index to new index pivotField.items
  */
 CT_pivotTableDefinition.prototype._updateCacheDataUpdatePivotFieldsMap = function (oldFields, newFields, pivotFieldsMap, cacheFieldsIndexesMap) {
@@ -7240,11 +7240,16 @@ CT_pivotTableDefinition.prototype.ungroupRangePr = function (fld) {
 	pivotField.checkSubtotal();
 	if (removeFields.length > 0) {
 		var pivotFieldsMap = new Map();
+		let pivotFieldsIndexesMap = new Map();
 		var removeIndex = 0;
 		var mapIndex = 0;
 		for (i = 0; i < pivotFields.length; ++i) {
 			if (i !== removeFields[removeIndex]) {
 				pivotFieldsMap.set(i, mapIndex++);
+				let pivotFieldIndexesMap = pivotFields[i].getPivotFieldIndexesMapIdentity();
+				if (pivotFieldIndexesMap) {
+					pivotFieldsIndexesMap.set(i, pivotFieldIndexesMap);
+				}
 			} else if (removeIndex < removeFields.length - 1) {
 				removeIndex++;
 			}
@@ -7252,7 +7257,7 @@ CT_pivotTableDefinition.prototype.ungroupRangePr = function (fld) {
 		for (i = removeFields.length - 1; i >= 0; --i) {
 			pivotFields.splice(removeFields[i], 1);
 		}
-		this.updateIndexesForNewPivotFields(this.cacheDefinition, this.pivotFields, pivotFieldsMap);
+		this.updateIndexesForNewPivotFields(this.cacheDefinition, this.pivotFields, pivotFieldsMap, pivotFieldsIndexesMap);
 	}
 	this.setChanged(true);
 };
@@ -7299,14 +7304,19 @@ CT_pivotTableDefinition.prototype.ungroupDiscrete = function (fld, groupRes) {
 	}
 	if (groupRes.removeField) {
 		var pivotFieldsMap = new Map();
+		let pivotFieldsIndexesMap = new Map();
 		var mapIndex = 0;
 		for (var i = 0; i < pivotFields.length; ++i) {
 			if (i !== fld) {
 				pivotFieldsMap.set(i, mapIndex++);
+				let pivotFieldIndexesMap = pivotFields[i].getPivotFieldIndexesMapIdentity();
+				if (pivotFieldIndexesMap) {
+					pivotFieldsIndexesMap.set(i, pivotFieldIndexesMap);
+				}
 			}
 		}
 		pivotFields.splice(fld, 1);
-		this.updateIndexesForNewPivotFields(this.cacheDefinition, this.pivotFields, pivotFieldsMap);
+		this.updateIndexesForNewPivotFields(this.cacheDefinition, this.pivotFields, pivotFieldsMap, pivotFieldsIndexesMap);
 	}
 
 	this.setChanged(true);
@@ -13183,6 +13193,22 @@ CT_PivotField.prototype.getPivotFieldIndexesMap = function(oldField, cacheFieldI
 				if (undefined !== index) {
 					pivotFieldIndexesMap.set(i, index);
 				}
+			}
+		}
+	}
+	return pivotFieldIndexesMap;
+};
+/**
+ * @return {Map<number, number>} old index to new index
+ */
+CT_PivotField.prototype.getPivotFieldIndexesMapIdentity = function() {
+	let pivotFieldIndexesMap;
+	if (this.items) {
+		pivotFieldIndexesMap = new Map();
+		for (let i = 0; i < this.items.item.length; ++i) {
+			let item = this.items.item[i];
+			if (Asc.c_oAscItemType.Data === item.t && !item.m) {
+				pivotFieldIndexesMap.set(i, i);
 			}
 		}
 	}
