@@ -369,10 +369,10 @@ function setFieldProperty(pivot, index, oldVal, newVal, addToHistory, historyTyp
 		pivot.setChanged(true);
 	}
 };
-function toXmlWithLength(w, elem, name, val1) {
+function toXmlWithLength(w, elem, name, val1, val2) {
 	var StartPos = w.GetCurPosition();
 	w.WriteLong(0);
-	elem.toXml(w, name, val1);
+	elem.toXml(w, name, val1, val2);
 	var EndPos = w.GetCurPosition();
 	w.Seek(StartPos);
 	w.WriteLong(EndPos - StartPos - 4);
@@ -1488,9 +1488,12 @@ CT_PivotCacheDefinition.prototype.Get_Id = function () {
 };
 CT_PivotCacheDefinition.prototype.Write_ToBinary2 = function(w) {
 	var t = this;
+	let initSaveManager = new AscCommonExcel.InitSaveManager(null);
+	var oBinaryStylesTableWriter = new AscCommonExcel.BinaryStylesTableWriter(w, null, initSaveManager);
 	AscCommonExcel.executeInR1C1Mode(false, function () {
-		toXmlWithLength(w, t);
+		toXmlWithLength(w, t, oBinaryStylesTableWriter.stylesForWrite);
 	});
+	oBinaryStylesTableWriter.Write();
 	if (this.cacheRecords) {
 		w.WriteBool(true);
 		this.cacheRecords.Write_ToBinary2(w);
@@ -1504,6 +1507,14 @@ CT_PivotCacheDefinition.prototype.Read_FromBinary2 = function(r) {
 	AscCommonExcel.executeInR1C1Mode(false, function () {
 		new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(r, len), t);
 	});
+	//todo remove EnterFrame and new FT_Stream2
+	let _stream = new AscCommon.FT_Stream2(r.data, r.size);
+	_stream.Seek2(r.GetCurPos());
+	_stream.Seek(r.GetCurPos());
+	let stylesTableReader = new AscCommonExcel.Binary_StylesTableReader(_stream, null);
+	let oStyleObject = stylesTableReader.Read();
+	r.Seek2(_stream.GetCurPos());
+	this.initPostOpenZip(oStyleObject.oNumFmts);
 	if (r.GetBool()) {
 		this.cacheRecords = new CT_PivotCacheRecords();
 		this.cacheRecords.Read_FromBinary2(r);
@@ -2983,9 +2994,12 @@ CT_pivotTableDefinition.prototype.Write_ToBinary2 = function (w) {
 	var t = this;
 	w.WriteLong(this.getObjectType());
 	w.WriteString2(this.worksheet ? this.worksheet.getId() : '-1');
+	let initSaveManager = new AscCommonExcel.InitSaveManager(null);
+	let oBinaryStylesTableWriter = new AscCommonExcel.BinaryStylesTableWriter(w, null, initSaveManager);
 	AscCommonExcel.executeInR1C1Mode(false, function () {
-		toXmlWithLength(w, t);
+		toXmlWithLength(w, t, oBinaryStylesTableWriter.stylesForWrite, initSaveManager.getDxfs());
 	});
+	oBinaryStylesTableWriter.Write();
 	if (this.cacheDefinition) {
 		w.WriteBool(true);
 		this.cacheDefinition.Write_ToBinary2(w);
@@ -3002,6 +3016,14 @@ CT_pivotTableDefinition.prototype.Read_FromBinary2 = function (r) {
 	AscCommonExcel.executeInR1C1Mode(false, function () {
 		new AscCommon.openXml.SaxParserBase().parse(AscCommon.GetStringUtf8(r, len), t);
 	});
+	//todo remove EnterFrame and new FT_Stream2
+	let _stream = new AscCommon.FT_Stream2(r.data, r.size);
+	_stream.Seek2(r.GetCurPos());
+	_stream.Seek(r.GetCurPos());
+	let stylesTableReader = new AscCommonExcel.Binary_StylesTableReader(_stream, null);
+	let oStyleObject = stylesTableReader.Read();
+	r.Seek2(_stream.GetCurPos());
+	this.initPostOpenZip(oStyleObject.oNumFmts, oStyleObject.aDxfs);
 	if (r.GetBool()) {
 		this.cacheDefinition = new CT_PivotCacheDefinition();
 		this.cacheDefinition.Read_FromBinary2(r);

@@ -224,6 +224,18 @@ $(function() {
 		});
 		return res;
 	}
+	function getReportValuesWithBoolFillAndNum(pivot) {
+		let res = [];
+		let range = new AscCommonExcel.MultiplyRange(pivot.getReportRanges()).getUnionRange();
+		pivot.GetWS().getRange3(range.r1, range.c1, range.r2, range.c2)._foreach(function(cell, r, c, r1, c1) {
+			if (!res[r - r1]) {
+				res[r - r1] = [];
+			}
+			let xf = cell.getStyle();
+			res[r - r1][c - c1] = cell.getName() + ":" + cell.getValue()+ ":" + !!(xf && (!xf.isNormalFill() || !xf.num || !xf.num.getNumFormat().isGeneralFormat()));
+		});
+		return res;
+	}
 
 	QUnit.module("Pivot");
 
@@ -249,6 +261,47 @@ $(function() {
 			let row = 4;
 			let col = 0;
 			let getValues = getReportValuesWithBoolFill;
+
+			function prepareValues(wb, name, row, col){
+				let pivot = wb.getWorksheetByName(name).getPivotTable(col, row);
+				return getValues(pivot);
+			}
+			function preparePivots(wb, name, row, col){
+				return wb.getWorksheetByName(name).getPivotTable(col, row);
+			}
+
+			let wbRedo = openDocument(fileRedo);
+			let valuesRedo = wsNames.map(function(name){
+				return prepareValues(wbRedo, name, row, col);
+			});
+
+			let wb = openDocument(file);
+			let valuesUndo = wsNames.map(function(name){
+				return prepareValues(wb, name, row, col);
+			});
+			let pivots = wsNames.map(function(name){
+				return preparePivots(wb, name, row, col);
+			});
+
+			prepareTest(assert, wb);
+			wsNames.forEach(function(name, index){
+				let pivot = pivots[index];
+				pivot = checkHistoryOperation(assert, pivot, valuesUndo[index], valuesRedo[index], "refresh[" + name + "]", function(){
+					pivot.asc_refresh(api);
+				}, function(assert, pivot, values, message) {
+					assert.deepEqual(getValues(pivot), values, message);
+				});
+			});
+		});
+		QUnit.test('Test: refresh pivot-styles-numformat check values and format', function (assert) {
+			let file = Asc.pivot_styles_numformat;
+			let fileRedo = Asc.pivot_styles_numformat_redo;
+			let wsNames = [
+				"pivot"
+			];
+			let row = 4;
+			let col = 0;
+			let getValues = getReportValuesWithBoolFillAndNum;
 
 			function prepareValues(wb, name, row, col){
 				let pivot = wb.getWorksheetByName(name).getPivotTable(col, row);
