@@ -836,6 +836,12 @@
 				prepared.listeners[listenerId].notify(notifyData);
 			}
 		},
+		changeExternalLink: function(prepared) {
+			var notifyData = {type: c_oNotifyType.ChangeExternalLink, data: prepared.data, preparedData: prepared.preparedData};
+			for (var listenerId in prepared.listeners) {
+				prepared.listeners[listenerId].notify(notifyData);
+			}
+		},
 		prepareRemoveSheet: function(sheetId, tableNames) {
 			var t = this;
 			//cells
@@ -880,11 +886,11 @@
 		isLockRecal: function() {
 			return this.lockCounter > 0;
 		},
-		unlockRecal: function() {
+		unlockRecal: function(notCalc) {
 			if (0 < this.lockCounter) {
 				--this.lockCounter;
 			}
-			if (0 >= this.lockCounter) {
+			if (!notCalc && 0 >= this.lockCounter) {
 				this.calcTree();
 			}
 		},
@@ -2322,6 +2328,7 @@
 		this.fileSharing = null;
 
 		this.customXmls = null;//[]
+		this.oGoalSeek = null;
 	}
 	Workbook.prototype.init=function(tableCustomFunc, tableIds, sheetIds, bNoBuildDep, bSnapshot){
 		if(this.nActive < 0)
@@ -2463,7 +2470,7 @@
 	};
 	Workbook.prototype.isChartOleObject = function () {
 		return this.aWorksheets.length === 2;
-	}
+	};
 	Workbook.prototype.setCommonIndexObjectsFrom = function(wb) {
 		this.oStyleManager = wb.oStyleManager;
 		this.sharedStrings = wb.sharedStrings;
@@ -4199,6 +4206,7 @@
 							_rule = _rule.clone();
 							_rule.id = _id;
 							_rule.isLock = isLocked;
+							_rule.recalcInterfaceFormula(sheet, true);
 						}
 						rules.push(_rule);
 					}
@@ -4218,6 +4226,7 @@
 						_rule = _rule.clone();
 						_rule.id = _id;
 						_rule.isLock = isLocked;
+						_rule.recalcInterfaceFormula(sheet, true);
 					}
 					rules.push(_rule);
 				}
@@ -4573,11 +4582,25 @@
 		if (index != null) {
 			var from = this.externalReferences[index - 1];
 			//this.reIndexExternalReferencesLinks(index - 1);
-			this.externalReferences.splice(index - 1, 1);
+			this._removeExternalReference(index - 1);
 			if (addToHistory) {
 				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
 					null, null, new UndoRedoData_FromTo(from, null));
 			}
+		}
+	};
+
+	Workbook.prototype._removeExternalReference = function (index) {
+		if (index != null) {
+			//need offset last references
+			for (let i = index + 1; i < this.externalReferences.length; i++) {
+				for (let j in this.externalReferences[i].worksheets) {
+					var prepared = this.dependencyFormulas.prepareChangeSheet(this.externalReferences[i].worksheets[j].getId(), {from: i + 1, to: i});
+					this.dependencyFormulas.changeExternalLink(prepared);
+				}
+			}
+
+			this.externalReferences.splice(index, 1);
 		}
 	};
 
@@ -4676,6 +4699,80 @@
 
 		return res;
 	};
+
+	/******GOAL SEEK******
+	/**
+	 * Initializes and starts goal seek calculation.
+	 * @param {string} sFormulaCell
+	 * @param {string} sExpectedValue
+	 * @param {string} sChangingCell
+	 * @param {Worksheet} wsFormula
+	 * @param {Worksheet} wsChangingCell
+	 */
+	Workbook.prototype.startGoalSeek = function(sFormulaCell, sExpectedValue, sChangingCell, wsFormula, wsChangingCell) {
+		let oParserFormula;
+		let oFormulaCell = wsFormula.getCell2(sFormulaCell);
+		wsFormula._getCell(oFormulaCell.bbox.r1, oFormulaCell.bbox.c1, function (cell) {
+			oParserFormula = cell.getFormulaParsed();
+		});
+
+		this.setGoalSeek(new AscCommonExcel.CGoalSeek(oParserFormula, Number(sExpectedValue), wsChangingCell.getRange2(sChangingCell)));
+		let oGoalSeek = this.getGoalSeek();
+		// Run goal seek
+		oGoalSeek.init();
+		oGoalSeek.setIntervalId(setInterval(function () {
+			let bIsFinish = oGoalSeek.calculate();
+			if (bIsFinish) {
+				clearInterval(oGoalSeek.getIntervalId());
+			}
+		}, oGoalSeek.getDelay()));
+	};
+	/**
+	 * Returns object with goal seek result
+	 * @returns {CGoalSeek}
+	 */
+	Workbook.prototype.getGoalSeek = function() {
+		return this.oGoalSeek;
+	};
+	/**
+	 * Sets object with goal seek result
+	 * @param {CGoalSeek} oGoalSeek
+	 */
+	Workbook.prototype.setGoalSeek = function(oGoalSeek) {
+		this.oGoalSeek = oGoalSeek;
+	};
+	/**
+	 * Discards goal seek result for "Changing cell" to original
+	 */
+	Workbook.prototype.closeGoalSeek = function () {
+		let oGoalSeek = this.getGoalSeek();
+		if (!oGoalSeek) {
+			return;
+		}
+		let oChangedCell = oGoalSeek.getChangingCell();
+		let nFirstChangingVal = oGoalSeek.getFirstChangingValue();
+		oChangedCell.setValue(nFirstChangingVal == null ? "" : nFirstChangingVal + "");
+		this.setGoalSeek(null);
+	};
+	/**
+	 * Saves goal seek result for "Changing cell"
+	 */
+	Workbook.prototype.saveGoalSeek = function() {
+		this.setGoalSeek(null);
+	};
+
+	Workbook.prototype.pauseGoalSeek = function() {
+		this.oGoalSeek && this.oGoalSeek.pause();
+	};
+
+	Workbook.prototype.continueGoalSeek = function() {
+		this.oGoalSeek && this.oGoalSeek.resume();
+	};
+
+	Workbook.prototype.stepGoalSeek = function() {
+		this.oGoalSeek && this.oGoalSeek.step();
+	};
+
 
 
 //-------------------------------------------------------------------------------------------------
@@ -10707,14 +10804,16 @@
 	};
 
 	Worksheet.prototype.checkCorrectTables = function () {
-		for (var i = 0; i < this.TableParts.length; ++i) {
-			var table = this.TableParts[i];
+		for (let i = 0; i < this.TableParts.length; ++i) {
+			let table = this.TableParts[i];
 			if (table.isHeaderRow()) {
-				for (var j = 0; j < table.TableColumns.length; j++) {
+
+				this.workbook.dependencyFormulas.lockRecal();
+				for (let j = 0; j < table.TableColumns.length; j++) {
+					let tableColName = table.TableColumns[j].Name;
 					this._getCell(table.Ref.r1, table.Ref.c1 + j, function(cell) {
-						var tableColName = table.TableColumns[j].Name;
-						var valueData = cell.getValueData();
-						var val = valueData && valueData.value && valueData.value.text;
+						let valueData = cell.getValueData();
+						let val = valueData && valueData.value && valueData.value.text;
 						if (val !== tableColName){
 							cell.setValueData(
 								new AscCommonExcel.UndoRedoData_CellValueData(null, new AscCommonExcel.CCellValue({
@@ -10724,6 +10823,8 @@
 						}
 					});
 				}
+				this.workbook.dependencyFormulas.unlockRecal(true);
+
 				if (table.TableColumns.length < (table.Ref.c2 - table.Ref.c1 + 1)) {
 					table.Ref.c2 = table.Ref.c1 + table.TableColumns.length - 1;
 				}
@@ -10864,6 +10965,7 @@
 			this.setDirtyConditionalFormatting(new AscCommonExcel.MultiplyRange(updateRange));
 		}
 
+		to.recalcInterfaceFormula(this);
 		from.set(to, addToHistory, this);
 	};
 
@@ -10879,6 +10981,8 @@
 			}
 		}
 
+
+		val.recalcInterfaceFormula(this);
 		this.aConditionalFormattingRules.push(val);
 		this.cleanConditionalFormattingRangeIterator();
 		if (addToHistory) {

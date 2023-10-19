@@ -306,13 +306,6 @@
 
         oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
     };
-    CAnnotationText.prototype.onMouseUp = function() {
-        let oViewer = editor.getDocumentRenderer();
-
-        let oPos = AscPDF.GetGlobalCoordsByPageCoords(this._pagePos.x + this._pagePos.w / oViewer.zoom, this._pagePos.y + this._pagePos.h / (2 * oViewer.zoom), this.GetPage(), true);
-        editor.sync_ShowComment([this.GetId()], oPos["X"], oPos["Y"])
-    };
-
     CAnnotationText.prototype.IsComment = function() {
         return true;
     };
@@ -365,8 +358,9 @@
             AscCommon.History.TurnOff();
     }
 
-    window["AscPDF"].CAnnotationText = CAnnotationText;
-    window["AscPDF"].TEXT_ANNOT_STATE = TEXT_ANNOT_STATE;
+    window["AscPDF"].CAnnotationText            = CAnnotationText;
+    window["AscPDF"].TEXT_ANNOT_STATE           = TEXT_ANNOT_STATE;
+    window["AscPDF"].TEXT_ANNOT_STATE_MODEL     = TEXT_ANNOT_STATE_MODEL;
 	
 	function toBase64(str) {
 		return window.btoa(unescape(encodeURIComponent(str)));
@@ -477,5 +471,6 @@
 		UpArrow:        getSvgImage(SVG_ICON_UP_ARROW),
 		UpLeftArrow:    getSvgImage(SVG_ICON_UP_LEFT_ARROW)
 	}
+    
 })();
 

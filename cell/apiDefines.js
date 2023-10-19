@@ -109,7 +109,9 @@ var c_oAscSelectionDialogType = {
   Function: 9,
   DataValidation: 10,
   ConditionalFormattingRule: 11,
-  ImportXml: 12
+  ImportXml: 12,
+  GoalSeek_Cell: 13,
+  GoalSeek_ChangingCell: 14
 };
 
 var c_oAscScrollType = {
@@ -119,7 +121,8 @@ var c_oAscScrollType = {
 
 var c_oAscHyperlinkType = {
   WebLink: 1,
-  RangeLink: 2
+  RangeLink: 2,
+  FileLink: 3
 };
 
 var c_oAscMouseMoveType = {
@@ -683,11 +686,15 @@ var c_oAscPopUpSelectorType = {
   prot['DataValidation'] = prot.DataValidation;
   prot['ImportXml'] = prot.ImportXml;
   prot['ConditionalFormattingRule'] = prot.ConditionalFormattingRule;
+  prot['GoalSeek_Cell'] = prot.GoalSeek_Cell;
+  prot['GoalSeek_ChangingCell'] = prot.GoalSeek_ChangingCell;
+
 
   window['Asc']['c_oAscHyperlinkType'] = window['Asc'].c_oAscHyperlinkType = c_oAscHyperlinkType;
   prot = c_oAscHyperlinkType;
   prot['WebLink'] = prot.WebLink;
   prot['RangeLink'] = prot.RangeLink;
+  prot['FileLink'] = prot.FileLink;
   window['Asc']['c_oAscMouseMoveType'] = window['Asc'].c_oAscMouseMoveType = c_oAscMouseMoveType;
   prot = c_oAscMouseMoveType;
   prot['None'] = prot.None;

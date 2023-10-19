@@ -263,88 +263,78 @@
         AscCommon.g_inputContext.keyPressInput = "";
     };
 
-    /**
-     * Pastes text in the HTML format into the document.
-     * @memberof Api
-     * @typeofeditors ["CDE", "CSE", "CPE"]
-     * @alias PasteHtml
-     * @param {string} htmlText - A string value that specifies the text in the *HTML* format to be pasted into the document.
-     */
-    Api.prototype["pluginMethod_PasteHtml"] = function(htmlText)
-    {
-        if (!AscCommon.g_clipboardBase)
-            return null;
+	/**
+	 * Pastes text in the HTML format into the document.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias PasteHtml
+	 * @param {string} htmlText - A string value that specifies the text in the *HTML* format to be pasted into the document.
+	 */
+	Api.prototype["pluginMethod_PasteHtml"] = function (htmlText) {
+		if (!AscCommon.g_clipboardBase)
+			return null;
 
 		if (this.isViewMode)
 			return null;
 
-        var _elem = document.getElementById("pmpastehtml");
-        if (_elem)
-            return;
+		let _elem = document.getElementById("pmpastehtml");
+		if (_elem)
+			return;
 
-        _elem = document.createElement("div");
-        _elem.id = "pmpastehtml";
-        _elem.style.color = "rgb(0,0,0)";
+		window.g_asc_plugins && window.g_asc_plugins.setPluginMethodReturnAsync();
+		_elem = document.createElement("div");
+		_elem.id = "pmpastehtml";
+		_elem.style.color = "rgb(0,0,0)";
 
-        if (this.editorId == AscCommon.c_oEditorId.Word || this.editorId == AscCommon.c_oEditorId.Presentation)
-        {
-            var textPr = this.get_TextProps();
-            if (textPr)
-            {
-                if (undefined !== textPr.TextPr.FontSize)
-                    _elem.style.fontSize = textPr.TextPr.FontSize + "pt";
+		if (this.editorId === AscCommon.c_oEditorId.Word || this.editorId === AscCommon.c_oEditorId.Presentation) {
+			let textPr = this.get_TextProps();
+			if (textPr) {
+				if (undefined !== textPr.TextPr.FontSize)
+					_elem.style.fontSize = textPr.TextPr.FontSize + "pt";
 
-                _elem.style.fontWeight = (true === textPr.TextPr.Bold) ? "bold" : "normal";
-                _elem.style.fontStyle = (true === textPr.TextPr.Italic) ? "italic" : "normal";
+				_elem.style.fontWeight = (true === textPr.TextPr.Bold) ? "bold" : "normal";
+				_elem.style.fontStyle = (true === textPr.TextPr.Italic) ? "italic" : "normal";
 
-                var _color = textPr.TextPr.Color;
-                if (_color)
-                    _elem.style.color = "rgb(" + _color.r + "," + _color.g + "," + _color.b + ")";
-                else
-                    _elem.style.color = "rgb(0,0,0)";
-            }
-        }
-        else if (this.editorId == AscCommon.c_oEditorId.Spreadsheet)
-        {
-            var props = this.asc_getCellInfo();
+				let _color = textPr.TextPr.Color;
+				if (_color)
+					_elem.style.color = "rgb(" + _color.r + "," + _color.g + "," + _color.b + ")";
+				else
+					_elem.style.color = "rgb(0,0,0)";
+			}
+		} else if (this.editorId === AscCommon.c_oEditorId.Spreadsheet) {
+			let props = this.asc_getCellInfo();
 
-            if (props && props.font)
-            {
-                if (undefined != props.font.size)
-                    _elem.style.fontSize = props.font.size + "pt";
+			if (props && props.font) {
+				if (undefined != props.font.size)
+					_elem.style.fontSize = props.font.size + "pt";
 
-                _elem.style.fontWeight = (true === props.font.bold) ? "bold" : "normal";
-                _elem.style.fontStyle = (true === props.font.italic) ? "italic" : "normal";
-            }
-        }
+				_elem.style.fontWeight = (true === props.font.bold) ? "bold" : "normal";
+				_elem.style.fontStyle = (true === props.font.italic) ? "italic" : "normal";
+			}
+		}
 
-        _elem.innerHTML = htmlText;
-        document.body.appendChild(_elem);
-        this.incrementCounterLongAction();
-        var b_old_save_format = AscCommon.g_clipboardBase.bSaveFormat;
-        AscCommon.g_clipboardBase.bSaveFormat = true;
-        this.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, _elem);
-        this.decrementCounterLongAction();
+		_elem.innerHTML = htmlText;
+		document.body.appendChild(_elem);
+		this.incrementCounterLongAction();
+		let b_old_save_format = AscCommon.g_clipboardBase.bSaveFormat;
+		AscCommon.g_clipboardBase.bSaveFormat = false;
+		let _t = this;
+		this.asc_PasteData(AscCommon.c_oAscClipboardDataFormat.HtmlElement, _elem, undefined, undefined, undefined,
+			function () {
+				_t.decrementCounterLongAction();
 
-        if (true)
-        {
-            var fCallback = function ()
-            {
-                document.body.removeChild(_elem);
-                _elem = null;
-                AscCommon.g_clipboardBase.bSaveFormat = b_old_save_format;
-            };
-            if(this.checkLongActionCallback(fCallback, null)){
-                fCallback();
-            }
-        }
-        else
-        {
-            document.body.removeChild(_elem);
-            _elem = null;
-            AscCommon.g_clipboardBase.bSaveFormat = b_old_save_format;
-        }
-    };
+				let fCallback = function () {
+					document.body.removeChild(_elem);
+					_elem = null;
+					AscCommon.g_clipboardBase.bSaveFormat = b_old_save_format;
+				};
+				if (_t.checkLongActionCallback(fCallback, null)) {
+					fCallback();
+				}
+				window.g_asc_plugins &&	window.g_asc_plugins.onPluginMethodReturn(true);
+			}
+		);
+	};
 
     /**
      * Pastes text into the document.
@@ -1269,8 +1259,9 @@
 			};
 		}
 		
-		const isDesktop = window["AscDesktopEditor"] !== undefined;
-		if (isDesktop)
+		// desktop detecting (it's necessary when we work with clouds into desktop)
+		const isLocal = ( (window["AscDesktopEditor"] !== undefined) && (window.location.protocol.indexOf('file') !== -1) );
+		if (isLocal)
 		{
 			// Отдаём весь конфиг, внутри вычислим путь к deploy
 			// TODO: отслеживать возможные ошибки при +/- плагинов: из ++кода отправлять статус операции и на основе его отправлять в менеджер плагинов корректный ответ.
@@ -1312,8 +1303,8 @@
 		if (this.disableCheckInstalledPlugins)
 			return;
 
-		const isDesktop = window["AscDesktopEditor"] !== undefined;
-		if (isDesktop) {
+		const isLocal = ( (window["AscDesktopEditor"] !== undefined) && (window.location.protocol.indexOf('file') !== -1) );
+		if (isLocal) {
 			// В случае Desktop не работаем с localStorage и extensions, этот метод может быть вызван из интерфейса
 			// если по какой-то причине (неактуальный cache) у пользователя есть asc_plugins_installed, asc_plugins_removed, то их нужно игнорировать/удалить
 			return;
@@ -1406,14 +1397,14 @@
 			}
 		*/
 
-		const isDesktop = window["AscDesktopEditor"] !== undefined;
+		const isLocal = ( (window["AscDesktopEditor"] !== undefined) && (window.location.protocol.indexOf('file') !== -1) );
 
 		// В случае Desktop нужно проверить какие плагины нельзя удалять. В UpdateInstallPlugins работаем с двумя типами папок.
 		// Пока проверка тут, но грамотнее будет сделать и использовать доп.свойство isSystemInstall класса CPlugin
 		// т.к. не будем лишний раз парсить папки, только при +/- плагинов.
 		let protectedPlugins = [];
 
-		if (isDesktop) {
+		if (isLocal) {
 			var _pluginsTmp = JSON.parse(window["AscDesktopEditor"]["GetInstallPlugins"]());
 
 			var len = _pluginsTmp[0]["pluginsData"].length;
@@ -1450,7 +1441,7 @@
 			});
 		}
 
-		if (isDesktop)
+		if (isLocal)
 			return returnArray;
 
 		// нужно послать и удаленные. так как удаленный может не быть в сторе. тогда его никак не установить обратно
@@ -1488,9 +1479,9 @@
 	Api.prototype["pluginMethod_RemovePlugin"] = function(guid, backup)
 	{
 		let removedPlugin = window.g_asc_plugins.unregister(guid);
-		const isDesktop = window["AscDesktopEditor"] !== undefined;
+		const isLocal = ( (window["AscDesktopEditor"] !== undefined) && (window.location.protocol.indexOf('file') !== -1) );
 
-		if (isDesktop)
+		if (isLocal)
 		{
 			// Вызываем только этот ++код, никаких дополнительных действий типа:
 			// window.g_asc_plugins.unregister(guid), window["UpdateInstallPlugins"](), this.sendEvent("asc_onPluginsReset"), window.g_asc_plugins.updateInterface()

@@ -3723,6 +3723,10 @@
 		if (!this.macros)
 			return true;
 
+		// we shouldn't create a history point and update it if macros haven't been changed
+		if (this.macros.Data && this.macros.Data === sData)
+			return true;
+
 		if (true === AscCommon.CollaborativeEditing.Get_GlobalLock())
 			return true;
 
@@ -4254,13 +4258,13 @@
 	baseEditorsApi.prototype.asc_correctEnterText = function(oldValue, newValue)
 	{
 	};
-	baseEditorsApi.prototype.asc_setContentDarkMode = baseEditorsApi.prototype["asc_setContentDarkMode"] = function(isDarkMode)
+	baseEditorsApi.prototype.asc_setContentDarkMode = function(isDarkMode)
 	{
 		if (this.isDarkMode === isDarkMode)
 			return;
-		
+
 		this.isDarkMode = isDarkMode;
-		
+
 		this.updateDarkMode();
 	};
 	baseEditorsApi.prototype.updateDarkMode = function()
@@ -4819,5 +4823,6 @@
 	prot["asc_searchEnabled"] = prot.asc_searchEnabled;
 	prot['asc_findText'] = prot.asc_findText;
 	prot['asc_endFindText'] = prot.asc_endFindText;
+	prot['asc_setContentDarkMode'] = prot.asc_setContentDarkMode;
 
 })(window);

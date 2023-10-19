@@ -962,7 +962,7 @@
 		{
 			const shape = AddShape(0, 0, 100, 100);
 			SelectDrawings([shape]);
-			logicDocument.AddAnimation(1, 1, 0, false, false);
+			logicDocument.AddAnimation(1, 1, 0, null, false, false);
 			GetDrawingObjects().resetSelection();
 			const timing = logicDocument.GetCurTiming();
 			let effects = timing.getObjectEffects(shape.GetId());

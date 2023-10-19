@@ -467,8 +467,6 @@ var cErrorType = {
 		not_available       : 7,
 		getting_data        : 8
   };
-
-
 //добавляю константу cReturnFormulaType для корректной обработки формул массива
 // value - функция умеет возвращать только значение(не массив)
 // в этом случае данная функция вызывается множество раз для каждого элемента внутренних массивов
@@ -505,6 +503,13 @@ var cNumFormatNull = -3;
 var g_nFormulaStringMaxLength = 255;
 
 
+// set type weight of base types
+let cElementTypeWeight =  new Map();
+	cElementTypeWeight.set(cElementType.number, 0);
+	cElementTypeWeight.set(cElementType.empty, 0);
+	cElementTypeWeight.set(cElementType.string, 1);
+	cElementTypeWeight.set(cElementType.bool, 2);
+	cElementTypeWeight.set(cElementType.error, 3);
 
 
 
@@ -3692,7 +3697,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cRangeUnionOperator.prototype.priority = 50;
 	cRangeUnionOperator.prototype.argumentsCurrent = 2;
 	cRangeUnionOperator.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1], ws0, ws1, ws, res;
+		let arg0 = arg[0], arg1 = arg[1], ws0, ws1, ws, res;
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+		if (cElementType.error === arg1.type) {
+			return arg1;
+		}
 		if (( cElementType.cell === arg0.type || cElementType.cellsRange === arg0.type ||
 			cElementType.cell3D === arg0.type ||
 			cElementType.cellsRange3D === arg0.type && (ws0 = arg0.wsFrom) === arg0.wsTo ) &&
@@ -3989,33 +4000,13 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cPowOperator.prototype.priority = 40;
 	cPowOperator.prototype.argumentsCurrent = 2;
 	cPowOperator.prototype.Calculate = function (arg) {
-		var arg0 = arg[0], arg1 = arg[1];
-		if (arg0 instanceof cArea) {
-			arg0 = arg0.cross(arguments[1]);
-		} else if (arg0 instanceof cArea3D) {
-			arg0 = arg0.cross(arguments[1], arguments[3]);
-		}
-		arg0 = arg0.tocNumber();
-		if (arg1 instanceof cArea) {
-			arg1 = arg1.cross(arguments[1]);
-		} else if (arg1 instanceof cArea3D) {
-			arg1 = arg1.cross(arguments[1], arguments[3]);
-		}
-		arg1 = arg1.tocNumber();
-		if (arg0 instanceof cError) {
-			return arg0;
-		}
-		if (arg1 instanceof cError) {
-			return arg1;
+		let res = AscCommonExcel.cFormulaFunction.POWER.prototype.Calculate(arg);
+
+		if (res) {
+			return res;
 		}
 
-		var _v = Math.pow(arg0.getValue(), arg1.getValue());
-		if (isNaN(_v)) {
-			return new cError(cErrorType.not_numeric);
-		} else if (_v === Number.POSITIVE_INFINITY) {
-			return new cError(cErrorType.division_by_zero);
-		}
-		return new cNumber(_v);
+		return new cError(cErrorType.wrong_value_type);
 	};
 
 	/**
@@ -5156,9 +5147,9 @@ _func[cElementType.number][cElementType.array] = _func[cElementType.string][cEle
 
 
 _func.binarySearch = function ( sElem, arrTagert, regExp ) {
-	var first = 0, /* Номер первого элемента в массиве */
-		last = arrTagert.length - 1, /* Номер элемента в массиве, СЛЕДУЮЩЕГО ЗА последним */
-		/* Если просматриваемый участок непустой, first<last */
+	var first = 0, /* The number of the first element in the array */
+		last = arrTagert.length - 1, /* The number of the element in the array that comes AFTER the last one */
+		/* If the viewed segment is not empty, first<last */
 		mid;
 
 	var arrTagertOneType = [], isString = false;
@@ -5176,31 +5167,49 @@ _func.binarySearch = function ( sElem, arrTagert, regExp ) {
 		}
 	}
 
+	// comparing the lengths of arrays and the first and last element
 	if (arrTagert.length === 0) {
 		return -1;
-		/* массив пуст */
+		/* array empty */
 	} else if (arrTagert[0].value > sElem.value) {
 		return -2;
 	} else if (arrTagert[arrTagert.length - 1].value < sElem.value) {
 		return arrTagert.length - 1;
 	}
 
+	// according to the sorting in MS, the comparison will be like this: cError > cBool > cText > (cNumber == cEmpty)
 	while (first < last) {
 		mid = Math.floor(first + (last - first) / 2);
-		if (sElem.value <= arrTagert[mid].value || ( regExp && regExp.test(arrTagert[mid].value) )) {
-			last = mid;
+		if (sElem.type !== arrTagert[mid].type) {
+			if (sElem.type === cElementType.empty || arrTagert[mid].type === cElementType.empty) {
+				if (sElem.value <= arrTagert[mid].value) {
+					// cEmpty.tocNumber() ?
+					last = mid;
+				}
+			} else {
+				if (cElementTypeWeight.get(sElem.type) < cElementTypeWeight.get(arrTagert[mid].type)) {
+					last = mid;
+				} else {
+					first = mid + 1;
+				}
+			}
 		} else {
-			first = mid + 1;
+			// if cError && cError ?
+			if (sElem.value < arrTagert[mid].value || ( regExp && regExp.test(arrTagert[mid].value) )) {
+				last = mid;
+			} else {
+				first = mid + 1;
+			}
 		}
 	}
 
-	/* Если условный оператор if(n==0) и т.д. в начале опущен - значит, тут раскомментировать!    */
+	/* If the conditional operator if(n==0) and so on is omitted at the beginning - then uncomment it here!    */
 	if (/* last<n &&*/ arrTagert[last].value === sElem.value) {
 		return last;
-		/* Искомый элемент найден. last - искомый индекс */
+		/* The desired element is found. last is the desired index */
 	} else {
 		return last - 1;
-		/* Искомый элемент не найден. Но если вам вдруг надо его вставить со сдвигом, то его место - last.    */
+		/* The desired element is not found. But if you suddenly need to insert it with a shift, its place is at last.    */
 	}
 
 };
@@ -5215,9 +5224,9 @@ _func.binarySearchByRange = function ( sElem, area, regExp ) {
 		ws = area.ws;
 	}
 	var bVertical = bbox.r2 - bbox.r1 >= bbox.c2 - bbox.c1;//r>=c
-	var first = 0, /* Номер первого элемента в массиве */
-		last = bVertical ? bbox.r2 - bbox.r1 : bbox.c2 - bbox.c1, /* Номер элемента в массиве, СЛЕДУЮЩЕГО ЗА последним */
-		/* Если просматриваемый участок непустой, first<last */
+	var first = 0, /* The number of the first element in the array */
+		last = bVertical ? bbox.r2 - bbox.r1 : bbox.c2 - bbox.c1, /* The number of the element in the array that comes AFTER the last one */
+		/* If the viewed segment is not empty, first<last */
 		mid;
 
 	var getValuesNoEmpty = function () {
@@ -5242,7 +5251,6 @@ _func.binarySearchByRange = function ( sElem, area, regExp ) {
 
 	if (noEmptyValues.length === 0) {
 		return -1;
-		/* массив пуст */
 	} else if (noEmptyValues[0].value > sElem.value) {
 		return -2;
 	} else if (noEmptyValues[last].value < sElem.value) {
@@ -5260,15 +5268,28 @@ _func.binarySearchByRange = function ( sElem, area, regExp ) {
 		}
 	}
 
-	/* Если условный оператор if(n==0) и т.д. в начале опущен - значит, тут раскомментировать!    */
+	/* If the conditional operator if(n==0) and so on is omitted at the beginning - then uncomment it here!    */
 	if (/* last<n &&*/ noEmptyValues[last].value === sElem.value) {
 		return mapEmptyFullValues[last];
-		/* Искомый элемент найден. last - искомый индекс */
+		/* The desired element is found. last is the desired index */
 	} else {
 		return mapEmptyFullValues[last - 1];
-		/* Искомый элемент не найден. Но если вам вдруг надо его вставить со сдвигом, то его место - last.    */
+		/* The desired element is not found. But if you suddenly need to insert it with a shift, its place is at last.    */
 	}
 
+};
+
+
+_func.getLastMatch = function (index, value, array) {
+	let resIndex = index;
+	for (let i = index; i < array.length; i++) {
+		if (array[i].type === value.type && array[i].value === value.value) {
+			resIndex = i;
+		} else {
+			break;
+		}
+	}
+	return resIndex;
 };
 
 _func[cElementType.number][cElementType.cell] = function ( arg0, arg1, what, bbox ) {
@@ -5703,6 +5724,10 @@ function parserFormula( formula, parent, _ws ) {
 		} else if (AscCommon.c_oNotifyType.Prepare === data.type) {
 			this.removeDependencies();
 			this.processNotifyPrepare(data);
+		} else if (AscCommon.c_oNotifyType.ChangeExternalLink === data.type) {
+			this._changeExternalLink(data);
+			this.Formula = this.assemble(true);
+			this.buildDependencies();
 		} else {
 			this.removeDependencies();
 			var needAssemble = true;
@@ -5719,6 +5744,15 @@ function parserFormula( formula, parent, _ws ) {
 			}
 			this.Formula = eventData.assemble;
 			this.buildDependencies();
+		}
+	};
+	parserFormula.prototype._changeExternalLink = function(data) {
+		for (var i = 0; i < this.outStack.length; i++) {
+			if (this.outStack[i].type === cElementType.cell3D || this.outStack[i].type === cElementType.cellsRange3D || this.outStack[i].type === cElementType.name3D) {
+				if (this.outStack[i].externalLink == data.data.from) {
+					this.outStack[i].externalLink = data.data.to;
+				}
+			}
 		}
 	};
 	parserFormula.prototype.processNotifyPrepare = function(data) {
@@ -8785,6 +8819,18 @@ function parserFormula( formula, parent, _ws ) {
 					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
 				}
 			}
+		} else if (arg0.getCountElement() !== arg1.getCountElement()) {
+			let arrayRows = Math.min(arg0.getRowCount(), arg1.getRowCount()),
+				arrayCols = Math.min(arg0.getCountElementInRow(), arg1.getCountElementInRow());
+				retArr = new cArray();
+
+			for (iRow = 0; iRow < arrayRows; iRow++, iRow < arrayRows ? retArr.addRow() : true) {
+				for (iCol = 0; iCol < arrayCols; iCol++) {
+					_arg0 = arg0.getElementRowCol(iRow, iCol);
+					_arg1 = arg1.getElementRowCol(iRow, iCol);
+					retArr.addElement(_func[_arg0.type][_arg1.type](_arg0, _arg1, what));
+				}
+			}
 		}
 		return retArr;
 	}
@@ -8793,6 +8839,7 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'] = window['AscCommonExcel'] || {};
 	window['AscCommonExcel'].cElementType = cElementType;
 	window['AscCommonExcel'].cErrorType = cErrorType;
+	window['AscCommonExcel'].cElementTypeWeight = cElementTypeWeight;
 	window['AscCommonExcel'].cExcelSignificantDigits = cExcelSignificantDigits;
 	window['AscCommonExcel'].cExcelMaxExponent = cExcelMaxExponent;
 	window['AscCommonExcel'].cExcelMinExponent = cExcelMinExponent;
@@ -8823,6 +8870,7 @@ function parserFormula( formula, parent, _ws ) {
 	window['AscCommonExcel'].cBaseFunction = cBaseFunction;
 	window['AscCommonExcel'].cUnknownFunction = cUnknownFunction;
 	window['AscCommonExcel'].cStrucTable = cStrucTable;
+	window['AscCommonExcel'].cBaseOperator = cBaseOperator;
 
 	window['AscCommonExcel'].checkTypeCell = checkTypeCell;
 	window['AscCommonExcel'].cFormulaFunctionGroup = cFormulaFunctionGroup;

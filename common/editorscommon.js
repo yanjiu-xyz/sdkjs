@@ -180,105 +180,6 @@
 		return (v - v % 1)   ||   (!isFinite(v) || v === 0 ? v : v < 0 ? -0 : 0);
 	};
 
-	// https://tc39.github.io/ecma262/#sec-array.prototype.includes
-	if (!Array.prototype.includes) {
-		Object.defineProperty(Array.prototype, 'includes', {
-			value: function(searchElement, fromIndex) {
-
-				if (this == null) {
-					throw new TypeError('"this" is null or not defined');
-				}
-
-				// 1. Let O be ? ToObject(this value).
-				var o = Object(this);
-
-				// 2. Let len be ? ToLength(? Get(O, "length")).
-				var len = o.length >>> 0;
-
-				// 3. If len is 0, return false.
-				if (len === 0) {
-					return false;
-				}
-
-				// 4. Let n be ? ToInteger(fromIndex).
-				//    (If fromIndex is undefined, this step produces the value 0.)
-				var n = fromIndex | 0;
-
-				// 5. If n ≥ 0, then
-				//  a. Let k be n.
-				// 6. Else n < 0,
-				//  a. Let k be len + n.
-				//  b. If k < 0, let k be 0.
-				var k = Math.max(n >= 0 ? n : len - Math.abs(n), 0);
-
-				function sameValueZero(x, y) {
-					return x === y || (typeof x === 'number' && typeof y === 'number' && isNaN(x) && isNaN(y));
-				}
-
-				// 7. Repeat, while k < len
-				while (k < len) {
-					// a. Let elementK be the result of ? Get(O, ! ToString(k)).
-					// b. If SameValueZero(searchElement, elementK) is true, return true.
-					if (sameValueZero(o[k], searchElement)) {
-						return true;
-					}
-					// c. Increase k by 1.
-					k++;
-				}
-
-				// 8. Return false
-				return false;
-			}
-		});
-	}
-
-	// https://tc39.github.io/ecma262/#sec-array.prototype.find
-	if (!Array.prototype.find) {
-		Object.defineProperty(Array.prototype, 'find', {
-			value: function(predicate) {
-				// 1. Let O be ? ToObject(this value).
-				if (this == null) {
-					throw new TypeError('"this" is null or not defined');
-				}
-
-				var o = Object(this);
-
-				// 2. Let len be ? ToLength(? Get(O, "length")).
-				var len = o.length >>> 0;
-
-				// 3. If IsCallable(predicate) is false, throw a TypeError exception.
-				if (typeof predicate !== 'function') {
-					throw new TypeError('predicate must be a function');
-				}
-
-				// 4. If thisArg was supplied, let T be thisArg; else let T be undefined.
-				var thisArg = arguments[1];
-
-				// 5. Let k be 0.
-				var k = 0;
-
-				// 6. Repeat, while k < len
-				while (k < len) {
-					// a. Let Pk be ! ToString(k).
-					// b. Let kValue be ? Get(O, Pk).
-					// c. Let testResult be ToBoolean(? Call(predicate, T, « kValue, k, O »)).
-					// d. If testResult is true, return kValue.
-					var kValue = o[k];
-					if (predicate.call(thisArg, kValue, k, o)) {
-						return kValue;
-					}
-					// e. Increase k by 1.
-					k++;
-				}
-
-				// 7. Return undefined.
-				return undefined;
-			},
-			configurable: true,
-			writable: true
-		});
-	}
-
 	if (typeof require === 'function' && !window['XRegExp'])
 	{
 		window['XRegExp'] = require('xregexp');
@@ -1521,12 +1422,14 @@
 		"uf": "#UNSUPPORTED_FUNCTION!"
 	};
 	var cErrorLocal = {};
+	let cCellFunctionLocal = {};
 
 	function build_local_rx(data)
 	{
 		rx_table_local = build_rx_table(data ? data["StructureTables"] : null);
 		rx_bool_local = build_rx_bool((data && data["CONST_TRUE_FALSE"]) || cBoolOrigin);
 		rx_error_local = build_rx_error(data ? data["CONST_ERROR"] : null);
+		rx_cell_func_local = build_rx_cell_func(data ? data["CELL_FUNCTION_INFO_TYPE"] : null);
 	}
 
 	function build_rx_table(local)
@@ -1612,6 +1515,50 @@
 			cErrorLocal["na"] + "|" +
 			cErrorLocal["getdata"] + "|" +
 			cErrorLocal["uf"] + ")", "i");
+	}
+
+	function build_rx_cell_func(local)
+	{
+		// ToDo переделать на более правильную реализацию. Не особо правильное копирование
+		local = local ? local : {
+			"address": "address",
+			"col": "col",
+			"color": "color",
+			"contents": "contents",
+			"filename": "filename",
+			"format": "format",
+			"parentheses": "parentheses",
+			"prefix": "prefix",
+			"protect": "protect",
+			"row": "row",
+			"type": "type",
+			"width": "width"
+		};
+		cCellFunctionLocal['address'] = local['address'];
+		cCellFunctionLocal['col'] = local['col'];
+		cCellFunctionLocal['color'] = local['color'];
+		cCellFunctionLocal['contents'] = local['contents'];
+		cCellFunctionLocal['filename'] = local['filename'];
+		cCellFunctionLocal['format'] = local['format'];
+		cCellFunctionLocal['parentheses'] = local['parentheses'];
+		cCellFunctionLocal['prefix'] = local['prefix'];
+		cCellFunctionLocal['protect'] = local['protect'];
+		cCellFunctionLocal['row'] = local['row'];
+		cCellFunctionLocal['type'] = local['type'];
+		cCellFunctionLocal['width'] = local['width'];
+
+		return new RegExp("^(" + cCellFunctionLocal["address"] + "|" +
+			cCellFunctionLocal["col"] + "|" +
+			cCellFunctionLocal["color"] + "|" +
+			cCellFunctionLocal["contents"] + "|" +
+			cCellFunctionLocal["filename"] + "|" +
+			cCellFunctionLocal["format"] + "|" +
+			cCellFunctionLocal["parentheses"] + "|" +
+			cCellFunctionLocal["prefix"] + "|" +
+			cCellFunctionLocal["protect"] +
+			cCellFunctionLocal["row"] +
+			cCellFunctionLocal["type"] +
+			cCellFunctionLocal["width"] + ")", "i");
 	}
 
 	var PostMessageType = {
@@ -2678,6 +2625,7 @@
 
 		rx_error              = build_rx_error(null),
 		rx_error_local        = build_rx_error(null),
+		rx_cell_func_local    = build_rx_cell_func(null),
 
 		rx_bool               = build_rx_bool(cBoolOrigin),
 		rx_bool_local         = rx_bool,
@@ -3606,8 +3554,9 @@
 	 */
 	parserHelper.prototype.checkDataRange = function (model, wb, dialogType, dataRange, fullCheck, isRows, subType)
 	{
-		var result, range, sheetModel, checkChangeRange;
-		if (Asc.c_oAscSelectionDialogType.Chart === dialogType)
+		let result, range, sheetModel, checkChangeRange;
+		let cDialogType = Asc.c_oAscSelectionDialogType;
+		if (cDialogType.Chart === dialogType)
 		{
 			if(dataRange)
 			{
@@ -3617,7 +3566,7 @@
 				}
 			}
 		}
-		else if(Asc.c_oAscSelectionDialogType.PivotTableData === dialogType || Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType || Asc.c_oAscSelectionDialogType.ImportXml === dialogType)
+		else if(cDialogType.PivotTableData === dialogType || cDialogType.PivotTableReport === dialogType || cDialogType.ImportXml === dialogType)
 		{
 			result = parserHelp.parse3DRef(dataRange);
 			if (result)
@@ -3627,7 +3576,7 @@
 				{
 					range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
 				}
-			} else if (Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType || Asc.c_oAscSelectionDialogType.ImportXml === dialogType) {
+			} else if (cDialogType.PivotTableReport === dialogType || cDialogType.ImportXml === dialogType) {
 				range = AscCommonExcel.g_oRangeCache.getAscRange(dataRange);
 			}
 			if (!range) {
@@ -3637,7 +3586,7 @@
 				range = parserHelp.isTable(dataRange, 0, true);
 			}
 		}
-		else if(Asc.c_oAscSelectionDialogType.PrintTitles === dialogType)
+		else if(cDialogType.PrintTitles === dialogType)
 		{
 			if(dataRange === "")
 			{
@@ -3648,7 +3597,7 @@
 				range = AscCommonExcel.g_oRangeCache.getAscRange(dataRange);
 			}
 		}
-		else if (Asc.c_oAscSelectionDialogType.DataValidation === dialogType)
+		else if (cDialogType.DataValidation === dialogType)
 		{
 			if (dataRange === null || dataRange === "") {
 				return Asc.c_oAscError.ID.DataValidateMustEnterValue;
@@ -3669,19 +3618,20 @@
 			range = AscCommonExcel.g_oRangeCache.getAscRange(dataRange);
 		}
 
-		if (!range && Asc.c_oAscSelectionDialogType.DataValidation !== dialogType && Asc.c_oAscSelectionDialogType.ConditionalFormattingRule !== dialogType)
+		if (!range && cDialogType.DataValidation !== dialogType && cDialogType.ConditionalFormattingRule !== dialogType && cDialogType.GoalSeek_Cell !== dialogType &&
+			cDialogType.GoalSeek_ChangingCell !== dialogType)
 		{
 			return Asc.c_oAscError.ID.DataRangeError;
 		}
 
 		if (fullCheck)
 		{
-			if (Asc.c_oAscSelectionDialogType.Chart === dialogType)
+			if (cDialogType.Chart === dialogType)
 			{
 				var oDataRefs = new AscFormat.CChartDataRefs(null);
 				return oDataRefs.checkDataRange(dataRange, isRows, subType);
 			}
-			else if (Asc.c_oAscSelectionDialogType.FormatTable === dialogType)
+			else if (cDialogType.FormatTable === dialogType)
 			{
 				// ToDo убрать эту проверку, заменить на более грамотную после правки функции _searchFilters
 				if (true === wb.getWorksheet().model.autoFilters.isRangeIntersectionTableOrFilter(range)) {
@@ -3692,26 +3642,26 @@
 					return Asc.c_oAscError.ID.LargeRangeWarning;
 				}
 			}
-			else if (Asc.c_oAscSelectionDialogType.FormatTableChangeRange === dialogType)
+			else if (cDialogType.FormatTableChangeRange === dialogType)
 			{
 				// ToDo убрать эту проверку, заменить на более грамотную после правки функции _searchFilters
 				checkChangeRange = wb.getWorksheet().af_checkChangeRange(range);
 				if (null !== checkChangeRange)
 					return checkChangeRange;
 			}
-			else if(Asc.c_oAscSelectionDialogType.CustomSort === dialogType)
+			else if(cDialogType.CustomSort === dialogType)
 			{
 				checkChangeRange = wb.getWorksheet().checkCustomSortRange(range, isRows);
 				if (null !== checkChangeRange)
 					return checkChangeRange;
 			}
-			else if (Asc.c_oAscSelectionDialogType.PivotTableData === dialogType)
+			else if (cDialogType.PivotTableData === dialogType)
 			{
 				if (!Asc.CT_pivotTableDefinition.prototype.isValidDataRef(dataRange)) {
 					return Asc.c_oAscError.ID.PivotLabledColumns;
 				}
 			}
-			else if (Asc.c_oAscSelectionDialogType.PivotTableReport === dialogType || Asc.c_oAscSelectionDialogType.ImportXml === dialogType)
+			else if (cDialogType.PivotTableReport === dialogType || cDialogType.ImportXml === dialogType)
 			{
 				var location = Asc.CT_pivotTableDefinition.prototype.parseDataRef(dataRange);
 				if (location) {
@@ -3719,7 +3669,7 @@
 					if (!sheetModel) {
 						sheetModel = model.getActiveWs();
 					}
-					if (Asc.c_oAscSelectionDialogType.ImportXml === dialogType) {
+					if (cDialogType.ImportXml === dialogType) {
 						return sheetModel.checkImportXmlLocationForError([location.bbox]);
 					} else {
 						var newRange = new Asc.Range(location.bbox.c1, location.bbox.r1, location.bbox.c1 + AscCommonExcel.NEW_PIVOT_LAST_COL_OFFSET, location.bbox.r1 + AscCommonExcel.NEW_PIVOT_LAST_ROW_OFFSET);
@@ -3729,7 +3679,7 @@
 					return Asc.c_oAscError.ID.DataRangeError;
 				}
 			}
-			else if (Asc.c_oAscSelectionDialogType.DataValidation === dialogType)
+			else if (cDialogType.DataValidation === dialogType)
 			{
 				var dataValidaionTest = AscCommonExcel.CDataValidation.prototype.isValidDataRef(model.getActiveWs(), dataRange, subType);
 				if (null !== dataValidaionTest)
@@ -3737,7 +3687,7 @@
 					return dataValidaionTest;
 				}
 			}
-			else if (Asc.c_oAscSelectionDialogType.ConditionalFormattingRule === dialogType)
+			else if (cDialogType.ConditionalFormattingRule === dialogType)
 			{
 
 				if (dataRange === null || dataRange === "")
@@ -3764,7 +3714,25 @@
 					}
 				}
 			}
+			else if (cDialogType.GoalSeek_Cell === dialogType || cDialogType.GoalSeek_ChangingCell === dialogType)
+			{
+				result = parserHelp.parse3DRef(dataRange);
+				if (result)
+				{
+					sheetModel = model.getWorksheetByName(result.sheet);
+					if (sheetModel)
+					{
+						range = AscCommonExcel.g_oRangeCache.getAscRange(result.range);
+					}
+				}
+
+				if (!sheetModel) {
+					sheetModel = model.getActiveWs();
+				}
+				return AscCommonExcel.CGoalSeek.prototype.isValidDataRef(sheetModel, range, dialogType);
+			}
 		}
+
 		return Asc.c_oAscError.ID.No;
 	};
 	parserHelper.prototype.setDigitSeparator = function (sep)
@@ -4421,6 +4389,44 @@
 		}
 
 		return (nFirstCharCode - 64) + 26 * (nLen - 1);
+	}
+
+	function RussianNumberingToInt(sLetters)
+	{
+		sLetters = sLetters.toUpperCase();
+
+		if (sLetters.length <= 0)
+			return NaN;
+
+		const nLen = sLetters.length;
+		const nFirstCharCode = sLetters[0].charCodeAt(0);
+		let nSub;
+		if (1040 <= nFirstCharCode && nFirstCharCode <= 1048)
+		{
+			nSub = 1039;
+		}
+		else if (1050 <= nFirstCharCode && nFirstCharCode <= 1065)
+		{
+			nSub = 1040;
+		}
+		else if (1069 <= nFirstCharCode && nFirstCharCode <= 1071)
+		{
+			nSub = 1042;
+		}
+		else if (nFirstCharCode === 1067)
+		{
+			nSub = 1041;
+		}
+
+		if (!nSub)
+			return NaN;
+
+		for (let nPos = 1; nPos < nLen; ++nPos)
+		{
+			if (sLetters.charCodeAt(nPos) !== nFirstCharCode)
+				return NaN;
+		}
+		return nFirstCharCode - nSub + 29 * (nLen - 1);
 	}
 
 	function repeatNumberingLvl(num, nLastTrueSymbol)
@@ -12625,6 +12631,9 @@
 			} else if (-1 !== value.indexOf("pc")) {
 				oType = "pc";
 				oVal *= AscCommonWord.g_dKoef_pc_to_mm;
+			} else if (-1 !== value.indexOf("em")) {
+				oType = "em";
+				oVal *= AscCommonWord.g_dKoef_em_to_mm;
 			} else {
 				oType = "none";
 			}
@@ -13473,9 +13482,10 @@
 	window["AscCommon"].CorrectMMToTwips = CorrectMMToTwips;
 	window["AscCommon"].TwipsToMM = TwipsToMM;
 	window["AscCommon"].MMToTwips = MMToTwips;
-	window["AscCommon"].RomanToInt = RomanToInt;
-	window["AscCommon"].LatinNumberingToInt = LatinNumberingToInt;
-	window["Asc"]["IntToNumberFormat"] = window["AscCommon"]["IntToNumberFormat"] = window["AscCommon"].IntToNumberFormat = IntToNumberFormat;
+	window["AscCommon"]["RomanToInt"] = window["AscCommon"].RomanToInt = RomanToInt;
+	window["AscCommon"]["LatinNumberingToInt"] = window["AscCommon"].LatinNumberingToInt = LatinNumberingToInt;
+	window["AscCommon"]["RussianNumberingToInt"] = window["AscCommon"].RussianNumberingToInt = RussianNumberingToInt;
+	window["AscCommon"]["IntToNumberFormat"] = window["AscCommon"].IntToNumberFormat = IntToNumberFormat;
 	window["AscCommon"].IsSpace = IsSpace;
 	window["AscCommon"].IntToHex = IntToHex;
 	window["AscCommon"].Int32ToHex = Int32ToHex;
@@ -13516,6 +13526,7 @@
 	window["AscCommon"].cBoolLocal = cBoolLocal;
 	window["AscCommon"].cErrorOrigin = cErrorOrigin;
 	window["AscCommon"].cErrorLocal = cErrorLocal;
+	window["AscCommon"].cCellFunctionLocal = cCellFunctionLocal;
 	window["AscCommon"].FormulaSeparators = FormulaSeparators;
 	window["AscCommon"].rx_space_g = rx_space_g;
 	window["AscCommon"].rx_space = rx_space;

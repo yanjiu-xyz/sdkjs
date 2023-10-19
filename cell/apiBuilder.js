@@ -50,6 +50,7 @@
 	 * @property {ApiWorksheet} ActiveSheet - Returns an object that represents the active sheet.
 	 * @property {ApiRange} Selection - Returns an object that represents the selected range.
 	 * @property {ApiComment[]} Comments - Returns an array of ApiComment objects.
+	 * @property {FreezePaneType} FreezePanes - Returns or sets a freeze panes type.
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
@@ -82,6 +83,7 @@
 	 * @property {boolean} PrintGridlines - Returns or sets the page PrintGridlines property.
 	 * @property {Array} Defnames - Returns an array of the ApiName objects.
 	 * @property {Array} Comments - Returns an array of the ApiComment objects.
+	 * @property {ApiFreezePanes} FreezePanes - Returns a freeze Panes for a current worsheet.
 	 */
 	function ApiWorksheet(worksheet) {
 		this.worksheet = worksheet;
@@ -279,11 +281,34 @@
 	/**
 	 * Class representing a comment.
 	 * @constructor
-	 * @property {string} Text - Returns the text from the first cell in range.
+	 * @property {string} Text - Returns or sets the comment text.
+	 * @property {string} Id - Returns the current comment ID.
+	 * @property {string} AuthorName - Returns or sets the comment author's name.
+	 * @property {string} UserId - Returns or sets the user ID of the comment author.
+	 * @property {boolean} Solved - Checks if a comment is solved or not or marks a comment as solved.
+	 * @property {number | string} TimeUTC - Returns or sets the timestamp of the comment creation in UTC format.
+	 * @property {number | string} Time - Returns or sets the timestamp of the comment creation in the current time zone format.
+	 * @property {string} QuoteText - Returns the quote text of the current comment.
+	 * @property {Number} RepliesCount - Returns a number of the comment replies.
 	 */
 	function ApiComment(comment, wb) {
-		this.Comment = comment;
+		this.Comment = comment.clone();
 		this.WB = wb;
+	}
+
+	/**
+	 * Class representing a comment reply.
+	 * @constructor
+	 * @property {string} Text - Returns or sets the comment reply text.
+	 * @property {string} AuthorName - Returns or sets the comment reply author's name.
+	 * @property {string} UserId - Returns or sets the user ID of the comment reply author.
+	 * @property {number | string} TimeUTC - Returns or sets the timestamp of the comment reply creation in UTC format.
+	 * @property {number | string} Time - Returns or sets the timestamp of the comment reply creation in the current time zone format.
+	 */
+	function ApiCommentReply(oParentComm, oCommentReply)
+	{
+		this.Comment = oParentComm;
+		this.Data = oCommentReply;
 	}
 
 	/**
@@ -333,6 +358,14 @@
 	}
 
 	/**
+	 * Class representing a freeze Panes.
+	 * @constructor
+	 */
+	function ApiFreezePanes(ws) {
+		this.ws = ws;
+	}
+
+	/**
 	 * Returns a class formatted according to the instructions contained in the format expression.
 	 * @memberof Api
 	 * @param {string} expression - Any valid expression.
@@ -353,7 +386,7 @@
 	 */
 	Api.prototype.AddSheet = function (sName) {
 		if (this.GetSheet(sName))
-			console.error(new Error('Worksheet with such a name already exists.'));
+			private_makeError('Worksheet with such a name already exists.', true);
 		else
 			this.asc_addWorksheet(sName);
 	};
@@ -498,17 +531,17 @@
 	 * @param {ApiRange} Range2 - One of the intersecting ranges. At least two Range objects must be specified.
 	 * @returns {ApiRange | null}
 	 */
-	Api.prototype.Intersect  = function (Range1, Range2) {
+	Api.prototype.Intersect = function (Range1, Range2) {
 		let result = null;
 		if (Range1.GetWorksheet().Id === Range2.GetWorksheet().Id) {
 			var res = Range1.range.bbox.intersection(Range2.range.bbox);
 			if (!res) {
-				console.error(new Error("Ranges do not intersect."));
+				private_makeError('Ranges do not intersect.', false);
 			} else {
 				result = new ApiRange(this.GetActiveSheet().worksheet.getRange3(res.r1, res.c1, res.r2, res.c2));
 			}
 		} else {
-			console.error(new Error('Ranges should be from one worksheet.'));
+			private_makeError('Ranges should be from one worksheet.', false);
 		}
 		return result;
 	};
@@ -588,16 +621,12 @@
 	 * Returns an object that represents the range of the specified sheet using the maximum and minimum row/column coordinates.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiWorksheet} ws - The sheet where the specified range is represented.
-	 * @param {number} r1 - The minimum row number of the specified range.
-	 * @param {number} c1 - The minimum column number of the specified range.
-	 * @param {number} r2 - The maximum row number of the specified range.
-	 * @param {number} c2 - The maximum column number of the specified range.
-	 * @param {ApiAreas} areas - A collection of the ranges from the specified range.
+	 * @param {Range} range - The internal Range class (not a ApiRange). For more details see any new ApiRange.
+	 * @param {[Range]} areas - A collection of the ranges (not a ApiRange) from the specified range. For more details see any new ApiRange.
 	 * @returns {ApiRange}
 	 */
-	Api.prototype.GetRangeByNumber = function(ws, r1, c1, r2, c2, areas) {
-		return new ApiRange( (ws ? ws.getRange3(r1, c1, r2, c2) : null), areas);
+	Api.prototype.private_GetRange = function(range, areas) {
+		return new ApiRange(range, areas);
 	};
 
 	/**
@@ -823,6 +852,48 @@
 	 * Returns an array of ApiComment objects.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
+	 * @param {string} sText - The comment text.
+	 * @param {string} sAuthor - The author's name (optional).
+	 * @returns {ApiComment | null}
+	 * @since 7.5.0
+	 */
+	Api.prototype.AddComment = function(sText, sAuthor) {
+		let result = null;
+		let isValidData = typeof(sText) === 'string' && sText.trim() !== '';
+		if (isValidData) {
+			var comment = new Asc.asc_CCommentData();
+			comment.asc_putText(sText);
+			let author = ( (typeof(sAuthor) === 'string' && sAuthor.trim() !== '') ? sAuthor : Asc['editor'].User.asc_getUserName());
+			comment.asc_putUserName(author);
+			// todo проверить как в документа добавлются (надо ли выставлять этот параметр)
+			// comment.asc_putUserId(Asc['editor'].User.asc_getId());
+			comment.asc_putDocumentFlag(true);
+			this.asc_addComment(comment);
+			result = new ApiComment(comment, Asc['editor'].wb);
+		}
+
+		return result;
+	};
+
+	/**
+	 * Returns a comment from the current document by its ID.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sId - The comment ID.
+	 * @returns {?ApiComment}
+	 */
+	Api.prototype.GetCommentById = function(sId) {
+		let comment = this.asc_findComment(sId);
+		if (!comment)
+			comment = this.wb.cellCommentator.findComment(sId);
+
+		return comment ? new ApiComment(comment, Asc['editor'].wb) : null;
+	};
+
+	/**
+	 * Returns an array of ApiComment objects.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
 	 * @returns {ApiComment[]}
 	 */
 	Api.prototype.GetComments = function () {
@@ -835,6 +906,83 @@
 	Object.defineProperty(Api.prototype, "Comments", {
 		get: function () {
 			return this.GetComments();
+		}
+	});
+
+	/**
+	 * Specifies freeze panes type.
+	 * @typedef {("row" | "column" | "cell" | null )} FreezePaneType
+	 */
+
+	/**
+	 * Sets freeze panes type.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {FreezePaneType} FreezePaneType - The type of freezing ('null' to unfreeze).
+	 * @since 7.6.0
+	 */
+	Api.prototype.SetFreezePanesType = function(FreezePaneType) {
+		if (typeof FreezePaneType === 'string' || FreezePaneType === null) {
+			//detect current freeze type
+			let curType = this.GetFreezePanesType();
+
+			let type = null;
+			if (FreezePaneType === 'cell' && ( ( curType && curType !== 'cell' ) || ( !curType ) ) ) {
+				// make unfreeze and freeze then
+				if (curType)
+					this.asc_freezePane(undefined);
+
+				type = undefined;
+			} else if (FreezePaneType === null && curType) {
+				type = undefined;
+			} else if (FreezePaneType === 'row' && curType !== 'row') {
+				type = 1;
+			} else if (FreezePaneType === 'column' && curType !== 'column') {
+				type = 2;
+			}
+			
+			if (type !== null)
+				this.asc_freezePane(type);
+
+		} else {
+			private_makeError('Invalid parametr "FreezePaneType".', false);
+		}
+	};
+
+	/**
+	 * Rerutns freeze panes type.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {FreezePaneType} FreezePaneType - The type of freezing ('null' - if there is no frozen pane).
+	 * @since 7.6.0
+	 */
+	Api.prototype.GetFreezePanesType = function() {
+		let cell = this.wb.getWorksheet().topLeftFrozenCell;
+		//detect current freeze type
+		let curType = null;
+		if (cell) {
+			let c = cell.getCol0();
+			let r = cell.getRow0();
+			if (c == 0) {
+				// hole row
+				curType = 'row';
+			} else if (r == 0) {
+				// whole column
+				curType = 'column';
+			} else {
+				// cell
+				curType = 'cell';
+			}
+		}
+		return curType;
+	};
+
+	Object.defineProperty(Api.prototype, "FreezePanes", {
+		get: function () {
+			return this.GetFreezePanesType();
+		},
+		set: function(FreezePaneType) {
+			this.SetFreezePanesType(FreezePaneType);
 		}
 	});
 
@@ -887,8 +1035,12 @@
 	 * @returns {ApiRange}
 	 */
 	ApiWorksheet.prototype.GetActiveCell = function () {
-		var cell = this.worksheet.selectionRange.activeCell;
-		return new ApiRange(this.worksheet.getCell3(cell.row, cell.col));
+		let cell = this.worksheet.getCell3(this.worksheet.selectionRange.activeCell.row, this.worksheet.selectionRange.activeCell.col);
+		let merged = cell.hasMerged();
+		if (merged)
+			cell = this.worksheet.getCell3(merged.r1, merged.c1);
+
+		return new ApiRange(cell);
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "ActiveCell", {
 		get: function () {
@@ -929,7 +1081,7 @@
 		let result;
 		if (typeof col == "number" && typeof row == "number") {
 			if (col < 1 || row < 1 || col > AscCommon.gc_nMaxCol0 || row > AscCommon.gc_nMaxRow0) {
-				console.error(new Error('Invalid paremert "row" or "col".'));
+				private_makeError('Invalid paremert "row" or "col".', false);
 				result = null;
 			} else {
 				row--;
@@ -938,20 +1090,19 @@
 			}
 		} else if (typeof row == "number") {
 			if (row < 1 || row > AscCommon.gc_nMaxRow0) {
-				console.error(new Error('Invalid paremert "row".'));
+				private_makeError('Invalid paremert "row".', false);
 				result = null;
 			} else {
-				row--
+				row--;
 				let r = (row) ?  (row / AscCommon.gc_nMaxCol0) >> 0 : row;
 				let c = (row) ? row % AscCommon.gc_nMaxCol0 : row;
 				if (r && c) c--;
-				console.error()
 				result = new ApiRange(this.worksheet.getRange3(r, c, r, c));
 			}
 			
 		} else if (typeof col == "number") {
 			if (col < 1 || col > AscCommon.gc_nMaxCol0) {
-				console.error(new Error('Invalid paremert "col".'))
+				private_makeError('Invalid paremert "col".', false);
 				result = null;
 			} else {
 				col--;
@@ -989,7 +1140,7 @@
 			if (value > 0 && value <=  AscCommon.gc_nMaxRow0 + 1 && value[0] !== NaN) {
 				value --;
 			} else {
-				console.error(new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
+				private_makeError('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1), false);
 				return null;
 			}
 			return new ApiRange(this.worksheet.getRange3(value, 0, value, AscCommon.gc_nMaxCol0));
@@ -1005,7 +1156,7 @@
 				}
 			}
 			if (isError) {
-				console.error(new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
+				private_makeError('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1), false);
 				return null;
 			} else {
 				return new ApiRange(this.worksheet.getRange3(value[0], 0, value[1], AscCommon.gc_nMaxCol0));
@@ -1067,12 +1218,14 @@
 	 * @param {string} sName - The name which will be displayed for the current sheet at the sheet tab.
 	 */
 	ApiWorksheet.prototype.SetName = function (sName) {
-		var sOldName = this.worksheet.getName();
+		let sOldName = this.worksheet.getName();
 		this.worksheet.setName(sName);
-		var oWorkbook = this.worksheet.workbook;
-		if(oWorkbook) {
-			oWorkbook.handleChartsOnChangeSheetName(this.worksheet, sOldName, sName)
-		}
+		// let oWorkbookView = this.worksheet.workbook.oApi.wb;
+		// it's temporary solution (we should use oWorkbookView instead of oWorkbook)
+		let oWorkbook = this.worksheet.workbook;
+		oWorkbook.oApi.sheetsChanged();
+		if(oWorkbook)
+			oWorkbook.handleChartsOnChangeSheetName(this.worksheet, sOldName, sName);
 	};
 	Object.defineProperty(ApiWorksheet.prototype, "Name", {
 		get: function () {
@@ -1112,7 +1265,7 @@
 		Range1 = (Range1 instanceof ApiRange) ? Range1.range : (typeof Range1 == 'string') ? this.worksheet.getRange2(Range1) : null;
 
 		if (!Range1) {
-			console.error(new Error('Incorrect "Range1" or it is empty.'));
+			private_makeError('Incorrect "Range1" or it is empty.', false);
 			return null;
 		}
 		
@@ -1452,7 +1605,7 @@
 	 * @returns {boolean} - returns false if sName or sRef are invalid.
 	 */
 	ApiWorksheet.prototype.AddDefName = function (sName, sRef, isHidden) {
-		return private_AddDefName(this.worksheet.workbook, sName, sRef, this.worksheet.getId(), isHidden);
+		return private_AddDefName(this.worksheet.workbook, sName, sRef, this.worksheet.getIndex(), isHidden);
 	};
 
 	Object.defineProperty(ApiWorksheet.prototype, "DefNames", {
@@ -1505,21 +1658,18 @@
 		if ( range && range.range.isOneCell() && (sAddress || subAddress) ) {
 			var externalLink = sAddress ? AscCommon.rx_allowedProtocols.test(sAddress) : false;
 			if (externalLink && AscCommonExcel.getFullHyperlinkLength(sAddress) > Asc.c_nMaxHyperlinkLength) {
-				console.error(new Error('Incorrect "sAddress".'));
-				return null;
+				private_makeError('Incorrect "sAddress".', true);
 			}
 			if (!externalLink) {
 				address = subAddress.split("!");
 				if (address.length == 1) 
 					address.unshift(this.GetName());
 				else if (this.worksheet.workbook.getWorksheetByName(address[0]) === null) {
-					console.error(new Error('Invalid "subAddress".'));	
-					return null;
+					private_makeError('Invalid "subAddress".', true);
 				}
 				var res = this.worksheet.workbook.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.FormatTable, address[1], false);
 				if (res === Asc.c_oAscError.ID.DataRangeError) {
-					console.error(new Error('Invalid "subAddress".'));
-					return null;
+					private_makeError('Invalid "subAddress".', true);
 				}
 			}
 			this.worksheet.selectionRange.assign2(range.range.bbox);
@@ -1815,13 +1965,30 @@
 		let bb = before instanceof ApiWorksheet;
 		let ba = after instanceof ApiWorksheet;
 		if ( (bb && ba) || (!bb && !ba) ) {
-			console.error(new Error('Incorrect parametrs.'));
+			private_makeError('Incorrect parametrs.', true);
 		} else {
 			let curIndex = this.GetIndex();
 			let newIndex = ( bb ? ( before.GetIndex() ) : (after.GetIndex() + 1) );
 			this.worksheet.workbook.oApi.asc_moveWorksheet( newIndex, [curIndex] );
 		}
 	};
+
+	/**
+	 * Returns a freezePanes for a current worsheet.
+	 * @memberof ApiWorksheet
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiFreezePanes}
+	*/
+	ApiWorksheet.prototype.GetFreezePanes = function() {
+		return new ApiFreezePanes(this.worksheet);
+	};
+
+	Object.defineProperty(ApiWorksheet.prototype, "FreezePanes", {
+		get: function () {
+			return this.GetFreezePanes();
+		}
+	});
+
 
 	/**
 	 * Specifies the cell border position.
@@ -1928,7 +2095,7 @@
 				if (r < 0) r = 0;
 				result = new ApiRange(this.range.worksheet.getRange3(r, this.range.bbox.c1, r, this.range.bbox.c2));
 			} else {
-				console.error(new Error('The nRow must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
+				private_makeError('The nRow must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1), false);
 			}
 		}
 		return result;
@@ -1959,7 +2126,7 @@
 				if (c < 0) c = 0;
 				result = new ApiRange(this.range.worksheet.getRange3(this.range.bbox.r1, c, this.range.bbox.r2, c));
 			} else {
-				console.error(new Error('The nCol must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxCol0 + 1)))
+				private_makeError('The nCol must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxCol0 + 1), false);
 			}
 		} 
 		return result;
@@ -2241,6 +2408,10 @@
 								value = AscCommon.cErrorLocal["na"];
 
 							let cell = this.range.worksheet.getRange3( (bbox.r1 + indR), (bbox.c1 + indC), (bbox.r1 + indR), (bbox.c1 + indC) );
+							let merged = cell.hasMerged();
+							if (merged)
+								cell = this.range.worksheet.getRange3(merged.r1, merged.c1, merged.r1, merged.c1);
+
 							value = checkFormat(value.toString());
 							cell.setValue(value.toString());
 							if (value.type === AscCommonExcel.cElementType.number)
@@ -2254,12 +2425,17 @@
 			}
 		}
 		data = checkFormat(data || 0);
-		this.range.setValue(data.toString());
-		if (data.type === AscCommonExcel.cElementType.number)
-			this.SetNumberFormat(AscCommon.getShortDateFormat());
+		let range = this.range;
+		let merged = range.hasMerged();
+		if (merged)
+			range = this.range.worksheet.getRange3(merged.r1, merged.c1, merged.r1, merged.c1);
 
-		worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [this.range.bbox], true);
-		worksheet.workbook.oApi.onWorksheetChange(this.range.bbox);
+		range.setValue(data.toString());
+		if (data.type === AscCommonExcel.cElementType.number)
+			range.setNumFormat(AscCommon.getShortDateFormat());
+
+		worksheet.workbook.handlers.trigger("cleanCellCache", worksheet.getId(), [range.bbox], true);
+		worksheet.workbook.oApi.onWorksheetChange(range.bbox);
 		return true;
 	};
 
@@ -2890,16 +3066,18 @@
 	 * Returns one cell or cells from the merge area.
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
-	 * @returns {ApiRange}
+	 * @returns {ApiRange | null} - returns null if range isn't one cell
 	 */
 	Object.defineProperty(ApiRange.prototype, "MergeArea", {
 		get: function () {
+			let result = null;
 			if (this.range.isOneCell()) {
 				var bb = this.range.hasMerged();
-				return new ApiRange((bb) ? AscCommonExcel.Range.prototype.createFromBBox(this.range.worksheet, bb) : this.range);
+				result = new ApiRange((bb) ? AscCommonExcel.Range.prototype.createFromBBox(this.range.worksheet, bb) : this.range);
 			} else {
-				console.error(new Error('Range must be is one cell.'));
+				private_makeError('Range must be is one cell.', false);
 			}
+			return result;
 		}
 	});
 
@@ -2923,22 +3101,29 @@
 	 * @memberof ApiRange
 	 * @typeofeditors ["CSE"]
 	 * @param {string} sText - The comment text.
-	 * @returns {boolean} - returns false if comment can't be added.
+	 * @param {string} sAuthor - The author's name (optional).
+	 * @returns {ApiComment | null} - returns false if comment can't be added.
 	 */
-	ApiRange.prototype.AddComment = function (sText) {
-		var ws = Asc['editor'].wb.getWorksheet(this.range.getWorksheet().getIndex());
-		if (ws) {
+	ApiRange.prototype.AddComment = function (sText, sAuthor) {
+		let result = null;
+		let ws = Asc['editor'].wb.getWorksheet(this.range.getWorksheet().getIndex());
+		let isValidData = typeof(sText) === 'string' && sText.trim() !== '';
+		if (ws && isValidData) {
 			var comment = new Asc.asc_CCommentData();
-			comment.sText = sText;
-			comment.nCol = this.range.bbox.c1;
-			comment.nRow = this.range.bbox.r1;
-			comment.bDocument = false;
+			comment.asc_putText(sText);
+			let author = ( (typeof(sAuthor) === 'string' && sAuthor.trim() !== '') ? sAuthor : Asc['editor'].User.asc_getUserName());
+			comment.asc_putUserName(author);
+			// todo проверить как в документа добавлются (надо ли выставлять этот параметр)
+			// comment.asc_putUserId(Asc['editor'].User.asc_getId());
+			comment.asc_putCol(this.range.bbox.c1);
+			comment.asc_putRow(this.range.bbox.r1);
+			comment.asc_putDocumentFlag(false);
 			ws.cellCommentator.addComment(comment, true);
-
-			return true;
+			// Asc['editor'].wb.Api.asc_addComment(comment);
+			result = new ApiComment(comment, Asc['editor'].wb);
 		}
 
-		return false;
+		return result;
 	};
 
 	/**
@@ -3006,7 +3191,14 @@
 	ApiRange.prototype.Select = function () {
 		if (this.range.worksheet.getId() === this.range.worksheet.workbook.getActiveWs().getId()) {
 			var newSelection = new AscCommonExcel.SelectionRange(this.range.worksheet);
-			newSelection.assign2(this.range.bbox);
+			let bbox = this.range.bbox;
+			newSelection.assign2(bbox);
+			if (this.areas) {
+				this.areas.forEach(function(el){
+					if (!bbox.isEqual(el.bbox))
+						newSelection.ranges.push(el.bbox);
+				})
+			}
 			newSelection.Select();
 		}
 	};
@@ -3232,7 +3424,7 @@
 			var range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols) );
 			this.range.move(range.bbox, true, destination.range.worksheet);
 		} else {
-			console.error(new Error ("Invalid destination"));
+			private_makeError('Invalid destination', false);
 		}
 	};
 
@@ -3250,7 +3442,7 @@
 			var range = this.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols) );
 			rangeFrom.range.move(range.bbox, true, range.worksheet);
 		} else {
-			console.error(new Error ("Invalid range"));
+			private_makeError('Invalid range', false);
 		}
 	};
 
@@ -3370,7 +3562,7 @@
 			this._searchOptions = options;
 			return res;
 		} else {
-			console.error(new Error('Invalid parametr "What".'));
+			private_makeError('Invalid parametr "What".', false);
 			return null;
 		}
 	};
@@ -3410,7 +3602,7 @@
 			}
 			return res;
 		} else {
-			console.error(new Error('You should use "Find" method before this.'));
+			private_makeError('You should use "Find" method before this.', false);
 			return null;
 		}
 	};
@@ -3450,7 +3642,7 @@
 			}
 			return res;
 		} else {
-			console.error(new Error('You should use "Find" method before this.'));
+			private_makeError('You should use "Find" method before this.', false);
 			return null;
 		}
 	};
@@ -3472,7 +3664,6 @@
 	 * @param {XlSearchDirection} SearchDirection - Range search direction - next match or previous match.
 	 * @param {boolean} MatchCase - Case sensitive or not. The default value is "false".
 	 * @param {boolean} ReplaceAll - Specifies if all the found data will be replaced or not. The default value is "true".
-	 * 
 	 */
 	ApiRange.prototype.Replace = function(oReplaceData) {
 		let What, Replacement, LookAt, SearchOrder, SearchDirection, MatchCase, ReplaceAll;
@@ -3529,7 +3720,7 @@
 				this.range.worksheet.workbook.oApi.wb.replaceCellText(options);
 			}
 		} else {
-			console.error(new Error('Invalid type of parametr "What" or "Replacement".'));
+			private_makeError('Invalid type of parametr "What" or "Replacement".', false);
 		}
 	};
 
@@ -4548,12 +4739,12 @@
 	 */
 	ApiName.prototype.SetName = function (sName) {
 		if (!sName || typeof sName !== 'string' || !this.DefName) {
-			console.error(new Error('Invalid name or Defname is undefined.'));
+			private_makeError('Invalid name or Defname is undefined.', false);
 			return false;
 		}
 		var res = this.DefName.wb.checkDefName(sName);
 		if (!res.status) {
-			console.error(new Error('Invalid name.')); // invalid name
+			private_makeError('Invalid name.', false); // invalid name
 			return false; 
 		}
 		var oldName = this.DefName.getAscCDefName(false);
@@ -4639,37 +4830,566 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
+	 * Returns a type of the ApiComment class.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @returns {"comment"}
+	*/
+	ApiComment.prototype.GetClassType = function() {
+		return "comment";
+	};
+
+	/**
 	 * Returns the comment text.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CSE"]
 	 * @returns {string}
 	 */
-	ApiComment.prototype.GetText = function () {
+	ApiComment.prototype.GetText = function() {
 		return this.Comment.asc_getText();
 	};
+	
+	/**
+	 * Sets the comment text.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @param {string} text - New text for comment.
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.SetText = function(text) {
+		if (typeof text === 'string' && text.trim() !== '') {
+			this.Comment.asc_putText(text);
+			this.private_OnChange();
+		}
+	};
+
 	Object.defineProperty(ApiComment.prototype, "Text", {
-		get: function () {
+		get: function() {
 			return this.GetText();
+		},
+		set: function(text) {
+			return this.SetText(text);
 		}
 	});
+
+	/**
+	 * Returns the current comment ID.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.GetId = function() {		
+		return this.Comment.asc_getId();
+	};
+
+	Object.defineProperty(ApiComment.prototype, "Id", {
+		get: function() {
+			return this.GetId();
+		}
+	});
+
+	/**
+	 * Returns the comment author's name.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.GetAuthorName = function() {
+		return this.Comment.asc_getUserName();
+	};
+
+	/**
+	 * Sets the comment author's name.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sAuthorName - The comment author's name.
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.SetAuthorName = function(sAuthorName) {
+		this.Comment.asc_putUserName(sAuthorName);
+		this.private_OnChange();
+	};
+
+	Object.defineProperty(ApiComment.prototype, "AuthorName", {
+		get: function() {
+			return this.GetAuthorName();
+		},
+		set: function(sAuthorName) {
+			return this.SetAuthorName(sAuthorName);
+		}
+	});
+
+	/**
+	 * Returns the user ID of the comment author.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.GetUserId = function() {
+		return this.Comment.asc_getUserId();
+	};
+
+	/**
+	 * Sets the user ID to the comment author.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sUserId - The user ID of the comment author.
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.SetUserId = function(sUserId) {
+		this.Comment.asc_putUserId(sUserId);
+		this.private_OnChange();
+	};
+
+	Object.defineProperty(ApiComment.prototype, "UserId", {
+		get: function() {
+			return this.GetUserId();
+		},
+		set: function(sUserId) {
+			return this.SetUserId(sUserId);
+		}
+	});
+
+	/**
+	 * Checks if a comment is solved or not.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @returns {boolean}
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.IsSolved = function() {
+		return this.Comment.getSolved();
+	};
+
+	/**
+	 * Marks a comment as solved.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @param {boolean} bSolved - Specifies if a comment is solved or not.
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.SetSolved = function(bSolved) {
+		this.Comment.setSolved(bSolved);
+		this.private_OnChange();
+	};
+
+	Object.defineProperty(ApiComment.prototype, "Solved", {
+		get: function() {
+			return this.IsSolved();
+		},
+		set: function(bSolved) {
+			return this.SetSolved(bSolved);
+		}
+	});
+
+	/**
+	 * Returns the timestamp of the comment creation in UTC format.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @returns {Number}
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.GetTimeUTC = function() {
+		let nTime = parseInt(this.Comment.asc_getOnlyOfficeTime());
+		if (isNaN(nTime))
+			return 0;
+		return nTime;
+	};
+
+	/**
+	 * Sets the timestamp of the comment creation in UTC format.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @param {Number | String} nTimeStamp - The timestamp of the comment creation in UTC format.
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.SetTimeUTC = function(timeStamp) {
+		let nTime = parseInt(timeStamp);
+		if (isNaN(nTime))
+			this.Comment.asc_putOnlyOfficeTime("0");
+		else
+			this.Comment.asc_putOnlyOfficeTime(String(nTime));
+
+		this.private_OnChange();
+	};
+
+	Object.defineProperty(ApiComment.prototype, "TimeUTC", {
+		get: function() {
+			return this.GetTimeUTC();
+		},
+		set: function(timeStamp) {
+			return this.SetTimeUTC(timeStamp);
+		}
+	});
+
+	/**
+	 * Returns the timestamp of the comment creation in the current time zone format.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @returns {Number}
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.GetTime = function() {
+		let nTime = parseInt(this.Comment.asc_getTime());
+		if (isNaN(nTime))
+			return 0;
+		return nTime;
+	};
+
+	/**
+	 * Sets the timestamp of the comment creation in the current time zone format.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @param {Number | String} nTimeStamp - The timestamp of the comment creation in the current time zone format.
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.SetTime = function(timeStamp) {
+		let nTime = parseInt(timeStamp);
+		if (isNaN(nTime))
+			this.Comment.asc_putTime("0");
+		else
+			this.Comment.asc_putTime(String(nTime));
+		
+		this.private_OnChange();
+	};
+
+	Object.defineProperty(ApiComment.prototype, "Time", {
+		get: function() {
+			return this.GetTime();
+		},
+		set: function(timeStamp) {
+			return this.SetTime(timeStamp);
+		}
+	});
+
+	/**
+	 * Returns the quote text of the current comment.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @returns {String | null}
+	 * @since 7.5.0
+	*/
+	ApiComment.prototype.GetQuoteText = function() {
+		let text = null;
+		let ws = this.WB.getWorksheetById(this.Comment.wsId);
+		if (!this.Comment.asc_getDocumentFlag() && ws)
+			text = ws._getRange(this.Comment.nCol, this.Comment.nRow, this.Comment.nCol, this.Comment.nRow).getValue();
+		
+		return text;
+	};
+
+	Object.defineProperty(ApiComment.prototype, "QuoteText", {
+		get: function () {
+			return this.GetQuoteText();
+		}
+	});
+
+	/**
+	 * Returns a number of the comment replies.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @returns {Number?}
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.GetRepliesCount = function() {
+		return this.Comment.asc_getRepliesCount()
+	};
+
+	Object.defineProperty(ApiComment.prototype, "RepliesCount", {
+		get: function () {
+			return this.GetRepliesCount();
+		}
+	});
+
+	/**
+	 * Returns the specified comment reply.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @param {Number} [nIndex = 0] - The comment reply index.
+	 * @returns {ApiCommentReply?}
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.GetReply = function(nIndex) {
+		if (typeof(nIndex) != "number" || nIndex < 0 || nIndex >= this.GetRepliesCount())
+			nIndex = 0;
+			
+		let oReply = this.Comment.asc_getReply(nIndex);
+		if (!oReply)
+			return null;
+
+		return new ApiCommentReply(this, oReply);
+	};
+
+	/**
+	 * Adds a reply to a comment.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @param {String} sText - The comment reply text (required).
+	 * @param {String} sAuthorName - The name of the comment reply author (optional).
+	 * @param {String} sUserId - The user ID of the comment reply author (optional).
+	 * @param {Number} [nPos=this.GetRepliesCount()] - The comment reply position.
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.AddReply = function(sText, sAuthorName, sUserId, nPos) {
+		if (typeof(sText) !== "string" || sText.trim() === "")
+			return null;
+		
+		if (typeof(nPos) !== "number" || nPos < 0 || nPos > this.GetRepliesCount())
+			nPos = this.GetRepliesCount();
+
+		let oReply = new Asc.asc_CCommentData();
+		oReply.asc_putText(sText);
+
+		if (typeof(sAuthorName) === "string" && sAuthorName !== "")
+			oReply.asc_putUserName(sAuthorName);
+
+		if (sUserId != undefined && typeof(sUserId) === "string" && sUserId.trim() !== "")
+			oReply.asc_putUserId(sUserId);
+
+		this.Comment.aReplies.splice(nPos, 0, oReply);
+		this.private_OnChange();
+	};
+
+	/**
+	 * Removes the specified comment replies.
+	 * @memberof ApiComment
+	 * @typeofeditors ["CSE"]
+	 * @param {Number} [nPos = 0] - The position of the first comment reply to remove.
+	 * @param {Number} [nCount = 1] - A number of comment replies to remove.
+	 * @param {boolean} [bRemoveAll = false] - Specifies whether to remove all comment replies or not.
+	 * @since 7.5.0
+	 */
+	ApiComment.prototype.RemoveReplies = function(nPos, nCount, bRemoveAll) {
+		if (typeof(nPos) !== "number" || nPos < 0 || nPos > this.GetRepliesCount())
+			nPos = 0;
+
+		if (typeof(nCount) !== "number" || nCount < 0)
+			nCount = 1;
+
+		if (typeof(bRemoveAll) !== "boolean")
+			bRemoveAll = false;
+
+		if (bRemoveAll) {
+			nPos = 0
+			nCount = this.GetRepliesCount();
+		}
+
+		this.Comment.aReplies.splice(nPos, nCount);
+		this.private_OnChange();
+	};
 
 	/**
 	 * Deletes the ApiComment object.
 	 * @memberof ApiComment
 	 * @typeofeditors ["CSE"]
 	 */
-	ApiComment.prototype.Delete = function () {
-		this.WB.removeComment(this.Comment.asc_getId());
+	ApiComment.prototype.Delete = function() {
+		this.WB.Api.asc_removeComment(this.Comment.asc_getId());
+	};
+
+	ApiComment.prototype.private_OnChange = function() {
+		this.WB.Api.asc_changeComment(this.Comment.asc_getId(), this.Comment);
+	};
+	
+
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiCommentReply
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns a type of the ApiCommentReply class.
+	 * @memberof ApiCommentReply
+	 * @typeofeditors ["CSE"]
+	 * @returns {"commentReply"}
+	 * @since 7.5.0
+	 */
+	ApiCommentReply.prototype.GetClassType = function() {
+		return "commentReply";
 	};
 
 	/**
-	 * Returns a type of the ApiComment class.
-	 * @memberof ApiComment
+	 * Returns the comment reply text.
+	 * @memberof ApiCommentReply
 	 * @typeofeditors ["CSE"]
-	 * @returns {"comment"}
+	 * @returns {string}
+	 * @since 7.5.0
 	 */
-	 ApiComment.prototype.GetClassType = function () {
-		return "comment";
+	ApiCommentReply.prototype.GetText = function() {
+		return this.Data.asc_getText();
+	};
+
+	/**
+	 * Sets the comment reply text.
+	 * @memberof ApiCommentReply
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sText - The comment reply text.
+	 * @since 7.5.0
+	*/
+	ApiCommentReply.prototype.SetText = function(sText) {
+		this.Data.asc_putText(sText);
+		this.private_OnChange();
+	};
+
+	Object.defineProperty(ApiCommentReply.prototype, "Text", {
+		get: function() {
+			return this.GetText();
+		},
+		set: function(sText) {
+			return this.SetText(sText);
+		}
+	});
+
+	/**
+	 * Returns the comment reply author's name.
+	 * @memberof ApiCommentReply
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @since 7.5.0
+	 */
+	ApiCommentReply.prototype.GetAuthorName = function() {
+		return this.Data.asc_getUserName();
+	};
+
+	/**
+	 * Sets the comment reply author's name.
+	 * @memberof ApiCommentReply
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sAuthorName - The comment reply author's name.
+	 * @since 7.5.0
+	 */
+	ApiCommentReply.prototype.SetAuthorName = function(sAuthorName) {
+		this.Data.asc_putUserName(sAuthorName);
+		this.private_OnChange();
+	};
+
+	Object.defineProperty(ApiCommentReply.prototype, "AuthorName", {
+		get: function() {
+			return this.GetAuthorName();
+		},
+		set: function(sAuthorName) {
+			return this.SetAuthorName(sAuthorName);
+		}
+	});
+
+	/**
+	 * Returns the user ID of the comment reply author.
+	 * @memberof ApiCommentReply
+	 * @typeofeditors ["CSE"]
+	 * @returns {string}
+	 * @since 7.5.0
+	 */
+	ApiCommentReply.prototype.GetUserId = function() {
+		return this.Data.asc_getUserId();
+	};
+
+	/**
+	 * Sets the user ID to the comment reply author.
+	 * @memberof ApiCommentReply
+	 * @typeofeditors ["CSE"]
+	 * @param {string} sUserId - The user ID of the comment reply author.
+	 * @since 7.5.0
+	 */
+	ApiCommentReply.prototype.SetUserId = function(sUserId) {
+		this.Data.asc_putUserId(sUserId);
+		this.private_OnChange();
+	};
+
+	Object.defineProperty(ApiCommentReply.prototype, "UserId", {
+		get: function() {
+			return this.GetUserId();
+		},
+		set: function(sUserId) {
+			return this.SetUserId(sUserId);
+		}
+	});
+
+	/**
+	 * Returns the timestamp of the comment reply creation in UTC format.
+	 * @memberof ApiCommentReply
+	 * @typeofeditors ["CSE"]
+	 * @returns {Number}
+	 * @since 7.5.0
+	 */
+	ApiCommentReply.prototype.GetTimeUTC = function() {
+		let nTime = parseInt(this.Data.asc_getOnlyOfficeTime());
+		if (isNaN(nTime))
+			return 0;
+		return nTime;
+	};
+
+	/**
+	 * Sets the timestamp of the comment reply creation in UTC format.
+	 * @memberof ApiCommentReply
+	 * @typeofeditors ["CSE"]
+	 * @param {Number | String} nTimeStamp - The timestamp of the comment reply creation in UTC format.
+	 * @since 7.5.0
+	 */
+	ApiCommentReply.prototype.SetTimeUTC = function(timeStamp) {
+		let nTime = parseInt(timeStamp);
+		if (isNaN(nTime))
+			this.Data.asc_putOnlyOfficeTime("0");
+		else
+			this.Data.asc_putOnlyOfficeTime(String(nTime));
+
+		this.private_OnChange();
+	};
+
+	Object.defineProperty(ApiCommentReply.prototype, "TimeUTC", {
+		get: function() {
+			return this.GetTimeUTC();
+		},
+		set: function(timeStamp) {
+			return this.SetTimeUTC(timeStamp);
+		}
+	});
+
+	/**
+	 * Returns the timestamp of the comment reply creation in the current time zone format.
+	 * @memberof ApiCommentReply
+	 * @typeofeditors ["CSE"]
+	 * @returns {Number}
+	 * @since 7.5.0
+	 */
+	ApiCommentReply.prototype.GetTime = function() {
+		let nTime = parseInt(this.Data.asc_getTime());
+		if (isNaN(nTime))
+			return 0;
+		return nTime;
+	};
+
+	/**
+	 * Sets the timestamp of the comment reply creation in the current time zone format.
+	 * @memberof ApiCommentReply
+	 * @typeofeditors ["CSE"]
+	 * @param {Number | String} nTimeStamp - The timestamp of the comment reply creation in the current time zone format.
+	 * @since 7.5.0
+	 */
+	ApiCommentReply.prototype.SetTime = function(timeStamp) {
+		let nTime = parseInt(timeStamp);
+		if (isNaN(nTime))
+			this.Data.asc_putTime("0");
+		else
+			this.Data.asc_putTime(String(nTime));
+		
+		this.private_OnChange();
+	};
+
+	Object.defineProperty(ApiCommentReply.prototype, "Time", {
+		get: function() {
+			return this.GetTime();
+		},
+		set: function(timeStamp) {
+			return this.SetTime(timeStamp);
+		}
+	});
+
+	ApiCommentReply.prototype.private_OnChange = function() {
+		this.Comment.private_OnChange();
 	};
 
 	//------------------------------------------------------------------------------------------------------------------
@@ -4825,7 +5545,7 @@
 			if (excess) {
 				length -= excess;
 				if (!length) {
-					console.error(new Error("Max symbols in one cell."))
+					private_makeError('Max symbols in one cell.', false);
 					return;
 				}
 				String = String.slice(0, length);
@@ -5008,7 +5728,7 @@
 	 */
 	ApiFont.prototype.SetBold = function (isBold) {
 		if (typeof isBold !== 'boolean') {
-			console.error(new Error('Invalid type of parametr "isBold".'));
+			private_makeError('Invalid type of parametr "isBold".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -5088,7 +5808,7 @@
 	 */
 	ApiFont.prototype.SetItalic = function (isItalic) {
 		if (typeof isItalic !== 'boolean') {
-			console.error(new Error('Invalid type of parametr "isItalic".'));
+			private_makeError('Invalid type of parametr "isItalic".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -5168,7 +5888,7 @@
 	 */
 	ApiFont.prototype.SetSize = function (Size) {
 		if (typeof Size !== 'number' || Size < 0 || Size > 409) {
-			console.error(new Error('Invalid type of parametr "Size".'));
+			private_makeError('Invalid type of parametr "Size".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -5248,7 +5968,7 @@
 	 */
 	ApiFont.prototype.SetStrikethrough = function (isStrikethrough) {
 		if (typeof isStrikethrough !== 'boolean') {
-			console.error(new Error('Invalid type of parametr "isStrikethrough".'));
+			private_makeError('Invalid type of parametr "isStrikethrough".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -5359,7 +6079,7 @@
 	 */
 	ApiFont.prototype.SetUnderline = function (Underline) {
 		if (typeof Underline !== 'string') {
-			console.error(new Error('Invalid type of parametr "isUnderline".'));
+			private_makeError('Invalid type of parametr "isUnderline".', false);
 			return;
 		}
 		switch (Underline) {
@@ -5464,7 +6184,7 @@
 	 */
 	ApiFont.prototype.SetSubscript = function (isSubscript) {
 		if (typeof isSubscript !== 'boolean') {
-			console.error(new Error('Invalid type of parameter "isSubscript".'));
+			private_makeError('Invalid type of parametr "isSubscript".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -5544,7 +6264,7 @@
 	 */
 	ApiFont.prototype.SetSuperscript = function (isSuperscript) {
 		if (typeof isSuperscript !== 'boolean') {
-			console.error(new Error('Invalid type of parametr "isSuperscript".'));
+			private_makeError('Invalid type of parametr "isSuperscript".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -5624,7 +6344,7 @@
 	 */
 	ApiFont.prototype.SetName = function (FontName) {
 		if (typeof FontName !== 'string') {
-			console.error(new Error('Invalid type of parametr "FontName".'));
+			private_makeError('Invalid type of parametr "FontName".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -5705,7 +6425,7 @@
 	 */
 	ApiFont.prototype.SetColor = function (Color) {
 		if (!Color instanceof ApiColor) {
-			console.error(new Error('Invalid type of parametr "Color".'));
+			private_makeError('Invalid type of parametr "Color".', false);
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -5745,6 +6465,116 @@
 		}
 	});
 
+	
+	//------------------------------------------------------------------------------------------------------------------
+	//
+	// ApiFreezePanes
+	//
+	//------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Sets the frozen cells in the active worksheet view. The range provided corresponds to cells that will be frozen in the top- and left-most pane.
+	 * @memberof ApiFreezePanes
+	 * @typeofeditors ["CSE"]
+	 * @param {ApiRange | String} frozenRange - A range that represents the cells to be frozen panes.
+	 * @since 7.6.0
+	 */
+	ApiFreezePanes.prototype.FreezeAt = function(frozenRange) {
+		let api = this.ws.workbook.oApi;
+		let tempRange = (typeof frozenRange === 'string') ? api.GetRange(frozenRange) : frozenRange;
+
+		if (tempRange.range) {
+			let bbox = tempRange.range.bbox;
+			let r = bbox.r2 < AscCommon.gc_nMaxRow0 ? bbox.r2 + 1 : bbox.r2;
+			let c = bbox.c2 < AscCommon.gc_nMaxCol0 ? bbox.c2 + 1 : bbox.c2;
+			api.asc_freezePane(null, c, r);
+		} else {
+			private_makeError('Invalid parametr "frozenRange".', false);
+		}
+	};
+
+	/**
+	 * Freeze the first column or columns of the worksheet in place.
+	 * @memberof ApiFreezePanes
+	 * @typeofeditors ["CSE"]
+	 * @param {Number?} [count=0] - Optional number of columns to freeze, or zero to unfreeze all columns.
+	 * @since 7.6.0
+	 */
+	ApiFreezePanes.prototype.FreezeColumns = function(count) {
+		let api = this.ws.workbook.oApi;
+		if (count == undefined) count = 0;
+		if (typeof count === 'number' && count > 0 && count <= AscCommon.gc_nMaxCol0) {
+			api.asc_freezePane(null, count, 0);
+		} else if (!!api.wb.getWorksheet().topLeftFrozenCell && count === 0) {
+			api.asc_freezePane(undefined);
+		} else {
+			private_makeError('Invalid parametr "count".', false);
+		}
+	};
+
+	/**
+	 * Freeze the top row or rows of the worksheet in place.
+	 * @memberof ApiFreezePanes
+	 * @typeofeditors ["CSE"]
+	 * @param {Number?} [count=0] - Optional number of rows to freeze, or zero to unfreeze all rows.
+	 * @since 7.6.0
+	 */
+	ApiFreezePanes.prototype.FreezeRows = function(count) {
+		let api = this.ws.workbook.oApi;
+		if (count == undefined) count = 0;
+		if (typeof count === 'number' && count > 0 && count <= AscCommon.gc_nMaxRow0) {
+			api.asc_freezePane(null, 0, count);
+		} else if (!!api.wb.getWorksheet().topLeftFrozenCell && count === 0) {
+			api.asc_freezePane(undefined);
+		} else {
+			private_makeError('Invalid parametr "count".', false);
+		}
+	};
+
+	/**
+	 * Gets a range that describes the frozen cells in the active worksheet view.
+	 * @memberof ApiFreezePanes
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiRange | null} - Returns null if there is no frozen pane.
+	 * @since 7.6.0
+	 */
+	ApiFreezePanes.prototype.GetLocation = function() {
+		let result = null;
+		let api = this.ws.workbook.oApi;
+		let cell = api.wb.getWorksheet().topLeftFrozenCell;
+		if (cell) {
+			let c = cell.getCol0();
+			let r = cell.getRow0();
+			if (c == 0) {
+				// hole row
+				r--;
+				c = AscCommon.gc_nMaxCol0;
+			} else if (r == 0) {
+				// whole column
+				c--;
+				r = AscCommon.gc_nMaxRow0;
+			} else {
+				// cell
+				r--;
+				c--;
+			}
+			result = new ApiRange(this.ws.getRange3(0, 0, r, c));
+		}
+		return result;
+	};
+
+	/**
+	 * Removes all frozen panes in the worksheet.
+	 * @memberof ApiFreezePanes
+	 * @typeofeditors ["CSE"]
+	 * @since 7.6.0
+	 */
+	ApiFreezePanes.prototype.Unfreeze = function() {
+		if (!!this.ws.workbook.oApi.wb.getWorksheet().topLeftFrozenCell)
+			this.ws.workbook.oApi.asc_freezePane(undefined);
+	};
+
+
 	Api.prototype["Format"]                = Api.prototype.Format;
 	Api.prototype["AddSheet"]              = Api.prototype.AddSheet;
 	Api.prototype["GetSheets"]             = Api.prototype.GetSheets;
@@ -5767,7 +6597,11 @@
 	Api.prototype["GetRange"] = Api.prototype.GetRange;
 
 	Api.prototype["RecalculateAllFormulas"] = Api.prototype.RecalculateAllFormulas;
+	Api.prototype["AddComment"]  = Api.prototype.AddComment;
 	Api.prototype["GetComments"] = Api.prototype.GetComments;
+	Api.prototype["GetCommentById"] = Api.prototype.GetCommentById;
+	Api.prototype["SetFreezePanesType"] = Api.prototype.SetFreezePanesType;
+	Api.prototype["GetFreezePanesType"] = Api.prototype.GetFreezePanesType;
 
 	ApiWorksheet.prototype["GetVisible"] = ApiWorksheet.prototype.GetVisible;
 	ApiWorksheet.prototype["SetVisible"] = ApiWorksheet.prototype.SetVisible;
@@ -5820,6 +6654,7 @@
 	ApiWorksheet.prototype["GetAllCharts"] = ApiWorksheet.prototype.GetAllCharts;
 	ApiWorksheet.prototype["GetAllOleObjects"] = ApiWorksheet.prototype.GetAllOleObjects;
 	ApiWorksheet.prototype["Move"] = ApiWorksheet.prototype.Move;
+	ApiWorksheet.prototype["GetFreezePanes"] = ApiWorksheet.prototype.GetFreezePanes;
 
 	ApiRange.prototype["GetClassType"] = ApiRange.prototype.GetClassType
 	ApiRange.prototype["GetRow"] = ApiRange.prototype.GetRow;
@@ -5963,10 +6798,40 @@
 	ApiName.prototype["GetRefersToRange"]        =  ApiName.prototype.GetRefersToRange;
 
 
-	ApiComment.prototype["GetText"]              =  ApiComment.prototype.GetText;
-	ApiComment.prototype["Delete"]               =  ApiComment.prototype.Delete;
 	ApiComment.prototype["GetClassType"]         =  ApiComment.prototype.GetClassType;
-	
+	ApiComment.prototype["GetText"]              =  ApiComment.prototype.GetText;
+	ApiComment.prototype["SetText"]              =  ApiComment.prototype.SetText;
+	ApiComment.prototype["GetId"]                =  ApiComment.prototype.GetId;
+	ApiComment.prototype["GetAuthorName"]        =  ApiComment.prototype.GetAuthorName;
+	ApiComment.prototype["SetAuthorName"]        =  ApiComment.prototype.SetAuthorName;
+	ApiComment.prototype["GetUserId"]            =  ApiComment.prototype.GetUserId;
+	ApiComment.prototype["SetUserId"]            =  ApiComment.prototype.SetUserId;
+	ApiComment.prototype["IsSolved"]             =  ApiComment.prototype.IsSolved;
+	ApiComment.prototype["SetSolved"]            =  ApiComment.prototype.SetSolved;
+	ApiComment.prototype["GetTimeUTC"]           =  ApiComment.prototype.GetTimeUTC;
+	ApiComment.prototype["SetTimeUTC"]           =  ApiComment.prototype.SetTimeUTC;
+	ApiComment.prototype["GetTime"]              =  ApiComment.prototype.GetTime;
+	ApiComment.prototype["SetTime"]              =  ApiComment.prototype.SetTime;
+	ApiComment.prototype["GetQuoteText"]         =  ApiComment.prototype.GetQuoteText;
+	ApiComment.prototype["GetRepliesCount"]      =  ApiComment.prototype.GetRepliesCount;
+	ApiComment.prototype["GetReply"]             =  ApiComment.prototype.GetReply;
+	ApiComment.prototype["AddReply"]             =  ApiComment.prototype.AddReply;
+	ApiComment.prototype["RemoveReplies"]        =  ApiComment.prototype.RemoveReplies;
+	ApiComment.prototype["Delete"]               =  ApiComment.prototype.Delete;
+
+
+	ApiCommentReply.prototype["GetClassType"]         =  ApiCommentReply.prototype.GetClassType;
+	ApiCommentReply.prototype["GetText"]              =  ApiCommentReply.prototype.GetText;
+	ApiCommentReply.prototype["SetTextGetAuthorName"] =  ApiCommentReply.prototype.SetTextGetAuthorName;
+	ApiCommentReply.prototype["GetAuthorName"]        =  ApiCommentReply.prototype.GetAuthorName;
+	ApiCommentReply.prototype["SetAuthorName"]        =  ApiCommentReply.prototype.SetAuthorName;
+	ApiCommentReply.prototype["GetUserId"]            =  ApiCommentReply.prototype.GetUserId;
+	ApiCommentReply.prototype["SetUserId"]            =  ApiCommentReply.prototype.SetUserId;
+	ApiCommentReply.prototype["GetTimeUTC"]           =  ApiCommentReply.prototype.GetTimeUTC;
+	ApiCommentReply.prototype["SetTimeUTC"]           =  ApiCommentReply.prototype.SetTimeUTC;
+	ApiCommentReply.prototype["GetTime"]              =  ApiCommentReply.prototype.GetTime;
+	ApiCommentReply.prototype["SetTime"]              =  ApiCommentReply.prototype.SetTime;
+
 
 	ApiAreas.prototype["GetCount"]               = ApiAreas.prototype.GetCount;
 	ApiAreas.prototype["GetItem"]                = ApiAreas.prototype.GetItem;
@@ -6003,6 +6868,13 @@
 	ApiFont.prototype["SetName"]                 = ApiFont.prototype.SetName;
 	ApiFont.prototype["GetColor"]                = ApiFont.prototype.GetColor;
 	ApiFont.prototype["SetColor"]                = ApiFont.prototype.SetColor;
+
+	ApiFreezePanes.prototype["FreezeAt"]         = ApiFreezePanes.prototype.FreezeAt;
+	ApiFreezePanes.prototype["FreezeColumns"]    = ApiFreezePanes.prototype.FreezeColumns;
+	ApiFreezePanes.prototype["FreezeRows"]       = ApiFreezePanes.prototype.FreezeRows;
+	ApiFreezePanes.prototype["GetLocation"]      = ApiFreezePanes.prototype.GetLocation;
+	ApiFreezePanes.prototype["Unfreeze"]         = ApiFreezePanes.prototype.Unfreeze;
+
 
 	function private_SetCoords(oDrawing, oWorksheet, nExtX, nExtY, nFromCol, nColOffset,  nFromRow, nRowOffset, pos){
 		oDrawing.x = 0;
@@ -6074,21 +6946,22 @@
 		return border;
 	}
 
-	function private_AddDefName(wb, name, ref, sheetId, hidden) {
-		var res = wb.checkDefName(name);
+	function private_AddDefName(wb, name, ref, sheetInd, hidden) {
+		let res = wb.checkDefName(name);
 		if (!res.status) {
-			console.error(new Error('Invalid name.'));
+			private_makeError('Invalid name.', false);
 			return false;
 		}
 		res = wb.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.Chart, ref, false);
 		if (res === Asc.c_oAscError.ID.DataRangeError) {
-			console.error(new Error('Invalid range.'));
+			private_makeError('Invalid range.', false);
 			return false;
 		}
-		if (sheetId) {
-			sheetId = (wb.getWorksheetById(sheetId)) ? sheetId : undefined;
+		if (sheetInd) {
+			sheetInd = (wb.getWorksheet(sheetInd)) ? sheetInd : undefined;
 		}
-		wb.addDefName(name, ref, sheetId, hidden, false)
+		let defName = new Asc.asc_CDefName(name, ref, sheetInd, undefined, hidden, undefined, undefined, true);
+		wb.oApi.asc_setDefinedNames(defName);
 
 		return true;
 	}
@@ -6151,5 +7024,16 @@
 
 		return nLockType;
 	}
+
+	function private_makeError(message, bMakeThrow) {
+		let err = new Error(message);
+		if (!console.error)
+			console.log(err);
+		
+		if (!bMakeThrow && console.error)
+			console.error(err)
+		else if (bMakeThrow)
+			throw err;
+	};
 
 }(window, null));
