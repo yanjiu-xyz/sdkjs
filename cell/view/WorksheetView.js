@@ -2985,7 +2985,7 @@
 						vector_koef /= t.getRetinaPixelRatio();
 					}
 					t._drawGrid(drawingCtx, range, offsetX, offsetY, printPagesData.pageWidth / vector_koef,
-					printPagesData.pageHeight / vector_koef, printPagesData.scale, titleHeight, titleWidth);
+					printPagesData.pageHeight / vector_koef, printPagesData.scale, !titleHeight, !titleWidth);
 				}
 
 				//TODO временно подменяю scale. пересмотреть! подменять либо всегда, либо флаг добавить.
