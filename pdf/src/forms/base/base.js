@@ -409,7 +409,7 @@
                     oAction.SetField(this);
                     break;
                 case AscPDF.ACTIONS_TYPES.ResetForm:
-                    oAction = new AscPDF.CActionReset(aFields, aActionsInfo[i]["Fields"]);
+                    oAction = new AscPDF.CActionReset(aActionsInfo[i]["Fields"], Boolean(aActionsInfo[i]["Flags"]));
                     aActions.push(oAction);
                     oAction.SetField(this);
                     break;
@@ -569,7 +569,61 @@
 
         return null;
     };
+    CBaseField.prototype.GetListActions = function() {
+        let aActions = [];
 
+        let oAction = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.MouseUp);
+        if (oAction) {
+            aActions.push(oAction);
+        }
+        
+        oAction = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.MouseDown);
+        if (oAction) {
+            aActions.push(oAction);
+        }
+
+        oAction = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter);
+        if (oAction) {
+            aActions.push(oAction);
+        }
+
+        oAction = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.MouseExit);
+        if (oAction) {
+            aActions.push(oAction);
+        }
+
+        oAction = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
+        if (oAction) {
+            aActions.push(oAction);
+        }
+
+        oAction = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.OnBlur);
+        if (oAction) {
+            aActions.push(oAction);
+        }
+
+        oAction = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Keystroke);
+        if (oAction) {
+            aActions.push(oAction);
+        }
+
+        oAction = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Validate);
+        if (oAction) {
+            aActions.push(oAction);
+        }
+
+        oAction = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Calculate);
+        if (oAction) {
+            aActions.push(oAction);
+        }
+
+        oAction = this.GetTrigger(AscPDF.FORMS_TRIGGERS_TYPES.Format);
+        if (oAction) {
+            aActions.push(oAction);
+        }
+        
+        return aActions;
+    };
     CBaseField.prototype.GetDocument = function() {
         return this._doc;
     };
@@ -1981,9 +2035,13 @@
             memory.WriteString(sName);
         }
 
-        // actions to do
-        memory.WriteLong(0);
+        // actions
+        let aActions = this.GetListActions();
+        memory.WriteLong(aActions.length);
         
+        for (let i = 0; i < aActions.length; i++) {
+            aActions[i].WriteToBinary(memory);
+        }
     };
 
     // for format

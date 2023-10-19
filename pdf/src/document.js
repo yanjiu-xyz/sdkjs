@@ -2045,22 +2045,32 @@ var CPresentation = CPresentation || function(){};
      * Note: This method used by forms actions.
 	 * @memberof CPDFDoc
      * @param {CBaseField[]} aNames - array with forms names to reset. If param is undefined or array is empty then resets all forms.
+     * @param {boolean} bAllExcept - reset all fields except aNames
 	 * @typeofeditors ["PDF"]
 	 */
-    CPDFDoc.prototype.ResetForms = function(aNames) {
+    CPDFDoc.prototype.ResetForms = function(aNames, bAllExcept) {
         let oActionsQueue = this.GetActionsQueue();
         let oThis = this;
 
         if (aNames.length > 0) {
-            aNames.forEach(function(name) {
-                let aFields = oThis.GetFields(name);
-                if (aFields.length > 0)
-                    AscCommon.History.Clear()
-
-                aFields.forEach(function(field) {
-                    field.Reset();
+            if (bAllExcept) {
+                for (let nField = 0; nField < this.widgets.length; nField++) {
+                    let oField = this.widgets[nField];
+                    if (aNames.includes(oField.GetFullName()) == false)
+                        oField.Reset();
+                }
+            }
+            else {
+                aNames.forEach(function(name) {
+                    let aFields = oThis.GetFields(name);
+                    if (aFields.length > 0)
+                        AscCommon.History.Clear()
+    
+                    aFields.forEach(function(field) {
+                        field.Reset();
+                    });
                 });
-            });
+            }
         }
         else {
             this.widgets.forEach(function(field) {
