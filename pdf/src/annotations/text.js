@@ -306,13 +306,6 @@
 
         oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
     };
-    CAnnotationText.prototype.onMouseUp = function() {
-        let oViewer = editor.getDocumentRenderer();
-
-        let oPos = AscPDF.GetGlobalCoordsByPageCoords(this._pagePos.x + this._pagePos.w / oViewer.zoom, this._pagePos.y + this._pagePos.h / (2 * oViewer.zoom), this.GetPage(), true);
-        editor.sync_ShowComment([this.GetId()], oPos["X"], oPos["Y"])
-    };
-
     CAnnotationText.prototype.IsComment = function() {
         return true;
     };
