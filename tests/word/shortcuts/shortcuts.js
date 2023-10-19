@@ -838,7 +838,7 @@
 			ExecuteHotkey(testHotkeyActions.selectToStartLine, 1);
 			CheckSelectedText('Hello World Hello ', 'Select to start line content');
 
-			ExecuteHotkey(testHotkeyActions.checkSelectCursorRight);
+			ExecuteHotkey(testHotkeyActions.selectRightChar);
 			CheckSelectedText('Hello World Hello W', 'Select to right char');
 
 			ExecuteHotkey(testHotkeyActions.selectLeftChar);
