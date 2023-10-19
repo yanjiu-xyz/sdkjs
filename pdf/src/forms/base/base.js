@@ -2057,6 +2057,9 @@
                 pageCoords = oViewer.pageDetector.pages[i];
         }
 
+        if (!pageCoords)
+            pageCoords = oViewer.getPageLikeDetector(nPage);
+
         let result = {
             X : (X * pageCoords.w / oViewer.file.pages[nPage].W + pageCoords.x) / AscCommon.AscBrowser.retinaPixelRatio,
             Y : (Y * pageCoords.h / oViewer.file.pages[nPage].H + pageCoords.y) / AscCommon.AscBrowser.retinaPixelRatio

@@ -2577,6 +2577,7 @@
 			this._paintFormsHighlight();
 			this._paintComboboxesMarkers();
 			oDoc.UpdateUndoRedo();
+			oDoc.UpdateCommentPos();
 		};
 		this.Get_PageLimits = function() {
 			let W = this.width;
@@ -2761,6 +2762,14 @@
 			};
 		};
 
+		this.getViewportPosition = function()
+		{
+			return {
+				scrollY : this.scrollY >> 0,
+				centerX : (this.documentWidth > this.width) ? ((this.documentWidth >> 1) - (this.scrollX) >> 0) : (this.width >> 1)
+			};
+		};
+
 		this.ConvertCoordsToCursor = function(x, y, pageIndex)
 		{
 			var dKoef = (this.zoom * g_dKoef_mm_to_pix);
@@ -2785,6 +2794,22 @@
 			var h_pix = (_h * dKoef) >> 0
 
 			return ( {x : x_pix, y : y_pix, w : w_pix, h: h_pix} );
+		};
+
+		this.getPageLikeDetector = function(pageIndex)
+		{
+			let curPosition = this.getViewportPosition();
+
+			let page = this.drawingPages[pageIndex];
+			let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+			let h = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+
+			return {
+				x : ((curPosition.centerX * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1),
+				y : ((page.Y - curPosition.scrollY) * AscCommon.AscBrowser.retinaPixelRatio) >> 0,
+				w : w,
+				h : h
+			};
 		};
 
 		this.Copy = function(_text_format)
