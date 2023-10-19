@@ -449,7 +449,7 @@
     };
 
     function CActionReset(aFieldsNames, bAllExcept) {
-        CActionBase.call(this, ACTIONS_TYPES.Reset);
+        CActionBase.call(this, ACTIONS_TYPES.ResetForm);
         this.names      = aFieldsNames;
         this.bAllExcept = bAllExcept;
     };
