@@ -10015,6 +10015,15 @@
 			this.lIns = 91440 / 36000;
 			this.rIns = 91440 / 36000;
 		};
+		CBodyPr.prototype.setInsets = function(l, t, r, b) {
+			this.lIns = l;
+			this.tIns = t;
+			this.rIns = r;
+			this.bIns = b;
+		};
+		CBodyPr.prototype.resetInsets = function() {
+			this.setInsets(0, 0, 0, 0);
+		};
 		CBodyPr.prototype.setDefault = function () {
 			this.setDefaultInsets();
 			this.flatTx = null;

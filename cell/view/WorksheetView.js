@@ -4099,6 +4099,7 @@
             const aFragments = portion;
 			const maxWidth = (width - left - right) / printScale;
 
+            let dLIns = 0, dRIns = 0;
             const oShape = AscFormat.ExecuteNoHistory(function() {
 
                 const oMockLogicDoc = {
@@ -4136,10 +4137,7 @@
                 oShape.setWorksheet(t.model);
                 oShape.createTextBody();
                 let oBodyPr = oShape.txBody.bodyPr;
-                oBodyPr.bIns = 0;
-                oBodyPr.tIns = 0;
-                oBodyPr.lIns = 0;
-                oBodyPr.rIns = 0;
+                oBodyPr.resetInsets();
                 oBodyPr.anchor = 4;//top
                 let oContent = oShape.txBody.content;
                 const oParagraph = oContent.GetAllParagraphs()[0];
@@ -4182,7 +4180,20 @@
                     oParagraph.AddToContent(nFragment, oParaRun);
                 }
 
-                oShape.setTransformParams(-1.6, 0, maxWidth + 3.2, 2000, 0, false, false);
+                let dIns = 1.6;
+                let res = AscCommon.align_Left;
+                if (nAlign === AscCommon.align_Left) {
+                    dLIns = 0;
+                    dRIns = 2*dIns;
+                }
+                else if (nAlign === AscCommon.align_Right) {
+                    dLIns = -2*dIns;
+                }
+                else if(nAlign === AscCommon.align_Center) {
+                    dLIns = -dIns;
+                    dRIns = dIns;
+                }
+                oShape.setTransformParams(-dLIns, 0, maxWidth + dLIns + dRIns, 2000, 0, false, false);
                 oShape.setBDeleted(false);
                 oShape.recalculate();
 
@@ -4216,7 +4227,7 @@
 
             oGraphics.SaveGrState();
             oGraphics.transform3(new AscCommon.CMatrix());
-            oGraphics.AddClipRect(left / printScale, top / printScale, (width - (left + right)) / printScale, (height - (top + bottom)) / printScale);
+            oGraphics.AddClipRect(left / printScale - dLIns / printScale, top / printScale, (width - (left + right)) / printScale + (dLIns + dRIns) / printScale, (height - (top + bottom)) / printScale);
             oShape.draw(oGraphics);
 
             oGraphics.RestoreGrState();
@@ -5840,6 +5851,21 @@
 			}
 		}
 
+		let _checkLastMergedRow = function (_mc, _row) {
+			let _res = _mc && _row === _mc.r2;
+			if (!_res) {
+				for (let i = _row + 1; i <= _mc.r2; i++) {
+					if (t._getRowHeight(i) !== 0) {
+						_res = false;
+						break;
+					} else {
+						_res = true;
+					}
+				}
+			}
+			return _res;
+		};
+
 		var arrPrevRow = [], arrCurrRow = [], arrNextRow = [];
 		var objMCPrevRow = null, objMCRow = null, objMCNextRow = null;
 		var bCur, bPrev, bNext, bTopCur, bTopPrev, bTopNext, bBotCur, bBotPrev, bBotNext;
@@ -6057,7 +6083,7 @@
 					continue;
 				}
 				
-				if (!mc || row === mc.r2) {
+				if (!mc || (_checkLastMergedRow(mc, row))) {
 					// draw bottom border
 					drawHorizontalBorder(bCur, bBotCur, x1, y2, x2);
 				}

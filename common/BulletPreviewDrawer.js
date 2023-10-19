@@ -229,9 +229,15 @@
 		oGraphics.SetIntegerGrid(true);
 		oGraphics.transform(1, 0, 0, 1, 0, 0);
 
-		if (this.m_oApi && this.m_oApi.isDarkMode && oGraphics.darkModeOverride3)
+		if (this.m_oApi && this.m_oApi.isDarkMode)
 		{
-			oGraphics.darkModeOverride3();
+			if(this.m_oApi.getEditorId() === AscCommon.c_oEditorId.Word)
+			{
+				if(oGraphics.darkModeOverride3)
+				{
+					oGraphics.darkModeOverride3();
+				}
+			}
 		}
 
 		oGraphics.b_color1(this.m_oBackgroundColor.r, this.m_oBackgroundColor.g, this.m_oBackgroundColor.b, 255);

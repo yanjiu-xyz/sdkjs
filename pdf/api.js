@@ -579,6 +579,11 @@
 		CommentData.Read_FromAscCommentData(AscCommentData);
 		oDoc.EditComment(Id, CommentData);
 	};
+	PDFEditorApi.prototype.asc_selectComment = function(Id)
+	{
+		this.getPDFDoc().GoToAnnot(Id);
+	};
+
 	PDFEditorApi.prototype.asc_EditSelectAll = function()
 	{
 		let oViewer = this.getDocumentRenderer();
@@ -866,6 +871,7 @@
 	PDFEditorApi.prototype['asc_hideComments']             = PDFEditorApi.prototype.asc_hideComments;
 	PDFEditorApi.prototype['asc_removeComment']            = PDFEditorApi.prototype.asc_removeComment;
 	PDFEditorApi.prototype['asc_changeComment']            = PDFEditorApi.prototype.asc_changeComment;
+	PDFEditorApi.prototype['asc_selectComment']            = PDFEditorApi.prototype.asc_selectComment;
 
 	PDFEditorApi.prototype['asc_setSkin']                  = PDFEditorApi.prototype.asc_setSkin;
 	PDFEditorApi.prototype['asc_getAnchorPosition']        = PDFEditorApi.prototype.asc_getAnchorPosition;

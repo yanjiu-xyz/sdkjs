@@ -249,10 +249,10 @@
             let angle2          = Math.atan2(dy2, dx2);
             let rotationAngle   = angle1;
 
+            oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
             AscPDF.startMultiplyMode(oGraphicsPDF.context);
 
             oGraphicsPDF.BeginPath();
-            oGraphicsPDF.SetGlobalAlpha(this.GetOpacity());
             oGraphicsPDF.SetFillStyle(oRGBFill.r, oRGBFill.g, oRGBFill.b);
 
             if (rotationAngle == 0 || rotationAngle == 3/2 * Math.PI) {

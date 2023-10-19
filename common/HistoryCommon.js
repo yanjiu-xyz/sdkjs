@@ -1723,7 +1723,8 @@
 	window['AscDFH'].historyitem_type_Pdf_Form				= 2211 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Comment			= 2212 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Ink				= 2213 << 16;
-	window['AscDFH'].historyitem_type_Pdf_Annot				= 2213 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Annot				= 2214 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Pushbutton		= 2215 << 16;
 
 	
 
@@ -4003,6 +4004,9 @@
 
 	AscDFH.historyitem_Pdf_Form_Value			= AscDFH.historyitem_type_Pdf_Form | 1;
 
+
+	AscDFH.historyitem_Pdf_Pushbutton_Image		= AscDFH.historyitem_type_Pdf_Pushbutton | 1;
+	
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в PDF Annots 
 	//------------------------------------------------------------------------------------------------------------------

@@ -14275,10 +14275,7 @@
             this.bodyPr = new AscFormat.CBodyPr();
             this.bodyPr.setDefault();
             this.bodyPr.anchor = 1;//vertical align ctr
-            this.bodyPr.lIns = 0;
-            this.bodyPr.rIns = 0;
-            this.bodyPr.tIns = 0;
-            this.bodyPr.bIns = 0;
+            this.bodyPr.resetInsets();
             this.bodyPr.horzOverflow = AscFormat.nHOTClip;
             this.bodyPr.vertOverflow = AscFormat.nVOTClip;
         }, this, []);

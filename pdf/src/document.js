@@ -1120,6 +1120,7 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.DoUndo = function() {
         let oViewer = editor.getDocumentRenderer();
 
+        this.TurnOffHistory();
         if (AscCommon.History.Can_Undo())
         {
             this.currInkInDrawingProcess = null;
@@ -1176,6 +1177,7 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.DoRedo = function() {
         let oViewer = editor.getDocumentRenderer();
 
+        this.TurnOffHistory();
         if (AscCommon.History.Can_Redo())
         {
             this.currInkInDrawingProcess = null;
@@ -1301,7 +1303,31 @@ var CPresentation = CPresentation || function(){};
     CPDFDoc.prototype.GetActionsQueue = function() {
         return this.actionsInfo;
     };
-        
+    
+    CPDFDoc.prototype.EscapeForm = function() {
+        let oViewer = editor.getDocumentRenderer();
+
+        if (this.activeForm && this.activeForm.IsNeedDrawHighlight() == false) {
+            if (this.activeForm.GetType() == AscPDF.FIELD_TYPES.listbox) {
+                this.activeForm.UndoNotAppliedChanges();
+            }
+            else if (this.History.Index != -1) {
+                let oHistoryPoint = this.History.Points[this.History.Index];
+                if (oHistoryPoint.Additional.FormFilling == this.activeForm && oHistoryPoint.Additional.CanUnion != false) {
+                    this.activeForm.UndoNotAppliedChanges();
+                }
+            }
+
+            if (this.activeForm.IsChanged() == false)
+                this.activeForm.SetDrawFromStream(true);
+
+            this.activeForm.AddToRedraw();
+            this.activeForm.SetDrawHighlight(true);
+            oViewer.Api.WordControl.m_oDrawingDocument.TargetEnd();
+            oViewer._paint();
+        }
+    };
+
     /**
 	 * Adds a new page to the active document.
 	 * @memberof CPDFDoc
@@ -1480,7 +1506,7 @@ var CPresentation = CPresentation || function(){};
             r: r != undefined ? r : 0,
             g: g != undefined ? g : 0,
             b: b != undefined ? b : 0,
-            a: opacity / 100
+            a: opacity
         };
 
         let oViewer         = editor.getDocumentRenderer();
@@ -1519,7 +1545,7 @@ var CPresentation = CPresentation || function(){};
 
             oAnnot.SetQuads(aQuads);
             oAnnot.SetStrokeColor([r/255, g/255, b/255]);
-            oAnnot.SetOpacity(opacity);
+            oAnnot.SetOpacity(opacity / 100);
         }
 
         editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Highlight, false);
@@ -1530,7 +1556,7 @@ var CPresentation = CPresentation || function(){};
             r: r != undefined ? r : 0,
             g: g != undefined ? g : 0,
             b: b != undefined ? b : 0,
-            a: opacity / 100
+            a: opacity
         };
 
         let oViewer         = editor.getDocumentRenderer();
@@ -1568,7 +1594,7 @@ var CPresentation = CPresentation || function(){};
 
             oAnnot.SetQuads(aQuads);
             oAnnot.SetStrokeColor([r/255, g/255, b/255]);
-            oAnnot.SetOpacity(opacity);
+            oAnnot.SetOpacity(opacity / 100);
         }
 
         editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Underline, false);
@@ -1579,7 +1605,7 @@ var CPresentation = CPresentation || function(){};
             r: r != undefined ? r : 0,
             g: g != undefined ? g : 0,
             b: b != undefined ? b : 0,
-            a: opacity / 100
+            a: opacity
         };
 
         let oViewer         = editor.getDocumentRenderer();
@@ -1617,7 +1643,7 @@ var CPresentation = CPresentation || function(){};
 
             oAnnot.SetQuads(aQuads);
             oAnnot.SetStrokeColor([r/255, g/255, b/255]);
-            oAnnot.SetOpacity(opacity);
+            oAnnot.SetOpacity(opacity / 100);
         }
 
         editor.sendEvent("asc_onMarkerFormatChanged", AscPDF.ANNOTATIONS_TYPES.Strikeout, false);
@@ -1686,6 +1712,30 @@ var CPresentation = CPresentation || function(){};
         
         return oAnnot;
     };
+    /**
+	 * Обновляет позицию всплывающего окна комментария
+	 * @memberof CPDFDoc
+	 * @typeofeditors ["PDF"]
+	 */
+    CPDFDoc.prototype.UpdateCommentPos = function() {
+        if (this.showedCommentId) {
+            let oAnnot = this.GetAnnotById(this.showedCommentId);
+
+            if (!oAnnot) {
+                this.showedCommentId = undefined;
+                return;
+            }
+
+            let oPos;
+            if (oAnnot.IsComment()) 
+                oPos = AscPDF.GetGlobalCoordsByPageCoords(oAnnot._pagePos.x + oAnnot._pagePos.w / this.Viewer.zoom, oAnnot._pagePos.y + oAnnot._pagePos.h / (2 * this.Viewer.zoom), oAnnot.GetPage(), true);
+            else
+                oPos = AscPDF.GetGlobalCoordsByPageCoords(oAnnot._pagePos.x + oAnnot._pagePos.w, oAnnot._pagePos.y + oAnnot._pagePos.h / 2, oAnnot.GetPage(), true);
+
+            editor.sync_UpdateCommentPosition(oAnnot.GetId(), oPos["X"], oPos["Y"]);
+        }
+    };
+
     CPDFDoc.prototype.CreateNewHistoryPoint = function() {
         if (AscCommon.History.IsOn() == false)
             AscCommon.History.TurnOn();
@@ -1716,26 +1766,30 @@ var CPresentation = CPresentation || function(){};
 
         for (var nIndex = 0, nCount = arrId.length; nIndex < nCount; ++nIndex)
         {
-            var Comment = this.GetCommentById(arrId[nIndex]);
-            if (Comment)
+            var oAnnot = this.GetAnnotById(arrId[nIndex]);
+            if (oAnnot)
             {
                 if (null == oPos)
                 {
-                    oPos = AscPDF.GetGlobalCoordsByPageCoords(Comment._pagePos.x + Comment._pagePos.w, Comment._pagePos.y + Comment._pagePos.h / 2, Comment.GetPage(), true);
+                    if (oAnnot.IsComment()) 
+                        oPos = AscPDF.GetGlobalCoordsByPageCoords(oAnnot._pagePos.x + oAnnot._pagePos.w / this.Viewer.zoom, oAnnot._pagePos.y + oAnnot._pagePos.h / (2 * this.Viewer.zoom), oAnnot.GetPage(), true);
+                    else
+                        oPos = AscPDF.GetGlobalCoordsByPageCoords(oAnnot._pagePos.x + oAnnot._pagePos.w, oAnnot._pagePos.y + oAnnot._pagePos.h / 2, oAnnot.GetPage(), true);
                 }
 
-                arrCommentsId.push(Comment.GetId());
+                arrCommentsId.push(oAnnot.GetId());
             }
-
         }
 
         if (null != oPos && arrCommentsId.length > 0)
         {
             editor.sync_ShowComment(arrCommentsId, oPos["X"], oPos["Y"]);
+            this.showedCommentId = arrCommentsId[0];
         }
         else
         {
             editor.sync_HideComment();
+            this.showedCommentId = undefined;
         }
     };
     CPDFDoc.prototype.UpdateCopyCutState = function() {
@@ -1768,6 +1822,7 @@ var CPresentation = CPresentation || function(){};
         if (!oAnnot)
             return;
 
+        editor.sync_HideComment();
         if (oAnnot.IsComment()) {
             this.RemoveAnnot(oAnnot.GetId());
         }
@@ -1802,14 +1857,73 @@ var CPresentation = CPresentation || function(){};
             this.TurnOffHistory();
         }
 
+        editor.sync_HideComment();
         editor.sync_RemoveComment(Id);
         oViewer._paint();
         oViewer.onUpdateOverlay();
     };
+    /**
+	 * Move page to annot (if annot is't visible)
+	 * @memberof CPDFDoc
+	 * @typeofeditors ["PDF"]
+     * @param {string} sId - id of annot.
+     * @param {boolean} bForceMove - move to annot even it's visible.
+     * @returns {object}
+	 */
+    CPDFDoc.prototype.GoToAnnot = function(sId, bForceMove) {
+        let oAnnot = this.GetAnnotById(sId);
+        if (!oAnnot)
+            return;
+
+        let nPage = oAnnot.GetPage();
+        let aRect = oAnnot.GetOrigRect();
+
+        let isVisible = false;
+        let oPage;
+        for (let i = 0; i < this.Viewer.pageDetector.pages.length; i++) {
+            oPage = this.Viewer.pageDetector.pages[i];
+            if (oPage.num == nPage) {
+                let nScale = AscCommon.AscBrowser.retinaPixelRatio * this.Viewer.zoom * (96 / this.Viewer.file.pages[nPage].Dpi);
+                let nPageY = -oPage.y / nScale;
+                let nPageX = -oPage.x / nScale;
+
+                let nVisibleH = (oPage.h - nPageY) / nScale;
+                let nVisibleW = (oPage.w - nPageX) / nScale;
+
+                // если рект аннотации попадает в рект видимого окна (положения страницы), то значит аннотация видима
+                if ((aRect[3] > nPageY && aRect[1] < nPageY + nVisibleH) && (aRect[2] > nPageX && aRect[0] < nPageX + nVisibleW))
+                    isVisible = true;
+            }
+        }
+
+        if (isVisible == true && bForceMove != true)
+            return;
+        
+        // выставляем смещения
+        let yOffset;
+        let xOffset;
+        if (aRect[1] != null) {
+            yOffset = aRect[1] + this.Viewer.betweenPages / (this.Viewer.drawingPages[nPage].H / this.Viewer.file.pages[nPage].H);
+        }
+        else
+            yOffset = this.Viewer.betweenPages / (this.Viewer.drawingPages[nPage].H / this.Viewer.file.pages[nPage].H);
+
+        if (aRect[0] != null) {
+            xOffset = aRect[0];
+        }
+
+        if (yOffset != undefined && xOffset != undefined || this.Viewer.currentPage != nPage) {
+            this.Viewer.disabledPaintOnScroll = true; // вырубаем отрисовку на скроле
+            this.Viewer.navigateToPage(nPage, yOffset, xOffset);
+            this.Viewer.disabledPaintOnScroll = false;
+            this.Viewer._paint();
+        }
+    };
     CPDFDoc.prototype.HideComments = function() {
         editor.sync_HideComment();
+        this.showedCommentId = undefined;
     };
-    CPDFDoc.prototype.GetCommentById = function(sId) {
+    CPDFDoc.prototype.GetAnnotById = function(sId) {
         return this.annots.find(function(annot) {
             return annot.GetId() == sId;
         });

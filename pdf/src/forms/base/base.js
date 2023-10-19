@@ -995,7 +995,7 @@
         }        
 
         // pressed border
-        if (this.GetType() == AscPDF.FIELD_TYPES.button && this.IsPressed() && this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push && this._images.mouseDown == undefined) {
+        if (this.GetType() == AscPDF.FIELD_TYPES.button && this.IsPressed() && this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push && this._imgData.mouseDown == undefined) {
             switch (this._borderStyle) {
                 case BORDER_TYPES.solid:
                 case BORDER_TYPES.dashed:
@@ -1882,6 +1882,9 @@
             if (oViewer.pageDetector.pages[i].num == nPage)
                 pageCoords = oViewer.pageDetector.pages[i];
         }
+
+        if (!pageCoords)
+            pageCoords = oViewer.getPageLikeDetector(nPage);
 
         let result = {
             X : (X * pageCoords.w / oViewer.file.pages[nPage].W + pageCoords.x) / AscCommon.AscBrowser.retinaPixelRatio,
