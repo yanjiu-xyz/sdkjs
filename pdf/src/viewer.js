@@ -2577,6 +2577,7 @@
 			this._paintFormsHighlight();
 			this._paintComboboxesMarkers();
 			oDoc.UpdateUndoRedo();
+			oDoc.UpdateCommentPos();
 		};
 		this.Get_PageLimits = function() {
 			let W = this.width;
