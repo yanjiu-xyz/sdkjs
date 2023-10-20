@@ -728,7 +728,7 @@
         get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
-                return oField.GetButtonFitBounds();
+                return oField.IsButtonFitBounds();
             }
             else {
                 throw Error("InvalidGetError: Get not possible, invalid or unknown.");

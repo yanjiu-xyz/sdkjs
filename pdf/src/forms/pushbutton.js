@@ -763,7 +763,7 @@
         oGraphicsWord.RemoveLastClip();
 
         if (false == this.IsPressed()) {
-            this.GetButtonFitBounds() == false && this.DrawBorders(oGraphicsPDF);
+            this.IsButtonFitBounds() == false && this.DrawBorders(oGraphicsPDF);
         }
 
         if (this.IsPressed()) {
@@ -1021,7 +1021,7 @@
         let contentXLimit;
         let contentYLimit;
         
-        if (this.GetButtonFitBounds() == false) {
+        if (this.IsButtonFitBounds() == false) {
             contentX = (X + 2 * oMargins.left) * g_dKoef_pix_to_mm;
             contentY = (Y + 2 * oMargins.top) * g_dKoef_pix_to_mm;
             contentXLimit = (X + nWidth - 2 * oMargins.left) * g_dKoef_pix_to_mm;
@@ -1291,7 +1291,7 @@
             this.SetNeedRecalc(true);
         }
     };
-    CPushButtonField.prototype.GetButtonFitBounds = function() {
+    CPushButtonField.prototype.IsButtonFitBounds = function() {
         return this._buttonFitBounds;
     };
     CPushButtonField.prototype.SetScaleWhen = function(nType) {
@@ -1816,7 +1816,122 @@
 
     CPushButtonField.prototype.Reset = function() {
     };
-	
+	CPushButtonField.prototype.WriteToBinary = function(memory) {
+        // TODO
+		/*
+		if (шрифт_у_CTextField_как-либо_изменялся)
+		{
+			// Также как функция SetFont в common/Drawings/Metafile.js
+			
+			if (шрифт_изменялся)
+			{
+				memory.WriteByte(AscCommon.CommandType.ctFontName);
+				memory.WriteString(this.m_oFont.Name);
+			}
+			
+			if (размер_шрифта_изменялся)
+			{
+				memory.WriteByte(AscCommon.CommandType.ctFontSize);
+				memory.WriteDouble(this.m_oFont.FontSize);
+			}
+			
+			if (стиль_шрифта_изменялся)
+			{
+				memory.WriteByte(AscCommon.CommandType.ctFontStyle);
+				memory.WriteLong(style);
+			}
+		}
+		*/
+
+        memory.WriteByte(AscCommon.CommandType.ctAnnotField);
+
+        // длина комманд
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+
+        this.WriteToBinaryBase(memory);
+        this.WriteToBinaryBase2(memory);
+
+        // value (зачем оно у кнопок?)
+        memory.fieldFlags2 |= (1 << 9);
+        
+        // флаги кнопки
+        let nPosForButtonFlags  = memory.GetCurPosition();
+        let nButtonFlags        = 0;
+        
+        // normal caption
+        let sCaption = this.GetCaption(CAPTION_TYPES.normal);
+        if (sCaption != null) {
+            memory.fieldFlags2 |= (1 << 10);
+            memory.WriteString(sCaption);
+        }
+
+        // rollover caption
+        let sRolloverCaption = this.GetCaption(CAPTION_TYPES.rollover);
+        if (sRolloverCaption != null) {
+            memory.fieldFlags2 |= (1 << 11);
+            memory.WriteString(sRolloverCaption);
+        }
+
+        // rollover caption
+        let sDownCaption = this.GetCaption(CAPTION_TYPES.mouseDown);
+        if (sDownCaption != null) {
+            memory.fieldFlags2 |= (1 << 12);
+            memory.WriteString(sDownCaption);
+        }
+
+        // button caption and image position
+        let nButtonPosition = this.GetButtonPosition();
+        if (nButtonPosition != null) {
+            memory.fieldFlags2 |= (1 << 13);
+            memory.WriteByte(nButtonPosition);
+        }
+
+        // scale when
+        let nScaleWhen = this.GetScaleWhen();
+        if (nScaleWhen != null) {
+            nButtonFlags |= (1 << 0);
+            nButtonFlags |= (1 << 1);
+            memory.WriteByte(nScaleWhen);
+        }
+
+        // scale how
+        let nScaleHow = this.GetScaleHow();
+        if (nScaleWhen != null) {
+            nButtonFlags |= (1 << 0);
+            nButtonFlags |= (1 << 2);
+            memory.WriteByte(nScaleHow);
+        }
+
+        // icon pos
+        let oIconPos = this.GetIconPosition();
+        if (oIconPos.X && oIconPos.Y) {
+            nButtonFlags |= (1 << 0);
+            nButtonFlags |= (1 << 3);
+            memory.WriteDouble(oIconPos.X);
+            memory.WriteDouble(oIconPos.Y);
+        }
+
+        let isButtonFB = this.IsButtonFitBounds();
+        if (isButtonFB) {
+            nButtonFlags |= (1 << 4);
+        }
+
+        let nEndPos = memory.GetCurPosition();
+
+        // запись флагов
+        memory.Seek(nPosForButtonFlags);
+        memory.WriteLong(nButtonFlags);
+        memory.Seek(memory.posForFlags1);
+        memory.WriteLong(memory.fieldFlags1);
+        memory.Seek(memory.posForFlags2);
+        memory.WriteLong(memory.fieldFlags2);
+
+        // запись длины комманд
+        memory.Seek(nStartPos);
+        memory.WriteLong(nEndPos - nStartPos);
+        memory.Seek(nEndPos);
+    };
     function MakeColorMoreGray(rgbColor, nPower) {
         // Получаем значения компонентов цвета
         const r = rgbColor.r;
