@@ -984,9 +984,9 @@ else
 				}
 			    if (flags & (1 << 14))
 				{
-					rec["NameOfYes"] = reader.readString();
+					rec["ExportValue"] = reader.readString();
 					if (flags & (1 << 9))
-						rec["value"] = rec["NameOfYes"];
+						rec["value"] = rec["ExportValue"];
 				}
 				// 12.7.4.2.1
 				rec["NoToggleToOff"]  = (rec["flag"] >> 14) & 1; // NoToggleToOff
@@ -1048,7 +1048,7 @@ else
 	};
 	// optional nWidget     - rec["AP"]["i"]
 	// optional sView       - N/D/R
-	// optional sButtonView - state pushbutton-annotation - Off/Yes(or rec["NameOfYes"])
+	// optional sButtonView - state pushbutton-annotation - Off/Yes(or rec["ExportValue"])
 	CFile.prototype["getInteractiveFormsAP"] = function(pageIndex, width, height, backgroundColor, nWidget, sView, sButtonView)
 	{
 		let nView = -1;
