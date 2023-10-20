@@ -479,6 +479,9 @@
     CBaseCheckBoxField.prototype.SetStyle = function(nType) {
         this._chStyle = nType;
     };
+    CBaseCheckBoxField.prototype.GetStyle = function() {
+        return this._chStyle;
+    };
     CBaseCheckBoxField.prototype.SetValue = function(sValue) {
         if (this._exportValue == sValue)
             this.SetChecked(true);
@@ -503,6 +506,7 @@
         if (bChecked == this.IsChecked())
             return;
 
+        this.SetWasChanged(true);
         this.AddToRedraw();
 
         if (bChecked) {
@@ -514,7 +518,82 @@
             this._checked = false;
         }
     };
+    CBaseCheckBoxField.prototype.WriteToBinary = function(memory) {
+        // TODO
+		/*
+		if (шрифт_у_CTextField_как-либо_изменялся)
+		{
+			// Также как функция SetFont в common/Drawings/Metafile.js
+			
+			if (шрифт_изменялся)
+			{
+				memory.WriteByte(AscCommon.CommandType.ctFontName);
+				memory.WriteString(this.m_oFont.Name);
+			}
+			
+			if (размер_шрифта_изменялся)
+			{
+				memory.WriteByte(AscCommon.CommandType.ctFontSize);
+				memory.WriteDouble(this.m_oFont.FontSize);
+			}
+			
+			if (стиль_шрифта_изменялся)
+			{
+				memory.WriteByte(AscCommon.CommandType.ctFontStyle);
+				memory.WriteLong(style);
+			}
+		}
+		*/
 
+        memory.WriteByte(AscCommon.CommandType.ctAnnotField);
+
+        // длина комманд
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+
+        this.WriteToBinaryBase(memory);
+        this.WriteToBinaryBase2(memory);
+
+        // checked
+        let isChecked = this.IsChecked();
+        if (isChecked) {
+            memory.fieldFlags2 |= (1 << 9);
+        }
+        
+        // just some flags (need to write, but used only in pushbutton)
+        memory.WriteLong(0);
+        
+        // check symbol
+        memory.WriteByte(this.GetStyle());
+
+        let sExportValue = this.GetExportValue();
+        if (sExportValue != null) {
+            memory.fieldFlags2 |= (1 << 14);
+            memory.WriteString(sExportValue);
+        }
+
+        if (this.IsNoToggleToOff()) {
+            memory.fieldFlags1 |= (1 << 14);
+        }
+
+        if (this.GetType() == AscPDF.FIELD_TYPES.radiobutton) {
+            if (this.IsRadiosInUnison()) {
+                memory.fieldFlags1 |= (1 << 25);
+            }
+        }
+        let nEndPos = memory.GetCurPosition();
+
+        // запись флагов
+        memory.Seek(memory.posForFlags1);
+        memory.WriteLong(memory.fieldFlags1);
+        memory.Seek(memory.posForFlags2);
+        memory.WriteLong(memory.fieldFlags2);
+
+        // запись длины комманд
+        memory.Seek(nStartPos);
+        memory.WriteLong(nEndPos - nStartPos);
+        memory.Seek(nEndPos);
+    };
     if (!window["AscPDF"])
 	    window["AscPDF"] = {};
         

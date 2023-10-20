@@ -1067,12 +1067,12 @@
                 if (typeof(bValue) == "boolean") {
                     let aFields = this._doc.GetFields(this.name);
                     aFields.forEach(function(field) {
-                        field._radiosInUnison = bValue;
+                        field.SetRadiosInUnison(bValue);
                     });
                 }
             },
             get: function() {
-                return this._radiosInUnison;
+                return this.IsRadiosInUnison();
             }
         },
         "value": {
