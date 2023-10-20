@@ -962,9 +962,9 @@
 				}
 
 				// checkbox - radiobutton
-				if (oFormInfo["NameOfYes"])
+				if (oFormInfo["ExportValue"])
 				{
-					oForm.SetExportValue(oFormInfo["NameOfYes"]);
+					oForm.SetExportValue(oFormInfo["ExportValue"]);
 				}
 				if (oFormInfo["radiosInUnison"])
 				{
