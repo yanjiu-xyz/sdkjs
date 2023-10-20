@@ -1506,7 +1506,7 @@
         get: function() {
             let oField = this.field.GetDocument().GetField(this.field.GetFullName());
             if (oField && oField.IsWidget()) {
-                return oField.GetCommitOnSelChange();
+                return oField.IsCommitOnSelChange();
             }
             else {
                 throw Error("InvalidGetError: Get not possible, invalid or unknown.");
@@ -1864,7 +1864,7 @@
                 }
             },
             get: function() {
-                return this._multipleSelection;
+                return this.field.IsMultipleSelection();
             }
         },
         "value": {
@@ -1953,7 +1953,7 @@
         this.SelectOption(0, true);
         this.UnionLastHistoryPoints();
 
-        if (this._multipleSelection)
+        if (this.field.IsMultipleSelection())
             this._currentValueIndices = [0];
         else
             this._currentValueIndices = 0;

@@ -578,6 +578,7 @@
 
         this._options = aOptToPush;
     };
+    
     CComboBoxField.prototype.GetValue = function() {
         // to do обработать rich value
         let sValue = this.content.GetElement(0).GetText({ParaEndToSpace: false});
@@ -613,6 +614,83 @@
         return -1;
     };
 	
+    CComboBoxField.prototype.WriteToBinary = function(memory) {
+		// TODO
+		/*
+		if (шрифт_у_CTextField_как-либо_изменялся)
+		{
+			// Также как функция SetFont в common/Drawings/Metafile.js
+			
+			if (шрифт_изменялся)
+			{
+				memory.WriteByte(AscCommon.CommandType.ctFontName);
+				memory.WriteString(this.m_oFont.Name);
+			}
+			
+			if (размер_шрифта_изменялся)
+			{
+				memory.WriteByte(AscCommon.CommandType.ctFontSize);
+				memory.WriteDouble(this.m_oFont.FontSize);
+			}
+			
+			if (стиль_шрифта_изменялся)
+			{
+				memory.WriteByte(AscCommon.CommandType.ctFontStyle);
+				memory.WriteLong(style);
+			}
+		}
+		*/
+
+        memory.WriteByte(AscCommon.CommandType.ctAnnotField);
+
+        // длина комманд
+        let nStartPos = memory.GetCurPosition();
+        memory.Skip(4);
+
+        this.WriteToBinaryBase(memory);
+        this.WriteToBinaryBase2(memory);
+
+        let sValue = this.GetValue();
+        if (sValue != null) {
+            memory.fieldFlags2 |= (1 << 9);
+            memory.WriteString(sValue);
+        }
+
+        let aOptions = this.GetOptions();
+        if (aOptions && aOptions.length != 0) {
+            memory.WriteLong(aOptions.length);
+            for (let i = 0; i < aOptions.length; i++) {
+                memory.WriteString(aOptions[i][1] != undefined ? aOptions[i][1] : "");
+                memory.WriteString(aOptions[i][0] != undefined ? aOptions[i][0] : "");
+            }
+        }
+        
+        // top index
+        
+        if (this.IsEditable()) {
+            memory.fieldFlags1 |= (1 << 18);
+        }
+        // if (this.IsDoNotSpellCheck()) {
+        //     memory.fieldFlags2 |= (1 << 22);
+        // }
+        if (this.IsCommitOnSelChange()) {
+            memory.fieldFlags1 |= (1 << 26);
+        }
+        
+        let nEndPos = memory.GetCurPosition();
+
+        // запись флагов
+        memory.Seek(memory.posForFlags1);
+        memory.WriteLong(memory.fieldFlags1);
+        memory.Seek(memory.posForFlags2);
+        memory.WriteLong(memory.fieldFlags2);
+
+        // запись длины комманд
+        memory.Seek(nStartPos);
+        memory.WriteLong(nEndPos - nStartPos);
+        memory.Seek(nEndPos);
+    };
+
     function TurnOffHistory() {
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();

@@ -175,6 +175,8 @@
             this.Actions[i].WriteToBinary(memory);
             if (this.Actions[i + 1])
                 memory.WriteByte(1);
+            else
+                memory.WriteByte(0);
         }
     };
 

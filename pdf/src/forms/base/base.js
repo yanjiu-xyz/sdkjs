@@ -1994,8 +1994,10 @@
 
         // highlight
         let nHighlightType = this.GetHighlight();
-        if (nHighlightType != null)
+        if (nHighlightType != null) {
             memory.fieldFlags2 |= (1 << 3);
+            memory.WriteByte(nHighlightType);
+        }
 
         let aBorderColor = this.GetBorderColor();
         if (aBorderColor && aBorderColor.length != 0) {

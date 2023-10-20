@@ -448,7 +448,7 @@
 		
 		oField.SelectOption(nIdx);
 		let isNeedRedraw = oField.IsNeedCommit();
-		if (oField._commitOnSelChange && oField.IsNeedCommit()) {
+		if (oField.IsCommitOnSelChange() && oField.IsNeedCommit()) {
 			oField.Commit();
 			isNeedRedraw = true;
 			
