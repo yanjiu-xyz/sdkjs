@@ -211,50 +211,23 @@ var CPresentation = CPresentation || function(){};
             let h = (oPage.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
 
             let oFile = oViewer.file;
-            let aIconsInfo = oFile.nativeFile["getButtonIcons"](i, w, h);
+            let aIconsInfo = oFile.nativeFile["getButtonIcons"](i, w, h, undefined, true);
 
             if (aIconsInfo["View"] == null)
                 return;
                 
             let aIconsToLoad = [];
-            let oIconsMap = {};
 
             // load images
             for (let nIcon = 0; nIcon < aIconsInfo["View"].length; nIcon++) {
-                let canvas  = document.createElement("canvas");
-                let ctx     = canvas.getContext("2d");
-                let nWidth  = aIconsInfo["View"][nIcon]["w"];
-                let nHeight = aIconsInfo["View"][nIcon]["h"];
-                
-                canvas.width    = nWidth;
-                canvas.height   = nHeight;
-
-                let nRetValue = aIconsInfo["View"][nIcon]["retValue"];
-
-                let supportImageDataConstructor = (AscCommon.AscBrowser.isIE && !AscCommon.AscBrowser.isIeEdge) ? false : true;
-                let mappedBuffer    = new Uint8ClampedArray(oFile.memory().buffer, nRetValue, 4 * nWidth * nHeight);
-                let imageData       = null;
-
-                if (supportImageDataConstructor) {
-                    imageData = new ImageData(mappedBuffer, nWidth, nHeight);
-                }
-                else {
-                    imageData = ctx.createImageData(nWidth, nHeight);
-                    imageData.data.set(mappedBuffer, 0);                    
-                }
-
-                if (ctx) {
-                    ctx.putImageData(imageData, 0, 0);
-                }
-                
-                oFile.free(nRetValue);
+                let sBase64 = aIconsInfo["View"][nIcon]["retValue"];
 
                 aIconsToLoad.push({
                     Image: {
-                        width: nWidth,
-                        height: nHeight,
+                        width: aIconsInfo["View"][nIcon]["w"],
+                        height: aIconsInfo["View"][nIcon]["h"],
                     },
-                    src: canvas.toDataURL()
+                    src: "data:image/png;base64," + sBase64
                 });
 
                 for (let nField = 0; nField < aIconsInfo["MK"].length; nField++) {
