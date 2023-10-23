@@ -886,8 +886,15 @@
 				}
 				if (oFormInfo["BG"] != null)
 					oForm.SetBackgroundColor(oFormInfo["BG"]);
-				if (oFormInfo["textColor"] != null)
-					oForm.SetTextColor(oFormInfo["textColor"]);
+
+				if (oFormInfo["font"]) {
+					if (oFormInfo["font"]["color"] != null)
+						oForm.SetTextColor(oFormInfo["font"]["color"]);
+					// if (oFormInfo["font"]["name"] != null)
+					// 	oForm.SetTextFont(oFormInfo["font"]["name"]);
+					if (oFormInfo["font"]["size"] != null)
+						oForm.SetTextSize(oFormInfo["font"]["size"] * 2);
+				}
 
 				if (oFormInfo["AP"] != null) {
 					oForm.SetApIdx(oFormInfo["AP"]["i"]);

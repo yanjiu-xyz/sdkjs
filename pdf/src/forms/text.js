@@ -98,7 +98,7 @@
     CTextField.prototype.SetCharLimit = function(nChars) {
         let oViewer = editor.getDocumentRenderer();
 
-        if (typeof(nChars) == "number" && nChars <= 500 && nChars > 0 && this.GetFileSelect() === false) {
+        if (typeof(nChars) == "number" && nChars <= 500 && nChars > 0 && this.IsFileSelect() === false) {
             nChars = Math.round(nChars);
             if (this._charLimit != nChars) {
 
@@ -281,8 +281,7 @@
         if (this.IsHidden() == true)
             return;
 
-        let oViewer         = editor.getDocumentRenderer();
-        let oDoc            = this.GetDocument();
+        let oDoc = this.GetDocument();
 
         this.Recalculate();
         this.DrawBackground(oGraphicsPDF);
@@ -307,6 +306,79 @@
         // redraw target cursor if field is selected
         if (oDoc.activeForm == this && oContentToDraw.IsSelectionUse() == false && this.IsEditable())
             oContentToDraw.RecalculateCurPos();
+    };
+    CTextField.prototype.ProcessAutoFitContent = function() {
+        let oPara   = this.content.GetElement(0);
+        let oRun    = oPara.GetElement(0);
+        let oTextPr = oRun.Get_CompiledPr(true);
+        let oBounds = this.getFormRelRect();
+
+        g_oTextMeasurer.SetTextPr(oTextPr, null);
+        g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
+
+        var nTextHeight = g_oTextMeasurer.GetHeight();
+        var nMaxWidth   = oPara.RecalculateMinMaxContentWidth(false).Max;
+        var nFontSize   = Math.max(oTextPr.FontSize);
+
+        if (nMaxWidth < 0.001 || nTextHeight < 0.001 || oBounds.W < 0.001 || oBounds.H < 0.001)
+    	    return nTextHeight;
+
+        var nNewFontSize = nFontSize;
+
+        if (this.IsMultiline() == true) {
+            const nFontStep = 0.05;
+            oPara.Recalculate_Page(0);
+            let oContentBounds = this.content.GetContentBounds(0);
+            if (oContentBounds.Bottom - oContentBounds.Top > oBounds.H)
+            {
+                nNewFontSize = AscCommon.CorrectFontSize(nFontSize, true);
+                while (nNewFontSize > 1)
+                {
+                    oRun.SetFontSize(nNewFontSize);
+                    oPara.Recalculate_Page(0);
+
+                    oContentBounds = this.content.GetContentBounds(0);
+                    if (oContentBounds.Bottom - oContentBounds.Top < oBounds.H)
+                        break;
+
+                    nNewFontSize -= nFontStep;
+                }
+            }
+            else
+            {
+                let nMaxFontSize = 12;
+
+                while (nNewFontSize <= nMaxFontSize)
+                {
+                    oRun.SetFontSize(nNewFontSize);
+                    oPara.Recalculate_Page(0);
+
+                    let oContentBounds = this.content.GetContentBounds(0);
+                    if (oContentBounds.Bottom - oContentBounds.Top > oBounds.H)
+                    {
+                        nNewFontSize -= nFontStep;
+                        oRun.SetFontSize(nNewFontSize);
+                        oPara.Recalculate_Page(0);
+                        break;
+                    }
+
+                    nNewFontSize += nFontStep;
+                }
+
+                nNewFontSize = Math.min(nNewFontSize, nMaxFontSize);
+            }
+
+        }
+        else {
+            nNewFontSize = (Math.min(nFontSize * oBounds.H / nTextHeight * 0.9, 100, nFontSize * oBounds.W / nMaxWidth) * 100 >> 0) / 100;
+            oRun.SetFontSize(nNewFontSize);
+            oPara.Recalculate_Page(0);
+        }
+
+        oTextPr.FontSize    = nNewFontSize;
+        oTextPr.FontSizeCS  = nNewFontSize;
+
+        this.AddToRedraw();
     };
     CTextField.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
@@ -334,6 +406,11 @@
         let contentXLimit = this.IsComb() ? (X + nWidth - oMargins.left) * g_dKoef_pix_to_mm : (X + nWidth - 2 * oMargins.left) * g_dKoef_pix_to_mm;
         let contentYLimit = (Y + nHeight - oMargins.bottom) * g_dKoef_pix_to_mm;
         
+        this.contentRect.X = contentX;
+        this.contentRect.Y = contentY;
+        this.contentRect.W = contentXLimit - contentX;
+        this.contentRect.H = contentYLimit - contentY;
+        
         if ((this.borderStyle == "solid" || this.borderStyle == "dashed") && 
         this._comb == true && this._charLimit > 1) {
             contentX = (X) * g_dKoef_pix_to_mm;
@@ -341,9 +418,23 @@
         }
         
         if (this.IsMultiline() == false) {
-            // выставляем текст посередине
-            let nContentH = this.content.GetElement(0).Get_EmptyHeight();
-            contentY = (Y + nHeight / 2) * g_dKoef_pix_to_mm - nContentH / 2;
+            let oRect = this.getFormRelRect();
+            
+            let oPara = this.content.GetElement(0);
+            oPara.Pr.Spacing.Before = 0;
+            oPara.Pr.Spacing.After  = 0;
+            oPara.CompiledPr.NeedRecalc = true;
+
+            this.content.Recalculate_Page(0, true);
+            let oContentBounds  = this.content.GetContentBounds(0);
+            let oContentH       = oContentBounds.Bottom - oContentBounds.Top;
+
+            oPara.Pr.Spacing.Before = (oRect.H - oContentH) / 2;
+            oPara.CompiledPr.NeedRecalc = true;
+
+            // // выставляем текст посередине
+            // let nContentH = this.content.GetElement(0).Get_EmptyHeight();
+            // contentY = (Y + nHeight / 2) * g_dKoef_pix_to_mm - nContentH / 2;
         }
 
         this._formRect.X = X * g_dKoef_pix_to_mm;
@@ -351,11 +442,6 @@
         this._formRect.W = nWidth * g_dKoef_pix_to_mm;
         this._formRect.H = nHeight * g_dKoef_pix_to_mm;
         
-        this.contentRect.X = contentX;
-        this.contentRect.Y = contentY;
-        this.contentRect.W = contentXLimit - contentX;
-        this.contentRect.H = contentYLimit - contentY;
-
         if (contentX != this._oldContentPos.X || contentY != this._oldContentPos.Y ||
         contentXLimit != this._oldContentPos.XLimit) {
             this.content.X      = this.contentFormat.X = this._oldContentPos.X = contentX;
@@ -374,6 +460,8 @@
             });
         }
 
+        if (this.GetTextSize() == 0)
+            this.ProcessAutoFitContent();
         this.SetNeedRecalc(false);
     };
 
@@ -453,7 +541,7 @@
     CTextField.prototype.UpdateScroll = function(bShow) {
         if (this.IsMultiline() == false)
             return;
-            
+        
         let oContentBounds  = this.content.GetContentBounds(0);
         let oContentRect    = this.getFormRelRect();
         let oFormRect       = this.getFormRect();
@@ -1198,11 +1286,11 @@
             // если высота контента больше чем высота формы
             if (oParagraph.IsSelectionUse()) {
                 if (oParagraph.GetSelectDirection() == 1) {
-                    if (nCursorT + nCursorH > oFormBounds.Y + oFormBounds.H)
+                    if (nCursorT + nCursorH - nCursorH/4 > oFormBounds.Y + oFormBounds.H)
                         nDy = oFormBounds.Y + oFormBounds.H - (nCursorT + nCursorH);
                 }
                 else {
-                    if (nCursorT < oFormBounds.Y)
+                    if (nCursorT + nCursorH/4 < oFormBounds.Y)
                         nDy = oFormBounds.Y - nCursorT;
                 }
             }
@@ -1210,9 +1298,9 @@
                 if (oPageBounds.Bottom - oPageBounds.Top > oFormBounds.H) {
                     if (oLastLineBounds.Bottom - Math.floor(((oFormBounds.Y + oFormBounds.H) * 1000)) / 1000 < 0)
                         nDy = oFormBounds.Y + oFormBounds.H - oLastLineBounds.Bottom;
-                    else if (nCursorT < oFormBounds.Y)
+                    else if (nCursorT + nCursorH/4 < oFormBounds.Y)
                         nDy = oFormBounds.Y - nCursorT;
-                    else if (nCursorT + nCursorH > oFormBounds.Y + oFormBounds.H)
+                    else if (nCursorT + nCursorH - nCursorH/4 > oFormBounds.Y + oFormBounds.H)
                         nDy = oFormBounds.Y + oFormBounds.H - (nCursorT + nCursorH);
                 }
                 else

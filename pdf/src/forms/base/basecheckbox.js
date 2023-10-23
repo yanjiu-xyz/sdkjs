@@ -300,35 +300,6 @@
     //     oPara.CompiledPr.NeedRecalc = true;
     // };
 
-    // CBaseCheckBoxField.prototype.ProcessAutoFitContent = function() {
-    //     let oPara   = this.content.GetElement(0);
-    //     let oRun    = oPara.GetElement(0);
-    //     let oTextPr = oRun.Get_CompiledPr(true);
-    //     let oBounds = this.getFormRelRect();
-
-    //     g_oTextMeasurer.SetTextPr(oTextPr, null);
-    //     g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
-
-    //     var nTextHeight = g_oTextMeasurer.GetHeight();
-    //     var nMaxWidth   = oPara.RecalculateMinMaxContentWidth(false).Max;
-    //     var nFontSize   = oTextPr.FontSize;
-
-    //     if (nMaxWidth < 0.001 || nTextHeight < 0.001 || oBounds.W < 0.001 || oBounds.H < 0.001)
-    // 	    return nTextHeight;
-
-    //     var nNewFontSize = nFontSize;
-
-    //     nNewFontSize = (oBounds.H / g_dKoef_pt_to_mm) >> 0;
-    //     oRun.SetFontSize(nNewFontSize);
-
-    //     oTextPr.FontSize    = nNewFontSize;
-    //     oTextPr.FontSizeCS  = nNewFontSize;
-
-    //     g_oTextMeasurer.SetTextPr(oTextPr, null);
-    //     g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
-
-    //     return g_oTextMeasurer.GetHeight();
-    // };
     /**
      * Returns a canvas with origin view (from appearance stream) of current form.
      * @memberof CBaseCheckBoxField

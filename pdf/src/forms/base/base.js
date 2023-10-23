@@ -105,7 +105,7 @@
 
     const MAX_TEXT_SIZE = 32767;
 	
-	const DEFAULT_FIELD_FONT = "Arial";
+	const DEFAULT_FIELD_FONT = "Times New Roman";
 	
 	
 	// freeze objects
@@ -148,6 +148,7 @@
         this._borderColor   = undefined;
         this._submitName    = "";
         this._textColor     = [0,0,0];
+        this._textFont      = undefined;
         this._fgColor       = undefined;
         this._textSize      = 10; // 0 == max text size // to do
         this._userName      = ""; // It is intended to be used as tooltip text whenever the cursor enters a field. 
@@ -208,7 +209,7 @@
         this.api = this.GetFormApi();
         this["api"] = this.api;
     }
-    
+
     CBaseField.prototype.SetApIdx = function(nIdx) {
         this.GetDocument().UpdateApIdx(nIdx);
         this._apIdx = nIdx;
@@ -1788,6 +1789,56 @@
     };
     CBaseField.prototype.GetTextColor = function() {
         return this._textColor;
+    };
+    CBaseField.prototype.SetTextFont = function(sFontName) {
+        this._textFont = sFontName;
+        
+        // if (this.content) {
+        //     let oPara       = this.content.GetElement(0);
+        //     let oApiPara    = editor.private_CreateApiParagraph(oPara);
+
+        //     oApiPara.SetColor(oRGB.r, oRGB.g, oRGB.b, false);
+        //     oPara.RecalcCompiledPr(true);
+        // }
+        // if (this.contentFormat) {
+        //     let oPara       = this.contentFormat.GetElement(0);
+        //     let oApiPara    = editor.private_CreateApiParagraph(oPara);
+
+        //     oApiPara.SetColor(oRGB.r, oRGB.g, oRGB.b, false);
+        //     oPara.RecalcCompiledPr(true);
+        // }
+        
+        this.SetWasChanged(true);
+        this.AddToRedraw();
+    };
+    CBaseField.prototype.GetTextFont = function() {
+        return this._textFont;
+    };
+    CBaseField.prototype.SetTextSize = function(nSize) {
+        this._textSize = nSize;
+        
+        if (nSize != 0) {
+            if (this.content) {
+                let oPara       = this.content.GetElement(0);
+                let oApiPara    = editor.private_CreateApiParagraph(oPara);
+    
+                oApiPara.SetFontSize(nSize);
+                oPara.RecalcCompiledPr(true);
+            }
+            if (this.contentFormat) {
+                let oPara       = this.contentFormat.GetElement(0);
+                let oApiPara    = editor.private_CreateApiParagraph(oPara);
+    
+                oApiPara.SetFontSize(nSize);
+                oPara.RecalcCompiledPr(true);
+            }
+        }
+        
+        this.SetWasChanged(true);
+        this.AddToRedraw();
+    };
+    CBaseField.prototype.GetTextSize = function() {
+        return this._textSize;
     };
     /**
      * Is the field completely within the window of view.
