@@ -2374,7 +2374,7 @@
     if (this.selectionDialogMode) {
       // Когда идет выбор диапазона, то на показываемом листе должны выставить нужный режим
       ws.cloneSelection(true, selectionRange);
-      this._onSelectionRangeChanged(ws.getSelectionRangeValue());
+      //this._onSelectionRangeChanged(ws.getSelectionRangeValue());
     }
 
     // Мы делали resize или меняли zoom, но не перерисовывали данный лист (он был не активный)
