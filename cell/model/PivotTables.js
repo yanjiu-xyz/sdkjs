@@ -15083,7 +15083,7 @@ CT_PivotArea.prototype.toXml = function(writer, name) {
 	if (null !== this.field) {
 		writer.WriteXmlAttributeNumber("field", this.field);
 	}
-	if (c_oAscPivotAreaType.None !== this.type) {
+	if (c_oAscPivotAreaType.Normal !== this.type) {
 		writer.WriteXmlAttributeStringEncode("type", ToXml_ST_PivotAreaType(this.type));
 	}
 	if (true !== this.dataOnly) {
