@@ -176,41 +176,25 @@
     CTextField.prototype.SetRichText = function(bRichText) {
         this._richText = bRichText;
     };
-    CTextField.prototype.SetValue = function(sValue) {
-        if (this.IsWidget()) {
-            let oPara   = this.content.GetElement(0);
-            let oRun    = oPara.GetElement(0);
-            oPara.RemoveFromContent(1, oPara.GetElementsCount() - 1);
-            oRun.ClearContent();
-
-            let oTextFormat = new AscWord.CTextFormFormat();
-            let arrBuffer   = oTextFormat.GetBuffer(sValue);
-            
-            if (sValue) {
-                for (let index = 0; index < arrBuffer.length; ++index) {
-                    let codePoint = arrBuffer[index];
-                    if (9 === codePoint) // \t
-                        oRun.AddToContent(index, new AscWord.CRunTab(), true);
-                    else if (10 === codePoint || 13 === codePoint) // \n \r
-                        oRun.AddToContent(index, new AscWord.CRunBreak(AscWord.break_Line), true);
-                    else if (AscCommon.IsSpace(codePoint)) // space
-                        oRun.AddToContent(index, new AscWord.CRunSpace(codePoint), true);
-                    else
-                        oRun.AddToContent(index, new AscWord.CRunText(codePoint), true);
-                }
-                
-                this.content.MoveCursorToStartPos();
-            }
-
-            this.SetNeedRecalc(true);
-            this.SetWasChanged(true);
-
-            if (editor.getDocumentRenderer().IsOpenFormsInProgress && this.GetParent() == null)
-                this.SetApiValue(sValue);
-        }
-        else
-            this.SetApiValue(sValue);
-    };
+	CTextField.prototype.SetValue = function(sValue) {
+		if (this.IsWidget()) {
+			let _t = this;
+			new Promise(function(resolve) {
+				AscFonts.FontPickerByCharacter.checkText(sValue, _t, resolve);
+			}).then(function() {
+				_t.content.replaceAllText(sValue);
+				
+				_t.SetNeedRecalc(true);
+				_t.SetWasChanged(true);
+				
+				if (editor.getDocumentRenderer().IsOpenFormsInProgress && !_t.GetParent())
+					_t.SetApiValue(sValue);
+			});
+		}
+		else {
+			this.SetApiValue(sValue);
+		}
+	};
     
     CTextField.prototype.GetCalcOrderIndex = function() {
         return this.field.GetDocument().GetCalculateInfo().names.indexOf(this.field.GetFullName());
