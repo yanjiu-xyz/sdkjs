@@ -13380,25 +13380,15 @@ background-repeat: no-repeat;\
 
 		return true;
 	};
-
-    asc_docs_api.prototype.asc_setContentDarkMode = function(isDarkMode)
+	
+	asc_docs_api.prototype.updateDarkMode = function()
 	{
-		if (this.isDarkMode === isDarkMode)
+		if (!this.WordControl || !this.WordControl.m_oDrawingDocument)
 			return;
-
-        this.isDarkMode = isDarkMode;
-        if (this.WordControl && this.WordControl.m_oDrawingDocument)
-		{
-			if (this.isUseNativeViewer && this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
-			{
-				this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.updateDarkMode();
-				return;
-			}
-
-			this.WordControl.m_oDrawingDocument.ClearCachePages();
-            this.WordControl.m_oDrawingDocument.FirePaint();
-            this.WordControl.m_oDrawingDocument.UpdateTargetNoAttack();
-        }
+		
+		this.WordControl.m_oDrawingDocument.ClearCachePages();
+		this.WordControl.m_oDrawingDocument.FirePaint();
+		this.WordControl.m_oDrawingDocument.UpdateTargetNoAttack();
 	};
     asc_docs_api.prototype.getPageBackgroundColor = function()
     {
@@ -13677,33 +13667,15 @@ background-repeat: no-repeat;\
 	};
 	asc_docs_api.prototype.asc_getPageSize = function(pageIndex)
 	{
-		if (!this.WordControl)
+		if (!this.WordControl
+			|| !this.WordControl.m_oDrawingDocument
+			|| this.WordControl.m_oDrawingDocument.IsFreezePage(pageIndex))
 			return null;
-
-		if (this.WordControl.m_oLogicDocument && this.WordControl.m_oDrawingDocument)
-		{
-			if (this.WordControl.m_oDrawingDocument.IsFreezePage(pageIndex))
-				return null;
-
-			return {
-				"W" : this.WordControl.m_oDrawingDocument.m_arrPages[pageIndex].width_mm,
-				"H" : this.WordControl.m_oDrawingDocument.m_arrPages[pageIndex].height_mm
-			}
-		}
-
-		if (this.isDocumentRenderer())
-		{
-			let page = this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.file.pages[pageIndex];
-			if (page)
-			{
-				return {
-					"W": 25.4 * page.W / page.Dpi,
-					"H": 25.4 * page.H / page.Dpi
-				}
-			}
-		}
-
-		return null;
+		
+		return {
+			"W" : this.WordControl.m_oDrawingDocument.m_arrPages[pageIndex].width_mm,
+			"H" : this.WordControl.m_oDrawingDocument.m_arrPages[pageIndex].height_mm
+		};
 	};
 	asc_docs_api.prototype.getEyedropperImgData = function()
 	{
