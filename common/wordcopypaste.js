@@ -10980,7 +10980,7 @@ function getPageWidth()
 	let logicDocument = editor && editor.WordControl && editor.WordControl.m_oLogicDocument && editor.WordControl.m_oLogicDocument;
 	let isPortraitOrient = true;
 	if (logicDocument) {
-		isPortraitOrient = logicDocument && logicDocument.Get_DocumentOrientation();
+		isPortraitOrient = logicDocument && logicDocument.Get_DocumentOrientation && logicDocument.Get_DocumentOrientation();
 	}
 	return !isPortraitOrient ? Page_Height - (Y_Top_Margin + Y_Bottom_Margin) : Page_Width - (X_Left_Margin + X_Right_Margin);
 }
