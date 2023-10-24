@@ -1321,7 +1321,7 @@
 
 		CColorModifiers.prototype.isUsePow = (!AscCommon.AscBrowser.isSailfish || !AscCommon.AscBrowser.isEmulateDevicePixelRatio);
 		CColorModifiers.prototype.getModValue = function (sName) {
-			let oMod = this.getMod();
+			let oMod = this.getMod(sName);
 			if(oMod) {
 				return oMod.val;
 			}
