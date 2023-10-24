@@ -698,7 +698,10 @@ var CPresentation = CPresentation || function(){};
 		if (!this.checkDefaultFieldFonts(function(){_t.OnMouseDownField(oField, event)}))
 			return;
 		
-		oField.Recalculate();
+        if (oField.IsNeedDrawFromStream()) {
+		    oField.Recalculate();
+            oField.SetNeedRecalc(true);
+        }
 
         // суть в том, что мы рисуем background только когда форма активна, если неактивна - рисуем highlight вместо него.
         if (oField.GetBackgroundColor())

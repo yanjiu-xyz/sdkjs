@@ -418,23 +418,12 @@
         }
         
         if (this.IsMultiline() == false) {
-            let oRect = this.getFormRelRect();
+            if (this.GetTextSize() == 0)
+                this.ProcessAutoFitContent();
             
-            let oPara = this.content.GetElement(0);
-            oPara.Pr.Spacing.Before = 0;
-            oPara.Pr.Spacing.After  = 0;
-            oPara.CompiledPr.NeedRecalc = true;
-
-            this.content.Recalculate_Page(0, true);
             let oContentBounds  = this.content.GetContentBounds(0);
-            let oContentH       = oContentBounds.Bottom - oContentBounds.Top;
-
-            oPara.Pr.Spacing.Before = (oRect.H - oContentH) / 2;
-            oPara.CompiledPr.NeedRecalc = true;
-
-            // // выставляем текст посередине
-            // let nContentH = this.content.GetElement(0).Get_EmptyHeight();
-            // contentY = (Y + nHeight / 2) * g_dKoef_pix_to_mm - nContentH / 2;
+            let nContentH       = oContentBounds.Bottom - oContentBounds.Top;
+            contentY            = (Y + nHeight / 2) * g_dKoef_pix_to_mm - nContentH / 2;
         }
 
         this._formRect.X = X * g_dKoef_pix_to_mm;
@@ -460,8 +449,6 @@
             });
         }
 
-        if (this.GetTextSize() == 0)
-            this.ProcessAutoFitContent();
         this.SetNeedRecalc(false);
     };
 
@@ -699,7 +686,6 @@
         // считаем символы в форме
         if (this._charLimit != 0)
             this.content.CheckRunContent(countChars);
-
 
         // считаем максимум символов для вставки
         let nSelChars = this.content.GetSelectedText(true, {NewLine: true}).length;

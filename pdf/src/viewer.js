@@ -3082,7 +3082,7 @@
 						this.Api.WordControl.m_oDrawingDocument.TargetEnd();
 						
 					let nCursorH = g_oTextMeasurer.GetHeight();
-					if ((oCurPos.X < oFieldBounds.X || oCurPos.Y - nCursorH < oFieldBounds.Y) && oDoc.activeForm._doNotScroll != true)
+					if ((oCurPos.X < oFieldBounds.X || oCurPos.Y - nCursorH * 0.75 < oFieldBounds.Y) && oDoc.activeForm._doNotScroll != true)
 					{
 						oDoc.activeForm.AddToRedraw();
 						this._paint();
@@ -3125,7 +3125,7 @@
 								this.Api.WordControl.m_oDrawingDocument.TargetEnd();
 
 							let nCursorH = g_oTextMeasurer.GetHeight();
-							if (oCurPos.Y - nCursorH < oFieldBounds.Y && oDoc.activeForm._doNotScroll != true)
+							if (oCurPos.Y - nCursorH * 0.75 < oFieldBounds.Y && oDoc.activeForm._doNotScroll != true)
 							{
 								oDoc.activeForm.AddToRedraw();
 								this._paint();

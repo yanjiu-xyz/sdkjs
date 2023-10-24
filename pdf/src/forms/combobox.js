@@ -79,6 +79,9 @@
         this.DrawBorders(oGraphicsPDF);
     };
     CComboBoxField.prototype.Recalculate = function() {
+        if (this.IsNeedRecalc() == false)
+            return;
+
         let oViewer = editor.getDocumentRenderer();
         let nScale  = AscCommon.AscBrowser.retinaPixelRatio * oViewer.zoom;
         let aRect   = this.GetRect();
@@ -103,18 +106,22 @@
         let contentXLimit   = (X + nWidth - 2 * oMargins.left - (18 / nScale)) * g_dKoef_pix_to_mm; // 18 / nScale --> Размер маркера комбобокса
         let contentYLimit   = (Y + nHeight - oMargins.bottom) * g_dKoef_pix_to_mm;
 
-        let nContentH = this.content.GetElement(0).Get_EmptyHeight();
-        contentY = (Y + nHeight / 2) * g_dKoef_pix_to_mm - nContentH / 2;
+        this.contentRect.X = contentX;
+        this.contentRect.Y = contentY;
+        this.contentRect.W = contentXLimit - this.contentRect.X;
+        this.contentRect.H = contentYLimit - this.contentRect.Y;
+
+        if (this.GetTextSize() == 0)
+            this.ProcessAutoFitContent();
+            
+        let oContentBounds  = this.content.GetContentBounds(0);
+        let nContentH       = oContentBounds.Bottom - oContentBounds.Top;
+        contentY            = (Y + nHeight / 2) * g_dKoef_pix_to_mm - nContentH / 2;
 
         this._formRect.X = X * g_dKoef_pix_to_mm;
         this._formRect.Y = Y * g_dKoef_pix_to_mm;
         this._formRect.W = nWidth * g_dKoef_pix_to_mm;
         this._formRect.H = nHeight * g_dKoef_pix_to_mm;
-        
-        this.contentRect.X = contentX;
-        this.contentRect.Y = contentY;
-        this.contentRect.W = contentXLimit - contentX;
-        this.contentRect.H = contentYLimit - contentY;
 
         if (contentX != this._oldContentPos.X || contentY != this._oldContentPos.Y ||
         contentXLimit != this._oldContentPos.XLimit) {
@@ -134,6 +141,7 @@
             });
         }
 
+        
         this.SetNeedRecalc(false);
     };
 
@@ -377,49 +385,46 @@
             }
         }
     };
-    CComboBoxField.prototype.EnterText = function(aChars, bForce)
+    CComboBoxField.prototype.EnterText = function(aChars)
     {
-        if (this.IsEditable() == false && !bForce)
-            return false;
-
-        if (aChars.length > 0)
-            this.CreateNewHistoryPoint(true);
-        else
-            return false;
-
         let oDoc = this.GetDocument();
-        
-        // Если у нас что-то заселекчено и мы вводим текст или пробел
-        // и т.д., тогда сначала удаляем весь селект.
-        if (this.content.IsSelectionUse()) {
-            if (this.content.IsSelectionEmpty())
-                this.content.RemoveSelection();
-            else
-                this.content.Remove(1, true, false, true);
-        }
-        
-        let isCanEnter = this.DoKeystrokeAction(aChars);
-        if (isCanEnter) {
-            this.content.Remove(1, true, false, false);
-        }
+        this.CreateNewHistoryPoint(true);
 
-        if (isCanEnter == false) {
+        if (this.DoKeystrokeAction(aChars) == false) {
+            AscCommon.History.Remove_LastPoint();
             return false;
         }
 
-        aChars = AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.event["change"].toString());
+        let nSelStart = oDoc.event["selStart"];
+        let nSelEnd = oDoc.event["selEnd"];
+
+        // убираем селект, выставляем из nSelStart/nSelEnd
+        if (this.content.IsSelectionUse())
+            this.content.RemoveSelection();
+
+        let oDocPos     = this.CalcDocPos(nSelStart, nSelEnd);
+        let startPos    = oDocPos.startPos;
+        let endPos      = oDocPos.endPos;
+        
+        if (nSelStart == nSelEnd) {
+            this.content.SetContentPosition(startPos, 0, 0);
+            this.content.RecalculateCurPos();
+        }
+        else
+            this.content.SetSelectionByContentPositions(startPos, endPos);
+
+        if (nSelStart != nSelEnd)
+            this.content.Remove(-1, true, false, false, false);
+
+        this.SetNeedRecalc(true);
+        aChars = AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.event["change"]);
         if (aChars.length == 0) {
             return false;
         }
 
-        this.CreateNewHistoryPoint(true);
         this.InsertChars(aChars);
-
-        this.SetNeedRecalc(true);
         this.SetNeedCommit(true); // флаг что значение будет применено к остальным формам с таким именем
-        
-        if (this.IsChanged() == false)
-            this.SetWasChanged(true);
+        this._bAutoShiftContentView = true && this._doNotScroll == false;
 
         return true;
     };
@@ -614,6 +619,32 @@
         return -1;
     };
 	
+    CComboBoxField.prototype.ProcessAutoFitContent = function() {
+        let oPara   = this.content.GetElement(0);
+        let oRun    = oPara.GetElement(0);
+        let oTextPr = oRun.Get_CompiledPr(true);
+        let oBounds = this.getFormRelRect();
+
+        g_oTextMeasurer.SetTextPr(oTextPr, null);
+        g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
+
+        var nTextHeight = g_oTextMeasurer.GetHeight();
+        var nMaxWidth   = oPara.RecalculateMinMaxContentWidth(false).Max;
+        var nFontSize   = Math.max(oTextPr.FontSize);
+
+        if (nMaxWidth < 0.001 || nTextHeight < 0.001 || oBounds.W < 0.001 || oBounds.H < 0.001)
+    	    return nTextHeight;
+
+        let nNewFontSize = (Math.min(nFontSize * oBounds.H / nTextHeight * 0.9, 100, nFontSize * oBounds.W / nMaxWidth) * 100 >> 0) / 100;
+        oRun.SetFontSize(nNewFontSize);
+        oPara.Recalculate_Page(0);
+
+        oTextPr.FontSize    = nNewFontSize;
+        oTextPr.FontSizeCS  = nNewFontSize;
+
+        this.AddToRedraw();
+    };
+
     CComboBoxField.prototype.WriteToBinary = function(memory) {
 		// TODO
 		/*
