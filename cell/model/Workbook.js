@@ -9165,6 +9165,25 @@
 		return rowFieldsOffset;
 	};
 	/**
+	 * @param {CT_pivotTableDefinition} pivotTable 
+	 */
+	Worksheet.prototype.setFormatsCellsDataNoDataField = function(pivotTable) {
+		const pivotRange = pivotTable.getRange();
+		const location = pivotTable.location;
+		const r1 = pivotRange.r1 + location.firstDataRow;
+		const c1 = pivotRange.c1 + location.firstDataCol;
+		const r2 = pivotRange.r2;
+		const c2 = pivotRange.c2;
+		for(let i = r1; i <= r2; i += 1) {
+			for(let j = c1; j <= c2; j += 1) {
+				const cell = this.getRange4(i, j);
+				cell.setStyle(pivotTable.getFormatting({
+					type: c_oAscPivotAreaType.All,
+				}));
+			}
+		}
+	};
+	/**
 	 * A function that updates the data in the cells of a pivot table.
 	 * @param {CT_pivotTableDefinition} pivotTable
 	 * @param {PivotDataElem} dataRow
@@ -9177,6 +9196,7 @@
 		const pivotFields = pivotTable.asc_getPivotFields();
 		const dataFields = pivotTable.asc_getDataFields();
 		if (!rowItems || !colItems || !dataFields) {
+			this.setFormatsCellsDataNoDataField(pivotTable);
 			return;
 		}
 		const valuesIndex = pivotTable.getRowFieldsValuesIndex();
