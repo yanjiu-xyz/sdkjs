@@ -1822,14 +1822,14 @@
                 let oPara       = this.content.GetElement(0);
                 let oApiPara    = editor.private_CreateApiParagraph(oPara);
     
-                oApiPara.SetFontSize(nSize);
+                oApiPara.SetFontSize(nSize * 2);
                 oPara.RecalcCompiledPr(true);
             }
             if (this.contentFormat) {
                 let oPara       = this.contentFormat.GetElement(0);
                 let oApiPara    = editor.private_CreateApiParagraph(oPara);
     
-                oApiPara.SetFontSize(nSize);
+                oApiPara.SetFontSize(nSize * 2);
                 oPara.RecalcCompiledPr(true);
             }
         }
@@ -1997,8 +1997,42 @@
         memory.WriteLong(annotFlags);
         memory.Seek(nEndPos);
     };
+    CBaseField.prototype.GetFontSizeAP = function() {
+        let oPara   = this.content.GetElement(0);
+        let oRun    = oPara.GetElement(0);
+        let oTextPr = oRun.Get_CompiledPr(true);
 
+        return oTextPr.FontSize;
+    };
     CBaseField.prototype.WriteToBinaryBase2 = function(memory) {
+        // font name
+        let sFontName = this.GetTextFont();
+        if (sFontName != null) {
+            memory.WriteString(sFontName);
+        }
+
+        // text size
+        let nFontSize = this.GetTextSize();
+        if (nFontSize != null) {
+            memory.WriteDouble(nFontSize);
+        }
+
+        // text size for ap
+        memory.WriteDouble(this.GetFontSizeAP());
+
+        // text style
+        let nStyle = 0;
+        let isBold = true;
+        let isItalic = true;
+        if (isBold) {
+            nStyle |= (1 << 0);
+        }
+        if (isItalic) {
+            nStyle |= (1 << 1);
+        }
+        memory.WriteLong(nStyle);
+
+        // text color
         let aTextColor = this.GetTextColor();
         if (aTextColor && aTextColor.length != 0) {
             memory.WriteLong(aTextColor.length);
@@ -2007,7 +2041,8 @@
                 memory.WriteDouble(aTextColor[i]);
             }
         }
-        
+
+        // align 
         if (this.GetType() == AscPDF.FIELD_TYPES.text) {
             let nAlignType = this.GetAlign();
             memory.WriteByte(nAlignType);

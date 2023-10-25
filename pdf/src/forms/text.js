@@ -318,7 +318,7 @@
 
         var nTextHeight = g_oTextMeasurer.GetHeight();
         var nMaxWidth   = oPara.RecalculateMinMaxContentWidth(false).Max;
-        var nFontSize   = Math.max(oTextPr.FontSize);
+        var nFontSize   = oTextPr.FontSize;
 
         if (nMaxWidth < 0.001 || nTextHeight < 0.001 || oBounds.W < 0.001 || oBounds.H < 0.001)
     	    return nTextHeight;
@@ -380,6 +380,16 @@
 
         this.AddToRedraw();
     };
+    CTextField.prototype.GetTextHeight = function() {
+        let oPara   = this.content.GetElement(0);
+        let oRun    = oPara.GetElement(0);
+        let oTextPr = oRun.Get_CompiledPr(true);
+
+        g_oTextMeasurer.SetTextPr(oTextPr, null);
+        g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII);
+
+        return g_oTextMeasurer.GetHeight();
+    };
     CTextField.prototype.Recalculate = function() {
         if (this.IsNeedRecalc() == false)
             return;
@@ -421,8 +431,7 @@
             if (this.GetTextSize() == 0)
                 this.ProcessAutoFitContent();
             
-            let oContentBounds  = this.content.GetContentBounds(0);
-            let nContentH       = oContentBounds.Bottom - oContentBounds.Top;
+            let nContentH       = this.GetTextHeight();
             contentY            = (Y + nHeight / 2) * g_dKoef_pix_to_mm - nContentH / 2;
         }
 

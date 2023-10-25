@@ -382,6 +382,9 @@
             this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.OnFocus);
         oDoc.activeForm = this;
     };
+    CBaseCheckBoxField.prototype.GetFontSizeAP = function() {
+        return 12;
+    };
     CBaseCheckBoxField.prototype.onMouseEnter = function() {
         this.AddActionsToQueue(AscPDF.FORMS_TRIGGERS_TYPES.MouseEnter);
 

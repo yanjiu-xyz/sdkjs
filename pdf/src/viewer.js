@@ -893,7 +893,7 @@
 					// if (oFormInfo["font"]["name"] != null)
 					// 	oForm.SetTextFont(oFormInfo["font"]["name"]);
 					if (oFormInfo["font"]["size"] != null)
-						oForm.SetTextSize(oFormInfo["font"]["size"] * 2);
+						oForm.SetTextSize(oFormInfo["font"]["size"]);
 				}
 
 				if (oFormInfo["AP"] != null) {
