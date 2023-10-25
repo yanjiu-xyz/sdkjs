@@ -984,9 +984,9 @@ else
 				}
 			    if (flags & (1 << 14))
 				{
-					rec["NameOfYes"] = reader.readString();
+					rec["ExportValue"] = reader.readString();
 					if (flags & (1 << 9))
-						rec["value"] = rec["NameOfYes"];
+						rec["value"] = rec["ExportValue"];
 				}
 				// 12.7.4.2.1
 				rec["NoToggleToOff"]  = (rec["flag"] >> 14) & 1; // NoToggleToOff
@@ -1048,7 +1048,7 @@ else
 	};
 	// optional nWidget     - rec["AP"]["i"]
 	// optional sView       - N/D/R
-	// optional sButtonView - state pushbutton-annotation - Off/Yes(or rec["NameOfYes"])
+	// optional sButtonView - state pushbutton-annotation - Off/Yes(or rec["ExportValue"])
 	CFile.prototype["getInteractiveFormsAP"] = function(pageIndex, width, height, backgroundColor, nWidget, sView, sButtonView)
 	{
 		let nView = -1;
@@ -1066,7 +1066,9 @@ else
 			nButtonView = (sButtonView == "Off" ? 0 : 1);
 
 		let res = [];
+		self.drawingFileCurrentPageIndex = pageIndex;
 		let ext = Module["_GetInteractiveFormsAP"](this.nativeFile, width, height, backgroundColor === undefined ? 0xFFFFFF : backgroundColor, pageIndex, nWidget === undefined ? -1 : nWidget, nView, nButtonView);
+		self.drawingFileCurrentPageIndex = -1;
 		if (ext == 0)
 			return res;
 
@@ -1109,7 +1111,9 @@ else
 		}
 
 		let res = {};
+		self.drawingFileCurrentPageIndex = pageIndex;
 		let ext = Module["_GetButtonIcons"](this.nativeFile, width, height, backgroundColor === undefined ? 0xFFFFFF : backgroundColor, pageIndex, nWidget === undefined ? -1 : nWidget, nView);
+		self.drawingFileCurrentPageIndex = -1;
 		if (ext == 0)
 			return res;
 
@@ -1451,7 +1455,9 @@ else
 		}
 
 		let res = [];
+		self.drawingFileCurrentPageIndex = pageIndex;
 		let ext = Module["_GetAnnotationsAP"](this.nativeFile, width, height, backgroundColor === undefined ? 0xFFFFFF : backgroundColor, pageIndex, nAnnot === undefined ? -1 : nAnnot, nView);
+		self.drawingFileCurrentPageIndex = -1;
 		if (ext == 0)
 			return res;
 

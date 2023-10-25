@@ -370,15 +370,17 @@
 			return false;
 		}
 		
-		oDoc.activeForm.EnterText(text);
+		let isEntered = oDoc.activeForm.EnterText(text);
 		if (viewer.pagesInfo.pages[oDoc.activeForm._page].needRedrawForms) {
 			viewer._paint();
 			viewer.onUpdateOverlay();
 		}
 		
-		this.WordControl.m_oDrawingDocument.TargetStart();
-		// Чтобы при зажатой клавише курсор не пропадал
-		this.WordControl.m_oDrawingDocument.showTarget(true);
+		if (isEntered) {
+			this.WordControl.m_oDrawingDocument.TargetStart();
+			// Чтобы при зажатой клавише курсор не пропадал
+			this.WordControl.m_oDrawingDocument.showTarget(true);
+		}
 		
 		return true;
 	};
@@ -448,7 +450,7 @@
 		
 		oField.SelectOption(nIdx);
 		let isNeedRedraw = oField.IsNeedCommit();
-		if (oField._commitOnSelChange && oField.IsNeedCommit()) {
+		if (oField.IsCommitOnSelChange() && oField.IsNeedCommit()) {
 			oField.Commit();
 			isNeedRedraw = true;
 			
