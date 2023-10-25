@@ -9178,7 +9178,7 @@
 			for(let j = c1; j <= c2; j += 1) {
 				const cell = this.getRange4(i, j);
 				cell.setStyle(pivotTable.getFormatting({
-					type: c_oAscPivotAreaType.All,
+					type: Asc.c_oAscPivotAreaType.All,
 				}));
 			}
 		}

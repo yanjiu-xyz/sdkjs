@@ -7667,6 +7667,10 @@ PivotFormatsManager.prototype.changeFormats = function(onAction) {
 PivotFormatsManager.prototype.removeField = function(index) {
 	this.changeFormats(function(format) {
 		const pivotArea = format.pivotArea;
+		if (pivotArea.field === index) {
+			pivotArea.axis = null;
+			pivotArea.fieldPosition = null;
+		}
 		const references = pivotArea.getReferences();
 		if (references) {
 			for(let i = 0; i < references.length; i += 1) {
