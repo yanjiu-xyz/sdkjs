@@ -287,37 +287,6 @@
         let oDrawing = this.GetDrawing();
         if (oDrawing) {
             let oLine = oDrawing.GraphicObj.pen;
-            oLine.setTailEnd(new AscFormat.EndArrow());
-            let nLineEndType;
-            switch (nType) {
-                case LINE_END_TYPE.None:
-                    nLineEndType = AscFormat.LineEndType.None;
-                    break;
-                case LINE_END_TYPE.OpenArrow:
-                    nLineEndType = AscFormat.LineEndType.Arrow;
-                    break;
-                case LINE_END_TYPE.Diamond:
-                    nLineEndType = AscFormat.LineEndType.Diamond;
-                    break;
-                case LINE_END_TYPE.Circle:
-                    nLineEndType = AscFormat.LineEndType.Oval;
-                    break;
-                default:
-                    nLineEndType = AscFormat.LineEndType.Arrow;
-                    break;
-            }
-
-            oLine.tailEnd.setType(nLineEndType);
-            oLine.tailEnd.setLen(AscFormat.LineEndSize.Mid);
-        }
-    };
-    CAnnotationLine.prototype.SetLineEnd = function(nType) {
-        this._lineEnd = nType;
-
-        this.SetWasChanged(true);
-        let oDrawing = this.GetDrawing();
-        if (oDrawing) {
-            let oLine = oDrawing.GraphicObj.pen;
             oLine.setHeadEnd(new AscFormat.EndArrow());
             let nLineEndType;
             switch (nType) {
@@ -340,6 +309,37 @@
 
             oLine.headEnd.setType(nLineEndType);
             oLine.headEnd.setLen(AscFormat.LineEndSize.Mid);
+        }
+    };
+    CAnnotationLine.prototype.SetLineEnd = function(nType) {
+        this._lineEnd = nType;
+        
+        this.SetWasChanged(true);
+        let oDrawing = this.GetDrawing();
+        if (oDrawing) {
+            let oLine = oDrawing.GraphicObj.pen;
+            oLine.setTailEnd(new AscFormat.EndArrow());
+            let nLineEndType;
+            switch (nType) {
+                case LINE_END_TYPE.None:
+                    nLineEndType = AscFormat.LineEndType.None;
+                    break;
+                case LINE_END_TYPE.OpenArrow:
+                    nLineEndType = AscFormat.LineEndType.Arrow;
+                    break;
+                case LINE_END_TYPE.Diamond:
+                    nLineEndType = AscFormat.LineEndType.Diamond;
+                    break;
+                case LINE_END_TYPE.Circle:
+                    nLineEndType = AscFormat.LineEndType.Oval;
+                    break;
+                default:
+                    nLineEndType = AscFormat.LineEndType.Arrow;
+                    break;
+            }
+
+            oLine.tailEnd.setType(nLineEndType);
+            oLine.tailEnd.setLen(AscFormat.LineEndSize.Mid);
         }
     };
     CAnnotationLine.prototype.GetLineStart = function() {
@@ -518,8 +518,8 @@
         shape.spPr.xfrm.setOffY(0);
         shape.spPr.xfrm.setExtX(Math.abs(xMax - xMin));
         shape.spPr.xfrm.setExtY(Math.abs(yMax - yMin));
-        shape.spPr.xfrm.setFlipV(true);
-        shape.spPr.xfrm.setFlipH(true);
+        // shape.spPr.xfrm.setFlipV(true);
+        // shape.spPr.xfrm.setFlipH(true);
 
         // shape.spPr.setGeometry(AscFormat.CreateGeometry("line"));
         shape.setStyle(AscFormat.CreateDefaultShapeStyle("line"));
@@ -540,6 +540,10 @@
         let yMin = aBounds[1];
         let xMax = aBounds[2];
         let yMax = aBounds[3];
+        // let xMin = Math.min(arrOfArrPoints[0][0].x, arrOfArrPoints[0][1].x);
+        // let yMin = Math.min(arrOfArrPoints[0][0].y, arrOfArrPoints[0][1].y);
+        // let xMax = Math.max(arrOfArrPoints[0][0].x, arrOfArrPoints[0][1].x);
+        // let yMax = Math.max(arrOfArrPoints[0][0].y, arrOfArrPoints[0][1].y);
 
         let geometry = oGeometry ? oGeometry : new AscFormat.Geometry();
         if (oGeometry) {

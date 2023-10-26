@@ -881,13 +881,10 @@
     };
 
     function generateShapeByPoints(arrOfArrPoints, aShapeRect, oParentAnnot) {
-        // смещаем точки для отступа внутри шейпа
-        let xMax = arrOfArrPoints[0][0].x, yMax = arrOfArrPoints[0][0].y, xMin = xMax, yMin = yMax;
-
-        xMax = aShapeRect[2];
-        xMin = aShapeRect[0];
-        yMin = aShapeRect[1];
-        yMax = aShapeRect[3];
+        let xMax = aShapeRect[2];
+        let xMin = aShapeRect[0];
+        let yMin = aShapeRect[1];
+        let yMax = aShapeRect[3];
 
         let shape = new AscFormat.CShape();
         shape.setSpPr(new AscFormat.CSpPr());
