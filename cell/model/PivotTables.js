@@ -7597,6 +7597,8 @@ PivotFormatsManager.prototype.reIndexDataFields = function(reindex) {
 						const x = indexes[j];
 						if (reindex[x.v] !== void 0) {
 							x.v = reindex[x.v];
+						} else if (indexes.length > 1){
+							indexes.splice(j, 1);
 						} else {
 							return false;
 						}
