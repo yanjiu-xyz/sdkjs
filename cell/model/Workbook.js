@@ -9256,9 +9256,11 @@
 							axis: axis,
 						});
 						if (formatting !== null) {
-							formatting.num = formatting.num || (dataFields && dataFields[dataIndex] && dataFields[dataIndex].num)
+							formatting.num = formatting.num || (dataFields[dataIndex].num)
+							cell.setStyle(formatting);
+						} else if (dataFields[dataIndex].num){
+							cell.setNum(dataFields[dataIndex].num);
 						}
-						cell.setStyle(formatting);
 						cell.setValueData(new AscCommonExcel.UndoRedoData_CellValueData(null, oCellValue));
 					}
 				}
