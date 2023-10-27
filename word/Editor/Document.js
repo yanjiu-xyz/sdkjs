@@ -2775,13 +2775,15 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	{
 		if (this.Action.Recalculate)
 		{
+
+            if (this.Action.Additional.ShapeAutoFit)
+                this.private_FinalizeShapeAutoFit();
+
 			var nRecalcResult = this.private_Recalculate();
 
 			if (this.Action.Additional.FormAutoFit)
 				this.private_FinalizeFormAutoFit(nRecalcResult & document_recalcresult_FastFlag);
-			
-			if (this.Action.Additional.ShapeAutoFit)
-				this.private_FinalizeShapeAutoFit();
+
 		}
 		else if (undefined !== this.Action.Redraw.Start && undefined !== this.Action.Redraw.End)
 		{
