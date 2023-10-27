@@ -7624,7 +7624,7 @@ PivotFormatsManager.prototype.checkValidFields = function(format, pivotFieldsMap
 	if (references) {
 		for(let i = 0; i < references.length; i += 1) {
 			const reference = references[i];
-			if (reference.field !== null && reference.field !== AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) {
+			if (reference.field !== AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) {
 				if (!pivotFieldsMap.has(reference.field)) {
 					return false;
 				}
@@ -7694,6 +7694,9 @@ PivotFormatsManager.prototype.updateIndexes = function(pivotFieldsMap, pivotFiel
 	this.changeFormats(function(format) {
 		const pivotArea = format.pivotArea;
 		if (t.checkValidFields(format, pivotFieldsMap, pivotFieldsIndexesMap)) {
+			if (pivotArea.field !== null && pivotArea.field !== AscCommonExcel.st_VALUES) {
+				pivotArea.field = pivotFieldsMap.get(pivotArea.field);
+			}
 			const references = pivotArea.getReferences();
 			if (references) {
 				for(let i = 0; i < references.length; i += 1) {
@@ -7702,8 +7705,17 @@ PivotFormatsManager.prototype.updateIndexes = function(pivotFieldsMap, pivotFiel
 					const newIndexes = pivotFieldsIndexesMap.get(reference.field);
 					if (newIndexes) {
 						for(let j = 0; j < x.length; j += 1) {
-							x[j].v = newIndexes.get(x[j].v)
+							if (newIndexes.has(x[j].v)) {
+								x[j].v = newIndexes.get(x[j].v)	
+							} else if (x.length > 1) {
+								x.splice(j, 1);
+							} else {
+								return false;
+							}
 						}
+					}
+					if (reference.field !== AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) {
+						reference.field = pivotFieldsMap.get(reference.field);
 					}
 				}
 			}
