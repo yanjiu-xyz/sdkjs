@@ -9023,6 +9023,11 @@
 						});
 						this._updatePivotTableCellsRowColLablesOffsets(pivotTable, rowFieldsOffset, isRowItems, i, j, query);
 					}
+					if (fields && fields[0]) {
+						if (pivotFields[fields[0].asc_getIndex()] && pivotFields[fields[0].asc_getIndex()].num) {
+							cells.setNum(pivotFields[fields[0].asc_getIndex()].num);
+						}
+					}
 				} else if (Asc.c_oAscItemType.Blank === item.t) {
 					break;
 				} else {
