@@ -1465,7 +1465,7 @@ Paragraph.prototype.RecalculateEndInfo = function(isFast)
 	if (prevEndInfo && !prevEndInfo.CheckRecalcId(recalcId))
 		return;
 	
-	let prsi = AscWord.ParagraphRecalculateStateManager.getEndInfoState();
+	let prsi = AscWord.ParagraphStatePool.getEndInfoState();
 	prsi.Reset(prevEndInfo);
 	prsi.setFast(!!isFast);
 	
@@ -1477,7 +1477,7 @@ Paragraph.prototype.RecalculateEndInfo = function(isFast)
 	this.EndInfo.SetFromPRSI(prsi);
 	this.EndInfo.SetRecalcId(recalcId);
 	
-	AscWord.ParagraphRecalculateStateManager.release(prsi);
+	AscWord.ParagraphStatePool.release(prsi);
 };
 /**
  * Данная функция вызывается, когда с данным элементом, и с элементами до него не произошло никаких изменений и мы
@@ -1507,7 +1507,7 @@ Paragraph.prototype.Recalculate_PageEndInfo = function(PRSW, CurPage)
 {
 	var PrevInfo = ( 0 === CurPage ? this.Parent.GetPrevElementEndInfo(this) : this.Pages[CurPage - 1].EndInfo.Copy() );
 
-	var PRSI = AscWord.ParagraphRecalculateStateManager.getEndInfoState();
+	var PRSI = AscWord.ParagraphStatePool.getEndInfoState();
 
 	PRSI.Reset(PrevInfo);
 
@@ -1533,7 +1533,7 @@ Paragraph.prototype.Recalculate_PageEndInfo = function(PRSW, CurPage)
 	if (PRSW)
 		this.Pages[CurPage].EndInfo.RunRecalcInfo = PRSW.RunRecalcInfoBreak;
 	
-	AscWord.ParagraphRecalculateStateManager.release(PRSI)
+	AscWord.ParagraphStatePool.release(PRSI)
 };
 Paragraph.prototype.UpdateEndInfo = function()
 {
@@ -1986,6 +1986,9 @@ Paragraph.prototype.Draw = function(CurPage, pGraphics)
 {
 	if (!this.Pages[CurPage] || this.Pages[CurPage].EndLine < 0)
 		return;
+	
+	let drawState = AscWord.ParagraphStatePool.getDrawState();
+	drawState.init(this, pGraphics);
 
 	if (pGraphics.Start_Command)
 	{
@@ -2008,7 +2011,6 @@ Paragraph.prototype.Draw = function(CurPage, pGraphics)
 		BgColor = this.Parent.Get_TextBackGroundColor();
 	}
 
-
 	// 1 часть отрисовки :
 	//    Рисуем слева от параграфа знак, если данный параграф зажат другим пользователем
 	this.Internal_Draw_1(CurPage, pGraphics, Pr);
@@ -2022,15 +2024,15 @@ Paragraph.prototype.Draw = function(CurPage, pGraphics)
 	// 3 часть отрисовки :
 	//    Рисуем заливку параграфа и различные выделения текста (highlight, поиск, совместное редактирование).
 	//    Кроме этого рисуем боковые линии обводки параграфа.
-	this.Internal_Draw_3(CurPage, pGraphics, Pr);
+	this.Internal_Draw_3(CurPage, pGraphics, Pr, drawState);
 
 	// 4 часть отрисовки :
 	//    Рисуем сами элементы параграфа
-	this.Internal_Draw_4(CurPage, pGraphics, Pr, BgColor, this.GetTheme(), this.GetColorMap());
+	this.Internal_Draw_4(CurPage, pGraphics, Pr, drawState, BgColor, this.GetTheme(), this.GetColorMap());
 
 	// 5 часть отрисовки :
 	//    Рисуем различные подчеркивания и зачеркивания.
-	this.Internal_Draw_5(CurPage, pGraphics, Pr, BgColor);
+	this.Internal_Draw_5(CurPage, pGraphics, Pr, drawState, BgColor);
 
 	// 6 часть отрисовки :
 	//    Рисуем верхнюю, нижнюю и промежуточную границы
@@ -2040,7 +2042,8 @@ Paragraph.prototype.Draw = function(CurPage, pGraphics)
 	{
 		pGraphics.End_Command();
 	}
-
+	
+	AscWord.ParagraphStatePool.release(drawState);
 };
 Paragraph.prototype.Internal_Draw_1 = function(CurPage, pGraphics, Pr)
 {
@@ -2112,7 +2115,7 @@ Paragraph.prototype.Internal_Draw_2 = function(CurPage, pGraphics, Pr)
 		pGraphics.FillText(SpecX, Y, SpecSym);
 	}
 };
-Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
+Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr, drawState)
 {
 	var LogicDocument = this.LogicDocument;
 
@@ -2120,8 +2123,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 	if (true === bDrawBorders && 0 === CurPage && true === this.private_IsEmptyPageWithBreak(CurPage))
 		bDrawBorders = false;
 
-	var PDSH = g_PDSH;
-
+	let PDSH = drawState.getHighlightState();
 	PDSH.ComplexFields.ResetPage(this, CurPage);
 
 	var _Page = this.Pages[CurPage];
@@ -2148,7 +2150,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 	if (FormsHighlight && FormsHighlight.IsAuto())
 		FormsHighlight = null;
 
-	PDSH.Reset(this, pGraphics, DrawColl, DrawFind, DrawComm, DrawMMFields, this.GetEndInfoByPage(CurPage - 1), DrawSolvedComments);
+	PDSH.Reset(DrawColl, DrawFind, DrawComm, DrawMMFields, this.GetEndInfoByPage(CurPage - 1), DrawSolvedComments);
 
 	var StartLine = _Page.StartLine;
 	var EndLine   = _Page.EndLine;
@@ -2262,7 +2264,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 	}
 	PDSH.SetCollectFixedForms(false);
 	PDSH.ComplexFields.ResetPage(this, CurPage);
-	PDSH.Reset(this, pGraphics, DrawColl, DrawFind, DrawComm, DrawMMFields, this.GetEndInfoByPage(CurPage - 1), DrawSolvedComments);
+	PDSH.Reset(DrawColl, DrawFind, DrawComm, DrawMMFields, this.GetEndInfoByPage(CurPage - 1), DrawSolvedComments);
 
 	for (var CurLine = StartLine; CurLine <= EndLine; CurLine++)
 	{
@@ -2835,10 +2837,10 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr)
 		}
 	}
 };
-Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, BgColor, Theme, ColorMap)
+Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, drawState, BgColor, Theme, ColorMap)
 {
-	var PDSE = g_PDSE;
-	PDSE.Reset(this, pGraphics, BgColor, Theme, ColorMap);
+	let PDSE = drawState.getRunElementState();
+	PDSE.Reset(BgColor, Theme, ColorMap);
 	PDSE.ComplexFields.ResetPage(this, CurPage);
 
 	var StartLine = this.Pages[CurPage].StartLine;
@@ -3141,10 +3143,10 @@ Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, BgColor, 
 		}
 	}
 };
-Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, BgColor)
+Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, drawState, BgColor)
 {
-	var PDSL = g_PDSL;
-	PDSL.Reset(this, pGraphics, BgColor);
+	let PDSL = drawState.getLineState();
+	PDSL.Reset(BgColor);
 	PDSL.ComplexFields.ResetPage(this, CurPage);
 
 	var Page = this.Pages[CurPage];
@@ -19472,11 +19474,13 @@ function CParagraphDrawStateHighlights()
 
     this.ComplexFields = new CParagraphComplexFieldsInfo();
 }
-CParagraphDrawStateHighlights.prototype.Reset = function(Paragraph, Graphics, DrawColl, DrawFind, DrawComments, DrawMMFields, PageEndInfo, DrawSolvedComments)
+CParagraphDrawStateHighlights.prototype.init = function(paragraph, graphics)
 {
-	this.Paragraph = Paragraph;
-	this.Graphics  = Graphics;
-
+	this.Paragraph = paragraph;
+	this.Graphics  = graphics;
+};
+CParagraphDrawStateHighlights.prototype.Reset = function(DrawColl, DrawFind, DrawComments, DrawMMFields, PageEndInfo, DrawSolvedComments)
+{
 	this.DrawColl     = DrawColl;
 	this.DrawFind     = DrawFind;
 	this.DrawMMFields = DrawMMFields;
@@ -19643,10 +19647,8 @@ function CParagraphDrawStateElements()
 
 CParagraphDrawStateElements.prototype =
 {
-    Reset : function(Paragraph, Graphics, BgColor, Theme, ColorMap)
+    Reset : function(BgColor, Theme, ColorMap)
     {
-        this.Paragraph = Paragraph;
-        this.Graphics  = Graphics;
         this.BgColor   = BgColor;
         this.Theme     = Theme;
         this.ColorMap  = ColorMap;
@@ -19673,6 +19675,11 @@ CParagraphDrawStateElements.prototype =
         this.LineBottom = Bottom;
         this.BaseLine   = BaseLine;
     }
+};
+CParagraphDrawStateElements.prototype.init = function(paragraph, graphics)
+{
+	this.Paragraph = paragraph;
+	this.Graphics  = graphics;
 };
 
 function CParagraphDrawStateLines()
@@ -19712,10 +19719,8 @@ function CParagraphDrawStateLines()
 
 CParagraphDrawStateLines.prototype =
 {
-    Reset : function(Paragraph, Graphics, BgColor)
+    Reset : function(BgColor)
     {
-        this.Paragraph = Paragraph;
-        this.Graphics  = Graphics;
         this.BgColor   = BgColor;
 
         this.VisitedHyperlink = false;
@@ -19757,6 +19762,11 @@ CParagraphDrawStateLines.prototype =
         this.Spaces = Spaces;
     }
 };
+CParagraphDrawStateLines.prototype.init = function(paragraph, graphics)
+{
+	this.Paragraph = paragraph;
+	this.Graphics  = graphics;
+};
 /**
  * Получаем количество орфографических ошибок в данном месте
  * @returns {number}
@@ -19789,10 +19799,6 @@ CParagraphDrawStateLines.prototype.IsUnderlineTrailSpace = function()
 {
 	return this.UlTrailSpace;
 };
-
-let g_PDSH = new CParagraphDrawStateHighlights();
-let g_PDSE = new CParagraphDrawStateElements();
-let g_PDSL = new CParagraphDrawStateLines();
 
 //----------------------------------------------------------------------------------------------------------------------
 // Классы для работы с курсором

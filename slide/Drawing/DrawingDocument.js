@@ -4603,15 +4603,18 @@ function CThumbnailsManager()
 				context.stroke();
 				context.beginPath();
 			}
+			page.animateLabelRect = null;
 			if (_logicDocument.isSlideAnimated(i))
 			{
 				let nX = (_bounds.x + _bounds.r) / 2 - AscCommon.AscBrowser.convertToRetinaValue(9.5, true);
 				let nY = _bounds.b + 3;
-				let oColor = text_color;
-				let resCords = this.DrawAnimLabel(g, nX, nY, oColor);
-				page.animateLabelRect = resCords
-			} else {
-				delete page.animateLabelRect;
+				let nIconH = AscCommon.AscBrowser.convertToRetinaValue(15, true);
+				if(nY + nIconH < page.bottom)
+				{
+					let oColor = text_color;
+					let resCords = this.DrawAnimLabel(g, nX, nY, oColor);
+					page.animateLabelRect = resCords
+				}
 			}
 		}
 

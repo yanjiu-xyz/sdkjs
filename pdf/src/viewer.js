@@ -859,7 +859,7 @@
 				oForm = this.doc.AddField(oFormInfo["name"], oFormInfo["type"], oFormInfo["page"], [oRect["x1"], oRect["y1"], oRect["x2"], oRect["y2"]]);
 				
 				if (!oForm) {
-					console.log(Error("Error while reading form, index " + i));
+					// console.log("Error while reading form, index " + oFormInfo["AP"]["i"]);
 					continue;
 				}
 
@@ -1035,7 +1035,7 @@
 				}
 				if (oFormInfo["value"] != null && oForm.GetType() != AscPDF.FIELD_TYPES.button)
 				{
-					oForm.SetValue(oFormInfo["value"]);
+					oForm.SetValue(oFormInfo["value"], true);
 				}
 				if (oFormInfo["display"])
 				{
