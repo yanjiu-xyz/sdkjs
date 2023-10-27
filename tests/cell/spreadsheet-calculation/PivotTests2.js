@@ -256,6 +256,7 @@ $(function() {
 				"Buttons outline test",
 				"Filter test",
 				"TypeAll test",
+				"NoDataFieldAllTest",
 				"All test"
 			];
 			let row = 4;
