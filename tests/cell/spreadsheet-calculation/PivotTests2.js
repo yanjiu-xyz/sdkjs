@@ -335,5 +335,35 @@ $(function() {
 				});
 			});
 		});
+		QUnit.test('Test: refresh pivot check formats after dataField reindex', function (assert) {
+			const file = Asc.pivot_datafield_reindex;
+			const row = 4;
+			const col = 0;
+			const wb = openDocument(file);
+			const getValues = getReportValuesWithBoolFillAndNum;
+
+			const dataFieldStartPivot = wb.getWorksheetByName('DataFieldStart').getPivotTable(col, row);
+			const moveDataFieldResultPivot = wb.getWorksheetByName('moveDataFieldResult').getPivotTable(col, row);
+			const removeDataFieldResultPivot = wb.getWorksheetByName('RemoveDataFieldResult').getPivotTable(col, row);
+
+			const dataFieldStartValues = getValues(dataFieldStartPivot);
+			const moveDataFieldResultValues = getValues(moveDataFieldResultPivot);
+			const removeDataFieldResultValues = getValues(removeDataFieldResultPivot);
+
+			prepareTest(assert, wb);
+			let pivot = wb.getWorksheetByName('DataFieldStart').getPivotTable(col, row);
+			pivot = checkHistoryOperation(assert, dataFieldStartPivot, dataFieldStartValues, moveDataFieldResultValues, "move dataField", function(){
+				pivot.asc_moveDataField(api, 0, 1);
+				pivot.asc_refresh(api);
+			}, function(assert, pivot, values, message) {
+				assert.deepEqual(getValues(pivot), values, message);
+			});
+			pivot = checkHistoryOperation(assert, dataFieldStartPivot, moveDataFieldResultValues, removeDataFieldResultValues, "remove dataField", function(){
+				pivot.asc_removeDataField(api, 5, 1);
+				pivot.asc_refresh(api);
+			}, function(assert, pivot, values, message) {
+				assert.deepEqual(getValues(pivot), values, message);
+			});
+		});
 	}
 });
