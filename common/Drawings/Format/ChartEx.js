@@ -222,7 +222,7 @@ function (window, undefined) {
 
 		this.majorTickMark = null;
 		this.minorTickMark = null;
-		this.crosses = nullT;
+		this.crosses = null;
 	}
 
 	InitClass(CAxis, CAxisBase, AscDFH.historyitem_type_Axis);
