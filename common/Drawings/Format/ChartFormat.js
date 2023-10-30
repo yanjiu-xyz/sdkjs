@@ -6447,7 +6447,19 @@
             }
         }
     };
-
+    CPlotArea.prototype.updateReferences = function(bDisplayEmptyCellsAs, bDisplayHidden) {
+        const aCharts = this.charts;
+        for (let nChart = 0; nChart < aCharts.length; ++nChart) {
+            this.charts[nChart].updateReferences(bDisplayEmptyCellsAs, bDisplayHidden);
+        }
+        const aAxes = this.axId;
+        for (let nAx = 0; nAx < aAxes.length; ++nAx) {
+            aAxes[nAx].updateReferences();
+        }
+        if(this.plotAreaRegion) {
+            this.plotAreaRefion.updateReferences(bDisplayEmptyCellsAs, bDisplayHidden);
+        }
+    };
     function getIsMarkerByType(nType) {
         if(nType === Asc.c_oAscChartTypeSettings.scatter ||
             nType === Asc.c_oAscChartTypeSettings.scatterLineMarker ||
@@ -7079,6 +7091,12 @@
         }
         return this.parent.getMaxSeriesIdx();
     };
+    CChartBase.prototype.updateReferences = function(bDisplayEmptyCellsAs, bDisplayHidden) {
+        for(let nSeries = 0; nSeries < this.series.length; ++nSeries) {
+            this.series[nSeries].updateData(bDisplayEmptyCellsAs, bDisplayHidden);
+        }
+    };
+
     function CBarChart() {
         CChartBase.call(this);
         this.barDir = null;
@@ -8090,6 +8108,13 @@
 	CAxisBase.prototype.isSeriesAxis = function() {
 		return this.getObjectType() === AscDFH.historyitem_type_SerAx;
 	};
+
+    CAxisBase.prototype.updateReferences = function() {
+        if(this.title) {
+            this.title.updateReferences();
+        }
+        this.updateNumFormat();
+    };
 
     function getBaseLog(x, y) {
         return Math.log(y) / Math.log(x);
@@ -14108,6 +14133,11 @@
             this.applyStyleEntry(oChartStyle.axisTitle, oColors.generateColors(1), 0, bReset);
         }
     };
+    CTitle.prototype.updateReferences = function() {
+        if (this.tx) {
+            this.tx.update();
+        }
+    };
 
     function CTrendLine() {
         CBaseChartObject.call(this);
@@ -15140,7 +15170,14 @@
             this.title.applyChartStyle(oChartStyle, oColors, oAdditionalData, bReset);
         }
     };
-
+    CChart.prototype.updateReferences = function(bDisplayEmptyCellsAs, bDisplayHidden) {
+        if(this.title) {
+            this.title.updateReferences();
+        }
+        if(this.plotArea) {
+            this.plotArea.updateReferences(bDisplayEmptyCellsAs, bDisplayHidden);
+        }
+    };
     function CChartWall() {
         CBaseChartObject.call(this);
         this.pictureOptions = null;

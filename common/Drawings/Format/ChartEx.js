@@ -438,6 +438,11 @@ function (window, undefined) {
 			History.CanAddChanges() && History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_ChartData_RemoveData, pos, [data], false));
 		}
 	};
+	CChartData.prototype.updateReferences = function(bDisplayEmptyCellsAs, bDisplayHidden) {
+		for(let nData = 0; nData < this.data.length; ++nData) {
+			this.data[nData].updateReferences(bDisplayEmptyCellsAs, bDisplayHidden)
+		}
+	};
 
 	// Clear (no in ChartSerializeEx.h)
 	drawingsChangesMap[AscDFH.historyitem_Clear_SetGeoLocationQueryResults] = function (oClass, value) {
@@ -561,6 +566,11 @@ function (window, undefined) {
 	CData.prototype.setId = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_Data_SetId, this.id, pr));
 		this.id = pr;
+	};
+	CData.prototype.updateReferences = function(bDisplayEmptyCellsAs, bDisplayHidden) {
+		for(let nDim = 0; nDim < this.dimension.length; ++nDim) {
+			this.dimension[nDim].updateReferences(bDisplayEmptyCellsAs, bDisplayHidden)
+		}
 	};
 
 
@@ -1987,6 +1997,7 @@ function (window, undefined) {
 		this.f = null;
 		this.nf = null;
 		this.type = null;
+		this.levelData = [];
 	}
 
 	InitClass(CDimension, CBaseChartObject, AscDFH.historyitem_type_Unknown);
@@ -2002,6 +2013,9 @@ function (window, undefined) {
 	CDimension.prototype.setType = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Dimension_SetType, this.type, pr));
 		this.type = pr;
+	};
+	CDimension.prototype.updateReferences = function(bDisplayEmptyCellsAs, bDisplayHidden) {
+
 	};
 
 	// NumericDimension
@@ -2020,7 +2034,6 @@ function (window, undefined) {
 
 	function CNumericDimension() {
 		CDimension.call(this);
-		this.levelData = [];
 	}
 
 	InitClass(CNumericDimension, CDimension, AscDFH.historyitem_type_NumericDimension);
@@ -2422,7 +2435,9 @@ function (window, undefined) {
 			History.CanAddChanges() && History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_PlotAreaRegion_RemoveSeries, pos, [series], false));
 		}
 	};
+	CPlotAreaRegion.prototype.updateReferences = function(bDisplayEmptyCellsAs, bDisplayHidden) {
 
+	};
 
 	// PlotSurface
 	drawingsChangesMap[AscDFH.historyitem_PlotSurface_SetSpPr] = function (oClass, value) {
@@ -2864,7 +2879,6 @@ function (window, undefined) {
 
 	function CStringDimension() {
 		CDimension.call(this);
-		this.levelData = [];
 	}
 
 	InitClass(CStringDimension, CDimension, AscDFH.historyitem_type_StringDimension);

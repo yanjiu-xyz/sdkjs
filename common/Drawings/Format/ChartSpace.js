@@ -3755,7 +3755,7 @@ function(window, undefined) {
 		this.clearDataCache();
 	};
 	CChartSpace.prototype.recalculateReferences = function () {
-		var oSelectedSeries = this.getSelectedSeries();
+		const oSelectedSeries = this.getSelectedSeries();
 		if (AscFormat.isRealNumber(this.selection.series)) {
 			if (!oSelectedSeries) {
 				this.selection.series = null;
@@ -3763,27 +3763,11 @@ function(window, undefined) {
 				this.selection.markers = null;
 			}
 		}
-		var worksheet = this.worksheet;
-		if (!worksheet)
+		if (!this.worksheet)
 			return;
-		var charts, series, i, j, ser;
-		charts = this.chart.plotArea.charts;
-		for (i = 0; i < charts.length; ++i) {
-			series = charts[i].series;
-			for (j = 0; j < series.length; ++j) {
-				series[j].updateData(this.displayEmptyCellsAs, this.displayHidden);
-			}
-		}
-		var aTitles = this.getAllTitles();
-		for (i = 0; i < aTitles.length; ++i) {
-			var oTitle = aTitles[i];
-			if (oTitle.tx) {
-				oTitle.tx.update();
-			}
-		}
-		var aAxis = this.chart.plotArea.axId;
-		for (i = 0; i < aAxis.length; ++i) {
-			aAxis[i].updateNumFormat();
+		this.chart.updateReferences(this.displayEmptyCellsAs, this.displayHidden);
+		if(this.chartData) {
+			this.chartData.updateReferences(this.displayEmptyCellsAs, this.displayHidden);
 		}
 	};
 	CChartSpace.prototype.checkEmptyVal = function (val) {
