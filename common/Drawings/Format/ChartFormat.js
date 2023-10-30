@@ -11736,6 +11736,8 @@
         this.formatCode = null;
         this.pts = [];
         this.ptCount = null;
+
+        this.name = null;
     }
 
     InitClass(CNumLit, CBaseChartObject, AscDFH.historyitem_type_NumLit);
@@ -11755,6 +11757,9 @@
             oCopy.addPt(this.pts[i].createDuplicate());
         }
         oCopy.setPtCount(this.ptCount);
+        if(this.name) {
+            oCopy.setName(this.name);
+        }
     };
     CNumLit.prototype.getPtByIndex = function(idx) {
         if(this.pts[idx] && this.pts[idx].idx === idx)
@@ -11998,6 +12003,10 @@
             return this.formatCode;
         }
         return "General";
+    };
+    CNumLit.prototype.setName = function(pr) {
+        History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_NumLit_SetName, this.name, pr));
+        this.name = pr;
     };
 
     function COfPieChart() {

@@ -2015,7 +2015,6 @@ function (window, undefined) {
 		this.type = pr;
 	};
 	CDimension.prototype.updateReferences = function(bDisplayEmptyCellsAs, bDisplayHidden) {
-
 	};
 
 	// NumericDimension
@@ -2126,22 +2125,6 @@ function (window, undefined) {
 	AscDFH.changesFactory[AscDFH.historyitem_NumericValue_SetIdx] = window['AscDFH'].CChangesDrawingsLong;
 	AscDFH.changesFactory[AscDFH.historyitem_NumericValue_SetContent] = window['AscDFH'].CChangesDrawingsDouble2;
 
-	function CNumericValue() {
-		CBaseChartObject.call(this);
-		this.idx = null;
-		this.content = null;
-	}
-
-	InitClass(CNumericValue, CBaseChartObject, AscDFH.historyitem_type_NumericValue);
-
-	CNumericValue.prototype.setIdx = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_NumericValue_SetIdx, this.idx, pr));
-		this.idx = pr;
-	};
-	CNumericValue.prototype.setContent = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsDouble2(this, AscDFH.historyitem_NumericValue_SetContent, this.content, pr));
-		this.content = pr;
-	};
 
 
 	// // PageMargins (CPageMarginsChart contains in ChartFormat.js)
@@ -3674,7 +3657,6 @@ function (window, undefined) {
 	// window['AscFormat'].CNumberFormat = CNumberFormat;
 
 	window['AscFormat'].CNumericLevel = CNumericLevel;
-	window['AscFormat'].CNumericValue = CNumericValue;
 	// window['AscFormat'].CPageMargins = CPageMargins;
 	// window['AscFormat'].CPageSetup = CPageSetup;
 	// window['AscFormat'].CParentLabelLayout = CParentLabelLayout;
