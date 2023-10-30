@@ -6457,7 +6457,7 @@
             aAxes[nAx].updateReferences();
         }
         if(this.plotAreaRegion) {
-            this.plotAreaRefion.updateReferences(bDisplayEmptyCellsAs, bDisplayHidden);
+            this.plotAreaRegion.updateReferences(bDisplayEmptyCellsAs, bDisplayHidden);
         }
     };
     function getIsMarkerByType(nType) {
