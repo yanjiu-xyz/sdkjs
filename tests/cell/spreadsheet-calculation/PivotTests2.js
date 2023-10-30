@@ -365,5 +365,60 @@ $(function() {
 				assert.deepEqual(getValues(pivot), values, message);
 			});
 		});
+		QUnit.test('Test: refresh pivot check formats after change source data 1', function (assert) {
+			const getValues = getReportValuesWithBoolFillAndNum;
+			const file = Asc.pivot_data_reindex1;
+			const row = 4;
+			const col = 0;
+			const wb = openDocument(file);
+			const dataRefFieldSettings = 'Sheet1' + "!" + 'I2:O13';
+			let pivot = wb.getWorksheetByName('pivot').getPivotTable(col, row);
+			const values = getValues(pivot);
+			prepareTest(assert, wb);
+
+			pivot = checkHistoryOperation(assert, pivot, values, values, "change source data 1", function(){
+				const props = new Asc.CT_pivotTableDefinition();
+				props.asc_setDataRef(dataRefFieldSettings);
+				pivot.asc_set(api, props);
+				pivot.asc_refresh(api);
+			}, function(assert, pivot, values, message) {
+				assert.deepEqual(getValues(pivot), values, message);
+			});
+		});
+		QUnit.test('Test: refresh pivot check formats after change source data 2', function (assert) {
+			const file = Asc.pivot_data_reindex2;
+			const row = 4;
+			const col = 0;
+			const wb = openDocument(file);
+			const dataRefFieldSettings1 = 'Sheet1' + "!" + 'I2:O8';
+			const dataRefFieldSettings2 = 'Sheet1' + "!" + 'A2:G13';
+			const getValues = getReportValuesWithBoolFillAndNum;
+			function prepareValues(wb, name, row, col){
+				let pivot = wb.getWorksheetByName(name).getPivotTable(col, row);
+				return getValues(pivot);
+			}
+			const valuesStart = prepareValues(wb, 'start', row, col);
+			const valuesReindex = prepareValues(wb, 'reindex', row, col);
+			const valuesResult = prepareValues(wb, 'result', row, col);
+			let pivot = wb.getWorksheetByName('start').getPivotTable(col, row);
+			prepareTest(assert, wb);
+
+			pivot = checkHistoryOperation(assert, pivot, valuesStart, valuesReindex, "change source data 2 reindex", function(){
+				const props = new Asc.CT_pivotTableDefinition();
+				props.asc_setDataRef(dataRefFieldSettings1);
+				pivot.asc_set(api, props);
+				pivot.asc_refresh(api);
+			}, function(assert, pivot, values, message) {
+				assert.deepEqual(getValues(pivot), values, message);
+			});
+			pivot = checkHistoryOperation(assert, pivot, valuesReindex, valuesResult, "change source data 2 result", function(){
+				const props = new Asc.CT_pivotTableDefinition();
+				props.asc_setDataRef(dataRefFieldSettings2);
+				pivot.asc_set(api, props);
+				pivot.asc_refresh(api);
+			}, function(assert, pivot, values, message) {
+				assert.deepEqual(getValues(pivot), values, message);
+			});
+		});
 	}
 });
