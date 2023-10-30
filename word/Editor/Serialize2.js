@@ -1408,16 +1408,10 @@ function CreateThemeUnifill(color, tint, shade){
 			ret.fill.color.setMods(new AscFormat.CColorModifiers());
 			var mod;
 			if(null != tint){
-				mod = new AscFormat.CColorMod();
-				mod.setName("wordTint");
-				mod.setVal(tint /** 100000.0 / 0xff*/);
-				ret.fill.color.Mods.addMod(mod);
+				ret.fill.color.Mods.addMod("wordTint", tint);
 			}
 			if(null != shade){
-				mod = new AscFormat.CColorMod();
-				mod.setName("wordShade");
-				mod.setVal(shade /** 100000.0 / 0xff*/);
-				ret.fill.color.Mods.addMod(mod);
+				ret.fill.color.Mods.addMod("wordShade", shade);
 			}
 		}
 	}
@@ -1679,10 +1673,14 @@ function readBookmarkStart(length, bcr, oReadResult, paragraphContent) {
 	if(typeof CParagraphBookmark === "undefined") {
 		return c_oSerConstants.ReadUnknown;
 	}
-	let bookmark = new CParagraphBookmark(true);
+	let bookmarkPr = {
+		BookmarkName : "",
+		BookmarkId   : ""
+	};
 	let res = bcr.Read1(length, function(t, l){
-		return bcr.ReadBookmark(t,l, bookmark);
+		return bcr.ReadBookmark(t,l, bookmarkPr);
 	});
+	let bookmark = new CParagraphBookmark(true, bookmarkPr.BookmarkId, bookmarkPr.BookmarkName);
 	oReadResult.addBookmarkStart(paragraphContent, bookmark, true);
 	return res;
 }
@@ -1690,10 +1688,14 @@ function readBookmarkEnd(length, bcr, oReadResult, paragraphContent) {
 	if(typeof CParagraphBookmark === "undefined") {
 		return c_oSerConstants.ReadUnknown;
 	}
-	let bookmark = new CParagraphBookmark(false);
+	let bookmarkPr = {
+		BookmarkName : "",
+		BookmarkId   : ""
+	};
 	let res = bcr.Read1(length, function(t, l){
-		return bcr.ReadBookmark(t,l, bookmark);
+		return bcr.ReadBookmark(t,l, bookmarkPr);
 	});
+	let bookmark = new CParagraphBookmark(false, bookmarkPr.BookmarkId, bookmarkPr.BookmarkName);
 	oReadResult.addBookmarkEnd(paragraphContent, bookmark, true);
 	return res;
 }
@@ -8660,7 +8662,7 @@ function BinaryFileReader(doc, openParams)
 		AscFormat.checkThemeFonts(AllFonts, fontScheme);
 
         for (var i in AllFonts)
-            aPrepeareFonts.push(new AscFonts.CFont(i, 0, "", 0));
+            aPrepeareFonts.push(new AscFonts.CFont(i));
         //создаем список используемых картинок
         var oPastedImagesUnique = {};
         var aPastedImages = pptx_content_loader.End_UseFullUrl();
@@ -16315,7 +16317,7 @@ function Binary_SettingsTableReader(doc, oReadResult, stream)
 		}
 		else if ( c_oSer_SettingsType.MathPr === type )
         {			
-			var props = new CMathPropertiesSettings();
+			var props = new AscWord.MathPr();
             res = this.bcr.Read1(length, function(t, l){
                 return oThis.ReadMathPr(t,l,props);
             });
@@ -17244,7 +17246,7 @@ CFontsCharMap.prototype =
                 _find.Name = family;
                 _find.Id = _id.id;
                 _find.FaceIndex = _id.faceIndex;
-                _find.IsEmbedded = (font_info.type == AscFonts.FONT_TYPE_EMBEDDED);
+                _find.IsEmbedded = false;
 
                 this.CurrentFontInfo = _find;
                 this.map_fonts[_find_index] = _find;

@@ -8,10 +8,10 @@
 
 * Put files with errors in json format in any `logs-dir`
 
-* Make `unique-file` with unique errors and new-lines
+* Make `unique-file` with unique errors that `last-log-file` adds(`last-log-file` is optional)
 
     ```bash
-    node parse-json-log-dir.js logs-dir unique-file
+    node parse-json-log-dir.js logs-dir last-log-file unique-file
     ```
 * Install dependencies for `download-maps.js`
 
@@ -42,7 +42,7 @@ maps-dir/
         <maps>
 ```
 
-* Deserialize `unique-file` call stack into `deserialized-file`
+* Deserialize `unique-file` call stack into `deserialized-file` (docx or txt by extension)
 
     ```bash
     node deserialize.js unique-file deserialized-file maps-dir

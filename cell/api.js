@@ -931,9 +931,9 @@ var editor;
     return AscCommon.g_clipboardBase.Button_Cut();
   };
 
-  spreadsheet_api.prototype.asc_PasteData = function (_format, data1, data2, text_data) {
+  spreadsheet_api.prototype.asc_PasteData = function (_format, data1, data2, text_data, doNotShowButton, callback) {
     if (this.canEdit()) {
-      this.wb.pasteData(_format, data1, data2, text_data, arguments[5]);
+      this.wb.pasteData(_format, data1, data2, text_data, doNotShowButton, callback);
       //this.asc_EndMoveSheet2(data1, 1, "test2");
     }
   };
@@ -1696,7 +1696,7 @@ var editor;
     this.asyncMethodCallback = callback;
     var arrLoadFonts = [];
     for (var i in fonts)
-      arrLoadFonts.push(new AscFonts.CFont(i, 0, "", 0));
+      arrLoadFonts.push(new AscFonts.CFont(i));
     AscFonts.FontPickerByCharacter.extendFonts(arrLoadFonts);
     this.FontLoader.LoadDocumentFonts2(arrLoadFonts);
   };
@@ -4009,9 +4009,6 @@ var editor;
     return res;
   };
 
-  spreadsheet_api.prototype.asc_searchEnabled = function(bIsEnabled) {
-  };
-
   spreadsheet_api.prototype.asc_findText = function(options, callback) {
     var result = null;
 
@@ -4024,9 +4021,13 @@ var editor;
 	}
 
 	if (window["NATIVE_EDITOR_ENJINE"]) {
-		var ws = this.wb.getWorksheet();
-		var activeCell = this.wbModel.getActiveWs().selectionRange.activeCell;
-		result = [ws.getCellLeftRelative(activeCell.col, 0), ws.getCellTopRelative(activeCell.row, 0)];
+        if (SearchEngine.Count > 0) {
+            var ws = this.wb.getWorksheet();
+            var activeCell = this.wbModel.getActiveWs().selectionRange.activeCell;
+            result = [ws.getCellLeftRelative(activeCell.col, 0), ws.getCellTopRelative(activeCell.row, 0)];
+        } else {
+            result = null;
+        }
 	} else {
 		result = SearchEngine.Count;
 	}
@@ -4071,22 +4072,6 @@ var editor;
   };
 
 	//***searchEngine
-  spreadsheet_api.prototype.sync_setSearchCurrent = function (nCurrent, nOverallCount) {
-    this.sendEvent("asc_onSetSearchCurrent", nCurrent, nOverallCount);
-  };
-
-	spreadsheet_api.prototype.sync_startTextAroundSearch = function () {
-		this.sendEvent("asc_onStartTextAroundSearch");
-	};
-	spreadsheet_api.prototype.sync_endTextAroundSearch = function () {
-		this.sendEvent("asc_onEndTextAroundSearch");
-	};
-	spreadsheet_api.prototype.sync_getTextAroundSearchPack = function (arrElements) {
-		this.sendEvent("asc_onGetTextAroundSearchPack", arrElements);
-	};
-	spreadsheet_api.prototype.sync_removeTextAroundSearch = function (sId) {
-		this.sendEvent("asc_onRemoveTextAroundSearch", [sId]);
-	};
 	spreadsheet_api.prototype.sync_SearchEndCallback = function () {
 		this.sendEvent("asc_onSearchEnd");
 	};
@@ -5708,9 +5693,9 @@ var editor;
   };
 
   // Frozen pane
-  spreadsheet_api.prototype.asc_freezePane = function (type) {
+  spreadsheet_api.prototype.asc_freezePane = function (type, col, row) {
     if (this.canEdit()) {
-      this.wb.getWorksheet().freezePane(type);
+      this.wb.getWorksheet().freezePane(type, col, row);
     }
   };
 
@@ -5812,22 +5797,26 @@ var editor;
 		  this.wb.cellEditor.options.menuEditor;
   };
 
-  spreadsheet_api.prototype.asc_getActiveRangeStr = function(referenceType, opt_getActiveCell, opt_ignore_r1c1) {
-  	var ws = this.wb.getWorksheet();
-  	var res = null;
-  	var tmpR1C1;
+  spreadsheet_api.prototype.asc_getActiveRangeStr = function(referenceType, opt_getActiveCell, opt_ignore_r1c1, opt_only_range) {
+  	let ws = this.wb.getWorksheet();
+  	let res = null;
+  	let tmpR1C1;
   	if (opt_ignore_r1c1) {
 		tmpR1C1 = AscCommonExcel.g_R1C1Mode;
 		AscCommonExcel.g_R1C1Mode = false;
   	}
   	if (ws && ws.model && ws.model.selectionRange) {
-  		var range;
+  		let range;
   		if (opt_getActiveCell) {
-			var activeCell = ws.model.selectionRange.activeCell;
+			let activeCell = ws.model.selectionRange.activeCell;
 			range = new Asc.Range(activeCell.col, activeCell.row, activeCell.col, activeCell.row);
 		} else {
-			var lastRange = ws.model.selectionRange.getLast();
+			let lastRange = ws.model.selectionRange.getLast();
 			range = new Asc.Range(lastRange.c1, lastRange.r1, lastRange.c2, lastRange.r2);
+		}
+
+		if (opt_only_range && range.isOneCell()) {
+			return null;
 		}
 
 		res = range.getName(referenceType);
@@ -8082,9 +8071,7 @@ var editor;
 		return true;
 	};
 
-  spreadsheet_api.prototype.asc_setSkin = function (theme) {
-    AscCommon.updateGlobalSkin(theme);
-
+  spreadsheet_api.prototype.updateSkin = function () {
     var elem = document.getElementById("ws-v-scrollbar");
     if (elem) {
       elem.style.backgroundColor = AscCommon.GlobalSkin.ScrollBackgroundColor;
@@ -8633,9 +8620,20 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_openExternalReference = function(externalReference) {
+		let t = this;
 		let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
 		if (isLocalDesktop) {
-			alert("NEED SUPPORT LOCAL OPEN FILE");
+			window["AscDesktopEditor"]["openExternalReference"](externalReference.externalReference.Id, function(error) {
+				let internalError = Asc.c_oAscError.ID.No;
+				switch (error) {
+					case 0: internalError = Asc.c_oAscError.ID.ConvertationOpenError; break;
+					default: break;
+				}
+
+				if (Asc.c_oAscError.ID.No !== internalError) {
+					t.sendEvent("asc_onError", internalError, c_oAscError.Level.NoCritical);
+				}
+			});
 			return null;
 		} else {
 			return externalReference;
@@ -8879,6 +8877,41 @@ var editor;
 		return res;
 	};
 
+	//goal seek
+	spreadsheet_api.prototype.asc_StartGoalSeek = function (sFormulaCell, nExpectedValue, sChangingCell) {
+		if (!this.wb) {
+			return;
+		}
+		return this.wb.startGoalSeek(sFormulaCell, nExpectedValue, sChangingCell);
+	};
+
+	spreadsheet_api.prototype.asc_CloseGoalClose = function (bSave) {
+		if (!this.wb) {
+			return;
+		}
+		return this.wb.closeGoalSeek(bSave);
+	};
+
+	spreadsheet_api.prototype.asc_PauseGoalSeek = function () {
+		if (!this.wb) {
+			return;
+		}
+		return this.wb.pauseGoalSeek();
+	};
+
+	spreadsheet_api.prototype.asc_ContinueGoalSeek = function () {
+		if (!this.wb) {
+			return;
+		}
+		return this.wb.continueGoalSeek();
+	};
+
+	spreadsheet_api.prototype.asc_StepGoalSeek = function () {
+		if (!this.wb) {
+			return;
+		}
+		return this.wb.stepGoalSeek();
+	};
 
 	spreadsheet_api.prototype.asc_TracePrecedents = function() {
 		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
@@ -8916,7 +8949,33 @@ var editor;
 		return ws.removeTraceArrows(type);
 	};
 
+	/** Returns array of function info
+	 * @param {number} pos - cursor position
+	 * @param {string} s - cell text
+	 * @returns {asc_CCompleteMenu[]}
+	 */
+	spreadsheet_api.prototype.asc_GetEditableFunctions = function(pos, s) {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		return wb.getEditableFunctions(pos, s);
+	};
+	spreadsheet_api.prototype.getSelectionState = function() {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
 
+		return wb.getSelectionState();
+	};
+	spreadsheet_api.prototype.getSpeechDescription = function(prevState, action) {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		return wb.getSpeechDescription(prevState, wb.getSelectionState(), action);
+	};
 
   /*
    * Export
@@ -9039,7 +9098,6 @@ var editor;
   prot["asc_getZoom"] = prot.asc_getZoom;
   prot["asc_setZoom"] = prot.asc_setZoom;
   prot["asc_enableKeyEvents"] = prot.asc_enableKeyEvents;
-  prot["asc_searchEnabled"] = prot.asc_searchEnabled;
   prot["asc_findText"] = prot.asc_findText;
   prot["asc_replaceText"] = prot.asc_replaceText;
   prot["asc_endFindText"] = prot.asc_endFindText;
@@ -9423,8 +9481,6 @@ var editor;
   prot["asc_setDataValidation"] = prot.asc_setDataValidation;
   prot["asc_getDataValidationProps"] = prot.asc_getDataValidationProps;
 
-  prot["asc_setSkin"] = prot.asc_setSkin;
-
   prot["asc_getEscapeSheetName"] = prot.asc_getEscapeSheetName;
 
 
@@ -9493,7 +9549,13 @@ var editor;
   prot["asc_ResetAllPageBreaks"]      = prot.asc_ResetAllPageBreaks;
   prot["asc_GetPageBreaksDisableType"]= prot.asc_GetPageBreaksDisableType;
 
+  prot["asc_GetEditableFunctions"]= prot.asc_GetEditableFunctions;
 
+  prot["asc_StartGoalSeek"]= prot.asc_StartGoalSeek;
+  prot["asc_CloseGoalClose"]= prot.asc_CloseGoalClose;
+  prot["asc_PauseGoalSeek"]= prot.asc_PauseGoalSeek;
+  prot["asc_ContinueGoalSeek"]= prot.asc_ContinueGoalSeek;
+  prot["asc_StepGoalSeek"]= prot.asc_StepGoalSeek;
 
 
 

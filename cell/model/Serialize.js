@@ -11619,6 +11619,10 @@
                 //TODO так же он проставляет флаг ca - рассмотреть стоит ли его нам доблавлять
                 formula.v = formula.v.replace("_xludf.", "");
             }
+            if (formula.v.startsWith("=")) {
+                //LO write "=" to file
+                formula.v = formula.v.replace("=", "");
+            }
 
             var offsetRow;
             var shared;
@@ -11661,13 +11665,21 @@
                 }
 
                 if (null !== formula.ref) {
+                    let range;
                     if(formula.t === ECellFormulaType.cellformulatypeShared) {
-                        sharedRef = AscCommonExcel.g_oRangeCache.getAscRange(formula.ref).clone();
-                        parsed.setShared(sharedRef, newFormulaParent);
+                        range = AscCommonExcel.g_oRangeCache.getAscRange(formula.ref);
+                        sharedRef = range && range.clone();
+                        if (sharedRef) {
+                            parsed.setShared(sharedRef, newFormulaParent);
+                        }
                     } else if(formula.t === ECellFormulaType.cellformulatypeArray) {//***array-formula***
                         if(AscCommonExcel.bIsSupportArrayFormula) {
-                            parsed.setArrayFormulaRef(AscCommonExcel.g_oRangeCache.getAscRange(formula.ref).clone());
-                            tmp.formulaArray.push(parsed);
+                            range = AscCommonExcel.g_oRangeCache.getAscRange(formula.ref);
+                            range = range && range.clone();
+                            if (range) {
+                                parsed.setArrayFormulaRef(range);
+                                tmp.formulaArray.push(parsed);
+                            }
                         }
                     }
                 }

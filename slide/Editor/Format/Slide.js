@@ -1286,6 +1286,27 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         return this.showMasterSp !== false;
     };
 
+    Slide.prototype.isEqualBgMasterAndLayout = function(oSlide) {
+        if(!(this.backgroundFill === oSlide.backgroundFill ||
+            this.backgroundFill && this.backgroundFill.isEqual(oSlide.backgroundFill))) {
+            return false;
+        }
+        if(this.needMasterSpDraw() && !oSlide.needMasterSpDraw() || oSlide.needMasterSpDraw() && !this.needMasterSpDraw()) {
+            return false;
+        }
+        if(this.needMasterSpDraw()) {
+            if(this.Layout.Master !== oSlide.Layout.Master) {
+               return false;
+            }
+        }
+        if(this.needLayoutSpDraw()) {
+            if(this.Layout !== oSlide.Layout) {
+                return false;
+            }
+        }
+        return true;
+    };
+
     Slide.prototype.drawBgMasterAndLayout = function(graphics, bClipBySlide, bCheckBounds) {
         let _bounds;
         DrawBackground(graphics, this.backgroundFill, this.Width, this.Height);
@@ -1731,7 +1752,32 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
 
     Slide.prototype.getColorMap = function()
     {
-
+        if(this.clrMap)
+        {
+            return this.clrMap;
+        }
+        else if(this.Layout)
+        {
+            if(this.Layout.clrMap)
+            {
+                return this.Layout.clrMap;
+            }
+            else if(this.Layout.Master)
+            {
+                if(this.Layout.Master.clrMap)
+                {
+                    return this.Layout.Master.clrMap;
+                }
+            }
+        }
+        else if(this.Master)
+        {
+            if(this.Master.clrMap)
+            {
+                return this.Master.clrMap;
+            }
+        }
+        return AscFormat.GetDefaultColorMap();
     };
 
 

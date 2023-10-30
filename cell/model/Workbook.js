@@ -799,6 +799,11 @@
 					listeners[listenerId] = sheetContainer.defName3d[listenerId];
 				}
 			}
+			if (this.volatileListeners) {
+				for (var listenerId in this.volatileListeners) {
+					listeners[listenerId] = this.volatileListeners[listenerId];
+				}
+			}
 			if(tableNamesMap){
 				for (var tableName in tableNamesMap) {
 					var nameIndex = getDefNameIndex(tableName);
@@ -2328,6 +2333,7 @@
 		this.fileSharing = null;
 
 		this.customXmls = null;//[]
+		this.oGoalSeek = null;
 	}
 	Workbook.prototype.init=function(tableCustomFunc, tableIds, sheetIds, bNoBuildDep, bSnapshot){
 		if(this.nActive < 0)
@@ -2469,7 +2475,7 @@
 	};
 	Workbook.prototype.isChartOleObject = function () {
 		return this.aWorksheets.length === 2;
-	}
+	};
 	Workbook.prototype.setCommonIndexObjectsFrom = function(wb) {
 		this.oStyleManager = wb.oStyleManager;
 		this.sharedStrings = wb.sharedStrings;
@@ -2911,7 +2917,7 @@
 
 		var aRes = [];
 		for(var i in oFontMap)
-			aRes.push(new AscFonts.CFont(i, 0, "", 0));
+			aRes.push(new AscFonts.CFont(i));
 		AscFonts.FontPickerByCharacter.extendFonts(aRes);
 		return aRes;
 	};
@@ -4699,6 +4705,80 @@
 		return res;
 	};
 
+	/******GOAL SEEK******
+	/**
+	 * Initializes and starts goal seek calculation.
+	 * @param {string} sFormulaCell
+	 * @param {string} sExpectedValue
+	 * @param {string} sChangingCell
+	 * @param {Worksheet} wsFormula
+	 * @param {Worksheet} wsChangingCell
+	 */
+	Workbook.prototype.startGoalSeek = function(sFormulaCell, sExpectedValue, sChangingCell, wsFormula, wsChangingCell) {
+		let oParserFormula;
+		let oFormulaCell = wsFormula.getCell2(sFormulaCell);
+		wsFormula._getCell(oFormulaCell.bbox.r1, oFormulaCell.bbox.c1, function (cell) {
+			oParserFormula = cell.getFormulaParsed();
+		});
+
+		this.setGoalSeek(new AscCommonExcel.CGoalSeek(oParserFormula, Number(sExpectedValue), wsChangingCell.getRange2(sChangingCell)));
+		let oGoalSeek = this.getGoalSeek();
+		// Run goal seek
+		oGoalSeek.init();
+		oGoalSeek.setIntervalId(setInterval(function () {
+			let bIsFinish = oGoalSeek.calculate();
+			if (bIsFinish) {
+				clearInterval(oGoalSeek.getIntervalId());
+			}
+		}, oGoalSeek.getDelay()));
+	};
+	/**
+	 * Returns object with goal seek result
+	 * @returns {CGoalSeek}
+	 */
+	Workbook.prototype.getGoalSeek = function() {
+		return this.oGoalSeek;
+	};
+	/**
+	 * Sets object with goal seek result
+	 * @param {CGoalSeek} oGoalSeek
+	 */
+	Workbook.prototype.setGoalSeek = function(oGoalSeek) {
+		this.oGoalSeek = oGoalSeek;
+	};
+	/**
+	 * Discards goal seek result for "Changing cell" to original
+	 */
+	Workbook.prototype.closeGoalSeek = function () {
+		let oGoalSeek = this.getGoalSeek();
+		if (!oGoalSeek) {
+			return;
+		}
+		let oChangedCell = oGoalSeek.getChangingCell();
+		let nFirstChangingVal = oGoalSeek.getFirstChangingValue();
+		oChangedCell.setValue(nFirstChangingVal == null ? "" : nFirstChangingVal + "");
+		this.setGoalSeek(null);
+	};
+	/**
+	 * Saves goal seek result for "Changing cell"
+	 */
+	Workbook.prototype.saveGoalSeek = function() {
+		this.setGoalSeek(null);
+	};
+
+	Workbook.prototype.pauseGoalSeek = function() {
+		this.oGoalSeek && this.oGoalSeek.pause();
+	};
+
+	Workbook.prototype.continueGoalSeek = function() {
+		this.oGoalSeek && this.oGoalSeek.resume();
+	};
+
+	Workbook.prototype.stepGoalSeek = function() {
+		this.oGoalSeek && this.oGoalSeek.step();
+	};
+
+
 
 //-------------------------------------------------------------------------------------------------
 	var tempHelp = new ArrayBuffer(8);
@@ -5271,6 +5351,13 @@
 				}
 				this.aProtectedRanges.push(wsFrom.aProtectedRanges[i].clone(this));
 			}
+		}
+
+		if(wsFrom.colBreaks) {
+			this.colBreaks = wsFrom.colBreaks.clone(this);
+		}
+		if(wsFrom.rowBreaks) {
+			this.rowBreaks = wsFrom.rowBreaks.clone(this);
 		}
 
 		return renameParams;
@@ -6025,10 +6112,9 @@
 				this.getId(), new Asc.Range(0, 0, gc_nMaxCol0, gc_nMaxRow0), new UndoRedoData_FromTo(view.showFormulas, value));
 			view.showFormulas = value;
 
-			//TODO
 			this.workbook.handlers.trigger("changeSheetViewSettings", this.getId(), AscCH.historyitem_Worksheet_SetShowFormulas);
-			if (!this.workbook.bUndoChanges && !this.workbook.bRedoChanges) {
-				this.workbook.handlers.trigger("asc_onUpdateSheetViewSettings");
+			if (!this.workbook.bCollaborativeChanges) {
+				this.workbook.handlers.trigger("asc_onUpdateFormulasViewSettings");
 			}
 		}
 	};
@@ -11508,7 +11594,7 @@
 
 		let _getLocked = function (_xfs) {
 			let _res = null;
-			if (_xfs && _xfs.applyProtection) {
+			if (_xfs/* && _xfs.applyProtection*/) {
 				_res = true;//null/true
 				if (_xfs.getLocked() === false) {
 					_res = false;
@@ -11946,6 +12032,25 @@
 		this.workbook.handlers.trigger("onChangePageSetupProps", this.getId());
 	};
 
+	Worksheet.prototype.isBreak = function (index, range, byCol) {
+		let min = null;
+		let max = !byCol ? gc_nMaxCol0 : gc_nMaxRow0;
+
+		let printArea = this.workbook.getDefinesNames("Print_Area", this.getId());
+		if (printArea && range) {
+			if (byCol) {
+				min = range.r1;
+				max = range.r2;
+			} else {
+				min = range.c1;
+				max = range.c2;
+			}
+		}
+
+		let rowColBreaks = !byCol ? this.rowBreaks : this.colBreaks;
+		return rowColBreaks && rowColBreaks.isBreak(index, min, max);
+	};
+
 	Worksheet.prototype.resetAllPageBreaks = function () {
 		let t = this;
 
@@ -12309,6 +12414,17 @@
 		return this.legacyDrawingHF.getDrawingById(val);
 	};
 
+	Worksheet.prototype.getCountNoEmptyCells = function() {
+		if (this.nRowsCount === 0 || this.nColsCount === 0) {
+			return 0;
+		}
+		let count = 0;
+		let range = this.getRange3(0, 0, this.nRowsCount - 1, this.nColsCount - 1);
+		range._foreachNoEmptyByCol(function () {
+			count++;
+		});
+		return count;
+	};
 
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
@@ -16448,6 +16564,9 @@
 				return;
 			}
 		}
+
+		this.worksheet.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.mergeRange, true, this.bbox, this.worksheet.getId());
+
 		//пробегаемся по границе диапазона, чтобы посмотреть какие границы нужно оставлять
 		var oLeftBorder = null;
 		var oTopBorder = null;
@@ -16540,7 +16659,7 @@
 
 									 }
 									 if(nRow0 == nRowStart && nCol0 == nColStart)
-										 oLeftTopCellStyle = cell.getStyle();
+										 oLeftTopCellStyle = cell.getStyle();									
 								 });
 		//правила работы с гиперссылками во время merge(отличются от Excel в случаем областей, например hyperlink: C3:D3 мержим C2:C3)
 		// 1)оставляем все ссылки, которые не полностью лежат в merge области
@@ -16752,6 +16871,7 @@
 		if (dataValidationRanges) {
 			this.worksheet.clearDataValidation(dataValidationRanges, true);
 		}
+		this.worksheet.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.mergeRange, null, this.bbox, this.worksheet.getId());
 
 		History.EndTransaction();
 	};

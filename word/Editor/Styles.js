@@ -33,6 +33,10 @@
 "use strict";
 
 // Import
+
+window['AscWord'] = window['AscWord'] || {};
+
+
 var align_Left = AscCommon.align_Left;
 var align_Right = AscCommon.align_Right;
 var History = AscCommon.History;
@@ -9054,11 +9058,14 @@ CStyles.prototype =
 
     Get_Name : function(StyleId)
     {
-        if ( undefined != this.Style[StyleId] )
-            return this.Style[StyleId].Name;
-
-        return "";
+        return this.GetName(StyleId);
     },
+	
+	GetName : function(styleId)
+	{
+		let style = this.Get(styleId);
+		return style ? style.GetName() : "";
+	},
 
     Get_Default_Paragraph : function()
     {
