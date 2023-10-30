@@ -5926,7 +5926,7 @@ BinaryChartWriter.prototype.WriteCT_Axis = function (oVal) {
             });
         } else {
             this.bs.WriteItem(c_oserct_chartExAxisVALSCALING, function() {
-                oThis.WriteCT_ValueAxisScaling(oVal.valScaling);
+                oThis.WriteCT_ValueAxisScaling(oVal.scaling);
             });
         }
     }
@@ -13645,7 +13645,13 @@ BinaryChartReader.prototype.ReadCT_Series = function (type, length, val) {
     }
     else if (c_oserct_chartExSeriesTEXT === type)
     {
-        val.setTx(this.stream.GetDoubleLE());
+        var oNewVal = new AscFormat.CChartText();
+        oNewVal.setIsForChartEx(true);
+        res = this.bcr.Read1(length, function (t, l) {
+            return oThis.ReadCT_Text(t, l, oNewVal);
+        });
+        oNewVal.setChart(this.curChart);
+        val.setTx(oNewVal);
     }
     else if (c_oserct_chartExSeriesAXIS === type) {
         var oNewVal = new AscFormat.CAxis();
@@ -13748,7 +13754,7 @@ BinaryChartReader.prototype.ReadCT_DataLabels = function (type, length, val) {
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_Datalabel(t, l, oNewVal);
         });
-        val.addDatalabel(oNewVal);
+        val.addDataLabel(oNewVal);
     }
     else if (c_oserct_chartExDataLabelsDATALABELHIDDEN === type) {
         var oNewVal = new AscFormat.CDataLabelHidden();
