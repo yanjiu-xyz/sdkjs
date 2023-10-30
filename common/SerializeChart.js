@@ -5920,11 +5920,11 @@ BinaryChartWriter.prototype.WriteCT_Axis = function (oVal) {
         });
     }
     if(oVal.scaling !== null) {
-        if (typeof oVal.scaling.gapWidth === "undefined") {
+        if (oVal.scaling instanceof AscFormat.CCategoryAxisScaling) {
             this.bs.WriteItem(c_oserct_chartExAxisCATSCALING, function() {
                 oThis.WriteCT_CategoryAxisScaling(oVal.scaling);
             });
-        } else {
+        } else if (oVal.scaling instanceof AscFormat.CValueAxisScaling) {
             this.bs.WriteItem(c_oserct_chartExAxisVALSCALING, function() {
                 oThis.WriteCT_ValueAxisScaling(oVal.scaling);
             });

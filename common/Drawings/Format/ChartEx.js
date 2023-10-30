@@ -218,6 +218,11 @@ function (window, undefined) {
 		CAxisBase.call(this);
 		this.units = null;
 		this.hidden = null;
+
+
+		this.majorTickMark = null;
+		this.minorTickMark = null;
+		this.crosses = nullT;
 	}
 
 	InitClass(CAxis, CAxisBase, AscDFH.historyitem_type_Axis);
