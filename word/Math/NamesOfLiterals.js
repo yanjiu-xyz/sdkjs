@@ -713,7 +713,6 @@
 		["⨄", oNamesOfLiterals.opNaryLiteral[0]], //		["⨄", oNamesOfLiterals.opNaryLiteral[0]],
 		["⋁", oNamesOfLiterals.opNaryLiteral[0]],
 		["⋀", oNamesOfLiterals.opNaryLiteral[0]],
-		["\\binom", true],
 		["⊥", oNamesOfLiterals.operatorLiteral[0]],
 		["□", oNamesOfLiterals.boxLiteral[0]],
 		["\\boxplus", "⊞"],
@@ -1540,7 +1539,7 @@
 					break;
 				case oNamesOfLiterals.preScriptLiteral[num]:
 					let oPreSubSup = oContext.Add_Script(
-						oTokens.up && oTokens.down,
+						true,
 						{ctrPrp: new CTextPr(), type: DEGREE_PreSubSup},
 						null,
 						null,
@@ -2047,7 +2046,7 @@
 	// Trow content and may skip bracket block
 	function UnicodeArgument (oInput, oComparison, oContext)
 	{
-		if (oInput && type === 0 && oInput.type === oComparison && oInput.left === "(" && oInput.right === ")")
+		if (oInput && type === 0 && oInput.type === oComparison && oInput.left === "(" && oInput.right === ")" && oInput.counter === 1)
 		{
 			ConvertTokens(
 				oInput.value,
@@ -3303,6 +3302,9 @@
 					for (let i = oCMathContent.Content.length - 1; i >= 0 && nCounter !== strToken.length; i--)
 					{
 						let oCurrentElement = oCMathContent.Content[i];
+						if (!oCurrentElement || !oCurrentElement.Content)
+							return false;
+
 						let oCurrentElementCounter = oCurrentElement.Content.length;
 
 						if (oCurrentElementCounter > strToken.length)

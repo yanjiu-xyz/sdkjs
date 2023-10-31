@@ -163,7 +163,7 @@
 		this.findFillColor = new CColor(255, 238, 128, 1);
 
 		// Цвет закрепленных областей
-		this.frozenColor = new CColor(105, 119, 62, 1);
+		this.frozenColor = new CColor(129, 129, 129, 1);
 
 		// Число знаков для математической информации
 		this.mathMaxDigCount = 9;

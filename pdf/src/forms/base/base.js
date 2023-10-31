@@ -678,7 +678,12 @@
     CBaseField.prototype.DrawBorders = function(oGraphicsPDF) {
         let oViewer     = editor.getDocumentRenderer();
         let aOringRect  = this.GetOrigRect();
-        let aBgColor    = this.IsNeedDrawHighlight() == false ? (this.GetBackgroundColor() || [1]) : [1];
+        let aBgColor;
+        if (this.GetType() == AscPDF.FIELD_TYPES.button)
+            aBgColor = this.GetBackgroundColor() || [1];
+        else
+            aBgColor = this.IsNeedDrawHighlight() == false ? (this.GetBackgroundColor() || [1]) : [1];
+
         let oBgRGBColor = this.GetRGBColor(aBgColor);
 
         if (aBgColor && aBgColor.length != 0)
@@ -995,7 +1000,7 @@
         }        
 
         // pressed border
-        if (this.GetType() == AscPDF.FIELD_TYPES.button && this.IsPressed() && this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push && this._images.mouseDown == undefined) {
+        if (this.GetType() == AscPDF.FIELD_TYPES.button && this.IsPressed() && this.GetHighlight() == AscPDF.BUTTON_HIGHLIGHT_TYPES.push && this._imgData.mouseDown == undefined) {
             switch (this._borderStyle) {
                 case BORDER_TYPES.solid:
                 case BORDER_TYPES.dashed:
@@ -1053,16 +1058,16 @@
 
         if (aInternalColor.length == 1) {
             oColor = {
-                r: aInternalColor[0] * 255,
-                g: aInternalColor[0] * 255,
-                b: aInternalColor[0] * 255
+                r: Math.round(aInternalColor[0] * 255),
+                g: Math.round(aInternalColor[0] * 255),
+                b: Math.round(aInternalColor[0] * 255)
             }
         }
         else if (aInternalColor.length == 3) {
             oColor = {
-                r: aInternalColor[0] * 255,
-                g: aInternalColor[1] * 255,
-                b: aInternalColor[2] * 255
+                r: Math.round(aInternalColor[0] * 255),
+                g: Math.round(aInternalColor[1] * 255),
+                b: Math.round(aInternalColor[2] * 255)
             }
         }
         else if (aInternalColor.length == 4) {
@@ -1166,6 +1171,7 @@
 
     CBaseField.prototype.AddToRedraw = function() {
         let oViewer = editor.getDocumentRenderer();
+        oViewer.paint();
         if (oViewer.pagesInfo.pages[this.GetPage()])
             oViewer.pagesInfo.pages[this.GetPage()].needRedrawForms = true;
     };
@@ -1667,29 +1673,29 @@
         return null;
     };
 
-    CBaseField.prototype.SetApiTextColor = function(aColor) {
+    CBaseField.prototype.SetApiTextColor = function(aApiColor) {
         if ([AscPDF.FIELD_TYPES.radiobutton, AscPDF.FIELD_TYPES.checkbox].includes(this.GetType()))
             return;
 
         let color = AscPDF.Api.Objects.color;
 
-        let oRGB = color.convert(aColor, "RGB");
+        let oRGB = color.convert(aApiColor, "RGB");
         if (this.content) {
             let oPara       = this.content.GetElement(0);
             let oApiPara    = editor.private_CreateApiParagraph(oPara);
 
-            oApiPara.SetColor(oRGB[1] * 255, oRGB[2] * 255, oRGB[3] * 255, false);
+            oApiPara.SetColor(Math.round(oRGB[1] * 255), Math.round(oRGB[2] * 255), Math.round(oRGB[3] * 255), false);
             oPara.RecalcCompiledPr(true);
         }
         if (this.contentFormat) {
             let oPara       = this.contentFormat.GetElement(0);
             let oApiPara    = editor.private_CreateApiParagraph(oPara);
 
-            oApiPara.SetColor(oRGB[1] * 255, oRGB[2] * 255, oRGB[3] * 255, false);
+            oApiPara.SetColor(Math.round(oRGB[1] * 255), Math.round(oRGB[2] * 255), Math.round(oRGB[3] * 255), false);
             oPara.RecalcCompiledPr(true);
         }
 
-        let oApiColor   = color.convert(oRGB, aColor[0]);
+        let oApiColor   = color.convert(oRGB, aApiColor[0]);
         this._textColor = oApiColor.slice(1);
 
         this.SetWasChanged(true);

@@ -859,7 +859,7 @@
 				oForm = this.doc.AddField(oFormInfo["name"], oFormInfo["type"], oFormInfo["page"], [oRect["x1"], oRect["y1"], oRect["x2"], oRect["y2"]]);
 				
 				if (!oForm) {
-					console.log(Error("Error while reading form, index " + i));
+					// console.log("Error while reading form, index " + oFormInfo["AP"]["i"]);
 					continue;
 				}
 
@@ -1028,7 +1028,7 @@
 				}
 				if (oFormInfo["value"] != null && oForm.GetType() != AscPDF.FIELD_TYPES.button)
 				{
-					oForm.SetValue(oFormInfo["value"]);
+					oForm.SetValue(oFormInfo["value"], true);
 				}
 				if (oFormInfo["display"])
 				{
@@ -1660,8 +1660,8 @@
 				for (var i = page.annots.length -1; i >= 0; i--)
 				{
 					let oAnnot = page.annots[i];
-					let nAnnotWidth		= (page.annots[i]._origRect[2] - page.annots[i]._origRect[0]) / this.zoom;
-					let nAnnotHeight	= (page.annots[i]._origRect[3] - page.annots[i]._origRect[1]) / this.zoom;
+					let nAnnotWidth		= Math.max(page.annots[i]._origRect[2] - page.annots[i]._origRect[0], 32) / (this.zoom * AscCommon.AscBrowser.retinaPixelRatio);
+					let nAnnotHeight	= Math.max(page.annots[i]._origRect[3] - page.annots[i]._origRect[1], 32) / (this.zoom * AscCommon.AscBrowser.retinaPixelRatio);
 					
 					if (true !== bGetHidden && oAnnot.IsHidden() == true || false == oAnnot.IsComment())
 						continue;
@@ -2577,6 +2577,7 @@
 			this._paintFormsHighlight();
 			this._paintComboboxesMarkers();
 			oDoc.UpdateUndoRedo();
+			oDoc.UpdateCommentPos();
 		};
 		this.Get_PageLimits = function() {
 			let W = this.width;
@@ -3017,11 +3018,9 @@
 				{
 					this.Api.sync_MarkerFormatCallback(false);
 				}
-				else if (oDoc.activeForm)
-				{
-					// to do отмена ввода
-				}
-
+				
+				oDoc.EscapeForm();
+				
 				editor.sync_HideComment();
 			}
 			else if (e.KeyCode === 32) // Space
@@ -3034,13 +3033,44 @@
 			}
 			else if ( e.KeyCode == 33 ) // PgUp
 			{
-				this.m_oScrollVerApi.scrollByY(-this.height, false);
-				this.timerSync();
+				if (e.AltKey == true)
+				{
+					var nextPage = -1;
+					if (this.thumbnails)
+						nextPage = this.currentPage - this.thumbnails.countPagesInBlock;
+					if (nextPage < 0)
+						nextPage = this.currentPage - 1;
+
+					if (nextPage >= 0)
+						this.navigateToPage(nextPage);
+				}
+				else {
+					this.m_oScrollVerApi.scrollByY(-this.height, false);
+					this.timerSync();
+				}
 			}
 			else if ( e.KeyCode == 34 ) // PgDn
 			{
-				this.m_oScrollVerApi.scrollByY(this.height, false);
-				this.timerSync();
+				if (e.AltKey == true)
+				{
+					var pagesCount = this.getPagesCount();
+					var nextPage = pagesCount;
+					if (this.thumbnails)
+					{
+						nextPage = this.currentPage + this.thumbnails.countPagesInBlock;
+						if (nextPage >= pagesCount)
+							nextPage = pagesCount - 1;
+					}
+					if (nextPage >= pagesCount)
+						nextPage = this.currentPage + 1;
+
+					if (nextPage < pagesCount)
+						this.navigateToPage(nextPage);
+				}
+				else {
+					this.m_oScrollVerApi.scrollByY(this.height, false);
+					this.timerSync();
+				}
 			}
 			else if ( e.KeyCode == 35 ) // End
 			{
@@ -3131,20 +3161,9 @@
 							break;
 					}
 				}
-				else if (!this.isFocusOnThumbnails && e.AltKey == false)
+				else if (!this.isFocusOnThumbnails)
 				{
 					this.m_oScrollVerApi.scrollByY(-40);
-				}
-				else
-				{
-					var nextPage = -1;
-					if (this.thumbnails)
-						nextPage = this.currentPage - this.thumbnails.countPagesInBlock;
-					if (nextPage < 0)
-						nextPage = this.currentPage - 1;
-
-					if (nextPage >= 0)
-						this.navigateToPage(nextPage);
 				}
 				bRetValue = true;
 			}
@@ -3219,25 +3238,9 @@
 					}
 					
 				}
-				else if (!this.isFocusOnThumbnails && e.AltKey == false)
+				else if (!this.isFocusOnThumbnails)
 				{
 					this.m_oScrollVerApi.scrollByY(40);
-				}
-				else
-				{
-					var pagesCount = this.getPagesCount();
-					var nextPage = pagesCount;
-					if (this.thumbnails)
-					{
-						nextPage = this.currentPage + this.thumbnails.countPagesInBlock;
-						if (nextPage >= pagesCount)
-							nextPage = pagesCount - 1;
-					}
-					if (nextPage >= pagesCount)
-						nextPage = this.currentPage + 1;
-
-					if (nextPage < pagesCount)
-						this.navigateToPage(nextPage);
 				}
 				bRetValue = true;
 			}

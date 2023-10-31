@@ -94,7 +94,7 @@
     }
     CAnnotationText.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
 	CAnnotationText.prototype.constructor = CAnnotationText;
-
+    
     CAnnotationText.prototype.SetState = function(nType) {
         this._state = nType;
     };
@@ -245,8 +245,8 @@
 
         let nScaleX = nWidth / imgW;
         let nScaleY = nHeight / imgH;
-        let wScaled = imgW * nScaleX + 0.5 >> 0;
-        let hScaled = imgH * nScaleY + 0.5 >> 0;
+        let wScaled = Math.max(imgW * nScaleX + 0.5 >> 0, 40);
+        let hScaled = Math.max(imgH * nScaleY + 0.5 >> 0, 40);
 
         let canvas = document.createElement('canvas');
         let context = canvas.getContext('2d');
@@ -258,29 +258,31 @@
         // Draw the image onto the canvas
         context.drawImage(ICON_TO_DRAW, 0, 0, imgW, imgH, 0, 0, wScaled, hScaled);
 
-        if (oRGB.r != 255 || oRGB.g != 209 || oRGB.b != 0) {
-            // Get the pixel data of the canvas
-            let imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-            let data = imageData.data;
-
-            // Loop through each pixel
-            for (let i = 0; i < data.length; i += 4) {
-                const red = data[i];
-                const green = data[i + 1];
-                const blue = data[i + 2];
-
-                // Check if the pixel is black (R = 0, G = 0, B = 0)
-                if (red === 255 && green === 209 && blue === 0) {
-                    // Change the pixel color to red (R = 255, G = 0, B = 0)
-                    data[i] = oRGB.r; // Red
-                    data[i + 1] = oRGB.g; // Green
-                    data[i + 2] = oRGB.b; // Blue
-                    // Note: The alpha channel (transparency) remains unchanged
+        if (!AscCommon.AscBrowser.isIE || AscCommon.AscBrowser.isIeEdge) {
+            if (oRGB.r != 255 || oRGB.g != 209 || oRGB.b != 0) {
+                // Get the pixel data of the canvas
+                let imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+                let data = imageData.data;
+    
+                // Loop through each pixel
+                for (let i = 0; i < data.length; i += 4) {
+                    const red = data[i];
+                    const green = data[i + 1];
+                    const blue = data[i + 2];
+    
+                    // Check if the pixel is black (R = 0, G = 0, B = 0)
+                    if (red === 255 && green === 209 && blue === 0) {
+                        // Change the pixel color to red (R = 255, G = 0, B = 0)
+                        data[i] = oRGB.r; // Red
+                        data[i + 1] = oRGB.g; // Green
+                        data[i + 2] = oRGB.b; // Blue
+                        // Note: The alpha channel (transparency) remains unchanged
+                    }
                 }
+    
+                // Put the modified pixel data back onto the canvas
+                context.putImageData(imageData, 0, 0);
             }
-
-            // Put the modified pixel data back onto the canvas
-            context.putImageData(imageData, 0, 0);
         }
 
         // Draw the comment note
@@ -306,13 +308,6 @@
 
         oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
     };
-    CAnnotationText.prototype.onMouseUp = function() {
-        let oViewer = editor.getDocumentRenderer();
-
-        let oPos = AscPDF.GetGlobalCoordsByPageCoords(this._pagePos.x + this._pagePos.w / oViewer.zoom, this._pagePos.y + this._pagePos.h / (2 * oViewer.zoom), this.GetPage(), true);
-        editor.sync_ShowComment([this.GetId()], oPos["X"], oPos["Y"])
-    };
-
     CAnnotationText.prototype.IsComment = function() {
         return true;
     };

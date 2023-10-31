@@ -532,10 +532,10 @@ Paragraph.prototype.StartFromNewPage = function()
  */
 Paragraph.prototype.recalculateRangeFast = function(iRange, iLine)
 {
-	let wrapState = AscWord.ParagraphRecalculateStateManager.getWrapState();
+	let wrapState = AscWord.ParagraphStatePool.getWrapState();
 	wrapState.SetFast(true);
 	let result = this.private_RecalculateFastRange(wrapState, iRange, iLine);
-	AscWord.ParagraphRecalculateStateManager.release(wrapState);
+	AscWord.ParagraphStatePool.release(wrapState);
 	return result;
 };
 Paragraph.prototype.private_RecalculateFastRange       = function(PRS, CurRange, CurLine)
@@ -663,10 +663,10 @@ Paragraph.prototype.private_RecalculateFastRange       = function(PRS, CurRange,
 };
 Paragraph.prototype.private_RecalculatePage = function(CurPage, isFast)
 {
-	let wrapState = AscWord.ParagraphRecalculateStateManager.getWrapState();
+	let wrapState = AscWord.ParagraphStatePool.getWrapState();
 	wrapState.SetFast(isFast);
 	let result = this.private_RecalculatePageInternal(wrapState, CurPage, true);
-	AscWord.ParagraphRecalculateStateManager.release(wrapState);
+	AscWord.ParagraphStatePool.release(wrapState);
 	return result;
 };
 Paragraph.prototype.private_RecalculatePageInternal = function(PRS, CurPage, bFirstRecalculate)
@@ -3168,12 +3168,13 @@ ParagraphRecalculateStateBase.prototype.unlock = function()
 	this.locked = false;
 };
 
-function ParagraphRecalculateStateManager()
+function ParagraphStatePool()
 {
 	this.wrap    = [];
 	this.endInfo = [];
+	this.draw    = [];
 }
-ParagraphRecalculateStateManager.prototype.getInstance = function(pool, className)
+ParagraphStatePool.prototype.getInstance = function(pool, className)
 {
 	let instance = null;
 	for (let i = 0, n = pool.length; i < n; ++i)
@@ -3194,19 +3195,23 @@ ParagraphRecalculateStateManager.prototype.getInstance = function(pool, classNam
 	instance.lock();
 	return instance;
 };
-ParagraphRecalculateStateManager.prototype.release = function(instance)
+ParagraphStatePool.prototype.release = function(instance)
 {
 	instance.unlock();
 };
-ParagraphRecalculateStateManager.prototype.getWrapState = function()
+ParagraphStatePool.prototype.getWrapState = function()
 {
 	return this.getInstance(this.wrap, CParagraphRecalculateStateWrap);
 };
-ParagraphRecalculateStateManager.prototype.getEndInfoState = function()
+ParagraphStatePool.prototype.getEndInfoState = function()
 {
 	return this.getInstance(this.endInfo, CParagraphRecalculateStateInfo);
 };
-window['AscWord'].ParagraphRecalculateStateManager = new ParagraphRecalculateStateManager();
+ParagraphStatePool.prototype.getDrawState = function()
+{
+	return this.getInstance(this.draw, ParagraphDrawState);
+};
+window['AscWord'].ParagraphStatePool = new ParagraphStatePool();
 
 function CParagraphRecalculateStateWrap()
 {
@@ -4483,6 +4488,37 @@ CParagraphRecalculateStateInfo.prototype.ProcessInstruction = function(oInstruct
 };
 
 const g_PRSI = new CParagraphRecalculateStateInfo();
+
+function ParagraphDrawState()
+{
+	ParagraphRecalculateStateBase.call(this);
+	
+	this.highlightState  = new CParagraphDrawStateHighlights();
+	this.runElementState = new CParagraphDrawStateElements();
+	this.lineState       = new CParagraphDrawStateLines();
+}
+
+ParagraphDrawState.prototype = Object.create(ParagraphRecalculateStateBase.prototype);
+ParagraphDrawState.prototype.constructor = ParagraphDrawState;
+
+ParagraphDrawState.prototype.init = function(paragraph, graphics)
+{
+	this.highlightState.init(paragraph, graphics);
+	this.runElementState.init(paragraph, graphics);
+	this.lineState.init(paragraph, graphics);
+};
+ParagraphDrawState.prototype.getHighlightState = function()
+{
+	return this.highlightState;
+};
+ParagraphDrawState.prototype.getRunElementState = function()
+{
+	return this.runElementState;
+};
+ParagraphDrawState.prototype.getLineState = function()
+{
+	return this.lineState;
+};
 
 function CParagraphRecalculateObject()
 {
