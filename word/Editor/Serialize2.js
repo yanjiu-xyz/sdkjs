@@ -2481,7 +2481,7 @@ function Binary_pPrWriter(memory, oNumIdMap, oBinaryHeaderFooterTableWriter, sav
         //Line
         if(null != Spacing.Line)
         {
-            var line = Asc.linerule_Auto === Spacing.LineRule ? Math.round(Spacing.Line * 240) : (this.bs.mmToTwips(Spacing.Line));
+            var line = Asc.linerule_Exact === Spacing.LineRule || Asc.linerule_AtLeast === Spacing.LineRule ? (this.bs.mmToTwips(Spacing.Line)) : Math.round(Spacing.Line * 240);
             this.memory.WriteByte(c_oSerProp_pPrType.Spacing_LineTwips);
             this.memory.WriteByte(c_oSerPropLenType.Long);
             this.memory.WriteLong(line);
