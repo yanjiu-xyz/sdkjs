@@ -2934,32 +2934,6 @@ function (window, undefined) {
 	};
 
 
-	// StringValue
-	drawingsChangesMap[AscDFH.historyitem_StringValue_SetIdx] = function (oClass, value) {
-		oClass.idx = value;
-	};
-	drawingsChangesMap[AscDFH.historyitem_StringValue_SetContent] = function (oClass, value) {
-		oClass.content = value;
-	};
-	AscDFH.changesFactory[AscDFH.historyitem_StringValue_SetIdx] = window['AscDFH'].CChangesDrawingsLong;
-	AscDFH.changesFactory[AscDFH.historyitem_StringValue_SetContent] = window['AscDFH'].CChangesDrawingsString;
-
-	function CStringValue() {
-		CBaseChartObject.call(this);
-		this.idx = null;
-		this.content = null;
-	}
-
-	InitClass(CStringValue, CBaseChartObject, AscDFH.historyitem_type_StringValue);
-
-	CStringValue.prototype.setIdx = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_StringValue_SetIdx, this.idx, pr));
-		this.idx = pr;
-	};
-	CStringValue.prototype.setContent = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_StringValue_SetContent, this.content, pr));
-		this.content = pr;
-	};
 
 
 	// Subtotals
@@ -3674,7 +3648,6 @@ function (window, undefined) {
 	window['AscFormat'].CNumericDimension = CNumericDimension;
 	window['AscFormat'].CStringDimension = CStringDimension;
 	window['AscFormat'].CStringLevel = CStringLevel;
-	window['AscFormat'].CStringValue = CStringValue;
 	window['AscFormat'].CSubtotals = CSubtotals;
 	// window['AscFormat'].CText = CText;
 	window['AscFormat'].CTextData = CTextData;
