@@ -35,6 +35,7 @@ jobs:
           node-qunit-puppeteer tests/cell/shortcuts/shortcuts.html
           node-qunit-puppeteer tests/cell/spreadsheet-calculation/FormulaTests.html
           node-qunit-puppeteer tests/cell/spreadsheet-calculation/PivotTests.html
+          node-qunit-puppeteer tests/cell/spreadsheet-calculation/PivotTests2.html
           node-qunit-puppeteer tests/cell/spreadsheet-calculation/CopyPasteTests.html
           node-qunit-puppeteer tests/cell/spreadsheet-calculation/SheetStructureTests.html
           node-qunit-puppeteer tests/cell/spreadsheet-calculation/autoFilterTests.html
