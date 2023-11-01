@@ -868,6 +868,9 @@
     drawingsChangesMap[AscDFH.historyitem_NumLit_SetPtCount] = function(oClass, value) {
         oClass.ptCount = value;
     };
+    drawingsChangesMap[AscDFH.historyitem_NumLit_SetName] = function(oClass, value) {
+        oClass.name = value;
+    };
     drawingsChangesMap[AscDFH.historyitem_OfPieChart_SetDLbls] = function(oClass, value) {
         oClass.dLbls = value;
     };
@@ -1658,6 +1661,7 @@
     AscDFH.changesFactory[AscDFH.historyitem_Marker_SetSymbol] = window['AscDFH'].CChangesDrawingsLong;
     AscDFH.changesFactory[AscDFH.historyitem_MultiLvlStrCache_SetPtCount] = window['AscDFH'].CChangesDrawingsLong;
     AscDFH.changesFactory[AscDFH.historyitem_NumLit_SetPtCount] = window['AscDFH'].CChangesDrawingsLong;
+    AscDFH.changesFactory[AscDFH.historyitem_NumLit_SetName] = window['AscDFH'].CChangesDrawingsString;
     AscDFH.changesFactory[AscDFH.historyitem_OfPieChart_SetGapWidth] = window['AscDFH'].CChangesDrawingsLong;
     AscDFH.changesFactory[AscDFH.historyitem_OfPieChart_SetOfPieType] = window['AscDFH'].CChangesDrawingsLong;
     AscDFH.changesFactory[AscDFH.historyitem_OfPieChart_SetSecondPieSize] = window['AscDFH'].CChangesDrawingsLong;
