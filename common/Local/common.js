@@ -232,7 +232,8 @@ prot.getImageUrl = function(strPath){
 
 	return this.documentUrl + "/media/" + strPath;
 };
-prot.getImageLocal = function(url){
+prot.getImageLocal = function(_url){
+	let url = _url.replaceAll("%20", " ");
 	var _first = this.documentUrl + "/media/";
 	if (0 == url.indexOf(_first))
 		return url.substring(_first.length);
