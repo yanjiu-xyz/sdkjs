@@ -29,6 +29,7 @@
  * terms at http://creativecommons.org/licenses/by-sa/4.0/legalcode
  *
  */
+
 module.exports = function(grunt) {
 	function loadConfig(pathConfigs, name) {
 		let config;
@@ -190,7 +191,8 @@ module.exports = function(grunt) {
 			cwd: '../common/',
 			src: [
 				'Charts/ChartStyles.js',
-				'SmartArts/SmartArts.bin',
+				'SmartArts/SmartArtData/*',
+				'SmartArts/SmartArtDrawing/*',
 				'Images/*',
 				'Images/placeholders/*',
 				'Images/content_controls/*',
@@ -253,7 +255,6 @@ module.exports = function(grunt) {
 		`--define=window.AscCommon.g_cBuildNumber='${buildNumber}'`,
 		`--define=window.AscCommon.g_cIsBeta='${beta}'`,
 		'--rewrite_polyfills=true',
-		'--jscomp_off=checkVars',
 		'--warning_level=QUIET',
 		'--language_out=ECMASCRIPT5',
 		'--compilation_level=' + level,
@@ -262,9 +263,10 @@ module.exports = function(grunt) {
 		`--chunk_wrapper=${outmin}:${license}\n%s`,
 		...sdkall.map((file) => ('--js=' + file)),
 		`--chunk=${outall}:${sdkall.length}:${outmin}`,
-		`--chunk_output_path_prefix=${pathPrefix}`,
-		`--chunk_wrapper=${outall}:${license}\n(function(window, undefined) {%s})(window);`);
+		`--chunk_wrapper=${outall}:${license}\n(function(window, undefined) {%s})(window);`,
+		`--chunk_output_path_prefix=${pathPrefix}`);
 		if (grunt.option('map')) {
+			grunt.file.mkdir(path.join('./maps'));
 			args.push('--property_renaming_report=' + path.join(`maps/${name}.props.js.map`));
 			args.push('--variable_renaming_report=' + path.join(`maps/${name}.vars.js.map`));
 			args.push('--create_source_map=' + path.join(`%outname%.map`));
@@ -411,7 +413,6 @@ module.exports = function(grunt) {
 							'--language_out=ECMASCRIPT5',
 							'--compilation_level=WHITESPACE_ONLY',
 							'--rewrite_polyfills=true',
-							'--jscomp_off=checkVars',
 							'--warning_level=QUIET',
 							`--js=${path.join(o.cwd, jsFile)}`,
 							`--js_output_file=${path.join(o.dest, jsFile)}`,
@@ -472,12 +473,14 @@ module.exports = function(grunt) {
 				}
 			}
 		});
+		grunt.task.run('clean');
 	});
 	grunt.registerTask('build-develop', 'Build develop scripts', function () {
 		const configs = getConfigs();
 		if (!configs.valid()) {
 			return;
 		}
+
 		writeScripts(configs.word['sdk'], 'word');
 		writeScripts(configs.cell['sdk'], 'cell');
 		writeScripts(configs.slide['sdk'], 'slide');
@@ -487,5 +490,5 @@ module.exports = function(grunt) {
 		defaultTasks.push('copy-maps');
 	}
 	grunt.registerTask('default', defaultTasks);
-	grunt.registerTask('develop', ['clean-develop', 'clean', 'build-develop']);
+	grunt.registerTask('develop', ['clean-develop', 'build-develop']);
 };
