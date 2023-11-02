@@ -1070,6 +1070,9 @@
     drawingsChangesMap[AscDFH.historyitem_StrCache_SetPtCount] = function(oClass, value) {
         oClass.ptCount = value;
     };
+    drawingsChangesMap[AscDFH.historyitem_StrCache_SetName] = function(oClass, value) {
+        oClass.name = value;
+    };
     drawingsChangesMap[AscDFH.historyitem_StrPoint_SetIdx] = function(oClass, value) {
         oClass.idx = value;
     };
@@ -1678,6 +1681,7 @@
     AscDFH.changesFactory[AscDFH.historyitem_ScatterSer_SetIdx] = window['AscDFH'].CChangesDrawingsLong;
     AscDFH.changesFactory[AscDFH.historyitem_ScatterSer_SetOrder] = window['AscDFH'].CChangesDrawingsLong;
     AscDFH.changesFactory[AscDFH.historyitem_StrCache_SetPtCount] = window['AscDFH'].CChangesDrawingsLong;
+    AscDFH.changesFactory[AscDFH.historyitem_StrCache_SetName] = window['AscDFH'].CChangesDrawingsString;
     AscDFH.changesFactory[AscDFH.historyitem_StringLiteral_SetPtCount] = window['AscDFH'].CChangesDrawingsLong;
     AscDFH.changesFactory[AscDFH.historyitem_StrPoint_SetIdx] = window['AscDFH'].CChangesDrawingsLong;
     AscDFH.changesFactory[AscDFH.historyitem_SurfaceSeries_SetIdx] = window['AscDFH'].CChangesDrawingsLong;
@@ -13296,6 +13300,7 @@
         CBaseChartObject.call(this);
         this.pts = [];
         this.ptCount = null;
+        this.name = null;
     }
 
     InitClass(CStrCache, CBaseChartObject, AscDFH.historyitem_type_StrCache);
@@ -13347,6 +13352,10 @@
     CStrCache.prototype.setPtCount = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_StrCache_SetPtCount, this.ptCount, pr));
         this.ptCount = pr;
+    };
+    CStrCache.prototype.setName = function(pr) {
+        History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_StrCache_SetName, this.name, pr));
+        this.name = pr;
     };
     CStrCache.prototype.update = function(sFormula) {
         AscFormat.ExecuteNoHistory(function() {

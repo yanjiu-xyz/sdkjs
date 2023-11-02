@@ -2015,6 +2015,97 @@ function (window, undefined) {
 		this.type = pr;
 	};
 	CDimension.prototype.updateReferences = function(bDisplayEmptyCellsAs, bDisplayHidden) {
+
+
+		if(!this.f) {
+			return;
+		}
+		let sContent = this.f.content;
+
+		let aParsedRef = AscFormat.fParseChartFormula(sContent);
+		if(!Array.isArray(aParsedRef) || aParsedRef.length === 0) {
+			return false;
+		}
+		let nPtCount = 0;
+		if(aParsedRef.length > 0) {
+			let nRows = 0, nRef, oRef, oBBox, nPtIdx, nCol, oWS, oCell, sVal, nCols = 0, nRow;
+			let nLvl, oLvl;
+			let bLvlsByRows;
+			if(this.f.dir === AscFormat.FORMULA_DIRECTION_ROW) {
+				bLvlsByRows = true;
+			}
+			else {
+				bLvlsByRows = false;
+			}
+
+			if(bLvlsByRows) {
+				for(nRef = 0; nRef < aParsedRef.length; ++nRef) {
+					oRef = aParsedRef[nRef];
+					oBBox = oRef.bbox;
+					nPtCount += (oBBox.c2 - oBBox.c1 + 1);
+					nRows = Math.max(nRows, oBBox.r2 - oBBox.r1 + 1);
+				}
+				for(nLvl = 0; nLvl < nRows; ++nLvl) {
+					oLvl = new CStrCache();
+					nPtIdx = 0;
+					for(nRef = 0; nRef < aParsedRef.length; ++nRef) {
+						oRef = aParsedRef[nRef];
+						oBBox = oRef.bbox;
+						oWS = oRef.worksheet;
+						if(nLvl < (oBBox.r2 - oBBox.r1 + 1)) {
+							for(nCol = oBBox.c1; nCol <= oBBox.c2; ++nCol) {
+								oCell = oWS.getCell3(nLvl + oBBox.r1, nCol);
+								sVal = oCell.getValueWithFormat();
+								if(typeof sVal === "string" && sVal.length > 0) {
+									oLvl.addStringPoint(nPtIdx, sVal);
+								}
+								++nPtIdx;
+							}
+						}
+						else {
+							nPtIdx += (oBBox.c2 - oBBox.c1 + 1);
+						}
+					}
+					nPtCount = Math.max(nPtCount, nPtIdx);
+					oLvl.setPtCount(nPtIdx);
+					this.addLvl(oLvl);
+				}
+			}
+			else {
+				for(nRef = 0; nRef < aParsedRef.length; ++nRef) {
+					oRef = aParsedRef[nRef];
+					oBBox = oRef.bbox;
+					nPtCount += (oBBox.r2 - oBBox.r1 + 1);
+					nCols = Math.max(nCols, oBBox.c2 - oBBox.c1 + 1);
+				}
+				for(nLvl = 0; nLvl < nCols; ++nLvl) {
+					oLvl = new CStrCache();
+					nPtIdx = 0;
+					for(nRef = 0; nRef < aParsedRef.length; ++nRef) {
+						oRef = aParsedRef[nRef];
+						oBBox = oRef.bbox;
+						oWS = oRef.worksheet;
+						if(nLvl < (oBBox.c2 - oBBox.c1 + 1)) {
+							for(nRow = oBBox.r1; nRow <= oBBox.r2; ++nRow) {
+								oCell = oWS.getCell3(nRow, nLvl + oBBox.c1);
+								sVal = oCell.getValueWithFormat();
+								if(typeof sVal === "string" && sVal.length > 0) {
+									oLvl.addStringPoint(nPtIdx, sVal);
+								}
+								++nPtIdx;
+							}
+						}
+						else {
+							nPtIdx += (oBBox.r2 - oBBox.r1 + 1);
+						}
+					}
+					nPtCount = Math.max(nPtCount, nPtIdx);
+					oLvl.setPtCount(nPtIdx);
+					this.addLvl(oLvl);
+				}
+			}
+		}
+		this.setPtCount(nPtCount);
 	};
 
 	// NumericDimension
@@ -2882,60 +2973,8 @@ function (window, undefined) {
 	};
 
 
-	// StringLevel
-	drawingsChangesMap[AscDFH.historyitem_StringLevel_SetPt] = function (oClass, value) {
-		oClass.pt = value;
-	};
-	drawingsChangesMap[AscDFH.historyitem_StringLevel_SetPtCount] = function (oClass, value) {
-		oClass.ptCount = value;
-	};
-	drawingsChangesMap[AscDFH.historyitem_StringLevel_SetName] = function (oClass, value) {
-		oClass.name = value;
-	};
-	AscDFH.changesFactory[AscDFH.historyitem_StringLevel_SetPt] = window['AscDFH'].CChangesDrawingsObjectNoId;
-	AscDFH.changesFactory[AscDFH.historyitem_StringLevel_SetPtCount] = window['AscDFH'].CChangesDrawingsLong;
-	AscDFH.changesFactory[AscDFH.historyitem_StringLevel_SetName] = window['AscDFH'].CChangesDrawingsString;
 
-	function CStringLevel() {
-		CBaseChartObject.call(this);
-		this.pt = [];
-		this.ptCount = null;
-		this.name = null;
-	}
-
-	InitClass(CStringLevel, CBaseChartObject, AscDFH.historyitem_type_StringLevel);
-
-	CStringLevel.prototype.setPt = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_StringLevel_SetPt, this.pt, pr));
-		this.pt = pr;
-	};
-	CStringLevel.prototype.addPt = function (pr, idx) {
-		let pos;
-		if (AscFormat.isRealNumber(idx))
-			pos = idx;
-		else
-			pos = this.pt.length;
-		History.CanAddChanges() && History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_StringLevel_AddPt, pos, [pr], true));
-		this.pt.splice(pos, 0, pr);
-	};
-	CStringLevel.prototype.removePtByPos = function (pos) {
-		if (this.pt[pos]) {
-			let pt = this.pt.splice(pos, 1)[0];
-			History.CanAddChanges() && History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_StringLevel_RemovePt, pos, [pt], false));
-		}
-	};
-	CStringLevel.prototype.setPtCount = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_StringLevel_SetPtCount, this.ptCount, pr));
-		this.ptCount = pr;
-	};
-	CStringLevel.prototype.setName = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_StringLevel_SetName, this.name, pr));
-		this.name = pr;
-	};
-
-
-
-
+	
 	// Subtotals
 	drawingsChangesMap[AscDFH.historyitem_Subtotals_SetIdx] = function (oClass, value) {
 		oClass.idx = value;
@@ -3647,7 +3686,6 @@ function (window, undefined) {
 	window['AscFormat'].CDimension = CDimension;
 	window['AscFormat'].CNumericDimension = CNumericDimension;
 	window['AscFormat'].CStringDimension = CStringDimension;
-	window['AscFormat'].CStringLevel = CStringLevel;
 	window['AscFormat'].CSubtotals = CSubtotals;
 	// window['AscFormat'].CText = CText;
 	window['AscFormat'].CTextData = CTextData;

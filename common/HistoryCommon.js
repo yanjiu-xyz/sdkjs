@@ -2692,6 +2692,7 @@
 
 	window['AscDFH'].historyitem_StrCache_AddPt      = window['AscDFH'].historyitem_type_StrCache | 1;
 	window['AscDFH'].historyitem_StrCache_SetPtCount = window['AscDFH'].historyitem_type_StrCache | 2;
+	window['AscDFH'].historyitem_StrCache_SetName    = window['AscDFH'].historyitem_type_StrCache | 3;
 
 	window['AscDFH'].historyitem_StrPoint_SetIdx = window['AscDFH'].historyitem_type_StrPoint | 1;
 	window['AscDFH'].historyitem_StrPoint_SetVal = window['AscDFH'].historyitem_type_StrPoint | 2;

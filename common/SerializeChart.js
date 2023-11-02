@@ -14442,7 +14442,7 @@ BinaryChartReader.prototype.ReadCT_StringDimension = function (type, length, val
     }
     else if (c_oserct_chartExDataDimensionSTRINGLEVEL === type)
     {
-        var oNewVal = new AscFormat.CStringLevel();
+        var oNewVal = new AscFormat.CStrCache();
         res = this.bcr.Read1(length, function (t, l) {
             return oThis.ReadCT_StringLevel(t, l, oNewVal);
         });
