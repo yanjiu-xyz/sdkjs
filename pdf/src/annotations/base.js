@@ -888,24 +888,6 @@
         return this._strokeColor;
     };
 
-    // аналоги методов Drawings
-    CAnnotationBase.prototype.getObjectType = function() {
-        return -1;
-    };
-    CAnnotationBase.prototype.hitInTextRect = function() {
-        let oViewer = editor.getDocumentRenderer();
-
-        if (oViewer.getPageAnnotByMouse() == this)
-            return true;
-
-        return false;
-    };
-    CAnnotationBase.prototype.getMediaFileName = function() {
-        return false;
-    };
-    CAnnotationBase.prototype.canEdit = function() {
-        return false;
-    };
     CAnnotationBase.prototype.WriteToBinaryBase = function(memory) {
         // type
         memory.WriteByte(this.GetType());

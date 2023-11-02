@@ -1835,6 +1835,7 @@ var CPresentation = CPresentation || function(){};
 
         editor.sync_HideComment();
         editor.sync_RemoveComment(Id);
+        oViewer.DrawingObjects.resetSelection();
         oViewer._paint();
         oViewer.onUpdateOverlay();
     };
