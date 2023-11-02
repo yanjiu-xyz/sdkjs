@@ -2367,15 +2367,11 @@
 					{
 						oDoc.mouseDownAnnot.DrawSelected(this.overlay);
 					}
-					else if (oDoc.mouseDownAnnot.IsInk() == true)
+					else if (oDoc.mouseDownAnnot.IsInk() || oDoc.mouseDownAnnot.IsLine())
 					{
 						let nPage = oDoc.mouseDownAnnot.GetPage();
 						this.DrawingObjects.drawingDocument.AutoShapesTrack.PageIndex = nPage;
 						this.DrawingObjects.drawSelect(nPage);
-					}
-					else if (oDoc.mouseDownAnnot.IsComment() == false)
-					{
-						oDoc.mouseDownAnnot.DrawSelected(this.overlay);
 					}
 				}
 			}

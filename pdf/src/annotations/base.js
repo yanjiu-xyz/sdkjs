@@ -605,6 +605,29 @@
         if (this._contents == null && this.IsInDocument())
             editor.sync_RemoveComment(this.GetId());
     };
+    CAnnotationBase.prototype.Recalculate = function() {
+        let oViewer     = editor.getDocumentRenderer();
+        let nPage       = this.GetPage();
+        let aOrigRect   = this.GetOrigRect();
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+        
+        this.handleUpdatePosition();
+        this.recalculate();
+        this.updatePosition(aOrigRect[0] * g_dKoef_pix_to_mm * nScaleX, aOrigRect[1] * g_dKoef_pix_to_mm * nScaleY)
+    };
+    CAnnotationBase.prototype.Draw = function(oGraphicsPDF, oGraphicsWord) {
+        if (this.IsHidden() == true)
+            return;
+
+        this.Recalculate();
+
+        // oGraphicsPDF.CheckPoint(aRect[0], aRect[1]);
+        // oGraphicsPDF.CheckPoint(aRect[2], aRect[3]);
+        
+        this.draw(oGraphicsWord);
+    };
     CAnnotationBase.prototype.AddReply = function(oReply) {
         let oDoc = this.GetDocument();
 
@@ -850,13 +873,8 @@
 
         return oNewAnnot;
     };
-    CAnnotationBase.prototype.Draw = function(oGraphics) {
-        this.DrawFromStream(oGraphics);
-    };
 
     CAnnotationBase.prototype.onMouseDown = function(e) {
-        return;
-        
         let oViewer         = editor.getDocumentRenderer();
         let oDrawingObjects = oViewer.DrawingObjects;
         let oDoc            = this.GetDocument();
@@ -870,6 +888,7 @@
         let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
 
         oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
+        oDrawingObjects.startEditGeometry();
     };
     CAnnotationBase.prototype.createMoveTrack = function() {
         return new AscFormat.MoveAnnotationTrack(this);
@@ -1114,6 +1133,11 @@
 
         return null;
     }
+
+    // переопределение методов cshape
+    CAnnotationBase.prototype.canRotate = function() {
+        return false;
+    };
 
     function formatTimestampToPDF(timestamp) {
         const date = new Date(parseInt(timestamp));
