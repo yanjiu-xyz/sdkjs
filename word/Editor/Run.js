@@ -1748,37 +1748,17 @@ ParaRun.prototype.private_UpdatePositionsOnRemove = function(Pos, Count)
 
 ParaRun.prototype.private_UpdateCompositeInputPositionsOnAdd = function(Pos)
 {
-	if (null !== this.CompositeInput)
-	{
-		if (Pos <= this.CompositeInput.Pos)
-			this.CompositeInput.Pos++;
-		else if (Pos < this.CompositeInput.Pos + this.CompositeInput.Length)
-			this.CompositeInput.Length++;
-	}
+	if (!this.CompositeInput)
+		return;
+	
+	this.CompositeInput.updateOnAdd(Pos);
 };
-
 ParaRun.prototype.private_UpdateCompositeInputPositionsOnRemove = function(Pos, Count)
 {
-	if (null !== this.CompositeInput)
-	{
-		if (Pos + Count <= this.CompositeInput.Pos)
-		{
-			this.CompositeInput.Pos -= Count;
-		}
-		else if (Pos < this.CompositeInput.Pos)
-		{
-			this.CompositeInput.Pos    = Pos;
-			this.CompositeInput.Length = Math.max(0, this.CompositeInput.Length - (Count - (this.CompositeInput.Pos - Pos)));
-		}
-		else if (Pos + Count < this.CompositeInput.Pos + this.CompositeInput.Length)
-		{
-			this.CompositeInput.Length = Math.max(0, this.CompositeInput.Length - Count);
-		}
-		else if (Pos < this.CompositeInput.Pos + this.CompositeInput.Length)
-		{
-			this.CompositeInput.Length = Math.max(0, Pos - this.CompositeInput.Pos);
-		}
-	}
+	if (!this.CompositeInput)
+		return;
+	
+	this.CompositeInput.updateOnRemove(Pos, Count);
 };
 
 ParaRun.prototype.GetLogicDocument = function()
@@ -2050,7 +2030,7 @@ ParaRun.prototype.AddInstrText = function(sString, nPos)
 };
 
 // Определим строку и отрезок текущей позиции
-ParaRun.prototype.GetCurrentParaPos = function()
+ParaRun.prototype.GetCurrentParaPos = function(align)
 {
     var Pos = this.State.ContentPos;
 
@@ -2068,8 +2048,10 @@ ParaRun.prototype.GetCurrentParaPos = function()
         {
             var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
             var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-            if ( Pos < EndPos && Pos >= StartPos )
-                return new CParaPos((CurLine === 0 ? CurRange + this.StartRange : CurRange), CurLine + this.StartLine, 0, 0);
+	
+			if (((-1 === align) && (StartPos < Pos && Pos <= EndPos))
+				|| ((-1 !== align) && (StartPos <= Pos && Pos < EndPos)))
+				return new CParaPos((CurLine === 0 ? CurRange + this.StartRange : CurRange), CurLine + this.StartLine, 0, 0);
         }
     }
 
@@ -7263,7 +7245,7 @@ ParaRun.prototype.Draw_Lines = function(PDSL)
 			case para_Separator:
 			case para_ContinuationSeparator:
 			{
-				if (para_Text === ItemType && null !== this.CompositeInput && Pos >= this.CompositeInput.Pos && Pos < this.CompositeInput.Pos + this.CompositeInput.Length)
+				if (para_Text === ItemType && this.CompositeInput && this.CompositeInput.isInside(Pos))
 				{
 					aUnderline.Add(UnderlineY, UnderlineY, X, X + ItemWidthVisible, LineW, CurColor.r, CurColor.g, CurColor.b, undefined, CurTextPr);
 				}

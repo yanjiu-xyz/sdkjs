@@ -859,7 +859,7 @@
 				oForm = this.doc.AddField(oFormInfo["name"], oFormInfo["type"], oFormInfo["page"], [oRect["x1"], oRect["y1"], oRect["x2"], oRect["y2"]]);
 				
 				if (!oForm) {
-					console.log(Error("Error while reading form, index " + i));
+					// console.log("Error while reading form, index " + oFormInfo["AP"]["i"]);
 					continue;
 				}
 
@@ -886,11 +886,18 @@
 				}
 				if (oFormInfo["BG"] != null)
 					oForm.SetBackgroundColor(oFormInfo["BG"]);
-				if (oFormInfo["textColor"] != null)
-					oForm.SetTextColor(oFormInfo["textColor"]);
+
+				if (oFormInfo["font"]) {
+					if (oFormInfo["font"]["color"] != null)
+						oForm.SetTextColor(oFormInfo["font"]["color"]);
+					// if (oFormInfo["font"]["name"] != null)
+					// 	oForm.SetTextFont(oFormInfo["font"]["name"]);
+					if (oFormInfo["font"]["size"] != null)
+						oForm.SetTextSize(oFormInfo["font"]["size"]);
+				}
 
 				if (oFormInfo["AP"] != null) {
-					oForm._apIdx = oFormInfo["AP"]["i"];
+					oForm.SetApIdx(oFormInfo["AP"]["i"]);
 					oForm.SetDrawFromStream(Boolean(oFormInfo["AP"]["have"]));
 				}
 
@@ -962,9 +969,9 @@
 				}
 
 				// checkbox - radiobutton
-				if (oFormInfo["NameOfYes"])
+				if (oFormInfo["ExportValue"])
 				{
-					oForm.SetExportValue(oFormInfo["NameOfYes"]);
+					oForm.SetExportValue(oFormInfo["ExportValue"]);
 				}
 				if (oFormInfo["radiosInUnison"])
 				{
@@ -1028,7 +1035,7 @@
 				}
 				if (oFormInfo["value"] != null && oForm.GetType() != AscPDF.FIELD_TYPES.button)
 				{
-					oForm.SetValue(oFormInfo["value"]);
+					oForm.SetValue(oFormInfo["value"], true);
 				}
 				if (oFormInfo["display"])
 				{
@@ -1660,8 +1667,8 @@
 				for (var i = page.annots.length -1; i >= 0; i--)
 				{
 					let oAnnot = page.annots[i];
-					let nAnnotWidth		= (page.annots[i]._origRect[2] - page.annots[i]._origRect[0]) / this.zoom;
-					let nAnnotHeight	= (page.annots[i]._origRect[3] - page.annots[i]._origRect[1]) / this.zoom;
+					let nAnnotWidth		= Math.max(page.annots[i]._origRect[2] - page.annots[i]._origRect[0], 32) / (this.zoom * AscCommon.AscBrowser.retinaPixelRatio);
+					let nAnnotHeight	= Math.max(page.annots[i]._origRect[3] - page.annots[i]._origRect[1], 32) / (this.zoom * AscCommon.AscBrowser.retinaPixelRatio);
 					
 					if (true !== bGetHidden && oAnnot.IsHidden() == true || false == oAnnot.IsComment())
 						continue;
@@ -2577,6 +2584,7 @@
 			this._paintFormsHighlight();
 			this._paintComboboxesMarkers();
 			oDoc.UpdateUndoRedo();
+			oDoc.UpdateCommentPos();
 		};
 		this.Get_PageLimits = function() {
 			let W = this.width;
@@ -2761,6 +2769,14 @@
 			};
 		};
 
+		this.getViewportPosition = function()
+		{
+			return {
+				scrollY : this.scrollY >> 0,
+				centerX : (this.documentWidth > this.width) ? ((this.documentWidth >> 1) - (this.scrollX) >> 0) : (this.width >> 1)
+			};
+		};
+
 		this.ConvertCoordsToCursor = function(x, y, pageIndex)
 		{
 			var dKoef = (this.zoom * g_dKoef_mm_to_pix);
@@ -2785,6 +2801,22 @@
 			var h_pix = (_h * dKoef) >> 0
 
 			return ( {x : x_pix, y : y_pix, w : w_pix, h: h_pix} );
+		};
+
+		this.getPageLikeDetector = function(pageIndex)
+		{
+			let curPosition = this.getViewportPosition();
+
+			let page = this.drawingPages[pageIndex];
+			let w = (page.W * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+			let h = (page.H * AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+
+			return {
+				x : ((curPosition.centerX * AscCommon.AscBrowser.retinaPixelRatio) >> 0) - (w >> 1),
+				y : ((page.Y - curPosition.scrollY) * AscCommon.AscBrowser.retinaPixelRatio) >> 0,
+				w : w,
+				h : h
+			};
 		};
 
 		this.Copy = function(_text_format)
@@ -2993,11 +3025,9 @@
 				{
 					this.Api.sync_MarkerFormatCallback(false);
 				}
-				else if (oDoc.activeForm)
-				{
-					// to do отмена ввода
-				}
-
+				
+				oDoc.EscapeForm();
+				
 				editor.sync_HideComment();
 			}
 			else if (e.KeyCode === 32) // Space
@@ -3052,7 +3082,7 @@
 						this.Api.WordControl.m_oDrawingDocument.TargetEnd();
 						
 					let nCursorH = g_oTextMeasurer.GetHeight();
-					if ((oCurPos.X < oFieldBounds.X || oCurPos.Y - nCursorH < oFieldBounds.Y) && oDoc.activeForm._doNotScroll != true)
+					if ((oCurPos.X < oFieldBounds.X || oCurPos.Y - nCursorH * 0.75 < oFieldBounds.Y) && oDoc.activeForm._doNotScroll != true)
 					{
 						oDoc.activeForm.AddToRedraw();
 						this._paint();
@@ -3095,7 +3125,7 @@
 								this.Api.WordControl.m_oDrawingDocument.TargetEnd();
 
 							let nCursorH = g_oTextMeasurer.GetHeight();
-							if (oCurPos.Y - nCursorH < oFieldBounds.Y && oDoc.activeForm._doNotScroll != true)
+							if (oCurPos.Y - nCursorH * 0.75 < oFieldBounds.Y && oDoc.activeForm._doNotScroll != true)
 							{
 								oDoc.activeForm.AddToRedraw();
 								this._paint();
@@ -3912,7 +3942,7 @@
 
 		for (let i = 0; i < aPages.length; i++)
 		{
-			if (aPages[i].annots == null || aPages[i].annots.length === 0 && !aDeleted[i])
+			if ((aPages[i].annots == null || aPages[i].annots.length === 0) && (aPages[i].fields == null || aPages[i].fields.length === 0) && !aDeleted[i])
 				continue;
 
 			if (!oMemory)
@@ -3926,8 +3956,10 @@
 			oMemory.WriteByte(0); // Annotation
 			oMemory.WriteLong(i);
 			
-			for (let nAnnot = 0; nAnnot < aPages[i].annots.length; nAnnot++) {
-				aPages[i].annots[nAnnot].WriteToBinary && aPages[i].annots[nAnnot].IsChanged() && aPages[i].annots[nAnnot].WriteToBinary(oMemory);
+			if (aPages[i].annots) {
+				for (let nAnnot = 0; nAnnot < aPages[i].annots.length; nAnnot++) {
+					aPages[i].annots[nAnnot].WriteToBinary && aPages[i].annots[nAnnot].IsChanged() && aPages[i].annots[nAnnot].WriteToBinary(oMemory);
+				}
 			}
 
 			if (aDeleted[i]) {
@@ -3936,6 +3968,11 @@
 					oMemory.WriteLong(8);
 					oMemory.WriteLong(aDeleted[i][j]);
 				}
+			}
+
+			// forms
+			for (let nForm = 0; nForm < aPages[i].fields.length; nForm++) {
+				aPages[i].fields[nForm].WriteToBinary && aPages[i].fields[nForm].IsChanged() && aPages[i].fields[nForm].WriteToBinary(oMemory);
 			}
 
 			let nEndPos = oMemory.GetCurPosition();

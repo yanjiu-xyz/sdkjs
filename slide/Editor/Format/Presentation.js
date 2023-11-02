@@ -3282,10 +3282,11 @@ CPresentation.prototype.collectHFProps = function (oSlide) {
 				oDTShape = oParentObjects.master.getMatchingShape(AscFormat.phType_dt, null, false, {});
 			}
 		}
+		let oDateTime;
 		if (oDTShape) {
 			oContent = oDTShape.getDocContent();
 			if (oContent && oContent.CalculateAllFields) {
-				var oDateTime = new AscCommonSlide.CAscDateTime();
+				oDateTime = new AscCommonSlide.CAscDateTime();
 				oContent.SetApplyToAll(true);
 				sText = oContent.GetSelectedText(false, {NewLine: true, NewParagraph: true});
 				oContent.SetApplyToAll(false);
@@ -3322,9 +3323,15 @@ CPresentation.prototype.collectHFProps = function (oSlide) {
 
 					oDateTime.put_Lang(oField.Pr.Lang.Val);
 				}
-				oSlideHF.put_DateTime(oDateTime);
 			}
 		}
+		if(!oDateTime) {
+			oDateTime = new AscCommonSlide.CAscDateTime();
+			oDateTime.put_CustomDateTime("");
+			oDateTime.put_DateTime("datetime");
+			oDateTime.put_Lang(this.GetDefaultLanguage());
+		}
+		oSlideHF.put_DateTime(oDateTime);
 
 
 		var oSldNumShape = oSlide.getMatchingShape(AscFormat.phType_sldNum, null, false, {});
@@ -4456,14 +4463,7 @@ CPresentation.prototype.Begin_CompositeInput = function () {
 			return false;
 		}
 
-		this.CompositeInput = {
-			Run: oRun,
-			Pos: oRun.State.ContentPos,
-			Length: 0,
-			CanUndo: true,
-			Check: true
-		};
-
+		this.CompositeInput = new AscWord.RunCompositeInput_Old(oRun);
 		oRun.Set_CompositeInput(this.CompositeInput);
 
 		return true;
@@ -11251,7 +11251,7 @@ CPresentation.prototype.moveSlidesPrevPos = function () {
 	if (can_move) {
 		History.Create_NewPoint(AscDFH.historydescription_Presentation_MoveSlidesPrevPos);
 		let aNewSelected = [];
-		for (i = first_index; i > -1; --i) {
+		for (i = first_index; i < _selected_array.length; ++i) {
 			let nOldIdx = _selected_array[i];
 			let nNewIdx = nOldIdx - 1;
 			this.moveSlides([nOldIdx], nNewIdx);

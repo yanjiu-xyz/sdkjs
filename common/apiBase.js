@@ -4258,9 +4258,14 @@
 	baseEditorsApi.prototype.asc_correctEnterText = function(oldValue, newValue)
 	{
 	};
-	baseEditorsApi.prototype.asc_setContentDarkMode = baseEditorsApi.prototype["asc_setContentDarkMode"] = function(isDarkMode)
+	baseEditorsApi.prototype.asc_setContentDarkMode = function(isDarkMode)
 	{
-		//TODO: empty for bug 64713
+		if (this.isDarkMode === isDarkMode)
+			return;
+
+		this.isDarkMode = isDarkMode;
+
+		this.updateDarkMode();
 	};
 	baseEditorsApi.prototype.updateDarkMode = function()
 	{
@@ -4818,5 +4823,6 @@
 	prot["asc_searchEnabled"] = prot.asc_searchEnabled;
 	prot['asc_findText'] = prot.asc_findText;
 	prot['asc_endFindText'] = prot.asc_endFindText;
+	prot['asc_setContentDarkMode'] = prot.asc_setContentDarkMode;
 
 })(window);

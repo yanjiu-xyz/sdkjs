@@ -1108,12 +1108,8 @@
 				if (outerShdw.sy) {
 					H *= outerShdw.sy / 100000;
 				}
-				// W += penW;
-				// H += penW;
-				if (W < this.extX + penW) {
+				if(AscFormat.fApproxEqual(W, this.extX) && AscFormat.fApproxEqual(H, this.extY)) {
 					W = this.extX + penW + 1;
-				}
-				if (H < this.extY + penW) {
 					H = this.extY + penW + 1;
 				}
 				shape.spPr.xfrm.setExtX(W);
@@ -1192,8 +1188,14 @@
 			var oTransform = new AscCommon.CMatrix();
 			var dist = outerShdw.dist ? outerShdw.dist / 36000 : 0;
 			var dir = outerShdw.dir ? outerShdw.dir : 0;
-			oTransform.tx = dist * Math.cos(AscFormat.cToRad * dir) - (this.shdwSp.extX - this.extX) / 2.0;
-			oTransform.ty = dist * Math.sin(AscFormat.cToRad * dir) - (this.shdwSp.extY - this.extY) / 2.0;
+			if(this.shdwSp.extX < this.extX && this.shdwSp.extY < this.extY) {
+				oTransform.tx = dist * Math.cos(AscFormat.cToRad * dir);
+				oTransform.ty = dist * Math.sin(AscFormat.cToRad * dir);
+			}
+			else {
+				oTransform.tx = dist * Math.cos(AscFormat.cToRad * dir) - (this.shdwSp.extX - this.extX) / 2.0;
+				oTransform.ty = dist * Math.sin(AscFormat.cToRad * dir) - (this.shdwSp.extY - this.extY) / 2.0;
+			}
 			global_MatrixTransformer.MultiplyAppend(oTransform, this.transform);
 			this.shdwSp.bounds.x = this.bounds.x + this.shdwSp.bounds.l;
 			this.shdwSp.bounds.y = this.bounds.y + this.shdwSp.bounds.t;

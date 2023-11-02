@@ -94,7 +94,7 @@
     }
     CAnnotationText.prototype = Object.create(AscPDF.CAnnotationBase.prototype);
 	CAnnotationText.prototype.constructor = CAnnotationText;
-
+    
     CAnnotationText.prototype.SetState = function(nType) {
         this._state = nType;
     };
@@ -245,8 +245,8 @@
 
         let nScaleX = nWidth / imgW;
         let nScaleY = nHeight / imgH;
-        let wScaled = imgW * nScaleX + 0.5 >> 0;
-        let hScaled = imgH * nScaleY + 0.5 >> 0;
+        let wScaled = Math.max(imgW * nScaleX + 0.5 >> 0, 40);
+        let hScaled = Math.max(imgH * nScaleY + 0.5 >> 0, 40);
 
         let canvas = document.createElement('canvas');
         let context = canvas.getContext('2d');
@@ -306,13 +306,6 @@
 
         oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
     };
-    CAnnotationText.prototype.onMouseUp = function() {
-        let oViewer = editor.getDocumentRenderer();
-
-        let oPos = AscPDF.GetGlobalCoordsByPageCoords(this._pagePos.x + this._pagePos.w / oViewer.zoom, this._pagePos.y + this._pagePos.h / (2 * oViewer.zoom), this.GetPage(), true);
-        editor.sync_ShowComment([this.GetId()], oPos["X"], oPos["Y"])
-    };
-
     CAnnotationText.prototype.IsComment = function() {
         return true;
     };

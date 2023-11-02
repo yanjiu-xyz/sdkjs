@@ -4021,9 +4021,13 @@ var editor;
 	}
 
 	if (window["NATIVE_EDITOR_ENJINE"]) {
-		var ws = this.wb.getWorksheet();
-		var activeCell = this.wbModel.getActiveWs().selectionRange.activeCell;
-		result = [ws.getCellLeftRelative(activeCell.col, 0), ws.getCellTopRelative(activeCell.row, 0)];
+        if (SearchEngine.Count > 0) {
+            var ws = this.wb.getWorksheet();
+            var activeCell = this.wbModel.getActiveWs().selectionRange.activeCell;
+            result = [ws.getCellLeftRelative(activeCell.col, 0), ws.getCellTopRelative(activeCell.row, 0)];
+        } else {
+            result = null;
+        }
 	} else {
 		result = SearchEngine.Count;
 	}
@@ -8616,9 +8620,20 @@ var editor;
 	};
 
 	spreadsheet_api.prototype.asc_openExternalReference = function(externalReference) {
+		let t = this;
 		let isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]();
 		if (isLocalDesktop) {
-			alert("NEED SUPPORT LOCAL OPEN FILE");
+			window["AscDesktopEditor"]["openExternalReference"](externalReference.externalReference.Id, function(error) {
+				let internalError = Asc.c_oAscError.ID.No;
+				switch (error) {
+					case 0: internalError = Asc.c_oAscError.ID.ConvertationOpenError; break;
+					default: break;
+				}
+
+				if (Asc.c_oAscError.ID.No !== internalError) {
+					t.sendEvent("asc_onError", internalError, c_oAscError.Level.NoCritical);
+				}
+			});
 			return null;
 		} else {
 			return externalReference;

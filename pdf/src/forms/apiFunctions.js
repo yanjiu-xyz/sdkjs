@@ -1002,7 +1002,7 @@
 
         function extractNumber(str) {
             let resultStr = str.replace(/^[^\d]*(\d+)/, "$1").replace(/[^0-9]+/, '.');
-            return parseFloat(resultStr);
+            return parseFloat(resultStr) || 0;
         }
 
         let aValues = [];
@@ -1055,7 +1055,7 @@
                 nResult = nResult / aValues.length;
                 break;
             case "MIN":
-                let nMin = aValues[0];
+                let nMin = extractNumber(aValues[0]);
                 for (let i = 1; i < aValues.length; i++) {
                     if (aValues[i] < nMin)
                         nMin = aValues[i];
