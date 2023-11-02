@@ -4154,6 +4154,10 @@
 			_stream["WriteByte"](9);
 			_stream["WriteLong"](this.verticalTextAlign);
 		}
+		if(this.vert !== null && this.vert !== undefined) {
+			_stream["WriteByte"](10);
+			_stream["WriteLong"](this.vert);
+		}
 
 		_stream["WriteByte"](255);
 	};
@@ -4203,6 +4207,10 @@
 				}
 				case 9: {
 					this.verticalTextAlign = _params[_cursor.pos++];
+					break;
+				}
+				case 10: {
+					this.vert = _params[_cursor.pos++];
 					break;
 				}
 				case 255:
