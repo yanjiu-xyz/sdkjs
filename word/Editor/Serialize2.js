@@ -10991,11 +10991,7 @@ function Binary_NumberingTableReader(doc, oReadResult, stream)
         {
 			if(nLevelNum < oNewNum.Lvl.length)
 			{
-				var oOldLvl = oNewNum.Lvl[nLevelNum];
-				var oNewLvl = oOldLvl.Copy();
-				//сбрасываем свойства
-				oNewLvl.ParaPr = new CParaPr();
-				oNewLvl.TextPr = new CTextPr();
+				var oNewLvl = new CNumberingLvl();
 				var tmp = {nLevelNum: nLevelNum};
 				res = this.bcr.Read2(length, function(t, l){
 					return oThis.ReadLevel(t, l, oNewLvl, tmp);
