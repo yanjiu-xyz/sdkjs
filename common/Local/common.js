@@ -466,19 +466,28 @@ AscCommon.InitDragAndDrop = function(oHtmlElement, callback) {
 			let countInserted = 0;
 			if (0 !== _files.length)
 			{
-				let countInserted = 0;
+				let imageFiles = [];
 				for (var i = 0; i < _files.length; i++)
 				{
 					if (window["AscDesktopEditor"]["IsImageFile"](_files[i]))
 					{
 						if (_files[i] === "")
 							continue;
-						var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](_files[i]);
-						editor.AddImageUrlAction(AscCommon.g_oDocumentUrls.getImageUrl(_url));
-						++countInserted;
+
+						let resImage = window["AscDesktopEditor"]["LocalFileGetImageUrl"](_files[i]);
+
+						if (resImage)
+						{
+							imageFiles.push(AscCommon.g_oDocumentUrls.getImageUrl(resImage));
+							++countInserted;
+						}
 						break;
 					}
 				}
+
+				countInserted = imageFiles.length;
+				if (0 !== countInserted)
+					editor._addImageUrl(imageFiles);
 			}
 
 			if (0 === countInserted)
