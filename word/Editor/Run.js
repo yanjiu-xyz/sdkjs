@@ -561,6 +561,8 @@ ParaRun.prototype.GetTextOfElement = function(isLaTeX)
 ParaRun.prototype.MathAutocorrection_GetBracketsOperatorsInfo = function (isLaTeX)
 {
 	const arrBracketsInfo = [];
+	let isOpen = false;
+	let isClose = false;
 
 	for (let intCounter = 0; intCounter < this.Content.length; intCounter++)
 	{
@@ -570,6 +572,24 @@ ParaRun.prototype.MathAutocorrection_GetBracketsOperatorsInfo = function (isLaTe
 		if ((strContent === "{" || strContent === "}") && isLaTeX)
 			continue;
 
+		if (strContent === "├")
+		{
+			isOpen = true;
+			continue;
+		}
+		else if (strContent === "┤")
+		{
+			if (intCounter === this.Content.length - 1)
+			{
+				arrBracketsInfo.push([intCounter - 1, 1]);
+			}
+			else
+			{
+				isClose = true;
+				continue;
+			}
+		}
+
 		if (AscMath.MathLiterals.lBrackets.IsIncludes(strContent))
 			intCount = -1;
 		else if (AscMath.MathLiterals.rBrackets.IsIncludes(strContent))
@@ -578,6 +598,17 @@ ParaRun.prototype.MathAutocorrection_GetBracketsOperatorsInfo = function (isLaTe
 			intCount = 0;
 		else if (AscMath.MathLiterals.operators.IsIncludes(strContent))
 			intCount = 2;
+
+		if (intCount === null && isOpen)
+		{
+			arrBracketsInfo.push([intCounter - 1, -1]);
+			isOpen = false;
+		}
+		else if (intCount === null && isClose)
+		{
+			arrBracketsInfo.push([intCounter - 1, 1]);
+			isClose = false;
+		}
 
 		if (intCount !== null)
 			arrBracketsInfo.push([intCounter, intCount]);
@@ -4562,8 +4593,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 					PRS.LastTab.Item         = Item;
 					PRS.LastTab.TabRightEdge = TabPos.TabRightEdge;
 
-					var oLogicDocument     = PRS.Paragraph.LogicDocument;
-					var nCompatibilityMode = oLogicDocument && oLogicDocument.GetCompatibilityMode ? oLogicDocument.GetCompatibilityMode() : AscCommon.document_compatibility_mode_Current;
+					var nCompatibilityMode = PRS.getCompatibilityMode();
 
 					// Если таб не левый, значит он не может быть сразу рассчитан, а если левый, тогда
                     // рассчитываем его сразу здесь
@@ -4577,6 +4607,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 						{
 							Para.Lines[PRS.Line].Ranges[PRS.Range].XEnd = 558.7;
 							XEnd                                        = 558.7;
+							PRS.XEnd                                    = XEnd;
 							PRS.BadLeftTab                              = true;
 						}
                     }
@@ -4597,6 +4628,7 @@ ParaRun.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
 						{
 							Para.Lines[PRS.Line].Ranges[PRS.Range].XEnd = 558.7;
 							XEnd                                        = 558.7;
+							PRS.XEnd                                    = XEnd;
 							PRS.BadLeftTab                              = true;
 
 							twXEnd = AscCommon.MMToTwips(XEnd);
@@ -10599,11 +10631,22 @@ ParaRun.prototype.IsContainMathOperators = function ()
 	for (let i = 0; i < this.Content.length; i++)
 	{
 		let oCurrentMathText = this.Content[i];
-		if (oCurrentMathText.IsBreakOperator())
+		let isNamesOFLiteralsOperator = AscMath.MathLiterals.operators.IsIncludes(String.fromCharCode(oCurrentMathText.value));
+		if (oCurrentMathText.IsBreakOperator() || isNamesOFLiteralsOperator)
 			return true;
 	}
 	return false;
 };
+ParaRun.prototype.IsContainNormalText = function()
+{
+	for (let i = 0; i < this.Content.length; i++)
+	{
+		let oCurrentMathText = this.Content[i];
+		if (!oCurrentMathText.IsBreakOperator())
+			return true;
+	}
+	return false;
+}
 ParaRun.prototype.private_RecalcCtrPrp = function()
 {
     if (para_Math_Run === this.Type && undefined !== this.Parent && null !== this.Parent && null !== this.Parent.ParaMath)

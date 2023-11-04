@@ -114,7 +114,7 @@
 		this.isEnabled = false;
 		this.speechElement = null;
 		this.isLogEnabled = false;
-		this.timerEqualValue = -1;
+		this.timerSetValue = -1;
 
 		this.setEnabled = function(isEnabled)
 		{
@@ -130,19 +130,17 @@
 				this.speechElement = document.createElement("div");
 				this.speechElement.innerHTML = "";
 				this.speechElement.id = "area_id_screen_reader";
-				this.speechElement.style.zIndex = -2;
 
-				if (AscCommon.AscBrowser.isWindows || (AscCommon.AscBrowser.isChrome && !AscCommon.AscBrowser.isMacOs))
-					this.speechElement.style.display = "none";
-				else
-					this.speechElement.style.opacity = 0;
+				let style = "position: absolute; left:0; top:-1; z-index: -2; opacity: 0;";
+				this.speechElement.setAttribute("style", style);
 
 				this.speechElement.setAttribute("role", "region");
-				this.speechElement.setAttribute("aria-live", "polite");
+				this.speechElement.setAttribute("aria-label", "");
+				this.speechElement.setAttribute("aria-live", "assertive");
 				this.speechElement.setAttribute("aria-atomic", "true");
 				this.speechElement.setAttribute("aria-hidden", "false");
 
-				AscCommon.g_inputContext.HtmlArea.setAttribute("aria-describedby", "area_id_screen_reader");
+				//AscCommon.g_inputContext.HtmlArea.setAttribute("aria-describedby", "area_id_screen_reader");
 				AscCommon.g_inputContext.HtmlDiv.appendChild(this.speechElement);
 			}
 			else if (this.speechElement)
@@ -160,12 +158,15 @@
 			console.log(message);
 		};
 
-		this._setValue = function(value)
+		// Variants for text setting
+
+		// 1) Resolve the problem with equals with temporary set empty value
+		this._setValueWithCheckEqual = function(value)
 		{
-			if (-1 !== this.timerEqualValue)
+			if (-1 !== this.timerSetValue)
 			{
-				clearTimeout(this.timerEqualValue);
-				this.timerEqualValue = -1;
+				clearTimeout(this.timerSetValue);
+				this.timerSetValue = -1;
 			}
 
 			if (value !== this.speechElement.innerHTML)
@@ -180,13 +181,47 @@
 
 				if ("" !== value)
 				{
-					this.timerEqualValue = setTimeout(function(){
-						AscCommon.SpeechWorker.timerEqualValue = -1;
-						AscCommon.SpeechWorker._setValue(value);
+					this.timerSetValue = setTimeout(function(){
+						AscCommon.SpeechWorker.timerSetValue = -1;
+						AscCommon.SpeechWorker._setValuePermanently(value);
 					}, 50);
 				}
 			}
 		};
+
+		// 2) Set value permanently
+		this._setValuePermanently = function(value)
+		{
+			this.speechElement.innerHTML = value;
+			if (this.isLogEnabled)
+				console.log("[speech]: " + value);
+		};
+
+		// 3) Resolve the problem with equals with nbsp
+		this._setValuePermanentlyDiffEqual = function(value)
+		{
+			let isEven = this.speechElement.innerHTML.endsWith("&nbsp;");
+			this.speechElement.innerHTML = isEven ? (value) : (value + "&nbsp;");
+			if (this.isLogEnabled)
+				console.log("[speech]: " + value);
+		};
+
+		// 4) Simple timer
+		this._setValueWithTimeout = function(value)
+		{
+			if (-1 !== this.timerSetValue)
+			{
+				clearTimeout(this.timerSetValue);
+				this.timerSetValue = -1;
+			}
+
+			this.timerSetValue = setTimeout(function(){
+				AscCommon.SpeechWorker._setValuePermanentlyDiffEqual(value);
+				AscCommon.SpeechWorker.timerSetValue = -1;
+			}, 5000);
+		};
+
+		this._setValue = this._setValuePermanentlyDiffEqual;
 
 		this.speech = function(type, obj)
 		{
