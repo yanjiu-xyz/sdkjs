@@ -420,5 +420,29 @@ $(function() {
 				assert.deepEqual(getValues(pivot), values, message);
 			});
 		});
+		QUnit.test('Test: refresh pivot check formats after remove field', function (assert) {
+			const file = Asc.remove_field;
+			const row = 4;
+			const col = 0;
+			const wb = openDocument(file);
+			const getValues = getReportValuesWithBoolFillAndNum;
+			function prepareValues(wb, name, row, col){
+				let pivot = wb.getWorksheetByName(name).getPivotTable(col, row);
+				return getValues(pivot);
+			}
+			const valuesStart = prepareValues(wb, 'start', row, col);
+			const valuesResult = prepareValues(wb, 'result', row, col);
+			let pivot = wb.getWorksheetByName('start').getPivotTable(col, row);
+			prepareTest(assert, wb);
+
+			pivot = checkHistoryOperation(assert, pivot, valuesStart, valuesResult, "remove field", function(){
+				pivot.asc_removeField(api, 0);
+				pivot.asc_addRowField(api, 0);
+				pivot.asc_moveRowField(api, 1, 0);
+				pivot.asc_refresh(api);
+			}, function(assert, pivot, values, message) {
+				assert.deepEqual(getValues(pivot), values, message);
+			});
+		});
 	}
 });
