@@ -5436,6 +5436,7 @@ CT_pivotTableDefinition.prototype.addRowField = function(pivotIndex, insertIndex
 			this.worksheet ? this.worksheet.getId() : null, null,
 			new AscCommonExcel.UndoRedoData_PivotTable(this.Get_Id(), pivotIndex, insertIndex));
 	}
+	this.formatsManager.addRowField(pivotIndex, addToHistory);
 	this.setChanged(true);
 };
 CT_pivotTableDefinition.prototype.asc_addColField = function(api, pivotIndex, insertIndex) {
@@ -5466,6 +5467,7 @@ CT_pivotTableDefinition.prototype.addColField = function(pivotIndex, insertIndex
 			this.worksheet ? this.worksheet.getId() : null, null,
 			new AscCommonExcel.UndoRedoData_PivotTable(this.Get_Id(), pivotIndex, insertIndex));
 	}
+	this.formatsManager.addColField(pivotIndex, addToHistory);
 	this.setChanged(true);
 };
 CT_pivotTableDefinition.prototype.asc_addPageField = function(api, pivotIndex, insertIndex) {
@@ -7585,11 +7587,50 @@ PivotFormatsManager.prototype.setDefaults = function() {
 	return;
 };
 /**
+ * @param {number} index 
+ * @param {boolean} addToHistory 
+ */
+PivotFormatsManager.prototype.addRowField = function(index, addToHistory) {
+	if (addToHistory) {
+		const oldFormats = this.pivot.formats ? this.pivot.formats.clone() : null;
+		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_FormatsAddRowField,
+			this.pivot.worksheet ? this.pivot.worksheet.getId() : null, null,
+			new AscCommonExcel.UndoRedoData_PivotTable(this.pivot && this.pivot.Get_Id(), oldFormats, index));
+	}
+	this.changeFormats(function(format) {
+		const pivotArea = format.pivotArea;
+		if(pivotArea.field === index) {
+			pivotArea.axis = c_oAscAxis.AxisRow;
+		}
+		return true;
+	});
+};
+/**
+ * @param {number} index 
+ * @param {boolean} addToHistory 
+ */
+PivotFormatsManager.prototype.addColField = function(index, addToHistory) {
+	if (addToHistory) {
+		const oldFormats = this.pivot.formats ? this.pivot.formats.clone() : null;
+		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_FormatsAddColField,
+			this.pivot.worksheet ? this.pivot.worksheet.getId() : null, null,
+			new AscCommonExcel.UndoRedoData_PivotTable(this.pivot && this.pivot.Get_Id(), oldFormats, index));
+	}
+	this.changeFormats(function(format) {
+		const pivotArea = format.pivotArea;
+		if(pivotArea.field === index) {
+			pivotArea.axis = c_oAscAxis.AxisCol;
+		}
+		return true;
+	});
+};
+/**
  * @param {number[]} reindex
+ * @param {boolean} addToHistory
  */
 PivotFormatsManager.prototype.reIndexDataFields = function(reindex, addToHistory) {
 	if (addToHistory) {
-		let oldFormats = this.pivot.formats ? this.pivot.formats.clone() : null;
+		const oldFormats = this.pivot.formats ? this.pivot.formats.clone() : null;
 		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_FormatsReindex,
 			this.pivot.worksheet ? this.pivot.worksheet.getId() : null, null,
 			new AscCommonExcel.UndoRedoData_PivotTable(this.pivot && this.pivot.Get_Id(), oldFormats, reindex));
@@ -7675,9 +7716,13 @@ PivotFormatsManager.prototype.changeFormats = function(onAction) {
 		this.pivot.formats.format = result;
 	}
 };
+/**
+ * @param {number} index
+ * @param {boolean} addToHistory
+ */
 PivotFormatsManager.prototype.removeField = function(index, addToHistory) {
 	if (addToHistory) {
-		let oldFormats = this.pivot.formats ? this.pivot.formats.clone() : null;
+		const oldFormats = this.pivot.formats ? this.pivot.formats.clone() : null;
 		History.Add(AscCommonExcel.g_oUndoRedoPivotTables, AscCH.historyitem_PivotTable_FormatsRemoveField,
 			this.pivot.worksheet ? this.pivot.worksheet.getId() : null, null,
 			new AscCommonExcel.UndoRedoData_PivotTable(this.pivot && this.pivot.Get_Id(), oldFormats, index));

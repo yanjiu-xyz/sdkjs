@@ -4218,6 +4218,20 @@ function (window, undefined) {
 					pivotTable.formatsManager.removeField(value, false);
 				}
 				break;
+			case AscCH.historyitem_PivotTable_FormatsAddRowField:
+				if (bUndo) {
+					pivotTable.formats = value;
+				} else {
+					pivotTable.formatsManager.addRowField(value, false);
+				}
+				break;
+			case AscCH.historyitem_PivotTable_FormatsAddColField:
+				if (bUndo) {
+					pivotTable.formats = value;
+				} else {
+					pivotTable.formatsManager.addColField(value, false);
+				}
+				break;
 		}
 	};
 

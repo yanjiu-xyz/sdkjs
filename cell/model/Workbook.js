@@ -8880,7 +8880,7 @@
 	 */
 	Worksheet.prototype._updatePivotTableCellsRowColLablesOffsets = function(pivotTable, rowFieldsOffset, isRowItem, itemIndex, itemXIndex, query) {
 		const items = isRowItem ? pivotTable.getRowItems() : pivotTable.getColItems();
-		query.axis = isRowItem ? Asc.c_oAscAxis.AxisRow : Asc.c_oAscAxis.AxisCol;
+		query.axis = isRowItem ? c_oAscAxis.AxisRow : c_oAscAxis.AxisCol;
 		const item = items[itemIndex];
 		if (item.t === Asc.c_oAscItemType.Data) {
 			this.updatePivotTableCellsRowColLablesDataOffsets(pivotTable, rowFieldsOffset, isRowItem, itemIndex, itemXIndex, query);
