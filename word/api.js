@@ -10911,13 +10911,13 @@ background-repeat: no-repeat;\
 		if (window.g_asc_plugins)
 			window.g_asc_plugins.onPluginEvent("onBlurContentControl", oControl.GetContentControlPr().GetEventObject());
 	};
-	asc_docs_api.prototype.asc_GetAllFormsData = function()
+	asc_docs_api.prototype.asc_GetAllFormsData = function(toArray)
 	{
 		let formManager = this.private_GetFormsManager();
 		if (!formManager)
-			return {};
+			return toArray ? [] : {};
 
-		return formManager.GetAllFormsData();
+		return formManager.GetAllFormsData(toArray);
 	};
 	asc_docs_api.prototype.asc_GetOForm = function()
 	{

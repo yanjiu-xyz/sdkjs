@@ -282,64 +282,67 @@
 	};
 	/**
 	 * Получаем данные всех форм
-	 * @returns {object}
+	 * @param {boolean} toArray
+	 * @returns {object|array}
 	 */
-	CFormsManager.prototype.GetAllFormsData = function()
+	CFormsManager.prototype.GetAllFormsData = function(toArray)
 	{
-		let data = {};
+		let data = toArray ? [] : {};
+
 		let allForms = this.GetAllForms();
-		let passedRadioGroups = {};
+		let passedKeys = {};
 		for (let index = 0, count = allForms.length; index < count; ++index)
 		{
 			let form = allForms[index];
 			let key  = form.GetFormKey();
-
-			if (form.IsRadioButton())
-			{
-				key = form.GetRadioButtonGroupKey();
-				if (passedRadioGroups[key])
-					continue;
-
-				passedRadioGroups[key] = true;
-			}
-
+			let type = form.GetSpecificType();
+			
 			if (!key)
 				continue;
-
+			
+			if (form.IsRadioButton())
+				key = form.GetCheckBoxPr().GetGroupKey();
+			
+			if (passedKeys[key] && passedKeys[key][type])
+				continue;
+			
+			if (!passedKeys[key])
+				passedKeys[key] = {};
+			
+			passedKeys[key][type] = form;
+			
+			let stringType = Asc.c_oAscContentControlSpecificType.toString(type);
+			if (form.IsRadioButton())
+				stringType = "radio";
+			
 			let val = {
 				"key"   : key,
 				"tag"   : form.GetTag(),
 				"value" : this.GetFormValue(form),
-				"type"  : "text"
+				"type"  : stringType
 			};
-
-			if (data[key])
+			
+			if (toArray)
 			{
-				let oldVal = data[key];
-				if (Array.isArray(oldVal))
-					oldVal.push(oldVal);
-				else
-					data[key] = [oldVal, val];
+				data.push(val);
 			}
 			else
 			{
-				data[key] = val;
+				if (data[key])
+				{
+					let oldVal = data[key];
+					if (Array.isArray(oldVal))
+						oldVal.push(oldVal);
+					else
+						data[key] = [oldVal, val];
+				}
+				else
+				{
+					data[key] = val;
+				}
 			}
-
-			if (form.IsComplexForm())
-				val["type"] = "complex";
-			else if (form.IsRadioButton())
-				val["type"] = "radioButton";
-			else if (form.IsCheckBox())
-				val["type"] = "checkBox";
-			else if (form.IsDropDownList())
-				val["type"] = "dropDownList";
-			else if (form.IsComboBox())
-				val["type"] = "comboBox";
-			else if (form.IsPicture())
-				val["type"] = "picture";
 		}
-
+		
 		return data;
 	};
 	CFormsManager.prototype.GetFormValue = function(form)
