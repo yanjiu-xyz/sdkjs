@@ -5454,7 +5454,7 @@ CT_pivotTableDefinition.prototype.asc_addColField = function(api, pivotIndex, in
 CT_pivotTableDefinition.prototype.addColField = function(pivotIndex, insertIndex, addToHistory) {
 	var pivotField = this.asc_getPivotFields()[pivotIndex];
 	if (pivotField) {
-		pivotField.axis = c_oAscAxis.AxisCol;
+		pivotField.axis = Asc.c_oAscAxis.AxisCol;
 	}
 	var newField = new CT_Field();
 	newField.x = pivotIndex;
@@ -5484,7 +5484,7 @@ CT_pivotTableDefinition.prototype.asc_addPageField = function(api, pivotIndex, i
 };
 CT_pivotTableDefinition.prototype.addPageField = function(pivotIndex, insertIndex, addToHistory) {
 	var pivotField = this.asc_getPivotFields()[pivotIndex];
-	pivotField.axis = c_oAscAxis.AxisPage;
+	pivotField.axis = Asc.c_oAscAxis.AxisPage;
 	var newField = new CT_PageField();
 	newField.fld = pivotIndex;
 	newField.hier = -1;
@@ -6116,15 +6116,15 @@ CT_pivotTableDefinition.prototype.removeNoDataField = function (pivotIndex, addT
 	var pivotField = this.asc_getPivotFields()[pivotIndex];
 	var historyType;
 	switch (pivotField.axis) {
-		case c_oAscAxis.AxisRow:
+		case Asc.c_oAscAxis.AxisRow:
 			deleteIndex = this._removeRowField(pivotIndex);
 			historyType = AscCH.historyitem_PivotTable_RemoveRowField;
 			break;
-		case c_oAscAxis.AxisCol:
+		case Asc.c_oAscAxis.AxisCol:
 			deleteIndex = this._removeColField(pivotIndex);
 			historyType = AscCH.historyitem_PivotTable_RemoveColField;
 			break;
-		case c_oAscAxis.AxisPage:
+		case Asc.c_oAscAxis.AxisPage:
 			deleteIndex = this._removePageField(pivotIndex);
 			historyType = AscCH.historyitem_PivotTable_RemovePageField;
 			break;
@@ -6493,7 +6493,7 @@ CT_pivotTableDefinition.prototype.filterPivotItems = function(index, autoFilterO
 	var pivotObj = autoFilterObject.asc_getPivotObj();
 	var pivotField = this.asc_getPivotFields()[index];
 	var pivotFieldOld = pivotField.clone();
-	if (c_oAscAxis.AxisPage === pivotField.axis && c_oAscAutoFilterTypes.Filters === filter.type) {
+	if (Asc.c_oAscAxis.AxisPage === pivotField.axis && c_oAscAutoFilterTypes.Filters === filter.type) {
 		pivotField.multipleItemSelectionAllowed = pivotObj.isMultipleItemSelectionAllowed;
 		this.filterPivotItemsFilters(index, autoFilterObject.values);
 		var pageFieldItem = null;
@@ -7600,7 +7600,7 @@ PivotFormatsManager.prototype.addRowField = function(index, addToHistory) {
 	this.changeFormats(function(format) {
 		const pivotArea = format.pivotArea;
 		if(pivotArea.field === index) {
-			pivotArea.axis = c_oAscAxis.AxisRow;
+			pivotArea.axis = Asc.c_oAscAxis.AxisRow;
 		}
 		return true;
 	});
@@ -7619,7 +7619,7 @@ PivotFormatsManager.prototype.addColField = function(index, addToHistory) {
 	this.changeFormats(function(format) {
 		const pivotArea = format.pivotArea;
 		if(pivotArea.field === index) {
-			pivotArea.axis = c_oAscAxis.AxisCol;
+			pivotArea.axis = Asc.c_oAscAxis.AxisCol;
 		}
 		return true;
 	});
