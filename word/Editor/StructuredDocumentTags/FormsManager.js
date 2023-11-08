@@ -432,6 +432,9 @@
 
 		if (oForm.IsRadioButton())
 		{
+			if (!oForm.GetCheckBoxPr().GetChecked())
+				return;
+			
 			let sKey = oForm.GetCheckBoxPr().GetGroupKey();
 			for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 			{
