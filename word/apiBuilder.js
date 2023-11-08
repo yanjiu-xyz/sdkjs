@@ -1240,7 +1240,7 @@
 			
 			for (var nPos = 0; nPos < nCurPos; ++nPos)
 			{
-				if (para_Text === oRun.Content[nPos].Type || para_Space === oRun.Content[nPos].Type || para_Tab === oRun.Content[nPos].Type)
+				if (para_Text === oRun.Content[nPos].Type || para_Space === oRun.Content[nPos].Type || para_Tab === oRun.Content[nPos].Type || para_NewLine === oRun.Content[nPos].Type || para_End === oRun.Content[nPos].Type)
 					nRangePos++;
 			}
 
@@ -1270,8 +1270,6 @@
 			this.Element.CheckRunContent(calcSumChars);
 			
 			this.End = charsCount;
-			if (this.End > 0)
-				this.End--;
 		}
 		else if (typeof(End) === "number")
 			this.End = End;
@@ -1294,15 +1292,13 @@
 
 		function callback(oRun)
 		{
-			var nRangePos = 0;
-
 			var nCurPos = oRun.Content.length;
 			for (var nPos = 0; nPos < nCurPos; ++nPos)
 			{
-				if (para_Text === oRun.Content[nPos].Type || para_Space === oRun.Content[nPos].Type || para_Tab === oRun.Content[nPos].Type)
-					nRangePos++;
+				if (para_Text === oRun.Content[nPos].Type || para_Space === oRun.Content[nPos].Type || para_Tab === oRun.Content[nPos].Type || para_NewLine === oRun.Content[nPos].Type || para_End === oRun.Content[nPos].Type)
+					charsCount++;
 
-				if (StartChar - charsCount === nRangePos - 1 && !isStartDocPosFinded)
+				if (StartChar - (charsCount - 1) === 0 && !isStartDocPosFinded)
 				{
 					DocPosInRun =
 					{
@@ -1319,7 +1315,7 @@
 					isStartDocPosFinded = true;
 				}
 				
-				if (EndChar - charsCount === nRangePos - 1 && !isEndDocPosFinded)
+				if (EndChar - charsCount === 0 && !isEndDocPosFinded)
 				{
 					DocPosInRun =
 					{
@@ -1336,9 +1332,6 @@
 					isEndDocPosFinded = true;
 				}
 			}
-
-			if (nRangePos !== 0)
-				charsCount += nRangePos;
 		}
 
 		if (this.Element instanceof CDocument || this.Element instanceof CDocumentContent || this.Element instanceof CTable || this.Element instanceof CBlockLevelSdt)
@@ -2898,7 +2891,8 @@
 
 			for (; nPos < nLenght; ++nPos)
 			{
-				if (para_Text === oRun.Content[nPos].Type || para_Space === oRun.Content[nPos].Type || para_Tab === oRun.Content[nPos].Type) {
+				if (para_Text === oRun.Content[nPos].Type || para_Space === oRun.Content[nPos].Type || para_Tab === oRun.Content[nPos].Type || para_NewLine === oRun.Content[nPos].Type || para_End === oRun.Content[nPos].Type)
+				{
 					nRangePos++;
 					tempCharsCount++;
 				}
