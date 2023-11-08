@@ -251,6 +251,10 @@
 				this._log("End of the document");
 			else if (obj.moveToEndOfLine)
 				this._log("End of the line");
+			else if (obj.movePageUp)
+				this._log("Page up");
+			else if (obj.movePageDown)
+				this._log("Page down");
 
 			let translateManager = AscCommon.translateManager;
 			switch (type)
