@@ -8071,11 +8071,7 @@ CDocument.prototype.SelectRange = function(nStartPos, nEndPos)
 };
 CDocument.prototype.OnEndTextDrag = function(NearPos, bCopy)
 {
-    if (true === this.Comments.Is_Use())
-    {
-        this.SelectComment(null, false);
-	    this.Api.sync_HideComment();
-    }
+	this.HideCurrentComment();
 
     // Сначала нам надо проверить попадаем ли мы обратно в выделенный текст, если да, тогда ничего не делаем,
     // а если нет, тогда удаляем выделенный текст и вставляем его в заданное место.
@@ -8363,8 +8359,7 @@ CDocument.prototype.CloseAllWindowsPopups = function()
 	this.TrackRevisionsManager.EndCollectChanges();
 
 	// Закрываем балун с комментариями
-	this.SelectComment(null, false);
-	this.Api.sync_HideComment();
+	this.HideCurrentComment();
 };
 /**
  * Проверяем попадание в границу таблицы.
@@ -10359,14 +10354,9 @@ CDocument.prototype.OnMouseUp = function(e, X, Y, PageIndex)
 			}
 
 			if (null !== CommentsX && null !== CommentsY && arrCommentsId.length > 0)
-			{
 				this.Api.sync_ShowComment(arrCommentsId, CommentsX, CommentsY);
-			}
 			else
-			{
-				this.SelectComment(null, false);
-				this.Api.sync_HideComment();
-			}
+				this.HideCurrentComment();
 		}
 	}
 
@@ -13535,6 +13525,14 @@ CDocument.prototype.HideComments = function()
 	this.Comments.Set_Current(null);
 	this.DrawingDocument.ClearCachePages();
 	this.DrawingDocument.FirePaint();
+};
+CDocument.prototype.HideCurrentComment = function()
+{
+	if (!this.Comments.Is_Use() || !this.Comments.Get_CurrentId())
+		return;
+	
+	this.SelectComment(null, false);
+	this.Api.sync_HideComment();
 };
 CDocument.prototype.private_GetCommentWorldAnchorPoint = function(oComment)
 {
