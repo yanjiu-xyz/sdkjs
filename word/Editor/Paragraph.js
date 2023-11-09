@@ -4969,7 +4969,7 @@ Paragraph.prototype.Add_Tab = function(bShift)
 /**
  * Расширяем параграф до позиции X
  */
-Paragraph.prototype.Extend_ToPos = function(_X)
+Paragraph.prototype.extendLastLineToPos = function(_X)
 {
 	var CompiledPr = this.Get_CompiledPr2(false).ParaPr;
 	var Page       = this.Pages[this.Pages.length - 1];
@@ -8362,34 +8362,11 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 
 	// Выставим в полученном месте текущую позицию курсора
 	this.Set_ParaContentPos(SearchPosXY2.Pos, true, SearchPosXY2.Line, SearchPosXY2.Range);
-
-	if (true === SearchPosXY.End || true === this.Is_Empty())
-	{
-		var LastRange = this.Lines[this.Lines.length - 1].Ranges[this.Lines[this.Lines.length - 1].Ranges.length - 1];
-		if (!isFixedForm && !this.Parent.IsFootnote() && CurPage >= PagesCount - 1 && X > LastRange.W && MouseEvent.ClickCount >= 2 && Y <= this.Pages[PagesCount - 1].Bounds.Bottom)
-		{
-			if (this.bFromDocument && false === this.LogicDocument.Document_Is_SelectionLocked(AscCommon.changestype_None, {
-					Type      : AscCommon.changestype_2_Element_and_Type,
-					Element   : this,
-					CheckType : AscCommon.changestype_Paragraph_Content
-				}))
-			{
-				this.LogicDocument.StartAction(AscDFH.historydescription_Document_ParagraphExtendToPos);
-				this.LogicDocument.GetHistory().Set_Additional_ExtendDocumentToPos();
-
-				if (this.Extend_ToPos(X))
-				{
-					this.RemoveSelection();
-					this.MoveCursorToEndPos();
-					this.Document_SetThisElementCurrent(true);
-					this.LogicDocument.Recalculate();
-				}
-
-				this.LogicDocument.FinalizeAction();
-				return;
-			}
-		}
-	}
+	
+	if (!isFixedForm
+		&& !this.Parent.IsFootnote()
+		&& this.extendLastLineToXY(X, Y, CurPage, MouseEvent))
+		return;
 
 	// Выставляем селект
 	this.Set_SelectionContentPos(this.Get_ParaContentPos(true, true), SearchPosXY.Pos, true, this.Selection.StartLine, this.Selection.StartRange, SearchPosXY2.Line, SearchPosXY2.Range);
@@ -8495,6 +8472,46 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 			}
 		}
 	}
+};
+Paragraph.prototype.extendLastLineToXY = function(x, y, curPage, mouseEvent)
+{
+	if ((!this.IsEmpty() && !this.Get_ParaContentPosByXY(x, y, curPage, false, true, true).End))
+		return false;
+	
+	let lastLine  = this.Lines.length ? this.Lines[this.Lines.length - 1] : null;
+	let lastRange = lastLine && lastLine.Ranges.length ? lastLine.Ranges[lastLine.Ranges.length - 1] : null;
+	let lastPage  = this.Pages.length ? this.Pages[this.Pages.length - 1] : null;
+	if (!lastRange
+		|| mouseEvent.ClickCount < 2
+		|| curPage !== this.Pages.length - 1
+		|| x <= lastRange.W
+		|| y > lastPage.Bounds.Bottom)
+		return false;
+	
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return false;
+
+	if (logicDocument.IsSelectionLocked(AscCommon.changestype_None, {
+			Type      : AscCommon.changestype_2_Element_and_Type,
+			Element   : this,
+			CheckType : AscCommon.changestype_Paragraph_Content
+		}))
+		return false;
+	
+	logicDocument.StartAction(AscDFH.historydescription_Document_ParagraphExtendToPos);
+	logicDocument.GetHistory().Set_Additional_ExtendDocumentToPos();
+	
+	if (this.extendLastLineToPos(x))
+	{
+		this.RemoveSelection();
+		this.MoveCursorToEndPos();
+		this.Document_SetThisElementCurrent(true);
+		logicDocument.Recalculate();
+	}
+	
+	logicDocument.FinalizeAction();
+	return true;
 };
 Paragraph.prototype.StopSelection = function()
 {
