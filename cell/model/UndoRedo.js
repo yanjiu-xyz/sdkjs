@@ -2353,6 +2353,9 @@ function (window, undefined) {
 			}
 			return null;
 		};
+		this.Clean = function () {
+			this.aTypes = [];
+		};
 	};
 
 	function UndoRedoWorkbook(wb) {
@@ -4208,6 +4211,34 @@ function (window, undefined) {
 				break;
 			case AscCH.historyitem_PivotTable_PivotCacheId:
 				pivotTable.setPivotCacheId(value);
+				break;
+			case AscCH.historyitem_PivotTable_FormatsReindex:
+				if (bUndo) {
+					pivotTable.formats = value;
+				} else {
+					pivotTable.formatsManager.reIndexDataFields(value, false);
+				}
+				break;
+			case AscCH.historyitem_PivotTable_FormatsRemoveField:
+				if (bUndo) {
+					pivotTable.formats = value;
+				} else {
+					pivotTable.formatsManager.removeField(value, false);
+				}
+				break;
+			case AscCH.historyitem_PivotTable_FormatsAddRowField:
+				if (bUndo) {
+					pivotTable.formats = value;
+				} else {
+					pivotTable.formatsManager.addRowField(value, false);
+				}
+				break;
+			case AscCH.historyitem_PivotTable_FormatsAddColField:
+				if (bUndo) {
+					pivotTable.formats = value;
+				} else {
+					pivotTable.formatsManager.addColField(value, false);
+				}
 				break;
 		}
 	};

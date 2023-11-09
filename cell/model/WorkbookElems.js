@@ -4592,6 +4592,9 @@ var g_oFontProperties = {
 	CellXfs.prototype.isNormalFont = function () {
 		return g_StyleCache.firstXf === this || g_StyleCache.normalXf.font === this.font;
 	};
+	CellXfs.prototype.isNormalFill = function () {
+		return g_StyleCache.firstXf === this || g_StyleCache.normalXf.fill === this.fill;
+	};
     CellXfs.prototype.merge = function (xfs, isTable, isTableBorders) {
         var xfIndexNumber = xfs.getIndexNumber();
         if (undefined === xfIndexNumber) {

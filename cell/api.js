@@ -374,6 +374,7 @@ var editor;
     // History & global counters
     History.init(wbModel);
 
+    AscCommonExcel.UndoRedoClassTypes.Clean();
     AscCommonExcel.g_oUndoRedoCell = new AscCommonExcel.UndoRedoCell(wbModel);
     AscCommonExcel.g_oUndoRedoWorksheet = new AscCommonExcel.UndoRedoWoorksheet(wbModel);
     AscCommonExcel.g_oUndoRedoWorkbook = new AscCommonExcel.UndoRedoWorkbook(wbModel);
@@ -1931,6 +1932,7 @@ var editor;
 						xmlParserContext.InitOpenManager.InitStyleManager(oStyleObject, aCellXfs);
 						dxfs = oStyleObject.aDxfs;
 						wb.oNumFmtsOpen = oStyleObject.oNumFmts;
+						wb.dxfsOpen = oStyleObject.aDxfs;
 					}
 				}
 				xmlParserContext.InitOpenManager.aCellXfs = aCellXfs;
