@@ -48,6 +48,7 @@ function (window, undefined) {
 	var cString = AscCommonExcel.cString;
 	var cBool = AscCommonExcel.cBool;
 	var cError = AscCommonExcel.cError;
+	var cEmpty = AscCommonExcel.cEmpty;
 	var cArea = AscCommonExcel.cArea;
 	var cArea3D = AscCommonExcel.cArea3D;
 	var cRef = AscCommonExcel.cRef;
@@ -1866,83 +1867,221 @@ function (window, undefined) {
 	cSEARCH.prototype.name = 'SEARCH';
 	cSEARCH.prototype.argumentsMin = 2;
 	cSEARCH.prototype.argumentsMax = 3;
+	cSEARCH.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1};
 	cSEARCH.prototype.argumentsType = [argType.text, argType.text, argType.number];
 	cSEARCH.prototype.Calculate = function (arg) {
 
-		var arg0 = arg[0], arg1 = arg[1], arg2 = arg[2] ? arg[2] : new cNumber(1);
+		const searchString = function (find_text, within_text, start_num) {
+			if (start_num < 1 || start_num > within_text.length) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+	
+			let valueForSearching = find_text
+				.replace(/(\\)/g, "\\\\")
+				.replace(/(\^)/g, "\\^")
+				.replace(/(\()/g, "\\(")
+				.replace(/(\))/g, "\\)")
+				.replace(/(\+)/g, "\\+")
+				.replace(/(\[)/g, "\\[")
+				.replace(/(\])/g, "\\]")
+				.replace(/(\{)/g, "\\{")
+				.replace(/(\})/g, "\\}")
+				.replace(/(\$)/g, "\\$")
+				.replace(/(\.)/g, "\\.")
+				.replace(/(~)?\*/g, function ($0, $1) {
+					return $1 ? $0 : '(.*)';
+				})
+				.replace(/(~)?\?/g, function ($0, $1) {
+					return $1 ? $0 : '.';
+				})
+				.replace(/(~\*)/g, "\\*").replace(/(~\?)/g, "\\?");
+			valueForSearching = new RegExp(valueForSearching, "ig");
+			if ('' === find_text) {
+				return new cNumber(start_num);
+			}
+	
+			let res = within_text.substring(start_num - 1).search(valueForSearching);
+			if (res < 0) {
+				return new cError(cErrorType.wrong_value_type);
+			}
+	
+			res += start_num - 1;
 
-		if (arg0 instanceof cArea || arg0 instanceof cArea3D) {
+			return new cNumber(res + 1);
+		}
+
+		const searchInArray = function (arr, findText, withinText, startNum) {
+			findText = findText ? findText.tocString() : findText;
+			withinText = withinText ? withinText.tocString()  : withinText;
+			startNum = startNum ? startNum.tocNumber() : startNum;
+			
+			arr.foreach(function (elem, r, c) {
+				if (!resArr.array[r]) {
+					resArr.addRow();
+				}
+
+				let item = startNum ? elem.tocString() : elem.tocNumber();
+				if (findText && findText.type === cElementType.error) {
+					resArr.addElement(findText);
+				} else if (withinText && withinText.type === cElementType.error) {
+					resArr.addElement(withinText);
+				} else if (startNum && startNum.type === cElementType.error) {
+					resArr.addElement(startNum);
+				} else if (item && item.type === cElementType.error) {
+					resArr.addElement(item);
+				} else {
+					let res = searchString(findText ? findText.getValue() : item.getValue(), withinText ? withinText.getValue() : item.getValue(), startNum ? startNum.getValue() : item.getValue());
+					resArr.addElement(res);
+				}
+			})
+
+			return resArr;
+		}
+
+		const t = this;
+		let arg0 = arg[0] ? arg[0] : new cEmpty(), arg1 = arg[1] ? arg[1] : new cEmpty(), arg2 = arg[2] ? arg[2] : new cNumber(1);
+		
+		if (arg0.type === cElementType.cellsRange || arg0.type === cElementType.cellsRange3D) {
 			arg0 = arg0.cross(arguments[1]).tocString();
-		} else if (arg0 instanceof cArray) {
-			arg0 = arg0.getElement(0).tocString();
+		}
+
+		if (arg1.type === cElementType.cellsRange || arg1.type === cElementType.cellsRange3D) {
+			arg1 = arg1.cross(arguments[1]).tocString();
+		}
+
+		if (arg2.type === cElementType.cellsRange || arg2.type === cElementType.cellsRange3D) {
+			arg2 = arg2.cross(arguments[1]).tocNumber();
+		}
+
+		let resArr = new cArray();
+		if ((arg0.type === cElementType.array && arg1.type === cElementType.array) || (arg0.type === cElementType.array && arg2.type === cElementType.array) || (arg1.type === cElementType.array && arg2.type === cElementType.array)) {
+			let findTextArrDimensions = arg0.getDimensions(),
+				withinTextArrDimensions = arg1.getDimensions(),
+				startNumDimensions = arg2.getDimensions(),
+				resCols = Math.max(findTextArrDimensions.col, withinTextArrDimensions.col, startNumDimensions.col),
+				resRows = Math.max(findTextArrDimensions.row, withinTextArrDimensions.row, startNumDimensions.row);
+
+			if (arg0.type !== cElementType.array) {
+				let tempArg0 = new cArray();
+				tempArg0.addElement(arg0);
+				arg0 = tempArg0;
+			}
+			if (arg1.type !== cElementType.array) {
+				let tempArg1 = new cArray();
+				tempArg1.addElement(arg1);
+				arg1 = tempArg1;
+			}
+			if (arg2.type !== cElementType.array) {
+				let tempArg2 = new cArray();
+				tempArg2.addElement(arg2);
+				arg2 = tempArg2;
+			}
+
+			for (let i = 0; i < resRows; i++) {
+				resArr.addRow();
+				for (let j = 0; j < resCols; j++) {
+					let findText, withinText, startNum;
+					// get the substring that we will look for
+					if ((findTextArrDimensions.col - 1 < j && findTextArrDimensions.col > 1) || (findTextArrDimensions.row - 1 < i && findTextArrDimensions.row > 1)) {
+						findText = new cError(cErrorType.not_available);
+						resArr.addElement(findText);
+						continue;
+					} else if (findTextArrDimensions.row === 1 && findTextArrDimensions.col === 1) {
+						// get first elem
+						findText = arg0.getElementRowCol ? arg0.getElementRowCol(0, 0) : arg0.getValueByRowCol(0, 0);
+					} else if (findTextArrDimensions.row === 1) {
+						// get elem from first row
+						findText = arg0.getElementRowCol ? arg0.getElementRowCol(0, j) : arg0.getValueByRowCol(0, j);
+					} else if (findTextArrDimensions.col === 1) {
+						// get elem from first col
+						findText = arg0.getElementRowCol ? arg0.getElementRowCol(i, 0) : arg0.getValueByRowCol(i, 0);
+					} else {
+						findText = arg0.getElementRowCol ? arg0.getElementRowCol(i, j) : arg0.getValueByRowCol(i, j);
+					}
+
+					// get the string that we will search in
+					if ((withinTextArrDimensions.col - 1 < j && withinTextArrDimensions.col > 1) || (withinTextArrDimensions.row - 1 < i && withinTextArrDimensions.row > 1)) {
+						withinText = new cError(cErrorType.not_available);
+						resArr.addElement(withinText);
+						continue;
+					} else if (withinTextArrDimensions.row === 1 && withinTextArrDimensions.col === 1) {
+						// get first elem
+						withinText = arg1.getElementRowCol ? arg1.getElementRowCol(0, 0) : arg1.getValueByRowCol(0, 0);
+					} else if (withinTextArrDimensions.row === 1) {
+						// get elem from first row
+						withinText = arg1.getElementRowCol ? arg1.getElementRowCol(0, j) : arg1.getValueByRowCol(0, j);
+					} else if (withinTextArrDimensions.col === 1) {
+						// get elem from first col
+						withinText = arg1.getElementRowCol ? arg1.getElementRowCol(i, 0) : arg1.getValueByRowCol(i, 0);
+					} else {
+						withinText = arg1.getElementRowCol ? arg1.getElementRowCol(i, j) : arg1.getValueByRowCol(i, j);
+					}
+
+					// get the start num that we will start search
+					if ((startNumDimensions.col - 1 < j && startNumDimensions.col > 1) || (startNumDimensions.row - 1 < i && startNumDimensions.row > 1)) {
+						startNum = new cError(cErrorType.not_available);
+						resArr.addElement(startNum);
+						continue;
+					} else if (startNumDimensions.row === 1 && startNumDimensions.col === 1) {
+						// get first elem
+						startNum = arg2.getElementRowCol ? arg2.getElementRowCol(0, 0) : arg2.getValueByRowCol(0, 0);
+					} else if (startNumDimensions.row === 1) {
+						// get elem from first row
+						startNum = arg2.getElementRowCol ? arg2.getElementRowCol(0, j) : arg2.getValueByRowCol(0, j);
+					} else if (startNumDimensions.col === 1) {
+						// get elem from first col
+						startNum = arg2.getElementRowCol ? arg2.getElementRowCol(i, 0) : arg2.getValueByRowCol(i, 0);
+					} else {
+						startNum = arg2.getElementRowCol ? arg2.getElementRowCol(i, j) : arg2.getValueByRowCol(i, j);
+					}
+
+					// check errors
+					findText = findText ? findText.tocString() : new cString("");
+					withinText = withinText ? withinText.tocString() : new cString("");
+					startNum = startNum ? startNum.tocNumber() : new cNumber(0);
+
+					if (findText.type === cElementType.error) {
+						resArr.addElement(findText);
+						continue
+					}
+					if (withinText.type === cElementType.error) {
+						resArr.addElement(withinText);
+						continue
+					}
+					if (startNum.type === startNum.error) {
+						resArr.addElement(startNum);
+						continue
+					}
+
+					let res = searchString(findText.getValue(), withinText.getValue(), startNum.getValue());
+					resArr.addElement(res);
+				}
+			}
+
+			return resArr;
+		} else if (arg0.type === cElementType.array) {
+			return searchInArray(arg0, null, arg1, arg2);
+		} else if (arg1.type === cElementType.array) {
+			return searchInArray(arg1, arg0, null, arg2);
+		} else if (arg2.type === cElementType.array) {
+			return searchInArray(arg2, arg0, arg1, null);
 		}
 
 		arg0 = arg0.tocString();
-
-		if (arg1 instanceof cArea || arg1 instanceof cArea3D) {
-			arg1 = arg1.cross(arguments[1]).tocString();
-		} else if (arg1 instanceof cArray) {
-			arg1 = arg1.getElement(0).tocString();
-		}
-
 		arg1 = arg1.tocString();
-
-		if (arg2 instanceof cArea || arg2 instanceof cArea3D) {
-			arg2 = arg2.cross(arguments[1]).tocNumber();
-		} else if (arg2 instanceof cArray) {
-			arg2 = arg2.getElement(0).tocNumber();
-		}
-
 		arg2 = arg2.tocNumber();
 
-		if (arg0 instanceof cError) {
+		if (arg0.type === cElementType.error) {
 			return arg0;
 		}
-		if (arg1 instanceof cError) {
+		if (arg1.type === cElementType.error) {
 			return arg1;
 		}
-		if (arg2 instanceof cError) {
+		if (arg2.type === cElementType.error) {
 			return arg2;
 		}
 
-		if (arg2.getValue() < 1 || arg2.getValue() > arg1.getValue().length) {
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		var string1 = arg0.getValue(), string2 = arg1.getValue(), valueForSearching = string1
-			.replace(/(\\)/g, "\\\\")
-			.replace(/(\^)/g, "\\^")
-			.replace(/(\()/g, "\\(")
-			.replace(/(\))/g, "\\)")
-			.replace(/(\+)/g, "\\+")
-			.replace(/(\[)/g, "\\[")
-			.replace(/(\])/g, "\\]")
-			.replace(/(\{)/g, "\\{")
-			.replace(/(\})/g, "\\}")
-			.replace(/(\$)/g, "\\$")
-			.replace(/(\.)/g, "\\.")
-			.replace(/(~)?\*/g, function ($0, $1) {
-				return $1 ? $0 : '(.*)';
-			})
-			.replace(/(~)?\?/g, function ($0, $1) {
-				return $1 ? $0 : '.';
-			})
-			.replace(/(~\*)/g, "\\*").replace(/(~\?)/g, "\\?");
-		valueForSearching = new RegExp(valueForSearching, "ig");
-		if ('' === string1) {
-			return arg2;
-		}
-
-
-		var res = string2.substring(arg2.getValue() - 1).search(valueForSearching);
-
-		if (res < 0) {
-			return new cError(cErrorType.wrong_value_type);
-		}
-
-		res += arg2.getValue() - 1;
-
-		return new cNumber(res + 1);
+		return searchString(arg0.getValue(), arg1.getValue(), arg2.getValue());
 
 	};
 
