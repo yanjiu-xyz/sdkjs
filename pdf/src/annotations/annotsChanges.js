@@ -220,5 +220,5 @@ CChangesPDFLinePoints.prototype.Type = AscDFH.historyitem_Pdf_Line_Geometry;
 CChangesPDFLinePoints.prototype.private_SetValue = function(Value)
 {
 	let oAnnot = this.Class;
-	oAnnot.SetPage(Value, true);
+	oAnnot.SetLinePoints(Value, true);
 };

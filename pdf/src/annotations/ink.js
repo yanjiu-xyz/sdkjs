@@ -40,6 +40,7 @@
     {
         AscPDF.CAnnotationBase.call(this, sName, AscPDF.ANNOTATIONS_TYPES.Ink, nPage, aRect, oDoc);
         AscFormat.CShape.call(this);
+        initShape(this);
 
         this._point         = undefined;
         this._popupOpen     = false;
@@ -614,6 +615,25 @@
         let yMin = aShapeRect[1];
         let yMax = aShapeRect[3];
 
+        let geometry = generateGeometry(arrOfArrPoints, [xMin, yMin, xMax, yMax]);
+        
+        oParentAnnot.spPr.setGeometry(geometry);
+        oParentAnnot.updatePosition(xMin, yMin);
+
+        oParentAnnot.x = xMin;
+        oParentAnnot.y = yMin;
+        return oParentAnnot;
+    }
+
+    function initShape(oParentAnnot) {
+        let aShapeRectInMM = oParentAnnot.GetRect().map(function(measure) {
+            return measure * g_dKoef_pix_to_mm;
+        });
+        let xMax = aShapeRectInMM[2];
+        let xMin = aShapeRectInMM[0];
+        let yMin = aShapeRectInMM[1];
+        let yMax = aShapeRectInMM[3];
+
         oParentAnnot.setSpPr(new AscFormat.CSpPr());
         oParentAnnot.spPr.setParent(oParentAnnot);
         oParentAnnot.spPr.setXfrm(new AscFormat.CXfrm());
@@ -625,20 +645,10 @@
         oParentAnnot.spPr.xfrm.setExtX(Math.abs(xMax - xMin));
         oParentAnnot.spPr.xfrm.setExtY(Math.abs(yMax - yMin));
         oParentAnnot.setStyle(AscFormat.CreateDefaultShapeStyle());
-	    
-        let geometry = generateGeometry(arrOfArrPoints, [xMin, yMin, xMax, yMax]);
-        
-        oParentAnnot.spPr.setGeometry(geometry);
         oParentAnnot.setBDeleted(false);
+        oParentAnnot.recalcInfo.recalculateGeometry = false;
         oParentAnnot.recalculate();
-
-        oParentAnnot.updatePosition(xMin, yMin);
-
-        oParentAnnot.x = xMin;
-        oParentAnnot.y = yMin;
-        return oParentAnnot;
     }
-
     function generateGeometry(arrOfArrPoints, aBounds, oGeometry) {
         let xMin = aBounds[0];
         let yMin = aBounds[1];
@@ -786,6 +796,7 @@
     }
 
     window["AscPDF"].fillShapeByPoints  = fillShapeByPoints;
+    window["AscPDF"].initShape  = initShape;
     window["AscPDF"].CAnnotationInk     = CAnnotationInk;
 })();
 

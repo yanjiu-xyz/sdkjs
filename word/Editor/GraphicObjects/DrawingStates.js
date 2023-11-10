@@ -774,9 +774,11 @@ RotateState.prototype =
         {
             var bounds;
 
-            if (editor.isDocumentRenderer()) {
-                
-                let oDoc = editor.getDocumentRenderer().getPDFDoc();
+            
+            if (Asc.editor.isPdfEditor()) {
+                let oViewer = editor.getDocumentRenderer();
+                let oDoc = oViewer.getPDFDoc();
+
                 for(i = 0; i < aTracks.length; ++i)
                 {   
                     var oTrack  = aTracks[i];
@@ -792,12 +794,14 @@ RotateState.prototype =
                         if (oTrack.originalFlipH != oTrack.resizedflipH)
                             oDoc.History.Add(new CChangesPDFInkFlipH(oTrack.originalObject, oTrack.originalFlipH, oTrack.resizedflipH));
 
+                        // для аннотации линии свой расчет ректа и точек, потому что меняем саму геометрию при редактировании
                         if (oTrack.originalObject.IsLine()) {
                             let oPaddings   = oTrack.originalObject.GetPaddings();
                             let aPaths      = oTrack.geometry.pathLst[0].ArrPathCommand;
 
                             let nLeft, nTop, nRight, nBottom;
                             
+                            // bounds идут по ректу геометрии, отступы от геометрии считаем сами
                             if (aPaths[0].X < aPaths[1].X) {
                                 nLeft = -oPaddings.lineStart * g_dKoef_mm_to_pix;
                                 nRight = oPaddings.lineEnd * g_dKoef_mm_to_pix;
@@ -824,15 +828,32 @@ RotateState.prototype =
                                 nBottom = Math.max(oPaddings.lineStart * g_dKoef_mm_to_pix, oPaddings.lineEnd * g_dKoef_mm_to_pix);
                             }
 
-                            oTrack.originalObject.spPr.geometry.pathLst[0].ArrPathCommand = oTrack.geometry.pathLst[0].ArrPathCommand.slice();
+                            let nPage = oTrack.originalObject.GetPage();
+                            let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+                            let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+                            let aLinePoints = [];
+                            let oTranform   = oTrack.originalObject.transform;
+                            // считаем новые точки linePoints (в оригинальных координатах - в пикселях, без скейлов)
+                            aLinePoints.push(oTranform.TransformPointX(aPaths[0].X, 0) * g_dKoef_mm_to_pix / nScaleX)
+                            aLinePoints.push(oTranform.TransformPointY(0, aPaths[0].Y) * g_dKoef_mm_to_pix / nScaleY)
+                            aLinePoints.push(oTranform.TransformPointX(aPaths[1].X, 0) * g_dKoef_mm_to_pix / nScaleX)
+                            aLinePoints.push(oTranform.TransformPointY(0, aPaths[1].Y) * g_dKoef_mm_to_pix / nScaleY)
 
                             aRect[0] = aRect[0] + nLeft;
                             aRect[1] = aRect[1] + nTop;
                             aRect[2] = aRect[2] + nRight;
                             aRect[3] = aRect[3] + nBottom;
+
+                            oTrack.originalObject.SetRect(aRect);
+                            
+                            oDoc.TurnOnHistory();
+                            oTrack.originalObject.SetLinePoints(aLinePoints);
+                        }
+                        else {
+                            oTrack.originalObject.SetRect(aRect);
                         }
                         
-                        oTrack.originalObject.SetRect(aRect);
                         oDoc.TurnOffHistory();
                     }
                     

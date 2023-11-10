@@ -389,7 +389,7 @@
         let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
         let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
 
-        if (this.IsNeedDrawFromStream() && this.IsInk()) {
+        if (this.IsInk()) {
             let aPath;
             for (let i = 0; i < this._gestures.length; i++) {
                 aPath = this._gestures[i];
@@ -397,6 +397,12 @@
                     aPath[j].x += nDeltaX * g_dKoef_pix_to_mm;
                     aPath[j].y += nDeltaY * g_dKoef_pix_to_mm;
                 }
+            }
+        }
+        else if (this.IsLine()) {
+            for (let i = 0; i < this._points.length; i+=2) {
+                this._points[i] += nDeltaX / nScaleX;
+                this._points[i+1] += nDeltaY / nScaleY;
             }
         }
 
@@ -422,6 +428,7 @@
             h: (this._rect[3] - this._rect[1])
         };
 
+        this.SetNeedRecalc(true);
         this.AddToRedraw();
         this.SetWasChanged(true);
     };

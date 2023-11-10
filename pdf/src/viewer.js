@@ -3563,9 +3563,7 @@
 								annot.Draw(oGraphicsPDF, oGraphicsWord);
 							}
 							else {
-								if (annot.IsInk())
-									annot.Recalculate();
-
+								annot.Recalculate();
 								annot.DrawFromStream(oGraphicsPDF);
 							}
 						}

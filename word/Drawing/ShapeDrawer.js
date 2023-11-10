@@ -99,23 +99,51 @@ function DrawLineEnd(xEnd, yEnd, xPrev, yPrev, type, w, len, drawer, trans)
             var tmpx2 = xEnd - len/2 * _ex;
             var tmpy2 = yEnd - len/2 * _ey;
 
-            drawer._s();
-            drawer._m(trans.TransformPointX(tmpx, tmpy), trans.TransformPointY(tmpx, tmpy));
-            drawer._l(trans.TransformPointX(x1, y1), trans.TransformPointY(x1, y1));
-            drawer._l(trans.TransformPointX(tmpx2, tmpy2), trans.TransformPointY(tmpx2, tmpy2));
-            drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
-            drawer._z();
-            drawer.drawStrokeFillStyle();
-            drawer._e();
+            if (Asc.editor.isPdfEditor() == true) {
+                // 
+                drawer._s();
+                drawer._m(trans.TransformPointX(tmpx, tmpy), trans.TransformPointY(tmpx, tmpy));
+                drawer._l(trans.TransformPointX(x1, y1), trans.TransformPointY(x1, y1));
+                drawer._l(trans.TransformPointX(tmpx2, tmpy2), trans.TransformPointY(tmpx2, tmpy2));
+                drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
+                drawer._z();
+                drawer.ds();
+                drawer._e();
 
-            drawer._s();
-            drawer._m(trans.TransformPointX(tmpx, tmpy), trans.TransformPointY(tmpx, tmpy));
-            drawer._l(trans.TransformPointX(x1, y1), trans.TransformPointY(x1, y1));
-            drawer._l(trans.TransformPointX(tmpx2, tmpy2), trans.TransformPointY(tmpx2, tmpy2));
-            drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
-            drawer._z();
-            drawer.ds();
-            drawer._e();
+                drawer._s();
+                drawer._m(trans.TransformPointX(tmpx, tmpy), trans.TransformPointY(tmpx, tmpy));
+                drawer._l(trans.TransformPointX(x1, y1), trans.TransformPointY(x1, y1));
+                drawer._l(trans.TransformPointX(tmpx2, tmpy2), trans.TransformPointY(tmpx2, tmpy2));
+                drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
+                drawer._z();
+                let oRGBColor = drawer.Shape.GetRGBColor(drawer.Shape.GetFillColor()); 
+
+                drawer.Graphics.m_oPen.Color.R = oRGBColor.r;
+                drawer.Graphics.m_oPen.Color.G = oRGBColor.g;
+                drawer.Graphics.m_oPen.Color.B = oRGBColor.b;
+
+                drawer.drawStrokeFillStyle();
+                drawer._e();
+            }
+            else {
+                drawer._s();
+                drawer._m(trans.TransformPointX(tmpx, tmpy), trans.TransformPointY(tmpx, tmpy));
+                drawer._l(trans.TransformPointX(x1, y1), trans.TransformPointY(x1, y1));
+                drawer._l(trans.TransformPointX(tmpx2, tmpy2), trans.TransformPointY(tmpx2, tmpy2));
+                drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
+                drawer._z();
+                drawer.drawStrokeFillStyle();
+                drawer._e();
+    
+                drawer._s();
+                drawer._m(trans.TransformPointX(tmpx, tmpy), trans.TransformPointY(tmpx, tmpy));
+                drawer._l(trans.TransformPointX(x1, y1), trans.TransformPointY(x1, y1));
+                drawer._l(trans.TransformPointX(tmpx2, tmpy2), trans.TransformPointY(tmpx2, tmpy2));
+                drawer._l(trans.TransformPointX(x3, y3), trans.TransformPointY(x3, y3));
+                drawer._z();
+                drawer.ds();
+                drawer._e();
+            }
 
             break;
         }

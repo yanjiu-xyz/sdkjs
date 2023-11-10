@@ -1735,6 +1735,10 @@ var CPresentation = CPresentation || function(){};
         if (AscCommon.History.IsOn() == true)
             AscCommon.History.TurnOff();
     }
+    CPDFDoc.prototype.TurnOnHistory = function() {
+        if (AscCommon.History.IsOn() == false)
+            AscCommon.History.TurnOn();
+    }
     CPDFDoc.prototype.ShowComment = function(arrId)
     {
         let oPos;
