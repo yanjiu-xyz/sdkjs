@@ -1771,26 +1771,32 @@ var CPresentation = CPresentation || function(){};
         }
     };
     CPDFDoc.prototype.UpdateCopyCutState = function() {
-        editor.sync_CanCopyCutCallback(this.CanCopyCut());
+        let oCanCopyCut = this.CanCopyCut();
+        editor.sync_CanCopyCutCallback(oCanCopyCut.copy, oCanCopyCut.cut);
     };
     CPDFDoc.prototype.CanCopyCut = function() {
         let oViewer = editor.getDocumentRenderer();
 
-        let isHasSelect = false;
+        let isCanCopy = false;
+        let isCanCut = false;
 
         let oSelection = oViewer.file.Selection;
         if (oSelection.Glyph1 != oSelection.Glyph2 || oSelection.Line1 != oSelection.Line2 ||
             oSelection.Page1 != oSelection.Page2) {
-                isHasSelect = true;
+                isCanCopy = true;
             }
         
 
         if (this.activeForm && this.activeForm.content && this.activeForm.content.IsSelectionUse() && 
             this.activeForm.content.IsSelectionEmpty() == false) {
-                isHasSelect = true;
+                isCanCopy = true;
+                isCanCut = true;
             }
 
-        return isHasSelect;
+        return {
+            copy: isCanCopy,
+            cut: isCanCut
+        };
     };
     CPDFDoc.prototype.RemoveComment = function(Id) {
         let oAnnot = this.annots.find(function(annot) {
