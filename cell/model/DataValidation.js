@@ -497,6 +497,21 @@
 
 			var v1 = this.formula1 && this.formula1.getValue(ws, true);
 			var v2 = this.formula2 && this.formula2.getValue(ws, true);
+
+			if (v1 == null && v2 == null) {
+				switch (this.type) {
+					case EDataValidationType.None:
+					case EDataValidationType.Date:
+					case EDataValidationType.Decimal:
+					case EDataValidationType.TextLength:
+					case EDataValidationType.Time:
+					case EDataValidationType.Whole:
+						res = true;
+						break;
+				}
+				return res;
+			}
+
 			if (!checkIntegerType(v1)) {
 				return false;
 			}
