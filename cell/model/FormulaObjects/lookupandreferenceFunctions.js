@@ -1247,6 +1247,7 @@ function (window, undefined) {
 		arg2 = arg2.tocNumber();
 		arg3 = arg3.tocNumber();
 
+
 		if (cElementType.error === arg1.type || cElementType.error === arg2.type || cElementType.error === arg3.type) {
 			return new cError(cErrorType.wrong_value_type);
 		}
@@ -3154,6 +3155,9 @@ function (window, undefined) {
 					k = Math.ceil((i + j) / 2);
 					elem = cacheArray[k];
 					val = elem.v;
+					if (val.type === cElementType.empty) {
+						val = val.tocBool();
+					}
 					if (_compareValues(valueForSearching, val, "=")) {
 						return elem.i;
 					} else if (_compareValues(valueForSearching, val, "<")) {
@@ -3170,6 +3174,9 @@ function (window, undefined) {
 					k = Math.floor((i + j) / 2);
 					elem = cacheArray[k];
 					val = elem.v;
+					if (val.type === cElementType.empty) {
+						val = val.tocBool();
+					}
 					if (_compareValues(valueForSearching, val, "=")) {
 						return elem.i;
 					} else if (_compareValues(valueForSearching, val, "<")) {
