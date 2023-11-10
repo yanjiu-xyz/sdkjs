@@ -1322,8 +1322,13 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nColumn - The number of the column to set the width to.
 	 * @param {number} nWidth - The width of the column divided by 7 pixels.
+	 * @param {boolean} [bWithotPaddings=false] - Specifies whether the nWidth will be set witout standart padding.
 	 */
-	ApiWorksheet.prototype.SetColumnWidth = function (nColumn, nWidth) {
+	ApiWorksheet.prototype.SetColumnWidth = function (nColumn, nWidth, bWithotPaddings) {
+		if (bWithotPaddings) {
+			let wb = this.worksheet.workbook;
+			nWidth = (nWidth * wb.maxDigitWidth - wb.paddingPlusBorder) / wb.maxDigitWidth;
+		}
 		this.worksheet.setColWidth(nWidth, nColumn, nColumn);
 	};
 
