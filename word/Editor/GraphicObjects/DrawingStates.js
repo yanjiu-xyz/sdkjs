@@ -783,14 +783,55 @@ RotateState.prototype =
                     bounds      = oTrack.getBounds();
                     oTrack.trackEnd(true);
 
-                    if (oTrack instanceof AscFormat.ResizeTrackShapeImage) {
-                        let aRect = [bounds.min_x * g_dKoef_mm_to_pix, bounds.min_y * g_dKoef_mm_to_pix, bounds.max_x * g_dKoef_mm_to_pix, bounds.max_y * g_dKoef_mm_to_pix];
+                    if (oTrack instanceof AscFormat.ResizeTrackShapeImage || oTrack instanceof AscFormat.EditShapeGeometryTrack) {
+                        let aRect = [bounds.posX * g_dKoef_mm_to_pix, bounds.posY * g_dKoef_mm_to_pix, (bounds.posX + bounds.extX) * g_dKoef_mm_to_pix, (bounds.posY + bounds.extY) * g_dKoef_mm_to_pix];
                         
                         oDoc.CreateNewHistoryPoint();
                         if (oTrack.originalFlipV != oTrack.resizedflipV)
                             oDoc.History.Add(new CChangesPDFInkFlipV(oTrack.originalObject, oTrack.originalFlipV, oTrack.resizedflipV));
                         if (oTrack.originalFlipH != oTrack.resizedflipH)
                             oDoc.History.Add(new CChangesPDFInkFlipH(oTrack.originalObject, oTrack.originalFlipH, oTrack.resizedflipH));
+
+                        if (oTrack.originalObject.IsLine()) {
+                            let oPaddings   = oTrack.originalObject.GetPaddings();
+                            let aPaths      = oTrack.geometry.pathLst[0].ArrPathCommand;
+
+                            let nLeft, nTop, nRight, nBottom;
+                            
+                            if (aPaths[0].X < aPaths[1].X) {
+                                nLeft = -oPaddings.lineStart * g_dKoef_mm_to_pix;
+                                nRight = oPaddings.lineEnd * g_dKoef_mm_to_pix;
+                            }
+                            else {
+                                nLeft = -oPaddings.lineEnd * g_dKoef_mm_to_pix;
+                                nRight = oPaddings.lineStart * g_dKoef_mm_to_pix;
+                            }
+                            if (aPaths[0].Y < aPaths[1].Y) {
+                                nTop = -oPaddings.lineStart * g_dKoef_mm_to_pix;
+                                nBottom = oPaddings.lineEnd * g_dKoef_mm_to_pix;
+                            }
+                            else {
+                                nTop = -oPaddings.lineEnd * g_dKoef_mm_to_pix;
+                                nBottom = oPaddings.lineStart * g_dKoef_mm_to_pix;
+                            }
+
+                            if (Math.abs(aPaths[0].X * g_dKoef_mm_to_pix - aPaths[1].X * g_dKoef_mm_to_pix) < Math.max(oPaddings.lineStart * g_dKoef_mm_to_pix, oPaddings.lineEnd * g_dKoef_mm_to_pix)) {
+                                nLeft    = -Math.max(oPaddings.lineStart * g_dKoef_mm_to_pix, oPaddings.lineEnd * g_dKoef_mm_to_pix);
+                                nRight = Math.max(oPaddings.lineStart * g_dKoef_mm_to_pix, oPaddings.lineEnd * g_dKoef_mm_to_pix);
+                            }
+                            if (Math.abs(aPaths[0].Y * g_dKoef_mm_to_pix - aPaths[1].Y * g_dKoef_mm_to_pix) < Math.max(oPaddings.lineStart * g_dKoef_mm_to_pix, oPaddings.lineEnd * g_dKoef_mm_to_pix)) {
+                                nTop    = -Math.max(oPaddings.lineStart * g_dKoef_mm_to_pix, oPaddings.lineEnd * g_dKoef_mm_to_pix);
+                                nBottom = Math.max(oPaddings.lineStart * g_dKoef_mm_to_pix, oPaddings.lineEnd * g_dKoef_mm_to_pix);
+                            }
+
+                            oTrack.originalObject.spPr.geometry.pathLst[0].ArrPathCommand = oTrack.geometry.pathLst[0].ArrPathCommand.slice();
+
+                            aRect[0] = aRect[0] + nLeft;
+                            aRect[1] = aRect[1] + nTop;
+                            aRect[2] = aRect[2] + nRight;
+                            aRect[3] = aRect[3] + nBottom;
+                        }
+                        
                         oTrack.originalObject.SetRect(aRect);
                         oDoc.TurnOffHistory();
                     }

@@ -149,7 +149,7 @@
         });
 
         AscPDF.fillShapeByPoints([aLinePoints], aShapeRectInMM, this);
-        this.spPr.geometry.preset = "line";
+        // this.spPr.geometry.preset = "line";
 
         let aRelPointsPos   = [];
         let aAllPoints      = [];
@@ -186,44 +186,136 @@
         this._relativePaths = aRelPointsPos;
         this._gestures = aLinePoints;
     };
+    CAnnotationLine.prototype.LazyCopy = function() {
+        let oDoc = this.GetDocument();
+        oDoc.TurnOffHistory();
+
+        let oLine = new CAnnotationLine(AscCommon.CreateGUID(), this.GetPage(), this.GetRect().slice(), oDoc);
+
+        oLine._pagePos = {
+            x: this._pagePos.x,
+            y: this._pagePos.y,
+            w: this._pagePos.w,
+            h: this._pagePos.h
+        }
+        oLine._origRect = this._origRect.slice();
+
+        this.fillObject(oLine);
+
+        oLine.pen = new AscFormat.CLn();
+        oLine._apIdx = this._apIdx;
+        oLine._originView = this._originView;
+        oLine.SetOriginPage(this.GetOriginPage());
+        oLine.SetAuthor(this.GetAuthor());
+        oLine.SetModDate(this.GetModDate());
+        oLine.SetCreationDate(this.GetCreationDate());
+        oLine.SetWidth(this.GetWidth());
+        oLine.SetStrokeColor(this.GetStrokeColor().slice());
+        oLine.SetLineStart(this.GetLineStart());
+        oLine.SetLineEnd(this.GetLineEnd());
+        oLine._relativePaths = this._relativePaths.slice();
+        oLine._gestures = this._gestures.slice();
+        oLine.SetContents(this.GetContents());
+        oLine.recalcInfo.recalculatePen = false;
+
+        return oLine;
+    };
     CAnnotationLine.prototype.IsLine = function() {
         return true;
     };
     CAnnotationLine.prototype.RefillGeometry = function(oGeometry, aBounds) {
-        let aRelPointsPos   = this._relativePaths;
-        let aShapePaths     = [];
-        
-        let nLineW = this.GetWidth() * g_dKoef_pt_to_mm;
+        let aShapePaths = [];
+        let aShapePath  = [];
 
-        let xMin = aBounds[0] + nLineW;
-        let yMin = aBounds[1] + nLineW;
-        let xMax = aBounds[2] - nLineW;
-        let yMax = aBounds[3] - nLineW;
+        let aPaths = oGeometry.pathLst[0].ArrPathCommand;
+        let oTranform = this.transform;
 
-        let nWidthMM    = (xMax - xMin);
-        let nHeightMM   = (yMax - yMin);
+        aShapePath.push({
+            x: oTranform.TransformPointX(aPaths[0].X, 0),
+            y: oTranform.TransformPointY(0, aPaths[0].Y)
+        });
+        aShapePath.push({
+            x: oTranform.TransformPointX(aPaths[1].X, 0),
+            y: oTranform.TransformPointY(0, aPaths[1].Y)
+        });
 
-        for (let nPath = 0; nPath < aRelPointsPos.length; nPath++) {
-            let aPath       = aRelPointsPos[nPath];
-            let aShapePath  = [];
+        aShapePaths.push(aShapePath);
 
-            for (let nPoint = 0; nPoint < aPath.length; nPoint++) {
-                aShapePath.push({
-                    x: (nWidthMM) * aPath[nPoint].relX + xMin,
-                    y: (nHeightMM) * aPath[nPoint].relY + yMin
-                });
-            }
-            
-            aShapePaths.push(aShapePath);
-        }
-        
         let geometry = generateGeometry(aShapePaths, aBounds, oGeometry);
-        this.GetDrawing().GraphicObj.recalcTransform()
-        var transform = this.GetDrawing().GraphicObj.getTransform();
+        this.recalcTransform()
+        var transform = this.getTransform();
         
         geometry.Recalculate(transform.extX, transform.extY);
 
         return geometry;
+    };
+    CAnnotationLine.prototype.GetPaddings = function() {
+        let nBasePadding = this.GetWidth() * g_dKoef_pt_to_mm * 1.2;
+
+        let nPaddingStart;
+        let nPaddingEnd;
+        switch (this._lineStart) {
+            case LINE_END_TYPE.OpenArrow:
+                nPaddingStart = nBasePadding;
+                break;
+            case LINE_END_TYPE.Diamond:
+                nPaddingEnd = 2 * nBasePadding;
+                break;
+            default:
+                nPaddingEnd = nBasePadding;
+                break;
+        }
+        switch (this._lineEnd) {
+            case LINE_END_TYPE.OpenArrow:
+                nPaddingEnd = nBasePadding;
+                break;
+            case LINE_END_TYPE.Diamond:
+                nPaddingEnd = 2 * nBasePadding;
+                break;
+            default:
+                nPaddingEnd = nBasePadding;
+                break;
+        }
+        return {
+            lineStart: nPaddingStart,
+            lineEnd: nPaddingEnd
+        }
+    };
+    CAnnotationLine.prototype.SetRect = function(aRect) {
+        let oViewer     = editor.getDocumentRenderer();
+        let oDoc        = oViewer.getPDFDoc();
+        let nPage       = this.GetPage();
+
+        oDoc.History.Add(new CChangesPDFAnnotRect(this, this.GetRect(), aRect));
+
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+        this._rect = aRect;
+
+        this._pagePos = {
+            x: aRect[0],
+            y: aRect[1],
+            w: (aRect[2] - aRect[0]),
+            h: (aRect[3] - aRect[1])
+        };
+
+        this._origRect[0] = this._rect[0] / nScaleX;
+        this._origRect[1] = this._rect[1] / nScaleY;
+        this._origRect[2] = this._rect[2] / nScaleX;
+        this._origRect[3] = this._rect[3] / nScaleY;
+
+        oDoc.TurnOffHistory();
+
+        this.spPr.xfrm.extX = this._pagePos.w * g_dKoef_pix_to_mm;
+        this.spPr.xfrm.extY = this._pagePos.h * g_dKoef_pix_to_mm;
+        
+        // this.Recalculate();
+        this.AddToRedraw();
+        this.RefillGeometry(this.spPr.geometry, [aRect[0] * g_dKoef_pix_to_mm, aRect[1] * g_dKoef_pix_to_mm, aRect[2] * g_dKoef_pix_to_mm, aRect[3] * g_dKoef_pix_to_mm]);
+
+        this.SetWasChanged(true);
+        this.SetDrawFromStream(false);
     };
     CAnnotationLine.prototype.SetDrawing = function(oDrawing) {
         let oRun = this.content.GetElement(0).GetElement(0);
@@ -253,9 +345,9 @@
         let oLine = this.pen;
         oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
     };
-    CAnnotationLine.prototype.IsNeedDrawFromStream = function() {
-        return false;
-    };
+    // CAnnotationLine.prototype.IsNeedDrawFromStream = function() {
+    //     return false;
+    // };
     CAnnotationLine.prototype.GetLinePoints = function() {
         return this._points;
     };

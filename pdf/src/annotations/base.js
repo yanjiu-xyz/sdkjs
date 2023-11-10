@@ -93,6 +93,7 @@
         }
         this._wasChanged            = false;
     }
+    
     CAnnotationBase.prototype.SetReplyTo = function(oAnnot) {
         this._inReplyTo = oAnnot;
     };

@@ -2372,6 +2372,9 @@
 						let nPage = oDoc.mouseDownAnnot.GetPage();
 						this.DrawingObjects.drawingDocument.AutoShapesTrack.PageIndex = nPage;
 						this.DrawingObjects.drawSelect(nPage);
+
+						if (oDoc.mouseDownAnnot.IsLine())
+							oDoc.mouseDownAnnot.DrawSelected(this.overlay)
 					}
 				}
 			}
