@@ -386,7 +386,7 @@
 	 */
 	Api.prototype.AddSheet = function (sName) {
 		if (this.GetSheet(sName))
-			private_makeError('Worksheet with such a name already exists.', true);
+			throwException(new Error('Worksheet with such a name already exists.'));
 		else
 			this.asc_addWorksheet(sName);
 	};
@@ -536,12 +536,12 @@
 		if (Range1.GetWorksheet().Id === Range2.GetWorksheet().Id) {
 			var res = Range1.range.bbox.intersection(Range2.range.bbox);
 			if (!res) {
-				private_makeError('Ranges do not intersect.', false);
+				logError(new Error('Ranges do not intersect.'));
 			} else {
 				result = new ApiRange(this.GetActiveSheet().worksheet.getRange3(res.r1, res.c1, res.r2, res.c2));
 			}
 		} else {
-			private_makeError('Ranges should be from one worksheet.', false);
+			logError(new Error('Ranges should be from one worksheet.'));
 		}
 		return result;
 	};
@@ -945,7 +945,7 @@
 				this.asc_freezePane(type);
 
 		} else {
-			private_makeError('Invalid parametr "FreezePaneType".', false);
+			logError(new Error('Invalid parametr "FreezePaneType".'));
 		}
 	};
 
@@ -1081,7 +1081,7 @@
 		let result;
 		if (typeof col == "number" && typeof row == "number") {
 			if (col < 1 || row < 1 || col > AscCommon.gc_nMaxCol0 || row > AscCommon.gc_nMaxRow0) {
-				private_makeError('Invalid paremert "row" or "col".', false);
+				logError(new Error('Invalid paremert "row" or "col".'));
 				result = null;
 			} else {
 				row--;
@@ -1090,7 +1090,7 @@
 			}
 		} else if (typeof row == "number") {
 			if (row < 1 || row > AscCommon.gc_nMaxRow0) {
-				private_makeError('Invalid paremert "row".', false);
+				logError(new Error('Invalid paremert "row".'));
 				result = null;
 			} else {
 				row--;
@@ -1102,7 +1102,7 @@
 			
 		} else if (typeof col == "number") {
 			if (col < 1 || col > AscCommon.gc_nMaxCol0) {
-				private_makeError('Invalid paremert "col".', false);
+				logError(new Error('Invalid paremert "col".'));
 				result = null;
 			} else {
 				col--;
@@ -1140,7 +1140,7 @@
 			if (value > 0 && value <=  AscCommon.gc_nMaxRow0 + 1 && value[0] !== NaN) {
 				value --;
 			} else {
-				private_makeError('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1), false);
+				logError(new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
 				return null;
 			}
 			return new ApiRange(this.worksheet.getRange3(value, 0, value, AscCommon.gc_nMaxCol0));
@@ -1156,7 +1156,7 @@
 				}
 			}
 			if (isError) {
-				private_makeError('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1), false);
+				logError(new Error('The nRow must be greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
 				return null;
 			} else {
 				return new ApiRange(this.worksheet.getRange3(value[0], 0, value[1], AscCommon.gc_nMaxCol0));
@@ -1265,7 +1265,7 @@
 		Range1 = (Range1 instanceof ApiRange) ? Range1.range : (typeof Range1 == 'string') ? this.worksheet.getRange2(Range1) : null;
 
 		if (!Range1) {
-			private_makeError('Incorrect "Range1" or it is empty.', false);
+			logError(new Error('Incorrect "Range1" or it is empty.'));
 			return null;
 		}
 		
@@ -1663,18 +1663,18 @@
 		if ( range && range.range.isOneCell() && (sAddress || subAddress) ) {
 			var externalLink = sAddress ? AscCommon.rx_allowedProtocols.test(sAddress) : false;
 			if (externalLink && AscCommonExcel.getFullHyperlinkLength(sAddress) > Asc.c_nMaxHyperlinkLength) {
-				private_makeError('Incorrect "sAddress".', true);
+				throwException(new Error('Incorrect "sAddress".'));
 			}
 			if (!externalLink) {
 				address = subAddress.split("!");
 				if (address.length == 1) 
 					address.unshift(this.GetName());
 				else if (this.worksheet.workbook.getWorksheetByName(address[0]) === null) {
-					private_makeError('Invalid "subAddress".', true);
+					throwException(new Error('Invalid "subAddress".'));
 				}
 				var res = this.worksheet.workbook.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.FormatTable, address[1], false);
 				if (res === Asc.c_oAscError.ID.DataRangeError) {
-					private_makeError('Invalid "subAddress".', true);
+					throwException(new Error('Invalid "subAddress".'));
 				}
 			}
 			this.worksheet.selectionRange.assign2(range.range.bbox);
@@ -1970,7 +1970,7 @@
 		let bb = before instanceof ApiWorksheet;
 		let ba = after instanceof ApiWorksheet;
 		if ( (bb && ba) || (!bb && !ba) ) {
-			private_makeError('Incorrect parametrs.', true);
+			throwException(new Error('Incorrect parametrs.'));
 		} else {
 			let curIndex = this.GetIndex();
 			let newIndex = ( bb ? ( before.GetIndex() ) : (after.GetIndex() + 1) );
@@ -2100,7 +2100,7 @@
 				if (r < 0) r = 0;
 				result = new ApiRange(this.range.worksheet.getRange3(r, this.range.bbox.c1, r, this.range.bbox.c2));
 			} else {
-				private_makeError('The nRow must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1), false);
+				logError(new Error('The nRow must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxRow0 + 1)));
 			}
 		}
 		return result;
@@ -2131,7 +2131,7 @@
 				if (c < 0) c = 0;
 				result = new ApiRange(this.range.worksheet.getRange3(this.range.bbox.r1, c, this.range.bbox.r2, c));
 			} else {
-				private_makeError('The nCol must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxCol0 + 1), false);
+				logError(new Error('The nCol must be a number that greater than 0 and less then ' + (AscCommon.gc_nMaxCol0 + 1)));
 			}
 		} 
 		return result;
@@ -3080,7 +3080,7 @@
 				var bb = this.range.hasMerged();
 				result = new ApiRange((bb) ? AscCommonExcel.Range.prototype.createFromBBox(this.range.worksheet, bb) : this.range);
 			} else {
-				private_makeError('Range must be is one cell.', false);
+				logError(new Error('Range must be is one cell.'));
 			}
 			return result;
 		}
@@ -3429,7 +3429,7 @@
 			var range = destination.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols) );
 			this.range.move(range.bbox, true, destination.range.worksheet);
 		} else {
-			private_makeError('Invalid destination', false);
+			logError(new Error('Invalid destination'));
 		}
 	};
 
@@ -3447,7 +3447,7 @@
 			var range = this.range.worksheet.getRange3(bbox.r1, bbox.c1, (bbox.r1 + rows), (bbox.c1 + cols) );
 			rangeFrom.range.move(range.bbox, true, range.worksheet);
 		} else {
-			private_makeError('Invalid range', false);
+			logError(new Error('Invalid range'));
 		}
 	};
 
@@ -3567,7 +3567,7 @@
 			this._searchOptions = options;
 			return res;
 		} else {
-			private_makeError('Invalid parametr "What".', false);
+			logError(new Error('Invalid parametr "What".'));
 			return null;
 		}
 	};
@@ -3607,7 +3607,7 @@
 			}
 			return res;
 		} else {
-			private_makeError('You should use "Find" method before this.', false);
+			logError(new Error('You should use "Find" method before this.'));
 			return null;
 		}
 	};
@@ -3647,7 +3647,7 @@
 			}
 			return res;
 		} else {
-			private_makeError('You should use "Find" method before this.', false);
+			logError(new Error('You should use "Find" method before this.'));
 			return null;
 		}
 	};
@@ -3725,7 +3725,7 @@
 				this.range.worksheet.workbook.oApi.wb.replaceCellText(options);
 			}
 		} else {
-			private_makeError('Invalid type of parametr "What" or "Replacement".', false);
+			logError(new Error('Invalid type of parametr "What" or "Replacement".'));
 		}
 	};
 
@@ -4744,12 +4744,12 @@
 	 */
 	ApiName.prototype.SetName = function (sName) {
 		if (!sName || typeof sName !== 'string' || !this.DefName) {
-			private_makeError('Invalid name or Defname is undefined.', false);
+			logError(new Error('Invalid name or Defname is undefined.'));
 			return false;
 		}
 		var res = this.DefName.wb.checkDefName(sName);
 		if (!res.status) {
-			private_makeError('Invalid name.', false); // invalid name
+			logError(new Error('Invalid name.')); // invalid name
 			return false; 
 		}
 		var oldName = this.DefName.getAscCDefName(false);
@@ -5550,7 +5550,7 @@
 			if (excess) {
 				length -= excess;
 				if (!length) {
-					private_makeError('Max symbols in one cell.', false);
+					logError(new Error('Max symbols in one cell.'));
 					return;
 				}
 				String = String.slice(0, length);
@@ -5733,7 +5733,7 @@
 	 */
 	ApiFont.prototype.SetBold = function (isBold) {
 		if (typeof isBold !== 'boolean') {
-			private_makeError('Invalid type of parametr "isBold".', false);
+			logError(new Error('Invalid type of parametr "isBold".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -5813,7 +5813,7 @@
 	 */
 	ApiFont.prototype.SetItalic = function (isItalic) {
 		if (typeof isItalic !== 'boolean') {
-			private_makeError('Invalid type of parametr "isItalic".', false);
+			logError(new Error('Invalid type of parametr "isItalic".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -5893,7 +5893,7 @@
 	 */
 	ApiFont.prototype.SetSize = function (Size) {
 		if (typeof Size !== 'number' || Size < 0 || Size > 409) {
-			private_makeError('Invalid type of parametr "Size".', false);
+			logError(new Error('Invalid type of parametr "Size".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -5973,7 +5973,7 @@
 	 */
 	ApiFont.prototype.SetStrikethrough = function (isStrikethrough) {
 		if (typeof isStrikethrough !== 'boolean') {
-			private_makeError('Invalid type of parametr "isStrikethrough".', false);
+			logError(new Error('Invalid type of parametr "isStrikethrough".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -6084,7 +6084,7 @@
 	 */
 	ApiFont.prototype.SetUnderline = function (Underline) {
 		if (typeof Underline !== 'string') {
-			private_makeError('Invalid type of parametr "isUnderline".', false);
+			logError(new Error('Invalid type of parametr "isUnderline".'));
 			return;
 		}
 		switch (Underline) {
@@ -6189,7 +6189,7 @@
 	 */
 	ApiFont.prototype.SetSubscript = function (isSubscript) {
 		if (typeof isSubscript !== 'boolean') {
-			private_makeError('Invalid type of parametr "isSubscript".', false);
+			logError(new Error('Invalid type of parametr "isSubscript".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -6269,7 +6269,7 @@
 	 */
 	ApiFont.prototype.SetSuperscript = function (isSuperscript) {
 		if (typeof isSuperscript !== 'boolean') {
-			private_makeError('Invalid type of parametr "isSuperscript".', false);
+			logError(new Error('Invalid type of parametr "isSuperscript".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -6349,7 +6349,7 @@
 	 */
 	ApiFont.prototype.SetName = function (FontName) {
 		if (typeof FontName !== 'string') {
-			private_makeError('Invalid type of parametr "FontName".', false);
+			logError(new Error('Invalid type of parametr "FontName".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -6430,7 +6430,7 @@
 	 */
 	ApiFont.prototype.SetColor = function (Color) {
 		if (!Color instanceof ApiColor) {
-			private_makeError('Invalid type of parametr "Color".', false);
+			logError(new Error('Invalid type of parametr "Color".'));
 			return;
 		}
 		if (this._object instanceof ApiCharacters) {
@@ -6494,7 +6494,7 @@
 			let c = bbox.c2 < AscCommon.gc_nMaxCol0 ? bbox.c2 + 1 : bbox.c2;
 			api.asc_freezePane(null, c, r);
 		} else {
-			private_makeError('Invalid parametr "frozenRange".', false);
+			logError(new Error('Invalid parametr "frozenRange".'));
 		}
 	};
 
@@ -6513,7 +6513,7 @@
 		} else if (!!api.wb.getWorksheet().topLeftFrozenCell && count === 0) {
 			api.asc_freezePane(undefined);
 		} else {
-			private_makeError('Invalid parametr "count".', false);
+			logError(new Error('Invalid parametr "count".'));
 		}
 	};
 
@@ -6532,7 +6532,7 @@
 		} else if (!!api.wb.getWorksheet().topLeftFrozenCell && count === 0) {
 			api.asc_freezePane(undefined);
 		} else {
-			private_makeError('Invalid parametr "count".', false);
+			logError(new Error('Invalid parametr "count".'));
 		}
 	};
 
@@ -6954,12 +6954,12 @@
 	function private_AddDefName(wb, name, ref, sheetInd, hidden) {
 		let res = wb.checkDefName(name);
 		if (!res.status) {
-			private_makeError('Invalid name.', false);
+			logError(new Error('Invalid name.'));
 			return false;
 		}
 		res = wb.oApi.asc_checkDataRange(Asc.c_oAscSelectionDialogType.Chart, ref, false);
 		if (res === Asc.c_oAscError.ID.DataRangeError) {
-			private_makeError('Invalid range.', false);
+			logError(new Error('Invalid range.'));
 			return false;
 		}
 		if (sheetInd) {
@@ -7030,15 +7030,17 @@
 		return nLockType;
 	}
 
-	function private_makeError(message, bMakeThrow) {
-		let err = new Error(message);
-		if (!console.error)
+	function logError(err) {
+		if (console.error)
+			console.error(err);
+		else
 			console.log(err);
-		
-		if (!bMakeThrow && console.error)
-			console.error(err)
-		else if (bMakeThrow)
-			throw err;
+	};
+
+	function throwException(err) {
+		if (!console.error)
+			logError(err);
+		throw err;
 	};
 
 }(window, null));
