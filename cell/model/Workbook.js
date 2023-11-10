@@ -20260,7 +20260,7 @@
 	 */
 	function _fillExcelDate(nPrevVal, nStep, nDateUnit) {
 		// Convert number to cDate object
-		let oPrevValDate = new cDate().getDateFromExcel(nPrevVal);
+		let oPrevValDate = new Asc.cDate().getDateFromExcel(nPrevVal);
 
 		switch (nDateUnit) {
 			case oSeriesDateUnitType.day:
