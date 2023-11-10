@@ -583,9 +583,9 @@
 	{
 		return this.copyOutEnabled;
 	};
-	baseEditorsApi.prototype.sync_CanCopyCutCallback = function (bCanCopyCut)
+	baseEditorsApi.prototype.sync_CanCopyCutCallback = function (bCanCopyCut, bCanCut)
 	{
-		this.sendEvent("asc_onCanCopyCut", bCanCopyCut);
+		this.sendEvent("asc_onCanCopyCut", bCanCopyCut, bCanCut);
 	};
 	baseEditorsApi.prototype.can_CopyCut = function ()
 	{

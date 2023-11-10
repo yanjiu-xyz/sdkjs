@@ -676,7 +676,21 @@
 		let oViewer = this.getDocumentRenderer();
 		let oDoc = oViewer.getPDFDoc();
 
-		oViewer.file.selectAll();
+		if (oDoc.activeForm && [AscPDF.FIELD_TYPES.text, AscPDF.FIELD_TYPES.combobox].includes(oDoc.activeForm.GetType()))
+		{
+			if (oDoc.activeForm.IsNeedDrawHighlight())
+				return;
+
+			oDoc.activeForm.content.SelectAll();
+			if (oDoc.activeForm.content.IsSelectionUse())
+				this.Api.WordControl.m_oDrawingDocument.TargetEnd();
+			
+			this.onUpdateOverlay();
+		}
+		else {
+			oViewer.file.selectAll();
+		}
+		
 		oDoc.UpdateCopyCutState();
 	};
 	PDFEditorApi.prototype.asc_showComment = function(Id)
