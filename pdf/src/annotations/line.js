@@ -233,22 +233,58 @@
         let nPaddingStart;
         let nPaddingEnd;
         switch (this._lineStart) {
+            case LINE_END_TYPE.None:
+                nPaddingStart = nBasePadding;
+                break;
             case LINE_END_TYPE.OpenArrow:
                 nPaddingStart = nBasePadding;
                 break;
             case LINE_END_TYPE.Diamond:
-                nPaddingEnd = 2 * nBasePadding;
+                nPaddingStart = nBasePadding;
+                break;
+            case LINE_END_TYPE.Circle:
+                nPaddingStart = nBasePadding;
+                break;
+            case LINE_END_TYPE.ClosedArrow:
+                nPaddingStart = 4 * nBasePadding;
+                break;
+            case LINE_END_TYPE.ROpenArrow:
+                nPaddingStart = nBasePadding;
+                break;
+            case LINE_END_TYPE.RClosedArrow:
+                nPaddingStart = 4 * nBasePadding;
+                break;
+            case LINE_END_TYPE.Butt:
+                nPaddingStart = 4 * nBasePadding;
                 break;
             default:
-                nPaddingEnd = nBasePadding;
+                nPaddingStart = nBasePadding;
                 break;
         }
         switch (this._lineEnd) {
+            case LINE_END_TYPE.None:
+                nPaddingEnd = nBasePadding;
+                break;
             case LINE_END_TYPE.OpenArrow:
                 nPaddingEnd = nBasePadding;
                 break;
             case LINE_END_TYPE.Diamond:
                 nPaddingEnd = 2 * nBasePadding;
+                break;
+            case LINE_END_TYPE.Circle:
+                nPaddingEnd = nBasePadding;
+                break;
+            case LINE_END_TYPE.ClosedArrow:
+                nPaddingEnd = 4 * nBasePadding;
+                break;
+            case LINE_END_TYPE.ROpenArrow:
+                nPaddingEnd = nBasePadding;
+                break;
+            case LINE_END_TYPE.RClosedArrow:
+                nPaddingEnd = 4 * nBasePadding;
+                break;
+            case LINE_END_TYPE.Butt:
+                nPaddingEnd = 4 * nBasePadding;
                 break;
             default:
                 nPaddingEnd = nBasePadding;
@@ -320,9 +356,9 @@
         let oLine = this.pen;
         oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
     };
-    // CAnnotationLine.prototype.IsNeedDrawFromStream = function() {
-    //     return false;
-    // };
+    CAnnotationLine.prototype.IsNeedDrawFromStream = function() {
+        return false;
+    };
     CAnnotationLine.prototype.GetLinePoints = function() {
         return this._points;
     };
@@ -352,6 +388,24 @@
             case LINE_END_TYPE.Circle:
                 nLineEndType = AscFormat.LineEndType.Oval;
                 break;
+            case LINE_END_TYPE.ClosedArrow:
+                nLineEndType = AscFormat.LineEndType.Triangle;
+                break;
+            case LINE_END_TYPE.ROpenArrow:
+                nLineEndType = AscFormat.LineEndType.ReverseArrow;
+                break;
+            case LINE_END_TYPE.RClosedArrow:
+                nLineEndType = AscFormat.LineEndType.ReverseTriangle;
+                break;
+            case LINE_END_TYPE.Butt:
+                nLineEndType = AscFormat.LineEndType.Butt;
+                break;
+            case LINE_END_TYPE.Square:
+                nLineEndType = AscFormat.LineEndType.Square;
+                break;
+            case LINE_END_TYPE.Slash:
+                nLineEndType = AscFormat.LineEndType.Slash;
+                break;
             default:
                 nLineEndType = AscFormat.LineEndType.Arrow;
                 break;
@@ -379,6 +433,24 @@
                 break;
             case LINE_END_TYPE.Circle:
                 nLineEndType = AscFormat.LineEndType.Oval;
+                break;
+            case LINE_END_TYPE.ClosedArrow:
+                nLineEndType = AscFormat.LineEndType.Triangle;
+                break;
+            case LINE_END_TYPE.ROpenArrow:
+                nLineEndType = AscFormat.LineEndType.ReverseArrow;
+                break;
+            case LINE_END_TYPE.RClosedArrow:
+                nLineEndType = AscFormat.LineEndType.ReverseTriangle;
+                break;
+            case LINE_END_TYPE.Butt:
+                nLineEndType = AscFormat.LineEndType.Butt;
+                break;
+            case LINE_END_TYPE.Square:
+                nLineEndType = AscFormat.LineEndType.Square;
+                break;
+            case LINE_END_TYPE.Slash:
+                nLineEndType = AscFormat.LineEndType.Slash;
                 break;
             default:
                 nLineEndType = AscFormat.LineEndType.Arrow;
