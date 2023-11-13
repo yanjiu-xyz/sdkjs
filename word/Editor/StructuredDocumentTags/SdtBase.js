@@ -967,7 +967,7 @@ CSdtBase.prototype.SetFormValue = function(value)
 		let isChecked = value === "true" ? true : value === "false" ? false : AscBuilder.GetBoolParameter(value, false);
 		this.SetCheckBoxChecked(isChecked);
 	}
-	else if (oForm.IsPictureForm())
+	else if (this.IsPictureForm())
 	{
 		let imageId = AscBuilder.GetStringParameter(value, "");
 		if (!imageId)
