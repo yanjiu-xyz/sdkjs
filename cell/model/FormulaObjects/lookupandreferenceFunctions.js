@@ -3120,7 +3120,9 @@ function (window, undefined) {
 					elem = cacheArray[i];
 					val = elem.v;
 					if (_compareValues(valueForSearching, val, "=")) {
-						return elem.i;
+						if (!(valueForSearching.type !== cElementType.error && val.type === cElementType.error)) {
+							return elem.i;
+						}
 					}
 					opt_arg4 !== undefined && addNextOptVal(elem, valueForSearching);
 				}
@@ -3129,7 +3131,9 @@ function (window, undefined) {
 					elem = cacheArray[i];
 					val = elem.v;
 					if (_compareValues(valueForSearching, val, "=")) {
-						return elem.i;
+						if (!(valueForSearching.type !== cElementType.error && val.type === cElementType.error)) {
+							return elem.i;
+						}
 					}
 					(opt_arg4 === 1 || opt_arg4 === -1) && addNextOptVal(elem, valueForSearching);
 				}
