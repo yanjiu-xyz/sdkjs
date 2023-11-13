@@ -6021,7 +6021,45 @@
 
 		return arrResult;
 	};
-
+	/**
+	 * The specific type of the form
+	 * @typedef {("text" | "checkBox" | "picture" | "comboBox" | "dropDownList" | "dateTime" | "radio")} FormSpecificType
+	 */
+	/**
+	 * Form data
+	 * @typedef {Object} FormData
+	 * @property {string} key - The key of the form. It current form is a radiobutton then this field holds the group key.
+	 * @property {string|boolean} value - Data of the current field.
+	 * @property {string} tag - Tag of the form
+	 * @property {FormSpecificType} type - Type of the form
+	 * @example
+	 * 	{
+	 * 	  "key" : "CompanyName",
+	 * 	  "tag" : "companyName"
+	 * 	  "value" : "OnlyOffice"
+	 * 	  "type" : "text"
+	 * 	}
+	 */
+	/**
+	 * Get data from all forms present in the current document.
+	 * If any form was created by not assigned to any part of the document, it won't be present in this list.
+	 * @returns {Array.<FormData>}
+	 */
+	ApiDocument.prototype.GetFormsData = function()
+	{
+		return this.Document.GetFormsManager().GetAllFormsData();
+	};
+	/**
+	 * Set the data for specified forms.
+	 * @param {Array.<FormData>} arrData
+	 */
+	ApiDocument.prototype.SetFormsData = function(arrData)
+	{
+		if (!arrData || !Array.isArray(arrData))
+			return;
+		
+		this.Document.GetFormsManager().SetAllFormsData(arrData);
+	};
 	/**
 	 * Sets the change tracking mode.
 	 * @memberof ApiDocument
@@ -19700,6 +19738,8 @@
 	ApiDocument.prototype["GetTagsOfAllForms"]           = ApiDocument.prototype.GetTagsOfAllForms;
 	ApiDocument.prototype["GetContentControlsByTag"]     = ApiDocument.prototype.GetContentControlsByTag;
 	ApiDocument.prototype["GetFormsByTag"]               = ApiDocument.prototype.GetFormsByTag;
+	ApiDocument.prototype["GetFormsData"]                = ApiDocument.prototype.GetFormsData;
+	ApiDocument.prototype["SetFormsData"]                = ApiDocument.prototype.SetFormsData;
 	ApiDocument.prototype["SetTrackRevisions"]           = ApiDocument.prototype.SetTrackRevisions;
 	ApiDocument.prototype["IsTrackRevisions"]            = ApiDocument.prototype.IsTrackRevisions;
 	ApiDocument.prototype["GetRange"]                    = ApiDocument.prototype.GetRange;
