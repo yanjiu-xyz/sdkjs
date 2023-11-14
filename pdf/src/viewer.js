@@ -1665,13 +1665,12 @@
 			
 			// если есть заселекченная аннотация под мышкой, то возвращаем её, а не первую попавшуюся
 			if (oDoc.mouseDownAnnot) {
-				let nAnnotWidth		= (oDoc.mouseDownAnnot._origRect[2] - oDoc.mouseDownAnnot._origRect[0]);
-				let nAnnotHeight	= (oDoc.mouseDownAnnot._origRect[3] - oDoc.mouseDownAnnot._origRect[1]);
-				
-				if (pageObject.x >= oDoc.mouseDownAnnot._origRect[0] && pageObject.x <= oDoc.mouseDownAnnot._origRect[0] + nAnnotWidth &&
-					pageObject.y >= oDoc.mouseDownAnnot._origRect[1] && pageObject.y <= oDoc.mouseDownAnnot._origRect[1] + nAnnotHeight) {
-						return oDoc.mouseDownAnnot;
-					}
+				let oPos	= oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+				let X       = oPos.X;
+				let Y       = oPos.Y;
+
+				if (oDoc.mouseDownAnnot.hitInPath(X, Y))
+					return oDoc.mouseDownAnnot;
 			}
 
 			if (page.annots)

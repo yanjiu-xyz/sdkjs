@@ -10719,7 +10719,7 @@
 
 				var oTrack = this.drawingObjects.arrPreTrackObjects[0];
 				var oGeomSelection = this.drawingObjects.selection.geometrySelection;
-				if (this.hitData.getPtIdx() !== null && oGeomSelection) {
+				if (this.hitData.getPtIdx() !== null) {
 					oGeomSelection.setGmEditPointIdx(this.hitData.gmEditPointIdx);
 					var oGmEditPt = oTrack.getGmEditPt();
 					if (oGmEditPt) {
