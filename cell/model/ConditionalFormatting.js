@@ -508,7 +508,7 @@
 		return propOld;
 	};
 
-	CConditionalFormattingRule.prototype.setOffset = function(offset, range, ws, addToHistory) {
+	CConditionalFormattingRule.prototype.setOffset = function (offset, range, ws, addToHistory) {
 		var newRanges = [];
 		var isChange = false;
 
@@ -1194,7 +1194,7 @@
 			});
 		}
 	};
-	
+
 	CConditionalFormattingRule.prototype.asc_setContainsText = function (val) {
 		if (val[0] === "=") {
 			val = val.slice(1);
@@ -1239,7 +1239,7 @@
 					res = "AND(ROUNDDOWN(" + firstCellInRange + ",0)-TODAY()>(7-WEEKDAY(TODAY())),ROUNDDOWN(" + firstCellInRange + ",0)-TODAY()<(15-WEEKDAY(TODAY())))";
 					break;
 				case AscCommonExcel.ST_TimePeriod.lastMonth:
-					res = "AND(MONTH(" +firstCellInRange + ")=MONTH(EDATE(TODAY(),0-1)),YEAR(" + firstCellInRange + ")=YEAR(EDATE(TODAY(),0-1)))";
+					res = "AND(MONTH(" + firstCellInRange + ")=MONTH(EDATE(TODAY(),0-1)),YEAR(" + firstCellInRange + ")=YEAR(EDATE(TODAY(),0-1)))";
 					break;
 				case AscCommonExcel.ST_TimePeriod.thisMonth:
 					res = "AND(MONTH(" + firstCellInRange + ")=MONTH(TODAY()),YEAR(" + firstCellInRange + ")=YEAR(TODAY()))";
@@ -1961,7 +1961,7 @@
 			}
 		}
 
-		AscCommonExcel.drawGradientPreview(id, api.wb, aColors, new AscCommon.CColor(202, 202, 202)/*this.settings.cells.defaultState.border*/, this.BorderColor, isReverse ? - 0.75 : 0.75, 2);
+		AscCommonExcel.drawGradientPreview(id, api.wb, aColors, new AscCommon.CColor(202, 202, 202)/*this.settings.cells.defaultState.border*/, this.BorderColor, isReverse ? -0.75 : 0.75, 2);
 	};
 	CDataBar.prototype.asc_getShowValue = function () {
 		return this.ShowValue;
@@ -2131,7 +2131,7 @@
 			res = this._f.assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true);
 		} else if (needBuild) {
 			var oWB = Asc.editor && Asc.editor.wbModel;
-			if(oWB) {
+			if (oWB) {
 				var ws = oWB.getActiveWs();
 				if (ws) {
 					var _f = new AscCommonExcel.parserFormula(this.Text, null, ws);
@@ -2640,18 +2640,18 @@
 		var _parseResultArg;
 		var _doParseFormula = function (sFormula) {
 			_parseResultArg = null;
-			if(!(typeof sFormula === "string" && sFormula.length > 0)) {
+			if (!(typeof sFormula === "string" && sFormula.length > 0)) {
 				return;
 			}
 			if (!ws) {
 				var oWB = Asc.editor && Asc.editor.wbModel;
-				if(!oWB) {
+				if (!oWB) {
 					return;
 				}
 				ws = oWB.getWorksheet(0);
 			}
 
-			if(sFormula.charAt(0) === '=') {
+			if (sFormula.charAt(0) === '=') {
 				sFormula = sFormula.slice(1);
 			}
 
@@ -2663,7 +2663,7 @@
 		};
 
 
-		var _checkValue = function(_val, _type, _isNumeric) {
+		var _checkValue = function (_val, _type, _isNumeric) {
 			var fParser, _error;
 			switch (_type) {
 				case AscCommonExcel.ECfvoType.Formula:
@@ -2846,7 +2846,7 @@
 				val = addQuotes(val);
 			} else {
 				let oWB = Asc.editor && Asc.editor.wbModel;
-				if(oWB) {
+				if (oWB) {
 					let ws = oWB.getActiveWs();
 					if (ws) {
 						let _f = new AscCommonExcel.parserFormula(val, null, ws);
@@ -2860,7 +2860,7 @@
 		return val;
 	}
 
-	function addQuotes (val) {
+	function addQuotes(val) {
 		var _res;
 		if (val[0] === '"') {
 			_res = val.replace(/\"/g, "\"\"");
@@ -2946,7 +2946,8 @@
 	var iZeroFilledBars = 39;
 	var iTriangleRed = 40, iDashYellow = 41, iTriangleGreen = 42;
 	var iStarSilver = 43, iStarHalf = 44, iStarGold = 45;
-	var iZeroFilledBoxes = 46, iOneFilledBoxes = 47, iTwoFilledBoxes = 48, iThreeFilledBoxes = 49, iFourFilledBoxes = 50;
+	var iZeroFilledBoxes = 46, iOneFilledBoxes = 47, iTwoFilledBoxes = 48, iThreeFilledBoxes = 49,
+		iFourFilledBoxes = 50;
 
 	var c_arrIcons = [20];
 	c_arrIcons[EIconSetType.Arrows3] = [iDown, iSide, iUp];
@@ -2999,9 +3000,11 @@
 	function getFullCFIcons() {
 		return fullIconArray;
 	}
+
 	function getCFIconsByType() {
 		return c_arrIcons;
 	}
+
 	function getFullCFPresets() {
 		return conditionalFormattingPresets;
 	}
