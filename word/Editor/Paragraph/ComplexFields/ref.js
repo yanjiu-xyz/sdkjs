@@ -34,6 +34,12 @@
 
 (function(window)
 {
+	const FLAG_H = 0x01;
+	const FLAG_N = 0x02;
+	const FLAG_W = 0x04;
+	const FLAG_R = 0x08;
+	const FLAG_P = 0x10;
+	
 	/**
 	 * REF field
 	 * @constructor
@@ -43,12 +49,8 @@
 		AscWord.FieldInstructionBase.call(this);
 		
 		this.BookmarkName = "";
-		this.Hyperlink = false; // \h - is hyperlink
-		this.bIsNumberNoContext = false; // \n - paragraph number (no context)
-		this.bIsNumberFullContext = false; // \w - paragraph number (full context)
-		this.bIsNumber = false; // \r - paragraph number in relative context
-		this.bIsPosition = false; // \p - above/below
-		this.Delimiter = null;
+		this.Delimiter    = null;
+		this.flags        = 0x00;
 	}
 	FieldInstructionREF.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 	FieldInstructionREF.prototype.constructor = FieldInstructionREF;
@@ -62,29 +64,38 @@
 	{
 		return this.BookmarkName;
 	};
-	FieldInstructionREF.prototype.SetHyperlink = function(bIsHyperlink)
+	FieldInstructionREF.prototype.SetHyperlink = function(isHyperlink)
 	{
-		this.Hyperlink = bIsHyperlink;
+		if (isHyperlink)
+			this.flags |= FLAG_H;
+		else
+			this.flags &= ~FLAG_H;
 	};
 	FieldInstructionREF.prototype.GetHyperlink = function()
 	{
-		return this.Hyperlink;
+		return !!(this.flags & FLAG_H);
 	};
 	FieldInstructionREF.prototype.SetIsNumberNoContext = function(bVal)
 	{
-		this.bIsNumberNoContext = bVal;
+		if (bVal)
+			this.flags |= FLAG_N;
+		else
+			this.flags &= ~FLAG_N;
 	};
 	FieldInstructionREF.prototype.IsNumberNoContext = function()
 	{
-		return this.bIsNumberNoContext;
+		return !!(this.flags & FLAG_N);
 	};
 	FieldInstructionREF.prototype.SetIsNumberFullContext = function(bVal)
 	{
-		this.bIsNumberFullContext = bVal;
+		if (bVal)
+			this.flags |= FLAG_W;
+		else
+			this.flags &= ~FLAG_W;
 	};
 	FieldInstructionREF.prototype.IsNumberFullContext = function()
 	{
-		return this.bIsNumberFullContext;
+		return !!(this.flags & FLAG_W);
 	};
 	FieldInstructionREF.prototype.HaveNumberFlag = function()
 	{
@@ -92,19 +103,25 @@
 	};
 	FieldInstructionREF.prototype.SetIsNumber = function(bVal)
 	{
-		this.bIsNumber = bVal;
+		if (bVal)
+			this.flags |= FLAG_R;
+		else
+			this.flags &= ~FLAG_R;
 	};
 	FieldInstructionREF.prototype.IsNumber = function()
 	{
-		return this.bIsNumber;
+		return !!(this.flags & FLAG_R);
 	};
 	FieldInstructionREF.prototype.SetIsPosition = function(bVal)
 	{
-		this.bIsPosition = bVal;
+		if (bVal)
+			this.flags |= FLAG_P;
+		else
+			this.flags &= ~FLAG_P;
 	};
 	FieldInstructionREF.prototype.IsPosition = function()
 	{
-		return this.bIsPosition;
+		return !!(this.flags & FLAG_P);
 	};
 	FieldInstructionREF.prototype.SetDelimiter = function(bVal)
 	{
@@ -174,35 +191,24 @@
 		let result = " REF ";
 		result += this.BookmarkName;
 		
-		if(this.GetHyperlink())
-		{
+		if (this.GetHyperlink())
 			result += " \\h";
-		}
-		if(this.IsNumberNoContext())
-		{
-			result += " \\n";
-		}
-		if(this.IsNumberFullContext())
-		{
-			result += " \\w";
-		}
-		if(this.IsNumber())
-		{
-			result += " \\r"
-		}
-		if(this.IsPosition())
-		{
-			result += " \\p";
-		}
-		if(typeof this.Delimiter === "string" && this.Delimiter.length > 0)
-		{
-			result += " \\d " + this.Delimiter;
-		}
 		
-		result += this.GeneralSwitchesToString();
+		if (this.IsNumber())
+			result += " \\r"
+		else if (this.IsNumberNoContext())
+			result += " \\n";
+		else if (this.IsNumberFullContext())
+			result += " \\w";
+		
+		if (this.IsPosition())
+			result += " \\p";
+		
+		if (typeof this.Delimiter === "string" && this.Delimiter.length > 0)
+			result += " \\d " + this.Delimiter;
+		
 		return result;
 	};
-	
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].FieldInstructionREF = FieldInstructionREF;
