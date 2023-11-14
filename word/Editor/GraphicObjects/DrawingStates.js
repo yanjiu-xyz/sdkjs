@@ -796,37 +796,8 @@ RotateState.prototype =
 
                         // для аннотации линии свой расчет ректа и точек, потому что меняем саму геометрию при редактировании
                         if (oTrack.originalObject.IsLine()) {
-                            let oPaddings   = oTrack.originalObject.GetPaddings();
-                            let aPaths      = oTrack.geometry.pathLst[0].ArrPathCommand;
-
-                            let nLeft, nTop, nRight, nBottom;
                             
-                            // bounds идут по ректу геометрии, отступы от геометрии считаем сами
-                            if (aPaths[0].X < aPaths[1].X) {
-                                nLeft = -oPaddings.lineStart * g_dKoef_mm_to_pix;
-                                nRight = oPaddings.lineEnd * g_dKoef_mm_to_pix;
-                            }
-                            else {
-                                nLeft = -oPaddings.lineEnd * g_dKoef_mm_to_pix;
-                                nRight = oPaddings.lineStart * g_dKoef_mm_to_pix;
-                            }
-                            if (aPaths[0].Y < aPaths[1].Y) {
-                                nTop = -oPaddings.lineStart * g_dKoef_mm_to_pix;
-                                nBottom = oPaddings.lineEnd * g_dKoef_mm_to_pix;
-                            }
-                            else {
-                                nTop = -oPaddings.lineEnd * g_dKoef_mm_to_pix;
-                                nBottom = oPaddings.lineStart * g_dKoef_mm_to_pix;
-                            }
-
-                            if (Math.abs(aPaths[0].X * g_dKoef_mm_to_pix - aPaths[1].X * g_dKoef_mm_to_pix) < Math.max(oPaddings.lineStart * g_dKoef_mm_to_pix, oPaddings.lineEnd * g_dKoef_mm_to_pix)) {
-                                nLeft    = -Math.max(oPaddings.lineStart * g_dKoef_mm_to_pix, oPaddings.lineEnd * g_dKoef_mm_to_pix);
-                                nRight = Math.max(oPaddings.lineStart * g_dKoef_mm_to_pix, oPaddings.lineEnd * g_dKoef_mm_to_pix);
-                            }
-                            if (Math.abs(aPaths[0].Y * g_dKoef_mm_to_pix - aPaths[1].Y * g_dKoef_mm_to_pix) < Math.max(oPaddings.lineStart * g_dKoef_mm_to_pix, oPaddings.lineEnd * g_dKoef_mm_to_pix)) {
-                                nTop    = -Math.max(oPaddings.lineStart * g_dKoef_mm_to_pix, oPaddings.lineEnd * g_dKoef_mm_to_pix);
-                                nBottom = Math.max(oPaddings.lineStart * g_dKoef_mm_to_pix, oPaddings.lineEnd * g_dKoef_mm_to_pix);
-                            }
+                            let aPaths = oTrack.geometry.pathLst[0].ArrPathCommand;
 
                             let nPage = oTrack.originalObject.GetPage();
                             let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
@@ -840,15 +811,10 @@ RotateState.prototype =
                             aLinePoints.push(oTranform.TransformPointX(aPaths[1].X, 0) * g_dKoef_mm_to_pix / nScaleX)
                             aLinePoints.push(oTranform.TransformPointY(0, aPaths[1].Y) * g_dKoef_mm_to_pix / nScaleY)
 
-                            aRect[0] = aRect[0] + nLeft;
-                            aRect[1] = aRect[1] + nTop;
-                            aRect[2] = aRect[2] + nRight;
-                            aRect[3] = aRect[3] + nBottom;
-
-                            oTrack.originalObject.SetRect(aRect);
-                            
-                            oDoc.TurnOnHistory();
                             oTrack.originalObject.SetLinePoints(aLinePoints);
+                            oTrack.originalObject.SetRect(oTrack.originalObject.GetMinShapeRect());
+
+                            oDoc.TurnOnHistory();
                         }
                         else {
                             oTrack.originalObject.SetRect(aRect);

@@ -227,73 +227,71 @@
     CAnnotationLine.prototype.IsLine = function() {
         return true;
     };
-    CAnnotationLine.prototype.GetPaddings = function() {
-        let nBasePadding = this.GetWidth() * g_dKoef_pt_to_mm * 1.2;
+    CAnnotationLine.prototype.GetMinShapeRect = function() {
+        let oViewer     = editor.getDocumentRenderer();
+        let nLineWidth  = this.GetWidth() * g_dKoef_pt_to_mm * g_dKoef_mm_to_pix;
+        let aPoints     = this.GetLinePoints();
+        let nPage       = this.GetPage();
 
-        let nPaddingStart;
-        let nPaddingEnd;
-        switch (this._lineStart) {
-            case LINE_END_TYPE.None:
-                nPaddingStart = nBasePadding;
-                break;
-            case LINE_END_TYPE.OpenArrow:
-                nPaddingStart = nBasePadding;
-                break;
-            case LINE_END_TYPE.Diamond:
-                nPaddingStart = nBasePadding;
-                break;
-            case LINE_END_TYPE.Circle:
-                nPaddingStart = nBasePadding;
-                break;
-            case LINE_END_TYPE.ClosedArrow:
-                nPaddingStart = 4 * nBasePadding;
-                break;
-            case LINE_END_TYPE.ROpenArrow:
-                nPaddingStart = nBasePadding;
-                break;
-            case LINE_END_TYPE.RClosedArrow:
-                nPaddingStart = 4 * nBasePadding;
-                break;
-            case LINE_END_TYPE.Butt:
-                nPaddingStart = 4 * nBasePadding;
-                break;
-            default:
-                nPaddingStart = nBasePadding;
-                break;
+        let nScaleY = oViewer.drawingPages[nPage].H / oViewer.file.pages[nPage].H / oViewer.zoom;
+        let nScaleX = oViewer.drawingPages[nPage].W / oViewer.file.pages[nPage].W / oViewer.zoom;
+
+        let shapeAtStart    = getFigureSize(this.GetLineStart(), nLineWidth);
+        let shapeAtEnd      = getFigureSize(this.GetLineEnd(), nLineWidth);
+
+        function calculateBoundingRectangle(line, figure1, figure2) {
+            const {x1, y1, x2, y2} = line;
+        
+            // Расчет угла поворота в радианах
+            const angle = Math.atan2(y2 - y1, x2 - x1);
+        
+            function rotatePoint(cx, cy, angle, px, py) {
+                var cos = Math.cos(angle),
+                    sin = Math.sin(angle),
+                    nx = (sin * (px - cx)) + (cos * (py - cy)) + cx,
+                    ny = (sin * (py - cy)) - (cos * (px - cx)) + cy;
+                return {x: nx, y: ny};
+            }
+            
+            function getRectangleCorners(cx, cy, width, height, angle) {
+                var halfWidth = width / 2;
+                var halfHeight = height / 2;
+            
+                // Углы прямоугольника до поворота
+                var corners = [
+                    {x: cx - halfWidth, y: cy - halfHeight}, // верхний левый
+                    {x: cx + halfWidth, y: cy - halfHeight}, // верхний правый
+                    {x: cx + halfWidth, y: cy + halfHeight}, // нижний правый
+                    {x: cx - halfWidth, y: cy + halfHeight}  // нижний левый
+                ];
+            
+                // Поворачиваем каждую точку
+                return corners.map(function(point) {
+                    return rotatePoint(cx, cy, angle, point.x, point.y);
+                });
+            }
+        
+            const cornersFigure1 = getRectangleCorners(x1, y1, figure1.width, figure1.height, angle);
+            const cornersFigure2 = getRectangleCorners(x2, y2, figure2.width, figure2.height, angle);
+
+            // Находим минимальные и максимальные координаты
+            let minX = Math.min(x1, x2);
+            let maxX = Math.max(x1, x2);
+            let minY = Math.min(y1, y2);
+            let maxY = Math.max(y1, y2);
+
+            [...cornersFigure1, ...cornersFigure2].forEach(point => {
+                minX = Math.min(minX, point.x);
+                maxX = Math.max(maxX, point.x);
+                minY = Math.min(minY, point.y);
+                maxY = Math.max(maxY, point.y);
+            });
+        
+            // Возвращаем координаты прямоугольника
+            return [minX * nScaleX, minY * nScaleY, maxX * nScaleX, maxY * nScaleY];
         }
-        switch (this._lineEnd) {
-            case LINE_END_TYPE.None:
-                nPaddingEnd = nBasePadding;
-                break;
-            case LINE_END_TYPE.OpenArrow:
-                nPaddingEnd = nBasePadding;
-                break;
-            case LINE_END_TYPE.Diamond:
-                nPaddingEnd = 2 * nBasePadding;
-                break;
-            case LINE_END_TYPE.Circle:
-                nPaddingEnd = nBasePadding;
-                break;
-            case LINE_END_TYPE.ClosedArrow:
-                nPaddingEnd = 4 * nBasePadding;
-                break;
-            case LINE_END_TYPE.ROpenArrow:
-                nPaddingEnd = nBasePadding;
-                break;
-            case LINE_END_TYPE.RClosedArrow:
-                nPaddingEnd = 4 * nBasePadding;
-                break;
-            case LINE_END_TYPE.Butt:
-                nPaddingEnd = 4 * nBasePadding;
-                break;
-            default:
-                nPaddingEnd = nBasePadding;
-                break;
-        }
-        return {
-            lineStart: nPaddingStart,
-            lineEnd: nPaddingEnd
-        }
+
+        return calculateBoundingRectangle({x1: aPoints[0], y1: aPoints[1], x2: aPoints[2], y2: aPoints[3]}, shapeAtStart, shapeAtEnd);
     };
     CAnnotationLine.prototype.SetRect = function(aRect) {
         let oViewer     = editor.getDocumentRenderer();
@@ -705,6 +703,49 @@
         }
 
         return [xMin, yMin, xMax, yMax];
+    }
+
+    function getFigureSize(nType, nLineW) {
+        let oSize = {width: 0, height: 0};
+
+        switch (nType) {
+            case LINE_END_TYPE.None:
+                oSize.width = nLineW;
+                oSize.height = nLineW;
+            case LINE_END_TYPE.OpenArrow:
+            case LINE_END_TYPE.ClosedArrow:
+                oSize.width = 4 * nLineW;
+                oSize.height = 2 * nLineW;
+                break;
+            case LINE_END_TYPE.Diamond:
+            case LINE_END_TYPE.Square:
+                oSize.width = 4 * nLineW;
+                oSize.height = 4 * nLineW;
+                break;
+            case LINE_END_TYPE.Circle:
+                oSize.width = 4 * nLineW;
+                oSize.height = 4 * nLineW;
+                break;
+            case LINE_END_TYPE.RClosedArrow:
+                oSize.width = 6 * nLineW;
+                oSize.height = 6 * nLineW;
+                break;
+            case LINE_END_TYPE.ROpenArrow:
+                oSize.width = 5 * nLineW;
+                oSize.height = 5 * nLineW;
+                break;
+            case LINE_END_TYPE.Butt:
+                oSize.width = 5 * nLineW;
+                oSize.height = 1.5 * nLineW;
+                break;
+            case LINE_END_TYPE.Slash:
+                oSize.width = 4 * nLineW;
+                oSize.height = 3.5 * nLineW;
+                break;
+            
+        }
+
+        return oSize;
     }
 
     function TurnOffHistory() {
