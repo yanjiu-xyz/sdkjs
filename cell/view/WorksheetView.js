@@ -26375,6 +26375,12 @@
 					cSerial.setFromRange(oRangeModel);
 					cSerial.exec();
 				}
+
+				//update
+				for (let i = 0; i < aRanges.length; i++) {
+					wsView._updateRange(aRanges[i]);
+				}
+				wsView.draw();
 			});
 		}
 	};

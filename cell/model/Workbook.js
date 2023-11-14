@@ -20154,8 +20154,6 @@
 						nCol = nCol0;
 						return true; // break loop
 					}
-				} else {
-					return true;
 				}
 			});
 			oFilledRange.bbox.r2 = nRow;
