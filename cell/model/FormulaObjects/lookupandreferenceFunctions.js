@@ -606,28 +606,58 @@ function (window, undefined) {
 	cCHOOSE.prototype.name = 'CHOOSE';
 	cCHOOSE.prototype.argumentsMin = 2;
 	cCHOOSE.prototype.argumentsMax = 30;
+	// todo add arrayIndex to all n-arguments (in array)
+	cCHOOSE.prototype.arrayIndexes = {0: 1, 1: 1, 2: 1, 3: 1, 4: 1};
 	cCHOOSE.prototype.argumentsType = [argType.number, [argType.any]];
 	cCHOOSE.prototype.Calculate = function (arg) {
-		var arg0 = arg[0];
+		const args = arguments;
+		let arg0 = arg[0];
 
-		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-			arg0 = arg0.cross(arguments[1]);
-		}
-		arg0 = arg0.tocNumber();
+		const chooseArgument = function (_arg0) {
+			if (cElementType.cellsRange === _arg0.type || cElementType.cellsRange3D === _arg0.type) {
+				_arg0 = _arg0.cross(args[1]);
+			}
+	
+			_arg0 = _arg0.tocNumber();
+			if (cElementType.error === _arg0.type) {
+				return _arg0;
+			}
+	
+			if (cElementType.number === _arg0.type) {
+				_arg0 = Math.floor(_arg0.getValue());
+				if (_arg0 < 1 || _arg0 > arg.length - 1) {
+					return new cError(cErrorType.wrong_value_type);
+				}
 
-		if (cElementType.error === arg0.type) {
-			return arg0;
-		}
-
-		if (cElementType.number === arg0.type) {
-			if (arg0.getValue() < 1 || arg0.getValue() > arg.length - 1) {
-				return new cError(cErrorType.wrong_value_type);
+				let returnVal = arg[Math.floor(_arg0)];
+				if (returnVal.type === cElementType.cell || returnVal.type === cElementType.cell3D) {
+					returnVal = returnVal.getValue();
+				} else if (returnVal.type === cElementType.cellsRange || returnVal.type === cElementType.cellsRange3D) {
+					returnVal = returnVal.cross(args[1]);
+				}
+	
+				return returnVal;
 			}
 
-			return arg[Math.floor(arg0.getValue())];
+			return new cError(cErrorType.wrong_value_type);
 		}
 
-		return new cError(cErrorType.wrong_value_type);
+		if (cElementType.array === arg0.type) {
+			// go through the array and return result for each element
+			let resArr = new cArray();
+			arg0.foreach(function(elem, r, c) {
+				if (!resArr.array[r]) {
+					resArr.addRow();
+				}
+
+				let res = chooseArgument(elem);
+				resArr.addElement(res);
+			});
+			return resArr;
+		}
+
+		return chooseArgument(arg0);
+
 	};
 
 	function chooseRowsCols(arg, argument1, byCol) {
