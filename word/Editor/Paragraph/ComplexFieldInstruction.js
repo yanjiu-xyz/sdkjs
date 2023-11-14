@@ -83,7 +83,7 @@ window['AscCommonWord'].fieldtype_ADDIN      = fieldtype_ADDIN;
 */
 function CFieldInstructionFORMULA()
 {
-	CFieldInstructionBase.call(this);
+	AscWord.FieldInstructionBase.call(this);
 	this.ParseQueue = null;
 	this.Error = null;
 	this.ErrStr = null;
@@ -92,7 +92,7 @@ function CFieldInstructionFORMULA()
 	this.ParentContent = null;
 }
 
-CFieldInstructionFORMULA.prototype = Object.create(CFieldInstructionBase.prototype);
+CFieldInstructionFORMULA.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionFORMULA.prototype.constructor = CFieldInstructionFORMULA;
 CFieldInstructionFORMULA.prototype.Type = fieldtype_FORMULA;
 CFieldInstructionFORMULA.prototype.SetFormat = function(oFormat)
@@ -184,7 +184,7 @@ CFieldInstructionFORMULA.prototype.private_Calculate = function (oLogicDocument)
 };
 
 CFieldInstructionFORMULA.prototype.SetComplexField = function(oComplexField){
-	CFieldInstructionBase.prototype.SetComplexField.call(this, oComplexField);
+	AscWord.FieldInstructionBase.prototype.SetComplexField.call(this, oComplexField);
 	this.ParentContent = null;
 	var oBeginChar = oComplexField.BeginChar;
 	if(oBeginChar)
@@ -207,10 +207,10 @@ CFieldInstructionFORMULA.prototype.SetComplexField = function(oComplexField){
  */
 function CFieldInstructionPAGE()
 {
-	CFieldInstructionBase.call(this);
+	AscWord.FieldInstructionBase.call(this);
 }
 
-CFieldInstructionPAGE.prototype = Object.create(CFieldInstructionBase.prototype);
+CFieldInstructionPAGE.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionPAGE.prototype.constructor = CFieldInstructionPAGE;
 CFieldInstructionPAGE.prototype.Type = fieldtype_PAGE;
 
@@ -220,14 +220,14 @@ CFieldInstructionPAGE.prototype.Type = fieldtype_PAGE;
  */
 function CFieldInstructionPAGEREF(sBookmarkName, isHyperlink, isPositionRelative)
 {
-	CFieldInstructionBase.call(this);
+	AscWord.FieldInstructionBase.call(this);
 
 	this.BookmarkName = sBookmarkName ? sBookmarkName : "";
 	this.Hyperlink    = isHyperlink ? true : false;
 	this.PosRelative  = isPositionRelative ? true : false;
 }
 
-CFieldInstructionPAGEREF.prototype = Object.create(CFieldInstructionBase.prototype);
+CFieldInstructionPAGEREF.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionPAGEREF.prototype.constructor = CFieldInstructionPAGEREF;
 CFieldInstructionPAGEREF.prototype.Type = fieldtype_PAGEREF;
 CFieldInstructionPAGEREF.prototype.SetHyperlink = function(isHyperlink)
@@ -257,7 +257,7 @@ CFieldInstructionPAGEREF.prototype.GetBookmarkName = function()
  */
 function CFieldInstructionTOC()
 {
-	CFieldInstructionBase.call(this);
+	AscWord.FieldInstructionBase.call(this);
 
 	this.PreserveTabs     = false;
 	this.RemoveBreaks     = true;
@@ -274,7 +274,7 @@ function CFieldInstructionTOC()
 	this.CaptionOnlyText  = undefined;
 }
 
-CFieldInstructionTOC.prototype = Object.create(CFieldInstructionBase.prototype);
+CFieldInstructionTOC.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionTOC.prototype.constructor = CFieldInstructionTOC;
 CFieldInstructionTOC.prototype.Type = fieldtype_TOC;
 CFieldInstructionTOC.prototype.IsPreserveTabs = function()
@@ -538,12 +538,12 @@ CFieldInstructionTOC.prototype.IsTableOfContents = function ()
  */
 function CFieldInstructionASK()
 {
-	CFieldInstructionBase.call(this);
+	AscWord.FieldInstructionBase.call(this);
 
 	this.BookmarkName = "";
 	this.PromptText   = "";
 }
-CFieldInstructionASK.prototype = Object.create(CFieldInstructionBase.prototype);
+CFieldInstructionASK.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionASK.prototype.constructor = CFieldInstructionASK;
 CFieldInstructionASK.prototype.Type = fieldtype_ASK;
 CFieldInstructionASK.prototype.SetBookmarkName = function(sBookmarkName)
@@ -572,7 +572,7 @@ CFieldInstructionASK.prototype.GetPromptText = function()
  */
 function CFieldInstructionREF()
 {
-	CFieldInstructionBase.call(this);
+	AscWord.FieldInstructionBase.call(this);
 
 	this.BookmarkName = "";
 	this.Hyperlink = false; // \h - is hyperlink
@@ -582,7 +582,7 @@ function CFieldInstructionREF()
 	this.bIsPosition = false; // \p - above/below
 	this.Delimiter = null;
 }
-CFieldInstructionREF.prototype = Object.create(CFieldInstructionBase.prototype);
+CFieldInstructionREF.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionREF.prototype.constructor = CFieldInstructionREF;
 CFieldInstructionREF.prototype.Type = fieldtype_REF;
 
@@ -738,9 +738,9 @@ CFieldInstructionREF.prototype.GetToolTip = function()
  */
 function CFieldInstructionNUMPAGES()
 {
-	CFieldInstructionBase.call(this);
+	AscWord.FieldInstructionBase.call(this);
 }
-CFieldInstructionNUMPAGES.prototype = Object.create(CFieldInstructionBase.prototype);
+CFieldInstructionNUMPAGES.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionNUMPAGES.prototype.constructor = CFieldInstructionNUMPAGES;
 CFieldInstructionNUMPAGES.prototype.Type = fieldtype_NUMPAGES;
 
@@ -750,13 +750,13 @@ CFieldInstructionNUMPAGES.prototype.Type = fieldtype_NUMPAGES;
  */
 function CFieldInstructionHYPERLINK()
 {
-	CFieldInstructionBase.call(this);
+	AscWord.FieldInstructionBase.call(this);
 
 	this.ToolTip      = "";
 	this.Link         = "";
 	this.BookmarkName = "";
 }
-CFieldInstructionHYPERLINK.prototype = Object.create(CFieldInstructionBase.prototype);
+CFieldInstructionHYPERLINK.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionHYPERLINK.prototype.constructor = CFieldInstructionHYPERLINK;
 CFieldInstructionHYPERLINK.prototype.Type = fieldtype_HYPERLINK;
 CFieldInstructionHYPERLINK.prototype.SetToolTip = function(sToolTip)
@@ -836,11 +836,11 @@ CFieldInstructionHYPERLINK.prototype.IsTopOfDocument = function()
  */
 function CFieldInstructionTIME()
 {
-	CFieldInstructionBase.call(this);
+	AscWord.FieldInstructionBase.call(this);
 
 	this.Format = "";
 }
-CFieldInstructionTIME.prototype = Object.create(CFieldInstructionBase.prototype);
+CFieldInstructionTIME.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionTIME.prototype.constructor = CFieldInstructionTIME;
 CFieldInstructionTIME.prototype.Type = fieldtype_TIME;
 CFieldInstructionTIME.prototype.ToString = function()
@@ -862,11 +862,11 @@ CFieldInstructionTIME.prototype.GetFormat = function()
  */
 function CFieldInstructionDATE()
 {
-	CFieldInstructionBase.call(this);
+	AscWord.FieldInstructionBase.call(this);
 
 	this.Format = "";
 }
-CFieldInstructionDATE.prototype = Object.create(CFieldInstructionBase.prototype);
+CFieldInstructionDATE.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionDATE.prototype.constructor = CFieldInstructionDATE;
 CFieldInstructionDATE.prototype.Type = fieldtype_DATE;
 CFieldInstructionDATE.prototype.ToString = function()
@@ -888,7 +888,7 @@ CFieldInstructionDATE.prototype.GetFormat = function()
 function CFieldInstructionSEQ()
 {
 
-	CFieldInstructionBase.call(this);
+	AscWord.FieldInstructionBase.call(this);
 	this.Id = null;
 	this.C = false;
 	this.H = false;
@@ -900,7 +900,7 @@ function CFieldInstructionSEQ()
 
 	this.ParentContent = null;
 }
-CFieldInstructionSEQ.prototype = Object.create(CFieldInstructionBase.prototype);
+CFieldInstructionSEQ.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionSEQ.prototype.constructor = CFieldInstructionSEQ;
 CFieldInstructionSEQ.prototype.Type = fieldtype_SEQ;
 CFieldInstructionSEQ.prototype.ToString = function ()
@@ -934,7 +934,7 @@ CFieldInstructionSEQ.prototype.ToString = function ()
 };
 CFieldInstructionSEQ.prototype.SetComplexField = function (oComplexField)
 {
-	CFieldInstructionBase.prototype.SetComplexField.call(this, oComplexField);
+	AscWord.FieldInstructionBase.prototype.SetComplexField.call(this, oComplexField);
 	this.ParentContent = null;
 	var oBeginChar = oComplexField.BeginChar;
 	if(oBeginChar)
@@ -1134,7 +1134,7 @@ function GeneralToNumFormat(sFormat)
 function CFieldInstructionSTYLEREF()
 {
 
-	CFieldInstructionBase.call(this);
+	AscWord.FieldInstructionBase.call(this);
 	this.StyleName = null;
 	this.L = null;
 	this.N = null;
@@ -1147,7 +1147,7 @@ function CFieldInstructionSTYLEREF()
 	this.ParentContent = null;
 	this.ParentParagraph = null;
 }
-CFieldInstructionSTYLEREF.prototype = Object.create(CFieldInstructionBase.prototype);
+CFieldInstructionSTYLEREF.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionSTYLEREF.prototype.constructor = CFieldInstructionSTYLEREF;
 CFieldInstructionSTYLEREF.prototype.Type = fieldtype_STYLEREF;
 CFieldInstructionSTYLEREF.prototype.SetL = function(v){this.L = v;};
@@ -1370,7 +1370,7 @@ CFieldInstructionSTYLEREF.prototype.ToString = function()
 };
 CFieldInstructionSTYLEREF.prototype.SetComplexField = function (oComplexField)
 {
-	CFieldInstructionBase.prototype.SetComplexField.call(this, oComplexField);
+	AscWord.FieldInstructionBase.prototype.SetComplexField.call(this, oComplexField);
 	this.ParentContent = null;
 	var oBeginChar = oComplexField.BeginChar;
 	if(oBeginChar)
@@ -1395,7 +1395,7 @@ CFieldInstructionSTYLEREF.prototype.SetComplexField = function (oComplexField)
  */
 function CFieldInstructionNOTEREF()
 {
-	CFieldInstructionBase.call(this);
+	AscWord.FieldInstructionBase.call(this);
 
 	this.GeneralSwitches = [];
 	this.BookmarkName = "";
@@ -1403,7 +1403,7 @@ function CFieldInstructionNOTEREF()
 	this.bIsPosition = false; // \p - above/below
 	this.bFormatting = false; // \p - format as notes or endnotes
 }
-CFieldInstructionNOTEREF.prototype = Object.create(CFieldInstructionBase.prototype);
+CFieldInstructionNOTEREF.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionNOTEREF.prototype.constructor = CFieldInstructionNOTEREF;
 CFieldInstructionNOTEREF.prototype.Type = fieldtype_NOTEREF;
 

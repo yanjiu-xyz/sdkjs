@@ -38,13 +38,13 @@
 	 * Данный класс не предназначен для использования в
 	 * FORMTEXT field
 	 * @constructor
-	 * @extends AscWord.CFieldInstructionBase
+	 * @extends AscWord.FieldInstructionBase
 	 */
 	function CFieldInstructionFORMTEXT()
 	{
-		AscWord.CFieldInstructionBase.call(this);
+		AscWord.FieldInstructionBase.call(this);
 	}
-	CFieldInstructionFORMTEXT.prototype = Object.create(AscWord.CFieldInstructionBase.prototype);
+	CFieldInstructionFORMTEXT.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 	CFieldInstructionFORMTEXT.prototype.constructor = CFieldInstructionFORMTEXT;
 	CFieldInstructionFORMTEXT.prototype.Type = fieldtype_FORMTEXT;
 	

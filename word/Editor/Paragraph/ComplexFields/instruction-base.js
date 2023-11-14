@@ -36,48 +36,47 @@
 {
 	const FLAGS_MERGEFORMAT = 0x00000001;
 	
-	
 	/**
 	 * Base class for complex field instruction
 	 * @constructor
 	 */
-	function CFieldInstructionBase()
+	function FieldInstructionBase()
 	{
 		this.ComplexField    = null;
 		this.InstructionLine = "";
 		this.generalSwitches = 0x0000;
 	}
-	CFieldInstructionBase.prototype.Type = fieldtype_UNKNOWN;
-	CFieldInstructionBase.prototype.GetType = function()
+	FieldInstructionBase.prototype.Type = fieldtype_UNKNOWN;
+	FieldInstructionBase.prototype.GetType = function()
 	{
 		return this.Type;
 	};
-	CFieldInstructionBase.prototype.SetComplexField = function(oComplexField)
+	FieldInstructionBase.prototype.SetComplexField = function(oComplexField)
 	{
 		this.ComplexField = oComplexField;
 	};
-	CFieldInstructionBase.prototype.GetComplexField = function()
+	FieldInstructionBase.prototype.GetComplexField = function()
 	{
 		return this.ComplexField;
 	};
-	CFieldInstructionBase.prototype.ToString = function()
+	FieldInstructionBase.prototype.ToString = function()
 	{
 		let result = this.writeField();
 		result += this.writeGeneralSwitches();
 		return result;
 	};
-	CFieldInstructionBase.prototype.SetPr = function()
+	FieldInstructionBase.prototype.SetPr = function()
 	{
 	};
-	CFieldInstructionBase.prototype.SetInstructionLine = function(sLine)
+	FieldInstructionBase.prototype.SetInstructionLine = function(sLine)
 	{
 		this.InstructionLine = sLine;
 	};
-	CFieldInstructionBase.prototype.CheckInstructionLine = function(sLine)
+	FieldInstructionBase.prototype.CheckInstructionLine = function(sLine)
 	{
 		return (this.InstructionLine === sLine);
 	};
-	CFieldInstructionBase.prototype.setGeneralSwitches = function(switches)
+	FieldInstructionBase.prototype.setGeneralSwitches = function(switches)
 	{
 		if (switches || !switches.length)
 			return;
@@ -88,18 +87,18 @@
 				this.GeneralSwitches |= FLAGS_MERGEFORMAT;
 		}
 	};
-	CFieldInstructionBase.prototype.isMergeFormat = function()
+	FieldInstructionBase.prototype.isMergeFormat = function()
 	{
 		return this.generalSwitches & FLAGS_MERGEFORMAT;
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	CFieldInstructionBase.prototype.writeField = function()
+	FieldInstructionBase.prototype.writeField = function()
 	{
 		// This method must be overridden
 	};
-	CFieldInstructionBase.prototype.writeGeneralSwitches = function()
+	FieldInstructionBase.prototype.writeGeneralSwitches = function()
 	{
 		let result = "";
 		
@@ -110,6 +109,6 @@
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
-	window['AscWord'].CFieldInstructionBase = CFieldInstructionBase;
+	window['AscWord'].FieldInstructionBase = FieldInstructionBase;
 	
 })(window);
