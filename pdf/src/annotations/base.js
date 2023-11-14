@@ -896,7 +896,6 @@
         let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
 
         oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
-        oDrawingObjects.startEditGeometry();
     };
     CAnnotationBase.prototype.createMoveTrack = function() {
         return new AscFormat.MoveAnnotationTrack(this);

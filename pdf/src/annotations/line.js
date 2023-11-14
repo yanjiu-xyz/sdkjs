@@ -188,6 +188,22 @@
     CAnnotationLine.prototype.GetLinePoints = function() {
         return this._points;
     };
+    CAnnotationLine.prototype.onMouseDown = function(e) {
+        let oViewer         = editor.getDocumentRenderer();
+        let oDrawingObjects = oViewer.DrawingObjects;
+        let oDoc            = this.GetDocument();
+        let oDrDoc          = oDoc.GetDrawingDocument();
+
+        this.selectStartPage = this.GetPage();
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
+        let X       = oPos.X;
+        let Y       = oPos.Y;
+
+        let pageObject = oViewer.getPageByCoords3(AscCommon.global_mouseEvent.X - oViewer.x, AscCommon.global_mouseEvent.Y - oViewer.y);
+
+        oDrawingObjects.OnMouseDown(e, X, Y, pageObject.index);
+        oDrawingObjects.startEditGeometry();
+    }
     CAnnotationLine.prototype.LazyCopy = function() {
         let oDoc = this.GetDocument();
         oDoc.TurnOffHistory();

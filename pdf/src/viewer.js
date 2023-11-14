@@ -1655,20 +1655,33 @@
 		};
 		this.getPageAnnotByMouse = function(bGetHidden)
 		{
-			let oDrDoc = this.getPDFDoc().GetDrawingDocument();
+			let oDoc = this.getPDFDoc();
+			let oDrDoc = oDoc.GetDrawingDocument();
 			var pageObject = this.getPageByCoords(AscCommon.global_mouseEvent.X - this.x, AscCommon.global_mouseEvent.Y - this.y);
 			if (!pageObject)
 				return null;
 
 			var page = this.pagesInfo.pages[pageObject.index];
+			
+			// если есть заселекченная аннотация под мышкой, то возвращаем её, а не первую попавшуюся
+			if (oDoc.mouseDownAnnot) {
+				let nAnnotWidth		= (oDoc.mouseDownAnnot._origRect[2] - oDoc.mouseDownAnnot._origRect[0]);
+				let nAnnotHeight	= (oDoc.mouseDownAnnot._origRect[3] - oDoc.mouseDownAnnot._origRect[1]);
+				
+				if (pageObject.x >= oDoc.mouseDownAnnot._origRect[0] && pageObject.x <= oDoc.mouseDownAnnot._origRect[0] + nAnnotWidth &&
+					pageObject.y >= oDoc.mouseDownAnnot._origRect[1] && pageObject.y <= oDoc.mouseDownAnnot._origRect[1] + nAnnotHeight) {
+						return oDoc.mouseDownAnnot;
+					}
+			}
+
 			if (page.annots)
 			{
 				// сначала ищем text annot (sticky note)
 				for (var i = page.annots.length -1; i >= 0; i--)
 				{
 					let oAnnot = page.annots[i];
-					let nAnnotWidth		= Math.max(page.annots[i]._origRect[2] - page.annots[i]._origRect[0], 32) / (this.zoom * AscCommon.AscBrowser.retinaPixelRatio);
-					let nAnnotHeight	= Math.max(page.annots[i]._origRect[3] - page.annots[i]._origRect[1], 32) / (this.zoom * AscCommon.AscBrowser.retinaPixelRatio);
+					let nAnnotWidth		= Math.max(oAnnot._origRect[2] - oAnnot._origRect[0], 32) / (this.zoom * AscCommon.AscBrowser.retinaPixelRatio);
+					let nAnnotHeight	= Math.max(oAnnot._origRect[3] - oAnnot._origRect[1], 32) / (this.zoom * AscCommon.AscBrowser.retinaPixelRatio);
 					
 					if (true !== bGetHidden && oAnnot.IsHidden() == true || false == oAnnot.IsComment())
 						continue;
@@ -1686,8 +1699,8 @@
 				for (var i = page.annots.length -1; i >= 0; i--)
 				{
 					let oAnnot = page.annots[i];
-					let nAnnotWidth		= (page.annots[i]._origRect[2] - page.annots[i]._origRect[0]);
-					let nAnnotHeight	= (page.annots[i]._origRect[3] - page.annots[i]._origRect[1]);
+					let nAnnotWidth		= (oAnnot._origRect[2] - oAnnot._origRect[0]);
+					let nAnnotHeight	= (oAnnot._origRect[3] - oAnnot._origRect[1]);
 					
 					if (true !== bGetHidden && oAnnot.IsHidden() == true || oAnnot.IsComment())
 						continue;
