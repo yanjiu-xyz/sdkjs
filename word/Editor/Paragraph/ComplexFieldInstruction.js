@@ -1776,7 +1776,7 @@ CFieldInstructionParser.prototype.private_ReadREF = function(sBookmarkName)
 			{
 				arrArguments = this.private_ReadArguments();
 				if (arrArguments.length > 0)
-					this.Result.SetGeneralSwitches(arrArguments);
+					this.Result.addGeneralSwitches(arrArguments);
 			}
 			else if("d" === sType)
 			{

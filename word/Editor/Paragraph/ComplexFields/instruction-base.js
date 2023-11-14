@@ -76,20 +76,21 @@
 	{
 		return (this.InstructionLine === sLine);
 	};
-	FieldInstructionBase.prototype.setGeneralSwitches = function(switches)
+	FieldInstructionBase.prototype.addGeneralSwitches = function(switches)
 	{
-		if (switches || !switches.length)
+		if (!switches || !switches.length)
 			return;
 		
 		for (let i = 0; i < switches.length; ++i)
 		{
-			if (switches[i].toUpperCase() === "MERGEFORMAT")
-				this.GeneralSwitches |= FLAGS_MERGEFORMAT;
+			let curSwitch = switches[i].toUpperCase();
+			if ("MERGEFORMAT" === curSwitch)
+				this.generalSwitches |= FLAGS_MERGEFORMAT;
 		}
 	};
 	FieldInstructionBase.prototype.isMergeFormat = function()
 	{
-		return this.generalSwitches & FLAGS_MERGEFORMAT;
+		return !!(this.generalSwitches & FLAGS_MERGEFORMAT);
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area

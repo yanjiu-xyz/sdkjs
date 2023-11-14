@@ -34,11 +34,11 @@
 
 (function(window)
 {
-	const FLAG_H = 0x01;
-	const FLAG_N = 0x02;
-	const FLAG_W = 0x04;
-	const FLAG_R = 0x08;
-	const FLAG_P = 0x10;
+	const SWITCH_H = 0x01;
+	const SWITCH_N = 0x02;
+	const SWITCH_W = 0x04;
+	const SWITCH_R = 0x08;
+	const SWITCH_P = 0x10;
 	
 	/**
 	 * REF field
@@ -50,7 +50,7 @@
 		
 		this.BookmarkName = "";
 		this.Delimiter    = null;
-		this.flags        = 0x00;
+		this.switches     = 0x00;
 	}
 	FieldInstructionREF.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 	FieldInstructionREF.prototype.constructor = FieldInstructionREF;
@@ -67,35 +67,35 @@
 	FieldInstructionREF.prototype.SetHyperlink = function(isHyperlink)
 	{
 		if (isHyperlink)
-			this.flags |= FLAG_H;
+			this.switches |= SWITCH_H;
 		else
-			this.flags &= ~FLAG_H;
+			this.switches &= ~SWITCH_H;
 	};
 	FieldInstructionREF.prototype.GetHyperlink = function()
 	{
-		return !!(this.flags & FLAG_H);
+		return !!(this.switches & SWITCH_H);
 	};
 	FieldInstructionREF.prototype.SetIsNumberNoContext = function(bVal)
 	{
 		if (bVal)
-			this.flags |= FLAG_N;
+			this.switches |= SWITCH_N;
 		else
-			this.flags &= ~FLAG_N;
+			this.switches &= ~SWITCH_N;
 	};
 	FieldInstructionREF.prototype.IsNumberNoContext = function()
 	{
-		return !!(this.flags & FLAG_N);
+		return !!(this.switches & SWITCH_N);
 	};
 	FieldInstructionREF.prototype.SetIsNumberFullContext = function(bVal)
 	{
 		if (bVal)
-			this.flags |= FLAG_W;
+			this.switches |= SWITCH_W;
 		else
-			this.flags &= ~FLAG_W;
+			this.switches &= ~SWITCH_W;
 	};
 	FieldInstructionREF.prototype.IsNumberFullContext = function()
 	{
-		return !!(this.flags & FLAG_W);
+		return !!(this.switches & SWITCH_W);
 	};
 	FieldInstructionREF.prototype.HaveNumberFlag = function()
 	{
@@ -104,24 +104,24 @@
 	FieldInstructionREF.prototype.SetIsNumber = function(bVal)
 	{
 		if (bVal)
-			this.flags |= FLAG_R;
+			this.switches |= SWITCH_R;
 		else
-			this.flags &= ~FLAG_R;
+			this.switches &= ~SWITCH_R;
 	};
 	FieldInstructionREF.prototype.IsNumber = function()
 	{
-		return !!(this.flags & FLAG_R);
+		return !!(this.switches & SWITCH_R);
 	};
 	FieldInstructionREF.prototype.SetIsPosition = function(bVal)
 	{
 		if (bVal)
-			this.flags |= FLAG_P;
+			this.switches |= SWITCH_P;
 		else
-			this.flags &= ~FLAG_P;
+			this.switches &= ~SWITCH_P;
 	};
 	FieldInstructionREF.prototype.IsPosition = function()
 	{
-		return !!(this.flags & FLAG_P);
+		return !!(this.switches & SWITCH_P);
 	};
 	FieldInstructionREF.prototype.SetDelimiter = function(bVal)
 	{
@@ -137,17 +137,17 @@
 	FieldInstructionREF.prototype.GetAnchor = function()
 	{
 		var sBookmarkName = this.GetBookmarkName();
-		var sAnchor = sBookmarkName;
-		if(this.ComplexField)
+		var sAnchor       = sBookmarkName;
+		if (this.ComplexField)
 		{
 			var oLogicDoc = this.ComplexField.LogicDocument;
-			if(oLogicDoc)
+			if (oLogicDoc)
 			{
 				var oBookmarksManager = oLogicDoc.GetBookmarksManager();
-				if(oBookmarksManager)
+				if (oBookmarksManager)
 				{
 					var oBookmark = oBookmarksManager.GetBookmarkByName(sBookmarkName);
-					if(!oBookmark)
+					if (!oBookmark)
 					{
 						sAnchor = "_top";
 					}
@@ -177,10 +177,9 @@
 	FieldInstructionREF.prototype.GetToolTip = function()
 	{
 		var sTooltip = this.BookmarkName;
-		if(!sTooltip || '_' === sTooltip.charAt(0))
-		{
+		if (!sTooltip || '_' === sTooltip.charAt(0))
 			sTooltip = AscCommon.translateManager.getValue("Current Document");
-		}
+
 		return sTooltip;
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
