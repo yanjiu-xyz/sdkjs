@@ -6501,7 +6501,7 @@
 
 					for (var nParaIndex = 0, nParasCount = arrParagraphs.length; nParaIndex < nParasCount; ++nParaIndex)
 					{
-						var arrPageNumbers = arrParagraphs[nParaIndex].GetComplexFieldsArrayByType(AscCommonWord.fieldtype_PAGEREF);
+						var arrPageNumbers = arrParagraphs[nParaIndex].GetComplexFieldsArrayByType(AscWord.fieldtype_PAGEREF);
 						for (var nRefIndex = 0, nRefsCount = arrPageNumbers.length; nRefIndex < nRefsCount; ++nRefIndex)
 						{
 							arrPageNumbers[nRefIndex].Update();
@@ -6557,7 +6557,7 @@
 
 				for (var nParaIndex = 0, nParasCount = arrParagraphs.length; nParaIndex < nParasCount; ++nParaIndex)
 				{
-					var arrPageNumbers = arrParagraphs[nParaIndex].GetComplexFieldsArrayByType(AscCommonWord.fieldtype_PAGEREF);
+					var arrPageNumbers = arrParagraphs[nParaIndex].GetComplexFieldsArrayByType(AscWord.fieldtype_PAGEREF);
 					for (var nRefIndex = 0, nRefsCount = arrPageNumbers.length; nRefIndex < nRefsCount; ++nRefIndex)
 					{
 						arrPageNumbers[nRefIndex].Update();
@@ -8511,7 +8511,7 @@
 	{
 		var oDocument = private_GetLogicDocument();
 		var fieldName = this.GetText();
-		var oField    = new ParaField(fieldtype_MERGEFIELD, [fieldName], []);
+		var oField    = new ParaField(AscWord.fieldtype_MERGEFIELD, [fieldName], []);
 		
 		var leftQuote  = new ParaRun();
 		var rightQuote = new ParaRun();
@@ -9728,7 +9728,7 @@
 	{
 		var oDocument = private_GetLogicDocument();
 		var fieldName = this.Run.GetText();
-		var oField    = new ParaField(fieldtype_MERGEFIELD, [fieldName], []);
+		var oField    = new ParaField(AscWord.fieldtype_MERGEFIELD, [fieldName], []);
 		var runParent = this.Run.GetParent();
 
 		var leftQuote  = new ParaRun();

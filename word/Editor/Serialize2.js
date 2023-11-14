@@ -5360,7 +5360,7 @@ function BinaryDocumentTableWriter(memory, doc, oMapCommentId, oNumIdMap, copyPa
                     break;
 				case para_Field:
 					let Instr = item.GetInstructionLine();
-					var oFFData = fieldtype_FORMTEXT === item.Get_FieldType() ? {} : null;
+					var oFFData = AscWord.fieldtype_FORMTEXT === item.Get_FieldType() ? {} : null;
 					if (Instr) {
 						if(this.saveParams && this.saveParams.bMailMergeDocx)
 							oThis.WriteParagraphContent(item, bUseSelection, false);
@@ -11747,12 +11747,12 @@ function Binary_DocumentTableReader(doc, oReadResult, openParams, stream, curNot
 		let paragraph = paragraphContent.GetParagraph();
         if (c_oSer_FldSimpleType.Instr === type) {
 			var Instr = this.stream.GetString2LE(length);
-			let elem = new ParaField(fieldtype_UNKNOWN);
+			let elem = new ParaField(AscWord.fieldtype_UNKNOWN);
 			elem.SetParagraph(paragraph);
 			let oParser = new CFieldInstructionParser();
 			let Instruction = oParser.GetInstructionClass(Instr);
 			oParser.InitParaFieldArguments(Instruction.Type, Instr, elem);
-			if (fieldtype_UNKNOWN !== elem.FieldType) {
+			if (AscWord.fieldtype_UNKNOWN !== elem.FieldType) {
 				oFldSimpleObj.ParaField = elem;
 			} else {
 				this.ConcatContent(elem.Content);

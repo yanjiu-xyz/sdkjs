@@ -52,7 +52,7 @@
 	}
 	FieldInstructionREF.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 	FieldInstructionREF.prototype.constructor = FieldInstructionREF;
-	FieldInstructionREF.prototype.Type = fieldtype_REF;
+	FieldInstructionREF.prototype.Type = AscWord.fieldtype_REF;
 	
 	FieldInstructionREF.prototype.SetBookmarkName = function(sBookmarkName)
 	{

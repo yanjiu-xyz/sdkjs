@@ -8394,7 +8394,7 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 			oSdt.SelectAll(1);
 			oSdt.SelectThisElement(1);
 		}
-		else if (oField && fieldtype_FORMTEXT === oField.Get_FieldType())
+		else if (oField && AscWord.fieldtype_FORMTEXT === oField.Get_FieldType())
 		{
 			oField.SelectAll(1);
 			oField.SelectThisElement(1);
@@ -12321,7 +12321,7 @@ Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 	{
 		var oComplexField = arrComplexFields[nIndex];
 		var oInstruction  = oComplexField.GetInstruction();
-		if (oInstruction && fieldtype_PAGEREF === oInstruction.GetType() && oInstruction.IsHyperlink())
+		if (oInstruction && AscWord.fieldtype_PAGEREF === oInstruction.GetType() && oInstruction.IsHyperlink())
 		{
 			bPageRefLink = true;
 			break;
@@ -12520,7 +12520,7 @@ Paragraph.prototype.Document_UpdateInterfaceState = function()
 	for (var nIndex = 0, nCount = arrComplexFields.length; nIndex < nCount; ++nIndex)
 	{
 		var oInstruction = arrComplexFields[nIndex].GetInstruction();
-		if (oInstruction && fieldtype_HYPERLINK === oInstruction.GetType())
+		if (oInstruction && AscWord.fieldtype_HYPERLINK === oInstruction.GetType())
 		{
 			var oHyperProps = new Asc.CHyperlinkProperty();
 			oHyperProps.put_ToolTip(oInstruction.GetToolTip());
@@ -16856,7 +16856,7 @@ Paragraph.prototype.GetTableOfContents = function(isUnique, isCheckFields)
 
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 	{
-		var oResult = this.Content[nIndex].GetComplexField(fieldtype_TOC);
+		var oResult = this.Content[nIndex].GetComplexField(AscWord.fieldtype_TOC);
 		if (oResult)
 		{
 			var oInstruction = oResult.GetInstruction();
@@ -16873,7 +16873,7 @@ Paragraph.prototype.GetTablesOfFigures = function(arrComplexFields)
 {
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
 	{
-		var oResult = this.Content[nIndex].GetComplexField(fieldtype_TOC);
+		var oResult = this.Content[nIndex].GetComplexField(AscWord.fieldtype_TOC);
 		if (oResult)
 		{
 			var oInstruction = oResult.GetInstruction();
@@ -17371,7 +17371,7 @@ Paragraph.prototype.CheckPageRefLink = function(X, Y, CurPage)
 	{
 		var oComplexField = arrComplexFields[nIndex];
 		var oInstruction  = oComplexField.GetInstruction();
-		if (oInstruction && fieldtype_PAGEREF === oInstruction.GetType() && oInstruction.IsHyperlink())
+		if (oInstruction && AscWord.fieldtype_PAGEREF === oInstruction.GetType() && oInstruction.IsHyperlink())
 			return oComplexField;
 	}
 
@@ -19501,7 +19501,7 @@ CParagraphComplexFieldsInfo.prototype.IsHyperlinkField = function()
 	for (var nIndex = 0, nCount = this.CF.length; nIndex < nCount; ++nIndex)
 	{
 		var oInstruction = this.CF[nIndex].ComplexField.GetInstruction();
-		if (oInstruction && fieldtype_HYPERLINK === oInstruction.GetType())
+		if (oInstruction && AscWord.fieldtype_HYPERLINK === oInstruction.GetType())
 			isHaveHyperlink = true;
 		else
 			isOtherField = true;
@@ -19537,9 +19537,9 @@ CParagraphComplexFieldsInfo.prototype.GetREForHYPERLINK = function()
 	{
 		var oInstruction = this.CF[nIndex].ComplexField.GetInstruction();
 		if (oInstruction && 
-			(fieldtype_HYPERLINK === oInstruction.GetType() 
-			|| fieldtype_REF === oInstruction.GetType() && oInstruction.GetHyperlink()
-			|| fieldtype_NOTEREF === oInstruction.GetType() && oInstruction.GetHyperlink()))
+			(AscWord.fieldtype_HYPERLINK === oInstruction.GetType()
+			|| AscWord.fieldtype_REF === oInstruction.GetType() && oInstruction.GetHyperlink()
+			|| AscWord.fieldtype_NOTEREF === oInstruction.GetType() && oInstruction.GetHyperlink()))
 			return this.CF[nIndex].ComplexField;
 	}
 

@@ -46,7 +46,7 @@
 	}
 	CFieldInstructionFORMTEXT.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 	CFieldInstructionFORMTEXT.prototype.constructor = CFieldInstructionFORMTEXT;
-	CFieldInstructionFORMTEXT.prototype.Type = fieldtype_FORMTEXT;
+	CFieldInstructionFORMTEXT.prototype.Type = AscWord.fieldtype_FORMTEXT;
 	
 	CFieldInstructionFORMTEXT.prototype.ToString = function()
 	{

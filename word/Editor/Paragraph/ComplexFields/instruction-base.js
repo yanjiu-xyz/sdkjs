@@ -46,7 +46,7 @@
 		this.InstructionLine = "";
 		this.generalSwitches = 0x0000;
 	}
-	FieldInstructionBase.prototype.Type = fieldtype_UNKNOWN;
+	FieldInstructionBase.prototype.Type = AscWord.fieldtype_UNKNOWN;
 	FieldInstructionBase.prototype.GetType = function()
 	{
 		return this.Type;

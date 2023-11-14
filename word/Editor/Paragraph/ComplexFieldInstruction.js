@@ -32,51 +32,6 @@
 
 "use strict";
 
-var fieldtype_UNKNOWN    = 0x0000;
-var fieldtype_MERGEFIELD = 0x0001;
-var fieldtype_PAGENUM    = 0x0002;
-var fieldtype_PAGECOUNT  = 0x0003;
-var fieldtype_FORMTEXT   = 0x0004;
-var fieldtype_TOC        = 0x0005;
-var fieldtype_PAGEREF    = 0x0006;
-var fieldtype_PAGE       = fieldtype_PAGENUM;
-var fieldtype_NUMPAGES   = fieldtype_PAGECOUNT;
-
-var fieldtype_ASK        = 0x0007;
-var fieldtype_REF        = 0x0008;
-var fieldtype_HYPERLINK  = 0x0009;
-var fieldtype_TIME       = 0x000A;
-var fieldtype_DATE       = 0x000B;
-var fieldtype_FORMULA    = 0x0010;
-var fieldtype_SEQ        = 0x0011;
-var fieldtype_STYLEREF   = 0x0012;
-var fieldtype_NOTEREF    = 0x0013;
-var fieldtype_ADDIN      = 0x0014;
-
-
-//--------------------------------------------------------export----------------------------------------------------
-window['AscCommonWord'] = window['AscCommonWord'] || {};
-
-window['AscCommonWord'].fieldtype_UNKNOWN    = fieldtype_UNKNOWN;
-window['AscCommonWord'].fieldtype_MERGEFIELD = fieldtype_MERGEFIELD;
-window['AscCommonWord'].fieldtype_PAGENUM    = fieldtype_PAGENUM;
-window['AscCommonWord'].fieldtype_PAGECOUNT  = fieldtype_PAGECOUNT;
-window['AscCommonWord'].fieldtype_FORMTEXT   = fieldtype_FORMTEXT;
-window['AscCommonWord'].fieldtype_TOC        = fieldtype_TOC;
-window['AscCommonWord'].fieldtype_PAGEREF    = fieldtype_PAGEREF;
-window['AscCommonWord'].fieldtype_PAGE       = fieldtype_PAGE;
-window['AscCommonWord'].fieldtype_NUMPAGES   = fieldtype_NUMPAGES;
-window['AscCommonWord'].fieldtype_ASK        = fieldtype_ASK;
-window['AscCommonWord'].fieldtype_REF        = fieldtype_REF;
-window['AscCommonWord'].fieldtype_HYPERLINK  = fieldtype_HYPERLINK;
-window['AscCommonWord'].fieldtype_TIME       = fieldtype_TIME;
-window['AscCommonWord'].fieldtype_DATE       = fieldtype_DATE;
-window['AscCommonWord'].fieldtype_FORMULA    = fieldtype_FORMULA;
-window['AscCommonWord'].fieldtype_SEQ        = fieldtype_SEQ;
-window['AscCommonWord'].fieldtype_STYLEREF   = fieldtype_STYLEREF;
-window['AscCommonWord'].fieldtype_NOTEREF    = fieldtype_NOTEREF;
-window['AscCommonWord'].fieldtype_ADDIN      = fieldtype_ADDIN;
-
 /**
 * FORMULA field
 * @constructor
@@ -94,7 +49,7 @@ function CFieldInstructionFORMULA()
 
 CFieldInstructionFORMULA.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionFORMULA.prototype.constructor = CFieldInstructionFORMULA;
-CFieldInstructionFORMULA.prototype.Type = fieldtype_FORMULA;
+CFieldInstructionFORMULA.prototype.Type = AscWord.fieldtype_FORMULA;
 CFieldInstructionFORMULA.prototype.SetFormat = function(oFormat)
 {
     this.Format = oFormat;
@@ -212,7 +167,7 @@ function CFieldInstructionPAGE()
 
 CFieldInstructionPAGE.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionPAGE.prototype.constructor = CFieldInstructionPAGE;
-CFieldInstructionPAGE.prototype.Type = fieldtype_PAGE;
+CFieldInstructionPAGE.prototype.Type = AscWord.fieldtype_PAGE;
 
 /**
  * PAGEREF field
@@ -229,7 +184,7 @@ function CFieldInstructionPAGEREF(sBookmarkName, isHyperlink, isPositionRelative
 
 CFieldInstructionPAGEREF.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionPAGEREF.prototype.constructor = CFieldInstructionPAGEREF;
-CFieldInstructionPAGEREF.prototype.Type = fieldtype_PAGEREF;
+CFieldInstructionPAGEREF.prototype.Type = AscWord.fieldtype_PAGEREF;
 CFieldInstructionPAGEREF.prototype.SetHyperlink = function(isHyperlink)
 {
 	this.Hyperlink   = isHyperlink ? true : false;
@@ -276,7 +231,7 @@ function CFieldInstructionTOC()
 
 CFieldInstructionTOC.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionTOC.prototype.constructor = CFieldInstructionTOC;
-CFieldInstructionTOC.prototype.Type = fieldtype_TOC;
+CFieldInstructionTOC.prototype.Type = AscWord.fieldtype_TOC;
 CFieldInstructionTOC.prototype.IsPreserveTabs = function()
 {
 	return this.PreserveTabs;
@@ -545,7 +500,7 @@ function CFieldInstructionASK()
 }
 CFieldInstructionASK.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionASK.prototype.constructor = CFieldInstructionASK;
-CFieldInstructionASK.prototype.Type = fieldtype_ASK;
+CFieldInstructionASK.prototype.Type = AscWord.fieldtype_ASK;
 CFieldInstructionASK.prototype.SetBookmarkName = function(sBookmarkName)
 {
 	this.BookmarkName = sBookmarkName;
@@ -576,7 +531,7 @@ function CFieldInstructionNUMPAGES()
 }
 CFieldInstructionNUMPAGES.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionNUMPAGES.prototype.constructor = CFieldInstructionNUMPAGES;
-CFieldInstructionNUMPAGES.prototype.Type = fieldtype_NUMPAGES;
+CFieldInstructionNUMPAGES.prototype.Type = AscWord.fieldtype_NUMPAGES;
 
 /**
  * HYPERLINK field
@@ -592,7 +547,7 @@ function CFieldInstructionHYPERLINK()
 }
 CFieldInstructionHYPERLINK.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionHYPERLINK.prototype.constructor = CFieldInstructionHYPERLINK;
-CFieldInstructionHYPERLINK.prototype.Type = fieldtype_HYPERLINK;
+CFieldInstructionHYPERLINK.prototype.Type = AscWord.fieldtype_HYPERLINK;
 CFieldInstructionHYPERLINK.prototype.SetToolTip = function(sToolTip)
 {
 	this.ToolTip = sToolTip;
@@ -676,7 +631,7 @@ function CFieldInstructionTIME()
 }
 CFieldInstructionTIME.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionTIME.prototype.constructor = CFieldInstructionTIME;
-CFieldInstructionTIME.prototype.Type = fieldtype_TIME;
+CFieldInstructionTIME.prototype.Type = AscWord.fieldtype_TIME;
 CFieldInstructionTIME.prototype.ToString = function()
 {
 	return ("TIME \\@ \"" + this.sFormat + "\"");
@@ -702,7 +657,7 @@ function CFieldInstructionDATE()
 }
 CFieldInstructionDATE.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionDATE.prototype.constructor = CFieldInstructionDATE;
-CFieldInstructionDATE.prototype.Type = fieldtype_DATE;
+CFieldInstructionDATE.prototype.Type = AscWord.fieldtype_DATE;
 CFieldInstructionDATE.prototype.ToString = function()
 {
 	return ("TIME \\@ \"" + this.sFormat + "\"");
@@ -736,7 +691,7 @@ function CFieldInstructionSEQ()
 }
 CFieldInstructionSEQ.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionSEQ.prototype.constructor = CFieldInstructionSEQ;
-CFieldInstructionSEQ.prototype.Type = fieldtype_SEQ;
+CFieldInstructionSEQ.prototype.Type = AscWord.fieldtype_SEQ;
 CFieldInstructionSEQ.prototype.ToString = function ()
 {
 	var sInstruction = " SEQ ";
@@ -983,7 +938,7 @@ function CFieldInstructionSTYLEREF()
 }
 CFieldInstructionSTYLEREF.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionSTYLEREF.prototype.constructor = CFieldInstructionSTYLEREF;
-CFieldInstructionSTYLEREF.prototype.Type = fieldtype_STYLEREF;
+CFieldInstructionSTYLEREF.prototype.Type = AscWord.fieldtype_STYLEREF;
 CFieldInstructionSTYLEREF.prototype.SetL = function(v){this.L = v;};
 CFieldInstructionSTYLEREF.prototype.SetN = function(v){this.N = v;};
 CFieldInstructionSTYLEREF.prototype.SetP = function(v){this.P = v;};
@@ -1239,7 +1194,7 @@ function CFieldInstructionNOTEREF()
 }
 CFieldInstructionNOTEREF.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 CFieldInstructionNOTEREF.prototype.constructor = CFieldInstructionNOTEREF;
-CFieldInstructionNOTEREF.prototype.Type = fieldtype_NOTEREF;
+CFieldInstructionNOTEREF.prototype.Type = AscWord.fieldtype_NOTEREF;
 
 
 CFieldInstructionNOTEREF.prototype.SetGeneralSwitches = function (aSwitches)
@@ -1336,8 +1291,7 @@ CFieldInstructionNOTEREF.prototype.GetValue = function()
 CFieldInstructionNOTEREF.prototype.SetVisited = function(isVisited)
 {
 };
-
-CFieldInstructionREF.prototype.SetToolTip = function(sToolTip)
+CFieldInstructionNOTEREF.prototype.SetToolTip = function(sToolTip)
 {
 };
 CFieldInstructionNOTEREF.prototype.GetToolTip = function()

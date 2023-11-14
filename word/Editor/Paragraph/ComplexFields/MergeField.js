@@ -47,7 +47,7 @@
 	}
 	CFieldInstructionMERGEFIELD.prototype = Object.create(AscWord.FieldInstructionBase.prototype);
 	CFieldInstructionMERGEFIELD.prototype.constructor = CFieldInstructionMERGEFIELD;
-	CFieldInstructionMERGEFIELD.prototype.Type = fieldtype_MERGEFIELD;
+	CFieldInstructionMERGEFIELD.prototype.Type = AscWord.fieldtype_MERGEFIELD;
 	
 	CFieldInstructionMERGEFIELD.prototype.SetName = function(value)
 	{
