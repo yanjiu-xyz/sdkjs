@@ -223,6 +223,7 @@
 			"word/Editor/Paragraph/ParaDrawing.js",
 			"word/Editor/Paragraph/ParaDrawingChanges.js",
 			"word/Editor/Paragraph/ParagraphContentPos.js",
+			"word/Editor/Paragraph/instruction-base.js",
 			"word/Editor/Paragraph/ComplexFieldInstruction.js",
 			"word/Editor/Paragraph/ComplexFields/Addin.js",
 			"word/Editor/Paragraph/ComplexFields/AddinData.js",

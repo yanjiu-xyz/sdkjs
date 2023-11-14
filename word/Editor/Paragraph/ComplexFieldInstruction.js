@@ -77,48 +77,6 @@ window['AscCommonWord'].fieldtype_STYLEREF   = fieldtype_STYLEREF;
 window['AscCommonWord'].fieldtype_NOTEREF    = fieldtype_NOTEREF;
 window['AscCommonWord'].fieldtype_ADDIN      = fieldtype_ADDIN;
 
-
-/**
- * Базовый класс для инструкции сложного поля.
- * @constructor
- */
-function CFieldInstructionBase()
-{
-	this.ComplexField    = null;
-	this.InstructionLine = "";
-}
-CFieldInstructionBase.prototype.Type = fieldtype_UNKNOWN;
-CFieldInstructionBase.prototype.GetType = function()
-{
-	return this.Type;
-};
-CFieldInstructionBase.prototype.SetComplexField = function(oComplexField)
-{
-	this.ComplexField = oComplexField;
-};
-CFieldInstructionBase.prototype.GetComplexField = function()
-{
-	return this.ComplexField;
-};
-CFieldInstructionBase.prototype.ToString = function()
-{
-	return "";
-};
-CFieldInstructionBase.prototype.SetPr = function()
-{
-};
-CFieldInstructionBase.prototype.SetInstructionLine = function(sLine)
-{
-	this.InstructionLine = sLine;
-};
-CFieldInstructionBase.prototype.CheckInstructionLine = function(sLine)
-{
-	return (this.InstructionLine === sLine);
-};
-//--------------------------------------------------------export----------------------------------------------------
-window['AscWord'] = window['AscWord'] || {};
-window['AscWord'].CFieldInstructionBase = CFieldInstructionBase;
-
 /**
 * FORMULA field
 * @constructor
@@ -616,7 +574,6 @@ function CFieldInstructionREF()
 {
 	CFieldInstructionBase.call(this);
 
-	this.GeneralSwitches = [];
 	this.BookmarkName = "";
 	this.Hyperlink = false; // \h - is hyperlink
 	this.bIsNumberNoContext = false; // \n - paragraph number (no context)
@@ -629,10 +586,6 @@ CFieldInstructionREF.prototype = Object.create(CFieldInstructionBase.prototype);
 CFieldInstructionREF.prototype.constructor = CFieldInstructionREF;
 CFieldInstructionREF.prototype.Type = fieldtype_REF;
 
-CFieldInstructionREF.prototype.SetGeneralSwitches = function (aSwitches)
-{
-	this.GeneralSwitches = aSwitches;
-};
 CFieldInstructionREF.prototype.SetBookmarkName = function(sBookmarkName)
 {
 	this.BookmarkName = sBookmarkName;
@@ -697,10 +650,7 @@ CFieldInstructionREF.prototype.ToString = function()
 {
 	var sInstruction = " REF ";
 	sInstruction += this.BookmarkName;
-	for(var nSwitch = 0; nSwitch < this.GeneralSwitches.length; ++nSwitch)
-	{
-		sInstruction +=  " \\* " + this.GeneralSwitches[nSwitch];
-	}
+
 	if(this.GetHyperlink())
 	{
 		sInstruction += " \\h";
@@ -725,6 +675,8 @@ CFieldInstructionREF.prototype.ToString = function()
 	{
 		sInstruction += " \\d " + this.Delimiter;
 	}
+	
+	sInstruction += this.GeneralSwitchesToString();
 	return sInstruction;
 };
 //----------------------------------------------------------------------------------------------------------------------
