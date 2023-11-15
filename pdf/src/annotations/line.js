@@ -370,9 +370,6 @@
         let oLine = this.pen;
         oLine.setW(nWidthPt * g_dKoef_pt_to_mm * 36000.0);
     };
-    CAnnotationLine.prototype.IsNeedDrawFromStream = function() {
-        return false;
-    };
     CAnnotationLine.prototype.GetLinePoints = function() {
         return this._points;
     };

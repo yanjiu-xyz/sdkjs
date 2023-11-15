@@ -3980,8 +3980,10 @@
 			}
 
 			// forms
-			for (let nForm = 0; nForm < aPages[i].fields.length; nForm++) {
-				aPages[i].fields[nForm].WriteToBinary && aPages[i].fields[nForm].IsChanged() && aPages[i].fields[nForm].WriteToBinary(oMemory);
+			if (aPages[i].fields) {
+				for (let nForm = 0; nForm < aPages[i].fields.length; nForm++) {
+					aPages[i].fields[nForm].WriteToBinary && aPages[i].fields[nForm].IsChanged() && aPages[i].fields[nForm].WriteToBinary(oMemory);
+				}
 			}
 
 			let nEndPos = oMemory.GetCurPosition();
