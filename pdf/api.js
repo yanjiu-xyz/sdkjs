@@ -404,6 +404,14 @@
 			oDoc.OnExitFieldByClick();
 
 		if (this.isMarkerFormat) {
+			let aSelQuads = this.getDocumentRenderer().file.getSelectionQuads();
+        	if (aSelQuads.length == 0) {
+				oDoc.bOffMarkerAfterUsing = false;
+			}
+			else {
+				oDoc.bOffMarkerAfterUsing = true;
+			}
+
 			switch (this.curMarkerType) {
 				case AscPDF.ANNOTATIONS_TYPES.Highlight:
 					this.SetHighlight(r, g, b, opacity);
@@ -415,6 +423,9 @@
 					this.SetStrikeout(r, g, b, opacity);
 					break;
 			}
+		}
+		else {
+			oDoc.bOffMarkerAfterUsing = true;
 		}
 	};
 	PDFEditorApi.prototype.Paste = function()
