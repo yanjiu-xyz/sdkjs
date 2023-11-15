@@ -1731,6 +1731,7 @@
 	window['AscDFH'].historyitem_type_Pdf_Ink				= 2213 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Annot				= 2214 << 16;
 	window['AscDFH'].historyitem_type_Pdf_Pushbutton		= 2215 << 16;
+	window['AscDFH'].historyitem_type_Pdf_Line				= 2216 << 16;
 
 	
 
@@ -4032,6 +4033,9 @@
 	AscDFH.historyitem_Pdf_Ink_FlipV			= AscDFH.historyitem_type_Pdf_Ink | 2;
 	AscDFH.historyitem_Pdf_Ink_FlipH			= AscDFH.historyitem_type_Pdf_Ink | 3;
 
+	// annot line
+	AscDFH.historyitem_Pdf_Line_Points			= AscDFH.historyitem_type_Pdf_Line | 1;
+	
 	//------------------------------------------------------------------------------------------------------------------
 	// Типы изменений в классе CPDFDoc
 	//------------------------------------------------------------------------------------------------------------------
