@@ -1027,8 +1027,10 @@
 
             if (nBorder == 2) {
                 let aDash = this.GetDash();
-                memory.WriteDouble(aDash[0]);
-                memory.WriteDouble(aDash[1]);
+                memory.WriteLong(aDash.length);
+                for (let i = 0; i < aDash.length; i++) {
+                    memory.WriteDouble(aDash[i]);
+                }
             }
         }
 
