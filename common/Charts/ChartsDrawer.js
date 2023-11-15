@@ -2696,13 +2696,13 @@ CChartsDrawer.prototype =
 
 		//позиция в заисимости от положения точек на оси OY
 		var result, resPos, resVal, diffVal;
-		var plotArea = this.cChartSpace.chart.plotArea;
 
 		if (!yPoints[1] && val === yPoints[0].val) {
 			result = yPoints[0].pos;
 		} else if (val < yPoints[0].val) {
-			resPos = Math.abs(yPoints[1].pos - yPoints[0].pos);
-			resVal = yPoints[1].val - yPoints[0].val;
+			let firstVal = yPoints[1] ? yPoints[1] : yPoints[0];
+			resPos = Math.abs(firstVal.pos - yPoints[0].pos);
+			resVal = firstVal.val - yPoints[0].val;
 			diffVal = Math.abs(yPoints[0].val) - Math.abs(val);
 			if (isOx || isRect) {
 				result = yPoints[0].pos - Math.abs((diffVal / resVal) * resPos);
