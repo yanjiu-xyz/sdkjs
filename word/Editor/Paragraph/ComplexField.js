@@ -1185,10 +1185,13 @@ CComplexField.prototype.private_GetMessageContent = function(sMessage, oTextPr)
 	var oSelectedContent = new AscCommonWord.CSelectedContent();
 	var oPara = new Paragraph(this.LogicDocument.GetDrawingDocument(), this.LogicDocument, false);
 	var oRun  = new ParaRun(oPara, false);
-	if(oTextPr)
-	{
-		oRun.Apply_Pr(oTextPr);
-	}
+	
+	if (this.Instruction && this.Instruction.isMergeFormat() && this.SeparateChar)
+		oRun.ApplyPr(this.SeparateChar.GetRun().GetDirectTextPr());
+	
+	if (oTextPr)
+		oRun.ApplyPr(oTextPr);
+
 	oRun.AddText(sMessage);
 	oPara.AddToContent(0, oRun);
 	oSelectedContent.Add(new AscCommonWord.CSelectedElement(oPara, false));
@@ -1209,7 +1212,12 @@ CComplexField.prototype.private_GetBookmarkContent = function(sBookmarkName)
 	var oSelectedContent = this.LogicDocument.GetSelectedContent(false);
 	var aElements = oSelectedContent.Elements;
 	var oElement;
-	for(var nIndex = 0; nIndex < aElements.length; ++nIndex)
+	
+	let isMergeFormat = this.Instruction.isMergeFormat();
+	let textPr        = this.GetFieldValueTextPr();
+	let paraTextPr    = new AscWord.ParaTextPr(textPr);
+	
+	for (var nIndex = 0; nIndex < aElements.length; ++nIndex)
 	{
 		oElement = aElements[nIndex];
 		oElement.Element = oElement.Element.Copy(null, null, {
@@ -1222,6 +1230,13 @@ CComplexField.prototype.private_GetBookmarkContent = function(sBookmarkName)
 			SkipBookmarks         : true,
 			SkipFldSimple         : true
 		});
+		
+		if (isMergeFormat)
+		{
+			oElement.Element.SetApplyToAll(true);
+			oElement.Element.AddToParagraph(paraTextPr);
+			oElement.Element.SetApplyToAll(false);
+		}
 	}
 	return oSelectedContent;
 };
@@ -1490,6 +1505,24 @@ CComplexField.prototype.GetFieldValueText = function()
 		logicDocument.LoadDocumentState(state);
 	
 	return result;
+};
+CComplexField.prototype.GetFieldValueTextPr = function()
+{
+	// TODO: Temporary. We select the first visible element in InstrText area and return its direct TextPr
+	let logicDocument = this.LogicDocument;
+	if (!logicDocument)
+		return new AscWord.CTextPr();
+	
+	let state = logicDocument.SaveDocumentState();
+	
+	let run = this.SeparateChar.GetRun();
+	run.Make_ThisElementCurrent(false);
+	run.SetCursorPosition(run.GetElementPosition(this.SeparateChar) + 1);
+	logicDocument.MoveCursorRight(true, false);
+	
+	let textPr = logicDocument.GetDirectTextPr();
+	logicDocument.LoadDocumentState(state);
+	return textPr;
 };
 CComplexField.prototype.GetTopDocumentContent = function()
 {
