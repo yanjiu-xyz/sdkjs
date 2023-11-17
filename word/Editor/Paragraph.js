@@ -4026,7 +4026,10 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 					this.CurPos.ContentPos = StartPos;
 				}
 				
-				if (this.LogicDocument && true === this.LogicDocument.IsTrackRevisions() && this.IsSelectionUse() && !this.GetPlaceHolderObject())
+				if (this.LogicDocument
+					&& true === this.LogicDocument.IsTrackRevisions()
+					&& this.Content[StartPos].IsSelectionUse()
+					&& !this.GetPlaceHolderObject())
 				{
 					// TODO: Используем данные функции для сброса селекта, по-хорошему надо сделать для
 					//       этого отдельные методы
