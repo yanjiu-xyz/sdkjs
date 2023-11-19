@@ -361,6 +361,28 @@
 			logicDocument.Content[pos].SelectAll(direction);
 		}
 	}
+	function SelectParagraphRange(paragraph, start, end)
+	{
+		if (!paragraph || start >= end)
+			return;
+		
+		if (logicDocument)
+			logicDocument.RemoveSelection();
+		
+		paragraph.RemoveSelection();
+		paragraph.MoveCursorToStartPos();
+		for (let i = 0; i < start; ++i)
+			paragraph.MoveCursorRight(false, false);
+		
+		let startPos = paragraph.getCurrentPos();
+		for (let i = start; i < end; ++i)
+			paragraph.MoveCursorRight(false, false);
+		
+		let endPos = paragraph.getCurrentPos();
+		paragraph.StartSelectionFromCurPos();
+		paragraph.SetSelectionContentPos(startPos, endPos, false);
+		paragraph.Document_SetThisElementCurrent();
+	}
 	function GetFinalSection()
 	{
 		if (!logicDocument)
@@ -431,6 +453,7 @@
 	AscTest.StartCollaboration       = StartCollaboration;
 	AscTest.SyncCollaboration        = SyncCollaboration;
 	AscTest.EndCollaboration         = EndCollaboration;
+	AscTest.SelectParagraphRange     = SelectParagraphRange;
 
 })(window);
 
