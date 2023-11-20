@@ -49,6 +49,9 @@ $(function ()
 			run.AddText(d.text);
 			if (undefined !== d.reviewType)
 				run.SetReviewType(d.reviewType);
+			else
+				run.SetReviewType(reviewtype_Common);
+			
 			p.AddToContentToEnd(run);
 		});
 		
@@ -72,19 +75,40 @@ $(function ()
 		// TODO: We only checked appearance of the text, but didn't check review mode of the added text
 		AscTest.SelectParagraphRange(p, 1, 3);
 		AscTest.EnterText("QQQ");
-		assert.strictEqual(AscTest.GetParagraphText(p), "1QQQ4test", 'Select text and enter text');
+		assert.deepEqual(
+			AscTest.GetParagraphReviewText(p),
+			[
+				[reviewtype_Add, "1QQQ4"],
+				[reviewtype_Common, "test"],
+			],
+			"Select text. Enter text over selection"
+		);
 		
 		p = fillDocument_1234test();
 		AscTest.SelectParagraphRange(p, 1, 3);
 		AscTest.PressKey(AscTest.Key.delete);
 		AscTest.EnterText("QQQ");
-		assert.strictEqual(AscTest.GetParagraphText(p), "1QQQ4test", 'Select text. Press delete button. Enter text');
+		assert.deepEqual(
+			AscTest.GetParagraphReviewText(p),
+			[
+				[reviewtype_Add, "1QQQ4"],
+				[reviewtype_Common, "test"],
+			],
+			"Select text. Press delete button. Enter text over selection"
+		);
 		
 		p = fillDocument_1234test();
 		AscTest.SelectParagraphRange(p, 1, 3);
 		AscTest.PressKey(AscTest.Key.backspace);
 		AscTest.EnterText("QQQ");
-		assert.strictEqual(AscTest.GetParagraphText(p), "1QQQ4test", 'Select text. Press backspace button. Enter text');
+		assert.deepEqual(
+			AscTest.GetParagraphReviewText(p),
+			[
+				[reviewtype_Add, "1QQQ4"],
+				[reviewtype_Common, "test"],
+			],
+			"Select text. Press backspace button. Enter text"
+		);
 	});
 	
 	QUnit.test("Remove/replace text in several runs", function (assert)

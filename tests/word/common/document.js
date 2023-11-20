@@ -142,6 +142,23 @@
 	{
 		return paragraph.GetText({ParaEndToSpace : false});
 	}
+	function GetParagraphReviewText(paragraph)
+	{
+		let result = [];
+		paragraph.CheckRunContent(function(run)
+		{
+			let text = run.GetText();
+			if (!text || !text.length)
+				return;
+			
+			let reviewType = run.GetReviewType();
+			if (result.length && reviewType === result[result.length - 1][0])
+				result[result.length - 1][1] += text;
+			else
+				result.push([reviewType, text]);
+		});
+		return result;
+	}
 	function RemoveTableBorders(table)
 	{
 		function CreateNoneBorder()
@@ -426,6 +443,7 @@
 	AscTest.CreateParagraphStyle     = CreateParagraphStyle;
 	AscTest.CreateRunStyle           = CreateRunStyle;
 	AscTest.GetParagraphText         = GetParagraphText;
+	AscTest.GetParagraphReviewText   = GetParagraphReviewText;
 	AscTest.RemoveTableBorders       = RemoveTableBorders;
 	AscTest.SetFillingFormMode       = SetFillingFormMode;
 	AscTest.SetEditingMode           = SetEditingMode;
