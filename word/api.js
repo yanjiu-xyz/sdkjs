@@ -2150,6 +2150,13 @@ background-repeat: no-repeat;\
 	{
 		return JSON.stringify(this.WordControl.m_oLogicDocument);
 	};
+	//=======================================
+	//公布logicDocument
+	asc_docs_api.prototype.GetLogicDocument = function()
+	{
+		return this.WordControl.m_oLogicDocument;
+	};
+	//=======================================
 
 	asc_docs_api.prototype.get_ContentCount = function()
 	{
@@ -13700,6 +13707,10 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['removeDropcap']                             = asc_docs_api.prototype.removeDropcap;
 	asc_docs_api.prototype['get_TextProps']                             = asc_docs_api.prototype.get_TextProps;
 	asc_docs_api.prototype['GetJSONLogicDocument']                      = asc_docs_api.prototype.GetJSONLogicDocument;
+	//=======================================
+    //公布logicDocument
+	asc_docs_api.prototype['GetLogicDocument']                          = asc_docs_api.prototype.GetLogicDocument;
+	//=======================================
 	asc_docs_api.prototype['get_ContentCount']                          = asc_docs_api.prototype.get_ContentCount;
 	asc_docs_api.prototype['select_Element']                            = asc_docs_api.prototype.select_Element;
 	asc_docs_api.prototype['UpdateTextPr']                              = asc_docs_api.prototype.UpdateTextPr;
