@@ -116,22 +116,104 @@ $(function ()
 		AscTest.SetTrackRevisions(true);
 		let p = fillDocument_1234test();
 		assert.strictEqual(AscTest.GetParagraphText(p), "1234test", 'Check paragraph text');
-		
+
 		// TODO: We only checked appearance of the text, but didn't check review mode of the added text
 		AscTest.SelectParagraphRange(p, 1, 6);
 		AscTest.EnterText("ABC");
-		assert.strictEqual(AscTest.GetParagraphText(p), "1ABCst", 'Select text and enter text');
-		
+		assert.deepEqual(
+			AscTest.GetParagraphReviewText(p),
+			[
+				[reviewtype_Add, "1ABC"],
+				[reviewtype_Remove, "te"],
+				[reviewtype_Common, "st"],
+			],
+			"Select text and enter text"
+		);
+
 		p = fillDocument_1234test();
 		AscTest.SelectParagraphRange(p, 1, 6);
 		AscTest.PressKey(AscTest.Key.delete);
 		AscTest.EnterText("ABC");
-		assert.strictEqual(AscTest.GetParagraphText(p), "1ABCst", 'Select text. Press delete button. Enter text');
-		
+		assert.deepEqual(
+			AscTest.GetParagraphReviewText(p),
+			[
+				[reviewtype_Add, "1"],
+				[reviewtype_Remove, "te"],
+				[reviewtype_Add, "ABC"],
+				[reviewtype_Common, "st"],
+			],
+			"Select text. Press delete button. Enter text"
+		);
+
 		p = fillDocument_1234test();
 		AscTest.SelectParagraphRange(p, 1, 6);
 		AscTest.PressKey(AscTest.Key.backspace);
 		AscTest.EnterText("ABC");
-		assert.strictEqual(AscTest.GetParagraphText(p), "1ABCst", 'Select text. Press backspace button. Enter text');
+		assert.deepEqual(
+			AscTest.GetParagraphReviewText(p),
+			[
+				[reviewtype_Add, "1ABC"],
+				[reviewtype_Remove, "te"],
+				[reviewtype_Common, "st"],
+			],
+			"Select text. Press backspace button. Enter text"
+		);
+
+		p = fillDocument([
+			{text : "Before"},
+			{text : "1234", reviewType : reviewtype_Add},
+			{text : "after"},
+		]);
+		AscTest.SelectParagraphRange(p, 8, 12);
+		AscTest.EnterText("777");
+		assert.deepEqual(
+			AscTest.GetParagraphReviewText(p),
+			[
+				[reviewtype_Common, "Before"],
+				[reviewtype_Add, "12777"],
+				[reviewtype_Remove, "af"],
+				[reviewtype_Common, "ter"],
+			],
+			"Select text and enter text"
+		);
+
+		p = fillDocument([
+			{text : "Before"},
+			{text : "1234", reviewType : reviewtype_Add},
+			{text : "after"},
+		]);
+		AscTest.SelectParagraphRange(p, 8, 12);
+		AscTest.PressKey(AscTest.Key.delete);
+		AscTest.EnterText("777");
+		assert.deepEqual(
+			AscTest.GetParagraphReviewText(p),
+			[
+				[reviewtype_Common, "Before"],
+				[reviewtype_Add, "12"],
+				[reviewtype_Remove, "af"],
+				[reviewtype_Add, "777"],
+				[reviewtype_Common, "ter"],
+			],
+			"Select text. Press delete button. Enter text"
+		);
+		
+		p = fillDocument([
+			{text : "Before"},
+			{text : "1234", reviewType : reviewtype_Add},
+			{text : "after"},
+		]);
+		AscTest.SelectParagraphRange(p, 8, 12);
+		AscTest.PressKey(AscTest.Key.backspace);
+		AscTest.EnterText("777");
+		assert.deepEqual(
+			AscTest.GetParagraphReviewText(p),
+			[
+				[reviewtype_Common, "Before"],
+				[reviewtype_Add, "12777"],
+				[reviewtype_Remove, "af"],
+				[reviewtype_Common, "ter"],
+			],
+			"Select text. Press backspace button. Enter text"
+		);
 	});
 });
