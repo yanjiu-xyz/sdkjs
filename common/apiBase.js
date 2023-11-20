@@ -2187,6 +2187,153 @@
 			AscCommon.sendCommand(t, fCallback1, oAdditionalData1, dataContainer1);
 		}, this.fCurCallback, options.callback, oAdditionalData, dataContainer);
 	};
+
+
+	//=======================================
+	/**
+	 * 扩展下载方法
+	 * @param actionType
+	 * @param options
+	 */
+	baseEditorsApi.prototype.downloadAs2                         = function (actionType, options)
+	{
+		var isCloudCrypto = !!(window["AscDesktopEditor"] && (0 < window["AscDesktopEditor"]["CryptoMode"]));
+		if (isCloudCrypto)
+		{
+			window.isCloudCryptoDownloadAs = true;
+		}
+		if (this._waitPrint(actionType, options))
+		{
+			return;
+		}
+
+		if (actionType)
+		{
+			this.sync_StartAction(c_oAscAsyncActionType.BlockInteraction, actionType);
+		}
+
+		var downloadType;
+		if (options.isDownloadEvent) {
+			downloadType = options.oDocumentMailMerge ? DownloadType.MailMerge : (actionType === c_oAscAsyncAction.Print ? DownloadType.Print : DownloadType.Download);
+		} else {
+			downloadType = DownloadType.None;
+		}
+
+		var isNoBase64 = (typeof ArrayBuffer !== 'undefined') && !isCloudCrypto;
+		var dataContainer = {data : null, part : null, index : 0, count : 0};
+		var oAdditionalData = {};
+		oAdditionalData["c"] = 'save';
+		oAdditionalData["id"] = this.documentId;
+		oAdditionalData["userid"] = this.documentUserId;
+		oAdditionalData["tokenSession"] = this.CoAuthoringApi.get_jwt();
+		oAdditionalData["outputformat"] = options.fileType;
+		oAdditionalData["title"] = AscCommon.changeFileExtention(this.documentTitle, AscCommon.getExtentionByFormat(options.fileType), Asc.c_nMaxDownloadTitleLen);
+		oAdditionalData["nobase64"] = isNoBase64;
+		let locale = this.asc_getLocale() || undefined;
+		if (typeof locale === "string") {
+			locale = Asc.g_oLcidNameToIdMap[locale];
+		}
+		oAdditionalData["lcid"] = locale;
+		if (DownloadType.Print === downloadType)
+		{
+			oAdditionalData["withoutPassword"] = true;
+			oAdditionalData["inline"] = 1;
+		}
+		if (Asc.c_oAscFileType.JPG === options.fileType || Asc.c_oAscFileType.TIFF === options.fileType
+			|| Asc.c_oAscFileType.TGA === options.fileType || Asc.c_oAscFileType.GIF === options.fileType
+			|| Asc.c_oAscFileType.PNG === options.fileType || Asc.c_oAscFileType.EMF === options.fileType
+			|| Asc.c_oAscFileType.WMF === options.fileType || Asc.c_oAscFileType.BMP === options.fileType
+			|| Asc.c_oAscFileType.CR2 === options.fileType || Asc.c_oAscFileType.PCX === options.fileType
+			|| Asc.c_oAscFileType.RAS === options.fileType || Asc.c_oAscFileType.PSD === options.fileType
+			|| Asc.c_oAscFileType.ICO === options.fileType) {
+			oAdditionalData["thumbnail"] = {
+				"aspect": 2,
+				"first": false
+			}
+			switch (options.fileType) {
+				case Asc.c_oAscFileType.PNG:
+					oAdditionalData["thumbnail"]["format"] = 4;
+					break;
+				case Asc.c_oAscFileType.GIF:
+					oAdditionalData["thumbnail"]["format"] = 2;
+					break;
+				case Asc.c_oAscFileType.BMP:
+					oAdditionalData["thumbnail"]["format"] = 1;
+					break;
+				default:
+					oAdditionalData["thumbnail"]["format"] = 3;
+					break;
+			}
+			oAdditionalData["outputformat"] = Asc.c_oAscFileType.IMG;
+			oAdditionalData["title"] = AscCommon.changeFileExtention(this.documentTitle, "zip", Asc.c_nMaxDownloadTitleLen);
+
+			let jsonparams = {};
+			//todo convert from asc_CAdjustPrint
+			jsonparams["spreadsheetLayout"] = {"ignorePrintArea": true, "scale": 100};
+			jsonparams["locale"] = this.asc_getLocale();
+			//todo move cmd from header to body and uncomment
+			// jsonparams["translate"] = AscCommon.translateManager.mapTranslate;
+			jsonparams["documentLayout"] = { "openedAt" : this.openedAt};
+			oAdditionalData["jsonparams"] = JSON.stringify(jsonparams);
+		}
+		if (options.textParams && undefined !== options.textParams.asc_getAssociation()) {
+			oAdditionalData["textParams"] = {"association": options.textParams.asc_getAssociation()};
+		}
+
+		if (this._downloadAs(actionType, options, oAdditionalData, dataContainer, downloadType))
+		{
+			return;
+		}
+		this._downloadAsUsingServer2(actionType, options, oAdditionalData, dataContainer, downloadType);
+	};
+
+	baseEditorsApi.prototype._downloadAsUsingServer2                        = function (actionType, options, oAdditionalData, dataContainer, downloadType)
+	{
+		var t = this;
+		this.fCurCallback = null;
+		var fCallbackRequest = null;
+
+		this.fCurCallback = function(input, status)
+		{
+			var error = 403 === status ? c_oAscError.ID.AccessDeny : c_oAscError.ID.Unknown;
+			//input = {'type': command, 'status': 'err', 'data': -80};
+			if (null != input && oAdditionalData["c"] === input['type'])
+			{
+				if ('ok' === input['status'])
+				{
+					if (options.callback)
+					{//回调返回的地址信息
+						options.callback(input, status)
+					}else {
+						var url = input['data'];
+						if (url)
+						{
+							error = c_oAscError.ID.No;
+							t.processSavedFile(url, downloadType, input["filetype"]);
+						}
+					}
+				}
+				else
+				{
+					error = AscCommon.mapAscServerErrorToAscError(parseInt(input["data"]),
+						(options && options.isGetTextFromUrl) ? AscCommon.c_oAscAdvancedOptionsAction.Open : AscCommon.c_oAscAdvancedOptionsAction.Save);
+				}
+			}
+			if (c_oAscError.ID.No !== error)
+			{
+				t.endInsertDocumentUrls();
+				t.sendEvent('asc_onError', options.errorDirect || error, c_oAscError.Level.NoCritical);
+			}
+			if (actionType)
+			{
+				t.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, actionType);
+			}
+		};
+		AscCommon.saveWithParts(function(fCallback1, oAdditionalData1, dataContainer1) {
+			AscCommon.sendCommand(t, fCallback1, oAdditionalData1, dataContainer1);
+		}, this.fCurCallback, fCallbackRequest, oAdditionalData, dataContainer);
+	};
+	//=======================================
 	baseEditorsApi.prototype._downloadOriginalFile = function (directUrl, url, fileType, token, callback)
 	{
 		if (directUrl) {
