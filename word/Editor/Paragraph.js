@@ -4151,20 +4151,32 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 					this.Content[StartPos].SetRStyle(undefined);
 				}
 			}
-
+			
 			if (this.LogicDocument && true === this.LogicDocument.IsTrackRevisions() && this.IsSelectionUse())
 			{
-				// TODO: Используем данные функции для сброса селекта, по-хорошему надо сделать для
-				//       этого отдельные методы
+				let _startPos = this.Selection.StartPos < this.Selection.EndPos ? this.Selection.StartPos : this.Selection.EndPos;
+				let _endPos   = this.Selection.StartPos < this.Selection.EndPos ? this.Selection.EndPos : this.Selection.StartPos;
+				
+				// TODO: Используем данные функции для сброса селекта, по-хорошему надо сделать для этого отдельный методы
 				if (Direction < 0)
-					this.MoveCursorLeft(false, false);
+				{
+					if (this.Content[_startPos].IsSelectionUse())
+						this.MoveCursorLeft(false, false);
+					else
+						this.RemoveSelection();
+				}
 				else
-					this.MoveCursorRight(false, false);
+				{
+					if (this.Content[_endPos].IsSelectionUse())
+						this.MoveCursorRight(false, false);
+					else
+						this.RemoveSelection();
+				}
 			}
-
+			
 			if (isStartDeleted && isEndDeleted)
 				this.Selection.Use = false;
-
+			
 			if (nCount > -1 && true !== bOnAddText)
 			{
 				this.Correct_ContentPos2();
