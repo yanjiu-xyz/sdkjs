@@ -4157,7 +4157,7 @@ Paragraph.prototype.Remove = function(nCount, isRemoveWholeElement, bRemoveOnlyS
 				let _startPos = this.Selection.StartPos < this.Selection.EndPos ? this.Selection.StartPos : this.Selection.EndPos;
 				let _endPos   = this.Selection.StartPos < this.Selection.EndPos ? this.Selection.EndPos : this.Selection.StartPos;
 				
-				// TODO: Используем данные функции для сброса селекта, по-хорошему надо сделать для этого отдельный методы
+				// TODO: Используем данные функции для сброса селекта, по-хорошему надо сделать для этого отдельные методы
 				if (Direction < 0)
 				{
 					if (this.Content[_startPos].IsSelectionUse())
