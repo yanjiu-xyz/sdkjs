@@ -265,6 +265,8 @@
 			"word/Editor/ParagraphChanges.js",
 			"word/Editor/Paragraph_Recalculate.js",
 			"word/Editor/Paragraph/draw/content-draw-state.js",
+			"word/Editor/Paragraph/draw/highlight-draw-state.js",
+			"word/Editor/Paragraph/draw/line-draw-state.js",
 			"word/Editor/Paragraph/draw/paragraph-draw-state.js",
 			"word/Editor/Layout/Base.js",
 			"word/Editor/Layout/PrintView.js",

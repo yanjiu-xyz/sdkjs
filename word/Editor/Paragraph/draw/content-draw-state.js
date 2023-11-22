@@ -35,12 +35,14 @@
 (function(window)
 {
 	/**
-	 * Class for holding the current state of paragraph content (text, images) drawing
+	 * Class for storing the current draw state of paragraph content (text, images)
 	 * @param {AscWord.ParagraphDrawState} drawState - reference to the main state
 	 * @constructor
 	 */
 	function ParagraphContentDrawState(drawState)
 	{
+		this.drawState = drawState;
+		
 		this.Paragraph = undefined;
 		this.Graphics  = undefined;
 		this.BgColor   = undefined;

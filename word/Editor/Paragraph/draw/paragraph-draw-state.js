@@ -42,9 +42,9 @@
 	{
 		AscWord.ParagraphRecalculateStateBase.call(this);
 		
-		this.highlightState  = new CParagraphDrawStateHighlights(this);
+		this.highlightState  = new AscWord.ParagraphHighlightDrawState(this);
 		this.runElementState = new AscWord.ParagraphContentDrawState(this);
-		this.lineState       = new CParagraphDrawStateLines(this);
+		this.lineState       = new AscWord.ParagraphLineDrawState(this);
 	}
 	
 	ParagraphDrawState.prototype = Object.create(AscWord.ParagraphRecalculateStateBase.prototype);
