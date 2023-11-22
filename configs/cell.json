@@ -254,6 +254,8 @@
 			"word/Editor/Paragraph.js",
 			"word/Editor/ParagraphChanges.js",
 			"word/Editor/Paragraph_Recalculate.js",
+			"word/Editor/Paragraph/draw/content-draw-state.js",
+			"word/Editor/Paragraph/draw/paragraph-draw-state.js",
 			"word/Editor/Sections.js",
 			"word/Editor/SectionsChanges.js",
 			"word/Editor/Numbering/NumberingApplicator.js",

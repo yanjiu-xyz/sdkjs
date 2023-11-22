@@ -3167,6 +3167,7 @@ ParagraphRecalculateStateBase.prototype.unlock = function()
 {
 	this.locked = false;
 };
+window['AscWord'].ParagraphRecalculateStateBase = ParagraphRecalculateStateBase;
 
 function ParagraphStatePool()
 {
@@ -3209,7 +3210,7 @@ ParagraphStatePool.prototype.getEndInfoState = function()
 };
 ParagraphStatePool.prototype.getDrawState = function()
 {
-	return this.getInstance(this.draw, ParagraphDrawState);
+	return this.getInstance(this.draw, AscWord.ParagraphDrawState);
 };
 window['AscWord'].ParagraphStatePool = new ParagraphStatePool();
 
@@ -4489,37 +4490,6 @@ CParagraphRecalculateStateInfo.prototype.ProcessInstruction = function(oInstruct
 };
 
 const g_PRSI = new CParagraphRecalculateStateInfo();
-
-function ParagraphDrawState()
-{
-	ParagraphRecalculateStateBase.call(this);
-	
-	this.highlightState  = new CParagraphDrawStateHighlights();
-	this.runElementState = new CParagraphDrawStateElements();
-	this.lineState       = new CParagraphDrawStateLines();
-}
-
-ParagraphDrawState.prototype = Object.create(ParagraphRecalculateStateBase.prototype);
-ParagraphDrawState.prototype.constructor = ParagraphDrawState;
-
-ParagraphDrawState.prototype.init = function(paragraph, graphics)
-{
-	this.highlightState.init(paragraph, graphics);
-	this.runElementState.init(paragraph, graphics);
-	this.lineState.init(paragraph, graphics);
-};
-ParagraphDrawState.prototype.getHighlightState = function()
-{
-	return this.highlightState;
-};
-ParagraphDrawState.prototype.getRunElementState = function()
-{
-	return this.runElementState;
-};
-ParagraphDrawState.prototype.getLineState = function()
-{
-	return this.lineState;
-};
 
 function CParagraphRecalculateObject()
 {
