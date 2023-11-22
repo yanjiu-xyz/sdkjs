@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2022
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -100,6 +100,10 @@
 				"usrLang"     : arrLangs
 			});
 		}
+		else
+		{
+			this.private_ClearMarksForCorrectWords();
+		}
 
 		return (arrWords.length || isFirst);
 	};
@@ -153,7 +157,7 @@
 			}
 		}
 	};
-	CParagraphSpellChecker.prototype.Add = function(StartPos, EndPos, Word, Lang, Prefix, Ending)
+	CParagraphSpellChecker.prototype.Add = function(startRun, startInRunPos, endRun, endInRunPos, Word, Lang, Prefix, Ending)
 	{
 		if (Word.length > 0)
 		{
@@ -163,8 +167,12 @@
 				Word = Word.substr(1);
 		}
 
-		let oElement = new AscCommonWord.CParagraphSpellCheckerElement(StartPos, EndPos, Word, Lang, Prefix, Ending);
-		this.Paragraph.AddSpellCheckerElement(oElement);
+		if (!this.HaveDictionary(Lang) || !this.IsNeedCheckWord(Word))
+			return;
+		
+		let oElement = new AscCommonWord.CParagraphSpellCheckerElement(startRun, startInRunPos, endRun, endInRunPos, Word, Lang, Prefix, Ending);
+		startRun.AddSpellCheckerElement(new AscWord.SpellMarkStart(oElement));
+		endRun.AddSpellCheckerElement(new AscWord.SpellMarkEnd(oElement));
 		this.Elements.push(oElement);
 	};
 	CParagraphSpellChecker.prototype.SpellCheckResponse = function(nRecalcId, usrCorrect)
@@ -393,7 +401,7 @@
 	CParagraphSpellChecker.prototype.GetCurrentPositionInParagraph = function()
 	{
 		let oCurPos = null;
-		if (this.Paragraph.Is_ThisElementCurrent())
+		if (this.Paragraph.IsThisElementCurrent())
 			oCurPos = this.Paragraph.Get_ParaContentPos(false, false);
 
 		return oCurPos;
@@ -493,9 +501,9 @@
 			}
 		}
 
-		this.private_ClearMarksForRightWords();
+		this.private_ClearMarksForCorrectWords();
 	};
-	CParagraphSpellChecker.prototype.private_ClearMarksForRightWords = function()
+	CParagraphSpellChecker.prototype.private_ClearMarksForCorrectWords = function()
 	{
 		for (let nCount = this.Elements.length, nIndex = nCount - 1; nIndex >= 0; --nIndex)
 		{
@@ -525,7 +533,7 @@
 		{
 			if (EASTEGGS[nIndex] === this.Elements[sId].Word)
 			{
-				this.Elements[sId].Variants = EASTEGGS_VARIANTS[Index];
+				this.Elements[sId].Variants = EASTEGGS_VARIANTS[nIndex];
 				return;
 			}
 		}

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -62,10 +62,38 @@
 		},
         fromRFonts : function(rFonts)
         {
-            this.Ascii.Name    = rFonts.Ascii.Name;
-            this.EastAsia.Name = rFonts.EastAsia.Name;
-            this.HAnsi.Name    = rFonts.HAnsi.Name;
-            this.CS.Name       = rFonts.CS.Name;
+			if (rFonts.Ascii)
+			{
+				this.Ascii.Name = rFonts.Ascii.Name;
+			}
+			else
+			{
+				this.Ascii.Name = "Empty";
+			}
+			if (rFonts.EastAsia)
+			{
+				this.EastAsia.Name = rFonts.EastAsia.Name;
+			}
+			else
+			{
+				this.EastAsia.Name = "Empty";
+			}
+			if (rFonts.HAnsi)
+			{
+				this.HAnsi.Name = rFonts.HAnsi.Name;
+			}
+			else
+			{
+				this.HAnsi.Name = "Empty"
+			}
+			if (rFonts.CS)
+			{
+				this.CS.Name = rFonts.CS.Name;
+			}
+			else
+			{
+				this.CS.Name = "Empty";
+			}
 
             this.Ascii.Index    = -1;
             this.EastAsia.Index = -1;
@@ -481,11 +509,11 @@
 
 	function CMemory(bIsNoInit)
 	{
-		this.Init = function()
+		this.Init = function(len)
 		{
 			var _canvas = document.createElement('canvas');
 			var _ctx    = _canvas.getContext('2d');
-			this.len    = 1024 * 1024 * 5;
+			this.len    = (len === undefined) ? 1024 * 1024 * 5 : len;
 			this.ImData = _ctx.createImageData(this.len / 4, 1);
 			this.data   = this.ImData.data;
 			this.pos    = 0;
@@ -539,6 +567,11 @@
 		{
 			return AscCommon.Base64.encode(this.data, nPos, nLen);
 		}
+		this.sha256 = function()
+		{
+			let sha256 = AscCommon.Digest.sha256(this.data, 0, this.pos);
+			return AscCommon.Hex.encode(sha256);
+		};
 		this.GetData   = function(nPos, nLen)
 		{
 			var _canvas = document.createElement('canvas');
@@ -576,6 +609,18 @@
 		{
 			this.pos += nDif;
 		}
+		this.WriteWithLen = function(_this, callback)
+		{
+			let oldPos = this.GetCurPosition();
+			this.WriteULong(0);
+			callback.call(_this, this);
+			let curPos = this.GetCurPosition();
+			let len = curPos - oldPos;
+			this.Seek(oldPos);
+			this.WriteULong(len - 4);
+			this.Seek(curPos);
+			return len;
+		};
 		this.WriteBool          = function(val)
 		{
 			this.CheckSize(1);
@@ -989,6 +1034,14 @@
 			this.WriteXmlString(name);
 			this.WriteUtf8Char(0x3e);
 		};
+		this.WriteXmlNodeWithText = function(name, text)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd(false);
+			if (text)
+				this.WriteXmlStringEncode(text.toString());
+			this.WriteXmlNodeEnd(name);
+		};
 		this.WriteXmlAttributesEnd = function(isEnd)
 		{
 			if (isEnd)
@@ -1192,6 +1245,13 @@
 			this.WriteXmlStringEncode(val.toString());
 			this.WriteXmlNodeEnd(name);
 		};
+		this.WriteXmlValueStringEncode2 = function(name, val)
+		{
+			this.WriteXmlNodeStart(name);
+			this.WriteXmlAttributesEnd();
+			this.WriteXmlStringEncode(val.toString());
+			this.WriteXmlNodeEnd(name);
+		};
 		this.WriteXmlValueBool = function(name, val)
 		{
 			this.WriteXmlNodeStart(name);
@@ -1265,6 +1325,12 @@
 		{
 			if (null !== val && undefined !== val) {
 				this.WriteXmlValueStringEncode(name, val)
+			}
+		};
+		this.WriteXmlNullableValueStringEncode2 = function(name, val)
+		{
+			if (null !== val && undefined !== val) {
+				this.WriteXmlValueStringEncode2(name, val)
 			}
 		};
 		this.WriteXmlNullableValueBool = function(name, val)
@@ -1363,6 +1429,14 @@
 			}
 			this.WriteXmlAttributesEnd(true);
 		};
+		this.WriteXmlHeader = function()
+		{
+			this.WriteXmlString("<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>\n");
+		};
+		this.WriteXmlRelationshipsNS = function()
+		{
+			this.WriteXmlAttributeString("xmlns:r", "http://schemas.openxmlformats.org/officeDocument/2006/relationships");
+		};
 	}
 
 	function CCommandsType()
@@ -1388,12 +1462,13 @@
 		this.ctBrushColor2          = 23;
 		this.ctBrushAlpha1          = 24;
 		this.ctBrushAlpha2          = 25;
-		this.ctBrushTexturePath     = 26;
+		this.ctBrushTexturePathOld  = 26;
 		this.ctBrushTextureAlpha    = 27;
 		this.ctBrushTextureMode     = 28;
 		this.ctBrushRectable        = 29;
 		this.ctBrushRectableEnabled = 30;
 		this.ctBrushGradient        = 31;
+		this.ctBrushTexturePath     = 32;
 
 		// font
 		this.ctFontXML       = 40;
@@ -1462,15 +1537,21 @@
 		this.ctCommandDouble2 = 154;
 		this.ctCommandString2 = 155;
 
-		this.ctHyperlink = 160;
-		this.ctLink      = 161;
-		this.ctFormField = 162;
+		this.ctHyperlink		= 160;
+		this.ctLink				= 161;
+		this.ctFormField		= 162;
+		this.ctDocInfo			= 163;
+		this.ctAnnotField		= 164;
+		this.ctAnnotFieldDelete	= 165;
 
 		this.ctPageWidth  = 200;
 		this.ctPageHeight = 201;
 
-		this.ctPageStart = 202;
-		this.ctPageEnd   = 203;
+		this.ctPageStart		= 202;
+		this.ctPageEnd			= 203;
+		this.ctDocumentEdit		= 204;
+		this.ctDocumentClose	= 205;
+		this.ctPageEdit			= 206;
 
 		this.ctError = 255;
 	}
@@ -1596,6 +1677,37 @@
 		};
 	}
 
+	function isCloudPrintingUrl()
+	{
+		if (window["AscDesktopEditor"])
+		{
+			if ((undefined !== window["AscDesktopEditor"]["CryptoMode"]) && (0 < window["AscDesktopEditor"]["CryptoMode"]))
+				return false;
+
+			if (window["AscDesktopEditor"]["IsLocalFile"] && window["AscDesktopEditor"]["IsFilePrinting"])
+			{
+				if (!window["AscDesktopEditor"]["IsLocalFile"]() && window["AscDesktopEditor"]["IsFilePrinting"]())
+					return true;
+			}
+		}
+		return false;
+	}
+
+	function getCloudPrintingUrl(url)
+	{
+		var urlLocal = AscCommon.g_oDocumentUrls.getImageLocal(url);
+		if (urlLocal && urlLocal.endsWith(".svg"))
+		{
+			let localWithoutExt = urlLocal.slice(0, urlLocal.length - 3);
+			let urlRes = AscCommon.g_oDocumentUrls.getImageUrl(localWithoutExt + "wmf");
+			if (urlRes)
+				return urlRes;
+			urlRes = AscCommon.g_oDocumentUrls.getImageUrl(localWithoutExt + "emf");
+			if (urlRes)
+				return urlRes;
+		}
+		return url;
+	}
 
 	function CMetafile(width, height)
 	{
@@ -1639,6 +1751,8 @@
 		this.m_bIsPenDash = false;
 
 		this.FontPicker = null;
+
+		this.lastPoint = null;
 	}
 
 	CMetafile.prototype =
@@ -1747,17 +1861,9 @@
 
 		put_brushTexture : function(src, mode)
 		{
-			var isLocalUse = true;
-			if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"] && window["AscDesktopEditor"]["IsFilePrinting"])
-				isLocalUse = ((!window["AscDesktopEditor"]["IsLocalFile"]()) && window["AscDesktopEditor"]["IsFilePrinting"]()) ? false : true;
+			var isCloudPrinting = isCloudPrintingUrl();
 
-            if (window["AscDesktopEditor"] && !isLocalUse)
-            {
-                if ((undefined !== window["AscDesktopEditor"]["CryptoMode"]) && (0 < window["AscDesktopEditor"]["CryptoMode"]))
-                    isLocalUse = true;
-            }
-
-			if (this.BrushType != MetaBrushType.Texture)
+			if (this.BrushType !== MetaBrushType.Texture)
 			{
 				this.Memory.WriteByte(CommandType.ctBrushType);
 				this.Memory.WriteLong(3008);
@@ -1771,11 +1877,15 @@
 			this.Memory.WriteByte(CommandType.ctBrushTexturePath);
 
 			var _src = src;
-
-			var srcLocal = AscCommon.g_oDocumentUrls.getLocal(_src);
-			if (srcLocal && isLocalUse)
+			if (isCloudPrinting)
 			{
-				_src = srcLocal;
+				_src = getCloudPrintingUrl(src)
+			}
+			else
+			{
+				var srcLocal = AscCommon.g_oDocumentUrls.getLocal(_src);
+				if (srcLocal)
+					_src = srcLocal;
 			}
 
 			this.Memory.WriteString2(_src);
@@ -1927,16 +2037,21 @@
 
 			var _memory = (null == this.VectorMemoryForPrint) ? this.Memory : this.VectorMemoryForPrint;
 			_memory.WriteByte(CommandType.ctPathCommandStart);
+
+			this.lastPoint = null;
 		},
 		_e                        : function()
 		{
 			// тут всегда напрямую в Memory
 			this.Memory.WriteByte(CommandType.ctPathCommandEnd);
+			this.lastPoint = null;
 		},
 		_z                        : function()
 		{
 			var _memory = (null == this.VectorMemoryForPrint) ? this.Memory : this.VectorMemoryForPrint;
 			_memory.WriteByte(CommandType.ctPathCommandClose);
+
+			this.lastPoint = null;
 		},
 		_m                        : function(x, y)
 		{
@@ -1944,6 +2059,8 @@
 			_memory.WriteByte(CommandType.ctPathCommandMoveTo);
 			_memory.WriteDouble(x);
 			_memory.WriteDouble(y);
+
+			this.lastPoint = {x: x, y: y};
 		},
 		_l                        : function(x, y)
 		{
@@ -1951,6 +2068,8 @@
 			_memory.WriteByte(CommandType.ctPathCommandLineTo);
 			_memory.WriteDouble(x);
 			_memory.WriteDouble(y);
+
+			this.lastPoint = {x: x, y: y};
 		},
 		_c                        : function(x1, y1, x2, y2, x3, y3)
 		{
@@ -1962,17 +2081,34 @@
 			_memory.WriteDouble(y2);
 			_memory.WriteDouble(x3);
 			_memory.WriteDouble(y3);
+
+			this.lastPoint = {x: x3, y: y3};
 		},
 		_c2                       : function(x1, y1, x2, y2)
 		{
 			var _memory = (null == this.VectorMemoryForPrint) ? this.Memory : this.VectorMemoryForPrint;
 			_memory.WriteByte(CommandType.ctPathCommandCurveTo);
-			_memory.WriteDouble(x1);
-			_memory.WriteDouble(y1);
-			_memory.WriteDouble(x1);
-			_memory.WriteDouble(y1);
-			_memory.WriteDouble(x2);
-			_memory.WriteDouble(y2);
+
+			if (null == this.lastPoint)
+			{
+				_memory.WriteDouble(x1);
+				_memory.WriteDouble(y1);
+				_memory.WriteDouble(x1);
+				_memory.WriteDouble(y1);
+				_memory.WriteDouble(x2);
+				_memory.WriteDouble(y2);
+			}
+			else
+			{
+				_memory.WriteDouble(this.lastPoint.x + 2 * (x1 - this.lastPoint.x) / 3);
+				_memory.WriteDouble(this.lastPoint.y + 2 * (y1 - this.lastPoint.y) / 3);
+				_memory.WriteDouble(x2 + 2 * (x1 - x2) / 3);
+				_memory.WriteDouble(y2 + 2 * (y1 - y2) / 3);
+				_memory.WriteDouble(x2);
+				_memory.WriteDouble(y2);
+			}
+
+			this.lastPoint = {x: x2, y: y2};
 		},
 		ds                        : function()
 		{
@@ -2038,31 +2174,28 @@
 		// images
 		drawImage : function(img, x, y, w, h, isUseOriginUrl)
 		{
-			var isLocalUse = true;
-			if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"] && window["AscDesktopEditor"]["IsFilePrinting"])
-				isLocalUse = ((!window["AscDesktopEditor"]["IsLocalFile"]()) && window["AscDesktopEditor"]["IsFilePrinting"]()) ? false : true;
-
-			if (window["AscDesktopEditor"] && !isLocalUse)
-			{
-				if ((undefined !== window["AscDesktopEditor"]["CryptoMode"]) && (0 < window["AscDesktopEditor"]["CryptoMode"]))
-					isLocalUse = true;
-			}
+			var isCloudPrinting = isCloudPrintingUrl();
 
 			if (!window.editor)
 			{
 				// excel
 				this.Memory.WriteByte(CommandType.ctDrawImageFromFile);
 
-				var imgLocal = AscCommon.g_oDocumentUrls.getLocal(img);
-				if (imgLocal && isLocalUse && (true !== isUseOriginUrl))
+				let _img = img;
+				if (isCloudPrinting)
 				{
-					this.Memory.WriteString2(imgLocal);
+					_img = getCloudPrintingUrl(_img);
 				}
 				else
 				{
-					this.Memory.WriteString2(img);
+					var imgLocal = AscCommon.g_oDocumentUrls.getLocal(img);
+					if (imgLocal && (true !== isUseOriginUrl))
+					{
+						_img = imgLocal;
+					}
 				}
 
+				this.Memory.WriteString2(_img);
 				this.Memory.WriteDouble(x);
 				this.Memory.WriteDouble(y);
 				this.Memory.WriteDouble(w);
@@ -2084,10 +2217,15 @@
 				_src = img;
 			}
 
-			var srcLocal = AscCommon.g_oDocumentUrls.getLocal(_src);
-			if (srcLocal && isLocalUse)
+			if (isCloudPrinting)
 			{
-				_src = srcLocal;
+				_src = getCloudPrintingUrl(_src)
+			}
+			else
+			{
+				var srcLocal = AscCommon.g_oDocumentUrls.getLocal(_src);
+				if (srcLocal)
+					_src = srcLocal;
 			}
 
 			this.Memory.WriteByte(CommandType.ctDrawImageFromFile);
@@ -2355,12 +2493,23 @@
 			var nFlag = 0;
 
 			var oFormPr = oForm.GetFormPr();
-
-			var sFormKey = oFormPr.GetKey();
-			if (sFormKey)
+			
+			let formKey = null;
+			if (!oForm.IsMainForm())
+			{
+				let mainForm = oForm.GetMainForm();
+				let subIndex = oForm.GetSubFormIndex();
+				formKey = mainForm.GetFormKey() + "_" + subIndex;
+			}
+			else
+			{
+				formKey = oFormPr.GetKey();
+			}
+			
+			if (formKey)
 			{
 				nFlag |= 1;
-				this.Memory.WriteString(sFormKey);
+				this.Memory.WriteString(formKey);
 			}
 
 			var sHelpText = oFormPr.GetHelpText();
@@ -2416,6 +2565,8 @@
 			// 2 - ComboBox/DropDownList
 			// 3 - CheckBox/RadioButton
 			// 4 - Picture
+			// 5 - Signature
+			// 6 - DateTime
 
 			if (oForm.IsTextForm())
 			{
@@ -2431,7 +2582,7 @@
 					this.Memory.WriteLong(oTextFormPr.MaxCharacters);
 				}
 
-				var sValue = oForm.GetSelectedText(true);
+				let sValue = oForm.GetSelectedText(true, false, {NewLine : true});
 				if (sValue)
 				{
 					nFlag |= (1 << 22);
@@ -2444,11 +2595,36 @@
 				if (oTextFormPr.AutoFit)
 					nFlag |= (1 << 24);
 
-				var sPlaceHolderText = oForm.GetPlaceholderText();
+				let sPlaceHolderText = oForm.GetPlaceholderText();
 				if (sPlaceHolderText)
 				{
 					nFlag |= (1 << 25);
 					this.Memory.WriteString(sPlaceHolderText);
+				}
+
+				let format = oTextFormPr.GetFormat();
+				if (!format.IsEmpty())
+				{
+					nFlag |= (1 << 26);
+
+					this.Memory.WriteByte(format.GetType());
+
+					let formatSymbols = format.GetSymbols(false);
+
+					this.Memory.WriteLong(formatSymbols.length);
+					for (let index = 0, count = formatSymbols.length; index < count; ++index)
+					{
+						this.Memory.WriteLong(formatSymbols[index]);
+					}
+
+					let mask = "";
+
+					if (format.IsMask())
+						mask = format.GetMask();
+					else if (format.IsRegExp())
+						mask = format.GetRegExp();
+
+					this.Memory.WriteString(mask);
 				}
 			}
 			else if (oForm.IsComboBox() || oForm.IsDropDownList())
@@ -2566,25 +2742,49 @@
 					var arrDrawings = oForm.GetAllDrawingObjects();
 					if (arrDrawings.length > 0 && arrDrawings[0].IsPicture() && arrDrawings[0].GraphicObj.blipFill)
 					{
-						var isLocalUse = true;
-						if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"] && window["AscDesktopEditor"]["IsFilePrinting"])
-							isLocalUse = ((!window["AscDesktopEditor"]["IsLocalFile"]()) && window["AscDesktopEditor"]["IsFilePrinting"]()) ? false : true;
+						var _src = AscCommon.getFullImageSrc2(arrDrawings[0].GraphicObj.blipFill.RasterImageId);
+						var isCloudPrinting = isCloudPrintingUrl();
 
-						if (window["AscDesktopEditor"] && !isLocalUse)
+						if (isCloudPrinting)
 						{
-							if ((undefined !== window["AscDesktopEditor"]["CryptoMode"]) && (0 < window["AscDesktopEditor"]["CryptoMode"]))
-								isLocalUse = true;
+							_src = getCloudPrintingUrl(_src)
+						}
+						else
+						{
+							var srcLocal = AscCommon.g_oDocumentUrls.getLocal(_src);
+							if (srcLocal)
+								_src = srcLocal;
 						}
 
-						var src = AscCommon.getFullImageSrc2(arrDrawings[0].GraphicObj.blipFill.RasterImageId);
-
-						var srcLocal = AscCommon.g_oDocumentUrls.getLocal(src);
-						if (srcLocal && isLocalUse)
-							src = srcLocal;
-
 						nFlag |= (1 << 22);
-						this.Memory.WriteString(src);
+						this.Memory.WriteString(_src);
 					}
+				}
+			}
+			else if (oForm.IsDatePicker())
+			{
+				this.Memory.WriteLong(6);
+				let dateTimePr = oForm.GetDatePickerPr();
+				
+				let value = oForm.GetSelectedText(true, false, {NewLine : true});
+				if (value)
+				{
+					nFlag |= (1 << 22);
+					this.Memory.WriteString(value);
+				}
+				
+				let placeholderText = oForm.GetPlaceholderText();
+				if (placeholderText)
+				{
+					nFlag |= (1 << 25);
+					this.Memory.WriteString(placeholderText);
+				}
+
+				let dateFormat = dateTimePr.GetDateFormat();
+				if (dateFormat)
+				{
+					nFlag |= (1 << 26);
+					this.Memory.WriteString(dateFormat);
 				}
 			}
 			else
@@ -3107,6 +3307,61 @@
 
 			this.ds();
 		},
+		
+		DrawPolygon : function(oPath, lineWidth, shift)
+		{
+			this.p_width(lineWidth);
+			this._s();
+			
+			var Points = oPath.Points;
+			var nCount = Points.length;
+			// берем предпоследнюю точку, т.к. последняя совпадает с первой
+			var PrevX = Points[nCount - 2].X, PrevY = Points[nCount - 2].Y;
+			var _x    = Points[nCount - 2].X,    _y = Points[nCount - 2].Y;
+			var StartX, StartY;
+			
+			for (var nIndex = 0; nIndex < nCount; nIndex++)
+			{
+				if(PrevX > Points[nIndex].X)
+				{
+					_y = Points[nIndex].Y - shift;
+				}
+				else if(PrevX < Points[nIndex].X)
+				{
+					_y  = Points[nIndex].Y + shift;
+				}
+				
+				if(PrevY < Points[nIndex].Y)
+				{
+					_x = Points[nIndex].X - shift;
+				}
+				else if(PrevY > Points[nIndex].Y)
+				{
+					_x = Points[nIndex].X + shift;
+				}
+				
+				PrevX = Points[nIndex].X;
+				PrevY = Points[nIndex].Y;
+				
+				if(nIndex > 0)
+				{
+					if (1 == nIndex)
+					{
+						StartX = _x;
+						StartY = _y;
+						this._m(_x, _y);
+					}
+					else
+					{
+						this._l(_x, _y);
+					}
+				}
+			}
+			
+			this._l(StartX, StartY);
+			this._z();
+			this.ds();
+		},
 
 		// мега крутые функции для таблиц
 		drawHorLineExt : function(align, y, x, r, penW, leftMW, rightMW)
@@ -3400,21 +3655,55 @@
 		{
 			if (0 !== this.m_lPagesCount)
 				this.m_arrayPages[this.m_lPagesCount - 1].AddFormField(nX, nY, nW, nH, nBaseLineOffset, oForm);
+		},
+
+		DocInfo : function(props)
+		{
+			if (props)
+			{
+				this.Memory.WriteByte(CommandType.ctDocInfo);
+
+				var nFlagPos = this.Memory.GetCurPosition();
+				this.Memory.Skip(4);
+				var nFlag = 0;
+
+				if (props.asc_getTitle())
+				{
+					nFlag |= 1;
+					this.Memory.WriteString(props.asc_getTitle());
+				}
+				if (props.asc_getCreator())
+				{
+					nFlag |= (1 << 1);
+					this.Memory.WriteString(props.asc_getCreator());
+				}
+				if (props.asc_getSubject())
+				{
+					nFlag |= (1 << 2);
+					this.Memory.WriteString(props.asc_getSubject());
+				}
+				if (props.asc_getKeywords())
+				{
+					nFlag |= (1 << 3);
+					this.Memory.WriteString(props.asc_getKeywords());
+				}
+
+				var nEndPos = this.Memory.GetCurPosition();
+				this.Memory.Seek(nFlagPos);
+				this.Memory.WriteLong(nFlag);
+				this.Memory.Seek(nEndPos);
+			}
+		},
+		
+		IsPdfRenderer : function()
+		{
+			return this.RENDERER_PDF_FLAG;
 		}
 	};
 
 	var MATRIX_ORDER_PREPEND = 0;
 	var MATRIX_ORDER_APPEND  = 1;
 
-	function deg2rad(deg)
-	{
-		return deg * Math.PI / 180.0;
-	}
-
-	function rad2deg(rad)
-	{
-		return rad * 180.0 / Math.PI;
-	}
 
 	function CMatrix()
 	{
@@ -3489,7 +3778,7 @@
 		Rotate          : function(a, order)
 		{
 			var m   = new CMatrix();
-			var rad = deg2rad(a);
+			var rad = AscCommon.deg2rad(a);
 			m.sx    = Math.cos(rad);
 			m.shx   = Math.sin(rad);
 			m.shy   = -Math.sin(rad);
@@ -3567,7 +3856,7 @@
 			}
 
 			var a = Math.atan2(_y, _x);
-			a     = rad2deg(a);
+			a     = AscCommon.rad2deg(a);
 			if (a < 0)
 				a += 360;
 			return a;
@@ -3663,7 +3952,7 @@
 		else
 		{
 			a = Math.atan2(_y, _x);
-			a = rad2deg(a);
+			a = AscCommon.rad2deg(a);
 		}
 
 		if (a < 0)
@@ -4054,8 +4343,6 @@
 	window['AscCommon'].CDocumentRenderer        = CDocumentRenderer;
 	window['AscCommon'].MATRIX_ORDER_PREPEND     = MATRIX_ORDER_PREPEND;
 	window['AscCommon'].MATRIX_ORDER_APPEND      = MATRIX_ORDER_APPEND;
-	window['AscCommon'].deg2rad                  = deg2rad;
-	window['AscCommon'].rad2deg                  = rad2deg;
 	window['AscCommon'].CMatrix                  = CMatrix;
 	window['AscCommon'].CMatrixL                 = CMatrixL;
 	window['AscCommon'].CGlobalMatrixTransformer = CGlobalMatrixTransformer;

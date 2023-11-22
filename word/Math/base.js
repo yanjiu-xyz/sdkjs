@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -218,6 +218,10 @@ CMathBase.prototype.setDimension = function(countRow, countCol)
     }
 
 };
+CMathBase.prototype.SetParent = function(parent)
+{
+	this.Parent = parent;
+};
 CMathBase.prototype.NeedBreakContent = function(Number)
 {
     this.bCanBreak       = true;
@@ -297,13 +301,6 @@ CMathBase.prototype.SetPlaceholder = function()
 				this.elements[i][j].SetPlaceholder();
 		}
 	}
-};
-CMathBase.prototype.CheckRunContent = function(fCheck)
-{
-    for(var i = 0; i < this.Content.length; ++i)
-    {
-        this.Content[i].CheckRunContent(fCheck);
-    }
 };
 CMathBase.prototype.addMCToContent = function(elements)
 {
@@ -727,7 +724,30 @@ CMathBase.prototype.recalculateSize = function(oMeasure, RPI)
     this.size.width  = width;
     this.size.height = height;
     this.size.ascent = ascent;
-}
+};
+CMathBase.prototype.recalculateAllSize = function(textMeasurer)
+{
+	this.setDistance();
+	
+	for (let index = 0, count = this.Content.length; index < count; ++index)
+	{
+		this.Content[index].recalculateAllSize(textMeasurer);
+	}
+	
+	for (let iRow = 0; iRow < this.nRow; ++iRow)
+	{
+		for (let iCol = 0; iCol < this.nCol; ++iCol)
+		{
+			let item = this.elements[iRow][iCol];
+			if (item.IsJustDraw())
+				this.MeasureJustDraw(item);
+			else if (item.recalculateSize)
+				item.recalculateSize(textMeasurer);
+		}
+	}
+	
+	this.recalculateSize(textMeasurer);
+};
 CMathBase.prototype.Resize = function(oMeasure, RPI)
 {
     for(var i=0; i < this.nRow; i++)
@@ -998,6 +1018,9 @@ CMathBase.prototype.Apply_TextPrToCtrPr = function(TextPr, IncFontSize, ApplyToA
 		if (undefined !== TextPr.Bold)
 			this.SetBold(null === TextPr.Bold ? undefined : TextPr.Bold);
 
+		if (undefined !== TextPr.Italic)
+			this.SetItalic(null === TextPr.Italic ? undefined : TextPr.Italic);
+
 		if (TextPr.AscFill || TextPr.AscLine || TextPr.AscUnifill)
 		{
 			var oCompiledPr = this.Get_CompiledCtrPrp();
@@ -1035,6 +1058,9 @@ CMathBase.prototype.Apply_TextPrToCtrPr = function(TextPr, IncFontSize, ApplyToA
 					this.Set_TextFill(undefined);
 			}
 		}
+
+		if (undefined !== TextPr.Color)
+			this.Set_Color(TextPr.Color);
 
 		if (undefined !== TextPr.TextOutline)
 			this.Set_TextOutline(null === TextPr.TextOutline ? undefined : TextPr.TextOutline);
@@ -1541,7 +1567,13 @@ CMathBase.prototype.Copy = function(Selected, oPr)
     }
     if(oPr && oPr.Comparison)
     {
-        oPr.Comparison.updateReviewInfo(NewElement, reviewtype_Add);
+        if (oPr.SkipUpdateInfo) {
+            oPr.Comparison.saveReviewInfo(NewElement, this);
+        } else if (oPr.bSaveCustomReviewType) {
+            oPr.Comparison.saveCustomReviewInfo(NewElement, this, oPr.Comparison.nInsertChangesType);
+        } else {
+            oPr.Comparison.updateReviewInfo(NewElement, oPr.Comparison.nInsertChangesType);
+        }
     }
     return NewElement;
 };
@@ -2310,115 +2342,26 @@ CMathBase.prototype.Recalculate_Range = function(PRS, ParaPr, Depth)
     PRS.bMath_OneLine = bOneLine;
     PRS.bContainCompareOper = bContainCompareOper;
 };
-/*CMathBase.prototype.Get_WrapToLine = function(_CurLine, _CurRange, WrapIndent)
-{
-    var Wrap = 0;
-
-    if(this.bOneLine)
-    {
-        Wrap = WrapIndent;
-    }
-    else
-    {
-        var Pos = this.NumBreakContent;
-        Wrap = this.Content[Pos].Get_WrapToLine(_CurLine, _CurRange, WrapIndent);
-    }
-
-    return Wrap;
-};*/
 CMathBase.prototype.RecalculateMinMaxContentWidth = function(MinMax)
 {
-    var bOneLine = MinMax.bMath_OneLine;
-
     if(this.kind !== MATH_DELIMITER)
     {
         this.BrGapLeft  = this.GapLeft;
         this.BrGapRight = this.GapRight;
     }
-
-    if(this.bCanBreak == false || MinMax.bMath_OneLine == true)
-    {
-        MinMax.bMath_OneLine = true;
-
-        for(var i=0; i < this.nRow; i++)
-        {
-            for(var j = 0; j < this.nCol; j++)
-            {
-                var Item = this.elements[i][j];
-
-                if(Item.IsJustDraw()) // для Just-Draw элементов надо выставить Font
-                {
-                    this.MeasureJustDraw(Item);
-                }
-                else
-                {
-                    Item.RecalculateMinMaxContentWidth(MinMax);
-                }
-            }
-        }
-
-        this.recalculateSize(g_oTextMeasurer);
-
-        var width = this.size.width;
-
-        if(false === MinMax.bWord)
-        {
-            MinMax.bWord    = true;
-            MinMax.nWordLen = width;
-        }
-        else
-        {
-            MinMax.nWordLen += width;
-        }
-
-        MinMax.nCurMaxWidth += width;
-    }
-    else
-    {
-        this.setDistance();
-
-        var Numb = this.NumBreakContent;
-        var Len = this.Content.length;
-
-        if(false === MinMax.bWord)
-        {
-            MinMax.bWord    = true;
-            MinMax.nWordLen = this.BrGapLeft;
-        }
-        else
-        {
-            MinMax.nWordLen += this.BrGapLeft;
-        }
-
-        MinMax.nCurMaxWidth += this.BrGapLeft;
-
-
-        for(var Pos = 0; Pos < Len; Pos++)
-        {
-            var Item = this.Content[Pos];
-
-            MinMax.bMath_OneLine = Pos !== Numb;
-            Item.RecalculateMinMaxContentWidth(MinMax);
-
-            if(Pos !== Numb)
-            {
-                MinMax.nWordLen += Item.size.width;
-                MinMax.nCurMaxWidth += Item.size.width;
-            }
-
-            if(Pos < Len - 1)
-            {
-                MinMax.nWordLen += this.dW;
-                MinMax.nCurMaxWidth += this.dW;
-            }
-        }
-
-        MinMax.nWordLen += this.BrGapRight;
-        MinMax.nCurMaxWidth += this.BrGapRight;
-
-    }
-
-    MinMax.bMath_OneLine = bOneLine;
+	
+	let mathContent = this.Content[this.NumBreakContent];
+	if (mathContent)
+	{
+		// Всю формулу воспринимаем как слово
+		MinMax.addLetter(this.BrGapLeft);
+		mathContent.RecalculateMinMaxContentWidth(MinMax);
+		MinMax.addLetter(this.BrGapRight);
+	}
+	else
+	{
+		MinMax.addLetter(this.size.width);
+	}
 };
 CMathBase.prototype.MeasureJustDraw = function(Item)
 {
@@ -2704,7 +2647,7 @@ CMathBase.prototype.CheckRevisionsChanges = function(Checker, ContentPos, Depth)
 
     if (true !== Checker.Is_CheckOnlyTextPr())
     {
-        if (ReviewType !== Checker.GetAddRemoveType() || (reviewtype_Common !== ReviewType && (this.ReviewInfo.GetUserId() !== Checker.Get_AddRemoveUserId() || this.GetReviewMoveType() !== Checker.GetAddRemoveMoveType())))
+		if (Checker.IsStopAddRemoveChange(ReviewType, this.GetReviewInfo()))
         {
             Checker.FlushAddRemoveChange();
             ContentPos.Update(0, Depth);
@@ -2729,8 +2672,8 @@ CMathBase.prototype.CheckRevisionsChanges = function(Checker, ContentPos, Depth)
                 var TempContentPos = this.Paragraph.Get_PosByElement(this);
                 if (TempContentPos)
                 {
-                    var InParentPos = TempContentPos.Get(TempContentPos.Get_Depth());
-                    TempContentPos.Decrease_Depth(1);
+                    var InParentPos = TempContentPos.Get(TempContentPos.GetDepth());
+                    TempContentPos.DecreaseDepth(1);
                     var Parent = this.Paragraph.Get_ElementByPos(TempContentPos);
                     if (Parent && Parent.Content && this === Parent.Content[InParentPos] && Parent.Content[InParentPos + 1] && para_Math_Run === Parent.Content[InParentPos + 1].Type)
                     {
@@ -2935,7 +2878,7 @@ CMathBase.prototype.Math_Set_EmptyRange         = CMathContent.prototype.Math_Se
 CMathBase.prototype.Set_ParaMath                = CMathContent.prototype.Set_ParaMath;
 CMathBase.prototype.Recalculate_Reset           = CMathContent.prototype.Recalculate_Reset;
 CMathBase.prototype.Set_ParaContentPos          = CMathContent.prototype.Set_ParaContentPos;
-CMathBase.prototype.GetCurrentParaPos          = CMathContent.prototype.GetCurrentParaPos;
+CMathBase.prototype.GetCurrentParaPos           = CMathContent.prototype.GetCurrentParaPos;
 CMathBase.prototype.private_UpdatePosOnAdd      = CMathContent.prototype.private_UpdatePosOnAdd;
 CMathBase.prototype.private_UpdatePosOnRemove   = CMathContent.prototype.private_UpdatePosOnRemove;
 CMathBase.prototype.private_CorrectSelectionPos = CMathContent.prototype.private_CorrectSelectionPos;
@@ -3008,6 +2951,10 @@ CMathBase.prototype.ConvertOperatorToStr = function(operator)
     }
     return OPERATOR_EMPTY === operator ? "" : AscCommon.convertUnicodeToUTF16([operator]);
 };
+CMathBase.prototype.GetTextOfElement = function()
+{
+	return "";
+};
 
 CMathBase.prototype.GetStartBracetForGetTextContent = function(isLaTeX) {
 	if (isLaTeX) 
@@ -3020,13 +2967,6 @@ CMathBase.prototype.GetEndBracetForGetTextContent = function(isLaTeX) {
 		return '}';
 	else
 		return ')';
-};
-CMathBase.prototype.CheckIsEmpty = function(strAtom) {
-	if (strAtom === '⬚') {
-		return "";
-	} else {
-		return strAtom
-	}
 };
 
 function CMathBasePr()
@@ -3049,6 +2989,10 @@ CMathBounds.prototype.Reset = function(CurLine, CurRange)
 CMathBounds.prototype.CheckLineBound = function(Line, Range)
 {
     if(this.Bounds.length <= Line)
+    {
+        this.Bounds[Line] = [];
+    }
+    else if (undefined === this.Bounds[Line])
     {
         this.Bounds[Line] = [];
     }

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -558,10 +558,95 @@ window['AscCommonWord'].CTextToTableEngine = CTextToTableEngine;
 
 		return (((nFontSize * nCoef * 2 + 0.5) | 0) / 2);
 	}
-
+	function TextToRunElements(sText, fHandle)
+	{
+		let arrElements = fHandle ? null : [];
+		for (var oIterator = sText.getUnicodeIterator(); oIterator.check(); oIterator.next())
+		{
+			let oElement = codePointToRunElement(oIterator.value(), false);
+			
+			if (fHandle)
+				fHandle(oElement);
+			else
+				arrElements.push(oElement);
+		}
+		return fHandle ? null : arrElements;
+	}
+	function TextToMathRunElements(sText, fHandle)
+	{
+		let arrElements = fHandle ? null : [];
+		for (var oIterator = sText.getUnicodeIterator(); oIterator.check(); oIterator.next())
+		{
+			let oElement = codePointToRunElement(oIterator.value(), true);
+			
+			if (fHandle)
+				fHandle(oElement);
+			else
+				arrElements.push(oElement);
+		}
+		return fHandle ? null : arrElements;
+	}
+	function codePointToRunElement(codePoint, isMath)
+	{
+		let element = null;
+		if (isMath)
+		{
+			if (0x0026 === codePoint)
+			{
+				element = new AscWord.CMathAmp();
+			}
+			else
+			{
+				element = new AscWord.CMathText(false);
+				element.add(codePoint);
+			}
+		}
+		else
+		{
+			if (9 === codePoint)
+				element = new AscWord.CRunTab();
+			else if (10 === codePoint)
+				element = new AscWord.CRunBreak(AscWord.break_Line);
+			else if (13 === codePoint)
+				element = null;
+			else if (AscCommon.IsSpace(codePoint))
+				element = new AscWord.CRunSpace(codePoint);
+			else
+				element = new AscWord.CRunText(codePoint);
+		}
+		return element;
+	}
+	function sortByDocumentPosition(elements)
+	{
+		let docPos = {};
+		elements.forEach(function(element)
+		{
+			docPos[element.GetId()] = element.GetDocumentPositionFromObject();
+		});
+		
+		elements.sort(function(l, r)
+		{
+			return CompareDocumentPositions(docPos[l.GetId()], docPos[r.GetId()]);
+		});
+	}
+	function checkAsYouTypeEnterText(run, inRunPos, codePoint)
+	{
+		let localHistory = AscCommon.History;
+		if (!localHistory.isEmpty())
+			return AscCommon.History.checkAsYouTypeEnterText(run, inRunPos, codePoint);
+		else (AscCommon.CollaborativeEditing.Is_Fast() && !AscCommon.CollaborativeEditing.Is_SingleUser())
+			return AscCommon.CollaborativeEditing.getCoHistory().checkAsYouTypeEnterText(run, inRunPos, codePoint);
+		
+		return false;
+	}
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CompareDocumentPositions = CompareDocumentPositions;
 	window['AscWord'].AlignFontSize            = AlignFontSize;
+	window['AscWord'].TextToRunElements        = TextToRunElements;
+	window['AscWord'].TextToMathRunElements    = TextToMathRunElements;
+	window['AscWord'].codePointToRunElement    = codePointToRunElement;
+	window['AscWord'].sortByDocumentPosition   = sortByDocumentPosition;
+	window['AscWord'].checkAsYouTypeEnterText  = checkAsYouTypeEnterText;
 
 })(window);

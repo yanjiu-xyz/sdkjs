@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 09.11.2016
- * Time: 15:52
- */
 
 // TODO: Изменения с добавлениями строк и колонок матриц работают не совсем корректно:
 //       Нужно либо сделать специальнный класс CContentChanges для случая прямоугольной матрицы,
@@ -213,22 +208,24 @@ CChangesMathContentAddItem.prototype.Undo = function()
 };
 CChangesMathContentAddItem.prototype.Redo = function()
 {
-	var oMathContent = this.Class;
-
-	var Array_start = oMathContent.Content.slice(0, this.Pos);
-	var Array_end   = oMathContent.Content.slice(this.Pos);
-
-	oMathContent.Content = Array_start.concat(this.Items, Array_end);
-	oMathContent.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
-
+	let mathContent = this.Class;
+	
+	var Array_start = mathContent.Content.slice(0, this.Pos);
+	var Array_end   = mathContent.Content.slice(this.Pos);
+	
+	mathContent.Content = Array_start.concat(this.Items, Array_end);
+	mathContent.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
+	
 	for (var nIndex = 0; nIndex < this.Items.length; ++nIndex)
 	{
-		this.Items[nIndex].Set_ParaMath(oMathContent.ParaMath);
+		let item = this.Items[nIndex];
+		item.Set_ParaMath(mathContent.ParaMath);
+		item.SetParent(mathContent);
 
-		if (this.Items[nIndex].SetParagraph)
-			this.Items[nIndex].SetParagraph(oMathContent.Paragraph);
-
-		this.Items[nIndex].Recalc_RunsCompiledPr();
+		if (item.SetParagraph)
+			item.SetParagraph(mathContent.Paragraph);
+		
+		item.Recalc_RunsCompiledPr();
 	}
 };
 CChangesMathContentAddItem.prototype.private_WriteItem = function(Writer, Item)
@@ -287,22 +284,24 @@ CChangesMathContentRemoveItem.prototype.constructor = CChangesMathContentRemoveI
 CChangesMathContentRemoveItem.prototype.Type = AscDFH.historyitem_MathContent_RemoveItem;
 CChangesMathContentRemoveItem.prototype.Undo = function()
 {
-	var oMathContent = this.Class;
-
-	var Array_start = oMathContent.Content.slice(0, this.Pos);
-	var Array_end   = oMathContent.Content.slice(this.Pos);
-
-	oMathContent.Content = Array_start.concat(this.Items, Array_end);
-	oMathContent.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
-
+	let mathContent = this.Class;
+	
+	var Array_start = mathContent.Content.slice(0, this.Pos);
+	var Array_end   = mathContent.Content.slice(this.Pos);
+	
+	mathContent.Content = Array_start.concat(this.Items, Array_end);
+	mathContent.private_UpdateSelectionPosOnAdd(this.Pos, this.Items.length);
+	
 	for (var nIndex = 0; nIndex < this.Items.length; ++nIndex)
 	{
-		this.Items[nIndex].Set_ParaMath(oMathContent.ParaMath);
-
-		if (this.Items[nIndex].SetParagraph)
-			this.Items[nIndex].SetParagraph(oMathContent.Paragraph);
-
-		this.Items[nIndex].Recalc_RunsCompiledPr();
+		let item = this.Items[nIndex];
+		item.Set_ParaMath(mathContent.ParaMath);
+		item.SetParent(mathContent);
+		
+		if (item.SetParagraph)
+			item.SetParagraph(mathContent.Paragraph);
+		
+		item.Recalc_RunsCompiledPr();
 	}
 };
 CChangesMathContentRemoveItem.prototype.Redo = function()

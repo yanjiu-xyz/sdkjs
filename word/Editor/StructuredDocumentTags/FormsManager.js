@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2022
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -54,9 +54,10 @@
 
 		// В мапе форм находятся вообще все формы. В списке находятся только самостоятельные формы, которые
 		// не являются частью другой формы
-		this.FormsMap   = {};
-		this.Forms      = [];
-		this.UpdateList = false;
+		this.FormsMap     = {};
+		this.Forms        = [];
+		this.UpdateList   = false;
+		this.KeyGenerator = new AscWord.CFormKeyGenerator(this);
 	}
 	CFormsManager.prototype.Register = function(oForm)
 	{
@@ -148,16 +149,17 @@
 	/**
 	 * Получаем массив всех специальных форм с заданным ключом
 	 * @param sKey
+	 * @param [formType=undefined] {Asc.c_oAscContentControlSpecificType}
 	 * @returns {[]}
 	 */
-	CFormsManager.prototype.GetAllFormsByKey = function(sKey)
+	CFormsManager.prototype.GetAllFormsByKey = function(sKey, formType)
 	{
 		let arrForms  = this.GetAllForms();
 		let arrResult = [];
 		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
 			let oForm = arrForms[nIndex];
-			if (sKey === oForm.GetFormKey())
+			if (sKey === oForm.GetFormKey() && (undefined === formType || formType === oForm.GetSpecificType()))
 				arrResult.push(oForm);
 		}
 
@@ -187,11 +189,20 @@
 	 */
 	CFormsManager.prototype.IsAllRequiredFormsFilled = function()
 	{
+		// TODO: Сейчас у нас здесь идет проверка и на правильность заполнения форм с форматом
+		// Возможно стоит разделить на 2 разные проверки и добавить одну общую проверку на правильность
+		// заполненности формы, куда будут входить обе предыдущие проверки
+
 		let arrForms = this.GetAllForms();
 		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
 			let oForm = arrForms[nIndex];
 			if (oForm.IsFormRequired() && !oForm.IsFormFilled())
+				return false;
+
+			if (oForm.IsTextForm()
+				&& !oForm.IsPlaceHolder()
+				&& !oForm.GetTextFormPr().CheckFormat(oForm.GetInnerText(), true))
 				return false;
 		}
 		return true;
@@ -235,9 +246,9 @@
 	 */
 	CFormsManager.prototype.OnChange = function(oForm)
 	{
-		if (!oForm || !oForm.IsUseInDocument())
+		if (!this.IsValidForm(oForm))
 			return;
-
+		
 		if (oForm.IsComplexForm())
 			this.OnChangeComplexForm(oForm);
 		else if (oForm.IsCheckBox())
@@ -246,6 +257,162 @@
 			this.OnChangePictureForm(oForm);
 		else
 			this.OnChangeTextForm(oForm);
+	};
+	/**
+	 * Проверяем корректность изменения формы
+	 * @param oForm
+	 */
+	CFormsManager.prototype.ValidateChangeOnFly = function(oForm)
+	{
+		if (!oForm.IsPlaceHolder() && !oForm.IsComplexForm() && oForm.IsTextForm())
+		{
+			let oTextFormPr = oForm.GetTextFormPr();
+			if (!oTextFormPr.CheckFormatOnFly(oForm.GetInnerText()))
+				return false;
+		}
+
+		return true;
+	};
+	/**
+	 * @returns {AscWord.CFormKeyGenerator}
+	 */
+	CFormsManager.prototype.GetKeyGenerator = function()
+	{
+		return this.KeyGenerator;
+	};
+	/**
+	 * Получаем данные всех форм
+	 * @returns {array}
+	 */
+	CFormsManager.prototype.GetAllFormsData = function()
+	{
+		let data = [];
+
+		let allForms = this.GetAllForms();
+		let passedKeys = {};
+		for (let index = 0, count = allForms.length; index < count; ++index)
+		{
+			let form = allForms[index];
+			let key  = form.GetFormKey();
+			let type = form.GetSpecificType();
+			
+			if (form.IsRadioButton())
+				key = form.GetCheckBoxPr().GetGroupKey();
+			
+			if (!key || (passedKeys[key] && passedKeys[key][type]))
+				continue;
+			
+			if (!passedKeys[key])
+				passedKeys[key] = {};
+			
+			passedKeys[key][type] = form;
+			
+			let stringType = Asc.c_oAscContentControlSpecificType.toString(type);
+			if (form.IsRadioButton())
+				stringType = "radio";
+			
+			data.push({
+				"key"   : key,
+				"tag"   : form.GetTag(),
+				"value" : this.GetFormValue(form),
+				"type"  : stringType
+			});
+		}
+		
+		return data;
+	};
+	CFormsManager.prototype.SetAllFormsData = function(data)
+	{
+		if (!data || !Array.isArray(data))
+			return;
+		
+		for (let index = 0, count = data.length; index < count; ++index)
+		{
+			let key   = data[index]["key"];
+			let value = data[index]["value"];
+			let type  = data[index]["type"];
+			
+			if (undefined !== type && null !== type)
+				type = Asc.c_oAscContentControlSpecificType.fromString(type);
+			
+			let forms = this.GetAllFormsByKey(key, type);
+			let form  = forms[0];
+			if (!form)
+			{
+				let radioGroup = this.GetRadioButtons(key);
+				if (!radioGroup.length)
+					continue;
+				
+				this.SetRadioGroupValue(key, value);
+			}
+			else
+			{
+				form.SetFormValue(value);
+			}
+			
+			this.OnChange(form);
+		}
+	};
+	CFormsManager.prototype.GetFormValue = function(form)
+	{
+		if (!form)
+			return null;
+
+		if (form.IsRadioButton())
+			return this.GetRadioGroupValue(form.GetRadioButtonGroupKey());
+
+		return form.GetFormValue();
+	};
+	/**
+	 * Получем роль по текущему ключу и возможно заданному типу формы
+	 * @param key
+	 * @param [formType=undefined] {Asc.c_oAscContentControlSpecificType}
+	 * @returns {string}
+	 */
+	CFormsManager.prototype.GetRoleByKey = function(key, formType)
+	{
+		let allForms = this.GetAllFormsByKey(key);
+		for (let index = 0, count = allForms.length; index < count; ++index)
+		{
+			let form = allForms[index];
+			if (undefined !== formType && formType !== form.GetSpecificType())
+				continue;
+			
+			let role = form.GetFormRole();
+			if (role)
+				return role;
+		}
+		
+		return "";
+	};
+	CFormsManager.prototype.OnEndLoad = function()
+	{
+		// Проверим, что у всех форм есть ключи
+		let keyGenerator = this.GetKeyGenerator();
+		let allForms     = this.GetAllForms();
+		for (let index = 0, count = allForms.length; index < count; ++index)
+		{
+			let form = allForms[index];
+			
+			if (form.IsRadioButton())
+			{
+				let key = form.GetRadioButtonGroupKey();
+				if (key && "" !== key)
+					continue;
+				
+				key = keyGenerator.GetNewKey(form);
+				form.SetRadioButtonGroupKey(key);
+			}
+			else
+			{
+				let key = form.GetFormKey();
+				if (key && "" !== key)
+					continue;
+				
+				key = keyGenerator.GetNewKey(form);
+				form.SetFormKey(key);
+			}
+		}
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
@@ -267,11 +434,15 @@
 	};
 	CFormsManager.prototype.OnChangeCheckBox = function(oForm)
 	{
-		let isChecked = oForm.GetCheckBoxPr().Checked;
-		let arrForms  = this.GetAllForms();
+		let isChecked  = oForm.GetCheckBoxPr().Checked;
+		let userMaster = this.GetUserMasterByForm(oForm);
+		let arrForms   = this.GetAllForms();
 
 		if (oForm.IsRadioButton())
 		{
+			if (!oForm.GetCheckBoxPr().GetChecked())
+				return;
+			
 			let sKey = oForm.GetCheckBoxPr().GetGroupKey();
 			for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 			{
@@ -279,7 +450,8 @@
 				if (oTempForm.IsComplexForm()
 					|| oTempForm === oForm
 					|| !oTempForm.IsRadioButton()
-					|| sKey !== oTempForm.GetCheckBoxPr().GetGroupKey())
+					|| sKey !== oTempForm.GetCheckBoxPr().GetGroupKey()
+					|| userMaster !== this.GetUserMasterByForm(oTempForm))
 					continue;
 
 				if (oTempForm.GetCheckBoxPr().GetChecked())
@@ -297,7 +469,8 @@
 					|| !oTempForm.IsCheckBox()
 					|| oTempForm.IsRadioButton()
 					|| sKey !== oTempForm.GetFormKey()
-					|| isChecked === oTempForm.GetCheckBoxPr().GetChecked())
+					|| isChecked === oTempForm.GetCheckBoxPr().GetChecked()
+					|| userMaster !== this.GetUserMasterByForm(oTempForm))
 					continue;
 
 				oTempForm.ToggleCheckBox();
@@ -316,6 +489,7 @@
 
 		let sKey          = oForm.GetFormKey();
 		let isPlaceHolder = oForm.IsPlaceHolder();
+		let userMaster    = this.GetUserMasterByForm(oForm);
 		let arrForms      = this.GetAllForms();
 		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
@@ -323,7 +497,8 @@
 			if (oTempForm.IsComplexForm()
 				|| oTempForm === oForm
 				|| sKey !== oTempForm.GetFormKey()
-				|| !oTempForm.IsPicture())
+				|| !oTempForm.IsPicture()
+				|| userMaster !== this.GetUserMasterByForm(oTempForm))
 				continue;
 
 			let arrDrawings = oTempForm.GetAllDrawingObjects();
@@ -342,6 +517,7 @@
 		let sKey          = oForm.GetFormKey();
 		let isPlaceHolder = oForm.IsPlaceHolder();
 		let oSrcRun       = !isPlaceHolder ? oForm.MakeSingleRunElement(false) : null;
+		let userMaster    = this.GetUserMasterByForm(oForm);
 		let arrForms      = this.GetAllForms();
 		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
@@ -351,7 +527,8 @@
 				|| oTempForm.IsPicture()
 				|| oTempForm.IsCheckBox()
 				|| oTempForm === oForm
-				|| sKey !== oTempForm.GetFormKey())
+				|| sKey !== oTempForm.GetFormKey()
+				|| userMaster !== this.GetUserMasterByForm(oTempForm))
 				continue;
 
 			if (isPlaceHolder)
@@ -371,22 +548,70 @@
 	};
 	CFormsManager.prototype.OnChangeComplexForm = function(oForm)
 	{
-		let arrForms = this.GetAllForms();
+		let sKey          = oForm.GetFormKey();
+		let isPlaceholder = oForm.IsPlaceHolder();
+		let userMaster    = this.GetUserMasterByForm(oForm);
+		let arrForms      = this.GetAllForms();
 		for (let nIndex = 0, nCount = arrForms.length; nIndex < nCount; ++nIndex)
 		{
 			let oTempForm = arrForms[nIndex];
-			if (!oTempForm.IsComplexForm() || oTempForm === oForm)
+			if (!oTempForm.IsComplexForm()
+				|| oTempForm === oForm
+				|| sKey !== oTempForm.GetFormKey()
+				|| userMaster !== this.GetUserMasterByForm(oTempForm))
 				continue;
 
 			// TODO: Сейчас мы полностью перезаписываем содержимое поля. Можно проверить, что поле состоит из таких
 			//       же базовых подклассов и попробовать обновить их каждый по отдельности, что бы было меньше изменений
 
+			oTempForm.SetShowingPlcHdr(isPlaceholder);
 			oTempForm.RemoveAll();
 			for (let nPos = 0, nItemsCount = oForm.GetElementsCount(); nPos < nItemsCount; ++nPos)
 			{
 				oTempForm.AddToContent(nPos, oForm.GetElement(nPos).Copy());
 			}
 		}
+	};
+	CFormsManager.prototype.GetRadioGroupValue = function(groupKey)
+	{
+		let group = this.GetRadioButtons(groupKey);
+		for (let index = 0, count = group.length; index < count; ++index)
+		{
+			let radioButton = group[index];
+			if (radioButton.IsCheckBoxChecked() && radioButton.GetFormKey())
+				return radioButton.GetFormKey();
+		}
+
+		return "";
+	};
+	CFormsManager.prototype.SetRadioGroupValue = function(groupKey, value)
+	{
+		let group = this.GetRadioButtons(groupKey);
+		for (let index = 0, count = group.length; index < count; ++index)
+		{
+			let radioButton = group[index];
+			if (radioButton.GetFormKey() !== value)
+				radioButton.SetCheckBoxChecked(false);
+			else
+				radioButton.SetCheckBoxChecked(true);
+		}
+		
+		return "";
+	};
+	CFormsManager.prototype.GetUserMasterByForm = function(form)
+	{
+		if (!form)
+			return null;
+		
+		let fieldMaster = form.GetFieldMaster();
+		if (!fieldMaster)
+			return null;
+		
+		return fieldMaster.getFirstUser();
+	};
+	CFormsManager.prototype.IsValidForm = function(form)
+	{
+		return (form && form.IsUseInDocument());
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};

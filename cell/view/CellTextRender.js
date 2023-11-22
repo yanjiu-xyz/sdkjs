@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -78,12 +78,16 @@
 		};
 
 		CellTextRender.prototype.getLineInfo = function (index) {
-			return this.lines.length > 0 && index >=0 && index < this.lines.length ? this.lines[index] : null;
+			return this.lines.length > 0 && index >= 0 && index < this.lines.length ? this.lines[index] : null;
 		};
 
 		CellTextRender.prototype.calcLineOffset = function (index) {
-			if (index < 0) {index = 0;}
-			if (index > this.lines.length) {index = this.lines.length;}
+			if (index < 0) {
+				index = 0;
+			}
+			if (index > this.lines.length) {
+				index = this.lines.length;
+			}
 
 			var zoom = this.drawingCtx.getZoom();
 			for (var i = 0, h = 0, l = this.lines; i < index; ++i) {
@@ -119,7 +123,9 @@
 			pos = pos < 0 ? 0 : Math.min(pos, this.chars.length);
 
 			for (var l = this.lines, i = 0; i < l.length; ++i) {
-				if (pos >= l[i].beg && pos <= l[i].end) {return l[i].beg;}
+				if (pos >= l[i].beg && pos <= l[i].end) {
+					return l[i].beg;
+				}
 			}
 
 			// pos - в конце текста
@@ -134,7 +140,9 @@
 			var l = this.lines;
 			var lastLine = l.length - 1;
 			for (var i = 0; i < lastLine; ++i) {
-				if (pos >= l[i].beg && pos <= l[i].end) {return l[i].end;}
+				if (pos >= l[i].beg && pos <= l[i].end) {
+					return l[i].end;
+				}
 			}
 
 			// pos - на последней линии
@@ -155,7 +163,7 @@
 
 			for (var l = this.lines, i = 0; i < l.length; ++i) {
 				if (pos >= l[i].beg && pos <= l[i].end) {
-					return i <= 0 ? 0 : Math.min(l[i-1].beg + pos - l[i].beg, l[i-1].end);
+					return i <= 0 ? 0 : Math.min(l[i - 1].beg + pos - l[i].beg, l[i - 1].end);
 				}
 			}
 
@@ -164,7 +172,7 @@
 			var lastChar = this.chars.length - 1;
 			return this.charWidths[lastChar] === 0 || l.length < 2 ?
 				(0 > lastLine ? 0 : l[lastLine].beg) :
-					lastChar > 0 ? Math.min(l[lastLine-1].beg + pos - l[lastLine].beg, l[lastLine-1].end) : 0;
+				lastChar > 0 ? Math.min(l[lastLine - 1].beg + pos - l[lastLine].beg, l[lastLine - 1].end) : 0;
 		};
 
 		CellTextRender.prototype.getNextLine = function (pos) {
@@ -174,7 +182,7 @@
 			var lastLine = l.length - 1;
 			for (var i = 0; i < lastLine; ++i) {
 				if (pos >= l[i].beg && pos <= l[i].end) {
-					return Math.min(l[i+1].beg + pos - l[i].beg, l[i+1].end);
+					return Math.min(l[i + 1].beg + pos - l[i].beg, l[i + 1].end);
 				}
 			}
 
@@ -189,7 +197,7 @@
 			return {
 				fsz: p.font.FontSize,
 				dh: p && p.lm && p.lm.bl2 > 0 ? p.lm.bl2 - p.lm.bl : 0,
-				h: p && p.lm ? p.lm.th: 0
+				h: p && p.lm ? p.lm.th : 0
 			};
 		};
 
@@ -203,10 +211,16 @@
 		CellTextRender.prototype.calcCharOffset = function (pos) {
 			var t = this, l = t.lines, i, h, co;
 
-			if (l.length < 1) {return null;}
+			if (l.length < 1) {
+				return null;
+			}
 
-			if (pos < 0) {pos = 0;}
-			if (pos > t.chars.length) {pos = t.chars.length;}
+			if (pos < 0) {
+				pos = 0;
+			}
+			if (pos > t.chars.length) {
+				pos = t.chars.length;
+			}
 
 			for (i = 0, h = 0; i < l.length; ++i) {
 				if (pos >= l[i].beg && pos <= l[i].end) {

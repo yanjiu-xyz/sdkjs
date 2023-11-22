@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -602,6 +602,8 @@ function CDrawingStream(_writer)
 
     this.ClearMode          = false;
     this.IsRetina           = false;
+
+    this.ForceChangeFont = false;
 }
 
 CDrawingStream.prototype =
@@ -964,6 +966,7 @@ CDrawingStream.prototype =
         if (_info.SrcBold)      flag |= 0x04;
         if (_info.SrcItalic)    flag |= 0x08;
 
+        this.ForceChangeFont = true;
         this.Native["PD_LoadFont"](_info.Path, _info.FaceIndex, font.FontSize, flag);
     },
 
@@ -989,8 +992,12 @@ CDrawingStream.prototype =
         _lastFont.Name = name;
         _lastFont.Size = size;
 
-        if (_lastFont.Name != _lastFont.SetUpName || _lastFont.Size != _lastFont.SetUpSize || style != _lastFont.SetUpStyle)
+        if (_lastFont.Name != _lastFont.SetUpName || 
+            _lastFont.Size != _lastFont.SetUpSize || 
+            style != _lastFont.SetUpStyle ||
+            this.ForceChangeFont)
         {
+            this.ForceChangeFont = false;
             _lastFont.SetUpName = _lastFont.Name;
             _lastFont.SetUpSize = _lastFont.Size;
             _lastFont.SetUpStyle = style;
@@ -1063,8 +1070,12 @@ CDrawingStream.prototype =
         if (_lastFont.Bold)
             _style += 1;
 
-        if (_lastFont.Name != _lastFont.SetUpName || _lastFont.Size != _lastFont.SetUpSize || _style != _lastFont.SetUpStyle)
+        if (_lastFont.Name != _lastFont.SetUpName || 
+            _lastFont.Size != _lastFont.SetUpSize || 
+            _style != _lastFont.SetUpStyle ||
+            this.ForceChangeFont)
         {
+            this.ForceChangeFont = false;
             _lastFont.SetUpName = _lastFont.Name;
             _lastFont.SetUpSize = _lastFont.Size;
             _lastFont.SetUpStyle = _style;

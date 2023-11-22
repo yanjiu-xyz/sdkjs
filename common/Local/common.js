@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -36,7 +36,7 @@
 {
 	AscCommon.baseEditorsApi.prototype._openChartOrLocalDocument = function ()
 	{
-		if (this.isChartEditor)
+		if (this.isFrameEditor())
 		{
 			return this._openEmptyDocument();
 		}
@@ -44,7 +44,7 @@
 	AscCommon.baseEditorsApi.prototype.onEndLoadFile2 = AscCommon.baseEditorsApi.prototype.onEndLoadFile;
 	AscCommon.baseEditorsApi.prototype.onEndLoadFile = function(result)
 	{
-		if (this.isChartEditor)
+		if (this.isFrameEditor())
 		{
 			return this.onEndLoadFile2(result);
 		}
@@ -62,9 +62,15 @@
 		}
 	};
 
-	AscCommon.baseEditorsApi.prototype["asc_setIsReadOnly"] = function(value, is_from_app)
+	AscCommon.baseEditorsApi.prototype["local_sendEvent"] = function()
 	{
-		if (value)
+		return this.sendEvent.apply(this, arguments);
+	};
+
+	AscCommon.baseEditorsApi.prototype["asc_setLocalRestrictions"] = function(value, is_from_app)
+	{
+		this.localRestrintions = value;
+		if (value !== Asc.c_oAscLocalRestrictionType.None)
 			this.asc_addRestriction(Asc.c_oAscRestrictionType.View);
 		else
 			this.asc_removeRestriction(Asc.c_oAscRestrictionType.View);
@@ -72,38 +78,46 @@
 		if (is_from_app)
 			return;
 
-		window["AscDesktopEditor"] && window["AscDesktopEditor"]["SetIsReadOnly"] && window["AscDesktopEditor"]["SetIsReadOnly"](value);
+		window["AscDesktopEditor"] && window["AscDesktopEditor"]["SetLocalRestrictions"] && window["AscDesktopEditor"]["SetLocalRestrictions"](value);
 	};
-	AscCommon.baseEditorsApi.prototype["asc_isReadOnly"] = function()
+	AscCommon.baseEditorsApi.prototype["asc_getLocalRestrictions"] = function()
 	{
-		return this.isRestrictionView();
+		if (undefined === this.localRestrintions)
+			return Asc.c_oAscLocalRestrictionType.None;
+		return this.localRestrintions;
 	};
-	AscCommon.baseEditorsApi.prototype["local_sendEvent"] = function()
+
+	AscCommon.baseEditorsApi.prototype["startExternalConvertation"] = function(type)
 	{
-		return this.sendEvent.apply(this, arguments);
+		let params = "";
+		try {
+			params = JSON.stringify(this["getAdditionalSaveParams"]());
+		}
+		catch (e) {
+			params = "";
+		}
+		this.sync_StartAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
+		window["AscDesktopEditor"]["startExternalConvertation"](type, params);
+	};
+	AscCommon.baseEditorsApi.prototype["endExternalConvertation"] = function()
+	{
+		this.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Waiting);
 	};
 })(window);
 
 /////////////////////////////////////////////////////////
 //////////////       FONTS       ////////////////////////
 /////////////////////////////////////////////////////////
-AscFonts.CFontFileLoader.prototype.LoadFontAsync = function(basePath, _callback, isEmbed)
+AscFonts.CFontFileLoader.prototype.LoadFontAsync = function(basePath, callback)
 {
-	this.callback = _callback;
-    if (-1 != this.Status)
+	this.callback = callback;
+    if (-1 !== this.Status)
         return true;
 		
-	var oThis = this;
 	this.Status = 2;
-	if (window["AscDesktopEditor"] !== undefined && !this.CanUseOriginalFormat)
-	{
-		this.callback = null;		
-		window["AscDesktopEditor"]["LoadFontBase64"](this.Id);
-		this._callback_font_load();
-		return;
-	}
 
 	var xhr = new XMLHttpRequest();
+	xhr.fontFile = this;
 	xhr.open('GET', "ascdesktop://fonts/" + this.Id, true);
 	xhr.responseType = 'arraybuffer';
 
@@ -114,30 +128,32 @@ AscFonts.CFontFileLoader.prototype.LoadFontAsync = function(basePath, _callback,
 
 	xhr.onload = function()
 	{
-		if (this.status != 200)
+		if (this.status !== 200)
 		{
-			oThis.Status = 1;
+			xhr.fontFile.Status = 1;
 			return;
 		}
 
-		oThis.Status = 0;
+		this.fontFile.Status = 0;
 
-		var fontStreams = AscFonts.g_fonts_streams;
-		var __font_data_idx = fontStreams.length;
+		let fontStreams = AscFonts.g_fonts_streams;
+		let streamIndex = fontStreams.length;
 		if (this.response)
 		{
-			var _uintData = new Uint8Array(this.response);
-			fontStreams[__font_data_idx] = new AscFonts.FontStream(_uintData, _uintData.length);
+			let data = new Uint8Array(this.response);
+			fontStreams[streamIndex] = new AscFonts.FontStream(data, data.length);
 		}
 		else
 		{
-			fontStreams[__font_data_idx] = AscFonts.CreateFontData3(this.responseText);
+			fontStreams[streamIndex] = AscFonts.CreateFontData3(this.responseText);
 		}
 
-		oThis.SetStreamIndex(__font_data_idx);
+		this.fontFile.SetStreamIndex(streamIndex);
 
-		if (null != oThis.callback)
-			oThis.callback();
+		if (null != this.fontFile.callback)
+			this.fontFile.callback();
+		if (this.fontFile["externalCallback"])
+			this.fontFile["externalCallback"]();
 	};
 
 	xhr.send(null);
@@ -216,7 +232,8 @@ prot.getImageUrl = function(strPath){
 
 	return this.documentUrl + "/media/" + strPath;
 };
-prot.getImageLocal = function(url){
+prot.getImageLocal = function(_url){
+	let url = _url.replaceAll("%20", " ");
 	var _first = this.documentUrl + "/media/";
 	if (0 == url.indexOf(_first))
 		return url.substring(_first.length);
@@ -250,6 +267,9 @@ prot.getUrl = function(strPath){
 prot.getLocal = function(url){
 	return this.getImageLocal(url);
 };
+prot.isThemeUrl = function(sUrl){
+	return sUrl && (0 === sUrl.indexOf('theme'));
+};
 
 AscCommon.sendImgUrls = function(api, images, callback)
 {
@@ -262,10 +282,11 @@ AscCommon.sendImgUrls = function(api, images, callback)
 	callback(_data);
 };
 
-window['Asc']["CAscWatermarkProperties"].prototype["showFileDialog"] = function () {
-    if(!this.Api || !this.DivId){
+window['Asc']["CAscWatermarkProperties"].prototype["showFileDialog"] = window['Asc']["CAscWatermarkProperties"].prototype["asc_showFileDialog"] = function ()
+{
+    if(!this.Api || !this.DivId)
         return;
-    }
+
     var t = this.Api;
     var _this = this;
 
@@ -289,6 +310,29 @@ window['Asc']["CAscWatermarkProperties"].prototype["showFileDialog"] = function 
             }
         });
     });
+};
+window["Asc"]["asc_CBullet"].prototype["showFileDialog"] = window["Asc"]["asc_CBullet"].prototype["asc_showFileDialog"] = function()
+{
+	var Api = window["Asc"]["editor"] ? window["Asc"]["editor"] : window.editor;
+	var _this = this;
+	window["AscDesktopEditor"]["OpenFilenameDialog"]("images", false, function(_file) {
+		var file = _file;
+		if (Array.isArray(file))
+			file = file[0];
+		if (!file)
+			return;
+
+		var url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](file);
+		var urls = [AscCommon.g_oDocumentUrls.getImageUrl(url)];
+
+		Api.ImageLoader.LoadImagesWithCallback(urls, function(){
+			if(urls.length > 0)
+			{
+				_this.fillBulletImage(urls[0]);
+				Api.sendEvent("asc_onBulletImageLoaded", _this);
+			}
+		});
+	});
 };
 
 /////////////////////////////////////////////////////////
@@ -321,7 +365,8 @@ AscCommon.CDocsCoApi.prototype.askSaveChanges = function(callback)
 };
 AscCommon.CDocsCoApi.prototype.saveChanges = function(arrayChanges, deleteIndex, excelAdditionalInfo)
 {
-	window["AscDesktopEditor"]["LocalFileSaveChanges"](arrayChanges.join("\",\""), deleteIndex, arrayChanges.length);
+	let count = arrayChanges.length;
+	window["AscDesktopEditor"]["LocalFileSaveChanges"]((count > 100000) ? arrayChanges : arrayChanges.join("\",\""), deleteIndex, count);
 	//this.onUnSaveLock();
 };
 
@@ -348,6 +393,8 @@ window["UpdateInstallPlugins"] = function()
 		var _len = _pluginsCur["pluginsData"].length;
 		for (var i = 0; i < _len; i++)
 		{
+			// TODO: здесь нужно прокинуть флаг isSystemInstall, указывающий на то, что этот плагин нельзя удалить, он не в папке пользователя
+			//_pluginsCur["pluginsData"][i]["isSystemInstall"] = (k == 0) ? true : false;
 			_pluginsCur["pluginsData"][i]["baseUrl"] = _pluginsCur["url"] + _pluginsCur["pluginsData"][i]["guid"].substring(4) + "/";
 			_plugins["pluginsData"].push(_pluginsCur["pluginsData"][i]);
 		}
@@ -416,7 +463,34 @@ AscCommon.InitDragAndDrop = function(oHtmlElement, callback) {
             editor.endInlineDropTarget(e);
 
 			var _files = window["AscDesktopEditor"]["GetDropFiles"]();
-			if (0 == _files.length)
+			let countInserted = 0;
+			if (0 !== _files.length)
+			{
+				let imageFiles = [];
+				for (var i = 0; i < _files.length; i++)
+				{
+					if (window["AscDesktopEditor"]["IsImageFile"](_files[i]))
+					{
+						if (_files[i] === "")
+							continue;
+
+						let resImage = window["AscDesktopEditor"]["LocalFileGetImageUrl"](_files[i]);
+
+						if (resImage)
+						{
+							imageFiles.push(AscCommon.g_oDocumentUrls.getImageUrl(resImage));
+							++countInserted;
+						}
+						break;
+					}
+				}
+
+				countInserted = imageFiles.length;
+				if (0 !== countInserted)
+					editor._addImageUrl(imageFiles);
+			}
+
+			if (0 === countInserted)
 			{
                 // test html
                 var htmlValue = e.dataTransfer.getData("text/html");
@@ -433,20 +507,6 @@ AscCommon.InitDragAndDrop = function(oHtmlElement, callback) {
                     return;
                 }
 			}
-			else
-			{
-                for (var i = 0; i < _files.length; i++)
-                {
-                    if (window["AscDesktopEditor"]["IsImageFile"](_files[i]))
-                    {
-						if (_files[i] == "")
-							continue;
-						var _url = window["AscDesktopEditor"]["LocalFileGetImageUrl"](_files[i]);
-						editor.AddImageUrlAction(AscCommon.g_oDocumentUrls.getImageUrl(_url));
-                        break;
-                    }
-                }
-            }
 		};
 	}
 };
@@ -597,13 +657,7 @@ window["asc_LocalRequestSign"] = function(guid, width, height, isView)
 		}
 	}
 
-	var isModify = false;
-	if (_editor.asc_isDocumentModified)
-		isModify = _editor.asc_isDocumentModified();
-	else
-		isModify = _editor.isDocumentModified();
-
-	if (!isModify)
+	if (!_editor.isDocumentModified())
 	{
 		_editor.sendEvent("asc_onSignatureClick", guid, width, height, window["asc_IsVisibleSign"](guid));
 		return;
@@ -620,53 +674,16 @@ window["DesktopAfterOpen"] = function(_api)
 		window["asc_LocalRequestSign"](guid, width, height, true);
 	});
 
-	_api.sendEvent('asc_onSpellCheckInit', [
-        "1026",
-        "1027",
-        "1029",
-        "1030",
-        "1031",
-        "1032",
-        "1033",
-        "1036",
-        "1038",
-        "1040",
-        "1042",
-        "1043",
-        "1044",
-        "1045",
-        "1046",
-        "1048",
-        "1049",
-        "1050",
-        "1051",
-        "1053",
-        "1055",
-        "1057",
-        "1058",
-        "1060",
-        "1062",
-        "1063",
-        "1066",
-        "1068",
-        "1069",
-        "1087",
-        "1104",
-        "1110",
-        "1134",
-        "2051",
-        "2055",
-        "2057",
-        "2068",
-        "2070",
-        "3079",
-        "3081",
-        "3082",
-        "4105",
-        "7177",
-        "9242",
-        "10266"
-	]);
+	let langs = AscCommon.spellcheckGetLanguages();
+	let langs_array = [];
+	for (let item in langs)
+	{
+		if (!langs.hasOwnProperty(item))
+			continue;
+		langs_array.push(item);
+	}
+
+	_api.sendEvent('asc_onSpellCheckInit', langs_array);
 };
 
 function getBinaryArray(_data, _len)

@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -318,10 +318,6 @@
         return editor.WordControl.m_oDrawingDocument.GetMMPerDot(pix);
     };
 
-    CNotes.prototype.checkGraphicObjectPosition = function()
-    {
-        return {x: 0, y: 0};
-    };
 
     CNotes.prototype.Clear_ContentChanges = function()
     {
@@ -334,48 +330,16 @@
     CNotes.prototype.Refresh_ContentChanges = function()
     {
     };
-    CNotes.prototype.readAttrXml = function(name, reader) {
-        switch (name) {
-            case "showMasterPhAnim": {
-                this.setShowPhAnim(reader.GetValueBool());
-                break;
-            }
-            case "showMasterSp": {
-                this.setShowMasterSp(reader.GetValueBool());
-                break;
+    CNotes.prototype.getColorMap = function()
+    {
+        if(this.Master)
+        {
+            if(this.Master.clrMap)
+            {
+                return this.Master.clrMap;
             }
         }
-    };
-    CNotes.prototype.readChildXml = function(name, reader) {
-        switch(name) {
-            case "cSld": {
-                let oCSld = this.cSld;
-                oCSld.fromXml(reader);
-                break;
-            }
-            case "clrMapOvr": {
-
-                let oClrMapOvr = new AscFormat.CClrMapOvr();
-                oClrMapOvr.fromXml(reader);
-                this.setClMapOverride(oClrMapOvr.overrideClrMapping);
-                break;
-            }
-        }
-    };
-    CNotes.prototype.toXml = function(writer) {
-        writer.WriteXmlString(AscCommonWord.g_sXmlHeader);
-        writer.WriteXmlNodeStart("p:notes");
-        writer.WriteXmlAttributeString("xmlns:a", "http://schemas.openxmlformats.org/drawingml/2006/main");
-        writer.WriteXmlAttributeString("xmlns:r", "http://schemas.openxmlformats.org/officeDocument/2006/relationships");
-        writer.WriteXmlAttributeString("xmlns:p", "http://schemas.openxmlformats.org/presentationml/2006/main");
-        writer.WriteXmlAttributeString("xmlns:m", "http://schemas.openxmlformats.org/officeDocument/2006/math");
-        writer.WriteXmlAttributeString("xmlns:w", "http://schemas.openxmlformats.org/wordprocessingml/2006/main");
-        writer.WriteXmlNullableAttributeBool("showMasterPhAnim", this.showMasterPhAnim);
-        writer.WriteXmlNullableAttributeBool("showMasterSp", this.showMasterSp);
-        writer.WriteXmlAttributesEnd();
-        this.cSld.toXml(writer);
-        AscFormat.CClrMapOvr.prototype.static_WriteCrlMapAsOvr(writer, this.clrMap);
-        writer.WriteXmlNodeEnd("p:notes");
+        return AscFormat.GetDefaultColorMap();
     };
 
     function CreateNotes(){
@@ -440,6 +404,15 @@
         oSp.txBody.setBodyPr(oBodyPr);
         oTxLstStyle = new AscFormat.TextListStyle();
         oSp.txBody.setLstStyle(oTxLstStyle);
+        const oContent = oSp.getDocContent();
+        if(oContent) {
+            oContent.ClearContent(true);
+            const oParagraph = oContent.Content[0];
+            const oFld = new AscCommonWord.CPresentationField(oParagraph);
+            oFld.SetGuid(AscCommon.CreateGUID());
+            oFld.SetFieldType("slidenum");
+            oParagraph.Internal_Content_Add(0, oFld);
+        }
         oSp.setParent(oN);
         oN.addToSpTreeToPos(2, oSp);
         return oN;

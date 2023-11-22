@@ -1,5 +1,5 @@
 /*
- * (c) Copyright Ascensio System SIA 2010-2019
+ * (c) Copyright Ascensio System SIA 2010-2023
  *
  * This program is a free software product. You can redistribute it and/or
  * modify it under the terms of the GNU Affero General Public License (AGPL)
@@ -12,7 +12,7 @@
  * warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR  PURPOSE. For
  * details, see the GNU AGPL at: http://www.gnu.org/licenses/agpl-3.0.html
  *
- * You can contact Ascensio System SIA at 20A-12 Ernesta Birznieka-Upisha
+ * You can contact Ascensio System SIA at 20A-6 Ernesta Birznieka-Upish
  * street, Riga, Latvia, EU, LV-1050.
  *
  * The  interactive user interfaces in modified source and object code versions
@@ -185,7 +185,12 @@
         {
             this.nativeFile["close"]();
             this.nativeFile = null;
+            this.pages = [];
         }
+    };
+    CFile.prototype.getFileBinary = function()
+    {
+        return this.nativeFile ? this.nativeFile["getFileAsBase64"]() : null;
     };
     CFile.prototype.memory = function()
     {
@@ -203,17 +208,27 @@
     {
         return this.nativeFile ? this.nativeFile["getDocumentInfo"]() : null;
     };
+    CFile.prototype.isNeedCMap = function()
+    {
+        return this.nativeFile ? this.nativeFile["isNeedCMap"]() : false;
+    };
+    CFile.prototype.setCMap = function(data)
+    {
+        if (this.nativeFile)
+            this.nativeFile["setCMap"](data);
+    };
 
     CFile.prototype.getPage = function(pageIndex, width, height, isNoUseCacheManager, backgroundColor)
     {
         if (!this.nativeFile)
             return null;
-        if (pageIndex < 0 || pageIndex >= this.pages.length)
+        if (pageIndex < 0 || pageIndex >= this.pages.length || this.pages[pageIndex].originIndex == undefined)
             return null;
 
         if (!width) width = this.pages[pageIndex].W;
         if (!height) height = this.pages[pageIndex].H;
 
+        pageIndex = this.pages[pageIndex].originIndex;
         var requestW = width;
         var requestH = height;
 
@@ -373,7 +388,7 @@ void main() {\n\
             gl.shaderSource(shader, source);
             gl.compileShader(shader);
             if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS))
-                throw new Error('FAIL: shader ' + id + ' compilation failed');
+                throw new Error('FAIL: shader compilation failed');
             return shader;
         }
 
@@ -535,6 +550,7 @@ void main() {\n\
 
     CFile.prototype.onMouseDown = function(pageIndex, x, y)
     {
+        let oDoc = this.viewer.getPDFDoc();
         var ret = this.getNearestPos(pageIndex, x, y);
         var sel = this.Selection;
 
@@ -572,6 +588,21 @@ void main() {\n\
         this.Selection.IsSelection = false;
         this.onUpdateSelection();
         this.onUpdateOverlay();
+
+        if (this.viewer.Api.isMarkerFormat) {
+            let oColor = this.viewer.getPDFDoc().GetMarkerColor(this.viewer.Api.curMarkerType);
+            switch (this.viewer.Api.curMarkerType) {
+				case AscPDF.ANNOTATIONS_TYPES.Highlight:
+					this.viewer.Api.SetHighlight(oColor.r, oColor.g, oColor.b, oColor.a);
+					break;
+				case AscPDF.ANNOTATIONS_TYPES.Underline:
+					this.viewer.Api.SetUnderline(oColor.r, oColor.g, oColor.b, oColor.a);
+					break;
+				case AscPDF.ANNOTATIONS_TYPES.Strikeout:
+					this.viewer.Api.SetStrikeout(oColor.r, oColor.g, oColor.b, oColor.a);
+					break;
+			}
+        }
     };
 
     CFile.prototype.getPageTextStream = function(pageIndex)
@@ -583,7 +614,7 @@ void main() {\n\
         return new TextStreamReader(textCommands, textCommands.length);
     };
 
-    CFile.prototype.getNearestPos = function(pageIndex, x, y)
+    CFile.prototype.getNearestPos = function(pageIndex, x, y, bExcludeSpaces)
     {
         var stream = this.getPageTextStream(pageIndex);
         if (!stream)
@@ -634,13 +665,25 @@ void main() {\n\
                     if (0 != _lineCharCount)
                         _linePrevCharX += stream.GetDouble2();
 
-                    _arrayGlyphOffsets[_lineCharCount] = _linePrevCharX;
+                    let char = stream.GetUShort();
+                    if (bExcludeSpaces)
+                    {
+                        if (char !== 0xFFFF)
+                            _arrayGlyphOffsets[_lineCharCount] = _linePrevCharX;
+                        else
+                            _arrayGlyphOffsets[_lineCharCount] = {
+                                offset: _linePrevCharX,
+                                isSpace: true
+                            };
+                    }
+                    else
+                    {
+                        _arrayGlyphOffsets[_lineCharCount] = _linePrevCharX;
+                    }
 
                     _lineCharCount++;
-
+                                        
                     if (_lineGidExist)
-                        stream.Skip(4);
-                    else
                         stream.Skip(2);
 
                     if (0 == _lineWidth)
@@ -713,8 +756,20 @@ void main() {\n\
                                 if (_arrayGlyphOffsets[_glyph] > _distX)
                                     break;
                             }
+
                             if (_glyph > 0)
+                            {
                                 --_glyph;
+
+                                if (bExcludeSpaces && _arrayGlyphOffsets[_glyph].isSpace)
+                                {
+                                    let nToLeft     = Math.abs(_distX - _arrayGlyphOffsets[_glyph].offset);
+                                    let nToRight    = Math.abs(_distX - _arrayGlyphOffsets[_glyph + 1]);
+
+                                    if (nToRight < nToLeft)
+                                        ++_glyph;
+                                }
+                            }
 
                             return { Line : _line, Glyph : _glyph };
                         }
@@ -846,7 +901,491 @@ void main() {\n\
 
         return { Line : _line, Glyph : _glyph };
     };
+    CFile.prototype.selectWholeWord = function(pageIndex, x, y) {
+        var oNearesPos  = this.getNearestPos(pageIndex, x, y, true);
+        if (oNearesPos.Glyph < 0)
+            return;
 
+        var stream = this.getPageTextStream(pageIndex);
+        var lineCharCount = 0;
+        var lineGidExist = false;
+        var lineText = "";
+        let nLine = -1;
+
+        while (stream.pos < stream.size)
+        {
+            var command = stream.GetUChar();
+
+            switch (command)
+            {
+                case 41: // ctFontName
+                {
+                    stream.Skip(12);
+                    break;
+                }
+                case 22: // ctBrushColor1
+                {
+                    stream.Skip(4);
+                    break;
+                }
+                case 80: // ctDrawText
+                {
+                    if (0 != lineCharCount)
+                        stream.Skip(2);
+
+                    lineCharCount++;
+
+                    var char = stream.GetUShort();
+                    if (char !== 0xFFFF)
+                        lineText += String.fromCharCode(char);
+                    else
+                        lineText += " ";
+
+                    if (lineGidExist)
+                        stream.Skip(2);
+
+                    stream.Skip(2);
+                    break;
+                }
+                case 160: // ctCommandTextLine
+                {
+                    if (nLine == oNearesPos.Line)
+                    {
+                        stream.pos = stream.size;
+                        break;
+                    }
+                    lineText = "";
+                    lineCharCount = 0;
+                    nLine++;
+                    var mask = stream.GetUChar();
+                    stream.Skip(8);
+
+                    if ((mask & 0x01) == 0)
+                    {
+                        stream.Skip(8);
+                    }
+
+                    stream.Skip(8);
+
+                    if ((mask & 0x04) != 0)
+                        stream.Skip(4);
+
+                    if ((mask & 0x02) != 0)
+                        lineGidExist = true;
+                    else
+                        lineGidExist = false;
+
+                    break;
+                }
+                case 161: // ctCommandTextTransform
+                {
+                    // text transform
+                    stream.Skip(16);
+                    break;
+                }
+                case 162: // ctCommandTextLineEnd
+                {
+                    break;
+                }
+                default:
+                {
+                    stream.pos = stream.size;
+                }
+            }
+        }
+
+        let oSelectionInfo = {
+            Glyph1: -2,
+            Glyph2: -1,
+            IsSelection: true,
+            Line1: oNearesPos.Line,
+            Line2: oNearesPos.Line,
+            Page1: pageIndex,
+            Page2: pageIndex
+        }
+
+        let isOnSpace       = false;
+        let isOnPunctuation = false;
+        if (lineText[oNearesPos.Glyph] == " ")
+        {
+            isOnSpace = true;
+        }
+        else if (undefined != AscCommon.g_aPunctuation[lineText[oNearesPos.Glyph].charCodeAt(0)])
+        {
+            isOnPunctuation = true;
+        }
+
+        if (isOnPunctuation)
+        {
+            oSelectionInfo.Glyph1 = oNearesPos.Glyph;
+        }
+        else
+        {
+            for (let i = oNearesPos.Glyph - 1; i >=0; i--)
+            {
+                if (lineText[i] == "")
+                {
+                    oSelectionInfo.Glyph1 = i;
+                    if (isOnSpace)
+                        return;
+                    break;     
+                }
+                else if (lineText[i] == " " || undefined != AscCommon.g_aPunctuation[lineText[i].charCodeAt(0)])
+                {
+                    oSelectionInfo.Glyph1 = i + 1;
+                    break;   
+                }
+            }
+        }
+        
+        if (isOnSpace)
+        {
+            oSelectionInfo.Glyph2 = oNearesPos.Glyph;
+        }
+        else if (isOnPunctuation && lineText[oNearesPos.Glyph + 1])
+        {
+            oSelectionInfo.Glyph2 = oNearesPos.Glyph + 1;
+        }
+        else
+        {
+            for (let i = oNearesPos.Glyph + 1; i < lineText.length; i++)
+            {
+                if (lineText[i] == "" || lineText[i] == " " || undefined != AscCommon.g_aPunctuation[lineText[i].charCodeAt(0)])
+                {
+                    oSelectionInfo.Glyph2 = i;
+                    break;
+                }
+            }
+        }
+        
+        this.Selection = oSelectionInfo;
+        this.onUpdateOverlay();
+    };
+    CFile.prototype.selectWholeRow = function(pageIndex, x, y) {
+        var oNearesPos  = this.getNearestPos(pageIndex, x, y, true);
+
+        let oSelectionInfo = {
+            Glyph1: -2,
+            Glyph2: -1,
+            IsSelection: true,
+            Line1: oNearesPos.Line,
+            Line2: oNearesPos.Line,
+            Page1: pageIndex,
+            Page2: pageIndex
+        }
+
+        this.Selection = oSelectionInfo;
+        this.onUpdateOverlay();
+    };
+    CFile.prototype.getSelectionQuads = function() {
+        let aInfo = [];
+
+        for (let i = this.Selection.Page1; i <= this.Selection.Page2; i++) {
+            var stream = this.getPageTextStream(i);
+            if (!stream)
+                continue;
+
+            let oInfo = {
+                page: i,
+                quads: []
+            }
+            
+            var sel = this.Selection;
+            var Page1 = 0;
+            var Page2 = 0;
+            var Line1 = 0;
+            var Line2 = 0;
+            var Glyph1 = 0;
+            var Glyph2 = 0;
+
+            if (sel.Page2 > sel.Page1)
+            {
+                Page1 = sel.Page1;
+                Page2 = sel.Page2;
+                Line1 = sel.Line1;
+                Line2 = sel.Line2;
+                Glyph1 = sel.Glyph1;
+                Glyph2 = sel.Glyph2;
+            }
+            else if (sel.Page2 < sel.Page1)
+            {
+                Page1 = sel.Page2;
+                Page2 = sel.Page1;
+                Line1 = sel.Line2;
+                Line2 = sel.Line1;
+                Glyph1 = sel.Glyph2;
+                Glyph2 = sel.Glyph1;
+            }
+            else if (sel.Page1 === sel.Page2)
+            {
+                Page1 = sel.Page1;
+                Page2 = sel.Page2;
+
+                if (sel.Line1 < sel.Line2)
+                {
+                    Line1 = sel.Line1;
+                    Line2 = sel.Line2;
+                    Glyph1 = sel.Glyph1;
+                    Glyph2 = sel.Glyph2;
+                }
+                else if (sel.Line2 < sel.Line1)
+                {
+                    Line1 = sel.Line2;
+                    Line2 = sel.Line1;
+                    Glyph1 = sel.Glyph2;
+                    Glyph2 = sel.Glyph1;
+                }
+                else
+                {
+                    Line1 = sel.Line1;
+                    Line2 = sel.Line2;
+
+                    if (-1 === sel.Glyph1)
+                    {
+                        Glyph1 = sel.Glyph2;
+                        Glyph2 = sel.Glyph1;
+                    }
+                    else if (-1 === sel.Glyph2)
+                    {
+                        Glyph1 = sel.Glyph1;
+                        Glyph2 = sel.Glyph2;
+                    }
+                    else if (sel.Glyph1 < sel.Glyph2)
+                    {
+                        Glyph1 = sel.Glyph1;
+                        Glyph2 = sel.Glyph2;
+                    }
+                    else
+                    {
+                        Glyph1 = sel.Glyph2;
+                        Glyph2 = sel.Glyph1;
+                    }
+                }
+            }
+
+            if (Page1 > i || Page2 < i)
+                continue;
+
+            if (Page1 < i)
+            {
+                Page1 = i;
+                Line1 = 0;
+                Glyph1 = -2;
+            }
+            var bIsFillToEnd = false;
+            if (Page2 > i)
+                bIsFillToEnd = true;
+
+            // textline parameters
+            var _lineX = 0;
+            var _lineY = 0;
+            var _lineEx = 0;
+            var _lineEy = 0;
+            var _lineAscent = 0;
+            var _lineDescent = 0;
+            var _lineWidth = 0;
+            var _lineGidExist = false;
+            var _linePrevCharX = 0;
+            var _lineCharCount = 0;
+            var _lineLastGlyphWidth = 0;
+            var _arrayGlyphOffsets = [];
+
+            var _numLine = -1;
+
+            let dKoefX = (this.pages[i].Dpi / 25.4);
+            let dKoefY = (this.pages[i].Dpi / 25.4);
+
+            while (stream.pos < stream.size)
+            {
+                var command = stream.GetUChar();
+
+                switch (command)
+                {
+                    case 41:
+                    {
+                        stream.Skip(12);
+                        break;
+                    }
+                    case 22:
+                    {
+                        stream.Skip(4);
+                        break;
+                    }
+                    case 80:
+                    {
+                        if (0 != _lineCharCount)
+                            _linePrevCharX += stream.GetDouble2();
+
+                        _arrayGlyphOffsets[_lineCharCount] = _linePrevCharX;
+
+                        _lineCharCount++;
+
+                        if (_lineGidExist)
+                            stream.Skip(4);
+                        else
+                            stream.Skip(2);
+
+                        if (0 == _lineWidth)
+                            _lineLastGlyphWidth = stream.GetDouble2();
+                        else
+                            stream.Skip(2);
+
+                        break;
+                    }
+                    case 160:
+                    {
+                        // textline
+                        _linePrevCharX = 0;
+                        _lineCharCount = 0;
+                        _lineWidth = 0;
+
+                        _arrayGlyphOffsets.splice(0, _arrayGlyphOffsets.length);
+
+                        ++_numLine;
+
+                        var mask = stream.GetUChar();
+                        _lineX = stream.GetDouble();
+                        _lineY = stream.GetDouble();
+
+                        if ((mask & 0x01) != 0)
+                        {
+                            _lineEx = 1;
+                            _lineEy = 0;
+                        }
+                        else
+                        {
+                            _lineEx = stream.GetDouble();
+                            _lineEy = stream.GetDouble();
+                        }
+
+                        _lineAscent = stream.GetDouble();
+                        _lineDescent = stream.GetDouble();
+
+                        if ((mask & 0x04) != 0)
+                            _lineWidth = stream.GetDouble();
+
+                        if ((mask & 0x02) != 0)
+                            _lineGidExist = true;
+                        else
+                            _lineGidExist = false;
+
+                        break;
+                    }
+                    case 162:
+                    {
+                        // textline end
+                        var off1 = 0;
+                        var off2 = 0;
+
+                        if (_numLine < Line1)
+                            break;
+                        if (_numLine > Line2 && !bIsFillToEnd) {
+                            stream.pos = stream.size;
+                            break;
+                        }
+
+                        // все подсчитано
+                        if (0 == _lineWidth)
+                            _lineWidth = _linePrevCharX + _lineLastGlyphWidth;
+
+                        if (Line1 == _numLine)
+                        {
+                            if (-2 == Glyph1)
+                                off1 = 0;
+                            else if (-1 == Glyph1)
+                                off1 = _lineWidth;
+                            else
+                                off1 = _arrayGlyphOffsets[Glyph1];
+                        }
+                        if (bIsFillToEnd || Line2 != _numLine)
+                            off2 = _lineWidth;
+                        else
+                        {
+                            if (Glyph2 == -2)
+                                off2 = 0;
+                            else if (Glyph2 == -1)
+                                off2 = _lineWidth;
+                            else
+                            {
+                                off2 = _arrayGlyphOffsets[Glyph2];
+                                /*
+                                if (Glyph2 >= (_arrayGlyphOffsets.length - 1))
+                                    off2 = _lineWidth;
+                                else
+                                    off2 = _arrayGlyphOffsets[Glyph2 + 1];
+                                */
+                            }
+                        }
+
+                        if (off2 <= off1)
+                            break;
+
+                        // в принципе код один и тот же. Но почти всегда линии горизонтальные.
+                        // а для горизонтальной линии все можно пооптимизировать
+                        if (_lineEx == 1 && _lineEy == 0)
+                        {
+                            var _x = (dKoefX * (_lineX + off1));
+                            var _r = (dKoefX * (_lineX + off2));
+                            var _y = (dKoefY * (_lineY - _lineAscent));
+                            var _b = (dKoefY * (_lineY + _lineDescent));
+
+                            oInfo.quads.push([_x,_y,_r,_y,_x,_b,_r,_b]);
+                            break;
+                        }
+                        else
+                        {
+                            // определяем точки descent линии
+                            var ortX = -_lineEy;
+                            var ortY = _lineEx;
+
+                            var _dx = _lineX + ortX * _lineDescent;
+                            var _dy = _lineY + ortY * _lineDescent;
+
+                            var _x1 = _dx + off1 * _lineEx;
+                            var _y1 = _dy + off1 * _lineEy;
+
+                            var _x2 = _x1 - ortX * (_lineAscent + _lineDescent);
+                            var _y2 = _y1 - ortY * (_lineAscent + _lineDescent);
+
+                            var _x3 = _x2 + (off2 - off1) * _lineEx;
+                            var _y3 = _y2 + (off2 - off1) * _lineEy;
+
+                            var _x4 = _x3 + ortX * (_lineAscent + _lineDescent);
+                            var _y4 = _y3 + ortY * (_lineAscent + _lineDescent);
+
+                            _x1 = (dKoefX * _x1);
+                            _x2 = (dKoefX * _x2);
+                            _x3 = (dKoefX * _x3);
+                            _x4 = (dKoefX * _x4);
+
+                            _y1 = (dKoefY * _y1);
+                            _y2 = (dKoefY * _y2);
+                            _y3 = (dKoefY * _y3);
+                            _y4 = (dKoefY * _y4);
+
+                            oInfo.quads.push([_x2,_y2, _x3,_y3, _x1,_y1, _x4,_y4]);
+                            break;
+                        }
+                    }
+                    case 161:
+                    {
+                        // text transform
+                        stream.Skip(16);
+                        break;
+                    }
+                    default:
+                    {
+                        stream.pos = stream.size;
+                    }
+                }
+            }
+
+            if (oInfo.quads.length > 0)
+                aInfo.push(oInfo);
+        }
+        
+        return aInfo;
+    };
     CFile.prototype.drawSelection = function(pageIndex, overlay, x, y, width, height)
     {
         var stream = this.getPageTextStream(pageIndex);
@@ -1619,6 +2158,10 @@ void main() {\n\
 
         var _searchResults = this.SearchResults;
         var _navRects = _searchResults.Pages[pageIndex];
+        if (_searchResults.PagesLines == null)
+            _searchResults.PagesLines = {};
+
+        _searchResults.PagesLines[pageIndex] = [];
 
         var glyphsEqualFound = 0;
         var text = _searchResults.Text;
@@ -1646,7 +2189,6 @@ void main() {\n\
         var _SeekToNextPoint = 0;
         var _SeekLinePrevCharX = 0;
 
-        var arrayLines = [];
         var curLine = null;
 
         while (stream.pos < stream.size)
@@ -1693,8 +2235,8 @@ void main() {\n\
                     _linePrevCharX = 0;
                     _lineCharCount = 0;
 
-                    arrayLines[arrayLines.length] = new CLineInfo();
-                    curLine = arrayLines[arrayLines.length - 1];
+                    _searchResults.PagesLines[pageIndex][_searchResults.PagesLines[pageIndex].length] = new CLineInfo();
+                    curLine = _searchResults.PagesLines[pageIndex][_searchResults.PagesLines[pageIndex].length - 1];
 
                     var mask = stream.GetUChar();
                     curLine.X = stream.GetDouble();
@@ -1755,7 +2297,21 @@ void main() {\n\
         _lineCharCount = 0;
         _numLine = 0;
 
+        // переменные для случаев, когда присутсвует небольшое смещение по y, что мы можем считать строку условно неделимой
+        var tmpLineCurCharX = 0;
+        var tmpLinePrevCharX = 0;
+        var tmpLineCurGlyphWidth = 0;
+        var tmpLinePrevGlyphWidth = 0;
+        var tmpLineCharCount = 0; // всего символов в условно неделимой строке.
+
         stream.Seek(0);
+
+        // если текст, который ищем разбит на строки, то мапим в какой строке какую часть текста нашли,
+        // чтобы потом повторно не пробегаться по строкам в поисках текста для aroundtext
+        var oEqualStrByLine = {};
+
+        // для whole words
+        var isStartWhole = false;
 
         while (stream.pos < stream.size)
         {
@@ -1763,22 +2319,20 @@ void main() {\n\
 
             switch (command)
             {
-                case 41:
+                case 41: // ctFontName
                 {
                     stream.Skip(12);
                     break;
                 }
-                case 22:
+                case 22: // ctBrushColor1
                 {
                     stream.Skip(4);
                     break;
                 }
-                case 80:
+                case 80: // ctDrawText
                 {
                     if (0 != _lineCharCount)
                         _linePrevCharX += stream.GetDouble2();
-
-                    _lineCharCount++;
 
                     var _char = stream.GetUShort();
                     if (_lineGidExist)
@@ -1788,6 +2342,44 @@ void main() {\n\
                         _char = " ".charCodeAt(0);
 
                     _lineLastGlyphWidth = stream.GetDouble2();
+                    tmpLineCurGlyphWidth = _lineLastGlyphWidth;
+
+                    if (tmpLineCharCount != 0)
+                        tmpLineCurCharX += tmpLinePrevGlyphWidth;
+
+                    _lineCharCount++;
+                    tmpLineCharCount++;
+
+                    let curLine = _searchResults.PagesLines[pageIndex][_numLine];
+                    let prevLine = _searchResults.PagesLines[pageIndex][_numLine - 1]
+                    // если текущий символ позади предыдущего (или впереди больше чем на ширину предыдущего символа) значит это новая строка (иначе был бы пробел), обнуляем поиск
+                    if (tmpLineCurCharX < tmpLinePrevCharX || tmpLineCurCharX > tmpLinePrevCharX + tmpLinePrevGlyphWidth)
+                    {
+                        glyphsEqualFound = 0;
+                        isStartWhole = true;
+                    }
+                    else if (prevLine && (prevLine.Y < curLine.Y - (curLine.H / 2) || prevLine.Y - (prevLine.H / 2) > curLine.Y))
+                    {
+                        tmpLineCharCount = _lineCharCount;
+                    }
+
+                    // если пробел или пунктуация (или начало строки), значит это старт для whole words
+                    if (_searchResults.WholeWords && (_char === " ".charCodeAt(0) || undefined !== AscCommon.g_aPunctuation[_char]))
+                    {
+                        isStartWhole = true;
+                        oEqualStrByLine = {};
+                        break;
+                    }
+                    else if (tmpLineCharCount == 1)
+                    {
+                        isStartWhole = true;
+                    }
+
+                    tmpLinePrevCharX = tmpLineCurCharX;
+                    tmpLinePrevGlyphWidth = tmpLineCurGlyphWidth;
+
+                    if (_searchResults.WholeWords && isStartWhole === false)
+                        break;
 
                     var _isFound = false;
                     if (_searchResults.MachingCase)
@@ -1816,61 +2408,105 @@ void main() {\n\
                         }
 
                         glyphsEqualFound++;
+                        if (!oEqualStrByLine[_numLine])
+                            oEqualStrByLine[_numLine] = "";
+                        oEqualStrByLine[_numLine] += String.fromCharCode(_char);
+
                         _findLineOffsetR = _linePrevCharX + _lineLastGlyphWidth;
                         if (glyphsFindCount == glyphsEqualFound)
                         {
+                            if (_searchResults.WholeWords)
+                            {
+                                var nCurStreamPos = stream.pos;
+                                var isWhole = CheckWholeNextChar(stream);
+                                stream.pos = nCurStreamPos;
+                                if (!isWhole)
+                                {
+                                    isStartWhole = false;
+                                    stream.pos = nCurStreamPos;
+                                    glyphsEqualFound = 0;
+                                    oEqualStrByLine = {};
+
+                                    break;
+                                }
+                            }
+
                             var _rects = [];
+                            var _prevL = null;
+                            var isDiffLines = false;
                             for (var i = _findLine; i <= _numLine; i++)
                             {
                                 var ps = 0;
                                 if (_findLine == i)
                                     ps = _findLineOffsetX;
-                                var pe = arrayLines[i].W;
+                                var pe = _searchResults.PagesLines[pageIndex][i].W;
                                 if (i == _numLine)
                                     pe = _findLineOffsetR;
 
-                                var _l = arrayLines[i];
+                                var _l = _searchResults.PagesLines[pageIndex][i];
+                                if (_prevL && (_prevL.Y < _l.Y - (_l.H / 2) || _prevL.Y - (_prevL.H / 2) > _l.Y))
+                                {
+                                    isDiffLines = true;
+                                    break;
+                                }
+                                _prevL = _l;
+
                                 if (_l.Ex == 1 && _l.Ey == 0)
                                 {
-                                    _rects[_rects.length] = { PageNum : pageIndex, X : _l.X + ps, Y : _l.Y, W : pe - ps, H : _l.H };
+                                    _rects[_rects.length] = { PageNum : pageIndex, X : _l.X + ps, Y : _l.Y, W : pe - ps, H : _l.H, LineNum: i, Text: oEqualStrByLine[i]};
                                 }
                                 else
                                 {
-                                    _rects[_rects.length] = { PageNum : pageIndex, X : _l.X + ps * _l.Ex, Y : _l.Y + ps * _l.Ey, W : pe - ps, H : _l.H, Ex : _l.Ex, Ey : _l.Ey };
+                                    _rects[_rects.length] = { PageNum : pageIndex, X : _l.X + ps * _l.Ex, Y : _l.Y + ps * _l.Ey, W : pe - ps, H : _l.H, Ex : _l.Ex, Ey : _l.Ey, LineNum: i, Text: oEqualStrByLine[i]};
                                 }
                             }
 
-                            _navRects[_navRects.length] = _rects;
+                            if (isDiffLines === false)
+                            {
+                                _navRects[_navRects.length] = _rects;
 
-                            // нужно вернуться и попробовать искать со след буквы.
+                                // если isWhole !== true -> нужно вернуться и попробовать искать со след буквы.
+                                if (!isWhole)
+                                {
+                                    stream.pos = _SeekToNextPoint;
+                                    _linePrevCharX = _SeekLinePrevCharX;
+                                    _lineCharCount = _findGlyphIndex;
+                                    _numLine = _findLine;
+                                }
+                            }
+                            
+                            isStartWhole = false;
                             glyphsEqualFound = 0;
-                            stream.pos = _SeekToNextPoint;
-                            _linePrevCharX = _SeekLinePrevCharX;
-                            _lineCharCount = _findGlyphIndex;
-                            _numLine = _findLine;
+                            oEqualStrByLine = {};
                         }
                     }
                     else
                     {
+                        isStartWhole = false;
+
                         if (0 != glyphsEqualFound)
                         {
-                            // нужно вернуться и попробовать искать со след буквы.
+                            // если isWhole !== true -> нужно вернуться и попробовать искать со след буквы.
+                            if (!isWhole)
+                            {
+                                stream.pos = _SeekToNextPoint;
+                                _linePrevCharX = _SeekLinePrevCharX;
+                                _lineCharCount = _findGlyphIndex;
+                                _numLine = _findLine;
+                            }
+
                             glyphsEqualFound = 0;
-                            stream.pos = _SeekToNextPoint;
-                            _linePrevCharX = _SeekLinePrevCharX;
-                            _lineCharCount = _findGlyphIndex;
-                            _numLine = _findLine;
+                            oEqualStrByLine = {};
                         }
                     }
 
                     break;
                 }
-                case 160:
+                case 160: // ctCommandTextLine
                 {
-                    // textline
                     _linePrevCharX = 0;
                     _lineCharCount = 0;
-
+                    
                     var mask = stream.GetUChar();
                     stream.Skip(8);
 
@@ -1887,16 +2523,27 @@ void main() {\n\
                     else
                         _lineGidExist = false;
 
+                    if (text.charCodeAt(glyphsEqualFound) === " ".charCodeAt(0))
+                    {
+                        glyphsEqualFound++;
+                        for (let i = glyphsEqualFound; i < text.length; i++)
+                        {
+                            if (text.charCodeAt(i) === " ".charCodeAt(0))
+                                glyphsEqualFound++;
+                            else
+                                break;
+                        }
+                    }
+
                     break;
                 }
-                case 162:
+                case 162: // ctCommandTextLineEnd
                 {
                     ++_numLine;
                     break;
                 }
-                case 161:
+                case 161: // ctCommandTextTransform
                 {
-                    // text transform
                     stream.Skip(16);
                     break;
                 }
@@ -1906,13 +2553,124 @@ void main() {\n\
                 }
             }
         }
+
+        // проверка следующего символа на совпадение условий для whole words
+        function CheckWholeNextChar(stream)
+        {
+            let n_linePrevCharX = _linePrevCharX;
+            let n_lineCharCount = _lineCharCount;
+            let n_lineLastGlyphWidth = _lineLastGlyphWidth;
+            let nTmpLineCurCharX = tmpLineCurCharX;
+            let nTmpLineCharCount = tmpLineCharCount;
+            let b_lineGidExist = _lineGidExist;
+            let n_numLine = _numLine;
+            let nTmpLinePrevCharX = tmpLinePrevCharX;
+
+            while (stream.pos < stream.size)
+            {
+                var command = stream.GetUChar();
+
+                switch (command)
+                {
+                    case 41: // ctFontName
+                    {
+                        stream.Skip(12);
+                        break;
+                    }
+                    case 22: // ctBrushColor1
+                    {
+                        stream.Skip(4);
+                        break;
+                    }
+                    case 80: // ctDrawText
+                    {
+                        if (0 != n_lineCharCount)
+                            n_linePrevCharX += stream.GetDouble2();
+
+                        var _char = stream.GetUShort();
+                        if (b_lineGidExist)
+                            stream.Skip(2);
+
+                        if (0xFFFF == _char)
+                            _char = " ".charCodeAt(0);
+
+                        n_lineLastGlyphWidth = stream.GetDouble2();
+
+                        if (nTmpLineCharCount != 0)
+                            nTmpLineCurCharX += tmpLinePrevGlyphWidth;
+
+                        n_lineCharCount++;
+                        nTmpLineCharCount++;
+
+                        let curLine = _searchResults.PagesLines[pageIndex][n_numLine];
+                        let prevLine = _searchResults.PagesLines[pageIndex][n_numLine - 1]
+                        // если текущий символ позади предыдущего (или впереди) больше чем на ширину предыдущего символа значит это другая строка (иначе был бы пробел), 
+                        // whole words условия выполнены
+                        if (nTmpLineCurCharX < nTmpLinePrevCharX || nTmpLineCurCharX > nTmpLinePrevCharX + tmpLinePrevGlyphWidth)
+                        {
+                            return true;
+                        }
+                        else if (prevLine && (prevLine.Y < curLine.Y - (curLine.H / 2) || prevLine.Y - (prevLine.H / 2) > curLine.Y))
+                        {
+                            nTmpLineCharCount = n_lineCharCount;
+                        }
+
+                        // если пробел или пунктуация (или начало строки), значит это старт для whole words
+                        if (_searchResults.WholeWords && (_char === " ".charCodeAt(0) || undefined !== AscCommon.g_aPunctuation[_char]))
+                            return true;
+                        else if (nTmpLineCharCount == 1)
+                            return true;
+
+                        return false;
+                    }
+                    case 160: // ctCommandTextLine
+                    {
+                        n_linePrevCharX = 0;
+                        n_lineCharCount = 0;
+                        
+                        var mask = stream.GetUChar();
+                        stream.Skip(8);
+
+                        if ((mask & 0x01) == 0)
+                            stream.Skip(8);
+
+                        stream.Skip(8);
+
+                        if ((mask & 0x04) != 0)
+                            stream.Skip(4);
+
+                        if ((mask & 0x02) != 0)
+                            b_lineGidExist = true;
+                        else
+                            b_lineGidExist = false;
+
+                        break;
+                    }
+                    case 162: // ctCommandTextLineEnd
+                    {
+                        ++n_numLine;
+                        break;
+                    }
+                    case 161: // ctCommandTextTransform
+                    {
+                        stream.Skip(16);
+                        break;
+                    }
+                    default:
+                    {
+                        stream.pos = stream.size;
+                    }
+                }
+            }
+            return true;
+        }
     };
 
-    CFile.prototype.findText = function(text, isMachingCase, isNext)
+    CFile.prototype.findText = function(text, isMachingCase, isWholeWords, isNext)
     {
         this.SearchResults.IsSearch = true;
         var pagesCount = this.pages.length;
-        if (text === this.SearchResults.Text && isMachingCase === this.SearchResults.MachingCase)
+        if (text === this.SearchResults.Text && isMachingCase === this.SearchResults.MachingCase && isWholeWords == this.SearchResults.WholeWords)
         {
             if (this.SearchResults.Count === 0)
             {
@@ -2013,6 +2771,7 @@ void main() {\n\
 
         this.SearchResults.Text = text;
         this.SearchResults.MachingCase = isMachingCase;
+        this.SearchResults.WholeWords = isWholeWords;
 
         for (var i = 0; i < this.pages.length; i++)
         {
@@ -2054,6 +2813,109 @@ void main() {\n\
         this.viewer.ToSearchResult();
     };
 
+    CFile.prototype.startTextAround = function()
+    {
+        var aTextAround = [];
+        var oPageMatches, oPart, oLineInfo, oLastPartInfo;
+        var aResult, nAroundAdded;
+        for (var nPage = 0; nPage < this.SearchResults.Pages.length; nPage++)
+        {
+            oPageMatches = this.SearchResults.Pages[nPage];
+            nAroundAdded = aTextAround.length;
+            // идём по всем совпадениям
+            for (var nMatch = 0; nMatch < oPageMatches.length; nMatch++)
+            {
+                aResult = ["", "", ""];
+                // найденный текст может быть разбит на части (строки)
+                for (var nPart = 0; nPart < oPageMatches[nMatch].length; nPart++)
+                {
+                    oPart = oPageMatches[nMatch][nPart];
+                    // знаем в какой строке было найдено совпадение
+                    oLineInfo = this.SearchResults.PagesLines[nPage][oPart.LineNum];
+
+                    // если line изменился, тогда инфу обнуляем
+                    if (oLastPartInfo && oPart.LineNum != oLastPartInfo.numLine)
+                        oLastPartInfo = null;
+
+                    var nPosInLine;
+                    // запоминаем позицию в строке у первого совпадения, чтобы расчитывать позиции следующих
+                    if (!oLastPartInfo)
+                    {
+                        nPosInLine = this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase());
+                        if (this.SearchResults.WholeWords)
+                        {
+                            while (!CheckWholeWords(nPosInLine, oPart.Text, oLineInfo.text))
+                            {
+                                nPosInLine = this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text, nPosInLine + 1) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase(), nPosInLine + 1);
+                            }
+                        }
+
+                        oLastPartInfo = {
+                            posInLine: nPosInLine,
+                            numLine: oPart.LineNum,
+                            text: oPart.Text 
+                        };    
+                    }
+                    else
+                    {
+                        nPosInLine = this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text, oLastPartInfo.posInLine + 1) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase(), oLastPartInfo.posInLine + 1);
+                        if (this.SearchResults.WholeWords)
+                        {
+                            while (!CheckWholeWords(nPosInLine, oPart.Text, oLineInfo.text))
+                            {
+                                nPosInLine = this.SearchResults.MachingCase ? oLineInfo.text.indexOf(oPart.Text, nPosInLine + 1) : oLineInfo.text.toLowerCase().indexOf(oPart.Text.toLowerCase(), nPosInLine + 1);
+                            }
+                        }
+
+                        oLastPartInfo = {
+                            posInLine: nPosInLine,
+                            numLine: oPart.LineNum,
+                            text: oPart.Text
+                        }
+                    }
+
+                    if (nPart == 0 && oPageMatches[nMatch].length == 1)
+                    {
+                        aResult[0] = oLineInfo.text.slice(0, oLastPartInfo.posInLine);
+                        aResult[1] = oPart.Text;
+                        aResult[2] = oLineInfo.text.slice(oLastPartInfo.posInLine + oPart.Text.length);
+                    }
+                    else if (nPart == 0)
+                    {
+                        aResult[0] = oLineInfo.text.slice(0, oLastPartInfo.posInLine);
+                        aResult[1] = oPart.Text;
+                    }
+                    else if (nPart == oPageMatches[nMatch].length - 1)
+                    {
+                        aResult[1] += oPart.Text;
+                        aResult[2] += oLineInfo.text.slice(oLastPartInfo.posInLine + oPart.Text.length);
+                    }
+                    else
+                        aResult[2] += oPart.Text;
+                }
+
+                aTextAround.push([nAroundAdded + nMatch, aResult]);
+            }
+        }
+
+        function CheckWholeWords(nMatchPos, sMatchStr, sParentSrt)
+        {
+            var charBeforeMatch = sParentSrt[nMatchPos - 1] ? sParentSrt[nMatchPos - 1].charCodeAt(0) : undefined;
+            var charAfterMatch = sParentSrt[nMatchPos + sMatchStr.length] ? sParentSrt[nMatchPos + sMatchStr.length].charCodeAt(0) : undefined;
+
+            if (charBeforeMatch !== " ".charCodeAt(0) && charBeforeMatch !== undefined && undefined === AscCommon.g_aPunctuation[charBeforeMatch])
+                return false;
+            if (charAfterMatch !== " ".charCodeAt(0) && charAfterMatch !== undefined && undefined === AscCommon.g_aPunctuation[charAfterMatch])
+                return false;
+
+            return true;
+        }
+
+        this.viewer.Api.sync_startTextAroundSearch();
+        this.viewer.Api.sync_getTextAroundSearchPack(aTextAround);
+        this.viewer.Api.sync_endTextAroundSearch();
+    };
+    
     CFile.prototype.prepareSearch = function()
     {
         this.SearchResults.Pages = new Array(this.pages.length);
@@ -2089,6 +2951,7 @@ void main() {\n\
                 page.W = page["W"];
                 page.H = page["H"];
                 page.Dpi = page["Dpi"];
+                page.originIndex = i; // исходный индекс в файле
             }
 
             file.prepareSearch();
@@ -2123,11 +2986,16 @@ void main() {\n\
                 page.W = page["W"];
                 page.H = page["H"];
                 page.Dpi = page["Dpi"];
+                page.originIndex = i; // исходный индекс в файле
             }
 
             file.prepareSearch();
             //file.cacheManager = new AscCommon.CCacheManager();
         }
     };
+	window["AscViewer"].createEmptyFile = function()
+	{
+		return new CFile();
+	};
 
 })(window, undefined);
