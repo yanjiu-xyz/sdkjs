@@ -1260,6 +1260,16 @@
 		}
 
 		let aStack = [];
+
+
+		for(let nSelObj = 0; nSelObj < this.SelectedObjectsStack.length; ++nSelObj)
+		{
+			if(this.SelectedObjectsStack[nSelObj].Type === c_oAscTypeSelectElement.Slide)
+			{
+				aStack.push(this.SelectedObjectsStack[nSelObj]);
+				break;
+			}
+		}
 		let oDrawingPr = oDrawingsController.getDrawingPropsFromArray(aDrawings);
 		let oParaPr = oDrawingsController.getParagraphParaPr();
 		let oTextPr = oDrawingsController.getParagraphTextPr();
