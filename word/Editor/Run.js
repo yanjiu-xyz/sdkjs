@@ -6420,6 +6420,17 @@ ParaRun.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 //-----------------------------------------------------------------------------------
 // Функции отрисовки
 //-----------------------------------------------------------------------------------
+ParaRun.prototype.getRangePos = function(line, range)
+{
+	let _line  = line - this.StartLine;
+	let _range = _line ? range : range - this.StartRange;
+	
+	return [
+		this.protected_GetRangeStartPos(_line, _range),
+		this.protected_GetRangeEndPos(_line, _range),
+	];
+};
+
 ParaRun.prototype.Draw_HighLights = function(PDSH)
 {
     var pGraphics = PDSH.Graphics;
@@ -6635,364 +6646,20 @@ ParaRun.prototype.Draw_HighLights = function(PDSH)
     PDSH.X = X;
 };
 
-ParaRun.prototype.Draw_Elements = function(PDSE)
+ParaRun.prototype.Draw_Elements = function(drawState)
 {
-    var CurLine  = PDSE.Line - this.StartLine;
-    var CurRange = ( 0 === CurLine ? PDSE.Range - this.StartRange : PDSE.Range );
-    var CurPage  = PDSE.Page;
-
-    var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-    var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-
-    var Para      = PDSE.Paragraph;
-    var pGraphics = PDSE.Graphics;
-    var BgColor   = PDSE.BgColor;
-    var Theme     = PDSE.Theme;
-
-    var X = PDSE.X;
-    var Y = PDSE.Y;
+	let rangePos = this.getRangePos(drawState.Line, drawState.Range);
+	let startPos = rangePos[0];
+	let endPos   = rangePos[1];
+	if (startPos >= endPos)
+		return;
 	
-	let yOffset = this.getYOffset();
-
-    var CurTextPr = this.Get_CompiledPr( false );
-
-    if (this.IsUseAscFont(CurTextPr))
+	drawState.handleRun(this);
+	for (let pos = startPos; pos < endPos; ++pos)
 	{
-		var oFontTextPr = CurTextPr.Copy();
-		oFontTextPr.RFonts.SetAll("ASCW3", -1);
-		pGraphics.SetTextPr(oFontTextPr, Theme);
+		let item = this.private_CheckInstrText(this.Content[pos]);
+		drawState.handleRunElement(item);
 	}
-    else
-	{
-		pGraphics.SetTextPr(CurTextPr, Theme);
-	}
-
-    var InfoMathText ;
-    if(this.Type == para_Math_Run)
-    {
-        var ArgSize = this.Parent.Compiled_ArgSz.value,
-            bNormalText = this.IsNormalText();
-
-        var InfoTextPr =
-        {
-            TextPr:         CurTextPr,
-            ArgSize:        ArgSize,
-            bNormalText:    bNormalText,
-            bEqArray:       this.bEqArray
-        };
-
-        InfoMathText = new CMathInfoTextPr(InfoTextPr);
-    }
-
-	if (CurTextPr.Shd && !CurTextPr.Shd.IsNil() && !(CurTextPr.FontRef && CurTextPr.FontRef.Color))
-		BgColor = CurTextPr.Shd.GetSimpleColor(Para.GetTheme(), Para.GetColorMap());
-
-    var AutoColor = ( undefined != BgColor && false === BgColor.Check_BlackAutoColor() ? new CDocumentColor( 255, 255, 255, false ) : new CDocumentColor( 0, 0, 0, false ) );
-    var  RGBA, Theme = PDSE.Theme, ColorMap = PDSE.ColorMap;
-    if(CurTextPr.FontRef && CurTextPr.FontRef.Color)
-    {
-        CurTextPr.FontRef.Color.check(Theme, ColorMap);
-        RGBA = CurTextPr.FontRef.Color.RGBA;
-        AutoColor = new CDocumentColor( RGBA.R, RGBA.G, RGBA.B, RGBA.A );
-    }
-
-
-    var RGBA;
-    var ReviewType  = this.GetReviewType();
-    var ReviewColor = null;
-    var bPresentation = this.Paragraph && !this.Paragraph.bFromDocument;
-    if (reviewtype_Add === ReviewType || reviewtype_Remove === ReviewType)
-    {
-        ReviewColor = this.GetReviewColor();
-        pGraphics.b_color1(ReviewColor.r, ReviewColor.g, ReviewColor.b, 255);
-    }
-    else if (CurTextPr.Unifill)
-    {
-        CurTextPr.Unifill.check(PDSE.Theme, PDSE.ColorMap);
-        RGBA = CurTextPr.Unifill.getRGBAColor();
-
-		if (true === PDSE.VisitedHyperlink)
-		{
-			AscFormat.G_O_VISITED_HLINK_COLOR.check(PDSE.Theme, PDSE.ColorMap);
-			RGBA = AscFormat.G_O_VISITED_HLINK_COLOR.getRGBAColor();
-			pGraphics.b_color1(RGBA.R, RGBA.G, RGBA.B, RGBA.A);
-		}
-        else
-        {
-            if(bPresentation && PDSE.Hyperlink)
-            {
-                AscFormat.G_O_HLINK_COLOR.check(PDSE.Theme, PDSE.ColorMap);
-                RGBA = AscFormat.G_O_HLINK_COLOR.getRGBAColor();
-                pGraphics.b_color1( RGBA.R, RGBA.G, RGBA.B, RGBA.A );
-            }
-            else
-            {
-                if(pGraphics.m_bIsTextDrawer !== true)
-                {
-                    pGraphics.b_color1( RGBA.R, RGBA.G, RGBA.B, RGBA.A);
-                }
-            }
-        }
-    }
-    else
-    {
-        if (true === PDSE.VisitedHyperlink)
-        {
-            AscFormat.G_O_VISITED_HLINK_COLOR.check(PDSE.Theme, PDSE.ColorMap);
-            RGBA = AscFormat.G_O_VISITED_HLINK_COLOR.getRGBAColor();
-            pGraphics.b_color1( RGBA.R, RGBA.G, RGBA.B, RGBA.A );
-        }
-        else
-        {
-            if(true === pGraphics.m_bIsTextDrawer)
-            {
-                if ( true === CurTextPr.Color.Auto && !CurTextPr.TextFill)
-                {
-                    pGraphics.b_color1( AutoColor.r, AutoColor.g, AutoColor.b, 255);
-                }
-            }
-            else
-            {
-                if ( true === CurTextPr.Color.Auto )
-                {
-                    pGraphics.b_color1( AutoColor.r, AutoColor.g, AutoColor.b, 255);
-                }
-                else
-                {
-                    pGraphics.b_color1( CurTextPr.Color.r, CurTextPr.Color.g, CurTextPr.Color.b, 255);
-                }
-            }
-        }
-    }
-
-	var isHiddenCFPart = PDSE.ComplexFields.IsComplexFieldCode();
-
-    for ( var Pos = StartPos; Pos < EndPos; Pos++ )
-    {
-		var Item = this.private_CheckInstrText(this.Content[Pos]);
-        var ItemType = Item.Type;
-
-		if ((PDSE.ComplexFields.IsHiddenFieldContent() || isHiddenCFPart) && para_End !== ItemType && para_FieldChar !== ItemType)
-			continue;
-
-        var TempY = Y;
-
-        switch (CurTextPr.VertAlign)
-        {
-            case AscCommon.vertalign_SubScript:
-            {
-                Y -= AscCommon.vaKSub * CurTextPr.FontSize * g_dKoef_pt_to_mm;
-                break;
-            }
-            case AscCommon.vertalign_SuperScript:
-            {
-                Y -= AscCommon.vaKSuper * CurTextPr.FontSize * g_dKoef_pt_to_mm;
-                break;
-            }
-        }
-
-        switch( ItemType )
-        {
-            case para_PageNum:
-            case para_PageCount:
-            case para_Drawing:
-            case para_Tab:
-            case para_Text:
-            case para_Sym:
-            case para_FootnoteReference:
-            case para_FootnoteRef:
-			case para_EndnoteReference:
-			case para_EndnoteRef:
-            case para_Separator:
-            case para_ContinuationSeparator:
-            {
-                if (para_Drawing != ItemType || Item.Is_Inline())
-                {
-                    Item.Draw(X, Y - yOffset, pGraphics, PDSE, CurTextPr);
-                    X += Item.GetWidthVisible();
-                }
-
-                // Внутри отрисовки инлайн-автофигур могут изменится цвета и шрифт, поэтому восстанавливаем настройки
-                if ((para_Drawing === ItemType && Item.Is_Inline()) || (para_Tab === ItemType))
-                {
-                    pGraphics.SetTextPr( CurTextPr, Theme );
-
-                    if (reviewtype_Add === ReviewType || reviewtype_Remove === ReviewType)
-                    {
-                        pGraphics.b_color1(ReviewColor.r, ReviewColor.g, ReviewColor.b, 255);
-                    }
-                    else if (RGBA)
-                    {
-                        pGraphics.b_color1( RGBA.R, RGBA.G, RGBA.B, 255);
-                        pGraphics.p_color( RGBA.R, RGBA.G, RGBA.B, 255);
-                    }
-                    else
-                    {
-                        if ( true === CurTextPr.Color.Auto )
-                        {
-                            pGraphics.b_color1( AutoColor.r, AutoColor.g, AutoColor.b, 255);
-                            pGraphics.p_color( AutoColor.r, AutoColor.g, AutoColor.b, 255);
-                        }
-                        else
-                        {
-                            pGraphics.b_color1( CurTextPr.Color.r, CurTextPr.Color.g, CurTextPr.Color.b, 255);
-                            pGraphics.p_color(  CurTextPr.Color.r, CurTextPr.Color.g, CurTextPr.Color.b, 255);
-                        }
-                    }
-                }
-
-                break;
-            }
-            case para_Space:
-            {
-                Item.Draw( X, Y - yOffset, pGraphics, PDSE, CurTextPr );
-
-                X += Item.GetWidthVisible();
-
-                break;
-            }
-            case para_End:
-            {
-                var SectPr = Para.Get_SectionPr();
-                if (!Para.LogicDocument || Para.LogicDocument !== Para.Parent)
-                    SectPr = undefined;
-
-				if (!Para.IsInFixedForm()
-					&& ((editor && editor.ShowParaMarks) || (!SectPr && reviewtype_Common !== ReviewType)))
-				{
-					if (undefined === SectPr)
-					{
-						var oEndTextPr = Para.GetParaEndCompiledPr();
-
-						if (reviewtype_Common !== ReviewType)
-						{
-							pGraphics.SetTextPr(oEndTextPr, PDSE.Theme);
-							pGraphics.b_color1(ReviewColor.r, ReviewColor.g, ReviewColor.b, 255);
-						}
-						else if (oEndTextPr.Unifill)
-						{
-							oEndTextPr.Unifill.check(PDSE.Theme, PDSE.ColorMap);
-							var RGBAEnd = oEndTextPr.Unifill.getRGBAColor();
-							pGraphics.SetTextPr(oEndTextPr, PDSE.Theme);
-							if (pGraphics.m_bIsTextDrawer !== true)
-							{
-								pGraphics.b_color1(RGBAEnd.R, RGBAEnd.G, RGBAEnd.B, 255);
-							}
-						}
-						else
-						{
-							pGraphics.SetTextPr(oEndTextPr, PDSE.Theme);
-							if (pGraphics.m_bIsTextDrawer !== true)
-							{
-								if (true === oEndTextPr.Color.Auto)
-								{
-									pGraphics.b_color1(AutoColor.r, AutoColor.g, AutoColor.b, 255);
-								}
-								else
-								{
-									pGraphics.b_color1(oEndTextPr.Color.r, oEndTextPr.Color.g, oEndTextPr.Color.b, 255);
-								}
-							}
-							else
-							{
-								if (true === oEndTextPr.Color.Auto && !oEndTextPr.TextFill)
-								{
-									pGraphics.b_color1(AutoColor.r, AutoColor.g, AutoColor.b, 255);
-								}
-							}
-						}
-
-						Y = TempY;
-						switch (oEndTextPr.VertAlign)
-						{
-							case AscCommon.vertalign_SubScript:
-							{
-								Y -= AscCommon.vaKSub * oEndTextPr.FontSize * g_dKoef_pt_to_mm;
-								break;
-							}
-							case AscCommon.vertalign_SuperScript:
-							{
-								Y -= AscCommon.vaKSuper * oEndTextPr.FontSize * g_dKoef_pt_to_mm;
-								break;
-							}
-						}
-					}
-
-					Item.Draw(X, Y - yOffset, pGraphics);
-				}
-
-                X += Item.GetWidth();
-
-                break;
-            }
-            case para_NewLine:
-            {
-                Item.Draw( X, Y - yOffset, pGraphics );
-                X += Item.WidthVisible;
-                break;
-            }
-            case para_Math_Ampersand:
-            case para_Math_Text:
-            case para_Math_BreakOperator:
-            {
-                var PosLine = this.ParaMath.GetLinePosition(PDSE.Line, PDSE.Range);
-                Item.Draw(PosLine.x, PosLine.y, pGraphics, InfoMathText);
-                X += Item.GetWidthVisible();
-                break;
-            }
-            case para_Math_Placeholder:
-            {
-                if(pGraphics.RENDERER_PDF_FLAG !== true) // если идет печать/ конвертация в PDF плейсхолдер не отрисовываем
-                {
-                    var PosLine = this.ParaMath.GetLinePosition(PDSE.Line, PDSE.Range);
-                    Item.Draw(PosLine.x, PosLine.y, pGraphics, InfoMathText);
-                    X += Item.GetWidthVisible();
-                }
-                break;
-            }
-			case para_FieldChar:
-			{
-				PDSE.ComplexFields.ProcessFieldChar(Item);
-				isHiddenCFPart = PDSE.ComplexFields.IsComplexFieldCode();
-
-				if (Item.IsNumValue())
-				{
-					var oParent = this.GetParent();
-					var nRunPos = this.private_GetPosInParent(oParent);
-
-					// Заглушка на случай, когда настройки текущего рана не совпадают с настройками рана, где расположен текст
-					if (Pos >= this.Content.length - 1 && oParent && oParent.Content[nRunPos + 1] instanceof ParaRun)
-					{
-						var oNumPr = oParent.Content[nRunPos + 1].Get_CompiledPr(false);
-
-						pGraphics.SetTextPr(oNumPr, PDSE.Theme);
-						if (oNumPr.Unifill)
-						{
-							oNumPr.Unifill.check(PDSE.Theme, PDSE.ColorMap);
-							RGBA = oNumPr.Unifill.getRGBAColor();
-							pGraphics.b_color1(RGBA.R, RGBA.G, RGBA.B, RGBA.A);
-						}
-						else
-						{
-							if (true === oNumPr.Color.Auto)
-								pGraphics.b_color1(AutoColor.r, AutoColor.g, AutoColor.b, 255);
-							else
-								pGraphics.b_color1(oNumPr.Color.r, oNumPr.Color.g, oNumPr.Color.b, 255);
-						}
-					}
-
-					Item.Draw(X, Y - yOffset, pGraphics, PDSE);
-					X += Item.GetWidthVisible();
-				}
-
-				break;
-			}
-        }
-
-        Y = TempY;
-    }
-    // Обновляем позицию
-    PDSE.X = X;
 };
 
 ParaRun.prototype.Draw_Lines = function(PDSL)
@@ -8822,6 +8489,14 @@ ParaRun.prototype.Get_CompiledPr = function(bCopy)
         return this.CompiledPr;
     else
         return this.CompiledPr.Copy(); // Отдаем копию объекта, чтобы никто не поменял извне настройки стиля
+};
+/**
+ * Return a reference to the compiled textPr object
+ * @returns {AscWord.CTextPr}
+ */
+ParaRun.prototype.getCompiledPr = function()
+{
+	return this.Get_CompiledPr(false);
 };
 
 ParaRun.prototype.Internal_Compile_Pr = function ()

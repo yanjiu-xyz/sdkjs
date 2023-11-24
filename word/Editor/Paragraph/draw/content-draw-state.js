@@ -70,20 +70,17 @@
 		
 		this.ComplexFields = new CParagraphComplexFieldsInfo();
 		
-		// TODO:
 		this.yOffset        = 0;
 		this.textPr         = null;
 		this.reviewColor    = null;
-		this.themeColor     = null; // aka RGBA
+		this.themeColor     = null;
 		this.autoColor      = null;
-		this.reviewType     = reviewtype_Common;
 		this.isHiddenCFPart = false;
-		this.tempY          = 0;
+		this.calcY          = 0; // calculated vertical position taking into account sub/super script
 		
 		// for Math
-		this.mathTextInfo = null; // InfoMathText
+		this.mathTextInfo = null;
 		this.paraMath     = null;
-		
 	}
 	ParagraphContentDrawState.prototype.init = function(paragraph, graphics)
 	{
@@ -117,10 +114,92 @@
 		this.BaseLine   = BaseLine;
 	};
 	/**
+	 * @param run {AscWord.CRun}
+	 */
+	ParagraphContentDrawState.prototype.handleRun = function(run)
+	{
+		this.yOffset = run.getYOffset();
+		
+		let textPr = run.getCompiledPr();
+		
+		if (run.IsMathRun())
+		{
+			this.mathTextInfo = new CMathInfoTextPr({
+				TextPr      : textPr,
+				ArgSize     : run.Parent.Compiled_ArgSz.value,
+				bNormalText : run.IsNormalText(),
+				bEqArray    : run.bEqArray
+			});
+			this.paraMath = run.ParaMath;
+		}
+		else
+		{
+			this.mathTextInfo = null;
+			this.paraMath     = null;
+		}
+		
+		this.reviewColor = null;
+		this.themeColor  = null;
+		this.autoColor   = null;
+		
+		if (reviewtype_Common !== run.GetReviewType())
+		{
+			this.reviewColor = run.GetReviewColor();
+		}
+		else if (this.VisitedHyperlink)
+		{
+			AscFormat.G_O_VISITED_HLINK_COLOR.check(PDSE.Theme, PDSE.ColorMap);
+			let RGBA = AscFormat.G_O_VISITED_HLINK_COLOR.getRGBAColor();
+			this.themeColor = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B, false);
+		}
+		else if (textPr.Unifill)
+		{
+			let RGBA = null;
+			if (this.isSlideEditor() && this.Hyperlink)
+			{
+				AscFormat.G_O_HLINK_COLOR.check(this.Theme, this.ColorMap);
+				RGBA = AscFormat.G_O_HLINK_COLOR.getRGBAColor();
+			}
+			else if (true !== this.Graphics.m_bIsTextDrawer)
+			{
+				textPr.Unifill.check(this.Theme, this.ColorMap);
+				RGBA = textPr.Unifill.getRGBAColor();
+			}
+			
+			if (RGBA)
+				this.themeColor = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B, false);
+		}
+		
+		if (textPr.FontRef && textPr.FontRef.Color)
+		{
+			textPr.FontRef.Color.check(this.Theme, this.ColorMap);
+			let RGBA = textPr.FontRef.Color.RGBA;
+			this.autoColor = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B, false);
+		}
+		else
+		{
+			let bgColor = this.BgColor;
+			if (textPr.Shd && !textPr.Shd.IsNil())
+				bgColor = textPr.Shd.GetSimpleColor(this.Theme, this.ColorMap);
+			
+			this.autoColor = (bgColor && !bgColor.Check_BlackAutoColor() ? new CDocumentColor(255, 255, 255, false) : new CDocumentColor(0, 0, 0, false));
+		}
+		
+		this.isHiddenCFPart = this.ComplexFields.IsComplexFieldCode();
+		this.updateGraphicsState(textPr, run.IsUseAscFont(textPr));
+		
+		this.calcY = this.calculateY(textPr.VertAlign);
+	};
+	/**
 	 * @param element {AscWord.CRunElementBase}
 	 */
 	ParagraphContentDrawState.prototype.handleRunElement = function(element)
 	{
+		if ((this.ComplexFields.IsHiddenFieldContent() || this.isHiddenCFPart)
+			&& para_End !== element.Type
+			&& para_FieldChar !== element.Type)
+			return;
+		
 		switch (element.Type)
 		{
 			case para_Text:
@@ -151,12 +230,19 @@
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/**
 	 * @param textPr {AscWord.CTextPr}
+	 * @param [useAscFont=false] {boolean}
 	 */
-	ParagraphContentDrawState.prototype.updateGraphicsState = function(textPr)
+	ParagraphContentDrawState.prototype.updateGraphicsState = function(textPr, useAscFont)
 	{
 		this.textPr = textPr;
 		
-		this.Graphics.SetTextPr(this.textPr, this.Theme);
+		if (useAscFont)
+		{
+			textPr = textPr.Copy();
+			textPr.RFonts.SetAll("ASCW3", -1);
+		}
+		
+		this.Graphics.SetTextPr(textPr, this.Theme);
 		
 		let color = this.getTextColor();
 		this.Graphics.b_color1(color.r, color.g, color.b, 255);
@@ -164,7 +250,7 @@
 	};
 	ParagraphContentDrawState.prototype.getTextColor = function()
 	{
-		if (reviewtype_Add === this.reviewType || reviewtype_Remove === this.reviewType)
+		if (this.reviewColor)
 			return this.reviewColor;
 		else if (this.themeColor)
 			return this.themeColor;
@@ -178,7 +264,7 @@
 	 */
 	ParagraphContentDrawState.prototype.handleText = function(text)
 	{
-		text.Draw(this.X, this.Y - this.yOffset, this.Graphics, this, this.textPr);
+		text.Draw(this.X, this.calcY - this.yOffset, this.Graphics, this, this.textPr);
 		this.X += text.GetWidthVisible();
 	};
 	/**
@@ -189,7 +275,7 @@
 		if (!drawing.IsInline())
 			return;
 		
-		drawing.Draw(this.X, this.Y - this.yOffset, this.Graphics, this, this.textPr);
+		drawing.Draw(this.X, this.calcY - this.yOffset, this.Graphics, this, this.textPr);
 		this.X += drawing.GetWidthVisible();
 		
 		// Внутри отрисовки инлайн-автофигур могут изменится цвета и шрифт, поэтому восстанавливаем настройки
@@ -200,7 +286,7 @@
 	 */
 	ParagraphContentDrawState.prototype.handleRegularElement = function(element)
 	{
-		element.Draw(this.X, this.Y - this.yOffset, this.Graphics, this, this.textPr);
+		element.Draw(this.X, this.calcY - this.yOffset, this.Graphics, this, this.textPr);
 		this.X += element.GetWidthVisible();
 		
 		if (element.IsTab())
@@ -231,21 +317,7 @@
 		{
 			let endTextPr = true !== this.Graphics.m_bIsTextDrawer ? this.Paragraph.GetParaEndCompiledPr() : this.textPr;
 			this.updateGraphicsState(endTextPr);
-			
-			y = this.tempY;
-			switch (endTextPr.VertAlign)
-			{
-				case AscCommon.vertalign_SubScript:
-				{
-					Y -= AscCommon.vaKSub * endTextPr.FontSize * g_dKoef_pt_to_mm;
-					break;
-				}
-				case AscCommon.vertalign_SuperScript:
-				{
-					Y -= AscCommon.vaKSuper * endTextPr.FontSize * g_dKoef_pt_to_mm;
-					break;
-				}
-			}
+			y = this.calculateY(endTextPr);
 		}
 		
 		paraMark.Draw(this.X, y - this.yOffset, this.Graphics);
@@ -310,6 +382,21 @@
 		// }
 		
 		this.handleRegularElement(element);
+	};
+	ParagraphContentDrawState.prototype.calculateY = function(textPr)
+	{
+		let y = this.Y;
+		
+		if (AscCommon.vertalign_SubScript === textPr.VertAlign)
+			y -= AscCommon.vaKSub * textPr.FontSize * g_dKoef_pt_to_mm;
+		else if (AscCommon.vertalign_SuperScript === textPr.VertAlign)
+			y -= AscCommon.vaKSuper * textPr.FontSize * g_dKoef_pt_to_mm;
+		
+		return y;
+	};
+	ParagraphContentDrawState.prototype.isSlideEditor = function()
+	{
+		return this.Paragraph && !this.Paragraph.bFromDocument;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.ParagraphContentDrawState = ParagraphContentDrawState;
