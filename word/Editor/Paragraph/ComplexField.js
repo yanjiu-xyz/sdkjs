@@ -1510,23 +1510,43 @@ CComplexField.prototype.GetFieldValueText = function()
 	
 	return result;
 };
-CComplexField.prototype.GetFieldValueTextPr = function()
+CComplexField.prototype.GetFieldValueTextPr = function(isCompiled)
 {
-	// TODO: Temporary. We select the first visible element in InstrText area and return its direct TextPr
-	let logicDocument = this.LogicDocument;
-	if (!logicDocument)
-		return new AscWord.CTextPr();
-	
-	let state = logicDocument.SaveDocumentState();
-	
-	let run = this.SeparateChar.GetRun();
-	run.Make_ThisElementCurrent(false);
-	run.SetCursorPosition(run.GetElementPosition(this.SeparateChar) + 1);
-	logicDocument.MoveCursorRight(true, false);
-	
-	let textPr = logicDocument.GetDirectTextPr();
-	logicDocument.LoadDocumentState(state);
-	return textPr;
+	if (isCompiled)
+	{
+		let run       = this.SeparateChar.GetRun();
+		let runParent = run.GetParent();
+		let runPos    = run.private_GetPosInParent(runParent);
+		
+		let inRunPos  = run.GetElementPosition(this.SeparateChar);
+		if (inRunPos >= run.GetElementsCount() - 1
+			&& runParent
+			&& runParent.GetElement
+			&& runParent.GetElement(runPos + 1) instanceof AscWord.CRun)
+		{
+			return runParent.GetElement(runPos + 1).getCompiledPr();
+		}
+		
+		return run.getCompiledPr();
+	}
+	else
+	{
+		// TODO: Temporary. We select the first visible element in InstrText area and return its direct TextPr
+		let logicDocument = this.LogicDocument;
+		if (!logicDocument)
+			return new AscWord.CTextPr();
+		
+		let state = logicDocument.SaveDocumentState();
+		
+		let run = this.SeparateChar.GetRun();
+		run.Make_ThisElementCurrent(false);
+		run.SetCursorPosition(run.GetElementPosition(this.SeparateChar) + 1);
+		
+		logicDocument.MoveCursorRight(true, false);
+		let textPr = logicDocument.GetDirectTextPr();
+		logicDocument.LoadDocumentState(state);
+		return textPr;
+	}
 };
 CComplexField.prototype.GetTopDocumentContent = function()
 {

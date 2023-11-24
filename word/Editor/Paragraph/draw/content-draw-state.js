@@ -351,37 +351,10 @@
 		
 		// We can't use textPr of the current run, since the properties of the actual text
 		// may be different
-		let textPr = complexField.GetFieldValueTextPr();
+		let textPr = complexField.GetFieldValueTextPr(true);
 		this.updateGraphicsState(textPr);
 		
-		
-		// OldVariant:
-		
-		// var oParent = this.GetParent();
-		// var nRunPos = this.private_GetPosInParent(oParent);
-		//
-		// // Заглушка на случай, когда настройки текущего рана не совпадают с настройками рана, где расположен текст
-		// if (Pos >= this.Content.length - 1 && oParent && oParent.Content[nRunPos + 1] instanceof ParaRun)
-		// {
-		// 	var oNumPr = oParent.Content[nRunPos + 1].Get_CompiledPr(false);
-		//
-		// 	pGraphics.SetTextPr(oNumPr, PDSE.Theme);
-		// 	if (oNumPr.Unifill)
-		// 	{
-		// 		oNumPr.Unifill.check(PDSE.Theme, PDSE.ColorMap);
-		// 		RGBA = oNumPr.Unifill.getRGBAColor();
-		// 		pGraphics.b_color1(RGBA.R, RGBA.G, RGBA.B, RGBA.A);
-		// 	}
-		// 	else
-		// 	{
-		// 		if (true === oNumPr.Color.Auto)
-		// 			pGraphics.b_color1(AutoColor.r, AutoColor.g, AutoColor.b, 255);
-		// 		else
-		// 			pGraphics.b_color1(oNumPr.Color.r, oNumPr.Color.g, oNumPr.Color.b, 255);
-		// 	}
-		// }
-		
-		this.handleRegularElement(element);
+		this.handleRegularElement(fieldChar);
 	};
 	ParagraphContentDrawState.prototype.calculateY = function(textPr)
 	{
