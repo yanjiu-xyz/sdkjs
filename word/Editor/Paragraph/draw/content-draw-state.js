@@ -188,7 +188,7 @@
 		this.isHiddenCFPart = this.ComplexFields.IsComplexFieldCode();
 		this.updateGraphicsState(textPr, run.IsUseAscFont(textPr));
 		
-		this.calcY = this.calculateY(textPr.VertAlign);
+		this.calcY = this.calculateY(textPr);
 	};
 	/**
 	 * @param element {AscWord.CRunElementBase}
