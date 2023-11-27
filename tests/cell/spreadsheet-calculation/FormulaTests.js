@@ -7381,9 +7381,9 @@ $(function () {
 		assert.ok(oParser.parse());
 		assert.strictEqual(oParser.calculate().getValue(), "02 00");
 
-		oParser = new parserFormula("TEXT(123,\"aaa-aaaa\")", "A2", ws);
+		oParser = new parserFormula("TEXT(123,\"aaa-aaaa am/pm\")", "A2", ws);
 		assert.ok(oParser.parse());
-		assert.strictEqual(oParser.calculate().getValue(), "Wed-Wednesday");
+		assert.strictEqual(oParser.calculate().getValue(), "Wed-Wednesday AM");
 
 		AscCommon.setCurrentCultureInfo(culturelciddefault);
 
