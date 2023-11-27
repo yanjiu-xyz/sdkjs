@@ -1088,8 +1088,8 @@ var CPresentation = CPresentation || function(){};
                 
                 oField.onMouseUp();
 
+                let oDoc = oField.GetDocument();
                 if (oField.IsNeedCommit() && oDoc.IsNeedDoCalculate()) {
-                    let oDoc = oField.GetDocument();
                     oDoc.DoCalculateFields();
                     oDoc.CommitFields();
                 }
