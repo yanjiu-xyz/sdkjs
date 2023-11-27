@@ -1698,14 +1698,6 @@
             this.setBldLst(null);
         }
     };
-    CTiming.prototype.onAnimPaneChanged = function (oRect) {
-        var oSlide = this.parent;
-        if (!oSlide) {
-            return;
-        }
-        var oPresentation = this.getPresentation();
-        oPresentation.OnAnimPaneChanged(oSlide.num, oRect)
-    };
     CTiming.prototype.getTimingRootNode = function () {
         if (this.tnLst) {
             return this.tnLst.getTimeNodeByType(AscFormat.NODE_TYPE_TMROOT);
@@ -2290,34 +2282,6 @@
             return;
         }
         this.buildTree(aSeqs);
-    };
-    CTiming.prototype.drawAnimPane = function (oGraphics) {
-        if (!this.animPane) {
-            this.animPane = new CAnimPane(this);
-        }
-        this.animPane.recalculate();
-        this.animPane.draw(oGraphics);
-    };
-    CTiming.prototype.getAnimPane = function () {
-        if (!this.animPane) {
-            this.animPane = new CAnimPane(this);
-        }
-        return this.animPane;
-    };
-    CTiming.prototype.onAnimPaneResize = function () {
-        this.getAnimPane().onResize();
-    };
-    CTiming.prototype.onAnimPaneMouseDown = function (e, x, y) {
-        this.getAnimPane().onMouseDown(e, x, y);
-    };
-    CTiming.prototype.onAnimPaneMouseMove = function (e, x, y) {
-        this.getAnimPane().onMouseMove(e, x, y);
-    };
-    CTiming.prototype.onAnimPaneMouseUp = function (e, x, y) {
-        this.getAnimPane().onMouseUp(e, x, y);
-    };
-    CTiming.prototype.onAnimPaneMouseWheel = function (e, deltaY, X, Y) {
-        this.getAnimPane().onMouseWheel(e, deltaY, X, Y);
     };
     CTiming.prototype.getRootSequences = function () {
         var oTmRoot = this.getTimingRootNode();
@@ -8395,7 +8359,16 @@
     CTimeNodeContainer.prototype.getIndexInSequence = function () {
         var aHierarchy = this.getHierarchy();
         if (aHierarchy[1] && aHierarchy[2]) {
-            return aHierarchy[1].getChildNodeIdx(aHierarchy[2]);
+            let nResultIdx = aHierarchy[1].getChildNodeIdx(aHierarchy[2]);
+            let oFirstEffectContainer = aHierarchy[1].getChildNode(0);
+            if(oFirstEffectContainer) {
+                let aEffects = oFirstEffectContainer.getAllEffects();
+                let oFirstEffect = aEffects[0];
+                if(!oFirstEffect || !oFirstEffect.isClickEffect()) {
+                    nResultIdx -= 1;
+                }
+            }
+            return nResultIdx + 1;
         }
         return -1;
     };
@@ -8454,12 +8427,12 @@
     const ICON_TRIGGER = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTEiIGhlaWdodD0iMTQiIHZpZXdCb3g9IjAgMCAxMSAxNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cGF0aCBkPSJNMTEgMEg1TDAgN0g0TDAgMTRMMTEgNUg2TDExIDBaIiBmaWxsPSIjNDQ0NDQ0Ii8+PC9zdmc+";
 
     CTimeNodeContainer.prototype.internalDrawEffectLabel = function (oGraphics) {
-        var oRect = this.getLabelRect();
+        let oRect = this.getLabelRect();
         if (!oRect) {
             return;
         }
         AscFormat.ExecuteNoHistory(function () {
-            var dX, dY, dW, dH;
+            let dX, dY, dW, dH;
             dX = oRect.l;
             dY = oRect.t;
             dW = oRect.w;
@@ -8469,16 +8442,16 @@
                 oGraphics.rect(dX, dY, dW, dH);
                 return;
             }
-            var oContext = oGraphics.m_oContext;
-            var oFullTr = oGraphics.m_oFullTransform;
-            var oT = oGraphics.m_oCoordTransform;
+            let oContext = oGraphics.m_oContext;
+            let oFullTr = oGraphics.m_oFullTransform;
+            let oT = oGraphics.m_oCoordTransform;
             if (!oContext || !oFullTr || !oT) {
                 return;
             }
 
             oGraphics.SaveGrState();
 
-            var oMatrix = new AscCommon.CMatrix();
+            let oMatrix = new AscCommon.CMatrix();
             oMatrix.tx = dX;
             oMatrix.ty = dY;
             oGraphics.transform3(oMatrix);
@@ -8493,10 +8466,10 @@
             oGraphics._s();
 
 
-            var _x1 = (oFullTr.TransformPointX(0, 0)) >> 0;
-            var _y1 = (oFullTr.TransformPointY(0, 0)) >> 0;
-            var _x2 = (oFullTr.TransformPointX(dW, dH)) >> 0;
-            var _y2 = (oFullTr.TransformPointY(dW, dH)) >> 0;
+            let _x1 = (oFullTr.TransformPointX(0, 0)) >> 0;
+            let _y1 = (oFullTr.TransformPointY(0, 0)) >> 0;
+            let _x2 = (oFullTr.TransformPointX(dW, dH)) >> 0;
+            let _y2 = (oFullTr.TransformPointY(dW, dH)) >> 0;
 
             oContext.lineWidth = 1;
             oContext.rect(_x1 + 0.5, _y1 + 0.5, _x2 - _x1, _y2 - _y1);
@@ -8541,15 +8514,15 @@
                 if (oApi && oApi.ImageLoader) {
                     var oImage = oApi.ImageLoader.map_image_index[ICON_TRIGGER];
                     if (oImage) {
-                        var oNImage = oImage.Image;
-                        var nNativeW = oNImage.width / 2;
-                        var nNativeH = oNImage.height / 2;
-                        var nWidth = AscCommon.AscBrowser.convertToRetinaValue(nNativeW, true);
-                        var nHeight = AscCommon.AscBrowser.convertToRetinaValue(nNativeH, true);
-                        var dTX = dX + (dW - oObject.convertPixToMM(nNativeW)) / 2;
-                        var dTY = dY + (dH - oObject.convertPixToMM(nNativeH)) / 2;
-                        var nX = oT.TransformPointX(dTX, dTY);
-                        var nY = oT.TransformPointY(dTX, dTY);
+                        let oNImage = oImage.Image;
+                        let nNativeW = oNImage.width / 2;
+                        let nNativeH = oNImage.height / 2;
+                        let nWidth = AscCommon.AscBrowser.convertToRetinaValue(nNativeW, true);
+                        let nHeight = AscCommon.AscBrowser.convertToRetinaValue(nNativeH, true);
+                        let dTX = dX + (dW - oObject.convertPixToMM(nNativeW)) / 2;
+                        let dTY = dY + (dH - oObject.convertPixToMM(nNativeH)) / 2;
+                        let nX = oT.TransformPointX(dTX, dTY);
+                        let nY = oT.TransformPointY(dTX, dTY);
                         oContext.drawImage(oImage.Image, nX, nY, nWidth, nHeight);
                     }
                 }
@@ -13112,7 +13085,6 @@
     CControl.prototype.getFullTextTransform = function () {
         return this.transformText;
     };
-
     CControl.prototype.recalculate = function () {
         AscFormat.CShape.prototype.recalculate.call(this);
     };
@@ -13666,10 +13638,7 @@
     InitClass(CTopControl, CControlContainer, CONTROL_TYPE_UNKNOWN);
     CTopControl.prototype.onUpdateRect = function (oBounds) {
         if (this.drawer) {
-            var oSlide = this.getSlide();
-            if (oSlide) {
-                this.drawer.OnAnimPaneChanged(oSlide.num, oBounds);
-            }
+            this.drawer.OnAnimPaneChanged(oBounds);
         }
     };
     CTopControl.prototype.onUpdate = function () {
@@ -14212,7 +14181,7 @@
 
     function CAnimItem(oParentControl, oEffect) {
         CControlContainer.call(this, oParentControl);
-        this.indexLabel = this.addControl(new CLabel(this, "1.", 7.5));
+        this.indexLabel = this.addControl(new CLabel(this, oEffect.getIndexInSequence() + "", 7.5));
         this.eventTypeImage = this.addControl(new CImageControl(this));
         this.effectTypeImage = this.addControl(new CImageControl(this));
         this.effectLabel = this.addControl(new CLabel(this, oEffect.getObjectName(), 7.5));
@@ -14809,122 +14778,6 @@
     const ANIM_ITEM_HEIGHT = TIMELINE_HEIGHT;
     const EFFECT_BAR_HEIGHT = 2 * ANIM_ITEM_HEIGHT / 3;
     const SEQ_LABEL_HEIGHT = EFFECT_BAR_HEIGHT;
-
-
-    function CAnimPane(oTiming) {
-        CControlContainer.call(this, null);
-        this.timing = oTiming;
-        this.header = this.addControl(new CAnimPaneHeader(this));
-        this.toolbar = this.addControl(new CToolbar(this));
-        this.seqListContainer = this.addControl(new CSeqListContainer(this));
-        this.timelineContainer = this.addControl(new CTimelineContainer(this));
-
-        this.recalcInfo.recalculateHeader = true;
-        this.recalcInfo.recalculateToolbar = true;
-        this.recalcInfo.recalculateSeqListContainer = true;
-        this.recalcInfo.recalculateTimelineContainer = true;
-    }
-
-    InitClass(CAnimPane, CControlContainer, CONTROL_TYPE_UNKNOWN);
-    CAnimPane.prototype.getHeader = function () {
-        return this.getChildByType(CONTROL_TYPE_HEADER);
-    };
-    CAnimPane.prototype.getToolbar = function () {
-        return this.getChildByType(CONTROL_TYPE_TOOLBAR);
-    };
-    CAnimPane.prototype.getSeqListContainer = function () {
-        return this.getChildByType(CONTROL_TYPE_SEQ_LIST_CONTAINER);
-    };
-    CAnimPane.prototype.getTimelineContainer = function () {
-        return this.getChildByType(CONTROL_TYPE_TIMELINE_CONTAINER);
-    };
-    CAnimPane.prototype.onChanged = function (oRect) {
-        this.timing.onAnimPaneChanged(oRect);
-    };
-    CAnimPane.prototype.onResize = function () {
-        return;
-        this.setLayout(
-            0,
-            0,
-            this.getExternalControlWidth(),
-            this.getExternalControlHeight()
-        );
-        this.recalculate();
-        this.onUpdate();
-    };
-    CAnimPane.prototype.getExternalControl = function () {
-        return editor.WordControl.m_oAnimPaneApi;
-    };
-    CAnimPane.prototype.getExternalControlWidth = function () {
-        return this.getExternalControl().GetWidth();
-    };
-    CAnimPane.prototype.getExternalControlHeight = function () {
-        return this.getExternalControl().GetHeight();
-    };
-    CAnimPane.prototype.onChildUpdate = function (oBounds) {
-        this.getExternalControl().OnAnimPaneChanged(this.getSlideNum(), oBounds);
-    };
-    CAnimPane.prototype.onUpdate = function () {
-        this.getExternalControl().OnAnimPaneChanged(this.getSlideNum(), this.getBounds());
-    };
-    CAnimPane.prototype.getSlideNum = function (oBounds) {
-        return this.timing.parent.num;
-    };
-    CAnimPane.prototype.recalculateChildrenLayout = function () {
-        var dControlWidth = Math.max(0, this.getWidth() - PADDING_LEFT - PADDING_RIGHT);
-        this.header.setLayout(
-            PADDING_LEFT,
-            PADDING_TOP,
-            this.getWidth() - PADDING_LEFT - PADDING_RIGHT,
-            HEADER_HEIGHT
-        );
-        var dBottomPartY = this.header.getBottom() + VERTICAL_SPACE;
-        this.toolbar.setLayout(
-            PADDING_LEFT,
-            dBottomPartY,
-            TOOLBAR_WIDTH,
-            this.getHeight() - dBottomPartY - PADDING_BOTTOM
-        );
-
-        var dRightPartX = PADDING_LEFT + this.toolbar.getWidth() + VERTICAL_SPACE;
-        var dRightPartWidth = Math.max(0, this.getWidth() - dRightPartX - PADDING_RIGHT);
-        this.timelineContainer.setLayout(
-            dRightPartX,
-            this.getHeight() - PADDING_BOTTOM - TIMELINE_HEIGHT,
-            dRightPartWidth,
-            TIMELINE_HEIGHT
-        );
-        var dListTop = dBottomPartY;
-        var dListBottom = this.timelineContainer.getTop();
-        var dListLeft = dRightPartX;
-        this.seqListContainer.setLayout(
-            dListLeft,
-            dListTop,
-            dRightPartWidth,
-            Math.max(0, dListBottom - dListTop)
-        );
-    };
-    CAnimPane.prototype.recalculateHeader = function () {
-        this.header.recalculate();
-    };
-    CAnimPane.prototype.recalculateToolbar = function () {
-        this.toolbar.recalculate();
-    };
-    CAnimPane.prototype.recalculateSeqListContainer = function () {
-        this.seqListContainer.recalculate();
-    };
-    CAnimPane.prototype.recalculateTimelineContainer = function () {
-        this.timelineContainer.recalculate();
-    };
-
-    CAnimPane.prototype.recalculate = function () {
-        return;
-    };
-    //CAnimPane.prototype.draw = function(oGraphics) {
-    //    oGraphics.b_color1(255, 0, 0, 255);
-    //    oGraphics.rect(0, 0, 100, 100);
-    //    oGraphics.df();
-    //};
 
 
     window['AscFormat'] = window['AscFormat'] || {};

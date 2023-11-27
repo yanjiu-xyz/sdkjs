@@ -3401,20 +3401,7 @@ function CDrawingDocument()
         return bIsReturn;
 	};
 
-	// animation
-	this.OnAnimPaneChanged = function(nSlideNum, oRect)
-	{
-		if(!this.m_oWordControl || !this.m_oWordControl.m_oAnimPaneApi)
-		{
-			return;
-		}
-		if(nSlideNum !== this.SlideCurrent)
-		{
-			return;
-		}
 
-		this.m_oWordControl.m_oAnimPaneApi.OnAnimPaneChanged(nSlideNum, oRect);
-	};
 }
 
 function CThPage()
@@ -6228,23 +6215,12 @@ function CNotesDrawer(page)
 
 function CAnimPaneDrawTask()
 {
-	this.Slide = null;
+	this.bDraw = false;
 	this.Rect = null;
 }
-CAnimPaneDrawTask.prototype.Check = function(nSlide, oRect)
+CAnimPaneDrawTask.prototype.Check = function(oRect)
 {
-	if(this.Slide === null)
-	{
-		this.Slide = nSlide;
-		this.Rect = oRect;
-		return;
-	}
-	if(this.Slide !== nSlide)
-	{
-		this.Slide = nSlide;
-		this.Rect = null;
-		return;
-	}
+	this.bDraw = true;
 	if(this.Rect)
 	{
 		if(!oRect)
@@ -6259,11 +6235,11 @@ CAnimPaneDrawTask.prototype.Check = function(nSlide, oRect)
 };
 CAnimPaneDrawTask.prototype.NeedRedraw = function()
 {
-	return this.Slide !== null;
+	return this.bDraw;
 };
 CAnimPaneDrawTask.prototype.Clear = function()
 {
-	this.Slide = null;
+	this.bDraw = false;
 	this.Rect = null;
 };
 CAnimPaneDrawTask.prototype.GetRect = function()
@@ -6370,10 +6346,10 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 	{};
 	oThis.Init = function ()
 	{
-		var oHtmlElem = oThis.GetHtmlElement();
-		oHtmlElem.onmousedown = oThis.onMouseDown;
-		oHtmlElem.onmousemove = oThis.onMouseMove;
-		oHtmlElem.onmouseup =  oThis.onMouseUp;
+		//var oHtmlElem = oThis.GetHtmlElement();
+		//oHtmlElem.onmousedown = oThis.onMouseDown;
+		//oHtmlElem.onmousemove = oThis.onMouseMove;
+		//oHtmlElem.onmouseup =  oThis.onMouseUp;
 		oThis.CheckSubscribeMouseWheel();
 	};
 	oThis.GetCurrentSlideNumber = function ()
@@ -6611,13 +6587,9 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 		oControl.onResize();
 		oThis.CheckScroll();
 	};
-	oThis.OnAnimPaneChanged = function (nSlideNum, oRect)
+	oThis.OnAnimPaneChanged = function (oRect)
 	{
-		if(oThis.GetCurrentSlideNumber() !== nSlideNum)
-		{
-			return;
-		}
-		oThis.DrawTask.Check(nSlideNum, oRect);
+		oThis.DrawTask.Check(oRect);
 	};
 
 	oThis.GetWidth = function()
@@ -6775,15 +6747,29 @@ function CAnimationPaneDrawer(page, htmlElement)
 		oThis.header.Init();
 		oThis.list.Init();
 		oThis.timeline.Init();
+
+		var oHtmlElem = oThis.GetHtmlElement();
+		oHtmlElem.onmousedown = oThis.onMouseDown;
+		oHtmlElem.onmousemove = oThis.onMouseMove;
+		oHtmlElem.onmouseup =  oThis.onMouseUp;
 	};
 	oThis.onMouseDown = function (e)
 	{
+		oThis.header.onMouseDown(e);
+		oThis.list.onMouseDown(e);
+		oThis.timeline.onMouseDown(e);
 	};
 	oThis.onMouseMove = function (e)
 	{
+		oThis.header.onMouseMove(e);
+		oThis.list.onMouseMove(e);
+		oThis.timeline.onMouseMove(e);
 	};
 	oThis.onMouseUp = function (e)
 	{
+		oThis.header.onMouseUp(e);
+		oThis.list.onMouseUp(e);
+		oThis.timeline.onMouseUp(e);
 	};
 	oThis.onMouseWhell = function(e)
 	{
@@ -6811,6 +6797,7 @@ function CAnimationPaneDrawer(page, htmlElement)
 	{
 		return oThis.list.onMouseWhell(e);
 	};
+
 }
 CAnimationPaneDrawer.prototype = Object.create(CPaneDrawerBase);
 

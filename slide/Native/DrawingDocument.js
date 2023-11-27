@@ -1776,10 +1776,6 @@ CDrawingDocument.prototype.OnKeyboardEvent = function(_params){
 };
 
 
-CDrawingDocument.prototype.OnAnimPaneChanged = function(nSlideNum, oRect)
-{
-};
-
 function DrawBackground(graphics, unifill, w, h)
 {
     // первым делом рисуем белый рект!
