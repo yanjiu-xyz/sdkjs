@@ -348,6 +348,13 @@
 		return false;
 	};
 	/**
+	 * @returns {boolean}
+	 */
+	CRunElementBase.prototype.isRtl = function()
+	{
+		return false;
+	};
+	/**
 	 * @return {number}
 	 */
 	CRunElementBase.prototype.GetCombWidth = function()

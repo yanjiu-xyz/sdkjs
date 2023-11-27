@@ -81,6 +81,10 @@
 		// for Math
 		this.mathTextInfo = null;
 		this.paraMath     = null;
+		
+		this.rtl = false;
+		this.bidiBuffer = [];
+		this.bidiWidth  = 0;
 	}
 	ParagraphContentDrawState.prototype.init = function(paragraph, graphics)
 	{
@@ -106,6 +110,19 @@
 		
 		this.X = X;
 		this.Y = Y;
+	};
+	ParagraphContentDrawState.prototype.beginRange = function(page, line, range, x, y)
+	{
+		this.Page  = page;
+		this.Line  = line;
+		this.Range = range;
+		
+		this.X = x;
+		this.Y = y;
+	};
+	ParagraphContentDrawState.prototype.endRange = function()
+	{
+		this.flushBidiText();
 	};
 	ParagraphContentDrawState.prototype.Set_LineMetrics = function(BaseLine, Top, Bottom)
 	{
@@ -200,6 +217,9 @@
 			&& para_FieldChar !== element.Type)
 			return;
 		
+		if (element.isRtl() === this.rtl)
+			this.flushBidiText();
+		
 		switch (element.Type)
 		{
 			case para_Text:
@@ -264,8 +284,16 @@
 	 */
 	ParagraphContentDrawState.prototype.handleText = function(text)
 	{
-		text.Draw(this.X, this.calcY - this.yOffset, this.Graphics, this, this.textPr);
-		this.X += text.GetWidthVisible();
+		if (text.isRtl() !== this.rtl)
+		{
+			this.bidiBuffer.push(text);
+			this.bidiWidth += text.GetWidthVisible();
+		}
+		else
+		{
+			text.Draw(this.X, this.calcY - this.yOffset, this.Graphics, this, this.textPr);
+			this.X += text.GetWidthVisible();
+		}
 	};
 	/**
 	 * @param drawing {ParaDrawing}
@@ -370,6 +398,20 @@
 	ParagraphContentDrawState.prototype.isSlideEditor = function()
 	{
 		return this.Paragraph && !this.Paragraph.bFromDocument;
+	};
+	ParagraphContentDrawState.prototype.flushBidiText = function()
+	{
+		if (!this.bidiBuffer.length)
+			return;
+		
+		for (let index = this.bidiBuffer.length - 1; index >= 0; --index)
+		{
+			let item = this.bidiBuffer[index];
+			item.Draw(this.X, this.calcY - this.yOffset, this.Graphics, this, this.textPr);
+			this.X += item.GetWidthVisible();
+		}
+		
+		this.bidiBuffer.length = 0;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.ParagraphContentDrawState = ParagraphContentDrawState;

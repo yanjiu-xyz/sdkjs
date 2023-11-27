@@ -53,6 +53,9 @@
 	const FLAGS_GAPS                        = 0x00002000; // 13 бит
 	const FLAGS_HYPHEN_AFTER                = 0x00004000; // 14
 	const FLAGS_TEMPORARY_HYPHEN_AFTER      = 0x00008000; // 15
+	
+	// Temporary
+	const FLAGS_RTL = 0x02;
 
 	// 16-31 биты зарезервированы под FontSize
 
@@ -177,8 +180,13 @@
 				nFS = FLAGS_HANSI;
 			else if (nFontSlot & AscWord.fontslot_CS)
 				nFS = FLAGS_CS;
-
+			
 			this.Flags = (this.Flags & 0xFFFFFFFC) | nFS;
+			
+			if (0x0400 <= this.Value && this.Value <= 0x04FF)
+				this.Flags |= FLAGS_RTL;
+			else
+				this.Flags &= ~FLAGS_RTL;
 			
 			if (oTextPr.Caps || oTextPr.SmallCaps)
 			{
@@ -280,6 +288,10 @@
 	CRunText.prototype.GetLigatureWidth = function()
 	{
 		return (AscFonts.GetGraphemeWidth(this.Flags & FLAGS_TEMPORARY ? this.TempGrapheme : this.Grapheme) * (((this.Flags >> 16) & 0xFFFF) / 64));
+	};
+	CRunText.prototype.isRtl = function()
+	{
+		return !!(this.Flags & FLAGS_RTL);
 	};
 	CRunText.prototype.SetWidth = function(nWidth)
 	{

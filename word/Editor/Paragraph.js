@@ -3151,6 +3151,8 @@ Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, drawState
 
 				Item.Draw_Elements(PDSE);
 			}
+			
+			PDSE.endRange();
 		}
 
 		if (pGraphics.End_Command)
