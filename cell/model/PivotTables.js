@@ -7587,6 +7587,31 @@ PivotFormatsManager.prototype.setDefaults = function() {
 	return;
 };
 /**
+ * @param {Range} range 
+ * @param {Num} num 
+ */
+PivotFormatsManager.prototype.setNum = function(range, num) {
+	const dxf = new AscCommonExcel.CellXfs()
+	dxf.setNum(num);
+	return;
+};
+/**
+ * @param {Range} range 
+ * @param {CellXfs} num 
+ */
+PivotFormatsManager.prototype.set = function(xfs, range) {
+	this.formatsCollection = [];
+	return;
+};
+/**
+ * @param {Range} range 
+ * @param {CellXfs} num 
+ */
+PivotFormatsManager.prototype.removeOld = function(xfs, range) {
+	this.formatsCollection = [];
+	return;
+};
+/**
  * @param {number} index 
  * @param {boolean} addToHistory 
  */
@@ -8062,7 +8087,6 @@ PivotFormatsManager.prototype.get = function(query) {
 		const dxf = format.dxf;
 		/**@type {CellXfs} */
 		if (result.num === null && dxf && dxf.num) {
-			result.num = dxf.num;
 			result.setNum(dxf.getNum());
 		}
 		if (result.font === null && dxf && dxf.font) {
