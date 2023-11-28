@@ -8081,7 +8081,7 @@ PivotFormatsManager.prototype.get = function(query) {
 			result.setAlign(dxf.getAlign());
 		}
 	}
-	return result;
+	return suitableFormatsCollectionItems.length === 0 ? null : result;
 };
 /**
  * @param {spreadsheet_api} api
