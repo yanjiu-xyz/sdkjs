@@ -13649,6 +13649,12 @@
                         }
                         break;
                     case "format":
+						const ws = range.worksheet;
+						const activeCell = ws.selectionRange.activeCell;
+    					const pivotTable = ws.getPivotTable(activeCell.col, activeCell.row);
+						if (pivotTable) {
+							pivotTable.formatsManager.setNum(range, val);
+						}
                         range.setNumFormat(val);
                         canChangeColWidth = c_oAscCanChangeColWidth.numbers;
                         break;

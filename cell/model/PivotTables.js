@@ -7588,28 +7588,21 @@ PivotFormatsManager.prototype.setDefaults = function() {
 };
 /**
  * @param {Range} range 
- * @param {Num} num 
+ * @param {string} numformat 
  */
-PivotFormatsManager.prototype.setNum = function(range, num) {
-	const dxf = new AscCommonExcel.CellXfs()
-	dxf.setNum(num);
-	return;
-};
-/**
- * @param {Range} range 
- * @param {CellXfs} num 
- */
-PivotFormatsManager.prototype.set = function(xfs, range) {
-	this.formatsCollection = [];
-	return;
-};
-/**
- * @param {Range} range 
- * @param {CellXfs} num 
- */
-PivotFormatsManager.prototype.removeOld = function(xfs, range) {
-	this.formatsCollection = [];
-	return;
+PivotFormatsManager.prototype.setNum = function(range, numformat) {
+	const pivotRange = this.pivot.getRange();
+	const location = this.pivot.location;
+	const dataRange = new Asc.Range(
+		pivotRange.c1 + location.firstDataCol,
+		pivotRange.r1 + location.firstDataRow,
+		pivotRange.c2,
+		pivotRange.r2);
+	if (dataRange.isEqual(range.bbox)) {
+		this.pivot.asc_getDataFields().forEach(function(dataField) {
+			dataField.setNumFormat(numformat);
+		})
+	}
 };
 /**
  * @param {number} index 
