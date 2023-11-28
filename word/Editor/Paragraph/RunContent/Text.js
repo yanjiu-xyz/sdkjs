@@ -183,7 +183,7 @@
 			
 			this.Flags = (this.Flags & 0xFFFFFFFC) | nFS;
 			
-			if (0x0400 <= this.Value && this.Value <= 0x04FF)
+			if ((0x0400 <= this.Value && this.Value <= 0x04FF) || (0x0627 <= this.Value && this.Value <= 0x0649))
 				this.Flags |= FLAGS_RTL;
 			else
 				this.Flags &= ~FLAGS_RTL;

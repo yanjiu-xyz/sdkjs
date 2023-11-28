@@ -154,17 +154,33 @@
 	};
 	CParagraphTextShaper.prototype.FlushGrapheme = function(nGrapheme, nWidth, nCodePointsCount, isLigature)
 	{
-		if (this.BufferIndex + nCodePointsCount - 1 >= this.Buffer.length)
-			return;
-
+		let curIndex = 0;
+		
+		if (this.IsRtlDirection())
+		{
+			if (this.BufferIndex - nCodePointsCount < 0)
+				return;
+			
+			this.BufferIndex -= nCodePointsCount;
+			curIndex = this.BufferIndex;
+		}
+		else
+		{
+			if (this.BufferIndex + nCodePointsCount - 1 >= this.Buffer.length)
+				return;
+			
+			curIndex = this.BufferIndex;
+			this.BufferIndex += nCodePointsCount;
+		}
+		
 		let _isLigature = isLigature && nCodePointsCount > 1;
-
+		
 		let _nWidth = (nWidth + (this.Spacing / this.FontSize)) / nCodePointsCount;
-		this.private_HandleItem(this.Buffer[this.BufferIndex++], nGrapheme, _nWidth, this.FontSize, this.FontSlot, _isLigature ? CODEPOINT_TYPE.LIGATURE : CODEPOINT_TYPE.BASE);
-
+		this.private_HandleItem(this.Buffer[curIndex++], nGrapheme, _nWidth, this.FontSize, this.FontSlot, _isLigature ? CODEPOINT_TYPE.LIGATURE : CODEPOINT_TYPE.BASE);
+		
 		for (let nIndex = 1; nIndex < nCodePointsCount; ++nIndex)
 		{
-			this.private_HandleItem(this.Buffer[this.BufferIndex++], AscFonts.NO_GRAPHEME, _nWidth, this.FontSize, AscWord.fontslot_ASCII, _isLigature ? CODEPOINT_TYPE.LIGATURE_CONTINUE : CODEPOINT_TYPE.COMBINING_MARK);
+			this.private_HandleItem(this.Buffer[curIndex++], AscFonts.NO_GRAPHEME, _nWidth, this.FontSize, AscWord.fontslot_ASCII, _isLigature ? CODEPOINT_TYPE.LIGATURE_CONTINUE : CODEPOINT_TYPE.COMBINING_MARK);
 		}
 	};
 	CParagraphTextShaper.prototype.private_CheckRun = function(oRun)
