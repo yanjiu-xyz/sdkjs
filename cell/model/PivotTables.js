@@ -7592,7 +7592,7 @@ PivotFormatsManager.prototype.setDefaults = function() {
  */
 PivotFormatsManager.prototype.setNum = function(range, numformat) {
 	History.Create_NewPoint();
-	History.StartTransaction()
+	History.StartTransaction();
 	const pivot = this.pivot;
 	const pivotRange = pivot.getRange();
 	const location = pivot.location;
@@ -7604,9 +7604,9 @@ PivotFormatsManager.prototype.setNum = function(range, numformat) {
 	if (dataRange.isEqual(range.bbox)) {
 		pivot.asc_getDataFields().forEach(function(dataField, index) {
 			dataField.setNumFormat(numformat, pivot, index, true);
-		})
+		});
 	}
-	History.EndTransaction()
+	History.EndTransaction();
 };
 /**
  * @param {number} index 
