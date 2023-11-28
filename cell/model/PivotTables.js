@@ -8055,9 +8055,8 @@ PivotFormatsManager.prototype.getSuitableFormatsCollectionItems = function(query
  */
 PivotFormatsManager.prototype.get = function(query) {
 	const suitableFormatsCollectionItems = this.getSuitableFormatsCollectionItems(query);
-	let result = null;
+	const result = new AscCommonExcel.CellXfs();;
 	for (let i = 0; i < suitableFormatsCollectionItems.length; i += 1) {
-		result = new AscCommonExcel.CellXfs();
 		const formatsCollectionItem = suitableFormatsCollectionItems[i];
 		const format = formatsCollectionItem.format;
 		const dxf = format.dxf;
@@ -8082,7 +8081,7 @@ PivotFormatsManager.prototype.get = function(query) {
 			result.setAlign(dxf.getAlign());
 		}
 	}
-	return result;
+	return suitableFormatsCollectionItems.length === 0 ? null : result;
 };
 /**
  * @param {spreadsheet_api} api
