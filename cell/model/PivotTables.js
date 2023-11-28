@@ -7591,18 +7591,22 @@ PivotFormatsManager.prototype.setDefaults = function() {
  * @param {string} numformat 
  */
 PivotFormatsManager.prototype.setNum = function(range, numformat) {
-	const pivotRange = this.pivot.getRange();
-	const location = this.pivot.location;
+	History.Create_NewPoint();
+	History.StartTransaction()
+	const pivot = this.pivot;
+	const pivotRange = pivot.getRange();
+	const location = pivot.location;
 	const dataRange = new Asc.Range(
 		pivotRange.c1 + location.firstDataCol,
 		pivotRange.r1 + location.firstDataRow,
 		pivotRange.c2,
 		pivotRange.r2);
 	if (dataRange.isEqual(range.bbox)) {
-		this.pivot.asc_getDataFields().forEach(function(dataField) {
-			dataField.setNumFormat(numformat);
+		pivot.asc_getDataFields().forEach(function(dataField, index) {
+			dataField.setNumFormat(numformat, pivot, index, true);
 		})
 	}
+	History.EndTransaction()
 };
 /**
  * @param {number} index 
