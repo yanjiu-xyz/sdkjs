@@ -8062,7 +8062,6 @@ PivotFormatsManager.prototype.get = function(query) {
 		const dxf = format.dxf;
 		/**@type {CellXfs} */
 		if (result.num === null && dxf && dxf.num) {
-			result.num = dxf.num;
 			result.setNum(dxf.getNum());
 		}
 		if (result.font === null && dxf && dxf.font) {
