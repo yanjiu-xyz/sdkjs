@@ -121,10 +121,11 @@
 		this.Grapheme = AscFonts.NO_GRAPHEME;
 
 		this.SetSpaceAfter(this.private_IsSpaceAfter());
-
+		this.updateRtlFlag();
+		
 		if (AscFonts.IsCheckSymbols)
 			AscFonts.FontPickerByCharacter.getFontBySymbol(this.Value);
-
+		
 	}
 	CRunText.prototype = Object.create(AscWord.CRunElementBase.prototype);
 	CRunText.prototype.constructor = CRunText;
@@ -134,9 +135,11 @@
 	{
 		this.Value = CharCode;
 		this.SetSpaceAfter(this.private_IsSpaceAfter());
-
+		this.updateRtlFlag();
+		
 		if (AscFonts.IsCheckSymbols)
 			AscFonts.FontPickerByCharacter.getFontBySymbol(this.Value);
+		
 	};
 	CRunText.prototype.GetCharCode = function()
 	{
@@ -173,20 +176,15 @@
 
 		if (undefined !== nFontSlot)
 		{
-			let nFS = FLAGS_ASCII;
-			if (nFontSlot & AscWord.fontslot_EastAsia)
-				nFS = FLAGS_EASTASIA;
-			else if (nFontSlot & AscWord.fontslot_HAnsi)
-				nFS = FLAGS_HANSI;
-			else if (nFontSlot & AscWord.fontslot_CS)
-				nFS = FLAGS_CS;
-			
-			this.Flags = (this.Flags & 0xFFFFFFFC) | nFS;
-			
-			if ((0x0400 <= this.Value && this.Value <= 0x04FF) || (0x0627 <= this.Value && this.Value <= 0x0649))
-				this.Flags |= FLAGS_RTL;
-			else
-				this.Flags &= ~FLAGS_RTL;
+			// let nFS = FLAGS_ASCII;
+			// if (nFontSlot & AscWord.fontslot_EastAsia)
+			// 	nFS = FLAGS_EASTASIA;
+			// else if (nFontSlot & AscWord.fontslot_HAnsi)
+			// 	nFS = FLAGS_HANSI;
+			// else if (nFontSlot & AscWord.fontslot_CS)
+			// 	nFS = FLAGS_CS;
+			//
+			// this.Flags = (this.Flags & 0xFFFFFFFC) | nFS;
 			
 			if (oTextPr.Caps || oTextPr.SmallCaps)
 			{
@@ -519,6 +517,16 @@
 			this.Flags |= FLAGS_SPACEAFTER;
 		else
 			this.Flags &= FLAGS_NON_SPACEAFTER;
+	};
+	CRunText.prototype.updateRtlFlag = function()
+	{
+		let isRtl = AscFonts.isRtlScript(this.Value);
+		
+		// TODO: mark these letters as rtl script for testing purposes
+		if ((0x0400 <= this.Value && this.Value <= 0x04FF) || isRtl)
+			this.Flags |= FLAGS_RTL;
+		else
+			this.Flags &= ~FLAGS_RTL;
 	};
 	CRunText.prototype.IsNoBreakHyphen = function()
 	{

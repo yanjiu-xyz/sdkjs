@@ -263,6 +263,7 @@
 
 		return script;
 	};
+	
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CODEPOINT_TYPE      = CODEPOINT_TYPE;

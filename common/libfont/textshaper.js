@@ -274,11 +274,17 @@
 
 		Flush(true);
 	};
+	
+	function isRtlScript(unicode)
+	{
+		return AscFonts.hb_get_script_horizontal_direction(AscFonts.hb_get_script_by_unicode(unicode)) === AscFonts.HB_DIRECTION.HB_DIRECTION_RTL;
+	}
 
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscFonts'] = window['AscFonts'] || {};
 	window['AscFonts'].CTextFontInfo        = CTextFontInfo;
 	window['AscFonts'].CTextShaper          = CTextShaper;
 	window['AscFonts'].DEFAULT_TEXTFONTINFO = DEFAULT_TEXTFONTINFO;
+	window['AscFonts'].isRtlScript          = isRtlScript;
 
 })(window);
