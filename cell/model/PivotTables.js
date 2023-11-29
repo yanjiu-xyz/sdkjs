@@ -7587,26 +7587,24 @@ PivotFormatsManager.prototype.setDefaults = function() {
 	return;
 };
 /**
- * @param {Range} range 
+ * @param {Asc.Range} bbox
  * @param {string} numformat 
  */
-PivotFormatsManager.prototype.setNum = function(range, numformat) {
-	History.Create_NewPoint();
-	History.StartTransaction();
+PivotFormatsManager.prototype.setNum = function(bbox, numformat) {
 	const pivot = this.pivot;
 	const pivotRange = pivot.getRange();
 	const location = pivot.location;
+	const dataFields = pivot.asc_getDataFields();
 	const dataRange = new Asc.Range(
 		pivotRange.c1 + location.firstDataCol,
 		pivotRange.r1 + location.firstDataRow,
 		pivotRange.c2,
 		pivotRange.r2);
-	if (dataRange.isEqual(range.bbox)) {
-		pivot.asc_getDataFields().forEach(function(dataField, index) {
+	if (dataFields && bbox.containsRange(dataRange)) {
+		dataFields.forEach(function(dataField, index) {
 			dataField.setNumFormat(numformat, pivot, index, true);
 		});
 	}
-	History.EndTransaction();
 };
 /**
  * @param {number} index 
