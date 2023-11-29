@@ -1840,8 +1840,9 @@
 	const SEQ_LABEL_HEIGHT = EFFECT_BAR_HEIGHT;
 
 	window['AscCommon'] = window['AscCommon'] || {};
-    window['AscCommon'].CAnimPaneHeader = CAnimPaneHeader;
-    window['AscCommon'].CSeqListContainer = CSeqListContainer;
-    window['AscCommon'].CTimelineContainer = CTimelineContainer;
+	window['AscCommon'].CAnimPaneHeader = CAnimPaneHeader;
+	window['AscCommon'].CSeqListContainer = CSeqListContainer;
+	window['AscCommon'].CTimelineContainer = CTimelineContainer;
 
 })(window);
+
