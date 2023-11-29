@@ -1501,7 +1501,11 @@
 		// Event handlers for button of CAnimPaneHeader ---
 
 		function log(targetName) {
-			return function() {console.log('[Mouse Down]:', targetName)}
+			return function (e, x, y) {
+				if (this.hit(x, y)) {
+					console.log('[Mouse Down]:', targetName)
+				}
+			}
 		}
 
 		// --- end of event handlers for buttons of CAnimPaneHeader
