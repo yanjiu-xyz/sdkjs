@@ -16175,6 +16175,235 @@ function RangeDataManagerElem(bbox, data)
 	};
 
 
+	function CTimeline() {
+		this.name = null;
+		this.cache = null;
+		this.caption = null;
+
+		this.scrollPosition = null;
+		this.uid = null;
+
+		this.level = null;
+		this.selectionLevel = null;
+		this.showHeader = null;
+
+		this.showHorizontalScrollbar = null;
+		this.showSelectionLabel = null;
+		this.showTimeLevel = null;
+		this.style = null;
+
+		return this;
+	}
+	CTimeline.prototype.clone = function () {
+		var res = new CTimeline();
+
+		res.name = this.name;
+		res.cache = this.cache;
+		res.caption = this.caption;
+
+		res.scrollPosition = this.scrollPosition;
+		res.uid = this.uid;
+
+		res.level = this.level;
+		res.selectionLevel = this.selectionLevel;
+		res.showHeader = this.showHeader;
+
+		res.showHorizontalScrollbar = this.showHorizontalScrollbar;
+		res.showSelectionLabel = this.showSelectionLabel;
+		res.showTimeLevel = this.showTimeLevel;
+		res.style = this.style;
+
+		return res;
+	};
+
+	function CTimelineCacheDefinition() {
+		this.name = null;
+		this.sourceName = null;
+		this.uid = null;
+
+		this.pivotTables = null;
+		this.state = null;
+		this.pivotFilter = null;
+
+		return this;
+	}
+	CTimelineCacheDefinition.prototype.clone = function () {
+		var res = new CTimelineCacheDefinition();
+
+		res.name = this.name;
+		res.sourceName = this.sourceName;
+		res.uid = this.uid;
+
+		res.pivotTables = this.pivotTables;
+		res.state = this.state;
+		res.pivotFilter = this.pivotFilter;
+
+		return res;
+	};
+	CTimelineCacheDefinition.prototype.initPostOpen = function (tableIds, sheetIds) {
+		if (this.pivotTables) {
+			this.pivotTables.forEach(function(elem){
+				elem.initPostOpen(tableIds, sheetIds);
+			});
+		}
+	};
+
+	CTimelineCacheDefinition.prototype.isCachePivotTable = function (sheetId, pivotName) {
+		if (this.pivotTables) {
+			for (let i = 0; i < this.pivotTables.length; i++) {
+				if (this.pivotTables[i].isCachePivotTable(sheetId, pivotName)) {
+					return true;
+				}
+			}
+		}
+		return false;
+	};
+
+
+	function CTimelineCachePivotTable() {
+		this.name = null;
+		this.tabId = null;
+	}
+	CTimelineCachePivotTable.prototype.clone = function () {
+		var res = new CTimelineCachePivotTable();
+
+		res.name = this.name;
+		res.tabId = this.tabId;
+
+		return res;
+	};
+	CTimelineCachePivotTable.prototype.initPostOpen = function (tableIds, sheetIds) {
+		var ws = null;
+		if (null != this.tabId) {
+			ws = sheetIds[this.tabId];
+			if (ws) {
+				this.tabId = ws.getId();
+			}
+		}
+		return ws;
+	};
+	CTimelineCachePivotTable.prototype.isCachePivotTable = function (sheetId, pivotName) {
+		return this.tabId === sheetId && this.name === pivotName;
+	};
+
+
+	function CTimelineState() {
+		this.name = null;
+		this.filterState = null;
+
+		this.pivotCacheId = null;
+		this.minimalRefreshVersion = null;
+
+		this.lastRefreshVersion = null;
+		this.filterType = null;
+
+		this.selection = null;
+		this.bounds = null;
+	}
+	CTimelineState.prototype.clone = function () {
+		var res = new CTimelineState();
+
+		res.name = this.name;
+		res.filterState = this.filterState;
+
+		res.pivotCacheId = this.pivotCacheId;
+		res.minimalRefreshVersion = this.minimalRefreshVersion;
+
+		res.lastRefreshVersion = this.lastRefreshVersion;
+		res.filterType = this.filterType;
+
+		res.selection = this.selection && this.selection.clone();
+		res.bounds = this.bounds && this.bounds.clone();
+
+		return res;
+	};
+
+	function CTimelineRange() {
+		this.startDate = null;
+		this.endDate = null;
+	}
+	CTimelineRange.prototype.clone = function () {
+		var res = new CTimelineRange();
+
+		res.startDate = this.startDate;
+		res.endDate = this.endDate;
+
+		return res;
+	};
+
+	function CTimelineStyles() {
+		this.defaultTimelineStyle = null;
+		this.timelineStyles = null;
+	}
+	CTimelineStyles.prototype.clone = function () {
+		var res = new CTimelineRange();
+
+		res.defaultTimelineStyle = this.defaultTimelineStyle;
+		if (this.timelineStyles) {
+			res.timelineStyles = [];
+			for (let i = 0; i < this.timelineStyles.length; i++) {
+				res.timelineStyles.push(this.timelineStyles[i].clone());
+			}
+		}
+
+		return res;
+	};
+
+	function CTimelineStyle() {
+		this.name = null;
+		this.timelineStyleElements = null;
+	}
+	CTimelineStyle.prototype.clone = function () {
+		var res = new CTimelineRange();
+
+		res.name = this.name;
+		if (this.timelineStyleElements) {
+			res.timelineStyleElements = [];
+			for (let i = 0; i < this.timelineStyleElements.length; i++) {
+				res.timelineStyleElements.push(this.timelineStyleElements[i].clone());
+			}
+		}
+
+		return res;
+	};
+
+	function CTimelineStyleElement() {
+		this.type = null;
+		this.dxfId = null;
+	}
+	CTimelineStyleElement.prototype.clone = function () {
+		var res = new CTimelineRange();
+
+		res.type = this.type;
+		res.dxfId = this.dxfId;
+
+		return res;
+	};
+
+	function CTimelinePivotFilter() {
+		this.name = null;
+		this.description = null;
+		this.useWholeDay = null;
+		this.id = null;
+		this.fld = null;
+
+		this.autoFilter = null;
+	}
+	CTimelinePivotFilter.prototype.clone = function () {
+		var res = new CTimelinePivotFilter();
+
+		res.name = this.name;
+		res.description = this.description;
+		res.useWholeDay = this.name;
+		res.id = this.description;
+		res.fld = this.name;
+
+		res.autoFilter = this.autoFilter && this.autoFilter.clone();
+
+		return res;
+	};
+
+
 	//----------------------------------------------------------export----------------------------------------------------
 	var prot;
 	window['Asc'] = window['Asc'] || {};
@@ -16668,6 +16897,18 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_setStopValue"] = prot.asc_setStopValue;
 	prot["asc_setContextMenuAllowedProps"] = prot.asc_setContextMenuAllowedProps;
 	prot["asc_setContextMenuChosenProperty"] = prot.asc_setContextMenuChosenProperty;
+
+
+	window["AscCommonExcel"].CTimeline = CTimeline;
+	window["AscCommonExcel"].CTimelineCacheDefinition = CTimelineCacheDefinition;
+	window["AscCommonExcel"].CTimelineCachePivotTable = CTimelineCachePivotTable;
+	window["AscCommonExcel"].CTimelineState = CTimelineState;
+	window["AscCommonExcel"].CTimelineRange = CTimelineRange;
+	window["AscCommonExcel"].CTimelineStyles = CTimelineStyles;
+	window["AscCommonExcel"].CTimelineStyle = CTimelineStyle;
+	window["AscCommonExcel"].CTimelineStyleElement = CTimelineStyleElement;
+	window["AscCommonExcel"].CTimelinePivotFilter = CTimelinePivotFilter;
+
 
 
 })(window);
