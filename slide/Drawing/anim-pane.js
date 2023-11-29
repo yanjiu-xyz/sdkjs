@@ -1877,6 +1877,7 @@
 	const ANIM_ITEM_HEIGHT = TIMELINE_HEIGHT;
 	const EFFECT_BAR_HEIGHT = 2 * ANIM_ITEM_HEIGHT / 3;
 	const SEQ_LABEL_HEIGHT = EFFECT_BAR_HEIGHT;
+	
 
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].CAnimPaneHeader = CAnimPaneHeader;
