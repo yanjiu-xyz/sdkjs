@@ -9812,6 +9812,15 @@
 		}
 		return res;
 	};
+	Worksheet.prototype.getPivotTablesIntersectingRange = function (bbox) {
+		var res = [];
+		for (var i = 0; i < this.pivotTables.length; ++i) {
+			if (this.pivotTables[i].intersection(bbox)) {
+				res.push(this.pivotTables[i]);
+			}
+		}
+		return res;
+	};
 	Worksheet.prototype.getPivotTableByName = function (name) {
 		var res = null;
 		for (var i = 0; i < this.pivotTables.length; ++i) {

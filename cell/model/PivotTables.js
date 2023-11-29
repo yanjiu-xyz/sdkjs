@@ -7587,6 +7587,26 @@ PivotFormatsManager.prototype.setDefaults = function() {
 	return;
 };
 /**
+ * @param {Asc.Range} bbox
+ * @param {string} numformat 
+ */
+PivotFormatsManager.prototype.setNum = function(bbox, numformat) {
+	const pivot = this.pivot;
+	const pivotRange = pivot.getRange();
+	const location = pivot.location;
+	const dataFields = pivot.asc_getDataFields();
+	const dataRange = new Asc.Range(
+		pivotRange.c1 + location.firstDataCol,
+		pivotRange.r1 + location.firstDataRow,
+		pivotRange.c2,
+		pivotRange.r2);
+	if (dataFields && bbox.containsRange(dataRange)) {
+		dataFields.forEach(function(dataField, index) {
+			dataField.setNumFormat(numformat, pivot, index, true);
+		});
+	}
+};
+/**
  * @param {number} index 
  * @param {boolean} addToHistory 
  */
@@ -8055,15 +8075,13 @@ PivotFormatsManager.prototype.getSuitableFormatsCollectionItems = function(query
  */
 PivotFormatsManager.prototype.get = function(query) {
 	const suitableFormatsCollectionItems = this.getSuitableFormatsCollectionItems(query);
-	let result = null;
+	const result = new AscCommonExcel.CellXfs();;
 	for (let i = 0; i < suitableFormatsCollectionItems.length; i += 1) {
-		result = new AscCommonExcel.CellXfs();
 		const formatsCollectionItem = suitableFormatsCollectionItems[i];
 		const format = formatsCollectionItem.format;
 		const dxf = format.dxf;
 		/**@type {CellXfs} */
 		if (result.num === null && dxf && dxf.num) {
-			result.num = dxf.num;
 			result.setNum(dxf.getNum());
 		}
 		if (result.font === null && dxf && dxf.font) {
@@ -8082,7 +8100,7 @@ PivotFormatsManager.prototype.get = function(query) {
 			result.setAlign(dxf.getAlign());
 		}
 	}
-	return result;
+	return suitableFormatsCollectionItems.length === 0 ? null : result;
 };
 /**
  * @param {spreadsheet_api} api
