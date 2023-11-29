@@ -1476,20 +1476,44 @@
 	var PLAY_BUTTON_LEFT = 145 * AscCommon.g_dKoef_pix_to_mm;
 	var PLAY_BUTTON_TOP = 12 * AscCommon.g_dKoef_pix_to_mm;
 
+	var MOVE_UP_BUTTON_WIDTH = 24 * AscCommon.g_dKoef_pix_to_mm;
+	var MOVE_UP_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
+	var MOVE_UP_BUTTON_LEFT = 241 * AscCommon.g_dKoef_pix_to_mm;
+	var MOVE_UP_BUTTON_TOP = 12 * AscCommon.g_dKoef_pix_to_mm;
+
+	var MOVE_DOWN_BUTTON_WIDTH = 24 * AscCommon.g_dKoef_pix_to_mm;
+	var MOVE_DOWN_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
+	var MOVE_DOWN_BUTTON_LEFT = MOVE_UP_BUTTON_WIDTH + 241 * AscCommon.g_dKoef_pix_to_mm;
+	var MOVE_DOWN_BUTTON_TOP = 12 * AscCommon.g_dKoef_pix_to_mm;
+
 	function CAnimPaneHeader(oDrawer) {
 		CTopControl.call(this, oDrawer);
 		this.label = this.addControl(new CLabel(this, "Animation Pane", 10, true));
-		this.playButton = this.addControl(new CButton(this));
-		this.closeButton = this.addControl(new CButton(this));
+		this.playButton = this.addControl(new CButton(
+			this, log('playButton'), null, null));
+		this.moveUpButton = this.addControl(new CButton(
+			this, log('moveUpButton'), null, null));
+		this.moveDownButton = this.addControl(new CButton(
+			this, log('moveDownButton'), null, null));
+		this.closeButton = this.addControl(new CButton(
+			this, log('closeButton'), null, null));
+
+		// Event handlers for button of CAnimPaneHeader ---
+
+		function log(targetName) {
+			return function() {console.log('[Mouse Down]:', targetName)}
+		}
+
+		// --- end of event handlers for buttons of CAnimPaneHeader
 	}
 
 	InitClass(CAnimPaneHeader, CTopControl, CONTROL_TYPE_HEADER);
 	CAnimPaneHeader.prototype.recalculateChildrenLayout = function () {
-		this.closeButton.setLayout(
-			this.getWidth() - AscCommon.TIMELINE_LIST_RIGHT_MARGIN - BUTTON_SIZE,
-			(this.getHeight() - BUTTON_SIZE) / 2,
-			BUTTON_SIZE,
-			BUTTON_SIZE
+		this.label.setLayout(
+			AscCommon.TIMELINE_LEFT_MARGIN,
+			0,
+			this.playButton.getLeft(),
+			this.getHeight()
 		);
 		this.playButton.setLayout(
 			PLAY_BUTTON_LEFT,
@@ -1497,13 +1521,24 @@
 			PLAY_BUTTON_WIDTH,
 			PLAY_BUTTON_HEIGHT
 		);
-		this.label.setLayout(
-			AscCommon.TIMELINE_LEFT_MARGIN,
-			0,
-			this.playButton.getLeft(),
-			this.getHeight()
+		this.moveUpButton.setLayout(
+			MOVE_UP_BUTTON_LEFT,
+			MOVE_UP_BUTTON_TOP,
+			MOVE_UP_BUTTON_WIDTH,
+			MOVE_UP_BUTTON_HEIGHT
 		);
-
+		this.moveDownButton.setLayout(
+			MOVE_DOWN_BUTTON_LEFT,
+			MOVE_DOWN_BUTTON_TOP,
+			MOVE_DOWN_BUTTON_WIDTH,
+			MOVE_DOWN_BUTTON_HEIGHT
+		);
+		this.closeButton.setLayout(
+			this.getWidth() - AscCommon.TIMELINE_LIST_RIGHT_MARGIN - BUTTON_SIZE,
+			(this.getHeight() - BUTTON_SIZE) / 2,
+			BUTTON_SIZE,
+			BUTTON_SIZE
+		);
 	};
 	CAnimPaneHeader.prototype.getFillColor = function () {
 		return null;
