@@ -8988,7 +8988,7 @@ var editor;
 		return res;
 	};
 
-	spreadsheet_api.prototype.asc_ApplySeriesSettings = function(settings) {
+	spreadsheet_api.prototype.asc_FillCells = function(type, settings) {
 		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
 			return;
 		}
@@ -8998,7 +8998,24 @@ var editor;
 		}
 
 		var ws = this.wb.getWorksheet();
-		return ws.applySeriesSettings(settings);
+		if (settings) {
+			settings.asc_setContextMenuChosenProperty(type);
+			settings.init(ws);
+		}
+		return ws.applySeriesSettings(type, settings);
+	};
+
+	spreadsheet_api.prototype.asc_CancelFillCells = function() {
+		if (this.collaborativeEditing.getGlobalLock() || !this.canEdit()) {
+			return;
+		}
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+
+		var ws = this.wb.getWorksheet();
+		return ws && ws.cleanFillHandleProps();
 	};
 
   /*
@@ -9584,7 +9601,9 @@ var editor;
   prot["asc_StepGoalSeek"]= prot.asc_StepGoalSeek;
 
   prot["asc_GetSeriesSettings"]= prot.asc_GetSeriesSettings;
-  prot["asc_ApplySeriesSettings"]= prot.asc_ApplySeriesSettings;
+  prot["asc_FillCells"]= prot.asc_FillCells;
+  prot["asc_CancelFillCells"]= prot.asc_CancelFillCells;
+
 
 
 })(window);
