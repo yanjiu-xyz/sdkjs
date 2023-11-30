@@ -82,9 +82,8 @@
 		this.mathTextInfo = null;
 		this.paraMath     = null;
 		
-		this.rtl = false;
-		this.bidiBuffer = [];
-		this.bidiWidth  = 0;
+		this.rtl      = false;
+		this.bidiFlow = new AscWord.BidiFlow(this);
 	}
 	ParagraphContentDrawState.prototype.init = function(paragraph, graphics)
 	{
@@ -102,15 +101,6 @@
 		
 		this.CurPos = new AscWord.CParagraphContentPos();
 	};
-	ParagraphContentDrawState.prototype.Reset_Range = function(Page, Line, Range, X, Y)
-	{
-		this.Page  = Page;
-		this.Line  = Line;
-		this.Range = Range;
-		
-		this.X = X;
-		this.Y = Y;
-	};
 	ParagraphContentDrawState.prototype.beginRange = function(page, line, range, x, y)
 	{
 		this.Page  = page;
@@ -119,10 +109,11 @@
 		
 		this.X = x;
 		this.Y = y;
+		this.bidiFlow.begin(this.rtl);
 	};
 	ParagraphContentDrawState.prototype.endRange = function()
 	{
-		this.flushBidiText();
+		this.bidiFlow.end();
 	};
 	ParagraphContentDrawState.prototype.Set_LineMetrics = function(BaseLine, Top, Bottom)
 	{
@@ -217,9 +208,10 @@
 			&& para_FieldChar !== element.Type)
 			return;
 		
-		if (element.isRtl() === this.rtl)
-			this.flushBidiText();
-		
+		this.bidiFlow.add(element, element.isRtl());
+	};
+	ParagraphContentDrawState.prototype.handleBidiFlow = function(element)
+	{
 		switch (element.Type)
 		{
 			case para_Text:
@@ -284,16 +276,8 @@
 	 */
 	ParagraphContentDrawState.prototype.handleText = function(text)
 	{
-		if (text.isRtl() !== this.rtl)
-		{
-			this.bidiBuffer.push(text);
-			this.bidiWidth += text.GetWidthVisible();
-		}
-		else
-		{
-			text.Draw(this.X, this.calcY - this.yOffset, this.Graphics, this, this.textPr);
-			this.X += text.GetWidthVisible();
-		}
+		text.Draw(this.X, this.calcY - this.yOffset, this.Graphics, this, this.textPr);
+		this.X += text.GetWidthVisible();
 	};
 	/**
 	 * @param drawing {ParaDrawing}
@@ -398,20 +382,6 @@
 	ParagraphContentDrawState.prototype.isSlideEditor = function()
 	{
 		return this.Paragraph && !this.Paragraph.bFromDocument;
-	};
-	ParagraphContentDrawState.prototype.flushBidiText = function()
-	{
-		if (!this.bidiBuffer.length)
-			return;
-		
-		for (let index = this.bidiBuffer.length - 1; index >= 0; --index)
-		{
-			let item = this.bidiBuffer[index];
-			item.Draw(this.X, this.calcY - this.yOffset, this.Graphics, this, this.textPr);
-			this.X += item.GetWidthVisible();
-		}
-		
-		this.bidiBuffer.length = 0;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.ParagraphContentDrawState = ParagraphContentDrawState;

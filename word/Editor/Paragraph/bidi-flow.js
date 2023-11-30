@@ -37,27 +37,35 @@
 	/**
 	 * Class for handling bidirectional flow of text or other content
 	 * @param handler - handler for elements in the flow
-	 * @param direction - main flow direction
 	 * @constructor
 	 */
-	function BidiFlow(handler, direction)
+	function BidiFlow(handler)
 	{
+		this.handler   = handler;
 		this.buffer    = [];
-		this.direction = direction;
+		this.direction = null;
 	}
+	/**
+	 * @param direction - main flow direction
+	 */
+	BidiFlow.prototype.begin = function(direction)
+	{
+		this.direction     = direction;
+		this.buffer.length = 0;
+	};
 	BidiFlow.prototype.add = function(element, direction)
 	{
 		if (direction === this.direction)
 		{
 			this.flushBuffer();
-			this.handler.handleBidiElement(element);
+			this.handler.handleBidiFlow(element);
 		}
 		else
 		{
 			this.buffer.push(element);
 		}
 	};
-	BidiFlow.prototype.close = function()
+	BidiFlow.prototype.end = function()
 	{
 		this.flushBuffer();
 	};
@@ -68,7 +76,7 @@
 	{
 		for (let i = this.buffer.length - 1; i >= 0; --i)
 		{
-			this.handler.handleBidiElement(this.buffer[i]);
+			this.handler.handleBidiFlow(this.buffer[i]);
 		}
 		this.buffer.length = 0;
 	};

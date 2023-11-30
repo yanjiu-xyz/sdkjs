@@ -2889,7 +2889,7 @@ Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, drawState
 			var Range = Line.Ranges[CurRange];
 
 			PDSE.Set_LineMetrics(Y, Y - Line.Metrics.Ascent, Y + Line.Metrics.Descent);
-			PDSE.Reset_Range(CurPage, CurLine, CurRange, X, Y);
+			PDSE.beginRange(CurPage, CurLine, CurRange, X, Y);
 
 			var StartPos = Range.StartPos;
 			var EndPos   = Range.EndPos;
