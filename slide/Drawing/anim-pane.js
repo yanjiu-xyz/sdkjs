@@ -1518,7 +1518,7 @@
 
 		function closePanel(event, x, y) {
 			if (!this.hit(x, y)) { return }
-			console.log('closePanel')
+			Asc.editor.asc_ShowAnimPane(false)
 		}
 
 		// --- end of event handlers for buttons of CAnimPaneHeader
@@ -1898,4 +1898,3 @@
 	window['AscCommon'].CTimelineContainer = CTimelineContainer;
 
 })(window);
-

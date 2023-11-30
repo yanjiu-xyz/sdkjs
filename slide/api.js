@@ -6432,6 +6432,10 @@ background-repeat: no-repeat;\
 		this.sendEvent("asc_onThumbnailsShow", bIsShow);
 	};
 
+	asc_docs_api.prototype.getIsAnimPaneShow = function()
+	{
+		return this.WordControl.IsAnimPaneShown();
+	};
 	asc_docs_api.prototype.getIsNotesShow = function()
 	{
 		return this.WordControl.IsNotesShown();

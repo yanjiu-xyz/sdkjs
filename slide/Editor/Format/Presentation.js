@@ -6015,6 +6015,18 @@ CPresentation.prototype.CheckNotesShow = function () {
 		}
 	}
 };
+CPresentation.prototype.CheckAnimPaneShow = function () {
+	if (this.Api) {
+		var bIsShow = this.Api.getIsAnimPaneShow();
+		if (!bIsShow) {
+			// if (this.FocusOnAnimPane) {
+				// this.FocusOnAnimPane = false;
+				this.Document_UpdateInterfaceState();
+				this.Document_UpdateSelectionState();
+			// }
+		}
+	}
+};
 
 CPresentation.prototype.EditChart = function (binary) {
 	var _this = this;

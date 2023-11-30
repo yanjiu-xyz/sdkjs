@@ -349,7 +349,7 @@ function CEditorPage(api)
 		this.Splitter1Pos    = 67.5;
 		this.Splitter1PosSetUp = this.Splitter1Pos;
 		this.Splitter2Pos    = (this.IsSupportNotes === true && this.m_oApi.isEmbedVersion !== true) ? 11 : 0;
-		this.Splitter3Pos = 100;//top of animation pane
+		this.Splitter3Pos    = (this.IsSupportAnimPane === true) ? 100 : 0;
 
 		this.OldSplitter1Pos = this.Splitter1Pos;
 		this.OldSplitter2Pos = this.Splitter2Pos;
@@ -4730,7 +4730,25 @@ function CEditorPage(api)
 
 	this.ShowAnimPane = function (bShow)
 	{
-		//TODO
+		if(this.IsAnimPaneShown() === bShow)
+		{
+			return;
+		}
+		if(bShow)
+		{
+			this.Splitter3Pos = this.OldSplitter3Pos;
+			if (this.Splitter3Pos <= 1)
+				this.Splitter3Pos = 11;
+			this.OnResizeSplitter();
+		}
+		else
+		{
+			var old = this.OldSplitter3Pos;
+			this.Splitter3Pos = 0;
+			this.OnResizeSplitter();
+			this.OldSplitter3Pos = old;
+			this.m_oLogicDocument.CheckAnimPaneShow()
+		}
 	};
 
 	// notes panel
