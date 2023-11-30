@@ -610,6 +610,331 @@
 		return charts;
 	};
 
+
+	WorksheetView.prototype.getCurrentChart = function() {
+		if(this.isSelectOnShape) {
+			let aSelectedDrawings = this.objectRender.controller.getSelectedArray();
+			if(aSelectedDrawings.length === 1 && aSelectedDrawings[0].isChart()) {
+				return aSelectedDrawings[0];
+			}
+		}
+		return null;
+	};
+	WorksheetView.prototype.getRangesForCharts = function () {
+		let aRanges;
+		let oCurChart = this.getCurrentChart();
+		if(oCurChart) {
+			let sChartRange = oCurChart.getCommonRange();
+			if(!sChartRange) {
+				return null;
+			}
+			aRanges = AscFormat.fParseChartFormulaExternal(sChartRange);
+		}
+		if(!aRanges) {
+			aRanges = this.getSelectedRanges();
+		}
+		if(!aRanges) {
+			return null;
+		}
+		return aRanges;
+	};
+
+	WorksheetView.prototype.getRecommendedChartData = function() {
+		return AscFormat.ExecuteNoHistory(function() {
+			let aRanges = this.getRangesForCharts();
+			let aResultCheckRange = aRanges;
+			if(aRanges.length === 1 && aRanges[0].isOneCell()) {
+				let oBBox = this.model.autoFilters.expandRange(aRanges[0].bbox, true);
+				let oRange = AscCommonExcel.Range.prototype.createFromBBox(this.model, oBBox);
+				aResultCheckRange = [oRange];
+			}
+
+			if(aResultCheckRange.length > 2) {
+				let oFirstRange = aResultCheckRange[0];
+				let oSecondRange = aResultCheckRange[1];
+				if(!oFirstRange.isEqualCols(oSecondRange) && !oFirstRange.isEqualRows(oSecondRange)) {
+					return null;
+				}
+				let bRows = oFirstRange.isEqualRows(oSecondRange);
+				for(let nRange = 2; nRange < aResultCheckRange.length; ++nRange) {
+					let oCurRange = aResultCheckRange[nRange];
+					if(bRows) {
+						if(!oFirstRange.isEqualRows(oCurRange)) {
+							return null;
+						}
+					}
+					else {
+						if(!oFirstRange.isEqualCols(oCurRange)) {
+							return null;
+						}
+					}
+				}
+			}
+			let bEmpty = true;
+			for(let nRange = 0; nRange < aResultCheckRange.length; ++nRange) {
+				let oRange = aResultCheckRange[nRange];
+				oRange._foreachNoEmpty(function (oCell) {
+					if(AscFormat.isRealNumber(oCell.getNumberValue())) {
+						bEmpty = false;
+						return true;
+					}
+					return null;
+				}, undefined, true);
+				if(!bEmpty) {
+					break;
+				}
+			}
+			if(bEmpty) {
+				return null;
+			}
+			const oDataRefs = new AscFormat.CChartDataRefs(null);
+			const nHorCheckError = oDataRefs.checkDataRangeRefs(aResultCheckRange, true, Asc.c_oAscChartTypeSettings.unknown);
+			const nVertCheckError = oDataRefs.checkDataRangeRefs(aResultCheckRange, false, Asc.c_oAscChartTypeSettings.unknown);
+			if(Asc.c_oAscError.ID.No !== nHorCheckError && Asc.c_oAscError.ID.No !== nVertCheckError) {
+				return null;
+			}
+
+			let oResultMap = {};
+			let aCharts = [];
+			let aSeriesRefsHor = oDataRefs.getSeriesRefsFromUnionRefs(aResultCheckRange, true, false);
+			let aSeriesRefsVer = oDataRefs.getSeriesRefsFromUnionRefs(aResultCheckRange, false, false);
+
+			if(aSeriesRefsHor.length === 1 || aSeriesRefsVer.length === 1) {
+				//bar, hbar, linear, pie
+
+				let aSeriesRef = aSeriesRefsHor.length === 1 ? aSeriesRefsHor : aSeriesRefsVer;
+				let oBarCS = this.getChartByType(Asc.c_oAscChartTypeSettings.barNormal, aSeriesRef);
+				aCharts.push(oBarCS);
+				let oHBarCS = this.getChartByType(Asc.c_oAscChartTypeSettings.hBarNormal, aSeriesRef);
+				aCharts.push(oHBarCS);
+				let oPieChart = this.getChartByType(Asc.c_oAscChartTypeSettings.pie, aSeriesRef);
+				aCharts.push(oPieChart);
+				if(aSeriesRefsHor.length > 1 || aSeriesRefsVer.length > 1) {
+					let oLineCS = this.getChartByType(Asc.c_oAscChartTypeSettings.lineNormal, aSeriesRef);
+					aCharts.push(oLineCS);
+				}
+				for(let nChart = 0; nChart < aCharts.length; ++nChart) {
+					let oCS = aCharts[nChart];
+					oCS.setBDeleted(false);
+					oCS.setWorksheet(this.model);
+					AscFormat.CheckSpPrXfrm(oCS);
+					oCS.allPreviewCharts = aCharts;
+
+					let nType = oCS.getChartType();
+					if(!Array.isArray(oResultMap[nType])) {
+						oResultMap[nType] = [];
+					}
+					oResultMap[nType].push(oCS);
+				}
+				return oResultMap;
+			}
+
+			let aSeriesRefsArr = [];
+			if(aSeriesRefsHor.length >= aSeriesRefsVer.length) {
+				aSeriesRefsArr.push(aSeriesRefsVer);
+			}
+
+			if(aSeriesRefsHor.length <= aSeriesRefsVer.length) {
+				aSeriesRefsArr.push(aSeriesRefsHor);
+			}
+
+			for(let nSerArr = 0; nSerArr <  aSeriesRefsArr.length; ++nSerArr) {
+				let aSeriesRef = aSeriesRefsArr[nSerArr];
+				//bar, hbar, linear, hbarstacked, barstacked, barstackedper, hbarstackedper;
+
+				let oBarCS = this.getChartByType(Asc.c_oAscChartTypeSettings.barNormal, aSeriesRef);
+				aCharts.push(oBarCS);
+				let oHBarCS = this.getChartByType(Asc.c_oAscChartTypeSettings.hBarNormal, aSeriesRef);
+				aCharts.push(oHBarCS);
+				let oLineCS = this.getChartByType(Asc.c_oAscChartTypeSettings.lineNormal, aSeriesRef);
+				aCharts.push(oLineCS);
+				let oHBarStackedCS = this.getChartByType(Asc.c_oAscChartTypeSettings.hBarStacked, aSeriesRef);
+				aCharts.push(oHBarStackedCS);
+				let oBarStackedCS = this.getChartByType(Asc.c_oAscChartTypeSettings.barStacked, aSeriesRef);
+				aCharts.push(oBarStackedCS);
+				let oBarStackedPerCS = this.getChartByType(Asc.c_oAscChartTypeSettings.barStackedPer, aSeriesRef);
+				aCharts.push(oBarStackedPerCS);
+				let oHBarStackedPerCS = this.getChartByType(Asc.c_oAscChartTypeSettings.hBarStackedPer, aSeriesRef);
+				aCharts.push(oHBarStackedPerCS);
+			}
+
+			let aScatterSeriesRefsHor = oDataRefs.getSeriesRefsFromUnionRefs(aResultCheckRange, true, true);
+			let aScatterSeriesRefsVer = oDataRefs.getSeriesRefsFromUnionRefs(aResultCheckRange, false, true);
+
+			aSeriesRefsArr = [];
+			if(aScatterSeriesRefsHor.length >= aScatterSeriesRefsVer.length) {
+				aSeriesRefsArr.push(aScatterSeriesRefsVer);
+			}
+
+			if(aScatterSeriesRefsHor.length <= aScatterSeriesRefsVer.length) {
+				aSeriesRefsArr.push(aScatterSeriesRefsHor);
+			}
+
+			for(let nSerArr = 0; nSerArr <  aSeriesRefsArr.length; ++nSerArr) {
+				let aSeriesRef = aSeriesRefsArr[nSerArr];
+				let oScatterCS = this.getChartByType(Asc.c_oAscChartTypeSettings.scatterMarker, aSeriesRef);
+				aCharts.push(oScatterCS);
+			}
+
+			for(let nChart = 0; nChart < aCharts.length; ++nChart) {
+				let oCS = aCharts[nChart];
+				oCS.setBDeleted(false);
+				oCS.setWorksheet(this.model);
+				AscFormat.CheckSpPrXfrm(oCS);
+				oCS.allPreviewCharts = aCharts;
+				let nType = oCS.getChartType();
+				if(!Array.isArray(oResultMap[nType])) {
+					oResultMap[nType] = [];
+				}
+				oResultMap[nType].push(oCS);
+			}
+			return oResultMap;
+		}, this, []);
+	};
+
+	WorksheetView.prototype.getChartByType = function(nType, aSeriesRef) {
+		let oCurChart = this.getCurrentChart();
+		let oChartSpace;
+		if(oCurChart) {
+			oChartSpace = oCurChart.copy();
+			oChartSpace.buildSeries(aSeriesRef);
+			oChartSpace.changeChartType(nType);
+		}
+		else {
+			let oDrawingsController = this.objectRender.controller;
+			oChartSpace = oDrawingsController._getChartSpace([], {type: nType}, false);
+			oChartSpace.buildSeries(aSeriesRef);
+			let oProps = Asc.editor.asc_getChartObject(true);
+			oProps.chartSpace = null;
+			oProps.removeAllAxesProps();
+			oProps.putType(nType);
+			oDrawingsController.applyPropsToChartSpace(oProps, oChartSpace);
+		}
+		return oChartSpace;
+	}
+	WorksheetView.prototype.getChartData = function(nType) {
+		return AscFormat.ExecuteNoHistory(function() {
+			let aRanges = this.getRangesForCharts();
+			const oDataRefs = new AscFormat.CChartDataRefs(null);
+
+			const bIsScatter = AscFormat.isScatterChartType(nType);
+
+			let aSeriesRefsHor = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, true, bIsScatter);
+			let aSeriesRefsVer = oDataRefs.getSeriesRefsFromUnionRefs(aRanges, false, bIsScatter);
+			let oChartSpace;
+			let aResult = [];
+			let aParams = [];
+			
+			function getSeriesMaxValCount(aSeries) {
+				let nMaxCount = 0;
+				for(let nS = 0; nS < aSeries.length; ++nS) {
+					let nValCount = aSeries[nS].getValCellsCount();
+					if(nValCount > nMaxCount) {
+						nMaxCount = nValCount;
+					}
+				}
+				return nMaxCount;
+			}
+
+			if(AscFormat.isComboChartType(nType)) {
+				if(aSeriesRefsHor.length <= aSeriesRefsVer.length) {
+					if(oDataRefs.checkValidDataRangeRefs(aRanges, true, nType)) {
+						aParams.push({
+							bHorValue: true,
+							aSeries: aSeriesRefsHor
+						});
+					}
+					else {
+						if(oDataRefs.checkValidDataRangeRefs(aRanges, false, nType)) {
+							aParams.push({
+								bHorValue: false,
+								aSeries: aSeriesRefsVer
+							});
+						}
+					}
+				}
+				else {
+					if(oDataRefs.checkValidDataRangeRefs(aRanges, false, nType)) {
+						aParams.push({
+							bHorValue: false,
+							aSeries: aSeriesRefsVer,
+						});
+					}
+					else {
+						if(oDataRefs.checkValidDataRangeRefs(aRanges, true, nType)) {
+							aParams.push({
+								bHorValue: true,
+								aSeries: aSeriesRefsHor
+							});
+						}
+					}
+				}
+			}
+			else if(AscFormat.isAreaChartType(nType) ||
+				AscFormat.isRadarChartType(nType) ||
+				AscFormat.isLineChartType(nType) ||
+				AscFormat.isScatterChartType(nType) ||
+				AscFormat.isDoughnutChartType(nType)) {
+				let nMinPtCount;
+
+				if(AscFormat.isRadarChartType(nType)) {
+					nMinPtCount = 3;
+				}
+				else {
+					nMinPtCount = 2;
+				}
+				if(getSeriesMaxValCount(aSeriesRefsHor) >= nMinPtCount) {
+					aParams.push({
+						bHorValue: true,
+						aSeries: aSeriesRefsHor
+					});
+				}
+				if(getSeriesMaxValCount(aSeriesRefsVer) >= nMinPtCount) {
+					aParams.push({
+						bHorValue: false,
+						aSeries: aSeriesRefsVer
+					});
+				}
+				if(aParams.length === 0) {
+					aParams.push({
+						bHorValue: true,
+						aSeries: aSeriesRefsHor
+					});
+				}
+			}
+			else {
+				aParams.push({
+					bHorValue: true,
+					aSeries: aSeriesRefsHor
+				});
+				aParams.push({
+					bHorValue: false,
+					aSeries: aSeriesRefsVer
+				});
+			}
+			let nError = Asc.c_oAscError.ID.No;
+			for(let nParam = 0; nParam < aParams.length; ++nParam) {
+				let oParam = aParams[nParam];
+				nError = oDataRefs.checkDataRangeRefs(aRanges, oParam.bHorValue, nType)
+				if(nError === Asc.c_oAscError.ID.No) {
+					oChartSpace = this.getChartByType(nType, oParam.aSeries);
+					if(oChartSpace) {
+						aResult.push(oChartSpace);
+						oChartSpace.setBDeleted(false);
+						oChartSpace.setWorksheet(this.model);
+						oChartSpace.allPreviewCharts = aResult;
+						AscFormat.CheckSpPrXfrm(oChartSpace);
+					}
+				}
+			}
+			if(aResult.length === 0 && nError !== Asc.c_oAscError.ID.No) {
+				return nError;
+			}
+			return aResult;
+		}, this, []);
+	};
+
+
 	WorksheetView.prototype._initWorksheetDefaultWidthForPrint = function () {
 		var defaultPpi = 96;
 		var truePPIX = this.drawingCtx.ppiX;

@@ -3912,6 +3912,20 @@
         this.onShowDrawingObjects();
     };
 
+	WorkbookView.prototype.getRecommendedChartData = function() {
+		const oCurWorksheet = this.getWorksheet();
+		if(!oCurWorksheet) {
+			return null;
+		}
+		return oCurWorksheet.getRecommendedChartData();
+	};
+	WorkbookView.prototype.getChartData = function(nType) {
+		const oCurWorksheet = this.getWorksheet();
+		if(!oCurWorksheet) {
+			return null;
+		}
+		return oCurWorksheet.getChartData(nType);
+	};
   WorkbookView.prototype.insertHyperlink = function(options, sheetId) {
     var ws = this.getWorksheet(sheetId);
     if (ws.objectRender.selectedGraphicObjectsExists()) {
