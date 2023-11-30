@@ -4350,6 +4350,11 @@ background-repeat: no-repeat;\
 	{
 		return this.WordControl.m_oLogicDocument.GetCurSlideObjectsNames();
 	};
+
+	asc_docs_api.prototype.asc_IsStartedAnimationPreview = function()
+	{
+		return this.WordControl.m_oLogicDocument.IsStartedPreview()
+	};
 	asc_docs_api.prototype.asc_StartAnimationPreview = function()
 	{
 		this.asc_StopAnimationPreview();
@@ -4359,7 +4364,7 @@ background-repeat: no-repeat;\
 		}
 		//this.sendEvent("asc_onStartDemonstration");//todo
 	};
-	
+
 	asc_docs_api.prototype.asc_canStartAnimationPreview = function()
 	{
 		return this.WordControl.m_oLogicDocument.CanStartAnimationPreview();

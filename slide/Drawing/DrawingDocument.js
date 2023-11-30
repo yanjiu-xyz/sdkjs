@@ -6537,7 +6537,7 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 			return;
 
 
-		oControl.onMouseMove(global_mouseEvent, _x, _y);
+		oControl.onMouseUp(global_mouseEvent, _x, _y);
 		//oThis.GetPresentation().AnimPane_OnMouseUp(global_mouseEvent, _x, _y);
 
 		oThis.HtmlPage.m_bIsMouseLock = false;

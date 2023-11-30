@@ -1490,22 +1490,35 @@
 		CTopControl.call(this, oDrawer);
 		this.label = this.addControl(new CLabel(this, "Animation Pane", 10, true));
 		this.playButton = this.addControl(new CButton(
-			this, log('playButton'), null, null));
+			this, null, null, managePreview));
 		this.moveUpButton = this.addControl(new CButton(
-			this, log('moveUpButton'), null, null));
+			this, null, null, moveChosenUp));
 		this.moveDownButton = this.addControl(new CButton(
-			this, log('moveDownButton'), null, null));
+			this, null, null, moveChosenDown));
 		this.closeButton = this.addControl(new CButton(
-			this, log('closeButton'), null, null));
+			this, null, null, closePanel));
 
 		// Event handlers for button of CAnimPaneHeader ---
 
-		function log(targetName) {
-			return function (e, x, y) {
-				if (this.hit(x, y)) {
-					console.log('[Mouse Down]:', targetName)
-				}
-			}
+		function managePreview(event, x, y) {
+			if (!this.hit(x, y)) { return }
+			Asc.editor.asc_IsStartedAnimationPreview() ?
+				Asc.editor.asc_StopAnimationPreview() : Asc.editor.asc_StartAnimationPreview()
+		}
+
+		function moveChosenUp(event, x, y) {
+			if (!this.hit(x, y)) { return }
+			console.log('moveChosenUp')
+		}
+
+		function moveChosenDown(event, x, y) {
+			if (!this.hit(x, y)) { return }
+			console.log('moveChosenDown')
+		}
+
+		function closePanel(event, x, y) {
+			if (!this.hit(x, y)) { return }
+			console.log('closePanel')
 		}
 
 		// --- end of event handlers for buttons of CAnimPaneHeader
@@ -1877,7 +1890,7 @@
 	const ANIM_ITEM_HEIGHT = TIMELINE_HEIGHT;
 	const EFFECT_BAR_HEIGHT = 2 * ANIM_ITEM_HEIGHT / 3;
 	const SEQ_LABEL_HEIGHT = EFFECT_BAR_HEIGHT;
-	
+
 
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].CAnimPaneHeader = CAnimPaneHeader;
