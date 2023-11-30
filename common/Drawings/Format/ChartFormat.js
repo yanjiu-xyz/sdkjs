@@ -15572,10 +15572,19 @@
     }
 
     function CheckContentTextAndAdd(oContent, sText) {
-        oContent.SetApplyToAll(true);
-        var sContentText = oContent.GetSelectedText(false, {NewLine: true, NewParagraph: true});
-        oContent.SetApplyToAll(false);
-        if(sContentText !== sText) {
+        let bClear = false;
+        if(oContent.AllFields && oContent.AllFields.length > 0) {
+            bClear = true;
+        }
+        else {
+            oContent.SetApplyToAll(true);
+            let sContentText = oContent.GetSelectedText(false, {NewLine: true, NewParagraph: true});
+            oContent.SetApplyToAll(false);
+            if(sContentText !== sText) {
+                bClear = true;
+            }
+        }
+        if(bClear) {
             oContent.ClearContent(true);
             AddToContentFromString(oContent, sText);
         }
