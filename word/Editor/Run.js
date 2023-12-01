@@ -8226,68 +8226,33 @@ ParaRun.prototype.SelectAll = function(nDirection)
 	}
 };
 
-ParaRun.prototype.Selection_DrawRange = function(_CurLine, _CurRange, SelectionDraw)
+ParaRun.prototype.Selection_DrawRange = function(line, range, drawSelectionState)
 {
-    var CurLine  = _CurLine - this.StartLine;
-    var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
-
-    var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-    var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-
-    var Selection = this.State.Selection;
-    var SelectionUse      = Selection.Use;
-    var SelectionStartPos = Selection.StartPos;
-    var SelectionEndPos   = Selection.EndPos;
-
-    if ( SelectionStartPos > SelectionEndPos )
-    {
-        SelectionStartPos = Selection.EndPos;
-        SelectionEndPos   = Selection.StartPos;
-    }
-
-    var FindStart = SelectionDraw.FindStart;
-
-    for(var CurPos = StartPos; CurPos < EndPos; CurPos++)
-    {
-        var Item = this.private_CheckInstrText(this.Content[CurPos]);
-        var ItemType = Item.Type;
-        var DrawSelection = false;
-
-        if ( true === FindStart )
-        {
-            if ( true === Selection.Use && CurPos >= SelectionStartPos && CurPos < SelectionEndPos )
-            {
-                FindStart = false;
-
-                DrawSelection = true;
-            }
-            else
-            {
-                if ( para_Drawing !== ItemType || true === Item.Is_Inline() )
-                    SelectionDraw.StartX += Item.GetWidthVisible();
-            }
-        }
-        else
-        {
-            if ( true === Selection.Use && CurPos >= SelectionStartPos && CurPos < SelectionEndPos )
-            {
-                DrawSelection = true;
-            }
-        }
-
-        if ( true === DrawSelection )
-        {
-            if (para_Drawing === ItemType && true !== Item.Is_Inline())
-            {
-                if (true === SelectionDraw.Draw)
-                    Item.Draw_Selection();
-            }
-            else
-                SelectionDraw.W += Item.GetWidthVisible();
-        }
-    }
-
-    SelectionDraw.FindStart = FindStart;
+	let rangeInfo  = this.getRangePos(line, range);
+	let rangeStart = rangeInfo[0];
+	let rangeEnd   = rangeInfo[1];
+	if (rangeStart >= rangeEnd)
+		return;
+	
+	let selectionStart = this.State.Selection.StartPos;
+	let selectionEnd   = this.State.Selection.EndPos;
+	
+	if (!this.State.Selection.Use)
+	{
+		selectionStart = -1;
+		selectionEnd   = -1;
+	}
+	else if (selectionStart > selectionEnd)
+	{
+		selectionStart = this.State.Selection.EndPos;
+		selectionEnd   = this.State.Selection.StartPos;
+	}
+	
+	for (let pos = rangeStart; pos < rangeEnd; ++pos)
+	{
+		let item = this.private_CheckInstrText(this.Content[pos]);
+		drawSelectionState.handleRunElement(item, selectionStart <= pos && pos < selectionEnd);
+	}
 };
 
 ParaRun.prototype.IsSelectionEmpty = function(CheckEnd)

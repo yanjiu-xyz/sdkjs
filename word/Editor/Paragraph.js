@@ -8682,6 +8682,8 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 				StartPos = this.Selection.EndPos;
 				EndPos   = this.Selection.StartPos;
 			}
+			
+			let paraPage = this.Pages[CurPage];
 
 			var _StartLine = this.Pages[CurPage].StartLine;
 			var _EndLine   = this.Pages[CurPage].EndLine;
@@ -8693,83 +8695,86 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 				StartPos = Math.max(StartPos, this.Lines[_StartLine].Get_StartPos());
 				EndPos   = Math.min(EndPos, ( _EndLine != this.Lines.length - 1 ? this.Lines[_EndLine].Get_EndPos() : this.Content.length - 1 ));
 			}
+			
+			let selectionStart = StartPos;
+			let selectionEnd   = EndPos;
+			
+			let isInline = this.IsInline();
+			
 
-			var DrawSelection = new CParagraphDrawSelectionRange();
-
-			var bInline = this.Is_Inline();
-
-			for (var CurLine = _StartLine; CurLine <= _EndLine; CurLine++)
+			let drawSelectionState = new AscWord.ParagraphDrawSelectionState();
+			for (let iLine = _StartLine; iLine <= _EndLine; ++iLine)
 			{
-				var Line        = this.Lines[CurLine];
-				var RangesCount = Line.Ranges.length;
-
-				// Определяем позицию и высоту строки
-				DrawSelection.StartY = this.Pages[CurPage].Y + this.Lines[CurLine].Top;
-				DrawSelection.H      = this.Lines[CurLine].Bottom - this.Lines[CurLine].Top;
-
-				for (var CurRange = 0; CurRange < RangesCount; CurRange++)
+				let line = this.Lines[iLine];
+				
+				let lineY = paraPage.Y + line.Top;
+				let lineH = line.Bottom - line.Top;
+				
+				for (let iRange = 0, rangeCount = line.Ranges.length; iRange < rangeCount; ++iRange)
 				{
-					var Range = Line.Ranges[CurRange];
-
-					var RStartPos = Range.StartPos;
-					var REndPos   = Range.EndPos;
-
+					let range = line.Ranges[iRange];
+					
+					let rangeStart = range.StartPos;
+					let rangeEnd   = range.EndPos;
+					
 					// Если пересечение пустое с селектом, тогда пропускаем данный отрезок
-					if (StartPos > REndPos || EndPos < RStartPos)
+					if (selectionStart > rangeEnd || selectionEnd < rangeStart)
 						continue;
-
-					DrawSelection.StartX    = this.Lines[CurLine].Ranges[CurRange].XVisible;
-					DrawSelection.W         = 0;
-					DrawSelection.FindStart = true;
-
-					if (CurLine === this.Numbering.Line && CurRange === this.Numbering.Range)
-						DrawSelection.StartX += this.Numbering.WidthVisible;
-
-					for (var CurPos = RStartPos; CurPos <= REndPos; CurPos++)
+					
+					let rangeX = range.XVisible;
+					if (iLine === this.Numbering.Line && iRange === this.Numbering.Range)
+						rangeX += this.Numbering.WidthVisible;
+					
+					drawSelectionState.beginRange(rangeX);
+					
+					for (let pos = rangeStart; pos <= rangeEnd; ++pos)
 					{
-						var Item = this.Content[CurPos];
-						Item.Selection_DrawRange(CurLine, CurRange, DrawSelection);
+						this.Content[pos].Selection_DrawRange(iLine, iRange, drawSelectionState);
 					}
-
-					var StartX = DrawSelection.StartX;
-					var W      = DrawSelection.W;
-
-					var StartY = DrawSelection.StartY;
-					var H      = DrawSelection.H;
-
-					if (true !== bInline && this.CalculatedFrame)
+					
+					drawSelectionState.endRange();
+					
+					let selectionRanges = drawSelectionState.getSelectionRanges();
+					for (let iSel = 0; iSel < selectionRanges.length; ++iSel)
 					{
-						var Frame_X_min = this.CalculatedFrame.L2;
-						var Frame_Y_min = this.CalculatedFrame.T2;
-						var Frame_X_max = this.CalculatedFrame.L2 + this.CalculatedFrame.W2;
-						var Frame_Y_max = this.CalculatedFrame.T2 + this.CalculatedFrame.H2;
-
-						StartX = Math.min(Math.max(Frame_X_min, StartX), Frame_X_max);
-						StartY = Math.min(Math.max(Frame_Y_min, StartY), Frame_Y_max);
-						W      = Math.min(W, Frame_X_max - StartX);
-						H      = Math.min(H, Frame_Y_max - StartY);
-					}
-
-					if (oFillingCC)
-					{
-						var arrRects = oFillingCC.IntersectWithRect(StartX, StartY, W, H, PageAbs);
-
-						for (var nIndex = 0, nCount = arrRects.length; nIndex < nCount; ++nIndex)
+						let _x = selectionRanges[iSel].x;
+						var _w = selectionRanges[iSel].w;
+						
+						let _y = lineY;
+						let _h = lineH;
+						
+						if (!isInline && this.CalculatedFrame)
 						{
-							var oRect = arrRects[nIndex];
-
-							if (oRect.W > 0.001 && oRect.H > 0.001)
-								this.DrawingDocument.AddPageSelection(PageAbs, oRect.X, oRect.Y, oRect.W, oRect.H);
+							var Frame_X_min = this.CalculatedFrame.L2;
+							var Frame_Y_min = this.CalculatedFrame.T2;
+							var Frame_X_max = this.CalculatedFrame.L2 + this.CalculatedFrame.W2;
+							var Frame_Y_max = this.CalculatedFrame.T2 + this.CalculatedFrame.H2;
+							
+							_x = Math.min(Math.max(Frame_X_min, _x), Frame_X_max);
+							_y = Math.min(Math.max(Frame_Y_min, _y), Frame_Y_max);
+							_w = Math.min(_w, Frame_X_max - _x);
+							_h = Math.min(_h, Frame_Y_max - _y);
 						}
-					}
-					else
-					{
-						if (W > 0.001)
-							this.DrawingDocument.AddPageSelection(PageAbs, StartX, StartY, W, H);
+						
+						if (oFillingCC)
+						{
+							var arrRects = oFillingCC.IntersectWithRect(_x, _y, _w, _h, PageAbs);
+							for (var nIndex = 0, nCount = arrRects.length; nIndex < nCount; ++nIndex)
+							{
+								var oRect = arrRects[nIndex];
+								
+								if (oRect.W > 0.001 && oRect.H > 0.001)
+									this.DrawingDocument.AddPageSelection(PageAbs, oRect.X, oRect.Y, oRect.W, oRect.H);
+							}
+						}
+						else
+						{
+							if (_w > 0.001)
+								this.DrawingDocument.AddPageSelection(PageAbs, _x, _y, _w, _h);
+						}
 					}
 				}
 			}
-
 			break;
 		}
 		case selectionflag_Numbering:
@@ -9064,7 +9069,7 @@ Paragraph.prototype.Select_Math = function(ParaMath)
 };
 Paragraph.prototype.GetSelectionBounds = function()
 {
-	if (!this.IsRecalculated())
+	if (true)//!this.IsRecalculated())
 	{
 		return {
 			Start     : {X : 0, Y : 0, W : 0, H : 0, Page : 0},
