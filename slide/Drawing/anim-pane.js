@@ -1496,7 +1496,7 @@
 		this.moveDownButton = this.addControl(new CButton(
 			this, null, null, moveChosenDown));
 		this.closeButton = this.addControl(new CButton(
-			this, null, null, closePanel));
+			this, null, setOnHover(function (e, x, y) {console.log('Cursor entered closeButton area at', x, y)}), closePanel));
 
 		// Event handlers for button of CAnimPaneHeader ---
 
@@ -1519,6 +1519,18 @@
 		function closePanel(event, x, y) {
 			if (!this.hit(x, y)) { return }
 			Asc.editor.asc_ShowAnimPane(false)
+		}
+
+
+		// TODO: вынести в методы прототипа CButton (или в прототип Control`а ?)
+		function setOnHover(callback) {
+			let alreadyHovered;
+			return function (event, x, y) {
+				if (!this.hit(x, y)) { return alreadyHovered = false }
+				if (alreadyHovered) { return }
+				alreadyHovered = true
+				callback(event, x, y)
+			}
 		}
 
 		// --- end of event handlers for buttons of CAnimPaneHeader
