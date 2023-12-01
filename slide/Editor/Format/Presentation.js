@@ -6019,11 +6019,11 @@ CPresentation.prototype.CheckAnimPaneShow = function () {
 	if (this.Api) {
 		var bIsShow = this.Api.getIsAnimPaneShow();
 		if (!bIsShow) {
-			// if (this.FocusOnAnimPane) {
-				// this.FocusOnAnimPane = false;
+			if (this.GetFocusObjType() === FOCUS_OBJECT_ANIM_PANE) {
+				this.SetThumbnailsFocusElement(FOCUS_OBJECT_MAIN);
 				this.Document_UpdateInterfaceState();
 				this.Document_UpdateSelectionState();
-			// }
+			}
 		}
 	}
 };

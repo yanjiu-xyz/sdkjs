@@ -49,6 +49,7 @@ var ImageLoadStatus   = AscFonts.ImageLoadStatus;
 var FOCUS_OBJECT_THUMBNAILS = 0;
 var FOCUS_OBJECT_MAIN       = 1;
 var FOCUS_OBJECT_NOTES      = 2;
+var FOCUS_OBJECT_ANIM_PANE  = 3;
 
 var COMMENT_WIDTH  = 18;
 var COMMENT_HEIGHT = 16;
@@ -4400,6 +4401,11 @@ function CThumbnailsManager()
 				}
 				break;
 			}
+			case FOCUS_OBJECT_ANIM_PANE:
+			{
+				this.FocusObjType = FOCUS_OBJECT_ANIM_PANE;
+				break;
+			}
 			case FOCUS_OBJECT_NOTES:
 			{
 				break;
@@ -6755,6 +6761,7 @@ function CAnimationPaneDrawer(page, htmlElement)
 	};
 	oThis.onMouseDown = function (e)
 	{
+		oThis.HtmlPage.Thumbnails.SetFocusElement(FOCUS_OBJECT_ANIM_PANE);
 		oThis.header.onMouseDown(e);
 		oThis.list.onMouseDown(e);
 		oThis.timeline.onMouseDown(e);
