@@ -73,7 +73,7 @@ function (window, undefined) {
 		cUNIQUE, cVLOOKUP, cXLOOKUP, cVSTACK, cHSTACK, cTOROW, cTOCOL, cWRAPROWS, cWRAPCOLS, cXMATCH);
 
 	cFormulaFunctionGroup['NotRealised'] = cFormulaFunctionGroup['NotRealised'] || [];
-	cFormulaFunctionGroup['NotRealised'].push(cAREAS, cGETPIVOTDATA, cRTD);
+	cFormulaFunctionGroup['NotRealised'].push(cAREAS, cRTD);
 
 	function searchRegExp(str, flags) {
 		var vFS = str
@@ -1156,7 +1156,113 @@ function (window, undefined) {
 	cGETPIVOTDATA.prototype = Object.create(cBaseFunction.prototype);
 	cGETPIVOTDATA.prototype.constructor = cGETPIVOTDATA;
 	cGETPIVOTDATA.prototype.name = 'GETPIVOTDATA';
+	cGETPIVOTDATA.prototype.argumentsMin = 2;
+	cGETPIVOTDATA.prototype.argumentsMax = 254;
 	cGETPIVOTDATA.prototype.argumentsType = [argType.text, argType.text, [argType.text, argType.any]];
+	cGETPIVOTDATA.prototype.Calculate = function (arg) {
+		// arg0 - data_field - Имя поля сводной таблицы (строка в кавычках), из которого необходимо извлечь данные. 
+		// Имя может быть введено в точности как существующее имя поля или только корень названия, например если в аргумент ввести "second", то вернется поле с именем "Sum of second", "Count of second" и т.д.
+		// arg1 - pivot_table - ссылка на таблицу - если приходит диапазон, то нужно проверить каждую его ячейку на вхождение в таблицу
+		// Если ни одна ячейка диапазона не касается таблицы, то вовзращаем #REF
+		// Примечание: если диапазон включает в себя в несколько таблиц, то возвращаем самую новую таблицу
+		// ...arg2 - [field1,item1] - [имя поля, элемент] - пара имя и элемент указывают на элемент в поле, они создают пересечение из другого столбца/строки в результате которого 
+		// должно вернуться значение из искомого поля(arg0) или Grand total для выбранного пересечения 
+
+		// Необходимо получить:
+		// - Все элементы поля (поле выбирается по имени)
+		// - Время жизни таблицы для того чтобы понимать какая из них была создана последней
+		// - Результат вычислений(total) для поля по его имени + возврат значения в зависимости от текущего типа операции subtotal. 
+		// Например если столбец суммирует значения по функции MAX, то из dataRow.total нужно вернуть max соответственно
+
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
+		let refError = new cError(cErrorType.bad_reference);
+		let ws = arguments[3], res;
+
+		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+			return refError;
+		}
+
+		if (cElementType.array === arg0.type) {
+			// todo возвращать массив с вычислениями для каждого элемента
+			arg0 = arg0.getFirstElement();
+		}
+
+		arg0 = arg0.tocString();
+		if (cElementType.error === arg0.type) {
+			return arg0;
+		}
+
+		let looking_data_field = arg0.getValue();
+		if (cElementType.cell !== arg1.type && cElementType.cell3D !== arg1.type && cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type) {
+			return refError;
+		}
+
+		if (ws) {
+			let bbox = arg1.getBBox0(),
+				operationTypes = Asc.c_oAscDataConsolidateFunction;
+
+			// 2 варианта поиска сводной таблицы:
+			// 1.Пройтись по всему bbox и вызывать getPivotTable пока не вернем true, иначе false
+			// 2.Проходиться по всем сводным таблицам и сравнивать их range с полученным на персечение(если пересекается то true иначе false)
+
+			// 1 вариант:
+			let isFound = false, pivot;
+			for (let row = bbox.r1; row <= bbox.r2; row++) {
+				for (let col = bbox.c1; col <= bbox.c2; col++) {
+					// todo проверить pivotTable на другой странице
+					pivot = ws.getPivotTable(col, row);
+					if (pivot) {
+						isFound = true;
+						break
+					}
+				}
+			}
+			if (!isFound) {
+				return refError;
+			}
+
+			// далее проходимся по заголовкам и сравниваем с первым аргументом
+			let fields = pivot.asc_getDataFields(), nameIsNotFound = true;
+			if (fields && fields.length > 0) {
+				for (let i = 0; i < fields.length; i++) {
+					let field = fields[i],
+						fieldName = field.name,
+						fld = field.fld;
+
+					if (fieldName.toLowerCase() !== looking_data_field.toLowerCase()) {
+						continue;
+					} else {
+						// Если мы нашли имя поля равное искомому, то вызываем функцию поиска
+						nameIsNotFound = false;
+						// Функция поиска: если аргументов меньше 4 и таблица не имеет общего резульатата(grand total или single Columns или single Rows), то возвращаем ошибку
+						// Иначе ищем результат по искомому полю
+						// В случае если в таблице есть общий результат, то сразу возвращаем его
+						// Если результата нет, но аргументов 4 или более, то выполняем поиск по условиям в них
+						let rowColData = pivot.updateRowColItems();
+						let lookingOperationType = Object.keys(operationTypes).find(key => operationTypes[key] === field.subtotal);
+
+						res = rowColData.dataRow.total[fld][lookingOperationType.toLowerCase()];
+						break;
+					}
+				}
+			} else {
+				return refError;
+			}
+
+			if (nameIsNotFound) {
+				return refError;
+			}
+
+		}
+		
+		// todo добавить пересчет функции при изменении видимости любого из полей таблицы
+		if (res) {
+			// todo результат может быть не только числом
+			return new cNumber(res);
+		}
+		
+		return refError;
+	};
 
 	/**
 	 * @constructor
