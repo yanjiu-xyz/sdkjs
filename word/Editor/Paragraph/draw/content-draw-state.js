@@ -70,6 +70,7 @@
 		
 		this.ComplexFields = new CParagraphComplexFieldsInfo();
 		
+		this.run            = null;
 		this.yOffset        = 0;
 		this.textPr         = null;
 		this.reviewColor    = null;
@@ -103,6 +104,8 @@
 	};
 	ParagraphContentDrawState.prototype.beginRange = function(page, line, range, x, y)
 	{
+		this.run = null;
+		
 		this.Page  = page;
 		this.Line  = line;
 		this.Range = range;
@@ -122,10 +125,61 @@
 		this.BaseLine   = BaseLine;
 	};
 	/**
+	 * @param element {AscWord.CRunElementBase}
+	 * @param run {AscWord.CRun}
+	 */
+	ParagraphContentDrawState.prototype.handleRunElement = function(element, run)
+	{
+		if ((this.ComplexFields.IsHiddenFieldContent() || this.isHiddenCFPart)
+			&& para_End !== element.Type
+			&& para_FieldChar !== element.Type)
+			return;
+		
+		this.bidiFlow.add([element, run], element.isRtl());
+	};
+	ParagraphContentDrawState.prototype.handleBidiFlow = function(data)
+	{
+		let element = data[0];
+		this.handleRun(data[1]);
+		
+		switch (element.Type)
+		{
+			case para_Text:
+				this.handleText(element);
+				break;
+			case para_Drawing:
+				this.handleDrawing(element);
+				break;
+			case para_End:
+				this.handleParagraphMark(element);
+				break;
+			case para_Math_Ampersand:
+			case para_Math_Text:
+			case para_Math_BreakOperator:
+			case para_Math_Placeholder:
+				this.handleMathElement(element);
+				break;
+			case para_FieldChar:
+				this.handleFieldChar(element);
+				break;
+			default:
+				this.handleRegularElement(element);
+				break;
+		}
+	};
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Private area
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/**
 	 * @param run {AscWord.CRun}
 	 */
 	ParagraphContentDrawState.prototype.handleRun = function(run)
 	{
+		if (this.run === run)
+			return;
+		
+		this.run = run;
+		
 		this.yOffset = run.getYOffset();
 		
 		let textPr = run.getCompiledPr();
@@ -198,48 +252,6 @@
 		
 		this.calcY = this.calculateY(textPr);
 	};
-	/**
-	 * @param element {AscWord.CRunElementBase}
-	 */
-	ParagraphContentDrawState.prototype.handleRunElement = function(element)
-	{
-		if ((this.ComplexFields.IsHiddenFieldContent() || this.isHiddenCFPart)
-			&& para_End !== element.Type
-			&& para_FieldChar !== element.Type)
-			return;
-		
-		this.bidiFlow.add(element, element.isRtl());
-	};
-	ParagraphContentDrawState.prototype.handleBidiFlow = function(element)
-	{
-		switch (element.Type)
-		{
-			case para_Text:
-				this.handleText(element);
-				break;
-			case para_Drawing:
-				this.handleDrawing(element);
-				break;
-			case para_End:
-				this.handleParagraphMark(element);
-				break;
-			case para_Math_Ampersand:
-			case para_Math_Text:
-			case para_Math_BreakOperator:
-			case para_Math_Placeholder:
-				this.handleMathElement(element);
-				break;
-			case para_FieldChar:
-				this.handleFieldChar(element);
-				break;
-			default:
-				this.handleRegularElement(element);
-				break;
-		}
-	};
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-	// Private area
-	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	/**
 	 * @param textPr {AscWord.CTextPr}
 	 * @param [useAscFont=false] {boolean}

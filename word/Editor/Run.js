@@ -6654,11 +6654,10 @@ ParaRun.prototype.Draw_Elements = function(drawState)
 	if (startPos >= endPos)
 		return;
 	
-	drawState.handleRun(this);
 	for (let pos = startPos; pos < endPos; ++pos)
 	{
 		let item = this.private_CheckInstrText(this.Content[pos]);
-		drawState.handleRunElement(item);
+		drawState.handleRunElement(item, this);
 	}
 };
 
