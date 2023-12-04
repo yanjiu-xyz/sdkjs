@@ -6209,6 +6209,9 @@ background-repeat: no-repeat;\
 		// Меняем тип состояния (на никакое)
 		this.advancedOptionsAction = AscCommon.c_oAscAdvancedOptionsAction.None;
 		this.goTo();
+		if (AscCommon.InitDebugSmartArt) {
+			AscCommon.InitDebugSmartArt();
+		}
 	};
 	asc_docs_api.prototype.asc_IsStartDemonstrationOnOpen = function()
 	{
