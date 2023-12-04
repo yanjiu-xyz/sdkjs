@@ -103,6 +103,7 @@
 			"common/Drawings/Format/Image.js",
 			"common/Drawings/Format/GroupShape.js",
 			"common/Drawings/Format/Data.js",
+			"common/SmartArts/SmartArtTree.js",
 			"common/Drawings/Format/ChartSpace.js",
 			"common/Drawings/Format/ChartFormat.js",
 			"common/Drawings/Format/ChartEx.js",

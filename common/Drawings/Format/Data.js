@@ -981,6 +981,20 @@ Because of this, the display is sometimes not correct.
       return [this.ptLst, this.cxnLst, this.whole, this.bg];
     };
 
+	  DataModel.prototype.getMainPoint = function () {
+		  const ptLst = this.getPtLst();
+
+			if (ptLst) {
+				const arrPoints = ptLst.list;
+				for (let i  = 0; i < arrPoints.length; i += 1) {
+					const oPoint = arrPoints[i];
+					if (oPoint.getType() === Point_type_doc) {
+						return oPoint;
+					}
+				}
+			}
+	  }
+
 
     changesFactory[AscDFH.historyitem_CCommonDataListAdd] = CChangeContent;
     changesFactory[AscDFH.historyitem_CCommonDataListRemove] = CChangeContent;
@@ -1090,7 +1104,7 @@ Because of this, the display is sometimes not correct.
     changesFactory[AscDFH.historyitem_CxnSibTransId] = CChangeString;
     changesFactory[AscDFH.historyitem_CxnSrcId] = CChangeString;
     changesFactory[AscDFH.historyitem_CxnSrcOrd] = CChangeString;
-    changesFactory[AscDFH.historyitem_CxnType] = CChangeString;
+    changesFactory[AscDFH.historyitem_CxnType] = CChangeLong;
     changesFactory[AscDFH.historyitem_CxnExtLst] = CChangeObject;
     drawingsChangesMap[AscDFH.historyitem_CxnDestId] = function (oClass, value) {
       oClass.destId = value;
@@ -1133,13 +1147,37 @@ Because of this, the display is sometimes not correct.
       this.sibTransId = null;
       this.srcId = null;
       this.srcOrd = null;
-      this.type = null;
+      this.type = Cxn_type_parOf;
 
       this.extLst = null;
     }
 
     InitClass(Cxn, CBaseFormatObject, AscDFH.historyitem_type_Cxn);
 
+		Cxn.getTypeEnum = function (sType) {
+			switch (sType) {
+				case 'presOf':
+					return Cxn_type_presOf;
+				case 'parOf':
+					return Cxn_type_parOf;
+				case 'presParOf':
+					return Cxn_type_presParOf;
+				default:
+					return;
+			}
+		};
+	  Cxn.getTypeString = function (sType) {
+		  switch (sType) {
+			  case Cxn_type_presOf:
+				  return 'presOf';
+			  case Cxn_type_parOf:
+				  return 'parOf';
+			  case Cxn_type_presParOf:
+				  return 'presParOf';
+			  default:
+				  return '';
+		  }
+	  };
     Cxn.prototype.setDestId = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnDestId, this.getDestId(), pr));
       this.destId = pr;
@@ -1181,7 +1219,7 @@ Because of this, the display is sometimes not correct.
     }
 
     Cxn.prototype.setType = function (pr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_CxnType, this.getType(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_CxnType, this.getType(), pr));
       this.type = pr;
     }
 
@@ -1248,7 +1286,7 @@ Because of this, the display is sometimes not correct.
 
     Cxn.prototype.privateWriteAttributes = function(pWriter) {
       pWriter._WriteString2(0, this.modelId);
-      pWriter._WriteString2(1, this.type);
+      pWriter._WriteString2(1, Cxn.getTypeString(this.type));
       pWriter._WriteString2(2, this.destId);
       pWriter._WriteString2(3, this.destOrd);
       pWriter._WriteString2(4, this.srcId);
@@ -1262,7 +1300,7 @@ Because of this, the display is sometimes not correct.
     Cxn.prototype.readAttribute = function(nType, pReader) {
       var oStream = pReader.stream;
       if (0 === nType) this.setModelId(oStream.GetString2());
-      else if (1 === nType) this.setType(oStream.GetString2());
+      else if (1 === nType) this.setType(Cxn.getTypeEnum(oStream.GetString2()));
       else if (2 === nType) this.setDestId(oStream.GetString2());
       else if (3 === nType) this.setDestOrd(oStream.GetString2());
       else if (4 === nType) this.setSrcId(oStream.GetString2());
@@ -1615,7 +1653,7 @@ Because of this, the display is sometimes not correct.
       CBaseFormatObject.call(this);
       this.cxnId = null;
       this.modelId = null;
-      this.type = null;
+      this.type = Point_type_node;
 
       this.extLst = null;
       this.prSet = null;
@@ -1886,6 +1924,14 @@ Because of this, the display is sometimes not correct.
     Point.prototype.getPresStyleLbl = function () {
       return this.prSet && this.prSet.presStyleLbl;
     };
+
+	  Point.prototype.getPresName = function () {
+		  return this.prSet && this.prSet.presName;
+	  };
+
+	  Point.prototype.getPresAssocID = function () {
+		  return this.prSet && this.prSet.presAssocID;
+	  };
 
     Point.prototype.getCustAng = function () {
       var prSet = this.getPrSet();
@@ -3748,6 +3794,69 @@ Because of this, the display is sometimes not correct.
     }
 
     InitClass(Param, CBaseFormatObject, AscDFH.historyitem_type_Param);
+		Param.prototype.getValEnum = function () {
+			switch (this.type) {
+				case Param_type_grDir: {
+					switch (this.val) {
+						case 'bL':
+							return ParameterVal_growDirection_bL;
+						case 'bR':
+							return ParameterVal_growDirection_bR;
+						case 'tL':
+							return ParameterVal_growDirection_tL;
+						case 'tR':
+							return ParameterVal_growDirection_tR;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_flowDir: {
+					switch (this.val) {
+						case 'col':
+							return ParameterVal_flowDirection_col;
+						case 'row':
+							return ParameterVal_flowDirection_row;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_off:
+					switch (this.val) {
+						case 'ctr':
+							return ParameterVal_offset_ctr;
+						case 'off':
+							return ParameterVal_offset_off;
+						default:
+							return this.val;
+					}
+				case Param_type_vertAlign:
+					switch (this.val) {
+						case 'mid':
+							return ParameterVal_verticalAlignment_mid;
+						case 'b':
+							return ParameterVal_verticalAlignment_b;
+						case 't':
+							return ParameterVal_verticalAlignment_t;
+						default:
+							return this.val;
+					}
+				case Param_type_horzAlign:
+					switch (this.val) {
+						case 'r':
+							return ParameterVal_diagramHorizontalAlignment_r;
+						case 'l':
+							return ParameterVal_diagramHorizontalAlignment_l;
+						case 'ctr':
+							return ParameterVal_diagramHorizontalAlignment_ctr;
+						default:
+							return this.val;
+					}
+				case Param_type_ar:
+					return parseFloat(this.val);
+				default:
+					return this.val;
+			}
+		};
 
     Param.prototype.setType = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParamType, this.getType(), pr));
@@ -4046,6 +4155,47 @@ Because of this, the display is sometimes not correct.
 
     InitClass(IteratorAttributes, CBaseFormatObject, AscDFH.historyitem_type_IteratorAttributes);
 
+
+	  IteratorAttributes.prototype.getNodesArray = function (smartartAlgorithm) {
+		  const currentNode = smartartAlgorithm.getCurrentNode();
+		  let nodes = [];
+		  for (let i = 0; i < this.axis.length; i += 1) {
+			  const tempNodes = [];
+			  currentNode.getNodesByAxis(tempNodes, this.getAxis(i), this.getPtType(i), this.getCount(i));
+				const step = this.getStep(i);
+			  for (let j = this.getStart(i); j < tempNodes.length; j += step) {
+				  nodes.push(tempNodes[j]);
+			  }
+		  }
+		  return nodes;
+	  };
+	  IteratorAttributes.prototype.getPtType = function (index) {
+		  if (this.ptType[index]) {
+				return this.ptType[index].getVal();
+		  }
+			return ElementType_value_all;
+	  };
+	  IteratorAttributes.prototype.getCount = function (index) {
+			return this.cnt[index];
+	  };
+	  IteratorAttributes.prototype.getAxis = function (index) {
+			if (this.axis[index]) {
+			return this.axis[index].getVal();
+			}
+			return AxisType_value_none;
+	  };
+	  IteratorAttributes.prototype.getStart = function (index) {
+		  if (AscFormat.isRealNumber(this.st[index])) {
+			  return this.st[index] - 1;
+		  }
+		  return 0;
+	  };
+	  IteratorAttributes.prototype.getStep = function (index) {
+		  if (AscFormat.isRealNumber(this.step[index])) {
+			  return this.st[index];
+		  }
+		  return 1;
+	  };
     IteratorAttributes.prototype.addToLstAxis = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.axis.length, Math.max(0, nIdx));
       oHistory.CanAddChanges() && oHistory.Add(new CChangeContent(this, AscDFH.historyitem_IteratorAttributesAddAxis, nInsertIdx, [oPr], true));
@@ -4282,7 +4432,7 @@ Because of this, the display is sometimes not correct.
 
     function ElementType() {
       CBaseFormatObject.call(this);
-      this.val = null;
+      this.val = ElementType_value_all;
     }
 
     InitClass(ElementType, CBaseFormatObject, AscDFH.historyitem_type_ElementType);
@@ -4501,7 +4651,7 @@ Because of this, the display is sometimes not correct.
       oCopy.setInt(this.getInt());
     };
 
-    changesFactory[AscDFH.historyitem_IfArg] = CChangeString;
+    changesFactory[AscDFH.historyitem_IfArg] = CChangeLong;
     changesFactory[AscDFH.historyitem_IfRef] = CChangeString;
     changesFactory[AscDFH.historyitem_IfFunc] = CChangeLong;
     changesFactory[AscDFH.historyitem_IfName] = CChangeString;
@@ -4537,7 +4687,7 @@ Because of this, the display is sometimes not correct.
 
     function If() {
       IteratorAttributes.call(this);
-      this.arg = null;
+      this.arg = If_arg_none;
       this.func = null;
       this.name = null;
       this.op = null;
@@ -4547,9 +4697,58 @@ Because of this, the display is sometimes not correct.
     }
 
     InitClass(If, IteratorAttributes, AscDFH.historyitem_type_If);
+		If.getArgEnum = function (arg) {
+			switch (arg) {
+				case 'animLvl':
+					return If_arg_animLvl;
+				case 'animOne':
+					return If_arg_animOne;
+				case 'bulEnabled':
+					return If_arg_bulEnabled;
+				case 'chMax':
+					return If_arg_chMax;
+				case 'chPref':
+					return If_arg_chPref;
+				case 'dir':
+					return If_arg_dir;
+				case 'hierBranch':
+					return If_arg_hierBranch;
+				case 'orgChart':
+					return If_arg_orgChart;
+				case 'resizeHandles':
+					return If_arg_resizeHandles;
+				case 'none':
+				default:
+					return If_arg_none;
+			}
+		};
+		If.getArgString = function (arg) {
+			switch (arg) {
+				case If_arg_animLvl:
+					return 'animLvl';
+				case If_arg_animOne:
+					return 'animOne';
+				case If_arg_bulEnabled:
+					return 'bulEnabled';
+				case If_arg_chMax:
+					return 'chMax';
+				case If_arg_chPref:
+					return 'chPref';
+				case If_arg_dir:
+					return 'dir';
+				case If_arg_hierBranch:
+					return 'hierBranch';
+				case If_arg_none:
+					return 'none';
+				case If_arg_orgChart:
+					return 'orgChart';
+				case If_arg_resizeHandles:
+					return 'resizeHandles';
 
+			}
+		}
     If.prototype.setArg = function (pr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_IfArg, this.getArg(), pr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_IfArg, this.getArg(), pr));
       this.arg = pr;
     };
 
@@ -4693,7 +4892,7 @@ Because of this, the display is sometimes not correct.
       pWriter._WriteUChar2(8, this.op);
       pWriter._WriteUChar2(9, this.func);
       pWriter._WriteString2(10, this.val);
-      pWriter._WriteString2(11, this.arg);
+      pWriter._WriteString2(11, If.getArgString(this.arg));
     };
     If.prototype.writeChildren = function(pWriter) {
       for(var nIndex = 0; nIndex < this.list.length; ++nIndex) {
@@ -4733,7 +4932,7 @@ Because of this, the display is sometimes not correct.
       else if (8 === nType) this.setOp(oStream.GetUChar());
       else if (9 === nType) this.setFunc(oStream.GetUChar());
       else if (10 === nType) this.setVal(oStream.GetString2());
-      else if (11 === nType) this.setArg(oStream.GetString2());
+      else if (11 === nType) this.setArg(If.getArgEnum(oStream.GetString2()));
     };
 
     If.prototype.readChild = function(nType, pReader) {
@@ -4845,17 +5044,17 @@ Because of this, the display is sometimes not correct.
 
     function Constr() {
       CBaseFormatObject.call(this);
-      this.fact = null;
-      this.for = null;
+      this.fact = 1;
+      this.for = Constr_for_self;
       this.forName = null;
-      this.op = null;
+      this.op = Constr_op_none;
       this.setPtType(new ElementType());
-      this.refFor = null;
+      this.refFor = Constr_for_self;
       this.refForName = null;
       this.setRefPtType(new ElementType());
-      this.refType = null;
+      this.refType = Constr_type_none;
       this.type = null;
-      this.val = null;
+      this.val = 0;
       this.extLst = null;
     }
 
@@ -5844,7 +6043,7 @@ Because of this, the display is sometimes not correct.
     changesFactory[AscDFH.historyitem_SShapeHideGeom] = CChangeBool;
     changesFactory[AscDFH.historyitem_SShapeLkTxEntry] = CChangeBool;
     changesFactory[AscDFH.historyitem_SShapeRot] = CChangeDouble2;
-    changesFactory[AscDFH.historyitem_SShapeType] = CChangeString;
+    changesFactory[AscDFH.historyitem_SShapeType] = CChangeLong;
     changesFactory[AscDFH.historyitem_SShapeZOrderOff] = CChangeLong;
     changesFactory[AscDFH.historyitem_SShapeAdjLst] = CChangeObject;
     changesFactory[AscDFH.historyitem_SShapeExtLst] = CChangeObject;
@@ -5879,12 +6078,12 @@ Because of this, the display is sometimes not correct.
     function SShape() {
       CBaseFormatObject.call(this);
       this.blip = null;
-      this.blipPhldr = null;
-      this.hideGeom = null;
-      this.lkTxEntry = null;
+      this.blipPhldr = false;
+      this.hideGeom = false;
+      this.lkTxEntry = false;
       this.rot = null;
-      this.type = null;
-      this.zOrderOff = null;
+      this.type = LayoutShapeType_outputShapeType_none;
+      this.zOrderOff = 0;
       this.adjLst = null;
       this.extLst = null;
     }
@@ -5917,7 +6116,7 @@ Because of this, the display is sometimes not correct.
     }
 
     SShape.prototype.setType = function (oPr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeString(this, AscDFH.historyitem_SShapeType, this.getType(), oPr));
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_SShapeType, this.getType(), oPr));
       this.type = oPr;
     }
 
@@ -5996,7 +6195,7 @@ Because of this, the display is sometimes not correct.
       pWriter._WriteBool2(3, this.lkTxEntry);
       pWriter._WriteDoubleReal2(4, this.rot);
       pWriter._WriteInt2(5, this.zOrderOff);
-      pWriter._WriteString2(6, this.type);
+      pWriter._WriteString2(6, AscCommon.To_XML_ST_LayoutShapeType(this.type));
 
     };
     SShape.prototype.writeChildren = function(pWriter) {
@@ -6010,7 +6209,7 @@ Because of this, the display is sometimes not correct.
       else if (3 === nType) this.setLkTxEntry(oStream.GetBool());
       else if (4 === nType) this.setRot(oStream.GetDouble());
       else if (5 === nType) this.setZOrderOff(oStream.GetULong());
-      else if (6 === nType) this.setType(oStream.GetString2());
+      else if (6 === nType) this.setType(AscCommon.From_XML_ST_LayoutShapeType(oStream.GetString2()));
     };
     SShape.prototype.readChild = function(nType, pReader) {
       switch (nType) {
@@ -6545,7 +6744,7 @@ Because of this, the display is sometimes not correct.
 
     function DiagramDirection() {
       CBaseFormatObject.call(this);
-      this.val = null;
+      this.val = DiagramDirection_val_norm;
     }
 
     InitClass(DiagramDirection, CBaseFormatObject, AscDFH.historyitem_type_DiagramDirection);
@@ -7725,6 +7924,42 @@ Because of this, the display is sometimes not correct.
     ColorDefStyleLbl.prototype.getChildren = function() {
       return [this.effectClrLst, this.fillClrLst, this.linClrLst, this.txEffectClrLst, this.txFillClrLst, this.txLinClrLst];
     };
+
+	  ColorDefStyleLbl.prototype.getShapeFill = function (index) {
+			const lst = this.fillClrLst && this.fillClrLst.list;
+		  if (lst && lst.length) {
+				const truthIndex = index % lst.length;
+				const uniColor = lst[truthIndex];
+				if (this.checkTransparent(uniColor)) {
+					return AscFormat.CreateNoFillUniFill();
+				}
+				return AscFormat.CreateUniFillByUniColorCopy(uniColor);
+		  }
+	  };
+
+	  ColorDefStyleLbl.prototype.getShapeLn = function (index) {
+		  const lst = this.linClrLst && this.linClrLst.list;
+		  if (lst && lst.length) {
+			  const truthIndex = index % lst.length;
+			  const uniColor = lst[truthIndex];
+			  if (this.checkTransparent(uniColor)) {
+				  return AscFormat.CreateNoFillLine();
+			  }
+
+			  const ln = new AscFormat.CLn();
+			  const fill = AscFormat.CreateUniFillByUniColorCopy(uniColor);
+			  ln.setFill(fill);
+				return ln;
+		  }
+	  };
+
+	  ColorDefStyleLbl.prototype.checkTransparent = function (uniColor) {
+		  const mods = uniColor.Mods;
+			if (mods) {
+				const value = mods.getModValue('alpha');
+				return value === 0;
+			}
+	  }
 
     changesFactory[AscDFH.historyitem_CCommonDataClrListAdd] = CChangesContentNoId;
     changesFactory[AscDFH.historyitem_CCommonDataClrListRemove] = CChangesContentNoId;
@@ -11060,6 +11295,61 @@ Because of this, the display is sometimes not correct.
       }
     };
 
+	  SmartArt.prototype.getRelationOfContent2 = function () {
+		  var dataModel = this.getDataModel() && this.getDataModel().getDataModel();
+		  if (dataModel) {
+			  var connections = {byConnections: {}, custom: {}};
+				connections.byConnections[Cxn_type_presOf] = {};
+				connections.byConnections[Cxn_type_parOf] = {};
+				connections.byConnections[Cxn_type_presParOf] = {};
+				connections.custom.presParOfAssocId = {};
+				connections.custom.presChildParOf = {};
+			  var ptMap = this.getPtMap();
+			  var cxnLst = dataModel.cxnLst.list;
+
+			  cxnLst.forEach(function (cxn) {
+					switch (cxn.type) {
+						case Cxn_type_presOf: {
+							const point = ptMap[cxn.srcId];
+							connections.byConnections[Cxn_type_presOf][point.getModelId()] = ptMap[cxn.destId];
+							break;
+						}
+						case Cxn_type_parOf: {
+							if (!connections.byConnections[Cxn_type_parOf][cxn.srcId]) {
+								connections.byConnections[Cxn_type_parOf][cxn.srcId] = [];
+							}
+							connections.byConnections[Cxn_type_parOf][cxn.srcId].push({
+								point   : ptMap[cxn.destId],
+								sibPoint: ptMap[cxn.sibTransId],
+								parPoint: ptMap[cxn.parTransId],
+								index: parseInt(cxn.srcOrd, 10)
+							});
+							break;
+						}
+						case Cxn_type_presParOf: {
+							if (!connections.byConnections[Cxn_type_presParOf][cxn.srcId]) {
+								connections.byConnections[Cxn_type_presParOf][cxn.srcId] = {};
+							}
+							const presPoint = ptMap[cxn.destId];
+							connections.byConnections[Cxn_type_presParOf][cxn.srcId][cxn.srcOrd] = ptMap[cxn.destId];
+							const presAssocId = presPoint.getPresAssocID();
+							connections.custom.presParOfAssocId[presAssocId] = presPoint;
+							connections.custom.presChildParOf[cxn.destId] = ptMap[cxn.srcId];
+							break;
+						}
+						default:
+							break;
+					}
+			  });
+				for (let id in connections.byConnections[Cxn_type_parOf]) {
+					connections.byConnections[Cxn_type_parOf][id].sort(function (a, b) {
+						return a.index - b.index;
+					});
+				}
+			  return connections;
+		  }
+	  };
+
     SmartArt.prototype.getRelationOfContent = function () {
       var dataModel = this.getDataModel() && this.getDataModel().getDataModel();
       if (dataModel) {
@@ -11068,7 +11358,7 @@ Because of this, the display is sometimes not correct.
         var shapeMap = this.getShapeMap();
         var cxnLst = dataModel.cxnLst.list;
         var presCxnLst = cxnLst.filter(function (cxn) {
-          return cxn.type === 'presOf';
+          return cxn.type === Cxn_type_presOf;
         });
 
         presCxnLst.forEach(function (cxn) {
@@ -11106,7 +11396,7 @@ Because of this, the display is sometimes not correct.
         var shapeMap = this.getShapeMap();
         var cxnLst = dataModel.cxnLst.list;
         var presCxnLst = cxnLst.filter(function (cxn) {
-          return cxn.type === 'presOf' || cxn.type === 'presParOf';
+          return cxn.type === Cxn_type_presOf || cxn.type === Cxn_type_presParOf;
         });
 
         presCxnLst.forEach(function (cxn) {
