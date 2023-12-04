@@ -3810,6 +3810,20 @@ Because of this, the display is sometimes not correct.
 							return this.val;
 					}
 				}
+				case Param_type_linDir: {
+					switch (this.val) {
+						case 'fromL':
+							return ParameterVal_linearDirection_fromL;
+						case 'fromT':
+							return ParameterVal_linearDirection_fromT;
+						case 'fromR':
+							return ParameterVal_linearDirection_fromR;
+						case 'fromB':
+							return ParameterVal_linearDirection_fromB;
+						default:
+							return this.val;
+					}
+				}
 				case Param_type_flowDir: {
 					switch (this.val) {
 						case 'col':
