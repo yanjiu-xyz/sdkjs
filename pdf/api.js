@@ -979,6 +979,16 @@
 	PDFEditorApi.prototype.checkDocumentTitleFonts = function() {
 		// Do not load any fonts
 	};
+
+	PDFEditorApi.prototype.getSelectionState = function()
+	{
+		return null;
+	};
+	PDFEditorApi.prototype.getSpeechDescription = function(prevState, action)
+	{
+		return null;
+	};
+
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Export
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1027,5 +1037,8 @@
 	PDFEditorApi.prototype['asc_CheckCopy']                = PDFEditorApi.prototype.asc_CheckCopy;
 	PDFEditorApi.prototype['Paste']                        = PDFEditorApi.prototype.Paste;
 	PDFEditorApi.prototype['asc_PasteData']                = PDFEditorApi.prototype.asc_PasteData;
+
+	PDFEditorApi.prototype['getSelectionState']            = PDFEditorApi.prototype.Paste;
+	PDFEditorApi.prototype['getSpeechDescription']         = PDFEditorApi.prototype.asc_PasteData;
 
 })(window, window.document);
