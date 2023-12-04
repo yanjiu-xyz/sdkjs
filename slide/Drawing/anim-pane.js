@@ -38,6 +38,8 @@
 
 	const STATE_FLAG_SELECTED = 1;
 	const STATE_FLAG_HOVERED = 2;
+	const STATE_FLAG_PRESSED = 4;
+	const STATE_FLAG_DISABLED = 8;
 
 	const CONTROL_TYPE_UNKNOWN = 0;
 	const CONTROL_TYPE_HEADER = 1;
@@ -282,17 +284,7 @@
 		var ty = oInv.TransformPointY(x, y);
 		return tx >= 0 && tx <= this.extX && ty >= 0 && ty <= this.extY;
 	};
-	CControl.prototype.isHovered = function () {
-		return this.getStateFlag(STATE_FLAG_HOVERED);
-	};
-	CControl.prototype.isActive = function () {
-		if (this.parentControl) {
-			if (!this.eventListener && this.parentControl.isEventListener(this)) {
-				return true;
-			}
-		}
-		return false;
-	};
+
 	CControl.prototype.setStateFlag = function (nFlag, bValue) {
 		var nOldState = this.state;
 		if (bValue) {
@@ -304,15 +296,29 @@
 			this.onUpdate();
 		}
 	};
+	CControl.prototype.getStateFlag = function (nFlag) {
+		return (this.state & nFlag) !== 0;
+	};
+
+	CControl.prototype.isHovered = function () {
+		return this.getStateFlag(STATE_FLAG_HOVERED);
+	};
+	CControl.prototype.isActive = function () {
+		if (this.parentControl) {
+			if (!this.eventListener && this.parentControl.isEventListener(this)) {
+				return true;
+			}
+		}
+		return false;
+	};
+	
 	CControl.prototype.setHoverState = function () {
 		this.setStateFlag(STATE_FLAG_HOVERED, true);
 	};
 	CControl.prototype.setNotHoverState = function () {
 		this.setStateFlag(STATE_FLAG_HOVERED, false);
 	};
-	CControl.prototype.getStateFlag = function (nFlag) {
-		return (this.state & nFlag) !== 0;
-	};
+
 	CControl.prototype.onMouseMove = function (e, x, y) {
 		if (e.IsLocked) {
 			return false;
@@ -1379,9 +1385,6 @@
 	CButton.prototype.canHandleEvents = function () {
 		return true;
 	};
-	CButton.prototype.canHandleEvents = function () {
-		return true;
-	};
 	// CButton.prototype.draw = function(graphics) {
 	//     if(this.isHidden()){
 	//         return false;
@@ -1471,6 +1474,13 @@
 		}
 	};
 
+	CButton.prototype.isPressed = function () {
+		return this.getStateFlag(STATE_FLAG_PRESSED);
+	};
+	CButton.prototype.isDisabled = function () {
+		return this.getStateFlag(STATE_FLAG_DISABLED);
+	};
+
 	var PLAY_BUTTON_WIDTH = 82 * AscCommon.g_dKoef_pix_to_mm;
 	var PLAY_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
 	var PLAY_BUTTON_LEFT = 145 * AscCommon.g_dKoef_pix_to_mm;
@@ -1489,6 +1499,7 @@
 	function CAnimPaneHeader(oDrawer) {
 		CTopControl.call(this, oDrawer);
 		this.label = this.addControl(new CLabel(this, "Animation Pane", 10, true));
+
 		this.playButton = this.addControl(new CButton(
 			this, null, null, managePreview));
 		this.moveUpButton = this.addControl(new CButton(

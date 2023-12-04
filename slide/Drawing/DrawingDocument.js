@@ -6799,11 +6799,25 @@ function CAnimationPaneDrawer(page, htmlElement)
 		oThis.list.CheckPaint();
 		oThis.timeline.CheckPaint();
 	};
-
 	oThis.onMouseWhell = function(e)
 	{
 		return oThis.list.onMouseWhell(e);
 	};
+	oThis.onPresentationChange = function () {
+		console.log('onPresentationChange')
+		if (!Asc.editor.WordControl.m_oAnimPaneApi.header.Control) { return }
+
+		const STATE_FLAG_DISABLED = 8;
+
+		// Changing buttons state
+		Asc.editor.WordControl.m_oAnimPaneApi.header.Control.playButton.setStateFlag(STATE_FLAG_DISABLED, !Asc.editor.asc_canStartAnimationPreview())
+		Asc.editor.WordControl.m_oAnimPaneApi.header.Control.moveUpButton.setStateFlag(STATE_FLAG_DISABLED, !Asc.editor.asc_canMoveAnimationEarlier())
+		Asc.editor.WordControl.m_oAnimPaneApi.header.Control.moveDownButton.setStateFlag(STATE_FLAG_DISABLED, !Asc.editor.asc_canMoveAnimationLater())
+		
+		// Hide or Show timelineContainer
+		!Asc.editor.asc_canStartAnimationPreview() ?
+			Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.hide() : Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.show()
+	}
 
 }
 CAnimationPaneDrawer.prototype = Object.create(CPaneDrawerBase);
