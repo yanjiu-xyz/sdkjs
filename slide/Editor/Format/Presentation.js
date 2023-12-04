@@ -8917,7 +8917,8 @@ CPresentation.prototype.Document_UpdateInterfaceState = function () {
 	this.Api.sendEvent("asc_onCanCopyCut", this.Can_CopyCut());
 
 	AscCommon.g_specialPasteHelper.SpecialPasteButton_Update_Position();
-	Asc.editor.WordControl.m_oAnimPaneApi.onPresentationChange()
+	
+	Asc.editor.WordControl.m_oAnimPaneApi && Asc.editor.WordControl.m_oAnimPaneApi.UpdateState()
 };
 
 CPresentation.prototype.changeBackground = function (bg, arr_ind, bNoCreatePoint) {

@@ -1477,9 +1477,17 @@
 	CButton.prototype.isPressed = function () {
 		return this.getStateFlag(STATE_FLAG_PRESSED);
 	};
+
+	CButton.prototype.disable = function () {
+		return this.setStateFlag(STATE_FLAG_DISABLED, true)
+	};
+	CButton.prototype.enable = function () {
+		return this.setStateFlag(STATE_FLAG_DISABLED, false)
+	};
 	CButton.prototype.isDisabled = function () {
 		return this.getStateFlag(STATE_FLAG_DISABLED);
 	};
+
 
 	var PLAY_BUTTON_WIDTH = 82 * AscCommon.g_dKoef_pix_to_mm;
 	var PLAY_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
