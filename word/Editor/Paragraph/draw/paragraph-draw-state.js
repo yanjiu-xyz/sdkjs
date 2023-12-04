@@ -45,6 +45,13 @@
 		this.highlightState  = new AscWord.ParagraphHighlightDrawState(this);
 		this.runElementState = new AscWord.ParagraphContentDrawState(this);
 		this.lineState       = new AscWord.ParagraphLineDrawState(this);
+		
+		this.paragraph  = null;
+		this.graphics   = null;
+		this.theme      = null;
+		this.colorMap   = null;
+		this.bgColor    = null;
+		this.compiledPr = null;
 	}
 	
 	ParagraphDrawState.prototype = Object.create(AscWord.ParagraphRecalculateStateBase.prototype);
@@ -52,8 +59,29 @@
 	
 	ParagraphDrawState.prototype.init = function(paragraph, graphics)
 	{
+		this.paragraph = paragraph;
+		this.graphics  = graphics;
+		
+		this.theme      = paragraph.getTheme();
+		this.colorMap   = paragraph.getColorMap();
+		this.compiledPr = paragraph.getCompiledPr();
+		
+		let paraParent = paragraph.GetParent();
+		let bgColor    = null;
+		if (this.compiledPr.ParaPr.Shd && !this.compiledPr.ParaPr.Shd.IsNil())
+		{
+			bgColor = this.compiledPr.ParaPr.Shd.GetSimpleColor(this.theme, this.colorMap);
+			if (bgColor.Auto && p)
+				bgColor = paraParent.Get_TextBackGroundColor();
+		}
+		else if (paraParent)
+		{
+			bgColor = paraParent.Get_TextBackGroundColor();
+		}
+		this.bgColor = bgColor;
+		
 		this.highlightState.init(paragraph, graphics);
-		this.runElementState.init(paragraph, graphics);
+		this.runElementState.init();
 		this.lineState.init(paragraph, graphics);
 	};
 	ParagraphDrawState.prototype.getHighlightState = function()
@@ -67,6 +95,30 @@
 	ParagraphDrawState.prototype.getLineState = function()
 	{
 		return this.lineState;
+	};
+	ParagraphDrawState.prototype.getParagraph = function()
+	{
+		return this.paragraph;
+	};
+	ParagraphDrawState.prototype.getGraphics = function()
+	{
+		return this.graphics;
+	};
+	ParagraphDrawState.prototype.getTheme = function()
+	{
+		return this.theme;
+	};
+	ParagraphDrawState.prototype.getColorMap = function()
+	{
+		return this.colorMap;
+	};
+	ParagraphDrawState.prototype.getBgColor = function()
+	{
+		return this.bgColor;
+	};
+	ParagraphDrawState.prototype.getParagraphCompiledPr = function()
+	{
+		return this.compiledPr;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.ParagraphDrawState = ParagraphDrawState;

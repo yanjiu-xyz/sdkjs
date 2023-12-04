@@ -725,6 +725,10 @@ Paragraph.prototype.GetTheme = function()
 	
 	return AscFormat.GetDefaultTheme();
 };
+Paragraph.prototype.getTheme = function()
+{
+	return this.GetTheme();
+};
 Paragraph.prototype.Get_ColorMap = function()
 {
 	return this.GetColorMap();
@@ -735,6 +739,10 @@ Paragraph.prototype.GetColorMap = function()
 		return this.Parent.Get_ColorMap();
 	
 	return AscFormat.GetDefaultColorMap();
+};
+Paragraph.prototype.getColorMap = function()
+{
+	return this.GetColorMap();
 };
 Paragraph.prototype.Reset = function(X, Y, XLimit, YLimit, PageNum, ColumnNum, ColumnsCount)
 {
@@ -2003,29 +2011,14 @@ Paragraph.prototype.Draw = function(CurPage, pGraphics)
 	if (!this.Pages[CurPage] || this.Pages[CurPage].EndLine < 0)
 		return;
 	
-	let drawState = AscWord.ParagraphStatePool.getDrawState();
-	drawState.init(this, pGraphics);
-
 	if (pGraphics.Start_Command)
 	{
 		pGraphics.Start_Command(AscFormat.DRAW_COMMAND_PARAGRAPH, this);
 	}
 
 	var Pr = this.Get_CompiledPr();
-
-	// Выясним какая заливка у нашего текста
-	var BgColor  = undefined;
-	if (Pr.ParaPr.Shd && !Pr.ParaPr.Shd.IsNil())
-	{
-		BgColor = Pr.ParaPr.Shd.GetSimpleColor(this.GetTheme(), this.GetColorMap());
-		if (true === BgColor.Auto)
-			BgColor = this.Parent.Get_TextBackGroundColor();
-	}
-	else
-	{
-		// Нам надо выяснить заливку у родительского класса (возможно мы находимся в ячейке таблицы с забивкой)
-		BgColor = this.Parent.Get_TextBackGroundColor();
-	}
+	let drawState = AscWord.ParagraphStatePool.getDrawState();
+	drawState.init(this, pGraphics);
 
 	// 1 часть отрисовки :
 	//    Рисуем слева от параграфа знак, если данный параграф зажат другим пользователем
@@ -2044,11 +2037,11 @@ Paragraph.prototype.Draw = function(CurPage, pGraphics)
 
 	// 4 часть отрисовки :
 	//    Рисуем сами элементы параграфа
-	this.Internal_Draw_4(CurPage, pGraphics, Pr, drawState, BgColor, this.GetTheme(), this.GetColorMap());
+	this.drawRunContent(CurPage, pGraphics, drawState);
 
 	// 5 часть отрисовки :
 	//    Рисуем различные подчеркивания и зачеркивания.
-	this.Internal_Draw_5(CurPage, pGraphics, Pr, drawState, BgColor);
+	this.Internal_Draw_5(CurPage, pGraphics, drawState);
 
 	// 6 часть отрисовки :
 	//    Рисуем верхнюю, нижнюю и промежуточную границы
@@ -2853,15 +2846,19 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr, drawState
 		}
 	}
 };
-Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, drawState, BgColor, Theme, ColorMap)
+Paragraph.prototype.drawRunContent = function(CurPage, pGraphics, drawState)
 {
 	let PDSE = drawState.getRunElementState();
-	PDSE.Reset(BgColor, Theme, ColorMap);
-	PDSE.ComplexFields.ResetPage(this, CurPage);
-
+	
 	var StartLine = this.Pages[CurPage].StartLine;
 	var EndLine   = this.Pages[CurPage].EndLine;
-
+	
+	let BgColor  = drawState.getBgColor();
+	let Theme    = drawState.getTheme();
+	let ColorMap = drawState.getColorMap();
+	let Pr       = drawState.getParagraphCompiledPr();
+	
+	PDSE.resetPage(CurPage);
 	for (var CurLine = StartLine; CurLine <= EndLine; CurLine++)
 	{
 		var Line        = this.Lines[CurLine];
@@ -2881,16 +2878,16 @@ Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, drawState
 		{
 			this.private_DrawLineNumber(X, Y, pGraphics, this.LineNumbersInfo.StartNum + CurLine + 1, Theme, ColorMap, CurPage, CurLine);
 		}
-
+		
+		PDSE.resetLine(CurLine, Y, Y - Line.Metrics.Ascent, Y + Line.Metrics.Descent);
 		for (var CurRange = 0; CurRange < RangesCount; CurRange++)
 		{
 			X = this.Lines[CurLine].Ranges[CurRange].XVisible;
 
 			var Range = Line.Ranges[CurRange];
-
-			PDSE.Set_LineMetrics(Y, Y - Line.Metrics.Ascent, Y + Line.Metrics.Descent);
-			PDSE.beginRange(CurPage, CurLine, CurRange, X, Y);
-
+			
+			PDSE.beginRange(CurRange, X);
+			
 			var StartPos = Range.StartPos;
 			var EndPos   = Range.EndPos;
 
@@ -3161,9 +3158,13 @@ Paragraph.prototype.Internal_Draw_4 = function(CurPage, pGraphics, Pr, drawState
 		}
 	}
 };
-Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, Pr, drawState, BgColor)
+Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, drawState)
 {
 	let PDSL = drawState.getLineState();
+	
+	let BgColor = drawState.getBgColor();
+	let Pr      = drawState.getParagraphCompiledPr();
+	
 	PDSL.Reset(BgColor);
 	PDSL.ComplexFields.ResetPage(this, CurPage);
 
@@ -10799,6 +10800,10 @@ Paragraph.prototype.Get_CompiledPr = function()
 	}
 
 	return Pr;
+};
+Paragraph.prototype.getCompiledPr = function()
+{
+	return this.Get_CompiledPr();
 };
 Paragraph.prototype.Recalc_CompiledPr = function()
 {

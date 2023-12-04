@@ -86,43 +86,47 @@
 		this.rtl      = false;
 		this.bidiFlow = new AscWord.BidiFlow(this);
 	}
-	ParagraphContentDrawState.prototype.init = function(paragraph, graphics)
+	ParagraphContentDrawState.prototype.init = function()
 	{
-		this.Paragraph = paragraph;
-		this.Graphics  = graphics;
-	};
-	ParagraphContentDrawState.prototype.Reset = function(BgColor, Theme, ColorMap)
-	{
-		this.BgColor  = BgColor;
-		this.Theme    = Theme;
-		this.ColorMap = ColorMap;
+		this.Paragraph = this.drawState.getParagraph();
+		this.Graphics  = this.drawState.getGraphics();
+		
+		this.BgColor  = this.drawState.getBgColor();
+		this.Theme    = this.drawState.getTheme();
+		this.ColorMap = this.drawState.getColorMap();
 		
 		this.VisitedHyperlink = false;
 		this.Hyperlink        = false;
 		
 		this.CurPos = new AscWord.CParagraphContentPos();
 	};
-	ParagraphContentDrawState.prototype.beginRange = function(page, line, range, x, y)
+	ParagraphContentDrawState.prototype.resetPage = function(page)
+	{
+		this.Page = page;
+		this.ComplexFields.ResetPage(this.Paragraph, page);
+	};
+	ParagraphContentDrawState.prototype.resetLine = function(line, baseLine, lineTop, lineBottom)
+	{
+		this.Line = line;
+		
+		this.LineTop    = lineTop;
+		this.LineBottom = lineBottom;
+		this.BaseLine   = baseLine;
+		
+		this.Y = baseLine;
+	};
+	ParagraphContentDrawState.prototype.beginRange = function(range, x)
 	{
 		this.run = null;
 		
-		this.Page  = page;
-		this.Line  = line;
 		this.Range = range;
 		
 		this.X = x;
-		this.Y = y;
 		this.bidiFlow.begin(this.rtl);
 	};
 	ParagraphContentDrawState.prototype.endRange = function()
 	{
 		this.bidiFlow.end();
-	};
-	ParagraphContentDrawState.prototype.Set_LineMetrics = function(BaseLine, Top, Bottom)
-	{
-		this.LineTop    = Top;
-		this.LineBottom = Bottom;
-		this.BaseLine   = BaseLine;
 	};
 	/**
 	 * @param element {AscWord.CRunElementBase}
