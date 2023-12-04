@@ -10204,7 +10204,7 @@ Because of this, the display is sometimes not correct.
         CGroupShape.prototype.recalculate.call(this);
         if (this.bFirstRecalculate) {
           this.bFirstRecalculate = false;
-          this.fitFontSize();
+          // this.fitFontSize();
         }
         if (oldParaMarks) {
           editor.ShowParaMarks = oldParaMarks;
