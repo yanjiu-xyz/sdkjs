@@ -1052,6 +1052,8 @@
 
 	function CScrollHor(oParentControl, oContainer, oChild) {
 		CScrollBase.call(this, oParentControl, oContainer, oChild);
+		this.leftButton = this.children[0];
+		this.rightButton = this.children[1];
 	}
 
 	InitClass(CScrollHor, CScrollBase, CONTROL_TYPE_SCROLL_HOR);
@@ -1606,8 +1608,17 @@
 	function CTimelineContainer(oDrawer) {
 		CTopControl.call(this, oDrawer);
 		this.drawer = oDrawer;
-		this.secondsButton = this.addControl(new CButton(this));
+
+		this.secondsButton = this.addControl(new CButton(
+			this, null, null, manageTimelineScale));
 		this.timeline = this.addControl(new CTimeline(this));
+
+		// Event handler for secondsButton
+		function manageTimelineScale(event, x, y) {
+			if (!this.hit(x, y)) { return }
+			this.next.tmScaleIdx = (this.next.tmScaleIdx + 1) % 11
+			this.next.onUpdate()
+		}
 	}
 
 	InitClass(CTimelineContainer, CTopControl, CONTROL_TYPE_TIMELINE_CONTAINER);
