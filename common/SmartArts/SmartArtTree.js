@@ -77,7 +77,6 @@
 		const list = this.list;
 		const parentPresNode = smartartAlgorithm.getCurrentPresNode();
 		const curPresNode = smartartAlgorithm.getPresNode(this);
-		smartartAlgorithm.addToColorCheck(curPresNode);
 		parentPresNode.addChild(curPresNode);
 		smartartAlgorithm.addCurrentPresNode(curPresNode);
 		for (let i = 0; i < list.length; i += 1) {
@@ -281,10 +280,11 @@
 				const presNodes = this.colorCheck[styleLbl];
 				for (let i = 0; i < presNodes.length; i += 1) {
 					const presNode = presNodes[i];
-					const shape = presNode.shape;
-					if (shape) {
-						shape.setFill(colorStyleLbl.getShapeFill(i));
-						shape.setLn(colorStyleLbl.getShapeLn(i));
+					const mainShape = presNode.shape;
+					if (mainShape) {
+						const colorShape = mainShape.connectorShape || mainShape;
+						colorShape.setFill(colorStyleLbl.getShapeFill(i));
+						colorShape.setLn(colorStyleLbl.getShapeLn(i));
 					}
 				}
 			}
@@ -397,6 +397,9 @@
 			presNode.startAlgorithm(oThis);
 		});
 		this.generateConnectors();
+		this.forEachPresFromTop(function (presNode) {
+			oThis.addToColorCheck(presNode);
+		});
 	};
 	SmartArtAlgorithm.prototype.generateConnectors = function () {
 		while (this.connectorAlgorithmStack.length) {
@@ -432,7 +435,7 @@
 		while (elements.length) {
 			const element = elements.pop();
 			callback(element);
-			for (let i = 0; i < element.childs.length; i++) {
+			for (let i = element.childs.length - 1; i >= 0; i -= 1) {
 				elements.push(element.childs[i]);
 			}
 		}
@@ -714,6 +717,7 @@
 		this.shape = null;
 		this.calcInfo = null;
 		this.connectorShape = null;
+		this.customAdj = null;
 	}
 	ShadowShape.prototype.getBounds = function () {
 		return {
@@ -793,12 +797,13 @@
 		return shape;
 	}
 	ShadowShape.prototype.applyAdjLst = function (editorShape) {
-		const adjLst = this.shape.adjLst;
+		const adjLst = this.customAdj || (this.shape && this.shape.adjLst);
 		if (adjLst) {
 			const geometry = editorShape.spPr.geometry;
 			for (let i = 0; i < adjLst.list.length; i += 1) {
 				const adj = adjLst.list[i];
-				const adjName = "adj" + adj.idx;
+				const geometryAdj = geometry.ahXYLstInfo[adj.idx - 1];
+				const adjName = geometryAdj && (geometryAdj.gdRefX || geometryAdj.gdRefY);
 				if (geometry.avLst[adjName]) {
 					geometry.AddAdj(adjName, 0, adj.val * 100000);
 				}
@@ -926,6 +931,9 @@
 		this.nodes = [];
 		this.parentNode = null;
 	}
+	BaseAlgorithm.prototype.setConnectionDistance = function (value, isStart) {
+
+	};
 	BaseAlgorithm.prototype.afterShape = function (smartartAlgorithm) {};
 	BaseAlgorithm.prototype.afterLayoutNode = function (smartartAlgorithm) {};
 	BaseAlgorithm.prototype.setParams = function (params) {
@@ -945,24 +953,30 @@
 	BaseAlgorithm.prototype.setParentNode = function (node) {
 		this.parentNode = node;
 	};
+	BaseAlgorithm.prototype.setFirstConnectorShape = function () {
 
+	};
+	BaseAlgorithm.prototype.setLastConnectorShape = function () {
+
+	};
 	function PositionAlgorithm() {
 		BaseAlgorithm.call(this);
 		this.connector = null;
 	}
 	AscFormat.InitClassWithoutType(PositionAlgorithm, BaseAlgorithm);
 
-	PositionAlgorithm.prototype.checkConnector = function (shapes) {
-		for (let i = 0; i < shapes.length; i++) {
-			const shape = shapes[i];
+	PositionAlgorithm.prototype.setConnections = function (nodes) {
+		for (let i = 0; i < nodes.length; i++) {
+			const node = nodes[i];
+			const shape = node.shape;
 			if (shape.type === AscFormat.LayoutShapeType_outputShapeType_conn) {
 				const node = shape.node;
 				const algorithm = node.algorithm;
-				if (shapes[i - 1]) {
-					algorithm.setFirstConnectorShape(shapes[i - 1]);
-				}
-				if (shapes[i + 1]) {
-					algorithm.setFirstConnectorShape(shapes[i + 1]);
+				const previousShape = nodes[i - 1] && nodes[i - 1].shape;
+				const nextShape = nodes[i + 1] && nodes[i + 1].shape;
+				if (algorithm && previousShape && nextShape) {
+					algorithm.setFirstConnectorShape(previousShape);
+					algorithm.setLastConnectorShape(nextShape);
 				}
 			}
 		}
@@ -1436,13 +1450,13 @@
 			const child = childs[i];
 			const shape = child.shape;
 			if (shape) {
+				child.changeShapeSizes(this.calcValues.coefficient);
 				shape.x += row.width;
 				row.push(shape);
-				child.changeShapeSizes(this.calcValues.coefficient);
 				if (row.height < shape.h) {
 					row.height = shape.h;
 				}
-				row.width += shape.width;
+				row.width += shape.w;
 			}
 		}
 		row.cleanHeight = row.height;
@@ -1462,9 +1476,11 @@
 		});
 		this.applyOffsets();
 		this.applyPostAlgorithmSettings();
+		this.setConnections(childs);
 	}
 
-	LinearAlgorithm.prototype.getShapes = function () {
+	LinearAlgorithm.prototype.getShapes = function (smartartAlgorithm) {
+		smartartAlgorithm.applyColorsDef();
 		const shapes = [];
 
 		this.rows.forEachShape(function (shape) {
@@ -1539,6 +1555,13 @@
 		};
 	}
 	AscFormat.InitClassWithoutType(ConnectorAlgorithm, BaseAlgorithm);
+	ConnectorAlgorithm.prototype.setConnectionDistance = function (value, isStart) {
+		if (isStart) {
+			this.connectionDistances.begin = value;
+		} else {
+			this.connectionDistances.end = value;
+		}
+	};
 	ConnectorAlgorithm.prototype.afterLayoutNode = function (presNode, smartartAlgorithm) {
 		presNode.createShadowShape();
 		smartartAlgorithm.addConnectorAlgorithm(this);
@@ -1549,26 +1572,38 @@
 			this.params[AscFormat.Param_type_dim] = AscFormat.ParameterVal_connectorDimension_2D;
 		}
 	};
-	ConnectorAlgorithm.prototype.setFirstConnectorShape = function () {
-
+	ConnectorAlgorithm.prototype.setFirstConnectorShape = function (shape) {
+		this.startShape = shape;
 	};
-	ConnectorAlgorithm.prototype.setEndShape = function () {
-
+	ConnectorAlgorithm.prototype.setLastConnectorShape = function (shape) {
+		this.endShape = shape;
 	};
 	ConnectorAlgorithm.prototype.connectShapes = function () {
-		if (this.params[AscFormat.Param_type_dim] === AscFormat.ParameterVal_connectorDimension_2D) {
-			this.createShapeConnector();
-		} else if (this.params[AscFormat.Param_type_dim] === AscFormat.ParameterVal_connectorDimension_1D) {
-			this.createLineConnector();
+		if (this.startShape && this.endShape) {
+			if (this.params[AscFormat.Param_type_dim] === AscFormat.ParameterVal_connectorDimension_2D) {
+				this.createShapeConnector();
+			} else if (this.params[AscFormat.Param_type_dim] === AscFormat.ParameterVal_connectorDimension_1D) {
+				this.createLineConnector();
+			}
 		}
 	};
-
+	ConnectorAlgorithm.prototype.getArrowAdjLst = function () {
+		const customAdjLst = new AscFormat.AdjLst();
+		const adj1 = new AscFormat.Adj();
+		const adj2 = new AscFormat.Adj();
+		adj1.setIdx(1);
+		adj2.setIdx(2);
+		adj1.setVal(0.6);
+		adj2.setVal(0.5);
+		customAdjLst.addToLst(0, adj1);
+		customAdjLst.addToLst(0, adj2);
+		return customAdjLst;
+	};
 	ConnectorAlgorithm.prototype.createShapeConnector = function () {
 		const startBounds = this.startShape.getBounds();
 		const endBounds = this.endShape.getBounds();
 
-		const shapeAngle = this.getShapeAngle(startBounds, endBounds);
-		const connectionDistanceInfo = this.getConnectionDistanceInfo();
+		const connectionDistanceInfo = this.getConnectionDistanceInfo(startBounds, endBounds);
 		const distance = connectionDistanceInfo.distance;
 		let start = 0;
 		let end = distance;
@@ -1579,54 +1614,103 @@
 			end -= distance * this.connectionDistances.end;
 		}
 
-		start += startBounds.r;
-		end += startBounds.r;
-
+		const width = end - start;
 		const connectorShape = new ShadowShape();
 		connectorShape.type = AscFormat.LayoutShapeType_shapeType_rightArrow;
-		connectorShape.w = start - end;
-		connectorShape.rot = shapeAngle;
+		connectorShape.customAdj = this.getArrowAdjLst();
+
 		connectorShape.h = this.parentNode.shape.h;
+		connectorShape.w = width;
+		connectorShape.x = start + startBounds.r;
+		connectorShape.y = startBounds.t + (startBounds.b - (startBounds.t + connectorShape.h)) / 2;
+		connectorShape.rot = connectionDistanceInfo.angle;
+		connectorShape.node = this.parentNode;
+
+		connectorShape.shape = this.parentNode.shape.shape;
 		this.parentNode.shape.connectorShape = connectorShape;
+		const prSet = this.parentNode.getPrSet();
+		if (!prSet.getPresStyleLbl()) {
+			prSet.setPresStyleLbl("sibTrans2D1");
+		}
 	};
 	ConnectorAlgorithm.prototype.getShapePoint = function (bounds) {
 		const point = {x: 0, y: 0};
-		if (this.params[AscFormat.Param_type_begPts] === AscFormat.ParameterVal_connectorPoint_auto) {
+		const begPoints = this.params[AscFormat.Param_type_begPts];
+		const isAuto = begPoints && (begPoints[0] === AscFormat.ParameterVal_connectorPoint_auto);
+		if (isAuto) {
 			point.x = bounds.l + (bounds.r - bounds.l) / 2;
 			point.y = bounds.t + (bounds.b - bounds.t) / 2;
 		}
 		return point;
 	};
 	ConnectorAlgorithm.prototype.getConnectionDistanceInfo = function (startBounds, endBounds) {
-		const result = {
-			distance: 0,
-			position: {}
-		};
-		const bottomDiff = startBounds.t - endBounds.b;
-		const topDiff = startBounds.b - endBounds.t;
-		const leftDiff = startBounds.l - endBounds.r;
-		const rightDiff = startBounds.r - endBounds.l;
-		if (rightDiff > leftDiff) {
-			result.position.isRight = true;
-		} else {
-			result.position.isLeft = true;
-		}
-		if (topDiff > bottomDiff) {
-			result.position.isTop = true;
-		} else {
-			result.position.isBottom = true;
-		}
-		result.distance = Math.max(bottomDiff, topDiff, leftDiff, rightDiff);
-		return result;
-	}
-
-	ConnectorAlgorithm.prototype.getShapeAngle = function (startBounds, endBounds) {
 		const startPoint = this.getShapePoint(startBounds);
 		const endPoint = this.getShapePoint(endBounds);
+
+		const angle = this.getShapeAngle(startPoint, endPoint);
+		const startEdgePoint = this.getMinShapeEdgePoint(startPoint, endPoint, startBounds, angle);
+		const endEdgePoint = this.getMinShapeEdgePoint(startPoint, endPoint, endBounds, AscFormat.normalizeRotate(angle + Math.PI));
+
+		if (startEdgePoint && endEdgePoint) {
+			const vX = endEdgePoint.x - startEdgePoint.x;
+			const vY = endEdgePoint.y - startEdgePoint.y;
+			const distance = Math.sqrt(vX * vX + vY * vY);
+			return {
+				distance: distance,
+				angle: -angle,
+				startEdgePoint: startEdgePoint,
+				endEdgePoint: startEdgePoint
+			};
+		}
+		return null;
+	}
+
+	ConnectorAlgorithm.prototype.getMinShapeEdgePoint = function (startPoint, endPoint, bounds, angle) {
+		let firstPoint;
+		let secondPoint;
+		if (angle >= 0 && angle < Math.PI / 2) {
+			firstPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.t}, {x: bounds.r, y: bounds.t});
+			secondPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.r, y: bounds.t}, {x: bounds.r, y: bounds.b});
+		} else if (angle >= Math.PI / 2 && angle < Math.PI) {
+			firstPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.t}, {x: bounds.r, y: bounds.t});
+			secondPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.t}, {x: bounds.l, y: bounds.b});
+		} else if (angle >= Math.PI && angle < 3 * Math.PI / 2) {
+			firstPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.b}, {x: bounds.r, y: bounds.b});
+			secondPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.t}, {x: bounds.l, y: bounds.b});
+		} else {
+			firstPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.r, y: bounds.t}, {x: bounds.r, y: bounds.b});
+			secondPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.b}, {x: bounds.r, y: bounds.b});
+		}
+
+		if (firstPoint && secondPoint) {
+			const firstSqrDistance = firstPoint.x * firstPoint.x + firstPoint.y * firstPoint.y;
+			const secondSqrDistance = secondPoint.x * secondPoint.x + secondPoint.y * secondPoint.y;
+			return firstSqrDistance > secondSqrDistance ? firstPoint : secondPoint;
+		} else if (firstPoint) {
+			return firstPoint;
+		}
+		return secondPoint;
+	}
+
+	ConnectorAlgorithm.prototype.getShapeEdgePoint = function (startLinePoint1, startLinePoint2, endLinePoint1, endLinePoint2) {
+		const divider = (startLinePoint1.x - startLinePoint2.x) * (endLinePoint1.y - endLinePoint2.y) - (startLinePoint1.y - startLinePoint2.y) * (endLinePoint1.x - endLinePoint2.x);
+		if (divider === 0) {
+			return null;
+		}
+		const m1 = (startLinePoint1.x * startLinePoint2.y - startLinePoint1.y * startLinePoint2.x);
+		const m2 = (endLinePoint1.x * endLinePoint2.y - endLinePoint1.y * endLinePoint2.x);
+
+		const x = (m1 * (endLinePoint1.x - endLinePoint2.x) - m2 * (startLinePoint1.x - startLinePoint2.x)) / divider;
+		const y = (m1 * (endLinePoint1.y - endLinePoint2.y) - m2 * (startLinePoint1.y - startLinePoint2.y)) / divider;
+		return {x: x, y: y};
+	}
+
+	ConnectorAlgorithm.prototype.getShapeAngle = function (startPoint, endPoint) {
 		const x = endPoint.x - startPoint.x;
 		const y = endPoint.y - startPoint.y;
 		const vectorLength = Math.sqrt(x * x + y * y);
-		return Math.acos(x / vectorLength);
+		const angle = Math.acos(x / vectorLength);
+		return AscFormat.isRealNumber(angle) ? angle : 0;
 	}
 
 	ConnectorAlgorithm.prototype.createLineConnector = function () {
@@ -1659,7 +1743,7 @@
 	AscFormat.InitClassWithoutType(CompositeAlgorithm, BaseAlgorithm);
 
 	CompositeAlgorithm.prototype.afterLayoutNode = function (presNode) {
-		presNode.createShadowShape();
+		presNode.createShadowShape(true);
 		presNode.shape.isSpacing = false;
 	};
 
@@ -1880,6 +1964,12 @@ PresNode.prototype.addChild = function (ch, pos) {
 					this.constr[AscFormat.Constr_type_l] = this.constr[AscFormat.Constr_type_r] - width;
 				}
 				break;
+			case AscFormat.Constr_type_begPad:
+			case AscFormat.Constr_type_endPad:
+				if (this.algorithm) {
+					this.algorithm.setConnectionDistance(constr.fact, constr.type === AscFormat.Constr_type_begPad);
+				}
+				break;
 			default:
 				break;
 		}
@@ -1969,11 +2059,11 @@ PresNode.prototype.addChild = function (ch, pos) {
 		this.layoutInfo.constrLst = lst;
 	};
 
-	PresNode.prototype.createShadowShape = function () {
+	PresNode.prototype.createShadowShape = function (isComposite) {
 		this.shape = new ShadowShape(this);
 		this.shape.initFromShape(this.layoutInfo.shape);
 
-		if (this.childs.length) {
+		if (isComposite && this.childs.length) {
 			let childBounds = {
 				custom:
 					{

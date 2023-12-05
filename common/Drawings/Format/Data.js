@@ -3865,6 +3865,21 @@ Because of this, the display is sometimes not correct.
 						default:
 							return this.val;
 					}
+				case Param_type_begPts:
+				case Param_type_endPts:
+					const arrVal = this.val.split(' ');
+					const arrResult = [];
+					for (let i = 0; i < arrVal.length; i++) {
+						const val = arrVal[i];
+						switch (val) {
+							case "auto":
+								arrResult.push(ParameterVal_connectorPoint_auto);
+								break;
+							default:
+								break;
+						}
+					}
+					return arrResult;
 				case Param_type_ar:
 					return parseFloat(this.val);
 				default:
@@ -7953,18 +7968,26 @@ Because of this, the display is sometimes not correct.
 
 	  ColorDefStyleLbl.prototype.getShapeLn = function (index) {
 		  const lst = this.linClrLst && this.linClrLst.list;
-		  if (lst && lst.length) {
-			  const truthIndex = index % lst.length;
-			  const uniColor = lst[truthIndex];
-			  if (this.checkTransparent(uniColor)) {
-				  return AscFormat.CreateNoFillLine();
-			  }
+			if (lst) {
+/*				if (lst.length === 1) {
+					const uniColor = lst[0];
+					if (uniColor.color.id === 0) {
+						return AscFormat.CreateNoFillLine();
+					}
+				}*/
+				if (lst.length) {
+					const truthIndex = index % lst.length;
+					const uniColor = lst[truthIndex];
+					if (this.checkTransparent(uniColor)) {
+						return AscFormat.CreateNoFillLine();
+					}
 
-			  const ln = new AscFormat.CLn();
-			  const fill = AscFormat.CreateUniFillByUniColorCopy(uniColor);
-			  ln.setFill(fill);
-				return ln;
-		  }
+					const ln = new AscFormat.CLn();
+					const fill = AscFormat.CreateUniFillByUniColorCopy(uniColor);
+					ln.setFill(fill);
+					return ln;
+				}
+			}
 	  };
 
 	  ColorDefStyleLbl.prototype.checkTransparent = function (uniColor) {
