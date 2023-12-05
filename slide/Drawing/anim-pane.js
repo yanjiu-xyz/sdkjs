@@ -1456,6 +1456,8 @@
 			return oSkin.ScrollerActiveColor;
 		} else if (this.isHovered()) {
 			return oSkin.ScrollerHoverColor;
+		} else if (this.isDisabled()) {
+			return '#123456'
 		} else {
 			return oSkin.ScrollerColor;
 		}
@@ -1521,12 +1523,14 @@
 
 		function managePreview(event, x, y) {
 			if (!this.hit(x, y)) { return }
+			if (this.isDisabled()) { return }
 			Asc.editor.asc_IsStartedAnimationPreview() ?
 				Asc.editor.asc_StopAnimationPreview() : Asc.editor.asc_StartAnimationPreview()
 		}
 
 		function moveChosenUp(event, x, y) {
 			if (!this.hit(x, y)) { return }
+			if (this.isDisabled()) { return }
 			if (Asc.editor.asc_canMoveAnimationEarlier()) {
 				if (Asc.editor.asc_IsStartedAnimationPreview()) {
 					Asc.editor.asc_StopAnimationPreview()
@@ -1537,6 +1541,7 @@
 
 		function moveChosenDown(event, x, y) {
 			if (!this.hit(x, y)) { return }
+			if (this.isDisabled()) { return }
 			if (Asc.editor.asc_canMoveAnimationLater()) {
 				if (Asc.editor.asc_IsStartedAnimationPreview()) {
 					Asc.editor.asc_StopAnimationPreview()
@@ -1547,6 +1552,7 @@
 
 		function closePanel(event, x, y) {
 			if (!this.hit(x, y)) { return }
+			if (this.isDisabled()) { return }
 			Asc.editor.asc_ShowAnimPane(false)
 		}
 
