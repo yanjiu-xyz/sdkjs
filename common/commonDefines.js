@@ -4020,12 +4020,12 @@ window.AscCommon.g_cIsBeta = "false";
 		"dd.MM.yy",
 		"MMMM yy",
 		"MMM-yy",
-		"dd/MM/yyyy HH.mm",
-		"dd/MM/yyyy HH.mm.ss",
-		"h.mm AM/PM",
-		"h.mm.ss AM/PM",
-		"HH.mm",
-		"HH.mm.ss"
+		"dd/MM/yyyy HH:mm",
+		"dd/MM/yyyy HH:mm:ss",
+		"h:mm AM/PM",
+		"h:mm:ss AM/PM",
+		"HH:mm",
+		"HH:mm:ss"
 	];
 	c_oAscDateTimeFormat[lcid_itIT]     = [
 		"dd/MM/yyyy",
@@ -4297,8 +4297,8 @@ window.AscCommon.g_cIsBeta = "false";
 		"MMMM yyyy",
 		"'den' d MMMM yyyy",
 		"yyyy-MM-dd HH:mm",
-		"YY-MM-dd hh:mm",
-		"h.mm",
+		"yy-MM-dd hh:mm",
+		"h.mm am/pm",
 		"h.mm",
 		"HH:mm",
 		"HH:mm:ss"
