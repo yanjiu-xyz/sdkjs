@@ -1599,37 +1599,6 @@
 		return null;
 	};
 
-	function CToolbar(oParentControl) {
-		CControlContainer.call(this, oParentControl);
-		this.playButton = this.addControl(new CButton(this));
-		this.upButton = this.addControl(new CButton(this));
-		this.downButton = this.addControl(new CButton(this));
-	}
-
-	InitClass(CToolbar, CControlContainer, CONTROL_TYPE_TOOLBAR);
-	CToolbar.prototype.recalculateChildrenLayout = function () {
-		this.playButton.setLayout(0, 0, this.getWidth(), BUTTON_SIZE);
-		this.downButton.setLayout(
-			this.getWidth() - BUTTON_SIZE,
-			this.getHeight() - BUTTON_SIZE,
-			BUTTON_SIZE,
-			BUTTON_SIZE
-		);
-		this.upButton.setLayout(
-			this.downButton.getLeft() - BUTTON_SPACE - BUTTON_SIZE,
-			this.getHeight() - BUTTON_SIZE,
-			BUTTON_SIZE,
-			BUTTON_SIZE
-		);
-	};
-	CToolbar.prototype.getFillColor = function () {
-		return null;
-	};
-	CToolbar.prototype.getOutlineColor = function () {
-		return null;
-	};
-
-
 	var SECONDS_BUTTON_WIDTH = 76 * AscCommon.g_dKoef_pix_to_mm;
 	var SECONDS_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
 	var SECONDS_BUTTON_LEFT = 57 * AscCommon.g_dKoef_pix_to_mm;
