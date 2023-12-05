@@ -1158,6 +1158,7 @@ function (window, undefined) {
 	cGETPIVOTDATA.prototype.name = 'GETPIVOTDATA';
 	cGETPIVOTDATA.prototype.argumentsMin = 2;
 	cGETPIVOTDATA.prototype.argumentsMax = 254;
+	cGETPIVOTDATA.prototype.arrayIndexes = {0: 1, 1: 1};
 	cGETPIVOTDATA.prototype.argumentsType = [argType.text, argType.text, [argType.text, argType.any]];
 	cGETPIVOTDATA.prototype.Calculate = function (arg) {
 		// arg0 - data_field - Имя поля сводной таблицы (строка в кавычках), из которого необходимо извлечь данные. 
@@ -1172,34 +1173,16 @@ function (window, undefined) {
 		// - Все элементы поля (поле выбирается по имени)
 		// - Время жизни таблицы для того чтобы понимать какая из них была создана последней
 		// - Результат вычислений(total) для поля по его имени + возврат значения в зависимости от текущего типа операции subtotal. 
-		// Например если столбец суммирует значения по функции MAX, то из dataRow.total нужно вернуть max соответственно
+		// Например если столбец суммирует значения по функции MAX, то из dataRow.total нужно вернуть max соответственно.
+		// - Проверка поля на существование по имени
 
-		let arg0 = arg[0], arg1 = arg[1], arg2 = arg[2];
-		let refError = new cError(cErrorType.bad_reference);
-		let ws = arguments[3], res;
-
-		if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
-			return refError;
-		}
-
-		if (cElementType.array === arg0.type) {
-			// todo возвращать массив с вычислениями для каждого элемента
-			arg0 = arg0.getFirstElement();
-		}
-
-		arg0 = arg0.tocString();
-		if (cElementType.error === arg0.type) {
-			return arg0;
-		}
-
-		let looking_data_field = arg0.getValue();
-		if (cElementType.cell !== arg1.type && cElementType.cell3D !== arg1.type && cElementType.cellsRange !== arg1.type && cElementType.cellsRange3D !== arg1.type) {
-			return refError;
-		}
-
-		if (ws) {
-			let bbox = arg1.getBBox0(),
-				operationTypes = Asc.c_oAscDataConsolidateFunction;
+		const getPivotData = function (looking_field, pivot_table_ref, items_array) {
+			if (cElementType.cell !== pivot_table_ref.type && cElementType.cell3D !== pivot_table_ref.type && cElementType.cellsRange !== pivot_table_ref.type && cElementType.cellsRange3D !== pivot_table_ref.type) {
+				return refError;
+			}
+	
+			let bbox = pivot_table_ref.getBBox0(),
+				operationTypes = Asc.c_oAscDataConsolidateFunction, result;
 
 			// 2 варианта поиска сводной таблицы:
 			// 1.Пройтись по всему bbox и вызывать getPivotTable пока не вернем true, иначе false
@@ -1208,6 +1191,10 @@ function (window, undefined) {
 			// 1 вариант:
 			let isFound = false, pivot;
 			for (let row = bbox.r1; row <= bbox.r2; row++) {
+				if (isFound) {
+					break
+				}
+
 				for (let col = bbox.c1; col <= bbox.c2; col++) {
 					// todo проверить pivotTable на другой странице
 					pivot = ws.getPivotTable(col, row);
@@ -1222,43 +1209,107 @@ function (window, undefined) {
 			}
 
 			// далее проходимся по заголовкам и сравниваем с первым аргументом
-			let fields = pivot.asc_getDataFields(), nameIsNotFound = true;
+			let fields = pivot.asc_getDataFields();
 			if (fields && fields.length > 0) {
 				for (let i = 0; i < fields.length; i++) {
 					let field = fields[i],
 						fieldName = field.name,
 						fld = field.fld;
 
-					if (fieldName.toLowerCase() !== looking_data_field.toLowerCase()) {
+					if (fieldName.toLowerCase() !== looking_field.toLowerCase()) {
 						continue;
 					} else {
 						// Если мы нашли имя поля равное искомому, то вызываем функцию поиска
-						nameIsNotFound = false;
-						// Функция поиска: если аргументов меньше 4 и таблица не имеет общего резульатата(grand total или single Columns или single Rows), то возвращаем ошибку
-						// Иначе ищем результат по искомому полю
-						// В случае если в таблице есть общий результат, то сразу возвращаем его
-						// Если результата нет, но аргументов 4 или более, то выполняем поиск по условиям в них
 						let rowColData = pivot.updateRowColItems();
 						let lookingOperationType = Object.keys(operationTypes).find(key => operationTypes[key] === field.subtotal);
+						// Функция поиска: если аргументов меньше 4 и таблица не имеет общего резульатата(grand total или single Columns или single Rows), то возвращаем ошибку
+						if (!pivot.colGrandTotals && !pivot.rowGrandTotals && arg.length === 2) {
+							return refError;
+						} else if ((pivot.colGrandTotals || pivot.rowGrandTotals) && arg.length === 2) {
+							// Вернуть значение grandTotal для поля по его имени 
 
-						res = rowColData.dataRow.total[fld][lookingOperationType.toLowerCase()];
-						break;
+							result = rowColData.dataRow.total[i][lookingOperationType.toLowerCase()];
+							// todo
+							// result = getGrandTotalByFieldName(fieldName);
+						} else if (arg.length > 2) {
+							let preparedItemsArray = prepareItemsArray(items_array);
+							if (!preparedItemsArray) {
+								return refError
+							}
+							// Необходимо доставать пары элементов из массива items_array и затем вернуть значение из таблицы, в зависимости от этих данных
+							// Пара элементов это имя поля и одно из значений в нем
+							// С помощью них нужно найти персечения в таблице и вернуть значение grandTotal(если такое существует для данного пересечения)
+							
+							result = rowColData.dataRow.total[i][lookingOperationType.toLowerCase()];
+							// todo
+							// result = getGrandTotalOnSeveralFields(fieldName, items_array);  
+						}
+
+						return new cNumber(result);	// Временная заглушка для результата. Нужно обрабатывать все возможные типы
 					}
 				}
-			} else {
-				return refError;
 			}
 
-			if (nameIsNotFound) {
-				return refError;
+			return refError;
+		}
+
+		const prepareItemsArray = function (array) {
+			let resArr = [];
+			for (let i = 0; i < array.length; i++) {
+				let item = array[i];
+				if (item.type === cElementType.error) {
+					return;
+				}
+				resArr.push(item.getValue());
 			}
 
+			return resArr;
+		}
+
+		const t = this;
+		let arg0 = arg[0], arg1 = arg[1], arg2 = arg.slice(2);
+		let refError = new cError(cErrorType.bad_reference);
+		let ws = arguments[3], res;
+
+		if (ws) {
+			if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
+				return refError;
+			}
+	
+			if (cElementType.array === arg0.type) {
+				if (!arg0.isOneElement()) {
+					let resArr = new cArray();
+					arg0.foreach(function (elem, r, c) {
+						if (!resArr.array[r]) {
+							resArr.addRow();
+						}
+	
+						let looking_data_field = elem.tocString();
+						if (cElementType.error === looking_data_field.type) {
+							// return arg0;
+							// push error in to arr and go to the next value
+							resArr.addElement(looking_data_field);
+						} else {
+							resArr.addElement(getPivotData(looking_data_field.getValue(), arg1, arg));
+						}
+					});
+	
+					return resArr;
+				}
+				arg0 = arg0.getFirstElement();
+			}
+	
+			arg0 = arg0.tocString();
+			if (cElementType.error === arg0.type) {
+				return arg0;
+			}
+	
+			res = getPivotData(arg0.getValue(), arg1, arg2);
 		}
 		
-		// todo добавить пересчет функции при изменении видимости любого из полей таблицы
+		// добавить пересчет функции при изменении видимости любого из полей таблицы
 		if (res) {
-			// todo результат может быть не только числом
-			return new cNumber(res);
+			return res
 		}
 		
 		return refError;
