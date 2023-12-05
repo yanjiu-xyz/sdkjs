@@ -2037,11 +2037,11 @@ Paragraph.prototype.Draw = function(CurPage, pGraphics)
 
 	// 4 часть отрисовки :
 	//    Рисуем сами элементы параграфа
-	this.drawRunContent(CurPage, pGraphics, drawState);
+	this.drawRunContentElements(CurPage, pGraphics, drawState);
 
 	// 5 часть отрисовки :
 	//    Рисуем различные подчеркивания и зачеркивания.
-	this.Internal_Draw_5(CurPage, pGraphics, drawState);
+	this.drawRunContentLines(CurPage, pGraphics, drawState);
 
 	// 6 часть отрисовки :
 	//    Рисуем верхнюю, нижнюю и промежуточную границы
@@ -2846,7 +2846,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr, drawState
 		}
 	}
 };
-Paragraph.prototype.drawRunContent = function(CurPage, pGraphics, drawState)
+Paragraph.prototype.drawRunContentElements = function(CurPage, pGraphics, drawState)
 {
 	let PDSE = drawState.getRunElementState();
 	
@@ -3158,16 +3158,11 @@ Paragraph.prototype.drawRunContent = function(CurPage, pGraphics, drawState)
 		}
 	}
 };
-Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, drawState)
+Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState)
 {
 	let PDSL = drawState.getLineState();
+	PDSL.resetPage(CurPage);
 	
-	let BgColor = drawState.getBgColor();
-	let Pr      = drawState.getParagraphCompiledPr();
-	
-	PDSL.Reset(BgColor);
-	PDSL.ComplexFields.ResetPage(this, CurPage);
-
 	var Page = this.Pages[CurPage];
 
 	var StartLine = Page.StartLine;
@@ -3200,7 +3195,7 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, drawState)
 		var Baseline        = Page.Y + Line.Y;
 		var UnderlineOffset = LineM.TextDescent * 0.4;
 
-		PDSL.Reset_Line(CurPage, CurLine, Baseline, UnderlineOffset);
+		PDSL.resetLine(CurLine, Baseline, UnderlineOffset);
 
 		// Сначала проанализируем данную строку: в массивы aStrikeout, aDStrikeout, aUnderline
 		// aSpelling сохраним позиции начала и конца продолжительных одинаковых настроек зачеркивания,
@@ -3211,9 +3206,9 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, drawState)
 		{
 			var Range = Line.Ranges[CurRange];
 			var X     = Range.XVisible;
-
-			PDSL.Reset_Range(CurRange, X, Range.Spaces);
-
+			
+			PDSL.beginRange(CurRange, X, Range.Spaces);
+			
 			var StartPos = Range.StartPos;
 			var EndPos   = Range.EndPos;
 
@@ -3229,6 +3224,8 @@ Paragraph.prototype.Internal_Draw_5 = function(CurPage, pGraphics, drawState)
 				var Item = this.Content[Pos];
 				Item.Draw_Lines(PDSL);
 			}
+			
+			PDSL.endRange();
 		}
 
 		var aStrikeout  = PDSL.Strikeout;
