@@ -756,24 +756,12 @@
 
 	function CScrollBase(oParentControl, oContainer, oChild) {
 		CControlContainer.call(this, oParentControl);
-		this.addControl(new CButton(this, function (e, x, y) {
-			if (this.hit(x, y)) {
-				this.parentControl.setEventListener(this);
-				this.parentControl.startScroll(-ANIM_ITEM_HEIGHT);
-			}
-		}, null, function (e, x, y) {
-			this.parentControl.setEventListener(null);
-			this.parentControl.endScroll();
-		}));//left or top button
-		this.addControl(new CButton(this, function (e, x, y) {
-			if (this.hit(x, y)) {
-				this.parentControl.setEventListener(this);
-				this.parentControl.startScroll(ANIM_ITEM_HEIGHT);
-			}
-		}, null, function (e, x, y) {
-			this.parentControl.setEventListener(null);
-			this.parentControl.endScroll();
-		}));//right or bottom button
+
+		// Left or top button
+		this.addControl(new CButton(this, onFirstBtnMouseDown, null, onMouseUp));
+		// Right or bottom button
+		this.addControl(new CButton(this, onSecondBtnMouseDown, null, onMouseUp));
+		
 		this.container = oContainer;
 		this.scrolledChild = oChild;
 		this.scrollOffset = 0;
@@ -781,6 +769,27 @@
 		this.startScrollerPos = null;
 		this.startScrollTop = null;
 		this.timerId = null;
+
+		// List of default handlers for buttons ---
+
+		function onFirstBtnMouseDown(e, x, y) {
+			if (!this.hit(x, y)) { return }
+			this.parentControl.setEventListener(this);
+			this.parentControl.startScroll(-ANIM_ITEM_HEIGHT);
+		}
+		
+		function onSecondBtnMouseDown(e, x, y) {
+			if (this.hit(x, y)) { return }
+			this.parentControl.setEventListener(this);
+			this.parentControl.startScroll(ANIM_ITEM_HEIGHT);
+		}
+
+		function onMouseUp(e, x, y) {
+			this.parentControl.setEventListener(null);
+			this.parentControl.endScroll();
+		}
+		
+		// --- end of list of default handlers for buttons
 	}
 
 	InitClass(CScrollBase, CControlContainer, CONTROL_TYPE_UNKNOWN);
@@ -1054,6 +1063,15 @@
 		CScrollBase.call(this, oParentControl, oContainer, oChild);
 		this.leftButton = this.children[0];
 		this.rightButton = this.children[1];
+
+		// this.leftButton.onMouseDownCallback = function (e, x, y) {
+		// 	if (!this.hit(x, y)) { return }
+		// 	// Переопределяем обработчик для кнопки скролла к началу
+		// }
+		// this.rightButton.onMouseDownCallback = function (e, x, y) {
+		// 	if (!this.hit(x, y)) { return }
+		// 	// Переопределяем обработчик для кнопки скролла к концу
+		// }
 	}
 
 	InitClass(CScrollHor, CScrollBase, CONTROL_TYPE_SCROLL_HOR);
