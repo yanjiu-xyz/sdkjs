@@ -930,6 +930,9 @@
 		this.params = {};
 		this.nodes = [];
 		this.parentNode = null;
+		this.calcValues = {
+			coefficient: 1
+		};
 	}
 	BaseAlgorithm.prototype.setConnectionDistance = function (value, isStart) {
 
@@ -958,6 +961,38 @@
 	};
 	BaseAlgorithm.prototype.setLastConnectorShape = function () {
 
+	};
+	BaseAlgorithm.prototype.applyPostAlgorithmSettingsForShape = function (shape, prSet, customCoefficient) {
+		const coefficient = AscFormat.isRealNumber(customCoefficient) ? customCoefficient : this.calcValues.coefficient;
+		const presNode = shape.node;
+		let neighborWidth = null;
+		let neighborHeight = null;
+		const neighbor = presNode.getNeighbor();
+		const neighborShape = neighbor.shape;
+		if (neighborShape) {
+			if (presNode.node.isSibNode()) {
+				neighborHeight = neighborShape.cleanParams.h;
+			} else {
+				neighborWidth = neighborShape.cleanParams.w;
+			}
+		}
+
+		if (prSet) {
+			if (prSet.custLinFactNeighborX) {
+				const width = neighborWidth !== null ? neighborWidth : shape.cleanParams.w;
+				shape.x += width * prSet.custLinFactNeighborX * coefficient;
+			}
+			if (prSet.custLinFactX) {
+				shape.x += shape.cleanParams.w * prSet.custLinFactX * coefficient;
+			}
+			if (prSet.custLinFactNeighborY) {
+				const height = neighborHeight !== null ? neighborHeight : shape.cleanParams.h;
+				shape.y += height * prSet.custLinFactNeighborY * coefficient;
+			}
+			if (prSet.custLinFactY) {
+				shape.y += shape.cleanParams.h * prSet.custLinFactY * coefficient;
+			}
+		}
 	};
 	function PositionAlgorithm() {
 		BaseAlgorithm.call(this);
@@ -1317,14 +1352,7 @@
 			node.forEachDesOrSelf(function (chNode) {
 				const prSet = chNode.getPrSet();
 				const shape = chNode.shape;
-				if (prSet) {
-					if (prSet.custLinFactNeighborX) {
-						shape.x += shape.cleanParams.w * prSet.custLinFactNeighborX * oThis.calcValues.coefficient;
-					}
-					if (prSet.custLinFactNeighborY) {
-						shape.y += shape.cleanParams.h * prSet.custLinFactNeighborY * oThis.calcValues.coefficient;
-					}
-				}
+				oThis.applyPostAlgorithmSettingsForShape(shape, prSet);
 			});
 		});
 	}
@@ -1507,14 +1535,7 @@
 			node.forEachDesOrSelf(function (chNode) {
 				const prSet = chNode.getPrSet();
 				const shape = chNode.shape;
-				if (prSet) {
-					if (prSet.custLinFactNeighborX) {
-						shape.x += shape.cleanParams.w * prSet.custLinFactNeighborX * oThis.calcValues.coefficient;
-					}
-					if (prSet.custLinFactNeighborY) {
-						shape.y += shape.cleanParams.h * prSet.custLinFactNeighborY * oThis.calcValues.coefficient;
-					}
-				}
+				oThis.applyPostAlgorithmSettingsForShape(shape, prSet);
 			});
 		});
 	}
@@ -1604,33 +1625,67 @@
 		const endBounds = this.endShape.getBounds();
 
 		const connectionDistanceInfo = this.getConnectionDistanceInfo(startBounds, endBounds);
-		const distance = connectionDistanceInfo.distance;
-		let start = 0;
-		let end = distance;
-		if (this.connectionDistances.begin !== 0) {
-			start = distance * this.connectionDistances.begin;
-		}
-		if (this.connectionDistances.end !== 0) {
-			end -= distance * this.connectionDistances.end;
-		}
+		if (connectionDistanceInfo) {
+			const startPoint = connectionDistanceInfo.startEdgePoint;
+			const endPoint = connectionDistanceInfo.endEdgePoint;
 
-		const width = end - start;
-		const connectorShape = new ShadowShape();
-		connectorShape.type = AscFormat.LayoutShapeType_shapeType_rightArrow;
-		connectorShape.customAdj = this.getArrowAdjLst();
+			const startArrowPoint = {x: 0, y: 0};
+			const endArrowPoint = {x: 0, y: 0};
+			const startLambda = this.connectionDistances.begin / (1 - this.connectionDistances.begin);
+			const sumStartX = startPoint.x + startLambda * endPoint.x;
+			const sumStartY = startPoint.y + startLambda * endPoint.y;
+			const endLambda = (1 - this.connectionDistances.end) / this.connectionDistances.end;
+			const sumEndX = startPoint.x + endLambda * endPoint.x;
+			const sumEndY = startPoint.y + endLambda * endPoint.y;
+			startArrowPoint.x = sumStartX / (1 + startLambda);
+			startArrowPoint.y = sumStartY / (1 + startLambda);
 
-		connectorShape.h = this.parentNode.shape.h;
-		connectorShape.w = width;
-		connectorShape.x = start + startBounds.r;
-		connectorShape.y = startBounds.t + (startBounds.b - (startBounds.t + connectorShape.h)) / 2;
-		connectorShape.rot = connectionDistanceInfo.angle;
-		connectorShape.node = this.parentNode;
+			endArrowPoint.x = sumEndX / (1 + endLambda);
+			endArrowPoint.y = sumEndY / (1 + endLambda);
 
-		connectorShape.shape = this.parentNode.shape.shape;
-		this.parentNode.shape.connectorShape = connectorShape;
-		const prSet = this.parentNode.getPrSet();
-		if (!prSet.getPresStyleLbl()) {
-			prSet.setPresStyleLbl("sibTrans2D1");
+			const cx = (startArrowPoint.x + endArrowPoint.x) / 2;
+			const cy = (startArrowPoint.y + endArrowPoint.y) / 2;
+
+			const arrowVector = {x: endArrowPoint.x - startArrowPoint.x, y: endArrowPoint.y - startArrowPoint.y};
+
+			const width = Math.sqrt(arrowVector.x * arrowVector.x + arrowVector.y * arrowVector.y);
+			const height = this.parentNode.shape.h;
+
+			const x = cx - width / 2;
+			const y = cy - height / 2;
+			const shape = this.parentNode.shape;
+			const connectorShape = new ShadowShape();
+			connectorShape.shape = shape.shape;
+			connectorShape.type = AscFormat.LayoutShapeType_shapeType_rightArrow;
+			connectorShape.customAdj = this.getArrowAdjLst();
+			connectorShape.cleanParams = {};
+			connectorShape.cleanParams.w = shape.cleanParams.w;
+			connectorShape.cleanParams.h = shape.cleanParams.h;
+			connectorShape.cleanParams.x = shape.cleanParams.x;
+			connectorShape.cleanParams.y = shape.cleanParams.y;
+
+			connectorShape.x = x;
+			connectorShape.y = y;
+			connectorShape.rot = connectionDistanceInfo.angle;
+			connectorShape.node = this.parentNode;
+
+			shape.connectorShape = connectorShape;
+
+			const prSet = this.parentNode.getPrSet();
+			if (!prSet.getPresStyleLbl()) {
+				prSet.setPresStyleLbl("sibTrans2D1");
+			}
+			const coefficient = width / shape.cleanParams.w;
+			this.applyPostAlgorithmSettingsForShape(connectorShape, prSet, coefficient);
+
+			const heightScale = this.parentNode.getHeightScale(true);
+			const widthScale = this.parentNode.getWidthScale(true);
+			const scaleHeight = height * heightScale;
+			const scaleWidth = width * widthScale;
+			connectorShape.h = scaleHeight;
+			connectorShape.w = scaleWidth;
+			connectorShape.x += (width - scaleWidth) / 2;
+			connectorShape.y += (height - scaleHeight) / 2;
 		}
 	};
 	ConnectorAlgorithm.prototype.getShapePoint = function (bounds) {
@@ -1652,14 +1707,10 @@
 		const endEdgePoint = this.getMinShapeEdgePoint(startPoint, endPoint, endBounds, AscFormat.normalizeRotate(angle + Math.PI));
 
 		if (startEdgePoint && endEdgePoint) {
-			const vX = endEdgePoint.x - startEdgePoint.x;
-			const vY = endEdgePoint.y - startEdgePoint.y;
-			const distance = Math.sqrt(vX * vX + vY * vY);
 			return {
-				distance: distance,
-				angle: -angle,
+				angle: AscFormat.normalizeRotate(-angle),
 				startEdgePoint: startEdgePoint,
-				endEdgePoint: startEdgePoint
+				endEdgePoint: endEdgePoint
 			};
 		}
 		return null;
@@ -1685,7 +1736,7 @@
 		if (firstPoint && secondPoint) {
 			const firstSqrDistance = firstPoint.x * firstPoint.x + firstPoint.y * firstPoint.y;
 			const secondSqrDistance = secondPoint.x * secondPoint.x + secondPoint.y * secondPoint.y;
-			return firstSqrDistance > secondSqrDistance ? firstPoint : secondPoint;
+			return firstSqrDistance < secondSqrDistance ? firstPoint : secondPoint;
 		} else if (firstPoint) {
 			return firstPoint;
 		}
@@ -1702,7 +1753,11 @@
 
 		const x = (m1 * (endLinePoint1.x - endLinePoint2.x) - m2 * (startLinePoint1.x - startLinePoint2.x)) / divider;
 		const y = (m1 * (endLinePoint1.y - endLinePoint2.y) - m2 * (startLinePoint1.y - startLinePoint2.y)) / divider;
-		return {x: x, y: y};
+		if (((x > endLinePoint1.x && x < endLinePoint2.x) || AscFormat.fApproxEqual(x, endLinePoint2.x, algDelta))
+			&& ((y > endLinePoint1.y && y < endLinePoint2.y) || AscFormat.fApproxEqual(y, endLinePoint2.y, algDelta))) {
+			return {x: x, y: y};
+		}
+		return null;
 	}
 
 	ConnectorAlgorithm.prototype.getShapeAngle = function (startPoint, endPoint) {
@@ -1710,7 +1765,13 @@
 		const y = endPoint.y - startPoint.y;
 		const vectorLength = Math.sqrt(x * x + y * y);
 		const angle = Math.acos(x / vectorLength);
-		return AscFormat.isRealNumber(angle) ? angle : 0;
+		if (AscFormat.isRealNumber(angle)) {
+			if (y > 0) {
+				return AscFormat.normalizeRotate(-angle);
+			}
+			return angle;
+		}
+		return 0;
 	}
 
 	ConnectorAlgorithm.prototype.createLineConnector = function () {
@@ -1757,7 +1818,34 @@ function PresNode(presPoint, contentNode) {
 	this.contentNodes = [];
 	this.layoutInfo = {};
 }
+	PresNode.prototype.getChildIndex = function (child) {
+		for (let i = 0; i < this.childs.length; i++) {
+			if (this.childs[i] === child) {
+				return i;
+			}
+		}
+	}
+	PresNode.prototype.getNeighbor = function () {
+		const parent = this.parent;
+		const index = parent.getChildIndex(this);
+		for (let i = index + 1; i < parent.childs.length; i += 1) {
+			const child = parent.childs[i];
+			const shape = child.shape;
+			if (!shape.isSpacing) {
+				return child;
+			}
+		}
 
+		for (let i = index - 1; i >= 0; i -= 1) {
+			const child = parent.childs[i];
+			const shape = child.shape;
+			if (!shape.isSpacing) {
+				return child;
+			}
+		}
+
+		return this;
+	};
 	PresNode.prototype.moveTo = function (deltaX, deltaY) {
 		this.forEachDesOrSelf(function (node) {
 			const shape = node.shape;
@@ -2132,7 +2220,11 @@ PresNode.prototype.addChild = function (ch, pos) {
 		}
 	}
 
-	PresNode.prototype.getHeightScale = function () {
+	PresNode.prototype.getHeightScale = function (force) {
+		const node = this.node;
+		if (!force && node.isSibNode()) {
+			return 1;
+		}
 		const prSet = this.getPrSet();
 		if (prSet) {
 			return prSet.custScaleY || 1;
@@ -2140,7 +2232,11 @@ PresNode.prototype.addChild = function (ch, pos) {
 		return 1;
 	}
 
-	PresNode.prototype.getWidthScale = function () {
+	PresNode.prototype.getWidthScale = function (force) {
+		const node = this.node;
+		if (!force && node.isSibNode()) {
+			return 1;
+		}
 		const prSet = this.getPrSet();
 		if (prSet) {
 			return prSet.custScaleX || 1;
