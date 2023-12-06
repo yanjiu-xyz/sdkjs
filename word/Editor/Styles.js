@@ -10421,6 +10421,10 @@ CDocumentColor.prototype =
         return true;
     }
 };
+CDocumentColor.prototype.isBlackAutoColor = function()
+{
+	return this.Check_BlackAutoColor();
+};
 CDocumentColor.prototype.WriteToBinary = function(oWriter)
 {
 	this.Write_ToBinary(oWriter);
