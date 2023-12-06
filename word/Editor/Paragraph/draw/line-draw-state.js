@@ -86,11 +86,8 @@
 		
 		this.Y = 0;
 		
-		this.yOffset    = 0;
-		this.strikeoutY = 0;
-		this.underlineY = 0;
-		this.color      = null;
-		this.lineW      = 1;
+		this.yOffset = 0;
+		this.color   = null;
 		
 		this.paraLineRange = null;
 		
@@ -196,7 +193,7 @@
 			return;
 		}
 		
-		this.checkCompositeInput(element, run, inRunPos);
+		this.addCompositeInputLine(element, run, inRunPos);
 		
 		let startX = this.X;
 		let endX   = this.X + element.GetWidthVisible();
@@ -217,7 +214,7 @@
 			case para_Math_BreakOperator:
 			case para_Math_Ampersand:
 			case para_Math_Placeholder:
-				this.handleRegular(startX, endX);
+				this.addLines(startX, endX);
 				break;
 			case para_Space:
 				if (this.paraLineRange)
@@ -229,22 +226,25 @@
 				if (this.Spaces > 0 || this.UlTrailSpace)
 				{
 					--this.Spaces;
-					this.handleRegular(startX, endX);
+					this.addLines(startX, endX);
 				}
 				break;
 			case para_Drawing:
 				if (element.IsInline())
-					this.handleRegular(startX, endX, false);
+					this.addLines(startX, endX, false);
 				break;
 			case para_End:
-				this.handleParagraphMark(element);
+				this.isUnderline  = false;
+				this.isStrikeout  = false;
+				this.isDStrikeout = false;
+				this.addLines(startX, endX);
 				break;
 			case para_FieldChar:
 				this.ComplexFields.ProcessFieldChar(element);
 				this.isHiddenCFPart = this.ComplexFields.IsComplexFieldCode();
 				
 				if (element.IsNumValue())
-					this.handleRegular(startX, endX);
+					this.addLines(startX, endX);
 				break;
 		}
 		
@@ -342,7 +342,6 @@
 		
 		let textPr = run.getCompiledPr();
 		
-		this.lineW = (textPr.FontSize / 18) * g_dKoef_pt_to_mm;
 		this.updateStrikeoutUnderlinePos(run, textPr.FontSize, textPr.VertAlign);
 		this.updateColor(textPr);
 		this.updateReviewState(run);
@@ -438,17 +437,19 @@
 		else if (AscCommon.vertalign_SuperScript === vertAlign)
 			strikeoutShift = AscCommon.vaKSize * 0.27 + AscCommon.vaKSuper;
 		
-		this.strikeoutY = this.Y - this.yOffset - fontSizeMM * strikeoutShift;
-		this.underlineY = this.Y - this.yOffset + this.UnderlineOffset;
+		let strikeoutY = this.Y - this.yOffset - fontSizeMM * strikeoutShift;
+		let underlineY = this.Y - this.yOffset + this.UnderlineOffset;
 		
 		if (AscCommon.vertalign_SubScript === vertAlign)
-			this.underlineY -= AscCommon.vaKSub * fontSizeMM;
+			underlineY -= AscCommon.vaKSub * fontSizeMM;
 		
-		this.Strikeout.set(this.strikeoutY, this.lineW);
-		this.DStrikeout.set(this.strikeoutY, this.lineW);
-		this.Underline.set(this.underlineY, this.lineW);
-		this.DUnderline.set(this.underlineY, this.lineW);
-		this.Spelling.set(this.underlineY, this.lineW);
+		let lineW = (textPr.FontSize / 18) * g_dKoef_pt_to_mm;
+		
+		this.Strikeout.set(strikeoutY, lineW);
+		this.DStrikeout.set(strikeoutY, lineW);
+		this.Underline.set(underlineY, lineW);
+		this.DUnderline.set(underlineY, lineW);
+		this.Spelling.set(underlineY, lineW);
 	};
 	ParagraphLineDrawState.prototype.updateColor = function(textPr)
 	{
@@ -531,7 +532,7 @@
 	 * @param endX {number}
 	 * @param drawStrikeout {boolean}
 	 */
-	ParagraphLineDrawState.prototype.handleRegular = function(startX, endX, drawStrikeout)
+	ParagraphLineDrawState.prototype.addLines = function(startX, endX, drawStrikeout)
 	{
 		if (endX - startX < 0.001)
 			return;
@@ -557,7 +558,7 @@
 				this.Strikeout.Add(startX, endX, this.color, undefined, this.textPr);
 			}
 		}
-			
+		
 		if (this.reviewAdd)
 		{
 			if (this.reviewMove)
@@ -570,38 +571,13 @@
 			this.Underline.Add(startX, endX, this.color, undefined, this.textPr);
 		}
 	};
-	ParagraphLineDrawState.prototype.checkCompositeInput = function(element, run, inRunPos)
+	ParagraphLineDrawState.prototype.addCompositeInputLine = function(element, run, inRunPos)
 	{
 		if (para_Text !== element.Type || !run.CompositeInput || !run.CompositeInput.isInside(inRunPos))
 			return;
 		
 		this.Underline.Add(this.X, this.X + element.GetWidthVisible(), this.color, undefined, this.textPr);
 	};
-	ParagraphLineDrawState.prototype.handleParagraphMark = function(paraMark)
-	{
-		if (!this.Paragraph)
-			return;
-		
-		let itemW = paraMark.GetWidthVisible();
-		if (this.reviewAdd)
-		{
-			if (this.reviewMove)
-				this.DUnderline.Add(this.X, this.X + itemW, this.reviewColor);
-			else
-				this.Underline.Add(this.X, this.X + itemW, this.reviewColor);
-		}
-		else if (this.reviewRem)
-		{
-			if (this.reviewMove)
-				this.DStrikeout.Add(this.X, this.X + itemW, this.reviewColor);
-			else
-				this.Strikeout.Add(this.X, this.X + itemW, this.reviewColor);
-			
-			if (this.reviewRemAdd)
-				this.Underline.Add(this.X, this.X + itemW, this.reviewRemAddColor);
-		}
-	};
-	
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.ParagraphLineDrawState = ParagraphLineDrawState;
 	
