@@ -60,13 +60,13 @@
 		
 		this.UlTrailSpace = false;
 		
-		this.Strikeout  = new CParaDrawingRangeLines();
-		this.DStrikeout = new CParaDrawingRangeLines();
-		this.Underline  = new CParaDrawingRangeLines();
-		this.Spelling   = new CParaDrawingRangeLines();
+		this.Strikeout  = new CParaDrawingRangeHorizontalLines();
+		this.DStrikeout = new CParaDrawingRangeHorizontalLines();
+		this.Underline  = new CParaDrawingRangeHorizontalLines();
+		this.Spelling   = new CParaDrawingRangeHorizontalLines();
+		this.DUnderline = new CParaDrawingRangeHorizontalLines();
 		this.RunReview  = new CParaDrawingRangeLines();
 		this.CollChange = new CParaDrawingRangeLines();
-		this.DUnderline = new CParaDrawingRangeLines();
 		this.FormBorder = new CParaDrawingRangeLines();
 		
 		this.Page  = 0;
@@ -85,14 +85,31 @@
 		this.isFormPlaceholder = false;
 		
 		this.Y = 0;
-		this.yOffset = 0;
+		
+		this.yOffset    = 0;
 		this.strikeoutY = 0;
 		this.underlineY = 0;
 		this.color      = null;
+		this.lineW      = 1;
+		
+		this.paraLineRange = null;
+		
+		this.isUnderline  = false;
+		this.isStrikeout  = false;
+		this.isDStrikeout = false;
 		
 		this.form       = null;
 		this.formBorder = null;
 		this.combMax    = -1;
+		
+		this.reviewAdd    = false;
+		this.reviewRem    = false;
+		this.reviewRemAdd = false;
+		this.reviewMove   = false;
+		
+		this.reviewColor       = REVIEW_COLOR;
+		this.reviewRemAddColor = REVIEW_COLOR;
+		this.reviewPrColor     = REVIEW_COLOR;
 		
 		this.rtl      = false;
 		this.bidiFlow = new AscWord.BidiFlow(this);
@@ -144,7 +161,9 @@
 		this.X      = x;
 		this.Spaces = spaces;
 		
-		this.bidiFlow.begin(this.rtl)
+		this.bidiFlow.begin(this.rtl);
+		
+		this.paraLineRange = this.Paragraph.Lines[this.Line].Ranges[this.Range];
 	};
 	ParagraphLineDrawState.prototype.endRange = function()
 	{
@@ -177,9 +196,74 @@
 			return;
 		}
 		
-
+		this.checkCompositeInput(element, run, inRunPos);
 		
-		this.X += element.GetWidthVisible();
+		let startX = this.X;
+		let endX   = this.X + element.GetWidthVisible();
+		switch (element.Type)
+		{
+			case para_PageNum:
+			case para_PageCount:
+			case para_Tab:
+			case para_Text:
+			case para_Sym:
+			case para_FootnoteReference:
+			case para_FootnoteRef:
+			case para_EndnoteReference:
+			case para_EndnoteRef:
+			case para_Separator:
+			case para_ContinuationSeparator:
+			case para_Math_Text:
+			case para_Math_BreakOperator:
+			case para_Math_Ampersand:
+			case para_Math_Placeholder:
+				this.handleRegular(startX, endX);
+				break;
+			case para_Space:
+				if (this.paraLineRange)
+				{
+					startX = this.paraLineRange.CorrectX(startX);
+					endX   = this.paraLineRange.CorrectX(endX);
+				}
+				
+				if (this.Spaces > 0 || this.UlTrailSpace)
+				{
+					--this.Spaces;
+					this.handleRegular(startX, endX);
+				}
+				break;
+			case para_Drawing:
+				if (element.IsInline())
+					this.handleRegular(startX, endX, false);
+				break;
+			case para_End:
+				this.handleParagraphMark(element);
+				break;
+			case para_FieldChar:
+				this.ComplexFields.ProcessFieldChar(element);
+				this.isHiddenCFPart = this.ComplexFields.IsComplexFieldCode();
+				
+				if (element.IsNumValue())
+					this.handleRegular(startX, endX);
+				break;
+		}
+		
+		if (misspell)
+			this.Spelling.Add(startX, endX, BLACK_COLOR);
+		
+		// // TODO: PrChange
+		// if (true === this.Pr.HavePrChange() && para_Math_Run !== this.Type)
+		// {
+		// 	var ReviewColor = this.GetPrReviewColor();
+		// 	PDSL.RunReview.Add(0, 0, PDSL.X, X, 0, ReviewColor.r, ReviewColor.g, ReviewColor.b, {RunPr: this.Get_CompiledPr(false)});
+		// }
+		//
+		// // TODO: Collaboration
+		// var CollPrChangeColor = this.private_GetCollPrChangeOther();
+		// if (false !== CollPrChangeColor)
+		// 	PDSL.CollChange.Add(0, 0, PDSL.X, X, 0, CollPrChangeColor.r, CollPrChangeColor.g, CollPrChangeColor.b, {RunPr : this.Pr});
+		
+		this.X = endX;
 	};
 	/**
 	 * Получаем количество орфографических ошибок в данном месте
@@ -258,14 +342,27 @@
 		
 		let textPr = run.getCompiledPr();
 		
+		this.lineW = (textPr.FontSize / 18) * g_dKoef_pt_to_mm;
 		this.updateStrikeoutUnderlinePos(run, textPr.FontSize, textPr.VertAlign);
 		this.updateColor(textPr);
 		this.updateReviewState(run);
 		
-		
 		this.isHiddenCFPart = this.ComplexFields.IsComplexFieldCode();
 		
+		this.isUnderline  = textPr.Underline;
+		this.isStrikeout  = textPr.Strikeout;
+		this.isDStrikeout = textPr.DStrikeout;
 		
+		if (run.IsMathRun() && run.IsPlaceholder())
+		{
+			this.isUnderline = false;
+			
+			let ctrPrp = run.Parent.GetCtrPrp();
+			this.isStrikeout  = ctrPrp.Strikeout;
+			this.isDStrikeout = ctrPrp.DStrikeout;
+		}
+		
+		this.textPr = textPr;
 	};
 	ParagraphLineDrawState.prototype.handleFormBorder = function(item, run, inRunPos)
 	{
@@ -346,6 +443,12 @@
 		
 		if (AscCommon.vertalign_SubScript === vertAlign)
 			this.underlineY -= AscCommon.vaKSub * fontSizeMM;
+		
+		this.Strikeout.set(this.strikeoutY, this.lineW);
+		this.DStrikeout.set(this.strikeoutY, this.lineW);
+		this.Underline.set(this.underlineY, this.lineW);
+		this.DUnderline.set(this.underlineY, this.lineW);
+		this.Spelling.set(this.underlineY, this.lineW);
 	};
 	ParagraphLineDrawState.prototype.updateColor = function(textPr)
 	{
@@ -394,9 +497,10 @@
 	};
 	ParagraphLineDrawState.prototype.updateReviewState = function(run)
 	{
-		this.addReview    = false;
-		this.remReview    = false;
-		this.remAddReview = false;
+		this.reviewAdd    = false;
+		this.reviewRem    = false;
+		this.reviewRemAdd = false;
+		this.reviewMove   = false;
 		
 		this.reviewColor       = REVIEW_COLOR;
 		this.reviewRemAddColor = REVIEW_COLOR;
@@ -405,9 +509,10 @@
 		let reviewType = run.GetReviewType();
 		if (reviewType !== reviewtype_Common)
 		{
-			this.addReview   = reviewtype_Add === reviewType;
-			this.remReview   = reviewtype_Remove === reviewType;
+			this.reviewAdd   = reviewtype_Add === reviewType;
+			this.reviewRem   = reviewtype_Remove === reviewType;
 			this.reviewColor = run.GetReviewColor();
+			this.reviewMove  = reviewtype_Add === reviewType ? run.GetReviewInfo().IsMovedTo() : run.GetReviewInfo().IsMovedFrom();
 			
 			let prevInfo = run.GetReviewInfo().GetPrevAdded();
 			if (prevInfo)
@@ -421,6 +526,82 @@
 	{
 		return this.Paragraph && !this.Paragraph.bFromDocument;
 	};
+	/**
+	 * @param startX {number}
+	 * @param endX {number}
+	 * @param drawStrikeout {boolean}
+	 */
+	ParagraphLineDrawState.prototype.handleRegular = function(startX, endX, drawStrikeout)
+	{
+		if (endX - startX < 0.001)
+			return;
+		
+		if (false !== drawStrikeout)
+		{
+			if (this.reviewRem)
+			{
+				if (this.reviewMove)
+					this.DStrikeout.Add(startX, endX, this.reviewColor);
+				else
+					this.Strikeout.Add(startX, endX, this.reviewColor);
+				
+				if (this.reviewRemAdd)
+					this.Underline.Add(startX, endX, this.reviewRemAddColor);
+			}
+			else if (this.isDStrikeout)
+			{
+				this.DStrikeout.Add(startX, endX, this.color, undefined, this.textPr);
+			}
+			else if (this.isStrikeout)
+			{
+				this.Strikeout.Add(startX, endX, this.color, undefined, this.textPr);
+			}
+		}
+			
+		if (this.reviewAdd)
+		{
+			if (this.reviewMove)
+				this.DUnderline.Add(startX, endX, this.reviewColor);
+			else
+				this.Underline.Add(startX, endX, this.reviewColor);
+		}
+		else if (this.isUnderline)
+		{
+			this.Underline.Add(startX, endX, this.color, undefined, this.textPr);
+		}
+	};
+	ParagraphLineDrawState.prototype.checkCompositeInput = function(element, run, inRunPos)
+	{
+		if (para_Text !== element.Type || !run.CompositeInput || !run.CompositeInput.isInside(inRunPos))
+			return;
+		
+		this.Underline.Add(this.X, this.X + element.GetWidthVisible(), this.color, undefined, this.textPr);
+	};
+	ParagraphLineDrawState.prototype.handleParagraphMark = function(paraMark)
+	{
+		if (!this.Paragraph)
+			return;
+		
+		let itemW = paraMark.GetWidthVisible();
+		if (this.reviewAdd)
+		{
+			if (this.reviewMove)
+				this.DUnderline.Add(this.X, this.X + itemW, this.reviewColor);
+			else
+				this.Underline.Add(this.X, this.X + itemW, this.reviewColor);
+		}
+		else if (this.reviewRem)
+		{
+			if (this.reviewMove)
+				this.DStrikeout.Add(this.X, this.X + itemW, this.reviewColor);
+			else
+				this.Strikeout.Add(this.X, this.X + itemW, this.reviewColor);
+			
+			if (this.reviewRemAdd)
+				this.Underline.Add(this.X, this.X + itemW, this.reviewRemAddColor);
+		}
+	};
+	
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.ParagraphLineDrawState = ParagraphLineDrawState;
 	

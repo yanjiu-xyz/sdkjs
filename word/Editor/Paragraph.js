@@ -19282,6 +19282,25 @@ CParaDrawingRangeLines.prototype =
         }
     }
 };
+function CParaDrawingRangeHorizontalLines()
+{
+	CParaDrawingRangeLines.call(this);
+	
+	this.y = 0;
+	this.w = 0;
+}
+CParaDrawingRangeHorizontalLines.prototype = Object.create(CParaDrawingRangeLines.prototype);
+CParaDrawingRangeHorizontalLines.prototype.constructor = CParaDrawingRangeHorizontalLines;
+CParaDrawingRangeHorizontalLines.prototype.set = function(y, w)
+{
+	this.y = y;
+	this.w = w;
+};
+CParaDrawingRangeHorizontalLines.prototype.Add = function(x0, x1, color, additional, additional2)
+{
+	return CParaDrawingRangeLines.prototype.Add.call(this, this.y, this.y, x0, x1, this.w, color.r, color.g, color.b, additional, additional2);
+};
+
 
 function CParagraphCurPos()
 {
