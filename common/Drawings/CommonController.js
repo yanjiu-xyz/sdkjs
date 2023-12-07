@@ -8926,6 +8926,7 @@
 
 
 				bringToFront: function () {
+					AscCommon.IsChangingDrawingZIndex = true;
 					var sp_tree = this.getDrawingObjects();
 					if (!(this.selection.groupSelection)) {
 						var selected = [];
@@ -8946,9 +8947,11 @@
 						this.selection.groupSelection.bringToFront();
 					}
 					this.drawingObjects.showDrawingObjects();
+					AscCommon.IsChangingDrawingZIndex = false;
 				},
 
 				bringForward: function () {
+					AscCommon.IsChangingDrawingZIndex = true;
 					var sp_tree = this.getDrawingObjects();
 					if (!(this.selection.groupSelection)) {
 						for (var i = sp_tree.length - 1; i > -1; --i) {
@@ -8962,9 +8965,12 @@
 						this.selection.groupSelection.bringForward();
 					}
 					this.drawingObjects.showDrawingObjects();
+					AscCommon.IsChangingDrawingZIndex = false;
 				},
 
 				sendToBack: function () {
+
+					AscCommon.IsChangingDrawingZIndex = true;
 					var sp_tree = this.getDrawingObjects();
 
 					if (!(this.selection.groupSelection)) {
@@ -8981,10 +8987,14 @@
 						this.selection.groupSelection.sendToBack();
 					}
 					this.drawingObjects.showDrawingObjects();
+
+					AscCommon.IsChangingDrawingZIndex = false;
 				},
 
 
 				bringBackward: function () {
+
+					AscCommon.IsChangingDrawingZIndex = true;
 					var sp_tree = this.getDrawingObjects();
 					if (!(this.selection.groupSelection)) {
 						for (var i = 0; i < sp_tree.length; ++i) {
@@ -8998,6 +9008,7 @@
 						this.selection.groupSelection.bringBackward();
 					}
 					this.drawingObjects.showDrawingObjects();
+					AscCommon.IsChangingDrawingZIndex = false;
 				},
 
 				addEventListener: function (drawing) {
