@@ -1670,6 +1670,7 @@
 		600,
 		600
 	];
+
 	//lengths
 	const SMALL_TIME_INTERVAL = 15;
 	const MIDDLE_1_TIME_INTERVAL = 20;
@@ -1694,7 +1695,7 @@
 		CScrollHor.call(this, oParentControl);
 		this.startTimePos = 0;
 		this.curTimePos = 0;
-		this.tmScaleIdx = 5;
+		this.tmScaleIdx = 2;
 
 		//labels cache
 		this.labels = {};
@@ -1705,12 +1706,14 @@
 
 	InitClass(CTimeline, CScrollHor, CONTROL_TYPE_TIMELINE);
 	CTimeline.prototype.shiftSelf = function (sDirection) {
-		let fixedOffset = 2 // in Seconds
+		const shiftMultiplier = 0.26 // calculated empirically :)
+		let pureTimelineWidth = this.getWidth() - 2 * SCROLL_BUTTON_SIZE // in mms
+		let shiftTimeInterval = this.posToTime(pureTimelineWidth * shiftMultiplier) // in seconds
 
-		if (sDirection == 'left')
-			this.startTimePos -= fixedOffset * (this.tmScaleIdx + 1);
-		if (sDirection == 'right')
-			this.startTimePos += fixedOffset * (this.tmScaleIdx + 1);
+		if (sDirection === 'left')
+			this.startTimePos -= shiftTimeInterval;
+		if (sDirection === 'right')
+			this.startTimePos += shiftTimeInterval;
 
 		this.startTimePos = Math.max(0, this.startTimePos)
 		this.onUpdate()
@@ -1804,12 +1807,12 @@
 	CTimeline.prototype.getOutlineColor = function () {
 		return null;
 	};
+	CTimeline.prototype.canHandleEvents = function () {
+		return true;
+	};
 	CTimeline.prototype.recalculateChildrenLayout = function () {
 		this.children[0].setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
 		this.children[1].setLayout(this.getWidth() - SCROLL_BUTTON_SIZE, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-	};
-	CTimeline.prototype.canHandleEvents = function () {
-		return true;
 	};
 	CTimeline.prototype.drawMark = function (graphics, dPos) {
 		var dHeight = this.getHeight() / 3;
@@ -1889,6 +1892,7 @@
 
 		graphics.RestoreGrState();
 	};
+
 	CTimeline.prototype.getRulerStart = function () {
 		return this.children[0].getRight();
 	};
@@ -1901,16 +1905,17 @@
 	CTimeline.prototype.getZeroShift = function () {
 		return this.getRulerStart() + this.getCursorSize() / 2;
 	};
-	CTimeline.prototype.timeToPos = function (fTime) {
-		//linear relationship x = a*t + b
-		var oCoefs = this.getLinearCoeffs();
-		return oCoefs.a * fTime + oCoefs.b;
-	};
+
 	CTimeline.prototype.getLinearCoeffs = function () {
 		//linear relationship x = a*t + b
 		var a = TIME_INTERVALS[this.tmScaleIdx] / TIME_SCALES[this.tmScaleIdx];
 		var b = this.getZeroShift() - a * this.startTimePos;
 		return { a: a, b: b };
+	};
+	CTimeline.prototype.timeToPos = function (fTime) {
+		//linear relationship x = a*t + b
+		var oCoefs = this.getLinearCoeffs();
+		return oCoefs.a * fTime + oCoefs.b;
 	};
 	CTimeline.prototype.posToTime = function (fPos) {
 		//linear relationship x = a*t + b
