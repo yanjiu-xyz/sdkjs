@@ -1064,14 +1064,14 @@
 		this.leftButton = this.children[0];
 		this.rightButton = this.children[1];
 
-		// this.leftButton.onMouseDownCallback = function (e, x, y) {
-		// 	if (!this.hit(x, y)) { return }
-		// 	// Переопределяем обработчик для кнопки скролла к началу
-		// }
-		// this.rightButton.onMouseDownCallback = function (e, x, y) {
-		// 	if (!this.hit(x, y)) { return }
-		// 	// Переопределяем обработчик для кнопки скролла к концу
-		// }
+		this.leftButton.onMouseDownCallback = function (e, x, y) {
+			if (!this.hit(x, y)) { return }
+			this.parentControl.shiftSelf('left')
+		}
+		this.rightButton.onMouseDownCallback = function (e, x, y) {
+			if (!this.hit(x, y)) { return }
+			this.parentControl.shiftSelf('right')
+		}
 	}
 
 	InitClass(CScrollHor, CScrollBase, CONTROL_TYPE_SCROLL_HOR);
@@ -1087,15 +1087,16 @@
 	};
 	CSeqList.prototype.recalculateChildren = function () {
 		this.clear();
+
 		var oTiming = this.getTiming();
-		if (oTiming) {
-			var aAllSeqs = oTiming.getRootSequences();
-			var oLastSeqView = null;
-			for (var nSeq = 0; nSeq < aAllSeqs.length; ++nSeq) {
-				var oSeqView = new CAnimSequence(this, aAllSeqs[nSeq]);
-				this.addControl(oSeqView);
-				oLastSeqView = oSeqView;
-			}
+		if (!oTiming) { return }
+
+		var aAllSeqs = oTiming.getRootSequences();
+		var oLastSeqView = null;
+		for (var nSeq = 0; nSeq < aAllSeqs.length; ++nSeq) {
+			var oSeqView = new CAnimSequence(this, aAllSeqs[nSeq]);
+			this.addControl(oSeqView);
+			oLastSeqView = oSeqView;
 		}
 	};
 	CSeqList.prototype.recalculateChildrenLayout = function () {
@@ -1703,6 +1704,18 @@
 	}
 
 	InitClass(CTimeline, CScrollHor, CONTROL_TYPE_TIMELINE);
+	CTimeline.prototype.shiftSelf = function (sDirection) {
+		let fixedOffset = 2 // in Seconds
+
+		if (sDirection == 'left')
+			this.startTimePos -= fixedOffset * (this.tmScaleIdx + 1);
+		if (sDirection == 'right')
+			this.startTimePos += fixedOffset * (this.tmScaleIdx + 1);
+
+		this.startTimePos = Math.max(0, this.startTimePos)
+		this.onUpdate()
+	}
+
 	CTimeline.prototype.startDrawLabels = function () {
 		this.usedLabels = {};
 	};
