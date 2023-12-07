@@ -514,7 +514,7 @@
 			let prevInfo = run.GetReviewInfo().GetPrevAdded();
 			if (prevInfo)
 			{
-				this.remAddReview = true;
+				this.reviewRemAdd = true;
 				this.reviewRemAddColor = prevInfo.GetColor();
 			}
 		}

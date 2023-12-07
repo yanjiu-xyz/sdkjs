@@ -337,7 +337,7 @@
 			sectPr = undefined;
 		
 		let editor = logicDocument.GetApi();
-		if ((!editor || !editor.ShowParaMarks) && (sectPr || reviewtype_Common === this.reviewType))
+		if ((!editor || !editor.ShowParaMarks) && (sectPr || !this.reviewColor))
 			return;
 		
 		let y = this.Y;
