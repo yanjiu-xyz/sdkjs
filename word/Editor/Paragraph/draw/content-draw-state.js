@@ -214,7 +214,7 @@
 		}
 		else if (this.VisitedHyperlink)
 		{
-			AscFormat.G_O_VISITED_HLINK_COLOR.check(PDSE.Theme, PDSE.ColorMap);
+			AscFormat.G_O_VISITED_HLINK_COLOR.check(this.Theme, this.ColorMap);
 			let RGBA = AscFormat.G_O_VISITED_HLINK_COLOR.getRGBAColor();
 			this.themeColor = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B, false);
 		}

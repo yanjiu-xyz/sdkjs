@@ -83,8 +83,6 @@
 		
 		this.isFormPlaceholder = false;
 		
-		this.Y = 0;
-		
 		this.yOffset = 0;
 		this.color   = null;
 		
@@ -370,7 +368,7 @@
 		let borderW     = this.formBorder.GetWidth();
 		let borderColor = this.formBorder.GetColor();
 		
-		let Y = this.Y;
+		let Y = this.Baseline;
 		let X = this.X;
 		
 		let formBounds = this.form.GetRangeBounds(this.Line, this.Range);
@@ -435,8 +433,8 @@
 		else if (AscCommon.vertalign_SuperScript === vertAlign)
 			strikeoutShift = AscCommon.vaKSize * 0.27 + AscCommon.vaKSuper;
 		
-		let strikeoutY = this.Y - this.yOffset - fontSizeMM * strikeoutShift;
-		let underlineY = this.Y - this.yOffset + this.UnderlineOffset;
+		let strikeoutY = this.Baseline - this.yOffset - fontSizeMM * strikeoutShift;
+		let underlineY = this.Baseline - this.yOffset + this.UnderlineOffset;
 		
 		if (AscCommon.vertalign_SubScript === vertAlign)
 			underlineY -= AscCommon.vaKSub * fontSizeMM;
@@ -453,7 +451,7 @@
 	{
 		if (this.VisitedHyperlink)
 		{
-			AscFormat.G_O_VISITED_HLINK_COLOR.check(Theme, ColorMap);
+			AscFormat.G_O_VISITED_HLINK_COLOR.check(this.Paragraph.getTheme(), this.Paragraph.getColorMap());
 			let RGBA = AscFormat.G_O_VISITED_HLINK_COLOR.getRGBAColor();
 			this.color = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B, RGBA.A);
 		}
