@@ -48,7 +48,6 @@
 		
 		this.Paragraph = undefined;
 		this.Graphics  = undefined;
-		this.BgColor   = undefined;
 		
 		this.logicDocument = null;
 		
@@ -58,7 +57,7 @@
 		this.VisitedHyperlink = false;
 		this.Hyperlink = false;
 		
-		this.UlTrailSpace = false;
+		this.ulTrailSpace = false;
 		
 		this.Strikeout  = new CParaDrawingRangeHorizontalLines();
 		this.DStrikeout = new CParaDrawingRangeHorizontalLines();
@@ -111,16 +110,14 @@
 		this.rtl      = false;
 		this.bidiFlow = new AscWord.BidiFlow(this);
 	}
-	
 	ParagraphLineDrawState.prototype.init = function()
 	{
 		this.Paragraph = this.drawState.getParagraph();
 		this.Graphics  = this.drawState.getGraphics();
-		this.BgColor   = this.drawState.getBgColor();
 		
 		this.logicDocument = this.GetLogicDocument();
 		if (this.logicDocument && this.logicDocument.IsDocumentEditor())
-			this.UlTrailSpace = this.logicDocument.IsUnderlineTrailSpace();
+			this.ulTrailSpace = this.logicDocument.IsUnderlineTrailSpace();
 	};
 	ParagraphLineDrawState.prototype.resetPage = function(page)
 	{
@@ -174,6 +171,11 @@
 	 */
 	ParagraphLineDrawState.prototype.handleRunElement = function(element, run, inRunPos, misspell)
 	{
+		if ((this.ComplexFields.IsHiddenFieldContent() || this.isHiddenCFPart)
+			&& para_End !== element.Type
+			&& para_FieldChar !== element.Type)
+			return;
+		
 		this.bidiFlow.add([element, run, inRunPos, misspell], element.isRtl());
 	};
 	ParagraphLineDrawState.prototype.handleBidiFlow = function(data)
@@ -223,7 +225,7 @@
 					endX   = this.paraLineRange.CorrectX(endX);
 				}
 				
-				if (this.Spaces > 0 || this.UlTrailSpace)
+				if (this.Spaces > 0 || this.ulTrailSpace)
 				{
 					--this.Spaces;
 					this.addLines(startX, endX);
@@ -293,10 +295,6 @@
 	{
 		return this.Paragraph.GetLogicDocument();
 	};
-	ParagraphLineDrawState.prototype.IsUnderlineTrailSpace = function()
-	{
-		return this.UlTrailSpace;
-	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -365,7 +363,7 @@
 	};
 	ParagraphLineDrawState.prototype.handleFormBorder = function(item, run, inRunPos)
 	{
-		let itemWidth = element.GetWidthVisible();
+		let itemWidth = item.GetWidthVisible();
 		if (!this.formBorder || itemWidth <= 0.001)
 			return;
 		
@@ -443,7 +441,7 @@
 		if (AscCommon.vertalign_SubScript === vertAlign)
 			underlineY -= AscCommon.vaKSub * fontSizeMM;
 		
-		let lineW = (textPr.FontSize / 18) * g_dKoef_pt_to_mm;
+		let lineW = (fontSize / 18) * g_dKoef_pt_to_mm;
 		
 		this.Strikeout.set(strikeoutY, lineW);
 		this.DStrikeout.set(strikeoutY, lineW);
