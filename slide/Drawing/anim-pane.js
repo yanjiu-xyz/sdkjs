@@ -1708,7 +1708,15 @@
 	CTimeline.prototype.shiftSelf = function (sDirection) {
 		const shiftMultiplier = 0.26 // calculated empirically :)
 		let pureTimelineWidth = this.getWidth() - 2 * SCROLL_BUTTON_SIZE // in mms
-		let shiftTimeInterval = this.posToTime(pureTimelineWidth * shiftMultiplier) // in seconds
+
+		// Не работает, потому что внутри posToTime используется поле startTimePos, а я не осилил
+		// let shiftTimeInterval = this.posToTime(pureTimelineWidth * shiftMultiplier) 
+		
+		// Работает, но что-то не то
+		let shiftTimeInterval = myPosToTime(pureTimelineWidth * shiftMultiplier, this)
+		function myPosToTime(interval_length, oThis) {
+			return interval_length * TIME_SCALES[oThis.tmScaleIdx] / TIME_INTERVALS[oThis.tmScaleIdx]
+		}
 
 		if (sDirection === 'left')
 			this.startTimePos -= shiftTimeInterval;
@@ -1918,7 +1926,7 @@
 		return oCoefs.a * fTime + oCoefs.b;
 	};
 	CTimeline.prototype.posToTime = function (fPos) {
-		//linear relationship x = a*t + b
+		//linear relationship x = a*t + b 
 		var oCoefs = this.getLinearCoeffs();
 		return (fPos - oCoefs.b) / oCoefs.a;
 	};
