@@ -46,6 +46,7 @@
 	const RuleLst = AscFormat.RuleLst;
 	const VarLst = AscFormat.VarLst;
 
+	const degToRad = Math.PI / 180;
 	const algDelta = 1e-13;
 	const bulletFontSizeCoefficient = 51 / 65;
 
@@ -108,7 +109,7 @@
 
 	If.prototype.checkCondition = function (smartArtAlgorithm) {
 		const node = smartArtAlgorithm.getCurrentNode();
-		const nodes = node.getNodesByAxis(this.axis);
+		const nodes = this.getNodesArray(smartArtAlgorithm);
 
 		switch (this.func) {
 			case AscFormat.If_func_cnt:
@@ -131,16 +132,37 @@
 				return false;
 		}
 	};
-	If.prototype.funcVar = function (node) {
-		const nodeVal = node.getFuncVarValue(this.arg);
+	If.prototype.check = function (expected, result) {
 		switch (this.op) {
 			case AscFormat.If_op_equ: {
-				return this.getConditionValue() === nodeVal;
+				return expected === result;
+			}
+			case AscFormat.If_op_gt: {
+				return result > expected;
+			}
+			case AscFormat.If_op_lt: {
+				return result < expected;
+			}
+			case AscFormat.If_op_gte: {
+				return result >= expected;
+			}
+			case AscFormat.If_op_lte: {
+				return result <= expected;
+			}
+			case AscFormat.If_op_neq: {
+				return result !== expected;
 			}
 			default: {
 				return false;
 			}
 		}
+	}
+	If.prototype.funcVar = function (node) {
+		const nodeVal = node.getFuncVarValue(this.arg);
+		return this.check(this.getConditionValue(), nodeVal);
+	}
+	If.prototype.funcCnt = function (nodes) {
+		return this.check(parseInt(this.val, 10), nodes.length);
 	}
 	If.prototype.getConditionValue = function () {
 		switch (this.arg) {
@@ -732,17 +754,21 @@
 			isChecked: false
 		};
 	};
-	ShadowShape.prototype.changeSize = function (coefficient) {
+	ShadowShape.prototype.changeSize = function (coefficient, props) {
+		props = props || {};
 		this.x *= coefficient;
-		this.y *= coefficient;
-		this.h *= coefficient;
 		this.w *= coefficient;
+		if (props.changeHeight !== false) {
+			this.y *= coefficient;
+			this.h *= coefficient;
+		}
 	}
 	ShadowShape.prototype.initFromShape = function (shape) {
 		this.shape = shape;
 		if (!shape.hideGeom) {
 			this.type = shape.type;
 			this.isSpacing = this.type === AscFormat.LayoutShapeType_outputShapeType_none;
+			this.rot = AscFormat.isRealNumber(shape.rot) ? AscFormat.normalizeRotate(degToRad * shape.rot) : 0;
 		}
 		const widthCoef = this.node.getWidthScale();
 		const heightCoef = this.node.getHeightScale();
@@ -750,10 +776,15 @@
 		const y = this.node.getConstr(AscFormat.Constr_type_t);
 		const width = this.node.getConstr(AscFormat.Constr_type_w);
 		const height = this.node.getConstr(AscFormat.Constr_type_h);
-		this.x = x * heightCoef;
-		this.y = y * heightCoef;
+		this.x = x;
+		this.y = y;
 		this.w = width * widthCoef;
 		this.h = height * heightCoef;
+/*		if (widthCoef < 1) {
+			this.x += (width - this.w) / 2;
+		}
+
+			this.y += (height - this.h) / 2;*/
 
 		this.cleanParams = {
 			w: width,
@@ -905,6 +936,7 @@
 		txXfrm.setOffY(xfrm.offY);
 		txXfrm.setExtX(xfrm.extX);
 		txXfrm.setExtY(xfrm.extY);
+		txXfrm.setRot(AscFormat.normalizeRotate(-this.rot));
 		editorShape.setTxXfrm(txXfrm);
 
 
@@ -933,6 +965,10 @@
 		this.calcValues = {
 			coefficient: 1
 		};
+		this.isChildAlgorithm = false;
+	}
+	BaseAlgorithm.prototype.getShapes = function () {
+		return [];
 	}
 	BaseAlgorithm.prototype.setConnectionDistance = function (value, isStart) {
 
@@ -955,6 +991,9 @@
 
 	BaseAlgorithm.prototype.setParentNode = function (node) {
 		this.parentNode = node;
+		if (node.parent) {
+			this.isChildAlgorithm = true;
+		}
 	};
 	BaseAlgorithm.prototype.setFirstConnectorShape = function () {
 
@@ -1016,11 +1055,16 @@
 			}
 		}
 	}
-	PositionAlgorithm.prototype.applyAligns = function (presNode) {
+	PositionAlgorithm.prototype.applyAligns = function (presNode, props) {
+		props = props || {};
 		const shape = presNode.shape;
 		const cleanParams = shape.cleanParams;
 		const cleanW = cleanParams.w * this.calcValues.coefficient;
-		const cleanH = cleanParams.h * this.calcValues.coefficient;
+		let cleanH = cleanParams.h;
+
+		if (props.changeHeight !== false) {
+			cleanH *= this.calcValues.coefficient;
+		}
 
 		const parentOffX = (shape.w - cleanW) / 2;
 		const parentOffY = (shape.h - cleanH) / 2;
@@ -1318,10 +1362,10 @@
 				}
 			});
 		});
-		this.applyOffsets();
+		this.applyParamOffsets();
 		this.applyPostAlgorithmSettings();
 	};
-	SnakeAlgorithm.prototype.applyOffsets = function () {
+	SnakeAlgorithm.prototype.applyParamOffsets = function () {
 
 		switch (this.params[AscFormat.Param_type_off]) {
 			case AscFormat.ParameterVal_offset_ctr:
@@ -1435,7 +1479,26 @@
 			this.params[AscFormat.Param_type_off] = AscFormat.ParameterVal_offset_ctr;
 		}
 	}
-
+	LinearAlgorithm.prototype.applyConstraintOffset = function () {
+		const parentNode = this.parentNode;
+		const width = parentNode.constr[AscFormat.Constr_type_w];
+		const ctrX = parentNode.constr[AscFormat.Constr_type_ctrX];
+		let offX = 0;
+		let offY = 0;
+		if (ctrX !== undefined) {
+			offX = ctrX - width / 2;
+		}
+			this.rows.forEachShape(function (shape) {
+				const node = shape.node;
+				node.forEachDes(function (node) {
+					const shape = node.shape;
+					if (shape) {
+						shape.x += offX;
+						shape.y += offY;
+					}
+				});
+			});
+	};
 	LinearAlgorithm.prototype.afterLayoutNode = function () {
 		const lastChild = this.parentNode.childs[this.parentNode.childs.length - 1];
 		if (lastChild) {
@@ -1447,6 +1510,7 @@
 		if (this.params[AscFormat.Param_type_linDir] === AscFormat.ParameterVal_linearDirection_fromT) {
 			this.calculateColumnLinear();
 		}
+
 	};
 	LinearAlgorithm.prototype.calculateRowScaleCoefficient = function () {
 		const childs = this.parentNode.childs;
@@ -1461,8 +1525,14 @@
 			const childConstraints = this.getNodeConstraints(child);
 			sumWidth += childConstraints.width;
 			const widthCoefficient = parentWidth / sumWidth;
-			const heightCoefficient = parentHeight / childConstraints.height;
-			coefficient = Math.min(coefficient, widthCoefficient, heightCoefficient);
+			if (this.isChildAlgorithm) {
+				coefficient = Math.min(coefficient, widthCoefficient);
+			} else {
+				const heightCoefficient = parentHeight / childConstraints.height;
+				coefficient = Math.min(coefficient, widthCoefficient, heightCoefficient);
+			}
+
+
 		}
 		this.calcValues.coefficient = coefficient;
 	}
@@ -1474,11 +1544,12 @@
 		const rows = new ShapeRows();
 		const row = new ShapeRow();
 		rows.push(row);
+		const changeProps = {changeHeight: !this.isChildAlgorithm};
 		for (let i = 0; i < length; i++) {
 			const child = childs[i];
 			const shape = child.shape;
 			if (shape) {
-				child.changeShapeSizes(this.calcValues.coefficient);
+				child.changeShapeSizes(this.calcValues.coefficient, changeProps);
 				shape.x += row.width;
 				row.push(shape);
 				if (row.height < shape.h) {
@@ -1502,7 +1573,8 @@
 				}
 			});
 		});
-		this.applyOffsets();
+		this.applyParamOffsets(changeProps);
+		this.applyConstraintOffset();
 		this.applyPostAlgorithmSettings();
 		this.setConnections(childs);
 	}
@@ -1540,19 +1612,17 @@
 		});
 	}
 
-	LinearAlgorithm.prototype.applyOffsets = function () {
+	LinearAlgorithm.prototype.applyParamOffsets = function (changeProps) {
 		const parentConstraints = this.getNodeConstraints(this.parentNode);
-		const parentWidth = parentConstraints.width;
-		const parentHeight = parentConstraints.height;
 		switch (this.params[AscFormat.Param_type_off]) {
 			case AscFormat.ParameterVal_offset_ctr:
-				this.applyCenterAlign(parentHeight, parentWidth);
+				this.applyCenterAlign(changeProps);
 				break;
 			default:
 				break;
 		}
 	}
-	LinearAlgorithm.prototype.applyCenterAlign = function () {
+	LinearAlgorithm.prototype.applyCenterAlign = function (changeProps) {
 		const parentConstraints = this.getNodeConstraints(this.parentNode);
 		const parentWidth = parentConstraints.width;
 		const parentHeight = parentConstraints.height;
@@ -1561,7 +1631,7 @@
 		const oThis = this;
 		this.rows.forEachShape(function (shadowShape) {
 			const node = shadowShape.node;
-			oThis.applyAligns(node);
+			oThis.applyAligns(node, changeProps);
 		});
 	};
 
@@ -1808,6 +1878,19 @@
 		presNode.shape.isSpacing = false;
 	};
 
+	CompositeAlgorithm.prototype.getShapes = function (smartartAlgorithm) {
+		smartartAlgorithm.applyColorsDef();
+		const shapes = [];
+		this.parentNode.forEachDes(function (presNode) {
+			const shape = presNode.shape;
+			const editorShape = shape && shape.getEditorShape();
+			if (editorShape) {
+				shapes.push(editorShape);
+			}
+		});
+		return shapes;
+	}
+
 function PresNode(presPoint, contentNode) {
 	this.parent = null;
 	this.presPoint = presPoint || null;
@@ -1855,11 +1938,11 @@ function PresNode(presPoint, contentNode) {
 			}
 		});
 	};
-	PresNode.prototype.changeShapeSizes = function (coefficient) {
+	PresNode.prototype.changeShapeSizes = function (coefficient, props) {
 	this.forEachDesOrSelf(function (presNode) {
 		const shape = presNode.shape;
 		if (shape) {
-			shape.changeSize(coefficient);
+			shape.changeSize(coefficient, props);
 		}
 	});
 	}
@@ -2038,6 +2121,26 @@ PresNode.prototype.addChild = function (ch, pos) {
 		return false;
 	};
 	PresNode.prototype.setConstraint = function (constr, value) {
+
+		switch (constr.op) {
+			case AscFormat.Constr_op_gte: {
+				const oldValue = this.constr[constr.type];
+				if (oldValue !== undefined && value < oldValue) {
+					return;
+				}
+				break;
+			}
+			case AscFormat.Constr_op_lte: {
+				const oldValue = this.constr[constr.type];
+				if (oldValue !== undefined && value > oldValue) {
+					return;
+				}
+				break;
+			}
+			default: {
+				break;
+			}
+		}
 		this.constr[constr.type] = value;
 		switch (constr.type) {
 			case AscFormat.Constr_type_b:
