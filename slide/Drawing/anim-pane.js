@@ -349,7 +349,10 @@
 	};
 	CControl.prototype.onMouseUp = function (e, x, y) {
 		if (this.parentControl) {
-			this.parentControl.setEventListener(null);
+			if(this.parentControl.isEventListener(this)) {
+				this.parentControl.setEventListener(null);
+				return true;
+			}
 		}
 		return false;
 	};
@@ -752,7 +755,8 @@
 		return false;
 	};
 
-	const SCROLL_TIMER_INTERVAL = 200;
+	const SCROLL_TIMER_INTERVAL = 150;
+	const SCROLL_TIMER_DELAY = 600;
 
 	function CScrollBase(oParentControl, oContainer, oChild) {
 		CControlContainer.call(this, oParentControl);
@@ -769,6 +773,7 @@
 		this.startScrollerPos = null;
 		this.startScrollTop = null;
 		this.timerId = null;
+		this.timeoutId = null;
 
 		// List of default handlers for buttons ---
 
@@ -776,17 +781,23 @@
 			if (!this.hit(x, y)) { return }
 			this.parentControl.setEventListener(this);
 			this.parentControl.startScroll(-ANIM_ITEM_HEIGHT);
+			return true;
 		}
 		
 		function onSecondBtnMouseDown(e, x, y) {
-			if (this.hit(x, y)) { return }
+			if (!this.hit(x, y)) { return }
 			this.parentControl.setEventListener(this);
 			this.parentControl.startScroll(ANIM_ITEM_HEIGHT);
+			return true;
 		}
 
 		function onMouseUp(e, x, y) {
-			this.parentControl.setEventListener(null);
-			this.parentControl.endScroll();
+			if(this.parentControl.isEventListener(this)) {
+				this.parentControl.setEventListener(null);
+				this.parentControl.endScroll();
+				return true;
+			}
+			return false;
 		}
 		
 		// --- end of list of default handlers for buttons
@@ -849,9 +860,14 @@
 		var oScroll = this;
 		this.tmpScrollOffset = this.getScrollOffset();
 		oScroll.addScroll(step);
-		this.timerId = setInterval(function () {
-			oScroll.addScroll(step);
-		}, SCROLL_TIMER_INTERVAL);
+
+		this.timeoutId = setTimeout(function () {
+			oScroll.timeoutId = null;
+			oScroll.timerId = setInterval(function () {
+				oScroll.addScroll(step);
+			}, SCROLL_TIMER_INTERVAL);
+		}, SCROLL_TIMER_DELAY);
+
 	};
 	CScrollBase.prototype.addScroll = function (step) {
 		this.setTmpScroll(this.tmpScrollOffset + step);
@@ -862,13 +878,17 @@
 			clearInterval(this.timerId);
 			this.timerId = null;
 		}
+		if (this.timeoutId !== null) {
+			clearTimeout(this.timeoutId);
+			this.timeoutId = null;
+		}
 		this.clearTmpScroll();
 		this.setStateFlag(STATE_FLAG_SELECTED, false);
 		this.startScrollerPos = null;
 		this.startScrollTop = null;
 	};
-	CScrollBase.prototype.isOnScroll = function (step) {
-		return this.timerId !== null || this.parentControl.isEventListener(this);
+	CScrollBase.prototype.isOnScroll = function () {
+		return this.timerId !== null || this.timeoutId !== null || this.parentControl.isEventListener(this);
 	};
 	CScrollBase.prototype.getFillColor = function () {
 		return null;
@@ -1063,25 +1083,6 @@
 		CScrollBase.call(this, oParentControl, oContainer, oChild);
 		this.leftButton = this.children[0];
 		this.rightButton = this.children[1];
-
-		this.leftButton.onMouseDownCallback = function (e, x, y) {
-			if (!this.hit(x, y)) { return }
-			let oThis = this
-			this.parentControl.setEventListener(this);
-			clearInterval(this.parentControl.timerId)
-			this.parentControl.timerId = setInterval(() => oThis.parentControl.shiftSelf('left'), 500)
-		}
-		this.rightButton.onMouseDownCallback = function (e, x, y) {
-			if (!this.hit(x, y)) { return }
-			this.parentControl.setEventListener(this);
-			let oThis = this
-			clearInterval(this.parentControl.timerId)
-			this.parentControl.timerId = setInterval(() => oThis.parentControl.shiftSelf('right'), 500)
-		}
-		this.leftButton.onMouseUpCallback = this.rightButton.onMouseUpCallback = function(e,x,y) {
-			clearInterval(this.parentControl.timerId)
-			this.parentControl.timerId = null
-		}
 	}
 
 	InitClass(CScrollHor, CScrollBase, CONTROL_TYPE_SCROLL_HOR);
@@ -1716,6 +1717,16 @@
 	}
 
 	InitClass(CTimeline, CScrollHor, CONTROL_TYPE_TIMELINE);
+
+
+	CTimeline.prototype.addScroll = function (step) {
+		if(step < 0) {
+			this.shiftSelf("left");
+		}
+		else {
+			this.shiftSelf("right");
+		}
+	};
 	CTimeline.prototype.shiftSelf = function (sDirection) {
 		const shiftMultiplier = 0.26 // calculated empirically :)
 		let pureTimelineWidth = this.getWidth() - 2 * SCROLL_BUTTON_SIZE // in mms
@@ -1851,7 +1862,8 @@
 		// graphics.rect(dPaneLeft, 0, dPaneWidth, this.getHeight());
 		// graphics.ds();
 		// graphics.RestoreGrState();
-		var sColor = this.children[0].getOutlineColor();
+		var oSkin = AscCommon.GlobalSkin;
+		var sColor = oSkin.ScrollOutlineColor;
 		var oColor = AscCommon.RgbaHexToRGBA(sColor);
 		var dPaneLeft = this.getRulerStart();
 		var dPaneWidth = this.getRulerEnd() - dPaneLeft;
