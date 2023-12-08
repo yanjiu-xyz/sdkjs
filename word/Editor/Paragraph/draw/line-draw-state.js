@@ -103,7 +103,7 @@
 		
 		this.reviewColor       = REVIEW_COLOR;
 		this.reviewRemAddColor = REVIEW_COLOR;
-		this.reviewPrColor     = REVIEW_COLOR;
+		this.reviewPrColor     = null;
 		
 		this.rtl      = false;
 		this.bidiFlow = new AscWord.BidiFlow(this);
@@ -251,12 +251,9 @@
 		if (misspell)
 			this.Spelling.Add(startX, endX, BLACK_COLOR);
 		
-		// // TODO: PrChange
-		// if (true === this.Pr.HavePrChange() && para_Math_Run !== this.Type)
-		// {
-		// 	var ReviewColor = this.GetPrReviewColor();
-		// 	PDSL.RunReview.Add(0, 0, PDSL.X, X, 0, ReviewColor.r, ReviewColor.g, ReviewColor.b, {RunPr: this.Get_CompiledPr(false)});
-		// }
+		if (this.reviewPrColor)
+			this.RunReview.Add(0, 0, startX, endX, 0, this.reviewPrColor.r, this.reviewPrColor.g, this.reviewPrColor.b, {RunPr: this.textPr});
+		
 		//
 		// // TODO: Collaboration
 		// var CollPrChangeColor = this.private_GetCollPrChangeOther();
@@ -501,7 +498,7 @@
 		
 		this.reviewColor       = REVIEW_COLOR;
 		this.reviewRemAddColor = REVIEW_COLOR;
-		this.reviewPrColor     = REVIEW_COLOR;
+		this.reviewPrColor     = run.Pr.HavePrChange() && !run.IsMathRun() ? run.GetPrReviewColor() : null;
 		
 		let reviewType = run.GetReviewType();
 		if (reviewType !== reviewtype_Common)
