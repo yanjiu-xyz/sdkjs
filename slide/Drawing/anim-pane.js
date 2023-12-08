@@ -1066,11 +1066,21 @@
 
 		this.leftButton.onMouseDownCallback = function (e, x, y) {
 			if (!this.hit(x, y)) { return }
-			this.parentControl.shiftSelf('left')
+			let oThis = this
+			this.parentControl.setEventListener(this);
+			clearInterval(this.parentControl.timerId)
+			this.parentControl.timerId = setInterval(() => oThis.parentControl.shiftSelf('left'), 500)
 		}
 		this.rightButton.onMouseDownCallback = function (e, x, y) {
 			if (!this.hit(x, y)) { return }
-			this.parentControl.shiftSelf('right')
+			this.parentControl.setEventListener(this);
+			let oThis = this
+			clearInterval(this.parentControl.timerId)
+			this.parentControl.timerId = setInterval(() => oThis.parentControl.shiftSelf('right'), 500)
+		}
+		this.leftButton.onMouseUpCallback = this.rightButton.onMouseUpCallback = function(e,x,y) {
+			clearInterval(this.parentControl.timerId)
+			this.parentControl.timerId = null
 		}
 	}
 
@@ -1676,6 +1686,7 @@
 	const MIDDLE_1_TIME_INTERVAL = 20;
 	const MIDDLE_2_TIME_INTERVAL = 25;
 	const LONG_TIME_INTERVAL = 30;
+
 	const TIME_INTERVALS = [
 		LONG_TIME_INTERVAL, //1
 		SMALL_TIME_INTERVAL, //1
@@ -1708,20 +1719,12 @@
 	CTimeline.prototype.shiftSelf = function (sDirection) {
 		const shiftMultiplier = 0.26 // calculated empirically :)
 		let pureTimelineWidth = this.getWidth() - 2 * SCROLL_BUTTON_SIZE // in mms
-
-		// Не работает, потому что внутри posToTime используется поле startTimePos, а я не осилил
-		// let shiftTimeInterval = this.posToTime(pureTimelineWidth * shiftMultiplier) 
-		
-		// Работает, но что-то не то
-		let shiftTimeInterval = myPosToTime(pureTimelineWidth * shiftMultiplier, this)
-		function myPosToTime(interval_length, oThis) {
-			return interval_length * TIME_SCALES[oThis.tmScaleIdx] / TIME_INTERVALS[oThis.tmScaleIdx]
-		}
+		let newTimePos = this.posToTime(pureTimelineWidth * shiftMultiplier)
 
 		if (sDirection === 'left')
-			this.startTimePos -= shiftTimeInterval;
+			this.startTimePos = 2 * this.startTimePos - newTimePos;
 		if (sDirection === 'right')
-			this.startTimePos += shiftTimeInterval;
+			this.startTimePos = newTimePos;
 
 		this.startTimePos = Math.max(0, this.startTimePos)
 		this.onUpdate()
@@ -1910,10 +1913,18 @@
 	CTimeline.prototype.getCursorSize = function () {
 		return BUTTON_SIZE;
 	};
+
+	/**
+	 * Returns the value (in millimeters) of the left margin
+	 * for the start of the timeline
+	 */
 	CTimeline.prototype.getZeroShift = function () {
 		return this.getRulerStart() + this.getCursorSize() / 2;
 	};
 
+	/*
+	 * Functions to convert time to pos and vice versa
+	 */
 	CTimeline.prototype.getLinearCoeffs = function () {
 		//linear relationship x = a*t + b
 		var a = TIME_INTERVALS[this.tmScaleIdx] / TIME_SCALES[this.tmScaleIdx];
