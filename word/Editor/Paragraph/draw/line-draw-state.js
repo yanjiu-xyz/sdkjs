@@ -372,7 +372,7 @@
 		let formBounds = this.form.GetRangeBounds(this.Line, this.Range);
 		let additional = {
 			Form    : this.form,
-			Comb    : nCombMax,
+			Comb    : this.combMax,
 			Y       : formBounds.Y,
 			H       : formBounds.H,
 			BorderL : 0 === inRunPos
@@ -389,7 +389,7 @@
 		if (item.RGapCount)
 		{
 			var nGapEnd = X + itemWidth;
-			aFormBorder.Add(Y, Y, X, nGapEnd - item.RGapCount * item.RGapShift,
+			this.FormBorder.Add(Y, Y, X, nGapEnd - item.RGapCount * item.RGapShift,
 				borderW,
 				borderColor.r,
 				borderColor.g,
@@ -399,7 +399,7 @@
 			
 			for (var nGapIndex = 0; nGapIndex < item.RGapCount; ++nGapIndex)
 			{
-				aFormBorder.Add(Y, Y, nGapEnd - (item.RGapCount - nGapIndex) * item.RGapShift, nGapEnd - (item.RGapCount - nGapIndex - 1) * item.RGapShift,
+				this.FormBorder.Add(Y, Y, nGapEnd - (item.RGapCount - nGapIndex) * item.RGapShift, nGapEnd - (item.RGapCount - nGapIndex - 1) * item.RGapShift,
 					borderW,
 					borderColor.r,
 					borderColor.g,
@@ -410,7 +410,7 @@
 		}
 		else
 		{
-			aFormBorder.Add(Y, Y, X, X + itemWidth,
+			this.FormBorder.Add(Y, Y, X, X + itemWidth,
 				borderW,
 				borderColor.r,
 				borderColor.g,
