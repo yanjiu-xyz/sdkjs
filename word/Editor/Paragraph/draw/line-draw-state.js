@@ -105,6 +105,8 @@
 		this.reviewRemAddColor = REVIEW_COLOR;
 		this.reviewPrColor     = null;
 		
+		this.collPrChangeColor = null;
+		
 		this.rtl      = false;
 		this.bidiFlow = new AscWord.BidiFlow(this);
 	}
@@ -254,11 +256,8 @@
 		if (this.reviewPrColor)
 			this.RunReview.Add(0, 0, startX, endX, 0, this.reviewPrColor.r, this.reviewPrColor.g, this.reviewPrColor.b, {RunPr: this.textPr});
 		
-		//
-		// // TODO: Collaboration
-		// var CollPrChangeColor = this.private_GetCollPrChangeOther();
-		// if (false !== CollPrChangeColor)
-		// 	PDSL.CollChange.Add(0, 0, PDSL.X, X, 0, CollPrChangeColor.r, CollPrChangeColor.g, CollPrChangeColor.b, {RunPr : this.Pr});
+		if (this.collPrChangeColor)
+			this.CollChange.Add(0, 0, startX, endX, 0, this.collPrChangeColor.r, this.collPrChangeColor.g, this.collPrChangeColor.b, {RunPr : this.textPr});
 		
 		this.X = endX;
 	};
@@ -353,6 +352,8 @@
 			this.isStrikeout  = ctrPrp.Strikeout;
 			this.isDStrikeout = ctrPrp.DStrikeout;
 		}
+		
+		this.collPrChangeColor = run.getCollPrChangeColor();
 		
 		this.textPr = textPr;
 	};

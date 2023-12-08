@@ -89,7 +89,7 @@ function ParaRun(Paragraph, bMathRun)
 	this.RecalcInfo = new CParaRunRecalcInfo();  // Флаги для пересчета (там же флаг пересчета стиля)
 	
 	this.CollPrChangeMine   = false;
-	this.CollPrChangeOther  = false;
+	this.CollPrChangeColor  = null; // Если задан, значит это цвет того, кто менял
 	this.CollaborativeMarks = new CRunCollaborativeMarks();
 	this.m_oContentChanges  = new AscCommon.CContentChanges(); // список изменений(добавление/удаление элементов)
 
@@ -2738,7 +2738,7 @@ ParaRun.prototype.Split2 = function(CurPos, Parent, ParentPos)
     NewRun.SetReviewTypeWithInfo(this.ReviewType, this.ReviewInfo ? this.ReviewInfo.Copy() : undefined);
 
     NewRun.CollPrChangeMine  = this.CollPrChangeMine;
-    NewRun.CollPrChangeOther = this.CollPrChangeOther;
+    NewRun.CollPrChangeColor = this.CollPrChangeColor;
 
     if(bMathRun)
         NewRun.Set_MathPr(this.MathPrp.Copy());
@@ -9721,12 +9721,12 @@ ParaRun.prototype.Read_FromBinary2 = function(Reader)
 ParaRun.prototype.Clear_CollaborativeMarks = function()
 {
     this.CollaborativeMarks.Clear();
-    this.CollPrChangeOther = false;
+    this.CollPrChangeColor = null;
 };
 ParaRun.prototype.private_AddCollPrChangeMine = function()
 {
     this.CollPrChangeMine  = true;
-    this.CollPrChangeOther = false;
+    this.CollPrChangeColor = null;
 };
 ParaRun.prototype.private_IsCollPrChangeMine = function()
 {
@@ -9735,14 +9735,14 @@ ParaRun.prototype.private_IsCollPrChangeMine = function()
 
     return false;
 };
-ParaRun.prototype.private_AddCollPrChangeOther = function(Color)
+ParaRun.prototype.setCollPrChangeColor = function(color)
 {
-    this.CollPrChangeOther = Color;
-    AscCommon.CollaborativeEditing.Add_ChangedClass(this);
+	this.CollPrChangeColor = color;
+	AscCommon.CollaborativeEditing.Add_ChangedClass(this);
 };
-ParaRun.prototype.private_GetCollPrChangeOther = function()
+ParaRun.prototype.getCollPrChangeColor = function()
 {
-    return this.CollPrChangeOther;
+	return this.CollPrChangeColor;
 };
 /**
  * Специальная функция-заглушка, добавляем элементы за знаком конца параграфа, для поддержки разделителей, лежащих
