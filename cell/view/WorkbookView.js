@@ -1958,7 +1958,7 @@
   WorkbookView.prototype._onMouseDblClick = function(x, y, event, callback) {
     var ws = this.getWorksheet();
     var ct = ws.getCursorTypeFromXY(x, y);
-
+	
     if (ct.target === c_oTargetType.FillHandle) {
 		ws.applyFillHandleDoubleClick();
     	asc_applyFunction(callback);
@@ -1979,6 +1979,7 @@
       }
       var pivotTable = ws.model.getPivotTable(ct.col, ct.row);
       if (pivotTable) {
+		console.log(pivotTable.getRangeByGetPivotDataParams('Sum of Cost',["Region","East"]))
         if(pivotTable.asc_canShowDetails(ct.row, ct.col)) {
           this.Api.asc_pivotShowDetails(pivotTable);
           return;
