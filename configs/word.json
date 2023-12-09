@@ -388,24 +388,9 @@
 				"word/Local/api.js"
 			]
 		},
-		"mobile_banners": {
-			"min": [
-				"common/Native/Wrappers/memory.js"
-			],
-			"common": []
-		},
 		"mobile": [
 			"common/libfont/engine/fonts_native.js",
-			"common/Charts/ChartStyles.js",
-			
-			"common/Native/Wrappers/serialize.js",
-			"common/Native/Wrappers/DrawingStream.js",
-			"common/Native/Wrappers/ShapeDrawer.js",
-			"common/Native/Wrappers/Overlay.js",
-
-			"word/Native/HtmlPage.js",
-			"word/Native/DrawingDocument.js",
-			"word/Native/api.js"
+			"common/Charts/ChartStyles.js"
 		],
 		"exclude_mobile": [
 			"vendor/iscroll.js",
