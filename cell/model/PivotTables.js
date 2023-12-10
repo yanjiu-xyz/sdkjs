@@ -7403,7 +7403,7 @@ CT_pivotTableDefinition.prototype.getDataFieldIndexByName = function(name) {
 
 /**
  * @param {GetPivotDataParams} params
- * @return {Range}
+ * @return {{row: number, col: number}}
  */
 CT_pivotTableDefinition.prototype.getRangeByGetPivotDataParams = function(params) {
 	const pivotRange = this.getRange();
@@ -7413,10 +7413,16 @@ CT_pivotTableDefinition.prototype.getRangeByGetPivotDataParams = function(params
 	if (itemFieldsMap) {
 		const indexes = this.getItemsIndexesByItemFieldsMap(itemFieldsMap);
 		if (indexes) {
-			return this.worksheet.getRange4(r + indexes.rowItemIndex, c + indexes.colItemIndex);;
+			return {
+				row: r + indexes.rowItemIndex,
+				col: c + indexes.colItemIndex
+			}
 		}
 	} else if (!params.optParams) {
-		return this.worksheet.getRange4(pivotRange.r2, pivotRange.c2);
+		return {
+			row: pivotRange.r2,
+			col: pivotRange.c2
+		}
 	}
 	return null;
 };
