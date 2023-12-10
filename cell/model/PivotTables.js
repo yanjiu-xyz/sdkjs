@@ -2632,7 +2632,7 @@ CT_PivotCacheRecords.prototype.updateCacheData = function() {
 };
 /**
  * @param {Worksheet} ws
- * @param {PivotItemFieldsMap} itemMap
+ * @param {ExtendedPivotItemFieldsMap} itemMap
  * @param {CT_CacheFields} cacheFields
  * @return {boolean[]}
  */
@@ -2656,7 +2656,7 @@ CT_PivotCacheRecords.prototype.getRowMapByItemMap = function(itemMap, cacheField
 };
 /**
  * @param {Worksheet} ws
- * @param {Map<number, number>} rowMap rows to copy
+ * @param {PivotItemFieldsMap} rowMap rows to copy
  * @param {CT_CacheFields} cacheFields
  * @return {FillPivotDetailsLengths}
  */
@@ -2699,7 +2699,7 @@ CT_PivotCacheRecords.prototype.copyRowsToWorksheet = function(ws, rowMap, cacheF
  */
 /**
  * @param {Worksheet} ws 
- * @param {PivotItemFieldsMap} itemMap
+ * @param {ExtendedPivotItemFieldsMap} itemMap
  * @param {CT_CacheFields} cacheFields
  * @return {FillPivotDetailsLengths} lengths
  */
@@ -5816,9 +5816,9 @@ CT_pivotTableDefinition.prototype.updateCacheData = function (dataRef) {
 /**
  * @param {CT_PivotField[]} oldFields
  * @param {CT_PivotField[]} newFields
- * @param {Map<number, number>} pivotFieldsMap old index to new index of pivotFields
- * @param {Map<number, Map<number, number>>} cacheFieldsIndexesMap old index to new index cacheFields
- * @return {Map<number, number>} old index to new index pivotField.items
+ * @param {PivotItemFieldsMap} pivotFieldsMap old index to new index of pivotFields
+ * @param {ExtendedPivotItemFieldsMap} cacheFieldsIndexesMap old index to new index cacheFields
+ * @return {PivotItemFieldsMap} old index to new index pivotField.items
  */
 CT_pivotTableDefinition.prototype._updateCacheDataUpdatePivotFieldsMap = function (oldFields, newFields, pivotFieldsMap, cacheFieldsIndexesMap) {
 	let pivotFieldsIndexesMap = new Map();
@@ -7374,45 +7374,48 @@ CT_pivotTableDefinition.prototype._groupDiscreteAddFields = function(fld, parFld
  */
 
 /**
- * @typedef {ItemFieldString[]} GetPivotDataOptionalParams
- */
-/**
 
 /** 
  * @typedef {[number, number][]} PivotItemFieldsMapArray 
  * [pivotFieldIndex, fieldItemIndex] array which describes the item by the all fields of the pivot table
  */
+
+/**
+ * @typedef GetPivotDataParams
+ * @property {string} dataFieldName
+ * @property {string[]?} optParams
+ */
+
 /**
  * @param {string} name 
- * @return {CT_DataField | null}
+ * @return {number | null}
  */
-CT_pivotTableDefinition.prototype.getDataFieldByName = function(name) {
+CT_pivotTableDefinition.prototype.getDataFieldIndexByName = function(name) {
 	const dataFields = this.asc_getDataFields();
 	for(let i = 0; i < dataFields.length; i += 1) {
 		const dataField = dataFields[i];
 		if (dataField.name === name) {
-			return dataField;
+			return i;
 		}
 	}
 	return null;
 }
 
 /**
- * @param {string} dataFieldName
- * @param {string[]} optParams
+ * @param {GetPivotDataParams} params
  * @return {Range}
  */
-CT_pivotTableDefinition.prototype.getRangeByGetPivotDataParams = function(dataFieldName, optParams) {
-	const dataIndex = this.getDataFieldByName(dataFieldName)
-	const getPivotDataOptParams = this.getPivotDataOptParams(optParams);
-	const itemFieldsMap = params.optParams ? this.getItemFieldsMapByStringParams(getPivotDataOptParams) : null;
-	const indexes = this.getItemsIndexesByItemFieldsMap(dataIndex, itemFieldsMap);
-	if (indexes) {
-		const pivotRange = this.getRange();
-		const r = pivotRange.r1 + this.location.firstDataRow;
-		const c = pivotRange.c1 + this.location.firstDataCol;
-		const range = this.worksheet.getRange4(r + indexes.rowItemIndex, c + indexes.colItemIndex);
-		return range;
+CT_pivotTableDefinition.prototype.getRangeByGetPivotDataParams = function(params) {
+	const itemFieldsMap = this.getItemFieldsMapByGetPivotDataParams(params);
+	if (itemFieldsMap) {
+		const indexes = this.getItemsIndexesByItemFieldsMap(itemFieldsMap);
+		if (indexes) {
+			const pivotRange = this.getRange();
+			const r = pivotRange.r1 + this.location.firstDataRow;
+			const c = pivotRange.c1 + this.location.firstDataCol;
+			const range = this.worksheet.getRange4(r + indexes.rowItemIndex, c + indexes.colItemIndex);
+			return range;
+		}
 	}
 	return null;
 };
@@ -7436,25 +7439,32 @@ CT_pivotTableDefinition.prototype.getPivotDataOptParams = function(params) {
 };
 /**
  * @param {PivotItemFieldsMap} itemFieldsMap
- * @param {number} dataIndex dataField index
  * @return {PivotItemsIndexes}
  */
-CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(dataIndex, itemFieldsMap) {
-	let count = itemFieldsMap.size;
+CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(itemFieldsMap) {
 	const pivotFields = this.asc_getPivotFields();
-	function getIndex(items, fields) {
+	/**
+	 * @param {CT_I[]} items
+	 * @param {CT_Field[]} fields
+	 * @param {PivotItemFieldsMap} itemMap
+	 * @return {number}
+	 */
+	function getIndex(items, fields, itemMap) {
+		let count = itemMap.size;
 		let j = -1;
-		for(let i = 0; i < fields.length && j < items.length; i += 1) {
-			j += 1;
+		for(let i = 0; i < fields.length && j < items.length && count !== 0; i += 1) {
 			const field = fields[i];
 			const fieldIndex = field.asc_getIndex();
-			if (itemFieldsMap.has(fieldIndex)) {
-				for(;j < items.length; j += 1) {
+			if (itemMap.has(fieldIndex)) {
+				for(j = j + 1; j < items.length; j += 1) {
 					const item = items[j];
 					if (item.getR() <= i && item.getR() + item.x.length - 1 >= i) {
 						const pivotField = pivotFields[fieldIndex];
 						const fieldItem = pivotField.getItem(item.x[i - item.getR()].getV());
-						if (fieldItem.x === itemFieldsMap.get(fieldIndex) && item.i === dataIndex) {
+						if (fieldItem.x === itemMap.get(fieldIndex)) {
+							if (item.x.length > 1) {
+								j -= 1;
+							}
 							count -= 1;
 							break;
 						}
@@ -7463,41 +7473,64 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(data
 						return null;
 					}
 				}
-			} else {
-				break;
+			} else if(fieldIndex === AscCommonExcel.st_VALUES) {
+				for (j = j + 1; j < items.length; j += 1) {
+					const item = items[j];
+					if (item.i === itemMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD)) {
+						count -= 1;
+						break;
+					}
+				}
 			}
 		}
 		return j;
 	}
-	function getIndexWithOnlyDataIndex(dataIndex, items) {
+	function getIndexWithOnlyDataIndex(items, dataIndex) {
 		for(let i = 0; i < items.length; i += 1) {
 			const item = items[i];
-			if (item.i === dataIndex) {
+			if (item.i === dataIndex && item.t === Asc.c_oAscItemType.Grand) {
 				return i;
 			}
 		}
-		return items.length - 1;
+		return null;
 	}
-
+	/**
+	 * @param {PivotItemFieldsMap} itemMap
+	 * @param {CT_Field[]} fields
+	 * @return {PivotItemFieldsMap}
+	 */
+	function getRowColItemMap(itemMap, fields) {
+		const result = new Map()
+		for (let i = 0; i < fields.length; i += 1) {
+			const field = fields[i];
+			const index = field.asc_getIndex();
+			if (itemMap.has(index)) {
+				result.set(index, itemMap.get(index));
+			} else if (index === AscCommonExcel.st_VALUES) {
+				result.set(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD, itemMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD))
+			}
+		}
+		return result;
+	}
 	const rowFields = this.asc_getRowFields();
 	const colFields = this.asc_getColumnFields();
 	const rowItems = this.getRowItems();
 	const colItems = this.getColItems();
-	if (itemFieldsMap) {
-		const rowItemIndex = rowItems ? getIndex(rowItems, rowFields) : null;
-		const colItemIndex = colItems ? getIndex(colItems, colFields) : null;
-		if (count !== 0) {
-			return null;
-		}
-		return {
-			rowItemIndex: rowItemIndex,
-			colItemIndex: colItemIndex
-		}
+	const rowItemFieldsMap = rowFields ? getRowColItemMap(itemFieldsMap, rowFields) : null;
+	const colItemFieldsMap = colFields ? getRowColItemMap(itemFieldsMap, colFields) : null;
+	let rowItemIndex = null;
+	if (rowItemFieldsMap && !(rowItemFieldsMap.size === 1 && rowItemFieldsMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD))) {
+		rowItemIndex = getIndex(rowItems, rowFields, rowItemFieldsMap);
+	} else {
+		const dataIndex = rowItemFieldsMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD)
+		rowItemIndex = rowItemFieldsMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) ? getIndexWithOnlyDataIndex(rowItems, dataIndex) : rowItems.length - 1;
 	}
-	const rowItemIndex = rowItems ? getIndexWithOnlyDataIndex(rowItems, dataIndex) : null;
-	const colItemIndex = colItems ? getIndexWithOnlyDataIndex(colItems, dataIndex) : null;
-	if (Math.max(rowItems[rowItemIndex].i, colItems[colItemIndex].i) !== dataIndex) {
-		return null;
+	let colItemIndex = null;
+	if (colItemFieldsMap && !(colItemFieldsMap.size === 1 && colItemFieldsMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD))) {
+		colItemIndex = getIndex(colItems, colFields, colItemFieldsMap);
+	} else {
+		const dataIndex = colItemFieldsMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD)
+		colItemIndex = colItemFieldsMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) ? getIndexWithOnlyDataIndex(colItems, dataIndex) : colItems.length - 1;
 	}
 	return {
 		rowItemIndex: rowItemIndex,
@@ -7517,14 +7550,25 @@ CT_pivotTableDefinition.prototype.getFieldItemByName = function(fieldIndex, name
 	return pivotField.findFieldItemByTextValue(cacheField, name);
 };
 /**
- * @param {GetPivotDataOptionalParams} params
- * @return {PivotItemFieldsMap | null}
+ * @param {GetPivotDataParams} params
+ * @return {PivotItemFieldsMap}
  */
-CT_pivotTableDefinition.prototype.getItemFieldsMapByStringParams = function(params) {
+CT_pivotTableDefinition.prototype.getItemFieldsMapByGetPivotDataParams = function(params) {
 	const result = new Map();
-	for(let i = 0; i < params.length; i += 1) {
-		const fieldName = params[i].fieldName;
-		const itemName = params[i].itemName;
+	if (this.asc_getDataFields().length > 1) {
+		const dataIndex = this.getDataFieldIndexByName(params.dataFieldName);
+		if (dataIndex === null) {
+			return null;
+		}
+		result.set(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD, dataIndex)
+	}
+	const optParams = this.getPivotDataOptParams(params.optParams);
+	if (optParams === null) {
+		return null;
+	};
+	for(let i = 0; i < optParams.length; i += 1) {
+		const fieldName = optParams[i].fieldName;
+		const itemName = optParams[i].itemName;
 		const fieldIndex = this.cacheDefinition.getFieldIndexByName(fieldName);
 		if (fieldIndex === -1) {
 			return null;
@@ -7584,12 +7628,13 @@ CT_pivotTableDefinition.prototype.getNoFilterItemFieldsMapArray = function(rowIt
 	}
 	return result;
 }
-/** @typedef {Map<number, Map<number, number>} PivotItemFieldsMap */
+/** @typedef {Map<number, number>} PivotItemFieldsMap */
+/** @typedef {Map<number, Map<number, number>>} ExtendedPivotItemFieldsMap */
 /**
  * Returns Map<pivotFieldIndex, Map<fieldItem.x, number>(Set-like map)>, 
  * which describes the values of this item in each field with filters.
  * @param {PivotItemFieldsMapArray} itemFieldsMapArray
- * @return {PivotItemFieldsMap}
+ * @return {ExtendedPivotItemFieldsMap}
  */
 CT_pivotTableDefinition.prototype.getItemFieldsMap = function(itemFieldsMapArray) {
 	const filterMaps = this.getFilterMaps({});
@@ -7613,6 +7658,7 @@ CT_pivotTableDefinition.prototype.getItemFieldsMap = function(itemFieldsMapArray
  * @return {FillPivotDetailsLengths}
  */
 CT_pivotTableDefinition.prototype.showDetails = function(ws, arrayFieldItemsMap) {
+	const itemMap = this.getItemFieldsMap(arrayFieldItemsMap);
 	const cacheFields = this.asc_getCacheFields();
 	const records = this.getRecords();
 	return records.fillPivotDetails(ws, itemMap, cacheFields);
@@ -7862,7 +7908,7 @@ PivotFormatsManager.prototype.reIndexDataFields = function(reindex, addToHistory
 };
 /**
  * @param {CT_Format} format
- * @param {Map<number, number>} pivotFieldsMap 
+ * @param {PivotItemFieldsMap} pivotFieldsMap 
  */
 PivotFormatsManager.prototype.checkValidFields = function(format, pivotFieldsMap, pivotFieldIndexesMap) {
 	const pivotArea = format.pivotArea;
@@ -7947,8 +7993,8 @@ PivotFormatsManager.prototype.removeField = function(index, addToHistory) {
 	});
 };
 /**
- * @param {Map<number, number>} pivotFieldsMap
- * @param {Map<number, Map<number, number>>} pivotFieldsIndexesMap
+ * @param {PivotItemFieldsMap} pivotFieldsMap
+ * @param {ExtendedPivotItemFieldsMap} pivotFieldsIndexesMap
  */
 PivotFormatsManager.prototype.updateIndexes = function(pivotFieldsMap, pivotFieldsIndexesMap) {
 	const t = this;
@@ -13455,7 +13501,7 @@ CT_PivotField.prototype.removeGroupFromAxis = function() {
 /**
  * @param {CT_SharedItems} sharedItems
  * @param {CT_SharedItems} oldSharedItems
- * @return {Map<number, number>} old index to new index cacheField
+ * @return {PivotItemFieldsMap} old index to new index cacheField
  */
 CT_PivotField.prototype.refreshPivotFieldItem = function(sharedItems, oldSharedItems) {
 	let cacheFieldIndexesMap = new Map();
@@ -13480,8 +13526,8 @@ CT_PivotField.prototype.refreshPivotFieldItem = function(sharedItems, oldSharedI
 };
 /**
  * @param {CT_PivotField} oldField
- * @param {Map<number, number>} cacheFieldIndexesMap
- * @return {Map<number, number>} old index to new index
+ * @param {PivotItemFieldsMap} cacheFieldIndexesMap
+ * @return {PivotItemFieldsMap} old index to new index
  */
 CT_PivotField.prototype.getPivotFieldIndexesMap = function(oldField, cacheFieldIndexesMap) {
 	let pivotFieldIndexesMap;
@@ -13508,7 +13554,7 @@ CT_PivotField.prototype.getPivotFieldIndexesMap = function(oldField, cacheFieldI
 	return pivotFieldIndexesMap;
 };
 /**
- * @return {Map<number, number>} old index to new index
+ * @return {PivotItemFieldsMap} old index to new index
  */
 CT_PivotField.prototype.getPivotFieldIndexesMapIdentity = function() {
 	let pivotFieldIndexesMap;
@@ -15492,7 +15538,7 @@ CT_PivotArea.prototype.getReferences = function() {
  */
 /**
  * @typedef PivotAreaReferenceInfo
- * @property {Map<number, number>} valuesMap
+ * @property {PivotItemFieldsMap} valuesMap
  * @property {CT_PivotAreaReference} reference
  */
 

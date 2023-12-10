@@ -1988,7 +1988,6 @@
       }
       var pivotTable = ws.model.getPivotTable(ct.col, ct.row);
       if (pivotTable) {
-		console.log(pivotTable.getRangeByGetPivotDataParams('Sum of Cost',["Region","East"]))
         if(pivotTable.asc_canShowDetails(ct.row, ct.col)) {
           this.Api.asc_pivotShowDetails(pivotTable);
           return;
