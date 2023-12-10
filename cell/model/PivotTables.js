@@ -7491,7 +7491,7 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(item
 		const minMapSize = itemMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) ? 1 : 0;
 		for (i = 0; i < items.length && itemMap.size > minMapSize; i += 1) {
 			const item = items[i];
-			if (item.x.length <= itemMap.size - minMapSize && item.getR() === minR) {
+			if ((item.x.length <= itemMap.size) && item.getR() === minR) {
 				for (let j = 0; j < item.x.length; j += 1) {
 					const fieldIndex = fields[item.getR() + j].asc_getIndex()
 					const field = pivotFields[fieldIndex];
