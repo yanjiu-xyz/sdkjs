@@ -34,6 +34,13 @@
 
 (function(window)
 {
+	const BidiType = {
+		ltr : 0, // strong rtl
+		rtl : 1, // strong ltr
+		weak : 2,
+		neutral : 3
+	};
+	
 	/**
 	 * Class for handling bidirectional flow of text or other content
 	 * @param handler - handler for elements in the flow
@@ -53,16 +60,16 @@
 		this.direction     = direction;
 		this.buffer.length = 0;
 	};
-	BidiFlow.prototype.add = function(element, direction)
+	BidiFlow.prototype.add = function(element, bidiType)
 	{
-		if (direction === this.direction)
+		if (bidiType === AscWord.BidiType.rtl)
 		{
-			this.flushBuffer();
-			this.handler.handleBidiFlow(element);
+			this.buffer.push(element);
 		}
 		else
 		{
-			this.buffer.push(element);
+			this.flushBuffer();
+			this.handler.handleBidiFlow(element);
 		}
 	};
 	BidiFlow.prototype.end = function()
@@ -82,6 +89,7 @@
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.BidiFlow = BidiFlow;
+	AscWord.BidiType = BidiType;
 	
 })(window);
 

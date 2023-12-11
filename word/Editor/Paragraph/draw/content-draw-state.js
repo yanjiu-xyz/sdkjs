@@ -139,7 +139,7 @@
 			&& para_FieldChar !== element.Type)
 			return;
 		
-		this.bidiFlow.add([element, run], element.isRtl());
+		this.bidiFlow.add([element, run], element.getBidiType());
 	};
 	ParagraphContentDrawState.prototype.handleBidiFlow = function(data)
 	{

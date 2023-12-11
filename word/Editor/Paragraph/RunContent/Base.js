@@ -348,11 +348,11 @@
 		return false;
 	};
 	/**
-	 * @returns {boolean}
+	 * return {AscWord.BidiType}
 	 */
-	CRunElementBase.prototype.isRtl = function()
+	CRunElementBase.prototype.getBidiType = function()
 	{
-		return false;
+		return AscWord.BidiType.neutral;
 	};
 	/**
 	 * @return {number}

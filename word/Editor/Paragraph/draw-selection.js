@@ -70,7 +70,7 @@
 		if (para_Drawing === element.Type && !element.IsInline())
 			element.Draw_Selection();
 		else
-			this.bidi.add([element, isSelected], element.isRtl());
+			this.bidi.add([element, isSelected], element.getBidiType());
 	};
 	ParagraphDrawSelectionState.prototype.handleBidiFlow = function(data)
 	{

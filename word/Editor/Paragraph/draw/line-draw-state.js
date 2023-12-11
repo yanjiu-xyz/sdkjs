@@ -176,7 +176,7 @@
 			&& para_FieldChar !== element.Type)
 			return;
 		
-		this.bidiFlow.add([element, run, inRunPos, misspell], element.isRtl());
+		this.bidiFlow.add([element, run, inRunPos, misspell], element.getBidiType());
 	};
 	ParagraphLineDrawState.prototype.handleBidiFlow = function(data)
 	{
@@ -576,4 +576,3 @@
 	AscWord.ParagraphLineDrawState = ParagraphLineDrawState;
 	
 })(window);
-

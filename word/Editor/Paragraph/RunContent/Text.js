@@ -287,9 +287,12 @@
 	{
 		return (AscFonts.GetGraphemeWidth(this.Flags & FLAGS_TEMPORARY ? this.TempGrapheme : this.Grapheme) * (((this.Flags >> 16) & 0xFFFF) / 64));
 	};
-	CRunText.prototype.isRtl = function()
+	CRunText.prototype.getBidiType = function()
 	{
-		return !!(this.Flags & FLAGS_RTL);
+		if (this.Flags & FLAGS_RTL)
+			return AscWord.BidiType.rtl;
+		
+		return AscWord.BidiType.ltr;
 	};
 	CRunText.prototype.SetWidth = function(nWidth)
 	{
