@@ -262,15 +262,18 @@
 	 */
 	ParagraphContentDrawState.prototype.updateGraphicsState = function(textPr, useAscFont)
 	{
-		this.textPr = textPr;
-		
-		if (useAscFont)
+		if (textPr)
 		{
-			textPr = textPr.Copy();
-			textPr.RFonts.SetAll("ASCW3", -1);
+			this.textPr = textPr;
+			
+			if (useAscFont)
+			{
+				textPr = textPr.Copy();
+				textPr.RFonts.SetAll("ASCW3", -1);
+			}
+			
+			this.Graphics.SetTextPr(textPr, this.Theme);
 		}
-		
-		this.Graphics.SetTextPr(textPr, this.Theme);
 		
 		let color = this.getTextColor();
 		this.Graphics.b_color1(color.r, color.g, color.b, 255);

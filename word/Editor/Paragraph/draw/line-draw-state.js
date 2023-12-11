@@ -465,7 +465,7 @@
 			{
 				let bgColor = this.drawState.getBgColor();
 				if (textPr.Shd && !textPr.Shd.IsNil())
-					bgColor = CurTextPr.Shd.GetSimpleColor(this.Paragraph.getTheme(), this.Paragraph.getColorMap());
+					bgColor = textPr.Shd.GetSimpleColor(this.Paragraph.getTheme(), this.Paragraph.getColorMap());
 				
 				this.color = bgColor && !bgColor.isBlackAutoColor() ? WHITE_COLOR : BLACK_COLOR;
 			}
