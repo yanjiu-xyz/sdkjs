@@ -5166,10 +5166,10 @@
 			return color.R * 0.2126 + color.G * 0.7152 + color.B * 0.0722;
 		}
 
-		function FormatRGBAColor() {
-			this.R = 0;
-			this.G = 0;
-			this.B = 0;
+		function FormatRGBAColor(r, g, b) {
+			this.R = r || 0;
+			this.G = g || 0;
+			this.B = b || 0;
 			this.A = 255;
 		}
 
@@ -5430,6 +5430,47 @@
 				}
 			}
 			return new FormatRGBAColor();
+		};
+
+		CUniFill.prototype.getStartAnimRGBA = function () {
+			let oFill = this.fill;
+			if(!oFill) {
+				return new FormatRGBAColor(255, 255, 255);
+			}
+			switch (oFill.type) {
+				case c_oAscFill.FILL_TYPE_SOLID: {
+					if (oFill.color) {
+						return this.fill.color.RGBA;
+					}
+					else {
+						return new FormatRGBAColor(255, 255, 255);
+					}
+				}
+				case c_oAscFill.FILL_TYPE_GRAD: {
+					let _colors = this.fill.colors;
+					let _len = _colors.length;
+
+					if (0 === _len) {
+						return new FormatRGBAColor(255, 255, 255);
+					}
+
+					let oFirstColor = _colors[0].color;
+					if(!oFirstColor) {
+						return new FormatRGBAColor(255, 255, 255);
+					}
+					return oFirstColor.RGBA;
+				}
+				case c_oAscFill.FILL_TYPE_PATT: {
+					if(oFill.fgClr) {
+						return oFill.fgClr.RGBA
+					}
+					return new FormatRGBAColor(255, 255, 255);
+				}
+				case c_oAscFill.FILL_TYPE_NOFILL: {
+					return new FormatRGBAColor(255, 255, 255);
+				}
+			}
+			return new FormatRGBAColor(255, 255, 255);
 		};
 		CUniFill.prototype.createDuplicate = function () {
 			var duplicate = new CUniFill();

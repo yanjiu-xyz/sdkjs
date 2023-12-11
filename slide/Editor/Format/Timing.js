@@ -6841,7 +6841,7 @@
             }
 
             if (oBrush) {
-                oStartRGBColor = oBrush.getRGBAColor();
+                oStartRGBColor = oBrush.getStartAnimRGBA();
                 oStartUniColor = AscFormat.CreateUniColorRGB(oStartRGBColor.R, oStartRGBColor.G, oStartRGBColor.B);
             } else {
                 oStartUniColor = AscFormat.CreateUniColorRGB(255, 255, 255);
