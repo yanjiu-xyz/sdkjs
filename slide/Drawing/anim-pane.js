@@ -1631,9 +1631,11 @@
 		return null;
 	};
 
-	var SECONDS_BUTTON_WIDTH = 76 * AscCommon.g_dKoef_pix_to_mm;
-	var SECONDS_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
-	var SECONDS_BUTTON_LEFT = 57 * AscCommon.g_dKoef_pix_to_mm;
+	const SECONDS_BUTTON_WIDTH = 76 * AscCommon.g_dKoef_pix_to_mm;
+	const SECONDS_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
+	const SECONDS_BUTTON_LEFT = 57 * AscCommon.g_dKoef_pix_to_mm;
+	const SCROLLER_WIDTH = SECONDS_BUTTON_WIDTH
+	const SCROLLER_HEIGHT = SECONDS_BUTTON_HEIGHT
 
 	function CTimelineContainer(oDrawer) {
 		CTopControl.call(this, oDrawer);
@@ -1642,12 +1644,18 @@
 		this.secondsButton = this.addControl(new CButton(
 			this, null, null, manageTimelineScale));
 		this.timeline = this.addControl(new CTimeline(this));
+		this.scroller = this.addControl(new CButton(this, stickToPointer, null, null));
 
 		// Event handler for secondsButton
 		function manageTimelineScale(event, x, y) {
 			if (!this.hit(x, y)) { return }
 			this.next.tmScaleIdx = (this.next.tmScaleIdx + 1) % 11
 			this.next.onUpdate()
+		}
+
+		function stickToPointer(event, x, y) {
+			if (!this.hit(x, y)) { return }
+			console.log('Это сообщение не выводится')
 		}
 	}
 
@@ -1659,6 +1667,8 @@
 		var dWidth = this.getWidth() - AscCommon.TIMELINE_LIST_RIGHT_MARGIN - dLeft;
 		dPosY = (this.getHeight() - SCROLL_THICKNESS) / 2;
 		this.timeline.setLayout(dLeft, dPosY, dWidth, SCROLL_THICKNESS);
+
+		this.scroller.setLayout(dLeft + 30, dPosY - (SECONDS_BUTTON_HEIGHT - SCROLL_THICKNESS) / 2, SCROLLER_WIDTH, SCROLLER_HEIGHT);
 	};
 	CTimelineContainer.prototype.getFillColor = function () {
 		return null;
