@@ -5421,7 +5421,7 @@
     CCTn.prototype.changeRewind = function (v) {
         this.setFill(v === true ? NODE_FILL_REMOVE : NODE_FILL_HOLD);
     };
-    CCTn.prototype.getObjectId = function (v) {
+    CCTn.prototype.getObjectId = function () {
         var sObjectId = null;
         this.traverse(function (oChild) {
             if (oChild.isTimeNode() && (sObjectId = oChild.getTargetObjectId())) {
