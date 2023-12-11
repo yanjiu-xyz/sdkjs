@@ -392,6 +392,20 @@
 	CControl.prototype.recalculate = function () {
 		AscFormat.CShape.prototype.recalculate.call(this);
 	};
+
+	/**
+	 * Sets the location and dimensions of the control inside the parent container.
+	 *
+	 * @param {number} dX - Offset of the element along the X axis relative to the upper-left corner of the parent container.
+	 * @param {number} dY - Offset of the element along the Y axis relative to the upper-left corner of the parent container.
+	 * @param {number} dExtX - Width of the element.
+	 * @param {number} dExtY - Height of the element.
+	 *
+	 * @note
+	 * - Negative values for dX and dY are supported with behavior similar to "overflow: hidden" in CSS.
+	 * - Negative values for dExtX and dExtY are not supported and may lead to unexpected behavior.
+	 * - It is recommended to avoid using negative values for dExtX and dExtY to ensure proper rendering and hit detection.
+	 */
 	CControl.prototype.setLayout = function (dX, dY, dExtX, dExtY) {
 		if (!this.spPr) {
 			this.spPr = new AscFormat.CSpPr();
@@ -651,7 +665,7 @@
 		}
 	};
 	CControlContainer.prototype.onMouseDown = function (e, x, y) {
-		for (var nChild = 0; nChild < this.children.length; ++nChild) {
+		for (var nChild = this.children.length -1 ; nChild >= 0; --nChild) {
 			if (this.children[nChild].onMouseDown(e, x, y)) {
 				return true;
 			}
@@ -659,7 +673,7 @@
 		return CControl.prototype.onMouseDown.call(this, e, x, y);
 	};
 	CControlContainer.prototype.onMouseMove = function (e, x, y) {
-		for (var nChild = 0; nChild < this.children.length; ++nChild) {
+		for (var nChild = this.children.length - 1; nChild >= 0; --nChild) {
 			if (this.children[nChild].onMouseMove(e, x, y)) {
 				return true;
 			}
@@ -667,7 +681,7 @@
 		return CControl.prototype.onMouseMove.call(this, e, x, y);
 	};
 	CControlContainer.prototype.onMouseUp = function (e, x, y) {
-		for (var nChild = 0; nChild < this.children.length; ++nChild) {
+		for (var nChild = this.children.length - 1; nChild >= 0; --nChild) {
 			if (this.children[nChild].onMouseUp(e, x, y)) {
 				return true;
 			}
@@ -1644,7 +1658,7 @@
 		this.secondsButton = this.addControl(new CButton(
 			this, null, null, manageTimelineScale));
 		this.timeline = this.addControl(new CTimeline(this));
-		this.scroller = this.addControl(new CButton(this, stickToPointer, null, null));
+		this.scroller = this.addControl(new CButton(this, null, stickToPointer, null));
 
 		// Event handler for secondsButton
 		function manageTimelineScale(event, x, y) {
@@ -1655,7 +1669,10 @@
 
 		function stickToPointer(event, x, y) {
 			if (!this.hit(x, y)) { return }
-			console.log('Это сообщение не выводится')
+			// this.bounds.l += 10
+			let {l, t, w, h} = this.bounds
+			this.setLayout(x - 5, t, w, h)
+			this.onUpdate()
 		}
 	}
 
