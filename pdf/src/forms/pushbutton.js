@@ -1610,7 +1610,7 @@
             });
         }
         else {
-            AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, undefined, function(error, files)
+            AscCommon.ShowImageFileDialog(Api.documentId, Api.documentUserId, undefined, Api.documentShardKey, function(error, files)
             {
                 if (error.canceled == true) {
                     let oDoc            = oThis.GetDocument();
