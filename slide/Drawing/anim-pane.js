@@ -1658,7 +1658,8 @@
 		this.secondsButton = this.addControl(new CButton(
 			this, null, null, manageTimelineScale));
 		this.timeline = this.addControl(new CTimeline(this));
-		this.scroller = this.addControl(new CButton(this, null, stickToPointer, null));
+		this.scroller = this.addControl(new CButton(this, stickToPointer, handlePointerMovement, unstickFromPointer));
+		this.scroller.isStickedToPointer = false
 
 		// Event handler for secondsButton
 		function manageTimelineScale(event, x, y) {
@@ -1669,10 +1670,19 @@
 
 		function stickToPointer(event, x, y) {
 			if (!this.hit(x, y)) { return }
-			// this.bounds.l += 10
-			let {l, t, w, h} = this.bounds
-			this.setLayout(x - 5, t, w, h)
+			this.isStickedToPointer = true
+		}
+		function handlePointerMovement(event, x, y) {
+			let { t, w, h } = this.bounds
+			this.setLayout(
+				x - SCROLLER_WIDTH / 2,
+				t, w, h
+			)
 			this.onUpdate()
+		}
+		function unstickFromPointer(event, x, y) {
+			if (!this.hit(x, y)) { return }
+			this.isStickedToPointer = false
 		}
 	}
 
