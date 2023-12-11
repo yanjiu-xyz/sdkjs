@@ -2790,6 +2790,9 @@
 	CGraphicObjectBase.prototype.onSlicerDelete = function (sName) {
 		return false;
 	};
+	CGraphicObjectBase.prototype.onTimeSlicerDelete = function (sName) {
+		return false;
+	};
 	CGraphicObjectBase.prototype.onSlicerChangeName = function (sName, sNewName) {
 		return false;
 	};
@@ -2830,6 +2833,9 @@
 		return oPr.hasSameNameAndId(oOtherPr);
 	};
 	CGraphicObjectBase.prototype.select = function (drawingObjectsController, pageIndex) {
+		if (!AscFormat.canSelectDrawing(this)) {
+			return;
+		}
 		this.selected = true;
 		this.selectStartPage = pageIndex;
 		var content = this.getDocContent && this.getDocContent();
