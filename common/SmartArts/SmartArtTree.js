@@ -784,14 +784,32 @@
 		}
 		const widthCoef = this.node.getWidthScale();
 		const heightCoef = this.node.getHeightScale();
-		const x = this.node.getAdaptConstr(AscFormat.Constr_type_l);
-		const y = this.node.getAdaptConstr(AscFormat.Constr_type_t);
+		let x = this.node.getAdaptConstr(AscFormat.Constr_type_l);
+		let y = this.node.getAdaptConstr(AscFormat.Constr_type_t);
 		const width = this.node.getAdaptConstr(AscFormat.Constr_type_w);
 		const height = this.node.getAdaptConstr(AscFormat.Constr_type_h);
+		if (this.node.adaptConstr[AscFormat.Constr_type_ctrX] !== undefined) {
+			x = this.node.adaptConstr[AscFormat.Constr_type_ctrX] - (x + width / 2);
+		}
+		if (this.node.adaptConstr[AscFormat.Constr_type_ctrY] !== undefined) {
+			y = this.node.adaptConstr[AscFormat.Constr_type_ctrY] - (y + height / 2);
+		}
 		this.x = x;
 		this.y = y;
 		this.w = width * widthCoef;
 		this.h = height * heightCoef;
+		const parentNode = this.node.parent;
+		if (parentNode) {
+			const offX = (width - this.w) / 2;
+			const offY = (height - this.h) / 2;
+			if (this.x + offX > 0) {
+				this.x += offX;
+			}
+			if (this.y + offY > 0) {
+				this.y += offY;
+			}
+		}
+
 
 		this.cleanParams = {
 			w: width,
@@ -969,9 +987,6 @@
 		this.params = {};
 		this.nodes = [];
 		this.parentNode = null;
-		this.calcValues = {
-			coefficient: 1
-		};
 	}
 	BaseAlgorithm.prototype.calcScaleCoefficients = function () {
 		this.parentNode.calcNodeConstraints();
@@ -1008,7 +1023,7 @@
 
 	};
 	BaseAlgorithm.prototype.applyPostAlgorithmSettingsForShape = function (shape, prSet, customCoefficient) {
-		const coefficient = AscFormat.isRealNumber(customCoefficient) ? customCoefficient : this.calcValues.coefficient;
+		const coefficient = AscFormat.isRealNumber(customCoefficient) ? customCoefficient : 1;
 		const presNode = shape.node;
 		let neighborWidth = null;
 		let neighborHeight = null;
@@ -1064,8 +1079,8 @@
 	PositionAlgorithm.prototype.applyAligns = function (presNode) {
 		const shape = presNode.shape;
 		const cleanParams = shape.cleanParams;
-		const cleanW = cleanParams.w * this.calcValues.coefficient;
-		const cleanH = cleanParams.h * this.calcValues.coefficient;
+		const cleanW = cleanParams.w;
+		const cleanH = cleanParams.h;
 
 		const parentOffX = (shape.w - cleanW) / 2;
 		const parentOffY = (shape.h - cleanH) / 2;
@@ -1099,9 +1114,6 @@
 
 	function SnakeAlgorithm() {
 		PositionAlgorithm.call(this);
-		this.calcValues = {
-			coefficient: 1
-		};
 		this.rows = null;
 	}
 
@@ -1162,15 +1174,15 @@
 	};
 
 
-	SnakeAlgorithm.prototype.initRowCalcValues = function () {
+	SnakeAlgorithm.prototype.calculateRowScaleCoefficient = function () {
 		const oThis = this;
 
 		const root = this.parentNode;
-		const parentConstraints = this.getNodeConstraints(this.parentNode);
+		const parentConstraints = this.getNodeConstraints(root);
 		const parentWidth = parentConstraints.width;
 		const parentHeight = parentConstraints.height;
-		const spaceConstr = this.parentNode.getConstr(AscFormat.Constr_type_sp);
-		const initValues = this.getStartValues(this.nodes[0]);
+		const spaceConstr = root.getConstr(AscFormat.Constr_type_sp);
+		const initValues = this.getStartValues(root.childs[0]);
 		let coefficient = initValues.coefficient;
 		let i = 1;
 		let nNeedRecalc = 0;
@@ -1243,25 +1255,13 @@
 			nNeedRecalc = i;
 			i = 1;
 		}
-		this.calcValues.coefficient = coefficient;
+		for (let j = 0; j < root.childs.length; j++) {
+			const node = root.childs[j];
+			node.setWidthScaleConstrCoefficient(coefficient);
+			node.setHeightScaleConstrCoefficient(coefficient);
+		}
 	};
 
-	SnakeAlgorithm.prototype.getScaledShape = function (node) {
-		const coefficient = this.calcValues.coefficient;
-		node.changeShapeSizes(coefficient);
-		return node.shape;
-	}
-	SnakeAlgorithm.prototype.getScaledShapes = function () {
-		const shapes = [];
-		for (let i = 0; i < this.nodes.length; i++) {
-			const node = this.nodes[i];
-			const shShape = this.getScaledShape(node);
-			if (shShape) {
-				shapes.push(shShape);
-			}
-		}
-		return shapes;
-	}
 	SnakeAlgorithm.prototype.afterLayoutNode = function () {
 		this.nodes = this.parentNode.childs.slice();
 		if (this.nodes[this.nodes.length - 1].node.isSibNode()) {
@@ -1281,20 +1281,23 @@
 		}
 	}
 	SnakeAlgorithm.prototype.calcScaleCoefficients = function () {
-
+		if (this.params[AscFormat.Param_type_flowDir] === AscFormat.ParameterVal_flowDirection_row) {
+			this.calculateRowScaleCoefficient();
+		}
 	};
 	SnakeAlgorithm.prototype.calculateRowSnake = function () {
 		const parentConstraints = this.getNodeConstraints(this.parentNode);
 		const parentWidth = parentConstraints.width;
-		this.initRowCalcValues();
-		const constrSpace = this.parentNode.getConstr(AscFormat.Constr_type_sp) * this.calcValues.coefficient;
+		const constrSpace = this.parentNode.getAdaptConstr(AscFormat.Constr_type_sp);
 		const rows = new ShapeRows();
 		let row = new ShapeRow();
 		rows.push(row);
 
-		const shapes = this.getScaledShapes();
-		for (let shapeIndex = 0; shapeIndex < shapes.length; shapeIndex += 1) {
-			const shShape = shapes[shapeIndex];
+		for (let shapeIndex = 0; shapeIndex < this.nodes.length; shapeIndex += 1) {
+			const shShape = this.nodes[shapeIndex].shape;
+			if (!shShape) {
+				continue;
+			}
 			shShape.setCalcInfo();
 			if ((row.width + shShape.w > parentWidth) && !AscFormat.fApproxEqual(row.width + shShape.w, parentWidth, algDelta)) {
 				let checkShape;
@@ -1306,7 +1309,7 @@
 
 				if (checkShape && checkShape.isSpacing && !checkShape.calcInfo.isChecked) {
 					checkShape.calcInfo.isChecked = true;
-					if ((shapeIndex === shapes.length - 1) && checkShape === shShape) {
+					if ((shapeIndex === this.nodes.length - 1) && checkShape === shShape) {
 						checkShape.h = 0;
 					} else {
 						row.height += constrSpace;
@@ -1457,8 +1460,6 @@
 	function LinearAlgorithm() {
 		PositionAlgorithm.call(this);
 		this.isLastSib = false;
-		this.calcValues = {coefficient: 1};
-		this.calcShapes = [];
 	}
 	AscFormat.InitClassWithoutType(LinearAlgorithm, PositionAlgorithm);
 
@@ -1535,9 +1536,10 @@
 			widthCoefficient = Math.min(1, parentWidth / sumWidth);
 		}
 		let heightCoefficient = 1;
-		if (maxHeight !== 0) {
+		// todo think about it
+/*		if (maxHeight !== 0) {
 			heightCoefficient = Math.min(1, parentHeight / maxHeight);
-		}
+		}*/
 
 
 		for (let i = 0; i < childs.length; i += 1) {
@@ -1891,13 +1893,13 @@
 	CompositeAlgorithm.prototype.getShapes = function (smartartAlgorithm) {
 		smartartAlgorithm.applyColorsDef();
 		const shapes = [];
-		this.parentNode.forEachDes(function (presNode) {
-			const shape = presNode.shape;
-			const editorShape = shape && shape.getEditorShape();
+		const shadowShapes = this.parentNode.getShadowShapesByZOrder();
+		for (let i = 0; i < shadowShapes.length; i++) {
+			const editorShape = shadowShapes[i].getEditorShape();
 			if (editorShape) {
 				shapes.push(editorShape);
 			}
-		});
+		}
 		return shapes;
 	}
 
@@ -1923,6 +1925,38 @@ function PresNode(presPoint, contentNode) {
 		height: 1
 	};
 }
+	PresNode.prototype.isSibNode = function () {
+		return this.node.isSibNode();
+	};
+	PresNode.prototype.getShadowShapesByZOrder = function () {
+		const shapes = [];
+		const elements = [this];
+		while (elements.length) {
+			const tempElements = [];
+			const element = elements.pop();
+			if (element.shape) {
+				shapes.push(element.shape);
+			}
+			for (let i = 0; i < element.childs.length; i += 1) {
+				const child = element.childs[i];
+				tempElements.push(child);
+			}
+			tempElements.sort(function (a, b) {
+				let aIndex = 0;
+				let bIndex = 0;
+				if (a.shape) {
+					aIndex = a.shape.shape.zOrderOff;
+				}
+				if (b.shape) {
+					bIndex = b.shape.shape.zOrderOff;
+				}
+				return aIndex - bIndex;
+			});
+			elements.push.apply(elements, tempElements);
+		}
+		shapes.reverse();
+		return shapes;
+	}
 	PresNode.prototype.setWidthScaleConstrCoefficient = function (coefficient) {
 		this.scaleMainConstraintCoefficient.width = coefficient;
 	}
@@ -2155,13 +2189,13 @@ PresNode.prototype.addChild = function (ch, pos) {
 			if (constr.for !== AscFormat.Constr_for_self && constr.refFor === AscFormat.Constr_for_self) {
 				if (constr.type === AscFormat.Constr_type_h) {
 					if (constr.refType === AscFormat.Constr_type_w) {
-						value = value * this.scaleMainConstraintCoefficient.width * this.scaleMainConstraintCoefficient.height;
+						value = value * this.scaleMainConstraintCoefficient.width/* * this.scaleMainConstraintCoefficient.height*/;
 					} else {
 						value = value * this.scaleMainConstraintCoefficient.height;
 					}
 				} else if (constr.type === AscFormat.Constr_type_w) {
 					if (constr.refType === AscFormat.Constr_type_h) {
-						value = value * this.scaleMainConstraintCoefficient.width * this.scaleMainConstraintCoefficient.height;
+						value = value * this.scaleMainConstraintCoefficient.width/* * this.scaleMainConstraintCoefficient.height*/;
 					} else {
 						value = value * this.scaleMainConstraintCoefficient.width;
 					}
@@ -2193,26 +2227,30 @@ PresNode.prototype.addChild = function (ch, pos) {
 
 		constrObject[constr.type] = value;
 		switch (constr.type) {
-			case AscFormat.Constr_type_b:
+			case AscFormat.Constr_type_b: {
 				const height = constrObject[AscFormat.Constr_type_h];
 				if (height !== undefined) {
 					constrObject[AscFormat.Constr_type_t] = constrObject[AscFormat.Constr_type_b] - height;
 				}
 				break;
-			case AscFormat.Constr_type_r:
+			}
+			case AscFormat.Constr_type_r: {
 				const width = constrObject[AscFormat.Constr_type_w];
 				if (width !== undefined) {
 					constrObject[AscFormat.Constr_type_l] = constrObject[AscFormat.Constr_type_r] - width;
 				}
 				break;
+			}
 			case AscFormat.Constr_type_begPad:
-			case AscFormat.Constr_type_endPad:
+			case AscFormat.Constr_type_endPad: {
 				if (this.algorithm) {
 					this.algorithm.setConnectionDistance(constr.fact, constr.type === AscFormat.Constr_type_begPad);
 				}
 				break;
-			default:
+			}
+			default: {
 				break;
+			}
 		}
 	};
 	PresNode.prototype.getRefConstr = function (constr, aspectRatio, isAdapt) {
@@ -2365,8 +2403,34 @@ PresNode.prototype.addChild = function (ch, pos) {
 	PresNode.prototype.createShadowShape = function (isComposite) {
 		this.shape = new ShadowShape(this);
 		this.shape.initFromShape(this.layoutInfo.shape);
+		if (isComposite && this.childs.length) {
+			const bounds = {
+				custom: {
+					l: 0,
+					r: 0,
+					t: 0,
+					b: 0
+				},
+				clean: {
+					l: 0,
+					r: 0,
+					t: 0,
+					b: 0
+				}
+			};
+			for (let i = 0; i < this.childs.length; i += 1) {
+				this.childs[i].checkShapeBounds(bounds);
+			}
+
+
+			this.shape.w = bounds.custom.r - bounds.custom.l;
+			this.shape.h = bounds.custom.b - bounds.custom.t;
+
+			this.shape.cleanParams.w = bounds.clean.r - bounds.clean.l;
+			this.shape.cleanParams.h = bounds.clean.b - bounds.clean.t;
+		}
 	};
-/*	PresNode.prototype.checkBounds = function (bounds) {
+	PresNode.prototype.checkShapeBounds = function (bounds) {
 		if (this.shape) {
 			if (this.shape.x < bounds.custom.l) {
 				bounds.custom.l = this.shape.x;
@@ -2399,7 +2463,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 				bounds.clean.b = cleanBottom;
 			}
 		}
-	}*/
+	}
 
 	PresNode.prototype.getHeightScale = function (force) {
 		const node = this.node;

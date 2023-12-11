@@ -6237,7 +6237,7 @@ Because of this, the display is sometimes not correct.
       else if (2 === nType) this.setHideGeom(oStream.GetBool());
       else if (3 === nType) this.setLkTxEntry(oStream.GetBool());
       else if (4 === nType) this.setRot(oStream.GetDouble());
-      else if (5 === nType) this.setZOrderOff(oStream.GetULong());
+      else if (5 === nType) this.setZOrderOff(oStream.GetLong());
       else if (6 === nType) this.setType(AscCommon.From_XML_ST_LayoutShapeType(oStream.GetString2()));
     };
     SShape.prototype.readChild = function(nType, pReader) {
