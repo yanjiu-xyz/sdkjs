@@ -1184,6 +1184,18 @@ function (window, undefined) {
 			let bbox = pivot_table_ref.getBBox0(),
 				operationTypes = Asc.c_oAscDataConsolidateFunction, result;
 
+			let pivotTables = ws.getPivotTablesIntersectingRange(bbox);
+			//todo
+			let pivotTable = pivotTables[0];
+			if (pivotTable) {
+				let cell = pivotTable.getCellByGetPivotDataParams({dataFieldName: looking_field, optParams: prepareItemsArray(items_array)});
+				if (cell) {
+					res = new cRef(ws.getCell3(cell.row, cell.col).getName(), ws);
+					return res.tocNumber();
+				}
+			}
+			return refError;
+
 			// 2 варианта поиска сводной таблицы:
 			// 1.Пройтись по всему bbox и вызывать getPivotTable пока не вернем true, иначе false
 			// 2.Проходиться по всем сводным таблицам и сравнивать их range с полученным на персечение(если пересекается то true иначе false)

@@ -1967,7 +1967,7 @@
   WorkbookView.prototype._onMouseDblClick = function(x, y, event, callback) {
     var ws = this.getWorksheet();
     var ct = ws.getCursorTypeFromXY(x, y);
-	
+
     if (ct.target === c_oTargetType.FillHandle) {
 		ws.applyFillHandleDoubleClick();
     	asc_applyFunction(callback);
