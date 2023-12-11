@@ -1693,7 +1693,7 @@ Paragraph.prototype.Internal_Recalculate_CurPos = function(Pos, UpdateCurPos, Up
 	var StartPos = this.Lines[CurLine].Ranges[CurRange].StartPos;
 	var EndPos   = this.Lines[CurLine].Ranges[CurRange].EndPos;
 
-	if (true === this.Numbering.Check_Range(CurRange, CurLine))
+	if (true === this.Numbering.checkRange(CurRange, CurLine))
 		X += this.Numbering.WidthVisible;
 
 	for (var CurPos = StartPos; CurPos <= EndPos; CurPos++)
@@ -2186,7 +2186,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr, drawState
 			let range = line.Ranges[curRange];
 			PDSH.Reset_Range(CurPage, curLine, curRange, range.XVisible, Y0, Y1, range.Spaces);
 
-			if (this.Numbering.Check_Range(curRange, curLine))
+			if (this.Numbering.checkRange(curRange, curLine))
 				PDSH.X += this.Numbering.WidthVisible;
 
 			for (let contentPos = range.StartPos; contentPos <= range.EndPos; ++contentPos)
@@ -2298,48 +2298,17 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr, drawState
 			// сохраним позиции начала и конца продолжительных одинаковых настроек
 			// выделения, совместного редактирования и поиска соответственно.
 
+			PDSH.beginRange(CurRange, X, _Range.Spaces);
+			
 			PDSH.Reset_Range(CurPage, CurLine, CurRange, X, Y0, Y1, _Range.Spaces);
-
-			if (true === this.Numbering.Check_Range(CurRange, CurLine))
-			{
-				var NumberingType = this.Numbering.Type;
-				var NumberingItem = this.Numbering;
-
-				if (para_Numbering === NumberingType)
-				{
-					var NumPr = Pr.ParaPr.NumPr;
-					if (undefined === NumPr || undefined === NumPr.NumId || 0 === NumPr.NumId || "0" === NumPr.NumId || (this.Parent && this.Parent.IsEmptyParagraphAfterTableInTableCell(this.GetIndex())))
-					{
-						// Ничего не делаем
-					}
-					else
-					{
-						let oNumbering = this.Parent.GetNumbering();
-						let oNumLvl    = oNumbering.GetNum(NumPr.NumId).GetLvl(NumPr.Lvl);
-						let nNumJc     = oNumLvl.GetJc();
-						let numTextPr  = this.GetNumberingTextPr();
-
-						var X_start = X;
-
-						if (align_Right === nNumJc)
-							X_start = X - NumberingItem.WidthNum;
-						else if (align_Center === nNumJc)
-							X_start = X - NumberingItem.WidthNum / 2;
-
-						// Если есть выделение текста, рисуем его сначала
-						if (highlight_None !== numTextPr.HighLight)
-							PDSH.High.Add(Y0, Y1, X_start, X_start + NumberingItem.WidthNum + NumberingItem.WidthSuff, 0, numTextPr.HighLight.r, numTextPr.HighLight.g, numTextPr.HighLight.b, undefined, numTextPr);
-					}
-				}
-
-				PDSH.X += this.Numbering.WidthVisible;
-			}
 
 			for (var Pos = StartPos; Pos <= EndPos; Pos++)
 			{
 				var Item = this.Content[Pos];
 				Item.Draw_HighLights(PDSH);
 			}
+			
+			PDSH.endRange();
 
 			//----------------------------------------------------------------------------------------------------------
 			// Заливка параграфа
@@ -2892,7 +2861,7 @@ Paragraph.prototype.drawRunContentElements = function(CurPage, pGraphics, drawSt
 			var EndPos   = Range.EndPos;
 
 			// Отрисовка нумерации
-			if (true === this.Numbering.Check_Range(CurRange, CurLine))
+			if (true === this.Numbering.checkRange(CurRange, CurLine))
 			{
 				var nReviewType  = this.GetReviewType();
 				var oReviewColor = this.GetReviewColor();
@@ -3213,7 +3182,7 @@ Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState
 			var EndPos   = Range.EndPos;
 
 			// TODO: Нумерация подчеркивается и зачеркивается в Draw_Elements, неплохо бы сюда перенести
-			if (true === this.Numbering.Check_Range(CurRange, CurLine))
+			if (true === this.Numbering.checkRange(CurRange, CurLine))
 				PDSL.X += this.Numbering.WidthVisible;
 
 			for (var Pos = StartPos; Pos <= EndPos; Pos++)
@@ -5923,7 +5892,7 @@ Paragraph.prototype.Get_ParaContentPosByXY = function(X, Y, PageIndex, bYLine, S
 	SearchPos.Y    = Y;
 
 	// Проверим попадание в нумерацию
-	if (true === this.Numbering.Check_Range(CurRange, CurLine))
+	if (true === this.Numbering.checkRange(CurRange, CurLine))
 	{
 		var oNumPr = this.GetNumPr();
 		if (para_Numbering === this.Numbering.Type && oNumPr && oNumPr.IsValid())
@@ -12137,7 +12106,7 @@ Paragraph.prototype.Get_Layout = function(ContentPos, Drawing)
 	var X = this.Lines[CurLine].Ranges[CurRange].XVisible;
 	var Y = this.Pages[CurPage].Y + this.Lines[CurLine].Y;
 
-	if (true === this.Numbering.Check_Range(CurRange, CurLine))
+	if (true === this.Numbering.checkRange(CurRange, CurLine))
 		X += this.Numbering.WidthVisible;
 
 	var DrawingLayout = new CParagraphDrawingLayout(Drawing, this, X, Y, CurLine, CurRange, CurPage);
@@ -15023,7 +14992,7 @@ Paragraph.prototype.GetLastRangeVisibleBounds = function()
 		RangeW.W   = 0;
 		RangeW.End = false;
 
-		if (true === this.Numbering.Check_Range(CurRange, CurLine))
+		if (true === this.Numbering.checkRange(CurRange, CurLine))
 			RangeW.W += this.Numbering.WidthVisible;
 
 		for (var Pos = StartPos; Pos <= EndPos; Pos++)

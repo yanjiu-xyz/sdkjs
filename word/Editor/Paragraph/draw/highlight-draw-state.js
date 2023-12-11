@@ -81,6 +81,9 @@
 		this.CollectFixedForms = false;
 		
 		this.ComplexFields = new CParagraphComplexFieldsInfo();
+		
+		this.rtl = false;
+		this.bidiFlow = new AscWord.BidiFlow(this);
 	}
 	ParagraphHighlightDrawState.prototype.init = function(paragraph, graphics)
 	{
@@ -112,6 +115,18 @@
 		if (Paragraph.LogicDocument)
 			this.Check_CommentsFlag();
 	};
+	ParagraphHighlightDrawState.prototype.beginRange = function(range, X, spaceCount)
+	{
+		this.X = X;
+		this.checkNumbering();
+		
+		this.Spaces = spaceCount;
+		this.bidiFlow.begin(this.rtl);
+	};
+	ParagraphHighlightDrawState.prototype.endRange = function()
+	{
+		this.bidiFlow.end();
+	}
 	ParagraphHighlightDrawState.prototype.Reset_Range = function(Page, Line, Range, X, Y0, Y1, SpacesCount)
 	{
 		this.Page  = Page;
@@ -223,6 +238,45 @@
 	ParagraphHighlightDrawState.prototype.SetCollectFixedForms = function(isCollect)
 	{
 		this.CollectFixedForms = isCollect;
+	};
+	ParagraphHighlightDrawState.prototype.handleRunElement = function(element, run)
+	{
+	
+	};
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Private area
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	ParagraphHighlightDrawState.prototype.checkNumbering = function()
+	{
+		let paraNumbering = this.Paragraph.Numbering;
+		if (!paraNumbering.checkRange(this.Range, this.Line))
+			return;
+		
+		let x = this.X;
+		this.X += paraNumbering.WidthVisible;
+		
+		let numPr = this.drawState.getParagraphCompiledPr().ParaPr.NumPr;
+		let paraParent = this.Paragraph.GetParent();
+
+		if (para_Numbering !== paraNumbering.Type
+			|| !numPr
+			|| !numrPr.IsValid()
+			|| !paraParent
+			|| !paraParent.IsEmptyParagraphAfterTableInTableCell(this.Paragraph.GetIndex()))
+			return;
+		
+		let numManager = paraParent.GetNumbering();
+		let numLvl     = numManager.GetNum(numPr.NumId).GetLvl(numPr.Lvl);
+		let numJc      = numLvl.GetJc();
+		let numTextPr  = this.Paragraph.GetNumberingTextPr();
+		
+		if (AscCommon.align_Right === numJc)
+			x -= paraNumbering.WidthNum;
+		else if (AscCommon.align_Center === numJc)
+			x -= paraNumbering.WidthNum / 2;
+		
+		if (highlight_None !== numTextPr.HighLight)
+			this.High.Add(this.Y0, this.Y1, x, x + paraNumbering.WidthNum + paraNumbering.WidthSuff, 0, numTextPr.HighLight.r, numTextPr.HighLight.g, numTextPr.HighLight.b, undefined, numTextPr);
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.ParagraphHighlightDrawState = ParagraphHighlightDrawState;

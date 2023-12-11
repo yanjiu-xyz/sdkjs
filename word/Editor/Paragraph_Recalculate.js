@@ -1936,7 +1936,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 		PRSC.Range.W      = 0;
 		PRSC.Range.WEnd   = 0;
 		PRSC.Range.WBreak = 0;
-        if ( true === this.Numbering.Check_Range(CurRange, CurLine) )
+        if ( true === this.Numbering.checkRange(CurRange, CurLine) )
             PRSC.Range.W += this.Numbering.WidthVisible;
 
         for ( var Pos = StartPos; Pos <= EndPos; Pos++ )
@@ -2080,7 +2080,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
         if ( 0 === CurRange )
             this.Lines[CurLine].X = X - PRSW.XStart;
 
-        if ( true === this.Numbering.Check_Range(CurRange, CurLine) )
+        if ( true === this.Numbering.checkRange(CurRange, CurLine) )
             PRSA.X += this.Numbering.WidthVisible;
 
         for ( var Pos = StartPos; Pos <= EndPos; Pos++ )
