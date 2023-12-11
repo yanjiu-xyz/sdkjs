@@ -11277,6 +11277,29 @@
         addSheet = addSheet || this.workbook.getDialogSheetName();
         if (this.model.selectionRange) {
             var ranges = this.model.selectionRange.ranges;
+
+			if (ranges.length === 1 && ranges[0].isOneCell() && this.getFormulaEditMode()) {
+				let range = ranges[0];
+				let pivotTables = this.model.getPivotTablesIntersectingRange(range);
+				if (pivotTables.length === 1) {
+					let dataParams = pivotTables[0].getGetPivotParamsByActiveCell({row: range.r1, col: range.c1});
+					if (dataParams) {
+						let pivotReport = pivotTables[0].getRange();
+						let leftCell = new Asc.Range(pivotReport.c1, pivotReport.r1, pivotReport.c1, pivotReport.r1);
+
+						let formula = 'GETPIVOTDATA(';
+						formula += '"' + dataParams.dataFieldName + '"'
+						formula += ',' + leftCell.getName(absName ? AscCommonExcel.referenceType.A : AscCommonExcel.referenceType.R);
+						if (dataParams.optParams.length > 0) {
+							formula += ',"' + dataParams.optParams.join('","') + '"';
+						}
+						formula += ')';
+						res.push(formula);
+						return res;
+					}
+				}
+			}
+
             for (var i = 0; i < ranges.length; ++i) {
 				var range = ranges[i];
 				//делаю условие только для формул, просмотреть все остальные диапазоны
