@@ -2178,7 +2178,7 @@
 		}
 		var t = this.Api;
 		var _this = this;
-		AscCommon.ShowImageFileDialog(t.documentId, t.documentUserId, t.CoAuthoringApi.get_jwt(), Api.documentShardKey, function(error, files)
+		AscCommon.ShowImageFileDialog(t.documentId, t.documentUserId, t.CoAuthoringApi.get_jwt(), t.documentShardKey, function(error, files)
 			{
 				if (Asc.c_oAscError.ID.No !== error)
 				{
