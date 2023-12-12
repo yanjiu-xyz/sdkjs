@@ -789,7 +789,7 @@
 		this.timerId = null;
 		this.timeoutId = null;
 
-		// List of default handlers for buttons ---
+		// List of buttons handlers---
 
 		function onFirstBtnMouseDown(e, x, y) {
 			if (!this.hit(x, y)) { return }
@@ -814,7 +814,7 @@
 			return false;
 		}
 		
-		// --- end of list of default handlers for buttons
+		// --- end of list of button handlers
 	}
 
 	InitClass(CScrollBase, CControlContainer, CONTROL_TYPE_UNKNOWN);
@@ -1648,8 +1648,6 @@
 	const SECONDS_BUTTON_WIDTH = 76 * AscCommon.g_dKoef_pix_to_mm;
 	const SECONDS_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
 	const SECONDS_BUTTON_LEFT = 57 * AscCommon.g_dKoef_pix_to_mm;
-	const SCROLLER_WIDTH = SECONDS_BUTTON_WIDTH
-	const SCROLLER_HEIGHT = SECONDS_BUTTON_HEIGHT
 
 	function CTimelineContainer(oDrawer) {
 		CTopControl.call(this, oDrawer);
@@ -1659,46 +1657,11 @@
 			this, null, null, manageTimelineScale));
 		this.timeline = this.addControl(new CTimeline(this));
 
-		this.scroller = this.addControl(new CButton(this, stickToPointer, handlePointerMovement, unstickFromPointer));
-		this.scroller.isStickedToPointer = false
-
-		// Event handlers ---
-
 		function manageTimelineScale(event, x, y) {
 			if (!this.hit(x, y)) { return }
 			this.next.tmScaleIdx = (this.next.tmScaleIdx + 1) % 11
 			this.next.onUpdate()
 		}
-
-		function stickToPointer(event, x, y) {
-			if (!this.hit(x, y)) { return }
-			this.isStickedToPointer = true
-		}
-
-		function handlePointerMovement(event, x, y) {
-			if (!this.isStickedToPointer) { return }
-
-			let { t, w, h } = this.bounds
-			let newLeft = x - SCROLLER_WIDTH / 2
-			
-			newLeft = Math.max(
-				newLeft,
-				LABEL_TIMELINE_WIDTH + AscCommon.TIMELINE_LEFT_MARGIN - 1.5 * SCROLL_THICKNESS + BUTTON_SIZE / 2
-			)
-			newLeft = Math.min(
-				newLeft,
-				LABEL_TIMELINE_WIDTH + AscCommon.TIMELINE_LEFT_MARGIN - 1.5 * SCROLL_THICKNESS + this.parentControl.timeline.getWidth() - SCROLLER_WIDTH - BUTTON_SIZE / 2
-			)
-			
-			this.setLayout(newLeft, t, w, h)
-			this.onUpdate()
-		}
-		
-		function unstickFromPointer(event, x, y) {
-			this.isStickedToPointer = false
-		}
-
-		// --- end of event handlers
 	}
 
 	InitClass(CTimelineContainer, CTopControl, CONTROL_TYPE_TIMELINE_CONTAINER);
@@ -1709,8 +1672,6 @@
 		var dWidth = this.getWidth() - AscCommon.TIMELINE_LIST_RIGHT_MARGIN - dLeft;
 		dPosY = (this.getHeight() - SCROLL_THICKNESS) / 2;
 		this.timeline.setLayout(dLeft, dPosY, dWidth, SCROLL_THICKNESS);
-
-		this.scroller.setLayout(dLeft + 30, dPosY - (SECONDS_BUTTON_HEIGHT - SCROLL_THICKNESS) / 2, SCROLLER_WIDTH, SCROLLER_HEIGHT);
 	};
 	CTimelineContainer.prototype.getFillColor = function () {
 		return null;
@@ -1757,6 +1718,9 @@
 
 	function CTimeline(oParentControl) {
 		CScrollHor.call(this, oParentControl);
+
+		this.scroller = this.addControl(new CButton(this, stickToPointer, handlePointerMovement, unstickFromPointer));
+
 		this.startTimePos = 0;
 		this.curTimePos = 0;
 		this.tmScaleIdx = 2;
@@ -1764,15 +1728,43 @@
 		//labels cache
 		this.labels = {};
 		this.usedLabels = {};
+		this.cachedParaPr = null
 
-		this.cachedParaPr = null;
+		// Handlers for scroller button ---
+
+		function stickToPointer(event, x, y) {
+			if (!this.hit(x, y)) { return }
+			this.isStickedToPointer = true
+		}
+
+		function unstickFromPointer(event, x, y) {
+			this.isStickedToPointer = false
+		}
+
+		function handlePointerMovement(event, x, y) {
+			if (!this.isStickedToPointer) { return }
+
+			let newLeft = x - SCROLL_BUTTON_SIZE / 2 - this.parentControl.getLeft()
+
+			// Странно работает this.parentControl.getRight() и 
+			newLeft = Math.max(newLeft, 0 + SCROLL_BUTTON_SIZE)
+			newLeft = Math.min(newLeft, this.parentControl.getWidth() - 2 * SCROLL_BUTTON_SIZE)
+
+			// Если оставить "newLeft, t, w, h", то t почему-то перезаписывается постоянно
+			// let { l, t, w, h } = this.bounds
+			// this.setLayout(newLeft, t, w, h)
+			
+			this.setLayout(newLeft, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE)
+			this.onUpdate()
+		}
+
+		// --- end of handlers for scroller button
 	}
 
 	InitClass(CTimeline, CScrollHor, CONTROL_TYPE_TIMELINE);
 
-
 	CTimeline.prototype.addScroll = function (step) {
-		if(step < 0) {
+		if (step < 0) {
 			this.shiftSelf("left");
 		}
 		else {
@@ -1887,6 +1879,7 @@
 	CTimeline.prototype.recalculateChildrenLayout = function () {
 		this.children[0].setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
 		this.children[1].setLayout(this.getWidth() - SCROLL_BUTTON_SIZE, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+		this.scroller.setLayout(SCROLL_BUTTON_SIZE, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
 	};
 	CTimeline.prototype.drawMark = function (graphics, dPos) {
 		var dHeight = this.getHeight() / 3;
