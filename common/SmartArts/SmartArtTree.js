@@ -988,6 +988,101 @@
 		this.nodes = [];
 		this.parentNode = null;
 	}
+	BaseAlgorithm.prototype.getShapePoint = function (bounds) {
+		const point = {x: 0, y: 0};
+		const begPoints = this.params[AscFormat.Param_type_begPts];
+		const isAuto = begPoints && (begPoints[0] === AscFormat.ParameterVal_connectorPoint_auto);
+		if (isAuto) {
+			point.x = bounds.l + (bounds.r - bounds.l) / 2;
+			point.y = bounds.t + (bounds.b - bounds.t) / 2;
+		}
+		return point;
+	};
+	BaseAlgorithm.prototype.getConnectionDistanceInfo = function (startBounds, endBounds) {
+		const startPoint = this.getShapePoint(startBounds);
+		const endPoint = this.getShapePoint(endBounds);
+
+		const angle = this.getShapeAngle(startPoint, endPoint);
+		const startEdgePoint = this.getMinShapeEdgePoint(startPoint, endPoint, startBounds, angle, startBounds.isEllipse);
+		const endEdgePoint = this.getMinShapeEdgePoint(startPoint, endPoint, endBounds, AscFormat.normalizeRotate(angle + Math.PI), startBounds.isEllipse);
+
+		if (startEdgePoint && endEdgePoint) {
+			return {
+				angle: AscFormat.normalizeRotate(-angle),
+				startEdgePoint: startEdgePoint,
+				endEdgePoint: endEdgePoint
+			};
+		}
+		return null;
+	}
+
+	BaseAlgorithm.prototype.getMinShapeEdgePoint = function (startPoint, endPoint, bounds, angle, isEllipse) {
+		if (isEllipse) {
+			return this.getMinCircleEdgePoint();
+		} else {
+			return this.getMinRectEdgePoint();
+		}
+	};
+
+	BaseAlgorithm.prototype.getMinCircleEdgePoint = function () {
+
+	};
+	BaseAlgorithm.prototype.getMinRectEdgePoint = function (startPoint, endPoint, bounds, angle) {
+		let firstPoint;
+		let secondPoint;
+		if (angle >= 0 && angle < Math.PI / 2) {
+			firstPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.t}, {x: bounds.r, y: bounds.t});
+			secondPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.r, y: bounds.t}, {x: bounds.r, y: bounds.b});
+		} else if (angle >= Math.PI / 2 && angle < Math.PI) {
+			firstPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.t}, {x: bounds.r, y: bounds.t});
+			secondPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.t}, {x: bounds.l, y: bounds.b});
+		} else if (angle >= Math.PI && angle < 3 * Math.PI / 2) {
+			firstPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.b}, {x: bounds.r, y: bounds.b});
+			secondPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.t}, {x: bounds.l, y: bounds.b});
+		} else {
+			firstPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.r, y: bounds.t}, {x: bounds.r, y: bounds.b});
+			secondPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.b}, {x: bounds.r, y: bounds.b});
+		}
+
+		if (firstPoint && secondPoint) {
+			const firstSqrDistance = firstPoint.x * firstPoint.x + firstPoint.y * firstPoint.y;
+			const secondSqrDistance = secondPoint.x * secondPoint.x + secondPoint.y * secondPoint.y;
+			return firstSqrDistance < secondSqrDistance ? firstPoint : secondPoint;
+		} else if (firstPoint) {
+			return firstPoint;
+		}
+		return secondPoint;
+	};
+	BaseAlgorithm.prototype.getShapeEdgePoint = function (startLinePoint1, startLinePoint2, endLinePoint1, endLinePoint2) {
+		const divider = (startLinePoint1.x - startLinePoint2.x) * (endLinePoint1.y - endLinePoint2.y) - (startLinePoint1.y - startLinePoint2.y) * (endLinePoint1.x - endLinePoint2.x);
+		if (divider === 0) {
+			return null;
+		}
+		const m1 = (startLinePoint1.x * startLinePoint2.y - startLinePoint1.y * startLinePoint2.x);
+		const m2 = (endLinePoint1.x * endLinePoint2.y - endLinePoint1.y * endLinePoint2.x);
+
+		const x = (m1 * (endLinePoint1.x - endLinePoint2.x) - m2 * (startLinePoint1.x - startLinePoint2.x)) / divider;
+		const y = (m1 * (endLinePoint1.y - endLinePoint2.y) - m2 * (startLinePoint1.y - startLinePoint2.y)) / divider;
+		if (((x > endLinePoint1.x && x < endLinePoint2.x) || AscFormat.fApproxEqual(x, endLinePoint2.x, algDelta))
+			&& ((y > endLinePoint1.y && y < endLinePoint2.y) || AscFormat.fApproxEqual(y, endLinePoint2.y, algDelta))) {
+			return {x: x, y: y};
+		}
+		return null;
+	}
+
+	BaseAlgorithm.prototype.getShapeAngle = function (startPoint, endPoint) {
+		const x = endPoint.x - startPoint.x;
+		const y = endPoint.y - startPoint.y;
+		const vectorLength = Math.sqrt(x * x + y * y);
+		const angle = Math.acos(x / vectorLength);
+		if (AscFormat.isRealNumber(angle)) {
+			if (y > 0) {
+				return AscFormat.normalizeRotate(-angle);
+			}
+			return angle;
+		}
+		return 0;
+	}
 	BaseAlgorithm.prototype.calcScaleCoefficients = function () {
 		this.parentNode.calcNodeConstraints();
 	};
@@ -1457,6 +1552,63 @@
 		}
 	}
 
+	function CycleAlgorithm() {
+		PositionAlgorithm.call(this);
+	}
+	AscFormat.InitClassWithoutType(LinearAlgorithm, PositionAlgorithm);
+	CycleAlgorithm.prototype.initParams = function (params) {
+		PositionAlgorithm.prototype.call(this, params);
+		if (this.params[AscFormat.Param_type_stAng] === undefined) {
+			this.params[AscFormat.Param_type_stAng] = 0;
+		}
+		if (this.params[AscFormat.Param_type_spanAng] === undefined) {
+			this.params[AscFormat.Param_type_spanAng] = 360;
+		}
+	}
+	CycleAlgorithm.prototype.calcScaleCoefficients = function () {
+		const spanAngle = this.params[AscFormat.Param_type_spanAng];
+		const startAngle = this.params[AscFormat.Param_type_stAng];
+		if (spanAngle > startAngle) {
+			this.calcClockwiseScaleCoefficient();
+		} else {
+			this.calcAntiClockwiseScaleCoefficient();
+		}
+	};
+
+	CycleAlgorithm.prototype.calcClockwiseScaleCoefficient = function () {
+		const spanAngle = this.params[AscFormat.Param_type_spanAng];
+		const startAngle = this.params[AscFormat.Param_type_stAng] * degToRad;
+
+		const childs = this.parentNode.childs;
+		const mainElements = [];
+		for (let i = 0; i < childs.length; i += 1) {
+			const child = childs[i];
+			if (!child.isSibNode()) {
+				mainElements.push(child);
+			}
+		}
+
+		let stepAngle;
+		if (Math.abs(spanAngle) === 360) {
+			stepAngle = (spanAngle / mainElements.length) * degToRad;
+		} else {
+			stepAngle = (spanAngle / (mainElements.length - 1)) * degToRad;
+		}
+
+		const parentConstraints = this.getNodeConstraints(this.parentNode);
+		const firstNodeConstraints = this.getNodeConstraints(childs[0]);
+		let coefficient = 1;
+		let currentAngle = startAngle;
+		const divider = Math.sqrt(2 - 2 * Math.cos(Math.abs(stepAngle)));
+		for (let i = 0; i < mainElements.length; i++) {
+			const calcSibSp = this.getCalcSibSp();
+			currentAngle += stepAngle;
+
+		}
+	};
+	CycleAlgorithm.prototype.calcAntiClockwiseScaleCoefficient = function () {
+
+	};
 	function LinearAlgorithm() {
 		PositionAlgorithm.call(this);
 		this.isLastSib = false;
@@ -1768,91 +1920,6 @@
 			connectorShape.y += (height - scaleHeight) / 2;
 		}
 	};
-	ConnectorAlgorithm.prototype.getShapePoint = function (bounds) {
-		const point = {x: 0, y: 0};
-		const begPoints = this.params[AscFormat.Param_type_begPts];
-		const isAuto = begPoints && (begPoints[0] === AscFormat.ParameterVal_connectorPoint_auto);
-		if (isAuto) {
-			point.x = bounds.l + (bounds.r - bounds.l) / 2;
-			point.y = bounds.t + (bounds.b - bounds.t) / 2;
-		}
-		return point;
-	};
-	ConnectorAlgorithm.prototype.getConnectionDistanceInfo = function (startBounds, endBounds) {
-		const startPoint = this.getShapePoint(startBounds);
-		const endPoint = this.getShapePoint(endBounds);
-
-		const angle = this.getShapeAngle(startPoint, endPoint);
-		const startEdgePoint = this.getMinShapeEdgePoint(startPoint, endPoint, startBounds, angle);
-		const endEdgePoint = this.getMinShapeEdgePoint(startPoint, endPoint, endBounds, AscFormat.normalizeRotate(angle + Math.PI));
-
-		if (startEdgePoint && endEdgePoint) {
-			return {
-				angle: AscFormat.normalizeRotate(-angle),
-				startEdgePoint: startEdgePoint,
-				endEdgePoint: endEdgePoint
-			};
-		}
-		return null;
-	}
-
-	ConnectorAlgorithm.prototype.getMinShapeEdgePoint = function (startPoint, endPoint, bounds, angle) {
-		let firstPoint;
-		let secondPoint;
-		if (angle >= 0 && angle < Math.PI / 2) {
-			firstPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.t}, {x: bounds.r, y: bounds.t});
-			secondPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.r, y: bounds.t}, {x: bounds.r, y: bounds.b});
-		} else if (angle >= Math.PI / 2 && angle < Math.PI) {
-			firstPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.t}, {x: bounds.r, y: bounds.t});
-			secondPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.t}, {x: bounds.l, y: bounds.b});
-		} else if (angle >= Math.PI && angle < 3 * Math.PI / 2) {
-			firstPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.b}, {x: bounds.r, y: bounds.b});
-			secondPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.t}, {x: bounds.l, y: bounds.b});
-		} else {
-			firstPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.r, y: bounds.t}, {x: bounds.r, y: bounds.b});
-			secondPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.b}, {x: bounds.r, y: bounds.b});
-		}
-
-		if (firstPoint && secondPoint) {
-			const firstSqrDistance = firstPoint.x * firstPoint.x + firstPoint.y * firstPoint.y;
-			const secondSqrDistance = secondPoint.x * secondPoint.x + secondPoint.y * secondPoint.y;
-			return firstSqrDistance < secondSqrDistance ? firstPoint : secondPoint;
-		} else if (firstPoint) {
-			return firstPoint;
-		}
-		return secondPoint;
-	}
-
-	ConnectorAlgorithm.prototype.getShapeEdgePoint = function (startLinePoint1, startLinePoint2, endLinePoint1, endLinePoint2) {
-		const divider = (startLinePoint1.x - startLinePoint2.x) * (endLinePoint1.y - endLinePoint2.y) - (startLinePoint1.y - startLinePoint2.y) * (endLinePoint1.x - endLinePoint2.x);
-		if (divider === 0) {
-			return null;
-		}
-		const m1 = (startLinePoint1.x * startLinePoint2.y - startLinePoint1.y * startLinePoint2.x);
-		const m2 = (endLinePoint1.x * endLinePoint2.y - endLinePoint1.y * endLinePoint2.x);
-
-		const x = (m1 * (endLinePoint1.x - endLinePoint2.x) - m2 * (startLinePoint1.x - startLinePoint2.x)) / divider;
-		const y = (m1 * (endLinePoint1.y - endLinePoint2.y) - m2 * (startLinePoint1.y - startLinePoint2.y)) / divider;
-		if (((x > endLinePoint1.x && x < endLinePoint2.x) || AscFormat.fApproxEqual(x, endLinePoint2.x, algDelta))
-			&& ((y > endLinePoint1.y && y < endLinePoint2.y) || AscFormat.fApproxEqual(y, endLinePoint2.y, algDelta))) {
-			return {x: x, y: y};
-		}
-		return null;
-	}
-
-	ConnectorAlgorithm.prototype.getShapeAngle = function (startPoint, endPoint) {
-		const x = endPoint.x - startPoint.x;
-		const y = endPoint.y - startPoint.y;
-		const vectorLength = Math.sqrt(x * x + y * y);
-		const angle = Math.acos(x / vectorLength);
-		if (AscFormat.isRealNumber(angle)) {
-			if (y > 0) {
-				return AscFormat.normalizeRotate(-angle);
-			}
-			return angle;
-		}
-		return 0;
-	}
 
 	ConnectorAlgorithm.prototype.createLineConnector = function () {
 
