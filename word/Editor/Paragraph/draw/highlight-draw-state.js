@@ -63,6 +63,10 @@
 		
 		this.DrawComments       = true;
 		this.DrawSolvedComments = true;
+		this.commentCounter     = 0;
+		this.haveCurrentComment = false;
+		this.currentCommentId   = null;
+
 		this.Comments           = [];
 		this.CommentsFlag       = AscCommon.comments_NoComment;
 		
@@ -89,39 +93,54 @@
 	{
 		this.Paragraph = paragraph;
 		this.Graphics  = graphics;
+		
+		let logicDocument = paragraph.GetLogicDocument();
+		let commentManager = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetCommentsManager() : null;
+		
+		this.DrawColl           = undefined !== graphics.RENDERER_PDF_FLAG;
+		this.DrawFind           = logicDocument && logicDocument.IsDocumentEditor() && logicDocument.SearchEngine.Selection;
+		this.DrawComments       = commentManager && commentManager.isUse();
+		this.DrawSolvedComments = commentManager && commentManager.isUseSolved();
+		this.DrawMMFields       = logicDocument && logicDocument.IsDocumentEditor() && logicDocument.isHighlightMailMergeFields();
+		this.currentCommentId   = commentManager ? commentManager.getCurrentCommentId() : -1;
 	};
-	ParagraphHighlightDrawState.prototype.Reset = function(DrawColl, DrawFind, DrawComments, DrawMMFields, PageEndInfo, DrawSolvedComments)
+	ParagraphHighlightDrawState.prototype.resetPage = function(page)
 	{
-		this.DrawColl     = DrawColl;
-		this.DrawFind     = DrawFind;
-		this.DrawMMFields = DrawMMFields;
+		this.Page = page;
 		
 		this.CurPos = new AscWord.CParagraphContentPos();
 		
 		this.SearchCounter = 0;
 		
-		this.DrawComments       = DrawComments;
-		this.DrawSolvedComments = DrawSolvedComments;
+		this.commentCounter     = 0;
+		this.haveCurrentComment = false;
 		
-		this.Comments = [];
-		if (null !== PageEndInfo)
+		let pageEndInfo = this.Paragraph.GetEndInfoByPage(page - 1);
+		if (pageEndInfo)
 		{
-			for (var nIndex = 0, nCount = PageEndInfo.Comments.length; nIndex < nCount; ++nIndex)
+			for (let index = 0, count = pageEndInfo.Comments.length; index < count; ++index)
 			{
-				this.AddComment(PageEndInfo.Comments[nIndex]);
+				this.addComment(pageEndInfo.Comments[index]);
 			}
 		}
-		
-		if (Paragraph.LogicDocument)
-			this.Check_CommentsFlag();
+		this.ComplexFields.ResetPage(this.Paragraph, page);
+	};
+	ParagraphHighlightDrawState.prototype.resetLine = function(line, top, bottom)
+	{
+		this.Line = line;
+		this.Y0   = top;
+		this.Y1   = bottom;
 	};
 	ParagraphHighlightDrawState.prototype.beginRange = function(range, X, spaceCount)
 	{
+		this.Range = range;
 		this.X = X;
 		this.checkNumbering();
 		
 		this.Spaces = spaceCount;
 		this.bidiFlow.begin(this.rtl);
+		
+		this.InlineSdt = [];
 	};
 	ParagraphHighlightDrawState.prototype.endRange = function()
 	{
@@ -154,62 +173,25 @@
 	{
 		this.InlineSdt.push(oSdt);
 	};
-	ParagraphHighlightDrawState.prototype.AddComment = function(Id)
+	ParagraphHighlightDrawState.prototype.addComment = function(commentId)
 	{
-		if (!this.DrawComments)
+		if (!this.checkComment(commentId))
 			return;
 		
-		var oComment = AscCommon.g_oTableId.Get_ById(Id);
-		if (!oComment || (!this.DrawSolvedComments && oComment.IsSolved()) || !AscCommon.UserInfoParser.canViewComment(oComment.GetUserName()))
-			return;
+		if (commentId === this.currentCommentId)
+			this.haveCurrentComment = true;
 		
-		this.Comments.push(Id);
-		this.Check_CommentsFlag();
+		++this.commentCounter;
 	};
-	ParagraphHighlightDrawState.prototype.RemoveComment = function(Id)
+	ParagraphHighlightDrawState.prototype.removeComment = function(commentId)
 	{
-		if (!this.DrawComments)
+		if (!this.checkComment(commentId))
 			return;
 		
-		var oComment = AscCommon.g_oTableId.Get_ById(Id);
-		if (!oComment || (!this.DrawSolvedComments && oComment.IsSolved()) || !AscCommon.UserInfoParser.canViewComment(oComment.GetUserName()))
-			return;
+		if (commentId === this.currentCommentId)
+			this.haveCurrentComment = false;
 		
-		for (var nIndex = 0, nCount = this.Comments.length; nIndex < nCount; ++nIndex)
-		{
-			if (this.Comments[nIndex] === Id)
-			{
-				this.Comments.splice(nIndex, 1);
-				break;
-			}
-		}
-		
-		this.Check_CommentsFlag();
-	};
-	ParagraphHighlightDrawState.prototype.Check_CommentsFlag = function()
-	{
-		let logicDocument = this.Paragraph.LogicDocument;
-		if (!logicDocument || !logicDocument.IsDocumentEditor())
-			return;
-		
-		// Проверяем флаг
-		var Para             = this.Paragraph;
-		var DocumentComments = Para.LogicDocument.Comments;
-		var CurComment       = DocumentComments.Get_CurrentId();
-		var CommLen          = this.Comments.length;
-		
-		// Сначала проверим есть ли вообще комментарии
-		this.CommentsFlag = ( CommLen > 0 ? AscCommon.comments_NonActiveComment : AscCommon.comments_NoComment );
-		
-		// Проверим является ли какой-либо комментарий активным
-		for (var CurPos = 0; CurPos < CommLen; CurPos++)
-		{
-			if (CurComment === this.Comments[CurPos])
-			{
-				this.CommentsFlag = AscCommon.comments_ActiveComment;
-				break
-			}
-		}
+		--this.commentCounter;
 	};
 	ParagraphHighlightDrawState.prototype.Save_Coll = function()
 	{
@@ -277,6 +259,16 @@
 		
 		if (highlight_None !== numTextPr.HighLight)
 			this.High.Add(this.Y0, this.Y1, x, x + paraNumbering.WidthNum + paraNumbering.WidthSuff, 0, numTextPr.HighLight.r, numTextPr.HighLight.g, numTextPr.HighLight.b, undefined, numTextPr);
+	};
+	ParagraphHighlightDrawState.prototype.checkComment = function(commentId)
+	{
+		if (!this.DrawComments)
+			return false;
+		
+		let comment = AscCommon.g_oTableId.GetById(commentId);
+		return (comment
+			&& (this.DrawSolvedComments || !comment.IsSolved())
+			&& AscCommon.UserInfoParser.canViewComment(comment.GetUserName()));
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.ParagraphHighlightDrawState = ParagraphHighlightDrawState;

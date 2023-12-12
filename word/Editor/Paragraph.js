@@ -2140,12 +2140,6 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr, drawState
 	var DocumentComments = LogicDocument && LogicDocument.Comments;
 	var Page_abs         = this.Get_AbsolutePage(CurPage);
 
-	var DrawComm           = DocumentComments ? DocumentComments.Is_Use() : false;
-	var DrawFind           = LogicDocument && LogicDocument.IsDocumentEditor() && LogicDocument.SearchEngine.Selection;
-	var DrawColl           = undefined !== pGraphics.RENDERER_PDF_FLAG;
-	var DrawMMFields       = LogicDocument && !!(this.LogicDocument && this.LogicDocument.Is_HighlightMailMergeFields && true === this.LogicDocument.Is_HighlightMailMergeFields());
-	var DrawSolvedComments = DocumentComments ? DocumentComments.IsUseSolved() : false;
-
 	var SdtHighlightColor  = LogicDocument && this.LogicDocument.GetSdtGlobalShowHighlight && this.LogicDocument.GetSdtGlobalShowHighlight() ? this.LogicDocument.GetSdtGlobalColor() : null;
 	var FormsHighlight     = LogicDocument && this.LogicDocument.GetSpecialFormsHighlight && this.LogicDocument.GetSpecialFormsHighlight() ? this.LogicDocument.GetSpecialFormsHighlight() : null;
 
@@ -2159,7 +2153,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr, drawState
 	if (FormsHighlight && FormsHighlight.IsAuto())
 		FormsHighlight = null;
 
-	PDSH.Reset(DrawColl, DrawFind, DrawComm, DrawMMFields, this.GetEndInfoByPage(CurPage - 1), DrawSolvedComments);
+	PDSH.resetPage(CurPage);
 
 	var StartLine = _Page.StartLine;
 	var EndLine   = _Page.EndLine;
@@ -2272,8 +2266,7 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr, drawState
 		}
 	}
 	PDSH.SetCollectFixedForms(false);
-	PDSH.ComplexFields.ResetPage(this, CurPage);
-	PDSH.Reset(DrawColl, DrawFind, DrawComm, DrawMMFields, this.GetEndInfoByPage(CurPage - 1), DrawSolvedComments);
+	PDSH.resetPage(CurPage);
 
 	for (var CurLine = StartLine; CurLine <= EndLine; CurLine++)
 	{
@@ -2285,6 +2278,8 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr, drawState
 		var Y1 = (_Page.Y + _Line.Y + _LineMetrics.Descent);
 		if (_LineMetrics.LineGap < 0)
 			Y1 += _LineMetrics.LineGap;
+		
+		PDSH.resetLine(CurLine, Y0, Y1);
 
 		var RangesCount = _Line.Ranges.length;
 		for (var CurRange = 0; CurRange < RangesCount; CurRange++)
@@ -2299,15 +2294,11 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr, drawState
 			// выделения, совместного редактирования и поиска соответственно.
 
 			PDSH.beginRange(CurRange, X, _Range.Spaces);
-			
-			PDSH.Reset_Range(CurPage, CurLine, CurRange, X, Y0, Y1, _Range.Spaces);
-
 			for (var Pos = StartPos; Pos <= EndPos; Pos++)
 			{
 				var Item = this.Content[Pos];
 				Item.Draw_HighLights(PDSH);
 			}
-			
 			PDSH.endRange();
 
 			//----------------------------------------------------------------------------------------------------------
