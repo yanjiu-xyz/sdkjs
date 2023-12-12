@@ -6431,8 +6431,44 @@ ParaRun.prototype.getRangePos = function(line, range)
 	];
 };
 
-ParaRun.prototype.Draw_HighLights = function(PDSH)
+ParaRun.prototype.Draw_HighLights = function(drawState)
 {
+	let rangePos = this.getRangePos(drawState.Line, drawState.Range);
+	let startPos = rangePos[0];
+	let endPos   = rangePos[1];
+	if (startPos >= endPos)
+		return;
+	
+	for (let pos = startPos; pos < endPos; ++pos)
+	{
+		let item = this.private_CheckInstrText(this.Content[pos]);
+		
+		for (let markPos = 0; markPos < this.SearchMarks.length; ++markPos)
+		{
+			let mark    = this.SearchMarks[markPos];
+			let markPos = mark.SearchResult.StartPos.Get(mark.Depth);
+			
+			if (pos === markPos && mark.Start)
+				drawState.increaseSearchCounter();
+		}
+		
+		drawState.handleRunElement(item, this);
+		
+		
+		for (let markPos = 0; markPos < this.SearchMarks.length; ++markPos)
+		{
+			let mark    = this.SearchMarks[markPos];
+			let markPos = mark.SearchResult.StartPos.Get(mark.Depth);
+			
+			if (pos + 1 === markPos && !mark.Start)
+				drawState.decreaseSearchCounter();
+		}
+	}
+	
+	
+	//------------------------------------------------------------------------------------------------------------------
+	
+	
     var pGraphics = PDSH.Graphics;
 
     var CurLine   = PDSH.Line - this.StartLine;
