@@ -76,7 +76,6 @@
 		this.reviewColor    = null;
 		this.themeColor     = null;
 		this.autoColor      = null;
-		this.isHiddenCFPart = false;
 		this.calcY          = 0; // calculated vertical position taking into account sub/super script
 		
 		// for Math
@@ -134,10 +133,13 @@
 	 */
 	ParagraphContentDrawState.prototype.handleRunElement = function(element, run)
 	{
-		if ((this.ComplexFields.IsHiddenFieldContent() || this.isHiddenCFPart)
+		if ((this.ComplexFields.IsHiddenFieldContent() || this.ComplexFields.IsComplexFieldCode())
 			&& para_End !== element.Type
 			&& para_FieldChar !== element.Type)
 			return;
+		
+		if (para_FieldChar === element.Type)
+			this.ComplexFields.ProcessFieldChar(element);
 		
 		this.bidiFlow.add([element, run], element.getBidiType());
 	};
@@ -251,7 +253,6 @@
 			this.autoColor = (bgColor && !bgColor.Check_BlackAutoColor() ? new CDocumentColor(255, 255, 255, false) : new CDocumentColor(0, 0, 0, false));
 		}
 		
-		this.isHiddenCFPart = this.ComplexFields.IsComplexFieldCode();
 		this.updateGraphicsState(textPr, run.IsUseAscFont(textPr));
 		
 		this.calcY = this.calculateY(textPr);
@@ -371,9 +372,6 @@
 	 */
 	ParagraphContentDrawState.prototype.handleFieldChar = function(fieldChar)
 	{
-		this.ComplexFields.ProcessFieldChar(fieldChar);
-		this.isHiddenCFPart = this.ComplexFields.IsComplexFieldCode();
-		
 		if (!fieldChar.IsNumValue())
 			return;
 		

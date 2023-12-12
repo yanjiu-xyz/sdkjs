@@ -171,10 +171,13 @@
 	 */
 	ParagraphLineDrawState.prototype.handleRunElement = function(element, run, inRunPos, misspell)
 	{
-		if ((this.ComplexFields.IsHiddenFieldContent() || this.isHiddenCFPart)
+		if ((this.ComplexFields.IsHiddenFieldContent() || this.ComplexFields.IsComplexFieldCode())
 			&& para_End !== element.Type
 			&& para_FieldChar !== element.Type)
 			return;
+		
+		if (para_FieldChar === element.Type)
+			this.ComplexFields.ProcessFieldChar(element);
 		
 		this.bidiFlow.add([element, run, inRunPos, misspell], element.getBidiType());
 	};
@@ -242,9 +245,6 @@
 				this.addLines(startX, endX);
 				break;
 			case para_FieldChar:
-				this.ComplexFields.ProcessFieldChar(element);
-				this.isHiddenCFPart = this.ComplexFields.IsComplexFieldCode();
-				
 				if (element.IsNumValue())
 					this.addLines(startX, endX);
 				break;
@@ -337,8 +337,6 @@
 		this.updateStrikeoutUnderlinePos(run, textPr.FontSize, textPr.VertAlign);
 		this.updateColor(textPr);
 		this.updateReviewState(run);
-		
-		this.isHiddenCFPart = this.ComplexFields.IsComplexFieldCode();
 		
 		this.isUnderline  = textPr.Underline;
 		this.isStrikeout  = textPr.Strikeout;

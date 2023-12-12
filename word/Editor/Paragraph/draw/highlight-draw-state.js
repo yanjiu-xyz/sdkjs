@@ -243,6 +243,9 @@
 			&& para_FieldChar !== element.Type)
 			return;
 		
+		if (para_FieldChar === element.Type)
+			this.ComplexFields.ProcessFieldChar(element);
+		
 		this.bidiFlow.add([element, run, this.searchCounter > 0], element.getBidiType());
 	};
 	ParagraphHighlightDrawState.prototype.handleBidiFlow = function(data)
@@ -328,7 +331,6 @@
 		
 		// TODO:
 		this.collaborationColor = null;
-
 	};
 	/**
 	 *
