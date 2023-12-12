@@ -1739,6 +1739,7 @@
 
 		function unstickFromPointer(event, x, y) {
 			this.isStickedToPointer = false
+			this.parentControl.endScroll()
 		}
 
 		function handlePointerMovement(event, x, y) {
@@ -1756,8 +1757,6 @@
 				if (!this.hit(x, y)) { return }
 				let scrollStep = newLeft == leftBorder ? -1 : 1;
 				this.parentControl.startScroll(scrollStep);
-			} else {
-				this.parentControl.endScroll();
 			}
 
 			// Updating curTimePos
@@ -1796,6 +1795,7 @@
 			this.startTimePos = newTimePos;
 
 		this.startTimePos = Math.max(0, this.startTimePos)
+		this.curTimePos = this.startTimePos
 		this.onUpdate()
 	}
 
