@@ -780,6 +780,10 @@
 			}
 			
 			this.checkLoadCMap();
+
+			let standardFonts = this.file.nativeFile["getInteractiveFormsStandardFonts"]();
+			let embeddedFonts = this.file.nativeFile["getInteractiveFormsEmbeddedFonts"]();
+			AscFonts.initEmbeddedFonts(standardFonts.concat(embeddedFonts));
 			
 			AscCommon.g_oIdCounter.Set_Load(false); // to do возможно не тут стоит выключать флаг
 		};

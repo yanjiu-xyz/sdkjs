@@ -198,6 +198,44 @@
     CFontFileLoader.prototype["GetStatus"] = function() { return this.Status; };
     CFontFileLoader.prototype["GetStreamIndex"] = function() { return this.stream_index; };
 
+    function CFontFileLoaderEmbed(id)
+    {
+        this.Id             = id;
+        this.Status         = -1;  // -1 - notloaded, 0 - loaded, 1 - error, 2 - loading
+        this.stream_index   = -1;
+        this.callback       = null;
+    }
+
+    CFontFileLoaderEmbed.prototype.startIndex = -1;
+    CFontFileLoaderEmbed.prototype.CheckLoaded = function()
+    {
+        return (0 === this.Status || 1 === this.Status);
+    };
+    CFontFileLoaderEmbed.prototype.SetStreamIndex = function(index)
+    {
+        this.stream_index = index;
+    };
+    CFontFileLoaderEmbed.prototype.LoadFontAsync = function()
+    {
+        if (this.Status === 0 || this.Status === 1)
+            return true;
+
+        let fontData = AscFonts["loadEmbeddedFont"](this.Id);
+        if (fontData)
+        {
+            let stream_index = g_fonts_streams.length;
+            g_fonts_streams[stream_index] = new AscFonts.FontStream(fontData, fontData.length);
+            this.SetStreamIndex(stream_index);
+            this.Status = 0;
+        }
+        else
+        {
+            this.Status = 1;
+        }
+
+        return true;
+    };
+
     const fontstyle_mask_regular    = 1;
     const fontstyle_mask_italic     = 2;
     const fontstyle_mask_bold       = 4;
@@ -497,6 +535,64 @@
         }
     };
 
+    function CFontInfoEmbed(name, index)
+    {
+        this.Name = name;
+        this.indexR     = index;
+        this.faceIndexR = 0;
+    }
+
+    CFontInfoEmbed.prototype =
+    {
+        // начинаем грузить нужные стили
+        CheckFontLoadStyles : function(global_loader)
+        {
+            let fontFile = global_loader.fontFiles[this.indexR];
+            fontFile.LoadFontAsync();
+            return false;
+        },
+
+        // надо ли грузить хоть один шрифт из семейства
+        CheckFontLoadStylesNoLoad : function(global_loader)
+        {
+            return false;
+        },
+
+        LoadFont : function(font_loader, fontManager, fEmSize, style, dHorDpi, dVerDpi, transform, isNoSetupToManager)
+        {
+            let fontfile = font_loader.fontFiles[this.indexR];
+
+            var pFontFile = fontManager.LoadFont(fontfile, this.faceIndexR, fEmSize,
+                (0 !== (style & FontStyle.FontStyleBold)) ? true : false,
+                (0 !== (style & FontStyle.FontStyleItalic)) ? true : false,
+                info.needB, info.needI,
+                isNoSetupToManager);
+
+            if (pFontFile && (true !== isNoSetupToManager))
+            {
+                var newEmSize = fontManager.UpdateSize(fEmSize, dVerDpi, dVerDpi);
+                pFontFile.SetSizeAndDpi(newEmSize, dHorDpi, dVerDpi);
+
+                if (undefined !== transform)
+                {
+                    fontManager.SetTextMatrix2(transform.sx,transform.shy,transform.shx,transform.sy,transform.tx,transform.ty);
+                }
+                else
+                {
+                    fontManager.SetTextMatrix(1, 0, 0, 1, 0, 0);
+                }
+            }
+
+            return pFontFile;
+        },
+
+        GetFontID : function(font_loader)
+        {
+            let fontfile = font_loader.fontFiles[this.indexК];
+            return { id: fontfile.Id, faceIndex : this.faceIndexR, file : fontfile };
+        }
+    };
+
     // thumbnail - это позиция (y) в общем табнейле всех шрифтов
     function CFont(name, id, thumbnail, style)
     {
@@ -605,10 +701,40 @@
     window['AscFonts'].CFontInfo = CFontInfo;
     window['AscFonts'].CFont = CFont;
 
+    window['AscFonts'].CFontFileLoaderEmbed = CFontFileLoaderEmbed;
+    window['AscFonts'].CFontInfoEmbed = CFontInfoEmbed;
+
     window['AscFonts'].ImageLoadStatus = ImageLoadStatus;
     window['AscFonts'].CImage = CImage;
 
     window['AscFonts'].checkAllFonts = checkAllFonts;
+
+    window['AscFonts'].g_font_infos_embed = [];
+
+
+    window['AscFonts'].getEmbeddedFontPrefix = function()
+    {
+        return "Embedded: ";
+    };
+
+    window['AscFonts'].initEmbeddedFonts = function(fonts)
+    {
+        const prefix = AscFonts.getEmbeddedFontPrefix();
+        let fontFiles = AscFonts.g_font_files;
+
+        if (CFontFileLoaderEmbed.prototype.startIndex > 0)
+            fontFiles.splice(CFontFileLoaderEmbed.prototype.startIndex);
+
+        CFontFileLoaderEmbed.prototype.startIndex = fontFiles.length;
+        let currentIndex = CFontFileLoaderEmbed.prototype.startIndex;
+
+        for (let i = 0, len = fonts.length; i < len; i++)
+        {
+            let name = prefix + fonts[i];
+            AscFonts.g_font_files.push(new CFontFileLoaderEmbed(name));
+            AscFonts.g_font_infos_embed.push(new CFontInfoEmbed(name, currentIndex++));
+        }
+    };
 
     checkAllFonts();
 
