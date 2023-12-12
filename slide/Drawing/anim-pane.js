@@ -1894,6 +1894,7 @@
 		this.children[0].setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
 		this.children[1].setLayout(this.getWidth() - SCROLL_BUTTON_SIZE, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
 		this.scroller.setLayout(this.timeToPos(this.curTimePos) - SCROLL_BUTTON_SIZE / 2, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+		this.scroller.getOutlineColor = function () { return '#000' }
 	};
 	CTimeline.prototype.drawMark = function (graphics, dPos) {
 		var dHeight = this.getHeight() / 3;
