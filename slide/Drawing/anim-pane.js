@@ -42,25 +42,22 @@
 	const STATE_FLAG_DISABLED = 8;
 
 	const CONTROL_TYPE_UNKNOWN = 0;
-	const CONTROL_TYPE_HEADER = 1;
-	const CONTROL_TYPE_TOOLBAR = 2;
-	const CONTROL_TYPE_SEQ_LIST_CONTAINER = 3;
-	const CONTROL_TYPE_SCROLL_VERT = 4;
-	const CONTROL_TYPE_SCROLL_HOR = 5;
-	const CONTROL_TYPE_SEQ_LIST = 6;
-	const CONTROL_TYPE_ANIM_SEQ = 7;
-	const CONTROL_TYPE_ANIM_GROUP_LIST = 8;
-	const CONTROL_TYPE_ANIM_GROUP = 9;
-	const CONTROL_TYPE_ANIM_ITEM = 10;
-	const CONTROL_TYPE_LABEL = 11;
-	const CONTROL_TYPE_BUTTON = 12;
-	const CONTROL_TYPE_IMAGE = 13;
-	const CONTROL_TYPE_TIMELINE_CONTAINER = 14;
-	const CONTROL_TYPE_TIMELINE = 15;
-	const CONTROL_TYPE_EFFECT_BAR = 16;
+	const CONTROL_TYPE_LABEL = 1;
+	const CONTROL_TYPE_IMAGE = 2;
+	const CONTROL_TYPE_BUTTON = 3;
+	const CONTROL_TYPE_HEADER = 4;
+	const CONTROL_TYPE_SCROLL_VERT = 5;
+	const CONTROL_TYPE_SCROLL_HOR = 6;
+	const CONTROL_TYPE_TIMELINE_CONTAINER = 7;
+	const CONTROL_TYPE_TIMELINE = 8;
+	const CONTROL_TYPE_SEQ_LIST_CONTAINER = 9;
+	const CONTROL_TYPE_SEQ_LIST = 10;
+	const CONTROL_TYPE_ANIM_SEQ = 11;
+	const CONTROL_TYPE_ANIM_GROUP_LIST = 12;
+	const CONTROL_TYPE_ANIM_GROUP = 13;
+	const CONTROL_TYPE_ANIM_ITEM = 14;
+	const CONTROL_TYPE_EFFECT_BAR = 15;
 
-	const LEFT_TIMELINE_INDENT = 14 * AscCommon.g_dKoef_pix_to_mm;
-	const LABEL_TIMELINE_WIDTH = 155 * AscCommon.g_dKoef_pix_to_mm;
 
 	function CControl(oParentControl) {
 		AscFormat.ExecuteNoHistory(function () {
@@ -79,6 +76,7 @@
 	}
 
 	InitClass(CControl, AscFormat.CShape, CONTROL_TYPE_UNKNOWN);
+
 	CControl.prototype.DEFALT_WRAP_OBJECT = {
 		oTxWarpStruct: null,
 		oTxWarpStructParamarks: null,
@@ -284,7 +282,6 @@
 		var ty = oInv.TransformPointY(x, y);
 		return tx >= 0 && tx <= this.extX && ty >= 0 && ty <= this.extY;
 	};
-
 	CControl.prototype.setStateFlag = function (nFlag, bValue) {
 		var nOldState = this.state;
 		if (bValue) {
@@ -299,7 +296,6 @@
 	CControl.prototype.getStateFlag = function (nFlag) {
 		return (this.state & nFlag) !== 0;
 	};
-
 	CControl.prototype.isHovered = function () {
 		return this.getStateFlag(STATE_FLAG_HOVERED);
 	};
@@ -311,14 +307,12 @@
 		}
 		return false;
 	};
-	
 	CControl.prototype.setHoverState = function () {
 		this.setStateFlag(STATE_FLAG_HOVERED, true);
 	};
 	CControl.prototype.setNotHoverState = function () {
 		this.setStateFlag(STATE_FLAG_HOVERED, false);
 	};
-
 	CControl.prototype.onMouseMove = function (e, x, y) {
 		if (e.IsLocked) {
 			return false;
@@ -349,7 +343,7 @@
 	};
 	CControl.prototype.onMouseUp = function (e, x, y) {
 		if (this.parentControl) {
-			if(this.parentControl.isEventListener(this)) {
+			if (this.parentControl.isEventListener(this)) {
 				this.parentControl.setEventListener(null);
 				return true;
 			}
@@ -392,7 +386,6 @@
 	CControl.prototype.recalculate = function () {
 		AscFormat.CShape.prototype.recalculate.call(this);
 	};
-
 	/**
 	 * Sets the location and dimensions of the control inside the parent container.
 	 *
@@ -529,6 +522,7 @@
 
 	};
 
+
 	function CControlContainer(oParentControl) {
 		CControl.call(this, oParentControl);
 		this.children = [];
@@ -539,6 +533,7 @@
 	}
 
 	InitClass(CControlContainer, CControl, CONTROL_TYPE_UNKNOWN);
+
 	CControlContainer.prototype.isEventListener = function (oChild) {
 		return this.eventListener === oChild;
 	};
@@ -665,7 +660,7 @@
 		}
 	};
 	CControlContainer.prototype.onMouseDown = function (e, x, y) {
-		for (var nChild = this.children.length -1 ; nChild >= 0; --nChild) {
+		for (var nChild = this.children.length - 1; nChild >= 0; --nChild) {
 			if (this.children[nChild].onMouseDown(e, x, y)) {
 				return true;
 			}
@@ -713,12 +708,14 @@
 		this.recalculate();
 	};
 
+
 	function CTopControl(oDrawer) {
 		CControlContainer.call(this, null);
 		this.drawer = oDrawer;
 	}
 
 	InitClass(CTopControl, CControlContainer, CONTROL_TYPE_UNKNOWN);
+
 	CTopControl.prototype.onUpdateRect = function (oBounds) {
 		if (this.drawer) {
 			this.drawer.OnAnimPaneChanged(oBounds);
@@ -737,137 +734,351 @@
 		this.onUpdate();
 	};
 
-	function CSeqListContainer(oDrawer) {
-		CTopControl.call(this, oDrawer);
-		this.seqList = this.addControl(new CSeqList(this));
+
+	function CLabel(oParentControl, sString, nFontSize, bBold, nParaAlign) {
+		CControl.call(this, oParentControl);
+		AscFormat.ExecuteNoHistory(function () {
+			this.string = sString;
+			this.fontSize = nFontSize;
+			this.createTextBody();
+			var oTxLstStyle = new AscFormat.TextListStyle();
+			oTxLstStyle.levels[0] = new CParaPr();
+			oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
+			oTxLstStyle.levels[0].DefaultRunPr.FontSize = nFontSize;
+			oTxLstStyle.levels[0].DefaultRunPr.Bold = bBold;
+			oTxLstStyle.levels[0].DefaultRunPr.Color = new AscCommonWord.CDocumentColor(0x44, 0x44, 0x44, false);
+			oTxLstStyle.levels[0].DefaultRunPr.RFonts.SetAll("Arial", -1);
+			if (AscFormat.isRealNumber(nParaAlign)) {
+				oTxLstStyle.levels[0].Jc = nParaAlign;
+			}
+			this.txBody.setLstStyle(oTxLstStyle);
+			this.bodyPr = new AscFormat.CBodyPr();
+			this.bodyPr.setDefault();
+			this.bodyPr.anchor = 1;//vertical align ctr
+			this.bodyPr.resetInsets();
+			this.bodyPr.horzOverflow = AscFormat.nHOTClip;
+			this.bodyPr.vertOverflow = AscFormat.nVOTClip;
+		}, this, []);
 	}
 
-	InitClass(CSeqListContainer, CTopControl, CONTROL_TYPE_SEQ_LIST_CONTAINER);
-	CSeqListContainer.prototype.getScrollOffsetY = function (oChild) {
-		return 0;
-	};
-	CSeqListContainer.prototype.recalculateChildrenLayout = function () {
-		this.seqList.setLayout(0, 0, this.getWidth(), this.seqList.getHeight());
-		this.seqList.recalculate();
-		this.setLayout(0, 0, this.seqList.getWidth(), this.seqList.getHeight());
-	};
-	CSeqListContainer.prototype.clipStart = function (graphics) {
+	InitClass(CLabel, CControl, CONTROL_TYPE_LABEL);
 
+	CLabel.prototype.getString = function () {
+		return AscCommon.translateManager.getValue(this.string);
 	};
-	CSeqListContainer.prototype.clipEnd = function (graphics) {
+	CLabel.prototype.recalculateContent = function () {
+		//this.recalculateGeometry();
+		this.recalculateTransform();
+		//        this.txBody.content.Recalc_AllParagraphs_CompiledPr();
+		if (!this.txBody.bFit || !AscFormat.isRealNumber(this.txBody.fitWidth) || this.txBody.fitWidth > this.getWidth()) {
+			this.txBody.recalculateOneString(this.getString());
+		}
 	};
-	CSeqListContainer.prototype.onScroll = function () {
-		this.onUpdate();
-	};
-	CSeqListContainer.prototype.getFillColor = function () {
-		return null;
-	};
-	CSeqListContainer.prototype.getOutlineColor = function () {
-		return null;
-	};
-	CSeqListContainer.prototype.onMouseWheel = function (e, deltaY, X, Y) {
+	CLabel.prototype.canHandleEvents = function () {
 		return false;
 	};
+	CLabel.prototype.getFillColor = function () {
+		return null;
+	};
+	CLabel.prototype.getOutlineColor = function () {
+		return null;
+	};
+	CLabel.prototype.recalculateTransformText = function () {
+		var Y = this.getHeight() / 2 - this.txBody.content.GetSummaryHeight() / 2;
+		if (!this.transformText) {
+			this.transformText = new AscCommon.CMatrix();
+		}
+		this.transformText.tx = this.transform.tx;
+		this.transformText.ty = this.transform.ty + Y;
 
-	const SCROLL_TIMER_INTERVAL = 150;
-	const SCROLL_TIMER_DELAY = 600;
+		if (!this.invertTransformText) {
+			this.invertTransformText = new AscCommon.CMatrix();
+		}
+		this.invertTransformText.tx = -this.transformText.tx;
+		this.invertTransformText.ty = -this.transformText.ty;
+		this.localTransformText = this.transformText;
+	};
+	CLabel.prototype.recalculateTransformText2 = function () {
+		return null;
+	};
+
+
+	function CImageControl(oParentControl) {
+		CControl.call(this, oParentControl)
+	}
+
+	InitClass(CImageControl, CControl, CONTROL_TYPE_IMAGE);
+
+	CImageControl.prototype.canHandleEvents = function () {
+		return false;
+	};
+	//CImageControl.prototype.draw = function() {
+	//};
+
+
+	function CButton(oParentControl, fOnMouseDown, fOnMouseMove, fOnMouseUp) {
+		CControlContainer.call(this, oParentControl);
+		this.onMouseDownCallback = fOnMouseDown;
+		this.onMouseMoveCallback = fOnMouseMove;
+		this.onMouseUpCallback = fOnMouseUp;
+	}
+
+	InitClass(CButton, CControlContainer, CONTROL_TYPE_BUTTON);
+
+	CButton.prototype.onMouseDown = function (e, x, y) {
+		if (this.onMouseDownCallback && this.onMouseDownCallback.call(this, e, x, y)) {
+			return true;
+		}
+		return CControlContainer.prototype.onMouseDown.call(this, e, x, y);
+	};
+	CButton.prototype.onMouseMove = function (e, x, y) {
+		if (this.onMouseMoveCallback && this.onMouseMoveCallback.call(this, e, x, y)) {
+			return true;
+		}
+		return CControlContainer.prototype.onMouseMove.call(this, e, x, y);
+	};
+	CButton.prototype.onMouseUp = function (e, x, y) {
+		if (this.onMouseUpCallback && this.onMouseUpCallback.call(this, e, x, y)) {
+			return true;
+		}
+		return CControlContainer.prototype.onMouseUp.call(this, e, x, y);
+	};
+	CButton.prototype.canHandleEvents = function () {
+		return true;
+	};
+	// CButton.prototype.draw = function(graphics) {
+	//     if(this.isHidden()){
+	//         return false;
+	//     }
+	//     if(!this.checkUpdateRect(graphics.updatedRect)) {
+	//         return false;
+	//     }
+	//
+	//     graphics.SaveGrState();
+	//     var oSkin = AscCommon.GlobalSkin;
+	//     //ScrollBackgroundColor     : "#EEEEEE",
+	//     //ScrollOutlineColor        : "#CBCBCB",
+	//     //ScrollOutlineHoverColor   : "#CBCBCB",
+	//     //ScrollOutlineActiveColor  : "#ADADAD",
+	//     //ScrollerColor             : "#F7F7F7",
+	//     //ScrollerHoverColor        : "#C0C0C0",
+	//     //ScrollerActiveColor       : "#ADADAD",
+	//     //ScrollArrowColor          : "#ADADAD",
+	//     //ScrollArrowHoverColor     : "#F7F7F7",
+	//     //ScrollArrowActiveColor    : "#F7F7F7",
+	//     //ScrollerTargetColor       : "#CFCFCF",
+	//     //ScrollerTargetHoverColor  : "#F1F1F1",
+	//     //ScrollerTargetActiveColor : "#F1F1F1",
+	//     var x = 0;
+	//     var y = 0;
+	//     var extX = this.getWidth();
+	//     var extY = this.getHeight();
+	//     graphics.transform3(this.transform);
+	//
+	//     var sFillColor;
+	//     var sOutlineColor;
+	//     var oColor;
+	//     if(this.isActive()) {
+	//         sFillColor = oSkin.ScrollerActiveColor;
+	//         sOutlineColor = oSkin.ScrollOutlineActiveColor;
+	//     }
+	//     else if(this.isHovered()) {
+	//         sFillColor = oSkin.ScrollerHoverColor;
+	//         sOutlineColor = oSkin.ScrollOutlineHoverColor;
+	//     }
+	//     else {
+	//         sFillColor = oSkin.ScrollerColor;
+	//         sOutlineColor = oSkin.ScrollOutlineColor;
+	//     }
+	//     oColor = AscCommon.RgbaHexToRGBA(sFillColor);
+	//     graphics.b_color1(oColor.R, oColor.G, oColor.B, 0xFF);
+	//     graphics.rect(x, y, extX, extY);
+	//     graphics.df();
+	//     oColor = AscCommon.RgbaHexToRGBA(sOutlineColor);
+	//
+	//     graphics.SetIntegerGrid(true);
+	//     graphics.p_width(0);
+	//     graphics.p_color(oColor.R, oColor.G, oColor.B, 0xFF);
+	//     graphics.drawHorLine(0, y, x, x + extX, 0);
+	//     graphics.drawHorLine(0, y + extY, x, x + extX, 0);
+	//     graphics.drawVerLine(2, x, y, y + extY, 0);
+	//     graphics.drawVerLine(2, x + extX, y, y + extY, 0);
+	//     graphics.ds();
+	//     graphics.RestoreGrState();
+	//     return true;
+	// };
+
+	CButton.prototype.getFillColor = function () {
+		// if(this.parentControl instanceof CTimelineContainer) {
+		//     return null;
+		// }
+
+		var oSkin = AscCommon.GlobalSkin;
+		if (this.isActive()) {
+			return oSkin.ScrollerActiveColor;
+		} else if (this.isHovered()) {
+			return oSkin.ScrollerHoverColor;
+		} else if (this.isDisabled()) {
+			return '#123456'
+		} else {
+			return oSkin.ScrollerColor;
+		}
+	};
+	CButton.prototype.getOutlineColor = function () {
+		if (this.parentControl instanceof CTimeline) { return '#000' }
+
+		var oSkin = AscCommon.GlobalSkin;
+		if (this.isActive()) {
+			return oSkin.ScrollOutlineActiveColor;
+		} else if (this.isHovered()) {
+			return oSkin.ScrollOutlineHoverColor;
+		} else {
+			return oSkin.ScrollOutlineColor;
+		}
+	};
+	CButton.prototype.isPressed = function () {
+		return this.getStateFlag(STATE_FLAG_PRESSED);
+	};
+	CButton.prototype.disable = function () {
+		return this.setStateFlag(STATE_FLAG_DISABLED, true)
+	};
+	CButton.prototype.enable = function () {
+		return this.setStateFlag(STATE_FLAG_DISABLED, false)
+	};
+	CButton.prototype.isDisabled = function () {
+		return this.getStateFlag(STATE_FLAG_DISABLED);
+	};
+
+
+	function CAnimPaneHeader(oDrawer) {
+		CTopControl.call(this, oDrawer);
+		this.label = this.addControl(new CLabel(this, "Animation Pane", 10, true));
+
+		this.playButton = this.addControl(new CButton(
+			this, null, null, managePreview));
+		this.moveUpButton = this.addControl(new CButton(
+			this, null, null, moveChosenUp));
+		this.moveDownButton = this.addControl(new CButton(
+			this, null, null, moveChosenDown));
+		this.closeButton = this.addControl(new CButton(
+			this, null, null, closePanel));
+
+		// Event handlers for button of CAnimPaneHeader ---
+
+		function managePreview(event, x, y) {
+			if (!this.hit(x, y)) { return }
+			if (this.isDisabled()) { return }
+			Asc.editor.asc_IsStartedAnimationPreview() ?
+				Asc.editor.asc_StopAnimationPreview() : Asc.editor.asc_StartAnimationPreview()
+		}
+
+		function moveChosenUp(event, x, y) {
+			if (!this.hit(x, y)) { return }
+			if (this.isDisabled()) { return }
+			if (Asc.editor.asc_canMoveAnimationEarlier()) {
+				if (Asc.editor.asc_IsStartedAnimationPreview()) {
+					Asc.editor.asc_StopAnimationPreview()
+				}
+				Asc.editor.asc_moveAnimationEarlier()
+			}
+		}
+
+		function moveChosenDown(event, x, y) {
+			if (!this.hit(x, y)) { return }
+			if (this.isDisabled()) { return }
+			if (Asc.editor.asc_canMoveAnimationLater()) {
+				if (Asc.editor.asc_IsStartedAnimationPreview()) {
+					Asc.editor.asc_StopAnimationPreview()
+				}
+				Asc.editor.asc_moveAnimationLater()
+			}
+		}
+
+		function closePanel(event, x, y) {
+			if (!this.hit(x, y)) { return }
+			if (this.isDisabled()) { return }
+			Asc.editor.asc_ShowAnimPane(false)
+		}
+
+		// --- end of event handlers for buttons of CAnimPaneHeader
+	}
+
+	InitClass(CAnimPaneHeader, CTopControl, CONTROL_TYPE_HEADER);
+
+	CAnimPaneHeader.prototype.recalculateChildrenLayout = function () {
+		this.label.setLayout(
+			AscCommon.TIMELINE_LEFT_MARGIN,
+			0,
+			this.playButton.getLeft(),
+			this.getHeight()
+		);
+		this.playButton.setLayout(
+			PLAY_BUTTON_LEFT,
+			PLAY_BUTTON_TOP,
+			PLAY_BUTTON_WIDTH,
+			PLAY_BUTTON_HEIGHT
+		);
+		this.moveUpButton.setLayout(
+			MOVE_UP_BUTTON_LEFT,
+			MOVE_UP_BUTTON_TOP,
+			MOVE_UP_BUTTON_WIDTH,
+			MOVE_UP_BUTTON_HEIGHT
+		);
+		this.moveDownButton.setLayout(
+			MOVE_DOWN_BUTTON_LEFT,
+			MOVE_DOWN_BUTTON_TOP,
+			MOVE_DOWN_BUTTON_WIDTH,
+			MOVE_DOWN_BUTTON_HEIGHT
+		);
+		this.closeButton.setLayout(
+			this.getWidth() - AscCommon.TIMELINE_LIST_RIGHT_MARGIN - BUTTON_SIZE,
+			(this.getHeight() - BUTTON_SIZE) / 2,
+			BUTTON_SIZE,
+			BUTTON_SIZE
+		);
+	};
+	CAnimPaneHeader.prototype.getFillColor = function () {
+		return null;
+	};
+	CAnimPaneHeader.prototype.getOutlineColor = function () {
+		return null;
+	};
+
 
 	function CScrollBase(oParentControl, oContainer, oChild) {
 		CControlContainer.call(this, oParentControl);
 
 		// Left or top button
-		this.addControl(new CButton(this, onFirstBtnMouseDown, null, onMouseUp));
+		this.addControl(new CButton(this));
 		// Right or bottom button
-		this.addControl(new CButton(this, onSecondBtnMouseDown, null, onMouseUp));
-		
+		this.addControl(new CButton(this));
+
+		// Scroller
+		this.scroller = this.addControl(new CButton(this));
+
+		this.timerId = null;
+		this.timeoutId = null;
+
 		this.container = oContainer;
 		this.scrolledChild = oChild;
 		this.scrollOffset = 0;
 		this.tmpScrollOffset = null;
 		this.startScrollerPos = null;
 		this.startScrollTop = null;
-		this.timerId = null;
-		this.timeoutId = null;
-
-		// List of buttons handlers---
-
-		function onFirstBtnMouseDown(e, x, y) {
-			if (!this.hit(x, y)) { return }
-			this.parentControl.setEventListener(this);
-			this.parentControl.startScroll(-ANIM_ITEM_HEIGHT);
-			return true;
-		}
-		
-		function onSecondBtnMouseDown(e, x, y) {
-			if (!this.hit(x, y)) { return }
-			this.parentControl.setEventListener(this);
-			this.parentControl.startScroll(ANIM_ITEM_HEIGHT);
-			return true;
-		}
-
-		function onMouseUp(e, x, y) {
-			if(this.parentControl.isEventListener(this)) {
-				this.parentControl.setEventListener(null);
-				this.parentControl.endScroll();
-				return true;
-			}
-			return false;
-		}
-		
-		// --- end of list of button handlers
 	}
 
 	InitClass(CScrollBase, CControlContainer, CONTROL_TYPE_UNKNOWN);
+
+	// С этими методами разобрался
+	CScrollBase.prototype.limitScrollOffset = function () {
+		this.scrollOffset = Math.max(0, Math.min(this.scrollOffset, this.getMaxScrollOffset()));
+	};
 	CScrollBase.prototype.getScrollOffset = function () {
 		if (this.tmpScrollOffset !== null) {
 			return this.tmpScrollOffset;
 		}
-		this.checkOffset();
+		this.limitScrollOffset();
 		return this.scrollOffset;
-	};
-	CScrollBase.prototype.checkOffset = function () {
-		this.scrollOffset = Math.max(0, Math.min(this.scrollOffset, this.getMaxScrollOffset()));
-	};
-	CScrollBase.prototype.setTmpScroll = function (val) {
-		this.tmpScrollOffset = Math.max(0, Math.min(this.getMaxScrollOffset(), val));
-		this.parentControl.onScroll();
-		this.onUpdate();
-	};
-	CScrollBase.prototype.clearTmpScroll = function () {
-		if (this.tmpScrollOffset !== null) {
-			this.scrollOffset = this.tmpScrollOffset;
-			this.tmpScrollOffset = null;
-			this.parentControl.onScroll();
-			this.onUpdate();
-		}
-	};
-	CScrollBase.prototype.getMaxScrollOffset = function (val) {
-		return 0;
-	};
-	CScrollBase.prototype.getScrollerX = function (dScrollOffset) {
-		return 0;
-	};
-	CScrollBase.prototype.getScrollerY = function (dScrollOffset) {
-		return 0;
-	};
-	CScrollBase.prototype.getScrollerWidth = function (dScrollOffset) {
-		return 0;
-	};
-	CScrollBase.prototype.getScrollerHeight = function (dScrollOffset) {
-		return 0;
-	};
-	CScrollBase.prototype.hitInScroller = function (x, y) {
-		if (this.isHidden()) {
-			return false;
-		}
-		var oInv = this.getInvFullTransformMatrix();
-		var tx = oInv.TransformPointX(x, y);
-		var ty = oInv.TransformPointY(x, y);
-		var l = this.getScrollerX();
-		var t = this.getScrollerY();
-		var r = l + this.getScrollerWidth();
-		var b = t + this.getScrollerHeight();
-		return tx >= l && tx <= r && ty >= t && ty <= b;
 	};
 	CScrollBase.prototype.startScroll = function (step) {
 		this.endScroll();
@@ -881,7 +1092,6 @@
 				oScroll.addScroll(step);
 			}, SCROLL_TIMER_INTERVAL);
 		}, SCROLL_TIMER_DELAY);
-
 	};
 	CScrollBase.prototype.addScroll = function (step) {
 		this.setTmpScroll(this.tmpScrollOffset + step);
@@ -896,20 +1106,71 @@
 			clearTimeout(this.timeoutId);
 			this.timeoutId = null;
 		}
+
 		this.clearTmpScroll();
 		this.setStateFlag(STATE_FLAG_SELECTED, false);
+
 		this.startScrollerPos = null;
 		this.startScrollTop = null;
 	};
 	CScrollBase.prototype.isOnScroll = function () {
 		return this.timerId !== null || this.timeoutId !== null || this.parentControl.isEventListener(this);
 	};
+	CScrollBase.prototype.setTmpScroll = function (val) {
+		this.tmpScrollOffset = Math.max(0, Math.min(this.getMaxScrollOffset(), val));
+
+		this.parentControl.onScroll();
+		this.onUpdate();
+	};
+	CScrollBase.prototype.clearTmpScroll = function () {
+		if (this.tmpScrollOffset === null) { return }
+
+		this.scrollOffset = this.tmpScrollOffset;
+		this.tmpScrollOffset = null;
+
+		this.parentControl.onScroll();
+		this.onUpdate();
+	};
+	CScrollBase.prototype.getMaxScrollOffset = function (val) {
+		// Method must return the maximum allowed value of "this.scrollOffset" in millimeters
+		let errorMessage = 'NOT IMPLEMENTED: getMaxScrollOffset'
+		throw new Error(errorMessage)
+	};
+
+	// Пока оставил, потому что используется в CScrollVert
+	CScrollBase.prototype.hitInScroller = function (x, y) {
+		if (this.isHidden()) {
+			return false;
+		}
+		var oInv = this.getInvFullTransformMatrix();
+		var tx = oInv.TransformPointX(x, y);
+		var ty = oInv.TransformPointY(x, y);
+		var l = this.getScrollerX();
+		var t = this.getScrollerY();
+		var r = l + this.getScrollerWidth();
+		var b = t + this.getScrollerHeight();
+		return tx >= l && tx <= r && ty >= t && ty <= b;
+	};
+	CScrollBase.prototype.getScrollerX = function (dScrollOffset) {
+		return 0;
+	};
+	CScrollBase.prototype.getScrollerY = function (dScrollOffset) {
+		return 0;
+	};
+	CScrollBase.prototype.getScrollerWidth = function (dScrollOffset) {
+		return 0;
+	};
+	CScrollBase.prototype.getScrollerHeight = function (dScrollOffset) {
+		return 0;
+	};
+
 	CScrollBase.prototype.getFillColor = function () {
 		return null;
 	};
 	CScrollBase.prototype.getOutlineColor = function () {
 		return null;
 	};
+
 
 	function CScrollVert(oParentControl, oContainer, oChild) {
 		CScrollBase.call(this, oParentControl, oContainer, oChild);
@@ -918,6 +1179,7 @@
 	}
 
 	InitClass(CScrollVert, CScrollBase, CONTROL_TYPE_SCROLL_VERT);
+
 	CScrollVert.prototype.recalculateChildrenLayout = function () {
 		this.topButton.setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
 		this.bottomButton.setLayout(0, this.getHeight() - SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
@@ -998,7 +1260,6 @@
 		graphics.rect(x, y, extX, extY);
 		graphics.df();
 		oColor = AscCommon.RgbaHexToRGBA(sOutlineColor);
-
 		graphics.SetIntegerGrid(true);
 		var nPenW = this.getPenWidth(graphics);
 		graphics.p_color(oColor.R, oColor.G, oColor.B, 0xFF);
@@ -1093,561 +1354,61 @@
 		return bRet;
 	};
 
+
 	function CScrollHor(oParentControl, oContainer, oChild) {
 		CScrollBase.call(this, oParentControl, oContainer, oChild);
 		this.leftButton = this.children[0];
 		this.rightButton = this.children[1];
+		// We also have the scroller here
+
+		this.leftButton.onMouseDownCallback = onFirstBtnMouseDown
+		this.rightButton.onMouseDownCallback = onSecondBtnMouseDown
+		this.leftButton.onMouseUpCallback = this.rightButton.onMouseUpCallback = onMouseUp
+
+		// List of buttons handlers---
+
+		function onFirstBtnMouseDown(e, x, y) {
+			if (!this.hit(x, y)) { return }
+			this.parentControl.setEventListener(this);
+			let step = (this.parentControl.getWidth() - 2 * SCROLL_BUTTON_SIZE) * SCROLL_STEP
+			this.parentControl.startScroll(-step);
+			return true;
+		}
+
+		function onSecondBtnMouseDown(e, x, y) {
+			if (!this.hit(x, y)) { return }
+			this.parentControl.setEventListener(this);
+			let step = (this.parentControl.getWidth() - 2 * SCROLL_BUTTON_SIZE) * SCROLL_STEP
+			this.parentControl.startScroll(step);
+			return true;
+		}
+
+		function onMouseUp(e, x, y) {
+			if (this.parentControl.isEventListener(this)) {
+				this.parentControl.setEventListener(null);
+				this.parentControl.endScroll();
+				return true;
+			}
+			return false;
+		}
+
+		// --- end of list of button handlers
 	}
 
 	InitClass(CScrollHor, CScrollBase, CONTROL_TYPE_SCROLL_HOR);
 
-	function CSeqList(oParentControl) {
-		CControlContainer.call(this, oParentControl);
-		this.sequences = this.children;
-	}
-
-	InitClass(CSeqList, CControlContainer, CONTROL_TYPE_SEQ_LIST);
-	CSeqList.prototype.getIndexLabelRight = function () {
-		return 10;//TODO
+	CScrollHor.prototype.recalculateChildrenLayout = function () {
+		this.leftButton.setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+		this.rightButton.setLayout(this.getWidth() - SCROLL_BUTTON_SIZE, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+		this.scroller.setLayout(this.timeToPos(this.curTimePos) - SCROLL_BUTTON_SIZE / 2, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
 	};
-	CSeqList.prototype.recalculateChildren = function () {
-		this.clear();
-
-		var oTiming = this.getTiming();
-		if (!oTiming) { return }
-
-		var aAllSeqs = oTiming.getRootSequences();
-		var oLastSeqView = null;
-		for (var nSeq = 0; nSeq < aAllSeqs.length; ++nSeq) {
-			var oSeqView = new CAnimSequence(this, aAllSeqs[nSeq]);
-			this.addControl(oSeqView);
-			oLastSeqView = oSeqView;
-		}
+	CScrollHor.prototype.getMaxScrollOffset = function () {
+		return this.getWidth() - SCROLL_BUTTON_SIZE - this.scroller.getWidth();
 	};
-	CSeqList.prototype.recalculateChildrenLayout = function () {
-		var dLastBottom = 0;
-		for (var nChild = 0; nChild < this.children.length; ++nChild) {
-			var oSeq = this.children[nChild];
-			oSeq.setLayout(0, dLastBottom, this.getWidth(), 0);
-			oSeq.recalculate();
-			dLastBottom = oSeq.getBottom();
-		}
-		this.setLayout(this.getLeft(), this.getTop(), this.getWidth(), dLastBottom);
-	};
-	CSeqList.prototype.getFillColor = function () {
-		return null;
-	};
-	CSeqList.prototype.getOutlineColor = function () {
-		return null;
-	};
-	// CSeqList.prototype.draw = function(graphics) {
-	//     if(!this.checkUpdateRect(graphics.updateRect)) {
-	//         return false;
-	//     }
-	//     if(this.parentControl.isScrolling() && !this.bDrawTexture) {
-	//         this.recalculateTransform();
-	//         this.checkCachedTexture(graphics).draw(graphics, new AscCommon.CMatrix());
-	//         return;
-	//     }
-	//     this.clearCachedTexture();
-	//     return CControlContainer.prototype.draw.call(this, graphics);
-	// };
-
-
-	CSeqList.prototype.checkCachedTexture = function (graphics) {
-		var dGraphicsScale = graphics.m_oCoordTransform.sx;
-		if (this.cachedCanvas) {
-			var dScale = this.cachedCanvas.scale;
-			if (AscFormat.fApproxEqual(dScale, dGraphicsScale)) {
-				return this.cachedCanvas;
-			}
-		}
-		this.bDrawTexture = true;
-		var oBaseTexture = this.getAnimTexture(dGraphicsScale);
-		if (oBaseTexture) {
-			this.cachedCanvas = new CAnimTexture(this, oBaseTexture.canvas, oBaseTexture.scale, oBaseTexture.x, oBaseTexture.y);
-		}
-		else {
-			this.cachedCanvas = null;
-		}
-		this.bDrawTexture = false;
-		return this.cachedCanvas;
-	};
-	CSeqList.prototype.clearCachedTexture = function () {
-		if (this.cachedCanvas) {
-			this.cachedCanvas = null;
-		}
+	CScrollHor.prototype.getScrollPointerPosition = function () {
+		return this.getScrollOffset() + this.scroller.getWidth() / 2;
 	};
 
-	function CAnimSequence(oParentControl, oSeq) {//main seq, interactive seq
-		CControlContainer.call(this, oParentControl);
-		this.seq = oSeq;
-		this.label = null; //this.addControl(new CLabel(this, "seq"));
-		this.groupList = null;//this.addControl(new CAnimGroupList(this));
-	}
-
-	InitClass(CAnimSequence, CControlContainer, CONTROL_TYPE_ANIM_SEQ);
-	CAnimSequence.prototype.getIndexLabelRight = function () {
-		return this.parentControl.getIndexLabelRight() - this.getLeft();
-	};
-	CAnimSequence.prototype.recalculateChildren = function () {
-		this.clear();
-		var sLabel = this.seq.getLabel();
-		if (typeof sLabel === "string" && sLabel.length > 0) {
-			this.label = this.addControl(new CLabel(this, sLabel, 9, true));
-		} else {
-			this.label = null;
-		}
-		this.groupList = this.addControl(new CAnimGroupList(this));
-	};
-	CAnimSequence.prototype.getSeq = function () {
-		return this.seq;
-	};
-	CAnimSequence.prototype.recalculateChildrenLayout = function () {
-		var dCurY = 0;
-		if (this.label) {
-			this.label.setLayout(0, dCurY, this.getWidth(), SEQ_LABEL_HEIGHT);
-			this.label.recalculate();
-			dCurY += this.label.getHeight();
-		}
-		if (this.groupList) {
-			this.groupList.setLayout(0, dCurY, this.getWidth(), 0);
-			this.groupList.recalculate();
-			dCurY += this.groupList.getHeight();
-		}
-		this.setLayout(this.getLeft(), this.getTop(), this.getWidth(), dCurY);
-	};
-	CAnimSequence.prototype.getFillColor = function () {
-		return null;
-	};
-	CAnimSequence.prototype.getOutlineColor = function () {
-		return null;
-	};
-
-	function CAnimGroupList(oParentControl) {//main seq, interactive seq
-		CControlContainer.call(this, oParentControl);
-	}
-
-	InitClass(CAnimGroupList, CControlContainer, CONTROL_TYPE_ANIM_GROUP_LIST);
-	CAnimGroupList.prototype.getIndexLabelRight = function () {
-		return this.parentControl.getIndexLabelRight() - this.getLeft();
-	};
-	CAnimGroupList.prototype.getSeq = function () {
-		return this.parentControl.getSeq();
-	};
-	CAnimGroupList.prototype.recalculateChildren = function () {
-		this.clear();
-		var oSeq = this.getSeq();
-		var aAllEffects = oSeq.getAllEffects();
-
-		for (var nCurEffect = 0; nCurEffect < aAllEffects.length; ++nCurEffect) {
-			var oItem = new CAnimItem(this, aAllEffects[nCurEffect]);
-			this.addControl(oItem);
-		}
-	};
-	CAnimGroupList.prototype.getFillColor = function () {
-		return null;
-	};
-	CAnimGroupList.prototype.getOutlineColor = function () {
-		return null;
-	};
-
-	//CAnimGroupList.prototype.draw = function() {
-	//};
-	CAnimGroupList.prototype.recalculateChildrenLayout = function () {
-		var dLastBottom = 0;
-		for (var nChild = 0; nChild < this.children.length; ++nChild) {
-			var oChild = this.children[nChild];
-			oChild.setLayout(0, dLastBottom, this.getWidth(), ANIM_ITEM_HEIGHT);
-			oChild.recalculate();
-			dLastBottom = oChild.getBottom();
-		}
-		this.setLayout(this.getLeft(), this.getTop(), this.getWidth(), dLastBottom);
-	};
-
-	function CAnimGroup(oParentControl, aEffects) {
-		CControlContainer.call(this, oParentControl);
-	}
-
-	InitClass(CAnimGroup, CControlContainer, CONTROL_TYPE_ANIM_GROUP);
-	CAnimGroup.prototype.getIndexLabelRight = function () {
-		return this.parentControl.getIndexLabelRight() - this.getLeft();
-	};
-
-	function CImageControl(oParentControl) {
-		CControl.call(this, oParentControl)
-	}
-
-	InitClass(CImageControl, CControl, CONTROL_TYPE_IMAGE);
-	CImageControl.prototype.canHandleEvents = function () {
-		return false;
-	};
-	//CImageControl.prototype.draw = function() {
-	//};
-
-	function CEffectBar(oParentControl) {
-		CControl.call(this, oParentControl)
-	}
-
-	InitClass(CEffectBar, CControl, CONTROL_TYPE_EFFECT_BAR);
-
-	function CAnimItem(oParentControl, oEffect) {
-		CControlContainer.call(this, oParentControl);
-		this.indexLabel = this.addControl(new CLabel(this, oEffect.getIndexInSequence() + "", 7.5));
-		this.eventTypeImage = this.addControl(new CImageControl(this));
-		this.effectTypeImage = this.addControl(new CImageControl(this));
-		this.effectLabel = this.addControl(new CLabel(this, oEffect.getObjectName(), 7.5));
-		this.effectBar = this.addControl(new CEffectBar(this));
-		this.contextMenuButton = this.addControl(new CButton(this));
-
-		this.effect = oEffect;
-	}
-
-	InitClass(CAnimItem, CControlContainer, CONTROL_TYPE_ANIM_ITEM);
-	CAnimItem.prototype.getIndexLabelRight = function () {
-		return this.parentControl.getIndexLabelRight() - this.getLeft();
-	};
-	CAnimItem.prototype.getEffectLabelRight = function () {
-		return LABEL_TIMELINE_WIDTH;
-	};
-	CAnimItem.prototype.recalculateChildrenLayout = function () {
-		var dIndexLabelRight = this.getIndexLabelRight();
-		var dYInside = (this.getHeight() - EFFECT_BAR_HEIGHT) / 2;
-		this.indexLabel.setLayout(0, dYInside, dIndexLabelRight, EFFECT_BAR_HEIGHT);
-		this.eventTypeImage.setLayout(this.indexLabel.getRight(), dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
-		this.effectTypeImage.setLayout(this.eventTypeImage.getRight(), dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
-		var dLabelRight = this.getEffectLabelRight();
-		var dEffectLabelLeft = this.effectTypeImage.getRight();
-		this.effectLabel.setLayout(dEffectLabelLeft, dYInside, dLabelRight - dEffectLabelLeft, EFFECT_BAR_HEIGHT);
-		this.effectBar.setLayout(0, 0, 0, 0);//todo
-		var dRightSpace = dYInside;
-		this.contextMenuButton.setLayout(this.getRight() - dRightSpace - EFFECT_BAR_HEIGHT, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
-	};
-	CAnimItem.prototype.canHandleEvents = function () {
-		return true;
-	};
-	// CAnimItem.prototype.getFillColor = function() {
-	//     return null;
-	// };
-	CAnimItem.prototype.getOutlineColor = function () {
-		return null;
-	};
-
-	//CAnimItem.prototype.draw = function() {
-	//};
-
-	function CLabel(oParentControl, sString, nFontSize, bBold, nParaAlign) {
-		CControl.call(this, oParentControl);
-		AscFormat.ExecuteNoHistory(function () {
-			this.string = sString;
-			this.fontSize = nFontSize;
-			this.createTextBody();
-			var oTxLstStyle = new AscFormat.TextListStyle();
-			oTxLstStyle.levels[0] = new CParaPr();
-			oTxLstStyle.levels[0].DefaultRunPr = new AscCommonWord.CTextPr();
-			oTxLstStyle.levels[0].DefaultRunPr.FontSize = nFontSize;
-			oTxLstStyle.levels[0].DefaultRunPr.Bold = bBold;
-			oTxLstStyle.levels[0].DefaultRunPr.Color = new AscCommonWord.CDocumentColor(0x44, 0x44, 0x44, false);
-			oTxLstStyle.levels[0].DefaultRunPr.RFonts.SetAll("Arial", -1);
-			if (AscFormat.isRealNumber(nParaAlign)) {
-				oTxLstStyle.levels[0].Jc = nParaAlign;
-			}
-			this.txBody.setLstStyle(oTxLstStyle);
-			this.bodyPr = new AscFormat.CBodyPr();
-			this.bodyPr.setDefault();
-			this.bodyPr.anchor = 1;//vertical align ctr
-			this.bodyPr.resetInsets();
-			this.bodyPr.horzOverflow = AscFormat.nHOTClip;
-			this.bodyPr.vertOverflow = AscFormat.nVOTClip;
-		}, this, []);
-	}
-
-	InitClass(CLabel, CControl, CONTROL_TYPE_LABEL);
-	CLabel.prototype.getString = function () {
-		return AscCommon.translateManager.getValue(this.string);
-	};
-	CLabel.prototype.recalculateContent = function () {
-		//this.recalculateGeometry();
-		this.recalculateTransform();
-		//        this.txBody.content.Recalc_AllParagraphs_CompiledPr();
-		if (!this.txBody.bFit || !AscFormat.isRealNumber(this.txBody.fitWidth) || this.txBody.fitWidth > this.getWidth()) {
-			this.txBody.recalculateOneString(this.getString());
-		}
-	};
-	CLabel.prototype.canHandleEvents = function () {
-		return false;
-	};
-	CLabel.prototype.getFillColor = function () {
-		return null;
-	};
-	CLabel.prototype.getOutlineColor = function () {
-		return null;
-	};
-	CLabel.prototype.recalculateTransformText = function () {
-		var Y = this.getHeight() / 2 - this.txBody.content.GetSummaryHeight() / 2;
-		if (!this.transformText) {
-			this.transformText = new AscCommon.CMatrix();
-		}
-		this.transformText.tx = this.transform.tx;
-		this.transformText.ty = this.transform.ty + Y;
-
-		if (!this.invertTransformText) {
-			this.invertTransformText = new AscCommon.CMatrix();
-		}
-		this.invertTransformText.tx = -this.transformText.tx;
-		this.invertTransformText.ty = -this.transformText.ty;
-		this.localTransformText = this.transformText;
-	};
-	CLabel.prototype.recalculateTransformText2 = function () {
-		return null;
-	};
-
-	function CButton(oParentControl, fOnMouseDown, fOnMouseMove, fOnMouseUp) {
-		CControlContainer.call(this, oParentControl);
-		this.onMouseDownCallback = fOnMouseDown;
-		this.onMouseMoveCallback = fOnMouseMove;
-		this.onMouseUpCallback = fOnMouseUp;
-	}
-
-	InitClass(CButton, CControlContainer, CONTROL_TYPE_BUTTON);
-	CButton.prototype.onMouseDown = function (e, x, y) {
-		if (this.onMouseDownCallback && this.onMouseDownCallback.call(this, e, x, y)) {
-			return true;
-		}
-		return CControlContainer.prototype.onMouseDown.call(this, e, x, y);
-	};
-	CButton.prototype.onMouseMove = function (e, x, y) {
-		if (this.onMouseMoveCallback && this.onMouseMoveCallback.call(this, e, x, y)) {
-			return true;
-		}
-		return CControlContainer.prototype.onMouseMove.call(this, e, x, y);
-	};
-	CButton.prototype.onMouseUp = function (e, x, y) {
-		if (this.onMouseUpCallback && this.onMouseUpCallback.call(this, e, x, y)) {
-			return true;
-		}
-		return CControlContainer.prototype.onMouseUp.call(this, e, x, y);
-	};
-	CButton.prototype.canHandleEvents = function () {
-		return true;
-	};
-	// CButton.prototype.draw = function(graphics) {
-	//     if(this.isHidden()){
-	//         return false;
-	//     }
-	//     if(!this.checkUpdateRect(graphics.updatedRect)) {
-	//         return false;
-	//     }
-	//
-	//     graphics.SaveGrState();
-	//     var oSkin = AscCommon.GlobalSkin;
-	//     //ScrollBackgroundColor     : "#EEEEEE",
-	//     //ScrollOutlineColor        : "#CBCBCB",
-	//     //ScrollOutlineHoverColor   : "#CBCBCB",
-	//     //ScrollOutlineActiveColor  : "#ADADAD",
-	//     //ScrollerColor             : "#F7F7F7",
-	//     //ScrollerHoverColor        : "#C0C0C0",
-	//     //ScrollerActiveColor       : "#ADADAD",
-	//     //ScrollArrowColor          : "#ADADAD",
-	//     //ScrollArrowHoverColor     : "#F7F7F7",
-	//     //ScrollArrowActiveColor    : "#F7F7F7",
-	//     //ScrollerTargetColor       : "#CFCFCF",
-	//     //ScrollerTargetHoverColor  : "#F1F1F1",
-	//     //ScrollerTargetActiveColor : "#F1F1F1",
-	//     var x = 0;
-	//     var y = 0;
-	//     var extX = this.getWidth();
-	//     var extY = this.getHeight();
-	//     graphics.transform3(this.transform);
-	//
-	//     var sFillColor;
-	//     var sOutlineColor;
-	//     var oColor;
-	//     if(this.isActive()) {
-	//         sFillColor = oSkin.ScrollerActiveColor;
-	//         sOutlineColor = oSkin.ScrollOutlineActiveColor;
-	//     }
-	//     else if(this.isHovered()) {
-	//         sFillColor = oSkin.ScrollerHoverColor;
-	//         sOutlineColor = oSkin.ScrollOutlineHoverColor;
-	//     }
-	//     else {
-	//         sFillColor = oSkin.ScrollerColor;
-	//         sOutlineColor = oSkin.ScrollOutlineColor;
-	//     }
-	//     oColor = AscCommon.RgbaHexToRGBA(sFillColor);
-	//     graphics.b_color1(oColor.R, oColor.G, oColor.B, 0xFF);
-	//     graphics.rect(x, y, extX, extY);
-	//     graphics.df();
-	//     oColor = AscCommon.RgbaHexToRGBA(sOutlineColor);
-	//
-	//     graphics.SetIntegerGrid(true);
-	//     graphics.p_width(0);
-	//     graphics.p_color(oColor.R, oColor.G, oColor.B, 0xFF);
-	//     graphics.drawHorLine(0, y, x, x + extX, 0);
-	//     graphics.drawHorLine(0, y + extY, x, x + extX, 0);
-	//     graphics.drawVerLine(2, x, y, y + extY, 0);
-	//     graphics.drawVerLine(2, x + extX, y, y + extY, 0);
-	//     graphics.ds();
-	//     graphics.RestoreGrState();
-	//     return true;
-	// };
-
-	CButton.prototype.getFillColor = function () {
-		// if(this.parentControl instanceof CTimelineContainer) {
-		//     return null;
-		// }
-		var oSkin = AscCommon.GlobalSkin;
-		if (this.isActive()) {
-			return oSkin.ScrollerActiveColor;
-		} else if (this.isHovered()) {
-			return oSkin.ScrollerHoverColor;
-		} else if (this.isDisabled()) {
-			return '#123456'
-		} else {
-			return oSkin.ScrollerColor;
-		}
-	};
-	CButton.prototype.getOutlineColor = function () {
-		// if(this.parentControl instanceof CTimelineContainer) {
-		//     return null;
-		// }
-		var oSkin = AscCommon.GlobalSkin;
-		if (this.isActive()) {
-			return oSkin.ScrollOutlineActiveColor;
-		} else if (this.isHovered()) {
-			return oSkin.ScrollOutlineHoverColor;
-		} else {
-			return oSkin.ScrollOutlineColor;
-		}
-	};
-
-	CButton.prototype.isPressed = function () {
-		return this.getStateFlag(STATE_FLAG_PRESSED);
-	};
-
-	CButton.prototype.disable = function () {
-		return this.setStateFlag(STATE_FLAG_DISABLED, true)
-	};
-	CButton.prototype.enable = function () {
-		return this.setStateFlag(STATE_FLAG_DISABLED, false)
-	};
-	CButton.prototype.isDisabled = function () {
-		return this.getStateFlag(STATE_FLAG_DISABLED);
-	};
-
-
-	var PLAY_BUTTON_WIDTH = 82 * AscCommon.g_dKoef_pix_to_mm;
-	var PLAY_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
-	var PLAY_BUTTON_LEFT = 145 * AscCommon.g_dKoef_pix_to_mm;
-	var PLAY_BUTTON_TOP = 12 * AscCommon.g_dKoef_pix_to_mm;
-
-	var MOVE_UP_BUTTON_WIDTH = 24 * AscCommon.g_dKoef_pix_to_mm;
-	var MOVE_UP_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
-	var MOVE_UP_BUTTON_LEFT = 241 * AscCommon.g_dKoef_pix_to_mm;
-	var MOVE_UP_BUTTON_TOP = 12 * AscCommon.g_dKoef_pix_to_mm;
-
-	var MOVE_DOWN_BUTTON_WIDTH = 24 * AscCommon.g_dKoef_pix_to_mm;
-	var MOVE_DOWN_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
-	var MOVE_DOWN_BUTTON_LEFT = MOVE_UP_BUTTON_WIDTH + 241 * AscCommon.g_dKoef_pix_to_mm;
-	var MOVE_DOWN_BUTTON_TOP = 12 * AscCommon.g_dKoef_pix_to_mm;
-
-	function CAnimPaneHeader(oDrawer) {
-		CTopControl.call(this, oDrawer);
-		this.label = this.addControl(new CLabel(this, "Animation Pane", 10, true));
-
-		this.playButton = this.addControl(new CButton(
-			this, null, null, managePreview));
-		this.moveUpButton = this.addControl(new CButton(
-			this, null, null, moveChosenUp));
-		this.moveDownButton = this.addControl(new CButton(
-			this, null, null, moveChosenDown));
-		this.closeButton = this.addControl(new CButton(
-			this, null, null, closePanel));
-
-		// Event handlers for button of CAnimPaneHeader ---
-
-		function managePreview(event, x, y) {
-			if (!this.hit(x, y)) { return }
-			if (this.isDisabled()) { return }
-			Asc.editor.asc_IsStartedAnimationPreview() ?
-				Asc.editor.asc_StopAnimationPreview() : Asc.editor.asc_StartAnimationPreview()
-		}
-
-		function moveChosenUp(event, x, y) {
-			if (!this.hit(x, y)) { return }
-			if (this.isDisabled()) { return }
-			if (Asc.editor.asc_canMoveAnimationEarlier()) {
-				if (Asc.editor.asc_IsStartedAnimationPreview()) {
-					Asc.editor.asc_StopAnimationPreview()
-				}
-				Asc.editor.asc_moveAnimationEarlier()
-			}
-		}
-
-		function moveChosenDown(event, x, y) {
-			if (!this.hit(x, y)) { return }
-			if (this.isDisabled()) { return }
-			if (Asc.editor.asc_canMoveAnimationLater()) {
-				if (Asc.editor.asc_IsStartedAnimationPreview()) {
-					Asc.editor.asc_StopAnimationPreview()
-				}
-				Asc.editor.asc_moveAnimationLater()
-			}
-		}
-
-		function closePanel(event, x, y) {
-			if (!this.hit(x, y)) { return }
-			if (this.isDisabled()) { return }
-			Asc.editor.asc_ShowAnimPane(false)
-		}
-
-		// --- end of event handlers for buttons of CAnimPaneHeader
-	}
-
-	InitClass(CAnimPaneHeader, CTopControl, CONTROL_TYPE_HEADER);
-	CAnimPaneHeader.prototype.recalculateChildrenLayout = function () {
-		this.label.setLayout(
-			AscCommon.TIMELINE_LEFT_MARGIN,
-			0,
-			this.playButton.getLeft(),
-			this.getHeight()
-		);
-		this.playButton.setLayout(
-			PLAY_BUTTON_LEFT,
-			PLAY_BUTTON_TOP,
-			PLAY_BUTTON_WIDTH,
-			PLAY_BUTTON_HEIGHT
-		);
-		this.moveUpButton.setLayout(
-			MOVE_UP_BUTTON_LEFT,
-			MOVE_UP_BUTTON_TOP,
-			MOVE_UP_BUTTON_WIDTH,
-			MOVE_UP_BUTTON_HEIGHT
-		);
-		this.moveDownButton.setLayout(
-			MOVE_DOWN_BUTTON_LEFT,
-			MOVE_DOWN_BUTTON_TOP,
-			MOVE_DOWN_BUTTON_WIDTH,
-			MOVE_DOWN_BUTTON_HEIGHT
-		);
-		this.closeButton.setLayout(
-			this.getWidth() - AscCommon.TIMELINE_LIST_RIGHT_MARGIN - BUTTON_SIZE,
-			(this.getHeight() - BUTTON_SIZE) / 2,
-			BUTTON_SIZE,
-			BUTTON_SIZE
-		);
-	};
-	CAnimPaneHeader.prototype.getFillColor = function () {
-		return null;
-	};
-	CAnimPaneHeader.prototype.getOutlineColor = function () {
-		return null;
-	};
-
-	const SECONDS_BUTTON_WIDTH = 76 * AscCommon.g_dKoef_pix_to_mm;
-	const SECONDS_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
-	const SECONDS_BUTTON_LEFT = 57 * AscCommon.g_dKoef_pix_to_mm;
 
 	function CTimelineContainer(oDrawer) {
 		CTopControl.call(this, oDrawer);
@@ -1665,6 +1426,7 @@
 	}
 
 	InitClass(CTimelineContainer, CTopControl, CONTROL_TYPE_TIMELINE_CONTAINER);
+
 	CTimelineContainer.prototype.recalculateChildrenLayout = function () {
 		var dPosY = (this.getHeight() - SECONDS_BUTTON_HEIGHT) / 2;
 		this.secondsButton.setLayout(SECONDS_BUTTON_LEFT, dPosY, SECONDS_BUTTON_WIDTH, SECONDS_BUTTON_HEIGHT);
@@ -1680,46 +1442,14 @@
 		return null;
 	};
 
-	//Time scales in seconds
-	const TIME_SCALES = [
-		1,
-		1,
-		2,
-		5,
-		10,
-		20,
-		60,
-		120,
-		300,
-		600,
-		600
-	];
-
-	//lengths
-	const SMALL_TIME_INTERVAL = 15;
-	const MIDDLE_1_TIME_INTERVAL = 20;
-	const MIDDLE_2_TIME_INTERVAL = 25;
-	const LONG_TIME_INTERVAL = 30;
-
-	const TIME_INTERVALS = [
-		LONG_TIME_INTERVAL, //1
-		SMALL_TIME_INTERVAL, //1
-		SMALL_TIME_INTERVAL, //2
-		MIDDLE_1_TIME_INTERVAL, //5
-		MIDDLE_1_TIME_INTERVAL,//10
-		MIDDLE_1_TIME_INTERVAL,//20
-		MIDDLE_2_TIME_INTERVAL,//60
-		MIDDLE_2_TIME_INTERVAL,//120
-		MIDDLE_2_TIME_INTERVAL,//300
-		MIDDLE_2_TIME_INTERVAL,//600
-		SMALL_TIME_INTERVAL//600
-	];
-	const LABEL_WIDTH = 100;
 
 	function CTimeline(oParentControl) {
 		CScrollHor.call(this, oParentControl);
 
-		this.scroller = this.addControl(new CButton(this, stickToPointer, handlePointerMovement, unstickFromPointer));
+		// this.scroller = this.addControl(new CButton(this, stickToPointer, handlePointerMovement, unstickFromPointer));
+		this.scroller.onMouseDownCallback = stickToPointer
+		this.scroller.onMouseMoveCallback = handlePointerMovement
+		this.scroller.onMouseUpCallback = unstickFromPointer
 
 		this.startTimePos = 0;
 		this.curTimePos = 5;
@@ -1745,28 +1475,28 @@
 		function handlePointerMovement(event, x, y) {
 			if (!this.isStickedToPointer) { return }
 
-			// Calculating new position of scroller
-			// Странно работает this.parentControl.getRight() и this.parentControl.getWidth()
-			let rightBorder = this.parentControl.getWidth() - 2 * SCROLL_BUTTON_SIZE;
-			let leftBorder = 0 + SCROLL_BUTTON_SIZE;
+			// Calculating new position of the scroller
+			let rightBorder = this.parentControl.getMaxScrollOffset()
+			let leftBorder = SCROLL_BUTTON_SIZE
 			let newLeft = x - SCROLL_BUTTON_SIZE / 2 - this.parentControl.getLeft()
 			newLeft = Math.min(rightBorder, Math.max(leftBorder, newLeft))
 
 			// Check if the boundaried are reached and start scrolling if so
 			if (newLeft == leftBorder || newLeft == rightBorder) {
 				if (!this.hit(x, y)) { return }
-				let scrollStep = newLeft == leftBorder ? -1 : 1;
+				let scrollStep = (this.parentControl.getWidth() - 2 * SCROLL_BUTTON_SIZE) * SCROLL_STEP
+				scrollStep = newLeft == leftBorder ? -scrollStep : scrollStep;
 				this.parentControl.startScroll(scrollStep);
 			}
+			else this.parentControl.endScroll()
 
 			// Updating curTimePos
 			this.parentControl.curTimePos = this.parentControl.posToTime(newLeft + SCROLL_BUTTON_SIZE / 2)
-			console.log(this.parentControl.curTimePos)
 
 			// Если оставить "newLeft, t, w, h", то t почему-то перезаписывается постоянно
 			// let { l, t, w, h } = this.bounds
 			// this.setLayout(newLeft, t, w, h)
-			
+
 			this.setLayout(newLeft, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE)
 			this.onUpdate()
 		}
@@ -1777,28 +1507,10 @@
 	InitClass(CTimeline, CScrollHor, CONTROL_TYPE_TIMELINE);
 
 	CTimeline.prototype.addScroll = function (step) {
-		if (step < 0) {
-			this.shiftSelf("left");
-		}
-		else {
-			this.shiftSelf("right");
-		}
-	};
-	CTimeline.prototype.shiftSelf = function (sDirection) {
-		const shiftMultiplier = 0.26 // calculated empirically :)
-		let pureTimelineWidth = this.getWidth() - 2 * SCROLL_BUTTON_SIZE // in mms
-		let newTimePos = this.posToTime(pureTimelineWidth * shiftMultiplier)
-
-		if (sDirection === 'left')
-			this.startTimePos = 2 * this.startTimePos - newTimePos;
-		if (sDirection === 'right')
-			this.startTimePos = newTimePos;
-
-		this.startTimePos = Math.max(0, this.startTimePos)
-		this.curTimePos = this.startTimePos
+		let diff = this.posToTime(step) - this.startTimePos
+		this.startTimePos = Math.max(0, this.startTimePos + diff)
 		this.onUpdate()
-	}
-
+	};
 	CTimeline.prototype.startDrawLabels = function () {
 		this.usedLabels = {};
 	};
@@ -1890,12 +1602,10 @@
 	CTimeline.prototype.canHandleEvents = function () {
 		return true;
 	};
-	CTimeline.prototype.recalculateChildrenLayout = function () {
-		this.children[0].setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-		this.children[1].setLayout(this.getWidth() - SCROLL_BUTTON_SIZE, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-		this.scroller.setLayout(this.timeToPos(this.curTimePos) - SCROLL_BUTTON_SIZE / 2, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-		this.scroller.getOutlineColor = function () { return '#000' }
-	};
+	// CTimeline.prototype.recalculateChildrenLayout = function () {
+	// 	this.scroller.setLayout(this.timeToPos(this.curTimePos) - SCROLL_BUTTON_SIZE / 2, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+	// 	this.scroller.getOutlineColor = function () { return '#000' }
+	// };
 	CTimeline.prototype.drawMark = function (graphics, dPos) {
 		var dHeight = this.getHeight() / 3;
 		var nPenW = this.getPenWidth(graphics);
@@ -1907,9 +1617,9 @@
 		graphics.drawVerLine(1, dPos, dHeight, dHeight + dHeight, nPenW);
 	};
 	CTimeline.prototype.draw = function (graphics) {
-		if (!CScrollHor.prototype.draw.call(this, graphics)) {
-			return false;
-		}
+		if (this.isHidden()) { return false }
+		if (!this.checkUpdateRect(graphics.updatedRect)) { return false }
+
 		graphics.SaveGrState();
 		// var dPenW = this.getPenWidth(graphics);
 		// graphics.SetIntegerGrid(true);
@@ -1974,6 +1684,10 @@
 		//
 
 		graphics.RestoreGrState();
+
+		if (!CScrollHor.prototype.draw.call(this, graphics)) {
+			return false;
+		}
 	};
 
 	CTimeline.prototype.getRulerStart = function () {
@@ -2014,6 +1728,329 @@
 		return (fPos - oCoefs.b) / oCoefs.a;
 	};
 
+
+	function CSeqListContainer(oDrawer) {
+		CTopControl.call(this, oDrawer);
+		this.seqList = this.addControl(new CSeqList(this));
+	}
+
+	InitClass(CSeqListContainer, CTopControl, CONTROL_TYPE_SEQ_LIST_CONTAINER);
+
+	CSeqListContainer.prototype.getScrollOffsetY = function (oChild) {
+		return 0;
+	};
+	CSeqListContainer.prototype.recalculateChildrenLayout = function () {
+		this.seqList.setLayout(0, 0, this.getWidth(), this.seqList.getHeight());
+		this.seqList.recalculate();
+		this.setLayout(0, 0, this.seqList.getWidth(), this.seqList.getHeight());
+	};
+	CSeqListContainer.prototype.clipStart = function (graphics) {
+
+	};
+	CSeqListContainer.prototype.clipEnd = function (graphics) {
+	};
+	CSeqListContainer.prototype.onScroll = function () {
+		this.onUpdate();
+	};
+	CSeqListContainer.prototype.getFillColor = function () {
+		return null;
+	};
+	CSeqListContainer.prototype.getOutlineColor = function () {
+		return null;
+	};
+	CSeqListContainer.prototype.onMouseWheel = function (e, deltaY, X, Y) {
+		return false;
+	};
+
+
+	function CSeqList(oParentControl) {
+		CControlContainer.call(this, oParentControl);
+		this.sequences = this.children;
+	}
+
+	InitClass(CSeqList, CControlContainer, CONTROL_TYPE_SEQ_LIST);
+
+	CSeqList.prototype.getIndexLabelRight = function () {
+		return 10;//TODO
+	};
+	CSeqList.prototype.recalculateChildren = function () {
+		this.clear();
+
+		var oTiming = this.getTiming();
+		if (!oTiming) { return }
+
+		var aAllSeqs = oTiming.getRootSequences();
+		var oLastSeqView = null;
+		for (var nSeq = 0; nSeq < aAllSeqs.length; ++nSeq) {
+			var oSeqView = new CAnimSequence(this, aAllSeqs[nSeq]);
+			this.addControl(oSeqView);
+			oLastSeqView = oSeqView;
+		}
+	};
+	CSeqList.prototype.recalculateChildrenLayout = function () {
+		var dLastBottom = 0;
+		for (var nChild = 0; nChild < this.children.length; ++nChild) {
+			var oSeq = this.children[nChild];
+			oSeq.setLayout(0, dLastBottom, this.getWidth(), 0);
+			oSeq.recalculate();
+			dLastBottom = oSeq.getBottom();
+		}
+		this.setLayout(this.getLeft(), this.getTop(), this.getWidth(), dLastBottom);
+	};
+	CSeqList.prototype.getFillColor = function () {
+		return null;
+	};
+	CSeqList.prototype.getOutlineColor = function () {
+		return null;
+	};
+	// CSeqList.prototype.draw = function(graphics) {
+	//     if(!this.checkUpdateRect(graphics.updateRect)) {
+	//         return false;
+	//     }
+	//     if(this.parentControl.isScrolling() && !this.bDrawTexture) {
+	//         this.recalculateTransform();
+	//         this.checkCachedTexture(graphics).draw(graphics, new AscCommon.CMatrix());
+	//         return;
+	//     }
+	//     this.clearCachedTexture();
+	//     return CControlContainer.prototype.draw.call(this, graphics);
+	// };
+
+
+	CSeqList.prototype.checkCachedTexture = function (graphics) {
+		var dGraphicsScale = graphics.m_oCoordTransform.sx;
+		if (this.cachedCanvas) {
+			var dScale = this.cachedCanvas.scale;
+			if (AscFormat.fApproxEqual(dScale, dGraphicsScale)) {
+				return this.cachedCanvas;
+			}
+		}
+		this.bDrawTexture = true;
+		var oBaseTexture = this.getAnimTexture(dGraphicsScale);
+		if (oBaseTexture) {
+			this.cachedCanvas = new CAnimTexture(this, oBaseTexture.canvas, oBaseTexture.scale, oBaseTexture.x, oBaseTexture.y);
+		}
+		else {
+			this.cachedCanvas = null;
+		}
+		this.bDrawTexture = false;
+		return this.cachedCanvas;
+	};
+	CSeqList.prototype.clearCachedTexture = function () {
+		if (this.cachedCanvas) {
+			this.cachedCanvas = null;
+		}
+	};
+
+
+	function CAnimSequence(oParentControl, oSeq) {//main seq, interactive seq
+		CControlContainer.call(this, oParentControl);
+		this.seq = oSeq;
+		this.label = null; //this.addControl(new CLabel(this, "seq"));
+		this.groupList = null;//this.addControl(new CAnimGroupList(this));
+	}
+
+	InitClass(CAnimSequence, CControlContainer, CONTROL_TYPE_ANIM_SEQ);
+
+	CAnimSequence.prototype.getIndexLabelRight = function () {
+		return this.parentControl.getIndexLabelRight() - this.getLeft();
+	};
+	CAnimSequence.prototype.recalculateChildren = function () {
+		this.clear();
+		var sLabel = this.seq.getLabel();
+		if (typeof sLabel === "string" && sLabel.length > 0) {
+			this.label = this.addControl(new CLabel(this, sLabel, 9, true));
+		} else {
+			this.label = null;
+		}
+		this.groupList = this.addControl(new CAnimGroupList(this));
+	};
+	CAnimSequence.prototype.getSeq = function () {
+		return this.seq;
+	};
+	CAnimSequence.prototype.recalculateChildrenLayout = function () {
+		var dCurY = 0;
+		if (this.label) {
+			this.label.setLayout(0, dCurY, this.getWidth(), SEQ_LABEL_HEIGHT);
+			this.label.recalculate();
+			dCurY += this.label.getHeight();
+		}
+		if (this.groupList) {
+			this.groupList.setLayout(0, dCurY, this.getWidth(), 0);
+			this.groupList.recalculate();
+			dCurY += this.groupList.getHeight();
+		}
+		this.setLayout(this.getLeft(), this.getTop(), this.getWidth(), dCurY);
+	};
+	CAnimSequence.prototype.getFillColor = function () {
+		return null;
+	};
+	CAnimSequence.prototype.getOutlineColor = function () {
+		return null;
+	};
+
+
+	function CAnimGroupList(oParentControl) {//main seq, interactive seq
+		CControlContainer.call(this, oParentControl);
+	}
+
+	InitClass(CAnimGroupList, CControlContainer, CONTROL_TYPE_ANIM_GROUP_LIST);
+
+	CAnimGroupList.prototype.getIndexLabelRight = function () {
+		return this.parentControl.getIndexLabelRight() - this.getLeft();
+	};
+	CAnimGroupList.prototype.getSeq = function () {
+		return this.parentControl.getSeq();
+	};
+	CAnimGroupList.prototype.recalculateChildren = function () {
+		this.clear();
+		var oSeq = this.getSeq();
+		var aAllEffects = oSeq.getAllEffects();
+
+		for (var nCurEffect = 0; nCurEffect < aAllEffects.length; ++nCurEffect) {
+			var oItem = new CAnimItem(this, aAllEffects[nCurEffect]);
+			this.addControl(oItem);
+		}
+	};
+	CAnimGroupList.prototype.getFillColor = function () {
+		return null;
+	};
+	CAnimGroupList.prototype.getOutlineColor = function () {
+		return null;
+	};
+
+	//CAnimGroupList.prototype.draw = function() {
+	//};
+	CAnimGroupList.prototype.recalculateChildrenLayout = function () {
+		var dLastBottom = 0;
+		for (var nChild = 0; nChild < this.children.length; ++nChild) {
+			var oChild = this.children[nChild];
+			oChild.setLayout(0, dLastBottom, this.getWidth(), ANIM_ITEM_HEIGHT);
+			oChild.recalculate();
+			dLastBottom = oChild.getBottom();
+		}
+		this.setLayout(this.getLeft(), this.getTop(), this.getWidth(), dLastBottom);
+	};
+
+
+	function CAnimGroup(oParentControl, aEffects) {
+		CControlContainer.call(this, oParentControl);
+	}
+
+	InitClass(CAnimGroup, CControlContainer, CONTROL_TYPE_ANIM_GROUP);
+
+	CAnimGroup.prototype.getIndexLabelRight = function () {
+		return this.parentControl.getIndexLabelRight() - this.getLeft();
+	};
+
+
+	function CAnimItem(oParentControl, oEffect) {
+		CControlContainer.call(this, oParentControl);
+		this.indexLabel = this.addControl(new CLabel(this, oEffect.getIndexInSequence() + "", 7.5));
+		this.eventTypeImage = this.addControl(new CImageControl(this));
+		this.effectTypeImage = this.addControl(new CImageControl(this));
+		this.effectLabel = this.addControl(new CLabel(this, oEffect.getObjectName(), 7.5));
+		this.effectBar = this.addControl(new CEffectBar(this));
+		this.contextMenuButton = this.addControl(new CButton(this));
+
+		this.effect = oEffect;
+	}
+
+	InitClass(CAnimItem, CControlContainer, CONTROL_TYPE_ANIM_ITEM);
+
+	CAnimItem.prototype.getIndexLabelRight = function () {
+		return this.parentControl.getIndexLabelRight() - this.getLeft();
+	};
+	CAnimItem.prototype.getEffectLabelRight = function () {
+		return LABEL_TIMELINE_WIDTH;
+	};
+	CAnimItem.prototype.recalculateChildrenLayout = function () {
+		var dIndexLabelRight = this.getIndexLabelRight();
+		var dYInside = (this.getHeight() - EFFECT_BAR_HEIGHT) / 2;
+		this.indexLabel.setLayout(0, dYInside, dIndexLabelRight, EFFECT_BAR_HEIGHT);
+		this.eventTypeImage.setLayout(this.indexLabel.getRight(), dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
+		this.effectTypeImage.setLayout(this.eventTypeImage.getRight(), dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
+		var dLabelRight = this.getEffectLabelRight();
+		var dEffectLabelLeft = this.effectTypeImage.getRight();
+		this.effectLabel.setLayout(dEffectLabelLeft, dYInside, dLabelRight - dEffectLabelLeft, EFFECT_BAR_HEIGHT);
+		this.effectBar.setLayout(0, 0, 0, 0);//todo
+		var dRightSpace = dYInside;
+		this.contextMenuButton.setLayout(this.getRight() - dRightSpace - EFFECT_BAR_HEIGHT, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
+	};
+	CAnimItem.prototype.canHandleEvents = function () {
+		return true;
+	};
+	// CAnimItem.prototype.getFillColor = function() {
+	//     return null;
+	// };
+	CAnimItem.prototype.getOutlineColor = function () {
+		return null;
+	};
+
+	//CAnimItem.prototype.draw = function() {
+	//};
+
+
+	function CEffectBar(oParentControl) {
+		CControl.call(this, oParentControl)
+	}
+
+	InitClass(CEffectBar, CControl, CONTROL_TYPE_EFFECT_BAR);
+
+
+	// Header
+	const PLAY_BUTTON_WIDTH = 82 * AscCommon.g_dKoef_pix_to_mm;
+	const PLAY_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
+	const PLAY_BUTTON_LEFT = 145 * AscCommon.g_dKoef_pix_to_mm;
+	const PLAY_BUTTON_TOP = 12 * AscCommon.g_dKoef_pix_to_mm;
+
+	const MOVE_UP_BUTTON_WIDTH = 24 * AscCommon.g_dKoef_pix_to_mm;
+	const MOVE_UP_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
+	const MOVE_UP_BUTTON_LEFT = 241 * AscCommon.g_dKoef_pix_to_mm;
+	const MOVE_UP_BUTTON_TOP = 12 * AscCommon.g_dKoef_pix_to_mm;
+
+	const MOVE_DOWN_BUTTON_WIDTH = 24 * AscCommon.g_dKoef_pix_to_mm;
+	const MOVE_DOWN_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
+	const MOVE_DOWN_BUTTON_LEFT = MOVE_UP_BUTTON_WIDTH + 241 * AscCommon.g_dKoef_pix_to_mm;
+	const MOVE_DOWN_BUTTON_TOP = 12 * AscCommon.g_dKoef_pix_to_mm;
+
+	// Timeline
+	const SECONDS_BUTTON_WIDTH = 76 * AscCommon.g_dKoef_pix_to_mm;
+	const SECONDS_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
+	const SECONDS_BUTTON_LEFT = 57 * AscCommon.g_dKoef_pix_to_mm;
+
+	const LEFT_TIMELINE_INDENT = 14 * AscCommon.g_dKoef_pix_to_mm;
+	const LABEL_TIMELINE_WIDTH = 155 * AscCommon.g_dKoef_pix_to_mm;
+
+	const SCROLL_TIMER_INTERVAL = 150;
+	const SCROLL_TIMER_DELAY = 600;
+	const SCROLL_STEP = 0.26
+
+	//Time scales in seconds
+	const TIME_SCALES = [1, 1, 2, 5, 10, 20, 60, 120, 300, 600, 600];
+
+	//lengths
+	const SMALL_TIME_INTERVAL = 15;
+	const MIDDLE_1_TIME_INTERVAL = 20;
+	const MIDDLE_2_TIME_INTERVAL = 25;
+	const LONG_TIME_INTERVAL = 30;
+
+	const TIME_INTERVALS = [
+		LONG_TIME_INTERVAL, //1
+		SMALL_TIME_INTERVAL, //1
+		SMALL_TIME_INTERVAL, //2
+		MIDDLE_1_TIME_INTERVAL, //5
+		MIDDLE_1_TIME_INTERVAL,//10
+		MIDDLE_1_TIME_INTERVAL,//20
+		MIDDLE_2_TIME_INTERVAL,//60
+		MIDDLE_2_TIME_INTERVAL,//120
+		MIDDLE_2_TIME_INTERVAL,//300
+		MIDDLE_2_TIME_INTERVAL,//600
+		SMALL_TIME_INTERVAL//600
+	];
+
+	const LABEL_WIDTH = 100;
+
 	const HEADER_HEIGHT = 7.5;
 	const BUTTON_SIZE = HEADER_HEIGHT;
 	const TOOLBAR_HEIGHT = HEADER_HEIGHT;
@@ -2040,3 +2077,4 @@
 	window['AscCommon'].CTimelineContainer = CTimelineContainer;
 
 })(window);
+
