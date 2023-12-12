@@ -1722,7 +1722,7 @@
 		this.scroller = this.addControl(new CButton(this, stickToPointer, handlePointerMovement, unstickFromPointer));
 
 		this.startTimePos = 0;
-		this.curTimePos = 0;
+		this.curTimePos = 5;
 		this.tmScaleIdx = 2;
 
 		//labels cache
@@ -1744,11 +1744,25 @@
 		function handlePointerMovement(event, x, y) {
 			if (!this.isStickedToPointer) { return }
 
+			// Calculating new position of scroller
+			// Странно работает this.parentControl.getRight() и this.parentControl.getWidth()
+			let rightBorder = this.parentControl.getWidth() - 2 * SCROLL_BUTTON_SIZE;
+			let leftBorder = 0 + SCROLL_BUTTON_SIZE;
 			let newLeft = x - SCROLL_BUTTON_SIZE / 2 - this.parentControl.getLeft()
+			newLeft = Math.min(rightBorder, Math.max(leftBorder, newLeft))
 
-			// Странно работает this.parentControl.getRight() и 
-			newLeft = Math.max(newLeft, 0 + SCROLL_BUTTON_SIZE)
-			newLeft = Math.min(newLeft, this.parentControl.getWidth() - 2 * SCROLL_BUTTON_SIZE)
+			// Check if the boundaried are reached and start scrolling if so
+			if (newLeft == leftBorder || newLeft == rightBorder) {
+				if (!this.hit(x, y)) { return }
+				let scrollStep = newLeft == leftBorder ? -1 : 1;
+				this.parentControl.startScroll(scrollStep);
+			} else {
+				this.parentControl.endScroll();
+			}
+
+			// Updating curTimePos
+			this.parentControl.curTimePos = this.parentControl.posToTime(newLeft + SCROLL_BUTTON_SIZE / 2)
+			console.log(this.parentControl.curTimePos)
 
 			// Если оставить "newLeft, t, w, h", то t почему-то перезаписывается постоянно
 			// let { l, t, w, h } = this.bounds
@@ -1879,7 +1893,7 @@
 	CTimeline.prototype.recalculateChildrenLayout = function () {
 		this.children[0].setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
 		this.children[1].setLayout(this.getWidth() - SCROLL_BUTTON_SIZE, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-		this.scroller.setLayout(SCROLL_BUTTON_SIZE, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+		this.scroller.setLayout(this.timeToPos(this.curTimePos) - SCROLL_BUTTON_SIZE / 2, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
 	};
 	CTimeline.prototype.drawMark = function (graphics, dPos) {
 		var dHeight = this.getHeight() / 3;
