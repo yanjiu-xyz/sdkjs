@@ -3981,6 +3981,7 @@
 			{
 				oMemory = new AscCommon.CMemory(true);
 				oMemory.Init(memoryInitSize);
+				oMemory.images = [];
 			}
 
 			let nStartPos = oMemory.GetCurPosition();
@@ -4051,7 +4052,13 @@
 			oMemory.WriteLong(nParents);
 			oMemory.Seek(nEndPos);
 
-			// длина комманд с информацией о родителях и CO
+			// пишем изображения
+			oMemory.WriteLong(oMemory.images.length);
+			for (let i = 0; i < oMemory.images.length; i++) {
+				oMemory.WriteString(oMemory.images[i]);
+			}
+
+			// длина комманд с информацией о родителях, CO и картинках
 			oMemory.Seek(nPosForLenght);
 			oMemory.WriteLong(nEndPos - nPosForLenght);
 			oMemory.Seek(nEndPos);
