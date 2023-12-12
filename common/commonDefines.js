@@ -4008,7 +4008,7 @@ window.AscCommon.g_cIsBeta = "false";
 		"HH:mm",
 		"HH:mm:ss"
 	];
-	c_oAscDateTimeFormat[lcid_idID]     = [
+	c_oAscDateTimeFormat[lcid_enID]     = c_oAscDateTimeFormat[lcid_idID] = [
 		"dd/MM/yyyy",
 		"dddd, dd MMMM yyyy",
 		"dd MMMM yyyy",
