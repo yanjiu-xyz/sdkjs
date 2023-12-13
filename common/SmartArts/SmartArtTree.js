@@ -50,6 +50,22 @@
 	const algDelta = 1e-13;
 	const bulletFontSizeCoefficient = 51 / 65;
 
+	function CCoordPoint(x, y) {
+		this.x = x;
+		this.y = y;
+	}
+
+	CCoordPoint.prototype.getVector = function (point) {
+		return new CVector(point.x - this.x, point.y - this.y);
+	}
+	function CVector(x, y) {
+		this.x = x;
+		this.y = y;
+	}
+	CVector.prototype.getDistance = function () {
+		return this.x * this.x + this.y * this.y;
+	};
+
 	function createPresNode(presName, styleLbl, contentNode) {
 		presName = presName || "";
 		const point = new Point();
@@ -758,7 +774,8 @@
 			b: this.y + this.h,
 			t: this.y,
 			l: this.x,
-			r: this.x + this.w
+			r: this.x + this.w,
+			isEllipse: this.type === AscFormat.LayoutShapeType_shapeType_ellipse
 		};
 	};
 	ShadowShape.prototype.setCalcInfo = function () {
@@ -1002,13 +1019,16 @@
 		const startPoint = this.getShapePoint(startBounds);
 		const endPoint = this.getShapePoint(endBounds);
 
-		const angle = this.getShapeAngle(startPoint, endPoint);
-		const startEdgePoint = this.getMinShapeEdgePoint(startPoint, endPoint, startBounds, angle, startBounds.isEllipse);
-		const endEdgePoint = this.getMinShapeEdgePoint(startPoint, endPoint, endBounds, AscFormat.normalizeRotate(angle + Math.PI), startBounds.isEllipse);
+		const startGuideVector = {x: endPoint.x - startPoint.x, y: endPoint.y - startPoint.y};
+		const endGuideVector = {x: -startGuideVector.x, y: -startGuideVector.y};
+		const startEdgePoint = this.getMinShapeEdgePoint(startBounds, startGuideVector);
+		const endEdgePoint = this.getMinShapeEdgePoint(endBounds, endGuideVector);
 
 		if (startEdgePoint && endEdgePoint) {
+			const angles = this.getGuideAngles(startGuideVector);
+			const angle = startGuideVector.y > 0 ? angles.xAngle : AscFormat.normalizeRotate(-angles.xAngle);
 			return {
-				angle: AscFormat.normalizeRotate(-angle),
+				angle: angle,
 				startEdgePoint: startEdgePoint,
 				endEdgePoint: endEdgePoint
 			};
@@ -1016,72 +1036,113 @@
 		return null;
 	}
 
-	BaseAlgorithm.prototype.getMinShapeEdgePoint = function (startPoint, endPoint, bounds, angle, isEllipse) {
-		if (isEllipse) {
-			return this.getMinCircleEdgePoint();
+	BaseAlgorithm.prototype.getMinShapeEdgePoint = function (bounds, guideVector) {
+		if (bounds.isEllipse) {
+			return this.getMinCircleEdgePoint(bounds, guideVector);
 		} else {
-			return this.getMinRectEdgePoint();
+			return this.getMinRectEdgePoint(bounds, guideVector);
 		}
 	};
 
-	BaseAlgorithm.prototype.getMinCircleEdgePoint = function () {
+	BaseAlgorithm.prototype.getParametricLin = function (startPoint, guideVector) {
+		return {
+			x: startPoint.x,
+			ax: guideVector.x,
+			y: startPoint.y,
+			ay: guideVector.y
+		};
+	}
+	BaseAlgorithm.prototype.getMinCircleEdgePoint = function (bounds, guideVector) {
+		const shapePoint = this.getShapePoint(bounds);
+		const width = bounds.r - bounds.l;
+		const height = bounds.b - bounds.t;
+		const cw = width / 2;
+		const ch = height / 2;
+		const cx = cw + bounds.l;
+		const cy = ch + bounds.t;
+		const line = this.getParametricLin(shapePoint, guideVector);
 
-	};
-	BaseAlgorithm.prototype.getMinRectEdgePoint = function (startPoint, endPoint, bounds, angle) {
-		let firstPoint;
-		let secondPoint;
-		if (angle >= 0 && angle < Math.PI / 2) {
-			firstPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.t}, {x: bounds.r, y: bounds.t});
-			secondPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.r, y: bounds.t}, {x: bounds.r, y: bounds.b});
-		} else if (angle >= Math.PI / 2 && angle < Math.PI) {
-			firstPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.t}, {x: bounds.r, y: bounds.t});
-			secondPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.t}, {x: bounds.l, y: bounds.b});
-		} else if (angle >= Math.PI && angle < 3 * Math.PI / 2) {
-			firstPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.b}, {x: bounds.r, y: bounds.b});
-			secondPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.t}, {x: bounds.l, y: bounds.b});
-		} else {
-			firstPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.r, y: bounds.t}, {x: bounds.r, y: bounds.b});
-			secondPoint = this.getShapeEdgePoint(startPoint, endPoint, {x: bounds.l, y: bounds.b}, {x: bounds.r, y: bounds.b});
+		const px = line.ax;
+		const py = line.ay;
+		const x1 = line.x;
+		const y1 = line.y;
+		const b2 = ch * ch;
+		const a2 = cw * cw;
+		const a = b2 * px * px + a2 * py * py;
+		const b = 2 * ch * px * (ch * x1 - cy) + 2 * cw * py * (cw * y1 - cx);
+		const c = b2 * x1 * x1 + a2 * y1 * y1 - 2 * ch * cy * x1 - 2 * cw * cx * y1 + a2 * cx * cx + b2 * cy * cy - a2 * b2;
+		const answer = AscFormat.fSolveQuadraticEquation(a, b, c);
+		if (answer.bError) {
+			return null;
+		}
+		const angles = this.getGuideAngles(guideVector);
+
+		const xt1 = x1 + px * answer.x1;
+		const yt1 = y1 + py * answer.x1;
+
+		let edgeAngles = this.getGuideAngles({x: xt1 - shapePoint.x, y: yt1 - shapePoint.y});
+		if (AscFormat.fApproxEqual(edgeAngles.xAngle, angles.xAngle, algDelta) && AscFormat.fApproxEqual(edgeAngles.yAngle, angles.yAngle, algDelta)) {
+			return {x: xt1, y: yt1};
 		}
 
-		if (firstPoint && secondPoint) {
-			const firstSqrDistance = firstPoint.x * firstPoint.x + firstPoint.y * firstPoint.y;
-			const secondSqrDistance = secondPoint.x * secondPoint.x + secondPoint.y * secondPoint.y;
-			return firstSqrDistance < secondSqrDistance ? firstPoint : secondPoint;
-		} else if (firstPoint) {
-			return firstPoint;
+		const xt2 = x1 + px * answer.x2;
+		const yt2 = y1 + py * answer.x2;
+
+		edgeAngles = this.getGuideAngles({x: xt2 - shapePoint.x, y: yt2 - shapePoint.y});
+		if (AscFormat.fApproxEqual(edgeAngles.xAngle, angles.xAngle, algDelta) && AscFormat.fApproxEqual(edgeAngles.yAngle, angles.yAngle, algDelta)) {
+			return {x: xt2, y: yt2};
 		}
-		return secondPoint;
 	};
-	BaseAlgorithm.prototype.getShapeEdgePoint = function (startLinePoint1, startLinePoint2, endLinePoint1, endLinePoint2) {
-		const divider = (startLinePoint1.x - startLinePoint2.x) * (endLinePoint1.y - endLinePoint2.y) - (startLinePoint1.y - startLinePoint2.y) * (endLinePoint1.x - endLinePoint2.x);
+	BaseAlgorithm.prototype.getMinRectEdgePoint = function (bounds, guideVector) {
+		const shapePoint = this.getShapePoint(bounds);
+		const centerAngles = this.getGuideAngles(guideVector);
+		let checkEdges = [
+			[{x: bounds.l, y: bounds.t}, {x: bounds.r, y: bounds.t}],
+			[{x: bounds.r, y: bounds.t}, {x: bounds.r, y: bounds.b}],
+			[{x: bounds.l, y: bounds.t}, {x: bounds.l, y: bounds.b}],
+			[{x: bounds.l, y: bounds.b}, {x: bounds.r, y: bounds.b}]
+		];
+		for (let i = 0; i < checkEdges.length; i += 1) {
+			const edge = checkEdges[i];
+			const point = this.getRectEdgePoint(shapePoint, guideVector, edge[0], edge[1]);
+			if (point) {
+				const edgeGuideVector = {x: point.x - shapePoint.x, y: point.y - shapePoint.y};
+				const edgeAngles = this.getGuideAngles(edgeGuideVector);
+				if (AscFormat.fApproxEqual(edgeAngles.xAngle, centerAngles.xAngle, algDelta) && AscFormat.fApproxEqual(edgeAngles.yAngle, centerAngles.yAngle, algDelta)) {
+					return point;
+				}
+			}
+		}
+	};
+	BaseAlgorithm.prototype.getRectEdgePoint = function (linePoint, guideVector, rectEdgePoint1, rectEdgePoint2) {
+		const line1 = this.getParametricLin(linePoint, guideVector);
+		const line2 = this.getParametricLin(rectEdgePoint1, {x: rectEdgePoint2.x - rectEdgePoint1.x, y: rectEdgePoint2.y - rectEdgePoint1.y});
+		const divider = line1.ay * line2.ax - line1.ax * line2.ay;
 		if (divider === 0) {
 			return null;
 		}
-		const m1 = (startLinePoint1.x * startLinePoint2.y - startLinePoint1.y * startLinePoint2.x);
-		const m2 = (endLinePoint1.x * endLinePoint2.y - endLinePoint1.y * endLinePoint2.x);
-
-		const x = (m1 * (endLinePoint1.x - endLinePoint2.x) - m2 * (startLinePoint1.x - startLinePoint2.x)) / divider;
-		const y = (m1 * (endLinePoint1.y - endLinePoint2.y) - m2 * (startLinePoint1.y - startLinePoint2.y)) / divider;
-		if (((x > endLinePoint1.x && x < endLinePoint2.x) || AscFormat.fApproxEqual(x, endLinePoint2.x, algDelta))
-			&& ((y > endLinePoint1.y && y < endLinePoint2.y) || AscFormat.fApproxEqual(y, endLinePoint2.y, algDelta))) {
+		const parameter = (line1.ax * (line2.y - line1.y) - line1.ay * (line2.x - line1.x)) / divider;
+		const x = line2.x + line2.ax * parameter;
+		const y = line2.y + line2.ay * parameter;
+		if (((x > rectEdgePoint1.x && x < rectEdgePoint2.x) || AscFormat.fApproxEqual(x, rectEdgePoint2.x, algDelta))
+			&& ((y > rectEdgePoint1.y && y < rectEdgePoint2.y) || AscFormat.fApproxEqual(y, rectEdgePoint2.y, algDelta))) {
 			return {x: x, y: y};
 		}
 		return null;
 	}
 
-	BaseAlgorithm.prototype.getShapeAngle = function (startPoint, endPoint) {
-		const x = endPoint.x - startPoint.x;
-		const y = endPoint.y - startPoint.y;
+	BaseAlgorithm.prototype.getGuideAngles = function (guideVector) {
+
+		const x = guideVector.x;
+		const y = guideVector.y;
 		const vectorLength = Math.sqrt(x * x + y * y);
-		const angle = Math.acos(x / vectorLength);
-		if (AscFormat.isRealNumber(angle)) {
-			if (y > 0) {
-				return AscFormat.normalizeRotate(-angle);
-			}
-			return angle;
+		if (vectorLength !== 0) {
+			return {
+				xAngle: Math.acos(x / vectorLength),
+				yAngle: Math.acos(y / vectorLength)
+			};
 		}
-		return 0;
+		return null;
 	}
 	BaseAlgorithm.prototype.calcScaleCoefficients = function () {
 		this.parentNode.calcNodeConstraints();
@@ -1575,6 +1636,7 @@
 		}
 	};
 
+
 	CycleAlgorithm.prototype.calcClockwiseScaleCoefficient = function () {
 		const spanAngle = this.params[AscFormat.Param_type_spanAng];
 		const startAngle = this.params[AscFormat.Param_type_stAng] * degToRad;
@@ -1599,12 +1661,57 @@
 		const firstNodeConstraints = this.getNodeConstraints(childs[0]);
 		let coefficient = 1;
 		let currentAngle = startAngle;
-		const divider = Math.sqrt(2 - 2 * Math.cos(Math.abs(stepAngle)));
-		for (let i = 0; i < mainElements.length; i++) {
-			const calcSibSp = this.getCalcSibSp();
+		const divider = Math.sqrt(2 * (1 - Math.cos(Math.abs(stepAngle))));
+		const sibSp = this.parentNode.constr[AscFormat.Constr_type_sibSp];
+		let maxRadius = 0;
+		let previousElement;
+		let previousBounds;
+		for (let i = 1; i < mainElements.length; i++) {
+			const currentElement = this.get
+			const prAngle = currentAngle;
 			currentAngle += stepAngle;
+			const guideVector = this.getDiffGuideVector(prAngle, currentAngle);
+			const currentBounds = this.getCleanNodeBounds(currentElement);
+			const currentEdgePoint = this.getMinShapeEdgePoint(currentBounds, guideVector);
+			const previousEdgePoint = this.getMinShapeEdgePoint(previousBounds, {x: -guideVector.x, y: -guideVector.y});
+			if (currentEdgePoint && previousEdgePoint) {
+				const currentShapePoint = this.getShapePoint(currentBounds);
+				const previousShapePoint = this.getShapePoint(previousBounds);
+				const currentVector = currentShapePoint.getVector(currentEdgePoint);
+				const previousVector = previousShapePoint.getVector(previousEdgePoint);
+				const previousDistance = previousVector.getDistance();
+				const currentDistance = currentVector.getDistance();
 
+				const radius = (sibSp + previousDistance + currentDistance) / divider;
+				if (radius > maxRadius) {
+					maxRadius = radius;
+				}
+			}
 		}
+	};
+
+	CycleAlgorithm.prototype.getCleanNodeBounds = function (node) {
+		const width = node.getConstr(AscFormat.Constr_type_w);
+		const height = node.getConstr(AscFormat.Constr_type_h);
+		const x = node.getConstr(AscFormat.Constr_type_l);
+		const y = node.getConstr(AscFormat.Constr_type_t);
+		const isEllipse = this.layoutInfo.shape.type === AscFormat.LayoutShapeType_shapeType_ellipse;
+		return {
+			l: x,
+			t: y,
+			r: x + width,
+			b: y + height,
+			isEllipse: isEllipse
+		};
+	}
+	CycleAlgorithm.prototype.getDiffGuideVector = function (xPreviousAngle, xCurrentAngle) {
+		const yPreviousAngle = Math.PI / 2 - xPreviousAngle;
+		const yCurrentAngle = Math.PI / 2 - xCurrentAngle;
+
+		const previousVector = {x: Math.cos(xPreviousAngle), y: Math.cos(yPreviousAngle)};
+		const currentVector = {x: Math.cos(xCurrentAngle), y: Math.cos(yCurrentAngle)};
+
+		return {x: currentVector.x - previousVector.x, y: currentVector.y - currentVector.x};
 	};
 	CycleAlgorithm.prototype.calcAntiClockwiseScaleCoefficient = function () {
 
