@@ -2033,7 +2033,7 @@ Paragraph.prototype.Draw = function(CurPage, pGraphics)
 	// 3 часть отрисовки :
 	//    Рисуем заливку параграфа и различные выделения текста (highlight, поиск, совместное редактирование).
 	//    Кроме этого рисуем боковые линии обводки параграфа.
-	this.Internal_Draw_3(CurPage, pGraphics, Pr, drawState);
+	this.drawRunHighlight(CurPage, pGraphics, Pr, drawState);
 
 	// 4 часть отрисовки :
 	//    Рисуем сами элементы параграфа
@@ -2124,7 +2124,7 @@ Paragraph.prototype.Internal_Draw_2 = function(CurPage, pGraphics, Pr)
 		pGraphics.FillText(SpecX, Y, SpecSym);
 	}
 };
-Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr, drawState)
+Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawState)
 {
 	var LogicDocument = this.LogicDocument;
 
@@ -2174,19 +2174,21 @@ Paragraph.prototype.Internal_Draw_3 = function(CurPage, pGraphics, Pr, drawState
 		let Y1 = (_Page.Y + line.Y + lineMetrics.Descent);
 		if (lineMetrics.LineGap < 0)
 			Y1 += lineMetrics.LineGap;
+		
+		PDSH.resetLine(curLine, Y0, Y1);
 
 		for (let curRange = 0, rangesCount = line.Ranges.length; curRange < rangesCount; ++curRange)
 		{
 			let range = line.Ranges[curRange];
-			PDSH.Reset_Range(CurPage, curLine, curRange, range.XVisible, Y0, Y1, range.Spaces);
-
-			if (this.Numbering.checkRange(curRange, curLine))
-				PDSH.X += this.Numbering.WidthVisible;
+			
+			PDSH.beginRange(curRange, range.XVisible, range.Spaces)
 
 			for (let contentPos = range.StartPos; contentPos <= range.EndPos; ++contentPos)
 			{
 				this.Content[contentPos].Draw_HighLights(PDSH);
 			}
+		
+			PDSH.endRange();
 
 			var isFormShd = false;
 			var oInlineSdt, isForm, oFormShd;

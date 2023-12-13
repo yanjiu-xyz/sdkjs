@@ -6439,6 +6439,7 @@ ParaRun.prototype.Draw_HighLights = function(drawState)
 	if (startPos >= endPos)
 		return;
 	
+	this.CollaborativeMarks.Init_Drawing();
 	for (let pos = startPos; pos < endPos; ++pos)
 	{
 		let item = this.private_CheckInstrText(this.Content[pos]);
@@ -6452,8 +6453,8 @@ ParaRun.prototype.Draw_HighLights = function(drawState)
 				drawState.increaseSearchCounter();
 		}
 		
-		let isCollaboration = this.CollaborativeMarks.Check(pos);
-		drawState.handleRunElement(item, this, isCollaboration);
+		let collaborationColor = this.CollaborativeMarks.Check(pos);
+		drawState.handleRunElement(item, this, collaborationColor);
 		
 		for (let iMark = 0, nMarks = this.SearchMarks.length; iMark < nMarks; ++iMark)
 		{
