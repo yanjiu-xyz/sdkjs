@@ -6443,243 +6443,27 @@ ParaRun.prototype.Draw_HighLights = function(drawState)
 	{
 		let item = this.private_CheckInstrText(this.Content[pos]);
 		
-		for (let markPos = 0; markPos < this.SearchMarks.length; ++markPos)
+		for (let iMark = 0, nMarks = this.SearchMarks.length; iMark < nMarks; ++iMark)
 		{
-			let mark    = this.SearchMarks[markPos];
+			let mark     = this.SearchMarks[iMark];
 			let markPos = mark.SearchResult.StartPos.Get(mark.Depth);
 			
 			if (pos === markPos && mark.Start)
 				drawState.increaseSearchCounter();
 		}
 		
-		drawState.handleRunElement(item, this);
+		let isCollaboration = this.CollaborativeMarks.Check(pos);
+		drawState.handleRunElement(item, this, isCollaboration);
 		
-		
-		for (let markPos = 0; markPos < this.SearchMarks.length; ++markPos)
+		for (let iMark = 0, nMarks = this.SearchMarks.length; iMark < nMarks; ++iMark)
 		{
-			let mark    = this.SearchMarks[markPos];
+			let mark    = this.SearchMarks[iMark];
 			let markPos = mark.SearchResult.StartPos.Get(mark.Depth);
 			
 			if (pos + 1 === markPos && !mark.Start)
 				drawState.decreaseSearchCounter();
 		}
 	}
-	
-	
-	//------------------------------------------------------------------------------------------------------------------
-	
-	
-    var pGraphics = PDSH.Graphics;
-
-    var CurLine   = PDSH.Line - this.StartLine;
-    var CurRange  = ( 0 === CurLine ? PDSH.Range - this.StartRange : PDSH.Range );
-
-    var aHigh     = PDSH.High;
-    var aColl     = PDSH.Coll;
-    var aFind     = PDSH.Find;
-    var aComm     = PDSH.Comm;
-    var aShd      = PDSH.Shd;
-    var aFields   = PDSH.MMFields;
-
-    var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-    var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-
-    var Para     = PDSH.Paragraph;
-    var SearchResults = Para.SearchResults;
-
-    var bDrawFind = PDSH.DrawFind;
-    var bDrawColl = PDSH.DrawColl;
-
-    var oCompiledPr = this.Get_CompiledPr(false);
-    var oShd        = oCompiledPr.Shd;
-    var bDrawShd    = ( oShd === undefined || oShd.IsNil() ? false : true );
-    var ShdColor    = ( true === bDrawShd ? oShd.GetSimpleColor(PDSH.Paragraph.GetTheme(), PDSH.Paragraph.GetColorMap()) : null );
-
-    if (!ShdColor || true === ShdColor.Auto || (this.Type === para_Math_Run && this.IsPlaceholder()))
-	{
-		ShdColor = null;
-		bDrawShd = false;
-	}
-
-    var X  = PDSH.X;
-    var Y0 = PDSH.Y0;
-    var Y1 = PDSH.Y1;
-
-    var CommentsFlag  = PDSH.CommentsFlag;
-    var arrComments   = [];
-    for (var nIndex = 0, nCount = PDSH.Comments.length; nIndex < nCount; ++nIndex)
-	{
-		arrComments.push(PDSH.Comments[nIndex]);
-	}
-
-    var HighLight = oCompiledPr.HighLight;
-    if(oCompiledPr.HighlightColor)
-    {
-        var Theme = this.Paragraph.Get_Theme(), ColorMap = this.Paragraph.Get_ColorMap(), RGBA;
-        oCompiledPr.HighlightColor.check(Theme, ColorMap);
-        RGBA = oCompiledPr.HighlightColor.RGBA;
-        HighLight = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B, RGBA.A);
-    }
-
-    var SearchMarksCount = this.SearchMarks.length;
-
-    this.CollaborativeMarks.Init_Drawing();
-
-	var isHiddenCFPart = PDSH.ComplexFields.IsComplexFieldCode();
-
-    for ( var Pos = StartPos; Pos < EndPos; Pos++ )
-    {
-		var Item = this.private_CheckInstrText(this.Content[Pos]);
-        var ItemType         = Item.Type;
-        var ItemWidthVisible = Item.GetWidthVisible();
-
-        if ((PDSH.ComplexFields.IsHiddenFieldContent() || isHiddenCFPart) && para_End !== ItemType && para_FieldChar !== ItemType)
-        	continue;
-
-        // Определим попадание в поиск и совместное редактирование. Попадание в комментарий определять не надо,
-        // т.к. класс CParaRun попадает или не попадает в комментарий целиком.
-
-        for ( var SPos = 0; SPos < SearchMarksCount; SPos++)
-        {
-            var Mark = this.SearchMarks[SPos];
-            var MarkPos = Mark.SearchResult.StartPos.Get(Mark.Depth);
-
-            if ( Pos === MarkPos && true === Mark.Start )
-                PDSH.SearchCounter++;
-        }
-
-        var DrawSearch = ( PDSH.SearchCounter > 0 && true === bDrawFind ? true : false );
-
-        var DrawColl = this.CollaborativeMarks.Check( Pos );
-
-        if ( true === bDrawShd && !Item.IsParaEnd() )
-            aShd.Add( Y0, Y1, X, X + ItemWidthVisible, 0, ShdColor.r, ShdColor.g, ShdColor.b, undefined, oShd );
-
-		if (PDSH.ComplexFields.IsComplexField()
-			&& !PDSH.ComplexFields.IsComplexFieldCode()
-			&& PDSH.ComplexFields.IsCurrentComplexField()
-			&& !PDSH.ComplexFields.IsHyperlinkField())
-			PDSH.CFields.Add(Y0, Y1, X, X + ItemWidthVisible, 0, 0, 0, 0);
-
-        switch( ItemType )
-        {
-            case para_PageNum:
-            case para_PageCount:
-            case para_Drawing:
-            case para_Tab:
-            case para_Text:
-            case para_Math_Text:
-            case para_Math_Placeholder:
-            case para_Math_BreakOperator:
-            case para_Math_Ampersand:
-            case para_Sym:
-            case para_FootnoteReference:
-            case para_FootnoteRef:
-            case para_Separator:
-            case para_ContinuationSeparator:
-			case para_EndnoteReference:
-			case para_EndnoteRef:
-            {
-                if ( para_Drawing === ItemType && !Item.Is_Inline() )
-                    break;
-
-                if ( CommentsFlag != AscCommon.comments_NoComment )
-                    aComm.Add( Y0, Y1, X, X + ItemWidthVisible, 0, 0, 0, 0, { Active : CommentsFlag === AscCommon.comments_ActiveComment ? true : false, CommentId : arrComments } );
-                else if ( highlight_None != HighLight )
-                    aHigh.Add( Y0, Y1, X, X + ItemWidthVisible, 0, HighLight.r, HighLight.g, HighLight.b, undefined, HighLight );
-
-                if ( true === DrawSearch )
-                    aFind.Add( Y0, Y1, X, X + ItemWidthVisible, 0, 0, 0, 0  );
-                else if ( null !== DrawColl )
-                    aColl.Add( Y0, Y1, X, X + ItemWidthVisible, 0, DrawColl.r, DrawColl.g, DrawColl.b );
-
-                if ( para_Drawing != ItemType || Item.Is_Inline() )
-                    X += ItemWidthVisible;
-
-                break;
-            }
-            case para_Space:
-            {
-                // Пробелы в конце строки (и строку состоящую из пробелов) не подчеркиваем, не зачеркиваем и не выделяем
-                if ( PDSH.Spaces > 0 )
-                {
-                    if ( CommentsFlag != AscCommon.comments_NoComment )
-                        aComm.Add( Y0, Y1, X, X + ItemWidthVisible, 0, 0, 0, 0, { Active : CommentsFlag === AscCommon.comments_ActiveComment ? true : false, CommentId : arrComments } );
-                    else if ( highlight_None != HighLight )
-                        aHigh.Add( Y0, Y1, X, X + ItemWidthVisible, 0, HighLight.r, HighLight.g, HighLight.b, undefined, HighLight );
-
-                    PDSH.Spaces--;
-                }
-
-                if ( true === DrawSearch )
-                    aFind.Add( Y0, Y1, X, X + ItemWidthVisible, 0, 0, 0, 0  );
-                else if ( null !== DrawColl )
-                    aColl.Add( Y0, Y1, X, X + ItemWidthVisible, 0, DrawColl.r, DrawColl.g, DrawColl.b  );
-
-                X += ItemWidthVisible;
-
-                break;
-            }
-            case para_End:
-            {
-                if ( null !== DrawColl )
-                    aColl.Add( Y0, Y1, X, X + ItemWidthVisible, 0, DrawColl.r, DrawColl.g, DrawColl.b  );
-
-                X += Item.GetWidth();
-                break;
-            }
-            case para_NewLine:
-            {
-                X += ItemWidthVisible;
-                break;
-            }
-			case para_FieldChar:
-			{
-				PDSH.ComplexFields.ProcessFieldChar(Item);
-				isHiddenCFPart = PDSH.ComplexFields.IsComplexFieldCode();
-
-				if (Item.IsNumValue())
-				{
-					if ( CommentsFlag != AscCommon.comments_NoComment )
-						aComm.Add( Y0, Y1, X, X + ItemWidthVisible, 0, 0, 0, 0, { Active : CommentsFlag === AscCommon.comments_ActiveComment ? true : false, CommentId : arrComments } );
-					else if ( highlight_None != HighLight )
-						aHigh.Add( Y0, Y1, X, X + ItemWidthVisible, 0, HighLight.r, HighLight.g, HighLight.b, undefined, HighLight );
-
-					if ( true === DrawSearch )
-						aFind.Add( Y0, Y1, X, X + ItemWidthVisible, 0, 0, 0, 0  );
-					else if ( null !== DrawColl )
-						aColl.Add( Y0, Y1, X, X + ItemWidthVisible, 0, DrawColl.r, DrawColl.g, DrawColl.b );
-
-						X += ItemWidthVisible;
-				}
-
-				break;
-			}
-		}
-
-		if (PDSH.Hyperlink)
-		{
-			PDSH.HyperCF.Add(Y0, Y1, X - ItemWidthVisible, X, 0, 0, 0, 0, {HyperlinkCF : PDSH.Hyperlink});
-		}
-		else if (PDSH.ComplexFields.IsComplexField() && !PDSH.ComplexFields.IsComplexFieldCode() && PDSH.Graphics.AddHyperlink)
-		{
-			var oCF = PDSH.ComplexFields.GetREForHYPERLINK();
-			if (oCF)
-				PDSH.HyperCF.Add(Y0, Y1, X - ItemWidthVisible, X, 0, 0, 0, 0, {HyperlinkCF : oCF.GetInstruction()});
-		}
-
-        for ( var SPos = 0; SPos < SearchMarksCount; SPos++)
-        {
-            var Mark = this.SearchMarks[SPos];
-            var MarkPos = Mark.SearchResult.EndPos.Get(Mark.Depth);
-
-            if ( Pos + 1 === MarkPos && true !== Mark.Start )
-                PDSH.SearchCounter--;
-        }
-    }
-
-    // Обновим позицию X
-    PDSH.X = X;
 };
 
 ParaRun.prototype.Draw_Elements = function(drawState)

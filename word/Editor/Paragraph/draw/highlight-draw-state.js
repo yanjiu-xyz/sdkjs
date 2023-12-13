@@ -78,7 +78,7 @@
 		this.comments           = []; // current list of comments
 		this.runComments        = []; // comments we use for a particular run
 		
-		this.hyperlinkObject    = null;
+		this.hyperlinksObject    = [];
 
 		this.Comments           = [];
 		this.CommentsFlag       = AscCommon.comments_NoComment;
@@ -92,7 +92,7 @@
 		this.Y0 = 0;
 		this.Y1 = 0;
 		
-		this.Spaces = 0;
+		this.spaces = 0;
 		
 		this.InlineSdt = [];
 		this.CollectFixedForms = false;
@@ -102,7 +102,9 @@
 		this.rtl = false;
 		this.bidiFlow = new AscWord.BidiFlow(this);
 		
-		this.run = null;
+		this.run       = null;
+		this.highlight = null;
+		this.shdColor  = null;
 	}
 	ParagraphHighlightDrawState.prototype.init = function(paragraph, graphics)
 	{
@@ -152,7 +154,7 @@
 		this.X = X;
 		this.checkNumbering();
 		
-		this.Spaces = spaceCount;
+		this.spaces = spaceCount;
 		this.bidiFlow.begin(this.rtl);
 		
 		this.InlineSdt = [];
@@ -236,7 +238,7 @@
 	{
 		this.CollectFixedForms = isCollect;
 	};
-	ParagraphHighlightDrawState.prototype.handleRunElement = function(element, run)
+	ParagraphHighlightDrawState.prototype.handleRunElement = function(element, run, isCollaboration)
 	{
 		if ((this.ComplexFields.IsHiddenFieldContent() || this.ComplexFields.IsComplexFieldCode())
 			&& para_End !== element.Type
@@ -246,20 +248,26 @@
 		if (para_FieldChar === element.Type)
 			this.ComplexFields.ProcessFieldChar(element);
 		
-		this.bidiFlow.add([element, run, this.searchCounter > 0], element.getBidiType());
+		if (para_Drawing === element.Type && !element.IsInline())
+			return;
+		
+		let flags = this.getFlags(element, isCollaboration);
+		let hyperlink = this.getHyperlinkObject();
+		this.bidiFlow.add([element, run, flags, hyperlink], element.getBidiType());
 	};
 	ParagraphHighlightDrawState.prototype.handleBidiFlow = function(data)
 	{
-		let element  = data[0];
-		let run      = data[1];
-		let isSearch = data[2];
+		let element   = data[0];
+		let run       = data[1];
+		let flags     = data[2];
+		let hyperlink = data[3];
+		
+		let w = element.GetWidthVisible();
 		
 		this.handleRun(run);
+		this.addHighlight(this.X, this.X + w, flags, hyperlink);
 		
-		
-
-			
-
+		this.X += w;
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
@@ -323,35 +331,51 @@
 		
 		this.run = run;
 		
-		// TODO: Comments
 		this.runComments = this.comments.slice();
-		
-		// TODO: highlight
-		this.highlight = highlight_None;
 		
 		// TODO:
 		this.collaborationColor = null;
+		this.CollaborativeMarks.Init_Drawing();
+		
+		let textPr = run.getCompiledPr();
+		let shd    = textPr.Shd;
+		
+		this.shdColor = shd && !shd.IsNil() ? shd.GetSimpleColor(this.drawState.getTheme(), this.drawState.getColorMap()) : null;
+		if (!this.shdColor || this.shdColor.IsAuto() || (run.IsMathRun() && run.IsPlaceholder()))
+			this.shdColor = null;
+		
+		this.highlight = textPr.highlight;
+		if (textPr.HighlightColor)
+		{
+			textPr.HighlightColor.check(this.drawState.getTheme(), this.drawState.getColorMap());
+			let RGBA = textPr.HighlightColor.RGBA;
+			this.highlight = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B, RGBA.A);
+		}
 	};
 	/**
 	 *
 	 */
-	ParagraphHighlightDrawState.prototype.addHighlight = function(startX, endX, flags)
+	ParagraphHighlightDrawState.prototype.addHighlight = function(startX, endX, flags, hyperlink)
 	{
 		let startY = this.Y0;
 		let endY   = this.Y1;
 		
-		let hyperlink = this.getHyperlinkObject();
 		if (hyperlink)
 			this.HyperCF.Add(startY, endY, startX, endX, 0, 0, 0, 0, {HyperlinkCF : hyperlink});
 		
-		if ((flags & FLAG_COMMENT) && this.comments.length > 0)
+		if (flags & FLAG_COMPLEX_FIELD)
+			this.CFields.Add(startY, endY, startX, endX, 0, 0, 0, 0);
+		
+		if (flags & FLAG_COMMENT)
 			this.Comm.Add(startY, endY, startX, endX, 0, 0, 0, 0, {Active : this.haveCurrentComment, CommentId : this.runComments});
-		else if ((flags & FLAG_COMMENT) && (highlight_None !== this.highlight))
+		
+		if ((flags & FLAG_HIGHLIGHT) && (this.highlight && highlight_None !== this.highlight))
 			this.High.Add(startY, endY, startX, endX, 0, this.highlight.r, this.highlight.g, this.highlight.b, undefined, this.highlight);
 		
 		if (flags & FLAG_SEARCH)
 			aFind.Add(startY, endY, startX, endX, 0, 0, 0, 0);
-		else if ((flags & FLAG_COLLABORATION) && this.collaborationColor)
+		
+		if ((flags & FLAG_COLLABORATION) && this.collaborationColor)
 			aColl.Add(startY, endY, startX, endX, 0, this.collaborationColor.r, this.collaborationColor.g, this.collaborationColor.b);
 	};
 	ParagraphHighlightDrawState.prototype.pushHyperlink = function(hyperlink)
@@ -375,6 +399,100 @@
 			return complexField.GetInstruction();
 		
 		return null;
+	};
+	ParagraphHighlightDrawState.prototype.isComplexFieldHighlight = function()
+	{
+		return (this.ComplexFields.IsComplexField()
+			&& !this.ComplexFields.IsComplexFieldCode()
+			&& this.ComplexFields.IsCurrentComplexField()
+			&& !this.ComplexFields.IsHyperlinkField());
+	};
+	ParagraphHighlightDrawState.prototype.getFlags = function(element, isCollaboration)
+	{
+		let flags = FLAG_HYPERLINK_CF;
+		if (this.DrawSearch && this.searchCounter > 0)
+			flags |= FLAG_SEARCH;
+		if (this.isComplexFieldHighlight())
+			flags |= FLAG_COMPLEX_FIELD;
+		if (isCollaboration)
+			flags |= FLAG_COLLABORATION;
+		
+		switch (ItemType)
+		{
+			case para_PageNum:
+			case para_PageCount:
+			case para_Drawing:
+			case para_Tab:
+			case para_Text:
+			case para_Math_Text:
+			case para_Math_Placeholder:
+			case para_Math_BreakOperator:
+			case para_Math_Ampersand:
+			case para_Sym:
+			case para_FootnoteReference:
+			case para_FootnoteRef:
+			case para_Separator:
+			case para_ContinuationSeparator:
+			case para_EndnoteReference:
+			case para_EndnoteRef:
+			{
+				if (this.DrawComments && this.comments.length > 0)
+					flags |= FLAG_COMMENT;
+				else
+					flags |= FLAG_HIGHLIGHT;
+				
+				if (this.DrawSearch && this.searchCounter > 0)
+					flags |= FLAG_SEARCH;
+				else if (this.DrawColl && isCollaboration)
+					flags |= FLAG_COLLABORATION;
+				
+				break;
+			}
+			case para_Space:
+			{
+				if (this.spaces > 0)
+				{
+					if (this.DrawComments && this.comments.length > 0)
+						flags |= FLAG_COMMENT;
+					else
+						flags |= FLAG_HIGHLIGHT;
+					
+					--this.spaces;
+				}
+				
+				if (this.DrawSearch && this.searchCounter > 0)
+					flags |= FLAG_SEARCH;
+				else if (this.DrawColl && isCollaboration)
+					flags |= FLAG_COLLABORATION;
+				
+				break;
+			}
+			case para_End:
+			{
+				if (this.DrawColl && isCollaboration)
+					flags |= FLAG_COLLABORATION;
+				
+				break;
+			}
+			case para_FieldChar:
+			{
+				if (element.IsNumValue())
+				{
+					if (this.DrawComments && this.comments.length > 0)
+						flags |= FLAG_COMMENT;
+					else
+						flags |= FLAG_HIGHLIGHT;
+					
+					if (this.DrawSearch && this.searchCounter > 0)
+						flags |= FLAG_SEARCH;
+					else if (this.DrawColl && isCollaboration)
+						flags |= FLAG_COLLABORATION;
+				}
+				break;
+			}
+		}
+		
+		return flags;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.ParagraphHighlightDrawState = ParagraphHighlightDrawState;
