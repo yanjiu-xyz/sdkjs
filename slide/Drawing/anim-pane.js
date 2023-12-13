@@ -1491,7 +1491,7 @@
 			else this.parentControl.endScroll()
 
 			// Updating curTimePos
-			this.parentControl.curTimePos = this.parentControl.posToTime(newLeft + SCROLL_BUTTON_SIZE / 2)
+			this.parentControl.setCurTimePos(this.parentControl.posToTime(newLeft + SCROLL_BUTTON_SIZE / 2))
 
 			// Если оставить "newLeft, t, w, h", то t почему-то перезаписывается постоянно
 			// let { l, t, w, h } = this.bounds
@@ -1506,9 +1506,14 @@
 
 	InitClass(CTimeline, CScrollHor, CONTROL_TYPE_TIMELINE);
 
+	
+	CTimeline.prototype.setCurTimePos = function (tValue) {
+		this.curTimePos = Math.max(0, tValue)
+	}
 	CTimeline.prototype.addScroll = function (step) {
 		let diff = this.posToTime(step) - this.startTimePos
 		this.startTimePos = Math.max(0, this.startTimePos + diff)
+		this.setCurTimePos(this.curTimePos + diff)
 		this.onUpdate()
 	};
 	CTimeline.prototype.startDrawLabels = function () {
