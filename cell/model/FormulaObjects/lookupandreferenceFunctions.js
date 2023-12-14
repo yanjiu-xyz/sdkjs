@@ -1160,6 +1160,7 @@ function (window, undefined) {
 	cGETPIVOTDATA.prototype.argumentsMax = 254;
 	cGETPIVOTDATA.prototype.arrayIndexes = {0: 1, 1: 1};
 	cGETPIVOTDATA.prototype.argumentsType = [argType.text, argType.text, [argType.text, argType.any]];
+	cGETPIVOTDATA.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cGETPIVOTDATA.prototype.Calculate = function (arg) {
 		// arg0 - data_field - Имя поля сводной таблицы (строка в кавычках), из которого необходимо извлечь данные. 
 		// Имя может быть введено в точности как существующее имя поля или только корень названия, например если в аргумент ввести "second", то вернется поле с именем "Sum of second", "Count of second" и т.д.
