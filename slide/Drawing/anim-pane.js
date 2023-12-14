@@ -1058,7 +1058,7 @@
 		this.timeoutId = null;
 
 		this.scrollOffset = 0;
-		this.tmpScrollOffset = null;
+		// this.tmpScrollOffset = null;
 
 		this.startScrollerPos = null;
 		this.startScrollTop = null;
@@ -1070,23 +1070,10 @@
 		return Math.max(0, Math.min(offsetValue, this.getMaxScrollOffset()));
 	};
 	CScrollBase.prototype.getScrollOffset = function () {
-		if (this.tmpScrollOffset !== null) {
-			return this.tmpScrollOffset;
-		}
-		this.scrollOffset = this.limitScrollOffset(this.scrollOffset);
 		return this.scrollOffset;
 	};
-	CScrollBase.prototype.setTmpScroll = function (val) {
-		this.tmpScrollOffset = this.limitScrollOffset(val)
-
-		this.parentControl.onScroll();
-		this.onUpdate();
-	};
-	CScrollBase.prototype.clearTmpScroll = function () {
-		if (this.tmpScrollOffset === null) { return }
-
-		this.scrollOffset = this.limitScrollOffset(this.tmpScrollOffset);
-		this.tmpScrollOffset = null;
+	CScrollBase.prototype.setScrollOffset = function (offsetValue /* in millimeters */) {
+		this.scrollOffset = this.limitScrollOffset(val)
 
 		this.parentControl.onScroll();
 		this.onUpdate();
@@ -1095,7 +1082,6 @@
 	CScrollBase.prototype.startScroll = function (step) {
 		this.endScroll();
 		var oScroll = this;
-		this.tmpScrollOffset = this.getScrollOffset();
 		oScroll.addScroll(step);
 
 		this.timeoutId = setTimeout(function () {
@@ -1106,7 +1092,8 @@
 		}, SCROLL_TIMER_DELAY);
 	};
 	CScrollBase.prototype.addScroll = function (step) {
-		this.setTmpScroll(this.tmpScrollOffset + step);
+		this.setScrollOffset(this.getScrollOffset() + step);
+
 		this.parentControl.onScroll();
 	};
 	CScrollBase.prototype.endScroll = function () {
@@ -1119,7 +1106,6 @@
 			this.timeoutId = null;
 		}
 
-		this.clearTmpScroll();
 		this.setStateFlag(STATE_FLAG_SELECTED, false);
 
 		this.startScrollerPos = null;
@@ -1283,7 +1269,7 @@
 			}
 			var dCoeff = this.getMaxScrollOffset() / this.getMaxRelScrollOffset();
 			var dy = dCoeff * (y - this.startScrollerPos);
-			this.setTmpScroll(dy + this.startScrollTop);
+			this.setScrollOffset(dy + this.startScrollTop);
 			return true;
 		}
 		bRet |= this.children[0].onMouseMove(e, x, y);
