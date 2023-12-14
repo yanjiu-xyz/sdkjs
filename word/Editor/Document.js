@@ -21921,9 +21921,12 @@ CDocument.prototype.IsFillingOFormMode = function()
 {
 	if (!this.IsFillingFormMode())
 		return false;
-
-	var oApi = this.GetApi();
-	return !!(oApi.DocInfo &&  oApi.DocInfo.Format && (this.Api.DocInfo.Format === "oform" || this.Api.DocInfo.Format === "docxf"));
+	
+	let api = this.GetApi();
+	return !!(api.DocInfo
+		&& (api.DocInfo.Format === "oform"
+			|| api.DocInfo.Format === "docxf"
+			|| api.DocInfo.Format === "pdf"));
 };
 CDocument.prototype.CheckOFormUserMaster = function(form)
 {

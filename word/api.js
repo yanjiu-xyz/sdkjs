@@ -962,6 +962,8 @@
 		this.isDarkMode = false;
 
 		this.TableStylesPreviewGenerator = null;
+		
+		this.isHandMode = false;
 
 		//g_clipboardBase.Init(this);
 
@@ -1512,8 +1514,11 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.navigate(value);
 	};
 	asc_docs_api.prototype["asc_setViewerTargetType"] = function(type) {
-		if (this.WordControl.m_oDrawingDocument.m_oDocumentRenderer)
-			this.WordControl.m_oDrawingDocument.m_oDocumentRenderer.setTargetType(type);
+		
+		this.isHandMode = ("hand" === type);
+		this.WordControl.checkMouseHandMode();
+		this.WordControl.onMouseMove();
+		let logicDocument = this.private_GetLogicDocument();
 	};
 
 	function BeforeOpenDocument()
@@ -13592,6 +13597,11 @@ background-repeat: no-repeat;\
 			return null;
 		
 		return logicDocument.getSpeechDescription(prevState, action);
+	};
+	
+	asc_docs_api.prototype.isTargetHandMode = function()
+	{
+		return this.isHandMode && this.isRestrictionForms();
 	};
 	
 	//-------------------------------------------------------------export---------------------------------------------------
