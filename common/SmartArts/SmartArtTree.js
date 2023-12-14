@@ -65,6 +65,14 @@
 	CVector.prototype.getDistance = function () {
 		return this.x * this.x + this.y * this.y;
 	};
+	CVector.prototype.diff = function (vector) {
+		return new CVector(this.x - vector.x, this.y - vector.y);
+	}
+	CVector.prototype.multiply = function (value) {
+		this.x *= value;
+		this.y *= value;
+	};
+
 
 	function createPresNode(presName, styleLbl, contentNode) {
 		presName = presName || "";
@@ -246,6 +254,10 @@
 			}
 			case AscFormat.Alg_type_conn: {
 				algorithm = new ConnectorAlgorithm();
+				break;
+			}
+			case AscFormat.Alg_type_cycle: {
+				algorithm = new CycleAlgorithm();
 				break;
 			}
 			default: {
@@ -1006,21 +1018,21 @@
 		this.parentNode = null;
 	}
 	BaseAlgorithm.prototype.getShapePoint = function (bounds) {
-		const point = {x: 0, y: 0};
-		const begPoints = this.params[AscFormat.Param_type_begPts];
+		const point = new CCoordPoint(0, 0);
+/*		const begPoints = this.params[AscFormat.Param_type_begPts];
 		const isAuto = begPoints && (begPoints[0] === AscFormat.ParameterVal_connectorPoint_auto);
-		if (isAuto) {
+		if (isAuto) {*/
 			point.x = bounds.l + (bounds.r - bounds.l) / 2;
 			point.y = bounds.t + (bounds.b - bounds.t) / 2;
-		}
+/*		}*/
 		return point;
 	};
 	BaseAlgorithm.prototype.getConnectionDistanceInfo = function (startBounds, endBounds) {
 		const startPoint = this.getShapePoint(startBounds);
 		const endPoint = this.getShapePoint(endBounds);
 
-		const startGuideVector = {x: endPoint.x - startPoint.x, y: endPoint.y - startPoint.y};
-		const endGuideVector = {x: -startGuideVector.x, y: -startGuideVector.y};
+		const startGuideVector = new CVector(endPoint.x - startPoint.x, endPoint.y - startPoint.y);
+		const endGuideVector = new CVector(-startGuideVector.x, -startGuideVector.y);
 		const startEdgePoint = this.getMinShapeEdgePoint(startBounds, startGuideVector);
 		const endEdgePoint = this.getMinShapeEdgePoint(endBounds, endGuideVector);
 
@@ -1044,7 +1056,7 @@
 		}
 	};
 
-	BaseAlgorithm.prototype.getParametricLin = function (startPoint, guideVector) {
+	BaseAlgorithm.prototype.getParametricLinEquation = function (startPoint, guideVector) {
 		return {
 			x: startPoint.x,
 			ax: guideVector.x,
@@ -1060,17 +1072,17 @@
 		const ch = height / 2;
 		const cx = cw + bounds.l;
 		const cy = ch + bounds.t;
-		const line = this.getParametricLin(shapePoint, guideVector);
+		const line = this.getParametricLinEquation(shapePoint, guideVector);
 
 		const px = line.ax;
 		const py = line.ay;
 		const x1 = line.x;
 		const y1 = line.y;
-		const b2 = ch * ch;
-		const a2 = cw * cw;
-		const a = b2 * px * px + a2 * py * py;
-		const b = 2 * ch * px * (ch * x1 - cy) + 2 * cw * py * (cw * y1 - cx);
-		const c = b2 * x1 * x1 + a2 * y1 * y1 - 2 * ch * cy * x1 - 2 * cw * cx * y1 + a2 * cx * cx + b2 * cy * cy - a2 * b2;
+		const ch2 = ch * ch;
+		const cw2 = cw * cw;
+		const a = ch2 * px * px + cw2 * py * py;
+		const b = 2 * ch2 * px * (x1 - cy) + 2 * cw2 * py * (y1 - cx);
+		const c = ch2 * x1 * x1 + cw2 * y1 * y1 - 2 * ch2 * cy * x1 - 2 * cw2 * cx * y1 + cw2 * cx * cx + ch2 * cy * cy - cw2 * ch2;
 		const answer = AscFormat.fSolveQuadraticEquation(a, b, c);
 		if (answer.bError) {
 			return null;
@@ -1080,27 +1092,27 @@
 		const xt1 = x1 + px * answer.x1;
 		const yt1 = y1 + py * answer.x1;
 
-		let edgeAngles = this.getGuideAngles({x: xt1 - shapePoint.x, y: yt1 - shapePoint.y});
+		let edgeAngles = this.getGuideAngles(new CVector(xt1 - shapePoint.x, yt1 - shapePoint.y));
 		if (AscFormat.fApproxEqual(edgeAngles.xAngle, angles.xAngle, algDelta) && AscFormat.fApproxEqual(edgeAngles.yAngle, angles.yAngle, algDelta)) {
-			return {x: xt1, y: yt1};
+			return new CCoordPoint(xt1, yt1);
 		}
 
 		const xt2 = x1 + px * answer.x2;
 		const yt2 = y1 + py * answer.x2;
 
-		edgeAngles = this.getGuideAngles({x: xt2 - shapePoint.x, y: yt2 - shapePoint.y});
+		edgeAngles = this.getGuideAngles(new CVector(xt2 - shapePoint.x, yt2 - shapePoint.y));
 		if (AscFormat.fApproxEqual(edgeAngles.xAngle, angles.xAngle, algDelta) && AscFormat.fApproxEqual(edgeAngles.yAngle, angles.yAngle, algDelta)) {
-			return {x: xt2, y: yt2};
+			return new CCoordPoint(xt2, yt2);
 		}
 	};
 	BaseAlgorithm.prototype.getMinRectEdgePoint = function (bounds, guideVector) {
 		const shapePoint = this.getShapePoint(bounds);
 		const centerAngles = this.getGuideAngles(guideVector);
 		let checkEdges = [
-			[{x: bounds.l, y: bounds.t}, {x: bounds.r, y: bounds.t}],
-			[{x: bounds.r, y: bounds.t}, {x: bounds.r, y: bounds.b}],
-			[{x: bounds.l, y: bounds.t}, {x: bounds.l, y: bounds.b}],
-			[{x: bounds.l, y: bounds.b}, {x: bounds.r, y: bounds.b}]
+			[new CCoordPoint(bounds.l, bounds.t), new CCoordPoint(bounds.r, bounds.t)],
+			[new CCoordPoint(bounds.r, bounds.t), new CCoordPoint(bounds.r, bounds.b)],
+			[new CCoordPoint(bounds.l, bounds.t), new CCoordPoint(bounds.l, bounds.b)],
+			[new CCoordPoint(bounds.l, bounds.b), new CCoordPoint(bounds.r, bounds.b)]
 		];
 		for (let i = 0; i < checkEdges.length; i += 1) {
 			const edge = checkEdges[i];
@@ -1115,8 +1127,8 @@
 		}
 	};
 	BaseAlgorithm.prototype.getRectEdgePoint = function (linePoint, guideVector, rectEdgePoint1, rectEdgePoint2) {
-		const line1 = this.getParametricLin(linePoint, guideVector);
-		const line2 = this.getParametricLin(rectEdgePoint1, {x: rectEdgePoint2.x - rectEdgePoint1.x, y: rectEdgePoint2.y - rectEdgePoint1.y});
+		const line1 = this.getParametricLinEquation(linePoint, guideVector);
+		const line2 = this.getParametricLinEquation(rectEdgePoint1, new CVector(rectEdgePoint2.x - rectEdgePoint1.x, rectEdgePoint2.y - rectEdgePoint1.y));
 		const divider = line1.ay * line2.ax - line1.ax * line2.ay;
 		if (divider === 0) {
 			return null;
@@ -1126,7 +1138,7 @@
 		const y = line2.y + line2.ay * parameter;
 		if (((x > rectEdgePoint1.x && x < rectEdgePoint2.x) || AscFormat.fApproxEqual(x, rectEdgePoint2.x, algDelta))
 			&& ((y > rectEdgePoint1.y && y < rectEdgePoint2.y) || AscFormat.fApproxEqual(y, rectEdgePoint2.y, algDelta))) {
-			return {x: x, y: y};
+			return new CCoordPoint(x, y);
 		}
 		return null;
 	}
@@ -1154,7 +1166,7 @@
 
 	};
 	BaseAlgorithm.prototype.afterShape = function (smartartAlgorithm) {};
-	BaseAlgorithm.prototype.afterLayoutNode = function (smartartAlgorithm) {};
+	BaseAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm) {};
 	BaseAlgorithm.prototype.setParams = function (params) {
 		this.initParams(params);
 	};
@@ -1213,8 +1225,97 @@
 	function PositionAlgorithm() {
 		BaseAlgorithm.call(this);
 		this.connector = null;
+		this.shapeContainer = null;
 	}
 	AscFormat.InitClassWithoutType(PositionAlgorithm, BaseAlgorithm);
+	PositionAlgorithm.prototype.applyOffsetByParents = function () {
+		this.shapeContainer.calcMetrics();
+		this.shapeContainer.forEachShape(function (shape) {
+			const node = shape.node;
+			node.forEachDes(function (node) {
+				const parentNode = node.parent;
+				const parentShape = parentNode.shape;
+				const shape = node.shape;
+				if (parentShape && shape) {
+					shape.x += parentShape.x;
+					shape.y += parentShape.y;
+				}
+			});
+		});
+	};
+	PositionAlgorithm.prototype.getShapes = function (smartartAlgorithm) {
+		smartartAlgorithm.applyColorsDef();
+		const shapes = [];
+
+		this.shapeContainer.forEachShape(function (shape) {
+			const nodes = [shape.node];
+			while (nodes.length) {
+				const node = nodes.pop();
+				const shape = node.shape;
+				const editorShape = shape && shape.getEditorShape();
+				if (editorShape) {
+					shapes.push(editorShape);
+				}
+				for (let i = node.childs.length - 1; i >= 0; i -= 1) {
+					nodes.push(node.childs[i]);
+				}
+			}
+		});
+		return shapes;
+	};
+	PositionAlgorithm.prototype.applyPostAlgorithmSettings = function () {
+		const oThis = this;
+		this.shapeContainer.forEachShape(function (shadowShape) {
+			const node = shadowShape.node;
+			node.forEachDesOrSelf(function (chNode) {
+				const prSet = chNode.getPrSet();
+				const shape = chNode.shape;
+				oThis.applyPostAlgorithmSettingsForShape(shape, prSet);
+			});
+		});
+	};
+	PositionAlgorithm.prototype.applyConstraintOffset = function () {
+		const parentNode = this.parentNode;
+		const width = parentNode.constr[AscFormat.Constr_type_w];
+		const ctrX = parentNode.constr[AscFormat.Constr_type_ctrX];
+		let offX = 0;
+		let offY = 0;
+		if (ctrX !== undefined) {
+			offX = ctrX - width / 2;
+		}
+		this.shapeContainer.forEachShape(function (shape) {
+			const node = shape.node;
+			node.forEachDes(function (node) {
+				const shape = node.shape;
+				if (shape) {
+					shape.x += offX;
+					shape.y += offY;
+				}
+			});
+		});
+	};
+	PositionAlgorithm.prototype.applyParamOffsets = function () {
+		switch (this.params[AscFormat.Param_type_off]) {
+			case AscFormat.ParameterVal_offset_ctr:
+				this.applyCenterAlign();
+				break;
+			default:
+				break;
+		}
+	};
+
+	PositionAlgorithm.prototype.applyCenterAlign = function () {
+		const parentConstraints = this.getNodeConstraints(this.parentNode);
+		const parentWidth = parentConstraints.width;
+		const parentHeight = parentConstraints.height;
+
+		this.shapeContainer.applyCenterAlign(parentHeight, parentWidth);
+		const oThis = this;
+		this.shapeContainer.forEachShape(function (shadowShape) {
+			const node = shadowShape.node;
+			oThis.applyAligns(node);
+		});
+	};
 
 	PositionAlgorithm.prototype.setConnections = function (nodes) {
 		for (let i = 0; i < nodes.length; i++) {
@@ -1270,7 +1371,6 @@
 
 	function SnakeAlgorithm() {
 		PositionAlgorithm.call(this);
-		this.rows = null;
 	}
 
 	AscFormat.InitClassWithoutType(SnakeAlgorithm, PositionAlgorithm);
@@ -1283,34 +1383,6 @@
 			this.params[AscFormat.Param_type_grDir] = AscFormat.ParameterVal_growDirection_tL;
 		}
 	};
-	SnakeAlgorithm.prototype.getShapes = function (smartartAlgorithm) {
-		smartartAlgorithm.applyColorsDef();
-		const shapes = [];
-		if (this.rows) {
-			for (let i = 0; i < this.rows.rows.length; i += 1) {
-				const row = this.rows.rows[i];
-				for (let j = 0; j < row.row.length; j += 1) {
-					const shShape = row.row[j];
-					const node = shShape.node;
-					const nodes = [node];
-					while (nodes.length) {
-						const shapeNode = nodes.pop();
-						const shadowShape = shapeNode.shape;
-						if (shadowShape) {
-							const editorShape = shadowShape.getEditorShape();
-							if (editorShape) {
-								shapes.push(editorShape);
-							}
-						}
-						for (let k = shapeNode.childs.length - 1; k >= 0; k -= 1) {
-							nodes.push(shapeNode.childs[k]);
-						}
-					}
-				}
-			}
-		}
-		return shapes;
-	}
 	SnakeAlgorithm.prototype.getStartValues = function (node) {
 		const oRes = {coefficient: 1, width: 0, height: 0, prSpace: 0};
 		if (node) {
@@ -1332,7 +1404,6 @@
 
 	SnakeAlgorithm.prototype.calculateRowScaleCoefficient = function () {
 		const oThis = this;
-
 		const root = this.parentNode;
 		const parentConstraints = this.getNodeConstraints(root);
 		const parentWidth = parentConstraints.width;
@@ -1418,7 +1489,7 @@
 		}
 	};
 
-	SnakeAlgorithm.prototype.afterLayoutNode = function () {
+	SnakeAlgorithm.prototype.calculateShapePositions = function () {
 		this.nodes = this.parentNode.childs.slice();
 		if (this.nodes[this.nodes.length - 1].node.isSibNode()) {
 			this.nodes.pop();
@@ -1499,7 +1570,7 @@
 			}
 		}
 		rows.calcMetrics();
-		this.rows = rows;
+		this.shapeContainer = rows;
 
 		rows.forEachShape(function (shape) {
 			const node = shape.node;
@@ -1516,49 +1587,85 @@
 		this.applyParamOffsets();
 		this.applyPostAlgorithmSettings();
 	};
-	SnakeAlgorithm.prototype.applyParamOffsets = function () {
-
-		switch (this.params[AscFormat.Param_type_off]) {
-			case AscFormat.ParameterVal_offset_ctr:
-				this.applyCenterAlign();
-				break;
-			default:
-				break;
-		}
-	}
 
 	SnakeAlgorithm.prototype.applyCenterAlign = function () {
 		const parentConstraints = this.getNodeConstraints(this.parentNode);
 		const parentWidth = parentConstraints.width;
 		const parentHeight = parentConstraints.height;
 
-		this.rows.applyCenterAlign(parentHeight, parentWidth);
+		this.shapeContainer.applyCenterAlign(parentHeight, parentWidth);
 		const oThis = this;
-		this.rows.forEachShape(function (shadowShape) {
+		this.shapeContainer.forEachShape(function (shadowShape) {
 			const node = shadowShape.node;
 			oThis.applyAligns(node);
 		});
 	};
 
-	SnakeAlgorithm.prototype.applyPostAlgorithmSettings = function () {
-		const oThis = this;
-		this.rows.forEachShape(function (shadowShape) {
-			const node = shadowShape.node;
-			node.forEachDesOrSelf(function (chNode) {
-				const prSet = chNode.getPrSet();
-				const shape = chNode.shape;
-				oThis.applyPostAlgorithmSettingsForShape(shape, prSet);
-			});
-		});
-	}
-
-	function ShapeRows() {
-		this.rows = [];
+	function ShapeContainer() {
 		this.width = 0;
 		this.height = 0;
-		this.x = 0;
-		this.y = 0;
 	}
+	ShapeContainer.prototype.forEachShape = function () {
+	};
+	ShapeContainer.prototype.applyCenterAlign = function (parentHeight, parentWidth) {
+	};
+
+	function ShapeCycle() {
+		ShapeContainer.call(this)
+		this.shapes = [];
+	}
+	AscFormat.InitClassWithoutType(ShapeCycle, ShapeContainer);
+	ShapeCycle.prototype.push = function (shape) {
+		this.shapes.push(shape);
+	};
+	ShapeCycle.prototype.forEachShape = function (callback) {
+		for (let i = 0; i < this.shapes.length; i += 1) {
+			callback(this.shapes[i]);
+		}
+	}
+	ShapeCycle.prototype.calcMetrics = function () {
+		const firstShape = this.shapes[0];
+		if (firstShape) {
+			const bounds = {l: firstShape.x, t: firstShape.y, r: firstShape.x + firstShape.w, b: firstShape.y + firstShape.h};
+			for (let i = 1; i < this.shapes.length; i += 1) {
+				const shape = this.shapes[i];
+				if (shape.x < bounds.l) {
+					bounds.l = shape.x;
+				}
+				if (shape.y < bounds.t) {
+					bounds.t = shape.y;
+				}
+
+				const b = shape.y + shape.h;
+				if (b > bounds.b) {
+					bounds.b = b;
+				}
+
+				const r = shape.x + shape.w;
+				if (r > bounds.r) {
+					bounds.r = r;
+				}
+			}
+			this.width = bounds.r - bounds.l;
+			this.height = bounds.b - bounds.t;
+		}
+	};
+	ShapeCycle.prototype.applyCenterAlign = function (parentHeight, parentWidth) {
+		const offY = (parentHeight - this.height) / 2;
+		const offX = (parentWidth - this.width) / 2;
+		for (let i = 0; i < this.shapes.length; i++) {
+			const shape = this.shapes[i];
+			const node = shape.node;
+			node.moveTo(offX, offY);
+		}
+	};
+
+
+	function ShapeRows() {
+		ShapeContainer.call(this);
+		this.rows = [];
+	}
+	AscFormat.InitClassWithoutType(ShapeRows, ShapeContainer);
 
 	ShapeRows.prototype.push = function (elem) {
 		this.rows.push(elem);
@@ -1615,79 +1722,145 @@
 
 	function CycleAlgorithm() {
 		PositionAlgorithm.call(this);
+		this.calcValues = {
+			radius: 0,
+			startAngle: 0,
+			stepAngle: 0
+		};
 	}
-	AscFormat.InitClassWithoutType(LinearAlgorithm, PositionAlgorithm);
+	AscFormat.InitClassWithoutType(CycleAlgorithm, PositionAlgorithm);
 	CycleAlgorithm.prototype.initParams = function (params) {
-		PositionAlgorithm.prototype.call(this, params);
+		PositionAlgorithm.prototype.initParams.call(this, params);
 		if (this.params[AscFormat.Param_type_stAng] === undefined) {
 			this.params[AscFormat.Param_type_stAng] = 0;
 		}
 		if (this.params[AscFormat.Param_type_spanAng] === undefined) {
 			this.params[AscFormat.Param_type_spanAng] = 360;
 		}
+		if (this.params[AscFormat.Param_type_off] === undefined) {
+			this.params[AscFormat.Param_type_off] = AscFormat.ParameterVal_offset_ctr;
+		}
 	}
 	CycleAlgorithm.prototype.calcScaleCoefficients = function () {
 		const spanAngle = this.params[AscFormat.Param_type_spanAng];
-		const startAngle = this.params[AscFormat.Param_type_stAng];
-		if (spanAngle > startAngle) {
-			this.calcClockwiseScaleCoefficient();
-		} else {
-			this.calcAntiClockwiseScaleCoefficient();
-		}
-	};
-
-
-	CycleAlgorithm.prototype.calcClockwiseScaleCoefficient = function () {
-		const spanAngle = this.params[AscFormat.Param_type_spanAng];
-		const startAngle = this.params[AscFormat.Param_type_stAng] * degToRad;
+		const startAngle = AscFormat.normalizeRotate(this.params[AscFormat.Param_type_stAng] * degToRad);
 
 		const childs = this.parentNode.childs;
-		const mainElements = [];
+		const mainElementsBounds = [];
 		for (let i = 0; i < childs.length; i += 1) {
 			const child = childs[i];
 			if (!child.isSibNode()) {
-				mainElements.push(child);
+				mainElementsBounds.push(this.getCleanNodeBounds(child));
 			}
 		}
 
 		let stepAngle;
 		if (Math.abs(spanAngle) === 360) {
-			stepAngle = (spanAngle / mainElements.length) * degToRad;
+			stepAngle = (spanAngle / mainElementsBounds.length) * degToRad;
 		} else {
-			stepAngle = (spanAngle / (mainElements.length - 1)) * degToRad;
+			stepAngle = (spanAngle / (mainElementsBounds.length - 1)) * degToRad;
 		}
 
-		const parentConstraints = this.getNodeConstraints(this.parentNode);
-		const firstNodeConstraints = this.getNodeConstraints(childs[0]);
-		let coefficient = 1;
-		let currentAngle = startAngle;
+		let previousAngle = startAngle;
+		let currentAngle = AscFormat.normalizeRotate(startAngle + stepAngle);
 		const divider = Math.sqrt(2 * (1 - Math.cos(Math.abs(stepAngle))));
 		const sibSp = this.parentNode.constr[AscFormat.Constr_type_sibSp];
 		let maxRadius = 0;
-		let previousElement;
-		let previousBounds;
-		for (let i = 1; i < mainElements.length; i++) {
-			const currentElement = this.get
-			const prAngle = currentAngle;
-			currentAngle += stepAngle;
-			const guideVector = this.getDiffGuideVector(prAngle, currentAngle);
-			const currentBounds = this.getCleanNodeBounds(currentElement);
-			const currentEdgePoint = this.getMinShapeEdgePoint(currentBounds, guideVector);
-			const previousEdgePoint = this.getMinShapeEdgePoint(previousBounds, {x: -guideVector.x, y: -guideVector.y});
-			if (currentEdgePoint && previousEdgePoint) {
-				const currentShapePoint = this.getShapePoint(currentBounds);
-				const previousShapePoint = this.getShapePoint(previousBounds);
-				const currentVector = currentShapePoint.getVector(currentEdgePoint);
-				const previousVector = previousShapePoint.getVector(previousEdgePoint);
-				const previousDistance = previousVector.getDistance();
-				const currentDistance = currentVector.getDistance();
+		if (divider !== 0) {
+			let previousBounds = mainElementsBounds[0];
+			for (let i = 1; i < mainElementsBounds.length; i++) {
+				const currentBounds = mainElementsBounds[i];
+				const guideVector = this.getDiffGuideVector(previousAngle, currentAngle);
+				const currentEdgePoint = this.getMinShapeEdgePoint(currentBounds, guideVector);
+				const previousEdgePoint = this.getMinShapeEdgePoint(previousBounds, {x: -guideVector.x, y: -guideVector.y});
+				if (currentEdgePoint && previousEdgePoint) {
+					const currentShapePoint = this.getShapePoint(currentBounds);
+					const previousShapePoint = this.getShapePoint(previousBounds);
+					const currentVector = currentShapePoint.getVector(currentEdgePoint);
+					const previousVector = previousShapePoint.getVector(previousEdgePoint);
+					const previousDistance = previousVector.getDistance();
+					const currentDistance = currentVector.getDistance();
 
-				const radius = (sibSp + previousDistance + currentDistance) / divider;
-				if (radius > maxRadius) {
-					maxRadius = radius;
+					const radius = (sibSp + previousDistance + currentDistance) / divider;
+					if (radius > maxRadius) {
+						maxRadius = radius;
+					}
+				}
+				previousAngle = currentAngle;
+				currentAngle = AscFormat.normalizeRotate(currentAngle + stepAngle);
+			}
+		}
+		currentAngle = startAngle;
+		const parentConstraints = this.getNodeConstraints(this.parentNode);
+		const cycleBounds = {l: 0, r: 0, t: 0, b: 0};
+		for (let i = 0; i < mainElementsBounds.length; i++) {
+			const radiusVector = this.getGuideVectorByAngle(currentAngle);
+			radiusVector.multiply(maxRadius);
+			const currentBounds = mainElementsBounds[i];
+			const halfWidth = (currentBounds.r - currentBounds.l) / 2;
+			const halfHeight = (currentBounds.b - currentBounds.t) / 2;
+			const newL = radiusVector.x - halfWidth;
+			const newR = radiusVector.x + halfWidth;
+			const newT = radiusVector.y - halfHeight;
+			const newB = radiusVector.y + halfHeight;
+
+			if (newL < cycleBounds.l) {
+				cycleBounds.l = newL;
+			}
+			if (newT < cycleBounds.t) {
+				cycleBounds.t = newT;
+			}
+			if (newR > cycleBounds.r) {
+				cycleBounds.r = newR;
+			}
+			if (newB > cycleBounds.b) {
+				cycleBounds.b = newB;
+			}
+
+			currentAngle = AscFormat.normalizeRotate(currentAngle + stepAngle);
+		}
+
+		const cycleHeight = cycleBounds.b - cycleBounds.t;
+		const cycleWidth = cycleBounds.r - cycleBounds.l;
+		const coefficient = Math.min(1, parentConstraints.width / cycleWidth, parentConstraints.height / cycleHeight);
+		this.calcValues.radius = maxRadius * coefficient;
+		for (let i = 0; i < this.parentNode.childs.length; i++) {
+			const child = this.parentNode.childs[i];
+			child.setWidthScaleConstrCoefficient(coefficient);
+			child.setHeightScaleConstrCoefficient(coefficient);
+		}
+	};
+	CycleAlgorithm.prototype.calculateShapePositions = function () {
+		const childs = this.parentNode.childs;
+		const radius = this.calcValues.radius;
+		let currentAngle = this.calcValues.startAngle;
+		const stepAngle = this.calcValues.stepAngle;
+		const parentConstraints = this.getNodeConstraints(this.parentNode);
+		const parentCX = parentConstraints.width / 2;
+		const parentCY = parentConstraints.height / 2;
+		const container = new ShapeCycle();
+		for (let i = 0; i < childs.length; i++) {
+			const child = childs[i];
+			if (!child.isSibNode()) {
+				const shape = child.shape;
+				if (shape) {
+					const radiusGuideVector = this.getGuideVectorByAngle(currentAngle);
+					radiusGuideVector.multiply(radius);
+					const offX = radiusGuideVector.x + parentCX - shape.cleanParams.w / 2;
+					const offY = radiusGuideVector.y + parentCY - shape.cleanParams.h / 2;
+					shape.x += offX;
+					shape.y += offY;
+					currentAngle += stepAngle;
+					container.push(shape);
 				}
 			}
 		}
+		this.shapeContainer = container;
+		this.applyOffsetByParents();
+		this.applyParamOffsets();
+		this.applyConstraintOffset();
+		this.applyPostAlgorithmSettings();
+		this.setConnections(childs);
 	};
 
 	CycleAlgorithm.prototype.getCleanNodeBounds = function (node) {
@@ -1695,7 +1868,7 @@
 		const height = node.getConstr(AscFormat.Constr_type_h);
 		const x = node.getConstr(AscFormat.Constr_type_l);
 		const y = node.getConstr(AscFormat.Constr_type_t);
-		const isEllipse = this.layoutInfo.shape.type === AscFormat.LayoutShapeType_shapeType_ellipse;
+		const isEllipse = node.layoutInfo.shape.type === AscFormat.LayoutShapeType_shapeType_ellipse;
 		return {
 			l: x,
 			t: y,
@@ -1704,18 +1877,18 @@
 			isEllipse: isEllipse
 		};
 	}
+
+	CycleAlgorithm.prototype.getGuideVectorByAngle = function (xAngle) {
+		const yAngle = Math.PI / 2 - xAngle;
+		return new CVector(Math.cos(xAngle), Math.cos(yAngle));
+	}
 	CycleAlgorithm.prototype.getDiffGuideVector = function (xPreviousAngle, xCurrentAngle) {
-		const yPreviousAngle = Math.PI / 2 - xPreviousAngle;
-		const yCurrentAngle = Math.PI / 2 - xCurrentAngle;
+		const previousVector = this.getGuideVectorByAngle(xPreviousAngle);
+		const currentVector =  this.getGuideVectorByAngle(xCurrentAngle);
 
-		const previousVector = {x: Math.cos(xPreviousAngle), y: Math.cos(yPreviousAngle)};
-		const currentVector = {x: Math.cos(xCurrentAngle), y: Math.cos(yCurrentAngle)};
-
-		return {x: currentVector.x - previousVector.x, y: currentVector.y - currentVector.x};
+		return currentVector.diff(previousVector);
 	};
-	CycleAlgorithm.prototype.calcAntiClockwiseScaleCoefficient = function () {
 
-	};
 	function LinearAlgorithm() {
 		PositionAlgorithm.call(this);
 		this.isLastSib = false;
@@ -1731,28 +1904,8 @@
 			this.params[AscFormat.Param_type_off] = AscFormat.ParameterVal_offset_ctr;
 		}
 	}
-	LinearAlgorithm.prototype.applyConstraintOffset = function () {
-		const parentNode = this.parentNode;
-		const width = parentNode.constr[AscFormat.Constr_type_w];
-		const ctrX = parentNode.constr[AscFormat.Constr_type_ctrX];
-		let offX = 0;
-		let offY = 0;
-		if (ctrX !== undefined) {
-			offX = ctrX - width / 2;
-		}
-			this.rows.forEachShape(function (shape) {
-				const node = shape.node;
-				node.forEachDes(function (node) {
-					const shape = node.shape;
-					if (shape) {
-						shape.x += offX;
-						shape.y += offY;
-					}
-				});
-			});
-	};
 
-	LinearAlgorithm.prototype.afterLayoutNode = function () {
+	LinearAlgorithm.prototype.calculateShapePositions = function () {
 		if (this.params[AscFormat.Param_type_linDir] === AscFormat.ParameterVal_linearDirection_fromL) {
 			this.calculateRowLinear();
 		}
@@ -1827,81 +1980,13 @@
 			}
 		}
 		row.cleanHeight = row.height;
-		this.rows = rows;
-		rows.calcMetrics();
-		this.rows.forEachShape(function (shape) {
-			const node = shape.node;
-			node.forEachDes(function (node) {
-				const parentNode = node.parent;
-				const parentShape = parentNode.shape;
-				const shape = node.shape;
-				if (parentShape && shape) {
-					shape.x += parentShape.x;
-					shape.y += parentShape.y;
-				}
-			});
-		});
+		this.shapeContainer = rows;
+		this.applyOffsetByParents();
 		this.applyParamOffsets();
 		this.applyConstraintOffset();
 		this.applyPostAlgorithmSettings();
 		this.setConnections(childs);
 	}
-
-	LinearAlgorithm.prototype.getShapes = function (smartartAlgorithm) {
-		smartartAlgorithm.applyColorsDef();
-		const shapes = [];
-
-		this.rows.forEachShape(function (shape) {
-			const nodes = [shape.node];
-			while (nodes.length) {
-				const node = nodes.pop();
-				const shape = node.shape;
-				const editorShape = shape && shape.getEditorShape();
-				if (editorShape) {
-					shapes.push(editorShape);
-				}
-				for (let i = node.childs.length - 1; i >= 0; i -= 1) {
-					nodes.push(node.childs[i]);
-				}
-			}
-		});
-		return shapes;
-	};
-
-	LinearAlgorithm.prototype.applyPostAlgorithmSettings = function () {
-		const oThis = this;
-		this.rows.forEachShape(function (shadowShape) {
-			const node = shadowShape.node;
-			node.forEachDesOrSelf(function (chNode) {
-				const prSet = chNode.getPrSet();
-				const shape = chNode.shape;
-				oThis.applyPostAlgorithmSettingsForShape(shape, prSet);
-			});
-		});
-	}
-
-	LinearAlgorithm.prototype.applyParamOffsets = function () {
-		const parentConstraints = this.getNodeConstraints(this.parentNode);
-		switch (this.params[AscFormat.Param_type_off]) {
-			case AscFormat.ParameterVal_offset_ctr:
-				this.applyCenterAlign();
-				break;
-			default:
-				break;
-		}
-	}
-	LinearAlgorithm.prototype.applyCenterAlign = function () {
-		const parentConstraints = this.getNodeConstraints(this.parentNode);
-		const parentWidth = parentConstraints.width;
-		const parentHeight = parentConstraints.height;
-
-		this.rows.applyCenterAlign(parentHeight, parentWidth);
-		const oThis = this;
-		this.rows.forEachShape(function (shadowShape) {
-			const node = shadowShape.node;
-			oThis.applyAligns(node);
-		});
-	};
 
 	function ConnectorAlgorithm() {
 		BaseAlgorithm.call(this);
@@ -1922,7 +2007,7 @@
 		}
 	};
 
-	ConnectorAlgorithm.prototype.afterLayoutNode = function (presNode, smartartAlgorithm) {
+	ConnectorAlgorithm.prototype.calculateShapePositions = function (presNode, smartartAlgorithm) {
 		presNode.createShadowShape();
 		smartartAlgorithm.addConnectorAlgorithm(this);
 	}
@@ -2037,7 +2122,7 @@
 	}
 	AscFormat.InitClassWithoutType(SpaceAlgorithm, BaseAlgorithm);
 	
-	SpaceAlgorithm.prototype.afterLayoutNode = function (presNode) {
+	SpaceAlgorithm.prototype.calculateShapePositions = function (presNode) {
 		presNode.createShadowShape();
 	}
 
@@ -2047,7 +2132,7 @@
 
 	AscFormat.InitClassWithoutType(TextAlgorithm, BaseAlgorithm);
 
-	TextAlgorithm.prototype.afterLayoutNode = function (presNode) {
+	TextAlgorithm.prototype.calculateShapePositions = function (presNode) {
 		presNode.createShadowShape();
 	};
 
@@ -2059,7 +2144,7 @@
 	CompositeAlgorithm.prototype.calcScaleCoefficients = function () {
 		this.parentNode.calcNodeConstraints(true);
 	};
-	CompositeAlgorithm.prototype.afterLayoutNode = function (presNode) {
+	CompositeAlgorithm.prototype.calculateShapePositions = function (presNode) {
 		presNode.createShadowShape(true);
 		presNode.shape.isSpacing = false;
 	};
@@ -2513,7 +2598,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 
 	PresNode.prototype.startAlgorithm = function (smartartAlgorithm) {
 		if (this.algorithm) {
-			this.algorithm.afterLayoutNode(this, smartartAlgorithm);
+			this.algorithm.calculateShapePositions(this, smartartAlgorithm);
 		}
 	}
 

@@ -3881,6 +3881,8 @@ Because of this, the display is sometimes not correct.
 					}
 					return arrResult;
 				case Param_type_ar:
+				case Param_type_spanAng:
+				case Param_type_stAng:
 					return parseFloat(this.val);
 				default:
 					return this.val;
