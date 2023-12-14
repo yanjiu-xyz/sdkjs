@@ -1181,7 +1181,7 @@ function (window, undefined) {
 			if (cElementType.cell !== pivot_table_ref.type && cElementType.cell3D !== pivot_table_ref.type && cElementType.cellsRange !== pivot_table_ref.type && cElementType.cellsRange3D !== pivot_table_ref.type) {
 				return refError;
 			}
-	
+
 			let bbox = pivot_table_ref.getBBox0(),
 				operationTypes = Asc.c_oAscDataConsolidateFunction, result;
 
@@ -1189,7 +1189,10 @@ function (window, undefined) {
 			//todo
 			let pivotTable = pivotTables[0];
 			if (pivotTable) {
-				let cell = pivotTable.getCellByGetPivotDataParams({dataFieldName: looking_field, optParams: prepareItemsArray(items_array)});
+				let cell = pivotTable.getCellByGetPivotDataParams({
+					dataFieldName: looking_field,
+					optParams: prepareItemsArray(items_array)
+				});
 				if (cell) {
 					res = new cRef(ws.getCell3(cell.row, cell.col).getName(), ws);
 					return res.tocNumber();
@@ -1252,7 +1255,7 @@ function (window, undefined) {
 							// Необходимо доставать пары элементов из массива items_array и затем вернуть значение из таблицы, в зависимости от этих данных
 							// Пара элементов это имя поля и одно из значений в нем
 							// С помощью них нужно найти персечения в таблице и вернуть значение grandTotal(если такое существует для данного пересечения)
-							
+
 							result = rowColData.dataRow.total[i][lookingOperationType.toLowerCase()];
 							// todo
 							// result = getGrandTotalOnSeveralFields(fieldName, items_array);  
@@ -1264,7 +1267,7 @@ function (window, undefined) {
 			}
 
 			return refError;
-		}
+		};
 
 		const prepareItemsArray = function (array) {
 			let resArr = [];
@@ -1277,7 +1280,7 @@ function (window, undefined) {
 			}
 
 			return resArr;
-		}
+		};
 
 		const t = this;
 		let arg0 = arg[0], arg1 = arg[1], arg2 = arg.slice(2);
@@ -1288,7 +1291,7 @@ function (window, undefined) {
 			if (cElementType.cellsRange === arg0.type || cElementType.cellsRange3D === arg0.type) {
 				return refError;
 			}
-	
+
 			if (cElementType.array === arg0.type) {
 				if (!arg0.isOneElement()) {
 					let resArr = new cArray();
@@ -1296,7 +1299,7 @@ function (window, undefined) {
 						if (!resArr.array[r]) {
 							resArr.addRow();
 						}
-	
+
 						let looking_data_field = elem.tocString();
 						if (cElementType.error === looking_data_field.type) {
 							// return arg0;
@@ -1306,25 +1309,25 @@ function (window, undefined) {
 							resArr.addElement(getPivotData(looking_data_field.getValue(), arg1, arg));
 						}
 					});
-	
+
 					return resArr;
 				}
 				arg0 = arg0.getFirstElement();
 			}
-	
+
 			arg0 = arg0.tocString();
 			if (cElementType.error === arg0.type) {
 				return arg0;
 			}
-	
+
 			res = getPivotData(arg0.getValue(), arg1, arg2);
 		}
-		
+
 		// добавить пересчет функции при изменении видимости любого из полей таблицы
 		if (res) {
 			return res
 		}
-		
+
 		return refError;
 	};
 
