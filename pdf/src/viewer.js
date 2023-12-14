@@ -786,6 +786,18 @@
 			let standardFonts = this.file.nativeFile["getInteractiveFormsStandardFonts"]();
 			let embeddedFonts = this.file.nativeFile["getInteractiveFormsEmbeddedFonts"]();
 			AscFonts.initEmbeddedFonts(standardFonts.concat(embeddedFonts));
+
+			var _nativeFile = this.file.nativeFile;
+			AscFonts.loadEmbeddedFont = function(id)
+			{
+				let prefix = AscFonts.getEmbeddedFontPrefix();
+				if (id.startsWith(prefix))
+					id = id.substr(prefix.length);
+
+				return _nativeFile["getFontByID"](id);
+			}
+
+			g_fontApplication.GetFontInfo = g_fontApplication.GetFontInfoWithEmbed;
 			
 			AscCommon.g_oIdCounter.Set_Load(false); // to do возможно не тут стоит выключать флаг
 		};

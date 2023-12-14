@@ -220,13 +220,14 @@
         if (this.Status === 0 || this.Status === 1)
             return true;
 
-        let fontData = AscFonts["loadEmbeddedFont"](this.Id);
+        let fontData = AscFonts.loadEmbeddedFont(this.Id);
         if (fontData)
         {
             let stream_index = g_fonts_streams.length;
             g_fonts_streams[stream_index] = new AscFonts.FontStream(fontData, fontData.length);
             this.SetStreamIndex(stream_index);
             this.Status = 0;
+            AscFonts.CreateNativeStreamByIndex(stream_index);
         }
         else
         {
@@ -710,6 +711,7 @@
     window['AscFonts'].checkAllFonts = checkAllFonts;
 
     window['AscFonts'].g_font_infos_embed = [];
+    window['AscFonts'].g_map_font_index_embed = {};
 
 
     window['AscFonts'].getEmbeddedFontPrefix = function()
@@ -733,6 +735,7 @@
             let name = prefix + fonts[i];
             AscFonts.g_font_files.push(new CFontFileLoaderEmbed(name));
             AscFonts.g_font_infos_embed.push(new CFontInfoEmbed(name, currentIndex++));
+            AscFonts.g_map_font_index_embed[name] = i;
         }
     };
 
