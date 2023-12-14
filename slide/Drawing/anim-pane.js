@@ -1048,38 +1048,50 @@
 	function CScrollBase(oParentControl, oContainer, oChild) {
 		CControlContainer.call(this, oParentControl);
 
-		// Left or top button
-		this.addControl(new CButton(this));
-		// Right or bottom button
-		this.addControl(new CButton(this));
+		this.container = oContainer;
+		this.scrolledChild = oChild;
 
-		// Scroller
-		this.scroller = this.addControl(new CButton(this));
+		this.startButton = this.addControl(new CButton(this));
+		this.endButton = this.addControl(new CButton(this));
 
 		this.timerId = null;
 		this.timeoutId = null;
 
-		this.container = oContainer;
-		this.scrolledChild = oChild;
 		this.scrollOffset = 0;
 		this.tmpScrollOffset = null;
+
 		this.startScrollerPos = null;
 		this.startScrollTop = null;
 	}
 
 	InitClass(CScrollBase, CControlContainer, CONTROL_TYPE_UNKNOWN);
 
-	// С этими методами разобрался
-	CScrollBase.prototype.limitScrollOffset = function () {
-		this.scrollOffset = Math.max(0, Math.min(this.scrollOffset, this.getMaxScrollOffset()));
+	CScrollBase.prototype.limitScrollOffset = function (offsetValue /* in millimeters */) {
+		return Math.max(0, Math.min(offsetValue, this.getMaxScrollOffset()));
 	};
 	CScrollBase.prototype.getScrollOffset = function () {
 		if (this.tmpScrollOffset !== null) {
 			return this.tmpScrollOffset;
 		}
-		this.limitScrollOffset();
+		this.scrollOffset = this.limitScrollOffset(this.scrollOffset);
 		return this.scrollOffset;
 	};
+	CScrollBase.prototype.setTmpScroll = function (val) {
+		this.tmpScrollOffset = this.limitScrollOffset(val)
+
+		this.parentControl.onScroll();
+		this.onUpdate();
+	};
+	CScrollBase.prototype.clearTmpScroll = function () {
+		if (this.tmpScrollOffset === null) { return }
+
+		this.scrollOffset = this.limitScrollOffset(this.tmpScrollOffset);
+		this.tmpScrollOffset = null;
+
+		this.parentControl.onScroll();
+		this.onUpdate();
+	};
+
 	CScrollBase.prototype.startScroll = function (step) {
 		this.endScroll();
 		var oScroll = this;
@@ -1116,28 +1128,12 @@
 	CScrollBase.prototype.isOnScroll = function () {
 		return this.timerId !== null || this.timeoutId !== null || this.parentControl.isEventListener(this);
 	};
-	CScrollBase.prototype.setTmpScroll = function (val) {
-		this.tmpScrollOffset = Math.max(0, Math.min(this.getMaxScrollOffset(), val));
 
-		this.parentControl.onScroll();
-		this.onUpdate();
-	};
-	CScrollBase.prototype.clearTmpScroll = function () {
-		if (this.tmpScrollOffset === null) { return }
-
-		this.scrollOffset = this.tmpScrollOffset;
-		this.tmpScrollOffset = null;
-
-		this.parentControl.onScroll();
-		this.onUpdate();
-	};
 	CScrollBase.prototype.getMaxScrollOffset = function (val) {
 		// Method must return the maximum allowed value of "this.scrollOffset" in millimeters
 		let errorMessage = 'NOT IMPLEMENTED: getMaxScrollOffset'
 		throw new Error(errorMessage)
 	};
-
-	// Пока оставил, потому что используется в CScrollVert
 	CScrollBase.prototype.hitInScroller = function (x, y) {
 		if (this.isHidden()) {
 			return false;
@@ -1163,7 +1159,6 @@
 	CScrollBase.prototype.getScrollerHeight = function (dScrollOffset) {
 		return 0;
 	};
-
 	CScrollBase.prototype.getFillColor = function () {
 		return null;
 	};
@@ -1174,21 +1169,19 @@
 
 	function CScrollVert(oParentControl, oContainer, oChild) {
 		CScrollBase.call(this, oParentControl, oContainer, oChild);
-		this.topButton = this.children[0];
-		this.bottomButton = this.children[1];
 	}
 
 	InitClass(CScrollVert, CScrollBase, CONTROL_TYPE_SCROLL_VERT);
 
 	CScrollVert.prototype.recalculateChildrenLayout = function () {
-		this.topButton.setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-		this.bottomButton.setLayout(0, this.getHeight() - SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+		this.startButton.setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+		this.endButton.setLayout(0, this.getHeight() - SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
 	};
 	CScrollVert.prototype.getRailHeight = function () {
 		return this.getHeight() - this.children[0].getHeight() - this.children[1].getHeight();
 	};
 	CScrollVert.prototype.getRelScrollerPos = function (dScrollOffset) {
-		return this.topButton.getBottom() + dScrollOffset * ((this.getRailHeight() - this.getScrollerHeight()) / (this.getMaxScrollOffset()));
+		return this.startButton.getBottom() + dScrollOffset * ((this.getRailHeight() - this.getScrollerHeight()) / (this.getMaxScrollOffset()));
 	};
 	CScrollVert.prototype.getScrollerX = function (dScrollOffset) {
 		return 0;
@@ -1357,13 +1350,10 @@
 
 	function CScrollHor(oParentControl, oContainer, oChild) {
 		CScrollBase.call(this, oParentControl, oContainer, oChild);
-		this.leftButton = this.children[0];
-		this.rightButton = this.children[1];
-		// We also have the scroller here
 
-		this.leftButton.onMouseDownCallback = onFirstBtnMouseDown
-		this.rightButton.onMouseDownCallback = onSecondBtnMouseDown
-		this.leftButton.onMouseUpCallback = this.rightButton.onMouseUpCallback = onMouseUp
+		this.startButton.onMouseDownCallback = onFirstBtnMouseDown
+		this.endButton.onMouseDownCallback = onSecondBtnMouseDown
+		this.startButton.onMouseUpCallback = this.endButton.onMouseUpCallback = onMouseUp
 
 		// List of buttons handlers---
 
@@ -1398,9 +1388,9 @@
 	InitClass(CScrollHor, CScrollBase, CONTROL_TYPE_SCROLL_HOR);
 
 	CScrollHor.prototype.recalculateChildrenLayout = function () {
-		this.leftButton.setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-		this.rightButton.setLayout(this.getWidth() - SCROLL_BUTTON_SIZE, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-		this.scroller.setLayout(this.timeToPos(this.curTimePos) - SCROLL_BUTTON_SIZE / 2, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+		this.startButton.setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+		this.endButton.setLayout(this.getWidth() - SCROLL_BUTTON_SIZE, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+		// this.scroller.setLayout(this.timeToPos(this.curTimePos) - SCROLL_BUTTON_SIZE / 2, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
 	};
 	CScrollHor.prototype.getMaxScrollOffset = function () {
 		return this.getWidth() - SCROLL_BUTTON_SIZE - this.scroller.getWidth();
@@ -1446,7 +1436,7 @@
 	function CTimeline(oParentControl) {
 		CScrollHor.call(this, oParentControl);
 
-		// this.scroller = this.addControl(new CButton(this, stickToPointer, handlePointerMovement, unstickFromPointer));
+		this.scroller = this.addControl(new CButton(this, stickToPointer, handlePointerMovement, unstickFromPointer));
 		this.scroller.onMouseDownCallback = stickToPointer
 		this.scroller.onMouseMoveCallback = handlePointerMovement
 		this.scroller.onMouseUpCallback = unstickFromPointer
