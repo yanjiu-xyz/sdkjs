@@ -1813,19 +1813,7 @@
                             oConnectedObject.setSpid(sObjectId);
                         }
                     }
-                    if(oColor) {
-                        let aSimpleEffects = oPar.getChildrenTimeNodes();
-
-                        for(let nEffect = 0; nEffect < aSimpleEffects.length; ++nEffect) {
-                            let oEffect = aSimpleEffects[nEffect];
-                            if(oEffect instanceof CAnimClr) {
-                                if(oEffect.to) {
-                                    let oUniColor = AscFormat.CorrectUniColor(oColor, new AscFormat.CUniColor(), 0);
-                                    oEffect.setTo(oUniColor);
-                                }
-                            }
-                        }
-                    }
+                    oPar.changeColor(oColor);
                     return oPar;
                 }
             }
@@ -2064,6 +2052,14 @@
             if (aSelectedEffects.length === 0) {
                 return this.addAnimationToSelectedObjects(nPresetClass, nPresetId, nPresetSubtype, oColor);
             } else {
+
+                if(oColor) {
+                    for(let nEffect = 0; nEffect < aSelectedEffects.length; ++nEffect) {
+                        aSelectedEffects[nEffect].changeColor(oColor);
+                    }
+                    aAddedEffects = aAddedEffects.concat(aSelectedEffects);
+                    return aAddedEffects;
+                }
                 var oMapOfObjects = {};
                 var aSelectedObjects = this.parent.graphicObjects.selectedObjects;
                 var bNeedRemoveExtra = (aSelectedObjects.length > 0);
@@ -9000,6 +8996,21 @@
         return AscCommon.CreateAscColor(oResultUnicolor)
     };
     CTimeNodeContainer.prototype["asc_getColor"] = CTimeNodeContainer.prototype.asc_getColor;
+
+    CTimeNodeContainer.prototype.changeColor = function(oColor) {
+        if(oColor) {
+            let aSimpleEffects = this.getChildrenTimeNodes();
+            for(let nEffect = 0; nEffect < aSimpleEffects.length; ++nEffect) {
+                let oEffect = aSimpleEffects[nEffect];
+                if(oEffect instanceof CAnimClr) {
+                    if(oEffect.to) {
+                        let oUniColor = AscFormat.CorrectUniColor(oColor, new AscFormat.CUniColor(), 0);
+                        oEffect.setTo(oUniColor);
+                    }
+                }
+            }
+        }
+    };
 
     function CPar() {
         CTimeNodeContainer.call(this);
