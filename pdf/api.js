@@ -162,28 +162,31 @@
 	PDFEditorApi.prototype.asc_CheckCopy = function(_clipboard /* CClipboardData */, _formats) {
 		if (!this.DocumentRenderer)
 			return;
-		
-		var _text_object = (AscCommon.c_oAscClipboardDataFormat.Text & _formats) ? {Text : ""} : null;
-		var _html_data;
+
+		let _html_data;
 		let oDoc = this.DocumentRenderer.getPDFDoc();
 		var oActiveForm = oDoc.activeForm;
 		if (oActiveForm && oActiveForm.content.IsSelectionUse()) {
 			let sText = oActiveForm.content.GetSelectedText(true);
 			if (!sText)
 				return;
-			
-			_text_object.Text = sText;
-			_html_data = "<div><p><span>" + sText + "</span></p></div>";
+
+			if (AscCommon.c_oAscClipboardDataFormat.Text & _formats)
+				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Text, sText);
+
+			if (AscCommon.c_oAscClipboardDataFormat.Html & _formats)
+				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, "<div><p><span>" + sText + "</span></p></div>");
 		}
 		else {
-			_html_data = this.DocumentRenderer.Copy(_text_object)
+			let _text_object = {};
+			let _html_data = this.DocumentRenderer.Copy(_text_object);
+
+			if (AscCommon.c_oAscClipboardDataFormat.Text & _formats)
+				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Text, _text_object.Text);
+
+			if (AscCommon.c_oAscClipboardDataFormat.Html & _formats)
+				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, _html_data);
 		}
-
-		if (AscCommon.c_oAscClipboardDataFormat.Text & _formats)
-			_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Text, _text_object.Text);
-
-		if (AscCommon.c_oAscClipboardDataFormat.Html & _formats)
-			_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, _html_data);
 	};
 	PDFEditorApi.prototype.asc_SelectionCut = function() {
 		if (!this.DocumentRenderer)
