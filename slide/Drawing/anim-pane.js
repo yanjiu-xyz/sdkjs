@@ -1118,8 +1118,8 @@
 		// This fields supposed to be private
 		// so it should not be changed directly.
 		// Use set methods insdead (setScrollOffset, setStartTimePos, timeScaleIndex)
-		this.scrollOffset = 0;
-		this.startTimePos = 0;
+		this.scrollOffset = 0; // in millimeters
+		this.startTime = 0; // in seconds
 		this.timeScaleIndex = 2;
 
 		// Labels cache
@@ -1146,6 +1146,16 @@
 		return this.getWidth() - SCROLL_BUTTON_SIZE - TIMELINE_SCROLLER_SIZE;
 	};
 
+	CTimeline.prototype.getStartTime = function () {
+		return this.startTime;
+	};
+	CTimeline.prototype.setStartTime = function (newStartTime /* in seconds */) {
+		this.startTime = Math.max(0, newStartTime)
+
+		this.parentControl.onScroll();
+		this.onUpdate();
+	};
+
 	CTimeline.prototype.startScroll = function (step /* in millimeters */) {
 		this.endScroll();
 		var oScroll = this;
@@ -1159,7 +1169,8 @@
 		}, SCROLL_TIMER_DELAY);
 	};
 	CTimeline.prototype.addScroll = function (step /* in millimeters */) {
-		this.setScrollOffset(this.getScrollOffset() + step);
+		let newStartTime = this.posToTime(step)
+		this.setStartTime(newStartTime)		
 	};
 	CTimeline.prototype.endScroll = function () {
 		if (this.timerId !== null) {
@@ -1202,6 +1213,7 @@
 	CTimeline.prototype.getScrollerHeight = function (dScrollOffset) {
 		return 0;
 	};
+
 	CTimeline.prototype.getFillColor = function () {
 		return null;
 	};
@@ -1209,16 +1221,6 @@
 		return null;
 	};
 
-
-	CTimeline.prototype.setCurTimePos = function (tValue) {
-		this.curTimePos = Math.max(0, tValue)
-	}
-	CTimeline.prototype.addScroll = function (step) {
-		let diff = this.posToTime(step) - this.startTimePos
-		this.startTimePos = Math.max(0, this.startTimePos + diff)
-		this.setCurTimePos(this.curTimePos + diff)
-		this.onUpdate()
-	};
 	CTimeline.prototype.startDrawLabels = function () {
 		this.usedLabels = {};
 	};
@@ -1366,7 +1368,7 @@
 		var nMarksCount = TIME_INTERVALS[this.timeScaleIndex] === LONG_TIME_INTERVAL ? 10 : 2;
 
 		var dTimeOfSmallInterval = fTimeInterval / nMarksCount;
-		var nStartIntervalIdx = this.startTimePos / dTimeOfSmallInterval >> 0;
+		var nStartIntervalIdx = this.startTime / dTimeOfSmallInterval >> 0;
 		var nEndIntervalIdx = this.posToTime(this.getRulerEnd()) / dTimeOfSmallInterval + 0.5 >> 0;
 		this.startDrawLabels();
 		var nInterval;
@@ -1422,7 +1424,7 @@
 	CTimeline.prototype.getLinearCoeffs = function () {
 		//linear relationship x = a*t + b
 		var a = TIME_INTERVALS[this.timeScaleIndex] / TIME_SCALES[this.timeScaleIndex];
-		var b = this.getZeroShift() - a * this.startTimePos;
+		var b = this.getZeroShift() - a * this.startTime;
 		return { a: a, b: b };
 	};
 	CTimeline.prototype.timeToPos = function (fTime) {
