@@ -1045,347 +1045,6 @@
 	};
 
 
-	function CScrollBase(oParentControl, oContainer, oChild) {
-		CControlContainer.call(this, oParentControl);
-
-		this.container = oContainer;
-		this.scrolledChild = oChild;
-
-		this.startButton = this.addControl(new CButton(this));
-		this.endButton = this.addControl(new CButton(this));
-
-		this.timerId = null;
-		this.timeoutId = null;
-
-		this.scrollOffset = 0;
-		// this.tmpScrollOffset = null;
-
-		this.startScrollerPos = null;
-		this.startScrollTop = null;
-	}
-
-	InitClass(CScrollBase, CControlContainer, CONTROL_TYPE_UNKNOWN);
-
-	CScrollBase.prototype.limitScrollOffset = function (offsetValue /* in millimeters */) {
-		return Math.max(0, Math.min(offsetValue, this.getMaxScrollOffset()));
-	};
-	CScrollBase.prototype.getScrollOffset = function () {
-		return this.scrollOffset;
-	};
-	CScrollBase.prototype.setScrollOffset = function (offsetValue /* in millimeters */) {
-		this.scrollOffset = this.limitScrollOffset(val)
-
-		this.parentControl.onScroll();
-		this.onUpdate();
-	};
-
-	CScrollBase.prototype.startScroll = function (step) {
-		this.endScroll();
-		var oScroll = this;
-		oScroll.addScroll(step);
-
-		this.timeoutId = setTimeout(function () {
-			oScroll.timeoutId = null;
-			oScroll.timerId = setInterval(function () {
-				oScroll.addScroll(step);
-			}, SCROLL_TIMER_INTERVAL);
-		}, SCROLL_TIMER_DELAY);
-	};
-	CScrollBase.prototype.addScroll = function (step) {
-		this.setScrollOffset(this.getScrollOffset() + step);
-
-		this.parentControl.onScroll();
-	};
-	CScrollBase.prototype.endScroll = function () {
-		if (this.timerId !== null) {
-			clearInterval(this.timerId);
-			this.timerId = null;
-		}
-		if (this.timeoutId !== null) {
-			clearTimeout(this.timeoutId);
-			this.timeoutId = null;
-		}
-
-		this.setStateFlag(STATE_FLAG_SELECTED, false);
-
-		this.startScrollerPos = null;
-		this.startScrollTop = null;
-	};
-	CScrollBase.prototype.isOnScroll = function () {
-		return this.timerId !== null || this.timeoutId !== null || this.parentControl.isEventListener(this);
-	};
-
-	CScrollBase.prototype.getMaxScrollOffset = function (val) {
-		// Method must return the maximum allowed value of "this.scrollOffset" in millimeters
-		let errorMessage = 'NOT IMPLEMENTED: getMaxScrollOffset'
-		throw new Error(errorMessage)
-	};
-	CScrollBase.prototype.hitInScroller = function (x, y) {
-		if (this.isHidden()) {
-			return false;
-		}
-		var oInv = this.getInvFullTransformMatrix();
-		var tx = oInv.TransformPointX(x, y);
-		var ty = oInv.TransformPointY(x, y);
-		var l = this.getScrollerX();
-		var t = this.getScrollerY();
-		var r = l + this.getScrollerWidth();
-		var b = t + this.getScrollerHeight();
-		return tx >= l && tx <= r && ty >= t && ty <= b;
-	};
-	CScrollBase.prototype.getScrollerX = function (dScrollOffset) {
-		return 0;
-	};
-	CScrollBase.prototype.getScrollerY = function (dScrollOffset) {
-		return 0;
-	};
-	CScrollBase.prototype.getScrollerWidth = function (dScrollOffset) {
-		return 0;
-	};
-	CScrollBase.prototype.getScrollerHeight = function (dScrollOffset) {
-		return 0;
-	};
-	CScrollBase.prototype.getFillColor = function () {
-		return null;
-	};
-	CScrollBase.prototype.getOutlineColor = function () {
-		return null;
-	};
-
-
-	function CScrollVert(oParentControl, oContainer, oChild) {
-		CScrollBase.call(this, oParentControl, oContainer, oChild);
-	}
-
-	InitClass(CScrollVert, CScrollBase, CONTROL_TYPE_SCROLL_VERT);
-
-	CScrollVert.prototype.recalculateChildrenLayout = function () {
-		this.startButton.setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-		this.endButton.setLayout(0, this.getHeight() - SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-	};
-	CScrollVert.prototype.getRailHeight = function () {
-		return this.getHeight() - this.children[0].getHeight() - this.children[1].getHeight();
-	};
-	CScrollVert.prototype.getRelScrollerPos = function (dScrollOffset) {
-		return this.startButton.getBottom() + dScrollOffset * ((this.getRailHeight() - this.getScrollerHeight()) / (this.getMaxScrollOffset()));
-	};
-	CScrollVert.prototype.getScrollerX = function (dScrollOffset) {
-		return 0;
-	};
-	CScrollVert.prototype.getScrollerY = function () {
-		return this.getRelScrollerPos(this.getScrollOffset());
-	};
-	CScrollVert.prototype.getScrollerWidth = function (dScrollOffset) {
-		return this.getWidth();
-	};
-	CScrollVert.prototype.getScrollerHeight = function () {
-		var dRailH = this.getRailHeight();
-		var dMinRailH = dRailH / 4;
-		return Math.max(dMinRailH, dRailH * (dRailH / this.scrolledChild.getHeight()))
-	};
-	CScrollVert.prototype.getMaxScrollOffset = function () {
-		return Math.max(0, this.scrolledChild.getHeight() - this.container.getHeight());
-	};
-	CScrollVert.prototype.getMaxRelScrollOffset = function () {
-		return Math.max(0, this.getRailHeight() - this.getScrollerHeight());
-	};
-	CScrollVert.prototype.draw = function (graphics) {
-		if (this.isHidden()) {
-			return false;
-		}
-		if (!this.checkUpdateRect(graphics.updatedRect)) {
-			return false;
-		}
-		this.children[0].draw(graphics);
-		this.children[1].draw(graphics);
-
-
-		graphics.SaveGrState();
-		var oSkin = AscCommon.GlobalSkin;
-		//ScrollBackgroundColor     : "#EEEEEE",
-		//ScrollOutlineColor        : "#CBCBCB",
-		//ScrollOutlineHoverColor   : "#CBCBCB",
-		//ScrollOutlineActiveColor  : "#ADADAD",
-		//ScrollerColor             : "#F7F7F7",
-		//ScrollerHoverColor        : "#C0C0C0",
-		//ScrollerActiveColor       : "#ADADAD",
-		//ScrollArrowColor          : "#ADADAD",
-		//ScrollArrowHoverColor     : "#F7F7F7",
-		//ScrollArrowActiveColor    : "#F7F7F7",
-		//ScrollerTargetColor       : "#CFCFCF",
-		//ScrollerTargetHoverColor  : "#F1F1F1",
-		//ScrollerTargetActiveColor : "#F1F1F1",
-		var x = this.getScrollerX();
-		var y = this.getRelScrollerPos(this.getScrollOffset());
-		var extX = this.getScrollerWidth();
-		var extY = this.getScrollerHeight();
-		graphics.transform3(this.transform);
-
-		var sFillColor;
-		var sOutlineColor;
-		var oColor;
-		if (this.isActive()) {
-			sFillColor = oSkin.ScrollerActiveColor;
-			sOutlineColor = oSkin.ScrollOutlineActiveColor;
-		} else if (this.isHovered()) {
-			sFillColor = oSkin.ScrollerHoverColor;
-			sOutlineColor = oSkin.ScrollOutlineHoverColor;
-		} else {
-			sFillColor = oSkin.ScrollerColor;
-			sOutlineColor = oSkin.ScrollOutlineColor;
-		}
-		oColor = AscCommon.RgbaHexToRGBA(sFillColor);
-		graphics.b_color1(oColor.R, oColor.G, oColor.B, 0xFF);
-		graphics.rect(x, y, extX, extY);
-		graphics.df();
-		oColor = AscCommon.RgbaHexToRGBA(sOutlineColor);
-		graphics.SetIntegerGrid(true);
-		var nPenW = this.getPenWidth(graphics);
-		graphics.p_color(oColor.R, oColor.G, oColor.B, 0xFF);
-		graphics.drawHorLine(0, y, x, x + extX, nPenW);
-		graphics.drawHorLine(0, y + extY, x, x + extX, nPenW);
-		graphics.drawVerLine(2, x, y, y + extY, nPenW);
-		graphics.drawVerLine(2, x + extX, y, y + extY, nPenW);
-		graphics.ds();
-		graphics.RestoreGrState();
-		return true;
-	};
-	CScrollVert.prototype.onMouseMove = function (e, x, y) {
-		if (this.isHidden()) {
-			return false;
-		}
-		var bRet = false;
-		if (this.eventListener) {
-			this.eventListener.onMouseMove(e, x, y);
-			return true;
-		}
-
-		if (this.parentControl.isEventListener(this)) {
-			if (this.startScrollerPos === null) {
-				this.startScrollerPos = y;
-			}
-			if (this.startScrollTop === null) {
-				this.startScrollTop = this.getScrollOffset();
-			}
-			var dCoeff = this.getMaxScrollOffset() / this.getMaxRelScrollOffset();
-			var dy = dCoeff * (y - this.startScrollerPos);
-			this.setScrollOffset(dy + this.startScrollTop);
-			return true;
-		}
-		bRet |= this.children[0].onMouseMove(e, x, y);
-		bRet |= this.children[1].onMouseMove(e, x, y);
-
-		var bHit = this.hitInScroller(x, y);
-		var nState = this.isHovered();
-		if (this.isHovered()) {
-			if (!bHit) {
-				this.setStateFlag(STATE_FLAG_HOVERED, false);
-				bRet = true;
-			}
-		} else {
-			if (bHit) {
-				this.setStateFlag(STATE_FLAG_HOVERED, true);
-				bRet = true;
-			}
-		}
-		//-----------------------------
-		return bRet;
-	};
-	CScrollVert.prototype.onMouseDown = function (e, x, y) {
-		var bRet = false;
-		if (this.hit(x, y)) {
-			bRet |= this.children[0].onMouseDown(e, x, y);
-			bRet |= this.children[1].onMouseDown(e, x, y);
-			if (!bRet) {
-				if (this.hitInScroller(x, y)) {
-					this.startScrollerPos = y;
-					this.startScrollTop = this.getScrollOffset();
-					this.setStateFlag(STATE_FLAG_SELECTED, true);
-					this.parentControl.setEventListener(this);
-					this.parentControl.onScroll();
-					//-----------------------------
-				} else {
-					this.parentControl.setEventListener(this);
-					var oInv = this.getInvFullTransformMatrix();
-					var ty = oInv.TransformPointY(x, y);
-					if (ty < this.getScrollerY()) {
-						this.startScroll(-ANIM_ITEM_HEIGHT);
-					} else {
-						this.startScroll(ANIM_ITEM_HEIGHT);
-					}
-				}
-				return true;
-			}
-		}
-		return bRet;
-	};
-	CScrollVert.prototype.onMouseUp = function (e, x, y) {
-		this.endScroll();
-		var bRet = false;
-		if (this.eventListener) {
-			bRet = this.eventListener.onMouseUp(e, x, y);
-			this.eventListener = null;
-			return bRet;
-		}
-		bRet |= this.children[0].onMouseUp(e, x, y);
-		bRet |= this.children[1].onMouseUp(e, x, y);
-		this.setEventListener(null);
-		return bRet;
-	};
-
-
-	function CScrollHor(oParentControl, oContainer, oChild) {
-		CScrollBase.call(this, oParentControl, oContainer, oChild);
-
-		this.startButton.onMouseDownCallback = onFirstBtnMouseDown
-		this.endButton.onMouseDownCallback = onSecondBtnMouseDown
-		this.startButton.onMouseUpCallback = this.endButton.onMouseUpCallback = onMouseUp
-
-		// List of buttons handlers---
-
-		function onFirstBtnMouseDown(e, x, y) {
-			if (!this.hit(x, y)) { return }
-			this.parentControl.setEventListener(this);
-			let step = (this.parentControl.getWidth() - 2 * SCROLL_BUTTON_SIZE) * SCROLL_STEP
-			this.parentControl.startScroll(-step);
-			return true;
-		}
-
-		function onSecondBtnMouseDown(e, x, y) {
-			if (!this.hit(x, y)) { return }
-			this.parentControl.setEventListener(this);
-			let step = (this.parentControl.getWidth() - 2 * SCROLL_BUTTON_SIZE) * SCROLL_STEP
-			this.parentControl.startScroll(step);
-			return true;
-		}
-
-		function onMouseUp(e, x, y) {
-			if (this.parentControl.isEventListener(this)) {
-				this.parentControl.setEventListener(null);
-				this.parentControl.endScroll();
-				return true;
-			}
-			return false;
-		}
-
-		// --- end of list of button handlers
-	}
-
-	InitClass(CScrollHor, CScrollBase, CONTROL_TYPE_SCROLL_HOR);
-
-	CScrollHor.prototype.recalculateChildrenLayout = function () {
-		this.startButton.setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-		this.endButton.setLayout(this.getWidth() - SCROLL_BUTTON_SIZE, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-		// this.scroller.setLayout(this.timeToPos(this.curTimePos) - SCROLL_BUTTON_SIZE / 2, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-	};
-	CScrollHor.prototype.getMaxScrollOffset = function () {
-		return this.getWidth() - SCROLL_BUTTON_SIZE - this.scroller.getWidth();
-	};
-	CScrollHor.prototype.getScrollPointerPosition = function () {
-		return this.getScrollOffset() + this.scroller.getWidth() / 2;
-	};
-
-
 	function CTimelineContainer(oDrawer) {
 		CTopControl.call(this, oDrawer);
 		this.drawer = oDrawer;
@@ -1419,9 +1078,60 @@
 	};
 
 
-	function CTimeline(oParentControl) {
-		CScrollHor.call(this, oParentControl);
+	function CTimeline(oParentControl, oContainer, oChild) {
+		CControlContainer.call(this, oParentControl);
 
+		// From CScrollBase
+		this.container = oContainer;
+		this.scrolledChild = oChild;
+
+		this.startButton = this.addControl(new CButton(this));
+		this.endButton = this.addControl(new CButton(this));
+
+		this.timerId = null;
+		this.timeoutId = null;
+
+		this.scrollOffset = 0;
+		// this.tmpScrollOffset = null;
+
+		this.startScrollerPos = null;
+		this.startScrollTop = null;
+
+
+		// From CScrollHor
+		this.startButton.onMouseDownCallback = onFirstBtnMouseDown
+		this.endButton.onMouseDownCallback = onSecondBtnMouseDown
+		this.startButton.onMouseUpCallback = this.endButton.onMouseUpCallback = onMouseUp
+
+		// List of buttons handlers---
+		function onFirstBtnMouseDown(e, x, y) {
+			if (!this.hit(x, y)) { return }
+			this.parentControl.setEventListener(this);
+			let step = (this.parentControl.getWidth() - 2 * SCROLL_BUTTON_SIZE) * SCROLL_STEP
+			this.parentControl.startScroll(-step);
+			return true;
+		}
+
+		function onSecondBtnMouseDown(e, x, y) {
+			if (!this.hit(x, y)) { return }
+			this.parentControl.setEventListener(this);
+			let step = (this.parentControl.getWidth() - 2 * SCROLL_BUTTON_SIZE) * SCROLL_STEP
+			this.parentControl.startScroll(step);
+			return true;
+		}
+
+		function onMouseUp(e, x, y) {
+			if (this.parentControl.isEventListener(this)) {
+				this.parentControl.setEventListener(null);
+				this.parentControl.endScroll();
+				return true;
+			}
+			return false;
+		}
+		// --- end of list of button handlers
+
+
+		// From here originally
 		this.scroller = this.addControl(new CButton(this, stickToPointer, handlePointerMovement, unstickFromPointer));
 		this.scroller.onMouseDownCallback = stickToPointer
 		this.scroller.onMouseMoveCallback = handlePointerMovement
@@ -1437,7 +1147,6 @@
 		this.cachedParaPr = null
 
 		// Handlers for scroller button ---
-
 		function stickToPointer(event, x, y) {
 			if (!this.hit(x, y)) { return }
 			this.isStickedToPointer = true
@@ -1476,13 +1185,98 @@
 			this.setLayout(newLeft, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE)
 			this.onUpdate()
 		}
-
 		// --- end of handlers for scroller button
 	}
 
-	InitClass(CTimeline, CScrollHor, CONTROL_TYPE_TIMELINE);
+	InitClass(CTimeline, CControlContainer, CONTROL_TYPE_TIMELINE);
 
-	
+	CTimeline.prototype.limitScrollOffset = function (offsetValue /* in millimeters */) {
+		return Math.max(0, Math.min(offsetValue, this.getMaxScrollOffset()));
+	};
+	CTimeline.prototype.getScrollOffset = function () {
+		return this.scrollOffset;
+	};
+	CTimeline.prototype.setScrollOffset = function (offsetValue /* in millimeters */) {
+		this.scrollOffset = this.limitScrollOffset(val)
+
+		this.parentControl.onScroll();
+		this.onUpdate();
+	};
+
+	CTimeline.prototype.startScroll = function (step) {
+		this.endScroll();
+		var oScroll = this;
+		oScroll.addScroll(step);
+
+		this.timeoutId = setTimeout(function () {
+			oScroll.timeoutId = null;
+			oScroll.timerId = setInterval(function () {
+				oScroll.addScroll(step);
+			}, SCROLL_TIMER_INTERVAL);
+		}, SCROLL_TIMER_DELAY);
+	};
+	CTimeline.prototype.addScroll = function (step) {
+		this.setScrollOffset(this.getScrollOffset() + step);
+
+		this.parentControl.onScroll();
+	};
+	CTimeline.prototype.endScroll = function () {
+		if (this.timerId !== null) {
+			clearInterval(this.timerId);
+			this.timerId = null;
+		}
+		if (this.timeoutId !== null) {
+			clearTimeout(this.timeoutId);
+			this.timeoutId = null;
+		}
+
+		this.setStateFlag(STATE_FLAG_SELECTED, false);
+
+		this.startScrollerPos = null;
+		this.startScrollTop = null;
+	};
+	CTimeline.prototype.isOnScroll = function () {
+		return this.timerId !== null || this.timeoutId !== null || this.parentControl.isEventListener(this);
+	};
+
+	CTimeline.prototype.getMaxScrollOffset = function (val) {
+		// Method must return the maximum allowed value of "this.scrollOffset" in millimeters
+		let errorMessage = 'NOT IMPLEMENTED: getMaxScrollOffset'
+		throw new Error(errorMessage)
+	};
+	CTimeline.prototype.hitInScroller = function (x, y) {
+		if (this.isHidden()) {
+			return false;
+		}
+		var oInv = this.getInvFullTransformMatrix();
+		var tx = oInv.TransformPointX(x, y);
+		var ty = oInv.TransformPointY(x, y);
+		var l = this.getScrollerX();
+		var t = this.getScrollerY();
+		var r = l + this.getScrollerWidth();
+		var b = t + this.getScrollerHeight();
+		return tx >= l && tx <= r && ty >= t && ty <= b;
+	};
+	CTimeline.prototype.getScrollerX = function (dScrollOffset) {
+		return 0;
+	};
+	CTimeline.prototype.getScrollerY = function (dScrollOffset) {
+		return 0;
+	};
+	CTimeline.prototype.getScrollerWidth = function (dScrollOffset) {
+		return 0;
+	};
+	CTimeline.prototype.getScrollerHeight = function (dScrollOffset) {
+		return 0;
+	};
+	CTimeline.prototype.getFillColor = function () {
+		return null;
+	};
+	CTimeline.prototype.getOutlineColor = function () {
+		return null;
+	};
+
+
 	CTimeline.prototype.setCurTimePos = function (tValue) {
 		this.curTimePos = Math.max(0, tValue)
 	}
@@ -1583,10 +1377,12 @@
 	CTimeline.prototype.canHandleEvents = function () {
 		return true;
 	};
-	// CTimeline.prototype.recalculateChildrenLayout = function () {
-	// 	this.scroller.setLayout(this.timeToPos(this.curTimePos) - SCROLL_BUTTON_SIZE / 2, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-	// 	this.scroller.getOutlineColor = function () { return '#000' }
-	// };
+	CTimeline.prototype.recalculateChildrenLayout = function () {
+		this.scroller.setLayout(SCROLL_BUTTON_SIZE * 4, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+		
+		this.startButton.setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+		this.endButton.setLayout(this.getWidth() - SCROLL_BUTTON_SIZE, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+	};
 	CTimeline.prototype.drawMark = function (graphics, dPos) {
 		var dHeight = this.getHeight() / 3;
 		var nPenW = this.getPenWidth(graphics);
@@ -1666,7 +1462,7 @@
 
 		graphics.RestoreGrState();
 
-		if (!CScrollHor.prototype.draw.call(this, graphics)) {
+		if (!CControlContainer.prototype.draw.call(this, graphics)) {
 			return false;
 		}
 	};
