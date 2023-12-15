@@ -4188,17 +4188,25 @@ Because of this, the display is sometimes not correct.
 
 
 	  IteratorAttributes.prototype.getNodesArray = function (smartartAlgorithm) {
-		  const currentNode = smartartAlgorithm.getCurrentNode();
-		  let nodes = [];
-		  for (let i = 0; i < this.axis.length; i += 1) {
-			  const tempNodes = [];
-			  currentNode.getNodesByAxis(tempNodes, this.getAxis(i), this.getPtType(i), this.getCount(i));
-				const step = this.getStep(i);
-			  for (let j = this.getStart(i); j < tempNodes.length; j += step) {
-				  nodes.push(tempNodes[j]);
-			  }
+		  if (!this.axis.length) {
+			  return [];
 		  }
-		  return nodes;
+		  const currentNode = smartartAlgorithm.getCurrentNode();
+		  let currentNodes = [currentNode];
+		  for (let i = 0; i < this.axis.length; i += 1) {
+			  const newCurrentNodes = [];
+			  for (let j = 0; j < currentNodes.length; j += 1) {
+				  const node = currentNodes[j];
+				  const tempNodes = [];
+				  node.getNodesByAxis(tempNodes, this.getAxis(i), this.getPtType(i), this.getCount(i));
+				  const step = this.getStep(i);
+				  for (let k = this.getStart(i); k < tempNodes.length; k += step) {
+					  newCurrentNodes.push(tempNodes[k]);
+				  }
+			  }
+			  currentNodes = newCurrentNodes;
+		  }
+		  return currentNodes;
 	  };
 	  IteratorAttributes.prototype.getPtType = function (index) {
 		  if (this.ptType[index]) {
@@ -4226,6 +4234,12 @@ Because of this, the display is sometimes not correct.
 			  return this.st[index];
 		  }
 		  return 1;
+	  };
+	  IteratorAttributes.prototype.getHideLastTrans = function (index) {
+		  if (this.hideLastTrans[index] !== undefined) {
+			  return this.hideLastTrans[index];
+		  }
+		  return true;
 	  };
     IteratorAttributes.prototype.addToLstAxis = function (nIdx, oPr) {
       var nInsertIdx = Math.min(this.axis.length, Math.max(0, nIdx));
