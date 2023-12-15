@@ -2835,7 +2835,14 @@
 			this.DefaultIndex = this.g_fontDictionary.GetFontIndex(oSelect, this.g_fontSelections.List, undefined);
 		};
 
-		this.LoadFont = function(name, font_loader, fontManager, fEmSize, lStyle, dHorDpi, dVerDpi, transform, objDst)
+		this.LoadFontWithEmbed = function(name, font_loader, fontManager, fEmSize, lStyle, dHorDpi, dVerDpi, transform, objDst)
+		{
+			if (name.startsWith(AscFonts.getEmbeddedFontPrefix()))
+				return AscFonts.g_font_infos_embed[AscFonts.g_map_font_index_embed[name]].LoadFont(AscCommon.g_font_loader, fontManager, fEmSize, /*_font.GetStyle()*/lStyle, dHorDpi, dVerDpi, transform);
+
+			return this.LoadFontWithoutEmbed(name, font_loader, fontManager, fEmSize, lStyle, dHorDpi, dVerDpi, transform, objDst)
+		};
+		this.LoadFontWithoutEmbed = function(name, font_loader, fontManager, fEmSize, lStyle, dHorDpi, dVerDpi, transform, objDst)
 		{
 			var _font = this.GetFontFileWeb(name, lStyle);
 			var font_name_index = AscFonts.g_map_font_index[_font.m_wsFontName];
@@ -2849,6 +2856,7 @@
 			// так как подвираем вез стиля в Web версии
 			return AscFonts.g_font_infos[font_name_index].LoadFont(AscCommon.g_font_loader, fontManager, fEmSize, /*_font.GetStyle()*/lStyle, dHorDpi, dVerDpi, transform);
 		};
+		this.LoadFont = this.LoadFontWithoutEmbed;
 
 		this.CheckReplaceGlyphsMap = function(name, objDst)
 		{

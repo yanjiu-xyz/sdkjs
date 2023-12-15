@@ -571,6 +571,8 @@
 
             if (pFontFile && (true !== isNoSetupToManager))
             {
+                pFontFile.m_pFaceInfo.family_name = this.Name;
+
                 var newEmSize = fontManager.UpdateSize(fEmSize, dVerDpi, dVerDpi);
                 pFontFile.SetSizeAndDpi(newEmSize, dHorDpi, dVerDpi);
 

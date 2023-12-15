@@ -798,6 +798,7 @@
 			}
 
 			g_fontApplication.GetFontInfo = g_fontApplication.GetFontInfoWithEmbed;
+			g_fontApplication.LoadFont = g_fontApplication.LoadFontWithEmbed;
 			
 			AscCommon.g_oIdCounter.Set_Load(false); // to do возможно не тут стоит выключать флаг
 		};
