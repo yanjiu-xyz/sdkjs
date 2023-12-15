@@ -1055,7 +1055,7 @@
 
 		function manageTimelineScale(event, x, y) {
 			if (!this.hit(x, y)) { return }
-			this.next.tmScaleIdx = (this.next.tmScaleIdx + 1) % 11
+			this.next.timeScaleIndex = (this.next.timeScaleIndex + 1) % 11
 			this.next.onUpdate()
 		}
 	}
@@ -1081,29 +1081,12 @@
 	function CTimeline(oParentControl, oContainer, oChild) {
 		CControlContainer.call(this, oParentControl);
 
-		// From CScrollBase
 		this.container = oContainer;
 		this.scrolledChild = oChild;
-
-		this.startButton = this.addControl(new CButton(this));
-		this.endButton = this.addControl(new CButton(this));
-
-		this.timerId = null;
-		this.timeoutId = null;
-
-		this.scrollOffset = 0;
-		// this.tmpScrollOffset = null;
-
-		this.startScrollerPos = null;
-		this.startScrollTop = null;
-
-
-		// From CScrollHor
-		this.startButton.onMouseDownCallback = onFirstBtnMouseDown
-		this.endButton.onMouseDownCallback = onSecondBtnMouseDown
-		this.startButton.onMouseUpCallback = this.endButton.onMouseUpCallback = onMouseUp
-
-		// List of buttons handlers---
+		
+		this.startButton = this.addControl(new CButton(this, onFirstBtnMouseDown, null, onMouseUp));
+		this.endButton = this.addControl(new CButton(this, onSecondBtnMouseDown, null, onMouseUp));
+		
 		function onFirstBtnMouseDown(e, x, y) {
 			if (!this.hit(x, y)) { return }
 			this.parentControl.setEventListener(this);
@@ -1128,82 +1111,42 @@
 			}
 			return false;
 		}
-		// --- end of list of button handlers
+		
+		this.timerId = null;
+		this.timeoutId = null;
 
-
-		// From here originally
-		this.scroller = this.addControl(new CButton(this, stickToPointer, handlePointerMovement, unstickFromPointer));
-		this.scroller.onMouseDownCallback = stickToPointer
-		this.scroller.onMouseMoveCallback = handlePointerMovement
-		this.scroller.onMouseUpCallback = unstickFromPointer
-
+		// This fields supposed to be private
+		// so it should not be changed directly.
+		// Use set methods insdead (setScrollOffset, setStartTimePos, timeScaleIndex)
+		this.scrollOffset = 0;
 		this.startTimePos = 0;
-		this.curTimePos = 5;
-		this.tmScaleIdx = 2;
+		this.timeScaleIndex = 2;
 
-		//labels cache
+		// Labels cache
 		this.labels = {};
 		this.usedLabels = {};
 		this.cachedParaPr = null
-
-		// Handlers for scroller button ---
-		function stickToPointer(event, x, y) {
-			if (!this.hit(x, y)) { return }
-			this.isStickedToPointer = true
-		}
-
-		function unstickFromPointer(event, x, y) {
-			this.isStickedToPointer = false
-			this.parentControl.endScroll()
-		}
-
-		function handlePointerMovement(event, x, y) {
-			if (!this.isStickedToPointer) { return }
-
-			// Calculating new position of the scroller
-			let rightBorder = this.parentControl.getMaxScrollOffset()
-			let leftBorder = SCROLL_BUTTON_SIZE
-			let newLeft = x - SCROLL_BUTTON_SIZE / 2 - this.parentControl.getLeft()
-			newLeft = Math.min(rightBorder, Math.max(leftBorder, newLeft))
-
-			// Check if the boundaried are reached and start scrolling if so
-			if (newLeft == leftBorder || newLeft == rightBorder) {
-				if (!this.hit(x, y)) { return }
-				let scrollStep = (this.parentControl.getWidth() - 2 * SCROLL_BUTTON_SIZE) * SCROLL_STEP
-				scrollStep = newLeft == leftBorder ? -scrollStep : scrollStep;
-				this.parentControl.startScroll(scrollStep);
-			}
-			else this.parentControl.endScroll()
-
-			// Updating curTimePos
-			this.parentControl.setCurTimePos(this.parentControl.posToTime(newLeft + SCROLL_BUTTON_SIZE / 2))
-
-			// Если оставить "newLeft, t, w, h", то t почему-то перезаписывается постоянно
-			// let { l, t, w, h } = this.bounds
-			// this.setLayout(newLeft, t, w, h)
-
-			this.setLayout(newLeft, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE)
-			this.onUpdate()
-		}
-		// --- end of handlers for scroller button
 	}
 
 	InitClass(CTimeline, CControlContainer, CONTROL_TYPE_TIMELINE);
 
-	CTimeline.prototype.limitScrollOffset = function (offsetValue /* in millimeters */) {
-		return Math.max(0, Math.min(offsetValue, this.getMaxScrollOffset()));
+	CTimeline.prototype.limitScrollOffset = function (newScrollOffset /* in millimeters */) {
+		return Math.max(0, Math.min(newScrollOffset, this.getMaxScrollOffset()));
 	};
 	CTimeline.prototype.getScrollOffset = function () {
 		return this.scrollOffset;
 	};
-	CTimeline.prototype.setScrollOffset = function (offsetValue /* in millimeters */) {
-		this.scrollOffset = this.limitScrollOffset(val)
+	CTimeline.prototype.setScrollOffset = function (newScrollOffset /* in millimeters */) {
+		this.scrollOffset = this.limitScrollOffset(newScrollOffset)
 
 		this.parentControl.onScroll();
 		this.onUpdate();
 	};
+	CTimeline.prototype.getMaxScrollOffset = function () {
+		return this.getWidth() - SCROLL_BUTTON_SIZE - TIMELINE_SCROLLER_SIZE;
+	};
 
-	CTimeline.prototype.startScroll = function (step) {
+	CTimeline.prototype.startScroll = function (step /* in millimeters */) {
 		this.endScroll();
 		var oScroll = this;
 		oScroll.addScroll(step);
@@ -1215,10 +1158,8 @@
 			}, SCROLL_TIMER_INTERVAL);
 		}, SCROLL_TIMER_DELAY);
 	};
-	CTimeline.prototype.addScroll = function (step) {
+	CTimeline.prototype.addScroll = function (step /* in millimeters */) {
 		this.setScrollOffset(this.getScrollOffset() + step);
-
-		this.parentControl.onScroll();
 	};
 	CTimeline.prototype.endScroll = function () {
 		if (this.timerId !== null) {
@@ -1231,19 +1172,11 @@
 		}
 
 		this.setStateFlag(STATE_FLAG_SELECTED, false);
-
-		this.startScrollerPos = null;
-		this.startScrollTop = null;
 	};
 	CTimeline.prototype.isOnScroll = function () {
 		return this.timerId !== null || this.timeoutId !== null || this.parentControl.isEventListener(this);
 	};
 
-	CTimeline.prototype.getMaxScrollOffset = function (val) {
-		// Method must return the maximum allowed value of "this.scrollOffset" in millimeters
-		let errorMessage = 'NOT IMPLEMENTED: getMaxScrollOffset'
-		throw new Error(errorMessage)
-	};
 	CTimeline.prototype.hitInScroller = function (x, y) {
 		if (this.isHidden()) {
 			return false;
@@ -1378,8 +1311,6 @@
 		return true;
 	};
 	CTimeline.prototype.recalculateChildrenLayout = function () {
-		this.scroller.setLayout(SCROLL_BUTTON_SIZE * 4, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-		
 		this.startButton.setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
 		this.endButton.setLayout(this.getWidth() - SCROLL_BUTTON_SIZE, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
 	};
@@ -1431,8 +1362,8 @@
 		//draw marks
 		//find first visible
 		var fStartTime = this.posToTime(this.getRulerStart());
-		var fTimeInterval = TIME_SCALES[this.tmScaleIdx];
-		var nMarksCount = TIME_INTERVALS[this.tmScaleIdx] === LONG_TIME_INTERVAL ? 10 : 2;
+		var fTimeInterval = TIME_SCALES[this.timeScaleIndex];
+		var nMarksCount = TIME_INTERVALS[this.timeScaleIndex] === LONG_TIME_INTERVAL ? 10 : 2;
 
 		var dTimeOfSmallInterval = fTimeInterval / nMarksCount;
 		var nStartIntervalIdx = this.startTimePos / dTimeOfSmallInterval >> 0;
@@ -1490,7 +1421,7 @@
 	 */
 	CTimeline.prototype.getLinearCoeffs = function () {
 		//linear relationship x = a*t + b
-		var a = TIME_INTERVALS[this.tmScaleIdx] / TIME_SCALES[this.tmScaleIdx];
+		var a = TIME_INTERVALS[this.timeScaleIndex] / TIME_SCALES[this.timeScaleIndex];
 		var b = this.getZeroShift() - a * this.startTimePos;
 		return { a: a, b: b };
 	};
@@ -1839,6 +1770,7 @@
 	const HORIZONTAL_SPACE = PADDING_LEFT;
 	const SCROLL_THICKNESS = 15 * AscCommon.g_dKoef_pix_to_mm;
 	const SCROLL_BUTTON_SIZE = SCROLL_THICKNESS;
+	const TIMELINE_SCROLLER_SIZE = SCROLL_BUTTON_SIZE;
 	const TIMELINE_HEIGHT = SCROLL_THICKNESS + 1;
 	const BUTTON_SPACE = HORIZONTAL_SPACE / 2;
 	const TOOLBAR_WIDTH = 25;
