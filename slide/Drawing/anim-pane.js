@@ -1188,39 +1188,6 @@
 		return this.timerId !== null || this.timeoutId !== null || this.parentControl.isEventListener(this);
 	};
 
-	CTimeline.prototype.hitInScroller = function (x, y) {
-		if (this.isHidden()) {
-			return false;
-		}
-		var oInv = this.getInvFullTransformMatrix();
-		var tx = oInv.TransformPointX(x, y);
-		var ty = oInv.TransformPointY(x, y);
-		var l = this.getScrollerX();
-		var t = this.getScrollerY();
-		var r = l + this.getScrollerWidth();
-		var b = t + this.getScrollerHeight();
-		return tx >= l && tx <= r && ty >= t && ty <= b;
-	};
-	CTimeline.prototype.getScrollerX = function (dScrollOffset) {
-		return 0;
-	};
-	CTimeline.prototype.getScrollerY = function (dScrollOffset) {
-		return 0;
-	};
-	CTimeline.prototype.getScrollerWidth = function (dScrollOffset) {
-		return 0;
-	};
-	CTimeline.prototype.getScrollerHeight = function (dScrollOffset) {
-		return 0;
-	};
-
-	CTimeline.prototype.getFillColor = function () {
-		return null;
-	};
-	CTimeline.prototype.getOutlineColor = function () {
-		return null;
-	};
-
 	CTimeline.prototype.startDrawLabels = function () {
 		this.usedLabels = {};
 	};
@@ -1299,22 +1266,6 @@
 		// oContent.ShiftView(dPos - LABEL_WIDTH / 2, this.getHeight() / 2 - oContent.GetSummaryHeight() / 2);
 		// oContent.Draw(0, graphics);
 		// oContent.ResetShiftView();
-	};
-	CTimeline.prototype.getPaneLeft = function () {
-		return SCROLL_BUTTON_SIZE;
-	};
-	CTimeline.prototype.getFillColor = function () {
-		return null;
-	};
-	CTimeline.prototype.getOutlineColor = function () {
-		return null;
-	};
-	CTimeline.prototype.canHandleEvents = function () {
-		return true;
-	};
-	CTimeline.prototype.recalculateChildrenLayout = function () {
-		this.startButton.setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-		this.endButton.setLayout(this.getWidth() - SCROLL_BUTTON_SIZE, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
 	};
 	CTimeline.prototype.drawMark = function (graphics, dPos) {
 		var dHeight = this.getHeight() / 3;
@@ -1401,21 +1352,14 @@
 	};
 
 	CTimeline.prototype.getRulerStart = function () {
-		return this.children[0].getRight();
+		return this.startButton.getRight();
 	};
 	CTimeline.prototype.getRulerEnd = function () {
-		return this.getWidth() - this.children[1].getWidth();
+		return this.getWidth() - this.endButton.getWidth();
 	};
-	CTimeline.prototype.getCursorSize = function () {
-		return BUTTON_SIZE;
-	};
-
-	/**
-	 * Returns the value (in millimeters) of the left margin
-	 * for the start of the timeline
-	 */
 	CTimeline.prototype.getZeroShift = function () {
-		return this.getRulerStart() + this.getCursorSize() / 2;
+		// Returns the value (in millimeters) of the left margin of the start of the ruler
+		return this.getRulerStart() + TIMELINE_SCROLLER_SIZE / 2;
 	};
 
 	/*
@@ -1436,6 +1380,20 @@
 		//linear relationship x = a*t + b 
 		var oCoefs = this.getLinearCoeffs();
 		return (fPos - oCoefs.b) / oCoefs.a;
+	};
+
+	CTimeline.prototype.getFillColor = function () {
+		return null;
+	};
+	CTimeline.prototype.getOutlineColor = function () {
+		return null;
+	};
+	CTimeline.prototype.canHandleEvents = function () {
+		return true;
+	};
+	CTimeline.prototype.recalculateChildrenLayout = function () {
+		this.startButton.setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+		this.endButton.setLayout(this.getWidth() - SCROLL_BUTTON_SIZE, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
 	};
 
 
