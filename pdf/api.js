@@ -163,7 +163,6 @@
 		if (!this.DocumentRenderer)
 			return;
 
-		let _html_data;
 		let oDoc = this.DocumentRenderer.getPDFDoc();
 		var oActiveForm = oDoc.activeForm;
 		if (oActiveForm && oActiveForm.content.IsSelectionUse()) {
