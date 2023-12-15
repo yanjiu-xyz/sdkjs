@@ -38,19 +38,46 @@
 	
 	/**
 	 * Class for handling bidirectional flow of text or other content
+	 * @param {AscWord.Paragraph} paragraph
 	 * @constructor
 	 */
-	function ParagraphDrawSelectionState()
+	function ParagraphDrawSelectionState(paragraph)
 	{
-		this.x    = 0;
+		this.paragraph = paragraph
+		
+		this.y = 0;
+		this.h = 0;
+		this.x = 0;
+		
 		this.rtl  = false;
 		this.bidi = new AscWord.BidiFlow(this);
 		
+		this.page  = 0;
+		this.range = 0;
+		this.line  = 0;
+		
 		this.selectionRanges = [];
 	}
-	ParagraphDrawSelectionState.prototype.beginRange = function(rangeX)
+	ParagraphDrawSelectionState.prototype.resetPage = function(page)
 	{
-		this.x = rangeX;
+		this.page = page;
+	};
+	ParagraphDrawSelectionState.prototype.resetLine = function(line)
+	{
+		this.line = line;
+		
+		let p = this.paragraph;
+		this.y = p.Pages[this.page].Y + p.Lines[this.line].Top;
+		this.h = p.Lines[this.line].Bottom - p.Lines[this.line].Top;
+	};
+	ParagraphDrawSelectionState.prototype.beginRange = function(range)
+	{
+		this.range = range;
+		
+		this.x = this.paragraph.Lines[this.line].Ranges[this.range].XVisible;
+		if (this.line === this.paragraph.Numbering.Line && this.range === this.paragraph.Numbering.Range)
+			this.X += this.paragraph.Numbering.WidthVisible;
+		
 		this.bidi.begin(this.rtl);
 	};
 	ParagraphDrawSelectionState.prototype.endRange = function()
@@ -84,7 +111,7 @@
 			if (lastRange && Math.abs(lastRange.x + lastRange.w - this.x) < EPSILON)
 				lastRange.w += w;
 			else
-				this.selectionRanges.push({x : this.x, w : w});
+				this.selectionRanges.push({x : this.x, w : w, y : this.y, h : this.h});
 		}
 		
 		this.x += w;

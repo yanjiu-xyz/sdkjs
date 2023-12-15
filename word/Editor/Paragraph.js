@@ -8643,8 +8643,6 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 				EndPos   = this.Selection.StartPos;
 			}
 			
-			let paraPage = this.Pages[CurPage];
-
 			var _StartLine = this.Pages[CurPage].StartLine;
 			var _EndLine   = this.Pages[CurPage].EndLine;
 
@@ -8653,7 +8651,7 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 			else
 			{
 				StartPos = Math.max(StartPos, this.Lines[_StartLine].Get_StartPos());
-				EndPos   = Math.min(EndPos, ( _EndLine != this.Lines.length - 1 ? this.Lines[_EndLine].Get_EndPos() : this.Content.length - 1 ));
+				EndPos   = Math.min(EndPos, ( _EndLine !== this.Lines.length - 1 ? this.Lines[_EndLine].Get_EndPos() : this.Content.length - 1 ));
 			}
 			
 			let selectionStart = StartPos;
@@ -8662,13 +8660,12 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 			let isInline = this.IsInline();
 			
 
-			let drawSelectionState = new AscWord.ParagraphDrawSelectionState();
+			let drawSelectionState = new AscWord.ParagraphDrawSelectionState(this);
+			drawSelectionState.resetPage(CurPage);
 			for (let iLine = _StartLine; iLine <= _EndLine; ++iLine)
 			{
 				let line = this.Lines[iLine];
-				
-				let lineY = paraPage.Y + line.Top;
-				let lineH = line.Bottom - line.Top;
+				drawSelectionState.resetLine(iLine);
 				
 				for (let iRange = 0, rangeCount = line.Ranges.length; iRange < rangeCount; ++iRange)
 				{
@@ -8681,11 +8678,7 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 					if (selectionStart > rangeEnd || selectionEnd < rangeStart)
 						continue;
 					
-					let rangeX = range.XVisible;
-					if (iLine === this.Numbering.Line && iRange === this.Numbering.Range)
-						rangeX += this.Numbering.WidthVisible;
-					
-					drawSelectionState.beginRange(rangeX);
+					drawSelectionState.beginRange(iRange);
 					
 					for (let pos = rangeStart; pos <= rangeEnd; ++pos)
 					{
@@ -8698,10 +8691,9 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 					for (let iSel = 0; iSel < selectionRanges.length; ++iSel)
 					{
 						let _x = selectionRanges[iSel].x;
-						var _w = selectionRanges[iSel].w;
-						
-						let _y = lineY;
-						let _h = lineH;
+						let _w = selectionRanges[iSel].w;
+						let _y = selectionRanges[iSel].y;
+						let _h = selectionRanges[iSel].h;
 						
 						if (!isInline && this.CalculatedFrame)
 						{
@@ -9200,7 +9192,6 @@ Paragraph.prototype.GetSelectionAnchorPos = function()
 	}
 	else if (true === this.Selection.Use)
 	{
-		// Делаем подсветку
 		var StartPos = this.Selection.StartPos;
 		var EndPos   = this.Selection.EndPos;
 
@@ -9226,81 +9217,64 @@ Paragraph.prototype.GetSelectionAnchorPos = function()
 		StartLine = Math.min(Math.max(0, StartLine), LinesCount - 1);
 		EndLine   = Math.min(Math.max(0, EndLine), LinesCount - 1);
 
-		var PagesCount     = this.Pages.length;
-		var DrawSelection  = new CParagraphDrawSelectionRange();
-		DrawSelection.Draw = false;
-
-		for (var CurLine = StartLine; CurLine <= EndLine; CurLine++)
+		let pageCount = this.Pages.length;
+		let drawSelectionState = new AscWord.ParagraphDrawSelectionState(this);
+		for (let iLine = StartLine; iLine <= EndLine; ++iLine)
 		{
-			var Line        = this.Lines[CurLine];
-			var RangesCount = Line.Ranges.length;
-
-			// Определим номер страницы
-			var CurPage = 0;
-			for (; CurPage < PagesCount; CurPage++)
+			let paraLine = this.Lines[iLine];
+			
+			let iPage = 0;
+			for (; iPage < pageCount; ++iPage)
 			{
-				if (CurLine >= this.Pages[CurPage].StartLine && CurLine <= this.Pages[CurPage].EndLine)
+				if (CurLine >= this.Pages[iPage].StartLine && CurLine <= this.Pages[iPage].EndLine)
 					break;
 			}
 
-			CurPage = Math.min(PagesCount - 1, CurPage);
-
-			// Определяем позицию и высоту строки
-			DrawSelection.StartY = this.Pages[CurPage].Y + this.Lines[CurLine].Top;
-			DrawSelection.H      = this.Lines[CurLine].Bottom - this.Lines[CurLine].Top;
-
+			iPage = Math.min(pageCount - 1, iPage);
+			drawSelectionState.resetPage(iPage);
+			drawSelectionState.resetLine(iLine);
+			
 			var Result = null;
-
-			for (var CurRange = 0; CurRange < RangesCount; CurRange++)
+			for (let iRange = 0, rangeCount = paraLine.Ranges.length; iRange < rangeCount; ++iRange)
 			{
-				var Range = Line.Ranges[CurRange];
+				let range = paraLine.Ranges[iRange];
 
-				var RStartPos = Range.StartPos;
-				var REndPos   = Range.EndPos;
+				var RStartPos = range.StartPos;
+				var REndPos   = range.EndPos;
 
 				// Если пересечение пустое с селектом, тогда пропускаем данный отрезок
 				if (StartPos > REndPos || EndPos < RStartPos)
 					continue;
 
-				DrawSelection.StartX    = this.Lines[CurLine].Ranges[CurRange].XVisible;
-				DrawSelection.W         = 0;
-				DrawSelection.FindStart = true;
-
-				if (CurLine === this.Numbering.Line && CurRange === this.Numbering.Range)
-					DrawSelection.StartX += this.Numbering.WidthVisible;
-
+				drawSelectionState.beginRange(iRange);
 				for (var CurPos = RStartPos; CurPos <= REndPos; CurPos++)
 				{
 					var Item = this.Content[CurPos];
 					Item.Selection_DrawRange(CurLine, CurRange, DrawSelection);
 				}
-
-				var StartX = DrawSelection.StartX;
-				var W      = DrawSelection.W;
-
-				var StartY = DrawSelection.StartY;
-				var H      = DrawSelection.H;
-
-				var StartX = DrawSelection.StartX;
-				var W      = DrawSelection.W;
-
-				var StartY = DrawSelection.StartY;
-				var H      = DrawSelection.H;
-
-				if (W > 0.001)
+				drawSelectionState.endRange();
+				
+				for (let iSel = 0; iSel < selectionRanges.length; ++iSel)
 				{
-					X0 = StartX;
-					X1 = StartX + W;
-					Y  = StartY;
-
-					Page = this.Get_AbsolutePage(CurPage);
-
-					if (null === Result)
-						Result = {X0 : X0, X1 : X1, Y : Y, Page : Page};
-					else
+					let _x = selectionRanges[iSel].x;
+					let _w = selectionRanges[iSel].w;
+					let _y = selectionRanges[iSel].y;
+					
+					if (_w > 0.001)
 					{
-						Result.X0 = Math.min(Result.X0, X0);
-						Result.X1 = Math.max(Result.X1, X1);
+						X0 = _x;
+						X1 = _x + _w;
+						Y  = _y;
+						
+						Page = this.Get_AbsolutePage(CurPage);
+						
+						if (null === Result)
+							Result = {X0 : X0, X1 : X1, Y : Y, Page : Page};
+						else
+						{
+							Result.X0 = Math.min(Result.X0, X0);
+							Result.X1 = Math.max(Result.X1, X1);
+						}
 					}
 				}
 			}
