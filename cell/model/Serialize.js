@@ -907,7 +907,8 @@
 		ShowInputMessage: 16,
 		SqRef: 17,
 		Formula1: 18,
-		Formula2: 19
+		Formula2: 19,
+		List: 20
 	};
     var c_oSer_SheetView = {
         ColorId						: 0,
@@ -4428,6 +4429,11 @@
 				this.memory.WriteByte(c_oSer_DataValidation.Formula2);
 				this.memory.WriteByte(c_oSerPropLenType.Variable);
 				this.memory.WriteString2(dataValidation.formula2.text);
+			}
+			if (null != dataValidation.list) {
+				this.memory.WriteByte(c_oSer_DataValidation.List);
+				this.memory.WriteByte(c_oSerPropLenType.Variable);
+				this.memory.WriteString2(dataValidation.list);
 			}
 		};
 		this.WriteSheetProtection = function(sheetProtection)
@@ -9043,11 +9049,13 @@
 			} else if (c_oSer_DataValidation.ShowInputMessage == type) {
 				dataValidation.showInputMessage = this.stream.GetBool();
 			} else if (c_oSer_DataValidation.SqRef == type) {
-			    dataValidation.setSqRef(this.stream.GetString2LE(length));
+				dataValidation.setSqRef(this.stream.GetString2LE(length));
 			} else if (c_oSer_DataValidation.Formula1 == type) {
-			    dataValidation.formula1 = new Asc.CDataFormula(this.stream.GetString2LE(length));
+				dataValidation.formula1 = new Asc.CDataFormula(this.stream.GetString2LE(length));
 			} else if (c_oSer_DataValidation.Formula2 == type) {
-                dataValidation.formula2 = new Asc.CDataFormula(this.stream.GetString2LE(length));
+				dataValidation.formula2 = new Asc.CDataFormula(this.stream.GetString2LE(length));
+			} else if (c_oSer_DataValidation.List == type) {
+				dataValidation.list = new Asc.CDataFormula(this.stream.GetString2LE(length));
 			} else
 				res = c_oSerConstants.ReadUnknown;
 			return res;
