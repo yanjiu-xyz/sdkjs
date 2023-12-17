@@ -1090,7 +1090,7 @@
 		function onFirstBtnMouseDown(e, x, y) {
 			if (!this.hit(x, y)) { return }
 			this.parentControl.setEventListener(this);
-			let step = (this.parentControl.getWidth() - 2 * SCROLL_BUTTON_SIZE) * SCROLL_STEP
+			let step = SCROLL_STEP * this.parentControl.getWidth()
 			this.parentControl.startScroll(-step);
 			return true;
 		}
@@ -1098,7 +1098,7 @@
 		function onSecondBtnMouseDown(e, x, y) {
 			if (!this.hit(x, y)) { return }
 			this.parentControl.setEventListener(this);
-			let step = (this.parentControl.getWidth() - 2 * SCROLL_BUTTON_SIZE) * SCROLL_STEP
+			let step = SCROLL_STEP * this.parentControl.getWidth()
 			this.parentControl.startScroll(step);
 			return true;
 		}
@@ -1126,6 +1126,40 @@
 		this.labels = {};
 		this.usedLabels = {};
 		this.cachedParaPr = null
+
+		this.onMouseDownCallback = function stickToPointer(event, x, y) {
+			if (!this.hitInScroller(x, y)) { return }
+			this.isStickedToPointer = true
+		}
+
+		this.onMouseUpCallback = function unstickFromPointer(event, x, y) {
+			this.isStickedToPointer = false;
+			if (this.isOnScroll()) { this.endScroll() }
+		}
+
+		this.onMouseMoveCallback = function handlePointerMovement(event, x, y) {
+			if (!this.isStickedToPointer) { return }
+
+			let oInv = this.getInvFullTransformMatrix();
+			let tx = oInv.TransformPointX(x, y);
+
+			let newScrollOffset = tx - this.getRulerStart() - TIMELINE_SCROLLER_SIZE / 2;
+
+			// Check if the boundaried are reached and start scrolling if so
+			let leftBorder = this.getRulerStart();
+			let rightBorder = this.getRulerEnd()
+			if (tx <= leftBorder || tx >= rightBorder) {
+				if (!this.isOnScroll()) {
+					let scrollStep = this.getWidth() * SCROLL_STEP;
+					scrollStep = tx <= leftBorder ? -scrollStep : scrollStep;
+					this.startScroll(scrollStep);
+				}
+			}
+			else this.endScroll()
+
+			// Updating scrollOffset
+			this.setScrollOffset(newScrollOffset)
+		}
 	}
 
 	InitClass(CTimeline, CControlContainer, CONTROL_TYPE_TIMELINE);
@@ -1143,7 +1177,7 @@
 		this.onUpdate();
 	};
 	CTimeline.prototype.getMaxScrollOffset = function () {
-		return this.getWidth() - SCROLL_BUTTON_SIZE - TIMELINE_SCROLLER_SIZE;
+		return this.getWidth() - 2 * SCROLL_BUTTON_SIZE - TIMELINE_SCROLLER_SIZE;
 	};
 
 	CTimeline.prototype.getStartTime = function () {
@@ -1185,7 +1219,8 @@
 		this.setStateFlag(STATE_FLAG_SELECTED, false);
 	};
 	CTimeline.prototype.isOnScroll = function () {
-		return this.timerId !== null || this.timeoutId !== null || this.parentControl.isEventListener(this);
+		return this.timerId !== null || this.timeoutId !== null;
+		// return this.timerId !== null || this.timeoutId !== null || this.parentControl.isEventListener(this);
 	};
 
 	CTimeline.prototype.startDrawLabels = function () {
@@ -1344,12 +1379,49 @@
 		this.endDrawLabels();
 		//
 
+		this.drawScroller(graphics)
+
 		graphics.RestoreGrState();
 
 		if (!CControlContainer.prototype.draw.call(this, graphics)) {
 			return false;
 		}
 	};
+	CTimeline.prototype.drawScroller = function (graphics) {
+		let x = this.getRulerStart() + this.getScrollOffset();
+		let y = 0;
+		let extX = TIMELINE_SCROLLER_SIZE;
+		let extY = this.getHeight();
+
+		graphics.b_color1(40, 160, 200, 0xFF);
+		graphics.rect(x, y, extX, extY);
+		graphics.df();
+
+		graphics.SetIntegerGrid(true);
+		let nPenW = this.getPenWidth(graphics);
+		graphics.p_color(0, 0, 0, 0xFF);
+		graphics.drawHorLine(0, y, x, x + extX, nPenW);
+		graphics.drawHorLine(0, y + extY, x, x + extX, nPenW);
+		graphics.drawVerLine(2, x, y, y + extY, nPenW);
+		graphics.drawVerLine(2, x + extX, y, y + extY, nPenW);
+
+		return true;
+	};
+	CTimeline.prototype.hitInScroller = function(x, y) {
+		// x, y - relatively to this.parentContainer
+		// tx, ty - relatively to this
+
+		let oInv = this.getInvFullTransformMatrix();
+		let tx = oInv.TransformPointX(x, y);
+		let ty = oInv.TransformPointY(x, y);
+
+		let l = this.getRulerStart() + this.getScrollOffset();
+		let t = 0;
+		let r = l + TIMELINE_SCROLLER_SIZE;
+		let b = t + this.getHeight();
+
+		return tx >= l && tx <= r && ty >= t && ty <= b;
+	}
 
 	CTimeline.prototype.getRulerStart = function () {
 		return this.startButton.getRight();
@@ -1394,6 +1466,24 @@
 	CTimeline.prototype.recalculateChildrenLayout = function () {
 		this.startButton.setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
 		this.endButton.setLayout(this.getWidth() - SCROLL_BUTTON_SIZE, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+	};
+	CTimeline.prototype.onMouseDown = function (e, x, y) {
+		if (this.onMouseDownCallback && this.onMouseDownCallback.call(this, e, x, y)) {
+			return true;
+		}
+		return CControlContainer.prototype.onMouseDown.call(this, e, x, y);
+	};
+	CTimeline.prototype.onMouseMove = function (e, x, y) {
+		if (this.onMouseMoveCallback && this.onMouseMoveCallback.call(this, e, x, y)) {
+			return true;
+		}
+		return CControlContainer.prototype.onMouseMove.call(this, e, x, y);
+	};
+	CTimeline.prototype.onMouseUp = function (e, x, y) {
+		if (this.onMouseUpCallback && this.onMouseUpCallback.call(this, e, x, y)) {
+			return true;
+		}
+		return CControlContainer.prototype.onMouseUp.call(this, e, x, y);
 	};
 
 
