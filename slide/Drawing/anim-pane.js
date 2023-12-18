@@ -1171,7 +1171,12 @@
 		return this.scrollOffset;
 	};
 	CTimeline.prototype.setScrollOffset = function (newScrollOffset /* in millimeters */) {
+		let oldScrollOffset = this.getScrollOffset()
+
 		this.scrollOffset = this.limitScrollOffset(newScrollOffset)
+
+		let difference = this.posToTime(this.getScrollOffset()) - this.posToTime(oldScrollOffset) // difference in seconds
+		this.setStartTime(this.getStartTime() + difference)
 
 		this.parentControl.onScroll();
 		this.onUpdate();
