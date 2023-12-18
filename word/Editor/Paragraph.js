@@ -9029,8 +9029,6 @@ Paragraph.prototype.GetSelectionBounds = function()
 		};
 	}
 
-	var X0 = this.X, X1 = this.XLimit, Y = this.Y;
-
 	var BeginRect = null;
 	var EndRect   = null;
 
@@ -9074,57 +9072,51 @@ Paragraph.prototype.GetSelectionBounds = function()
 		{
 			let paraLine = this.Lines[iLine];
 
-			let iPage = this.getPageByLine(iLine);
+			let iPage   = this.getPageByLine(iLine);
+			let absPage = this.GetAbsolutePage(iPage);
 			drawSelectionState.resetPage(iPage);
 			drawSelectionState.resetLine(iLine);
 			for (let iRange = 0, rangeCount = paraLine.Ranges.length; iRange < rangeCount; ++iRange)
 			{
 				let range = paraLine.Ranges[iRange];
 
-				var RStartPos = range.StartPos;
-				var REndPos   = range.EndPos;
-
-				// Если пересечение пустое с селектом, тогда пропускаем данный отрезок
-				if (StartPos > REndPos || EndPos < RStartPos)
+				let rangeStart = range.StartPos;
+				let rangeEnd   = range.EndPos;
+				
+				if (StartPos > rangeEnd || EndPos < rangeStart)
 					continue;
 				
 				drawSelectionState.beginRange(iRange);
-				for (var CurPos = RStartPos; CurPos <= REndPos; CurPos++)
+				for (var CurPos = rangeStart; CurPos <= rangeEnd; CurPos++)
 				{
 					var Item = this.Content[CurPos];
 					Item.Selection_DrawRange(iLine, iRange, drawSelectionState);
 				}
 				drawSelectionState.endRange();
 				
-				let selectionRanges = drawSelectionState.getSelectionRanges();
-				for (let iSel = 0; iSel < selectionRanges.length; ++iSel)
+				if (!BeginRect)
 				{
-					let _x = selectionRanges[iSel].x;
-					let _w = selectionRanges[iSel].w;
-					let _y = selectionRanges[iSel].y;
-					let _h = selectionRanges[iSel].h;
-					if (_w > 0.001)
-					{
-						X0 = StartX;
-						X1 = StartX + _w;
-						
-						var Page = this.Get_AbsolutePage(iPage);
-						
-						if (null === BeginRect)
-							BeginRect = {X : _x, Y : _y, W : _w, H : _h, Page : Page};
-						
-						EndRect = {X : _x, Y : _y, W : _w, H : _h, Page : Page};
+					let beginInfo = drawSelectionState.getBeginInfo();
+					BeginRect = {
+						X    : beginInfo.x,
+						Y    : beginInfo.y,
+						W    : beginInfo.w,
+						H    : beginInfo.h,
+						Page : absPage
 					}
-					
-					if (null === _StartX)
-					{
-						_StartX = _x;
-						_StartY = _y;
-					}
-					
-					_EndX = _x;
-					_EndY = _y;
 				}
+				
+				let endInfo = drawSelectionState.getEndInfo();
+				EndRect     = {
+					X    : endInfo.x,
+					Y    : endInfo.y,
+					W    : endInfo.w,
+					H    : endInfo.h,
+					Page : absPage
+				};
+				
+				_EndX = endInfo.x;
+				_EndY = endInfo.y;
 			}
 		}
 	}
@@ -9141,6 +9133,7 @@ Paragraph.prototype.GetSelectionBounds = function()
 	}
 
 	if (null === BeginRect)
+	{
 		BeginRect = {
 			X    : _StartX === null ? this.Pages[StartPage].X : _StartX,
 			Y    : _StartY === null ? this.Pages[StartPage].Y : _StartY,
@@ -9148,8 +9141,10 @@ Paragraph.prototype.GetSelectionBounds = function()
 			H    : 0,
 			Page : this.Get_AbsolutePage(StartPage)
 		};
+	}
 
 	if (null === EndRect)
+	{
 		EndRect = {
 			X    : _EndX === null ? this.Pages[StartPage].X : _EndX,
 			Y    : _EndY === null ? this.Pages[StartPage].Y : _EndY,
@@ -9157,8 +9152,13 @@ Paragraph.prototype.GetSelectionBounds = function()
 			H    : 0,
 			Page : this.Get_AbsolutePage(EndPage)
 		};
-
-	return {Start : BeginRect, End : EndRect, Direction : this.GetSelectDirection()};
+	}
+	
+	return {
+		Start     : BeginRect,
+		End       : EndRect,
+		Direction : this.GetSelectDirection()
+	};
 };
 Paragraph.prototype.GetSelectDirection = function()
 {

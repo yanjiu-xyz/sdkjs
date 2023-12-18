@@ -57,6 +57,11 @@
 		this.line  = 0;
 		
 		this.selectionRanges = [];
+		
+		this.beginElement = null;
+		this.endElement   = null;
+		this.beginInfo    = null;
+		this.endInfo      = null;
 	}
 	ParagraphDrawSelectionState.prototype.resetPage = function(page)
 	{
@@ -79,6 +84,9 @@
 			this.X += this.paragraph.Numbering.WidthVisible;
 		
 		this.bidi.begin(this.rtl);
+		
+		this.beginElement = null;
+		this.endElement   = null;
 	};
 	ParagraphDrawSelectionState.prototype.endRange = function()
 	{
@@ -88,6 +96,20 @@
 	{
 		return this.selectionRanges;
 	};
+	ParagraphDrawSelectionState.prototype.getBeginInfo = function()
+	{
+		if (!this.beginInfo)
+			return {x : this.x, y : this.y, w : 0, h : this.h};
+		
+		return this.beginInfo;
+	};
+	ParagraphDrawSelectionState.prototype.getEndInfo = function()
+	{
+		if (!this.endInfo)
+			return {x : this.x, y : this.y, w : 0, h : this.h};
+		
+		return this.endInfo;
+	};
 	/**
 	 * @param element {AscWord.CRunElementBase}
 	 * @param isSelected {boolean}
@@ -95,9 +117,20 @@
 	ParagraphDrawSelectionState.prototype.handleRunElement = function(element, isSelected)
 	{
 		if (para_Drawing === element.Type && !element.IsInline())
+		{
 			element.Draw_Selection();
-		else
-			this.bidi.add([element, isSelected], element.getBidiType());
+			return;
+		}
+		
+		if (isSelected)
+		{
+			if (!this.beginElement)
+				this.beginElement = element;
+			
+			this.endElement = element;
+		}
+		
+		this.bidi.add([element, isSelected], element.getBidiType());
 	};
 	ParagraphDrawSelectionState.prototype.handleBidiFlow = function(data)
 	{
@@ -112,6 +145,27 @@
 				lastRange.w += w;
 			else
 				this.selectionRanges.push({x : this.x, w : w, y : this.y, h : this.h});
+			
+			// TODO: Сейчас мы используем начальный типа символа, нужно использовать тип расчитанный алгоритомом bidi
+			if (element === this.beginElement)
+			{
+				this.beginInfo = {
+					x : element.getBidiType() === AscWord.BidiType.rtl ? this.x + w : this.x,
+					w : 0,
+					y : this.y,
+					h : this.h
+				};
+			}
+			
+			if (element === this.endElement)
+			{
+				this.endInfo = {
+					x : element.getBidiType() === AscWord.BidiType.rtl ? this.x : this.x + w,
+					w : 0,
+					y : this.y,
+					h : this.h
+				};
+			}
 		}
 		
 		this.x += w;
