@@ -1194,6 +1194,9 @@
 		this.parentControl.onScroll();
 		this.onUpdate();
 	};
+	CTimeline.prototype.getCurrentTime = function() {
+		return this.posToTime(this.getScrollOffset() + this.startButton.getWidth() + TIMELINE_SCROLLER_SIZE / 2)
+	}
 
 	CTimeline.prototype.startScroll = function (step /* in millimeters */) {
 		this.endScroll();
