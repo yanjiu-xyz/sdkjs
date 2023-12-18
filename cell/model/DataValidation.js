@@ -178,6 +178,9 @@
 		this.formula1 = null;
 		this.formula2 = null;
 
+		//while on open
+		this.list = null;
+
 		this.Id = AscCommon.g_oIdCounter.Get_NewId();
 
 		this._tempSelection = null;
@@ -195,6 +198,14 @@
 		return AscCommonExcel.UndoRedoDataTypes.DataValidationInner;
 	};
 	CDataValidation.prototype._init = function (ws, doNotBuildDependencies) {
+		//list convert to formula
+		if (this.list) {
+			if (!this.formula1 && !this.formula2) {
+				this.formula1 = this.list;
+			}
+			this.list = null;
+		}
+
 		if (this.formula1) {
 			this.formula1._init(ws, null, doNotBuildDependencies);
 		}

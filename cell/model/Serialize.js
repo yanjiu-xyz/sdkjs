@@ -907,7 +907,8 @@
 		ShowInputMessage: 16,
 		SqRef: 17,
 		Formula1: 18,
-		Formula2: 19
+		Formula2: 19,
+		List: 20
 	};
     var c_oSer_SheetView = {
         ColorId						: 0,
@@ -4429,6 +4430,11 @@
 				this.memory.WriteByte(c_oSerPropLenType.Variable);
 				this.memory.WriteString2(dataValidation.formula2.text);
 			}
+			if (null != dataValidation.list) {
+				this.memory.WriteByte(c_oSer_DataValidation.List);
+				this.memory.WriteByte(c_oSerPropLenType.Variable);
+				this.memory.WriteString2(dataValidation.list);
+			}
 		};
 		this.WriteSheetProtection = function(sheetProtection)
 		{
@@ -7151,7 +7157,7 @@
         this.Read = function()
         {
             var oThis = this;
-			var tempValue = {text: null, multiText: null};
+            var tempValue = {text: null, multiText: null};
             return this.bcr.ReadTable(function(t, l){
                 return oThis.ReadSharedStringContent(t,l, tempValue);
             });
@@ -7162,20 +7168,26 @@
             if ( c_oSerSharedStringTypes.Si === type )
             {
                 var oThis = this;
-				tempValue.text = null;
-				tempValue.multiText = null;
+                tempValue.text = null;
+                tempValue.multiText = null;
                 res = this.bcr.Read1(length, function(t,l){
                     return oThis.ReadSharedString(t,l, tempValue);
                 });
                 if(null != this.aSharedStrings) {
-					if (null != tempValue.text) {
-						this.aSharedStrings.push(tempValue.text);
-					} else if (null != tempValue.multiText) {
-						this.aSharedStrings.push(tempValue.multiText);
-					} else {
-						this.aSharedStrings.push("");
-					}
-				}
+                    if (null != tempValue.multiText) {
+                        let aMultiText = tempValue.multiText;
+                        if (null != tempValue.text) {
+                            let oElem = new AscCommonExcel.CMultiTextElem();
+                            oElem.text = tempValue.text;
+                            aMultiText.unshift(oElem);
+                        }
+                        this.aSharedStrings.push(aMultiText);
+                    } else if (null != tempValue.text) {
+                        this.aSharedStrings.push(tempValue.text);
+                    } else {
+                        this.aSharedStrings.push("");
+                    }
+                }
             }
             else
                 res = c_oSerConstants.ReadUnknown;
@@ -9037,11 +9049,13 @@
 			} else if (c_oSer_DataValidation.ShowInputMessage == type) {
 				dataValidation.showInputMessage = this.stream.GetBool();
 			} else if (c_oSer_DataValidation.SqRef == type) {
-			    dataValidation.setSqRef(this.stream.GetString2LE(length));
+				dataValidation.setSqRef(this.stream.GetString2LE(length));
 			} else if (c_oSer_DataValidation.Formula1 == type) {
-			    dataValidation.formula1 = new Asc.CDataFormula(this.stream.GetString2LE(length));
+				dataValidation.formula1 = new Asc.CDataFormula(this.stream.GetString2LE(length));
 			} else if (c_oSer_DataValidation.Formula2 == type) {
-                dataValidation.formula2 = new Asc.CDataFormula(this.stream.GetString2LE(length));
+				dataValidation.formula2 = new Asc.CDataFormula(this.stream.GetString2LE(length));
+			} else if (c_oSer_DataValidation.List == type) {
+				dataValidation.list = new Asc.CDataFormula(this.stream.GetString2LE(length));
 			} else
 				res = c_oSerConstants.ReadUnknown;
 			return res;
