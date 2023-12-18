@@ -1365,6 +1365,8 @@
 		var nStartIntervalIdx = this.startTime / dTimeOfSmallInterval >> 0;
 		var nEndIntervalIdx = this.posToTime(this.getRulerEnd()) / dTimeOfSmallInterval + 0.5 >> 0;
 		this.startDrawLabels();
+
+		graphics.SaveGrState();
 		var nInterval;
 		graphics.AddClipRect(x, y, extX, extY);
 		for (nInterval = nStartIntervalIdx; nInterval <= nEndIntervalIdx; ++nInterval) {
@@ -1384,10 +1386,12 @@
 		//         this.drawLabel(graphics, dPos, dTime);
 		//     }
 		// }
+
+		graphics.RestoreGrState();
 		this.endDrawLabels();
 		//
 
-		this.drawScroller(graphics)
+		this.drawScroller(graphics);
 
 		graphics.RestoreGrState();
 
