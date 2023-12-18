@@ -1891,8 +1891,8 @@
 					radiusGuideVector.multiply(radius);
 					const radiusX = radiusGuideVector.x;
 					const radiusY = radiusGuideVector.y;
-					const offX = radiusX - shape.cleanParams.w / 2;
-					const offY = radiusY - shape.cleanParams.h / 2;
+					const offX = radiusX - shape.w / 2;
+					const offY = radiusY - shape.h / 2;
 					shape.x += offX;
 					shape.y += offY;
 					currentAngle += stepAngle;
