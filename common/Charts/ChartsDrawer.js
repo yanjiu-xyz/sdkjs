@@ -279,7 +279,6 @@ CChartsDrawer.prototype =
 
 		var cShapeDrawer = new AscCommon.CShapeDrawer();
 		cShapeDrawer.Graphics = graphics;
-		this.calcProp.series = chartSpace.chart.plotArea.chart.series;
 
 		this.cShapeDrawer = cShapeDrawer;
 
@@ -316,7 +315,7 @@ CChartsDrawer.prototype =
 				if(bIsNoSmartAttack) {
 					t.cShapeDrawer.bIsNoSmartAttack = true;
 				}
-				t.calcProp.series = chartModel.series;
+
 				t.charts[id].draw();
 				if(bIsNoSmartAttack) {
 					t.cShapeDrawer.bIsNoSmartAttack = false;
@@ -864,22 +863,22 @@ CChartsDrawer.prototype =
 	},
 
 	_calculatePositionLabelsCatAxForRadar: function (idx) {
-		var chartProp = this.calcProp;
+		let chartProp = this.calcProp;
 
-		var trueWidth = chartProp.trueWidth;
-		var trueHeight = chartProp.trueHeight;
-		var xCenter = (chartProp.chartGutter._left + trueWidth / 2) / chartProp.pxToMM;
-		var yCenter = (chartProp.chartGutter._top + trueHeight / 2) / chartProp.pxToMM;
+		let trueWidth = chartProp.trueWidth;
+		let trueHeight = chartProp.trueHeight;
+		let xCenter = (chartProp.chartGutter._left + trueWidth / 2) / chartProp.pxToMM;
+		let yCenter = (chartProp.chartGutter._top + trueHeight / 2) / chartProp.pxToMM;
 
-		var seria = chartProp.series;
-		var numChache = this.getNumCache(seria[0].val);
+		let radarChart = this.getChartByType(AscDFH.historyitem_type_RadarChart);
+		let ptCount = radarChart && radarChart.series && this.cChartDrawer.getPtCount(radarChart.series);
 
-		var angle = (Math.PI * 2 / numChache.ptCount) * idx;
-		var radius = (trueHeight / 2) / chartProp.pxToMM;
-		var startAngle = (Math.PI / 2) * 3 + angle;
+		let angle = (Math.PI * 2 / ptCount) * idx;
+		let radius = (trueHeight / 2) / chartProp.pxToMM;
+		let startAngle = (Math.PI / 2) * 3 + angle;
 
-		var x = xCenter + radius * Math.cos(startAngle);
-		var y = yCenter + radius * Math.sin(startAngle);
+		let x = xCenter + radius * Math.cos(startAngle);
+		let y = yCenter + radius * Math.sin(startAngle);
 
 		return { x: x, y: y };
 	},
@@ -2423,8 +2422,6 @@ CChartsDrawer.prototype =
 		this._calculateExtremumAllCharts(chartSpace);
 
 		//***series***
-		this.calcProp.series = chartSpace.chart.plotArea.chart.series;
-
 		//отсеиваем пустые серии
 		var countSeries = this.calculateCountSeries(chartSpace.chart.plotArea.chart);
 		this.calcProp.seriesCount = countSeries.series;
@@ -4457,10 +4454,10 @@ CChartsDrawer.prototype =
 
 	//common functions for grid
 	getHorizontalGridLines: function (axis, isCatAxis) {
-		var t = this;
-		var gridLines, minorGridLines;
-		var crossBetween = this.cChartSpace.getValAxisCrossType();
-		var points = axis.yPoints;
+		let t = this;
+		let gridLines, minorGridLines;
+		let crossBetween = this.cChartSpace.getValAxisCrossType();
+		let points = axis.yPoints;
 
 		if(!points) {
 			return;
@@ -4469,24 +4466,25 @@ CChartsDrawer.prototype =
 			return;
 		}
 
-		var widthLine = this.calcProp.widthCanvas - (this.calcProp.chartGutter._left + this.calcProp.chartGutter._right);
-		var bottomMargin = this.calcProp.heightCanvas - this.calcProp.chartGutter._bottom;
-		var posX = this.calcProp.chartGutter._left;
-		var posMinorY, posY, crossDiff;
+		let widthLine = this.calcProp.widthCanvas - (this.calcProp.chartGutter._left + this.calcProp.chartGutter._right);
+		let bottomMargin = this.calcProp.heightCanvas - this.calcProp.chartGutter._bottom;
+		let posX = this.calcProp.chartGutter._left;
+		let posMinorY, posY, crossDiff;
 
 		if (crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN && isCatAxis) {
-			var posAxis = (this.calcProp.heightCanvas - this.calcProp.chartGutter._bottom)/this.calcProp.pxToMM;
+			let posAxis = (this.calcProp.heightCanvas - this.calcProp.chartGutter._bottom)/this.calcProp.pxToMM;
 			crossDiff = points[1] ? Math.abs((points[1].pos - points[0].pos) / 2) : Math.abs(points[0].pos - posAxis);
 		}
 
 		let isRadarValues = axis.isRadarValues();
-
-		//TODO пересмотреть отрисовку сетки для Radar, не использовать numCache!
-		var numCache, tempAngle, trueHeight, trueWidth, xDiff, xCenter, yCenter;
+		
+		let ptCount, tempAngle, trueHeight, trueWidth, xDiff, xCenter, yCenter;
 		if(isRadarValues) {
-			numCache = this.getNumCache(this.calcProp.series[0].val);
-			if(numCache) {
-				tempAngle = 2 * Math.PI / numCache.length;
+			let radarChart = this.getChartByType(AscDFH.historyitem_type_RadarChart);
+			let ptCount = radarChart && radarChart.series && this.getPtCount(radarChart.series);
+			
+			if(ptCount) {
+				tempAngle = 2 * Math.PI / ptCount;
 				trueHeight = this.calcProp.trueHeight;
 				trueWidth = this.calcProp.trueWidth;
 				xDiff = ((trueHeight / 2) / points.length) / this.calcProp.pxToMM;
@@ -4495,10 +4493,10 @@ CChartsDrawer.prototype =
 			}
 		}
 
-		var calculateRadarGridLines = function () {
-			var y, x, radius, xFirst, yFirst;
+		let calculateRadarGridLines = function () {
+			let y, x, radius, xFirst, yFirst;
 
-			for (var k = 0; k < numCache.length; k++) {
+			for (let k = 0; k < ptCount; k++) {
 				y = i * xDiff;
 				x = xCenter;
 
@@ -4507,8 +4505,8 @@ CChartsDrawer.prototype =
 				y = yCenter - radius * Math.cos(k * tempAngle);
 				x = x + radius * Math.sin(k * tempAngle);
 
-				var pathH = t.calcProp.pathH;
-				var pathW = t.calcProp.pathW;
+				let pathH = t.calcProp.pathH;
+				let pathW = t.calcProp.pathW;
 
 				path.stroke = true;
 				if (k === 0) {
@@ -4516,7 +4514,7 @@ CChartsDrawer.prototype =
 					yFirst = y;
 					path.moveTo(x * pathW, y * pathH);
 				} else {
-					if (k === numCache.length - 1) {
+					if (k === ptCount - 1) {
 						path.lnTo(x * pathW, y * pathH);
 						path.lnTo(xFirst * pathW, yFirst * pathH);
 					} else {
@@ -4530,16 +4528,16 @@ CChartsDrawer.prototype =
 			}
 		};
 
-		var minorLinesCount = isCatAxis ? 2 : 5;
-		var stepY = points[1] ? Math.abs(points[1].pos - points[0].pos) : Math.abs(points[0].pos - axis.posY) * 2;
-		var minorStep = (stepY / minorLinesCount) * this.calcProp.pxToMM;
+		let minorLinesCount = isCatAxis ? 2 : 5;
+		let stepY = points[1] ? Math.abs(points[1].pos - points[0].pos) : Math.abs(points[0].pos - axis.posY) * 2;
+		let minorStep = (stepY / minorLinesCount) * this.calcProp.pxToMM;
 
-		var pathId = t.cChartSpace.AllocPath();
-		var path = t.cChartSpace.GetPath(pathId);
-		var i;
+		let pathId = t.cChartSpace.AllocPath();
+		let path = t.cChartSpace.GetPath(pathId);
+		let i;
 		for (i = 0; i < points.length; i++) {
 			if(isRadarValues) {
-				if(numCache) {
+				if(ptCount) {
 					calculateRadarGridLines();
 				}
 			} else {
@@ -4573,8 +4571,8 @@ CChartsDrawer.prototype =
 			}
 		}
 
-		var pathIdMinor = t.cChartSpace.AllocPath();
-		var pathMinor = t.cChartSpace.GetPath(pathIdMinor);
+		let pathIdMinor = t.cChartSpace.AllocPath();
+		let pathMinor = t.cChartSpace.GetPath(pathIdMinor);
 		for (i = 0; i < points.length; i++) {
 			if(!isRadarValues) {
 				if(isCatAxis && points[i].val < 0) {
@@ -4588,7 +4586,7 @@ CChartsDrawer.prototype =
 				}
 
 				//промежуточные линии
-				for (var n = 0; n < minorLinesCount; n++) {
+				for (let n = 0; n < minorLinesCount; n++) {
 					posMinorY = posY + n * minorStep;
 
 					if (posMinorY < this.calcProp.chartGutter._top || posMinorY > bottomMargin) {
@@ -4603,7 +4601,6 @@ CChartsDrawer.prototype =
 				}
 			}
 		}
-
 
 		return {gridLines: gridLines, minorGridLines: minorGridLines};
 	},
@@ -4830,7 +4827,9 @@ CChartsDrawer.prototype =
 				yCenter = (this.calcProp.chartGutter._top + trueHeight / 2) / this.calcProp.pxToMM;
 			}
 
-			var ptCount = this.getPtCount(this.calcProp.series);
+			let radarChart = this.getChartByType(AscDFH.historyitem_type_RadarChart);
+			let ptCount = radarChart && radarChart.series && this.getPtCount(radarChart.series);
+
 			if (!ptCount) {
 				return null;
 			}
@@ -5899,6 +5898,15 @@ CChartsDrawer.prototype =
 
 		return pathId;
 	},
+
+	getChartByType: function (type) {
+		for (let i in this.charts) {
+			if (this.charts[i] && this.charts[i].chart.getObjectType() === type) {
+				return this.charts[i].chart;
+			}
+		}
+		return null;
+	}
 };
 
 
@@ -9034,11 +9042,6 @@ drawAreaChart.prototype = {
 			this.chartProp.trueWidth / this.chartProp.pxToMM, this.chartProp.trueHeight / this.chartProp.pxToMM);
 
 		for (var i = 0; i < this.chart.series.length; i++) {
-
-			//в случае накопительных дигарамм, рисуем в обратном порядке
-			/*if(this.chartProp.subType == "stackedPer" || this.chartProp.subType == "stacked")
-			 seria = this.chartProp.series[this.chartProp.series.length - 1 - i];
-			 else*/
 			seria = this.chart.series[i];
 			numCache = this.cChartDrawer.getNumCache(seria.val);
 			dataSeries = numCache && numCache.pts ? numCache.pts : null;
@@ -14350,20 +14353,20 @@ axisChart.prototype = {
 	},
 
 	_calculateValAxis: function () {
-		var axisPos;
-		var left = this.chartProp.chartGutter._left / this.chartProp.pxToMM;
-		var right = (this.chartProp.widthCanvas - this.chartProp.chartGutter._right) / this.chartProp.pxToMM;
-		var top = this.chartProp.chartGutter._top / this.chartProp.pxToMM;
-		var bottom = (this.chartProp.heightCanvas - this.chartProp.chartGutter._bottom) / this.chartProp.pxToMM;
+		let axisPos;
+		let left = this.chartProp.chartGutter._left / this.chartProp.pxToMM;
+		let right = (this.chartProp.widthCanvas - this.chartProp.chartGutter._right) / this.chartProp.pxToMM;
+		let top = this.chartProp.chartGutter._top / this.chartProp.pxToMM;
+		let bottom = (this.chartProp.heightCanvas - this.chartProp.chartGutter._bottom) / this.chartProp.pxToMM;
 
 		if (this.axis && this.axis.isRadarValues()) {
 
-			var axis = this.axis;
-			var yPoints = axis.yPoints;
-			var orientation = axis.scaling.orientation === AscFormat.ORIENTATION_MIN_MAX;
-			var xCenter = axis.posX;
+			let axis = this.axis;
+			let yPoints = axis.yPoints;
+			let orientation = axis.scaling.orientation === AscFormat.ORIENTATION_MIN_MAX;
+			let xCenter = axis.posX;
 
-			var yCenter, trueHeight;
+			let yCenter, trueHeight;
 			if (yPoints.length > 0) {
 				yCenter = orientation ? yPoints[0].pos : yPoints[yPoints.length - 1].pos;
 			} else {
@@ -14371,15 +14374,16 @@ axisChart.prototype = {
 				yCenter = (this.chartProp.chartGutter._top + trueHeight / 2) / this.chartProp.pxToMM;
 			}
 
-			var ptCount = this.cChartDrawer.getPtCount(this.chartProp.series);
+			let radarChart = this.cChartDrawer.getChartByType(AscDFH.historyitem_type_RadarChart);
+			let ptCount = radarChart && radarChart.series && this.cChartDrawer.getPtCount(radarChart.series);
 			if (!ptCount) {
 				return;
 			}
-			var tempAngle = 2 * Math.PI / ptCount;
+			let tempAngle = 2 * Math.PI / ptCount;
 
-			var radius, x, y;
+			let radius, x, y;
 			radius = Math.abs(yPoints[yPoints.length - 1].pos - yPoints[0].pos);
-			for (var n = 0; n < ptCount; n++) {
+			for (let n = 0; n < ptCount; n++) {
 				x = xCenter + radius * Math.sin(n * tempAngle);
 				y = yCenter - radius * Math.cos(n * tempAngle);
 
@@ -14709,7 +14713,9 @@ axisChart.prototype = {
 			let stepY = points[1] ? Math.abs(points[1].pos - points[0].pos) : Math.abs(points[0].pos - this.chartProp.chartGutter._bottom / this.chartProp.pxToMM);
 			minorStep = stepY / minorLinesCount;
 
-			let ptCount = this.cChartDrawer.getNumCache(this.chartProp.series[0].val).ptCount;
+			let radarChart = this.cChartDrawer.getChartByType(AscDFH.historyitem_type_RadarChart);
+			let ptCount = radarChart && radarChart.series && this.cChartDrawer.getPtCount(radarChart.series);
+
 			let tempAngle = 2 * Math.PI / ptCount;
 			let x1, y1, x2, y2;
 			for (let nDataPt = 0; nDataPt < ptCount; nDataPt++) {
