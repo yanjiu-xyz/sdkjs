@@ -3875,6 +3875,9 @@ Because of this, the display is sometimes not correct.
 							case "auto":
 								arrResult.push(ParameterVal_connectorPoint_auto);
 								break;
+							case "radial":
+								arrResult.push(ParameterVal_connectorPoint_radial);
+								break;
 							default:
 								break;
 						}
