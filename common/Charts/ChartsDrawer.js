@@ -615,6 +615,18 @@ CChartsDrawer.prototype =
 					pos = this._calculatePositionLegend(obj);
 					break;
 				}
+				case AscDFH.historyitem_type_TrendLine: {
+					/*{
+						coefficients : coefficients,
+							rSquared : rSquared,
+						coordinate : lastPoint
+					}*/
+					if (this.trendline) {
+						//CTrendLine
+						return this.trendline && this.trendline.getAdditionalInfo(obj.parent.Id, obj.parent.parent.Id);
+					}
+					return null;
+				}
 				default: {
 					pos = { x: 0, y: 0 };
 					break;
@@ -16263,11 +16275,11 @@ CColorObj.prototype =
 			}
 		},
 
-		getAdditionalInfo: function (chartId, seriaId) {
-			if (this.storage[chartId] && this.storage[chartId][seriaId]) {
-				const coefficients = this.storage[chartId][seriaId].getCoefficients(chartId, seriaId);
-				const rSquared = this.storage[chartId][seriaId].getRSquared(chartId, seriaId);
-				const lastPoint = this.storage[chartId][seriaId].getLastPoint(chartId, seriaId);
+		getAdditionalInfo: function (chartId, seriesId) {
+			if (this.storage[chartId] && this.storage[chartId][seriesId]) {
+				const coefficients = this.storage[chartId][seriesId].getCoefficients();
+				const rSquared = this.storage[chartId][seriesId].getRSquared();
+				const lastPoint = this.storage[chartId][seriesId].getLastPoint();
 				if (coefficients || rSquared) {
 					const additionalInfo = {
 						coefficients : coefficients,
@@ -16277,6 +16289,7 @@ CColorObj.prototype =
 					return additionalInfo;
 				}
 			}
+			return null;
 		},
 
 		preCalculate: function (charts, boundaries) {
