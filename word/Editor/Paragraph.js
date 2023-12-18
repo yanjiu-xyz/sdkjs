@@ -1890,7 +1890,7 @@ Paragraph.prototype.GetLinesCount = function()
 Paragraph.prototype.GetLineBounds = function(nCurLine)
 {
 	var oLine    = this.Lines[nCurLine];
-	var nCurPage = this.GetPageByLine();
+	var nCurPage = this.getPageByLine(nCurLine);
 	var oPage    = this.Pages[nCurPage];
 	if (!this.IsRecalculated() || !oLine || oLine.Ranges.length <= 0 || !oPage)
 		return new CDocumentBounds(0, 0, 0, 0);
@@ -8659,7 +8659,6 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 			
 			let isInline = this.IsInline();
 			
-
 			let drawSelectionState = new AscWord.ParagraphDrawSelectionState(this);
 			drawSelectionState.resetPage(CurPage);
 			for (let iLine = _StartLine; iLine <= _EndLine; ++iLine)
@@ -9021,7 +9020,7 @@ Paragraph.prototype.Select_Math = function(ParaMath)
 };
 Paragraph.prototype.GetSelectionBounds = function()
 {
-	if (true)//!this.IsRecalculated())
+	if (!this.IsRecalculated())
 	{
 		return {
 			Start     : {X : 0, Y : 0, W : 0, H : 0, Page : 0},
@@ -9064,78 +9063,68 @@ Paragraph.prototype.GetSelectionBounds = function()
 		StartLine = Math.min(Math.max(0, StartLine), LinesCount - 1);
 		EndLine   = Math.min(Math.max(0, EndLine), LinesCount - 1);
 
-		StartPage = this.GetPageByLine(StartLine);
-		EndPage   = this.GetPageByLine(EndLine);
+		StartPage = this.getPageByLine(StartLine);
+		EndPage   = this.getPageByLine(EndLine);
 
-		var PagesCount     = this.Pages.length;
 		var DrawSelection  = new CParagraphDrawSelectionRange();
 		DrawSelection.Draw = false;
-
-		for (var CurLine = StartLine; CurLine <= EndLine; CurLine++)
+		
+		let drawSelectionState = new AscWord.ParagraphDrawSelectionState(this);
+		for (let iLine = StartLine; iLine <= EndLine; ++iLine)
 		{
-			var Line        = this.Lines[CurLine];
-			var RangesCount = Line.Ranges.length;
+			let paraLine = this.Lines[iLine];
 
-			var CurPage = this.GetPageByLine(CurLine);
-
-			// Определяем позицию и высоту строки
-			DrawSelection.StartY = this.Pages[CurPage].Y + this.Lines[CurLine].Top;
-			DrawSelection.H      = this.Lines[CurLine].Bottom - this.Lines[CurLine].Top;
-
-			var Result = null;
-
-			for (var CurRange = 0; CurRange < RangesCount; CurRange++)
+			let iPage = this.getPageByLine(iLine);
+			drawSelectionState.resetPage(iPage);
+			drawSelectionState.resetLine(iLine);
+			for (let iRange = 0, rangeCount = paraLine.Ranges.length; iRange < rangeCount; ++iRange)
 			{
-				var Range = Line.Ranges[CurRange];
+				let range = paraLine.Ranges[iRange];
 
-				var RStartPos = Range.StartPos;
-				var REndPos   = Range.EndPos;
+				var RStartPos = range.StartPos;
+				var REndPos   = range.EndPos;
 
 				// Если пересечение пустое с селектом, тогда пропускаем данный отрезок
 				if (StartPos > REndPos || EndPos < RStartPos)
 					continue;
-
-				DrawSelection.StartX    = this.Lines[CurLine].Ranges[CurRange].XVisible;
-				DrawSelection.W         = 0;
-				DrawSelection.FindStart = true;
-
-				if (CurLine === this.Numbering.Line && CurRange === this.Numbering.Range)
-					DrawSelection.StartX += this.Numbering.WidthVisible;
-
+				
+				drawSelectionState.beginRange(iRange);
 				for (var CurPos = RStartPos; CurPos <= REndPos; CurPos++)
 				{
 					var Item = this.Content[CurPos];
-					Item.Selection_DrawRange(CurLine, CurRange, DrawSelection);
+					Item.Selection_DrawRange(iLine, iRange, drawSelectionState);
 				}
-
-				var StartX = DrawSelection.StartX;
-				var W      = DrawSelection.W;
-
-				var StartY = DrawSelection.StartY;
-				var H      = DrawSelection.H;
-
-				if (W > 0.001)
+				drawSelectionState.endRange();
+				
+				let selectionRanges = drawSelectionState.getSelectionRanges();
+				for (let iSel = 0; iSel < selectionRanges.length; ++iSel)
 				{
-					X0 = StartX;
-					X1 = StartX + W;
-					Y  = StartY;
-
-					var Page = this.Get_AbsolutePage(CurPage);
-
-					if (null === BeginRect)
-						BeginRect = {X : StartX, Y : StartY, W : W, H : H, Page : Page};
-
-					EndRect = {X : StartX, Y : StartY, W : W, H : H, Page : Page};
+					let _x = selectionRanges[iSel].x;
+					let _w = selectionRanges[iSel].w;
+					let _y = selectionRanges[iSel].y;
+					let _h = selectionRanges[iSel].h;
+					if (_w > 0.001)
+					{
+						X0 = StartX;
+						X1 = StartX + _w;
+						
+						var Page = this.Get_AbsolutePage(iPage);
+						
+						if (null === BeginRect)
+							BeginRect = {X : _x, Y : _y, W : _w, H : _h, Page : Page};
+						
+						EndRect = {X : _x, Y : _y, W : _w, H : _h, Page : Page};
+					}
+					
+					if (null === _StartX)
+					{
+						_StartX = _x;
+						_StartY = _y;
+					}
+					
+					_EndX = _x;
+					_EndY = _y;
 				}
-
-				if (null === _StartX)
-				{
-					_StartX = StartX;
-					_StartY = StartY;
-				}
-
-				_EndX = StartX;
-				_EndY = StartY;
 			}
 		}
 	}
@@ -9217,21 +9206,12 @@ Paragraph.prototype.GetSelectionAnchorPos = function()
 		StartLine = Math.min(Math.max(0, StartLine), LinesCount - 1);
 		EndLine   = Math.min(Math.max(0, EndLine), LinesCount - 1);
 
-		let pageCount = this.Pages.length;
 		let drawSelectionState = new AscWord.ParagraphDrawSelectionState(this);
 		for (let iLine = StartLine; iLine <= EndLine; ++iLine)
 		{
 			let paraLine = this.Lines[iLine];
 			
-			let iPage = 0;
-			for (; iPage < pageCount; ++iPage)
-			{
-				if (CurLine >= this.Pages[iPage].StartLine && CurLine <= this.Pages[iPage].EndLine)
-					break;
-			}
-
-			iPage = Math.min(pageCount - 1, iPage);
-			drawSelectionState.resetPage(iPage);
+			drawSelectionState.resetPage(this.getPageByLine(iLine));
 			drawSelectionState.resetLine(iLine);
 			
 			var Result = null;
@@ -9254,6 +9234,7 @@ Paragraph.prototype.GetSelectionAnchorPos = function()
 				}
 				drawSelectionState.endRange();
 				
+				let selectionRanges = drawSelectionState.getSelectionRanges();
 				for (let iSel = 0; iSel < selectionRanges.length; ++iSel)
 				{
 					let _x = selectionRanges[iSel].x;
@@ -15124,7 +15105,7 @@ Paragraph.prototype.private_RecalculateTextMetrics = function(TextMetrics)
             this.Content[Index].Recalculate_Measure2(TextMetrics);
     }
 };
-Paragraph.prototype.GetPageByLine = function(CurLine)
+Paragraph.prototype.getPageByLine = function(CurLine)
 {
     var CurPage = 0;
     var PagesCount = this.Pages.length;

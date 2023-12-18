@@ -674,7 +674,7 @@ CComplexField.prototype.private_CalculatePAGE = function()
 	var oParagraph = oRun.GetParagraph();
 	var nInRunPos  = oRun.GetElementPosition(this.BeginChar);
 	var nLine      = oRun.GetLineByPosition(nInRunPos);
-	var nPage      = oParagraph.GetPageByLine(nLine);
+	var nPage      = oParagraph.getPageByLine(nLine);
 
 	var oLogicDocument = oParagraph.LogicDocument;
 	return oLogicDocument.Get_SectionPageNumInfo2(oParagraph.Get_AbsolutePage(nPage)).CurPage;
