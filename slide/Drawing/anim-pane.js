@@ -1401,9 +1401,10 @@
 		let extX = TIMELINE_SCROLLER_SIZE;
 		let extY = this.getHeight();
 
-		graphics.b_color1(40, 160, 200, 0xFF);
-		graphics.rect(x, y, extX, extY);
-		graphics.df();
+		// Filling the scroller with a solid color
+		// graphics.b_color1(40, 160, 200, 0xFF);
+		// graphics.rect(x, y, extX, extY);
+		// graphics.df();
 
 		graphics.SetIntegerGrid(true);
 		let nPenW = this.getPenWidth(graphics);
@@ -1474,6 +1475,11 @@
 	CTimeline.prototype.recalculateChildrenLayout = function () {
 		this.startButton.setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
 		this.endButton.setLayout(this.getWidth() - SCROLL_BUTTON_SIZE, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+
+		const currentScrollOffset = this.getScrollOffset()
+		if (currentScrollOffset >= this.getMaxScrollOffset()) {
+			this.setScrollOffset(currentScrollOffset)
+		}
 	};
 	CTimeline.prototype.onMouseDown = function (e, x, y) {
 		if (this.onMouseDownCallback && this.onMouseDownCallback.call(this, e, x, y)) {
