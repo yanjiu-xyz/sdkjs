@@ -16245,7 +16245,7 @@ CColorObj.prototype =
 
 		//control trend calculate type
 		this.bAllowDrawByBezier = true;
-		this.bAllowDrawByPoints = true;
+		this.bAllowDrawByPoints = false;
 	}
 
 	CTrendline.prototype = {
