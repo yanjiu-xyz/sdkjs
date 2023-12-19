@@ -2239,7 +2239,7 @@ ParaRun.prototype.Recalculate_CurPos = function(X, Y, CurrentRun, _CurRange, _Cu
             if ( true === UpdateTarget )
             {
                 var CurTextPr = this.Get_CompiledPr(false);
-				var dFontKoef = bNearFootnoteReference ? 1 : CurTextPr.Get_FontKoef();
+				var dFontKoef = bNearFootnoteReference ? 1 : CurTextPr.getFontCoef();
 
 				g_oTextMeasurer.SetTextPr(CurTextPr, this.Paragraph.Get_Theme());
 				g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, dFontKoef);
@@ -2396,7 +2396,7 @@ ParaRun.prototype.Recalculate_CurPos = function(X, Y, CurrentRun, _CurRange, _Cu
         if ( true === ReturnTarget )
         {
 			var CurTextPr = this.Get_CompiledPr(false);
-			var dFontKoef = bNearFootnoteReference ? 1 : CurTextPr.Get_FontKoef();
+			var dFontKoef = bNearFootnoteReference ? 1 : CurTextPr.getFontCoef();
 
 			g_oTextMeasurer.SetTextPr(CurTextPr, this.Paragraph.Get_Theme());
 			g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, dFontKoef);
@@ -6420,17 +6420,6 @@ ParaRun.prototype.Shift_Range = function(Dx, Dy, _CurLine, _CurRange, _CurPage)
 //-----------------------------------------------------------------------------------
 // Функции отрисовки
 //-----------------------------------------------------------------------------------
-ParaRun.prototype.getRangePos = function(line, range)
-{
-	let _line  = line - this.StartLine;
-	let _range = _line ? range : range - this.StartRange;
-	
-	return [
-		this.protected_GetRangeStartPos(_line, _range),
-		this.protected_GetRangeEndPos(_line, _range),
-	];
-};
-
 ParaRun.prototype.Draw_HighLights = function(drawState)
 {
 	let rangePos = this.getRangePos(drawState.Line, drawState.Range);

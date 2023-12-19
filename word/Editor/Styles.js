@@ -14683,26 +14683,9 @@ CTextPr.prototype.Check_NeedRecalc = function()
 
 	return false;
 };
-CTextPr.prototype.Get_FontKoef = function()
+CTextPr.prototype.getFontCoef = function()
 {
-	var dFontKoef = 1;
-
-	switch (this.VertAlign)
-	{
-		case AscCommon.vertalign_Baseline:
-		{
-			dFontKoef = 1;
-			break;
-		}
-		case AscCommon.vertalign_SubScript:
-		case AscCommon.vertalign_SuperScript:
-		{
-			dFontKoef = AscCommon.vaKSize;
-			break;
-		}
-	}
-
-	return dFontKoef;
+	return (AscCommon.vertalign_SubScript === this.VertAlign || AscCommon.vertalign_SubScript === this.VertAlign ? AscCommon.vaKSize : 1);
 };
 CTextPr.prototype.Document_Get_AllFontNames = function(AllFonts)
 {
