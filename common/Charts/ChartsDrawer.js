@@ -2418,14 +2418,8 @@ CChartsDrawer.prototype =
 		this.calcProp.xaxispos = null;
 		this.calcProp.yaxispos = null;
 
-		//рассчёт данных и ещё некоторых параметров(this.calcProp./min/max/ymax/ymin/)
+		//calculate calcProp -> /min/max/ymax/ymin/
 		this._calculateExtremumAllCharts(chartSpace);
-
-		//***series***
-		//отсеиваем пустые серии
-		var countSeries = this.calculateCountSeries(chartSpace.chart.plotArea.chart);
-		this.calcProp.seriesCount = countSeries.series;
-		this.calcProp.ptCount = countSeries.points;
 
 		this.calcProp.widthCanvas = chartSpace.extX * this.calcProp.pxToMM;
 		this.calcProp.heightCanvas = chartSpace.extY * this.calcProp.pxToMM;
@@ -8826,6 +8820,9 @@ drawAreaChart.prototype = {
 			return pathId;
 		};
 
+		let countSeries = oThis.cChartDrawer.calculateCountSeries(oThis.chart);
+		let ptCount = countSeries.points;
+
 		//left
 		paths[2] = null;
 		if (this.darkFaces["left"] && point === 0) {
@@ -8834,7 +8831,7 @@ drawAreaChart.prototype = {
 
 		//right
 		paths[3] = null;
-		if (this.darkFaces["right"] && point === t.cChartDrawer.calcProp.ptCount - 2) {
+		if (this.darkFaces["right"] && point === ptCount - 2) {
 			paths[3] = calculateSimpleFace(point4, point8, point7, point3, point44, point88, point77, point33, 3);
 		}
 
@@ -14802,31 +14799,33 @@ axisChart.prototype = {
 	},
 
 	_calculateSerTickMark: function () {
-		var perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
-		var tickmarksProps = this._getTickmarksPropsSer();
-		var widthLine = tickmarksProps.widthLine;
+		let perspectiveDepth = this.cChartDrawer.processor3D.depthPerspective;
+		let tickmarksProps = this._getTickmarksPropsSer();
+		let widthLine = tickmarksProps.widthLine;
 
+		let seriesCount = this.axis.labels.count;
+		
 		if (widthLine !== 0) {
-			var positionX = this.cChartDrawer.processor3D.calculateXPositionSerAxis();
-			var stepY = perspectiveDepth / this.chartProp.seriesCount;
-			var startX;
+			let positionX = this.cChartDrawer.processor3D.calculateXPositionSerAxis();
+			let stepY = perspectiveDepth / seriesCount;
+			let startX;
 			if (positionX) {
 				startX = this.chartProp.chartGutter._left;
 			} else {
 				startX = this.chartProp.widthCanvas - this.chartProp.chartGutter._right;
 			}
 
-			var startY = this.axis.posY * this.chartProp.pxToMM;
+			let startY = this.axis.posY * this.chartProp.pxToMM;
 
-			for (var i = 0; i <= this.chartProp.seriesCount; i++) {
+			for (let i = 0; i <= seriesCount; i++) {
 				//основные линии
 				if (!this.paths.tickMarks) {
 					this.paths.tickMarks = [];
 				}
 
-				var convertResult = this.cChartDrawer._convertAndTurnPoint(startX, startY, i * stepY);
-				var x = convertResult.x / this.chartProp.pxToMM;
-				var y = convertResult.y / this.chartProp.pxToMM;
+				let convertResult = this.cChartDrawer._convertAndTurnPoint(startX, startY, i * stepY);
+				let x = convertResult.x / this.chartProp.pxToMM;
+				let y = convertResult.y / this.chartProp.pxToMM;
 
 				this.paths.tickMarks[i] = this._calculateLine(x, y, x + widthLine / this.chartProp.pxToMM, y);
 			}
