@@ -1083,6 +1083,9 @@
 
 		this.container = oContainer;
 		this.scrolledChild = oChild;
+
+		this.isScrollerHovered;
+		this.isStickedToPointer;
 		
 		this.startButton = this.addControl(new CButton(this, onFirstBtnMouseDown, null, onMouseUp));
 		this.endButton = this.addControl(new CButton(this, onSecondBtnMouseDown, null, onMouseUp));
@@ -1130,14 +1133,23 @@
 		this.onMouseDownCallback = function stickToPointer(event, x, y) {
 			if (!this.hitInScroller(x, y)) { return }
 			this.isStickedToPointer = true
+			this.onUpdate()
 		}
 
 		this.onMouseUpCallback = function unstickFromPointer(event, x, y) {
 			this.isStickedToPointer = false;
 			if (this.isOnScroll()) { this.endScroll() }
+			this.onUpdate()
 		}
 
 		this.onMouseMoveCallback = function handlePointerMovement(event, x, y) {
+			// Updating hover state of the scroller
+			const tmpIsScrollerHovered = this.hitInScroller(x, y);
+			if (this.isScrollerHovered !== tmpIsScrollerHovered) {
+				this.isScrollerHovered = tmpIsScrollerHovered;
+				this.onUpdate()
+			}
+
 			if (!this.isStickedToPointer) { return }
 
 			let oInv = this.getInvFullTransformMatrix();
@@ -1405,12 +1417,27 @@
 		let extX = TIMELINE_SCROLLER_SIZE;
 		let extY = this.getHeight();
 
-		// Filling the scroller with a solid color
-		// graphics.b_color1(40, 160, 200, 0xFF);
-		// graphics.rect(x, y, extX, extY);
-		// graphics.df();
+		const oSkin = AscCommon.GlobalSkin;
+		let sFillColor;
+		let oColor;
 
-		graphics.SetIntegerGrid(true);
+		if (this.isStickedToPointer) {
+			sFillColor = '#000'// oSkin.ScrollerActiveColor;
+			oColor = AscCommon.RgbaHexToRGBA(sFillColor);
+			graphics.b_color1(oColor.R, oColor.G, oColor.B, 0x80);
+		} else if (this.isScrollerHovered) {
+			sFillColor = '#000' // oSkin.ScrollerHoverColor;
+			let oColor = AscCommon.RgbaHexToRGBA(sFillColor);
+			graphics.b_color1(oColor.R, oColor.G, oColor.B, 0x40);
+		} else {
+			sFillColor = '#000';
+			let oColor = AscCommon.RgbaHexToRGBA(sFillColor);
+			graphics.b_color1(oColor.R, oColor.G, oColor.B, 0x0);
+		}
+
+		graphics.rect(x, y, extX, extY);
+		graphics.df();
+
 		let nPenW = this.getPenWidth(graphics);
 		graphics.p_color(0, 0, 0, 0xFF);
 		graphics.drawHorLine(0, y, x, x + extX, nPenW);
