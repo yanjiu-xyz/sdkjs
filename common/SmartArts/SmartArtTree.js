@@ -50,6 +50,10 @@
 	const algDelta = 1e-13;
 	const bulletFontSizeCoefficient = 51 / 65;
 
+	function fAlgDeltaEqual(a, b) {
+		return AscFormat.fApproxEqual(a, b, algDelta);
+	}
+
 	function CCoordPoint(x, y) {
 		this.x = x;
 		this.y = y;
@@ -1038,6 +1042,9 @@
 		this.parentNode = null;
 		this._isHideLastChild = null;
 	}
+	BaseAlgorithm.prototype.getGuideVectorByAngle = function (xAngle) {
+		return new CVector(Math.cos(xAngle), Math.sin(xAngle));
+	}
 	BaseAlgorithm.prototype.getRadialConnectionInfo = function () {};
 	BaseAlgorithm.prototype.setParentAlgorithm = function (algorithm) {};
 	BaseAlgorithm.prototype.isHideLastChild = function () {
@@ -1075,50 +1082,53 @@
 			ay: guideVector.y / len
 		};
 	}
-	BaseAlgorithm.prototype.getMinCircleEdgePoint = function (bounds, guideVector) {
-		const shapePoint = this.getShapePoint(bounds);
-		const width = bounds.r - bounds.l;
-		const height = bounds.b - bounds.t;
+	BaseAlgorithm.prototype.resolveParameterLineAndShapeEquation = function (ellipseBounds, paramLine) {
+		const width = ellipseBounds.r - ellipseBounds.l;
+		const height = ellipseBounds.b - ellipseBounds.t;
 		const cw = width / 2;
 		const ch = height / 2;
-		const cx = cw + bounds.l;
-		const cy = ch + bounds.t;
-		const line = this.getParametricLinEquation(shapePoint, guideVector);
+		const cx = cw + ellipseBounds.l;
+		const cy = ch + ellipseBounds.t;
 
-		const px = line.ax;
-		const py = line.ay;
-		const x1 = line.x;
-		const y1 = line.y;
+		const px = paramLine.ax;
+		const py = paramLine.ay;
+		const x1 = paramLine.x;
+		const y1 = paramLine.y;
 		const ch2 = ch * ch;
 		const cw2 = cw * cw;
 		const a = ch2 * px * px + cw2 * py * py;
 		const b = 2 * ch2 * px * (x1 - cx) + 2 * cw2 * py * (y1 - cy);
 		const c = ch2 * (cy * cy - 2 * cy * y1 + y1 * y1) + cw2 * (cx * cx - 2 * cx * x1 + x1 * x1) - cw2 * ch2;
-		const answer = AscFormat.fSolveQuadraticEquation(a, b, c);
+		return AscFormat.fSolveQuadraticEquation(a, b, c);
+	}
+	BaseAlgorithm.prototype.getMinCircleEdgePoint = function (bounds, guideVector) {
+		const shapePoint = this.getShapePoint(bounds);
+		const line = this.getParametricLinEquation(shapePoint, guideVector);
+		const answer = this.resolveParameterLineAndShapeEquation(bounds, line);
 		if (answer.bError) {
 			return null;
 		}
-		const angles = this.getGuideAngles(guideVector);
+		const angle = this.getGuideAngle(guideVector);
 
-		const xt1 = x1 + px * answer.x1;
-		const yt1 = y1 + py * answer.x1;
+		const xt1 = x1 + line.ax * answer.x1;
+		const yt1 = y1 + line.ay * answer.x1;
 
-		let edgeAngles = this.getGuideAngles(new CVector(xt1 - shapePoint.x, yt1 - shapePoint.y));
-		if (AscFormat.fApproxEqual(edgeAngles.xAngle, angles.xAngle, algDelta) && AscFormat.fApproxEqual(edgeAngles.yAngle, angles.yAngle, algDelta)) {
+		let edgeAngle = this.getGuideAngle(new CVector(xt1 - shapePoint.x, yt1 - shapePoint.y));
+		if (AscFormat.fApproxEqual(edgeAngle, angle, algDelta)) {
 			return new CCoordPoint(xt1, yt1);
 		}
 
-		const xt2 = x1 + px * answer.x2;
-		const yt2 = y1 + py * answer.x2;
+		const xt2 = x1 + line.ax * answer.x2;
+		const yt2 = y1 + line.ay * answer.x2;
 
-		edgeAngles = this.getGuideAngles(new CVector(xt2 - shapePoint.x, yt2 - shapePoint.y));
-		if (AscFormat.fApproxEqual(edgeAngles.xAngle, angles.xAngle, algDelta) && AscFormat.fApproxEqual(edgeAngles.yAngle, angles.yAngle, algDelta)) {
+		edgeAngle = this.getGuideAngle(new CVector(xt2 - shapePoint.x, yt2 - shapePoint.y));
+		if (AscFormat.fApproxEqual(edgeAngle, angle, algDelta)) {
 			return new CCoordPoint(xt2, yt2);
 		}
 	};
 	BaseAlgorithm.prototype.getMinRectEdgePoint = function (bounds, guideVector) {
 		const shapePoint = this.getShapePoint(bounds);
-		const centerAngles = this.getGuideAngles(guideVector);
+		const centerAngle = this.getGuideAngle(guideVector);
 		let checkEdges = [
 			[new CCoordPoint(bounds.l, bounds.t), new CCoordPoint(bounds.r, bounds.t)],
 			[new CCoordPoint(bounds.r, bounds.t), new CCoordPoint(bounds.r, bounds.b)],
@@ -1130,8 +1140,8 @@
 			const point = this.getRectEdgePoint(shapePoint, guideVector, edge[0], edge[1]);
 			if (point) {
 				const edgeGuideVector = {x: point.x - shapePoint.x, y: point.y - shapePoint.y};
-				const edgeAngles = this.getGuideAngles(edgeGuideVector);
-				if (AscFormat.fApproxEqual(edgeAngles.xAngle, centerAngles.xAngle, algDelta) && AscFormat.fApproxEqual(edgeAngles.yAngle, centerAngles.yAngle, algDelta)) {
+				const edgeAngle = this.getGuideAngle(edgeGuideVector);
+				if (AscFormat.fApproxEqual(edgeAngle, centerAngle, algDelta)) {
 					return point;
 				}
 			}
@@ -1154,16 +1164,17 @@
 		return null;
 	}
 
-	BaseAlgorithm.prototype.getGuideAngles = function (guideVector) {
+	BaseAlgorithm.prototype.getGuideAngle = function (guideVector) {
 
 		const x = guideVector.x;
 		const y = guideVector.y;
 		const vectorLength = Math.sqrt(x * x + y * y);
 		if (vectorLength !== 0) {
-			return {
-				xAngle: Math.acos(x / vectorLength),
-				yAngle: Math.acos(y / vectorLength)
-			};
+			const angle = Math.acos(x / vectorLength);
+			if (y > 0) {
+				return angle;
+			}
+			return AscFormat.normalizeRotate(-angle);
 		}
 		return null;
 	}
@@ -1764,8 +1775,6 @@
 		return this.calcValues.mainElements.indexOf(shape);
 	};
 	CycleAlgorithm.prototype.getRadialConnectionInfo = function (node) {
-		const x = 0;
-		const y = 0;
 		const parentHeight = this.parentNode.getAdaptConstr(AscFormat.Constr_type_h);
 		const parentWidth = this.parentNode.getAdaptConstr(AscFormat.Constr_type_w);
 
@@ -1779,6 +1788,7 @@
 		result.radius = this.calcValues.radius;
 		result.angle = AscFormat.normalizeRotate(this.calcValues.startAngle + this.calcValues.stepAngle * nodeIndex);
 		result.isClockwise = this.isClockwise();
+		result.stepAngle = this.calcValues.stepAngle;
 		return result;
 	};
 	CycleAlgorithm.prototype.initParams = function (params) {
@@ -1939,9 +1949,7 @@
 		};
 	}
 
-	CycleAlgorithm.prototype.getGuideVectorByAngle = function (xAngle) {
-		return new CVector(Math.cos(xAngle), Math.sin(xAngle));
-	}
+
 	CycleAlgorithm.prototype.getDiffGuideVector = function (xPreviousAngle, xCurrentAngle) {
 		const previousVector = this.getGuideVectorByAngle(xPreviousAngle);
 		const currentVector =  this.getGuideVectorByAngle(xCurrentAngle);
@@ -2109,23 +2117,63 @@
 
 		return new CCoordPoint(Math.cos(angle) * radius + centerPoint.x, Math.sin(angle) * radius + centerPoint.y);
 	};
+	ConnectorAlgorithm.prototype.isPointOnSegment = function (point, startSegment, endSegment) {
+		return (point.x > startSegment.x || fAlgDeltaEqual(point.x, startSegment.x)) && (point.x < endSegment.x || fAlgDeltaEqual(point.x, endSegment.x)) &&
+			(point.y > startSegment.y || fAlgDeltaEqual(point.y, startSegment.y)) && (point.y < endSegment.y || fAlgDeltaEqual(point.y, endSegment.y));
+	}
 	ConnectorAlgorithm.prototype.getRectRadialEdgePoint = function (radialInfo, bounds, isStart) {
-		const cycleAngle = radialInfo.angle;
+
 		const centerPoint = radialInfo.point;
 		const radius = radialInfo.radius;
-		if (radialInfo.isClockwise) {
-			if (isStart) {
+		const stepAngle = radialInfo.stepAngle;
+		const radiusAngle = radialInfo.angle;
+		const isClockwise = radialInfo.isClockwise;
+		const radiusVector = this.getGuideVectorByAngle(radiusAngle);
+		radiusVector.multiply(radius);
 
-			} else {
-				angle -= shapeAngle;
-			}
-		} else {
-			if (isStart) {
-				angle -= shapeAngle;
-			} else {
-				angle += shapeAngle;
+		const ellipseBounds = {
+			l: centerPoint.x - radius,
+			r: centerPoint.x + radius,
+			t: centerPoint.y - radius,
+			b: centerPoint.y + radius
+		};
+		const linePoints = [
+			[new CCoordPoint(bounds.l, bounds.t), new CCoordPoint(bounds.r, bounds.t)],
+			[new CCoordPoint(bounds.l, bounds.t), new CCoordPoint(bounds.l, bounds.b)],
+			[new CCoordPoint(bounds.l, bounds.b), new CCoordPoint(bounds.r, bounds.b)],
+			[new CCoordPoint(bounds.r, bounds.t), new CCoordPoint(bounds.r, bounds.b)]
+		];
+		for (let i = 0; i < linePoints.length; i += 1) {
+			const coords = linePoints[0];
+			const paramLine = this.getParametricLinEquation(coords[0], new CVector(coords[1].x - coords[0].x, coords[1].y - coords[0].y));
+			const answer = this.resolveParameterLineAndShapeEquation(ellipseBounds, paramLine);
+			if (!answer.bError) {
+				let point;
+				const point1 = new CCoordPoint(paramLine.x + paramLine.ax * answer.x1, paramLine.y + paramLine.ay * answer.x1);
+				const point2 = new CCoordPoint(paramLine.x + paramLine.ax * answer.x2, paramLine.y + paramLine.ay * answer.x2);
+
+				if (this.isPointOnSegment(point1, coords[0], coords[1])) {
+					point = point1;
+				} else if (this.isPointOnSegment(point2, coords[0], coords[1])) {
+					point = point2;
+				} else {
+					continue;
+				}
+				const guideVector = new CVector(point.x - centerPoint.x, point.y - centerPoint.y);
+				const diffVector = guideVector.diff(radiusVector);
+				const diffAngle = this.getGuideAngle(diffVector);
+				if (isStart && isClockwise || !isStart && !isClockwise) {
+					if (diffVector.y < 0) {
+						return point;
+					}
+				} else {
+					if (diffVector.y > 0) {
+						return point;
+					}
+				}
 			}
 		}
+		return null;
 	};
 	ConnectorAlgorithm.prototype.getRadialEdgePoint = function (isStart) {
 		const shape = isStart ? this.startShape : this.endShape;
@@ -2137,9 +2185,8 @@
 		const bounds = shape.getBounds();
 		if (bounds.isEllipse) {
 			return this.getEllipseRadialEdgePoint(radialInfo, bounds, isStart);
-		} else {
-			return this.getRectRadialEdgePoint(radialInfo, bounds, isStart);
 		}
+		return this.getRectRadialEdgePoint(radialInfo, bounds, isStart);
 	};
 	ConnectorAlgorithm.prototype.getEdgePoint = function (isStart) {
 		const type = this.getPointPosition(isStart);
@@ -2157,8 +2204,7 @@
 
 		if (startEdgePoint && endEdgePoint) {
 			const guideVector = new CVector(endEdgePoint.x - startEdgePoint.x, endEdgePoint.y - startEdgePoint.y);
-			const angles = this.getGuideAngles(guideVector);
-			const angle = guideVector.y > 0 ? angles.xAngle : AscFormat.normalizeRotate(-angles.xAngle);
+			const angle = this.getGuideAngle(guideVector);
 			return {
 				angle: angle,
 				startEdgePoint: startEdgePoint,
