@@ -1305,7 +1305,7 @@
 			return (((nTime / 60) >> 0) + ":") + sSec;
 		}
 
-		nMin = ((nTime / 60) >> 0);
+		nMin = ((nTime / 60) >> 0) % 60;
 		if (nMin === 0) {
 			sMin = "00";
 		} else {
