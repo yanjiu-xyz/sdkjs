@@ -1162,9 +1162,11 @@
 			let rightBorder = this.getRulerEnd()
 			if (tx <= leftBorder || tx >= rightBorder) {
 				if (!this.isOnScroll()) {
-					let scrollStep = this.getWidth() * SCROLL_STEP;
+					let scrollStep = this.getWidth() * SCROLL_STEP / 5;
 					scrollStep = tx <= leftBorder ? -scrollStep : scrollStep;
-					this.startScroll(scrollStep);
+					let scrollTimerDelay = 0;
+					let scrollTimerInterval = 50;
+					this.startScroll(scrollStep, scrollTimerDelay, scrollTimerInterval);
 				}
 			}
 			else this.endScroll()
@@ -1210,7 +1212,10 @@
 		return this.posToTime(this.getScrollOffset() + this.startButton.getWidth() + TIMELINE_SCROLLER_SIZE / 2)
 	}
 
-	CTimeline.prototype.startScroll = function (step /* in millimeters */) {
+	CTimeline.prototype.startScroll = function (step /* in millimeters */, scrollTimerDelay, scrollTimerInterval) {
+		if (typeof scrollTimerDelay === 'undefined') { scrollTimerDelay = SCROLL_TIMER_DELAY }
+		if (typeof scrollTimerInterval === 'undefined') { scrollTimerInterval = SCROLL_TIMER_INTERVAL }
+
 		this.endScroll();
 		var oScroll = this;
 		oScroll.addScroll(step);
@@ -1219,8 +1224,8 @@
 			oScroll.timeoutId = null;
 			oScroll.timerId = setInterval(function () {
 				oScroll.addScroll(step);
-			}, SCROLL_TIMER_INTERVAL);
-		}, SCROLL_TIMER_DELAY);
+			}, scrollTimerInterval);
+		}, scrollTimerDelay);
 	};
 	CTimeline.prototype.addScroll = function (step /* in millimeters */) {
 		let newStartTime = this.posToTime(step)
