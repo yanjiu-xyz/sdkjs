@@ -3406,6 +3406,12 @@ CChartsDrawer.prototype =
 
 		return {series: counter, points: ptCount};
 	},
+
+	calculateFirstChartCountSeries: function () {
+		let chart = this.cChartSpace && this.cChartSpace.chart && this.cChartSpace.chart.plotArea && this.cChartSpace.chart.plotArea.charts &&
+			this.cChartSpace.chart.plotArea.charts[0];
+		return chart ? this.calculateCountSeries(chart) : null;
+	},
 	
 	//вспомогательные функции работающие с тремя координатами
 	//получаем к-ты уравнения прямой по 2 точкам
