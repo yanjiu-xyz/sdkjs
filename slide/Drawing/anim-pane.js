@@ -1293,25 +1293,22 @@
 		if (nTime < 60) {
 			return "" + nTime;
 		}
-		var nMin, nSec;
-		var sMin, sSec;
-		nSec = (nTime % 60);
-		if (nSec === 0) {
-			sSec = "00";
-		} else {
-			sSec = "" + nSec;
-		}
+
+		const nSeconds = nTime % 60;
+		const nMinutes = ((nTime / 60) >> 0) % 60;
+
+		let sSeconds = padZero(nSeconds);
+		let sMinutes = padZero(nMinutes);
+
 		if (nTime < 3600) {
-			return (((nTime / 60) >> 0) + ":") + sSec;
+			return (sMinutes + ":") + sSeconds;
 		}
 
-		nMin = ((nTime / 60) >> 0) % 60;
-		if (nMin === 0) {
-			sMin = "00";
-		} else {
-			sMin = "" + nMin;
+		return (((nTime / 3600) >> 0) + ":") + sMinutes + ":" + sSeconds;
+
+		function padZero(number) {
+			return number < 10 ? "0" + number : "" + number;
 		}
-		return (((nTime / 3600) >> 0) + ":") + (sMin + ":") + sSec;
 	};
 	CTimeline.prototype.drawLabel = function (graphics, dPos, nTime) {
 		var oLabelTexture = this.getLabel(nTime, graphics.m_oCoordTransform.sx);
