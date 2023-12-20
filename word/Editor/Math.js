@@ -2051,12 +2051,10 @@ ParaMath.prototype.Get_ParaPosByContentPos = function(ContentPos, Depth)
 {
     return this.Root.Get_ParaPosByContentPos(ContentPos, Depth);
 };
-
-ParaMath.prototype.Recalculate_CurPos = function(_X, Y, CurrentRun, _CurRange, _CurLine, _CurPage, UpdateCurPos, UpdateTarget, ReturnTarget)
+ParaMath.prototype.recalculateCursorPosition = function(positionCalculator, isCurrent)
 {
-    return this.Root.Recalculate_CurPos(_X, Y, CurrentRun, _CurRange, _CurLine, _CurPage, UpdateCurPos, UpdateTarget, ReturnTarget);
+	this.Root.recalculateCursorPosition(positionCalculator, isCurrent);
 };
-
 ParaMath.prototype.Refresh_RecalcData = function(Data)
 {
     this.Paragraph.Refresh_RecalcData2(0);

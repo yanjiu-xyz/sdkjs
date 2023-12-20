@@ -420,9 +420,8 @@ CParagraphContentBase.prototype.CheckSplitPageOnPageBreak = function(oPBChecker)
 {
 	return false;
 };
-CParagraphContentBase.prototype.Recalculate_CurPos = function(X, Y, CurrentRun, _CurRange, _CurLine, CurPage, UpdateCurPos, UpdateTarget, ReturnTarget)
+CParagraphContentBase.prototype.recalculateCursorPosition = function(positionCalculator, isCurrent)
 {
-	return { X : X };
 };
 CParagraphContentBase.prototype.RecalculateMinMaxContentWidth = function(MinMax)
 {
@@ -1018,6 +1017,17 @@ CParagraphContentWithContentBase.prototype.protected_GetRangesCount = function(L
         return (this.Lines.length - this.Lines[1 + LineIndex] - (this.Lines[0] + 1)) / 2;
     else
         return (this.Lines[1 + LineIndex + 1] - this.Lines[1 + LineIndex]) / 2;
+};
+
+CParagraphContentWithContentBase.prototype.getRangePos = function(line, range)
+{
+	let _line  = line - this.StartLine;
+	let _range = _line ? range : range - this.StartRange;
+	
+	return [
+		this.protected_GetRangeStartPos(_line, _range),
+		this.protected_GetRangeEndPos(_line, _range),
+	];
 };
 
 // Здесь предполагается, что строки с номерами меньше, чем LineIndex заданы, а также заданы и отрезки в строке 
@@ -2892,27 +2902,19 @@ CParagraphContentWithParagraphLikeContent.prototype.Get_ParaPosByContentPos = fu
 
     return this.Content[Pos].Get_ParaPosByContentPos( ContentPos, Depth + 1 );
 };
-CParagraphContentWithParagraphLikeContent.prototype.Recalculate_CurPos = function(_X, Y, CurrentRun, _CurRange, _CurLine, _CurPage, UpdateCurPos, UpdateTarget, ReturnTarget)
+CParagraphContentWithParagraphLikeContent.prototype.recalculateCursorPosition = function(positionCalculator, isCurrent)
 {
-    var CurLine  = _CurLine - this.StartLine;
-    var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
-    var X = _X;
-
-    var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-    var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-
-    for ( var CurPos = StartPos; CurPos <= EndPos; CurPos++ )
-    {
-        var Item = this.Content[CurPos];
-        var Res = Item.Recalculate_CurPos( X, Y, (true === CurrentRun && CurPos === this.State.ContentPos ? true : false), _CurRange, _CurLine, _CurPage, UpdateCurPos, UpdateTarget, ReturnTarget );
-
-        if ( true === CurrentRun && CurPos === this.State.ContentPos )
-            return Res;
-        else
-            X = Res.X;
-    }
-
-    return { X : X };
+	let rangePos = this.getRangePos(positionCalculator.line, positionCalculator.range);
+	let startPos = rangePos[0];
+	let endPos   = rangePos[1];
+	if (startPos >= endPos)
+		return;
+	
+	for (let pos = startPos; pos <= endPos; ++pos)
+	{
+		let item = this.Content[pos];
+		item.recalculateCursorPosition(positionCalculator, isCurrent && pos === this.State.ContentPos);
+	}
 };
 CParagraphContentWithParagraphLikeContent.prototype.Refresh_RecalcData = function(Data)
 {

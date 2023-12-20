@@ -1634,91 +1634,136 @@ Paragraph.prototype.CheckSplitPageOnPageBreak = function(oPageBreakItem)
 /**
  * Пересчитываем заданную позицию элемента или текущую позицию курсора.
  */
-Paragraph.prototype.Internal_Recalculate_CurPos = function(Pos, UpdateCurPos, UpdateTarget, ReturnTarget)
+Paragraph.prototype.Internal_Recalculate_CurPos = function(updateCurPos, updateTarget, returnTarget)
 {
-	var Transform = this.Get_ParentTextTransform();
+	let result = {
+		X         : 0,
+		Y         : 0,
+		Height    : 0,
+		PageNum   : 0,
+		Internal  : {
+			Line  : 0,
+			Page  : 0,
+			Range : 0
+		},
+		Transform : this.Get_ParentTextTransform()
+	};
 
 	if (!this.IsRecalculated() || this.Lines.length <= 0)
-	{
-		return {
-			X         : 0,
-			Y         : 0,
-			Height    : 0,
-			PageNum   : 0,
-			Internal  : {Line : 0, Page : 0, Range : 0},
-			Transform : Transform
-		};
-	}
+		return result;
 
 	var LinePos = this.GetCurrentParaPos();
 
 	if (-1 === LinePos.Line || LinePos.Line >= this.Lines.length)
-	{
-		return {
-			X         : 0,
-			Y         : 0,
-			Height    : 0,
-			PageNum   : 0,
-			Internal  : {Line : 0, Page : 0, Range : 0},
-			Transform : Transform
-		};
-	}
+		return result;
 
 	var CurLine  = LinePos.Line;
 	var CurRange = LinePos.Range;
 	var CurPage  = LinePos.Page;
 
 	// Если в текущей позиции явно указана строка
-	if (-1 != this.CurPos.Line)
+	if (-1 !== this.CurPos.Line)
 	{
 		CurLine  = this.CurPos.Line;
 		CurRange = this.CurPos.Range;
 	}
 
 	if (this.Lines[CurLine].Ranges.length <= 0)
+		return result;
+	
+	let startPos = this.Lines[CurLine].Ranges[CurRange].StartPos;
+	let endPos   = this.Lines[CurLine].Ranges[CurRange].EndPos;
+	
+	let positionCalculator = new AscWord.ParagraphPositionCalculator(this);
+	positionCalculator.reset(CurPage, CurLine, CurRange);
+	for (let pos = startPos; pos <= endPos; ++pos)
 	{
-		return {
-			X         : 0,
-			Y         : 0,
-			Height    : 0,
-			PageNum   : 0,
-			Internal  : {Line : 0, Page : 0, Range : 0},
-			Transform : Transform
-		};
+		let item = this.Content[pos];
+		item.recalculateCursorPosition(positionCalculator, pos === this.CurPos.ContentPos);
 	}
+	
+	let point  = positionCalculator.getXY();
+	result.X = point.x;
+	result.Y = point.y;
+	result.PageNum = this.GetAbsolutePage(CurPage);
 
-	var X = this.Lines[CurLine].Ranges[CurRange].XVisible;
-	var Y = this.Pages[CurPage].Y + this.Lines[CurLine].Y;
-
-	var StartPos = this.Lines[CurLine].Ranges[CurRange].StartPos;
-	var EndPos   = this.Lines[CurLine].Ranges[CurRange].EndPos;
-
-	if (true === this.Numbering.checkRange(CurRange, CurLine))
-		X += this.Numbering.WidthVisible;
-
-	for (var CurPos = StartPos; CurPos <= EndPos; CurPos++)
+	result.Internal.Line  = CurLine;
+	result.Internal.Page  = CurPage;
+	result.Internal.Range = CurRange;
+	
+	if (updateCurPos)
 	{
-		var Item = this.Content[CurPos];
-		var Res  = Item.Recalculate_CurPos(X, Y, (CurPos === this.CurPos.ContentPos ? true : false), CurRange, CurLine, CurPage, UpdateCurPos, UpdateTarget, ReturnTarget);
-
-		if (CurPos === this.CurPos.ContentPos)
-		{
-			Res.Transform = Transform;
-			return Res;
-		}
-		else
-		{
-			X = Res.X;
-		}
+		this.CurPos.X        = point.X;
+		this.CurPos.Y        = point.Y;
+		this.CurPos.PagesPos = CurPage;
 	}
-
-	return {
-		X         : X,
-		Y         : Y,
-		PageNum   : this.Get_AbsolutePage(CurPage),
-		Internal  : {Line : CurLine, Page : CurPage, Range : CurRange},
-		Transform : Transform
-	};
+	
+	if (updateTarget)
+	{
+		let target = positionCalculator.getTargetXY();
+		
+		let targetX = target.x;
+		let targetY = target.y;
+		let targetH = target.h;
+		let ascent  = target.ascent;
+		
+		let color = positionCalculator.getTargetColor();
+		
+		// Special hack for scrolling to the last selected line
+		let logicDocument = this.GetLogicDocument();
+		if (logicDocument
+			&& logicDocument.IsDocumentEditor()
+			&& !logicDocument.IsStartSelection()
+			&& this.IsSelectionUse())
+		{
+			let paraLine = this.Lines[CurLine];
+			let paraPage = this.Pages[CurPage];
+			
+			if (paraLine && paraPage)
+			{
+				targetY = paraPage.Y + paraLine.Top;
+				targetH = paraLine.Bottom - paraLine.Top;
+				ascent  = paraLine.Metrics.Ascent;
+			}
+		}
+		
+		
+		let absPage = this.GetAbsolutePage(CurPage);
+		let pdfForm = this.Parent && this.Parent.ParentPDF ? this.Parent.ParentPDF : null;
+		
+		// TODO: Убрать данную заглушку
+		// загрушка для обновления target (курсора)
+		// т.к. у любой формы у объекта CDocumentContent page == 0
+		if (pdfForm)
+			absPage = pdfForm.GetPage();
+		
+		if (this.GetFramePr())
+		{
+			let lineTop = this.Pages[CurPage].Y + this.Lines[CurLine].Top;
+			let lineBot = this.Pages[CurPage].Y + this.Lines[CurLine].Bottom;
+			
+			let top = Math.max(lineTop, targetY);
+			let bot = Math.min(lineBot, targetY + targetH);
+			
+			targetH = bot - top;
+			targetY = top;
+		}
+		
+		let drawingDocument = this.DrawingDocument;
+		drawingDocument.SetTargetColor(color.r, color.g, color.b);
+		drawingDocument.SetTargetSize(targetH, ascent);
+		drawingDocument.UpdateTarget(targetX, targetY, absPage);
+	}
+	
+	if (returnTarget)
+	{
+		let target = positionCalculator.getTargetXY();
+		
+		result.Y      = target.y;
+		result.Height = target.h;
+	}
+	
+	return result;
 };
 /**
  * Проверяем не пустые ли границы
@@ -1949,7 +1994,7 @@ Paragraph.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY, isUpdateTar
 	if (undefined === isReturnTarget)
 		isReturnTarget = false;
 
-	var oCurPosInfo = this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, true, isUpdateTarget, isReturnTarget);
+	var oCurPosInfo = this.Internal_Recalculate_CurPos(true, isUpdateTarget, isReturnTarget);
 
 	if (bUpdateX)
 		this.CurPos.RealX = oCurPosInfo.X;
@@ -1961,7 +2006,7 @@ Paragraph.prototype.RecalculateCurPos = function(bUpdateX, bUpdateY, isUpdateTar
 };
 Paragraph.prototype.GetCalculatedCurPosXY = function()
 {
-	return this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, false, false, true);
+	return this.Internal_Recalculate_CurPos(false, false, true);
 };
 Paragraph.prototype.RecalculateMinMaxContentWidth = function(isRotated)
 {
@@ -6077,7 +6122,7 @@ Paragraph.prototype.MoveCursorLeft = function(AddToSelect, Word)
 			this.CheckSmartSelection();
 	}
 
-	this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, true, false, false);
+	this.Internal_Recalculate_CurPos(true, false, false);
 
 	this.CurPos.RealX = this.CurPos.X;
 	this.CurPos.RealY = this.CurPos.Y;
@@ -6201,7 +6246,7 @@ Paragraph.prototype.MoveCursorRight = function(AddToSelect, Word)
 		this.CheckSmartSelection();
 	}
 
-	this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, true, false, false);
+	this.Internal_Recalculate_CurPos(true, false, false);
 
 	this.CurPos.RealX = this.CurPos.X;
 	this.CurPos.RealY = this.CurPos.Y;
@@ -6221,7 +6266,7 @@ Paragraph.prototype.MoveCursorToXY = function(X, Y, bLine, bDontChangeRealPos, C
 	var SearchPosXY = this.Get_ParaContentPosByXY(X, Y, CurPage, bLine, false);
 
 	this.Set_ParaContentPos(SearchPosXY.Pos, false, SearchPosXY.Line, SearchPosXY.Range);
-	this.Internal_Recalculate_CurPos(-1, false, false, false);
+	this.Internal_Recalculate_CurPos(false, false, false);
 
 	if (bDontChangeRealPos != true)
 	{
@@ -6901,7 +6946,7 @@ Paragraph.prototype.MoveCursorUp = function(AddToSelect)
 			// Пересчитаем координату точки TopPos
 			this.Set_ParaContentPos(TopPos, false, CurLine, CurRange);
 
-			this.Internal_Recalculate_CurPos(0, true, false, false);
+			this.Internal_Recalculate_CurPos(true, false, false);
 			this.CurPos.RealX = this.CurPos.X;
 			this.CurPos.RealY = this.CurPos.Y;
 
@@ -7002,7 +7047,7 @@ Paragraph.prototype.MoveCursorDown = function(AddToSelect)
 			// Пересчитаем координату BottomPos
 			this.Set_ParaContentPos(BottomPos, false, CurLine, CurRange);
 
-			this.Internal_Recalculate_CurPos(0, true, false, false);
+			this.Internal_Recalculate_CurPos(true, false, false);
 			this.CurPos.RealX = this.CurPos.X;
 			this.CurPos.RealY = this.CurPos.Y;
 
@@ -7131,7 +7176,7 @@ Paragraph.prototype.MoveCursorToEndOfLine = function(addToSelect)
 	if (this.IsSelectionUse())
 		this.Set_ParaContentPos(this.getSelectionEndPos(), false, this.Selection.EndLine, this.Selection.EndRange);
 	
-	this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, true, false, false);
+	this.Internal_Recalculate_CurPos(true, false, false);
 	
 	this.CurPos.RealX = this.CurPos.X;
 	this.CurPos.RealY = this.CurPos.Y;
@@ -7206,7 +7251,7 @@ Paragraph.prototype.MoveCursorToStartOfLine = function(addToSelect)
 	if (this.IsSelectionUse())
 		this.Set_ParaContentPos(this.getSelectionEndPos(), false, this.Selection.EndLine, this.Selection.EndRange);
 	
-	this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, true, false, false);
+	this.Internal_Recalculate_CurPos(true, false, false);
 	
 	this.CurPos.RealX = this.CurPos.X;
 	this.CurPos.RealY = this.CurPos.Y;
@@ -11942,7 +11987,7 @@ Paragraph.prototype.Get_NearestPos = function(CurPage, X, Y, bAnchor, Drawing)
 
 	ContentPos = this.private_CorrectNearestPos(ContentPos, bAnchor, Drawing);
 
-	var Result = this.Internal_Recalculate_CurPos(ContentPos, false, false, true);
+	var Result = this.Internal_Recalculate_CurPos(false, false, true);
 
 	// Сохраняем параграф и найденное место в параграфе
 	Result.ContentPos = ContentPos;
@@ -12153,7 +12198,7 @@ Paragraph.prototype.Get_AnchorPos = function(Drawing)
 
 	this.Set_ParaContentPos(ContentPos, false, -1, -1);
 
-	var Result = this.Internal_Recalculate_CurPos(ContentPos, false, false, true);
+	var Result = this.Internal_Recalculate_CurPos(false, false, true);
 
 	Result.Paragraph  = this;
 	Result.ContentPos = ContentPos;
@@ -12173,13 +12218,13 @@ Paragraph.prototype.IsContentOnFirstPage = function()
 Paragraph.prototype.Get_CurrentPage_Absolute = function()
 {
 	// Обновляем позицию
-	this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, true, false, false);
+	this.Internal_Recalculate_CurPos(true, false, false);
 	return this.private_GetAbsolutePageIndex(this.CurPos.PagesPos);
 };
 Paragraph.prototype.Get_CurrentPage_Relative = function()
 {
 	// Обновляем позицию
-	this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, true, false, false);
+	this.Internal_Recalculate_CurPos(true, false, false);
 	return this.private_GetRelativePageIndex(this.CurPos.PagesPos);
 };
 Paragraph.prototype.CollectDocumentStatistics = function(Stats)
@@ -16005,7 +16050,7 @@ Paragraph.prototype.Get_XYByContentPos = function(ContentPos)
 {
 	var ParaContentPos = this.Get_ParaContentPos(false, false);
 	this.Set_ParaContentPos(ContentPos, true, -1, -1);
-	var Result = this.Internal_Recalculate_CurPos(-1, false, false, true);
+	var Result = this.Internal_Recalculate_CurPos(false, false, true);
 	this.Set_ParaContentPos(ParaContentPos, true, this.CurPos.Line, this.CurPos.Range, false);
 	return Result;
 };
@@ -16054,7 +16099,7 @@ Paragraph.prototype.Check_EmptyPages = function(CurPage, bSkipEmptyLinesWithBrea
 };
 Paragraph.prototype.Get_CurrentColumn = function(CurPage)
 {
-    this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, true, false, false);
+    this.Internal_Recalculate_CurPos(true, false, false);
     return this.Get_AbsoluteColumn(this.CurPos.PagesPos);
 };
 Paragraph.prototype.private_RefreshNumbering = function(NumPr)
@@ -16530,7 +16575,7 @@ Paragraph.prototype.GetAllContentControls = function(arrContentControls)
 };
 Paragraph.prototype.GetTargetPos = function()
 {
-	return this.Internal_Recalculate_CurPos(this.CurPos.ContentPos, false, false, true);
+	return this.Internal_Recalculate_CurPos(false, false, true);
 };
 Paragraph.prototype.GetSelectedContentControls = function()
 {

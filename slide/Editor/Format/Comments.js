@@ -297,11 +297,6 @@ ParaComment.prototype =
         return false;
     },
 
-    Recalculate_CurPos : function(X, Y, CurrentRun, _CurRange, _CurLine, CurPage, UpdateCurPos, UpdateTarget, ReturnTarget)
-    {
-        return { X : X };
-    },
-
 	RecalculateMinMaxContentWidth : function()
     {
 

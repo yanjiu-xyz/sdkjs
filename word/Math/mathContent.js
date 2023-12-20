@@ -3732,27 +3732,12 @@ CMathContent.prototype.Add_MatrixWithBrackets = function(begChr, endChr, ctrPr, 
     var MathContent = Delimiter.getElementMathContent(0);
     return MathContent.Add_Matrix(ctrPr, RowsCount, ColsCount, plcHide, aText);
 };
-CMathContent.prototype.Recalculate_CurPos = function(_X, _Y, CurrentRun, _CurRange, _CurLine, _CurPage, UpdateCurPos, UpdateTarget, ReturnTarget)
+CMathContent.prototype.recalculateCursorPosition = function(positionCalculator, isCurrent)
 {
-	if (-1 === this.StartLine)
-	{
-		return {
-			X         : 0,
-			Y         : 0,
-			Height    : 0,
-			PageNum   : 0,
-			Internal  : {Line : 0, Page : 0, Range : 0},
-			Transform : null
-		};
-	}
-
-    var CurLine  = _CurLine - this.StartLine;
-    var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
-    var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-
-    var _EndPos = ( true === CurrentRun ? Math.min( EndPos, this.CurPos ) : EndPos );
-
-    return this.Content[_EndPos].Recalculate_CurPos(_X, _Y, CurrentRun, _CurRange, _CurLine, _CurPage, UpdateCurPos, UpdateTarget, ReturnTarget);
+	if (-1 === this.StartLine || !isCurrent)
+		return;
+	
+	this.Content[this.CurPos].RecalculateCursorPosition(positionCalculator, true);
 };
 CMathContent.prototype.GetCurrentParaPos = function(align)
 {

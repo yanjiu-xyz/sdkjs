@@ -34,6 +34,8 @@
 
 (function(window)
 {
+	const BLACK_COLOR = new AscWord.CDocumentColor(0, 0, 0);
+	
 	/**
 	 * Class for calculating the current position of the cursor
 	 * @param {AscWord.Paragraph} paragraph
@@ -50,15 +52,14 @@
 		this.x = 0;
 		this.y = 0;
 		
-		this.mathY = -1;
-		
 		this.bidi = new AscWord.BidiFlow(this);
 		this.rtl  = false;
 		
 		this.posInfo = {
-			x : 0,
-			y : 0,
-			run : null
+			x     : 0,
+			y     : 0,
+			run   : null,
+			mathY : -1
 		};
 	}
 	ParagraphPositionCalculator.prototype.reset = function(page, line, range)
@@ -159,7 +160,7 @@
 		this.bidi.end();
 		let run = this.posInfo.run;
 		if (!run)
-			return {x : this.posInfo.x, y : this.posInfo.y, h : 0};
+			return {x : this.posInfo.x, y : this.posInfo.y, h : 0, ascent : 0};
 		
 		let textPr = run.getCompiledPr();
 		let isNearFootnoteRef = run.IsCurPosNearFootEndnoteReference();
@@ -181,9 +182,70 @@
 				y -= textPr.FontSize * g_dKoef_pt_to_mm * AscCommon.vaKSuper;
 		}
 		
-		return {x : this.posInfo.x, y : y, h : textHeight};
+		let runParent = run.Parent;
+		if (run.IsMathRun() && runParent && runParent.bRoot && runParent.bMath_OneLine)
+		{
+			let mathBounds = runParent.Get_Bounds();
+			
+			let y0 = y;
+			let y1 = y + textHeight;
+			
+			let _y = runParent.pos.y - runParent.size.ascent;
+			
+			let _y0 = this.posInfo.mathY + _y - 0.2 * mathBounds.H;
+			let _y1 = this.posInfo.mathY + _y + 1.4 * mathBounds.H;
+			
+			y0 = Math.max(y0, _y0);
+			y1 = Math.min(y1, _y1);
+			
+			y = y0;
+			textHeight = y1 - y0;
+		}
+		
+		return {x : this.posInfo.x, y : y, h : textHeight, ascent : ascent};
 	};
-	
+	/**
+	 * @returns {AscWord.CDocumentColor}
+	 */
+	ParagraphPositionCalculator.prototype.getTargetColor = function()
+	{
+		if (!this.finalize())
+			return BLACK_COLOR;
+		
+		let p      = this.paragraph;
+		let textPr = this.posInfo.run.getCompiledPr();
+		let color  = textPr.Color;
+		
+		if (textPr.TextFill)
+		{
+			textPr.TextFill.check(p.getTheme(), p.getColorMap());
+			let RGBA = textPr.TextFill.getRGBAColor();
+			return new AscWord.CDocumentColor(RGBA.R, RGBA.G, RGBA.B);
+		}
+		else if (textPr.Unifill)
+		{
+			textPr.Unifill.check(p.getTheme(), p.getColorMap());
+			let RGBA = textPr.Unifill.getRGBAColor();
+			return new AscWord.CDocumentColor(RGBA.R, RGBA.G, RGBA.B);
+		}
+		else if (color.IsAuto())
+		{
+			return this.posInfo.run.getAutoColor();
+		}
+		
+		return color;
+	};
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	// Private area
+	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+	/**
+	 * @returns {boolean}
+	 */
+	ParagraphPositionCalculator.prototype.finalize = function()
+	{
+		this.bidi.end();
+		return !!this.posInfo.run;
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.ParagraphPositionCalculator = ParagraphPositionCalculator;
 	

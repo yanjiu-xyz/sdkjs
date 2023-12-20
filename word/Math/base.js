@@ -1714,9 +1714,12 @@ CMathBase.prototype.Create_FontMap = function(Map)
     for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; nIndex++)
         this.Content[nIndex].Create_FontMap(Map);
 };
-CMathBase.prototype.Recalculate_CurPos = function(_X, Y, CurrentRun, _CurRange, _CurLine, _CurPage, UpdateCurPos, UpdateTarget, ReturnTarget)
+CMathBase.prototype.recalculateCursorPosition = function(positionCalculator, isCurrent)
 {
-    return this.Content[this.CurPos].Recalculate_CurPos(_X, Y, CurrentRun, _CurRange, _CurLine, _CurPage, UpdateCurPos, UpdateTarget, ReturnTarget);
+	if (!isCurrent)
+		return;
+	
+	this.Content[this.CurPos].RecalculateCursorPosition(positionCalculator, isCurrent);
 };
 CMathBase.prototype.Get_ParaContentPosByXY = function(SearchPos, Depth, _CurLine, _CurRange, StepEnd)
 {

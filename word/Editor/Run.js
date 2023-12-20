@@ -117,7 +117,7 @@ function ParaRun(Paragraph, bMathRun)
 	{
 		this.Type = para_Math_Run;
 
-		// запомним позицию для Recalculate_CurPos, когда  Run пустой
+		// запомним позицию для recalculateCursorPosition, когда  Run пустой
 		this.pos      = new CMathPosition();
 		this.ParaMath = null;
 		this.Parent   = null;
@@ -2140,298 +2140,74 @@ ParaRun.prototype.Get_ParaPosByContentPos = function(ContentPos, Depth)
     return new CParaPos((LinesCount === 1 ? this.protected_GetRangesCount(0) - 1 + this.StartRange : this.protected_GetRangesCount(0) - 1), LinesCount - 1 + this.StartLine, 0, 0);
 };
 
-ParaRun.prototype.Recalculate_CurPos = function(X, Y, CurrentRun, _CurRange, _CurLine, CurPage, UpdateCurPos, UpdateTarget, ReturnTarget)
+ParaRun.prototype.recalculateCursorPosition = function(positionCalculator, isCurrent)
 {
-    var Para = this.Paragraph;
-
-    var CurLine  = _CurLine - this.StartLine;
-    var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
-
-    var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-    var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-
-    var Pos = StartPos;
-    var _EndPos = ( true === CurrentRun ? Math.min( EndPos, this.State.ContentPos ) : EndPos );
-
-    if(this.Type == para_Math_Run)
-    {
-        var Lng = this.Content.length;
-
-        Pos = _EndPos;
-
-        var LocParaMath = this.ParaMath.GetLinePosition(_CurLine, _CurRange);
-        X = LocParaMath.x;
-        Y = LocParaMath.y;
-
-        var MATH_Y = Y;
-        var loc;
-
-        if(Lng == 0)
-        {
-            X += this.pos.x;
-            Y += this.pos.y;
-        }
-        else if(Pos < EndPos)
-        {
-            loc = this.Content[Pos].GetLocationOfLetter();
-
-            X += loc.x;
-            Y += loc.y;
-        }
-        else if(!(StartPos == EndPos)) // исключаем этот случай StartPos == EndPos && EndPos == Pos, это возможно когда конец Run находится в начале строки, при этом ни одна из букв этого Run не входит в эту строку
-        {
-            var Letter = this.Content[Pos - 1];
-            loc = Letter.GetLocationOfLetter();
-
-            X += loc.x + Letter.GetWidthVisible();
-            Y += loc.y;
-        }
-
-    }
-    else
-    {
-        for ( ; Pos < _EndPos; Pos++ )
-        {
-            var Item = this.private_CheckInstrText(this.Content[Pos]);
-            var ItemType = Item.Type;
-
-            if (para_Drawing === ItemType && drawing_Inline !== Item.DrawingType)
-                continue;
-
-            X += Item.GetWidthVisible();
-        }
-
-        if (CurrentRun && this.Content.length > 0)
+	if (this.IsMathRun())
+	{
+		positionCalculator.handleMathRun(this, isCurrent ? this.Selection.State.ContentPos : -1);
+		return;
+	}
+	
+	let rangePos = this.getRangePos(positionCalculator.line, positionCalculator.range);
+	let startPos = rangePos[0];
+	let endPos   = rangePos[1];
+	if (startPos >= endPos)
+		return;
+	
+	for (let pos = startPos; pos < endPos; ++pos)
+	{
+		let item = this.private_CheckInstrText(this.Content[pos]);
+		let isCurPos = isCurrent && pos === this.State.ContentPos;
+		let isNearNoteRef = isCurPos ? this.IsCurPosNearFootEndnoteReference() : false;
+		positionCalculator.handleRunElement(item, this, isCurPos, isNearNoteRef);
+	}
+}
+/**
+ * Get auto color against current background color
+ * @returns {AscWord.CDocumentColor}
+ */
+ParaRun.prototype.getAutoColor = function()
+{
+	let paragraph = this.GetParagraph();
+	if (!paragraph)
+		return AscWord.BLACK_COLOR;
+	
+	let textPr = this.getCompiledPr();
+	if (textP.FontRef && textPr.FontRef.Color)
+	{
+		text.FontRef.Color.check(paragraph.getTheme(), paragraph.getColorMap());
+		let RGBA = textPr.FontRef.Color.RGBA;
+		return new AscWord.CDocumentColor(RGBA.R, RGBA.G, RGBA.B, RGBA.A);
+	}
+	
+	let bgColor = null;
+	if (textPr.Shd && !textPr.Shd.IsNil())
+	{
+		bgColor = textPr.Shd.GetSimpleColor(paragraph.getTheme(), paragraph.getColorMap());
+	}
+	else
+	{
+		let paraPr = paragraph.getCompiledPr().ParaPr;
+		if (paraPr.Shd && !paraPr.Shd.IsNil())
 		{
-			if (Pos === this.Content.length)
+			if (paraPr.Shd.Unifill)
 			{
-				var Item = this.Content[Pos - 1];
-				if (Item.RGap)
-				{
-					if (Item.RGapCount)
-					{
-						X -= Item.RGapCount * Item.RGapShift - (Item.RGapShift - Item.RGapCharWidth) / 2;
-					}
-					else
-					{
-						X -= Item.RGap;
-					}
-				}
+				paraPr.Shd.Unifill.check(this.Paragraph.Get_Theme(), this.Paragraph.Get_ColorMap());
+				let RGBA = paraPr.Shd.Unifill.getRGBAColor();
+				bgColor = new AscWord.CDocumentColor(RGBA.R, RGBA.G, RGBA.B, RGBA.A);
 			}
-			else if (this.Content[Pos].LGap)
+			else
 			{
-				X += this.Content[Pos].LGap;
+				bgColor = paraPr.Shd.Color;
 			}
 		}
-    }
-
-	var bNearFootnoteReference = this.IsCurPosNearFootEndnoteReference();
-    if ( true === CurrentRun && Pos === this.State.ContentPos )
-    {
-        if ( true === UpdateCurPos )
-        {
-            // Обновляем позицию курсора в параграфе
-
-            Para.CurPos.X        = X;
-            Para.CurPos.Y        = Y;
-            Para.CurPos.PagesPos = CurPage;
-
-            if ( true === UpdateTarget )
-            {
-                var CurTextPr = this.Get_CompiledPr(false);
-				var dFontKoef = bNearFootnoteReference ? 1 : CurTextPr.getFontCoef();
-
-				g_oTextMeasurer.SetTextPr(CurTextPr, this.Paragraph.Get_Theme());
-				g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, dFontKoef);
-				var Height    = g_oTextMeasurer.GetHeight();
-				var Descender = Math.abs(g_oTextMeasurer.GetDescender());
-				var Ascender  = Height - Descender;
-
-                var RGBA;
-                Para.DrawingDocument.UpdateTargetTransform(Para.Get_ParentTextTransform());
-                if(CurTextPr.TextFill)
-                {
-                    CurTextPr.TextFill.check(Para.Get_Theme(), Para.Get_ColorMap());
-                    var oColor = CurTextPr.TextFill.getRGBAColor();
-                    Para.DrawingDocument.SetTargetColor( oColor.R, oColor.G, oColor.B );
-                }
-                else if(CurTextPr.Unifill)
-                {
-                    CurTextPr.Unifill.check(Para.Get_Theme(), Para.Get_ColorMap());
-                    RGBA = CurTextPr.Unifill.getRGBAColor();
-                    Para.DrawingDocument.SetTargetColor( RGBA.R, RGBA.G, RGBA.B );
-                }
-                else
-                {
-                    if ( true === CurTextPr.Color.Auto )
-                    {
-                        // Выясним какая заливка у нашего текста
-                        var Pr = Para.Get_CompiledPr();
-                        var BgColor = undefined;
-                        if ( undefined !== Pr.ParaPr.Shd && c_oAscShdNil !== Pr.ParaPr.Shd.Value )
-                        {
-                            if(Pr.ParaPr.Shd.Unifill)
-                            {
-                                Pr.ParaPr.Shd.Unifill.check(this.Paragraph.Get_Theme(), this.Paragraph.Get_ColorMap());
-                                var RGBA =  Pr.ParaPr.Shd.Unifill.getRGBAColor();
-                                BgColor = new CDocumentColor(RGBA.R, RGBA.G, RGBA.B, false);
-                            }
-                            else
-                            {
-                                BgColor = Pr.ParaPr.Shd.Color;
-                            }
-                        }
-                        else
-                        {
-                            // Нам надо выяснить заливку у родительского класса (возможно мы находимся в ячейке таблицы с забивкой)
-                            BgColor = Para.Parent.Get_TextBackGroundColor();
-
-                            if ( undefined !== CurTextPr.Shd && c_oAscShdNil !== CurTextPr.Shd.Value && !(CurTextPr.FontRef && CurTextPr.FontRef.Color) )
-                                BgColor = CurTextPr.Shd.Get_Color( this.Paragraph );
-                        }
-
-                        // Определим автоцвет относительно заливки
-                        var AutoColor = ( undefined != BgColor && false === BgColor.Check_BlackAutoColor() ? new CDocumentColor( 255, 255, 255, false ) : new CDocumentColor( 0, 0, 0, false ) );
-                        var  RGBA, Theme = Para.Get_Theme(), ColorMap = Para.Get_ColorMap();
-                        if(CurTextPr.FontRef && CurTextPr.FontRef.Color)
-                        {
-                            CurTextPr.FontRef.Color.check(Theme, ColorMap);
-                            RGBA = CurTextPr.FontRef.Color.RGBA;
-                            AutoColor = new CDocumentColor( RGBA.R, RGBA.G, RGBA.B, RGBA.A );
-                        }
-
-                        Para.DrawingDocument.SetTargetColor( AutoColor.r, AutoColor.g, AutoColor.b );
-                    }
-                    else
-                        Para.DrawingDocument.SetTargetColor( CurTextPr.Color.r, CurTextPr.Color.g, CurTextPr.Color.b );
-                }
-
-                var TargetY = Y - Ascender - CurTextPr.Position;
-				if (!bNearFootnoteReference)
-				{
-					switch (CurTextPr.VertAlign)
-					{
-						case AscCommon.vertalign_SubScript:
-						{
-							TargetY -= CurTextPr.FontSize * g_dKoef_pt_to_mm * AscCommon.vaKSub;
-							break;
-						}
-						case AscCommon.vertalign_SuperScript:
-						{
-							TargetY -= CurTextPr.FontSize * g_dKoef_pt_to_mm * AscCommon.vaKSuper;
-							break;
-						}
-					}
-				}
-
-				let oLogicDocument = Para.GetLogicDocument();
-				if (oLogicDocument
-					&& oLogicDocument.IsDocumentEditor()
-					&& !oLogicDocument.IsStartSelection()
-					&& Para.IsSelectionUse())
-				{
-					let oLine = Para.Lines[_CurLine];
-					let oPage = Para.Pages[CurPage];
-
-					if (oLine && oPage)
-					{
-						TargetY  = oPage.Y + oLine.Top;
-						Height   = oLine.Bottom - oLine.Top;
-						Ascender = oLine.Metrics.Ascent;
-					}
-				}
-
-				Para.DrawingDocument.SetTargetSize(Height, Ascender);
-
-                var PageAbs = Para.Get_AbsolutePage(CurPage);
-				let oFormPDF = this.GetFormPDF();
-				
-				// загрушка для обновления target (курсора)
-				// т.к. у любой формы у объекта CDocumentContent page == 0
-				if (oFormPDF)
-					PageAbs = oFormPDF.GetPage();
-
-                // TODO: Тут делаем, чтобы курсор не выходил за границы буквицы. На самом деле, надо делать, чтобы
-                //       курсор не выходил за границы строки, но для этого надо делать обрезку по строкам, а без нее
-                //       такой вариант будет смотреться плохо.
-                if (para_Math_Run === this.Type && null !== this.Parent && true !== this.Parent.bRoot && this.Parent.bMath_OneLine)
-                {
-                    var oBounds = this.Parent.Get_Bounds();
-                    var __Y0 = TargetY, __Y1 = TargetY + Height;
-
-                    // пока так
-                    // TO DO : переделать
-
-                    var YY = this.Parent.pos.y - this.Parent.size.ascent,
-                        XX = this.Parent.pos.x;
-
-                    var ___Y0 = MATH_Y + YY - 0.2 * oBounds.H;
-                    var ___Y1 = MATH_Y + YY + 1.4 * oBounds.H;
-
-                    __Y0 = Math.max( __Y0, ___Y0 );
-                    __Y1 = Math.min( __Y1, ___Y1 );
-
-					Para.DrawingDocument.SetTargetSize(__Y1 - __Y0, Ascender);
-                    Para.DrawingDocument.UpdateTarget( X, __Y0, PageAbs );
-                }
-                else if ( undefined != Para.Get_FramePr() )
-                {
-                    var __Y0 = TargetY, __Y1 = TargetY + Height;
-                    var ___Y0 = Para.Pages[CurPage].Y + Para.Lines[CurLine].Top;
-                    var ___Y1 = Para.Pages[CurPage].Y + Para.Lines[CurLine].Bottom;
-
-                    __Y0 = Math.max( __Y0, ___Y0 );
-                    __Y1 = Math.min( __Y1, ___Y1 );
-
-					Para.DrawingDocument.SetTargetSize(__Y1 - __Y0, Ascender);
-                    Para.DrawingDocument.UpdateTarget( X, __Y0, PageAbs );
-                }
-                else
-                {
-                    Para.DrawingDocument.UpdateTarget(X, TargetY, PageAbs);
-                }
-            }
-        }
-
-        if ( true === ReturnTarget )
-        {
-			var CurTextPr = this.Get_CompiledPr(false);
-			var dFontKoef = bNearFootnoteReference ? 1 : CurTextPr.getFontCoef();
-
-			g_oTextMeasurer.SetTextPr(CurTextPr, this.Paragraph.Get_Theme());
-			g_oTextMeasurer.SetFontSlot(AscWord.fontslot_ASCII, dFontKoef);
-
-			var Height    = g_oTextMeasurer.GetHeight();
-			var Descender = Math.abs(g_oTextMeasurer.GetDescender());
-			var Ascender  = Height - Descender;
-
-			var TargetY = Y - Ascender - CurTextPr.Position;
-			if (!bNearFootnoteReference)
-			{
-				switch (CurTextPr.VertAlign)
-				{
-					case AscCommon.vertalign_SubScript:
-					{
-						TargetY -= CurTextPr.FontSize * g_dKoef_pt_to_mm * AscCommon.vaKSub;
-						break;
-					}
-					case AscCommon.vertalign_SuperScript:
-					{
-						TargetY -= CurTextPr.FontSize * g_dKoef_pt_to_mm * AscCommon.vaKSuper;
-						break;
-					}
-				}
-			}
-
-
-            return { X : X, Y : TargetY, Height : Height, PageNum : Para.Get_AbsolutePage(CurPage), Internal : { Line : CurLine, Page : CurPage, Range : CurRange } };
-        }
-        else
-            return { X : X, Y : Y, PageNum : Para.Get_AbsolutePage(CurPage), Internal : { Line : CurLine, Page : CurPage, Range : CurRange } };
-
-    }
-
-    return { X : X, Y: Y,  PageNum : Para.Get_AbsolutePage(CurPage), Internal : { Line : CurLine, Page : CurPage, Range : CurRange } };
+		else if (paragraph.GetParent())
+		{
+			bgColor = paragraph.GetParent().Get_TextBackGroundColor();
+		}
+	}
+	
+	return bgColor && !bg.isBlackAutoColor() ? AscWord.WHITE_COLOR : AscWord.BLACK_COLOR;
 };
 /**
  * Проверяем являются ли заданные изменения заданного рана простыми (например, последовательное удаление или набор текста)
@@ -10031,7 +9807,7 @@ ParaRun.prototype.Math_SetPosition = function(pos, PosInfo)
     var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
     var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
 
-    // запомним позицию для Recalculate_CurPos, когда  Run пустой
+    // запомним позицию для recalculateCursorPosition, когда  Run пустой
     this.pos.x = pos.x;
     this.pos.y = pos.y;
 

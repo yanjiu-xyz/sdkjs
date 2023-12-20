@@ -18333,6 +18333,9 @@ window["AscWord"].DEFAULT_TABLE_CELL_PR  = g_oDocumentDefaultTableCellPr;
 window["AscWord"].DEFAULT_TABLE_ROW_PR   = g_oDocumentDefaultTableRowPr;
 window["AscWord"].DEFAULT_TABLE_STYLE_PR = g_oDocumentDefaultTableStylePr;
 
+AscWord.BLACK_COLOR = new AscWord.CDocumentColor(0, 0, 0, false);
+AscWord.WHITE_COLOR = new AscWord.CDocumentColor(255, 255, 255, false);
+
 var g_oDocumentDefaultFillColor   = new CDocumentColor(255, 255, 255, true);
 var g_oDocumentDefaultStrokeColor = new CDocumentColor(0, 0, 0, true);
 

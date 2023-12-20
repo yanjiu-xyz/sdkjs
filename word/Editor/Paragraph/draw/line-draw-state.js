@@ -34,9 +34,6 @@
 
 (function(window)
 {
-	const WHITE_COLOR = new AscWord.CDocumentColor(255, 255, 255);
-	const BLACK_COLOR = new AscWord.CDocumentColor(0, 0, 0);
-	
 	/**
 	 * Class for storing the current draw state of various lines in the paragraph (underline/spelling/etc.)
 	 * @param {AscWord.ParagraphDrawState} drawState
@@ -251,7 +248,7 @@
 		}
 		
 		if (misspell)
-			this.Spelling.Add(startX, endX, BLACK_COLOR);
+			this.Spelling.Add(startX, endX, AscWord.BLACK_COLOR);
 		
 		if (this.reviewPrColor)
 			this.RunReview.Add(0, 0, startX, endX, 0, this.reviewPrColor.r, this.reviewPrColor.g, this.reviewPrColor.b, {RunPr: this.textPr});
@@ -465,7 +462,7 @@
 				if (textPr.Shd && !textPr.Shd.IsNil())
 					bgColor = textPr.Shd.GetSimpleColor(this.Paragraph.getTheme(), this.Paragraph.getColorMap());
 				
-				this.color = bgColor && !bgColor.isBlackAutoColor() ? WHITE_COLOR : BLACK_COLOR;
+				this.color = bgColor && !bgColor.isBlackAutoColor() ? AscWord.WHITE_COLOR : AscWord.BLACK_COLOR;
 			}
 		}
 		else
