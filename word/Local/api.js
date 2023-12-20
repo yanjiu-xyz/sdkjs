@@ -174,6 +174,10 @@ Asc['asc_docs_api'].prototype.asc_Save = function (isNoUserSave, isSaveAs, isRes
 		}
 		else
 		{
+			// TODO:
+			if (this.isPdfEditor() && this.IsUserSave)
+				this.IsUserSave = false;
+
 			this.canSave = true;
 		}
 		
