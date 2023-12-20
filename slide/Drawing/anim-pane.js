@@ -1162,7 +1162,7 @@
 			let rightBorder = this.getRulerEnd()
 			if (tx <= leftBorder || tx >= rightBorder) {
 				if (!this.isOnScroll()) {
-					let scrollStep = this.getWidth() * SCROLL_STEP / 5;
+					let scrollStep = this.getWidth() * SCROLL_STEP / 10;
 					scrollStep = tx <= leftBorder ? -scrollStep : scrollStep;
 					let scrollTimerDelay = 0;
 					let scrollTimerInterval = 50;
@@ -1228,7 +1228,7 @@
 		}, scrollTimerDelay);
 	};
 	CTimeline.prototype.addScroll = function (step /* in millimeters */) {
-		let newStartTime = this.posToTime(step)
+		let newStartTime = this.posToTime(this.getZeroShift() + step)
 		this.setStartTime(newStartTime)		
 	};
 	CTimeline.prototype.endScroll = function () {
