@@ -149,7 +149,7 @@
 			case AscFormat.If_func_pos:
 				return this.funcPos(nodes);
 			case AscFormat.If_func_posEven:
-				return this.funcPosEven(nodes);
+				return this.funcPosEven(nodes, node);
 			case AscFormat.If_func_posOdd:
 				return this.funcPosOdd(nodes);
 			case AscFormat.If_func_revPos:
@@ -160,6 +160,7 @@
 				return false;
 		}
 	};
+
 	If.prototype.check = function (expected, result) {
 		switch (this.op) {
 			case AscFormat.If_op_equ: {
@@ -185,6 +186,15 @@
 			}
 		}
 	}
+	If.prototype.funcPosEven = function (nodes, currentNode) {
+		for (let i = 0; i < nodes.length; i++) {
+			if (nodes[i] === currentNode) {
+				const isEven = i % 2 === 0 ? 1 : 0;
+				return this.check(parseInt(this.getConditionValue(), 10), isEven);
+			}
+		}
+		return false;
+	};
 	If.prototype.funcVar = function (node) {
 		const nodeVal = node.getFuncVarValue(this.arg);
 		return this.check(this.getConditionValue(), nodeVal);
@@ -1341,16 +1351,29 @@
 
 	PositionAlgorithm.prototype.setConnections = function (parentAlgorithm) {
 		const nodes = this.parentNode.childs;
+		let previousIndex = 0;
+		for (let i = 0; i < nodes.length; i++) {
+			const node = nodes[i];
+			if (node.isMainElement()) {
+				previousIndex = i;
+				break;
+			}
+		}
 		for (let i = 0; i < nodes.length; i++) {
 			const node = nodes[i];
 			const shape = node.shape;
 			if (shape.type === AscFormat.LayoutShapeType_outputShapeType_conn) {
 				const node = shape.node;
 				const algorithm = node.algorithm;
-				const previousIndex = i - 1;
 				let nextIndex = i + 1;
+				while (nextIndex < nodes.length && !nodes[nextIndex].isMainElement()) {
+					nextIndex += 1;
+				}
 				if (nextIndex === nodes.length && !this.isHideLastChild()) {
 					nextIndex = 0;
+					while (nextIndex < previousIndex && !nodes[nextIndex].isMainElement()) {
+						nextIndex += 1;
+					}
 				}
 				const previousShape = nodes[previousIndex] && nodes[previousIndex].shape;
 				const nextShape = nodes[nextIndex] && nodes[nextIndex].shape;
@@ -1359,6 +1382,7 @@
 					algorithm.setLastConnectorShape(nextShape);
 					algorithm.setParentAlgorithm(parentAlgorithm);
 				}
+				previousIndex = nextIndex;
 			}
 		}
 	}
@@ -1788,7 +1812,6 @@
 		result.radius = this.calcValues.radius;
 		result.angle = AscFormat.normalizeRotate(this.calcValues.startAngle + this.calcValues.stepAngle * nodeIndex);
 		result.isClockwise = this.isClockwise();
-		result.stepAngle = this.calcValues.stepAngle;
 		return result;
 	};
 	CycleAlgorithm.prototype.initParams = function (params) {
@@ -2060,8 +2083,76 @@
 			end: 0.25
 		};
 		this.parentAlgorithm = null;
+		this.calcValues = {
+			edgePoints: null,
+			connectionPoints: null
+		}
 	}
 	AscFormat.InitClassWithoutType(ConnectorAlgorithm, BaseAlgorithm);
+	ConnectorAlgorithm.prototype.initParams = function (params) {
+		BaseAlgorithm.prototype.initParams.call(this, params);
+		if (this.params[AscFormat.Param_type_dim] === undefined) {
+			this.params[AscFormat.Param_type_dim] = AscFormat.ParameterVal_connectorDimension_2D;
+		}
+/*
+		if (this.params[AscFormat.Param_type_begSty] === undefined) {
+*/
+			this.params[AscFormat.Param_type_begSty] = AscFormat.ParameterVal_arrowheadStyle_noArr;
+/*
+		}
+*/
+/*		if (this.params[AscFormat.Param_type_endSty] === undefined) {*/
+			this.params[AscFormat.Param_type_endSty] = AscFormat.ParameterVal_arrowheadStyle_arr;
+/*
+		}
+*/
+		if (this.params[AscFormat.Param_type_connRout] === undefined) {
+			this.params[AscFormat.Param_type_connRout] = AscFormat.ParameterVal_connectorRouting_stra;
+		}
+	}
+	ConnectorAlgorithm.prototype.getEdgePoints = function () {
+		if (!this.calcValues.edgePoints) {
+			const startEdgePoint = this.getEdgePoint(true);
+			const endEdgePoint = this.getEdgePoint();
+			this.calcValues.edgePoints = {
+				start: startEdgePoint,
+				end: endEdgePoint
+			};
+		}
+		if (this.calcValues.edgePoints.start && this.calcValues.edgePoints.end) {
+			return this.calcValues.edgePoints;
+		}
+		return null;
+	};
+	ConnectorAlgorithm.prototype.getConnectionPoints = function () {
+		if (!this.calcValues.connectionPoints) {
+			this.calcValues.connectionPoints = {
+				start: null,
+				end : null
+			};
+			const edgePoints = this.getEdgePoints();
+			if (edgePoints) {
+				const startPoint = edgePoints.start;
+				const endPoint = edgePoints.end;
+
+
+				const startLambda = this.connectionDistances.begin / (1 - this.connectionDistances.begin);
+				const sumStartX = startPoint.x + startLambda * endPoint.x;
+				const sumStartY = startPoint.y + startLambda * endPoint.y;
+				const endLambda = this.connectionDistances.end / (1 - this.connectionDistances.end);
+				const sumEndX = endPoint.x + endLambda * startPoint.x;
+				const sumEndY = endPoint.y + endLambda * startPoint.y;
+				const startConnectionPoint = new CCoordPoint(sumStartX / (1 + startLambda), sumStartY / (1 + startLambda));
+				const endConnectionPoint = new CCoordPoint(sumEndX / (1 + endLambda), sumEndY / (1 + endLambda));
+				this.calcValues.connectionPoints.start = startConnectionPoint;
+				this.calcValues.connectionPoints.end = endConnectionPoint;
+			}
+		}
+		if (this.calcValues.connectionPoints.start && this.calcValues.connectionPoints.end) {
+			return this.calcValues.connectionPoints;
+		}
+		return null;
+	}
 	ConnectorAlgorithm.prototype.setParentAlgorithm = function (algorithm) {
 		this.parentAlgorithm = algorithm;
 	};
@@ -2122,14 +2213,9 @@
 			(point.y > startSegment.y || fAlgDeltaEqual(point.y, startSegment.y)) && (point.y < endSegment.y || fAlgDeltaEqual(point.y, endSegment.y));
 	}
 	ConnectorAlgorithm.prototype.getRectRadialEdgePoint = function (radialInfo, bounds, isStart) {
-
 		const centerPoint = radialInfo.point;
 		const radius = radialInfo.radius;
-		const stepAngle = radialInfo.stepAngle;
-		const radiusAngle = radialInfo.angle;
 		const isClockwise = radialInfo.isClockwise;
-		const radiusVector = this.getGuideVectorByAngle(radiusAngle);
-		radiusVector.multiply(radius);
 
 		const ellipseBounds = {
 			l: centerPoint.x - radius,
@@ -2137,14 +2223,16 @@
 			t: centerPoint.y - radius,
 			b: centerPoint.y + radius
 		};
+
 		const linePoints = [
 			[new CCoordPoint(bounds.l, bounds.t), new CCoordPoint(bounds.r, bounds.t)],
 			[new CCoordPoint(bounds.l, bounds.t), new CCoordPoint(bounds.l, bounds.b)],
 			[new CCoordPoint(bounds.l, bounds.b), new CCoordPoint(bounds.r, bounds.b)],
 			[new CCoordPoint(bounds.r, bounds.t), new CCoordPoint(bounds.r, bounds.b)]
 		];
+		const rectCenterPoint = this.getShapePoint(bounds);
 		for (let i = 0; i < linePoints.length; i += 1) {
-			const coords = linePoints[0];
+			const coords = linePoints[i];
 			const paramLine = this.getParametricLinEquation(coords[0], new CVector(coords[1].x - coords[0].x, coords[1].y - coords[0].y));
 			const answer = this.resolveParameterLineAndShapeEquation(ellipseBounds, paramLine);
 			if (!answer.bError) {
@@ -2159,16 +2247,44 @@
 				} else {
 					continue;
 				}
-				const guideVector = new CVector(point.x - centerPoint.x, point.y - centerPoint.y);
-				const diffVector = guideVector.diff(radiusVector);
+				const diffVector = new CVector(point.x - centerPoint.x, point.y - centerPoint.y);
 				const diffAngle = this.getGuideAngle(diffVector);
 				if (isStart && isClockwise || !isStart && !isClockwise) {
-					if (diffVector.y < 0) {
-						return point;
+					if (diffAngle >= 0 && diffAngle < Math.PI / 2) {
+						if (point.y > rectCenterPoint.y && point.x < rectCenterPoint.x) {
+							return point;
+						}
+					} else if (diffAngle >= Math.PI / 2 && diffAngle < Math.PI) {
+						if (point.y < rectCenterPoint.y && point.x < rectCenterPoint.x) {
+							return point;
+						}
+					} else if (diffAngle >= Math.PI && diffAngle < 3 * Math.PI / 2) {
+						if (point.y < rectCenterPoint.y && point.x > rectCenterPoint.x) {
+							return point;
+						}
+					} else {
+						if (point.y > rectCenterPoint.y && point.x > rectCenterPoint.x) {
+							return point;
+						}
 					}
+
 				} else {
-					if (diffVector.y > 0) {
-						return point;
+					if (diffAngle >= 0 && diffAngle < Math.PI / 2) {
+						if (point.y < rectCenterPoint.y && point.x > rectCenterPoint.x) {
+							return point;
+						}
+					} else if (diffAngle >= Math.PI / 2 && diffAngle < Math.PI) {
+						if (point.y > rectCenterPoint.y && point.x > rectCenterPoint.x) {
+							return point;
+						}
+					} else if (diffAngle >= Math.PI && diffAngle < 3 * Math.PI / 2) {
+						if (point.y > rectCenterPoint.y && point.x < rectCenterPoint.x) {
+							return point;
+						}
+					} else {
+						if (point.y < rectCenterPoint.y && point.x < rectCenterPoint.x) {
+							return point;
+						}
 					}
 				}
 			}
@@ -2198,32 +2314,12 @@
 				return this.getAutoEdgePoint(isStart);
 		}
 	}
-	ConnectorAlgorithm.prototype.getShapeConnectionDistanceInfo = function () {
-		const startEdgePoint = this.getEdgePoint(true);
-		const endEdgePoint = this.getEdgePoint();
-
-		if (startEdgePoint && endEdgePoint) {
-			const guideVector = new CVector(endEdgePoint.x - startEdgePoint.x, endEdgePoint.y - startEdgePoint.y);
-			const angle = this.getGuideAngle(guideVector);
-			return {
-				angle: angle,
-				startEdgePoint: startEdgePoint,
-				endEdgePoint: endEdgePoint
-			};
-		}
-		return null;
-	};
 
 	ConnectorAlgorithm.prototype.calculateShapePositions = function (presNode, smartartAlgorithm) {
 		presNode.createShadowShape();
 		smartartAlgorithm.addConnectorAlgorithm(this);
 	}
-	ConnectorAlgorithm.prototype.initParams = function (params) {
-		BaseAlgorithm.prototype.initParams.call(this, params);
-		if (this.params[AscFormat.Param_type_dim] === undefined) {
-			this.params[AscFormat.Param_type_dim] = AscFormat.ParameterVal_connectorDimension_2D;
-		}
-	};
+
 	ConnectorAlgorithm.prototype.setFirstConnectorShape = function (shape) {
 		this.startShape = shape;
 	};
@@ -2239,65 +2335,77 @@
 			}
 		}
 	};
-	ConnectorAlgorithm.prototype.getArrowAdjLst = function () {
-		const customAdjLst = new AscFormat.AdjLst();
-		const adj1 = new AscFormat.Adj();
-		const adj2 = new AscFormat.Adj();
-		adj1.setIdx(1);
-		adj2.setIdx(2);
-		adj1.setVal(0.6);
-		adj2.setVal(0.5);
-		customAdjLst.addToLst(0, adj1);
-		customAdjLst.addToLst(0, adj2);
-		return customAdjLst;
+	ConnectorAlgorithm.prototype.getCustomAdjShapeLst = function (shapeType) {
+		if (shapeType !== AscFormat.LayoutShapeType_shapeType_rect) {
+			const customAdjLst = new AscFormat.AdjLst();
+			const adj1 = new AscFormat.Adj();
+			const adj2 = new AscFormat.Adj();
+			adj1.setIdx(1);
+			adj2.setIdx(2);
+			adj1.setVal(0.6);
+			adj2.setVal(0.5);
+			customAdjLst.addToLst(0, adj1);
+			customAdjLst.addToLst(0, adj2);
+			return customAdjLst;
+		}
+	};
+
+	ConnectorAlgorithm.prototype.getConnectorShapeType = function () {
+		const endStyle = this.params[AscFormat.Param_type_endSty];
+		const beginStyle = this.params[AscFormat.Param_type_begSty];
+		if (endStyle === AscFormat.ParameterVal_arrowheadStyle_arr && beginStyle === AscFormat.ParameterVal_arrowheadStyle_arr) {
+			return AscFormat.LayoutShapeType_shapeType_leftRightArrow;
+		} else if (endStyle === AscFormat.ParameterVal_arrowheadStyle_arr) {
+			return AscFormat.LayoutShapeType_shapeType_rightArrow;
+		} else if (beginStyle === AscFormat.ParameterVal_arrowheadStyle_arr) {
+			return AscFormat.LayoutShapeType_shapeType_leftArrow;
+		}
+		return AscFormat.LayoutShapeType_shapeType_rect;
+	}
+	ConnectorAlgorithm.prototype.getTemplateConnectorShape = function () {
+		const shape = this.parentNode.shape;
+		const connectorShape = new ShadowShape();
+		connectorShape.shape = shape.shape;
+
+		connectorShape.type = this.getConnectorShapeType();
+		connectorShape.customAdj = this.getCustomAdjShapeLst(connectorShape.type);
+		connectorShape.cleanParams = {};
+		connectorShape.cleanParams.w = shape.cleanParams.w;
+		connectorShape.cleanParams.h = shape.cleanParams.h;
+		connectorShape.cleanParams.x = shape.cleanParams.x;
+		connectorShape.cleanParams.y = shape.cleanParams.y;
+		connectorShape.node = this.parentNode;
+		return connectorShape;
 	};
 	ConnectorAlgorithm.prototype.createShapeConnector = function () {
-
-		const connectionDistanceInfo = this.getShapeConnectionDistanceInfo();
-		if (connectionDistanceInfo) {
-			const startPoint = connectionDistanceInfo.startEdgePoint;
-			const endPoint = connectionDistanceInfo.endEdgePoint;
-
-			const startArrowPoint = {x: 0, y: 0};
-			const endArrowPoint = {x: 0, y: 0};
-			const startLambda = this.connectionDistances.begin / (1 - this.connectionDistances.begin);
-			const sumStartX = startPoint.x + startLambda * endPoint.x;
-			const sumStartY = startPoint.y + startLambda * endPoint.y;
-			const endLambda = this.connectionDistances.end / (1 - this.connectionDistances.end);
-			const sumEndX = endPoint.x + endLambda * startPoint.x;
-			const sumEndY = endPoint.y + endLambda * startPoint.y;
-			startArrowPoint.x = sumStartX / (1 + startLambda);
-			startArrowPoint.y = sumStartY / (1 + startLambda);
-
-			endArrowPoint.x = sumEndX / (1 + endLambda);
-			endArrowPoint.y = sumEndY / (1 + endLambda);
+		const connectionPoints = this.getConnectionPoints();
+		if (connectionPoints) {
+			const startArrowPoint = connectionPoints.start;
+			const endArrowPoint = connectionPoints.end;
 
 			const cx = (startArrowPoint.x + endArrowPoint.x) / 2;
 			const cy = (startArrowPoint.y + endArrowPoint.y) / 2;
 
-			const arrowVector = {x: endArrowPoint.x - startArrowPoint.x, y: endArrowPoint.y - startArrowPoint.y};
+			const arrowVector = new CVector(endArrowPoint.x - startArrowPoint.x, endArrowPoint.y - startArrowPoint.y);
 
-			const width = Math.sqrt(arrowVector.x * arrowVector.x + arrowVector.y * arrowVector.y);
+			let width;
+			const connectionDistanceResolver = this.parentAlgorithm.parentNode.connectionDistanceResolver;
+			const minConnectionDistance = connectionDistanceResolver && connectionDistanceResolver.getConnectionDistance();
+			if (connectionDistanceResolver && minConnectionDistance !== -1) {
+				width = minConnectionDistance;
+			} else {
+				width = arrowVector.getDistance();
+			}
 			const height = this.parentNode.shape.h;
 
 			const x = cx - width / 2;
 			const y = cy - height / 2;
 			const shape = this.parentNode.shape;
-			const connectorShape = new ShadowShape();
-			connectorShape.shape = shape.shape;
-			connectorShape.type = AscFormat.LayoutShapeType_shapeType_rightArrow;
-			connectorShape.customAdj = this.getArrowAdjLst();
-			connectorShape.cleanParams = {};
-			connectorShape.cleanParams.w = shape.cleanParams.w;
-			connectorShape.cleanParams.h = shape.cleanParams.h;
-			connectorShape.cleanParams.x = shape.cleanParams.x;
-			connectorShape.cleanParams.y = shape.cleanParams.y;
+			const connectorShape = this.getTemplateConnectorShape();
 
 			connectorShape.x = x;
 			connectorShape.y = y;
-			connectorShape.rot = connectionDistanceInfo.angle;
-			connectorShape.node = this.parentNode;
-
+			connectorShape.rot = this.getGuideAngle(arrowVector);
 			shape.connectorShape = connectorShape;
 
 			const prSet = this.parentNode.getPrSet();
@@ -2389,7 +2497,12 @@ function PresNode(presPoint, contentNode) {
 		height: 1
 	};
 	this.isHideLastTrans = true;
+	this.connectionDistanceResolver = null;
 }
+	PresNode.prototype.isMainElement = function () {
+		return this.layoutInfo.shape.type !== AscFormat.LayoutShapeType_outputShapeType_conn &&
+			this.layoutInfo.shape.type !== AscFormat.LayoutShapeType_outputShapeType_none;
+	}
 	PresNode.prototype.isSibNode = function () {
 		return this.node.isSibNode();
 	};
@@ -2643,10 +2756,25 @@ PresNode.prototype.addChild = function (ch, pos) {
 				return false;
 			}
 			constrNode.setConstraint(constr, constrVal, isAdapt);
+			constrNode.setParamConstraint(constr, refNode);
 			return true;
 		}
 		return false;
 	};
+	PresNode.prototype.setParamConstraint = function (constr, refNode) {
+		switch (constr.type) {
+			case AscFormat.Constr_type_connDist: {
+				if (constr.for !== AscFormat.Constr_for_self) {
+					if (this.algorithm) {
+						if (!refNode.connectionDistanceResolver) {
+							refNode.connectionDistanceResolver = new CConnectionDistanceResolver();
+						}
+						refNode.connectionDistanceResolver.addConnection(this.algorithm);
+					}
+				}
+			}
+		}
+	}
 	PresNode.prototype.setConstraint = function (constr, value, isAdapt) {
 		let constrObject;
 		if (isAdapt) {
@@ -2708,8 +2836,12 @@ PresNode.prototype.addChild = function (ch, pos) {
 			}
 			case AscFormat.Constr_type_begPad:
 			case AscFormat.Constr_type_endPad: {
-				if (this.algorithm) {
-					this.algorithm.setConnectionDistance(constr.fact, constr.type === AscFormat.Constr_type_begPad);
+				if (constr.refType === AscFormat.Constr_type_connDist) {
+					if (this.algorithm) {
+						this.algorithm.setConnectionDistance(constr.fact, constr.type === AscFormat.Constr_type_begPad);
+					}
+				} else {
+					this.algorithm.setConnectionDistance(value, constr.type === AscFormat.Constr_type_begPad);
 				}
 				break;
 			}
@@ -2966,6 +3098,44 @@ PresNode.prototype.addChild = function (ch, pos) {
 		return this.presPoint.getModelId();
 	};
 
+function CConnectionDistanceResolver() {
+	this.connectionAlgorithms = [];
+	this.connectionDistance = null;
+}
+
+	CConnectionDistanceResolver.prototype.calcChildConnectionDistance = function () {
+		this.connectionDistance = -1;
+		const firstAlg = this.connectionAlgorithms[0];
+		if (firstAlg) {
+			const points = firstAlg.getConnectionPoints();
+			if (points) {
+				const v = new CVector(points.end.x - points.start.x, points.end.y - points.start.y);
+				this.connectionDistance = v.getDistance();
+			} else {
+				return;
+			}
+		}
+		for (let i = 1; i < this.connectionAlgorithms.length; i++) {
+			const alg = this.connectionAlgorithms[i];
+			const points = alg.getConnectionPoints();
+			if (points) {
+				const v = new CVector(points.end.x - points.start.x, points.end.y - points.start.y);
+				const distance = v.getDistance();
+				if (distance < this.connectionDistance) {
+					this.connectionDistance = distance;
+				}
+			}
+		}
+	};
+	CConnectionDistanceResolver.prototype.getConnectionDistance = function () {
+		if (this.connectionDistance === null) {
+			this.calcChildConnectionDistance();
+		}
+		return this.connectionDistance;
+	};
+	CConnectionDistanceResolver.prototype.addConnection = function (algorithm) {
+		this.connectionAlgorithms.push(algorithm);
+	}
 
 
 

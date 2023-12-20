@@ -3796,6 +3796,31 @@ Because of this, the display is sometimes not correct.
     InitClass(Param, CBaseFormatObject, AscDFH.historyitem_type_Param);
 		Param.prototype.getValEnum = function () {
 			switch (this.type) {
+				case Param_type_dim: {
+					switch (this.val) {
+						case '2D':
+							return ParameterVal_connectorDimension_2D;
+						case '1D':
+							return ParameterVal_connectorDimension_1D;
+						case 'cust':
+							return ParameterVal_connectorDimension_cust;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_begSty:
+				case Param_type_endSty: {
+					switch (this.val) {
+						case 'arr':
+							return ParameterVal_arrowheadStyle_arr;
+						case 'noArr':
+							return ParameterVal_arrowheadStyle_noArr;
+						case 'auto':
+							return ParameterVal_arrowheadStyle_auto;
+						default:
+							return this.val;
+					}
+				}
 				case Param_type_grDir: {
 					switch (this.val) {
 						case 'bL':
