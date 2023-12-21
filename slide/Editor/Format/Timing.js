@@ -12162,7 +12162,14 @@
         let bStrokeOn = oAttributesMap["stroke.on"];
 
 
-        let oCurBrush = oDrawing.brush;
+        let oCurBrush;
+        if(oDrawing.blipFill) {
+            oCurBrush = new AscFormat.CUniFill();
+            oCurBrush.fill = oDrawing.blipFill;
+        }
+        else {
+            oCurBrush = oDrawing.brush;
+        }
         let oCurPen = oDrawing.pen;
         let oNewBrush = oCurBrush;
         let oNewPen = oCurPen;
