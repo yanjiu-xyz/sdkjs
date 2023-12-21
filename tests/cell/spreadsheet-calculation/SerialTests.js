@@ -141,6 +141,7 @@ $(function () {
 	};
 	const clearData = function(c1, r1, c2, r2) {
 		ws.autoFilters.deleteAutoFilter(getRange(0, 0, 0, 0));
+		ws.mergeManager.remove(getRange(c1, r1, c2, r2));
 		wsView.activeFillHandle = null;
 		wsView.fillHandleDirection = null;
 		ws.removeRows(r1, r2, false);
@@ -163,6 +164,12 @@ $(function () {
 		oFromRange.bbox = getRange(c1, r1, c2, r2);
 
 		return oFromRange;
+	}
+	const initMergedCell = function(oRangeModel, oRange) {
+		let oFromWs = oRangeModel.worksheet;
+		oFromWs.mergeManager.add(oRange, 1);
+
+		return oFromWs;
 	}
 
 	QUnit.module('Series');
@@ -2303,7 +2310,7 @@ $(function () {
 		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.rows, 'oSeriesSettings: "Series in" is detected as "Rows".');
 		assert.strictEqual(oSeriesSettings.type, oSeriesType.linear, 'oSeriesSettings: "Type" is detected as "Linear".');
 		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
-		assert.strictEqual(oSeriesSettings.stepValue, 33.13253012048193, 'oSeriesSettings: "Step" is detected as 33.13253012048193.');
+		assert.strictEqual(oSeriesSettings.stepValue, 32.14285714285714, 'oSeriesSettings: "Step" is detected as 33.13253012048193.');
 		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
 		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
 		// contextMenuAllowedProps
@@ -2336,7 +2343,7 @@ $(function () {
 		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.columns, 'oSeriesSettings: "Series in" is detected as "Columns".');
 		assert.strictEqual(oSeriesSettings.type, oSeriesType.linear, 'oSeriesSettings: "Type" is detected as "Linear".');
 		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
-		assert.strictEqual(oSeriesSettings.stepValue, 33.13253012048193, 'oSeriesSettings: "Step" is detected as 33.13253012048193.');
+		assert.strictEqual(oSeriesSettings.stepValue, 32.14285714285714, 'oSeriesSettings: "Step" is detected as 33.13253012048193.');
 		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
 		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
 		// contextMenuAllowedProps
@@ -2905,5 +2912,225 @@ $(function () {
 		];
 		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Context menu - Copy cells. Selected filled cells - A1:A6. The fill handle has a horizontal direction. Case: bug #65405');
 		clearData(0, 0, 2, 5);
+	});
+	QUnit.test('Toolbar: Fill -> "Up/Down, Left/Right"', function(assert) {
+		const testData = [
+			['1']
+		];
+		// Fill -> Down with merged cell
+		oFromRange = getFilledData(0, 0, 1, 3, testData, [0,0]);
+		let oFromWs = initMergedCell(oFromRange, getRange(0, 0, 1, 1));
+		api.asc_FillCells(oRightClickOptions.fillDown);
+
+		autofillRange = getRange(0, 2, 0, 2);
+		autofillData(assert, autofillRange, [['1']], 'Fill -> Down with merged cell');
+		let oToMergedCell = oFromWs.mergeManager.get(autofillRange);
+		assert.strictEqual(oToMergedCell.all.length > 0, true, "Filled cell must be merged" );
+		clearData(0, 0, 1, 3);
+		// Fill -> Up with merged cell
+		oFromRange = getFilledData(0, 0, 1, 3, testData, [3,0]);
+		oFromWs = initMergedCell(oFromRange, getRange(0, 2, 1, 3));
+		api.asc_FillCells(oRightClickOptions.fillUp);
+
+		autofillRange = getRange(0, 1, 0, 1);
+		autofillData(assert, autofillRange, [['1']], 'Fill -> Up with merged cell');
+		oToMergedCell = oFromWs.mergeManager.get(autofillRange);
+		assert.strictEqual(oToMergedCell.all.length > 0, true, "Filled cell must be merged" );
+		clearData(0, 0, 1, 3);
+		// Fill -> Right with merged cell
+		oFromRange = getFilledData(0, 0, 3, 1, testData, [0,0]);
+		oFromWs = initMergedCell(oFromRange, getRange(0, 0, 1, 1));
+		api.asc_FillCells(oRightClickOptions.fillRight);
+
+		autofillRange = getRange(2, 0, 2, 0);
+		autofillData(assert, autofillRange, [['1']], 'Fill -> Right with merged cell');
+		oToMergedCell = oFromWs.mergeManager.get(autofillRange);
+		assert.strictEqual(oToMergedCell.all.length > 0, true, "Filled cell must be merged" );
+		clearData(0, 0, 3, 1);
+		// Fill -> Left with merged cell
+		oFromRange = getFilledData(0, 0, 3, 1, testData, [0,3]);
+		oFromWs = initMergedCell(oFromRange, getRange(2, 0, 3, 1));
+		api.asc_FillCells(oRightClickOptions.fillLeft);
+
+		autofillRange = getRange(1, 0, 1, 0);
+		autofillData(assert, autofillRange, [['1']], 'Fill -> Left with merged cell');
+		oToMergedCell = oFromWs.mergeManager.get(autofillRange);
+		assert.strictEqual(oToMergedCell.all.length > 0, true, "Filled cell must be merged" );
+		clearData(0, 0, 3, 1);
+	});
+	QUnit.test('Series with merged cells', function(assert) {
+		const cSeriesSettings = Asc.asc_CSeriesSettings;
+		let testData = [
+			['1']
+		];
+		// Toolbar and context menu - Series: Filled cells has merged cell, cells that need to be filled are not merged cells. NOT Trend mode.
+		oFromRange = getFilledData(0, 0, 5, 1, testData, [0,0]);
+		let oWsFrom = initMergedCell(oFromRange, getRange(0, 0, 1, 1));
+		let oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
+		oSeriesSettings.prepare(wsView);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(2, 0, 5, 1);
+		autofillData(assert, autofillRange, [['2','', '3', ''], ['', '', '', '']], 'Toolbar and context menu - Series: Filled cells has merged cell, cells that need to be filled are not merged cells. NOT Trend mode.');
+		oWsFrom.mergeManager.get(autofillRange);
+		assert.strictEqual(oWsFrom.mergeManager.get(autofillRange).all.length > 0, true, "ToRange must be merged" );
+		clearData(0, 0, 5, 1);
+		// Toolbar and context menu - Series: Filled cell has merged cell, cells that need to be filled are not merged cells. Trend mode.
+		oFromRange = getFilledData(0, 0, 5, 1, testData, [0,0]);
+		initMergedCell(oFromRange, getRange(0, 0, 1, 1));
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'Negative case: oSeriesSettings is created.');
+		oSeriesSettings.prepare(wsView);
+		oSeriesSettings.asc_setTrend(true);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(2, 0, 5, 1);
+		autofillData(assert, autofillRange, [['', '', '', ''], ['', '', '', '']], 'Toolbar and context menu - Series: Filled cell has merged cell, cells that need to be filled are not merged cells. Trend mode.');
+		clearData(0, 0, 5, 1);
+		// Toolbar and context menu - Series: Filled cell has merged cells, cells that need to be filled are merged cells. Trend mode.
+		oFromRange = getFilledData(0, 0, 3, 1, testData, [0,0]);
+		initMergedCell(oFromRange, getRange(0, 0, 1, 1));
+		initMergedCell(oFromRange, getRange(2, 0, 3, 1));
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'Negative case: oSeriesSettings is created.');
+		oSeriesSettings.prepare(wsView);
+		oSeriesSettings.asc_setTrend(true);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(2, 0, 3, 1);
+		autofillData(assert, autofillRange, [['', ''], ['', '']], 'Toolbar and context menu - Series: Filled cell has merged cells, cells that need to be filled are merged cells. Trend mode.');
+		clearData(0, 0, 3, 1);
+		// Toolbar and context menu - Series: Filled cells has merged cell, cells that need to be filled are  merged cells. NOT Trend mode.
+		oFromRange = getFilledData(0, 0, 3, 1, testData, [0,0]);
+		initMergedCell(oFromRange, getRange(0, 0, 1, 1));
+		initMergedCell(oFromRange, getRange(2, 0, 3, 1));
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
+		oSeriesSettings.prepare(wsView);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(2, 0, 3, 1);
+		autofillData(assert, autofillRange, [['2', ''], ['', '']], 'Toolbar and context menu - Series: Filled cells has merged cell, cells that need to be filled are merged cells. NOT Trend mode.');
+		clearData(0, 0, 3, 1);
+
+		testData = [
+			['1', '', '2', '']
+		];
+		// Toolbar and context menu - Series: Filled cells have merged cells, cells that need to be filled are not merged cells. NOT Trend mode.
+		oFromRange = getFilledData(0, 0, 7, 1, testData, [0,0]);
+		initMergedCell(oFromRange, getRange(0, 0, 1, 1));
+		initMergedCell(oFromRange, getRange(2, 0, 3, 1));
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'Negative case: oSeriesSettings is created.');
+		oSeriesSettings.prepare(wsView);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(4, 0, 7, 1);
+		autofillData(assert, autofillRange, [['','', '', ''], ['', '', '', '']], 'Toolbar and context menu - Series: Filled cells have merged cells, cells that need to be filled are not merged cells. NOT Trend mode.');
+		clearData(0, 0, 7, 1);
+		// Toolbar and context menu - Series: Filled cells have merged cells, cells that need to be filled are not merged cells. Trend mode.
+		oFromRange = getFilledData(0, 0, 7, 1, testData, [0,0]);
+		initMergedCell(oFromRange, getRange(0, 0, 1, 1));
+		initMergedCell(oFromRange, getRange(2, 0, 3, 1));
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'Negative case: oSeriesSettings is created.');
+		oSeriesSettings.prepare(wsView);
+		oSeriesSettings.asc_setTrend(true);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(4, 0, 7, 1);
+		autofillData(assert, autofillRange, [['', '', '', ''], ['', '', '', '']], 'Toolbar and context menu - Series: Filled cells have merged cells, cells that need to be filled are not merged cells. Trend mode.');
+		clearData(0, 0, 7, 1);
+		// Toolbar and context menu - Series: Filled cells have merged cells, cells that need to be filled are merged cells. Trend mode.
+		oFromRange = getFilledData(0, 0, 5, 1, testData, [0,0]);
+		initMergedCell(oFromRange, getRange(0, 0, 1, 1));
+		initMergedCell(oFromRange, getRange(2, 0, 3, 1));
+		initMergedCell(oFromRange, getRange(4, 0, 5, 1));
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'Negative case: oSeriesSettings is created.');
+		oSeriesSettings.prepare(wsView);
+		oSeriesSettings.asc_setTrend(true);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(4, 0, 5, 1);
+		autofillData(assert, autofillRange, [['', ''], ['', '']], 'Toolbar and context menu - Series: Filled cells have merged cells, cells that need to be filled are merged cells. Trend mode.');
+		clearData(0, 0, 5, 1);
+		// Toolbar and context menu - Series: Filled cells have merged cells, cells that need to be filled are merged cells. NOT Trend mode.
+		oFromRange = getFilledData(0, 0, 5, 1, testData, [0,0]);
+		initMergedCell(oFromRange, getRange(0, 0, 1, 1));
+		initMergedCell(oFromRange, getRange(2, 0, 3, 1));
+		initMergedCell(oFromRange, getRange(4, 0, 5, 1));
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
+		oSeriesSettings.prepare(wsView);
+		oSeriesSettings.asc_setStepValue(1);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(4, 0, 5, 1);
+		autofillData(assert, autofillRange, [['3', ''], ['', '']], 'Toolbar and context menu - Series: Filled cells have merged cells, cells that need to be filled are merged cells. NOT Trend mode.');
+		clearData(0, 0, 5, 1);
+		// Context menu - Linear trend: Filled cells have merged cells, cells that need to be filled are not merged cells.
+		oFromRange = getFilledData(0, 0, 3, 1, testData, [0,0]);
+		initMergedCell(oFromRange, getRange(0, 0, 1, 1));
+		oWsFrom = initMergedCell(oFromRange, getRange(2, 0, 3, 1));
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
+		oSeriesSettings.prepare(wsView);
+		wsView.activeFillHandle = getRange(0, 0, 7, 1);
+		api.asc_FillCells(oRightClickOptions.linearTrend, oSeriesSettings);
+
+		autofillRange = getRange(4, 0, 7, 0);
+		autofillData(assert, autofillRange, [['3', '3.5', '4', '4.5']], 'Context menu - Linear trend: Filled cells have merged cells, cells that need to be filled are not merged cells.');
+		oWsFrom.mergeManager.get(autofillRange);
+		assert.strictEqual(oWsFrom.mergeManager.get(autofillRange).all.length > 0, true, "ToRange must be merged" );
+		clearData(0,0,7,1);
+		// Context menu - Growth trend: Filled cells have merged cells, cells that need to be filled are not merged cells.
+		oFromRange = getFilledData(0, 0, 3, 1, testData, [0,0]);
+		initMergedCell(oFromRange, getRange(0, 0, 1, 1));
+		oWsFrom = initMergedCell(oFromRange, getRange(2, 0, 3, 1));
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
+		oSeriesSettings.prepare(wsView);
+		wsView.activeFillHandle = getRange(0, 0, 7, 1);
+		api.asc_FillCells(oRightClickOptions.growthTrend, oSeriesSettings);
+
+		autofillRange = getRange(4, 0, 7, 0);
+		autofillData(assert, autofillRange, [['4', '5.65685424949238', '7.999999999999998', '11.31370849898476']], 'Context menu - Growth trend: Filled cells have merged cells, cells that need to be filled are not merged cells.');
+		oWsFrom.mergeManager.get(autofillRange);
+		assert.strictEqual(oWsFrom.mergeManager.get(autofillRange).all.length > 0, true, "ToRange must be merged" );
+		clearData(0,0,7,1);
+		// Context menu - Linear trend: Filled cells have merged cells, cells that need to be filled are merged cells.
+		oFromRange = getFilledData(0, 0, 3, 1, testData, [0,0]);
+		initMergedCell(oFromRange, getRange(0, 0, 1, 1));
+		initMergedCell(oFromRange, getRange(2, 0, 3, 1));
+		initMergedCell(oFromRange, getRange(4, 0, 5, 1));
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
+		oSeriesSettings.prepare(wsView);
+		wsView.activeFillHandle = getRange(0, 0, 5, 1);
+		api.asc_FillCells(oRightClickOptions.linearTrend, oSeriesSettings);
+
+		autofillRange = getRange(4, 0, 5, 0);
+		autofillData(assert, autofillRange, [['3', '3.5']], 'Context menu - Linear trend: Filled cells have merged cells, cells that need to be filled are merged cells.');
+		oWsFrom.mergeManager.get(autofillRange);
+		assert.strictEqual(oWsFrom.mergeManager.get(autofillRange).all.length > 0, true, "ToRange must be merged" );
+		clearData(0,0,5,1);
+		// Context menu - Growth trend: Filled cells have merged cells, cells that need to be filled are merged cells.
+		oFromRange = getFilledData(0, 0, 3, 1, testData, [0,0]);
+		initMergedCell(oFromRange, getRange(0, 0, 1, 1));
+		initMergedCell(oFromRange, getRange(2, 0, 3, 1));
+		initMergedCell(oFromRange, getRange(4, 0, 5, 1));
+		oSeriesSettings = new cSeriesSettings();
+		assert.ok(oSeriesSettings, 'oSeriesSettings is created.');
+		oSeriesSettings.prepare(wsView);
+		wsView.activeFillHandle = getRange(0, 0, 5, 1);
+		api.asc_FillCells(oRightClickOptions.growthTrend, oSeriesSettings);
+
+		autofillRange = getRange(4, 0, 5, 0);
+		autofillData(assert, autofillRange, [['4', '5.65685424949238']], 'Context menu - Growth trend: Filled cells have merged cells, cells that need to be filled are merged cells.');
+		oWsFrom.mergeManager.get(autofillRange);
+		assert.strictEqual(oWsFrom.mergeManager.get(autofillRange).all.length > 0, true, "ToRange must be merged" );
+		clearData(0,0,5,1);
 	});
 });

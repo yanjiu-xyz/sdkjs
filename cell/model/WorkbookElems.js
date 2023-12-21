@@ -15994,29 +15994,27 @@ function RangeDataManagerElem(bbox, data)
 		}
 
 		function calcAvg(seriesInType) {
-			let filledRangeLength = null;
+			let filledRangeLength = 0;
 
 			if (seriesInType === Asc.c_oAscSeriesInType.rows) {
 				filledRange._foreach2(function (cell, curRow, curCol, rowStart, colStart) {
-					if (cell && cell.getNumberValue() != null) {
+					if ((cell && cell.getNumberValue() != null) && curRow === rowStart) {
 						// If columns range not starts with 0, define indexCell by difference between current column and start column
 						let indexCell = curCol - colStart;
 						ySum += cell.getNumberValue();
 						xSum += indexCell;
+						filledRangeLength++;
 					}
 				});
-				filledRangeLength = (filledRange.bbox.c2 - filledRange.bbox.c1) + 1;
 			} else {
 				filledRange._foreach2(function (cell, curRow, curCol, rowStart, colStart) {
-					if (curCol === colStart) {
-						if (cell && cell.getNumberValue() != null) {
-							let indexCell = curRow - rowStart;
-							ySum += cell.getNumberValue();
-							xSum += indexCell;
-						}
+					if ((cell && cell.getNumberValue() != null) && curCol === colStart) {
+						let indexCell = curRow - rowStart;
+						ySum += cell.getNumberValue();
+						xSum += indexCell;
+						filledRangeLength++;
 					}
 				});
-				filledRangeLength = (filledRange.bbox.r2 - filledRange.bbox.r1) + 1;
 			}
 
 			xAvg = xSum / filledRangeLength;
@@ -16157,7 +16155,11 @@ function RangeDataManagerElem(bbox, data)
 			} else if (countOfCol >= countOfRow) {
 				this.asc_setSeriesIn(Asc.c_oAscSeriesInType.rows);
 				calcAvg(Asc.c_oAscSeriesInType.rows);
-				filledRange._foreach2(actionCell);
+				filledRange._foreach2(function (cell, curRow, curCol, rowStart, colStart) {
+					if (curRow === rowStart) {
+						return actionCell(cell, curRow, curCol, rowStart, colStart);
+					}
+				});
 			} else {
 				this.asc_setSeriesIn(Asc.c_oAscSeriesInType.columns);
 				calcAvg(Asc.c_oAscSeriesInType.columns);
