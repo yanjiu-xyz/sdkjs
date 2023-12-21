@@ -551,6 +551,7 @@
 	CGraphicObjectBase.prototype = Object.create(CBaseObject.prototype);
 	CGraphicObjectBase.prototype.constructor = CGraphicObjectBase;
 
+	CGraphicObjectBase.prototype.isDrawing = true;
 	CGraphicObjectBase.prototype.notAllowedWithoutId = function () {
 		return true;
 	};

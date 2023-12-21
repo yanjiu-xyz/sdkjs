@@ -3410,8 +3410,7 @@
     };
 
     CBldBase.prototype.assignConnection = function (oObjectsMap) {
-        if (AscCommon.isRealObject(oObjectsMap[this.spid]) &&
-            (oObjectsMap[this.spid].getObjectType && oObjectsMap[this.spid].getObjectType() === AscDFH.historyitem_type_ChartSpace)) {
+        if (AscCommon.isRealObject(oObjectsMap[this.spid]) && oObjectsMap[this.spid].isDrawing) {
             this.setSpid(oObjectsMap[this.spid].Id);
         } else {
             if (this.parent) {
