@@ -55,6 +55,8 @@
 		this.bidi = new AscWord.BidiFlow(this);
 		this.rtl  = false;
 		
+		this.isNextCurrent = false;
+		
 		this.posInfo = {
 			x     : 0,
 			y     : 0,
@@ -64,6 +66,8 @@
 	}
 	ParagraphPositionCalculator.prototype.reset = function(page, line, range)
 	{
+		this.isNextCurrent = false;
+		
 		this.page  = page;
 		this.line  = line;
 		this.range = range;
@@ -78,10 +82,24 @@
 		
 		this.bidi.begin();
 	};
+	ParagraphPositionCalculator.prototype.setNextCurrent = function()
+	{
+		this.isNextCurrent = true;
+	};
 	ParagraphPositionCalculator.prototype.handleRunElement = function(element, run, isCurrent, isNearFootnoteRef)
 	{
 		if (para_Drawing === element.Type && !element.IsInline())
+		{
+			if (isCurrent)
+				this.setNextCurrent();
 			return;
+		}
+		
+		if (this.isNextCurrent)
+		{
+			isCurrent = true;
+			this.isNextCurrent = false;
+		}
 		
 		this.bidi.add([element, run, isCurrent, isNearFootnoteRef], element.getBidiType());
 	};

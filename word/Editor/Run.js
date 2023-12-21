@@ -2151,9 +2151,6 @@ ParaRun.prototype.recalculateCursorPosition = function(positionCalculator, isCur
 	let rangePos = this.getRangePos(positionCalculator.line, positionCalculator.range);
 	let startPos = rangePos[0];
 	let endPos   = rangePos[1];
-	if (startPos >= endPos)
-		return;
-	
 	for (let pos = startPos; pos < endPos; ++pos)
 	{
 		let item = this.private_CheckInstrText(this.Content[pos]);
@@ -2161,6 +2158,9 @@ ParaRun.prototype.recalculateCursorPosition = function(positionCalculator, isCur
 		let isNearNoteRef = isCurPos ? this.IsCurPosNearFootEndnoteReference() : false;
 		positionCalculator.handleRunElement(item, this, isCurPos, isNearNoteRef);
 	}
+	
+	if (isCurrent && endPos === this.State.ContentPos)
+		positionCalculator.setNextCurrent();
 }
 /**
  * Get auto color against current background color
@@ -2173,7 +2173,7 @@ ParaRun.prototype.getAutoColor = function()
 		return AscWord.BLACK_COLOR;
 	
 	let textPr = this.getCompiledPr();
-	if (textP.FontRef && textPr.FontRef.Color)
+	if (textPr.FontRef && textPr.FontRef.Color)
 	{
 		text.FontRef.Color.check(paragraph.getTheme(), paragraph.getColorMap());
 		let RGBA = textPr.FontRef.Color.RGBA;
