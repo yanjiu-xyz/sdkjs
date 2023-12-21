@@ -902,6 +902,9 @@
         return this.state === TIME_NODE_STATE_FINISHED;
     };
     CTimeNodeBase.prototype.isDrawable = function () {
+        if(this.isAtEnd() && this.getRewind()) {
+            return false;
+        }
         return this.isActive() || this.isFrozen() || (this.isTimingContainer() || this.isFinished());
     };
     CTimeNodeBase.prototype.isAtEnd = function () {
@@ -1026,10 +1029,6 @@
         }
     };
     CTimeNodeBase.prototype.getRewind = function () {
-        var oParentTimeNode = this.getParentTimeNode();
-        if (oParentTimeNode) {
-            return oParentTimeNode.getRewind();
-        }
         return false;
     };
     CTimeNodeBase.prototype.getRelativeTime = function (nElapsedTime) {
