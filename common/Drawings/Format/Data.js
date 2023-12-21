@@ -3796,6 +3796,30 @@ Because of this, the display is sometimes not correct.
     InitClass(Param, CBaseFormatObject, AscDFH.historyitem_type_Param);
 		Param.prototype.getValEnum = function () {
 			switch (this.type) {
+				case Param_type_ctrShpMap: {
+					switch (this.val) {
+						case 'fNode':
+							return ParameterVal_centerShapeMapping_fNode;
+						case 'none':
+							return ParameterVal_centerShapeMapping_none;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_connRout: {
+					switch (this.val) {
+						case 'longCurve':
+							return ParameterVal_connectorRouting_longCurve;
+						case 'curve':
+							return ParameterVal_connectorRouting_curve;
+						case 'stra':
+							return ParameterVal_connectorRouting_stra;
+						case 'bend':
+							return ParameterVal_connectorRouting_bend;
+						default:
+							return this.val;
+					}
+				}
 				case Param_type_dim: {
 					switch (this.val) {
 						case '2D':
@@ -4243,7 +4267,7 @@ Because of this, the display is sometimes not correct.
 			return ElementType_value_all;
 	  };
 	  IteratorAttributes.prototype.getCount = function (index) {
-			return this.cnt[index];
+			return this.cnt[index] || 0;
 	  };
 	  IteratorAttributes.prototype.getAxis = function (index) {
 			if (this.axis[index]) {
