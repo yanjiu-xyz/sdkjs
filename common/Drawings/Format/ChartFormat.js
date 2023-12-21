@@ -2546,6 +2546,9 @@
         return this.chart && this.chart.convertPixToMM(pix);
     };
     CDLbl.prototype.checkDlbl = function() {
+        if(this.parent && this.parent.getObjectType() === AscDFH.historyitem_type_TrendLine) {
+            return this;
+        }
         if(this.series && this.pt) {
             var oSeries = this.series;
             if(oSeries) {
@@ -2617,7 +2620,7 @@
         var ty = this.invertTransform.TransformPointY(x, y);
         return tx >= 0 && tx <= this.extX && ty >= 0 && ty <= this.extY;
     };
-    CDLbl.prototype.hitInPath = CShape.prototype.hitInPath;
+    CDLbl.prototype.hitInPath = CShape.prototype.hitInBoundingRect;
     CDLbl.prototype.hitInInnerArea = CShape.prototype.hitInInnerArea;
     CDLbl.prototype.getGeometry = CShape.prototype.getGeometry;
     CDLbl.prototype.hitInBoundingRect = CShape.prototype.hitInBoundingRect;
@@ -14140,6 +14143,7 @@
         this.recalculatePen();
         if(this.trendlineLbl) {
             this.trendlineLbl.recalculate();
+            this.trendlineLbl.chart = this.getChartSpace();
         }
     };
     CTrendLine.prototype.fillEquationContent = function(oDrawingContent) {
@@ -14247,6 +14251,13 @@
             }
 
         }
+    };
+
+    CTrendLine.prototype.Refresh_RecalcData = function() {
+        this.onChartInternalUpdate();
+    };
+    CTrendLine.prototype.Refresh_RecalcData2 = function(pageIndex, object) {
+        this.onChartInternalUpdate();
     };
 
     function CUpDownBars() {
