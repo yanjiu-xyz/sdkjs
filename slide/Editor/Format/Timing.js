@@ -12182,15 +12182,6 @@
                 if (oStrokeColor) {
                     if (oCurPen) {
                         oNewPen = oCurPen.createDuplicate();
-                        let oMods;
-                        if (oNewPen.Fill &&
-                            oNewPen.Fill.fill &&
-                            oNewPen.Fill.fill.color &&
-                            oNewPen.Fill.fill.color.Mods &&
-                            oNewPen.Fill.fill.color.Mods.Mods.length !== 0) {
-                            oMods = oNewPen.Fill.fill.color.Mods;
-                            oMods.Apply(oStrokeColor.RGBA);
-                        }
                     } else {
                         oNewPen = AscFormat.CreateNoFillLine();
                     }
