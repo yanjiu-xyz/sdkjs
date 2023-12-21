@@ -2144,7 +2144,7 @@ ParaRun.prototype.recalculateCursorPosition = function(positionCalculator, isCur
 {
 	if (this.IsMathRun())
 	{
-		positionCalculator.handleMathRun(this, isCurrent ? this.Selection.State.ContentPos : -1);
+		positionCalculator.handleMathRun(this, isCurrent, this.State.ContentPos);
 		return;
 	}
 	

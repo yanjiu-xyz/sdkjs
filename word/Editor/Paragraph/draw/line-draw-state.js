@@ -418,7 +418,7 @@
 	{
 		let fontSizeMM = fontSize * g_dKoef_pt_to_mm;
 		if (run.IsMathRun())
-			fontSizeMM *= MatGetKoeffArgSize(fontSize, run.Compiled_ArgSz.value);
+			fontSizeMM *= MatGetKoeffArgSize(fontSize, run.Parent.Compiled_ArgSz.value);
 		
 		let strikeoutShift = 0.27;
 		if (AscCommon.vertalign_SubScript === vertAlign)

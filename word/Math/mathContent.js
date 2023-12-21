@@ -3737,7 +3737,7 @@ CMathContent.prototype.recalculateCursorPosition = function(positionCalculator, 
 	if (-1 === this.StartLine || !isCurrent)
 		return;
 	
-	this.Content[this.CurPos].RecalculateCursorPosition(positionCalculator, true);
+	this.Content[this.CurPos].recalculateCursorPosition(positionCalculator, true);
 };
 CMathContent.prototype.GetCurrentParaPos = function(align)
 {

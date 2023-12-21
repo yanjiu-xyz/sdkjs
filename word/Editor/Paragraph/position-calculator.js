@@ -144,13 +144,24 @@
 		// 	X += this.Content[Pos].LGap;
 		// }
 	};
-	ParagraphPositionCalculator.prototype.handleMathRun = function(run, currentPos)
+	ParagraphPositionCalculator.prototype.handleMathRun = function(run, isCurrentRun, currentPos)
 	{
 		this.bidi.end();
 		this.bidi.begin(this.rtl);
 		
-		if (-1 === currentPos)
+		if (isCurrentRun && !run.Content[currentPos])
+		{
+			this.setNextCurrent();
 			return;
+		}
+		else if (!isCurrentRun)
+		{
+			if (!this.isNextCurrent || run.Content.length <= 0)
+				return;
+			
+			currentPos = 0;
+			this.isNextCurrent = false;
+		}
 		
 		let paraMathLocation = run.ParaMath.GetLinePosition(this.line, this.range);
 		

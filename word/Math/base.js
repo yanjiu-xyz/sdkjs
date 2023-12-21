@@ -1719,7 +1719,7 @@ CMathBase.prototype.recalculateCursorPosition = function(positionCalculator, isC
 	if (!isCurrent)
 		return;
 	
-	this.Content[this.CurPos].RecalculateCursorPosition(positionCalculator, isCurrent);
+	this.Content[this.CurPos].recalculateCursorPosition(positionCalculator, isCurrent);
 };
 CMathBase.prototype.Get_ParaContentPosByXY = function(SearchPos, Depth, _CurLine, _CurRange, StepEnd)
 {
