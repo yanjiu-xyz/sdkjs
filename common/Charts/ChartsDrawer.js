@@ -623,7 +623,7 @@ CChartsDrawer.prototype =
 					}*/
 					if (this.trendline) {
 						//CTrendLine
-						return this.trendline && this.trendline.getAdditionalInfo(obj.parent.Id, obj.parent.parent.Id);
+						return this.trendline && this.trendline.getAdditionalInfo(obj.parent.parent.Id, obj.parent.Id);
 					}
 					return null;
 				}
@@ -16903,7 +16903,7 @@ CColorObj.prototype =
 					if (!this.storage[i].hasOwnProperty(j) || !oSeries || !this.storage[i][j]) {
 						continue;
 					}
-					let pen = oSeries.trendline.pen;
+					let pen = oSeries.trendline.getPen();
 					if (!pen) {
 						pen = this.cChartDrawer.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines;
 					}
@@ -17410,8 +17410,9 @@ CColorObj.prototype =
 			this.boundary = boundary;
 		},
 
-		setLastPoint: function (lastPoint) {
-			this.lastPoint = lastPoint;
+		setLastPoint: function (catVal, valVal) {
+			this.lastPoint.catVal = catVal;
+			this.lastPoint.valVal = valVal;
 		},
 
 		setBezierPath: function (bezierPath) {

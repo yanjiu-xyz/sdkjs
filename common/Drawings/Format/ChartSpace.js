@@ -3421,6 +3421,10 @@ function(window, undefined) {
 								pts[j].compiledDlb.updatePosition(posX, posY);
 							}
 						}
+						let oTrendlineLbl = ser.trendline && ser.trendline.trendlineLbl;
+						if(oTrendlineLbl) {
+							oTrendlineLbl.updatePosition(posX, posY);
+						}
 					}
 				}
 				var aAxes = this.chart.plotArea.axId;
@@ -4125,6 +4129,42 @@ function(window, undefined) {
 				this.chart.legend.legendPos = null;
 			}
 		}
+
+		let aSeries = this.getAllSeries();
+		for(let nSer = 0; nSer < aSeries.length; ++nSer) {
+			let oSer = aSeries[nSer];
+			if(oSer.trendline) {
+				let oLbl = oSer.trendline.trendlineLbl;
+				let oDrawerData = oSer.trendline.drawerData;
+				if(oLbl && oDrawerData && oDrawerData.coordinate) {
+					pos = {x: oDrawerData.coordinate.catVal, y: oDrawerData.coordinate.valVal};
+					if (oLbl.layout) {
+						layout = oLbl.layout;
+						if (AscFormat.isRealNumber(layout.x)) {
+							pos.x = this.calculatePosByLayout(pos.x, layout.xMode, layout.x, oLbl.extX, this.extX);
+						}
+						if (AscFormat.isRealNumber(layout.y)) {
+							pos.y = this.calculatePosByLayout(pos.y, layout.yMode, layout.y, oLbl.extY, this.extY);
+						}
+					}
+
+					if (pos.x + oLbl.extX > this.extX) {
+						pos.x -= (pos.x + oLbl.extX - this.extX);
+					}
+					if (pos.y + oLbl.extY > this.extY) {
+						pos.y -= (pos.y + oLbl.extY - this.extY);
+					}
+					if (pos.x < 0) {
+						pos.x = 0;
+					}
+					if (pos.y < 0) {
+						pos.y = 0;
+					}
+					oLbl.setPosition(pos.x, pos.y);
+				}
+			}
+		}
+
 	};
 	CChartSpace.prototype.getCatValues = function () {
 		var ret = [];
@@ -7160,7 +7200,6 @@ function(window, undefined) {
 						var ser = series[ii];
 						var pts = ser.getNumPts();
 						this.ptsCount += pts.length;
-						ser.recalculateTrendline();
 						ser.compiledSeriesBrush = new AscFormat.CUniFill();
 						ser.compiledSeriesBrush.merge(base_fills2[ser.idx]);
 						if (ser.spPr && ser.spPr.Fill) {
@@ -7305,7 +7344,6 @@ function(window, undefined) {
 								var default_line = parents.theme.themeElements.fmtScheme.lnStyleLst[0];
 								var ser = series[i];
 								var pts = ser.getNumPts();
-								ser.recalculateTrendline();
 								this.ptsCount += pts.length;
 								var compiled_line = new AscFormat.CLn();
 								compiled_line.merge(default_line);
@@ -7431,7 +7469,6 @@ function(window, undefined) {
 						for(var i = 0; i < series.length; ++i) {
 							var default_line = parents.theme.themeElements.fmtScheme.lnStyleLst[0];
 							var ser = series[i];
-							ser.recalculateTrendline();
 							var pts = ser.getNumPts();
 							this.ptsCount += pts.length;
 							if(oChart.scatterStyle === AscFormat.SCATTER_STYLE_SMOOTH || oChart.scatterStyle === AscFormat.SCATTER_STYLE_SMOOTH_MARKER) {
@@ -7593,7 +7630,6 @@ function(window, undefined) {
 							base_line_fills = getArrayFillsFromBase(style.line2, nMaxSeriesIdx);
 						for(var i = 0; i < series.length; ++i) {
 							var ser = series[i];
-							ser.recalculateTrendline();
 							var compiled_brush = new AscFormat.CUniFill();
 							compiled_brush.merge(base_fills[ser.idx]);
 							if(ser.spPr && ser.spPr.Fill) {
@@ -8157,6 +8193,10 @@ function(window, undefined) {
 								if (pts[j].compiledDlb)
 									pts[j].compiledDlb.draw(graphics);
 							}
+							let oTrendlineLbl = ser.trendline && ser.trendline.trendlineLbl;
+							if(oTrendlineLbl) {
+								oTrendlineLbl.draw(graphics);
+							}
 						}
 					}
 				}
@@ -8247,7 +8287,18 @@ function(window, undefined) {
 		this.chart.plotArea.extY = oChartSize.h;
 		this.chart.plotArea.localTransform.Reset();
 		AscCommon.global_MatrixTransformer.TranslateAppend(this.chart.plotArea.localTransform, oChartSize.startX, oChartSize.startY);
+
+		this.recalculateTrendlines();
 	};
+
+
+	CChartSpace.prototype.recalculateTrendlines = function () {
+		let aSeries = this.getAllSeries();
+		for(let nSer = 0; nSer < aSeries.length; ++nSer) {
+			aSeries[nSer].recalculateTrendline();
+		}
+	};
+
 	CChartSpace.prototype.GetRevisionsChangeElement = function (SearchEngine) {
 		var titles = this.getAllTitles(), i;
 		if (titles.length === 0) {
