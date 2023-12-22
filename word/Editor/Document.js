@@ -21923,10 +21923,7 @@ CDocument.prototype.IsFillingOFormMode = function()
 		return false;
 	
 	let api = this.GetApi();
-	return !!(api.DocInfo
-		&& (api.DocInfo.Format === "oform"
-			|| api.DocInfo.Format === "docxf"
-			|| api.DocInfo.Format === "pdf"));
+	return !!(api.DocInfo && api.DocInfo.isFormatWithForms());
 };
 CDocument.prototype.CheckOFormUserMaster = function(form)
 {

@@ -8759,7 +8759,8 @@ background-repeat: no-repeat;\
 			oAdditionalData["format"] = this.documentFormat;
 			dataContainer.data = options.pdfChanges;
 		}
-		else if (null == options.oDocumentMailMerge && (c_oAscFileType.PDF === fileType || c_oAscFileType.PDFA === fileType))
+		else if ((c_oAscFileType.PDF === fileType || c_oAscFileType.PDFA === fileType) &&
+			null == options.oDocumentMailMerge && (options.isPdfPrint || !(this.DocInfo && this.DocInfo.isFormatWithForms())))
 		{
             var isSelection = false;
             if (options.advancedOptions && options.advancedOptions && (Asc.c_oAscPrintType.Selection === options.advancedOptions.asc_getPrintType()))

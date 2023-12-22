@@ -4496,6 +4496,9 @@
 	}
 
 	prot = asc_CDocInfo.prototype;
+	prot.isFormatWithForms = function () {
+		return this.Format === "oform" || this.Format === "docxf" || this.Format === "pdf";
+	};
 	prot.get_Id = prot.asc_getId = function () {
 		return this.Id
 	};
