@@ -142,17 +142,17 @@
 			case AscFormat.If_func_cnt:
 				return this.funcCnt(nodes);
 			case AscFormat.If_func_depth:
-				return this.funcDepth(nodes);
+				return this.funcDepth(node);
 			case AscFormat.If_func_maxDepth:
 				return this.funcMaxDepth(nodes);
 			case AscFormat.If_func_pos:
-				return this.funcPos(nodes);
+				return this.funcPos(nodes, node);
 			case AscFormat.If_func_posEven:
 				return this.funcPosEven(nodes, node);
 			case AscFormat.If_func_posOdd:
-				return this.funcPosOdd(nodes);
+				return this.funcPosOdd(nodes, node);
 			case AscFormat.If_func_revPos:
-				return this.funcRevPos(nodes);
+				return this.funcRevPos(nodes, node);
 			case AscFormat.If_func_var:
 				return this.funcVar(node);
 			default:
@@ -186,13 +186,56 @@
 		}
 	}
 	If.prototype.funcPosEven = function (nodes, currentNode) {
+		const conditionValue = parseInt(this.getConditionValue(), 10);
 		for (let i = 0; i < nodes.length; i++) {
 			if (nodes[i] === currentNode) {
 				const isEven = i % 2 === 0 ? 1 : 0;
-				return this.check(parseInt(this.getConditionValue(), 10), isEven);
+				return this.check(conditionValue, isEven);
 			}
 		}
 		return false;
+	};
+	If.prototype.funcPosOdd = function (nodes, currentNode) {
+		const conditionValue = parseInt(this.getConditionValue(), 10);
+		for (let i = 0; i < nodes.length; i++) {
+			if (nodes[i] === currentNode) {
+				const isOdd = i % 2;
+				return this.check(conditionValue, isOdd);
+			}
+		}
+		return false;
+	};
+	If.prototype.funcPos = function (nodes, currentNode) {
+		const conditionValue = parseInt(this.getConditionValue(), 10);
+		for (let i = 0; i < nodes.length; i++) {
+			if (nodes[i] === currentNode) {
+				return this.check(conditionValue, i + 1);
+			}
+		}
+		return false;
+	};
+	If.prototype.funcRevPos = function (nodes, currentNode) {
+		const conditionValue = parseInt(this.getConditionValue(), 10);
+		for (let i = 0; i < nodes.length; i++) {
+			if (nodes[i] === currentNode) {
+				return this.check(conditionValue, nodes.length - i);
+			}
+		}
+		return false;
+	};
+	If.prototype.funcDepth = function (currentNode) {
+		const conditionValue = parseInt(this.getConditionValue(), 10);
+		return this.check(conditionValue, currentNode.depth + 1);
+	};
+	If.prototype.funcMaxDepth = function (nodes) {
+		const conditionValue = parseInt(this.getConditionValue(), 10);
+		let maxDepth = -1;
+		for (let i = 0; i < nodes.length; i++) {
+			if (nodes[i].depth > maxDepth) {
+				maxDepth = nodes[i].depth;
+			}
+		}
+		return this.check(conditionValue, maxDepth + 1);
 	};
 	If.prototype.funcVar = function (node) {
 		const nodeVal = node.getFuncVarValue(this.arg);
@@ -365,7 +408,7 @@
 	SmartArtAlgorithm.prototype.initDataTree = function () {
 		const dataModel = this.smartart.getDataModel().getDataModel();
 		const mainSmartArtPoint = dataModel.getMainPoint();
-		const treeRoot = new SmartArtDataNode(mainSmartArtPoint, null, 0);
+		const treeRoot = new SmartArtDataNode(mainSmartArtPoint, 0);
 		this.dataRoot = treeRoot;
 		const elements = [treeRoot];
 
@@ -565,15 +608,15 @@
 		return this.point.type;
 	}
 
-	SmartArtDataNodeBase.prototype.getNodesByAxis = function (nodes, axis, ptType, count) {
+	SmartArtDataNodeBase.prototype.getNodesByAxis = function (nodes, axis, ptType) {
 		nodes = nodes || [];
 		switch (axis) {
 			case AscFormat.AxisType_value_ch: {
-				this.getNodesByCh(nodes, ptType, count);
+				this.getNodesByCh(nodes, ptType);
 				break;
 			}
 			case AscFormat.AxisType_value_par: {
-				this.getNodesByParent(nodes, ptType, count);
+				this.getNodesByParent(nodes, ptType);
 				break;
 			}
 			case AscFormat.AxisType_value_self: {
@@ -584,19 +627,16 @@
 				break;
 			}
 			case AscFormat.AxisType_value_followSib: {
-				this.getNodesByFollowSib(nodes, ptType, count);
+				this.getNodesByFollowSib(nodes, ptType);
 				break;
 			}
 			case AscFormat.AxisType_value_des: {
-				this.getNodesByDescendant(nodes, ptType, count);
+				this.getNodesByDescendant(nodes, ptType);
 				break;
 			}
 			case AscFormat.AxisType_value_desOrSelf: {
-				this.getNodesByAxis(nodes, AscFormat.AxisType_value_self, ptType, count);
-				if (isMaxCount(nodes, count)) {
-					break;
-				}
-				this.getNodesByAxis(nodes, AscFormat.AxisType_value_des, ptType, count);
+				this.getNodesByAxis(nodes, AscFormat.AxisType_value_self, ptType);
+				this.getNodesByAxis(nodes, AscFormat.AxisType_value_des, ptType);
 				break;
 			}
 			default: {
@@ -608,14 +648,14 @@
 	SmartArtDataNodeBase.prototype.getParent = function () {
 		return this.parent;
 	}
-	SmartArtDataNodeBase.prototype.getNodesByParent = function (nodes, ptType, count) {
+	SmartArtDataNodeBase.prototype.getNodesByParent = function (nodes, ptType) {
 		const parent = this.getParent();
 		const needNode = parent && parent.getNodeByPtType(ptType);
 		if (needNode) {
 			nodes.push(needNode);
 		}
 	};
-	SmartArtDataNodeBase.prototype.getNodesByDescendant = function (nodes, ptType, count) {
+	SmartArtDataNodeBase.prototype.getNodesByDescendant = function (nodes, ptType) {
 		const elements = [].concat(this.childs);
 		while (elements.length) {
 			const child = elements.shift();
@@ -623,15 +663,12 @@
 			if (needNode) {
 				nodes.push(needNode);
 			}
-			if (isMaxCount(nodes, count)) {
-				return;
-			}
 			for (let i = 0; i < child.childs.length; i++) {
 				elements.push(child.childs[i]);
 			}
 		}
 	};
-	SmartArtDataNodeBase.prototype.getNodesByFollowSib = function (nodes, ptType, count) {
+	SmartArtDataNodeBase.prototype.getNodesByFollowSib = function (nodes, ptType) {
 		const parent = this.parent;
 		if (parent) {
 			let bAdd = false;
@@ -650,33 +687,19 @@
 						}
 					}
 				}
-				if (isMaxCount(nodes, count)) {
-					return;
-				}
 			}
 		}
 	};
 
-	SmartArtDataNodeBase.prototype.getNodesByCh = function (nodes, ptType, count) {
+	SmartArtDataNodeBase.prototype.getNodesByCh = function (nodes, ptType) {
 		for (let i = 0; i < this.childs.length; i++) {
 			const child = this.childs[i];
 			const needNode = child.getNodeByPtType(ptType);
 			if (needNode) {
 				nodes.push(needNode);
 			}
-			if (isMaxCount(nodes, count)) {
-				return;
-			}
 		}
 	};
-
-	function isMaxCount(array, count) {
-		if (count) {
-			return array.length >= count;
-		}
-
-		return false;
-	}
 
 	SmartArtDataNodeBase.prototype.addChild = function (child, position) {
 		position = AscFormat.isRealNumber(position) ? position : this.childs.length;

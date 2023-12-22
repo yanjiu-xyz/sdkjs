@@ -4250,10 +4250,15 @@ Because of this, the display is sometimes not correct.
 			  for (let j = 0; j < currentNodes.length; j += 1) {
 				  const node = currentNodes[j];
 				  const tempNodes = [];
-				  node.getNodesByAxis(tempNodes, this.getAxis(i), this.getPtType(i), this.getCount(i));
+				  node.getNodesByAxis(tempNodes, this.getAxis(i), this.getPtType(i));
 				  const step = this.getStep(i);
+					let count = this.getCount(i) || tempNodes.length;
 				  for (let k = this.getStart(i); k < tempNodes.length; k += step) {
 					  newCurrentNodes.push(tempNodes[k]);
+						count -= 1;
+						if (!count) {
+							break;
+						}
 				  }
 			  }
 			  currentNodes = newCurrentNodes;
@@ -5060,34 +5065,6 @@ Because of this, the display is sometimes not correct.
         }
       }
     };
-
-    ConstrLst.prototype.startSetConstr = function (pointTree, node) {
-      var constrWithPrimFont = [];
-      var constrWithSecFont = [];
-      this.list.forEach(function (constr) {
-        if (constr.type === Constr_type_primFontSz) {
-          constrWithPrimFont.push({
-            constr: constr,
-            node: node,
-          });
-        } else if (constr.type === Constr_type_secFontSz) {
-          constrWithSecFont.push({
-            constr: constr,
-            node: node,
-          });
-        } else {
-          constr.setConstr(pointTree, [{node: node, constr: constr}]);
-        }
-      });
-      if (constrWithPrimFont.length !== 0) {
-        constrWithPrimFont[0].constr.setConstr(pointTree, constrWithPrimFont);
-      }
-      if (constrWithSecFont.length !== 0) {
-        constrWithSecFont[0].constr.setConstr(pointTree, constrWithSecFont);
-      }
-    };
-
-
 
     changesFactory[AscDFH.historyitem_ConstrFact] = CChangeDouble2;
     changesFactory[AscDFH.historyitem_ConstrFor] = CChangeLong;
