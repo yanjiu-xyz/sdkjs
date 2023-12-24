@@ -1541,86 +1541,73 @@
 
 	InitClass(CSeqListContainer, CTopControl, CONTROL_TYPE_SEQ_LIST_CONTAINER);
 
-	CSeqListContainer.prototype.getScrollOffsetY = function (oChild) {
-		return 0;
-	};
 	CSeqListContainer.prototype.recalculateChildrenLayout = function () {
 		this.seqList.setLayout(0, 0, this.getWidth(), this.seqList.getHeight());
 		this.seqList.recalculate();
 		this.setLayout(0, 0, this.seqList.getWidth(), this.seqList.getHeight());
 	};
+
 	CSeqListContainer.prototype.clipStart = function (graphics) {
 
 	};
 	CSeqListContainer.prototype.clipEnd = function (graphics) {
+
 	};
+
 	CSeqListContainer.prototype.onScroll = function () {
 		this.onUpdate();
 	};
+	CSeqListContainer.prototype.onMouseWheel = function (e, deltaY, X, Y) {
+		return false;
+	};
+	
 	CSeqListContainer.prototype.getFillColor = function () {
 		return null;
 	};
 	CSeqListContainer.prototype.getOutlineColor = function () {
 		return null;
 	};
-	CSeqListContainer.prototype.onMouseWheel = function (e, deltaY, X, Y) {
-		return false;
-	};
 
 
 	function CSeqList(oParentControl) {
 		CControlContainer.call(this, oParentControl);
-		this.sequences = this.children;
+		// this.children - mainSeq, interactiveSeq 
 	}
 
 	InitClass(CSeqList, CControlContainer, CONTROL_TYPE_SEQ_LIST);
 
-	CSeqList.prototype.getIndexLabelRight = function () {
-		return 10;//TODO
-	};
 	CSeqList.prototype.recalculateChildren = function () {
 		this.clear();
 
-		var oTiming = this.getTiming();
+		const oTiming = this.getTiming();
 		if (!oTiming) { return }
 
-		var aAllSeqs = oTiming.getRootSequences();
-		var oLastSeqView = null;
+		const aAllSeqs = oTiming.getRootSequences();
+		let oLastSeqView = null; // Зачем нужна эта переменная?
 		for (var nSeq = 0; nSeq < aAllSeqs.length; ++nSeq) {
-			var oSeqView = new CAnimSequence(this, aAllSeqs[nSeq]);
+			const oSeqView = new CAnimSequence(this, aAllSeqs[nSeq]);
 			this.addControl(oSeqView);
 			oLastSeqView = oSeqView;
 		}
 	};
 	CSeqList.prototype.recalculateChildrenLayout = function () {
-		var dLastBottom = 0;
-		for (var nChild = 0; nChild < this.children.length; ++nChild) {
-			var oSeq = this.children[nChild];
+		let dLastBottom = 0;
+
+		for (let nChild = 0; nChild < this.children.length; ++nChild) {
+			const oSeq = this.children[nChild];
 			oSeq.setLayout(0, dLastBottom, this.getWidth(), 0);
 			oSeq.recalculate();
 			dLastBottom = oSeq.getBottom();
 		}
 		this.setLayout(this.getLeft(), this.getTop(), this.getWidth(), dLastBottom);
 	};
+
 	CSeqList.prototype.getFillColor = function () {
 		return null;
 	};
 	CSeqList.prototype.getOutlineColor = function () {
 		return null;
 	};
-	// CSeqList.prototype.draw = function(graphics) {
-	//     if(!this.checkUpdateRect(graphics.updateRect)) {
-	//         return false;
-	//     }
-	//     if(this.parentControl.isScrolling() && !this.bDrawTexture) {
-	//         this.recalculateTransform();
-	//         this.checkCachedTexture(graphics).draw(graphics, new AscCommon.CMatrix());
-	//         return;
-	//     }
-	//     this.clearCachedTexture();
-	//     return CControlContainer.prototype.draw.call(this, graphics);
-	// };
-
 
 	CSeqList.prototype.checkCachedTexture = function (graphics) {
 		var dGraphicsScale = graphics.m_oCoordTransform.sx;
@@ -1648,30 +1635,45 @@
 	};
 
 
-	function CAnimSequence(oParentControl, oSeq) {//main seq, interactive seq
+	// mainSeq or interactiveSeq
+	function CAnimSequence(oParentControl, oSeq) {
 		CControlContainer.call(this, oParentControl);
 		this.seq = oSeq;
 		this.label = null; //this.addControl(new CLabel(this, "seq"));
-		this.groupList = null;//this.addControl(new CAnimGroupList(this));
+		this.animGroups = [];
 	}
 
 	InitClass(CAnimSequence, CControlContainer, CONTROL_TYPE_ANIM_SEQ);
 
-	CAnimSequence.prototype.getIndexLabelRight = function () {
-		return this.parentControl.getIndexLabelRight() - this.getLeft();
-	};
-	CAnimSequence.prototype.recalculateChildren = function () {
-		this.clear();
-		var sLabel = this.seq.getLabel();
-		if (typeof sLabel === "string" && sLabel.length > 0) {
-			this.label = this.addControl(new CLabel(this, sLabel, 9, true));
-		} else {
-			this.label = null;
-		}
-		this.groupList = this.addControl(new CAnimGroupList(this));
-	};
 	CAnimSequence.prototype.getSeq = function () {
 		return this.seq;
+	};
+
+	CAnimSequence.prototype.recalculateChildren = function () {
+		this.clear();
+
+		let sLabel = this.seq.getLabel();
+		if (typeof sLabel === "string" && sLabel.length > 0) {
+			this.label = this.addControl(new CLabel(this, sLabel, 9, true));
+		}
+
+		const aAllEffects = this.seq.getAllEffects();
+		const animGroups = groupBy(aAllEffects, function (effect) { return effect.getIndexInSequence(); })
+
+		for (let indexInSequence in animGroups) {
+			const oAnimGroup = this.addControl(new CAnimGroup(this, animGroups[indexInSequence]));
+			this.animGroups[this.animGroups.length] = oAnimGroup;
+		}
+
+		// Own realization of Object.groupBy for IE11 compatibility
+		function groupBy(arr, callback) {
+			return arr.reduce(function (storage, item) {
+				let group = callback(item);
+				storage[group] = storage[group] || [];
+				storage[group].push(item);
+				return storage;
+			}, {});
+		}
 	};
 	CAnimSequence.prototype.recalculateChildrenLayout = function () {
 		var dCurY = 0;
@@ -1680,13 +1682,14 @@
 			this.label.recalculate();
 			dCurY += this.label.getHeight();
 		}
-		if (this.groupList) {
-			this.groupList.setLayout(0, dCurY, this.getWidth(), 0);
-			this.groupList.recalculate();
-			dCurY += this.groupList.getHeight();
+		for (let nGroup = 0; nGroup < this.animGroups.length; ++nGroup) {
+			this.animGroups[nGroup].setLayout(0, dCurY, this.getWidth(), 0);
+			this.animGroups[nGroup].recalculate();
+			dCurY += this.animGroups[nGroup].getHeight();
 		}
 		this.setLayout(this.getLeft(), this.getTop(), this.getWidth(), dCurY);
 	};
+
 	CAnimSequence.prototype.getFillColor = function () {
 		return null;
 	};
@@ -1695,105 +1698,93 @@
 	};
 
 
-	function CAnimGroupList(oParentControl) {//main seq, interactive seq
+	function CAnimGroup(oParentControl, aAllGroupEffects) {
 		CControlContainer.call(this, oParentControl);
+		this.effects = aAllGroupEffects;
 	}
 
-	InitClass(CAnimGroupList, CControlContainer, CONTROL_TYPE_ANIM_GROUP_LIST);
+	InitClass(CAnimGroup, CControlContainer, CONTROL_TYPE_ANIM_GROUP_LIST);
 
-	CAnimGroupList.prototype.getIndexLabelRight = function () {
-		return this.parentControl.getIndexLabelRight() - this.getLeft();
-	};
-	CAnimGroupList.prototype.getSeq = function () {
+	CAnimGroup.prototype.getSeq = function () {
 		return this.parentControl.getSeq();
 	};
-	CAnimGroupList.prototype.recalculateChildren = function () {
-		this.clear();
-		var oSeq = this.getSeq();
-		var aAllEffects = oSeq.getAllEffects();
 
-		for (var nCurEffect = 0; nCurEffect < aAllEffects.length; ++nCurEffect) {
-			var oItem = new CAnimItem(this, aAllEffects[nCurEffect]);
+	const INDEX_LABEL_WIDTH = 5
+
+	CAnimGroup.prototype.recalculateChildren = function () {
+		this.clear();
+
+		const indexInSequence = this.effects[0].getIndexInSequence()
+		this.indexLabel = this.addControl(new CLabel(this, '' + indexInSequence, 7.5))
+
+		for (let nCurEffect = this.effects.length - 1; nCurEffect >= 0; --nCurEffect) {
+			const oItem = new CAnimItem(this, this.effects[nCurEffect]);
 			this.addControl(oItem);
 		}
 	};
-	CAnimGroupList.prototype.getFillColor = function () {
-		return null;
-	};
-	CAnimGroupList.prototype.getOutlineColor = function () {
-		return null;
-	};
+	CAnimGroup.prototype.recalculateChildrenLayout = function () {
+		let dLastBottom = 0;
 
-	//CAnimGroupList.prototype.draw = function() {
-	//};
-	CAnimGroupList.prototype.recalculateChildrenLayout = function () {
-		var dLastBottom = 0;
-		for (var nChild = 0; nChild < this.children.length; ++nChild) {
-			var oChild = this.children[nChild];
-			oChild.setLayout(0, dLastBottom, this.getWidth(), ANIM_ITEM_HEIGHT);
+		this.indexLabel.setLayout(0, 0, ANIM_ITEM_HEIGHT, ANIM_ITEM_HEIGHT)
+
+		for (let nChild = 1; nChild < this.children.length; ++nChild) {
+			let oChild = this.children[nChild];
+			oChild.setLayout(INDEX_LABEL_WIDTH, dLastBottom, this.getWidth() - INDEX_LABEL_WIDTH, ANIM_ITEM_HEIGHT);
 			oChild.recalculate();
 			dLastBottom = oChild.getBottom();
 		}
 		this.setLayout(this.getLeft(), this.getTop(), this.getWidth(), dLastBottom);
 	};
 
-
-	function CAnimGroup(oParentControl, aEffects) {
-		CControlContainer.call(this, oParentControl);
-	}
-
-	InitClass(CAnimGroup, CControlContainer, CONTROL_TYPE_ANIM_GROUP);
-
-	CAnimGroup.prototype.getIndexLabelRight = function () {
-		return this.parentControl.getIndexLabelRight() - this.getLeft();
+	CAnimGroup.prototype.getFillColor = function () {
+		return null;
+	};
+	CAnimGroup.prototype.getOutlineColor = function () {
+		return null;
 	};
 
 
 	function CAnimItem(oParentControl, oEffect) {
 		CControlContainer.call(this, oParentControl);
-		this.indexLabel = this.addControl(new CLabel(this, oEffect.getIndexInSequence() + "", 7.5));
+		this.effect = oEffect;
+
+		// this.indexLabel = this.addControl(new CLabel(this, oEffect.getIndexInSequence() + "", 7.5));
 		this.eventTypeImage = this.addControl(new CImageControl(this));
 		this.effectTypeImage = this.addControl(new CImageControl(this));
-		this.effectLabel = this.addControl(new CLabel(this, oEffect.getObjectName(), 7.5));
+		this.effectLabel = this.addControl(new CLabel(this, this.effect.getObjectName(), 7.5));
 		this.effectBar = this.addControl(new CEffectBar(this));
 		this.contextMenuButton = this.addControl(new CButton(this));
-
-		this.effect = oEffect;
 	}
 
 	InitClass(CAnimItem, CControlContainer, CONTROL_TYPE_ANIM_ITEM);
 
-	CAnimItem.prototype.getIndexLabelRight = function () {
-		return this.parentControl.getIndexLabelRight() - this.getLeft();
-	};
 	CAnimItem.prototype.getEffectLabelRight = function () {
 		return LABEL_TIMELINE_WIDTH;
 	};
 	CAnimItem.prototype.recalculateChildrenLayout = function () {
-		var dIndexLabelRight = this.getIndexLabelRight();
-		var dYInside = (this.getHeight() - EFFECT_BAR_HEIGHT) / 2;
-		this.indexLabel.setLayout(0, dYInside, dIndexLabelRight, EFFECT_BAR_HEIGHT);
-		this.eventTypeImage.setLayout(this.indexLabel.getRight(), dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
+		const dYInside = (this.getHeight() - EFFECT_BAR_HEIGHT) / 2;
+
+		this.eventTypeImage.setLayout(0, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
 		this.effectTypeImage.setLayout(this.eventTypeImage.getRight(), dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
-		var dLabelRight = this.getEffectLabelRight();
-		var dEffectLabelLeft = this.effectTypeImage.getRight();
+
+		const dLabelRight = this.getEffectLabelRight();
+		const dEffectLabelLeft = this.effectTypeImage.getRight();
+
 		this.effectLabel.setLayout(dEffectLabelLeft, dYInside, dLabelRight - dEffectLabelLeft, EFFECT_BAR_HEIGHT);
 		this.effectBar.setLayout(0, 0, 0, 0);//todo
-		var dRightSpace = dYInside;
-		this.contextMenuButton.setLayout(this.getRight() - dRightSpace - EFFECT_BAR_HEIGHT, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
+
+		let dRightSpace = dYInside;
+		this.contextMenuButton.setLayout(this.getRight() - EFFECT_BAR_HEIGHT - INDEX_LABEL_WIDTH - dRightSpace, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
 	};
 	CAnimItem.prototype.canHandleEvents = function () {
 		return true;
 	};
 	// CAnimItem.prototype.getFillColor = function() {
-	//     return null;
+	//     return '0f0';
 	// };
 	CAnimItem.prototype.getOutlineColor = function () {
 		return null;
 	};
-
-	//CAnimItem.prototype.draw = function() {
-	//};
 
 
 	function CEffectBar(oParentControl) {
