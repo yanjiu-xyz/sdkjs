@@ -192,6 +192,7 @@ DrawingObjectsController.prototype.recalculate = function(bAll, Point, bCheckPoi
 {
     if(bCheckPoint !== false)
     {
+        this.objectsForRecalculate = {};
         History.Get_RecalcData(Point);//Только для таблиц
     }
     this.recalculate2(bAll);

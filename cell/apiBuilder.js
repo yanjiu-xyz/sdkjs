@@ -3344,18 +3344,35 @@
 	 * @param {?string} shift - Specifies how to shift cells to replace the deleted cells ("up", "left").
 	 */
 	ApiRange.prototype.Delete = function (shift) {
+		let preDeleteAction = function() {
+			cellCommentator.updateCommentsDependencies(false, val, checkRange);
+			wsView.shiftCellWatches(false, val, bbox);
+			wsView.model.shiftDataValidation(false, val, checkRange, true);
+			wsView._cleanCache(lockRange);
+		};
+		let val;
+		let ws = this.Worksheet.worksheet;
+		let wsView = Asc['editor'].wb.getWorksheet(ws.getIndex());
+		let cellCommentator = wsView.cellCommentator;
+		let bbox = this.range.bbox;
+		let checkRange = bbox.clone();
+		let lockRange;
 		if (shift && shift.toLocaleLowerCase) {
 			shift = shift.toLocaleLowerCase();
 		} else {
-			var bbox = this.range.bbox;
-			var rows = bbox.r2 - bbox.r1 + 1;
-			var cols = bbox.c2 - bbox.c1 + 1;
+			let rows = bbox.r2 - bbox.r1 + 1;
+			let cols = bbox.c2 - bbox.c1 + 1;
 			shift = (rows <= cols) ? "up" : "left";
 		}
-		if (shift == "up")
-			this.range.deleteCellsShiftUp();
-		else
-			this.range.deleteCellsShiftLeft()
+		if (shift == "up") {
+			val = Asc.c_oAscDeleteOptions.DeleteCellsAndShiftTop;
+			lockRange = ws.getRange3(bbox.r1, bbox.c1, bbox.r2, AscCommon.gc_nMaxCol0);
+			this.range.deleteCellsShiftUp(preDeleteAction);
+		} else {
+			val = Asc.c_oAscDeleteOptions.DeleteCellsAndShiftLeft;
+			lockRange = ws.getRange3(bbox.r1, bbox.c1, AscCommon.gc_nMaxRow0, AscCommon.c2);
+			this.range.deleteCellsShiftLeft(preDeleteAction);
+		}
 	};
 
 	/**
