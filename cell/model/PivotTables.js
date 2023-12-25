@@ -7409,6 +7409,12 @@ CT_pivotTableDefinition.prototype.getCellByGetPivotDataParams = function(params)
 CT_pivotTableDefinition.prototype.getGetPivotParamsByActiveCell = function(activeCell) {
 	const row = activeCell.row;
 	const col = activeCell.col;
+	const pivotReport = this.getRange()
+	const c1 = pivotReport.c1;
+	const r1 = pivotReport.r1;
+	if (row - r1 < this.location.firstDataRow || col - c1 < this.location.firstDataCol){
+		return null;
+	}
 	const rowItems = this.getRowItems();
 	const colItems = this.getColItems();
 	const dataFields = this.asc_getDataFields();
