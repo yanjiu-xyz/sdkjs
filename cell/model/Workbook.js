@@ -14119,6 +14119,8 @@
 					if (aStandartNumFormatsId[t.getNumFormatStr()] == 0) {
 						t.setNum(new AscCommonExcel.Num({id: valueCalc.numFormat}));
 					}
+				} else if (typeof valueCalc.numFormat === "string") {
+					t.setNum(new AscCommonExcel.Num({f: valueCalc.numFormat}));
 				} else if (AscCommonExcel.cNumFormatFirstCell === valueCalc.numFormat) {
 					//ищет в формуле первый рэндж и устанавливает формат ячейки как формат первой ячейки в рэндже
 					//принимают формат первой ячейки в рейндже только функции с inheritFormat = true

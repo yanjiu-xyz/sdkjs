@@ -4167,7 +4167,7 @@ function (window, undefined) {
 		}
 
 		res = new cNumber(res);
-		res.numFormat = 8;
+		res.numFormat = "#,##0.00\\ \"₽\";[Red]\\-#,##0.00\\ \"₽\"";
 		return res;
 	};
 
