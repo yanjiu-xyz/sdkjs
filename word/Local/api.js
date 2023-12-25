@@ -176,7 +176,10 @@ Asc['asc_docs_api'].prototype.asc_Save = function (isNoUserSave, isSaveAs, isRes
 		{
 			// TODO:
 			if (this.isPdfEditor() && this.IsUserSave)
+			{
+				AscCommon.History.Reset_SavedIndex(this.IsUserSave);
 				this.IsUserSave = false;
+			}
 
 			this.canSave = true;
 		}
