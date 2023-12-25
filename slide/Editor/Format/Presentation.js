@@ -4411,7 +4411,9 @@ CPresentation.prototype.GetCurrentController = function () {
 	}
 	return null;
 };
-
+CPresentation.prototype.IsEmpty = function() {
+	return this.GetSlidesCount() === 0;
+};
 CPresentation.prototype.Get_TargetDocContent = function () {
 	var oController = this.GetCurrentController();
 	if (oController) {
@@ -6270,6 +6272,7 @@ CPresentation.prototype.GetSelectedSlides = function () {
 	if (!window["NATIVE_EDITOR_ENJINE"] && this.Api.WordControl.Thumbnails) {
 		return this.Api.WordControl.Thumbnails.GetSelectedArray();
 	} else {
+		//todo: check if this.CurPage is -1
 		return [this.CurPage];
 	}
 };
