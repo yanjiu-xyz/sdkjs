@@ -144,6 +144,13 @@ Asc['asc_docs_api'].prototype._saveLocalCheck = function()
 	return !this.isLongAction();
 };
 
+Asc['asc_docs_api'].prototype.asc_setCurrentPasswordBase = Asc['asc_docs_api'].prototype.asc_setCurrentPassword;
+Asc['asc_docs_api'].prototype.asc_setCurrentPassword = Asc['asc_docs_api'].prototype["asc_setCurrentPassword"] = function(password)
+{
+	this.currentPasswordOld = this.currentPassword;
+	return this.asc_setCurrentPasswordBase(password);
+};
+
 Asc['asc_docs_api'].prototype.asc_Save = function (isNoUserSave, isSaveAs, isResaveAttack, options)
 {
 	if (!isResaveAttack && !isSaveAs && !this.asc_isDocumentCanSave())
@@ -239,7 +246,7 @@ window["DesktopOfflineAppDocumentStartSave"] = function(isSaveAs, password, isFo
 	window["AscDesktopEditor"]["LocalFileSave"](_param, (password === undefined) ? editor.currentPassword : password,
 		docinfo,
 		(options && options.fileType) ? options.fileType : 0,
-		JSON.stringify(jsonOptions));
+		JSON.stringify(jsonOptions), editor.currentPasswordOld ? editor.currentPasswordOld : "");
 };
 window["DesktopOfflineAppDocumentEndSave"] = function(error, hash, password)
 {
