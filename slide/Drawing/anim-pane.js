@@ -1714,9 +1714,6 @@
 	CAnimGroup.prototype.recalculateChildren = function () {
 		this.clear();
 
-		const indexInSequence = this.effects[0].getIndexInSequence()
-		this.indexLabel = this.addControl(new CLabel(this, '' + indexInSequence, 7.5))
-
 		for (let nCurEffect = this.effects.length - 1; nCurEffect >= 0; --nCurEffect) {
 			const oItem = new CAnimItem(this, this.effects[nCurEffect]);
 			this.addControl(oItem);
@@ -1725,11 +1722,9 @@
 	CAnimGroup.prototype.recalculateChildrenLayout = function () {
 		let dLastBottom = 0;
 
-		this.indexLabel.setLayout(0, 0, ANIM_ITEM_HEIGHT, ANIM_ITEM_HEIGHT)
-
-		for (let nChild = 1; nChild < this.children.length; ++nChild) {
+		for (let nChild = 0; nChild < this.children.length; ++nChild) {
 			let oChild = this.children[nChild];
-			oChild.setLayout(INDEX_LABEL_WIDTH, dLastBottom, this.getWidth() - INDEX_LABEL_WIDTH, ANIM_ITEM_HEIGHT);
+			oChild.setLayout(0, dLastBottom, this.getWidth(), ANIM_ITEM_HEIGHT);
 			oChild.recalculate();
 			dLastBottom = oChild.getBottom();
 		}
@@ -1748,7 +1743,10 @@
 		CControlContainer.call(this, oParentControl);
 		this.effect = oEffect;
 
-		// this.indexLabel = this.addControl(new CLabel(this, oEffect.getIndexInSequence() + "", 7.5));
+		if (this.effect.isClickEffect() || !this.effect.getPreviousEffect()) {
+			this.indexLabel = this.addControl(new CLabel(this, this.effect.getIndexInSequence() + "", 7.5))
+		}
+
 		this.eventTypeImage = this.addControl(new CImageControl(this));
 		this.effectTypeImage = this.addControl(new CImageControl(this));
 		this.effectLabel = this.addControl(new CLabel(this, this.effect.getObjectName(), 7.5));
@@ -1764,7 +1762,9 @@
 	CAnimItem.prototype.recalculateChildrenLayout = function () {
 		const dYInside = (this.getHeight() - EFFECT_BAR_HEIGHT) / 2;
 
-		this.eventTypeImage.setLayout(0, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
+		if (this.indexLabel) this.indexLabel.setLayout(0, 0, ANIM_ITEM_HEIGHT, ANIM_ITEM_HEIGHT)
+
+		this.eventTypeImage.setLayout(INDEX_LABEL_WIDTH, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
 		this.effectTypeImage.setLayout(this.eventTypeImage.getRight(), dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
 
 		const dLabelRight = this.getEffectLabelRight();
@@ -1774,7 +1774,7 @@
 		this.effectBar.setLayout(0, 0, 0, 0);//todo
 
 		let dRightSpace = dYInside;
-		this.contextMenuButton.setLayout(this.getRight() - EFFECT_BAR_HEIGHT - INDEX_LABEL_WIDTH - dRightSpace, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
+		this.contextMenuButton.setLayout(this.getRight() - EFFECT_BAR_HEIGHT - dRightSpace, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
 	};
 	CAnimItem.prototype.canHandleEvents = function () {
 		return true;
