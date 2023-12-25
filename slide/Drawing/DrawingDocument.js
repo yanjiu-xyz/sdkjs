@@ -6445,15 +6445,17 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 	};
 	oThis.GetPosition = function (e)
 	{
-		var _x = global_mouseEvent.X - oThis.HtmlPage.X - ((oThis.HtmlPage.m_oMainParent.AbsolutePosition.L * g_dKoef_mm_to_pix + 0.5) >> 0);
-		var nTopPos = oThis.HtmlPage.m_oBottomPanesContainer.AbsolutePosition.T;
+		let nLeftPos = oThis.HtmlPage.m_oMainParent.AbsolutePosition.L;
+		let nTopPos = oThis.HtmlPage.m_oBottomPanesContainer.AbsolutePosition.T;
 		nTopPos += oThis.HtmlPage.m_oAnimationPaneContainer.AbsolutePosition.T;
 		if(oThis.PageParentControl)
 		{
+			nLeftPos += oThis.PageParentControl.AbsolutePosition.L;
 			nTopPos += oThis.PageParentControl.AbsolutePosition.T;
 		}
 
-		var _y = global_mouseEvent.Y - oThis.HtmlPage.Y - ((nTopPos * g_dKoef_mm_to_pix + 0.5) >> 0);
+		let _x = global_mouseEvent.X - oThis.HtmlPage.X - ((nLeftPos * g_dKoef_mm_to_pix + 0.5) >> 0);
+		let _y = global_mouseEvent.Y - oThis.HtmlPage.Y - ((nTopPos * g_dKoef_mm_to_pix + 0.5) >> 0);
 		_y += oThis.Scroll;
 		_x *= g_dKoef_pix_to_mm;
 		_y *= g_dKoef_pix_to_mm;
