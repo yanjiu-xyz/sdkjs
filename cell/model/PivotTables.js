@@ -7415,7 +7415,7 @@ CT_pivotTableDefinition.prototype.getGetPivotParamsByActiveCell = function(activ
 	const cacheFieds = this.asc_getCacheFields();
 	const indexes = this.getItemsIndexesByActiveCell(row, col);
 	const dataIndex = Math.max(rowItems[indexes.rowItemIndex].i, colItems[indexes.colItemIndex].i);
-	const dataFieldName = dataFields[dataIndex].asc_getName();
+	const dataFieldName = dataFields.length === 1 ? cacheFieds[dataFields[dataIndex].fld].asc_getName() : dataFields[dataIndex].asc_getName();
 	const itemMapArray = this.getNoFilterItemFieldsMapArray(indexes.rowItemIndex, indexes.colItemIndex);
 	const resultOptParams = [];
 	itemMapArray.forEach(function(item) {
@@ -7461,42 +7461,38 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(item
 	 * @return {number}
 	 */
 	function getIndex(items, fields, itemMap) {
-		let i;
 		let minR = 0;
-		const minMapSize = itemMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD) ? 1 : 0;
-		for (i = 0; i < items.length && itemMap.size > minMapSize; i += 1) {
+		for (let i = 0; i < items.length; i += 1) {
 			const item = items[i];
-			if ((item.x.length <= itemMap.size) && item.getR() === minR) {
-				for (let j = 0; j < item.x.length; j += 1) {
-					const fieldIndex = fields[item.getR() + j].asc_getIndex()
+			if (item.getR() > minR) {
+				continue;
+			}
+			for (let j = minR - item.getR(); j < item.x.length; j += 1) {
+				const fieldIndex = fields[item.getR() + j].asc_getIndex();
+				if (fieldIndex === AscCommonExcel.st_VALUES) {
+					const dataIndex = itemMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD);
+					if (dataIndex === item.x[j].getV()) {
+						itemMap.delete(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD);
+						minR = minR + 1;
+					}
+				} else {
 					const field = pivotFields[fieldIndex];
 					const fieldItem = field.getItem(item.x[j].getV());
 					if (itemMap.has(fieldIndex)) {
 						if (itemMap.get(fieldIndex) === fieldItem.x) {
 							itemMap.delete(fieldIndex);
-							minR = item.getR() + j + 1;
-							break;
+							minR = minR + 1;
 						} else {
 							break;
 						}
-					} else if (item.getR() + j > minR) {
-						// Exception
-						return null;
 					}
 				}
 			}
-		}
-		i = i - 1;
-		if (itemMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD)) {
-			const dataIndex = itemMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD)
-			for (; i < items.length; i += 1) {
-				const item = items[i];
-				if (item.i === dataIndex) {
-					break;
-				}
+			if (itemMap.size === 0) {
+				return i;
 			}
 		}
-		return i;
+		return null;
 	}
 	function getIndexWithOnlyDataIndex(items, dataIndex) {
 		for(let i = 0; i < items.length; i += 1) {
