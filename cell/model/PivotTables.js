@@ -7404,7 +7404,7 @@ CT_pivotTableDefinition.prototype.getCellByGetPivotDataParams = function(params)
 
 /**
  * @param {{row: number, col: number}} activeCell
- * @return {GetPivotDataParams}
+ * @return {GetPivotDataParams & {optParamsFormula: string[]}}
  */
 CT_pivotTableDefinition.prototype.getGetPivotParamsByActiveCell = function(activeCell) {
 	const row = activeCell.row;
@@ -7424,16 +7424,39 @@ CT_pivotTableDefinition.prototype.getGetPivotParamsByActiveCell = function(activ
 	const dataFieldName = dataFields.length === 1 ? cacheFieds[dataFields[dataIndex].fld].asc_getName() : dataFields[dataIndex].asc_getName();
 	const itemMapArray = this.getNoFilterItemFieldsMapArray(indexes.rowItemIndex, indexes.colItemIndex);
 	const resultOptParams = [];
+	const resultOptParamsFormula = [];
 	itemMapArray.forEach(function(item) {
 		const fieldIndex = item[0];
 		const fieldItemIndex = item[1];
 		const cacheField = cacheFieds[fieldIndex];
 		const sharedItem = cacheField.getGroupOrSharedItem(fieldItemIndex);
-		resultOptParams.push(cacheField.asc_getName(), sharedItem.getCellValue().getTextValue());
+		let value;
+		let formulaValue;
+		switch (sharedItem.type) {
+			case c_oAscPivotRecType.Number:
+				value = sharedItem.getCellValue().number;
+				formulaValue = value
+				break;
+			case c_oAscPivotRecType.DateTime:
+				value = Asc.cDate.prototype.getDateFromExcel(sharedItem.getCellValue().number);
+				const date = value.getUTCDate() + 1;
+				const month = value.getUTCMonth() + 1;
+				const year = value.getUTCFullYear();
+				value = 'DATE(' + year + ',' + month + ',' + date + ')';
+				formulaValue = value;
+				break;
+			default:
+				value = sharedItem.getCellValue().getTextValue();
+				formulaValue = '"' + value + '"'
+				break;
+		}
+		resultOptParams.push(cacheField.asc_getName(), value);
+		resultOptParamsFormula.push('"' + cacheField.asc_getName() + '"', formulaValue);
 	})
 	return {
 		dataFieldName: dataFieldName,
 		optParams: resultOptParams,
+		optParamsFormula: resultOptParamsFormula,
 	};
 };
 

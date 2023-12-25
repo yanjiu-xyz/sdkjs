@@ -11299,6 +11299,7 @@
 
 			if (ranges.length === 1 && ranges[0].isOneCell() && this.getFormulaEditMode()) {
 				let range = ranges[0];
+				/**@type {CT_pivotTableDefinition[]} */
 				let pivotTables = this.model.getPivotTablesIntersectingRange(range);
 				if (pivotTables.length === 1) {
 					let dataParams = pivotTables[0].getGetPivotParamsByActiveCell({row: range.r1, col: range.c1});
@@ -11310,7 +11311,7 @@
 						formula += '"' + dataParams.dataFieldName + '"'
 						formula += ',' + leftCell.getName(absName ? AscCommonExcel.referenceType.A : AscCommonExcel.referenceType.R);
 						if (dataParams.optParams.length > 0) {
-							formula += ',"' + dataParams.optParams.join('","') + '"';
+							formula += ',' + dataParams.optParamsFormula.join(',');
 						}
 						formula += ')';
 						res.push(formula);
