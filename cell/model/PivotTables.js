@@ -7433,16 +7433,20 @@ CT_pivotTableDefinition.prototype.getGetPivotParamsByActiveCell = function(activ
 		let value;
 		let formulaValue;
 		switch (sharedItem.type) {
-			case c_oAscPivotRecType.Number:
+			case Asc.c_oAscPivotRecType.Number:
 				value = sharedItem.getCellValue().number;
 				formulaValue = value
 				break;
-			case c_oAscPivotRecType.DateTime:
+			case Asc.c_oAscPivotRecType.DateTime:
 				value = Asc.cDate.prototype.getDateFromExcel(sharedItem.getCellValue().number);
 				const date = value.getUTCDate() + 1;
 				const month = value.getUTCMonth() + 1;
 				const year = value.getUTCFullYear();
 				value = 'DATE(' + year + ',' + month + ',' + date + ')';
+				formulaValue = value;
+				break;
+			case Asc.c_oAscPivotRecType.Boolean:
+				value = sharedItem.getCellValue().getTextValue();
 				formulaValue = value;
 				break;
 			default:
