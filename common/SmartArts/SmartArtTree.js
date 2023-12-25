@@ -3308,7 +3308,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 	PresNode.prototype.createShadowShape = function (isComposite, isCombine) {
 		this.shape = new ShadowShape(this);
 		this.shape.initFromShape(this.layoutInfo.shape);
-		this.shape.isSpacing = isComposite || isCombine;
+		this.shape.isSpacing = !(isComposite || isCombine);
 		if (isComposite) {
 			if (this.childs.length) {
 				const firstShape = this.childs[0].shape;
