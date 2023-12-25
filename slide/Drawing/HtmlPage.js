@@ -547,7 +547,7 @@ function CEditorPage(api)
 		this.m_oAnimPaneHeaderContainer.AddControl(this.m_oAnimPaneHeader);
 
 		this.m_oAnimPaneListContainer = CreateControlContainer("id_anim_list_container");
-		this.m_oAnimPaneListContainer.Bounds.SetParams(TIMELINE_LEFT_MARGIN, HEADER_HEIGHT, TIMELINE_LIST_RIGHT_MARGIN, TIMELINE_HEIGHT, true, true, true, true, -1, -1);
+		this.m_oAnimPaneListContainer.Bounds.SetParams(0, HEADER_HEIGHT, 0, TIMELINE_HEIGHT, true, true, true, true, -1, -1);
 		this.m_oAnimPaneListContainer.Anchor = (g_anchor_left | g_anchor_right | g_anchor_top | g_anchor_bottom);
 		this.m_oAnimationPaneContainer.AddControl(this.m_oAnimPaneListContainer);
 

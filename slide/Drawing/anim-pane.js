@@ -1757,8 +1757,6 @@
 			if (!this.hit(x, y)) { return }
 			console.log('showContextMenu on effect', this.parentControl.effect.Id);
 		}
-
-		this.contextMenuButton.onMouseDownCallback = () => console.log('hello')
 	}
 
 	InitClass(CAnimItem, CControlContainer, CONTROL_TYPE_ANIM_ITEM);
@@ -1766,18 +1764,18 @@
 	CAnimItem.prototype.recalculateChildrenLayout = function () {
 		const dYInside = (this.getHeight() - EFFECT_BAR_HEIGHT) / 2;
 
-		if (this.indexLabel) this.indexLabel.setLayout(0, 0, ANIM_ITEM_HEIGHT, ANIM_ITEM_HEIGHT)
+		if (this.indexLabel) this.indexLabel.setLayout(AscCommon.TIMELINE_LEFT_MARGIN, 0, ANIM_ITEM_HEIGHT, ANIM_ITEM_HEIGHT)
 
-		this.eventTypeImage.setLayout(INDEX_LABEL_WIDTH, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
+		this.eventTypeImage.setLayout(AscCommon.TIMELINE_LEFT_MARGIN + INDEX_LABEL_WIDTH, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
 		this.effectTypeImage.setLayout(this.eventTypeImage.getRight(), dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
 
 		this.effectLabel.setLayout(this.effectTypeImage.getRight(), dYInside, 20, EFFECT_BAR_HEIGHT);
 
-		const effectBarWidth = this.getWidth() - this.effectLabel.getRight() - ANIM_ITEM_HEIGHT;
+		const effectBarWidth = this.getWidth() - this.effectLabel.getRight() - ANIM_ITEM_HEIGHT - AscCommon.TIMELINE_LIST_RIGHT_MARGIN;
 		this.effectBar.setLayout(this.effectLabel.getRight(), dYInside, effectBarWidth, EFFECT_BAR_HEIGHT);
 
 		let dRightSpace = dYInside;
-		this.contextMenuButton.setLayout(this.getRight() - ANIM_ITEM_HEIGHT + dRightSpace, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
+		this.contextMenuButton.setLayout(this.getRight() - ANIM_ITEM_HEIGHT - AscCommon.TIMELINE_LIST_RIGHT_MARGIN + dRightSpace, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
 	};
 	CAnimItem.prototype.canHandleEvents = function () {
 		return true;
