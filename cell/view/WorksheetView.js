@@ -2882,6 +2882,7 @@
 
 			newPagePrint.titleHeight = curTitleHeight;
 
+			let rightBorderWidth = null;
 			for (rowIndex = currentRowIndex; rowIndex <= range.r2; ++rowIndex) {
 				let currentRowHeight = _getRowHeight(rowIndex) * scale;
 				let currentRowHeightReal = (t._getRowHeight(rowIndex)/this.getRetinaPixelRatio()) *scale;
@@ -2951,6 +2952,13 @@
 					realPageWidth = currentWidth;
 				}
 
+
+				let endCell = t.model.getCell3(rowIndex, colIndex - 1);
+				let fullBordersEndCell = endCell.getBorderFull();
+				if (fullBordersEndCell && fullBordersEndCell.r) {
+					rightBorderWidth = Math.max(fullBordersEndCell.r.w, rightBorderWidth);
+				}
+
 				currentHeight += currentRowHeight;
 				currentHeightReal += currentRowHeightReal;
 				if(tRow1 !== undefined && rowIndex >= tRow1 && rowIndex <= tRow2) {
@@ -2964,6 +2972,12 @@
 				currentHeight += this.cellsTop;
 				currentHeightReal += this.cellsTop;
 			}
+			
+			if (rightBorderWidth) {
+				rightBorderWidth = Math.floor(rightBorderWidth / 2);
+				newPagePrint.pageClipRectWidth += rightBorderWidth;
+			}
+
 			if (startPrintPreview && (bFitToHeight || bFitToWidth)) {
 				newPagePrint.pageClipRectHeight = Math.max(currentHeight, newPagePrint.pageClipRectHeight, currentHeightReal);
 				//newPagePrint.pageHeight = newPagePrint.pageClipRectHeight * vector_koef + (pageTopField + pageBottomField);
