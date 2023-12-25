@@ -1751,14 +1751,18 @@
 		this.effectTypeImage = this.addControl(new CImageControl(this));
 		this.effectLabel = this.addControl(new CLabel(this, this.effect.getObjectName(), 7.5));
 		this.effectBar = this.addControl(new CEffectBar(this));
-		this.contextMenuButton = this.addControl(new CButton(this));
+		this.contextMenuButton = this.addControl(new CButton(this, showContextMenu));
+
+		function showContextMenu(e, x, y) {
+			if (!this.hit(x, y)) { return }
+			console.log('showContextMenu on effect', this.parentControl.effect.Id);
+		}
+
+		this.contextMenuButton.onMouseDownCallback = () => console.log('hello')
 	}
 
 	InitClass(CAnimItem, CControlContainer, CONTROL_TYPE_ANIM_ITEM);
 
-	CAnimItem.prototype.getEffectLabelRight = function () {
-		return LABEL_TIMELINE_WIDTH;
-	};
 	CAnimItem.prototype.recalculateChildrenLayout = function () {
 		const dYInside = (this.getHeight() - EFFECT_BAR_HEIGHT) / 2;
 
@@ -1767,14 +1771,13 @@
 		this.eventTypeImage.setLayout(INDEX_LABEL_WIDTH, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
 		this.effectTypeImage.setLayout(this.eventTypeImage.getRight(), dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
 
-		const dLabelRight = this.getEffectLabelRight();
-		const dEffectLabelLeft = this.effectTypeImage.getRight();
+		this.effectLabel.setLayout(this.effectTypeImage.getRight(), dYInside, 20, EFFECT_BAR_HEIGHT);
 
-		this.effectLabel.setLayout(dEffectLabelLeft, dYInside, dLabelRight - dEffectLabelLeft, EFFECT_BAR_HEIGHT);
-		this.effectBar.setLayout(0, 0, 0, 0);//todo
+		const effectBarWidth = this.getWidth() - this.effectLabel.getRight() - ANIM_ITEM_HEIGHT;
+		this.effectBar.setLayout(this.effectLabel.getRight(), dYInside, effectBarWidth, EFFECT_BAR_HEIGHT);
 
 		let dRightSpace = dYInside;
-		this.contextMenuButton.setLayout(this.getRight() - EFFECT_BAR_HEIGHT - dRightSpace, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
+		this.contextMenuButton.setLayout(this.getRight() - ANIM_ITEM_HEIGHT + dRightSpace, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
 	};
 	CAnimItem.prototype.canHandleEvents = function () {
 		return true;
