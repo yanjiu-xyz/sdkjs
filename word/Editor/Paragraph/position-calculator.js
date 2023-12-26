@@ -149,19 +149,8 @@
 		this.bidi.end();
 		this.bidi.begin(this.rtl);
 		
-		if (isCurrentRun && !run.Content[currentPos])
-		{
-			this.setNextCurrent();
+		if (!isCurrentRun)
 			return;
-		}
-		else if (!isCurrentRun)
-		{
-			if (!this.isNextCurrent || run.Content.length <= 0)
-				return;
-			
-			currentPos = 0;
-			this.isNextCurrent = false;
-		}
 		
 		let paraMathLocation = run.ParaMath.GetLinePosition(this.line, this.range);
 		
@@ -169,15 +158,31 @@
 		this.y = paraMathLocation.y;
 		
 		let mathY = this.y;
-		let elementLocation = run.Content[currentPos].GetLocationOfLetter();
-		this.x += elementLocation.x;
-		this.y += elementLocation.y;
+		
+		if (run.IsEmpty())
+		{
+			this.x += run.pos.x;
+			this.y += run.pos.y;
+		}
+		else
+		{
+			let w = 0;
+			if (!run.Content[currentPos])
+			{
+				currentPos = run.Content.length - 1;
+				w          = run.Content[currentPos].GetWidthVisible();
+			}
+			
+			let elementLocation = run.Content[currentPos].GetLocationOfLetter();
+			this.x += elementLocation.x + w;
+			this.y += elementLocation.y;
+		}
 		
 		// TODO: Пометить данное место, как текущее
 		this.posInfo.x     = this.x;
 		this.posInfo.y     = this.y;
 		this.posInfo.mathY = mathY;
-		
+		this.posInfo.run   = run;
 	};
 	ParagraphPositionCalculator.prototype.getXY = function()
 	{
