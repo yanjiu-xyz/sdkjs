@@ -1548,7 +1548,7 @@
 			this.getWidth() - AscCommon.TIMELINE_LEFT_MARGIN - AscCommon.TIMELINE_LIST_RIGHT_MARGIN,
 			this.seqList.getHeight());
 		this.seqList.recalculate();
-		this.setLayout(0, 0, this.seqList.getWidth(), this.seqList.getHeight());
+		this.setLayout(0, 0, this.getWidth(), this.seqList.getHeight());
 	};
 
 	CSeqListContainer.prototype.clipStart = function (graphics) {
