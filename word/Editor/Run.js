@@ -2160,7 +2160,7 @@ ParaRun.prototype.recalculateCursorPosition = function(positionCalculator, isCur
 	}
 	
 	if (isCurrent && endPos === this.State.ContentPos)
-		positionCalculator.setNextCurrent();
+		positionCalculator.setNextCurrent(this);
 }
 /**
  * Get auto color against current background color

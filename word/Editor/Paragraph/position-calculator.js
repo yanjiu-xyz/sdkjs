@@ -56,6 +56,7 @@
 		this.rtl  = false;
 		
 		this.isNextCurrent = false;
+		this.nextRun       = null;
 		
 		this.posInfo = {
 			x     : 0,
@@ -67,6 +68,7 @@
 	ParagraphPositionCalculator.prototype.reset = function(page, line, range)
 	{
 		this.isNextCurrent = false;
+		this.nextRun       = null;
 		
 		this.page  = page;
 		this.line  = line;
@@ -82,16 +84,17 @@
 		
 		this.bidi.begin();
 	};
-	ParagraphPositionCalculator.prototype.setNextCurrent = function()
+	ParagraphPositionCalculator.prototype.setNextCurrent = function(run)
 	{
 		this.isNextCurrent = true;
+		this.nextRun       = run;
 	};
 	ParagraphPositionCalculator.prototype.handleRunElement = function(element, run, isCurrent, isNearFootnoteRef)
 	{
 		if (para_Drawing === element.Type && !element.IsInline())
 		{
 			if (isCurrent)
-				this.setNextCurrent();
+				this.setNextCurrent(run);
 			return;
 		}
 		
@@ -99,6 +102,8 @@
 		{
 			isCurrent = true;
 			this.isNextCurrent = false;
+			run = this.nextRun;
+			this.nextRun = null;
 		}
 		
 		this.bidi.add([element, run, isCurrent, isNearFootnoteRef], element.getBidiType());
