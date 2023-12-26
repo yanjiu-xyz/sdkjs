@@ -11309,7 +11309,7 @@
 
 						let formula = 'GETPIVOTDATA(';
 						formula += '"' + dataParams.dataFieldName + '"'
-						formula += ',' + leftCell.getName(absName ? AscCommonExcel.referenceType.A : AscCommonExcel.referenceType.R);
+						formula += ',' + leftCell.getName(AscCommonExcel.referenceType.A);
 						if (dataParams.optParams.length > 0) {
 							formula += ',' + dataParams.optParamsFormula.join(',');
 						}

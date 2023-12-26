@@ -7439,7 +7439,7 @@ CT_pivotTableDefinition.prototype.getGetPivotParamsByActiveCell = function(activ
 				break;
 			case Asc.c_oAscPivotRecType.DateTime:
 				value = Asc.cDate.prototype.getDateFromExcel(sharedItem.getCellValue().number);
-				const date = value.getUTCDate() + 1;
+				const date = value.getUTCDate();
 				const month = value.getUTCMonth() + 1;
 				const year = value.getUTCFullYear();
 				value = 'DATE(' + year + ',' + month + ',' + date + ')';

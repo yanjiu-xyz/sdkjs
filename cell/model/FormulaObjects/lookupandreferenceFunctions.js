@@ -1270,16 +1270,9 @@ function (window, undefined) {
 		};
 
 		const prepareItemsArray = function (array) {
-			let resArr = [];
-			for (let i = 0; i < array.length; i++) {
-				let item = array[i];
-				if (item.type === cElementType.error) {
-					return;
-				}
-				resArr.push(item.getValue());
-			}
-
-			return resArr;
+			return array.map(function(elem) {
+				return elem.getValue();
+			});
 		};
 
 		const t = this;
