@@ -2159,47 +2159,50 @@ CChartsDrawer.prototype =
 		return arrayValues;
 	},
 
-	/*
-	Assumptions 
-		yMin and yMax alywas nummeric
-		yMin always less than yMax
-		logBase is always >= 2
-	*/
-	_getLogArray: function (yMin, yMax, logBase, axis) {
+	_getLogArray: function (yMin, yMax, logBase, axis) {	
+		// first check dependencies to be numeric and valid
+		if((yMin !== 0 && !yMin) || (yMax !== 0 && !yMax)) {
+			return [1, logBase];
+		}
+		logBase = (logBase < 2) ? 2 : logBase;
+
 		/**
 		 * axis contains min and max values and logBase
 		 * if they are null just use yMin lowerBound and yMax upperBound
-		 * create loop from min to max, multiply each time by logBase
-		 */
+		*/
 		let kF = 1000000000;
-		let trueMin = (axis.scaling && axis.scaling.min) !== null ? Math.round(axis.scaling.min * kF) / kF : null;
-		let trueMax = (axis.scaling && axis.scaling.max) !== null ? Math.round(axis.scaling.max * kF) / kF : null;
-		yMin = (yMin <= 0) ? 1 : yMin;
+		let trueMin = (axis && axis.scaling && axis.scaling.min) !== null ? Math.round(axis.scaling.min * kF) / kF : null;
+		let trueMax = (axis && axis.scaling && axis.scaling.max) !== null ? Math.round(axis.scaling.max * kF) / kF : null;
+		yMin = (yMin <= 0 || yMin >= 1) ? 1 : yMin;
 		yMax = (yMax <= 0) ? logBase : yMax;
 		trueMin = (!trueMin || trueMin <= 0) ? yMin : trueMin;
 		trueMax = (!trueMax || trueMax <= 0) ? yMax : trueMax;
 
-		trueMin = Math.pow(logBase, Math.floor(Math.log(trueMin) / Math.log(logBase)));
-		trueMax = Math.pow(logBase, Math.ceil(Math.log(trueMax) / Math.log(logBase)));
+		//for the cases when min > max ;
+		let realTrueMax = Math.max(trueMin, trueMax);
+		let realTrueMin = Math.min(trueMin, trueMax);
+
+		// normalize min and max on the scale of logBase;
+		// create loop from min to max, multiply each time by logBase
+		const trueMaxPower = Math.ceil(Math.log(realTrueMax) / Math.log(logBase));
+		const trueMinPower = Math.floor(Math.log(realTrueMin) / Math.log(logBase));
+		realTrueMax = Math.pow(logBase, trueMaxPower);
+		realTrueMin = Math.pow(logBase, trueMinPower);
 		const result = [];
-
-		//------------------------------
-		/* Possible cases */
-
-		// trueMin is too small
-		if (trueMin > 0 && trueMin < 1e-12) {
-			trueMin = 1e-12;
+		while (realTrueMin != 0 && realTrueMin <= realTrueMax) {
+			result.push(realTrueMin);
+			realTrueMin *= logBase;
 		}
 
-		// range between trueMin and trueMax is too huge
-		if (trueMax / trueMin > 1e50) {
-			trueMin = trueMax / 1e50;
+		// fo the cases where last number was a little bit greater than target
+		// 105000000001 <= 10500000000
+		const prevVal = realTrueMin / logBase;
+		if (Math.abs(realTrueMax - prevVal) > Math.abs(realTrueMax - realTrueMin)){
+			result.push(realTrueMin)
 		}
-		//------------------------------
 
-		while (trueMin <= trueMax) {
-			result.push(trueMin);
-			trueMin *= logBase;
+		if (result.length === 1) {
+			result.push(result[0] * logBase);
 		}
 		return result;
 
@@ -2937,20 +2940,21 @@ CChartsDrawer.prototype =
 		return result;
 	},
 
-	// Assumptions:
-	/*	yPoints.length always >= 2
-		logBase is always 10
-	 */
 	_getYPositionLogBase: function (val, yPoints, isOx, logBase) {
-		if (val <= 0) {
+		// first check dependencies to be numeric and valid
+		if (!val && val <= 0) {
 			return this.axesChart[0].axis.xPoints ? (this.calcProp.heightCanvas / this.calcProp.pxToMM) : 0;
 		}
+		if (!yPoints || yPoints.length < 2) {
+			return null;
+		}
+		logBase = (logBase < 2) ? 2 : logBase;
 
-		const startingPos = yPoints[yPoints.length - 1].pos;
-		const stepDistance = yPoints[yPoints.length - 2].pos - yPoints[yPoints.length - 1].pos;
 		const startingPoint = Math.log(yPoints[yPoints.length - 1].val) / Math.log(logBase);
 		const currentPoint = Math.log(val) / Math.log(logBase);
 		const pointsDiff = startingPoint - currentPoint;
+		const startingPos = yPoints[yPoints.length - 1].pos;
+		const stepDistance = yPoints[yPoints.length - 2].pos - yPoints[yPoints.length - 1].pos;
 		return (stepDistance * pointsDiff) + startingPos;
 
 		// var logVal = Math.log(val) / Math.log(logBase);
@@ -3232,14 +3236,19 @@ CChartsDrawer.prototype =
 	},
 
 	_roundValues: function (values) {
-		//ToDo пересмотреть округление. на числа << 0 могут быть проблемы!
-		var kF = 1000000000;
 		if (values.length) {
-			for (var i = 0; i < values.length; i++) {
-				values[i] = Math.round(values[i] * kF) / kF;
+		  for (let i = 0; i < values.length; i++) {
+			let count = 1;
+			let kF = 1000000000;
+			if (values[i] !== 0 && Math.abs(values[i] * kF) < 1) {
+				while (Math.abs(values[i]*kF) < 1) {
+					kF *= 10;
+				}
 			}
+			values[i] = Math.round(values[i] * kF) / (kF * count);
+		  }
 		}
-
+	  
 		return values;
 	},
 	
