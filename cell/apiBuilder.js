@@ -2076,14 +2076,16 @@
 	 * @typeofeditors ["CSE"]
 	 */
 	ApiRange.prototype.Clear = function () {
-		this.range.cleanAll();
-		let ws = this.Worksheet.worksheet;
-		ws.deletePivotTables(this.range.bbox);
-		ws.removeSparklines(this.range.bbox);
-		ws.clearDataValidation([this.range.bbox], true);
-		ws.clearConditionalFormattingRulesByRanges([this.range.bbox]);
-		let wsView = Asc['editor'].wb.getWorksheet(ws.getIndex());
-		wsView.cellCommentator.deleteCommentsRange(this.range.bbox, null);
+		let range = this.range,
+			bbox = range.bbox,
+			ws = range.worksheet,
+			wsView = Asc['editor'].wb.getWorksheet(ws.getIndex());
+		range.cleanAll();
+		ws.deletePivotTables(bbox);
+		ws.removeSparklines(bbox);
+		ws.clearDataValidation([bbox], true);
+		ws.clearConditionalFormattingRulesByRanges([bbox]);
+		wsView.cellCommentator.deleteCommentsRange(bbox, null);
 	};
 
 	/**
