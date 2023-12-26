@@ -958,16 +958,25 @@
 		this.applyPostEditorSettings(shape);
 		return shape;
 	}
+	ShadowShape.prototype.getAdjFactor = function () {
+		if (this.type === AscFormat.LayoutShapeType_shapeType_pie) {
+			return 60000;
+		}
+		return 100000;
+	};
 	ShadowShape.prototype.applyAdjLst = function (editorShape) {
 		const adjLst = this.customAdj || (this.shape && this.shape.adjLst);
 		if (adjLst) {
 			const geometry = editorShape.spPr.geometry;
+			const factor = this.getAdjFactor();
+			const singleAdjName = "adj";
 			for (let i = 0; i < adjLst.list.length; i += 1) {
 				const adj = adjLst.list[i];
-				const geometryAdj = geometry.ahXYLstInfo[adj.idx - 1];
-				const adjName = geometryAdj && (geometryAdj.gdRefX || geometryAdj.gdRefY);
+				const adjName = singleAdjName + adj.idx;
 				if (geometry.avLst[adjName]) {
-					geometry.AddAdj(adjName, 0, adj.val * 100000);
+					geometry.AddAdj(adjName, 0, adj.val * factor);
+				} else if (geometry.avLst[singleAdjName]) {
+					geometry.AddAdj(singleAdjName, 0, adj.val * factor);
 				}
 			}
 		}
