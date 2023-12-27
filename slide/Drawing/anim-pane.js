@@ -1748,7 +1748,7 @@
 		this.effect = oEffect;
 
 		if (this.effect.isClickEffect() || !this.effect.getPreviousEffect()) {
-			this.indexLabel = this.addControl(new CLabel(this, this.effect.getIndexInSequence() + "", 7.5))
+			this.indexLabel = this.addControl(new CLabel(this, this.effect.getIndexInSequence() + "", 7.5, false, 2))
 		}
 
 		this.eventTypeImage = this.addControl(new CImageControl(this));
