@@ -8731,6 +8731,12 @@ Paragraph.prototype.DrawSelectionOnPage = function(CurPage)
 					
 					drawSelectionState.endRange();
 					
+					let anchored = drawSelectionState.getAnchoredObjects();
+					for (let index = 0; index < anchored.length; ++index)
+					{
+						anchored[index].Draw_Selection();
+					}
+					
 					let selectionRanges = drawSelectionState.getSelectionRanges();
 					for (let iSel = 0; iSel < selectionRanges.length; ++iSel)
 					{

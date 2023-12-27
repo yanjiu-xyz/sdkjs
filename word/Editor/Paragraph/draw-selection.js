@@ -62,6 +62,8 @@
 		this.endElement   = null;
 		this.beginInfo    = null;
 		this.endInfo      = null;
+		
+		this.anchoredObjects = [];
 	}
 	ParagraphDrawSelectionState.prototype.resetPage = function(page)
 	{
@@ -87,6 +89,8 @@
 		
 		this.beginElement = null;
 		this.endElement   = null;
+		
+		this.flowObjects = [];
 	};
 	ParagraphDrawSelectionState.prototype.endRange = function()
 	{
@@ -95,6 +99,10 @@
 	ParagraphDrawSelectionState.prototype.getSelectionRanges = function()
 	{
 		return this.selectionRanges;
+	};
+	ParagraphDrawSelectionState.prototype.getAnchoredObjects = function()
+	{
+		return this.anchoredObjects;
 	};
 	ParagraphDrawSelectionState.prototype.getBeginInfo = function()
 	{
@@ -118,7 +126,9 @@
 	{
 		if (para_Drawing === element.Type && !element.IsInline())
 		{
-			element.Draw_Selection();
+			if (isSelected)
+				this.anchoredObjects.push(element);
+			
 			return;
 		}
 		
