@@ -1775,15 +1775,7 @@
 
 		this.effectLabel.setLayout(this.effectTypeImage.getRight(), dYInside, 20, EFFECT_BAR_HEIGHT);
 
-		const timelineContainer = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control
-		if (timelineContainer) {
-			const index = timelineContainer.timeline.timeScaleIndex;
-			const effectBarWidth = this.effect.asc_getDuration() * TIME_INTERVALS[index] / TIME_SCALES[index] / 1000;
-			const effectBarLeft = timelineContainer.timeline.getLeft()
-				+ timelineContainer.timeline.getZeroShift()
-				- SCROLL_BUTTON_SIZE;
-			this.effectBar.setLayout(effectBarLeft, dYInside, effectBarWidth, EFFECT_BAR_HEIGHT);
-		}
+		this.effectBar.recalculateLayout()
 
 		let dRightSpace = dYInside;
 		this.contextMenuButton.setLayout(this.getRight() - ANIM_ITEM_HEIGHT + dRightSpace, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
@@ -1801,9 +1793,29 @@
 
 	function CEffectBar(oParentControl) {
 		CControl.call(this, oParentControl)
+
+		// delay and duration in milliseconds
+		this.delay = 0;
+		this.duration = this.parentControl.effect.asc_getDuration();
 	}
 
 	InitClass(CEffectBar, CControl, CONTROL_TYPE_EFFECT_BAR);
+
+	CEffectBar.prototype.recalculateLayout = function () {
+		const timelineContainer = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control
+		if (!timelineContainer) { return }
+
+		const timeline = timelineContainer.timeline;
+
+		const effectBarLeft = timeline.getLeft() + timeline.getZeroShift() - SCROLL_BUTTON_SIZE;
+		const dYInside = (this.parentControl.getHeight() - EFFECT_BAR_HEIGHT) / 2;
+		const effectBarWidth = this.ms_to_mm(this.duration);
+		this.setLayout(effectBarLeft + this.ms_to_mm(this.delay), dYInside, effectBarWidth, EFFECT_BAR_HEIGHT);
+	}
+	CEffectBar.prototype.ms_to_mm = function (nMilliseconds) {
+		const index = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.timeScaleIndex;
+		return nMilliseconds * TIME_INTERVALS[index] / TIME_SCALES[index] / 1000;
+	}
 
 
 	// Header
