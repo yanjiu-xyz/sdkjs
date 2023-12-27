@@ -2437,7 +2437,10 @@
 				}
 			}
 		}
-		data = checkFormat(data || 0);
+		if (data === undefined || data === null)
+			data = AscCommon.cErrorLocal["na"];
+
+		data = checkFormat(data);
 		let range = this.range;
 		let merged = range.hasMerged();
 		if (merged)
