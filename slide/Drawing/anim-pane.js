@@ -1792,14 +1792,40 @@
 
 
 	function CEffectBar(oParentControl) {
-		CControl.call(this, oParentControl)
+		CButton.call(this, oParentControl)
 
-		// delay and duration in milliseconds
-		this.delay = 0;
+		// startTime and duration in milliseconds
+		this.startTime = 0;
 		this.duration = this.parentControl.effect.asc_getDuration();
+
+		this.onMouseDownCallback = function stickToPointer(event, x, y) {
+			if (!this.hit(x, y)) { return }
+
+			// Remembering the point where the effectBar was pressed
+			this.innerPressingX = this.getInvFullTransformMatrix().TransformPointX(x, y);
+
+			this.isStickedToPointer = true
+			this.onUpdate()
+		}
+
+		this.onMouseUpCallback = function unstickFromPointer(event, x, y) {
+			this.isStickedToPointer = false;
+			this.onUpdate()
+		}
+
+		this.onMouseMoveCallback = function handlePointerMovement(event, x, y) {
+			if (!this.isStickedToPointer) { return }
+
+			let oInv = this.getInvFullTransformMatrix();
+			let tx = oInv.TransformPointX(x, y);
+			let newLeft = this.getLeft() + tx - this.innerPressingX;
+			this.setLayout(newLeft, this.getTop(), this.getWidth(), this.getHeight())
+
+			this.onUpdate()
+		}
 	}
 
-	InitClass(CEffectBar, CControl, CONTROL_TYPE_EFFECT_BAR);
+	InitClass(CEffectBar, CButton, CONTROL_TYPE_EFFECT_BAR);
 
 	CEffectBar.prototype.recalculateLayout = function () {
 		const timelineContainer = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control
@@ -1810,7 +1836,7 @@
 		const effectBarLeft = timeline.getLeft() + timeline.getZeroShift() - SCROLL_BUTTON_SIZE;
 		const dYInside = (this.parentControl.getHeight() - EFFECT_BAR_HEIGHT) / 2;
 		const effectBarWidth = this.ms_to_mm(this.duration);
-		this.setLayout(effectBarLeft + this.ms_to_mm(this.delay), dYInside, effectBarWidth, EFFECT_BAR_HEIGHT);
+		this.setLayout(effectBarLeft + this.ms_to_mm(this.startTime), dYInside, effectBarWidth, EFFECT_BAR_HEIGHT);
 	}
 	CEffectBar.prototype.ms_to_mm = function (nMilliseconds) {
 		const index = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.timeScaleIndex;
