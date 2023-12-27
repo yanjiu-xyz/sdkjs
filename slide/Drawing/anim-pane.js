@@ -1055,7 +1055,7 @@
 
 		function manageTimelineScale(event, x, y) {
 			if (!this.hit(x, y)) { return }
-			this.next.timeScaleIndex = (this.next.timeScaleIndex + 1) % 11
+			this.next.timeScaleIndex = (this.next.timeScaleIndex + 1) % TIME_SCALES.length
 			this.next.onUpdate()
 		}
 	}
@@ -1835,7 +1835,7 @@
 	const SCROLL_STEP = 0.26
 
 	//Time scales in seconds
-	const TIME_SCALES = [1, 1, 2, 5, 10, 20, 60, 120, 300, 600, 600];
+	const TIME_SCALES = [0.25, 1, 1, 2, 5, 10, 20, 60, 120, 300, 600, 600];
 
 	//lengths
 	const SMALL_TIME_INTERVAL = 15;
@@ -1844,6 +1844,7 @@
 	const LONG_TIME_INTERVAL = 30;
 
 	const TIME_INTERVALS = [
+		SMALL_TIME_INTERVAL,
 		LONG_TIME_INTERVAL, //1
 		SMALL_TIME_INTERVAL, //1
 		SMALL_TIME_INTERVAL, //2
