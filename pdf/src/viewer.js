@@ -791,6 +791,7 @@
 				{
 					window["AscViewer"].setFilePassword(this.file, password);
 					this.Api.currentPassword = password;
+					this.Api.currentPasswordOld = this.Api.currentPassword;
 				}
 			}
 			else
