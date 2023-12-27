@@ -1775,8 +1775,15 @@
 
 		this.effectLabel.setLayout(this.effectTypeImage.getRight(), dYInside, 20, EFFECT_BAR_HEIGHT);
 
-		const effectBarWidth = this.getWidth() - this.effectLabel.getRight() - ANIM_ITEM_HEIGHT;
-		this.effectBar.setLayout(this.effectLabel.getRight(), dYInside, effectBarWidth, EFFECT_BAR_HEIGHT);
+		const timelineContainer = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control
+		if (timelineContainer) {
+			const index = timelineContainer.timeline.timeScaleIndex;
+			const effectBarWidth = this.effect.asc_getDuration() * TIME_INTERVALS[index] / TIME_SCALES[index] / 1000;
+			const effectBarLeft = timelineContainer.timeline.getLeft()
+				+ timelineContainer.timeline.getZeroShift()
+				- SCROLL_BUTTON_SIZE;
+			this.effectBar.setLayout(effectBarLeft, dYInside, effectBarWidth, EFFECT_BAR_HEIGHT);
+		}
 
 		let dRightSpace = dYInside;
 		this.contextMenuButton.setLayout(this.getRight() - ANIM_ITEM_HEIGHT + dRightSpace, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
