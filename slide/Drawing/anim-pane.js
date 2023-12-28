@@ -1790,6 +1790,30 @@
 		return nMilliseconds * TIME_INTERVALS[index] / TIME_SCALES[index] / 1000;
 	}
 
+	CAnimItem.prototype.draw = function drawEffectBar(graphics) {
+		const timelineContainer = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control
+		if (!timelineContainer) { return }
+
+		if (this.isHidden()) { return false }
+		if (!this.checkUpdateRect(graphics.updatedRect)) { return false }
+
+		graphics.SaveGrState();
+
+		let x = timeline.getLeft()
+		let y = 0;
+		let extX = 50;
+		let extY = EFFECT_BAR_HEIGHT;
+
+		graphics.b_color1(255, 0, 0, 255);
+
+		graphics.rect(x, y, extX, extY);
+		graphics.df();
+
+		graphics.RestoreGrState();
+
+		return CControlContainer.prototype.draw.call(this, graphics);
+	};
+
 
 	// Header
 	const PLAY_BUTTON_WIDTH = 82 * AscCommon.g_dKoef_pix_to_mm;
