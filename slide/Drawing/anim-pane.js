@@ -1785,6 +1785,10 @@
 	CAnimItem.prototype.getOutlineColor = function () {
 		return null;
 	};
+	CAnimItem.prototype.ms_to_mm = function (nMilliseconds) {
+		const index = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.timeScaleIndex;
+		return nMilliseconds * TIME_INTERVALS[index] / TIME_SCALES[index] / 1000;
+	}
 
 
 	// Header
