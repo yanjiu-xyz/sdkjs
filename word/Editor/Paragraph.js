@@ -1636,6 +1636,7 @@ Paragraph.prototype.CheckSplitPageOnPageBreak = function(oPageBreakItem)
  */
 Paragraph.prototype.Internal_Recalculate_CurPos = function(updateCurPos, updateTarget, returnTarget)
 {
+	let transform = this.Get_ParentTextTransform();
 	let result = {
 		X         : 0,
 		Y         : 0,
@@ -1646,7 +1647,7 @@ Paragraph.prototype.Internal_Recalculate_CurPos = function(updateCurPos, updateT
 			Page  : 0,
 			Range : 0
 		},
-		Transform : this.Get_ParentTextTransform()
+		Transform : transform
 	};
 
 	if (!this.IsRecalculated() || this.Lines.length <= 0)
@@ -1752,6 +1753,7 @@ Paragraph.prototype.Internal_Recalculate_CurPos = function(updateCurPos, updateT
 		let drawingDocument = this.DrawingDocument;
 		drawingDocument.SetTargetColor(color.r, color.g, color.b);
 		drawingDocument.SetTargetSize(targetH, ascent);
+		drawingDocument.UpdateTargetTransform(transform);
 		drawingDocument.UpdateTarget(targetX, targetY, absPage);
 	}
 	

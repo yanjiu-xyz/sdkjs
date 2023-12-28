@@ -2175,7 +2175,7 @@ ParaRun.prototype.getAutoColor = function()
 	let textPr = this.getCompiledPr();
 	if (textPr.FontRef && textPr.FontRef.Color)
 	{
-		text.FontRef.Color.check(paragraph.getTheme(), paragraph.getColorMap());
+		textPr.FontRef.Color.check(paragraph.getTheme(), paragraph.getColorMap());
 		let RGBA = textPr.FontRef.Color.RGBA;
 		return new AscWord.CDocumentColor(RGBA.R, RGBA.G, RGBA.B, RGBA.A);
 	}
