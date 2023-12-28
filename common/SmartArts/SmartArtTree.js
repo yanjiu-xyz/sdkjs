@@ -225,17 +225,18 @@
 	};
 	If.prototype.funcDepth = function (currentNode) {
 		const conditionValue = parseInt(this.getConditionValue(), 10);
-		return this.check(conditionValue, currentNode.depth + 1);
+		return this.check(conditionValue, currentNode.depth);
 	};
 	If.prototype.funcMaxDepth = function (nodes) {
 		const conditionValue = parseInt(this.getConditionValue(), 10);
-		let maxDepth = -1;
+		let maxDepth = 0;
 		for (let i = 0; i < nodes.length; i++) {
-			if (nodes[i].depth > maxDepth) {
-				maxDepth = nodes[i].depth;
+			const depth = nodes[i].getChildDepth();
+			if (depth > maxDepth) {
+				maxDepth = depth;
 			}
 		}
-		return this.check(conditionValue, maxDepth + 1);
+		return this.check(conditionValue, maxDepth);
 	};
 	If.prototype.funcVar = function (node) {
 		const nodeVal = node.getFuncVarValue(this.arg);
@@ -767,10 +768,25 @@
 		SmartArtDataNodeBase.call(this, mainPoint, depth);
 		this.sibNode = null;
 		this.parNode = null;
+		this.childDepth = null;
 	}
 	AscFormat.InitClassWithoutType(SmartArtDataNode, SmartArtDataNodeBase);
 
-
+	SmartArtDataNode.prototype.getChildDepth = function () {
+		if (this.childDepth === null) {
+			let maxDepth = this.depth;
+			const tempNodes = [this];
+			while (tempNodes.length) {
+				const node = tempNodes.pop();
+				if (node.depth > maxDepth) {
+					maxDepth = node.depth;
+				}
+				tempNodes.push.apply(tempNodes, node.childs);
+			}
+			this.childDepth = maxDepth - this.depth;
+		}
+		return this.childDepth;
+	};
 	SmartArtDataNode.prototype.isContentNode = function () {
 		return true;
 	};
