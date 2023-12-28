@@ -1754,7 +1754,6 @@
 		this.eventTypeImage = this.addControl(new CImageControl(this));
 		this.effectTypeImage = this.addControl(new CImageControl(this));
 		this.effectLabel = this.addControl(new CLabel(this, this.effect.getObjectName(), 7.5));
-		this.effectBar = this.addControl(new CEffectBar(this));
 		this.contextMenuButton = this.addControl(new CButton(this, showContextMenu));
 
 		function showContextMenu(e, x, y) {
@@ -1772,10 +1771,7 @@
 
 		this.eventTypeImage.setLayout(INDEX_LABEL_WIDTH, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
 		this.effectTypeImage.setLayout(this.eventTypeImage.getRight(), dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
-
 		this.effectLabel.setLayout(this.effectTypeImage.getRight(), dYInside, 20, EFFECT_BAR_HEIGHT);
-
-		this.effectBar.recalculateLayout()
 
 		let dRightSpace = dYInside;
 		this.contextMenuButton.setLayout(this.getRight() - ANIM_ITEM_HEIGHT + dRightSpace, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
@@ -1789,59 +1785,6 @@
 	CAnimItem.prototype.getOutlineColor = function () {
 		return null;
 	};
-
-
-	function CEffectBar(oParentControl) {
-		CButton.call(this, oParentControl)
-
-		// startTime and duration in milliseconds
-		this.startTime = 0;
-		this.duration = this.parentControl.effect.asc_getDuration();
-
-		this.onMouseDownCallback = function stickToPointer(event, x, y) {
-			if (!this.hit(x, y)) { return }
-
-			// Remembering the point where the effectBar was pressed
-			this.innerPressingX = this.getInvFullTransformMatrix().TransformPointX(x, y);
-
-			this.isStickedToPointer = true
-			this.onUpdate()
-		}
-
-		this.onMouseUpCallback = function unstickFromPointer(event, x, y) {
-			this.isStickedToPointer = false;
-			this.onUpdate()
-		}
-
-		this.onMouseMoveCallback = function handlePointerMovement(event, x, y) {
-			if (!this.isStickedToPointer) { return }
-
-			let oInv = this.getInvFullTransformMatrix();
-			let tx = oInv.TransformPointX(x, y);
-			let newLeft = this.getLeft() + tx - this.innerPressingX;
-			this.setLayout(newLeft, this.getTop(), this.getWidth(), this.getHeight())
-
-			this.onUpdate()
-		}
-	}
-
-	InitClass(CEffectBar, CButton, CONTROL_TYPE_EFFECT_BAR);
-
-	CEffectBar.prototype.recalculateLayout = function () {
-		const timelineContainer = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control
-		if (!timelineContainer) { return }
-
-		const timeline = timelineContainer.timeline;
-
-		const effectBarLeft = timeline.getLeft() + timeline.getZeroShift() - SCROLL_BUTTON_SIZE;
-		const dYInside = (this.parentControl.getHeight() - EFFECT_BAR_HEIGHT) / 2;
-		const effectBarWidth = this.ms_to_mm(this.duration);
-		this.setLayout(effectBarLeft + this.ms_to_mm(this.startTime), dYInside, effectBarWidth, EFFECT_BAR_HEIGHT);
-	}
-	CEffectBar.prototype.ms_to_mm = function (nMilliseconds) {
-		const index = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.timeScaleIndex;
-		return nMilliseconds * TIME_INTERVALS[index] / TIME_SCALES[index] / 1000;
-	}
 
 
 	// Header
