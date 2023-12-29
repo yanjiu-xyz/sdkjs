@@ -1760,6 +1760,36 @@
 			if (!this.hit(x, y)) { return }
 			console.log('showContextMenu on effect', this.parentControl.effect.Id);
 		}
+
+		// // Callback functions for effect bar events ---
+
+		// this.onMouseDownCallback = function stickToPointer(event, x, y) {
+		// 	if (!this.hitInEffectBar(x, y)) { return }
+
+		// 	// Remembering the point where the effectBar was pressed
+		// 	this.innerPressingX = this.getInvFullTransformMatrix().TransformPointX(x, y);
+
+		// 	this.isStickedToPointer = true
+		// 	this.onUpdate()
+		// }
+
+		// this.onMouseUpCallback = function unstickFromPointer(event, x, y) {
+		// 	this.isStickedToPointer = false;
+		// 	this.onUpdate()
+		// }
+
+		// this.onMouseMoveCallback = function handlePointerMovement(event, x, y) {
+		// 	if (!this.isStickedToPointer) { return }
+
+		// 	// let oInv = this.getInvFullTransformMatrix();
+		// 	// let tx = oInv.TransformPointX(x, y);
+		// 	// let newLeft = this.getLeft() + tx - this.innerPressingX;
+
+		// 	console.log('Nothing happens here')
+		// 	this.onUpdate()
+		// }
+
+		// // --- end of callback functions for effect bar events
 	}
 
 	InitClass(CAnimItem, CControlContainer, CONTROL_TYPE_ANIM_ITEM);
@@ -1799,6 +1829,7 @@
 
 		graphics.SaveGrState();
 
+		const timeline = timelineContainer.timeline
 		let x = timeline.getLeft()
 		let y = 0;
 		let extX = 50;
