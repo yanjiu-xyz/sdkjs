@@ -7037,6 +7037,9 @@
     CAnimEffect.prototype.getChildren = function () {
         return [this.cBhvr, this.progress];
     };
+    CAnimEffect.prototype.isRemoveAfterFill = function () {
+        return true;
+    };
     CAnimEffect.prototype.calculateAttributes = function (nElapsedTime, oAttributes) {
         if (!this.filter) {
             return;
