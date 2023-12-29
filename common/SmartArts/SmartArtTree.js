@@ -1153,6 +1153,9 @@
 		this.namedNodes = null;
 	}
 	BaseAlgorithm.prototype.getNamedNode = function (name) {
+		if (this.parentNode.getPresName() === name) {
+			return this.parentNode;
+		}
 		if (this.namedNodes === null) {
 			this.namedNodes = {};
 			const childs = this.parentNode.childs;
@@ -1208,7 +1211,7 @@
 						algorithm.setParentAlgorithm(this);
 					}
 				} else {
-					this.setParentConnection(algorithm, nextShape);
+					this.setParentConnection(algorithm, node.node.parent.presNode.shape);
 				}
 				previousIndex = nextIndex;
 			}
@@ -2401,10 +2404,7 @@
 				this.calcValues.connectionPoints.end = endConnectionPoint;
 			}
 		}
-		if (this.calcValues.connectionPoints.start && this.calcValues.connectionPoints.end) {
-			return this.calcValues.connectionPoints;
-		}
-		return null;
+		return this.calcValues.connectionPoints;
 	}
 	ConnectorAlgorithm.prototype.setParentAlgorithm = function (algorithm) {
 		this.parentAlgorithm = algorithm;
@@ -2814,7 +2814,7 @@
 	}
 	ConnectorAlgorithm.prototype.createStraightLineConnector = function (startPoint, endPoint) {
 		const shape = this.parentNode.shape;
-
+		shape.h = 0;
 		const info = this.getStraightConnectionInfo(startPoint, endPoint);
 		const connectorShape = this.getTemplateConnectorLine();
 
@@ -2828,10 +2828,8 @@
 		if (!prSet.getPresStyleLbl()) {
 			prSet.setPresStyleLbl("parChTrans1D2");
 		}
-		const coefficient = info.coefficient;
-		this.applyPostAlgorithmSettingsForShape(connectorShape, prSet, coefficient);
 
-		connectorShape.h = 0;
+		connectorShape.h = info.height;
 		connectorShape.w = info.width;
 		connectorShape.x += info.offX;
 		connectorShape.y += info.offY;
