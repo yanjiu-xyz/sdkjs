@@ -1823,26 +1823,33 @@
 	CAnimItem.prototype.draw = function drawEffectBar(graphics) {
 		const timelineContainer = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control
 		if (!timelineContainer) { return }
+		const timeline = timelineContainer.timeline
 
+		if (!CControlContainer.prototype.draw.call(this, graphics)) { return false }
 		if (this.isHidden()) { return false }
 		if (!this.checkUpdateRect(graphics.updatedRect)) { return false }
 
 		graphics.SaveGrState();
 
-		const timeline = timelineContainer.timeline
-		let x = timeline.getLeft()
-		let y = 0;
-		let extX = 50;
-		let extY = EFFECT_BAR_HEIGHT;
+		// In case we need to draw a triangle
+		if (false /* TODO: find method to get effect type */) {
+			// TODO: draw a triangle
+		} else {
+			// In case we need to draw a bar
+			let x = timeline.getLeft()
+			let y = this.bounds.t + (ANIM_ITEM_HEIGHT - EFFECT_BAR_HEIGHT) / 2;
+			let extX = 50;
+			let extY = EFFECT_BAR_HEIGHT;
 
-		graphics.b_color1(255, 0, 0, 255);
+			graphics.b_color1(255, 0, 0, 255);
 
-		graphics.rect(x, y, extX, extY);
-		graphics.df();
+			graphics.rect(x, y, extX, extY);
+			graphics.df();
+		}
 
 		graphics.RestoreGrState();
 
-		return CControlContainer.prototype.draw.call(this, graphics);
+		// return CControlContainer.prototype.draw.call(this, graphics);
 	};
 
 
