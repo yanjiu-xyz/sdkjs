@@ -1362,15 +1362,23 @@
 		this.checkContentDrawings && this.checkContentDrawings();
 	};
 	CGraphicObjectBase.prototype.getPlaceholderType = function () {
+		if(!this.isPlaceholder()) {
+			return null;
+		}
+		let oNvPr = this.getNvProps();
+		if (oNvPr && oNvPr.ph) {
+			return oNvPr.ph.type;
+		}
 		return null;
 	};
 	CGraphicObjectBase.prototype.getPlaceholderIndex = function () {
-		return null;
-	};
-	CGraphicObjectBase.prototype.getPhType = function () {
-		return null;
-	};
-	CGraphicObjectBase.prototype.getPhIndex = function () {
+		if(!this.isPlaceholder()) {
+			return null;
+		}
+		let oNvPr = this.getNvProps();
+		if (oNvPr && oNvPr.ph) {
+			return oNvPr.ph.idx;
+		}
 		return null;
 	};
 	CGraphicObjectBase.prototype.getDrawingBaseType = function () {
@@ -2683,7 +2691,7 @@
 		if (!this.isEmptyPlaceholder() || !this.canAddButtonPlaceholder()) {
 			return;
 		}
-		var phType = this.getPhType();
+		var phType = this.getPlaceholderType();
 		var aButtons = [];
 		var isLocalDesktop = window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsSupportMedia"] && window["AscDesktopEditor"]["IsSupportMedia"]();
 		const oRect = {x: 0, y: 0, w: this.extX, h: this.extY};

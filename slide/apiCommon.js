@@ -940,7 +940,7 @@ CAscHFProps.prototype['updateView'] = CAscHFProps.prototype.updateView = functio
                     if(b <= oCanvas.height && b + nLineWidth >= oCanvas.height) {
                         b = oCanvas.height - nLineWidth - 1;
                     }
-                    nPhType = oSp.getPhType();
+                    nPhType = oSp.getPlaceholderType();
                     oContext.beginPath();
                     if(nPhType === AscFormat.phType_dt ||
                     nPhType === AscFormat.phType_ftr ||
