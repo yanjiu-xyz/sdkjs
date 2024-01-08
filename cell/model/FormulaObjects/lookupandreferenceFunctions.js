@@ -1182,8 +1182,7 @@ function (window, undefined) {
 				return refError;
 			}
 
-			let bbox = pivot_table_ref.getBBox0(),
-				operationTypes = Asc.c_oAscDataConsolidateFunction, result;
+			let bbox = pivot_table_ref.getBBox0();
 
 			let pivotTables = ws.getPivotTablesIntersectingRange(bbox);
 			let pivotTable = pivotTables && pivotTables.length > 0 && pivotTables[pivotTables.length - 1];
