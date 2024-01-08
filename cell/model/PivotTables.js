@@ -7580,6 +7580,9 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(item
 			}
 		}
 	}
+	if (rowItemIndex === null || colItemIndex === null) {
+		return null;
+	}
 	return {
 		rowItemIndex: rowItemIndex,
 		colItemIndex: colItemIndex
@@ -7602,34 +7605,40 @@ CT_pivotTableDefinition.prototype.getFieldItemByName = function(fieldIndex, name
  * @return {PivotItemFieldsMap}
  */
 CT_pivotTableDefinition.prototype.getItemFieldsMapByGetPivotDataParams = function(params) {
-	const result = new Map();
-	let dataIndex = -1;
-	var fieldIndex = this.cacheDefinition.getFieldIndexByName(params.dataFieldName);
-	if (fieldIndex > 0) {
-		dataIndex = this.dataFields.find(fieldIndex);
-	}
-	if (dataIndex < 0 && this.dataFields) {
-		dataIndex = this.dataFields.getIndexByName(params.dataFieldName);
-	}
-	if (dataIndex < 0) {
-		return null;
-	}
-	result.set(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD, dataIndex);
-	const optParams = this.getPivotDataOptParams(params.optParams);
-	for(let i = 0; i < optParams.length; i += 1) {
-		const fieldName = optParams[i].fieldName;
-		const itemName = optParams[i].itemName;
-		const fieldIndex = this.cacheDefinition.getFieldIndexByName(fieldName);
-		if (fieldIndex === -1) {
+	const dataFields = this.asc_getDataFields();
+	if (dataFields && dataFields.length > 0) {
+		const result = new Map();
+		let dataIndex = -1;
+		let fieldIndex = this.cacheDefinition.getFieldIndexByName(params.dataFieldName);
+		if (fieldIndex > 0) {
+			dataIndex = this.dataFields.find(fieldIndex);
+		}
+		if (dataIndex < 0 && this.dataFields) {
+			dataIndex = this.dataFields.getIndexByName(params.dataFieldName);
+		}
+		if (dataIndex < 0) {
 			return null;
 		}
-		const fieldItem = this.getFieldItemByName(fieldIndex, itemName);
-		if (fieldItem === null) {
-			return null;
+		if (dataFields && dataFields.length > 1) {
+			result.set(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD, dataIndex);
 		}
-		result.set(fieldIndex, fieldItem.x);
+		const optParams = this.getPivotDataOptParams(params.optParams);
+		for(let i = 0; i < optParams.length; i += 1) {
+			const fieldName = optParams[i].fieldName;
+			const itemName = optParams[i].itemName;
+			const fieldIndex = this.cacheDefinition.getFieldIndexByName(fieldName);
+			if (fieldIndex === -1) {
+				return null;
+			}
+			const fieldItem = this.getFieldItemByName(fieldIndex, itemName);
+			if (fieldItem === null) {
+				return null;
+			}
+			result.set(fieldIndex, fieldItem.x);
+		}
+		return result;
 	}
-	return result;
+	return null;
 };
 
 /**
