@@ -1186,8 +1186,7 @@ function (window, undefined) {
 				operationTypes = Asc.c_oAscDataConsolidateFunction, result;
 
 			let pivotTables = ws.getPivotTablesIntersectingRange(bbox);
-			//todo
-			let pivotTable = pivotTables[0];
+			let pivotTable = pivotTables && pivotTables.length > 0 && pivotTables[pivotTables.length - 1];
 			if (pivotTable) {
 				let cell = pivotTable.getCellByGetPivotDataParams({
 					dataFieldName: looking_field,
