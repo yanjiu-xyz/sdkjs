@@ -7727,6 +7727,15 @@
             return Asc.c_oAscGridLinesSettings.minor;
         return Asc.c_oAscGridLinesSettings.majorMinor;
     };
+    CAxisBase.prototype.getOrientation = function() {
+        if(this.scaling && AscFormat.isRealNumber(this.scaling.orientation)) {
+            return this.scaling.orientation;
+        }
+        return AscFormat.ORIENTATION_MIN_MAX;
+    };
+    CAxisBase.prototype.isReversed = function () {
+        return this.getOrientation() === AscFormat.ORIENTATION_MAX_MIN;
+    };
     CAxisBase.prototype.getLabelSetting = function() {
         if(this.isHorizontal()) {
             if(this.title) {
@@ -8061,11 +8070,7 @@
             ret.putIntervalBetweenLabels(this.tickLblSkip);
         }
 
-        var scaling = this.scaling;
-        if(!scaling || scaling.orientation !== ORIENTATION_MAX_MIN)
-            ret.putInvertCatOrder(false);
-        else
-            ret.putInvertCatOrder(true);
+        ret.putInvertCatOrder(this.isReversed());
 
         //настройки пересечения с другой осью
 
@@ -8558,7 +8563,7 @@
         }
 
         //настройка ориентации оси
-        ret.putInvertValOrder(scaling && scaling.orientation === ORIENTATION_MAX_MIN);
+        ret.putInvertValOrder(this.isReversed());
 
         //настройка множителя единиц на оси
         if(isRealObject(this.dispUnits)) {
