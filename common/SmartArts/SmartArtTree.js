@@ -890,6 +890,7 @@
 		this.connectorShape = null;
 		this.customAdj = null;
 		this.customGeom = [];
+		this.radialVector = null;
 	}
 	ShadowShape.prototype.getBounds = function () {
 		return {
@@ -1400,21 +1401,40 @@
 				neighborWidth = neighborShape.cleanParams.w;
 			}
 		}
-
 		if (prSet) {
-			if (prSet.custLinFactNeighborX) {
-				const width = neighborWidth !== null ? neighborWidth : shape.cleanParams.w;
-				shape.x += width * prSet.custLinFactNeighborX * coefficient;
-			}
-			if (prSet.custLinFactX) {
-				shape.x += shape.cleanParams.w * prSet.custLinFactX * coefficient;
-			}
-			if (prSet.custLinFactNeighborY) {
-				const height = neighborHeight !== null ? neighborHeight : shape.cleanParams.h;
-				shape.y += height * prSet.custLinFactNeighborY * coefficient;
-			}
-			if (prSet.custLinFactY) {
-				shape.y += shape.cleanParams.h * prSet.custLinFactY * coefficient;
+			if (shape.radialVector) {
+				const custScaleRadius = prSet.custRadScaleRad === null ? 1 : prSet.custRadScaleRad;
+				const custOffsetAngle = prSet.custRadScaleInc === null ? 0 : prSet.custRadScaleInc;
+				if (custScaleRadius !== 1 || custOffsetAngle !== 0) {
+
+					const defaultRadius = shape.radialVector.getDistance();
+					const defaultAngle = shape.radialVector.getAngle();
+					const adaptDefaultAngle = defaultAngle === 0 ? 2 * Math.PI : defaultAngle;
+					const shapeCenterPoint = new CCoordPoint(shape.x + shape.w / 2, shape.y + shape.h / 2);
+					const centerPoint = new CCoordPoint(shapeCenterPoint.x - shape.radialVector.x, shapeCenterPoint.y - shape.radialVector.y);
+					const customRadius = defaultRadius * custScaleRadius;
+					const custAngle = AscFormat.normalizeRotate(adaptDefaultAngle + custOffsetAngle);
+					const custVector = CVector.getVectorByAngle(custAngle);
+					custVector.multiply(customRadius);
+					const custCenterPoint = new CCoordPoint(custVector.x + centerPoint.x, custVector.y + centerPoint.y);
+					shape.x = custCenterPoint.x - shape.w / 2;
+					shape.y = custCenterPoint.y - shape.h / 2;
+				}
+			} else {
+				if (prSet.custLinFactNeighborX) {
+					const width = neighborWidth !== null ? neighborWidth : shape.cleanParams.w;
+					shape.x += width * prSet.custLinFactNeighborX * coefficient;
+				}
+				if (prSet.custLinFactX) {
+					shape.x += shape.cleanParams.w * prSet.custLinFactX * coefficient;
+				}
+				if (prSet.custLinFactNeighborY) {
+					const height = neighborHeight !== null ? neighborHeight : shape.cleanParams.h;
+					shape.y += height * prSet.custLinFactNeighborY * coefficient;
+				}
+				if (prSet.custLinFactY) {
+					shape.y += shape.cleanParams.h * prSet.custLinFactY * coefficient;
+				}
 			}
 		}
 	};
@@ -2196,10 +2216,10 @@
 				if (shape) {
 					const radiusGuideVector = CVector.getVectorByAngle(currentAngle);
 					radiusGuideVector.multiply(radius);
-					const radiusX = radiusGuideVector.x;
-					const radiusY = radiusGuideVector.y;
-					const offX = radiusX - shape.w / 2;
-					const offY = radiusY - shape.h / 2;
+					shape.radialVector = radiusGuideVector;
+					shape.stepAngle = stepAngle;
+					const offX = radiusGuideVector.x - shape.w / 2;
+					const offY = radiusGuideVector.y - shape.h / 2;
 					shape.x += offX;
 					shape.y += offY;
 					currentAngle = currentAngle + stepAngle;
@@ -2709,7 +2729,7 @@
 	};
 	ConnectorAlgorithm.prototype.createShapeConnector = function () {
 		const connectionPoints = this.getConnectionPoints();
-		if (connectionPoints) {
+		if (connectionPoints.start && connectionPoints.end) {
 			const startArrowPoint = connectionPoints.start;
 			const endArrowPoint = connectionPoints.end;
 
@@ -3794,7 +3814,7 @@ function CConnectionDistanceResolver() {
 		const firstAlg = this.connectionAlgorithms[0];
 		if (firstAlg) {
 			const points = firstAlg.getConnectionPoints();
-			if (points) {
+			if (points.end && points.start) {
 				const v = new CVector(points.end.x - points.start.x, points.end.y - points.start.y);
 				this.connectionDistance = v.getDistance();
 			} else {
@@ -3804,7 +3824,7 @@ function CConnectionDistanceResolver() {
 		for (let i = 1; i < this.connectionAlgorithms.length; i++) {
 			const alg = this.connectionAlgorithms[i];
 			const points = alg.getConnectionPoints();
-			if (points) {
+			if (points.end && points.start) {
 				const v = new CVector(points.end.x - points.start.x, points.end.y - points.start.y);
 				const distance = v.getDistance();
 				if (distance < this.connectionDistance) {
