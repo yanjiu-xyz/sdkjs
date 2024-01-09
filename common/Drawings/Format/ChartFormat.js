@@ -10680,31 +10680,19 @@
         return nType;
     };
     CLineChart.prototype.setMarkerValue = function(bVal) {
-        var aSeries = this.series, nSeries, oSeries;
+        let aSeries = this.series, nSeries;
         if(bVal) {
             if(!this.marker) {
                 this.setMarker(true);
-            }
-            for(nSeries = 0; nSeries < aSeries.length; ++nSeries) {
-                oSeries = aSeries[nSeries];
-                if(oSeries.marker && oSeries.marker.symbol === AscFormat.SYMBOL_NONE) {
-                    oSeries.setMarker(null);
-                }
             }
         }
         else {
             if(this.marker) {
                 this.setMarker(false);
             }
-            for(nSeries = 0; nSeries < aSeries.length; ++nSeries) {
-                oSeries = aSeries[nSeries];
-                if(!oSeries.marker) {
-                    oSeries.setMarker(new AscFormat.CMarker());
-                }
-                if(oSeries.marker.symbol !== AscFormat.SYMBOL_NONE) {
-                    oSeries.marker.setSymbol(AscFormat.SYMBOL_NONE);
-                }
-            }
+        }
+        for(nSeries = 0; nSeries < aSeries.length; ++nSeries) {
+            aSeries[nSeries].checkSeriesAfterChangeType();
         }
     };
     CLineChart.prototype.isMarkerChart = function() {
@@ -10910,12 +10898,32 @@
         return null;
     };
     CLineSeries.prototype.checkSeriesAfterChangeType = function() {
+
+
+        this.setSmooth(false);
+        if(this.spPr && this.spPr.hasNoFillLine()) {
+            this.spPr.setLn(null);
+        }
+        if(this.parent && this.parent.getObjectType() === AscDFH.historyitem_type_LineChart) {
+
+            let bMarker = this.parent.marker;
+            if(bMarker) {
+                if(this.marker && this.marker.symbol === AscFormat.SYMBOL_NONE) {
+                    this.setMarker(null);
+                }
+            }
+            else {
+                if(!this.marker) {
+                    this.setMarker(new AscFormat.CMarker());
+                }
+                if(this.marker.symbol !== AscFormat.SYMBOL_NONE) {
+                    this.marker.setSymbol(AscFormat.SYMBOL_NONE);
+                }
+            }
+            return;
+        }
 	    this.setMarker(new AscFormat.CMarker());
 	    this.marker.setSymbol(AscFormat.SYMBOL_NONE);
-	    this.setSmooth(false);
-	    if(this.spPr && this.spPr.hasNoFillLine()) {
-		    this.spPr.setLn(null);
-	    }
     };
 
     var SYMBOL_CIRCLE = 0;
