@@ -1766,31 +1766,35 @@
 
 		// // Callback functions for effect bar events ---
 
-		// this.onMouseDownCallback = function stickToPointer(event, x, y) {
-		// 	if (!this.hitInEffectBar(x, y)) { return }
+		this.onMouseDownCallback = function stickToPointer(event, x, y) {
+			if (!this.hitInEffectBar(x, y)) { return }
 
-		// 	// Remembering the point where the effectBar was pressed
-		// 	this.innerPressingX = this.getInvFullTransformMatrix().TransformPointX(x, y);
+			// Remembering the point where the effectBar was pressed (left offset inside effect bar)
+			this.innerPressingX = x - this.getEffectBarBounds().l;
 
-		// 	this.isStickedToPointer = true
-		// 	this.onUpdate()
-		// }
+			this.isStickedToPointer = true
+			console.log(this.effect.asc_getDuration())
+			this.onUpdate()
+		}
 
-		// this.onMouseUpCallback = function unstickFromPointer(event, x, y) {
-		// 	this.isStickedToPointer = false;
-		// 	this.onUpdate()
-		// }
+		this.onMouseUpCallback = function unstickFromPointer(event, x, y) {
+			if (!this.isStickedToPointer) { return };
+			this.isStickedToPointer = false;
 
-		// this.onMouseMoveCallback = function handlePointerMovement(event, x, y) {
-		// 	if (!this.isStickedToPointer) { return }
+			const newDelay = this.mm_to_ms(this.tmpStartPos);
+			const newDuration = 1000;
+			this.setNewEffectParams(newDelay, newDuration);
+			this.tmpStartPos = this.tmpWidth = null;
+			this.onUpdate()
+		}
 
-		// 	// let oInv = this.getInvFullTransformMatrix();
-		// 	// let tx = oInv.TransformPointX(x, y);
-		// 	// let newLeft = this.getLeft() + tx - this.innerPressingX;
+		this.onMouseMoveCallback = function handlePointerMovement(event, x, y) {
+			if (!this.isStickedToPointer) { return }
 
-		// 	console.log('Nothing happens here')
-		// 	this.onUpdate()
-		// }
+			const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline
+			this.tmpStartPos = x - timeline.getLeft() - timeline.getZeroShift() - this.innerPressingX;
+			this.onUpdate()
+		}
 
 		// // --- end of callback functions for effect bar events
 	}
@@ -1821,7 +1825,11 @@
 	CAnimItem.prototype.ms_to_mm = function (nMilliseconds) {
 		const index = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.timeScaleIndex;
 		return nMilliseconds * TIME_INTERVALS[index] / TIME_SCALES[index] / 1000;
-	}
+	};
+	CAnimItem.prototype.mm_to_ms = function (nMillimeters) {
+		const index = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.timeScaleIndex;
+		return nMillimeters / TIME_INTERVALS[index] * TIME_SCALES[index] * 1000;
+	};
 
 	CAnimItem.prototype.draw = function drawEffectBar(graphics) {
 		const timelineContainer = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control
@@ -1850,7 +1858,7 @@
 	CAnimItem.prototype.getEffectBarBounds = function () {
 		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline
 
-		let l = timeline.getLeft() + (this.tmpStartPos !== null ?
+		let l = timeline.getLeft() + timeline.getZeroShift() + (this.tmpStartPos !== null ?
 			this.tmpStartPos :
 			this.ms_to_mm(this.effect.asc_getDelay()));
 
@@ -1866,6 +1874,11 @@
 	CAnimItem.prototype.hitInEffectBar = function (x, y) {
 		const bounds = this.getEffectBarBounds()
 		return x >= bounds.l && x <= bounds.r && y >= bounds.t && y <= bounds.b;
+	};
+
+	CAnimItem.prototype.setNewEffectParams = function (newDelay, newDuration) {
+		console.log('Set new delay - ' + newDelay + ' to effect ' + this.effect.Id)
+		console.log('Set new duration - ' + newDuration + ' to effect ' + this.effect.Id)
 	};
 
 	CAnimItem.prototype.onMouseDown = function (e, x, y) {
