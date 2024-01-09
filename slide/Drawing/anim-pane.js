@@ -1761,6 +1761,9 @@
 			console.log('showContextMenu on effect', this.parentControl.effect.Id);
 		}
 
+		this.tmpStartPos = null;
+		this.tmpWidth = null;
+
 		// // Callback functions for effect bar events ---
 
 		// this.onMouseDownCallback = function stickToPointer(event, x, y) {
@@ -1823,7 +1826,6 @@
 	CAnimItem.prototype.draw = function drawEffectBar(graphics) {
 		const timelineContainer = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control
 		if (!timelineContainer) { return }
-		const timeline = timelineContainer.timeline
 
 		if (!CControlContainer.prototype.draw.call(this, graphics)) { return false }
 		if (this.isHidden()) { return false }
@@ -1836,31 +1838,54 @@
 			// TODO: draw a triangle
 		} else {
 			// In case we need to draw a bar
-			let x = timeline.getLeft()
-			let y = this.bounds.t + (ANIM_ITEM_HEIGHT - EFFECT_BAR_HEIGHT) / 2;
-			let extX = 50;
-			let extY = EFFECT_BAR_HEIGHT;
-
 			graphics.b_color1(255, 0, 0, 255);
 
-			graphics.rect(x, y, extX, extY);
+			const bounds = this.getEffectBarBounds()
+			graphics.rect(bounds.l, bounds.t, bounds.r - bounds.l, bounds.b - bounds.t);
 			graphics.df();
 		}
 
 		graphics.RestoreGrState();
-
-		// return CControlContainer.prototype.draw.call(this, graphics);
 	};
-	CAnimItem.prototype.hitInEffectBar = function (x, y) {
+	CAnimItem.prototype.getEffectBarBounds = function () {
 		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline
 
-		let l = timeline.getLeft();
-		let r = l + 50;
+		let l = timeline.getLeft() + (this.tmpStartPos !== null ?
+			this.tmpStartPos :
+			this.ms_to_mm(this.effect.asc_getDelay()));
+
+		let r = l + (this.tmpWidth !== null ?
+			this.tmpWidth :
+			this.ms_to_mm(this.effect.asc_getDuration()));
+
 		let t = this.bounds.t + (ANIM_ITEM_HEIGHT - EFFECT_BAR_HEIGHT) / 2;
 		let b = t + EFFECT_BAR_HEIGHT;
 
-		return x >= l && x <= r && y >= t && y <= b;
-	}
+		return { l, r, t, b }
+	};
+	CAnimItem.prototype.hitInEffectBar = function (x, y) {
+		const bounds = this.getEffectBarBounds()
+		return x >= bounds.l && x <= bounds.r && y >= bounds.t && y <= bounds.b;
+	};
+
+	CAnimItem.prototype.onMouseDown = function (e, x, y) {
+		if (this.onMouseDownCallback && this.onMouseDownCallback.call(this, e, x, y)) {
+			return true;
+		}
+		return CControlContainer.prototype.onMouseDown.call(this, e, x, y);
+	};
+	CAnimItem.prototype.onMouseMove = function (e, x, y) {
+		if (this.onMouseMoveCallback && this.onMouseMoveCallback.call(this, e, x, y)) {
+			return true;
+		}
+		return CControlContainer.prototype.onMouseMove.call(this, e, x, y);
+	};
+	CAnimItem.prototype.onMouseUp = function (e, x, y) {
+		if (this.onMouseUpCallback && this.onMouseUpCallback.call(this, e, x, y)) {
+			return true;
+		}
+		return CControlContainer.prototype.onMouseUp.call(this, e, x, y);
+	};
 
 
 	// Header
