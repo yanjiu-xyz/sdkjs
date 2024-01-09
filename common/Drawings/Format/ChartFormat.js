@@ -8819,9 +8819,9 @@
             }
         }
     };
-    CValAx.prototype.getFormatCode = function(oChartSpace, oSeries) {
-        var oNumFmt = this.numFmt;
-        var sFormatCode = null;
+    CValAx.prototype.getFormatCode = function() {
+        let oNumFmt = this.numFmt;
+        let sFormatCode = null;
 
         if(oNumFmt) {
             if(oNumFmt.sourceLinked) {
@@ -8831,8 +8831,11 @@
             if(typeof sFormatCode === "string" && sFormatCode.length > 0) {
                 return sFormatCode;
             }
+            return "General";
         }
-        return "General";
+        else {
+            return this.getSourceFormatCode();
+        }
     };
     CValAx.prototype.getSourceFormatCode = function() {
         var oPlotArea = this.getPlotArea();
