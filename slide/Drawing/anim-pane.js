@@ -1851,6 +1851,16 @@
 
 		// return CControlContainer.prototype.draw.call(this, graphics);
 	};
+	CAnimItem.prototype.hitInEffectBar = function (x, y) {
+		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline
+
+		let l = timeline.getLeft();
+		let r = l + 50;
+		let t = this.bounds.t + (ANIM_ITEM_HEIGHT - EFFECT_BAR_HEIGHT) / 2;
+		let b = t + EFFECT_BAR_HEIGHT;
+
+		return x >= l && x <= r && y >= t && y <= b;
+	}
 
 
 	// Header
