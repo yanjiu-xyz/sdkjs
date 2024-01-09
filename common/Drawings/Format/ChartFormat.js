@@ -6165,7 +6165,7 @@
         return false;
     };
     CPlotArea.prototype.isDoughnutType = function(nType) {
-        isDoughnutChartType(nType);
+        return isDoughnutChartType(nType);
     };
     CPlotArea.prototype.isAreaType = function(nType) {
         return isAreaChartType(nType);
@@ -6177,7 +6177,7 @@
         return isScatterChartType(nType);
     };
     CPlotArea.prototype.isStockChart = function(nType) {
-        isStockChartType(nType);
+        return isStockChartType(nType);
     };
     CPlotArea.prototype.isRadarChart = function(nType) {
       return this.isRadarType(nType);
