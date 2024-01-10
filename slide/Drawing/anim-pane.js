@@ -1207,6 +1207,11 @@
 
 		this.parentControl.onScroll();
 		this.onUpdate();
+
+		// also updating seqList to redraw effect bars
+		if (Asc.editor.WordControl.m_oAnimPaneApi.list.Control) {
+			Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList.onUpdate()
+		}
 	};
 	CTimeline.prototype.getCurrentTime = function() {
 		return this.posToTime(this.getScrollOffset() + this.startButton.getWidth() + TIMELINE_SCROLLER_SIZE / 2)
@@ -1773,7 +1778,6 @@
 			this.innerPressingX = x - this.getEffectBarBounds().l;
 
 			this.isStickedToPointer = true
-			console.log(this.effect.asc_getDuration())
 			this.onUpdate()
 		}
 
@@ -1848,8 +1852,9 @@
 			// In case we need to draw a bar
 			graphics.b_color1(255, 0, 0, 255);
 
-			const bounds = this.getEffectBarBounds()
-			graphics.rect(bounds.l, bounds.t, bounds.r - bounds.l, bounds.b - bounds.t);
+			const bounds = this.getEffectBarBounds();
+			const shift = this.ms_to_mm(timelineContainer.timeline.getStartTime() * 1000);
+			graphics.rect(bounds.l - shift, bounds.t, bounds.r - bounds.l, bounds.b - bounds.t);
 			graphics.df();
 		}
 
