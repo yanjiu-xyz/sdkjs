@@ -7347,7 +7347,6 @@ drawHistogramChart.prototype = {
 		var right = this.chartProp.trueWidth / this.chartProp.pxToMM;
 		var bottom = this.chartProp.trueHeight / this.chartProp.pxToMM;
 		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(left, top, right, bottom);
-		
 		const brush = this.cChartSpace.brush;
 		brush.fill.color.RGBA.R = 79;
 		brush.fill.color.RGBA.G = 129;
@@ -17645,6 +17644,7 @@ CColorObj.prototype =
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscFormat'] = window['AscFormat'] || {};
 	window['AscFormat'].CChartsDrawer = CChartsDrawer;
+	window['AscFormat'].CTrendline = CTrendline;
 	window['AscFormat'].CColorObj = CColorObj;
 	window["AscFormat"].c_oChartTypes = c_oChartTypes;
 })(window);
