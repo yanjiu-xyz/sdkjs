@@ -8392,7 +8392,12 @@
     CTimeNodeContainer.prototype.getIndexInSequence = function () {
         var aHierarchy = this.getHierarchy();
         if (aHierarchy[1] && aHierarchy[2]) {
-            return aHierarchy[1].getChildNodeIdx(aHierarchy[2]);
+            let nIdx = aHierarchy[1].getChildNodeIdx(aHierarchy[2]);
+            let aAllEffects = aHierarchy[1].getAllAnimEffects();
+            if(aAllEffects[0] && !aAllEffects[0].isClickEffect()) {
+                nIdx -= 1;
+            }
+            return nIdx;
         }
         return -1;
     };
