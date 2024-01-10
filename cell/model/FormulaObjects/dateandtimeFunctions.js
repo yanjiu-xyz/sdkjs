@@ -232,9 +232,7 @@ function (window, undefined) {
 	}
 
 	function days360(date1, date2, flag, isAccrint) {
-		// special modifying a function to call from ACCRINT formula
 		let sign;
-
 		let nY1 = date1.getUTCFullYear(), nM1 = date1.getUTCMonth() + 1, nD1 = date1.getUTCDate(),
 			nY2 = date2.getUTCFullYear(), nM2 = date2.getUTCMonth() + 1, nD2 = date2.getUTCDate();
 
@@ -314,6 +312,7 @@ function (window, undefined) {
 		}
 		return val;
 	}
+
 
 	function getWeekends(val) {
 		var res = [];
@@ -2413,5 +2412,6 @@ function (window, undefined) {
 	window['AscCommonExcel'].yearFrac = yearFrac;
 	window['AscCommonExcel'].diffDate = diffDate;
 	window['AscCommonExcel'].days360 = days360;
+	window['AscCommonExcel'].getCorrectDate = getCorrectDate;
 	window['AscCommonExcel'].daysInYear = daysInYear;
 })(window);
