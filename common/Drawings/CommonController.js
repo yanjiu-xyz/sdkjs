@@ -4474,7 +4474,12 @@
 					var aPositions = chart_space.getPossibleDLblsPosition();
 					var nDefaultDatalabelsPos;
 					nDefaultDatalabelsPos = aPositions[0];
-					var oFirstChart = plot_area.charts[0];
+					var oFirstChart;
+					if (plot_area.isForChartEx) {
+						oFirstChart = plot_area.plotAreaRegion
+					} else {
+						oFirstChart = plot_area.charts[0];
+					}
 					var aSeries = oFirstChart.series;
 					var nSer, oSeries;
 					var oFirstSeries = aSeries[0];
