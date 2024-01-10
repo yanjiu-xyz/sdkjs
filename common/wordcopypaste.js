@@ -7086,6 +7086,7 @@ PasteProcessor.prototype =
 				var oLineHeight = AscCommon.valueToMmType(line_height);
 				if (oLineHeight && ("%" === oLineHeight.type || "none" === oLineHeight.type)) {
 					Spacing.Line = oLineHeight.val;
+					Spacing.LineRule = Asc.linerule_Auto;
 				} else if (line_height && null != (line_height = AscCommon.valueToMm(line_height)) && line_height >= 0) {
 					Spacing.Line = line_height;
 					Spacing.LineRule = Asc.linerule_AtLeast;
