@@ -1845,6 +1845,12 @@
 
 		graphics.SaveGrState();
 
+		const clipL = timelineContainer.timeline.getLeft() + timelineContainer.timeline.getZeroShift();
+		const clipT = this.bounds.t;
+		const clipW = timelineContainer.timeline.getRulerEnd() - timelineContainer.timeline.getZeroShift();
+		const clipH = this.bounds.b - this.bounds.t;
+		graphics.AddClipRect(clipL, clipT, clipW, clipH);
+
 		// In case we need to draw a triangle
 		if (false /* TODO: find method to get effect type */) {
 			// TODO: draw a triangle
