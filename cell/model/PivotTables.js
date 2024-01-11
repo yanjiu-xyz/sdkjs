@@ -7487,6 +7487,7 @@ CT_pivotTableDefinition.prototype.getPivotDataOptParams = function(params) {
  */
 CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(itemFieldsMap) {
 	const pivotFields = this.asc_getPivotFields();
+	let lastR = null;
 	/**
 	 * @param {CT_I[]} items
 	 * @param {CT_Field[]} fields
@@ -7514,6 +7515,7 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(item
 					if (itemMap.has(fieldIndex)) {
 						if (itemMap.get(fieldIndex) === fieldItem.x) {
 							itemMap.delete(fieldIndex);
+							lastR = minR;
 							minR = minR + 1;
 						} else {
 							break;
@@ -7567,6 +7569,25 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(item
 				rowItemIndex = getIndexWithOnlyDataIndex(rowItems, rowItemFieldsMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD))
 			} else {
 				rowItemIndex = getIndex(rowItems, rowFields, rowItemFieldsMap);
+				let rowR = lastR;
+				let maxRowDefaultSubtotalR = null;
+				if (rowFields[rowFields.length - 1].asc_getIndex() === AscCommonExcel.st_VALUES) {
+					maxRowDefaultSubtotalR = rowFields.length - 2;
+				} else {
+					maxRowDefaultSubtotalR = rowFields.length - 1;
+				}
+				if (rowR < maxRowDefaultSubtotalR && !this.outline && !this.compact) {
+					for(let i = rowItemIndex + 1; i < rowItems.length; i += 1) {
+						const rowItem = rowItems[i];
+						if (rowItem.getR() > rowR) {
+							continue;
+						}
+						if (rowItem.t === Asc.c_oAscItemType.Default) {
+							rowItemIndex = i;
+							break;
+						}
+					}
+				}
 			}
 		}
 	}
@@ -7577,9 +7598,33 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(item
 				colItemIndex = getIndexWithOnlyDataIndex(colItems, colItemFieldsMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD))
 			} else {
 				colItemIndex = getIndex(colItems, colFields, colItemFieldsMap);
+				let colR = lastR;
+				let maxColDefaultSubtotalR = null;
+				if (colFields[colFields.length - 1].asc_getIndex() === AscCommonExcel.st_VALUES) {
+					maxColDefaultSubtotalR = colFields.length - 2;
+				} else {
+					maxColDefaultSubtotalR = colFields.length - 1;
+				}
+				if (colR < maxColDefaultSubtotalR) {
+					if (!pivotFields[colFields[colR].asc_getIndex()].defaultSubtotal) {
+						colItemIndex = null;
+					} else {
+						for(let i = colItemIndex + 1; i < colItems.length; i += 1) {
+							const colItem = colItems[i];
+							if (colItem.getR() > colR) {
+								continue;
+							}
+							if (colItem.t === Asc.c_oAscItemType.Default) {
+								colItemIndex = i;
+								break;
+							}
+						}
+					}
+				}
 			}
 		}
 	}
+	
 	if (rowItemIndex === null || colItemIndex === null) {
 		return null;
 	}
