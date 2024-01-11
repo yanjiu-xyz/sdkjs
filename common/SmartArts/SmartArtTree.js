@@ -341,6 +341,10 @@
 				algorithm = new CycleAlgorithm();
 				break;
 			}
+			case AscFormat.Alg_type_pyra: {
+				algorithm = new PyramidAlgorithm();
+				break;
+			}
 			default: {
 				break;
 			}
@@ -1578,7 +1582,14 @@
 
 	PositionAlgorithm.prototype.getNodeConstraints = function (node) {
 		return node.nodeConstraints;
-	}
+	};
+	
+	PositionAlgorithm.prototype.calcScaleCoefficients = function () {
+
+	};
+	PositionAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm) {
+		
+	};
 
 
 	function SnakeAlgorithm() {
@@ -1806,12 +1817,29 @@
 		this.width = 0;
 		this.height = 0;
 	}
-	ShapeContainer.prototype.forEachShape = function () {
+	ShapeContainer.prototype.forEachShape = function (callback) {
 	};
 	ShapeContainer.prototype.applyCenterAlign = function (parentHeight, parentWidth) {
 	};
 
-	function ShapeCycle() {
+	function PyramidContainer() {
+		ShapeContainer.call(this)
+		this.shapes = [];
+		this.height = 0;
+	}
+	AscFormat.InitClassWithoutType(PyramidContainer, ShapeContainer);
+	PyramidContainer.prototype.forEachShape = function (callback) {
+		for (let i = 0; i < this.shapes.length; i += 1) {
+			callback(this.shapes[i]);
+		}
+	};
+	PyramidContainer.prototype.applyCenterAlign = function (parentHeight, parentWidth) {
+	};
+	PyramidContainer.prototype.push = function (shape) {
+		this.shapes.push(shape);
+	};
+
+	function CycleContainer() {
 		ShapeContainer.call(this)
 		this.shapes = [];
 		this.bounds = {
@@ -1821,16 +1849,16 @@
 			b: 0
 		};
 	}
-	AscFormat.InitClassWithoutType(ShapeCycle, ShapeContainer);
-	ShapeCycle.prototype.push = function (shape) {
+	AscFormat.InitClassWithoutType(CycleContainer, ShapeContainer);
+	CycleContainer.prototype.push = function (shape) {
 		this.shapes.push(shape);
 	};
-	ShapeCycle.prototype.forEachShape = function (callback) {
+	CycleContainer.prototype.forEachShape = function (callback) {
 		for (let i = 0; i < this.shapes.length; i += 1) {
 			callback(this.shapes[i]);
 		}
 	}
-	ShapeCycle.prototype.calcMetrics = function () {
+	CycleContainer.prototype.calcMetrics = function () {
 		const firstShape = this.shapes[0];
 		if (firstShape) {
 			const bounds = {l: firstShape.x, t: firstShape.y, r: firstShape.x + firstShape.w, b: firstShape.y + firstShape.h};
@@ -1858,15 +1886,15 @@
 			this.bounds = bounds;
 		}
 	};
-	ShapeCycle.prototype.getOffsets = function (parentHeight, parentWidth) {
+	CycleContainer.prototype.getOffsets = function (parentHeight, parentWidth) {
 		const cycleCY = this.bounds.t + this.height / 2;
 		const cycleCX = this.bounds.l + this.width / 2;
 		return {
 			x: parentWidth / 2 - cycleCX,
 			y: parentHeight / 2 - cycleCY
 		};
-	}
-	ShapeCycle.prototype.applyCenterAlign = function (parentHeight, parentWidth) {
+	};
+	CycleContainer.prototype.applyCenterAlign = function (parentHeight, parentWidth) {
 		const offsets = this.getOffsets(parentHeight, parentWidth);
 		for (let i = 0; i < this.shapes.length; i++) {
 			const shape = this.shapes[i];
@@ -1935,6 +1963,84 @@
 		}
 	}
 
+	function PyramidAlgorithm() {
+		PositionAlgorithm.call(this);
+		this.calcValues = {
+			defaultBlockHeight: 0
+		};
+	}
+	AscFormat.InitClassWithoutType(PyramidAlgorithm, PositionAlgorithm);
+	PyramidAlgorithm.prototype.calcScaleCoefficients = function () {
+		this.parentNode.calcNodeConstraints();
+		const parentConstraints = this.getNodeConstraints(this.parentNode);
+		const parentHeight = parentConstraints.height;
+		const childs = this.parentNode.childs;
+		const defaultBlockHeight = parentHeight / childs.length;
+		let sumHeight = 0;
+		for (let i = 0; i < childs.length; i++) {
+			const child = childs[i];
+			const scaleBlockHeight = child.getHeightScale();
+			sumHeight += scaleBlockHeight * defaultBlockHeight;
+		}
+		this.calcValues.defaultBlockHeight = defaultBlockHeight * (parentHeight / sumHeight);
+	};
+	PyramidAlgorithm.prototype.setPyramidParametersForNode = function (child, x, y, height, width, adjValue) {
+		const shape = child.shape;
+		if (shape) {
+			shape.h = height;
+			shape.w = width;
+			shape.x = x;
+			shape.y = y;
+			const adjLst = new AscFormat.AdjLst();
+			const adj = new AscFormat.Adj();
+			adj.setVal(adjValue);
+			adj.setIdx(1);
+			adjLst.addToLst(0, adj);
+			shape.customAdj = adjLst;
+		}
+	};
+	PyramidAlgorithm.prototype.getPyramidChild = function (node) {
+		return node.childs[0];
+	}
+	PyramidAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm) {
+		const childs = this.parentNode.childs;
+		if (!childs.length) {
+			return;
+		}
+		this.shapeContainer = new PyramidContainer();
+		const parentConstraints = this.getNodeConstraints(this.parentNode);
+		const parentHeight = parentConstraints.height;
+		const parentWidth = parentConstraints.width;
+		const adjValue = (parentWidth / 2) / parentHeight;
+		const defaultBlockHeight = this.calcValues.defaultBlockHeight;
+		let previousBlockWidth = parentConstraints.width;
+		const ctrX = parentWidth / 2;
+
+		const firstChild = this.getPyramidChild(childs[0]);
+		const firstHeight = defaultBlockHeight * firstChild.getHeightScale();
+		const firstWidth = parentConstraints.width * firstChild.getWidthScale();
+		let previousY = parentHeight - firstHeight;
+		this.setPyramidParametersForNode(firstChild, 0, previousY,  firstHeight, firstWidth, adjValue);
+		let previousBlockHeight = firstHeight;
+		this.shapeContainer.push(firstChild.shape);
+		for (let i = 1; i < childs.length; i++) {
+			const child = this.getPyramidChild(childs[i]);
+			const blockHeightFactor = child.getHeightScale();
+			const blockWidthFactor = child.getWidthScale();
+			const scaledBlockHeight = blockHeightFactor * defaultBlockHeight;
+			const curBlockWidth = previousBlockWidth - adjValue * 2 * previousBlockHeight;
+			const scaledBlockWidth = curBlockWidth * blockWidthFactor;
+			const x = ctrX - scaledBlockWidth / 2;
+			const y = previousY - scaledBlockHeight;
+			this.setPyramidParametersForNode(child, x, y,  scaledBlockHeight, scaledBlockWidth, adjValue);
+
+			previousBlockWidth = curBlockWidth;
+			previousBlockHeight = scaledBlockHeight;
+			previousY = y;
+			this.shapeContainer.push(child.shape);
+		}
+	};
+
 	function CycleAlgorithm() {
 		PositionAlgorithm.call(this);
 		this.calcValues = {
@@ -1981,6 +2087,7 @@
 		const offsets = this.shapeContainer.getOffsets(parentHeight, parentWidth);
 		result.point = new CCoordPoint(offsets.x, offsets.y);
 		result.radius = this.calcValues.radius;
+		// todo: add custom radial info
 		result.angle = AscFormat.normalizeRotate(this.calcValues.startAngle + this.calcValues.stepAngle * nodeIndex);
 		result.isClockwise = this.isClockwise();
 		return result;
@@ -2195,7 +2302,7 @@
 		const radius = this.calcValues.radius;
 		let currentAngle = this.calcValues.startAngle;
 		const stepAngle = this.calcValues.stepAngle;
-		const container = new ShapeCycle();
+		const container = new CycleContainer();
 		let startIndex = 0;
 		if (this.calcValues.centerNodeIndex !== null) {
 			const centerNode = this.getCenterNode();
