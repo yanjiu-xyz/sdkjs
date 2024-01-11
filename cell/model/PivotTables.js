@@ -13195,12 +13195,15 @@ CT_PivotField.prototype.findFieldItemInSharedItems = function(cacheField, value)
  * @return {boolean}
  */
 CT_PivotField.prototype.checkFieldItemInFieldGroup = function(cacheField, value, sharedItem, fieldItem) {
+	/**@type {CT_RangePr} */
+	const rangePr = cacheField.fieldGroup.rangePr;
+	if (!rangePr) {
+		return this.findFieldItemInSharedItems(cacheField, value);
+	}
 	const textValue = (sharedItem.getCellValue().getTextValue() + "").toLowerCase();
 	if (textValue === value) {
 		return true;
 	}
-	/**@type {CT_RangePr} */
-	const rangePr = cacheField.fieldGroup.rangePr;
 	if (rangePr.groupBy === c_oAscGroupBy.Range) {
 		const execRes = /(.+)-(.+)/.exec(textValue);
 		if (execRes && execRes[1] === value) {
