@@ -13176,6 +13176,9 @@ CT_PivotField.prototype.findFieldItemInSharedItems = function(cacheField, value)
 		const item = items[i];
 		const sharedItem = cacheField.getGroupOrSharedItem(item.x);
 		if (sharedItem) {
+			if (sharedItem.type === c_oAscPivotRecType.Missing && lowerCaseValue === "") {
+				return item;
+			}
 			const textValue = (sharedItem.getCellValue().getTextValue() + "").toLowerCase();
 			if (textValue === lowerCaseValue) {
 				return item;
