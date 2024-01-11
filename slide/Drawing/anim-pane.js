@@ -1883,8 +1883,16 @@
 		return { l, r, t, b }
 	};
 	CAnimItem.prototype.hitInEffectBar = function (x, y) {
-		const bounds = this.getEffectBarBounds()
-		return x >= bounds.l && x <= bounds.r && y >= bounds.t && y <= bounds.b;
+		const delta = AscFormat.DIST_HIT_IN_LINE
+		const bounds = this.getEffectBarBounds();
+
+		if (y > bounds.t && y < bounds.b) {
+			if (x >= bounds.l - delta && x <= bounds.l + delta) { return 'left'; }
+			if (x >= bounds.r - delta && x <= bounds.r + delta) { return 'right'; }
+			if (x > bounds.l && x < bounds.r) { return 'inside'; }
+		}
+
+		return null;
 	};
 
 	CAnimItem.prototype.setNewEffectParams = function (newDelay, newDuration) {
