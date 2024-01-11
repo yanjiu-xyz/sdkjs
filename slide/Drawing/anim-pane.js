@@ -1772,45 +1772,74 @@
 		// // Callback functions for effect bar events ---
 
 		this.onMouseDownCallback = function stickToPointer(event, x, y) {
-			if (!this.hitInEffectBar(x, y)) { return }
+			if (!this.hit(x, y)) { return }
+
+			const hitRes = this.hitInEffectBar(x, y);
+			if (!hitRes) { return }
 
 			// Remembering the point where the effectBar was pressed (left offset inside effect bar)
 			this.innerPressingX = x - this.getEffectBarBounds().l;
 
-			this.isStickedToPointer = true
-			this.onUpdate()
+			this.stickedToPointerAt = hitRes;
+			this.onUpdate();
 		}
 
 		this.onMouseUpCallback = function unstickFromPointer(event, x, y) {
-			if (!this.isStickedToPointer) { return };
-			this.isStickedToPointer = false;
+			if (!this.stickedToPointerAt) { return };
+			this.stickedToPointerAt = null;
 
 			const newDelay = this.mm_to_ms(this.tmpStartPos);
-			const newDuration = 1000;
+			const newDuration = this.mm_to_ms(this.tmpWidth);
 			this.setNewEffectParams(newDelay, newDuration);
 			this.tmpStartPos = this.tmpWidth = null;
 			this.onUpdate()
 		}
 
 		this.onMouseMoveCallback = function handlePointerMovement(event, x, y) {
-			if (!this.hit(x, y)) { return }
+			if (this.hit(x, y)) {
+				// const drawingDocument = Asc.editor.WordControl.m_oDrawingDocument;
+				// drawingDocument.SetCursorType('move');
 
-			const drawingDocument = Asc.editor.WordControl.m_oDrawingDocument;
-			drawingDocument.SetCursorType('move')
-			
-			// const hitRes = this.hitInEffectBar(x, y)
-			// if (hitRes === 'left' || hitRes === 'right') {
-			// 	drawingDocument.SetCursorType('col-resize')
-			// } else if (hitRes) {
-			// 	drawingDocument.SetCursorType('ew-resize')
-			// } else {
-			// 	drawingDocument.SetCursorType('default')
-			// }
-			
-			if (!this.isStickedToPointer) { return }
+				// const hitRes = this.hitInEffectBar(x, y)
+				// if (hitRes === 'left' || hitRes === 'right') {
+				//      drawingDocument.SetCursorType('col-resize')
+				// } else if (hitRes) {
+				//      drawingDocument.SetCursorType('ew-resize')
+				// } else {
+				//      drawingDocument.SetCursorType('default')
+				// }
+			}
+
+			if (!this.stickedToPointerAt) { return }
 
 			const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline
-			this.tmpStartPos = x - timeline.getLeft() - timeline.getZeroShift() - this.innerPressingX;
+			const relX = x - timeline.getLeft() - timeline.getZeroShift() - this.innerPressingX; // relative to timeline's '0'
+			this.tmpWidth = this.ms_to_mm(this.effect.asc_getDuration());
+			this.tmpStartPos = this.ms_to_mm(this.effect.asc_getDelay());
+
+			const MIN_EFFECT_DURATION = 100;
+			if (this.stickedToPointerAt === 'center') {
+				// changing start position only
+				this.tmpStartPos = Math.max(0, relX);
+			}
+			if (this.stickedToPointerAt === 'right') {
+				// changing width with left limitation - not less than minimal allowed value
+				const newTmpWidth = this.tmpWidth + relX - this.tmpStartPos;
+				this.tmpWidth = Math.max(this.ms_to_mm(MIN_EFFECT_DURATION), newTmpWidth);
+			}
+			if (this.stickedToPointerAt === 'left') {
+				// new start position - set it equal to 'relX' (0 <= relX <= right bar border)
+				const newTmpStartPos = Math.min(Math.max(0, relX), this.tmpWidth + this.tmpStartPos - this.ms_to_mm(MIN_EFFECT_DURATION));
+
+				// new width with limitations:
+				// minimal allowed value <= newTmpWidth <= left bar offset + bar width;
+				const newTmpWidth = this.tmpWidth - relX + this.tmpStartPos;
+				const maxTmpWidth = this.tmpWidth + this.tmpStartPos;
+
+				this.tmpStartPos = newTmpStartPos;
+				this.tmpWidth = Math.min(Math.max(this.ms_to_mm(MIN_EFFECT_DURATION), newTmpWidth), maxTmpWidth);
+			}
+
 			this.onUpdate()
 		}
 
@@ -1903,7 +1932,7 @@
 		if (y > bounds.t && y < bounds.b) {
 			if (x >= bounds.l - delta && x <= bounds.l + delta) { return 'left'; }
 			if (x >= bounds.r - delta && x <= bounds.r + delta) { return 'right'; }
-			if (x > bounds.l && x < bounds.r) { return 'inside'; }
+			if (x > bounds.l && x < bounds.r) { return 'center'; }
 		}
 
 		return null;
