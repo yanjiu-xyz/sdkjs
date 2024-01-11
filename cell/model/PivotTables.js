@@ -7577,14 +7577,18 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(item
 					maxRowDefaultSubtotalR = rowFields.length - 1;
 				}
 				if (rowR < maxRowDefaultSubtotalR && !this.outline && !this.compact) {
-					for(let i = rowItemIndex + 1; i < rowItems.length; i += 1) {
-						const rowItem = rowItems[i];
-						if (rowItem.getR() > rowR) {
-							continue;
-						}
-						if (rowItem.t === Asc.c_oAscItemType.Default) {
-							rowItemIndex = i;
-							break;
+					if (!pivotFields[rowFields[rowR].asc_getIndex()].defaultSubtotal) {
+						rowItemIndex = null;
+					} else {
+						for(let i = rowItemIndex + 1; i < rowItems.length; i += 1) {
+							const rowItem = rowItems[i];
+							if (rowItem.getR() > rowR) {
+								continue;
+							}
+							if (rowItem.t === Asc.c_oAscItemType.Default) {
+								rowItemIndex = i;
+								break;
+							}
 						}
 					}
 				}
