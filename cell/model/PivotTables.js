@@ -13179,7 +13179,14 @@ CT_PivotField.prototype.findFieldItemInSharedItems = function(cacheField, value)
 			if (sharedItem.type === c_oAscPivotRecType.Missing && lowerCaseValue === "") {
 				return item;
 			}
-			const textValue = (sharedItem.getCellValue().getTextValue() + "").toLowerCase();
+			const cellValue = sharedItem.getCellValue();
+			let textValue = "";
+			if (cellValue.type === AscCommon.CellValueType.Number) {
+				textValue = cellValue.number + "";
+			} else {
+				textValue = cellValue.getTextValue() + "";
+			}
+			textValue = textValue.toLowerCase();
 			if (textValue === lowerCaseValue) {
 				return item;
 			}
