@@ -1894,7 +1894,7 @@
 		let t = this.bounds.t + (ANIM_ITEM_HEIGHT - EFFECT_BAR_HEIGHT) / 2;
 		let b = t + EFFECT_BAR_HEIGHT;
 
-		return { l, r, t, b }
+		return { l: l, r: r, t: t, b: b }
 	};
 	CAnimItem.prototype.hitInEffectBar = function (x, y) {
 		const delta = AscFormat.DIST_HIT_IN_LINE
