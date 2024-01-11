@@ -7435,7 +7435,7 @@ CT_pivotTableDefinition.prototype.getGetPivotParamsByActiveCell = function(activ
 		switch (sharedItem.type) {
 			case Asc.c_oAscPivotRecType.Number:
 				value = sharedItem.getCellValue().number;
-				formulaValue = value
+				formulaValue = value;
 				break;
 			case Asc.c_oAscPivotRecType.DateTime:
 				value = Asc.cDate.prototype.getDateFromExcel(sharedItem.getCellValue().number);
@@ -13169,31 +13169,93 @@ CT_PivotField.prototype.getFilterObject = function(cacheField, pageFilterItem, n
  * @param {string} value 
  * @return {CT_Item}
  */
-CT_PivotField.prototype.findFieldItemByTextValue = function(cacheField, value) {
+CT_PivotField.prototype.findFieldItemInSharedItems = function(cacheField, value) {
 	const items = this.getItems();
-	if (items) {
-		let valueLowerCase = (value + "").toLowerCase();
-		for (let i = 0; i < items.length; i += 1) {
-			const item = items[i];
-			if (Asc.c_oAscItemType.Data === item.t && false === item.h) {
-				const sharedItem = cacheField.getGroupOrSharedItem(item.x);
-				if (sharedItem) {
-					const textValue = (sharedItem.getCellValue().getTextValue() + "").toLowerCase();
-					if (textValue === valueLowerCase) {
-						return item;
-					}
-					const execRes = /(\d+)-(\d+)/.exec(textValue);
-					if (execRes && execRes[1] === valueLowerCase) {
-						return item;
-					}
-					if (textValue[0] === valueLowerCase){
-						return item;
-					}
+	const lowerCaseValue = (value + "").toLowerCase();
+	for (let i = 0; i < items.length; i += 1) {
+		const item = items[i];
+		const sharedItem = cacheField.getGroupOrSharedItem(item.x);
+		if (sharedItem) {
+			const textValue = (sharedItem.getCellValue().getTextValue() + "").toLowerCase();
+			if (textValue === lowerCaseValue) {
+				return item;
+			}
+		}
+	}
+	return null;
+};
+/**
+ * @param {CT_CacheField} cacheField 
+ * @param {string} value 
+ * @param {PivotRecordValue} sharedItem 
+ * @param {CT_Item} fieldItem 
+ * @return {boolean}
+ */
+CT_PivotField.prototype.checkFieldItemInFieldGroup = function(cacheField, value, sharedItem, fieldItem) {
+	const textValue = (sharedItem.getCellValue().getTextValue() + "").toLowerCase();
+	if (textValue === value) {
+		return true;
+	}
+	/**@type {CT_RangePr} */
+	const rangePr = cacheField.fieldGroup.rangePr;
+	if (rangePr.groupBy === c_oAscGroupBy.Range) {
+		const execRes = /(.+)-(.+)/.exec(textValue);
+		if (execRes && execRes[1] === value) {
+			return true;
+		}
+	} else if (rangePr.groupBy === c_oAscGroupBy.Seconds) {
+		if (value === fieldItem.x - 1 + "") {
+			return true;
+		}
+	} else if (rangePr.groupBy === c_oAscGroupBy.Minutes) {
+		if (value === fieldItem.x - 1 + "") {
+			return true;
+		}
+	} else if (rangePr.groupBy === c_oAscGroupBy.Hours) {
+		if (value === fieldItem.x - 1 + "") {
+			return true;
+		}
+	} else {
+		if (value === fieldItem.x + "") {
+			return true;
+		}
+	}
+	if (textValue[0] === value){
+		return true;
+	}
+	return false;
+};
+/**
+ * @param {CT_CacheField} cacheField 
+ * @param {string} value 
+ * @return {CT_Item}
+ */
+CT_PivotField.prototype.findFieldItemInFieldGroup = function(cacheField, value) {
+	const items = this.getItems();
+	const lowerCaseValue = (value + "").toLowerCase()
+	for (let i = 0; i < items.length; i += 1) {
+		const item = items[i];
+		if (Asc.c_oAscItemType.Data === item.t && false === item.h) {
+			const sharedItem = cacheField.getGroupOrSharedItem(item.x);
+			if (sharedItem) {
+				if(this.checkFieldItemInFieldGroup(cacheField, lowerCaseValue, sharedItem, item)) {
+					return item;
 				}
 			}
 		}
 	}
 	return null;
+}
+/**
+ * @param {CT_CacheField} cacheField 
+ * @param {string} value 
+ * @return {CT_Item}
+ */
+CT_PivotField.prototype.findFieldItemByTextValue = function(cacheField, value) {
+	if (cacheField.fieldGroup) {
+		return this.findFieldItemInFieldGroup(cacheField, value);
+	}
+	return this.findFieldItemInSharedItems(cacheField, value);
 };
 
 CT_PivotField.prototype.asc_getBaseItemObject = function(cacheField) {
@@ -15024,6 +15086,7 @@ function CT_FieldGroup() {
 	this.par = null;
 	this.base = null;
 //Members
+	/**@type {CT_RangePr} */
 	this.rangePr = null;
 	this.discretePr = null;
 	this.groupItems = null;
