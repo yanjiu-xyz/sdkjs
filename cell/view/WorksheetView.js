@@ -902,6 +902,32 @@
 					});
 				}
 			}
+			else if(AscFormat.isPieChartType(nType)) {
+				if(aSeriesRefsHor.length <= aSeriesRefsVer.length) {
+					aParams.push({
+						bHorValue: true,
+						aSeries: aSeriesRefsHor
+					});
+					if(aSeriesRefsHor.length === 2) {
+						aParams.push({
+							bHorValue: true,
+							aSeries: oDataRefs.getSeriesRefsFromUnionRefs(aRanges, true, true)
+						});
+					}
+				}
+				else {
+					aParams.push({
+						bHorValue: false,
+						aSeries: aSeriesRefsVer
+					});
+					if(aSeriesRefsVer.length === 2) {
+						aParams.push({
+							bHorValue: false,
+							aSeries: oDataRefs.getSeriesRefsFromUnionRefs(aRanges, false, true)
+						});
+					}
+				}
+			}
 			else {
 				aParams.push({
 					bHorValue: true,
