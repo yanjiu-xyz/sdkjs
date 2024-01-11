@@ -1328,7 +1328,7 @@
 			const edge = checkEdges[i];
 			const point = this.getRectEdgePoint(shapePoint, guideVector, edge[0], edge[1]);
 			if (point) {
-				const edgeGuideVector = {x: point.x - shapePoint.x, y: point.y - shapePoint.y};
+				const edgeGuideVector = new CVector(point.x - shapePoint.x, point.y - shapePoint.y);
 				const edgeAngle = edgeGuideVector.getAngle();
 				if (AscFormat.fApproxEqual(edgeAngle, centerAngle, algDelta)) {
 					return point;
@@ -1703,7 +1703,6 @@
 	};
 
 	SnakeAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm) {
-		this.parentNode.createShadowShape(true);
 		this.nodes = this.parentNode.childs.slice();
 		if (this.isHideLastChild()) {
 			this.nodes.pop();
@@ -2217,7 +2216,6 @@
 					const radiusGuideVector = CVector.getVectorByAngle(currentAngle);
 					radiusGuideVector.multiply(radius);
 					shape.radialVector = radiusGuideVector;
-					shape.stepAngle = stepAngle;
 					const offX = radiusGuideVector.x - shape.w / 2;
 					const offY = radiusGuideVector.y - shape.h / 2;
 					shape.x += offX;
