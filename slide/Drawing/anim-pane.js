@@ -1793,6 +1793,20 @@
 		}
 
 		this.onMouseMoveCallback = function handlePointerMovement(event, x, y) {
+			if (!this.hit(x, y)) { return }
+
+			const drawingDocument = Asc.editor.WordControl.m_oDrawingDocument;
+			drawingDocument.SetCursorType('move')
+			
+			// const hitRes = this.hitInEffectBar(x, y)
+			// if (hitRes === 'left' || hitRes === 'right') {
+			// 	drawingDocument.SetCursorType('col-resize')
+			// } else if (hitRes) {
+			// 	drawingDocument.SetCursorType('ew-resize')
+			// } else {
+			// 	drawingDocument.SetCursorType('default')
+			// }
+			
 			if (!this.isStickedToPointer) { return }
 
 			const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline
