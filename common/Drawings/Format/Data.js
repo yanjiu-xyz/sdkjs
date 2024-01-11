@@ -87,9 +87,8 @@ Because of this, the display is sometimes not correct.
 
     // consts
     const GRAYSCALE_TRESHHOLD = 150;
-		const CUST_RAD_SCALE_INC_FACTOR = 95500;
 
-    const Point_type_asst = 1;
+	  const Point_type_asst = 1;
     const Point_type_doc = 2;
     const Point_type_node = 0;
     const Point_type_parTrans = 4;
@@ -2421,7 +2420,7 @@ Because of this, the display is sometimes not correct.
       pWriter._WriteInt2(8, this.custLinFactNeighborY ? Math.floor(this.custLinFactNeighborY * 100000) : null);
       pWriter._WriteInt2(9, this.custLinFactX ? Math.floor(this.custLinFactX * 100000) : null);
       pWriter._WriteInt2(10, this.custLinFactY ? Math.floor(this.custLinFactY * 100000) : null);
-      pWriter._WriteInt2(11, this.custRadScaleInc ? Math.floor(this.custRadScaleInc * CUST_RAD_SCALE_INC_FACTOR) : null);
+      pWriter._WriteInt2(11, this.custRadScaleInc ? Math.floor(this.custRadScaleInc * 100000) : null);
       pWriter._WriteInt2(12, this.custRadScaleRad ? Math.floor(this.custRadScaleRad * 100000) : null);
       pWriter._WriteInt2(13, this.custScaleX ? Math.floor(this.custScaleX * 100000) : null);
       pWriter._WriteInt2(14, this.custScaleY ? Math.floor(this.custScaleY * 100000) : null);
@@ -2456,7 +2455,7 @@ Because of this, the display is sometimes not correct.
       else if (8 === nType) this.setCustLinFactNeighborY(oStream.GetLong() / 100000);
       else if (9 === nType) this.setCustLinFactX(oStream.GetLong() / 100000);
       else if (10 === nType) this.setCustLinFactY(oStream.GetLong() / 100000);
-      else if (11 === nType) this.setCustRadScaleInc(oStream.GetLong() / CUST_RAD_SCALE_INC_FACTOR);
+      else if (11 === nType) this.setCustRadScaleInc(oStream.GetLong() / 100000);
       else if (12 === nType) this.setCustRadScaleRad(oStream.GetLong() / 100000);
       else if (13 === nType) this.setCustScaleX(oStream.GetLong() / 100000);
       else if (14 === nType) this.setCustScaleY(oStream.GetLong() / 100000);

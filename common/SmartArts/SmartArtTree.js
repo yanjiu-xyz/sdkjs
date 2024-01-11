@@ -1404,16 +1404,15 @@
 		if (prSet) {
 			if (shape.radialVector) {
 				const custScaleRadius = prSet.custRadScaleRad === null ? 1 : prSet.custRadScaleRad;
-				const custOffsetAngle = prSet.custRadScaleInc === null ? 0 : prSet.custRadScaleInc;
-				if (custScaleRadius !== 1 || custOffsetAngle !== 0) {
+				const custScaleAngle = prSet.custRadScaleInc === null ? 0 : prSet.custRadScaleInc;
+				if (custScaleRadius !== 1 || custScaleAngle !== 0) {
 
 					const defaultRadius = shape.radialVector.getDistance();
 					const defaultAngle = shape.radialVector.getAngle();
-					const adaptDefaultAngle = defaultAngle === 0 ? 2 * Math.PI : defaultAngle;
 					const shapeCenterPoint = new CCoordPoint(shape.x + shape.w / 2, shape.y + shape.h / 2);
 					const centerPoint = new CCoordPoint(shapeCenterPoint.x - shape.radialVector.x, shapeCenterPoint.y - shape.radialVector.y);
 					const customRadius = defaultRadius * custScaleRadius;
-					const custAngle = AscFormat.normalizeRotate(adaptDefaultAngle + custOffsetAngle);
+					const custAngle = AscFormat.normalizeRotate(defaultAngle + custScaleAngle * shape.incAngle);
 					const custVector = CVector.getVectorByAngle(custAngle);
 					custVector.multiply(customRadius);
 					const custCenterPoint = new CCoordPoint(custVector.x + centerPoint.x, custVector.y + centerPoint.y);
@@ -2208,6 +2207,11 @@
 			}
 			startIndex = this.calcValues.centerNodeIndex + 1;
 		}
+		let incAngle = 0;
+		if (this.calcValues.mainElements.length) {
+			incAngle = Math.PI / this.calcValues.mainElements.length;
+		}
+
 		for (let i = startIndex; i < childs.length; i++) {
 			const child = childs[i];
 			if (child.isContentNode()) {
@@ -2216,6 +2220,7 @@
 					const radiusGuideVector = CVector.getVectorByAngle(currentAngle);
 					radiusGuideVector.multiply(radius);
 					shape.radialVector = radiusGuideVector;
+					shape.incAngle = incAngle;
 					const offX = radiusGuideVector.x - shape.w / 2;
 					const offY = radiusGuideVector.y - shape.h / 2;
 					shape.x += offX;
