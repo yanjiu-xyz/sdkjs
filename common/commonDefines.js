@@ -3003,9 +3003,9 @@ window.AscCommon.g_cIsBeta = "false";
 
 	/** enum {number} */
 	var c_oAscNumberingSuff = {
-		Tab   : 0x01,
-		Space : 0x02,
-		None  : 0x03
+		None  : 0x00,
+		Space : 0x01,
+		Tab   : 0x02
 	};
 
 	var c_oAscNumberingLvlTextType = {

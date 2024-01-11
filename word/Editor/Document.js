@@ -5181,7 +5181,8 @@ CDocument.prototype.private_RecalculateFlowParagraph         = function(RecalcIn
             var TempElement = this.Content[TempIndex];
             TempElement.Reset(TempElement.X, TempElement.Y, TempElement.XLimit, TempElement.YLimit, PageIndex, ColumnIndex, ColumnsCount);
         }
-
+		
+		Index += FlowCount - 1;
         RecalcResult = recalcresult_NextElement;
     }
 
@@ -6379,6 +6380,7 @@ CDocument.prototype.setMergeFormatComplexFieldOnApplyTextPr = function()
 	// Word doesn't add MERGEFORMAT for all field types (for example PAGE)
 	// So we add it to some specific types
 	if (!complexField
+		|| !(complexField instanceof AscWord.CComplexField)
 		|| !complexField.IsValid()
 		|| complexField.GetInstruction().isMergeFormat()
 		|| !complexField.CheckType(AscWord.fieldtype_REF)
@@ -15910,6 +15912,9 @@ CDocument.prototype.private_GetElementPageIndexByXY = function(ElementPos, X, Y,
 		StartColumn = 0;
 		EndColumn   = Math.min(ElementPagesCount - ElementStartColumn + (PageIndex - ElementStartPage) * ColumnsCount, ColumnsCount - 1);
 	}
+	
+	if (!PageSection.Columns[EndColumn])
+		return 0;
 
 	// TODO: Разобраться с ситуацией, когда пустые колонки стоят не только в конце
 	while (true === PageSection.Columns[EndColumn].Empty && EndColumn > StartColumn)
@@ -21921,9 +21926,9 @@ CDocument.prototype.IsFillingOFormMode = function()
 {
 	if (!this.IsFillingFormMode())
 		return false;
-
-	var oApi = this.GetApi();
-	return !!(oApi.DocInfo &&  oApi.DocInfo.Format && (this.Api.DocInfo.Format === "oform" || this.Api.DocInfo.Format === "docxf"));
+	
+	let api = this.GetApi();
+	return !!(api.DocInfo && api.DocInfo.isFormatWithForms());
 };
 CDocument.prototype.CheckOFormUserMaster = function(form)
 {

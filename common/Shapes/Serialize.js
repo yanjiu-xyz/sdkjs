@@ -9741,7 +9741,6 @@ function BinaryPPTYLoader()
                     {
                         s.Skip2(1); // type
                         var _paragraph = this.ReadParagraph(txbody.content);
-                        _paragraph.Correct_Content();
                         txbody.content.Internal_Content_Add(txbody.content.Content.length, _paragraph);
 
                     }
@@ -10210,6 +10209,7 @@ function BinaryPPTYLoader()
             }
         }
         s.Seek2(_end_rec);
+        par.Correct_Content();
         return par;
     };
 

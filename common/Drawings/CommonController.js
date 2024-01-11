@@ -2179,7 +2179,7 @@
 						}
 					} else if (oGrp) {
 						if (oGrp.selectStartPage === pageIndex) {
-							drawingDocument.DrawTrack(
+							!Asc.editor.isPdfEditor() && drawingDocument.DrawTrack(
 								AscFormat.TYPE_TRACK.GROUP_PASSIVE,
 								oGrp.getTransformMatrix(),
 								0,
@@ -2241,7 +2241,8 @@
 					} else {
 						for (i = 0; i < this.selectedObjects.length; ++i) {
 							let oDrawing = this.selectedObjects[i];
-							if (oDrawing.selectStartPage === pageIndex) {
+							// if (oDrawing.selectStartPage === pageIndex) {
+							if (oDrawing.selectStartPage === pageIndex && !oDrawing.IsFreeText || (oDrawing.IsFreeText && !oDrawing.IsFreeText())) {
 								let nType = oDrawing.isForm && oDrawing.isForm() ? AscFormat.TYPE_TRACK.FORM : AscFormat.TYPE_TRACK.SHAPE
 								drawingDocument.DrawTrack(
 									nType,
@@ -4556,7 +4557,7 @@
 						case c_oAscChartTypeSettings.barNormal3dPerspective:
 							return AscFormat.CreateBarChart(chartSeries, BAR_GROUPING_STANDARD, bUseCache, options, true, true);
 						case c_oAscChartTypeSettings.hBarNormal:
-							return AscFormat.CreateHBarChart(chartSeries, `BAR_GROUPING_CLUSTERED`, bUseCache, options);
+							return AscFormat.CreateHBarChart(chartSeries, BAR_GROUPING_CLUSTERED, bUseCache, options);
 						case c_oAscChartTypeSettings.hBarStacked:
 							return AscFormat.CreateHBarChart(chartSeries, BAR_GROUPING_STACKED, bUseCache, options);
 						case c_oAscChartTypeSettings.hBarStackedPer:

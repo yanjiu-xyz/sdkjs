@@ -6833,23 +6833,24 @@
 	/** */
 
     WorksheetView.prototype._drawSelectionElement = function (visibleRange, offsetX, offsetY, args) {
-        var range = args[0];
-        var selectionLineType = args[1];
-        var strokeColor = args[2];
-        var isAllRange = args[3];
-		var isAllowRetina = args[5] ? 1 : 0;
-        var colorN = this.settings.activeCellBorderColor2;
-        var ctx = this.overlayCtx;
-        var oIntersection = range.intersectionSimple(visibleRange);
+        let range = args[0];
+        let selectionLineType = args[1];
+        let strokeColor = args[2];
+        let isAllRange = args[3];
+		let isAllowRetina = args[5] ? 1 : 0;
+		let isAllowRetinaResize = args[6] ? 1 : 0;
+        let colorN = this.settings.activeCellBorderColor2;
+        let ctx = this.overlayCtx;
+        let oIntersection = range.intersectionSimple(visibleRange);
 
         if (!oIntersection) {
             return true;
         }
 
-        var fHorLine, fVerLine;
-        var canFill = AscCommonExcel.selectionLineType.Selection & selectionLineType;
-        var isDashLine = AscCommonExcel.selectionLineType.Dash & selectionLineType;
-        var dashThickLine = AscCommonExcel.selectionLineType.DashThick & selectionLineType;
+        let fHorLine, fVerLine;
+        let canFill = AscCommonExcel.selectionLineType.Selection & selectionLineType;
+        let isDashLine = AscCommonExcel.selectionLineType.Dash & selectionLineType;
+        let dashThickLine = AscCommonExcel.selectionLineType.DashThick & selectionLineType;
 
         if (isDashLine || dashThickLine) {
             fHorLine = ctx.dashLineCleverHor;
@@ -6859,13 +6860,13 @@
             fVerLine = ctx.lineVerPrevPx;
         }
 
-        var firstCol = oIntersection.c1 === visibleRange.c1 && !isAllRange;
-        var firstRow = oIntersection.r1 === visibleRange.r1 && !isAllRange;
+        let firstCol = oIntersection.c1 === visibleRange.c1 && !isAllRange;
+        let firstRow = oIntersection.r1 === visibleRange.r1 && !isAllRange;
 
-        var drawLeftSide = oIntersection.c1 === range.c1;
-        var drawRightSide = oIntersection.c2 === range.c2;
-        var drawTopSide = oIntersection.r1 === range.r1;
-        var drawBottomSide = oIntersection.r2 === range.r2;
+        let drawLeftSide = oIntersection.c1 === range.c1;
+        let drawRightSide = oIntersection.c2 === range.c2;
+        let drawTopSide = oIntersection.r1 === range.r1;
+        let drawBottomSide = oIntersection.r2 === range.r2;
 
         if(args[4]) {
         	if(args[4] === 1) {
@@ -6882,37 +6883,37 @@
 			}
 		}
 
-        var x1 = this._getColLeft(oIntersection.c1) - offsetX;
-        var x2 = this._getColLeft(oIntersection.c2 + 1) - offsetX;
-        var y1 = this._getRowTop(oIntersection.r1) - offsetY;
-        var y2 = this._getRowTop(oIntersection.r2 + 1) - offsetY;
+        let x1 = this._getColLeft(oIntersection.c1) - offsetX;
+        let x2 = this._getColLeft(oIntersection.c2 + 1) - offsetX;
+        let y1 = this._getRowTop(oIntersection.r1) - offsetY;
+        let y2 = this._getRowTop(oIntersection.r2 + 1) - offsetY;
 
         if (canFill) {
-            var fillColor = strokeColor.Copy();
+            let fillColor = strokeColor.Copy();
             fillColor.a = 0.15;
             ctx.setFillStyle(fillColor).fillRect(x1, y1, x2 - x1, y2 - y1);
         }
 
 
-        var isPagePreview = AscCommonExcel.selectionLineType.ResizeRange & selectionLineType;
+        let isPagePreview = AscCommonExcel.selectionLineType.ResizeRange & selectionLineType;
 		//меняю толщину линии для селекта(только в случае сплошной линии) и масштаба 200%
-		var isRetina = (!isDashLine || isAllowRetina) && this.getRetinaPixelRatio() >= 2;
-		var widthLine = isDashLine ? 1 : 2;
+		let isRetina = (!isDashLine || isAllowRetina) && this.getRetinaPixelRatio() >= 2;
+		let widthLine = isDashLine ? 1 : 2;
 
 		//TODO for scale > 200% use a multiplier of 2 . revise the rendering for scales over 200%
 		if (isRetina) {
 			widthLine = ((widthLine * 2) + 0.5) >> 0//AscCommon.AscBrowser.convertToRetinaValue(widthLine, true);
 		}
-		var thinLineDiff = 0;
+		let thinLineDiff = 0;
 		if (isPagePreview) {
 			widthLine = widthLine + 1;
 			thinLineDiff = isDashLine ? 0 : 1;
 		}
 
         //TODO проверить на следующих версиях. сдвиг, который получился опытным путём. проблема только в safari.
-        var notStroke = AscCommonExcel.selectionLineType.NotStroke & selectionLineType;
+        let notStroke = AscCommonExcel.selectionLineType.NotStroke & selectionLineType;
         if (!notStroke) {
-            var _diff = 0;
+            let _diff = 0;
             if (AscBrowser.isSafari) {
                 _diff = 1;
             }
@@ -6935,18 +6936,18 @@
 		}
 
 		// draw active cell in selection
-		var isActive = AscCommonExcel.selectionLineType.ActiveCell & selectionLineType;
+		let isActive = AscCommonExcel.selectionLineType.ActiveCell & selectionLineType;
 		if (isActive) {
-			var cell = this.model.getSelection().activeCell;
-			var fs = this.model.getMergedByCell(cell.row, cell.col);
+			let cell = this.model.getSelection().activeCell;
+			let fs = this.model.getMergedByCell(cell.row, cell.col);
 			fs = oIntersection.intersectionSimple(fs || new asc_Range(cell.col, cell.row, cell.col, cell.row));
 			if (fs) {
-			    var top = this._getRowTop(fs.r1);
-			    var left = this._getColLeft(fs.c1);
-				var _x1 = left - offsetX + 1;
-				var _y1 = top - offsetY + 1;
-				var _w = this._getColLeft(fs.c2 + 1) - left - 2 - isRetina * 1;
-				var _h = this._getRowTop(fs.r2 + 1) - top - 2  - isRetina * 1;
+			    let top = this._getRowTop(fs.r1);
+			    let left = this._getColLeft(fs.c1);
+				let _x1 = left - offsetX + 1;
+				let _y1 = top - offsetY + 1;
+				let _w = this._getColLeft(fs.c2 + 1) - left - 2 - isRetina * 1;
+				let _h = this._getRowTop(fs.r2 + 1) - top - 2  - isRetina * 1;
 				if (0 < _w && 0 < _h) {
 					ctx.clearRect(_x1, _y1, _w, _h);
 				}
@@ -6973,15 +6974,15 @@
         }
 
         // Отрисовка квадратов для move/resize
-        var isResize = AscCommonExcel.selectionLineType.Resize & selectionLineType;
-        var isPromote = AscCommonExcel.selectionLineType.Promote & selectionLineType;
+        let isResize = AscCommonExcel.selectionLineType.Resize & selectionLineType;
+        let isPromote = AscCommonExcel.selectionLineType.Promote & selectionLineType;
         if (isResize || isPromote) {
             //isResize - пока не увеличиваю квадрат при выборе диапазона в формуле, поскольку нужно менять логику очистки селекта в режиме формул
-			var retinaKf = isRetina && !isResize ? 2 : 1;
-			var size = 5 * retinaKf;
-			var sizeBorder = size + 2 * retinaKf;
-			var diff = Math.floor(size/2) + 1;
-			var diffBorder = Math.floor(sizeBorder/2) + 1 * retinaKf;
+			let retinaKf = isRetina && (!isResize || isAllowRetinaResize) ? 2 : 1;
+			let size = 5 * retinaKf;
+			let sizeBorder = size + 2 * retinaKf;
+			let diff = Math.floor(size/2) + 1;
+			let diffBorder = Math.floor(sizeBorder/2) + 1 * retinaKf;
 
 			ctx.setFillStyle(colorN);
             if (drawRightSide && drawBottomSide) {
@@ -7290,7 +7291,7 @@
 
             this._drawElements(this._drawSelectionElement, ranges[i],
                 AscCommonExcel.selectionLineType.Selection | (ranges[i].isName ? AscCommonExcel.selectionLineType.None :
-                AscCommonExcel.selectionLineType.Resize), strokeColor);
+                AscCommonExcel.selectionLineType.Resize), strokeColor, null, null, null, true);
         }
     };
 
@@ -7466,13 +7467,14 @@
         var t = this;
 		var isRetinaWidth = this.getRetinaPixelRatio() >= 2;
         var selectionRange = this.model.getSelection();
+        const isMacLinuxMozilla = (AscCommon.AscBrowser.isLinuxOS || AscCommon.AscBrowser.isMacOs) && AscCommon.AscBrowser.isMozilla;
         selectionRange.ranges.forEach(function (item, index) {
             var arnIntersection = item.intersectionSimple(range);
             if (arnIntersection) {
-                _x1 = t._getColLeft(arnIntersection.c1) - offsetX - 3;
+                _x1 = t._getColLeft(arnIntersection.c1) - offsetX - 3 - isMacLinuxMozilla * 1;
                 _x2 = t._getColLeft(arnIntersection.c2 + 1) - offsetX +
                   1 + /* Это ширина "квадрата" для автофильтра от границы ячейки */2;
-                _y1 = t._getRowTop(arnIntersection.r1) - offsetY - 2 - isRetinaWidth * 1;
+                _y1 = t._getRowTop(arnIntersection.r1) - offsetY - 2 - isRetinaWidth * 1 - isMacLinuxMozilla * 1;
                 _y2 = t._getRowTop(arnIntersection.r2 + 1) - offsetY +
                   1 + /* Это высота "квадрата" для автофильтра от границы ячейки */2;
 
@@ -7556,14 +7558,15 @@
 			this.overlayCtx.clear();
 		}
 
+		let retinaСoef = isRetinaWidth ? 2 : 1;
         if (this.oOtherRanges) {
             this.oOtherRanges.ranges.forEach(function (item) {
                 arnIntersection = item.intersectionSimple(range);
                 if (arnIntersection) {
-                    _x1 = t._getColLeft(arnIntersection.c1) - offsetX - 3;
-                    _x2 = arnIntersection.c2 > t.nColsCount ? width : t._getColLeft(arnIntersection.c2 + 1) - offsetX + 1 + 2;
-                    _y1 = t._getRowTop(arnIntersection.r1) - offsetY - 3;
-                    _y2 = arnIntersection.r2 > t.nRowsCount ? height : t._getRowTop(arnIntersection.r2 + 1) - offsetY + 1 + 2;
+                    _x1 = t._getColLeft(arnIntersection.c1) - offsetX - 3 * retinaСoef;
+                    _x2 = arnIntersection.c2 > t.nColsCount ? width : t._getColLeft(arnIntersection.c2 + 1) - offsetX + 3  *retinaСoef;
+                    _y1 = t._getRowTop(arnIntersection.r1) - offsetY - 3 * retinaСoef;
+                    _y2 = arnIntersection.r2 > t.nRowsCount ? height : t._getRowTop(arnIntersection.r2 + 1) - offsetY + 3 * retinaСoef;
 
                     x1 = Math.min(x1, _x1);
                     x2 = Math.max(x2, _x2);
@@ -12776,6 +12779,7 @@
                         t.fillHandleDirection = -1;	
 
                         t.updateSelection();
+                        callback && callback(false);
                     }
                 } else {
 					// Сбрасываем параметры автозаполнения
@@ -26744,38 +26748,66 @@
 
 			let oneRow = selectionRange.isOneRow();
 			let oneCol = selectionRange.isOneCol();
+			let ws = oThis.model;
+			let aMergedCells =  ws.mergeManager.get(selectionRange).all;
 			if (type === c_oAscFillType.fillDown) {
 				if (oneRow && selectionRange.r1 === 0) {
 					return false;
 				}
-
-				selectionRange.assign(selectionRange.c1, selectionRange.r1 - 1*oneRow, selectionRange.c2, selectionRange.r1 - 1*oneRow);
+				if (aMergedCells.length) {
+					let oMergedRange = aMergedCells[0].bbox;
+					selectionRange.assign(oMergedRange.c1, oMergedRange.r1, oMergedRange.c2, oMergedRange.r2);
+				} else {
+					selectionRange.assign(selectionRange.c1, selectionRange.r1 - 1*oneRow, selectionRange.c2, selectionRange.r1 - 1*oneRow);
+				}
 				_applyFillHandleSettings(cloneSelection, 1, 3);
 			} else if (type === c_oAscFillType.fillUp) {
 				if (oneRow && selectionRange.r2 === gc_nMaxRow0) {
 					return false;
 				}
-
-				selectionRange.assign(selectionRange.c1, selectionRange.r2 + 1*oneRow, selectionRange.c2, selectionRange.r2 + 1*oneRow);
+				if (aMergedCells.length) {
+					let oMergedRange = aMergedCells[aMergedCells.length - 1].bbox;
+					selectionRange.assign(oMergedRange.c1, oMergedRange.r1, oMergedRange.c2, oMergedRange.r2);
+				} else {
+					selectionRange.assign(selectionRange.c1, selectionRange.r2 + 1 * oneRow, selectionRange.c2, selectionRange.r2 + 1 * oneRow);
+				}
 				_applyFillHandleSettings(new asc_Range(cloneSelection.c2, cloneSelection.r2, cloneSelection.c1, cloneSelection.r1), 1, 1);
 			} else if (type === c_oAscFillType.fillRight) {
 				if (oneCol && selectionRange.c1 === 0) {
 					return false;
 				}
-
-				selectionRange.assign(selectionRange.c1 - 1*oneCol, selectionRange.r1, selectionRange.c1 - 1*oneCol, selectionRange.r2);
+				if (aMergedCells.length) {
+					let oMergedRange = aMergedCells[0].bbox;
+					selectionRange.assign(oMergedRange.c1, oMergedRange.r1, oMergedRange.c2, oMergedRange.r2);
+				} else {
+					selectionRange.assign(selectionRange.c1 - 1*oneCol, selectionRange.r1, selectionRange.c1 - 1*oneCol, selectionRange.r2);
+				}
 				_applyFillHandleSettings(cloneSelection, 0, 3);
 			} else if (type === c_oAscFillType.fillLeft) {
 				if (oneCol && selectionRange.c2 === gc_nMaxCol0) {
 					return false;
 				}
-
-				selectionRange.assign(selectionRange.c2 + 1*oneCol, selectionRange.r1, selectionRange.c2 + 1*oneCol, selectionRange.r2);
+				if (aMergedCells.length) {
+					let oMergedRange = aMergedCells[aMergedCells.length - 1].bbox;
+					selectionRange.assign(oMergedRange.c1, oMergedRange.r1, oMergedRange.c2, oMergedRange.r2);
+				} else {
+					selectionRange.assign(selectionRange.c2 + 1 * oneCol, selectionRange.r1, selectionRange.c2 + 1 * oneCol, selectionRange.r2);
+				}
 				_applyFillHandleSettings(new asc_Range(cloneSelection.c2, cloneSelection.r2, cloneSelection.c1, cloneSelection.r1), 0, 1);
 			}
 
 			return true;
 		};
+
+		let _setScrollType = function (_typeSelection) {
+			if (_typeSelection === Asc.c_oAscSelectionType.RangeCol || _typeSelection === Asc.c_oAscSelectionType.RangeMax) {
+				oThis.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
+			}
+			if (_typeSelection === Asc.c_oAscSelectionType.RangeRow || _typeSelection === Asc.c_oAscSelectionType.RangeMax) {
+				oThis.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
+			}
+		};
+
 
 		switch (type) {
 			case c_oAscFillType.copyCells:
@@ -26798,7 +26830,9 @@
 				if (oRange.isOneCell() && oRangeModel.getType() === AscCommon.CellValueType.Number && !bDateType) {
 					this.applyFillHandle(null, null, true, null);
 				} else {
+					this.model.setFillHandleRightClick(true);
 					this.applyFillHandle(null, null, false, null);
+					this.model.setFillHandleRightClick(false);
 				}
 				break;
 			case c_oAscFillType.linearTrend:
@@ -26863,6 +26897,7 @@
 					//update
 					for (let i = 0; i < aRanges.length; i++) {
 						oThis._updateRange(aRanges[i]);
+						_setScrollType(aRanges[i] && aRanges[i].getType());
 					}
 					oThis.draw();
 				});
@@ -26881,14 +26916,25 @@
 					History.Create_NewPoint();
 					History.StartTransaction();
 
-					oThis.applyFillHandle(null, null, true, true, function (success) {
+					let isCtrlKey = true;
+					oThis.model.setActiveFillType(type);
+					oThis.applyFillHandle(null, null, isCtrlKey, true, function (success) {
 						_setSelection(_cloneSelection);
 
 						History.SetSelection(_cloneSelection);
 						History.SetSelectionRedo(_cloneSelection);
 						History.EndTransaction();
 
-						success && oThis.draw();
+						let typeSelection = _cloneSelection.getType();
+						if ((type ===  c_oAscFillType.fillDown || type ===  c_oAscFillType.fillUp) && (typeSelection === Asc.c_oAscSelectionType.RangeCol || typeSelection === Asc.c_oAscSelectionType.RangeMax)) {
+							oThis.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollVertical;
+						}
+						if ((type ===  c_oAscFillType.fillLeft || type ===  c_oAscFillType.fillRight) && (typeSelection === Asc.c_oAscSelectionType.RangeRow || typeSelection === Asc.c_oAscSelectionType.RangeMax)) {
+							oThis.scrollType |= AscCommonExcel.c_oAscScrollType.ScrollHorizontal;
+						}
+
+						oThis.draw();
+						oThis.model.setActiveFillType(null);
 					});
 				}
 

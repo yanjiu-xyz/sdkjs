@@ -642,22 +642,6 @@
 
 		CImageShape.prototype.hitToAdjustment = CShape.prototype.hitToAdjustment;
 
-		CImageShape.prototype.getPlaceholderType = function () {
-			return this.isPlaceholder() ? this.nvPicPr.nvPr.ph.type : null;
-		};
-
-		CImageShape.prototype.getPlaceholderIndex = function () {
-			return this.isPlaceholder() ? this.nvPicPr.nvPr.ph.idx : null;
-		};
-
-		CImageShape.prototype.getPhType = function () {
-			return this.isPlaceholder() ? this.nvPicPr.nvPr.ph.type : null;
-		};
-
-		CImageShape.prototype.getPhIndex = function () {
-			return this.isPlaceholder() ? this.nvPicPr.nvPr.ph.idx : null;
-		};
-
 		CImageShape.prototype.getMediaFileName = function () {
 			if (this.nvPicPr && this.nvPicPr.nvPr && this.nvPicPr.nvPr.unimedia) {
 				var oUniMedia = this.nvPicPr.nvPr.unimedia;

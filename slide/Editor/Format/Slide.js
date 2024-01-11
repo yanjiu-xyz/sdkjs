@@ -766,7 +766,7 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         }
         for (var j = 0; j < layout.cSld.spTree.length; ++j) {
             if (layout.cSld.spTree[j].isPlaceholder()) {
-                var _ph_type = layout.cSld.spTree[j].getPhType();
+                var _ph_type = layout.cSld.spTree[j].getPlaceholderType();
                 var hf = layout.Master.hf;
                 var bIsSpecialPh = _ph_type === AscFormat.phType_dt || _ph_type === AscFormat.phType_ftr || _ph_type === AscFormat.phType_hdr || _ph_type === AscFormat.phType_sldNum;
                 if (!bIsSpecialPh || hf && ((_ph_type === AscFormat.phType_dt && (hf.dt !== false)) ||

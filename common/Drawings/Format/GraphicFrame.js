@@ -784,28 +784,6 @@
 		return this.graphicObject.SetSelectionState(Sate, Sate.length - 1);
 	};
 
-	CGraphicFrame.prototype.getPhType = function () {
-		if (this.isPlaceholder()) {
-			return this.nvGraphicFramePr.nvPr.ph.type;
-		}
-		return null;
-	};
-
-	CGraphicFrame.prototype.getPhIndex = function () {
-		if (this.isPlaceholder()) {
-			return this.nvGraphicFramePr.nvPr.ph.idx;
-		}
-		return null;
-	};
-
-	CGraphicFrame.prototype.getPlaceholderType = function () {
-		return this.getPhType();
-	};
-
-	CGraphicFrame.prototype.getPlaceholderIndex = function () {
-		return this.getPhIndex();
-	};
-
 	CGraphicFrame.prototype.paragraphAdd = function (paraItem, bRecalculate) {
 	};
 

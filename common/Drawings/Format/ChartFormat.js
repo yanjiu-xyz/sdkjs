@@ -4298,14 +4298,18 @@
             return;
         }
 
-        var bResetLine = false;
-        var nType = this.getObjectType();
+        let bResetLine = false;
+        let nType = this.getObjectType();
+        let bLineSeriesInStock = (nType === AscDFH.historyitem_type_LineSeries && this.parent.getObjectType() === AscDFH.historyitem_type_StockChart)
         if(nType === AscDFH.historyitem_type_ScatterSer) {//TODO: radar chart
             if(this.parent.isNoLine()) {
                 bResetLine = true;
             }
         }
-        var bMarkerChart = false;
+        if(bLineSeriesInStock) {
+            bResetLine = true;
+        }
+        let bMarkerChart = false;
         if(nType === AscDFH.historyitem_type_LineSeries
             || nType === AscDFH.historyitem_type_RadarSeries
             || nType === AscDFH.historyitem_type_ScatterSer) {
@@ -4313,10 +4317,10 @@
                 bMarkerChart = true;
             }
         }
-        var nColorsCount;
-        var aColors;
-        var oDataStyleEntry = this.getDataStyleEntry(oChartStyle);
-        var oMarker;
+        let nColorsCount;
+        let aColors;
+        let oDataStyleEntry = this.getDataStyleEntry(oChartStyle);
+        let oMarker;
         if(bReset && oAdditionalData) {
             if(!oAdditionalData.dLbls) {
                 this.setDLbls(null);
@@ -4335,11 +4339,11 @@
             this.trendline.applyChartStyle(oChartStyle, oColors, oAdditionalData, bReset);
         }
         if(this.isVaryColors() && this.addDPt) {
-            var oVal = (this.val || this.yVal);
+            let oVal = (this.val || this.yVal);
             nColorsCount = oVal.getValuesCount();
             aColors = oColors.generateColors(nColorsCount);
-            var nDPtCount = nColorsCount;
-            var nDPt, oDPt;
+            let nDPtCount = nColorsCount;
+            let nDPt, oDPt;
             if(bReset) {
                 this.removeAllDPts();
                 for(nDPt = 0; nDPt < nDPtCount; ++nDPt) {
@@ -4392,6 +4396,9 @@
             if(this.marker) {
                 this.marker.applyChartStyle(oChartStyle, oColors, oAdditionalData, bReset);
             }
+        }
+        if(bLineSeriesInStock) {
+            this.setNoneMarker();
         }
         if(bResetLine) {
             if(!this.spPr) {
@@ -6186,7 +6193,7 @@
         return false;
     };
     CPlotArea.prototype.isDoughnutType = function(nType) {
-        isDoughnutChartType(nType);
+        return isDoughnutChartType(nType);
     };
     CPlotArea.prototype.isAreaType = function(nType) {
         return isAreaChartType(nType);
@@ -6198,7 +6205,7 @@
         return isScatterChartType(nType);
     };
     CPlotArea.prototype.isStockChart = function(nType) {
-        isStockChartType(nType);
+        return isStockChartType(nType);
     };
     CPlotArea.prototype.isRadarChart = function(nType) {
       return this.isRadarType(nType);
@@ -7741,6 +7748,15 @@
             return Asc.c_oAscGridLinesSettings.minor;
         return Asc.c_oAscGridLinesSettings.majorMinor;
     };
+    CAxisBase.prototype.getOrientation = function() {
+        if(this.scaling && AscFormat.isRealNumber(this.scaling.orientation)) {
+            return this.scaling.orientation;
+        }
+        return AscFormat.ORIENTATION_MIN_MAX;
+    };
+    CAxisBase.prototype.isReversed = function () {
+        return this.getOrientation() === AscFormat.ORIENTATION_MAX_MIN;
+    };
     CAxisBase.prototype.getLabelSetting = function() {
         if(this.isHorizontal()) {
             if(this.title) {
@@ -8075,11 +8091,7 @@
             ret.putIntervalBetweenLabels(this.tickLblSkip);
         }
 
-        var scaling = this.scaling;
-        if(!scaling || scaling.orientation !== ORIENTATION_MAX_MIN)
-            ret.putInvertCatOrder(false);
-        else
-            ret.putInvertCatOrder(true);
+        ret.putInvertCatOrder(this.isReversed());
 
         //настройки пересечения с другой осью
 
@@ -8572,7 +8584,7 @@
         }
 
         //настройка ориентации оси
-        ret.putInvertValOrder(scaling && scaling.orientation === ORIENTATION_MAX_MIN);
+        ret.putInvertValOrder(this.isReversed());
 
         //настройка множителя единиц на оси
         if(isRealObject(this.dispUnits)) {
@@ -8828,9 +8840,9 @@
             }
         }
     };
-    CValAx.prototype.getFormatCode = function(oChartSpace, oSeries) {
-        var oNumFmt = this.numFmt;
-        var sFormatCode = null;
+    CValAx.prototype.getFormatCode = function() {
+        let oNumFmt = this.numFmt;
+        let sFormatCode = null;
 
         if(oNumFmt) {
             if(oNumFmt.sourceLinked) {
@@ -8840,8 +8852,11 @@
             if(typeof sFormatCode === "string" && sFormatCode.length > 0) {
                 return sFormatCode;
             }
+            return "General";
         }
-        return "General";
+        else {
+            return this.getSourceFormatCode();
+        }
     };
     CValAx.prototype.getSourceFormatCode = function() {
         var oPlotArea = this.getPlotArea();
@@ -10686,31 +10701,19 @@
         return nType;
     };
     CLineChart.prototype.setMarkerValue = function(bVal) {
-        var aSeries = this.series, nSeries, oSeries;
+        let aSeries = this.series, nSeries;
         if(bVal) {
             if(!this.marker) {
                 this.setMarker(true);
-            }
-            for(nSeries = 0; nSeries < aSeries.length; ++nSeries) {
-                oSeries = aSeries[nSeries];
-                if(oSeries.marker && oSeries.marker.symbol === AscFormat.SYMBOL_NONE) {
-                    oSeries.setMarker(null);
-                }
             }
         }
         else {
             if(this.marker) {
                 this.setMarker(false);
             }
-            for(nSeries = 0; nSeries < aSeries.length; ++nSeries) {
-                oSeries = aSeries[nSeries];
-                if(!oSeries.marker) {
-                    oSeries.setMarker(new AscFormat.CMarker());
-                }
-                if(oSeries.marker.symbol !== AscFormat.SYMBOL_NONE) {
-                    oSeries.marker.setSymbol(AscFormat.SYMBOL_NONE);
-                }
-            }
+        }
+        for(nSeries = 0; nSeries < aSeries.length; ++nSeries) {
+            aSeries[nSeries].checkSeriesAfterChangeType();
         }
     };
     CLineChart.prototype.isMarkerChart = function() {
@@ -10915,13 +10918,33 @@
         }
         return null;
     };
+    CLineSeries.prototype.setNoneMarker = function() {
+        if(!this.marker) {
+            this.setMarker(new AscFormat.CMarker());
+        }
+        if(this.marker.symbol !== AscFormat.SYMBOL_NONE) {
+            this.marker.setSymbol(AscFormat.SYMBOL_NONE);
+        }
+    };
     CLineSeries.prototype.checkSeriesAfterChangeType = function() {
-	    this.setMarker(new AscFormat.CMarker());
-	    this.marker.setSymbol(AscFormat.SYMBOL_NONE);
-	    this.setSmooth(false);
-	    if(this.spPr && this.spPr.hasNoFillLine()) {
-		    this.spPr.setLn(null);
-	    }
+        this.setSmooth(false);
+        if(this.spPr && this.spPr.hasNoFillLine()) {
+            this.spPr.setLn(null);
+        }
+        if(this.parent && this.parent.getObjectType() === AscDFH.historyitem_type_LineChart) {
+
+            let bMarker = this.parent.marker;
+            if(bMarker) {
+                if(this.marker && this.marker.symbol === AscFormat.SYMBOL_NONE) {
+                    this.setMarker(null);
+                }
+            }
+            else {
+                this.setNoneMarker();
+            }
+            return;
+        }
+        this.setNoneMarker();
     };
 
     var SYMBOL_CIRCLE = 0;
@@ -16065,6 +16088,12 @@
     function isStockChartType(nType) {
         return (Asc.c_oAscChartTypeSettings.stock === nType);
     }
+    function getStockSeriesCount(nType) {
+        if(Asc.c_oAscChartTypeSettings.stock === nType) {
+            return AscFormat.MIN_STOCK_COUNT;
+        }
+        return null;
+    }
 
     function isComboChartType(nType) {
         return (Asc.c_oAscChartTypeSettings.comboAreaBar === nType
@@ -17448,26 +17477,26 @@
         this.updateDataRefs();
         return this.info;
     };
-    CChartDataRefs.prototype.getSeriesRefsFromUnionRefs = function(aRefs, bHorValue, bScatter) {
+    CChartDataRefs.prototype.getSeriesRefsFromUnionRefs = function(aRefs, bHorValue, bScatter, nChartType) {
         if(aRefs.length === 0) {
             return [];
         }
-        var oRefs = new CDataRefs(aRefs);
+        let oRefs = new CDataRefs(aRefs);
         if(oRefs.isEmpty()) {
             return [];
         }
-        var aGrid = oRefs.getGrid();
-        var aGridRow, oRef, nRef, oBBox;
-        var nRow, nCol;
-        var oCell;
-        var nEndCol, nEndRow;
-        var nTopHeader = -1, nLeftHeader = -1;
-        var nRowsCount, nColsCount;
-        var nGridRow, nGridCol;
-        var nR1, nR2, nC1, nC2;
-        var bHorizontalValues;
+        let aGrid = oRefs.getGrid();
+        let aGridRow, oRef, nRef, oBBox;
+        let nRow, nCol;
+        let oCell;
+        let nEndCol, nEndRow;
+        let nTopHeader = -1, nLeftHeader = -1;
+        let nRowsCount, nColsCount;
+        let nGridRow, nGridCol;
+        let nR1, nR2, nC1, nC2;
+        let bHorizontalValues;
 
-        var oVal = null, oTx = null, oCat = null, nInfo = 0;
+        let oVal = null, oTx = null, oCat = null, nInfo = 0;
         if(Array.isArray(aGrid)) {
             aGridRow = aGrid[0];
             if(!Array.isArray(aGridRow)) {
@@ -17532,7 +17561,7 @@
                 oBBox = oRef.bbox;
                 nCol = oBBox.c2;
 
-                var nStartRow = oBBox.r2;
+                let nStartRow = oBBox.r2;
                 if(aGridRow.length === 1 && oBBox.r2 > oBBox.r1) {
                     for(nRow = oBBox.r2 - 1; nRow >= oBBox.r1; --nRow) {
                         if(!this.privateCheckCellDateTimeFormatFull(oRef.worksheet.getCell3(nRow, nCol))) {
@@ -17557,7 +17586,7 @@
                 oRef = aGridRow[0];
                 oBBox = oRef.bbox;
                 nRow = oBBox.r2;
-                var nStartCol = oBBox.c2;
+                let nStartCol = oBBox.c2;
                 if(aGrid.length === 1  && oBBox.c2 > oBBox.c1) {
                     for(nCol = oBBox.c2 - 1; nCol >= oBBox.c1; --nCol) {
                         if(!this.privateCheckCellDateTimeFormatFull(oRef.worksheet.getCell3(nRow, nCol))) {
@@ -17594,11 +17623,21 @@
             nRowsCount -= (nTopHeader + 1);
             nColsCount -= (nLeftHeader + 1);
             if(bHorizontalValues !== true && bHorizontalValues !== false) {
-                if(nRowsCount > nColsCount) {
-                    bHorizontalValues = false;
+
+                if(isStockChartType(nChartType)) {
+                    if(nRowsCount === getStockSeriesCount(nChartType)) {
+                        bHorizontalValues = true;
+                    }
+                    else if(nColsCount === getStockSeriesCount(nChartType)) {
+                        bHorizontalValues = false;
+                    }
+                    else {
+
+                        bHorizontalValues = (nRowsCount <= nColsCount);
+                    }
                 }
                 else {
-                    bHorizontalValues = true;
+                    bHorizontalValues = (nRowsCount <= nColsCount);
                 }
             }
             if(bScatter) {
@@ -17720,12 +17759,7 @@
                 oBBox = aRefs[0].bbox;
                 nRowsCount = oBBox.getHeight();
                 nColsCount = oBBox.getWidth();
-                if(nRowsCount > nColsCount) {
-                    bHorizontalValues = false;
-                }
-                else {
-                    bHorizontalValues = true;
-                }
+                bHorizontalValues = (nRowsCount <= nColsCount);
             }
             for(nRef = 0; nRef < aRefs.length; ++nRef) {
                 aSeries = aSeries.concat(this.getSeriesRefsFromUnionRefs([aRefs[nRef]], bHorizontalValues, false));
@@ -17810,7 +17844,7 @@
         }
         return aData;
     };
-    CChartDataRefs.prototype.getSeriesRefsFromSelectedRange = function(oSelectedRange, bScatter) {
+    CChartDataRefs.prototype.getSeriesRefsFromSelectedRange = function(oSelectedRange, bScatter, nChartType) {
         this.fillFromSelectedRange(oSelectedRange);
         if(this.info === 0) {
             return null;
@@ -17825,7 +17859,7 @@
                 else {
                     bHor = false;
                 }
-                return this.getSeriesRefsFromUnionRefs(oUnionRefs.aRefs, bHor, bScatter);
+                return this.getSeriesRefsFromUnionRefs(oUnionRefs.aRefs, bHor, bScatter, nChartType);
             }
             else {
                 return this.getSeriesFromFixedRefs();
@@ -17879,7 +17913,7 @@
     };
 
     CChartDataRefs.prototype.checkDataRangeRefs = function (aRanges, bHorValue, nType) {
-        var aSeriesRefs = this.getSeriesRefsFromUnionRefs(aRanges, bHorValue, isScatterChartType(nType));
+        var aSeriesRefs = this.getSeriesRefsFromUnionRefs(aRanges, bHorValue, isScatterChartType(nType), nType);
         if(!Array.isArray(aSeriesRefs)) {
             return  Asc.c_oAscError.ID.DataRangeError;
         }
@@ -17889,7 +17923,7 @@
                 return Asc.c_oAscError.ID.StockChartError;
             }
             for(nRef = 0; nRef < aSeriesRefs.length; ++nRef) {
-                if(aSeriesRefs[nRef].getValCellsCount() < AscFormat.MIN_STOCK_COUNT) {
+                if(aSeriesRefs[nRef].getValCellsCount() < 1) {
                     return Asc.c_oAscError.ID.StockChartError;
                 }
             }

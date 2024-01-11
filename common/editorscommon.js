@@ -2201,13 +2201,15 @@
 	}
 
 	function DownloadOriginalFile(documentId, url, urlPathInToken, token, fError, fSuccess) {
+		let data = JSON.stringify({
+			"url": url,
+			"token": token
+		});
 		asc_ajax({
 			url: sDownloadFileLocalUrl + '/' + documentId,
+			type: "POST",
 			responseType: "arraybuffer",
-			headers: {
-				'Authorization': 'Bearer ' + token,
-				'x-url': encodeURI(url)
-			},
+			data: data,
 			success: function(resp) {
 				fSuccess(AscCommon.initStreamFromResponse(resp));
 			},
