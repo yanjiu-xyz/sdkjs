@@ -13178,8 +13178,15 @@ CT_PivotField.prototype.findFieldItemByTextValue = function(cacheField, value) {
 			if (Asc.c_oAscItemType.Data === item.t && false === item.h) {
 				const sharedItem = cacheField.getGroupOrSharedItem(item.x);
 				if (sharedItem) {
-					const textValue = sharedItem.getCellValue().getTextValue();
-					if ((textValue + "").toLowerCase() === valueLowerCase) {
+					const textValue = (sharedItem.getCellValue().getTextValue() + "").toLowerCase();
+					if (textValue === valueLowerCase) {
+						return item;
+					}
+					const execRes = /(\d+)-(\d+)/.exec(textValue);
+					if (execRes && execRes[1] === valueLowerCase) {
+						return item;
+					}
+					if (textValue[0] === valueLowerCase){
 						return item;
 					}
 				}
