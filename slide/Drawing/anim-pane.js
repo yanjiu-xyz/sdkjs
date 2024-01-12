@@ -1797,17 +1797,16 @@
 
 		this.onMouseMoveCallback = function handlePointerMovement(event, x, y) {
 			if (this.hit(x, y)) {
-				// const drawingDocument = Asc.editor.WordControl.m_oDrawingDocument;
-				// drawingDocument.SetCursorType('move');
+				const animPane = Asc.editor.WordControl.m_oAnimPaneApi;
 
-				// const hitRes = this.hitInEffectBar(x, y)
-				// if (hitRes === 'left' || hitRes === 'right') {
-				//      drawingDocument.SetCursorType('col-resize')
-				// } else if (hitRes) {
-				//      drawingDocument.SetCursorType('ew-resize')
-				// } else {
-				//      drawingDocument.SetCursorType('default')
-				// }
+				const hitRes = this.hitInEffectBar(x, y)
+				if (hitRes === 'left' || hitRes === 'right') {
+				     animPane.SetCursorType('col-resize')
+				} else if (hitRes) {
+				     animPane.SetCursorType('ew-resize')
+				} else {
+				     animPane.SetCursorType('default')
+				}
 			}
 
 			if (!this.stickedToPointerAt) { return }
@@ -1930,8 +1929,8 @@
 		const bounds = this.getEffectBarBounds();
 
 		if (y > bounds.t && y < bounds.b) {
-			if (x >= bounds.l - delta && x <= bounds.l + delta) { return 'left'; }
-			if (x >= bounds.r - delta && x <= bounds.r + delta) { return 'right'; }
+			if (x >= bounds.l - delta && x <= bounds.l) { return 'left'; }
+			if (x >= bounds.r && x <= bounds.r + delta) { return 'right'; }
 			if (x > bounds.l && x < bounds.r) { return 'center'; }
 		}
 

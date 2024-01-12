@@ -6827,6 +6827,21 @@ function CAnimationPaneDrawer(page, htmlElement)
 		oThis.timeline.UpdateState();
 	};
 
+	oThis.SetCursorType = function(sType, Data) {
+		let elem = this.HtmlElement;
+		// if (Asc.editor.WordControl.DemonstrationManager.Mode)
+		// 	elem = Asc.editor.WordControl.DemonstrationManager.Canvas;
+
+		if (Asc.editor.WordControl.m_oDrawingDocument.m_sLockedCursorType === '') {
+			elem.style.cursor = AscCommon.g_oHtmlCursor.value(sType);
+		} else
+			elem.style.cursor = AscCommon.g_oHtmlCursor.value(this.m_sLockedCursorType);
+
+		if ("undefined" === typeof (Data) || null === Data)
+			Data = new AscCommon.CMouseMoveData();
+
+		Asc.editor.sync_MouseMoveCallback(Data);
+	};
 }
 
 CAnimationPaneDrawer.prototype = Object.create(CPaneDrawerBase);
