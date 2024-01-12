@@ -632,6 +632,10 @@
 	SmartArtDataNodeBase.prototype.getNodesByAxis = function (nodes, axis, ptType) {
 		nodes = nodes || [];
 		switch (axis) {
+			case AscFormat.AxisType_value_root: {
+				this.getNodesByRoot(nodes, ptType);
+				break;
+			}
 			case AscFormat.AxisType_value_ch: {
 				this.getNodesByCh(nodes, ptType);
 				break;
@@ -676,6 +680,18 @@
 			nodes.push(needNode);
 		}
 	};
+	SmartArtDataNodeBase.prototype.getNodesByRoot = function (nodes, ptType) {
+		let curNode = this;
+		while (curNode && !curNode.isRoot()) {
+			curNode = curNode.parent;
+		}
+		if (curNode && curNode.isRoot()) {
+			const needNode = curNode.getNodeByPtType(ptType);
+			if (needNode) {
+				nodes.push(needNode);
+			}
+		}
+	}
 	SmartArtDataNodeBase.prototype.getNodesByDescendant = function (nodes, ptType) {
 		const elements = [].concat(this.childs);
 		while (elements.length) {
@@ -803,7 +819,7 @@
 				}
 				tempNodes.push.apply(tempNodes, node.childs);
 			}
-			this.childDepth = maxDepth - this.depth;
+			this.childDepth = maxDepth;
 		}
 		return this.childDepth;
 	};
@@ -1171,21 +1187,6 @@
 		this.parentNode = null;
 		this._isHideLastChild = null;
 		this.constraintSizes = null;
-		this.namedNodes = null;
-	}
-	BaseAlgorithm.prototype.getNamedNode = function (name) {
-		if (this.parentNode.getPresName() === name) {
-			return this.parentNode;
-		}
-		if (this.namedNodes === null) {
-			this.namedNodes = {};
-			const childs = this.parentNode.childs;
-			for (let i = 0; i < childs.length; i++) {
-				const child = childs[i];
-				this.namedNodes[child.getPresName()] = child;
-			}
-		}
-		return this.namedNodes[name];
 	}
 	BaseAlgorithm.prototype.isCanSetConnection = function () {
 		return false;
@@ -1978,7 +1979,7 @@
 		const defaultBlockHeight = parentHeight / childs.length;
 		let sumHeight = 0;
 		for (let i = 0; i < childs.length; i++) {
-			const child = childs[i];
+			const child = this.getPyramidChildren(childs[i]).pyramid;
 			const scaleBlockHeight = child.getHeightScale();
 			sumHeight += scaleBlockHeight * defaultBlockHeight;
 		}
@@ -1999,8 +2000,18 @@
 			shape.customAdj = adjLst;
 		}
 	};
-	PyramidAlgorithm.prototype.getPyramidChild = function (node) {
-		return node.childs[0];
+	PyramidAlgorithm.prototype.getPyramidChildren = function (node) {
+		const pyramid = node.getNamedNode(this.params[AscFormat.Param_type_pyraLvlNode]);
+		const acct = node.getNamedNode(this.params[AscFormat.Param_type_pyraAcctBkgdNode]);
+		return {
+			pyramid: pyramid,
+			acct: acct
+		};
+	};
+	PyramidAlgorithm.prototype.getStartDefaultBlockWidth = function () {
+		const acctRatio = this.parentNode.getConstr(AscFormat.Constr_type_pyraAcctRatio);
+		const parentWidth = this.getNodeConstraints(this.parentNode).width;
+		return parentWidth * (1 - acctRatio);
 	}
 	PyramidAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm) {
 		const childs = this.parentNode.childs;
@@ -2010,35 +2021,104 @@
 		this.shapeContainer = new PyramidContainer();
 		const parentConstraints = this.getNodeConstraints(this.parentNode);
 		const parentHeight = parentConstraints.height;
-		const parentWidth = parentConstraints.width;
-		const adjValue = (parentWidth / 2) / parentHeight;
 		const defaultBlockHeight = this.calcValues.defaultBlockHeight;
-		let previousBlockWidth = parentConstraints.width;
-		const ctrX = parentWidth / 2;
+		let previousBlockWidth = this.getStartDefaultBlockWidth();
+		const defaultAdjValue = (previousBlockWidth / 2) / parentHeight;
 
-		const firstChild = this.getPyramidChild(childs[0]);
+
+		const firstPyramidComponents = this.getPyramidChildren(childs[childs.length - 1]);
+		const firstChild = firstPyramidComponents.pyramid;
 		const firstHeight = defaultBlockHeight * firstChild.getHeightScale();
-		const firstWidth = parentConstraints.width * firstChild.getWidthScale();
+		const firstWidth = previousBlockWidth * firstChild.getWidthScale();
+		const ctrX = firstWidth / 2;
 		let previousY = parentHeight - firstHeight;
-		this.setPyramidParametersForNode(firstChild, 0, previousY,  firstHeight, firstWidth, adjValue);
+		let previousAdjValue;
+		let flag = false;
+		if (previousBlockWidth >= firstHeight) {
+			previousAdjValue = defaultAdjValue;
+		} else {
+			flag = true;
+			previousAdjValue = defaultAdjValue * firstHeight / previousBlockWidth;
+		}
+		this.setPyramidParametersForNode(firstChild, ctrX - firstWidth / 2, previousY,  firstHeight, firstWidth, previousAdjValue);
 		let previousBlockHeight = firstHeight;
+		let firstAcctHelper;
+		if (flag) {
+			firstAcctHelper = previousAdjValue * previousBlockWidth;
+		} else {
+			firstAcctHelper = previousAdjValue * previousBlockHeight;
+		}
+		this.addAcctShape(firstChild, firstPyramidComponents.acct, defaultAdjValue, firstAcctHelper);
 		this.shapeContainer.push(firstChild.shape);
-		for (let i = 1; i < childs.length; i++) {
-			const child = this.getPyramidChild(childs[i]);
+		for (let i = childs.length - 2; i >= 0; i -= 1) {
+			const pyramidComponents = this.getPyramidChildren(childs[i]);
+			const child = pyramidComponents.pyramid;
 			const blockHeightFactor = child.getHeightScale();
 			const blockWidthFactor = child.getWidthScale();
 			const scaledBlockHeight = blockHeightFactor * defaultBlockHeight;
-			const curBlockWidth = previousBlockWidth - adjValue * 2 * previousBlockHeight;
+			let curBlockWidth;
+			if (flag) {
+				curBlockWidth = previousBlockWidth - previousAdjValue * 2 * previousBlockWidth;
+			} else {
+				curBlockWidth = previousBlockWidth - previousAdjValue * 2 * previousBlockHeight;
+			}
 			const scaledBlockWidth = curBlockWidth * blockWidthFactor;
 			const x = ctrX - scaledBlockWidth / 2;
 			const y = previousY - scaledBlockHeight;
-			this.setPyramidParametersForNode(child, x, y,  scaledBlockHeight, scaledBlockWidth, adjValue);
+			if (curBlockWidth >= scaledBlockHeight) {
+				previousAdjValue = defaultAdjValue;
+			} else {
+				flag = true;
+				previousAdjValue = defaultAdjValue * scaledBlockHeight / curBlockWidth;
+			}
+			this.setPyramidParametersForNode(child, x, y,  scaledBlockHeight, scaledBlockWidth, previousAdjValue);
 
 			previousBlockWidth = curBlockWidth;
 			previousBlockHeight = scaledBlockHeight;
 			previousY = y;
+			let acctHelper;
+			if (flag) {
+				acctHelper = previousAdjValue * previousBlockWidth;
+			} else {
+				acctHelper = previousAdjValue * previousBlockHeight;
+			}
+			this.addAcctShape(child, pyramidComponents.acct, defaultAdjValue, acctHelper);
 			this.shapeContainer.push(child.shape);
 		}
+	};
+	PyramidAlgorithm.prototype.addAcctShape = function (mainNode, acctNode, defaultAdjValue, acctHelper) {
+		if (!(mainNode && acctNode)) {
+			return;
+		}
+		const parentWidth = this.getNodeConstraints(this.parentNode).width;
+		const mainShape = mainNode.shape;
+		const acctShape = acctNode.shape;
+		const heightScale = acctNode.getHeightScale();
+		const widthScale = acctNode.getWidthScale();
+		const defaultWidth = parentWidth - (mainShape.x + mainShape.w - acctHelper);
+		const defaultHeight = mainShape.h;
+		acctShape.w = defaultWidth * widthScale;
+		acctShape.h = defaultHeight * heightScale;
+		acctShape.x = mainShape.x + mainShape.w - acctHelper;
+		acctShape.y = mainShape.y;
+		if (defaultWidth >= defaultHeight) {
+			defaultAdjValue = defaultAdjValue * defaultHeight / defaultWidth;
+		}
+		const adjLst = new AscFormat.AdjLst();
+		acctShape.customAdj = adjLst;
+
+		const adj1 = new AscFormat.Adj();
+		adj1.setIdx(1);
+		adj1.setVal(0);
+		adjLst.addToLst(0, adj1);
+
+		const adj2 = new AscFormat.Adj();
+		adj2.setIdx(2);
+		adj2.setVal(defaultAdjValue);
+		adjLst.addToLst(1, adj2);
+
+		acctShape.rot = Math.PI;
+		this.shapeContainer.push(acctShape);
 	};
 
 	function CycleAlgorithm() {
@@ -3004,8 +3084,8 @@
 
 	CompositeAlgorithm.prototype.setParentConnection = function (connectorAlgorithm, childShape) {
 		if (connectorAlgorithm && childShape.node.algorithm) {
-			const srcNode = this.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_srcNode]);
-			const dstNode = childShape.node.algorithm.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_dstNode]);
+			const srcNode = this.parentNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_srcNode]);
+			const dstNode = childShape.node.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_dstNode]);
 			if (srcNode && dstNode) {
 				const srcShape = srcNode.shape;
 				const dstShape = dstNode.shape;
@@ -3088,7 +3168,19 @@ function PresNode(presPoint, contentNode) {
 	this.bounds = {
 		constraints: null
 	};
+	this.namedNodes = null;
 }
+PresNode.prototype.getNamedNode = function (name) {
+	if (this.namedNodes === null) {
+		this.namedNodes = {};
+		const childs = this.childs;
+		for (let i = 0; i < childs.length; i++) {
+			const child = childs[i];
+			this.namedNodes[child.getPresName()] = child;
+		}
+	}
+	return this.namedNodes[name];
+};
 	PresNode.prototype.isMainElement = function () {
 		return this.layoutInfo.shape.type !== AscFormat.LayoutShapeType_outputShapeType_conn &&
 			this.layoutInfo.shape.type !== AscFormat.LayoutShapeType_outputShapeType_none || (this.algorithm && this.algorithm.isCanSetConnection());
