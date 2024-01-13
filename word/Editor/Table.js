@@ -2271,7 +2271,7 @@ CTable.prototype.getRowBounds = function(iRow, relPage)
 		rowInfo.Y[relPage] + rowInfo.H[relPage]
 	);
 };
-CTable.prototype.getRowPageRange = function()
+CTable.prototype.getRowPageRange = function(iRow)
 {
 	let rowInfo = this.RowsInfo[iRow];
 	if (!this.IsRecalculate() || undefined === rowInfo)
