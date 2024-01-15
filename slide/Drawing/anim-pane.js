@@ -1774,6 +1774,22 @@
 		this.onMouseDownCallback = function stickToPointer(event, x, y) {
 			if (!this.hit(x, y)) { return }
 
+			// Select
+			const oThis = this
+			const sequencies = Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList
+			if (event.CtrlKey) {
+				this.effect.select()
+			} else {
+				sequencies.children.forEach(function (seq) {
+					seq.animGroups.forEach(function (group) {
+						group.effects.forEach(function (effect) {
+							effect === oThis.effect ? effect.select() : effect.deselect()
+							oThis.onUpdate()
+						})
+					})
+				})
+			}
+
 			const hitRes = this.hitInEffectBar(x, y);
 			if (!hitRes) { return }
 
@@ -1862,9 +1878,11 @@
 	CAnimItem.prototype.canHandleEvents = function () {
 		return true;
 	};
-	// CAnimItem.prototype.getFillColor = function() {
-	//     return '0f0';
-	// };
+	CAnimItem.prototype.getFillColor = function() {
+		if (this.effect.isSelected()) return AscCommon.GlobalSkin.ScrollerActiveColor
+		else if (this.isHovered()) return AscCommon.GlobalSkin.ScrollerHoverColor
+		else return AscCommon.GlobalSkin.ScrollerColor;
+	};
 	CAnimItem.prototype.getOutlineColor = function () {
 		return null;
 	};
