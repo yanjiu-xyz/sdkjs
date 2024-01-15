@@ -1788,8 +1788,8 @@
 			if (!this.stickedToPointerAt) { return };
 			this.stickedToPointerAt = null;
 
-			const newDelay = this.mm_to_ms(this.tmpStartPos);
-			const newDuration = this.mm_to_ms(this.tmpWidth);
+			const newDelay = this.tmpStartPos !== null ? this.mm_to_ms(this.tmpStartPos) : null;
+			const newDuration = this.tmpWidth !== null ? this.mm_to_ms(this.tmpWidth) : null;
 			this.setNewEffectParams(newDelay, newDuration);
 			this.tmpStartPos = this.tmpWidth = null;
 			this.onUpdate()
@@ -1938,8 +1938,10 @@
 	};
 
 	CAnimItem.prototype.setNewEffectParams = function (newDelay, newDuration) {
-		console.log('Set new delay - ' + newDelay + ' to effect ' + this.effect.Id)
-		console.log('Set new duration - ' + newDuration + ' to effect ' + this.effect.Id)
+		if (newDelay !== null && newDelay !== undefined && newDelay !== this.effect.asc_getDelay()) {
+				this.effect.cTn.stCondLst.list[0].delay = newDelay.toString();
+				Asc.editor.WordControl.m_oLogicDocument.SetAnimationProperties(this.effect);
+		}
 	};
 
 	CAnimItem.prototype.onMouseDown = function (e, x, y) {
