@@ -7625,8 +7625,10 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(item
 			const index = field.asc_getIndex();
 			if (itemMap.has(index)) {
 				result.set(index, itemMap.get(index));
+				itemMap.delete(index);
 			} else if (index === AscCommonExcel.st_VALUES) {
-				result.set(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD, itemMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD))
+				result.set(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD, itemMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD));
+				itemMap.delete(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD);
 			}
 		}
 		return result;
@@ -7637,7 +7639,10 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(item
 	const colItems = this.getColItems();
 	const rowItemFieldsMap = rowFields ? getRowColItemMap(itemFieldsMap, rowFields) : null;
 	const colItemFieldsMap = colFields ? getRowColItemMap(itemFieldsMap, colFields) : null;
-	let rowItemIndex = null;
+	if (itemFieldsMap.size !== 0) {
+		return null;
+	}
+	let rowItemIndex = rowItems.length - 1;
 	if (rowItemFieldsMap) {
 		if (rowItemFieldsMap.size > 0) {
 			if (rowItemFieldsMap.size === 1 && rowItemFieldsMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD)) {
@@ -7668,11 +7673,9 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(item
 					}
 				}
 			}
-		} else {
-			rowItemIndex = rowItems.length - 1;
 		}
 	}
-	let colItemIndex = null;
+	let colItemIndex = colItems.length - 1;;
 	if (colItemFieldsMap) {
 		if (colItemFieldsMap.size > 0) {
 			if (colItemFieldsMap.size === 1 && colItemFieldsMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD)) {
@@ -7703,8 +7706,6 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(item
 					}
 				}
 			}
-		} else {
-			colItemIndex = colItems.length - 1;
 		}
 	}
 	
