@@ -35,7 +35,7 @@
 (function (window) {
 	const IS_DEBUG_DRAWING = true;
 	const IS_ADD_HTML = false;
-	AscCommon.IS_GENERATE_SMARTART_ON_OPEN = true;
+	AscCommon.IS_GENERATE_SMARTART_ON_OPEN = false;
 
 	const LayoutNode = AscFormat.LayoutNode;
 	const Choose = AscFormat.Choose;
@@ -1647,6 +1647,7 @@
 			let columnWidth = initValues.width;
 			let rowHeight = initValues.height;
 			let previousRowSpace = 0;
+			let previousMaxWidthCoefficient = null;
 			for (i; i < root.childs.length; i++) {
 				const child = root.childs[i];
 				if (child.node.isSibNode()) {
@@ -1684,6 +1685,12 @@
 							return true;
 						}
 					} else {
+						if (previousMaxWidthCoefficient !== null && previousMaxWidthCoefficient < coefficient && tempCoefficient < coefficient && previousMaxWidthCoefficient >= heightCoefficient) {
+							coefficient = previousMaxWidthCoefficient;
+							return true;
+						} else if (widthCoefficient < coefficient && (previousMaxWidthCoefficient === null || previousMaxWidthCoefficient < widthCoefficient)) {
+							previousMaxWidthCoefficient = widthCoefficient;
+						}
 						addToWidth = widthCoefficient >= tempCoefficient;
 						coefficient = tempCoefficient;
 
