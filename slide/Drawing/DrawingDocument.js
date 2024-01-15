@@ -6772,7 +6772,15 @@ function CAnimationPaneDrawer(page, htmlElement)
 		var oHtmlElem = oThis.GetHtmlElement();
 		oHtmlElem.onmousedown = oThis.onMouseDown;
 		oHtmlElem.onmousemove = oThis.onMouseMove;
-		oHtmlElem.onmouseup =  oThis.onMouseUp;
+		oHtmlElem.onmouseup = oThis.onMouseUp;
+
+		Asc.editor.asc_registerCallback('asc_onFocusObject', function () {
+			if (editor.WordControl.m_oAnimPaneApi.list.Control) {
+				editor.WordControl.m_oAnimPaneApi.list.Control.seqList.recalculateChildren()
+				editor.WordControl.m_oAnimPaneApi.list.Control.seqList.recalculateChildrenLayout()
+				editor.WordControl.m_oAnimPaneApi.list.Control.onUpdate()
+			}
+		})
 	};
 	oThis.onMouseDown = function (e)
 	{
