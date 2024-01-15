@@ -1057,6 +1057,11 @@
 			if (!this.hit(x, y)) { return }
 			this.next.timeScaleIndex = (this.next.timeScaleIndex + 1) % TIME_SCALES.length
 			this.next.onUpdate()
+
+			// also updating seqList to redraw effect bars
+			if (Asc.editor.WordControl.m_oAnimPaneApi.list.Control) {
+				Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList.onUpdate()
+			}
 		}
 	}
 
@@ -1771,7 +1776,7 @@
 
 		// // Callback functions for effect bar events ---
 
-		this.onMouseDownCallback = function stickToPointer(event, x, y) {
+		this.onMouseDownCallback = function (event, x, y) {
 			if (!this.hit(x, y)) { return }
 
 			// Select
@@ -1802,7 +1807,7 @@
 			this.onUpdate();
 		}
 
-		this.onMouseUpCallback = function unstickFromPointer(event, x, y) {
+		this.onMouseUpCallback = function (event, x, y) {
 			if (!this.stickedToPointerAt) { return };
 			this.stickedToPointerAt = null;
 
@@ -1813,7 +1818,7 @@
 			this.onUpdate()
 		}
 
-		this.onMouseMoveCallback = function handlePointerMovement(event, x, y) {
+		this.onMouseMoveCallback = function (event, x, y) {
 			if (this.hit(x, y)) {
 				const animPane = Asc.editor.WordControl.m_oAnimPaneApi;
 
