@@ -33,6 +33,10 @@
 "use strict";
 
 (function (window) {
+	const IS_DEBUG_DRAWING = true;
+	const IS_ADD_HTML = false;
+	AscCommon.IS_GENERATE_SMARTART_ON_OPEN = true;
+
 	const LayoutNode = AscFormat.LayoutNode;
 	const Choose = AscFormat.Choose;
 	const If = AscFormat.If;
@@ -4057,8 +4061,6 @@ function CConnectionDistanceResolver() {
 
 
 
-	let IS_DEBUG_DRAWING = true;
-	let IS_ADD_HTML = false;
 
 	if (IS_DEBUG_DRAWING) {
 		AscCommon.InitDebugSmartArt = function () {
@@ -4193,8 +4195,8 @@ function CConnectionDistanceResolver() {
 				}
 			});
 		}
-
 	}
 
+	AscFormat.SmartArtAlgorithm = SmartArtAlgorithm;
 })(window);
 

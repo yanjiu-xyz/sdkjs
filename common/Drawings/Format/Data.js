@@ -9687,7 +9687,19 @@ Because of this, the display is sometimes not correct.
     SmartArt.prototype.getName = function () {
       return 'SmartArt';
     };
-
+    SmartArt.prototype.generateDrawingPart = function () {
+      const smartArtAlgorithm = new AscFormat.SmartArtAlgorithm(this);
+      smartArtAlgorithm.startFromBegin();
+      const drawing = this.getDrawing();
+      const shapeLength = drawing.spTree.length;
+      for (let i = 0; i < shapeLength; i++) {
+        drawing.removeFromSpTreeByPos(0);
+      }
+      const shapes = smartArtAlgorithm.getShapes();
+      for (let i = shapes.length - 1; i >= 0; i -= 1) {
+        drawing.addToSpTree(0, shapes[i]);
+      }
+    };
 	  SmartArt.prototype.getAllRasterImages = function (arrImages)
 	  {
 			const oBgFormat = this.getBg();
@@ -9758,6 +9770,9 @@ Because of this, the display is sometimes not correct.
         CGroupShape.prototype.recalculate.call(this);
         if (this.bFirstRecalculate) {
           this.bFirstRecalculate = false;
+	        if (AscCommon.IS_GENERATE_SMARTART_ON_OPEN) {
+		        this.fitFontSize();
+	        }
           // this.fitFontSize();
         }
         if (oldParaMarks) {
