@@ -1789,6 +1789,8 @@
 					})
 				})
 			}
+			Asc.editor.WordControl.m_oLogicDocument.RedrawCurSlide()
+			Asc.editor.WordControl.m_oLogicDocument.Document_UpdateInterfaceState()
 
 			const hitRes = this.hitInEffectBar(x, y);
 			if (!hitRes) { return }

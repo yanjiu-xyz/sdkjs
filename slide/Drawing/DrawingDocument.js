@@ -6776,6 +6776,7 @@ function CAnimationPaneDrawer(page, htmlElement)
 
 		Asc.editor.asc_registerCallback('asc_onFocusObject', function () {
 			if (editor.WordControl.m_oAnimPaneApi.list.Control) {
+				editor.WordControl.m_oAnimPaneApi.list.Control.recalculateChildrenLayout()
 				editor.WordControl.m_oAnimPaneApi.list.Control.seqList.recalculateChildren()
 				editor.WordControl.m_oAnimPaneApi.list.Control.seqList.recalculateChildrenLayout()
 				editor.WordControl.m_oAnimPaneApi.list.Control.onUpdate()
