@@ -7405,12 +7405,104 @@ CT_pivotTableDefinition.prototype.getCellByGetPivotDataParams = function(params)
 	}
 	return null;
 };
-
+/**
+ * @param {CT_CacheField} cacheField 
+ * @param {number} fieldItemIndex 
+ * @return {{value: string, formulaValue: string}} 
+ */
+CT_pivotTableDefinition.prototype.getGetPivotParamForGroup = function(cacheField, fieldItemIndex) {
+	/**@type {CT_RangePr} */
+	const rangePr = cacheField.fieldGroup.rangePr;
+	let value = null;
+	let formulaValue = null;
+	if (rangePr.groupBy === c_oAscGroupBy.Hours || 
+		rangePr.groupBy === c_oAscGroupBy.Minutes || 
+		rangePr.groupBy === c_oAscGroupBy.Seconds) {
+		value = (fieldItemIndex - 1) + "";
+		formulaValue = value;
+	} else if (rangePr.groupBy === c_oAscGroupBy.Years) {
+		const sharedItem = cacheField.getGroupOrSharedItem(fieldItemIndex);
+		value = sharedItem.getCellValue().getTextValue() + "";
+		formulaValue = value;
+	} else if (rangePr.groupBy === c_oAscGroupBy.Range) { 
+		const sharedItem = cacheField.getGroupOrSharedItem(fieldItemIndex);
+		value = sharedItem.getCellValue().getTextValue() + "";
+		if (value[0] === '>' || value[0] === '<') {
+			value = value[0];
+			formulaValue =  '"' + value + '"';
+		} else {
+			const execRes = /(.+)-(.+)/.exec(value);
+			value = execRes && execRes[1];
+			formulaValue = value;
+		}
+	} else {
+		value = fieldItemIndex + "";
+		formulaValue = value;
+	}
+	return {
+		value: value,
+		formulaValue: formulaValue
+	};
+};
+/**
+ * @param {CT_CacheField} cacheField 
+ * @param {number} fieldItemIndex 
+ * @return {{value: string, formulaValue: string}} 
+ */
+CT_pivotTableDefinition.prototype.getGetPivotParamForSharedItem = function(cacheField, fieldItemIndex) {
+	const sharedItem = cacheField.getGroupOrSharedItem(fieldItemIndex);
+	let value = null;
+	let formulaValue = null;
+	switch (sharedItem.type) {
+		case Asc.c_oAscPivotRecType.Number:
+			value = sharedItem.getCellValue().number;
+			formulaValue = value;
+			break;
+		case Asc.c_oAscPivotRecType.DateTime:
+			value = Asc.cDate.prototype.getDateFromExcelWithTime2(sharedItem.getCellValue().number);
+			const date = value.getUTCDate();
+			const month = value.getUTCMonth() + 1;
+			const year = value.getUTCFullYear();
+			const hours = value.getUTCHours();
+			const minutes = value.getUTCMinutes();
+			const seconds =  value.getUTCSeconds();
+			value = 'DATE(' + year + ',' + month + ',' + date + ')';
+			if (hours + minutes + seconds > 0) {
+				value += '+TIME(' + hours + ',' + minutes + ',' + seconds + ')';
+			}
+			formulaValue = value;
+			break;
+		case Asc.c_oAscPivotRecType.Boolean:
+			value = sharedItem.getCellValue().getTextValue();
+			formulaValue = value;
+			break;
+		default:
+			value = sharedItem.getCellValue().getTextValue();
+			formulaValue = '"' + value + '"'
+			break;
+	}
+	return {
+		value: value,
+		formulaValue: formulaValue
+	}
+};
+/**
+ * @param {CT_CacheField} cacheField 
+ * @param {number} fieldItemIndex 
+ * @return {{value: string, formulaValue: string}} 
+ */
+CT_pivotTableDefinition.prototype.getGetPivotParam = function(cacheField, fieldItemIndex) {
+	if (cacheField.fieldGroup && cacheField.fieldGroup.rangePr) {
+		return this.getGetPivotParamForGroup(cacheField, fieldItemIndex);
+	}
+	return this.getGetPivotParamForSharedItem(cacheField, fieldItemIndex)
+};
 /**
  * @param {{row: number, col: number}} activeCell
  * @return {GetPivotDataParams & {optParamsFormula: string[]}}
  */
 CT_pivotTableDefinition.prototype.getGetPivotParamsByActiveCell = function(activeCell) {
+	const t = this;
 	const row = activeCell.row;
 	const col = activeCell.col;
 	const pivotReport = this.getRange()
@@ -7436,40 +7528,10 @@ CT_pivotTableDefinition.prototype.getGetPivotParamsByActiveCell = function(activ
 		const fieldIndex = item[0];
 		const fieldItemIndex = item[1];
 		const cacheField = cacheFieds[fieldIndex];
-		const sharedItem = cacheField.getGroupOrSharedItem(fieldItemIndex);
-		let value;
-		let formulaValue;
-		switch (sharedItem.type) {
-			case Asc.c_oAscPivotRecType.Number:
-				value = sharedItem.getCellValue().number;
-				formulaValue = value;
-				break;
-			case Asc.c_oAscPivotRecType.DateTime:
-				value = Asc.cDate.prototype.getDateFromExcelWithTime2(sharedItem.getCellValue().number);
-				const date = value.getUTCDate();
-				const month = value.getUTCMonth() + 1;
-				const year = value.getUTCFullYear();
-				const hours = value.getUTCHours();
-				const minutes = value.getUTCMinutes();
-				const seconds =  value.getUTCSeconds();
-				value = 'DATE(' + year + ',' + month + ',' + date + ')';
-				if (hours + minutes + seconds > 0) {
-					value += '+TIME(' + hours + ',' + minutes + ',' + seconds + ')';
-				}
-				formulaValue = value;
-				break;
-			case Asc.c_oAscPivotRecType.Boolean:
-				value = sharedItem.getCellValue().getTextValue();
-				formulaValue = value;
-				break;
-			default:
-				value = sharedItem.getCellValue().getTextValue();
-				formulaValue = '"' + value + '"'
-				break;
-		}
-		resultOptParams.push(cacheField.asc_getName(), value);
-		resultOptParamsFormula.push('"' + cacheField.asc_getName() + '"', formulaValue);
-	})
+		const result = t.getGetPivotParam(cacheField, fieldItemIndex);
+		resultOptParams.push(cacheField.asc_getName(), result.value);
+		resultOptParamsFormula.push('"' + cacheField.asc_getName() + '"', result.formulaValue);
+	});
 	return {
 		dataFieldName: dataFieldName,
 		optParams: resultOptParams,
