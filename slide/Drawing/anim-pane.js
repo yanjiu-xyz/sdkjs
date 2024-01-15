@@ -1956,10 +1956,16 @@
 	};
 
 	CAnimItem.prototype.setNewEffectParams = function (newDelay, newDuration) {
+		const effectCopy = this.effect.createDuplicate();
+
 		if (newDelay !== null && newDelay !== undefined && newDelay !== this.effect.asc_getDelay()) {
-				this.effect.cTn.stCondLst.list[0].delay = newDelay.toString();
-				Asc.editor.WordControl.m_oLogicDocument.SetAnimationProperties(this.effect);
+			effectCopy.asc_putDelay(newDelay);
 		}
+		if (newDuration !== null && newDuration !== undefined && newDuration !== this.effect.asc_getDuration()) {
+			effectCopy.asc_putDuration(newDelay);
+		}
+
+		Asc.editor.WordControl.m_oLogicDocument.SetAnimationProperties(effectCopy);
 	};
 
 	CAnimItem.prototype.onMouseDown = function (e, x, y) {
