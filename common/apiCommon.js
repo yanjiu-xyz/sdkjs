@@ -4886,6 +4886,9 @@
 
 		this.StartRenderer = function()
 		{
+			if (window["NATIVE_EDITOR_ENJINE"])
+				return;
+
 			var canvasTransparent = document.createElement("canvas");
 			canvasTransparent.width = this.image.width;
 			canvasTransparent.height = this.image.height;
@@ -4897,6 +4900,9 @@
 		};
 		this.EndRenderer = function()
 		{
+			if (window["NATIVE_EDITOR_ENJINE"])
+				return;
+
 			delete this.imageBase64;
 			this.imageBase64 = undefined;
 		};
@@ -4907,9 +4913,21 @@
 			var x = (w - wMM) / 2;
 			var y = (h - hMM) / 2;
 
-			renderer.UseOriginImageUrl = true;
-			renderer.drawImage(this.imageBase64, x, y, wMM, hMM);
-			renderer.UseOriginImageUrl = false;
+			if (window["NATIVE_EDITOR_ENJINE"])
+			{
+				renderer.put_brushTexture(this.imageBase64, 0);
+				renderer.put_BrushTextureAlpha((255 * this.transparent) >> 0);
+				renderer._e();
+				renderer.rect(x, y, wMM, hMM);
+				renderer.df();
+				renderer._e();
+			}
+			else
+			{
+				renderer.UseOriginImageUrl = true;
+				renderer.drawImage(this.imageBase64, x, y, wMM, hMM);
+				renderer.UseOriginImageUrl = false;
+			}
 		};
 
 		this.privateGenerateShape = function(obj)
@@ -5108,15 +5126,32 @@
 
 				var _ctx = this.image.getContext('2d');
 
-				var g = new AscCommon.CGraphics();
-				g.init(_ctx, w_px, h_px, w_mm, h_mm);
-				g.m_oFontManager = AscCommon.g_fontManager;
+				var g = null;
 
-				g.m_oCoordTransform.tx = -_bounds_cheker.Bounds.min_x;
-				g.m_oCoordTransform.ty = -_bounds_cheker.Bounds.min_y;
-				g.transform(1,0,0,1,0,0);
+				if (window["NATIVE_EDITOR_ENJINE"])
+				{
+					g = new AscCommon.CNativeGraphics();
+					g.width  = _need_pix_width;
+					g.height = _need_pix_height;
+					g.create(window["native"], _need_pix_width, _need_pix_height, _need_pix_width / AscCommon.g_dKoef_mm_to_pix, _need_pix_height / AscCommon.g_dKoef_mm_to_pix);
+					g.CoordTransformOffset(-_bounds_cheker.Bounds.min_x, -_bounds_cheker.Bounds.min_y);
+					g.transform(1, 0, 0, 1, 0, 0);
+				}
+				else
+				{
+					g = new AscCommon.CGraphics();
+					g.init(_ctx, w_px, h_px, w_mm, h_mm);
+					g.m_oFontManager = AscCommon.g_fontManager;
+
+					g.m_oCoordTransform.tx = -_bounds_cheker.Bounds.min_x;
+					g.m_oCoordTransform.ty = -_bounds_cheker.Bounds.min_y;
+					g.transform(1, 0, 0, 1, 0, 0);
+				}
 
 				oShape.draw(g, 0);
+
+				if (window["NATIVE_EDITOR_ENJINE"])
+					this.imageBase64 = g.toDataURL("image/png");
 
 				AscCommon.IsShapeToImageConverter = false;
 
@@ -5247,6 +5282,15 @@
 				Asc["editor"].watermarkDraw.onReady();
 			};
 			this.imageBackground.src = this.imageBackgroundUrl;
+		};
+
+		this.generateNative = function()
+		{
+			this.isFontsLoaded = true;
+			this.zoom = 1;
+			this.calculatezoom = 0;
+			this.CheckParams();
+			this.Generate();
 		};
 	}
 
