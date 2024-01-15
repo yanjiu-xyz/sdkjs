@@ -2283,6 +2283,13 @@ CDocument.prototype.On_EndLoad                     = function()
 
 	this.End_SilentMode();
 };
+CDocument.prototype.sendEvent = function()
+{
+	if (!this.MainDocument || !this.Api)
+		return;
+	
+	this.Api.sendEvent(arguments);
+};
 CDocument.prototype.UpdateDefaultsDependingOnCompatibility = function()
 {
 	this.Styles.UpdateDefaultsDependingOnCompatibility(this.GetCompatibilityMode());
@@ -2549,7 +2556,7 @@ CDocument.prototype.GetColorMap = function()
  */
 CDocument.prototype.StartAction = function(nDescription, oSelectionState)
 {
-	this.Api.sendEvent("asc_onUserActionStart");
+	this.sendEvent("asc_onUserActionStart");
 	
 	var isNewPoint = this.History.Create_NewPoint(nDescription, oSelectionState);
 
@@ -2840,7 +2847,7 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	
 	this.Action.UpdateStates = false;
 	
-	this.Api.sendEvent("asc_onUserActionEnd");
+	this.sendEvent("asc_onUserActionEnd");
 };
 /**
  * Сообщаем, что нужно отменить начатое действие
@@ -8577,7 +8584,7 @@ CDocument.prototype.IsUseInDocument = function(Id)
 };
 CDocument.prototype.OnKeyDown = function(e)
 {
-	this.Api.sendEvent("asc_onBeforeKeyDown", e);
+	this.sendEvent("asc_onBeforeKeyDown", e);
 	
 	// if (e.KeyCode < 34 || e.KeyCode > 40)
 	// 	this.CloseAllWindowsPopups();
@@ -9934,7 +9941,7 @@ CDocument.prototype.OnKeyDown = function(e)
         this.Document_UpdateSelectionState();
 	
 	
-	this.Api.sendEvent("asc_onKeyDown", e);
+	this.sendEvent("asc_onKeyDown", e);
 	return bRetValue;
 };
 CDocument.prototype.CompareReviewInfo = function(ReviewInfo1, ReviewInfo2)
@@ -12148,7 +12155,7 @@ CDocument.prototype.CheckTextFormFormatOnBlur = function(oForm)
 
 	if (!format.Check(sText))
 	{
-		this.Api.sendEvent("asc_onError", Asc.c_oAscError.ID.TextFormWrongFormat, Asc.c_oAscError.Level.NoCritical, oTextFormPr);
+		this.sendEvent("asc_onError", Asc.c_oAscError.ID.TextFormWrongFormat, Asc.c_oAscError.Level.NoCritical, oTextFormPr);
 
 		if (this.CollaborativeEditing.Is_SingleUser() || !this.CollaborativeEditing.Is_Fast())
 		{
@@ -12645,12 +12652,12 @@ CDocument.prototype.Document_Undo = function(Options)
 	{
 		if (this.History.Can_Undo())
 		{
-			this.Api.sendEvent("asc_onBeforeUndoRedo");
+			this.sendEvent("asc_onBeforeUndoRedo");
 			this.StartUndoRedoAction();
 			let changes = this.History.Undo(Options);
 			this.UpdateAfterUndoRedo(changes);
 			this.FinalizeUndoRedoAction();
-			this.Api.sendEvent("asc_onUndoRedo");
+			this.sendEvent("asc_onUndoRedo");
 		}
 	}
 
@@ -12667,12 +12674,12 @@ CDocument.prototype.Document_Redo = function()
 
 	if (this.History.Can_Redo())
 	{
-		this.Api.sendEvent("asc_onBeforeUndoRedo");
+		this.sendEvent("asc_onBeforeUndoRedo");
 		this.StartUndoRedoAction();
 		let changes = this.History.Redo();
 		this.UpdateAfterUndoRedo(changes);
 		this.FinalizeUndoRedoAction();
-		this.Api.sendEvent("asc_onUndoRedo");
+		this.sendEvent("asc_onUndoRedo");
 	}
 
 	if (this.IsFillingFormMode())
@@ -16301,15 +16308,15 @@ CDocument.prototype.GetColumnSize = function()
 };
 CDocument.prototype.private_OnSelectionEnd = function()
 {
-	this.Api.sendEvent("asc_onSelectionEnd");
+	this.sendEvent("asc_onSelectionEnd");
 };
 CDocument.prototype.private_OnSelectionCancel = function()
 {
-	this.Api.sendEvent("asc_onSelectionCancel");
+	this.sendEvent("asc_onSelectionCancel");
 };
 CDocument.prototype.private_OnCursorMove = function()
 {
-	this.Api.sendEvent("asc_onCursorMove");
+	this.sendEvent("asc_onCursorMove");
 };
 CDocument.prototype.AddPageCount = function()
 {
@@ -22374,7 +22381,7 @@ CDocument.prototype.CallSignatureDblClickEvent = function(sGuid)
     {
         if(allSpr[i].getSignatureLineGuid() === sGuid)
         {
-            this.Api.sendEvent("asc_onSignatureDblClick", sGuid, allSpr[i].extX, allSpr[i].extY);
+            this.sendEvent("asc_onSignatureDblClick", sGuid, allSpr[i].extX, allSpr[i].extY);
         }
     }
 };
@@ -22482,7 +22489,7 @@ CDocument.prototype.SetDisplayModeInReview = function(nMode, isSendEvent)
 		return;
 
 	if (isSendEvent)
-		this.Api.sendEvent("asc_onChangeDisplayModeInReview", nMode);
+		this.sendEvent("asc_onChangeDisplayModeInReview", nMode);
 
 	if (Asc.c_oAscDisplayModeInReview.Edit === nMode || Asc.c_oAscDisplayModeInReview.Simple === nMode)
 	{
