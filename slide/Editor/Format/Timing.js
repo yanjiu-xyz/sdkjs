@@ -8505,7 +8505,7 @@
                     var nY = oT.TransformPointY(dTX, dTY);
                     var sOldFill = oContext.fillStyle;
                     oContext.fillStyle = "#000000";
-                    oContext.fillText((nIdx + 1) + "", nX, nY);
+                    oContext.fillText(nIdx + "", nX, nY);
                     oContext.fillStyle = sOldFill;
                 }
             } else {
