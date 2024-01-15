@@ -13218,9 +13218,6 @@ CT_PivotField.prototype.findFieldItemInSharedItems = function(cacheField, value)
 CT_PivotField.prototype.checkFieldItemInFieldGroup = function(cacheField, value, sharedItem, fieldItem) {
 	/**@type {CT_RangePr} */
 	const rangePr = cacheField.fieldGroup.rangePr;
-	if (!rangePr) {
-		return this.findFieldItemInSharedItems(cacheField, value);
-	}
 	const textValue = (sharedItem.getCellValue().getTextValue() + "").toLowerCase();
 	if (textValue === value) {
 		return true;
@@ -13279,7 +13276,7 @@ CT_PivotField.prototype.findFieldItemInFieldGroup = function(cacheField, value) 
  * @return {CT_Item}
  */
 CT_PivotField.prototype.findFieldItemByTextValue = function(cacheField, value) {
-	if (cacheField.fieldGroup) {
+	if (cacheField.fieldGroup && cacheField.fieldGroup.rangePr) {
 		return this.findFieldItemInFieldGroup(cacheField, value);
 	}
 	return this.findFieldItemInSharedItems(cacheField, value);
