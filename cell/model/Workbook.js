@@ -19941,9 +19941,9 @@
 
 
 	function tryTranslateToPrintArea(val) {
-		var printAreaStr = "Print_Area";
-		var printAreaStrLocale = AscCommon.translateManager.getValue(printAreaStr);
-		if(printAreaStrLocale.toLowerCase() === val.toLowerCase()) {
+		const printAreaStr = "Print_Area";
+		const printAreaStrLocale = AscCommon.translateManager && AscCommon.translateManager.getValue(printAreaStr);
+		if(printAreaStrLocale && printAreaStrLocale.toLowerCase() === val.toLowerCase()) {
 			return printAreaStr;
 		}
 		return null;
