@@ -632,10 +632,10 @@ function (window, undefined) {
 	};
 
 	CellEditor.prototype.checkSymbolBeforeRange = function (char) {
-		if (!char.trim) {
+		if (char && !char.trim) {
 			char = AscCommon.convertUnicodeToUTF16(char);
 		}
-		return this.rangeChars.indexOf(char) >= 0 || char === AscCommon.FormulaSeparators.functionArgumentSeparator;
+		return (this.rangeChars && this.rangeChars.indexOf(char) >= 0) || char === AscCommon.FormulaSeparators.functionArgumentSeparator;
 	};
 
 	CellEditor.prototype.changeCellRange = function (range, moveEndOfText) {
