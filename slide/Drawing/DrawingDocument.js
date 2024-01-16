@@ -6775,11 +6775,34 @@ function CAnimationPaneDrawer(page, htmlElement)
 		oHtmlElem.onmouseup = oThis.onMouseUp;
 
 		Asc.editor.asc_registerCallback('asc_onFocusObject', function () {
-			if (editor.WordControl.m_oAnimPaneApi.list.Control) {
-				editor.WordControl.m_oAnimPaneApi.list.Control.recalculateChildrenLayout()
-				editor.WordControl.m_oAnimPaneApi.list.Control.seqList.recalculateChildren()
-				editor.WordControl.m_oAnimPaneApi.list.Control.seqList.recalculateChildrenLayout()
-				editor.WordControl.m_oAnimPaneApi.list.Control.onUpdate()
+			// Here we need to check if all animEffects havent been changed
+			// If they were - recalculate corresponding elements
+			// If they were not - redraw animItems based on "selected" state of effects
+
+			// "oThis" here - Asc.editor.WordControl.m_oAnimPaneApi
+			if (!oThis.list.Control) { return }
+
+			const newSeqList = oThis.list.Control.getTiming().getRootSequences()
+			newSeqList.forEach(function (newSeq, index) {
+				const oldSeq = oThis.list.Control.seqList.children[index] && oThis.list.Control.seqList.children[index].getSeq()
+
+				// Not sure if we need to compare by Id here,
+				// cuz these are references either to the same object (CSeq) or to different ones
+				if (oldSeq !== newSeq) { return recalculateSeqListContainer() }
+				console.log('seqList didnt Changed')
+
+				oThis.list.Control.seqList.forEachAnimItem(function (animItem) {
+					console.log('Updating animItem with effect.Id', animItem.effect.Id)
+					animItem.onUpdate()
+				})
+			})
+
+			function recalculateSeqListContainer () {
+				console.log('seqList Changed - recalculateSeqListContainer()')
+				oThis.list.Control.recalculateChildrenLayout()
+				oThis.list.Control.seqList.recalculateChildren()
+				oThis.list.Control.seqList.recalculateChildrenLayout()
+				oThis.list.Control.onUpdate()
 			}
 		})
 	};

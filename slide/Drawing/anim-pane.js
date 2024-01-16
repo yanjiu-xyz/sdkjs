@@ -1641,12 +1641,12 @@
 		}
 	};
 
-	CSeqList.prototype.forEachEffect = function (callback) {
+	CSeqList.prototype.forEachAnimItem = function (callback) {
 		// here: this === Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList;
 		this.children.forEach(function (seq) {
 			seq.animGroups.forEach(function (group) {
-				group.effects.forEach(function (effect) {
-					callback(effect)
+				group.children.forEach(function (animItem) {
+					callback(animItem)
 				})
 			})
 		})
@@ -1789,9 +1789,8 @@
 				this.effect.select()
 			} else {
 				const seqList = Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList
-				seqList.forEachEffect(function (effect) {
-					effect === oThis.effect ? effect.select() : effect.deselect()
-					oThis.onUpdate()
+				seqList.forEachAnimItem(function (animItem) {
+					animItem.effect === oThis.effect ? animItem.effect.select() : animItem.effect.deselect()
 				})
 			}
 			Asc.editor.WordControl.m_oLogicDocument.RedrawCurSlide()
