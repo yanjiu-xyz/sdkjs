@@ -6782,8 +6782,15 @@ function CAnimationPaneDrawer(page, htmlElement)
 			// "oThis" here - Asc.editor.WordControl.m_oAnimPaneApi
 			if (!oThis.list.Control) { return }
 
-			const newSeqList = oThis.list.Control.getTiming().getRootSequences()
-			newSeqList.forEach(function (newSeq, index) {
+			const newSeqList = oThis.list.Control.getTiming() ? oThis.list.Control.getTiming().getRootSequences() : []
+			const oldSeqList = oThis.list.Control.seqList.children ?
+				oThis.list.Control.seqList.children.map(function (seqItem) { return seqItem.getSeq() }) : []
+
+			if (oldSeqList.length != newSeqList.length) {
+				return recalculateSeqListContainer()
+			}
+
+			newSeqList.some(function (newSeq, index) {
 				const oldSeq = oThis.list.Control.seqList.children[index] && oThis.list.Control.seqList.children[index].getSeq()
 
 				// Not sure if we need to compare by Id here,
@@ -6795,6 +6802,10 @@ function CAnimationPaneDrawer(page, htmlElement)
 					console.log('Updating animItem with effect.Id', animItem.effect.Id)
 					animItem.onUpdate()
 				})
+
+				// We need to return false here
+				// to continue Array.some method
+				return false
 			})
 
 			function recalculateSeqListContainer () {
@@ -6803,6 +6814,11 @@ function CAnimationPaneDrawer(page, htmlElement)
 				oThis.list.Control.seqList.recalculateChildren()
 				oThis.list.Control.seqList.recalculateChildrenLayout()
 				oThis.list.Control.onUpdate()
+
+				// We need to return true here
+				// to stop comparing the following sequences
+				// if any of them have changed
+				return true
 			}
 		})
 	};
