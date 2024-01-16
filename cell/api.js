@@ -6843,7 +6843,7 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_nativeGetPDF = function(options) {
-    if (options["watermark"])
+    if (options && options["watermark"])
     {
       this.watermarkDraw = new AscCommon.CWatermarkOnDraw(options["watermark"], this);
       this.watermarkDraw.generateNative();
