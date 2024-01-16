@@ -6810,9 +6810,9 @@ function CAnimationPaneDrawer(page, htmlElement)
 
 			function recalculateSeqListContainer () {
 				console.log('seqList Changed - recalculateSeqListContainer()')
-				oThis.list.Control.recalculateChildrenLayout()
 				oThis.list.Control.seqList.recalculateChildren()
 				oThis.list.Control.seqList.recalculateChildrenLayout()
+				oThis.list.Control.recalculateChildrenLayout()
 				oThis.list.Control.onUpdate()
 
 				// We need to return true here
