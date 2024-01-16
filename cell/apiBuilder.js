@@ -2076,14 +2076,16 @@
 	 * @typeofeditors ["CSE"]
 	 */
 	ApiRange.prototype.Clear = function () {
-		this.range.cleanAll();
-		let ws = this.Worksheet.worksheet;
-		ws.deletePivotTables(this.range.bbox);
-		ws.removeSparklines(this.range.bbox);
-		ws.clearDataValidation([this.range.bbox], true);
-		ws.clearConditionalFormattingRulesByRanges([this.range.bbox]);
-		let wsView = Asc['editor'].wb.getWorksheet(ws.getIndex());
-		wsView.cellCommentator.deleteCommentsRange(this.range.bbox, null);
+		let range = this.range,
+			bbox = range.bbox,
+			ws = range.worksheet,
+			wsView = Asc['editor'].wb.getWorksheet(ws.getIndex());
+		range.cleanAll();
+		ws.deletePivotTables(bbox);
+		ws.removeSparklines(bbox);
+		ws.clearDataValidation([bbox], true);
+		ws.clearConditionalFormattingRulesByRanges([bbox]);
+		wsView.cellCommentator.deleteCommentsRange(bbox, null);
 	};
 
 	/**
@@ -2435,7 +2437,10 @@
 				}
 			}
 		}
-		data = checkFormat(data || 0);
+		if (data === undefined || data === null)
+			data = AscCommon.cErrorLocal["na"];
+
+		data = checkFormat(data);
 		let range = this.range;
 		let merged = range.hasMerged();
 		if (merged)
@@ -3344,18 +3349,35 @@
 	 * @param {?string} shift - Specifies how to shift cells to replace the deleted cells ("up", "left").
 	 */
 	ApiRange.prototype.Delete = function (shift) {
+		let preDeleteAction = function() {
+			cellCommentator.updateCommentsDependencies(false, val, checkRange);
+			wsView.shiftCellWatches(false, val, bbox);
+			wsView.model.shiftDataValidation(false, val, checkRange, true);
+			wsView._cleanCache(lockRange);
+		};
+		let val;
+		let ws = this.Worksheet.worksheet;
+		let wsView = Asc['editor'].wb.getWorksheet(ws.getIndex());
+		let cellCommentator = wsView.cellCommentator;
+		let bbox = this.range.bbox;
+		let checkRange = bbox.clone();
+		let lockRange;
 		if (shift && shift.toLocaleLowerCase) {
 			shift = shift.toLocaleLowerCase();
 		} else {
-			var bbox = this.range.bbox;
-			var rows = bbox.r2 - bbox.r1 + 1;
-			var cols = bbox.c2 - bbox.c1 + 1;
+			let rows = bbox.r2 - bbox.r1 + 1;
+			let cols = bbox.c2 - bbox.c1 + 1;
 			shift = (rows <= cols) ? "up" : "left";
 		}
-		if (shift == "up")
-			this.range.deleteCellsShiftUp();
-		else
-			this.range.deleteCellsShiftLeft()
+		if (shift == "up") {
+			val = Asc.c_oAscDeleteOptions.DeleteCellsAndShiftTop;
+			lockRange = ws.getRange3(bbox.r1, bbox.c1, bbox.r2, AscCommon.gc_nMaxCol0);
+			this.range.deleteCellsShiftUp(preDeleteAction);
+		} else {
+			val = Asc.c_oAscDeleteOptions.DeleteCellsAndShiftLeft;
+			lockRange = ws.getRange3(bbox.r1, bbox.c1, AscCommon.gc_nMaxRow0, AscCommon.c2);
+			this.range.deleteCellsShiftLeft(preDeleteAction);
+		}
 	};
 
 	/**

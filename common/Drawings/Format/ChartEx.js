@@ -3157,7 +3157,7 @@ function (window, undefined) {
 			let oPt = new AscFormat.CStringPoint();
 			oPt.setIdx(nPtIdx);
 			oPt.setVal(sVal);
-			oLvl.addPt(pt);
+			oLvl.addPt(oPt);
 		}
 	};
 
