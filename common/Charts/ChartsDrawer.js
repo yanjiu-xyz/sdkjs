@@ -1136,7 +1136,7 @@ CChartsDrawer.prototype =
 		} else if(horizontalAxis instanceof AscFormat.CValAx) {
 			crossBetween = horizontalAxis.crossBetween;
 		}
-
+		const isChartEx = chartSpace.chart.plotArea.isForChartEx;
 		if (horizontalAxis && horizontalAxis.xPoints && horizontalAxis.xPoints.length && this.calcProp.widthCanvas != undefined) {
 			if (horizontalAxis instanceof AscFormat.CValAx) {
 				if (horizontalAxis.scaling.orientation == ORIENTATION_MIN_MAX) {
@@ -1146,16 +1146,17 @@ CChartsDrawer.prototype =
 					calculateLeft = horizontalAxis.xPoints[horizontalAxis.xPoints.length - 1].pos;
 					calculateRight = this.calcProp.widthCanvas / pxToMM - horizontalAxis.xPoints[0].pos;
 				}
-			} else if ((horizontalAxis instanceof AscFormat.CCatAx || horizontalAxis instanceof AscFormat.CDateAx) && verticalAxis && !isNaN(verticalAxis.posX)) {
+			} else if (((horizontalAxis instanceof AscFormat.CCatAx || horizontalAxis instanceof AscFormat.CDateAx) && verticalAxis && !isNaN(verticalAxis.posX)) || isChartEx) {
 				diffPoints = horizontalAxis.xPoints[1] ? Math.abs(horizontalAxis.xPoints[1].pos - horizontalAxis.xPoints[0].pos) : Math.abs(horizontalAxis.xPoints[0].pos - verticalAxis.posX) * 2;
 
 				curBetween = 0;
-				if (horizontalAxis.scaling.orientation === ORIENTATION_MIN_MAX) {
-					if (crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN) {
+				if (horizontalAxis.scaling.orientation === ORIENTATION_MIN_MAX || isChartEx) {
+					if (crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN || isChartEx) {
 						curBetween = diffPoints / 2;
 					}
 
 					calculateLeft = horizontalAxis.xPoints[0].pos - curBetween;
+					console.log("here");
 					calculateRight = this.calcProp.widthCanvas / pxToMM - (horizontalAxis.xPoints[horizontalAxis.xPoints.length - 1].pos + curBetween);
 				} else {
 					if (crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN) {
@@ -1279,15 +1280,17 @@ CChartsDrawer.prototype =
 		if(verticalAxis && verticalAxis.yPoints && verticalAxis.yPoints.length) {
 			let orientationVerAxis = verticalAxis.scaling.orientation === ORIENTATION_MIN_MAX;
 			diffPoints = 0;
+			const isChartEx = chartSpace.chart.plotArea.isForChartEx;
 			if((verticalAxis instanceof AscFormat.CDateAx || verticalAxis instanceof AscFormat.CCatAx)&& crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN) {
 				diffPoints = Math.abs((verticalAxis.interval) / 2);
 			}
-			if(orientationVerAxis) {
+			if(orientationVerAxis || isChartEx) {
 				leftDownPointY = verticalAxis.yPoints[0].pos + diffPoints;
 				rightUpPointY = verticalAxis.yPoints[verticalAxis.yPoints.length - 1].pos - diffPoints;
 			} else {
 				leftDownPointY = verticalAxis.yPoints[verticalAxis.yPoints.length - 1].pos + diffPoints;
 				rightUpPointY = verticalAxis.yPoints[0].pos - diffPoints;
+				console.log("here");
 			}
 
 			if (horizontalAxis && horizontalAxis.labels && !horizontalAxis.bDelete) {
@@ -1326,20 +1329,34 @@ CChartsDrawer.prototype =
 		var priorityAxis = [];
 
 		let charts = chartSpace.chart.plotArea.charts;
-		for (let i = 0; i < charts.length; i++) {
-			for (let j = 0; j < charts[i].axId.length; j++) {
-				var axis = charts[i].axId[j];
-				if(axis.axPos === window['AscFormat'].AX_POS_R || axis.axPos === window['AscFormat'].AX_POS_L) {
-					if (charts[i].getObjectType() === AscDFH.historyitem_type_RadarChart) {
-						priorityAxis.push(axis);
-					} else {
-						res.push(axis);
+		if (chartSpace.chart.plotArea.isForChartEx) {
+			// var axId = chartSpace.chart.plotArea.axId;
+			// for(var i = 0; i < axId.length; i++) {
+			// 	var axis = chartSpace.chart.plotArea.axId[i];
+			// 	if(axis.axPos === window['AscFormat'].AX_POS_R || axis.axPos === window['AscFormat'].AX_POS_L) {
+			// 		if(!res) {
+			// 			res = [];
+			// 		}
+			// 		res.push(axis);
+			// 	}
+			// }
+			return res;
+		} else {
+			for (let i = 0; i < charts.length; i++) {
+				for (let j = 0; j < charts[i].axId.length; j++) {
+					var axis = charts[i].axId[j];
+					if(axis.axPos === window['AscFormat'].AX_POS_R || axis.axPos === window['AscFormat'].AX_POS_L) {
+						if (charts[i].getObjectType() === AscDFH.historyitem_type_RadarChart) {
+							priorityAxis.push(axis);
+						} else {
+							res.push(axis);
+						}
 					}
 				}
 			}
+			return res.length || priorityAxis.length ? priorityAxis.concat(res) : null;
 		}
 
-		return res.length || priorityAxis.length ? priorityAxis.concat(res) : null;
 	},
 
 	isRadarChart: function(axis) {
@@ -1939,6 +1956,8 @@ CChartsDrawer.prototype =
 		let isOx = axis.axPos === window['AscFormat'].AX_POS_B || axis.axPos === window['AscFormat'].AX_POS_T;
 		//для оси категорий берем интервал 1
 		let arrayValues;
+		let isChartEx = (chartSpace.chart && chartSpace.chart.plotArea) ? chartSpace.chart.plotArea.isForChartEx : false;
+		//(isChartEx && !isOx)
 		if(AscDFH.historyitem_type_CatAx === axis.getObjectType() || AscDFH.historyitem_type_DateAx === axis.getObjectType()) {
 			arrayValues = [];
 			let max = axis.max;
@@ -2434,21 +2453,23 @@ CChartsDrawer.prototype =
 					//calculate calcProp -> /min/max/ymax/ymin/
 			this._calculateExtremumAllCharts(chartSpace);
 		} else {
-			this._calculateExtremumForChartEx(chartSpace, chartSpace.chart.plotArea, chartSpace.chart.plotArea.plotAreaRegion.series[0])
+			this._calculateExtremumForChartEx(chartSpace)
 		}
 
 		this.calcProp.widthCanvas = chartSpace.extX * this.calcProp.pxToMM;
 		this.calcProp.heightCanvas = chartSpace.extY * this.calcProp.pxToMM;
 	},
 
-	_calculateExtremumForChartEx: function (chartSpace, plotArea, seria) {
+	_calculateExtremumForChartEx: function (chartSpace) {
 		// plotArea: CPlotArea
 		// data: CNumericPoint
-		if (plotArea && plotArea.axId && plotArea.axId.length === 2) {
+		const plotArea = chartSpace.chart.plotArea;
+		const seria = chartSpace.chart.plotArea.plotAreaRegion.series[0];
+		const numLit = seria.getValLit();
+		if (plotArea && plotArea.axId && plotArea.axId.length === 2 && numLit) {
 
 			const normalizeBinWidth = function (num) { 
 				let count = 0;
-				let result = null;
 				let multiply = false;
 				while (num >= 100) {
 					num /= 10;
@@ -2468,8 +2489,7 @@ CChartsDrawer.prototype =
 
 			const catAxis = plotArea.axId[0];
 			const valAxis = plotArea.axId[1];
-			const data = seria.dataPt;
-			const binning = seria.layoutPr.binning;
+			const data = numLit.pts;
 			let stDev = null;
 			let mean = 0;
 
@@ -2488,58 +2508,118 @@ CChartsDrawer.prototype =
 			mean /= data.length;
 			catAxis.min = catMin;
 			catAxis.max = catMax;
+			const binning = seria.layoutPr.binning;
+			seria.layoutPr.subtotals = {binning: {intervalClosed: binning.intervalClosed, overflow: binning.overflow, underflow: binning.underflow, binCount : binning.binCount, binSize : binning.binSize }, results: [] };
+			const localBinning = seria.layoutPr.subtotals.binning;
+			const localResults = seria.layoutPr.subtotals.results;
+			localBinning.binCount = 3;
+			// localBinning.overflow = 177;
+			// localBinning.underflow = 7;
+			const statement1 = localBinning.intervalClosed !== "r" ? localBinning.overflow < catAxis.max && localBinning.overflow >= catAxis.min : localBinning.overflow <= catAxis.max && localBinning.overflow > catAxis.min;
+			const statement2 = localBinning.intervalClosed !== "r" ? localBinning.underflow >= catAxis.min && localBinning.underflow < catAxis.max : localBinning.underflow > catAxis.min && localBinning.underflow <= catAxis.max;
+			localBinning.overflow = ((localBinning.overflow === 0 || localBinning.overflow) && statement1) ? localBinning.overflow : null;
+			localBinning.underflow = ((localBinning.underflow === 0 || localBinning.underflow) && statement2) ? localBinning.underflow : null;
+			const trueMax = (localBinning.overflow === 0 || localBinning.overflow) ? localBinning.overflow : catAxis.max;
+			const trueMin = (localBinning.underflow === 0 || localBinning.underflow) ? localBinning.underflow : catAxis.min;
+			if (localBinning.binSize) {
+				localBinning.binCount = Math.ceil((trueMax - trueMin) / localBinning.binSize);
+			} else if (localBinning.binCount) {
+				let binCountDecrease = 0;
+				binCountDecrease = (localBinning.overflow === 0 || localBinning.overflow) ? binCountDecrease + 1 : binCountDecrease;
+				binCountDecrease = (localBinning.underflow === 0 || localBinning.underflow) ? binCountDecrease + 1 : binCountDecrease;
+				if (localBinning.binCount >= binCountDecrease) {
+					localBinning.binCount -= binCountDecrease;
+				} else {
+					localBinning.binCount = 0;
+				}
+				localBinning.binSize = (localBinning.binCount != 0) ? ((trueMax - trueMin) / localBinning.binCount) : null;
+			} else {
+				// Find stdev 
+				// formula = sqrt((∑(x - mean)^2)/(n-1))
+				for (let i = 0; i < data.length; i++) {
+					stDev += Math.pow((data[i].val - mean), 2);
+				}
+				stDev /= (data.length - 1);
+				stDev = Math.sqrt(stDev);
+				
+				// Calculate bin size and bin count
+				let result = (3.5 * stDev) / (Math.pow(data.length, 1 / 3));
+				localBinning.binSize = normalizeBinWidth(result);
 
-			// Find stdev 
-			// formula = sqrt((∑(x - mean)^2)/(n-1))
-			for (let i = 0; i < data.length; i++) {
-				stDev += Math.pow((data[i].val - mean), 2);
+				localBinning.binCount = (localBinning.binSize != 0) ? Math.ceil((trueMax - trueMin) / localBinning.binSize) : 2;
 			}
-			stDev /= (data.length - 1);
-			stDev = Math.sqrt(stDev);
-			
-			// Calculate bin size and bin count
-			let result = (3.5 * stDev) / (Math.pow(data.length, 1 / 3));
-			binning.binSize = normalizeBinWidth(result);
-			binning.binCount = (binning.binSize != 0) ? Math.ceil((catMax - catMin) / binning.binSize) : 2;
 
 			// CreateRanges and find catAxis scale
-			seria.layoutPr.subtotals = [];
-			let prev = catMin;
+			let prev = trueMin;
 			catAxis.scale = [];
-			for (let i = 0; i < binning.binCount; i++) {
-				const curr = prev + binning.binSize;
+			if (localBinning.underflow === 0 || localBinning.underflow) {
+				const range = {
+					min : null,
+					max : localBinning.underflow,
+					occurrence : 0
+				};
+				localResults.push(range);
+			}
+
+			for (let i = 0; i < localBinning.binCount; i++) {
+				const curr = prev + localBinning.binSize;
 				const range = {
 					min : prev,
 					max : curr,
 					occurrence : 0
 				};
 				prev = curr;
-				seria.layoutPr.subtotals.push(range);
+				localResults.push(range);
 				catAxis.scale.push(range.min);
+			}
+
+			if (localBinning.overflow === 0 || localBinning.overflow) {
+				const range = {
+					min : localBinning.overflow,
+					max : null,
+					occurrence : 0
+				};
+				localResults.push(range);
 			}
 
 			// Count occurrences, valAxis scale, min and max
 			let valMax = null;
 			let valMin = null; 
 			for (let i = 0; i < data.length; i++) {
-				for (let j = 0; j < seria.layoutPr.subtotals.length; j++) {
-					let statement1 = (j === 0 && data[i].val === seria.layoutPr.subtotals[0].min);
-					let statement2 = (data[i].val > seria.layoutPr.subtotals[j].min && data[i].val <= seria.layoutPr.subtotals[j].max);
+				for (let j = 0; j < localResults.length; j++) {
+					const min = localResults[j].min;
+					const max = localResults[j].max;
+					let statement1 = (j === 0 && data[i].val === min);
+					let statement2 = localBinning.intervalClosed !== "r" ? ((!min || data[i].val > min) && (!max || data[i].val <= max)) : ((!min || data[i].val >= min) && (!max || data[i].val < max));
 					if (statement1 || statement2) {
-						seria.layoutPr.subtotals[j].occurrence++;
+						localResults[j].occurrence++;
 
-						if (valMax === null || seria.layoutPr.subtotals[j].occurrence > valMax) {
-							valMax =seria.layoutPr.subtotals[j].occurrence;
+						if (valMax === null || localResults[j].occurrence > valMax) {
+							valMax = localResults[j].occurrence;
 						}
-						if (valMin === null || seria.layoutPr.subtotals[j].occurrence < valMin) {
-							valMin = seria.layoutPr.subtotals[j].occurrence
+						if (valMin === null || localResults[j].occurrence < valMin) {
+							valMin = localResults[j].occurrence
 						}
 					}
 				}
 			}
 
-			valAxis.min = valMin;
-			valAxis.max = valMax;
+			//check for user typed max and min properties
+			let kF = 1000000000;
+			let trueValMin = (valAxis.scaling && valAxis.scaling.min != null)? Math.round(valAxis.scaling.min * kF) / kF : null;
+			let trueValMax = (valAxis.scaling && valAxis.scaling.max != null)? Math.round(valAxis.scaling.max * kF) / kF : null;
+			trueValMin = (trueValMin != 0 && !trueValMin) ? valMin : trueValMin;
+			trueValMax = (trueValMax != 0 && !trueValMax) ? valMax : trueValMax;
+
+			//for the cases when max >= min ;
+			if (trueValMax === 0) {
+				trueValMax = 1;
+			} else if (trueValMax < trueValMin) {
+				trueValMin = trueValMax * 2;
+			}
+
+			valAxis.min = trueValMin;
+			valAxis.max = trueValMax;
 			valAxis.scale = this._roundValues(this._getAxisValues2(valAxis, chartSpace, false, false));
 
 			// Exchange cross axes 
@@ -7321,40 +7401,44 @@ drawHistogramChart.prototype = {
 	constructor: drawHistogramChart,
 
 	recalculate: function () {
-		const sections = this.cChartSpace.chart.plotArea.plotAreaRegion.series[0].layoutPr.subtotals;
-		const catAxis = this.cChartSpace.chart.plotArea.axId[0];
+		const sections = this.cChartSpace.chart.plotArea.plotAreaRegion.series[0].layoutPr.subtotals.results;
 		const valAxis = this.cChartSpace.chart.plotArea.axId[1];
+		const catAxis = this.cChartSpace.chart.plotArea.axId[0];
 
-		const gapWidth = sections.length + 1;
-		const barWidth = (this.chartProp.trueWidth - gapWidth)/ sections.length;
+		const initialBarWidth = (this.chartProp.trueWidth)/ sections.length;
 		const catStart = this.chartProp.chartGutter._left;
 		const valStart = this.chartProp.trueHeight + this.chartProp.chartGutter._bottom;
-		let start = catStart + 1;
+		const coeff = catAxis.scaling.gapWidth;
+		const barWidth = (initialBarWidth / (1 + coeff));
+		const margin = (initialBarWidth - barWidth) / 2;
+		let start = (catStart + margin);
 		for (let i = 0; i < sections.length; i++) {
-			let height = this.cChartDrawer.getYPosition(sections[i].occurrence, valAxis, true);
+			let height = this.cChartDrawer.getYPosition(sections[i].occurrence, valAxis);
 
 			let path = this._calculateRect(start, valStart, barWidth, height);
 			this.paths[i] = path;
-			start += (barWidth + 1);
+			start += (barWidth + margin + margin);
 		}
 	},
 
 	draw: function () {
-		this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
+		let leftRect = this.cChartDrawer.calcProp.chartGutter._left / this.cChartDrawer.calcProp.pxToMM;
+		let topRect = (this.cChartDrawer.calcProp.chartGutter._top) / this.cChartDrawer.calcProp.pxToMM;
+		let rightRect = this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM;
+		let bottomRect = (this.cChartDrawer.calcProp.trueHeight) / this.cChartDrawer.calcProp.pxToMM;
 
-		var left = (this.chartProp.chartGutter._left - 1) / this.chartProp.pxToMM;
-		var top = (this.chartProp.chartGutter._top - 1) / this.chartProp.pxToMM;
-		var right = this.chartProp.trueWidth / this.chartProp.pxToMM;
-		var bottom = this.chartProp.trueHeight / this.chartProp.pxToMM;
-		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(left, top, right, bottom);
+		this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
+		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);
+
 		const brush = this.cChartSpace.brush;
 		brush.fill.color.RGBA.R = 79;
 		brush.fill.color.RGBA.G = 129;
 		brush.fill.color.RGBA.B = 189;
 		const pen = this.cChartSpace.pen;
 		for (let i in this.paths) {
-			this.cChartDrawer.drawPath(this.paths[i], null, brush);
+			this.cChartDrawer.drawPath(this.paths[i], pen, brush);
 		}
+		
 		this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
 	},
 
@@ -17645,6 +17729,7 @@ CColorObj.prototype =
 	window['AscFormat'] = window['AscFormat'] || {};
 	window['AscFormat'].CChartsDrawer = CChartsDrawer;
 	window['AscFormat'].CTrendline = CTrendline;
+	window['AscFormat'].CLineBuilder = CLineBuilder;
 	window['AscFormat'].CColorObj = CColorObj;
 	window["AscFormat"].c_oChartTypes = c_oChartTypes;
 })(window);

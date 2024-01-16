@@ -1440,26 +1440,6 @@ function(window, undefined) {
 		}
 		return this.dataRefs;
 	};
-	CChartSpace.prototype.setPlotAreaRegionInformation = function () {
-		if ( this.chartData && this.chartData.data) {
-			for (let i = 0; i < this.chartData.data.length; i++) {
-				const dimension = this.chartData.data[i].dimension;
-				if (dimension) {
-					for (let j = 0; j < dimension.length; j++){
-						const levelData = dimension[j].levelData;
-						if (levelData) {
-							for (let k = 0; k < levelData.length; k++) {
-								if (levelData[k].pts && levelData[k].pts.length !== 0) {
-									this.chart.plotArea.plotAreaRegion.series[0].dataPt = levelData[k].pts;
-									return;
-								}
-							}
-						}
-					}
-				}
-			}
-		}
-	};
 	CChartSpace.prototype.setIsForChartEx = function(pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_ChartSpace_SetIsForChartEx, this.isForChartEx, pr));
 		this.isForChartEx = pr;
@@ -3882,7 +3862,11 @@ function(window, undefined) {
 	};
 	CChartSpace.prototype.checkEmptySeries = function () {
 		if (this.chart.plotArea.isForChartEx) {
-			return this.chart.plotArea.plotAreaRegion.series[0].dataPt.length === 0 ? true : false;
+			const numLit = this.chart.plotArea.plotAreaRegion.series[0].getValLit();
+			if (!numLit) {
+				return true;
+			}
+			return numLit.pts.length === 0 ? true : false;
 		} else {
 			for (var t = 0; t < this.chart.plotArea.charts.length; ++t) {
 				var chart_type = this.chart.plotArea.charts[t];
@@ -4195,11 +4179,29 @@ function(window, undefined) {
 				}
 			} else {
 				// const step = oAxis.scale[1] - oAxis.scale[0]
-				const labels = this.chart.plotArea.plotAreaRegion.series[0].layoutPr.subtotals
+				const labels = this.chart.plotArea.plotAreaRegion.series[0].layoutPr.subtotals.results;
+				const binning = this.chart.plotArea.plotAreaRegion.series[0].layoutPr.subtotals.binning;
+				let start = '[';
+				let end = binning.intervalClosed === "r" ? ')' : ']';
+				const alternativeStart = binning.intervalClosed === 'r' ? '<' : '≤';
+				const alternativeEnd = binning.intervalClosed === 'r' ? '≥' : '>';
 				for (let i = 0; i < labels.length; i++) {
-					let newString = (i === 0) ? "[" : "(";
-					newString += `${labels[i].min},${labels[i].max}]`;
-					aStrings.push(newString);
+					if (i === 1 && binning.intervalClosed !== 'r') {
+						start = '(';
+					}
+					if (i === (labels.length - 1) && binning.intervalClosed === "r") {
+						end = ']';
+					}
+					let result = null;
+
+					if (labels[i].min !== 0 && !labels[i].min) {
+						result = alternativeStart + ` ${labels[i].max}`;
+					} else if (labels[i].max !== 0 && !labels[i].max) {
+						result = alternativeEnd + ` ${labels[i].min}`;
+					} else {
+						result = start + `${labels[i].min}, ${labels[i].max}` + end;
+					}
+					aStrings.push(result);
 				}
 			}
 			return (aStrings);
@@ -4866,9 +4868,6 @@ function(window, undefined) {
 	CChartSpace.prototype.recalculateAxes = function () {
 		this.cachedCanvas = null;
 		this.plotAreaRect = null;
-		if (this.chart.plotArea.isForChartEx) {
-			this.setPlotAreaRegionInformation()
-		}
 		this.bEmptySeries = this.checkEmptySeries();
 		if (this.chart && this.chart.plotArea) {
 			var oPlotArea = this.chart.plotArea;
