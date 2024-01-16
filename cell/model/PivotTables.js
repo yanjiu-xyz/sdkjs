@@ -16467,7 +16467,7 @@ CT_RangePr.prototype.generateGroupItems  = function (containsInteger, containsBl
 			groupItems.addString(qtr + "4");
 		} else if (this.groupBy === c_oAscGroupBy.Years) {
 			date = new Asc.cDate(this.startDate.getTime());
-			while (date < this.endDate) {
+			while (date.getUTCFullYear() <= this.endDate.getUTCFullYear()) {
 				groupItems.addString(date.getUTCFullYear().toString());
 				date.addYears(1);
 			}
