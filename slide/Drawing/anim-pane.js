@@ -1561,13 +1561,6 @@
 		this.setLayout(0, 0, this.getWidth(), this.seqList.getHeight());
 	};
 
-	CSeqListContainer.prototype.clipStart = function (graphics) {
-
-	};
-	CSeqListContainer.prototype.clipEnd = function (graphics) {
-
-	};
-
 	CSeqListContainer.prototype.onScroll = function () {
 		this.onUpdate();
 	};
@@ -1647,6 +1640,17 @@
 			this.cachedCanvas = null;
 		}
 	};
+
+	CSeqList.prototype.forEachEffect = function (callback) {
+		// here: this === Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList;
+		this.children.forEach(function (seq) {
+			seq.animGroups.forEach(function (group) {
+				group.effects.forEach(function (effect) {
+					callback(effect)
+				})
+			})
+		})
+	}
 
 
 	// mainSeq or interactiveSeq
@@ -1781,17 +1785,13 @@
 
 			// Select
 			const oThis = this
-			const sequencies = Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList
 			if (event.CtrlKey) {
 				this.effect.select()
 			} else {
-				sequencies.children.forEach(function (seq) {
-					seq.animGroups.forEach(function (group) {
-						group.effects.forEach(function (effect) {
-							effect === oThis.effect ? effect.select() : effect.deselect()
-							oThis.onUpdate()
-						})
-					})
+				const seqList = Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList
+				seqList.forEachEffect(function (effect) {
+					effect === oThis.effect ? effect.select() : effect.deselect()
+					oThis.onUpdate()
 				})
 			}
 			Asc.editor.WordControl.m_oLogicDocument.RedrawCurSlide()
