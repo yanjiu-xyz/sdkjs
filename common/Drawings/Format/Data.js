@@ -3806,6 +3806,16 @@ Because of this, the display is sometimes not correct.
 							return this.val;
 					}
 				}
+				case Param_type_pyraAcctPos: {
+					switch (this.val) {
+						case 'bef':
+							return ParameterVal_pyramidAccentPosition_bef;
+						case 'aft':
+							return ParameterVal_pyramidAccentPosition_aft;
+						default:
+							return this.val;
+					}
+				}
 				case Param_type_connRout: {
 					switch (this.val) {
 						case 'longCurve':

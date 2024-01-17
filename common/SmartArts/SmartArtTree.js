@@ -1845,6 +1845,9 @@
 			callback(this.shapes[i]);
 		}
 	};
+	PyramidContainer.prototype.reverse = function () {
+		return this.shapes.reverse();
+	};
 	PyramidContainer.prototype.applyCenterAlign = function (parentHeight, parentWidth) {
 	};
 	PyramidContainer.prototype.push = function (shape) {
@@ -1982,6 +1985,12 @@
 		};
 	}
 	AscFormat.InitClassWithoutType(PyramidAlgorithm, PositionAlgorithm);
+	PyramidAlgorithm.prototype.initParams = function (params) {
+		PositionAlgorithm.prototype.initParams.call(this, params);
+		if (this.params[AscFormat.Param_type_pyraAcctPos] === undefined) {
+			this.params[AscFormat.Param_type_pyraAcctPos] = AscFormat.ParameterVal_pyramidAccentPosition_aft;
+		}
+	}
 	PyramidAlgorithm.prototype.calcScaleCoefficients = function () {
 		this.parentNode.calcNodeConstraints();
 		const parentConstraints = this.getNodeConstraints(this.parentNode);
@@ -2041,26 +2050,26 @@
 		const firstChild = firstPyramidComponents.pyramid;
 		const firstHeight = defaultBlockHeight * firstChild.getHeightScale();
 		const firstWidth = previousBlockWidth * firstChild.getWidthScale();
-		const ctrX = firstWidth / 2;
+		let ctrX;
+		if (this.isAfterAcct()) {
+			ctrX = firstWidth / 2;
+		} else {
+			ctrX = parentConstraints.width - firstWidth / 2;
+		}
 		let previousY = parentHeight - firstHeight;
 		let previousAdjValue;
-		let flag = false;
-		if (previousBlockWidth >= firstHeight) {
+		let firstAcctOffset;
+		let previousBlockHeight = firstHeight;
+		if (previousBlockWidth >= previousBlockHeight) {
 			previousAdjValue = defaultAdjValue;
+			firstAcctOffset = previousAdjValue * previousBlockHeight;
 		} else {
-			flag = true;
-			previousAdjValue = defaultAdjValue * firstHeight / previousBlockWidth;
+			previousAdjValue = defaultAdjValue * previousBlockHeight / previousBlockWidth;
+			firstAcctOffset = previousAdjValue * previousBlockWidth;
 		}
 		this.setPyramidParametersForNode(firstChild, ctrX - firstWidth / 2, previousY,  firstHeight, firstWidth, previousAdjValue);
-		let previousBlockHeight = firstHeight;
-		let firstAcctHelper;
-		if (flag) {
-			firstAcctHelper = previousAdjValue * previousBlockWidth;
-		} else {
-			firstAcctHelper = previousAdjValue * previousBlockHeight;
-		}
-		this.addAcctShape(firstChild, firstPyramidComponents.acct, defaultAdjValue, firstAcctHelper);
 		this.shapeContainer.push(firstChild.shape);
+		this.addAcctShape(firstChild, firstPyramidComponents.acct, defaultAdjValue, firstAcctOffset);
 		for (let i = childs.length - 2; i >= 0; i -= 1) {
 			const pyramidComponents = this.getPyramidChildren(childs[i]);
 			const child = pyramidComponents.pyramid;
@@ -2068,35 +2077,49 @@
 			const blockWidthFactor = child.getWidthScale();
 			const scaledBlockHeight = blockHeightFactor * defaultBlockHeight;
 			let curBlockWidth;
-			if (flag) {
-				curBlockWidth = previousBlockWidth - previousAdjValue * 2 * previousBlockWidth;
-			} else {
+			if (previousBlockWidth >= previousBlockHeight) {
 				curBlockWidth = previousBlockWidth - previousAdjValue * 2 * previousBlockHeight;
+			} else {
+				curBlockWidth = previousBlockWidth - previousAdjValue * 2 * previousBlockWidth;
 			}
 			const scaledBlockWidth = curBlockWidth * blockWidthFactor;
 			const x = ctrX - scaledBlockWidth / 2;
 			const y = previousY - scaledBlockHeight;
+			let acctOffset;
 			if (curBlockWidth >= scaledBlockHeight) {
 				previousAdjValue = defaultAdjValue;
+				acctOffset = previousAdjValue * previousBlockHeight;
 			} else {
-				flag = true;
 				previousAdjValue = defaultAdjValue * scaledBlockHeight / curBlockWidth;
+				acctOffset = previousAdjValue * previousBlockWidth;
 			}
+			this.shapeContainer.push(child.shape);
 			this.setPyramidParametersForNode(child, x, y,  scaledBlockHeight, scaledBlockWidth, previousAdjValue);
+			this.addAcctShape(child, pyramidComponents.acct, defaultAdjValue, acctOffset);
 
 			previousBlockWidth = curBlockWidth;
 			previousBlockHeight = scaledBlockHeight;
 			previousY = y;
-			let acctHelper;
-			if (flag) {
-				acctHelper = previousAdjValue * previousBlockWidth;
-			} else {
-				acctHelper = previousAdjValue * previousBlockHeight;
-			}
-			this.addAcctShape(child, pyramidComponents.acct, defaultAdjValue, acctHelper);
-			this.shapeContainer.push(child.shape);
 		}
+		this.shapeContainer.reverse();
 	};
+	PyramidAlgorithm.prototype.getTemplateAdjAcctLst = function (firstAdj, secondAdj) {
+		const adjLst = new AscFormat.AdjLst();
+		const adj1 = new AscFormat.Adj();
+		adjLst.addToLst(0, adj1);
+		adj1.setIdx(1);
+
+		const adj2 = new AscFormat.Adj();
+		adj2.setIdx(2);
+		adjLst.addToLst(1, adj2);
+
+		adj1.setVal(firstAdj);
+		adj2.setVal(secondAdj);
+		return adjLst;
+	};
+	PyramidAlgorithm.prototype.isAfterAcct = function () {
+		return this.params[AscFormat.Param_type_pyraAcctPos] === AscFormat.ParameterVal_pyramidAccentPosition_aft;
+	}
 	PyramidAlgorithm.prototype.addAcctShape = function (mainNode, acctNode, defaultAdjValue, acctHelper) {
 		if (!(mainNode && acctNode)) {
 			return;
@@ -2104,29 +2127,30 @@
 		const parentWidth = this.getNodeConstraints(this.parentNode).width;
 		const mainShape = mainNode.shape;
 		const acctShape = acctNode.shape;
+
 		const heightScale = acctNode.getHeightScale();
 		const widthScale = acctNode.getWidthScale();
-		const defaultWidth = parentWidth - (mainShape.x + mainShape.w - acctHelper);
+		let defaultWidth;
+		if (this.isAfterAcct()) {
+			defaultWidth = parentWidth - (mainShape.x + mainShape.w - acctHelper);
+		} else {
+			defaultWidth = mainShape.x + acctHelper;
+		}
 		const defaultHeight = mainShape.h;
 		acctShape.w = defaultWidth * widthScale;
 		acctShape.h = defaultHeight * heightScale;
-		acctShape.x = mainShape.x + mainShape.w - acctHelper;
-		acctShape.y = mainShape.y;
 		if (defaultWidth >= defaultHeight) {
 			defaultAdjValue = defaultAdjValue * defaultHeight / defaultWidth;
 		}
-		const adjLst = new AscFormat.AdjLst();
-		acctShape.customAdj = adjLst;
 
-		const adj1 = new AscFormat.Adj();
-		adj1.setIdx(1);
-		adj1.setVal(0);
-		adjLst.addToLst(0, adj1);
-
-		const adj2 = new AscFormat.Adj();
-		adj2.setIdx(2);
-		adj2.setVal(defaultAdjValue);
-		adjLst.addToLst(1, adj2);
+		if (this.isAfterAcct()) {
+			acctShape.x = mainShape.x + mainShape.w - acctHelper;
+			acctShape.customAdj = this.getTemplateAdjAcctLst(0, defaultAdjValue);
+		} else {
+			acctShape.x = 0;
+			acctShape.customAdj = this.getTemplateAdjAcctLst(defaultAdjValue, 0);
+		}
+		acctShape.y = mainShape.y;
 
 		acctShape.rot = Math.PI;
 		this.shapeContainer.push(acctShape);
