@@ -786,11 +786,6 @@
 										});
 										if (this.isSlideShow()) {
 											ret.cursorType = "pointer";
-											if (AscCommon.IsLinkPPAction(sHyperlink)) {
-												MMData = new AscCommon.CMouseMoveData();
-												MMData.X_abs = Coords.X;
-												MMData.Y_abs = Coords.Y;
-											}
 											oDD.SetCursorType("pointer", MMData);
 										} else {
 											editor.sync_MouseMoveCallback(MMData);
@@ -10653,22 +10648,9 @@
 		}
 
 
-		function fCheckObjectHyperlink(object, x, y) {
-			var content = object.getDocContent && object.getDocContent();
-			var invert_transform_text = object.invertTransformText, tx, ty, hit_paragraph, check_hyperlink, par;
-			if (content && invert_transform_text) {
-				tx = invert_transform_text.TransformPointX(x, y);
-				ty = invert_transform_text.TransformPointY(x, y);
-				hit_paragraph = content.Internal_GetContentPosByXY(tx, ty, 0);
-				par = content.Content[hit_paragraph];
-				if (isRealObject(par)) {
-					if (par.IsInText && par.IsInText(tx, ty, 0)) {
-						check_hyperlink = par.CheckHyperlink(tx, ty, 0);
-						if (isRealObject(check_hyperlink)) {
-							return check_hyperlink;
-						}
-					}
-				}
+		function fCheckObjectHyperlink(oDrawing, x, y) {
+			if(oDrawing.hitInTextHyperlink) {
+				return oDrawing.hitInTextHyperlink(x, y);
 			}
 			return null;
 		}

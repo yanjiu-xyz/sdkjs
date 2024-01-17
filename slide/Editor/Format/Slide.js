@@ -1934,7 +1934,6 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
             {
                 if(sp.isPlaceholder && sp.isPlaceholder())
                 {
-                    sp.recalcInfo.recalculateShapeHierarchy = true;
                     var hierarchy = sp.getHierarchy();
                     for(var j = 0; j < hierarchy.length; ++j)
                     {
