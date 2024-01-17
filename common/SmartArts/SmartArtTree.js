@@ -2005,13 +2005,15 @@
 		}
 		this.calcValues.defaultBlockHeight = defaultBlockHeight * (parentHeight / sumHeight);
 	};
-	PyramidAlgorithm.prototype.setPyramidParametersForNode = function (child, x, y, height, width, adjValue) {
+	PyramidAlgorithm.prototype.setPyramidParametersForNode = function (child, x, y, height, width, cleanHeight, cleanWidth, adjValue) {
 		const shape = child.shape;
 		if (shape) {
 			shape.h = height;
 			shape.w = width;
 			shape.x = x;
 			shape.y = y;
+			shape.cleanParams.h = cleanHeight;
+			shape.cleanParams.w = cleanWidth;
 			const adjLst = new AscFormat.AdjLst();
 			const adj = new AscFormat.Adj();
 			adj.setVal(adjValue);
@@ -2028,10 +2030,25 @@
 			acct: acct
 		};
 	};
+	PyramidAlgorithm.prototype.isReversedPyramid = function () {
+		return this.params[AscFormat.Param_type_linDir] === AscFormat.ParameterVal_linearDirection_fromT;
+	};
 	PyramidAlgorithm.prototype.getStartDefaultBlockWidth = function () {
 		const acctRatio = this.parentNode.getConstr(AscFormat.Constr_type_pyraAcctRatio);
 		const parentWidth = this.getNodeConstraints(this.parentNode).width;
 		return parentWidth * (1 - acctRatio);
+	}
+	PyramidAlgorithm.prototype.forEachChild = function (callback, startIndex) {
+		const childs = this.parentNode.childs;
+		if (this.isReversedPyramid()) {
+			for (let i = startIndex; i < childs.length; i += 1) {
+				callback(childs[i]);
+			}
+		} else {
+			for (let i = childs.length - 1 - startIndex; i >= 0; i -= 1) {
+				callback(childs[i]);
+			}
+		}
 	}
 	PyramidAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm) {
 		const childs = this.parentNode.childs;
@@ -2046,7 +2063,12 @@
 		const defaultAdjValue = (previousBlockWidth / 2) / parentHeight;
 
 
-		const firstPyramidComponents = this.getPyramidChildren(childs[childs.length - 1]);
+		let firstPyramidComponents;
+		if (this.isReversedPyramid()) {
+			firstPyramidComponents = this.getPyramidChildren(childs[0]);
+		} else {
+			firstPyramidComponents = this.getPyramidChildren(childs[childs.length - 1]);
+		}
 		const firstChild = firstPyramidComponents.pyramid;
 		const firstHeight = defaultBlockHeight * firstChild.getHeightScale();
 		const firstWidth = previousBlockWidth * firstChild.getWidthScale();
@@ -2056,7 +2078,12 @@
 		} else {
 			ctrX = parentConstraints.width - firstWidth / 2;
 		}
-		let previousY = parentHeight - firstHeight;
+		let previousY;
+		if (this.isReversedPyramid()) {
+			previousY = 0;
+		} else {
+			previousY = parentHeight - firstHeight;
+		}
 		let previousAdjValue;
 		let firstAcctOffset;
 		let previousBlockHeight = firstHeight;
@@ -2067,11 +2094,18 @@
 			previousAdjValue = defaultAdjValue * previousBlockHeight / previousBlockWidth;
 			firstAcctOffset = previousAdjValue * previousBlockWidth;
 		}
-		this.setPyramidParametersForNode(firstChild, ctrX - firstWidth / 2, previousY,  firstHeight, firstWidth, previousAdjValue);
-		this.shapeContainer.push(firstChild.shape);
-		this.addAcctShape(firstChild, firstPyramidComponents.acct, defaultAdjValue, firstAcctOffset);
-		for (let i = childs.length - 2; i >= 0; i -= 1) {
-			const pyramidComponents = this.getPyramidChildren(childs[i]);
+		this.setPyramidParametersForNode(firstChild, ctrX - firstWidth / 2, previousY,  firstHeight, firstWidth, defaultBlockHeight, previousBlockWidth, previousAdjValue);
+		if (this.isReversedPyramid()) {
+			firstChild.shape.rot = Math.PI;
+			this.addAcctShape(firstChild, firstPyramidComponents.acct, defaultAdjValue, firstAcctOffset);
+			this.shapeContainer.push(firstChild.shape);
+		} else {
+			this.shapeContainer.push(firstChild.shape);
+			this.addAcctShape(firstChild, firstPyramidComponents.acct, defaultAdjValue, firstAcctOffset);
+		}
+		const oThis = this;
+		this.forEachChild(function (node) {
+			const pyramidComponents = oThis.getPyramidChildren(node);
 			const child = pyramidComponents.pyramid;
 			const blockHeightFactor = child.getHeightScale();
 			const blockWidthFactor = child.getWidthScale();
@@ -2084,7 +2118,12 @@
 			}
 			const scaledBlockWidth = curBlockWidth * blockWidthFactor;
 			const x = ctrX - scaledBlockWidth / 2;
-			const y = previousY - scaledBlockHeight;
+			let y;
+			if (oThis.isReversedPyramid()) {
+				y = previousY + scaledBlockHeight;
+			} else {
+				y = previousY - scaledBlockHeight;
+			}
 			let acctOffset;
 			if (curBlockWidth >= scaledBlockHeight) {
 				previousAdjValue = defaultAdjValue;
@@ -2093,15 +2132,26 @@
 				previousAdjValue = defaultAdjValue * scaledBlockHeight / curBlockWidth;
 				acctOffset = previousAdjValue * previousBlockWidth;
 			}
-			this.shapeContainer.push(child.shape);
-			this.setPyramidParametersForNode(child, x, y,  scaledBlockHeight, scaledBlockWidth, previousAdjValue);
-			this.addAcctShape(child, pyramidComponents.acct, defaultAdjValue, acctOffset);
+
+			oThis.setPyramidParametersForNode(child, x, y,  scaledBlockHeight, scaledBlockWidth, defaultBlockHeight, curBlockWidth, previousAdjValue);
+			if (oThis.isReversedPyramid()) {
+				child.shape.rot = Math.PI;
+				oThis.addAcctShape(child, pyramidComponents.acct, defaultAdjValue, acctOffset);
+				oThis.shapeContainer.push(child.shape);
+			} else {
+				oThis.shapeContainer.push(child.shape);
+				oThis.addAcctShape(child, pyramidComponents.acct, defaultAdjValue, acctOffset);
+			}
+
 
 			previousBlockWidth = curBlockWidth;
 			previousBlockHeight = scaledBlockHeight;
 			previousY = y;
+		}, 1);
+		if (!this.isReversedPyramid()) {
+			this.shapeContainer.reverse();
 		}
-		this.shapeContainer.reverse();
+		this.applyPostAlgorithmSettings();
 	};
 	PyramidAlgorithm.prototype.getTemplateAdjAcctLst = function (firstAdj, secondAdj) {
 		const adjLst = new AscFormat.AdjLst();
@@ -2137,22 +2187,33 @@
 			defaultWidth = mainShape.x + acctHelper;
 		}
 		const defaultHeight = mainShape.h;
+		acctShape.cleanParams.w = defaultWidth;
+		acctShape.cleanParams.h = defaultHeight;
 		acctShape.w = defaultWidth * widthScale;
 		acctShape.h = defaultHeight * heightScale;
-		if (defaultWidth >= defaultHeight) {
+		if (defaultWidth < defaultHeight) {
 			defaultAdjValue = defaultAdjValue * defaultHeight / defaultWidth;
 		}
 
 		if (this.isAfterAcct()) {
-			acctShape.x = mainShape.x + mainShape.w - acctHelper;
-			acctShape.customAdj = this.getTemplateAdjAcctLst(0, defaultAdjValue);
+			acctShape.x = mainShape.x + mainShape.w - acctHelper + (defaultWidth - acctShape.w) / 2;
+			if (this.isReversedPyramid()) {
+				acctShape.customAdj = this.getTemplateAdjAcctLst(defaultAdjValue, 0);
+			} else {
+				acctShape.customAdj = this.getTemplateAdjAcctLst(0, defaultAdjValue);
+			}
 		} else {
-			acctShape.x = 0;
-			acctShape.customAdj = this.getTemplateAdjAcctLst(defaultAdjValue, 0);
+			acctShape.x = (defaultWidth - acctShape.w) / 2;
+			if (this.isReversedPyramid()) {
+				acctShape.customAdj = this.getTemplateAdjAcctLst(0, defaultAdjValue);
+			} else {
+				acctShape.customAdj = this.getTemplateAdjAcctLst(defaultAdjValue, 0);
+			}
 		}
-		acctShape.y = mainShape.y;
-
-		acctShape.rot = Math.PI;
+		acctShape.y = mainShape.y + (defaultHeight - acctShape.h) / 2;
+		if (!this.isReversedPyramid()) {
+			acctShape.rot = Math.PI;
+		}
 		this.shapeContainer.push(acctShape);
 	};
 
