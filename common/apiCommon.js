@@ -202,18 +202,6 @@
 		return false;
 	}
 
-	function asc_menu_ReadPaddings(_params, _cursor){
-		const _paddings = new Asc.asc_CPaddings();
-		_paddings.read(_params, _cursor);
-		return _paddings;
-	}
-
-	function asc_menu_ReadColor(_params, _cursor) {
-		const _color = new Asc.asc_CColor();
-		_color.read(_params, _cursor);
-		return _color;
-	}
-
 	var c_oLicenseResult = {
 		Error         : 1,
 		Expired       : 2,
@@ -6720,18 +6708,16 @@
 	prot["asc_getType"] = prot["get_Type"] = prot.asc_getType;
 	prot["asc_getImage"] = prot.asc_getImage;
 
-    window["AscCommon"].asc_CSpellCheckProperty = asc_CSpellCheckProperty;
-    prot = asc_CSpellCheckProperty.prototype;
-    prot["get_Word"] = prot.get_Word;
-    prot["get_Checked"] = prot.get_Checked;
-    prot["get_Variants"] = prot.get_Variants;
+	window["AscCommon"].asc_CSpellCheckProperty = asc_CSpellCheckProperty;
+	prot = asc_CSpellCheckProperty.prototype;
+	prot["get_Word"] = prot.get_Word;
+	prot["get_Checked"] = prot.get_Checked;
+	prot["get_Variants"] = prot.get_Variants;
 
-    window["AscCommon"].CWatermarkOnDraw = CWatermarkOnDraw;
-    window["AscCommon"].isFileBuild = isFileBuild;
-    window["AscCommon"].checkCanvasInDiv = checkCanvasInDiv;
-    window["AscCommon"].isValidJs = isValidJs;
-    window["AscCommon"].asc_menu_ReadPaddings = asc_menu_ReadPaddings;
-    window["AscCommon"].asc_menu_ReadColor = asc_menu_ReadColor;
+	window["AscCommon"].CWatermarkOnDraw = CWatermarkOnDraw;
+	window["AscCommon"].isFileBuild = isFileBuild;
+	window["AscCommon"].checkCanvasInDiv = checkCanvasInDiv;
+	window["AscCommon"].isValidJs = isValidJs;
 
 	window["Asc"]["PluginType"] = window["Asc"].PluginType = PluginType;
 	window["Asc"]["CPluginVariation"] = window["Asc"].CPluginVariation = CPluginVariation;

@@ -372,8 +372,6 @@
 			]
 		},
 		"mobile": [
-			"common/libfont/engine/fonts_native.js",
-			"common/Charts/ChartStyles.js"
 		],
 		"exclude_mobile": [
 			"vendor/iscroll.js",
