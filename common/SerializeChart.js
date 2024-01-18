@@ -252,8 +252,8 @@ var st_tickmarkstypeNONE = 3;
 var st_quartilemethodINCLUSIVE = 0;
 var st_quartilemethodEXCLUSIVE = 1;
 
-var st_stringdimensiontypeCAT = 0;
-var st_stringdimensiontypeCOLORSTR = 1;
+var st_stringdimensiontypeCAT = 10;
+var st_stringdimensiontypeCOLORSTR = 11;
 
 var st_numericdimensiontypeVAL = 0;
 var st_numericdimensiontypeX = 1;
