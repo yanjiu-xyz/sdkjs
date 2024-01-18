@@ -4455,6 +4455,35 @@ CChartsDrawer.prototype =
 		return res;
 	},
 
+	// Draws a rectangle, 
+	// params are start x and y, width, height and isCOnverted
+	_calculateRect: function (x, y, w, h, isPxToMmConverted) {
+		if (!this.cChartSpace || !this.calcProp) {
+			return null;
+		}
+		var pathId = this.cChartSpace.AllocPath();
+		var path = this.cChartSpace.GetPath(pathId);
+
+		var pathH = this.calcProp.pathH;
+		var pathW = this.calcProp.pathW;
+
+		if (!isPxToMmConverted) {
+			const pxToMm = this.calcProp.pxToMM;
+			x = x / pxToMm;
+			y = y / pxToMm;
+			w = w / pxToMm;
+			h = h / pxToMm;
+		}
+
+		path.moveTo(x * pathW, y * pathH);
+		path.lnTo(x * pathW, (y - h) * pathH);
+		path.lnTo((x + w) * pathW, (y - h) * pathH);
+		path.lnTo((x + w) * pathW, y * pathH);
+		path.lnTo(x * pathW, y * pathH);
+
+		return pathId;
+	},
+
 	_calculatePathFaceCylinder: function(segmentPoints, segmentPoints2, up, down, isConvertPxToMM, check)
 	{
 		var pxToMm = 1;
@@ -6406,7 +6435,7 @@ drawBarChart.prototype = {
 
 					cubeCount++;
 				} else {
-					paths = this._calculateRect(startX, startY, individualBarWidth, height);
+					paths = this.cChartDrawer._calculateRect(startX, startY, individualBarWidth, height);
 				}
 
 				var serIdx = this.chart.series[i].idx;
@@ -6854,25 +6883,6 @@ drawBarChart.prototype = {
 		}
 
 		return {x: centerX, y: centerY};
-	},
-
-	_calculateRect: function (x, y, w, h) {
-		var pathId = this.cChartSpace.AllocPath();
-		var path = this.cChartSpace.GetPath(pathId);
-
-		var pathH = this.chartProp.pathH;
-		var pathW = this.chartProp.pathW;
-
-
-		var pxToMm = this.chartProp.pxToMM;
-
-		path.moveTo(x / pxToMm * pathW, y / pxToMm * pathH);
-		path.lnTo(x / pxToMm * pathW, (y - h) / pxToMm * pathH);
-		path.lnTo((x + w) / pxToMm * pathW, (y - h) / pxToMm * pathH);
-		path.lnTo((x + w) / pxToMm * pathW, y / pxToMm * pathH);
-		path.lnTo(x / pxToMm * pathW, y / pxToMm * pathH);
-
-		return pathId;
 	},
 
 
@@ -7472,10 +7482,11 @@ drawHistogramChart.prototype = {
 
 				let start = (catStart + margin);
 				for (let i in cachedData.aggregation) {
-					let height = this.cChartDrawer.getYPosition(cachedData.aggregation[i], valAxis);
-		
-					let path = this._calculateRect(start, valStart, barWidth, height);
-					this.paths[i] = path;
+					if (this.chartProp && this.chartProp.pxToMM ) {
+						const height = valStart - (startY * this.chartProp.pxToMM);
+						let path = this.cChartDrawer._calculateRect(start, valStart, barWidth, height);
+						this.paths[i] = path;
+					}		
 					start += (barWidth + margin + margin);
 				}
 			} else if (cachedData.results) {
@@ -7492,10 +7503,12 @@ drawHistogramChart.prototype = {
 
 				let start = (catStart + margin);
 				for (let i = 0; i < sections.length; i++) {
-					let height = this.cChartDrawer.getYPosition(sections[i].occurrence, valAxis);
-		
-					let path = this._calculateRect(start, valStart, barWidth, height);
-					this.paths[i] = path;
+					const startY = this.cChartDrawer.getYPosition(sections[i].occurrence, valAxis);
+					if (this.chartProp && this.chartProp.pxToMM ) {
+						const height = valStart - (startY * this.chartProp.pxToMM);
+						let path = this.cChartDrawer._calculateRect(start, valStart, barWidth, height);
+						this.paths[i] = path;
+					}		
 					start += (barWidth + margin + margin);
 				}
 			} 
@@ -7537,25 +7550,6 @@ drawHistogramChart.prototype = {
 		}
 		
 		this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
-	},
-
-	_calculateRect: function (x, y, w, h) {
-		var pathId = this.cChartSpace.AllocPath();
-		var path = this.cChartSpace.GetPath(pathId);
-
-		var pathH = this.chartProp.pathH;
-		var pathW = this.chartProp.pathW;
-
-
-		var pxToMm = this.chartProp.pxToMM;
-
-		path.moveTo(x / pxToMm * pathW, y / pxToMm * pathH);
-		path.lnTo((x + w) / pxToMm * pathW, y / pxToMm * pathH);
-		path.lnTo((x + w) / pxToMm * pathW, h * pathH);
-		path.lnTo(x / pxToMm * pathW, h * pathH);
-		path.lnTo(x / pxToMm * pathW, y / pxToMm * pathH);
-
-		return pathId;
 	}
 };
 
@@ -9826,7 +9820,7 @@ drawHBarChart.prototype = {
 						seriesHeight, i, idx, cubeCount, shapeType, maxH, minH);
 					cubeCount++;
 				} else {
-					paths = this._calculateRect(newStartX, newStartY / this.chartProp.pxToMM, width, individualBarHeight / this.chartProp.pxToMM);
+					paths = this.cChartDrawer._calculateRect(newStartX, newStartY / this.chartProp.pxToMM, width, individualBarHeight / this.chartProp.pxToMM, true);
 				}
 
 				var serIdx = this.chart.series[i].idx;
@@ -10153,21 +10147,6 @@ drawHBarChart.prototype = {
 		}
 
 		return {x: centerX, y: centerY};
-	},
-
-	_calculateRect: function (x, y, w, h) {
-		var pathId = this.cChartSpace.AllocPath();
-		var path = this.cChartSpace.GetPath(pathId);
-
-		var pathH = this.chartProp.pathH;
-		var pathW = this.chartProp.pathW;
-
-		path.moveTo(x * pathW, y * pathH);
-		path.lnTo(x * pathW, (y - h) * pathH);
-		path.lnTo((x + w) * pathW, (y - h) * pathH);
-		path.lnTo((x + w) * pathW, y * pathH);
-		path.lnTo(x * pathW, y * pathH);
-		return pathId;
 	},
 
 	calculateParallalepiped: function (newStartX, newStartY, val, width, DiffGapDepth, perspectiveDepth,
