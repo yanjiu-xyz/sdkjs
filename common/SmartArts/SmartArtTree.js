@@ -2112,11 +2112,9 @@
 		const firstChild = firstPyramidComponents.pyramid;
 		const firstHeight = defaultBlockHeight * firstChild.getHeightScale();
 		const firstWidth = previousBlockWidth * firstChild.getWidthScale();
-		let ctrX;
-		if (this.isAfterAcct()) {
-			ctrX = firstWidth / 2;
-		} else {
-			ctrX = parentConstraints.width - firstWidth / 2;
+		let ctrX = (previousBlockWidth - firstWidth) / 2 + firstWidth / 2;
+		if (!this.isAfterAcct()) {
+			ctrX = parentConstraints.width - ctrX;
 		}
 		let previousY;
 		if (this.isReversedPyramid()) {
