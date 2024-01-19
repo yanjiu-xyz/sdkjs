@@ -952,9 +952,12 @@
 			return;
 		}
 		rdata["userconnectionid"] = editor.CoAuthoringApi.getUserConnectionId();
+		let url = sDownloadServiceLocalUrl + '/' + rdata["id"];
+		url += '?cmd=' + encodeURIComponent(JSON.stringify(rdata));
+		url += '&' + Asc.c_sShardKeyName + '=' + encodeURIComponent(editor.documentShardKey);
 		asc_ajax({
 			type:        'POST',
-			url:         sDownloadServiceLocalUrl + '/' + rdata["id"] + '?cmd=' + encodeURIComponent(JSON.stringify(rdata)),
+			url:         url,
 			data:        dataContainer.part || dataContainer.data,
 			contentType: "application/octet-stream",
 			error:       function (httpRequest, statusText, status)
@@ -974,12 +977,15 @@
 		});
 	}
 
-	function sendSaveFile(docId, userId, title, jwt, data, fError, fsuccess)
+	function sendSaveFile(docId, userId, title, jwt, shardKey, data, fError, fsuccess)
 	{
-		var cmd = {'id': docId, "userid": userId, "tokenSession": jwt, 'outputpath': title};
+		let cmd = {'id': docId, "userid": userId, "tokenSession": jwt, 'outputpath': title};
+		let url =sSaveFileLocalUrl + '/' + docId;
+		url += '?cmd=' + encodeURIComponent(JSON.stringify(cmd));
+		url += '&' + Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey);
 		asc_ajax({
 			type:        'POST',
-			url:         sSaveFileLocalUrl + '/' + docId + '?cmd=' + encodeURIComponent(JSON.stringify(cmd)),
+			url:         url,
 			data:        data,
 			contentType: "application/octet-stream",
 			error:       fError,
@@ -2022,12 +2028,13 @@
 			return false;
 		}
 	}
-	function ShowImageFileDialog(documentId, documentUserId, jwt, callback, callbackOld)
+	function ShowImageFileDialog(documentId, documentUserId, jwt, shardKey, callback, callbackOld)
 	{
 		if (false === _ShowFileDialog(getAcceptByArray(c_oAscImageUploadProp.SupportedFormats), true, true, ValidateUploadImage, callback)) {
 			//todo remove this compatibility
 			var frameWindow = GetUploadIFrame();
-			var url = sUploadServiceLocalUrlOld + '/' + documentId;
+			let url = sUploadServiceLocalUrlOld + '/' + documentId;
+			url += '?' + Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey);
 			if (jwt)
 			{
 				url += '?token=' + encodeURIComponent(jwt);
@@ -2172,13 +2179,15 @@
 	}
 
 	function DownloadOriginalFile(documentId, url, urlPathInToken, token, fError, fSuccess) {
+		let data = JSON.stringify({
+			"url": url,
+			"token": token
+		});
 		asc_ajax({
 			url: sDownloadFileLocalUrl + '/' + documentId,
+			type: "POST",
 			responseType: "arraybuffer",
-			headers: {
-				'Authorization': 'Bearer ' + token,
-				'x-url': encodeURI(url)
-			},
+			data: data,
 			success: function(resp) {
 				fSuccess(AscCommon.initStreamFromResponse(resp));
 			},
@@ -2237,12 +2246,12 @@
 		callback(nError, [file], obj);
 	}
 
-	function UploadImageFiles(files, documentId, documentUserId, jwt, callback)
+	function UploadImageFiles(files, documentId, documentUserId, jwt, shardKey, callback)
 	{
 		if (files.length > 0)
 		{
-			var url = sUploadServiceLocalUrl + '/' + documentId;
-
+			let url = sUploadServiceLocalUrl + '/' + documentId;
+			url += '?' + Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey);
 			var aFiles = [];
 			for(var i = files.length - 1;  i > - 1; --i){
                 aFiles.push(files[i]);
@@ -2269,8 +2278,6 @@
                         else{
                             file = aFiles.pop();
                             var xhr = new XMLHttpRequest();
-
-                            url = sUploadServiceLocalUrl + '/' + documentId;
 
                             xhr.open('POST', url, true);
                             xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
@@ -2303,12 +2310,12 @@
 		}
 	}
 
-    function UploadImageUrls(files, documentId, documentUserId, jwt, callback)
+    function UploadImageUrls(files, documentId, documentUserId, jwt, shardKey, callback)
     {
         if (files.length > 0)
         {
-            var url = sUploadServiceLocalUrl + '/' + documentId;
-
+            let url = sUploadServiceLocalUrl + '/' + documentId;
+			url += '?' + Asc.c_sShardKeyName + '=' + encodeURIComponent(shardKey);
             var aFiles = [];
             for(var i = files.length - 1;  i > - 1; --i){
                 aFiles.push(files[i]);
@@ -2340,8 +2347,6 @@
 						{
                             file = aFiles.pop();
                             var xhr = new XMLHttpRequest();
-
-                            url = sUploadServiceLocalUrl + '/' + documentId;
 
                             xhr.open('POST', url, true);
                             xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
@@ -3150,7 +3155,7 @@
 			this.operand_str = match[1];
 			return [true, match["name_from"] ? match["name_from"].replace(/''/g, "'") : null, match["name_to"] ? match["name_to"].replace(/''/g, "'") : null, external];
 		}
-		return [false, null, null];
+		return [false, null, null, external, externalLength];
 	};
 	parserHelper.prototype.isNextPtg = function (formula, start_pos, digitDelim)
 	{
@@ -10189,7 +10194,7 @@
 
 	function loadScript(url, onSuccess, onError)
 	{
-		if (window["NATIVE_EDITOR_ENJINE"] === true || window["Native"] !== undefined)
+		if (window["NATIVE_EDITOR_ENJINE"] === true || window["native"] !== undefined)
 		{
 			onSuccess();
 			return;
@@ -11179,7 +11184,7 @@
 						obj.options.callback(Asc.c_oAscError.ID.No, data);
 					else
 					{
-						AscCommon.UploadImageUrls(data, obj.options.api.documentId, obj.options.api.documentUserId, obj.options.api.CoAuthoringApi.get_jwt(), function(urls)
+						AscCommon.UploadImageUrls(data, obj.options.api.documentId, obj.options.api.documentUserId, obj.options.api.CoAuthoringApi.get_jwt(), obj.options.api.documentShardKey, function(urls)
                         {
                             obj.options.api.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.UploadImage);
 
@@ -13598,6 +13603,14 @@
 	{
 		return rad * 180.0 / Math.PI;
 	}
+
+	function trimMinMaxValue(value, min, max) {
+		if (value < min)
+			return min;
+		if (value > max)
+			return max;
+		return value;
+	}
 	//------------------------------------------------------------export---------------------------------------------------
 	window['AscCommon'] = window['AscCommon'] || {};
 	window["AscCommon"].getSockJs = getSockJs;
@@ -13818,6 +13831,7 @@
 	window['AscCommon'].deg2rad = deg2rad;
 	window['AscCommon'].rad2deg = rad2deg;
 	window["AscCommon"].c_oAscImageUploadProp = c_oAscImageUploadProp;
+	window["AscCommon"].trimMinMaxValue = trimMinMaxValue;
 })(window);
 
 window["asc_initAdvancedOptions"] = function(_code, _file_hash, _docInfo)
@@ -14035,7 +14049,7 @@ window["buildCryptoFile_End"] = function(url, error, hash, password)
 					ext = ".docxf";
 			}
 
-			AscCommon.sendSaveFile(_editor.documentId, _editor.documentUserId, "output" + ext, _editor.asc_getSessionToken(), fileData, function(err) {
+			AscCommon.sendSaveFile(_editor.documentId, _editor.documentUserId, "output" + ext, _editor.asc_getSessionToken(), _editor.documentShardKey, fileData, function(err) {
 
                 _editor.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.Save);
                 _editor.sendEvent("asc_onError", Asc.c_oAscError.ID.ConvertationSaveError, Asc.c_oAscError.Level.Critical);

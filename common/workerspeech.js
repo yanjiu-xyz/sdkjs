@@ -119,6 +119,10 @@
 		this.value = "";
 		this.valueEqualAddon = false;
 
+		this.equalAddon = "&nbsp;";
+		if (AscCommon.AscBrowser.isMacOs)
+			this.equalAddon = "<br/>";
+
 		this.setEnabled = function(isEnabled)
 		{
 			if (this.isEnabled === isEnabled)
@@ -214,7 +218,7 @@
 				this.valueEqualAddon = !this.valueEqualAddon;
 				if (this.valueEqualAddon)
 				{
-					this.speechElement.innerHTML = this.value + "&nbsp;";
+					this.speechElement.innerHTML = this.value + this.equalAddon;
 				}
 				else
 				{
@@ -497,7 +501,7 @@
 		//se
 		this.editor.asc_registerCallback('asc_onActiveSheetChanged', this.onActiveSheetChanged);
 		
-		this.selectionState = this.editor.getSelectionState();
+		this.selectionState = this.editor.isDocumentLoadComplete ? this.editor.getSelectionState() : null;
 		this.isAction       = false;
 		this.isApplyChanges = false;
 		this.isKeyDown      = false;

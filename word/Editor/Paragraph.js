@@ -7110,6 +7110,9 @@ Paragraph.prototype.MoveCursorDown = function(AddToSelect)
 };
 Paragraph.prototype.MoveCursorToEndOfLine = function(addToSelect)
 {
+	if (!this.IsRecalculated())
+		return this.MoveCursorToEndPos(addToSelect);
+	
 	if (this.IsSelectionUse())
 	{
 		if (addToSelect)
@@ -7185,6 +7188,9 @@ Paragraph.prototype.MoveCursorToEndOfLine = function(addToSelect)
 };
 Paragraph.prototype.MoveCursorToStartOfLine = function(addToSelect)
 {
+	if (!this.IsRecalculated())
+		return this.MoveCursorToStartPos(addToSelect);
+	
 	if (this.IsSelectionUse())
 	{
 		if (addToSelect)
@@ -12361,6 +12367,8 @@ Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 
 	if (isInText && (isCheckBox || ((null != oHyperlink || bPageRefLink) && true === AscCommon.global_keyboardEvent.CtrlKey)))
 		this.DrawingDocument.SetCursorType("pointer", MMData);
+	else if (this.LogicDocument && this.LogicDocument.IsDocumentEditor() && this.LogicDocument.IsFillingOFormMode())
+		this.DrawingDocument.SetCursorType("default", MMData);
 	else
 		this.DrawingDocument.SetCursorType("text", MMData);
 

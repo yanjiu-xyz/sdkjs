@@ -32,6 +32,7 @@ jobs:
           npm install --prefix build
           grunt --gruntfile build/Gruntfile.js develop
           node-qunit-puppeteer tests/common/api/api.html
+          node-qunit-puppeteer tests/common/color-mods/color-mods.html
           node-qunit-puppeteer tests/cell/shortcuts/shortcuts.html
           node-qunit-puppeteer tests/cell/spreadsheet-calculation/FormulaTests.html
           node-qunit-puppeteer tests/cell/spreadsheet-calculation/PivotTests.html
@@ -50,6 +51,7 @@ jobs:
           node-qunit-puppeteer tests/word/document-calculation/table/correctBadTable.html
           node-qunit-puppeteer tests/word/document-calculation/table/flowTablePosition.html
           node-qunit-puppeteer tests/word/document-calculation/table/pageBreak.html
+          node-qunit-puppeteer tests/word/document-calculation/table/table-header.html
           node-qunit-puppeteer tests/word/document-calculation/textShaper/textShaper.html
           node-qunit-puppeteer tests/word/document-calculation/text-hyphenator/text-hyphenator.html
           node-qunit-puppeteer tests/word/forms/forms.html

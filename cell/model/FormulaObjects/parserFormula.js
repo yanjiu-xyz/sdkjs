@@ -4000,7 +4000,7 @@ parserHelp.setDigitSeparator(AscCommon.g_oDefaultCultureInfo.NumberDecimalSepara
 	cPowOperator.prototype.priority = 40;
 	cPowOperator.prototype.argumentsCurrent = 2;
 	cPowOperator.prototype.Calculate = function (arg) {
-		let res = AscCommonExcel.cFormulaFunction.POWER.prototype.Calculate(arg, arguments[1]);
+		let res = AscCommonExcel.cFormulaFunction["POWER"].prototype.Calculate(arg, arguments[1]);
 
 		if (res) {
 			return res;
@@ -5185,6 +5185,8 @@ _func.binarySearch = function ( sElem, arrTagert, regExp ) {
 				if (sElem.value <= arrTagert[mid].value) {
 					// cEmpty.tocNumber() ?
 					last = mid;
+				} else {
+					first = mid + 1;
 				}
 			} else {
 				if (cElementTypeWeight.get(sElem.type) < cElementTypeWeight.get(arrTagert[mid].type)) {

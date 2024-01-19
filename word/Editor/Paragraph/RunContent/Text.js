@@ -327,12 +327,15 @@
 	};
 	CRunText.prototype.GetWidthVisible = function()
 	{
+		let width = 0;
 		if (this.Flags & FLAGS_VISIBLE_WIDTH)
-			return (this.WidthVisible / AscWord.TEXTWIDTH_DIVIDER);
+			width = (this.WidthVisible / AscWord.TEXTWIDTH_DIVIDER);
 		else if (this.Flags & FLAGS_TEMPORARY)
-			return (this.TempWidth / AscWord.TEXTWIDTH_DIVIDER);
+			width = (this.TempWidth / AscWord.TEXTWIDTH_DIVIDER);
 		else
-			return (this.Width / AscWord.TEXTWIDTH_DIVIDER);
+			width = (this.Width / AscWord.TEXTWIDTH_DIVIDER);
+		
+		return (width > 0 ? width : 0);
 	};
 	CRunText.prototype.GetWidth = function(textPr)
 	{
@@ -349,7 +352,7 @@
 		if (this.Flags & FLAGS_GAPS)
 			nWidth += this.LGap + this.RGap;
 
-		return nWidth;
+		return (nWidth > 0 ? nWidth : 0);
 	};
 	CRunText.prototype.GetMeasuredWidth = function()
 	{
@@ -357,7 +360,7 @@
 			this.TempWidth / AscWord.TEXTWIDTH_DIVIDER :
 			this.Width / AscWord.TEXTWIDTH_DIVIDER);
 
-		return (nWidth / (((this.Flags >> 16) & 0xFFFF) / 64));
+		return (nWidth > 0 ? nWidth / (((this.Flags >> 16) & 0xFFFF) / 64) : 0);
 	};
 	CRunText.prototype.Draw = function(X, Y, Context, PDSE, oTextPr)
 	{

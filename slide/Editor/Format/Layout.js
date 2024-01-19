@@ -341,7 +341,7 @@ AscFormat.InitClass(SlideLayout, AscFormat.CBaseFormatObject, AscDFH.historyitem
             _shape = _shapes[_shape_index];
             if(_shape.isPlaceholder())
             {
-                var _cur_type = _shape.getPhType();
+                var _cur_type = _shape.getPlaceholderType();
                 if(!(typeof(_cur_type) == "number"))
                 {
                     _cur_type = AscFormat.phType_body;
