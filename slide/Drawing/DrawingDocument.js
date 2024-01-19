@@ -6796,10 +6796,8 @@ function CAnimationPaneDrawer(page, htmlElement)
 				// Not sure if we need to compare by Id here,
 				// cuz these are references either to the same object (CSeq) or to different ones
 				if (oldSeq !== newSeq) { return recalculateSeqListContainer() }
-				console.log('seqList didnt Changed')
 
 				oThis.list.Control.seqList.forEachAnimItem(function (animItem) {
-					console.log('Updating animItem with effect.Id', animItem.effect.Id)
 					animItem.onUpdate()
 				})
 
@@ -6809,7 +6807,6 @@ function CAnimationPaneDrawer(page, htmlElement)
 			})
 
 			function recalculateSeqListContainer () {
-				console.log('seqList Changed - recalculateSeqListContainer()')
 				oThis.list.Control.seqList.recalculateChildren()
 				oThis.list.Control.seqList.recalculateChildrenLayout()
 				oThis.list.Control.recalculateChildrenLayout()

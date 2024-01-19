@@ -1059,9 +1059,7 @@
 			this.next.onUpdate()
 
 			// also updating seqList to redraw effect bars
-			if (Asc.editor.WordControl.m_oAnimPaneApi.list.Control) {
-				Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList.onUpdate()
-			}
+			editor.WordControl.m_oAnimPaneApi.list.Control.seqList.onUpdateSeqList()
 		}
 	}
 
@@ -1214,9 +1212,7 @@
 		this.onUpdate();
 
 		// also updating seqList to redraw effect bars
-		if (Asc.editor.WordControl.m_oAnimPaneApi.list.Control) {
-			Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList.onUpdate()
-		}
+		editor.WordControl.m_oAnimPaneApi.list.Control.seqList.onUpdateSeqList()
 	};
 	CTimeline.prototype.getCurrentTime = function() {
 		return this.posToTime(this.getScrollOffset() + this.startButton.getWidth() + TIMELINE_SCROLLER_SIZE / 2)
@@ -1616,6 +1612,12 @@
 		return null;
 	};
 
+	CSeqList.prototype.onUpdateSeqList = function () {
+		if (Asc.editor.WordControl.m_oAnimPaneApi.list.Control) {
+			this.onUpdate()
+		}
+	}
+
 	CSeqList.prototype.checkCachedTexture = function (graphics) {
 		var dGraphicsScale = graphics.m_oCoordTransform.sx;
 		if (this.cachedCanvas) {
@@ -1775,7 +1777,10 @@
 			console.log('showContextMenu on effect', this.parentControl.effect.Id);
 		}
 
-		this.tmpStartPos = null;
+		// Temp fields for effect bar movement
+		this.stickedToPointerAt = null; // in [null, 'left', 'right', 'center']
+		this.innerPressingX = null; // point where the effectBar was pressed (left offset inside effect bar)
+		this.tmpStartPos = null; // relatively to timeline's zero
 		this.tmpWidth = null;
 
 		// // Callback functions for effect bar events ---
@@ -1783,7 +1788,7 @@
 		this.onMouseDownCallback = function (event, x, y) {
 			if (!this.hit(x, y)) { return }
 
-			// Select
+			// Select animation effect
 			const oThis = this
 			if (event.CtrlKey) {
 				this.effect.select()
@@ -1796,69 +1801,80 @@
 			Asc.editor.WordControl.m_oLogicDocument.RedrawCurSlide()
 			Asc.editor.WordControl.m_oLogicDocument.Document_UpdateInterfaceState()
 
+			// Set temp fields for further movement handling
 			const hitRes = this.hitInEffectBar(x, y);
 			if (!hitRes) { return }
 
-			// Remembering the point where the effectBar was pressed (left offset inside effect bar)
-			this.innerPressingX = x - this.getEffectBarBounds().l;
-
 			this.stickedToPointerAt = hitRes;
+			this.innerPressingX = x - this.getEffectBarBounds().l;
+			this.tmpWidth = this.ms_to_mm(this.effect.asc_getDuration());
+			this.tmpStartPos = this.ms_to_mm(this.effect.asc_getDelay());
+
 			this.onUpdate();
 		}
 
 		this.onMouseUpCallback = function (event, x, y) {
 			if (!this.stickedToPointerAt) { return };
-			this.stickedToPointerAt = null;
 
-			const newDelay = this.tmpStartPos !== null ? this.mm_to_ms(this.tmpStartPos) : null;
-			const newDuration = this.tmpWidth !== null ? this.mm_to_ms(this.tmpWidth) : null;
+			const newDelay = this.mm_to_ms(this.tmpStartPos);
+			const newDuration = this.mm_to_ms(this.tmpWidth);
 			this.setNewEffectParams(newDelay, newDuration);
-			this.tmpStartPos = this.tmpWidth = null;
+
+			this.stickedToPointerAt = null;
+			this.innerPressingX = null;
+			this.tmpWidth = null;
+			this.tmpStartPos = null;
+
 			this.onUpdate()
 		}
 
 		this.onMouseMoveCallback = function (event, x, y) {
+			// Cursor type changing
 			if (this.hit(x, y)) {
 				const animPane = Asc.editor.WordControl.m_oAnimPaneApi;
+				const hitRes = this.hitInEffectBar(x, y);
 
-				const hitRes = this.hitInEffectBar(x, y)
-				if (hitRes === 'left' || hitRes === 'right') {
-				     animPane.SetCursorType('col-resize')
-				} else if (hitRes) {
-				     animPane.SetCursorType('ew-resize')
-				} else {
-				     animPane.SetCursorType('default')
-				}
+				const cursorTypes = {
+					'left': 'col-resize',
+					'right': 'col-resize',
+					'center': 'ew-resize'
+				};
+
+				const cursorType = cursorTypes[hitRes] || 'default';
+				animPane.SetCursorType(cursorType);
 			}
 
 			if (!this.stickedToPointerAt) { return }
 
+			// Effect bar moving
 			const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline
-			const relX = x - timeline.getLeft() - timeline.getZeroShift() - this.innerPressingX; // relative to timeline's '0'
-			this.tmpWidth = this.ms_to_mm(this.effect.asc_getDuration());
-			this.tmpStartPos = this.ms_to_mm(this.effect.asc_getDelay());
+			const relativeX = x - timeline.getLeft() - timeline.getZeroShift();
 
 			const MIN_EFFECT_DURATION = 100;
+			const timelineShift = this.ms_to_mm(timeline.getStartTime() * 1000);
+
 			if (this.stickedToPointerAt === 'center') {
-				// changing start position only
-				this.tmpStartPos = Math.max(0, relX);
+				const newTmpStartPos = relativeX - this.innerPressingX + timelineShift;
+				this.tmpStartPos = Math.max(0, newTmpStartPos);
 			}
+
 			if (this.stickedToPointerAt === 'right') {
-				// changing width with left limitation - not less than minimal allowed value
-				const newTmpWidth = this.tmpWidth + relX - this.tmpStartPos;
+				const newTmpWidth = relativeX - this.tmpStartPos + timelineShift;
 				this.tmpWidth = Math.max(this.ms_to_mm(MIN_EFFECT_DURATION), newTmpWidth);
 			}
+
 			if (this.stickedToPointerAt === 'left') {
-				// new start position - set it equal to 'relX' (0 <= relX <= right bar border)
-				const newTmpStartPos = Math.min(Math.max(0, relX), this.tmpWidth + this.tmpStartPos - this.ms_to_mm(MIN_EFFECT_DURATION));
+				const newTmpStartPos = relativeX + timelineShift;
+				const newTmpWidth = this.tmpWidth + this.tmpStartPos - relativeX - timelineShift;
 
-				// new width with limitations:
-				// minimal allowed value <= newTmpWidth <= left bar offset + bar width;
-				const newTmpWidth = this.tmpWidth - relX + this.tmpStartPos;
-				const maxTmpWidth = this.tmpWidth + this.tmpStartPos;
+				// const minTmpStartPos = 0;
+				const maxTmpStartPos = this.tmpStartPos + this.tmpWidth - this.ms_to_mm(MIN_EFFECT_DURATION);
 
-				this.tmpStartPos = newTmpStartPos;
-				this.tmpWidth = Math.min(Math.max(this.ms_to_mm(MIN_EFFECT_DURATION), newTmpWidth), maxTmpWidth);
+				const minTmpWidth = this.ms_to_mm(MIN_EFFECT_DURATION);
+				const maxTmpWidth = this.tmpStartPos + this.tmpWidth;
+
+				this.tmpStartPos = Math.min(Math.max(0, newTmpStartPos), maxTmpStartPos);
+				this.tmpWidth = Math.min(Math.max(minTmpWidth, newTmpWidth), maxTmpWidth);
 			}
 
 			this.onUpdate()
@@ -1893,10 +1909,14 @@
 		return null;
 	};
 	CAnimItem.prototype.ms_to_mm = function (nMilliseconds) {
+		if (nMilliseconds === null || nMilliseconds === undefined) { return }
+
 		const index = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.timeScaleIndex;
 		return nMilliseconds * TIME_INTERVALS[index] / TIME_SCALES[index] / 1000;
 	};
 	CAnimItem.prototype.mm_to_ms = function (nMillimeters) {
+		if (nMillimeters === null || nMillimeters === undefined) { return }
+
 		const index = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.timeScaleIndex;
 		return nMillimeters / TIME_INTERVALS[index] * TIME_SCALES[index] * 1000;
 	};
@@ -1925,8 +1945,7 @@
 			graphics.b_color1(255, 0, 0, 255);
 
 			const bounds = this.getEffectBarBounds();
-			const shift = this.ms_to_mm(timelineContainer.timeline.getStartTime() * 1000);
-			graphics.rect(bounds.l - shift, bounds.t, bounds.r - bounds.l, bounds.b - bounds.t);
+			graphics.rect(bounds.l, bounds.t, bounds.r - bounds.l, bounds.b - bounds.t);
 			graphics.df();
 		}
 
@@ -1935,7 +1954,8 @@
 	CAnimItem.prototype.getEffectBarBounds = function () {
 		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline
 
-		let l = timeline.getLeft() + timeline.getZeroShift() + (this.tmpStartPos !== null ?
+		const shift = this.ms_to_mm(timeline.getStartTime() * 1000);
+		let l = timeline.getLeft() + timeline.getZeroShift() - shift + (this.tmpStartPos !== null ?
 			this.tmpStartPos :
 			this.ms_to_mm(this.effect.asc_getDelay()));
 
@@ -1968,7 +1988,7 @@
 			effectCopy.asc_putDelay(newDelay);
 		}
 		if (newDuration !== null && newDuration !== undefined && newDuration !== this.effect.asc_getDuration()) {
-			effectCopy.asc_putDuration(newDelay);
+			effectCopy.asc_putDuration(newDuration);
 		}
 
 		Asc.editor.WordControl.m_oLogicDocument.SetAnimationProperties(effectCopy);
