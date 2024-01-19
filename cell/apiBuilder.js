@@ -623,7 +623,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {Range} range - The internal Range class (not a ApiRange). For more details see any new ApiRange.
-	 * @param {[Range]} areas - A collection of the ranges (not a ApiRange) from the specified range. For more details see any new ApiRange.
+	 * @param {Range[]} areas - A collection of the ranges (not a ApiRange) from the specified range. For more details see any new ApiRange.
 	 * @returns {ApiRange}
 	 */
 	Api.prototype.private_GetRange = function (range, areas) {
