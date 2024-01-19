@@ -84,6 +84,9 @@
 	var c_oNotifyType = AscCommon.c_oNotifyType;
 	var g_cCalcRecursion = AscCommonExcel.g_cCalcRecursion;
 
+	var cError = AscCommonExcel.cError;
+	var cErrorType = AscCommonExcel.cErrorType;
+
 	var g_nVerticalTextAngle = 255;
 	//определяется в WorksheetView.js
 	var oDefaultMetrics = {
@@ -20440,7 +20443,7 @@
 				}
 			}
 			this.setPrevValue(nCurrentVal)
-			return oCurrentValDate.getExcelDate();
+			return nCurrentVal < 0 ? nCurrentVal : oCurrentValDate.getExcelDate();
 		}
 
 		let nCurrentVal = _smartRound(nPrevVal + nStep, nStep);
@@ -20454,6 +20457,9 @@
 		if (nDateUnit === oSeriesDateUnitType.month) {
 			let oCurrentValDate = new Asc.cDate().getDateFromExcel(nIntegerVal < 60 ? nIntegerVal + 1 : nIntegerVal);
 			let nFinalStep = _smartRound(nCurrentVal - nIntegerVal, nStep);
+			if (nFinalStep < 0) {
+				return NaN;
+			}
 			if (Number.isInteger(nFinalStep)) {
 				oCurrentValDate.addMonths(nFinalStep);
 				oFilledLine.nValue = oCurrentValDate.getExcelDate();
@@ -20466,6 +20472,9 @@
 		if (nDateUnit === oSeriesDateUnitType.year) {
 			let oCurrentValDate = new Asc.cDate().getDateFromExcel(nIntegerVal < 60 ? nIntegerVal + 1 : nIntegerVal);
 			let nFinalStep = _smartRound(nCurrentVal - nIntegerVal, nStep);
+			if (nFinalStep < 0) {
+				return NaN;
+			}
 			if (Number.isInteger(nFinalStep)) {
 				oCurrentValDate.addYears(nFinalStep);
 				oFilledLine.nValue = oCurrentValDate.getExcelDate();
@@ -20498,8 +20507,12 @@
 					let nCurrentValue = oProgressionCalc[oSerial.getType()]();
 					let bNeedStopLoop = false;
 					if (nStopValue != null) {
-						if (oSerial.getType() === oSeriesType.growth) {
+						if (isNaN(nCurrentValue)) {
+							bNeedStopLoop = true;
+						} else if (oSerial.getType() === oSeriesType.growth) {
 							bNeedStopLoop = Number.isInteger(nStep) ? nCurrentValue	> nStopValue : nCurrentValue < nStopValue;
+						} else if (oSerial.getDateUnit() === oSeriesDateUnitType.weekday) {
+							bNeedStopLoop = nCurrentValue <= 0;
 						} else {
 							bNeedStopLoop = nStep > 0 ? nCurrentValue > nStopValue : nCurrentValue < nStopValue;
 						}
@@ -20508,8 +20521,14 @@
 						bStopLoop = true;
 						return;
 					}
-					oCellValue.type = CellValueType.Number;
-					oCellValue.number = nCurrentValue;
+					if (isNaN(nCurrentValue)) {
+						let oErrorValue = new cError(cErrorType.not_numeric);
+						oCellValue.type = CellValueType.Error
+						oCellValue.text = oErrorValue.value;
+					} else {
+						oCellValue.type = CellValueType.Number;
+						oCellValue.number = nCurrentValue;
+					}
 					oCopyCell.setValueData(new UndoRedoData_CellValueData(null, oCellValue));
 					// Add styles from firstCell
 					if (null != oFromCell) {
