@@ -1094,15 +1094,14 @@
 					oSpPr.Fill = oShadowFill;
 					oSpPr.ln = AscFormat.CreateNoFillLine();
 				}
-				let W = this.extX;
-				let H = this.extY;
 				let penW = 0;
 				if (this.pen) {
 					penW = this.pen.w ? this.pen.w / 36000.0 : 12700.0 / 36000.0;
-					if (this.getObjectType() !== AscDFH.historyitem_type_ImageShape) {
-						penW /= 2.0;
-					}
 				}
+				let W = this.extX + penW;
+				let H = this.extY + penW;
+				let W0 = W;
+				let H0 = H;
 				let bFlipH = false;
 				let bFlipV = false;
 				if (outerShdw.sx) {
@@ -1113,9 +1112,11 @@
 					H *= Math.abs(outerShdw.sy / 100000);
 					bFlipV = outerShdw.sy < 0;
 				}
-				if(AscFormat.fApproxEqual(W, this.extX) && AscFormat.fApproxEqual(H, this.extY)) {
-					W = this.extX + 2*penW;
-					H = this.extY + 2*penW;
+
+				let dist = outerShdw.dist ? outerShdw.dist / 36000 : 0;
+				if(AscFormat.fApproxEqual(W, W0) && AscFormat.fApproxEqual(H, H0) && AscFormat.fApproxEqual(dist, 0)) {
+					W += 1;
+					H += 1;
 				}
 				let oXfrm = oSpPr.xfrm;
 				oXfrm.setExtX(W);
