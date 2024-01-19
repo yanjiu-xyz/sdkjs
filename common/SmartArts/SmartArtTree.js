@@ -349,6 +349,14 @@
 				algorithm = new PyramidAlgorithm();
 				break;
 			}
+			case AscFormat.Alg_type_hierRoot: {
+				algorithm = new HierarchyRootAlgorithm();
+				break;
+			}
+			case AscFormat.Alg_type_hierChild: {
+				algorithm = new HierarchyChildAlgorithm();
+				break;
+			}
 			default: {
 				break;
 			}
@@ -1210,6 +1218,9 @@
 		this._isHideLastChild = null;
 		this.constraintSizes = null;
 	}
+	BaseAlgorithm.prototype.isRootHierarchy = function () {
+		return false;
+	};
 	BaseAlgorithm.prototype.isCanSetConnection = function () {
 		return false;
 	};
@@ -1851,6 +1862,9 @@
 	};
 	ShapeContainer.prototype.applyCenterAlign = function (parentHeight, parentWidth) {
 	};
+	ShapeContainer.prototype.calcMetrics = function () {
+	};
+
 
 	function PyramidContainer() {
 		ShapeContainer.call(this)
@@ -1899,8 +1913,37 @@
 		}
 	};
 
+	function HierarchyChildContainer() {
+		ShapeContainer.call(this);
+		this.shapes = [];
+
+	}
+	AscFormat.InitClassWithoutType(HierarchyChildContainer, ShapeContainer);
+	HierarchyChildContainer.prototype.forEachShape = function (callback) {
+		for (let i = 0; i < this.shapes.length; i += 1) {
+			callback(this.shapes[i]);
+		}
+	}
+	HierarchyChildContainer.prototype.push = function (shape) {
+		this.shapes.push(shape);
+	};
+
+	function HierarchyRootContainer() {
+		ShapeContainer.call(this);
+		this.shapes = [];
+	}
+	AscFormat.InitClassWithoutType(HierarchyRootContainer, ShapeContainer);
+	HierarchyRootContainer.prototype.forEachShape = function (callback) {
+		for (let i = 0; i < this.shapes.length; i += 1) {
+			callback(this.shapes[i]);
+		}
+	}
+	HierarchyRootContainer.prototype.push = function (shape) {
+		this.shapes.push(shape);
+	};
+
 	function CycleContainer() {
-		ShapeContainer.call(this)
+		ShapeContainer.call(this);
 		this.shapes = [];
 		this.bounds = {
 			l: 0,
@@ -2007,6 +2050,146 @@
 			callback(this.row[i]);
 		}
 	}
+
+	function HierarchyChildAlgorithm() {
+		PositionAlgorithm.call(this);
+	}
+	AscFormat.InitClassWithoutType(HierarchyChildAlgorithm, PositionAlgorithm);
+	HierarchyChildAlgorithm.prototype.getChildShape = function (node) {
+		if (node.algorithm.isRootHierarchy()) {
+
+		}
+	}
+	HierarchyChildAlgorithm.prototype.calcScaleCoefficients = function () {
+		this.parentNode.calcNodeConstraints();
+		const childs = this.getMainChilds();
+		const parentConstraints = this.getNodeConstraints(this.parentNode);
+		const parentWidth = parentConstraints.width;
+		const parentHeight = parentConstraints.height;
+		const space = this.parentNode.getConstr(AscFormat.Constr_type_sibSp);
+		let sumWidth = 0;
+		let sumHeight = 0;
+		for (let i = 0; i < childs.length; i += 1) {
+			const child = childs[i];
+			const childConstraints = this.getNodeConstraints(child);
+			sumWidth += childConstraints.width + space;
+			sumHeight += childConstraints.height + space;
+		}
+		const coefficient = Math.min(1, parentWidth / sumWidth, parentHeight / sumHeight);
+
+		for (let i = 0; i < this.parentNode.childs.length; i += 1) {
+			const child = this.parentNode.childs[i];
+			child.forEachDesOrSelf(function (node) {
+				node.setWidthScaleConstrCoefficient(coefficient);
+				node.setHeightScaleConstrCoefficient(coefficient);
+			});
+		}
+	};
+	HierarchyChildAlgorithm.prototype.getMainChilds = function () {
+		const childs = [];
+		for (let i = 0; i < this.parentNode.childs.length; i += 1) {
+			const child = this.parentNode.childs[i];
+			if (child.isContentNode()) {
+				childs.push(child);
+			}
+		}
+		return childs;
+	}
+	HierarchyChildAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm) {
+		this.shapeContainer = new HierarchyChildContainer();
+		const parentNode = this.parentNode;
+		const childs = this.getMainChilds();
+
+		let space = parentNode.getAdaptConstr(AscFormat.Constr_type_sibSp);
+
+		let x = 0;
+		for (let i = 0; i < childs.length; i += 1) {
+			const child = childs[i];
+			const shape = child.shape;
+			if (shape) {
+				shape.x = x;
+				x += shape.w + space;
+				this.shapeContainer.push(shape);
+			}
+		}
+		this.applyOffsetByParents();
+		this.applyParamOffsets();
+		this.applyConstraintOffset();
+		this.applyPostAlgorithmSettings();
+		this.setConnections();
+		this.parentNode.createShadowShape();
+	};
+
+	function HierarchyRootAlgorithm() {
+		PositionAlgorithm.call(this);
+	}
+	AscFormat.InitClassWithoutType(HierarchyRootAlgorithm, PositionAlgorithm);
+	HierarchyRootAlgorithm.prototype.isRootHierarchy = function () {
+		return true;
+	};
+	HierarchyRootAlgorithm.prototype.calcScaleCoefficients = function () {
+		this.parentNode.calcNodeConstraints();
+		const childs = this.getMainChilds();
+		const parentConstraints = this.getNodeConstraints(this.parentNode);
+		const parentWidth = parentConstraints.width;
+		const parentHeight = parentConstraints.height;
+		const space = this.parentNode.getConstr(AscFormat.Constr_type_sp);
+		let sumWidth = 0;
+		let sumHeight = 0;
+		for (let i = 0; i < childs.length; i += 1) {
+			const child = childs[i];
+			const childConstraints = this.getNodeConstraints(child);
+			sumWidth += childConstraints.width + space;
+			sumHeight += childConstraints.height + space;
+		}
+		const coefficient = Math.min(1, Math.max(sumWidth / parentWidth, sumHeight / parentHeight));
+
+		for (let i = 0; i < this.parentNode.childs.length; i += 1) {
+			const child = this.parentNode.childs[i];
+			child.forEachDesOrSelf(function (node) {
+				node.setWidthScaleConstrCoefficient(coefficient);
+				node.setHeightScaleConstrCoefficient(coefficient);
+			});
+
+		}
+	};
+	HierarchyRootAlgorithm.prototype.getMainChilds = function () {
+		const childs = [];
+		for (let i = 0; i < this.parentNode.childs.length; i += 1) {
+			const child = this.parentNode.childs[i];
+			if (child.isContentNode()) {
+				childs.push(child);
+			}
+		}
+		return childs;
+	}
+	HierarchyRootAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm) {
+		this.shapeContainer = new HierarchyRootContainer();
+		const parentNode = this.parentNode;
+		const childs = this.getMainChilds();
+
+		let space = parentNode.getAdaptConstr(AscFormat.Constr_type_sp);
+
+		let x = 0;
+		for (let i = 0; i < childs.length; i += 1) {
+			const child = childs[i];
+			const shape = child.shape;
+			if (shape) {
+				shape.x = x;
+				x += shape.w + space;
+				this.shapeContainer.push(shape);
+			}
+		}
+
+		this.applyOffsetByParents();
+		this.applyParamOffsets();
+		this.applyConstraintOffset();
+		this.applyPostAlgorithmSettings();
+		this.setConnections();
+		this.parentNode.createShadowShape();
+	};
+
+
 
 	function PyramidAlgorithm() {
 		PositionAlgorithm.call(this);
