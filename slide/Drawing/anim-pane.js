@@ -1877,6 +1877,21 @@
 				this.tmpWidth = Math.min(Math.max(minTmpWidth, newTmpWidth), maxTmpWidth);
 			}
 
+			// Check boundaries to start or end timeline scroll
+			const leftBorder = 0;
+			const rightBorder = timeline.getRulerEnd() - timeline.getZeroShift();
+
+			if (relativeX <= leftBorder || relativeX >= rightBorder) {
+				if (!timeline.isOnScroll()) {
+					let scrollStep = timeline.getWidth() * SCROLL_STEP / 10;
+					scrollStep = relativeX <= leftBorder ? -scrollStep : scrollStep;
+					let scrollTimerDelay = 0;
+					let scrollTimerInterval = 50;
+					timeline.startScroll(scrollStep, scrollTimerDelay, scrollTimerInterval);
+				}
+			}
+			else timeline.endScroll()
+
 			this.onUpdate()
 		}
 
