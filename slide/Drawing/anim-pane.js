@@ -1848,7 +1848,16 @@
 
 			// Effect bar moving
 			const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline
-			const relativeX = x - timeline.getLeft() - timeline.getZeroShift();
+			let relativeX = x - timeline.getLeft() - timeline.getZeroShift();
+
+			if (this.effect.isAfterEffect()) {
+				const prev = this.effect.getPreviousEffect()
+				if (prev) {
+					// for after effects relativeX becomes relative to prev effect end
+					relativeX -= this.ms_to_mm(prev.asc_getDelay())
+					relativeX -= this.ms_to_mm(prev.asc_getDuration())
+				}
+			}
 
 			const MIN_EFFECT_DURATION = 100;
 			const timelineShift = this.ms_to_mm(timeline.getStartTime() * 1000);
@@ -1880,6 +1889,9 @@
 			// Check boundaries to start or end timeline scroll
 			const leftBorder = 0;
 			const rightBorder = timeline.getRulerEnd() - timeline.getZeroShift();
+
+			// make relativeX relative to timeline's zero again
+			relativeX = x - timeline.getLeft() - timeline.getZeroShift()
 
 			if (relativeX <= leftBorder || relativeX >= rightBorder) {
 				if (!timeline.isOnScroll()) {
@@ -2017,10 +2029,10 @@
 	CAnimItem.prototype.setNewEffectParams = function (newDelay, newDuration) {
 		const effectCopy = this.effect.createDuplicate();
 
-		if (newDelay !== null && newDelay !== undefined && newDelay !== this.effect.asc_getDelay()) {
+		if (newDelay !== null && newDelay !== undefined) {
 			effectCopy.asc_putDelay(newDelay);
 		}
-		if (newDuration !== null && newDuration !== undefined && newDuration !== this.effect.asc_getDuration()) {
+		if (newDuration !== null && newDuration !== undefined) {
 			effectCopy.asc_putDuration(newDuration);
 		}
 
