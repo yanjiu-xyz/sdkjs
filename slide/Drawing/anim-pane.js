@@ -1791,7 +1791,7 @@
 			// Select animation effect
 			const oThis = this
 			if (event.CtrlKey) {
-				this.effect.select()
+				this.effect.toggleSelect()
 			} else {
 				const seqList = Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList
 				seqList.forEachAnimItem(function (animItem) {

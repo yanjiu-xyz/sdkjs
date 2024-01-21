@@ -8937,6 +8937,9 @@
     CTimeNodeContainer.prototype.deselect = function () {
         this.selected = false;
     };
+	CTimeNodeContainer.prototype.toggleSelect = function () {
+        this.selected = !this.selected;
+    };
     CTimeNodeContainer.prototype.asc_getColor = function() {
         let aEffects = this.merged;
         if(!Array.isArray(aEffects) || aEffects.length !== 1) {
