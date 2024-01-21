@@ -1959,6 +1959,14 @@
 			this.tmpStartPos :
 			this.ms_to_mm(this.effect.asc_getDelay()));
 
+		if (this.effect.isAfterEffect()) {
+			const prev = this.effect.getPreviousEffect()
+			if (prev) {
+				l += this.ms_to_mm(prev.asc_getDelay())
+				l += this.ms_to_mm(prev.asc_getDuration())
+			}
+		}
+
 		let r = l + (this.tmpWidth !== null ?
 			this.tmpWidth :
 			this.ms_to_mm(this.effect.asc_getDuration()));
