@@ -1953,8 +1953,12 @@
 		graphics.AddClipRect(clipL, clipT, clipW, clipH);
 
 		// In case we need to draw a triangle
-		if (false /* TODO: find method to get effect type */) {
-			// TODO: draw a triangle
+		if (this.effect.cTn.presetID === 1) {
+			graphics.b_color1(0, 0, 255, 255);
+
+			const bounds = this.getEffectBarBounds();
+			graphics.rect(bounds.l, bounds.t, bounds.r - bounds.l, bounds.b - bounds.t);
+			graphics.df();
 		} else {
 			// In case we need to draw a bar
 			graphics.b_color1(255, 0, 0, 255);
@@ -1989,6 +1993,10 @@
 		let t = this.bounds.t + (ANIM_ITEM_HEIGHT - EFFECT_BAR_HEIGHT) / 2;
 		let b = t + EFFECT_BAR_HEIGHT;
 
+		if (this.effect.cTn.presetID === 1) {
+			return { l: l, r: l + EFFECT_BAR_HEIGHT, t: t, b: b }
+		}
+
 		return { l: l, r: r, t: t, b: b }
 	};
 	CAnimItem.prototype.hitInEffectBar = function (x, y) {
@@ -1996,8 +2004,10 @@
 		const bounds = this.getEffectBarBounds();
 
 		if (y > bounds.t && y < bounds.b) {
-			if (x >= bounds.l - delta && x <= bounds.l) { return 'left'; }
-			if (x >= bounds.r && x <= bounds.r + delta) { return 'right'; }
+			if (this.effect.cTn.presetID !== 1) {
+				if (x >= bounds.l - delta && x <= bounds.l) { return 'left'; }
+				if (x >= bounds.r && x <= bounds.r + delta) { return 'right'; }
+			}
 			if (x > bounds.l && x < bounds.r) { return 'center'; }
 		}
 
