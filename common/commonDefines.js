@@ -4350,10 +4350,10 @@ window.AscCommon.g_cIsBeta = "false";
 		"yyyy年M月",
 		"h时m分s秒",
 		"h时m分",
-		"AMPMh时m分",
-		"EEEE年O月A日",
-		"EEEE年O月A日星期W",
-		"EEEE年O月"
+		"AM/PMh时m分",
+		"YYYY年M月d日",
+		"YYYY年M月d日星期W",
+		"YYYY年M月"
 	];
 	c_oAscDateTimeFormat[lcid_enUS]     = [
 		"M/d/yyyy",
