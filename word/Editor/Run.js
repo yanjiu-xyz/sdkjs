@@ -7941,7 +7941,7 @@ ParaRun.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, UseConten
 			isHiddenCF   = SearchPos.IsHiddenComplexField();
 		}
 
-		if (Item.Type === para_Math_Text && Item.GetWidthVisible() === 0)
+		if (Item && Item.Type === para_Math_Text && Item.GetWidthVisible() === 0)
 			continue;
 
 		if (CurPos >= 0 && (isFieldCode || isHiddenCF))
