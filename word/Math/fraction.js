@@ -643,10 +643,11 @@ CFraction.prototype.GetTextOfElement = function(isLaTeX)
 		strTemp += strNumerator;
 		switch (this.Pr.type)
         {
-			case 0:	strTemp += '/';	break;
-			case 1:	strTemp += '⁄';	break;
-			case 2:	strTemp += '⊘';	break;
-			case 3:	strTemp += String.fromCharCode(166); break;
+			case BAR_FRACTION:	strTemp += '/';	break;
+			case SKEWED_FRACTION:	strTemp += '⁄';	break;
+			case LINEAR_FRACTION:	strTemp += '∕';	break;
+			case NO_BAR_FRACTION:	strTemp += '¦'; break;
+
 			default:strTemp += String.fromCharCode(47); break;
 		}
 

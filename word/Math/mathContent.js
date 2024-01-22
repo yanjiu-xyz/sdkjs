@@ -6589,6 +6589,10 @@ ContentIterator.prototype.CheckRules = function ()
 		["l","i","m"],["m","i","n"],["m","a","x"],
 
 		[true, "/", true],
+		[true, "⁄", true],
+		[true, "⒞", true],
+		[true, "∕", true],
+		[true, "¦", true],
 		[true, "^", true],
 		[true, "_", true],
 
@@ -6608,14 +6612,27 @@ ContentIterator.prototype.CheckRules = function ()
 		["¯", true],
 		["▁", true],
 		["/", true],
+		["⁄", true],
+		["∕", true],
+		["⒞", true],
+		["¦", true],
 		["⏟", true],
 		["⏞", true],
 		[true, "/"],
+		[true, "⁄"],
+		[true, "⒞"],
+		[true, "∕"],
+		[true, "¦"],
+
 		["■", true],
 
 		[true, "┬"],
 		[true, "┴"],
 		["/"],
+		["⁄"],
+		["⒞"],
+		["∕"],
+		["¦"],
 
 		[true, "́" ],
 		[true, "̂" ],

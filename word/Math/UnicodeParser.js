@@ -1298,8 +1298,11 @@
 	CUnicodeParser.prototype.GetFractionType = function(str)
 	{
 		switch (str) {
-			case "⁄" : return 1
-			case "⊘" : return 2
+			case "/"	:	return BAR_FRACTION;
+			case "⁄"	:	return SKEWED_FRACTION;
+			case "⊘"	:	return 'LITTLE_FRACTION';
+			case "¦"	:	return NO_BAR_FRACTION;
+			case "∕"	:	return LINEAR_FRACTION;
 		}
 	}
 	CUnicodeParser.prototype.IsFractionLiteral = function ()
@@ -1564,6 +1567,12 @@
 				{
 					return this.GetOneBarLiteral(oEntity, oDiacritic);
 				}
+
+				//nbsp processing for accents
+				if (oEntity[oEntity.length - 1] && oEntity[oEntity.length - 1].value === String.fromCharCode(160)) //nbsp
+					oEntity.length--;
+				else if (oEntity.value === String.fromCharCode(160))
+					oEntity = {};
 
 				return {
 					type: MathLiteral.accent.id,
@@ -1857,7 +1866,7 @@
 	{
 		return this.IsElementLiteral() ||
 			this.oLookahead.class === oLiteralNames.operatorLiteral[0] ||
-			this.oLookahead.data === "/" ||
+			this.oLookahead.class === oLiteralNames.overLiteral[0] ||
 			this.oLookahead.data === "¦" ||
 			this.IsPreScriptLiteral();
 	};
@@ -1870,7 +1879,7 @@
 
 		while (this.IsExpLiteral() || (!isMatrix && (this.oLookahead.data === "@" || this.oLookahead.data === "&")) || (arrCorrectSymbols.includes(this.oLookahead.data)))
 		{
-			if (this.oLookahead.data === "/" || this.oLookahead.data === "¦" || this.oLookahead.data === "⒞")
+			if (this.oLookahead.class === oLiteralNames.overLiteral[0])
 			{
 				let type = oLiteralNames.fractionLiteral[num];
 
