@@ -1927,6 +1927,10 @@ Paragraph.prototype.IsEmptyRange = function(nCurLine, nCurRange)
 
 	return true;
 };
+Paragraph.prototype.getLineCount = function()
+{
+	return this.GetLinesCount();
+};
 Paragraph.prototype.GetLinesCount = function()
 {
 	if (!this.IsRecalculated())
@@ -5854,7 +5858,7 @@ Paragraph.prototype.private_CorrectPosInCombiningMark = function(oContentPos, is
 };
 Paragraph.prototype.Get_ParaContentPosByXY = function(X, Y, PageIndex, bYLine, StepEnd, bCenterMode)
 {
-	var SearchPos        = new CParagraphSearchPosXY();
+	var SearchPos        = new AscWord.ParagraphSearchPositionXY();
 	SearchPos.CenterMode = (undefined === bCenterMode ? true : bCenterMode);
 
 	if (this.Lines.length <= 0)
@@ -16082,6 +16086,10 @@ Paragraph.prototype.GetPagesCount = function()
 {
 	return this.Pages.length;
 };
+Paragraph.prototype.getPageCount = function()
+{
+	return this.Pages.length;
+};
 Paragraph.prototype.IsEmptyPage = function(CurPage, bSkipEmptyLinesWithBreak)
 {
     if (!this.Pages[CurPage] || this.Pages[CurPage].EndLine < this.Pages[CurPage].StartLine)
@@ -19732,35 +19740,6 @@ CParagraphSearchPos.prototype.IsFound = function()
 CParagraphSearchPos.prototype.GetPos = function()
 {
 	return this.Pos;
-};
-
-function CParagraphSearchPosXY()
-{
-    this.Pos       = new AscWord.CParagraphContentPos();
-    this.InTextPos = new AscWord.CParagraphContentPos();
-
-    this.CenterMode     = true; // Ищем ближайший (т.е. ориентируемся по центру элемента), или ищем именно прохождение через элемент
-    this.CurX           = 0;
-    this.CurY           = 0;
-    this.X              = 0;
-    this.Y              = 0;
-    this.DiffX          = 1000000; // километра для ограничения должно хватить
-    this.NumberingDiffX = 1000000; // километра для ограничения должно хватить
-	this.DiffAbs        = 1000000;
-
-    this.Line      = 0;
-    this.Range     = 0;
-
-    this.InTextX   = false;
-    this.InText    = false;
-    this.Numbering = false;
-    this.End       = false;
-    this.Field     = null;
-}
-CParagraphSearchPosXY.prototype.SetDiffX = function(nDiff)
-{
-	this.DiffX   = Math.abs(nDiff);
-	this.DiffAbs = nDiff;
 };
 
 //----------------------------------------------------------------------------------------------------------------------

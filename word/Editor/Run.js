@@ -6574,6 +6574,20 @@ ParaRun.prototype.Get_ParaContentPosByXY = function(SearchPos, Depth, _CurLine, 
 
     return Result;
 };
+ParaRun.prototype.getParagraphContentPosByXY = function(searchState)
+{
+	let rangePos = this.getRangePos(searchState.Line, searchState.Range);
+	let startPos = rangePos[0];
+	let endPos   = rangePos[1];
+	if (startPos >= endPos)
+		return;
+	
+	for (let pos = startPos; pos < endPos; ++pos)
+	{
+		let item = this.private_CheckInstrText(this.Content[pos]);
+		searchState.handleRunElement(item, this);
+	}
+};
 
 ParaRun.prototype.Get_ParaContentPos = function(bSelection, bStart, ContentPos, bUseCorrection)
 {

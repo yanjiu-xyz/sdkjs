@@ -358,6 +358,11 @@ ParaComment.prototype =
     {
         return false;
     },
+	
+	getParagraphContentPosByXY : function(state)
+	{
+		return false;
+	},
 
     Get_ParaContentPos : function(bSelection, bStart, ContentPos, bUseCorrection)
     {

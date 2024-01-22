@@ -484,6 +484,10 @@ CParagraphContentBase.prototype.Get_ParaContentPosByXY = function(SearchPos, Dep
 {
 	return false;
 };
+CParagraphContentBase.prototype.getParagraphContentPosByXY = function(state, depth)
+{
+	return false;
+};
 CParagraphContentBase.prototype.Get_ParaContentPos = function(bSelection, bStart, ContentPos, bUseCorrection)
 {
 };
@@ -3124,6 +3128,19 @@ CParagraphContentWithParagraphLikeContent.prototype.Get_ParaContentPosByXY = fun
     }
 
     return Result;
+};
+CParagraphContentWithParagraphLikeContent.prototype.getParagraphContentPosByXY = function(searchState)
+{
+	let rangePos = this.getRangePos(searchState.line, searchState.range);
+	let startPos = rangePos[0];
+	let endPos   = rangePos[1];
+	if (startPos >= endPos)
+		return;
+	
+	for (let pos = startPos; pos <= endPos; ++pos)
+	{
+		this.Content[pos].getParagraphContentPosByXY(searchState);
+	}
 };
 CParagraphContentWithParagraphLikeContent.prototype.Get_ParaContentPos = function(bSelection, bStart, ContentPos, bUseCorrection)
 {
