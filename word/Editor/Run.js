@@ -2207,7 +2207,7 @@ ParaRun.prototype.getAutoColor = function()
 		}
 	}
 	
-	return bgColor && !bg.isBlackAutoColor() ? AscWord.WHITE_COLOR : AscWord.BLACK_COLOR;
+	return bgColor && !bgColor.isBlackAutoColor() ? AscWord.WHITE_COLOR : AscWord.BLACK_COLOR;
 };
 /**
  * Проверяем являются ли заданные изменения заданного рана простыми (например, последовательное удаление или набор текста)
