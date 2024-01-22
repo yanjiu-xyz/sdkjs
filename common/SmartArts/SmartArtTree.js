@@ -270,8 +270,27 @@
 			case AscFormat.If_arg_dir: {
 				return this.getConditionDirValue();
 			}
+			case AscFormat.If_arg_hierBranch: {
+				return this.getConditionHierBranchValue();
+			}
 			default:
 				return this.val;
+		}
+	};
+	If.prototype.getConditionHierBranchValue = function () {
+		switch (this.val) {
+			case 'l':
+				return AscFormat.HierBranch_val_l;
+			case 'r':
+				return AscFormat.HierBranch_val_r;
+			case 'hang':
+				return AscFormat.HierBranch_val_hang;
+			case 'init':
+				return AscFormat.HierBranch_val_init;
+			case 'std':
+				return AscFormat.HierBranch_val_std;
+			default:
+				break;
 		}
 	}
 	If.prototype.getConditionDirValue = function () {
@@ -667,6 +686,10 @@
 				this.getNodesByFollowSib(nodes, ptType);
 				break;
 			}
+			case AscFormat.AxisType_value_precedSib: {
+				this.getNodesByPrecedSib(nodes, ptType);
+				break;
+			}
 			case AscFormat.AxisType_value_des: {
 				this.getNodesByDescendant(nodes, ptType);
 				break;
@@ -734,6 +757,21 @@
 						if (needNode) {
 							nodes.push(needNode);
 						}
+					}
+				}
+			}
+		}
+	};
+	SmartArtDataNodeBase.prototype.getNodesByPrecedSib = function (nodes, ptType) {
+		const parent = this.parent;
+		if (parent) {
+			for (let i = 0; i < parent.childs.length; i++) {
+				if (parent.childs[i] === this) {
+					break;
+				} else {
+					const needNode = parent.childs[i].getNodeByPtType(ptType);
+					if (needNode) {
+						nodes.push(needNode);
 					}
 				}
 			}
@@ -884,8 +922,16 @@
 		switch (type) {
 			case AscFormat.If_arg_dir:
 				return this.getDirection();
+			case AscFormat.If_arg_hierBranch:
+				return this.getHierBranch();
 		}
-	}
+	};
+	SmartArtDataNode.prototype.getHierBranch = function () {
+		if (this.presNode) {
+			const presPoint = this.presNode.presPoint;
+			return presPoint && presPoint.getHierBranchValue();
+		}
+	};
 
 
 	SmartArtDataNode.prototype.checkName = function (name) {
@@ -1218,6 +1264,9 @@
 		this._isHideLastChild = null;
 		this.constraintSizes = null;
 	}
+	BaseAlgorithm.prototype.getNodeConstraints = function (node) {
+		return node.nodeConstraints;
+	};
 	BaseAlgorithm.prototype.isRootHierarchy = function () {
 		return false;
 	};
@@ -1612,10 +1661,6 @@
 				}
 			}
 		});
-	};
-
-	PositionAlgorithm.prototype.getNodeConstraints = function (node) {
-		return node.nodeConstraints;
 	};
 	
 	PositionAlgorithm.prototype.calcScaleCoefficients = function () {

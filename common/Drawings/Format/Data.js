@@ -1663,6 +1663,9 @@ Because of this, the display is sometimes not correct.
 
     InitClass(Point, CBaseFormatObject, AscDFH.historyitem_type_Point);
 
+	  Point.prototype.getHierBranchValue = function () {
+		  return this.prSet && this.prSet.getHierBranchValue();
+	  };
     Point.prototype.getDrawingDocument = function () {
     }
 
@@ -2100,7 +2103,9 @@ Because of this, the display is sometimes not correct.
 
     InitClass(PrSet, CBaseFormatObject, AscDFH.historyitem_type_PrSet);
 
-
+	  PrSet.prototype.getHierBranchValue = function () {
+		  return this.presLayoutVars && this.presLayoutVars.getHierBranchValue();
+	  };
     PrSet.prototype.setCoherent3DOff = function (pr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeBool(this, AscDFH.historyitem_PrSetCoherent3DOff, this.getCoherent3DOff(), pr));
       this.coherent3DOff = pr;
@@ -4263,7 +4268,7 @@ Because of this, the display is sometimes not correct.
 				  node.getNodesByAxis(tempNodes, this.getAxis(i), this.getPtType(i));
 				  const step = this.getStep(i);
 					let count = this.getCount(i) || tempNodes.length;
-				  for (let k = this.getStart(i); k < tempNodes.length; k += step) {
+				  for (let k = this.getStart(i, tempNodes.length); k < tempNodes.length; k += step) {
 					  newCurrentNodes.push(tempNodes[k]);
 						count -= 1;
 						if (!count) {
@@ -4290,8 +4295,12 @@ Because of this, the display is sometimes not correct.
 			}
 			return AxisType_value_none;
 	  };
-	  IteratorAttributes.prototype.getStart = function (index) {
+	  IteratorAttributes.prototype.getStart = function (index, nodesLength) {
 		  if (AscFormat.isRealNumber(this.st[index])) {
+				const start = this.st[index];
+				if (start < 0) {
+					return Math.max(nodesLength - start, 0);
+				}
 			  return this.st[index] - 1;
 		  }
 		  return 0;
@@ -5907,6 +5916,9 @@ Because of this, the display is sometimes not correct.
 
     InitClass(VarLst, CBaseFormatObject, AscDFH.historyitem_type_VarLst);
 
+	  VarLst.prototype.getHierBranchValue = function () {
+		  return this.hierBranch && this.hierBranch.val;
+	  }
     VarLst.prototype.setAnimLvl = function (oPr) {
       oHistory.CanAddChanges() && oHistory.Add(new CChangeObject(this, AscDFH.historyitem_VarLstAnimLvl, this.getAnimLvl(), oPr));
       this.animLvl = oPr;
