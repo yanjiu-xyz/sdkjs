@@ -84,10 +84,29 @@
 		
 		this.bidi.begin();
 	};
-	ParagraphPositionCalculator.prototype.setNextCurrent = function(run)
+	ParagraphPositionCalculator.prototype.setNextCurrent = function(run, lastCombItem)
 	{
 		this.isNextCurrent = true;
 		this.nextRun       = run;
+		
+		if (lastCombItem && lastCombItem.RGap)
+		{
+			this.bidi.end();
+			
+			this.posInfo.x = this.x;
+			this.posInfo.y = this.y;
+			this.posInfo.run = run;
+			
+			if (lastCombItem.getBidiType() === AscWord.BidiType.rtl)
+				this.posInfo.x -= lastCombItem.GetWidthVisible();
+			
+			if (lastCombItem.RGapCount)
+				this.posInfo.x -= lastCombItem.RGapCount * lastCombItem.RGapShift - (lastCombItem.RGapShift - lastCombItem.RGapCharWidth) / 2;
+			else
+				this.posInfo.x -= lastCombItem.RGap;
+			
+			this.isNextCurrent = false;
+		}
 	};
 	ParagraphPositionCalculator.prototype.handleRunElement = function(element, run, isCurrent, isNearFootnoteRef)
 	{
@@ -124,30 +143,13 @@
 				this.posInfo.x += w;
 			
 			this.posInfo.run = run;
+			
+			// for comb forms
+			if (element.LGap)
+				this.posInfo.x += element.LGap;
 		}
 		
 		this.x += w;
-
-		// TODO: Position in form
-		// if (Pos === this.Content.length)
-		// {
-		// 	var Item = this.Content[Pos - 1];
-		// 	if (Item.RGap)
-		// 	{
-		// 		if (Item.RGapCount)
-		// 		{
-		// 			X -= Item.RGapCount * Item.RGapShift - (Item.RGapShift - Item.RGapCharWidth) / 2;
-		// 		}
-		// 		else
-		// 		{
-		// 			X -= Item.RGap;
-		// 		}
-		// 	}
-		// }
-		// else if (this.Content[Pos].LGap)
-		// {
-		// 	X += this.Content[Pos].LGap;
-		// }
 	};
 	ParagraphPositionCalculator.prototype.handleMathRun = function(run, isCurrentRun, currentPos)
 	{
