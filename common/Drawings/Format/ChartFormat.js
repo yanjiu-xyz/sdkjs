@@ -6186,11 +6186,7 @@
         return isLineChartType(nType);
     };
     CPlotArea.prototype.isPieType = function(nType) {
-        if(Asc.c_oAscChartTypeSettings.pie === nType
-            || Asc.c_oAscChartTypeSettings.pie3d === nType) {
-            return true
-        }
-        return false;
+        return isPieChartType(nType);
     };
     CPlotArea.prototype.isDoughnutType = function(nType) {
         return isDoughnutChartType(nType);
@@ -7000,7 +6996,18 @@
         if(!this.parent) {
             return false;
         }
-        return this.getChartType() === nNewType;
+        if(this.hasSerAx() && !is3DChartType(nNewType)) {
+            return false;
+        }
+        return (this.getChartType() === nNewType);
+    };
+    CChartBase.prototype.hasSerAx = function() {
+        for(let nAx = 0; nAx < this.axId.length; ++nAx) {
+            if(this.axId[nAx].getObjectType() === AscDFH.historyitem_type_SerAx) {
+                return true;
+            }
+        }
+        return false;
     };
     CChartBase.prototype.remove = function() {
         if(!this.parent) {
@@ -7256,6 +7263,9 @@
             || !this.isHBar() && !this.parent.isBarType(nType)) {
             return false;
         }
+        if(this.hasSerAx() && !is3DChartType(nType)) {
+            return false;
+        }
         var nNewBarDir = this.parent.getBarDirByType(nType);
         var bChangedGrouping = false;
         var nOldGrouping = this.grouping;
@@ -7410,6 +7420,9 @@
         }
         if(nType === this.getChartType()) {
             return true;
+        }
+        if(this.hasSerAx() && !is3DChartType(nType)) {
+            return false;
         }
         var nNewGrouping;
         nNewGrouping = this.parent.getGroupingByType(nType);
@@ -10803,8 +10816,12 @@
         if(!this.parent.isLineType(nType)) {
             return false;
         }
+
         if(nType === this.getChartType()) {
             return true;
+        }
+        if(this.hasSerAx() && !is3DChartType(nType)) {
+            return false;
         }
         var nNewGrouping;
         nNewGrouping = this.parent.getGroupingByType(nType);
@@ -12428,6 +12445,9 @@
 		if(nType === this.getChartType()) {
 			return true;
 		}
+        if(this.hasSerAx() && !is3DChartType(nType)) {
+            return false;
+        }
 		let nRadarStyle;
 		if(nType === Asc.c_oAscChartTypeSettings.radarFilled) {
 			nRadarStyle = AscFormat.RADAR_STYLE_FILLED;
@@ -12794,6 +12814,10 @@
             return true;
         }
         if(!this.parent.isScatterType(nNewType)) {
+            return false;
+        }
+
+        if(this.hasSerAx() && !is3DChartType(nNewType)) {
             return false;
         }
         var bMarker = getIsMarkerByType(nNewType);
@@ -16115,6 +16139,26 @@
     function isDoughnutChartType(nType) {
         return (Asc.c_oAscChartTypeSettings.doughnut === nType);
     }
+    function isPieChartType(nType) {
+        if(Asc.c_oAscChartTypeSettings.pie === nType
+            || Asc.c_oAscChartTypeSettings.pie3d === nType) {
+            return true
+        }
+        return false;
+    }
+
+    function is3DChartType(nType) {
+        const oCT = Asc.c_oAscChartTypeSettings;
+        return (oCT.barNormal3d === nType ||
+            oCT.barStacked3d === nType ||
+            oCT.barStackedPer3d === nType ||
+            oCT.barNormal3dPerspective === nType ||
+            oCT.line3d === nType ||
+            oCT.pie3d === nType ||
+            oCT.hBarNormal3d === nType ||
+            oCT.hBarStacked3d === nType ||
+            oCT.hBarStackedPer3d === nType)
+    }
 
     function CParseResult() {
         this.error = Asc.c_oAscError.ID.No;
@@ -17477,7 +17521,7 @@
         this.updateDataRefs();
         return this.info;
     };
-    CChartDataRefs.prototype.getSeriesRefsFromUnionRefs = function(aRefs, bHorValue, bScatter, nChartType) {
+    CChartDataRefs.prototype.getSeriesRefsFromUnionRefs = function(aRefs, bHorValue, bForceCat, nChartType) {
         if(aRefs.length === 0) {
             return [];
         }
@@ -17640,7 +17684,7 @@
                     bHorizontalValues = (nRowsCount <= nColsCount);
                 }
             }
-            if(bScatter) {
+            if(bForceCat) {
                 if(bHorizontalValues) {
                     if(nTopHeader === -1 && nRowsCount > 1) {
                         nTopHeader = 0;
@@ -18857,6 +18901,7 @@
     window['AscFormat'].isAreaChartType = isAreaChartType;
     window['AscFormat'].isRadarChartType = isRadarChartType;
     window['AscFormat'].isDoughnutChartType = isDoughnutChartType;
+    window['AscFormat'].isPieChartType = isPieChartType;
 
     window['AscFormat'].AX_POS_L = AX_POS_L;
     window['AscFormat'].AX_POS_T = AX_POS_T;

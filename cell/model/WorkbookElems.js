@@ -16202,16 +16202,18 @@ function RangeDataManagerElem(bbox, data)
 		function actionCell(cell, curRow, curCol, rowStart, colStart) {
 			if (cell && cell.getValueWithoutFormat()) {
 				// Fill type
-				seriesSettings.asc_setType(Asc.c_oAscSeriesType.linear);
-				if (cell.xfs != null && cell.xfs.num != null && cell.xfs.num.getFormat() != null) {
-					let numFormat = AscCommon.oNumFormatCache.get(cell.xfs.num.getFormat());
-					if (numFormat.isDateTimeFormat() && numFormat.getType() === Asc.c_oAscNumFormatType.Date) {
-						seriesSettings.asc_setType(Asc.c_oAscSeriesType.date);
+				if (seriesSettings.asc_getType() == null) {
+					seriesSettings.asc_setType(Asc.c_oAscSeriesType.linear);
+					if (cell.xfs != null && cell.xfs.num != null && cell.xfs.num.getFormat() != null) {
+						let numFormat = AscCommon.oNumFormatCache.get(cell.xfs.num.getFormat());
+						if (numFormat.isDateTimeFormat() && numFormat.getType() === Asc.c_oAscNumFormatType.Date) {
+							seriesSettings.asc_setType(Asc.c_oAscSeriesType.date);
 
-						contextMenuAllowedProps[Asc.c_oAscFillType.fillDays] = true;
-						//contextMenuAllowedProps[Asc.c_oAscFillType.fillWeekdays] = true;
-						//contextMenuAllowedProps[Asc.c_oAscFillType.fillMonths] = true;
-						//contextMenuAllowedProps[Asc.c_oAscFillType.fillYears] = true;
+							contextMenuAllowedProps[Asc.c_oAscFillType.fillDays] = true;
+							//contextMenuAllowedProps[Asc.c_oAscFillType.fillWeekdays] = true;
+							//contextMenuAllowedProps[Asc.c_oAscFillType.fillMonths] = true;
+							//contextMenuAllowedProps[Asc.c_oAscFillType.fillYears] = true;
+						}
 					}
 				}
 
@@ -16645,6 +16647,51 @@ function RangeDataManagerElem(bbox, data)
 	asc_CSeriesSettings.prototype.asc_setStopValue = function (val) {
 		this.stopValue = val;
 	};
+	/**
+	 * Method checks "Step Value" attribute of SeriesSettings object
+	 * @param {number} val
+	 */
+	asc_CSeriesSettings.prototype.asc_isValidStepValue = function (val) {
+		return this.checkValidValue(val);
+	};
+
+	/**
+	 * Method checks "Stop Value" attribute of SeriesSettings object
+	 * @param {number} val
+	 */
+	asc_CSeriesSettings.prototype.asc_isValidStopValue = function (val) {
+		return this.checkValidValue(val);
+	};
+
+	/**
+	 * Method checks input values
+	 * @param {number} val
+	 */
+	asc_CSeriesSettings.prototype.checkValidValue = function (val) {
+		let errCode = Asc.c_oAscError.ID.No;
+
+		let regstr = new RegExp('^\s*[+-]?([0-9]+([.][0-9]*)?|[.][0-9]+)\s*$');
+		if (typeof val === 'string') {
+			let findComma = val.match(/,/g);
+			if (findComma && findComma.length === 1) {
+				val = val.replace(',','.');
+			}
+		}
+
+		if (val !== '' && (!regstr.test(val.trim()) || isNaN(parseFloat(val)))) {
+			//check on format
+			let parsedRes = AscCommon.g_oFormatParser.parse(val);
+			if (parsedRes === null) {
+				errCode = Asc.c_oAscError.ID.MustIntegerOrDecimalNumber;
+				val = null;
+			} else {
+				val = parsedRes.value;
+			}
+		}
+
+		return [errCode, (val != null && val !== "") ? parseFloat(val) : null];
+	};
+
 	/**
 	 * Method sets "contextMenuAllowedProps" attribute of SeriesSettings object.
 	 * Uses for hide and shade menu items in context menu.
@@ -17406,6 +17453,8 @@ function RangeDataManagerElem(bbox, data)
 	prot["asc_setTrend"] = prot.asc_setTrend;
 	prot["asc_setStepValue"] = prot.asc_setStepValue;
 	prot["asc_setStopValue"] = prot.asc_setStopValue;
+	prot["asc_isValidStepValue"] = prot.asc_isValidStepValue;
+	prot["asc_isValidStopValue"] = prot.asc_isValidStopValue;
 	prot["asc_setContextMenuAllowedProps"] = prot.asc_setContextMenuAllowedProps;
 	prot["asc_setContextMenuChosenProperty"] = prot.asc_setContextMenuChosenProperty;
 	prot["asc_setToolbarMenuAllowedProps"] = prot.asc_setToolbarMenuAllowedProps;

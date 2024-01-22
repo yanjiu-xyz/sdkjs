@@ -1047,7 +1047,7 @@ var CPresentation = CPresentation || function(){};
 
             oViewer.setCursorType(cursorType);
 
-            if (mouseMoveAnnotObject && mouseMoveAnnotObject.IsComment() == false && mouseMoveAnnotObject.IsTextMarkup() == false)
+            if ((this.mouseDownAnnot && this.mouseDownAnnot.hitToHandles && this.mouseDownAnnot.hitToHandles(X, Y) != - 1) || mouseMoveAnnotObject && mouseMoveAnnotObject.IsComment() == false && mouseMoveAnnotObject.IsTextMarkup() == false)
                 oDrawingObjects.updateCursorType(oPos.DrawPage, X, Y, e, false);
         }
     };
@@ -1067,7 +1067,7 @@ var CPresentation = CPresentation || function(){};
         let oMouseUpField = oViewer.getPageFieldByMouse();
 		let oMouseUpAnnot = oViewer.getPageAnnotByMouse();
         
-        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.X);
+        let oPos    = oDrDoc.ConvertCoordsFromCursor2(AscCommon.global_mouseEvent.X, AscCommon.global_mouseEvent.Y);
         let X       = oPos.X;
         let Y       = oPos.Y;
 

@@ -10844,6 +10844,16 @@ CPresentation.prototype.getDefaultMasterSlide = function () {
 	}
 	return this.slideMasters[0];
 };
+CPresentation.prototype.getLayoutsMasterSlide = function () {
+	let oCurSlide = this.GetCurrentSlide();
+	if(!oCurSlide ||
+		!oCurSlide.Layout ||
+		!oCurSlide.Layout.Master ||
+		oCurSlide.Layout.Master.sldLayoutLst.length <= 0) {
+		return this.getDefaultMasterSlide();
+	}
+	return oCurSlide.Layout.Master;
+};
 CPresentation.prototype.DublicateSlide = function () {
 	if (this.Api.WordControl.Thumbnails) {
 		var selected_slides = this.GetSelectedSlides();

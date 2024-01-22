@@ -8016,7 +8016,7 @@ background-repeat: no-repeat;\
 
 	asc_docs_api.prototype.pre_Paste = function(_fonts, _images, callback)
 	{
-		if (undefined !== window["Native"] && undefined !== window["Native"]["GetImageUrl"])
+		if (undefined !== window["native"] && undefined !== window["native"]["GetImageUrl"])
 		{
 			callback();
 			return;
@@ -12449,9 +12449,6 @@ background-repeat: no-repeat;\
 			};
 		}
 
-		if (undefined != window["Native"])
-			return;
-
 		//callback
 		this.DocumentOrientation = (null == editor.WordControl.m_oLogicDocument) ? true : !editor.WordControl.m_oLogicDocument.Orientation;
 		var sizeMM;
@@ -12782,6 +12779,10 @@ background-repeat: no-repeat;\
 			var page = this.WordControl.m_oDrawingDocument.m_arrPages[_page];
 			_printer.BeginPage(page.width_mm, page.height_mm);
 			oLogicDocument.DrawPage(_page, _printer);
+
+			if (this.watermarkDraw)
+				this.watermarkDraw.DrawOnRenderer(_printer, page.width_mm, page.height_mm);
+
 			_printer.EndPage();
 			oLogicDocument.RestoreAfterNativePrint();
 		}
@@ -12794,6 +12795,16 @@ background-repeat: no-repeat;\
 
 	window["asc_docs_api"].prototype["asc_nativeGetPDF"] = function(options)
 	{
+		if (options && options["watermark"])
+		{
+			this.watermarkDraw = new AscCommon.CWatermarkOnDraw(options["watermark"], this);
+			this.watermarkDraw.generateNative();
+		}
+		else
+		{
+			this.watermarkDraw = null;
+		}
+
 		var pagescount = this["asc_nativePrintPagesCount"]();
 		if (options && options["printOptions"] && options["printOptions"]["onlyFirstPage"])
             pagescount = 1;

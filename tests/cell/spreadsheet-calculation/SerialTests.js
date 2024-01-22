@@ -357,6 +357,93 @@ $(function () {
 			autofillData(assert, autofillRange, [['1'], ['2'], ['']], _desc);
 		}, "Autofill one Column with stop value = 1 and step value = 1. Bug #65705");
 		clearData(0, 0, 0, 2);
+		// Select horizontal oFromRange with stop value = 0 and step value = 1. Bug #65705
+		testData = [
+			['1', '2'],
+		];
+		oFromRange = getFilledData(0, 0, 2, 0, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStopValue(0);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 2, 0);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['1', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1', '2', '']], _desc);
+		}, "Autofill one Row with stop value = 0 and step value = 1. Bug #65705");
+		clearData(0, 0, 2, 0);
+		// Select vertical oFromRange with step value = -0.2. Bug #65871
+		testData = [
+			['1']
+		];
+		oFromRange = getFilledData(0, 0, 0, 5, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(-0.2);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 0, 5);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['1'], [''], [''], [''], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1'], ['0.8'], ['0.6'], ['0.4'], ['0.2'], ['0']], _desc);
+		}, "Autofill one Column with step value = -0.2. Bug #65871");
+		clearData(0, 0, 0, 5);
+		// Select horizontal oFromRange with activeFillHandle. Step value = -1, stop value = 1 . Bug #65895
+		testData = [
+			['3']
+		];
+		oFromRange = getFilledData(0, 0, 0, 0, testData, [0, 0]);
+		wsView.activeFillHandle = getRange(0, 0, 3, 0);
+		wsView.fillHandleDirection = 0;
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(-1);
+		oSeriesSettings.asc_setStopValue(1);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 3, 0);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['3', '', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['3', '2', '1', '']], _desc);
+		}, "Autofill one Row with activeFillHandle. Step value = -1, stop value = 1 . Bug #65895");
+		clearData(0, 0, 3, 0);
+		// Select vertical oFromRange with activeFillHandle. Step value = 1, stop value = 0 . Bug #65895
+		testData = [
+			['-2']
+		];
+		oFromRange = getFilledData(0, 0, 0, 0, testData, [0, 0]);
+		wsView.activeFillHandle = getRange(0, 0, 0, 3);
+		wsView.fillHandleDirection = 1;
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(1);
+		oSeriesSettings.asc_setStopValue(0);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 0, 3);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['-2'], [''], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['-2'], ['-1'], ['0'], ['']], _desc);
+		}, "Autofill one Column with activeFillHandle. Step value = 1, stop value = 0 . Bug #65895");
+		clearData(0, 0, 0, 3);
+		// Select horizontal oFromRange. Step value = 1, stop value = -2 . Bug #65895
+		testData = [
+			['-4']
+		];
+		oFromRange = getFilledData(0, 0, 3, 0, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(1);
+		oSeriesSettings.asc_setStopValue(-2);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 3, 0);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['-4', '', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['-4', '-3', '-2', '']], _desc);
+		}, "Autofill one Row. Step value = 1, stop value = -2 . Bug #65895");
+		clearData(0, 0, 3, 0);
 	});
 	QUnit.test('Autofill growth progression - one filled row/column', function (assert) {
 		const testData = [
@@ -445,11 +532,11 @@ $(function () {
 			autofillData(assert, autofillRange, [['1', '', '']], _desc);
 		}, "Autofill one Row with stop value = -10 and step value = -1. Bug #65705");
 		clearData(0, 0, 2, 0);
-		// Select vertical oFromRange with stop value = -10 and step value = -2. Bug #65705
+		// Select vertical oFromRange with stop value = 10 and step value = -2. Bug #65705
 		oFromRange = getFilledData(0, 0, 0, 2, testData, [0, 0]);
 		oSeriesSettings = api.asc_GetSeriesSettings();
 		oSeriesSettings.asc_setStepValue(-2);
-		oSeriesSettings.asc_setStopValue(-10);
+		oSeriesSettings.asc_setStopValue(10);
 		oSeriesSettings.asc_setType(oSeriesType.growth);
 		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
 
@@ -458,37 +545,7 @@ $(function () {
 			autofillData(assert, autofillRange, [[''], [''], ['']], _desc);
 		}, function (_desc) {
 			autofillData(assert, autofillRange, [['1'], [''], ['']], _desc);
-		}, "Autofill one Column with stop value = -10 and step value = -2. Bug #65705");
-		clearData(0, 0, 0, 2);
-		// Select horizontal oFromRange with stop value = -10 and step value = 1. Bug #65705
-		oFromRange = getFilledData(0, 0, 2, 0, testData, [0, 0]);
-		oSeriesSettings = api.asc_GetSeriesSettings();
-		oSeriesSettings.asc_setStepValue(1);
-		oSeriesSettings.asc_setStopValue(-10);
-		oSeriesSettings.asc_setType(oSeriesType.growth);
-		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
-
-		autofillRange = getRange(0, 0, 2, 0);
-		checkUndoRedo(function (_desc) {
-			autofillData(assert, autofillRange, [['', '', '']], _desc);
-		}, function (_desc) {
-			autofillData(assert, autofillRange, [['1', '', '']], _desc);
-		}, "Autofill one Row with stop value = -10 and step value = 1. Bug #65705");
-		clearData(0, 0, 2, 0);
-		// Select vertical oFromRange with stop value = -10 and step value = 2. Bug #65705
-		oFromRange = getFilledData(0, 0, 0, 2, testData, [0, 0]);
-		oSeriesSettings = api.asc_GetSeriesSettings();
-		oSeriesSettings.asc_setStepValue(2);
-		oSeriesSettings.asc_setStopValue(-10);
-		oSeriesSettings.asc_setType(oSeriesType.growth);
-		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
-
-		autofillRange = getRange(0, 0, 0, 2);
-		checkUndoRedo(function (_desc) {
-			autofillData(assert, autofillRange, [[''], [''], ['']], _desc);
-		}, function (_desc) {
-			autofillData(assert, autofillRange, [['1'], [''], ['']], _desc);
-		}, "Autofill one Column with stop value = -10 and step value = 2. Bug #65705");
+		}, "Autofill one Column with stop value = 10 and step value = -2. Bug #65705");
 		clearData(0, 0, 0, 2);
 		// Select horizontal oFromRange with stop value = -10 and step value = 1. Bug #65705
 		oFromRange = getFilledData(0, 0, 2, 0, testData, [0, 0]);
@@ -520,6 +577,51 @@ $(function () {
 			autofillData(assert, autofillRange, [['1'], [''], ['']], _desc);
 		}, "Autofill one Column with stop value = 10 and step value = 1. Bug #65705");
 		clearData(0, 0, 0, 2);
+		// Select horizontal oFromRange with stop value = -10 and step value = 2. Bug #65705
+		oFromRange = getFilledData(0, 0, 2, 0, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(2);
+		oSeriesSettings.asc_setStopValue(-10);
+		oSeriesSettings.asc_setType(oSeriesType.growth);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 2, 0);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1', '', '']], _desc);
+		}, "Autofill one Row with stop value = -10 and step value = 2. Bug #65705");
+		clearData(0, 0, 2, 0);
+		// Select vertical oFromRange with stop value = 10 and step value = 0. Bug #65705
+		oFromRange = getFilledData(0, 0, 0, 2, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(0);
+		oSeriesSettings.asc_setStopValue(10);
+		oSeriesSettings.asc_setType(oSeriesType.growth);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 0, 2);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [[''], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1'], [''], ['']], _desc);
+		}, "Autofill one Column with stop value = 10 and step value = 0. Bug #65705");
+		clearData(0, 0, 0, 2);
+		// Select horizontal oFromRange with stop value = 0.25 and step value = 0.5. Bug #65897
+		oFromRange = getFilledData(0, 0, 3, 0, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(0.5);
+		oSeriesSettings.asc_setStopValue(0.25);
+		oSeriesSettings.asc_setType(oSeriesType.growth);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 3, 0);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['1', '', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1', '0.5', '0.25', '']], _desc);
+		}, "Autofill one Row with stop value = 0.25 and step value = 0.5. Bug #65897");
+		clearData(0, 0, 2, 0);
 	});
 	QUnit.test('Autofill default mode', function (assert) {
 		let testData = [
@@ -554,6 +656,52 @@ $(function () {
 		autofillRange = getRange(0, 2, 0, 5);
 		autofillData(assert, autofillRange, [['3'], ['4'], ['5'], ['6']], 'Autofill one Column');
 		clearData(0, 0, 0, 5);
+		// Select vertical oFromRange, Series in: Rows. Bug #65724
+		testData = [
+			['1']
+		];
+		oFromRange = getFilledData(0, 0, 0, 2, testData, [0, 0]);
+		let oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setSeriesIn(oSeriesInType.rows);
+		oSeriesSettings.asc_setType(oSeriesType.autoFill);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 0, 2);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [[''], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1'], [''], ['']], _desc);
+		}, "Autofill one Column. Series in: Rows. Type: AutoFill. Bug #65724");
+		clearData(0, 0, 0, 2);
+		// Select horizontal oFromRange, Series in: Columns. Bug #65724
+		oFromRange = getFilledData(0, 0, 2, 0, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setSeriesIn(oSeriesInType.columns);
+		oSeriesSettings.asc_setType(oSeriesType.autoFill);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 2, 0);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1', '', '']], _desc);
+		}, "Autofill one Row. Series in: Columns. Type: AutoFill. Bug #65724");
+		clearData(0, 0, 2, 0);
+		// FillHandle Vertical. Series in: Rows. Type: AutoFill. Bug #65724
+		oFromRange = getFilledData(0, 0, 0, 0, testData, [0, 0]);
+		wsView.activeFillHandle = getRange(0, 0, 0, 2);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setSeriesIn(oSeriesInType.rows);
+		oSeriesSettings.asc_setType(oSeriesType.autoFill);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 0, 2);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [[''], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1'], [''], ['']], _desc);
+		}, "Autofill one Column fillHandle. Series in: Rows. Type: AutoFill. Bug #65724");
+		clearData(0, 0, 0, 2);
 	});
 	QUnit.test('Negative cases', function (assert) {
 		const testData = [
@@ -1222,9 +1370,136 @@ $(function () {
 		checkUndoRedo(function (_desc) {
 			autofillData(assert, autofillRange, [['1'], [''], [''], [''], [''], ['']], _desc);
 		}, function (_desc) {
-			autofillData(assert, autofillRange, [['1'], ['1'], ['1'], ['1'], ['1'], ['2']], _desc);
+			autofillData(assert, autofillRange, [['1'], ['2'], ['2'], ['2'], ['2'], ['3']], _desc);
 		}, "Autofill Column: Date progression - Weekday, Step - 0.2. Case: 01/01/1900 - 01/03/1900. Bug #65672");
 		clearData(0, 0, 0, 5);
+		// Vertical dateUnit - Weekday. Step - 1. Bug #65900
+		oFromRange = getFilledData(0, 0, 0, 6, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setDateUnit(oSeriesDateUnitType.weekday);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 0, 6);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['1'], [''], [''], [''], [''], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1'], ['2'], ['3'], ['4'], ['5'], ['6'], ['9']], _desc);
+		}, "Autofill Column: Date progression - Weekday, Step - 1. Case: 01/01/1900 - 01/03/1900. Bug #65900");
+		clearData(0, 0, 0, 6);
+		// Horizontal dateUnit - Month. Step - -1. Bug #65899
+		oFromRange = getFilledData(0, 0, 3, 0, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(-1);
+		oSeriesSettings.asc_setDateUnit(oSeriesDateUnitType.month);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 3, 0);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['1', '', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1', '#NUM!', '#NUM!', '#NUM!']], _desc);
+		}, "Autofill Row: Date progression - Month, Step - -1. Case: 01/01/1900 - 01/03/1900. Bug #65899");
+		clearData(0, 0, 3, 0);
+		// Vertical dateUnit - Year. Step - -1. Bug #65899
+		oFromRange = getFilledData(0, 0, 0, 3, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(-1);
+		oSeriesSettings.asc_setDateUnit(oSeriesDateUnitType.year);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 0, 3);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['1'], [''], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1'], ['#NUM!'], ['#NUM!'], ['#NUM!']], _desc);
+		}, "Autofill Column: Date progression - Year, Step - -1. Case: 01/01/1900 - 01/03/1900. Bug #65899");
+		clearData(0, 0, 0, 3);
+		// Vertical dateUnit - Weekday, Step - -1. Case: 01/01/1900 - 01/03/1900. Bug #65899
+		oFromRange = getFilledData(0, 0, 0, 6, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(-1);
+		oSeriesSettings.asc_setDateUnit(oSeriesDateUnitType.weekday);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 0, 6);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['1'], [''], [''], [''], [''], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1'], ['-1'], ['-2'], ['-3'], ['-4'], ['-5'], ['-8']], _desc);
+		}, "Autofill Column: Date progression - Weekday, Step - -1. Case: 01/01/1900 - 01/03/1900. Bug #65899");
+		clearData(0, 0, 0, 6);
+		// Horizontal dateUnit - Day. Step - -1. Case: 01/01/1900 - 01/03/1900. Bug #65899
+		oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(-1);
+		oSeriesSettings.asc_setDateUnit(oSeriesDateUnitType.day);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 5, 0);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['1', '', '', '', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1', '0', '-1', '-2', '-3', '-4']], _desc);
+		}, "Autofill Row: Date progression - Day, Step - -1. Case: 01/01/1900 - 01/03/1900. Bug #65899");
+		clearData(0, 0, 5, 0);
+		// Vertical dateUnit - Month. Step - -1, StopValue - -10. Case: 01/01/1900 - 01/03/1900. Bug #65899
+		oFromRange = getFilledData(0, 0, 0, 3, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(-1);
+		oSeriesSettings.asc_setStopValue(-10);
+		oSeriesSettings.asc_setDateUnit(oSeriesDateUnitType.month);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 0, 3);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [[''], [''], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1'], [''], [''], ['']], _desc);
+		}, "Autofill Column: Date progression - Month, Step - -1, StopValue - -10. Case: 01/01/1900 - 01/03/1900. Bug #65899");
+		clearData(0, 0, 0, 3);
+		// Vertical dateUnit - Year. Step - -1, StopValue - -10. Case: 01/01/1900 - 01/03/1900. Bug #65899
+		oFromRange = getFilledData(0, 0, 0, 3, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(-1);
+		oSeriesSettings.asc_setStopValue(-10);
+		oSeriesSettings.asc_setDateUnit(oSeriesDateUnitType.year);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 0, 3);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [[''], [''], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1'], [''], [''], ['']], _desc);
+		}, "Autofill Column: Date progression - Year, Step - -1, StopValue - -10. Case: 01/01/1900 - 01/03/1900. Bug #65899");
+		clearData(0, 0, 0, 3);
+		// Vertical dateUnit - Weekday, Step - -1, StopValue - -10. Case: 01/01/1900 - 01/03/1900. Bug #65899
+		oFromRange = getFilledData(0, 0, 0, 3, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(-1);
+		oSeriesSettings.asc_setStopValue(-10);
+		oSeriesSettings.asc_setDateUnit(oSeriesDateUnitType.weekday);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 0, 3);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [[''], [''], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1'], [''], [''], ['']], _desc);
+		}, "Autofill Column: Date progression - Weekday, Step - -1, StopValue - -10. Case: 01/01/1900 - 01/03/1900. Bug #65899");
+		clearData(0, 0, 0, 3);
+		// Horizontal dateUnit - Day. Step - -0.5. Case: 01/01/1900 - 01/03/1900. Bug #65876
+		oFromRange = getFilledData(0, 0, 5, 0, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(-0.5);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 5, 0);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['1', '', '', '', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1', '0.5', '0', '0.5', '0', '0.5']], _desc);
+		}, "Autofill Row: Date progression - Day, Step - -0.5. Case: 01/01/1900 - 01/03/1900. Bug #65876");
+		clearData(0, 0, 5, 0);
 		// Horizontal dateUnit - Month. Step - 0.2. Bug #65672
 		testData = [
 			['01/01/2000']
@@ -1259,6 +1534,94 @@ $(function () {
 			autofillData(assert, autofillRange, [['1'], ['1'], ['1'], ['1'], ['1'], ['367']], _desc);
 		}, "Autofill Column: Date progression - Year, Step - 0.2. Case: 01/01/1900 - 01/03/1900. Bug #65672");
 		clearData(0, 0, 5, 0);
+		// Horizontal dateUnit - Month. Step - 30.2. Case: 01/01/1900 - 01/03/1900. Bug #65796.
+		testData = [
+			['1', '32', '61', '92']
+		];
+		oFromRange = getFilledData(0, 0, 10, 0, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setType(oSeriesType.date);
+		oSeriesSettings.asc_setDateUnit(oSeriesDateUnitType.month);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 10, 0);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['1', '32', '61', '92', '', '', '', '', '', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1', '913', '1828', '2739', '3654', '4597', '5511', '6423', '7337', '8249', '9192']], _desc);
+		}, "Autofill Row: Date progression - Month, Step - 30.2. Case: 01/01/1900 - 01/03/1900. Bug #65796");
+		clearData(0, 0, 10, 0);
+		// Vertical dateUnit - Year. Step - 365.3. Case: 01/01/1900 - 01/03/1900. Bug #65796.
+		testData = [
+			['1'],
+			['367'],
+			['732'],
+			['1097']
+		];
+		oFromRange = getFilledData(0, 0, 0, 4, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setType(oSeriesType.date);
+		oSeriesSettings.asc_setDateUnit(oSeriesDateUnitType.year);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 0, 4);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['1'], ['367'], ['732'], ['1097'], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['1'],['133316'], ['266629'], ['399943'], ['533622']], _desc);
+		}, "Autofill Column: Date progression - Year, Step - 365.3. Case: 01/01/1900 - 01/03/1900. Bug #65796");
+		clearData(0, 0, 0, 4);
+		// Horizontal dateUnit - Weekday. Step - 1.2. Bug #65796.
+		testData = [
+			['01/14/2024']
+		];
+		oFromRange = getFilledData(0, 0, 9, 0, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(1.2);
+		oSeriesSettings.asc_setDateUnit(oSeriesDateUnitType.weekday);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 9, 0);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['45305', '', '', '', '', '', '', '', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['45305', '45306', '45307', '45308', '45309', '45313', '45314', '45315', '45316', '45317']], _desc);
+		}, "Autofill Row: Date progression - Weekday, Step - 1.2. Bug #65796");
+		clearData(0, 0, 9, 0);
+		// Vertical dateUnit - Weekday. Step - 1.2. Bug #65796.
+		testData = [
+			['01/13/2024']
+		];
+		oFromRange = getFilledData(0, 0, 0, 9, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(1.2);
+		oSeriesSettings.asc_setDateUnit(oSeriesDateUnitType.weekday);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 0, 9);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['45304'], [''], [''], [''], [''], [''], [''], [''], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['45304'], ['45306'], ['45307'], ['45308'], ['45309'], ['45313'], ['45314'], ['45315'], ['45316'], ['45317']], _desc);
+		}, "Autofill Column: Date progression - Weekday, Step - 1.2. Bug #65796");
+		clearData(0, 0, 0, 9);
+		// Horizontal dateUnit - Weekday. Step - -2. Bug #65731.
+		testData = [
+			['01/01/2023']
+		];
+		oFromRange = getFilledData(0, 0, 10, 0, testData, [0, 0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		oSeriesSettings.asc_setStepValue(-2);
+		oSeriesSettings.asc_setDateUnit(oSeriesDateUnitType.weekday);
+		api.asc_FillCells(oRightClickOptions.series, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 10, 0);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['44927', '', '', '', '', '', '', '', '', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['44927', '44924', '44922', '44918', '44916', '44914', '44910', '44908', '44904', '44902', '44900']], _desc);
+		}, "Autofill Row: Date progression - Weekday, Step - -2. Bug #65731");
+		clearData(0, 0, 10, 0);
 	});
 	QUnit.test('Autofill Date type - Horizontal multiple cells', function (assert) {
 		const testData = [
@@ -1622,6 +1985,23 @@ $(function () {
 		];
 		autofillData(assert, autofillRange, expectedData, 'Autofill Rows. Growth progression with trend mode. Start with empty cells');
 		clearData(0, 0, 5, 1);
+		// Growth progression with trend mode. With negative numbers as values in Range. Using activeFillHandle.
+		testData = [
+			['-1', '-2']
+		];
+		oFromRange = getFilledData(0, 0, 1, 0, testData, [0, 0]);
+		wsView.activeFillHandle = getRange(0, 0, 3, 0);
+		wsView.fillHandleDirection = 0;
+		let oSeriesSettings = api.asc_GetSeriesSettings();
+		api.asc_FillCells(oRightClickOptions.growthTrend, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 3, 0);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['-1', '-2', '', '']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['-1', '-2', '0', '0']], _desc);
+		}, 'Autofill Rows. Growth progression with trend mode. With negative numbers as values in Range. Using activeFillHandle');
+		clearData(0, 0, 3, 0);
 	});
 	QUnit.test('Fill -> Series. Trend. Vertical - Multiple cells', function (assert) {
 		let testData = [
@@ -1842,6 +2222,24 @@ $(function () {
 		]
 		autofillData(assert, autofillRange, expectedData, 'Autofill Columns. Growth progression with trend mode. Start with empty cells');
 		clearData(0, 0, 1, 5);
+		// Growth progression with trend mode. With negative numbers as values in Range. Using activeFillHandle.
+		testData = [
+			['-1'],
+			['-2']
+		];
+		oFromRange = getFilledData(0, 0, 0, 1, testData, [0, 0]);
+		wsView.activeFillHandle = getRange(0, 0, 0, 3);
+		wsView.fillHandleDirection = 1;
+		let oSeriesSettings = api.asc_GetSeriesSettings();
+		api.asc_FillCells(oRightClickOptions.growthTrend, oSeriesSettings);
+
+		autofillRange = getRange(0, 0, 0, 3);
+		checkUndoRedo(function (_desc) {
+			autofillData(assert, autofillRange, [['-1'], ['-2'], [''], ['']], _desc);
+		}, function (_desc) {
+			autofillData(assert, autofillRange, [['-1'], ['-2'], ['0'], ['0']], _desc);
+		}, 'Autofill Columns. Growth progression with trend mode. With negative numbers as values in Range. Using activeFillHandle');
+		clearData(0, 0, 0, 3);
 	});
 	QUnit.test('Autofill Series. StopValue out of range', function (assert) {
 		const testData = [
@@ -3085,6 +3483,38 @@ $(function () {
 
 		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.rows, 'oSeriesSettings: "Series in" is detected as "Rows".');
 		assert.strictEqual(oSeriesSettings.type, oSeriesType.date, 'oSeriesSettings: "Type" is detected as "Date".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 1, 'oSeriesSettings: "Step" is detected as 1.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		clearData(0, 0, 3, 0);
+		// Vertical selected range, first cell in range has type Date, another cells General. Bug #65873
+		testData = [
+			['01/01/1900'],
+			['2'],
+			['3']
+		];
+		getFilledData(0, 0, 0, 3, testData, [0,0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		assert.ok(oSeriesSettings, 'Vertical selected range, first cell in range has type Date, another cells General. Bug #65873');
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.columns, 'oSeriesSettings: "Series in" is detected as "Columns".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.date, 'oSeriesSettings: "Type" is detected as "Date".');
+		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
+		assert.strictEqual(oSeriesSettings.stepValue, 1, 'oSeriesSettings: "Step" is detected as 1.');
+		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');
+		assert.strictEqual(oSeriesSettings.trend, false, 'oSeriesSettings: "Trend" is detected as "false".');
+		clearData(0, 0, 0, 3);
+		// Horizontal selected range, first cell in range has type General, another cells Data. Bug #65873
+		testData = [
+			['1', '01/02/1900', '01/03/1900']
+		];
+		getFilledData(0, 0, 3, 0, testData, [0,0]);
+		oSeriesSettings = api.asc_GetSeriesSettings();
+		assert.ok(oSeriesSettings, 'Horizontal selected range, first cell in range has type General, another cells Data. Bug #65873');
+
+		assert.strictEqual(oSeriesSettings.seriesIn, oSeriesInType.rows, 'oSeriesSettings: "Series in" is detected as "Rows".');
+		assert.strictEqual(oSeriesSettings.type, oSeriesType.linear, 'oSeriesSettings: "Type" is detected as "Linear".');
 		assert.strictEqual(oSeriesSettings.dateUnit, oSeriesDateUnitType.day, 'oSeriesSettings: "Date unit" is detected as "Day".');
 		assert.strictEqual(oSeriesSettings.stepValue, 1, 'oSeriesSettings: "Step" is detected as 1.');
 		assert.strictEqual(oSeriesSettings.stopValue, null, 'oSeriesSettings: "Stop value" is detected as empty.');

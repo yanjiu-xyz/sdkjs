@@ -744,6 +744,16 @@ NumFormat.prototype =
 				return true;
 			}
 		}
+		if ("上" === next) {
+			let ampm = "上午/下午";
+			if (ampm.substring(1) === this._GetText(ampm.length - 1).toUpperCase()) {
+				this._addToFormat2(new FormatObj(numFormat_AmPm));
+				this.bTimePeriod = true;
+				this.bDateTime = true;
+				this._skip(ampm.length - 1);
+				return true;
+			}
+		}
 		return false;
     },
 	_ReadAmPmPDF : function(next)
@@ -1632,16 +1642,14 @@ NumFormat.prototype =
 		}
 		else
 		{
-			if(numberAbs === 60)
+			if (60 <= numberAbs && numberAbs < 61)
 			{
 				day = 29;
 				month = 1;
 				year = 1900;
 				dayWeek = 3;
 			}
-			// todo test converting all positive fractional values less than one into dates
-			// else if(numberAbs === 0 || (numberAbs > 0 && numberAbs < 1))
-			else if(numberAbs === 0)
+			else if (0 <= numberAbs && numberAbs < 1)
 			{
 				//TODO необходимо использовать cDate везде
 				stDate = new Asc.cDate(Date.UTC(1899,11,31,0,0,0));
@@ -5373,8 +5381,122 @@ function setCurrentCultureInfo (LCID, decimalSeparator, groupSeparator) {
 		}
 		return res;
 	}
-	function getFormatByStandardId(id) {
-		var res = null;
+	function getFormatByCulturalStandardId(id, opt_cultureInfo) {
+		var cultureInfo = opt_cultureInfo ? opt_cultureInfo : g_oDefaultCultureInfo;
+		let standartNumFormatsByLocale = {
+			1028: {//"zh-tw"
+				27: '[$-404]e/m/d',
+				28: '[$-404]e"年"m"月"d"日"',
+				29: '[$-404]e"年"m"月"d"日"',
+				30: 'm/d/yy',
+				31: 'yyyy"年"m"月"d"日"',
+				32: 'hh"時"mm"分"',
+				33: 'hh"時"mm"分"ss"秒"',
+				34: '上午/下午hh"時"mm"分"',
+				35: '上午/下午hh"時"mm"分"ss"秒"',
+				36: '[$-404]e/m/d',
+				50: '[$-404]e/m/d',
+				51: '[$-404]e"年"m"月"d"日"',
+				52: '上午/下午hh"時"mm"分"',
+				53: '上午/下午hh"時"mm"分"ss"秒"',
+				54: '上午/下午hh"時"mm"分"',
+				55: '上午/下午hh"時"mm"分"ss"秒"',
+				56: '[$-404]e/m/d',
+				57: '[$-404]e"年"m"月"d"日"',
+				58: '[$-404]e"年"m"月"d"日"'
+			},
+			2052: {//"zh-cn"
+				27: 'yyyy"年"m"月"',
+				28: 'm"月"d"日"',
+				29: 'm"月"d"日"',
+				30: 'm-d-yy',
+				31: 'yyyy"年"m"月"d"日"',
+				32: 'h"时"mm"分"',
+				33: 'h"时"mm"分"ss"秒"',
+				34: '上午/下午h"时"mm"分"',
+				35: '上午/下午h"时"mm"分"ss"秒"',
+				36: 'yyyy"年"m"月"',
+				50: 'yyyy"年"m"月"',
+				51: 'm"月"d"日"',
+				52: 'yyyy"年"m"月"',
+				53: 'm"月"d"日"',
+				54: 'm"月"d"日"',
+				55: '上午/下午h"时"mm"分"',
+				56: '上午/下午h"时"mm"分"ss"秒"',
+				57: 'yyyy"年"m"月"',
+				58: 'm"月"d"日"'
+			},
+			1041: {//"ja-jp"
+				27: '[$-411]ge.m.d',
+				28: '[$-411]ggge"年"m"月"d"日"',
+				29: '[$-411]ggge"年"m"月"d"日"',
+				30: 'm/d/yy',
+				31: 'yyyy"年"m"月"d"日"',
+				32: 'h"時"mm"分"',
+				33: 'h"時"mm"分"ss"秒"',
+				34: 'yyyy"年"m"月"',
+				35: 'm"月"d"日"',
+				36: '[$-411]ge.m.d',
+				50: '[$-411]ge.m.d',
+				51: '[$-411]ggge"年"m"月"d"日"',
+				52: 'yyyy"年"m"月"',
+				53: 'm"月"d"日"',
+				54: '[$-411]ggge"年"m"月"d"日"',
+				55: 'yyyy"年"m"月"',
+				56: 'm"月"d"日"',
+				57: '[$-411]ge.m.d',
+				58: '[$-411]ggge"年"m"月"d"日"'
+			},
+			1042: {//"ko-kr"
+				27: 'yyyy"年" mm"月" dd"日"',
+				28: 'mm-dd',
+				29: 'mm-dd',
+				30: 'mm-dd-yy',
+				31: 'yyyy"년" mm"월" dd"일"',
+				32: 'h"시" mm"분"',
+				33: 'h"시" mm"분" ss"초"',
+				34: 'yyyy-mm-dd',
+				35: 'yyyy-mm-dd',
+				36: 'yyyy"年" mm"月" dd"日"',
+				50: 'yyyy"年" mm"月" dd"日"',
+				51: 'mm-dd',
+				52: 'yyyy-mm-dd',
+				53: 'yyyy-mm-dd',
+				54: 'mm-dd',
+				55: 'yyyy-mm-dd',
+				56: 'yyyy-mm-dd',
+				57: 'yyyy"年" mm"月" dd"日"',
+				58: 'mm-dd'
+			},
+			1054: {//"th-th"
+				59: 't0',
+				60: 't0.00',
+				61: 't#,##0',
+				62: 't#,##0.00',
+				67: 't0%',
+				68: 't0.00%',
+				69: 't# ?/?',
+				70: 't# ??/??',
+				71: 'ว/ด/ปปปป',
+				72: 'ว-ดดด-ปป',
+				73: 'ว-ดดด',
+				74: 'ดดด-ปป',
+				75: 'ช:นน',
+				76: 'ช:นน:ทท',
+				77: 'ว/ด/ปปปป ช:นน',
+				78: 'นน:ทท',
+				79: '[ช]:นน:ทท',
+				80: '80 นน:ทท.0',
+				81: 'd/m/bb'
+			}
+		}
+		return standartNumFormatsByLocale[cultureInfo.LCID] && standartNumFormatsByLocale[cultureInfo.LCID][id] || null;
+	}
+	function getFormatByStandardId(id, opt_cultureInfo) {
+		var res = getFormatByCulturalStandardId(id, opt_cultureInfo);
+		if (res) {
+			return res;
+		}
 		if (59 <= id && id <= 78) {
 			if (69 <= id && id <= 71) {
 				id += 1;

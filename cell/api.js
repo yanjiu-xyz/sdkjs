@@ -6875,6 +6875,15 @@ var editor;
   };
 
   spreadsheet_api.prototype.asc_nativeGetPDF = function(options) {
+    if (options && options["watermark"])
+    {
+      this.watermarkDraw = new AscCommon.CWatermarkOnDraw(options["watermark"], this);
+      this.watermarkDraw.generateNative();
+    }
+    else
+    {
+      this.watermarkDraw = null;
+    }
     var _ret = this.asc_nativePrint(undefined, undefined, options);
 
     window["native"]["Save_End"]("", _ret.GetCurPosition());

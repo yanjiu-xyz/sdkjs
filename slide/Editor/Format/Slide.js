@@ -1340,6 +1340,9 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
         let oIdentityMtx = new AscCommon.CMatrix();
         for(i = 0; i < this.cSld.spTree.length; ++i) {
             let oSp = this.cSld.spTree[i];
+            if(AscCommon.IsHiddenObj(oSp)) {
+                continue;
+            }
             if(this.collaborativeMarks) {
                 oCollColor = this.collaborativeMarks.Check(i);
                 if(oCollColor) {
@@ -1925,7 +1928,6 @@ AscFormat.InitClass(Slide, AscFormat.CBaseFormatObject, AscDFH.historyitem_type_
             {
                 if(sp.isPlaceholder && sp.isPlaceholder())
                 {
-                    sp.recalcInfo.recalculateShapeHierarchy = true;
                     var hierarchy = sp.getHierarchy();
                     for(var j = 0; j < hierarchy.length; ++j)
                     {
