@@ -2027,7 +2027,9 @@
 	};
 
 	CAnimItem.prototype.setNewEffectParams = function (newDelay, newDuration) {
-		const effectCopy = this.effect.createDuplicate();
+		const effectCopy = AscFormat.ExecuteNoHistory(function () {
+			return this.effect.createDuplicate();
+		}, this, []);
 
 		if (newDelay !== null && newDelay !== undefined) {
 			effectCopy.asc_putDelay(newDelay);
