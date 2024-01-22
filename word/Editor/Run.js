@@ -6576,6 +6576,8 @@ ParaRun.prototype.Get_ParaContentPosByXY = function(SearchPos, Depth, _CurLine, 
 };
 ParaRun.prototype.getParagraphContentPosByXY = function(searchState)
 {
+	searchState.handleRun(this);
+	
 	let rangePos = this.getRangePos(searchState.Line, searchState.Range);
 	let startPos = rangePos[0];
 	let endPos   = rangePos[1];
