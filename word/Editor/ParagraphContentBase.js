@@ -3134,9 +3134,6 @@ CParagraphContentWithParagraphLikeContent.prototype.getParagraphContentPosByXY =
 	let rangePos = this.getRangePos(searchState.line, searchState.range);
 	let startPos = rangePos[0];
 	let endPos   = rangePos[1];
-	if (startPos >= endPos)
-		return;
-	
 	for (let pos = startPos; pos <= endPos; ++pos)
 	{
 		this.Content[pos].getParagraphContentPosByXY(searchState);
