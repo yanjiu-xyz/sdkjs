@@ -34,42 +34,20 @@
 
 (function(window)
 {
-	const EPSILON = 0.001;
+	const EPSILON  = 0.001;
 	const MAX_DIFF = 1000000;
 	
 	/**
 	 * Class for searching position in the paragraph
-	 * @param {AscWord.Paragraph} paragraph
 	 * @constructor
 	 */
 	function ParagraphSearchPositionXY()
 	{
-		this.Pos       = new AscWord.CParagraphContentPos();
-		this.InTextPos = new AscWord.CParagraphContentPos();
-		
-		this.CenterMode     = true; // Ищем ближайший (т.е. ориентируемся по центру элемента), или ищем именно прохождение через элемент
-		this.CurX           = 0;
-		this.CurY           = 0;
-		this.X              = 0;
-		this.Y              = 0;
-		this.DiffX          = 1000000; // километра для ограничения должно хватить
-		this.NumberingDiffX = 1000000; // километра для ограничения должно хватить
-		this.DiffAbs        = 1000000;
-		
-		this.Line      = 0;
-		this.Range     = 0;
-		
-		this.InTextX   = false;
-		this.InText    = false;
-		this.Numbering = false;
-		this.End       = false;
-		this.Field     = null;
-		
 		this.line  = 0;
 		this.range = 0;
 		this.page  = 0;
 		
-		this.centerMode = true;  // Ищем ближайший (т.е. ориентируемся по центру элемента), или ищем именно прохождение через элемент
+		this.centerMode = true;  // Search the closest position (relative to the middle of the element), or we search a position beyond the specified x-coordinate
 		this.stepEnd    = false; // Search for position beyond the mark of paragraph
 		
 		this.curX    = 0;
@@ -86,12 +64,14 @@
 		this.rtl      = false;
 		
 		// TODO: Unite with CRunWithPosition class
+		this.pos     = null;
 		this.posInfo = {
 			run : null,
 			pos : 0
 		};
 		
-		this.inTextPos = {
+		this.inTextPos     = null;
+		this.inTextPosInfo = {
 			run : null,
 			pos : 0
 		};
@@ -111,11 +91,16 @@
 	{
 		if (this.correctPageAndLineNumber(page))
 			this.line = this.calculateLineNumber(y, this.page);
+		else
+			y = undefined;
 		
 		this.searchByLine(x, this.line, page, y);
 	};
 	ParagraphSearchPositionXY.prototype.searchByLine = function(x, line, page, y)
 	{
+		this.pos       = null;
+		this.inTextPos = null;
+		
 		this.line = line;
 		this.correctPageAndLineNumber(page);
 		
@@ -142,28 +127,16 @@
 			this.Content[pos].getParagraphContentPosByXY(this);
 		}
 		
-		//
-		// // По Х попали в какой-то элемент, проверяем по Y
-		// if (true === SearchPos.InText && Y >= this.Pages[PNum].Y + this.Lines[CurLine].Y - this.Lines[CurLine].Metrics.Ascent - 0.01 && Y <= this.Pages[PNum].Y + this.Lines[CurLine].Y + this.Lines[CurLine].Metrics.Descent + this.Lines[CurLine].Metrics.LineGap + 0.01)
-		// 	SearchPos.InText = true;
-		// else
-		// 	SearchPos.InText = false;
-		//
-		// // Такое возможно, если все раны до этого (в том числе и этот) были пустыми, тогда, чтобы не возвращать
-		// // неправильную позицию вернем позицию начала данного пустого рана.
-		// if (SearchPos.DiffX > 1000000 - 1)
-		// {
-		// 	SearchPos.Line  = -1;
-		// 	SearchPos.Range = -1;
-		// }
-		// else
-		// {
-		// 	SearchPos.Line  = CurLine;
-		// 	SearchPos.Range = CurRange;
-		// }
+		this.checkInText()
 		
-		//SearchPos.Pos = this.private_GetClosestPosInCombiningMark(SearchPos.Pos, SearchPos.DiffAbs);
-		//return SearchPos;
+		if (this.diffX > MAX_DIFF - 1)
+		{
+			this.line  = -1;
+			this.range = -1;
+			
+			this.pos       = p.GetStartPos();
+			this.inTextPos = this.pos.copy();
+		}
 	};
 	ParagraphSearchPositionXY.prototype.handleRun = function(run)
 	{
@@ -241,14 +214,14 @@
 		if (-EPSILON <= diff && diff <= w + EPSILON)
 		{
 			this.inTextX = true;
-			this.inTextPos.run = this;
+			this.inTextPos.run = run;
 			this.inTextPos.pos = inRunPos;
 		}
 		
 		if (this.checkPosition(diff))
 		{
 			this.setDiff(diff);
-			this.posInfo.run = this;
+			this.posInfo.run = run;
 			this.posInfo.pos = inRunPos;
 		}
 		
@@ -271,7 +244,7 @@
 					diff = Math.min(diff, diff - item.RGap);
 				
 				this.setDiff(diff);
-				this.posInfo.run = this;
+				this.posInfo.run = run;
 				this.posInfo.pos = inRunPos + 1;
 			}
 		}
@@ -281,15 +254,19 @@
 	};
 	ParagraphSearchPositionXY.prototype.getPos = function()
 	{
-		let paraPos = this.paragraph.GetPosByElement(this.posInfo.run);
-		paraPos.Update(this.posInfo.pos, paraPos.GetDepth() + 1);
-		return paraPos;
+		if (this.pos)
+			return this.pos;
+		
+		this.pos = this.getPosByPosInfo(this.posInfo)
+		return this.pos;
 	};
 	ParagraphSearchPositionXY.prototype.getInTextPos = function()
 	{
-		let paraPos = this.paragraph.GetPosByElement(this.posInfo.run);
-		paraPos.Update(this.posInfo.pos, paraPos.GetDepth() + 1);
-		return paraPos;
+		if (this.inTextPos)
+			return this.inTextPos;
+		
+		this.inTextPos = this.getPosByPosInfo(this.inTextPosInfo);
+		return this.inTextPos;
 	};
 	ParagraphSearchPositionXY.prototype.getLine = function()
 	{
@@ -421,6 +398,25 @@
 		return (((diff <= 0 && Math.abs(diff) < this.diffX - EPSILON) || (diff > 0 && diff < this.diffX + EPSILON))
 			&& (this.centerMode || this.x > this.curX));
 	}
+	ParagraphSearchPositionXY.prototype.checkInText = function(y)
+	{
+		this.inText = false;
+		if (!this.inTextX || undefined === y)
+			return;
+		
+		let p = this.paragraph;
+		
+		let lineTop    = p.Pages[this.page].Y + p.Lines[this.line].Y - p.Lines[this.line].Metrics.Ascent - EPSILON;
+		let lineBottom = p.Pages[this.page].Y + p.Lines[this.line].Y + p.Lines[this.line].Metrics.Descent + p.Lines[this.line].Metrics.LineGap + EPSILON;
+		
+		return (lineTop <= y && y <= lineBottom);
+	};
+	ParagraphSearchPositionXY.prototype.getPosByPosInfo = function(posInfo)
+	{
+		let paraPos = this.paragraph.GetPosByElement(posInfo.run);
+		paraPos.Update(posInfo.pos, paraPos.GetDepth() + 1);
+		return this.paragraph.private_GetClosestPosInCombiningMark(paraPos, this.diffAbs);
+	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.ParagraphSearchPositionXY = ParagraphSearchPositionXY;
 	
