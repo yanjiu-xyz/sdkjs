@@ -30627,7 +30627,6 @@ $(function () {
 		fillData(ws, testData, testDataRange);
 		ws.getRange2("B2")
 		const dataRef = ws.getName() + "!" + testDataRange.getName();
-		const api = wb.oApi;
 		const pivotName = wb.dependencyFormulas.getNextPivotName();
 		const pivot = new Asc.CT_pivotTableDefinition(true);
 		const dataLocation = AscFormat.ExecuteNoHistory(function() {
@@ -30637,7 +30636,7 @@ $(function () {
 		if (!cacheDefinition) {
 			cacheDefinition = new Asc.CT_PivotCacheDefinition();
 			cacheDefinition.asc_create();
-			// Or crash on 17664 PivotTables.js
+			// Fix crash on 17664 PivotTables.js
 			window["Asc"]["editor"].wbModel = wb;
 			cacheDefinition.fromDataRef(dataRef);
 		}
@@ -30650,6 +30649,9 @@ $(function () {
 		addColField(pivot, 1);
 		pivot.addDataFieldAndReIndex(5, undefined, true);
 		pivot.addValuesField(true);
+
+		ws.getRange2("Z1").setValue('=GETPIVOTDATA("Price",$A$3,"Region","East";"Gender","Boy","Style","Fancy")');
+		console.log(ws.getRange2("Z1").getValue());
 
 		console.log(pivot);
 		assert.strictEqual()
