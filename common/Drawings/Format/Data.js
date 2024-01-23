@@ -3874,6 +3874,7 @@ Because of this, the display is sometimes not correct.
 							return this.val;
 					}
 				}
+				case Param_type_secLinDir:
 				case Param_type_linDir: {
 					switch (this.val) {
 						case 'fromL':
@@ -6157,7 +6158,9 @@ Because of this, the display is sometimes not correct.
     };
     AnimLvl.prototype.fromPPTY = function (pReader) {
       var val = pReader.stream.ReadByteFromPPTY();
-      this.setVal(val);
+			if (val !== null) {
+				this.setVal(val);
+			}
     };
     AnimLvl.prototype.readAttribute = function(nType, pReader) {
       var oStream = pReader.stream;
@@ -6197,7 +6200,9 @@ Because of this, the display is sometimes not correct.
 
     AnimOne.prototype.fromPPTY = function (pReader) {
       var val = pReader.stream.ReadByteFromPPTY();
-      this.setVal(val);
+	    if (val !== null) {
+		    this.setVal(val);
+	    }
     };
 
     changesFactory[AscDFH.historyitem_BulletEnabledVal] = CChangeBool;
@@ -6230,7 +6235,9 @@ Because of this, the display is sometimes not correct.
 
     BulletEnabled.prototype.fromPPTY = function (pReader) {
       var val = pReader.stream.ReadByteFromPPTY();
-      this.setVal(!!val);
+	    if (val !== null) {
+		    this.setVal(!!val);
+	    }
     };
 
     changesFactory[AscDFH.historyitem_ChMaxVal] = CChangeLong;
@@ -6336,7 +6343,9 @@ Because of this, the display is sometimes not correct.
 
     DiagramDirection.prototype.fromPPTY = function (pReader) {
       var val = pReader.stream.ReadByteFromPPTY();
-      this.setVal(val);
+	    if (val !== null) {
+		    this.setVal(val);
+	    }
     };
 
 
@@ -6347,7 +6356,7 @@ Because of this, the display is sometimes not correct.
 
     function HierBranch() {
       CBaseFormatObject.call(this);
-      this.val = null;
+      this.val = AscFormat.HierBranch_val_std;
     }
 
     InitClass(HierBranch, CBaseFormatObject, AscDFH.historyitem_type_HierBranch);
@@ -6366,12 +6375,14 @@ Because of this, the display is sometimes not correct.
     };
 
     HierBranch.prototype.toPPTY = function (pWriter) {
-      pWriter.WriteByteToPPTY(this.getVal() || 0);
+      pWriter.WriteByteToPPTY(this.getVal());
     };
 
     HierBranch.prototype.fromPPTY = function (pReader) {
       var val = pReader.stream.ReadByteFromPPTY();
-      this.setVal(val);
+	    if (val !== null) {
+		    this.setVal(val/* || AscFormat.HierBranch_val_std*/);
+	    }
     };
 
 
@@ -6406,7 +6417,9 @@ Because of this, the display is sometimes not correct.
 
     OrgChart.prototype.fromPPTY = function (pReader) {
       var val = pReader.stream.ReadByteFromPPTY();
-      this.setVal(!!val);
+	    if (val !== null) {
+		    this.setVal(!!val);
+	    }
     };
 
 
@@ -6442,7 +6455,9 @@ Because of this, the display is sometimes not correct.
 
     ResizeHandles.prototype.fromPPTY = function (pReader) {
       var val = pReader.stream.ReadByteFromPPTY();
-      this.setVal(val);
+	    if (val !== null) {
+		    this.setVal(val);
+	    }
     };
 
 
