@@ -30611,6 +30611,16 @@ $(function () {
 			["West","Girl","Tee","2","15","13.42","13.29"],
 			["West","Girl","Golf","1","15","11.48","10.67"]
 		];
+		function addRowField(pivot, index) {
+			var deleteIndex = pivot.removeNoDataField(index, true);
+			let insertIndex = pivot.checkInsertIndex(undefined, deleteIndex);
+			pivot.addRowField(index, insertIndex, true);
+		}
+		function addColField(pivot, index) {
+			var deleteIndex = pivot.removeNoDataField(index, true);
+			let insertIndex = pivot.checkInsertIndex(undefined, deleteIndex);
+			pivot.addColField(index, insertIndex, true);
+		}
 		const reportRange = new Asc.Range(AscCommonExcel.NEW_PIVOT_COL, AscCommonExcel.NEW_PIVOT_ROW, AscCommonExcel.NEW_PIVOT_COL, AscCommonExcel.NEW_PIVOT_ROW);
 		const dataOffset = 30;
 		const testDataRange = new Asc.Range(dataOffset, dataOffset, dataOffset + testData[0].length - 1, dataOffset + testData.length - 1);
@@ -30627,18 +30637,22 @@ $(function () {
 		if (!cacheDefinition) {
 			cacheDefinition = new Asc.CT_PivotCacheDefinition();
 			cacheDefinition.asc_create();
-			// Crash on 17664 PivotTables.js
+			// Or crash on 17664 PivotTables.js
+			window["Asc"]["editor"].wbModel = wb;
 			cacheDefinition.fromDataRef(dataRef);
 		}
 		pivot.asc_create(ws, pivotName, cacheDefinition, reportRange);
 		pivot.stashEmptyReportRange();
 		ws.insertPivotTable(pivot, true, false);
 
-		pivot.asc_addRowField(api, 0);
-		pivot.asc_addRowField(api, 2);
-		pivot.asc_addRowField(api, 4);
-		pivot.asc_addColField(api, 1);
-		pivot.asc_addDataField(api, 5);
+		addRowField(pivot, 0);
+		addRowField(pivot, 2);
+		addColField(pivot, 1);
+		pivot.addDataFieldAndReIndex(5, undefined, true);
+		pivot.addValuesField(true);
+
+		console.log(pivot);
+		assert.strictEqual()
 		
 	});
 
