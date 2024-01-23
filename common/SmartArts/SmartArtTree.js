@@ -423,8 +423,15 @@
 		this.presNodesStack = [];
 		this.colorCheck = {};
 		this.connectorAlgorithmStack = [];
+		this.hierarchyOffsetHelper = null;
 		this.initDataTree();
 	}
+	SmartArtAlgorithm.prototype.getHierarchyOffsetHelper = function () {
+		if (this.hierarchyOffsetHelper === null) {
+			this.hierarchyOffsetHelper = new HierarchyOffsetHelper();
+		}
+		return this.hierarchyOffsetHelper;
+	};
 	SmartArtAlgorithm.prototype.addConnectorAlgorithm = function (algorithm) {
 		this.connectorAlgorithmStack.push(algorithm);
 	}
@@ -2095,39 +2102,46 @@
 			callback(this.row[i]);
 		}
 	}
-
+function HierarchyOffsetHelper() {
+	this.minMax = {};
+}
 	function HierarchyChildAlgorithm() {
 		PositionAlgorithm.call(this);
 	}
 	AscFormat.InitClassWithoutType(HierarchyChildAlgorithm, PositionAlgorithm);
-	HierarchyChildAlgorithm.prototype.getChildShape = function (node) {
-		if (node.algorithm.isRootHierarchy()) {
-
-		}
-	}
-	HierarchyChildAlgorithm.prototype.calcScaleCoefficients = function () {
-		this.parentNode.calcNodeConstraints();
+	HierarchyChildAlgorithm.prototype.calcScaleCoefficients = function (smartartAlgoithm) {
+		this.parentNode.calcNodeConstraints(true);
 		const childs = this.getMainChilds();
+		if (!childs.length) {
+			return;
+		}
+		const hierarchyHelper = smartartAlgoithm.getHierarchyOffsetHelper();
+
 		const parentConstraints = this.getNodeConstraints(this.parentNode);
 		const parentWidth = parentConstraints.width;
 		const parentHeight = parentConstraints.height;
 		const space = this.parentNode.getConstr(AscFormat.Constr_type_sibSp);
-		let sumWidth = 0;
-		let sumHeight = 0;
-		for (let i = 0; i < childs.length; i += 1) {
+		const firstChild = childs[0];
+		const firstConstraints = this.getNodeConstraints(firstChild);
+		let sumWidth = firstConstraints.width;
+		let sumHeight = firstConstraints.height;
+		for (let i = 1; i < childs.length; i += 1) {
 			const child = childs[i];
 			const childConstraints = this.getNodeConstraints(child);
-			sumWidth += childConstraints.width + space;
-			sumHeight += childConstraints.height + space;
+			if (childConstraints.width || childConstraints.height) {
+				sumWidth += childConstraints.width + space;
+				sumHeight += childConstraints.height + space;
+			}
 		}
 		const coefficient = Math.min(1, parentWidth / sumWidth, parentHeight / sumHeight);
 
 		for (let i = 0; i < this.parentNode.childs.length; i += 1) {
+
 			const child = this.parentNode.childs[i];
-			child.forEachDesOrSelf(function (node) {
-				node.setWidthScaleConstrCoefficient(coefficient);
-				node.setHeightScaleConstrCoefficient(coefficient);
-			});
+			for (let j = 0; j < child.childs.length; j += 1) {
+				child.childs[j].setWidthScaleConstrCoefficient(coefficient);
+				child.childs[j].setHeightScaleConstrCoefficient(coefficient);
+			}
 		}
 	};
 	HierarchyChildAlgorithm.prototype.getMainChilds = function () {
@@ -2151,7 +2165,7 @@
 		for (let i = 0; i < childs.length; i += 1) {
 			const child = childs[i];
 			const shape = child.shape;
-			if (shape) {
+			if (shape && (shape.w || shape.h)) {
 				shape.x = x;
 				x += shape.w + space;
 				this.shapeContainer.push(shape);
@@ -2162,7 +2176,7 @@
 		this.applyConstraintOffset();
 		this.applyPostAlgorithmSettings();
 		this.setConnections();
-		this.parentNode.createShadowShape();
+		this.parentNode.createShadowShape(true);
 	};
 
 	function HierarchyRootAlgorithm() {
@@ -4108,7 +4122,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 
 	PresNode.prototype.calcScaleCoefficients = function (smartartAlgorithm) {
 		if (this.algorithm) {
-			this.algorithm.calcScaleCoefficients(this, smartartAlgorithm);
+			this.algorithm.calcScaleCoefficients(smartartAlgorithm);
 		}
 	}
 
@@ -4135,7 +4149,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 		}
 	}
 	PresNode.prototype.calcNodeConstraints = function (isComposite) {
-		if (isComposite && this.childs.length) {
+		if (isComposite && this.childs.length && !this.node.isRoot()) {
 			const childBounds = {
 					b: this.nodeConstraints.y + this.nodeConstraints.height,
 					t: this.nodeConstraints.y,
