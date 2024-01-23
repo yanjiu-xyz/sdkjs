@@ -1965,7 +1965,7 @@
 		graphics.AddClipRect(clipL, clipT, clipW, clipH);
 
 		// In case we need to draw a triangle
-		if (this.effect.cTn.presetID === 1) {
+		if (this.effect.isInstantEffect()) {
 			graphics.b_color1(0, 0, 255, 255);
 
 			const bounds = this.getEffectBarBounds();
@@ -2005,7 +2005,7 @@
 		let t = this.bounds.t + (ANIM_ITEM_HEIGHT - EFFECT_BAR_HEIGHT) / 2;
 		let b = t + EFFECT_BAR_HEIGHT;
 
-		if (this.effect.cTn.presetID === 1) {
+		if (this.effect.isInstantEffect()) {
 			return { l: l, r: l + EFFECT_BAR_HEIGHT, t: t, b: b }
 		}
 
@@ -2016,7 +2016,7 @@
 		const bounds = this.getEffectBarBounds();
 
 		if (y > bounds.t && y < bounds.b) {
-			if (this.effect.cTn.presetID !== 1) {
+			if (!this.effect.isInstantEffect()) {
 				if (x >= bounds.l - delta && x <= bounds.l) { return 'left'; }
 				if (x >= bounds.r && x <= bounds.r + delta) { return 'right'; }
 			}

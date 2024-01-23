@@ -968,6 +968,10 @@
     CTimeNodeBase.prototype.isAfterEffect = function () {
         return this.isAnimEffect() && this.getNodeType() === AscFormat.NODE_TYPE_AFTEREFFECT;
     };
+	CTimeNodeBase.prototype.isInstantEffect = function () {
+		return this.cTn.presetID === 1 && this.cTn.presetClass === AscFormat.PRESET_CLASS_ENTR ||
+			this.cTn.presetID === 1 && this.cTn.presetClass === AscFormat.PRESET_CLASS_EXIT
+	}
     CTimeNodeBase.prototype.traverseTimeNodes = function (fCallback) {
         fCallback(this);
         var aChildren = this.getChildrenTimeNodes();
