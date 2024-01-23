@@ -240,6 +240,22 @@ function (window, undefined) {
 		this.setParentToChild(pr);
 	};
 
+	CAxis.prototype.getFormatCode = function() {
+        var oNumFmt = this.numFmt;
+        var sFormatCode = null;
+
+        if(oNumFmt) {
+            if(oNumFmt.sourceLinked) {
+                return this.getSourceFormatCode();
+            }
+            sFormatCode = oNumFmt.formatCode;
+            if(typeof sFormatCode === "string" && sFormatCode.length > 0) {
+                return sFormatCode;
+            }
+        }
+        return "General";
+    };
+
 	CAxis.prototype.setTickLabels = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_Axis_SetTickLabels, this.tickLabels, pr));
 		this.tickLabels = pr;

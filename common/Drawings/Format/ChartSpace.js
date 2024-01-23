@@ -4290,7 +4290,9 @@ function(window, undefined) {
 				}
 	
 				if (cachedData.aggregation) {
-					aStrings = this.getLabelsForAxis(oAxis, true);
+					for (let i = 0; i < oAxis.scale.length; i++) {
+						aStrings.push(String.fromCharCode(oAxis.scale[i]));
+					}
 				} else if (cachedData.binning) {
 					const bStrings = this.getLabelsForAxis(oAxis, true);
 					const binning = cachedData.binning;
@@ -4492,8 +4494,25 @@ function(window, undefined) {
 		}
 
 		if (isChartEx) {
-			for (let i = 0; i < oAxis.scale.length; i++) {
-				aStrings.push(oAxis.scale[i].toString());
+			var aVal = [].concat(oAxis.scale);
+			var fMultiplier = 1.0;
+			var oNumFormat = null;
+			var sFormatCode = oAxis.getFormatCode();
+			if (typeof sFormatCode === "string") {
+				oNumFormat = oNumFormatCache.get(sFormatCode);
+			}
+			if (!oNumFormat) {
+				oNumFormat = oNumFormatCache.get("General");
+			}
+			for (var t = 0; t < aVal.length; ++t) {
+				var fCalcValue = aVal[t] * fMultiplier;
+				var sRichValue;
+				if (oNumFormat) {
+					sRichValue = oNumFormat.formatToChart(fCalcValue);
+				} else {
+					sRichValue = fCalcValue + "";
+				}
+				aStrings.push(sRichValue);
 			}
 		}
 		return aStrings;
@@ -4689,6 +4708,7 @@ function(window, undefined) {
 			let bKoeff = 1.0;
 			if(oCrossAxis.scale.length > 1) {
 				bKoeff = oCrossAxis.scale[1] - oCrossAxis.scale[0];
+				bKoeff = bKoeff ? bKoeff : 1.0;
 			}
 			fAxisPos = oCrossGrid.fStart;
 			const bRadarValues = oCurAxis.isRadarValues();

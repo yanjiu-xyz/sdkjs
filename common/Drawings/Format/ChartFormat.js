@@ -7680,6 +7680,7 @@
     };
     CAxisBase.prototype.setNumFmt = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_CatAxSetNumFmt, this.numFmt, pr));
+        console.log(pr)
         this.numFmt = pr;
         this.setParentToChild(pr);
         this.onUpdate();
@@ -7794,6 +7795,7 @@
             oNumFmt = new CNumFmt();
             oNumFmt.setSourceLinked(true);
             oNumFmt.setFormatCode("General");
+            console.log("here");
             this.setNumFmt(oNumFmt)
         }
         if(oNumFmt.sourceLinked) {

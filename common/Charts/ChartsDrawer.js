@@ -1172,8 +1172,8 @@ CChartsDrawer.prototype =
 		}
 
 		if (verticalAxis && verticalAxis.yPoints && verticalAxis.yPoints.length && this.calcProp.heightCanvas != undefined) {
-			if (verticalAxis instanceof AscFormat.CValAx) {
-				if (verticalAxis.scaling.orientation === ORIENTATION_MIN_MAX) {
+			if (verticalAxis instanceof AscFormat.CValAx || isChartEx) {
+				if (verticalAxis.scaling.orientation === ORIENTATION_MIN_MAX || isChartEx) {
 					calculateTop = verticalAxis.yPoints[verticalAxis.yPoints.length - 1].pos;
 					calculateBottom = this.calcProp.heightCanvas / pxToMM - verticalAxis.yPoints[0].pos;
 				} else {
@@ -2478,7 +2478,7 @@ CChartsDrawer.prototype =
 		const strSeria = plotArea.plotAreaRegion.series[0];
 		const strCahce = strSeria.getCatLit();
 		const seriesLength = plotArea.plotAreaRegion.series.length;
-		let numSeria = strCahce ? plotArea.plotAreaRegion.series[0] : plotArea.plotAreaRegion.series[seriesLength - 1];
+		let numSeria = !strCahce ? plotArea.plotAreaRegion.series[0] : plotArea.plotAreaRegion.series[seriesLength - 1];
 		const numLit = numSeria.getValLit();
 		plotArea.plotAreaRegion.cachedData = {
 			aggregation : null,
@@ -2488,6 +2488,9 @@ CChartsDrawer.prototype =
 		if (numLit && plotArea.axId && plotArea.axId.length === 2) {
 
 			const normalizeBinWidth = function (num) { 
+				if (num === 0) {
+					return num;
+				}
 				let count = 0;
 				let multiply = false;
 				while (num >= 100) {
@@ -2538,7 +2541,7 @@ CChartsDrawer.prototype =
 				for (let i = 0; i < numLit.pts.length; i++) {
 					if (!cachedData.aggregation[strCahce.pts[i].val]) {
 						cachedData.aggregation[strCahce.pts[i].val] = 0;
-						catAxis.scale.push(i);
+						catAxis.scale.push(strCahce.pts[i].val.charCodeAt(0));
 					}
 					cachedData.aggregation[strCahce.pts[i].val] += numLit.pts[i].val;
 					if (valMin === null || cachedData.aggregation[strCahce.pts[i].val] < valMin) {
@@ -2561,12 +2564,13 @@ CChartsDrawer.prototype =
 				// localBinning.overflow = ((localBinning.overflow === 0 || localBinning.overflow) && statement1) ? localBinning.overflow : null;
 				// localBinning.underflow = ((localBinning.underflow === 0 || localBinning.underflow) && statement2) ? localBinning.underflow : null;
 	
-				localBinning.overflow = ((localBinning.overflow === 0 || localBinning.overflow) && localBinning.overflow < catAxis.max && localBinning.overflow > catAxis.min) ? localBinning.overflow : null;
-				localBinning.underflow = ((localBinning.underflow === 0 || localBinning.underflow) && localBinning.underflow > catAxis.min && localBinning.underflow < catAxis.max) ? localBinning.underflow : null;
+				localBinning.overflow = ((localBinning.overflow === 0 || localBinning.overflow) && localBinning.overflow < catAxis.max && localBinning.overflow >= catAxis.min) ? localBinning.overflow : null;
+				localBinning.underflow = ((localBinning.underflow === 0 || localBinning.underflow) && localBinning.underflow > catAxis.min && localBinning.underflow <= catAxis.max) ? localBinning.underflow : null;
 				const trueMax = (localBinning.overflow === 0 || localBinning.overflow) ? localBinning.overflow : catAxis.max;
 				const trueMin = (localBinning.underflow === 0 || localBinning.underflow) ? localBinning.underflow : catAxis.min;
 				if (localBinning.binSize) {
 					localBinning.binCount = Math.ceil((trueMax - trueMin) / localBinning.binSize);
+					localBinning.binCount = localBinning.binCount ? localBinning.binCount : 1;
 				} else if (localBinning.binCount) {
 					let binCountDecrease = 0;
 					binCountDecrease = (localBinning.overflow === 0 || localBinning.overflow) ? binCountDecrease + 1 : binCountDecrease;
@@ -2580,17 +2584,40 @@ CChartsDrawer.prototype =
 				} else {
 					// Find stdev 
 					// formula = sqrt((∑(x - mean)^2)/(n-1))
-					for (let i = 0; i < data.length; i++) {
-						stDev += Math.pow((data[i].val - mean), 2);
+					if (data.length > 0) {
+						let isUnique = true;
+						for (let i = 0; i < data.length; i++) {
+							isUnique = data[i].val === data[0].val ? true : false;
+							stDev += Math.pow((data[i].val - mean), 2);
+						}
+						stDev /= (data.length - 1);
+						stDev = Math.sqrt(stDev);
+
+						// Calculate bin size and bin count
+						let result = (3.5 * stDev) / (Math.pow(data.length, 1 / 3));
+						localBinning.binSize = normalizeBinWidth(result);
+		
+						const reminder1 = ((localBinning.underflow === 0 || localBinning.underflow) && (trueMax - trueMin <= localBinning.binSize)) ?  localBinning.binSize : 0
+						let reminder2 = 0;
+						if (!reminder1) {
+							reminder2 = ((localBinning.overflow === 0 || localBinning.overflow) && (trueMax - trueMin <= 0)) ? catAxis.max - trueMin : 0;
+						}
+						if (trueMax - trueMin === 0 && !reminder2) {
+							localBinning.binCount = 1;
+						}else{
+							localBinning.binCount = (localBinning.binSize !== 0) ? Math.ceil((trueMax + reminder1 + reminder2 - trueMin) / localBinning.binSize) : 2;
+						}
+						
+						if (isUnique) {
+							localBinning.binSize = 5;
+							localBinning.binCount = 1;
+							localBinning.overflow = null;
+							localBinning.underflow = null;
+						}
+					} else {
+						return
 					}
-					stDev /= (data.length - 1);
-					stDev = Math.sqrt(stDev);
 					
-					// Calculate bin size and bin count
-					let result = (3.5 * stDev) / (Math.pow(data.length, 1 / 3));
-					localBinning.binSize = normalizeBinWidth(result);
-	
-					localBinning.binCount = (localBinning.binSize != 0) ? Math.ceil((trueMax - trueMin) / localBinning.binSize) : 2;
 				}
 	
 				// CreateRanges and find catAxis scale
@@ -2606,7 +2633,7 @@ CChartsDrawer.prototype =
 	
 				catAxis.scale.push(prev);
 				for (let i = 0; i < localBinning.binCount; i++) {
-					const curr = ((prev + localBinning.binSize) < catAxis.max) ? prev + localBinning.binSize : catAxis.max;
+					const curr = ((localBinning.overflow === 0 || localBinning.overflow) && (prev + localBinning.binSize) >= trueMax) ? trueMax : prev + localBinning.binSize;
 					const range = {
 						min : prev,
 						max : curr,
@@ -2614,7 +2641,7 @@ CChartsDrawer.prototype =
 					};
 					prev = curr;
 					localResults.push(range);
-					catAxis.scale.push(range.max);
+					catAxis.scale.push(curr);
 				}
 	
 				if (localBinning.overflow === 0 || localBinning.overflow) {
@@ -2627,20 +2654,26 @@ CChartsDrawer.prototype =
 				}
 	
 				// Count occurrences, valAxis scale, min and max
-				for (let i = 0; i < data.length; i++) {
-					for (let j = 0; j < localResults.length; j++) {
-						const min = localResults[j].min;
-						const max = localResults[j].max;
-						let statement1 = (j === 0 && data[i].val === min);
-						let statement2 = localBinning.intervalClosed !== "r" ? ((!min || data[i].val > min) && (!max || data[i].val <= max)) : ((!min || data[i].val >= min) && (!max || data[i].val < max));
-						if (statement1 || statement2) {
-							localResults[j].occurrence++;
-	
-							if (valMax === null || localResults[j].occurrence > valMax) {
-								valMax = localResults[j].occurrence;
-							}
-							if (valMin === null || localResults[j].occurrence < valMin) {
-								valMin = localResults[j].occurrence
+				if (data.length === 1) {
+					localResults[0].occurrence++;
+					valMax = 1;
+					valMin = 1;
+				} else {
+					for (let i = 0; i < data.length; i++) {
+						for (let j = 0; j < localResults.length; j++) {
+							const min = localResults[j].min;
+							const max = localResults[j].max;
+							let statement1 = (j === 0 && data[i].val === min);
+							let statement2 = localBinning.intervalClosed !== "r" ? ((!min || data[i].val > min) && (!max || data[i].val <= max)) : ((!min || data[i].val >= min) && (!max || data[i].val < max));
+							if (statement1 || statement2) {
+								localResults[j].occurrence++;
+		
+								if (valMax === null || localResults[j].occurrence > valMax) {
+									valMax = localResults[j].occurrence;
+								}
+								if (valMin === null || localResults[j].occurrence < valMin) {
+									valMin = localResults[j].occurrence
+								}
 							}
 						}
 					}
@@ -7463,19 +7496,19 @@ drawHistogramChart.prototype = {
 	constructor: drawHistogramChart,
 
 	recalculate: function () {
-		if (!this.cChartSpace || !this.cChartSpace.chart || !this.cChartSpace.chart.plotArea || !this.cChartSpace.chart.plotArea.plotAreaRegion) {
+		if (!this.cChartSpace || !this.cChartSpace.chart || !this.cChartSpace.chart.plotArea || !this.cChartSpace.chart.plotArea.plotAreaRegion || !this.cChartSpace.chart.plotArea.axId) {
 			return;
 		}
 		const cachedData = this.cChartSpace.chart.plotArea.plotAreaRegion.cachedData;
 		if (cachedData && this.chartProp && this.chartProp.chartGutter) {
+			const valAxis = this.cChartSpace.chart.plotArea.axId[1];
+			const catAxis = this.cChartSpace.chart.plotArea.axId[0];
 			if (cachedData.aggregation) {
 				const sections = Object.keys(cachedData.aggregation).length;;
-				const valAxis = this.cChartSpace.chart.plotArea.axId[1];
-				const catAxis = this.cChartSpace.chart.plotArea.axId[0];
 
 				const initialBarWidth = (this.chartProp.trueWidth)/ sections;
 				const catStart = this.chartProp.chartGutter._left;
-				const valStart = this.chartProp.trueHeight + this.chartProp.chartGutter._bottom;
+				const valStart = this.chartProp.trueHeight + this.chartProp.chartGutter._top;
 				const coeff = catAxis.scaling.gapWidth;
 				const barWidth = (initialBarWidth / (1 + coeff));
 				const margin = (initialBarWidth - barWidth) / 2;
@@ -7483,6 +7516,7 @@ drawHistogramChart.prototype = {
 				let start = (catStart + margin);
 				for (let i in cachedData.aggregation) {
 					if (this.chartProp && this.chartProp.pxToMM ) {
+						const startY = this.cChartDrawer.getYPosition(cachedData.aggregation[i], valAxis);
 						const height = valStart - (startY * this.chartProp.pxToMM);
 						let path = this.cChartDrawer._calculateRect(start, valStart, barWidth, height);
 						this.paths[i] = path;
@@ -7491,12 +7525,10 @@ drawHistogramChart.prototype = {
 				}
 			} else if (cachedData.results) {
 				const sections = cachedData.results;
-				const valAxis = this.cChartSpace.chart.plotArea.axId[1];
-				const catAxis = this.cChartSpace.chart.plotArea.axId[0];
 
 				const initialBarWidth = (this.chartProp.trueWidth)/ sections.length;
 				const catStart = this.chartProp.chartGutter._left;
-				const valStart = this.chartProp.trueHeight + this.chartProp.chartGutter._bottom;
+				const valStart = this.chartProp.trueHeight + this.chartProp.chartGutter._top;
 				const coeff = catAxis.scaling.gapWidth;
 				const barWidth = (initialBarWidth / (1 + coeff));
 				const margin = (initialBarWidth - barWidth) / 2;
