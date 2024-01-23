@@ -12018,7 +12018,7 @@ Paragraph.prototype.Get_NearestPos = function(CurPage, X, Y, bAnchor, Drawing)
 
 	var oState = this.SaveSelectionState();
 
-	this.Set_ParaContentPos(searchPosXY.getPos(), true, SearchPosXY.getLine(), SearchPosXY.getRange());
+	this.Set_ParaContentPos(searchPosXY.getPos(), true, searchPosXY.getLine(), searchPosXY.getRange());
 	var ContentPos = this.Get_ParaContentPos(false, false);
 
 	ContentPos = this.private_CorrectNearestPos(ContentPos, bAnchor, Drawing);

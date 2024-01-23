@@ -69,7 +69,7 @@
 		else
 		{
 			this.flushBuffer();
-			this.handler.handleBidiFlow(element);
+			this.handler.handleBidiFlow(element, AscWord.BidiType.ltr);
 		}
 	};
 	BidiFlow.prototype.end = function()
@@ -83,7 +83,7 @@
 	{
 		for (let i = this.buffer.length - 1; i >= 0; --i)
 		{
-			this.handler.handleBidiFlow(this.buffer[i]);
+			this.handler.handleBidiFlow(this.buffer[i], AscWord.BidiType.rtl);
 		}
 		this.buffer.length = 0;
 	};

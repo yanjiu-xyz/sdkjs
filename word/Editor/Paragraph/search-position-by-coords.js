@@ -193,7 +193,7 @@
 	{
 		this.bidiFlow.add([element, run, inRunPos], element.getBidiType());
 	};
-	ParagraphSearchPositionXY.prototype.handleBidiFlow = function(data)
+	ParagraphSearchPositionXY.prototype.handleBidiFlow = function(data, direction)
 	{
 		let item     = data[0];
 		let run      = data[1];
@@ -211,30 +211,32 @@
 		// 	SearchPos.CurX = PosLine.x + loc.x; // позиция формулы в строке + смещение буквы в контенте
 		// }
 		
-		let diff = this.x - this.curX;
-		if (-EPSILON <= diff && diff <= w + EPSILON)
+		let diffL = this.x - this.curX;
+		let diffR = this.x - this.curX - w + (item.RGap ? item.RGap : 0);
+		
+		if (direction === AscWord.BidiType.rtl)
+		{
+			let tmp = diffR;
+			diffR = diffL;
+			diffL = tmp;
+		}
+		
+		if (-EPSILON <= diffL && diffL <= w + EPSILON)
 		{
 			this.inTextX = true;
 			this.inTextPosInfo.run = run;
 			this.inTextPosInfo.pos = inRunPos;
 		}
 		
-		if (this.checkPosition(diff))
+		if (this.checkPosition(diffL))
 		{
-			this.setDiff(diff);
+			this.setDiff(diffL);
 			this.posInfo.run = run;
 			this.posInfo.pos = inRunPos;
 		}
 		
-		if (item.RGap)
-			w -= item.RGap;
-		
-		this.curX += w;
-		
-		diff = this.x - this.curX;
-		
 		// TODO: Check comb forms
-		if (!item.IsBreak() && this.checkPosition(diff))
+		if (!item.IsBreak() && this.checkPosition(diffR))
 		{
 			if (item.IsParaEnd())
 				this.paraEnd = true;
@@ -242,16 +244,16 @@
 			if (!item.IsParaEnd() || this.stepEnd)
 			{
 				if (item.RGap)
-					diff = Math.min(diff, diff - item.RGap);
+					diffR = Math.min(diffR, diffR - item.RGap);
 				
-				this.setDiff(diff);
+				this.setDiff(diffR);
 				this.posInfo.run = run;
 				this.posInfo.pos = inRunPos + 1;
 			}
 		}
 		
-		if (item.RGap)
-			this.curX += item.RGap;
+		
+		this.curX += w;
 	};
 	ParagraphSearchPositionXY.prototype.getPos = function()
 	{
