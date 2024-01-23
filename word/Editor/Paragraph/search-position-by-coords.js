@@ -42,7 +42,7 @@
 	 * @param {AscWord.Paragraph} paragraph
 	 * @constructor
 	 */
-	function ParagraphSearchPositionXY(paragraph)
+	function ParagraphSearchPositionXY()
 	{
 		this.Pos       = new AscWord.CParagraphContentPos();
 		this.InTextPos = new AscWord.CParagraphContentPos();
@@ -79,6 +79,7 @@
 		
 		this.numbering = false;
 		this.inText    = false;
+		this.inTextX   = false;
 		this.paraEnd   = false;
 		
 		this.bidiFlow = new AscWord.BidiFlow(this);
@@ -111,9 +112,9 @@
 		if (this.correctPageAndLineNumber(page))
 			this.line = this.calculateLineNumber(y, this.page);
 		
-		this.searchByLine(x, this.line, page);
+		this.searchByLine(x, this.line, page, y);
 	};
-	ParagraphSearchPositionXY.prototype.searchByLine = function(x, line, page)
+	ParagraphSearchPositionXY.prototype.searchByLine = function(x, line, page, y)
 	{
 		this.line = line;
 		this.correctPageAndLineNumber(page);
@@ -121,8 +122,6 @@
 		this.range = this.calculateRangeNumber(x);
 		if (-1 === this.range)
 			return;
-		
-		//SearchPos.CenterMode = (undefined === bCenterMode ? true : bCenterMode);
 		
 		let paraRange = this.paragraph.Lines[this.line].Ranges[this.range];
 		
@@ -138,17 +137,11 @@
 		if (true !== this.stepEnd && endPos === p.Content.length - 1 && endPos > startPos)
 			--endPos;
 		
-		this.inText = false;
 		for (let pos = startPos; pos <= endPos; ++pos)
 		{
-			if (!this.inText)
-				this.inTextPos.Update2(pos, 0);
-			
-			if (this.Content[pos].getParaContentPosByXY())
-				this.pos.Update2(pos, 0);
+			this.Content[pos].getParagraphContentPosByXY(this);
 		}
 		
-		// SearchPos.InTextX = SearchPos.InText;
 		//
 		// // По Х попали в какой-то элемент, проверяем по Y
 		// if (true === SearchPos.InText && Y >= this.Pages[PNum].Y + this.Lines[CurLine].Y - this.Lines[CurLine].Metrics.Ascent - 0.01 && Y <= this.Pages[PNum].Y + this.Lines[CurLine].Y + this.Lines[CurLine].Metrics.Descent + this.Lines[CurLine].Metrics.LineGap + 0.01)
@@ -247,7 +240,7 @@
 		let diff = this.x - this.curX;
 		if (-EPSILON <= diff && diff <= w + EPSILON)
 		{
-			this.inText = true;
+			this.inTextX = true;
 			this.inTextPos.run = this;
 			this.inTextPos.pos = inRunPos;
 		}
@@ -297,6 +290,30 @@
 		let paraPos = this.paragraph.GetPosByElement(this.posInfo.run);
 		paraPos.Update(this.posInfo.pos, paraPos.GetDepth() + 1);
 		return paraPos;
+	};
+	ParagraphSearchPositionXY.prototype.getLine = function()
+	{
+		return this.line;
+	};
+	ParagraphSearchPositionXY.prototype.getRange = function()
+	{
+		return this.range;
+	};
+	ParagraphSearchPositionXY.prototype.isNumbering = function()
+	{
+		return this.numbering;
+	};
+	ParagraphSearchPositionXY.prototype.isBeyondEnd = function()
+	{
+		return this.paraEnd;
+	};
+	ParagraphSearchPositionXY.prototype.isInText = function()
+	{
+		return this.inText;
+	};
+	ParagraphSearchPositionXY.prototype.isInTextByX = function()
+	{
+		return this.inTextX;
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area

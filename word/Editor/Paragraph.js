@@ -5856,6 +5856,21 @@ Paragraph.prototype.private_CorrectPosInCombiningMark = function(oContentPos, is
 
 	return oCurrentPos;
 };
+/**
+ * @returns {ParagraphSearchPositionXY}
+ */
+Paragraph.prototype.getSearchPosByXY = function(x, y, page, yIsLine, stepEnd, centerMode)
+{
+	let searchPos = new AscWord.ParagraphSearchPositionXY();
+	searchPos.init(this, stepEnd, centerMode);
+	
+	if (yIsLine)
+		searchPos.searchByLine(x, y, page);
+	else
+		searchPos.searchByXY(x, y, page);
+	
+	return searchPos;
+};
 Paragraph.prototype.Get_ParaContentPosByXY = function(X, Y, PageIndex, bYLine, StepEnd, bCenterMode)
 {
 	var SearchPos        = new AscWord.ParagraphSearchPositionXY();
@@ -6269,9 +6284,9 @@ Paragraph.prototype.MoveCursorToXY = function(X, Y, bLine, bDontChangeRealPos, C
 	if (!this.IsRecalculated())
 		return;
 
-	var SearchPosXY = this.Get_ParaContentPosByXY(X, Y, CurPage, bLine, false);
+	var SearchPosXY = this.getSearchPosByXY(X, Y, CurPage, bLine, false);
 
-	this.Set_ParaContentPos(SearchPosXY.Pos, false, SearchPosXY.Line, SearchPosXY.Range);
+	this.Set_ParaContentPos(SearchPosXY.getPos(), false, SearchPosXY.getLine(), SearchPosXY.getRange());
 	this.Internal_Recalculate_CurPos(false, false, false);
 
 	if (bDontChangeRealPos != true)
@@ -8341,22 +8356,25 @@ Paragraph.prototype.Selection_SetStart = function(X, Y, CurPage, bTableBorder)
 	// Найдем позицию в контенте, в которую мы попали
 	// Если мы начинаем селект внутри параграфа (не выходя за знак конца абзаца), то даем выделять знак абзаца,
 	// в противном случае, не выделяем знак конца абзаца
-	var SearchPosXY  = this.Get_ParaContentPosByXY(X, Y, CurPage, false, true);
-	var SearchPosXY2 = this.Get_ParaContentPosByXY(X, Y, CurPage, false, false);
+	var SearchPosXY  = this.getSearchPosByXY(X, Y, CurPage, false, true);
+	var SearchPosXY2 = this.getSearchPosByXY(X, Y, CurPage, false, false);
+	
+	let pos  = SearchPosXY.getPos();
+	let pos2 = SearchPosXY2.getPos();
 	
 	this.Selection.Use            = true;
 	this.Selection.Start          = true;
 	this.Selection.Flag           = selectionflag_Common;
 	this.Selection.StartManually  = true;
-	this.Selection.StartBehindEnd = SearchPosXY.Pos.Compare(SearchPosXY2.Pos) > 0;
+	this.Selection.StartBehindEnd = pos.Compare(pos2) > 0;
 	
-	let line  = SearchPosXY2.Line;
-	let range = SearchPosXY2.Range;
+	let line  = SearchPosXY2.getLine();
+	let range = SearchPosXY2.getRange();
 	
-	this.Set_ParaContentPos(SearchPosXY2.Pos, true, line, range);
-	this.Set_SelectionContentPos(SearchPosXY2.Pos, SearchPosXY2.Pos, true, line, range, line, range);
+	this.Set_ParaContentPos(pos2, true, line, range);
+	this.Set_SelectionContentPos(pos2, pos2, true, line, range, line, range);
 	
-	if (true === SearchPosXY2.Numbering && undefined !== this.GetNumPr())
+	if (SearchPosXY2.isNumbering() && undefined !== this.GetNumPr())
 	{
 		this.Set_ParaContentPos(this.Get_StartPos(), true, -1, -1);
 		this.Parent.SelectNumbering(this.GetNumPr(), this);
@@ -8391,11 +8409,14 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 	this.Selection.EndManually = true;
 	
 	// Найдем позицию в контенте, в которую мы попали (для селекта ищем и за знаком параграфа, для курсора только перед)
-	var SearchPosXY  = this.Get_ParaContentPosByXY(X, Y, CurPage, false, !this.Selection.StartBehindEnd, true);
-	var SearchPosXY2 = this.Get_ParaContentPosByXY(X, Y, CurPage, false, false, true);
+	var SearchPosXY  = this.getSearchPosByXY(X, Y, CurPage, false, !this.Selection.StartBehindEnd, true);
+	var SearchPosXY2 = this.getSearchPosByXY(X, Y, CurPage, false, false, true);
+	
+	let pos  = SearchPosXY.getPos();
+	let pos2 = SearchPosXY2.getPos();
 
 	// Выставим в полученном месте текущую позицию курсора
-	this.Set_ParaContentPos(SearchPosXY2.Pos, true, SearchPosXY2.Line, SearchPosXY2.Range);
+	this.Set_ParaContentPos(pos2, true, SearchPosXY2.getLine(), SearchPosXY2.getRange());
 	
 	if (!isFixedForm
 		&& !this.Parent.IsFootnote()
@@ -8403,7 +8424,7 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 		return;
 
 	// Выставляем селект
-	this.Set_SelectionContentPos(this.Get_ParaContentPos(true, true), SearchPosXY.Pos, true, this.Selection.StartLine, this.Selection.StartRange, SearchPosXY2.Line, SearchPosXY2.Range);
+	this.Set_SelectionContentPos(this.Get_ParaContentPos(true, true), pos, true, this.Selection.StartLine, this.Selection.StartRange, SearchPosXY2.getLine(), SearchPosXY2.getRange());
 	
 	if (!this.GetPlaceHolderObject())
 		this.CheckSmartSelection();
@@ -8457,7 +8478,7 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 				var SearchPosS = new CParagraphSearchPos();
 				var SearchPosE = new CParagraphSearchPos();
 
-				this.Get_WordEndPos(SearchPosE, SearchPosXY.Pos);
+				this.Get_WordEndPos(SearchPosE, pos);
 				this.Get_WordStartPos(SearchPosS, SearchPosE.Pos);
 
 				var StartPos = ( true === SearchPosS.Found ? SearchPosS.Pos : this.Get_StartPos() );
@@ -8509,7 +8530,7 @@ Paragraph.prototype.Selection_SetEnd = function(X, Y, CurPage, MouseEvent, bTabl
 };
 Paragraph.prototype.extendLastLineToXY = function(x, y, curPage, mouseEvent)
 {
-	if ((!this.IsEmpty() && !this.Get_ParaContentPosByXY(x, y, curPage, false, true, true).End))
+	if ((!this.IsEmpty() && !this.getSearchPosByXY(x, y, curPage, false, true, true).isBeyondEnd()))
 		return false;
 	
 	let lastLine  = this.Lines.length ? this.Lines[this.Lines.length - 1] : null;
@@ -8904,13 +8925,10 @@ Paragraph.prototype.CheckPosInSelection = function(X, Y, CurPage, NearPos)
 		if (CurPage < 0 || CurPage >= this.Pages.length || true != this.Selection.Use)
 			return false;
 
-		var SearchPosXY = this.Get_ParaContentPosByXY(X, Y, CurPage, false, true, false);
-
-		if (true === SearchPosXY.InTextX)
-		{
-			return this.Selection_CheckParaContentPos(SearchPosXY.InTextPos);
-		}
-
+		let searchPosXY = this.getSearchPosByXY(X, Y, CurPage, false, true, false);
+		if (searchPosXY.isInTextByX())
+			return this.Selection_CheckParaContentPos(searchPosXY.getInTextPos());
+		
 		return false;
 	}
 };
@@ -9444,8 +9462,8 @@ Paragraph.prototype.GetSelectedElementsInfo = function(oInfo, ContentPos, Depth)
 };
 Paragraph.prototype.GetElementsInfoByXY = function(oInfo, X, Y, CurPage)
 {
-	var SearchPosXY = this.Get_ParaContentPosByXY(X, Y, CurPage, false, false);
-	this.GetSelectedElementsInfo(oInfo, SearchPosXY.Pos, 0);
+	let searchPosXY = this.getSearchPosByXY(X, Y, CurPage, false, false);
+	this.GetSelectedElementsInfo(oInfo, searchPosXY.getPos(), 0);
 };
 Paragraph.prototype.GetSelectedContent = function(oSelectedContent)
 {
@@ -9556,7 +9574,7 @@ Paragraph.prototype.GetSelectedContent = function(oSelectedContent)
 };
 Paragraph.prototype.CheckHitInParaEnd = function(X, Y, CurPage)
 {
-	var oContentPos = this.Get_ParaContentPosByXY(X, Y, CurPage, false, true).InTextPos;
+	var oContentPos = this.getSearchPosByXY(X, Y, CurPage, false, true).getInTextPos();
 	return (oContentPos.Get(0) === (this.Content.length - 1));
 };
 /**
@@ -9756,8 +9774,8 @@ Paragraph.prototype.IsInText = function(X, Y, CurPage)
 	if (CurPage < 0 || CurPage >= this.Pages.length)
 		return null;
 
-	var SearchPosXY = this.Get_ParaContentPosByXY(X, Y, CurPage, false, true);
-	if (true === SearchPosXY.InText)
+	let searchPosXY = this.getSearchPosByXY(X, Y, CurPage, false, true);
+	if (true === searchPosXY.isInText())
 		return this;
 
 	return null;
@@ -11996,11 +12014,11 @@ Paragraph.prototype.Internal_CorrectAnchorPos = function(Result, Drawing)
  */
 Paragraph.prototype.Get_NearestPos = function(CurPage, X, Y, bAnchor, Drawing)
 {
-	var SearchPosXY = this.Get_ParaContentPosByXY(X, Y, CurPage, false, false);
+	let searchPosXY = this.getSearchPosByXY(X, Y, CurPage, false, false);
 
 	var oState = this.SaveSelectionState();
 
-	this.Set_ParaContentPos(SearchPosXY.Pos, true, SearchPosXY.Line, SearchPosXY.Range);
+	this.Set_ParaContentPos(searchPosXY.getPos(), true, SearchPosXY.getLine(), SearchPosXY.getRange());
 	var ContentPos = this.Get_ParaContentPos(false, false);
 
 	ContentPos = this.private_CorrectNearestPos(ContentPos, bAnchor, Drawing);
@@ -12009,7 +12027,7 @@ Paragraph.prototype.Get_NearestPos = function(CurPage, X, Y, bAnchor, Drawing)
 
 	// Сохраняем параграф и найденное место в параграфе
 	Result.ContentPos = ContentPos;
-	Result.SearchPos  = SearchPosXY.Pos;
+	Result.SearchPos  = searchPosXY.getPos();
 	Result.Paragraph  = this;
 	Result.transform  = this.Get_ParentTextTransform();
 
@@ -12316,7 +12334,7 @@ Paragraph.prototype.UpdateCursorType = function(X, Y, CurPage)
 	// TODO: Поиск гиперссылок и сносок нужно переделать через работу с SelectedElementsInfo
 	var oInfo = new CSelectedElementsInfo();
 
-	var oContentPos = this.Get_ParaContentPosByXY(X, Y, CurPage, false, false).Pos;
+	var oContentPos = this.getSearchPosByXY(X, Y, CurPage, false, false).getPos();
 	this.GetSelectedElementsInfo(oInfo, oContentPos, 0);
 
 	var bPageRefLink = false;
@@ -16317,10 +16335,10 @@ Paragraph.prototype.GetText = function(oPr)
 };
 Paragraph.prototype.CheckFootnote = function(X, Y, CurPage)
 {
-	var SearchPosXY = this.Get_ParaContentPosByXY(X, Y, CurPage, false, false);
-	var CurLine = SearchPosXY.Line;
+	let searchPosXY = this.getSearchPosByXY(X, Y, CurPage, false, false);
+	var CurLine = searchPosXY.getLine();
 
-	if (true !== SearchPosXY.InText)
+	if (!searchPosXY.isInText())
 		return null;
 
 	if (!this.Lines[CurLine])
@@ -16770,8 +16788,8 @@ Paragraph.prototype.GetComplexFieldsByPos = function(oParaPos, bReturnFieldPos)
 };
 Paragraph.prototype.GetComplexFieldsByXY = function(X, Y, CurPage, bReturnFieldPos)
 {
-	var SearchPosXY = this.Get_ParaContentPosByXY(X, Y, CurPage, false, false);
-	return this.GetComplexFieldsByPos(SearchPosXY.Pos, bReturnFieldPos);
+	let searchPosXY = this.getSearchPosByXY(X, Y, CurPage, false, false);
+	return this.GetComplexFieldsByPos(searchPosXY.getPos(), bReturnFieldPos);
 };
 Paragraph.prototype.GetOutlineParagraphs = function(arrOutline, oPr)
 {

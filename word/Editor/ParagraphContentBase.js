@@ -484,7 +484,7 @@ CParagraphContentBase.prototype.Get_ParaContentPosByXY = function(SearchPos, Dep
 {
 	return false;
 };
-CParagraphContentBase.prototype.getParagraphContentPosByXY = function(state, depth)
+CParagraphContentBase.prototype.getParagraphContentPosByXY = function(searchState)
 {
 	return false;
 };
