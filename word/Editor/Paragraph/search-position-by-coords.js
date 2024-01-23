@@ -108,7 +108,8 @@
 		if (-1 === this.range)
 			return;
 		
-		let paraRange = this.paragraph.Lines[this.line].Ranges[this.range];
+		let para = this.paragraph;
+		let paraRange = para.Lines[this.line].Ranges[this.range];
 		
 		this.x    = x;
 		this.curX = paraRange.XVisible;
@@ -119,12 +120,12 @@
 		let endPos   = paraRange.EndPos;
 		
 		// Do not enter to the run containing paragraphMark if we don't want to
-		if (true !== this.stepEnd && endPos === p.Content.length - 1 && endPos > startPos)
+		if (true !== this.stepEnd && endPos === para.Content.length - 1 && endPos > startPos)
 			--endPos;
 		
 		for (let pos = startPos; pos <= endPos; ++pos)
 		{
-			this.Content[pos].getParagraphContentPosByXY(this);
+			para.Content[pos].getParagraphContentPosByXY(this);
 		}
 		
 		this.checkInText()
@@ -134,8 +135,8 @@
 			this.line  = -1;
 			this.range = -1;
 			
-			this.pos       = p.GetStartPos();
-			this.inTextPos = this.pos.copy();
+			this.pos       = para.GetStartPos();
+			this.inTextPos = this.pos.Copy();
 		}
 	};
 	ParagraphSearchPositionXY.prototype.handleRun = function(run)
@@ -190,7 +191,7 @@
 	};
 	ParagraphSearchPositionXY.prototype.handleRunElement = function(element, run, inRunPos)
 	{
-		this.bidiFlow.add([element, run, inRunPos]);
+		this.bidiFlow.add([element, run, inRunPos], element.getBidiType());
 	};
 	ParagraphSearchPositionXY.prototype.handleBidiFlow = function(data)
 	{
@@ -214,8 +215,8 @@
 		if (-EPSILON <= diff && diff <= w + EPSILON)
 		{
 			this.inTextX = true;
-			this.inTextPos.run = run;
-			this.inTextPos.pos = inRunPos;
+			this.inTextPosInfo.run = run;
+			this.inTextPosInfo.pos = inRunPos;
 		}
 		
 		if (this.checkPosition(diff))
@@ -233,7 +234,7 @@
 		diff = this.x - this.curX;
 		
 		// TODO: Check comb forms
-		if (!item.IsNewLine() && this.checkPosition(diff))
+		if (!item.IsBreak() && this.checkPosition(diff))
 		{
 			if (item.IsParaEnd())
 				this.paraEnd = true;

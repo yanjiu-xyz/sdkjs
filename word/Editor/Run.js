@@ -6578,7 +6578,7 @@ ParaRun.prototype.getParagraphContentPosByXY = function(searchState)
 {
 	searchState.handleRun(this);
 	
-	let rangePos = this.getRangePos(searchState.Line, searchState.Range);
+	let rangePos = this.getRangePos(searchState.line, searchState.range);
 	let startPos = rangePos[0];
 	let endPos   = rangePos[1];
 	if (startPos >= endPos)
@@ -6587,7 +6587,7 @@ ParaRun.prototype.getParagraphContentPosByXY = function(searchState)
 	for (let pos = startPos; pos < endPos; ++pos)
 	{
 		let item = this.private_CheckInstrText(this.Content[pos]);
-		searchState.handleRunElement(item, this);
+		searchState.handleRunElement(item, this, pos);
 	}
 };
 
