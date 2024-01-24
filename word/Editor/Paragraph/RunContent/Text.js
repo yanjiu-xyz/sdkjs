@@ -291,6 +291,8 @@
 	{
 		if (this.Flags & FLAGS_RTL)
 			return AscWord.BidiType.rtl;
+		else if (0x060C <= this.Value && this.Value <= 0x074A || this.IsPunctuation())
+			return AscWord.BidiType.neutral;
 		
 		return AscWord.BidiType.ltr;
 	};
