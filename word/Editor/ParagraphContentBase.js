@@ -480,10 +480,6 @@ CParagraphContentBase.prototype.MoveCursorToStartPos = function()
 CParagraphContentBase.prototype.MoveCursorToEndPos = function(SelectFromEnd)
 {
 };
-CParagraphContentBase.prototype.Get_ParaContentPosByXY = function(SearchPos, Depth, _CurLine, _CurRange, StepEnd)
-{
-	return false;
-};
 CParagraphContentBase.prototype.getParagraphContentPosByXY = function(searchState)
 {
 	return false;
@@ -3102,32 +3098,6 @@ CParagraphContentWithParagraphLikeContent.prototype.MoveCursorToEndPos = functio
         this.State.ContentPos = ContentLen - 1;
         this.Content[ContentLen - 1].MoveCursorToEndPos( SelectFromEnd );
     }
-};
-CParagraphContentWithParagraphLikeContent.prototype.Get_ParaContentPosByXY = function(SearchPos, Depth, _CurLine, _CurRange, StepEnd)
-{
-    var Result = false;
-
-    var CurLine = _CurLine - this.StartLine;
-    var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
-
-    var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-    var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-
-    for ( var CurPos = StartPos; CurPos <= EndPos; CurPos++ )
-    {
-        var Item = this.Content[CurPos];
-
-        if ( false === SearchPos.InText )
-            SearchPos.InTextPos.Update2( CurPos, Depth );
-
-        if ( true === Item.Get_ParaContentPosByXY( SearchPos, Depth + 1, _CurLine, _CurRange, StepEnd ) )
-        {
-            SearchPos.Pos.Update2( CurPos, Depth );
-            Result = true;
-        }
-    }
-
-    return Result;
 };
 CParagraphContentWithParagraphLikeContent.prototype.getParagraphContentPosByXY = function(searchState)
 {

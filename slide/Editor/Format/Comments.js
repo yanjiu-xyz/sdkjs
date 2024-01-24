@@ -353,11 +353,6 @@ ParaComment.prototype =
 	MoveCursorToEndPos : function(SelectFromEnd)
     {
     },
-
-    Get_ParaContentPosByXY : function(SearchPos, Depth, _CurLine, _CurRange, StepEnd)
-    {
-        return false;
-    },
 	
 	getParagraphContentPosByXY : function(state)
 	{

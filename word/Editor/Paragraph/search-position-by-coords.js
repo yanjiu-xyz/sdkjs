@@ -51,7 +51,9 @@
 		this.stepEnd    = false; // Search for position beyond the mark of paragraph
 		
 		this.curX    = 0;
+		this.curY    = 0;
 		this.x       = 0;
+		this.y       = 0;
 		this.diffX   = MAX_DIFF;
 		this.diffAbs = MAX_DIFF;
 		
@@ -111,8 +113,10 @@
 		let para = this.paragraph;
 		let paraRange = para.Lines[this.line].Ranges[this.range];
 		
+		this.y    = undefined === y ? 0 : y;
 		this.x    = x;
 		this.curX = paraRange.XVisible;
+		this.curY = 0;
 		
 		this.checkNumbering();
 		
@@ -189,6 +193,100 @@
 		// }
 		
 	};
+	ParagraphSearchPositionXY.prototype.handleParaMath = function(math)
+	{
+		let curX = this.curX;
+		let mathW = math.Root.GetWidth(this.line, this.range);
+		
+		if ((curX <= this.x && this.x < curX + mathW) || this.diffX > MAX_DIFF - 1)
+		{
+			let diffX = this.diffX;
+			this.setDiff(MAX_DIFF);
+			
+			math.Root.getParagraphContentPosByXY(this);
+			
+			if (this.inText)
+				this.diffX = EPSILON;
+			
+			// TODO: Пересмотреть данную проверку. Надо выяснить насколько сильно она вообще нужна
+			// Если мы попадаем в формулу, тогда не ищем позицию вне ее. За исключением, случая когда формула идет в начале
+			// строки. Потому что в последнем случае из формулы 100% придет true, а позиция, возможно, находится за формулой.
+			if (this.diffX < MAX_DIFF - 1 && diffX < MAX_DIFF - 1)
+				this.diffX = 0;
+			else if (this.diffX > MAX_DIFF - 1)
+				this.diffX = diffX;
+		}
+		
+		// Такое возможно, если все элементы до этого (в том числе и этот) были пустыми, тогда, чтобы не возвращать
+		// неправильную позицию вернем позицию начала данного элемента.
+		if (this.diffX > MAX_DIFF - 1)
+		{
+			this.pos = this.getStartPosOfElement(math);
+			this.setDiff(0);
+		}
+		
+		this.curX = curX + mathW;
+	};
+	ParagraphSearchPositionXY.prototype.handleMathBase = function(base)
+	{
+		if (!base.Content.length)
+			return;
+		
+		let startPos = 0;
+		let endPos   = base.Content.length - 1;
+		
+		if (!base.bOneLine)
+		{
+			let rangePos = base.getRangePos(this.line, this.range);
+			startPos = rangePos[0];
+			endPos   = rangePos[1];
+		}
+		
+		let x = this.X;
+		let y = this.Y;
+		
+		let targetPos    = -1;
+		let targetBounds = null;
+		let diff         = null;
+		for (let pos = 0; pos < base.Content.length; ++pos)
+		{
+			if (pos < startPos || pos > endPos)
+				continue;
+			
+			let bounds = base.Content[pos].Get_LineBound(this.line, this.range);
+			if (!bounds || bounds.W < EPSILON || bounds.H < EPSILON)
+				continue;
+			
+			if (bounds.X <= x && x <= bounds.X + bounds.W && bounds.Y <= y && y <= bounds.Y + bounds.H)
+			{
+				targetPos    = pos;
+				targetBounds = bounds;
+				break;
+			}
+			else
+			{
+				// TODO: Rework this hit check
+				let diffX = x - (bounds.X + bounds.W / 2);
+				let diffY = y - (bounds.Y + bounds.H / 2);
+				
+				let curDiff = diffX * diffX + diffY * diffY;
+				if (null === diff || diff > curDiff)
+				{
+					diff         = curDiff;
+					targetPos    = pos;
+					targetBounds = bounds;
+				}
+			}
+		}
+		
+		if (-1 === targetPos)
+			return;
+		
+		this.curX = targetBounds.X;
+		this.curY = targetBounds.Y;
+		
+		base.Content[targetPos].getParagraphContentPosByXY(this);
+	};
 	ParagraphSearchPositionXY.prototype.handleRunElement = function(element, run, inRunPos)
 	{
 		this.bidiFlow.add([element, run, inRunPos], element.getBidiType());
@@ -203,13 +301,12 @@
 		if (!item.IsDrawing() || item.IsInline())
 			w = item.GetWidthVisible();
 		
-		// TODO: Math
-		// if (this.Type == para_Math_Run)
-		// {
-		// 	var PosLine    = this.ParaMath.GetLinePosition(_CurLine, _CurRange);
-		// 	var loc        = this.Content[CurPos].GetLocationOfLetter();
-		// 	SearchPos.CurX = PosLine.x + loc.x; // позиция формулы в строке + смещение буквы в контенте
-		// }
+		if (run.IsMathRun())
+		{
+			let posLine = run.ParaMath.GetLinePosition(this.line, this.range);
+			let loc     = item.GetLocationOfLetter();
+			this.curX   = posLine.x + loc.x;
+		}
 		
 		let diffL = this.x - this.curX;
 		let diffR = this.x - this.curX - w + (item.RGap ? item.RGap : 0);
@@ -235,7 +332,6 @@
 			this.posInfo.pos = inRunPos;
 		}
 		
-		// TODO: Check comb forms
 		if (!item.IsBreak() && this.checkPosition(diffR))
 		{
 			if (item.IsParaEnd())
@@ -419,6 +515,12 @@
 		let paraPos = this.paragraph.GetPosByElement(posInfo.run);
 		paraPos.Update(posInfo.pos, paraPos.GetDepth() + 1);
 		return this.paragraph.private_GetClosestPosInCombiningMark(paraPos, this.diffAbs);
+	};
+	ParagraphSearchPositionXY.prototype.getStartPosOfElement = function(element)
+	{
+		let paraPos = this.paragraph.GetPosByElement(element);
+		element.Get_StartPos(paraPos, paraPos.GetDepth() + 1);
+		return paraPos;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.ParagraphSearchPositionXY = ParagraphSearchPositionXY;
