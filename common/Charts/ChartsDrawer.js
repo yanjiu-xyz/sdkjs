@@ -2485,7 +2485,7 @@ CChartsDrawer.prototype =
 			binning : null,
 			results : null
 		};
-		if (numLit && plotArea.axId && plotArea.axId.length === 2) {
+		if (numLit && numLit.pts && plotArea.axId && plotArea.axId.length === 2) {
 
 			const normalizeBinWidth = function (num) { 
 				if (num === 0) {
@@ -2514,10 +2514,13 @@ CChartsDrawer.prototype =
 			const data = numLit.pts;
 			let stDev = null;
 			let mean = 0;
-
-			// Calculate mean, catAxis min and max;
 			let catMin = null;
 			let catMax = null;
+			let valMax = null;
+			let valMin = null; 
+			catAxis.scale = [];
+
+			// Calculate mean, catAxis min and max;
 			for (let i = 0; i < data.length; i++) {
 				mean += data[i].val;
 				if (i === 0 || data[i].val > catMax) {
@@ -2528,28 +2531,34 @@ CChartsDrawer.prototype =
 				}
 			}
 			mean /= data.length;
+
 			catAxis.min = catMin;
 			catAxis.max = catMax;
-			let valMax = null;
-			let valMin = null; 
-			catAxis.scale = [];
 			const binning = numSeria.layoutPr.binning;
 			const aggregation = numSeria.layoutPr.aggregation;
-			if (aggregation && strCahce) {
+			if (aggregation) {
 				const cachedData = plotArea.plotAreaRegion.cachedData;
 				cachedData.aggregation = {};
-				for (let i = 0; i < numLit.pts.length; i++) {
-					if (!cachedData.aggregation[strCahce.pts[i].val]) {
-						cachedData.aggregation[strCahce.pts[i].val] = 0;
-						catAxis.scale.push(strCahce.pts[i].val.charCodeAt(0));
+				if (strCahce && strCahce.pts && numLit.pts.length <= strCahce.pts.length) {
+					for (let i = 0; i < numLit.pts.length; i++) {
+						if (!cachedData.aggregation.hasOwnProperty(strCahce.pts[i].val)) {
+							cachedData.aggregation[strCahce.pts[i].val] = 0;
+							catAxis.scale.push(strCahce.pts[i].val.charCodeAt(0));
+						}
+						cachedData.aggregation[strCahce.pts[i].val] += numLit.pts[i].val;
+						if (valMin === null || cachedData.aggregation[strCahce.pts[i].val] < valMin) {
+							valMin = cachedData.aggregation[strCahce.pts[i].val]
+						}
+						if (valMin === null || cachedData.aggregation[strCahce.pts[i].val] > valMax) {
+							valMax = cachedData.aggregation[strCahce.pts[i].val]
+						}
 					}
-					cachedData.aggregation[strCahce.pts[i].val] += numLit.pts[i].val;
-					if (valMin === null || cachedData.aggregation[strCahce.pts[i].val] < valMin) {
-						valMin = cachedData.aggregation[strCahce.pts[i].val]
-					}
-					if (valMin === null || cachedData.aggregation[strCahce.pts[i].val] > valMax) {
-						valMax = cachedData.aggregation[strCahce.pts[i].val]
-					}
+				} else {
+					const val = numLit.pts[0].val ? numLit.pts[0].val : 0;
+					cachedData.aggregation[''] = val;
+					valMin = val;
+					valMax = val;
+					catAxis.scale.push(null);
 				}
 			} else if (binning) {
 				const cachedData = plotArea.plotAreaRegion.cachedData;
@@ -2558,6 +2567,8 @@ CChartsDrawer.prototype =
 				const localBinning = cachedData.binning;
 				const localResults = cachedData.results;
 	
+				// Check if overflow and underflow exist and valid!!!
+				// ----------------------------------------
 				// uncomment when excel will fix the problem of overflow and underflow being incorrect in some moments
 				// const statement1 = localBinning.intervalClosed !== "r" ? localBinning.overflow < catAxis.max && localBinning.overflow >= catAxis.min : localBinning.overflow <= catAxis.max && localBinning.overflow > catAxis.min;
 				// const statement2 = localBinning.intervalClosed !== "r" ? localBinning.underflow >= catAxis.min && localBinning.underflow < catAxis.max : localBinning.underflow > catAxis.min && localBinning.underflow <= catAxis.max;
@@ -2566,15 +2577,28 @@ CChartsDrawer.prototype =
 	
 				localBinning.overflow = ((localBinning.overflow === 0 || localBinning.overflow) && localBinning.overflow < catAxis.max && localBinning.overflow >= catAxis.min) ? localBinning.overflow : null;
 				localBinning.underflow = ((localBinning.underflow === 0 || localBinning.underflow) && localBinning.underflow > catAxis.min && localBinning.underflow <= catAxis.max) ? localBinning.underflow : null;
-				const trueMax = (localBinning.overflow === 0 || localBinning.overflow) ? localBinning.overflow : catAxis.max;
-				const trueMin = (localBinning.underflow === 0 || localBinning.underflow) ? localBinning.underflow : catAxis.min;
+				const statement1 = localBinning.overflow === 0 || localBinning.overflow;
+				const statement2 = localBinning.underflow === 0 || localBinning.underflow;
+				if (statement1 && statement2 && localBinning.underflow > localBinning.overflow) {
+					localBinning.overflow = null;
+				}
+				const isOverflowExist = localBinning.overflow === 0 || localBinning.overflow;
+				const isUnderflowExist = statement2;
+
+				// ----------------------------------------
+				// Check if overflow and underflow exist and valid!!!
+
+				// set trueMax and trueMin if oveflow and underflow exists.
+				const trueMax = isOverflowExist ? localBinning.overflow : catAxis.max;
+				const trueMin = isUnderflowExist ? localBinning.underflow : catAxis.min;
+
 				if (localBinning.binSize) {
 					localBinning.binCount = Math.ceil((trueMax - trueMin) / localBinning.binSize);
 					localBinning.binCount = localBinning.binCount ? localBinning.binCount : 1;
 				} else if (localBinning.binCount) {
 					let binCountDecrease = 0;
-					binCountDecrease = (localBinning.overflow === 0 || localBinning.overflow) ? binCountDecrease + 1 : binCountDecrease;
-					binCountDecrease = (localBinning.underflow === 0 || localBinning.underflow) ? binCountDecrease + 1 : binCountDecrease;
+					binCountDecrease = isOverflowExist ? binCountDecrease + 1 : binCountDecrease;
+					binCountDecrease = isUnderflowExist ? binCountDecrease + 1 : binCountDecrease;
 					if (localBinning.binCount >= binCountDecrease) {
 						localBinning.binCount -= binCountDecrease;
 					} else {
@@ -2597,17 +2621,8 @@ CChartsDrawer.prototype =
 						let result = (3.5 * stDev) / (Math.pow(data.length, 1 / 3));
 						localBinning.binSize = normalizeBinWidth(result);
 		
-						const reminder1 = ((localBinning.underflow === 0 || localBinning.underflow) && (trueMax - trueMin <= localBinning.binSize)) ?  localBinning.binSize : 0
-						let reminder2 = 0;
-						if (!reminder1) {
-							reminder2 = ((localBinning.overflow === 0 || localBinning.overflow) && (trueMax - trueMin <= 0)) ? catAxis.max - trueMin : 0;
-						}
-						if (trueMax - trueMin === 0 && !reminder2) {
-							localBinning.binCount = 1;
-						}else{
-							localBinning.binCount = (localBinning.binSize !== 0) ? Math.ceil((trueMax + reminder1 + reminder2 - trueMin) / localBinning.binSize) : 2;
-						}
-						
+						localBinning.binCount = (localBinning.binSize) ? Math.ceil((trueMax - trueMin) / localBinning.binSize) : 1;
+						localBinning.binCount = localBinning.binCount === 0 ? 1 : localBinning.binCount;
 						if (isUnique) {
 							localBinning.binSize = 5;
 							localBinning.binCount = 1;
@@ -2620,37 +2635,29 @@ CChartsDrawer.prototype =
 					
 				}
 	
-				// CreateRanges and find catAxis scale
+				// find number of occurences in each range and create catAxis scale
 				let prev = trueMin;
-				if (localBinning.underflow === 0 || localBinning.underflow) {
+				const addRange = function (minVal, maxVal) {
 					const range = {
-						min : null,
-						max : localBinning.underflow,
+						min : (minVal !== 0 && !minVal) ? null : minVal,
+						max : (maxVal !== 0 && !maxVal) ? null : maxVal,
 						occurrence : 0
 					};
 					localResults.push(range);
+				}
+				if (isUnderflowExist) {
+					addRange(null, localBinning.underflow);
 				}
 	
 				catAxis.scale.push(prev);
 				for (let i = 0; i < localBinning.binCount; i++) {
 					const curr = ((localBinning.overflow === 0 || localBinning.overflow) && (prev + localBinning.binSize) >= trueMax) ? trueMax : prev + localBinning.binSize;
-					const range = {
-						min : prev,
-						max : curr,
-						occurrence : 0
-					};
-					prev = curr;
-					localResults.push(range);
+					addRange(prev, curr);
 					catAxis.scale.push(curr);
 				}
 	
-				if (localBinning.overflow === 0 || localBinning.overflow) {
-					const range = {
-						min : localBinning.overflow,
-						max : null,
-						occurrence : 0
-					};
-					localResults.push(range);
+				if (isOverflowExist) {
+					addRange(prev, curr);
 				}
 	
 				// Count occurrences, valAxis scale, min and max
@@ -2660,12 +2667,14 @@ CChartsDrawer.prototype =
 					valMin = 1;
 				} else {
 					for (let i = 0; i < data.length; i++) {
+						let isFound = false;
 						for (let j = 0; j < localResults.length; j++) {
 							const min = localResults[j].min;
 							const max = localResults[j].max;
 							let statement1 = (j === 0 && data[i].val === min);
 							let statement2 = localBinning.intervalClosed !== "r" ? ((!min || data[i].val > min) && (!max || data[i].val <= max)) : ((!min || data[i].val >= min) && (!max || data[i].val < max));
 							if (statement1 || statement2) {
+								isFound = true;
 								localResults[j].occurrence++;
 		
 								if (valMax === null || localResults[j].occurrence > valMax) {
@@ -2676,12 +2685,19 @@ CChartsDrawer.prototype =
 								}
 							}
 						}
+						if (!isFound && localResults.length > 1) {
+							const lastIndex = localResults.length - 1;
+							localResults[lastIndex].occurrence++;
+							if (valMax === null || localResults[lastIndex].occurrence > valMax) {
+								valMax = localResults[lastIndex].occurrence;
+							}
+							if (valMin === null || localResults[lastIndex].occurrence < valMin) {
+								valMin = localResults[lastIndex].occurrence
+							}
+						}
 					}
 				}
-			} else {
-				return;
-			}
-
+			} 
 			//check for user typed max and min properties
 			let kF = 1000000000;
 			let trueValMin = (valAxis.scaling && valAxis.scaling.min != null)? Math.round(valAxis.scaling.min * kF) / kF : null;
