@@ -289,7 +289,7 @@
 
 		if (para_Numbering !== paraNumbering.Type
 			|| !numPr
-			|| !numrPr.IsValid()
+			|| !numPr.IsValid()
 			|| !paraParent
 			|| !paraParent.IsEmptyParagraphAfterTableInTableCell(this.Paragraph.GetIndex()))
 			return;
