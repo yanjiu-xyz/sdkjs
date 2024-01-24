@@ -242,8 +242,8 @@
 			endPos   = rangePos[1];
 		}
 		
-		let x = this.X;
-		let y = this.Y;
+		let x = this.x;
+		let y = this.y;
 		
 		let targetPos    = -1;
 		let targetBounds = null;
