@@ -2051,12 +2051,10 @@ ParaMath.prototype.Get_ParaPosByContentPos = function(ContentPos, Depth)
 {
     return this.Root.Get_ParaPosByContentPos(ContentPos, Depth);
 };
-
-ParaMath.prototype.Recalculate_CurPos = function(_X, Y, CurrentRun, _CurRange, _CurLine, _CurPage, UpdateCurPos, UpdateTarget, ReturnTarget)
+ParaMath.prototype.recalculateCursorPosition = function(positionCalculator, isCurrent)
 {
-    return this.Root.Recalculate_CurPos(_X, Y, CurrentRun, _CurRange, _CurLine, _CurPage, UpdateCurPos, UpdateTarget, ReturnTarget);
+	this.Root.recalculateCursorPosition(positionCalculator, isCurrent);
 };
-
 ParaMath.prototype.Refresh_RecalcData = function(Data)
 {
     this.Paragraph.Refresh_RecalcData2(0);
@@ -2670,42 +2668,9 @@ ParaMath.prototype.MoveCursorToEndPos = function(SelectFromEnd)
 	this.Root.MoveCursorToEndPos(SelectFromEnd);
 };
 
-ParaMath.prototype.Get_ParaContentPosByXY = function(SearchPos, Depth, _CurLine, _CurRange, StepEnd, Flag) // получить логическую позицию по XY
+ParaMath.prototype.getParagraphContentPosByXY = function(searchState)
 {
-	var Result = false;
-
-	var CurX = SearchPos.CurX;
-
-	var MathX = SearchPos.CurX;
-	var MathW = this.Root.GetWidth(_CurLine, _CurRange);
-
-	// Если мы попадаем четко в формулу, тогда ищем внутри нее, если нет, тогда не заходим внутрь
-	if ((SearchPos.X > MathX && SearchPos.X < MathX + MathW) || SearchPos.DiffX > 1000000 - 1)
-	{
-		var bFirstItem = SearchPos.DiffX > 1000000 - 1 ? true : false;
-
-		Result = this.Root.Get_ParaContentPosByXY(SearchPos, Depth, _CurLine, _CurRange, StepEnd);
-
-		if (SearchPos.InText)
-			SearchPos.DiffX = 0.001; // чтобы всегда встать в формулу, если попали в текст
-
-		// TODO: Пересмотреть данную проверку. Надо выяснить насколько сильно она вообще нужна
-		// Если мы попадаем в формулу, тогда не ищем позицию вне ее. За исключением, случая когда формула идет в начале
-		// строки. Потому что в последнем случае из формулы 100% придет true, а позиция, возможно, находится за формулой.
-		if (Result && !bFirstItem)
-			SearchPos.DiffX = 0;
-	}
-
-	// Такое возможно, если все элементы до этого (в том числе и этот) были пустыми, тогда, чтобы не возвращать
-	// неправильную позицию вернем позицию начала данного элемента.
-	if (SearchPos.DiffX > 1000000 - 1)
-	{
-		this.Get_StartPos(SearchPos.Pos, Depth);
-		Result = true;
-	}
-
-	SearchPos.CurX = CurX + MathW;
-	return Result;
+	searchState.handleParaMath(this);
 };
 
 ParaMath.prototype.Get_ParaContentPos = function(bSelection, bStart, ContentPos, bUseCorrection)

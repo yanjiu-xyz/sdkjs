@@ -10421,6 +10421,10 @@ CDocumentColor.prototype =
         return true;
     }
 };
+CDocumentColor.prototype.isBlackAutoColor = function()
+{
+	return this.Check_BlackAutoColor();
+};
 CDocumentColor.prototype.WriteToBinary = function(oWriter)
 {
 	this.Write_ToBinary(oWriter);
@@ -14679,26 +14683,9 @@ CTextPr.prototype.Check_NeedRecalc = function()
 
 	return false;
 };
-CTextPr.prototype.Get_FontKoef = function()
+CTextPr.prototype.getFontCoef = function()
 {
-	var dFontKoef = 1;
-
-	switch (this.VertAlign)
-	{
-		case AscCommon.vertalign_Baseline:
-		{
-			dFontKoef = 1;
-			break;
-		}
-		case AscCommon.vertalign_SubScript:
-		case AscCommon.vertalign_SuperScript:
-		{
-			dFontKoef = AscCommon.vaKSize;
-			break;
-		}
-	}
-
-	return dFontKoef;
+	return (AscCommon.vertalign_SubScript === this.VertAlign || AscCommon.vertalign_SubScript === this.VertAlign ? AscCommon.vaKSize : 1);
 };
 CTextPr.prototype.Document_Get_AllFontNames = function(AllFonts)
 {
@@ -18345,6 +18332,9 @@ window["AscWord"].DEFAULT_TABLE_PR       = g_oDocumentDefaultTablePr;
 window["AscWord"].DEFAULT_TABLE_CELL_PR  = g_oDocumentDefaultTableCellPr;
 window["AscWord"].DEFAULT_TABLE_ROW_PR   = g_oDocumentDefaultTableRowPr;
 window["AscWord"].DEFAULT_TABLE_STYLE_PR = g_oDocumentDefaultTableStylePr;
+
+AscWord.BLACK_COLOR = new AscWord.CDocumentColor(0, 0, 0, false);
+AscWord.WHITE_COLOR = new AscWord.CDocumentColor(255, 255, 255, false);
 
 var g_oDocumentDefaultFillColor   = new CDocumentColor(255, 255, 255, true);
 var g_oDocumentDefaultStrokeColor = new CDocumentColor(0, 0, 0, true);
