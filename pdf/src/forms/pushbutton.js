@@ -1243,7 +1243,7 @@
             oActionsQueue.bContinueAfterEval = false;
         
         Api.oSaveObjectForAddImage = this;
-        if (window["AscDesktopEditor"]) {
+        if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["IsLocalFile"]()) {
             window["AscDesktopEditor"]["OpenFilenameDialog"]("images", false, function(_file) {
                 var file = _file;
                 if (Array.isArray(file))
