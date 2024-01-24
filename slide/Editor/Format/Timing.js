@@ -2463,6 +2463,9 @@
                     oEffect.resetDelayShift();
                     if (oEffect.isSelected()) {
                         oEffect.cTn.setNodeType(oPr.asc_getStartType());
+                        if(oPr.asc_getStartType() === AscFormat.NODE_TYPE_AFTEREFFECT) {
+                            oEffect.cTn.changeDelay(0, false);
+                        }
                     }
                 }
             }
