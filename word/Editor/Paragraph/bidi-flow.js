@@ -93,16 +93,16 @@
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	BidiFlow.prototype.flushBuffer = function()
 	{
-		for (let i = 0; i < this.neutralBuffer.length; ++i)
-		{
-			this.handler.handleBidiFlow(this.neutralBuffer[i], AscWord.BidiType.ltr);
-		}
-
 		for (let i = this.buffer.length - 1; i >= 0; --i)
 		{
 			this.handler.handleBidiFlow(this.buffer[i], AscWord.BidiType.rtl);
 		}
 		this.buffer.length = 0;
+		
+		for (let i = 0; i < this.neutralBuffer.length; ++i)
+		{
+			this.handler.handleBidiFlow(this.neutralBuffer[i], AscWord.BidiType.ltr);
+		}
 		this.neutralBuffer.length = 0;
 	};
 	//--------------------------------------------------------export----------------------------------------------------

@@ -132,6 +132,8 @@
 			para.Content[pos].getParagraphContentPosByXY(this);
 		}
 		
+		this.bidiFlow.end();
+		
 		this.checkInText()
 		
 		if (this.diffX > MAX_DIFF - 1)
