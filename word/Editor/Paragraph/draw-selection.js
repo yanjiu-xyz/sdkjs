@@ -82,8 +82,9 @@
 		this.range = range;
 		
 		this.x = this.paragraph.Lines[this.line].Ranges[this.range].XVisible;
-		if (this.line === this.paragraph.Numbering.Line && this.range === this.paragraph.Numbering.Range)
-			this.X += this.paragraph.Numbering.WidthVisible;
+		
+		if (this.paragraph.Numbering.checkRange(this.line, this.range))
+			this.x += this.paragraph.Numbering.WidthVisible;
 		
 		this.bidi.begin(this.rtl);
 		
