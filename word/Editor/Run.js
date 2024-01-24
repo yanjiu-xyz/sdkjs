@@ -6443,8 +6443,6 @@ ParaRun.prototype.MoveCursorToEndPos = function(SelectFromEnd)
 
 ParaRun.prototype.getParagraphContentPosByXY = function(searchState)
 {
-	searchState.handleRun(this);
-	
 	let rangePos = this.getRangePos(searchState.line, searchState.range);
 	let startPos = rangePos[0];
 	let endPos   = rangePos[1];
@@ -6456,6 +6454,8 @@ ParaRun.prototype.getParagraphContentPosByXY = function(searchState)
 		let item = this.private_CheckInstrText(this.Content[pos]);
 		searchState.handleRunElement(item, this, pos);
 	}
+	
+	searchState.handleRun(this);
 };
 
 ParaRun.prototype.Get_ParaContentPos = function(bSelection, bStart, ContentPos, bUseCorrection)

@@ -145,52 +145,29 @@
 	};
 	ParagraphSearchPositionXY.prototype.handleRun = function(run)
 	{
-		// TODO: Тут сохраняем ран на случай, если мы не найдем ни одного элемента
-		//       и нам нужно будет хоть к чему-то привязаться
-		
-		// if (CurPos >= EndPos)
-		// {
-		// 	// Заглушка, чтобы мы тыкая вправо попадали в самый правый пустой ран
-		//
-		// 	// Проверяем, попали ли мы в данный элемент
-		// 	var Diff = SearchPos.X - SearchPos.CurX;
-		//
-		// 	if (((Diff <= 0 && Math.abs(Diff) < SearchPos.DiffX - 0.001) || (Diff > 0 && Diff < SearchPos.DiffX + 0.001)) && (SearchPos.CenterMode || SearchPos.X > SearchPos.CurX) && InMathText == false)
-		// 	{
-		// 		SearchPos.SetDiffX(Diff);
-		// 		SearchPos.Pos.Update(CurPos, Depth);
-		// 		Result = true;
-		// 	}
-		// }
-		
-		
-		// // Такое возможно, если все раны до этого (в том числе и этот) были пустыми, тогда, чтобы не возвращать
-		// // неправильную позицию вернем позицию начала данного путого рана.
-		// if ( SearchPos.DiffX > 1000000 - 1 )
-		// {
-		// 	SearchPos.SetDiffX(SearchPos.X - SearchPos.CurX);
-		// 	SearchPos.Pos.Update( StartPos, Depth );
-		// 	Result = true;
-		// }
-		//
-		// if (this.Type == para_Math_Run) // не только для пустых Run, но и для проверки на конец Run (т.к. Diff не обновляется)
-		// {
-		// 	//для пустых Run искомая позиция - позиция самого Run
-		// 	var bEmpty = this.Is_Empty();
-		//
-		// 	var PosLine = this.ParaMath.GetLinePosition(_CurLine, _CurRange);
-		//
-		// 	if (bEmpty)
-		// 		SearchPos.CurX = PosLine.x + this.pos.x;
-		//
-		// 	Diff = SearchPos.X - SearchPos.CurX;
-		// 	if (SearchPos.InText == false && (bEmpty || StartPos !== EndPos) && (Math.abs(Diff) < SearchPos.DiffX + 0.001 && (SearchPos.CenterMode || SearchPos.X > SearchPos.CurX)))
-		// 	{
-		// 		SearchPos.SetDiffX(Diff);
-		// 		SearchPos.Pos.Update(CurPos, Depth);
-		// 		Result = true;
-		// 	}
-		// }
+		// For the case when we didn't find any run with content
+		if (this.diffX > MAX_DIFF - 1)
+		{
+			this.posInfo.run = run;
+			this.posInfo.pos = run.GetElementsCount();
+		}
+
+		if (run.IsMathRun())
+		{
+			if (run.IsEmpty())
+			{
+				let mathPos = run.ParaMath.GetLinePosition(this.line, this.range);
+				this.curX   = mathPos.x + run.pos.x;
+			}
+			
+			let diff = this.x - this.curX;
+			if (!this.inTextX && (Math.abs(diff) < this.diffAbs + EPSILON && (this.centerMode || this.x > this.curX)))
+			{
+				this.setDiff(diff);
+				this.posInfo.run = run;
+				this.posInfo.pos = run.GetElementsCount();
+			}
+		}
 		
 	};
 	ParagraphSearchPositionXY.prototype.handleParaMath = function(math)
