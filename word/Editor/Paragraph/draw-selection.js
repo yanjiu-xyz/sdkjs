@@ -143,7 +143,7 @@
 		
 		this.bidi.add([element, isSelected], element.getBidiType());
 	};
-	ParagraphDrawSelectionState.prototype.handleBidiFlow = function(data)
+	ParagraphDrawSelectionState.prototype.handleBidiFlow = function(data, direction)
 	{
 		let element    = data[0];
 		let isSelected = data[1];
@@ -161,7 +161,7 @@
 			if (element === this.beginElement)
 			{
 				this.beginInfo = {
-					x : element.getBidiType() === AscWord.BidiType.rtl ? this.x + w : this.x,
+					x : direction === AscWord.BidiType.rtl ? this.x + w : this.x,
 					w : 0,
 					y : this.y,
 					h : this.h
@@ -171,7 +171,7 @@
 			if (element === this.endElement)
 			{
 				this.endInfo = {
-					x : element.getBidiType() === AscWord.BidiType.rtl ? this.x : this.x + w,
+					x : direction === AscWord.BidiType.rtl ? this.x : this.x + w,
 					w : 0,
 					y : this.y,
 					h : this.h
@@ -180,6 +180,18 @@
 		}
 		
 		this.x += w;
+	};
+	ParagraphDrawSelectionState.prototype.handleMathElement = function(mathElement)
+	{
+		this.bidi.end();
+		
+		let w = mathElement.GetWidth(this.line, this.range);
+		
+		let lastRange = this.selectionRanges.length ? this.selectionRanges[this.selectionRanges.length - 1] : null;
+		if (lastRange && Math.abs(lastRange.x + lastRange.w - this.x) < EPSILON)
+			lastRange.w += w;
+		else
+			this.selectionRanges.push({x : this.x, w : w, y : this.y, h : this.h});
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	AscWord.ParagraphDrawSelectionState = ParagraphDrawSelectionState;
