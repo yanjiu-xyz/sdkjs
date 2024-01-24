@@ -530,8 +530,7 @@
 	{
 		let isRtl = AscFonts.isRtlScript(this.Value);
 		
-		// TODO: mark these letters as rtl script for testing purposes
-		if ((0x0400 <= this.Value && this.Value <= 0x04FF) || isRtl)
+		if (isRtl)
 			this.Flags |= FLAGS_RTL;
 		else
 			this.Flags &= ~FLAGS_RTL;
