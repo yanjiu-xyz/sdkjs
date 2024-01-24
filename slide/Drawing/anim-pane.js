@@ -1887,16 +1887,13 @@
 			}
 
 			// Check boundaries to start or end timeline scroll
-			const leftBorder = 0;
-			const rightBorder = timeline.getRulerEnd() - timeline.getZeroShift();
+			const leftBorder = this.getLeftBorder();
+			const rightBorder = this.getRightBorder();
 
-			// make relativeX relative to timeline's zero again
-			relativeX = x - timeline.getLeft() - timeline.getZeroShift()
-
-			if (relativeX <= leftBorder || relativeX >= rightBorder) {
+			if (x <= leftBorder || x >= rightBorder) {
 				if (!timeline.isOnScroll()) {
 					let scrollStep = timeline.getWidth() * SCROLL_STEP / 10;
-					scrollStep = relativeX <= leftBorder ? -scrollStep : scrollStep;
+					scrollStep = x <= leftBorder ? -scrollStep : scrollStep;
 					let scrollTimerDelay = 0;
 					let scrollTimerInterval = 50;
 					timeline.startScroll(scrollStep, scrollTimerDelay, scrollTimerInterval);
@@ -1948,6 +1945,15 @@
 		return nMillimeters / TIME_INTERVALS[index] * TIME_SCALES[index] * 1000;
 	};
 
+	CAnimItem.prototype.getLeftBorder = function () {
+		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline
+		return timeline.getLeft() + timeline.getZeroShift()
+	}
+	CAnimItem.prototype.getRightBorder = function () {
+		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline
+		return this.getLeftBorder() + timeline.getRulerEnd() - timeline.getZeroShift()
+	}
+
 	CAnimItem.prototype.draw = function drawEffectBar(graphics) {
 		const timelineContainer = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control
 		if (!timelineContainer) { return }
@@ -1958,9 +1964,9 @@
 
 		graphics.SaveGrState();
 
-		const clipL = timelineContainer.timeline.getLeft() + timelineContainer.timeline.getZeroShift();
+		const clipL = this.getLeftBorder();
 		const clipT = this.bounds.t;
-		const clipW = timelineContainer.timeline.getRulerEnd() - timelineContainer.timeline.getZeroShift();
+		const clipW = this.getRightBorder() - clipL;
 		const clipH = this.bounds.b - this.bounds.t;
 		graphics.AddClipRect(clipL, clipT, clipW, clipH);
 
@@ -2015,7 +2021,9 @@
 		const delta = AscFormat.DIST_HIT_IN_LINE
 		const bounds = this.getEffectBarBounds();
 
-		if (y > bounds.t && y < bounds.b) {
+		const isOutOfBorders = x < this.getLeftBorder() || x > this.getRightBorder() || y < bounds.t || y > bounds.b
+
+		if (!isOutOfBorders) {
 			if (!this.effect.isInstantEffect()) {
 				if (x >= bounds.l - delta && x <= bounds.l) { return 'left'; }
 				if (x >= bounds.r && x <= bounds.r + delta) { return 'right'; }
