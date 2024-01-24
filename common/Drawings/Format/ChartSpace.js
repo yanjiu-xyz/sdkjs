@@ -4280,6 +4280,7 @@ function(window, undefined) {
 			return [];
 		}
 		if (oAxis.Id === this.chart.plotArea.axId[1].Id) {
+			// for the val axis, regularly get labels
 			aStrings = this.getLabelsForAxis(oAxis, true);
 		} else {
 			const strSeria = this.chart.plotArea.plotAreaRegion && this.chart.plotArea.plotAreaRegion.series ? this.chart.plotArea.plotAreaRegion.series[0] : null;
@@ -4289,26 +4290,37 @@ function(window, undefined) {
 					return [];
 				}
 	
+				// if data is aggregated then convert array of integers into chars 
 				if (cachedData.aggregation) {
 					for (let i = 0; i < oAxis.scale.length; i++) {
-						aStrings.push(String.fromCharCode(oAxis.scale[i]));
+						// If no labels exist, then excel just leaves empty catAxis
+						const str = (oAxis.scale[i] === 0 || oAxis.scale[i] !== null) ? String.fromCharCode(oAxis.scale[i]) : '';
+						aStrings.push(str);
 					}
 				} else if (cachedData.binning) {
+					// obtain properly formated array of integers
 					const bStrings = this.getLabelsForAxis(oAxis, true);
 					const binning = cachedData.binning;
 		
+					//convert array of formated strings into ranges
 					if (bStrings && bStrings.length != 0) {
+						// ranges always start with '[' and end with ']', however between they can have '(' and ')'
 						let start = '[';
 						let end = binning.intervalClosed === "r" ? ')' : ']';
+						// user can manually set minimum and maximum, therefore alternative start and end needed
 						const alternativeStart = binning.intervalClosed === 'r' ? '<' : '≤';
 						const alternativeEnd = binning.intervalClosed === 'r' ? '≥' : '>';
 		
 						const isAlternativeStartExist = binning.underflow === 0 || binning.underflow ? true : false;
 						const isAlternativeEndExist = binning.overflow === 0 || binning.overflow ? true : false;
+						// first check is alternativeStart exist, and append alternativeStartSign with value, 
+						// also because start not the first anymore, we can change its value from '[' to '(';
 						if (isAlternativeStartExist) {
 							aStrings.push(alternativeStart + ` ${bStrings[0]}`);
 							start = '(';
 						}
+						// if element not the first one, then change value of start
+						// if element is last one and no alternativeEnd exist, then change value of end 
 						for (let i = 0; i < (bStrings.length - 1); i++) {
 							if (i === 1 && start != "(" && binning.intervalClosed !== 'r') {
 								start = '(';
@@ -4319,8 +4331,10 @@ function(window, undefined) {
 							}
 							aStrings.push(start + `${bStrings[i]}, ${bStrings[i + 1]}` + end)
 						}
+						// add alternativeEnd if exist
 						if (isAlternativeEndExist) {
-							aStrings.push(alternativeEnd + ` ${bStrings[bStrings.length - 1]}`);
+							const val = (bStrings.length > 1) ? bStrings[bStrings.length - 1] : binning.overflow;
+							aStrings.push(alternativeEnd + ` ${val}`);
 						}
 					}
 				}
