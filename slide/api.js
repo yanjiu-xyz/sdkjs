@@ -4478,10 +4478,15 @@ background-repeat: no-repeat;\
 	{
 		return this.WordControl.m_oLogicDocument.IsStartedPreview()
 	};
-	asc_docs_api.prototype.asc_StartAnimationPreview = function()
+	asc_docs_api.prototype.asc_StartAnimationPreview = function(bAll)
 	{
 		this.asc_StopAnimationPreview();
-		if(this.WordControl.m_oLogicDocument.StartAnimationPreview(true))
+		let bStartAll = true;
+		if(bAll === false)
+		{
+			bStartAll = false;
+		}
+		if(this.WordControl.m_oLogicDocument.StartAnimationPreview(bStartAll))
 		{
 			this.sendEvent("asc_onAnimPreviewStarted");
 		}

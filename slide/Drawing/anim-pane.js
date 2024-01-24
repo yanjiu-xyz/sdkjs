@@ -968,8 +968,18 @@
 		function managePreview(event, x, y) {
 			if (!this.hit(x, y)) { return }
 			if (this.isDisabled()) { return }
-			Asc.editor.asc_IsStartedAnimationPreview() ?
-				Asc.editor.asc_StopAnimationPreview() : Asc.editor.asc_StartAnimationPreview()
+			if(Asc.editor.asc_IsStartedAnimationPreview()) {
+				Asc.editor.asc_StopAnimationPreview();
+			}
+			else {
+				let aSelectedEffects = this.getTiming().getSelectedEffects();
+				if(aSelectedEffects.length > 1) {
+					Asc.editor.asc_StartAnimationPreview(false);
+				}
+				else {
+					Asc.editor.asc_StartAnimationPreview(true);
+				}
+			}
 		}
 
 		function moveChosenUp(event, x, y) {
@@ -1674,7 +1684,7 @@
 
 		let sLabel = this.seq.getLabel();
 		if (typeof sLabel === "string" && sLabel.length > 0) {
-			this.label = this.addControl(new CLabel(this, sLabel, 9, true));
+			this.label = this.addControl(new CLabel(this, sLabel, 9, true, AscCommon.align_Left));
 		}
 
 		const aAllEffects = this.seq.getAllEffects();
@@ -1698,9 +1708,10 @@
 	CAnimSequence.prototype.recalculateChildrenLayout = function () {
 		var dCurY = 0;
 		if (this.label) {
-			this.label.setLayout(0, dCurY, this.getWidth(), SEQ_LABEL_HEIGHT);
+			dCurY += PADDING_TOP;
+			this.label.setLayout(PADDING_TOP, dCurY, this.getWidth(), SEQ_LABEL_HEIGHT);
 			this.label.recalculate();
-			dCurY += this.label.getHeight();
+			dCurY += this.label.getHeight() + PADDING_BOTTOM;
 		}
 		for (let nGroup = 0; nGroup < this.animGroups.length; ++nGroup) {
 			this.animGroups[nGroup].setLayout(0, dCurY, this.getWidth(), 0);

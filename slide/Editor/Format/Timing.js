@@ -2597,20 +2597,12 @@
         }
     };
     CTiming.prototype.getEffectsForDemo = function () {
-        var aEffectsForDemo, aCurEffects;
+        var aEffectsForDemo;
         var aSelectedEffects = this.getSelectedEffects();
         if (aSelectedEffects.length > 0 && !this.isAllSlideAnimations) {
-            aCurEffects = aSelectedEffects;
+            aEffectsForDemo = aSelectedEffects;
         } else {
-            aCurEffects = this.getAllAnimEffects();
-        }
-
-        aEffectsForDemo = [];
-        for (var nEffect = 0; nEffect < aCurEffects.length; ++nEffect) {
-            var oEffect = aCurEffects[nEffect];
-            if (oEffect.isPartOfMainSequence()) {
-                aEffectsForDemo.push(oEffect);
-            }
+            aEffectsForDemo = this.getAllAnimEffects();
         }
         if (aEffectsForDemo.length === 0) {
             return null;
@@ -8667,14 +8659,16 @@
         if (this.isMainSequence()) {
             return null;
         }
+        let sResult = AscCommon.translateManager.getValue("Trigger");
+        let sObjectName = AscCommon.translateManager.getValue("Without Name");
         var sClickSp = this.getSpClickInteractiveSeq();
         if (sClickSp) {
             var oSp = AscCommon.g_oTableId.Get_ById(sClickSp);
             if (oSp) {
-                return AscCommon.translateManager.getValue("Trigger:") + " " + oSp.getObjectName();
+                sObjectName = oSp.getObjectName();
             }
         }
-        return null;
+        return AscCommon.translateManager.getValue("Trigger") + ": " + sObjectName;
     };
     CTimeNodeContainer.prototype.getObjectName = function () {
         var sObjectId = this.getObjectId();
