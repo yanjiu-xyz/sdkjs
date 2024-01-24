@@ -5266,14 +5266,11 @@
         }
     };
     CCTn.prototype.getDelayShift = function () {
-        if (this.nodeType === AscFormat.NODE_TYPE_AFTEREFFECT ||
-            this.nodeType === AscFormat.NODE_TYPE_WITHEFFECT) {
-            var oPrev = this.parent.getPreviousEffect();
+        if (this.nodeType === AscFormat.NODE_TYPE_AFTEREFFECT) {
+            let oPrev = this.parent.getPreviousEffect();
             if (oPrev && oPrev.cTn) {
-                var nShift = oPrev.cTn.getDelay(false);
-                if (this.nodeType === AscFormat.NODE_TYPE_AFTEREFFECT) {
-                    nShift += oPrev.cTn.getEffectDuration()
-                }
+                let nShift = oPrev.cTn.getDelay(false);
+                nShift += oPrev.cTn.getEffectDuration()
                 return nShift;
             }
         }
