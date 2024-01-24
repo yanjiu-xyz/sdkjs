@@ -129,7 +129,13 @@
 				return;
 
 			if (!AscCommon.g_inputContext)
+			{
+				var worker = this;
+				AscCommon.inputMethodAddInitEvent(function() {
+					worker.setEnabled(isEnabled);
+				});
 				return;
+			}
 
 			this.isEnabled = isEnabled;
 			if (this.isEnabled)
