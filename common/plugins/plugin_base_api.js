@@ -648,7 +648,7 @@ window.startPluginApi = function() {
     };
 
 	/**
-	 * attachEvent
+	 * @function attachEvent
 	 * @memberof Plugin
 	 * @alias attachEvent
 	 * @description Defines the method to add an event listener, a function that will be called whenever the specified event is delivered to the target.
@@ -658,7 +658,7 @@ window.startPluginApi = function() {
 	 */
 
 	/**
-	 * attachContextMenuClickEvent
+	 * @function attachContextMenuClickEvent
 	 * @memberof Plugin
 	 * @alias attachContextMenuClickEvent
 	 * @description Defines the method to add an event listener, a function that will be called whenever the specified event is clicked in the context menu.
