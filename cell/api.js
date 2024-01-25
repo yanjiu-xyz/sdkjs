@@ -6962,7 +6962,6 @@ var editor;
 
 	spreadsheet_api.prototype._changePivotSimple = function(pivot, isInsert, needUpdateView, callback) {
 		var wsModel = pivot.GetWS();
-		var ws = this.wb.getWorksheet(wsModel.getIndex());
 		if (isInsert) {
 			pivot.stashEmptyReportRange();
 		} else {
@@ -6971,26 +6970,35 @@ var editor;
 
 		callback(wsModel);
 
-		var dataRow;
-		var pivotChanged = pivot.getAndCleanChanged();
-		if (pivotChanged.data) {
-			var updateRes = pivot.updateAfterEdit();
-			dataRow = updateRes.dataRow;
+		let changeRes = {changed: undefined, ranges: undefined, error: c_oAscError.ID.No, warning: c_oAscError.ID.No, updateRes: undefined};
+		changeRes.changed = pivot.getAndCleanChanged();
+		if (changeRes.changed.data) {
+			changeRes.updateRes = pivot.updateAfterEdit();
 		}
-		this._updatePivotTable(pivot, pivotChanged, wsModel, ws, dataRow, needUpdateView, false);
+		let dataRow = changeRes.updateRes && changeRes.updateRes.dataRow;
+		changeRes.ranges = wsModel.updatePivotTable(pivot, changeRes.changed, dataRow, false);
+		this.updateWorksheetByPivotTable(pivot, changeRes, needUpdateView);
 	};
 	spreadsheet_api.prototype.updatePivotTables = function() {
 		var t = this;
 		this.wbModel.forEach(function(wsModel) {
-			var ws = t.wb.getWorksheet(wsModel.getIndex());
 			for (var i = 0; i < wsModel.pivotTables.length; ++i) {
 				var pivot = wsModel.pivotTables[i];
-				t._updatePivotTable(pivot, pivot.getAndCleanChanged(), wsModel, ws, undefined, false, true);
+				let changed = pivot.getAndCleanChanged();
+				var ranges = wsModel.updatePivotTable(pivot, changed, undefined, true);
+				let changeRes = {changed: changed, ranges: ranges, error: c_oAscError.ID.No, warning: c_oAscError.ID.No, updateRes: undefined};
+				t.updateWorksheetByPivotTable(pivot, changeRes, false);
 			}
 		});
 	};
-	spreadsheet_api.prototype._updatePivotTable = function(pivot, changed, wsModel, ws, dataRow, needUpdateView, canModifyDocument, doNotAutoFitColumnsWidth) {
-		var ranges = wsModel.updatePivotTable(pivot, changed, dataRow, canModifyDocument);
+	spreadsheet_api.prototype.updateWorksheetByPivotTable = function(pivot, changeRes, needUpdateView, doNotAutoFitColumnsWidth, updateSelection) {
+		let wsModel = pivot.GetWS();
+		let ws = this.wb.getWorksheet(wsModel.getIndex());
+		let changed = changeRes.changed;
+		var ranges = changeRes.ranges;
+		if (updateSelection) {
+			pivot.updateSelection(ws);
+		}
 		if (needUpdateView) {
 			if (changed.oldRanges) {
 				ws.updateRanges(changed.oldRanges);
@@ -7254,25 +7262,34 @@ var editor;
 			History.StartTransaction();
 			t.wbModel.dependencyFormulas.lockRecal();
 
-			let changeRes;
-			for (let i = pivotTables.length - 1; i >= 0; --i) {
+			let pivotTablesChangeRes = [];
+			for (let i = 0; i < pivotTables.length; ++i) {
 				let checkRefresh = pivotTables[i].checkRefresh();
+				let changeRes;
 				if (c_oAscError.ID.No === checkRefresh) {
-					changeRes = t._changePivot(pivotTables[i], opt_confirmation, false, function(ws, pivot) {
+					changeRes = t._changePivot(pivotTables[i], opt_confirmation, function(ws, pivot) {
 						let error = pivot.refresh();
 					});
 				} else {
 					changeRes = {error: checkRefresh, warning: c_oAscError.ID.No, updateRes: undefined};
 				}
+				pivotTablesChangeRes[i] = changeRes;
 				if (c_oAscError.ID.No !== changeRes.error || c_oAscError.ID.No !== changeRes.warning) {
 					break;
 				}
 			}
 			t.wbModel.dependencyFormulas.unlockRecal();
 			History.EndTransaction();
-			t._changePivotEndCheckError(changeRes, function(){
+			let success = t._changePivotEndCheckError(pivotTablesChangeRes[pivotTablesChangeRes.length - 1], function(){
 				t.asc_refreshAllPivots(true);
 			});
+			if (success) {
+				for (let i = 0; i < pivotTablesChangeRes.length; ++i) {
+					let pivotTable = pivotTables[i];
+					let changeRes = pivotTablesChangeRes[i];
+					t.updateWorksheetByPivotTable(pivotTable, changeRes,  true, undefined, false);
+				}
+			}
 		});
 
 	};
@@ -7326,14 +7343,17 @@ var editor;
 			History.Create_NewPoint();
 			History.StartTransaction();
 			t.wbModel.dependencyFormulas.lockRecal();
-			var changeRes = t._changePivot(pivot, confirmation, updateSelection, onAction, doNotCheckUnderlyingData, doNotAutoFitColumnsWidth);
+			var changeRes = t._changePivot(pivot, confirmation, onAction, doNotCheckUnderlyingData);
 			t.wbModel.dependencyFormulas.unlockRecal();
 			History.EndTransaction();
-			t._changePivotEndCheckError(changeRes, function () {
+			let success = t._changePivotEndCheckError(changeRes, function () {
 				//undo can replace pivot complitly. note: getPivotTableById returns nothing while insert operation
 				var pivotAfterUndo = t.wbModel.getPivotTableById(pivot.Get_Id()) || pivot;
 				t._changePivotWithLockExt(pivotAfterUndo, true, updateSelection, onAction);
 			});
+			if (success) {
+				t.updateWorksheetByPivotTable(pivot, changeRes, true, doNotAutoFitColumnsWidth, updateSelection);
+			}
 		});
 	};
 	spreadsheet_api.prototype._changePivotAndConnectedBySlicerWithLock = function (pivot, flds, onAction) {
@@ -7364,10 +7384,14 @@ var editor;
 			var changeRes = onAction(confirmation, pivotTables);
 			t.wbModel.dependencyFormulas.unlockRecal();
 			History.EndTransaction();
-			t._changePivotEndCheckError(changeRes, onRepeat);
+			let success = t._changePivotEndCheckError(changeRes, onRepeat);
+			if (success) {
+				//todo pivot
+				t.updateWorksheetByPivotTable(pivot, changeRes, true, undefined, true);
+			}
 		});
 	};
-	spreadsheet_api.prototype._changePivot = function(pivot, confirmation, updateSelection, onAction, doNotCheckUnderlyingData, doNotAutoFitColumnsWidth) {
+	spreadsheet_api.prototype._changePivot = function(pivot, confirmation, onAction, doNotCheckUnderlyingData) {
 		if (!doNotCheckUnderlyingData && !pivot.checkPivotUnderlyingData()) {
 			return {error: c_oAscError.ID.PivotWithoutUnderlyingData, warning: c_oAscError.ID.No, updateRes: undefined};
 		}
@@ -7392,21 +7416,15 @@ var editor;
 				}
 			}
 		}
-		var isSuccess = c_oAscError.ID.No === error && c_oAscError.ID.No === warning;
-		if (isSuccess) {
-			var ws = this.wb.getWorksheet(wsModel.getIndex());
-			this._updatePivotTable(pivot, pivotChanged, wsModel, ws, updateRes && updateRes.dataRow, true, true, doNotAutoFitColumnsWidth);
-			if (updateSelection) {
-				pivot.updateSelection(ws);
-			}
-			//ws can be inactive in case of slicer on other sheet
-			if (this.wbModel.getActive() === wsModel.getIndex()) {
-				ws.draw();
-			}
+		let ranges;
+		let success = c_oAscError.ID.No === error && c_oAscError.ID.No === warning;
+		if (success) {
+			let dataRow = updateRes && updateRes.dataRow;
+			ranges = wsModel.updatePivotTable(pivot, pivotChanged, dataRow, true);
 		} else {
 			pivot.stashEmptyReportRange();//to prevent clearTableStyle while undo
 		}
-		return {error: error, warning: warning, updateRes: updateRes};
+		return {changed: pivotChanged, ranges: ranges, error: error, warning: warning, updateRes: updateRes};
 	};
 	spreadsheet_api.prototype._changePivotRevert = function () {
 		History.Undo();
