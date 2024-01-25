@@ -9132,7 +9132,8 @@ Paragraph.prototype.GetSelectionAnchorPos = function()
 		{
 			let paraLine = this.Lines[iLine];
 			
-			drawSelectionState.resetPage(this.getPageByLine(iLine));
+			let iPage = this.getPageByLine(iLine);
+			drawSelectionState.resetPage(iPage);
 			drawSelectionState.resetLine(iLine);
 			
 			var Result = null;
@@ -9151,7 +9152,7 @@ Paragraph.prototype.GetSelectionAnchorPos = function()
 				for (var CurPos = RStartPos; CurPos <= REndPos; CurPos++)
 				{
 					var Item = this.Content[CurPos];
-					Item.Selection_DrawRange(CurLine, CurRange, DrawSelection);
+					Item.Selection_DrawRange(iLine, iRange, drawSelectionState);
 				}
 				drawSelectionState.endRange();
 				
@@ -9168,7 +9169,7 @@ Paragraph.prototype.GetSelectionAnchorPos = function()
 						X1 = _x + _w;
 						Y  = _y;
 						
-						Page = this.Get_AbsolutePage(CurPage);
+						Page = this.Get_AbsolutePage(iPage);
 						
 						if (null === Result)
 							Result = {X0 : X0, X1 : X1, Y : Y, Page : Page};

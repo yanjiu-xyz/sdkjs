@@ -71,7 +71,7 @@
 		if (this.compiledPr.ParaPr.Shd && !this.compiledPr.ParaPr.Shd.IsNil())
 		{
 			bgColor = this.compiledPr.ParaPr.Shd.GetSimpleColor(this.theme, this.colorMap);
-			if (bgColor.Auto && p)
+			if (bgColor.Auto && paraParent)
 				bgColor = paraParent.Get_TextBackGroundColor();
 		}
 		else if (paraParent)
