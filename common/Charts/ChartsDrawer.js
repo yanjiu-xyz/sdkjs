@@ -2474,255 +2474,313 @@ CChartsDrawer.prototype =
 		if (!chartSpace || !chartSpace.chart || !chartSpace.chart.plotArea || !chartSpace.chart.plotArea.plotAreaRegion || !chartSpace.chart.plotArea.plotAreaRegion.series) {
 			return;
 		}
+
 		const plotArea = chartSpace.chart.plotArea;
 		const strSeria = plotArea.plotAreaRegion.series[0];
-		const strCahce = strSeria.getCatLit();
+		const strCache = strSeria.getCatLit();
 		const seriesLength = plotArea.plotAreaRegion.series.length;
-		let numSeria = !strCahce ? plotArea.plotAreaRegion.series[0] : plotArea.plotAreaRegion.series[seriesLength - 1];
+		let numSeria = !strCache ? plotArea.plotAreaRegion.series[0] : plotArea.plotAreaRegion.series[seriesLength - 1];
 		const numLit = numSeria.getValLit();
-		plotArea.plotAreaRegion.cachedData = {
-			aggregation : null,
-			binning : null,
-			results : null
-		};
-		if (numLit && numLit.pts && plotArea.axId && plotArea.axId.length === 2) {
 
-			const normalizeBinWidth = function (num) { 
-				if (num === 0) {
-					return num;
-				}
-				let count = 0;
-				let multiply = false;
-				while (num >= 100) {
-					num /= 10;
-					count++;
-					multiply = true;
-				}
-				while (num < 10) {
-					num *= 10; 
-					count++;
-				}
-				if (multiply) {
-					return Math.round(num) * Math.pow(10, count);
-				} else {
-					return Math.round(num) / Math.pow(10, count);
-				}
+		//createCache for storing information
+		const createCachedData = function (chart, numSeria) {
+			if (!chart || !numSeria || !numSeria.layoutPr) {
+				return;
 			}
-
-			const catAxis = plotArea.axId[0];
-			const valAxis = plotArea.axId[1];
-			const data = numLit.pts;
-			let stDev = null;
-			let mean = 0;
-			let catMin = null;
-			let catMax = null;
-			let valMax = null;
-			let valMin = null; 
-			catAxis.scale = [];
-
-			// Calculate mean, catAxis min and max;
-			for (let i = 0; i < data.length; i++) {
-				mean += data[i].val;
-				if (i === 0 || data[i].val > catMax) {
-					catMax = data[i].val;
-				}
-				if (i === 0 || data[i].val < catMin) {
-					catMin = data[i].val;
-				}
-			}
-			mean /= data.length;
-
-			catAxis.min = catMin;
-			catAxis.max = catMax;
+			chart.cachedData = {}
 			const binning = numSeria.layoutPr.binning;
 			const aggregation = numSeria.layoutPr.aggregation;
 			if (aggregation) {
-				const cachedData = plotArea.plotAreaRegion.cachedData;
-				cachedData.aggregation = {};
-				if (strCahce && strCahce.pts && numLit.pts.length <= strCahce.pts.length) {
-					for (let i = 0; i < numLit.pts.length; i++) {
-						if (!cachedData.aggregation.hasOwnProperty(strCahce.pts[i].val)) {
-							cachedData.aggregation[strCahce.pts[i].val] = 0;
-							catAxis.scale.push(strCahce.pts[i].val.charCodeAt(0));
+				chart.cachedData.aggregation = {};
+			}
+			if (binning) {
+				chart.cachedData.binning = {intervalClosed: binning.intervalClosed, overflow: binning.overflow, underflow: binning.underflow, binCount : binning.binCount, binSize : binning.binSize };
+				chart.cachedData.results = [];
+			}
+		}
+		
+		createCachedData(plotArea.plotAreaRegion, numSeria);
+
+		if (numLit && numLit.pts && numLit.pts.length > 0 && plotArea.axId && plotArea.axId.length === 2) {
+
+			const catAxis = plotArea.axId[0];
+			const valAxis = plotArea.axId[1];
+			const numArr = numLit.pts;
+			const strArr = strCache ? strCache.pts : [];
+			const cachedData = plotArea.plotAreaRegion.cachedData;
+			const intrinsicProperties = {
+				stDev : null,
+				mean : 0,
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			}
+
+			const normalizeBinWidth = function (num, precision) { 
+				if (num === 0) {
+					return num;
+				}
+		
+				let count = 0;
+		
+				// Normalize the number by adjusting its scale
+				while (num >= 10) {
+					num /= 10;
+					count++;
+				}
+		
+				while (num < 1) {
+					num *= 10;
+					count--;
+				}
+		
+				// Round the number to two decimal places
+				const kF = Math.pow(10, precision);
+				const roundedNum = Math.round(num * kF) / kF;
+		
+				// Return the normalized number with the appropriate scale
+				return (count >= 0) ? roundedNum * Math.pow(10, count) : roundedNum / Math.pow(10, -count);
+			}
+
+			if (cachedData) {
+				let stDev = null;
+				let mean = 0;
+				let catMin = null;
+				let catMax = null;
+				let valMax = null;
+				let valMin = null; 
+				catAxis.scale = [];
+
+				const setAxisMinAndMax = function (axis, num) {
+					if (!axis || (num !== 0 && !num)) {
+						return;
+					}
+					axis.max = (axis.max === null || num > axis.max) ? num : axis.max;
+					axis.min = (axis.min === null || num < axis.min) ? num : axis.min;
+				}
+
+				const calculateMeanAndCatExtremums = function (iP, numArr) {
+					if (!iP || !numArr) {
+						return;
+					}
+					if (!iP.mean && !iP.catMax && !iP.catMin) {
+						for (let i = 0; i < numArr.length; i++) {
+							iP.mean += numArr[i].val;
+							setAxisMinAndMax(iP.cat, numArr[i].val);
 						}
-						cachedData.aggregation[strCahce.pts[i].val] += numLit.pts[i].val;
-						if (valMin === null || cachedData.aggregation[strCahce.pts[i].val] < valMin) {
-							valMin = cachedData.aggregation[strCahce.pts[i].val]
-						}
-						if (valMin === null || cachedData.aggregation[strCahce.pts[i].val] > valMax) {
-							valMax = cachedData.aggregation[strCahce.pts[i].val]
+						iP.mean /= numArr.length;
+					}
+				}
+
+				const handleAggregation = function (cachedData, numArr, strArr, iP) {
+					if (!cachedData || !numArr || !strArr || !iP) {
+						return;
+					}
+					if (cachedData.aggregation) {
+						const aggregation = cachedData.aggregation;
+						iP.cat.scale.push(1);
+						if (strArr.length !== 0) {
+							// create object of key and values
+							for (let i = 0; i < numArr.length; i++) {
+								const key = strCache.pts[i].val;
+								if (!aggregation.hasOwnProperty(key)) {
+									aggregation[key] = 0;
+								}
+								aggregation[key] += numArr[i].val;
+								setAxisMinAndMax(iP.val, aggregation[key]);
+							}
+						} else {
+							// Cases when labels do not exist
+							const val = numArr[0].val ? numArr[0].val : 0;
+							aggregation[''] = val;
+							setAxisMinAndMax(iP.val, val);
 						}
 					}
-				} else {
-					const val = numLit.pts[0].val ? numLit.pts[0].val : 0;
-					cachedData.aggregation[''] = val;
-					valMin = val;
-					valMax = val;
-					catAxis.scale.push(null);
 				}
-			} else if (binning) {
-				const cachedData = plotArea.plotAreaRegion.cachedData;
-				cachedData.binning = {intervalClosed: binning.intervalClosed, overflow: binning.overflow, underflow: binning.underflow, binCount : binning.binCount, binSize : binning.binSize };
-				cachedData.results = [];
-				const localBinning = cachedData.binning;
-				const localResults = cachedData.results;
-	
-				// Check if overflow and underflow exist and valid!!!
-				// ----------------------------------------
-				// uncomment when excel will fix the problem of overflow and underflow being incorrect in some moments
-				// const statement1 = localBinning.intervalClosed !== "r" ? localBinning.overflow < catAxis.max && localBinning.overflow >= catAxis.min : localBinning.overflow <= catAxis.max && localBinning.overflow > catAxis.min;
-				// const statement2 = localBinning.intervalClosed !== "r" ? localBinning.underflow >= catAxis.min && localBinning.underflow < catAxis.max : localBinning.underflow > catAxis.min && localBinning.underflow <= catAxis.max;
-				// localBinning.overflow = ((localBinning.overflow === 0 || localBinning.overflow) && statement1) ? localBinning.overflow : null;
-				// localBinning.underflow = ((localBinning.underflow === 0 || localBinning.underflow) && statement2) ? localBinning.underflow : null;
-	
-				localBinning.overflow = ((localBinning.overflow === 0 || localBinning.overflow) && localBinning.overflow < catAxis.max && localBinning.overflow >= catAxis.min) ? localBinning.overflow : null;
-				localBinning.underflow = ((localBinning.underflow === 0 || localBinning.underflow) && localBinning.underflow > catAxis.min && localBinning.underflow <= catAxis.max) ? localBinning.underflow : null;
-				const statement1 = localBinning.overflow === 0 || localBinning.overflow;
-				const statement2 = localBinning.underflow === 0 || localBinning.underflow;
-				if (statement1 && statement2 && localBinning.underflow > localBinning.overflow) {
-					localBinning.overflow = null;
+
+				const handleCatLimits = function (localBinning, iP) {
+					if (!localBinning || !iP || !iP.cat) {
+						return;
+					}
+					// uncomment when excel will fix the problem of overflow and underflow being incorrect in some moments
+					// const statement1 = localBinning.intervalClosed !== "r" ? localBinning.overflow < iP.cat.max && localBinning.overflow >= iP.cat.min : localBinning.overflow <= iP.cat.max && localBinning.overflow > iP.cat.min;
+					// const statement2 = localBinning.intervalClosed !== "r" ? localBinning.underflow >= iP.cat.min && localBinning.underflow < iP.cat.max : localBinning.underflow > iP.cat.min && localBinning.underflow <= iP.cat.max;
+					// localBinning.overflow = ((localBinning.overflow === 0 || localBinning.overflow) && statement1) ? localBinning.overflow : null;
+					// localBinning.underflow = ((localBinning.underflow === 0 || localBinning.underflow) && statement2) ? localBinning.underflow : null;
+					localBinning.overflow = ((localBinning.overflow === 0 || localBinning.overflow) && localBinning.overflow < iP.cat.max && localBinning.overflow >= iP.cat.min) ? localBinning.overflow : null;
+					localBinning.underflow = ((localBinning.underflow === 0 || localBinning.underflow) && localBinning.underflow > iP.cat.min && localBinning.underflow <= iP.cat.max) ? localBinning.underflow : null;
+					const limits = {
+						isOverflowExist : localBinning.overflow === 0 || localBinning.overflow ? true : false,
+						isUnderflowExist : localBinning.underflow === 0 || localBinning.underflow ? true : false,
+						trueMax : null,
+						trueMin : null,
+					}
+					if (limits.isOverflowExist && limits.isUnderflowExist && localBinning.underflow > localBinning.overflow) {
+						localBinning.overflow = null;
+						limits.isOverflowExist = false;
+					}
+					limits.trueMax = limits.isOverflowExist ? localBinning.overflow : iP.cat.max;
+					limits.trueMin = limits.isUnderflowExist ? localBinning.underflow : iP.cat.min;
+					return limits;
 				}
-				const isOverflowExist = localBinning.overflow === 0 || localBinning.overflow;
-				const isUnderflowExist = statement2;
 
-				// ----------------------------------------
-				// Check if overflow and underflow exist and valid!!!
-
-				// set trueMax and trueMin if oveflow and underflow exists.
-				const trueMax = isOverflowExist ? localBinning.overflow : catAxis.max;
-				const trueMin = isUnderflowExist ? localBinning.underflow : catAxis.min;
-
-				if (localBinning.binSize) {
-					localBinning.binCount = Math.ceil((trueMax - trueMin) / localBinning.binSize);
-					localBinning.binCount = localBinning.binCount ? localBinning.binCount : 1;
-				} else if (localBinning.binCount) {
-					let binCountDecrease = 0;
-					binCountDecrease = isOverflowExist ? binCountDecrease + 1 : binCountDecrease;
-					binCountDecrease = isUnderflowExist ? binCountDecrease + 1 : binCountDecrease;
-					if (localBinning.binCount >= binCountDecrease) {
-						localBinning.binCount -= binCountDecrease;
+				const calculateBinSizeAndCount = function (localBinning, cL, numArr, iP) {
+					if (!localBinning || !cL || !numArr || !iP) {
+						return;
+					}
+					if (localBinning.binSize) {
+						localBinning.binCount = Math.max(Math.ceil((cL.trueMax - cL.trueMin) / localBinning.binSize), 1);
+					} else if (localBinning.binCount) {
+						localBinning.binCount -= (cL.isOverflowExist ? 1 : 0) + (cL.isUnderflowExist ? 1 : 0);
+						localBinning.binCount = Math.max(localBinning.binCount, 0);
+						localBinning.binSize = (localBinning.binCount != 0) ? ((cL.trueMax - cL.trueMin) / localBinning.binCount) : null;
 					} else {
-						localBinning.binCount = 0;
-					}
-					localBinning.binSize = (localBinning.binCount != 0) ? ((trueMax - trueMin) / localBinning.binCount) : null;
-				} else {
-					// Find stdev 
-					// formula = sqrt((∑(x - mean)^2)/(n-1))
-					if (data.length > 0) {
+						// Find stdev 
+						// formula = sqrt((∑(x - mean)^2)/(n-1))
 						let isUnique = true;
-						for (let i = 0; i < data.length; i++) {
-							isUnique = data[i].val === data[0].val ? true : false;
-							stDev += Math.pow((data[i].val - mean), 2);
+						for (let i = 0; i < numArr.length; i++) {
+							isUnique = numArr[i].val === numArr[0].val ? true : false;
+							iP.stDev += Math.pow((numArr[i].val - iP.mean), 2);
 						}
-						stDev /= (data.length - 1);
-						stDev = Math.sqrt(stDev);
+						iP.stDev = Math.sqrt(iP.stDev / Math.max(numArr.length - 1, 1));
 
 						// Calculate bin size and bin count
-						let result = (3.5 * stDev) / (Math.pow(data.length, 1 / 3));
-						localBinning.binSize = normalizeBinWidth(result);
-		
-						localBinning.binCount = (localBinning.binSize) ? Math.ceil((trueMax - trueMin) / localBinning.binSize) : 1;
-						localBinning.binCount = localBinning.binCount === 0 ? 1 : localBinning.binCount;
+						let result = (3.5 * iP.stDev) / (Math.pow(numArr.length, 1 / 3));
+						localBinning.binSize = normalizeBinWidth(result, 1);
+						localBinning.binCount = (localBinning.binSize) ? Math.max(Math.ceil((cL.trueMax - cL.trueMin) / localBinning.binSize), 1) : 1;
 						if (isUnique) {
 							localBinning.binSize = 5;
 							localBinning.binCount = 1;
 							localBinning.overflow = null;
 							localBinning.underflow = null;
 						}
+					}
+				}
+
+				const addRangesAndFillCatScale = function (localResults, localBinning, cL, iP) {
+					if (!localResults || !localBinning || !cL || !iP) {
+						return;
+					}
+					let prev = cL.trueMin;
+					const addRange = function (minVal, maxVal) {
+						localResults.push({ min: minVal, max: maxVal, occurrence: 0 });
+					}
+					if (cL.isUnderflowExist) {
+						addRange(null, prev);
+					}
+
+					iP.cat.scale.push(prev);
+					for (let i = 0; i < localBinning.binCount; i++) {
+						let curr = prev + localBinning.binSize;
+
+						if (cL.isOverflowExist) {
+							curr = Math.min(curr, cL.trueMax);
+						}
+
+						addRange(prev, curr);
+						prev = curr;
+						iP.cat.scale.push(curr);
+					}
+
+					if (cL.isOverflowExist) {
+						addRange(prev, cL.trueMax);
+					}
+				}
+
+				const countOccurrencesAndValExtremum = function (localResults, localBinning, numArr, iP) {
+					if (!localResults || !localBinning || !numArr || !iP) {
+						return ;
+					}
+					if (numArr.length === 1) {
+						localResults[0].occurrence++;
+						setAxisMinAndMax(iP.val, 1);
 					} else {
-						return
+						for (let i = 0; i < numArr.length; i++) {
+							// sometimes when bincount is fixed, values shifts into the last bean. 
+							// if this issue will be fixed remove isFound and last if case
+							let isFound = false;
+							for (let j = 0; j < localResults.length; j++) {
+								const min = localResults[j].min;
+								const max = localResults[j].max;
+								const statement1 = (j === 0 && numArr[i].val === min);
+								const statement2 = localBinning.intervalClosed !== "r" ? 
+									((!min || numArr[i].val > min) && (!max || numArr[i].val <= max)) : 
+									((!min || numArr[i].val >= min) && (!max || numArr[i].val < max));
+								if (statement1 || statement2) {
+									isFound = true;
+									localResults[j].occurrence++;
+									setAxisMinAndMax(iP.val, localResults[j].occurrence);
+								}
+							}
+							if (!isFound && localResults.length > 1) {
+								const lastIndex = localResults.length - 1;
+								localResults[lastIndex].occurrence++;
+								setAxisMinAndMax(iP.val, localResults[lastIndex].occurrence);
+							}
+						}
 					}
-					
 				}
-	
-				// find number of occurences in each range and create catAxis scale
-				let prev = trueMin;
-				const addRange = function (minVal, maxVal) {
-					const range = {
-						min : (minVal !== 0 && !minVal) ? null : minVal,
-						max : (maxVal !== 0 && !maxVal) ? null : maxVal,
-						occurrence : 0
-					};
-					localResults.push(range);
+
+				const handleBinning = function (cachedData, numArr, iP) {
+					if (!cachedData || !numArr || !iP) {
+						return;
+					}
+					if (cachedData.binning) {
+						const localBinning = cachedData.binning;
+						const localResults = cachedData.results;
+						const catLimits = handleCatLimits(localBinning, iP);
+						calculateBinSizeAndCount(localBinning, catLimits, numArr, iP);
+						addRangesAndFillCatScale(localResults, localBinning, catLimits, iP);
+						countOccurrencesAndValExtremum(localResults, localBinning, numArr, iP);
+					}
 				}
-				if (isUnderflowExist) {
-					addRange(null, localBinning.underflow);
-				}
-	
-				catAxis.scale.push(prev);
-				for (let i = 0; i < localBinning.binCount; i++) {
-					const curr = ((localBinning.overflow === 0 || localBinning.overflow) && (prev + localBinning.binSize) >= trueMax) ? trueMax : prev + localBinning.binSize;
-					addRange(prev, curr);
-					catAxis.scale.push(curr);
-				}
-	
-				if (isOverflowExist) {
-					addRange(prev, curr);
-				}
-	
-				// Count occurrences, valAxis scale, min and max
-				if (data.length === 1) {
-					localResults[0].occurrence++;
-					valMax = 1;
-					valMin = 1;
-				} else {
-					for (let i = 0; i < data.length; i++) {
-						let isFound = false;
-						for (let j = 0; j < localResults.length; j++) {
-							const min = localResults[j].min;
-							const max = localResults[j].max;
-							let statement1 = (j === 0 && data[i].val === min);
-							let statement2 = localBinning.intervalClosed !== "r" ? ((!min || data[i].val > min) && (!max || data[i].val <= max)) : ((!min || data[i].val >= min) && (!max || data[i].val < max));
-							if (statement1 || statement2) {
-								isFound = true;
-								localResults[j].occurrence++;
+
+				const handleUserTypedValMinMax = function (iP, valAxis) {
+					if (!iP || !valAxis) {
+						return;
+					}
+					//check for user typed max and min properties
+					let kF = 1000000000;
+					let trueValMin = (valAxis.scaling && valAxis.scaling.min != null)? Math.round(valAxis.scaling.min * kF) / kF : null;
+					let trueValMax = (valAxis.scaling && valAxis.scaling.max != null)? Math.round(valAxis.scaling.max * kF) / kF : null;
+					trueValMin = (trueValMin != 0 && !trueValMin) ? iP.val.min : trueValMin;
+					trueValMax = (trueValMax != 0 && !trueValMax) ? iP.val.max : trueValMax;
+
+					//for the cases when max >= min ;
+					trueValMax = (trueValMax === 0) ? 1 : trueValMax;
+					trueValMin = (trueValMax < trueValMin) ? trueValMax * 2 : trueValMin;
+
+					iP.val.max = trueValMax;
+					iP.val.min = trueValMin;
+				};
+
+				const handleAxisConfigurations = function (catAxis, valAxis, iP, chartsDrawer) {
+					if (!catAxis || !valAxis || !iP || !chartsDrawer) {
+						return;
+					}
+					catAxis.min = iP.cat.min;
+					catAxis.max = iP.cat.max;
+					catAxis.scale = iP.cat.scale;
+
+					valAxis.min = iP.val.min;
+					valAxis.max = iP.val.max;
+					valAxis.scale = chartsDrawer._roundValues(chartsDrawer._getAxisValues2(valAxis, chartSpace, false, false));
 		
-								if (valMax === null || localResults[j].occurrence > valMax) {
-									valMax = localResults[j].occurrence;
-								}
-								if (valMin === null || localResults[j].occurrence < valMin) {
-									valMin = localResults[j].occurrence
-								}
-							}
-						}
-						if (!isFound && localResults.length > 1) {
-							const lastIndex = localResults.length - 1;
-							localResults[lastIndex].occurrence++;
-							if (valMax === null || localResults[lastIndex].occurrence > valMax) {
-								valMax = localResults[lastIndex].occurrence;
-							}
-							if (valMin === null || localResults[lastIndex].occurrence < valMin) {
-								valMin = localResults[lastIndex].occurrence
-							}
-						}
-					}
-				}
-			} 
-			//check for user typed max and min properties
-			let kF = 1000000000;
-			let trueValMin = (valAxis.scaling && valAxis.scaling.min != null)? Math.round(valAxis.scaling.min * kF) / kF : null;
-			let trueValMax = (valAxis.scaling && valAxis.scaling.max != null)? Math.round(valAxis.scaling.max * kF) / kF : null;
-			trueValMin = (trueValMin != 0 && !trueValMin) ? valMin : trueValMin;
-			trueValMax = (trueValMax != 0 && !trueValMax) ? valMax : trueValMax;
+					// Exchange cross axes 
+					catAxis.crossAx = valAxis;
+					valAxis.crossAx = catAxis;
+		
+					// Differentiate between axes 
+					catAxis.axPos = window['AscFormat'].AX_POS_B;
+					valAxis.axPos = window['AscFormat'].AX_POS_L;
+				};
 
-			//for the cases when max >= min ;
-			if (trueValMax === 0) {
-				trueValMax = 1;
-			} else if (trueValMax < trueValMin) {
-				trueValMin = trueValMax * 2;
+				// Calculate mean, catAxis min and max
+				calculateMeanAndCatExtremums(intrinsicProperties, numArr);
+				handleAggregation(plotArea.plotAreaRegion.cachedData, numArr, strArr, intrinsicProperties);
+				handleBinning(plotArea.plotAreaRegion.cachedData, numArr, intrinsicProperties);
+				handleUserTypedValMinMax(intrinsicProperties, valAxis);
+				handleAxisConfigurations(catAxis, valAxis, intrinsicProperties, this);
 			}
-
-			valAxis.min = trueValMin;
-			valAxis.max = trueValMax;
-			valAxis.scale = this._roundValues(this._getAxisValues2(valAxis, chartSpace, false, false));
-
-			// Exchange cross axes 
-			catAxis.crossAx = valAxis;
-			valAxis.crossAx = catAxis;
-
-			// Differentiate between axes 
-			catAxis.axPos = window['AscFormat'].AX_POS_B;
-			valAxis.axPos = window['AscFormat'].AX_POS_L;
 		}
 	},
 
