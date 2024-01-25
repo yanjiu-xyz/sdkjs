@@ -4292,10 +4292,19 @@ function(window, undefined) {
 	
 				// if data is aggregated then convert array of integers into chars 
 				if (cachedData.aggregation) {
-					for (let i = 0; i < oAxis.scale.length; i++) {
-						// If no labels exist, then excel just leaves empty catAxis
-						const str = (oAxis.scale[i] === 0 || oAxis.scale[i] !== null) ? String.fromCharCode(oAxis.scale[i]) : '';
-						aStrings.push(str);
+					const strCache = this.chart.plotArea.plotAreaRegion.series ? this.chart.plotArea.plotAreaRegion.series[0].getCatLit() : null;
+					if (strCache && strCache.pts) {
+						const mySet = {};
+						for (let i = 0; i < strCache.pts.length; i++) {
+							// If no labels exist, then excel just leaves empty catAxis
+							const key = strCache.pts[i].val;
+							if (!mySet.hasOwnProperty(key)) {
+								mySet[key] = true;
+								aStrings.push(key);
+							}
+						}
+					} else {
+						aStrings.push('');
 					}
 				} else if (cachedData.binning) {
 					// obtain properly formated array of integers
