@@ -66,7 +66,7 @@
 		this.FontSlot       = AscWord.fontslot_None;
 		this.FontSize       = 10;
 		this.ForceCheckFont = false;
-		this.Direction      = AscFonts.HB_DIRECTION.HB_DIRECTION_RTL;
+		this.Direction      = AscFonts.HB_DIRECTION.HB_DIRECTION_LTR;
 	}
 	CTextShaper.prototype.ClearBuffer = function()
 	{

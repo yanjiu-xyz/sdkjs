@@ -1694,8 +1694,8 @@ Paragraph.prototype.Internal_Recalculate_CurPos = function(updateCurPos, updateT
 	
 	if (updateCurPos)
 	{
-		this.CurPos.X        = point.X;
-		this.CurPos.Y        = point.Y;
+		this.CurPos.X        = point.x;
+		this.CurPos.Y        = point.y;
 		this.CurPos.PagesPos = CurPage;
 	}
 	
