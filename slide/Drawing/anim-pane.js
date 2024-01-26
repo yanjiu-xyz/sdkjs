@@ -1553,6 +1553,14 @@
 	function CSeqListContainer(oDrawer) {
 		CTopControl.call(this, oDrawer);
 		this.seqList = this.addControl(new CSeqList(this));
+
+		this.onMouseDownCallback = function clearSelection(event, x, y) {
+			if (this.seqList.hit(x, y)) { return }
+
+			this.seqList.forEachAnimItem(function (animItem) { animItem.effect.deselect() })
+			Asc.editor.WordControl.m_oLogicDocument.RedrawCurSlide()
+			Asc.editor.WordControl.m_oLogicDocument.Document_UpdateInterfaceState()
+		}
 	}
 
 	InitClass(CSeqListContainer, CTopControl, CONTROL_TYPE_SEQ_LIST_CONTAINER);
@@ -1572,6 +1580,12 @@
 	};
 	CSeqListContainer.prototype.onMouseWheel = function (e, deltaY, X, Y) {
 		return false;
+	};
+	CSeqListContainer.prototype.onMouseDown = function (e, x, y) {
+		if (this.onMouseDownCallback && this.onMouseDownCallback.call(this, e, x, y)) {
+			return true;
+		}
+		return CTopControl.prototype.onMouseDown.call(this, e, x, y);
 	};
 	
 	CSeqListContainer.prototype.getFillColor = function () {
