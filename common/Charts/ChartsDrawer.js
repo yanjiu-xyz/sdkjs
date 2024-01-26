@@ -7580,13 +7580,16 @@ drawHistogramChart.prototype = {
 		if (cachedData && this.chartProp && this.chartProp.chartGutter) {
 			const valAxis = this.cChartSpace.chart.plotArea.axId[1];
 			const catAxis = this.cChartSpace.chart.plotArea.axId[0];
+
+			const catStart = this.chartProp.chartGutter._left;
+			const valStart = this.chartProp.trueHeight + this.chartProp.chartGutter._top;
+			const coeff = catAxis.scaling.gapWidth;
+
+			//TODO code duplication
 			if (cachedData.aggregation) {
-				const sections = Object.keys(cachedData.aggregation).length;;
+				const sections = Object.keys(cachedData.aggregation).length;
 
 				const initialBarWidth = (this.chartProp.trueWidth)/ sections;
-				const catStart = this.chartProp.chartGutter._left;
-				const valStart = this.chartProp.trueHeight + this.chartProp.chartGutter._top;
-				const coeff = catAxis.scaling.gapWidth;
 				const barWidth = (initialBarWidth / (1 + coeff));
 				const margin = (initialBarWidth - barWidth) / 2;
 
@@ -7595,8 +7598,7 @@ drawHistogramChart.prototype = {
 					if (this.chartProp && this.chartProp.pxToMM ) {
 						const startY = this.cChartDrawer.getYPosition(cachedData.aggregation[i], valAxis);
 						const height = valStart - (startY * this.chartProp.pxToMM);
-						let path = this.cChartDrawer._calculateRect(start, valStart, barWidth, height);
-						this.paths[i] = path;
+						this.paths[i] = this.cChartDrawer._calculateRect(start, valStart, barWidth, height);
 					}		
 					start += (barWidth + margin + margin);
 				}
@@ -7604,9 +7606,6 @@ drawHistogramChart.prototype = {
 				const sections = cachedData.results;
 
 				const initialBarWidth = (this.chartProp.trueWidth)/ sections.length;
-				const catStart = this.chartProp.chartGutter._left;
-				const valStart = this.chartProp.trueHeight + this.chartProp.chartGutter._top;
-				const coeff = catAxis.scaling.gapWidth;
 				const barWidth = (initialBarWidth / (1 + coeff));
 				const margin = (initialBarWidth - barWidth) / 2;
 
@@ -7615,8 +7614,7 @@ drawHistogramChart.prototype = {
 					const startY = this.cChartDrawer.getYPosition(sections[i].occurrence, valAxis);
 					if (this.chartProp && this.chartProp.pxToMM ) {
 						const height = valStart - (startY * this.chartProp.pxToMM);
-						let path = this.cChartDrawer._calculateRect(start, valStart, barWidth, height);
-						this.paths[i] = path;
+						this.paths[i] = this.cChartDrawer._calculateRect(start, valStart, barWidth, height);
 					}		
 					start += (barWidth + margin + margin);
 				}
