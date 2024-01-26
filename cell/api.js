@@ -5669,11 +5669,12 @@ var editor;
     options.isMatchCase = true;
 
     if (replaceAll === true) {
-      if (!this.spellcheckState.isIgnoreUppercase) {
+      /*if (!this.spellcheckState.isIgnoreUppercase) {
         this.spellcheckState.changeWords[variantsFound.Word] = newWord;
       } else {
         this.spellcheckState.changeWords[variantsFound.Word.toLowerCase()] = newWord;
-      }
+      }*/
+      this.spellcheckState.changeWords[variantsFound.Word] = newWord;
       options.isReplaceAll = true;
     }
       this.spellcheckState.lockSpell = false;
