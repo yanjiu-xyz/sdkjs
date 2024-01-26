@@ -2202,9 +2202,8 @@ CChartsDrawer.prototype =
 		 * axis contains min and max values and logBase
 		 * if they are null just use yMin lowerBound and yMax upperBound
 		*/
-		let kF = 1000000000;
-		let trueMin = (axis && axis.scaling && axis.scaling.min) !== null ? Math.round(axis.scaling.min * kF) / kF : null;
-		let trueMax = (axis && axis.scaling && axis.scaling.max) !== null ? Math.round(axis.scaling.max * kF) / kF : null;
+		let trueMin = (axis && axis.scaling && axis.scaling.min) !== null ? this._round(axis.scaling.min) : null;
+		let trueMax = (axis && axis.scaling && axis.scaling.max) !== null ? this._round(axis.scaling.max) : null;
 		yMin = (yMin <= 0 || yMin >= 1) ? 1 : yMin;
 		yMax = (yMax <= 0) ? logBase : yMax;
 		trueMin = (!trueMin || trueMin <= 0) ? yMin : trueMin;
@@ -2739,9 +2738,8 @@ CChartsDrawer.prototype =
 						return;
 					}
 					//check for user typed max and min properties
-					let kF = 1000000000;
-					let trueValMin = (valAxis.scaling && valAxis.scaling.min != null)? Math.round(valAxis.scaling.min * kF) / kF : null;
-					let trueValMax = (valAxis.scaling && valAxis.scaling.max != null)? Math.round(valAxis.scaling.max * kF) / kF : null;
+					let trueValMin = (valAxis.scaling && valAxis.scaling.min != null) ? this._round(valAxis.scaling.min) : null;
+					let trueValMax = (valAxis.scaling && valAxis.scaling.max != null) ? this._round(valAxis.scaling.max) : null;
 					trueValMin = (trueValMin != 0 && !trueValMin) ? iP.val.min : trueValMin;
 					trueValMax = (trueValMax != 0 && !trueValMax) ? iP.val.max : trueValMax;
 
@@ -3596,6 +3594,11 @@ CChartsDrawer.prototype =
 		}
 	  
 		return values;
+	},
+
+	_round: function (val) {
+		let kF = 1000000000
+		return Math.round(val * kF) / kF;
 	},
 	
 	

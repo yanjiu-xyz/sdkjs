@@ -541,8 +541,8 @@ function(window, undefined) {
 		oClass.isForChartEx = value;
 	};
 	drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetChartData] = function(oClass, value) {
-        oClass.chartData = value;
-    };
+		oClass.chartData = value;
+	};
 	drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetParent] = function (oClass, value) {
 		oClass.oldParent = oClass.parent;
 		oClass.parent = value;
@@ -1445,9 +1445,9 @@ function(window, undefined) {
 		this.isForChartEx = pr;
 	};
 	CChartSpace.prototype.setChartData = function(pr) {
-        History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetChartData, this.chartData, pr));
-        this.chartData = pr;
-    };
+		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetChartData, this.chartData, pr));
+		this.chartData = pr;
+	};
 	CChartSpace.prototype.clearDataRefs = function () {
 		if (this.dataRefs) {
 			this.dataRefs = null;
