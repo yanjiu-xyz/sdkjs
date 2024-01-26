@@ -2029,15 +2029,15 @@
 		return { l: l, r: r, t: t, b: b }
 	};
 	CAnimItem.prototype.hitInEffectBar = function (x, y) {
-		const delta = AscFormat.DIST_HIT_IN_LINE
+		const delta = AscFormat.DIST_HIT_IN_LINE / 2
 		const bounds = this.getEffectBarBounds();
 
 		const isOutOfBorders = x < this.getLeftBorder() || x > this.getRightBorder() || y < bounds.t || y > bounds.b
 
 		if (!isOutOfBorders) {
 			if (!this.effect.isInstantEffect()) {
-				if (x >= bounds.l - delta && x <= bounds.l) { return 'left'; }
-				if (x >= bounds.r && x <= bounds.r + delta) { return 'right'; }
+				if (x >= bounds.l - delta && x <= bounds.l + delta) { return 'left'; }
+				if (x >= bounds.r - delta && x <= bounds.r + delta) { return 'right'; }
 			}
 			if (x > bounds.l && x < bounds.r) { return 'center'; }
 		}
