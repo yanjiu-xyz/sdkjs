@@ -4355,50 +4355,51 @@ background-repeat: no-repeat;\
 	 }
 	 }
 	 */
-	asc_docs_api.prototype.tblApply = function(obj)
+	asc_docs_api.prototype.tblApply = function(oPr)
 	{
-		var doc = this.WordControl.m_oLogicDocument;
-		var oController = doc.GetCurrentController();
+		const oPresentation = this.private_GetLogicDocument()
+		if(!oPresentation)
+			return;
+		const oController = oPresentation.GetCurrentController();
 		if(!oController){
 			return;
 		}
-		var aAdditionalObjects = oController.getConnectorsForCheck2();
-		if (doc.Document_Is_SelectionLocked(changestype_Drawing_Props, undefined, undefined, aAdditionalObjects) === false)
+		const aAdditionalObjects = oController.getConnectorsForCheck2();
+		if (!oPresentation.Document_Is_SelectionLocked(changestype_Drawing_Props, undefined, undefined, aAdditionalObjects))
 		{
-			this.WordControl.m_oLogicDocument.Create_NewHistoryPoint(AscDFH.historydescription_Presentation_TblApply);
-			if (obj.CellBorders)
+			oPresentation.StartAction(AscDFH.historydescription_Presentation_TblApply);
+
+			let oBorders = oPr.CellBorders;
+			if (oPr.CellBorders)
 			{
-				if (obj.CellBorders.Left && obj.CellBorders.Left.Color)
+				function fCheckBorder(oBorder)
 				{
-					obj.CellBorders.Left.Unifill = AscFormat.CreateUnifillFromAscColor(obj.CellBorders.Left.Color, 0);
+					if(!oBorder || !oBorder.Color)
+						return;
+					oBorder.Unifill =  AscFormat.CreateUnifillFromAscColor(oBorder.Color, 0);
 				}
-				if (obj.CellBorders.Top && obj.CellBorders.Top.Color)
+				fCheckBorder(oBorders.Left);
+				fCheckBorder(oBorders.Top);
+				fCheckBorder(oBorders.Right);
+				fCheckBorder(oBorders.Bottom);
+				fCheckBorder(oBorders.InsideH);
+				fCheckBorder(oBorders.InsideV);
+			}
+			let oBackground = oPr.CellsBackground;
+			if (oBackground && oBackground.Color)
+			{
+				if(oBackground.Value === Asc.c_oAscShd.Nil)
 				{
-					obj.CellBorders.Top.Unifill = AscFormat.CreateUnifillFromAscColor(obj.CellBorders.Top.Color, 0);
+					oBackground.Value = Asc.c_oAscShd.Clear;
+					oBackground.Unifill = AscFormat.CreateNoFillUniFill();
 				}
-				if (obj.CellBorders.Right && obj.CellBorders.Right.Color)
+				else
 				{
-					obj.CellBorders.Right.Unifill = AscFormat.CreateUnifillFromAscColor(obj.CellBorders.Right.Color, 0);
-				}
-				if (obj.CellBorders.Bottom && obj.CellBorders.Bottom.Color)
-				{
-					obj.CellBorders.Bottom.Unifill = AscFormat.CreateUnifillFromAscColor(obj.CellBorders.Bottom.Color, 0);
-				}
-				if (obj.CellBorders.InsideH && obj.CellBorders.InsideH.Color)
-				{
-					obj.CellBorders.InsideH.Unifill = AscFormat.CreateUnifillFromAscColor(obj.CellBorders.InsideH.Color, 0);
-				}
-				if (obj.CellBorders.InsideV && obj.CellBorders.InsideV.Color)
-				{
-					obj.CellBorders.InsideV.Unifill = AscFormat.CreateUnifillFromAscColor(obj.CellBorders.InsideV.Color, 0);
+					oBackground.Unifill = AscFormat.CreateUnifillFromAscColor(oBackground.Color, 0);
 				}
 			}
-			if (obj.CellsBackground && obj.CellsBackground.Color)
-			{
-				obj.CellsBackground.Unifill = AscFormat.CreateUnifillFromAscColor(obj.CellsBackground.Color, 0);
-			}
-			this.WordControl.m_oLogicDocument.SetTableProps(obj);
-			this.checkChangesSize();
+			this.WordControl.m_oLogicDocument.SetTableProps(oPr);
+			oPresentation.FinalizeAction();
 		}
 	};
 	/*callbacks*/
