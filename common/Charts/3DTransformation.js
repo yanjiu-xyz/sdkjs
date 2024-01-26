@@ -177,10 +177,10 @@ function (window, undefined) {
 		this.aspectRatioZ = this.aspectRatioZ * kF;
 	};
 
-	Processor3D.prototype.calculateCommonOptions = function () {
-		this.orientationCatAx = this.chartSpace && this.chartSpace.chart.plotArea.catAx ? this.chartSpace.chart.plotArea.catAx.scaling.orientation : ORIENTATION_MIN_MAX;
-		this.orientationValAx = this.chartSpace && this.chartSpace.chart.plotArea.valAx ? this.chartSpace.chart.plotArea.valAx.scaling.orientation : ORIENTATION_MIN_MAX;
-	};
+Processor3D.prototype.calculateCommonOptions = function () {
+	this.orientationCatAx = this.chartSpace && this.chartSpace.chart.plotArea.catAx ? this.chartSpace.chart.plotArea.catAx.getOrientation() : ORIENTATION_MIN_MAX;
+	this.orientationValAx = this.chartSpace && this.chartSpace.chart.plotArea.valAx ? this.chartSpace.chart.plotArea.valAx.getOrientation() : ORIENTATION_MIN_MAX;
+};
 
 	Processor3D.prototype._calculateAutoHPercent = function () {
 		let widthLine = this.widthCanvas - (this.left + this.right);

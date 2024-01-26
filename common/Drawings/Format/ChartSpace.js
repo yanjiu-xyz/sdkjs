@@ -4548,13 +4548,12 @@ function(window, undefined) {
 		let oAxisGrid = new CAxisGrid();
 		oAxis.grid = oAxisGrid;
 		let aStrings = (this.chart && this.chart.plotArea && this.chart.plotArea.isForChartEx) ? this.getLabelsForChartExAxis(oAxis) : this.getLabelsForAxis(oAxis);
-		let nOrientation = oAxis.scaling && AscFormat.isRealNumber(oAxis.scaling.orientation) ? oAxis.scaling.orientation : AscFormat.ORIENTATION_MIN_MAX;
 		if(oAxis.isRadarCategories()) {
 			let nIntervalsCount = aStrings.length;
 			oAxisGrid.nCount = nIntervalsCount;
 			oAxisGrid.bOnTickMark = true;
 			oAxisGrid.aStrings = aStrings;
-			if (nOrientation === AscFormat.ORIENTATION_MIN_MAX) {
+			if (!oAxis.isReversed()) {
 				oAxisGrid.fStart = 0;
 				oAxisGrid.fStride = 2*Math.PI / nIntervalsCount;
 			} else {
@@ -4574,7 +4573,7 @@ function(window, undefined) {
 				this.checkPrecalculateChartObject();
 				var dDepth = this.getDepthPerspective();
 				fInterval = dDepth / nIntervalsCount;
-				if (nOrientation === AscFormat.ORIENTATION_MIN_MAX) {
+				if (!oAxis.isReversed()) {
 					oAxisGrid.fStart = 0;
 					oAxisGrid.fStride = fInterval;
 				} else {
@@ -4583,7 +4582,7 @@ function(window, undefined) {
 				}
 			} else if (oAxis.isHorizontal()) {
 				fInterval = oRect.w / nIntervalsCount;
-				if (nOrientation === AscFormat.ORIENTATION_MIN_MAX) {
+				if (!oAxis.isReversed()) {
 					oAxisGrid.fStart = oRect.x;
 					oAxisGrid.fStride = fInterval;
 				} else {
@@ -4598,7 +4597,7 @@ function(window, undefined) {
 					fRectH /= 2.0;
 				}
 				fInterval = fRectH / nIntervalsCount;
-				if (nOrientation === AscFormat.ORIENTATION_MIN_MAX) {
+				if (!oAxis.isReversed()) {
 					oAxisGrid.fStart = fRectY + fRectH;
 					oAxisGrid.fStride = -fInterval;
 				} else {
@@ -4744,8 +4743,7 @@ function(window, undefined) {
 				}
 			}
 
-			let nOrientation = isRealObject(oCrossAxis.scaling) && AscFormat.isRealNumber(oCrossAxis.scaling.orientation) ? oCrossAxis.scaling.orientation : AscFormat.ORIENTATION_MIN_MAX;
-			if(nOrientation === AscFormat.ORIENTATION_MAX_MIN) {
+			if(oCrossAxis.isReversed()) {
 				fDistanceSign = -fDistanceSign;
 			}
 			let oLabelsBox = null, fPos;
@@ -4857,7 +4855,7 @@ function(window, undefined) {
 				}
 				if(oCurAxis.isRadarAxis()) {
 					fDistanceSign = -1;
-					if(nOrientation === AscFormat.ORIENTATION_MAX_MIN) {
+					if(oCrossAxis.isReversed()) {
 						fDistanceSign = 1;
 					}
 				}
@@ -5310,14 +5308,13 @@ function(window, undefined) {
 			this.recalculateChart();
 			this.calculateAxisGrid(oSerAx);
 
-			let nOrientation = oSerAx.scaling && AscFormat.isRealNumber(oSerAx.scaling.orientation) ? oSerAx.scaling.orientation : AscFormat.ORIENTATION_MIN_MAX;
 			let nCrossType = this.getAxisCrossType(oSerAx);
 			let bOnTickMark = ((nCrossType === AscFormat.CROSS_BETWEEN_MID_CAT) && (aAllSeries.length > 1));
 			let nIntervalsCount = bOnTickMark ? (aAllSeries.length - 1) : (aAllSeries.length);
 			oGrid = oSerAx.grid;
 			let dDepth = this.getDepthPerspective();
 			let fStart, fStride;
-			if (nOrientation === AscFormat.ORIENTATION_MIN_MAX) {
+			if (!oSerAx.isReversed()) {
 				fStart = 0;
 				fStride = dDepth / nIntervalsCount;
 			} else {
@@ -6124,7 +6121,7 @@ function(window, undefined) {
 						}
 						var b_reverse_order = false;
 						if (chart_object && chart_object.getObjectType() === AscDFH.historyitem_type_BarChart && chart_object.barDir === AscFormat.BAR_DIR_BAR &&
-							(cat_ax && cat_ax.scaling && AscFormat.isRealNumber(cat_ax.scaling.orientation) ? cat_ax.scaling.orientation : AscFormat.ORIENTATION_MIN_MAX) === AscFormat.ORIENTATION_MIN_MAX
+							(!cat_ax || !cat_ax.isReversed())
 							|| chart_object && chart_object.getObjectType() === AscDFH.historyitem_type_SurfaceChart) {
 							b_reverse_order = true;
 						}
@@ -6179,7 +6176,7 @@ function(window, undefined) {
 							}
 						}
 						if (chart_object && chart_object.getObjectType() === AscDFH.historyitem_type_BarChart && chart_object.barDir === AscFormat.BAR_DIR_BAR &&
-							(cat_ax && cat_ax.scaling && AscFormat.isRealNumber(cat_ax.scaling.orientation) ? cat_ax.scaling.orientation : AscFormat.ORIENTATION_MIN_MAX) === AscFormat.ORIENTATION_MIN_MAX) {
+							(!cat_ax || !cat_ax.isReversed())) {
 							b_reverse_order = true;
 						}
 
@@ -8756,8 +8753,9 @@ function(window, undefined) {
 		if (sRange === this.getCommonRange()) {
 			return;
 		}
-		var oDataRange = this.getDataRefs();
-		var aRefs = oDataRange.getSeriesRefsFromUnionRefs(AscFormat.fParseChartFormulaExternal(sRange), undefined, AscFormat.isScatterChartType(this.getChartType()));
+		let oDataRange = this.getDataRefs();
+		let nChartType = this.getChartType();
+		let aRefs = oDataRange.getSeriesRefsFromUnionRefs(AscFormat.fParseChartFormulaExternal(sRange), undefined, AscFormat.isScatterChartType(nChartType), nChartType);
 		if (!Array.isArray(aRefs)) {
 			this.buildSeries([]);
 		} else {
@@ -8789,7 +8787,7 @@ function(window, undefined) {
 			return;
 		}
 		let oDataRange = this.getDataRefs();
-		let nResult = this.buildSeries(oDataRange.getSeriesRefsFromSelectedRange(oSelectedRange, this.isScatterChartType()));
+		let nResult = this.buildSeries(oDataRange.getSeriesRefsFromSelectedRange(oSelectedRange, this.isScatterChartType(), this.getChartType()));
 		if (Asc.c_oAscError.ID.No === nResult) {
 			this.recalculate();
 		}
@@ -10969,23 +10967,24 @@ function(window, undefined) {
 	}
 
 	function getChartSeries(options) {
-		var sRange = options.getRange();
+		let sRange = options.getRange();
 		if (typeof sRange !== "string") {
 			return [];
 		}
-		var bInColumns = options.getInColumns();
-		var bHorValues = null;
+		let bInColumns = options.getInColumns();
+		let bHorValues = null;
 		if (bInColumns === true || bInColumns === false) {
 			bHorValues = !bInColumns;
 		}
-		var bScatter = AscFormat.isScatterChartType(options.getType());
-		var oDataRange = new AscFormat.CChartDataRefs(null);
-		var aSeriesRefs = oDataRange.getSeriesRefsFromUnionRefs(AscFormat.fParseChartFormulaExternal(sRange), bHorValues, bScatter);
+		let nChartType = options.getType();
+		let bScatter = AscFormat.isScatterChartType(nChartType);
+		let oDataRange = new AscFormat.CChartDataRefs(null);
+		let aSeriesRefs = oDataRange.getSeriesRefsFromUnionRefs(AscFormat.fParseChartFormulaExternal(sRange), bHorValues, bScatter, nChartType);
 		if (!Array.isArray(aSeriesRefs)) {
 			return [];
 		}
-		var aSeries = [];
-		for (var nRef = 0; nRef < aSeriesRefs.length; ++nRef) {
+		let aSeries = [];
+		for (let nRef = 0; nRef < aSeriesRefs.length; ++nRef) {
 			aSeries.push(aSeriesRefs[nRef].getAscSeries());
 		}
 		return aSeries;
