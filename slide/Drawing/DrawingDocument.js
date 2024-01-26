@@ -6750,8 +6750,9 @@ function CAnimPaneTimelineDrawer(page, htmlElement, parentDrawer)
 		oThis.Control.onResize();
 	};
 	oThis.UpdateState = function () {
-		!Asc.editor.asc_canStartAnimationPreview() ?
-			oThis.Control.hide() : oThis.Control.show()
+		const timing = oThis.Control.getTiming()
+		timing && timing.hasEffects() ?
+			oThis.Control.show() : oThis.Control.hide()
 	}
 }
 
