@@ -7626,8 +7626,8 @@ drawHistogramChart.prototype = {
 
 	draw: function () {
 		const isNumber = function (par) {
-			return (par === 0 || par)? true : false;
-		}
+			return (par === 0 || par);
+		};
 		if (!this.cChartDrawer || !this.cChartDrawer.calcProp || !this.cChartDrawer.cShapeDrawer || !this.cChartDrawer.cShapeDrawer.Graphics || !this.cChartDrawer.calcProp.chartGutter) {
 			return;
 		}
@@ -7645,15 +7645,78 @@ drawHistogramChart.prototype = {
 		this.cChartDrawer.cShapeDrawer.Graphics.SaveGrState();
 		this.cChartDrawer.cShapeDrawer.Graphics.AddClipRect(leftRect, topRect, rightRect, bottomRect);
 
-		const brush = this.cChartSpace.brush;
-		if (brush) {
-			brush.fill.color.RGBA.R = 79;
-			brush.fill.color.RGBA.G = 129;
-			brush.fill.color.RGBA.B = 189;
+
+		//TODO !!!
+		//series color
+		/*<cx:plotArea>
+		<cx:plotAreaRegion>
+		<cx:series layoutId="clusteredColumn" uniqueId="{F41B4FED-57DF-4014-AD1A-6DD63A203692}">
+			<cx:spPr>
+		<a:solidFill>
+		<a:srgbClr val="ED7D31">
+			<a:lumMod val="60000"/>
+			<a:lumOff val="40000"/>
+			</a:srgbClr>
+			</a:solidFill>*/
+
+		//point color
+		/*cx:plotAreaRegion>
+		<cx:series layoutId="clusteredColumn" uniqueId="{F41B4FED-57DF-4014-AD1A-6DD63A203692}">
+			<cx:dataPt idx="2">
+			<cx:spPr>
+		<a:solidFill>
+		<a:srgbClr val="ED7D31">
+			<a:lumMod val="40000"/>
+			<a:lumOff val="60000"/>
+			</a:srgbClr>
+			</a:solidFill>
+			</cx:spPr>*/
+
+		//this.cChartSpace.chart.plotArea.plotAreaRegion.series[0].spPr.Fill.ln
+
+		let series = this.cChartSpace.chart.plotArea.plotAreaRegion.series;
+
+		let _getPointPPr = function (_idx) {
+			let dataPt = series[0].dataPt;
+			if (dataPt) {
+				for (let j in dataPt) {
+					if (dataPt[j].idx === _idx) {
+						return dataPt[j].spPr;
+					}
+				}
+			}
+			return null;
+		};
+
+		//TODO zero series
+		const style = series[0].spPr;
+		let brushSeries = style ? style.Fill : null;
+		let penSeries = style ? style.ln : null;
+
+		if (!brushSeries) {
+			brushSeries = this.cChartSpace.brush;
+			if (brushSeries) {
+				brushSeries.fill.color.RGBA.R = 79;
+				brushSeries.fill.color.RGBA.G = 129;
+				brushSeries.fill.color.RGBA.B = 189;
+			}
 		}
-		const pen = this.cChartSpace.pen;
-		if (pen && brush) {
+
+		if (!penSeries) {
+			penSeries = this.cChartSpace.pen;
+		}
+
+		if (penSeries || brushSeries) {
 			for (let i in this.paths) {
+				let pen = penSeries;
+				let brush = brushSeries;
+
+				let pointPPr = _getPointPPr(i - 0);
+				if (pointPPr) {
+					pen = pointPPr.ln;
+					brush = pointPPr.Fill;
+				}
+
 				this.cChartDrawer.drawPath(this.paths[i], pen, brush);
 			}
 		}
