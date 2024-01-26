@@ -2060,6 +2060,11 @@
 	};
 
 	CAnimItem.prototype.setNewEffectParams = function (newDelay, newDuration) {
+		const minAllowedDelta = 1 // in ms
+		const delayDiff = Math.abs(newDelay - this.effect.asc_getDelay())
+		const durationDiff = Math.abs(newDuration - this.effect.asc_getDuration())
+		if (delayDiff < minAllowedDelta && durationDiff < minAllowedDelta ) { return }
+
 		const effectCopy = AscFormat.ExecuteNoHistory(function () {
 			return this.effect.createDuplicate();
 		}, this, []);
