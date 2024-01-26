@@ -6797,24 +6797,14 @@ CPresentation.prototype.Get_TextBackGroundColor = function () {
 
 CPresentation.prototype.SetTableProps = function (Props) {
 
-	var oController = this.GetCurrentController();
+	const oController = this.GetCurrentController();
 	if (oController) {
 		oController.setTableProps(Props);
-		this.Recalculate();
 
 		if (!this.FocusOnNotes) {
-			var aConnectors = oController.getConnectorsForCheck();
-			for (var i = 0; i < aConnectors.length; ++i) {
-				aConnectors[i].calculateTransform(false);
-				var oGroup = aConnectors[i].getMainGroup();
-				if (oGroup) {
-					AscFormat.checkObjectInArray([], oGroup);
-				}
-			}
-			if (aConnectors.length > 0) {
-				this.Recalculate();
-			}
+			oController.updateConnectors(false);
 		}
+		this.Recalculate();
 
 		this.Document_UpdateInterfaceState();
 		this.Document_UpdateSelectionState();
@@ -8550,75 +8540,53 @@ CPresentation.prototype.GetSelectedParagraphs = function () {
 //-----------------------------------------------------------------------------------
 
 CPresentation.prototype.ApplyTableFunction = function (Function, bBefore, bAll, Cols, Rows) {
-	var result = null;
-	if (this.Slides[this.CurPage]) {
-		var args;
-		if (AscFormat.isRealNumber(Rows) && AscFormat.isRealNumber(Cols)) {
-			args = [Cols, Rows];
-		} else {
-			args = [bBefore];
-		}
-		var target_text_object = AscFormat.getTargetTextObject(this.Slides[this.CurPage].graphicObjects);
-		if (target_text_object && target_text_object.getObjectType() === AscDFH.historyitem_type_GraphicFrame) {
-			result = Function.apply(target_text_object.graphicObject, args);
-			if (target_text_object.graphicObject.Content.length === 0) {
-				this.RemoveTable();
-				return result;
-			}
-			this.Recalculate();
-			if (!this.FocusOnNotes) {
-				var aConnectors = this.Slides[this.CurPage].graphicObjects.getConnectorsForCheck();
-				for (var i = 0; i < aConnectors.length; ++i) {
-					aConnectors[i].calculateTransform(false);
-					var oGroup = aConnectors[i].getMainGroup();
-					if (oGroup) {
-						AscFormat.checkObjectInArray([], oGroup);
-					}
-				}
-				if (aConnectors.length > 0) {
-					this.Recalculate();
-				}
-			}
-			this.Document_UpdateInterfaceState();
-		} else {
-			var by_types = this.Slides[this.CurPage].graphicObjects.getSelectedObjectsByTypes(true);
-			if (by_types.tables.length === 1) {
-				if (Function !== CTable.prototype.DistributeTableCells) {
-					by_types.tables[0].Set_CurrentElement();
-					if (!(bAll === true)) {
-						if (bBefore) {
-							by_types.tables[0].graphicObject.MoveCursorToStartPos();
-						} else {
-							by_types.tables[0].graphicObject.MoveCursorToStartPos();
-						}
-					} else {
-						by_types.tables[0].graphicObject.SelectAll();
-					}
-				}
+	let oController = this.GetCurrentController();
+	if(!oController)
+		return null;
 
-				result = Function.apply(by_types.tables[0].graphicObject, args);
-				if (by_types.tables[0].graphicObject.Content.length === 0) {
-					this.RemoveTable();
-					return;
-				}
-				this.Recalculate();
-				if (!this.FocusOnNotes) {
-					var aConnectors = this.Slides[this.CurPage].graphicObjects.getConnectorsForCheck();
-					for (var i = 0; i < aConnectors.length; ++i) {
-						aConnectors[i].calculateTransform(false);
-						var oGroup = aConnectors[i].getMainGroup();
-						if (oGroup) {
-							AscFormat.checkObjectInArray([], oGroup);
-						}
+	let result = null;
+
+	let args;
+	if (AscFormat.isRealNumber(Rows) && AscFormat.isRealNumber(Cols)) {
+		args = [Cols, Rows];
+	} else {
+		args = [bBefore];
+	}
+	let oTargetText = AscFormat.getTargetTextObject(oController);
+	let oTable;
+	if (oTargetText && oTargetText.getObjectType() === AscDFH.historyitem_type_GraphicFrame) {
+		oTable = oTargetText.graphicObject;
+	}
+	else {
+		let oByTypes = oController.getSelectedObjectsByTypes(true);
+		if (oByTypes.tables.length === 1) {
+			let oGrFrame = oByTypes.tables[0];
+			oTable = oGrFrame.graphicObject;
+			if (Function !== AscWord.CTable.prototype.DistributeTableCells) {
+				oGrFrame.Set_CurrentElement();
+				if (!(bAll === true)) {
+					if (bBefore) {
+						oTable.MoveCursorToStartPos();
+					} else {
+						oTable.MoveCursorToStartPos();
 					}
-					if (aConnectors.length > 0) {
-						this.Recalculate();
-					}
+				} else {
+					oTable.SelectAll();
 				}
-				this.Document_UpdateSelectionState();
-				this.Document_UpdateInterfaceState();
 			}
 		}
+	}
+	if(oTable) {
+		result = Function.apply(oTable, args);
+		if (oTable.Content.length === 0) {
+			this.RemoveTable();
+			return result;
+		}
+		if (!this.FocusOnNotes) {
+			oController.updateConnectors(false);
+		}
+		this.Recalculate();
+		this.Document_UpdateInterfaceState();
 	}
 	return result;
 };
@@ -8664,11 +8632,13 @@ CPresentation.prototype.RemoveTable = function () {
 };
 
 CPresentation.prototype.SelectTable = function (Type) {
-	if (this.Slides[this.CurPage]) {
-		var by_types = this.Slides[this.CurPage].graphicObjects.getSelectedObjectsByTypes(true);
-		if (by_types.tables.length === 1) {
-			by_types.tables[0].Set_CurrentElement();
-			by_types.tables[0].graphicObject.SelectTable(Type);
+	const oController = this.GetCurrentController();
+	if (oController) {
+		let oByTypes = oController.getSelectedObjectsByTypes(true);
+		if (oByTypes.tables.length === 1) {
+			let oGrFrame = oByTypes.tables[0];
+			oGrFrame.Set_CurrentElement();
+			oGrFrame.graphicObject.SelectTable(Type);
 			this.Document_UpdateSelectionState();
 			this.Document_UpdateInterfaceState();
 		}
@@ -8676,24 +8646,12 @@ CPresentation.prototype.SelectTable = function (Type) {
 };
 
 CPresentation.prototype.Table_CheckFunction = function (Function) {
-	if (this.Slides[this.CurPage]) {
-		var target_text_object = AscFormat.getTargetTextObject(this.Slides[this.CurPage].graphicObjects);
-		if (target_text_object && target_text_object.getObjectType() === AscDFH.historyitem_type_GraphicFrame) {
-			return Function.apply(target_text_object.graphicObject, []);
+	let oController = this.GetCurrentController();
+	if (oController) {
+		let oTextDrawing = AscFormat.getTargetTextObject(oController);
+		if (oTextDrawing && oTextDrawing.getObjectType() === AscDFH.historyitem_type_GraphicFrame) {
+			return Function.apply(oTextDrawing.graphicObject, []);
 		}
-		//else
-		//{
-		//    return
-		//    var by_types = this.Slides[this.CurPage].graphicObjects.getSelectedObjectsByTypes(true);
-		//    if(by_types.tables.length === 1)
-		//    {
-		//        var ret;
-		//        by_types.tables[0].graphicObject.SetApplyToAll(true);
-		//        ret = Function.apply(by_types.tables[0].graphicObject, []);
-		//        by_types.tables[0].graphicObject.SetApplyToAll(false);
-		//        return ret;
-		//    }
-		//}
 	}
 	return false;
 };
@@ -12399,7 +12357,7 @@ CPresentation.prototype.StartAction = function (nDescription) {
 CPresentation.prototype.FinalizeAction = function (isCheckEmptyAction) {
 	this.Recalculate();
 	this.Api.checkChangesSize();
-	if (true === isCheckEmptyAction && AscCommon.History.Is_LastPointEmpty()) {
+	if (false !== isCheckEmptyAction && AscCommon.History.Is_LastPointEmpty()) {
 		AscCommon.History.RemoveLastPoint();
 	}
 	this.Api.sendEvent("asc_onUserActionEnd");
