@@ -476,6 +476,9 @@
 		this.isApplyChanges = false;
 		this.isKeyDown      = false;
 		this.isUndoRedo     = false;
+
+		if (AscCommon.EditorActionSpeakerInitData && AscCommon.EditorActionSpeakerInitData.isEnabled)
+			this.run();
 	}
 	EditorActionSpeaker.prototype.toggle = function()
 	{
