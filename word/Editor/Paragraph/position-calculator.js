@@ -155,6 +155,16 @@
 	{
 		this.bidi.end();
 		
+		if (this.isNextCurrent)
+		{
+			this.posInfo.x   = this.x;
+			this.posInfo.y   = this.y;
+			this.posInfo.run = this.nextRun;
+			
+			this.isNextCurrent = false;
+			this.nextRun       = null;
+		}
+		
 		let mathW = math.Root.GetWidth(this.line, this.range);
 		let x = this.x;
 		
