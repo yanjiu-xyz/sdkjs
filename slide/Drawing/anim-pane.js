@@ -1995,21 +1995,62 @@
 		const clipH = this.bounds.b - this.bounds.t;
 		graphics.AddClipRect(clipL, clipT, clipW, clipH);
 
-		// In case we need to draw a triangle
-		if (this.effect.isInstantEffect()) {
-			graphics.b_color1(0, 0, 255, 255);
+		const oSkin = AscCommon.GlobalSkin;
+		let sFillColor, sOutlineColor;
+		let oFillColor, oOutlineColor;
 
-			const bounds = this.getEffectBarBounds();
-			graphics.rect(bounds.l, bounds.t, bounds.r - bounds.l, bounds.b - bounds.t);
-			graphics.df();
+		switch (this.effect.cTn.presetClass) {
+			case AscFormat.PRESET_CLASS_ENTR:
+				sFillColor = oSkin['animation-effect-entr-fill'];
+				sOutlineColor = oSkin['animation-effect-entr-outline'];
+				break;
+
+			case AscFormat.PRESET_CLASS_EMPH:
+				sFillColor = oSkin['animation-effect-emph-fill'];
+				sOutlineColor = oSkin['animation-effect-emph-outline'];
+				break;
+
+			case AscFormat.PRESET_CLASS_EXIT:
+				sFillColor = oSkin['animation-effect-exit-fill'];
+				sOutlineColor = oSkin['animation-effect-exit-outline'];
+				break;
+
+			case AscFormat.PRESET_CLASS_PATH:
+				sFillColor = oSkin['animation-effect-path-fill'];
+				sOutlineColor = oSkin['animation-effect-path-outline'];
+				break;
+		}
+		oFillColor = AscCommon.RgbaHexToRGBA(sFillColor);
+		oOutlineColor = AscCommon.RgbaHexToRGBA(sOutlineColor);
+
+		graphics.b_color1(oFillColor.R, oFillColor.G, oFillColor.B, 255);
+		graphics.p_color(oOutlineColor.R, oOutlineColor.G, oOutlineColor.B, 255)
+
+		const bounds = this.getEffectBarBounds();
+		if (this.effect.isInstantEffect()) {
+			// In case we need to draw a triangle
+
+			let transform = graphics.m_oFullTransform;
+			let left = (transform.TransformPointX(bounds.l, bounds.t) + 0.5) >> 0;
+			let top = (transform.TransformPointY(bounds.l, bounds.t) + 0.5) >> 0;
+			let right = (transform.TransformPointX(bounds.r, bounds.t) + 0.5) >> 0;
+			let bottom = (transform.TransformPointY(bounds.l, bounds.b) + 0.5) >> 0;
+
+			var ctx = graphics.m_oContext;
+			ctx.beginPath();
+			ctx.moveTo(left, top);
+			ctx.lineTo(left + 5, top);
+			ctx.lineTo(right, top + (bottom - top) / 2);
+			ctx.lineTo(left + 5, bottom);
+			ctx.lineTo(left, bottom);
+			ctx.lineTo(left, top);
 		} else {
 			// In case we need to draw a bar
-			graphics.b_color1(255, 0, 0, 255);
-
-			const bounds = this.getEffectBarBounds();
 			graphics.rect(bounds.l, bounds.t, bounds.r - bounds.l, bounds.b - bounds.t);
-			graphics.df();
 		}
+
+		graphics.df();
+		graphics.ds();
 
 		graphics.RestoreGrState();
 	};
@@ -2179,5 +2220,17 @@
 	window['AscCommon'].CSeqListContainer = CSeqListContainer;
 	window['AscCommon'].CTimelineContainer = CTimelineContainer;
 
+	AscCommon.GlobalSkin['animation-effect-entr-fill'] = '#9edb86';
+	AscCommon.GlobalSkin['animation-effect-entr-outline'] = '#386821';
+	AscCommon.GlobalSkin['animation-effect-emph-fill'] = '#ffe87f';
+	AscCommon.GlobalSkin['animation-effect-emph-outline'] = '#ca8310';
+	AscCommon.GlobalSkin['animation-effect-exit-fill'] = '#ffcfc9';
+	AscCommon.GlobalSkin['animation-effect-exit-outline'] = '#b54548';
+	AscCommon.GlobalSkin['animation-effect-path-fill'] = '#a3c7d8';
+	AscCommon.GlobalSkin['animation-effect-path-outline'] = '#274a68';
+	// AscCommon.GlobalSkin['animation-effect-mediacall-fill'] =
+	// AscCommon.GlobalSkin['animation-effect-mediacall-outline'] =
+	// AscCommon.GlobalSkin['animation-effect-verb-fill'] =
+	// AscCommon.GlobalSkin['animation-effect-verb-outline'] =
 })(window);
 
