@@ -7367,6 +7367,44 @@ CT_pivotTableDefinition.prototype._groupDiscreteAddFields = function(fld, parFld
 		}
 	}
 };
+/**
+ * @param {string} name
+ * @return {number}
+ */
+CT_pivotTableDefinition.prototype.findDataFieldByFldName = function(name) {
+	const fieldIndex = this.cacheDefinition.getFieldIndexByName(name);
+	if (fieldIndex !== -1) {
+		return this.dataFields.find(fieldIndex);
+	}
+	return -1;
+};
+/**
+ * @param {string} name 
+ * @return {{row: number, col: number} | null}
+ */
+CT_pivotTableDefinition.prototype.getCellByDataFieldOnly = function(name) {
+	const dataFields = this.asc_getDataFields()
+	const pivotRange = this.getRange();
+	const r = pivotRange.r1 + this.location.firstDataRow;
+	const c = pivotRange.c1 + this.location.firstDataCol;
+	let dataIndex = this.dataFields.getIndexByName(name);
+	if (dataIndex === -1) {
+		dataIndex = this.findDataFieldByFldName(name);
+	}
+	if (dataIndex !== -1) {
+		const rowItems = this.getRowItems();
+		const colItems = this.getColItems();
+		const rowFields = this.asc_getRowFields();
+		const colFields = this.asc_getColumnFields();
+		const rowIndex = this.getIndexWithOnlyDataIndex(rowItems, dataIndex, rowFields);
+		const colIndex = this.getIndexWithOnlyDataIndex(colItems, dataIndex, colFields);
+		return {
+			row: r + (rowIndex !== null ? rowIndex : rowItems.length - 1),
+			col: c + (colIndex !== null ? colIndex : colItems.length - 1)
+		}
+	}
+	return null;
+};
 
 /** 
  * @typedef {[number, number][]} PivotItemFieldsMapArray 
@@ -7395,14 +7433,9 @@ CT_pivotTableDefinition.prototype.getCellByGetPivotDataParams = function(params)
 				(this.colGrandTotals && !this.asc_getRowFields()) ||
 				(!this.asc_getRowFields() && !this.asc_getColumnFields());
 			if (hasGrandTotal) {
-				const rowItems = this.getRowItems();
-				const colItems = this.getColItems();
-				return {
-					row: r + rowItems.length - 1,
-					col: c + colItems.length - 1
-				}
+				return this.getCellByDataFieldOnly(params.dataFieldName);
 			} else {
-				//hidden grand total
+				// hidden grand total
 				return null;
 			}
 		}
@@ -7598,6 +7631,25 @@ CT_pivotTableDefinition.prototype.getPivotDataOptParams = function(params) {
 	return result;
 };
 /**
+ * @param {CT_I[]} items 
+ * @param {number} dataIndex 
+ * @param {CT_Field[]} fields 
+ * @returns 
+ */
+CT_pivotTableDefinition.prototype.getIndexWithOnlyDataIndex = function(items, dataIndex, fields) {
+	let findType = Asc.c_oAscItemType.Grand;
+	if (fields.length === 1 && fields[0].asc_getIndex() === AscCommonExcel.st_VALUES) {
+		findType = Asc.c_oAscItemType.Data;
+	}
+	for(let i = 0; i < items.length; i += 1) {
+		const item = items[i];
+		if (item.i === dataIndex && item.t === findType) {
+			return i;
+		}
+	}
+	return null;
+}
+/**
  * @param {PivotItemFieldsMap} itemFieldsMap
  * @return {PivotItemsIndexes}
  */
@@ -7645,15 +7697,6 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(item
 		}
 		return null;
 	}
-	function getIndexWithOnlyDataIndex(items, dataIndex) {
-		for(let i = 0; i < items.length; i += 1) {
-			const item = items[i];
-			if (item.i === dataIndex && item.t === Asc.c_oAscItemType.Grand) {
-				return i;
-			}
-		}
-		return null;
-	}
 	/**
 	 * @param {PivotItemFieldsMap} itemMap
 	 * @param {CT_Field[]} fields
@@ -7687,7 +7730,7 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(item
 	if (rowItemFieldsMap) {
 		if (rowItemFieldsMap.size > 0) {
 			if (rowItemFieldsMap.size === 1 && rowItemFieldsMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD)) {
-				rowItemIndex = getIndexWithOnlyDataIndex(rowItems, rowItemFieldsMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD))
+				rowItemIndex = this.getIndexWithOnlyDataIndex(rowItems, rowItemFieldsMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD), rowFields)
 			} else {
 				rowItemIndex = getIndex(rowItems, rowFields, rowItemFieldsMap);
 				let rowR = lastR;
@@ -7731,7 +7774,7 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(item
 	if (colItemFieldsMap) {
 		if (colItemFieldsMap.size > 0) {
 			if (colItemFieldsMap.size === 1 && colItemFieldsMap.has(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD)) {
-				colItemIndex = getIndexWithOnlyDataIndex(colItems, colItemFieldsMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD))
+				colItemIndex = this.getIndexWithOnlyDataIndex(colItems, colItemFieldsMap.get(AscCommonExcel.st_DATAFIELD_REFERENCE_FIELD), colFields)
 			} else {
 				colItemIndex = getIndex(colItems, colFields, colItemFieldsMap);
 				let colR = lastR;
