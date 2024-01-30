@@ -13365,6 +13365,15 @@ CT_PivotField.prototype.findFieldItemInSharedItems = function(cacheField, value)
 			if (sharedItem.type === c_oAscPivotRecType.Missing && lowerCaseValue === "") {
 				return item;
 			}
+			if (sharedItem.type === c_oAscPivotRecType.DateTime) {
+				/**@type {Date} */
+				const number = sharedItem.getCellValue().number;
+				const numFormat = this.num.getNumFormat();
+				const textValue = numFormat.formatToMathInfo(number, AscCommon.CellValueType.Number, AscCommon.gc_nMaxDigCountView);
+				if (textValue.toLowerCase() === lowerCaseValue) {
+					return item;
+				}
+			}
 			const cellValue = sharedItem.getCellValue();
 			let textValue = "";
 			if (cellValue.type === AscCommon.CellValueType.Number) {
