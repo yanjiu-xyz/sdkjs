@@ -13362,16 +13362,20 @@ CT_PivotField.prototype.findFieldItemInSharedItems = function(cacheField, value)
 		const item = items[i];
 		const sharedItem = cacheField.getGroupOrSharedItem(item.x);
 		if (sharedItem) {
-			if (sharedItem.type === c_oAscPivotRecType.Missing && lowerCaseValue === "") {
-				return item;
-			}
-			if (sharedItem.type === c_oAscPivotRecType.DateTime) {
-				/**@type {Date} */
-				const number = sharedItem.getCellValue().number;
-				const numFormat = this.num.getNumFormat();
-				const textValue = numFormat.formatToMathInfo(number, AscCommon.CellValueType.Number, AscCommon.gc_nMaxDigCountView);
-				if (textValue.toLowerCase() === lowerCaseValue) {
+			if (sharedItem.type === c_oAscPivotRecType.Missing) {
+				const blankCaption = AscCommon.translateManager.getValue(AscCommonExcel.BLANK_CAPTION);
+				if (lowerCaseValue === "" || lowerCaseValue === blankCaption) {
 					return item;
+				}
+			}
+			if (sharedItem.type === c_oAscPivotRecType.DateTime || sharedItem.type === c_oAscPivotRecType.Number) {
+				const number = sharedItem.getCellValue().number;
+				const numFormat = this.num && this.num.getNumFormat();
+				if (numFormat) {
+					const textValue = numFormat.formatToMathInfo(number, AscCommon.CellValueType.Number, AscCommon.gc_nMaxDigCountView);
+					if (textValue.toLowerCase() === lowerCaseValue) {
+						return item;
+					}
 				}
 			}
 			const cellValue = sharedItem.getCellValue();
