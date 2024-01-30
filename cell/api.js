@@ -6977,6 +6977,7 @@ var editor;
 		}
 		let dataRow = changeRes.updateRes && changeRes.updateRes.dataRow;
 		changeRes.ranges = wsModel.updatePivotTable(pivot, changeRes.changed, dataRow, false);
+		pivot.autoFitColumnsWidth(changeRes.ranges, needUpdateView);
 		this.updateWorksheetByPivotTable(pivot, changeRes, needUpdateView);
 	};
 	spreadsheet_api.prototype.updatePivotTables = function() {
@@ -6986,12 +6987,14 @@ var editor;
 				var pivot = wsModel.pivotTables[i];
 				let changed = pivot.getAndCleanChanged();
 				var ranges = wsModel.updatePivotTable(pivot, changed, undefined, true);
+				let needUpdateView = false;
+				pivot.autoFitColumnsWidth(ranges, needUpdateView);
 				let changeRes = {changed: changed, ranges: ranges, error: c_oAscError.ID.No, warning: c_oAscError.ID.No, updateRes: undefined};
-				t.updateWorksheetByPivotTable(pivot, changeRes, false);
+				t.updateWorksheetByPivotTable(pivot, changeRes, needUpdateView);
 			}
 		});
 	};
-	spreadsheet_api.prototype.updateWorksheetByPivotTable = function(pivot, changeRes, needUpdateView, doNotAutoFitColumnsWidth, updateSelection) {
+	spreadsheet_api.prototype.updateWorksheetByPivotTable = function(pivot, changeRes, needUpdateView, updateSelection) {
 		let wsModel = pivot.GetWS();
 		let ws = this.wb.getWorksheet(wsModel.getIndex());
 		let changed = changeRes.changed;
@@ -7005,9 +7008,6 @@ var editor;
 			}
 			if (ranges) {
 				ws.updateRanges(ranges);
-				if (pivot.useAutoFormatting && !doNotAutoFitColumnsWidth) {
-					ws._autoFitColumnsWidth(ranges);
-				}
 			}
 			//ws can be inactive in case of slicer on other sheet
 			if (this.wbModel.getActive() === wsModel.getIndex()) {
@@ -7267,7 +7267,7 @@ var editor;
 				let checkRefresh = pivotTables[i].checkRefresh();
 				let changeRes;
 				if (c_oAscError.ID.No === checkRefresh) {
-					changeRes = t._changePivot(pivotTables[i], opt_confirmation, function(ws, pivot) {
+					changeRes = t._changePivot(pivotTables[i], opt_confirmation, true, function(ws, pivot) {
 						let error = pivot.refresh();
 					});
 				} else {
@@ -7287,7 +7287,7 @@ var editor;
 				for (let i = 0; i < pivotTablesChangeRes.length; ++i) {
 					let pivotTable = pivotTables[i];
 					let changeRes = pivotTablesChangeRes[i];
-					t.updateWorksheetByPivotTable(pivotTable, changeRes,  true, undefined, false);
+					t.updateWorksheetByPivotTable(pivotTable, changeRes,  true, false);
 				}
 			}
 		});
@@ -7343,7 +7343,7 @@ var editor;
 			History.Create_NewPoint();
 			History.StartTransaction();
 			t.wbModel.dependencyFormulas.lockRecal();
-			var changeRes = t._changePivot(pivot, confirmation, onAction, doNotCheckUnderlyingData);
+			var changeRes = t._changePivot(pivot, confirmation, !doNotAutoFitColumnsWidth, onAction, doNotCheckUnderlyingData);
 			t.wbModel.dependencyFormulas.unlockRecal();
 			History.EndTransaction();
 			let success = t._changePivotEndCheckError(changeRes, function () {
@@ -7352,7 +7352,7 @@ var editor;
 				t._changePivotWithLockExt(pivotAfterUndo, true, updateSelection, onAction);
 			});
 			if (success) {
-				t.updateWorksheetByPivotTable(pivot, changeRes, true, doNotAutoFitColumnsWidth, updateSelection);
+				t.updateWorksheetByPivotTable(pivot, changeRes, true, updateSelection);
 			}
 		});
 	};
@@ -7387,11 +7387,11 @@ var editor;
 			let success = t._changePivotEndCheckError(changeRes, onRepeat);
 			if (success) {
 				//todo pivot
-				t.updateWorksheetByPivotTable(pivot, changeRes, true, undefined, true);
+				t.updateWorksheetByPivotTable(pivot, changeRes, true, true);
 			}
 		});
 	};
-	spreadsheet_api.prototype._changePivot = function(pivot, confirmation, onAction, doNotCheckUnderlyingData) {
+	spreadsheet_api.prototype._changePivot = function(pivot, confirmation, fitColumnsWidth, onAction, doNotCheckUnderlyingData) {
 		if (!doNotCheckUnderlyingData && !pivot.checkPivotUnderlyingData()) {
 			return {error: c_oAscError.ID.PivotWithoutUnderlyingData, warning: c_oAscError.ID.No, updateRes: undefined};
 		}
@@ -7421,6 +7421,7 @@ var editor;
 		if (success) {
 			let dataRow = updateRes && updateRes.dataRow;
 			ranges = wsModel.updatePivotTable(pivot, pivotChanged, dataRow, true);
+			pivot.autoFitColumnsWidth(ranges, fitColumnsWidth);
 		} else {
 			pivot.stashEmptyReportRange();//to prevent clearTableStyle while undo
 		}

@@ -1456,7 +1456,7 @@
 				});
 				if (success) {
 					//todo pivot
-					api.updateWorksheetByPivotTable(pivotTables[0], changeRes, true, undefined, false);
+					api.updateWorksheetByPivotTable(pivotTables[0], changeRes, true, false);
 				}
 			});
 		} else {
@@ -1490,7 +1490,7 @@
 			pivotTable.fillAutoFiltersOptions(autoFilterObject, fld);
 			autoFilterObject.setVisibleFromValues(visible);
 			autoFilterObject.filter.type = Asc.c_oAscAutoFilterTypes.Filters;
-			changeRes = api._changePivot(pivotTable, confirmation, function (ws) {
+			changeRes = api._changePivot(pivotTable, confirmation, true, function (ws) {
 				pivotTable.filterPivotItems(fld, autoFilterObject);
 			});
 			if (c_oAscError.ID.No !== changeRes.error || c_oAscError.ID.No !== changeRes.warning) {

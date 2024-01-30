@@ -6467,7 +6467,7 @@ CT_pivotTableDefinition.prototype.filterByFieldIndex = function (api, autoFilter
 		History.Create_NewPoint();
 		History.StartTransaction();
 		api.wbModel.dependencyFormulas.lockRecal();
-		var changeRes = api._changePivot(t, confirmation, function (ws) {
+		var changeRes = api._changePivot(t, confirmation, true, function (ws) {
 			t.filterPivotItems(fld, autoFilterObject);
 		});
 		if (c_oAscError.ID.No === changeRes.error && c_oAscError.ID.No === changeRes.warning) {
@@ -6485,7 +6485,7 @@ CT_pivotTableDefinition.prototype.filterByFieldIndex = function (api, autoFilter
 			}
 		});
 		if (success) {
-			api.updateWorksheetByPivotTable(t, changeRes, true, undefined, true);
+			api.updateWorksheetByPivotTable(t, changeRes, true, true);
 		}
 	});
 };
@@ -6622,7 +6622,7 @@ CT_pivotTableDefinition.prototype.removeFiltersWithLock = function(api, flds, co
 			}
 		});
 		if (success) {
-			api.updateWorksheetByPivotTable(t, changeRes, true, undefined, false);
+			api.updateWorksheetByPivotTable(t, changeRes, true, false);
 		}
 	});
 };
@@ -6672,7 +6672,7 @@ CT_pivotTableDefinition.prototype.removeFilter = function(index, isRemovePageFil
 };
 CT_pivotTableDefinition.prototype.removeFilterWithSlicer = function(api, fld, confirmation) {
 	var t = this;
-	var changeRes = api._changePivot(this, confirmation, function(){
+	var changeRes = api._changePivot(this, confirmation, true, function(){
 		t.removeFilter(fld);
 	});
 	if (c_oAscError.ID.No === changeRes.error && c_oAscError.ID.No === changeRes.warning) {
@@ -7041,6 +7041,15 @@ CT_pivotTableDefinition.prototype.updateSelection = function(wsView) {
 		History.SetSelectionRedo(selection);
 	}
 };
+CT_pivotTableDefinition.prototype.autoFitColumnsWidth = function (ranges, fitColumnsWidth, needUpdateView, doNotAutoFitColumnsWidth) {
+	if (this.useAutoFormatting && fitColumnsWidth) {
+		let wsModel = this.GetWS();
+		let wsView = this.worksheet.workbook.oApi.wb.getWorksheet(wsModel.getIndex());
+		if (wsView) {
+			wsView._autoFitColumnsWidth(ranges);
+		}
+	}
+};
 CT_pivotTableDefinition.prototype.hasLeftAlignInRowLables = function() {
 	var i, index;
 	var rowFields = this.asc_getRowFields();
@@ -7099,7 +7108,7 @@ CT_pivotTableDefinition.prototype.groupPivot = function (api, layout, confirmati
 	var rangePrRes = pivotTable.getGroupRangePr(baseFld);
 	if (opt_rangePr && opt_rangePr.getFieldGroupType() === fieldGroupType) {
 		api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, confirmation, function (confirmation, pivotTables) {
-			var changeRes = api._changePivot(pivotTable, confirmation, function () {
+			var changeRes = api._changePivot(pivotTable, confirmation, true, function () {
 				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
 
 				//todo redo 
@@ -7130,7 +7139,7 @@ CT_pivotTableDefinition.prototype.groupPivot = function (api, layout, confirmati
 		api.handlers.trigger("asc_onShowPivotGroupDialog", newRangePrRes.rangePr, newRangePrRes.dateTypes, newRangePrRes.rangePr.clone());
 	} else if (layout.getGroupSize() > 1) {
 		api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, confirmation, function (confirmation, pivotTables) {
-			var changeRes = api._changePivot(pivotTable, confirmation, function () {
+			var changeRes = api._changePivot(pivotTable, confirmation, true, function () {
 				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
 
 				//todo redo 
@@ -7163,7 +7172,7 @@ CT_pivotTableDefinition.prototype.ungroupPivot = function (api, layout, confirma
 	var rangePrRes = pivotTable.getGroupRangePr(baseFld);
 	if (rangePrRes) {
 		api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, confirmation, function (confirmation, pivotTables) {
-			var changeRes = api._changePivot(pivotTable, confirmation, function () {
+			var changeRes = api._changePivot(pivotTable, confirmation, true, function () {
 				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
 
 				//todo redo 				//clone pivotCache to avoid conflict with other pivotTables(case adding discrete fields)
@@ -7186,7 +7195,7 @@ CT_pivotTableDefinition.prototype.ungroupPivot = function (api, layout, confirma
 	} else if (layout.getGroupSize() > 0) {
 		api._changePivotAndConnectedByPivotCacheWithLock(pivotTable, confirmation, function (confirmation, pivotTables) {
 			var groupRes;
-			var changeRes = api._changePivot(pivotTable, confirmation, function () {
+			var changeRes = api._changePivot(pivotTable, confirmation, true, function () {
 				var oldPivot = new AscCommonExcel.UndoRedoData_BinaryWrapper(pivotTable.cloneForHistory(true, false));
 
 				//todo redo 
@@ -7638,7 +7647,7 @@ CT_pivotTableDefinition.prototype.getPivotDataOptParams = function(params) {
  */
 CT_pivotTableDefinition.prototype.getIndexWithOnlyDataIndex = function(items, dataIndex, fields) {
 	let findType = Asc.c_oAscItemType.Grand;
-	if (fields.length === 1 && fields[0].asc_getIndex() === AscCommonExcel.st_VALUES) {
+	if (fields && fields.length === 1 && fields[0].asc_getIndex() === AscCommonExcel.st_VALUES) {
 		findType = Asc.c_oAscItemType.Data;
 	}
 	for(let i = 0; i < items.length; i += 1) {
