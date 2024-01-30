@@ -444,5 +444,104 @@ $(function() {
 				assert.deepEqual(getValues(pivot), values, message);
 			});
 		});
+		QUnit.test('Test: GETPIVOTDATA', function (assert) {
+			const file = Asc.GetPivotData;
+			const wb = openDocument(file);
+			let data = {
+				"general": [
+					['G4', 'E11'],
+					['G5', 'E8'],
+					['G6', 'E9'],
+					['G7', 'D9'],
+					['G8', 'D11'],
+					['G9', 'B10'],
+					['G10', 'E11', true],
+					['H4', 'E11', true],
+					['H5', 'D9', true],
+					['H6', 'E11', true],
+					['H7', 'D9', true],
+					['I4', 'E11', true],
+					['I5', 'E8', true],
+					['I6', 'E8', true],
+					['I7', 'E11', true],
+					['G15', 'C17'],
+					['G16', 'B17'],
+					['G17', 'C17', true],
+					['G21', 'A20', true],
+					['H21', 'A20', true],
+					['I21', 'A20', true],
+					['I22', 'A20', true],
+					['I23', 'B24'],
+					['J21', 'A20', true],
+					['G28', 'B34'],
+					['G29', 'B41'],
+					['G30', 'B41', true],
+					['G46', 'A45', true],
+					['H46', 'A45', true],
+				],
+				"total": [
+					['H3', 'D7'],
+					['H10', 'B13'],
+					['H17', 'D19'],
+					['H24', 'A24', true],
+					['H31', 'A31', true],
+					['H37', 'A37', true],
+					['H43', 'A44'],
+				],
+				"subtotal": [
+					['D3', 'B3'],
+					['D10', 'B10'],
+					['D18', 'B18', true],
+					['D21', 'B21'],
+					['D25', 'B25', true],
+					['D26', 'B26'],
+					['D34', 'B34'],
+					['K3', 'H3'],
+					['K10', 'H10'],
+					['K18', 'H18', true],
+					['K21', 'H21'],
+					['K25', 'H25', true],
+					['K26', 'I26'],
+					['K34', 'I34'],
+					['R5', 'O5'],
+					['R12', 'O12'],
+					['R18', 'O18', true],
+					['R25', 'O25', true],
+					['R28', 'P28'],
+					['R33', 'P33'],
+					['AB5', 'Y5'],
+					['AB11', 'V9', true],
+					['AB12', 'Y12'],
+					['AH17', 'V16', true],
+					['AH18', 'Z20'],
+					['AH20', 'AE20'],
+				],
+			};
+			for(let sheetName in data) {
+				let elems = data[sheetName];
+				let ws = wb.getWorksheetByName(sheetName);
+				elems.forEach(function (elem) {
+					let errorText = sheetName + ':' + JSON.stringify(elem);
+					let formulaRef = elem[0];
+					let rangeFormula = ws.getRange2(formulaRef);
+					let valueExpected = rangeFormula.getValue();
+					let formulaExpected = rangeFormula.getValueForEdit().substring(1);
+
+					if (!elem[2]) {
+						let pivotRef = elem[1];
+						let rangePivot = ws.getRange2(pivotRef);
+						let bboxPivot = rangePivot.bbox;
+						let pivot = ws.getPivotTable(bboxPivot.c1, bboxPivot.r1);
+						let formula = pivot.getGetPivotDataFormulaByActiveCell(bboxPivot.r1, bboxPivot.c1);
+						assert.strictEqual(formula, formulaExpected, errorText);
+					}
+
+					let oParser = new AscCommonExcel.parserFormula(formulaExpected, "A1", ws);
+					assert.ok(oParser.parse(), errorText);
+					assert.strictEqual(oParser.calculate().getValue() + "", valueExpected, errorText);
+				});
+			}
+
+		});
 	}
 });

@@ -7381,7 +7381,7 @@ CT_pivotTableDefinition.prototype._groupDiscreteAddFields = function(fld, parFld
 
 /**
  * @param {GetPivotDataParams} params
- * @return {{row: number, col: number}}
+ * @return {{row: number, col: number} | null}
  */
 CT_pivotTableDefinition.prototype.getCellByGetPivotDataParams = function(params) {
 	const pivotRange = this.getRange();
@@ -7390,11 +7390,20 @@ CT_pivotTableDefinition.prototype.getCellByGetPivotDataParams = function(params)
 	const c = pivotRange.c1 + this.location.firstDataCol;
 	if (dataFields && dataFields.length > 0) {
 		if (params.optParams.length === 0) {
-			const rowItems = this.getRowItems();
-			const colItems = this.getColItems();
-			return {
-				row: r + rowItems.length - 1,
-				col: c + colItems.length - 1
+			let hasGrandTotal = (this.rowGrandTotals && this.colGrandTotals) ||
+				(this.rowGrandTotals && !this.asc_getColumnFields()) ||
+				(this.colGrandTotals && !this.asc_getRowFields()) ||
+				(!this.asc_getRowFields() && !this.asc_getColumnFields());
+			if (hasGrandTotal) {
+				const rowItems = this.getRowItems();
+				const colItems = this.getColItems();
+				return {
+					row: r + rowItems.length - 1,
+					col: c + colItems.length - 1
+				}
+			} else {
+				//hidden grand total
+				return null;
 			}
 		}
 		const itemFieldsMap = this.getItemFieldsMapByGetPivotDataParams(params);
@@ -7524,6 +7533,9 @@ CT_pivotTableDefinition.prototype.getGetPivotParamsByActiveCell = function(activ
 	const dataIndex = Math.max(rowItems[indexes.rowItemIndex].i, colItems[indexes.colItemIndex].i);
 	const dataFieldName = dataFields.length === 1 ? cacheFieds[dataFields[dataIndex].fld].asc_getName() : dataFields[dataIndex].asc_getName();
 	const itemMapArray = this.getNoFilterItemFieldsMapArray(indexes.rowItemIndex, indexes.colItemIndex);
+	if (!itemMapArray){
+		return null;
+	}
 	const resultOptParams = [];
 	const resultOptParamsFormula = [];
 	itemMapArray.sort(function(a, b) {
@@ -7543,6 +7555,30 @@ CT_pivotTableDefinition.prototype.getGetPivotParamsByActiveCell = function(activ
 		optParamsFormula: resultOptParamsFormula,
 	};
 };
+/**
+ * @param {number} row
+ * @param {number} col
+ * @return {string | undefined}
+ */
+CT_pivotTableDefinition.prototype.getGetPivotDataFormulaByActiveCell = function(row, col) {
+	const dataFields = this.asc_getDataFields();
+	if (dataFields && dataFields.length > 0) {
+		const dataParams = this.getGetPivotParamsByActiveCell({row: row, col: col});
+		if (dataParams) {
+			let pivotReport = this.getRange();
+			let leftCell = new Asc.Range(pivotReport.c1, pivotReport.r1, pivotReport.c1, pivotReport.r1);
+
+			let formula = 'GETPIVOTDATA(';
+			formula += '"' + dataParams.dataFieldName + '"'
+			formula += ',' + leftCell.getName(AscCommonExcel.referenceType.A);
+			if (dataParams.optParams.length > 0) {
+				formula += ',' + dataParams.optParamsFormula.join(',');
+			}
+			formula += ')';
+			return formula;
+		}
+	}
+}
 
 /**
  * @param {string[]} params
@@ -7661,8 +7697,19 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(item
 				} else {
 					maxRowDefaultSubtotalR = rowFields.length - 1;
 				}
-				if (rowR < maxRowDefaultSubtotalR && !this.outline && !this.compact) {
-					if (!pivotFields[rowFields[rowR].asc_getIndex()].defaultSubtotal) {
+				if (rowR < maxRowDefaultSubtotalR) {
+					let pivotField = pivotFields[rowFields[rowR].asc_getIndex()];
+					let canShowSubtotal = null !== rowItemIndex && (this.colGrandTotals || !this.asc_getColumnFields());
+					if (canShowSubtotal) {
+						let visible = true;
+						let rowItemX = rowItems[rowItemIndex].x;
+						if (rowItemX.length > 0) {
+							let rowX = rowItemX[rowItemX.length - 1];
+							visible = pivotField.asc_getVisible(rowX.getV())
+						}
+						canShowSubtotal = (pivotField.defaultSubtotal || !visible);
+					}
+					if (!canShowSubtotal) {
 						rowItemIndex = null;
 					} else {
 						for(let i = rowItemIndex + 1; i < rowItems.length; i += 1) {
@@ -7695,7 +7742,18 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(item
 					maxColDefaultSubtotalR = colFields.length - 1;
 				}
 				if (colR < maxColDefaultSubtotalR) {
-					if (!pivotFields[colFields[colR].asc_getIndex()].defaultSubtotal) {
+					let pivotField = pivotFields[colFields[colR].asc_getIndex()];
+					let canShowSubtotal = null !== colItemIndex && (this.rowGrandTotals || !this.asc_getRowFields());
+					if (canShowSubtotal) {
+						let visible = true;
+						let colItemX = colItems[colItemIndex].x;
+						if (colItemX.length > 0) {
+							let colX = colItemX[colItemX.length - 1];
+							visible = pivotField.asc_getVisible(colX.getV())
+						}
+						canShowSubtotal = (pivotField.defaultSubtotal || !visible);
+					}
+					if (!canShowSubtotal) {
 						colItemIndex = null;
 					} else {
 						for(let i = colItemIndex + 1; i < colItems.length; i += 1) {
@@ -7775,7 +7833,7 @@ CT_pivotTableDefinition.prototype.getItemFieldsMapByGetPivotDataParams = functio
 /**
  * @param {number} rowItemIndex 
  * @param {number} colItemIndex 
- * @return {PivotItemFieldsMapArray} [pivotFieldIndex, fieldItem.x] array
+ * @return {PivotItemFieldsMapArray | null} [pivotFieldIndex, fieldItem.x] array
  */
 CT_pivotTableDefinition.prototype.getNoFilterItemFieldsMapArray = function(rowItemIndex, colItemIndex) {
 	const rowItems = this.getRowItems();
@@ -7786,7 +7844,10 @@ CT_pivotTableDefinition.prototype.getNoFilterItemFieldsMapArray = function(rowIt
 	const searchColItem = colItems && colItems[colItemIndex];
 	const pivotFields = this.asc_getPivotFields();
 	const result = [];
-
+	//Insert blank lines settings
+	if ((searchRowItem && searchRowItem.t === Asc.c_oAscItemType.Blank) || (searchColItem && searchColItem.t === Asc.c_oAscItemType.Blank)) {
+		return null;
+	}
 	function getRowColFieldsMap(searchItemIndex, rowColFields, items) {
 		const searchItem = items[searchItemIndex];
 		let r = null;

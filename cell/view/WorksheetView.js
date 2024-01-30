@@ -11302,24 +11302,10 @@
 				/**@type {CT_pivotTableDefinition[]} */
 				let pivotTables = this.model.getPivotTablesIntersectingRange(range);
 				if (pivotTables.length === 1) {
-					const pivotTable = pivotTables[0];
-					const dataFields = pivotTable.asc_getDataFields();
-					if (dataFields && dataFields.length > 0) {
-						const dataParams = pivotTables[0].getGetPivotParamsByActiveCell({row: range.r1, col: range.c1});
-						if (dataParams) {
-							let pivotReport = pivotTables[0].getRange();
-							let leftCell = new Asc.Range(pivotReport.c1, pivotReport.r1, pivotReport.c1, pivotReport.r1);
-
-							let formula = 'GETPIVOTDATA(';
-							formula += '"' + dataParams.dataFieldName + '"'
-							formula += ',' + leftCell.getName(AscCommonExcel.referenceType.A);
-							if (dataParams.optParams.length > 0) {
-								formula += ',' + dataParams.optParamsFormula.join(',');
-							}
-							formula += ')';
-							res.push(formula);
-							return res;
-						}
+					let formula = pivotTables[0].getGetPivotDataFormulaByActiveCell(range.r1, range.c1);
+					if (formula) {
+						res.push(formula);
+						return res;
 					}
 				}
 			}
