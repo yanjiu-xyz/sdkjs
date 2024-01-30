@@ -6485,6 +6485,8 @@ function CPaneDrawerBase(page, htmlElement, parentDrawer, pageControl)
 		}
 		oControl.onMouseDown(global_mouseEvent, _x, _y);
 		//oThis.GetPresentation().AnimPane_OnMouseDown(global_mouseEvent, _x, _y);
+
+		return oControl.hit(_x, _y);
 	};
 	oThis.onMouseMove = function (e)
 	{
@@ -6823,9 +6825,12 @@ function CAnimationPaneDrawer(page, htmlElement)
 	oThis.onMouseDown = function (e)
 	{
 		oThis.HtmlPage.Thumbnails.SetFocusElement(FOCUS_OBJECT_ANIM_PANE);
-		oThis.header.onMouseDown(e);
-		oThis.list.onMouseDown(e);
-		oThis.timeline.onMouseDown(e);
+
+		// Order matters
+		if (oThis.header.onMouseDown(e)) { return true };
+		if (oThis.timeline.onMouseDown(e)) { return true };
+		if (oThis.list.onMouseDown(e)) { return true };
+		return false;
 	};
 	oThis.onMouseMove = function (e)
 	{
