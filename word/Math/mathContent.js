@@ -3732,32 +3732,24 @@ CMathContent.prototype.Add_MatrixWithBrackets = function(begChr, endChr, ctrPr, 
     var MathContent = Delimiter.getElementMathContent(0);
     return MathContent.Add_Matrix(ctrPr, RowsCount, ColsCount, plcHide, aText);
 };
-CMathContent.prototype.Recalculate_CurPos = function(_X, _Y, CurrentRun, _CurRange, _CurLine, _CurPage, UpdateCurPos, UpdateTarget, ReturnTarget)
+CMathContent.prototype.recalculateCursorPosition = function(positionCalculator, isCurrent)
 {
-	if (-1 === this.StartLine)
+	let line  = positionCalculator.line;
+	let range = positionCalculator.range;
+	
+	let rangeInfo  = this.getRangePos(line, range);
+	let rangeStart = rangeInfo[0];
+	let rangeEnd   = rangeInfo[1];
+	
+	for (var pos = rangeStart; pos <= rangeEnd; ++pos)
 	{
-		return {
-			X         : 0,
-			Y         : 0,
-			Height    : 0,
-			PageNum   : 0,
-			Internal  : {Line : 0, Page : 0, Range : 0},
-			Transform : null
-		};
+		this.Content[pos].recalculateCursorPosition(positionCalculator, isCurrent && pos === this.CurPos);
 	}
-
-    var CurLine  = _CurLine - this.StartLine;
-    var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
-    var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-
-    var _EndPos = ( true === CurrentRun ? Math.min( EndPos, this.CurPos ) : EndPos );
-
-    return this.Content[_EndPos].Recalculate_CurPos(_X, _Y, CurrentRun, _CurRange, _CurLine, _CurPage, UpdateCurPos, UpdateTarget, ReturnTarget);
 };
-CMathContent.prototype.GetCurrentParaPos = function()
+CMathContent.prototype.GetCurrentParaPos = function(align)
 {
 	if (this.CurPos >= 0 && this.CurPos < this.Content.length)
-		return this.Content[this.CurPos].GetCurrentParaPos();
+		return this.Content[this.CurPos].GetCurrentParaPos(align);
 
 	return new CParaPos(this.StartRange, this.StartLine, 0, 0);
 };
@@ -4302,48 +4294,38 @@ CMathContent.prototype.SelectAll = function(Direction)
         this.Content[nPos].SelectAll(Direction);
     }
 };
-CMathContent.prototype.Selection_DrawRange = function(_CurLine, _CurRange, SelectionDraw)
+CMathContent.prototype.drawSelectionInRange = function(line, range, drawSelectionState)
 {
-    var SelectionStartPos = this.Selection.StartPos;
-    var SelectionEndPos   = this.Selection.EndPos;
-
-    if(SelectionStartPos > SelectionEndPos)
-    {
-        SelectionStartPos = this.Selection.EndPos;
-        SelectionEndPos   = this.Selection.StartPos;
-    }
-
-    var SelectionUse = this.Selection.Use;
-
-    var CurLine = _CurLine - this.StartLine;
-    var CurRange = ( 0 === CurLine ? _CurRange - this.StartRange : _CurRange );
-
-    var StartPos = this.protected_GetRangeStartPos(CurLine, CurRange);
-    var EndPos   = this.protected_GetRangeEndPos(CurLine, CurRange);
-
-    if(this.bRoot == false)
-    {
-        var Bound = this.Get_LineBound(_CurLine, _CurRange);
-        SelectionDraw.StartY   = Bound.Y;
-        SelectionDraw.H        = Bound.H;
-    }
-
-    for(var CurPos = StartPos; CurPos <= EndPos; CurPos++)
-    {
-        var Item = this.Content[CurPos];
-
-        var bSelectAll = SelectionUse && SelectionStartPos <= CurPos && CurPos <= SelectionEndPos && SelectionStartPos !== SelectionEndPos;
-
-        if(Item.Type == para_Math_Composition && bSelectAll)
-        {
-            SelectionDraw.FindStart = false;
-            SelectionDraw.W += Item.GetWidth(_CurLine, _CurRange);
-        }
-        else
-        {
-            Item.Selection_DrawRange( _CurLine, _CurRange, SelectionDraw );
-        }
-    }
+	let rangeInfo  = this.getRangePos(line, range);
+	let rangeStart = rangeInfo[0];
+	let rangeEnd   = rangeInfo[1];
+	
+	let selectionStart = this.Selection.StartPos;
+	let selectionEnd   = this.Selection.EndPos;
+	
+	if (selectionStart > selectionEnd)
+	{
+		selectionStart = this.Selection.EndPos;
+		selectionEnd   = this.Selection.StartPos;
+	}
+	
+	if (!this.bRoot)
+	{
+		let bounds = this.Get_LineBound(line, range);
+		drawSelectionState.y = bounds.Y;
+		drawSelectionState.h = bounds.H;
+	}
+	
+	for (var pos = rangeStart; pos <= rangeEnd; ++pos)
+	{
+		let item = this.Content[pos];
+		let isSelected = this.Selection.Use && selectionStart <= pos && pos <= selectionEnd;
+		
+		if (para_Math_Composition !== item.Type || (isSelected && selectionStart === selectionEnd))
+			item.drawSelectionInRange(line, range, drawSelectionState);
+		else
+			drawSelectionState.handleMathElement(item, isSelected);
+	}
 };
 CMathContent.prototype.SelectElementByPos = function(nPos)
 {
