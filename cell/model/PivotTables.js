@@ -7532,6 +7532,14 @@ CT_pivotTableDefinition.prototype.getGetPivotParamForSharedItem = function(cache
 			value = sharedItem.getCellValue().getTextValue();
 			formulaValue = value;
 			break;
+		case Asc.c_oAscPivotRecType.Missing:
+			value = '';
+			formulaValue = value;
+			break;
+		case Asc.c_oAscPivotRecType.Error:
+			value = sharedItem.getCellValue().getTextValue();
+			formulaValue = value;
+			break;
 		default:
 			value = sharedItem.getCellValue().getTextValue();
 			formulaValue = '"' + value + '"'
