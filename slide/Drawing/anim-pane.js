@@ -1858,11 +1858,13 @@
 			if (this.hit(x, y)) {
 				const animPane = Asc.editor.WordControl.m_oAnimPaneApi;
 				const hitRes = this.hitInEffectBar(x, y);
+				console.log(hitRes);
 
 				const cursorTypes = {
 					'left': 'col-resize',
 					'right': 'col-resize',
-					'center': 'ew-resize'
+					'center': 'ew-resize',
+					'intersection': 'col-resize'
 				};
 
 				const cursorType = cursorTypes[hitRes] || 'default';
@@ -2046,9 +2048,15 @@
 			ctx.lineTo(left, top);
 		} else {
 			// In case we need to draw a bar
-			graphics.rect(bounds.l, bounds.t, bounds.r - bounds.l, bounds.b - bounds.t);
+			const repeats = this.effect.asc_getRepeatCount() / 1000;
+			const width = bounds.r - bounds.l;
+			for (let barIndex = 0; barIndex < repeats - 1; ++barIndex) {
+				graphics.rect(bounds.l + barIndex * width, bounds.t, width, bounds.b - bounds.t);		
+				graphics.df();
+				graphics.ds();
+			}
+			graphics.rect(bounds.l + width * (repeats >> 0), bounds.t, width * (repeats % 1), bounds.b - bounds.t);				
 		}
-
 		graphics.df();
 		graphics.ds();
 
@@ -2087,14 +2095,25 @@
 		const delta = AscFormat.DIST_HIT_IN_LINE / 2
 		const bounds = this.getEffectBarBounds();
 
-		const isOutOfBorders = x < this.getLeftBorder() || x > this.getRightBorder() || y < bounds.t || y > bounds.b
+		const width = bounds.r - bounds.l;
+		const repeats = this.effect.asc_getRepeatCount() / 1000;
 
+		const isOutOfBorders = x < this.getLeftBorder() || x > this.getRightBorder() || y < bounds.t || y > bounds.b
 		if (!isOutOfBorders) {
 			if (!this.effect.isInstantEffect()) {
+
 				if (x >= bounds.l - delta && x <= bounds.l + delta) { return 'left'; }
-				if (x >= bounds.r - delta && x <= bounds.r + delta) { return 'right'; }
+				if (x >= bounds.l + width * repeats - delta && x <= bounds.l + width * (repeats) + delta) { return 'right'; }
+
+				if (repeats > 1) {
+					const intersectionIndex = (x - bounds.l) / width >> 0;
+					if (intersectionIndex > 0 && intersectionIndex < repeats) {
+						const intersectionPos = bounds.l + intersectionIndex * width;
+						if (x <= intersectionPos + delta && x >= intersectionPos - delta) {return 'intersection'; }
+					}
+				}
 			}
-			if (x > bounds.l && x < bounds.r) { return 'center'; }
+			if (x > bounds.l && x < bounds.l + width * repeats) { return 'center'; }
 		}
 
 		return null;
