@@ -6094,9 +6094,9 @@ BinaryChartWriter.prototype.WriteCT_SeriesLayout = function (oVal) {
 };
 BinaryChartWriter.prototype.WriteCT_Series = function (oVal) {
     var oThis = this;
-    if (oVal.dataPt !== null) {
-        for (var i = 0, length = oVal.dataPt.length; i < length; ++i) {
-            var oCurVal = oVal.dataPt[i];
+    if (oVal.dPt !== null) {
+        for (var i = 0, length = oVal.dPt.length; i < length; ++i) {
+            var oCurVal = oVal.dPt[i];
             if (null != oCurVal) {
                 this.bs.WriteItem(c_oserct_chartExSeriesDATAPT, function () {
                     oThis.WriteCT_DataPoint(oCurVal);

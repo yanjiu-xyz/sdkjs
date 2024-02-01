@@ -7674,47 +7674,12 @@ drawHistogramChart.prototype = {
 
 		let series = this.cChartSpace.chart.plotArea.plotAreaRegion.series;
 
-		let _getPointPPr = function (_idx) {
-			let dataPt = series[0].dataPt;
-			if (dataPt) {
-				for (let j in dataPt) {
-					if (dataPt[j].idx === _idx) {
-						return dataPt[j].spPr;
-					}
-				}
-			}
-			return null;
-		};
-
-		//TODO zero series
-		const style = series[0].spPr;
-		let brushSeries = style ? style.Fill : null;
-		let penSeries = style ? style.ln : null;
-
-		if (!brushSeries) {
-			brushSeries = this.cChartSpace.brush;
-			if (brushSeries) {
-				brushSeries.fill.color.RGBA.R = 79;
-				brushSeries.fill.color.RGBA.G = 129;
-				brushSeries.fill.color.RGBA.B = 189;
-			}
-		}
-
-		if (!penSeries) {
-			penSeries = this.cChartSpace.pen;
-		}
-
-		if (penSeries || brushSeries) {
+		let oSeries = series[0];
+		if(oSeries) {
 			for (let i in this.paths) {
-				let pen = penSeries;
-				let brush = brushSeries;
-
-				let pointPPr = _getPointPPr(i - 0);
-				if (pointPPr) {
-					pen = pointPPr.ln;
-					brush = pointPPr.Fill;
-				}
-
+				let nPtIdx = parseInt(i);
+				let pen = oSeries.getPtPen(nPtIdx);
+				let brush = oSeries.getPtBrush(nPtIdx);
 				this.cChartDrawer.drawPath(this.paths[i], pen, brush);
 			}
 		}

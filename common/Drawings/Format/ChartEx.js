@@ -2604,6 +2604,9 @@ function (window, undefined) {
 
 	InitClass(CPlotAreaRegion, CBaseChartObject, AscDFH.historyitem_type_PlotAreaRegion);
 
+	CPlotAreaRegion.prototype.getMaxSeriesIdx = function() {
+		return this.series.length;
+	};
 	CPlotAreaRegion.prototype.setPlotSurface = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_PlotAreaRegion_SetPlotSurface, this.plotSurface, pr));
 		this.plotSurface = pr;
@@ -2737,7 +2740,7 @@ function (window, undefined) {
 	//     oClass.valueColorPositions = value;
 	// };
 	drawingsChangesMap[AscDFH.historyitem_Series_SetDataPt] = function (oClass, value) {
-		oClass.dataPt = value;
+		oClass.dPt = value;
 	};
 	drawingsChangesMap[AscDFH.historyitem_Series_SetDataLabels] = function (oClass, value) {
 		oClass.dataLabels = value;
@@ -2769,7 +2772,7 @@ function (window, undefined) {
 
 	drawingContentChanges[AscDFH.historyitem_Series_AddDataPt] =
 		drawingContentChanges[AscDFH.historyitem_Series_RemoveDataPt] = function (oClass) {
-			return oClass.dataPt;
+			return oClass.dPt;
 		};
 
 	drawingContentChanges[AscDFH.historyitem_Series_AddAxisId] =
@@ -2802,7 +2805,7 @@ function (window, undefined) {
 		// commented in ChartSerializeEx.h
 		// this.valueColors = null;
 		// this.valueColorPositions = null;
-		this.dataPt = [];
+		this.dPt = [];
 		this.dataLabels = null;
 		this.dataId = null;
 		this.layoutPr = null;
@@ -2835,8 +2838,8 @@ function (window, undefined) {
 	//     this.valueColorPositions = pr;
 	// };
 	CSeries.prototype.setDataPt = function (pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Series_SetDataPt, this.dataPt, pr));
-		this.dataPt = pr;
+		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Series_SetDataPt, this.dPt, pr));
+		this.dPt = pr;
 		this.setParentToChild(pr);
 	};
 	CSeries.prototype.addDataPt = function (pr, idx) {
@@ -2844,15 +2847,15 @@ function (window, undefined) {
 		if (AscFormat.isRealNumber(idx))
 			pos = idx;
 		else
-			pos = this.dataPt.length;
+			pos = this.dPt.length;
 		History.CanAddChanges() && History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_Series_AddDataPt, pos, [pr], true));
-		this.dataPt.splice(pos, 0, pr);
+		this.dPt.splice(pos, 0, pr);
 		this.setParentToChild(pr);
 	};
 	CSeries.prototype.removeDataPtByPos = function (pos) {
-		if (this.dataPt[pos]) {
-			let dataPt = this.dataPt.splice(pos, 1)[0];
-			History.CanAddChanges() && History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_Series_RemoveDataPt, pos, [dataPt], false));
+		if (this.dPt[pos]) {
+			let dPt = this.dPt.splice(pos, 1)[0];
+			History.CanAddChanges() && History.Add(new CChangesDrawingsContent(this, AscDFH.historyitem_Series_RemoveDataPt, pos, [dPt], false));
 		}
 	};
 	CSeries.prototype.setDataLabels = function (pr) {
@@ -2956,6 +2959,48 @@ function (window, undefined) {
 			}
 		}
 		return null;
+	};
+	CSeries.prototype.getBrush = function() {
+		return this.compiledSeriesBrush;
+	};
+	CSeries.prototype.getPen = function() {
+		return this.compiledSeriesPen;
+	};
+	CSeries.prototype.getDptByIdx = function(idx) {
+		for(let nDpt = 0; nDpt < this.dPt.length; ++nDpt) {
+			if(this.dPt[nDpt].idx === idx) {
+				return this.dPt[nDpt];
+			}
+		}
+		return null;
+	};
+	CSeries.prototype.getPtPen = function(nIdx) {
+		let oDpt = this.getDptByIdx(nIdx);
+		if(oDpt && oDpt.pen) {
+			return oDpt.pen;
+		}
+		return this.compiledSeriesPen;
+	};
+
+	CSeries.prototype.getPtBrush = function(nIdx) {
+		let oDpt = this.getDptByIdx(nIdx);
+		if(oDpt && oDpt.brush) {
+			return oDpt.brush;
+		}
+		return this.compiledSeriesBrush;
+	};
+
+	CSeries.prototype.getIdx = function() {
+		if(!this.parent) {
+			return -1;
+		}
+		let aSeries = this.parent.series;
+		for(let nSer = 0; nSer < aSeries.length; ++nSer) {
+			if(this === aSeries[nSer]) {
+				return nSer;
+			}
+		}
+		return -1;
 	};
 
 

@@ -4681,8 +4681,11 @@
         oChartSpace.onDataUpdate();
     };
     CSeriesBase.prototype["asc_setOrder"] = CSeriesBase.prototype.asc_setOrder;
-    CSeriesBase.prototype.asc_getIdx = function() {
+    CSeriesBase.prototype.getIdx = function() {
         return this.idx;
+    };
+    CSeriesBase.prototype.asc_getIdx = function() {
+        return this.getIdx();
     };
     CSeriesBase.prototype["asc_getIdx"] = CSeriesBase.prototype.asc_getIdx;
     CSeriesBase.prototype.asc_MoveUp = function() {
@@ -5943,7 +5946,10 @@
         return _ret;
     };
     CPlotArea.prototype.getMaxSeriesIdx = function() {
-        var aAllSeries = this.getAllSeries();
+        if(this.plotAreaRegion) {
+            return this.plotAreaRegion.getMaxSeriesIdx();
+        }
+        let aAllSeries = this.getAllSeries();
         if(aAllSeries.length === 0) {
             return -1;
         }
