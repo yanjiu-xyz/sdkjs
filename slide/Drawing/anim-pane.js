@@ -1804,7 +1804,7 @@
 
 		// Temp fields for effect bar movement
 		this.stickedToPointerAt = null; // in [null, 'left', 'right', 'center']
-		this.innerPressingX = null; // point where the effectBar was pressed (left offset inside effect bar)
+		this.pressingX = null; // point where the effectBar was pressed
 		this.tmpStartPos = null; // relatively to timeline's zero
 		this.tmpWidth = null;
 
@@ -1831,7 +1831,7 @@
 			if (!hitRes) { return }
 
 			this.stickedToPointerAt = hitRes;
-			this.innerPressingX = x - this.getEffectBarBounds().l;
+			this.pressingX = x;
 			this.tmpWidth = this.ms_to_mm(this.effect.asc_getDuration());
 			this.tmpStartPos = this.ms_to_mm(this.effect.asc_getDelay());
 
@@ -1846,7 +1846,7 @@
 			this.setNewEffectParams(newDelay, newDuration);
 
 			this.stickedToPointerAt = null;
-			this.innerPressingX = null;
+			this.pressingX = null;
 			this.tmpWidth = null;
 			this.tmpStartPos = null;
 
@@ -1858,16 +1858,14 @@
 			if (this.hit(x, y)) {
 				const animPane = Asc.editor.WordControl.m_oAnimPaneApi;
 				const hitRes = this.hitInEffectBar(x, y);
-				// console.log(hitRes);
 
 				const cursorTypes = {
 					'left': 'col-resize',
 					'right': 'col-resize',
 					'center': 'ew-resize',
-					'intersection': 'col-resize'
 				};
 
-				const cursorType = cursorTypes[hitRes] || 'default';
+				const cursorType = cursorTypes[hitRes] || AscFormat.isRealNumber(hitRes) && 'col-resize' ||'default';
 				animPane.SetCursorType(cursorType);
 			}
 
@@ -1888,20 +1886,22 @@
 
 			const MIN_EFFECT_DURATION = 100;
 			const timelineShift = this.ms_to_mm(timeline.getStartTime() * 1000);
+			const originalStartPos = this.ms_to_mm(this.effect.asc_getDelay());
+			const originalWidth = this.ms_to_mm(this.effect.asc_getDuration());
+			const diff = x - this.pressingX;
+			const repeats = this.effect.asc_getRepeatCount() / 1000;
 
 			if (this.stickedToPointerAt === 'center') {
-				const newTmpStartPos = relativeX - this.innerPressingX + timelineShift;
-				this.tmpStartPos = Math.max(0, newTmpStartPos);
+				this.tmpStartPos = Math.max(0, originalStartPos + diff);
 			}
 
 			if (this.stickedToPointerAt === 'right') {
-				const newTmpWidth = relativeX - this.tmpStartPos + timelineShift;
-				this.tmpWidth = Math.max(this.ms_to_mm(MIN_EFFECT_DURATION), newTmpWidth);
+				this.tmpWidth = Math.max(this.ms_to_mm(MIN_EFFECT_DURATION), originalWidth + diff / repeats);
 			}
 
 			if (this.stickedToPointerAt === 'left') {
-				const newTmpStartPos = relativeX + timelineShift;
-				const newTmpWidth = this.tmpWidth + this.tmpStartPos - relativeX - timelineShift;
+				const newTmpStartPos = originalStartPos + diff;
+				const newTmpWidth = originalWidth - diff / repeats;
 
 				// const minTmpStartPos = 0;
 				const maxTmpStartPos = this.tmpStartPos + this.tmpWidth - this.ms_to_mm(MIN_EFFECT_DURATION);
@@ -1911,6 +1911,10 @@
 
 				this.tmpStartPos = Math.min(Math.max(0, newTmpStartPos), maxTmpStartPos);
 				this.tmpWidth = Math.min(Math.max(minTmpWidth, newTmpWidth), maxTmpWidth);
+			}
+
+			if (AscFormat.isRealNumber(this.stickedToPointerAt)) {
+				this.tmpWidth = Math.max(this.ms_to_mm(MIN_EFFECT_DURATION), originalWidth + diff / this.stickedToPointerAt);
 			}
 
 			// Check boundaries to start or end timeline scroll
@@ -2113,7 +2117,7 @@
 					const intersectionIndex = (x - bounds.l) / width >> 0;
 					if (intersectionIndex > 0 && intersectionIndex < repeats) {
 						const intersectionPos = bounds.l + intersectionIndex * width;
-						if (x <= intersectionPos + delta && x >= intersectionPos - delta) {return 'intersection'; }
+						if (x <= intersectionPos + delta && x >= intersectionPos - delta) { return intersectionIndex; }
 					}
 				}
 			}
