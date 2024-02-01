@@ -4325,7 +4325,7 @@ function(window, undefined) {
 						// first check is alternativeStart exist, and append alternativeStartSign with value, 
 						// also because start not the first anymore, we can change its value from '[' to '(';
 						if (isAlternativeStartExist) {
-							aStrings.push(alternativeStart + ` ${bStrings[0]}`);
+							aStrings.push(alternativeStart + bStrings[0]);
 							start = '(';
 						}
 						// if element not the first one, then change value of start
@@ -4338,12 +4338,12 @@ function(window, undefined) {
 							if (i === (bStrings.length - 2) && !isAlternativeEndExist && binning.intervalClosed === "r") {
 								end = ']';
 							}
-							aStrings.push(start + `${bStrings[i]}, ${bStrings[i + 1]}` + end)
+							aStrings.push(start + bStrings[i] + ", " + bStrings[i + 1] + end)
 						}
 						// add alternativeEnd if exist
 						if (isAlternativeEndExist) {
 							const val = (bStrings.length > 1) ? bStrings[bStrings.length - 1] : binning.overflow;
-							aStrings.push(alternativeEnd + ` ${val}`);
+							aStrings.push(alternativeEnd +  " " + val);
 						}
 					}
 				}
