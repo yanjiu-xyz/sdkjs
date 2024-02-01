@@ -1858,7 +1858,7 @@
 			if (this.hit(x, y)) {
 				const animPane = Asc.editor.WordControl.m_oAnimPaneApi;
 				const hitRes = this.hitInEffectBar(x, y);
-				console.log(hitRes);
+				// console.log(hitRes);
 
 				const cursorTypes = {
 					'left': 'col-resize',
@@ -2038,7 +2038,7 @@
 			let right = (transform.TransformPointX(bounds.r, bounds.t) + 0.5) >> 0;
 			let bottom = (transform.TransformPointY(bounds.l, bounds.b) + 0.5) >> 0;
 
-			var ctx = graphics.m_oContext;
+			let ctx = graphics.m_oContext;
 			ctx.beginPath();
 			ctx.moveTo(left, top);
 			ctx.lineTo(left + 5, top);
@@ -2046,19 +2046,23 @@
 			ctx.lineTo(left + 5, bottom);
 			ctx.lineTo(left, bottom);
 			ctx.lineTo(left, top);
+			graphics.df();
+			graphics.ds();
 		} else {
 			// In case we need to draw a bar
 			const repeats = this.effect.asc_getRepeatCount() / 1000;
-			const width = bounds.r - bounds.l;
-			for (let barIndex = 0; barIndex < repeats - 1; ++barIndex) {
-				graphics.rect(bounds.l + barIndex * width, bounds.t, width, bounds.b - bounds.t);		
-				graphics.df();
-				graphics.ds();
+			const width = (bounds.r - bounds.l) * repeats;
+			const height = bounds.b - bounds.t;
+			graphics.rect(bounds.l, bounds.t, width, height);
+			graphics.df();
+			graphics.ds();
+
+			const gap = height / 5;
+			for (let markIndex = 1; markIndex < repeats; markIndex++) {
+				const xCord = bounds.l + markIndex * (bounds.r - bounds.l)
+				graphics.drawVerLine(2, xCord, bounds.t + gap, bounds.b - gap, this.getPenWidth(graphics));
 			}
-			graphics.rect(bounds.l + width * (repeats >> 0), bounds.t, width * (repeats % 1), bounds.b - bounds.t);				
 		}
-		graphics.df();
-		graphics.ds();
 
 		graphics.RestoreGrState();
 	};
