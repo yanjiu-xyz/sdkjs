@@ -2082,7 +2082,7 @@
 			const prev = this.effect.getPreviousEffect()
 			if (prev) {
 				l += this.ms_to_mm(prev.asc_getDelay())
-				l += this.ms_to_mm(prev.asc_getDuration())
+				l += this.ms_to_mm(prev.asc_getDuration()) * prev.asc_getRepeatCount() / 1000;
 			}
 		}
 
