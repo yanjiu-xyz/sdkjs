@@ -6655,7 +6655,7 @@ var editor;
 		  var _header = oBinaryFileWriter.WriteFileHeader(oBinaryFileWriter.Memory.GetCurPosition(), Asc.c_nVersionNoBase64);
 		  window["native"]["Save_End"](_header, oBinaryFileWriter.Memory.GetCurPosition());
 
-		  return oBinaryFileWriter.Memory.ImData.data;
+		  return oBinaryFileWriter.Memory.data;
 	  }
   };
   spreadsheet_api.prototype.asc_nativeCalculate = function() {
@@ -8704,7 +8704,7 @@ var editor;
 			if (!wb) {
 				return;
 			}
-			return wb.canFillHandle(range);
+			return wb.canFillHandle(range, true);
 		}
 		return false;
 	};
