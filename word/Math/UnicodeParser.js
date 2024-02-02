@@ -1552,6 +1552,9 @@
 		{
 			let oEntity = this.GetEntityLiteral();
 
+			if (this.oLookahead.data === " ")
+				this.EatToken(this.oLookahead.class);
+
 			if (this.IsDiacriticsLiteral())
 			{
 				const oDiacritic = this.GetDiacriticsLiteral();

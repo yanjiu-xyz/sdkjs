@@ -1478,6 +1478,14 @@ ParaRun.prototype.Remove = function(Direction, bOnAddText)
 				{
 					this.RemoveFromContent(CurPos, 1, true);
 					this.State.ContentPos = CurPos;
+
+					//math accents (\tilde..)
+					//word delete accent along with content only when deleted from left to right
+					if (this.Content[CurPos] && this.Content[CurPos].Type === para_Math_Text && this.Content[CurPos].IsAccent())
+					{
+						this.RemoveFromContent(CurPos, 1, true);
+						this.State.ContentPos = CurPos;
+					}
 				}
             }
         }
@@ -2868,7 +2876,7 @@ ParaRun.prototype.GetNextRunElements = function(oRunElements, isUseContentPos, n
 
 	for (var nCurPos = nStartPos, nCount = this.Content.length; nCurPos < nCount; ++nCurPos)
 	{
-		if (oRunElements.IsEnoughElements())
+		if (oRunElements.IsEnoughElements() || this.IsEmpty())
 			return;
 
 		oRunElements.UpdatePos(nCurPos, nDepth);
@@ -2884,7 +2892,7 @@ ParaRun.prototype.GetPrevRunElements = function(oRunElements, isUseContentPos, n
 
 	for (var nCurPos = nStartPos; nCurPos >= 0; --nCurPos)
 	{
-		if (oRunElements.IsEnoughElements())
+		if (oRunElements.IsEnoughElements() || this.IsEmpty())
 			return;
 
 		oRunElements.UpdatePos(nCurPos, nDepth);

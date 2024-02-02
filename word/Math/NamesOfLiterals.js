@@ -3148,6 +3148,9 @@
 			let oRun = RemoveCountFormMathContent(oCMathContent,isLastOperator ? oContent.counter - 1 : oContent.counter, isLastOperator);
 			let nPos = isLastOperator ? oRun.Content.length - 1 : oRun.Content.length;
 
+			if (MathLiterals.accent.IsInUnicode(strCorrection))
+				strCorrection = String.fromCharCode(160) + strCorrection; //add nbsp before accent, like word
+
 			for (let i = 0; i < strCorrection.length; i++)
 			{
 				let nCharValue = strCorrection[i].charCodeAt(0);

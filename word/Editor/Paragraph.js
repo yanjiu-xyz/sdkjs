@@ -6685,11 +6685,15 @@ Paragraph.prototype.GetPrevRunElements = function(oRunElements)
  * @param {AscWord.CParagraphContentPos} [oParaPos=undefined]
  * @returns {?AscWord.CRunElementBase}
  */
-Paragraph.prototype.GetNextRunElement = function(oParaPos)
+Paragraph.prototype.GetNextRunElement = function(oParaPos, isMath)
 {
 	let _oParaPos = oParaPos ? oParaPos : this.Get_ParaContentPos(this.Selection.Use, false, false);
 
 	var oRunElements = new CParagraphRunElements(_oParaPos, 1, null);
+
+	if (isMath)
+		oRunElements.SkipMath = false;
+
 	this.GetNextRunElements(oRunElements);
 
 	if (oRunElements.Elements.length <= 0)
@@ -6702,11 +6706,15 @@ Paragraph.prototype.GetNextRunElement = function(oParaPos)
  * @param {AscWord.CParagraphContentPos} [oParaPos=undefined]
  * @returns {?AscWord.CRunElementBase}
  */
-Paragraph.prototype.GetPrevRunElement = function(oParaPos)
+Paragraph.prototype.GetPrevRunElement = function(oParaPos, isMath)
 {
 	let _oParaPos = oParaPos ? oParaPos : this.Get_ParaContentPos(this.Selection.Use, false, false)
 
 	var oRunElements = new CParagraphRunElements(_oParaPos, 1, null, true);
+
+	if (isMath)
+		oRunElements.SkipMath = false;
+
 	this.GetPrevRunElements(oRunElements);
 
 	if (oRunElements.Elements.length <= 0)

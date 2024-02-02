@@ -698,6 +698,10 @@ CMathText.prototype.SetPlaceholder = function()
     this.Type = para_Math_Placeholder;
     this.value = StartTextElement;
 };
+CMathText.prototype.IsAccent = function ()
+{
+	return AscMath.MathLiterals.accent.fromSymbols[String.fromCharCode(this.value)] != undefined;
+}
 CMathText.prototype.Measure = function(oMeasure, TextPr, InfoMathText)
 {
     /*

@@ -758,5 +758,6 @@
 	window['AscWord'] = window['AscWord'] || {};
 	window['AscWord'].CRunText = CRunText;
 	window['AscWord'].CreateNonBreakingHyphen = CreateNonBreakingHyphen;
+	window['AscWord'].IsCombinedMark = IsCombinedMark;
 
 })(window);
