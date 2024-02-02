@@ -7068,6 +7068,8 @@ background-repeat: no-repeat;\
 				this.WordControl.m_oLogicDocument.viewMode = false;
 			}
 		}
+
+		this.checkInputMode();
 	};
 
 	asc_docs_api.prototype.sync_HyperlinkClickCallback = function(Url)

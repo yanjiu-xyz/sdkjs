@@ -1128,6 +1128,7 @@ var editor;
     if(this.isViewMode) {
         this.turnOffSpecialModes();
     }
+    this.checkInputMode();
   };
 
 	  spreadsheet_api.prototype.asc_setFilteringMode = function (mode) {
