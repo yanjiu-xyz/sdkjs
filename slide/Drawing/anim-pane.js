@@ -1803,139 +1803,43 @@
 		}
 
 		// Temp fields for effect bar movement
-		this.stickedToPointerAt = null; // in [null, 'left', 'right', 'center']
-		this.pressingX = null; // point where the effectBar was pressed
-		this.tmpStartPos = null; // relatively to timeline's zero
-		this.tmpWidth = null;
+		this.tmpDelay = null;
+		this.tmpDuration = null;
 
-		// // Callback functions for effect bar events ---
-
+		// Callback functions for effect bar events
 		this.onMouseDownCallback = function (event, x, y) {
 			if (!this.hit(x, y)) { return }
+			
+			this.updateSelectState(event);
 
-			// Select animation effect
-			const oThis = this
-			if (event.CtrlKey) {
-				this.effect.toggleSelect()
-			} else {
-				const seqList = Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList
-				seqList.forEachAnimItem(function (animItem) {
-					animItem.effect === oThis.effect ? animItem.effect.select() : animItem.effect.deselect()
-				})
-			}
-			Asc.editor.WordControl.m_oLogicDocument.RedrawCurSlide()
-			Asc.editor.WordControl.m_oLogicDocument.Document_UpdateInterfaceState()
-
-			// Set temp fields for further movement handling
 			const hitRes = this.hitInEffectBar(x, y);
-			if (!hitRes) { return }
+			if (hitRes) {
+				this.hitResult = hitRes;
+				this.tmpDelay = this.getDelay();
+				this.tmpDuration = this.getDuration();
 
-			this.stickedToPointerAt = hitRes;
-			this.pressingX = x;
-			this.tmpWidth = this.ms_to_mm(this.effect.asc_getDuration());
-			this.tmpStartPos = this.ms_to_mm(this.effect.asc_getDelay());
+				this.onUpdate();
+			}
+		}
+		this.onMouseMoveCallback = function (event, x, y) {
+			if (this.hit(x, y)) {
+				this.updateCursorType(x, y);
+			}
+
+			if (!this.hitResult) { return }
+			this.handleMovement(x, y);
+			this.handleScrollCondition(x, y);
 
 			this.onUpdate();
 		}
-
 		this.onMouseUpCallback = function (event, x, y) {
-			if (!this.stickedToPointerAt) { return };
-
-			const newDelay = this.mm_to_ms(this.tmpStartPos);
-			const newDuration = this.mm_to_ms(this.tmpWidth);
-			this.setNewEffectParams(newDelay, newDuration);
-
-			this.stickedToPointerAt = null;
-			this.pressingX = null;
-			this.tmpWidth = null;
-			this.tmpStartPos = null;
+			if (!this.hitResult) { return }
+			
+			this.setNewEffectParams(this.tmpDelay, this.tmpDuration);
+			this.hitResult = this.tmpDelay = this.tmpDuration = null;
 
 			this.onUpdate()
 		}
-
-		this.onMouseMoveCallback = function (event, x, y) {
-			// Cursor type changing
-			if (this.hit(x, y)) {
-				const animPane = Asc.editor.WordControl.m_oAnimPaneApi;
-				const hitRes = this.hitInEffectBar(x, y);
-
-				const cursorTypes = {
-					'left': 'col-resize',
-					'right': 'col-resize',
-					'center': 'ew-resize',
-				};
-
-				const cursorType = cursorTypes[hitRes] || AscFormat.isRealNumber(hitRes) && 'col-resize' ||'default';
-				animPane.SetCursorType(cursorType);
-			}
-
-			if (!this.stickedToPointerAt) { return }
-
-			// Effect bar moving
-			const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline
-			let relativeX = x - timeline.getLeft() - timeline.getZeroShift();
-
-			if (this.effect.isAfterEffect()) {
-				const prev = this.effect.getPreviousEffect()
-				if (prev) {
-					// for after effects relativeX becomes relative to prev effect end
-					relativeX -= this.ms_to_mm(prev.asc_getDelay())
-					relativeX -= this.ms_to_mm(prev.asc_getDuration())
-				}
-			}
-
-			const MIN_EFFECT_DURATION = 100;
-			const timelineShift = this.ms_to_mm(timeline.getStartTime() * 1000);
-			const originalStartPos = this.ms_to_mm(this.effect.asc_getDelay());
-			const originalWidth = this.ms_to_mm(this.effect.asc_getDuration());
-			const diff = x - this.pressingX;
-			const repeats = this.effect.asc_getRepeatCount() / 1000;
-
-			if (this.stickedToPointerAt === 'center') {
-				this.tmpStartPos = Math.max(0, originalStartPos + diff);
-			}
-
-			if (this.stickedToPointerAt === 'right') {
-				this.tmpWidth = Math.max(this.ms_to_mm(MIN_EFFECT_DURATION), originalWidth + diff / repeats);
-			}
-
-			if (this.stickedToPointerAt === 'left') {
-				const newTmpStartPos = originalStartPos + diff;
-				const newTmpWidth = originalWidth - diff / repeats;
-
-				// const minTmpStartPos = 0;
-				const maxTmpStartPos = this.tmpStartPos + this.tmpWidth - this.ms_to_mm(MIN_EFFECT_DURATION);
-
-				const minTmpWidth = this.ms_to_mm(MIN_EFFECT_DURATION);
-				const maxTmpWidth = this.tmpStartPos + this.tmpWidth;
-
-				this.tmpStartPos = Math.min(Math.max(0, newTmpStartPos), maxTmpStartPos);
-				this.tmpWidth = Math.min(Math.max(minTmpWidth, newTmpWidth), maxTmpWidth);
-			}
-
-			if (AscFormat.isRealNumber(this.stickedToPointerAt)) {
-				this.tmpWidth = Math.max(this.ms_to_mm(MIN_EFFECT_DURATION), originalWidth + diff / this.stickedToPointerAt);
-			}
-
-			// Check boundaries to start or end timeline scroll
-			const leftBorder = this.getLeftBorder();
-			const rightBorder = this.getRightBorder();
-
-			if (x <= leftBorder || x >= rightBorder) {
-				if (!timeline.isOnScroll()) {
-					let scrollStep = timeline.getWidth() * SCROLL_STEP / 10;
-					scrollStep = x <= leftBorder ? -scrollStep : scrollStep;
-					let scrollTimerDelay = 0;
-					let scrollTimerInterval = 50;
-					timeline.startScroll(scrollStep, scrollTimerDelay, scrollTimerInterval);
-				}
-			}
-			else timeline.endScroll()
-
-			this.onUpdate()
-		}
-
-		// // --- end of callback functions for effect bar events
 	}
 
 	InitClass(CAnimItem, CControlContainer, CONTROL_TYPE_ANIM_ITEM);
@@ -1952,17 +1856,80 @@
 		let dRightSpace = dYInside;
 		this.contextMenuButton.setLayout(this.getRight() - ANIM_ITEM_HEIGHT + dRightSpace, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
 	};
-	CAnimItem.prototype.canHandleEvents = function () {
-		return true;
-	};
-	CAnimItem.prototype.getFillColor = function() {
-		if (this.effect.isSelected()) return AscCommon.GlobalSkin.ScrollerActiveColor
-		else if (this.isHovered()) return AscCommon.GlobalSkin.ScrollerHoverColor
-		else return AscCommon.GlobalSkin.ScrollerColor;
-	};
-	CAnimItem.prototype.getOutlineColor = function () {
-		return null;
-	};
+
+	CAnimItem.prototype.updateSelectState = function (event) {
+		const oThis = this
+		if (event.CtrlKey) {
+			oThis.effect.toggleSelect()
+		} else {
+			const seqList = Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList
+			seqList.forEachAnimItem(function (animItem) {
+				animItem.effect === oThis.effect ? animItem.effect.select() : animItem.effect.deselect()
+			})
+		}
+		Asc.editor.WordControl.m_oLogicDocument.RedrawCurSlide()
+		Asc.editor.WordControl.m_oLogicDocument.Document_UpdateInterfaceState()
+	}
+	CAnimItem.prototype.updateCursorType = function (x, y) {
+		const hitRes = this.hitResult || this.hitInEffectBar(x, y);
+		
+		const cursorTypes = {
+			'left': 'col-resize',
+			'right': 'col-resize',
+			'partition': 'col-resize',
+			'center': 'ew-resize'
+		};
+		const cursorType = hitRes ? cursorTypes[hitRes.type] : 'default';
+		
+		const animPane = Asc.editor.WordControl.m_oAnimPaneApi;
+		animPane.SetCursorType(cursorType);
+	}
+	CAnimItem.prototype.handleScrollCondition = function (x, y) {
+		const leftBorder = this.getLeftBorder();
+		const rightBorder = this.getRightBorder();
+
+		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline;
+		if (x <= leftBorder || x >= rightBorder) {
+			if (!timeline.isOnScroll()) {
+				let scrollStep = timeline.getWidth() * SCROLL_STEP / 10;
+				scrollStep = x <= leftBorder ? -scrollStep : scrollStep;
+				let scrollTimerDelay = 0;
+				let scrollTimerInterval = 50;
+				timeline.startScroll(scrollStep, scrollTimerDelay, scrollTimerInterval);
+			}
+		} else timeline.endScroll();
+	}
+	CAnimItem.prototype.handleMovement = function (x, y) {
+		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline;
+		const timelineShift = this.ms_to_mm(timeline.getStartTime() * 1000);
+
+		if (this.hitResult.type === 'center') {
+			this.tmpDelay = this.mm_to_ms(x - this.getLeftBorder() + timelineShift - this.hitResult.offset);
+		}
+
+		// if (this.stickedToPointerAt === 'right') {
+		// 	this.tmpWidth = Math.max(this.ms_to_mm(MIN_EFFECT_DURATION), originalWidth + diff / repeats);
+		// }
+
+		// if (this.stickedToPointerAt === 'left') {
+		// 	const newTmpStartPos = originalStartPos + diff;
+		// 	const newTmpWidth = originalWidth - diff / repeats;
+
+		// 	// const minTmpStartPos = 0;
+		// 	const maxTmpStartPos = this.tmpStartPos + this.tmpWidth - this.ms_to_mm(MIN_EFFECT_DURATION);
+
+		// 	const minTmpWidth = this.ms_to_mm(MIN_EFFECT_DURATION);
+		// 	const maxTmpWidth = this.tmpStartPos + this.tmpWidth;
+
+		// 	this.tmpStartPos = Math.min(Math.max(0, newTmpStartPos), maxTmpStartPos);
+		// 	this.tmpWidth = Math.min(Math.max(minTmpWidth, newTmpWidth), maxTmpWidth);
+		// }
+
+		// if (AscFormat.isRealNumber(this.stickedToPointerAt)) {
+		// 	this.tmpWidth = Math.max(this.ms_to_mm(MIN_EFFECT_DURATION), originalWidth + diff / this.stickedToPointerAt);
+		// }
+	}
+
 	CAnimItem.prototype.ms_to_mm = function (nMilliseconds) {
 		if (nMilliseconds === null || nMilliseconds === undefined) { return }
 
@@ -1976,14 +1943,47 @@
 		return nMillimeters / TIME_INTERVALS[index] * TIME_SCALES[index] * 1000;
 	};
 
+	CAnimItem.prototype.getDelay = function () {
+		return this.tmpDelay !== null ? this.tmpDelay : this.effect.asc_getDelay()
+	}
+	CAnimItem.prototype.getDuration = function () {
+		return this.tmpDuration !== null ? this.tmpDuration : this.effect.asc_getDuration()
+	}
+
 	CAnimItem.prototype.getLeftBorder = function () {
-		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline
-		return timeline.getLeft() + timeline.getZeroShift()
+		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline;
+		return timeline.getLeft() + timeline.getZeroShift();
 	}
 	CAnimItem.prototype.getRightBorder = function () {
-		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline
-		return this.getLeftBorder() + timeline.getRulerEnd() - timeline.getZeroShift()
+		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline;
+		return this.getLeftBorder() + timeline.getRulerEnd() - timeline.getZeroShift();
 	}
+	CAnimItem.prototype.getEffectBarBounds = function () {
+		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline;
+		const timelineShift = this.ms_to_mm(timeline.getStartTime() * 1000);
+
+		let l = this.ms_to_mm(this.getDelay()) + this.getLeftBorder() - timelineShift;
+
+		if (this.effect.isAfterEffect()) {
+			const prev = this.effect.getPreviousEffect()
+			if (prev) {
+				l += this.ms_to_mm(prev.asc_getDelay());
+				l += this.ms_to_mm(prev.asc_getDuration()) * prev.asc_getRepeatCount() / 1000;
+			}
+		}
+
+		let r = l + this.ms_to_mm(this.getDuration());
+
+		let t = this.bounds.t + (ANIM_ITEM_HEIGHT - EFFECT_BAR_HEIGHT) / 2;
+
+		let b = t + EFFECT_BAR_HEIGHT;
+
+		if (this.effect.isInstantEffect()) {
+			return { l: l, r: l + EFFECT_BAR_HEIGHT, t: t, b: b }
+		}
+
+		return { l: l, r: r, t: t, b: b }
+	};
 
 	CAnimItem.prototype.draw = function drawEffectBar(graphics) {
 		const timelineContainer = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control
@@ -2070,62 +2070,42 @@
 
 		graphics.RestoreGrState();
 	};
-	CAnimItem.prototype.getEffectBarBounds = function () {
-		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline
-
-		const shift = this.ms_to_mm(timeline.getStartTime() * 1000);
-		let l = timeline.getLeft() + timeline.getZeroShift() - shift + (this.tmpStartPos !== null ?
-			this.tmpStartPos :
-			this.ms_to_mm(this.effect.asc_getDelay()));
-
-		if (this.effect.isAfterEffect()) {
-			const prev = this.effect.getPreviousEffect()
-			if (prev) {
-				l += this.ms_to_mm(prev.asc_getDelay())
-				l += this.ms_to_mm(prev.asc_getDuration()) * prev.asc_getRepeatCount() / 1000;
-			}
-		}
-
-		let r = l + (this.tmpWidth !== null ?
-			this.tmpWidth :
-			this.ms_to_mm(this.effect.asc_getDuration()));
-
-		let t = this.bounds.t + (ANIM_ITEM_HEIGHT - EFFECT_BAR_HEIGHT) / 2;
-		let b = t + EFFECT_BAR_HEIGHT;
-
-		if (this.effect.isInstantEffect()) {
-			return { l: l, r: l + EFFECT_BAR_HEIGHT, t: t, b: b }
-		}
-
-		return { l: l, r: r, t: t, b: b }
-	};
 	CAnimItem.prototype.hitInEffectBar = function (x, y) {
-		const delta = AscFormat.DIST_HIT_IN_LINE / 2
 		const bounds = this.getEffectBarBounds();
+		const isOutOfBorders = x < this.getLeftBorder() || x > this.getRightBorder() || y < bounds.t || y > bounds.b
+		if (isOutOfBorders) { return null; }
 
 		const width = bounds.r - bounds.l;
 		const repeats = this.effect.asc_getRepeatCount() / 1000;
+		const delta = AscFormat.DIST_HIT_IN_LINE / 2
 
-		const isOutOfBorders = x < this.getLeftBorder() || x > this.getRightBorder() || y < bounds.t || y > bounds.b
-		if (!isOutOfBorders) {
-			if (!this.effect.isInstantEffect()) {
+		if (!this.effect.isInstantEffect()) {
+			if (x >= bounds.l - delta && x <= bounds.l + delta) {
+				return { type: 'left' };
+			}
 
-				if (x >= bounds.l - delta && x <= bounds.l + delta) { return 'left'; }
-				if (x >= bounds.l + width * repeats - delta && x <= bounds.l + width * (repeats) + delta) { return 'right'; }
+			if (x >= bounds.l + width * repeats - delta && x <= bounds.l + width * (repeats) + delta) {
+				return { type: 'right' };
+			}
 
-				if (repeats > 1) {
-					const intersectionIndex = (x - bounds.l) / width >> 0;
-					if (intersectionIndex > 0 && intersectionIndex < repeats) {
-						const intersectionPos = bounds.l + intersectionIndex * width;
-						if (x <= intersectionPos + delta && x >= intersectionPos - delta) { return intersectionIndex; }
+			if (repeats > 1) {
+				const partitionIndex = (x - bounds.l) / width >> 0;
+				if (partitionIndex > 0 && partitionIndex < repeats) {
+					const partitionPos = bounds.l + partitionIndex * width;
+					if (x <= partitionPos + delta && x >= partitionPos - delta) {
+						return { type: 'partition', index: partitionIndex };
 					}
 				}
 			}
-			if (x > bounds.l && x < bounds.l + width * repeats) { return 'center'; }
+		}
+
+		if (x > bounds.l && x < bounds.l + width * repeats) {
+			return { type: 'center', offset: x - bounds.l };
 		}
 
 		return null;
 	};
+
 
 	CAnimItem.prototype.setNewEffectParams = function (newDelay, newDuration) {
 		const minAllowedDelta = 1 // in ms
@@ -2164,6 +2144,17 @@
 			return true;
 		}
 		return CControlContainer.prototype.onMouseUp.call(this, e, x, y);
+	};
+	CAnimItem.prototype.canHandleEvents = function () {
+		return true;
+	};
+	CAnimItem.prototype.getFillColor = function() {
+		if (this.effect.isSelected()) return AscCommon.GlobalSkin.ScrollerActiveColor
+		else if (this.isHovered()) return AscCommon.GlobalSkin.ScrollerHoverColor
+		else return AscCommon.GlobalSkin.ScrollerColor;
+	};
+	CAnimItem.prototype.getOutlineColor = function () {
+		return null;
 	};
 
 
