@@ -2084,10 +2084,13 @@
 			graphics.df();
 			graphics.ds();
 
-			const gap = height / 5;
-			for (let markIndex = 1; markIndex < repeats; markIndex++) {
-				const xCord = bounds.l + markIndex * (bounds.r - bounds.l)
-				graphics.drawVerLine(2, xCord, bounds.t + gap, bounds.b - gap, this.getPenWidth(graphics));
+			// 0.5 look fine, meh
+			if (this.getPenWidth(graphics) * repeats / (bounds.r - bounds.l) < 0.5) {
+				const gap = height / 5;
+				for (let markIndex = 1; markIndex < repeats; markIndex++) {
+					const xCord = bounds.l + markIndex * (bounds.r - bounds.l)
+					graphics.drawVerLine(2, xCord, bounds.t + gap, bounds.b - gap, this.getPenWidth(graphics));
+				}
 			}
 		}
 
