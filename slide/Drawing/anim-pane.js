@@ -1902,32 +1902,55 @@
 	CAnimItem.prototype.handleMovement = function (x, y) {
 		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline;
 		const timelineShift = this.ms_to_mm(timeline.getStartTime() * 1000);
+		const repeats = this.effect.asc_getRepeatCount() / 1000;
+		const minimalAllowedDuration = 10; // milliseconds
 
-		if (this.hitResult.type === 'center') {
-			this.tmpDelay = this.mm_to_ms(x - this.getLeftBorder() + timelineShift - this.hitResult.offset);
+		let pointOfLanding = x - this.getLeftBorder() + timelineShift;
+		if (this.effect.isAfterEffect()) {
+			const prev = this.effect.getPreviousEffect()
+			if (prev) {
+				pointOfLanding -= this.ms_to_mm(prev.asc_getDelay());
+				pointOfLanding -= this.ms_to_mm(prev.asc_getDuration()) * prev.asc_getRepeatCount() / 1000;;
+			}
 		}
 
-		// if (this.stickedToPointerAt === 'right') {
-		// 	this.tmpWidth = Math.max(this.ms_to_mm(MIN_EFFECT_DURATION), originalWidth + diff / repeats);
-		// }
+		if (this.hitResult.type === 'right') {
+			const pointOfContact = this.ms_to_mm(this.effect.asc_getDelay() + this.effect.asc_getDuration() * repeats);
+			let diff = this.mm_to_ms(pointOfLanding - pointOfContact);
 
-		// if (this.stickedToPointerAt === 'left') {
-		// 	const newTmpStartPos = originalStartPos + diff;
-		// 	const newTmpWidth = originalWidth - diff / repeats;
+			const newTmpDuration = this.effect.asc_getDuration() + diff / repeats;
+			this.tmpDuration = Math.max(minimalAllowedDuration, newTmpDuration);
+		}
 
-		// 	// const minTmpStartPos = 0;
-		// 	const maxTmpStartPos = this.tmpStartPos + this.tmpWidth - this.ms_to_mm(MIN_EFFECT_DURATION);
+		if (this.hitResult.type === 'left') {
+			const pointOfContact = this.ms_to_mm(this.effect.asc_getDelay());
+			const diff = this.mm_to_ms(pointOfLanding - pointOfContact);
 
-		// 	const minTmpWidth = this.ms_to_mm(MIN_EFFECT_DURATION);
-		// 	const maxTmpWidth = this.tmpStartPos + this.tmpWidth;
+			const newTmpDuration = this.effect.asc_getDuration() - diff / repeats;
+			const newTmpDelay = this.effect.asc_getDelay() + diff;
 
-		// 	this.tmpStartPos = Math.min(Math.max(0, newTmpStartPos), maxTmpStartPos);
-		// 	this.tmpWidth = Math.min(Math.max(minTmpWidth, newTmpWidth), maxTmpWidth);
-		// }
+			const maxNewTmpDuration = this.effect.asc_getDelay() / repeats + this.effect.asc_getDuration();
+			const maxNewTmpDelay = this.effect.asc_getDelay() + this.effect.asc_getDuration() * repeats - minimalAllowedDuration;
 
-		// if (AscFormat.isRealNumber(this.stickedToPointerAt)) {
-		// 	this.tmpWidth = Math.max(this.ms_to_mm(MIN_EFFECT_DURATION), originalWidth + diff / this.stickedToPointerAt);
-		// }
+			this.tmpDuration = Math.min(Math.max(newTmpDuration, minimalAllowedDuration), maxNewTmpDuration);
+			this.tmpDelay = Math.min(Math.max(newTmpDelay, 0), maxNewTmpDelay);
+		}
+
+		if (this.hitResult.type === 'center') {
+			const pointOfContact = this.ms_to_mm(this.effect.asc_getDelay()) + this.hitResult.offset;
+			const diff = this.mm_to_ms(pointOfLanding - pointOfContact);
+
+			const newTmpDelay = this.effect.asc_getDelay() + diff;
+			this.tmpDelay = Math.max(newTmpDelay, 0);
+		}
+
+		if (this.hitResult.type === 'partition') {
+			const pointOfContact = this.ms_to_mm(this.effect.asc_getDelay() + this.effect.asc_getDuration() * this.hitResult.index);
+			const diff = this.mm_to_ms(pointOfLanding - pointOfContact);
+
+			const newTmpDuration = this.effect.asc_getDuration() + diff / this.hitResult.index;
+			this.tmpDuration = Math.max(minimalAllowedDuration, newTmpDuration);
+		}
 	}
 
 	CAnimItem.prototype.ms_to_mm = function (nMilliseconds) {
@@ -1960,9 +1983,9 @@
 	}
 	CAnimItem.prototype.getEffectBarBounds = function () {
 		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline;
-		const timelineShift = this.ms_to_mm(timeline.getStartTime() * 1000);
+		const timelineShift = timeline.getStartTime() * 1000;
 
-		let l = this.ms_to_mm(this.getDelay()) + this.getLeftBorder() - timelineShift;
+		let l = this.ms_to_mm(this.getDelay()) + this.getLeftBorder() - this.ms_to_mm(timelineShift);
 
 		if (this.effect.isAfterEffect()) {
 			const prev = this.effect.getPreviousEffect()
