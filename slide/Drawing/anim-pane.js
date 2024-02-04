@@ -1930,7 +1930,7 @@
 			const newTmpDelay = this.effect.asc_getDelay() + diff;
 
 			const maxNewTmpDuration = this.effect.asc_getDelay() / repeats + this.effect.asc_getDuration();
-			const maxNewTmpDelay = this.effect.asc_getDelay() + this.effect.asc_getDuration() * repeats - minimalAllowedDuration;
+			const maxNewTmpDelay = this.effect.asc_getDelay() + (this.effect.asc_getDuration() - minimalAllowedDuration) * repeats;
 
 			this.tmpDuration = Math.min(Math.max(newTmpDuration, minimalAllowedDuration), maxNewTmpDuration);
 			this.tmpDelay = Math.min(Math.max(newTmpDelay, 0), maxNewTmpDelay);
