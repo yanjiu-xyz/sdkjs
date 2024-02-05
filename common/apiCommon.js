@@ -3715,19 +3715,33 @@ function (window, undefined) {
 
 		let origW = 0;
 		let origH = 0;
-		let _image = api.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(this.ImageUrl)];
-		if (_image != undefined && _image.Image != null && _image.Status == window['AscFonts'].ImageLoadStatus.Complete) {
-			origW = _image.Image.width;
-			origH = _image.Image.height;
-		}
-		else if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["GetImageOriginalSize"]) {
-			let _size = window["AscDesktopEditor"]["GetImageOriginalSize"](this.ImageUrl);
-			if (_size["W"] != 0 && _size["H"] != 0) {
-				origW = _size["W"];
-				origH = _size["H"];
+
+		if(window["IS_NATIVE_EDITOR"]) {
+			let fGetOriginalImageSize = window["native"]["GetOriginalImageSize"] ||
+				window["native"]["DD_GetOriginalImageSize"];
+			let sizes = fGetOriginalImageSize(this.ImageUrl);
+			let w = sizes[0];
+			let h = sizes[1];
+			let isN = AscFormat.isRealNumber;
+			if (isN(w) && isN(h)) {
+				origW = w;
+				origH = h;
 			}
 		}
-
+		else {
+			let _image = api.ImageLoader.map_image_index[AscCommon.getFullImageSrc2(this.ImageUrl)];
+			if (_image != undefined && _image.Image != null && _image.Status == window['AscFonts'].ImageLoadStatus.Complete) {
+				origW = _image.Image.width;
+				origH = _image.Image.height;
+			}
+			else if (window["AscDesktopEditor"] && window["AscDesktopEditor"]["GetImageOriginalSize"]) {
+				let _size = window["AscDesktopEditor"]["GetImageOriginalSize"](this.ImageUrl);
+				if (_size["W"] != 0 && _size["H"] != 0) {
+					origW = _size["W"];
+					origH = _size["H"];
+				}
+			}
+		}
 		if (origW != 0 && origH != 0) {
 			let __w = Math.max((origW * AscCommon.g_dKoef_pix_to_mm), 1);
 			let __h = Math.max((origH * AscCommon.g_dKoef_pix_to_mm), 1);
