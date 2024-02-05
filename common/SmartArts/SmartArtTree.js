@@ -129,7 +129,7 @@
 	};
 
 
-	function createPresNode(presName, styleLbl, contentNode) {
+	function createPresNode(presName, styleLbl, moveWith, contentNode) {
 		presName = presName || "";
 		const point = new Point();
 		point.setType(AscFormat.Point_type_pres);
@@ -138,7 +138,7 @@
 		prSet.setPresStyleLbl(styleLbl || "node1");
 
 		point.setPrSet(prSet);
-		return new PresNode(point, contentNode);
+		return new PresNode(point, contentNode, moveWith);
 	}
 
 	VarLst.prototype.executeAlgorithm = function (smartartAlgorithm) {};
@@ -568,7 +568,7 @@
 			if (presPoint) {
 				presNode = new PresNode(presPoint, currentNode);
 			} else {
-				presNode = createPresNode(layoutNode.name, layoutNode.styleLbl, currentNode);
+				presNode = createPresNode(layoutNode.name, layoutNode.styleLbl, layoutNode.moveWith, currentNode);
 			}
 			currentNode.setPresNode(presNode);
 		} else {
@@ -577,7 +577,7 @@
 			if (child) {
 				presNode = new PresNode(child, currentNode);
 			} else {
-				presNode = createPresNode(layoutNode.name, layoutNode.styleLbl, currentNode);
+				presNode = createPresNode(layoutNode.name, layoutNode.styleLbl, layoutNode.moveWith, currentNode);
 			}
 		}
 		return presNode;
@@ -2291,7 +2291,6 @@ function HierarchyAlgorithm() {
 		if (isCalculateScaleCoefficients) {
 			this.setScaleCoefficient();
 		} else {
-
 			this.applyPostAlgorithmSettings();
 			this.setConnections();
 		}
@@ -4053,7 +4052,7 @@ function HierarchyAlgorithm() {
 		return shapes;
 	}
 
-function PresNode(presPoint, contentNode) {
+function PresNode(presPoint, contentNode, moveWith) {
 	this.parent = null;
 	this.presPoint = presPoint || null;
 	this.childs = [];
@@ -4069,6 +4068,7 @@ function PresNode(presPoint, contentNode) {
 	};
 	this.adaptConstr = {};
 	this.nodeConstraints = new Position(this);
+	this.moveWithNodes = [];
 
 	this.scaleMainConstraintCoefficient = {
 		width: 1,
@@ -4088,6 +4088,7 @@ function PresNode(presPoint, contentNode) {
 		width: 1,
 		height: 1
 	}
+	this.moveWith = moveWith || null;
 }
 	PresNode.prototype.getShape = function (isCalculateCoefficients) {
 		if (isCalculateCoefficients) {
@@ -4200,10 +4201,19 @@ PresNode.prototype.getNamedNode = function (name) {
 	};
 	PresNode.prototype.moveTo = function (deltaX, deltaY, isCalcScaleCoefficient) {
 		this.forEachDesOrSelf(function (node) {
+
 			const shape = node.getShape(isCalcScaleCoefficient);
 			if (shape) {
 				shape.x += deltaX;
 				shape.y += deltaY;
+			}
+			for (let i = 0; i < node.moveWithNodes.length; i++) {
+				const moveNode = node.moveWithNodes[i];
+				const moveShape = moveNode.getShape(isCalcScaleCoefficient);
+				if (moveShape) {
+					moveShape.x += deltaX;
+					moveShape.y += deltaY;
+				}
 			}
 		});
 		this.algorithm.moveToHierarchyOffsets(deltaX, deltaY);
@@ -4241,11 +4251,23 @@ PresNode.prototype.getNamedNode = function (name) {
 	PresNode.prototype.getPresStyleLbl = function () {
 		return this.presPoint.getPresStyleLbl();
 	}
+	PresNode.prototype.addMoveWithNode = function (node) {
+		this.moveWithNodes.push(node);
+	}
+	PresNode.prototype.checkMoveWith = function (node) {
+		if (node.moveWith) {
+			const moveNode = this.getNamedNode(node.moveWith);
+			if (moveNode) {
+				moveNode.addMoveWithNode(node);
+			}
+		}
+	};
 PresNode.prototype.addChild = function (ch, pos) {
 	if (!AscFormat.isRealNumber(pos)) {
 		pos = this.childs.length;
 	}
 	this.childs.splice(pos, 0, ch);
+	this.checkMoveWith(ch);
 	ch.parent = this;
 };
 	PresNode.prototype.removeChilds = function (pos, count) {
