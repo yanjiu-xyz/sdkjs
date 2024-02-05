@@ -5032,6 +5032,7 @@ background-repeat: no-repeat;\
 		ImagePr.Height     = null === obj.Height || undefined === obj.Height ? null : parseFloat(obj.Height);
 
 		ImagePr.title       = obj.title;
+		ImagePr.bSetOriginalSize = obj.bSetOriginalSize;
 		ImagePr.description = obj.description;
 		ImagePr.name = obj.name;
 		ImagePr.rot = obj.rot;
