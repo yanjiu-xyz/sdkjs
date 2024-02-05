@@ -2370,7 +2370,7 @@ function HierarchyAlgorithm() {
 
 		let offY = firstBounds.b - firstBounds.t + sibSp;
 		this.setLevelBounds(this.parentNode.node.depth + 1, {l: firstShape.x, t: firstShape.y, b: firstShape.y + firstShape.height, r: firstShape.x + firstShape.width});
-
+		this.updateVerticalLevelPositions(childs[0].algorithm);
 		for (let i = 1; i < childs.length; i += 1) {
 			const node = childs[i];
 			const shape = node.getShape(isCalculateScaleCoefficient);
@@ -2379,6 +2379,7 @@ function HierarchyAlgorithm() {
 			offY = offY + (bounds.b - bounds.t) + sibSp;
 			shapeContainer.push(shape);
 			this.setLevelBounds(this.parentNode.node.depth + i + 1, {l: shape.x, t: shape.y, b: shape.y + shape.height, r: shape.x + shape.width});
+			this.updateVerticalLevelPositions(node.algorithm, i);
 		}
 	};
 	HierarchyChildAlgorithm.prototype.calculateShapePositionsFromBottom = function (isCalculateScaleCoefficient) {
@@ -2476,28 +2477,30 @@ function HierarchyAlgorithm() {
 			}
 		}
 		const startLevel = this.parentNode.node.depth + 1;
-		const leftColumnBounds = this.calculateColumnBounds(leftCol, isCalculateScaleCoefficient);
+		const leftCalcBounds = this.calculateColumnBounds(leftCol, isCalculateScaleCoefficient);
+		const rightCalcBounds = this.calculateColumnBounds(rightCol, isCalculateScaleCoefficient);
+		let rightOffX;
+		if (rightCalcBounds) {
+			rightOffX = leftCalcBounds.commonBounds.r - rightCalcBounds.commonBounds.l + sibSp;
+		}
+		let offY = 0;
 		for (let i = 0; i < leftCol.length; i += 1) {
-			const child = leftCol[i];
-			const shape = child.getShape(isCalculateScaleCoefficient);
-			this.updateVerticalLevelPositions(child.algorithm, i);
-			this.setLevelBounds(startLevel + i, {l: shape.x, r: shape.x + shape.width, t: shape.y, b: shape.y + shape.height});
-		}
+			const leftNode = leftCol[i];
+			const leftShape = leftNode.getShape(isCalculateScaleCoefficient);
+			leftShape.moveTo(0, offY, isCalculateScaleCoefficient);
 
-		if (!rightCol.length) {
-			return
-		}
-		const rightColumnBounds = this.calculateColumnBounds(rightCol, isCalculateScaleCoefficient);
-		const rightOffset = leftColumnBounds.r - rightColumnBounds.l + sibSp;
-		for (let i = 0; i < rightCol.length; i += 1) {
-			const child = rightCol[i];
-			child.moveTo(rightOffset, 0, isCalculateScaleCoefficient);
-		}
-		for (let i = 0; i < rightCol.length; i += 1) {
-			const child = rightCol[i];
-			const shape = child.getShape(isCalculateScaleCoefficient);
-			this.updateVerticalLevelPositions(child.algorithm, i);
-			this.setLevelBounds(startLevel + i, {l: shape.x, r: shape.x + shape.width, t: shape.y, b: shape.y + shape.height});
+			const rightNode = rightCol[i];
+			if (rightNode) {
+				const rightShape = rightNode.getShape(isCalculateScaleCoefficient);
+				rightShape.moveTo(rightOffX, offY, isCalculateScaleCoefficient);
+				const leftBounds = leftCalcBounds.bounds[i];
+				const rightBounds = rightCalcBounds.bounds[i];
+				offY += Math.max(leftBounds.b - leftBounds.t, rightBounds.b - rightBounds.t) + sibSp;
+				this.updateVerticalLevelPositions(rightNode.algorithm, i);
+				this.setLevelBounds(startLevel + i, {l: rightShape.x, r: rightShape.x + rightShape.width, t: rightShape.y, b: rightShape.y + rightShape.height});
+			}
+			this.updateVerticalLevelPositions(leftNode.algorithm, i);
+			this.setLevelBounds(startLevel + i, {l: leftShape.x, r: leftShape.x + leftShape.width, t: leftShape.y, b: leftShape.y + leftShape.height});
 		}
 	};
 	HierarchyChildAlgorithm.prototype.calculateColumnBounds = function (column, isCalculateScaleCoefficient) {
@@ -2516,14 +2519,12 @@ function HierarchyAlgorithm() {
 			allBounds.push(bounds);
 		}
 
-		let offY = 0;
 		for (let i = 0; i < column.length; i += 1) {
 			const child = column[i];
 			const bounds = allBounds[i];
-			child.moveTo(commonBounds.l - bounds.l, offY, isCalculateScaleCoefficient);
-			offY += bounds.b - bounds.t + sibSp;
+			child.moveTo(commonBounds.l - bounds.l, 0, isCalculateScaleCoefficient);
 		}
-		return commonBounds;
+		return {commonBounds: commonBounds, bounds: allBounds};
 	}
 	HierarchyChildAlgorithm.prototype.calculateShapePositionsVerticalHangFromRight = function (isCalculateScaleCoefficient) {
 
