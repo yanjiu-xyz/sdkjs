@@ -4780,7 +4780,10 @@
 	// speech
 	baseEditorsApi.prototype["setSpeechEnabled"] = function(isEnabled) {
 		if (!AscCommon.EditorActionSpeaker)
+		{
+			AscCommon.EditorActionSpeakerInitData = { isEnabled : isEnabled };
 			return;
+		}
 		if (isEnabled)
 			AscCommon.EditorActionSpeaker.run();
 		else

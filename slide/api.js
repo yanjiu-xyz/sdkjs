@@ -8709,7 +8709,7 @@ background-repeat: no-repeat;\
 			var _header = "PPTY;v10;" + writer.pos + ";";
 			window["native"]["Save_End"](_header, writer.pos);
 
-			return writer.ImData.data;
+			return writer.data;
 		}
 	};
 

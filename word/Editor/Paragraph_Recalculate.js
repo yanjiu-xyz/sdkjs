@@ -1897,7 +1897,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
 		PRSC.Range.W      = 0;
 		PRSC.Range.WEnd   = 0;
 		PRSC.Range.WBreak = 0;
-        if ( true === this.Numbering.Check_Range(CurRange, CurLine) )
+        if ( true === this.Numbering.checkRange(CurRange, CurLine) )
             PRSC.Range.W += this.Numbering.WidthVisible;
 
         for ( var Pos = StartPos; Pos <= EndPos; Pos++ )
@@ -2041,7 +2041,7 @@ Paragraph.prototype.private_RecalculateLineAlign       = function(CurLine, CurPa
         if ( 0 === CurRange )
             this.Lines[CurLine].X = X - PRSW.XStart;
 
-        if ( true === this.Numbering.Check_Range(CurRange, CurLine) )
+        if ( true === this.Numbering.checkRange(CurRange, CurLine) )
             PRSA.X += this.Numbering.WidthVisible;
 
         for ( var Pos = StartPos; Pos <= EndPos; Pos++ )
@@ -3128,6 +3128,7 @@ ParagraphRecalculateStateBase.prototype.unlock = function()
 {
 	this.locked = false;
 };
+window['AscWord'].ParagraphRecalculateStateBase = ParagraphRecalculateStateBase;
 
 function ParagraphStatePool()
 {
@@ -3170,7 +3171,7 @@ ParagraphStatePool.prototype.getEndInfoState = function()
 };
 ParagraphStatePool.prototype.getDrawState = function()
 {
-	return this.getInstance(this.draw, ParagraphDrawState);
+	return this.getInstance(this.draw, AscWord.ParagraphDrawState);
 };
 window['AscWord'].ParagraphStatePool = new ParagraphStatePool();
 
@@ -4450,37 +4451,6 @@ CParagraphRecalculateStateInfo.prototype.ProcessInstruction = function(oInstruct
 };
 
 const g_PRSI = new CParagraphRecalculateStateInfo();
-
-function ParagraphDrawState()
-{
-	ParagraphRecalculateStateBase.call(this);
-	
-	this.highlightState  = new CParagraphDrawStateHighlights();
-	this.runElementState = new CParagraphDrawStateElements();
-	this.lineState       = new CParagraphDrawStateLines();
-}
-
-ParagraphDrawState.prototype = Object.create(ParagraphRecalculateStateBase.prototype);
-ParagraphDrawState.prototype.constructor = ParagraphDrawState;
-
-ParagraphDrawState.prototype.init = function(paragraph, graphics)
-{
-	this.highlightState.init(paragraph, graphics);
-	this.runElementState.init(paragraph, graphics);
-	this.lineState.init(paragraph, graphics);
-};
-ParagraphDrawState.prototype.getHighlightState = function()
-{
-	return this.highlightState;
-};
-ParagraphDrawState.prototype.getRunElementState = function()
-{
-	return this.runElementState;
-};
-ParagraphDrawState.prototype.getLineState = function()
-{
-	return this.lineState;
-};
 
 function CParagraphRecalculateObject()
 {
