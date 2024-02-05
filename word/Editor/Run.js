@@ -4882,14 +4882,14 @@ ParaRun.prototype.Recalculate_LineMetrics = function(PRS, ParaPr, _CurLine, _Cur
 					// Обновим метрики строки
 					if (Asc.linerule_Exact === LineRule)
 					{
-						if (PRS.LineAscent < Item.Height)
-							PRS.LineAscent = Item.Height;
+						if (PRS.LineAscent < Item.getHeight())
+							PRS.LineAscent = Item.getHeight();
 					}
 					else
 					{
 						let yOffset = this.getYOffset();
-						if (PRS.LineAscent < Item.Height + yOffset)
-							PRS.LineAscent = Item.Height + yOffset;
+						if (PRS.LineAscent < Item.getHeight() + yOffset)
+							PRS.LineAscent = Item.getHeight() + yOffset;
 
 						if (PRS.LineDescent < -yOffset)
 							PRS.LineDescent = -yOffset;
@@ -6005,9 +6005,9 @@ ParaRun.prototype.RecalculateMinMaxContentWidth = function(MinMax)
                         nMinWidth = DrawingW;
                 }
 
-                if ((true === Item.Is_Inline() || true === this.Paragraph.Parent.Is_DrawingShape()) && Item.Height > nMaxHeight)
+                if ((true === Item.Is_Inline() || true === this.Paragraph.Parent.Is_DrawingShape()) && Item.getHeight() > nMaxHeight)
                 {
-                    nMaxHeight = Item.Height;
+                    nMaxHeight = Item.getHeight();
                 }
                 else if (true === Item.Use_TextWrap())
                 {
