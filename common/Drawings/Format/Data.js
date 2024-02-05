@@ -3889,6 +3889,60 @@ Because of this, the display is sometimes not correct.
 							return this.val;
 					}
 				}
+				case Param_type_hierAlign:
+				{
+					switch (this.val) {
+						case 'bCtrCh':
+							return ParameterVal_hierarchyAlignment_bCtrCh;
+						case 'bCtrDes':
+							return ParameterVal_hierarchyAlignment_bCtrDes;
+						case 'bL':
+							return ParameterVal_hierarchyAlignment_bL;
+						case 'bR':
+							return ParameterVal_hierarchyAlignment_bR;
+						case 'lB':
+							return ParameterVal_hierarchyAlignment_lB;
+						case 'lCtrCh':
+							return ParameterVal_hierarchyAlignment_lCtrCh;
+						case 'lCtrDes':
+							return ParameterVal_hierarchyAlignment_lCtrDes;
+						case 'lT':
+							return ParameterVal_hierarchyAlignment_lT;
+						case 'rB':
+							return ParameterVal_hierarchyAlignment_rB;
+						case 'rCtrCh':
+							return ParameterVal_hierarchyAlignment_rCtrCh;
+						case 'rCtrDes':
+							return ParameterVal_hierarchyAlignment_rCtrDes;
+						case 'rT':
+							return ParameterVal_hierarchyAlignment_rT;
+						case 'tCtrCh':
+							return ParameterVal_hierarchyAlignment_tCtrCh;
+						case 'tCtrDes':
+							return ParameterVal_hierarchyAlignment_tCtrDes;
+						case 'tL':
+							return ParameterVal_hierarchyAlignment_tL;
+						case 'tR':
+							return ParameterVal_hierarchyAlignment_tR;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_secChAlign:
+				case Param_type_chAlign: {
+					switch (this.val) {
+						case 'l':
+							return ParameterVal_childAlignment_l;
+						case 't':
+							return ParameterVal_childAlignment_t;
+						case 'r':
+							return ParameterVal_childAlignment_r;
+						case 'b':
+							return ParameterVal_childAlignment_b;
+						default:
+							return this.val;
+					}
+				}
 				case Param_type_flowDir: {
 					switch (this.val) {
 						case 'col':

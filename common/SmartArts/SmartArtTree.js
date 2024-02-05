@@ -2356,6 +2356,16 @@ function HierarchyAlgorithm() {
 			return shape.width / 2 - width / 2;
 		}
 	};
+	HierarchyChildAlgorithm.prototype.getTopOffXFromBounds = function (commonBounds, bounds) {
+		switch (this.params[AscFormat.Param_type_chAlign]) {
+			case AscFormat.ParameterVal_childAlignment_r:
+				return commonBounds.r - bounds.r;
+			case AscFormat.ParameterVal_childAlignment_l:
+				return commonBounds.l - bounds.l;
+			default:
+				return 0;
+		}
+	};
 	HierarchyChildAlgorithm.prototype.calculateShapePositionsFromTop = function (isCalculateScaleCoefficient) {
 		const childs = this.getMainChilds();
 		const parentNode = this.parentNode;
@@ -2363,7 +2373,7 @@ function HierarchyAlgorithm() {
 		const commonBounds = this.getCommonChildBounds(isCalculateScaleCoefficient);
 		const firstShape = childs[0].getShape(isCalculateScaleCoefficient);
 		const firstBounds = childs[0].algorithm.getBounds(isCalculateScaleCoefficient);
-		firstShape.moveTo(commonBounds.l - firstBounds.l, 0);
+		firstShape.moveTo(this.getTopOffXFromBounds(commonBounds, firstBounds), 0);
 		const shapeContainer = this.getShapeContainer(isCalculateScaleCoefficient);
 		shapeContainer.push(firstShape);
 
@@ -2375,7 +2385,7 @@ function HierarchyAlgorithm() {
 			const node = childs[i];
 			const shape = node.getShape(isCalculateScaleCoefficient);
 			const bounds = node.algorithm.getBounds(isCalculateScaleCoefficient);
-			shape.moveTo(commonBounds.l - bounds.l, offY);
+			shape.moveTo(this.getTopOffXFromBounds(commonBounds, bounds), offY);
 			offY = offY + (bounds.b - bounds.t) + sibSp;
 			shapeContainer.push(shape);
 			this.setLevelBounds(this.parentNode.node.depth + i + 1, {l: shape.x, t: shape.y, b: shape.y + shape.height, r: shape.x + shape.width});
@@ -2647,7 +2657,15 @@ function HierarchyAlgorithm() {
 		}
 		const childShape = child.getShape(isCalculateScaleCoefficient);
 		const rootShape = root.getShape(isCalculateScaleCoefficient);
-		child.moveTo(rootShape.x - childShape.x + offsetFactor * rootShape.width, 0, isCalculateScaleCoefficient);
+		switch (this.params[AscFormat.Param_type_hierAlign]) {
+			case AscFormat.ParameterVal_hierarchyAlignment_tR:
+				child.moveTo((rootShape.x + rootShape.width) - (childShape.x + childShape.width) - offsetFactor * rootShape.width, 0, isCalculateScaleCoefficient);
+				break;
+			case AscFormat.ParameterVal_hierarchyAlignment_tL:
+				child.moveTo(rootShape.x - childShape.x + offsetFactor * rootShape.width, 0, isCalculateScaleCoefficient);
+				break;
+		}
+
 	}
 	HierarchyRootAlgorithm.prototype.applyOffsetAlign = function (isCalculateScaleCoefficient) {
 		this.applyOffsetAlignForChild(this.getAsstNode(), isCalculateScaleCoefficient);
