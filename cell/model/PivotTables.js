@@ -7883,6 +7883,21 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(rowI
 			rowItemIndex = getIndex(rowItems, rowFields, rowItemMap, maxRowR);
 			const dataIndex = rowItemMap.has(AscCommonExcel.st_VALUES) ? rowItemMap.get(AscCommonExcel.st_VALUES) : 0;
 			rowItemIndex = this.getDefaultSubtotalItemIndex(rowItems, rowItemIndex, rowFields, dataIndex, maxRowR);
+
+			const pivotField = pivotFields[rowFields[maxRowR].asc_getIndex()];
+			let canShowSubtotal = null !== rowItemIndex && (this.colGrandTotals || !this.asc_getColumnFields());
+			if (pivotField && canShowSubtotal) {
+				let visible = true;
+				let rowItemX = rowItems[rowItemIndex].x;
+				if (rowItemX.length > 0) {
+					let rowX = rowItemX[rowItemX.length - 1];
+					visible = pivotField.asc_getVisible(rowX.getV())
+				}
+				canShowSubtotal = (pivotField.defaultSubtotal || !visible);
+			}
+			if (!canShowSubtotal) {
+				rowItemIndex = null;
+			}
 		}
 	}
 	let colItemIndex = colItems.length - 1;
@@ -7893,6 +7908,21 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(rowI
 			colItemIndex = getIndex(colItems, colFields, colItemMap, maxColR);
 			const dataIndex = colItemMap.has(AscCommonExcel.st_VALUES) ? colItemMap.get(AscCommonExcel.st_VALUES) : 0;
 			colItemIndex = this.getDefaultSubtotalItemIndex(colItems, colItemIndex, colFields, dataIndex, maxColR);
+
+			const pivotField = pivotFields[colFields[maxColR].asc_getIndex()];
+			let canShowSubtotal = null !== colItemIndex && (this.rowGrandTotals || !this.asc_getRowFields());
+			if (pivotField && canShowSubtotal) {
+				let visible = true;
+				let colItemX = colItems[colItemIndex].x;
+				if (colItemX.length > 0) {
+					let colX = colItemX[colItemX.length - 1];
+					visible = pivotField.asc_getVisible(colX.getV())
+				}
+				canShowSubtotal = (pivotField.defaultSubtotal || !visible);
+			}
+			if (!canShowSubtotal) {
+				colItemIndex = null;
+			}
 		}
 	}
 	if (rowItemIndex === null || colItemIndex === null) {
