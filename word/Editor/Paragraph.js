@@ -1951,6 +1951,10 @@ Paragraph.prototype.GetLineBounds = function(nCurLine)
 
 	return new CDocumentBounds(oPage.X, nTop, oPage.XLimit, nBottom);
 };
+Paragraph.prototype.getLineMetrics = function(iLine)
+{
+	return this.Lines[iLine] ? this.Lines[iLine].Metrics : new CParaLineMetrics();
+};
 Paragraph.prototype.GetTextOnLine = function(nCurLine)
 {
 	if (!this.IsRecalculated() || this.GetLinesCount() <= nCurLine)
@@ -19006,6 +19010,11 @@ CParaDrawingRangeLines.prototype =
 
         return Element;
     },
+	
+	getNext : function(saveIntermediate)
+	{
+		return this.Get_Next(saveIntermediate);
+	},
 
     Get_NextForward : function()
     {

@@ -2533,9 +2533,7 @@
 				return;
 
 			let ctx = this.canvas.getContext("2d");
-			ctx.strokeStyle = AscCommon.GlobalSkin.PageOutline;
 			let lineW = AscCommon.AscBrowser.retinaPixelRatio >> 0;
-			ctx.lineWidth = lineW;
 
 			let yPos = this.scrollY >> 0;
 			let yMax = yPos + this.height;
@@ -2584,6 +2582,10 @@
 				return;
 
 			this.canvas.width = this.canvas.width;
+
+			ctx.strokeStyle = AscCommon.GlobalSkin.PageOutline;
+			ctx.lineWidth = lineW;
+
 			this.pageDetector = new CCurrentPageDetector(this.canvas.width, this.canvas.height);
 
 			let oDrDoc = oDoc.GetDrawingDocument();

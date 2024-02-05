@@ -73,12 +73,8 @@
 		this.haveCurrentComment = false;
 		this.currentCommentId   = null;
 		this.comments           = []; // current list of comments
-		this.runComments        = []; // comments we use for a particular run
 		
 		this.hyperlinks = [];
-
-		this.Comments           = [];
-		this.CommentsFlag       = AscCommon.comments_NoComment;
 		
 		this.searchCounter = 0;
 		
@@ -112,7 +108,7 @@
 		let logicDocument = paragraph.GetLogicDocument();
 		let commentManager = logicDocument && logicDocument.IsDocumentEditor() ? logicDocument.GetCommentsManager() : null;
 		
-		this.DrawColl           = undefined !== graphics.RENDERER_PDF_FLAG;
+		this.DrawColl           = undefined === graphics.RENDERER_PDF_FLAG;
 		this.DrawSearch         = logicDocument && logicDocument.IsDocumentEditor() && logicDocument.SearchEngine.Selection;
 		this.DrawComments       = commentManager && commentManager.isUse();
 		this.DrawSolvedComments = commentManager && commentManager.isUseSolved();
@@ -128,7 +124,6 @@
 		this.searchCounter = 0;
 		
 		this.comments           = [];
-		this.runComments        = [];
 		this.haveCurrentComment = false;
 		
 		let pageEndInfo = this.Paragraph.GetEndInfoByPage(page - 1);
@@ -175,7 +170,7 @@
 	ParagraphHighlightDrawState.prototype.endRange = function()
 	{
 		this.bidiFlow.end();
-	}
+	};
 	ParagraphHighlightDrawState.prototype.AddInlineSdt = function(oSdt)
 	{
 		this.InlineSdt.push(oSdt);
@@ -212,26 +207,6 @@
 	{
 		--this.searchCounter;
 	};
-	ParagraphHighlightDrawState.prototype.Save_Coll = function()
-	{
-		var Coll  = this.Coll;
-		this.Coll = new CParaDrawingRangeLines();
-		return Coll;
-	};
-	ParagraphHighlightDrawState.prototype.Save_Comm = function()
-	{
-		var Comm  = this.Comm;
-		this.Comm = new CParaDrawingRangeLines();
-		return Comm;
-	};
-	ParagraphHighlightDrawState.prototype.Load_Coll = function(Coll)
-	{
-		this.Coll = Coll;
-	};
-	ParagraphHighlightDrawState.prototype.Load_Comm = function(Comm)
-	{
-		this.Comm = Comm;
-	};
 	ParagraphHighlightDrawState.prototype.IsCollectFixedForms = function()
 	{
 		return this.CollectFixedForms;
@@ -255,22 +230,100 @@
 		
 		let flags = this.getFlags(element, !!collaborationColor);
 		let hyperlink = this.getHyperlinkObject();
-		this.bidiFlow.add([element, run, flags, hyperlink, collaborationColor], element.getBidiType());
+		this.bidiFlow.add([element, run, flags, hyperlink, collaborationColor, this.comments.slice(), this.haveCurrentComment], element.getBidiType());
 	};
 	ParagraphHighlightDrawState.prototype.handleBidiFlow = function(data)
 	{
-		let element   = data[0];
-		let run       = data[1];
-		let flags     = data[2];
-		let hyperlink = data[3];
-		let collColor = data[4];
+		let element    = data[0];
+		let run        = data[1];
+		let flags      = data[2];
+		let hyperlink  = data[3];
+		let collColor  = data[4];
+		let comments   = data[5];
+		let curComment = data[6];
 		
 		let w = element.GetWidthVisible();
 		
 		this.handleRun(run);
-		this.addHighlight(this.X, this.X + w, flags, hyperlink, collColor);
+		this.addHighlight(this.X, this.X + w, flags, hyperlink, collColor, comments, curComment);
 		
 		this.X += w;
+	};
+	ParagraphHighlightDrawState.prototype.handleParaMath = function(math)
+	{
+		if (!math || math.Root.IsEmptyRange(this.Line, this.Range))
+			return;
+		
+		this.bidiFlow.end();
+		
+		let y0 = this.Y0;
+		let y1 = this.Y1;
+		
+		let coll = this.Coll;
+		let comm = this.Comm;
+		
+		this.Coll = new CParaDrawingRangeLines();
+		this.Comm = new CParaDrawingRangeLines();
+		
+		math.Root.Draw_HighLights(this);
+		
+		let mathComments = this.Comm.getNext();
+		if (mathComments)
+		{
+			let bounds = math.Root.Get_LineBound(this.Line, this.Range);
+			comm.Add(bounds.Y, bounds.Y + bounds.H, bounds.X, bounds.X + bounds.W, 0, 0, 0, 0, mathComments.Additional);
+		}
+		
+		let mathColl = this.Coll.getNext();
+		if (mathColl)
+		{
+			let bounds = math.Root.Get_LineBound(this.Line, this.Range);
+			coll.Add(bounds.Y, bounds.Y + bounds.H, bounds.X, bounds.X + bounds.W, 0, mathColl.r, mathColl.g, mathColl.b);
+		}
+		
+		this.Coll = coll;
+		this.Comm = comm;
+		
+		this.Y0 = y0;
+		this.Y1 = y1;
+	};
+	ParagraphHighlightDrawState.prototype.handleMathBase = function(element)
+	{
+		this.bidiFlow.end();
+		
+		let textPr = element.Get_CompiledCtrPrp();
+		
+		let shdColor = (textPr.Shd && !textPr.Shd.IsNil() ? textPr.Shd.GetSimpleColor(this.drawState.getTheme(), this.drawState.getColorMap()) : null);
+		
+		let w = element.Get_LineBound(this.Line, this.Range).W;
+		
+		let x  = this.X;
+		let y0 = this.Y0;
+		let y1 = this.Y1;
+		
+		let startPos = 0;
+		let endPos   = element.Content.length - 1;
+		if (!element.bOneLine)
+		{
+			let rangeInfo = element.getRangePos(this.Line, this.Range);
+			
+			startPos = rangeInfo[0];
+			endPos   = rangeInfo[1];
+		}
+		
+		for (let pos = startPos; pos <= endPos; ++pos)
+		{
+			element.Content[pos].Draw_HighLights(this);
+		}
+		
+		// Add after because we are rendering in reverse direction
+		if (shdColor)
+			this.Shd.Add(y0, y1, x, x + w, 0, shdColor.r, shdColor.g, shdColor.b);
+		
+		if (highlight_None !== textPr.HighLight)
+			this.High.Add(y0, y1, x, x + w, 0, textPr.HighLight.r, textPr.HighLight.g, textPr.HighLight.b);
+		
+		this.X = x + w;
 	};
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 	// Private area
@@ -334,8 +387,6 @@
 		
 		this.run = run;
 		
-		this.runComments = this.comments.slice();
-		
 		let textPr = run.getCompiledPr();
 		let shd    = textPr.Shd;
 		
@@ -355,7 +406,7 @@
 	/**
 	 *
 	 */
-	ParagraphHighlightDrawState.prototype.addHighlight = function(startX, endX, flags, hyperlink, collColor)
+	ParagraphHighlightDrawState.prototype.addHighlight = function(startX, endX, flags, hyperlink, collColor, comments, curComment)
 	{
 		let startY = this.Y0;
 		let endY   = this.Y1;
@@ -369,8 +420,8 @@
 		if (flags & FLAG_COMPLEX_FIELD)
 			this.CFields.Add(startY, endY, startX, endX, 0, 0, 0, 0);
 		
-		if (flags & FLAG_COMMENT && this.runComments.length)
-			this.Comm.Add(startY, endY, startX, endX, 0, 0, 0, 0, {Active : this.haveCurrentComment, CommentId : this.runComments});
+		if (flags & FLAG_COMMENT && comments.length)
+			this.Comm.Add(startY, endY, startX, endX, 0, 0, 0, 0, {Active : curComment, CommentId : comments});
 		
 		if ((flags & FLAG_HIGHLIGHT) && (this.highlight && highlight_None !== this.highlight))
 			this.High.Add(startY, endY, startX, endX, 0, this.highlight.r, this.highlight.g, this.highlight.b, undefined, this.highlight);
