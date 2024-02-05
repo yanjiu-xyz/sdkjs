@@ -6601,9 +6601,6 @@ ParaRun.prototype.Get_LeftPos = function(SearchPos, ContentPos, Depth, UseConten
 			isHiddenCF   = SearchPos.IsHiddenComplexField();
 		}
 
-		if (Item && Item.Type === para_Math_Text && Item.GetWidthVisible() === 0)
-			continue;
-
 		if (CurPos >= 0 && (isFieldCode || isHiddenCF))
 			continue;
 
@@ -6679,9 +6676,7 @@ ParaRun.prototype.Get_RightPos = function(SearchPos, ContentPos, Depth, UseConte
 
 		if (!(true !== StepEnd && para_End === ItemType)
 			&& !(para_Drawing === Item.Type && false === Item.Is_Inline())
-			&& !((para_FootnoteReference === Item.Type || para_EndnoteReference === Item.Type) && true === Item.IsCustomMarkFollows())
-			&& !(para_Math_Text === this.Content[CurPos].Type && this.Content[CurPos].GetWidthVisible() === 0)
-		)
+			&& !((para_FootnoteReference === Item.Type || para_EndnoteReference === Item.Type) && true === Item.IsCustomMarkFollows()))
 			break;
 	}
 
