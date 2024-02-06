@@ -972,6 +972,10 @@
 		return this.cTn.presetID === 1 && this.cTn.presetClass === AscFormat.PRESET_CLASS_ENTR ||
 			this.cTn.presetID === 1 && this.cTn.presetClass === AscFormat.PRESET_CLASS_EXIT
 	}
+	CTimeNodeBase.prototype.isUntilEffect = function () {
+		return this.asc_getRepeatCount() === AscFormat.untilNextClick ||
+			this.asc_getRepeatCount() === AscFormat.untilNextSlide;
+	}
     CTimeNodeBase.prototype.traverseTimeNodes = function (fCallback) {
         fCallback(this);
         var aChildren = this.getChildrenTimeNodes();

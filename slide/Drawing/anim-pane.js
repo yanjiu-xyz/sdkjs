@@ -1245,7 +1245,14 @@
 	};
 	CTimeline.prototype.addScroll = function (step /* in millimeters */) {
 		let newStartTime = this.posToTime(this.getZeroShift() + step)
-		this.setStartTime(newStartTime)		
+
+		const seqList = editor.WordControl.m_oAnimPaneApi.list.Control.seqList
+		seqList.forEachAnimItem(function (animItem) {
+			if (!animItem.hitResult) { return }
+			animItem.handleTimelineScroll(step);
+		})
+
+		this.setStartTime(newStartTime)
 	};
 	CTimeline.prototype.endScroll = function () {
 		if (this.timerId !== null) {
@@ -1903,7 +1910,6 @@
 		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline;
 		const timelineShift = this.ms_to_mm(timeline.getStartTime() * 1000);
 		const repeats = this.effect.asc_getRepeatCount() / 1000;
-		const minimalAllowedDuration = 10; // milliseconds
 
 		let pointOfLanding = x - this.getLeftBorder() + timelineShift;
 		if (this.effect.isAfterEffect()) {
@@ -1919,7 +1925,7 @@
 			let diff = this.mm_to_ms(pointOfLanding - pointOfContact);
 
 			const newTmpDuration = this.effect.asc_getDuration() + diff / repeats;
-			this.tmpDuration = Math.max(minimalAllowedDuration, newTmpDuration);
+			this.tmpDuration = Math.max(MIN_ALLOWED_DURATION, newTmpDuration);
 		}
 
 		if (this.hitResult.type === 'left') {
@@ -1930,10 +1936,14 @@
 			const newTmpDelay = this.effect.asc_getDelay() + diff;
 
 			const maxNewTmpDuration = this.effect.asc_getDelay() / repeats + this.effect.asc_getDuration();
-			const maxNewTmpDelay = this.effect.asc_getDelay() + (this.effect.asc_getDuration() - minimalAllowedDuration) * repeats;
+			const maxNewTmpDelay = this.effect.asc_getDelay() + (this.effect.asc_getDuration() - MIN_ALLOWED_DURATION) * repeats;
 
-			this.tmpDuration = Math.min(Math.max(newTmpDuration, minimalAllowedDuration), maxNewTmpDuration);
-			this.tmpDelay = Math.min(Math.max(newTmpDelay, 0), maxNewTmpDelay);
+			if (this.effect.isUntilEffect()) {
+				this.tmpDelay = Math.max(newTmpDelay, 0);
+			} else {
+				this.tmpDuration = Math.min(Math.max(newTmpDuration, MIN_ALLOWED_DURATION), maxNewTmpDuration);
+				this.tmpDelay = Math.min(Math.max(newTmpDelay, 0), maxNewTmpDelay);
+			}
 		}
 
 		if (this.hitResult.type === 'center') {
@@ -1949,8 +1959,12 @@
 			const diff = this.mm_to_ms(pointOfLanding - pointOfContact);
 
 			const newTmpDuration = this.effect.asc_getDuration() + diff / this.hitResult.index;
-			this.tmpDuration = Math.max(minimalAllowedDuration, newTmpDuration);
+			this.tmpDuration = Math.max(MIN_ALLOWED_DURATION, newTmpDuration);
 		}
+	}
+	CAnimItem.prototype.handleTimelineScroll = function (step) {
+		console.log('Таймлайн сдвинулся на ' + step.toFixed(3) + ' миллиметра');
+		// this.onUpdate();
 	}
 
 	CAnimItem.prototype.ms_to_mm = function (nMilliseconds) {
@@ -2076,16 +2090,43 @@
 			graphics.df();
 			graphics.ds();
 		} else {
-			// In case we need to draw a bar
-			const repeats = this.effect.asc_getRepeatCount() / 1000;
-			const width = (bounds.r - bounds.l) * repeats;
-			const height = bounds.b - bounds.t;
-			graphics.rect(bounds.l, bounds.t, width, height);
+			let repeats;
+			if (this.effect.isUntilEffect()) {
+				// In case we need to draw an infinite bar with an arrow
+
+				const barWidth = Math.max(this.getRightBorder() - bounds.l - EFFECT_BAR_HEIGHT, this.ms_to_mm(MIN_ALLOWED_DURATION));
+				repeats = barWidth / (bounds.r - bounds.l);
+
+				let transform = graphics.m_oFullTransform;
+				let left = (transform.TransformPointX(bounds.l, bounds.t) + 0.5) >> 0;
+				let top = (transform.TransformPointY(bounds.l, bounds.t) + 0.5) >> 0;
+				let right = (transform.TransformPointX(bounds.l + barWidth, bounds.t) + 0.5) >> 0;
+				let bottom = (transform.TransformPointY(bounds.l, bounds.b) + 0.5) >> 0;
+
+				let ctx = graphics.m_oContext;
+				ctx.beginPath();
+				ctx.moveTo(left, top);
+				ctx.lineTo(right, top);
+				ctx.lineTo(right + 5, top);
+				ctx.lineTo(right + EFFECT_BAR_HEIGHT * g_dKoef_mm_to_pix, top + (bottom - top) / 2);
+				ctx.lineTo(right + 5, bottom);
+				ctx.lineTo(right, bottom);
+				ctx.lineTo(left, bottom);
+				ctx.lineTo(left, top);
+			} else {
+				// In case we need to draw a bar
+
+				repeats = this.effect.asc_getRepeatCount() / 1000;
+				const barWidth = (bounds.r - bounds.l) * repeats;
+				graphics.rect(bounds.l, bounds.t, barWidth, bounds.b - bounds.t);
+			}
+
 			graphics.df();
 			graphics.ds();
 
+			// draw marks
 			if ((bounds.r - bounds.l) >= 2 * g_dKoef_pix_to_mm) {
-				const gap = height / 5;
+				const gap = (bounds.b - bounds.t) / 5;
 				for (let markIndex = 1; markIndex < repeats; markIndex++) {
 					const xCord = bounds.l + markIndex * (bounds.r - bounds.l)
 					graphics.drawVerLine(2, xCord, bounds.t + gap, bounds.b - gap, this.getPenWidth(graphics));
@@ -2104,27 +2145,29 @@
 		const repeats = this.effect.asc_getRepeatCount() / 1000;
 		const delta = AscFormat.DIST_HIT_IN_LINE / 2
 
+		let barRight = this.effect.isUntilEffect() ? this.getRightBorder() : bounds.l + width * repeats;
+		barRight = Math.max(bounds.l + this.ms_to_mm(MIN_ALLOWED_DURATION), barRight);
+
 		if (!this.effect.isInstantEffect()) {
 			if (x >= bounds.l - delta && x <= bounds.l + delta) {
 				return { type: 'left' };
 			}
 
-			if (x >= bounds.l + width * repeats - delta && x <= bounds.l + width * (repeats) + delta) {
+			if (x >= barRight - delta && x <= barRight + delta) {
 				return { type: 'right' };
 			}
 
-			if (repeats > 1) {
-				const partitionIndex = (x - bounds.l) / width >> 0;
-				if (partitionIndex > 0 && partitionIndex < repeats) {
-					const partitionPos = bounds.l + partitionIndex * width;
-					if (x <= partitionPos + delta && x >= partitionPos - delta) {
-						return { type: 'partition', index: partitionIndex };
-					}
+			const partitionIndex = (x - bounds.l) / width >> 0;
+			// if effect isUntilEffect condition (partitionIndex < repeats) doesnt matter
+			if (partitionIndex > 0 && (this.effect.isUntilEffect() || partitionIndex < repeats)) {
+				const partitionPos = bounds.l + partitionIndex * width;
+				if (x <= partitionPos + delta && x >= partitionPos - delta) {
+					return { type: 'partition', index: partitionIndex };
 				}
 			}
 		}
 
-		if (x > bounds.l && x < bounds.l + width * repeats) {
+		if (x > bounds.l && x < barRight) {
 			return { type: 'center', offset: x - bounds.l };
 		}
 
@@ -2153,6 +2196,7 @@
 
 		Asc.editor.WordControl.m_oLogicDocument.SetAnimationProperties(effectCopy);
 	};
+
 
 	CAnimItem.prototype.onMouseDown = function (e, x, y) {
 		if (this.onMouseDownCallback && this.onMouseDownCallback.call(this, e, x, y)) {
@@ -2258,6 +2302,9 @@
 	const ANIM_ITEM_HEIGHT = TIMELINE_HEIGHT;
 	const EFFECT_BAR_HEIGHT = 2 * ANIM_ITEM_HEIGHT / 3;
 	const SEQ_LABEL_HEIGHT = EFFECT_BAR_HEIGHT;
+
+	// List
+	const MIN_ALLOWED_DURATION = 10; // milliseconds
 
 
 	window['AscCommon'] = window['AscCommon'] || {};
