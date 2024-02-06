@@ -1812,6 +1812,7 @@
 		// Temp fields for effect bar movement
 		this.tmpDelay = null;
 		this.tmpDuration = null;
+		this.tmpRepeatCount = null;
 
 		// Callback functions for effect bar events
 		this.onMouseDownCallback = function (event, x, y) {
@@ -1824,6 +1825,11 @@
 				this.hitResult = hitRes;
 				this.tmpDelay = this.getDelay();
 				this.tmpDuration = this.getDuration();
+
+				if (this.effect.isUntilEffect() && hitRes.type === 'right') {
+					this.tmpRepeatCount = this.getRepeatCount();
+					this.initialTmpRepeatCount = this.tmpRepeatCount;
+				}
 
 				this.onUpdate();
 			}
@@ -1841,9 +1847,8 @@
 		}
 		this.onMouseUpCallback = function (event, x, y) {
 			if (!this.hitResult) { return }
-			
-			this.setNewEffectParams(this.tmpDelay, this.tmpDuration);
-			this.hitResult = this.tmpDelay = this.tmpDuration = null;
+			this.setNewEffectParams(this.tmpDelay, this.tmpDuration, this.tmpRepeatCount);
+			this.hitResult = this.tmpDelay = this.tmpDuration = this.tmpRepeatCount = null;
 
 			this.onUpdate()
 		}
@@ -1909,7 +1914,7 @@
 	CAnimItem.prototype.handleMovement = function (x, y) {
 		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline;
 		const timelineShift = this.ms_to_mm(timeline.getStartTime() * 1000);
-		const repeats = this.effect.asc_getRepeatCount() / 1000;
+		const repeats = this.getRepeatCount() / 1000;
 
 		let pointOfLanding = x - this.getLeftBorder() + timelineShift;
 		if (this.effect.isAfterEffect()) {
@@ -1921,11 +1926,19 @@
 		}
 
 		if (this.hitResult.type === 'right') {
-			const pointOfContact = this.ms_to_mm(this.effect.asc_getDelay() + this.effect.asc_getDuration() * repeats);
-			let diff = this.mm_to_ms(pointOfLanding - pointOfContact);
+			if (this.effect.isUntilEffect()) {
+				const pointOfContact = this.ms_to_mm(this.effect.asc_getDelay() + this.effect.asc_getDuration() * this.initialTmpRepeatCount / 1000);
+				let diff = this.mm_to_ms(pointOfLanding - pointOfContact);
 
-			const newTmpDuration = this.effect.asc_getDuration() + diff / repeats;
-			this.tmpDuration = Math.max(MIN_ALLOWED_DURATION, newTmpDuration);
+				const newTmpRepeatCount = this.initialTmpRepeatCount + diff / (this.effect.asc_getDuration() / 1000);
+				this.tmpRepeatCount = Math.max(newTmpRepeatCount, MIN_ALLOWED_REPEAT_COUNT);
+			} else {
+				const pointOfContact = this.ms_to_mm(this.effect.asc_getDelay() + this.effect.asc_getDuration() * repeats);
+				let diff = this.mm_to_ms(pointOfLanding - pointOfContact);
+
+				const newTmpDuration = this.effect.asc_getDuration() + diff / repeats;
+				this.tmpDuration = Math.max(MIN_ALLOWED_DURATION, newTmpDuration);
+			}
 		}
 
 		if (this.hitResult.type === 'left') {
@@ -1985,6 +1998,16 @@
 	}
 	CAnimItem.prototype.getDuration = function () {
 		return this.tmpDuration !== null ? this.tmpDuration : this.effect.asc_getDuration()
+	}
+	CAnimItem.prototype.getRepeatCount = function () {
+		if (this.tmpRepeatCount !== null) { return this.tmpRepeatCount; }
+		else if (this.effect.asc_getRepeatCount() > 0) { return this.effect.asc_getRepeatCount(); }
+		else {
+			const bounds = this.getEffectBarBounds();
+			const width = bounds.r - bounds.l;
+			const totalWidth = this.getRightBorder() - bounds.l;
+			return (totalWidth / width * 1000) >> 0; // approximate repeat counter
+		}
 	}
 
 	CAnimItem.prototype.getLeftBorder = function () {
@@ -2091,11 +2114,12 @@
 			graphics.ds();
 		} else {
 			let repeats;
-			if (this.effect.isUntilEffect()) {
+			if (this.effect.isUntilEffect() && this.tmpRepeatCount === null) {
 				// In case we need to draw an infinite bar with an arrow
 
 				const barWidth = Math.max(this.getRightBorder() - bounds.l - EFFECT_BAR_HEIGHT, this.ms_to_mm(MIN_ALLOWED_DURATION));
-				repeats = barWidth / (bounds.r - bounds.l);
+				// repeats = barWidth / (bounds.r - bounds.l);
+				repeats = this.getRepeatCount() / 1000;
 
 				let transform = graphics.m_oFullTransform;
 				let left = (transform.TransformPointX(bounds.l, bounds.t) + 0.5) >> 0;
@@ -2116,7 +2140,7 @@
 			} else {
 				// In case we need to draw a bar
 
-				repeats = this.effect.asc_getRepeatCount() / 1000;
+				repeats = this.getRepeatCount() / 1000;
 				const barWidth = (bounds.r - bounds.l) * repeats;
 				graphics.rect(bounds.l, bounds.t, barWidth, bounds.b - bounds.t);
 			}
@@ -2142,7 +2166,7 @@
 		if (isOutOfBorders) { return null; }
 
 		const width = bounds.r - bounds.l;
-		const repeats = this.effect.asc_getRepeatCount() / 1000;
+		const repeats = this.getRepeatCount() / 1000;
 		const delta = AscFormat.DIST_HIT_IN_LINE / 2
 
 		let barRight = this.effect.isUntilEffect() ? this.getRightBorder() : bounds.l + width * repeats;
@@ -2175,11 +2199,11 @@
 	};
 
 
-	CAnimItem.prototype.setNewEffectParams = function (newDelay, newDuration) {
+	CAnimItem.prototype.setNewEffectParams = function (newDelay, newDuration, newRepeatCount) {
 		const minAllowedDelta = 1 // in ms
-		const delayDiff = Math.abs(newDelay - this.effect.asc_getDelay())
-		const durationDiff = Math.abs(newDuration - this.effect.asc_getDuration())
-		if (delayDiff < minAllowedDelta && durationDiff < minAllowedDelta ) { return }
+		const delayDiff = Math.abs(newDelay - this.effect.asc_getDelay());
+		const durationDiff = Math.abs(newDuration - this.effect.asc_getDuration());
+		const repeatCountDiff = Math.abs(newRepeatCount - this.effect.asc_getRepeatCount());
 
 		const effectCopy = AscFormat.ExecuteNoHistory(function () {
 			let oCopy = this.effect.createDuplicate();
@@ -2187,13 +2211,18 @@
 			return oCopy;
 		}, this, []);
 
-		if (newDelay !== null && newDelay !== undefined) {
+		if (newDelay !== null && newDelay !== undefined && delayDiff >= minAllowedDelta) {
 			effectCopy.asc_putDelay(newDelay);
 		}
-		if (newDuration !== null && newDuration !== undefined) {
+		if (newDuration !== null && newDuration !== undefined && durationDiff >= minAllowedDelta) {
 			effectCopy.asc_putDuration(newDuration);
 		}
+		if (newRepeatCount !== null && newRepeatCount !== undefined && repeatCountDiff >= 1) {
+			effectCopy.asc_putRepeatCount(newRepeatCount);
+		}
 
+		if (this.effect.isEqualProperties(effectCopy)) { return }
+		console.log('changes')
 		Asc.editor.WordControl.m_oLogicDocument.SetAnimationProperties(effectCopy);
 	};
 
@@ -2305,6 +2334,7 @@
 
 	// List
 	const MIN_ALLOWED_DURATION = 10; // milliseconds
+	const MIN_ALLOWED_REPEAT_COUNT = 10; // equals 0.01 of full effect duration
 
 
 	window['AscCommon'] = window['AscCommon'] || {};
