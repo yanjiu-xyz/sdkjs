@@ -3811,6 +3811,18 @@ Because of this, the display is sometimes not correct.
 							return this.val;
 					}
 				}
+				case Param_type_bendPt: {
+					switch (this.val) {
+						case 'end':
+							return ParameterVal_bendPoint_end;
+						case 'beg':
+							return ParameterVal_bendPoint_beg;
+						case 'def':
+							return ParameterVal_bendPoint_def;
+						default:
+							return this.val;
+					}
+				}
 				case Param_type_pyraAcctPos: {
 					switch (this.val) {
 						case 'bef':
@@ -3994,8 +4006,35 @@ Because of this, the display is sometimes not correct.
 							case "auto":
 								arrResult.push(ParameterVal_connectorPoint_auto);
 								break;
+							case "bCtr":
+								arrResult.push(ParameterVal_connectorPoint_bCtr);
+								break;
+							case "bL":
+								arrResult.push(ParameterVal_connectorPoint_bL);
+								break;
+							case "bR":
+								arrResult.push(ParameterVal_connectorPoint_bR);
+								break;
+							case "ctr":
+								arrResult.push(ParameterVal_connectorPoint_ctr);
+								break;
+							case "midL":
+								arrResult.push(ParameterVal_connectorPoint_midL);
+								break;
+							case "midR":
+								arrResult.push(ParameterVal_connectorPoint_midR);
+								break;
 							case "radial":
 								arrResult.push(ParameterVal_connectorPoint_radial);
+								break;
+							case "tCtr":
+								arrResult.push(ParameterVal_connectorPoint_tCtr);
+								break;
+							case "tL":
+								arrResult.push(ParameterVal_connectorPoint_tL);
+								break;
+							case "tR":
+								arrResult.push(ParameterVal_connectorPoint_tR);
 								break;
 							default:
 								break;
@@ -4354,9 +4393,9 @@ Because of this, the display is sometimes not correct.
 		  if (AscFormat.isRealNumber(this.st[index])) {
 				const start = this.st[index];
 				if (start < 0) {
-					return Math.max(nodesLength - start, 0);
+					return Math.max(nodesLength + start, 0);
 				}
-			  return this.st[index] - 1;
+			  return start - 1;
 		  }
 		  return 0;
 	  };

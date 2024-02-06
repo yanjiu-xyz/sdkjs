@@ -727,7 +727,19 @@
 		this.cacheAlgorithm = null;
 		this.depth = AscFormat.isRealNumber(depth) ? depth : null;
 	}
-
+	SmartArtDataNodeBase.prototype.getDirection = function () {};
+	SmartArtDataNodeBase.prototype.getHierBranch = function () {};
+	SmartArtDataNodeBase.prototype.getFuncVarValue = function (type) {
+		switch (type) {
+			case AscFormat.If_arg_dir:
+				return this.getDirection();
+			case AscFormat.If_arg_hierBranch:
+				return this.getHierBranch();
+		}
+	};
+	SmartArtDataNodeBase.prototype.getPresName = function () {
+		return this.presNode && this.presNode.getPresName();
+	};
 	SmartArtDataNodeBase.prototype.getPtType = function () {
 		return this.point.type;
 	}
@@ -839,6 +851,12 @@
 		if (parent) {
 			for (let i = 0; i < parent.childs.length; i++) {
 				if (parent.childs[i] === this) {
+					if (ptType === AscFormat.ElementType_value_parTrans) {
+						const needNode = parent.childs[i].getNodeByPtType(ptType);
+						if (needNode) {
+							nodes.push(needNode);
+						}
+					}
 					break;
 				} else {
 					const needNode = parent.childs[i].getNodeByPtType(ptType);
@@ -928,6 +946,16 @@
 	SmartArtParDataNode.prototype.getNodeByPtType = function (elementTypeValue) {
 		return this;
 	}
+	SmartArtParDataNode.prototype.getDirection = function () {
+		return this.parent.getDirection();
+	};
+	SmartArtParDataNode.prototype.getHierBranch = function () {
+		let node = this;
+		while (!node.presNode && node.parent) {
+			node = node.parent;
+		}
+		return node.getHierBranch();
+	};
 	function SmartArtDataNode(mainPoint, depth) {
 		SmartArtDataNodeBase.call(this, mainPoint, depth);
 		this.sibNode = null;
@@ -935,6 +963,20 @@
 		this.childDepth = null;
 	}
 	AscFormat.InitClassWithoutType(SmartArtDataNode, SmartArtDataNodeBase);
+	SmartArtDataNode.prototype.getPointType = function () {
+		return this.point.getType();
+	}
+
+	SmartArtDataNode.prototype.getDirection = function () {
+		return this.presNode && this.presNode.getDirection();
+	}
+
+	SmartArtDataNode.prototype.getHierBranch = function () {
+		if (this.presNode) {
+			const presPoint = this.presNode.presPoint;
+			return presPoint && presPoint.getHierBranchValue();
+		}
+	};
 
 	SmartArtDataNode.prototype.getChildDepth = function () {
 		if (this.childDepth === null) {
@@ -1005,39 +1047,12 @@
 		}
 	}
 
-	SmartArtDataNode.prototype.getPresName = function () {
-		return this.presNode && this.presNode.getPresName();
-	};
 	SmartArtDataNode.prototype.getSibName = function () {
 		return this.sibNode.getPresName();
 	};
 	SmartArtDataNode.prototype.getParName = function () {
 		return this.parNode.getPresName();
 	};
-
-	SmartArtDataNode.prototype.getPointType = function () {
-		return this.point.getType();
-	}
-
-	SmartArtDataNode.prototype.getDirection = function () {
-		return this.presNode && this.presNode.getDirection();
-	}
-
-	SmartArtDataNode.prototype.getFuncVarValue = function (type) {
-		switch (type) {
-			case AscFormat.If_arg_dir:
-				return this.getDirection();
-			case AscFormat.If_arg_hierBranch:
-				return this.getHierBranch();
-		}
-	};
-	SmartArtDataNode.prototype.getHierBranch = function () {
-		if (this.presNode) {
-			const presPoint = this.presNode.presPoint;
-			return presPoint && presPoint.getHierBranchValue();
-		}
-	};
-
 
 	SmartArtDataNode.prototype.checkName = function (name) {
 		switch (name) {
@@ -1349,6 +1364,8 @@
 		this._isHideLastChild = null;
 		this.constraintSizes = null;
 	}
+	BaseAlgorithm.prototype.isHierarchy = function () {return false;};
+	BaseAlgorithm.prototype.getBounds = function (isCalculateScaleCoefficients, bounds) { return bounds};
 	BaseAlgorithm.prototype.moveToHierarchyOffsets = function () {};
 
 	BaseAlgorithm.prototype.getNodeConstraints = function (node) {
@@ -1393,16 +1410,17 @@
 						nextIndex += 1;
 					}
 				}
-				const nextShape = nodes[nextIndex] && nodes[nextIndex].shape;
+				const nextNode = nodes[nextIndex];
 				if (node.isSibNode()) {
-					const previousShape = nodes[previousIndex] && nodes[previousIndex].shape;
-					if (algorithm && previousShape && nextShape) {
-						algorithm.setFirstConnectorShape(previousShape);
-						algorithm.setLastConnectorShape(nextShape);
+					const previousNode = nodes[previousIndex];
+					if (algorithm && previousNode && nextNode) {
+						algorithm.setFirstConnectorNode(previousNode);
+						algorithm.setLastConnectorNode(nextNode);
 						algorithm.setParentAlgorithm(this);
 					}
 				} else {
-					this.setParentConnection(algorithm, node.node.parent.presNode.shape);
+					// todo
+					this.setParentConnection(algorithm, node.node.parent.presNode);
 				}
 				previousIndex = nextIndex;
 			}
@@ -1560,10 +1578,10 @@
 	BaseAlgorithm.prototype.setParentNode = function (node) {
 		this.parentNode = node;
 	};
-	BaseAlgorithm.prototype.setFirstConnectorShape = function () {
+	BaseAlgorithm.prototype.setFirstConnectorNode = function () {
 
 	};
-	BaseAlgorithm.prototype.setLastConnectorShape = function () {
+	BaseAlgorithm.prototype.setLastConnectorNode = function () {
 
 	};
 	BaseAlgorithm.prototype.applyPostAlgorithmSettingsForShape = function (shape, prSet, customCoefficient) {
@@ -1728,13 +1746,10 @@
 		});*/
 	};
 
-	PositionAlgorithm.prototype.setParentConnection = function (connectorAlgorithm, childShape) {
-		const parentShape = this.parentNode.shape;
-		if (parentShape && connectorAlgorithm && childShape) {
-			connectorAlgorithm.setParentAlgorithm(this);
-			connectorAlgorithm.setFirstConnectorShape(parentShape);
-			connectorAlgorithm.setLastConnectorShape(childShape);
-		}
+	PositionAlgorithm.prototype.setParentConnection = function (connectorAlgorithm, childNode) {
+		connectorAlgorithm.setParentAlgorithm(this);
+		connectorAlgorithm.setFirstConnectorNode(this.parentNode);
+		connectorAlgorithm.setLastConnectorNode(childNode);
 	};
 	PositionAlgorithm.prototype.applyAligns = function (presNode, isCalculateScaleCoefficient) {
 		const shape = presNode.getShape(isCalculateScaleCoefficient);
@@ -2216,6 +2231,9 @@ function HierarchyAlgorithm() {
 		}
 		return maxSpace;
 	}
+	HierarchyAlgorithm.prototype.isHierarchy = function () {
+		return true;
+	};
 	HierarchyAlgorithm.prototype.getMainChilds = function () {
 		const childs = [];
 		for (let i = 0; i < this.parentNode.childs.length; i += 1) {
@@ -2230,6 +2248,7 @@ function HierarchyAlgorithm() {
 
 	};
 	HierarchyAlgorithm.prototype.setScaleCoefficient = function () {
+		const childs = this.getMainChilds();
 		const parentHeight = this.parentNode.getConstr(AscFormat.Constr_type_h);
 		const parentWidth = this.parentNode.getConstr(AscFormat.Constr_type_w);
 		if (!(parentHeight && parentWidth)) {
@@ -2244,8 +2263,8 @@ function HierarchyAlgorithm() {
 		if (!AscFormat.isRealNumber(coefficient)) {
 			return
 		}
-		for (let i = 0; i < this.parentNode.childs.length; i += 1) {
-			const rootChild = this.parentNode.childs[i];
+		for (let i = 0; i < childs.length; i += 1) {
+			const rootChild = childs[i];
 			const rootRelationWidth = rootChild.relations.nodeWidth;
 			const rootRelationHeight = rootChild.relations.nodeHeight;
 			if (rootRelationWidth && rootRelationHeight) {
@@ -2305,6 +2324,13 @@ function HierarchyAlgorithm() {
 	HierarchyChildAlgorithm.prototype.createShadowShape = function (isCalculateScaleCoefficients) {
 		return this.parentNode.createHierarchyChildShadowShape(isCalculateScaleCoefficients);
 	};
+	HierarchyChildAlgorithm.prototype.setParentConnection = function (connectorAlgorithm, childNode) {
+		const parent = this.parentNode.parent;
+		if (parent && parent.algorithm.isHierarchy()) {
+			const root = parent.algorithm.getRoot();
+			root.algorithm.setParentConnection(connectorAlgorithm, childNode.algorithm.getRoot());
+		}
+	};
 	HierarchyChildAlgorithm.prototype.initParams = function (params) {
 		HierarchyAlgorithm.prototype.initParams.call(this, params);
 		if (this.params[AscFormat.Param_type_linDir] === undefined) {
@@ -2337,9 +2363,10 @@ function HierarchyAlgorithm() {
 			this.params[AscFormat.Param_type_linDir] !== undefined;
 	}
 	HierarchyChildAlgorithm.prototype.getCommonChildBounds = function (isCalculateScaleCoefficient) {
+		const childs = this.getMainChilds();
 		let bounds;
-		for (let i = 0; i < this.parentNode.childs.length; i += 1) {
-			const child = this.parentNode.childs[i];
+		for (let i = 0; i < childs.length; i += 1) {
+			const child = childs[i];
 			bounds = child.algorithm.getBounds(isCalculateScaleCoefficient, bounds);
 		}
 		return bounds;
@@ -2348,6 +2375,9 @@ function HierarchyAlgorithm() {
 		if (this.isHang()) {
 			const sibSp = this.parentNode.getConstr(AscFormat.Constr_type_sibSp, !isCalculateScaleCoefficient);
 			const bounds = this.getHangColumnBounds(isCalculateScaleCoefficient);
+			if (!bounds) {
+				return 0;
+			}
 			return shape.x + shape.width / 2 - bounds.r - sibSp / 2;
 		} else {
 			const bounds = this.getChildBounds(isCalculateScaleCoefficient);
@@ -2577,7 +2607,7 @@ function HierarchyAlgorithm() {
 	};
 
 	HierarchyChildAlgorithm.prototype.getChildBounds = function (isCalculateScaleCoefficients) {
-		const childs = this.parentNode.childs;
+		const childs = this.getMainChilds();
 
 		if (!childs.length) {
 			return;
@@ -2588,8 +2618,8 @@ function HierarchyAlgorithm() {
 		const firstShape = firstRoot.getShape(isCalculateScaleCoefficients);
 		const bounds = firstShape.getBounds();
 
-		for (let i = 1; i < this.parentNode.childs.length; i += 1) {
-			const child = this.parentNode.childs[i];
+		for (let i = 1; i < childs.length; i += 1) {
+			const child = childs[i];
 			const root = child.algorithm.getRoot();
 			const shape = root.getShape(isCalculateScaleCoefficients);
 			shape.checkBounds(bounds);
@@ -2597,14 +2627,14 @@ function HierarchyAlgorithm() {
 		return bounds;
 	};
 	HierarchyChildAlgorithm.prototype.getHangColumnBounds = function (isCalculateScaleCoefficients) {
-		const childs = this.parentNode.childs;
+		const childs = this.getMainChilds;
 		if (!childs.length) {
 			return;
 		}
 		const firstChild = childs[0];
 		const bounds = firstChild.algorithm.getBounds(isCalculateScaleCoefficients);
-		for (let i = 2; i < this.parentNode.childs.length; i += 2) {
-			const child = this.parentNode.childs[i];
+		for (let i = 2; i < childs.length; i += 2) {
+			const child = childs[i];
 			child.algorithm.getBounds(isCalculateScaleCoefficients, bounds);
 		}
 		return bounds;
@@ -2614,7 +2644,8 @@ function HierarchyAlgorithm() {
 	}
 	AscFormat.InitClassWithoutType(HierarchyRootAlgorithm, HierarchyAlgorithm);
 	HierarchyRootAlgorithm.prototype.getBounds = function (isCalculateScaleCoefficients, bounds) {
-		const firstChild = this.parentNode.childs[0];
+		const childs = this.getMainChilds();
+		const firstChild = childs[0];
 		const firstShape = firstChild.getShape(isCalculateScaleCoefficients);
 		if (!bounds) {
 			bounds = firstShape.getBounds();
@@ -2637,12 +2668,10 @@ function HierarchyAlgorithm() {
 		return this.parentNode.createHierarchyRootShadowShape(isCalculateScaleCoefficients);
 	};
 	HierarchyRootAlgorithm.prototype.getNonAsstNode = function () {
-		const childs = this.getMainChilds();
-		return childs[1];
+		return this.parentNode.childs[1];
 	};
 	HierarchyRootAlgorithm.prototype.getAsstNode = function () {
-		const childs = this.getMainChilds();
-		return childs[2];
+		return this.parentNode.childs[2];
 	};
 	HierarchyRootAlgorithm.prototype.applyOffsetAlignForChild = function (child, isCalculateScaleCoefficient) {
 		const offsetFactor = this.parentNode.getConstr(AscFormat.Constr_type_alignOff, !isCalculateScaleCoefficient);
@@ -2730,22 +2759,22 @@ function HierarchyAlgorithm() {
 
 		const space = parentNode.getConstr(AscFormat.Constr_type_sp, !isCalculateScaleCoefficients);
 		const rootShape = root.getShape(isCalculateScaleCoefficients);
-		const nonAsstNode = parentNode.childs[1];
-		const asstNode = parentNode.childs[2];
+		const nonAsstNode = this.getNonAsstNode();
+		const asstNode = this.getAsstNode();
 		const nonAsstShape = nonAsstNode.getShape(isCalculateScaleCoefficients);
 		const asstShape = asstNode.getShape(isCalculateScaleCoefficients);
-		if (nonAsstNode.childs.length && asstNode.childs.length) {
+		if (nonAsstNode.algorithm.getMainChilds().length && asstNode.algorithm.getMainChilds().length) {
 			const asstOffset = asstNode.algorithm.getRootCenteringOffset(rootShape, isCalculateScaleCoefficients);
 			const nonAsstOffset = nonAsstNode.algorithm.getRootCenteringOffset(rootShape, isCalculateScaleCoefficients);
 			asstShape.moveTo(asstOffset, rootShape.y + rootShape.height + space - asstShape.y);
 			nonAsstShape.moveTo(nonAsstOffset, asstShape.y + asstShape.height + space - nonAsstShape.y);
 			shapeContainer.push(asstShape);
 			shapeContainer.push(nonAsstShape);
-		} else if (nonAsstNode.childs.length) {
+		} else if (nonAsstNode.algorithm.getMainChilds().length) {
 			const offset = nonAsstNode.algorithm.getRootCenteringOffset(rootShape, isCalculateScaleCoefficients);
 			nonAsstShape.moveTo(offset, rootShape.y + rootShape.height + space - nonAsstShape.y);
 			shapeContainer.push(nonAsstShape);
-		} else if (asstNode.childs.length) {
+		} else if (asstNode.algorithm.getMainChilds().length) {
 			const offset = asstNode.algorithm.getRootCenteringOffset(rootShape, isCalculateScaleCoefficients);
 			asstShape.moveTo(offset, rootShape.y + rootShape.height + space - asstShape.y);
 			shapeContainer.push(asstShape);
@@ -3014,13 +3043,12 @@ function HierarchyAlgorithm() {
 			return this.parentNode.childs[this.calcValues.centerNodeIndex];
 		}
 	};
-	CycleAlgorithm.prototype.setParentConnection = function (connectorAlgorithm, childShape) {
-		const centerNode = this.getCenterNode();
-		const centerShape = centerNode && centerNode.shape;
-		if (centerShape && connectorAlgorithm && childShape) {
+	CycleAlgorithm.prototype.setParentConnection = function (connectorAlgorithm, childNode) {
+		const centerShape = this.getCenterNode();
+		if (centerShape && connectorAlgorithm && childNode) {
 			connectorAlgorithm.setParentAlgorithm(this);
-			connectorAlgorithm.setFirstConnectorShape(centerShape);
-			connectorAlgorithm.setLastConnectorShape(childShape);
+			connectorAlgorithm.setFirstConnectorNode(centerShape);
+			connectorAlgorithm.setLastConnectorNode(childNode);
 		}
 	};
 	CycleAlgorithm.prototype.isClockwise = function () {
@@ -3444,8 +3472,8 @@ function HierarchyAlgorithm() {
 
 	function ConnectorAlgorithm() {
 		BaseAlgorithm.call(this);
-		this.startShape = null;
-		this.endShape = null;
+		this.startNode = null;
+		this.endNode = null;
 		this.connectorShape = null;
 		this.connectionDistances = {
 			begin: 0.22,
@@ -3530,9 +3558,17 @@ function HierarchyAlgorithm() {
 		}
 		return AscFormat.ParameterVal_connectorPoint_auto;
 	};
+	ConnectorAlgorithm.prototype.getStartShape = function () {
+		return this.startNode.getShape(false);
+	};
+	ConnectorAlgorithm.prototype.getEndShape = function () {
+		return this.endNode.getShape(false);
+	};
 	ConnectorAlgorithm.prototype.getAutoEdgePoint = function (isStart) {
-		const startBounds = this.startShape.getBounds();
-		const endBounds = this.endShape.getBounds();
+		const startShape = this.getStartShape();
+		const endShape = this.getEndShape();
+		const startBounds = startShape.getBounds();
+		const endBounds = endShape.getBounds();
 		const startPoint = this.getShapePoint(startBounds);
 		const endPoint = this.getShapePoint(endBounds);
 		let guideVector;
@@ -3652,7 +3688,7 @@ function HierarchyAlgorithm() {
 		return null;
 	};
 	ConnectorAlgorithm.prototype.getRadialEdgePoint = function (isStart) {
-		const shape = isStart ? this.startShape : this.endShape;
+		const shape = isStart ? this.getStartShape() : this.getEndShape();
 		const radialInfo = this.parentAlgorithm.getRadialConnectionInfo(shape.node);
 		if (!radialInfo || radialInfo.radius === 0) {
 			return null;
@@ -3691,35 +3727,35 @@ function HierarchyAlgorithm() {
 		}
 	};
 	ConnectorAlgorithm.prototype.getTopLeftEdgePoint = function (isStart) {
-		const shape = isStart ? this.startShape : this.endShape;
+		const shape = isStart ? this.getStartShape() : this.getEndShape();
 		return new CCoordPoint(shape.x, shape.y);
 	};
 	ConnectorAlgorithm.prototype.getTopCenterEdgePoint = function (isStart) {
-		const shape = isStart ? this.startShape : this.endShape;
+		const shape = isStart ? this.getStartShape() : this.getEndShape();
 		return new CCoordPoint(shape.x + shape.width / 2, shape.y);
 	};
 	ConnectorAlgorithm.prototype.getTopRightEdgePoint = function (isStart) {
-		const shape = isStart ? this.startShape : this.endShape;
+		const shape = isStart ? this.getStartShape() : this.getEndShape();
 		return new CCoordPoint(shape.x + shape.width, shape.y);
 	};
 	ConnectorAlgorithm.prototype.getMidRightEdgePoint = function (isStart) {
-		const shape = isStart ? this.startShape : this.endShape;
+		const shape = isStart ? this.getStartShape() : this.getEndShape();
 		return new CCoordPoint(shape.x + shape.width, shape.y + shape.height / 2);
 	};
 	ConnectorAlgorithm.prototype.getBottomRightEdgePoint = function (isStart) {
-		const shape = isStart ? this.startShape : this.endShape;
+		const shape = isStart ? this.getStartShape() : this.getEndShape();
 		return new CCoordPoint(shape.x + shape.width, shape.y + shape.height);
 	};
 	ConnectorAlgorithm.prototype.getBottomCenterEdgePoint = function (isStart) {
-		const shape = isStart ? this.startShape : this.endShape;
+		const shape = isStart ? this.getStartShape() : this.getEndShape();
 		return new CCoordPoint(shape.x + shape.width / 2, shape.y + shape.height);
 	};
 	ConnectorAlgorithm.prototype.getBottomLeftEdgePoint = function (isStart) {
-		const shape = isStart ? this.startShape : this.endShape;
+		const shape = isStart ? this.getStartShape() : this.getEndShape();
 		return new CCoordPoint(shape.x, shape.y + shape.height);
 	};
 	ConnectorAlgorithm.prototype.getMidLeftEdgePoint = function (isStart) {
-		const shape = isStart ? this.startShape : this.endShape;
+		const shape = isStart ? this.getStartShape() : this.getEndShape();
 		return new CCoordPoint(shape.x, shape.y + shape.height / 2);
 	};
 
@@ -3731,14 +3767,14 @@ function HierarchyAlgorithm() {
 		smartartAlgorithm.addConnectorAlgorithm(this);
 	}
 
-	ConnectorAlgorithm.prototype.setFirstConnectorShape = function (shape) {
-		this.startShape = shape;
+	ConnectorAlgorithm.prototype.setFirstConnectorNode = function (node) {
+		this.startNode = node;
 	};
-	ConnectorAlgorithm.prototype.setLastConnectorShape = function (shape) {
-		this.endShape = shape;
+	ConnectorAlgorithm.prototype.setLastConnectorNode = function (node) {
+		this.endNode = node;
 	};
 	ConnectorAlgorithm.prototype.connectShapes = function () {
-		if (this.startShape && this.endShape) {
+		if (this.startNode && this.endNode) {
 			if (this.params[AscFormat.Param_type_dim] === AscFormat.ParameterVal_connectorDimension_2D) {
 				this.createShapeConnector();
 			} else if (this.params[AscFormat.Param_type_dim] === AscFormat.ParameterVal_connectorDimension_1D) {
@@ -3878,6 +3914,9 @@ function HierarchyAlgorithm() {
 					case AscFormat.ParameterVal_connectorRouting_stra:
 						this.createStraightLineConnector(points.start, points.end);
 						break;
+					case AscFormat.ParameterVal_connectorRouting_bend:
+						this.createBendLineConnector(points.start, points.end);
+						break;
 					default:
 						break;
 				}
@@ -3921,6 +3960,105 @@ function HierarchyAlgorithm() {
 			coefficient: coefficient
 		}
 	}
+	ConnectorAlgorithm.prototype.getBendPoint = function (startPoint, endPoint) {
+		const isReverse = this.params[AscFormat.Param_type_bendPt] === AscFormat.ParameterVal_bendPoint_beg;
+		if (isReverse) {
+			const t = startPoint;
+			startPoint = endPoint;
+			endPoint = t;
+		}
+		const bendDist = this.parentNode.getConstr(AscFormat.Constr_type_bendDist, true);
+		const type = this.getPointPosition(isReverse);
+		switch (type) {
+			case AscFormat.ParameterVal_connectorPoint_auto:
+				break;
+			case AscFormat.ParameterVal_connectorPoint_bCtr:
+				break;
+			case AscFormat.ParameterVal_connectorPoint_bL:
+				break;
+			case AscFormat.ParameterVal_connectorPoint_bR:
+				break;
+			case AscFormat.ParameterVal_connectorPoint_ctr:
+				break;
+			case AscFormat.ParameterVal_connectorPoint_midL:
+				break;
+			case AscFormat.ParameterVal_connectorPoint_midR:
+				break;
+			case AscFormat.ParameterVal_connectorPoint_radial:
+				break;
+			case AscFormat.ParameterVal_connectorPoint_tCtr:
+				return new CCoordPoint(endPoint.x, Math.max(startPoint.y, endPoint.y - bendDist));
+			case AscFormat.ParameterVal_connectorPoint_tL:
+				break;
+			case AscFormat.ParameterVal_connectorPoint_tR:
+				break;
+			default:
+				break;
+		}
+	};
+	ConnectorAlgorithm.prototype.getStartBendPoint = function (startPoint, endPoint) {
+
+	};
+	ConnectorAlgorithm.prototype.getEndBendPoint = function (startPoint, endPoint) {
+
+	};
+	ConnectorAlgorithm.prototype.getBendConnectionInfo = function (startPoint, endPoint) {
+		const x = endPoint.x < startPoint.x ? endPoint.x : startPoint.x;
+		const y = endPoint.y < startPoint.y ? endPoint.y : startPoint.y;
+		const width = Math.abs(endPoint.x - startPoint.x);
+		const height = Math.abs(endPoint.y - startPoint.y);
+		const bendPoint = this.getBendPoint(startPoint, endPoint);
+		return {
+			x: x,
+			y: y,
+			width: width,
+			height: height,
+			bendPoint: bendPoint
+		};
+	}
+	ConnectorAlgorithm.prototype.createBendLineConnector = function (startPoint, endPoint) {
+		const shape = this.parentNode.shape;
+		shape.height = 0;
+		const info = this.getBendConnectionInfo(startPoint, endPoint);
+		const connectorShape = this.getTemplateConnectorLine();
+
+		connectorShape.x = info.x;
+		connectorShape.y = info.y;
+		connectorShape.width = info.width;
+		connectorShape.height = info.height;
+
+		shape.connectorShape = connectorShape;
+
+		const prSet = this.parentNode.getPrSet();
+		if (!prSet.getPresStyleLbl()) {
+			prSet.setPresStyleLbl("parChTrans1D2");
+		}
+
+		const bendPoint = info.bendPoint;
+		const localEndPoint = new CCoordPoint(endPoint.x - connectorShape.x, endPoint.y - connectorShape.y);
+		const localStartPoint = new CCoordPoint(startPoint.x - connectorShape.x, startPoint.y - connectorShape.y);
+		if (false/*bendPoint*/) {
+			connectorShape.customGeom.push([0]);
+			if (this.params[AscFormat.Param_type_bendPt] === AscFormat.ParameterVal_bendPoint_end) {
+
+				const localBendPoint = new CCoordPoint(bendPoint.x - connectorShape.x, bendPoint.y - connectorShape.y);
+				connectorShape.customGeom.push([1, String(localEndPoint.x * 36000 >> 0), String(localEndPoint.y * 36000 >> 0)]);
+				connectorShape.customGeom.push([2, String(localBendPoint.x * 36000 >> 0), String(localBendPoint.y * 36000 >> 0)]);
+				//todo
+				connectorShape.customGeom.push([2, String(localStartPoint.x * 36000 >> 0), String(localStartPoint.y * 36000 >> 0)]);
+
+
+			} else {
+
+			}
+			connectorShape.customGeom.push([6]);
+		} else {
+			connectorShape.customGeom.push([0]);
+			connectorShape.customGeom.push([1, String(localStartPoint.x * 36000 >> 0), String(localStartPoint.y * 36000 >> 0)]);
+			connectorShape.customGeom.push([2, String(localEndPoint.x * 36000 >> 0), String(localEndPoint.y * 36000 >> 0)]);
+			connectorShape.customGeom.push([6]);
+		}
+	};
 	ConnectorAlgorithm.prototype.createStraightLineConnector = function (startPoint, endPoint) {
 		const shape = this.parentNode.shape;
 		shape.height = 0;
@@ -3992,16 +4130,14 @@ function HierarchyAlgorithm() {
 	}
 	AscFormat.InitClassWithoutType(CompositeAlgorithm, BaseAlgorithm);
 
-	CompositeAlgorithm.prototype.setParentConnection = function (connectorAlgorithm, childShape) {
-		if (connectorAlgorithm && childShape.node.algorithm) {
+	CompositeAlgorithm.prototype.setParentConnection = function (connectorAlgorithm, childNode) {
+		if (connectorAlgorithm && childNode.algorithm) {
 			const srcNode = this.parentNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_srcNode]);
-			const dstNode = childShape.node.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_dstNode]);
+			const dstNode = childNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_dstNode]);
 			if (srcNode && dstNode) {
-				const srcShape = srcNode.shape;
-				const dstShape = dstNode.shape;
 				connectorAlgorithm.setParentAlgorithm(this);
-				connectorAlgorithm.setFirstConnectorShape(srcShape);
-				connectorAlgorithm.setLastConnectorShape(dstShape);
+				connectorAlgorithm.setFirstConnectorNode(srcNode);
+				connectorAlgorithm.setLastConnectorNode(dstNode);
 			}
 		}
 
@@ -4113,6 +4249,9 @@ function PresNode(presPoint, contentNode, moveWith) {
 		}
 	}
 PresNode.prototype.getNamedNode = function (name) {
+		if (name === undefined) {
+			return this;
+		}
 	if (this.namedNodes === null) {
 		this.namedNodes = {};
 		const childs = this.childs;
@@ -4403,6 +4542,11 @@ PresNode.prototype.addChild = function (ch, pos) {
 					return this;
 				}
 				break;
+			case AscFormat.ElementType_value_parTrans:
+				if (ptType === AscFormat.Point_type_parTrans) {
+					return this;
+				}
+				break;
 			case AscFormat.ElementType_value_node:
 				if (ptType === AscFormat.Point_type_node) {
 					return this;
@@ -4417,6 +4561,8 @@ PresNode.prototype.addChild = function (ch, pos) {
 				if (ptType !== AscFormat.Point_type_asst) {
 					return this;
 				}
+				break;
+			default:
 				break;
 		}
 	}
@@ -4859,16 +5005,18 @@ PresNode.prototype.addChild = function (ch, pos) {
 		if (!this.childs.length) {
 			return;
 		}
-		const bounds = this.childs[0].algorithm.getBounds(isCalculateCoefficients);
+		let bounds = this.childs[0].algorithm.getBounds(isCalculateCoefficients);
 		for (let i = 1; i < this.childs.length; i += 1) {
 			const child = this.childs[i];
 			const algorithm = child.algorithm;
-			algorithm.getBounds(isCalculateCoefficients, bounds);
+			bounds = algorithm.getBounds(isCalculateCoefficients, bounds);
 		}
-		shape.x = bounds.l;
-		shape.y = bounds.t;
-		shape.width = bounds.r - bounds.l;
-		shape.height = bounds.b - bounds.t;
+		if (bounds) {
+			shape.x = bounds.l;
+			shape.y = bounds.t;
+			shape.width = bounds.r - bounds.l;
+			shape.height = bounds.b - bounds.t;
+		}
 	};
 	PresNode.prototype.createShadowShapeFromConstraints = function (isCalculateCoefficients) {
 		const shape = this.getShape(isCalculateCoefficients);
