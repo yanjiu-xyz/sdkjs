@@ -2084,8 +2084,7 @@
 			graphics.df();
 			graphics.ds();
 
-			// 0.5 look fine, meh
-			if (this.getPenWidth(graphics) * repeats / (bounds.r - bounds.l) < 0.5) {
+			if ((bounds.r - bounds.l) >= 2 * g_dKoef_pix_to_mm) {
 				const gap = height / 5;
 				for (let markIndex = 1; markIndex < repeats; markIndex++) {
 					const xCord = bounds.l + markIndex * (bounds.r - bounds.l)
