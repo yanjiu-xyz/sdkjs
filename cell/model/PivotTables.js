@@ -7893,7 +7893,7 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(rowI
 					let rowX = rowItemX[rowItemX.length - 1];
 					visible = pivotField.asc_getVisible(rowX.getV())
 				}
-				canShowSubtotal = (pivotField.defaultSubtotal || !visible);
+				canShowSubtotal = (1 === pivotField.asc_getSubtotals(true).length) || !visible || (maxRowR === rowFields.length - 1);
 			}
 			if (!canShowSubtotal) {
 				rowItemIndex = null;
@@ -7918,7 +7918,7 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(rowI
 					let colX = colItemX[colItemX.length - 1];
 					visible = pivotField.asc_getVisible(colX.getV())
 				}
-				canShowSubtotal = (pivotField.defaultSubtotal || !visible);
+				canShowSubtotal = (1 === pivotField.asc_getSubtotals(true).length) || !visible || (maxColR === colFields.length - 1);
 			}
 			if (!canShowSubtotal) {
 				colItemIndex = null;
