@@ -2140,7 +2140,9 @@
 		if (delayDiff < minAllowedDelta && durationDiff < minAllowedDelta ) { return }
 
 		const effectCopy = AscFormat.ExecuteNoHistory(function () {
-			return this.effect.createDuplicate();
+			let oCopy = this.effect.createDuplicate();
+			oCopy.merge(this.effect);
+			return oCopy;
 		}, this, []);
 
 		if (newDelay !== null && newDelay !== undefined) {
