@@ -1976,8 +1976,53 @@
 		}
 	}
 	CAnimItem.prototype.handleTimelineScroll = function (step) {
-		console.log('Таймлайн сдвинулся на ' + step.toFixed(3) + ' миллиметра');
-		// this.onUpdate();
+		if (!this.hitResult) { return }
+
+		// this.tmpDelay = null;
+		// this.tmpDuration = null;
+		// this.tmpRepeatCount = null;
+
+		const repeats = this.getRepeatCount() / 1000;
+		const diff = this.mm_to_ms(step);
+		let newTmpDelay, newTmpDuration, newTmpRepeatCount;
+		switch (this.hitResult.type) {
+			case 'center':
+				newTmpDelay = this.tmpDelay + diff;
+				this.tmpDelay = Math.max(newTmpDelay, 0);
+				break;
+
+			case 'right':
+				if (this.effect.isUntilEffect()) {
+					newTmpRepeatCount = this.tmpRepeatCount + diff / (this.effect.asc_getDuration() / 1000);
+					this.tmpRepeatCount = Math.max(newTmpRepeatCount, MIN_ALLOWED_REPEAT_COUNT);
+				} else {
+					const newTmpDuration = this.tmpDuration + diff / repeats;
+					this.tmpDuration = Math.max(MIN_ALLOWED_DURATION, newTmpDuration);
+				}
+				break;
+
+			case 'left':
+				newTmpDuration = this.tmpDuration - diff / repeats;
+				newTmpDelay = this.tmpDelay + diff;
+
+				const maxNewTmpDuration = this.effect.asc_getDelay() / repeats + this.effect.asc_getDuration();
+				const maxNewTmpDelay = this.effect.asc_getDelay() + (this.effect.asc_getDuration() - MIN_ALLOWED_DURATION) * repeats;
+
+				if (this.effect.isUntilEffect()) {
+					this.tmpDelay = Math.max(newTmpDelay, 0);
+				} else {
+					this.tmpDuration = Math.min(Math.max(newTmpDuration, MIN_ALLOWED_DURATION), maxNewTmpDuration);
+					this.tmpDelay = Math.min(Math.max(newTmpDelay, 0), maxNewTmpDelay);
+				}
+				break;
+
+			case 'partition':
+				const newTmpDuration = this.tmpDuration + diff / this.hitResult.index;
+				this.tmpDuration = Math.max(MIN_ALLOWED_DURATION, newTmpDuration);
+				break;
+		}
+
+		this.onUpdate();
 	}
 
 	CAnimItem.prototype.ms_to_mm = function (nMilliseconds) {
@@ -2222,7 +2267,6 @@
 		}
 
 		if (this.effect.isEqualProperties(effectCopy)) { return }
-		console.log('changes')
 		Asc.editor.WordControl.m_oLogicDocument.SetAnimationProperties(effectCopy);
 	};
 
