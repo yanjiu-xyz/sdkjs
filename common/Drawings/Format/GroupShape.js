@@ -682,7 +682,7 @@
 						this.selection.textSelection.select(this, this.selection.textSelection.selectStartPage);
 				} else if (this.selectedObjects.length > 0) {
 					if (this.parent) {
-						this.parent.GoTo_Text();
+						this.parent.GoToText();
 						this.resetSelection();
 					}
 				}

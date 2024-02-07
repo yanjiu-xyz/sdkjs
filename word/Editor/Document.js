@@ -21990,7 +21990,7 @@ CDocument.prototype.MoveToFillingForm = function(isNext)
 		if (!oRes)
 		{
 			this.DrawingObjects.resetSelection();
-			oParaDrawing.GoTo_Text(true !== isNext, false);
+			oParaDrawing.GoToText(true !== isNext, false);
 
 			// В случаях, когда у нас автофигура внутри другой автофигуры
 			var arrPassedParagraphs = [];
@@ -22025,7 +22025,7 @@ CDocument.prototype.MoveToFillingForm = function(isNext)
 				}
 				else
 				{
-					oParaDrawing.GoTo_Text(true !== isNext, false);
+					oParaDrawing.GoToText(true !== isNext, false);
 					oParagraph = this.GetCurrentParagraph();
 					oShape     = oParagraph.GetParent() ? oParagraph.GetParent().Is_DrawingShape(true) : null;
 				}
@@ -26715,7 +26715,7 @@ CDocument.prototype.GetSearchElementId = function(bNext)
 			return Id;
 
 		this.DrawingObjects.resetSelection();
-		ParaDrawing.GoTo_Text(true !== bNext, false);
+		ParaDrawing.GoToText(true !== bNext, false);
 	}
 
 	if (docpostype_Content === this.CurPos.Type)

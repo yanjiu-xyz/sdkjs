@@ -1951,7 +1951,7 @@ ParaDrawing.prototype.Get_ParentTextTransform = function()
 	}
 	return null;
 };
-ParaDrawing.prototype.GoTo_Text = function(bBefore, bUpdateStates)
+ParaDrawing.prototype.GoToText = function(bBefore, bUpdateStates)
 {
 	var Paragraph = this.Get_ParentParagraph();
 	if (Paragraph)
