@@ -7884,7 +7884,7 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(rowI
 			rowItemIndex = this.getDefaultSubtotalItemIndex(rowItems, rowItemIndex, rowFields, dataIndex, maxRowR);
 
 			const pivotField = pivotFields[rowFields[maxRowR].asc_getIndex()];
-			let canShowSubtotal = null !== rowItemIndex && (this.colGrandTotals || !this.asc_getColumnFields());
+			let canShowSubtotal = null !== rowItemIndex && (this.colGrandTotals || !this.asc_getColumnFields() || (maxRowR === rowFields.length - 1));
 			if (pivotField && canShowSubtotal) {
 				let visible = true;
 				let rowItemX = rowItems[rowItemIndex].x;
@@ -7909,7 +7909,7 @@ CT_pivotTableDefinition.prototype.getItemsIndexesByItemFieldsMap = function(rowI
 			colItemIndex = this.getDefaultSubtotalItemIndex(colItems, colItemIndex, colFields, dataIndex, maxColR);
 
 			const pivotField = pivotFields[colFields[maxColR].asc_getIndex()];
-			let canShowSubtotal = null !== colItemIndex && (this.rowGrandTotals || !this.asc_getRowFields());
+			let canShowSubtotal = null !== colItemIndex && (this.rowGrandTotals || !this.asc_getRowFields() || (maxColR === colFields.length - 1));
 			if (pivotField && canShowSubtotal) {
 				let visible = true;
 				let colItemX = colItems[colItemIndex].x;
