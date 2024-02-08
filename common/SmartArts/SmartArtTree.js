@@ -2208,6 +2208,9 @@
 function HierarchyAlgorithm() {
 	PositionAlgorithm.call(this);
 	this.verticalLevelPositions = {};
+	this.calcValues = {
+		mainChilds: null
+	};
 }
 	AscFormat.InitClassWithoutType(HierarchyAlgorithm, PositionAlgorithm);
 	HierarchyAlgorithm.prototype.moveToHierarchyOffsets = function (dx, dy) {
@@ -2258,15 +2261,18 @@ function HierarchyAlgorithm() {
 		return true;
 	};
 	HierarchyAlgorithm.prototype.getMainChilds = function () {
-		const childs = [];
-		for (let i = 0; i < this.parentNode.childs.length; i += 1) {
-			const child = this.parentNode.childs[i];
-			if (child.isContentNode()) {
-				childs.push(child);
+		if (this.calcValues.mainChilds === null) {
+			const childs = [];
+			for (let i = 0; i < this.parentNode.childs.length; i += 1) {
+				const child = this.parentNode.childs[i];
+				if (child.isContentNode()) {
+					childs.push(child);
+				}
 			}
+			this.calcValues.mainChilds = childs;
 		}
-		return childs;
-	}
+		return this.calcValues.mainChilds;
+	};
 	HierarchyAlgorithm.prototype._calculateShapePositions = function (isAdapt) {
 
 	};
@@ -2426,8 +2432,7 @@ function HierarchyAlgorithm() {
 		}
 	}
 	HierarchyChildAlgorithm.prototype.calculateVerticalShapePositions = function (isCalculateScaleCoefficient, fromTop) {
-		// todo: not suitable for caching
-		const childs = fromTop ? this.getMainChilds() : this.getMainChilds().reverse();
+		const childs = fromTop ? this.getMainChilds() : this.getMainChilds().slice().reverse();
 		const parentNode = this.parentNode;
 		const sibSp = parentNode.getConstr(AscFormat.Constr_type_sibSp, !isCalculateScaleCoefficient);
 		const commonBounds = this.getCommonChildBounds(isCalculateScaleCoefficient);
@@ -2456,8 +2461,7 @@ function HierarchyAlgorithm() {
 		return sibSp + offset;
 	};
 	HierarchyChildAlgorithm.prototype.calculateHorizontalShapePositions = function (isCalculateScaleCoefficient, fromLeft) {
-		//todo
-		const childs = fromLeft ? this.getMainChilds() : this.getMainChilds().reverse();
+		const childs = fromLeft ? this.getMainChilds() : this.getMainChilds().slice().reverse();
 
 		const firstShape = childs[0].getShape(isCalculateScaleCoefficient);
 		this.updateVerticalLevelPositions(childs[0].algorithm);
