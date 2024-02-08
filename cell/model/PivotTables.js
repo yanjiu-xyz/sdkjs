@@ -7807,7 +7807,6 @@ CT_pivotTableDefinition.prototype.getMaxSubtotalR = function(fields) {
  * @param {number} dataIndex 
  */
 CT_pivotTableDefinition.prototype.getDefaultSubtotalItemIndex = function(items, itemIndex, fields, dataIndex, r) {
-	// todo visible settings
 	const pivotFields = this.asc_getPivotFields();
 	let maxSubtotalR = this.getMaxSubtotalR(fields);
 	if (r < maxSubtotalR) {
