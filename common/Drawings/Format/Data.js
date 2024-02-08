@@ -6474,7 +6474,7 @@ Because of this, the display is sometimes not correct.
     HierBranch.prototype.fromPPTY = function (pReader) {
       var val = pReader.stream.ReadByteFromPPTY();
 	    if (val !== null) {
-		    this.setVal(val/* || AscFormat.HierBranch_val_std*/);
+		    this.setVal(val);
 	    }
     };
 
