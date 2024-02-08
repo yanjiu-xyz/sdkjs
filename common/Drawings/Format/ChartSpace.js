@@ -4286,12 +4286,13 @@ function(window, undefined) {
 			const strSeria = this.chart.plotArea.plotAreaRegion && this.chart.plotArea.plotAreaRegion.series ? this.chart.plotArea.plotAreaRegion.series[0] : null;
 			if (strSeria) {
 				const cachedData = this.chart.plotArea.plotAreaRegion.cachedData;
+				const type = this.chart.plotArea.plotAreaRegion.series[0].layoutId;
 				if (!cachedData || !oAxis.scale) {
 					return [];
 				}
 	
 				// if data is aggregated then convert array of integers into chars 
-				if (cachedData.aggregation) {
+				if (type === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN && cachedData.aggregation) {
 					const strCache = this.chart.plotArea.plotAreaRegion.series ? this.chart.plotArea.plotAreaRegion.series[0].getCatLit() : null;
 					if (strCache && strCache.pts) {
 						const mySet = {};
@@ -4306,7 +4307,7 @@ function(window, undefined) {
 					} else {
 						aStrings.push('');
 					}
-				} else if (cachedData.binning) {
+				} else if (type === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN && cachedData.binning) {
 					// obtain properly formated array of integers
 					const bStrings = this.getLabelsForAxis(oAxis, true);
 					const binning = cachedData.binning;
@@ -4346,6 +4347,8 @@ function(window, undefined) {
 							aStrings.push(alternativeEnd +  " " + val);
 						}
 					}
+				} else if (type === AscFormat.SERIES_LAYOUT_WATERFALL) {
+					aStrings = this.getLabelsForAxis(oAxis, true);
 				}
 			}
 		}
