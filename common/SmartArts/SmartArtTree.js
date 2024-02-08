@@ -2515,23 +2515,27 @@ function HierarchyAlgorithm() {
 			rightOffX = leftCalcBounds.commonBounds.r - rightCalcBounds.commonBounds.l + sibSp;
 		}
 		let offY = 0;
-		for (let i = 0; i < leftCol.length; i += 1) {
+		const columnLength = Math.ceil(childs.length / 2);
+		for (let i = 0; i < columnLength; i += 1) {
 			const leftNode = leftCol[i];
-			const leftShape = leftNode.getShape(isCalculateScaleCoefficient);
-			leftShape.moveTo(0, offY, isCalculateScaleCoefficient);
-
+			if (leftNode) {
+				const leftShape = leftNode.getShape(isCalculateScaleCoefficient);
+				leftShape.moveTo(0, offY, isCalculateScaleCoefficient);
+				this.updateVerticalLevelPositions(leftNode.algorithm, i);
+				this.setLevelBounds(startLevel + i, {l: leftShape.x, r: leftShape.x + leftShape.width, t: leftShape.y, b: leftShape.y + leftShape.height});
+			}
 			const rightNode = rightCol[i];
 			if (rightNode) {
 				const rightShape = rightNode.getShape(isCalculateScaleCoefficient);
 				rightShape.moveTo(rightOffX, offY, isCalculateScaleCoefficient);
-				const leftBounds = leftCalcBounds.bounds[i];
-				const rightBounds = rightCalcBounds.bounds[i];
-				offY += Math.max(leftBounds.b - leftBounds.t, rightBounds.b - rightBounds.t) + sibSp;
 				this.updateVerticalLevelPositions(rightNode.algorithm, i);
 				this.setLevelBounds(startLevel + i, {l: rightShape.x, r: rightShape.x + rightShape.width, t: rightShape.y, b: rightShape.y + rightShape.height});
 			}
-			this.updateVerticalLevelPositions(leftNode.algorithm, i);
-			this.setLevelBounds(startLevel + i, {l: leftShape.x, r: leftShape.x + leftShape.width, t: leftShape.y, b: leftShape.y + leftShape.height});
+			const leftBounds = leftCalcBounds.bounds[i];
+			const rightBounds = rightCalcBounds.bounds[i];
+			if (leftBounds && rightBounds) {
+				offY += Math.max(leftBounds.b - leftBounds.t, rightBounds.b - rightBounds.t) + sibSp;
+			}
 		}
 	};
 	HierarchyChildAlgorithm.prototype.calculateColumnBounds = function (column, isCalculateScaleCoefficient) {
