@@ -910,6 +910,28 @@
 		}
 	});
 
+
+	/**
+	 * Returns all comments from the current workbook including comments from all worksheets.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiComment[]}
+	 */
+	Api.prototype.GetAllComments = function () {
+		let aApiComments = this.GetComments();
+
+		let aWS = this.GetSheets();
+		for(let nWS = 0; nWS < aWS.length; ++nWS) {
+			aApiComments = aApiComments.concat(aWS[nWS].GetComments())
+		}
+		return aApiComments;
+	};
+	Object.defineProperty(Api.prototype, "AllComments", {
+		get: function () {
+			return this.GetAllComments();
+		}
+	});
+
 	/**
 	 * Specifies a type of freeze panes.
 	 * @typedef {("row" | "column" | "cell" | null )} FreezePaneType
@@ -6528,6 +6550,7 @@
 	Api.prototype["RecalculateAllFormulas"] = Api.prototype.RecalculateAllFormulas;
 	Api.prototype["AddComment"]  = Api.prototype.AddComment;
 	Api.prototype["GetComments"] = Api.prototype.GetComments;
+	Api.prototype["GetAllComments"] = Api.prototype.GetAllComments;
 	Api.prototype["GetCommentById"] = Api.prototype.GetCommentById;
 	Api.prototype["SetFreezePanesType"] = Api.prototype.SetFreezePanesType;
 	Api.prototype["GetFreezePanesType"] = Api.prototype.GetFreezePanesType;
