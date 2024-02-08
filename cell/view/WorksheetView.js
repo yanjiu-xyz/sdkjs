@@ -11291,26 +11291,26 @@
 			}
 		}
 		for (let i = 0; i < ranges.length; ++i) {
-        var name, res = [];
-        absName = absName || this.workbook.dialogAbsName;
-        addSheet = addSheet || this.workbook.getDialogSheetName();
-        if (this.model.selectionRange) {
-            var ranges = this.model.selectionRange.ranges;
+			var name, res = [];
+			absName = absName || this.workbook.dialogAbsName;
+			addSheet = addSheet || this.workbook.getDialogSheetName();
+			if (this.model.selectionRange) {
+				var ranges = this.model.selectionRange.ranges;
 
-			if (ranges.length === 1 && ranges[0].isOneCell() && this.getFormulaEditMode()) {
-				let range = ranges[0];
-				/**@type {CT_pivotTableDefinition[]} */
-				let pivotTables = this.model.getPivotTablesIntersectingRange(range);
-				if (pivotTables.length === 1) {
-					let formula = pivotTables[0].getGetPivotDataFormulaByActiveCell(range.r1, range.c1);
-					if (formula) {
-						res.push(formula);
-						return res;
+				if (ranges.length === 1 && ranges[0].isOneCell() && this.getFormulaEditMode()) {
+					let range = ranges[0];
+					/**@type {CT_pivotTableDefinition[]} */
+					let pivotTables = this.model.getPivotTablesIntersectingRange(range);
+					if (pivotTables.length === 1) {
+						let formula = pivotTables[0].getGetPivotDataFormulaByActiveCell(range.r1, range.c1);
+						if (formula) {
+							res.push(formula);
+							return res;
+						}
 					}
 				}
 			}
-		}
-            for (let i = 0; i < ranges.length; ++i) {
+			for (let i = 0; i < ranges.length; ++i) {
 				var range = ranges[i];
 				//делаю условие только для формул, просмотреть все остальные диапазоны
 				if (this.getFormulaEditMode()) {

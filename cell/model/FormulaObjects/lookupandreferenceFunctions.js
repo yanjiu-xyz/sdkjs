@@ -1162,20 +1162,12 @@ function (window, undefined) {
 	cGETPIVOTDATA.prototype.argumentsType = [argType.text, argType.text, [argType.text, argType.any]];
 	cGETPIVOTDATA.prototype.numFormat = AscCommonExcel.cNumFormatNone;
 	cGETPIVOTDATA.prototype.Calculate = function (arg) {
-		// arg0 - data_field - Имя поля сводной таблицы (строка в кавычках), из которого необходимо извлечь данные. 
-		// Имя может быть введено в точности как существующее имя поля или только корень названия, например если в аргумент ввести "second", то вернется поле с именем "Sum of second", "Count of second" и т.д.
-		// arg1 - pivot_table - ссылка на таблицу - если приходит диапазон, то нужно проверить каждую его ячейку на вхождение в таблицу
-		// Если ни одна ячейка диапазона не касается таблицы, то вовзращаем #REF
-		// Примечание: если диапазон включает в себя в несколько таблиц, то возвращаем самую новую таблицу
-		// ...arg2 - [field1,item1] - [имя поля, элемент] - пара имя и элемент указывают на элемент в поле, они создают пересечение из другого столбца/строки в результате которого 
-		// должно вернуться значение из искомого поля(arg0) или Grand total для выбранного пересечения 
+		// arg0 - data_field - pivot table name
+		//The name can be entered exactly like the existing field name or only the root of the name, for example, if you enter "second" in the argument, a field named "Sum of second", "Count of second", etc. will be returned.
+		// arg1 - pivot_table - pivot table range
+		// // If none of the cells in the range touch the table, then return #REF
+		// ...arg2 - [field1,item1] - [field name, element] - the name and element pair point to an element in the field
 
-		// Необходимо получить:
-		// - Все элементы поля (поле выбирается по имени)
-		// - Время жизни таблицы для того чтобы понимать какая из них была создана последней
-		// - Результат вычислений(total) для поля по его имени + возврат значения в зависимости от текущего типа операции subtotal. 
-		// Например если столбец суммирует значения по функции MAX, то из dataRow.total нужно вернуть max соответственно.
-		// - Проверка поля на существование по имени
 
 		const getPivotData = function (looking_field, pivot_table_ref, items_array) {
 			if (cElementType.cell !== pivot_table_ref.type && cElementType.cell3D !== pivot_table_ref.type && cElementType.cellsRange !== pivot_table_ref.type && cElementType.cellsRange3D !== pivot_table_ref.type) {
@@ -1246,7 +1238,6 @@ function (window, undefined) {
 			res = getPivotData(arg0.getValue(), arg1, arg2);
 		}
 
-		// добавить пересчет функции при изменении видимости любого из полей таблицы
 		if (res) {
 			return res
 		}
