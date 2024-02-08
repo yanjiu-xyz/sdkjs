@@ -6745,7 +6745,11 @@ function CAnimPaneListDrawer(page, htmlElement, parentDrawer)
 function CAnimPaneTimelineDrawer(page, htmlElement, parentDrawer)
 {
 	CPaneDrawerBase.call(this, page, htmlElement, parentDrawer, page.m_oAnimPaneTimelineContainer);
-	var oThis = this;
+	const oThis = this;
+
+	// this.oCurSlide = editor.WordControl.m_oLogicDocument.GetCurrentSlide();
+	this.oCurSlide = editor.WordControl.m_oLogicDocument ? editor.WordControl.m_oLogicDocument.GetCurrentSlide() : {};
+
 	oThis.CreateControl = function()
 	{
 		oThis.Control = new AscCommon.CTimelineContainer(this);
@@ -6755,6 +6759,14 @@ function CAnimPaneTimelineDrawer(page, htmlElement, parentDrawer)
 		const timing = oThis.Control.getTiming()
 		timing && timing.hasEffects() ?
 			oThis.Control.show() : oThis.Control.hide()
+
+		const actualCurrentSlide = Asc.editor.WordControl.m_oLogicDocument.GetCurrentSlide();
+		if (this.oCurSlide !== actualCurrentSlide) {
+			this.oCurSlide = actualCurrentSlide;
+			oThis.Control.timeline.setStartTime(0);
+			oThis.Control.timeline.setScrollOffset(0);
+		}
+
 	}
 }
 

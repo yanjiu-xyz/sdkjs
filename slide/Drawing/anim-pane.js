@@ -1133,7 +1133,7 @@
 
 		// This fields supposed to be private
 		// so it should not be changed directly.
-		// Use set methods insdead (setScrollOffset, setStartTimePos, timeScaleIndex)
+		// Use set methods insdead (setScrollOffset, setStartTime)
 		this.scrollOffset = 0; // in millimeters
 		this.startTime = 0; // in seconds
 		this.timeScaleIndex = 2;
@@ -1984,7 +1984,9 @@
 
 		const repeats = this.getRepeatCount() / 1000;
 		const diff = this.mm_to_ms(step);
-		let newTmpDelay, newTmpDuration, newTmpRepeatCount;
+		let newTmpDelay;
+		let newTmpDuration;
+		let newTmpRepeatCount;
 		switch (this.hitResult.type) {
 			case 'center':
 				newTmpDelay = this.tmpDelay + diff;
@@ -1996,7 +1998,7 @@
 					newTmpRepeatCount = this.tmpRepeatCount + diff / (this.effect.asc_getDuration() / 1000);
 					this.tmpRepeatCount = Math.max(newTmpRepeatCount, MIN_ALLOWED_REPEAT_COUNT);
 				} else {
-					const newTmpDuration = this.tmpDuration + diff / repeats;
+					newTmpDuration = this.tmpDuration + diff / repeats;
 					this.tmpDuration = Math.max(MIN_ALLOWED_DURATION, newTmpDuration);
 				}
 				break;
@@ -2017,7 +2019,7 @@
 				break;
 
 			case 'partition':
-				const newTmpDuration = this.tmpDuration + diff / this.hitResult.index;
+				newTmpDuration = this.tmpDuration + diff / this.hitResult.index;
 				this.tmpDuration = Math.max(MIN_ALLOWED_DURATION, newTmpDuration);
 				break;
 		}
@@ -2203,8 +2205,13 @@
 			}
 		}
 
+		this.drawConnectionLines(graphics);
+
 		graphics.RestoreGrState();
 	};
+	CAnimItem.prototype.drawConnectionLines = function (graphics) {
+
+	}
 	CAnimItem.prototype.hitInEffectBar = function (x, y) {
 		const bounds = this.getEffectBarBounds();
 		const isOutOfBorders = x < this.getLeftBorder() || x > this.getRightBorder() || y < bounds.t || y > bounds.b
