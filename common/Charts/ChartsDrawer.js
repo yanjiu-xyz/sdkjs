@@ -2209,8 +2209,8 @@ CChartsDrawer.prototype =
 		 * axis contains min and max values and logBase
 		 * if they are null just use yMin lowerBound and yMax upperBound
 		*/
-		let trueMin = (axis && axis.scaling && axis.scaling.min) !== null ? this._roundValue(axis.scaling.min, 9) : null;
-		let trueMax = (axis && axis.scaling && axis.scaling.max) !== null ? this._roundValue(axis.scaling.max, 9) : null;
+		let trueMin = (axis && axis.scaling && axis.scaling.min) !== null ? this._roundValue(axis.scaling.min) : null;
+		let trueMax = (axis && axis.scaling && axis.scaling.max) !== null ? this._roundValue(axis.scaling.max) : null;
 		yMin = (yMin <= 0 || yMin >= 1) ? 1 : yMin;
 		yMax = (yMax <= 0) ? logBase : yMax;
 		trueMin = (!trueMin || trueMin <= 0) ? yMin : trueMin;
@@ -2466,7 +2466,7 @@ CChartsDrawer.prototype =
 				//calculate calcProp -> /min/max/ymax/ymin/
 				this._calculateExtremumAllCharts(chartSpace);
 			} else {
-				this._prepChartExData(chartSpace, chartSpace.chart.plotArea, chartSpace.chart.plotArea.plotAreaRegion.series[0])
+				this._prepChartExData(chartSpace)
 			}
 		}
 
@@ -2474,18 +2474,18 @@ CChartsDrawer.prototype =
 		this.calcProp.heightCanvas = chartSpace.extY * this.calcProp.pxToMM;
 	},
 
-	_chartExHandleAxesConfigurations: function (catAxis, valAxis, iP) {
-		if (!catAxis || !valAxis || !iP ) {
+	_chartExHandleAxesConfigurations: function (catAxis, valAxis, axisProperties) {
+		if (!catAxis || !valAxis || !axisProperties ) {
 			return;
 		}
 
-		catAxis.min = iP.cat.min;
-		catAxis.max = iP.cat.max;
-		catAxis.scale = iP.cat.scale.length > 0 ? iP.cat.scale : this._roundValues(this._getAxisValues2(catAxis, this.cChartSpace, false, false));
+		catAxis.min = axisProperties.cat.min;
+		catAxis.max = axisProperties.cat.max;
+		catAxis.scale = axisProperties.cat.scale.length > 0 ? axisProperties.cat.scale : this._roundValues(this._getAxisValues2(catAxis, this.cChartSpace, false, false));
 
-		valAxis.min = iP.val.min;
-		valAxis.max = iP.val.max;
-		valAxis.scale = iP.val.scale.length > 0 ? iP.val.scale : this._roundValues(this._getAxisValues2(valAxis, this.cChartSpace, false, false));
+		valAxis.min = axisProperties.val.min;
+		valAxis.max = axisProperties.val.max;
+		valAxis.scale = axisProperties.val.scale.length > 0 ? axisProperties.val.scale : this._roundValues(this._getAxisValues2(valAxis, this.cChartSpace, false, false));
 
 		// Exchange cross axes 
 		catAxis.crossAx = valAxis;
@@ -2504,13 +2504,13 @@ CChartsDrawer.prototype =
 		axis.min = (axis.min === null || num < axis.min) ? num : axis.min;
 	},
 
-	_chartExHandleAggregation: function (type, cachedData, numArr, strArr, iP) {
-		if (type !== AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN || !cachedData || !numArr || !strArr || !iP) {
+	_chartExHandleAggregation: function (type, cachedData, numArr, strArr, axisProperties) {
+		if (type !== AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN || !cachedData || !numArr || !strArr || !axisProperties) {
 			return;
 		}
 		if (cachedData.aggregation) {
 			const aggregation = cachedData.aggregation;
-			iP.cat.scale.push(1);
+			axisProperties.cat.scale.push(1);
 			if (strArr.length !== 0) {
 				// create object of key and values
 				for (let i = 0; i < numArr.length; i++) {
@@ -2519,34 +2519,34 @@ CChartsDrawer.prototype =
 						aggregation[key] = 0;
 					}
 					aggregation[key] += numArr[i].val;
-					this._chartExSetAxisMinAndMax(iP.val, aggregation[key]);
+					this._chartExSetAxisMinAndMax(axisProperties.val, aggregation[key]);
 				}
 			} else {
 				// Cases when labels do not exist
 				const val = numArr[0].val ? numArr[0].val : 0;
 				aggregation[''] = val;
-				this._chartExSetAxisMinAndMax(iP.val, val);
+				this._chartExSetAxisMinAndMax(axisProperties.val, val);
 			}
 		}
 	},
 
 
-	_chartExHandleBinning: function (type, cachedData, numArr, iP) {
-		if (type !== AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN || !cachedData || !numArr || !iP) {
+	_chartExHandleBinning: function (type, cachedData, numArr, axisProperties) {
+		if (type !== AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN || !cachedData || !numArr || !axisProperties) {
 			return;
 		}
 		if (cachedData.binning) {
-			const handleCatLimits = function (localBinning, iP) {
-				if (!localBinning || !iP || !iP.cat) {
+			const handleCatLimits = function (localBinning, axisProperties) {
+				if (!localBinning || !axisProperties || !axisProperties.cat) {
 					return;
 				}
 				// uncomment when excel will fix the problem of overflow and underflow being incorrect in some moments
-				// const statement1 = localBinning.intervalClosed !== "r" ? localBinning.overflow < iP.cat.max && localBinning.overflow >= iP.cat.min : localBinning.overflow <= iP.cat.max && localBinning.overflow > iP.cat.min;
-				// const statement2 = localBinning.intervalClosed !== "r" ? localBinning.underflow >= iP.cat.min && localBinning.underflow < iP.cat.max : localBinning.underflow > iP.cat.min && localBinning.underflow <= iP.cat.max;
+				// const statement1 = localBinning.intervalClosed !== "r" ? localBinning.overflow < axisProperties.cat.max && localBinning.overflow >= axisProperties.cat.min : localBinning.overflow <= axisProperties.cat.max && localBinning.overflow > axisProperties.cat.min;
+				// const statement2 = localBinning.intervalClosed !== "r" ? localBinning.underflow >= axisProperties.cat.min && localBinning.underflow < axisProperties.cat.max : localBinning.underflow > axisProperties.cat.min && localBinning.underflow <= axisProperties.cat.max;
 				// localBinning.overflow = ((localBinning.overflow === 0 || localBinning.overflow) && statement1) ? localBinning.overflow : null;
 				// localBinning.underflow = ((localBinning.underflow === 0 || localBinning.underflow) && statement2) ? localBinning.underflow : null;
-				localBinning.overflow = ((localBinning.overflow === 0 || localBinning.overflow) && localBinning.overflow < iP.cat.max && localBinning.overflow >= iP.cat.min) ? localBinning.overflow : null;
-				localBinning.underflow = ((localBinning.underflow === 0 || localBinning.underflow) && localBinning.underflow > iP.cat.min && localBinning.underflow <= iP.cat.max) ? localBinning.underflow : null;
+				localBinning.overflow = ((localBinning.overflow === 0 || localBinning.overflow) && localBinning.overflow < axisProperties.cat.max && localBinning.overflow >= axisProperties.cat.min) ? localBinning.overflow : null;
+				localBinning.underflow = ((localBinning.underflow === 0 || localBinning.underflow) && localBinning.underflow > axisProperties.cat.min && localBinning.underflow <= axisProperties.cat.max) ? localBinning.underflow : null;
 				const limits = {
 					isOverflowExist : localBinning.overflow === 0 || localBinning.overflow ? true : false,
 					isUnderflowExist : localBinning.underflow === 0 || localBinning.underflow ? true : false,
@@ -2557,13 +2557,13 @@ CChartsDrawer.prototype =
 					localBinning.overflow = null;
 					limits.isOverflowExist = false;
 				}
-				limits.trueMax = limits.isOverflowExist ? localBinning.overflow : iP.cat.max;
-				limits.trueMin = limits.isUnderflowExist ? localBinning.underflow : iP.cat.min;
+				limits.trueMax = limits.isOverflowExist ? localBinning.overflow : axisProperties.cat.max;
+				limits.trueMin = limits.isUnderflowExist ? localBinning.underflow : axisProperties.cat.min;
 				return limits;
 			}
 			
-			const calculateBinSizeAndCount = function (localBinning, cL, numArr, iP) {
-				if (!localBinning || !cL || !numArr || !iP) {
+			const calculateBinSizeAndCount = function (localBinning, cL, numArr, axisProperties) {
+				if (!localBinning || !cL || !numArr || !axisProperties) {
 					return;
 				}
 				if (localBinning.binSize) {
@@ -2578,20 +2578,21 @@ CChartsDrawer.prototype =
 					// Find stdev 
 					// formula = sqrt((∑(x - mean)^2)/(n-1))
 					let isUnique = true;
-
+					let mean = 0;
+					let stDev = 0;
 					for (let i = 0; i < numArr.length; i++) {
-						iP.mean += numArr[i].val;
+						mean += numArr[i].val;
 					}
-					iP.mean /= numArr.length;
+					mean /= numArr.length;
 
 					for (let i = 0; i < numArr.length; i++) {
 						isUnique = numArr[i].val === numArr[0].val ? true : false;
-						iP.stDev += Math.pow((numArr[i].val - iP.mean), 2);
+						stDev += Math.pow((numArr[i].val - mean), 2);
 					}
-					iP.stDev = Math.sqrt(iP.stDev / Math.max(numArr.length - 1, 1));
+					stDev = Math.sqrt(stDev / Math.max(numArr.length - 1, 1));
 
 					// Calculate bin size and bin count
-					localBinning.binSize = (3.5 * iP.stDev) / (Math.pow(numArr.length, 1 / 3));
+					localBinning.binSize = (3.5 * stDev) / (Math.pow(numArr.length, 1 / 3));
 					localBinning.binCount = (localBinning.binSize) ? Math.max(Math.ceil((cL.trueMax - cL.trueMin) / localBinning.binSize), 1) : 1;
 					localBinning.normalized = false;
 					if (isUnique) {
@@ -2603,8 +2604,8 @@ CChartsDrawer.prototype =
 				}
 			}
 
-			const addRangesAndFillCatScale = function (localResults, localBinning, cL, iP) {
-				if (!localResults || !localBinning || !cL || !iP) {
+			const addRangesAndFillCatScale = function (localResults, localBinning, cL, axisProperties) {
+				if (!localResults || !localBinning || !cL || !axisProperties) {
 					return;
 				}
 				let prev = cL.trueMin;
@@ -2615,7 +2616,7 @@ CChartsDrawer.prototype =
 					addRange(null, prev);
 				}
 
-				iP.cat.scale.push(prev);
+				axisProperties.cat.scale.push(prev);
 				for (let i = 0; i < localBinning.binCount; i++) {
 					let curr = prev + localBinning.binSize;
 
@@ -2625,7 +2626,7 @@ CChartsDrawer.prototype =
 
 					addRange(prev, curr);
 					prev = curr;
-					iP.cat.scale.push(curr);
+					axisProperties.cat.scale.push(curr);
 				}
 
 				if (cL.isOverflowExist) {
@@ -2633,13 +2634,13 @@ CChartsDrawer.prototype =
 				}
 			}
 
-			const countOccurrencesAndValExtremum = function (localResults, localBinning, numArr, iP, chartsDrawer) {
-				if (!localResults || !localBinning || !numArr || !iP) {
+			const countOccurrencesAndValExtremum = function (localResults, localBinning, numArr, axisProperties, chartsDrawer) {
+				if (!localResults || !localBinning || !numArr || !axisProperties) {
 					return ;
 				}
 				if (numArr.length === 1) {
 					localResults[0].occurrence++;
-					chartsDrawer._chartExSetAxisMinAndMax(iP.val, 1);
+					chartsDrawer._chartExSetAxisMinAndMax(axisProperties.val, 1);
 				} else {
 					for (let i = 0; i < numArr.length; i++) {
 						// sometimes when bincount is fixed, values shifts into the last bean. 
@@ -2655,13 +2656,13 @@ CChartsDrawer.prototype =
 							if (statement1 || statement2) {
 								isFound = true;
 								localResults[j].occurrence++;
-								chartsDrawer._chartExSetAxisMinAndMax(iP.val, localResults[j].occurrence);
+								chartsDrawer._chartExSetAxisMinAndMax(axisProperties.val, localResults[j].occurrence);
 							}
 						}
 						if (!isFound && localResults.length > 1) {
 							const lastIndex = localResults.length - 1;
 							localResults[lastIndex].occurrence++;
-							chartsDrawer._chartExSetAxisMinAndMax(iP.val, localResults[lastIndex].occurrence);
+							chartsDrawer._chartExSetAxisMinAndMax(axisProperties.val, localResults[lastIndex].occurrence);
 						}
 					}
 				}
@@ -2669,24 +2670,24 @@ CChartsDrawer.prototype =
 
 			const localBinning = cachedData.binning;
 			const localResults = cachedData.results;
-			const catLimits = handleCatLimits(localBinning, iP);
-			calculateBinSizeAndCount(localBinning, catLimits, numArr, iP);
-			// if binSize is calculated automatically, it must be rounded!
-			localBinning.binSize = !localBinning.normalized ? this._roundValue(localBinning.binSize, 1) : localBinning.binSize;
-			addRangesAndFillCatScale(localResults, localBinning, catLimits, iP);
-			countOccurrencesAndValExtremum(localResults, localBinning, numArr, iP, this);
+			const catLimits = handleCatLimits(localBinning, axisProperties);
+			calculateBinSizeAndCount(localBinning, catLimits, numArr, axisProperties);
+			// if binSize is calculated automatically, it must be rounded to two digits. Example: 78.65 = 79, 0.856 : 0.86!
+			localBinning.binSize = !localBinning.normalized ? this._roundValue(localBinning.binSize, AscFormat.BINNING_PRECISION) : localBinning.binSize;
+			addRangesAndFillCatScale(localResults, localBinning, catLimits, axisProperties);
+			countOccurrencesAndValExtremum(localResults, localBinning, numArr, axisProperties, this);
 		}
 	},
 
-	_chartExHandleAccumulation: function (type, numArr, iP) {
-		if (type != AscFormat.SERIES_LAYOUT_WATERFALL || !numArr || !iP) {
+	_chartExHandleAccumulation: function (type, numArr, axisProperties) {
+		if (type != AscFormat.SERIES_LAYOUT_WATERFALL || !numArr || !axisProperties) {
 			return;
 		}
-		iP.val.min = 0;
-		iP.val.max = 0;
+		axisProperties.val.min = 0;
+		axisProperties.val.max = 0;
 		for (let i = 0; i < numArr.length; i++) {
-			iP.val.max += numArr[i].val;
-			iP.cat.scale.push(numArr[i].idx + 1);
+			axisProperties.val.max += numArr[i].val;
+			axisProperties.cat.scale.push(numArr[i].idx + 1);
 		}
 	},
 
@@ -2730,9 +2731,7 @@ CChartsDrawer.prototype =
 			const numArr = numLit.pts;
 			const strArr = strCache ? strCache.pts : [];
 			const cachedData = plotArea.plotAreaRegion.cachedData;
-			const intrinsicProperties = {
-				stDev : null,
-				mean : 0,
+			const axisProperties = {
 				cat : {max: null, min:null, scale : []},
 				val : {max: null, min:null, scale : []},
 			}
@@ -2740,48 +2739,48 @@ CChartsDrawer.prototype =
 			if (cachedData) {
 				catAxis.scale = [];
 
-				const calculateExtremums = function (iP, numArr, isUniqueLabels, chartsDrawer) {
-					if (!iP || !numArr) {
+				const calculateExtremums = function (axisProperties, numArr, isUniqueLabels, chartsDrawer) {
+					if (!axisProperties || !numArr) {
 						return;
 					}
-					if (!iP.mean && !iP.catMax && !iP.catMin) {
+					if (!axisProperties.mean && !axisProperties.catMax && !axisProperties.catMin) {
 						if (isUniqueLabels) {
 							for (let i = 0; i < numArr.length; i++) {
-								chartsDrawer._chartExSetAxisMinAndMax(iP.cat, numArr[i].val);
+								chartsDrawer._chartExSetAxisMinAndMax(axisProperties.cat, numArr[i].val);
 							}
 						} else {
-							iP.cat.min = numArr.length > 0 ? numArr[0].idx + 1 : 0;
-							iP.cat.max = numArr.length > 0 ? numArr[numArr.length - 1].idx + 1 : 0;
+							axisProperties.cat.min = numArr.length > 0 ? numArr[0].idx + 1 : 0;
+							axisProperties.cat.max = numArr.length > 0 ? numArr[numArr.length - 1].idx + 1 : 0;
 						}
 					}
 				}
 
-				const handleUserTypedValMinMax = function (iP, valAxis, chartsDrawer) {
-					if (!iP || !valAxis) {
+				const handleUserTypedValMinMax = function (axisProperties, valAxis, chartsDrawer) {
+					if (!axisProperties || !valAxis) {
 						return;
 					}
 					//check for user typed max and min properties
-					let trueValMin = (valAxis.scaling && valAxis.scaling.min != null) ? chartsDrawer._roundValue(valAxis.scaling.min, 9) : null;
-					let trueValMax = (valAxis.scaling && valAxis.scaling.max != null) ? chartsDrawer._roundValue(valAxis.scaling.max, 9) : null;
-					trueValMin = (trueValMin != 0 && !trueValMin) ? iP.val.min : trueValMin;
-					trueValMax = (trueValMax != 0 && !trueValMax) ? iP.val.max : trueValMax;
+					let trueValMin = (valAxis.scaling && valAxis.scaling.min != null) ? chartsDrawer._roundValue(valAxis.scaling.min) : null;
+					let trueValMax = (valAxis.scaling && valAxis.scaling.max != null) ? chartsDrawer._roundValue(valAxis.scaling.max) : null;
+					trueValMin = (trueValMin !== 0 && !trueValMin) ? axisProperties.val.min : trueValMin;
+					trueValMax = (trueValMax !== 0 && !trueValMax) ? axisProperties.val.max : trueValMax;
 
 					//for the cases when max >= min ;
 					trueValMax = (trueValMax === 0) ? 1 : trueValMax;
 					trueValMin = (trueValMax < trueValMin) ? trueValMax * 2 : trueValMin;
 
-					iP.val.max = trueValMax;
-					iP.val.min = trueValMin;
+					axisProperties.val.max = trueValMax;
+					axisProperties.val.min = trueValMin;
 				};
 
 				// Histogram has unique labels. Example: [1, 3], (3, 7], ... etc.
 				const isUniqueLabels = (numSeria.layoutId === 1) ? true : false;
-				calculateExtremums(intrinsicProperties, numArr, isUniqueLabels, this);
-				this._chartExHandleAggregation(numSeria.layoutId, plotArea.plotAreaRegion.cachedData, numArr, strArr, intrinsicProperties);
-				this._chartExHandleBinning(numSeria.layoutId, plotArea.plotAreaRegion.cachedData, numArr, intrinsicProperties);
-				this._chartExHandleAccumulation(numSeria.layoutId, numArr, intrinsicProperties);
-				handleUserTypedValMinMax(intrinsicProperties, valAxis, this);
-				this._chartExHandleAxesConfigurations(catAxis, valAxis, intrinsicProperties);
+				calculateExtremums(axisProperties, numArr, isUniqueLabels, this);
+				this._chartExHandleAggregation(numSeria.layoutId, plotArea.plotAreaRegion.cachedData, numArr, strArr, axisProperties);
+				this._chartExHandleBinning(numSeria.layoutId, plotArea.plotAreaRegion.cachedData, numArr, axisProperties);
+				this._chartExHandleAccumulation(numSeria.layoutId, numArr, axisProperties);
+				handleUserTypedValMinMax(axisProperties, valAxis, this);
+				this._chartExHandleAxesConfigurations(catAxis, valAxis, axisProperties);
 			}
 		}
 	},
@@ -3586,7 +3585,7 @@ CChartsDrawer.prototype =
 	_roundValues: function (values) {
 		if (values.length) {
 		  for (let i = 0; i < values.length; i++) {
-			values[i] = this._roundValue(values[i], 9);
+			values[i] = this._roundValue(values[i]);
 		  }
 		}
 	  
@@ -3600,6 +3599,11 @@ CChartsDrawer.prototype =
 
 		if (num === 0) {
 			return num;
+		}
+
+		if (!precision || precision < 0) {
+			//default precision is 9! 
+			precision = 9;
 		}
 
 		let count = 0;
