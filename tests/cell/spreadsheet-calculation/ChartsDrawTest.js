@@ -1604,6 +1604,15 @@ $(function () {
 		})
 	}
 
+	const areSameStrings = function (result, check) {
+		for(let i=0; i< result.length; i++){
+			if(result[i] !== check[i]){
+				return false
+			}
+		}
+		return true
+	}
+
 	const areSame = function (result, check){
 		for(let i=0; i< result.length; i++){
 			if(!isEqual(result[i], check[i])){
@@ -3945,6 +3954,88 @@ $(function () {
 		})
 	}
 
+	function testHistogramHandleAggregation () {
+		QUnit.test("Test: Histogram aggregation calculations", function (assert) {
+
+			let chartsDrawer = new AscFormat.CChartsDrawer();
+			let cachedData = {aggregation : {}}
+			let axisProperties = {
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			}
+			let numArr = [{val: 7}, {val: 9}]
+			let strArr = [{val: "c"}, {val: "#"}]
+			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
+			result = [['c', '#'], [7, 9]]
+			let keys = Object.keys(cachedData.aggregation);
+			let values = Object.values(cachedData.aggregation);
+
+			assert.ok(areSameStrings(result[0], keys), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + keys);
+			assert.ok(areSame(result[1], values), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + values);
+
+			cachedData = {aggregation : {}}
+			axisProperties = {
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			}
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}]
+			strArr = [{val: "c"}, {val: "#"}, {val: "f"}, {val: "c"}, {val: "c"}, {val: "c"}, {val: "c"}, {val: "f"}, {val: "f"}, {val: "d"}, {val: "f"}, {val: "d"}, {val: "d"}]
+			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
+			result = [['c', '#', 'f', 'd'], [247, 9, 381, 451]]
+			keys = Object.keys(cachedData.aggregation);
+			values = Object.values(cachedData.aggregation);
+
+			assert.ok(areSameStrings(result[0], keys), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + keys);
+			assert.ok(areSame(result[1], values), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + values);
+
+			cachedData = {aggregation : {}}
+			axisProperties = {
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			}
+			numArr = [{val: 7},]
+			strArr = []
+			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
+			result = [[''], [7]]
+			keys = Object.keys(cachedData.aggregation);
+			values = Object.values(cachedData.aggregation);
+
+			assert.ok(areSameStrings(result[0], keys), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + keys);
+			assert.ok(areSame(result[1], values), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + values);
+
+			cachedData = {aggregation : {}}
+			axisProperties = {
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			}
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}]
+			strArr = [{val: "7"}, {val: "7"}, {val: "31"}, {val: "31"}, {val: "47"}, {val: "75"}, {val: "87"}, {val: "115"}, {val: "116"}, {val: "119"}, {val: "119"}, {val: "155"}, {val: "177"}]
+			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
+			result = [['7', '31', '47', '75', '87', '115', '116', '119', '155', '177'], [16, 62, 47, 75, 87, 115, 116, 238, 155, 177]]
+			keys = Object.keys(cachedData.aggregation);
+			values = Object.values(cachedData.aggregation);
+
+			assert.ok(areSameStrings(result[0], keys), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + keys);
+			assert.ok(areSame(result[1], values), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + values);
+
+			cachedData = {aggregation : {}}
+			axisProperties = {
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			}
+			numArr = [{val: 0}, {val: 9}, {val: 31}, {val: 0}]
+			strArr = [{val: "c"}, {val: "#"}, {val: "f"}, {val: "c"}]
+			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
+			result = [['c', '#', 'f'], [0, 9, 31]]
+			keys = Object.keys(cachedData.aggregation);
+			values = Object.values(cachedData.aggregation);
+
+			assert.ok(areSameStrings(result[0], keys), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + keys);
+			assert.ok(areSame(result[1], values), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + values);
+
+		})
+	}
+
 	QUnit.module("ChartsDraw");
 
 	function startTests() {
@@ -3960,5 +4051,6 @@ $(function () {
 		testDispR()
 		testIntercept();
 		testLineBuilderApproximatedBezier();
+		testHistogramHandleAggregation();
 	}
 });
