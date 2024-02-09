@@ -903,7 +903,7 @@ CGraphicObjects.prototype =
             || AscFormat.isRealNumber(oApplyProps.rotAdd)
             || AscFormat.isRealBool(oApplyProps.flipH)|| AscFormat.isRealBool(oApplyProps.flipV)
             || AscFormat.isRealBool(oApplyProps.flipHInvert)|| AscFormat.isRealBool(oApplyProps.flipVInvert) || (typeof oApplyProps.type === "string")
-            || AscCommon.isRealObject(oApplyProps.shadow) || oApplyProps.shadow === null)
+            || AscCommon.isRealObject(oApplyProps.shadow) || oApplyProps.shadow === null || oApplyProps.bSetOriginalSize)
         {
             /*в случае если в насторойках ParaDrawing стоит UseAlign - пересчитываем drawing, т. к. ширина и высото ParaDrawing рассчитывается по bounds*/
             var aSelectedObjects = this.selectedObjects;
@@ -926,6 +926,7 @@ CGraphicObjects.prototype =
     },
 
     applyDrawingProps: DrawingObjectsController.prototype.applyDrawingProps,
+    updateConnectors: function (bMoveFlag) {},
     sendCropState: DrawingObjectsController.prototype.sendCropState,
 
     CheckAutoFit : function()

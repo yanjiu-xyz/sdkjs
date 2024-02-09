@@ -3529,8 +3529,8 @@
 				},
 
 				applyDrawingProps: function (props) {
-					var objects_by_type = this.getSelectedObjectsByTypes(true);
-					var i;
+					let objects_by_type = this.getSelectedObjectsByTypes(true);
+					let i;
 					if (AscFormat.isRealNumber(props.verticalTextAlign)) {
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
 							objects_by_type.shapes[i].setVerticalAlign(props.verticalTextAlign);
@@ -3854,62 +3854,47 @@
 							}
 						}
 					}
-					var oApi = editor || Asc['editor'];
+					var oApi = Asc.editor;
 					var editorId = oApi.getEditorId();
 					var bMoveFlag = true;
+
+
+
+					function fApplyDrawingSize(oSp, oPr) {
+						oSp.applyDrawingSize(oPr)
+						if (oSp.group) {
+							checkObjectInArray(aGroups, oSp.group.getMainGroup());
+						}
+					}
+
+					if(props.bSetOriginalSize) {
+						let aImages = objects_by_type.images;
+						for (let nImg = 0; nImg < aImages.length; ++nImg) {
+							let oImg = aImages[nImg];
+							let sUrl = oImg.getImageUrl();
+							if(sUrl) {
+								let oProps = new Asc.asc_CImgProperty();
+								oProps.ImageUrl = sUrl;
+								let oSize = oProps.asc_getOriginSize(oApi);
+								if(oSize.asc_getIsCorrect()) {
+									oProps.Width = oSize.asc_getImageWidth();
+									oProps.Height = oSize.asc_getImageHeight();
+									fApplyDrawingSize(oImg, oProps);
+								}
+							}
+						}
+					}
 					if (AscFormat.isRealNumber(props.Width) || AscFormat.isRealNumber(props.Height)) {
 
-						function fApplyDrawingSize(oSp) {
-							let oSpParent = oSp.parent;
-							let oXfrm = oSp.spPr.xfrm;
-							CheckSpPrXfrm3(oSp);
-							if (!props.SizeRelH && AscFormat.isRealNumber(props.Width)) {
-								oXfrm.setExtX(props.Width);
-								if (oSpParent instanceof AscCommonWord.ParaDrawing) {
-									oSpParent.SetSizeRelH({
-										RelativeFrom: c_oAscSizeRelFromH.sizerelfromhPage,
-										Percent: 0
-									});
-								}
-							}
-							if (!props.SizeRelV && AscFormat.isRealNumber(props.Height)) {
-								oXfrm.setExtY(props.Height);
-								if (oSpParent instanceof AscCommonWord.ParaDrawing) {
-									oSpParent.SetSizeRelV({
-										RelativeFrom: c_oAscSizeRelFromV.sizerelfromvPage,
-										Percent: 0
-									});
-								}
-							}
-							if (oSpParent instanceof AscCommonWord.ParaDrawing) {
-								if (oSpParent.SizeRelH && !oSpParent.SizeRelV) {
-									oSpParent.SetSizeRelV({
-										RelativeFrom: c_oAscSizeRelFromV.sizerelfromvPage,
-										Percent: 0
-									});
-								}
-								if (oSpParent.SizeRelV && !oSpParent.SizeRelH) {
-									oSpParent.SetSizeRelH({
-										RelativeFrom: c_oAscSizeRelFromH.sizerelfromhPage,
-										Percent: 0
-									});
-								}
-							}
-							oSp.ResetParametersWithResize(true);
-							if (oSp.group) {
-								checkObjectInArray(aGroups, oSp.group.getMainGroup());
-							}
-							oSp.checkDrawingBaseCoords();
-						}
 
 						for (i = 0; i < objects_by_type.shapes.length; ++i) {
-							fApplyDrawingSize(objects_by_type.shapes[i]);
+							fApplyDrawingSize(objects_by_type.shapes[i], props);
 						}
 						for (i = 0; i < objects_by_type.images.length; ++i) {
-							fApplyDrawingSize(objects_by_type.images[i]);
+							fApplyDrawingSize(objects_by_type.images[i], props);
 						}
 						for (i = 0; i < objects_by_type.charts.length; ++i) {
-							fApplyDrawingSize(objects_by_type.charts[i]);
+							fApplyDrawingSize(objects_by_type.charts[i], props);
 						}
 						for (i = 0; i < objects_by_type.smartArts.length; ++i) {
 							let oSmartArt = objects_by_type.smartArts[i];
@@ -3926,7 +3911,7 @@
 						}
 						for (i = 0; i < objects_by_type.oleObjects.length; ++i) {
 							let oOleObject = objects_by_type.oleObjects[i];
-							fApplyDrawingSize(oOleObject);
+							fApplyDrawingSize(oOleObject, props);
 							var api = window.editor || window["Asc"]["editor"];
 							if (api) {
 								var pluginData = new Asc.CPluginData();
@@ -4088,14 +4073,7 @@
 					}
 
 					if (bCheckConnectors) {
-						var aConnectors = this.getConnectorsForCheck();
-						for (i = 0; i < aConnectors.length; ++i) {
-							aConnectors[i].calculateTransform(bMoveFlag);
-							var oGroup = aConnectors[i].getMainGroup();
-							if (oGroup) {
-								checkObjectInArray(aGroups, oGroup);
-							}
-						}
+						this.updateConnectors(bMoveFlag);
 					}
 
 					for (i = 0; i < aGroups.length; ++i) {
@@ -4185,6 +4163,21 @@
 						}
 					}
 					return objects_by_type;
+				},
+
+				updateConnectors: function(bMove) {
+					let aGroups = [];
+					let aConnectors = this.getConnectorsForCheck();
+					for (let nIdx = 0; nIdx < aConnectors.length; ++nIdx) {
+						aConnectors[nIdx].calculateTransform(bMove);
+						let oGroup = aConnectors[nIdx].getMainGroup();
+						if (oGroup) {
+							checkObjectInArray(aGroups, oGroup);
+						}
+					}
+					for (let nIdx = 0; nIdx < aGroups.length; ++nIdx) {
+						aGroups[nIdx].updateCoordinatesAfterInternalResize();
+					}
 				},
 
 				getSelectedObjectsByTypes: function (bGroupedObjects) {

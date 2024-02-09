@@ -4780,11 +4780,29 @@
 	// speech
 	baseEditorsApi.prototype["setSpeechEnabled"] = function(isEnabled) {
 		if (!AscCommon.EditorActionSpeaker)
+		{
+			AscCommon.EditorActionSpeakerInitData = { isEnabled : isEnabled };
 			return;
+		}
 		if (isEnabled)
 			AscCommon.EditorActionSpeaker.run();
 		else
 			AscCommon.EditorActionSpeaker.stop();
+	};
+
+	baseEditorsApi.prototype.asc_getFilePath = function(callback)
+	{
+		if (window["AscDesktopEditor"]) {
+			window["AscDesktopEditor"]["OpenFilenameDialog"]("All files (*.*)", false, function(_file) {
+				var file = _file;
+				if (Array.isArray(file)) {
+					file = file[0];
+				}
+				callback(file);
+			});
+		} else {
+			callback(null);
+		}
 	};
 
 	//----------------------------------------------------------export----------------------------------------------------
@@ -4855,5 +4873,6 @@
 	prot['asc_findText'] = prot.asc_findText;
 	prot['asc_endFindText'] = prot.asc_endFindText;
 	prot['asc_setContentDarkMode'] = prot.asc_setContentDarkMode;
+	prot['asc_getFilePath'] = prot.asc_getFilePath;
 
 })(window);
