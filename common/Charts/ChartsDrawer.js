@@ -12793,6 +12793,23 @@ drawScatterChart.prototype = {
 	_recalculateScatter: function () {
 		let seria, yVal, xVal, points, yNumCache, compiledMarkerSize, compiledMarkerSymbol, yPoint, idx, xPoint;
 		let dispBlanksAs =  this.cChartSpace.chart.dispBlanksAs;
+
+		let t = this;
+		let _initObjs = function (_index) {
+			if (!t.paths.points) {
+				t.paths.points = [];
+			}
+			if (!t.paths.points[_index]) {
+				t.paths.points[_index] = [];
+			}
+			if (!points) {
+				points = [];
+			}
+			if (!points[_index]) {
+				points[_index] = [];
+			}
+		};
+
 		for (let i = 0; i < this.chart.series.length; i++) {
 			seria = this.chart.series[i];
 			yNumCache = this.cChartDrawer.getNumCache(seria.yVal);
@@ -12811,6 +12828,7 @@ drawScatterChart.prototype = {
 				if (dispBlanksAs === AscFormat.DISP_BLANKS_AS_ZERO || dispBlanksAs === AscFormat.DISP_BLANKS_AS_GAP) {
 					if (yNumCache.pts[n-1] && yNumCache.pts[n] && yNumCache.pts[n].idx - yNumCache.pts[n-1].idx > 1) {
 						for (let k = 0; k < yNumCache.pts[n].idx - yNumCache.pts[n-1].idx - 1; k++) {
+							_initObjs(i);
 							this.paths.points[i].push(null);
 							points[i].push(dispBlanksAs === AscFormat.DISP_BLANKS_AS_ZERO ? {x: 0, y: 0} : null);
 						}
@@ -12831,19 +12849,7 @@ drawScatterChart.prototype = {
 						compiledMarkerSymbol = yPoint.compiledMarker.symbol;
 					}
 
-					if (!this.paths.points) {
-						this.paths.points = [];
-					}
-					if (!this.paths.points[i]) {
-						this.paths.points[i] = [];
-					}
-
-					if (!points) {
-						points = [];
-					}
-					if (!points[i]) {
-						points[i] = [];
-					}
+					_initObjs(i);
 
 					if (yVal != null) {
 						let x = this.cChartDrawer.getYPosition(xVal, this.catAx);

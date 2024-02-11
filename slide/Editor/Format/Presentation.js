@@ -6397,10 +6397,15 @@ CPresentation.prototype.ResolveAllComments = function (isMine, isCurrent, arrIds
 	}
 };
 CPresentation.prototype.GetAllComments = function (aAllComments, isMine, isCurrent, aIds) {
-	this.comments.getAllComments(aAllComments, isMine, isCurrent, aIds);
-	for (var i = 0; i < this.Slides.length; ++i) {
-		this.Slides[i].getAllComments(aAllComments, isMine, isCurrent, aIds);
+	let aResult = aAllComments;
+	if(!Array.isArray(aAllComments)) {
+		aResult = [];
 	}
+	this.comments.getAllComments(aResult, isMine, isCurrent, aIds);
+	for (var i = 0; i < this.Slides.length; ++i) {
+		this.Slides[i].getAllComments(aResult, isMine, isCurrent, aIds);
+	}
+	return aResult;
 };
 
 CPresentation.prototype.Remove = function (Count, bOnlyText, bRemoveOnlySelection, bOnTextAdd, isWord) {

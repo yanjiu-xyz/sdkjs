@@ -8663,6 +8663,8 @@ background-repeat: no-repeat;\
 			this.WordControl.m_oDrawingDocument.ClearCachePages();
 			this.WordControl.OnResize(true);
 		}
+
+		this.checkInputMode();
 	};
 
 	asc_docs_api.prototype.OnMouseUp = function(x, y)
