@@ -162,35 +162,37 @@
 	PDFEditorApi.prototype.asc_CheckCopy = function(_clipboard /* CClipboardData */, _formats) {
 		if (!this.DocumentRenderer)
 			return;
-		
-		var _text_object = (AscCommon.c_oAscClipboardDataFormat.Text & _formats) ? {Text : ""} : null;
-		var _html_data;
+
 		let oDoc = this.DocumentRenderer.getPDFDoc();
 		var oActiveForm = oDoc.activeForm;
 		if (oActiveForm && oActiveForm.content.IsSelectionUse()) {
 			let sText = oActiveForm.content.GetSelectedText(true);
 			if (!sText)
 				return;
-			
-			_text_object.Text = sText;
-			_html_data = "<div><p><span>" + sText + "</span></p></div>";
+
+			if (AscCommon.c_oAscClipboardDataFormat.Text & _formats)
+				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Text, sText);
+
+			if (AscCommon.c_oAscClipboardDataFormat.Html & _formats)
+				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, "<div><p><span>" + sText + "</span></p></div>");
 		}
 		else {
-			_html_data = this.DocumentRenderer.Copy(_text_object)
+			let _text_object = {Text: ""};
+			let _html_data = this.DocumentRenderer.Copy(_text_object);
+
+			if (AscCommon.c_oAscClipboardDataFormat.Text & _formats)
+				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Text, _text_object.Text);
+
+			if (AscCommon.c_oAscClipboardDataFormat.Html & _formats)
+				_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, _html_data);
 		}
-
-		if (AscCommon.c_oAscClipboardDataFormat.Text & _formats)
-			_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Text, _text_object.Text);
-
-		if (AscCommon.c_oAscClipboardDataFormat.Html & _formats)
-			_clipboard.pushData(AscCommon.c_oAscClipboardDataFormat.Html, _html_data);
 	};
 	PDFEditorApi.prototype.asc_SelectionCut = function() {
 		if (!this.DocumentRenderer)
 			return;
 		let oDoc = this.DocumentRenderer.getPDFDoc();
 		let oField = oDoc.activeForm;
-		if (oField && (oField.GetType() === AscPDF.FIELD_TYPES.text || (oField.GetType() === AscPDF.FIELD_TYPES.combobox && oField.IsEditable()))) {
+		if (oField && oField.IsCanEditText()) {
 			if (oField.content.IsSelectionUse()) {
 				oField.Remove(-1);
 				this.DocumentRenderer._paint();
@@ -215,7 +217,7 @@
 		if (oField && (oField.GetType() != AscPDF.FIELD_TYPES.text || oField.IsMultiline() == false))
 			data = data.trim().replace(/[\n\r]/g, ' ');
 
-		if (oField && (oField.GetType() === AscPDF.FIELD_TYPES.text || (oField.GetType() === AscPDF.FIELD_TYPES.combobox && oField.IsEditable()))) {
+		if (oField && oField.IsCanEditText()) {
 			let aChars = [];
 			for (let i = 0; i < data.length; i++)
 				aChars.push(data[i].charCodeAt(0));
@@ -240,7 +242,11 @@
 		if (!this.DocumentRenderer)
 			return false;
 		
-		return this.DocumentRenderer.isCanCopy();
+		let oDoc = this.DocumentRenderer.getPDFDoc();
+		if (!oDoc)
+			return false;
+
+		return oDoc.CanCopyCut().copy;
 	};
 	PDFEditorApi.prototype.startGetDocInfo = function() {
 		let renderer = this.DocumentRenderer;
@@ -367,9 +373,9 @@
 		let viewer	= this.DocumentRenderer;
 		let oDoc	= viewer.getPDFDoc();
 		if (!viewer
-			|| !oDoc.checkDefaultFieldFonts()
+			|| !oDoc.checkFieldFont(oDoc.activeForm)
 			|| !oDoc.activeForm
-			|| !oDoc.activeForm.IsEditable()) {
+			|| !oDoc.activeForm.IsCanEditText()) {
 			return false;
 		}
 		
@@ -464,27 +470,22 @@
 		if (!oActiveForm)
 			return;
 
-		let sDate = oPr.get_String();
-		let oActionsQueue = oDoc.GetActionsQueue();
-		
+		let oDate = new Asc.cDate(oPr.GetFullDate());
 		let oCurDate = new Date();
 
-		let parts = sDate.split(".");
-		let oDate = new Date(parts[2], parts[1] - 1, parts[0]);
 		oDate.setMinutes(oCurDate.getMinutes());
 		oDate.setSeconds(oCurDate.getSeconds());
 		oDate.getMilliseconds(oCurDate.getMilliseconds());
 
-		// суть в том, что дату из пикера можем подогнать под любой формат
-		// но в цепочке actions может быть изменение значения формы, куда вводится дата с picker, что вызовет новый коммит
-		// если значение не изменилось на этапе нового коммита формы, то опять выставляем будто бы взяли с пикера
-		// в конце actions удаляем эту информацию, чтобы в дальнейшем это не влияло на обычную работу парсера даты из соответсвующих методов
-		oActionsQueue.datePickerInfo = {
+		oDoc.lastDatePickerInfo = {
 			value: AscPDF.FormatDateValue(oActiveForm.GetDateFormat(), oDate.getTime()),
 			form: oActiveForm
-		}
+		};
 
-		oActiveForm.api["value"] = AscPDF.FormatDateValue(oActiveForm.GetDateFormat(), oDate.getTime());
+		oActiveForm.content.SelectAll();
+		oActiveForm.EnterText(AscWord.CTextFormFormat.prototype.GetBuffer(oDoc.lastDatePickerInfo.value));
+		oDoc.EnterDownActiveField();
+		oDoc.lastDatePickerInfo = null;
 	};
 	PDFEditorApi.prototype.asc_SelectPDFFormListItem = function(sId) {
 		let nIdx = parseInt(sId);
@@ -494,10 +495,14 @@
 		if (!oField)
 			return;
 		
+		if (oField.GetType() == AscPDF.FIELD_TYPES.combobox) {
+			oField.CreateNewHistoryPoint(true);
+		}
+		
 		oField.SelectOption(nIdx);
 		let isNeedRedraw = oField.IsNeedCommit();
 		if (oField.IsCommitOnSelChange() && oField.IsNeedCommit()) {
-			oField.Commit();
+			oDoc.EnterDownActiveField();
 			isNeedRedraw = true;
 			
 			oDoc.activeForm = null;
@@ -505,7 +510,6 @@
 			
 			this.WordControl.m_oDrawingDocument.TargetEnd();
 		}
-		
 		
 		if (isNeedRedraw) {
 			oViewer._paint();
@@ -542,14 +546,14 @@
 			return false;
 		
 		let pdfDoc = viewer.getPDFDoc();
-		if (!pdfDoc.activeForm || !pdfDoc.activeForm.IsEditable())
+		if (!pdfDoc.activeForm || !pdfDoc.activeForm.IsCanEditText())
 			return false;
 		
 		function begin() {
 			pdfDoc.activeForm.beginCompositeInput();
 		}
 		
-		if (!pdfDoc.checkDefaultFieldFonts(begin))
+		if (!pdfDoc.checkFieldFont(pdfDoc.activeForm, begin))
 			return true;
 		
 		begin();
@@ -557,21 +561,21 @@
 	};
 	PDFEditorApi.prototype.Add_CompositeText = function(codePoint) {
 		let form = this._getActiveForm();
-		if (!form || !form.IsEditable())
+		if (!form || !form.IsCanEditText())
 			return;
 		
 		form.addCompositeText(codePoint);
 	};
 	PDFEditorApi.prototype.Remove_CompositeText = function(count) {
 		let form = this._getActiveForm();
-		if (!form || !form.IsEditable())
+		if (!form || !form.IsCanEditText())
 			return;
 		
 		form.removeCompositeText(count);
 	};
 	PDFEditorApi.prototype.Replace_CompositeText = function(codePoints) {
 		let form = this._getActiveForm();
-		if (!form || !form.IsEditable())
+		if (!form || !form.IsCanEditText())
 			return;
 		
 		form.replaceCompositeText(codePoints);
@@ -579,28 +583,28 @@
 	PDFEditorApi.prototype.End_CompositeInput = function()
 	{
 		let form = this._getActiveForm();
-		if (!form || !form.IsEditable())
+		if (!form || !form.IsCanEditText())
 			return;
 		
 		form.endCompositeInput();
 	};
 	PDFEditorApi.prototype.Set_CursorPosInCompositeText = function(pos) {
 		let form = this._getActiveForm();
-		if (!form || !form.IsEditable())
+		if (!form || !form.IsCanEditText())
 			return;
 		
 		form.setPosInCompositeInput(pos);
 	};
 	PDFEditorApi.prototype.Get_CursorPosInCompositeText = function() {
 		let form = this._getActiveForm();
-		if (!form || !form.IsEditable())
+		if (!form || !form.IsCanEditText())
 			return 0;
 		
 		return form.getPosInCompositeInput();
 	};
 	PDFEditorApi.prototype.Get_MaxCursorPosInCompositeText = function() {
 		let form = this._getActiveForm();
-		if (!form || !form.IsEditable())
+		if (!form || !form.IsCanEditText())
 			return 0;
 		
 		return form.getMaxPosInCompositeInput();
@@ -632,12 +636,12 @@
 		oCommentData.Read_FromAscCommentData(AscCommentData);
 
 		let oComment = oDoc.AddComment(AscCommentData);
-		//this.sync_AddComment(oComment.GetId(), oCommentData);
 
-		oComment.AddToRedraw();
-		oViewer._paint();
-
-		return oComment.GetId()
+		if (oComment) {
+			oComment.AddToRedraw();
+			oViewer._paint();
+			return oComment.GetId()
+		}
 	};
 	PDFEditorApi.prototype.asc_showComments = function()
 	{
@@ -723,9 +727,9 @@
 
 			oDoc.activeForm.content.SelectAll();
 			if (oDoc.activeForm.content.IsSelectionUse())
-				this.Api.WordControl.m_oDrawingDocument.TargetEnd();
+				this.WordControl.m_oDrawingDocument.TargetEnd();
 			
-			this.onUpdateOverlay();
+			oViewer.onUpdateOverlay();
 		}
 		else {
 			oViewer.file.selectAll();
@@ -772,6 +776,12 @@
 				oViewer.setCursorType("default");
 			}
 		}
+	};
+	PDFEditorApi.prototype.UpdateInterfaceState = function()
+	{
+		let oDoc = this.getPDFDoc();
+		if (oDoc)
+			oDoc.UpdateInterface();
 	};
 
 	////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1033,6 +1043,7 @@
 	PDFEditorApi.prototype['asc_EditSelectAll']            = PDFEditorApi.prototype.asc_EditSelectAll;
 	PDFEditorApi.prototype['Undo']                         = PDFEditorApi.prototype.Undo;
 	PDFEditorApi.prototype['Redo']                         = PDFEditorApi.prototype.Redo;
+	PDFEditorApi.prototype['UpdateInterfaceState']         = PDFEditorApi.prototype.UpdateInterfaceState;
 	PDFEditorApi.prototype['asc_SelectionCut']             = PDFEditorApi.prototype.asc_SelectionCut;
 	PDFEditorApi.prototype['asc_CheckCopy']                = PDFEditorApi.prototype.asc_CheckCopy;
 	PDFEditorApi.prototype['Paste']                        = PDFEditorApi.prototype.Paste;

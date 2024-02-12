@@ -119,13 +119,23 @@
 		this.value = "";
 		this.valueEqualAddon = false;
 
+		this.equalAddon = "&nbsp;";
+		if (AscCommon.AscBrowser.isMacOs)
+			this.equalAddon = "<br/>";
+
 		this.setEnabled = function(isEnabled)
 		{
 			if (this.isEnabled === isEnabled)
 				return;
 
 			if (!AscCommon.g_inputContext)
+			{
+				var worker = this;
+				AscCommon.inputMethodAddInitEvent(function() {
+					worker.setEnabled(isEnabled);
+				});
 				return;
+			}
 
 			this.isEnabled = isEnabled;
 			if (this.isEnabled)
@@ -214,7 +224,7 @@
 				this.valueEqualAddon = !this.valueEqualAddon;
 				if (this.valueEqualAddon)
 				{
-					this.speechElement.innerHTML = this.value + "&nbsp;";
+					this.speechElement.innerHTML = this.value + this.equalAddon;
 				}
 				else
 				{
@@ -466,6 +476,9 @@
 		this.isApplyChanges = false;
 		this.isKeyDown      = false;
 		this.isUndoRedo     = false;
+
+		if (AscCommon.EditorActionSpeakerInitData && AscCommon.EditorActionSpeakerInitData.isEnabled)
+			this.run();
 	}
 	EditorActionSpeaker.prototype.toggle = function()
 	{

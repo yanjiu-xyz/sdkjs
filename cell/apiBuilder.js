@@ -49,8 +49,9 @@
 	 * @property {Array} Sheets - Returns the Sheets collection that represents all the sheets in the active workbook.
 	 * @property {ApiWorksheet} ActiveSheet - Returns an object that represents the active sheet.
 	 * @property {ApiRange} Selection - Returns an object that represents the selected range.
-	 * @property {ApiComment[]} Comments - Returns an array of ApiComment objects.
-	 * @property {FreezePaneType} FreezePanes - Returns or sets a freeze panes type.
+	 * @property {ApiComment[]} Comments - Returns all comments related to the whole workbook.
+	 * @property {FreezePaneType} FreezePanes - Returns or sets the type of freeze panes.
+	 * @property {ApiComment[]} AllComments - Returns all comments from the current workbook including comments from all worksheets.
 	 */
 	var Api = window["Asc"]["spreadsheet_api"];
 
@@ -82,8 +83,8 @@
 	 * @property {boolean} PrintHeadings - Returns or sets the page PrintHeadings property.
 	 * @property {boolean} PrintGridlines - Returns or sets the page PrintGridlines property.
 	 * @property {Array} Defnames - Returns an array of the ApiName objects.
-	 * @property {Array} Comments - Returns an array of the ApiComment objects.
-	 * @property {ApiFreezePanes} FreezePanes - Returns a freeze Panes for a current worsheet.
+	 * @property {Array} Comments - Returns all comments from the current worksheet.
+	 * @property {ApiFreezePanes} FreezePanes - Returns the freeze panes for the current worksheet.
 	 */
 	function ApiWorksheet(worksheet) {
 		this.worksheet = worksheet;
@@ -359,7 +360,7 @@
 	}
 
 	/**
-	 * Class representing a freeze Panes.
+	 * Class representing freeze panes.
 	 * @constructor
 	 */
 	function ApiFreezePanes(ws) {
@@ -623,7 +624,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @param {Range} range - The internal Range class (not a ApiRange). For more details see any new ApiRange.
-	 * @param {[Range]} areas - A collection of the ranges (not a ApiRange) from the specified range. For more details see any new ApiRange.
+	 * @param {Range[]} areas - A collection of the ranges (not a ApiRange) from the specified range. For more details see any new ApiRange.
 	 * @returns {ApiRange}
 	 */
 	Api.prototype.private_GetRange = function (range, areas) {
@@ -892,7 +893,7 @@
 	};
 
 	/**
-	 * Returns an array of ApiComment objects.
+	 * Returns all comments related to the whole workbook.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiComment[]}
@@ -910,17 +911,39 @@
 		}
 	});
 
+
 	/**
-	 * Specifies freeze panes type.
+	 * Returns all comments from the current workbook including comments from all worksheets.
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @returns {ApiComment[]}
+	 */
+	Api.prototype.GetAllComments = function () {
+		let aApiComments = this.GetComments();
+
+		let aWS = this.GetSheets();
+		for(let nWS = 0; nWS < aWS.length; ++nWS) {
+			aApiComments = aApiComments.concat(aWS[nWS].GetComments())
+		}
+		return aApiComments;
+	};
+	Object.defineProperty(Api.prototype, "AllComments", {
+		get: function () {
+			return this.GetAllComments();
+		}
+	});
+
+	/**
+	 * Specifies a type of freeze panes.
 	 * @typedef {("row" | "column" | "cell" | null )} FreezePaneType
 	 */
 
 	/**
-	 * Sets freeze panes type.
+	 * Sets a type to the freeze panes.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @param {FreezePaneType} FreezePaneType - The type of freezing ('null' to unfreeze).
-	 * @since 7.6.0
+	 * @param {FreezePaneType} FreezePaneType - The freeze panes type ("null" to unfreeze).
+	 * @since 8.0.0
 	 */
 	Api.prototype.SetFreezePanesType = function (FreezePaneType) {
 		if (typeof FreezePaneType === 'string' || FreezePaneType === null) {
@@ -951,11 +974,11 @@
 	};
 
 	/**
-	 * Rerutns freeze panes type.
+	 * Returns the freeze panes type.
 	 * @memberof Api
 	 * @typeofeditors ["CSE"]
-	 * @returns {FreezePaneType} FreezePaneType - The type of freezing ('null' - if there is no frozen pane).
-	 * @since 7.6.0
+	 * @returns {FreezePaneType} FreezePaneType - The freeze panes type ("null" if there are no freeze panes).
+	 * @since 8.0.0
 	 */
 	Api.prototype.GetFreezePanesType = function () {
 		let cell = this.wb.getWorksheet().topLeftFrozenCell;
@@ -1323,7 +1346,7 @@
 	 * @typeofeditors ["CSE"]
 	 * @param {number} nColumn - The number of the column to set the width to.
 	 * @param {number} nWidth - The width of the column divided by 7 pixels.
-	 * @param {boolean} [bWithotPaddings=false] - Specifies whether the nWidth will be set witout standart padding.
+	 * @param {boolean} [bWithotPaddings=false] - Specifies whether nWidth will be set without standard paddings.
 	 */
 	ApiWorksheet.prototype.SetColumnWidth = function (nColumn, nWidth, bWithotPaddings) {
 		if (bWithotPaddings) {
@@ -1621,7 +1644,7 @@
 	});
 
 	/**
-	 * Returns an array of ApiComment objects.
+	 * Returns all comments from the current worksheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiComment[]}
@@ -1978,10 +2001,11 @@
 	};
 
 	/**
-	 * Returns a freezePanes for a current worsheet.
+	 * Returns the freeze panes from the current worksheet.
 	 * @memberof ApiWorksheet
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiFreezePanes}
+	 * @since 8.0.0
 	 */
 	ApiWorksheet.prototype.GetFreezePanes = function () {
 		return new ApiFreezePanes(this.worksheet);
@@ -2076,14 +2100,16 @@
 	 * @typeofeditors ["CSE"]
 	 */
 	ApiRange.prototype.Clear = function () {
-		this.range.cleanAll();
-		let ws = this.Worksheet.worksheet;
-		ws.deletePivotTables(this.range.bbox);
-		ws.removeSparklines(this.range.bbox);
-		ws.clearDataValidation([this.range.bbox], true);
-		ws.clearConditionalFormattingRulesByRanges([this.range.bbox]);
-		let wsView = Asc['editor'].wb.getWorksheet(ws.getIndex());
-		wsView.cellCommentator.deleteCommentsRange(this.range.bbox, null);
+		let range = this.range,
+			bbox = range.bbox,
+			ws = range.worksheet,
+			wsView = Asc['editor'].wb.getWorksheet(ws.getIndex());
+		range.cleanAll();
+		ws.deletePivotTables(bbox);
+		ws.removeSparklines(bbox);
+		ws.clearDataValidation([bbox], true);
+		ws.clearConditionalFormattingRulesByRanges([bbox]);
+		wsView.cellCommentator.deleteCommentsRange(bbox, null);
 	};
 
 	/**
@@ -2435,7 +2461,10 @@
 				}
 			}
 		}
-		data = checkFormat(data || 0);
+		if (data === undefined || data === null)
+			data = AscCommon.cErrorLocal["na"];
+
+		data = checkFormat(data);
 		let range = this.range;
 		let merged = range.hasMerged();
 		if (merged)
@@ -3344,18 +3373,35 @@
 	 * @param {?string} shift - Specifies how to shift cells to replace the deleted cells ("up", "left").
 	 */
 	ApiRange.prototype.Delete = function (shift) {
+		let preDeleteAction = function() {
+			cellCommentator.updateCommentsDependencies(false, val, checkRange);
+			wsView.shiftCellWatches(false, val, bbox);
+			wsView.model.shiftDataValidation(false, val, checkRange, true);
+			wsView._cleanCache(lockRange);
+		};
+		let val;
+		let ws = this.Worksheet.worksheet;
+		let wsView = Asc['editor'].wb.getWorksheet(ws.getIndex());
+		let cellCommentator = wsView.cellCommentator;
+		let bbox = this.range.bbox;
+		let checkRange = bbox.clone();
+		let lockRange;
 		if (shift && shift.toLocaleLowerCase) {
 			shift = shift.toLocaleLowerCase();
 		} else {
-			var bbox = this.range.bbox;
-			var rows = bbox.r2 - bbox.r1 + 1;
-			var cols = bbox.c2 - bbox.c1 + 1;
+			let rows = bbox.r2 - bbox.r1 + 1;
+			let cols = bbox.c2 - bbox.c1 + 1;
 			shift = (rows <= cols) ? "up" : "left";
 		}
-		if (shift == "up")
-			this.range.deleteCellsShiftUp();
-		else
-			this.range.deleteCellsShiftLeft()
+		if (shift == "up") {
+			val = Asc.c_oAscDeleteOptions.DeleteCellsAndShiftTop;
+			lockRange = ws.getRange3(bbox.r1, bbox.c1, bbox.r2, AscCommon.gc_nMaxCol0);
+			this.range.deleteCellsShiftUp(preDeleteAction);
+		} else {
+			val = Asc.c_oAscDeleteOptions.DeleteCellsAndShiftLeft;
+			lockRange = ws.getRange3(bbox.r1, bbox.c1, AscCommon.gc_nMaxRow0, AscCommon.c2);
+			this.range.deleteCellsShiftLeft(preDeleteAction);
+		}
 	};
 
 	/**
@@ -3849,7 +3895,7 @@
 	};
 	/**
 	 * Returns the lock value for the specified lock type of the current drawing.
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CSE"]
 	 * @param {"noGrp" | "noUngrp" | "noSelect" | "noRot" | "noChangeAspect" | "noMove" | "noResize" | "noEditPoints" | "noAdjustHandles"
 	 * 	| "noChangeArrowheads" | "noChangeShapeType" | "noDrilldown" | "noTextEdit" | "noCrop" | "txBox"} sType - Lock type in the string format.
 	 * @returns {bool}
@@ -3868,7 +3914,7 @@
 
 	/**
 	 * Sets the lock value to the specified lock type of the current drawing.
-	 * @typeofeditors ["CPE"]
+	 * @typeofeditors ["CSE"]
 	 * @param {"noGrp" | "noUngrp" | "noSelect" | "noRot" | "noChangeAspect" | "noMove" | "noResize" | "noEditPoints" | "noAdjustHandles"
 	 * 	| "noChangeArrowheads" | "noChangeShapeType" | "noDrilldown" | "noTextEdit" | "noCrop" | "txBox"} sType - Lock type in the string format.
 	 * @param {bool} bValue - Specifies if the specified lock is applied to the current drawing.
@@ -6408,11 +6454,11 @@
 	//------------------------------------------------------------------------------------------------------------------
 
 	/**
-	 * Sets the frozen cells in the active worksheet view. The range provided corresponds to cells that will be frozen in the top- and left-most pane.
+	 * Sets the frozen cells in the active worksheet view. The range provided corresponds to the cells that will be frozen in the top- and left-most pane.
 	 * @memberof ApiFreezePanes
 	 * @typeofeditors ["CSE"]
-	 * @param {ApiRange | String} frozenRange - A range that represents the cells to be frozen panes.
-	 * @since 7.6.0
+	 * @param {ApiRange | String} frozenRange - A range that represents the cells to be frozen.
+	 * @since 8.0.0
 	 */
 	ApiFreezePanes.prototype.FreezeAt = function (frozenRange) {
 		let api = this.ws.workbook.oApi;
@@ -6429,11 +6475,11 @@
 	};
 
 	/**
-	 * Freeze the first column or columns of the worksheet in place.
+	 * Freezes the first column or columns of the current worksheet.
 	 * @memberof ApiFreezePanes
 	 * @typeofeditors ["CSE"]
 	 * @param {Number?} [count=0] - Optional number of columns to freeze, or zero to unfreeze all columns.
-	 * @since 7.6.0
+	 * @since 8.0.0
 	 */
 	ApiFreezePanes.prototype.FreezeColumns = function (count) {
 		let api = this.ws.workbook.oApi;
@@ -6448,11 +6494,11 @@
 	};
 
 	/**
-	 * Freeze the top row or rows of the worksheet in place.
+	 * Freezes the top row or rows of the current worksheet.
 	 * @memberof ApiFreezePanes
 	 * @typeofeditors ["CSE"]
 	 * @param {Number?} [count=0] - Optional number of rows to freeze, or zero to unfreeze all rows.
-	 * @since 7.6.0
+	 * @since 8.0.0
 	 */
 	ApiFreezePanes.prototype.FreezeRows = function (count) {
 		let api = this.ws.workbook.oApi;
@@ -6467,11 +6513,11 @@
 	};
 
 	/**
-	 * Gets a range that describes the frozen cells in the active worksheet view.
+	 * Returns a range that describes the frozen cells in the active worksheet view.
 	 * @memberof ApiFreezePanes
 	 * @typeofeditors ["CSE"]
 	 * @returns {ApiRange | null} - Returns null if there is no frozen pane.
-	 * @since 7.6.0
+	 * @since 8.0.0
 	 */
 	ApiFreezePanes.prototype.GetLocation = function () {
 		let result = null;
@@ -6499,10 +6545,10 @@
 	};
 
 	/**
-	 * Removes all frozen panes in the worksheet.
+	 * Removes all frozen panes in the current worksheet.
 	 * @memberof ApiFreezePanes
 	 * @typeofeditors ["CSE"]
-	 * @since 7.6.0
+	 * @since 8.0.0
 	 */
 	ApiFreezePanes.prototype.Unfreeze = function () {
 		if (!!this.ws.workbook.oApi.wb.getWorksheet().topLeftFrozenCell)
@@ -6534,6 +6580,7 @@
 	Api.prototype["RecalculateAllFormulas"] = Api.prototype.RecalculateAllFormulas;
 	Api.prototype["AddComment"]  = Api.prototype.AddComment;
 	Api.prototype["GetComments"] = Api.prototype.GetComments;
+	Api.prototype["GetAllComments"] = Api.prototype.GetAllComments;
 	Api.prototype["GetCommentById"] = Api.prototype.GetCommentById;
 	Api.prototype["SetFreezePanesType"] = Api.prototype.SetFreezePanesType;
 	Api.prototype["GetFreezePanesType"] = Api.prototype.GetFreezePanesType;
