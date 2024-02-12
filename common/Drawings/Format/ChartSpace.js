@@ -3532,6 +3532,10 @@ function(window, undefined) {
 			oRecalcInfo.recalcTransform = true;
 			oRecalcInfo.recalculateTransformText = true;
 			oRecalcInfo.recalculateGeometry = true;
+			let oContent = oTitle.getDocContent();
+			if(oContent) {
+				oContent.Recalc_AllParagraphs_CompiledPr();
+			}
 		}
 	};
 	CChartSpace.prototype.recalcTitles2 = function () {
@@ -3544,6 +3548,10 @@ function(window, undefined) {
 			oRecalcInfo.recalculateTransformText = true;
 			oRecalcInfo.recalculateTxBody = true;
 			oRecalcInfo.recalculateGeometry = true;
+			let oContent = oTitle.getDocContent();
+			if(oContent) {
+				oContent.Recalc_AllParagraphs_CompiledPr();
+			}
 		}
 	};
 	CChartSpace.prototype.refreshRecalcData2 = function (pageIndex, object) {

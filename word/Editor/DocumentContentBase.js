@@ -1534,8 +1534,9 @@ CDocumentContentBase.prototype.GetTablesOfFigures = function(arrComplexFields)
 /**
  * Добавляем заданный текст в текущей позиции
  * @param {String} sText
+ * @param {AscWord.CTextPr} textPr
  */
-CDocumentContentBase.prototype.AddText = function(sText)
+CDocumentContentBase.prototype.AddText = function(sText, textPr)
 {
 	if (this.IsSelectionUse())
 		this.Remove(1, true, false, true, false);
@@ -1544,12 +1545,14 @@ CDocumentContentBase.prototype.AddText = function(sText)
 	if (!oParagraph)
 		return;
 
-	var oTextPr = oParagraph.GetDirectTextPr();
-	if (!oTextPr)
-		oTextPr = new CTextPr();
-
+	if (!textPr)
+		textPr = oParagraph.GetDirectTextPr();
+	
 	var oRun = new ParaRun(oParagraph);
-	oRun.SetPr(oTextPr);
+	
+	if (textPr)
+		oRun.SetPr(textPr);
+	
 	oRun.AddText(sText);
 	oParagraph.Add(oRun);
 };
