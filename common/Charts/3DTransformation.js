@@ -783,8 +783,8 @@ Processor3D.prototype.calculateCommonOptions = function () {
 			xPoints = chartSpace.chart.plotArea && chartSpace.chart.plotArea.valAx ? chartSpace.chart.plotArea.valAx.xPoints : null;
 		}
 
-		let coordYAxisOx = chartSpace.chart.plotArea.catAx.posY;
-		if (!coordYAxisOx) {
+		let coordYAxisOx = chartSpace.chart.plotArea.catAx && chartSpace.chart.plotArea.catAx.posY;
+		if (!coordYAxisOx && chartSpace.chart.plotArea.valAx) {
 			coordYAxisOx = chartSpace.chart.plotArea.valAx.posY != undefined ? chartSpace.chart.plotArea.valAx.posY : chartSpace.chart.plotArea.valAx.posY;
 		}
 
@@ -793,8 +793,11 @@ Processor3D.prototype.calculateCommonOptions = function () {
 			yPoints = chartSpace.chart.plotArea && chartSpace.chart.plotArea.catAx ? chartSpace.chart.plotArea.catAx.yPoints : null;
 		}
 
-		let coordXAxisOy = chartSpace.chart.plotArea.catAx.posX ? chartSpace.chart.plotArea.catAx.posX : chartSpace.chart.plotArea.catAx.xPos;
-		if (!coordXAxisOy) {
+		let coordXAxisOy;
+		if (chartSpace.chart.plotArea.catAx) {
+			coordXAxisOy = chartSpace.chart.plotArea.catAx.posX ? chartSpace.chart.plotArea.catAx.posX : chartSpace.chart.plotArea.catAx.xPos;
+		}
+		if (!coordXAxisOy && chartSpace.chart.plotArea.valAx) {
 			coordXAxisOy = chartSpace.chart.plotArea.valAx.posX != undefined ? chartSpace.chart.plotArea.valAx.posX : null;
 		}
 
