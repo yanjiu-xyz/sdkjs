@@ -2584,7 +2584,7 @@ function HierarchyAlgorithm() {
 		return this.shapeContainer;
 	}
 	HierarchyChildAlgorithm.prototype.calculateShapePositionsHorizontalHang = function (isCalculateScaleCoefficient, fromRight) {
-		const childs = fromRight ? this.getMainChilds().slice().reverse() : this.getMainChilds();
+		const childs = this.getMainChilds();
 		const sibSp = this.parentNode.getConstr(AscFormat.Constr_type_sibSp, !isCalculateScaleCoefficient);
 
 		const topRow = [];
@@ -2612,20 +2612,41 @@ function HierarchyAlgorithm() {
 		for (let i = 0; i < topRow.length; i += 1) {
 			const topNode = topRow[i];
 			const topShape = topNode.getShape(isCalculateScaleCoefficient);
-			topShape.moveTo(offX, 0);
+			if (fromRight) {
+				topShape.moveTo(offX, 0);
+			} else {
+				topShape.moveTo(offX, 0);
+			}
+
 			this.updateHorizontalLevelPositions(topNode.algorithm, i);
 			this.setHorizontalLevelBounds(startLevel + i, {l: topShape.x, r: topShape.x + topShape.width, t: topShape.y, b: topShape.y + topShape.height});
 
 			const bottomNode = bottomRow[i];
 			if (bottomNode) {
 				const bottomShape = bottomNode.getShape(isCalculateScaleCoefficient);
-				bottomShape.moveTo(offX, bottomOffY);
+				if (fromRight) {
+					bottomShape.moveTo(offX, bottomOffY);
+				} else {
+					bottomShape.moveTo(offX, bottomOffY);
+				}
+
 				this.updateHorizontalLevelPositions(bottomNode.algorithm, i);
 				this.setHorizontalLevelBounds(startLevel + i, {l: bottomShape.x, r: bottomShape.x + bottomShape.width, t: bottomShape.y, b: bottomShape.y + bottomShape.height});
 
 				const topBounds = topCalcBounds.bounds[i];
 				const bottomBounds = bottomCalcBounds.bounds[i];
-				offX += Math.max(topBounds.r - topBounds.l, bottomBounds.r - bottomBounds.l) + sibSp;
+
+				const commonChildBounds = Object.assign({}, topBounds);
+				checkBounds(commonChildBounds, bottomBounds);
+				const topOffsets = this.getChildAlignOffsets(commonChildBounds, topBounds, this.params[AscFormat.Param_type_chAlign]);
+				const bottomOffsets = this.getChildAlignOffsets(commonChildBounds, bottomBounds, this.params[AscFormat.Param_type_chAlign]);
+				topNode.moveTo(topOffsets.offX, topOffsets.offY, isCalculateScaleCoefficient);
+				bottomNode.moveTo(bottomOffsets.offX, bottomOffsets.offY, isCalculateScaleCoefficient);
+				if (fromRight) {
+					offX -= Math.max(topBounds.r - topBounds.l, bottomBounds.r - bottomBounds.l) + sibSp;
+				} else {
+					offX += Math.max(topBounds.r - topBounds.l, bottomBounds.r - bottomBounds.l) + sibSp;
+				}
 			}
 		}
 	};
@@ -2696,18 +2717,30 @@ function HierarchyAlgorithm() {
 			const leftBounds = leftCalcBounds.bounds[i];
 			const rightBounds = rightCalcBounds.bounds[i];
 			if (leftBounds && rightBounds) {
+				const commonChildBounds = Object.assign({}, leftBounds);
+				checkBounds(commonChildBounds, rightBounds);
+/*				const leftOffsets = this.getChildAlignOffsets(commonChildBounds, leftBounds, this.params[AscFormat.Param_type_chAlign]);
+				const rightOffsets = this.getChildAlignOffsets(commonChildBounds, rightBounds, this.params[AscFormat.Param_type_chAlign]);
+				leftNode.moveTo(leftOffsets.offX, leftOffsets.offY, isCalculateScaleCoefficient);
+				rightNode.moveTo(rightOffsets.offX, rightOffsets.offY, isCalculateScaleCoefficient);*/
 				offY += Math.max(leftBounds.b - leftBounds.t, rightBounds.b - rightBounds.t) + sibSp;
 			}
 		}
 	};
 	HierarchyChildAlgorithm.prototype.applyMainChildAlign = function (childs, isCalculateScaleCoefficient) {
+		const allBounds = [];
+		const commonBounds = {};
+		const result = {
+			commonBounds: commonBounds,
+			bounds: allBounds
+		};
 		if (!childs.length) {
-			return;
+			return result;
 		}
 		const firstChild = childs[0];
 		const firstBounds = firstChild.algorithm.getBounds(isCalculateScaleCoefficient);
-		const allBounds = [firstBounds];
-		const commonBounds = Object.assign({}, firstBounds);
+		allBounds.push(firstBounds);
+		Object.assign(commonBounds, firstBounds);
 		for (let i = 1; i < childs.length; i += 1) {
 			const child = childs[i];
 			const bounds = child.algorithm.getBounds(isCalculateScaleCoefficient);
@@ -2733,13 +2766,16 @@ function HierarchyAlgorithm() {
 			return;
 		}
 		if (this.isHang()) {
-			const fromRight = this.params[AscFormat.Param_type_linDir] === AscFormat.ParameterVal_linearDirection_fromR;
 			switch (this.params[AscFormat.Param_type_secLinDir]) {
 				case AscFormat.ParameterVal_linearDirection_fromT:
+					const fromRight = this.params[AscFormat.Param_type_linDir] === AscFormat.ParameterVal_linearDirection_fromR;
 					this.calculateShapePositionsVerticalHangFromTop(isCalculateScaleCoefficient, fromRight);
 					break;
 				case AscFormat.ParameterVal_linearDirection_fromL:
-					this.calculateShapePositionsHorizontalHang(isCalculateScaleCoefficient, fromRight);
+					this.calculateShapePositionsHorizontalHang(isCalculateScaleCoefficient, false);
+					break;
+				case AscFormat.ParameterVal_linearDirection_fromR:
+					this.calculateShapePositionsHorizontalHang(isCalculateScaleCoefficient, true);
 					break;
 				default:
 					break;
@@ -3894,6 +3930,11 @@ function HierarchyAlgorithm() {
 		if (this.params[AscFormat.Param_type_connRout] === undefined) {
 			this.params[AscFormat.Param_type_connRout] = AscFormat.ParameterVal_connectorRouting_stra;
 		}
+		if (this.params[AscFormat.Param_type_connRout] === AscFormat.ParameterVal_connectorRouting_bend) {
+			if (this.params[AscFormat.Param_type_bendPt] === undefined) {
+				this.params[AscFormat.Param_type_bendPt] = AscFormat.ParameterVal_bendPoint_end;
+			}
+		}
 	}
 	ConnectorAlgorithm.prototype.getEdgePoints = function () {
 		if (!this.calcValues.edgePoints) {
@@ -4356,6 +4397,13 @@ function HierarchyAlgorithm() {
 			coefficient: coefficient
 		}
 	}
+	ConnectorAlgorithm.prototype.isDoubleBendConnector = function () {
+		const startPoint = this.getPointPosition(true);
+		const endPoint = this.getPointPosition();
+		return startPoint === AscFormat.ParameterVal_connectorPoint_bCtr && endPoint === AscFormat.ParameterVal_connectorPoint_tCtr ||
+			startPoint === AscFormat.ParameterVal_connectorPoint_midR && endPoint === AscFormat.ParameterVal_connectorPoint_midL ||
+			startPoint === AscFormat.ParameterVal_connectorPoint_midL && endPoint === AscFormat.ParameterVal_connectorPoint_midR;
+	};
 	ConnectorAlgorithm.prototype.getBendPoints = function (startPoint, endPoint) {
 		const isReverse = this.params[AscFormat.Param_type_bendPt] === AscFormat.ParameterVal_bendPoint_end;
 		if (isReverse) {
@@ -4363,18 +4411,20 @@ function HierarchyAlgorithm() {
 			startPoint = endPoint;
 			endPoint = t;
 		}
-		const bendDist = this.parentNode.adaptConstr[AscFormat.Constr_type_bendDist];
+		let bendDist;
+		if (this.isDoubleBendConnector()) {
+			bendDist = this.parentNode.adaptConstr[AscFormat.Constr_type_bendDist];
+		}
 		const type = this.getPointPosition(!isReverse);
 		let bendPoints;
 		switch (type) {
 			case AscFormat.ParameterVal_connectorPoint_auto:
 				break;
 			case AscFormat.ParameterVal_connectorPoint_bCtr: {
-
 				if (bendDist === undefined) {
 					bendPoints = [new CCoordPoint(startPoint.x, endPoint.y)];
 				} else {
-					let y = Math.max(endPoint.y, startPoint.y + bendDist);
+					let y = Math.min(endPoint.y, startPoint.y + bendDist);
 					bendPoints = [new CCoordPoint(startPoint.x, y), new CCoordPoint(endPoint.x, y)];
 				}
 				break;
@@ -4385,15 +4435,33 @@ function HierarchyAlgorithm() {
 				break;
 			case AscFormat.ParameterVal_connectorPoint_ctr:
 				break;
-			case AscFormat.ParameterVal_connectorPoint_midL:
+			case AscFormat.ParameterVal_connectorPoint_midL: {
+				if (bendDist === undefined) {
+					bendPoints = [new CCoordPoint(endPoint.x, startPoint.y)];
+				} else {
+					let x = Math.max(endPoint.x, startPoint.x - bendDist);
+					bendPoints = [new CCoordPoint(x, startPoint.y), new CCoordPoint(x, endPoint.y)];
+				}
 				break;
-			case AscFormat.ParameterVal_connectorPoint_midR:
+			}
+			case AscFormat.ParameterVal_connectorPoint_midR: {
+				if (bendDist === undefined) {
+					bendPoints = [new CCoordPoint(endPoint.x, startPoint.y)];
+				} else {
+					let x = Math.min(endPoint.x, startPoint.x + bendDist);
+					bendPoints = [new CCoordPoint(x, startPoint.y), new CCoordPoint(x, endPoint.y)];
+				}
 				break;
+			}
 			case AscFormat.ParameterVal_connectorPoint_radial:
 				break;
 			case AscFormat.ParameterVal_connectorPoint_tCtr: {
-				let y = Math.max(endPoint.y, startPoint.y - bendDist);
-				bendPoints = [new CCoordPoint(startPoint.x, y), new CCoordPoint(endPoint.x, y)];
+				if (bendDist === undefined) {
+					bendPoints = [new CCoordPoint(startPoint.x, endPoint.y)];
+				} else {
+					let y = Math.max(endPoint.y, startPoint.y - bendDist);
+					bendPoints = [new CCoordPoint(startPoint.x, y), new CCoordPoint(endPoint.x, y)];
+				}
 				break;
 			}
 			case AscFormat.ParameterVal_connectorPoint_tL:
