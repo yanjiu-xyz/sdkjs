@@ -2630,7 +2630,7 @@ CChartsDrawer.prototype =
 				}
 
 				if (cL.isOverflowExist) {
-					addRange(prev, cL.trueMax);
+					addRange(cL.trueMax, null);
 				}
 			}
 
@@ -2671,9 +2671,11 @@ CChartsDrawer.prototype =
 			const localBinning = cachedData.binning;
 			const localResults = cachedData.results;
 			const catLimits = handleCatLimits(localBinning, axisProperties);
+			console.log(catLimits);
 			calculateBinSizeAndCount(localBinning, catLimits, numArr, axisProperties);
 			// if binSize is calculated automatically, it must be rounded to two digits. Example: 78.65 = 79, 0.856 : 0.86!
-			localBinning.binSize = !localBinning.normalized ? this._roundValue(localBinning.binSize, AscFormat.BINNING_PRECISION) : localBinning.binSize;
+			const BINNING_PRECISION = 1;
+			localBinning.binSize = !localBinning.normalized ? this._roundValue(localBinning.binSize, true, BINNING_PRECISION) : localBinning.binSize;
 			addRangesAndFillCatScale(localResults, localBinning, catLimits, axisProperties);
 			countOccurrencesAndValExtremum(localResults, localBinning, numArr, axisProperties, this);
 		}
@@ -3592,7 +3594,9 @@ CChartsDrawer.prototype =
 		return values;
 	},
 
-	_roundValue: function (num, precision) {
+	// if rounding is strong it affects whole number. Example 106.82 -> 107
+	// if weak, then only decimal places. Example 106.82 ->106.8
+	_roundValue: function (num, isStrong, precision) {
 		if (num !== 0 && !num) {
 			return;
 		}
@@ -3609,9 +3613,11 @@ CChartsDrawer.prototype =
 		let count = 0;
 
 		// Normalize the number by adjusting its scale
-		while (num >= 10) {
-			num /= 10;
-			count++;
+		if (isStrong) {
+			while (num >= 10) {
+				num /= 10;
+				count++;
+			}
 		}
 
 		while (num < 1) {
