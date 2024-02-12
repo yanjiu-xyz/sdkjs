@@ -3958,80 +3958,4214 @@ $(function () {
 		QUnit.test("Test: Histogram aggregation calculations", function (assert) {
 
 			let chartsDrawer = new AscFormat.CChartsDrawer();
-			let cachedData = {aggregation : {}}
+			let cachedData = {aggregation : {}};
 			let axisProperties = {
 				cat : {max: null, min:null, scale : []},
 				val : {max: null, min:null, scale : []},
-			}
-			let numArr = [{val: 7}, {val: 9}]
-			let strArr = [{val: "c"}, {val: "#"}]
+			};
+			let numArr = [{val: 7}, {val: 9}];
+			let strArr = [{val: "c"}, {val: "#"}];
 			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
-			result = [['c', '#'], [7, 9]]
+			result = [['c', '#'], [7, 9]];
 			let keys = Object.keys(cachedData.aggregation);
 			let values = Object.values(cachedData.aggregation);
 
 			assert.ok(areSameStrings(result[0], keys), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + keys);
 			assert.ok(areSame(result[1], values), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + values);
 
-			cachedData = {aggregation : {}}
+			cachedData = {aggregation : {}};
 			axisProperties = {
 				cat : {max: null, min:null, scale : []},
 				val : {max: null, min:null, scale : []},
-			}
-			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}]
-			strArr = [{val: "c"}, {val: "#"}, {val: "f"}, {val: "c"}, {val: "c"}, {val: "c"}, {val: "c"}, {val: "f"}, {val: "f"}, {val: "d"}, {val: "f"}, {val: "d"}, {val: "d"}]
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			strArr = [{val: "c"}, {val: "#"}, {val: "f"}, {val: "c"}, {val: "c"}, {val: "c"}, {val: "c"}, {val: "f"}, {val: "f"}, {val: "d"}, {val: "f"}, {val: "d"}, {val: "d"}];
 			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
-			result = [['c', '#', 'f', 'd'], [247, 9, 381, 451]]
+			result = [['c', '#', 'f', 'd'], [247, 9, 381, 451]];
 			keys = Object.keys(cachedData.aggregation);
 			values = Object.values(cachedData.aggregation);
 
 			assert.ok(areSameStrings(result[0], keys), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + keys);
 			assert.ok(areSame(result[1], values), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + values);
 
-			cachedData = {aggregation : {}}
+			cachedData = {aggregation : {}};
 			axisProperties = {
 				cat : {max: null, min:null, scale : []},
 				val : {max: null, min:null, scale : []},
-			}
-			numArr = [{val: 7},]
-			strArr = []
+			};
+			numArr = [{val: 7},];
+			strArr = [];
 			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
-			result = [[''], [7]]
+			result = [[''], [7]];
 			keys = Object.keys(cachedData.aggregation);
 			values = Object.values(cachedData.aggregation);
 
 			assert.ok(areSameStrings(result[0], keys), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + keys);
 			assert.ok(areSame(result[1], values), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + values);
 
-			cachedData = {aggregation : {}}
+			cachedData = {aggregation : {}};
 			axisProperties = {
 				cat : {max: null, min:null, scale : []},
 				val : {max: null, min:null, scale : []},
-			}
-			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}]
-			strArr = [{val: "7"}, {val: "7"}, {val: "31"}, {val: "31"}, {val: "47"}, {val: "75"}, {val: "87"}, {val: "115"}, {val: "116"}, {val: "119"}, {val: "119"}, {val: "155"}, {val: "177"}]
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			strArr = [{val: "7"}, {val: "7"}, {val: "31"}, {val: "31"}, {val: "47"}, {val: "75"}, {val: "87"}, {val: "115"}, {val: "116"}, {val: "119"}, {val: "119"}, {val: "155"}, {val: "177"}];
 			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
-			result = [['7', '31', '47', '75', '87', '115', '116', '119', '155', '177'], [16, 62, 47, 75, 87, 115, 116, 238, 155, 177]]
+			result = [['7', '31', '47', '75', '87', '115', '116', '119', '155', '177'], [16, 62, 47, 75, 87, 115, 116, 238, 155, 177]];
 			keys = Object.keys(cachedData.aggregation);
 			values = Object.values(cachedData.aggregation);
 
 			assert.ok(areSameStrings(result[0], keys), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + keys);
 			assert.ok(areSame(result[1], values), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + values);
 
-			cachedData = {aggregation : {}}
+			cachedData = {aggregation : {}};
 			axisProperties = {
 				cat : {max: null, min:null, scale : []},
 				val : {max: null, min:null, scale : []},
-			}
-			numArr = [{val: 0}, {val: 9}, {val: 31}, {val: 0}]
-			strArr = [{val: "c"}, {val: "#"}, {val: "f"}, {val: "c"}]
+			};
+			numArr = [{val: 0}, {val: 9}, {val: 31}, {val: 0}];
+			strArr = [{val: "c"}, {val: "#"}, {val: "f"}, {val: "c"}];
 			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
-			result = [['c', '#', 'f'], [0, 9, 31]]
+			result = [['c', '#', 'f'], [0, 9, 31]];
 			keys = Object.keys(cachedData.aggregation);
 			values = Object.values(cachedData.aggregation);
 
 			assert.ok(areSameStrings(result[0], keys), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + keys);
 			assert.ok(areSame(result[1], values), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + values);
+
+		})
+	}
+
+	function testHistogramHandleAggregationMinAndMax () {
+		QUnit.test("Test: Histogram aggregation min and max calculations", function (assert) {
+
+			let chartsDrawer = new AscFormat.CChartsDrawer();
+			let cachedData = {aggregation : {}};
+			let axisProperties = {
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			let numArr = [{val: 7}, {val: 9}];
+			let strArr = [{val: "c"}, {val: "#"}];
+			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
+			result = [7, 9];
+
+			assert.ok(isEqual(result[0], axisProperties.val.min), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + axisProperties.val.min);
+			assert.ok(isEqual(result[1], axisProperties.val.max), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + axisProperties.val.max);
+
+			cachedData = {aggregation : {}};
+			axisProperties = {
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			strArr = [{val: "c"}, {val: "#"}, {val: "f"}, {val: "c"}, {val: "c"}, {val: "c"}, {val: "c"}, {val: "f"}, {val: "f"}, {val: "d"}, {val: "f"}, {val: "d"}, {val: "d"}];
+			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
+			result = [7, 451];
+
+			assert.ok(isEqual(result[0], axisProperties.val.min), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + axisProperties.val.min);
+			assert.ok(isEqual(result[1], axisProperties.val.max), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + axisProperties.val.max);
+
+			cachedData = {aggregation : {}};
+			axisProperties = {
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7},];
+			strArr = [];
+			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
+			result = [7, 7];
+
+			assert.ok(isEqual(result[0], axisProperties.val.min), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + axisProperties.val.min);
+			assert.ok(isEqual(result[1], axisProperties.val.max), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + axisProperties.val.max);
+
+			cachedData = {aggregation : {}};
+			axisProperties = {
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			strArr = [{val: "7"}, {val: "7"}, {val: "31"}, {val: "31"}, {val: "47"}, {val: "75"}, {val: "87"}, {val: "115"}, {val: "116"}, {val: "119"}, {val: "119"}, {val: "155"}, {val: "177"}];
+			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
+			result = [7, 238];
+
+			assert.ok(isEqual(result[0], axisProperties.val.min), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + axisProperties.val.min);
+			assert.ok(isEqual(result[1], axisProperties.val.max), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + axisProperties.val.max);
+
+			cachedData = {aggregation : {}};
+			axisProperties = {
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 0}, {val: 9}, {val: 31}, {val: 0}];
+			strArr = [{val: "c"}, {val: "#"}, {val: "f"}, {val: "c"}];
+			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
+			result = [0, 31];
+
+			assert.ok(isEqual(result[0], axisProperties.val.min), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + axisProperties.val.min);
+			assert.ok(isEqual(result[1], axisProperties.val.max), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + axisProperties.val.max);
+
+		})
+	}
+
+
+	function testHistogramHandleBinning () {
+
+		// this function compares each object inside the arrays
+		// if there is an object different for each array
+		// this function will return the index, the true object, and its incorrect prediction
+		function checkArraysOfObjects (arr, predicted) {
+			if (!arr || !predicted) {
+				return;
+			}
+			if (arr.length !== predicted.length) {
+				return ['arrays are different', 'arrays are different', 'arrays are different'];
+			}
+			for (let i = 0; i < arr.length; i++) {
+				const st1 = !isEqual(arr[i].min, predicted[i].min);
+				const st2 = !isEqual(arr[i].max, predicted[i].max);
+				const st3 = !isEqual(arr[i].occurrence, predicted[i].occurrence);
+				if (st1 || st2 || st3) {
+					return [i, arr[i], predicted[i]];
+				}
+			}
+			return false;
+		}
+
+
+		QUnit.test("Test: Histogram binning calculations", function (assert) {
+
+			let chartsDrawer = new AscFormat.CChartsDrawer();
+			let cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: null},
+				results: []};
+			let axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			let numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			let result = [{min : 7, max : 89, occurrence: 7}, {min : 89, max : 171, occurrence: 5}, {min : 171, max : 253, occurrence: 1}];
+			let isProblematic = checkArraysOfObjects(result, cachedData.results);
+			let message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 119, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 78, occurrence: 6}, {min : 78, max : 149, occurrence: 5}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 116, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 78, occurrence: 6}, {min : 78, max : 149, occurrence: 3}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 87, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 63, occurrence: 5}, {min : 63, max : 119, occurrence: 2}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 47, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 41, occurrence: 4}, {min : 41, max : 75, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 39, occurrence: 3}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 9, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 10.9, occurrence: 2}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 7, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 12, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 7, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 12, occurrence: 8}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: 26},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 33, occurrence: 4}, {min : 33, max : 59, occurrence: 1}, {min : 59, max : 85, occurrence: 1}, {min : 85, max : 111, occurrence: 1}, {min : 111, max : 137, occurrence: 4}, {min : 137, max : 163, occurrence: 1}, {min : 163, max : 189, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: 5},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 12, occurrence: 2}, {min : 12, max : 17, occurrence: 0}, {min : 17, max : 22, occurrence: 0}, {min : 22, max : 27, occurrence: 0}, {min : 27, max : 32, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: 10},
+				results: []};
+			axisProperties = {
+				cat : {max: 18, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 18}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 17, occurrence: 1}, {min : 17, max : 27, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: 1, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 177, occurrence: 13}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: 3, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 9, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 7.666666667, occurrence: 1}, {min : 7.666666667, max : 8.3333333333, occurrence: 0}, {min : 8.3333333333, max : 9, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: 2, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:31, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 31, max : 31, occurrence: 1}, {min : 31, max : 31, occurrence: 0}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 7.1, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 7.1, occurrence: 1}, {min : 7.1, max : 89.1, occurrence: 6}, {min : 89.1, max : 171.1, occurrence: 5}, {min : 171.1, max : 253.1, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 25, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 119, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 25, occurrence: 2}, {min : 25, max : 96, occurrence: 5}, {min : 96, max : 167, occurrence: 4}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 78, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 116, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 78, occurrence: 6}, {min : 78, max : 149, occurrence: 3}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 86.9999, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 87, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 86.9999, occurrence: 6}, {min : 86.9999, max : 142.9999, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 7, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 47, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 41, occurrence: 4}, {min : 41, max : 75, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 30, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 30, occurrence: 2}, {min : 30, max : 62, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 7.4, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 7.5, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 7.5}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 7.4, occurrence: 1}, {min : 7.4, max : 8.38, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 6.99999, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 7, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 12, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 7, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 7, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 12, occurrence: 8}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 7.5, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 9, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 7.5, occurrence: 1}, {min : 7.5, max : 11.4, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 8, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 8, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 8}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 8, occurrence: 2}, {min : 8, max : 10, occurrence: 0}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 176.99, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 89, occurrence: 7}, {min : 89, max : 171, occurrence: 5}, {min : 171, max : 176.99, occurrence: 0}, {min : 176.99, max : null, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 116, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 119, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 78, occurrence: 6}, {min : 78, max : 116, occurrence: 3}, {min : 116, max : null, occurrence: 2}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 78, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 116, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 78, occurrence: 6}, {min : 78, max : null, occurrence: 3}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 7, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 87, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 7, occurrence: 1}, {min : 7, max : null, occurrence: 6}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 47, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 47, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 41, occurrence: 4}, {min : 41, max : 75, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 8, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 8, occurrence: 1}, {min : 8, max : null, occurrence: 2}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 8.9, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 9, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 8.9, occurrence: 1}, {min : 8.9, max : null, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 7.111111, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 7, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 12, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 7.111111, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 7, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 12, occurrence: 8}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 8, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 8, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 8}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 9, occurrence: 2}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 176.99, underflow: 7.1, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 7.1, occurrence: 1}, {min : 7.1, max : 89.1, occurrence: 6}, {min : 89.1, max : 171.1, occurrence: 5}, {min : 171.1, max : 176.99, occurrence: 0}, {min : 176.99, max : null, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 116, underflow: 25, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 119, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 25, occurrence: 2}, {min : 25, max : 96, occurrence: 5}, {min : 96, max : 116, occurrence: 2}, {min : 116, max : null, occurrence: 2}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 78, underflow: 78, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 116, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 78, occurrence: 6}, {min : 78, max : 78, occurrence: 0}, {min : 78, max : null, occurrence: 3}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 7, underflow: 86.999, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 87, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 86.999, occurrence: 6}, {min : 86.999, max : 142.999, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 47, underflow: 7, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 47, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 41, occurrence: 4}, {min : 41, max : 75, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 8, underflow: 30, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 30, occurrence: 2}, {min : 30, max : 62, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 8.9, underflow: 7.4, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 9, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 7.4, occurrence: 1}, {min : 7.4, max : 8.9, occurrence: 0}, {min : 8.9, max : null, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 6.999, underflow: 7.1111, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 7, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 12, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 7.0, underflow: 7.1111, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 7, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 12, occurrence: 8}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 7.1, binCount: null, binSize: 40},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 7.1, occurrence: 1}, {min : 7.1, max : 47.1, occurrence: 4}, {min : 47.1, max : 87.1, occurrence: 2}, {min : 87.1, max : 127.1, occurrence: 4}, {min : 127.1, max : 167.1, occurrence: 1}, {min : 167.1, max : 207.1, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 20, binCount: null, binSize: 15},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 20, occurrence: 2}, {min : 20, max : 35, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 18, binCount: null, binSize: 110},
+				results: []};
+			axisProperties = {
+				cat : {max: 18, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 18}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 18, occurrence: 2}, {min : 18, max : 128, occurrence: 0}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 7, binCount: null, binSize: 50},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 57, occurrence: 5}, {min : 57, max : 107, occurrence: 2}, {min : 107, max : 157, occurrence: 5}, {min : 157, max : 207, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 169.9, underflow: null, binCount: null, binSize: 40},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 47, occurrence: 5}, {min : 47, max : 87, occurrence: 2}, {min : 87, max : 127, occurrence: 4}, {min : 127, max : 167, occurrence: 1}, {min : 167, max : 169.9, occurrence: 0}, {min : 169.9, max : null, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 20, underflow: null, binCount: null, binSize: 8},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 15, occurrence: 2}, {min : 15, max : 20, occurrence: 0}, {min : 20, max : null, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 7, underflow: null, binCount: null, binSize: 15},
+				results: []};
+			axisProperties = {
+				cat : {max: 18, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 18}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 7, occurrence: 1}, {min : 7, max : null, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 177, underflow: null, binCount: null, binSize: 50},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 57, occurrence: 5}, {min : 57, max : 107, occurrence: 2}, {min : 107, max : 157, occurrence: 5}, {min : 157, max : 207, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 176.9, underflow: 7.9, binCount: null, binSize: 70},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 7.9, occurrence: 1}, {min : 7.9, max : 77.9, occurrence: 5}, {min : 77.9, max : 147.9, occurrence: 5}, {min : 147.9, max : 176.9, occurrence: 1}, {min : 176.9, max : null, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 20, underflow: 20, binCount: null, binSize: 10},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 20, occurrence: 2}, {min : 20, max : 20, occurrence: 0}, {min : 20, max : null, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 18, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 18}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 29, occurrence: 2}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 177, underflow: 7, binCount: null, binSize: 50},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 57, occurrence: 5}, {min : 57, max : 107, occurrence: 2}, {min : 107, max : 157, occurrence: 5}, {min : 157, max : 207, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 7.1, binCount: 2, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 7.1, occurrence: 1}, {min : 7.1, max : 177, occurrence: 12}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 7.1, binCount: 1, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 7.1, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 18, binCount: 3, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 18, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 18}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 18, occurrence: 2}, {min : 18, max : 18, occurrence: 0}, {min : 18, max : 18, occurrence: 0}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 176.9, underflow: null, binCount: 2, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 176.9, occurrence: 12}, {min : 176.9, max : null, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 30.9, underflow: null, binCount: 1, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 30.9, max : null, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 7, underflow: null, binCount: 3, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 18, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 18}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 7, occurrence: 1}, {min : 7, max : 7, occurrence: 0}, {min : 7, max : null, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 169.9, underflow: 7.1, binCount: 1, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 7.1, occurrence: 1}, {min : 169.9, max : null, occurrence: 12}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 28, underflow: 28, binCount: 3, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 28, occurrence: 2}, {min : 28, max : 28, occurrence: 0}, {min : 28, max : null, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 17.5, underflow: 8.5, binCount: 2, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 18, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 18}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 8.5, occurrence: 1}, {min : 17.5, max : null, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 10, underflow: 8, binCount: 2, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 18, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 8, occurrence: 1}, {min : 10, max : null, occurrence: 2}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+		})
+	}
+
+	function testLineBuilderApproximatedBezier () {
+		QUnit.test("Test: Line Builder approximated bezier function", function (assert) {
+
+			let chartletiables = [0.6000000000000014, 0.8285714285714283]
+			let catMin = 1;
+			let catMax = 6;
+			let valMin = null;
+			let valMax = null;
+			let logBase = null;
+			let type = 1;
+			let lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			let equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			let cutPoint = 1000;
+			let resultStartCatVals = [];
+			let resultsStartValVals = [];
+			let resultsCatVals = [1, 6];
+			let resultsValVals = [1.4285714285714297, 5.571428571428571];
+			let lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-19, 15.200000000000003]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 4];
+			resultsValVals = [-3.799999999999997, 41.80000000000001];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-4.199999999999999, 1.7714285714285714]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 6];
+			resultsValVals = [-2.428571428571428, 6.428571428571429];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-172840, 75837.85714285713]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 6];
+			resultsValVals = [-97002.14285714287, 282187.1428571428];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.333333333333334, 0.28571428571428514]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 6];
+			resultsValVals = [1.619047619047619, 3.047619047619045];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [0.6000000000000014, 0.8285714285714283]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.4315151945474693, 6];
+			resultsValVals = [1.4285714285714297, 3.2770831944502925, 5.57142857142857];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-19, 15.200000000000003]
+			catMin = 1;
+			catMax = 4;
+			valMin = 0.1;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1.256578947368421, 1.2814964885317515, 1.2898023355861947, 4];
+			resultsValVals = [0.10000000000000005, 4.414440786380464, 15.60154450534442, 41.800000000000004];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-4.199999999999999, 1.7714285714285714]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [2.376612903225806, 2.399797564974433, 2.4075257855573082, 6];
+			resultsValVals = [0.01000000000000001, 0.6076398272462274, 2.3888835256910106, 6.428571428571428];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-172840, 75837.85714285713]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [2.2827937611257103, 2.3006753066997625, 2.304801817216851, 6];
+			resultsValVals = [282.187142857143, 34483.62358038931, 104531.15364045568, 282187.1428571427];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.333333333333334, 0.28571428571428514]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.9798282656993273, 6];
+			resultsValVals = [1.619047619047619, 2.2961172530284593, 3.047619047619045];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.0853780304041418, 2.202033537057911]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.150111363073666, 6];
+			resultsValVals = [1.0853780304041418, 3.6179618232437427, 5.030892471985402];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-4.489845190674558, 29.565068994571178]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 1.8483924814931874, 4];
+			resultsValVals = [-4.489845190674558, 20.592937059146976, 36.496043242619976];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-1.5298842782486233, 3.2191057898549253]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.1501113630736657, 6];
+			resultsValVals = [-1.5298842782486233, 2.1724458695997537, 4.237979003170796];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-94541.7317212114, 170658.5375973549]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.150111363073666, 6];
+			resultsValVals = [-94541.7317212114, 101734.59157504095, 211237.3190234613];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [0.8734737381931108, 1.3313304643014572]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.1501113630736657, 6];
+			resultsValVals = [0.8734737381931108, 2.404652033192356, 3.2588977042770297];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.0853780304041418, 2.202033537057911]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 1.2988232955456442, 1.5976465910912885, 6];
+			resultsValVals = [1.0853780304041418, 1.990102532537364, 3.6489665158755145, 5.0308924719854];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-4.489845190674558, 29.565068994571178]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1.165438725217985, 1.1736988748896424, 1.174553373131538, 4];
+			resultsValVals = [0.03649604324262, 11.370596442990395, 20.593748163716384, 36.49604324261996];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-1.5298842782486233, 3.2191057898549253]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1.6134226199693829, 1.6375316351901021, 1.6409757802216334, 6];
+			resultsValVals = [0.01000000000000001, 1.2276085027998023, 2.4406022912978123, 4.2379790031707945];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [-94541.7317212114, 170658.5375973549]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1.7423235984576693, 1.7547074335066466, 1.7559885198910234, 6];
+			resultsValVals = [211.23731902346108, 65857.82996110985, 119286.28973286712, 211237.31902346085];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [0.8734737381931108, 1.3313304643014572]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 1.2933202071709262, 1.6704461878192602, 6];
+			resultsValVals = [0.8734737381931108, 1.365875111651997, 2.42687128132288, 3.2588977042770293];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.3470294984018791, 0.7283261086204962]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.6012794465851243, 6];
+			resultsValVals = [1.3470294984018791, 2.918007538131848, 4.967352481769911];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.8367239858577353, 2.210556099993931]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.5676669401272707, 4];
+			resultsValVals = [1.8367239858577353, 8.201736154712346, 39.34878110454656];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.597378819226662, 6.290262865578015]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [1];
+			resultsStartValVals = [6];
+			resultsCatVals = [3.5, 4.128138791741785, 5.175036777978095, 6];
+			resultsValVals = [4224.146163889106, 8992.794563642741, 16940.541896565468, 125367.1738292479];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.3470294984018791, 0.7283261086204962]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 2.1501113630736657, 6];
+			resultsValVals = [1.3470294984018791, 3.112909844498046, 4.967352481769911];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.8367239858577353, 2.210556099993931]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 1.8483924814931876, 4];
+			resultsValVals = [1.8367239858577353, 11.981966375832453, 39.34878110454656];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.9540401412926336, 6.056432353383194]
+			catMin = 1;
+			catMax = 10;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 1.5844104554141858, 2.558427881104495, 10];
+			resultsValVals = [1.9540401412926336, 67.31219921189552, 24548.64985736736, 2225183.5179863917];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.1384149147480012, 0.2762585712743759]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 4.058030426393523, 6];
+			resultsValVals = [1.5006456374707577, 2.7684017513643067, 5.97263555719961];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [0.7999999999999979, 1.034977465516456]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 1.8154710586797078, 3.1745894898125546, 4];
+			resultsValVals = [2.252034239498936, 4.152738007182711, 7.3205776199890025, 50.23772863019174];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [0.5000000000000027, 2.302585092994045]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [1];
+			resultsStartValVals = [6];
+			resultsCatVals = [3.5, 4.925624950443996, 5.573636291554903, 6];
+			resultsValVals = [1581.1388300841957, 6771.4211390038145, 9130.640370330913, 500000.00000000064];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [1.1384149147480012, 0.2762585712743759]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 6];
+			resultsValVals = [1.5006456374707577, 5.9726355571996095];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [0.7999999999999979, 1.034977465516456]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 4];
+			resultsValVals = [2.2520342394989354, 50.237728630191725];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+
+			chartletiables = [0.5000000000000027, 2.302585092994045]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			resultStartCatVals = [];
+			resultsStartValVals = [];
+			resultsCatVals = [1, 6];
+			resultsValVals = [5.000000000000022, 499999.99999999994];
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+
+			assert.ok(areSame(lineCoords.mainLine.catVals, resultsCatVals), "Approximated bezier catVal results are not equal to the expected results: expected catVals:" + resultsCatVals + ', got:' + lineCoords.mainLine.catVals);
+			assert.ok(areSame(lineCoords.mainLine.valVals, resultsValVals), "Approximated bezier valVal results are not equal to the expected results: expected valVals:" + resultsValVals + ', got:' + lineCoords.mainLine.valVals);
+			assert.ok(areSame(lineCoords.startPoint.catVals, resultStartCatVals), "Approximated bezier starting catVal results are not equal to the expected results: expected catVals:" + resultStartCatVals + ', got:' + lineCoords.startPoint.catVals);
+			assert.ok(areSame(lineCoords.startPoint.valVals, resultsStartValVals), "Approximated bezier starting valVal results are not equal to the expected results: expected valVals:" + resultsStartValVals + ', got:' + lineCoords.startPoint.valVals);
+		})
+	}
+
+	function testLineBuilderApproximatedBezier () {
+		QUnit.test("Test: Line Builder boundaries calculation", function (assert) {
+
+			let chartletiables = [0.6000000000000014, 0.8285714285714283]
+			let catMin = 1;
+			let catMax = 6;
+			let valMin = null;
+			let valMax = null;
+			let logBase = null;
+			let type = 1;
+			let lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			let equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			let cutPoint = 1000; 
+			let maxCatVal = 6;
+			let minCatVal = 1;
+			let maxValVal = 5.571428571428571;
+			let minValVal = 1.4285714285714297;
+			let lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			let boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-19, 15.200000000000003]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 41.80000000000001;
+			minValVal = -3.799999999999997;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-4.199999999999999, 1.7714285714285714]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 6.428571428571429;
+			minValVal = -2.428571428571428;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-172840, 75837.85714285713]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 282187.1428571428;
+			minValVal = -97002.14285714287;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.333333333333334, 0.28571428571428514]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 1000;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 3.047619047619045;
+			minValVal = 1.619047619047619;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [0.6000000000000014, 0.8285714285714283]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 5.57142857142857;
+			minValVal = 1.4285714285714297;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-19, 15.200000000000003]
+			catMin = 1;
+			catMax = 4;
+			valMin = 0.1;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 41.800000000000004;
+			minValVal = 0.10000000000000005;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-4.199999999999999, 1.7714285714285714]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 2.376612903225806;
+			maxValVal = 6.428571428571428;
+			minValVal = 0.01000000000000001;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-172840, 75837.85714285713]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 2.2827937611257103;
+			maxValVal = 282187.1428571427;
+			minValVal = 282.187142857143;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.333333333333334, 0.28571428571428514]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 1;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 3.047619047619045;
+			minValVal = 1.619047619047619;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.0853780304041418, 2.202033537057911]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 5.030892471985402;
+			minValVal = 1.0853780304041418;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-4.489845190674558, 29.565068994571178]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 36.496043242619976;
+			minValVal = -4.489845190674558;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-1.5298842782486233, 3.2191057898549253]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 4.237979003170796;
+			minValVal = -1.5298842782486233;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-94541.7317212114, 170658.5375973549]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 211237.3190234613;
+			minValVal = -94541.7317212114;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [0.8734737381931108, 1.3313304643014572]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 3.2588977042770297;
+			minValVal = 0.8734737381931108;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.0853780304041418, 2.202033537057911]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 5.0308924719854;
+			minValVal = 1.0853780304041418;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-4.489845190674558, 29.565068994571178]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 36.49604324261996;
+			minValVal = 0.03649604324262;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-1.5298842782486233, 3.2191057898549253]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1.6134226199693829;
+			maxValVal = 4.2379790031707945;
+			minValVal = 0.01000000000000001;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [-94541.7317212114, 170658.5375973549]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1.7423235984576693;
+			maxValVal = 211237.31902346085;
+			minValVal = 211.23731902346108;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [0.8734737381931108, 1.3313304643014572]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 2;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 3.2588977042770293;
+			minValVal = 0.8734737381931108;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.3470294984018791, 0.7283261086204962]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 4.967352481769911;
+			minValVal = 1.3470294984018791;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.8367239858577353, 2.210556099993931]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 39.34878110454656;
+			minValVal = 1.8367239858577353;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.597378819226662, 6.290262865578015]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 125367.1738292479;
+			minValVal = 6;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.3470294984018791, 0.7283261086204962]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 4.967352481769911;
+			minValVal = 1.3470294984018791;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.8367239858577353, 2.210556099993931]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 39.34878110454656;
+			minValVal = 1.8367239858577353;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.9540401412926336, 6.056432353383194]
+			catMin = 1;
+			catMax = 10;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 5;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 10;
+			minCatVal = 1;
+			maxValVal = 2225183.5179863917;
+			minValVal = 1.9540401412926336;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.1384149147480012, 0.2762585712743759]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 5.97263555719961;
+			minValVal = 1.5006456374707577;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [0.7999999999999979, 1.034977465516456]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 50.23772863019174;
+			minValVal = 2.252034239498936;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [0.5000000000000027, 2.302585092994045]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = null;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 500000.00000000064;
+			minValVal = 6;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [1.1384149147480012, 0.2762585712743759]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 5.9726355571996095;
+			minValVal = 1.5006456374707577;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [0.7999999999999979, 1.034977465516456]
+			catMin = 1;
+			catMax = 4;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 4;
+			minCatVal = 1;
+			maxValVal = 50.237728630191725;
+			minValVal = 2.2520342394989354;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+
+			chartletiables = [0.5000000000000027, 2.302585092994045]
+			catMin = 1;
+			catMax = 6;
+			valMin = null;
+			valMax = null;
+			logBase = 10;
+			type = 0;
+			lineBuilder = new AscFormat.CLineBuilder(chartletiables, catMin, catMax, valMin, valMax, logBase);
+			equationStorage = _obtainEquationStorage(type);
+			lineBuilder.setCalcYVal(equationStorage.calcYVal);
+			lineBuilder.setCalcXVal(equationStorage.calcXVal);
+			lineBuilder.setCalcSlope(equationStorage.calcSlope);
+			cutPoint = 3;
+			maxCatVal = 6;
+			minCatVal = 1;
+			maxValVal = 499999.99999999994;
+			minValVal = 5.000000000000022;
+			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
+			boundaries = lineBuilder.getBoundary();
+
+			assert.ok(isEqual(boundaries.catMax, maxCatVal), "Boundaries catMax calculated incorrectly:" + maxCatVal + ', got:' + boundaries.catMax);
+			assert.ok(isEqual(boundaries.catMin, minCatVal), "Boundaries catMin calculated incorrectly" + minCatVal + ', got:' + boundaries.catMin);
+			assert.ok(isEqual(boundaries.valMax, maxValVal), "Boundaries valMax calculated incorrectly" + maxValVal + ', got:' + boundaries.valMax);
+			assert.ok(isEqual(boundaries.valMin, minValVal), "Boundaries valMin calculated incorrectly" + minValVal + ', got:' + boundaries.valMin);
+		})
+	}
+
+	function testHistogramHandleAggregation () {
+		QUnit.test("Test: Histogram aggregation calculations", function (assert) {
+
+			let chartsDrawer = new AscFormat.CChartsDrawer();
+			let cachedData = {aggregation : {}};
+			let axisProperties = {
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			let numArr = [{val: 7}, {val: 9}];
+			let strArr = [{val: "c"}, {val: "#"}];
+			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
+			result = [['c', '#'], [7, 9]];
+			let keys = Object.keys(cachedData.aggregation);
+			let values = Object.values(cachedData.aggregation);
+
+			assert.ok(areSameStrings(result[0], keys), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + keys);
+			assert.ok(areSame(result[1], values), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + values);
+
+			cachedData = {aggregation : {}};
+			axisProperties = {
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			strArr = [{val: "c"}, {val: "#"}, {val: "f"}, {val: "c"}, {val: "c"}, {val: "c"}, {val: "c"}, {val: "f"}, {val: "f"}, {val: "d"}, {val: "f"}, {val: "d"}, {val: "d"}];
+			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
+			result = [['c', '#', 'f', 'd'], [247, 9, 381, 451]];
+			keys = Object.keys(cachedData.aggregation);
+			values = Object.values(cachedData.aggregation);
+
+			assert.ok(areSameStrings(result[0], keys), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + keys);
+			assert.ok(areSame(result[1], values), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + values);
+
+			cachedData = {aggregation : {}};
+			axisProperties = {
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7},];
+			strArr = [];
+			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
+			result = [[''], [7]];
+			keys = Object.keys(cachedData.aggregation);
+			values = Object.values(cachedData.aggregation);
+
+			assert.ok(areSameStrings(result[0], keys), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + keys);
+			assert.ok(areSame(result[1], values), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + values);
+
+			cachedData = {aggregation : {}};
+			axisProperties = {
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			strArr = [{val: "7"}, {val: "7"}, {val: "31"}, {val: "31"}, {val: "47"}, {val: "75"}, {val: "87"}, {val: "115"}, {val: "116"}, {val: "119"}, {val: "119"}, {val: "155"}, {val: "177"}];
+			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
+			result = [['7', '31', '47', '75', '87', '115', '116', '119', '155', '177'], [16, 62, 47, 75, 87, 115, 116, 238, 155, 177]];
+			keys = Object.keys(cachedData.aggregation);
+			values = Object.values(cachedData.aggregation);
+
+			assert.ok(areSameStrings(result[0], keys), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + keys);
+			assert.ok(areSame(result[1], values), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + values);
+
+			cachedData = {aggregation : {}};
+			axisProperties = {
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 0}, {val: 9}, {val: 31}, {val: 0}];
+			strArr = [{val: "c"}, {val: "#"}, {val: "f"}, {val: "c"}];
+			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
+			result = [['c', '#', 'f'], [0, 9, 31]];
+			keys = Object.keys(cachedData.aggregation);
+			values = Object.values(cachedData.aggregation);
+
+			assert.ok(areSameStrings(result[0], keys), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + keys);
+			assert.ok(areSame(result[1], values), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + values);
+
+		})
+	}
+
+	function testHistogramHandleAggregationMinAndMax () {
+		QUnit.test("Test: Histogram aggregation min and max calculations", function (assert) {
+
+			let chartsDrawer = new AscFormat.CChartsDrawer();
+			let cachedData = {aggregation : {}};
+			let axisProperties = {
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			let numArr = [{val: 7}, {val: 9}];
+			let strArr = [{val: "c"}, {val: "#"}];
+			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
+			result = [7, 9];
+
+			assert.ok(isEqual(result[0], axisProperties.val.min), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + axisProperties.val.min);
+			assert.ok(isEqual(result[1], axisProperties.val.max), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + axisProperties.val.max);
+
+			cachedData = {aggregation : {}};
+			axisProperties = {
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			strArr = [{val: "c"}, {val: "#"}, {val: "f"}, {val: "c"}, {val: "c"}, {val: "c"}, {val: "c"}, {val: "f"}, {val: "f"}, {val: "d"}, {val: "f"}, {val: "d"}, {val: "d"}];
+			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
+			result = [7, 451];
+
+			assert.ok(isEqual(result[0], axisProperties.val.min), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + axisProperties.val.min);
+			assert.ok(isEqual(result[1], axisProperties.val.max), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + axisProperties.val.max);
+
+			cachedData = {aggregation : {}};
+			axisProperties = {
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7},];
+			strArr = [];
+			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
+			result = [7, 7];
+
+			assert.ok(isEqual(result[0], axisProperties.val.min), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + axisProperties.val.min);
+			assert.ok(isEqual(result[1], axisProperties.val.max), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + axisProperties.val.max);
+
+			cachedData = {aggregation : {}};
+			axisProperties = {
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			strArr = [{val: "7"}, {val: "7"}, {val: "31"}, {val: "31"}, {val: "47"}, {val: "75"}, {val: "87"}, {val: "115"}, {val: "116"}, {val: "119"}, {val: "119"}, {val: "155"}, {val: "177"}];
+			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
+			result = [7, 238];
+
+			assert.ok(isEqual(result[0], axisProperties.val.min), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + axisProperties.val.min);
+			assert.ok(isEqual(result[1], axisProperties.val.max), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + axisProperties.val.max);
+
+			cachedData = {aggregation : {}};
+			axisProperties = {
+				cat : {max: null, min:null, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 0}, {val: 9}, {val: 31}, {val: 0}];
+			strArr = [{val: "c"}, {val: "#"}, {val: "f"}, {val: "c"}];
+			chartsDrawer._chartExHandleAggregation(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, strArr, axisProperties);
+			result = [0, 31];
+
+			assert.ok(isEqual(result[0], axisProperties.val.min), "Histogram; aggregation keys calculated incorrectly:" + result[0] + ', got:' + axisProperties.val.min);
+			assert.ok(isEqual(result[1], axisProperties.val.max), "Histogram; aggregation values calculated incorrectly:" + result[1] + ', got:' + axisProperties.val.max);
+
+		})
+	}
+
+
+	function testHistogramHandleBinningMinAndMaxAndScale () {
+
+		// this function compares each object inside the arrays
+		// if there is an object different for each array
+		// this function will return the index, the true object, and its incorrect prediction
+		function checkArraysOfObjects (arr, predicted) {
+			if (!arr || !predicted) {
+				return;
+			}
+			if (arr.length !== predicted.length) {
+				return ['arrays are different', 'arrays are different', 'arrays are different'];
+			}
+			for (let i = 0; i < arr.length; i++) {
+				const st1 = !isEqual(arr[i].min, predicted[i].min);
+				const st2 = !isEqual(arr[i].max, predicted[i].max);
+				const st3 = !isEqual(arr[i].occurrence, predicted[i].occurrence);
+				if (st1 || st2 || st3) {
+					return [i, arr[i], predicted[i]];
+				}
+			}
+			return false;
+		}
+
+
+		QUnit.test("Test: Histogram binning min and max and scale", function (assert) {
+
+			let chartsDrawer = new AscFormat.CChartsDrawer();
+			let cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: null},
+				results: []};
+			let axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			let numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			let resultMax = 7;
+			let resultMin = 1; 
+			let resultScale = [7, 89, 171, 253];
+			let test1 = axisProperties.val.max === resultMax;
+			let test2 = axisProperties.val.min === resultMin;
+			let test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 119, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 6;
+			resultMin = 1; 
+			resultScale = [7, 78, 149];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 116, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 6;
+			resultMin = 1; 
+			resultScale = [7, 78, 149];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 87, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 5;
+			resultMin = 1; 
+			resultScale = [7, 63, 119];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 47, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 4;
+			resultMin = 1; 
+			resultScale = [7, 41, 75];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 3;
+			resultMin = 1; 
+			resultScale = [7, 39];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 9, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 2;
+			resultMin = 1; 
+			resultScale = [7, 10.9];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 7, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 1;
+			resultMin = 1; 
+			resultScale = [7, 12];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 7, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 8;
+			resultMin = 1; 
+			resultScale = [7, 12];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: 26},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 4;
+			resultMin = 1; 
+			resultScale = [7, 33, 59, 85, 111, 137, 163, 189];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: 5},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 2;
+			resultMin = 1; 
+			resultScale = [7, 12, 17, 22, 27, 32];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: 10},
+				results: []};
+			axisProperties = {
+				cat : {max: 18, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 18}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 1;
+			resultMin = 1; 
+			resultScale = [7, 17, 27];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: 1, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 13;
+			resultMin = 1; 
+			resultScale = [7, 177];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: 3, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 9, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 1;
+			resultMin = 1; 
+			resultScale = [7, 7.666666667, 8.333333333, 9];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: 2, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:31, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 1;
+			resultMin = 1; 
+			resultScale = [31, 31, 31];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+			
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 7.1, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 6;
+			resultMin = 1; 
+			resultScale = [7.1, 89.1, 171.1, 253.1];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 25, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 119, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 5;
+			resultMin = 1; 
+			resultScale = [25, 96, 167];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 78, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 116, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 6;
+			resultMin = 1; 
+			resultScale = [78, 149];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 86.9999, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 87, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 6;
+			resultMin = 1; 
+			resultScale = [86.9999, 142.9999];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 7, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 47, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 41, occurrence: 4}, {min : 41, max : 75, occurrence: 1}];
+			isProblematic = checkArraysOfObjects(result, cachedData.results);
+			message = isProblematic ? "Histogram; binning ranges calculated incorrectly at index: " + isProblematic[0] + ", Expected value were: " + JSON.stringify(isProblematic[1]) + ', got:' + JSON.stringify(isProblematic[2]) : 'test passed';
+			assert.ok(!isProblematic, message);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 30, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 2;
+			resultMin = 1; 
+			resultScale = [30, 62];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 7.4, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 7.5, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 7.5}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 1;
+			resultMin = 1; 
+			resultScale = [7.4, 8.38];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 6.99999, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 7, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 12, occurrence: 1}];
+			resultMax = 1;
+			resultMin = 1; 
+			resultScale = [7, 12];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 7, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 7, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 8;
+			resultMin = 1; 
+			resultScale = [7, 12];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 7.5, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 9, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 1;
+			resultMin = 1; 
+			resultScale = [7.5, 11.4];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 8, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 8, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 8}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 2;
+			resultMin = 1; 
+			resultScale = [8, 10];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 176.99, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 7;
+			resultMin = 1; 
+			resultScale = [7, 89, 171, 176.99];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 116, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 119, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 6;
+			resultMin = 1; 
+			resultScale = [7, 78, 116];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 78, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 116, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 6;
+			resultMin = 1; 
+			resultScale = [7, 78];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 7, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 87, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 6;
+			resultMin = 1; 
+			resultScale = [7, 7];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 47, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 47, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 4;
+			resultMin = 1; 
+			resultScale = [7, 41, 75];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 8, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 2;
+			resultMin = 1; 
+			resultScale = [7, 8];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 8.9, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 9, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 1;
+			resultMin = 1; 
+			resultScale = [7, 8.9];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 7.111111, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 7, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 1;
+			resultMin = 1; 
+			resultScale = [7, 12];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 7.111111, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 7, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 8;
+			resultMin = 1; 
+			resultScale = [7, 12];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 8, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 8, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 8}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 2;
+			resultMin = 1; 
+			resultScale = [7, 9];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 176.99, underflow: 7.1, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 6;
+			resultMin = 1; 
+			resultScale = [7.1, 89.1, 171.1, 176.99];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 116, underflow: 25, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 119, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 5;
+			resultMin = 1; 
+			resultScale = [25, 96, 116];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 78, underflow: 78, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 116, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 6;
+			resultMin = 1; 
+			resultScale = [78, 78];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 7, underflow: 86.999, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 87, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 6;
+			resultMin = 1; 
+			resultScale = [86.999, 142.999];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 47, underflow: 7, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 47, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 4;
+			resultMin = 1; 
+			resultScale = [7, 41, 75];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 8, underflow: 30, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 2;
+			resultMin = 1; 
+			resultScale = [30, 62];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 8.9, underflow: 7.4, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 9, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 1;
+			resultMin = 1; 
+			resultScale = [7.4, 8.9];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 6.999, underflow: 7.1111, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 7, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 1;
+			resultMin = 1; 
+			resultScale = [7, 12];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 7.0, underflow: 7.1111, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 7, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}, {val: 7}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 8;
+			resultMin = 1; 
+			resultScale = [7, 12];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 7.1, binCount: null, binSize: 40},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 4;
+			resultMin = 1; 
+			resultScale = [7.1, 47.1, 87.1, 127.1, 167.1, 207.1];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 20, binCount: null, binSize: 15},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 2;
+			resultMin = 1; 
+			resultScale = [20, 35];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 18, binCount: null, binSize: 110},
+				results: []};
+			axisProperties = {
+				cat : {max: 18, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 18}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 2;
+			resultMin = 1; 
+			resultScale = [18, 128];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 7, binCount: null, binSize: 50},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 5;
+			resultMin = 1; 
+			resultScale = [7, 57, 107, 157, 207];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 169.9, underflow: null, binCount: null, binSize: 40},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 5;
+			resultMin = 1; 
+			resultScale = [7, 47, 87, 127, 167, 169.9];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 20, underflow: null, binCount: null, binSize: 8},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : 7, max : 15, occurrence: 2}, {min : 15, max : 20, occurrence: 0}, {min : 20, max : null, occurrence: 1}];
+			resultMax = 2;
+			resultMin = 1; 
+			resultScale = [7, 15, 20];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 7, underflow: null, binCount: null, binSize: 15},
+				results: []};
+			axisProperties = {
+				cat : {max: 18, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 18}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 1;
+			resultMin = 1; 
+			resultScale = [7, 7];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 177, underflow: null, binCount: null, binSize: 50},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 5;
+			resultMin = 1; 
+			resultScale = [7, 57, 107, 157, 207];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 176.9, underflow: 7.9, binCount: null, binSize: 70},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 5;
+			resultMin = 1; 
+			resultScale = [7.9, 77.9, 147.9, 176.9];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 20, underflow: 20, binCount: null, binSize: 10},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 2;
+			resultMin = 1; 
+			resultScale = [20, 20];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: null, binCount: null, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 18, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 18}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 2;
+			resultMin = 1; 
+			resultScale = [7, 29];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 177, underflow: 7, binCount: null, binSize: 50},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 5;
+			resultMin = 1; 
+			resultScale = [7, 57, 107, 157, 207];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 7.1, binCount: 2, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 12;
+			resultMin = 1; 
+			resultScale = [7.1, 177];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 7.1, binCount: 1, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 1;
+			resultMin = 1; 
+			resultScale = [7.1];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: null, underflow: 18, binCount: 3, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 18, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 18}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 2;
+			resultMin = 1; 
+			resultScale = [18, 18, 18];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 176.9, underflow: null, binCount: 2, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 12;
+			resultMin = 1; 
+			resultScale = [7, 176.9];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 30.9, underflow: null, binCount: 1, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 1;
+			resultMin = 1; 
+			resultScale = [7];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 7, underflow: null, binCount: 3, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 18, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 18}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 1;
+			resultMin = 1; 
+			resultScale = [7, 7, 7];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 169.9, underflow: 7.1, binCount: 1, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 177, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}, {val: 31}, {val: 47}, {val: 75}, {val: 87}, {val: 115}, {val: 116}, {val: 119}, {val: 119}, {val: 155}, {val: 177}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 12;
+			resultMin = 1; 
+			resultScale = [7.1, 169.9];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 28, underflow: 28, binCount: 3, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 31, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 2;
+			resultMin = 1; 
+			resultScale = [28, 28];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 17.5, underflow: 8.5, binCount: 2, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 18, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 18}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			resultMax = 1;
+			resultMin = 1; 
+			resultScale = [8.5, 17.5];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+
+			cachedData = {
+				binning : { intervalClosed : 1, overflow: 10, underflow: 8, binCount: 2, binSize: null},
+				results: []};
+			axisProperties = {
+				cat : {max: 18, min:7, scale : []},
+				val : {max: null, min:null, scale : []},
+			};
+			numArr = [{val: 7}, {val: 9}, {val: 31}];
+			chartsDrawer._chartExHandleBinning(AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN, cachedData, numArr, axisProperties);
+			result = [{min : null, max : 8, occurrence: 1}, {min : 10, max : null, occurrence: 2}];
+			resultMax = 2;
+			resultMin = 1; 
+			resultScale = [8, 10];
+			test1 = axisProperties.val.max === resultMax;
+			test2 = axisProperties.val.min === resultMin;
+			test3 = areSame(axisProperties.cat.scale, resultScale);
+			assert.ok(test1, test1 ? 'test passed' : "Histogram; binning val max calculated incorrectly: " + resultMax + ", got: " + axisProperties.val.max);
+			assert.ok(test2, test2 ? 'test passed' : "Histogram; binning val min calculated incorrectly: " + resultMin + ", got: " + axisProperties.val.min);
+			assert.ok(test3, test3 ? 'test passed' : "Histogram; binning cat scale calculated incorrectly: " + resultScale + ", got: " + axisProperties.cat.scale);
+		})
+	}
+
+	function testRoundValue () {
+		QUnit.test("Test: RoundValues function", function (assert) {
+
+			let chartsDrawer = new AscFormat.CChartsDrawer();
+			let val = 105.965
+			let predicted = chartsDrawer._roundValue(val);
+			result = 105.965
+
+			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
+
+			val = 105.965000000002
+			predicted = chartsDrawer._roundValue(val);
+			result = 105.965
+
+			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
+
+			val = 105.965000000002
+			predicted = chartsDrawer._roundValue(val, true, 2);
+			result = 106
+
+			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
+
+			val = 106.82
+			predicted = chartsDrawer._roundValue(val, true, 2);
+			result = 107
+
+			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
+
+			val = 106.82
+			predicted = chartsDrawer._roundValue(val, false, 1);
+			result = 106.8
+
+			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
+
+			val = 1.452369
+			predicted = chartsDrawer._roundValue(val, true, 1);
+			result = 1.5
+
+			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
+
+			val = 10536.236958
+			predicted = chartsDrawer._roundValue(val, true, 1);
+			result = 11000
+
+			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
+
+			val = 0.5623695865465845
+			predicted = chartsDrawer._roundValue(val);
+			result = 0.5623695865
+
+			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
+
+			val = 15262.1262653592
+			predicted = chartsDrawer._roundValue(val);
+			result = 15262.126256359
+
+			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
 
 		})
 	}
@@ -4052,5 +8186,9 @@ $(function () {
 		testIntercept();
 		testLineBuilderApproximatedBezier();
 		testHistogramHandleAggregation();
+		testHistogramHandleAggregationMinAndMax();
+		testHistogramHandleBinning();
+		testHistogramHandleBinningMinAndMaxAndScale();
+		testRoundValue();
 	}
 });
