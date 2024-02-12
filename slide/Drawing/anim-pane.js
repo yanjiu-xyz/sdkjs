@@ -1917,23 +1917,16 @@
 		const repeats = this.getRepeatCount() / 1000;
 
 		let pointOfLanding = x - this.getLeftBorder() + timelineShift;
-		if (this.effect.isAfterEffect()) {
-			const prev = this.effect.getPreviousEffect()
-			if (prev) {
-				pointOfLanding -= this.ms_to_mm(prev.asc_getDelay());
-				pointOfLanding -= this.ms_to_mm(prev.asc_getDuration()) * prev.asc_getRepeatCount() / 1000;;
-			}
-		}
 
 		if (this.hitResult.type === 'right') {
 			if (this.effect.isUntilEffect()) {
-				const pointOfContact = this.ms_to_mm(this.effect.asc_getDelay() + this.effect.asc_getDuration() * this.initialTmpRepeatCount / 1000);
+				const pointOfContact = this.ms_to_mm(this.effect.getBaseTime() + this.effect.asc_getDelay() + this.effect.asc_getDuration() * this.initialTmpRepeatCount / 1000);
 				let diff = this.mm_to_ms(pointOfLanding - pointOfContact);
 
 				const newTmpRepeatCount = this.initialTmpRepeatCount + diff / (this.effect.asc_getDuration() / 1000);
 				this.tmpRepeatCount = Math.max(newTmpRepeatCount, MIN_ALLOWED_REPEAT_COUNT);
 			} else {
-				const pointOfContact = this.ms_to_mm(this.effect.asc_getDelay() + this.effect.asc_getDuration() * repeats);
+				const pointOfContact = this.ms_to_mm(this.effect.getBaseTime() + this.effect.asc_getDelay() + this.effect.asc_getDuration() * repeats);
 				let diff = this.mm_to_ms(pointOfLanding - pointOfContact);
 
 				const newTmpDuration = this.effect.asc_getDuration() + diff / repeats;
@@ -1942,7 +1935,7 @@
 		}
 
 		if (this.hitResult.type === 'left') {
-			const pointOfContact = this.ms_to_mm(this.effect.asc_getDelay());
+			const pointOfContact = this.ms_to_mm(this.effect.getBaseTime() + this.effect.asc_getDelay());
 			const diff = this.mm_to_ms(pointOfLanding - pointOfContact);
 
 			const newTmpDuration = this.effect.asc_getDuration() - diff / repeats;
@@ -1960,7 +1953,7 @@
 		}
 
 		if (this.hitResult.type === 'center') {
-			const pointOfContact = this.ms_to_mm(this.effect.asc_getDelay()) + this.hitResult.offset;
+			const pointOfContact = this.ms_to_mm(this.effect.getBaseTime() + this.effect.asc_getDelay()) + this.hitResult.offset;
 			const diff = this.mm_to_ms(pointOfLanding - pointOfContact);
 
 			const newTmpDelay = this.effect.asc_getDelay() + diff;
@@ -1968,7 +1961,7 @@
 		}
 
 		if (this.hitResult.type === 'partition') {
-			const pointOfContact = this.ms_to_mm(this.effect.asc_getDelay() + this.effect.asc_getDuration() * this.hitResult.index);
+			const pointOfContact = this.ms_to_mm(this.effect.getBaseTime() + this.effect.asc_getDelay() + this.effect.asc_getDuration() * this.hitResult.index);
 			const diff = this.mm_to_ms(pointOfLanding - pointOfContact);
 
 			const newTmpDuration = this.effect.asc_getDuration() + diff / this.hitResult.index;
@@ -2069,15 +2062,7 @@
 		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline;
 		const timelineShift = timeline.getStartTime() * 1000;
 
-		let l = this.ms_to_mm(this.getDelay()) + this.getLeftBorder() - this.ms_to_mm(timelineShift);
-
-		if (this.effect.isAfterEffect()) {
-			const prev = this.effect.getPreviousEffect()
-			if (prev) {
-				l += this.ms_to_mm(prev.asc_getDelay());
-				l += this.ms_to_mm(prev.asc_getDuration()) * prev.asc_getRepeatCount() / 1000;
-			}
-		}
+		let l = this.ms_to_mm(this.effect.getBaseTime() + this.getDelay()) + this.getLeftBorder() - this.ms_to_mm(timelineShift);
 
 		let r = l + this.ms_to_mm(this.getDuration());
 

@@ -979,6 +979,67 @@
 		return this.asc_getRepeatCount() === AscFormat.untilNextClick ||
 			this.asc_getRepeatCount() === AscFormat.untilNextSlide;
 	}
+	CTimeNodeBase.prototype.getBaseTime = function () {
+		if (!this.isAnimEffect()) { return false; }
+
+		const nodeType = this.getNodeType();
+		if (nodeType === AscFormat.NODE_TYPE_CLICKEFFECT) {
+			return 0;
+		}
+		if (nodeType === AscFormat.NODE_TYPE_WITHEFFECT) {
+			const prev = this.getPreviousEffect();
+			return prev ? prev.getBaseTime() : 0;
+		}
+		if (nodeType === AscFormat.NODE_TYPE_AFTEREFFECT) {
+			let prev = this.getPreviousEffect();
+			if (!prev) { return 0; }
+
+			if (prev.getNodeType() === AscFormat.NODE_TYPE_CLICKEFFECT) {
+				if (prev.isUntilEffect()) {
+					return prev.getBaseTime() + prev.asc_getDelay() + prev.asc_getDuration();
+				} else {
+					return prev.getBaseTime() + prev.asc_getDelay() + prev.asc_getDuration() * prev.asc_getRepeatCount() / 1000;
+				}
+			}
+
+			if (prev.getNodeType() === AscFormat.NODE_TYPE_AFTEREFFECT) {
+				if (prev.isUntilEffect()) {
+					return prev.getBaseTime() + prev.asc_getDelay() + prev.asc_getDuration();
+				} else {
+					return prev.getBaseTime() + prev.asc_getDelay() + prev.asc_getDuration() * prev.asc_getRepeatCount() / 1000;
+				}
+			}
+
+			if (prev.getNodeType() === AscFormat.NODE_TYPE_WITHEFFECT) {
+				const prevPrev = prev.getPreviousEffect();
+				if (prevPrev) {
+					let maxEndTime = calcEndTime(prev);
+					let current = prev.getPreviousEffect();
+					while (current) {
+						maxEndTime = Math.max(maxEndTime, calcEndTime(current));
+						if (current.getNodeType() !== AscFormat.NODE_TYPE_WITHEFFECT) {
+							break;
+						}
+						current = current.getPreviousEffect();
+					}
+					return maxEndTime;
+
+					function calcEndTime(effect) {
+						return effect.isUntilEffect() ?
+							effect.getBaseTime() + effect.asc_getDelay() + effect.asc_getDuration() :
+							effect.getBaseTime() + effect.asc_getDelay() + effect.asc_getDuration() * effect.asc_getRepeatCount() / 1000;
+					}
+				} else {
+					// return calcEndTime(prev);
+					if (prev.isUntilEffect()) {
+						return prev.getBaseTime() + prev.asc_getDelay() + prev.asc_getDuration();
+					} else {
+						return prev.getBaseTime() + prev.asc_getDelay() + prev.asc_getDuration() * prev.asc_getRepeatCount() / 1000;
+					}
+				}
+			}
+		}
+	}
     CTimeNodeBase.prototype.traverseTimeNodes = function (fCallback) {
         fCallback(this);
         var aChildren = this.getChildrenTimeNodes();
