@@ -81,7 +81,7 @@ $(function () {
 
 	function ShowDelText()
 	{
-		oCurDelRecover.recover();
+		oCurDelRecover.RecoverDeletedText();
 	}
 
 	function Prev()

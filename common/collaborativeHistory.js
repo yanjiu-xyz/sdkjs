@@ -53,7 +53,10 @@
 		
 		this.textRecovery = null;
 	}
-	CCollaborativeHistory.prototype.splitChangesByPoints = function ()
+	/**
+	 * Разделяем изменения ревизии для отображения истории ревизии
+	 */
+	CCollaborativeHistory.prototype.SplitChangesByPoints = function ()
 	{
 		if (!this.Changes || !this.Changes || this.ChangesSplitByPoints.length !== 0)
 			return;
@@ -87,7 +90,10 @@
 		
 		this.textRecovery = null;
 	};
-	CCollaborativeHistory.prototype.undoNavigationRevision = function ()
+	/**
+	 * Отменяем изменения хождения по истории ревизии
+	 */
+	CCollaborativeHistory.prototype.UndoNavigationRevision = function ()
 	{
 		let arrInput = this.RedoUndoChanges(this.StepTextPoint, false);
 		editor.WordControl.m_oLogicDocument.RecalculateByChanges(arrInput);
@@ -95,13 +101,11 @@
 	/**
 	 * Перемещаемся по истории ревизии на заданную точку
 	 * @param {number} intCount - Позиция на которую необходимо переместится
-	 * @param {boolean} isNotUndoPoints - Нужно, что бы перемещение по истории правильно отрабатывало, если мы не сохранили изменения
 	 * @constructor
 	 */
-	CCollaborativeHistory.prototype.NavigationRevisionHistoryByStep = function (intCount, isNotUndoPoints)
+	CCollaborativeHistory.prototype.NavigationRevisionHistoryByStep = function (intCount)
 	{
-		let arr = this.Changes;
-		this.splitChangesByPoints();
+		this.SplitChangesByPoints();
 
 		if (intCount <= 0 || intCount > this.ChangesSplitByPoints.length || intCount === this.curChangeIndex)
 		{
@@ -109,7 +113,7 @@
 			return false;
 		}
 
-		this.undoNavigationRevision();
+		this.UndoNavigationRevision();
 		AscCommon.History.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_DeletedTextRecovery);
 
 		this.curChangeIndex = intCount;
@@ -212,7 +216,7 @@
 	 */
 	CCollaborativeHistory.prototype.RedoUndoChanges = function(count, isReverse)
 	{
-		this.undoDeletedTextRecovery();
+		this.UndoDeletedTextRecovery();
 
 		if (isNaN(count))
 			return [];
@@ -236,8 +240,8 @@
 	 */
 	CCollaborativeHistory.prototype.UndoGlobalChanges = function(count)
 	{
-		this.undoDeletedTextRecovery();
-		
+		this.UndoDeletedTextRecovery();
+
 		count = Math.min(count, this.Changes.length);
 
 		if (!count)
@@ -276,8 +280,8 @@
 	 */
 	CCollaborativeHistory.prototype.UndoGlobalPoint = function()
 	{
-		this.undoDeletedTextRecovery();
-		
+		this.UndoDeletedTextRecovery();
+
 		let count = 0;
 		for (let index = this.Changes.length - 1; index > 0; --index, ++count)
 		{
@@ -294,37 +298,59 @@
 
 		return count ? this.UndoGlobalChanges(count) : [];
 	};
-	CCollaborativeHistory.prototype.getGlobalPointCount = function()
+	/**
+	 * Получаем количество позиций истории в текущей ревизии
+	 * @return {number}
+	 * @constructor
+	 */
+	CCollaborativeHistory.prototype.GetGlobalPointCount = function()
 	{
-		this.splitChangesByPoints();
+		this.SplitChangesByPoints();
 		return this.ChangesSplitByPoints.length;
 	};
-	CCollaborativeHistory.prototype.getGlobalPointIndex = function()
+	/**
+	 * Получаем текущую позицию в истории ревизии
+	 * @return {number}
+	 */
+	CCollaborativeHistory.prototype.GetGlobalPointIndex = function()
 	{
-		this.splitChangesByPoints();
+		this.SplitChangesByPoints();
 		return this.curChangeIndex;
 	};
-	CCollaborativeHistory.prototype.moveToPoint = function(pointIndex)
+	/**
+	 * Перемещаемся на нужную точку истории ревизии
+	 * @param nPos - позиция в истории
+	 * @return {boolean} - был ли произведен переход на данную позицию
+	 */
+	CCollaborativeHistory.prototype.MoveToPoint = function(nPos)
 	{
-		this.undoDeletedTextRecovery();
-		return this.NavigationRevisionHistoryByStep(pointIndex, false);
+		this.UndoDeletedTextRecovery();
+		return this.NavigationRevisionHistoryByStep(nPos, false);
 	};
-	CCollaborativeHistory.prototype.initTextRecover = function ()
+	CCollaborativeHistory.prototype.InitTextRecover = function ()
 	{
 		if (!this.textRecovery)
-		{
 			this.textRecovery = new AscCommon.DeletedTextRecovery();
-		}
 	};
-	CCollaborativeHistory.prototype.recoverDeletedText = function()
+	/**
+	 * Отображаем удаленный текст для данный точки в истории ревизии
+	 * @return {boolean} - был ли отображен удаленный текст
+	 */
+	CCollaborativeHistory.prototype.RecoverDeletedText = function()
 	{
-		this.initTextRecover();
-		return this.textRecovery.recover();
+		this.InitTextRecover();
+		return this.textRecovery.RecoverDeletedText();
 	};
-	CCollaborativeHistory.prototype.undoDeletedTextRecovery = function()
+	/**
+	 * Отменить отображение удаленного текста в данной точке истории ревизии
+	 * @return {boolean}
+	 */
+	CCollaborativeHistory.prototype.UndoDeletedTextRecovery = function()
 	{
 		if (this.textRecovery)
-			this.textRecovery.UndoShowDelText();
+			return this.textRecovery.UndoShowDelText();
+
+		return false;
 	};
 	/**
 	 * Отменяем собственные последние действия, прокатывая их через чужие
@@ -925,10 +951,10 @@
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].CCollaborativeHistory = CCollaborativeHistory;
 	
-	CCollaborativeHistory.prototype["getGlobalPointCount"]     = CCollaborativeHistory.prototype.getGlobalPointCount;
-	CCollaborativeHistory.prototype["getGlobalPointIndex"]     = CCollaborativeHistory.prototype.getGlobalPointIndex;
-	CCollaborativeHistory.prototype["moveToPoint"]             = CCollaborativeHistory.prototype.moveToPoint;
-	CCollaborativeHistory.prototype["recoverDeletedText"]      = CCollaborativeHistory.prototype.recoverDeletedText;
-	CCollaborativeHistory.prototype["undoDeletedTextRecovery"] = CCollaborativeHistory.prototype.undoDeletedTextRecovery;
+	CCollaborativeHistory.prototype["GetGlobalPointCount"]     = CCollaborativeHistory.prototype.GetGlobalPointCount;
+	CCollaborativeHistory.prototype["getGlobalPointIndex"]     = CCollaborativeHistory.prototype.GetGlobalPointIndex;
+	CCollaborativeHistory.prototype["moveToPoint"]             = CCollaborativeHistory.prototype.MoveToPoint;
+	CCollaborativeHistory.prototype["recoverDeletedText"]      = CCollaborativeHistory.prototype.RecoverDeletedText;
+	CCollaborativeHistory.prototype["undoDeletedTextRecovery"] = CCollaborativeHistory.prototype.UndoDeletedTextRecovery;
 	
 })(window);
