@@ -1790,6 +1790,43 @@
 		return null;
 	};
 
+	CAnimGroup.prototype.draw = function(graphics) {
+		if (this.isHidden()) { return false; }
+		if (!this.checkUpdateRect(graphics.updatedRect)) { return false; }
+		if (!CControlContainer.prototype.draw.call(this, graphics)) { return false; }
+
+		const oThis = this;
+		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline;
+		const timelineShift = ms_to_mm(timeline.getStartTime() * 1000);
+
+		let afterItems = []
+		this.children.forEach(function (animItem) {
+			if (animItem.effect.isAfterEffect()) afterItems[afterItems.length] = animItem;
+		})
+		if (afterItems.length === 0) { return }
+
+		graphics.SaveGrState();
+		graphics.AddClipRect(afterItems[0].getLeftBorder(), oThis.getTop(), afterItems[0].getRightBorder() - afterItems[0].getLeftBorder(), oThis.getBottom() - oThis.getTop());
+
+		for (let i = 0; i < afterItems.length; i++) {
+			const animItem = afterItems[i];
+
+			const align = 0;
+			const x = ms_to_mm(animItem.effect.getBaseTime()) + animItem.getLeftBorder() - timelineShift;
+			let top = afterItems[i-1] ? oThis.getTop() + afterItems[i-1].getTop() : oThis.getTop();
+			let bottom = afterItems[i+1] ? oThis.getTop() + afterItems[i+1].getTop() : oThis.getBottom();
+
+			graphics.drawVerLine(align, x, top, bottom, oThis.getPenWidth(graphics));
+		}
+
+		graphics.RestoreGrState();
+
+		function ms_to_mm(nMilliseconds) {
+			const index = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.timeScaleIndex;
+			return nMilliseconds * TIME_INTERVALS[index] / TIME_SCALES[index] / 1000;
+		}
+	}
+
 
 	function CAnimItem(oParentControl, oEffect) {
 		CControlContainer.call(this, oParentControl);
@@ -2190,13 +2227,8 @@
 			}
 		}
 
-		this.drawConnectionLines(graphics);
-
 		graphics.RestoreGrState();
 	};
-	CAnimItem.prototype.drawConnectionLines = function (graphics) {
-
-	}
 	CAnimItem.prototype.hitInEffectBar = function (x, y) {
 		const bounds = this.getEffectBarBounds();
 		const isOutOfBorders = x < this.getLeftBorder() || x > this.getRightBorder() || y < bounds.t || y > bounds.b
