@@ -1795,6 +1795,12 @@
 		if (!this.checkUpdateRect(graphics.updatedRect)) { return false; }
 		if (!CControlContainer.prototype.draw.call(this, graphics)) { return false; }
 
+		let bShouldDraw = false;
+		this.effects.some(function (effect) {
+			if (effect.isSelected()) return bShouldDraw = true;
+		})
+		if (!bShouldDraw) { return }
+
 		const oThis = this;
 		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline;
 		const timelineShift = ms_to_mm(timeline.getStartTime() * 1000);
