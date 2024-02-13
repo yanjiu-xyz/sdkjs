@@ -193,8 +193,10 @@
 		CImageShape.prototype.getWatermarkProps = function () {
 			var oProps = new Asc.CAscWatermarkProperties();
 			oProps.put_Type(Asc.c_oAscWatermarkType.Image);
+			oProps.setXfrmRot(AscFormat.normalizeRotate(this.getXfrmRot() || 0));
 			oProps.put_ImageUrl2(this.blipFill.RasterImageId);
 			oProps.put_Scale(-1);
+			oProps.put_ImageSize(this.getXfrmExtX() * 36000 + 0.5 >> 0, this.getXfrmExtY() * 36000 + 0.5 >> 0);
 			var oApi;
 			if (window["Asc"] && window["Asc"]["editor"]) {
 				oApi = window["Asc"]["editor"];
@@ -317,29 +319,26 @@
 		};
 
 		CImageShape.prototype.getHierarchy = function () {
-			if (this.recalcInfo.recalculateShapeHierarchy) {
-				this.compiledHierarchy.length = 0;
-				var hierarchy = this.compiledHierarchy;
-				if (this.isPlaceholder()) {
-					var ph_type = this.getPlaceholderType();
-					var ph_index = this.getPlaceholderIndex();
-					var b_is_single_body = this.getIsSingleBody();
-					switch (this.parent.kind) {
-						case AscFormat.TYPE_KIND.SLIDE: {
-							hierarchy.push(this.parent.Layout.getMatchingShape(ph_type, ph_index, b_is_single_body));
-							hierarchy.push(this.parent.Layout.Master.getMatchingShape(ph_type, ph_index, b_is_single_body));
-							break;
-						}
 
-						case AscFormat.TYPE_KIND.LAYOUT: {
-							hierarchy.push(this.parent.Master.getMatchingShape(ph_type, ph_index, b_is_single_body));
-							break;
-						}
+			let hierarchy = [];
+			if (this.isPlaceholder()) {
+				var ph_type = this.getPlaceholderType();
+				var ph_index = this.getPlaceholderIndex();
+				var b_is_single_body = this.getIsSingleBody();
+				switch (this.parent.kind) {
+					case AscFormat.TYPE_KIND.SLIDE: {
+						hierarchy.push(this.parent.Layout.getMatchingShape(ph_type, ph_index, b_is_single_body));
+						hierarchy.push(this.parent.Layout.Master.getMatchingShape(ph_type, ph_index, b_is_single_body));
+						break;
+					}
+
+					case AscFormat.TYPE_KIND.LAYOUT: {
+						hierarchy.push(this.parent.Master.getMatchingShape(ph_type, ph_index, b_is_single_body));
+						break;
 					}
 				}
-				this.recalcInfo.recalculateShapeHierarchy = true;
 			}
-			return this.compiledHierarchy;
+			return hierarchy;
 		};
 
 		CImageShape.prototype.recalculateTransform = function () {
@@ -640,22 +639,6 @@
 
 		CImageShape.prototype.hitToAdjustment = CShape.prototype.hitToAdjustment;
 
-		CImageShape.prototype.getPlaceholderType = function () {
-			return this.isPlaceholder() ? this.nvPicPr.nvPr.ph.type : null;
-		};
-
-		CImageShape.prototype.getPlaceholderIndex = function () {
-			return this.isPlaceholder() ? this.nvPicPr.nvPr.ph.idx : null;
-		};
-
-		CImageShape.prototype.getPhType = function () {
-			return this.isPlaceholder() ? this.nvPicPr.nvPr.ph.type : null;
-		};
-
-		CImageShape.prototype.getPhIndex = function () {
-			return this.isPlaceholder() ? this.nvPicPr.nvPr.ph.idx : null;
-		};
-
 		CImageShape.prototype.getMediaFileName = function () {
 			if (this.nvPicPr && this.nvPicPr.nvPr && this.nvPicPr.nvPr.unimedia) {
 				var oUniMedia = this.nvPicPr.nvPr.unimedia;
@@ -839,8 +822,8 @@
 			}
 			this.pasteDrawingFormatting(oFormatData.Drawing);
 		};
-		CImageShape.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
-			return AscFormat.CShape.prototype.compareForMorph.call(this, oDrawingToCheck, oCurCandidate);
+		CImageShape.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate, oMapPaired) {
+			return AscFormat.CShape.prototype.compareForMorph.call(this, oDrawingToCheck, oCurCandidate, oMapPaired);
 		};
 		CImageShape.prototype.getText = function() {
 			return null;

@@ -199,6 +199,8 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
         this.startShape = null;
         this.endShape = null;
 
+				this.smartartParent = this.originalObject.isObjectInSmartArt() ? this.originalObject.group.group.parent : null;
+
         this.beginShapeId = null;
         this.beginShapeIdx = null;
 
@@ -859,7 +861,19 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                 this.resizedflipH = false;
                 this.resizedflipV = false;
             }
-            this.geometry.Recalculate(this.resizedExtX, this.resizedExtY);
+            
+            if (Asc.editor.isPdfEditor() && this.originalObject.IsPdfObject) {
+                let xMin = this.resizedPosX;
+                let xMax = this.resizedPosX + this.resizedExtX;
+                let yMin = this.resizedPosY;
+                let yMax = this.resizedPosY + this.resizedExtY;
+                
+                this.originalObject.RefillGeometry(this.geometry, [xMin, yMin, xMax, yMax]);
+            }
+            else {
+                this.geometry.Recalculate(this.resizedExtX, this.resizedExtY);
+            }
+
             this.overlayObject.updateExtents(this.resizedExtX, this.resizedExtY);
 
             this.recalculateTransform();
@@ -1001,6 +1015,14 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
             {
                 global_MatrixTransformer.MultiplyAppend(_transform, this.originalObject.group.transform);
             }
+						if (this.smartartParent)
+						{
+							var parent_transform = this.smartartParent.Get_ParentTextTransform && this.smartartParent.Get_ParentTextTransform();
+							if(parent_transform)
+							{
+								global_MatrixTransformer.MultiplyAppend(_transform, parent_transform);
+							}
+						}
 
             if(this.originalObject.parent)
             {
@@ -1212,7 +1234,14 @@ function ResizeTrackShapeImage(originalObject, cardDirection, drawingsController
                 {
                     oObjectToSet.setLayout(new AscFormat.CLayout());
                 }
-                var pos = this.chartSpace.chartObj.recalculatePositionText(this.originalObject);
+                let pos;
+                if(this.originalObject.parent && this.originalObject.parent.getObjectType() === AscDFH.historyitem_type_TrendLine) {
+                    pos = this.chartSpace.chartObj.recalculatePositionText(this.originalObject.parent);
+                    pos = {x: pos.coordinate.catVal, y: pos.coordinate.valVal};
+                }
+                else {
+                    pos = this.chartSpace.chartObj.recalculatePositionText(this.originalObject);
+                }
                 oObjectToSet.layout.setXMode(AscFormat.LAYOUT_MODE_EDGE);
                 oObjectToSet.layout.setYMode(AscFormat.LAYOUT_MODE_EDGE);
                 if(oObjectToSet instanceof AscFormat.CPlotArea)
@@ -1867,6 +1896,14 @@ function ResizeTrackGroup(originalObject, cardDirection, parentTrack)
             global_MatrixTransformer.TranslateAppend(_transform, this.resizedPosX, this.resizedPosY);
             global_MatrixTransformer.TranslateAppend(_transform, _horizontal_center, _vertical_center);
 
+						if(this.originalObject.parent)
+	        {
+		        var parent_transform = this.originalObject.parent.Get_ParentTextTransform && this.originalObject.parent.Get_ParentTextTransform();
+		        if(parent_transform)
+		        {
+			        global_MatrixTransformer.MultiplyAppend(_transform, parent_transform);
+		        }
+	        }
 
 
 

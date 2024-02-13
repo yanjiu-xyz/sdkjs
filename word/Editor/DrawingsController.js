@@ -98,9 +98,9 @@ CDrawingsController.prototype.AddNewParagraph = function(bRecalculate, bForceAdd
 {
 	return this.DrawingObjects.addNewParagraph(bRecalculate, bForceAdd);
 };
-CDrawingsController.prototype.AddInlineImage = function(nW, nH, oImage, oChart, bFlow)
+CDrawingsController.prototype.AddInlineImage = function(nW, nH, oImage, oGraphicObject, bFlow)
 {
-	return this.DrawingObjects.addInlineImage(nW, nH, oImage, oChart, bFlow);
+	return this.DrawingObjects.addInlineImage(nW, nH, oImage, oGraphicObject, bFlow);
 };
 CDrawingsController.prototype.AddImages = function(aImages)
 {
@@ -119,7 +119,7 @@ CDrawingsController.prototype.AddTextArt = function(nStyle)
 	var ParaDrawing = this.DrawingObjects.getMajorParaDrawing();
 	if (ParaDrawing)
 	{
-		ParaDrawing.GoTo_Text(undefined, false);
+		ParaDrawing.GoToText(undefined, false);
 		this.LogicDocument.AddTextArt(nStyle);
 	}
 };
@@ -380,7 +380,7 @@ CDrawingsController.prototype.RemoveSelection = function(bNoCheckDrawing)
 				oParaDrawing = arrDrawings[0];
 		}
 
-		oParaDrawing.GoTo_Text(undefined, false);
+		oParaDrawing.GoToText(undefined, false);
 	}
 };
 CDrawingsController.prototype.IsSelectionEmpty = function(bCheckHidden)

@@ -31,11 +31,6 @@
  */
 
 "use strict";
-/**
- * User: Ilja.Kirillov
- * Date: 08.05.2018
- * Time: 15:08
- */
 
 // Import
 var g_oTextMeasurer = AscCommon.g_oTextMeasurer;
@@ -64,7 +59,6 @@ function CAbstractNum()
 	for (var nLvl = 0; nLvl < 9; ++nLvl)
 	{
 		this.Lvl[nLvl] = new CNumberingLvl();
-		this.Lvl[nLvl].InitDefault(nLvl);
 	}
 
 	this.MultiLvlType = Asc.c_oAbstractNumMultiLvlTypes.MultiLevel;

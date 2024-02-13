@@ -885,7 +885,7 @@
 	 * Converts the specified JSON object into the Document Builder object of the corresponding type.
 	 * @memberof Api
 	 * @param {JSON} sMessage - The JSON object to convert.
-	 * @typeofeditors ["CDE"]
+	 * @typeofeditors ["CPE"]
 	 */
 	Api.prototype.FromJSON = function(sMessage)
 	{
@@ -1034,6 +1034,7 @@
 
     /**
 	 * Subscribes to the specified event and calls the callback function when the event fires.
+     * @function
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
 	 * @param {string} eventName - The event name.
@@ -1043,6 +1044,7 @@
 
 	/**
 	 * Unsubscribes from the specified event.
+     * @function
 	 * @memberof Api
 	 * @typeofeditors ["CPE"]
 	 * @param {string} eventName - The event name.
@@ -1358,7 +1360,24 @@
         }
     };
 
-    //------------------------------------------------------------------------------------------------------------------
+
+	/**
+	 * Returns all comments from the current presentation.
+	 * @memberof ApiPresentation
+	 * @typeofeditors ["CPE"]
+	 * @returns {ApiComment[]}
+	 */
+	ApiPresentation.prototype.GetAllComments = function()
+	{
+		let aCommentsData = this.Presentation.GetAllComments();
+		let aApiComments = [];
+		for(let nComment = 0; nComment < aCommentsData.length; ++nComment) {
+			aApiComments.push(private_GetApi().private_CreateApiComment(aCommentsData[nComment].comment));
+		}
+		return aApiComments;
+	};
+
+	//------------------------------------------------------------------------------------------------------------------
     //
     // ApiMaster
     //
@@ -2671,7 +2690,7 @@
 
 
     /**
-     * Returns the visibility to the current presentation slide.
+     * Returns the visibility of the current presentation slide.
      * @memberOf ApiSlide
      * @typeofeditors ["CPE"]
      * @returns {boolean}
@@ -2687,7 +2706,7 @@
      * Sets the visibility to the current presentation slide.
      * @memberOf ApiSlide
      * @typeofeditors ["CPE"]
-     * @param {boolean} value - Value of visibility of slide.
+     * @param {boolean} value - Slide visibility.
      * @returns {boolean}
      * */
     ApiSlide.prototype.SetVisible = function(value){
@@ -4880,6 +4899,7 @@
     ApiPresentation.prototype["SetLanguage"]              = ApiPresentation.prototype.SetLanguage;
     ApiPresentation.prototype["GetWidth"]                 = ApiPresentation.prototype.GetWidth;
     ApiPresentation.prototype["GetHeight"]                = ApiPresentation.prototype.GetHeight;
+    ApiPresentation.prototype["GetAllComments"]           = ApiPresentation.prototype.GetAllComments;
 
     ApiPresentation.prototype["SlidesToJSON"]             = ApiPresentation.prototype.SlidesToJSON;
     ApiPresentation.prototype["ToJSON"]                   = ApiPresentation.prototype.ToJSON;
@@ -4962,6 +4982,8 @@
     ApiSlide.prototype["AddObject"]                       = ApiSlide.prototype.AddObject;
     ApiSlide.prototype["RemoveObject"]                    = ApiSlide.prototype.RemoveObject;
     ApiSlide.prototype["SetBackground"]                   = ApiSlide.prototype.SetBackground;
+    ApiSlide.prototype["GetVisible"]                      = ApiSlide.prototype.GetVisible;
+    ApiSlide.prototype["SetVisible"]                      = ApiSlide.prototype.SetVisible;
     ApiSlide.prototype["GetWidth"]                        = ApiSlide.prototype.GetWidth;
     ApiSlide.prototype["GetHeight"]                       = ApiSlide.prototype.GetHeight;
     ApiSlide.prototype["ApplyLayout"]                     = ApiSlide.prototype.ApplyLayout;

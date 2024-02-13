@@ -268,7 +268,7 @@
         this.m_aCheckLocksInstance = [];
         this.m_aNewObjects = [];
         this.m_aNewImages = [];
-		
+
 		this.CoHistory.clear();
     };
     CCollaborativeEditingBase.prototype.Set_Fast = function(bFast)
@@ -289,6 +289,10 @@
     {
         return (1 === this.m_nUseType);
     };
+	CCollaborativeEditingBase.prototype.getCoHistory = function()
+	{
+		return this.CoHistory;
+	};
     CCollaborativeEditingBase.prototype.getCollaborativeEditing = function()
     {
         return !this.Is_SingleUser();
@@ -345,6 +349,7 @@
     {
         if (this.m_aChanges.length > 0)
         {
+            this.GetEditorApi().sendEvent("asc_onBeforeApplyChanges");
             AscFonts.IsCheckSymbols = true;
             editor.WordControl.m_oLogicDocument.PauseRecalculate();
             editor.WordControl.m_oLogicDocument.EndPreview_MailMergeResult();
@@ -361,7 +366,8 @@
             this.private_RestoreDocumentState(DocState);
             this.OnStart_Load_Objects(fEndCallBack);
             AscFonts.IsCheckSymbols = false;
-		}
+            this.GetEditorApi().sendEvent("asc_onApplyChanges");
+        }
 		else
 		{
 			if (fEndCallBack)
@@ -404,7 +410,6 @@
         this.Check_MergeData();
 
         this.OnEnd_ReadForeignChanges();
-
         AscCommon.g_oIdCounter.Set_Load( false );
     };
 	CCollaborativeEditingBase.prototype.ValidateExternalChanges = function()
@@ -904,14 +909,14 @@
 	{
 		if (!info)
 			return;
-
+		
 		let userId      = undefined !== info["UserId"] ? info["UserId"] : info.UserId;
 		let cursorInfo  = undefined !== info["CursorInfo"] ? info["CursorInfo"] : info.CursorInfo;
 		let shortUserId = undefined !== info["UserShortId"] ? info["UserShortId"] : info.UserShortId;
-
+		
 		if (!userId || !cursorInfo || !shortUserId)
 			return;
-
+		
 		this.Add_ForeignCursorToUpdate(userId, cursorInfo, shortUserId);
 	};
     CCollaborativeEditingBase.prototype.Add_ForeignCursorToUpdate = function(UserId, CursorInfo, UserShortId)

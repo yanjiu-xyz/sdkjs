@@ -326,7 +326,11 @@ function CTransitionAnimation(htmlpage)
 
         this.TimerId = null;
         this.Params = null;
-		this.Morph = null;
+        if(this.Morph)
+        {
+            this.Morph.end();
+            this.Morph = null;
+        }
 
         if (this.endCallback)
             this.endCallback()
@@ -2734,6 +2738,8 @@ function CDemonstrationManager(htmlpage)
     this.TmpSlideVisible = -1;
     this.LastMoveTime = null;
 
+		this.GoToSlideShortcutStack = [];
+
     var oThis = this;
 
     this.CacheSlide = function(slide_num, slide_index)
@@ -2946,6 +2952,7 @@ function CDemonstrationManager(htmlpage)
         this.SlideIndexes[0] = -1;
         this.SlideIndexes[1] = -1;
 
+				this.GoToSlideShortcutStack = [];
         this.StartSlide(true, true);
     };
 
@@ -3476,13 +3483,13 @@ function CDemonstrationManager(htmlpage)
         return oSlide.getAnimationPlayer();
 	};
 
-    this.OnNextSlide = function()
+    this.OnNextSlide = function(isNoSendFormReporter)
     {
         if(this.OnNextSlideAnimPlayer())
         {
             return;
         }
-        this.NextSlide();
+        this.NextSlide(isNoSendFormReporter);
     };
 
     this.OnNextSlideAnimPlayer = function ()
@@ -3543,7 +3550,7 @@ function CDemonstrationManager(htmlpage)
         return (this.HtmlPage.m_oApi.WordControl.m_oLogicDocument.isLoopShowMode() || this.HtmlPage.m_oApi.isEmbedVersion);
     };
 
-    this.OnPrevSlide = function()
+    this.OnPrevSlide = function(isNoSendFormReporter)
     {
         var oPlayer = this.GetCurrentAnimPlayer();
         if(oPlayer)
@@ -3553,7 +3560,7 @@ function CDemonstrationManager(htmlpage)
                 return;
             }
         }
-        return this.PrevSlide();
+        return this.PrevSlide(isNoSendFormReporter);
     };
 
     this.PrevSlide = function(isNoSendFormReporter)
@@ -3638,9 +3645,23 @@ function CDemonstrationManager(htmlpage)
     // manipulators
     this.onKeyDownCode = function(code)
     {
+			let bDropGoToSlideStack = !!this.GoToSlideShortcutStack.length;
 		switch (code)
 		{
 			case 13:    // enter
+			{
+				if (this.GoToSlideShortcutStack.length)
+				{
+					const nStackNumber = parseInt(this.GoToSlideShortcutStack.join(''), 10);
+					const nSlide = Math.max(1, Math.min(nStackNumber, this.SlidesCount)) - 1;
+					oThis.GoToSlide(nSlide);
+				}
+				else
+				{
+					oThis.OnNextSlide();
+				}
+				break;
+			}
 			case 32:    // space
 			case 34:    // PgDn
 			case 39:    // right arrow
@@ -3671,8 +3692,38 @@ function CDemonstrationManager(htmlpage)
 				oThis.End();
 				break;
 			}
+			case 48: // 0
+			case 49: // 1
+			case 50: // 2
+			case 51: // 3
+			case 52: // 4
+			case 53: // 5
+			case 54: // 6
+			case 55: // 7
+			case 56: // 8
+			case 57: // 9
+				bDropGoToSlideStack = false;
+				this.GoToSlideShortcutStack.push(code - 48);
+				break;
+			case 96: // numpad0
+			case 97: // numpad1
+			case 98: // numpad2
+			case 99: // numpad3
+			case 100: // numpad4
+			case 101: // numpad5
+			case 102: // numpad6
+			case 103: // numpad7
+			case 104: // numpad8
+			case 105: // numpad9
+				bDropGoToSlideStack = false;
+				this.GoToSlideShortcutStack.push(code - 96);
+				break;
 			default:
 				break;
+		}
+		if (bDropGoToSlideStack)
+		{
+			this.GoToSlideShortcutStack = [];
 		}
     };
 
@@ -3882,6 +3933,9 @@ function CDemonstrationManager(htmlpage)
 		_x -= parseInt(oThis.HtmlPage.m_oMainParent.HtmlElement.style.left);
 		_y -= parseInt(oThis.HtmlPage.m_oMainParent.HtmlElement.style.top);
 
+        _x *= AscCommon.AscBrowser.retinaPixelRatio;
+        _y *= AscCommon.AscBrowser.retinaPixelRatio;
+
 		var _rect = oThis.Transition.Rect;
 		_x -= _rect.x;
 		_y -= _rect.y;
@@ -4077,8 +4131,8 @@ function CDemonstrationManager(htmlpage)
 			this.DemonstrationDiv.appendChild(this.PointerDiv);
         }
         var _rect = this.Transition.Rect;
-		this.PointerDiv.style.left = ((_rect.x + x * _rect.w - 14) >> 0) + "px";
-		this.PointerDiv.style.top = ((_rect.y + y * _rect.h - 14) >> 0) + "px";
+		this.PointerDiv.style.left = ((((_rect.x + x * _rect.w) / AscCommon.AscBrowser.retinaPixelRatio) - 14) >> 0) + "px";
+		this.PointerDiv.style.top  = ((((_rect.y + y * _rect.h) / AscCommon.AscBrowser.retinaPixelRatio) - 14) >> 0) + "px";
 
 		if (this.HtmlPage.m_oApi.isReporterMode)
         {

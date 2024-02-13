@@ -289,6 +289,18 @@
 			}
 		};
 
+		CGroupShape.prototype.handleUpdateExtents = function() {
+			this.recalcTransform();
+			for(let nSp = 0; nSp < this.spTree.length; ++nSp) {
+				this.spTree[nSp].handleUpdateExtents();
+			}
+			if(!this.group) {
+				if(this.addToRecalculate) {
+					this.addToRecalculate();
+				}
+			}
+		};
+
 		CGroupShape.prototype.copy = function (oPr) {
 			var copy = new CGroupShape();
 			this.copy2(copy, oPr);
@@ -670,7 +682,7 @@
 						this.selection.textSelection.select(this, this.selection.textSelection.selectStartPage);
 				} else if (this.selectedObjects.length > 0) {
 					if (this.parent) {
-						this.parent.GoTo_Text();
+						this.parent.GoToText();
 						this.resetSelection();
 					}
 				}
@@ -819,23 +831,9 @@
 				}
 			}
 		};
-
-		CGroupShape.prototype.getPlaceholderType = function () {
-			return this.isPlaceholder() ? this.nvGrpSpPr.nvPr.ph.type : null;
+		CGroupShape.prototype.getSelectedArray = function () {
+			return this.selectedObjects;
 		};
-
-		CGroupShape.prototype.getPlaceholderIndex = function () {
-			return this.isPlaceholder() ? this.nvGrpSpPr.nvPr.ph.idx : null;
-		};
-
-		CGroupShape.prototype.getPhType = function () {
-			return this.isPlaceholder() ? this.nvGrpSpPr.nvPr.ph.type : null;
-		};
-
-		CGroupShape.prototype.getPhIndex = function () {
-			return this.isPlaceholder() ? this.nvGrpSpPr.nvPr.ph.idx : null;
-		};
-
 		CGroupShape.prototype.getSelectionState = function () {
 			var selection_state = {};
 			if (this.selection.textSelection) {
@@ -1549,6 +1547,13 @@
 			}
 			return bRet;
 		};
+		CGroupShape.prototype.onTimeSlicerDelete = function (sName) {
+			var bRet = false;
+			for (var i = 0; i < this.spTree.length; ++i) {
+				bRet = bRet || this.spTree[i].onTimeSlicerDelete(sName);
+			}
+			return bRet;
+		};
 		CGroupShape.prototype.onSlicerLock = function (sName, bLock) {
 			for (var i = 0; i < this.spTree.length; ++i) {
 				this.spTree[i].onSlicerLock(sName, bLock);
@@ -1626,7 +1631,7 @@
 			}
 		};
 
-		CGroupShape.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate) {
+		CGroupShape.prototype.compareForMorph = function(oDrawingToCheck, oCurCandidate, oMapPaired) {
 			if(this.getObjectType() !== oDrawingToCheck.getObjectType()) {
 				return oCurCandidate;
 			}
@@ -1648,7 +1653,52 @@
 					return oCurCandidate;
 				}
 			}
-			return oDrawingToCheck;
+			if(!oCurCandidate) {
+				if(oMapPaired && oMapPaired[oDrawingToCheck.Id]) {
+					let oParedDrawing = oMapPaired[oDrawingToCheck.Id].drawing;
+					if(oParedDrawing.getOwnName() === oDrawingToCheck.getOwnName()) {
+						return oCurCandidate;
+					}
+
+					let dDistMCheck = oParedDrawing.getDistanceL1(oDrawingToCheck);
+					let dDistMCur = this.getDistanceL1(oDrawingToCheck);
+					if(dDistMCheck < dDistMCur) {
+						return oCurCandidate;
+					}
+
+					let dSizeMCandidate = Math.abs(oParedDrawing.extX - oDrawingToCheck.extX) + Math.abs(oParedDrawing.extY - oDrawingToCheck.extY);
+					let dSizeMCheck = Math.abs(oDrawingToCheck.extX - this.extX) + Math.abs(oDrawingToCheck.extY - this.extY);
+					if(dSizeMCandidate < dSizeMCheck) {
+						return oCurCandidate;
+					}
+				}
+				return oDrawingToCheck;
+			}
+			const dDistCheck = this.getDistanceL1(oDrawingToCheck);
+			const dDistCur = this.getDistanceL1(oCurCandidate);
+			let dSizeMCandidate = Math.abs(oCurCandidate.extX - this.extX) + Math.abs(oCurCandidate.extY - this.extY);
+			let dSizeMCheck = Math.abs(oDrawingToCheck.extX - this.extX) + Math.abs(oDrawingToCheck.extY - this.extY);
+			if(dDistCur < dDistCheck) {
+				return  oCurCandidate;
+			}
+			else {
+				if(dSizeMCandidate < dSizeMCheck) {
+					return  oCurCandidate;
+				}
+			}
+			if(!oMapPaired || !oMapPaired[oDrawingToCheck.Id]) {
+				return oDrawingToCheck;
+			}
+			else {
+				let oParedDrawing = oMapPaired[oDrawingToCheck.Id].drawing;
+				if(oParedDrawing.getOwnName() === oDrawingToCheck.getOwnName()) {
+					return oCurCandidate;
+				}
+				else {
+					return oDrawingToCheck;
+				}
+			}
+			return oCurCandidate;
 		};
 
 		//--------------------------------------------------------export----------------------------------------------------

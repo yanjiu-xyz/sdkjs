@@ -87,7 +87,7 @@
 			return;
 
 		let oDocument = this.Paragraph.GetLogicDocument();
-		if (!oDocument || !(oDocument instanceof CDocument) && !(oDocument instanceof CPresentation))
+		if (!oDocument || (!oDocument.IsDocumentEditor() && !oDocument.IsPresentationEditor()))
 			return;
 
 		this.Document = oDocument;
@@ -1185,6 +1185,7 @@
 				nPos = oNum.Pos;
 
 				var oNumberingLvl = new CNumberingLvl();
+				oNumberingLvl.InitDefault(0, c_oAscMultiLevelNumbering.Numbered);
 				if ('.' === oNum.Char)
 					oNumberingLvl.SetByType(c_oAscNumberingLevel.DecimalDot_Left, nCurLvl);
 				else if (')' === oNum.Char)

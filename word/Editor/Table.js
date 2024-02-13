@@ -2254,6 +2254,31 @@ CTable.prototype.GetPageBounds = function(nCurPage)
 {
 	return this.Get_PageBounds(nCurPage);
 };
+CTable.prototype.getRowBounds = function(iRow, relPage)
+{
+	let page = this.Pages[relPage];
+	let rowInfo = this.RowsInfo[iRow];
+	if (!this.IsRecalculated()
+		|| undefined === page
+		|| undefined === rowInfo
+		|| undefined === rowInfo.Y[relPage])
+		return new CDocumentBounds(0, 0, 0, 0);
+	
+	return new CDocumentBounds(
+		rowInfo.X0 + page.X_origin,
+		rowInfo.Y[relPage],
+		rowInfo.X1 + page.X_origin,
+		rowInfo.Y[relPage] + rowInfo.H[relPage]
+	);
+};
+CTable.prototype.getRowPageRange = function(iRow)
+{
+	let rowInfo = this.RowsInfo[iRow];
+	if (!this.IsRecalculate() || undefined === rowInfo)
+		return [0, 0];
+	
+	return [rowInfo.StartPage, rowInfo.StartPage + rowInfo.Pages - 1];
+};
 CTable.prototype.GetContentBounds = function(CurPage)
 {
 	return this.Get_PageBounds(CurPage);
@@ -2392,7 +2417,9 @@ CTable.prototype.GetAllSeqFieldsByType = function(sType, aFields)
 		}
 	}
 };
-CTable.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
+
+
+CTable.prototype.FindParagraph = function (fCondition, bBackward, nStartIdx)
 {
 	var nSearchStartIdx, nIdx, oResult;
 	if(bBackward)
@@ -2407,7 +2434,7 @@ CTable.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
 		}
 		for(nIdx = nSearchStartIdx; nIdx >= 0; --nIdx)
 		{
-			oResult = this.Content[nIdx].FindParaWithStyle(sStyleId, bBackward, null);
+			oResult = this.Content[nIdx].FindParagraph(fCondition, bBackward, null);
 			if(oResult)
 			{
 				return oResult
@@ -2426,7 +2453,7 @@ CTable.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
 		}
 		for(nIdx = nSearchStartIdx; nIdx < this.Content.length; ++nIdx)
 		{
-			oResult = this.Content[nIdx].FindParaWithStyle(sStyleId, bBackward, null);
+			oResult = this.Content[nIdx].FindParagraph(fCondition, bBackward, null);
 			if(oResult)
 			{
 				return oResult
@@ -2434,6 +2461,23 @@ CTable.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
 		}
 	}
 	return null;
+};
+
+CTable.prototype.FindParaWithStyle = function (sStyleId, bBackward, nStartIdx)
+{
+	let fCondition = function (oParagraph)
+	{
+		return oParagraph.GetParagraphStyle() === sStyleId;
+	};
+	return this.FindParagraph(fCondition, bBackward, nStartIdx);
+};
+
+CTable.prototype.FindParaWithOutlineLvl = function (nOutlineLvl, bBackward, nStartIdx)
+{
+	let fCondition = function (oParagraph) {
+		return oParagraph.GetOutlineLvl() === nOutlineLvl;
+	};
+	return this.FindParagraph(fCondition, bBackward, nStartIdx);
 };
 /**
  * Данная функция запрашивает новую позицию для содержимого у ячейки, разбивающейся на несколько страниц
@@ -6049,11 +6093,11 @@ CTable.prototype.AddNewParagraph = function()
 {
 	this.CurCell.Content.AddNewParagraph();
 };
-CTable.prototype.AddInlineImage = function(W, H, Img, Chart, bFlow)
+CTable.prototype.AddInlineImage = function(W, H, Img, GraphicObject, bFlow)
 {
 	this.Selection.Use  = true;
 	this.Selection.Type = table_Selection_Text;
-	this.CurCell.Content.AddInlineImage(W, H, Img, Chart, bFlow);
+	this.CurCell.Content.AddInlineImage(W, H, Img, GraphicObject, bFlow);
 };
 CTable.prototype.AddImages = function(aImages)
 {
@@ -8137,7 +8181,7 @@ CTable.prototype.GetCalculatedTextPr = function()
 		var Cell = Row.Get_Cell(0);
 
 		Cell.Content.SetApplyToAll(true);
-		var Result_TextPr = Cell.Content.GetCalculatedTextPr();
+		var Result_TextPr = Cell.Content.GetCalculatedTextPr(true);
 		Cell.Content.SetApplyToAll(false);
 
 		for (var CurRow = 0; CurRow < this.Content.length; CurRow++)
@@ -8150,7 +8194,7 @@ CTable.prototype.GetCalculatedTextPr = function()
 			{
 				Cell = Row.Get_Cell(CurCell);
 				Cell.Content.SetApplyToAll(true);
-				var CurPr = Cell.Content.GetCalculatedTextPr();
+				var CurPr = Cell.Content.GetCalculatedTextPr(true);
 				Cell.Content.SetApplyToAll(false);
 
 				Result_TextPr = Result_TextPr.Compare(CurPr);
@@ -8167,7 +8211,7 @@ CTable.prototype.GetCalculatedTextPr = function()
 		var Cell = Row.Get_Cell(Pos.Cell);
 
 		Cell.Content.SetApplyToAll(true);
-		var Result_TextPr = Cell.Content.GetCalculatedTextPr();
+		var Result_TextPr = Cell.Content.GetCalculatedTextPr(true);
 		Cell.Content.SetApplyToAll(false);
 
 		for (var Index = 1; Index < this.Selection.Data.length; Index++)
@@ -8177,7 +8221,7 @@ CTable.prototype.GetCalculatedTextPr = function()
 			Cell = Row.Get_Cell(Pos.Cell);
 
 			Cell.Content.SetApplyToAll(true);
-			var CurPr = Cell.Content.GetCalculatedTextPr();
+			var CurPr = Cell.Content.GetCalculatedTextPr(true);
 			Cell.Content.SetApplyToAll(false);
 
 			Result_TextPr = Result_TextPr.Compare(CurPr);
@@ -8186,7 +8230,7 @@ CTable.prototype.GetCalculatedTextPr = function()
 		return Result_TextPr;
 	}
 
-	return this.CurCell.Content.GetCalculatedTextPr();
+	return this.CurCell.Content.GetCalculatedTextPr(true);
 };
 CTable.prototype.GetDirectTextPr = function()
 {
@@ -8608,6 +8652,10 @@ CTable.prototype.Set_TableLook = function(TableLook)
 CTable.prototype.Get_TableLook = function()
 {
 	return this.TableLook;
+};
+CTable.prototype.setAllowOverlap = function(isAllow)
+{
+	this.Set_AllowOverlap(isAllow);
 };
 CTable.prototype.Set_AllowOverlap = function(AllowOverlap)
 {
@@ -16352,6 +16400,12 @@ CTable.prototype.GetRowsCount = function()
 {
 	return this.Content.length;
 };
+
+
+CTable.prototype.GetColsCount = function()
+{
+	return this.TableGrid.length;
+};
 /**
  * Получаем строку с заданным номером
  * @param {number} nIndex
@@ -16531,7 +16585,9 @@ CTable.prototype.AcceptRevisionChanges = function(nType, bAll)
 	if (this.GetRowsCount() <= 0)
 		return;
 	
-	this.RemoveSelection();
+	if (isCellSelection)
+		this.RemoveSelection();
+	
 	if (arrSelectionArray.length <= 0)
 	{
 		var nCurRow = nFirstRow < this.GetRowsCount() ? nFirstRow : this.GetRowsCount() - 1;
@@ -16644,7 +16700,9 @@ CTable.prototype.RejectRevisionChanges = function(nType, bAll)
 	if (this.GetRowsCount() <= 0)
 		return;
 	
-	this.RemoveSelection();
+	if (isCellSelection)
+		this.RemoveSelection();
+	
 	if (arrSelectionArray.length <= 0)
 	{
 		var nCurRow = nFirstRow < this.GetRowsCount() ? nFirstRow : this.GetRowsCount() - 1;
