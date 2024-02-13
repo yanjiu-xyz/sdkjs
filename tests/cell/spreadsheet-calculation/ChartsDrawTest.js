@@ -6418,7 +6418,7 @@ $(function () {
 			maxCatVal = 6;
 			minCatVal = 1;
 			maxValVal = 125367.1738292479;
-			minValVal = 6;
+			minValVal = 1.597378819226662;
 			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
 			boundaries = lineBuilder.getBoundary();
 
@@ -6568,7 +6568,7 @@ $(function () {
 			maxCatVal = 6;
 			minCatVal = 1;
 			maxValVal = 500000.00000000064;
-			minValVal = 6;
+			minValVal = 5.000000000000023;
 			lineCoords = lineBuilder.drawWithApproximatedBezier(0.01, 1.56, cutPoint);
 			boundaries = lineBuilder.getBoundary();
 
@@ -8113,57 +8113,81 @@ $(function () {
 		QUnit.test("Test: RoundValues function", function (assert) {
 
 			let chartsDrawer = new AscFormat.CChartsDrawer();
-			let val = 105.965
+			let val = 105.965;
 			let predicted = chartsDrawer._roundValue(val);
-			result = 105.965
+			result = 105.965;
 
 			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
 
-			val = 105.965000000002
+			val = 105.965000000002;
 			predicted = chartsDrawer._roundValue(val);
-			result = 105.965
+			result = 105.965;
 
 			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
 
-			val = 105.965000000002
+			val = 105.965000000002;
 			predicted = chartsDrawer._roundValue(val, true, 2);
-			result = 106
+			result = 106;
 
 			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
 
-			val = 106.82
+			val = 106.82;
 			predicted = chartsDrawer._roundValue(val, true, 2);
-			result = 107
+			result = 107;
 
 			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
 
-			val = 106.82
-			predicted = chartsDrawer._roundValue(val, false, 1);
-			result = 106.8
+			val = 106.823;
+			predicted = chartsDrawer._roundValue(val, false, 2);
+			result = 106.82;
 
 			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
 
-			val = 1.452369
+			val = 1.452369;
 			predicted = chartsDrawer._roundValue(val, true, 1);
-			result = 1.5
+			result = 1.5;
 
 			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
 
-			val = 10536.236958
+			val = 10536.236958;
 			predicted = chartsDrawer._roundValue(val, true, 1);
-			result = 11000
+			result = 11000;
 
 			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
 
-			val = 0.5623695865465845
+			val = 0.5623695865465845;
 			predicted = chartsDrawer._roundValue(val);
-			result = 0.5623695865
+			result = 0.5623695865;
 
 			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
 
-			val = 15262.1262653592
+			val = 15262.1262653592;
 			predicted = chartsDrawer._roundValue(val);
-			result = 15262.126256359
+			result = 15262.126256359;
+
+			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
+
+			val = 15262.1262653592;
+			predicted = chartsDrawer._roundValue(val / 0);
+			result = 1;
+
+			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
+
+			val = -105.965000000002;
+			predicted = chartsDrawer._roundValue(val);
+			result = -105.965;
+
+			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
+
+			val = -105.965000000002;
+			predicted = chartsDrawer._roundValue(val, true, 2);
+			result = -106;
+
+			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
+
+			val = -106.82;
+			predicted = chartsDrawer._roundValue(val, true, 2);
+			result = -107;
 
 			assert.ok(isEqual(result, predicted), "RoundValues calculated incorrectly:" + result + ', got:' + predicted);
 
