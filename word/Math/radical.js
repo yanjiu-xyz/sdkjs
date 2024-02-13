@@ -250,7 +250,7 @@ CSignRadical.prototype.recalculateSize = function(oMeasure, sizeArg, bInline)
     this.Parent.MeasureJustDraw(letterG);
 
     var Descent = letterG.size.height - letterG.size.ascent;
-    var bDescentArg = sizeArg.height - sizeArg.ascent > 0.9*Descent;
+    var bDescentArg = sizeArg.height - sizeArg.ascent > 0.9*Descent && FontSize > 6;
 
     if(heightArg < H0 && !bDescentArg)
         height = H0;
@@ -552,7 +552,38 @@ CRadical.prototype.recalculateSize = function(oMeasure)
         gSign = this.signRadical.gapSign,
         // в случае смещения baseline контента тоже смещается, и по высоте артгумент может выйти чуть за пределы (т.о. значок интеграла будет расположен чуть выше, чем следовало бы, и размер аргумента выйде за границы)
         gArg = this.signRadical.gapArg > 2*g_dKoef_pt_to_mm ? this.signRadical.gapArg : 2*g_dKoef_pt_to_mm; // делаем смещение, т.к. для fontSize 11, 14 и меньше высота плейсхолдера не совпадает
-                                                                                                            // с высотой отрисовки плейсхолдера и происходит наложение черты значка радикала и плейсхолдера
+
+
+	let CtrPrp = this.Get_CompiledCtrPrp(),
+		FontSize = CtrPrp.FontSize;
+
+	if (FontSize === 1)
+	{
+		gArg = g_dKoef_pt_to_mm/5;
+		sign.height *= 0.15;
+
+		this.signRadical.measure.heightTick *= 0.05;
+	}
+	else if (FontSize === 2)
+	{
+		gArg = g_dKoef_pt_to_mm/4;
+		sign.height *= 0.4;
+		this.signRadical.measure.heightTick *= 0.4;
+	}
+	else if (FontSize === 3)
+	{
+		gArg = g_dKoef_pt_to_mm/3;
+		sign.height *= 0.45;
+		this.signRadical.measure.heightTick *= 0.45;
+	}
+	else if (FontSize <= 6)
+	{
+		sign.height *= 0.7;
+		gArg = g_dKoef_pt_to_mm;
+		this.signRadical.measure.heightTick *= 0.7;
+	}
+
+	// с высотой отрисовки плейсхолдера и происходит наложение черты значка радикала и плейсхолдера
 
     var gapBase = gSign + gArg;
 

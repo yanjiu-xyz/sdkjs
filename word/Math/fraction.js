@@ -122,7 +122,7 @@ CFraction.prototype.drawBarFraction = function(PDSE)
 {
     var mgCtrPrp = this.Get_TxtPrControlLetter();
 
-    var penW = mgCtrPrp.FontSize* 25.4/96 * 0.08;
+    var penW = mgCtrPrp.FontSize* 25.4/96 * 0.086;
 
     var numHeight = this.elements[0][0].size.height;
 
@@ -779,8 +779,16 @@ CNumerator.prototype.recalculateSize = function()
     }
     else    // Fraction
     {
-        gapNum = Height/3.05;
-        minGap = Height/9.77;
+	    if (mgCtrPrp.FontSize < 4)
+		    gapNum = Height/2.2;
+		else if (mgCtrPrp.FontSize < 9)
+			gapNum = Height/2.35;
+		else if (mgCtrPrp.FontSize < 16)
+			gapNum = Height/2.25;
+	    else
+            gapNum = Height/2.32;
+
+        minGap = Height/15;
 
         var delta = gapNum - Descent;
         this.gap = delta > minGap ? delta : minGap;
@@ -828,8 +836,8 @@ CDenominator.prototype.recalculateSize = function()
     }
     else // Fraction
     {
-        gapDen = Height/2.03;
-        minGap = Height/6.1;
+        gapDen = Height/2.175;
+        minGap = Height/12;
     }
 
     var delta = gapDen - Ascent;
