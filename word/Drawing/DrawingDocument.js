@@ -2510,7 +2510,7 @@ function CDrawingDocument()
 	this.isHideTarget = function()
 	{
 		let api = this.m_oWordControl.m_oApi;
-		if (api.isViewMode || api.isRestrictionView())
+		if (api.isViewMode || (api.isRestrictionView() && !api.isRestrictionForms()))
 			return this.isHideTargetBeforeFirstClick;
 		return false;
 	};
@@ -2526,7 +2526,7 @@ function CDrawingDocument()
 				isActive = false;
 			else if (oThis.m_oWordControl.m_oApi.isBlurEditor)
 				isActive = false;
-			else if (api.isViewMode || api.isRestrictionView())
+			else if (api.isViewMode || (api.isRestrictionView() && !api.isRestrictionForms()))
 				isActive = false;
 
 			if (isActive)
