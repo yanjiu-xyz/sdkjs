@@ -66,7 +66,9 @@
 		for (let i = 0; i < this.Changes.length; i++)
 		{
 			let oCurrentChange = this.Changes[i];
-			let oPrevChange = i === 0 ? undefined : this.Changes[i - 1];
+			let oPrevChange = (i === 0)
+				? undefined
+				: this.Changes[i - 1];
 
 			if (!(oPrevChange && (oPrevChange instanceof AscCommon.CChangesTableIdDescription || oPrevChange.IsDescriptionChange() === oCurrentChange.IsDescriptionChange())))
 			{
@@ -116,10 +118,11 @@
 		this.UndoNavigationRevision();
 		AscCommon.History.CreateNewPointToCollectChanges(AscDFH.historydescription_Collaborative_DeletedTextRecovery);
 
-		this.curChangeIndex = intCount;
-		this.StepTextPoint = this.ChangesSplitByPoints[intCount - 1];
+		this.curChangeIndex	= intCount;
+		this.StepTextPoint	= this.ChangesSplitByPoints[intCount - 1];
 
-		let arrInput = this.RedoUndoChanges(this.StepTextPoint, true);
+		let arrInput		= this.RedoUndoChanges(this.StepTextPoint, true);
+
 		editor.WordControl.m_oLogicDocument.RecalculateByChanges(arrInput);
 		AscCommon.History.Remove_LastPoint();
 		AscCommon.DeletedTextRecoveryCheckRunsColor();
@@ -325,7 +328,7 @@
 	CCollaborativeHistory.prototype.MoveToPoint = function(nPos)
 	{
 		this.UndoDeletedTextRecovery();
-		return this.NavigationRevisionHistoryByStep(nPos, false);
+		return this.NavigationRevisionHistoryByStep(nPos);
 	};
 	CCollaborativeHistory.prototype.InitTextRecover = function ()
 	{

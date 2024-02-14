@@ -46,7 +46,7 @@
 		 */
 		this.m_RewiewDelPoints		= [];
 		/**
-		 * Список всех изменений уже показанного текста
+		 * Список всех изменений уже показанного удаленного текста
 		 * @type {null|*[]}
 		 */
 		this.ShowDelLettersChanges	= null;
@@ -62,11 +62,11 @@
 	{
 		AscCommon.CollaborativeEditing.CoHistory.SplitChangesByPoints();
 		
-		let oCoHistory		= AscCommon.CollaborativeEditing.CoHistory;
-		let arrChangesList	= oCoHistory.Changes;
-		let arrPointsList	= AscCommon.CollaborativeEditing.CoHistory.ChangesSplitByPoints;
-		let nIndex			= AscCommon.CollaborativeEditing.CoHistory.curChangeIndex;
-		let arrChanges		= arrChangesList.slice(0, arrPointsList[nIndex]);
+		let oCoHistory			= AscCommon.CollaborativeEditing.CoHistory;
+		let arrChangesList		= oCoHistory.Changes;
+		let arrPointsList		= AscCommon.CollaborativeEditing.CoHistory.ChangesSplitByPoints;
+		let nIndex				= AscCommon.CollaborativeEditing.CoHistory.curChangeIndex;
+		let arrChanges			= arrChangesList.slice(0, arrPointsList[nIndex]);
 
 		if (!arrChanges || !arrChanges.length)
 			return;
@@ -103,11 +103,11 @@
 		// если блок изменений состоит только из CChangesTableIdDescription, убираем этот блок
 		for (let i = 0; i < arrDelChanges.length; i++)
 		{
-			if(arrDelChanges[i].length === 1 && arrDelChanges[i][0] instanceof AscCommon.CChangesTableIdDescription)
+			if (arrDelChanges[i].length === 1 && arrDelChanges[i][0] instanceof AscCommon.CChangesTableIdDescription)
 				arrDelChanges[i].length = 0;
 		}
 
-		this.m_RewiewDelPoints	= arrDelChanges;
+		this.m_RewiewDelPoints = arrDelChanges;
 	};
 	/**
 	 * Отображаем удаленный текст в текущей точки истории ревизии
@@ -744,7 +744,7 @@
 		{
 			return arr[1].Class === this.class;
 		};
-	};
+	}
 
 	//--------------------------------------------------------export----------------------------------------------------
 	AscCommon.DeletedTextRecovery = DeletedTextRecovery;
