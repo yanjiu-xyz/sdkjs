@@ -1089,6 +1089,18 @@
 	CTimelineContainer.prototype.getOutlineColor = function () {
 		return null;
 	};
+	CTimelineContainer.prototype.draw = function (graphics) {
+		if (!CTopControl.prototype.draw.call(this, graphics)) {
+			return false;
+		}
+		// this.clipStart(graphics);
+		for (var nChild = 0; nChild < this.children.length; ++nChild) {
+			this.children[nChild].draw(graphics);
+		}
+		// graphics.RemoveClipRect();
+		// this.clipEnd(graphics);
+		return true;
+	};
 
 
 	function CTimeline(oParentControl, oContainer, oChild) {
@@ -1477,7 +1489,9 @@
 			graphics.SaveGrState();
 			graphics.RemoveClipRect();
 
-			graphics.drawVerLine(1, x + extX / 2, y - 100, y, nPenW);
+			// const seqList = Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList
+			// graphics.drawVerLine(1, x + extX / 2, seqList.getTop(), y, nPenW);
+			graphics.drawVerLine(1, x + extX / 2, y - 1000, y, nPenW);
 
 			graphics.RestoreGrState();
 		}
