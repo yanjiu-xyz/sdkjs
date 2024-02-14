@@ -9528,10 +9528,6 @@ var editor;
   prot["asc_gotoSignature"] 	    = prot.asc_gotoSignature;
   prot["asc_getSignatureSetup"] 	= prot.asc_getSignatureSetup;
 
-  // password
-  prot["asc_setCurrentPassword"]    = prot.asc_setCurrentPassword;
-  prot["asc_resetPassword"] 		= prot.asc_resetPassword;
-
   // mobile
   prot["asc_Remove"] = prot.asc_Remove;
 
