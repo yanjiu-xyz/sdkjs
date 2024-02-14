@@ -11811,17 +11811,23 @@
         CAnimationPlayer.prototype.start.call(this);
         this.overlay.CheckRect(this.rect.x, this.rect.y, this.rect.w, this.rect.h);
         this.onRecalculateFrame();
+
+        Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.onPreviewStart();
     };
     CDemoAnimPlayer.prototype.stop = function () {
         CAnimationPlayer.prototype.stop.call(this);
         this.overlay.Clear();
         this.overlay.CheckRect(this.rect.x, this.rect.y, this.rect.w, this.rect.h);
         this.slide.showDrawingObjects();
+
+        Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.onPreviewStop();
     };
     CDemoAnimPlayer.prototype.onRecalculateFrame = function () {
         this.overlay.Clear();
         this.overlay.CheckRect(this.rect.x, this.rect.y, this.rect.w, this.rect.h);
         this.drawFrame(this.overlayCanvas, this.rect);
+
+        Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.onPreview();
     };
 
     const DEFAULT_SIMPLE_TRIGGER = function () {

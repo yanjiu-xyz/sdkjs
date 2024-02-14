@@ -1138,6 +1138,9 @@
 		this.startTime = 0; // in seconds
 		this.timeScaleIndex = 2;
 
+		// Tmp field for demoPreview
+		this.tmpScrollOffset = null;
+
 		// Labels cache
 		this.labels = {};
 		this.usedLabels = {};
@@ -1195,7 +1198,7 @@
 		return Math.max(0, Math.min(newScrollOffset, this.getMaxScrollOffset()));
 	};
 	CTimeline.prototype.getScrollOffset = function () {
-		return this.scrollOffset;
+		return this.tmpScrollOffset !== null ? this.tmpScrollOffset : this.scrollOffset;
 	};
 	CTimeline.prototype.setScrollOffset = function (newScrollOffset /* in millimeters */) {
 		let oldScrollOffset = this.getScrollOffset()
@@ -1470,6 +1473,15 @@
 		graphics.drawVerLine(2, x, y, y + extY, nPenW);
 		graphics.drawVerLine(2, x + extX, y, y + extY, nPenW);
 
+		if (this.tmpScrollOffset !== null) {
+			graphics.SaveGrState();
+			graphics.RemoveClipRect();
+
+			graphics.drawVerLine(1, x + extX / 2, y - 100, y, nPenW);
+
+			graphics.RestoreGrState();
+		}
+
 		return true;
 	};
 	CTimeline.prototype.hitInScroller = function(x, y) {
@@ -1486,6 +1498,22 @@
 		let b = t + this.getHeight();
 
 		return tx >= l && tx <= r && ty >= t && ty <= b;
+	}
+
+	CTimeline.prototype.onPreviewStart = function() {
+		console.log('Превью началось')
+		this.tmpScrollOffset = -100;
+	}
+	CTimeline.prototype.onPreviewStop = function() {
+		console.log('Превью закончилось')
+		this.tmpScrollOffset = null;
+	}
+	CTimeline.prototype.onPreview = function() {
+		if (this.tmpScrollOffset === null) { return };
+
+		console.log('Превью происходит')
+		this.tmpScrollOffset += 1;
+		this.onUpdate();
 	}
 
 	CTimeline.prototype.getRulerStart = function () {
