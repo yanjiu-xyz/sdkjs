@@ -11827,7 +11827,7 @@
         this.overlay.CheckRect(this.rect.x, this.rect.y, this.rect.w, this.rect.h);
         this.drawFrame(this.overlayCanvas, this.rect);
 
-        Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.onPreview();
+        Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.onPreview(this.getElapsedTicks());
     };
 
     const DEFAULT_SIMPLE_TRIGGER = function () {

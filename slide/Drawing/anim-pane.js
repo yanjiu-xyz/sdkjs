@@ -1501,19 +1501,23 @@
 	}
 
 	CTimeline.prototype.onPreviewStart = function() {
-		console.log('Превью началось')
-		this.tmpScrollOffset = -100;
+		this.tmpScrollOffset = 0;
+		this.onUpdate();
 	}
 	CTimeline.prototype.onPreviewStop = function() {
-		console.log('Превью закончилось')
 		this.tmpScrollOffset = null;
+		this.onUpdate();
 	}
-	CTimeline.prototype.onPreview = function() {
+	CTimeline.prototype.onPreview = function(elapsedTicks) {
 		if (this.tmpScrollOffset === null) { return };
 
-		console.log('Превью происходит')
-		this.tmpScrollOffset += 1;
+		this.tmpScrollOffset = ms_to_mm(elapsedTicks);
 		this.onUpdate();
+
+		function ms_to_mm(nMilliseconds) {
+			const index = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.timeScaleIndex;
+			return nMilliseconds * TIME_INTERVALS[index] / TIME_SCALES[index] / 1000;
+		}
 	}
 
 	CTimeline.prototype.getRulerStart = function () {
