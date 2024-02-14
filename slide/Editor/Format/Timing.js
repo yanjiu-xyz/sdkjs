@@ -5320,7 +5320,13 @@
             let oPrev = this.parent.getPreviousEffect();
             if (oPrev && oPrev.cTn) {
                 let nShift = oPrev.cTn.getDelay(false);
-                nShift += oPrev.cTn.getEffectDuration()
+
+                let nDurationDelay = oPrev.cTn.getEffectDuration();
+                let oRepeatCount = oPrev.getRepeatCount();
+                if (oRepeatCount.isDefinite()) {
+                    nDurationDelay *= oRepeatCount.val / 1000;
+                }
+                nShift += nDurationDelay;
                 return nShift;
             }
         }
