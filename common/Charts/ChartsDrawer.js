@@ -670,18 +670,23 @@ CChartsDrawer.prototype =
 	
 	_calculatePositionDlbl: function(obj/*chartSpace, ser, val, bLayout*/)
 	{
-		var res = null;
-
-		var chartSpace = obj.chart;
-		var bLayout = AscCommon.isRealObject(obj.layout) && (AscFormat.isRealNumber(obj.layout.x) || AscFormat.isRealNumber(obj.layout.y));
-		var serIdx = obj.series.idx;
-		var valIdx = obj.pt.idx;
-
-		var chartId = this._getChartModelIdBySerIdx(chartSpace.chart.plotArea, serIdx);
-		if(null !== chartId && this.charts[chartId] && this.charts[chartId].chart && this.charts[chartId].chart.series) {
-			//TODO нужно переделать все массивы с патами по idx
-			var serIndex = this._getIndexByIdxSeria(this.charts[chartId].chart.series, serIdx);
-			res = this.charts[chartId]._calculateDLbl(chartSpace, serIndex, valIdx, bLayout, serIdx);
+		let res = null;
+		if (obj.showChartExVal) {
+			if (this.charts && this.charts.null) {
+				res = this.charts.null._calculateDLbl(obj);
+			}
+		} else {
+			var chartSpace = obj.chart;
+			var bLayout = AscCommon.isRealObject(obj.layout) && (AscFormat.isRealNumber(obj.layout.x) || AscFormat.isRealNumber(obj.layout.y));
+			var serIdx = obj.series.idx;
+			var valIdx = obj.pt.idx;
+	
+			var chartId = this._getChartModelIdBySerIdx(chartSpace.chart.plotArea, serIdx);
+			if(null !== chartId && this.charts[chartId] && this.charts[chartId].chart && this.charts[chartId].chart.series) {
+				//TODO нужно переделать все массивы с патами по idx
+				var serIndex = this._getIndexByIdxSeria(this.charts[chartId].chart.series, serIdx);
+				res = this.charts[chartId]._calculateDLbl(chartSpace, serIndex, valIdx, bLayout, serIdx);
+			}
 		}
 
 		return res;
@@ -2671,7 +2676,6 @@ CChartsDrawer.prototype =
 			const localBinning = cachedData.binning;
 			const localResults = cachedData.results;
 			const catLimits = handleCatLimits(localBinning, axisProperties);
-			console.log(catLimits);
 			calculateBinSizeAndCount(localBinning, catLimits, numArr, axisProperties);
 			// if binSize is calculated automatically, it must be rounded to two digits. Example: 78.65 = 79, 0.856 : 0.86!
 			const BINNING_PRECISION = 1;
@@ -7712,6 +7716,70 @@ drawHistogramChart.prototype = {
 		}
 		
 		this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
+	},
+
+	_calculateDLbl: function (compiledDlb) {
+		if (!this.paths || !this.chartProp) {
+			return;
+		}
+		const path = this.paths[compiledDlb.idx];
+
+		if (!AscFormat.isRealNumber(path)) {
+			return;
+		}
+
+		const oPath = this.cChartSpace.GetPath(path);
+		const oCommand0 = oPath.getCommandByIndex(0);
+		const oCommand1 = oPath.getCommandByIndex(1);
+		const oCommand2 = oPath.getCommandByIndex(2);
+		const oCommand3 = oPath.getCommandByIndex(3);
+
+		const x = oCommand0.X;
+		const y = oCommand0.Y;
+
+		const h = oCommand0.Y - oCommand1.Y;
+		const w = oCommand2.X - oCommand1.X;
+
+		const pxToMm = this.chartProp.pxToMM;
+
+		const width = compiledDlb.extX;
+		const height = compiledDlb.extY;
+
+		let centerX, centerY;
+		// DATA_LABEL_POS_IN_END
+		switch (compiledDlb.dLblPos) {
+			case AscFormat.DATA_LABEL_POS_CTR: {
+				centerX = x + w / 2 - width / 2;
+				centerY = y - h / 2 - height / 2;
+				break;
+			}
+			case AscFormat.DATA_LABEL_POS_IN_BASE: {
+				centerX = x + w / 2 - width / 2;
+				centerY = y - height;
+				break;
+			}
+			case AscFormat.DATA_LABEL_POS_IN_END: {
+				centerX = x + w / 2 - width / 2;
+				centerY = y - h;
+				break;
+			}
+			case AscFormat.DATA_LABEL_POS_OUT_END: {
+				centerX = x + w / 2 - width / 2;
+				centerY = y - h - height;
+				break;
+			}
+		}
+
+		if (height > h) {
+			centerY = y - height;
+		}
+
+		const top = this.chartProp.chartGutter._top / pxToMm;
+		if (centerY < top) {
+			centerY = top;
+		}
+
+		return {x: centerX, y: centerY};
 	}
 };
 
