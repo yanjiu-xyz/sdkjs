@@ -1543,8 +1543,10 @@
 		})
 
 		this.tmpScrollOffset = ms_to_mm(elapsedTicks + correction);
-		this.parentControl.drawer.OnPaint() // instead of this.onUpdate()
-		// TODO: Отправить ивент какой-то сиквенс листу, чтоб он тоже линию нарисовал
+
+		// this.parentControl.drawer == editor.WordControl.m_oAnimPaneApi.timeline
+		Asc.editor.WordControl.m_oAnimPaneApi.timeline.OnPaint();
+		Asc.editor.WordControl.m_oAnimPaneApi.list.OnPaint();
 
 		function ms_to_mm(nMilliseconds) {
 			const index = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.timeScaleIndex;
@@ -1699,6 +1701,28 @@
 		}
 		this.setLayout(this.getLeft(), this.getTop(), this.getWidth(), dLastBottom);
 	};
+
+	CSeqList.prototype.draw = function (graphics) {
+		if (!CControlContainer.prototype.draw.call(this, graphics)) { return false; }
+
+		for (var nChild = 0; nChild < this.children.length; ++nChild) {
+			this.children[nChild].draw(graphics);
+		}
+
+		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline;
+		if (timeline.tmpScrollOffset !== null) {
+			graphics.SaveGrState();
+			graphics.RemoveClipRect();
+
+			const xCord = timeline.getLeft() + timeline.getZeroShift() + timeline.tmpScrollOffset;
+			const height = this.parentControl.drawer.GetHeight();
+			graphics.drawVerLine(1, xCord, this.getTop(), this.getTop() + height, this.getPenWidth(graphics));
+
+			graphics.RestoreGrState();
+		}
+
+		return true;
+	}
 
 	CSeqList.prototype.getFillColor = function () {
 		return null;
