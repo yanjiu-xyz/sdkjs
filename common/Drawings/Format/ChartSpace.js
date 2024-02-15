@@ -3478,21 +3478,30 @@ function(window, undefined) {
 		if (this.chart) {
 			if (this.chart.plotArea) {
 				this.chart.plotArea.updatePosition(posX, posY);
-				var aCharts = this.chart.plotArea.charts;
-				for (var t = 0; t < aCharts.length; ++t) {
-					var oChart = aCharts[t];
-					var series = oChart.series;
-					for (var i = 0; i < series.length; ++i) {
-						var ser = series[i];
-						var pts = ser.getNumPts();
-						for (var j = 0; j < pts.length; ++j) {
-							if (pts[j].compiledDlb) {
-								pts[j].compiledDlb.updatePosition(posX, posY);
-							}
+				if (this.chart.plotArea.isForChartEx) {
+					const cachedData = this.chart.plotArea.plotAreaRegion ? this.chart.plotArea.plotAreaRegion.cachedData : null;
+					if (cachedData && cachedData.compiledDlbs) {
+						for (let i = 0; i < cachedData.compiledDlbs.length; i++) {
+							cachedData.compiledDlbs[i].compiledDlb.updatePosition(posX, posY);
 						}
-						let oTrendlineLbl = ser.trendline && ser.trendline.trendlineLbl;
-						if(oTrendlineLbl) {
-							oTrendlineLbl.updatePosition(posX, posY);
+					}
+				} else {
+					var aCharts = this.chart.plotArea.charts;
+					for (var t = 0; t < aCharts.length; ++t) {
+						var oChart = aCharts[t];
+						var series = oChart.series;
+						for (var i = 0; i < series.length; ++i) {
+							var ser = series[i];
+							var pts = ser.getNumPts();
+							for (var j = 0; j < pts.length; ++j) {
+								if (pts[j].compiledDlb) {
+									pts[j].compiledDlb.updatePosition(posX, posY);
+								}
+							}
+							let oTrendlineLbl = ser.trendline && ser.trendline.trendlineLbl;
+							if(oTrendlineLbl) {
+								oTrendlineLbl.updatePosition(posX, posY);
+							}
 						}
 					}
 				}
@@ -4105,9 +4114,76 @@ function(window, undefined) {
 		}
 		return fRetLayout;
 	};
+	CChartSpace.prototype.calculateDLblsForChartEx = function () {
+		const obtainResults = function (cachedData) {
+			if (!cachedData) {
+				return;
+			}
+			if (cachedData.aggregation) {
+				return cachedData.aggregation;
+			} else if (cachedData.results) {
+				return cachedData.results;
+			} else {
+				return {};
+			}
+		}
+
+		const obtainVal = function (cachedData, key) {
+			if (!cachedData) {
+				return;
+			}
+			if (cachedData.aggregation) {
+				return cachedData.aggregation[key];
+			} else if (cachedData.results) {
+				return cachedData.results[key].occurrence;
+			} else {
+				return null;
+			}
+		}
+		const size = this.chart.plotArea.plotAreaRegion.series.length;
+		const seria = this.chart.plotArea.plotAreaRegion.series[size - 1];
+		const cachedData = this.chart.plotArea.plotAreaRegion.cachedData;
+		const results = obtainResults(cachedData);
+		//seria.dataLabels.visibility optional
+		if (seria && seria.dataLabels) {
+			const default_lbl = new AscFormat.CDLbl();
+			const nDefaultPosition = seria.dataLabels.pos ? seria.dataLabels.pos : 7;
+			default_lbl.initDefault(nDefaultPosition);
+			cachedData.compiledDlbs = [];
+			for (let i in results) {
+				const compiled_dlb = new AscFormat.CDLbl();
+				const pt = {};
+				compiled_dlb.merge(default_lbl);
+				pt.compiledDlb = compiled_dlb;
+				pt.compiledDlb.chart = this;
+				pt.compiledDlb.series = seria;
+				pt.compiledDlb.pt = obtainVal(cachedData, i);
+				pt.compiledDlb.setShowChartExVal(true);
+				pt.compiledDlb.recalculate();
+				cachedData.compiledDlbs.push(pt);
+			}
+		}
+	}
+	CChartSpace.prototype.calculateChartExLabelsPositions = function () {
+		if (!this.chart || !this.chart.plotArea || !this.chart.plotArea.isForChartEx || !this.chart.plotArea.plotAreaRegion || !this.chartObj) {
+			return;
+		}
+		this.calculateDLblsForChartEx()
+		const aDLbls = this.recalcInfo.dataLbls;
+		for (let i = 0; i < aDLbls.length; i++) {
+			let oLbl = aDLbls[i];
+			oLbl.idx = i;
+			let pos = this.chartObj.recalculatePositionText(oLbl);
+			oLbl.setPosition(pos.x, pos.y);
+		}
+	}
+
 	CChartSpace.prototype.calculateLabelsPositions = function (b_recalc_labels, b_recalc_legend) {
 		let layout;
 		let aDLbls = this.recalcInfo.dataLbls;
+		if (!aDLbls || aDLbls.length === 0) {
+			this.calculateChartExLabelsPositions();
+		}
 		for (let i = 0; i < aDLbls.length; ++i) {
 			let series = this.getAllSeries();
 			let oLbl = aDLbls[i];
@@ -8376,22 +8452,32 @@ function(window, undefined) {
 				// graphics._l(oChartSize.startX + 0, oChartSize.startY + oChartSize.h);
 				// graphics._z();
 				// graphics.ds();
-				var aCharts = this.chart.plotArea.charts;
-				for (var t = 0; t < aCharts.length; ++t) {
-					var oChart = aCharts[t];
-					if (oChart && oChart.series) {
-						var series = oChart.series;
-						var _len = oChart.getObjectType() === AscDFH.historyitem_type_PieChart ? 1 : series.length;
-						for (var i = 0; i < _len; ++i) {
-							var ser = series[i];
-							var pts = ser.getNumPts();
-							for (var j = 0; j < pts.length; ++j) {
-								if (pts[j].compiledDlb)
-									pts[j].compiledDlb.draw(graphics);
-							}
-							let oTrendlineLbl = ser.trendline && ser.trendline.trendlineLbl;
-							if(oTrendlineLbl) {
-								oTrendlineLbl.draw(graphics);
+				if (this.chart.plotArea.isForChartEx) {
+					const cachedData = this.chart.plotArea.plotAreaRegion ? this.chart.plotArea.plotAreaRegion.cachedData : null;
+					if (cachedData && cachedData.compiledDlbs) {
+						for (let i = 0; i < cachedData.compiledDlbs.length; i++) {
+							cachedData.compiledDlbs[i].compiledDlb.draw(graphics);
+						}
+					}
+				} else {
+					var aCharts = this.chart.plotArea.charts;
+					for (var t = 0; t < aCharts.length; ++t) {
+						var oChart = aCharts[t];
+						if (oChart && oChart.series) {
+							var series = oChart.series;
+							var _len = oChart.getObjectType() === AscDFH.historyitem_type_PieChart ? 1 : series.length;
+							for (var i = 0; i < _len; ++i) {
+								var ser = series[i];
+								var pts = ser.getNumPts();
+								for (var j = 0; j < pts.length; ++j) {
+									if (pts[j].compiledDlb) {
+										pts[j].compiledDlb.draw(graphics);
+									}
+								}
+								let oTrendlineLbl = ser.trendline && ser.trendline.trendlineLbl;
+								if(oTrendlineLbl) {
+									oTrendlineLbl.draw(graphics);
+								}
 							}
 						}
 					}

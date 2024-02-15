@@ -3159,6 +3159,11 @@
                 compiled_string += separator;
             compiled_string += this.getPercentageString();
         }
+        if (this.showChartExVal) {
+            //TODO: format the passed number
+            const val = this.pt;
+            compiled_string = "" + val;
+        }
         return compiled_string;
     };
     CDLbl.prototype.getMaxWidth = function(bodyPr) {
@@ -3606,6 +3611,10 @@
     CDLbl.prototype.setShowVal = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_DLbl_SetShowVal, this.showVal, pr));
         this.showVal = pr;
+    };
+    CDLbl.prototype.setShowChartExVal = function(pr) {
+        History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_DLbl_SetShowVal, this.setShowChartExVal, pr));
+        this.showChartExVal = pr;
     };
     CDLbl.prototype.setShowDlblsRange = function(pr) {
         History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_DLbl_SetShowDLblsRange, this.showDlblsRange, pr));
