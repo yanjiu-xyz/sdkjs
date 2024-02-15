@@ -1405,7 +1405,14 @@ var editor;
 	if (this.isCloudSaveAsLocalToDrawingFormat(actionType, fileType)) {
 	  var printPagesData, pdfPrinterMemory, t = this;
       this.wb._executeWithoutZoom(function () {
-        printPagesData = t.wb.calcPagesPrint(options.advancedOptions);
+        let printOptions = options.advancedOptions;
+        if (fileType & 0x0400) {
+          printOptions = new Asc.asc_CAdjustPrint();
+          printOptions.printType = Asc.c_oAscPrintType.EntireWorkbook;
+          printOptions.ignorePrintArea = true;
+          printOptions.isOnlyFirstPage = false;
+        }
+        printPagesData = t.wb.calcPagesPrint(printOptions);
         pdfPrinterMemory = t.wb.printSheets(printPagesData, null, options.advancedOptions).DocumentRenderer.Memory;
 	  });
       this.localSaveToDrawingFormat(pdfPrinterMemory.GetBase64Memory(), fileType);
