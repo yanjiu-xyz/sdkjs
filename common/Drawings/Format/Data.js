@@ -7600,13 +7600,28 @@ Because of this, the display is sometimes not correct.
     ColorDefStyleLbl.prototype.getChildren = function() {
       return [this.effectClrLst, this.fillClrLst, this.linClrLst, this.txEffectClrLst, this.txFillClrLst, this.txLinClrLst];
     };
-
+	  ColorDefStyleLbl.prototype.checkNoFill = function () {
+			switch (this.name) {
+				case "parChTrans1D1":
+					return true;
+				default:
+					return false;
+			}
+	  };
+	  ColorDefStyleLbl.prototype.checkNoLn = function () {
+		  switch (this.name) {
+			  case "alignAcc1":
+				  return true;
+			  default:
+				  return false;
+		  }
+	  };
 	  ColorDefStyleLbl.prototype.getShapeFill = function (index) {
 			const lst = this.fillClrLst && this.fillClrLst.list;
 		  if (lst && lst.length) {
 				const truthIndex = index % lst.length;
 				const uniColor = lst[truthIndex];
-				if (this.checkTransparent(uniColor)) {
+				if (this.checkTransparent(uniColor) || this.checkNoFill()) {
 					return AscFormat.CreateNoFillUniFill();
 				}
 				return AscFormat.CreateUniFillByUniColorCopy(uniColor);
@@ -7625,11 +7640,12 @@ Because of this, the display is sometimes not correct.
 				if (lst.length) {
 					const truthIndex = index % lst.length;
 					const uniColor = lst[truthIndex];
-					if (this.checkTransparent(uniColor)) {
+					if (this.checkTransparent(uniColor) || this.checkNoLn()) {
 						return AscFormat.CreateNoFillLine();
 					}
 
 					const ln = new AscFormat.CLn();
+					ln.setW(12700);
 					const fill = AscFormat.CreateUniFillByUniColorCopy(uniColor);
 					ln.setFill(fill);
 					return ln;
