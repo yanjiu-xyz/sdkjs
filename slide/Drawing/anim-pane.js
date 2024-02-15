@@ -1515,18 +1515,36 @@
 	}
 
 	CTimeline.prototype.onPreviewStart = function() {
+		this.demoTiming = Asc.editor.WordControl.m_oLogicDocument.previewPlayer.timings[0];
 		this.tmpScrollOffset = 0;
 		this.onUpdate();
 	}
 	CTimeline.prototype.onPreviewStop = function() {
+		this.demoTiming = null;
 		this.tmpScrollOffset = null;
 		this.onUpdate();
 	}
 	CTimeline.prototype.onPreview = function(elapsedTicks) {
 		if (this.tmpScrollOffset === null) { return };
+		if (!this.demoTiming) { return }
 
-		this.tmpScrollOffset = ms_to_mm(elapsedTicks);
-		this.onUpdate();
+		let demoEffects = this.demoTiming.getRootSequences()[0].getAllEffects();
+		let correction;
+		demoEffects.forEach(function (effect) {
+			let originalEffectStart = effect.originalNode.getBaseTime() + effect.originalNode.asc_getDelay();
+			// let originalEffectEnd = originalEffectStart + effect.originalNode.asc_getDuration();
+
+			let demoEffectStart = effect.getBaseTime() + effect.asc_getDelay();
+			let demoEffectEnd = demoEffectStart + effect.asc_getDuration();
+
+			if (demoEffectStart < elapsedTicks && elapsedTicks < demoEffectEnd) {
+				correction = originalEffectStart - demoEffectStart;
+			}
+		})
+
+		this.tmpScrollOffset = ms_to_mm(elapsedTicks + correction);
+		this.parentControl.drawer.OnPaint() // instead of this.onUpdate()
+		// TODO: Отправить ивент какой-то сиквенс листу, чтоб он тоже линию нарисовал
 
 		function ms_to_mm(nMilliseconds) {
 			const index = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.timeScaleIndex;

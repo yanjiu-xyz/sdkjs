@@ -2696,7 +2696,7 @@
                     oCopyEffect.cTn.changeEffectDuration(750);
                 }
 
-                oCopyEffect.originalNode = null;
+                // oCopyEffect.originalNode = null;
                 aSeq.push(oCopyEffect);
             }
             var oTiming = new CTiming();
@@ -11792,9 +11792,8 @@
         if (oTiming) {
             var oDemoTiming = oTiming.createDemoTiming();
             if (oDemoTiming) {
-
+                this.timings.push(oDemoTiming);
             }
-            this.timings.push(oDemoTiming);
         }
         var oTr = editor.WordControl.m_oDrawingDocument.TransitionSlide;
         oTr.CalculateRect();
