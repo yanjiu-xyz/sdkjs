@@ -1145,7 +1145,7 @@
 
 		// This fields supposed to be private
 		// so it should not be changed directly.
-		// Use set methods insdead (setScrollOffset, setStartTime)
+		// Use set methods instead (setScrollOffset, setStartTime)
 		this.scrollOffset = 0; // in millimeters
 		this.startTime = 0; // in seconds
 		this.timeScaleIndex = 2;
@@ -1517,6 +1517,7 @@
 	CTimeline.prototype.onPreviewStart = function() {
 		this.demoTiming = Asc.editor.WordControl.m_oLogicDocument.previewPlayer.timings[0];
 		this.tmpScrollOffset = 0;
+		this.setStartTime(0);
 
 		Asc.editor.WordControl.m_oAnimPaneApi.timeline.OnPaint();
 		Asc.editor.WordControl.m_oAnimPaneApi.list.OnPaint();
