@@ -1517,12 +1517,18 @@
 	CTimeline.prototype.onPreviewStart = function() {
 		this.demoTiming = Asc.editor.WordControl.m_oLogicDocument.previewPlayer.timings[0];
 		this.tmpScrollOffset = 0;
-		this.onUpdate();
+
+		Asc.editor.WordControl.m_oAnimPaneApi.timeline.OnPaint();
+		Asc.editor.WordControl.m_oAnimPaneApi.list.OnPaint();
+		// this.onUpdate();
 	}
 	CTimeline.prototype.onPreviewStop = function() {
 		this.demoTiming = null;
 		this.tmpScrollOffset = null;
-		this.onUpdate();
+
+		Asc.editor.WordControl.m_oAnimPaneApi.timeline.OnPaint();
+		Asc.editor.WordControl.m_oAnimPaneApi.list.OnPaint();
+		// this.onUpdate();
 	}
 	CTimeline.prototype.onPreview = function(elapsedTicks) {
 		if (this.tmpScrollOffset === null) { return };
