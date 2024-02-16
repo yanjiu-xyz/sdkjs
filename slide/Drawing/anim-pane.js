@@ -1712,10 +1712,6 @@
 	CSeqList.prototype.draw = function (graphics) {
 		if (!CControlContainer.prototype.draw.call(this, graphics)) { return false; }
 
-		for (var nChild = 0; nChild < this.children.length; ++nChild) {
-			this.children[nChild].draw(graphics);
-		}
-
 		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline;
 		if (timeline.tmpScrollOffset !== null) {
 			graphics.SaveGrState();
