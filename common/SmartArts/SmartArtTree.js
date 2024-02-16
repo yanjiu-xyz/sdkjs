@@ -51,6 +51,7 @@
 	const VarLst = AscFormat.VarLst;
 
 	const degToRad = Math.PI / 180;
+	const radToDeg = 1 / degToRad;
 	const algDelta = 1e-13;
 	const bulletFontSizeCoefficient = 51 / 65;
 
@@ -129,7 +130,7 @@
 	};
 
 
-	function createPresNode(presName, styleLbl, moveWith, contentNode) {
+	function createPresNode(presName, styleLbl, contentNode) {
 		presName = presName || "";
 		const point = new Point();
 		point.setType(AscFormat.Point_type_pres);
@@ -138,7 +139,7 @@
 		prSet.setPresStyleLbl(styleLbl || "node1");
 
 		point.setPrSet(prSet);
-		return new PresNode(point, contentNode, moveWith);
+		return new PresNode(point, contentNode);
 	}
 
 	VarLst.prototype.executeAlgorithm = function (smartartAlgorithm) {};
@@ -162,6 +163,7 @@
 			const element = this.list[i];
 			element.executeAlgorithm(smartartAlgorithm);
 		}
+		curPresNode.checkMoveWith();
 		smartartAlgorithm.removeCurrentPresNode(curPresNode);
 	}
 	LayoutNode.prototype.getForEachMap = function () {
@@ -486,6 +488,7 @@
 		this.presNodesStack = [];
 		this.colorCheck = {};
 		this.connectorAlgorithmStack = [];
+		this.moveShapeSettings = [];
 		this.sizeCoefficients = {
 			widthCoefficient: 1,
 			heightCoefficient: 1
@@ -493,6 +496,68 @@
 		this.forEachMap = null;
 		this.initDataTree();
 	}
+	SmartArtAlgorithm.prototype.addSettingsForMove = function (settings) {
+		this.moveShapeSettings.push(settings);
+	};
+	SmartArtAlgorithm.prototype.applySettingsForMove = function () {
+		while (this.moveShapeSettings.length) {
+			const settings = this.moveShapeSettings.pop();
+			const coefficient = settings.coefficient;
+			const shape = settings.shape;
+
+			const presNode = shape.node;
+			const prSet = presNode.getPrSet();
+			let neighborWidth = null;
+			let neighborHeight = null;
+			const neighbor = presNode.getNeighbor();
+			const neighborShape = neighbor.shape;
+/*			if (neighborShape) {
+				if (presNode.node.isSibNode()) {
+					neighborHeight = neighborShape.cleanParams.height;
+				} else {
+					neighborWidth = neighborShape.cleanParams.width;
+				}
+			}*/
+			if (prSet) {
+				let offX = 0;
+				let offY = 0;
+				if (shape.radialVector) {
+					const custScaleRadius = prSet.custRadScaleRad === null ? 1 : prSet.custRadScaleRad;
+					const custScaleAngle = prSet.custRadScaleInc === null ? 0 : prSet.custRadScaleInc;
+					if (custScaleRadius !== 1 || custScaleAngle !== 0) {
+
+						const defaultRadius = shape.radialVector.getDistance();
+						const defaultAngle = shape.radialVector.getAngle();
+						const shapeCenterPoint = new CCoordPoint(shape.x + shape.width / 2, shape.y + shape.height / 2);
+						const centerPoint = new CCoordPoint(shapeCenterPoint.x - shape.radialVector.x, shapeCenterPoint.y - shape.radialVector.y);
+						const customRadius = defaultRadius * custScaleRadius;
+						const custAngle = AscFormat.normalizeRotate(defaultAngle + custScaleAngle * shape.incAngle);
+						const custVector = CVector.getVectorByAngle(custAngle);
+						custVector.multiply(customRadius);
+						const custCenterPoint = new CCoordPoint(custVector.x + centerPoint.x, custVector.y + centerPoint.y);
+						offX = custCenterPoint.x - shape.width / 2 - shape.x;
+						offY = custCenterPoint.y - shape.height / 2 - shape.y;
+					}
+				} else {
+					if (prSet.custLinFactNeighborX) {
+						const width = neighborWidth !== null ? neighborWidth : shape.cleanParams.width;
+						offX += width * prSet.custLinFactNeighborX * coefficient;
+					}
+					if (prSet.custLinFactX) {
+						offX += shape.cleanParams.width * prSet.custLinFactX * coefficient;
+					}
+					if (prSet.custLinFactNeighborY) {
+						const height = neighborHeight !== null ? neighborHeight : shape.cleanParams.height;
+						offY += height * prSet.custLinFactNeighborY * coefficient;
+					}
+					if (prSet.custLinFactY) {
+						offY += shape.cleanParams.height * prSet.custLinFactY * coefficient;
+					}
+				}
+				shape.moveTo(offX, offY);
+			}
+		}
+	};
 	SmartArtAlgorithm.prototype.getForEach = function (ref) {
 		return this.forEachMap[ref];
 	};
@@ -584,7 +649,7 @@
 			if (presPoint) {
 				presNode = new PresNode(presPoint, currentNode);
 			} else {
-				presNode = createPresNode(layoutNode.name, layoutNode.styleLbl, layoutNode.moveWith, currentNode);
+				presNode = createPresNode(layoutNode.name, layoutNode.styleLbl, currentNode);
 			}
 			currentNode.setPresNode(presNode);
 		} else {
@@ -593,9 +658,10 @@
 			if (child) {
 				presNode = new PresNode(child, currentNode);
 			} else {
-				presNode = createPresNode(layoutNode.name, layoutNode.styleLbl, layoutNode.moveWith, currentNode);
+				presNode = createPresNode(layoutNode.name, layoutNode.styleLbl, currentNode);
 			}
 		}
+		presNode.moveWith = layoutNode.moveWith;
 		return presNode;
 	};
 
@@ -668,7 +734,9 @@
 		this.forEachPresFromBottom(function (presNode) {
 			presNode.startAlgorithm(oThis);
 		});
+		this.applySettingsForMove();
 		this.generateConnectors();
+		this.applySettingsForMove();
 		this.forEachPresFromTop(function (presNode) {
 			oThis.addToColorCheck(presNode);
 		});
@@ -676,7 +744,7 @@
 	SmartArtAlgorithm.prototype.generateConnectors = function () {
 		while (this.connectorAlgorithmStack.length) {
 			const connectorAlgorithm = this.connectorAlgorithmStack.pop();
-			connectorAlgorithm.connectShapes();
+			connectorAlgorithm.connectShapes(this);
 		}
 	};
 	SmartArtAlgorithm.prototype.forEachPresFromBottom = function (callback) {
@@ -744,7 +812,15 @@
 		this.depth = AscFormat.isRealNumber(depth) ? depth : null;
 	}
 	SmartArtDataNodeBase.prototype.getDirection = function () {};
-	SmartArtDataNodeBase.prototype.getHierBranch = function () {};
+	SmartArtDataNodeBase.prototype._getHierBranchValue = function () {
+		if (this.presNode) {
+			const presPoint = this.presNode.presPoint;
+			return presPoint && presPoint.getHierBranchValue();
+		}
+	};
+	SmartArtDataNodeBase.prototype.getHierBranch = function () {
+		return this._getHierBranchValue();
+	};
 	SmartArtDataNodeBase.prototype.getFuncVarValue = function (type) {
 		switch (type) {
 			case AscFormat.If_arg_dir:
@@ -967,10 +1043,14 @@
 	};
 	SmartArtParDataNode.prototype.getHierBranch = function () {
 		let node = this;
-		while (!node.presNode && node.parent) {
+		while (node) {
+			const val = node._getHierBranchValue();
+			if (AscFormat.isRealNumber(val)) {
+				return val;
+			}
 			node = node.parent;
 		}
-		return node.getHierBranch();
+		return null;
 	};
 	SmartArtParDataNode.prototype.getParent = function () {
 		return this.parent && this.parent.parent;
@@ -989,13 +1069,6 @@
 	SmartArtDataNode.prototype.getDirection = function () {
 		return this.presNode && this.presNode.getDirection();
 	}
-
-	SmartArtDataNode.prototype.getHierBranch = function () {
-		if (this.presNode) {
-			const presPoint = this.presNode.presPoint;
-			return presPoint && presPoint.getHierBranchValue();
-		}
-	};
 
 	SmartArtDataNode.prototype.getChildDepth = function () {
 		if (this.childDepth === null) {
@@ -1166,10 +1239,9 @@
 	}
 	ShadowShape.prototype.initFromShape = function (shape) {
 		this.shape = shape;
-		if (!shape.hideGeom) {
+		if (!(shape.hideGeom && (this.node.algorithm instanceof SpaceAlgorithm))) {
 			this.type = shape.type;
 			this.isSpacing = this.type === AscFormat.LayoutShapeType_outputShapeType_none;
-			this.rot = AscFormat.isRealNumber(shape.rot) ? AscFormat.normalizeRotate(degToRad * shape.rot) : 0;
 		}
 
 	}
@@ -1240,25 +1312,28 @@
 			return shape;
 		}
 	}
-	ShadowShape.prototype.getAdjFactor = function () {
-		if (this.type === AscFormat.LayoutShapeType_shapeType_pie) {
-			return 60000;
+	ShadowShape.prototype.getAdjValueWithApplyFactor = function (val) {
+		switch (this.type) {
+			case AscFormat.LayoutShapeType_shapeType_pie:
+			case AscFormat.LayoutShapeType_shapeType_arc:
+				val = AscFormat.normalizeRotate(val * degToRad) * radToDeg;
+				return val * 60000;
+			default:
+				return val * 100000;
 		}
-		return 100000;
 	};
 	ShadowShape.prototype.applyAdjLst = function (editorShape) {
 		const adjLst = this.customAdj || (this.shape && this.shape.adjLst);
 		if (adjLst) {
 			const geometry = editorShape.spPr.geometry;
-			const factor = this.getAdjFactor();
 			const singleAdjName = "adj";
 			for (let i = 0; i < adjLst.list.length; i += 1) {
 				const adj = adjLst.list[i];
 				const adjName = singleAdjName + adj.idx;
 				if (geometry.avLst[adjName]) {
-					geometry.AddAdj(adjName, 0, adj.val * factor);
+					geometry.AddAdj(adjName, 0, this.getAdjValueWithApplyFactor(adj.val));
 				} else if (geometry.avLst[singleAdjName]) {
-					geometry.AddAdj(singleAdjName, 0, adj.val * factor);
+					geometry.AddAdj(singleAdjName, 0, this.getAdjValueWithApplyFactor(adj.val));
 				}
 			}
 		}
@@ -1387,6 +1462,28 @@
 		this._isHideLastChild = null;
 		this.constraintSizes = null;
 	}
+	BaseAlgorithm.prototype.setParentConnection = function(connectorAlgorithm, childNode) {
+		if (connectorAlgorithm && childNode) {
+			connectorAlgorithm.setParentAlgorithm(this);
+			connectorAlgorithm.setFirstConnectorNode(this.parentNode);
+			connectorAlgorithm.setLastConnectorNode(childNode);
+		}
+	};
+	BaseAlgorithm.prototype.getShapes = function (smartartAlgorithm) {
+		smartartAlgorithm.applyColorsDef();
+		const shapes = [];
+		const shadowShapes = this.parentNode.getShadowShapesByZOrder();
+		for (let i = 0; i < shadowShapes.length; i++) {
+			const editorShape = shadowShapes[i].getEditorShape();
+			if (editorShape) {
+				shapes.push(editorShape);
+			}
+		}
+		return shapes;
+	}
+	BaseAlgorithm.prototype.applyPostAlgorithmSettings = function (smartartAlgorithm) {
+		this.applyPostAlgorithmSettingsForShape(smartartAlgorithm, this.parentNode.getShape(false));
+	};
 	BaseAlgorithm.prototype.isHierarchy = function () {return false;};
 	BaseAlgorithm.prototype.getBounds = function (isCalculateScaleCoefficients, bounds) { return bounds};
 	BaseAlgorithm.prototype.moveToHierarchyOffsets = function () {};
@@ -1443,7 +1540,10 @@
 					}
 				} else {
 					// todo
-					this.setParentConnection(algorithm, node.node.parent.presNode);
+					const childNode = node.node.parent.presNode;
+					if (childNode) {
+						this.setParentConnection(algorithm, childNode);
+					}
 				}
 				previousIndex = nextIndex;
 			}
@@ -1571,9 +1671,6 @@
 	BaseAlgorithm.prototype.calcScaleCoefficients = function () {
 		this.parentNode.calcNodeConstraints();
 	};
-	BaseAlgorithm.prototype.getShapes = function () {
-		return [];
-	}
 	BaseAlgorithm.prototype.setConnectionDistance = function (value, isStart) {
 
 	};
@@ -1607,54 +1704,11 @@
 	BaseAlgorithm.prototype.setLastConnectorNode = function () {
 
 	};
-	BaseAlgorithm.prototype.applyPostAlgorithmSettingsForShape = function (shape, prSet, customCoefficient) {
-		const coefficient = AscFormat.isRealNumber(customCoefficient) ? customCoefficient : 1;
+	BaseAlgorithm.prototype.applyPostAlgorithmSettingsForShape = function (smartartAlgorithm, shape, customCoefficient) {
 		const presNode = shape.node;
-		let neighborWidth = null;
-		let neighborHeight = null;
-		const neighbor = presNode.getNeighbor();
-		const neighborShape = neighbor.shape;
-		if (neighborShape) {
-			if (presNode.node.isSibNode()) {
-				neighborHeight = neighborShape.cleanParams.height;
-			} else {
-				neighborWidth = neighborShape.cleanParams.width;
-			}
-		}
-		if (prSet) {
-			if (shape.radialVector) {
-				const custScaleRadius = prSet.custRadScaleRad === null ? 1 : prSet.custRadScaleRad;
-				const custScaleAngle = prSet.custRadScaleInc === null ? 0 : prSet.custRadScaleInc;
-				if (custScaleRadius !== 1 || custScaleAngle !== 0) {
-
-					const defaultRadius = shape.radialVector.getDistance();
-					const defaultAngle = shape.radialVector.getAngle();
-					const shapeCenterPoint = new CCoordPoint(shape.x + shape.width / 2, shape.y + shape.height / 2);
-					const centerPoint = new CCoordPoint(shapeCenterPoint.x - shape.radialVector.x, shapeCenterPoint.y - shape.radialVector.y);
-					const customRadius = defaultRadius * custScaleRadius;
-					const custAngle = AscFormat.normalizeRotate(defaultAngle + custScaleAngle * shape.incAngle);
-					const custVector = CVector.getVectorByAngle(custAngle);
-					custVector.multiply(customRadius);
-					const custCenterPoint = new CCoordPoint(custVector.x + centerPoint.x, custVector.y + centerPoint.y);
-					shape.x = custCenterPoint.x - shape.width / 2;
-					shape.y = custCenterPoint.y - shape.height / 2;
-				}
-			} else {
-				if (prSet.custLinFactNeighborX) {
-					const width = neighborWidth !== null ? neighborWidth : shape.cleanParams.width;
-					shape.x += width * prSet.custLinFactNeighborX * coefficient;
-				}
-				if (prSet.custLinFactX) {
-					shape.x += shape.cleanParams.width * prSet.custLinFactX * coefficient;
-				}
-				if (prSet.custLinFactNeighborY) {
-					const height = neighborHeight !== null ? neighborHeight : shape.cleanParams.height;
-					shape.y += height * prSet.custLinFactNeighborY * coefficient;
-				}
-				if (prSet.custLinFactY) {
-					shape.y += shape.cleanParams.height * prSet.custLinFactY * coefficient;
-				}
-			}
+		const prSet = presNode.getPrSet();
+		if (prSet.custLinFactY || prSet.custLinFactX || prSet.custLinFactNeighborY || prSet.custLinFactNeighborX) {
+			smartartAlgorithm.addSettingsForMove({shape: shape, coefficient: customCoefficient || 1});
 		}
 	};
 	function PositionAlgorithm() {
@@ -1684,38 +1738,7 @@
 			});
 		});
 	};
-	PositionAlgorithm.prototype.getShapes = function (smartartAlgorithm) {
-		smartartAlgorithm.applyColorsDef();
-		const shapes = [];
-		const shapeContainer = this.getShapeContainer();
-		shapeContainer.forEachShape(function (shape) {
-			const nodes = [shape.node];
-			while (nodes.length) {
-				const node = nodes.pop();
-				const shape = node.shape;
-				const editorShape = shape && shape.getEditorShape();
-				if (editorShape) {
-					shapes.push(editorShape);
-				}
-				for (let i = node.childs.length - 1; i >= 0; i -= 1) {
-					nodes.push(node.childs[i]);
-				}
-			}
-		});
-		return shapes;
-	};
-	PositionAlgorithm.prototype.applyPostAlgorithmSettings = function () {
-		const oThis = this;
-		const shapeContainer = this.getShapeContainer();
-		shapeContainer.forEachShape(function (shadowShape) {
-			const node = shadowShape.node;
-			node.forEachDesOrSelf(function (chNode) {
-				const prSet = chNode.getPrSet();
-				const shape = chNode.shape;
-				oThis.applyPostAlgorithmSettingsForShape(shape, prSet);
-			});
-		});
-	};
+
 	PositionAlgorithm.prototype.applyConstraintOffset = function (isCalculateScaleCoefficient) {
 		const parentNode = this.parentNode;
 		const constrObject = isCalculateScaleCoefficient ? parentNode.constr : parentNode.adaptConstr;
@@ -2123,6 +2146,9 @@
 			const algorithm = shape.node.algorithm;
 			bounds = algorithm.getBounds(isCalculateScaleCoefficient, bounds);
 		}
+		if (!bounds) {
+			return {l: 0, r: 0, t: 0, b: 0};
+		}
 		return bounds;
 	};
 	function HierarchyRootContainer() {
@@ -2377,7 +2403,6 @@ function HierarchyAlgorithm() {
 		if (isCalculateScaleCoefficients) {
 			this.setScaleCoefficient();
 		} else {
-			this.applyPostAlgorithmSettings();
 			this.setConnections();
 		}
 		this.createShadowShape(isCalculateScaleCoefficients);
@@ -2450,14 +2475,18 @@ function HierarchyAlgorithm() {
 		if (this.isHang()) {
 			const isHorizontal = this.isHorizontalHierarchy();
 			const sibSp = this.parentNode.getConstr(AscFormat.Constr_type_sibSp, !isCalculateScaleCoefficient);
-			const bounds = this.getHangStructBounds(isCalculateScaleCoefficient, !isHorizontal && this.params[AscFormat.Param_type_linDir] === AscFormat.ParameterVal_linearDirection_fromR);
+			const bounds = this.getHangStructBounds(isCalculateScaleCoefficient);
 			if (!bounds) {
 				return result;
 			}
 			if (isHorizontal) {
 				result.offY = shape.y + shape.height / 2 - bounds.b - sibSp / 2;
 			} else {
-				result.offX = shape.x + shape.width / 2 - bounds.r - sibSp / 2;
+				if (this.params[AscFormat.Param_type_linDir] === AscFormat.ParameterVal_linearDirection_fromR) {
+					result.offX = shape.x + shape.width / 2 - bounds.l + sibSp / 2;
+				} else {
+					result.offX = shape.x + shape.width / 2 - bounds.r - sibSp / 2;
+				}
 			}
 		}
 		return result;
@@ -2528,7 +2557,7 @@ function HierarchyAlgorithm() {
 		const firstShape = firstNode.getShape(isCalculateScaleCoefficient);
 		const firstBounds = firstNode.algorithm.getBounds(isCalculateScaleCoefficient);
 		const firstAlignOffsets = this.getChildAlignOffsets(commonBounds, firstBounds, this.params[AscFormat.Param_type_chAlign]);
-		firstNode.moveTo(firstAlignOffsets.offX, firstAlignOffsets.offY, isCalculateScaleCoefficient);
+		firstNode.moveTo( -firstShape.x + firstAlignOffsets.offX, -firstShape.y + firstAlignOffsets.offY, isCalculateScaleCoefficient);
 		this.updateVerticalLevelPositions(childs[0].algorithm);
 		let previousShape = firstShape;
 		for (let i = 1; i < childs.length; i += 1) {
@@ -2603,8 +2632,8 @@ function HierarchyAlgorithm() {
 		const topCalcBounds = this.applyMainChildAlign(topRow, isCalculateScaleCoefficient);
 		const bottomCalcBounds = this.applyMainChildAlign(bottomRow, isCalculateScaleCoefficient);
 
-		let bottomOffY;
-		if (bottomCalcBounds) {
+		let bottomOffY = 0;
+		if (topCalcBounds.commonBounds && bottomCalcBounds.commonBounds) {
 			bottomOffY = topCalcBounds.commonBounds.b - bottomCalcBounds.commonBounds.t + sibSp;
 		}
 
@@ -2693,8 +2722,8 @@ function HierarchyAlgorithm() {
 		const startLevel = this.parentNode.node.depth + 1;
 		const leftCalcBounds = this.applyMainChildAlign(leftCol, isCalculateScaleCoefficient);
 		const rightCalcBounds = this.applyMainChildAlign(rightCol, isCalculateScaleCoefficient);
-		let rightOffX;
-		if (rightCalcBounds) {
+		let rightOffX = 0;
+		if (leftCalcBounds.commonBounds && rightCalcBounds.commonBounds) {
 			rightOffX = leftCalcBounds.commonBounds.r - rightCalcBounds.commonBounds.l + sibSp;
 		}
 		let offY = 0;
@@ -2729,14 +2758,14 @@ function HierarchyAlgorithm() {
 	};
 	HierarchyChildAlgorithm.prototype.applyMainChildAlign = function (childs, isCalculateScaleCoefficient) {
 		const allBounds = [];
-		const commonBounds = {};
 		const result = {
-			commonBounds: commonBounds,
+			commonBounds: null,
 			bounds: allBounds
 		};
 		if (!childs.length) {
 			return result;
 		}
+		const commonBounds = {};
 		const firstChild = childs[0];
 		const firstBounds = firstChild.algorithm.getBounds(isCalculateScaleCoefficient);
 		allBounds.push(firstBounds);
@@ -2839,15 +2868,14 @@ function HierarchyAlgorithm() {
 		}
 		return bounds;
 	};
-	HierarchyChildAlgorithm.prototype.getHangStructBounds = function (isCalculateScaleCoefficients, isRightToLeft) {
+	HierarchyChildAlgorithm.prototype.getHangStructBounds = function (isCalculateScaleCoefficients) {
 		const childs = this.getMainChilds();
 		if (!childs.length) {
 			return;
 		}
-		const addingNumber = isRightToLeft ? 1 : 0;
-		const firstChild = childs[addingNumber];
+		const firstChild = childs[0];
 		const bounds = firstChild.algorithm.getBounds(isCalculateScaleCoefficients);
-		for (let i = 2 + addingNumber; i < childs.length; i += 2) {
+		for (let i = 2; i < childs.length; i += 2) {
 			const child = childs[i];
 			child.algorithm.getBounds(isCalculateScaleCoefficients, bounds);
 		}
@@ -2878,7 +2906,7 @@ function HierarchyAlgorithm() {
 		const nonAsstNode = this.getNonAsstNode();
 		const shapeContainer = this.getShapeContainer(isCalculateScaleCoefficient);
 		shapeContainer.push(rootNode.getShape(isCalculateScaleCoefficient));
-		if (asstNode.algorithm.getMainChilds().length) {
+		if (asstNode && asstNode.algorithm.getMainChilds().length) {
 			shapeContainer.push(asstNode.getShape(isCalculateScaleCoefficient));
 		}
 		if (nonAsstNode.algorithm.getMainChilds().length) {
@@ -2895,7 +2923,7 @@ function HierarchyAlgorithm() {
 			firstShape.checkBounds(bounds);
 		}
 		const asstNode = this.getAsstNode();
-		if (asstNode.childs.length) {
+		if (asstNode && asstNode.childs.length) {
 			const shape = asstNode.getShape(isCalculateScaleCoefficients);
 			shape.checkBounds(bounds);
 		}
@@ -2926,7 +2954,7 @@ function HierarchyAlgorithm() {
 		let offY = rootShape.y + rootShape.height + space;
 
 		const asstNode = this.getAsstNode();
-		if (asstNode.algorithm.getMainChilds().length) {
+		if (asstNode && asstNode.algorithm.getMainChilds().length) {
 			const asstShape = asstNode.getShape(isCalculateScaleCoefficients);
 			asstShape.moveTo(/*todo: asstOffset*/0, offY - asstShape.y);
 			offY = asstShape.y + asstShape.height + space;
@@ -2956,7 +2984,7 @@ function HierarchyAlgorithm() {
 
 
 		const asstNode = this.getAsstNode();
-		if (asstNode.algorithm.getMainChilds().length) {
+		if (asstNode && asstNode.algorithm.getMainChilds().length) {
 			const asstShape = asstNode.getShape(isCalculateScaleCoefficients);
 			asstShape.moveTo(/*todo: asstOffset*/0, offY - asstShape.y);
 			offY = asstShape.y + asstShape.height + space;
@@ -2976,7 +3004,7 @@ function HierarchyAlgorithm() {
 		let offX = rootShape.x + rootShape.width + space;
 
 		const asstNode = this.getAsstNode();
-		if (asstNode.algorithm.getMainChilds().length) {
+		if (asstNode && asstNode.algorithm.getMainChilds().length) {
 			const asstShape = asstNode.getShape(isCalculateScaleCoefficients);
 			asstShape.moveTo(offX - asstShape.x, 0);
 			offX = asstShape.x + asstShape.width + space;
@@ -3004,7 +3032,7 @@ function HierarchyAlgorithm() {
 		}
 
 		const asstNode = this.getAsstNode();
-		if (asstNode.algorithm.getMainChilds().length) {
+		if (asstNode && asstNode.algorithm.getMainChilds().length) {
 			const asstShape = asstNode.getShape(isCalculateScaleCoefficients);
 			asstShape.moveTo(offX, 0);
 			offX = asstShape.x + asstShape.width + space;
@@ -3048,7 +3076,9 @@ function HierarchyAlgorithm() {
 		const asstNode = this.getAsstNode();
 		const nonAsstNode = this.getNonAsstNode();
 
-		this.applySecondaryAlignForChild(isCalculateScaleCoefficients, asstNode);
+		if (asstNode) {
+			this.applySecondaryAlignForChild(isCalculateScaleCoefficients, asstNode);
+		}
 		this.applySecondaryAlignForChild(isCalculateScaleCoefficients, nonAsstNode);
 	};
 	HierarchyRootAlgorithm.prototype.applySecondaryAlignForChild = function (isCalculateScaleCoefficients, child) {
@@ -3172,20 +3202,22 @@ function HierarchyAlgorithm() {
 	};
 	HierarchyRootAlgorithm.prototype._collectHierarchyPositions = function (isVertical) {
 		let maxAsstNodeLevel = 0;
-		const currentDepth = this.parentNode.node.depth;
 		const asstNode = this.getAsstNode();
-		const asstAlgorithm = asstNode.algorithm;
-		const asstLevelPositions = isVertical ? asstAlgorithm.verticalLevelPositions : asstAlgorithm.horizontalLevelPositions;
-		for (let stringLevel in asstLevelPositions) {
-			const level = parseInt(stringLevel, 10);
-			const diffLevel = level - currentDepth;
-			if (diffLevel > maxAsstNodeLevel) {
-				maxAsstNodeLevel = diffLevel;
-			}
-			if (isVertical) {
-				this.setVerticalLevelBounds(level, asstLevelPositions[level]);
-			} else {
-				this.setHorizontalLevelBounds(level, asstLevelPositions[level]);
+		if (asstNode) {
+			const currentDepth = this.parentNode.node.depth;
+			const asstAlgorithm = asstNode.algorithm;
+			const asstLevelPositions = isVertical ? asstAlgorithm.verticalLevelPositions : asstAlgorithm.horizontalLevelPositions;
+			for (let stringLevel in asstLevelPositions) {
+				const level = parseInt(stringLevel, 10);
+				const diffLevel = level - currentDepth;
+				if (diffLevel > maxAsstNodeLevel) {
+					maxAsstNodeLevel = diffLevel;
+				}
+				if (isVertical) {
+					this.setVerticalLevelBounds(level, asstLevelPositions[level]);
+				} else {
+					this.setHorizontalLevelBounds(level, asstLevelPositions[level]);
+				}
 			}
 		}
 		const nonAsstNode = this.getNonAsstNode();
@@ -4210,10 +4242,10 @@ function HierarchyAlgorithm() {
 	ConnectorAlgorithm.prototype.setLastConnectorNode = function (node) {
 		this.endNode = node;
 	};
-	ConnectorAlgorithm.prototype.connectShapes = function () {
+	ConnectorAlgorithm.prototype.connectShapes = function (smartartAlgorithm) {
 		if (this.startNode && this.endNode) {
 			if (this.params[AscFormat.Param_type_dim] === AscFormat.ParameterVal_connectorDimension_2D) {
-				this.createShapeConnector();
+				this.createShapeConnector(smartartAlgorithm);
 			} else if (this.params[AscFormat.Param_type_dim] === AscFormat.ParameterVal_connectorDimension_1D) {
 				this.createLineConnector();
 			}
@@ -4295,7 +4327,7 @@ function HierarchyAlgorithm() {
 		connectorShape.node = this.parentNode;
 		return connectorShape;
 	};
-	ConnectorAlgorithm.prototype.createShapeConnector = function () {
+	ConnectorAlgorithm.prototype.createShapeConnector = function (smartartAlgorithm) {
 		const connectionPoints = this.getConnectionPoints();
 		if (connectionPoints.start && connectionPoints.end) {
 			const startArrowPoint = connectionPoints.start;
@@ -4331,7 +4363,7 @@ function HierarchyAlgorithm() {
 				prSet.setPresStyleLbl("sibTrans2D1");
 			}
 			const coefficient = width / shape.cleanParams.width;
-			this.applyPostAlgorithmSettingsForShape(connectorShape, prSet, coefficient);
+			this.applyPostAlgorithmSettings(smartartAlgorithm, connectorShape, coefficient);
 
 			const heightScale = this.parentNode.getHeightScale(true);
 			const widthScale = this.parentNode.getWidthScale(true);
@@ -4429,12 +4461,11 @@ function HierarchyAlgorithm() {
 				}
 				break;
 			}
-			case AscFormat.ParameterVal_connectorPoint_bL:
-				break;
 			case AscFormat.ParameterVal_connectorPoint_bR:
 				break;
 			case AscFormat.ParameterVal_connectorPoint_ctr:
 				break;
+			case AscFormat.ParameterVal_connectorPoint_bL:
 			case AscFormat.ParameterVal_connectorPoint_midL: {
 				if (bendDist === undefined) {
 					bendPoints = [new CCoordPoint(endPoint.x, startPoint.y)];
@@ -4496,7 +4527,7 @@ function HierarchyAlgorithm() {
 		};
 	}
 	ConnectorAlgorithm.prototype.createBendLineConnector = function (startPoint, endPoint) {
-		const shape = this.parentNode.shape;
+		const shape = this.parentNode.getShape(false);
 		shape.height = 0;
 		const info = this.getBendConnectionInfo(startPoint, endPoint);
 		const connectorShape = this.getTemplateConnectorLine();
@@ -4581,6 +4612,9 @@ function HierarchyAlgorithm() {
 	
 	SpaceAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm, isCalculateScaleCoefficients) {
 		this.createShadowShape(isCalculateScaleCoefficients);
+		if (!isCalculateScaleCoefficients) {
+			this.applyPostAlgorithmSettings(smartartAlgorithm);
+		}
 	}
 	SpaceAlgorithm.prototype.createShadowShape = function (isCalculateScaleCoefficients) {
 		return this.parentNode.createShadowShape(false, false, isCalculateScaleCoefficients);
@@ -4593,6 +4627,9 @@ function HierarchyAlgorithm() {
 
 	TextAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm, isCalculateScaleCoefficient) {
 		this.createShadowShape(isCalculateScaleCoefficient);
+		if (!isCalculateScaleCoefficient) {
+			this.applyPostAlgorithmSettings(smartartAlgorithm);
+		}
 	};
 	TextAlgorithm.prototype.createShadowShape = function (isCalculateScaleCoefficients) {
 		return this.parentNode.createShadowShape(false, false, isCalculateScaleCoefficients);
@@ -4605,8 +4642,18 @@ function HierarchyAlgorithm() {
 
 	CompositeAlgorithm.prototype.setParentConnection = function (connectorAlgorithm, childNode) {
 		if (connectorAlgorithm && childNode.algorithm) {
-			const srcNode = this.parentNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_srcNode]);
-			const dstNode = childNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_dstNode]);
+			let srcNode;
+			let dstNode;
+			if (connectorAlgorithm.params[AscFormat.Param_type_srcNode]) {
+				srcNode = this.parentNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_srcNode]);
+			} else {
+				srcNode = this.parentNode.childs[0];
+			}
+			if (connectorAlgorithm.params[AscFormat.Param_type_dstNode]) {
+				dstNode = childNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_dstNode]);
+			} else {
+				dstNode = childNode.childs[0];
+			}
 			if (srcNode && dstNode) {
 				connectorAlgorithm.setParentAlgorithm(this);
 				connectorAlgorithm.setFirstConnectorNode(srcNode);
@@ -4619,49 +4666,28 @@ function HierarchyAlgorithm() {
 		this.parentNode.calcNodeConstraints(true);
 	};
 	CompositeAlgorithm.prototype.createShadowShape = function (isCalculateScaleCoefficients) {
-		return this.parentNode.createShadowShape(true, true, isCalculateScaleCoefficients);
+		return this.parentNode.createShadowShape(true, false, isCalculateScaleCoefficients);
 	};
 	CompositeAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm, isCalculateCoefficients) {
 		const parentNode = this.parentNode;
 		const bounds = this.createShadowShape(isCalculateCoefficients);
 		if (!isCalculateCoefficients) {
-			const shape = parentNode.getShape(false);
+			const shape = parentNode.getShape(isCalculateCoefficients);
 			const boundsHeight = shape.height;
-			const constrBounds = parentNode.getChildConstraintBounds();
+			const constrBounds = parentNode.getChildConstraintBounds(isCalculateCoefficients);
 			const boundsWidth = constrBounds.r - constrBounds.l;
 			const parentWidth = parentNode.getConstr(AscFormat.Constr_type_w, true);
 			const parentHeight = parentNode.getConstr(AscFormat.Constr_type_h, true);
 			const offX = -constrBounds.l + (parentWidth - boundsWidth) / 2;
 			//todo: height alignment is carried out without taking into account ctrY
 			const offY = -bounds.custom.t + (parentHeight - boundsHeight) / 2;
-			for (let i = 0; i < parentNode.childs.length; i++) {
-				const node = parentNode.childs[i];
-				node.forEachDesOrSelf(function (node) {
-					const shape = node.shape;
-					if (shape) {
-						shape.x += offX;
-						shape.y += offY;
-					}
-				});
+			parentNode.moveTo(offX, offY, isCalculateCoefficients);
+				this.setConnections();
 			}
-			this.setConnections();
-		}
+
 	};
 
-	CompositeAlgorithm.prototype.getShapes = function (smartartAlgorithm) {
-		smartartAlgorithm.applyColorsDef();
-		const shapes = [];
-		const shadowShapes = this.parentNode.getShadowShapesByZOrder();
-		for (let i = 0; i < shadowShapes.length; i++) {
-			const editorShape = shadowShapes[i].getEditorShape();
-			if (editorShape) {
-				shapes.push(editorShape);
-			}
-		}
-		return shapes;
-	}
-
-function PresNode(presPoint, contentNode, moveWith) {
+function PresNode(presPoint, contentNode) {
 	this.parent = null;
 	this.presPoint = presPoint || null;
 	this.childs = [];
@@ -4697,12 +4723,12 @@ function PresNode(presPoint, contentNode, moveWith) {
 		width: 1,
 		height: 1
 	}
-	this.moveWith = moveWith || null;
+	this.moveWith = null;
 }
 	PresNode.prototype.getShape = function (isCalculateCoefficients) {
 		if (isCalculateCoefficients) {
 			if (!this.nodeConstraints) {
-				this.nodeConstraints = new Position();
+				this.nodeConstraints = new Position(this);
 			}
 			return this.nodeConstraints;
 		}
@@ -4748,31 +4774,61 @@ PresNode.prototype.getNamedNode = function (name) {
 	PresNode.prototype.isContentNode = function () {
 		return this.node.isContentNode();
 	};
+	PresNode.prototype.collectHierarchyShapes = function(shapes) {
+		const nodeElements = [this];
+		const tempShapes = [];
+		while (nodeElements.length) {
+			const element = nodeElements.pop();
+			if (element.algorithm.isHierarchy()) {
+				for (let i = 0; i < element.childs.length; i += 1) {
+					nodeElements.push(element.childs[i]);
+				}
+				const shape = element.getShape(false);
+				tempShapes.push(shape);
+			} else {
+				const childShapes = element.getShadowShapesByZOrder();
+				for (let i = childShapes.length - 1; i >= 0; i -= 1) {
+					tempShapes.push(childShapes[i]);
+				}
+			}
+		}
+		tempShapes.sort(function (a, b) {
+			const aIndex = a.shape.zOrderOff;
+			const bIndex = b.shape.zOrderOff;
+			return bIndex - aIndex;
+		});
+		shapes.push.apply(shapes, tempShapes);
+	};
 	PresNode.prototype.getShadowShapesByZOrder = function () {
 		const shapes = [];
 		const elements = [this];
 		while (elements.length) {
 			const tempElements = [];
 			const element = elements.pop();
-			if (element.shape) {
-				shapes.push(element.shape);
-			}
-			for (let i = 0; i < element.childs.length; i += 1) {
-				const child = element.childs[i];
-				tempElements.push(child);
-			}
-			tempElements.sort(function (a, b) {
-				let aIndex = 0;
-				let bIndex = 0;
-				if (a.shape) {
-					aIndex = a.shape.shape.zOrderOff;
+			if (element.algorithm.isHierarchy()) {
+				this.collectHierarchyShapes(shapes);
+			} else {
+				const shape = element.getShape(false);
+				if (shape) {
+					shapes.push(shape);
 				}
-				if (b.shape) {
-					bIndex = b.shape.shape.zOrderOff;
+				for (let i = 0; i < element.childs.length; i += 1) {
+					const child = element.childs[i];
+					tempElements.push(child);
 				}
-				return aIndex - bIndex;
-			});
-			elements.push.apply(elements, tempElements);
+				tempElements.sort(function (a, b) {
+					let aIndex = 0;
+					let bIndex = 0;
+					if (a.shape) {
+						aIndex = a.shape.shape.zOrderOff;
+					}
+					if (b.shape) {
+						bIndex = b.shape.shape.zOrderOff;
+					}
+					return aIndex - bIndex;
+				});
+				elements.push.apply(elements, tempElements);
+			}
 		}
 		shapes.reverse();
 		return shapes;
@@ -4796,7 +4852,7 @@ PresNode.prototype.getNamedNode = function (name) {
 		for (let i = index + 1; i < parent.childs.length; i += 1) {
 			const child = parent.childs[i];
 			const shape = child.shape;
-			if (!shape.isSpacing) {
+			if (child.isMainElement()) {
 				return child;
 			}
 		}
@@ -4804,7 +4860,7 @@ PresNode.prototype.getNamedNode = function (name) {
 		for (let i = index - 1; i >= 0; i -= 1) {
 			const child = parent.childs[i];
 			const shape = child.shape;
-			if (!shape.isSpacing) {
+			if (child.isMainElement()) {
 				return child;
 			}
 		}
@@ -4812,22 +4868,23 @@ PresNode.prototype.getNamedNode = function (name) {
 		return this;
 	};
 	PresNode.prototype.moveTo = function (deltaX, deltaY, isCalcScaleCoefficient) {
+		deltaX = deltaX || 0;
+		deltaY = deltaY || 0;
 		this.forEachDesOrSelf(function (node) {
-
 			const shape = node.getShape(isCalcScaleCoefficient);
 			if (shape) {
 				shape.x += deltaX;
 				shape.y += deltaY;
 			}
-			for (let i = 0; i < node.moveWithNodes.length; i++) {
-				const moveNode = node.moveWithNodes[i];
-				const moveShape = moveNode.getShape(isCalcScaleCoefficient);
-				if (moveShape) {
-					moveShape.x += deltaX;
-					moveShape.y += deltaY;
-				}
-			}
 		});
+		for (let i = 0; i < this.moveWithNodes.length; i++) {
+			const moveNode = this.moveWithNodes[i];
+			const moveShape = moveNode.getShape(isCalcScaleCoefficient);
+			if (moveShape) {
+				moveShape.x += deltaX;
+				moveShape.y += deltaY;
+			}
+		}
 		this.algorithm.moveToHierarchyOffsets(deltaX, deltaY);
 	};
 	PresNode.prototype.changeShapeSizes = function (coefficient, props) {
@@ -4866,11 +4923,14 @@ PresNode.prototype.getNamedNode = function (name) {
 	PresNode.prototype.addMoveWithNode = function (node) {
 		this.moveWithNodes.push(node);
 	}
-	PresNode.prototype.checkMoveWith = function (node) {
-		if (node.moveWith) {
-			const moveNode = this.getNamedNode(node.moveWith);
-			if (moveNode) {
-				moveNode.addMoveWithNode(node);
+	PresNode.prototype.checkMoveWith = function () {
+		for (let i = 0; i < this.childs.length; i += 1) {
+			const node = this.childs[i];
+			if (node.moveWith) {
+				const moveNode = this.getNamedNode(node.moveWith);
+				if (moveNode) {
+					moveNode.addMoveWithNode(node);
+				}
 			}
 		}
 	};
@@ -4879,7 +4939,6 @@ PresNode.prototype.addChild = function (ch, pos) {
 		pos = this.childs.length;
 	}
 	this.childs.splice(pos, 0, ch);
-	this.checkMoveWith(ch);
 	ch.parent = this;
 };
 	PresNode.prototype.removeChilds = function (pos, count) {
@@ -5172,17 +5231,13 @@ PresNode.prototype.addChild = function (ch, pos) {
 		constrObject[constr.type] = value;
 		switch (constr.type) {
 			case AscFormat.Constr_type_b: {
-				const height = constrObject[AscFormat.Constr_type_h];
-				if (height !== undefined) {
-					constrObject[AscFormat.Constr_type_t] = constrObject[AscFormat.Constr_type_b] - height;
-				}
+				const height = constrObject[AscFormat.Constr_type_h] || 0;
+				constrObject[AscFormat.Constr_type_t] = constrObject[AscFormat.Constr_type_b] - height;
 				break;
 			}
 			case AscFormat.Constr_type_r: {
-				const width = constrObject[AscFormat.Constr_type_w];
-				if (width !== undefined) {
-					constrObject[AscFormat.Constr_type_l] = constrObject[AscFormat.Constr_type_r] - width;
-				}
+				const width = constrObject[AscFormat.Constr_type_w] || 0;
+				constrObject[AscFormat.Constr_type_l] = constrObject[AscFormat.Constr_type_r] - width;
 				break;
 			}
 			case AscFormat.Constr_type_begPad:
@@ -5451,7 +5506,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 
 		const shape = this.getShape(isCalculateCoefficients);
 		shape.initFromShape(this.layoutInfo.shape);
-		this.createShadowShapeFromConstraints(isCalculateCoefficients);
+		this.createShadowShapeFromConstraints(shape, isCalculateCoefficients);
 		if (isComposite) {
 			shape.isSpacing = !(isComposite || isCombine);
 			//todo
@@ -5465,6 +5520,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 			const root = algorithm.getRoot();
 			const shape = this.getShape(isCalculateCoefficients);
 			shape.initFromShape(this.layoutInfo.shape);
+			// root.algorithm.getBounds();
 			const rootShape = root.getShape(isCalculateCoefficients);
 			shape.x = rootShape.x;
 			shape.y = rootShape.y;
@@ -5475,6 +5531,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 	};
 	PresNode.prototype.createHierarchyChildShadowShape = function (isCalculateCoefficients) {
 		const shape = this.getShape(isCalculateCoefficients);
+		shape.initFromShape(this.layoutInfo.shape);
 		if (!this.childs.length) {
 			return;
 		}
@@ -5491,33 +5548,59 @@ PresNode.prototype.addChild = function (ch, pos) {
 			shape.height = bounds.b - bounds.t;
 		}
 	};
-	PresNode.prototype.createShadowShapeFromConstraints = function (isCalculateCoefficients) {
+	PresNode.prototype.createShadowShapeFromConstraints = function (layoutShape, isCalculateCoefficients) {
+		const constrObject = isCalculateCoefficients ? this.constr : this.adaptConstr;
 		const shape = this.getShape(isCalculateCoefficients);
+		shape.rot = AscFormat.isRealNumber(layoutShape.rot) ? AscFormat.normalizeRotate(degToRad * layoutShape.rot) : 0;
+
 		const widthCoef = this.getWidthScale();
 		const heightCoef = this.getHeightScale();
-		let x = this.getConstr(AscFormat.Constr_type_l, !isCalculateCoefficients);
-		let y = this.getConstr(AscFormat.Constr_type_t, !isCalculateCoefficients);
-		const width = this.getConstr(AscFormat.Constr_type_w, !isCalculateCoefficients);
-		const height = this.getConstr(AscFormat.Constr_type_h, !isCalculateCoefficients);
-		if (this.adaptConstr[AscFormat.Constr_type_ctrX] !== undefined) {
-			x = this.adaptConstr[AscFormat.Constr_type_ctrX] - (x + width / 2);
+		let x = 0;
+		let y = 0;
+		let width = this.getConstr(AscFormat.Constr_type_w, !isCalculateCoefficients);
+		let height = this.getConstr(AscFormat.Constr_type_h, !isCalculateCoefficients);
+		let scaleWidth = width * widthCoef;
+		let scaleHeight = height * heightCoef;
+		if (layoutShape.rot === 90 || layoutShape.rot === 270) {
+			let temp = width;
+			width = height;
+			height = temp;
+			temp = scaleWidth;
+			scaleWidth = scaleHeight;
+			scaleHeight = temp;
 		}
-		if (this.adaptConstr[AscFormat.Constr_type_ctrY] !== undefined) {
-			y = this.adaptConstr[AscFormat.Constr_type_ctrY] - (y + height / 2);
+
+		if (constrObject[AscFormat.Constr_type_l] !== undefined) {
+			x = constrObject[AscFormat.Constr_type_l];
+		} else if (constrObject[AscFormat.Constr_type_ctrX] !== undefined) {
+			x = constrObject[AscFormat.Constr_type_ctrX] - (x + width / 2);
 		}
+
+		if (constrObject[AscFormat.Constr_type_t] !== undefined) {
+			y = constrObject[AscFormat.Constr_type_t];
+		} else if (constrObject[AscFormat.Constr_type_ctrY] !== undefined) {
+			y = constrObject[AscFormat.Constr_type_ctrY] - (y + height / 2);
+		}
+
 		shape.x = x;
 		shape.y = y;
-		shape.width = width * widthCoef;
-		shape.height = height * heightCoef;
+
+
+		shape.width = scaleWidth;
+		shape.height = scaleHeight;
 		const parentNode = this.parent;
 		if (parentNode) {
 			const offX = (width - shape.width) / 2;
 			const offY = (height - shape.height) / 2;
-			if (shape.x + offX > 0) {
+			if (/*shape.x + offX > 0*/true) {
 				shape.x += offX;
 			}
-			if (shape.y + offY > 0) {
+			if (/*shape.y + offY > 0*/true) {
 				shape.y += offY;
+			}
+
+			for (let i = 0; i < this.moveWithNodes.length; i += 1) {
+				this.moveWithNodes[i].moveTo(offX, offY, isCalculateCoefficients);
 			}
 		}
 
@@ -5528,7 +5611,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 			y: y
 		};
 	};
-	PresNode.prototype.getChildConstraintBounds = function () {
+	PresNode.prototype.getChildConstraintBounds = function (isCalculateCoefficients) {
 		if (this.bounds.constraints === null) {
 			const constrBounds = {
 				l: 0,
@@ -5545,20 +5628,20 @@ PresNode.prototype.addChild = function (ch, pos) {
 					constrBounds.l = firstNodeConstraints.x;
 					constrBounds.r = firstNodeConstraints.x + firstNodeConstraints.width;
 				} else {
-					const shape = this.childs[0].shape;
+					const shape = this.childs[0].getShape(isCalculateCoefficients);
 					constrBounds.b = shape.y + shape.height;
 					constrBounds.t = shape.y;
 					constrBounds.l = shape.x;
 					constrBounds.r = shape.x + shape.width;
 				}
 				for (let i = 1; i < this.childs.length; i++) {
-					this.childs[i].checkConstraintBounds(constrBounds);
+					this.childs[i].checkConstraintBounds(constrBounds, isCalculateCoefficients);
 				}
 			}
 		}
 		return this.bounds.constraints;
 	};
-	PresNode.prototype.checkConstraintBounds = function (bounds) {
+	PresNode.prototype.checkConstraintBounds = function (bounds, isCalculateScaleCoefficient) {
 		if (!this.isContentNode()) {
 			return;
 		}
@@ -5579,17 +5662,18 @@ PresNode.prototype.addChild = function (ch, pos) {
 				bounds.b = bottom;
 			}
 		} else {
-			if (this.shape.x < bounds.l) {
-				bounds.l = this.shape.x;
+			const shape = this.getShape(isCalculateScaleCoefficient);
+			if (shape.x < bounds.l) {
+				bounds.l = shape.x;
 			}
-			if (this.shape.y < bounds.t) {
-				bounds.t = this.shape.y;
+			if (shape.y < bounds.t) {
+				bounds.t = shape.y;
 			}
-			const right = this.shape.x + this.shape.width;
+			const right = shape.x + shape.width;
 			if (right > bounds.r) {
 				bounds.r = right;
 			}
-			const bottom = this.shape.y + this.shape.height;
+			const bottom = shape.y + shape.height;
 			if (bottom > bounds.b) {
 				bounds.b = bottom;
 			}
@@ -5598,7 +5682,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 
 	PresNode.prototype.checkShapeBounds = function (bounds, isCalculateScaleCoefficient) {
 		const shape = this.getShape(isCalculateScaleCoefficient);
-		if (!this.isContentNode() || shape.width === 0 && shape.height === 0) {
+		if (!this.isContentNode() || shape.width === 0 && shape.height === 0 || !(this.algorithm instanceof CompositeAlgorithm) && (!this.isMainElement() || this.layoutInfo.shape.hideGeom)) {
 			return;
 		}
 
