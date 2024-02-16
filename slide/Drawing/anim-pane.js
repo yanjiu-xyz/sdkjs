@@ -2315,16 +2315,23 @@
 				ctx.lineTo(right, bottom);
 				ctx.lineTo(left, bottom);
 				ctx.lineTo(left, top);
+
+				graphics.df();
+				graphics.ds();
+
+				// renew clipRect to clip marks
+				graphics.RemoveClipRect();
+				graphics.AddClipRect(clipL, clipT, clipW - EFFECT_BAR_HEIGHT, clipH);
 			} else {
 				// In case we need to draw a bar
 
 				repeats = this.getRepeatCount() / 1000;
 				const barWidth = (bounds.r - bounds.l) * repeats;
 				graphics.rect(bounds.l, bounds.t, barWidth, bounds.b - bounds.t);
-			}
 
-			graphics.df();
-			graphics.ds();
+				graphics.df();
+				graphics.ds();
+			}
 
 			// draw marks
 			if ((bounds.r - bounds.l) >= 2 * g_dKoef_pix_to_mm) {
@@ -2355,8 +2362,14 @@
 				return { type: 'left' };
 			}
 
-			if (x >= barRight - delta && x <= barRight + delta) {
-				return { type: 'right' };
+			if (this.effect.isUntilEffect()) {
+				if (x >= barRight - EFFECT_BAR_HEIGHT - delta && x <= barRight + delta) {
+					return { type: 'right' };
+				}
+			} else {
+				if (x >= barRight - delta && x <= barRight + delta) {
+					return { type: 'right' };
+				}
 			}
 
 			const partitionIndex = (x - bounds.l) / width >> 0;
