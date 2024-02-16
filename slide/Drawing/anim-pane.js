@@ -1903,7 +1903,12 @@
 		if (afterItems.length === 0) { return }
 
 		graphics.SaveGrState();
-		graphics.AddClipRect(afterItems[0].getLeftBorder(), oThis.getTop(), afterItems[0].getRightBorder() - afterItems[0].getLeftBorder(), oThis.getBottom() - oThis.getTop());
+		graphics.AddClipRect(
+			afterItems[0].getLeftBorder(),
+			oThis.parentControl.getTop(),
+			afterItems[0].getRightBorder() - afterItems[0].getLeftBorder(),
+			oThis.parentControl.getBottom() - oThis.parentControl.getTop()
+		);
 
 		for (let i = 0; i < afterItems.length; i++) {
 			const animItem = afterItems[i];
@@ -1916,7 +1921,9 @@
 			const align = 0;
 			const x = ms_to_mm(animItem.effect.getBaseTime()) + animItem.getLeftBorder() - timelineShift;
 			let top = afterItems[i-1] ? oThis.getTop() + afterItems[i-1].getTop() : oThis.getTop();
+			top += oThis.parentControl.getTop();
 			let bottom = afterItems[i+1] ? oThis.getTop() + afterItems[i+1].getTop() : oThis.getBottom();
+			bottom += oThis.parentControl.getTop();
 
 			graphics.drawVerLine(align, x, top, bottom, oThis.getPenWidth(graphics));
 		}
