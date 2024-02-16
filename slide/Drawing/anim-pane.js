@@ -1910,6 +1910,11 @@
 
 		for (let i = 0; i < afterItems.length; i++) {
 			const animItem = afterItems[i];
+			
+			if (animItem.effect === this.effects[this.effects.length - 1]) {
+				// effects in group are arranged backwards
+				continue;
+			}
 
 			const align = 0;
 			const x = ms_to_mm(animItem.effect.getBaseTime()) + animItem.getLeftBorder() - timelineShift;
