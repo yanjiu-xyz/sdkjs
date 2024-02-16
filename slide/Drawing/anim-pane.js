@@ -1536,7 +1536,7 @@
 		if (!this.demoTiming) { return }
 
 		let demoEffects = this.demoTiming.getRootSequences()[0].getAllEffects();
-		let correction;
+		let correction = 0;
 		demoEffects.forEach(function (effect) {
 			let originalEffectStart = effect.originalNode.getBaseTime() + effect.originalNode.asc_getDelay();
 			// let originalEffectEnd = originalEffectStart + effect.originalNode.asc_getDuration();
@@ -1544,7 +1544,7 @@
 			let demoEffectStart = effect.getBaseTime() + effect.asc_getDelay();
 			let demoEffectEnd = demoEffectStart + effect.asc_getDuration();
 
-			if (demoEffectStart < elapsedTicks && elapsedTicks < demoEffectEnd) {
+			if (effect.getBaseTime() < elapsedTicks && elapsedTicks < demoEffectEnd) {
 				correction = originalEffectStart - demoEffectStart;
 			}
 		})

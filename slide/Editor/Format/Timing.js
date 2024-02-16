@@ -11811,6 +11811,13 @@
             }
         }, 1000);
     };
+    CDemoAnimPlayer.prototype.onFrame = function () {
+        CAnimationPlayer.prototype.onFrame.call(this);
+
+        if (this.isStarted()) {
+            Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.onPreview(this.getElapsedTicks());
+        }
+    };
 
     CDemoAnimPlayer.prototype.start = function () {
         CAnimationPlayer.prototype.start.call(this);
@@ -11831,8 +11838,6 @@
         this.overlay.Clear();
         this.overlay.CheckRect(this.rect.x, this.rect.y, this.rect.w, this.rect.h);
         this.drawFrame(this.overlayCanvas, this.rect);
-
-        Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.onPreview(this.getElapsedTicks());
     };
 
     const DEFAULT_SIMPLE_TRIGGER = function () {
