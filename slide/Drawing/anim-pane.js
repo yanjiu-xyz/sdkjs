@@ -1536,7 +1536,7 @@
 		if (!this.demoTiming) { return }
 
 		let demoEffects = this.demoTiming.getRootSequences()[0].getAllEffects();
-		let correction;
+		let correction = 0;
 		demoEffects.forEach(function (effect) {
 			let originalEffectStart = effect.originalNode.getBaseTime() + effect.originalNode.asc_getDelay();
 			// let originalEffectEnd = originalEffectStart + effect.originalNode.asc_getDuration();
@@ -1544,7 +1544,7 @@
 			let demoEffectStart = effect.getBaseTime() + effect.asc_getDelay();
 			let demoEffectEnd = demoEffectStart + effect.asc_getDuration();
 
-			if (demoEffectStart < elapsedTicks && elapsedTicks < demoEffectEnd) {
+			if (effect.getBaseTime() < elapsedTicks && elapsedTicks < demoEffectEnd) {
 				correction = originalEffectStart - demoEffectStart;
 			}
 		})
@@ -1903,7 +1903,12 @@
 		if (afterItems.length === 0) { return }
 
 		graphics.SaveGrState();
-		graphics.AddClipRect(afterItems[0].getLeftBorder(), oThis.getTop(), afterItems[0].getRightBorder() - afterItems[0].getLeftBorder(), oThis.getBottom() - oThis.getTop());
+		graphics.AddClipRect(
+			afterItems[0].getLeftBorder(),
+			oThis.parentControl.getTop(),
+			afterItems[0].getRightBorder() - afterItems[0].getLeftBorder(),
+			oThis.parentControl.getBottom() - oThis.parentControl.getTop()
+		);
 
 		for (let i = 0; i < afterItems.length; i++) {
 			const animItem = afterItems[i];
@@ -1916,7 +1921,9 @@
 			const align = 0;
 			const x = ms_to_mm(animItem.effect.getBaseTime()) + animItem.getLeftBorder() - timelineShift;
 			let top = afterItems[i-1] ? oThis.getTop() + afterItems[i-1].getTop() : oThis.getTop();
+			top += oThis.parentControl.getTop();
 			let bottom = afterItems[i+1] ? oThis.getTop() + afterItems[i+1].getTop() : oThis.getBottom();
+			bottom += oThis.parentControl.getTop();
 
 			graphics.drawVerLine(align, x, top, bottom, oThis.getPenWidth(graphics));
 		}
@@ -2308,16 +2315,23 @@
 				ctx.lineTo(right, bottom);
 				ctx.lineTo(left, bottom);
 				ctx.lineTo(left, top);
+
+				graphics.df();
+				graphics.ds();
+
+				// renew clipRect to clip marks
+				graphics.RemoveClipRect();
+				graphics.AddClipRect(clipL, clipT, clipW - EFFECT_BAR_HEIGHT, clipH);
 			} else {
 				// In case we need to draw a bar
 
 				repeats = this.getRepeatCount() / 1000;
 				const barWidth = (bounds.r - bounds.l) * repeats;
 				graphics.rect(bounds.l, bounds.t, barWidth, bounds.b - bounds.t);
-			}
 
-			graphics.df();
-			graphics.ds();
+				graphics.df();
+				graphics.ds();
+			}
 
 			// draw marks
 			if ((bounds.r - bounds.l) >= 2 * g_dKoef_pix_to_mm) {
@@ -2348,8 +2362,14 @@
 				return { type: 'left' };
 			}
 
-			if (x >= barRight - delta && x <= barRight + delta) {
-				return { type: 'right' };
+			if (this.effect.isUntilEffect()) {
+				if (x >= barRight - EFFECT_BAR_HEIGHT - delta && x <= barRight + delta) {
+					return { type: 'right' };
+				}
+			} else {
+				if (x >= barRight - delta && x <= barRight + delta) {
+					return { type: 'right' };
+				}
 			}
 
 			const partitionIndex = (x - bounds.l) / width >> 0;
