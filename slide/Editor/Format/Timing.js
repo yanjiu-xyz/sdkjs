@@ -11803,13 +11803,14 @@
         this.overlay = editor.WordControl.m_oOverlayApi;
     };
     CDemoAnimPlayer.prototype.onMainSeqFinished = function () {
-        var oThis = this;
+        let oThis = this;
+        oThis.pause();
         setTimeout(function () {
             if (!oThis.isStopped()) {
                 oThis.stop();
                 editor.WordControl.m_oLogicDocument.StopAnimationPreview();
             }
-        }, 1000);
+        }, 700);
     };
     CDemoAnimPlayer.prototype.onFrame = function () {
         CAnimationPlayer.prototype.onFrame.call(this);
