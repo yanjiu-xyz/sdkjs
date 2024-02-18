@@ -12838,6 +12838,25 @@ background-repeat: no-repeat;\
 		return _renderer.Memory.data;
 	};
 
+	window["asc_docs_api"].prototype["asc_nativeGetWatermark"] = function(options)
+	{
+		if (options && options["watermark"])
+		{
+			if (!this.User)
+			{
+				this.User = new AscCommon.asc_CUser();
+				this.User.setId("TM");
+				this.User.setUserName("native");
+			}
+
+			this.watermarkDraw = new AscCommon.CWatermarkOnDraw(options["watermark"], this);
+			this.watermarkDraw.isNativeGlobalAlpha = true;
+			this.watermarkDraw.generateNative();
+			return this.watermarkDraw.imageBase64;
+		}
+		return "";
+	};
+
 	// cool api (autotests)
 	window["asc_docs_api"].prototype["Add_Text"]                     = function(_text)
 	{
