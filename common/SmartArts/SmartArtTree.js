@@ -1469,6 +1469,18 @@
 			connectorAlgorithm.setLastConnectorNode(childNode);
 		}
 	};
+	BaseAlgorithm.prototype.getBounds = function (isCalculateScaleCoefficients, bounds) {
+		const shape = this.parentNode.getShape(isCalculateScaleCoefficients);
+		if (!bounds) {
+			bounds = shape.getBounds();
+		} else {
+			shape.checkBounds(bounds);
+		}
+		return bounds;
+	};
+	BaseAlgorithm.prototype.getRoot = function () {
+		return this.parentNode;
+	};
 	BaseAlgorithm.prototype.getShapes = function (smartartAlgorithm) {
 		smartartAlgorithm.applyColorsDef();
 		const shapes = [];
@@ -1485,7 +1497,6 @@
 		this.applyPostAlgorithmSettingsForShape(smartartAlgorithm, this.parentNode.getShape(false));
 	};
 	BaseAlgorithm.prototype.isHierarchy = function () {return false;};
-	BaseAlgorithm.prototype.getBounds = function (isCalculateScaleCoefficients, bounds) { return bounds};
 	BaseAlgorithm.prototype.moveToHierarchyOffsets = function () {};
 
 	BaseAlgorithm.prototype.getNodeConstraints = function (node) {
@@ -1783,9 +1794,14 @@
 		if (!(parentWidth && parentHeight)) {
 			return
 		}
+
 		const shapeContainer = this.getShapeContainer(isCalculateScaleCoefficient);
-		shapeContainer.applyCenterAlign(parentHeight, parentWidth, isCalculateScaleCoefficient);
-		const oThis = this;
+		const offsets = shapeContainer.getOffsets(parentHeight, parentWidth, isCalculateScaleCoefficient);
+		// this.parentNode.moveTo(offsets.offX, offsets.offY, isCalculateScaleCoefficient);
+		this.moveToHierarchyOffsets(offsets.offX, offsets.offY);
+		for (let i = 0; i < this.parentNode.childs.length; i++) {
+			this.parentNode.childs[i].moveTo(offsets.offX, offsets.offY, isCalculateScaleCoefficient);
+		}
 /*		shapeContainer.forEachShape(function (shadowShape) {
 			const node = shadowShape.node;
 			oThis.applyAligns(node, isCalculateScaleCoefficient);
@@ -2118,16 +2134,20 @@
 		}
 		return this.bounds;
 	};
-	ShapeContainer.prototype.applyCenterAlign = function (parentHeight, parentWidth, isCalculateScaleCoefficient) {
+	ShapeContainer.prototype.getOffsets = function (parentHeight, parentWidth, isCalculateScaleCoefficient) {
 		const bounds = this.getBounds(isCalculateScaleCoefficient);
 		const ctrX = bounds.l + (bounds.r - bounds.l) / 2;
 		const ctrY = bounds.t + (bounds.b - bounds.t) / 2;
 		const offX = parentWidth / 2 - ctrX;
 		const offY = parentHeight / 2 - ctrY;
+		return {offX: offX, offY: offY};
+	}
+	ShapeContainer.prototype.applyCenterAlign = function (parentHeight, parentWidth, isCalculateScaleCoefficient) {
+		const offsets = this.getOffsets(parentHeight, parentWidth, isCalculateScaleCoefficient);
 		for (let i = 0; i < this.shapes.length; i++) {
 			const shape = this.shapes[i];
 			const node = shape.node;
-			node.moveTo(offX, offY, isCalculateScaleCoefficient);
+			node.moveTo(offsets.offX, offsets.offY, isCalculateScaleCoefficient);
 		}
 	};
 	function PyramidContainer() {
@@ -2279,32 +2299,52 @@ function HierarchyAlgorithm() {
 	HierarchyAlgorithm.prototype.getScaleCoefficient = function () {
 		return 1;
 	};
-	HierarchyAlgorithm.prototype.getHorizontalOffset = function (node) {
+	HierarchyAlgorithm.prototype.getHorizontalOffset = function (node, isCalculateScaleCoefficient) {
 		const algorithm = node.algorithm;
 		let maxSpace = 0;
-		for (let sLevel in this.verticalLevelPositions) {
-			const startBounds = this.verticalLevelPositions[sLevel];
-			const endBounds = algorithm.verticalLevelPositions[sLevel];
-			if (startBounds && endBounds) {
-				const levelDifference = startBounds.r - endBounds.l;
-				if (levelDifference > maxSpace) {
-					maxSpace = levelDifference;
-				}
+		const shape = node.getShape(isCalculateScaleCoefficient);
+		for (let sCurrentLevel in this.verticalLevelPositions) {
+			const startBounds = this.verticalLevelPositions[sCurrentLevel];
+			for (let sNodeLevel in algorithm.verticalLevelPositions) {
+				const endBounds = algorithm.verticalLevelPositions[sNodeLevel];
+					const levelDifference = startBounds.r - endBounds.l;
+					if (levelDifference > maxSpace && this.isBoundsIntersect(startBounds, endBounds)) {
+						maxSpace = levelDifference;
+					}
+			}
+			const shapeBounds = shape.getBounds();
+			const nodeDifference = startBounds.r - shapeBounds.l;
+			if (nodeDifference > maxSpace && this.isBoundsIntersect(shapeBounds, startBounds)) {
+				maxSpace = nodeDifference;
 			}
 		}
 		return maxSpace;
 	};
-	HierarchyAlgorithm.prototype.getVerticalOffset = function (node) {
+	HierarchyAlgorithm.prototype.isBoundsIntersect = function (bounds1, bounds2) {
+		const startPoint = new CCoordPoint(Math.max(bounds1.l, bounds2.l), Math.max(bounds1.t, bounds2.t));
+		const endPoint = new CCoordPoint(Math.min(bounds1.r, bounds2.r), Math.min(bounds1.b, bounds2.b));
+
+		const width = endPoint.x - startPoint.x;
+		const height = endPoint.y - startPoint.y;
+		return width > 0 && height > 0;
+	};
+	HierarchyAlgorithm.prototype.getVerticalOffset = function (node, isCalculateScaleCoefficient) {
 		const algorithm = node.algorithm;
 		let maxSpace = 0;
-		for (let sLevel in this.horizontalLevelPositions) {
-			const startBounds = this.horizontalLevelPositions[sLevel];
-			const endBounds = algorithm.horizontalLevelPositions[sLevel];
-			if (startBounds && endBounds) {
+		const shape = node.getShape(isCalculateScaleCoefficient);
+		for (let sCurrentLevel in this.horizontalLevelPositions) {
+			const startBounds = this.horizontalLevelPositions[sCurrentLevel];
+			for (let sNodeLevel in algorithm.horizontalLevelPositions) {
+				const endBounds = algorithm.horizontalLevelPositions[sNodeLevel];
 				const levelDifference = startBounds.b - endBounds.t;
-				if (levelDifference > maxSpace) {
+				if (levelDifference > maxSpace && this.isBoundsIntersect(startBounds, endBounds)) {
 					maxSpace = levelDifference;
 				}
+			}
+			const shapeBounds = shape.getBounds();
+			const nodeDifference = startBounds.b - shapeBounds.t;
+			if (nodeDifference > maxSpace && this.isBoundsIntersect(shapeBounds, startBounds)) {
+				maxSpace = nodeDifference;
 			}
 		}
 		return maxSpace;
@@ -2413,14 +2453,15 @@ function HierarchyAlgorithm() {
 		HierarchyAlgorithm.call(this);
 	}
 	AscFormat.InitClassWithoutType(HierarchyChildAlgorithm, HierarchyAlgorithm);
+
 	HierarchyChildAlgorithm.prototype.getHorizontalSibSp = function (node, isCalculateScaleCoefficient) {
 		const sibSp = this.parentNode.getConstr(AscFormat.Constr_type_sibSp, !isCalculateScaleCoefficient);
-		const offset = this.getHorizontalOffset(node);
+		const offset = this.getHorizontalOffset(node, isCalculateScaleCoefficient);
 		return sibSp + offset;
 	};
 	HierarchyChildAlgorithm.prototype.getVerticalSibSp = function (node, isCalculateScaleCoefficient) {
 		const sibSp = this.parentNode.getConstr(AscFormat.Constr_type_sibSp, !isCalculateScaleCoefficient);
-		const offset = this.getVerticalOffset(node);
+		const offset = this.getVerticalOffset(node, isCalculateScaleCoefficient);
 		return sibSp + offset;
 	};
 	HierarchyChildAlgorithm.prototype.isHorizontalHierarchy = function () {
@@ -2451,6 +2492,9 @@ function HierarchyAlgorithm() {
 		HierarchyAlgorithm.prototype.initParams.call(this, params);
 		if (this.params[AscFormat.Param_type_linDir] === undefined) {
 			this.params[AscFormat.Param_type_linDir] = AscFormat.ParameterVal_linearDirection_fromL;
+		}
+		if (this.params[AscFormat.Param_type_chAlign] === undefined) {
+			this.params[AscFormat.Param_type_chAlign] = AscFormat.ParameterVal_childAlignment_t;
 		}
 		if (this.params[AscFormat.Param_type_off] === undefined) {
 			this.params[AscFormat.Param_type_off] = AscFormat.ParameterVal_offset_ctr;
@@ -2535,6 +2579,7 @@ function HierarchyAlgorithm() {
 
 		this.updateHorizontalLevelPositions(firstNode.algorithm);
 		let previousShape = firstShape;
+		this.setHorizontalLevelBounds(parentNode.node.depth + 1, {l: firstShape.x, r: firstShape.x + firstShape.width, t: firstShape.y, b: firstShape.y + firstShape.height});
 		for (let i = 1; i < childs.length; i += 1) {
 			const node = childs[i];
 			const shape = node.getShape(isCalculateScaleCoefficient);
@@ -2545,13 +2590,13 @@ function HierarchyAlgorithm() {
 			const sibSp = this.getVerticalSibSp(node, isCalculateScaleCoefficient);
 			shape.moveTo(0, sibSp);
 			this.updateHorizontalLevelPositions(node.algorithm);
+			this.setHorizontalLevelBounds(parentNode.node.depth + 1, {l: shape.x, r: shape.x + shape.width, t: shape.y, b: shape.y + shape.height});
 			previousShape = shape;
 		}
-		this.setHorizontalLevelBounds(parentNode.node.depth + 1, {l: commonBounds.l, r: commonBounds.r, t: firstShape.y, b: previousShape.y + previousShape.height});
 	};
 	HierarchyChildAlgorithm.prototype.calculateVerticalHierarchyHorizontalShapePositions = function (isCalculateScaleCoefficient, fromLeft) {
 		const childs = fromLeft ? this.getMainChilds() : this.getMainChilds().slice().reverse();
-
+		const dataNode = this.parentNode.node;
 		const commonBounds = this.getCommonChildBounds(isCalculateScaleCoefficient);
 		const firstNode = childs[0];
 		const firstShape = firstNode.getShape(isCalculateScaleCoefficient);
@@ -2560,6 +2605,7 @@ function HierarchyAlgorithm() {
 		firstNode.moveTo( -firstShape.x + firstAlignOffsets.offX, -firstShape.y + firstAlignOffsets.offY, isCalculateScaleCoefficient);
 		this.updateVerticalLevelPositions(childs[0].algorithm);
 		let previousShape = firstShape;
+		this.setVerticalLevelBounds(this.parentNode.node.depth + 1, {l: firstShape.x, t: firstShape.y, b: firstShape.y + firstShape.height, r: firstShape.x + firstShape.width});
 		for (let i = 1; i < childs.length; i += 1) {
 			const node = childs[i];
 			const shape = node.getShape(isCalculateScaleCoefficient);
@@ -2572,8 +2618,8 @@ function HierarchyAlgorithm() {
 			node.moveTo(offset, 0, isCalculateScaleCoefficient);
 			previousShape = shape;
 			this.updateVerticalLevelPositions(node.algorithm);
+			this.setVerticalLevelBounds(this.parentNode.node.depth + 1, {l: shape.x, t: shape.y, b: shape.y + shape.height, r: shape.x + shape.width});
 		}
-		this.setVerticalLevelBounds(this.parentNode.node.depth + 1, {l: firstShape.x, t: firstShape.y, b: firstShape.height, r: previousShape.x + previousShape.width});
 	};
 	HierarchyChildAlgorithm.prototype.calculateHorizontalHierarchyHorizontalShapePositions = function (isCalculateScaleCoefficient, fromRight) {
 		const childs = fromRight ? this.getMainChilds() : this.getMainChilds().slice().reverse();
@@ -4647,12 +4693,12 @@ function HierarchyAlgorithm() {
 			if (connectorAlgorithm.params[AscFormat.Param_type_srcNode]) {
 				srcNode = this.parentNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_srcNode]);
 			} else {
-				srcNode = this.parentNode.childs[0];
+				srcNode = this.parentNode.getDefaultConnectionNode();
 			}
 			if (connectorAlgorithm.params[AscFormat.Param_type_dstNode]) {
 				dstNode = childNode.getNamedNode(connectorAlgorithm.params[AscFormat.Param_type_dstNode]);
 			} else {
-				dstNode = childNode.childs[0];
+				dstNode = childNode.getDefaultConnectionNode();
 			}
 			if (srcNode && dstNode) {
 				connectorAlgorithm.setParentAlgorithm(this);
@@ -4725,6 +4771,12 @@ function PresNode(presPoint, contentNode) {
 	}
 	this.moveWith = null;
 }
+PresNode.prototype.getDefaultConnectionNode = function() {
+	if (this.childs.length) {
+		return this.childs[0];
+	}
+	return this;
+	};
 	PresNode.prototype.getShape = function (isCalculateCoefficients) {
 		if (isCalculateCoefficients) {
 			if (!this.nodeConstraints) {
