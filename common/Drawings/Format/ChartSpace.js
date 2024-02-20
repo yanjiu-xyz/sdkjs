@@ -5832,9 +5832,12 @@ function(window, undefined) {
 			this.legendLength = null;
 
 			var oFirstChart = aCharts[0];
-			var bNoPieChart = (oFirstChart.getObjectType() !== AscDFH.historyitem_type_PieChart && oFirstChart.getObjectType() !== AscDFH.historyitem_type_DoughnutChart);
-			var bSurfaceChart = (oFirstChart.getObjectType() === AscDFH.historyitem_type_SurfaceChart);
-			const bRadarChart = (oFirstChart.getObjectType() === AscDFH.historyitem_type_RadarChart);
+			if (!oFirstChart) {
+				console.log("TODO: oFirstChart === undefined")
+			}
+			var bNoPieChart = oFirstChart && (oFirstChart.getObjectType() !== AscDFH.historyitem_type_PieChart && oFirstChart.getObjectType() !== AscDFH.historyitem_type_DoughnutChart);
+			var bSurfaceChart = oFirstChart && (oFirstChart.getObjectType() === AscDFH.historyitem_type_SurfaceChart);
+			const bRadarChart = oFirstChart && (oFirstChart.getObjectType() === AscDFH.historyitem_type_RadarChart);
 
 			var bSeriesLegend = aCharts.length > 1 || (bNoPieChart && (!(oFirstChart.varyColors && series.length === 1) || bSurfaceChart || bRadarChart));
 			if (bSeriesLegend) {
