@@ -1532,16 +1532,15 @@
 		// this.onUpdate();
 	}
 	CTimeline.prototype.onPreview = function(elapsedTicks) {
-		if (this.tmpScrollOffset === null) { return };
+		if (this.tmpScrollOffset === null) { return }
 		if (!this.demoTiming) { return }
 
 		let demoEffects = this.demoTiming.getRootSequences()[0].getAllEffects();
 		let correction = 0;
 		demoEffects.forEach(function (effect) {
-			let originalEffectStart = effect.originalNode.getBaseTime() + effect.originalNode.asc_getDelay();
-			// let originalEffectEnd = originalEffectStart + effect.originalNode.asc_getDuration();
+			let originalEffectStart = effect.originalNode.getFullDelay();
 
-			let demoEffectStart = effect.getBaseTime() + effect.asc_getDelay();
+			let demoEffectStart = effect.getFullDelay();
 			let demoEffectEnd = demoEffectStart + effect.asc_getDuration();
 
 			if (effect.getBaseTime() < elapsedTicks && elapsedTicks < demoEffectEnd) {
@@ -1812,7 +1811,7 @@
 			return arr.reduce(function (storage, item) {
 				let group = callback(item);
 				storage[group] = storage[group] || [];
-				storage[group].push(item);
+				storage[group].splice(0, 0, item);
 				return storage;
 			}, {});
 		}
@@ -2066,13 +2065,13 @@
 
 		if (this.hitResult.type === 'right') {
 			if (this.effect.isUntilEffect()) {
-				const pointOfContact = this.ms_to_mm(this.effect.getBaseTime() + this.effect.asc_getDelay() + this.effect.asc_getDuration() * this.initialTmpRepeatCount / 1000);
+				const pointOfContact = this.ms_to_mm(this.effect.getFullDelay() + this.effect.asc_getDuration() * this.initialTmpRepeatCount / 1000);
 				let diff = this.mm_to_ms(pointOfLanding - pointOfContact);
 
 				const newTmpRepeatCount = this.initialTmpRepeatCount + diff / (this.effect.asc_getDuration() / 1000);
 				this.tmpRepeatCount = Math.max(newTmpRepeatCount, MIN_ALLOWED_REPEAT_COUNT);
 			} else {
-				const pointOfContact = this.ms_to_mm(this.effect.getBaseTime() + this.effect.asc_getDelay() + this.effect.asc_getDuration() * repeats);
+				const pointOfContact = this.ms_to_mm(this.effect.getFullDelay() + this.effect.asc_getDuration() * repeats);
 				let diff = this.mm_to_ms(pointOfLanding - pointOfContact);
 
 				const newTmpDuration = this.effect.asc_getDuration() + diff / repeats;
@@ -2081,33 +2080,35 @@
 		}
 
 		if (this.hitResult.type === 'left') {
-			const pointOfContact = this.ms_to_mm(this.effect.getBaseTime() + this.effect.asc_getDelay());
+			const pointOfContact = this.ms_to_mm(this.effect.getFullDelay());
+			const basePoint = this.ms_to_mm(this.effect.getBaseTime());
+			pointOfLanding = Math.max(pointOfLanding, basePoint);
 			const diff = this.mm_to_ms(pointOfLanding - pointOfContact);
 
 			const newTmpDuration = this.effect.asc_getDuration() - diff / repeats;
-			const newTmpDelay = this.effect.asc_getDelay() + diff;
+			const newTmpDelay = this.effect.getFullDelay() + diff;
 
-			const maxNewTmpDuration = this.effect.asc_getDelay() / repeats + this.effect.asc_getDuration();
-			const maxNewTmpDelay = this.effect.asc_getDelay() + (this.effect.asc_getDuration() - MIN_ALLOWED_DURATION) * repeats;
+			const maxNewTmpDuration = this.effect.getFullDelay() / repeats + this.effect.asc_getDuration();
+			const maxNewTmpDelay = this.effect.getFullDelay() + (this.effect.asc_getDuration() - MIN_ALLOWED_DURATION) * repeats;
 
 			if (this.effect.isUntilEffect()) {
 				this.tmpDelay = Math.max(newTmpDelay, 0);
 			} else {
 				this.tmpDuration = Math.min(Math.max(newTmpDuration, MIN_ALLOWED_DURATION), maxNewTmpDuration);
-				this.tmpDelay = Math.min(Math.max(newTmpDelay, 0), maxNewTmpDelay);
+				this.tmpDelay = Math.min(Math.max(newTmpDelay, this.effect.getBaseTime()), maxNewTmpDelay);
 			}
 		}
 
 		if (this.hitResult.type === 'center') {
-			const pointOfContact = this.ms_to_mm(this.effect.getBaseTime() + this.effect.asc_getDelay()) + this.hitResult.offset;
+			const pointOfContact = this.ms_to_mm(this.effect.getFullDelay()) + this.hitResult.offset;
 			const diff = this.mm_to_ms(pointOfLanding - pointOfContact);
 
-			const newTmpDelay = this.effect.asc_getDelay() + diff;
-			this.tmpDelay = Math.max(newTmpDelay, 0);
+			const newTmpDelay = this.effect.getFullDelay() + diff;
+			this.tmpDelay = Math.max(newTmpDelay, this.effect.getBaseTime());
 		}
 
 		if (this.hitResult.type === 'partition') {
-			const pointOfContact = this.ms_to_mm(this.effect.getBaseTime() + this.effect.asc_getDelay() + this.effect.asc_getDuration() * this.hitResult.index);
+			const pointOfContact = this.ms_to_mm(this.effect.getFullDelay() + this.effect.asc_getDuration() * this.hitResult.index);
 			const diff = this.mm_to_ms(pointOfLanding - pointOfContact);
 
 			const newTmpDuration = this.effect.asc_getDuration() + diff / this.hitResult.index;
@@ -2146,8 +2147,8 @@
 				newTmpDuration = this.tmpDuration - diff / repeats;
 				newTmpDelay = this.tmpDelay + diff;
 
-				const maxNewTmpDuration = this.effect.asc_getDelay() / repeats + this.effect.asc_getDuration();
-				const maxNewTmpDelay = this.effect.asc_getDelay() + (this.effect.asc_getDuration() - MIN_ALLOWED_DURATION) * repeats;
+				const maxNewTmpDuration = this.effect.getFullDelay() / repeats + this.effect.asc_getDuration();
+				const maxNewTmpDelay = this.effect.getFullDelay() + (this.effect.asc_getDuration() - MIN_ALLOWED_DURATION) * repeats;
 
 				if (this.effect.isUntilEffect()) {
 					this.tmpDelay = Math.max(newTmpDelay, 0);
@@ -2180,7 +2181,7 @@
 	};
 
 	CAnimItem.prototype.getDelay = function () {
-		return this.tmpDelay !== null ? this.tmpDelay : this.effect.asc_getDelay()
+		return this.tmpDelay !== null ? this.tmpDelay : this.effect.getFullDelay();
 	}
 	CAnimItem.prototype.getDuration = function () {
 		return this.tmpDuration !== null ? this.tmpDuration : this.effect.asc_getDuration()
@@ -2208,7 +2209,7 @@
 		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline;
 		const timelineShift = timeline.getStartTime() * 1000;
 
-		let l = this.ms_to_mm(this.effect.getBaseTime() + this.getDelay()) + this.getLeftBorder() - this.ms_to_mm(timelineShift);
+		let l = this.ms_to_mm(this.getDelay()) + this.getLeftBorder() - this.ms_to_mm(timelineShift);
 
 		let r = l + this.ms_to_mm(this.getDuration());
 
@@ -2392,7 +2393,8 @@
 
 	CAnimItem.prototype.setNewEffectParams = function (newDelay, newDuration, newRepeatCount) {
 		const minAllowedDelta = 1 // in ms
-		const delayDiff = Math.abs(newDelay - this.effect.asc_getDelay());
+		let dOwnNewDelay = newDelay - this.effect.getBaseTime();
+		const delayDiff = Math.abs(dOwnNewDelay - this.effect.asc_getDelay());
 		const durationDiff = Math.abs(newDuration - this.effect.asc_getDuration());
 		const repeatCountDiff = Math.abs(newRepeatCount - this.effect.asc_getRepeatCount());
 
@@ -2402,8 +2404,8 @@
 			return oCopy;
 		}, this, []);
 
-		if (newDelay !== null && newDelay !== undefined && delayDiff >= minAllowedDelta) {
-			effectCopy.asc_putDelay(newDelay);
+		if (dOwnNewDelay !== null && dOwnNewDelay !== undefined && delayDiff >= minAllowedDelta) {
+			effectCopy.asc_putDelay(dOwnNewDelay);
 		}
 		if (newDuration !== null && newDuration !== undefined && durationDiff >= minAllowedDelta) {
 			effectCopy.asc_putDuration(newDuration);

@@ -979,54 +979,23 @@
 		return this.asc_getRepeatCount() === AscFormat.untilNextClick ||
 			this.asc_getRepeatCount() === AscFormat.untilNextSlide;
 	}
+
+    CTimeNodeBase.prototype.getFullDelay = function() {
+        let nDelay = 0;
+        let aHierarchy = this.getHierarchy();
+        for(let nNode = 3; nNode < aHierarchy.length; ++nNode) {
+            nDelay += aHierarchy[nNode].getDelay();
+        }
+        return nDelay;
+    };
 	CTimeNodeBase.prototype.getBaseTime = function () {
-		if (!this.isAnimEffect()) { return false; }
+		if (!this.isAnimEffect()) { return 0; }
 
-		const nodeType = this.getNodeType();
-
-		const isClickEffect = nodeType === AscFormat.NODE_TYPE_CLICKEFFECT;
-		const isWithEffect = nodeType === AscFormat.NODE_TYPE_WITHEFFECT;
-		const isAfterEffect = nodeType === AscFormat.NODE_TYPE_AFTEREFFECT;
-
-		if (isClickEffect) {
-			return 0;
-		}
-
-		if (isWithEffect) {
-			const prev = this.getPreviousEffect();
-			return prev ? prev.getBaseTime() : 0;
-		}
-
-		if (isAfterEffect) {
-			const prev = this.getPreviousEffect();
-			if (!prev) { return 0; }
-
-			const prevType = prev.getNodeType();
-			const calcEndTime = function(effect) {
-				return effect.isUntilEffect() ?
-					effect.getBaseTime() + effect.asc_getDelay() + effect.asc_getDuration() :
-					effect.getBaseTime() + effect.asc_getDelay() + effect.asc_getDuration() * effect.asc_getRepeatCount() / 1000;
-			};
-
-			if (prevType === AscFormat.NODE_TYPE_CLICKEFFECT || prevType === AscFormat.NODE_TYPE_AFTEREFFECT) {
-				return calcEndTime(prev);
-			}
-
-			if (prevType === AscFormat.NODE_TYPE_WITHEFFECT) {
-				let maxEndTime = calcEndTime(prev);
-				let current = prev.getPreviousEffect();
-
-				while (current) {
-					maxEndTime = Math.max(maxEndTime, calcEndTime(current));
-					if (current.getNodeType() !== AscFormat.NODE_TYPE_WITHEFFECT) {
-						break;
-					}
-					current = current.getPreviousEffect();
-				}
-
-				return maxEndTime;
-			}
-		}
+        let oParentNode = this.getParentTimeNode();
+        if(!oParentNode) {
+            return 0;
+        }
+        return oParentNode.getDelay();
 	}
     CTimeNodeBase.prototype.traverseTimeNodes = function (fCallback) {
         fCallback(this);
@@ -1348,6 +1317,10 @@
         }
         aHierarchy.push(this);
         return aHierarchy;
+    };
+    CTimeNodeBase.prototype.getLvl = function() {
+        let aHierarchy = this.getHierarchy();
+        return aHierarchy.length - 1;
     };
     CTimeNodeBase.prototype.getAllAnimEffects = function (aEffects) {
         var aEffectsInternal = aEffects;
@@ -2132,7 +2105,7 @@
                             oNewEffect = this.createEffect(sObjectId, nPresetClass, nPresetId, nPresetSubtype, oColor);
                             if (oNewEffect) {
                                 oNewEffect.cTn.setNodeType(oEffect.cTn.nodeType);
-                                oNewEffect.cTn.changeDelay(oEffect.cTn.getDelay(true));
+                                oNewEffect.cTn.changeDelay(oEffect.cTn.getDelay());
                                 oNewEffect.select();
                                 aSeq[nEffectIdx] = oNewEffect;
                                 bNeedRebuild = true;
@@ -2378,7 +2351,7 @@
         }
         return aSequences;
     };
-    CTiming.prototype.buildTree = function (aSequences, bRestedDelayShift) {
+    CTiming.prototype.buildTree = function (aSequences) {
         var aCurSequence;
         var oEffect;
         var sSeqId;
@@ -2386,16 +2359,6 @@
         var nSeq;
         var oCont1;//containers by depth
         var aAddedEffects = [];
-        if (bRestedDelayShift !== false) {
-            //substract delay shift from afterEffect nodes
-            for (nSeq = 0; nSeq < aSequences.length; ++nSeq) {
-                aCurSequence = aSequences[nSeq];
-                for (nEffect = 1; nEffect < aCurSequence.length; ++nEffect) {
-                    oEffect = aCurSequence[nEffect];
-                    oEffect.resetDelayShift();
-                }
-            }
-        }
         this.createTimingRoot();
         var oTmRoot = this.getTimingRootNode();
         if (oTmRoot) {
@@ -2434,77 +2397,15 @@
         this.updateNodesIDs();
         return aAddedEffects;
     };
-    CTiming.prototype.executeWithCheckDelay = function (fCallback, aEffects) {
-        var aDelays = [];
-        for (var nEffect = 0; nEffect < aEffects.length; ++nEffect) {
-            aDelays.push(aEffects[nEffect].cTn.getDelay(true));
-        }
-        fCallback();
-        for (nEffect = 0; nEffect < aEffects.length; ++nEffect) {
-            if (aEffects[nEffect].isAfterEffect()) {
-                aEffects[nEffect].cTn.changeDelay(aDelays[nEffect], true);
-            }
-        }
-    };
     CTiming.prototype.setAnimationProperties = function (oPr) {
-        var aEffects = this.getSelectedEffects();
-        var oCurPr = this.getAnimProperties();
-        var nEffect, oEffect;
-        var aAllEffects = this.getAllAnimEffects();
-        var aEffectsForCheck;
-        var aSeqs, aSeq, nSeq;
+        let aEffects = this.getSelectedEffects();
+        let oCurPr = this.getAnimProperties();
+        let nEffect, oEffect;
+        let aSeqs, aSeq, nSeq;
         if (aEffects.length < 1) {
             return null;
         }
 
-        if (oPr.asc_getDelay() !== oCurPr.asc_getDelay() && AscFormat.isRealNumber(oPr.asc_getDelay())) {
-            for (nEffect = aAllEffects.length - 1; nEffect > -1; --nEffect) {
-                if (aAllEffects[nEffect].isSelected()) {
-                    break;
-                }
-            }
-            aEffectsForCheck = aAllEffects.slice(nEffect + 1);
-            this.executeWithCheckDelay(function () {
-                for (nEffect = 0; nEffect < aEffects.length; ++nEffect) {
-                    oEffect = aEffects[nEffect];
-                    oEffect.cTn.changeDelay(oPr.asc_getDelay());
-                }
-            }, aEffectsForCheck);
-        }
-
-        if (oPr.asc_getDuration() !== oCurPr.asc_getDuration() && AscFormat.isRealNumber(oPr.asc_getDuration())) {
-            for (nEffect = 0; nEffect < aAllEffects.length; ++nEffect) {
-                if (aAllEffects[nEffect].isSelected()) {
-                    break;
-                }
-            }
-            aEffectsForCheck = aAllEffects.slice(nEffect + 1);
-            this.executeWithCheckDelay(function () {
-                for (nEffect = 0; nEffect < aEffects.length; ++nEffect) {
-                    oEffect = aEffects[nEffect];
-                    oEffect.cTn.changeEffectDuration(oPr.asc_getDuration());
-                }
-            }, aEffectsForCheck);
-        }
-        if (oPr.asc_getSubtype() !== oCurPr.asc_getSubtype()) {
-            for (nEffect = 0; nEffect < aEffects.length; ++nEffect) {
-                oEffect = aEffects[nEffect];
-                oEffect.cTn.changeSubtype(oPr.asc_getSubtype());
-            }
-        }
-        if (oPr.asc_getRepeatCount() !== oCurPr.asc_getRepeatCount() && AscFormat.isRealNumber(oPr.asc_getRepeatCount())) {
-            for (nEffect = 0; nEffect < aEffects.length; ++nEffect) {
-                oEffect = aEffects[nEffect];
-                oEffect.cTn.changeRepeatCount(oPr.asc_getRepeatCount());
-            }
-        }
-
-        if (oPr.asc_getRewind() !== oCurPr.asc_getRewind() && AscFormat.isRealBool(oCurPr.asc_getRewind())) {
-            for (nEffect = 0; nEffect < aEffects.length; ++nEffect) {
-                oEffect = aEffects[nEffect];
-                oEffect.cTn.changeRewind(oPr.asc_getRewind());
-            }
-        }
 
 
         if (oPr.asc_getStartType() !== oCurPr.asc_getStartType()) {
@@ -2513,16 +2414,13 @@
                 aSeq = aSeqs[nSeq];
                 for (nEffect = 1; nEffect < aSeq.length; ++nEffect) {
                     oEffect = aSeq[nEffect];
-                    oEffect.resetDelayShift();
                     if (oEffect.isSelected()) {
                         oEffect.cTn.setNodeType(oPr.asc_getStartType());
-                        if(oPr.asc_getStartType() === AscFormat.NODE_TYPE_AFTEREFFECT) {
-                            oEffect.cTn.changeDelay(0, false);
-                        }
                     }
                 }
             }
-            this.buildTree(aSeqs, false);
+            this.buildTree(aSeqs);
+            return;
         }
 
 
@@ -2530,30 +2428,30 @@
             || oPr.asc_getTriggerObjectClick() !== oCurPr.asc_getTriggerObjectClick()) {
             aSeqs = this.getEffectsSequences();
 
-            var sSeqId;
+            let sSeqId;
             if (oPr.asc_getTriggerClickSequence() || !oPr.asc_getTriggerObjectClick()) {
                 sSeqId = null;
             } else {
-                var oTimingParent = this.parent;//might be slide, layout, master
+                let oTimingParent = this.parent;//might be slide, layout, master
                 if (!oTimingParent) {
                     return;
                 }
-                var oCSld = oTimingParent.cSld;
+                let oCSld = oTimingParent.cSld;
                 if (!oCSld) {
                     return;
                 }
-                var sObjectId;
+                let sObjectId;
 
-                var oDrawing = oCSld.getObjectByName(oPr.asc_getTriggerObjectClick());
+                let oDrawing = oCSld.getObjectByName(oPr.asc_getTriggerObjectClick());
                 if (!oDrawing) {
                     return;
                 }
                 sObjectId = oDrawing.Get_Id();
                 sSeqId = sObjectId;
             }
-            var aEffectsToInsert = [];
-            var sCurSeqId;
-            var aTriggerSeq = null;
+            let aEffectsToInsert = [];
+            let sCurSeqId;
+            let aTriggerSeq = null;
             for (nSeq = 0; nSeq < aSeqs.length; ++nSeq) {
                 aSeq = aSeqs[nSeq];
                 sCurSeqId = aSeq[0];
@@ -2562,7 +2460,6 @@
                 }
                 for (nEffect = aSeq.length - 1; nEffect > 0; --nEffect) {
                     oEffect = aSeq[nEffect];
-                    oEffect.resetDelayShift();
                     if (oEffect.isSelected()) {
                         if (sCurSeqId !== sSeqId) {
                             aEffectsToInsert.splice(0, 0, aSeq.splice(nEffect, 1)[0]);
@@ -2577,7 +2474,64 @@
             for (nEffect = 0; nEffect < aEffectsToInsert.length; ++nEffect) {
                 aTriggerSeq.push(aEffectsToInsert[nEffect]);
             }
-            this.buildTree(aSeqs, false);
+            this.buildTree(aSeqs);
+            return;
+        }
+
+
+        let iN = AscFormat.isRealNumber;
+        let iB = AscFormat.isRealBool;
+        let nDelay = null;
+        let nDuration = null;
+        let nSubtype = null;
+        let nRepeatCount = null;
+        let bRewind = null;
+        if (oPr.asc_getDelay() !== oCurPr.asc_getDelay() && iN(oPr.asc_getDelay())) {
+            nDelay = oPr.asc_getDelay();
+        }
+
+        if (oPr.asc_getDuration() !== oCurPr.asc_getDuration() && iN(oPr.asc_getDuration())) {
+            nDuration = oPr.asc_getDuration();
+        }
+        if (oPr.asc_getSubtype() !== oCurPr.asc_getSubtype()) {
+            nSubtype = oPr.asc_getSubtype();
+        }
+        if (oPr.asc_getRepeatCount() !== oCurPr.asc_getRepeatCount() && iN(oPr.asc_getRepeatCount())) {
+            nRepeatCount = oPr.asc_getRepeatCount();
+        }
+
+        if (oPr.asc_getRewind() !== oCurPr.asc_getRewind() && iB(oCurPr.asc_getRewind())) {
+            bRewind = oPr.asc_getRewind();
+        }
+        let oPar2Map = {};
+        if(iN(nDelay) || iN(nDuration) || iN(nSubtype) || iN(nRepeatCount) || iB(bRewind)) {
+            for (nEffect = 0; nEffect < aEffects.length; ++nEffect) {
+                oEffect = aEffects[nEffect];
+                if(iN(nDelay)) {
+                    oEffect.cTn.changeDelay(nDelay);
+                }
+                if(iN(nDuration)) {
+                    oEffect.cTn.changeEffectDuration(nDuration);
+                }
+                if(iN(nSubtype)) {
+                    oEffect.cTn.changeSubtype(nSubtype);
+                }
+                if(iN(nRepeatCount)) {
+                    oEffect.cTn.changeRepeatCount(nRepeatCount);
+                }
+                if(iB(bRewind)) {
+                    oEffect.cTn.changeRewind(bRewind);
+                }
+                let oPar2Node = oEffect.getTimeNodeWithLvl(2);
+                if(oPar2Node) {
+                    oPar2Map[oPar2Node.Id] = oPar2Node;
+                }
+            }
+            for(let sId in oPar2Map) {
+                if(oPar2Map.hasOwnProperty(sId)) {
+                    oPar2Map[sId].update3LvlDelays();
+                }
+            }
         }
     };
     CTiming.prototype.getObjectEffects = function (sObjectId) {
@@ -2685,7 +2639,6 @@
                 oEffect = aEffectsForDemo[nIdx];
                 var oCopyEffect = oEffect.createDuplicate();
                 oCopyEffect.originalNode = oEffect;
-                oCopyEffect.cTn.resetDelayShift();
                 if (oCopyEffect.cTn.nodeType === AscFormat.NODE_TYPE_CLICKEFFECT) {
                     oCopyEffect.cTn.setNodeType(nIdx === 0 ? AscFormat.NODE_TYPE_WITHEFFECT : AscFormat.NODE_TYPE_AFTEREFFECT);
                 }
@@ -2706,7 +2659,7 @@
             }
             var oTiming = new CTiming();
             oTiming.setParent(this.parent);
-            oTiming.buildTree(aSeqs, false);
+            oTiming.buildTree(aSeqs);
             return oTiming;
         }, this, []);
     };
@@ -5320,54 +5273,28 @@
             this.setChildTnLst(new CChildTnLst());
         }
     };
-    CCTn.prototype.getDelayShift = function () {
-        if (this.nodeType === AscFormat.NODE_TYPE_AFTEREFFECT) {
-            let oPrev = this.parent.getPreviousEffect();
-            if (oPrev && oPrev.cTn) {
-                let nShift = oPrev.cTn.getDelay(false);
-
-                let nDurationDelay = oPrev.cTn.getEffectDuration();
-                let oRepeatCount = oPrev.getRepeatCount();
-                if (oRepeatCount.isDefinite()) {
-                    nDurationDelay *= oRepeatCount.val / 1000;
-                }
-                nShift += nDurationDelay;
-                return nShift;
-            }
-        }
-        return 0;
-    };
-    CCTn.prototype.getDelay = function (bUseDelayShift) {
-        var delay = 0;
-        var aConds;
+    CCTn.prototype.getDelay = function () {
+        let delay = 0;
+        let aConds;
         if (this.stCondLst) {
             aConds = this.stCondLst.list;
-            for (var nCond = 0; nCond < aConds.length; ++nCond) {
+            for (let nCond = 0; nCond < aConds.length; ++nCond) {
                 if (aConds[nCond].delay !== null) {
                     delay = aConds[nCond].getDelayTime().getVal();
                     break;
                 }
             }
         }
-        var nDelayShift;
-        if (bUseDelayShift === false) {
-            nDelayShift = 0;
-        } else {
-            nDelayShift = this.getDelayShift();
-        }
-        delay = Math.max(0, delay - nDelayShift);
+        delay = Math.max(0, delay);
         return delay;
     };
-    CCTn.prototype.changeDelay = function (nDelay, bUseDelayShift) {
-        var nDelayShift;
-        if (bUseDelayShift === false) {
-            nDelayShift = 0;
-        } else {
-            nDelayShift = this.getDelayShift();
+    CCTn.prototype.changeDelay = function (nDelay) {
+        let nNewDelay = ((Math.max(0, nDelay) + 0.5) >> 0);
+        if(this.getDelay() === nNewDelay) {
+            return;
         }
-        var nNewDelay = ((Math.max(0, nDelay + nDelayShift) + 0.5) >> 0);
-        var sNewDelay = nNewDelay + "";
-        var aConds;
+        let sNewDelay = nNewDelay + "";
+        let aConds;
         if (!this.stCondLst) {
             this.setStCondLst(new CCondLst());
         }
@@ -5381,18 +5308,6 @@
         this.stCondLst.push(oCond);
         oCond.setDelay(sNewDelay);
     };
-    CCTn.prototype.resetDelayShift = function () {
-        var nDelayShift = this.getDelayShift();
-        if (nDelayShift > 0) {
-            this.changeDelay(this.getDelay(false) - this.getDelayShift(), false);
-        }
-    };
-    CCTn.prototype.setDelayShift = function () {
-        var nDelayShift = this.getDelayShift();
-        if (nDelayShift > 0) {
-            this.changeDelay(this.getDelay(false), true);
-        }
-    };
     CCTn.prototype.getEffectDuration = function () {
         var nDur = 0;
         var aChildren = this.childTnLst && this.childTnLst.list;
@@ -5403,7 +5318,7 @@
                 if (oDur.isSpecified()) {
 
                     var oAttr = oChild.getAttributesObject();
-                    var nDelay = oAttr.getDelay(false);
+                    var nDelay = oAttr.getDelay();
                     nDur = Math.max(nDur, oDur.getVal() + nDelay);
                 }
             }
@@ -5411,24 +5326,24 @@
         return nDur;
     };
     CCTn.prototype.changeEffectDuration = function (v) {
-        var dOldV = this.getEffectDuration();
-        var dCoef = null;
-        var v_ = Math.max(10, v);
+        let dOldV = this.getEffectDuration();
+        let dCoef = null;
+        let v_ = Math.max(10, v);
         if (dOldV > 0) {
             dCoef = v_ / dOldV;
             if (AscFormat.fApproxEqual(dCoef, 1.0)) {
                 return;
             }
         }
-        var bIsIndefinite = (v === AscFormat.untilNextSlide || v === AscFormat.untilNextClick);
-        var aChildren = this.childTnLst && this.childTnLst.list;
+        let bIsIndefinite = (v === AscFormat.untilNextSlide || v === AscFormat.untilNextClick);
+        let aChildren = this.childTnLst && this.childTnLst.list;
         if (aChildren) {
             for (var nChild = 0; nChild < aChildren.length; ++nChild) {
                 var oChild = aChildren[nChild];
                 var oDur = oChild.getDur();
                 if (oDur.isSpecified()) {
                     var oAttr = oChild.getAttributesObject();
-                    var nDelay = oAttr.getDelay(false);
+                    var nDelay = oAttr.getDelay();
                     if (bIsIndefinite) {
                         oAttr.setDur("indefinite");
                     } else if (dCoef !== null) {
@@ -5580,7 +5495,6 @@
                 oPar2Lvl = oCurPar2Lvl;
                 oPar2Lvl.splice(nIdx2 + 1, 0, oPar3Lvl);
             }
-            oEffectNode.setDelayShift();
         }
         if (oCurPar3Lvl.getChildrenCount() === 0) {
             oCurPar3Lvl.parent.onRemoveChild(oCurPar3Lvl);
@@ -8421,7 +8335,7 @@
             if(oFirstEffectContainer) {
                 let aEffects = oFirstEffectContainer.getAllEffects();
                 let oFirstEffect = aEffects[0];
-                if(!oFirstEffect || !oFirstEffect.isClickEffect()) {
+                if(!oFirstEffect || oFirstEffect.isWithEffect()) {
                     nResultIdx -= 1;
                 }
             }
@@ -8632,21 +8546,43 @@
     CTimeNodeContainer.prototype.clearChildTnLst = function () {
         this.cTn.clearChildTnLst();
     };
-    CTimeNodeContainer.prototype.resetDelayShift = function () {
-        if (this.isAnimEffect()) {
-            this.cTn.resetDelayShift();
-        }
-    };
-    CTimeNodeContainer.prototype.setDelayShift = function () {
-        if (this.isAnimEffect()) {
-            this.cTn.setDelayShift();
-        }
-    };
     CTimeNodeContainer.prototype.splice = function () {
         return this.cTn.childTnLst.splice.apply(this.cTn.childTnLst, arguments);
     };
     CTimeNodeContainer.prototype.getLastChild = function () {
         return this.cTn.childTnLst.getLast();
+    };
+
+    CTimeNodeContainer.prototype.getTimeNodeWithLvl = function (nLvl) {
+        return this.getHierarchy()[nLvl] || null;
+    };
+    CTimeNodeContainer.prototype.update3LvlDelays = function () {
+        let oPar2 = this.getTimeNodeWithLvl(2);
+        if(!oPar2) {
+            return;
+        }
+        let aChildren = oPar2.getChildrenTimeNodes();
+        let nCurDelay = 0;
+        for(let nNode = 0; nNode < aChildren.length; ++nNode) {
+            let oPar3Node = aChildren[nNode];
+            let oPrev3Node = aChildren[nNode - 1];
+            if(oPrev3Node) {
+                let nMaxEffectEnd = 0;
+                let aChildEffects = oPrev3Node.getChildrenTimeNodes();
+                for(let nEffect = 0; nEffect < aChildEffects.length; ++nEffect) {
+                    let oEffect = aChildEffects[nEffect];
+                    let nDurationDelay = oEffect.cTn.getEffectDuration();
+                    let oRepeatCount = oEffect.getRepeatCount();
+                    if (oRepeatCount.isDefinite()) {
+                        nDurationDelay *= oRepeatCount.val / 1000;
+                    }
+                    let nEffectEnd = oEffect.cTn.getDelay() + nDurationDelay;
+                    nMaxEffectEnd = Math.max(nMaxEffectEnd, nEffectEnd);
+                }
+                nCurDelay += nMaxEffectEnd;
+            }
+            oPar3Node.cTn.changeDelay(nCurDelay);
+        }
     };
     CTimeNodeContainer.prototype.addEffects = function (nInsertIdx, aEffects) {
         for (var nIdx = 0; nIdx < aEffects.length; ++nIdx) {
@@ -8669,7 +8605,7 @@
         if (!oEffect) {
             return;
         }
-        var oPar2Lvl, oPar3Lvl;
+        let oPar2Lvl, oPar3Lvl;
         if (oEffect.isClickEffect()) {
             this.addEffectToTheEndOfSeqAsClickEffect(oEffect);
         } else if (oEffect.isAfterEffect()) {
@@ -8696,7 +8632,9 @@
                 }
             }
         }
-        oEffect.setDelayShift();
+        if(oPar2Lvl) {
+            oPar2Lvl.update3LvlDelays();
+        }
     };
     CTimeNodeContainer.prototype.getChildrenCount = function () {
         return this.cTn.childTnLst.getLength();
@@ -8713,7 +8651,7 @@
             if (oChild.isTimeNode() && oChild.isAnimEffect()) {
                 aAllEffects.push(oChild);
             }
-        });
+        }, false);
         return aAllEffects;
     };
     CTimeNodeContainer.prototype.getLabel = function () {
@@ -8768,6 +8706,9 @@
             }
             return nFirst;
         }
+        return this.getDelay();
+    };
+    CTimeNodeContainer.prototype.getDelay = function () {
         if (this.cTn) {
             return this.cTn.getDelay();
         }
@@ -8813,6 +8754,8 @@
             return nDur;
         }
     };
+
+
     CTimeNodeContainer.prototype["asc_getDuration"] = CTimeNodeContainer.prototype.asc_getDuration;
     CTimeNodeContainer.prototype.asc_getIsAutoDuration = function () {
         return (new CAnimationTime(this.asc_getDuration())).isIndefinite();
