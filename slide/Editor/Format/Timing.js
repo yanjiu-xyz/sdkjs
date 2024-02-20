@@ -2242,94 +2242,99 @@
         }
         return aRanges;
     };
-    CTiming.prototype.getSequencesForMove = function (bEarlier, bCheckPossibility) {
-        var aSeqs = this.getEffectsSequences();
-        if (bEarlier && (!aSeqs[0] || aSeqs[0][0] !== null)) {
-            aSeqs.splice(0, 0, [null]);
+    CTiming.prototype.getSequencesForMove = function (bEarlier, bCheckPossibility, nPositions) {
+        if (!AscFormat.isRealNumber(nPositions) || nPositions < 1) {
+            nPositions = 1;
         }
-        var aRanges = this.getSelectionRanges(aSeqs);
-        var nSeq, aSeq;
+
+        // Получаем последовательности и выбранные интервалы
+        const aSeqs = this.getEffectsSequences();
+        const aRanges = this.getSelectionRanges(aSeqs);
+
         if (aRanges.length !== 1) {
             return bCheckPossibility ? false : null;
         }
-        var aRange = aRanges[0];
-        var aStart = aRange[0];
-        var aEnd = aRange[1];
-        var nEffectStart;
-        var nEffectEnd;
-        var nCount;
-        var aEffectsToInsert = [];
-        var nPos;
-        if (bEarlier) {
-            if (aStart[0] === 0) {
-                if (aStart[1] === 1) {
-                    return bCheckPossibility ? false : null;
-                }
-            }
-            if (bCheckPossibility) {
-                return true;
-            }
-        } else {
-            if (aEnd[0] === aSeqs.length - 1) {
-                if (aEnd[1] === aSeqs[aSeqs.length - 1].length - 1) {
-                    return bCheckPossibility ? false : null;
-                }
-            }
-            if (bCheckPossibility) {
-                return true;
-            }
+
+        if (bEarlier && (!aSeqs[0] || aSeqs[0][0] !== null)) {
+            aSeqs.splice(0, 0, [null]);
         }
 
+        const aRange = aRanges[0];
+        const aStart = aRange[0];
+        const aEnd = aRange[1];
 
-        var nPosStartEnd;
-        var aSeqToInsert;
+        // Вычисляем максимальное разрешенное количество перемещений
+        let nAllowedMovements;
         if (bEarlier) {
-            if (aStart[1] === 1) {
-                aSeqToInsert = aSeqs[aStart[0] - 1];
-                nPosStartEnd = aSeqToInsert.length;
-            } else {
-                aSeqToInsert = aSeqs[aStart[0]];
-                nPosStartEnd = aStart[1] - 1;
+            let nOuterPossibleMovements = aStart[0];
+            let nInnerPossibleMovements = aStart[1] - 1;
+            for (let nSeq = 0; nSeq < aStart[0]; nSeq++) {
+                nInnerPossibleMovements += (aSeqs[nSeq].length - 1);
             }
+            nAllowedMovements = nInnerPossibleMovements + nOuterPossibleMovements;
         } else {
-            if (aEnd[1] === aSeqs[aEnd[0]].length - 1) {
-                aSeqToInsert = aSeqs[aEnd[0] + 1];
-                nPosStartEnd = aSeqToInsert.length - 1;
-            } else {
-                aSeqToInsert = aSeqs[aEnd[0]];
-                nPosStartEnd = aSeqToInsert.length - (aEnd[1] + 2);
+            let nOuterPossibleMovements = (aSeqs.length - 1) - aEnd[0];
+            let nInnerPossibleMovements = (aSeqs[aEnd[0]].length - 1) - aEnd[1];
+            for (let nSeq = aSeqs.length - 1; nSeq > aEnd[0]; nSeq--) {
+                nInnerPossibleMovements += (aSeqs[nSeq].length - 1);
             }
+            nAllowedMovements = nInnerPossibleMovements + nOuterPossibleMovements;
         }
 
+        if (bCheckPossibility) {
+            return (nPositions <= nAllowedMovements);
+        }
 
-        for (nSeq = aStart[0]; nSeq <= aEnd[0]; ++nSeq) {
-            aSeq = aSeqs[nSeq];
-            if (nSeq === aStart[0]) {
-                nEffectStart = aStart[1];
-            } else {
-                nEffectStart = 1;
+        if (nPositions > nAllowedMovements) {
+            return null;
+        }
+
+        // Вычисляем целевую последовательность и позицию в ней
+        let newStart = [].concat(aStart);
+        let newEnd = [].concat(aEnd);
+        if (bEarlier) {
+        for (let nTmpPos = 0; nTmpPos < nPositions; nTmpPos++) {
+                if (newStart[1] > 1) {
+                    newStart[1] = newStart[1] - 1;
+                } else {
+                    newStart[1] = aSeqs[newStart[0] - 1].length - 1;
+                    newStart[0] = newStart[0] - 1;
+                }
             }
-            if (nSeq === aEnd[0]) {
-                nEffectEnd = aEnd[1];
-            } else {
-                nEffectEnd = aSeq.length - 1;
+        } else {
+            for (let nTmpPos = 0; nTmpPos < nPositions; nTmpPos++) {
+                if (newEnd[1] < aSeqs[newEnd[0]].length - 1) {
+                    newEnd[1] = newEnd[1] + 1;
+                } else {
+                    newEnd[1] = 1;
+                    newEnd[0] = newEnd[0] + 1;
+                }
             }
-            nCount = nEffectEnd - nEffectStart + 1;
+        }
+        let aSeqToInsert = bEarlier ? aSeqs[newStart[0]] : aSeqs[newEnd[0]];
+        let nPosToInsert = bEarlier ? newStart[1] : newEnd[1];
+
+        // Забираем из последовательностей все выбранные эффекты и складываем их в aEffectsToInsert
+        let aEffectsToInsert = [];
+        for (let nSeq = aStart[0]; nSeq <= aEnd[0]; nSeq++) {
+            let aSeq = aSeqs[nSeq];
+
+            let nEffectStart = (nSeq === aStart[0]) ? aStart[1] : 1;
+            let nEffectEnd = (nSeq === aEnd[0]) ? aEnd[1] : aSeq.length - 1;
+            let nCount = nEffectEnd - nEffectStart + 1;
+
             aEffectsToInsert = aEffectsToInsert.concat(aSeq.splice(nEffectStart, nCount));
         }
-        if (bEarlier) {
-            nPos = nPosStartEnd;
-        } else {
-            nPos = aSeqToInsert.length - nPosStartEnd;
-        }
-        aSeqToInsert.splice.apply(aSeqToInsert, [nPos, 0].concat(aEffectsToInsert));
+
+        // aSeqToInsert.splice(nPos, 0, ...aEffectsToInsert);
+        aSeqToInsert.splice.apply(aSeqToInsert, [nPosToInsert, 0].concat(aEffectsToInsert));
         return aSeqs;
     };
-    CTiming.prototype.canMoveAnimation = function (bEarlier) {
-        return this.getSequencesForMove(bEarlier, true);
+    CTiming.prototype.canMoveAnimation = function (bEarlier, nPositions) {
+        return this.getSequencesForMove(bEarlier, true, nPositions);
     };
-    CTiming.prototype.moveAnimation = function (bEarlier) {
-        var aSeqs = this.getSequencesForMove(bEarlier, false);
+    CTiming.prototype.moveAnimation = function (bEarlier, nPositions) {
+        var aSeqs = this.getSequencesForMove(bEarlier, false, nPositions);
         if (!Array.isArray(aSeqs)) {
             return;
         }
