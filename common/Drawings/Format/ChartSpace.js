@@ -3978,7 +3978,7 @@ function(window, undefined) {
 		return ret;
 	};
 	CChartSpace.prototype.getAxisCrossType = function (oAxis) {
-		if (oAxis.getObjectType() === AscDFH.historyitem_type_ValAx) {
+		if (oAxis.getObjectType() === AscDFH.historyitem_type_ValAx || (oAxis.getObjectType() === AscDFH.historyitem_type_Axis && oAxis.axPos === window['AscFormat'].AX_POS_L)) {
 			return AscFormat.CROSS_BETWEEN_MID_CAT;
 		}
 		if (oAxis.getObjectType() === AscDFH.historyitem_type_SerAx) {
@@ -4123,7 +4123,9 @@ function(window, undefined) {
 				return cachedData.aggregation;
 			} else if (cachedData.results) {
 				return cachedData.results;
-			} else {
+			} else if (cachedData.accumulation){
+				return cachedData.accumulation;
+			}else {
 				return {};
 			}
 		}
@@ -4136,6 +4138,8 @@ function(window, undefined) {
 				return cachedData.aggregation[key];
 			} else if (cachedData.results) {
 				return cachedData.results[key].occurrence;
+			} else if (cachedData.accumulation) {
+				return cachedData.accumulation[key];
 			} else {
 				return null;
 			}
@@ -4147,7 +4151,7 @@ function(window, undefined) {
 		//seria.dataLabels.visibility optional
 		if (seria && seria.dataLabels) {
 			const default_lbl = new AscFormat.CDLbl();
-			const nDefaultPosition = seria.dataLabels.pos ? seria.dataLabels.pos : 7;
+			const nDefaultPosition = seria.dataLabels.pos ? seria.dataLabels.pos : AscFormat.DATA_LABEL_POS_OUT_END;
 			default_lbl.initDefault(nDefaultPosition);
 			cachedData.compiledDlbs = [];
 			for (let i in results) {
@@ -4432,7 +4436,14 @@ function(window, undefined) {
 						}
 					}
 				} else if (type === AscFormat.SERIES_LAYOUT_WATERFALL) {
-					aStrings = this.getLabelsForAxis(oAxis, true);
+					const strCache = this.chart.plotArea.plotAreaRegion.series ? this.chart.plotArea.plotAreaRegion.series[0].getCatLit(type) : null;
+					if (strCache) {
+						for ( let i = 0; i < strCache.pts.length; i++) {
+							aStrings.push(strCache.pts[i].val);
+						}
+					} else {
+						aStrings = this.getLabelsForAxis(oAxis, true);
+					}
 				}
 			}
 		}
@@ -4727,6 +4738,7 @@ function(window, undefined) {
 		}
 		let bCorrected = false;
 		let fL = oRect.x, fT = oRect.y, fR = oRect.x + oRect.w, fB = oRect.y + oRect.h;
+		const isChartEX = this.chart && this.chart.plotArea && this.chart.plotArea.isForChartEx ? true : false;
 		let fHorPadding = 0.0;
 		let fVertPadding = 0.0;
 		let fHorInterval = null;
@@ -4743,6 +4755,9 @@ function(window, undefined) {
 				oCalcMap[oCrossAxis.Id] = true;
 			}
 			let fCrossValue;
+			// posY seeks the zero position on the diagram
+			let posY = null;
+			// fAxisPos seeks the bottom diagram position
 			let fAxisPos;
 			let fDistance = DEFAULT_LBLS_DISTANCE;
 			let fDistanceSign = 1;
@@ -4795,7 +4810,9 @@ function(window, undefined) {
 					}
 					default:
 					{ //includes AutoZero
-						if(oCrossAxis.scale[0] <= 0 && oCrossAxis.scale[oCrossAxis.scale.length - 1] >= 0) {
+						if (isChartEX) {
+							fCrossValue = oCrossAxis.scale[0];
+						} else if(oCrossAxis.scale[0] <= 0 && oCrossAxis.scale[oCrossAxis.scale.length - 1] >= 0) {
 							fCrossValue = 0;
 						}
 						else if(oCrossAxis.scale[0] > 0) {
@@ -4827,6 +4844,7 @@ function(window, undefined) {
 			else {
 				if(oCrossAxis.scale.length > 0) {
 					fAxisPos += (fCrossValue - oCrossAxis.scale[0]) * (oCrossGrid.fStride) / bKoeff;
+					posY = fAxisPos + (-oCrossAxis.scale[0]) * (oCrossGrid.fStride) / bKoeff;
 				}
 			}
 
@@ -4890,7 +4908,7 @@ function(window, undefined) {
 				fLayoutRadarCatLabelsBox(oLabelsBox, oRect, aPoints);
 			}
 			else if(oCurAxis.isHorizontal()) {
-				oCurAxis.posY = fAxisPos;
+				oCurAxis.posY = isChartEX ? posY : fAxisPos;
 				oCurAxis.xPoints = [];
 				aPoints = oCurAxis.xPoints;
 				if(oLabelsBox) {

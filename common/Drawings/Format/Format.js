@@ -876,7 +876,7 @@
 		g_oThemeFontsName["minorHAnsi"] = true;
 
 		function isRealNumber(n) {
-			return typeof n === "number" && !isNaN(n);
+			return typeof n === "number" && !isNaN(n) && isFinite(n);
 		}
 
 		function isRealBool(b) {

@@ -2946,7 +2946,7 @@ function (window, undefined) {
 		}
 		return null;
 	};
-	CSeries.prototype.getCatLit = function () {
+	CSeries.prototype.getCatLit = function (type) {
 		let oSeriesData = this.getData();
 		if(!oSeriesData) {
 			return null;
@@ -2955,7 +2955,8 @@ function (window, undefined) {
 		if(aCatDim.length > 0) {
 			let oDim = aCatDim[0];
 			if(oDim) {
-				return oDim.levelData[0] || null;
+				let index = (type === AscFormat.SERIES_LAYOUT_WATERFALL) ? oDim.levelData.length - 1 : 0;
+				return oDim.levelData[index] || null;
 			}
 		}
 		return null;
