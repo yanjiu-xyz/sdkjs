@@ -2470,8 +2470,8 @@ function HierarchyAlgorithm() {
 			return parent.algorithm.isHorizontalHierarchy();
 		} else {
 			switch (this.params[AscFormat.Param_type_chAlign]) {
-				case AscFormat.ParameterVal_childAlignment_b:
-				case AscFormat.ParameterVal_childAlignment_t:
+				case AscFormat.ParameterVal_childAlignment_r:
+				case AscFormat.ParameterVal_childAlignment_l:
 					return true;
 				default:
 					return false;
@@ -2556,15 +2556,19 @@ function HierarchyAlgorithm() {
 		let offY = firstBounds.b - firstBounds.t + sibSp;
 		this.setVerticalLevelBounds(this.parentNode.node.depth + 1, {l: firstShape.x, t: firstShape.y, b: firstShape.y + firstShape.height, r: firstShape.x + firstShape.width});
 		this.updateVerticalLevelPositions(childs[0].algorithm);
+		let previousShape = firstShape;
+		let previousDesHeight = firstBounds.b - firstBounds.t;
 		for (let i = 1; i < childs.length; i += 1) {
 			const node = childs[i];
 			const shape = node.getShape(isCalculateScaleCoefficient);
 			const bounds = node.algorithm.getBounds(isCalculateScaleCoefficient);
 			const childOffsets = this.getChildAlignOffsets(commonBounds, bounds, this.params[AscFormat.Param_type_chAlign]);
+			const offY = previousShape.y + previousDesHeight + sibSp - shape.y;
 			shape.moveTo(childOffsets.offX, offY + childOffsets.offY);
-			offY = offY + (bounds.b - bounds.t) + sibSp;
 			this.setVerticalLevelBounds(this.parentNode.node.depth + i + 1, {l: shape.x, t: shape.y, b: shape.y + shape.height, r: shape.x + shape.width});
 			this.updateVerticalLevelPositions(node.algorithm, i);
+			previousShape = shape;
+			previousDesHeight = bounds.b - bounds.t;
 		}
 	};
 	HierarchyChildAlgorithm.prototype.calculateHorizontalHierarchyVerticalShapePositions = function (isCalculateScaleCoefficient, fromTop) {
@@ -2602,7 +2606,7 @@ function HierarchyAlgorithm() {
 		const firstShape = firstNode.getShape(isCalculateScaleCoefficient);
 		const firstBounds = firstNode.algorithm.getBounds(isCalculateScaleCoefficient);
 		const firstAlignOffsets = this.getChildAlignOffsets(commonBounds, firstBounds, this.params[AscFormat.Param_type_chAlign]);
-		firstNode.moveTo( -firstShape.x + firstAlignOffsets.offX, -firstShape.y + firstAlignOffsets.offY, isCalculateScaleCoefficient);
+		firstNode.moveTo( -firstShape.x + firstAlignOffsets.offX, firstAlignOffsets.offY, isCalculateScaleCoefficient);
 		this.updateVerticalLevelPositions(childs[0].algorithm);
 		let previousShape = firstShape;
 		this.setVerticalLevelBounds(this.parentNode.node.depth + 1, {l: firstShape.x, t: firstShape.y, b: firstShape.y + firstShape.height, r: firstShape.x + firstShape.width});
@@ -4475,12 +4479,17 @@ function HierarchyAlgorithm() {
 			coefficient: coefficient
 		}
 	}
-	ConnectorAlgorithm.prototype.isDoubleBendConnector = function () {
+	ConnectorAlgorithm.prototype.isDoubleBendHorizontalConnector = function() {
+		const startPoint = this.getPointPosition(true);
+		const endPoint = this.getPointPosition();
+		return startPoint === AscFormat.ParameterVal_connectorPoint_midR && endPoint === AscFormat.ParameterVal_connectorPoint_midL ||
+			startPoint === AscFormat.ParameterVal_connectorPoint_midL && endPoint === AscFormat.ParameterVal_connectorPoint_midR;
+	};
+	ConnectorAlgorithm.prototype.isDoubleBendVerticalConnector = function() {
 		const startPoint = this.getPointPosition(true);
 		const endPoint = this.getPointPosition();
 		return startPoint === AscFormat.ParameterVal_connectorPoint_bCtr && endPoint === AscFormat.ParameterVal_connectorPoint_tCtr ||
-			startPoint === AscFormat.ParameterVal_connectorPoint_midR && endPoint === AscFormat.ParameterVal_connectorPoint_midL ||
-			startPoint === AscFormat.ParameterVal_connectorPoint_midL && endPoint === AscFormat.ParameterVal_connectorPoint_midR;
+			startPoint === AscFormat.ParameterVal_connectorPoint_tCtr && endPoint === AscFormat.ParameterVal_connectorPoint_bCtr;
 	};
 	ConnectorAlgorithm.prototype.getBendPoints = function (startPoint, endPoint) {
 		const isReverse = this.params[AscFormat.Param_type_bendPt] === AscFormat.ParameterVal_bendPoint_end;
@@ -4490,8 +4499,16 @@ function HierarchyAlgorithm() {
 			endPoint = t;
 		}
 		let bendDist;
-		if (this.isDoubleBendConnector()) {
+		if (this.isDoubleBendHorizontalConnector()) {
 			bendDist = this.parentNode.adaptConstr[AscFormat.Constr_type_bendDist];
+			if (bendDist === undefined) {
+				bendDist = Math.abs(startPoint.x - endPoint.x) / 2;
+			}
+		} else if (this.isDoubleBendVerticalConnector()) {
+			bendDist = this.parentNode.adaptConstr[AscFormat.Constr_type_bendDist];
+			if (bendDist === undefined) {
+				bendDist = Math.abs(startPoint.y - endPoint.y) / 2;
+			}
 		}
 		const type = this.getPointPosition(!isReverse);
 		let bendPoints;
