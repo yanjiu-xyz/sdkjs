@@ -205,18 +205,17 @@ CChartsDrawer.prototype =
 	},
 
 	createChartEx: function (seria) {
-		const chartExStorage = { 
-			[AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN] : drawHistogramChart,
-			[AscFormat.SERIES_LAYOUT_WATERFALL] : drawWaterfallChart
+		this.charts = {};
+		switch (seria.layoutId) {
+			case AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN :
+				this.charts[null] = new drawHistogramChart(seria, this)
+				break
+			case AscFormat.SERIES_LAYOUT_WATERFALL :
+				this.charts[null] = new drawWaterfallChart(seria, this)
+				break
+			default :
+				this.charts[null] = null;
 		}
-
-		const chartBuilder = chartExStorage[seria.layoutId];
-
-		if (chartBuilder) {
-			this.charts = {};
-			this.charts[null] = new chartBuilder(seria, this);
-		}
-		return null;
 	},
 
 	init: function(chartSpace) {
@@ -2685,13 +2684,15 @@ CChartsDrawer.prototype =
 		}
 	},
 
-	_chartExHandleAccumulation: function (type, numArr, axisProperties) {
+	_chartExHandleAccumulation: function (type, cachedData, numArr, axisProperties) {
 		if (type != AscFormat.SERIES_LAYOUT_WATERFALL || !numArr || !axisProperties) {
 			return;
 		}
 		axisProperties.val.min = 0;
 		axisProperties.val.max = 0;
+		cachedData.accumulation = [];
 		for (let i = 0; i < numArr.length; i++) {
+			cachedData.accumulation.push(numArr[i].val);
 			axisProperties.val.max += numArr[i].val;
 			axisProperties.cat.scale.push(numArr[i].idx + 1);
 		}
@@ -2705,20 +2706,19 @@ CChartsDrawer.prototype =
 		}
 
 		const plotArea = chartSpace.chart.plotArea;
-		const strSeria = plotArea.plotAreaRegion.series[0];
-		const strCache = strSeria.getCatLit();
-		const seriesLength = plotArea.plotAreaRegion.series.length;
-		let numSeria = !strCache ? plotArea.plotAreaRegion.series[0] : plotArea.plotAreaRegion.series[seriesLength - 1];
-		const numLit = numSeria.getValLit();
+		const seria = plotArea.plotAreaRegion.series[0];
+		const type = seria.layoutId;
+		const strCache = seria.getCatLit(type);
+		const numLit = seria.getValLit();
 
 		//createCache for storing information
-		const createCachedData = function (chart, numSeria) {
-			if (!chart || !numSeria || !numSeria.layoutPr) {
+		const createCachedData = function (chart, seria) {
+			if (!chart || !seria || !seria.layoutPr) {
 				return;
 			}
 			chart.cachedData = {}
-			const binning = numSeria.layoutPr.binning;
-			const aggregation = numSeria.layoutPr.aggregation;
+			const binning = seria.layoutPr.binning;
+			const aggregation = seria.layoutPr.aggregation;
 			if (aggregation) {
 				chart.cachedData.aggregation = {};
 			}
@@ -2728,7 +2728,7 @@ CChartsDrawer.prototype =
 			}
 		}
 		
-		createCachedData(plotArea.plotAreaRegion, numSeria);
+		createCachedData(plotArea.plotAreaRegion, seria);
 
 		if (numLit && numLit.pts && numLit.pts.length > 0 && plotArea.axId && plotArea.axId.length === 2) {
 
@@ -2780,11 +2780,11 @@ CChartsDrawer.prototype =
 				};
 
 				// Histogram has unique labels. Example: [1, 3], (3, 7], ... etc.
-				const isUniqueLabels = (numSeria.layoutId === 1) ? true : false;
+				const isUniqueLabels = (type === 1) ? true : false;
 				calculateExtremums(axisProperties, numArr, isUniqueLabels, this);
-				this._chartExHandleAggregation(numSeria.layoutId, plotArea.plotAreaRegion.cachedData, numArr, strArr, axisProperties);
-				this._chartExHandleBinning(numSeria.layoutId, plotArea.plotAreaRegion.cachedData, numArr, axisProperties);
-				this._chartExHandleAccumulation(numSeria.layoutId, numArr, axisProperties);
+				this._chartExHandleAggregation(type, plotArea.plotAreaRegion.cachedData, numArr, strArr, axisProperties);
+				this._chartExHandleBinning(type, plotArea.plotAreaRegion.cachedData, numArr, axisProperties);
+				this._chartExHandleAccumulation(type, plotArea.plotAreaRegion.cachedData, numArr, axisProperties);
 				handleUserTypedValMinMax(axisProperties, valAxis, this);
 				this._chartExHandleAxesConfigurations(catAxis, valAxis, axisProperties);
 			}
@@ -7654,9 +7654,6 @@ drawHistogramChart.prototype = {
 	},
 
 	draw: function () {
-		const isNumber = function (par) {
-			return (par === 0 || par);
-		};
 		if (!this.cChartDrawer || !this.cChartDrawer.calcProp || !this.cChartDrawer.cShapeDrawer || !this.cChartDrawer.cShapeDrawer.Graphics || !this.cChartDrawer.calcProp.chartGutter) {
 			return;
 		}
@@ -7667,7 +7664,7 @@ drawHistogramChart.prototype = {
 		let rightRect = this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM;
 		let bottomRect = (this.cChartDrawer.calcProp.trueHeight) / this.cChartDrawer.calcProp.pxToMM;
 
-		if (!isNumber(leftRect) || !isNumber(topRect) || !isNumber(rightRect) || !isNumber(bottomRect) ) {
+		if (!AscFormat.isRealNumber(leftRect) || !AscFormat.isRealNumber(topRect) || !AscFormat.isRealNumber(rightRect) || !AscFormat.isRealNumber(bottomRect) ) {
 			return
 		}
 
@@ -7770,13 +7767,14 @@ drawHistogramChart.prototype = {
 			}
 		}
 
-		if (height > h) {
-			centerY = y - height;
-		}
-
 		const top = this.chartProp.chartGutter._top / pxToMm;
 		if (centerY < top) {
 			centerY = top;
+		}
+
+		const bottom = ((this.chartProp.trueHeight + this.chartProp.chartGutter._top) / pxToMm) - height ;
+		if (centerY >= bottom) {
+			centerY = bottom;
 		}
 
 		return {x: centerX, y: centerY};
@@ -7816,30 +7814,29 @@ drawWaterfallChart.prototype = {
 			const catAxis = this.cChartSpace.chart.plotArea.axId[0];
 
 			const catStart = this.chartProp.chartGutter._left;
-			let valStart = this.chartProp.trueHeight + this.chartProp.chartGutter._top;
-			const coeff = catAxis.scaling.gapWidth;
-			const initialBarWidth = (this.chartProp.trueWidth)/ data.length;
-			const barWidth = (initialBarWidth / (1 + coeff));
-			const margin = (initialBarWidth - barWidth) / 2;
-			let sum = 0;
-			let start = (catStart + margin);
-			for (let i = 0; i < data.length; i++) {
-				sum += data[i].val;
-				const startY = this.cChartDrawer.getYPosition(sum, valAxis, true) * this.chartProp.pxToMM;
-				if (this.chartProp && this.chartProp.pxToMM ) {
-					const height = valStart - startY;
-					this.paths[i] = this.cChartDrawer._calculateRect(start, valStart, barWidth, height);
+			let valStart = this.cChartSpace.chart.plotArea.axId ? this.cChartSpace.chart.plotArea.axId[0].posY * this.chartProp.pxToMM : this.chartProp.trueHeight + this.chartProp.chartGutter._top;
+			if (AscFormat.isRealNumber(valStart)) {
+				const coeff = catAxis.scaling.gapWidth;
+				const initialBarWidth = (this.chartProp.trueWidth)/ data.length;
+				const barWidth = (initialBarWidth / (1 + coeff));
+				const margin = (initialBarWidth - barWidth) / 2;
+				let sum = 0;
+				let start = (catStart + margin);
+				for (let i = 0; i < data.length; i++) {
+					sum += data[i].val;
+					const startY = this.cChartDrawer.getYPosition(sum, valAxis, true) * this.chartProp.pxToMM;
+					if (this.chartProp && this.chartProp.pxToMM ) {
+						const height = valStart - startY;
+						this.paths[i] = this.cChartDrawer._calculateRect(start, valStart, barWidth, height);
+					}
+					valStart = startY;		
+					start += (barWidth + margin + margin);
 				}
-				valStart = startY;		
-				start += (barWidth + margin + margin);
 			}
 		}
 	},
 
 	draw: function () {
-		const isNumber = function (par) {
-			return (par === 0 || par);
-		};
 		if (!this.cChartDrawer || !this.cChartDrawer.calcProp || !this.cChartDrawer.cShapeDrawer || !this.cChartDrawer.cShapeDrawer.Graphics || !this.cChartDrawer.calcProp.chartGutter) {
 			return;
 		}
@@ -7850,7 +7847,7 @@ drawWaterfallChart.prototype = {
 		let rightRect = this.cChartDrawer.calcProp.trueWidth / this.cChartDrawer.calcProp.pxToMM;
 		let bottomRect = (this.cChartDrawer.calcProp.trueHeight) / this.cChartDrawer.calcProp.pxToMM;
 
-		if (!isNumber(leftRect) || !isNumber(topRect) || !isNumber(rightRect) || !isNumber(bottomRect) ) {
+		if (!AscFormat.isRealNumber(leftRect) || !AscFormat.isRealNumber(topRect) || !AscFormat.isRealNumber(rightRect) || !AscFormat.isRealNumber(bottomRect) ) {
 			return
 		}
 
@@ -7899,6 +7896,71 @@ drawWaterfallChart.prototype = {
 		}
 		
 		this.cChartDrawer.cShapeDrawer.Graphics.RestoreGrState();
+	}, 
+
+	_calculateDLbl: function (compiledDlb) {
+		if (!this.paths || !this.chartProp) {
+			return;
+		}
+		const path = this.paths[compiledDlb.idx];
+
+		if (!AscFormat.isRealNumber(path)) {
+			return;
+		}
+
+		const oPath = this.cChartSpace.GetPath(path);
+		const oCommand0 = oPath.getCommandByIndex(0);
+		const oCommand1 = oPath.getCommandByIndex(1);
+		const oCommand2 = oPath.getCommandByIndex(2);
+		const oCommand3 = oPath.getCommandByIndex(3);
+
+		const x = oCommand0.X;
+		const y = oCommand0.Y;
+
+		const h = oCommand0.Y - oCommand1.Y;
+		const w = oCommand2.X - oCommand1.X;
+
+		const pxToMm = this.chartProp.pxToMM;
+
+		const width = compiledDlb.extX;
+		const height = compiledDlb.extY;
+
+		let centerX, centerY;
+		// DATA_LABEL_POS_IN_END
+		switch (compiledDlb.dLblPos) {
+			case AscFormat.DATA_LABEL_POS_CTR: {
+				centerX = x + w / 2 - width / 2;
+				centerY = y - h / 2 - height / 2;
+				break;
+			}
+			case AscFormat.DATA_LABEL_POS_IN_BASE: {
+				centerX = x + w / 2 - width / 2;
+				centerY = y - height;
+				break;
+			}
+			case AscFormat.DATA_LABEL_POS_IN_END: {
+				centerX = x + w / 2 - width / 2;
+				centerY = y - h;
+				break;
+			}
+			case AscFormat.DATA_LABEL_POS_OUT_END: {
+				centerX = x + w / 2 - width / 2;
+				centerY = y - h - height;
+				break;
+			}
+		}
+
+		const top = this.chartProp.chartGutter._top / pxToMm;
+		if (centerY < top) {
+			centerY = top;
+		}
+
+		const bottom = ((this.chartProp.trueHeight + this.chartProp.chartGutter._top) / pxToMm) - height ;
+		if (centerY >= bottom) {
+			centerY = bottom;
+		}
+
+		return {x: centerX, y: centerY};
 	}
 }
 
