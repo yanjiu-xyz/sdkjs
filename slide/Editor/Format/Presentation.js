@@ -12033,16 +12033,16 @@ CPresentation.prototype.IsStartedPreview = function () {
 	return false;
 };
 
-CPresentation.prototype.CanMoveAnimation = function (bEarlier) {
+CPresentation.prototype.CanMoveAnimation = function (bEarlier, nPositions) {
 	var oTiming = this.GetCurTiming();
-	return oTiming && oTiming.canMoveAnimation(bEarlier) || false;
+	return oTiming && oTiming.canMoveAnimation(bEarlier, nPositions) || false;
 };
 
-CPresentation.prototype.MoveAnimation = function (bEarlier) {
+CPresentation.prototype.MoveAnimation = function (bEarlier, nPositions) {
 	History.Create_NewPoint(0);
 	var oTiming = this.GetCurTiming();
 	if (oTiming) {
-		oTiming.moveAnimation(bEarlier);
+		oTiming.moveAnimation(bEarlier, nPositions);
 		this.DrawingDocument.OnRecalculatePage(this.CurPage, this.Slides[this.CurPage]);
 		this.Document_UpdateInterfaceState();
 	}

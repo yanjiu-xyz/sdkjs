@@ -4586,13 +4586,13 @@ background-repeat: no-repeat;\
 	{
 		this.WordControl.m_oLogicDocument.SetAnimationProperties(oPr)
 	};
-	asc_docs_api.prototype.asc_canMoveAnimationEarlier = function() 
+	asc_docs_api.prototype.asc_canMoveAnimationEarlier = function(nPositions)
 	{
-		return this.WordControl.m_oLogicDocument.CanMoveAnimation(true);
+		return this.WordControl.m_oLogicDocument.CanMoveAnimation(true, nPositions);
 	};
-	asc_docs_api.prototype.asc_canMoveAnimationLater = function() 
+	asc_docs_api.prototype.asc_canMoveAnimationLater = function(nPositions) 
 	{
-		return this.WordControl.m_oLogicDocument.CanMoveAnimation(false);
+		return this.WordControl.m_oLogicDocument.CanMoveAnimation(false, nPositions);
 	};
 	asc_docs_api.prototype.asc_onShowAnimTab = function(bShow) 
 	{
