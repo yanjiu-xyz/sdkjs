@@ -4814,6 +4814,11 @@
 			callback(null);
 		}
 	};
+	
+	baseEditorsApi.prototype["asc_getUserColorById"] = function(id)
+	{
+		return '#' + ('000000' + AscCommon.getUserColorById(id, null, false, true).toString(16)).substr(-6);
+	};
 
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
