@@ -2092,7 +2092,7 @@
 			const maxNewTmpDelay = this.effect.getFullDelay() + (this.effect.asc_getDuration() - MIN_ALLOWED_DURATION) * repeats;
 
 			if (this.effect.isUntilEffect()) {
-				this.tmpDelay = Math.max(newTmpDelay, 0);
+				this.tmpDelay = Math.max(newTmpDelay, this.effect.getBaseTime());
 			} else {
 				this.tmpDuration = Math.min(Math.max(newTmpDuration, MIN_ALLOWED_DURATION), maxNewTmpDuration);
 				this.tmpDelay = Math.min(Math.max(newTmpDelay, this.effect.getBaseTime()), maxNewTmpDelay);
@@ -2118,10 +2118,6 @@
 	CAnimItem.prototype.handleTimelineScroll = function (step) {
 		if (!this.hitResult) { return }
 
-		// this.tmpDelay = null;
-		// this.tmpDuration = null;
-		// this.tmpRepeatCount = null;
-
 		const repeats = this.getRepeatCount() / 1000;
 		const diff = this.mm_to_ms(step);
 		let newTmpDelay;
@@ -2130,7 +2126,7 @@
 		switch (this.hitResult.type) {
 			case 'center':
 				newTmpDelay = this.tmpDelay + diff;
-				this.tmpDelay = Math.max(newTmpDelay, 0);
+				this.tmpDelay = Math.max(newTmpDelay, this.effect.getBaseTime());
 				break;
 
 			case 'right':
@@ -2147,14 +2143,14 @@
 				newTmpDuration = this.tmpDuration - diff / repeats;
 				newTmpDelay = this.tmpDelay + diff;
 
-				const maxNewTmpDuration = this.effect.getFullDelay() / repeats + this.effect.asc_getDuration();
+				const maxNewTmpDuration = (this.effect.getFullDelay() - this.effect.getBaseTime()) / repeats + this.effect.asc_getDuration();
 				const maxNewTmpDelay = this.effect.getFullDelay() + (this.effect.asc_getDuration() - MIN_ALLOWED_DURATION) * repeats;
 
 				if (this.effect.isUntilEffect()) {
-					this.tmpDelay = Math.max(newTmpDelay, 0);
+					this.tmpDelay = Math.max(newTmpDelay, this.effect.getBaseTime());
 				} else {
 					this.tmpDuration = Math.min(Math.max(newTmpDuration, MIN_ALLOWED_DURATION), maxNewTmpDuration);
-					this.tmpDelay = Math.min(Math.max(newTmpDelay, 0), maxNewTmpDelay);
+					this.tmpDelay = Math.min(Math.max(newTmpDelay, this.effect.getBaseTime()), maxNewTmpDelay);
 				}
 				break;
 
