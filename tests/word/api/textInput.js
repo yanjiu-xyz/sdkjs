@@ -96,7 +96,7 @@ $(function () {
 		assert.strictEqual(GetParagraphText(p), "xx", "Test special case, when added symbols collect to a single grapheme with previous symbols");
 		
 		// Вводим на сингальском 1ෑඒ (1-e-e-t)
-		p = new AscWord.CParagraph(AscTest.DrawingDocument);
+		p = new AscWord.Paragraph();
 		logicDocument.PushToContent(p);
 		AscTest.MoveCursorToParagraph(p);
 		AscTest.EnterText("1");
@@ -139,7 +139,7 @@ $(function () {
 		AscTest.StartTextSpeaker();
 		
 		AscTest.ClearDocument();
-		let p = new AscWord.CParagraph(AscTest.DrawingDocument);
+		let p = new AscWord.Paragraph();
 		logicDocument.AddToContent(0, p);
 		
 		AscTest.EnterText("ABC");
@@ -155,7 +155,7 @@ $(function () {
 		assert.strictEqual(GetParagraphText(p), "AB123QRSC", "Add text '111' and correct it with '123' in collaboration (no sync between actions)");
 		
 		// Вводим на сингальском 1ෑඒ (1-e-e-t)
-		p = new AscWord.CParagraph(AscTest.DrawingDocument);
+		p = new AscWord.Paragraph();
 		logicDocument.PushToContent(p);
 		AscTest.MoveCursorToParagraph(p);
 		AscTest.EnterText("1");
