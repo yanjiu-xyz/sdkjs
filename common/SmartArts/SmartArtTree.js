@@ -4438,7 +4438,31 @@ function HierarchyAlgorithm() {
 		return startPoint === AscFormat.ParameterVal_connectorPoint_bCtr && endPoint === AscFormat.ParameterVal_connectorPoint_tCtr ||
 			startPoint === AscFormat.ParameterVal_connectorPoint_tCtr && endPoint === AscFormat.ParameterVal_connectorPoint_bCtr;
 	};
+	ConnectorAlgorithm.prototype.isWrongBendPoints = function (startPoint, endPoint) {
+		const startPointPosition = this.getPointPosition(true);
+		switch (startPointPosition) {
+			case AscFormat.ParameterVal_connectorPoint_bCtr:
+				if (endPoint.y <= startPoint.y) {
+					return true;
+				}
+				break;
+			case AscFormat.ParameterVal_connectorPoint_midR:
+				if (endPoint.x <= startPoint.x) {
+					return true;
+				}
+				break;
+			case AscFormat.ParameterVal_connectorPoint_midL:
+				if (endPoint.x >= startPoint.x) {
+					return true;
+				}
+				break;
+		}
+		return false;
+	};
 	ConnectorAlgorithm.prototype.getBendPoints = function (startPoint, endPoint) {
+		if (this.isWrongBendPoints(startPoint, endPoint)) {
+			return [];
+		}
 		const isReverse = this.params[AscFormat.Param_type_bendPt] === AscFormat.ParameterVal_bendPoint_end;
 		if (isReverse) {
 			const t = startPoint;
@@ -4712,10 +4736,15 @@ function PresNode(presPoint, contentNode) {
 		shape: null
 	};
 	this.adaptConstr = {};
-	this.nodeConstraints = new Position(this);
+	this.nodeConstraints = null;
+	this.shape = null;
 	this.moveWithNodes = [];
 
 	this.scaleMainConstraintCoefficient = {
+		width: 1,
+		height: 1
+	};
+	this.moveScaleCoefficients = {
 		width: 1,
 		height: 1
 	};
@@ -5246,7 +5275,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 
 		constrObject[constr.type] = value;
 		switch (constr.type) {
-			case AscFormat.Constr_type_b: {
+/*			case AscFormat.Constr_type_b: {
 				const height = constrObject[AscFormat.Constr_type_h] || 0;
 				constrObject[AscFormat.Constr_type_t] = constrObject[AscFormat.Constr_type_b] - height;
 				break;
@@ -5255,7 +5284,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 				const width = constrObject[AscFormat.Constr_type_w] || 0;
 				constrObject[AscFormat.Constr_type_l] = constrObject[AscFormat.Constr_type_r] - width;
 				break;
-			}
+			}*/
 			case AscFormat.Constr_type_begPad:
 			case AscFormat.Constr_type_endPad: {
 				if (constr.refType === AscFormat.Constr_type_connDist) {
@@ -5396,37 +5425,35 @@ PresNode.prototype.addChild = function (ch, pos) {
 	}
 	PresNode.prototype.getConstr = function (type, isAdapt) {
 		const constrObj = isAdapt ? this.adaptConstr : this.constr;
-		if (constrObj[type] === undefined) {
 			switch (type) {
-				case AscFormat.Constr_type_l: {
-					let result = 0;
-					const width = constrObj[AscFormat.Constr_type_w];
-					const right = constrObj[AscFormat.Constr_type_r];
-					if (width !== undefined && right !== undefined) {
-						result = right - width;
-					}
-					constrObj[AscFormat.Constr_type_l] = result;
-					break;
+			case AscFormat.Constr_type_l: {
+				let result = constrObj[AscFormat.Constr_type_l];
+				const right = constrObj[AscFormat.Constr_type_r];
+				if (right !== undefined) {
+					const width = constrObj[AscFormat.Constr_type_w] || 0;
+					result = right - width;
 				}
-				case AscFormat.Constr_type_t: {
-					let result = 0;
-					const height = constrObj[AscFormat.Constr_type_h];
-					const bottom = constrObj[AscFormat.Constr_type_b];
-					if (height !== undefined && bottom !== undefined) {
-						result = bottom - height;
-					}
-					constrObj[AscFormat.Constr_type_t] = result;
-					break;
-				}
-/*				case AscFormat.Constr_type_w: {
-					return this.getParentWidth(isAdapt) || 0;
-				}
-				case AscFormat.Constr_type_h: {
-					return this.getParentHeight(isAdapt) || 0;
-				}*/
-				default:
-					break;
+				constrObj[AscFormat.Constr_type_l] = result;
+				break;
 			}
+			case AscFormat.Constr_type_t: {
+				let result = constrObj[AscFormat.Constr_type_t];
+				const bottom = constrObj[AscFormat.Constr_type_b];
+				if (bottom !== undefined) {
+					const height = constrObj[AscFormat.Constr_type_h] || 0;
+					result = bottom - height;
+				}
+				constrObj[AscFormat.Constr_type_t] = result;
+				break;
+			}
+/*				case AscFormat.Constr_type_w: {
+				return this.getParentWidth(isAdapt) || 0;
+			}
+			case AscFormat.Constr_type_h: {
+				return this.getParentHeight(isAdapt) || 0;
+			}*/
+			default:
+				break;
 		}
 		return constrObj[type] || 0;
 	};
@@ -5548,12 +5575,13 @@ PresNode.prototype.addChild = function (ch, pos) {
 	PresNode.prototype.createHierarchyChildShadowShape = function (isCalculateCoefficients) {
 		const shape = this.getShape(isCalculateCoefficients);
 		shape.initFromShape(this.layoutInfo.shape);
-		if (!this.childs.length) {
+		const childs = this.algorithm.getMainChilds();
+		if (!childs.length) {
 			return;
 		}
-		let bounds = this.childs[0].algorithm.getBounds(isCalculateCoefficients);
-		for (let i = 1; i < this.childs.length; i += 1) {
-			const child = this.childs[i];
+		let bounds = childs[0].algorithm.getBounds(isCalculateCoefficients);
+		for (let i = 1; i < childs.length; i += 1) {
+			const child = childs[i];
 			const algorithm = child.algorithm;
 			bounds = algorithm.getBounds(isCalculateCoefficients, bounds);
 		}
@@ -5586,14 +5614,15 @@ PresNode.prototype.addChild = function (ch, pos) {
 			scaleHeight = temp;
 		}
 
+		const calcL = this.getConstr(AscFormat.Constr_type_l, !isCalculateCoefficients);
 		if (constrObject[AscFormat.Constr_type_l] !== undefined) {
-			x = constrObject[AscFormat.Constr_type_l];
+			x = calcL;
 		} else if (constrObject[AscFormat.Constr_type_ctrX] !== undefined) {
 			x = constrObject[AscFormat.Constr_type_ctrX] - (x + width / 2);
 		}
-
+		const calcT = this.getConstr(AscFormat.Constr_type_t, !isCalculateCoefficients);
 		if (constrObject[AscFormat.Constr_type_t] !== undefined) {
-			y = constrObject[AscFormat.Constr_type_t];
+			y = calcT;
 		} else if (constrObject[AscFormat.Constr_type_ctrY] !== undefined) {
 			y = constrObject[AscFormat.Constr_type_ctrY] - (y + height / 2);
 		}
@@ -5604,19 +5633,27 @@ PresNode.prototype.addChild = function (ch, pos) {
 
 		shape.width = scaleWidth;
 		shape.height = scaleHeight;
-		const parentNode = this.parent;
-		if (parentNode) {
-			const offX = (width - shape.width) / 2;
-			const offY = (height - shape.height) / 2;
-			if (/*shape.x + offX > 0*/true) {
-				shape.x += offX;
-			}
-			if (/*shape.y + offY > 0*/true) {
-				shape.y += offY;
-			}
+		const offX = (width - shape.width) / 2;
+		const offY = (height - shape.height) / 2;
+		shape.x += offX;
+		shape.y += offY;
 
-			for (let i = 0; i < this.moveWithNodes.length; i += 1) {
-				this.moveWithNodes[i].moveTo(offX, offY, isCalculateCoefficients);
+		for (let i = 0; i < this.moveWithNodes.length; i += 1) {
+			const moveNode = this.moveWithNodes[i];
+			const moveConstrObject = isCalculateCoefficients ? moveNode.constr : moveNode.adaptConstr;
+			if (moveNode.isInitShape(isCalculateCoefficients)) {
+				const moveShape = moveNode.getShape(isCalculateCoefficients);
+				const scaleMoveWidth = moveShape.width * widthCoef;
+				const scaleMoveHeight = moveShape.height * heightCoef;
+				const moveOffX = (shape.x + (moveShape.x - x) * widthCoef) - moveShape.x;
+				const moveOffY = (shape.y + (moveShape.y - y) * heightCoef) - moveShape.y;
+				moveShape.width = scaleMoveWidth;
+				moveShape.height = scaleMoveHeight;
+				moveNode.moveTo(moveOffX, moveOffY, isCalculateCoefficients);
+
+
+			} else {
+				moveNode.setMoveScaleCoefficients(widthCoef, heightCoef);
 			}
 		}
 
@@ -5626,6 +5663,13 @@ PresNode.prototype.addChild = function (ch, pos) {
 			x: x,
 			y: y
 		};
+	};
+	PresNode.prototype.isInitShape = function (isCalculateScaleCoefficient) {
+		return !!(isCalculateScaleCoefficient ? this.nodeConstraints : this.shape);
+	};
+	PresNode.prototype.setMoveScaleCoefficients = function (widthCoefficient, heightCoefficient) {
+		this.moveScaleCoefficients.width = widthCoefficient;
+		this.moveScaleCoefficients.height = heightCoefficient;
 	};
 	PresNode.prototype.getChildConstraintBounds = function (isCalculateCoefficients) {
 		if (this.bounds.constraints === null) {
@@ -5709,25 +5753,25 @@ PresNode.prototype.addChild = function (ch, pos) {
 	PresNode.prototype.getHeightScale = function (force) {
 		const node = this.node;
 		if (!force && node.isSibNode()) {
-			return 1;
+			return this.moveScaleCoefficients.height;
 		}
 		const prSet = this.getPrSet();
 		if (prSet) {
-			return prSet.custScaleY || 1;
+			return (prSet.custScaleY || 1) * this.moveScaleCoefficients.height;
 		}
-		return 1;
+		return this.moveScaleCoefficients.height;
 	}
 
 	PresNode.prototype.getWidthScale = function (force) {
 		const node = this.node;
 		if (!force && node.isSibNode()) {
-			return 1;
+			return this.moveScaleCoefficients.width;
 		}
 		const prSet = this.getPrSet();
 		if (prSet) {
-			return prSet.custScaleX || 1;
+			return (prSet.custScaleX || 1) * this.moveScaleCoefficients.width;
 		}
-		return 1;
+		return this.moveScaleCoefficients.width;
 	}
 
 	PresNode.prototype.initRootConstraints = function (smartArt, smartartAlgorithm) {
@@ -5735,8 +5779,6 @@ PresNode.prototype.addChild = function (ch, pos) {
 		this.constr[AscFormat.Constr_type_h] = smartArt.spPr.xfrm.extY;
 		this.adaptConstr[AscFormat.Constr_type_w] = smartArt.spPr.xfrm.extX * smartartAlgorithm.sizeCoefficients.widthCoefficient;
 		this.adaptConstr[AscFormat.Constr_type_h] = smartArt.spPr.xfrm.extY * smartartAlgorithm.sizeCoefficients.heightCoefficient;
-		this.nodeConstraints.width = smartArt.spPr.xfrm.extX;
-		this.nodeConstraints.height = smartArt.spPr.xfrm.extY;
 	};
 	PresNode.prototype.getModelId = function () {
 		return this.presPoint.getModelId();
