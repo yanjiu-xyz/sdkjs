@@ -6828,6 +6828,8 @@ function CAnimationPaneDrawer(page, htmlElement)
 				oThis.list.Control.recalculateChildrenLayout()
 				oThis.list.Control.onUpdate()
 
+				oThis.list.CheckScroll()
+
 				// We need to return true here
 				// to stop comparing the following sequences
 				// if any of them have changed
