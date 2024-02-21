@@ -1696,7 +1696,58 @@
 
 	function CSeqList(oParentControl) {
 		CControlContainer.call(this, oParentControl);
-		// this.children - mainSeq, interactiveSeq 
+		// this.children - mainSeq, interactiveSeq
+
+		// Tmp field for animItems moving up/down
+		this.nPressedAnimItem = null;
+		this.nCurrentAnimItem = null;
+		this.bTopPart = false;
+
+		this.onMouseDownCallback = function (event, x, y) {
+			const oThis = this;
+			this.forEachAnimItem(function (animItem, index) {
+				const hit = animItem.hit(x, y);
+				const hitInEffectBar = animItem.hitInEffectBar(x, y);
+				const hitInMenuButton = animItem.contextMenuButton.hit(x, y);
+				if (hit && !hitInEffectBar && !hitInMenuButton) {
+					oThis.nPressedAnimItem = index;
+				}
+			})
+		}
+		this.onMouseMoveCallback = function (event, x, y) {
+			if (this.nPressedAnimItem === null) { return }
+
+			const oThis = this;
+			this.forEachAnimItem(function (animItem, index) {
+				const hit = animItem.hit(x, y);
+				if (hit) {
+					oThis.nCurrentAnimItem = index;
+					oThis.bTopPart = (hit === 'top')
+				}
+			})
+		}
+		this.onMouseUpCallback = function (event, x, y) {
+			if (this.nCurrentAnimItem === null || this.nPressedAnimItem === null) { return }
+
+			let moves = this.nCurrentAnimItem - this.nPressedAnimItem;
+			if (moves > 0 && this.bTopPart) { moves -= 1; }
+			if (moves < 0 && !this.bTopPart) { moves += 1; }
+
+			if (moves > 0) {
+				if (Asc.editor.asc_canMoveAnimationLater(moves)) {
+					Asc.editor.asc_moveAnimationLater(moves)
+				}
+			}
+
+			if (moves < 0) {
+				if (Asc.editor.asc_canMoveAnimationEarlier(Math.abs(moves))) {
+					Asc.editor.asc_moveAnimationEarlier(Math.abs(moves))
+				}
+			}
+
+			this.nPressedAnimItem = null;
+			this.nCurrentAnimItem = null;
+		}
 	}
 
 	InitClass(CSeqList, CControlContainer, CONTROL_TYPE_SEQ_LIST);
@@ -1751,6 +1802,18 @@
 	CSeqList.prototype.getOutlineColor = function () {
 		return null;
 	};
+	CSeqList.prototype.onMouseDown = function (e, x, y) {
+		if (this.onMouseDownCallback) this.onMouseDownCallback(e, x, y);
+		return CControlContainer.prototype.onMouseDown.call(this, e, x, y);
+	};
+	CSeqList.prototype.onMouseMove = function (e, x, y) {
+		if (this.onMouseMoveCallback) this.onMouseMoveCallback(e, x, y);
+		return CControlContainer.prototype.onMouseMove.call(this, e, x, y);
+	};
+	CSeqList.prototype.onMouseUp = function (e, x, y) {
+		if (this.onMouseUpCallback) this.onMouseUpCallback(e, x, y);
+		return CControlContainer.prototype.onMouseUp.call(this, e, x, y);
+	};
 
 	CSeqList.prototype.onUpdateSeqList = function () {
 		if (Asc.editor.WordControl.m_oAnimPaneApi.list.Control) {
@@ -1784,15 +1847,17 @@
 	};
 
 	CSeqList.prototype.forEachAnimItem = function (callback) {
-		// here: this === Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList;
+		let index = 0;
 		this.children.forEach(function (seq) {
 			seq.animGroups.forEach(function (group) {
 				group.children.forEach(function (animItem) {
-					callback(animItem)
+					callback(animItem, index);
+					index++;
 				})
 			})
 		})
 	}
+
 
 
 	// mainSeq or interactiveSeq
@@ -2362,6 +2427,8 @@
 		graphics.RestoreGrState();
 	};
 	CAnimItem.prototype.hitInEffectBar = function (x, y) {
+		if (!this.hit(x, y)) { return null; }
+
 		const bounds = this.getEffectBarBounds();
 		const isOutOfBorders = x < this.getLeftBorder() || x > this.getRightBorder() || y < bounds.t || y > bounds.b
 		if (isOutOfBorders) { return null; }
@@ -2404,7 +2471,19 @@
 
 		return null;
 	};
+	CAnimItem.prototype.hit = function (x, y) {
+		if (this.parentControl && !this.parentControl.hit(x, y)) { return false; }
 
+		const oInv = this.invertTransform;
+		const tx = oInv.TransformPointX(x, y);
+		const ty = oInv.TransformPointY(x, y);
+
+		if (tx >= 0 && tx <= this.extX) {
+			if (ty >= 0 && ty <= this.extY / 2) { return 'top' }
+			if (ty > this.extY / 2 && ty <= this.extY) { return 'bottom' }
+		}
+		return false;
+	};
 
 	CAnimItem.prototype.setNewEffectParams = function (newDelay, newDuration, newRepeatCount) {
 		const minAllowedDelta = 1 // in ms

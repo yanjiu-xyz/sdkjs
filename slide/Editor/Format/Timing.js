@@ -2266,11 +2266,11 @@
         let newStart = [].concat(aStart);
         let newEnd = [].concat(aEnd);
         if (bEarlier) {
-        for (let nTmpPos = 0; nTmpPos < nPositions; nTmpPos++) {
+            for (let nTmpPos = 0; nTmpPos < nPositions; nTmpPos++) {
                 if (newStart[1] > 1) {
                     newStart[1] = newStart[1] - 1;
                 } else {
-                    newStart[1] = aSeqs[newStart[0] - 1].length - 1;
+                    newStart[1] = aSeqs[newStart[0] - 1].length;
                     newStart[0] = newStart[0] - 1;
                 }
             }

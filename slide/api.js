@@ -4617,13 +4617,13 @@ background-repeat: no-repeat;\
 	{
 		return this.bIsShowAnimTab;
 	};
-	asc_docs_api.prototype.asc_moveAnimationEarlier = function() 
+	asc_docs_api.prototype.asc_moveAnimationEarlier = function(nPositions)
 	{
-		return this.WordControl.m_oLogicDocument.MoveAnimation(true);
+		return this.WordControl.m_oLogicDocument.MoveAnimation(true, nPositions);
 	};
-	asc_docs_api.prototype.asc_moveAnimationLater = function() 
+	asc_docs_api.prototype.asc_moveAnimationLater = function(nPositions)
 	{
-		return this.WordControl.m_oLogicDocument.MoveAnimation(false);
+		return this.WordControl.m_oLogicDocument.MoveAnimation(false, nPositions);
 	};
 	asc_docs_api.prototype.getImageDataFromSelection = function()
 	{
