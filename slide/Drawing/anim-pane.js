@@ -1526,6 +1526,7 @@
 	CTimeline.prototype.onPreviewStop = function() {
 		this.demoTiming = null;
 		this.tmpScrollOffset = null;
+		this.setStartTime(0);
 
 		Asc.editor.WordControl.m_oAnimPaneApi.timeline.OnPaint();
 		Asc.editor.WordControl.m_oAnimPaneApi.list.OnPaint();
@@ -1548,7 +1549,21 @@
 			}
 		})
 
-		this.tmpScrollOffset = ms_to_mm(elapsedTicks + correction);
+		let newTmpScrollOffset = ms_to_mm(elapsedTicks + correction) - ms_to_mm(this.getStartTime() * 1000);
+
+		const rightLimit = this.getRulerEnd() - this.getZeroShift();
+		if (newTmpScrollOffset > rightLimit) {
+			const rulerDur = mm_to_ms(this.getRulerEnd() - this.getRulerStart()) / 1000; // seconds
+			this.setStartTime(this.getStartTime() + rulerDur / 2);
+			newTmpScrollOffset -= ms_to_mm(rulerDur / 2);
+		}
+		const leftLimit = 0;
+		if (newTmpScrollOffset < leftLimit) {
+			this.setStartTime(0);
+			newTmpScrollOffset = 0;
+		}
+
+		this.tmpScrollOffset = newTmpScrollOffset;
 
 		// this.parentControl.drawer == editor.WordControl.m_oAnimPaneApi.timeline
 		Asc.editor.WordControl.m_oAnimPaneApi.timeline.OnPaint();
@@ -1557,6 +1572,10 @@
 		function ms_to_mm(nMilliseconds) {
 			const index = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.timeScaleIndex;
 			return nMilliseconds * TIME_INTERVALS[index] / TIME_SCALES[index] / 1000;
+		}
+		function mm_to_ms(nMillimeters) {
+			const index = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline.timeScaleIndex;
+			return nMillimeters / TIME_INTERVALS[index] * TIME_SCALES[index] * 1000;
 		}
 	}
 
