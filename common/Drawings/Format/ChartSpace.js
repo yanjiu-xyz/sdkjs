@@ -373,7 +373,6 @@ function(window, undefined) {
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetNvGrFrProps] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetThemeOverride] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ShapeSetBDeleted] = CChangesDrawingsBool;
-	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetIsForChartEx] = CChangesDrawingsBool;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetChartData] = CChangesDrawingsObjectNoId;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetParent] = CChangesDrawingsObject;
 	AscDFH.changesFactory[AscDFH.historyitem_ChartSpace_SetChart] = CChangesDrawingsObject;
@@ -536,9 +535,6 @@ function(window, undefined) {
 	};
 	drawingsChangesMap[AscDFH.historyitem_ShapeSetBDeleted] = function (oClass, value) {
 		oClass.bDeleted = value;
-	};
-	drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetIsForChartEx] = function(oClass, value) {
-		oClass.isForChartEx = value;
 	};
 	drawingsChangesMap[AscDFH.historyitem_ChartSpace_SetChartData] = function(oClass, value) {
 		oClass.chartData = value;
@@ -1314,7 +1310,6 @@ function(window, undefined) {
 
 	function CChartSpace() {
 		AscFormat.CGraphicObjectBase.call(this);
-		this.isForChartEx = false;
 		this.nvGraphicFramePr = null;
 		this.chart = null;
 		this.clrMapOvr = null;
@@ -1365,6 +1360,12 @@ function(window, undefined) {
 	}
 
 	AscFormat.InitClass(CChartSpace, AscFormat.CGraphicObjectBase, AscDFH.historyitem_type_ChartSpace);
+	CChartSpace.prototype.getPlotArea = function () {
+		return this.chart.plotArea;
+	};
+	CChartSpace.prototype.isChartEx = function () {
+		return this.getPlotArea().isChartEx();
+	};
 	CChartSpace.prototype.fromOther = function(oChartSpace) {
 		if(oChartSpace.nvGraphicFramePr) {
 			this.setNvSpPr(oChartSpace.nvGraphicFramePr.createDuplicate());
@@ -1440,10 +1441,6 @@ function(window, undefined) {
 		}
 		return this.dataRefs;
 	};
-	CChartSpace.prototype.setIsForChartEx = function(pr) {
-		History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_ChartSpace_SetIsForChartEx, this.isForChartEx, pr));
-		this.isForChartEx = pr;
-	};
 	CChartSpace.prototype.setChartData = function(pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartSpace_SetChartData, this.chartData, pr));
 		this.chartData = pr;
@@ -1460,16 +1457,7 @@ function(window, undefined) {
 		return this.pathMemory.GetPath(index);
 	};
 	CChartSpace.prototype.checkTypeCorrect = function () {
-		if (!this.chart) {
-			return false;
-		}
-		if (!this.chart.plotArea) {
-			return false
-		}
-		if (this.chart.plotArea.charts.length === 0) {
-			return false;
-		}
-		var allSeries = this.getAllSeries();
+		let allSeries = this.getAllSeries();
 		if (allSeries.length === 0) {
 			return false;
 		}
@@ -3478,7 +3466,7 @@ function(window, undefined) {
 		if (this.chart) {
 			if (this.chart.plotArea) {
 				this.chart.plotArea.updatePosition(posX, posY);
-				if (this.chart.plotArea.isForChartEx) {
+				if (this.isChartEx()) {
 					const cachedData = this.chart.plotArea.plotAreaRegion ? this.chart.plotArea.plotAreaRegion.cachedData : null;
 					if (cachedData && cachedData.compiledDlbs) {
 						for (let i = 0; i < cachedData.compiledDlbs.length; i++) {
@@ -3865,8 +3853,7 @@ function(window, undefined) {
 		this.group = group;
 	};
 	CChartSpace.prototype.hasCharts = function () {
-		if (!this.isForChartEx && this.chart && this.chart.plotArea && this.chart.plotArea.charts.length > 0 ||
-			this.isForChartEx && this.chart && this.chart.plotArea) {
+		if (this.isChartEx() || !this.isChartEx() && this.chart && this.chart.plotArea && this.chart.plotArea.charts.length > 0) {
 			return true;
 		}
 		return false;
@@ -3938,7 +3925,7 @@ function(window, undefined) {
 		if (!this.chart || !this.chart.plotArea ) {
 			return true;
 		}
-		if (this.chart.plotArea.isForChartEx) {
+		if (this.isChartEx()) {
 			if (!this.chart.plotArea.plotAreaRegion) {
 				return true;
 			}
@@ -4169,7 +4156,7 @@ function(window, undefined) {
 		}
 	}
 	CChartSpace.prototype.calculateChartExLabelsPositions = function () {
-		if (!this.chart || !this.chart.plotArea || !this.chart.plotArea.isForChartEx || !this.chart.plotArea.plotAreaRegion || !this.chartObj) {
+		if (!this.isChartEx() || !this.chartObj) {
 			return;
 		}
 		this.calculateDLblsForChartEx()
@@ -4362,116 +4349,59 @@ function(window, undefined) {
 		return ret;
 	};
 
-	CChartSpace.prototype.getLabelsForChartExAxis = function (oAxis) {
+
+	CChartSpace.prototype.getValLabels = function(oAxis) {
 		let aStrings = [];
-		if (!this.chart || !this.chart.plotArea) {
-			return [];
-		}
-		if (oAxis.Id === this.chart.plotArea.axId[1].Id) {
-			// for the val axis, regularly get labels
-			aStrings = this.getLabelsForAxis(oAxis, true);
+		let aVal = [].concat(oAxis.scale);
+		let fMultiplier;
+		if (oAxis.dispUnits) {
+			fMultiplier = oAxis.dispUnits.getMultiplier();
 		} else {
-			const strSeria = this.chart.plotArea.plotAreaRegion && this.chart.plotArea.plotAreaRegion.series ? this.chart.plotArea.plotAreaRegion.series[0] : null;
-			if (strSeria) {
-				const cachedData = this.chart.plotArea.plotAreaRegion.cachedData;
-				const type = this.chart.plotArea.plotAreaRegion.series[0].layoutId;
-				if (!cachedData || !oAxis.scale) {
-					return [];
-				}
-	
-				// if data is aggregated then convert array of integers into chars 
-				if (type === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN && cachedData.aggregation) {
-					const strCache = this.chart.plotArea.plotAreaRegion.series ? this.chart.plotArea.plotAreaRegion.series[0].getCatLit() : null;
-					if (strCache && strCache.pts) {
-						const mySet = {};
-						for (let i = 0; i < strCache.pts.length; i++) {
-							// If no labels exist, then excel just leaves empty catAxis
-							const key = strCache.pts[i].val;
-							if (!mySet.hasOwnProperty(key)) {
-								mySet[key] = true;
-								aStrings.push(key);
-							}
-						}
-					} else {
-						aStrings.push('');
-					}
-				} else if (type === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN && cachedData.binning) {
-					// obtain properly formated array of integers
-					const bStrings = this.getLabelsForAxis(oAxis, true);
-					const binning = cachedData.binning;
-		
-					//convert array of formated strings into ranges
-					if (bStrings && bStrings.length != 0) {
-						// ranges always start with '[' and end with ']', however between they can have '(' and ')'
-						let start = '[';
-						let end = binning.intervalClosed === "r" ? ')' : ']';
-						// user can manually set minimum and maximum, therefore alternative start and end needed
-						const alternativeStart = binning.intervalClosed === 'r' ? '<' : '≤';
-						const alternativeEnd = binning.intervalClosed === 'r' ? '≥' : '>';
-		
-						const isAlternativeStartExist = binning.underflow === 0 || binning.underflow ? true : false;
-						const isAlternativeEndExist = binning.overflow === 0 || binning.overflow ? true : false;
-						// first check is alternativeStart exist, and append alternativeStartSign with value, 
-						// also because start not the first anymore, we can change its value from '[' to '(';
-						if (isAlternativeStartExist) {
-							aStrings.push(alternativeStart + bStrings[0]);
-							start = '(';
-						}
-						// if element not the first one, then change value of start
-						// if element is last one and no alternativeEnd exist, then change value of end 
-						for (let i = 0; i < (bStrings.length - 1); i++) {
-							if (i === 1 && start != "(" && binning.intervalClosed !== 'r') {
-								start = '(';
-							}
-		
-							if (i === (bStrings.length - 2) && !isAlternativeEndExist && binning.intervalClosed === "r") {
-								end = ']';
-							}
-							aStrings.push(start + bStrings[i] + ", " + bStrings[i + 1] + end)
-						}
-						// add alternativeEnd if exist
-						if (isAlternativeEndExist) {
-							const val = (bStrings.length > 1) ? bStrings[bStrings.length - 1] : binning.overflow;
-							aStrings.push(alternativeEnd +  " " + val);
-						}
-					}
-				} else if (type === AscFormat.SERIES_LAYOUT_WATERFALL) {
-					const strCache = this.chart.plotArea.plotAreaRegion.series ? this.chart.plotArea.plotAreaRegion.series[0].getCatLit(type) : null;
-					if (strCache) {
-						for ( let i = 0; i < strCache.pts.length; i++) {
-							aStrings.push(strCache.pts[i].val);
-						}
-					} else {
-						aStrings = this.getLabelsForAxis(oAxis, true);
-					}
-				}
-			}
+			fMultiplier = 1.0;
 		}
-		return (aStrings);
+		let oNumFormat = null;
+		let sFormatCode = oAxis.getFormatCode();
+		if (typeof sFormatCode === "string") {
+			oNumFormat = oNumFormatCache.get(sFormatCode);
+		}
+		if (!oNumFormat) {
+			oNumFormat = oNumFormatCache.get("General");
+		}
+		for (let t = 0; t < aVal.length; ++t) {
+			let fCalcValue = aVal[t] * fMultiplier;
+			let sRichValue;
+			if (oNumFormat) {
+				sRichValue = oNumFormat.formatToChart(fCalcValue);
+			} else {
+				sRichValue = fCalcValue + "";
+			}
+			aStrings.push(sRichValue);
+		}
+		return aStrings;
 	};
 
-	CChartSpace.prototype.getLabelsForAxis = function (oAxis, isChartEx) {
+	CChartSpace.prototype.getLabelsForAxis = function (oAxis) {
 		let aStrings = [];
-		var oPlotArea = this.chart.plotArea, i;
-		var nAxisType = oAxis.getObjectType();
-		var oSeries = oPlotArea.getSeriesWithSmallestIndexForAxis(oAxis);
-		var bCat = false;
+		let oPlotArea = this.chart.plotArea, i;
+		let nAxisType = oAxis.getObjectType();
+		let oSeries = oPlotArea.getSeriesWithSmallestIndexForAxis(oAxis);
+		let bCat = false;
 		switch (nAxisType) {
 			case AscDFH.historyitem_type_DateAx:
 			case AscDFH.historyitem_type_CatAx: {
 				//расчитаем подписи для горизонтальной оси
-				var nPtsLen = 0;
-				var aScale = [];
+				let nPtsLen = 0;
+				let aScale = [];
 				if (Array.isArray(oAxis.scale)) {
 					aScale = aScale.concat(oAxis.scale);
 
 				}
 				if (oSeries && oSeries.cat) {
-					var oCat = oSeries.cat;
-					var oLit = oCat.getLit();
+					let oCat = oSeries.cat;
+					let oLit = oCat.getLit();
 					if (oLit) {
 						bCat = true;
-						var oLitFormat = null, oPtFormat = null;
+						let oLitFormat = null, oPtFormat = null;
 						if (typeof oLit.formatCode === "string" && oLit.formatCode.length > 0) {
 							oLitFormat = oNumFormatCache.get(oLit.formatCode);
 						}
@@ -4480,15 +4410,15 @@ function(window, undefined) {
 						}
 						nPtsLen = oLit.ptCount;
 
-						var bTickSkip = AscFormat.isRealNumber(oAxis.tickLblSkip) || nPtsLen >= SKIP_LBL_LIMIT;
-						var nTickLblSkip = AscFormat.isRealNumber(oAxis.tickLblSkip) ? oAxis.tickLblSkip : (nPtsLen < SKIP_LBL_LIMIT ? 1 : (Math.floor(nPtsLen / SKIP_LBL_LIMIT) + 1));
+						let bTickSkip = AscFormat.isRealNumber(oAxis.tickLblSkip) || nPtsLen >= SKIP_LBL_LIMIT;
+						let nTickLblSkip = AscFormat.isRealNumber(oAxis.tickLblSkip) ? oAxis.tickLblSkip : (nPtsLen < SKIP_LBL_LIMIT ? 1 : (Math.floor(nPtsLen / SKIP_LBL_LIMIT) + 1));
 						let nLastNoEmptyLblIdx = -1;
 						for (i = 0; i < nPtsLen; ++i) {
 							if (!bTickSkip ||
 								nLastNoEmptyLblIdx === -1 || ((i - nLastNoEmptyLblIdx) >= nTickLblSkip)) {
-								var oPt = oLit.getPtByIndex(i);
+								let oPt = oLit.getPtByIndex(i);
 								if (oPt) {
-									var sPt;
+									let sPt;
 									if (typeof oPt.formatCode === "string" && oPt.formatCode.length > 0) {
 										oPtFormat = oNumFormatCache.get(oPt.formatCode);
 										if (oPtFormat) {
@@ -4514,12 +4444,12 @@ function(window, undefined) {
 						}
 					}
 				}
-				var nPtsLength = 0;
-				var aChartsForAxis = oAxis.getAllCharts();
+				let nPtsLength = 0;
+				let aChartsForAxis = oAxis.getAllCharts();
 				for (i = 0; i < aChartsForAxis.length; ++i) {
-					var oChart = aChartsForAxis[i];
-					for (var j = 0; j < oChart.series.length; ++j) {
-						var oCurPts = null;
+					let oChart = aChartsForAxis[i];
+					for (let j = 0; j < oChart.series.length; ++j) {
+						let oCurPts = null;
 						oSeries = oChart.series[j];
 						if (oSeries.val) {
 							if (oSeries.val.numRef && oSeries.val.numRef.numCache) {
@@ -4533,19 +4463,19 @@ function(window, undefined) {
 						}
 					}
 				}
-				var nCrossBetween = this.getAxisCrossType(oAxis);
+				let nCrossBetween = this.getAxisCrossType(oAxis);
 				if (nCrossBetween === AscFormat.CROSS_BETWEEN_MID_CAT && nPtsLength < 2) {
 					nPtsLength = 2;
 				}
-				var oLitFormatDate = null;
+				let oLitFormatDate = null;
 				if (nAxisType === AscDFH.historyitem_type_DateAx && oAxis.numFmt && typeof oAxis.numFmt.formatCode === "string" && oAxis.numFmt.formatCode.length > 0) {
 					oLitFormatDate = oNumFormatCache.get(oAxis.numFmt.formatCode);
 				}
 
 				if (nPtsLength > aStrings.length) {
-					bTickSkip = AscFormat.isRealNumber(oAxis.tickLblSkip) || nPtsLength >= SKIP_LBL_LIMIT;
-					nTickLblSkip = AscFormat.isRealNumber(oAxis.tickLblSkip) ? oAxis.tickLblSkip : (nPtsLength < SKIP_LBL_LIMIT ? 1 : (Math.floor(nPtsLength / SKIP_LBL_LIMIT) + 1));
-					var nStartLength = aStrings.length;
+					let bTickSkip = AscFormat.isRealNumber(oAxis.tickLblSkip) || nPtsLength >= SKIP_LBL_LIMIT;
+					let nTickLblSkip = AscFormat.isRealNumber(oAxis.tickLblSkip) ? oAxis.tickLblSkip : (nPtsLength < SKIP_LBL_LIMIT ? 1 : (Math.floor(nPtsLength / SKIP_LBL_LIMIT) + 1));
+					let nStartLength = aStrings.length;
 					for (i = aStrings.length; i < nPtsLength; ++i) {
 						if (!bCat && (!bTickSkip || (((nStartLength + i) % nTickLblSkip) === 0))) {
 							if (oLitFormatDate) {
@@ -4574,32 +4504,8 @@ function(window, undefined) {
 
 				break;
 			}
-			case (AscDFH.historyitem_type_ValAx): {
-				var aVal = [].concat(oAxis.scale);
-				var fMultiplier;
-				if (oAxis.dispUnits) {
-					fMultiplier = oAxis.dispUnits.getMultiplier();
-				} else {
-					fMultiplier = 1.0;
-				}
-				var oNumFormat = null;
-				var sFormatCode = oAxis.getFormatCode();
-				if (typeof sFormatCode === "string") {
-					oNumFormat = oNumFormatCache.get(sFormatCode);
-				}
-				if (!oNumFormat) {
-					oNumFormat = oNumFormatCache.get("General");
-				}
-				for (var t = 0; t < aVal.length; ++t) {
-					var fCalcValue = aVal[t] * fMultiplier;
-					var sRichValue;
-					if (oNumFormat) {
-						sRichValue = oNumFormat.formatToChart(fCalcValue);
-					} else {
-						sRichValue = fCalcValue + "";
-					}
-					aStrings.push(sRichValue);
-				}
+			case AscDFH.historyitem_type_ValAx: {
+				aStrings = this.getValLabels(oAxis);
 				break;
 			}
 			case AscDFH.historyitem_type_SerAx: {
@@ -4612,28 +4518,91 @@ function(window, undefined) {
 
 				break;
 			}
-		}
-
-		if (isChartEx) {
-			var aVal = [].concat(oAxis.scale);
-			var fMultiplier = 1.0;
-			var oNumFormat = null;
-			var sFormatCode = oAxis.getFormatCode();
-			if (typeof sFormatCode === "string") {
-				oNumFormat = oNumFormatCache.get(sFormatCode);
-			}
-			if (!oNumFormat) {
-				oNumFormat = oNumFormatCache.get("General");
-			}
-			for (var t = 0; t < aVal.length; ++t) {
-				var fCalcValue = aVal[t] * fMultiplier;
-				var sRichValue;
-				if (oNumFormat) {
-					sRichValue = oNumFormat.formatToChart(fCalcValue);
-				} else {
-					sRichValue = fCalcValue + "";
+			case AscDFH.historyitem_type_Axis: {
+				if (!this.chart || !this.chart.plotArea) {
+					return [];
 				}
-				aStrings.push(sRichValue);
+				if (oAxis.isValuesAxis()) {
+					// for the val axis, regularly get labels
+					aStrings = this.getValLabels(oAxis);
+				} else {
+					const strSeria = this.chart.plotArea.plotAreaRegion && this.chart.plotArea.plotAreaRegion.series ? this.chart.plotArea.plotAreaRegion.series[0] : null;
+					if (strSeria) {
+						const cachedData = this.chart.plotArea.plotAreaRegion.cachedData;
+						const type = this.chart.plotArea.plotAreaRegion.series[0].layoutId;
+						if (!cachedData || !oAxis.scale) {
+							return [];
+						}
+
+						// if data is aggregated then convert array of integers into chars
+						if (type === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN && cachedData.aggregation) {
+							const strCache = this.chart.plotArea.plotAreaRegion.series ? this.chart.plotArea.plotAreaRegion.series[0].getCatLit() : null;
+							if (strCache && strCache.pts) {
+								const mySet = {};
+								for (let i = 0; i < strCache.pts.length; i++) {
+									// If no labels exist, then excel just leaves empty catAxis
+									const key = strCache.pts[i].val;
+									if (!mySet.hasOwnProperty(key)) {
+										mySet[key] = true;
+										aStrings.push(key);
+									}
+								}
+							} else {
+								aStrings.push('');
+							}
+						} else if (type === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN && cachedData.binning) {
+							// obtain properly formated array of integers
+							const bStrings = this.getValLabels(oAxis);
+							const binning = cachedData.binning;
+
+							//convert array of formated strings into ranges
+							if (bStrings && bStrings.length != 0) {
+								// ranges always start with '[' and end with ']', however between they can have '(' and ')'
+								let start = '[';
+								let end = binning.intervalClosed === "r" ? ')' : ']';
+								// user can manually set minimum and maximum, therefore alternative start and end needed
+								const alternativeStart = binning.intervalClosed === 'r' ? '<' : '≤';
+								const alternativeEnd = binning.intervalClosed === 'r' ? '≥' : '>';
+
+								const isAlternativeStartExist = binning.underflow === 0 || binning.underflow ? true : false;
+								const isAlternativeEndExist = binning.overflow === 0 || binning.overflow ? true : false;
+								// first check is alternativeStart exist, and append alternativeStartSign with value,
+								// also because start not the first anymore, we can change its value from '[' to '(';
+								if (isAlternativeStartExist) {
+									aStrings.push(alternativeStart + bStrings[0]);
+									start = '(';
+								}
+								// if element not the first one, then change value of start
+								// if element is last one and no alternativeEnd exist, then change value of end
+								for (let i = 0; i < (bStrings.length - 1); i++) {
+									if (i === 1 && start != "(" && binning.intervalClosed !== 'r') {
+										start = '(';
+									}
+
+									if (i === (bStrings.length - 2) && !isAlternativeEndExist && binning.intervalClosed === "r") {
+										end = ']';
+									}
+									aStrings.push(start + bStrings[i] + ", " + bStrings[i + 1] + end)
+								}
+								// add alternativeEnd if exist
+								if (isAlternativeEndExist) {
+									const val = (bStrings.length > 1) ? bStrings[bStrings.length - 1] : binning.overflow;
+									aStrings.push(alternativeEnd +  " " + val);
+								}
+							}
+						} else if (type === AscFormat.SERIES_LAYOUT_WATERFALL) {
+							const strCache = this.chart.plotArea.plotAreaRegion.series ? this.chart.plotArea.plotAreaRegion.series[0].getCatLit(type) : null;
+							if (strCache) {
+								for ( let i = 0; i < strCache.pts.length; i++) {
+									aStrings.push(strCache.pts[i].val);
+								}
+							} else {
+								aStrings = this.getValLabels(oAxis);
+							}
+						}
+					}
+				}
+				break;
 			}
 		}
 		return aStrings;
@@ -4642,10 +4611,9 @@ function(window, undefined) {
 		if (!oAxis) {
 			return;
 		}
-
 		let oAxisGrid = new CAxisGrid();
 		oAxis.grid = oAxisGrid;
-		let aStrings = (this.chart && this.chart.plotArea && this.chart.plotArea.isForChartEx) ? this.getLabelsForChartExAxis(oAxis) : this.getLabelsForAxis(oAxis);
+		let aStrings = this.getLabelsForAxis(oAxis);
 		if(oAxis.isRadarCategories()) {
 			let nIntervalsCount = aStrings.length;
 			oAxisGrid.nCount = nIntervalsCount;
@@ -4738,7 +4706,7 @@ function(window, undefined) {
 		}
 		let bCorrected = false;
 		let fL = oRect.x, fT = oRect.y, fR = oRect.x + oRect.w, fB = oRect.y + oRect.h;
-		const isChartEX = this.chart && this.chart.plotArea && this.chart.plotArea.isForChartEx ? true : false;
+		const isChartEX = this.isChartEx();
 		let fHorPadding = 0.0;
 		let fVertPadding = 0.0;
 		let fHorInterval = null;
@@ -5212,7 +5180,7 @@ function(window, undefined) {
 			var aSeriesAxes = [];
 			var dSeriesLabelsWidth = 0;
 			var oSetAxis;
-			if (this.chart.plotArea.isForChartEx) {
+			if (this.isChartEx()) {
 				aAllAxes.push([this.chart.plotArea.axId[0], this.chart.plotArea.axId[1]]);
 			} else {
 				while (aAxes.length > 0) {
@@ -5760,25 +5728,29 @@ function(window, undefined) {
 	};
 	CChartSpace.prototype.recalculateLegend = function () {
 		if (this.chart && this.chart.legend) {
-			var parents = this.getParentObjects();
-			var RGBA = {R: 0, G: 0, B: 0, A: 255};
-			var legend = this.chart.legend;
-			var arr_str_labels = [], i, j;
-			var calc_entryes = legend.calcEntryes;
+			let aCharts = this.chart.plotArea.charts;
+			if(aCharts.length === 0) {
+				return;
+			}
+			let parents = this.getParentObjects();
+			let RGBA = {R: 0, G: 0, B: 0, A: 255};
+			let legend = this.chart.legend;
+			let arr_str_labels = [], i, j;
+			let calc_entryes = legend.calcEntryes;
 			calc_entryes.length = 0;
-			var series;
-			var legend_pos = c_oAscChartLegendShowSettings.right;
+			let series;
+			let legend_pos = c_oAscChartLegendShowSettings.right;
 			if (AscFormat.isRealNumber(legend.legendPos)) {
 				legend_pos = legend.legendPos;
 			}
-			var aCharts = this.chart.plotArea.charts;
-			var oTypedChart;
+
+			let oTypedChart;
 			//Order series for the legend
-			var aOrderedSeries = [];
-			var aChartSeries;
-			var nChart;
-			var bStraightOrder;
-			var bVericalLegend = false;
+			let aOrderedSeries = [];
+			let aChartSeries;
+			let nChart;
+			let bStraightOrder;
+			let bVericalLegend = false;
 			if (aCharts.length === 1 && (legend_pos === c_oAscChartLegendShowSettings.left ||
 				legend_pos === c_oAscChartLegendShowSettings.right ||
 				legend_pos === c_oAscChartLegendShowSettings.leftOverlay ||
@@ -5822,24 +5794,21 @@ function(window, undefined) {
 				}
 			}
 			series = aOrderedSeries;
-			var calc_entry, union_marker, entry;
-			var max_width = 0, cur_width, max_font_size = 0, cur_font_size, ser, b_line_series;
-			var b_no_line_series = false;
+			let calc_entry, union_marker, entry;
+			let max_width = 0, cur_width, max_font_size = 0, cur_font_size, ser, b_line_series;
+			let b_no_line_series = false;
 			this.chart.legend.chart = this;
 			var b_scatter_no_line = false;
 			/*(this.chart.plotArea.charts[0].getObjectType() === AscDFH.historyitem_type_ScatterChart &&
              (this.chart.plotArea.charts[0].scatterStyle === AscFormat.SCATTER_STYLE_MARKER || this.chart.plotArea.charts[0].scatterStyle === AscFormat.SCATTER_STYLE_NONE));  */
 			this.legendLength = null;
 
-			var oFirstChart = aCharts[0];
-			if (!oFirstChart) {
-				console.log("TODO: oFirstChart === undefined")
-			}
-			var bNoPieChart = oFirstChart && (oFirstChart.getObjectType() !== AscDFH.historyitem_type_PieChart && oFirstChart.getObjectType() !== AscDFH.historyitem_type_DoughnutChart);
-			var bSurfaceChart = oFirstChart && (oFirstChart.getObjectType() === AscDFH.historyitem_type_SurfaceChart);
+			const oFirstChart = aCharts[0];
+			const bNoPieChart = oFirstChart && (oFirstChart.getObjectType() !== AscDFH.historyitem_type_PieChart && oFirstChart.getObjectType() !== AscDFH.historyitem_type_DoughnutChart);
+			const bSurfaceChart = oFirstChart && (oFirstChart.getObjectType() === AscDFH.historyitem_type_SurfaceChart);
 			const bRadarChart = oFirstChart && (oFirstChart.getObjectType() === AscDFH.historyitem_type_RadarChart);
 
-			var bSeriesLegend = aCharts.length > 1 || (bNoPieChart && (!(oFirstChart.varyColors && series.length === 1) || bSurfaceChart || bRadarChart));
+			let bSeriesLegend = aCharts.length > 1 || (bNoPieChart && (!(oFirstChart.varyColors && series.length === 1) || bSurfaceChart || bRadarChart));
 			if (bSeriesLegend) {
 				if (bSurfaceChart) {
 					this.legendLength = this.chart.plotArea.charts[0].compiledBandFormats.length;
@@ -7567,7 +7536,7 @@ function(window, undefined) {
 				}
 			}
 
-			if(this.isForChartEx) {
+			if(this.isChartEx()) {
 				let oPlotAreaRegion = this.chart.plotArea.plotAreaRegion;
 				if(oPlotAreaRegion) {
 					defaultCalculateSeriesColors(oPlotAreaRegion.series);
@@ -8473,7 +8442,7 @@ function(window, undefined) {
 				// graphics._l(oChartSize.startX + 0, oChartSize.startY + oChartSize.h);
 				// graphics._z();
 				// graphics.ds();
-				if (this.chart.plotArea.isForChartEx) {
+				if (this.isChartEx()) {
 					const cachedData = this.chart.plotArea.plotAreaRegion ? this.chart.plotArea.plotAreaRegion.cachedData : null;
 					if (cachedData && cachedData.compiledDlbs) {
 						for (let i = 0; i < cachedData.compiledDlbs.length; i++) {

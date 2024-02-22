@@ -191,7 +191,6 @@ $(function() {
 			let componentClass = AscFormat[componentClassName];
 			if (componentClass) {
 				let componentObject = new componentClass(api);
-				componentObject.isForChartEx = true;
 				QUnit.test(testName, function (assert) {
 					testFileSerializeUseStringsCompare(assert, componentObject, fileContent, ignoreQuotes, doRemoveLineBreaks);
 				});

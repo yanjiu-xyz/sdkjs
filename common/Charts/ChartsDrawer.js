@@ -231,7 +231,7 @@ CChartsDrawer.prototype =
 		//draw chart
 		let plotArea = chartSpace.chart.plotArea;
 		let newChart;
-		if (plotArea.isForChartEx) {
+		if (plotArea.isChartEx()) {
 			const series = plotArea.plotAreaRegion.series;
 			for (let i = 0; i < series.length; i++) {
 				this.createChartEx(series[i]);
@@ -316,7 +316,7 @@ CChartsDrawer.prototype =
 				return;
 			}
 
-			if (chartSpace.chart.plotArea.isForChartEx) {
+			if (chartSpace.isChartEx()) {
 				for (i in t.charts) {
 					t.charts[i].draw();
 				}
@@ -1159,7 +1159,7 @@ CChartsDrawer.prototype =
 		} else if(horizontalAxis instanceof AscFormat.CValAx) {
 			crossBetween = horizontalAxis.crossBetween;
 		}
-		const isChartEx = chartSpace && chartSpace.chart && chartSpace.chart.plotArea && chartSpace.chart.plotArea.isForChartEx;
+		const isChartEx = chartSpace.isChartEx();
 		if (horizontalAxis && horizontalAxis.xPoints && horizontalAxis.xPoints.length && this.calcProp.widthCanvas != undefined) {
 			if (horizontalAxis instanceof AscFormat.CValAx) {
 				if (!horizontalAxis.isReversed()) {
@@ -1293,7 +1293,7 @@ CChartsDrawer.prototype =
 		if(verticalAxis && verticalAxis.yPoints && verticalAxis.yPoints.length) {
 			let orientationVerAxis = !verticalAxis.isReversed();
 			diffPoints = 0;
-			const isChartEx = (chartSpace && chartSpace.chart && chartSpace.chart.plotArea) ? chartSpace.chart.plotArea.isForChartEx : false;
+			const isChartEx = chartSpace.isChartEx();
 			if((verticalAxis instanceof AscFormat.CDateAx || verticalAxis instanceof AscFormat.CCatAx)&& crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN) {
 				diffPoints = Math.abs((verticalAxis.interval) / 2);
 			}
@@ -1341,7 +1341,7 @@ CChartsDrawer.prototype =
 		var priorityAxis = [];
 
 		let charts = chartSpace.chart.plotArea.charts;
-		const isChartEx = (chartSpace && chartSpace.chart && chartSpace.chart.plotArea) ? chartSpace.chart.plotArea.isForChartEx : false;
+		const isChartEx = chartSpace.isChartEx();
 		if (isChartEx) {
 			var axId = chartSpace.chart.plotArea.axId;
 			for(var i = 0; i < axId.length; i++) {
@@ -2463,7 +2463,7 @@ CChartsDrawer.prototype =
 
 
 		if (!notCalcExtremum) {
-			const isChartEx = (chartSpace && chartSpace.chart && chartSpace.chart.plotArea) ? chartSpace.chart.plotArea.isForChartEx : false;
+			const isChartEx = chartSpace.isChartEx();
 			if (!isChartEx) {
 				this.calcProp.type = this._getChartType(chartSpace.chart.plotArea.chart);
 				this.calcProp.subType = this.getChartGrouping(chartSpace.chart.plotArea.chart);
@@ -3278,7 +3278,7 @@ CChartsDrawer.prototype =
 				k = Math.floor((i + j) / 2);
 
 				if (val >= yPoints[k].val && yPoints[k + 1] && val <= yPoints[k + 1].val) {
-					const isChartEx = (this.cChartSpace && this.cChartSpace.chart && this.cChartSpace.chart.plotArea) ? this.cChartSpace.chart.plotArea.isForChartEx : false;
+					const isChartEx = this.cChartSpace.isChartEx();
 					result = getResult(k, isChartEx);
 					break;
 				} else if (val < yPoints[k].val) {

@@ -3519,7 +3519,7 @@ function CBinaryFileWriter()
             }
             case AscDFH.historyitem_type_ChartSpace:
             {
-                if(grObj.isForChartEx)
+                if(grObj.isChartEx())
                 {
                     oThis.WriteRecord2(7, grObj, oThis.WriteChart2);
                 }
@@ -3567,7 +3567,7 @@ function CBinaryFileWriter()
         oThis.UseContinueWriter++;
 
         var oBinaryChartWriter = new AscCommon.BinaryChartWriter(_memory);
-        if (grObj.isForChartEx) {
+        if (grObj.isChartEx()) {
             oBinaryChartWriter.WriteCT_ChartExSpace(grObj);
         } else {
             oBinaryChartWriter.WriteCT_ChartSpace(grObj);
