@@ -1713,6 +1713,7 @@
 					oThis.nPressedSlot = index + seqIndex;
 				}
 			})
+			this.onUpdate();
 		}
 		this.onMouseMoveCallback = function (event, x, y) {
 			if (this.nPressedSlot === null) { return }
@@ -1725,28 +1726,30 @@
 					oThis.bTopPart = (hit === 'top');
 				}
 			})
+			this.onUpdate();
 		}
 		this.onMouseUpCallback = function (event, x, y) {
-			if (this.nCurrentSlot === null || this.nPressedSlot === null) { return }
+			if (this.nCurrentSlot !== null && this.nPressedSlot !== null) {
+				let moves = this.nCurrentSlot - this.nPressedSlot;
+				if (moves > 0 && this.bTopPart) { moves -= 1; }
+				if (moves < 0 && !this.bTopPart) { moves += 1; }
 
-			let moves = this.nCurrentSlot - this.nPressedSlot;
-			if (moves > 0 && this.bTopPart) { moves -= 1; }
-			if (moves < 0 && !this.bTopPart) { moves += 1; }
-
-			if (moves > 0) {
-				if (Asc.editor.asc_canMoveAnimationLater(moves)) {
-					Asc.editor.asc_moveAnimationLater(moves)
+				if (moves > 0) {
+					if (Asc.editor.asc_canMoveAnimationLater(moves)) {
+						Asc.editor.asc_moveAnimationLater(moves)
+					}
 				}
-			}
 
-			if (moves < 0) {
-				if (Asc.editor.asc_canMoveAnimationEarlier(Math.abs(moves))) {
-					Asc.editor.asc_moveAnimationEarlier(Math.abs(moves))
+				if (moves < 0) {
+					if (Asc.editor.asc_canMoveAnimationEarlier(Math.abs(moves))) {
+						Asc.editor.asc_moveAnimationEarlier(Math.abs(moves))
+					}
 				}
 			}
 
 			this.nPressedSlot = null;
 			this.nCurrentSlot = null;
+			this.onUpdate();
 		}
 	}
 
@@ -1781,6 +1784,48 @@
 	CSeqList.prototype.draw = function (graphics) {
 		if (!CControlContainer.prototype.draw.call(this, graphics)) { return false; }
 
+		// Draw horizontal line when animItem is moving
+		if (this.nCurrentSlot !== null) {
+			const oThis = this;
+			let currentAnimItem;
+			this.forEachAnimItem(function(animItem, index, groupIndex, seqIndex) {
+				if (index + seqIndex === oThis.nCurrentSlot) currentAnimItem = animItem;
+			})
+
+			const transformX = function (x, y) { return graphics.m_oFullTransform.TransformPointX(x, y) + 0.5 >> 0; }
+			const transformY = function (x, y) { return graphics.m_oFullTransform.TransformPointY(x, y) + 0.5 >> 0; }
+
+			const yCord = this.bTopPart ? currentAnimItem.bounds.t : currentAnimItem.bounds.b;
+			const triangle_diagonal_half = 1; // mm
+
+			const outerLeft = transformX(this.getLeft(), yCord);
+			const innerLeft = transformX(this.getLeft() + triangle_diagonal_half, yCord);
+			const innerRight = transformX(this.getRight() - triangle_diagonal_half, yCord);
+			const outerRight = transformX(this.getRight(), yCord);
+			const top = transformY(0, yCord - triangle_diagonal_half);
+			const center = transformY(0, yCord);
+			const bottom = transformY(0, yCord + triangle_diagonal_half);
+
+			graphics.SaveGrState();
+			graphics.RemoveClipRect();
+
+			let ctx = graphics.m_oContext;
+			ctx.beginPath();
+			ctx.moveTo(innerLeft, center);
+			ctx.lineTo(outerLeft, top);
+			ctx.lineTo(outerLeft, bottom);
+			ctx.lineTo(innerLeft, center);
+			ctx.lineTo(innerRight, center);
+			ctx.lineTo(outerRight, top);
+			ctx.lineTo(outerRight, bottom);
+			ctx.lineTo(innerRight, center);
+			graphics.df();
+			graphics.ds();
+
+			graphics.RestoreGrState();
+		}
+
+		// Draw preview line
 		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline;
 		if (timeline.tmpScrollOffset !== null) {
 			graphics.SaveGrState();
