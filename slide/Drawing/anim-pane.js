@@ -1699,37 +1699,37 @@
 		// this.children - mainSeq, interactiveSeq
 
 		// Tmp field for animItems moving up/down
-		this.nPressedAnimItem = null;
-		this.nCurrentAnimItem = null;
+		this.nPressedSlot = null;
+		this.nCurrentSlot = null;
 		this.bTopPart = false;
 
 		this.onMouseDownCallback = function (event, x, y) {
 			const oThis = this;
-			this.forEachAnimItem(function (animItem, index) {
+			this.forEachAnimItem(function (animItem, index, groupIndex, seqIndex) {
 				const hit = animItem.hit(x, y);
 				const hitInEffectBar = animItem.hitInEffectBar(x, y);
 				const hitInMenuButton = animItem.contextMenuButton.hit(x, y);
 				if (hit && !hitInEffectBar && !hitInMenuButton) {
-					oThis.nPressedAnimItem = index;
+					oThis.nPressedSlot = index + seqIndex;
 				}
 			})
 		}
 		this.onMouseMoveCallback = function (event, x, y) {
-			if (this.nPressedAnimItem === null) { return }
+			if (this.nPressedSlot === null) { return }
 
 			const oThis = this;
-			this.forEachAnimItem(function (animItem, index) {
+			this.forEachAnimItem(function (animItem, index, groupIndex, seqIndex) {
 				const hit = animItem.hit(x, y);
 				if (hit) {
-					oThis.nCurrentAnimItem = index;
-					oThis.bTopPart = (hit === 'top')
+					oThis.nCurrentSlot = index + seqIndex;
+					oThis.bTopPart = (hit === 'top');
 				}
 			})
 		}
 		this.onMouseUpCallback = function (event, x, y) {
-			if (this.nCurrentAnimItem === null || this.nPressedAnimItem === null) { return }
+			if (this.nCurrentSlot === null || this.nPressedSlot === null) { return }
 
-			let moves = this.nCurrentAnimItem - this.nPressedAnimItem;
+			let moves = this.nCurrentSlot - this.nPressedSlot;
 			if (moves > 0 && this.bTopPart) { moves -= 1; }
 			if (moves < 0 && !this.bTopPart) { moves += 1; }
 
@@ -1745,8 +1745,8 @@
 				}
 			}
 
-			this.nPressedAnimItem = null;
-			this.nCurrentAnimItem = null;
+			this.nPressedSlot = null;
+			this.nCurrentSlot = null;
 		}
 	}
 
@@ -1847,14 +1847,19 @@
 	};
 
 	CSeqList.prototype.forEachAnimItem = function (callback) {
-		let index = 0;
+		// У счетчиков сквозная нумерация
+		let seqCounter = 0;
+		let groupCounter = 0;
+		let itemCounter = 0;
 		this.children.forEach(function (seq) {
 			seq.animGroups.forEach(function (group) {
 				group.children.forEach(function (animItem) {
-					callback(animItem, index);
-					index++;
+					callback(animItem, itemCounter, groupCounter, seqCounter);
+					itemCounter++;
 				})
+				groupCounter++;
 			})
+			seqCounter++;
 		})
 	}
 

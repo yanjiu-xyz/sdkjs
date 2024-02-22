@@ -2266,21 +2266,25 @@
         let newStart = [].concat(aStart);
         let newEnd = [].concat(aEnd);
         if (bEarlier) {
-            for (let nTmpPos = 0; nTmpPos < nPositions; nTmpPos++) {
+            for (let nTmpPos = 1; nTmpPos <= nPositions; nTmpPos++) {
                 if (newStart[1] > 1) {
                     newStart[1] = newStart[1] - 1;
                 } else {
-                    newStart[1] = aSeqs[newStart[0] - 1].length;
                     newStart[0] = newStart[0] - 1;
+                    newStart[1] = aSeqs[newStart[0]].length; // newStart[0] have been decremented on last line
                 }
             }
         } else {
-            for (let nTmpPos = 0; nTmpPos < nPositions; nTmpPos++) {
-                if (newEnd[1] < aSeqs[newEnd[0]].length - 1) {
+            for (let nTmpPos = 1; nTmpPos <= nPositions; nTmpPos++) {
+                let maxAllowedPos = aEnd[0] === newEnd[0] ?
+                    aSeqs[newEnd[0]].length - 1 :
+                    aSeqs[newEnd[0]].length;
+
+                if (newEnd[1] < maxAllowedPos) {
                     newEnd[1] = newEnd[1] + 1;
                 } else {
-                    newEnd[1] = 1;
                     newEnd[0] = newEnd[0] + 1;
+                    newEnd[1] = 1;
                 }
             }
         }
