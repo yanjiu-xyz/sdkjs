@@ -2599,18 +2599,21 @@ function HierarchyAlgorithm() {
 		const firstChildOffsets = this.getChildAlignOffsets(commonBounds, firstBounds, this.params[AscFormat.Param_type_chAlign]);
 		firstShape.moveTo(firstChildOffsets.offX, firstChildOffsets.offY);
 
-		let offX = firstBounds.r - firstBounds.l + sibSp;
 		this.setLevelBounds({l: firstShape.x, t: firstShape.y, b: firstShape.y + firstShape.height, r: firstShape.x + firstShape.width});
 		this.updateLevelPositions(childs[0].algorithm);
+		let previousShape = firstShape;
+		let previousWidth = firstBounds.r - firstBounds.l;
 		for (let i = 1; i < childs.length; i += 1) {
 			const node = childs[i];
 			const shape = node.getShape(isCalculateScaleCoefficient);
 			const bounds = node.algorithm.getBounds(isCalculateScaleCoefficient);
 			const childOffsets = this.getChildAlignOffsets(commonBounds, bounds, this.params[AscFormat.Param_type_chAlign]);
+			const offX = previousShape.x + previousWidth + sibSp;
 			shape.moveTo(childOffsets.offX + offX, childOffsets.offY);
-			offX = offX + (bounds.r - bounds.l) + sibSp;
 			this.setLevelBounds({l: shape.x, t: shape.y, b: shape.y + shape.height, r: shape.x + shape.width});
 			this.updateLevelPositions(node.algorithm);
+			previousShape = shape;
+			previousWidth = bounds.r - bounds.l;
 		}
 	};
 	HierarchyChildAlgorithm.prototype.getShapeContainer = function (isCalculateScaleCoefficient) {
@@ -2641,7 +2644,6 @@ function HierarchyAlgorithm() {
 			}
 		}
 
-		const startLevel = this.parentNode.node.depth + 1;
 		const topCalcBounds = this.applyMainChildAlign(topRow, isCalculateScaleCoefficient);
 		const bottomCalcBounds = this.applyMainChildAlign(bottomRow, isCalculateScaleCoefficient);
 
@@ -2654,40 +2656,55 @@ function HierarchyAlgorithm() {
 		for (let i = 0; i < topRow.length; i += 1) {
 			const topNode = topRow[i];
 			const topShape = topNode.getShape(isCalculateScaleCoefficient);
-			if (fromRight) {
-				topShape.moveTo(offX, 0);
-			} else {
-				topShape.moveTo(offX, 0);
-			}
+			const topBounds = topCalcBounds.bounds[i];
 
-			this.updateLevelPositions(topNode.algorithm);
-			this.setLevelBounds({l: topShape.x, r: topShape.x + topShape.width, t: topShape.y, b: topShape.y + topShape.height});
+			const commonChildBounds = Object.assign({}, topBounds);
 
 			const bottomNode = bottomRow[i];
+			let bottomShape;
 			if (bottomNode) {
-				const bottomShape = bottomNode.getShape(isCalculateScaleCoefficient);
-				if (fromRight) {
-					bottomShape.moveTo(offX, bottomOffY);
-				} else {
-					bottomShape.moveTo(offX, bottomOffY);
-				}
-
-				this.updateLevelPositions(bottomNode.algorithm);
-				this.setLevelBounds({l: bottomShape.x, r: bottomShape.x + bottomShape.width, t: bottomShape.y, b: bottomShape.y + bottomShape.height});
-
-				const topBounds = topCalcBounds.bounds[i];
+				bottomShape = bottomNode.getShape(isCalculateScaleCoefficient);
 				const bottomBounds = bottomCalcBounds.bounds[i];
-
-				const commonChildBounds = Object.assign({}, topBounds);
 				checkBounds(commonChildBounds, bottomBounds);
-				const topOffsets = this.getChildAlignOffsets(commonChildBounds, topBounds, this.params[AscFormat.Param_type_chAlign]);
 				const bottomOffsets = this.getChildAlignOffsets(commonChildBounds, bottomBounds, this.params[AscFormat.Param_type_chAlign]);
-				topNode.moveTo(topOffsets.offX, topOffsets.offY, isCalculateScaleCoefficient);
 				bottomNode.moveTo(bottomOffsets.offX, bottomOffsets.offY, isCalculateScaleCoefficient);
 				if (fromRight) {
-					offX -= Math.max(topBounds.r - topBounds.l, bottomBounds.r - bottomBounds.l) + sibSp;
+					bottomShape.moveTo(offX - (bottomShape.x + bottomShape.width), bottomOffY - bottomShape.y);
 				} else {
-					offX += Math.max(topBounds.r - topBounds.l, bottomBounds.r - bottomBounds.l) + sibSp;
+					bottomShape.moveTo(offX - bottomShape.x, bottomOffY - bottomShape.y);
+				}
+				this.updateLevelPositions(bottomNode.algorithm);
+				this.setLevelBounds({
+					l: bottomShape.x,
+					r: bottomShape.x + bottomShape.width,
+					t: bottomShape.y,
+					b: bottomShape.y + bottomShape.height
+				});
+			}
+			const topOffsets = this.getChildAlignOffsets(commonChildBounds, topBounds, this.params[AscFormat.Param_type_chAlign]);
+			topNode.moveTo(topOffsets.offX, topOffsets.offY, isCalculateScaleCoefficient);
+			if (fromRight) {
+				topShape.moveTo(offX - (topShape.x + topShape.width), 0);
+			} else {
+				topShape.moveTo(offX - topShape.x, 0);
+			}
+			this.updateLevelPositions(topNode.algorithm);
+			this.setLevelBounds({
+				l: topShape.x,
+				r: topShape.x + topShape.width,
+				t: topShape.y,
+				b: topShape.y + topShape.height
+			});
+			if (topShape && bottomShape) {
+				const bottomBounds = bottomCalcBounds.bounds[i];
+				if (fromRight) {
+					const topLeft = topShape.x + topShape.width - (topBounds.r - topBounds.l);
+					const bottomLeft = bottomShape.x + bottomShape.width - (bottomBounds.r - bottomBounds.l);
+					offX = Math.min(topLeft, bottomLeft) - sibSp;
+				} else {
+					const topRight = topShape.x + (topBounds.r - topBounds.l);
+					const bottomRight = bottomShape.x + (bottomBounds.r - bottomBounds.l);
+					offX = Math.max(topRight, bottomRight) + sibSp;
 				}
 			}
 		}
@@ -3046,12 +3063,12 @@ function HierarchyAlgorithm() {
 		const asstNode = this.getAsstNode();
 		if (asstNode && asstNode.algorithm.getMainChilds().length) {
 			const asstShape = asstNode.getShape(isCalculateScaleCoefficients);
-			asstShape.moveTo(offX, 0);
+			asstShape.moveTo(offX - asstShape.x, 0);
 			offX = asstShape.x + asstShape.width + space;
 		}
 
 		const rootShape = rootNode.getShape(isCalculateScaleCoefficients);
-		rootShape.moveTo(offX, 0);
+		rootShape.moveTo(offX - rootShape.x, 0);
 	};
 
 	HierarchyRootAlgorithm.prototype.applyMainAlign = function (isCalculateScaleCoefficients) {
@@ -3935,7 +3952,8 @@ function HierarchyAlgorithm() {
 		this.parentAlgorithm = null;
 		this.calcValues = {
 			edgePoints: null,
-			connectionPoints: null
+			connectionPoints: null,
+			pointPositions: null
 		}
 	}
 	AscFormat.InitClassWithoutType(ConnectorAlgorithm, BaseAlgorithm);
@@ -3961,12 +3979,38 @@ function HierarchyAlgorithm() {
 	}
 	ConnectorAlgorithm.prototype.getEdgePoints = function () {
 		if (!this.calcValues.edgePoints) {
-			const startEdgePoint = this.getEdgePoint(true);
-			const endEdgePoint = this.getEdgePoint();
+			const startEdgePoints = this.getAvailableEdgePoints(true);
+			const endEdgePoints = this.getAvailableEdgePoints();
+
+			let minDistance = null;
+			let calcStartEdgePoint;
+			let calcEndEdgePoint;
+			for (let i = 0; i < startEdgePoints.length; i += 1) {
+				const startEdgePoint = startEdgePoints[i].point;
+				for (let j = 0; j < endEdgePoints.length; j += 1) {
+					const endEdgePoint = endEdgePoints[j].point;
+					const distance = startEdgePoint.getVector(endEdgePoint).getDistance();
+					if (minDistance === null || minDistance > distance) {
+						minDistance = distance;
+						calcStartEdgePoint = startEdgePoints[i];
+						calcEndEdgePoint = endEdgePoints[j];
+					}
+				}
+			}
 			this.calcValues.edgePoints = {
-				start: startEdgePoint,
-				end: endEdgePoint
+				start: null,
+				end: null
 			};
+			this.calcValues.pointPositions = {
+				start: AscFormat.ParameterVal_connectorPoint_auto,
+				end: AscFormat.ParameterVal_connectorPoint_auto
+			};
+			if (calcStartEdgePoint && calcEndEdgePoint) {
+				this.calcValues.edgePoints.start = calcStartEdgePoint.point;
+				this.calcValues.pointPositions.start = calcStartEdgePoint.type;
+				this.calcValues.edgePoints.end = calcEndEdgePoint.point;
+				this.calcValues.pointPositions.end = calcEndEdgePoint.type;
+			}
 		}
 		if (this.calcValues.edgePoints.start && this.calcValues.edgePoints.end) {
 			return this.calcValues.edgePoints;
@@ -4010,11 +4054,10 @@ function HierarchyAlgorithm() {
 		}
 	};
 	ConnectorAlgorithm.prototype.getPointPosition = function (isStart) {
-		const param = isStart ? this.params[AscFormat.Param_type_begPts] : this.params[AscFormat.Param_type_endPts];
-		if (param) {
-			return param[0];
+		if (!this.calcValues.pointPositions) {
+			this.getEdgePoints();
 		}
-		return AscFormat.ParameterVal_connectorPoint_auto;
+		return isStart ? this.calcValues.pointPositions.start : this.calcValues.pointPositions.end;
 	};
 	ConnectorAlgorithm.prototype.getStartShape = function () {
 		return this.startNode.getShape(false);
@@ -4158,31 +4201,51 @@ function HierarchyAlgorithm() {
 		}
 		return this.getRectRadialEdgePoint(radialInfo, bounds, isStart);
 	};
-	ConnectorAlgorithm.prototype.getEdgePoint = function (isStart) {
-		const type = this.getPointPosition(isStart);
-		switch (type) {
-			case AscFormat.ParameterVal_connectorPoint_radial:
-				return this.getRadialEdgePoint(isStart);
-			case AscFormat.ParameterVal_connectorPoint_tL:
-				return this.getTopLeftEdgePoint(isStart);
-			case AscFormat.ParameterVal_connectorPoint_tCtr:
-				return this.getTopCenterEdgePoint(isStart);
-			case AscFormat.ParameterVal_connectorPoint_tR:
-				return this.getTopRightEdgePoint(isStart);
-			case AscFormat.ParameterVal_connectorPoint_midR:
-				return this.getMidRightEdgePoint(isStart);
-			case AscFormat.ParameterVal_connectorPoint_bR:
-				return this.getBottomRightEdgePoint(isStart);
-			case AscFormat.ParameterVal_connectorPoint_bCtr:
-				return this.getBottomCenterEdgePoint(isStart);
-			case AscFormat.ParameterVal_connectorPoint_bL:
-				return this.getBottomLeftEdgePoint(isStart);
-			case AscFormat.ParameterVal_connectorPoint_midL:
-				return this.getMidLeftEdgePoint(isStart);
-			case AscFormat.ParameterVal_connectorPoint_auto:
-			default:
-				return this.getAutoEdgePoint(isStart);
+	ConnectorAlgorithm.prototype.getAvailablePointPositions = function (isStart) {
+		const parameters = isStart ? this.params[AscFormat.Param_type_begPts] : this.params[AscFormat.Param_type_endPts];
+		return parameters || [AscFormat.ParameterVal_connectorPoint_auto];
+
+	}
+	ConnectorAlgorithm.prototype.getAvailableEdgePoints = function (isStart) {
+		const result = [];
+		const pointPositions = this.getAvailablePointPositions(isStart);
+		for (let i = 0; i < pointPositions.length; i += 1) {
+			const type = pointPositions[i];
+			switch (type) {
+				case AscFormat.ParameterVal_connectorPoint_radial:
+					result.push({point: this.getRadialEdgePoint(isStart), type: type});
+					break;
+				case AscFormat.ParameterVal_connectorPoint_tL:
+					result.push({point: this.getTopLeftEdgePoint(isStart), type: type});
+					break;
+				case AscFormat.ParameterVal_connectorPoint_tCtr:
+					result.push({point: this.getTopCenterEdgePoint(isStart), type: type});
+					break;
+				case AscFormat.ParameterVal_connectorPoint_tR:
+					result.push({point: this.getTopRightEdgePoint(isStart), type: type});
+					break;
+				case AscFormat.ParameterVal_connectorPoint_midR:
+					result.push({point: this.getMidRightEdgePoint(isStart), type: type});
+					break;
+				case AscFormat.ParameterVal_connectorPoint_bR:
+					result.push({point: this.getBottomRightEdgePoint(isStart), type: type});
+					break;
+				case AscFormat.ParameterVal_connectorPoint_bCtr:
+					result.push({point: this.getBottomCenterEdgePoint(isStart), type: type});
+					break;
+				case AscFormat.ParameterVal_connectorPoint_bL:
+					result.push({point: this.getBottomLeftEdgePoint(isStart), type: type});
+					break;
+				case AscFormat.ParameterVal_connectorPoint_midL:
+					result.push({point: this.getMidLeftEdgePoint(isStart), type: type});
+					break;
+				case AscFormat.ParameterVal_connectorPoint_auto:
+				default:
+					result.push({point: this.getAutoEdgePoint(isStart), type: type});
+					break;
+			}
 		}
+		return result;
 	};
 	ConnectorAlgorithm.prototype.getTopLeftEdgePoint = function (isStart) {
 		const shape = isStart ? this.getStartShape() : this.getEndShape();
@@ -4433,20 +4496,36 @@ function HierarchyAlgorithm() {
 			startPoint === AscFormat.ParameterVal_connectorPoint_tCtr && endPoint === AscFormat.ParameterVal_connectorPoint_bCtr;
 	};
 	ConnectorAlgorithm.prototype.isWrongBendPoints = function (startPoint, endPoint) {
+		const endPointPosition = this.getPointPosition();
 		const startPointPosition = this.getPointPosition(true);
-		switch (startPointPosition) {
+		switch (endPointPosition) {
+			case AscFormat.ParameterVal_connectorPoint_tCtr:
+				if ((endPoint.y <= startPoint.y) ||
+					(startPointPosition === AscFormat.ParameterVal_connectorPoint_midR && endPoint.x <= startPoint.x) ||
+					(startPointPosition === AscFormat.ParameterVal_connectorPoint_midL && endPoint.x >= startPoint.x)) {
+					return true;
+				}
+				break;
 			case AscFormat.ParameterVal_connectorPoint_bCtr:
-				if (endPoint.y <= startPoint.y) {
+				if ((endPoint.y >= startPoint.y) ||
+					(startPointPosition === AscFormat.ParameterVal_connectorPoint_midR && endPoint.x <= startPoint.x) ||
+					(startPointPosition === AscFormat.ParameterVal_connectorPoint_midL && endPoint.x >= startPoint.x)) {
 					return true;
 				}
 				break;
 			case AscFormat.ParameterVal_connectorPoint_midR:
-				if (endPoint.x <= startPoint.x) {
+			case AscFormat.ParameterVal_connectorPoint_bR:
+				if ((endPoint.x >= startPoint.x) ||
+					((startPointPosition === AscFormat.ParameterVal_connectorPoint_bCtr ||
+						startPointPosition === AscFormat.ParameterVal_connectorPoint_tCtr) && endPoint.y <= startPoint.y)) {
 					return true;
 				}
 				break;
 			case AscFormat.ParameterVal_connectorPoint_midL:
-				if (endPoint.x >= startPoint.x) {
+			case AscFormat.ParameterVal_connectorPoint_bL:
+				if ((endPoint.x <= startPoint.x) ||
+					((startPointPosition === AscFormat.ParameterVal_connectorPoint_bCtr ||
+						startPointPosition === AscFormat.ParameterVal_connectorPoint_tCtr) && endPoint.y <= startPoint.y)) {
 					return true;
 				}
 				break;
@@ -4489,8 +4568,6 @@ function HierarchyAlgorithm() {
 				}
 				break;
 			}
-			case AscFormat.ParameterVal_connectorPoint_bR:
-				break;
 			case AscFormat.ParameterVal_connectorPoint_ctr:
 				break;
 			case AscFormat.ParameterVal_connectorPoint_bL:
@@ -4503,6 +4580,7 @@ function HierarchyAlgorithm() {
 				}
 				break;
 			}
+			case AscFormat.ParameterVal_connectorPoint_bR:
 			case AscFormat.ParameterVal_connectorPoint_midR: {
 				if (bendDist === undefined) {
 					bendPoints = [new CCoordPoint(endPoint.x, startPoint.y)];
@@ -5440,6 +5518,22 @@ PresNode.prototype.addChild = function (ch, pos) {
 				constrObj[AscFormat.Constr_type_t] = result;
 				break;
 			}
+				case AscFormat.Constr_type_w: {
+					const right = constrObj[AscFormat.Constr_type_r];
+					const left = constrObj[AscFormat.Constr_type_l];
+					if (right !== undefined && left !== undefined) {
+						constrObj[AscFormat.Constr_type_w] = right - left;
+					}
+					break;
+				}
+				case AscFormat.Constr_type_h: {
+					const bottom = constrObj[AscFormat.Constr_type_b];
+					const top = constrObj[AscFormat.Constr_type_t];
+					if (bottom !== undefined && top !== undefined) {
+						constrObj[AscFormat.Constr_type_h] = bottom - top;
+					}
+					break;
+				}
 /*				case AscFormat.Constr_type_w: {
 				return this.getParentWidth(isAdapt) || 0;
 			}
@@ -5640,7 +5734,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 				const scaleMoveWidth = moveShape.width * widthCoef;
 				const scaleMoveHeight = moveShape.height * heightCoef;
 				const moveOffX = (shape.x + (moveShape.x - x) * widthCoef) - moveShape.x;
-				const moveOffY = (shape.y + (moveShape.y - y) * heightCoef) - moveShape.y;
+				const moveOffY = (moveShape.height - scaleMoveHeight) / 2;
 				moveShape.width = scaleMoveWidth;
 				moveShape.height = scaleMoveHeight;
 				moveNode.moveTo(moveOffX, moveOffY, isCalculateCoefficients);
