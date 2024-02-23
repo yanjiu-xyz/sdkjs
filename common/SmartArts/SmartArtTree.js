@@ -593,10 +593,10 @@
 						const colorShape = mainShape.connectorShape || mainShape;
 						if (mainShape.connectorShape) {
 							mainShape.connectorShape.setFill(AscFormat.CreateNoFillUniFill());
-							mainShape.connectorShape.setLn(colorStyleLbl.getShapeLn(i));
+							mainShape.connectorShape.setLn(colorStyleLbl.getShapeLn(i, mainShape.connectorShape));
 						} else {
-							colorShape.setFill(colorStyleLbl.getShapeFill(i));
-							colorShape.setLn(colorStyleLbl.getShapeLn(i));
+							colorShape.setFill(colorStyleLbl.getShapeFill(i, mainShape));
+							colorShape.setLn(colorStyleLbl.getShapeLn(i, mainShape));
 						}
 					}
 				}

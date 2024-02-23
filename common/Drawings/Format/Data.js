@@ -7610,25 +7610,23 @@ Because of this, the display is sometimes not correct.
 	  };
 	  ColorDefStyleLbl.prototype.checkNoLn = function () {
 		  switch (this.name) {
-			  case "alignAcc1":
-				  return true;
 			  default:
 				  return false;
 		  }
 	  };
-	  ColorDefStyleLbl.prototype.getShapeFill = function (index) {
+	  ColorDefStyleLbl.prototype.getShapeFill = function (index, shadowShape) {
 			const lst = this.fillClrLst && this.fillClrLst.list;
 		  if (lst && lst.length) {
 				const truthIndex = index % lst.length;
 				const uniColor = lst[truthIndex];
-				if (this.checkTransparent(uniColor) || this.checkNoFill()) {
+				if (this.checkTransparent(uniColor) || shadowShape.shape.hideGeom || this.checkNoFill()) {
 					return AscFormat.CreateNoFillUniFill();
 				}
 				return AscFormat.CreateUniFillByUniColorCopy(uniColor);
 		  }
 	  };
 
-	  ColorDefStyleLbl.prototype.getShapeLn = function (index) {
+	  ColorDefStyleLbl.prototype.getShapeLn = function (index, shadowShape) {
 		  const lst = this.linClrLst && this.linClrLst.list;
 			if (lst) {
 /*				if (lst.length === 1) {
@@ -7640,7 +7638,7 @@ Because of this, the display is sometimes not correct.
 				if (lst.length) {
 					const truthIndex = index % lst.length;
 					const uniColor = lst[truthIndex];
-					if (this.checkTransparent(uniColor) || this.checkNoLn()) {
+					if (this.checkTransparent(uniColor) || shadowShape.shape.hideGeom/* || this.checkNoLn()*/) {
 						return AscFormat.CreateNoFillLine();
 					}
 
