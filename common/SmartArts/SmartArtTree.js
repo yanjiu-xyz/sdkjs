@@ -709,10 +709,6 @@
 		this.forEachPresFromBottom(function (presNode) {
 			presNode.startAlgorithm(oThis, true);
 		});
-		const rootConstraints = this.presRoot.nodeConstraints;
-		const coefficient = Math.min(1, this.presRoot.getConstr(AscFormat.Constr_type_w) / rootConstraints.width, this.presRoot.getConstr(AscFormat.Constr_type_h) / rootConstraints.height);
-/*		this.setHeightScaleCoefficient(coefficient);
-		this.setWidthScaleCoefficient(coefficient);*/
 	};
 	SmartArtAlgorithm.prototype.calcAdaptedConstraints = function () {
 		this.forEachPresFromTop(function (presNode) {
@@ -808,7 +804,6 @@
 		this.presNode = null;
 		this.childs = [];
 		this.algorithm = null;
-		this.cacheAlgorithm = null;
 		this.depth = AscFormat.isRealNumber(depth) ? depth : null;
 	}
 	SmartArtDataNodeBase.prototype.getDirection = function () {};
@@ -2574,7 +2569,7 @@ function HierarchyAlgorithm() {
 		const firstShape = firstNode.getShape(isCalculateScaleCoefficient);
 		const firstBounds = firstNode.algorithm.getBounds(isCalculateScaleCoefficient);
 		const firstAlignOffsets = this.getChildAlignOffsets(commonBounds, firstBounds, this.params[AscFormat.Param_type_chAlign]);
-		firstNode.moveTo( -firstShape.x + firstAlignOffsets.offX, firstAlignOffsets.offY, isCalculateScaleCoefficient);
+		firstNode.moveTo(firstAlignOffsets.offX, firstAlignOffsets.offY, isCalculateScaleCoefficient);
 		this.updateLevelPositions(childs[0].algorithm);
 		let previousShape = firstShape;
 		this.setLevelBounds({l: firstShape.x, t: firstShape.y, b: firstShape.y + firstShape.height, r: firstShape.x + firstShape.width});
@@ -2737,7 +2732,6 @@ function HierarchyAlgorithm() {
 			leftCol = rightCol;
 			rightCol = tempCol;
 		}
-		const startLevel = this.parentNode.node.depth + 1;
 		const leftCalcBounds = this.applyMainChildAlign(leftCol, isCalculateScaleCoefficient);
 		const rightCalcBounds = this.applyMainChildAlign(rightCol, isCalculateScaleCoefficient);
 		let rightOffX = 0;
