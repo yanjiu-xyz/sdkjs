@@ -320,14 +320,14 @@
 		if (!this.canHandleEvents()) {
 			return false;
 		}
-		var bHover = this.hit(x, y);
-		var bRet = bHover !== this.isHovered();
+		const bHover = !!this.hit(x, y);
+		const bHoverChanged = bHover !== this.isHovered();
 		if (bHover) {
 			this.setHoverState();
 		} else {
 			this.setNotHoverState();
 		}
-		return bRet;
+		return bHoverChanged;
 	};
 	CControl.prototype.onMouseDown = function (e, x, y) {
 		if (!this.canHandleEvents()) {
