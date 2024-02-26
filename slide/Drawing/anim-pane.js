@@ -1717,10 +1717,19 @@
 		}
 		this.onMouseMoveCallback = function (event, x, y) {
 			if (this.nPressedSlot === null) { return }
-
 			const oThis = this;
+
+			let nLastCheckedSeq = null;
+			let hit = null;
 			this.forEachAnimItem(function (animItem, index, groupIndex, seqIndex) {
-				const hit = animItem.hit(x, y);
+				const seqLabel = oThis.children[seqIndex].label;
+				if (seqIndex !== nLastCheckedSeq && seqLabel !== null && seqLabel.hit(x, y)) {
+					hit = 'top';
+					nLastCheckedSeq = seqIndex;
+				} else {
+					hit = animItem.hit(x, y);
+				}
+
 				if (hit) {
 					oThis.nCurrentSlot = index + seqIndex;
 					oThis.bTopPart = (hit === 'top');
