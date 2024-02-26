@@ -268,6 +268,10 @@ function (window, undefined) {
 		this.setParentToChild(pr);
 	};
 
+	CAxis.prototype.setAxPos = function (pos) {
+		this.axPos = pos ? window['AscFormat'].AX_POS_L : window['AscFormat'].AX_POS_B;
+	}
+
 	// AxisUnits
 	drawingsChangesMap[AscDFH.historyitem_AxisUnits_SetUnitsLabel] = function (oClass, value) {
 		oClass.unitsLabel = value;
@@ -2945,6 +2949,10 @@ function (window, undefined) {
 			}
 		}
 		return null;
+	};
+	CSeries.prototype.getValPts = function () {
+		const numLit = this.getValLit();
+		return numLit ? numLit.pts : [];
 	};
 	CSeries.prototype.getCatLit = function (type) {
 		let oSeriesData = this.getData();

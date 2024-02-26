@@ -189,7 +189,9 @@ CChartsDrawer.prototype =
 		//CHARTS
 		if (!chartSpace.bEmptySeries) {
 			for(var i in this.charts) {
-				this.charts[i].recalculate();
+				if (this.charts.hasOwnProperty(i) && this.charts[i]) {
+					this.charts[i].recalculate();
+				}
 			}
 		}
 
@@ -318,7 +320,9 @@ CChartsDrawer.prototype =
 
 			if (chartSpace.chart.plotArea.isForChartEx) {
 				for (i in t.charts) {
-					t.charts[i].draw();
+					if (t.charts.hasOwnProperty(i) && t.charts[i]) {
+						t.charts[i].draw();
+					}
 				}
 			} else {
 				//для начала нужно отсортировать
@@ -616,6 +620,7 @@ CChartsDrawer.prototype =
 
 		if (!this.cChartSpace.bEmptySeries) {
 			var type = obj.getObjectType();
+
 			switch (type) {
 				case AscDFH.historyitem_type_DLbl: {
 					pos = this._calculatePositionDlbl(obj);
@@ -625,7 +630,7 @@ CChartsDrawer.prototype =
 					var parentType = obj.parent ? obj.parent.getObjectType() : null;
 					if (parentType === AscDFH.historyitem_type_Chart) {
 						pos = this._calculatePositionTitle(obj);
-					} else if (parentType === AscDFH.historyitem_type_ValAx || parentType === AscDFH.historyitem_type_CatAx || parentType === AscDFH.historyitem_type_DateAx) {
+					} else if (parentType === AscDFH.historyitem_type_ValAx || parentType === AscDFH.historyitem_type_CatAx || parentType === AscDFH.historyitem_type_DateAx || parentType === AscDFH.historyitem_type_Axis) {
 						pos = this._calculatePositionAxisTitle(obj.parent);
 					}
 					break;
@@ -2491,13 +2496,6 @@ CChartsDrawer.prototype =
 		valAxis.max = axisProperties.val.max;
 		valAxis.scale = axisProperties.val.scale.length > 0 ? axisProperties.val.scale : this._roundValues(this._getAxisValues2(valAxis, this.cChartSpace, false, false));
 
-		// Exchange cross axes 
-		catAxis.crossAx = valAxis;
-		valAxis.crossAx = catAxis;
-
-		// Differentiate between axes 
-		catAxis.axPos = window['AscFormat'].AX_POS_B;
-		valAxis.axPos = window['AscFormat'].AX_POS_L;
 	},
 
 	_chartExSetAxisMinAndMax: function (axis, num) {
@@ -2691,9 +2689,11 @@ CChartsDrawer.prototype =
 		axisProperties.val.min = 0;
 		axisProperties.val.max = 0;
 		cachedData.accumulation = [];
+		let sum = 0;
 		for (let i = 0; i < numArr.length; i++) {
 			cachedData.accumulation.push(numArr[i].val);
-			axisProperties.val.max += numArr[i].val;
+			sum += numArr[i].val;
+			this._chartExSetAxisMinAndMax(axisProperties.val, sum);
 			axisProperties.cat.scale.push(numArr[i].idx + 1);
 		}
 	},
@@ -4615,11 +4615,11 @@ CChartsDrawer.prototype =
 		if (!this.cChartSpace || !this.calcProp) {
 			return null;
 		}
-		var pathId = this.cChartSpace.AllocPath();
-		var path = this.cChartSpace.GetPath(pathId);
+		const pathId = this.cChartSpace.AllocPath();
+		const path = this.cChartSpace.GetPath(pathId);
 
-		var pathH = this.calcProp.pathH;
-		var pathW = this.calcProp.pathW;
+		const pathH = this.calcProp.pathH;
+		const pathW = this.calcProp.pathW;
 
 		if (!isPxToMmConverted) {
 			const pxToMm = this.calcProp.pxToMM;
@@ -5049,9 +5049,10 @@ CChartsDrawer.prototype =
 
 	getVerticalGridLines: function (axis, isCatAxis) {
 		var gridLines, minorGridLines;
+		const isForChartEx = this.cChartSpace && this.cChartSpace.chart && this.cChartSpace.chart.plotArea && this.cChartSpace.chart.plotArea.isForChartEx ? true : false;
 
 		var crossBetween = this.cChartSpace.getValAxisCrossType();
-		if(null === crossBetween && isCatAxis) {
+		if(null === crossBetween && (isCatAxis || isForChartEx)) {
 			crossBetween = axis.crossAx ? axis.crossAx.crossBetween : null;
 		}
 
@@ -5067,15 +5068,14 @@ CChartsDrawer.prototype =
 		if(!axis.majorGridlines && !axis.minorGridlines) {
 			return;
 		}
-
-		var minorLinesCount = isCatAxis ? 2 : 5;
+		var minorLinesCount = isCatAxis || isForChartEx ? 2 : 5;
 
 		var posAxis = this.calcProp.chartGutter._left / this.calcProp.pxToMM;
 		var stepX = points[1] ? Math.abs((points[1].pos - points[0].pos)) : (Math.abs(points[0].pos - posAxis) * 2);
 		var minorStep = (stepX * this.calcProp.pxToMM) / minorLinesCount;
 		var posX, crossDiff;
 
-		if (crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN && isCatAxis) {
+		if (crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN && (isCatAxis || isForChartEx)) {
 			crossDiff = points[1] ? Math.abs((points[1].pos - points[0].pos) / 2) : Math.abs(points[0].pos - posAxis);
 		}
 
@@ -5083,7 +5083,7 @@ CChartsDrawer.prototype =
 		var path = this.cChartSpace.GetPath(pathId);
 		var i;
 		for (i = 0; i < points.length; i++) {
-			if(isCatAxis && points[i].val < 0) {
+			if((isCatAxis && points[i].val < 0) && !isForChartEx) {
 				continue;
 			}
 
@@ -5114,7 +5114,7 @@ CChartsDrawer.prototype =
 		var pathIdMinor = this.cChartSpace.AllocPath();
 		var pathMinor = this.cChartSpace.GetPath(pathIdMinor);
 		for (i = 0; i < points.length; i++) {
-			if(isCatAxis && points[i].val < 0) {
+			if((isCatAxis && points[i].val < 0) && !isForChartEx) {
 				continue;
 			}
 
@@ -7633,7 +7633,9 @@ drawHistogramChart.prototype = {
 			// two different ways of storing information, object and array, therefore convert object into array
 			const sections = isAggregation ? Object.values(cachedData.aggregation) : cachedData.results; 
 			if (sections) {
-				const initialBarWidth = (this.chartProp.trueWidth)/ sections.length;
+				// 1 px gap for each section length
+				const gapWidth = 1;
+				const initialBarWidth = (this.chartProp.trueWidth) / sections.length;
 				const barWidth = (initialBarWidth / (1 + coeff));
 				const margin = (initialBarWidth - barWidth) / 2;
 
@@ -7642,11 +7644,12 @@ drawHistogramChart.prototype = {
 					// aggregation object does not have field occurrence;
 					const val = isAggregation ? sections[i] : sections[i].occurrence;
 					const startY = this.cChartDrawer.getYPosition(val, valAxis, true);
+					const bW = i === 0 ? barWidth : barWidth - gapWidth;
 					if (this.chartProp && this.chartProp.pxToMM ) {
 						const height = valStart - (startY * this.chartProp.pxToMM);
-						this.paths[i] = this.cChartDrawer._calculateRect(start, valStart, barWidth, height);
+						this.paths[i] = this.cChartDrawer._calculateRect(start, valStart, bW, height);
 					}		
-					start += (barWidth + margin + margin);
+					start += (bW + margin + margin + gapWidth);
 				}
 			}
 
@@ -7705,10 +7708,12 @@ drawHistogramChart.prototype = {
 		let oSeries = series[0];
 		if(oSeries) {
 			for (let i in this.paths) {
-				let nPtIdx = parseInt(i);
-				let pen = oSeries.getPtPen(nPtIdx);
-				let brush = oSeries.getPtBrush(nPtIdx);
-				this.cChartDrawer.drawPath(this.paths[i], pen, brush);
+				if (this.paths.hasOwnProperty(i) && this.paths[i]) {
+					let nPtIdx = parseInt(i);
+					let pen = oSeries.getPtPen(nPtIdx);
+					let brush = oSeries.getPtBrush(nPtIdx);
+					this.cChartDrawer.drawPath(this.paths[i], pen, brush);
+				}
 			}
 		}
 		
@@ -7817,23 +7822,50 @@ drawWaterfallChart.prototype = {
 			let valStart = this.cChartSpace.chart.plotArea.axId ? this.cChartSpace.chart.plotArea.axId[0].posY * this.chartProp.pxToMM : this.chartProp.trueHeight + this.chartProp.chartGutter._top;
 			if (AscFormat.isRealNumber(valStart)) {
 				const coeff = catAxis.scaling.gapWidth;
-				const initialBarWidth = (this.chartProp.trueWidth)/ data.length;
+				// 1 px gap for each section length
+				const gapWidth = 1.5;
+				const gapNumbers = data.length - 1;
+				const initialBarWidth = (this.chartProp.trueWidth - (gapWidth * gapNumbers))/ data.length;
 				const barWidth = (initialBarWidth / (1 + coeff));
 				const margin = (initialBarWidth - barWidth) / 2;
+
 				let sum = 0;
-				let start = (catStart + margin);
+				let start = (catStart + margin); 
 				for (let i = 0; i < data.length; i++) {
 					sum += data[i].val;
-					const startY = this.cChartDrawer.getYPosition(sum, valAxis, true) * this.chartProp.pxToMM;
+					const valPos = this.cChartDrawer.getYPosition(sum, valAxis, true) * this.chartProp.pxToMM; // calc roof of the current bar
+					const next = start + (barWidth + margin + gapWidth + margin); // calc end of the current barr
 					if (this.chartProp && this.chartProp.pxToMM ) {
-						const height = valStart - startY;
-						this.paths[i] = this.cChartDrawer._calculateRect(start, valStart, barWidth, height);
+						const height = valStart - valPos;
+						this.paths[i] = [];
+						this.paths[i].push(this.cChartDrawer._calculateRect(start, valStart, barWidth, height));
+						//dont need last connectorLine
+						if (i !== data.length - 1 && margin !== 0) {
+							this.paths[i].push(this._calculateConnectorLine(valPos, start + barWidth, next))
+						}
 					}
-					valStart = startY;		
-					start += (barWidth + margin + margin);
+					valStart = valPos;	// go up in y direction
+					start = next;	// go right in x direction
 				}
 			}
 		}
+	},
+
+	_calculateConnectorLine: function (y, x1, x2) {
+		if (!this.cChartSpace || !this.chartProp) {
+			return null;
+		}
+		const pathId = this.cChartSpace.AllocPath();
+		const path = this.cChartSpace.GetPath(pathId);
+
+		const pathH = this.chartProp.pathH;
+		const pathW = this.chartProp.pathW;
+		const pxToMm = this.chartProp.pxToMM;
+
+		path.moveTo((x1 / pxToMm) * pathW, (y / pxToMm)  * pathH);
+		path.lnTo((x2 / pxToMm) * pathW, (y / pxToMm)  * pathH);
+
+		return pathId;
 	},
 
 	draw: function () {
@@ -7888,10 +7920,16 @@ drawWaterfallChart.prototype = {
 		let oSeries = series[0];
 		if(oSeries) {
 			for (let i in this.paths) {
-				let nPtIdx = parseInt(i);
-				let pen = oSeries.getPtPen(nPtIdx);
-				let brush = oSeries.getPtBrush(nPtIdx);
-				this.cChartDrawer.drawPath(this.paths[i], pen, brush);
+				if (this.paths.hasOwnProperty(i) && this.paths[i]) {
+					for (let j in this.paths[i]) {
+						if (this.paths[i].hasOwnProperty(j) && this.paths[i][j]) {
+							let nPtIdx = parseInt(i);
+							let pen = (j === 0 ) ? oSeries.getPtPen(nPtIdx) : this.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines;
+							let brush = oSeries.getPtBrush(nPtIdx);
+							this.cChartDrawer.drawPath(this.paths[i][j], pen, brush);
+						}
+					}
+				}
 			}
 		}
 		
@@ -7902,7 +7940,7 @@ drawWaterfallChart.prototype = {
 		if (!this.paths || !this.chartProp) {
 			return;
 		}
-		const path = this.paths[compiledDlb.idx];
+		const path = this.paths[compiledDlb.idx][0];
 
 		if (!AscFormat.isRealNumber(path)) {
 			return;

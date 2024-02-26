@@ -4149,7 +4149,7 @@ function(window, undefined) {
 		const cachedData = this.chart.plotArea.plotAreaRegion.cachedData;
 		const results = obtainResults(cachedData);
 		//seria.dataLabels.visibility optional
-		if (seria && seria.dataLabels) {
+		if (cachedData && seria && seria.dataLabels) {
 			const default_lbl = new AscFormat.CDLbl();
 			const nDefaultPosition = seria.dataLabels.pos ? seria.dataLabels.pos : AscFormat.DATA_LABEL_POS_OUT_END;
 			default_lbl.initDefault(nDefaultPosition);
@@ -4185,6 +4185,18 @@ function(window, undefined) {
 	CChartSpace.prototype.calculateLabelsPositions = function (b_recalc_labels, b_recalc_legend) {
 		let layout;
 		let aDLbls = this.recalcInfo.dataLbls;
+
+		// TODO after new succefull implementation of new type remove option here
+		const isForChartEx = this.chart && this.chart.plotArea && this.chart.plotArea.isForChartEx ? true : false;
+		const type = this.chart && this.chart.plotArea && this.chart.plotArea.plotAreaRegion && this.chart.plotArea.plotAreaRegion.series && this.chart.plotArea.plotAreaRegion.series[0] ? this.chart.plotArea.plotAreaRegion.series[0].layoutId : null;
+		if (isForChartEx && type !== AscFormat.SERIES_LAYOUT_BOX_WHISKER && !type) {
+			return ;
+		}
+		if (isForChartEx && (type === AscFormat.SERIES_LAYOUT_BOX_WHISKER || type === AscFormat.SERIES_LAYOUT_FUNNEL || type === AscFormat.SERIES_LAYOUT_PARETO_LINE || type === AscFormat.SERIES_LAYOUT_REGION_MAP || type === AscFormat.SERIES_LAYOUT_SUNBURST || type === AscFormat.SERIES_LAYOUT_TREEMAP)) {
+			return ;
+		}
+		//----------------------------------
+		
 		if (!aDLbls || aDLbls.length === 0) {
 			this.calculateChartExLabelsPositions();
 		}
@@ -4367,7 +4379,7 @@ function(window, undefined) {
 		if (!this.chart || !this.chart.plotArea) {
 			return [];
 		}
-		if (oAxis.Id === this.chart.plotArea.axId[1].Id) {
+		if (this.chart.plotArea.axId.length > 1 && oAxis.Id === this.chart.plotArea.axId[1].Id) {
 			// for the val axis, regularly get labels
 			aStrings = this.getLabelsForAxis(oAxis, true);
 		} else {
@@ -4736,6 +4748,7 @@ function(window, undefined) {
 		if(this.chart.plotArea.layout && this.chart.plotArea.layout.layoutTarget === AscFormat.LAYOUT_TARGET_INNER) {
 			bWithoutLabels = true;
 		}
+		
 		let bCorrected = false;
 		let fL = oRect.x, fT = oRect.y, fR = oRect.x + oRect.w, fB = oRect.y + oRect.h;
 		const isChartEX = this.chart && this.chart.plotArea && this.chart.plotArea.isForChartEx ? true : false;
@@ -4753,6 +4766,9 @@ function(window, undefined) {
 			if(oCrossAxis && !oCalcMap[oCrossAxis.Id]) {
 				this.calculateAxisGrid(oCrossAxis, oRect);
 				oCalcMap[oCrossAxis.Id] = true;
+			}
+			if (!oCrossAxis) {
+				return;
 			}
 			let fCrossValue;
 			// posY seeks the zero position on the diagram
@@ -5143,6 +5159,16 @@ function(window, undefined) {
 		this.cachedCanvas = null;
 		this.plotAreaRect = null;
 		this.bEmptySeries = this.checkEmptySeries();
+		// TODO after new succefull implementation of new type remove option here
+		const isForChartEx = this.chart && this.chart.plotArea && this.chart.plotArea.isForChartEx ? true : false;
+		const type = this.chart && this.chart.plotArea && this.chart.plotArea.plotAreaRegion && this.chart.plotArea.plotAreaRegion.series && this.chart.plotArea.plotAreaRegion.series[0] ? this.chart.plotArea.plotAreaRegion.series[0].layoutId : null;
+		if (isForChartEx && type !== AscFormat.SERIES_LAYOUT_BOX_WHISKER && !type) {
+			return ;
+		}
+		if (isForChartEx && (type === AscFormat.SERIES_LAYOUT_BOX_WHISKER || type === AscFormat.SERIES_LAYOUT_FUNNEL || type === AscFormat.SERIES_LAYOUT_PARETO_LINE || type === AscFormat.SERIES_LAYOUT_REGION_MAP || type === AscFormat.SERIES_LAYOUT_SUNBURST || type === AscFormat.SERIES_LAYOUT_TREEMAP)) {
+			return ;
+		}
+		//----------------------------------
 		if (this.chart && this.chart.plotArea) {
 			var oPlotArea = this.chart.plotArea;
 			for (i = 0; i < oPlotArea.axId.length; ++i) {
@@ -5771,7 +5797,8 @@ function(window, undefined) {
 			if (AscFormat.isRealNumber(legend.legendPos)) {
 				legend_pos = legend.legendPos;
 			}
-			var aCharts = this.chart.plotArea.charts;
+			const isChartEx = this.chart && this.chart.plotArea && this.chart.plotArea.isForChartEx ? true : false;
+			var aCharts = isChartEx ? [this.chart.plotArea.plotAreaRegion] : this.chart.plotArea.charts;
 			var oTypedChart;
 			//Order series for the legend
 			var aOrderedSeries = [];
@@ -5853,7 +5880,8 @@ function(window, undefined) {
 						entry = legend.findLegendEntryByIndex(i);
 						if(entry && entry.bDelete)
 							continue;
-						arr_str_labels.push(ser.getSeriesName());
+						const label = ser.getSeriesName ? ser.getSeriesName() : '';
+						arr_str_labels.push(label);
 					}
 					else {
 						entry = legend.findLegendEntryByIndex(i);
@@ -5884,7 +5912,7 @@ function(window, undefined) {
 
 					calc_entry.calcMarkerUnion = new AscFormat.CUnionMarker();
 					union_marker = calc_entry.calcMarkerUnion;
-					var pts = ser.getNumPts();
+					var pts = isChartEx ? ser.getValPts() : ser.getNumPts();
 					var nSerType = ser.getObjectType();
 					if(nSerType === AscDFH.historyitem_type_BarSeries ||
 						nSerType === AscDFH.historyitem_type_BubbleSeries ||
@@ -6084,6 +6112,9 @@ function(window, undefined) {
 			} else {
 				marker_size = 0.2 * max_font_size;
 				for (i = 0; i < calc_entryes.length; ++i) {
+					if (!calc_entryes[i].calcMarkerUnion || !calc_entryes[i].calcMarkerUnion.marker || !calc_entryes[i].calcMarkerUnion.marker.spPr || !calc_entryes[i].calcMarkerUnion.marker.spPr.geometry) {
+						continue;
+					}
 					calc_entryes[i].calcMarkerUnion.marker.spPr.geometry.Recalculate(marker_size, marker_size);
 				}
 				distance_to_text = marker_size * 0.7;
@@ -8458,6 +8489,16 @@ function(window, undefined) {
 		if (this.chartObj) {
 			this.chartObj.draw(this, graphics);
 		}
+		// TODO after new succefull implementation of new type remove option here
+		const isForChartEx = this.chart && this.chart.plotArea && this.chart.plotArea.isForChartEx ? true : false;
+		const type = this.chart && this.chart.plotArea && this.chart.plotArea.plotAreaRegion && this.chart.plotArea.plotAreaRegion.series && this.chart.plotArea.plotAreaRegion.series[0] ? this.chart.plotArea.plotAreaRegion.series[0].layoutId : null;
+		if (isForChartEx && type !== AscFormat.SERIES_LAYOUT_BOX_WHISKER && !type) {
+			return ;
+		}
+		if (isForChartEx && (type === AscFormat.SERIES_LAYOUT_BOX_WHISKER || type === AscFormat.SERIES_LAYOUT_FUNNEL || type === AscFormat.SERIES_LAYOUT_PARETO_LINE || type === AscFormat.SERIES_LAYOUT_REGION_MAP || type === AscFormat.SERIES_LAYOUT_SUNBURST || type === AscFormat.SERIES_LAYOUT_TREEMAP)) {
+			return ;
+		}
+		//----------------------------------
 		if (this.chart && !this.bEmptySeries) {
 			if (this.chart.plotArea) {
 				// var oChartSize = this.getChartSizes();
