@@ -1193,7 +1193,7 @@
 		Graphic.GraphicData = new AscFormat.CT_GraphicalObjectData();
 		let nDrawingType = oDrawing.getObjectType();
 		if (nDrawingType === AscDFH.historyitem_type_ChartSpace) {
-			if (oDrawing.isForChartEx) {
+			if (oDrawing.isChartEx()) {
 				Graphic.GraphicData.Uri = "http://schemas.microsoft.com/office/drawing/2014/chartex";
 			} else {
 				Graphic.GraphicData.Uri = "http://schemas.openxmlformats.org/drawingml/2006/chart";

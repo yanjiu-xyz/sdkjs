@@ -233,7 +233,7 @@ CChartsDrawer.prototype =
 		//draw chart
 		let plotArea = chartSpace.chart.plotArea;
 		let newChart;
-		if (plotArea.isForChartEx) {
+		if (plotArea.isChartEx()) {
 			const series = plotArea.plotAreaRegion.series;
 			for (let i = 0; i < series.length; i++) {
 				this.createChartEx(series[i]);
@@ -318,7 +318,7 @@ CChartsDrawer.prototype =
 				return;
 			}
 
-			if (chartSpace.chart.plotArea.isForChartEx) {
+			if (chartSpace.isChartEx()) {
 				for (i in t.charts) {
 					if (t.charts.hasOwnProperty(i) && t.charts[i]) {
 						t.charts[i].draw();
@@ -1164,7 +1164,7 @@ CChartsDrawer.prototype =
 		} else if(horizontalAxis instanceof AscFormat.CValAx) {
 			crossBetween = horizontalAxis.crossBetween;
 		}
-		const isChartEx = chartSpace && chartSpace.chart && chartSpace.chart.plotArea && chartSpace.chart.plotArea.isForChartEx;
+		const isChartEx = chartSpace.isChartEx();
 		if (horizontalAxis && horizontalAxis.xPoints && horizontalAxis.xPoints.length && this.calcProp.widthCanvas != undefined) {
 			if (horizontalAxis instanceof AscFormat.CValAx) {
 				if (!horizontalAxis.isReversed()) {
@@ -1298,7 +1298,7 @@ CChartsDrawer.prototype =
 		if(verticalAxis && verticalAxis.yPoints && verticalAxis.yPoints.length) {
 			let orientationVerAxis = !verticalAxis.isReversed();
 			diffPoints = 0;
-			const isChartEx = (chartSpace && chartSpace.chart && chartSpace.chart.plotArea) ? chartSpace.chart.plotArea.isForChartEx : false;
+			const isChartEx = chartSpace.isChartEx();
 			if((verticalAxis instanceof AscFormat.CDateAx || verticalAxis instanceof AscFormat.CCatAx)&& crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN) {
 				diffPoints = Math.abs((verticalAxis.interval) / 2);
 			}
@@ -1346,7 +1346,7 @@ CChartsDrawer.prototype =
 		var priorityAxis = [];
 
 		let charts = chartSpace.chart.plotArea.charts;
-		const isChartEx = (chartSpace && chartSpace.chart && chartSpace.chart.plotArea) ? chartSpace.chart.plotArea.isForChartEx : false;
+		const isChartEx = chartSpace.isChartEx();
 		if (isChartEx) {
 			var axId = chartSpace.chart.plotArea.axId;
 			for(var i = 0; i < axId.length; i++) {
@@ -2468,7 +2468,7 @@ CChartsDrawer.prototype =
 
 
 		if (!notCalcExtremum) {
-			const isChartEx = (chartSpace && chartSpace.chart && chartSpace.chart.plotArea) ? chartSpace.chart.plotArea.isForChartEx : false;
+			const isChartEx = chartSpace.isChartEx();
 			if (!isChartEx) {
 				this.calcProp.type = this._getChartType(chartSpace.chart.plotArea.chart);
 				this.calcProp.subType = this.getChartGrouping(chartSpace.chart.plotArea.chart);
@@ -3245,7 +3245,7 @@ CChartsDrawer.prototype =
 			}*/
 
 
-			var getResult = function(index, isForChartEx) {
+			var getResult = function(index, isChartEx) {
 				resPos = Math.abs(yPoints[index + 1].pos - yPoints[index].pos);
 				resVal = yPoints[index + 1].val - yPoints[index].val;
 
@@ -3257,13 +3257,13 @@ CChartsDrawer.prototype =
 				var startPos = yPoints[index].pos;
 
 				if (!isOx) {
-					if (!axis.isReversed() || isForChartEx) {
+					if (!axis.isReversed() || isChartEx) {
 						res = -(resPos / resVal) * (Math.abs(val - yPoints[index].val)) + startPos;
 					} else {
 						res = (resPos / resVal) * (Math.abs(val - yPoints[index].val)) + startPos;
 					}
 				} else {
-					if (axis.isReversed() || isForChartEx) {
+					if (axis.isReversed() || isChartEx) {
 						res = -(resPos / resVal) * (Math.abs(val - yPoints[index].val)) + startPos;
 					} else {
 						res = (resPos / resVal) * (Math.abs(val - yPoints[index].val)) + startPos;
@@ -3278,7 +3278,7 @@ CChartsDrawer.prototype =
 				k = Math.floor((i + j) / 2);
 
 				if (val >= yPoints[k].val && yPoints[k + 1] && val <= yPoints[k + 1].val) {
-					const isChartEx = (this.cChartSpace && this.cChartSpace.chart && this.cChartSpace.chart.plotArea) ? this.cChartSpace.chart.plotArea.isForChartEx : false;
+					const isChartEx = this.cChartSpace.isChartEx();
 					result = getResult(k, isChartEx);
 					break;
 				} else if (val < yPoints[k].val) {
@@ -5049,10 +5049,10 @@ CChartsDrawer.prototype =
 
 	getVerticalGridLines: function (axis, isCatAxis) {
 		var gridLines, minorGridLines;
-		const isForChartEx = this.cChartSpace && this.cChartSpace.chart && this.cChartSpace.chart.plotArea && this.cChartSpace.chart.plotArea.isForChartEx ? true : false;
+		const isChartEx = this.cChartSpace.isChartEx();
 
 		var crossBetween = this.cChartSpace.getValAxisCrossType();
-		if(null === crossBetween && (isCatAxis || isForChartEx)) {
+		if(null === crossBetween && (isCatAxis || isChartEx)) {
 			crossBetween = axis.crossAx ? axis.crossAx.crossBetween : null;
 		}
 
@@ -5068,14 +5068,14 @@ CChartsDrawer.prototype =
 		if(!axis.majorGridlines && !axis.minorGridlines) {
 			return;
 		}
-		var minorLinesCount = isCatAxis || isForChartEx ? 2 : 5;
+		var minorLinesCount = isCatAxis || isChartEx ? 2 : 5;
 
 		var posAxis = this.calcProp.chartGutter._left / this.calcProp.pxToMM;
 		var stepX = points[1] ? Math.abs((points[1].pos - points[0].pos)) : (Math.abs(points[0].pos - posAxis) * 2);
 		var minorStep = (stepX * this.calcProp.pxToMM) / minorLinesCount;
 		var posX, crossDiff;
 
-		if (crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN && (isCatAxis || isForChartEx)) {
+		if (crossBetween === AscFormat.CROSS_BETWEEN_BETWEEN && (isCatAxis || isChartEx)) {
 			crossDiff = points[1] ? Math.abs((points[1].pos - points[0].pos) / 2) : Math.abs(points[0].pos - posAxis);
 		}
 
@@ -5083,7 +5083,7 @@ CChartsDrawer.prototype =
 		var path = this.cChartSpace.GetPath(pathId);
 		var i;
 		for (i = 0; i < points.length; i++) {
-			if((isCatAxis && points[i].val < 0) && !isForChartEx) {
+			if((isCatAxis && points[i].val < 0) && !isChartEx) {
 				continue;
 			}
 
@@ -5114,7 +5114,7 @@ CChartsDrawer.prototype =
 		var pathIdMinor = this.cChartSpace.AllocPath();
 		var pathMinor = this.cChartSpace.GetPath(pathIdMinor);
 		for (i = 0; i < points.length; i++) {
-			if((isCatAxis && points[i].val < 0) && !isForChartEx) {
+			if((isCatAxis && points[i].val < 0) && !isChartEx) {
 				continue;
 			}
 

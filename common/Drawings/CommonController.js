@@ -4468,7 +4468,7 @@
 					var nDefaultDatalabelsPos;
 					nDefaultDatalabelsPos = aPositions[0];
 					var oFirstChart;
-					if (plot_area.isForChartEx) {
+					if (plot_area.isChartEx()) {
 						oFirstChart = plot_area.plotAreaRegion
 					} else {
 						oFirstChart = plot_area.charts[0];
