@@ -205,6 +205,16 @@ function (window, undefined) {
 		this.setParentToChild(pr);
 	};
 
+	CAddress.prototype.fillObject (oCopy) {
+		oCopy.setAddress1(this.adress1);
+		oCopy.setCountryRegion(this.countryRegion);
+		oCopy.setAdminDistrict1(this.adminDistrict1);
+		oCopy.setAdminDistrict2(this.adminDistrict2);
+		oCopy.setPostalCode(this.postalCode);
+		oCopy.setLocality(this.locality);
+		oCopy.setISOCountryCode(this.isoCountryCode);
+	}
+
 	drawingsChangesMap[AscDFH.historyitem_Axis_SetUnits] = function (oClass, value) {
 		oClass.units = value;
 	};
@@ -226,7 +236,7 @@ function (window, undefined) {
 		this.units = null;
 		this.hidden = null;
 
-
+		this.axPos = null;
 		this.majorTickMark = null;
 		this.minorTickMark = null;
 		this.crosses = null;
