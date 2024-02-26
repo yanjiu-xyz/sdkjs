@@ -34,6 +34,19 @@
 
 (function(window)
 {
+	let trackManager = null;
+	function getTrackRevisionManager()
+	{
+		return trackManager;
+	}
+	function checkElementInRevision(element)
+	{
+		if (!trackManager)
+			return;
+		
+		trackManager.CheckElement(element);
+	}
+	
 	// ВАЖНО: CheckArray - специальный массив-дублер для мапа CheckMap, для более быстрого выполнения функции
 	//        ContinueTrackRevisions. Заметим, что на функции CompleteTrackChangesForElements мы не выкидываем
 	//        элемент из CheckArray, но выкидываем из CheckMap. Это не страшно, т.к. при последующей проверке по
@@ -66,6 +79,8 @@
 		this.ProcessMove = null;
 
 		this.SkipPreDeleteMoveMarks = false;
+		
+		trackManager = this;
 	}
 
 	/**
@@ -1349,6 +1364,8 @@
 		return null;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscWord'].CTrackRevisionsManager = CTrackRevisionsManager;
+	window['AscWord'].CTrackRevisionsManager  = CTrackRevisionsManager;
+	window['AscWord'].getTrackRevisionManager = getTrackRevisionManager;
+	window['AscWord'].checkElementInRevision  = checkElementInRevision;
 
 })(window);
