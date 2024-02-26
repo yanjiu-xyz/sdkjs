@@ -8535,6 +8535,10 @@ CTable.prototype.Internal_Compile_Pr = function()
 	}
 	// Копируем прямые настройки параграфа.
 	Pr.TablePr.Merge(this.Pr);
+	
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument.IsDocumentEditor())
+		Pr.TablePr.TableInd = logicDocument.Layout.calculateIndent(Pr.TablePr.TableInd, this.Get_SectPr());
 
 	return Pr;
 };

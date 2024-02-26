@@ -1860,12 +1860,36 @@ Paragraph.prototype.GetNumberingText = function(bWithoutLvlText)
 {
 	var oParent = this.GetParent();
 	var oNumPr  = this.GetNumPr();
-	if (!oNumPr || !oParent)
+	
+	// При копировании иногда неправильно проставляется родительский класс, поэтому проверяем не только наличие
+	// родительского класса и что данный параграф в нем присутсвует
+	if (!oNumPr || !oParent || -1 === this.GetIndex())
 		return "";
 
 	var oNumbering = oParent.GetNumbering();
 	var oNumInfo   = oParent.CalculateNumberingValues(this, oNumPr);
 	return oNumbering.GetText(oNumPr.NumId, oNumPr.Lvl, oNumInfo, bWithoutLvlText);
+};
+/**
+ * Получаем рассчитанное значение нумерации для данного параграфа вместе с суффиксом
+ * @returns {string}
+ */
+Paragraph.prototype.GetNumberingTextWithSuffix = function()
+{
+	let numText = this.GetNumberingText(false);
+	if (!numText)
+		return "";
+	
+	let parent = this.GetParent();
+	let numPr  = this.GetNumPr();
+	
+	let suff = parent.GetNumbering().GetNum(numPr.NumId).GetLvl(numPr.Lvl).GetSuff();
+	if (Asc.c_oAscNumberingSuff.Tab === suff)
+		numText += "	";
+	else if (Asc.c_oAscNumberingSuff.Space === suff)
+		numText += " ";
+	
+	return numText;
 };
 /**
  * Есть ли у параграфа нумерованная нумерация
@@ -2188,7 +2212,6 @@ Paragraph.prototype.drawRunHighlight = function(CurPage, pGraphics, Pr, drawStat
 		bDrawBorders = false;
 
 	let PDSH = drawState.getHighlightState();
-	PDSH.ComplexFields.ResetPage(this, CurPage);
 
 	var _Page = this.Pages[CurPage];
 
@@ -8901,28 +8924,33 @@ Paragraph.prototype.SetSelectionToBeginEnd = function(isSelectionStart, isElemen
 {
 	this.Selection_SetBegEnd(isSelectionStart, isElementStart);
 };
-Paragraph.prototype.SelectAll = function(Direction)
+/**
+ * @param direction {AscWord.Direction}
+ */
+Paragraph.prototype.SelectAll = function(direction)
 {
 	this.Selection.Use = true;
-
-	var StartPos = null, EndPos = null;
-	if (-1 === Direction)
+	
+	let startPos, endPos, curPos;
+	if (AscWord.Direction.BACKWARD === direction)
 	{
-		StartPos = this.Get_EndPos(true);
-		EndPos   = this.Get_StartPos();
+		startPos = this.Get_EndPos(true);
+		endPos   = this.Get_StartPos();
+		curPos   = endPos;
 	}
 	else
 	{
-		StartPos = this.Get_StartPos();
-		EndPos   = this.Get_EndPos(true);
+		startPos = this.Get_StartPos();
+		endPos   = this.Get_EndPos(true);
+		curPos   = this.Get_EndPos(false);
 	}
-
+	
 	this.Selection.StartManually  = false;
 	this.Selection.EndManually    = false;
 	this.Selection.StartBehindEnd = false;
 	
-	this.Set_ParaContentPos(EndPos, true, -1, -1);
-	this.Set_SelectionContentPos(StartPos, EndPos);
+	this.Set_ParaContentPos(curPos, true, -1, -1);
+	this.Set_SelectionContentPos(startPos, endPos);
 };
 Paragraph.prototype.Select_Math = function(ParaMath)
 {
@@ -9022,26 +9050,32 @@ Paragraph.prototype.GetSelectionBounds = function()
 				if (!BeginRect)
 				{
 					let beginInfo = drawSelectionState.getBeginInfo();
-					BeginRect = {
-						X    : beginInfo.x,
-						Y    : beginInfo.y,
-						W    : beginInfo.w,
-						H    : beginInfo.h,
-						Page : absPage
+					if (beginInfo)
+					{
+						BeginRect = {
+							X    : beginInfo.x,
+							Y    : beginInfo.y,
+							W    : beginInfo.w,
+							H    : beginInfo.h,
+							Page : absPage
+						}
 					}
 				}
 				
 				let endInfo = drawSelectionState.getEndInfo();
-				EndRect     = {
-					X    : endInfo.x,
-					Y    : endInfo.y,
-					W    : endInfo.w,
-					H    : endInfo.h,
-					Page : absPage
-				};
-				
-				_EndX = endInfo.x;
-				_EndY = endInfo.y;
+				if (endInfo)
+				{
+					EndRect = {
+						X    : endInfo.x,
+						Y    : endInfo.y,
+						W    : endInfo.w,
+						H    : endInfo.h,
+						Page : absPage
+					};
+					
+					_EndX = endInfo.x;
+					_EndY = endInfo.y;
+				}
 			}
 		}
 	}
@@ -9214,15 +9248,7 @@ Paragraph.prototype.GetSelectedText = function(bClearText, oPr)
 	{
 		var oNumPr = this.GetNumPr();
 		if (oNumPr && oNumPr.IsValid() && this.IsSelectionFromStart(false))
-		{
-			Str += this.GetNumberingText(false);
-
-			var nSuff = this.Parent.GetNumbering().GetNum(oNumPr.NumId).GetLvl(oNumPr.Lvl).GetSuff();
-			if (Asc.c_oAscNumberingSuff.Tab === nSuff)
-				Str += "	";
-			else if (Asc.c_oAscNumberingSuff.Space === nSuff)
-				Str += " ";
-		}
+			Str += this.GetNumberingTextWithSuffix();
 	}
 
 	var Count = this.Content.length;
@@ -10842,8 +10868,17 @@ Paragraph.prototype.Internal_CompileParaPr2 = function()
 			Pr.ParaPr.NumPr.Lvl = Lvl;
 		else
 			Pr.ParaPr.NumPr = undefined;
-
-
+		
+		let logicDocument = this.GetLogicDocument();
+		if (logicDocument && logicDocument.IsDocumentEditor())
+		{
+			let sectPr = this.Get_SectPr();
+			let left = Pr.ParaPr.Ind.Left;
+			Pr.ParaPr.Ind.Left  = logicDocument.Layout.calculateIndent(Pr.ParaPr.Ind.Left, sectPr);
+			Pr.ParaPr.Ind.Right = logicDocument.Layout.calculateIndent(Pr.ParaPr.Ind.Right, sectPr);
+			Pr.ParaPr.Ind.FirstLine = logicDocument.Layout.calculateIndent(left + Pr.ParaPr.Ind.FirstLine, sectPr) - Pr.ParaPr.Ind.Left;
+		}
+		
 		return Pr;
 	}
 	else
@@ -13732,7 +13767,7 @@ Paragraph.prototype.SetSelectionState = function(State, StateIndex)
 	this.CurPos.RealY    = ParaState.CurPos.RealY;
 	this.CurPos.PagesPos = ParaState.CurPos.PagesPos;
 
-	this.Set_ParaContentPos(ParaState.CurPos.ContentPos, true, -1, -1);
+	this.Set_ParaContentPos(ParaState.CurPos.ContentPos, true, -1, -1, false);
 
 	this.RemoveSelection();
 
@@ -16159,15 +16194,7 @@ Paragraph.prototype.GetText = function(oPr)
 	{
 		var oNumPr = this.GetNumPr();
 		if (oNumPr && oNumPr.IsValid())
-		{
-			oText.Text += this.GetNumberingText(false);
-
-			var nSuff = this.Parent.GetNumbering().GetNum(oNumPr.NumId).GetLvl(oNumPr.Lvl).GetSuff();
-			if (Asc.c_oAscNumberingSuff.Tab === nSuff)
-				oText.Text += "	";
-			else if (Asc.c_oAscNumberingSuff.Space === nSuff)
-				oText.Text += " ";
-		}
+			oText.Text += this.GetNumberingTextWithSuffix();
 	}
 
 	for (var nIndex = 0, nCount = this.Content.length; nIndex < nCount; ++nIndex)
@@ -17371,6 +17398,11 @@ Paragraph.prototype.GetParaEndCompiledPr = function()
 
 	oTextPr.Merge(this.TextPr.Value);
 	oTextPr.CheckFontScale();
+	
+	let layoutCoeff = this.getLayoutFontSizeCoefficient();
+	oTextPr.FontSize   *= layoutCoeff;
+	oTextPr.FontSizeCS *= layoutCoeff;
+	
 	return oTextPr;
 };
 Paragraph.prototype.GetLastParagraph = function()
@@ -18063,12 +18095,12 @@ Paragraph.prototype.ProcessComplexFields = function()
 	{
 		return;
 	}
-	var oComplexFields = new CParagraphComplexFieldsInfo();
-	oComplexFields.ResetPage(this, 0);
+	let complexFields = new AscWord.ParagraphComplexFieldStack();
+	complexFields.resetPage(this, 0);
 
 	for (var nPos = 0, nCount = this.Content.length; nPos < nCount; ++nPos)
 	{
-		this.Content[nPos].ProcessComplexFields(oComplexFields);
+		this.Content[nPos].ProcessComplexFields(complexFields);
 	}
 };
 Paragraph.prototype.GetStartPageForRecalculate = function(nPageAbs)
@@ -18745,6 +18777,24 @@ Paragraph.prototype.SelectFotMath = function()
 	
 	this.Document_SetThisElementCurrent(false);
 }
+Paragraph.prototype.getLayoutFontSizeCoefficient = function()
+{
+	let logicDocument = this.GetLogicDocument();
+	if (!logicDocument || !logicDocument.IsDocumentEditor())
+		return 1;
+	
+	let shape   = this.GetParentShape();
+	let drawing = shape ? shape.GetParaDrawing() : null;
+	if (drawing)
+		return drawing.GetScaleCoefficient();
+	
+	// TODO: В MSWord в режиме readmode не скейлится размер шрифта вне таблицы, а уменьшается вместе с самой таблицой
+	//       у нас пока было решено скейлить текст в таблицах и вне таблицы одинаково
+	// if (this.IsTableCellContent())
+	// 	return this.getLayoutScaleCoefficient();
+	
+	return logicDocument.GetDocumentLayout().GetFontScale();
+};
 
 Paragraph.prototype.asc_getText = function()
 {
@@ -18761,12 +18811,7 @@ Paragraph.prototype.asc_getText = function()
 				sText += " ";
 			}
 		}
-		var sNumText = this.GetNumberingText();
-		if(typeof sNumText === "string" && sNumText.length > 0)
-		{
-			sText += sNumText;
-			sText += " ";
-		}
+		sText += this.GetNumberingTextWithSuffix();
 	}
 	sText += this.GetText();
 	return sText;
@@ -19224,225 +19269,6 @@ CComplexFieldStatePos.prototype.IsEqual = function(oState)
 		&& this.ComplexField.GetBeginChar() === oState.ComplexField.GetBeginChar());
 };
 
-function CParagraphComplexFieldsInfo()
-{
-	// Массив CComplexFieldStatePos
-	this.CF = [];
-
-	this.isHidden = null;
-
-	this.StoredState = null;
-}
-CParagraphComplexFieldsInfo.prototype.ResetPage = function(Paragraph, CurPage)
-{
-	this.isHidden = null;
-
-	var PageEndInfo = Paragraph.GetEndInfoByPage(CurPage - 1);
-
-	if (PageEndInfo)
-		this.CF = PageEndInfo.GetComplexFields();
-	else
-		this.CF = [];
-};
-/**
- * Находимся ли мы внутри содержимого скрытого поля
- * @returns {boolean}
- */
-CParagraphComplexFieldsInfo.prototype.IsHiddenFieldContent = function()
-{
-	if (null === this.isHidden)
-		this.isHidden = this.private_IsHiddenFieldContent();
-
-	return this.isHidden;
-};
-CParagraphComplexFieldsInfo.prototype.private_IsHiddenFieldContent = function()
-{
-	if (this.CF.length > 0)
-	{
-		for (var nIndex = 0, nCount = this.CF.length; nIndex < nCount; ++nIndex)
-		{
-			if (this.CF[nIndex].ComplexField.IsHidden())
-				return true;
-		}
-	}
-
-	return false;
-};
-/**
- * Данная функция используется при пересчете, когда мы собираем сложное поле.
- * @param oChar
- */
-CParagraphComplexFieldsInfo.prototype.ProcessFieldCharAndCollectComplexField = function(oChar)
-{
-	this.isHidden = null;
-
-	if (oChar.IsBegin())
-	{
-		var oComplexField = oChar.GetComplexField();
-		if (!oComplexField)
-		{
-			oChar.SetUse(false);
-		}
-		else
-		{
-			oChar.SetUse(true);
-			oComplexField.SetBeginChar(oChar);
-			this.CF.push(new CComplexFieldStatePos(oComplexField, true));
-		}
-	}
-	else if (oChar.IsEnd())
-	{
-		if (this.CF.length > 0)
-		{
-			oChar.SetUse(true);
-			var oComplexField = this.CF[this.CF.length - 1].ComplexField;
-			oComplexField.SetEndChar(oChar);
-			this.CF.splice(this.CF.length - 1, 1);
-
-			if (this.CF.length > 0 && this.CF[this.CF.length - 1].IsFieldCode())
-				this.CF[this.CF.length - 1].ComplexField.SetInstructionCF(oComplexField);
-		}
-		else
-		{
-			oChar.SetUse(false);
-		}
-	}
-	else if (oChar.IsSeparate())
-	{
-		if (this.CF.length > 0)
-		{
-			oChar.SetUse(true);
-			var oComplexField = this.CF[this.CF.length - 1].ComplexField;
-			oComplexField.SetSeparateChar(oChar);
-			this.CF[this.CF.length - 1].SetFieldCode(false);
-		}
-		else
-		{
-			oChar.SetUse(false);
-		}
-	}
-};
-/**
- * Данная функция используется, когда мы просто хотим отследить где мы находимся, относительно сложных полей
- * @param oChar
- */
-CParagraphComplexFieldsInfo.prototype.ProcessFieldChar = function(oChar)
-{
-	this.isHidden = null;
-
-	if (!oChar || !oChar.IsUse())
-		return;
-
-	var oComplexField = oChar.GetComplexField();
-
-	if (oChar.IsBegin())
-	{
-		this.CF.push(new CComplexFieldStatePos(oComplexField, true));
-	}
-	else if (oChar.IsSeparate())
-	{
-		if (this.CF.length > 0)
-		{
-			this.CF[this.CF.length - 1].SetFieldCode(false);
-		}
-	}
-	else if (oChar.IsEnd())
-	{
-		if (this.CF.length > 0)
-		{
-			this.CF.splice(this.CF.length - 1, 1);
-		}
-	}
-};
-CParagraphComplexFieldsInfo.prototype.ProcessInstruction = function(oInstruction)
-{
-	if (this.CF.length <= 0)
-		return;
-
-	var oComplexField = this.CF[this.CF.length - 1].ComplexField;
-	if (oComplexField && null === oComplexField.GetSeparateChar())
-		oComplexField.SetInstruction(oInstruction);
-};
-CParagraphComplexFieldsInfo.prototype.IsComplexField = function()
-{
-	return (this.CF.length > 0 ? true : false);
-};
-CParagraphComplexFieldsInfo.prototype.IsComplexFieldCode = function()
-{
-	if (!this.IsComplexField())
-		return false;
-
-	for (var nIndex = 0, nCount = this.CF.length; nIndex < nCount; ++nIndex)
-	{
-		if (this.CF[nIndex].IsFieldCode())
-			return true;
-	}
-
-	return false;
-};
-CParagraphComplexFieldsInfo.prototype.IsCurrentComplexField = function()
-{
-	for (var nIndex = 0, nCount = this.CF.length; nIndex < nCount; ++nIndex)
-	{
-		if (this.CF[nIndex].ComplexField.IsCurrent())
-			return true;
-	}
-
-	return false;
-};
-CParagraphComplexFieldsInfo.prototype.IsHyperlinkField = function()
-{
-	var isHaveHyperlink = false,
-		isOtherField    = false;
-
-	for (var nIndex = 0, nCount = this.CF.length; nIndex < nCount; ++nIndex)
-	{
-		var oInstruction = this.CF[nIndex].ComplexField.GetInstruction();
-		if (oInstruction && AscWord.fieldtype_HYPERLINK === oInstruction.GetType())
-			isHaveHyperlink = true;
-		else
-			isOtherField = true;
-
-	}
-
-	return (isHaveHyperlink && !isOtherField ? true : false);
-};
-CParagraphComplexFieldsInfo.prototype.PushState = function()
-{
-	this.StoredState = {
-		Hidden : this.isHidden,
-		CF     : []
-	};
-
-	for (var nIndex = 0, nCount = this.CF.length; nIndex < nCount; ++nIndex)
-	{
-		this.StoredState.CF[nIndex] = this.CF[nIndex].Copy();
-	}
-};
-CParagraphComplexFieldsInfo.prototype.PopState = function()
-{
-	if (this.StoredState)
-	{
-		this.isHidden    = this.StoredState.Hidden;
-		this.CF          = this.StoredState.CF;
-		this.StoredState = null;
-	}
-};
-CParagraphComplexFieldsInfo.prototype.GetREForHYPERLINK = function()
-{
-	for (var nIndex = this.CF.length - 1; nIndex >= 0; --nIndex)
-	{
-		var oInstruction = this.CF[nIndex].ComplexField.GetInstruction();
-		if (oInstruction && 
-			(AscWord.fieldtype_HYPERLINK === oInstruction.GetType()
-			|| AscWord.fieldtype_REF === oInstruction.GetType() && oInstruction.GetHyperlink()
-			|| AscWord.fieldtype_NOTEREF === oInstruction.GetType() && oInstruction.GetHyperlink()))
-			return this.CF[nIndex].ComplexField;
-	}
-
-	return null;
-};
-
 //----------------------------------------------------------------------------------------------------------------------
 // Классы для работы с курсором
 //----------------------------------------------------------------------------------------------------------------------
@@ -19559,13 +19385,13 @@ CParagraphSearchPos.prototype.InitComplexFields = function(arrComplexFields)
 {
 	this.ComplexFields = arrComplexFields;
 };
-CParagraphSearchPos.prototype.IsComplexField = function()
+CParagraphSearchPos.prototype.isComplexField = function()
 {
 	return (this.ComplexFields.length > 0 ? true : false);
 };
-CParagraphSearchPos.prototype.IsComplexFieldCode = function()
+CParagraphSearchPos.prototype.isComplexFieldCode = function()
 {
-	if (!this.IsComplexField())
+	if (!this.isComplexField())
 		return false;
 
 	for (var nIndex = 0, nCount = this.ComplexFields.length; nIndex < nCount; ++nIndex)
@@ -19576,14 +19402,14 @@ CParagraphSearchPos.prototype.IsComplexFieldCode = function()
 
 	return false;
 };
-CParagraphSearchPos.prototype.IsComplexFieldValue = function()
+CParagraphSearchPos.prototype.isComplexFieldValue = function()
 {
-	if (!this.IsComplexField() || this.IsComplexFieldCode())
+	if (!this.isComplexField() || this.isComplexFieldCode())
 		return false;
 
 	return true;
 };
-CParagraphSearchPos.prototype.IsHiddenComplexField = function()
+CParagraphSearchPos.prototype.isHiddenComplexField = function()
 {
 	for (var nIndex = 0, nCount = this.ComplexFields.length; nIndex < nCount; ++nIndex)
 	{

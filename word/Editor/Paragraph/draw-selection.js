@@ -64,10 +64,14 @@
 		this.endInfo      = null;
 		
 		this.anchoredObjects = [];
+		
+		this.complexFields = new AscWord.ParagraphComplexFieldStack();
 	}
 	ParagraphDrawSelectionState.prototype.resetPage = function(page)
 	{
 		this.page = page;
+		
+		this.complexFields.resetPage(this.paragraph, page);
 	};
 	ParagraphDrawSelectionState.prototype.resetLine = function(line)
 	{
@@ -107,16 +111,10 @@
 	};
 	ParagraphDrawSelectionState.prototype.getBeginInfo = function()
 	{
-		if (!this.beginInfo)
-			return {x : this.x, y : this.y, w : 0, h : this.h};
-		
 		return this.beginInfo;
 	};
 	ParagraphDrawSelectionState.prototype.getEndInfo = function()
 	{
-		if (!this.endInfo)
-			return {x : this.x, y : this.y, w : 0, h : this.h};
-		
 		return this.endInfo;
 	};
 	/**
@@ -125,6 +123,9 @@
 	 */
 	ParagraphDrawSelectionState.prototype.handleRunElement = function(element, isSelected)
 	{
+		if (!this.complexFields.checkRunElement(element))
+			return;
+		
 		if (para_Drawing === element.Type && !element.IsInline())
 		{
 			if (isSelected)

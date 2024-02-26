@@ -149,12 +149,16 @@
 	{
 		if (this.Buffer.length >= AscFonts.HB_STRING_MAX_LEN)
 			this.FlushWord();
-
+		
+		// TODO: Check bugs 66317 66435
 		let nScript = this.GetTextScript(nUnicode);
 		if (nScript !== this.Script
 			&& -1 !== this.Script
 			&& AscFonts.HB_SCRIPT.HB_SCRIPT_INHERITED !== nScript
 			&& AscFonts.HB_SCRIPT.HB_SCRIPT_INHERITED !== this.Script)
+			this.FlushWord();
+		
+		if (this.GetDirection(this.Script) !== this.GetDirection(nScript))
 			this.FlushWord();
 
 		let nFontSlot = this.GetFontSlot(nUnicode);

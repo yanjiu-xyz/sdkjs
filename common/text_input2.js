@@ -126,6 +126,8 @@
 
 		// для сброса текста при фокусе
 		this.checkClearTextOnFocusTimerId = -1;
+
+		this.isDisableKeyboard = false;
 	}
 
 	var CTextInputPrototype = CTextInput2.prototype;
@@ -855,7 +857,7 @@
 	};
 	CTextInputPrototype.setReadOnlyWrapper = function(val)
 	{
-		this.HtmlArea.readOnly = this.Api.isViewMode ? true : val;
+		this.HtmlArea.readOnly = this.isDisableKeyboard ? true : val;
 	};
 	CTextInputPrototype.setInterfaceEnableKeyEvents = function(value)
 	{
@@ -1005,6 +1007,8 @@
 		}
 
 		this.Api.Input_UpdatePos();
+
+		this.checkViewMode();
 	};
 	CTextInputPrototype.appendInputToCanvas = function(parent_id)
 	{
@@ -1169,6 +1173,25 @@
 	CTextInputPrototype.enableVirtualKeyboard_Hard = function()
 	{
 		this.setReadOnlyWrapper(false);
+	};
+
+	CTextInputPrototype.checkViewMode = function()
+	{
+		let oldDisableKeyboard = this.isDisableKeyboard;
+		this.isDisableKeyboard = this.Api.isViewMode;
+
+		if (!this.isDisableKeyboard)
+		{
+			if (this.Api.isRestrictionView() && !this.Api.isRestrictionForms())
+			{
+				this.isDisableKeyboard = true;
+			}
+		}
+
+		if (oldDisableKeyboard !== this.isDisableKeyboard)
+		{
+			this.setReadOnlyWrapper(false);
+		}
 	};
 
 	function _getAttirbute(_elem, _attr, _depth)

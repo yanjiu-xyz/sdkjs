@@ -676,6 +676,7 @@
 
 		this.restrictions = val;
 		this.onUpdateRestrictions(additionalSettings);
+		this.checkInputMode();
 	};
 	baseEditorsApi.prototype.getViewMode                     = function()
 	{
@@ -685,12 +686,21 @@
 	{
 		this.restrictions |= val;
 		this.onUpdateRestrictions();
+		this.checkInputMode();
 	};
 	baseEditorsApi.prototype.asc_removeRestriction           = function(val)
 	{
 		this.restrictions &= ~val;
 		this.onUpdateRestrictions();
+		this.checkInputMode();
 	};
+
+	baseEditorsApi.prototype.checkInputMode                  = function()
+	{
+		if (AscCommon.g_inputContext)
+			AscCommon.g_inputContext.checkViewMode();
+	};
+
 	baseEditorsApi.prototype.addTableOleObject = function(oleBinary)
 	{
 		var _this = this;
@@ -4858,5 +4868,9 @@
 	prot['asc_findText'] = prot.asc_findText;
 	prot['asc_endFindText'] = prot.asc_endFindText;
 	prot['asc_setContentDarkMode'] = prot.asc_setContentDarkMode;
+
+	// passwords
+	prot["asc_setCurrentPassword"] = prot.asc_setCurrentPassword;
+	prot["asc_resetPassword"] = prot.asc_resetPassword;
 
 })(window);

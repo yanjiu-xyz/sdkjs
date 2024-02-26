@@ -2331,6 +2331,7 @@
 							}
 						}
 					}
+					this.lastSelectedObject = null;
 				},
 
 				deselectObject: function (object) {
@@ -2338,6 +2339,9 @@
 						if (this.selectedObjects[i] === object) {
 							object.selected = false;
 							this.selectedObjects.splice(i, 1);
+							if(this.selectedObjects.length === 0) {
+								this.lastSelectedObject = object;
+							}
 							return;
 						}
 					}
@@ -2877,14 +2881,14 @@
 								this.selectedObjects[0].applyTextFunction(docContentFunction, tableFunction, args);
 								this.selection.textSelection.select(this, this.selection.textSelection.selectStartPage);
 							}
-						} else if (this.parent && this.parent.GoTo_Text) {
-							this.parent.GoTo_Text();
+						} else if (this.parent && this.parent.GoToText) {
+							this.parent.GoToText();
 							this.resetSelection();
 							if (this.document && (docpostype_DrawingObjects !== this.document.GetDocPosType() || isRealObject(getTargetTextObject(this.document.DrawingObjects))) && CDocumentContent.prototype.AddNewParagraph === docContentFunction) {
 								this.document.AddNewParagraph(args[0]);
 							}
-						} else if (this.selectedObjects.length > 0 && this.selectedObjects[0].parent && this.selectedObjects[0].parent.GoTo_Text) {
-							this.selectedObjects[0].parent.GoTo_Text();
+						} else if (this.selectedObjects.length > 0 && this.selectedObjects[0].parent && this.selectedObjects[0].parent.GoToText) {
+							this.selectedObjects[0].parent.GoToText();
 							this.resetSelection();
 							if (this.document && (docpostype_DrawingObjects !== this.document.GetDocPosType() || isRealObject(getTargetTextObject(this))) && CDocumentContent.prototype.AddNewParagraph === docContentFunction) {
 								this.document.AddNewParagraph(args[0]);
@@ -6314,19 +6318,19 @@
 						this.checkChartTextSelection();
 					}
 					this.resetInternalSelection(noResetContentSelect, bDoNotRedraw);
-					for (var i = 0; i < this.selectedObjects.length; ++i) {
-						this.selectedObjects[i].selected = false;
+					let aSelected = [].concat(this.selectedObjects);
+					for (let nDrawing = 0; nDrawing < aSelected.length; ++nDrawing) {
+						this.deselectObject(aSelected[nDrawing]);
 					}
 					this.selectedObjects.length = 0;
-					this.selection =
-						{
+					this.selection = {
 							selectedObjects: [],
 							groupSelection: null,
 							chartSelection: null,
 							textSelection: null,
 							cropSelection: null,
 							geometrySelection: null
-						};
+					};
 					if (bNoCheckAnim !== true) {
 						this.onChangeDrawingsSelection();
 					}
