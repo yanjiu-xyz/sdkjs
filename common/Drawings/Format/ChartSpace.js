@@ -5754,7 +5754,7 @@ function(window, undefined) {
 	};
 	CChartSpace.prototype.recalculateLegend = function () {
 		if (this.chart && this.chart.legend) {
-			let aCharts = this.chart.plotArea.charts;
+			let aCharts = this.isChartEx() ? [this.chart.plotArea.plotAreaRegion] : this.chart.plotArea.charts;
 			if(aCharts.length === 0) {
 				return;
 			}
@@ -5769,7 +5769,6 @@ function(window, undefined) {
 			if (AscFormat.isRealNumber(legend.legendPos)) {
 				legend_pos = legend.legendPos;
 			}
-			var aCharts = this.isChartEx() ? [this.chart.plotArea.plotAreaRegion] : this.chart.plotArea.charts;
 			var oTypedChart;
 			//Order series for the legend
 			let aOrderedSeries = [];
@@ -5883,7 +5882,7 @@ function(window, undefined) {
 
 					calc_entry.calcMarkerUnion = new AscFormat.CUnionMarker();
 					union_marker = calc_entry.calcMarkerUnion;
-					var pts = isChartEx ? ser.getValPts() : ser.getNumPts();
+					var pts = this.isChartEx() ? ser.getValPts() : ser.getNumPts();
 					var nSerType = ser.getObjectType();
 					if(nSerType === AscDFH.historyitem_type_BarSeries ||
 						nSerType === AscDFH.historyitem_type_BubbleSeries ||
