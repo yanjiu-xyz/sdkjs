@@ -8070,7 +8070,7 @@
         }
 
         let c = this._getCell(col, row);
-        if (null === c) {
+        if (null === c || !this.model.isUserProtectedRangesCanView({nCol: col, nRow: row})) {
             return col;
         }
 

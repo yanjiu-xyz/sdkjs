@@ -1187,11 +1187,18 @@
         Name: 2,
         Text: 3,
         User: 4,
-        UsersGroup: 5
+        UsersGroup: 5,
+        Type: 6
     };
 	var c_oSerUserProtectedRangeDesc = {
 		Id: 0,
-		Name: 1
+		Name: 1,
+		Type: 2
+	};
+	var c_oSerUserProtectedRangeType = {
+		notView: 0,
+		view: 1,
+		edit: 2
 	};
 
     /** @enum */
@@ -6079,6 +6086,11 @@
 				this.memory.WriteByte(c_oSerPropLenType.Variable);
 				this.memory.WriteString2(desc.name);
 			}
+			if (desc.type) {
+				this.memory.WriteByte(c_oSerUserProtectedRangeDesc.Type);
+				this.memory.WriteByte(c_oSerPropLenType.Byte);
+				this.memory.WriteByte(desc.type);
+			}
 		};
         this.WriteUserProtectedRange = function (oUserProtectedRange) {
 
@@ -6117,6 +6129,11 @@
 						oThis.WriteUserProtectedRangeDesc(userGroups[i]);
 					});
 				}
+            }
+            if (oUserProtectedRange.type) {
+                this.bs.WriteItem(c_oSerUserProtectedRange.Type, function () {
+                    oThis.memory.WriteByte(oUserProtectedRange.type);
+                });
             }
         };
 
@@ -9214,6 +9231,8 @@
 				oUser.name = this.stream.GetString2LE(length);
 			} else if (c_oSerUserProtectedRangeDesc.Id === type) {
 				oUser.id = this.stream.GetString2LE(length);
+			} else if (c_oSerUserProtectedRangeDesc.Type === type) {
+				oUser.type = this.stream.GetByte();
 			} else {
 				res = c_oSerConstants.ReadUnknown;
 			}
@@ -9232,6 +9251,8 @@
                 }
             } else if (c_oSerUserProtectedRange.Text === type) {
                 oUserProtectedRange.warningText = this.stream.GetString2(length);
+            } else if (c_oSerUserProtectedRange.Type === type) {
+                oUserProtectedRange.type = this.stream.GetByte(length);
             } else if (c_oSerUserProtectedRange.User === type)
 			{
 
@@ -13597,6 +13618,10 @@
     prot['pageBreakPreview'] = prot.pageBreakPreview;
     prot['pageLayout'] = prot.pageLayout;
 
-
+    window["Asc"].c_oSerUserProtectedRangeType = c_oSerUserProtectedRangeType;
+    prot = c_oSerUserProtectedRangeType;
+    prot['notView'] = prot.notView;
+    prot['view'] = prot.view;
+    prot['edit'] = prot.edit;
 
 })(window);
