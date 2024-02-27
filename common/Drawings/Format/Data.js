@@ -7619,7 +7619,10 @@ Because of this, the display is sometimes not correct.
 		  if (lst && lst.length) {
 				const truthIndex = index % lst.length;
 				const uniColor = lst[truthIndex];
-				if (this.checkTransparent(uniColor) || shadowShape.shape.hideGeom || this.checkNoFill()) {
+				if (this.checkTransparent(uniColor) ||
+					shadowShape.shape.hideGeom ||
+					this.checkNoFill() ||
+					shadowShape.type === AscFormat.LayoutShapeType_outputShapeType_conn) {
 					return AscFormat.CreateNoFillUniFill();
 				}
 				return AscFormat.CreateUniFillByUniColorCopy(uniColor);
