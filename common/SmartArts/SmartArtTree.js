@@ -479,10 +479,6 @@
 		this.colorCheck = {};
 		this.connectorAlgorithmStack = [];
 		this.moveShapeSettings = [];
-		this.sizeCoefficients = {
-			widthCoefficient: 1,
-			heightCoefficient: 1
-		};
 		this.forEachMap = null;
 		this.initDataTree();
 	}
@@ -550,12 +546,6 @@
 	};
 	SmartArtAlgorithm.prototype.getForEach = function (ref) {
 		return this.forEachMap[ref];
-	};
-	SmartArtAlgorithm.prototype.setWidthScaleCoefficient = function (coefficient) {
-		this.sizeCoefficients.widthCoefficient = coefficient;
-	};
-	SmartArtAlgorithm.prototype.setHeightScaleCoefficient = function (coefficient) {
-		this.sizeCoefficients.heightCoefficient = coefficient;
 	};
 	SmartArtAlgorithm.prototype.addConnectorAlgorithm = function (algorithm) {
 		this.connectorAlgorithmStack.push(algorithm);
