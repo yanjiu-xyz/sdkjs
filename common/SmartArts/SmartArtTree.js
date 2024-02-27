@@ -257,23 +257,13 @@
 	}
 	If.prototype.funcPosEven = function (nodes, currentNode) {
 		const conditionValue = parseInt(this.getConditionValue(), 10);
-		for (let i = 0; i < nodes.length; i++) {
-			if (nodes[i] === currentNode) {
-				const isEven = i % 2 === 0 ? 1 : 0;
-				return this.check(conditionValue, isEven);
-			}
-		}
-		return false;
+		const position = currentNode.getPositionByParent() + 1;
+		return this.check(conditionValue, position % 2 === 0 ? 1 : 0);
 	};
 	If.prototype.funcPosOdd = function (nodes, currentNode) {
 		const conditionValue = parseInt(this.getConditionValue(), 10);
-		for (let i = 0; i < nodes.length; i++) {
-			if (nodes[i] === currentNode) {
-				const isOdd = i % 2;
-				return this.check(conditionValue, isOdd);
-			}
-		}
-		return false;
+		const position = currentNode.getPositionByParent() + 1;
+		return this.check(conditionValue, position % 2);
 	};
 	If.prototype.funcPos = function (nodes, currentNode) {
 		const conditionValue = parseInt(this.getConditionValue(), 10);
@@ -808,6 +798,9 @@
 			return presPoint && presPoint.getHierBranchValue();
 		}
 	};
+	SmartArtDataNodeBase.prototype.getPositionByParent = function () {
+		return -1;
+	};
 	SmartArtDataNodeBase.prototype.getHierBranch = function () {
 		return this._getHierBranchValue();
 	};
@@ -1055,6 +1048,16 @@
 	SmartArtDataNode.prototype.getPointType = function () {
 		return this.point.getType();
 	}
+
+	SmartArtDataNodeBase.prototype.getPositionByParent = function () {
+		const parent = this.getParent();
+		for (let i = 0; i < parent.childs.length; i++) {
+			if (parent.childs[i] === this) {
+				return i;
+			}
+		}
+		return -1;
+	};
 
 	SmartArtDataNode.prototype.getDirection = function () {
 		return this.presNode && this.presNode.getDirection();
