@@ -1354,10 +1354,7 @@ CInlineLevelSdt.prototype.Document_UpdateInterfaceState = function()
 };
 CInlineLevelSdt.prototype.SetParagraph = function(oParagraph)
 {
-	let oLogicDocument;
-	if (this.GetTextFormPr() && (oLogicDocument = this.GetLogicDocument()))
-		oLogicDocument.GetFormsManager().Register(this);
-
+	AscWord.registerForm(this);
 	CParagraphContentWithParagraphLikeContent.prototype.SetParagraph.apply(this, arguments);
 };
 CInlineLevelSdt.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)

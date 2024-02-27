@@ -695,15 +695,10 @@ CChangesSdtPrFormPr.prototype.private_SetValue = function(Value)
 			form.Pr.FormPr.Field = fieldMaster;
 	}
 	
-	let logicDocument = form.GetLogicDocument();
-	let formManager   = logicDocument ? logicDocument.GetFormsManager() : null;
-	if (formManager)
-	{
-		if (Value)
-			formManager.Register(form);
-		else
-			formManager.Unregister(form);
-	}
+	if (Value)
+		AscWord.registerForm(form);
+	else
+		AscWord.unregisterForm(form);
 };
 CChangesSdtPrFormPr.prototype.private_CreateObject = function()
 {
