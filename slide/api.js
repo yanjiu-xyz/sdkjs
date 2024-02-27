@@ -708,6 +708,10 @@
 		}
 		return false;
 	};
+	asc_docs_api.prototype._loadSdkImages = function () {
+		const aImages = AscCommon.getIconsForLoad();
+		this.ImageLoader.LoadDocumentImages(aImages);
+	};
 
 	/////////////////////////////////////////////////////////////////////////
 	///////////////////CoAuthoring and Chat api//////////////////////////////

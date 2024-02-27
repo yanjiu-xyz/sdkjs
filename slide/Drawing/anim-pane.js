@@ -803,8 +803,11 @@
 	};
 
 
-	function CImageControl(oParentControl) {
+	function CImageControl(oParentControl, sBase64Image, width, height) {
 		CControl.call(this, oParentControl)
+		this.image = sBase64Image;
+		this.imgWidth = width || EFFECT_BAR_HEIGHT;
+		this.imgHeight = height || EFFECT_BAR_HEIGHT;
 	}
 
 	InitClass(CImageControl, CControl, CONTROL_TYPE_IMAGE);
@@ -812,8 +815,34 @@
 	CImageControl.prototype.canHandleEvents = function () {
 		return false;
 	};
-	//CImageControl.prototype.draw = function() {
-	//};
+	CImageControl.prototype.draw = function(graphics) {
+		if (!this.image) { return false; }
+		if (this.isHidden()) { return false; }
+		if (!this.checkUpdateRect(graphics.updatedRect)) { return false; }
+
+		const dimensions = this.normalizeDimensions(this.imgWidth, this.imgHeight, EFFECT_BAR_HEIGHT);
+		const left = this.bounds.l + (this.getWidth() - dimensions.width) / 2;
+		const top = this.bounds.t + (this.getHeight() - dimensions.height) / 2;
+
+		graphics.SaveGrState();
+		graphics.SetIntegerGrid(false);
+		graphics.drawImage(this.image, left, top, dimensions.width, dimensions.height);
+		graphics.RestoreGrState();
+	};
+
+	CImageControl.prototype.normalizeDimensions = function (width, height, maxSize) {
+		const maxWidth = maxSize;
+		const maxHeight = maxSize;
+
+		const widthRatio = maxWidth / width;
+		const heightRatio = maxHeight / height;
+		const scale = (width > maxWidth || height > maxHeight) ? Math.min(widthRatio, heightRatio) : 1;
+
+		return {
+			width: width * scale,
+			height: height * scale
+		};
+	};
 
 
 	function CButton(oParentControl, fOnMouseDown, fOnMouseMove, fOnMouseUp) {
@@ -2087,8 +2116,24 @@
 			this.indexLabel = this.addControl(new CLabel(this, this.effect.getIndexInSequence() + "", 7.5, false, 2))
 		}
 
-		this.eventTypeImage = this.addControl(new CImageControl(this));
-		this.effectTypeImage = this.addControl(new CImageControl(this));
+		const images = getIconsForLoad();
+		let img = {};
+		switch (true) {
+			case this.effect.isClickEffect():
+				img.src = images[0];
+				img.width = 11 * AscCommon.g_dKoef_pix_to_mm;
+				img.height = 16 * AscCommon.g_dKoef_pix_to_mm;
+				break;
+
+			case this.effect.isAfterEffect():
+				img.src = images[1];
+				// img.width = 14 * AscCommon.g_dKoef_pix_to_mm;
+				// img.height = 14 * AscCommon.g_dKoef_pix_to_mm;
+				break;
+		}
+
+		this.eventTypeImage = this.addControl(new CImageControl(this, img.src, img.width, img.height));
+		this.effectTypeImage = this.addControl(new CImageControl(this, images[2]));
 		this.effectLabel = this.addControl(new CLabel(this, this.effect.getObjectName(), 7.5));
 		this.contextMenuButton = this.addControl(new CButton(this, showContextMenu));
 
@@ -2681,11 +2726,21 @@
 	const MIN_ALLOWED_DURATION = 10; // milliseconds
 	const MIN_ALLOWED_REPEAT_COUNT = 10; // equals 0.01 of full effect duration
 
+	const getIconsForLoad = function () {
+		const clickEffectImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTEiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxMSAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIgMC41SDlDOS44Mjg0MyAwLjUgMTAuNSAxLjE3MTU3IDEwLjUgMlYxMkMxMC41IDEzLjkzMyA4LjkzMyAxNS41IDcgMTUuNUg0QzIuMDY3IDE1LjUgMC41IDEzLjkzMyAwLjUgMTJWMkMwLjUgMS4xNzE1NyAxLjE3MTU3IDAuNSAyIDAuNVoiIGZpbGw9IndoaXRlIiBzdHJva2U9IiM0NDQ0NDQiLz4KPHJlY3QgeD0iNSIgeT0iMiIgd2lkdGg9IjEiIGhlaWdodD0iNCIgZmlsbD0iIzQ0NDQ0NCIvPgo8L3N2Zz4K';
+		const afterEffectImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTQiIGhlaWdodD0iMTQiIHZpZXdCb3g9IjAgMCAxNCAxNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iNyIgY3k9IjciIHI9IjYuNSIgZmlsbD0id2hpdGUiIHN0cm9rZT0iIzQ0NDQ0NCIvPgo8cmVjdCB4PSI2IiB5PSIzIiB3aWR0aD0iMSIgaGVpZ2h0PSI0IiBmaWxsPSIjNDQ0NDQ0Ii8+CjxyZWN0IHg9IjEwIiB5PSI3IiB3aWR0aD0iMSIgaGVpZ2h0PSI0IiB0cmFuc2Zvcm09InJvdGF0ZSg5MCAxMCA3KSIgZmlsbD0iIzQ0NDQ0NCIvPgo8L3N2Zz4K';
+
+		// TODO: effectTypeImage
+		const effectTypeImage = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTMiIGhlaWdodD0iMTEiIHZpZXdCb3g9IjAgMCAxMyAxMSIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTcuNSAxLjY5MzUzTDguMzIwNjYgNC4zNDkyNUw4LjQyOTU1IDQuNzAxNjNIOC43OTgzN0gxMS41MjE4TDkuMjk3MjggNi40MDEwNUw5LjAyMDEzIDYuNjEyNzdMOS4xMjMxIDYuOTQ1OTlMOS45NTk2MiA5LjY1MzAzTDcuODAzNTMgOC4wMDU5M0w3LjUgNy43NzQwNUw3LjE5NjQ3IDguMDA1OTNMNS4wNDAzNyA5LjY1MzAzTDUuODc2ODkgNi45NDU5OUw1Ljk3OTg3IDYuNjEyNzdMNS43MDI3MSA2LjQwMTA1TDMuNDc4MTQgNC43MDE2M0g2LjIwMTYySDYuNTcwNDRMNi42NzkzMyA0LjM0OTI1TDcuNSAxLjY5MzUzWiIgZmlsbD0iIzQ0NDQ0NCIgc3Ryb2tlPSIjNDQ0NDQ0Ii8+CjxyZWN0IHk9IjIiIHdpZHRoPSI1IiBoZWlnaHQ9IjEiIGZpbGw9IiM0NDQ0NDQiLz4KPHJlY3QgeT0iOCIgd2lkdGg9IjQiIGhlaWdodD0iMSIgZmlsbD0iIzQ0NDQ0NCIvPgo8cmVjdCB5PSI2IiB3aWR0aD0iMyIgaGVpZ2h0PSIxIiBmaWxsPSIjNDQ0NDQ0Ii8+Cjwvc3ZnPgo=';
+		return [clickEffectImage, afterEffectImage, effectTypeImage];
+	}
 
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].CAnimPaneHeader = CAnimPaneHeader;
 	window['AscCommon'].CSeqListContainer = CSeqListContainer;
 	window['AscCommon'].CTimelineContainer = CTimelineContainer;
+
+	window['AscCommon'].getIconsForLoad = getIconsForLoad;
 
 	AscCommon.GlobalSkin['animation-effect-entr-fill'] = '#9edb86';
 	AscCommon.GlobalSkin['animation-effect-entr-outline'] = '#386821';
