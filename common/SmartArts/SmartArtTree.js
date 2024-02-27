@@ -1305,18 +1305,36 @@
 				return val * 100000;
 		}
 	};
+	function getAdjName(geometry, id) {
+		switch (geometry.preset) {
+			case "hexagon":
+				if (id === 1) {
+					return "adj"
+				} else if (id === 2) {
+					return "vf";
+				}
+				break;
+			default:
+				const singleAdjName = "adj";
+				const adjName = singleAdjName + id;
+				if (geometry.avLst[adjName]) {
+					return adjName;
+				} else if (geometry.avLst[singleAdjName]) {
+					return singleAdjName;
+				}
+				break;
+		}
+		return null;
+	}
 	ShadowShape.prototype.applyAdjLst = function (editorShape) {
 		const adjLst = this.customAdj || (this.shape && this.shape.adjLst);
 		if (adjLst) {
 			const geometry = editorShape.spPr.geometry;
-			const singleAdjName = "adj";
 			for (let i = 0; i < adjLst.list.length; i += 1) {
 				const adj = adjLst.list[i];
-				const adjName = singleAdjName + adj.idx;
-				if (geometry.avLst[adjName]) {
+				const adjName = getAdjName(geometry, adj.idx);
+				if (adjName) {
 					geometry.AddAdj(adjName, 0, this.getAdjValueWithApplyFactor(adj.val));
-				} else if (geometry.avLst[singleAdjName]) {
-					geometry.AddAdj(singleAdjName, 0, this.getAdjValueWithApplyFactor(adj.val));
 				}
 			}
 		}
@@ -1779,16 +1797,7 @@
 		}
 
 		const shapeContainer = this.getShapeContainer(isCalculateScaleCoefficient);
-		const offsets = shapeContainer.getOffsets(parentHeight, parentWidth, isCalculateScaleCoefficient);
-		// this.parentNode.moveTo(offsets.offX, offsets.offY, isCalculateScaleCoefficient);
-		this.moveToHierarchyOffsets(offsets.offX, offsets.offY);
-		for (let i = 0; i < this.parentNode.childs.length; i++) {
-			this.parentNode.childs[i].moveTo(offsets.offX, offsets.offY, isCalculateScaleCoefficient);
-		}
-/*		shapeContainer.forEachShape(function (shadowShape) {
-			const node = shadowShape.node;
-			oThis.applyAligns(node, isCalculateScaleCoefficient);
-		});*/
+		shapeContainer.applyCenterAlign(parentHeight, parentWidth, isCalculateScaleCoefficient, this);
 	};
 
 	PositionAlgorithm.prototype.setParentConnection = function (connectorAlgorithm, childNode) {
@@ -2082,7 +2091,7 @@
 	}
 	ContainerBase.prototype.forEachShape = function (callback) {
 	};
-	ContainerBase.prototype.applyCenterAlign = function (parentHeight, parentWidth) {
+	ContainerBase.prototype.applyCenterAlign = function (parentHeight, parentWidth, isCalculateScaleCoefficients, algorithm) {
 	};
 	ContainerBase.prototype.calcMetrics = function () {
 	};
@@ -2125,8 +2134,9 @@
 		const offY = parentHeight / 2 - ctrY;
 		return {offX: offX, offY: offY};
 	}
-	ShapeContainer.prototype.applyCenterAlign = function (parentHeight, parentWidth, isCalculateScaleCoefficient) {
+	ShapeContainer.prototype.applyCenterAlign = function (parentHeight, parentWidth, isCalculateScaleCoefficient, algorithm) {
 		const offsets = this.getOffsets(parentHeight, parentWidth, isCalculateScaleCoefficient);
+		algorithm.moveToHierarchyOffsets(offsets.offX, offsets.offY);
 		for (let i = 0; i < this.shapes.length; i++) {
 			const shape = this.shapes[i];
 			const node = shape.node;
@@ -2176,9 +2186,8 @@
 
 	function ShapeRows() {
 		ContainerBase.call(this);
+		this.bounds = null;
 		this.rows = [];
-		this.width = 0;
-		this.height = 0;
 	}
 	AscFormat.InitClassWithoutType(ShapeRows, ContainerBase);
 
@@ -2194,18 +2203,41 @@
 			this.height += row.height;
 		}
 	};
-	ShapeRows.prototype.applyCenterAlign = function (parentHeight, parentWidth, isCalculateScaleCoefficient) {
-		const offRowsX = (parentWidth - this.width) / 2;
-		const offRowsY = (parentHeight - this.height) / 2;
+	ShapeRows.prototype.getBounds = function () {
+		if (this.bounds === null) {
+			if (this.rows.length) {
+				const firstBounds = Object.assign({}, this.rows[0].getBounds());
+				for (let i = 0; i < this.rows.length; i++) {
+					const row = this.rows[i];
+					const bounds = row.getBounds();
+					checkBounds(firstBounds, bounds);
+				}
+				this.bounds = firstBounds;
+			} else {
+				this.bounds = {l: 0, r: 0, t: 0, b: 0};
+			}
+		}
+		return this.bounds;
+	};
+
+	ShapeRows.prototype.applyCenterAlign = function (parentHeight, parentWidth, isCalculateScaleCoefficient, algorithm) {
+		const bounds = this.getBounds();
+		const width = bounds.r - bounds.l;
+		const height = bounds.b - bounds.t;
+
+		const offRowsX = parentWidth / 2 - (bounds.l + width / 2);
+		const offRowsY = parentHeight / 2 - (bounds.t + height / 2);
 
 		for (let i = 0; i < this.rows.length; i++) {
 			const row = this.rows[i];
+			const cleanHeight = row.getCleanHeight();
+			const rowBounds = row.getBounds();
+			const rowWidth = rowBounds.r - rowBounds.l;
+			const offRowX = width / 2 - ((bounds.l - rowBounds.l) + rowWidth / 2);
 			for (let j = 0; j < row.row.length; j++) {
 				const shape = row.row[j];
-				const offRowX = (this.width - row.width) / 2;
-				const offRowY = (row.cleanHeight - shape.height) / 2;
-				const node = shape.node;
-				node.moveTo(offRowsX + offRowX, offRowsY + offRowY);
+				const offRowY = cleanHeight / 2 - (shape.height / 2);
+				shape.moveTo(offRowsX + offRowX, offRowsY + offRowY);
 			}
 		}
 	};
@@ -2218,17 +2250,44 @@
 
 	function ShapeRow() {
 		this.row = [];
-		this.width = 0;
-		this.height = 0;
-		this.cleanHeight = 0;
-		this.x = 0;
-		this.y = 0;
+		this.bounds = null;
 	}
 
+	ShapeRow.prototype.getCleanHeight = function () {
+		let cleanHeight = 0;
+		for (let i = 0; i < this.row.length; i++) {
+			const shape = this.row[i];
+			const node = shape.node;
+			if (node.isContentNode()) {
+				if (cleanHeight < shape.height) {
+					cleanHeight = shape.height;
+				}
+			}
+		}
+		return cleanHeight;
+	};
 	ShapeRow.prototype.push = function (elem) {
 		this.row.push(elem);
 	}
 
+	ShapeRow.prototype.getBounds = function () {
+		if (this.bounds === null) {
+			if (this.row.length) {
+				const shape = this.row[0];
+				const firstBounds = shape.getBounds();
+				for (let i = 1; i < this.row.length; i += 1) {
+					const shape = this.row[i];
+					const node = shape.node;
+					const bounds = this.row[i].getBounds();
+					checkBounds(firstBounds, bounds);
+				}
+				this.bounds = firstBounds;
+			} else {
+				this.bounds = {l: 0, r: 0, t: 0, b: 0};
+			}
+		}
+		return this.bounds;
+	}
 	ShapeRow.prototype.forEachShape = function (callback) {
 		for (let i = 0; i < this.row.length; i += 1) {
 			callback(this.row[i]);
