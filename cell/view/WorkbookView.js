@@ -5952,7 +5952,7 @@
 			return this.Direction ? this.CurId + 1 : this.CurId - 1;
 		} else {
 			// it's necessary because into the docbuilder "this.wb.wsActive" is "-1" and search doesn't work
-			let ws = this.wb.model.getActiveWS();
+			let ws = this.wb.model.getActiveWs();
 			let selectionRange = (this.props && this.props.selectionRange) || ws.selectionRange || ws.copySelection;
 
 			let activeCell = this.props.activeCell ? this.props.activeCell : selectionRange.activeCell;
