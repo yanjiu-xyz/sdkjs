@@ -5052,8 +5052,12 @@ CChartsDrawer.prototype =
 		const isChartEx = this.cChartSpace.isChartEx();
 
 		var crossBetween = this.cChartSpace.getValAxisCrossType();
-		if(null === crossBetween && (isCatAxis || isChartEx)) {
+		if(null === crossBetween && isCatAxis) {
 			crossBetween = axis.crossAx ? axis.crossAx.crossBetween : null;
+		}
+
+		if(null === crossBetween && isChartEx) {
+			crossBetween = 0;
 		}
 
 		var heightLine = this.calcProp.heightCanvas - (this.calcProp.chartGutter._bottom + this.calcProp.chartGutter._top);

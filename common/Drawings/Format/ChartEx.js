@@ -169,7 +169,19 @@ function (window, undefined) {
 
 	InitClass(CAddress, CBaseChartObject, AscDFH.historyitem_type_Address);
 
+	CAddress.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		oCopy.setAddress1(this.adress1);
+		oCopy.setCountryRegion(this.countryRegion);
+		oCopy.setAdminDistrict1(this.adminDistrict1);
+		oCopy.setAdminDistrict2(this.adminDistrict2);
+		oCopy.setPostalCode(this.postalCode);
+		oCopy.setLocality(this.locality);
+		oCopy.setISOCountryCode(this.isoCountryCode);
+	};
+
 	CAddress.prototype.setAddress1 = function (pr) {
+		CAxisBase.prototype.fillObject.call(this, oCopy);
 		History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Address_SetAddress1, this.address1, pr));
 		this.address1 = pr;
 		this.setParentToChild(pr);
@@ -205,16 +217,6 @@ function (window, undefined) {
 		this.setParentToChild(pr);
 	};
 
-	CAddress.prototype.fillObject (oCopy) {
-		oCopy.setAddress1(this.adress1);
-		oCopy.setCountryRegion(this.countryRegion);
-		oCopy.setAdminDistrict1(this.adminDistrict1);
-		oCopy.setAdminDistrict2(this.adminDistrict2);
-		oCopy.setPostalCode(this.postalCode);
-		oCopy.setLocality(this.locality);
-		oCopy.setISOCountryCode(this.isoCountryCode);
-	}
-
 	drawingsChangesMap[AscDFH.historyitem_Axis_SetUnits] = function (oClass, value) {
 		oClass.units = value;
 	};
@@ -236,13 +238,25 @@ function (window, undefined) {
 		this.units = null;
 		this.hidden = null;
 
-		this.axPos = null;
 		this.majorTickMark = null;
 		this.minorTickMark = null;
-		this.crosses = null;
 	}
 
 	InitClass(CAxis, CAxisBase, AscDFH.historyitem_type_Axis);
+
+	CAxis.prototype.fillObject = function (oCopy) {
+		CAxisBase.prototype.fillObject.call(this, oCopy);
+		if (this.units) {
+			oCopy.setUnits(this.units.createDuplicate());
+		}
+		oCopy.setTickLabels(this.tickLabels);
+		oCopy.setHidden(this.hidden);
+	};
+
+	CAxis.prototype.setAxPos = function (pos) {
+		const axPos = pos ? window['AscFormat'].AX_POS_L : window['AscFormat'].AX_POS_B;
+		CAxisBase.prototype.setAxPos.call(this, axPos);
+	}
 
 	CAxis.prototype.setUnits = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Axis_SetUnits, this.units, pr));
@@ -279,10 +293,6 @@ function (window, undefined) {
 		return (this.scaling instanceof CValueAxisScaling);
 	};
 
-	CAxis.prototype.setAxPos = function (pos) {
-		this.axPos = pos ? window['AscFormat'].AX_POS_L : window['AscFormat'].AX_POS_B;
-	}
-
 	// AxisUnits
 	drawingsChangesMap[AscDFH.historyitem_AxisUnits_SetUnitsLabel] = function (oClass, value) {
 		oClass.unitsLabel = value;
@@ -301,6 +311,13 @@ function (window, undefined) {
 
 	InitClass(CAxisUnits, CBaseChartObject, AscDFH.historyitem_type_AxisUnits);
 
+	CAxisUnits.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.unitsLabel) {
+			oCopy.setUnitsLabel(this.unitsLabel.createDuplicate());
+		}
+		oCopy.setUnit(this.unit);
+	};
 	CAxisUnits.prototype.setUnitsLabel = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_AxisUnits_SetUnitsLabel, this.unitsLabel, pr));
 		this.unitsLabel = pr;
@@ -334,6 +351,19 @@ function (window, undefined) {
 	}
 
 	InitClass(CAxisUnitsLabel, CBaseChartObject, AscDFH.historyitem_type_AxisUnitsLabel);
+
+	CAxisUnitsLabel.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.tx) {
+			oCopy.setTx(this.tx.createDuplicate());
+		}
+        if(this.spPr) {
+            oCopy.setSpPr(this.spPr.createDuplicate());
+        }
+        if(this.txPr) {
+            oCopy.setTxPr(this.txPr.createDuplicate());
+        }
+	};
 
 	CAxisUnitsLabel.prototype.setTx = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_AxisUnitsLabel_SetTx, this.tx, pr));
@@ -385,6 +415,15 @@ function (window, undefined) {
 
 	InitClass(CBinning, CBaseChartObject, AscDFH.historyitem_type_Binning);
 
+	CBinning.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		oCopy.setBinSize(this.binSize);
+		oCopy.setBinCount(this.binCount);
+		oCopy.setIntervalClosed(this.intervalClosed);
+		oCopy.setUnderflow(this.underflow);
+		oCopy.setOverflow(this.overflow);
+	};
+
 	CBinning.prototype.setBinSize = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsDouble2(this, AscDFH.historyitem_Binning_SetBinSize, this.binSize, pr));
 		this.binSize = pr;
@@ -424,6 +463,11 @@ function (window, undefined) {
 	}
 
 	InitClass(CCategoryAxisScaling, CBaseChartObject, AscDFH.historyitem_type_CategoryAxisScaling);
+
+	CCategoryAxisScaling.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		oCopy.setGapWidth(this.gapWidth);
+	};
 
 	CCategoryAxisScaling.prototype.setGapWidth = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_CategoryAxisScaling_SetGapWidth, this.gapWidth, pr));
@@ -470,6 +514,16 @@ function (window, undefined) {
 	}
 
 	InitClass(CChartData, CBaseChartObject, AscDFH.historyitem_type_ChartData);
+
+	CChartData.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.externalData) {
+			oCopy.setExternalData(this.externalData.createDuplicate());
+		}
+		for (let i = 0; i < this.data.length; i++) {
+			oCopy.addData(this.data[i].createDuplicate(), i);
+		}
+	};
 
 	CChartData.prototype.setExternalData = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ChartData_SetExternalData, this.externalData, pr));
@@ -535,6 +589,22 @@ function (window, undefined) {
 
 	InitClass(CClear, CBaseChartObject, AscDFH.historyitem_type_Clear);
 
+	CChartData.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.geoLocationQueryResults) {
+			oCopy.setGeoLocationQueryResults(this.geoLocationQueryResults.createDuplicate());
+		}
+		if (this.geoDataEntityQueryResults) {
+			oCopy.setGeoDataEntityQueryResults(this.geoDataEntityQueryResults.createDuplicate());
+		}
+		if (this.geoDataPointToEntityQueryResults) {
+			oCopy.setGeoDataPointToEntityQueryResults(this.geoDataPointToEntityQueryResults.createDuplicate());
+		}
+		if (this.geoChildEntitiesQueryResults) {
+			oCopy.setGeoChildEntitiesQueryResults(this.geoChildEntitiesQueryResults.createDuplicate());
+		}
+	};
+
 	CClear.prototype.setGeoLocationQueryResults = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Clear_SetGeoLocationQueryResults, this.geoLocationQueryResults, pr));
 		this.geoLocationQueryResults = pr;
@@ -569,6 +639,11 @@ function (window, undefined) {
 	}
 
 	InitClass(CCopyrights, CBaseChartObject, AscDFH.historyitem_type_Copyrights);
+
+	CCopyrights.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		oCopy.setCopyright(this.copyright);
+	};
 
 	CCopyrights.prototype.setCopyright = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Copyrights_SetCopyright, this.copyright, pr));
@@ -606,6 +681,14 @@ function (window, undefined) {
 	}
 
 	InitClass(CData, CBaseChartObject, AscDFH.historyitem_type_Data);
+
+	CData.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		for (let i = 0; i < this.dimension.length; i++) {
+			oCopy.addDimension(this.dimension[i].createDuplicate(), i);
+		}
+		oCopy.setId(this.id);
+	};
 
 	// CData.prototype.setNumDim = function(pr) {
 	//     History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_Data_SetNumDim, this.numDim, pr));
@@ -724,6 +807,25 @@ function (window, undefined) {
 
 	InitClass(CDataLabel, CBaseChartObject, AscDFH.historyitem_type_DataLabel);
 
+	CDataLabel.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.numFmt) {
+			oCopy.setNumFmt(this.numFmt.createDuplicate());
+		}
+        if(this.spPr) {
+            oCopy.setSpPr(this.spPr.createDuplicate());
+        }
+        if(this.txPr) {
+            oCopy.setTxPr(this.txPr.createDuplicate());
+        }
+		if (this.visibility) {
+			oCopy.setVisibility(this.visibility.createDuplicate());
+		}
+		oCopy.setSeparator(this.separator);
+		oCopy.setPos(this.pos);
+		oCopy.setIdx(this.idx);
+	};
+
 	CDataLabel.prototype.setNumFmt = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_DataLabel_SetNumFmt, this.numFmt, pr));
 		this.numFmt = pr;
@@ -773,6 +875,11 @@ function (window, undefined) {
 	}
 
 	InitClass(CDataLabelHidden, CBaseChartObject, AscDFH.historyitem_type_DataLabelHidden);
+
+	CDataLabelHidden.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		oCopy.setIdx(this.idx);
+	};
 
 	CDataLabelHidden.prototype.setIdx = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsLong(this, AscDFH.historyitem_DataLabelHidden_SetIdx, this.idx, pr));
@@ -842,6 +949,29 @@ function (window, undefined) {
 	}
 
 	InitClass(CDataLabels, CBaseChartObject, AscDFH.historyitem_type_DataLabels);
+
+	CDataLabels.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.numFmt) {
+			oCopy.setNumFmt(this.numFmt.createDuplicate());
+		}
+        if(this.spPr) {
+            oCopy.setSpPr(this.spPr.createDuplicate());
+        }
+        if(this.txPr) {
+            oCopy.setTxPr(this.txPr.createDuplicate());
+        }
+		if (this.visibility) {
+			oCopy.setVisibility(this.visibility.createDuplicate());
+		}
+		for (let i = 0; i < this.dataLabel.length; i++) {
+			oCopy.addDataLabel(this.dataLabel[i].createDuplicate(), i);
+		}
+		for (let i = 0; i < this.dataLabelHidden.length; i++) {
+			oCopy.addDataLabelHidden(this.dataLabelHidden[i].createDuplicate(), i);
+		}
+		oCopy.setPos(this.pos);
+	};
 
 	CDataLabels.prototype.setNumFmt = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_DataLabels_SetNumFmt, this.numFmt, pr));
@@ -935,6 +1065,13 @@ function (window, undefined) {
 
 	InitClass(CDataLabelVisibilities, CBaseChartObject, AscDFH.historyitem_type_DataLabelVisibilities);
 
+	CDataLabelVisibilities.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		oCopy.setSeriesName(this.seriesName);
+		oCopy.setCategoryName(this.categoryName);
+		oCopy.setValue(this.value);
+	};
+
 	CDataLabelVisibilities.prototype.setSeriesName = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_DataLabelVisibilities_SetSeriesName, this.seriesName, pr));
 		this.seriesName = pr;
@@ -969,6 +1106,14 @@ function (window, undefined) {
 	}
 
 	InitClass(CDataPoint, CBaseChartObject, AscDFH.historyitem_type_DataPoint);
+
+	CDataPoint.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.spPr) {
+			oCopy.setSpPr(this.spPr.createDuplicate());
+		}
+		oCopy.setIdx(this.idx);
+	};
 
 	CDataPoint.prototype.setSpPr = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_DataPoint_SetSpPr, this.spPr, pr));
@@ -1063,6 +1208,14 @@ function (window, undefined) {
 
 	InitClass(CFormatOverride, CBaseChartObject, AscDFH.historyitem_type_FormatOverride);
 
+	CFormatOverride.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.spPr) {
+			oCopy.setSpPr(this.spPr.createDuplicate());
+		}
+		oCopy.setIdx(this.idx);
+	};
+
 	CFormatOverride.prototype.setSpPr = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_FormatOverride_SetSpPr, this.spPr, pr));
 		this.spPr = pr;
@@ -1088,6 +1241,13 @@ function (window, undefined) {
 
 	InitClass(CFormatOverrides, CBaseChartObject, AscDFH.historyitem_type_FormatOverrides);
 
+	CFormatOverrides.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.fmtOvr) {
+			oCopy.setFmtOvr(this.fmtOvr.createDuplicate());
+		}
+	};
+
 	CFormatOverrides.prototype.setFmtOvr = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_FormatOverrides_SetFmtOvr, this.fmtOvr, pr));
 		this.fmtOvr = pr;
@@ -1112,6 +1272,12 @@ function (window, undefined) {
 	}
 
 	InitClass(CFormula, CBaseChartObject, AscDFH.historyitem_type_Formula);
+
+	CFormula.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		oCopy.setDir(this.dir);
+		oCopy.setContent(this.content);
+	};
 
 	CFormula.prototype.setDir = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Formula_SetDir, this.dir, pr));
@@ -1148,6 +1314,15 @@ function (window, undefined) {
 
 	InitClass(CGeoCache, CBaseChartObject, AscDFH.historyitem_type_GeoCache);
 
+	CGeoCache.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.clear) {
+			oCopy.setClear(this.clear.createDuplicate());
+		}
+		oCopy.setBinary(this.binary);
+		oCopy.setProvider(this.provider);
+	};
+
 	CGeoCache.prototype.setBinary = function (pr) { // todo base64binary type
 		History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_GeoCache_SetBinary, this.binary, pr));
 		this.binary = pr;
@@ -1178,6 +1353,13 @@ function (window, undefined) {
 
 	InitClass(CGeoChildEntities, CBaseChartObject, AscDFH.historyitem_type_GeoChildEntities);
 
+	CGeoChildEntities.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.geoHierarchyEntity) {
+			oCopy.setGeoHierarchyEntity(this.geoHierarchyEntity.createDuplicate());
+		}
+	};
+
 	CGeoChildEntities.prototype.setGeoHierarchyEntity = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_GeoChildEntities_SetGeoHierarchyEntity, this.geoHierarchyEntity, pr));
 		this.geoHierarchyEntity = pr;
@@ -1202,6 +1384,14 @@ function (window, undefined) {
 	}
 
 	InitClass(CGeoChildEntitiesQuery, CBaseChartObject, AscDFH.historyitem_type_GeoChildEntitiesQuery);
+
+	CGeoChildEntitiesQuery.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.geoChildTypes) {
+			oCopy.setGeoChildTypes(this.geoChildTypes.createDuplicate());
+		}
+		oCopy.setEntityId(this.entityId);
+	};
 
 	CGeoChildEntitiesQuery.prototype.setGeoChildTypes = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_GeoChildEntitiesQuery_SetGeoChildTypes, this.geoChildTypes, pr));
@@ -1232,6 +1422,16 @@ function (window, undefined) {
 	}
 
 	InitClass(CGeoChildEntitiesQueryResult, CBaseChartObject, AscDFH.historyitem_type_GeoChildEntitiesQueryResult);
+	
+	CGeoChildEntitiesQueryResult.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.geoChildEntities) {
+			oCopy.setGeoChildEntities(this.geoChildEntities.createDuplicate());
+		}
+		if (this.geoChildEntitiesQuery) {
+			oCopy.setGeoChildEntitiesQuery(this.geoChildEntitiesQuery.createDuplicate());
+		}
+	};
 
 	CGeoChildEntitiesQueryResult.prototype.setGeoChildEntitiesQuery = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_GeoChildEntitiesQueryResult_SetGeoChildEntitiesQuery, this.geoChildEntitiesQuery, pr));
@@ -1258,6 +1458,13 @@ function (window, undefined) {
 
 	InitClass(CGeoChildEntitiesQueryResults, CBaseChartObject, AscDFH.historyitem_type_GeoChildEntitiesQueryResults);
 
+	CGeoChildEntitiesQueryResults.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.geoChildEntitiesQueryResult) {
+			oCopy.setGeoChildEntitiesQueryResult(this.geoChildEntitiesQueryResult.createDuplicate());
+		}
+	};
+
 	CGeoChildEntitiesQueryResults.prototype.setGeoChildEntitiesQueryResult = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_GeoChildEntitiesQueryResults_SetGeoChildEntitiesQueryResult, this.geoChildEntitiesQueryResult, pr));
 		this.geoChildEntitiesQueryResult = pr;
@@ -1277,6 +1484,11 @@ function (window, undefined) {
 	}
 
 	InitClass(CGeoChildTypes, CBaseChartObject, AscDFH.historyitem_type_GeoChildTypes);
+
+	CGeoChildTypes.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		oCopy.setEntityType(this.entityType);
+	};
 
 	CGeoChildTypes.prototype.setEntityType = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_GeoChildTypes_SetEntityType, this.entityType, pr));
@@ -1332,6 +1544,22 @@ function (window, undefined) {
 	}
 
 	InitClass(CGeoData, CBaseChartObject, AscDFH.historyitem_type_GeoData);
+
+	CGeoData.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.geoPolygons) {
+			oCopy.setGeoPolygons(this.geoPolygons.createDuplicate());
+		}
+		if (this.setCopyrights) {
+			oCopy.setGeoChildEntitiesQuery(this.copyrights.createDuplicate());
+		}
+		oCopy.setEntityName(this.entityName);
+		oCopy.setEntityId(this.entityId);
+		oCopy.setEast(this.east);
+		oCopy.setWest(this.west);
+		oCopy.setNorth(this.north);
+		oCopy.setSouth(this.south);
+	};
 
 	CGeoData.prototype.setGeoPolygons = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_GeoData_SetGeoPolygons, this.geoPolygons, pr));
@@ -1393,6 +1621,12 @@ function (window, undefined) {
 
 	InitClass(CGeoDataEntityQuery, CBaseChartObject, AscDFH.historyitem_type_GeoDataEntityQuery);
 
+	CGeoDataEntityQuery.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		oCopy.setEntityType(this.entityType);
+		oCopy.setEntityId(this.entityId);
+	};
+
 	CGeoDataEntityQuery.prototype.setEntityType = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_GeoDataEntityQuery_SetEntityType, this.entityType, pr));
 		this.entityType = pr;
@@ -1423,6 +1657,16 @@ function (window, undefined) {
 
 	InitClass(CGeoDataEntityQueryResult, CBaseChartObject, AscDFH.historyitem_type_GeoDataEntityQueryResult);
 
+	CGeoDataEntityQueryResult.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.geoDataEntityQuery) {
+			oCopy.setGeoDataEntityQuery(this.geoDataEntityQuery.createDuplicate());
+		}
+		if (this.geoData) {
+			oCopy.setGeoData(this.geoData.createDuplicate());
+		}
+	}
+
 	CGeoDataEntityQueryResult.prototype.setGeoDataEntityQuery = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_GeoDataEntityQueryResult_SetGeoDataEntityQuery, this.geoDataEntityQuery, pr));
 		this.geoDataEntityQuery = pr;
@@ -1447,6 +1691,13 @@ function (window, undefined) {
 	}
 
 	InitClass(CGeoDataEntityQueryResults, CBaseChartObject, AscDFH.historyitem_type_GeoDataEntityQueryResults);
+
+	CGeoDataEntityQueryResults.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.geoDataEntityQueryResult) {
+			oCopy.setGeoDataEntityQueryResult(this.geoDataEntityQueryResult.createDuplicate());
+		}
+	}
 
 	CGeoDataEntityQueryResults.prototype.setGeoDataEntityQueryResult = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_GeoDataEntityQueryResults_SetGeoDataEntityQueryResult, this.geoDataEntityQueryResult, pr));
@@ -1477,6 +1728,13 @@ function (window, undefined) {
 	}
 
 	InitClass(CGeoDataPointQuery, CBaseChartObject, AscDFH.historyitem_type_GeoDataPointQuery);
+
+	CGeoDataPointQuery.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		oCopy.setEntityType(this.entityType);
+		oCopy.setLatitude(this.latitude);
+		oCopy.setLongitude(this.longitude);
+	}
 
 	CGeoDataPointQuery.prototype.setEntityType = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_GeoDataPointQuery_SetEntityType, this.entityType, pr));
@@ -1513,6 +1771,12 @@ function (window, undefined) {
 
 	InitClass(CGeoDataPointToEntityQuery, CBaseChartObject, AscDFH.historyitem_type_GeoDataPointToEntityQuery);
 
+	CGeoDataPointToEntityQuery.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		oCopy.setEntityType(this.entityType);
+		oCopy.setEntityId(this.entityId);
+	}
+
 	CGeoDataPointToEntityQuery.prototype.setEntityType = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_GeoDataPointToEntityQuery_SetEntityType, this.entityType, pr));
 		this.entityType = pr;
@@ -1543,6 +1807,16 @@ function (window, undefined) {
 
 	InitClass(CGeoDataPointToEntityQueryResult, CBaseChartObject, AscDFH.historyitem_type_GeoDataPointToEntityQueryResult);
 
+	CGeoDataPointToEntityQueryResult.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.geoDataPointQuery) {
+			oCopy.setGeoDataPointQuery(this.geoDataPointQuery.createDuplicate());
+		}
+		if (this.geoDataPointToEntityQuery) {
+			oCopy.setGeoDataPointToEntityQuery(this.geoDataPointToEntityQuery.createDuplicate());
+		}
+	}
+	
 	CGeoDataPointToEntityQueryResult.prototype.setGeoDataPointQuery = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_GeoDataPointToEntityQueryResult_SetGeoDataPointQuery, this.geoDataPointQuery, pr));
 		this.geoDataPointQuery = pr;
@@ -1568,6 +1842,13 @@ function (window, undefined) {
 
 	InitClass(CGeoDataPointToEntityQueryResults, CBaseChartObject, AscDFH.historyitem_type_GeoDataPointToEntityQueryResults);
 
+	CGeoDataPointToEntityQueryResults.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.geoDataPointToEntityQueryResult) {
+			oCopy.setGeoDataPointToEntityQueryResult(this.geoDataPointToEntityQueryResult.createDuplicate());
+		}
+	}
+	
 	CGeoDataPointToEntityQueryResults.prototype.setGeoDataPointToEntityQueryResult = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_GeoDataPointToEntityQueryResults_SetGeoDataPointToEntityQueryResult, this.geoDataPointToEntityQueryResult, pr));
 		this.geoDataPointToEntityQueryResult = pr;
@@ -1612,6 +1893,18 @@ function (window, undefined) {
 	}
 
 	InitClass(CGeography, CBaseChartObject, AscDFH.historyitem_type_Geography);
+
+	CGeography.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.geoCache) {
+			oCopy.setGeoCache(this.geoCache.createDuplicate());
+		}
+		oCopy.setProjectionType(this.projectionType);
+		oCopy.setViewedRegionType(this.viewedRegionType);
+		oCopy.setCultureLanguage(this.cultureLanguage);
+		oCopy.setCultureRegion(this.cultureRegion);
+		oCopy.setAttribution(this.attribution);
+	}
 
 	CGeography.prototype.setGeoCache = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Geography_SetGeoCache, this.geoCache, pr));
@@ -1668,6 +1961,13 @@ function (window, undefined) {
 
 	InitClass(CGeoHierarchyEntity, CBaseChartObject, AscDFH.historyitem_type_GeoHierarchyEntity);
 
+	CGeoHierarchyEntity.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		oCopy.setEntityName(this.entityName);
+		oCopy.setEntityId(this.entityId);
+		oCopy.setEntityType(this.entityType);
+	}
+
 	CGeoHierarchyEntity.prototype.setEntityName = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_GeoHierarchyEntity_SetEntityName, this.entityName, pr));
 		this.entityName = pr;
@@ -1717,6 +2017,17 @@ function (window, undefined) {
 	}
 
 	InitClass(CGeoLocation, CBaseChartObject, AscDFH.historyitem_type_GeoLocation);
+
+	CGeoLocation.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.address) {
+			oCopy.setAddress(this.address.createDuplicate());
+		}
+		oCopy.setLatitude(this.latitude);
+		oCopy.setLongitude(this.longitude);
+		oCopy.setEntityName(this.entityName);
+		oCopy.setEntityType(this.entityType);
+	}
 
 	CGeoLocation.prototype.setAddress = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_GeoLocation_SetAddress, this.address, pr));
@@ -1778,6 +2089,15 @@ function (window, undefined) {
 
 	InitClass(CGeoLocationQuery, CBaseChartObject, AscDFH.historyitem_type_GeoLocationQuery);
 
+	CGeoLocationQuery.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		oCopy.setCountryRegion(this.countryRegion);
+		oCopy.setAdminDistrict1(this.adminDistrict1);
+		oCopy.setAdminDistrict2(this.adminDistrict2);
+		oCopy.setPostalCode(this.postalCode);
+		oCopy.setEntityType(this.entityType);
+	}
+
 	CGeoLocationQuery.prototype.setCountryRegion = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_GeoLocationQuery_SetCountryRegion, this.countryRegion, pr));
 		this.countryRegion = pr;
@@ -1823,6 +2143,16 @@ function (window, undefined) {
 
 	InitClass(CGeoLocationQueryResult, CBaseChartObject, AscDFH.historyitem_type_GeoLocationQueryResult);
 
+	CGeoLocationQueryResult.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.geoLocationQuery) {
+			oCopy.setGeoLocationQuery(this.geoLocationQuery.createDuplicate());
+		}
+		if (this.geoLocations) {
+			oCopy.setGeoLocations(this.geoLocations.createDuplicate());
+		}
+	}
+
 	CGeoLocationQueryResult.prototype.setGeoLocationQuery = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_GeoLocationQueryResult_SetGeoLocationQuery, this.geoLocationQuery, pr));
 		this.geoLocationQuery = pr;
@@ -1848,6 +2178,13 @@ function (window, undefined) {
 
 	InitClass(CGeoLocationQueryResults, CBaseChartObject, AscDFH.historyitem_type_GeoLocationQueryResults);
 
+	CGeoLocationQueryResults.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.geoLocationQueryResult) {
+			oCopy.setGeoLocationQueryResult(this.geoLocationQueryResult.createDuplicate());
+		}
+	}
+
 	CGeoLocationQueryResults.prototype.setGeoLocationQueryResult = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_GeoLocationQueryResults_SetGeoLocationQueryResult, this.geoLocationQueryResult, pr));
 		this.geoLocationQueryResult = pr;
@@ -1867,6 +2204,13 @@ function (window, undefined) {
 	}
 
 	InitClass(CGeoLocations, CBaseChartObject, AscDFH.historyitem_type_GeoLocations);
+
+	CGeoLocations.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.geoLocation) {
+			oCopy.setGeoLocation(this.geoLocation.createDuplicate());
+		}
+	}
 
 	CGeoLocations.prototype.setGeoLocation = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_GeoLocations_SetGeoLocation, this.geoLocation, pr));
@@ -1898,6 +2242,14 @@ function (window, undefined) {
 
 	InitClass(CGeoPolygon, CBaseChartObject, AscDFH.historyitem_type_GeoPolygon);
 
+	CGeoPolygon.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		oCopy.setPolygonId(this.polygonId);
+		oCopy.setNumPoints(this.numPoints);
+		oCopy.setPcaRings(this.pcaRings);
+	}
+
+
 	CGeoPolygon.prototype.setPolygonId = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsString(this, AscDFH.historyitem_GeoPolygon_SetPolygonId, this.polygonId, pr));
 		this.polygonId = pr;
@@ -1928,6 +2280,13 @@ function (window, undefined) {
 
 	InitClass(CGeoPolygons, CBaseChartObject, AscDFH.historyitem_type_GeoPolygons);
 
+	CGeoPolygons.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.geoPolygon) {
+			oCopy.setGeoPolygon(this.geoPolygon.createDuplicate());
+		}
+	}
+
 	CGeoPolygons.prototype.setGeoPolygon = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_GeoPolygons_SetGeoPolygon, this.geoPolygon, pr));
 		this.geoPolygon = pr;
@@ -1952,6 +2311,14 @@ function (window, undefined) {
 	}
 
 	InitClass(CGridlines, CBaseChartObject, AscDFH.historyitem_type_Gridlines);
+
+	CGridlines.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.spPr) {
+			oCopy.setSpPr(this.spPr.createDuplicate());
+		}
+		oCopy.setName(this.name);
+	}
 
 	CGridlines.prototype.setSpPr = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Gridlines_SetSpPr, this.spPr, pr));
@@ -2178,6 +2545,17 @@ function (window, undefined) {
 
 	InitClass(CDimension, CBaseChartObject, AscDFH.historyitem_type_Dimension);
 
+	CDimension.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.f) {
+			oCopy.setF(this.f.createDuplicate());
+		}
+		if (this.nf) {
+			oCopy.setNf(this.nf.createDuplicate());
+		}
+		oCopy.setType(this.type);
+	}
+
 	CDimension.prototype.setF = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Dimension_SetF, this.f, pr));
 		this.f = pr;
@@ -2308,6 +2686,13 @@ function (window, undefined) {
 	}
 
 	InitClass(CNumericDimension, CDimension, AscDFH.historyitem_type_NumericDimension);
+
+	CNumericDimension.prototype.fillObject = function (oCopy) {
+		CDimension.prototype.fillObject.call(this, oCopy);
+		for (let i = 0; i < this.levelData.length; i++) {
+			oCopy.addLevelData(this.levelData[i].createDuplicate(), i);
+		}
+	}
 
 	CNumericDimension.prototype.addLevelData = function (pr, idx) {
 		let pos;
@@ -2530,6 +2915,11 @@ function (window, undefined) {
 
 	InitClass(CPercentageColorPosition, CBaseChartObject, AscDFH.historyitem_type_PercentageColorPosition);
 
+	CPercentageColorPosition.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		oCopy.setVal(this.val);
+	}
+
 	CPercentageColorPosition.prototype.setVal = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsDouble2(this, AscDFH.historyitem_PercentageColorPosition_SetVal, this.val, pr));
 		this.val = pr;
@@ -2619,6 +3009,16 @@ function (window, undefined) {
 
 	InitClass(CPlotAreaRegion, CBaseChartObject, AscDFH.historyitem_type_PlotAreaRegion);
 
+	CPlotAreaRegion.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.plotSurface) {
+			oCopy.setPlotSurface(this.plotSurface.createDuplicate());
+		}
+		for (let i = 0; i < this.series.length; i++) {
+			oCopy.addSeries(this.series[i].createDuplicate(), i);
+		}
+	}
+
 	CPlotAreaRegion.prototype.getMaxSeriesIdx = function() {
 		return this.series.length;
 	};
@@ -2662,6 +3062,13 @@ function (window, undefined) {
 	}
 
 	InitClass(CPlotSurface, CBaseChartObject, AscDFH.historyitem_type_PlotSurface);
+
+	CPlotSurface.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.spPr) {
+			oCopy.setSpPr(this.spPr.createDuplicate());
+		}
+	}
 
 	CPlotSurface.prototype.setSpPr = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_PlotSurface_SetSpPr, this.spPr, pr));
@@ -2784,8 +3191,6 @@ function (window, undefined) {
 
 	function CSeries() {
 		AscFormat.CSeriesBase.call(this);
-		this.tx = null;
-		this.spPr = null;
 		// commented in ChartSerializeEx.h
 		// this.valueColors = null;
 		// this.valueColorPositions = null;
@@ -2802,6 +3207,32 @@ function (window, undefined) {
 	}
 
 	InitClass(CSeries, AscFormat.CSeriesBase, AscDFH.historyitem_type_Series);
+
+	CSeries.prototype.fillObject = function (oCopy) {
+		AscFormat.CSeriesBase.prototype.fillObject.call(this, oCopy);
+		if (this.dataLabels) {
+			oCopy.setDataLabels(this.dataLabels.createDuplicate());
+		}
+		if (this.dataId) {
+			oCopy.setDataId(this.dataId.createDuplicate());
+		}
+		if (this.layoutPr) {
+			oCopy.setLayoutPr(this.layoutPr.createDuplicate());
+		}
+		if (this.layoutId) {
+			oCopy.setLayoutId(this.layoutId.createDuplicate());
+		}
+		for (let i = 0; i < this.dPt.length; i++) {
+			oCopy.addDataPt(this.dPt[i].createDuplicate(), i);
+		}
+		for (let i = 0; i < this.axisId.length; i++) {
+			oCopy.addAxisId(this.axisId[i].createDuplicate(), i);
+		}
+		oCopy.setHidden(this.hidden);
+		oCopy.setOwnerIdx(this.ownerIdx);
+		oCopy.setUniqueId(this.uniqueId);
+		oCopy.setFormatIdx(this.formatIdx);
+	}
 
 	// CSeries.prototype.setValueColors = function(pr) {
 	//     History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Series_SetValueColors, this.valueColors, pr));
@@ -3011,6 +3442,15 @@ function (window, undefined) {
 
 	InitClass(CSeriesElementVisibilities, CBaseChartObject, AscDFH.historyitem_type_SeriesElementVisibilities);
 
+	CSeriesElementVisibilities.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		oCopy.setConnectorLines(this.connectorLines);
+		oCopy.setMeanLine(this.meanLine);
+		oCopy.setMeanMarker(this.meanMarker);
+		oCopy.setNonoutliers(this.nonoutliers);
+		oCopy.setOutliers(this.outliers);
+	}
+
 	CSeriesElementVisibilities.prototype.setConnectorLines = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_SeriesElementVisibilities_SetConnectorLines, this.connectorLines, pr));
 		this.connectorLines = pr;
@@ -3087,6 +3527,28 @@ function (window, undefined) {
 
 	InitClass(CSeriesLayoutProperties, CBaseChartObject, AscDFH.historyitem_type_SeriesLayoutProperties);
 
+	CSeriesLayoutProperties.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.visibility) {
+			oCopy.setVisibility(this.visibility.createDuplicate());
+		}
+		if (this.statistics) {
+			oCopy.setStatistics(this.statistics.createDuplicate());
+		}
+		if (this.subtotals) {
+			oCopy.setSubtotals(this.subtotals.createDuplicate());
+		}
+		if (this.binning) {
+			oCopy.setBinning(this.binning.createDuplicate());
+		}
+		if (this.geography) {
+			oCopy.setGeography(this.geography.createDuplicate());
+		}
+		oCopy.setParentLabelLayout(this.parentLabelLayout);
+		oCopy.setRegionLabelLayout(this.regionLabelLayout);
+		oCopy.setAggregation(this.aggregation);
+	}
+
 	CSeriesLayoutProperties.prototype.setParentLabelLayout = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_SeriesLayoutProperties_SetParentLabelLayout, this.parentLabelLayout, pr));
 		this.parentLabelLayout = pr;
@@ -3142,6 +3604,11 @@ function (window, undefined) {
 
 	InitClass(CStatistics, CBaseChartObject, AscDFH.historyitem_type_Statistics);
 
+	CStatistics.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		oCopy.setQuartileMethod(this.quartileMethod);
+	}
+
 	CStatistics.prototype.setQuartileMethod = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_Statistics_SetQuartileMethod, this.quartileMethod, pr));
 		this.quartileMethod = pr;
@@ -3166,6 +3633,14 @@ function (window, undefined) {
 	}
 
 	InitClass(CStringDimension, CDimension, AscDFH.historyitem_type_StringDimension);
+
+	CNumericDimension.prototype.fillObject = function (oCopy) {
+		CDimension.prototype.fillObject.call(this, oCopy);
+		for (let i = 0; i < this.levelData.length; i++) {
+			oCopy.addLevelData(this.levelData[i].createDuplicate(), i);
+		}
+	}
+
 	CStringDimension.prototype.addLevelData = function (pr, idx) {
 		let pos;
 		if (AscFormat.isRealNumber(idx))
@@ -3216,6 +3691,13 @@ function (window, undefined) {
 	}
 
 	InitClass(CSubtotals, CBaseChartObject, AscDFH.historyitem_type_Subtotals);
+
+	CSubtotals.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		for (let i = 0; i < this.idx.length; i++) {
+			oCopy.addDataPt(this.idx[i], i);
+		}
+	}
 
 	CSubtotals.prototype.addIdx = function (pr, idx) {
 		let pos;
@@ -3280,6 +3762,14 @@ function (window, undefined) {
 
 	InitClass(CTextData, CBaseChartObject, AscDFH.historyitem_type_TextData);
 
+	CTextData.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.f) {
+			oCopy.setF(this.f.createDuplicate());
+		}
+		oCopy.setV(this.v);
+	}
+
 	CTextData.prototype.setF = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_TextData_SetF, this.f, pr));
 		this.f = pr;
@@ -3317,6 +3807,12 @@ function (window, undefined) {
 	}
 
 	InitClass(CTickMarks, CBaseChartObject, AscDFH.historyitem_type_TickMarks);
+
+	CTickMarks.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		oCopy.setType(this.type);
+		oCopy.setName(this.name);
+	}
 
 	CTickMarks.prototype.setType = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_TickMarks_SetType, this.type, pr));
@@ -3357,6 +3853,14 @@ function (window, undefined) {
 	}
 
 	InitClass(CValueAxisScaling, CBaseChartObject, AscDFH.historyitem_type_ValueAxisScaling);
+
+	CValueAxisScaling.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		oCopy.setMax(this.max);
+		oCopy.setMin(this.min);
+		oCopy.setMajorUnit(this.majorUnit);
+		oCopy.setMinorUnit(this.minorUnit);
+	}
 
 	CValueAxisScaling.prototype.setMax = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ValueAxisScaling_SetMax, this.max, pr));
@@ -3403,6 +3907,15 @@ function (window, undefined) {
 
 	InitClass(CValueColorEndPosition, CBaseChartObject, AscDFH.historyitem_type_ValueColorEndPosition);
 
+	CValueColorEndPosition.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.percent) {
+			oCopy.setPercent(this.percent.createDuplicate());
+		}
+		oCopy.setExtremeValue(this.extremeValue);
+		oCopy.setNumber(this.number);
+	}
+
 	CValueColorEndPosition.prototype.setExtremeValue = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_ValueColorEndPosition_SetExtremeValue, this.extremeValue, pr));
 		this.extremeValue = pr;
@@ -3437,6 +3950,14 @@ function (window, undefined) {
 	}
 
 	InitClass(CValueColorMiddlePosition, CBaseChartObject, AscDFH.historyitem_type_ValueColorMiddlePosition);
+
+	CValueColorMiddlePosition.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.percent) {
+			oCopy.setPercent(this.percent.createDuplicate());
+		}
+		oCopy.setNumber(this.number);
+	}	
 
 	CValueColorMiddlePosition.prototype.setNumber = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ValueColorMiddlePosition_SetNumber, this.number, pr));
@@ -3477,6 +3998,20 @@ function (window, undefined) {
 	}
 
 	InitClass(CValueColorPositions, CBaseChartObject, AscDFH.historyitem_type_ValueColorPositions);
+
+	CValueColorPositions.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		if (this.min) {
+			oCopy.setMin(this.min.createDuplicate());
+		}
+		if (this.mid) {
+			oCopy.setMid(this.mid.createDuplicate());
+		}
+		if (this.max) {
+			oCopy.setMax(this.max.createDuplicate());
+		}
+		oCopy.setCount(this.count);
+	}	
 
 	CValueColorPositions.prototype.setMin = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ValueColorPositions_SetMin, this.min, pr));
@@ -3522,6 +4057,13 @@ function (window, undefined) {
 	}
 
 	InitClass(CValueColors, CBaseChartObject, AscDFH.historyitem_type_ValueColors);
+
+	CValueColors.prototype.fillObject = function (oCopy) {
+		CBaseChartObject.prototype.fillObject.call(this, oCopy);
+		oCopy.setMinColor(this.minColor);
+		oCopy.setMidColor(this.midColor);
+		oCopy.setMaxColor(this.maxColor);
+	}	
 
 	CValueColors.prototype.setMinColor = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_ValueColors_SetMinColor, this.minColor, pr));

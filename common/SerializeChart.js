@@ -13510,9 +13510,8 @@ BinaryChartReader.prototype.ReadCT_ChartEx = function (type, length, val) {
                 axis.setAxPos(i);
             }
             if (oNewVal.axId.length === 2) {
-                oNewVal.axId[0].crossAx = oNewVal.axId[1];
-                oNewVal.axId[1].crossAx = oNewVal.axId[0];
-                oNewVal.axId[1].crossBetween = 0;
+                oNewVal.axId[0].setCrossAx(oNewVal.axId[1]);
+                oNewVal.axId[1].setCrossAx(oNewVal.axId[0]);
             }
         }
         val.setPlotArea(oNewVal);
