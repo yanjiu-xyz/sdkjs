@@ -268,15 +268,15 @@ function (window, undefined) {
         var oNumFmt = this.numFmt;
         var sFormatCode = null;
 
-        if (oNumFmt) {
-            if (oNumFmt.sourceLinked) {
+		if (oNumFmt) {
+		if (oNumFmt.sourceLinked) {
                 return this.getSourceFormatCode();
-            }
+		}
             sFormatCode = oNumFmt.formatCode;
-            if (typeof sFormatCode === "string" && sFormatCode.length > 0) {
+		if (typeof sFormatCode === "string" && sFormatCode.length > 0) {
                 return sFormatCode;
-            }
-        }
+		}
+		}
         return "General";
     };
 	CAxis.prototype.setTickLabels = function (pr) {
@@ -358,11 +358,11 @@ function (window, undefined) {
 			oCopy.setTx(this.tx.createDuplicate());
 		}
 		if (this.spPr) {
-            oCopy.setSpPr(this.spPr.createDuplicate());
-        }
+			oCopy.setSpPr(this.spPr.createDuplicate());
+		}
 		if (this.txPr) {
-            oCopy.setTxPr(this.txPr.createDuplicate());
-        }
+			oCopy.setTxPr(this.txPr.createDuplicate());
+		}
 	};
 
 	CAxisUnitsLabel.prototype.setTx = function (pr) {
@@ -812,12 +812,12 @@ function (window, undefined) {
 		if (this.numFmt) {
 			oCopy.setNumFmt(this.numFmt.createDuplicate());
 		}
-        if (this.spPr) {
-            oCopy.setSpPr(this.spPr.createDuplicate());
-        }
-        if (this.txPr) {
-            oCopy.setTxPr(this.txPr.createDuplicate());
-        }
+		if (this.spPr) {
+			oCopy.setSpPr(this.spPr.createDuplicate());
+		}
+		if (this.txPr) {
+			oCopy.setTxPr(this.txPr.createDuplicate());
+		}
 		if (this.visibility) {
 			oCopy.setVisibility(this.visibility.createDuplicate());
 		}
@@ -955,12 +955,12 @@ function (window, undefined) {
 		if (this.numFmt) {
 			oCopy.setNumFmt(this.numFmt.createDuplicate());
 		}
-        if (this.spPr) {
-            oCopy.setSpPr(this.spPr.createDuplicate());
-        }
-        if (this.txPr) {
-            oCopy.setTxPr(this.txPr.createDuplicate());
-        }
+		if (this.spPr) {
+			oCopy.setSpPr(this.spPr.createDuplicate());
+		}
+		if (this.txPr) {
+			oCopy.setTxPr(this.txPr.createDuplicate());
+		}
 		if (this.visibility) {
 			oCopy.setVisibility(this.visibility.createDuplicate());
 		}
