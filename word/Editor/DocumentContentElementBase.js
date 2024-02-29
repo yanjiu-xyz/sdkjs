@@ -1335,6 +1335,28 @@ CDocumentContentElementBase.prototype.getDrawingDocument = function()
 	return this.Parent && this.Parent.getDrawingDocument ? this.Parent.getDrawingDocument() : null;
 };
 /**
+ * @returns {?CDocumentSpellChecker}
+ */
+CDocumentContentElementBase.prototype.getSpelling = function()
+{
+	let oLogicDocument = this.GetLogicDocument();
+	if(oLogicDocument)
+	{
+		return oLogicDocument.Spelling;
+	}
+	return null;
+};
+/**
+ * @returns {boolean}
+ */
+CDocumentContentElementBase.prototype.IsSpellingUse = function()
+{
+	let oSpelling = this.getSpelling();
+	if(!oSpelling)
+		return false;
+	return oSpelling.Use;
+};
+/**
  * Получаем настройки рамки для данного элемента
  * @returns {?CFramePr}
  */

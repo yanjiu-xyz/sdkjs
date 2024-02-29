@@ -3362,16 +3362,20 @@ Paragraph.prototype.drawRunContentLines = function(CurPage, pGraphics, drawState
 				Element = aCollChange.Get_Next();
 			}
             // Рисуем подчеркивание орфографии
-            if (editor && this.LogicDocument && true === this.LogicDocument.Spelling.Use && !(pGraphics.IsThumbnail === true || pGraphics.IsDemonstrationMode === true || AscCommon.IsShapeToImageConverter))
+            if (this.IsSpellingUse() && !(pGraphics.IsThumbnail === true || pGraphics.IsDemonstrationMode === true || AscCommon.IsShapeToImageConverter))
             {
-                pGraphics.p_color(255, 0, 0, 255);
-                var SpellingW = editor.WordControl.m_oDrawingDocument.GetMMPerDot(1);
-                Element       = aSpelling.Get_Next();
-                while (null != Element)
-                {
-                    pGraphics.DrawSpellingLine(Element.y0, Element.x0, Element.x1, SpellingW);
-                    Element = aSpelling.Get_Next();
-                }
+				let drawingDocument = this.getDrawingDocument();
+				if(drawingDocument)
+				{
+					pGraphics.p_color(255, 0, 0, 255);
+					let SpellingW = drawingDocument.GetMMPerDot(1);
+					Element       = aSpelling.Get_Next();
+					while (null != Element)
+					{
+						pGraphics.DrawSpellingLine(Element.y0, Element.x0, Element.x1, SpellingW);
+						Element = aSpelling.Get_Next();
+					}
+				}
             }
 		}
 
@@ -12381,7 +12385,7 @@ Paragraph.prototype.Document_UpdateInterfaceState = function()
 		EndPos     = CurPos;
 	}
 
-	if (this.LogicDocument && true === this.LogicDocument.Spelling.Use && (selectionflag_Numbering !== this.Selection.Flag && selectionflag_NumberingCur !== this.Selection.Flag))
+	if (this.IsSpellingUse() && (selectionflag_Numbering !== this.Selection.Flag && selectionflag_NumberingCur !== this.Selection.Flag))
 	{
 		let oSpellCheckElement = this.SpellChecker.GetElementByRange(StartPos, EndPos);
 		if (oSpellCheckElement && oSpellCheckElement.IsWrong())
@@ -14448,14 +14452,21 @@ Paragraph.prototype.RestartSpellCheck = function()
 	{
 		this.Content[nIndex].RestartSpellCheck();
 	}
-
-	this.LogicDocument.Spelling.AddParagraphToCheck(this);
+	let oSpelling = this.getSpelling();
+	if(oSpelling)
+	{
+		oSpelling.AddParagraphToCheck(this);
+	}
 };
 Paragraph.prototype.RequestSpellCheck = function()
 {
 	if (this.RecalcInfo.SpellCheck)
 	{
-		this.LogicDocument && this.LogicDocument.Spelling.AddParagraphToCheck(this);
+		let oSpelling = this.getSpelling();
+		if(oSpelling)
+		{
+			oSpelling.AddParagraphToCheck(this);
+		}
 	}
 };
 /**
