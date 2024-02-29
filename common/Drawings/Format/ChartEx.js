@@ -265,20 +265,20 @@ function (window, undefined) {
 	};
 
 	CAxis.prototype.getFormatCode = function () {
-        var oNumFmt = this.numFmt;
-        var sFormatCode = null;
+		var oNumFmt = this.numFmt;
+		var sFormatCode = null;
 
 		if (oNumFmt) {
 		if (oNumFmt.sourceLinked) {
-                return this.getSourceFormatCode();
-            }
-            sFormatCode = oNumFmt.formatCode;
+				return this.getSourceFormatCode();
+		}
+			sFormatCode = oNumFmt.formatCode;
 		if (typeof sFormatCode === "string" && sFormatCode.length > 0) {
-                return sFormatCode;
-            }
-        }
-        return "General";
-    };
+				return sFormatCode;
+		}
+		}
+		return "General";
+	};
 	CAxis.prototype.setTickLabels = function (pr) {
 		History.CanAddChanges() && History.Add(new CChangesDrawingsBool(this, AscDFH.historyitem_Axis_SetTickLabels, this.tickLabels, pr));
 		this.tickLabels = pr;
@@ -817,11 +817,11 @@ function (window, undefined) {
 			oCopy.setNumFmt(this.numFmt.createDuplicate());
 		}
 		if (this.spPr) {
-            oCopy.setSpPr(this.spPr.createDuplicate());
-        }
+			oCopy.setSpPr(this.spPr.createDuplicate());
+		}
 		if (this.txPr) {
-            oCopy.setTxPr(this.txPr.createDuplicate());
-        }
+			oCopy.setTxPr(this.txPr.createDuplicate());
+		}
 		if (this.visibility) {
 			oCopy.setVisibility(this.visibility.createDuplicate());
 		}
@@ -960,11 +960,11 @@ function (window, undefined) {
 			oCopy.setNumFmt(this.numFmt.createDuplicate());
 		}
 		if (this.spPr) {
-            oCopy.setSpPr(this.spPr.createDuplicate());
-        }
+			oCopy.setSpPr(this.spPr.createDuplicate());
+		}
 		if (this.txPr) {
-            oCopy.setTxPr(this.txPr.createDuplicate());
-        }
+			oCopy.setTxPr(this.txPr.createDuplicate());
+		}
 		if (this.visibility) {
 			oCopy.setVisibility(this.visibility.createDuplicate());
 		}
