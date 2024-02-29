@@ -357,10 +357,10 @@ function (window, undefined) {
 		if (this.tx) {
 			oCopy.setTx(this.tx.createDuplicate());
 		}
-    	if (this.spPr) {
+		if (this.spPr) {
             oCopy.setSpPr(this.spPr.createDuplicate());
         }
-        if (this.txPr) {
+		if (this.txPr) {
             oCopy.setTxPr(this.txPr.createDuplicate());
         }
 	};
