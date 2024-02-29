@@ -271,12 +271,12 @@ function (window, undefined) {
 		if (oNumFmt) {
 		if (oNumFmt.sourceLinked) {
                 return this.getSourceFormatCode();
-		}
+            }
             sFormatCode = oNumFmt.formatCode;
 		if (typeof sFormatCode === "string" && sFormatCode.length > 0) {
                 return sFormatCode;
-		}
-		}
+            }
+        }
         return "General";
     };
 	CAxis.prototype.setTickLabels = function (pr) {
@@ -520,8 +520,10 @@ function (window, undefined) {
 		if (this.externalData) {
 			oCopy.setExternalData(this.externalData.createDuplicate());
 		}
-		for (let i = 0; i < this.data.length; i++) {
-			oCopy.addData(this.data[i].createDuplicate(), i);
+		if (this.data) {
+			for (let i = 0; i < this.data.length; i++) {
+				oCopy.addData(this.data[i].createDuplicate(), i);
+			}
 		}
 	};
 
@@ -684,8 +686,10 @@ function (window, undefined) {
 
 	CData.prototype.fillObject = function (oCopy) {
 		CBaseChartObject.prototype.fillObject.call(this, oCopy);
-		for (let i = 0; i < this.dimension.length; i++) {
-			oCopy.addDimension(this.dimension[i].createDuplicate(), i);
+		if (this.dimension) {
+			for (let i = 0; i < this.dimension.length; i++) {
+				oCopy.addDimension(this.dimension[i].createDuplicate(), i);
+			}
 		}
 		oCopy.setId(this.id);
 	};
@@ -813,11 +817,11 @@ function (window, undefined) {
 			oCopy.setNumFmt(this.numFmt.createDuplicate());
 		}
 		if (this.spPr) {
-			oCopy.setSpPr(this.spPr.createDuplicate());
-		}
+            oCopy.setSpPr(this.spPr.createDuplicate());
+        }
 		if (this.txPr) {
-			oCopy.setTxPr(this.txPr.createDuplicate());
-		}
+            oCopy.setTxPr(this.txPr.createDuplicate());
+        }
 		if (this.visibility) {
 			oCopy.setVisibility(this.visibility.createDuplicate());
 		}
@@ -956,19 +960,23 @@ function (window, undefined) {
 			oCopy.setNumFmt(this.numFmt.createDuplicate());
 		}
 		if (this.spPr) {
-			oCopy.setSpPr(this.spPr.createDuplicate());
-		}
+            oCopy.setSpPr(this.spPr.createDuplicate());
+        }
 		if (this.txPr) {
-			oCopy.setTxPr(this.txPr.createDuplicate());
-		}
+            oCopy.setTxPr(this.txPr.createDuplicate());
+        }
 		if (this.visibility) {
 			oCopy.setVisibility(this.visibility.createDuplicate());
 		}
-		for (let i = 0; i < this.dataLabel.length; i++) {
-			oCopy.addDataLabel(this.dataLabel[i].createDuplicate(), i);
+		if (this.dataLabel) {
+			for (let i = 0; i < this.dataLabel.length; i++) {
+				oCopy.addDataLabel(this.dataLabel[i].createDuplicate(), i);
+			}
 		}
-		for (let i = 0; i < this.dataLabelHidden.length; i++) {
-			oCopy.addDataLabelHidden(this.dataLabelHidden[i].createDuplicate(), i);
+		if (this.dataLabelHidden) {
+			for (let i = 0; i < this.dataLabelHidden.length; i++) {
+				oCopy.addDataLabelHidden(this.dataLabelHidden[i].createDuplicate(), i);
+			}
 		}
 		oCopy.setPos(this.pos);
 	};
@@ -2689,8 +2697,10 @@ function (window, undefined) {
 
 	CNumericDimension.prototype.fillObject = function (oCopy) {
 		CDimension.prototype.fillObject.call(this, oCopy);
-		for (let i = 0; i < this.levelData.length; i++) {
-			oCopy.addLevelData(this.levelData[i].createDuplicate(), i);
+		if (this.levelData) {
+			for (let i = 0; i < this.levelData.length; i++) {
+				oCopy.addLevelData(this.levelData[i].createDuplicate(), i);
+			}
 		}
 	}
 
@@ -3014,8 +3024,10 @@ function (window, undefined) {
 		if (this.plotSurface) {
 			oCopy.setPlotSurface(this.plotSurface.createDuplicate());
 		}
-		for (let i = 0; i < this.series.length; i++) {
-			oCopy.addSeries(this.series[i].createDuplicate(), i);
+		if (this.series) {
+			for (let i = 0; i < this.series.length; i++) {
+				oCopy.addSeries(this.series[i].createDuplicate(), i);
+			}
 		}
 	}
 
@@ -3222,11 +3234,15 @@ function (window, undefined) {
 		if (this.layoutId) {
 			oCopy.setLayoutId(this.layoutId.createDuplicate());
 		}
-		for (let i = 0; i < this.dPt.length; i++) {
-			oCopy.addDataPt(this.dPt[i].createDuplicate(), i);
+		if (this.dPt) {
+			for (let i = 0; i < this.dPt.length; i++) {
+				oCopy.addDataPt(this.dPt[i].createDuplicate(), i);
+			}
 		}
-		for (let i = 0; i < this.axisId.length; i++) {
-			oCopy.addAxisId(this.axisId[i].createDuplicate(), i);
+		if (this.axisId) {
+			for (let i = 0; i < this.axisId.length; i++) {
+				oCopy.addAxisId(this.axisId[i].createDuplicate(), i);
+			}
 		}
 		oCopy.setHidden(this.hidden);
 		oCopy.setOwnerIdx(this.ownerIdx);
@@ -3636,8 +3652,10 @@ function (window, undefined) {
 
 	CStringDimension.prototype.fillObject = function (oCopy) {
 		CDimension.prototype.fillObject.call(this, oCopy);
-		for (let i = 0; i < this.levelData.length; i++) {
-			oCopy.addLevelData(this.levelData[i].createDuplicate(), i);
+		if (this.levelData) {
+			for (let i = 0; i < this.levelData.length; i++) {
+				oCopy.addLevelData(this.levelData[i].createDuplicate(), i);
+			}
 		}
 	}
 
@@ -3694,8 +3712,10 @@ function (window, undefined) {
 
 	CSubtotals.prototype.fillObject = function (oCopy) {
 		CBaseChartObject.prototype.fillObject.call(this, oCopy);
-		for (let i = 0; i < this.idx.length; i++) {
-			oCopy.addDataPt(this.idx[i], i);
+		if (this.idx) {
+			for (let i = 0; i < this.idx.length; i++) {
+				oCopy.addDataPt(this.idx[i], i);
+			}
 		}
 	}
 
