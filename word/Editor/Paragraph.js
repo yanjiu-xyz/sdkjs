@@ -10402,6 +10402,8 @@ Paragraph.prototype.IsEmptyWithBullet = function()
 Paragraph.prototype.Get_CompiledPr = function()
 {
 	var Pr = this.Get_CompiledPr2();
+	if (!this.Parent)
+		return Pr;
 
 	// При формировании конечных настроек параграфа, нужно учитывать предыдущий и последующий
 	// параграфы. Например, для формирования интервала между параграфами.
