@@ -519,6 +519,10 @@
 		{
 			this.DocInfo.put_OfflineApp(true);
 		}
+		else if (AscCommon.dataMode === this.documentUrl)
+		{
+			this.DocInfo.put_IsWebOpening(true);
+		}
 
 		if (this.DocInfo.get_EncryptedInfo())
 		{
@@ -2619,6 +2623,12 @@
 				}
 			} else if (this.isForceSaveOnUserSave && this.IsUserSave) {
 				this.forceSave();
+			}
+			if (this.IsUserSave && this.DocInfo.get_IsWebOpening() && this.isOpenOOXInBrowser && this.saveDocumentToZip) {
+				this.saveDocumentToZip(this.WordControl.m_oLogicDocument, this.editorId, function (data) {
+					t.sendEvent('asc_onSaveDocument', data);
+					AscCommon.DownloadFileFromBytes(data, t.documentTitle, AscCommon.openXml.GetMimeType(t.documentFormat));
+				});
 			}
 		}
 		return res;
@@ -4823,6 +4833,14 @@
 		return AscCommon.getUserColorById(id, null, false, true);
 	};
 
+	baseEditorsApi.prototype.asc_openDocumentFromBytes = function(data)
+	{
+		let file = new AscCommon.OpenFileResult();
+		file.data = data;
+		file.bSerFormat = AscCommon.checkStreamSignature(file.data, AscCommon.c_oSerFormat.Signature);
+		this.onEndLoadFile(file);
+	};
+
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
 	window['AscCommon'].baseEditorsApi = baseEditorsApi;
@@ -4892,6 +4910,7 @@
 	prot['asc_endFindText'] = prot.asc_endFindText;
 	prot['asc_setContentDarkMode'] = prot.asc_setContentDarkMode;
 	prot['asc_getFilePath'] = prot.asc_getFilePath;
+	prot['asc_openDocumentFromBytes'] = prot.asc_openDocumentFromBytes;
 
 	// passwords
 	prot["asc_setCurrentPassword"] = prot.asc_setCurrentPassword;
