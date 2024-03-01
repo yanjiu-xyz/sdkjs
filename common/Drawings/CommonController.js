@@ -879,13 +879,6 @@
 					}
 				},
 
-				showVideoControl: function (sMediaFile, extX, extY, transform) {
-					this.bShowVideoControl = true;
-					var oApi = this.getEditorApi();
-					oApi.showVideoControl(sMediaFile, extX, extY, transform);
-				},
-
-
 				getAllSignatures: function () {
 					var _ret = [];
 					this.getAllSignatures2(_ret, this.getDrawingArray());
@@ -1312,10 +1305,6 @@
 				},
 
 				resetInternalSelection: function (noResetContentSelect, bDoNotRedraw) {
-					var oApi = this.getEditorApi && this.getEditorApi();
-					if (oApi && oApi.hideVideoControl) {
-						oApi.hideVideoControl();
-					}
 					if (this.selection.groupSelection) {
 						this.selection.groupSelection.resetSelection(this);
 						this.selection.groupSelection = null;
@@ -2299,7 +2288,6 @@
 				selectObject: function (object, pageIndex) {
 					object.select(this, pageIndex);
 					if (AscFormat.MoveAnimationDrawObject) {
-						let aSel = this.selectedObjects;
 						if (object instanceof AscFormat.MoveAnimationDrawObject) {
 							for (let i = this.selectedObjects.length - 1; i > -1; --i) {
 								if (!this.selectedObjects[i].isMoveAnimObject()) {
@@ -2319,6 +2307,7 @@
 						}
 					}
 					this.lastSelectedObject = null;
+					this.checkShowMediaControlOnSelect();
 				},
 
 				deselectObject: function (object) {
@@ -2329,7 +2318,47 @@
 							if(this.selectedObjects.length === 0) {
 								this.lastSelectedObject = object;
 							}
+							this.checkShowMediaControlOnSelect();
 							return;
+						}
+					}
+				},
+
+				checkShowMediaControlOnSelect: function () {
+					let aSelectedObjects = this.getSelectedArray();
+					let oMediaData;
+					if(aSelectedObjects.length === 1) {
+						oMediaData = aSelectedObjects[0].getMediaData();
+					}
+					if(oMediaData) {
+						Asc.editor.callMediaPlayerCommand("showMediaControl", oMediaData);
+					}
+					else {
+						Asc.editor.callMediaPlayerCommand("hideMediaControl");
+					}
+				},
+				checkShowMediaControlOnHover: function (oDrawing) {
+					let oCurMediaSp = null;
+					let oCurMediaData = Asc.editor.mediaData;
+					if(oCurMediaData) {
+						oCurMediaSp = AscCommon.g_oTableId.Get_ById(oCurMediaData["id"]);
+					}
+					let oDrawingMediaData;
+
+					if(oDrawing) {
+						oDrawingMediaData = oDrawing.getMediaData();
+					}
+
+					if(!oDrawingMediaData) {
+						if(oCurMediaSp) {
+							if(!oCurMediaSp.selected) {
+								Asc.editor.callMediaPlayerCommand("hideMediaControl");
+							}
+						}
+					}
+					else {
+						if(!oCurMediaSp || !oCurMediaSp.selected) {
+							Asc.editor.callMediaPlayerCommand("showMediaControl", oDrawingMediaData);
 						}
 					}
 				},

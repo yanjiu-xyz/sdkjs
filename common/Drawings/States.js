@@ -624,6 +624,7 @@ NullState.prototype =
                 _x = -1000;
             }
         }
+        this.drawingObjects.checkShowMediaControlOnHover(this.lastMoveHandler);
     },
 
     onMouseUp: function(e, x, y, pageIndex)

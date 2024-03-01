@@ -2624,6 +2624,9 @@
 	CGraphicObjectBase.prototype.getMediaFileName = function () {
 		return null;
 	};
+	CGraphicObjectBase.prototype.getMediaData = function() {
+		return null;
+	};
 	CGraphicObjectBase.prototype.getLogicDocument = function () {
 		var oApi = editor || Asc['editor'];
 		if (oApi && oApi.WordControl) {

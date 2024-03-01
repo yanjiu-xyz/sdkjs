@@ -2632,8 +2632,8 @@ function CEditorPage(api)
 		if (this.m_bDocumentPlaceChangedEnabled)
 			this.m_oApi.sendEvent("asc_onDocumentPlaceChanged");
 
-		// remove media
-		this.m_oApi.hideVideoControl();
+		// update media control position
+		this.m_oApi.onUpdateMediaControl();
 		AscCommon.g_specialPasteHelper.SpecialPasteButton_Update_Position();
 	};
 
@@ -4793,7 +4793,126 @@ function CEditorPage(api)
 
 		this.OnResizeSplitter();
 	};
+
+
+	this.GetMediaPlayerRect = function()
+	{
+		let mediaData = this.m_oApi.mediaData;
+		if(!mediaData)
+		{
+			return null;
+		}
+		if(!oThis.m_oApi.isReporterMode) return null;
+
+		let oDrawing = AscCommon.g_oTableId.Get_ById(mediaData["id"])
+		if(!oDrawing) return;
+
+		let nWidth, nHeight, nX, nY;
+		let dWidthMM, dHeightMM, dXMM, dYMM;
+
+		if(!oThis.DemonstrationManager.Mode)
+		{
+			let dZoomValue = this.m_nZoomValue / 100;
+			let dKoef = AscCommon.g_dKoef_mm_to_pix * dZoomValue;
+			let oBounds = oDrawing.bounds;
+			nWidth = (oBounds.w * dKoef - 2 * MIN_MEDIA_CONTROL_CONTROL_INSET + 0.5) >> 0;
+			nWidth = Math.max(nWidth, MIN_MEDIA_CONTROL_WIDTH);
+			nHeight = MEDIA_CONTROL_HEIGHT;
+
+			dWidthMM = nWidth / dKoef;
+			dHeightMM = nHeight / dKoef;
+
+			dXMM = (oBounds.l + oBounds.r) / 2.0;
+			dYMM = oBounds.b + MEDIA_CONTROL_TOP_MARGIN / dKoef;
+
+			//view rect relative to slide coords
+			let dViewRectL, dViewRectT, dViewRectR, dViewRectB, dViewRectW, dViewRectH;
+			let oSlideRect = this.m_oDrawingDocument.SlideCurrectRect;
+			let oMainViewRect = this.m_oMainView.AbsolutePosition;
+			dViewRectL = -oSlideRect.l / dKoef;
+			dViewRectT = -oSlideRect.t / dKoef;
+			dViewRectW = (oMainViewRect.R - oMainViewRect.L) / dZoomValue;
+			dViewRectH = (oMainViewRect.B - oMainViewRect.T) / dZoomValue;
+			dViewRectR = dViewRectL + dViewRectW;
+			dViewRectB = dViewRectT + dViewRectH;
+
+			if(dXMM + dWidthMM > dViewRectR)
+			{
+				dXMM = dViewRectR - dWidthMM;
+			}
+			if(dYMM + dHeightMM > dViewRectB)
+			{
+				dYMM = dViewRectB - dHeightMM;
+			}
+			return new AscFormat.CGraphicBounds(dXMM, dYMM, dXMM + dWidthMM, dYMM + dHeightMM);
+		}
+		else
+		{
+
+		}
+	};
+	this.OnUpdateMediaControlRect = function()
+	{
+		let mediaData = this.m_oApi.mediaData;
+		if(!mediaData)
+		{
+			return null;
+		}
+		if(!oThis.m_oApi.isReporterMode) return null;
+
+		let oDrawing = AscCommon.g_oTableId.Get_ById(mediaData["id"])
+		if(!oDrawing) return null;
+
+		let nWidth, nHeight;
+		let dWidthMM, dHeightMM, dXMM, dYMM;
+
+		if(!oThis.DemonstrationManager.Mode)
+		{
+			let dZoomValue = this.m_nZoomValue / 100;
+			let dKoef = AscCommon.g_dKoef_mm_to_pix * dZoomValue;
+			let oBounds = oDrawing.bounds;
+			nWidth = (oBounds.w * dKoef - 2 * MIN_MEDIA_CONTROL_CONTROL_INSET + 0.5) >> 0;
+			nWidth = Math.max(nWidth, MIN_MEDIA_CONTROL_WIDTH);
+			nHeight = MEDIA_CONTROL_HEIGHT;
+
+			dWidthMM = nWidth / dKoef;
+			dHeightMM = nHeight / dKoef;
+
+			dXMM = (oBounds.l + oBounds.r) / 2.0;
+			dYMM = oBounds.b + MEDIA_CONTROL_TOP_MARGIN / dKoef;
+
+			//view rect relative to slide coords
+			let dViewRectL, dViewRectT, dViewRectR, dViewRectB, dViewRectW, dViewRectH;
+			let oSlideRect = this.m_oDrawingDocument.SlideCurrectRect;
+			let oMainViewRect = this.m_oMainView.AbsolutePosition;
+			dViewRectL = -oSlideRect.l / dKoef;
+			dViewRectT = -oSlideRect.t / dKoef;
+			dViewRectW = (oMainViewRect.R - oMainViewRect.L) / dZoomValue;
+			dViewRectH = (oMainViewRect.B - oMainViewRect.T) / dZoomValue;
+			dViewRectR = dViewRectL + dViewRectW;
+			dViewRectB = dViewRectT + dViewRectH;
+
+			if(dXMM + dWidthMM > dViewRectR)
+			{
+				dXMM = dViewRectR - dWidthMM;
+			}
+			if(dYMM + dHeightMM > dViewRectB)
+			{
+				dYMM = dViewRectB - dHeightMM;
+			}
+			return new AscFormat.CGraphicBounds(dXMM, dYMM, dXMM + dWidthMM, dYMM + dHeightMM);
+		}
+		else
+		{
+
+		}
+	};
 }
+
+const MEDIA_CONTROL_HEIGHT = 70;
+const MIN_MEDIA_CONTROL_WIDTH = 560;
+const MIN_MEDIA_CONTROL_CONTROL_INSET = 20;
+const MEDIA_CONTROL_TOP_MARGIN = 10;
 
 //------------------------------------------------------------export----------------------------------------------------
 window['AscCommon']                       = window['AscCommon'] || {};

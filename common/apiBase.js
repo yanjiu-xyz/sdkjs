@@ -3046,10 +3046,89 @@
 	};
 	baseEditorsApi.prototype.hideVideoControl = function()
 	{
+
+		this.callMediaPlayerCommand("hideMediaControl");
+
         if (!window["AscDesktopEditor"] || !window["AscDesktopEditor"]["MediaEnd"])
             return;
         window["AscDesktopEditor"]["MediaEnd"]();
 	};
+
+
+	baseEditorsApi.prototype.onMediaPlayerEvent = function(evt, mediaData)
+	{
+
+	};
+
+	baseEditorsApi.prototype.onUpdateMediaControl = function()
+	{
+		if(this.mediaData)
+		{
+			switch (this.editorId)
+			{
+				case c_oEditorId.Word:
+				{
+					break;
+				}
+				case c_oEditorId.Presentation:
+				{
+					this.WordControl.OnUpdateMediaControl(this.mediaData);
+					break;
+				}
+				case c_oEditorId.Spreadsheet:
+				{
+					break;
+				}
+			}
+		}
+	};
+	baseEditorsApi.prototype.callMediaPlayerCommand = function(sCmd, oMediaData)
+	{
+		if(!sCmd) return;
+		console.log(sCmd);
+		switch (sCmd)
+		{
+			case "play":
+			{
+				break;
+			}
+			case "playFrom":
+			{
+				break;
+			}
+			case "pause":
+			{
+				break;
+			}
+			case "resume":
+			{
+				break;
+			}
+			case "stop":
+			{
+				break;
+			}
+			case "togglePause":
+			{
+				break;
+			}
+			case "showMediaControl":
+			{
+				this.mediaData = oMediaData;
+				this.onUpdateMediaControl();
+				break;
+			}
+			case "hideMediaControl":
+			{
+				if(this.mediaData)
+				{
+					this.mediaData = null;
+				}
+				break;
+			}
+		}
+	};
+
 	// plugins
 	baseEditorsApi.prototype._checkLicenseApiFunctions   = function()
 	{
@@ -4526,7 +4605,7 @@
 	// ---------------------------------------------------- interface events ---------------------------------------------
 	baseEditorsApi.prototype["asc_onShowPopupWindow"] = function()
 	{
-		this.hideVideoControl();
+		this.callMediaPlayerCommand("hideMediaControl");
 	};
 
 

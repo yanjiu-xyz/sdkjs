@@ -8392,6 +8392,10 @@ function BinaryPPTYLoader()
                     s.Skip2(_len);
                     break;
                 }
+                case 2:
+                {
+                    break;
+                }
                 default:
                 {
                     var _len = s.GetULong();

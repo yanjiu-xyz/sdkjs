@@ -2419,6 +2419,7 @@
 	window['AscDFH'].historyitem_NvPr_SetUserDrawn = window['AscDFH'].historyitem_type_NvPr | 2;
 	window['AscDFH'].historyitem_NvPr_SetPh        = window['AscDFH'].historyitem_type_NvPr | 3;
 	window['AscDFH'].historyitem_NvPr_SetUniMedia  = window['AscDFH'].historyitem_type_NvPr | 4;
+	window['AscDFH'].historyitem_NvPr_AddExt       = window['AscDFH'].historyitem_type_NvPr | 5;
 
 	window['AscDFH'].historyitem_Ph_SetHasCustomPrompt = window['AscDFH'].historyitem_type_Ph | 1;
 	window['AscDFH'].historyitem_Ph_SetIdx             = window['AscDFH'].historyitem_type_Ph | 2;

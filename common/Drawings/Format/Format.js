@@ -749,6 +749,7 @@
 		AscDFH.changesFactory[AscDFH.historyitem_NvPr_SetIsPhoto] = CChangesDrawingsBool;
 		AscDFH.changesFactory[AscDFH.historyitem_NvPr_SetUserDrawn] = CChangesDrawingsBool;
 		AscDFH.changesFactory[AscDFH.historyitem_NvPr_SetPh] = CChangesDrawingsObject;
+		AscDFH.changesFactory[AscDFH.historyitem_NvPr_AddExt] = CChangesDrawingsContentNoId;
 		AscDFH.changesFactory[AscDFH.historyitem_NvPr_SetUniMedia] = CChangesDrawingsObjectNoId;
 		AscDFH.changesFactory[AscDFH.historyitem_Ph_SetHasCustomPrompt] = CChangesDrawingsBool;
 		AscDFH.changesFactory[AscDFH.historyitem_Ph_SetIdx] = CChangesDrawingsString;
@@ -6770,6 +6771,8 @@
 			this.userDrawn = null;
 			this.ph = null;
 			this.unimedia = null;
+
+			this.extLst = [];
 		}
 
 		InitClass(NvPr, CBaseFormatObject, AscDFH.historyitem_type_NvPr);
@@ -6784,6 +6787,10 @@
 		NvPr.prototype.setPh = function (ph) {
 			AscCommon.History.Add(new CChangesDrawingsObject(this, AscDFH.historyitem_NvPr_SetPh, this.ph, ph));
 			this.ph = ph;
+		};
+		NvPr.prototype.addExt = function (ext) {
+			History.Add(new CChangesDrawingsContentNoId(this, AscDFH.historyitem_NvPr_AddExt, this.extLst.length, [ext], true));
+			this.extLst.push(ext);
 		};
 		NvPr.prototype.setUniMedia = function (pr) {
 			AscCommon.History.Add(new CChangesDrawingsObjectNoId(this, AscDFH.historyitem_NvPr_SetUniMedia, this.unimedia, pr));
@@ -8361,6 +8368,7 @@
 		};
 
 		drawingConstructorsMap[AscDFH.historyitem_ExtraClrScheme_SetClrScheme] = ClrScheme;
+		drawingConstructorsMap[AscDFH.historyitem_NvPr_AddExt] = CExtP;
 
 		function FontCollection(fontScheme) {
 			CBaseNoIdObject.call(this);
@@ -13691,6 +13699,38 @@
 		}
 		InitClass(IdEntry, CBaseNoIdObject, undefined);
 
+
+		function CExtP() {
+			this.st = null;
+			this.end = null;
+		}
+		InitClass(CExtP, CBaseNoIdObject, undefined);
+
+		CExtP.prototype.readAttribute = function (nType, pReader) {
+			switch (nType) {
+				case 0: {
+					// id. embed / link
+					pReader.stream.Skip2(4);
+					break;
+				}
+				case 1: {
+					this.st = pReader.stream.GetDouble();
+					break;
+				}
+				case 2: {
+					this.end = pReader.stream.GetDouble();
+					break;
+				}
+			}
+		};
+		CExtP.prototype.Write_ToBinary = function (w) {
+			writeDouble(w, this.st);
+			writeDouble(w, this.end);
+		};
+		CExtP.prototype.Read_FromBinary = function (r) {
+			this.st = readDouble(r);
+			this.end = readDouble(r);
+		};
 
 		function CreateSchemeUnicolorWithMods(id, aMods) {
 			let oColor = new CUniColor();

@@ -655,6 +655,28 @@
 			return null;
 		};
 
+		CImageShape.prototype.getMediaData = function () {
+			let sMediaName = this.getMediaFileName();
+			if (!sMediaName) {
+				return null;
+			}
+
+			let oData = {};
+			let sId = this.GetId();
+			oData["id"] = sId;
+			oData["name"] = sMediaName;
+			oData["extX"] = this.extX;
+			oData["extY"] = this.extY;
+			let oTransform = this.getTransformMatrix();
+			oData["sx"] = oTransform.sx;
+			oData["sy"] = oTransform.sy;
+			oData["shx"] = oTransform.shx;
+			oData["shy"] = oTransform.shy;
+			oData["tx"] = oTransform.tx;
+			oData["ty"] = oTransform.ty;
+			return oData;
+		};
+
 		CImageShape.prototype.setNvSpPr = function (pr) {
 			AscCommon.History.Add(new AscDFH.CChangesDrawingsObject(this, AscDFH.historyitem_ImageShapeSetNvPicPr, this.nvPicPr, pr));
 			this.nvPicPr = pr;
