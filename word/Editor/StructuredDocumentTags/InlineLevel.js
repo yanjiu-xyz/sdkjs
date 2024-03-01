@@ -1499,13 +1499,15 @@ CInlineLevelSdt.prototype.private_FillPlaceholderContent = function()
 	var isSelection = this.IsSelectionUse();
 
 	this.RemoveFromContent(0, this.GetElementsCount());
+	
+	let logicDocument = this.GetLogicDocument();
+	let docPart       = null;
+	if (logicDocument && logicDocument.IsDocumentEditor())
+		docPart = logicDocument.GetGlossaryDocument().GetDocPartByName(this.GetPlaceholder());
 
-	var oParagraph     = this.GetParagraph();
-	var oLogicDocument = oParagraph ? oParagraph.GetLogicDocument() : editor.WordControl.m_oLogicDocument;
-	var oDocPart       = oLogicDocument.GetGlossaryDocument().GetDocPartByName(this.GetPlaceholder());
-	if (oDocPart)
+	if (docPart)
 	{
-		var oFirstParagraph = oDocPart.GetFirstParagraph();
+		var oFirstParagraph = docPart.GetFirstParagraph();
 
 		if (this.IsContentControlEquation())
 		{
@@ -1544,7 +1546,7 @@ CInlineLevelSdt.prototype.private_FillPlaceholderContent = function()
 		}
 		else
 		{
-			var oRun = new ParaRun(oParagraph, false);
+			var oRun = new AscWord.Run();
 			oRun.AddText(String.fromCharCode(nbsp_charcode, nbsp_charcode, nbsp_charcode, nbsp_charcode));
 			this.AddToContent(0, oRun);
 		}
@@ -2698,8 +2700,8 @@ CInlineLevelSdt.prototype.IsShowingPlcHdr = function()
 };
 CInlineLevelSdt.prototype.GetLogicDocument = function()
 {
-	var oParagraph = this.GetParagraph();
-	return oParagraph ? oParagraph.GetLogicDocument() : editor.WordControl.m_oLogicDocument;
+	let logicDocument = paragraph ? paragraph.GetLogicDocument() : null;
+	return logicDocument ? logicDocument : editor.WordControl.m_oLogicDocument;
 };
 CInlineLevelSdt.prototype.private_OnAddFormPr = function()
 {
