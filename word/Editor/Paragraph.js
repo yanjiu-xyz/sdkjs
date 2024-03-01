@@ -14842,28 +14842,27 @@ Paragraph.prototype.Get_SectionPr = function()
 {
 	return this.SectPr;
 };
-Paragraph.prototype.Set_SectionPr = function(SectPr, bUpdate)
+Paragraph.prototype.Set_SectionPr = function(sectPr, update)
 {
-	if (this.LogicDocument !== this.Parent && (!this.LogicDocument || true !== this.LogicDocument.ForceCopySectPr))
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument && logicDocument !== this.GetParent() && true !== this.LogicDocument.ForceCopySectPr)
 		return;
-
-	if (SectPr !== this.SectPr)
-	{
-		History.Add(new CChangesParagraphSectPr(this, this.SectPr, SectPr));
-
-		var oOldSectPr = this.SectPr;
-		this.SectPr = SectPr;
-
-		if (false !== bUpdate)
-			this.LogicDocument.UpdateSectionInfo(oOldSectPr, SectPr, true);
-
-		// TODO: Когда избавимся от ParaEnd переделать тут
-		if (this.Content.length > 0 && para_Run === this.Content[this.Content.length - 1].Type)
-		{
-			var LastRun                = this.Content[this.Content.length - 1];
-			LastRun.RecalcInfo.Measure = true;
-		}
-	}
+	
+	if (sectPr === this.SectPr)
+		return;
+	
+	let oldSectPr = this.SectPr;
+	this.SectPr   = sectPr;
+	
+	AscCommon.History.Add(new CChangesParagraphSectPr(this, oldSectPr, sectPr));
+	
+	if (logicDocument && false !== update)
+		logicDocument.UpdateSectionInfo(oldSectPr, sectPr, true);
+	
+	// TODO: Когда избавимся от ParaEnd переделать тут
+	let paraEndRun = this.GetParaEndRun();
+	if (paraEndRun)
+		paraEndRun.RecalcMeasure();
 };
 Paragraph.prototype.SetSectionPr = function(sectPr, isUpdate)
 {
