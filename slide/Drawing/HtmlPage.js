@@ -60,15 +60,13 @@ var Y_Bottom_Field = Page_Height - Y_Bottom_Margin;
 
 var HIDDEN_PANE_HEIGHT = 1;
 
-var HEADER_HEIGHT = 45 * g_dKoef_pix_to_mm;
-var TIMELINE_HEIGHT = 36 * g_dKoef_pix_to_mm;
-var TIMELINE_LEFT_MARGIN = 14 * g_dKoef_pix_to_mm;
+var HEADER_HEIGHT = 40 * g_dKoef_pix_to_mm;
+var TIMELINE_HEIGHT = 40 * g_dKoef_pix_to_mm;
 var TIMELINE_LIST_RIGHT_MARGIN = 23 * g_dKoef_pix_to_mm;
 var TIMELINE_HEADER_RIGHT_MARGIN = 18 * g_dKoef_pix_to_mm;
 
 AscCommon.HIDDEN_PANE_HEIGHT = HIDDEN_PANE_HEIGHT;
 AscCommon.TIMELINE_HEIGHT = TIMELINE_HEIGHT;
-AscCommon.TIMELINE_LEFT_MARGIN = TIMELINE_LEFT_MARGIN;
 AscCommon.TIMELINE_LIST_RIGHT_MARGIN = TIMELINE_LIST_RIGHT_MARGIN;
 AscCommon.TIMELINE_HEADER_RIGHT_MARGIN = TIMELINE_HEADER_RIGHT_MARGIN;
 

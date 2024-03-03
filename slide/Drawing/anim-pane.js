@@ -805,9 +805,9 @@
 
 	function CImageControl(oParentControl, sBase64Image, width, height) {
 		CControl.call(this, oParentControl)
-		this.image = sBase64Image;
-		this.imgWidth = width || EFFECT_BAR_HEIGHT;
-		this.imgHeight = height || EFFECT_BAR_HEIGHT;
+		this.src = sBase64Image;
+		this.imgWidth = width || 0;
+		this.imgHeight = height || 0;
 	}
 
 	InitClass(CImageControl, CControl, CONTROL_TYPE_IMAGE);
@@ -816,32 +816,17 @@
 		return false;
 	};
 	CImageControl.prototype.draw = function(graphics) {
-		if (!this.image) { return false; }
+		if (!this.src) { return false; }
 		if (this.isHidden()) { return false; }
 		if (!this.checkUpdateRect(graphics.updatedRect)) { return false; }
 
-		const dimensions = this.normalizeDimensions(this.imgWidth, this.imgHeight, EFFECT_BAR_HEIGHT);
-		const left = this.bounds.l + (this.getWidth() - dimensions.width) / 2;
-		const top = this.bounds.t + (this.getHeight() - dimensions.height) / 2;
+		const left = this.bounds.l + (this.getWidth() - this.imgWidth) / 2;
+		const top = this.bounds.t + (this.getHeight() - this.imgHeight) / 2;
 
 		graphics.SaveGrState();
 		graphics.SetIntegerGrid(false);
-		graphics.drawImage(this.image, left, top, dimensions.width, dimensions.height);
+		graphics.drawImage(this.src, left, top, this.imgWidth, this.imgHeight);
 		graphics.RestoreGrState();
-	};
-
-	CImageControl.prototype.normalizeDimensions = function (width, height, maxSize) {
-		const maxWidth = maxSize;
-		const maxHeight = maxSize;
-
-		const widthRatio = maxWidth / width;
-		const heightRatio = maxHeight / height;
-		const scale = (width > maxWidth || height > maxHeight) ? Math.min(widthRatio, heightRatio) : 1;
-
-		return {
-			width: width * scale,
-			height: height * scale
-		};
 	};
 
 
@@ -943,27 +928,19 @@
 		// }
 
 		var oSkin = AscCommon.GlobalSkin;
-		if (this.isActive()) {
-			return oSkin.ScrollerActiveColor;
-		} else if (this.isHovered()) {
-			return oSkin.ScrollerHoverColor;
-		} else if (this.isDisabled()) {
-			return '#123456'
-		} else {
-			return oSkin.ScrollerColor;
-		}
+		if (this.isActive()) { return oSkin['anim-pane-button-active-fill']; }
+		if (this.isDisabled()) { return oSkin['anim-pane-button-disabled-fill']; }
+		if (this.isHovered()) { return oSkin['anim-pane-button-hovered-fill']; }
+		return oSkin['anim-pane-button-fill'];
 	};
 	CButton.prototype.getOutlineColor = function () {
 		if (this.parentControl instanceof CTimeline) { return '#000' }
 
 		var oSkin = AscCommon.GlobalSkin;
-		if (this.isActive()) {
-			return oSkin.ScrollOutlineActiveColor;
-		} else if (this.isHovered()) {
-			return oSkin.ScrollOutlineHoverColor;
-		} else {
-			return oSkin.ScrollOutlineColor;
-		}
+		if (this.isActive()) { return oSkin['anim-pane-button-active-outline']; }
+		if (this.isDisabled()) { return oSkin['anim-pane-button-disabled-outline']; }
+		if (this.isHovered()) { return oSkin['anim-pane-button-hovered-outline']; }
+		return oSkin['anim-pane-button-outline'];
 	};
 	CButton.prototype.isPressed = function () {
 		return this.getStateFlag(STATE_FLAG_PRESSED);
@@ -981,16 +958,20 @@
 
 	function CAnimPaneHeader(oDrawer) {
 		CTopControl.call(this, oDrawer);
-		this.label = this.addControl(new CLabel(this, "Animation Pane", 10, true));
+		this.label = this.addControl(new CLabel(this, 'Animation Pane', HEADER_LABEL_FONTSIZE, true, AscCommon.align_Left));
 
-		this.playButton = this.addControl(new CButton(
-			this, null, null, managePreview));
-		this.moveUpButton = this.addControl(new CButton(
-			this, null, null, moveChosenUp));
-		this.moveDownButton = this.addControl(new CButton(
-			this, null, null, moveChosenDown));
-		this.closeButton = this.addControl(new CButton(
-			this, null, null, closePanel));
+		this.playButton = this.addControl(new CButton(this, null, null, managePreview));
+		this.playButton.icon = this.playButton.addControl(new CImageControl(this.playButton, null, PLAY_BUTTON_ICON_SIZE, PLAY_BUTTON_ICON_SIZE));
+		this.playButton.label = this.playButton.addControl(new CLabel(this.playButton, '', PLAY_BUTTON_LABEL_FONTSIZE));
+
+		this.moveUpButton = this.addControl(new CButton(this, null, null, moveChosenUp));
+		this.moveUpButton.icon = this.moveUpButton.addControl(new CImageControl(this.moveUpButton, null, MOVE_BUTTON_ICON_SIZE, MOVE_BUTTON_ICON_SIZE));
+
+		this.moveDownButton = this.addControl(new CButton(this, null, null, moveChosenDown));
+		this.moveDownButton.icon = this.moveDownButton.addControl(new CImageControl(this.moveDownButton, null, MOVE_BUTTON_ICON_SIZE, MOVE_BUTTON_ICON_SIZE));
+
+		this.closeButton = this.addControl(new CButton(this, null, null, closePanel));
+		this.closeButton.icon = this.closeButton.addControl(new CImageControl(this.closeButton, null, CLOSE_BUTTON_ICON_SIZE, CLOSE_BUTTON_ICON_SIZE));
 
 		// Event handlers for button of CAnimPaneHeader ---
 
@@ -1045,35 +1026,59 @@
 	InitClass(CAnimPaneHeader, CTopControl, CONTROL_TYPE_HEADER);
 
 	CAnimPaneHeader.prototype.recalculateChildrenLayout = function () {
-		this.label.setLayout(
-			AscCommon.TIMELINE_LEFT_MARGIN,
+		let gap;
+
+		this.label.setLayout(COMMON_LEFT_MARGIN, 0, HEADER_LABEL_WIDTH, this.getHeight());
+
+		this.playButton.icon.src = playIcon;
+		gap = (PLAY_BUTTON_HEIGHT - PLAY_BUTTON_ICON_SIZE) / 2;
+		this.playButton.icon.setLayout(PLAY_BUTTON_LEFT_PADDING, gap, PLAY_BUTTON_ICON_SIZE, PLAY_BUTTON_ICON_SIZE);
+
+		this.playButton.label.string = 'Play all';				// TODO - 'Play all', 'Play', 'Play selected', 'Stop'
+		this.playButton.label.setLayout(
+			this.playButton.icon.getRight() + PLAY_BUTTON_LABEL_LEFT_MARGIN,
 			0,
-			this.playButton.getLeft(),
-			this.getHeight()
-		);
-		this.playButton.setLayout(
-			PLAY_BUTTON_LEFT,
-			PLAY_BUTTON_TOP,
-			PLAY_BUTTON_WIDTH,
+			PLAY_BUTTON_LABEL_WIDTH,
 			PLAY_BUTTON_HEIGHT
 		);
+
+		const contentWidth = this.playButton.label.getRight() - this.playButton.icon.getLeft()
+		this.playButton.setLayout(
+			this.label.getRight() + PLAY_BUTTON_LEFT_MARGIN,
+			(HEADER_HEIGHT - PLAY_BUTTON_HEIGHT) / 2,
+			PLAY_BUTTON_LEFT_PADDING + contentWidth + PLAY_BUTTON_RIGHT_PADDING,
+			PLAY_BUTTON_HEIGHT
+		);
+
+		this.moveUpButton.icon.src = arrowUpIcon;
+		this.moveUpButton.icon.setLayout(0, 0, MOVE_BUTTON_ICON_SIZE, MOVE_BUTTON_ICON_SIZE);
+
+		gap = (HEADER_HEIGHT - MOVE_BUTTON_SIZE) / 2;
 		this.moveUpButton.setLayout(
-			MOVE_UP_BUTTON_LEFT,
-			MOVE_UP_BUTTON_TOP,
-			MOVE_UP_BUTTON_WIDTH,
-			MOVE_UP_BUTTON_HEIGHT
+			this.playButton.getRight() + MOVE_UP_BUTTON_LEFT_MARGIN,
+			gap,
+			MOVE_BUTTON_SIZE,
+			MOVE_BUTTON_SIZE,
 		);
+
+		this.moveDownButton.icon.src = arrowDownIcon;
+		this.moveDownButton.icon.setLayout(0, 0, MOVE_BUTTON_ICON_SIZE, MOVE_BUTTON_ICON_SIZE);
+
 		this.moveDownButton.setLayout(
-			MOVE_DOWN_BUTTON_LEFT,
-			MOVE_DOWN_BUTTON_TOP,
-			MOVE_DOWN_BUTTON_WIDTH,
-			MOVE_DOWN_BUTTON_HEIGHT
+			this.moveUpButton.getRight() + MOVE_DOWN_BUTTON_LEFT_MARGIN,
+			gap,
+			MOVE_BUTTON_SIZE,
+			MOVE_BUTTON_SIZE
 		);
+
+		this.closeButton.icon.src = closeIcon;
+		this.closeButton.icon.setLayout(0, 0, CLOSE_BUTTON_SIZE, CLOSE_BUTTON_SIZE);
+		gap = (HEADER_HEIGHT - CLOSE_BUTTON_SIZE) / 2;
 		this.closeButton.setLayout(
-			this.getWidth() - AscCommon.TIMELINE_LIST_RIGHT_MARGIN - BUTTON_SIZE,
-			(this.getHeight() - BUTTON_SIZE) / 2,
-			BUTTON_SIZE,
-			BUTTON_SIZE
+			this.getRight() - COMMON_RIGHT_MARGIN - CLOSE_BUTTON_SIZE,
+			gap,
+			CLOSE_BUTTON_SIZE,
+			CLOSE_BUTTON_SIZE
 		);
 	};
 	CAnimPaneHeader.prototype.getFillColor = function () {
@@ -1088,8 +1093,10 @@
 		CTopControl.call(this, oDrawer);
 		this.drawer = oDrawer;
 
-		this.secondsButton = this.addControl(new CButton(
-			this, null, null, manageTimelineScale));
+		this.scaleButton = this.addControl(new CButton(this, null, null, manageTimelineScale));
+		this.scaleButton.label = this.scaleButton.addControl(new CLabel(this.scaleButton, 'Seconds', SCALE_BUTTON_LABEL_FONTSIZE));
+		this.scaleButton.icon = this.scaleButton.addControl(new CImageControl(this.scaleButton, dropDownIcon, SCALE_BUTTON_ICON_SIZE, SCALE_BUTTON_ICON_SIZE));
+
 		this.timeline = this.addControl(new CTimeline(this));
 
 		function manageTimelineScale(event, x, y) {
@@ -1105,12 +1112,29 @@
 	InitClass(CTimelineContainer, CTopControl, CONTROL_TYPE_TIMELINE_CONTAINER);
 
 	CTimelineContainer.prototype.recalculateChildrenLayout = function () {
-		var dPosY = (this.getHeight() - SECONDS_BUTTON_HEIGHT) / 2;
-		this.secondsButton.setLayout(SECONDS_BUTTON_LEFT, dPosY, SECONDS_BUTTON_WIDTH, SECONDS_BUTTON_HEIGHT);
-		var dLeft = LABEL_TIMELINE_WIDTH + AscCommon.TIMELINE_LEFT_MARGIN - 1.5 * SCROLL_THICKNESS;
-		var dWidth = this.getWidth() - AscCommon.TIMELINE_LIST_RIGHT_MARGIN - dLeft;
-		dPosY = (this.getHeight() - SCROLL_THICKNESS) / 2;
-		this.timeline.setLayout(dLeft, dPosY, dWidth, SCROLL_THICKNESS);
+		this.scaleButton.setLayout(
+			COMMON_LEFT_MARGIN + SCALE_BUTTON_LEFT_MARGIN,
+			(TIMELINE_HEIGHT - SCALE_BUTTON_HEIGHT) / 2,
+			SCALE_BUTTON_WIDTH,
+			SCALE_BUTTON_HEIGHT
+		);
+		this.scaleButton.label.setLayout(
+			SCALE_BUTTON_LEFT_PADDING,
+			0,
+			SCALE_BUTTON_LABEL_WIDTH,
+			SCALE_BUTTON_HEIGHT
+		);
+		this.scaleButton.icon.setLayout(this.scaleButton.label.getRight(), 0, SCALE_BUTTON_HEIGHT, SCALE_BUTTON_HEIGHT);
+
+		const timelineWidth = this.getWidth() -
+			(COMMON_LEFT_MARGIN + COMMON_RIGHT_MARGIN) -
+			(SCALE_BUTTON_LEFT_MARGIN + SCALE_BUTTON_WIDTH + TIMELINE_SCROLL_LEFT_MARGIN) - (ANIM_ITEM_HEIGHT - MENU_BUTTON_SIZE) / 2;
+		this.timeline.setLayout(
+			this.scaleButton.getRight() + TIMELINE_SCROLL_LEFT_MARGIN,
+			(TIMELINE_HEIGHT - TIMELINE_SCROLL_HEIGHT) / 2,
+			timelineWidth,
+			TIMELINE_SCROLL_HEIGHT
+		);
 	};
 	CTimelineContainer.prototype.getFillColor = function () {
 		return null;
@@ -1142,7 +1166,10 @@
 		this.isStickedToPointer;
 		
 		this.startButton = this.addControl(new CButton(this, onFirstBtnMouseDown, null, onMouseUp));
+		this.startButton.icon = this.startButton.addControl(new CImageControl(this.startButton, arrowLeft, 5 * AscCommon.g_dKoef_pix_to_mm, 9 * AscCommon.g_dKoef_pix_to_mm));
+
 		this.endButton = this.addControl(new CButton(this, onSecondBtnMouseDown, null, onMouseUp));
+		this.endButton.icon = this.endButton.addControl(new CImageControl(this.endButton, arrowRight, 5 * AscCommon.g_dKoef_pix_to_mm, 9 * AscCommon.g_dKoef_pix_to_mm));
 		
 		function onFirstBtnMouseDown(e, x, y) {
 			if (!this.hit(x, y)) { return }
@@ -1212,7 +1239,7 @@
 			let oInv = this.getInvFullTransformMatrix();
 			let tx = oInv.TransformPointX(x, y);
 
-			let newScrollOffset = tx - this.getRulerStart() - TIMELINE_SCROLLER_SIZE / 2;
+			let newScrollOffset = tx - this.getRulerStart() - TIMELINE_SCROLLER_WIDTH / 2;
 
 			// Check if the boundaried are reached and start scrolling if so
 			let leftBorder = this.getRulerStart();
@@ -1253,7 +1280,7 @@
 		this.onUpdate();
 	};
 	CTimeline.prototype.getMaxScrollOffset = function () {
-		return this.getWidth() - 2 * SCROLL_BUTTON_SIZE - TIMELINE_SCROLLER_SIZE;
+		return this.getWidth() - 2 * TIMELINE_SCROLL_BUTTON_SIZE - TIMELINE_SCROLLER_WIDTH;
 	};
 
 	CTimeline.prototype.getStartTime = function () {
@@ -1269,7 +1296,7 @@
 		editor.WordControl.m_oAnimPaneApi.list.Control.seqList.onUpdateSeqList()
 	};
 	CTimeline.prototype.getCurrentTime = function() {
-		return this.posToTime(this.getScrollOffset() + this.startButton.getWidth() + TIMELINE_SCROLLER_SIZE / 2)
+		return this.posToTime(this.getScrollOffset() + this.startButton.getWidth() + TIMELINE_SCROLLER_WIDTH / 2)
 	}
 
 	CTimeline.prototype.startScroll = function (step /* in millimeters */, scrollTimerDelay, scrollTimerInterval) {
@@ -1336,9 +1363,9 @@
 		return this.cacheLabel(nTime, scale);
 	};
 	CTimeline.prototype.cacheLabel = function (nTime, scale) {
-		var oLabel = new CLabel(this, this.getTimeString(nTime), 7.5);
+		var oLabel = new CLabel(this, this.getTimeString(nTime), TIMELINE_LABEL_FONTSIZE);
 		var oContent = oLabel.txBody.content;
-		oLabel.setLayout(0, 0, LABEL_WIDTH, this.getHeight());
+		oLabel.setLayout(0, 0, TIMELINE_LABEL_WIDTH, this.getHeight());
 		if (this.cachedParaPr) {
 			oContent.Content[0].CompiledPr = this.cachedParaPr;
 		} else {
@@ -1387,7 +1414,7 @@
 			dWidth,
 			dHeight);
 		// var oContent = oLabel.txBody.content;
-		// oContent.ShiftView(dPos - LABEL_WIDTH / 2, this.getHeight() / 2 - oContent.GetSummaryHeight() / 2);
+		// oContent.ShiftView(dPos - TIMELINE_LABEL_WIDTH / 2, this.getHeight() / 2 - oContent.GetSummaryHeight() / 2);
 		// oContent.Draw(0, graphics);
 		// oContent.ResetShiftView();
 	};
@@ -1483,7 +1510,7 @@
 	CTimeline.prototype.drawScroller = function (graphics) {
 		let x = this.getRulerStart() + this.getScrollOffset();
 		let y = 0;
-		let extX = TIMELINE_SCROLLER_SIZE;
+		let extX = TIMELINE_SCROLLER_WIDTH;
 		let extY = this.getHeight();
 
 		const oSkin = AscCommon.GlobalSkin;
@@ -1537,7 +1564,7 @@
 
 		let l = this.getRulerStart() + this.getScrollOffset();
 		let t = 0;
-		let r = l + TIMELINE_SCROLLER_SIZE;
+		let r = l + TIMELINE_SCROLLER_WIDTH;
 		let b = t + this.getHeight();
 
 		return tx >= l && tx <= r && ty >= t && ty <= b;
@@ -1616,7 +1643,7 @@
 	};
 	CTimeline.prototype.getZeroShift = function () {
 		// Returns the value (in millimeters) of the left margin of the start of the ruler
-		return this.getRulerStart() + TIMELINE_SCROLLER_SIZE / 2;
+		return this.getRulerStart() + TIMELINE_SCROLLER_WIDTH / 2;
 	};
 
 	/*
@@ -1649,8 +1676,11 @@
 		return true;
 	};
 	CTimeline.prototype.recalculateChildrenLayout = function () {
-		this.startButton.setLayout(0, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
-		this.endButton.setLayout(this.getWidth() - SCROLL_BUTTON_SIZE, 0, SCROLL_BUTTON_SIZE, SCROLL_BUTTON_SIZE);
+		this.startButton.setLayout(0, 0, TIMELINE_SCROLL_BUTTON_SIZE, TIMELINE_SCROLL_BUTTON_SIZE);
+		this.startButton.icon.setLayout(0, 0, TIMELINE_SCROLL_BUTTON_SIZE, TIMELINE_SCROLL_BUTTON_SIZE);
+
+		this.endButton.setLayout(this.getWidth() - TIMELINE_SCROLL_BUTTON_SIZE, 0, TIMELINE_SCROLL_BUTTON_SIZE, TIMELINE_SCROLL_BUTTON_SIZE);
+		this.endButton.icon.setLayout(0, 0, TIMELINE_SCROLL_BUTTON_SIZE, TIMELINE_SCROLL_BUTTON_SIZE);
 
 		const currentScrollOffset = this.getScrollOffset()
 		if (currentScrollOffset >= this.getMaxScrollOffset()) {
@@ -1694,9 +1724,9 @@
 
 	CSeqListContainer.prototype.recalculateChildrenLayout = function () {
 		this.seqList.setLayout(
-			AscCommon.TIMELINE_LEFT_MARGIN,
+			COMMON_LEFT_MARGIN,
 			0,
-			this.getWidth() - AscCommon.TIMELINE_LEFT_MARGIN - AscCommon.TIMELINE_LIST_RIGHT_MARGIN,
+			this.getWidth() - COMMON_LEFT_MARGIN - COMMON_RIGHT_MARGIN,
 			this.seqList.getHeight());
 		this.seqList.recalculate();
 		this.setLayout(0, 0, this.getWidth(), this.seqList.getHeight());
@@ -1989,12 +2019,12 @@
 		}
 	};
 	CAnimSequence.prototype.recalculateChildrenLayout = function () {
-		var dCurY = 0;
+		let dCurY = 0;
 		if (this.label) {
-			dCurY += PADDING_TOP;
-			this.label.setLayout(PADDING_TOP, dCurY, this.getWidth(), SEQ_LABEL_HEIGHT);
+			dCurY += SEQ_LABEL_MARGIN;
+			this.label.setLayout(SEQ_LABEL_MARGIN, dCurY, this.getWidth(), SEQ_LABEL_HEIGHT);
 			this.label.recalculate();
-			dCurY += this.label.getHeight() + PADDING_BOTTOM;
+			dCurY += this.label.getHeight() + SEQ_LABEL_MARGIN;
 		}
 		for (let nGroup = 0; nGroup < this.animGroups.length; ++nGroup) {
 			this.animGroups[nGroup].setLayout(0, dCurY, this.getWidth(), 0);
@@ -2022,8 +2052,6 @@
 	CAnimGroup.prototype.getSeq = function () {
 		return this.parentControl.getSeq();
 	};
-
-	const INDEX_LABEL_WIDTH = 5
 
 	CAnimGroup.prototype.recalculateChildren = function () {
 		this.clear();
@@ -2057,6 +2085,7 @@
 		if (!this.checkUpdateRect(graphics.updatedRect)) { return false; }
 		if (!CControlContainer.prototype.draw.call(this, graphics)) { return false; }
 
+		// Connection lines drawing
 		let bShouldDraw = false;
 		this.effects.some(function (effect) {
 			if (effect.isSelected()) return bShouldDraw = true;
@@ -2113,7 +2142,7 @@
 		this.effect = oEffect;
 
 		if (this.effect.isClickEffect() || !this.effect.getPreviousEffect()) {
-			this.indexLabel = this.addControl(new CLabel(this, this.effect.getIndexInSequence() + "", 7.5, false, 2))
+			this.indexLabel = this.addControl(new CLabel(this, this.effect.getIndexInSequence() + "", INDEX_LABEL_FONTSIZE, false, AscCommon.align_Center))
 		}
 
 		const images = getIconsForLoad();
@@ -2128,8 +2157,8 @@
 		}
 		if (this.effect.isAfterEffect()) {
 			eventImg.src = images[1];
-			eventImg.width = 14 * AscCommon.g_dKoef_pix_to_mm;
-			eventImg.height = 14 * AscCommon.g_dKoef_pix_to_mm;
+			eventImg.width = 16 * AscCommon.g_dKoef_pix_to_mm;
+			eventImg.height = 16 * AscCommon.g_dKoef_pix_to_mm;
 		}
 		this.eventTypeImage = this.addControl(new CImageControl(this, eventImg.src, eventImg.width, eventImg.height));
 
@@ -2157,8 +2186,9 @@
 		}
 		this.effectTypeImage = this.addControl(new CImageControl(this, effectImg.src, effectImg.width, effectImg.height));
 
-		this.effectLabel = this.addControl(new CLabel(this, this.effect.getObjectName(), 7.5));
+		this.effectLabel = this.addControl(new CLabel(this, this.effect.getObjectName(), EFFECT_LABEL_FONTSIZE, false, AscCommon.align_Left));
 		this.contextMenuButton = this.addControl(new CButton(this, showContextMenu));
+		this.contextMenuButton.icon = this.contextMenuButton.addControl(new CImageControl(this.contextMenuButton, menuButton, 20 * AscCommon.g_dKoef_pix_to_mm, 20 * AscCommon.g_dKoef_pix_to_mm));
 
 		function showContextMenu(e, x, y) {
 			if (!this.hit(x, y)) { return }
@@ -2213,16 +2243,21 @@
 	InitClass(CAnimItem, CControlContainer, CONTROL_TYPE_ANIM_ITEM);
 
 	CAnimItem.prototype.recalculateChildrenLayout = function () {
-		const dYInside = (this.getHeight() - EFFECT_BAR_HEIGHT) / 2;
+		if (this.indexLabel) this.indexLabel.setLayout(0, 0, INDEX_LABEL_WIDTH, ANIM_ITEM_HEIGHT)
 
-		if (this.indexLabel) this.indexLabel.setLayout(0, 0, ANIM_ITEM_HEIGHT, ANIM_ITEM_HEIGHT)
+		this.eventTypeImage.setLayout(INDEX_LABEL_WIDTH, 0, EVENT_TYPE_ICON_SIZE, EVENT_TYPE_ICON_SIZE);
+		this.effectTypeImage.setLayout(this.eventTypeImage.getRight(), 0, EFFECT_TYPE_ICON_SIZE, EFFECT_TYPE_ICON_SIZE);
 
-		this.eventTypeImage.setLayout(INDEX_LABEL_WIDTH, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
-		this.effectTypeImage.setLayout(this.eventTypeImage.getRight(), dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
-		this.effectLabel.setLayout(this.effectTypeImage.getRight(), dYInside, 20, EFFECT_BAR_HEIGHT);
+		const zeroPos = COMMON_LEFT_MARGIN + SCALE_BUTTON_LEFT_MARGIN + SCALE_BUTTON_WIDTH + TIMELINE_SCROLL_LEFT_MARGIN + TIMELINE_SCROLL_BUTTON_SIZE;
+		const labelWidth = zeroPos - COMMON_LEFT_MARGIN - (INDEX_LABEL_WIDTH + EVENT_TYPE_ICON_SIZE + EFFECT_TYPE_ICON_SIZE);
+		const gap = (ANIM_ITEM_HEIGHT - EFFECT_BAR_HEIGHT) / 2;
+		this.effectLabel.setLayout(this.effectTypeImage.getRight(), gap, labelWidth, EFFECT_BAR_HEIGHT);
 
-		let dRightSpace = dYInside;
-		this.contextMenuButton.setLayout(this.getRight() - ANIM_ITEM_HEIGHT + dRightSpace, dYInside, EFFECT_BAR_HEIGHT, EFFECT_BAR_HEIGHT);
+		const menuBtnGap = (ANIM_ITEM_HEIGHT - MENU_BUTTON_SIZE) / 2;
+		const menuBtnLeft = this.getRight() - MENU_BUTTON_SIZE - menuBtnGap;
+		this.contextMenuButton.setLayout(menuBtnLeft, menuBtnGap, MENU_BUTTON_SIZE, MENU_BUTTON_SIZE);
+
+		this.contextMenuButton.icon.setLayout(0, 0, MENU_BUTTON_SIZE, MENU_BUTTON_SIZE);
 	};
 
 	CAnimItem.prototype.updateSelectState = function (event) {
@@ -2410,7 +2445,7 @@
 	}
 	CAnimItem.prototype.getRightBorder = function () {
 		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline;
-		return this.getLeftBorder() + timeline.getRulerEnd() - timeline.getZeroShift();
+		return timeline.getRight() - TIMELINE_SCROLL_BUTTON_SIZE;
 	}
 	CAnimItem.prototype.getEffectBarBounds = function () {
 		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline;
@@ -2671,38 +2706,55 @@
 	};
 
 
-	// Header
-	const PLAY_BUTTON_WIDTH = 82 * AscCommon.g_dKoef_pix_to_mm;
+	// HEADER
+	const HEADER_HEIGHT = 40 * AscCommon.g_dKoef_pix_to_mm;
+	const HEADER_LABEL_FONTSIZE = 10;
+	const HEADER_LABEL_WIDTH = 101 * AscCommon.g_dKoef_pix_to_mm;
+
 	const PLAY_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
-	const PLAY_BUTTON_LEFT = 145 * AscCommon.g_dKoef_pix_to_mm;
-	const PLAY_BUTTON_TOP = 12 * AscCommon.g_dKoef_pix_to_mm;
+	const PLAY_BUTTON_LEFT_MARGIN = 30 * AscCommon.g_dKoef_pix_to_mm;
+	const PLAY_BUTTON_LEFT_PADDING = 8 *  AscCommon.g_dKoef_pix_to_mm;
+	const PLAY_BUTTON_RIGHT_PADDING = 12 *  AscCommon.g_dKoef_pix_to_mm;
+	const PLAY_BUTTON_ICON_SIZE = 20 * AscCommon.g_dKoef_pix_to_mm;;
+	const PLAY_BUTTON_LABEL_FONTSIZE = 9;
+	const PLAY_BUTTON_LABEL_WIDTH = 40 * g_dKoef_pix_to_mm;
+	const PLAY_BUTTON_LABEL_LEFT_MARGIN = 4 * AscCommon.g_dKoef_pix_to_mm;
 
-	const MOVE_UP_BUTTON_WIDTH = 24 * AscCommon.g_dKoef_pix_to_mm;
-	const MOVE_UP_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
-	const MOVE_UP_BUTTON_LEFT = 241 * AscCommon.g_dKoef_pix_to_mm;
-	const MOVE_UP_BUTTON_TOP = 12 * AscCommon.g_dKoef_pix_to_mm;
+	const MOVE_BUTTON_SIZE = 24 * AscCommon.g_dKoef_pix_to_mm;
+	const MOVE_UP_BUTTON_LEFT_MARGIN = 14 * AscCommon.g_dKoef_pix_to_mm;
+	const MOVE_DOWN_BUTTON_LEFT_MARGIN = 4 * AscCommon.g_dKoef_pix_to_mm;
+	const MOVE_BUTTON_ICON_SIZE = 24 * AscCommon.g_dKoef_pix_to_mm;
 
-	const MOVE_DOWN_BUTTON_WIDTH = 24 * AscCommon.g_dKoef_pix_to_mm;
-	const MOVE_DOWN_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
-	const MOVE_DOWN_BUTTON_LEFT = MOVE_UP_BUTTON_WIDTH + 241 * AscCommon.g_dKoef_pix_to_mm;
-	const MOVE_DOWN_BUTTON_TOP = 12 * AscCommon.g_dKoef_pix_to_mm;
+	const CLOSE_BUTTON_SIZE = 24 * AscCommon.g_dKoef_pix_to_mm;
+	const CLOSE_BUTTON_ICON_SIZE = 12 * AscCommon.g_dKoef_pix_to_mm;
 
-	// Timeline
-	const SECONDS_BUTTON_WIDTH = 76 * AscCommon.g_dKoef_pix_to_mm;
-	const SECONDS_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
-	const SECONDS_BUTTON_LEFT = 57 * AscCommon.g_dKoef_pix_to_mm;
 
-	const LEFT_TIMELINE_INDENT = 14 * AscCommon.g_dKoef_pix_to_mm;
-	const LABEL_TIMELINE_WIDTH = 155 * AscCommon.g_dKoef_pix_to_mm;
+	// TIMELINE
+	const TIMELINE_HEIGHT = 40 * AscCommon.g_dKoef_pix_to_mm;
+	const TIMELINE_SCROLL_HEIGHT = 17 * AscCommon.g_dKoef_pix_to_mm;
+	const TIMELINE_SCROLL_LEFT_MARGIN = 10 * AscCommon.g_dKoef_pix_to_mm;
+	const TIMELINE_SCROLL_RIGHT_MARGIN = 40 * AscCommon.g_dKoef_pix_to_mm;
+	const TIMELINE_SCROLL_BUTTON_SIZE = 17 * AscCommon.g_dKoef_pix_to_mm;
+	const TIMELINE_SCROLLER_WIDTH = 16 * AscCommon.g_dKoef_pix_to_mm;
+	
+	const SCALE_BUTTON_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
+	const SCALE_BUTTON_WIDTH = 76 * AscCommon.g_dKoef_pix_to_mm;
+	const SCALE_BUTTON_LEFT_MARGIN = 43 * AscCommon.g_dKoef_pix_to_mm;
+	const SCALE_BUTTON_LEFT_PADDING = 4 * AscCommon.g_dKoef_pix_to_mm;
+	const SCALE_BUTTON_LABEL_WIDTH = 50 * AscCommon.g_dKoef_pix_to_mm;
+	const SCALE_BUTTON_LABEL_FONTSIZE = 9;
+	const SCALE_BUTTON_ICON_LEFT_MARGIN = 17 * AscCommon.g_dKoef_pix_to_mm;
+	const SCALE_BUTTON_ICON_SIZE = 5 * AscCommon.g_dKoef_pix_to_mm;
+
+	const TIMELINE_LABEL_WIDTH = 100;
+	const TIMELINE_LABEL_FONTSIZE = 7.5;
 
 	const SCROLL_TIMER_INTERVAL = 150;
 	const SCROLL_TIMER_DELAY = 600;
 	const SCROLL_STEP = 0.26
 
-	//Time scales in seconds
-	const TIME_SCALES = [0.25, 1, 1, 2, 5, 10, 20, 60, 120, 300, 600, 600];
+	const TIME_SCALES = [0.25, 1, 1, 2, 5, 10, 20, 60, 120, 300, 600, 600]; // in seconds
 
-	//lengths
 	const SMALL_TIME_INTERVAL = 15;
 	const MIDDLE_1_TIME_INTERVAL = 20;
 	const MIDDLE_2_TIME_INTERVAL = 25;
@@ -2721,62 +2773,91 @@
 		MIDDLE_2_TIME_INTERVAL,//300
 		MIDDLE_2_TIME_INTERVAL,//600
 		SMALL_TIME_INTERVAL//600
-	];
+	]; // in mms
 
-	const LABEL_WIDTH = 100;
 
-	const HEADER_HEIGHT = 7.5;
-	const BUTTON_SIZE = HEADER_HEIGHT;
-	const TOOLBAR_HEIGHT = HEADER_HEIGHT;
-	const PADDING_LEFT = 3;
-	const PADDING_TOP = PADDING_LEFT;
-	const PADDING_RIGHT = PADDING_LEFT;
-	const PADDING_BOTTOM = PADDING_LEFT;
-	const VERTICAL_SPACE = PADDING_LEFT;
-	const HORIZONTAL_SPACE = PADDING_LEFT;
-	const SCROLL_THICKNESS = 15 * AscCommon.g_dKoef_pix_to_mm;
-	const SCROLL_BUTTON_SIZE = SCROLL_THICKNESS;
-	const TIMELINE_SCROLLER_SIZE = SCROLL_BUTTON_SIZE;
-	const TIMELINE_HEIGHT = SCROLL_THICKNESS + 1;
-	const BUTTON_SPACE = HORIZONTAL_SPACE / 2;
-	const TOOLBAR_WIDTH = 25;
-	const ANIM_LABEL_WIDTH = 40;
-	const ANIM_ITEM_HEIGHT = TIMELINE_HEIGHT;
-	const EFFECT_BAR_HEIGHT = 2 * ANIM_ITEM_HEIGHT / 3;
-	const SEQ_LABEL_HEIGHT = EFFECT_BAR_HEIGHT;
+	// SEQUENCE LIST
+	const SEQ_LABEL_MARGIN = 3;
+	const SEQ_LABEL_HEIGHT = 15 * AscCommon.g_dKoef_pix_to_mm;
 
-	// List
+	const ANIM_ITEM_HEIGHT = 24 * AscCommon.g_dKoef_pix_to_mm;
+
+	const INDEX_LABEL_FONTSIZE = 7.5;
+	const INDEX_LABEL_WIDTH = 19 * AscCommon.g_dKoef_pix_to_mm;
+	const EVENT_TYPE_ICON_SIZE = ANIM_ITEM_HEIGHT;
+	const EFFECT_TYPE_ICON_SIZE = ANIM_ITEM_HEIGHT;
+	const EFFECT_LABEL_FONTSIZE = 7.5;
+	const EFFECT_BAR_HEIGHT = ANIM_ITEM_HEIGHT * 5 / 8;
+	const MENU_BUTTON_SIZE = 15 * AscCommon.g_dKoef_pix_to_mm;
+
 	const MIN_ALLOWED_DURATION = 10; // milliseconds
 	const MIN_ALLOWED_REPEAT_COUNT = 10; // equals 0.01 of full effect duration
 
-	const getIconsForLoad = function () {
-		// event type images
-		const clickEffectIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxMiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIgMC41SDEwQzEwLjgyODQgMC41IDExLjUgMS4xNzE1NyAxMS41IDJWMTJDMTEuNSAxMy45MzMgOS45MzMgMTUuNSA4IDE1LjVINEMyLjA2NyAxNS41IDAuNSAxMy45MzMgMC41IDEyVjJDMC41IDEuMTcxNTcgMS4xNzE1NyAwLjUgMiAwLjVaIiBmaWxsPSJ3aGl0ZSIgc3Ryb2tlPSIjNDQ0NDQ0Ii8+CjxyZWN0IHg9IjUiIHk9IjIiIHdpZHRoPSIyIiBoZWlnaHQ9IjQiIGZpbGw9IiM0NDQ0NDQiLz4KPC9zdmc+Cg==';
-		const afterEffectIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHZpZXdCb3g9IjAgMCAxOCAxOCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDkuNUg4TTguNSA1VjEwTTE3IDlDMTcgMTMuNDE4MyAxMy40MTgzIDE3IDkgMTdDNC41ODE3MiAxNyAxIDEzLjQxODMgMSA5QzEgNC41ODE3MiA0LjU4MTcyIDEgOSAxQzEzLjQxODMgMSAxNyA0LjU4MTcyIDE3IDlaIiBzdHJva2U9IiM0NDQ0NDQiLz4KPC9zdmc+Cg==';
 
-		// effect type images
-		const entrEffectIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMCAxLjAwMDAyQzkuNzExNjQgMC45OTgxNDIgOS40MjIyNSAxLjE2Mjk3IDkuMzE0NTQgMS40OTQ0OUw3LjM3MDc5IDcuNTIzNDZDNy4yOTE4MyA3Ljc2NjQ3IDcuMDkxMzIgNy45NDQ4IDYuODQ5NjkgOEgxLjcxN0MxLjAyMzc1IDggMC43MzU1MTYgOC44ODcxIDEuMjk2MzYgOS4yOTQ1OEw1LjgyNzIyIDEyLjQ4NzlDNS43ODMzMiAxMi42NjA5IDUuNzMxNzEgMTIuODQwMyA1LjY3MTI5IDEzLjAyNjJMNC4wMzcyOCAxOC4wNTUyQzMuODIzMDUgMTguNzE0NSA0LjU3NzY3IDE5LjI2MjggNS4xMzg1MiAxOC44NTUzTDEwIDE1LjQyODlMMTQuODYxNSAxOC44NTUzQzE1LjQyMjMgMTkuMjYyOCAxNi4xNzY5IDE4LjcxNDUgMTUuOTYyNyAxOC4wNTUyTDE0LjMyODcgMTMuMDI2MkMxNC4yNjgzIDEyLjg0MDMgMTQuMjE2NyAxMi42NjA5IDE0LjE3MjggMTIuNDg3OUwxOC43MDM2IDkuMjk0NThDMTkuMjY0NSA4Ljg4NzEgMTguOTc2MiA4IDE4LjI4MyA4SDEzLjE1MDNDMTIuOTA4NyA3Ljk0NDggMTIuNzA4MiA3Ljc2NjQ3IDEyLjYyOTIgNy41MjM0NkwxMC42ODU1IDEuNDk0NDlDMTAuNTc3NyAxLjE2Mjk3IDEwLjI4ODQgMC45OTgxNDIgMTAgMS4wMDAwMlpNMTAgMi42MDAzMUM5LjMwMDY2IDQuNzM5NDYgNy44MTc1MSA5LjAwMDAxIDcuODE3NTEgOS4wMDAwMUgyLjYwMDFMNy4wMDAxIDEyLjFDNi42MTQ0OSAxMy40NDk2IDYuMTcxNzMgMTQuNzQ0OCA1LjcyMjY5IDE2LjA1ODRDNS41NDg0NSAxNi41NjgxIDUuMzczMjYgMTcuMDgwNSA1LjIwMDEgMTcuNkwxMCAxNC4yMzIyTDE0Ljc5OTkgMTcuNkMxNC42MjY3IDE3LjA4MDYgMTQuNDUxNiAxNi41NjgxIDE0LjI3NzMgMTYuMDU4NUMxMy44MjgzIDE0Ljc0NDkgMTMuMzg1NSAxMy40NDk2IDEyLjk5OTkgMTIuMUwxNy4zOTk5IDkuMDAwMDFIMTIuMTgyNUMxMi4xODI1IDkuMDAwMDEgMTAuNjk5MyA0LjczOTQ2IDEwIDIuNjAwMzFaIiBmaWxsPSIjMEU4QTI2Ii8+CjxwYXRoIG9wYWNpdHk9IjAuNSIgZD0iTTcuODE3NTEgOS4wMDAyOUM3LjgxNzUxIDkuMDAwMjkgOS4zMDA2NiA0LjczOTc0IDEwIDIuNjAwNTlDMTAuNjk5MyA0LjczOTc0IDEyLjE4MjUgOS4wMDAyOSAxMi4xODI1IDkuMDAwMjlIMTcuMzk5OUwxMi45OTk5IDEyLjEwMDNDMTMuMzg1NSAxMy40NDk5IDEzLjgyODMgMTQuNzQ1MSAxNC4yNzczIDE2LjA1ODdDMTQuNDUxNiAxNi41NjgzIDE0LjYyNjcgMTcuMDgwOCAxNC43OTk5IDE3LjYwMDNMMTAgMTQuMjMyNUw1LjIwMDEgMTcuNjAwM0M1LjM3MzI2IDE3LjA4MDggNS41NDg0NCAxNi41NjgzIDUuNzIyNjggMTYuMDU4N0M2LjE3MTczIDE0Ljc0NTEgNi42MTQ0OSAxMy40NDk5IDcuMDAwMSAxMi4xMDAzTDIuNjAwMSA5LjAwMDI5SDcuODE3NTFaIiBmaWxsPSIjMEU4QTI2Ii8+CjxyZWN0IHg9IjMiIHk9IjIiIHdpZHRoPSI0IiBoZWlnaHQ9IjEiIGZpbGw9IiMwRThBMjYiLz4KPHJlY3QgeD0iMSIgeT0iNSIgd2lkdGg9IjQiIGhlaWdodD0iMSIgZmlsbD0iIzBFOEEyNiIvPgo8cmVjdCB4PSIxIiB5PSIxMiIgd2lkdGg9IjMiIGhlaWdodD0iMSIgZmlsbD0iIzBFOEEyNiIvPgo8cmVjdCB4PSIxIiB5PSIxNSIgd2lkdGg9IjIiIGhlaWdodD0iMSIgZmlsbD0iIzBFOEEyNiIvPgo8L3N2Zz4K';
-		const emphEffectIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMCAxLjAwMDAyQzkuNzExNjQgMC45OTgxNDIgOS40MjIyNSAxLjE2Mjk3IDkuMzE0NTQgMS40OTQ0OUw3LjM3MDc5IDcuNTIzNDZDNy4yOTE4MyA3Ljc2NjQ3IDcuMDkxMzIgNy45NDQ4IDYuODQ5NjkgOEgxLjcxN0MxLjAyMzc1IDggMC43MzU1MTYgOC44ODcxIDEuMjk2MzYgOS4yOTQ1OEw1LjgyNzIyIDEyLjQ4NzlDNS43ODMzMiAxMi42NjA5IDUuNzMxNzEgMTIuODQwMyA1LjY3MTI5IDEzLjAyNjJMNC4wMzcyOCAxOC4wNTUyQzMuODIzMDUgMTguNzE0NSA0LjU3NzY3IDE5LjI2MjggNS4xMzg1MiAxOC44NTUzTDEwIDE1LjQyODlMMTQuODYxNSAxOC44NTUzQzE1LjQyMjMgMTkuMjYyOCAxNi4xNzY5IDE4LjcxNDUgMTUuOTYyNyAxOC4wNTUyTDE0LjMyODcgMTMuMDI2MkMxNC4yNjgzIDEyLjg0MDMgMTQuMjE2NyAxMi42NjA5IDE0LjE3MjggMTIuNDg3OUwxOC43MDM2IDkuMjk0NThDMTkuMjY0NSA4Ljg4NzEgMTguOTc2MiA4IDE4LjI4MyA4SDEzLjE1MDNDMTIuOTA4NyA3Ljk0NDggMTIuNzA4MiA3Ljc2NjQ3IDEyLjYyOTIgNy41MjM0NkwxMC42ODU1IDEuNDk0NDlDMTAuNTc3NyAxLjE2Mjk3IDEwLjI4ODQgMC45OTgxNDIgMTAgMS4wMDAwMlpNMTAgMi42MDAzMUM5LjMwMDY2IDQuNzM5NDYgNy44MTc1MSA5LjAwMDAxIDcuODE3NTEgOS4wMDAwMUgyLjYwMDFMNy4wMDAxIDEyLjFDNi42MTQ0OSAxMy40NDk2IDYuMTcxNzMgMTQuNzQ0OCA1LjcyMjY5IDE2LjA1ODRDNS41NDg0NSAxNi41NjgxIDUuMzczMjYgMTcuMDgwNSA1LjIwMDEgMTcuNkwxMCAxNC4yMzIyTDE0Ljc5OTkgMTcuNkMxNC42MjY3IDE3LjA4MDYgMTQuNDUxNiAxNi41NjgxIDE0LjI3NzMgMTYuMDU4NUMxMy44MjgzIDE0Ljc0NDkgMTMuMzg1NSAxMy40NDk2IDEyLjk5OTkgMTIuMUwxNy4zOTk5IDkuMDAwMDFIMTIuMTgyNUMxMi4xODI1IDkuMDAwMDEgMTAuNjk5MyA0LjczOTQ2IDEwIDIuNjAwMzFaIiBmaWxsPSIjRkY4RTAwIi8+CjxwYXRoIG9wYWNpdHk9IjAuNSIgZD0iTTcuODE3NTEgOS4wMDAyOUM3LjgxNzUxIDkuMDAwMjkgOS4zMDA2NiA0LjczOTc0IDEwIDIuNjAwNTlDMTAuNjk5MyA0LjczOTc0IDEyLjE4MjUgOS4wMDAyOSAxMi4xODI1IDkuMDAwMjlIMTcuMzk5OUwxMi45OTk5IDEyLjEwMDNDMTMuMzg1NSAxMy40NDk5IDEzLjgyODMgMTQuNzQ1MSAxNC4yNzczIDE2LjA1ODdDMTQuNDUxNiAxNi41NjgzIDE0LjYyNjcgMTcuMDgwOCAxNC43OTk5IDE3LjYwMDNMMTAgMTQuMjMyNUw1LjIwMDEgMTcuNjAwM0M1LjM3MzI2IDE3LjA4MDggNS41NDg0NCAxNi41NjgzIDUuNzIyNjggMTYuMDU4N0M2LjE3MTczIDE0Ljc0NTEgNi42MTQ0OSAxMy40NDk5IDcuMDAwMSAxMi4xMDAzTDIuNjAwMSA5LjAwMDI5SDcuODE3NTFaIiBmaWxsPSIjRkY4RTAwIi8+CjxwYXRoIGQ9Ik01Ljg5NDU4IDYuMTkzMzZMMi4zOTQ1OCAxLjY5MzM2TDEuNjA1MjIgMi4zMDczTDUuMTA1MjIgNi44MDczTDUuODk0NTggNi4xOTMzNloiIGZpbGw9IiNGRjhFMDAiLz4KPHBhdGggZD0iTTEuODUzNTkgMTUuODUzOUw0LjM1MzU5IDEzLjM1MzlMMy42NDY0OCAxMi42NDY4TDEuMTQ2NDggMTUuMTQ2OEwxLjg1MzU5IDE1Ljg1MzlaIiBmaWxsPSIjRkY4RTAwIi8+CjxwYXRoIGQ9Ik0xNC4xNDY0IDYuMTkzMzZMMTcuNjQ2NCAxLjY5MzM2TDE4LjQzNTggMi4zMDczTDE0LjkzNTggNi44MDczTDE0LjE0NjQgNi4xOTMzNloiIGZpbGw9IiNGRjhFMDAiLz4KPHBhdGggZD0iTTE4LjE4NzQgMTUuODUzOUwxNS42ODc0IDEzLjM1MzlMMTYuMzk0NSAxMi42NDY4TDE4Ljg5NDUgMTUuMTQ2OEwxOC4xODc0IDE1Ljg1MzlaIiBmaWxsPSIjRkY4RTAwIi8+Cjwvc3ZnPgo=';
-		const exitEffectIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMCAxLjAwMDAyQzkuNzExNjQgMC45OTgxNDIgOS40MjIyNSAxLjE2Mjk3IDkuMzE0NTQgMS40OTQ0OUw3LjM3MDc5IDcuNTIzNDZDNy4yOTE4MyA3Ljc2NjQ3IDcuMDkxMzIgNy45NDQ4IDYuODQ5NjkgOEgxLjcxN0MxLjAyMzc1IDggMC43MzU1MTYgOC44ODcxIDEuMjk2MzYgOS4yOTQ1OEw1LjgyNzIyIDEyLjQ4NzlDNS43ODMzMiAxMi42NjA5IDUuNzMxNzEgMTIuODQwMyA1LjY3MTI5IDEzLjAyNjJMNC4wMzcyOCAxOC4wNTUyQzMuODIzMDUgMTguNzE0NSA0LjU3NzY3IDE5LjI2MjggNS4xMzg1MiAxOC44NTUzTDEwIDE1LjQyODlMMTQuODYxNSAxOC44NTUzQzE1LjQyMjMgMTkuMjYyOCAxNi4xNzY5IDE4LjcxNDUgMTUuOTYyNyAxOC4wNTUyTDE0LjMyODcgMTMuMDI2MkMxNC4yNjgzIDEyLjg0MDMgMTQuMjE2NyAxMi42NjA5IDE0LjE3MjggMTIuNDg3OUwxOC43MDM2IDkuMjk0NThDMTkuMjY0NSA4Ljg4NzEgMTguOTc2MiA4IDE4LjI4MyA4SDEzLjE1MDNDMTIuOTA4NyA3Ljk0NDggMTIuNzA4MiA3Ljc2NjQ3IDEyLjYyOTIgNy41MjM0NkwxMC42ODU1IDEuNDk0NDlDMTAuNTc3NyAxLjE2Mjk3IDEwLjI4ODQgMC45OTgxNDIgMTAgMS4wMDAwMlpNMTAgMi42MDAzMUM5LjMwMDY2IDQuNzM5NDYgNy44MTc1MSA5LjAwMDAxIDcuODE3NTEgOS4wMDAwMUgyLjYwMDFMNy4wMDAxIDEyLjFDNi42MTQ0OSAxMy40NDk2IDYuMTcxNzMgMTQuNzQ0OCA1LjcyMjY5IDE2LjA1ODRDNS41NDg0NSAxNi41NjgxIDUuMzczMjYgMTcuMDgwNSA1LjIwMDEgMTcuNkwxMCAxNC4yMzIyTDE0Ljc5OTkgMTcuNkMxNC42MjY3IDE3LjA4MDYgMTQuNDUxNiAxNi41NjgxIDE0LjI3NzMgMTYuMDU4NUMxMy44MjgzIDE0Ljc0NDkgMTMuMzg1NSAxMy40NDk2IDEyLjk5OTkgMTIuMUwxNy4zOTk5IDkuMDAwMDFIMTIuMTgyNUMxMi4xODI1IDkuMDAwMDEgMTAuNjk5MyA0LjczOTQ2IDEwIDIuNjAwMzFaIiBmaWxsPSIjRjIzRDNEIi8+CjxwYXRoIG9wYWNpdHk9IjAuNSIgZD0iTTcuODE3NTEgOS4wMDAyOUM3LjgxNzUxIDkuMDAwMjkgOS4zMDA2NiA0LjczOTc0IDEwIDIuNjAwNTlDMTAuNjk5MyA0LjczOTc0IDEyLjE4MjUgOS4wMDAyOSAxMi4xODI1IDkuMDAwMjlIMTcuMzk5OUwxMi45OTk5IDEyLjEwMDNDMTMuMzg1NSAxMy40NDk5IDEzLjgyODMgMTQuNzQ1MSAxNC4yNzczIDE2LjA1ODdDMTQuNDUxNiAxNi41NjgzIDE0LjYyNjcgMTcuMDgwOCAxNC43OTk5IDE3LjYwMDNMMTAgMTQuMjMyNUw1LjIwMDEgMTcuNjAwM0M1LjM3MzI2IDE3LjA4MDggNS41NDg0NCAxNi41NjgzIDUuNzIyNjggMTYuMDU4N0M2LjE3MTczIDE0Ljc0NTEgNi42MTQ0OSAxMy40NDk5IDcuMDAwMSAxMi4xMDAzTDIuNjAwMSA5LjAwMDI5SDcuODE3NTFaIiBmaWxsPSIjRjIzRDNEIi8+CjxwYXRoIGQ9Ik0xMyAySDE3VjNIMTNWMloiIGZpbGw9IiNGMjNEM0QiLz4KPHBhdGggZD0iTTE1IDZWNUgxOVY2SDE1WiIgZmlsbD0iI0YyM0QzRCIvPgo8cGF0aCBkPSJNMTkgMTJIMTZWMTNIMTlWMTJaIiBmaWxsPSIjRjIzRDNEIi8+CjxwYXRoIGQ9Ik0xNyAxNUgxOVYxNkgxN1YxNVoiIGZpbGw9IiNGMjNEM0QiLz4KPC9zdmc+Cg==';
-		const pathEffectIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTkuOTk2NzUgMS41MDAwMUw5Ljk5Njc1IDEuNTAwMDVMMTAuMDAzMiAxLjUwMDAxQzEwLjA1MjUgMS40OTk2OSAxMC4wOTcgMS41MTM4IDEwLjEzMDQgMS41MzY0QzEwLjE2MDUgMS41NTY3NSAxMC4xOTA1IDEuNTg5NjEgMTAuMjA5OCAxLjY0ODU4QzEwLjIwOTggMS42NDg3MiAxMC4yMDk5IDEuNjQ4ODYgMTAuMjA5OSAxLjY0ODk5TDEyLjE1MzMgNy42NzY4OUwxMi4xNTM3IDcuNjc3OTdDMTIuMjg3OSA4LjA5MDk3IDEyLjYyODYgOC4zOTM2OSAxMy4wMzg5IDguNDg3NDRMMTMuMDkzOSA4LjVIMTMuMTUwM0gxOC4yODNDMTguNDkxIDguNSAxOC41NzggOC43NjUwNCAxOC40MTE5IDguODg4NTFMMTMuODg0NyAxMi4wNzkzTDEzLjYwMzUgMTIuMjc3NEwxMy42ODgxIDEyLjYxMDlDMTMuNzM0OCAxMi43OTQ2IDEzLjc4OTQgMTIuOTg0NSAxMy44NTMyIDEzLjE4MDhMMTUuNDg3MiAxOC4yMDk3QzE1LjU1MTcgMTguNDA4NCAxNS4zMjQ0IDE4LjU3MzYgMTUuMTU1NCAxOC40NTA4TDE1LjE1NTQgMTguNDUwOEwxNS4xNDk1IDE4LjQ0NjZMMTAuMjg4IDE1LjAyMDJMMTAgMTQuODE3Mkw5LjcxMTk1IDE1LjAyMDJMNC44NTA0NyAxOC40NDY2TDQuODUwNDQgMTguNDQ2Nkw0Ljg0NDYyIDE4LjQ1MDhDNC42NzU2NCAxOC41NzM2IDQuNDQ4MjYgMTguNDA4NCA0LjUxMjgxIDE4LjIwOTdMNi4xNDY4MiAxMy4xODA4QzYuMjEwNTggMTIuOTg0NSA2LjI2NTI0IDEyLjc5NDYgNi4zMTE4NiAxMi42MTA5TDYuMzk2NDcgMTIuMjc3NEw2LjExNTI2IDEyLjA3OTNMMS41ODgxNSA4Ljg4ODUzQzEuNDIyIDguNzY1MDYgMS41MDg5OSA4LjUgMS43MTcgOC41SDYuODQ5NjlINi45MDYwOEw2Ljk2MTA1IDguNDg3NDRDNy4zNzE0MyA4LjM5MzY5IDcuNzEyMTMgOC4wOTA5NyA3Ljg0NjMyIDcuNjc3OTdMNy44NDY2NyA3LjY3Njg5TDkuNzkwMDcgMS42NDg5OUM5Ljc5MDExIDEuNjQ4ODYgOS43OTAxNSAxLjY0ODcyIDkuNzkwMiAxLjY0ODU5QzkuODA5NDUgMS41ODk2MSA5LjgzOTU0IDEuNTU2NzYgOS44Njk2MyAxLjUzNjRDOS45MDMwNSAxLjUxMzggOS45NDc1NCAxLjQ5OTY5IDkuOTk2NzUgMS41MDAwMVoiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS1vcGFjaXR5PSIwLjgiLz4KPHBhdGggZD0iTTEyIDNDMTIgNC4xMDQ1NyAxMS4xMDQ2IDUgMTAgNUM4Ljg5NTQzIDUgOCA0LjEwNDU3IDggM0M4IDEuODk1NDMgOC44OTU0MyAxIDEwIDFDMTEuMTA0NiAxIDEyIDEuODk1NDMgMTIgM1oiIGZpbGw9IiMwRThBMjYiLz4KPHBhdGggZD0iTTkgN0M5IDguMTA0NTcgOC4xMDQ1NyA5IDcgOUM1Ljg5NTQzIDkgNSA4LjEwNDU3IDUgN0M1IDUuODk1NDMgNS44OTU0MyA1IDcgNUM4LjEwNDU3IDUgOSA1Ljg5NTQzIDkgN1oiIGZpbGw9IiNGMjNEM0QiLz4KPC9zdmc+Cg==';
-		return [clickEffectIcon, afterEffectIcon, entrEffectIcon, emphEffectIcon, exitEffectIcon, pathEffectIcon];
+	// COMMON
+	const COMMON_LEFT_MARGIN = 14 * AscCommon.g_dKoef_pix_to_mm;
+	const COMMON_RIGHT_MARGIN = 20 * AscCommon.g_dKoef_pix_to_mm;
+	// const ALIGNMENT_LINE = MATH.max(CLOSE_BUTTON_SIZE, MENU_BUTTON_SIZE, TIMELINE_SCROLL_BUTTON_SIZE) / 2;
+
+
+	// ICONS
+	const playIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik03IDE1TDE1IDEwTDcgNVYxNVoiIGZpbGw9ImJsYWNrIi8+Cjwvc3ZnPgo=';
+	const stopIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHZpZXdCb3g9IjAgMCAxMCAxMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSJibGFjayIvPgo8L3N2Zz4K';
+
+	const clickEffectIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxMiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIgMC41SDEwQzEwLjgyODQgMC41IDExLjUgMS4xNzE1NyAxMS41IDJWMTJDMTEuNSAxMy45MzMgOS45MzMgMTUuNSA4IDE1LjVINEMyLjA2NyAxNS41IDAuNSAxMy45MzMgMC41IDEyVjJDMC41IDEuMTcxNTcgMS4xNzE1NyAwLjUgMiAwLjVaIiBmaWxsPSJ3aGl0ZSIgc3Ryb2tlPSIjNDQ0NDQ0Ii8+CjxyZWN0IHg9IjUiIHk9IjIiIHdpZHRoPSIyIiBoZWlnaHQ9IjQiIGZpbGw9IiM0NDQ0NDQiLz4KPC9zdmc+Cg==';
+	const afterEffectIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTggMTUuNUMxMi4xNDIxIDE1LjUgMTUuNSAxMi4xNDIxIDE1LjUgOEMxNS41IDMuODU3ODYgMTIuMTQyMSAwLjUgOCAwLjVDMy44NTc4NiAwLjUgMC41IDMuODU3ODYgMC41IDhDMC41IDEyLjE0MjEgMy44NTc4NiAxNS41IDggMTUuNVoiIGZpbGw9IndoaXRlIiBzdHJva2U9IiM0NDQ0NDQiLz4KPHBhdGggZD0iTTExIDguNUg3IiBzdHJva2U9IiM0NDQ0NDQiLz4KPHBhdGggZD0iTTcuNSA0VjkiIHN0cm9rZT0iIzQ0NDQ0NCIvPgo8L3N2Zz4K';
+
+	const entrEffectIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMCAxLjAwMDAyQzkuNzExNjQgMC45OTgxNDIgOS40MjIyNSAxLjE2Mjk3IDkuMzE0NTQgMS40OTQ0OUw3LjM3MDc5IDcuNTIzNDZDNy4yOTE4MyA3Ljc2NjQ3IDcuMDkxMzIgNy45NDQ4IDYuODQ5NjkgOEgxLjcxN0MxLjAyMzc1IDggMC43MzU1MTYgOC44ODcxIDEuMjk2MzYgOS4yOTQ1OEw1LjgyNzIyIDEyLjQ4NzlDNS43ODMzMiAxMi42NjA5IDUuNzMxNzEgMTIuODQwMyA1LjY3MTI5IDEzLjAyNjJMNC4wMzcyOCAxOC4wNTUyQzMuODIzMDUgMTguNzE0NSA0LjU3NzY3IDE5LjI2MjggNS4xMzg1MiAxOC44NTUzTDEwIDE1LjQyODlMMTQuODYxNSAxOC44NTUzQzE1LjQyMjMgMTkuMjYyOCAxNi4xNzY5IDE4LjcxNDUgMTUuOTYyNyAxOC4wNTUyTDE0LjMyODcgMTMuMDI2MkMxNC4yNjgzIDEyLjg0MDMgMTQuMjE2NyAxMi42NjA5IDE0LjE3MjggMTIuNDg3OUwxOC43MDM2IDkuMjk0NThDMTkuMjY0NSA4Ljg4NzEgMTguOTc2MiA4IDE4LjI4MyA4SDEzLjE1MDNDMTIuOTA4NyA3Ljk0NDggMTIuNzA4MiA3Ljc2NjQ3IDEyLjYyOTIgNy41MjM0NkwxMC42ODU1IDEuNDk0NDlDMTAuNTc3NyAxLjE2Mjk3IDEwLjI4ODQgMC45OTgxNDIgMTAgMS4wMDAwMlpNMTAgMi42MDAzMUM5LjMwMDY2IDQuNzM5NDYgNy44MTc1MSA5LjAwMDAxIDcuODE3NTEgOS4wMDAwMUgyLjYwMDFMNy4wMDAxIDEyLjFDNi42MTQ0OSAxMy40NDk2IDYuMTcxNzMgMTQuNzQ0OCA1LjcyMjY5IDE2LjA1ODRDNS41NDg0NSAxNi41NjgxIDUuMzczMjYgMTcuMDgwNSA1LjIwMDEgMTcuNkwxMCAxNC4yMzIyTDE0Ljc5OTkgMTcuNkMxNC42MjY3IDE3LjA4MDYgMTQuNDUxNiAxNi41NjgxIDE0LjI3NzMgMTYuMDU4NUMxMy44MjgzIDE0Ljc0NDkgMTMuMzg1NSAxMy40NDk2IDEyLjk5OTkgMTIuMUwxNy4zOTk5IDkuMDAwMDFIMTIuMTgyNUMxMi4xODI1IDkuMDAwMDEgMTAuNjk5MyA0LjczOTQ2IDEwIDIuNjAwMzFaIiBmaWxsPSIjMEU4QTI2Ii8+CjxwYXRoIG9wYWNpdHk9IjAuNSIgZD0iTTcuODE3NTEgOS4wMDAyOUM3LjgxNzUxIDkuMDAwMjkgOS4zMDA2NiA0LjczOTc0IDEwIDIuNjAwNTlDMTAuNjk5MyA0LjczOTc0IDEyLjE4MjUgOS4wMDAyOSAxMi4xODI1IDkuMDAwMjlIMTcuMzk5OUwxMi45OTk5IDEyLjEwMDNDMTMuMzg1NSAxMy40NDk5IDEzLjgyODMgMTQuNzQ1MSAxNC4yNzczIDE2LjA1ODdDMTQuNDUxNiAxNi41NjgzIDE0LjYyNjcgMTcuMDgwOCAxNC43OTk5IDE3LjYwMDNMMTAgMTQuMjMyNUw1LjIwMDEgMTcuNjAwM0M1LjM3MzI2IDE3LjA4MDggNS41NDg0NCAxNi41NjgzIDUuNzIyNjggMTYuMDU4N0M2LjE3MTczIDE0Ljc0NTEgNi42MTQ0OSAxMy40NDk5IDcuMDAwMSAxMi4xMDAzTDIuNjAwMSA5LjAwMDI5SDcuODE3NTFaIiBmaWxsPSIjMEU4QTI2Ii8+CjxyZWN0IHg9IjMiIHk9IjIiIHdpZHRoPSI0IiBoZWlnaHQ9IjEiIGZpbGw9IiMwRThBMjYiLz4KPHJlY3QgeD0iMSIgeT0iNSIgd2lkdGg9IjQiIGhlaWdodD0iMSIgZmlsbD0iIzBFOEEyNiIvPgo8cmVjdCB4PSIxIiB5PSIxMiIgd2lkdGg9IjMiIGhlaWdodD0iMSIgZmlsbD0iIzBFOEEyNiIvPgo8cmVjdCB4PSIxIiB5PSIxNSIgd2lkdGg9IjIiIGhlaWdodD0iMSIgZmlsbD0iIzBFOEEyNiIvPgo8L3N2Zz4K';
+	const emphEffectIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMCAxLjAwMDAyQzkuNzExNjQgMC45OTgxNDIgOS40MjIyNSAxLjE2Mjk3IDkuMzE0NTQgMS40OTQ0OUw3LjM3MDc5IDcuNTIzNDZDNy4yOTE4MyA3Ljc2NjQ3IDcuMDkxMzIgNy45NDQ4IDYuODQ5NjkgOEgxLjcxN0MxLjAyMzc1IDggMC43MzU1MTYgOC44ODcxIDEuMjk2MzYgOS4yOTQ1OEw1LjgyNzIyIDEyLjQ4NzlDNS43ODMzMiAxMi42NjA5IDUuNzMxNzEgMTIuODQwMyA1LjY3MTI5IDEzLjAyNjJMNC4wMzcyOCAxOC4wNTUyQzMuODIzMDUgMTguNzE0NSA0LjU3NzY3IDE5LjI2MjggNS4xMzg1MiAxOC44NTUzTDEwIDE1LjQyODlMMTQuODYxNSAxOC44NTUzQzE1LjQyMjMgMTkuMjYyOCAxNi4xNzY5IDE4LjcxNDUgMTUuOTYyNyAxOC4wNTUyTDE0LjMyODcgMTMuMDI2MkMxNC4yNjgzIDEyLjg0MDMgMTQuMjE2NyAxMi42NjA5IDE0LjE3MjggMTIuNDg3OUwxOC43MDM2IDkuMjk0NThDMTkuMjY0NSA4Ljg4NzEgMTguOTc2MiA4IDE4LjI4MyA4SDEzLjE1MDNDMTIuOTA4NyA3Ljk0NDggMTIuNzA4MiA3Ljc2NjQ3IDEyLjYyOTIgNy41MjM0NkwxMC42ODU1IDEuNDk0NDlDMTAuNTc3NyAxLjE2Mjk3IDEwLjI4ODQgMC45OTgxNDIgMTAgMS4wMDAwMlpNMTAgMi42MDAzMUM5LjMwMDY2IDQuNzM5NDYgNy44MTc1MSA5LjAwMDAxIDcuODE3NTEgOS4wMDAwMUgyLjYwMDFMNy4wMDAxIDEyLjFDNi42MTQ0OSAxMy40NDk2IDYuMTcxNzMgMTQuNzQ0OCA1LjcyMjY5IDE2LjA1ODRDNS41NDg0NSAxNi41NjgxIDUuMzczMjYgMTcuMDgwNSA1LjIwMDEgMTcuNkwxMCAxNC4yMzIyTDE0Ljc5OTkgMTcuNkMxNC42MjY3IDE3LjA4MDYgMTQuNDUxNiAxNi41NjgxIDE0LjI3NzMgMTYuMDU4NUMxMy44MjgzIDE0Ljc0NDkgMTMuMzg1NSAxMy40NDk2IDEyLjk5OTkgMTIuMUwxNy4zOTk5IDkuMDAwMDFIMTIuMTgyNUMxMi4xODI1IDkuMDAwMDEgMTAuNjk5MyA0LjczOTQ2IDEwIDIuNjAwMzFaIiBmaWxsPSIjRkY4RTAwIi8+CjxwYXRoIG9wYWNpdHk9IjAuNSIgZD0iTTcuODE3NTEgOS4wMDAyOUM3LjgxNzUxIDkuMDAwMjkgOS4zMDA2NiA0LjczOTc0IDEwIDIuNjAwNTlDMTAuNjk5MyA0LjczOTc0IDEyLjE4MjUgOS4wMDAyOSAxMi4xODI1IDkuMDAwMjlIMTcuMzk5OUwxMi45OTk5IDEyLjEwMDNDMTMuMzg1NSAxMy40NDk5IDEzLjgyODMgMTQuNzQ1MSAxNC4yNzczIDE2LjA1ODdDMTQuNDUxNiAxNi41NjgzIDE0LjYyNjcgMTcuMDgwOCAxNC43OTk5IDE3LjYwMDNMMTAgMTQuMjMyNUw1LjIwMDEgMTcuNjAwM0M1LjM3MzI2IDE3LjA4MDggNS41NDg0NCAxNi41NjgzIDUuNzIyNjggMTYuMDU4N0M2LjE3MTczIDE0Ljc0NTEgNi42MTQ0OSAxMy40NDk5IDcuMDAwMSAxMi4xMDAzTDIuNjAwMSA5LjAwMDI5SDcuODE3NTFaIiBmaWxsPSIjRkY4RTAwIi8+CjxwYXRoIGQ9Ik01Ljg5NDU4IDYuMTkzMzZMMi4zOTQ1OCAxLjY5MzM2TDEuNjA1MjIgMi4zMDczTDUuMTA1MjIgNi44MDczTDUuODk0NTggNi4xOTMzNloiIGZpbGw9IiNGRjhFMDAiLz4KPHBhdGggZD0iTTEuODUzNTkgMTUuODUzOUw0LjM1MzU5IDEzLjM1MzlMMy42NDY0OCAxMi42NDY4TDEuMTQ2NDggMTUuMTQ2OEwxLjg1MzU5IDE1Ljg1MzlaIiBmaWxsPSIjRkY4RTAwIi8+CjxwYXRoIGQ9Ik0xNC4xNDY0IDYuMTkzMzZMMTcuNjQ2NCAxLjY5MzM2TDE4LjQzNTggMi4zMDczTDE0LjkzNTggNi44MDczTDE0LjE0NjQgNi4xOTMzNloiIGZpbGw9IiNGRjhFMDAiLz4KPHBhdGggZD0iTTE4LjE4NzQgMTUuODUzOUwxNS42ODc0IDEzLjM1MzlMMTYuMzk0NSAxMi42NDY4TDE4Ljg5NDUgMTUuMTQ2OEwxOC4xODc0IDE1Ljg1MzlaIiBmaWxsPSIjRkY4RTAwIi8+Cjwvc3ZnPgo=';
+	const exitEffectIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMCAxLjAwMDAyQzkuNzExNjQgMC45OTgxNDIgOS40MjIyNSAxLjE2Mjk3IDkuMzE0NTQgMS40OTQ0OUw3LjM3MDc5IDcuNTIzNDZDNy4yOTE4MyA3Ljc2NjQ3IDcuMDkxMzIgNy45NDQ4IDYuODQ5NjkgOEgxLjcxN0MxLjAyMzc1IDggMC43MzU1MTYgOC44ODcxIDEuMjk2MzYgOS4yOTQ1OEw1LjgyNzIyIDEyLjQ4NzlDNS43ODMzMiAxMi42NjA5IDUuNzMxNzEgMTIuODQwMyA1LjY3MTI5IDEzLjAyNjJMNC4wMzcyOCAxOC4wNTUyQzMuODIzMDUgMTguNzE0NSA0LjU3NzY3IDE5LjI2MjggNS4xMzg1MiAxOC44NTUzTDEwIDE1LjQyODlMMTQuODYxNSAxOC44NTUzQzE1LjQyMjMgMTkuMjYyOCAxNi4xNzY5IDE4LjcxNDUgMTUuOTYyNyAxOC4wNTUyTDE0LjMyODcgMTMuMDI2MkMxNC4yNjgzIDEyLjg0MDMgMTQuMjE2NyAxMi42NjA5IDE0LjE3MjggMTIuNDg3OUwxOC43MDM2IDkuMjk0NThDMTkuMjY0NSA4Ljg4NzEgMTguOTc2MiA4IDE4LjI4MyA4SDEzLjE1MDNDMTIuOTA4NyA3Ljk0NDggMTIuNzA4MiA3Ljc2NjQ3IDEyLjYyOTIgNy41MjM0NkwxMC42ODU1IDEuNDk0NDlDMTAuNTc3NyAxLjE2Mjk3IDEwLjI4ODQgMC45OTgxNDIgMTAgMS4wMDAwMlpNMTAgMi42MDAzMUM5LjMwMDY2IDQuNzM5NDYgNy44MTc1MSA5LjAwMDAxIDcuODE3NTEgOS4wMDAwMUgyLjYwMDFMNy4wMDAxIDEyLjFDNi42MTQ0OSAxMy40NDk2IDYuMTcxNzMgMTQuNzQ0OCA1LjcyMjY5IDE2LjA1ODRDNS41NDg0NSAxNi41NjgxIDUuMzczMjYgMTcuMDgwNSA1LjIwMDEgMTcuNkwxMCAxNC4yMzIyTDE0Ljc5OTkgMTcuNkMxNC42MjY3IDE3LjA4MDYgMTQuNDUxNiAxNi41NjgxIDE0LjI3NzMgMTYuMDU4NUMxMy44MjgzIDE0Ljc0NDkgMTMuMzg1NSAxMy40NDk2IDEyLjk5OTkgMTIuMUwxNy4zOTk5IDkuMDAwMDFIMTIuMTgyNUMxMi4xODI1IDkuMDAwMDEgMTAuNjk5MyA0LjczOTQ2IDEwIDIuNjAwMzFaIiBmaWxsPSIjRjIzRDNEIi8+CjxwYXRoIG9wYWNpdHk9IjAuNSIgZD0iTTcuODE3NTEgOS4wMDAyOUM3LjgxNzUxIDkuMDAwMjkgOS4zMDA2NiA0LjczOTc0IDEwIDIuNjAwNTlDMTAuNjk5MyA0LjczOTc0IDEyLjE4MjUgOS4wMDAyOSAxMi4xODI1IDkuMDAwMjlIMTcuMzk5OUwxMi45OTk5IDEyLjEwMDNDMTMuMzg1NSAxMy40NDk5IDEzLjgyODMgMTQuNzQ1MSAxNC4yNzczIDE2LjA1ODdDMTQuNDUxNiAxNi41NjgzIDE0LjYyNjcgMTcuMDgwOCAxNC43OTk5IDE3LjYwMDNMMTAgMTQuMjMyNUw1LjIwMDEgMTcuNjAwM0M1LjM3MzI2IDE3LjA4MDggNS41NDg0NCAxNi41NjgzIDUuNzIyNjggMTYuMDU4N0M2LjE3MTczIDE0Ljc0NTEgNi42MTQ0OSAxMy40NDk5IDcuMDAwMSAxMi4xMDAzTDIuNjAwMSA5LjAwMDI5SDcuODE3NTFaIiBmaWxsPSIjRjIzRDNEIi8+CjxwYXRoIGQ9Ik0xMyAySDE3VjNIMTNWMloiIGZpbGw9IiNGMjNEM0QiLz4KPHBhdGggZD0iTTE1IDZWNUgxOVY2SDE1WiIgZmlsbD0iI0YyM0QzRCIvPgo8cGF0aCBkPSJNMTkgMTJIMTZWMTNIMTlWMTJaIiBmaWxsPSIjRjIzRDNEIi8+CjxwYXRoIGQ9Ik0xNyAxNUgxOVYxNkgxN1YxNVoiIGZpbGw9IiNGMjNEM0QiLz4KPC9zdmc+Cg==';
+	const pathEffectIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTkuOTk2NzUgMS41MDAwMUw5Ljk5Njc1IDEuNTAwMDVMMTAuMDAzMiAxLjUwMDAxQzEwLjA1MjUgMS40OTk2OSAxMC4wOTcgMS41MTM4IDEwLjEzMDQgMS41MzY0QzEwLjE2MDUgMS41NTY3NSAxMC4xOTA1IDEuNTg5NjEgMTAuMjA5OCAxLjY0ODU4QzEwLjIwOTggMS42NDg3MiAxMC4yMDk5IDEuNjQ4ODYgMTAuMjA5OSAxLjY0ODk5TDEyLjE1MzMgNy42NzY4OUwxMi4xNTM3IDcuNjc3OTdDMTIuMjg3OSA4LjA5MDk3IDEyLjYyODYgOC4zOTM2OSAxMy4wMzg5IDguNDg3NDRMMTMuMDkzOSA4LjVIMTMuMTUwM0gxOC4yODNDMTguNDkxIDguNSAxOC41NzggOC43NjUwNCAxOC40MTE5IDguODg4NTFMMTMuODg0NyAxMi4wNzkzTDEzLjYwMzUgMTIuMjc3NEwxMy42ODgxIDEyLjYxMDlDMTMuNzM0OCAxMi43OTQ2IDEzLjc4OTQgMTIuOTg0NSAxMy44NTMyIDEzLjE4MDhMMTUuNDg3MiAxOC4yMDk3QzE1LjU1MTcgMTguNDA4NCAxNS4zMjQ0IDE4LjU3MzYgMTUuMTU1NCAxOC40NTA4TDE1LjE1NTQgMTguNDUwOEwxNS4xNDk1IDE4LjQ0NjZMMTAuMjg4IDE1LjAyMDJMMTAgMTQuODE3Mkw5LjcxMTk1IDE1LjAyMDJMNC44NTA0NyAxOC40NDY2TDQuODUwNDQgMTguNDQ2Nkw0Ljg0NDYyIDE4LjQ1MDhDNC42NzU2NCAxOC41NzM2IDQuNDQ4MjYgMTguNDA4NCA0LjUxMjgxIDE4LjIwOTdMNi4xNDY4MiAxMy4xODA4QzYuMjEwNTggMTIuOTg0NSA2LjI2NTI0IDEyLjc5NDYgNi4zMTE4NiAxMi42MTA5TDYuMzk2NDcgMTIuMjc3NEw2LjExNTI2IDEyLjA3OTNMMS41ODgxNSA4Ljg4ODUzQzEuNDIyIDguNzY1MDYgMS41MDg5OSA4LjUgMS43MTcgOC41SDYuODQ5NjlINi45MDYwOEw2Ljk2MTA1IDguNDg3NDRDNy4zNzE0MyA4LjM5MzY5IDcuNzEyMTMgOC4wOTA5NyA3Ljg0NjMyIDcuNjc3OTdMNy44NDY2NyA3LjY3Njg5TDkuNzkwMDcgMS42NDg5OUM5Ljc5MDExIDEuNjQ4ODYgOS43OTAxNSAxLjY0ODcyIDkuNzkwMiAxLjY0ODU5QzkuODA5NDUgMS41ODk2MSA5LjgzOTU0IDEuNTU2NzYgOS44Njk2MyAxLjUzNjRDOS45MDMwNSAxLjUxMzggOS45NDc1NCAxLjQ5OTY5IDkuOTk2NzUgMS41MDAwMVoiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS1vcGFjaXR5PSIwLjgiLz4KPHBhdGggZD0iTTEyIDNDMTIgNC4xMDQ1NyAxMS4xMDQ2IDUgMTAgNUM4Ljg5NTQzIDUgOCA0LjEwNDU3IDggM0M4IDEuODk1NDMgOC44OTU0MyAxIDEwIDFDMTEuMTA0NiAxIDEyIDEuODk1NDMgMTIgM1oiIGZpbGw9IiMwRThBMjYiLz4KPHBhdGggZD0iTTkgN0M5IDguMTA0NTcgOC4xMDQ1NyA5IDcgOUM1Ljg5NTQzIDkgNSA4LjEwNDU3IDUgN0M1IDUuODk1NDMgNS44OTU0MyA1IDcgNUM4LjEwNDU3IDUgOSA1Ljg5NTQzIDkgN1oiIGZpbGw9IiNGMjNEM0QiLz4KPC9zdmc+Cg==';
+
+	const arrowUpIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMiA4LjI5Mjg2TDExLjY0NjQgOC42NDY0MUw2LjE0NjQxIDE0LjE0NjRMNi44NTM1MiAxNC44NTM1TDEyIDkuNzA3MDdMMTcuMTQ2NCAxNC44NTM1TDE3Ljg1MzUgMTQuMTQ2NEwxMi4zNTM1IDguNjQ2NDFMMTIgOC4yOTI4NloiIGZpbGw9ImJsYWNrIiBmaWxsLW9wYWNpdHk9IjAuOCIvPgo8L3N2Zz4K';
+	const arrowDownIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik0xMiAxNS43MDcxTDEyLjM1MzYgMTUuMzUzNkwxNy44NTM2IDkuODUzNTlMMTcuMTQ2NSA5LjE0NjQ4TDEyIDE0LjI5MjlMNi44NTM1OSA5LjE0NjQ4TDYuMTQ2NDggOS44NTM1OUwxMS42NDY1IDE1LjM1MzZMMTIgMTUuNzA3MVoiIGZpbGw9ImJsYWNrIiBmaWxsLW9wYWNpdHk9IjAuOCIvPgo8L3N2Zz4K';
+	const closeIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iMTIiIHZpZXdCb3g9IjAgMCAxMiAxMiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEgMUwxMSAxMU0xMSAxTDEgMTEiIHN0cm9rZT0iYmxhY2siIHN0cm9rZS13aWR0aD0iMS41Ii8+Cjwvc3ZnPgo=';
+	const menuButton = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEwIDdDOS40NDc3MiA3IDkgNi41NTIyOCA5IDZDOSA1LjQ0NzcyIDkuNDQ3NzIgNSAxMCA1QzEwLjU1MjMgNSAxMSA1LjQ0NzcyIDExIDZDMTEgNi41NTIyOCAxMC41NTIzIDcgMTAgN1oiIGZpbGw9ImJsYWNrIi8+CjxwYXRoIGQ9Ik0xMCAxMUM5LjQ0NzcyIDExIDkgMTAuNTUyMyA5IDEwQzkgOS40NDc3MSA5LjQ0NzcyIDkgMTAgOUMxMC41NTIzIDkgMTEgOS40NDc3MSAxMSAxMEMxMSAxMC41NTIzIDEwLjU1MjMgMTEgMTAgMTFaIiBmaWxsPSJibGFjayIvPgo8cGF0aCBkPSJNOSAxNEM5IDE0LjU1MjMgOS40NDc3MiAxNSAxMCAxNUMxMC41NTIzIDE1IDExIDE0LjU1MjMgMTEgMTRDMTEgMTMuNDQ3NyAxMC41NTIzIDEzIDEwIDEzQzkuNDQ3NzIgMTMgOSAxMy40NDc3IDkgMTRaIiBmaWxsPSJibGFjayIvPgo8L3N2Zz4K';	
+	const dropDownIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNSIgaGVpZ2h0PSI1IiB2aWV3Qm94PSIwIDAgNSA1IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMCAxSDFWMkgwVjFaIiBmaWxsPSJibGFjayIgZmlsbC1vcGFjaXR5PSIwLjgiLz4KPHBhdGggZD0iTTIgM0gxVjJIMlYzWiIgZmlsbD0iYmxhY2siIGZpbGwtb3BhY2l0eT0iMC44Ii8+CjxwYXRoIGQ9Ik0zIDNWNEgyVjNIM1oiIGZpbGw9ImJsYWNrIiBmaWxsLW9wYWNpdHk9IjAuOCIvPgo8cGF0aCBkPSJNNCAySDNWM0g0VjJaIiBmaWxsPSJibGFjayIgZmlsbC1vcGFjaXR5PSIwLjgiLz4KPHBhdGggZD0iTTQgMlYxSDVWMkg0WiIgZmlsbD0iYmxhY2siIGZpbGwtb3BhY2l0eT0iMC44Ii8+Cjwvc3ZnPgo=';
+	const arrowLeft = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNSIgaGVpZ2h0PSI5IiB2aWV3Qm94PSIwIDAgNSA5IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNNSA5LjUzNjc0ZS0wN0w1IDlMMC41IDQuNUw1IDkuNTM2NzRlLTA3WiIgZmlsbD0iYmxhY2siIGZpbGwtb3BhY2l0eT0iMC44Ii8+Cjwvc3ZnPgo=';
+	const arrowRight = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNSIgaGVpZ2h0PSI5IiB2aWV3Qm94PSIwIDAgNSA5IiBmaWxsPSJub25lIiB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPgo8cGF0aCBkPSJNMCA5TDAgMEw0LjUgNC41TDAgOVoiIGZpbGw9ImJsYWNrIiBmaWxsLW9wYWNpdHk9IjAuOCIvPgo8L3N2Zz4K';
+
+	const getIconsForLoad = function () {
+		return [
+			clickEffectIcon, afterEffectIcon,
+			entrEffectIcon, emphEffectIcon, exitEffectIcon, pathEffectIcon,
+			playIcon, stopIcon, arrowUpIcon, arrowDownIcon, closeIcon,
+			menuButton,
+			dropDownIcon,
+			arrowLeft, arrowRight
+		];
 	}
 
+	// EXPORTS
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].CAnimPaneHeader = CAnimPaneHeader;
 	window['AscCommon'].CSeqListContainer = CSeqListContainer;
 	window['AscCommon'].CTimelineContainer = CTimelineContainer;
 
 	window['AscCommon'].getIconsForLoad = getIconsForLoad;
+	
+	AscCommon.GlobalSkin['anim-pane-background'] = '#f7f7f7';
 
-	AscCommon.GlobalSkin['animation-effect-entr-fill'] = '#9edb86';
-	AscCommon.GlobalSkin['animation-effect-entr-outline'] = '#386821';
-	AscCommon.GlobalSkin['animation-effect-emph-fill'] = '#ffe87f';
-	AscCommon.GlobalSkin['animation-effect-emph-outline'] = '#ca8310';
-	AscCommon.GlobalSkin['animation-effect-exit-fill'] = '#ffcfc9';
-	AscCommon.GlobalSkin['animation-effect-exit-outline'] = '#b54548';
-	AscCommon.GlobalSkin['animation-effect-path-fill'] = '#a3c7d8';
-	AscCommon.GlobalSkin['animation-effect-path-outline'] = '#274a68';
+	AscCommon.GlobalSkin['anim-pane-button-fill'] = '#fff';
+	AscCommon.GlobalSkin['anim-pane-button-active-fill'] = '#ccc';
+	AscCommon.GlobalSkin['anim-pane-button-hovered-fill'] = '#ddd';
+	AscCommon.GlobalSkin['anim-pane-button-disabled-fill'] = '#aaa';
+	AscCommon.GlobalSkin['anim-pane-button-outline'] = '#cbcbcb';
+	AscCommon.GlobalSkin['anim-pane-button-active-outline'] = '#adadad';
+	AscCommon.GlobalSkin['anim-pane-button-hovered-outline'] = '#cbcbcb';
+	AscCommon.GlobalSkin['anim-pane-button-disabled-outline'] = '#adadad';
+
+	AscCommon.GlobalSkin['animation-effect-entr-fill'] = '#77B583';
+	AscCommon.GlobalSkin['animation-effect-entr-outline'] = '#0E8A26';
+	AscCommon.GlobalSkin['animation-effect-emph-fill'] = '#FBC37C';
+	AscCommon.GlobalSkin['animation-effect-emph-outline'] = '#FF8E00';
+	AscCommon.GlobalSkin['animation-effect-exit-fill'] = '#F59A9A';
+	AscCommon.GlobalSkin['animation-effect-exit-outline'] = '#F23D3D';
+	AscCommon.GlobalSkin['animation-effect-path-fill'] = '#A1CEE3';
+	AscCommon.GlobalSkin['animation-effect-path-outline'] = '#254662';
 	// AscCommon.GlobalSkin['animation-effect-mediacall-fill'] =
 	// AscCommon.GlobalSkin['animation-effect-mediacall-outline'] =
 	// AscCommon.GlobalSkin['animation-effect-verb-fill'] =
