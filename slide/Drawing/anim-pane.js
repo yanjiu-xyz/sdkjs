@@ -322,12 +322,10 @@
 		}
 		const bHover = !!this.hit(x, y);
 		const bHoverChanged = bHover !== this.isHovered();
-		if (bHover) {
-			this.setHoverState();
-		} else {
-			this.setNotHoverState();
+		if(bHoverChanged) {
+			this.setStateFlag(STATE_FLAG_HOVERED, bHover);
 		}
-		return bHoverChanged;
+		return false;
 	};
 	CControl.prototype.onMouseDown = function (e, x, y) {
 		if (!this.canHandleEvents()) {
