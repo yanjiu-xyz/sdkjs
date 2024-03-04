@@ -7630,7 +7630,7 @@ drawHistogramChart.prototype = {
 			const catAxis = this.cChartSpace.chart.plotArea.axId[0];
 
 			const catStart = this.chartProp.chartGutter._left;
-			const valStart = this.chartProp.trueHeight + this.chartProp.chartGutter._top;
+			let valStart = this.cChartSpace.chart.plotArea.axId ? this.cChartSpace.chart.plotArea.axId[0].posY * this.chartProp.pxToMM : this.chartProp.trueHeight + this.chartProp.chartGutter._top;
 			const coeff = catAxis.scaling.gapWidth;
 
 			const isAggregation = cachedData.aggregation;
@@ -7638,12 +7638,14 @@ drawHistogramChart.prototype = {
 			const sections = isAggregation ? Object.values(cachedData.aggregation) : cachedData.results; 
 			if (sections) {
 				// 1 px gap for each section length
-				const gapWidth = 1;
-				const initialBarWidth = (this.chartProp.trueWidth) / sections.length;
+				const gapWidth = 0.5 / this.chartProp.pxToMM;
+				const gapNumber = sections.length;
+				//Each bar will have 2 gapWidth and 2 margins , on left and right sides
+				const initialBarWidth = (this.chartProp.trueWidth - (2 * gapWidth * gapNumber)) / sections.length;
 				const barWidth = (initialBarWidth / (1 + coeff));
 				const margin = (initialBarWidth - barWidth) / 2;
 
-				let start = (catStart + margin);
+				let start = (catStart + margin + gapWidth);
 				for (let i = 0; i < sections.length; i++) {
 					// aggregation object does not have field occurrence;
 					const val = isAggregation ? sections[i] : sections[i].occurrence;
@@ -7653,7 +7655,7 @@ drawHistogramChart.prototype = {
 						const height = valStart - (startY * this.chartProp.pxToMM);
 						this.paths[i] = this.cChartDrawer._calculateRect(start, valStart, bW, height);
 					}		
-					start += (bW + margin + margin + gapWidth);
+					start += (bW + margin + gapWidth + gapWidth + margin);
 				}
 			}
 
@@ -7827,25 +7829,27 @@ drawWaterfallChart.prototype = {
 			if (AscFormat.isRealNumber(valStart)) {
 				const coeff = catAxis.scaling.gapWidth;
 				// 1 px gap for each section length
-				const gapWidth = 1.5;
-				const gapNumbers = data.length - 1;
-				const initialBarWidth = (this.chartProp.trueWidth - (gapWidth * gapNumbers))/ data.length;
+				const gapWidth = 0.5 / this.chartProp.pxToMM;
+				const gapNumber = data.length;
+				//Each bar will have 2 gapWidth and 2 margins , on left and right sides
+				const initialBarWidth = (this.chartProp.trueWidth - (2 * gapWidth * gapNumber))/ data.length;
 				const barWidth = (initialBarWidth / (1 + coeff));
 				const margin = (initialBarWidth - barWidth) / 2;
 
 				let sum = 0;
-				let start = (catStart + margin); 
+				let start = (catStart + margin + gapWidth); 
 				for (let i = 0; i < data.length; i++) {
 					sum += data[i].val;
 					const valPos = this.cChartDrawer.getYPosition(sum, valAxis, true) * this.chartProp.pxToMM; // calc roof of the current bar
-					const next = start + (barWidth + margin + gapWidth + margin); // calc end of the current barr
+					const next = start + (barWidth + margin + gapWidth + gapWidth + margin); // start of the next bar
 					if (this.chartProp && this.chartProp.pxToMM ) {
 						const height = valStart - valPos;
 						this.paths[i] = [];
 						this.paths[i].push(this.cChartDrawer._calculateRect(start, valStart, barWidth, height));
 						//dont need last connectorLine
 						if (i !== data.length - 1 && margin !== 0) {
-							this.paths[i].push(this._calculateConnectorLine(valPos, start + barWidth, next))
+							//exclude gapWidth from connector line
+							this.paths[i].push(this._calculateConnectorLine(valPos, start + barWidth + gapWidth, next - gapWidth))
 						}
 					}
 					valStart = valPos;	// go up in y direction
@@ -7928,7 +7932,7 @@ drawWaterfallChart.prototype = {
 					for (let j in this.paths[i]) {
 						if (this.paths[i].hasOwnProperty(j) && this.paths[i][j]) {
 							let nPtIdx = parseInt(i);
-							let pen = (j === 0 ) ? oSeries.getPtPen(nPtIdx) : this.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines;
+							let pen = (j === '0' ) ? oSeries.getPtPen(nPtIdx) : this.cChartSpace.chart.plotArea.axId[1].compiledMajorGridLines;
 							let brush = oSeries.getPtBrush(nPtIdx);
 							this.cChartDrawer.drawPath(this.paths[i][j], pen, brush);
 						}
