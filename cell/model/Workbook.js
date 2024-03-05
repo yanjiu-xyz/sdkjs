@@ -152,6 +152,9 @@
 		NeedTransform: 2,
 		PreProcessed: 3
 	};
+
+
+
 	var emptyStyleComponents = {table: [], conditional: []};
 	function getRangeType(oBBox){
 		if(null == oBBox)
@@ -1842,18 +1845,78 @@
 			}
 			this.tempGetByCells = [];
 		},
+
+
+
 		_calculateDirty: function() {
 			var t = this;
-			this._foreachChanged(function(cell){
+			
+			let needUpdateCells = [];
+
+			this._foreachChanged(function (cell) {
 				if (cell && cell.isFormula()) {
 					cell.setIsDirty(true);
 				}
 			});
+
+			AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = false;
+
 			this._foreachChanged(function(cell){
 				cell && cell._checkDirty();
 			});
 			this.changedCell = null;
 			this.changedRange = null;
+
+			if (AscCommonExcel.importRangeLinksState.importRangeLinks) {
+				//need update
+
+				let needUpdateExternalReference = [];
+				let newExternalReferences = [];
+				for (let i in AscCommonExcel.importRangeLinksState.importRangeLinks) {
+					let newExternalReference = new AscCommonExcel.ExternalReference();
+					//newExternalReference.referenceData = referenceData;
+					newExternalReference.Id = i;
+
+					for (var j = 0; j < AscCommonExcel.importRangeLinksState.importRangeLinks[i].length; j++) {
+						let newSheet = AscCommonExcel.importRangeLinksState.importRangeLinks[i][j].sheet;
+						newExternalReference.addSheetName(newSheet, true);
+						newExternalReference.initWorksheetFromSheetDataSet(newSheet);
+
+						let ws = newExternalReference.worksheets[newSheet];
+
+						newExternalReference.initRows(ws.getRange2(AscCommonExcel.importRangeLinksState.importRangeLinks[i][j].range));
+					}
+
+					newExternalReference.notUpdateId = true;
+
+					newExternalReferences.push(newExternalReference);
+					needUpdateExternalReference.push(newExternalReference.getAscLink())
+				}
+
+				AscCommonExcel.importRangeLinksState.importRangeLinks = null;
+
+				this.wb.addExternalReferences(newExternalReferences);
+
+
+				this.wb.dependencyFormulas.lockRecal();
+				let t = this;
+				this.wb.oApi.asc_updateExternalReferences(needUpdateExternalReference, function () {
+					t.wb.dependencyFormulas.unlockRecal(true);
+
+					//needUpdateCells
+					for (let i = 0; i < needUpdateCells.length; i++) {
+						t.wb.dependencyFormulas.addToChangedCell(needUpdateCells[i]);
+					}
+					t.wb.sortDependency();
+					AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = null;
+
+
+					t.wb.drawWorksheet();
+				});
+			} else {
+				AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = null;
+			}
+
 		},
 		_foreachChanged: function(callback) {
 			var sheetId, changedSheet, ws, bbox;
@@ -4711,7 +4774,7 @@
 	};
 
 	Workbook.prototype.addExternalReferences = function (arr) {
-		if (arr) {
+		if (arr && arr.length) {
 			for (var i = 0; i < arr.length; i++) {
 				this.externalReferences.push(arr[i]);
 				History.Add(AscCommonExcel.g_oUndoRedoWorkbook, AscCH.historyitem_Workbook_ChangeExternalReference,
@@ -4769,6 +4832,39 @@
 			}
 		}
 		return null;
+	};
+
+	Workbook.prototype.addExternalReferencesAfterParseFormulas = function (externalReferenesNeedAdd) {
+		let newExternalReferences = [];
+		for (let i in externalReferenesNeedAdd) {
+			let needAdd = false;
+			let newExternalReference = this.getExternalReferenceById(i);
+			if (!newExternalReference) {
+				newExternalReference = new AscCommonExcel.ExternalReference();
+				newExternalReference.Id = i;
+				needAdd = true;
+			}
+
+			for (let j = 0; j < externalReferenesNeedAdd[i].length; j++) {
+				let oNewSheet = externalReferenesNeedAdd[i][j];
+				if (null === newExternalReference.getSheetByName(oNewSheet.sheet)) {
+					let newSheet = oNewSheet.sheet;
+					newExternalReference.addSheetName(newSheet, true);
+					newExternalReference.initWorksheetFromSheetDataSet(newSheet);
+				}
+				if (oNewSheet.notUpdateId) {
+					newExternalReference.notUpdateId = true;
+				}
+			}
+
+			if (needAdd) {
+				newExternalReferences.push(newExternalReference);
+			} else {
+				//this.changeExternalReference();
+			}
+		}
+
+		this.addExternalReferences(newExternalReferences);
 	};
 
 	Workbook.prototype.unlockUserProtectedRanges = function(){
@@ -13355,15 +13451,43 @@
 		let externalLinks;
 		let i;
 		if (fOld && (!fNew || fNew.Formula !== fOld.Formula) && fOld.outStack) {
+			let needCheckImportFuncs = false;
 			for (i = 0; i < fOld.outStack.length; i++) {
 				if (fOld.outStack[i].externalLink) {
 					if (!externalLinks) {
 						externalLinks = {};
 					}
 					externalLinks[fOld.outStack[i].externalLink] = fOld.outStack[i].getWsId();
+				} else if (fOld.outStack[i].type === cElementType.func && fOld.outStack[i].name === "IMPORTRANGE") {
+					needCheckImportFuncs = true;
 				}
 			}
+
+			if (needCheckImportFuncs) {
+				AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = true;
+				fOld.calculate();
+				AscCommonExcel.importRangeLinksState.startBuildImportRangeLinks = null;
+
+				if (AscCommonExcel.importRangeLinksState.importRangeLinks) {
+					for (i in AscCommonExcel.importRangeLinksState.importRangeLinks) {
+						for (let j = 0; j < AscCommonExcel.importRangeLinksState.importRangeLinks[i].length; j++) {
+							if (AscCommonExcel.importRangeLinksState.importRangeLinks[i][j]) {
+								let ws = this.ws.workbook.getExternalWorksheet(i, AscCommonExcel.importRangeLinksState.importRangeLinks[i][j].sheet);
+								if (ws) {
+									if (!externalLinks) {
+										externalLinks = {};
+									}
+									externalLinks[i] = ws.getId();
+								}
+							}
+
+						}
+					}
+				}
+				AscCommonExcel.importRangeLinksState.importRangeLinks = null;
+			}
 		}
+
 
 		//2. проверяем, каких ссылок не осталось в новых данных
 		if (externalLinks && fNew && fNew.outStack) {
@@ -13371,6 +13495,13 @@
 				if (fNew.outStack[i].externalLink) {
 					if (externalLinks[fNew.outStack[i].externalLink]) {
 						delete externalLinks[fNew.outStack[i].externalLink];
+					}
+				}
+			}
+			if (fNew.importFunctionsRangeLinks) {
+				for (i in fNew.importFunctionsRangeLinks) {
+					if (externalLinks[i]) {
+						delete externalLinks[i];
 					}
 				}
 			}

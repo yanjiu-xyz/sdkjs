@@ -12324,6 +12324,11 @@
                 //TODO так же он проставляет флаг ca - рассмотреть стоит ли его нам доблавлять
                 formula.v = formula.v.replace("_xludf.", "");
             }
+            if (formula.v.startsWith("IFERROR(__xludf.DUMMYFUNCTION(\"")) {
+                formula.v = formula.v.replace('IFERROR(__xludf.DUMMYFUNCTION(\"', "");
+                formula.v = formula.v.substr(0, formula.v.lastIndexOf('\"\)'));
+                formula.v = formula.v.replace(/\"\"/g,"\"");
+            }
             if (formula.v.startsWith("=")) {
                 //LO write "=" to file
                 formula.v = formula.v.replace("=", "");
@@ -12368,6 +12373,15 @@
                     tmp.ws.workbook.openErrors.push(cell.getName());
                     return;
                 }
+
+				if (parsed.importFunctionsRangeLinks) {
+					for (let i in parsed.importFunctionsRangeLinks) {
+						let eR = tmp.ws.workbook.getExternalLinkByName(i);
+						if (eR) {
+							eR.notUpdateId = true;
+						}
+					}
+				}
 
                 if (null !== formula.ref) {
                     let range;
@@ -13237,11 +13251,19 @@
         } else {
             formula = parsed.getFormula();
         }
+        //TODO пока едиственный идентификатор, что внутри есть функция import - importFunctionsRangeLinks
+        //обходить каждый раз колстек - не хотелось бы замедлять сохранение, так же как и искать в строке
+
+        //view ->sum(IMPORTRANGE("https://","Sheet1!A1"))+cos(1)
+        //file -> IFERROR(__xludf.DUMMYFUNCTION("sum(IMPORTRANGE(""https://"",""Sheet1!A1""))+cos(1)"),123)</f>
+        if (formula && parsed && parsed.importFunctionsRangeLinks) {
+            formula = "IFERROR(__xludf.DUMMYFUNCTION(\"" + formula.replace(/\"/g,"\"\"") + "\")" + "," + cell.getValue() + ")";
+        }
         return {formula: formula, si: si, ref: ref, type: type, ca: parsed.ca};
     };
 
     function ReadWbComments (wb, contentWorkbookComment, InitOpenManager) {
-        var stream = new AscCommon.FT_Stream2(contentWorkbookComment, contentWorkbookComment.length)
+        var stream = new AscCommon.FT_Stream2(contentWorkbookComment, contentWorkbookComment.length);
         var bwtr = new Binary_WorksheetTableReader(stream, InitOpenManager, wb);
         var bcr = new AscCommon.Binary_CommonReader(stream);
         bcr.Read1(contentWorkbookComment.length, function(t,l){
