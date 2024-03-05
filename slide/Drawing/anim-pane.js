@@ -800,6 +800,18 @@
 		return null;
 	};
 
+	CLabel.prototype.getContentOneStringSizes = function () {
+		this.recalculateContent();
+		return this.txBody.getContentOneStringSizes();
+	};
+
+	CLabel.prototype.setLayout = function (dX, dY, dExtX, dExtY) {
+		this.superclass.prototype.setLayout.call(this, dX, dY, dExtX, dExtY);
+		if(this.txBody) {
+			this.txBody.bFit = false;
+		}
+	};
+
 
 	function CImageControl(oParentControl, sBase64Image, width, height) {
 		CControl.call(this, oParentControl)
@@ -980,13 +992,7 @@
 				Asc.editor.asc_StopAnimationPreview();
 			}
 			else {
-				let aSelectedEffects = this.getTiming().getSelectedEffects();
-				if(aSelectedEffects.length > 1) {
-					Asc.editor.asc_StartAnimationPreview(false);
-				}
-				else {
-					Asc.editor.asc_StartAnimationPreview(true);
-				}
+				Asc.editor.asc_StartAnimationPreview(this.parentControl.isStartAllPreview());
 			}
 		}
 
@@ -1022,31 +1028,81 @@
 	}
 
 	InitClass(CAnimPaneHeader, CTopControl, CONTROL_TYPE_HEADER);
-
+	CAnimPaneHeader.prototype.isStartAllPreview = function() {
+		let aSelectedEffects = this.getTiming().getSelectedEffects();
+		if(aSelectedEffects.length > 1) {
+			return false;
+		}
+		return true;
+	};
+	CAnimPaneHeader.prototype.getPlayButtonText = function() {
+		let sPlayButtonText = "";
+		if(Asc.editor.asc_IsStartedAnimationPreview()) {
+			sPlayButtonText = "Stop";
+		}
+		else {
+			if(this.isStartAllPreview()) {
+				sPlayButtonText = "Play All";
+			}
+			else {
+				sPlayButtonText = "Play Selected";
+			}
+		}
+		return sPlayButtonText;
+	};
+	CAnimPaneHeader.prototype.getPlayButtonIcon = function() {
+		let sPlayButtonIcon = "";
+		if(Asc.editor.asc_IsStartedAnimationPreview()) {
+			sPlayButtonIcon = stopIcon;
+		}
+		else {
+			sPlayButtonIcon = playIcon;
+		}
+		return sPlayButtonIcon;
+	};
+	CAnimPaneHeader.prototype.checkLayout = function() {
+		if(this.playButton.label.string !== this.getPlayButtonText()) {
+			this.recalculateChildrenLayout();
+			this.onUpdate();
+		}
+	};
 	CAnimPaneHeader.prototype.recalculateChildrenLayout = function () {
 		let gap;
 
 		this.label.setLayout(COMMON_LEFT_MARGIN, 0, HEADER_LABEL_WIDTH, this.getHeight());
 
-		this.playButton.icon.src = playIcon;
+
+
+		let sPlayButtonText = this.getPlayButtonText();
+		let sPlayButtonIcon = this.getPlayButtonIcon();
+		this.playButton.icon.src = sPlayButtonIcon;
 		gap = (PLAY_BUTTON_HEIGHT - PLAY_BUTTON_ICON_SIZE) / 2;
 		this.playButton.icon.setLayout(PLAY_BUTTON_LEFT_PADDING, gap, PLAY_BUTTON_ICON_SIZE, PLAY_BUTTON_ICON_SIZE);
 
-		this.playButton.label.string = 'Play all';				// TODO - 'Play all', 'Play', 'Play selected', 'Stop'
-		this.playButton.label.setLayout(
+		let oButtonLabel = this.playButton.label;
+		oButtonLabel.string = sPlayButtonText;
+		oButtonLabel.setLayout(
 			this.playButton.icon.getRight() + PLAY_BUTTON_LABEL_LEFT_MARGIN,
 			0,
-			PLAY_BUTTON_LABEL_WIDTH,
+			PLAY_BUTTON_MAX_LABEL_WIDTH,
 			PLAY_BUTTON_HEIGHT
 		);
+		let dLabelWidth = Math.min(PLAY_BUTTON_MAX_LABEL_WIDTH, oButtonLabel.getContentOneStringSizes().w)
+		oButtonLabel.setLayout(
+			this.playButton.icon.getRight() + PLAY_BUTTON_LABEL_LEFT_MARGIN,
+			0,
+			dLabelWidth,
+			PLAY_BUTTON_HEIGHT
+		);
+		oButtonLabel.recalculate();
 
-		const contentWidth = this.playButton.label.getRight() - this.playButton.icon.getLeft()
 		this.playButton.setLayout(
 			this.label.getRight() + PLAY_BUTTON_LEFT_MARGIN,
 			(HEADER_HEIGHT - PLAY_BUTTON_HEIGHT) / 2,
-			PLAY_BUTTON_LEFT_PADDING + contentWidth + PLAY_BUTTON_RIGHT_PADDING,
+			this.playButton.icon.getRight() + PLAY_BUTTON_LABEL_LEFT_MARGIN + oButtonLabel.getWidth() + PLAY_BUTTON_RIGHT_PADDING,
 			PLAY_BUTTON_HEIGHT
 		);
+
 
 		this.moveUpButton.icon.src = arrowUpIcon;
 		this.moveUpButton.icon.setLayout(0, 0, MOVE_BUTTON_ICON_SIZE, MOVE_BUTTON_ICON_SIZE);
@@ -1058,6 +1114,7 @@
 			MOVE_BUTTON_SIZE,
 			MOVE_BUTTON_SIZE,
 		);
+		this.moveUpButton.recalculate();
 
 		this.moveDownButton.icon.src = arrowDownIcon;
 		this.moveDownButton.icon.setLayout(0, 0, MOVE_BUTTON_ICON_SIZE, MOVE_BUTTON_ICON_SIZE);
@@ -1068,6 +1125,7 @@
 			MOVE_BUTTON_SIZE,
 			MOVE_BUTTON_SIZE
 		);
+		this.moveDownButton.recalculate();
 
 		this.closeButton.icon.src = closeIcon;
 		this.closeButton.icon.setLayout(0, 0, CLOSE_BUTTON_SIZE, CLOSE_BUTTON_SIZE);
@@ -1078,6 +1136,7 @@
 			CLOSE_BUTTON_SIZE,
 			CLOSE_BUTTON_SIZE
 		);
+		this.closeButton.recalculate();
 	};
 	CAnimPaneHeader.prototype.getFillColor = function () {
 		return null;
@@ -1573,8 +1632,11 @@
 		this.tmpScrollOffset = 0;
 		this.setStartTime(0);
 
-		Asc.editor.WordControl.m_oAnimPaneApi.timeline.OnPaint();
-		Asc.editor.WordControl.m_oAnimPaneApi.list.OnPaint();
+		let oPaneApi = Asc.editor.WordControl.m_oAnimPaneApi;
+		oPaneApi.header.Control.recalculateChildrenLayout();
+		oPaneApi.header.OnPaint();
+		oPaneApi.timeline.OnPaint();
+		oPaneApi.list.OnPaint();
 		// this.onUpdate();
 	}
 	CTimeline.prototype.onPreviewStop = function() {
@@ -1582,8 +1644,11 @@
 		this.tmpScrollOffset = null;
 		this.setStartTime(0);
 
-		Asc.editor.WordControl.m_oAnimPaneApi.timeline.OnPaint();
-		Asc.editor.WordControl.m_oAnimPaneApi.list.OnPaint();
+		let oPaneApi = Asc.editor.WordControl.m_oAnimPaneApi;
+		oPaneApi.header.Control.recalculateChildrenLayout();
+		oPaneApi.header.OnPaint();
+		oPaneApi.timeline.OnPaint();
+		oPaneApi.list.OnPaint();
 		// this.onUpdate();
 	}
 	CTimeline.prototype.onPreview = function(elapsedTicks) {
@@ -2715,7 +2780,7 @@
 	const PLAY_BUTTON_RIGHT_PADDING = 12 *  AscCommon.g_dKoef_pix_to_mm;
 	const PLAY_BUTTON_ICON_SIZE = 20 * AscCommon.g_dKoef_pix_to_mm;;
 	const PLAY_BUTTON_LABEL_FONTSIZE = 9;
-	const PLAY_BUTTON_LABEL_WIDTH = 40 * g_dKoef_pix_to_mm;
+	const PLAY_BUTTON_MAX_LABEL_WIDTH = 100 * g_dKoef_pix_to_mm;
 	const PLAY_BUTTON_LABEL_LEFT_MARGIN = 4 * AscCommon.g_dKoef_pix_to_mm;
 
 	const MOVE_BUTTON_SIZE = 24 * AscCommon.g_dKoef_pix_to_mm;

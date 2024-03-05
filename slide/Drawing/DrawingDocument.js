@@ -6631,6 +6631,10 @@ function CAnimPaneHeaderDrawer(page, htmlElement, parentDrawer)
 		Asc.editor.asc_canMoveAnimationLater() ?
 			oThis.Control.moveDownButton.enable() : oThis.Control.moveDownButton.disable()
 	}
+	oThis.UpdateState = function () {
+		oThis.Control.checkLayout();
+		oThis.UpdateButtonsState();
+	}
 }
 
 function CAnimPaneListDrawer(page, htmlElement, parentDrawer)
@@ -6888,7 +6892,7 @@ function CAnimationPaneDrawer(page, htmlElement)
 	oThis.UpdateState = function () {
 		if (!oThis.header.Control) { return }
 
-		oThis.header.UpdateButtonsState();
+		oThis.header.UpdateState();
 		// TODO: oThis.list.UpdateState();
 		oThis.timeline.UpdateState();
 	};
