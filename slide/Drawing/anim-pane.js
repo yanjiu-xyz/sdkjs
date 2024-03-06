@@ -870,6 +870,58 @@
 	CButton.prototype.canHandleEvents = function () {
 		return true;
 	};
+	CButton.prototype.draw = function (graphics) {
+		if (this.isHidden()) { return false; }
+		if (!this.checkUpdateRect(graphics.updatedRect)) { return false; }
+
+		this.recalculateTransform();
+		this.recalculateTransformText();
+
+		const sFillColor = this.getFillColor();
+		const sOutlineColor = this.getOutlineColor();
+		let oColor;
+
+		graphics.SaveGrState();
+		if (this.isDisabled()) {
+			graphics.put_GlobalAlpha(true, 0.6); // Вот здесь почему-то alpha принаджлит [0; 1], а не [0; 255]
+		}
+
+		if (sOutlineColor || sFillColor) {
+			graphics.transform3(this.transform);
+			var x = 0;
+			var y = 0;
+			var extX = this.getWidth();
+			var extY = this.getHeight();
+			if (sFillColor) {
+				oColor = AscCommon.RgbaHexToRGBA(sFillColor);
+				graphics.b_color1(oColor.R, oColor.G, oColor.B, 0xFF);
+				graphics.rect(x, y, extX, extY);
+				graphics.df();
+			}
+			if (sOutlineColor) {
+				oColor = AscCommon.RgbaHexToRGBA(sOutlineColor);
+				graphics.SetIntegerGrid(true);
+
+				var nPenW = this.getPenWidth(graphics);
+				//graphics.p_width(100);//AscCommon.AscBrowser.convertToRetinaValue(1, true);
+				graphics.p_color(oColor.R, oColor.G, oColor.B, 0xFF);
+				graphics.drawHorLine(0, y, x, x + extX, nPenW);
+				graphics.drawHorLine(0, y + extY, x, x + extX, nPenW);
+				graphics.drawVerLine(2, x, y, y + extY, nPenW);
+				graphics.drawVerLine(2, x + extX, y, y + extY, nPenW);
+				graphics.ds();
+			}
+		}
+
+		this.children.forEach(function (child) {
+			child.draw(graphics);
+		})
+
+		graphics.put_GlobalAlpha(false);
+		graphics.RestoreGrState(); // RestoreGrState почему-то не сбрасывает значение alpha
+		return true;
+
+	};
 	// CButton.prototype.draw = function(graphics) {
 	//     if(this.isHidden()){
 	//         return false;
@@ -933,24 +985,23 @@
 	// };
 
 	CButton.prototype.getFillColor = function () {
-		// if(this.parentControl instanceof CTimelineContainer) {
-		//     return null;
-		// }
+		const oSkin = AscCommon.GlobalSkin;
 
-		var oSkin = AscCommon.GlobalSkin;
+		if(this.parentControl && this.parentControl instanceof CAnimPaneHeader && this.parentControl.children[1] === this) {
+			return oSkin['anim-pane-play-button-fill'];
+		}
+
 		if (this.isActive()) { return oSkin['anim-pane-button-active-fill']; }
 		if (this.isDisabled()) { return oSkin['anim-pane-button-disabled-fill']; }
 		if (this.isHovered()) { return oSkin['anim-pane-button-hovered-fill']; }
 		return oSkin['anim-pane-button-fill'];
 	};
 	CButton.prototype.getOutlineColor = function () {
-		if (this.parentControl instanceof CTimeline) { return '#000' }
+		if (this.parentControl && this.parentControl instanceof CAnimPaneHeader && this.parentControl.children[1] === this) {
+			return AscCommon.GlobalSkin['anim-pane-play-button-outline'];
+		}
 
-		var oSkin = AscCommon.GlobalSkin;
-		if (this.isActive()) { return oSkin['anim-pane-button-active-outline']; }
-		if (this.isDisabled()) { return oSkin['anim-pane-button-disabled-outline']; }
-		if (this.isHovered()) { return oSkin['anim-pane-button-hovered-outline']; }
-		return oSkin['anim-pane-button-outline'];
+		return null;
 	};
 	CButton.prototype.isPressed = function () {
 		return this.getStateFlag(STATE_FLAG_PRESSED);
@@ -975,10 +1026,10 @@
 		this.playButton.label = this.playButton.addControl(new CLabel(this.playButton, '', PLAY_BUTTON_LABEL_FONTSIZE));
 
 		this.moveUpButton = this.addControl(new CButton(this, null, null, moveChosenUp));
-		this.moveUpButton.icon = this.moveUpButton.addControl(new CImageControl(this.moveUpButton, null, MOVE_BUTTON_ICON_SIZE, MOVE_BUTTON_ICON_SIZE));
+		this.moveUpButton.icon = this.moveUpButton.addControl(new CImageControl(this.moveUpButton, arrowUpIcon, MOVE_BUTTON_ICON_SIZE, MOVE_BUTTON_ICON_SIZE));
 
 		this.moveDownButton = this.addControl(new CButton(this, null, null, moveChosenDown));
-		this.moveDownButton.icon = this.moveDownButton.addControl(new CImageControl(this.moveDownButton, null, MOVE_BUTTON_ICON_SIZE, MOVE_BUTTON_ICON_SIZE));
+		this.moveDownButton.icon = this.moveDownButton.addControl(new CImageControl(this.moveDownButton, arrowDownIcon, MOVE_BUTTON_ICON_SIZE, MOVE_BUTTON_ICON_SIZE));
 
 		this.closeButton = this.addControl(new CButton(this, null, null, closePanel));
 		this.closeButton.icon = this.closeButton.addControl(new CImageControl(this.closeButton, null, CLOSE_BUTTON_ICON_SIZE, CLOSE_BUTTON_ICON_SIZE));
@@ -1029,7 +1080,9 @@
 
 	InitClass(CAnimPaneHeader, CTopControl, CONTROL_TYPE_HEADER);
 	CAnimPaneHeader.prototype.isStartAllPreview = function() {
-		let aSelectedEffects = this.getTiming().getSelectedEffects();
+		const timing = this.getTiming();
+		if (!timing) { return true; }
+		const aSelectedEffects = timing.getSelectedEffects();
 		if(aSelectedEffects.length > 1) {
 			return false;
 		}
@@ -1104,7 +1157,6 @@
 		);
 
 
-		this.moveUpButton.icon.src = arrowUpIcon;
 		this.moveUpButton.icon.setLayout(0, 0, MOVE_BUTTON_ICON_SIZE, MOVE_BUTTON_ICON_SIZE);
 
 		gap = (HEADER_HEIGHT - MOVE_BUTTON_SIZE) / 2;
@@ -1116,7 +1168,6 @@
 		);
 		this.moveUpButton.recalculate();
 
-		this.moveDownButton.icon.src = arrowDownIcon;
 		this.moveDownButton.icon.setLayout(0, 0, MOVE_BUTTON_ICON_SIZE, MOVE_BUTTON_ICON_SIZE);
 
 		this.moveDownButton.setLayout(
@@ -2904,14 +2955,13 @@
 	
 	AscCommon.GlobalSkin['anim-pane-background'] = '#f7f7f7';
 
-	AscCommon.GlobalSkin['anim-pane-button-fill'] = '#fff';
+	AscCommon.GlobalSkin['anim-pane-button-fill'] = null;
 	AscCommon.GlobalSkin['anim-pane-button-active-fill'] = '#ccc';
 	AscCommon.GlobalSkin['anim-pane-button-hovered-fill'] = '#ddd';
 	AscCommon.GlobalSkin['anim-pane-button-disabled-fill'] = '#aaa';
-	AscCommon.GlobalSkin['anim-pane-button-outline'] = '#cbcbcb';
-	AscCommon.GlobalSkin['anim-pane-button-active-outline'] = '#adadad';
-	AscCommon.GlobalSkin['anim-pane-button-hovered-outline'] = '#cbcbcb';
-	AscCommon.GlobalSkin['anim-pane-button-disabled-outline'] = '#adadad';
+
+	AscCommon.GlobalSkin['anim-pane-play-button-fill'] = '#ffffff';
+	AscCommon.GlobalSkin['anim-pane-play-button-outline'] = '#cbcbcb';
 
 	AscCommon.GlobalSkin['animation-effect-entr-fill'] = '#77B583';
 	AscCommon.GlobalSkin['animation-effect-entr-outline'] = '#0E8A26';
