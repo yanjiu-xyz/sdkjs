@@ -915,7 +915,7 @@
 		this.moveDownButton.icon = this.moveDownButton.addControl(new CImageControl(this.moveDownButton, arrowDownIcon, MOVE_BUTTON_ICON_SIZE, MOVE_BUTTON_ICON_SIZE));
 
 		this.closeButton = this.addControl(new CButton(this, null, null, closePanel));
-		this.closeButton.icon = this.closeButton.addControl(new CImageControl(this.closeButton, null, CLOSE_BUTTON_ICON_SIZE, CLOSE_BUTTON_ICON_SIZE));
+		this.closeButton.icon = this.closeButton.addControl(new CImageControl(this.closeButton, closeIcon, CLOSE_BUTTON_ICON_SIZE, CLOSE_BUTTON_ICON_SIZE));
 
 		// Event handlers for button of CAnimPaneHeader ---
 
@@ -1061,7 +1061,6 @@
 		);
 		this.moveDownButton.recalculate();
 
-		this.closeButton.icon.src = closeIcon;
 		this.closeButton.icon.setLayout(0, 0, CLOSE_BUTTON_SIZE, CLOSE_BUTTON_SIZE);
 		gap = (HEADER_HEIGHT - CLOSE_BUTTON_SIZE) / 2;
 		this.closeButton.setLayout(
@@ -1097,6 +1096,12 @@
 
 			// also updating seqList to redraw effect bars
 			editor.WordControl.m_oAnimPaneApi.list.Control.seqList.onUpdateSeqList()
+		}
+
+		this.onMouseDownCallback = function (event, x, y) {
+			if(Asc.editor.asc_IsStartedAnimationPreview()) {
+				Asc.editor.asc_StopAnimationPreview();
+			}
 		}
 	}
 
@@ -1144,6 +1149,12 @@
 		// graphics.RemoveClipRect();
 		// this.clipEnd(graphics);
 		return true;
+	};
+	CTimelineContainer.prototype.onMouseDown = function (e, x, y) {
+		if (this.onMouseDownCallback && this.onMouseDownCallback.call(this, e, x, y)) {
+			return true;
+		}
+		return CTopControl.prototype.onMouseDown.call(this, e, x, y);
 	};
 
 
@@ -1708,7 +1719,11 @@
 		CTopControl.call(this, oDrawer);
 		this.seqList = this.addControl(new CSeqList(this));
 
-		this.onMouseDownCallback = function clearSelection(event, x, y) {
+		this.onMouseDownCallback = function (event, x, y) {
+			if(Asc.editor.asc_IsStartedAnimationPreview()) {
+				Asc.editor.asc_StopAnimationPreview();
+			}
+
 			if (this.seqList.hit(x, y)) { return }
 
 			this.seqList.forEachAnimItem(function (animItem) { animItem.effect.deselect() })
@@ -2802,8 +2817,8 @@
 
 	// ICONS
 	const playIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZmlsbC1ydWxlPSJldmVub2RkIiBjbGlwLXJ1bGU9ImV2ZW5vZGQiIGQ9Ik03IDE1TDE1IDEwTDcgNVYxNVoiIGZpbGw9ImJsYWNrIi8+Cjwvc3ZnPgo=';
-	const stopIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHZpZXdCb3g9IjAgMCAxMCAxMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSJibGFjayIvPgo8L3N2Zz4K';
-
+	// const stopIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTAiIGhlaWdodD0iMTAiIHZpZXdCb3g9IjAgMCAxMCAxMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3Qgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSJibGFjayIvPgo8L3N2Zz4K';
+	const stopIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHZpZXdCb3g9IjAgMCAyMCAyMCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHJlY3QgeD0iNSIgeT0iNSIgd2lkdGg9IjEwIiBoZWlnaHQ9IjEwIiBmaWxsPSJibGFjayIvPgo8L3N2Zz4K';
 	const clickEffectIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTIiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxMiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIgMC41SDEwQzEwLjgyODQgMC41IDExLjUgMS4xNzE1NyAxMS41IDJWMTJDMTEuNSAxMy45MzMgOS45MzMgMTUuNSA4IDE1LjVINEMyLjA2NyAxNS41IDAuNSAxMy45MzMgMC41IDEyVjJDMC41IDEuMTcxNTcgMS4xNzE1NyAwLjUgMiAwLjVaIiBmaWxsPSJ3aGl0ZSIgc3Ryb2tlPSIjNDQ0NDQ0Ii8+CjxyZWN0IHg9IjUiIHk9IjIiIHdpZHRoPSIyIiBoZWlnaHQ9IjQiIGZpbGw9IiM0NDQ0NDQiLz4KPC9zdmc+Cg==';
 	const afterEffectIcon = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMTYiIGhlaWdodD0iMTYiIHZpZXdCb3g9IjAgMCAxNiAxNiIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTggMTUuNUMxMi4xNDIxIDE1LjUgMTUuNSAxMi4xNDIxIDE1LjUgOEMxNS41IDMuODU3ODYgMTIuMTQyMSAwLjUgOCAwLjVDMy44NTc4NiAwLjUgMC41IDMuODU3ODYgMC41IDhDMC41IDEyLjE0MjEgMy44NTc4NiAxNS41IDggMTUuNVoiIGZpbGw9IndoaXRlIiBzdHJva2U9IiM0NDQ0NDQiLz4KPHBhdGggZD0iTTExIDguNUg3IiBzdHJva2U9IiM0NDQ0NDQiLz4KPHBhdGggZD0iTTcuNSA0VjkiIHN0cm9rZT0iIzQ0NDQ0NCIvPgo8L3N2Zz4K';
 
