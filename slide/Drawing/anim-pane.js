@@ -2482,6 +2482,9 @@
 		const timelineContainer = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control
 		if (!timelineContainer) { return }
 
+		// TODO: Работает, но я не уверен, что оно должно находиться тут
+		this.effect.isSelected() ? this.contextMenuButton.show() : this.contextMenuButton.hide();
+
 		if (!CControlContainer.prototype.draw.call(this, graphics)) { return false }
 		if (this.isHidden()) { return false }
 		if (!this.checkUpdateRect(graphics.updatedRect)) { return false }
