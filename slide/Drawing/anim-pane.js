@@ -872,8 +872,8 @@
 	}
 	CButton.prototype.getFillColor = function () {
 		const oSkin = AscCommon.GlobalSkin;
-		if (this.isActive()) { return oSkin['anim-pane-button-active-fill']; }
 		if (this.isDisabled()) { return oSkin['anim-pane-button-disabled-fill']; }
+		// if (this.isActive()) { return oSkin['anim-pane-button-active-fill']; }
 		if (this.isHovered()) { return oSkin['anim-pane-button-hovered-fill']; }
 		if (this.sName === 'playButton') { return oSkin['anim-pane-play-button-fill']; }
 		return oSkin['anim-pane-button-fill'];
@@ -1433,6 +1433,8 @@
 	CTimeline.prototype.draw = function (graphics) {
 		if (this.isHidden()) { return false }
 		if (!this.checkUpdateRect(graphics.updatedRect)) { return false }
+
+		this.getStartTime() === 0 ? this.startButton.disable() : this.startButton.enable();
 
 		graphics.SaveGrState();
 		// var dPenW = this.getPenWidth(graphics);
