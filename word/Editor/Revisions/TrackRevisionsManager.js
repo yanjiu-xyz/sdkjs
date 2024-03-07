@@ -34,17 +34,46 @@
 
 (function(window)
 {
-	let trackManager = null;
-	function getTrackRevisionManager()
-	{
-		return trackManager;
-	}
+	let elementToCheck = {};
 	function checkElementInRevision(element)
 	{
-		if (!trackManager)
+		if (!element)
 			return;
 		
-		trackManager.CheckElement(element);
+		let logicDocument = element.GetLogicDocument();
+		if (!element.GetLogicDocument())
+		{
+			elementToCheck[element.GetId()] = element;
+			return;
+		}
+		
+		if (!logicDocument || !logicDocument.IsDocumentEditor())
+			return;
+		
+		logicDocument.GetTrackRevisionsManager().CheckElement(element);
+	}
+	function haveElementToCheck()
+	{
+		for (let id in elementToCheck)
+		{
+			return true;
+		}
+		
+		return false;
+	}
+	function flushElementToCheck()
+	{
+		for (let id in elementToCheck)
+		{
+			let element = elementToCheck[id];
+			let logicDocument = element.GetLogicDocument();
+			if (!logicDocument || !logicDocument.IsDocumentEditor())
+				continue;
+			
+			logicDocument.GetTrackRevisionsManager().CheckElement(elementToCheck[id]);
+		}
+		
+		elementToCheck = {};
 	}
 	
 	// ВАЖНО: CheckArray - специальный массив-дублер для мапа CheckMap, для более быстрого выполнения функции
@@ -79,8 +108,6 @@
 		this.ProcessMove = null;
 
 		this.SkipPreDeleteMoveMarks = false;
-		
-		trackManager = this;
 	}
 
 	/**
@@ -125,6 +152,8 @@
 	{
 		if (this.IsAllChecked())
 			return;
+		
+		flushElementToCheck();
 
 		var nStartTime = performance.now();
 
@@ -824,7 +853,7 @@
 	};
 	CTrackRevisionsManager.prototype.IsAllChecked = function()
 	{
-		return (!this.CheckArray.length);
+		return (!this.CheckArray.length && !haveElementToCheck());
 	};
 	/**
 	 * Завершаем проверку всех элементов на наличие рецензирования
@@ -1364,8 +1393,7 @@
 		return null;
 	};
 	//--------------------------------------------------------export----------------------------------------------------
-	window['AscWord'].CTrackRevisionsManager  = CTrackRevisionsManager;
-	window['AscWord'].getTrackRevisionManager = getTrackRevisionManager;
-	window['AscWord'].checkElementInRevision  = checkElementInRevision;
+	window['AscWord'].CTrackRevisionsManager = CTrackRevisionsManager;
+	window['AscWord'].checkElementInRevision = checkElementInRevision;
 
 })(window);
