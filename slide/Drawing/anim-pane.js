@@ -228,36 +228,35 @@
 		return nPenW;
 	};
 	CControl.prototype.draw = function (graphics) {
-		if (this.isHidden()) {
-			return false;
-		}
-		if (!this.checkUpdateRect(graphics.updatedRect)) {
-			return false;
-		}
+		if (this.isHidden()) { return false; }
+		if (!this.checkUpdateRect(graphics.updatedRect)) { return false; }
 
 		this.recalculateTransform();
 		this.recalculateTransformText();
 
-		const oFillColor = this.getFillColor();
-		const oOutlineColor = this.getOutlineColor();
-		if (oOutlineColor || oFillColor) {
+		const sFillColor = this.getFillColor();
+		const sOutlineColor = this.getOutlineColor();
+		let oColor;
+		if (sOutlineColor || sFillColor) {
 			graphics.SaveGrState();
 			graphics.transform3(this.transform);
 			var x = 0;
 			var y = 0;
 			var extX = this.getWidth();
 			var extY = this.getHeight();
-			if (oFillColor) {
-				graphics.b_color1(oFillColor.R, oFillColor.G, oFillColor.B, oFillColor.A);
+			if (sFillColor) {
+				oColor = AscCommon.RgbaHexToRGBA(sFillColor);
+				graphics.b_color1(oColor.R, oColor.G, oColor.B, 0xFF);
 				graphics.rect(x, y, extX, extY);
 				graphics.df();
 			}
-			if (oOutlineColor) {
+			if (sOutlineColor) {
+				oColor = AscCommon.RgbaHexToRGBA(sOutlineColor);
 				graphics.SetIntegerGrid(true);
 
 				var nPenW = this.getPenWidth(graphics);
 				//graphics.p_width(100);//AscCommon.AscBrowser.convertToRetinaValue(1, true);
-				graphics.p_color(oOutlineColor.R, oOutlineColor.G, oOutlineColor.B, oOutlineColor.A);
+				graphics.p_color(oColor.R, oColor.G, oColor.B, 0xFF);
 				graphics.drawHorLine(0, y, x, x + extX, nPenW);
 				graphics.drawHorLine(0, y + extY, x, x + extX, nPenW);
 				graphics.drawVerLine(2, x, y, y + extY, nPenW);
@@ -489,28 +488,15 @@
 		return -1;
 	};
 	CControl.prototype.getFillColor = function () {
-		var sFillColor;
-		var oSkin = AscCommon.GlobalSkin;
-		if (this.isActive()) {
-			sFillColor = oSkin.ThumbnailsPageOutlineActive;
-		} else if (this.isHovered()) {
-			sFillColor = oSkin.ScrollerHoverColor;
-		} else {
-			sFillColor = oSkin.BackgroundColorThumbnails;
-		}
-		return AscCommon.RgbaHexToRGBA(sFillColor);
+		const oSkin = AscCommon.GlobalSkin;
+		if (this.isActive()) { return AscCommon.GlobalSkin['anim-pane-control-active-fill']; }
+		if (this.isHovered()) { return AscCommon.GlobalSkin['anim-pane-control-hovered-fill']; }
+		return AscCommon.GlobalSkin['anim-pane-control-fill']; 
 	};
 	CControl.prototype.getOutlineColor = function () {
-		var sOutlineColor;
-		var oSkin = AscCommon.GlobalSkin;
-		if (this.isActive()) {
-			sOutlineColor = oSkin.ScrollOutlineActiveColor;
-		} else if (this.isHovered()) {
-			sOutlineColor = oSkin.ThumbnailsPageOutlineHover;
-		} else {
-			sOutlineColor = oSkin.ScrollOutlineColor;
-		}
-		return AscCommon.RgbaHexToRGBA(sOutlineColor);
+		if (this.isActive()) { return AscCommon.GlobalSkin['anim-pane-control-active-outline']; }
+		if (this.isHovered()) { return AscCommon.GlobalSkin['anim-pane-control-hovered-outline']; }
+		return AscCommon.GlobalSkin['anim-pane-control-outline']; 
 	};
 	CControl.prototype.drawShdw = function () {
 
@@ -866,129 +852,31 @@
 	CButton.prototype.canHandleEvents = function () {
 		return true;
 	};
+
 	CButton.prototype.draw = function (graphics) {
-		if (this.isHidden()) { return false; }
-		if (!this.checkUpdateRect(graphics.updatedRect)) { return false; }
+		if (!CControl.prototype.draw.call(this, graphics)) { return false; }
 
-		this.recalculateTransform();
-		this.recalculateTransformText();
-
-		const oFillColor = this.getFillColor();
-		const oOutlineColor = this.getOutlineColor();
-
-		graphics.SaveGrState();
-		if (oOutlineColor || oFillColor) {
-			graphics.transform3(this.transform);
-			var x = 0;
-			var y = 0;
-			var extX = this.getWidth();
-			var extY = this.getHeight();
-			if (oFillColor) {
-				graphics.b_color1(oFillColor.R, oFillColor.G, oFillColor.B, oFillColor.A);
-				graphics.rect(x, y, extX, extY);
-				graphics.df();
-			}
-			if (oOutlineColor) {
-				graphics.SetIntegerGrid(true);
-
-				var nPenW = this.getPenWidth(graphics);
-				//graphics.p_width(100);//AscCommon.AscBrowser.convertToRetinaValue(1, true);
-				graphics.p_color(oOutlineColor.R, oOutlineColor.G, oOutlineColor.B, oOutlineColor.A);
-				graphics.drawHorLine(0, y, x, x + extX, nPenW);
-				graphics.drawHorLine(0, y + extY, x, x + extX, nPenW);
-				graphics.drawVerLine(2, x, y, y + extY, nPenW);
-				graphics.drawVerLine(2, x + extX, y, y + extY, nPenW);
-				graphics.ds();
-			}
+		const contentOpacity = this.getContentOpacity();
+		graphics.put_GlobalAlpha(true, contentOpacity);
+		for (var nChild = 0; nChild < this.children.length; ++nChild) {
+			this.children[nChild].draw(graphics);
 		}
-
-		graphics.put_GlobalAlpha(true, oFillColor.A / 255);
-		this.children.forEach(function (child) {
-			child.draw(graphics);
-		})
 		graphics.put_GlobalAlpha(false);
 
-		graphics.RestoreGrState(); // RestoreGrState почему-то не сбрасывает значение alpha
 		return true;
-
 	};
-	// CButton.prototype.draw = function(graphics) {
-	//     if(this.isHidden()){
-	//         return false;
-	//     }
-	//     if(!this.checkUpdateRect(graphics.updatedRect)) {
-	//         return false;
-	//     }
-	//
-	//     graphics.SaveGrState();
-	//     var oSkin = AscCommon.GlobalSkin;
-	//     //ScrollBackgroundColor     : "#EEEEEE",
-	//     //ScrollOutlineColor        : "#CBCBCB",
-	//     //ScrollOutlineHoverColor   : "#CBCBCB",
-	//     //ScrollOutlineActiveColor  : "#ADADAD",
-	//     //ScrollerColor             : "#F7F7F7",
-	//     //ScrollerHoverColor        : "#C0C0C0",
-	//     //ScrollerActiveColor       : "#ADADAD",
-	//     //ScrollArrowColor          : "#ADADAD",
-	//     //ScrollArrowHoverColor     : "#F7F7F7",
-	//     //ScrollArrowActiveColor    : "#F7F7F7",
-	//     //ScrollerTargetColor       : "#CFCFCF",
-	//     //ScrollerTargetHoverColor  : "#F1F1F1",
-	//     //ScrollerTargetActiveColor : "#F1F1F1",
-	//     var x = 0;
-	//     var y = 0;
-	//     var extX = this.getWidth();
-	//     var extY = this.getHeight();
-	//     graphics.transform3(this.transform);
-	//
-	//     var sFillColor;
-	//     var sOutlineColor;
-	//     var oColor;
-	//     if(this.isActive()) {
-	//         sFillColor = oSkin.ScrollerActiveColor;
-	//         sOutlineColor = oSkin.ScrollOutlineActiveColor;
-	//     }
-	//     else if(this.isHovered()) {
-	//         sFillColor = oSkin.ScrollerHoverColor;
-	//         sOutlineColor = oSkin.ScrollOutlineHoverColor;
-	//     }
-	//     else {
-	//         sFillColor = oSkin.ScrollerColor;
-	//         sOutlineColor = oSkin.ScrollOutlineColor;
-	//     }
-	//     oColor = AscCommon.RgbaHexToRGBA(sFillColor);
-	//     graphics.b_color1(oColor.R, oColor.G, oColor.B, 0xFF);
-	//     graphics.rect(x, y, extX, extY);
-	//     graphics.df();
-	//     oColor = AscCommon.RgbaHexToRGBA(sOutlineColor);
-	//
-	//     graphics.SetIntegerGrid(true);
-	//     graphics.p_width(0);
-	//     graphics.p_color(oColor.R, oColor.G, oColor.B, 0xFF);
-	//     graphics.drawHorLine(0, y, x, x + extX, 0);
-	//     graphics.drawHorLine(0, y + extY, x, x + extX, 0);
-	//     graphics.drawVerLine(2, x, y, y + extY, 0);
-	//     graphics.drawVerLine(2, x + extX, y, y + extY, 0);
-	//     graphics.ds();
-	//     graphics.RestoreGrState();
-	//     return true;
-	// };
 
+	CButton.prototype.getContentOpacity = function () {
+		if (this.isDisabled()) { return 0.6 }
+		return 1;
+	}
 	CButton.prototype.getFillColor = function () {
 		const oSkin = AscCommon.GlobalSkin;
-		let oColor;
-
-		if(this.sName === 'playButton') {
-			oColor = oSkin['anim-pane-play-button-fill'];
-			return oColor;
-		}
-
-		if (this.isActive()) { oColor = oSkin['anim-pane-button-active-fill']; }
-		else if (this.isDisabled()) { oColor = oSkin['anim-pane-button-disabled-fill']; }
-		else if (this.isHovered()) { oColor = oSkin['anim-pane-button-hovered-fill']; }
-		else oColor = oSkin['anim-pane-button-fill'];
-
-		return oColor;
+		if (this.isActive()) { return oSkin['anim-pane-button-active-fill']; }
+		if (this.isDisabled()) { return oSkin['anim-pane-button-disabled-fill']; }
+		if (this.isHovered()) { return oSkin['anim-pane-button-hovered-fill']; }
+		if (this.sName === 'playButton') { return oSkin['anim-pane-play-button-fill']; }
+		return oSkin['anim-pane-button-fill'];
 	};
 	CButton.prototype.getOutlineColor = function () {
 		if (this.sName === 'playButton') {
@@ -1547,8 +1435,7 @@
 		// graphics.rect(dPaneLeft, 0, dPaneWidth, this.getHeight());
 		// graphics.ds();
 		// graphics.RestoreGrState();
-		var oSkin = AscCommon.GlobalSkin;
-		var sColor = oSkin.ScrollOutlineColor;
+		const sColor = AscCommon.GlobalSkin['anim-pane-timeline-ruler-outline'];
 		var oColor = AscCommon.RgbaHexToRGBA(sColor);
 		var dPaneLeft = this.getRulerStart();
 		var dPaneWidth = this.getRulerEnd() - dPaneLeft;
@@ -1620,6 +1507,7 @@
 		let sFillColor;
 		let oColor;
 
+		// TODO: Определиться с цветом и прозрачностью скроллера (оставить как есть?)
 		if (this.isStickedToPointer) {
 			sFillColor = '#000'// oSkin.ScrollerActiveColor;
 			oColor = AscCommon.RgbaHexToRGBA(sFillColor);
@@ -2592,32 +2480,35 @@
 		graphics.AddClipRect(clipL, clipT, clipW, clipH);
 
 		const oSkin = AscCommon.GlobalSkin;
+		let sFillColor, sOutlineColor;
 		let oFillColor, oOutlineColor;
 
 		switch (this.effect.cTn.presetClass) {
 			case AscFormat.PRESET_CLASS_ENTR:
-				oFillColor = oSkin['animation-effect-entr-fill'];
-				oOutlineColor = oSkin['animation-effect-entr-outline'];
+				sFillColor = oSkin['animation-effect-entr-fill'];
+				sOutlineColor = oSkin['animation-effect-entr-outline'];
 				break;
 
 			case AscFormat.PRESET_CLASS_EMPH:
-				oFillColor = oSkin['animation-effect-emph-fill'];
-				oOutlineColor = oSkin['animation-effect-emph-outline'];
+				sFillColor = oSkin['animation-effect-emph-fill'];
+				sOutlineColor = oSkin['animation-effect-emph-outline'];
 				break;
 
 			case AscFormat.PRESET_CLASS_EXIT:
-				oFillColor = oSkin['animation-effect-exit-fill'];
-				oOutlineColor = oSkin['animation-effect-exit-outline'];
+				sFillColor = oSkin['animation-effect-exit-fill'];
+				sOutlineColor = oSkin['animation-effect-exit-outline'];
 				break;
 
 			case AscFormat.PRESET_CLASS_PATH:
-				oFillColor = oSkin['animation-effect-path-fill'];
-				oOutlineColor = oSkin['animation-effect-path-outline'];
+				sFillColor = oSkin['animation-effect-path-fill'];
+				sOutlineColor = oSkin['animation-effect-path-outline'];
 				break;
 		}
+		oFillColor = AscCommon.RgbaHexToRGBA(sFillColor);
+		oOutlineColor = AscCommon.RgbaHexToRGBA(sOutlineColor);
 
-		graphics.b_color1(oFillColor.R, oFillColor.G, oFillColor.B, oFillColor.A);
-		graphics.p_color(oOutlineColor.R, oOutlineColor.G, oOutlineColor.B, oOutlineColor.A);
+		graphics.b_color1(oFillColor.R, oFillColor.G, oFillColor.B, 255);
+		graphics.p_color(oOutlineColor.R, oOutlineColor.G, oOutlineColor.B, 255)
 
 		const bounds = this.getEffectBarBounds();
 		if (this.effect.isInstantEffect()) {
@@ -2804,11 +2695,11 @@
 	};
 	CAnimItem.prototype.getFillColor = function() {
 		let sColor;
-		if (this.effect.isSelected()) sColor = AscCommon.GlobalSkin.ScrollerActiveColor
-		else if (this.isHovered()) sColor = AscCommon.GlobalSkin.ScrollerHoverColor
-		else sColor = AscCommon.GlobalSkin.ScrollerColor;
+		if (this.effect.isSelected()) sColor = AscCommon.GlobalSkin['anim-pane-item-selected'];
+		else if (this.isHovered()) sColor = AscCommon.GlobalSkin['anim-pane-item-hovered'];
+		else sColor = AscCommon.GlobalSkin['anim-pane-background'];
 
-		return AscCommon.RgbaHexToRGBA(sColor);
+		return sColor;
 	};
 	CAnimItem.prototype.getOutlineColor = function () {
 		return null;
@@ -2948,24 +2839,37 @@
 
 	window['AscCommon'].getIconsForLoad = getIconsForLoad;
 
-	AscCommon.GlobalSkin['anim-pane-background'] = AscCommon.RgbaHexToRGBA('#f7f7f7');
+	AscCommon.GlobalSkin['anim-pane-background'] = '#f0f0f0';
 
-	AscCommon.GlobalSkin['anim-pane-button-fill'] = { R: 0, G: 0, B: 0, A: 0 };
-	AscCommon.GlobalSkin['anim-pane-button-active-fill'] = {R: 190, G: 190, B: 190, A: 255};
-	AscCommon.GlobalSkin['anim-pane-button-hovered-fill'] = {R: 128, G: 128, B: 128, A: 255};
-	AscCommon.GlobalSkin['anim-pane-button-disabled-fill'] = {R: 0, G: 0, B: 0, A: 255};
+	AscCommon.GlobalSkin['anim-pane-control-outline'] = AscCommon.GlobalSkin.ScrollOutlineColor;
+	AscCommon.GlobalSkin['anim-pane-control-active-outline'] = AscCommon.GlobalSkin.ScrollOutlineActiveColor;
+	AscCommon.GlobalSkin['anim-pane-control-hovered-outline'] = AscCommon.GlobalSkin.ThumbnailsPageOutlineHover;
 
-	AscCommon.GlobalSkin['anim-pane-play-button-fill'] = AscCommon.RgbaHexToRGBA('#ffffff');
-	AscCommon.GlobalSkin['anim-pane-play-button-outline'] = AscCommon.RgbaHexToRGBA('#cbcbcb');
+	AscCommon.GlobalSkin['anim-pane-control-fill'] = AscCommon.GlobalSkin.ThumbnailsPageOutlineActive;
+	AscCommon.GlobalSkin['anim-pane-control-active-fill'] = AscCommon.GlobalSkin.ScrollerHoverColor;
+	AscCommon.GlobalSkin['anim-pane-control-hovered-fill'] = AscCommon.GlobalSkin.BackgroundColorThumbnails;
 
-	AscCommon.GlobalSkin['animation-effect-entr-fill'] = AscCommon.RgbaHexToRGBA('#77B583');
-	AscCommon.GlobalSkin['animation-effect-entr-outline'] = AscCommon.RgbaHexToRGBA('#0E8A26');
-	AscCommon.GlobalSkin['animation-effect-emph-fill'] = AscCommon.RgbaHexToRGBA('#FBC37C');
-	AscCommon.GlobalSkin['animation-effect-emph-outline'] = AscCommon.RgbaHexToRGBA('#FF8E00');
-	AscCommon.GlobalSkin['animation-effect-exit-fill'] = AscCommon.RgbaHexToRGBA('#F59A9A');
-	AscCommon.GlobalSkin['animation-effect-exit-outline'] = AscCommon.RgbaHexToRGBA('#F23D3D');
-	AscCommon.GlobalSkin['animation-effect-path-fill'] = AscCommon.RgbaHexToRGBA('#A1CEE3');
-	AscCommon.GlobalSkin['animation-effect-path-outline'] = AscCommon.RgbaHexToRGBA('#254662');
+	AscCommon.GlobalSkin['anim-pane-item-selected'] = AscCommon.GlobalSkin.ScrollerActiveColor;
+	AscCommon.GlobalSkin['anim-pane-item-hovered'] = AscCommon.GlobalSkin.ScrollerHoverColor;
+
+	AscCommon.GlobalSkin['anim-pane-timeline-ruler-outline'] = AscCommon.GlobalSkin.ScrollOutlineColor;
+
+	AscCommon.GlobalSkin['anim-pane-button-fill'] = null;
+	AscCommon.GlobalSkin['anim-pane-button-active-fill'] = '#ccc';
+	AscCommon.GlobalSkin['anim-pane-button-hovered-fill'] = '#ddd';
+	AscCommon.GlobalSkin['anim-pane-button-disabled-fill'] = null;
+
+	AscCommon.GlobalSkin['anim-pane-play-button-fill'] = '#ffffff';
+	AscCommon.GlobalSkin['anim-pane-play-button-outline'] = '#cbcbcb';
+
+	AscCommon.GlobalSkin['animation-effect-entr-fill'] = '#77B583';
+	AscCommon.GlobalSkin['animation-effect-entr-outline'] = '#0E8A26';
+	AscCommon.GlobalSkin['animation-effect-emph-fill'] = '#FBC37C';
+	AscCommon.GlobalSkin['animation-effect-emph-outline'] = '#FF8E00';
+	AscCommon.GlobalSkin['animation-effect-exit-fill'] = '#F59A9A';
+	AscCommon.GlobalSkin['animation-effect-exit-outline'] = '#F23D3D';
+	AscCommon.GlobalSkin['animation-effect-path-fill'] = '#A1CEE3';
+	AscCommon.GlobalSkin['animation-effect-path-outline'] = '#254662';
 	// AscCommon.GlobalSkin['animation-effect-mediacall-fill'] =
 	// AscCommon.GlobalSkin['animation-effect-mediacall-outline'] =
 	// AscCommon.GlobalSkin['animation-effect-verb-fill'] =
