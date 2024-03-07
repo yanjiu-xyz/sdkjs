@@ -1770,6 +1770,7 @@
 		// this.children - mainSeq, interactiveSeq
 
 		// Tmp field for animItems moving up/down
+		this.pressingPoint = null;
 		this.nPressedSlot = null;
 		this.nCurrentSlot = null;
 		this.bTopPart = false;
@@ -1782,6 +1783,7 @@
 				const hitInMenuButton = animItem.contextMenuButton.hit(x, y);
 				if (hit && !hitInEffectBar && !hitInMenuButton) {
 					oThis.nPressedSlot = index + seqIndex;
+					oThis.pressingPoint = { x: x, y: y };
 				}
 			})
 			this.onUpdate();
@@ -1789,6 +1791,11 @@
 		this.onMouseMoveCallback = function (event, x, y) {
 			if (this.nPressedSlot === null) { return }
 			const oThis = this;
+
+			const minRadius = 2; // in millimeters
+			const currentShift = Math.sqrt(Math.pow(oThis.pressingPoint.x - x, 2) + Math.pow(oThis.pressingPoint.y - y, 2));
+			const bDistancePassed = currentShift >= minRadius;
+			if (!bDistancePassed) { return }
 
 			let nLastCheckedSeq = null;
 			let hit = null;
@@ -1827,6 +1834,7 @@
 				}
 			}
 
+			this.pressingPoint = null;
 			this.nPressedSlot = null;
 			this.nCurrentSlot = null;
 			this.onUpdate();
