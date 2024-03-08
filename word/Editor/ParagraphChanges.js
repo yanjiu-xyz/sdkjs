@@ -1666,14 +1666,20 @@ CChangesParagraphSectPr.prototype.Undo = function()
 	var oParagraph = this.Class;
 	var oOldSectPr = oParagraph.SectPr;
 	oParagraph.SectPr = this.Old;
-	oParagraph.LogicDocument.UpdateSectionInfo(oOldSectPr, this.Old, false);
+	
+	let logicDocument = oParagraph.GetLogicDocument();
+	if (logicDocument)
+		logicDocument.UpdateSectionInfo(oOldSectPr, this.Old, false);
 };
 CChangesParagraphSectPr.prototype.Redo = function()
 {
 	var oParagraph = this.Class;
 	var oOldSectPr = oParagraph.SectPr;
 	oParagraph.SectPr = this.New;
-	oParagraph.LogicDocument.UpdateSectionInfo(oOldSectPr, this.New, false);
+	
+	let logicDocument = oParagraph.GetLogicDocument();
+	if (logicDocument)
+		logicDocument.UpdateSectionInfo(oOldSectPr, this.New, false);
 };
 CChangesParagraphSectPr.prototype.WriteToBinary = function(Writer)
 {
