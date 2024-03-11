@@ -6637,6 +6637,16 @@ background-repeat: no-repeat;\
 		this.WordControl.ShowAnimPane(bIsShow);
 	};
 
+	asc_docs_api.prototype.asc_ZoomOutTimeline = function() {
+		AscCommon.changeTimelineScale(true);
+	}
+	asc_docs_api.prototype.asc_ZoomInTimeline = function() {
+		AscCommon.changeTimelineScale(false);
+	}
+	asc_docs_api.prototype.asc_GetTrackingTime = function() {
+		return AscCommon.getTrackingTime();
+	}
+
 	asc_docs_api.prototype.asc_DeleteVerticalScroll = function()
 	{
 		this.WordControl.DeleteVerticalScroll();

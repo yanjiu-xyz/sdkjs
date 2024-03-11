@@ -1091,11 +1091,7 @@
 
 		function manageTimelineScale(event, x, y) {
 			if (!this.hit(x, y)) { return }
-			this.next.timeScaleIndex = (this.next.timeScaleIndex + 1) % TIME_SCALES.length
-			this.next.onUpdate()
-
-			// also updating seqList to redraw effect bars
-			editor.WordControl.m_oAnimPaneApi.list.Control.seqList.onUpdateSeqList()
+			console.log('scaleButton methods: asc_ZoomOutTimeline() or asc_ZoomOutTimeline()')
 		}
 
 		this.onMouseDownCallback = function (event, x, y) {
@@ -2859,6 +2855,50 @@
 		];
 	}
 
+	const changeTimelineScale = function (bZoomOut) {
+		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline;
+		if (bZoomOut) {
+			timeline.timeScaleIndex = Math.min(timeline.timeScaleIndex + 1, TIME_SCALES.length - 1);
+		} else {
+			timeline.timeScaleIndex = Math.max(timeline.timeScaleIndex - 1, 0);
+		}
+		timeline.onUpdate();
+
+		// also updating seqList to redraw effect bars
+		editor.WordControl.m_oAnimPaneApi.list.Control.seqList.onUpdateSeqList();
+	}
+
+	const getTrackingTime = function () {
+		const seqList = Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList;
+		let trackingTime = null;
+		seqList.forEachAnimItem(function (animItem) {
+			if (animItem.hitResult) {
+				switch (animItem.hitResult.type) {
+					case 'left':
+						// console.log('Начало:', animItem.getDelay())
+						trackingTime = animItem.getDelay();
+						break;
+
+					case 'right':
+						// console.log('Окончание:', animItem.getDelay() + animItem.getDuration())
+						trackingTime = animItem.getDelay() + animItem.getDuration();
+						break;
+
+					case 'partition':
+						// console.log('Цикл:', animItem.getDuration())
+						trackingTime = animItem.getDuration();
+						break;
+
+					case 'center':
+						// console.log('Начало:', animItem.getDelay())
+						trackingTime = animItem.getDelay();
+						break;
+				}
+			};
+		})
+		return trackingTime;
+	}
+
 	// EXPORTS
 	window['AscCommon'] = window['AscCommon'] || {};
 	window['AscCommon'].CAnimPaneHeader = CAnimPaneHeader;
@@ -2866,6 +2906,9 @@
 	window['AscCommon'].CTimelineContainer = CTimelineContainer;
 
 	window['AscCommon'].getIconsForLoad = getIconsForLoad;
+
+	window['AscCommon'].changeTimelineScale = changeTimelineScale;
+	window['AscCommon'].getTrackingTime = getTrackingTime;
 
 	AscCommon.GlobalSkin['anim-pane-background'] = '#f0f0f0';
 
