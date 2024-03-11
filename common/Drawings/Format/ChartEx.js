@@ -253,9 +253,8 @@ function (window, undefined) {
 		oCopy.setHidden(this.hidden);
 	};
 
-	// isVertAxis => shows if axis is vertical
-	CAxis.prototype.setAxPos = function (isVertAxis) {
-		const axPos = isVertAxis ? window['AscFormat'].AX_POS_L : window['AscFormat'].AX_POS_B;
+	CAxis.prototype.setAxPos = function (pos) {
+		const axPos = pos ? window['AscFormat'].AX_POS_L : window['AscFormat'].AX_POS_B;
 		CAxisBase.prototype.setAxPos.call(this, axPos);
 	}
 

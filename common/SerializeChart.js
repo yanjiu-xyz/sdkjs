@@ -13507,15 +13507,11 @@ BinaryChartReader.prototype.ReadCT_ChartEx = function (type, length, val) {
         if (oNewVal && oNewVal.axId && Array.isArray(oNewVal.axId)) {
             for (let i = 0; i < oNewVal.axId.length; i++) {
                 const axis = oNewVal.axId[i];
-                const start = (oNewVal.axId.length > 1) ? i : i + 1;
-                axis.setAxPos(start);
+                axis.setAxPos(i);
             }
             if (oNewVal.axId.length === 2) {
                 oNewVal.axId[0].setCrossAx(oNewVal.axId[1]);
                 oNewVal.axId[1].setCrossAx(oNewVal.axId[0]);
-            }
-            if (oNewVal.axId.length === 1) {
-                oNewVal.axId[0].setCrossAx(oNewVal.axId[0]);
             }
         }
         val.setPlotArea(oNewVal);
