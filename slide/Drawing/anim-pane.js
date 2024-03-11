@@ -1672,6 +1672,17 @@
 		return (fPos - oCoefs.b) / oCoefs.a;
 	};
 
+	CTimeline.prototype.changeTimelineScale = function (bZoomOut) {
+		this.timeScaleIndex = bZoomOut ?
+			Math.min(this.timeScaleIndex + 1, TIME_SCALES.length - 1) :
+			Math.max(this.timeScaleIndex - 1, 0)
+
+		this.onUpdate();
+
+		// also updating seqList to redraw effect bars
+		editor.WordControl.m_oAnimPaneApi.list.Control.seqList.onUpdateSeqList();
+	}
+
 	CTimeline.prototype.getFillColor = function () {
 		return null;
 	};
@@ -1976,6 +1987,36 @@
 			this.cachedCanvas = null;
 		}
 	};
+
+	CSeqList.prototype.getTrackingTime = function () {
+		let trackingTime = null;
+		this.forEachAnimItem(function (animItem) {
+			if (animItem.hitResult) {
+				switch (animItem.hitResult.type) {
+					case 'left':
+						// console.log('Начало:', animItem.getDelay())
+						trackingTime = animItem.getDelay();
+						break;
+
+					case 'right':
+						// console.log('Окончание:', animItem.getDelay() + animItem.getDuration())
+						trackingTime = animItem.getDelay() + animItem.getDuration();
+						break;
+
+					case 'partition':
+						// console.log('Цикл:', animItem.getDuration())
+						trackingTime = animItem.getDuration();
+						break;
+
+					case 'center':
+						// console.log('Начало:', animItem.getDelay())
+						trackingTime = animItem.getDelay();
+						break;
+				}
+			};
+		})
+		return trackingTime;
+	}
 
 	CSeqList.prototype.forEachAnimItem = function (callback) {
 		// У счетчиков сквозная нумерация
@@ -2855,49 +2896,6 @@
 		];
 	}
 
-	const changeTimelineScale = function (bZoomOut) {
-		const timeline = Asc.editor.WordControl.m_oAnimPaneApi.timeline.Control.timeline;
-		if (bZoomOut) {
-			timeline.timeScaleIndex = Math.min(timeline.timeScaleIndex + 1, TIME_SCALES.length - 1);
-		} else {
-			timeline.timeScaleIndex = Math.max(timeline.timeScaleIndex - 1, 0);
-		}
-		timeline.onUpdate();
-
-		// also updating seqList to redraw effect bars
-		editor.WordControl.m_oAnimPaneApi.list.Control.seqList.onUpdateSeqList();
-	}
-
-	const getTrackingTime = function () {
-		const seqList = Asc.editor.WordControl.m_oAnimPaneApi.list.Control.seqList;
-		let trackingTime = null;
-		seqList.forEachAnimItem(function (animItem) {
-			if (animItem.hitResult) {
-				switch (animItem.hitResult.type) {
-					case 'left':
-						// console.log('Начало:', animItem.getDelay())
-						trackingTime = animItem.getDelay();
-						break;
-
-					case 'right':
-						// console.log('Окончание:', animItem.getDelay() + animItem.getDuration())
-						trackingTime = animItem.getDelay() + animItem.getDuration();
-						break;
-
-					case 'partition':
-						// console.log('Цикл:', animItem.getDuration())
-						trackingTime = animItem.getDuration();
-						break;
-
-					case 'center':
-						// console.log('Начало:', animItem.getDelay())
-						trackingTime = animItem.getDelay();
-						break;
-				}
-			};
-		})
-		return trackingTime;
-	}
 
 	// EXPORTS
 	window['AscCommon'] = window['AscCommon'] || {};
@@ -2906,9 +2904,6 @@
 	window['AscCommon'].CTimelineContainer = CTimelineContainer;
 
 	window['AscCommon'].getIconsForLoad = getIconsForLoad;
-
-	window['AscCommon'].changeTimelineScale = changeTimelineScale;
-	window['AscCommon'].getTrackingTime = getTrackingTime;
 
 	AscCommon.GlobalSkin['anim-pane-background'] = '#f0f0f0';
 

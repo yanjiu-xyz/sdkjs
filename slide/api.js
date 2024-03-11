@@ -6638,13 +6638,13 @@ background-repeat: no-repeat;\
 	};
 
 	asc_docs_api.prototype.asc_ZoomOutTimeline = function() {
-		AscCommon.changeTimelineScale(true);
+		this.WordControl.ChangeTimelineScale(true);
 	}
 	asc_docs_api.prototype.asc_ZoomInTimeline = function() {
-		AscCommon.changeTimelineScale(false);
+		this.WordControl.ChangeTimelineScale(false);
 	}
-	asc_docs_api.prototype.asc_GetTrackingTime = function() {
-		return AscCommon.getTrackingTime();
+	asc_docs_api.prototype.asc_GetEffectBarTrackingTime = function() {
+		return this.WordControl.GetEffectBarTrackingTime();
 	}
 
 	asc_docs_api.prototype.asc_DeleteVerticalScroll = function()
@@ -9452,6 +9452,9 @@ background-repeat: no-repeat;\
 	asc_docs_api.prototype['ShowThumbnails']                      = asc_docs_api.prototype.ShowThumbnails;
 	asc_docs_api.prototype['asc_ShowNotes']                       = asc_docs_api.prototype.asc_ShowNotes;
 	asc_docs_api.prototype['asc_ShowAnimPane']                    = asc_docs_api.prototype.asc_ShowAnimPane;
+	asc_docs_api.prototype['asc_ZoomOutTimeline']                 = asc_docs_api.prototype.asc_ZoomOutTimeline;
+	asc_docs_api.prototype['asc_ZoomInTimeline']                  = asc_docs_api.prototype.asc_ZoomInTimeline;
+	asc_docs_api.prototype['asc_GetEffectBarTrackingTime']        = asc_docs_api.prototype.asc_GetEffectBarTrackingTime;
 	asc_docs_api.prototype['asc_DeleteVerticalScroll']            = asc_docs_api.prototype.asc_DeleteVerticalScroll;
 	asc_docs_api.prototype['syncOnThumbnailsShow']                = asc_docs_api.prototype.syncOnThumbnailsShow;
 	asc_docs_api.prototype['can_AddHyperlink']                    = asc_docs_api.prototype.can_AddHyperlink;
