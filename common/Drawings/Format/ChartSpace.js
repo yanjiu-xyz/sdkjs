@@ -4106,12 +4106,12 @@ function(window, undefined) {
 			if (!cachedData) {
 				return;
 			}
-			if (cachedData.aggregation) {
-				return cachedData.aggregation;
-			} else if (cachedData.results) {
-				return cachedData.results;
-			} else if (cachedData.accumulation){
-				return cachedData.accumulation;
+			if (cachedData.clusteredColumn && cachedData.clusteredColumn.aggregation) {
+				return cachedData.clusteredColumn.aggregation;
+			} else if (cachedData.clusteredColumn && cachedData.clusteredColumn.results) {
+				return cachedData.clusteredColumn.results;
+			} else if (cachedData.waterfall){
+				return cachedData.waterfall;
 			}else {
 				return {};
 			}
@@ -4121,12 +4121,14 @@ function(window, undefined) {
 			if (!cachedData) {
 				return;
 			}
-			if (cachedData.aggregation) {
-				return cachedData.aggregation[key];
-			} else if (cachedData.results) {
-				return cachedData.results[key].occurrence;
-			} else if (cachedData.accumulation) {
-				return cachedData.accumulation[key];
+			if (cachedData.clusteredColumn && cachedData.clusteredColumn.aggregation) {
+				return cachedData.clusteredColumn.aggregation[key];
+			} else if (cachedData.clusteredColumn && cachedData.clusteredColumn.results) {
+				return cachedData.clusteredColumn.results[key].occurrence;
+			} else if (cachedData.waterfall) {
+				return cachedData.waterfall[key];
+			} else if (cachedData.funnel) {
+				return cachedData.funnel[key];
 			} else {
 				return null;
 			}
@@ -4176,10 +4178,7 @@ function(window, undefined) {
 		// TODO after new succefull implementation of new type remove option here
 		const isChartEx = this.isChartEx();
 		const type = this.chart && this.chart.plotArea && this.chart.plotArea.plotAreaRegion && this.chart.plotArea.plotAreaRegion.series && this.chart.plotArea.plotAreaRegion.series[0] ? this.chart.plotArea.plotAreaRegion.series[0].layoutId : null;
-		if (isChartEx && type !== AscFormat.SERIES_LAYOUT_BOX_WHISKER && !type) {
-			return ;
-		}
-		if (isChartEx && (type === AscFormat.SERIES_LAYOUT_BOX_WHISKER || type === AscFormat.SERIES_LAYOUT_FUNNEL || type === AscFormat.SERIES_LAYOUT_PARETO_LINE || type === AscFormat.SERIES_LAYOUT_REGION_MAP || type === AscFormat.SERIES_LAYOUT_SUNBURST || type === AscFormat.SERIES_LAYOUT_TREEMAP)) {
+		if (isChartEx && !type && (type === AscFormat.SERIES_LAYOUT_BOX_WHISKER || type === AscFormat.SERIES_LAYOUT_PARETO_LINE || type === AscFormat.SERIES_LAYOUT_REGION_MAP || type === AscFormat.SERIES_LAYOUT_SUNBURST || type === AscFormat.SERIES_LAYOUT_TREEMAP)) {
 			return ;
 		}
 		//----------------------------------
@@ -4534,82 +4533,91 @@ function(window, undefined) {
 				if (!this.chart || !this.chart.plotArea) {
 					return [];
 				}
-				if (oAxis.isValuesAxis()) {
-					// for the val axis, regularly get labels
-					aStrings = this.getValLabels(oAxis);
-				} else {
-					const strSeria = this.chart.plotArea.plotAreaRegion && this.chart.plotArea.plotAreaRegion.series ? this.chart.plotArea.plotAreaRegion.series[0] : null;
-					if (strSeria) {
-						const cachedData = this.chart.plotArea.plotAreaRegion.cachedData;
-						const type = this.chart.plotArea.plotAreaRegion.series[0].layoutId;
-						if (!cachedData || !oAxis.scale) {
-							return [];
-						}
 
+				const strSeria = this.chart.plotArea.plotAreaRegion && this.chart.plotArea.plotAreaRegion.series ? this.chart.plotArea.plotAreaRegion.series[0] : null;
+				if (strSeria) {
+					const cachedData = this.chart.plotArea.plotAreaRegion.cachedData;
+					const type = this.chart.plotArea.plotAreaRegion.series[0].layoutId;
+					if (!cachedData || !oAxis.scale) {
+						return [];
+					}
+
+					if (oAxis.isValuesAxis()) {
+						aStrings = this.getValLabels(oAxis);
+					} else if (type === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN && cachedData.clusteredColumn && cachedData.clusteredColumn.aggregation) {
 						// if data is aggregated then convert array of integers into chars
-						if (type === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN && cachedData.aggregation) {
-							const strCache = this.chart.plotArea.plotAreaRegion.series ? this.chart.plotArea.plotAreaRegion.series[0].getCatLit() : null;
-							if (strCache && strCache.pts) {
-								const mySet = {};
-								for (let i = 0; i < strCache.pts.length; i++) {
-									// If no labels exist, then excel just leaves empty catAxis
-									const key = strCache.pts[i].val;
-									if (!mySet.hasOwnProperty(key)) {
-										mySet[key] = true;
-										aStrings.push(key);
-									}
+						const strCache = strSeria.getCatLit();
+						if (strCache && strCache.pts) {
+							const mySet = {};
+							for (let i = 0; i < strCache.pts.length; i++) {
+								// If no labels exist, then excel just leaves empty catAxis
+								const key = strCache.pts[i].val;
+								if (!mySet.hasOwnProperty(key)) {
+									mySet[key] = true;
+									aStrings.push(key);
 								}
-							} else {
-								aStrings.push('');
 							}
-						} else if (type === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN && cachedData.binning) {
-							// obtain properly formated array of integers
-							const bStrings = this.getValLabels(oAxis);
-							const binning = cachedData.binning;
+						} else {
+							aStrings.push('');
+						}
+					} else if (type === AscFormat.SERIES_LAYOUT_CLUSTERED_COLUMN && cachedData.clusteredColumn && cachedData.clusteredColumn.binning) {
+						// obtain properly formated array of integers
+						const bStrings = this.getValLabels(oAxis);
+						const binning = cachedData.clusteredColumn.binning;
 
-							//convert array of formated strings into ranges
-							if (bStrings && bStrings.length != 0) {
-								// ranges always start with '[' and end with ']', however between they can have '(' and ')'
-								let start = '[';
-								let end = binning.intervalClosed === "r" ? ')' : ']';
-								// user can manually set minimum and maximum, therefore alternative start and end needed
-								const alternativeStart = binning.intervalClosed === 'r' ? '<' : '≤';
-								const alternativeEnd = binning.intervalClosed === 'r' ? '≥' : '>';
+						//convert array of formated strings into ranges
+						if (bStrings && bStrings.length != 0) {
+							// ranges always start with '[' and end with ']', however between they can have '(' and ')'
+							let start = '[';
+							let end = binning.intervalClosed === "r" ? ')' : ']';
+							// user can manually set minimum and maximum, therefore alternative start and end needed
+							const alternativeStart = binning.intervalClosed === 'r' ? '<' : '≤';
+							const alternativeEnd = binning.intervalClosed === 'r' ? '≥' : '>';
 
-								const isAlternativeStartExist = binning.underflow === 0 || binning.underflow ? true : false;
-								const isAlternativeEndExist = binning.overflow === 0 || binning.overflow ? true : false;
-								// first check is alternativeStart exist, and append alternativeStartSign with value,
-								// also because start not the first anymore, we can change its value from '[' to '(';
-								if (isAlternativeStartExist) {
-									aStrings.push(alternativeStart + bStrings[0]);
+							const isAlternativeStartExist = binning.underflow === 0 || binning.underflow ? true : false;
+							const isAlternativeEndExist = binning.overflow === 0 || binning.overflow ? true : false;
+							// first check is alternativeStart exist, and append alternativeStartSign with value,
+							// also because start not the first anymore, we can change its value from '[' to '(';
+							if (isAlternativeStartExist) {
+								aStrings.push(alternativeStart + bStrings[0]);
+								start = '(';
+							}
+							// if element not the first one, then change value of start
+							// if element is last one and no alternativeEnd exist, then change value of end
+							for (let i = 0; i < (bStrings.length - 1); i++) {
+								if (i === 1 && start != "(" && binning.intervalClosed !== 'r') {
 									start = '(';
 								}
-								// if element not the first one, then change value of start
-								// if element is last one and no alternativeEnd exist, then change value of end
-								for (let i = 0; i < (bStrings.length - 1); i++) {
-									if (i === 1 && start != "(" && binning.intervalClosed !== 'r') {
-										start = '(';
-									}
 
-									if (i === (bStrings.length - 2) && !isAlternativeEndExist && binning.intervalClosed === "r") {
-										end = ']';
-									}
-									aStrings.push(start + bStrings[i] + ", " + bStrings[i + 1] + end)
+								if (i === (bStrings.length - 2) && !isAlternativeEndExist && binning.intervalClosed === "r") {
+									end = ']';
 								}
-								// add alternativeEnd if exist
-								if (isAlternativeEndExist) {
-									const val = (bStrings.length > 1) ? bStrings[bStrings.length - 1] : binning.overflow;
-									aStrings.push(alternativeEnd +  " " + val);
-								}
+								aStrings.push(start + bStrings[i] + ", " + bStrings[i + 1] + end)
 							}
-						} else if (type === AscFormat.SERIES_LAYOUT_WATERFALL) {
-							const strCache = this.chart.plotArea.plotAreaRegion.series ? this.chart.plotArea.plotAreaRegion.series[0].getCatLit(type) : null;
-							if (strCache) {
-								for ( let i = 0; i < strCache.pts.length; i++) {
-									aStrings.push(strCache.pts[i].val);
-								}
-							} else {
-								aStrings = this.getValLabels(oAxis);
+							// add alternativeEnd if exist
+							if (isAlternativeEndExist) {
+								const val = (bStrings.length > 1) ? bStrings[bStrings.length - 1] : binning.overflow;
+								aStrings.push(alternativeEnd +  " " + val);
+							}
+						}
+					} else if (type === AscFormat.SERIES_LAYOUT_WATERFALL) {
+						const strCache = strSeria.getCatLit(type);
+						if (strCache) {
+							for ( let i = 0; i < strCache.pts.length; i++) {
+								aStrings.push(strCache.pts[i].val);
+							}
+						} else {
+							aStrings = this.getValLabels(oAxis);
+						}
+					} else if (type === AscFormat.SERIES_LAYOUT_FUNNEL) {
+						const strCache = strSeria.getCatLit(type);
+						if (strCache) {
+							for ( let i = 0; i < strCache.pts.length; i++) {
+								aStrings.push(strCache.pts[i].val);
+							}
+						} else {
+							for ( let i = cachedData.funnel.length - 1; i >= 0; i--) {
+								aStrings.push("" + (i + 1));
 							}
 						}
 					}
@@ -4719,7 +4727,7 @@ function(window, undefined) {
 		
 		let bCorrected = false;
 		let fL = oRect.x, fT = oRect.y, fR = oRect.x + oRect.w, fB = oRect.y + oRect.h;
-		const isChartEX = this.isChartEx();
+		const isChartEx = this.isChartEx();
 		let fHorPadding = 0.0;
 		let fVertPadding = 0.0;
 		let fHorInterval = null;
@@ -4794,7 +4802,7 @@ function(window, undefined) {
 					}
 					default:
 					{ //includes AutoZero
-						if (isChartEX) {
+						if (isChartEx) {
 							fCrossValue = oCrossAxis.scale[0];
 						} else if(oCrossAxis.scale[0] <= 0 && oCrossAxis.scale[oCrossAxis.scale.length - 1] >= 0) {
 							fCrossValue = 0;
@@ -4869,7 +4877,9 @@ function(window, undefined) {
 				}
 			}
 
-
+			if (isChartEx && aAxesSet.length === 1) {
+				fPos = oRect.x;
+			}
 
 			oCurAxis.labels = oLabelsBox;
 			oCurAxis.posX = null;
@@ -4892,7 +4902,7 @@ function(window, undefined) {
 				fLayoutRadarCatLabelsBox(oLabelsBox, oRect, aPoints);
 			}
 			else if(oCurAxis.isHorizontal()) {
-				oCurAxis.posY = isChartEX ? posY : fAxisPos;
+				oCurAxis.posY = isChartEx ? posY : fAxisPos;
 				oCurAxis.xPoints = [];
 				aPoints = oCurAxis.xPoints;
 				if(oLabelsBox) {
@@ -5130,10 +5140,7 @@ function(window, undefined) {
 		// TODO after new succefull implementation of new type remove option here
 		const isChartEx = this.isChartEx();
 		const type = this.chart && this.chart.plotArea && this.chart.plotArea.plotAreaRegion && this.chart.plotArea.plotAreaRegion.series && this.chart.plotArea.plotAreaRegion.series[0] ? this.chart.plotArea.plotAreaRegion.series[0].layoutId : null;
-		if (isChartEx && type !== AscFormat.SERIES_LAYOUT_BOX_WHISKER && !type) {
-			return ;
-		}
-		if (isChartEx && (type === AscFormat.SERIES_LAYOUT_BOX_WHISKER || type === AscFormat.SERIES_LAYOUT_FUNNEL || type === AscFormat.SERIES_LAYOUT_PARETO_LINE || type === AscFormat.SERIES_LAYOUT_REGION_MAP || type === AscFormat.SERIES_LAYOUT_SUNBURST || type === AscFormat.SERIES_LAYOUT_TREEMAP)) {
+		if (isChartEx && !type && (type === AscFormat.SERIES_LAYOUT_BOX_WHISKER || type === AscFormat.SERIES_LAYOUT_PARETO_LINE || type === AscFormat.SERIES_LAYOUT_REGION_MAP || type === AscFormat.SERIES_LAYOUT_SUNBURST || type === AscFormat.SERIES_LAYOUT_TREEMAP)) {
 			return ;
 		}
 		//----------------------------------
@@ -5202,12 +5209,14 @@ function(window, undefined) {
 					aAxes.push(oAxesMap[sAxId]);
 				}
 			}
-			var aAllAxes = [];//array of axes sets
+			var aAllAxes = [[]];//array of axes sets
 			var aSeriesAxes = [];
 			var dSeriesLabelsWidth = 0;
 			var oSetAxis;
 			if (this.isChartEx()) {
-				aAllAxes.push([this.chart.plotArea.axId[0], this.chart.plotArea.axId[1]]);
+				for (let i = 0; i < this.chart.plotArea.axId.length; i++) {
+					aAllAxes[0].push(this.chart.plotArea.axId[i]);
+				}
 			} else {
 				while (aAxes.length > 0) {
 					oCurAxis = aAxes.splice(0, 1)[0];
@@ -8462,10 +8471,7 @@ function(window, undefined) {
 		// TODO after new succefull implementation of new type remove option here
 		const isChartEx = this.isChartEx();
 		const type = this.chart && this.chart.plotArea && this.chart.plotArea.plotAreaRegion && this.chart.plotArea.plotAreaRegion.series && this.chart.plotArea.plotAreaRegion.series[0] ? this.chart.plotArea.plotAreaRegion.series[0].layoutId : null;
-		if (isChartEx && type !== AscFormat.SERIES_LAYOUT_BOX_WHISKER && !type) {
-			return ;
-		}
-		if (isChartEx && (type === AscFormat.SERIES_LAYOUT_BOX_WHISKER || type === AscFormat.SERIES_LAYOUT_FUNNEL || type === AscFormat.SERIES_LAYOUT_PARETO_LINE || type === AscFormat.SERIES_LAYOUT_REGION_MAP || type === AscFormat.SERIES_LAYOUT_SUNBURST || type === AscFormat.SERIES_LAYOUT_TREEMAP)) {
+		if (isChartEx && !type && (type === AscFormat.SERIES_LAYOUT_BOX_WHISKER || type === AscFormat.SERIES_LAYOUT_PARETO_LINE || type === AscFormat.SERIES_LAYOUT_REGION_MAP || type === AscFormat.SERIES_LAYOUT_SUNBURST || type === AscFormat.SERIES_LAYOUT_TREEMAP)) {
 			return ;
 		}
 		//----------------------------------
