@@ -6904,8 +6904,8 @@ var editor;
     History.StartTransaction();
     return true;
   };
-  spreadsheet_api.prototype.asc_endPaste = function () {
-    History.EndTransaction();
+  spreadsheet_api.prototype.asc_endPaste = function (checkLockLastAction) {
+    History.EndTransaction(checkLockLastAction);
   };
   spreadsheet_api.prototype.asc_Recalculate = function () {
       History.EndTransaction();
@@ -6927,7 +6927,7 @@ var editor;
 		return this.asc_canPaste();
 	};
 	spreadsheet_api.prototype.onEndBuilderScript = function() {
-		this.asc_endPaste();
+		this.asc_endPaste(true);
 		return true;
 	};
 
