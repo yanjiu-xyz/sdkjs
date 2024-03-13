@@ -3910,19 +3910,97 @@ function HierarchyAlgorithm() {
 		if (this.params[AscFormat.Param_type_off] === undefined) {
 			this.params[AscFormat.Param_type_off] = AscFormat.ParameterVal_offset_ctr;
 		}
+
+		if (this.params[AscFormat.Param_type_nodeVertAlign] === undefined &&
+			(this.params[AscFormat.Param_type_linDir] === AscFormat.ParameterVal_linearDirection_fromL ||
+			this.params[AscFormat.Param_type_linDir] === AscFormat.ParameterVal_linearDirection_fromR)) {
+			this.params[AscFormat.Param_type_nodeVertAlign] = AscFormat.ParameterVal_nodeVerticalAlignment_mid;
+		}
+
+		if (this.params[AscFormat.Param_type_nodeHorzAlign] === undefined &&
+			(this.params[AscFormat.Param_type_linDir] === AscFormat.ParameterVal_linearDirection_fromT ||
+				this.params[AscFormat.Param_type_linDir] === AscFormat.ParameterVal_linearDirection_fromB)) {
+			this.params[AscFormat.Param_type_nodeHorzAlign] = AscFormat.ParameterVal_nodeHorizontalAlignment_ctr;
+		}
 	}
 	LinearAlgorithm.prototype.applyLeftNodeAlign = function (isCalculateScaleCoefficients) {
 		const shapeContainer = this.getShapeContainer(isCalculateScaleCoefficients);
 		const bounds = shapeContainer.getBounds();
 
 		shapeContainer.forEachShape(function (shape) {
-			shape.moveTo(-shape.x, 0);
-		})
+			const shapeBounds = shape.getBounds();
+			shape.moveTo(bounds.l - shapeBounds.l, 0);
+		});
+	};
+	LinearAlgorithm.prototype.applyRightNodeAlign = function (isCalculateScaleCoefficients) {
+		const shapeContainer = this.getShapeContainer(isCalculateScaleCoefficients);
+		const bounds = shapeContainer.getBounds();
+
+		shapeContainer.forEachShape(function (shape) {
+			const shapeBounds = shape.getBounds();
+			shape.moveTo(bounds.r - shapeBounds.r, 0);
+		});
+	};
+	LinearAlgorithm.prototype.applyCenterNodeAlign = function (isCalculateScaleCoefficients) {
+		const shapeContainer = this.getShapeContainer(isCalculateScaleCoefficients);
+		const bounds = shapeContainer.getBounds();
+		const boundsCenter = bounds.l + (bounds.r - bounds.l) / 2;
+		shapeContainer.forEachShape(function (shape) {
+			const shapeBounds = shape.getBounds();
+			shape.moveTo(boundsCenter - (shapeBounds.l + (shapeBounds.r - shapeBounds.l) / 2), 0);
+		});
+	};
+	LinearAlgorithm.prototype.applyTopNodeAlign = function (isCalculateScaleCoefficients) {
+		const shapeContainer = this.getShapeContainer(isCalculateScaleCoefficients);
+		const bounds = shapeContainer.getBounds();
+
+		shapeContainer.forEachShape(function (shape) {
+			const shapeBounds = shape.getBounds();
+			shape.moveTo(0, bounds.t - shapeBounds.t);
+		});
+	};
+	LinearAlgorithm.prototype.applyBottomNodeAlign = function (isCalculateScaleCoefficients) {
+		const shapeContainer = this.getShapeContainer(isCalculateScaleCoefficients);
+		const bounds = shapeContainer.getBounds();
+
+		shapeContainer.forEachShape(function (shape) {
+			const shapeBounds = shape.getBounds();
+			shape.moveTo(0, bounds.b - shapeBounds.b);
+		});
+	};
+	LinearAlgorithm.prototype.applyMidNodeAlign = function (isCalculateScaleCoefficients) {
+		const shapeContainer = this.getShapeContainer(isCalculateScaleCoefficients);
+		const bounds = shapeContainer.getBounds();
+		const boundsCenter = bounds.t + (bounds.b - bounds.t) / 2;
+		shapeContainer.forEachShape(function (shape) {
+			const shapeBounds = shape.getBounds();
+			shape.moveTo(0, boundsCenter - (shapeBounds.t + (shapeBounds.b - shapeBounds.t) / 2));
+		});
 	};
 	LinearAlgorithm.prototype.applyAligns = function (isCalculateScaleCoefficients) {
 		switch (this.params[AscFormat.Param_type_nodeHorzAlign]) {
 			case AscFormat.ParameterVal_nodeHorizontalAlignment_l:
 				this.applyLeftNodeAlign(isCalculateScaleCoefficients);
+				break;
+			case AscFormat.ParameterVal_nodeHorizontalAlignment_ctr:
+				this.applyCenterNodeAlign(isCalculateScaleCoefficients);
+				break;
+			case AscFormat.ParameterVal_nodeHorizontalAlignment_r:
+				this.applyRightNodeAlign(isCalculateScaleCoefficients);
+				break;
+			default:
+				break;
+		}
+
+		switch (this.params[AscFormat.Param_type_nodeVertAlign]) {
+			case AscFormat.ParameterVal_nodeVerticalAlignment_t:
+				this.applyTopNodeAlign(isCalculateScaleCoefficients);
+				break;
+			case AscFormat.ParameterVal_nodeVerticalAlignment_mid:
+				this.applyMidNodeAlign(isCalculateScaleCoefficients);
+				break;
+			case AscFormat.ParameterVal_nodeVerticalAlignment_b:
+				this.applyBottomNodeAlign(isCalculateScaleCoefficients);
 				break;
 			default:
 				break;
