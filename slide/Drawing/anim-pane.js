@@ -1091,7 +1091,14 @@
 
 		function manageTimelineScale(event, x, y) {
 			if (!this.hit(x, y)) { return }
-			console.log('scaleButton methods: asc_ZoomOutTimeline() or asc_ZoomOutTimeline()')
+
+			const data = new AscCommonSlide.CContextMenuData()
+			data.Type = Asc.c_oAscContextMenuTypes.TimelineZoom;
+			// TODO: Посчитать координаты
+			data.X_abs = global_mouseEvent.X;
+			data.Y_abs = global_mouseEvent.Y;
+			
+			editor.sync_ContextMenuCallback(data);
 		}
 
 		this.onMouseDownCallback = function (event, x, y) {
