@@ -1723,8 +1723,9 @@ CChartsDrawer.prototype =
 
 		let calcErrValues = function (_seria, _l, _col, isHorAxis) {
 			// either horAxis with horErrbars or vertAxis with vertErrBars
-			const statement1 = (isHorAxis && _seria.errBars && (_seria.errBars.errDir === AscFormat.st_errdirX || _seria.errBars.errDir === null));
-			const statement2 = (!isHorAxis && _seria.errBars && (_seria.errBars.errDir === AscFormat.st_errdirY || _seria.errBars.errDir === null));
+			let errBars = _seria.errBars[0];
+			const statement1 = (isHorAxis && errBars && (errBars.errDir === AscFormat.st_errdirX || errBars.errDir === null));
+			const statement2 = (!isHorAxis && errBars && (errBars.errDir === AscFormat.st_errdirY || errBars.errDir === null));
 			if (statement1 || statement2) {
 				var oErrVal = t.errBars.calculateErrVal(chart, _l, _col);
 				if (oErrVal) {
@@ -1737,7 +1738,7 @@ CChartsDrawer.prototype =
 
 					var plusErrVal = oErrVal.plusErrVal;
 					var minusErrVal = oErrVal.minusErrVal
-					switch (_seria.errBars.errBarType) {
+					switch (errBars.errBarType) {
 						case AscFormat.st_errbartypeBOTH: {
 							if (maxErr === null || maxErr < pointVal + plusErrVal) {
 								maxErr = pointVal + plusErrVal;
@@ -6172,12 +6173,13 @@ drawBarChart.prototype = {
 				}
 				this.paths.series[serIdx][idx] = paths;
 
-				if (this.chart.series[i].errBars) {
+				let errBars = this.chart.series[i].errBars[0];
+				if (errBars) {
 					var _pointX = (startX + individualBarWidth / 2) / this.chartProp.pxToMM;
 					var pointY = (startY + height) / this.chartProp.pxToMM;
 					var _pointVal = this.cChartDrawer.getValWithStacked(i, idx, this.chart);
 					// var _pointVal = this.subType === "stacked" || this.subType === "stackedPer" ? this._getStackedValue(this.chart.series, i, j, val) : val;
-					if (this.chart.series[i].errBars) {
+					if (errBars) {
 						this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, _pointVal,  serIdx, idx);
 					}
 				}
@@ -7275,7 +7277,8 @@ drawLineChart.prototype = {
 
 				if (val != null) {
 					this.paths.points[i][n] = this.cChartDrawer.calculatePoint(x, y, compiledMarkerSize, compiledMarkerSymbol);
-					if (this.chart.series[i].errBars) {
+					let errBars = this.chart.series[i].errBars[0];
+					if (errBars) {
 						this.cChartDrawer.errBars.putPoint(x, y, val, null,  seria.idx, n);
 					}
 					points[i][n] = {x: x, y: y};
@@ -9468,15 +9471,14 @@ drawHBarChart.prototype = {
 					this.paths.series[serIdx][idx] = paths;
 				}
 
-				if (this.chart.series[i].errBars) {
+				let errBars = this.chart.series[i].errBars[0];
+				if (errBars) {
 					var _pointX = (startX) / this.chartProp.pxToMM;
 					var pointY = (startY - individualBarHeight / 2) / this.chartProp.pxToMM;
 					//var _pointVal = this.subType === "stacked" || this.subType === "stackedPer" ? this._getStackedValue(this.chart.series, i, j, val) : val;
 					var _pointVal = this.cChartDrawer.getValWithStacked(i, idx, this.chart);
 					this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, _pointVal,  serIdx, idx);
-					if (this.chart.series[i].errBars) {
-						this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, _pointVal,  serIdx, idx);
-					}
+					this.cChartDrawer.errBars.putPoint(_pointX, pointY, _pointVal, _pointVal,  serIdx, idx);
 				}
 
 			}
@@ -12865,7 +12867,9 @@ drawScatterChart.prototype = {
 						let x = this.cChartDrawer.getYPosition(xVal, this.catAx, true);
 						let y = this.cChartDrawer.getYPosition(yVal, this.valAx, true);
 						this.paths.points[i].push(this.cChartDrawer.calculatePoint(x, y, compiledMarkerSize, compiledMarkerSymbol));
-						if (this.chart.series[i].errBars) {
+
+						let errBars = this.chart.series[i].errBars[0];
+						if (errBars) {
 							this.cChartDrawer.errBars.putPoint(x, y, xVal, yVal, seria.idx, idx);
 						}
 
@@ -15460,7 +15464,7 @@ CErrBarsDraw.prototype = {
 					}
 					var seria = this.charts[i].chart.series[j];
 					for (var k = 0; k < this.paths[i][j].length; k++) {
-						var errBars = seria.getErrBars();
+						var errBars = seria.getErrBars()[0];
 						var pen = errBars && errBars.getPen();
 						if (pen) {
 							this.cChartDrawer.drawPath(this.paths[i][j][k], pen);
@@ -15542,10 +15546,10 @@ CErrBarsDraw.prototype = {
 		for (var i = 0; i < this.points.length; i++) {
 			if (this.points[i]) {
 				var serIndex = t.cChartDrawer._getIndexByIdxSeria(oChart.chart.series, i);
-				if (!oChart.chart.series[serIndex] || !oChart.chart.series[serIndex].errBars) {
+				if (!oChart.chart.series[serIndex] || !oChart.chart.series[serIndex].errBars[0]) {
 					continue;
 				}
-				errBars = oChart.chart.series[serIndex].errBars;
+				errBars = oChart.chart.series[serIndex].errBars[0];
 				for (var j = 0; j < this.points[i].length; j++) {
 					if (this.points[i][j]) {
 
@@ -15644,8 +15648,8 @@ CErrBarsDraw.prototype = {
 		var plusErrVal = null;
 		var minusErrVal = null;
 
-		if (seria && seria.errBars) {
-			var errBars = seria.errBars;
+		if (seria && seria.errBars[0]) {
+			var errBars = seria.errBars[0];
 			const isHorErrBar = errBars.errDir === AscFormat.st_errdirX;
 			var grouping = t.cChartDrawer.getChartGrouping(oChart);
 			var chartType = t.cChartDrawer._getChartType(oChart);
