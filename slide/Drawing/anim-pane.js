@@ -2312,10 +2312,73 @@
 			'center': 'ew-resize'
 		};
 		const cursorType = hitRes ? cursorTypes[hitRes.type] : 'default';
-		
+
+		const mouseMoveData = new CMouseMoveData();
+		mouseMoveData.Type = Asc.c_oAscMouseMoveDataTypes.EffectInfo;
+		mouseMoveData.Info = this.getInfoForTooltip(x, y);
+		mouseMoveData.Effect = this.effect;
+		// TODO: Расчитать координаты
+		mouseMoveData.X_abs = global_mouseEvent.X;
+		mouseMoveData.Y_abs = global_mouseEvent.Y;
+
 		const animPane = Asc.editor.WordControl.m_oAnimPaneApi;
-		animPane.SetCursorType(cursorType);
+		animPane.SetCursorType(cursorType, mouseMoveData);
 	}
+
+	CAnimItem.prototype.getInfoForTooltip = function (x, y) {
+		if (this.hitInEffectBar(x, y)) {
+			if (!this.hitResult) {
+				let str = AscCommon.translateManager.getValue('Start')
+				str += ': ' + (this.getDelay() / 1000).toFixed(1) + 's, '
+				str += AscCommon.translateManager.getValue('End')
+				str += ': ' + ((this.getDelay() + this.getDuration()) / 1000).toFixed(1) + 's'
+				return str
+			}
+
+			switch (this.hitResult.type) {
+				case 'left': return AscCommon.translateManager.getValue('Start') + ': ' + (this.getDelay()).toFixed(1);
+				case 'right': return AscCommon.translateManager.getValue('End') + ': ' + (this.getDelay() + this.getDuration()).toFixed(1);
+				case 'center': return AscCommon.translateManager.getValue('Start') + ': ' + (this.getDelay()).toFixed(1);
+				case 'partition': return AscCommon.translateManager.getValue('Loop') + ': ' + (this.getDuration()).toFixed(1);
+			}
+
+		} else {
+			let eventType = '';
+			if (this.effect.isClickEffect()) { eventType = AscCommon.translateManager.getValue('On Click'); }
+			if (this.effect.isAfterEffect()) { eventType = AscCommon.translateManager.getValue('After Previous'); }
+			if (this.effect.isWithEffect()) { eventType = AscCommon.translateManager.getValue('With Previous'); }
+
+			let effectType = '';
+			switch (this.effect.cTn.presetClass) {
+				case AscFormat.PRESET_CLASS_ENTR: effectType = AscCommon.translateManager.getValue('Entrance'); break;
+				case AscFormat.PRESET_CLASS_EMPH: effectType = AscCommon.translateManager.getValue('Emphasis'); break;
+				case AscFormat.PRESET_CLASS_EXIT: effectType = AscCommon.translateManager.getValue('Exit'); break;
+				case AscFormat.PRESET_CLASS_PATH: effectType = AscCommon.translateManager.getValue('Motion Path'); break;
+			}
+
+			let effectName = '';
+			let presetClass = this.effect.cTn.presetClass;
+			let presetId = this.effect.cTn.presetID;
+
+			const groupData = Common.define.effectData.getEffectGroupData()
+			const effectData = Common.define.effectData.getEffectData()
+
+			groupData.forEach(function(groupItem) {
+				if (groupItem.value === presetClass) {
+					effectData.forEach(function(effectItem) {
+						if (effectItem.value === presetId) {
+							effectName = AscCommon.translateManager.getValue(effectItem.displayValue);
+						}
+					})
+				}
+			})
+
+			let shapeName = this.effect.getObjectName();
+
+			return eventType + '\n' + effectType + '\n' + effectName + ' : ' + shapeName;
+		}
+	}
+
 	CAnimItem.prototype.handleScrollCondition = function (x, y) {
 		const leftBorder = this.getLeftBorder();
 		const rightBorder = this.getRightBorder();
