@@ -1815,37 +1815,6 @@
 		connectorAlgorithm.setFirstConnectorNode(this.parentNode);
 		connectorAlgorithm.setLastConnectorNode(childNode);
 	};
-	PositionAlgorithm.prototype.applyAligns = function (presNode, isCalculateScaleCoefficient) {
-		const shape = presNode.getShape(isCalculateScaleCoefficient);
-		const cleanParams = shape.cleanParams;
-		const cleanW = cleanParams.width;
-		const cleanH = cleanParams.height;
-
-		const parentOffX = (shape.width - cleanW) / 2;
-		const parentOffY = (shape.height - cleanH) / 2;
-
-		presNode.forEachDes(function (chNode) {
-			const parNode = chNode.parent;
-			let parentRightEdge = 0;
-			let parentBottomEdge = 0;
-			const parShape = parNode && parNode.getShape(isCalculateScaleCoefficient);
-			if (parShape) {
-				parentRightEdge = parShape.x + parShape.width;
-				parentBottomEdge = parShape.y + parShape.height;
-			}
-			const chShape = chNode.getShape(isCalculateScaleCoefficient);
-			if (chShape) {
-				const newX = chShape.x + parentOffX;
-				const newY = chShape.y + parentOffY;
-				if ((newX > 0) && (newX + chShape.width < parentRightEdge)) {
-					chShape.x = newX;
-				}
-				if (( newY > 0) && (newY + chShape.height < parentBottomEdge)) {
-					chShape.y = newY;
-				}
-			}
-		});
-	};
 	
 	PositionAlgorithm.prototype.calcScaleCoefficients = function () {
 
