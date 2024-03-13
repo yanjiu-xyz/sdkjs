@@ -5495,6 +5495,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 		if (!constrLst) {
 			return;
 		}
+		const valueCache = {};
 		let cacheFor = {};
 		let cacheRefFor = {};
 		for (let i = 0; i < constrLst.length; i++) {
@@ -5504,18 +5505,19 @@ PresNode.prototype.addChild = function (ch, pos) {
 				this.getNodesByAxis(cacheFor[constr.for], constr.for);
 			}
 			const nodes = cacheFor[constr.for];
-/*			if (constr.for === constr.refFor) {
-				for (let j = 0; j < nodes.length; j++) {
-					const node = nodes[j];
-					node.setConstraintByNode(constr, node);
-				}
-			} else */if (constr.refFor === AscFormat.Constr_for_self) {
+		if (constr.refFor === AscFormat.Constr_for_self) {
 				if (constr.for === AscFormat.Constr_for_self) {
-					nodes[0].setConstraintByNode(constr, nodes[0], isAdapt);
+					const calcValue = nodes[0].getCalcRefConstr(constr, isAdapt, valueCache);
+					if (AscFormat.isRealNumber(calcValue)) {
+						nodes[0].setConstraintByNode(constr, nodes[0], calcValue, isAdapt);
+					}
 				} else {
-					for (let j = 0; j < nodes.length; j++) {
-						const node = nodes[j];
-						node.setConstraintByNode(constr, this, isAdapt);
+					const calcValue = this.getCalcRefConstr(constr, isAdapt, valueCache);
+					if (AscFormat.isRealNumber(calcValue)) {
+						for (let j = 0; j < nodes.length; j++) {
+							const node = nodes[j];
+							node.setConstraintByNode(constr, this, calcValue, isAdapt);
+						}
 					}
 				}
 			} else {
@@ -5524,13 +5526,13 @@ PresNode.prototype.addChild = function (ch, pos) {
 					this.getNodesByAxis(cacheRefFor[constr.refFor], constr.refFor);
 				}
 				const refNodes = cacheRefFor[constr.refFor];
-				for (let k = 0; k < nodes.length; k += 1) {
-					if(!constr.forName || nodes[k].checkName(constr.forName)) {
-						for (let j = 0; j < refNodes.length; j++) {
-							if (nodes[k].setConstraintByNode(constr, refNodes[j], isAdapt)) {
-								break;
-							}
+				for (let j = 0; j < refNodes.length; j++) {
+					const calcValue = refNodes[j].getCalcRefConstr(constr, isAdapt, valueCache);
+					if (AscFormat.isRealNumber(calcValue)) {
+						for (let k = 0; k < nodes.length; k++) {
+							nodes[k].setConstraintByNode(constr, refNodes[j], calcValue, isAdapt);
 						}
+						break;
 					}
 				}
 			}
@@ -5582,29 +5584,46 @@ PresNode.prototype.addChild = function (ch, pos) {
 		return node && node.checkPtType(ptType);
 	};
 
-	PresNode.prototype.setConstraintByNode = function (constr, node, isAdapt) {
-		const refNode = node.getConstraintNode(constr.refForName, constr.refPtType.getVal());
-		if (!refNode) {
-			return false;
+	PresNode.prototype.getCalcRefConstr = function (constr, isAdapt, valueCache) {
+		if (!constr.refForName) {
+			if (!valueCache) {
+				valueCache = {};
+			}
+			if (!valueCache[constr.refFor]) {
+				valueCache[constr.refFor] = {};
+			}
+			if (!valueCache[constr.refFor][constr.refPtType]) {
+				valueCache[constr.refFor][constr.refPtType] = {};
+			}
+			const cacheValue = valueCache[constr.refFor][constr.refPtType][constr.refType];
+			if (AscFormat.isRealNumber(cacheValue)) {
+				return cacheValue;
+			}
 		}
+
+		const refNode = this.getConstraintNode(constr.refForName, constr.refPtType.getVal());
+		if (!refNode) {
+			return;
+		}
+		const calcValue = refNode.getRefConstr(constr, isAdapt);
+		if (constr.refType !== AscFormat.Constr_type_none && !constr.refForName) {
+			valueCache[constr.refFor][constr.refPtType][constr.refType] = calcValue;
+		}
+		return calcValue;
+	};
+	PresNode.prototype.setConstraintByNode = function (constr, refNode, calcValue, isAdapt) {
 		const constrNode = this.getConstraintNode(constr.forName, constr.ptType.getVal());
 		if (constrNode) {
 			if (constr.op === AscFormat.Constr_op_equ) {
 				constrNode.addEqualRelation(refNode, constr, isAdapt);
 			}
-			const constrVal = refNode.getRefConstr(constr, isAdapt, constrNode);
-			if (!AscFormat.isRealNumber(constrVal)) {
-				return false;
-			}
-			const isSettingConstraint = constrNode.setConstraint(constr, constrVal, isAdapt);
+			const isSettingConstraint = constrNode.setConstraint(constr, calcValue, isAdapt);
 			constrNode.setParamConstraint(constr, refNode);
 			if (isSettingConstraint) {
+				constrNode.applyEqualRelations(isAdapt);
 				setRelationConstraints(constrNode, refNode, constr, isAdapt);
 			}
-
-			return true;
 		}
-		return false;
 	};
 
 	function setRelationConstraints(constrNode, refNode, constr) {
@@ -5694,6 +5713,40 @@ PresNode.prototype.addChild = function (ch, pos) {
 	}
 
 	PresNode.prototype.setConstraint = function (constr, value, isAdapt) {
+		if (!this.isCanAdapt(constr, isAdapt)) {
+			return false;
+		}
+		let parentScaleHeight = this.parentScale.height;
+		let parentScaleWidth = this.parentScale.width;
+		if (isAdapt && this.algorithm instanceof CompositeAlgorithm && this.algorithm.params[AscFormat.Param_type_ar]) {
+			const commonCoefficient = Math.min(parentScaleHeight, parentScaleWidth);
+			parentScaleHeight = commonCoefficient;
+			parentScaleWidth = commonCoefficient;
+		}
+		switch (constr.type) {
+			case AscFormat.Constr_type_h: {
+				let mainScale = parentScaleHeight;
+				let acctScale = parentScaleWidth;
+				const rot = this.layoutInfo.shape && this.layoutInfo.shape.rot;
+				if (rot && (rot === 90 || rot === 270 || rot === -90)) {
+					value *= acctScale;
+				} else {
+					value *= mainScale;
+				}
+				break;
+			}
+			case AscFormat.Constr_type_w: {
+				let mainScale = parentScaleWidth;
+				let acctScale = parentScaleHeight;
+				const rot = this.layoutInfo.shape && this.layoutInfo.shape.rot;
+				if (rot && (rot === 90 || rot === 270 || rot === -90)) {
+					value *= acctScale;
+				} else {
+					value *= mainScale;
+				}
+				break;
+			}
+		}
 		let factor = this.getFactRule(constr.type);
 		if (factor === undefined) {
 			factor = constr.fact;
@@ -5721,7 +5774,6 @@ PresNode.prototype.addChild = function (ch, pos) {
 		}
 
 		constrObject[constr.type] = value;
-		this.applyEqualRelations(isAdapt);
 		switch (constr.type) {
 			case AscFormat.Constr_type_begPad:
 			case AscFormat.Constr_type_endPad: {
@@ -5770,23 +5822,20 @@ PresNode.prototype.addChild = function (ch, pos) {
 			return parentHeight;
 		}
 	};
-	PresNode.prototype.isCanAdapt = function (constr, constrNode, isAdapt) {
+	PresNode.prototype.isCanAdapt = function (constr, isAdapt) {
 		if (isAdapt) {
 			switch (constr.type) {
 				case AscFormat.Constr_type_w:
-					return constr === constrNode.relations.widthConstr;
+					return constr === this.relations.widthConstr;
 				case AscFormat.Constr_type_h:
-					return constr === constrNode.relations.heightConstr;
+					return constr === this.relations.heightConstr;
 				default:
 					return true;
 			}
 		}
 		return true;
 	}
-	PresNode.prototype.getRefConstr = function (constr, isAdapt, constrNode) {
-		if (!this.isCanAdapt(constr, constrNode, isAdapt)) {
-			return;
-		}
+	PresNode.prototype.getRefConstr = function (constr, isAdapt) {
 		let aspectRatio;
 		if (constr.for === AscFormat.Constr_for_ch || constr.for === AscFormat.Constr_for_des) {
 			aspectRatio = this.getAspectRatio();
@@ -5824,38 +5873,6 @@ PresNode.prototype.addChild = function (ch, pos) {
 						break;
 				}
 			}
-			let parentScaleHeight = constrNode.parentScale.height;
-			let parentScaleWidth = constrNode.parentScale.width;
-			if (isAdapt && constrNode.algorithm instanceof CompositeAlgorithm && constrNode.algorithm.params[AscFormat.Param_type_ar]) {
-				const commonCoefficient = Math.min(parentScaleHeight, parentScaleWidth);
-				parentScaleHeight = commonCoefficient;
-				parentScaleWidth = commonCoefficient;
-			}
-			switch (constr.type) {
-				case AscFormat.Constr_type_h: {
-					let mainScale = parentScaleHeight;
-					let acctScale = parentScaleWidth;
-					const rot = constrNode.layoutInfo.shape && constrNode.layoutInfo.shape.rot;
-					if (rot && (rot === 90 || rot === 270 || rot === -90)) {
-						value *= acctScale;
-					} else {
-						value *= mainScale;
-					}
-					break;
-				}
-				case AscFormat.Constr_type_w: {
-					let mainScale = parentScaleWidth;
-					let acctScale = parentScaleHeight;
-					const rot = constrNode.layoutInfo.shape && constrNode.layoutInfo.shape.rot;
-					if (rot && (rot === 90 || rot === 270 || rot === -90)) {
-						value *= acctScale;
-					} else {
-						value *= mainScale;
-					}
-					break;
-				}
-			}
-
 		} else {
 			switch (constr.refType) {
 				case AscFormat.Constr_type_b: {
