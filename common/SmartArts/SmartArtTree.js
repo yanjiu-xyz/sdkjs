@@ -374,11 +374,17 @@
 			refForEach.executeAlgorithm(smartartAlgorithm);
 			return;
 		}
-		const nodes = this.getNodesArray(smartartAlgorithm);
-		const currentPresNode = smartartAlgorithm.getCurrentPresNode();
-		if (currentPresNode) {
-			currentPresNode.isHideLastTrans = this.getHideLastTrans(0);
+		const currentNode = smartartAlgorithm.getCurrentNode();
+
+		let isHideLastTrans2 = this.getHideLastTrans(0);
+		if (!isHideLastTrans2 && currentNode.parent) {
+			const parent = currentNode.parent;
+			const lastChild = parent.childs[parent.childs.length - 1];
+			if (lastChild && lastChild.sibNode) {
+				lastChild.sibNode.isHideLastTrans = false;
+			}
 		}
+		const nodes = this.getNodesArray(smartartAlgorithm);
 		for (let i = 0; i < nodes.length; i += 1) {
 			const node = nodes[i];
 			smartartAlgorithm.addCurrentNode(node);
@@ -602,6 +608,11 @@
 					node.setParNode(new SmartArtParDataNode(parPoint, rootChildDepth));
 					root.addChild(node);
 					elements.push(node);
+				}
+				if (connectionChildren.length) {
+					const lastNode = elements[elements.length - 1];
+					const sibTrans = lastNode.sibNode;
+					sibTrans.isHideLastTrans = true;
 				}
 			}
 		}
@@ -903,16 +914,17 @@
 		}
 	};
 	SmartArtDataNodeBase.prototype.getNodesByFollowSib = function (nodes, ptType) {
-		const parent = this.parent;
+		const parent = this.getParent();
 		if (parent) {
 			let bAdd = false;
 			for (let i = 0; i < parent.childs.length; i++) {
+				const child = parent.childs[i];
 				if (bAdd) {
 					const needNode = parent.childs[i].getNodeByPtType(ptType);
 					if (needNode) {
 						nodes.push(needNode);
 					}
-				} else if (parent.childs[i] === this) {
+				} else if (child === this) {
 					bAdd = true;
 					if (ptType === AscFormat.ElementType_value_sibTrans) {
 						const needNode = parent.childs[i].getNodeByPtType(ptType);
@@ -920,6 +932,8 @@
 							nodes.push(needNode);
 						}
 					}
+				} else if (child.sibNode === this) {
+					bAdd = true;
 				}
 			}
 		}
@@ -1587,7 +1601,7 @@
 					}
 				} else {
 					// todo
-					const childNode = node.node.parent.presNode;
+					const childNode = node.node.parent && node.node.parent.presNode;
 					if (childNode) {
 						this.setParentConnection(algorithm, childNode);
 					}

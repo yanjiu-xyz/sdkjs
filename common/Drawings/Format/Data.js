@@ -4406,6 +4406,10 @@ Because of this, the display is sometimes not correct.
 			  }
 			  currentNodes = newCurrentNodes;
 		  }
+			const lastNode = currentNodes[currentNodes.length - 1];
+			if (lastNode && lastNode.isHideLastTrans) {
+				currentNodes.pop();
+			}
 		  return currentNodes;
 	  };
 	  IteratorAttributes.prototype.getPtType = function (index) {
