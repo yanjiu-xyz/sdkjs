@@ -5764,7 +5764,7 @@ Because of this, the display is sometimes not correct.
       this.blipPhldr = false;
       this.hideGeom = false;
       this.lkTxEntry = false;
-      this.rot = null;
+      this.rot = 0;
       this.type = LayoutShapeType_outputShapeType_none;
       this.zOrderOff = 0;
       this.adjLst = null;
