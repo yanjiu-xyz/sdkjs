@@ -3833,6 +3833,30 @@ Because of this, the display is sometimes not correct.
 							return this.val;
 					}
 				}
+				case Param_type_nodeHorzAlign: {
+					switch (this.val) {
+						case 'l':
+							return ParameterVal_nodeHorizontalAlignment_l;
+						case 'ctr':
+							return ParameterVal_nodeHorizontalAlignment_ctr;
+						case 'r':
+							return ParameterVal_nodeHorizontalAlignment_r;
+						default:
+							return this.val;
+					}
+				}
+				case Param_type_nodeVertAlign: {
+					switch (this.val) {
+						case 'b':
+							return ParameterVal_nodeVerticalAlignment_b;
+						case 'mid':
+							return ParameterVal_nodeVerticalAlignment_mid;
+						case 't':
+							return ParameterVal_nodeVerticalAlignment_t;
+						default:
+							return this.val;
+					}
+				}
 				case Param_type_connRout: {
 					switch (this.val) {
 						case 'longCurve':
