@@ -11070,7 +11070,10 @@ Because of this, the display is sometimes not correct.
 							const presPoint = ptMap[cxn.destId];
 							connections.byConnections[Cxn_type_presParOf][cxn.srcId][cxn.srcOrd] = ptMap[cxn.destId];
 							const presAssocId = presPoint.getPresAssocID();
-							connections.custom.presParOfAssocId[presAssocId] = presPoint;
+							if (!connections.custom.presParOfAssocId[presAssocId]) {
+								connections.custom.presParOfAssocId[presAssocId] = [];
+							}
+							connections.custom.presParOfAssocId[presAssocId].push(presPoint);
 							connections.custom.presChildParOf[cxn.destId] = ptMap[cxn.srcId];
 							break;
 						}

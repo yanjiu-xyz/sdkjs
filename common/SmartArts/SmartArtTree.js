@@ -617,9 +617,21 @@
 		if (!currentNode.presNode) {
 			const nodeModelId = currentNode.getModelId();
 
-			let presPoint = presRelations[nodeModelId] || presCustomRelations[nodeModelId];
-			while (presPoint && presPoint.getPresName() !== layoutNode.name) {
-				presPoint = presChildParRelations[presPoint.getModelId()];
+			let presPoint = presRelations[nodeModelId];
+			if (!presPoint || presPoint.getPresName() !== layoutNode.name) {
+				let i;
+				if (presCustomRelations[nodeModelId]) {
+					for (i = 0; i < presCustomRelations[nodeModelId].length; i += 1) {
+						const assocPresPoint = presCustomRelations[nodeModelId][i];
+						if (assocPresPoint.getPresName() === layoutNode.name) {
+							presPoint = assocPresPoint;
+							break;
+						}
+					}
+				}
+			 while (presPoint && presPoint.getPresName() !== layoutNode.name) {
+				 presPoint = presChildParRelations[presPoint.getModelId()];
+			 }
 			}
 			if (presPoint) {
 				presNode = new PresNode(presPoint, currentNode);
