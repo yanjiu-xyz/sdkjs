@@ -164,6 +164,7 @@
 			element.executeAlgorithm(smartartAlgorithm);
 		}
 		curPresNode.checkMoveWith();
+		curPresNode.initPresShape();
 		smartartAlgorithm.removeCurrentPresNode(curPresNode);
 	}
 	LayoutNode.prototype.getForEachMap = function () {
@@ -5000,6 +5001,11 @@ function PresNode(presPoint, contentNode) {
 	}
 	this.moveWith = null;
 }
+	PresNode.prototype.initPresShape = function () {
+		if (!this.layoutInfo.shape) {
+			this.layoutInfo.shape = new AscFormat.SShape();
+		}
+	}
 PresNode.prototype.getDefaultConnectionNode = function() {
 	if (this.childs.length) {
 		return this.childs[0];
