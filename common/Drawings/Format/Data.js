@@ -7653,19 +7653,16 @@ Because of this, the display is sometimes not correct.
 		  }
 	  };
 
-	  ColorDefStyleLbl.prototype.getShapeLn = function (index, shadowShape) {
+	  ColorDefStyleLbl.prototype.getShapeLn = function (index, shadowShape, isConnector) {
 		  const lst = this.linClrLst && this.linClrLst.list;
 			if (lst) {
-/*				if (lst.length === 1) {
-					const uniColor = lst[0];
-					if (uniColor.color.id === 0) {
-						return AscFormat.CreateNoFillLine();
-					}
-				}*/
 				if (lst.length) {
 					const truthIndex = index % lst.length;
 					const uniColor = lst[truthIndex];
-					if (this.checkTransparent(uniColor) || shadowShape.shape.hideGeom/* || this.checkNoLn()*/) {
+
+					if ((isConnector && shadowShape.type !== AscFormat.LayoutShapeType_outputShapeType_conn) ||
+						this.checkTransparent(uniColor)
+						|| shadowShape.shape.hideGeom/* || this.checkNoLn()*/) {
 						return AscFormat.CreateNoFillLine();
 					}
 

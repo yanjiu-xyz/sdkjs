@@ -572,7 +572,7 @@
 					if (mainShape) {
 						const colorShape = mainShape.connectorShape || mainShape;
 						colorShape.setFill(colorStyleLbl.getShapeFill(i, colorShape));
-						colorShape.setLn(colorStyleLbl.getShapeLn(i, colorShape));
+						colorShape.setLn(colorStyleLbl.getShapeLn(i, colorShape, !!mainShape.connectorShape));
 					}
 				}
 			}
