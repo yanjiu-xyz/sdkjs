@@ -2223,12 +2223,20 @@
 		this.effectTypeImage = this.addControl(new CImageControl(this, effectImg.src, effectImg.width, effectImg.height));
 
 		this.effectLabel = this.addControl(new CLabel(this, this.effect.getObjectName(), EFFECT_LABEL_FONTSIZE, false, AscCommon.align_Left));
-		this.contextMenuButton = this.addControl(new CButton(this, showContextMenu));
+		this.contextMenuButton = this.addControl(new CButton(this, null, null, showContextMenu));
 		this.contextMenuButton.icon = this.contextMenuButton.addControl(new CImageControl(this.contextMenuButton, menuButton, 20 * AscCommon.g_dKoef_pix_to_mm, 20 * AscCommon.g_dKoef_pix_to_mm));
 
 		function showContextMenu(e, x, y) {
 			if (!this.hit(x, y)) { return }
-			console.log('showContextMenu on effect', this.parentControl.effect.Id);
+
+			const data = new AscCommonSlide.CContextMenuData()
+			data.Type = Asc.c_oAscContextMenuTypes.AnimEffect;
+			// TODO: Посчитать координаты
+			data.X_abs = global_mouseEvent.X;
+			data.Y_abs = global_mouseEvent.Y;
+
+			console.log('here')
+			editor.sync_ContextMenuCallback(data);
 		}
 
 		// Temp fields for effect bar movement
