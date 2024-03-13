@@ -3943,6 +3943,9 @@ function HierarchyAlgorithm() {
 		}
 		return false;
 	}
+	LinearAlgorithm.prototype.is2DFallback = function () {
+		return this.params[AscFormat.Param_type_fallback] === AscFormat.ParameterVal_fallbackDimension_2D || this.isHaveChildLinear();
+	}
 	LinearAlgorithm.prototype.setScaleCoefficient = function () {
 		if (!(!this.parentNode.parent || this.parentNode.parent.algorithm instanceof CompositeAlgorithm)) {
 			return;
@@ -3962,7 +3965,7 @@ function HierarchyAlgorithm() {
 			const height = bounds.b - bounds.t;
 			let widthCoefficient = Math.min(parentWidth / width, 1);
 			let heightCoefficient = Math.min(parentHeight / height, 1);
-			if (this.isHaveChildLinear()) {
+			if (this.is2DFallback()) {
 				const commonCoefficient = Math.min(widthCoefficient, heightCoefficient);
 				widthCoefficient = commonCoefficient;
 				heightCoefficient = commonCoefficient;

@@ -3811,6 +3811,16 @@ Because of this, the display is sometimes not correct.
 							return this.val;
 					}
 				}
+				case Param_type_fallback: {
+					switch (this.val) {
+						case '1D':
+							return ParameterVal_fallbackDimension_1D;
+						case '2D':
+							return ParameterVal_fallbackDimension_2D;
+						default:
+							return this.val;
+					}
+				}
 				case Param_type_bendPt: {
 					switch (this.val) {
 						case 'end':
