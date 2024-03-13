@@ -1308,7 +1308,7 @@
 				return null;
 			}
 
-			const shapeTrack = new AscFormat.NewShapeTrack(this.getEditorShapeType(), this.x, this.y, AscFormat.GetDefaultTheme(), parentObjects.theme, parentObjects.master, parentObjects.layout, parentObjects.slide, initObjects.page);
+			const shapeTrack = new AscFormat.NewShapeTrack(this.getEditorShapeType(), this.x, this.y, parentObjects.theme || AscFormat.GetDefaultTheme(), parentObjects.master, parentObjects.layout, parentObjects.slide, initObjects.page);
 			shapeTrack.track({}, this.x + this.width, this.y + this.height);
 			const shape = shapeTrack.getShape(false, initObjects.drawingDocument, null);
 			shape.spPr.xfrm.setExtX(this.width);
