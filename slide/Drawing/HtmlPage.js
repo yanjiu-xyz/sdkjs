@@ -4742,9 +4742,6 @@ function CEditorPage(api)
 	this.ChangeTimelineScale = function(bZoomOut) {
 		this.m_oAnimPaneApi.timeline.Control.timeline.changeTimelineScale(bZoomOut);
 	}
-	this.GetEffectBarTrackingTime = function() {
-		return this.m_oAnimPaneApi.list.Control.seqList.getTrackingTime();
-	}
 
 	// notes panel
 	this.GetNotesHeight = function()

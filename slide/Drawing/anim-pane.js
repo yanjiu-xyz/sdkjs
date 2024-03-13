@@ -1988,36 +1988,6 @@
 		}
 	};
 
-	CSeqList.prototype.getTrackingTime = function () {
-		let trackingTime = null;
-		this.forEachAnimItem(function (animItem) {
-			if (animItem.hitResult) {
-				switch (animItem.hitResult.type) {
-					case 'left':
-						// console.log('Начало:', animItem.getDelay())
-						trackingTime = animItem.getDelay();
-						break;
-
-					case 'right':
-						// console.log('Окончание:', animItem.getDelay() + animItem.getDuration())
-						trackingTime = animItem.getDelay() + animItem.getDuration();
-						break;
-
-					case 'partition':
-						// console.log('Цикл:', animItem.getDuration())
-						trackingTime = animItem.getDuration();
-						break;
-
-					case 'center':
-						// console.log('Начало:', animItem.getDelay())
-						trackingTime = animItem.getDelay();
-						break;
-				}
-			};
-		})
-		return trackingTime;
-	}
-
 	CSeqList.prototype.forEachAnimItem = function (callback) {
 		// У счетчиков сквозная нумерация
 		let seqCounter = 0;
