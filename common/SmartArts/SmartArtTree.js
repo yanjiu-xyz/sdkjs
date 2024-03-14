@@ -377,8 +377,8 @@
 		const currentNode = smartartAlgorithm.getCurrentNode();
 
 		let isHideLastTrans2 = this.getHideLastTrans(0);
-		if (!isHideLastTrans2 && currentNode.parent) {
-			const parent = currentNode.parent;
+		if (!isHideLastTrans2) {
+			const parent = currentNode.parent || currentNode;
 			const lastChild = parent.childs[parent.childs.length - 1];
 			if (lastChild && lastChild.sibNode) {
 				lastChild.sibNode.isHideLastTrans = false;
@@ -5081,7 +5081,7 @@ function HierarchyAlgorithm() {
 		} else {
 			const shape = parentNode.getShape(isCalculateCoefficients);
 			const boundsHeight = shape.height;
-			const constrBounds = parentNode.getChildConstraintBounds(isCalculateCoefficients);
+			const constrBounds = /*parentNode.getChildConstraintBounds(isCalculateCoefficients)*/shape.getBounds();
 			const boundsWidth = constrBounds.r - constrBounds.l;
 			const parentWidth = parentNode.getConstr(AscFormat.Constr_type_w, true);
 			const parentHeight = parentNode.getConstr(AscFormat.Constr_type_h, true);
