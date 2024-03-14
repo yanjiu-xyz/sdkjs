@@ -2234,6 +2234,7 @@
 			// TODO: Посчитать координаты
 			data.X_abs = global_mouseEvent.X;
 			data.Y_abs = global_mouseEvent.Y;
+			data.Effect = this.effect;
 
 			console.log('here')
 			editor.sync_ContextMenuCallback(data);
