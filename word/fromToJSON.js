@@ -1408,6 +1408,7 @@
 		let aResult = [];
 		for (let nErrBar = 0; nErrBar < aErrBars.length; ++nErrBar)
 		{
+			let oErrBars = aErrBars[nErrBar];
 			if (!oErrBars)
 				return undefined;
 
