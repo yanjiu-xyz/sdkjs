@@ -1092,12 +1092,18 @@
 		function manageTimelineScale(event, x, y) {
 			if (!this.hit(x, y)) { return }
 
+			const animPaneAbsPosition = editor.WordControl.m_oAnimationPaneContainer.AbsolutePosition;
+			const animPaneHeight = animPaneAbsPosition.B - animPaneAbsPosition.T;
+			const coords = editor.WordControl.m_oDrawingDocument.ConvertAnimPaneCoordsToCursor(
+				this.getLeft(),
+				animPaneHeight - this.getTop()
+			);
+
 			const data = new AscCommonSlide.CContextMenuData()
 			data.Type = Asc.c_oAscContextMenuTypes.TimelineZoom;
-			// TODO: Посчитать координаты
-			data.X_abs = global_mouseEvent.X;
-			data.Y_abs = global_mouseEvent.Y;
-			
+			data.X_abs = coords.X;
+			data.Y_abs = coords.Y;
+
 			editor.sync_ContextMenuCallback(data);
 		}
 
@@ -2229,14 +2235,17 @@
 		function showContextMenu(e, x, y) {
 			if (!this.hit(x, y)) { return }
 
+			const coords = editor.WordControl.m_oDrawingDocument.ConvertAnimPaneCoordsToCursor(
+				this.bounds.l,
+				HEADER_HEIGHT + this.bounds.t - editor.WordControl.m_oAnimPaneApi.list.Scroll * g_dKoef_pix_to_mm
+			);
+
 			const data = new AscCommonSlide.CContextMenuData()
 			data.Type = Asc.c_oAscContextMenuTypes.AnimEffect;
-			// TODO: Посчитать координаты
-			data.X_abs = global_mouseEvent.X;
-			data.Y_abs = global_mouseEvent.Y;
+			data.X_abs = coords.X;
+			data.Y_abs = coords.Y;
 			data.Effect = this.effect;
 
-			console.log('here')
 			editor.sync_ContextMenuCallback(data);
 		}
 
@@ -2329,13 +2338,16 @@
 		};
 		const cursorType = hitRes ? cursorTypes[hitRes.type] : 'default';
 
+		const coords = editor.WordControl.m_oDrawingDocument.ConvertAnimPaneCoordsToCursor(
+			x, y + HEADER_HEIGHT - editor.WordControl.m_oAnimPaneApi.list.Scroll * g_dKoef_pix_to_mm
+		);
+
 		const mouseMoveData = new CMouseMoveData();
 		mouseMoveData.Type = Asc.c_oAscMouseMoveDataTypes.EffectInfo;
 		mouseMoveData.Info = this.getInfoForTooltip(x, y);
 		mouseMoveData.Effect = this.effect;
-		// TODO: Расчитать координаты
-		mouseMoveData.X_abs = global_mouseEvent.X;
-		mouseMoveData.Y_abs = global_mouseEvent.Y;
+		mouseMoveData.X_abs = coords.X;
+		mouseMoveData.Y_abs = coords.Y;
 
 		const animPane = Asc.editor.WordControl.m_oAnimPaneApi;
 		animPane.SetCursorType(cursorType, mouseMoveData);

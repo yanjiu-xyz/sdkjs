@@ -2671,6 +2671,14 @@ function CDrawingDocument()
 		}
 	};
 
+	this.ConvertAnimPaneCoordsToCursor = function(x, y)
+	{
+		const wc = this.m_oWordControl;
+		const x_pix = (x * g_dKoef_mm_to_pix + (wc.m_oMainParent.AbsolutePosition.L + wc.m_oBottomPanesContainer.AbsolutePosition.L + wc.m_oAnimationPaneContainer.AbsolutePosition.L) * g_dKoef_mm_to_pix) >> 0;
+		const y_pix = (y * g_dKoef_mm_to_pix + (wc.m_oMainParent.AbsolutePosition.T + wc.m_oBottomPanesContainer.AbsolutePosition.T + wc.m_oAnimationPaneContainer.AbsolutePosition.T) * g_dKoef_mm_to_pix) >> 0;
+		return {X: x_pix, Y: y_pix, Error: false};
+	};
+
 	this.ConvertCoordsToCursor3 = function (x, y, isGlobal)
 	{
 		var wc = this.m_oWordControl;
