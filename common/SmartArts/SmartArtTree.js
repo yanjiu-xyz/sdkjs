@@ -1228,12 +1228,26 @@
 		const y3 = matrix.TransformPointY(this.x, this.y + this.height);
 		const y4 = matrix.TransformPointY(this.x + this.width, this.y + this.height);
 
-		return {
-			l: Math.min(x1, x2, x3, x4),
-			r: Math.max(x1, x2, x3, x4),
-			t: Math.min(y1, y2, y3, y4),
-			b: Math.max(y1, y2, y3, y4)
-		};
+		const res = {};
+		const minX = Math.min(x1, x2, x3, x4);
+		const maxX = Math.max(x1, x2, x3, x4);
+		const minY = Math.min(y1, y2, y3, y4);
+		const maxY = Math.max(y1, y2, y3, y4);
+		if (this.width < 0) {
+			res.l = maxX;
+			res.r = minX;
+		} else {
+			res.l = minX;
+			res.r = maxX;
+		}
+		if (this.height < 0) {
+			res.t = maxY;
+			res.b = minY;
+		} else {
+			res.t = minY;
+			res.b = maxY;
+		}
+		return res;
 	};
 	function ShadowShape(node) {
 		Position.call(this, node);
@@ -4117,16 +4131,15 @@ function HierarchyAlgorithm() {
 		for (let i = 0; i < length; i++) {
 			const node = childs[i];
 			const shape = node.getShape(isCalculateScaleCoefficients);
-			// const bounds = shape.getBounds();
+			const bounds = shape.getBounds();
 			row.push(shape);
 			if (fromLeft) {
-				shape.moveTo(offX - shape.x, 0);
-				// const newBounds = shape.getBounds();
-				/*offX = newBounds.l + newBounds.r - newBounds.l;*/
-				offX += shape.width;
+				shape.moveTo(offX - bounds.l, 0);
+				const newBounds = shape.getBounds();
+				offX += bounds.r - bounds.l;
 			} else {
-				shape.moveTo(offX - (shape.x + shape.width), 0);
-				offX -= shape.width;
+				shape.moveTo(offX - bounds.r, 0);
+				offX -= bounds.r - bounds.l;
 			}
 		}
 	};
@@ -4146,11 +4159,13 @@ function HierarchyAlgorithm() {
 			const node = childs[i];
 			const shape = node.getShape(isCalculateScaleCoefficients);
 			row.push(shape);
+			const bounds = shape.getBounds();
 			if (fromTop) {
-				shape.moveTo(0, offY - shape.y);
-				offY = shape.y + shape.height;
+				shape.moveTo(0, offY - bounds.t);
+				offY += bounds.b - bounds.t;
 			} else {
-				shape.moveTo(0, offY - (shape.y + shape.height));
+				shape.moveTo(0, offY - bounds.b);
+				offY -= bounds.b - bounds.t;
 			}
 		}
 	};
@@ -5149,7 +5164,7 @@ PresNode.prototype.getDefaultConnectionNode = function() {
 		return this.shape;
 	};
 	PresNode.prototype.isSwitchWidthHeight = function () {
-		return this.layoutInfo.shape.rot === 90 || this.layoutInfo.shape.rot === 270;
+		return this.layoutInfo.shape.rot === 90 || this.layoutInfo.shape.rot === 270  || this.layoutInfo.shape.rot === -90;
 	};
 	PresNode.prototype.setWidthScale = function (pr, mapPresName, isLinear) {
 		const relationConstr = this.relations.widthConstr;
@@ -5741,8 +5756,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 			case AscFormat.Constr_type_h: {
 				let mainScale = parentScaleHeight;
 				let acctScale = parentScaleWidth;
-				const rot = this.layoutInfo.shape && this.layoutInfo.shape.rot;
-				if (rot && (rot === 90 || rot === 270 || rot === -90)) {
+				if (this.isSwitchWidthHeight()) {
 					value *= acctScale;
 				} else {
 					value *= mainScale;
@@ -5752,8 +5766,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 			case AscFormat.Constr_type_w: {
 				let mainScale = parentScaleWidth;
 				let acctScale = parentScaleHeight;
-				const rot = this.layoutInfo.shape && this.layoutInfo.shape.rot;
-				if (rot && (rot === 90 || rot === 270 || rot === -90)) {
+				if (this.isSwitchWidthHeight()) {
 					value *= acctScale;
 				} else {
 					value *= mainScale;
@@ -6096,7 +6109,6 @@ PresNode.prototype.addChild = function (ch, pos) {
 		let width = constrNode.getConstr(AscFormat.Constr_type_w, !isCalculateCoefficients);
 		let height = constrNode.getConstr(AscFormat.Constr_type_h, !isCalculateCoefficients);
 		if (layoutShape.rot === 45 || layoutShape.rot === 225) {
-
 			const side = width / Math.sqrt(2);
 			const center = (width - side) / 2;
 			x += center;
@@ -6106,7 +6118,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 		}
 		let scaleWidth = width * widthCoef;
 		let scaleHeight = height * heightCoef;
-		if (this.isSwitchWidthHeight()/* || layoutShape.rot === -90*/) {
+		if (this.isSwitchWidthHeight()) {
 			x += (width - height) / 2;
 			y += (height - width) / 2;
 			let temp = width;
