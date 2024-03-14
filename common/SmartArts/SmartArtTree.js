@@ -547,6 +547,20 @@
 						offY += shape.cleanParams.height * prSet.custLinFactY * coefficient;
 					}
 				}
+				const smartart = this.smartart;
+				const smartartHeight = smartart.spPr.xfrm.extY;
+				const smartartWidth = smartart.spPr.xfrm.extX;
+				const shapeBounds = shape.getBounds();
+				if (shapeBounds.l + offX < 0) {
+					offX = -shapeBounds.l;
+				} else if (shapeBounds.r + offX > smartartWidth) {
+					offX = smartartWidth - shapeBounds.r;
+				}
+				if (shapeBounds.t + offY < 0) {
+					offY = -shapeBounds.t;
+				} else if (shapeBounds.b + offY > smartartHeight) {
+					offY = smartartHeight - shapeBounds.b;
+				}
 				shape.moveTo(offX, offY);
 			}
 		}
