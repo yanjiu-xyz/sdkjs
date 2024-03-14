@@ -1155,6 +1155,7 @@ var g_oFontProperties = {
 		}
 		this.fn = stream.GetString();
 	};
+	window["AscCommonExcel"].Font = Font;
 
 	var c_oAscPatternType = {
 		DarkDown :  0,

@@ -811,8 +811,11 @@ CGraphics.prototype =
     SetTextPr : function(textPr, theme)
     {
         this.m_oTextPr = textPr.Copy();
-        this.theme = theme;
-        this.m_oTextPr.ReplaceThemeFonts(theme.themeElements.fontScheme);
+		if (theme)
+		{
+			this.theme = theme;
+			this.m_oTextPr.ReplaceThemeFonts(theme.themeElements.fontScheme);
+		}
     },
 
     SetFontSlot : function(slot, fontSizeKoef)

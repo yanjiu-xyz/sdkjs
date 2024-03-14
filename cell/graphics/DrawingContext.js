@@ -942,6 +942,17 @@
 
 		return this;
 	};
+	
+	DrawingContext.prototype.SetFontInternal = function(name, size, style) {
+		let font = new AscCommonExcel.Font();
+		font.setName(name);
+		font.setSize(size);
+		if (style & 1)
+			font.setBold(true);
+		if (style & 2)
+			font.setItalic(true);
+		this.setFont(font);
+	};
 
 	/**
 	 * Returns dimensions of first char of string
@@ -1025,6 +1036,26 @@
 
 	DrawingContext.prototype.fillTextCode = function (text, x, y, maxWidth, charWidths, angle) {
 		return this.fillText(text, x, y, maxWidth, charWidths, angle);
+	};
+	
+	DrawingContext.prototype.tg = function(gid, x, y, codePoints) {
+		// TODO: angle
+		let angle = 0;
+		let fontManager = angle ? this.fmgrGraphics[1] : this.fmgrGraphics[0];
+		
+		var _x = this._mift.transformPointX(x, y);
+		var _y = this._mift.transformPointY(x, y);
+		
+		try {
+			fontManager.LoadString3C(gid, _x, _y, codePoints);
+		}
+		catch(err){}
+		
+		let glyph = fontManager.m_oGlyphString.m_pGlyphsBuffer[0];
+		if (!glyph || !glyph.oBitmap)
+			return;
+		
+		this.fillGlyph(glyph, fontManager);
 	};
 
 

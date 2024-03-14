@@ -48,6 +48,20 @@
 		var asc_debug   = asc.outputDebugStr;
 		var asc_typeof  = asc.typeOf;
 		var asc_round   = asc.round;
+		let graphics    = null;
+		
+		function getGraphics(wb)
+		{
+			if (graphics)
+				return graphics;
+			graphics = new AscCommon.CGraphics();
+			let canvas  = wb.buffers.main.canvas;
+			let ppiX = wb.buffers.main.ppiX;
+			let ppiY = wb.buffers.main.ppiY;
+			graphics.init(wb.buffers.main.ctx, canvas.width, canvas.height, 25.4 * canvas.width / ppiX, 25.4 * canvas.height / ppiY);
+			graphics.m_oFontManager = AscCommon.g_fontManager;
+			return graphics;
+		}
 
 		function LineInfo(lm) {
 			this.tw = 0;
@@ -145,6 +159,7 @@
 
 			/** @type String */
 			this.chars = [];
+			this.textShaper = new AscFonts.CTextShaper();
 
 			this.charWidths = [];
 			this.charProps = [];
@@ -1045,7 +1060,18 @@
 			var align = this.flags ? this.flags.textAlign : null;
 			var i, j, p, p_, strBeg;
 			var n = 0, l = this.lines[0], x1 = l ? initX(0) : 0, y1 = y, dx = l ? computeWordDeltaX() : 0;
-
+			
+			let fontSize = 10;
+			
+			// let graphics = getGraphics(Asc.editor.wb);
+			// graphics.SaveGrState();
+			// graphics.b_color1(0, 0, 0, 255);
+			// graphics.b_color2(0, 0, 0, 255);
+			// let textPr = new AscWord.CTextPr();
+			// textPr.InitDefault();
+			// graphics.SetTextPr(textPr);
+			// graphics.SetIntegerGrid(false);
+			
 			function initX(startPos) {
 				var x_ = x;
 				if (align === AscCommon.align_Right) {
@@ -1078,24 +1104,48 @@
 				var isSO = so === true;
 				var fsz, x2, y, lw, dy, i, b, x_, cp;
 				var bl = asc_round(l.bl * zoom);
-
+				
+				
+				let glyphs = [];
+				let widths = [];
+				
+				self.textShaper.ShapeArray(self.chars.slice(begin, end), function(grapheme, width, isLigature){
+					glyphs.push(grapheme);
+					widths.push(width * fontSize / 25.4 * ppiy);
+				});
+				
 				y = y1 + bl + dh;
-				if (align !== AscCommon.align_Justify || dx < 0.000001) {
-					ctx.fillTextCode(self.chars.slice(begin, end), x1, y, undefined, self.charWidths.slice(begin, end), angle);
-				} else {
-					for (i = b = begin, x_ = x1; i < end; ++i) {
-						cp = self.charProps[i];
-						if (cp && cp.wrd && i > b) {
-							ctx.fillTextCode(self.chars.slice(b, i), x_, y, undefined, self.charWidths.slice(b, i), angle);
-							x_ += self._calcCharsWidth(b, i - 1) + dx;
-							dw += dx;
-							b = i;
-						}
-					}
-					if (i > b) { // draw remainder of text
-						ctx.fillTextCode(self.chars.slice(b, i), x_, y, undefined, self.charWidths.slice(b, i), angle);
-					}
+				
+				// graphics.m_oCoordTransform.tx = x1;
+				// graphics.m_oCoordTransform.ty = y;
+				// graphics.transform3(new AscCommon.CMatrix());
+				
+				let __x = x1;
+				for (let glyphIndex = 0; glyphIndex < glyphs.length; ++glyphIndex)
+				{
+					AscFonts.DrawGrapheme(glyphs[glyphIndex], ctx, __x, y, fontSize);
+					__x += widths[glyphIndex];
 				}
+				
+
+				// y = y1 + bl + dh;
+				// if (align !== AscCommon.align_Justify || dx < 0.000001) {
+				// 	ctx.fillTextCode(self.chars.slice(begin, end), x1, y, undefined, self.charWidths.slice(begin, end), angle);
+				// } else {
+				// 	for (i = b = begin, x_ = x1; i < end; ++i) {
+				// 		cp = self.charProps[i];
+				// 		if (cp && cp.wrd && i > b) {
+				// 			ctx.fillTextCode(self.chars.slice(b, i), x_, y, undefined, self.charWidths.slice(b, i), angle);
+				// 			x_ += self._calcCharsWidth(b, i - 1) + dx;
+				// 			dw += dx;
+				// 			b = i;
+				// 		}
+				// 	}
+				// 	if (i > b) { // draw remainder of text
+				// 		ctx.fillTextCode(self.chars.slice(b, i), x_, y, undefined, self.charWidths.slice(b, i), angle);
+				// 	}
+				// }
+				
 
 				if (isSO || ul) {
 
@@ -1168,6 +1218,8 @@
 				// render text remainder
 				renderFragment(strBeg, i, p_, this.angle);
 			}
+			
+			//graphics.RestoreGrState();
 		};
 
 		StringRender.prototype.getInternalState = function () {
