@@ -141,6 +141,10 @@ var editor;
     this.sendInternalEvent.apply(this, arguments);
     this.handlers.trigger.apply(this.handlers, arguments);
   };
+  spreadsheet_api.prototype.asc_checkNeedCallback = function(name)
+  {
+    return this.handlers.hasTrigger(name);
+  };
 
   spreadsheet_api.prototype._init = function() {
     AscCommon.baseEditorsApi.prototype._init.call(this);

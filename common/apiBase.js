@@ -624,6 +624,10 @@
 	baseEditorsApi.prototype.sendEvent                       = function()
 	{
 	};
+	baseEditorsApi.prototype.asc_checkNeedCallback = function(name)
+	{
+		return false;
+	};
 	baseEditorsApi.prototype.SendOpenProgress                = function()
 	{
 		this.sendEvent("asc_onOpenDocumentProgress", this.OpenDocumentProgress);
@@ -2624,15 +2628,42 @@
 			} else if (this.isForceSaveOnUserSave && this.IsUserSave) {
 				this.forceSave();
 			}
-			if (this.IsUserSave && this.DocInfo.get_IsWebOpening() && this.isOpenOOXInBrowser && this.saveDocumentToZip) {
-				this.saveDocumentToZip(this.WordControl.m_oLogicDocument, this.editorId, function (data) {
-					t.sendEvent('asc_onSaveDocument', data);
-					AscCommon.DownloadFileFromBytes(data, t.documentTitle, AscCommon.openXml.GetMimeType(t.documentFormat));
-				});
-			}
+			this.checkSaveDocumentEvent(this.IsUserSave);
 		}
 		return res;
 	};
+	baseEditorsApi.prototype.checkSaveDocumentEvent = function (IsUserSave) {
+		let t = this;
+		if (IsUserSave && this.DocInfo.get_SupportsOnSaveDocument()) {
+			if (this.isOpenOOXInBrowser && this.saveDocumentToZip) {
+				this.saveDocumentToZip(this.WordControl.m_oLogicDocument, this.editorId, function (data) {
+					t.sendEvent('asc_onSaveDocument', data);
+					//AscCommon.DownloadFileFromBytes(data, t.documentTitle, AscCommon.openXml.GetMimeType(t.documentFormat));
+				});
+			} else {
+				let opts = new Asc.asc_CDownloadOptions(t.documentFormatSave, true);
+				opts.callback = function() {
+					t.fCurCallback = function(res) {
+						t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.DownloadAs);
+						if (res.status === "ok") {
+							AscCommon.loadFileContent(res.data, function (httpRequest) {
+								if (httpRequest && httpRequest.response) {
+									let data = new Uint8Array(httpRequest.response);
+									t.sendEvent('asc_onSaveDocument', data);
+									// AscCommon.DownloadFileFromBytes(data, t.documentTitle, AscCommon.openXml.GetMimeType(t.documentFormat));
+								} else {
+									t.sendEvent("asc_onError", c_oAscError.ID.Unknown, c_oAscError.Level.Critical);
+								}
+							}, "arraybuffer");
+						} else {
+							t.sendEvent("asc_onError", c_oAscError.ID.ConvertationSaveError, c_oAscError.Level.NoCritical);
+						}
+					};
+				}
+				t.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, opts);
+			}
+		}
+	}
 	/**
 	 * Эта функция возвращает true, если есть изменения или есть lock-и в документе
 	 */

@@ -8765,6 +8765,10 @@ background-repeat: no-repeat;\
 			}
 		}
 
+		let canDownloadFromBytes = null == options.oDocumentMailMerge && null == options.oMailMergeSendData
+			&& !window.isCloudCryptoDownloadAs && DownloadType.None === downloadType
+			&& !(AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.isChrome)
+			&& !AscCommon.AscBrowser.isAndroidNativeApp;
 		if ('savefromorigin' === oAdditionalData["c"])
 		{
 			oAdditionalData["format"] = this.documentFormat;
@@ -8813,11 +8817,7 @@ background-repeat: no-repeat;\
 			oAdditionalData["codepage"] = AscCommon.c_oAscCodePageUtf8;
 			dataContainer.data = last.data;
 		}
-		else if (c_oAscFileType.HTML === fileType
-			&& null == options.oDocumentMailMerge && null == options.oMailMergeSendData
-			&& !window.isCloudCryptoDownloadAs && DownloadType.None === downloadType
-			&& !(AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.isChrome)
-			&& !AscCommon.AscBrowser.isAndroidNativeApp)
+		else if (c_oAscFileType.HTML === fileType && canDownloadFromBytes)
 		{
 			//DownloadFileFromBytes has bug on Chrome on iOS https://github.com/kennethjiang/js-file-download/issues/72
 			//в asc_nativeGetHtml будет вызван select all, чтобы выделился документ должны выйти из колонтитулов и автофигур
@@ -8840,7 +8840,7 @@ background-repeat: no-repeat;\
 			var title = this.documentTitle;
 			this.saveDocumentToZip(this.WordControl.m_oLogicDocument, AscCommon.c_oEditorId.Word, function(data) {
 				if (data) {
-					if (c_oAscFileType.DOCX === fileType && !window.isCloudCryptoDownloadAs) {
+					if (c_oAscFileType.DOCX === fileType && canDownloadFromBytes) {
 						AscCommon.DownloadFileFromBytes(data, title, AscCommon.openXml.GetMimeType("docx"));
 					} else {
 						dataContainer.data = data;
