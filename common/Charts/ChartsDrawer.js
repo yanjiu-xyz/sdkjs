@@ -7836,6 +7836,13 @@ drawAreaChart.prototype = {
 					this.points[i][n] = {x: x, y: nullPositionOX, val: val};
 				}
 
+				let errBars = seria.errBars[0];
+				if (errBars && this.chartProp && this.chartProp.pxToMM) {
+					const idx = AscFormat.isRealNumber(dataSeries[n].idx) ? dataSeries[n].idx : n;
+					var _pointVal = this.cChartDrawer.getValWithStacked(i, idx, this.chart);
+					this.cChartDrawer.errBars.putPoint(x, y, _pointVal, _pointVal,  seria.idx, idx);
+				}
+
 			}
 
 			if (this.cChartDrawer.nDimensionCount === 3) {
