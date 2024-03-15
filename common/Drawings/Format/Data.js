@@ -7648,6 +7648,8 @@ Because of this, the display is sometimes not correct.
 	  };
 	  ColorDefStyleLbl.prototype.checkNoLn = function () {
 		  switch (this.name) {
+			  case "sibTrans2D1":
+					return true;
 			  default:
 				  return false;
 		  }
@@ -7676,7 +7678,7 @@ Because of this, the display is sometimes not correct.
 
 					if ((isConnector && shadowShape.type !== AscFormat.LayoutShapeType_outputShapeType_conn) ||
 						this.checkTransparent(uniColor)
-						|| shadowShape.shape.hideGeom/* || this.checkNoLn()*/) {
+						|| shadowShape.shape.hideGeom || this.checkNoLn()) {
 						return AscFormat.CreateNoFillLine();
 					}
 
