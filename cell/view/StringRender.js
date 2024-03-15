@@ -125,7 +125,61 @@
 			return oRes;
 		};
 		
-
+		/**
+		 *
+		 * @constructor
+		 */
+		function FragmentShaper() {
+			AscFonts.CTextShaper.call(this);
+			
+			this.fragment       = null;
+			this.graphemes      = [];
+			this.widths         = [];
+			this.codePointCount = [];
+		}
+		FragmentShaper.prototype = Object.create(AscFonts.CTextShaper.prototype);
+		FragmentShaper.prototype.constructor = FragmentShaper;
+		FragmentShaper.prototype.init = function(fragment){
+			this.fragment       = fragment;
+			this.graphemes      = [];
+			this.widths         = [];
+			this.codePointCount = [];
+		};
+		FragmentShaper.prototype.shapeFragment = function(chars, fragment, stringRenderer) {
+			this.init(fragment);
+			
+			this.StartString();
+			
+			let ctx = stringRenderer.drawingCtx;
+			
+			let char, isNL, isSP;
+			for (let i = 0; i < chars.length; ++i) {
+				
+				char = chars[i];
+				isNL = stringRenderer.codesHypNL[char];
+				isSP = !isNL ? stringRenderer.codesHypSp[char] : false;
+				
+				if (isNL || isSP) {
+					this.FlushWord();
+					let spaceW = ctx.measureChar(null, 0, char).width;
+					this.graphemes.push(AscFonts.NO_GRAPHEME);
+					this.widths.push(spaceW);
+				} else {
+					this.AppendToString(char);
+				}
+			}
+			this.FlushWord();
+		};
+		FragmentShaper.prototype.FlushGrapheme = function(grapheme, width, codePointCount, isLigature) {
+			if (codePointCount <= 0)
+				return;
+			
+			AscFonts.CTextShaper.prototype.FlushGrapheme.apply(this, arguments);
+			
+			this.graphemes.push(grapheme);
+			this.widths.push(width);
+			this.codePointCount.push(codePointCount);
+		};
 		
 		/**
 		 * Formatted text render
@@ -147,6 +201,11 @@
 			/** @type String */
 			this.chars = [];
 			this.textShaper = new AscFonts.CTextShaper();
+			this.fragmentShaper = new FragmentShaper();
+
+			this.graphemes      = [];
+			this.graphemeWithds = [];
+			this.graphemeProps  = [];
 			
 			this.charWidths = [];
 			this.charProps = [];
@@ -848,7 +907,10 @@
 			var i, j, fr, fmt, chars, p, p_ = {}, pIndex, startCh;
 			var tw = 0, nlPos = 0, isEastAsian, hpPos = undefined, isSP_ = true, delta = 0;
 
-			function measureFragment(_chars) {
+			function measureFragment(_chars, fragment) {
+				
+				self.fragmentShaper.shapeFragment(_chars, fragment, self);
+				
 				var j, chc, chw, chPos, isNL, isSP, isHP, tm;
 				for (chPos = self.chars.length, j = 0; j < _chars.length; ++j, ++chPos) {
 					chc = _chars[j];
@@ -982,7 +1044,7 @@
 				if (chars.length < 1) {
 					continue;
 				}
-				measureFragment(chars);
+				measureFragment(chars, fr);
 
 				// для italic текста прибавляем к концу строки разницу между charWidth и BBox
 				for (j = startCh; font.getItalic() && j < this.charWidths.length; ++j) {
