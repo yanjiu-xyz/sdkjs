@@ -132,21 +132,23 @@
 		function FragmentShaper() {
 			AscFonts.CTextShaper.call(this);
 			
-			this.fragment       = null;
+			this.font           = null;
 			this.graphemes      = [];
 			this.widths         = [];
 			this.codePointCount = [];
+			this.stringRenderer = null;
 		}
 		FragmentShaper.prototype = Object.create(AscFonts.CTextShaper.prototype);
 		FragmentShaper.prototype.constructor = FragmentShaper;
-		FragmentShaper.prototype.init = function(fragment){
-			this.fragment       = fragment;
+		FragmentShaper.prototype.init = function(font){
+			this.font           = font;
 			this.graphemes      = [];
 			this.widths         = [];
 			this.codePointCount = [];
 		};
-		FragmentShaper.prototype.shapeFragment = function(chars, fragment, stringRenderer) {
-			this.init(fragment);
+		FragmentShaper.prototype.shapeFragment = function(chars, font, stringRenderer) {
+			this.init(font);
+			this.stringRenderer = stringRenderer;
 			
 			this.StartString();
 			
@@ -177,8 +179,18 @@
 			AscFonts.CTextShaper.prototype.FlushGrapheme.apply(this, arguments);
 			
 			this.graphemes.push(grapheme);
-			this.widths.push(width);
+			this.widths.push(width * this.font.getSize() / 25.4 * this.stringRenderer.drawingCtx.getPPIY());
 			this.codePointCount.push(codePointCount);
+		};
+		FragmentShaper.prototype.GetFontSlot = function() {
+			return AscWord.fontslot_ASCII;
+		};
+		FragmentShaper.prototype.GetFontInfo = function() {
+			return {
+				Name  : this.font.getName(),
+				Size  : this.font.getSize(),
+				Style : (this.font.getBold() ? 1 : 0) | (this.font.getItalic() ? 2 : 0)
+			};
 		};
 		
 		/**
@@ -204,7 +216,7 @@
 			this.fragmentShaper = new FragmentShaper();
 
 			this.graphemes      = [];
-			this.graphemeWithds = [];
+			this.graphemeWidths = [];
 			this.graphemeProps  = [];
 			
 			this.charWidths = [];
@@ -560,7 +572,7 @@
 			this.lines = [];
 			
 			this.graphemes      = [];
-			this.graphemeWithds = [];
+			this.graphemeWidths = [];
 			this.graphemeProps  = [];
 		};
 
@@ -906,10 +918,31 @@
 			var hasRepeats = false;
 			var i, j, fr, fmt, chars, p, p_ = {}, pIndex, startCh;
 			var tw = 0, nlPos = 0, isEastAsian, hpPos = undefined, isSP_ = true, delta = 0;
+			let frShaper = this.fragmentShaper;
+			
+			var zoom = ctx.getZoom();
+			var ppiy = ctx.getPPIY();
+			
+			this.charToGrapheme = [];
+			let charToGraphemeIndex = 0;
 
 			function measureFragment(_chars, fragment) {
 				
-				self.fragmentShaper.shapeFragment(_chars, fragment, self);
+				frShaper.shapeFragment(_chars, fragment.format, self);
+				
+				let graphemes = frShaper.graphemes;
+				let widths    = frShaper.widths;
+				let codePointCount = frShaper.codePointCount;
+				
+				for (let i = 0; i < graphemes.length; ++i) {
+					for (let j = 0; j < codePointCount[i]; ++j) {
+						self.charToGrapheme[charToGraphemeIndex++] = self.graphemes.length + i;
+					}
+				}
+
+				self.graphemes = self.graphemes.concat(graphemes);
+				self.graphemeWidths = self.graphemeWidths.concat(widths);
+				
 				
 				var j, chc, chw, chPos, isNL, isSP, isHP, tm;
 				for (chPos = self.chars.length, j = 0; j < _chars.length; ++j, ++chPos) {
@@ -1114,8 +1147,6 @@
 			var i, j, p, p_, strBeg;
 			var n = 0, l = this.lines[0], x1 = l ? initX(0) : 0, y1 = y, dx = l ? computeWordDeltaX() : 0;
 			
-			let fontSize = 10;
-			
 			function initX(startPos) {
 				var x_ = x;
 				if (align === AscCommon.align_Right) {
@@ -1149,22 +1180,34 @@
 				var fsz, x2, y, lw, dy, i, b, x_, cp;
 				var bl = asc_round(l.bl * zoom);
 				
+				if (begin >= end)
+					return;
 				
-				let glyphs = [];
-				let widths = [];
-				
-				self.textShaper.ShapeArray(self.chars.slice(begin, end), function(grapheme, width, isLigature){
-					glyphs.push(grapheme);
-					widths.push(width * prop.font.getSize() / 25.4 * ppiy);
-				});
-				
+				let beginGrapheme = self.charToGrapheme[begin];
+				let endGrapheme   = self.charToGrapheme[end - 1];
 				y = y1 + bl + dh;
 				let __x = x1;
-				for (let glyphIndex = 0; glyphIndex < glyphs.length; ++glyphIndex)
+				for (let glyphIndex = beginGrapheme; glyphIndex <= endGrapheme; ++glyphIndex)
 				{
-					AscFonts.DrawGrapheme(glyphs[glyphIndex], ctx, __x, y, prop.font.getSize(), ppiy / 25.4);
-					__x += widths[glyphIndex];
+					AscFonts.DrawGrapheme(self.graphemes[glyphIndex], ctx, __x, y, prop.font.getSize(), ppiy / 25.4);
+					__x += self.graphemeWidths[glyphIndex];
 				}
+				
+				// let glyphs = [];
+				// let widths = [];
+				//
+				// self.textShaper.ShapeArray(self.chars.slice(begin, end), function(grapheme, width, isLigature){
+				// 	glyphs.push(grapheme);
+				// 	widths.push(width * prop.font.getSize() / 25.4 * ppiy);
+				// });
+				//
+				// y = y1 + bl + dh;
+				// let __x = x1;
+				// for (let glyphIndex = 0; glyphIndex < glyphs.length; ++glyphIndex)
+				// {
+				// 	AscFonts.DrawGrapheme(glyphs[glyphIndex], ctx, __x, y, prop.font.getSize(), ppiy / 25.4);
+				// 	__x += widths[glyphIndex];
+				// }
 				
 
 				// y = y1 + bl + dh;
@@ -1267,7 +1310,13 @@
 				chars: this.chars,
 				charWidths: this.charWidths,
 				charProps: this.charProps,
-				lines: this.lines
+				lines: this.lines,
+				
+				graphemes: this.graphemes,
+				graphemeWidths: this.graphemeWidths,
+				graphemeProps: this.graphemeProps,
+				charToGrapheme: this.charToGrapheme
+				
 			};
 		};
 
@@ -1277,6 +1326,10 @@
 			this.charWidths = state.charWidths;
 			this.charProps = state.charProps;
 			this.lines = state.lines;
+			this.graphemes = state.graphemes;
+			this.graphemeWidths = state.graphemeWidths;
+			this.graphemeProps = state.graphemeProps;
+			this.charToGrapheme = state.charToGrapheme;
 			return this;
 		};
 
