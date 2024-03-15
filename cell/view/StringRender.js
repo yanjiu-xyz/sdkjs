@@ -48,20 +48,6 @@
 		var asc_debug   = asc.outputDebugStr;
 		var asc_typeof  = asc.typeOf;
 		var asc_round   = asc.round;
-		let graphics    = null;
-		
-		function getGraphics(wb)
-		{
-			if (graphics)
-				return graphics;
-			graphics = new AscCommon.CGraphics();
-			let canvas  = wb.buffers.main.canvas;
-			let ppiX = wb.buffers.main.ppiX;
-			let ppiY = wb.buffers.main.ppiY;
-			graphics.init(wb.buffers.main.ctx, canvas.width, canvas.height, 25.4 * canvas.width / ppiX, 25.4 * canvas.height / ppiY);
-			graphics.m_oFontManager = AscCommon.g_fontManager;
-			return graphics;
-		}
 
 		function LineInfo(lm) {
 			this.tw = 0;
@@ -138,8 +124,9 @@
 			oRes.wrd = this.wrd;
 			return oRes;
 		};
+		
 
-
+		
 		/**
 		 * Formatted text render
 		 * -----------------------------------------------------------------------------
@@ -160,7 +147,7 @@
 			/** @type String */
 			this.chars = [];
 			this.textShaper = new AscFonts.CTextShaper();
-
+			
 			this.charWidths = [];
 			this.charProps = [];
 			this.lines = [];
@@ -512,6 +499,10 @@
 			this.charWidths = [];
 			this.charProps = [];
 			this.lines = [];
+			
+			this.graphemes      = [];
+			this.graphemeWithds = [];
+			this.graphemeProps  = [];
 		};
 
 		/**
@@ -866,7 +857,7 @@
 
 					isNL = self.codesHypNL[chc];
 					isSP = !isNL ? self.codesHypSp[chc] : false;
-
+					
 					// if 'wrap flag' is set
 					if (wrap || wrapNL || verticalText) {
 						isHP = !isSP && !isNL ? self.codesHyphen[chc] : false;
@@ -1063,15 +1054,6 @@
 			
 			let fontSize = 10;
 			
-			// let graphics = getGraphics(Asc.editor.wb);
-			// graphics.SaveGrState();
-			// graphics.b_color1(0, 0, 0, 255);
-			// graphics.b_color2(0, 0, 0, 255);
-			// let textPr = new AscWord.CTextPr();
-			// textPr.InitDefault();
-			// graphics.SetTextPr(textPr);
-			// graphics.SetIntegerGrid(false);
-			
 			function initX(startPos) {
 				var x_ = x;
 				if (align === AscCommon.align_Right) {
@@ -1111,19 +1093,14 @@
 				
 				self.textShaper.ShapeArray(self.chars.slice(begin, end), function(grapheme, width, isLigature){
 					glyphs.push(grapheme);
-					widths.push(width * fontSize / 25.4 * ppiy);
+					widths.push(width * prop.font.getSize() / 25.4 * ppiy);
 				});
 				
 				y = y1 + bl + dh;
-				
-				// graphics.m_oCoordTransform.tx = x1;
-				// graphics.m_oCoordTransform.ty = y;
-				// graphics.transform3(new AscCommon.CMatrix());
-				
 				let __x = x1;
 				for (let glyphIndex = 0; glyphIndex < glyphs.length; ++glyphIndex)
 				{
-					AscFonts.DrawGrapheme(glyphs[glyphIndex], ctx, __x, y, fontSize);
+					AscFonts.DrawGrapheme(glyphs[glyphIndex], ctx, __x, y, prop.font.getSize(), ppiy / 25.4);
 					__x += widths[glyphIndex];
 				}
 				
@@ -1218,8 +1195,6 @@
 				// render text remainder
 				renderFragment(strBeg, i, p_, this.angle);
 			}
-			
-			//graphics.RestoreGrState();
 		};
 
 		StringRender.prototype.getInternalState = function () {

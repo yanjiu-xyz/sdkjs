@@ -63,11 +63,14 @@
 		GRAPHEME_BUFFER[1] += nAdvanceX;
 		GRAPHEME_BUFFER[2] += 1;
 	}
-	function DrawGrapheme(nGraphemeId, oContext, nX, nY, nFontSize)
+	function DrawGrapheme(nGraphemeId, oContext, nX, nY, nFontSize, coeff)
 	{
 		let oGrapheme = GRAPHEMES[nGraphemeId];
 		if (!oGrapheme)
 			return;
+		
+		if (undefined === coeff)
+			coeff = 1;
 
 		let nFontId = oGrapheme[0] >> 8;
 		let nStyle  = oGrapheme[0] & 0xF;
@@ -75,7 +78,7 @@
 		let sFontName = AscCommon.FontNameMap.GetName(nFontId);
 		oContext.SetFontInternal(sFontName, nFontSize, nStyle);
 
-		let nKoef = COEF * nFontSize;
+		let nKoef = COEF * nFontSize * coeff;
 		let nPos  = 3;
 		for (let nIndex = 0, nCount = oGrapheme[2]; nIndex < nCount; ++nIndex)
 		{
