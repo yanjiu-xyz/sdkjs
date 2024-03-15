@@ -2635,8 +2635,8 @@
 	baseEditorsApi.prototype.checkSaveDocumentEvent = function (IsUserSave) {
 		let t = this;
 		if (IsUserSave && this.DocInfo.get_SupportsOnSaveDocument()) {
-			if (this.isOpenOOXInBrowser && this.saveDocumentToZip) {
-				this.saveDocumentToZip(this.WordControl.m_oLogicDocument, this.editorId, function (data) {
+			if (this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml")) {
+				this.saveLogicDocumentToZip(undefined, undefined, function (data) {
 					t.sendEvent('asc_onSaveDocument', data);
 					//AscCommon.DownloadFileFromBytes(data, t.documentTitle, AscCommon.openXml.GetMimeType(t.documentFormat));
 				});
@@ -2712,6 +2712,12 @@
 	};
 	baseEditorsApi.prototype.openDocumentFromZip  = function()
 	{
+	};
+	baseEditorsApi.prototype.saveLogicDocumentToZip  = function(fileType, options, callback)
+	{
+		//todo common getLogicDocument
+		let model = this.WordControl && this.WordControl.m_oLogicDocument ? this.WordControl.m_oLogicDocument : this.wb.model;
+		this.saveDocumentToZip(model, this.editorId, callback, fileType, options);
 	};
 	baseEditorsApi.prototype.onEndLoadDocInfo = function()
 	{

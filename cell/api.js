@@ -1445,11 +1445,11 @@ var editor;
       // ToDo select txt params
       oAdditionalData["codepage"] = AscCommon.c_oAscCodePageUtf8;
       dataContainer.data = last.data;
-    } else if(this.isOpenOOXInBrowser && this.saveDocumentToZip) {
+    } else if(this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml")) {
 		var t = this;
 		var title = this.documentTitle;
 		AscCommonExcel.executeInR1C1Mode(false, function () {
-			t.saveDocumentToZip(t.wb.model, AscCommon.c_oEditorId.Spreadsheet, function(data) {
+			t.saveLogicDocumentToZip(undefined, undefined, function(data) {
 				if (data) {
 					if (c_oAscFileType.XLSX === fileType && !window.isCloudCryptoDownloadAs) {
 						AscCommon.DownloadFileFromBytes(data, title, AscCommon.openXml.GetMimeType("xlsx"));
@@ -6683,9 +6683,9 @@ var editor;
   spreadsheet_api.prototype.asc_nativeGetFileData = function() {
 	  //calc to fix case where file has formulas with no cache values and no changes
 	  this.wbModel.dependencyFormulas.calcTree();
-	  if (this.isOpenOOXInBrowser && this.saveDocumentToZip) {
+	  if (this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml")) {
 		  let res;
-		  this.saveDocumentToZip(this.wb.model, this.editorId, function(data) {
+		  this.saveLogicDocumentToZip(undefined, undefined, function(data) {
 			  res = data;
 		  });
 		  if (res) {
