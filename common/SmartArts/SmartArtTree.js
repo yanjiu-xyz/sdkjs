@@ -5614,29 +5614,27 @@ PresNode.prototype.addChild = function (ch, pos) {
 	};
 
 	PresNode.prototype.getCalcRefConstr = function (constr, isAdapt, valueCache) {
+		const refPtType = constr.refPtType.getVal();
 		if (!constr.refForName) {
-			if (!valueCache) {
-				valueCache = {};
-			}
 			if (!valueCache[constr.refFor]) {
 				valueCache[constr.refFor] = {};
 			}
-			if (!valueCache[constr.refFor][constr.refPtType]) {
-				valueCache[constr.refFor][constr.refPtType] = {};
+			if (!valueCache[constr.refFor][refPtType]) {
+				valueCache[constr.refFor][refPtType] = {};
 			}
-			const cacheValue = valueCache[constr.refFor][constr.refPtType][constr.refType];
+			const cacheValue = valueCache[constr.refFor][refPtType][constr.refType];
 			if (AscFormat.isRealNumber(cacheValue)) {
 				return cacheValue;
 			}
 		}
 
-		const refNode = this.getConstraintNode(constr.refForName, constr.refPtType.getVal());
+		const refNode = this.getConstraintNode(constr.refForName, refPtType);
 		if (!refNode) {
 			return;
 		}
 		const calcValue = refNode.getRefConstr(constr, isAdapt);
 		if (constr.refType !== AscFormat.Constr_type_none && !constr.refForName) {
-			valueCache[constr.refFor][constr.refPtType][constr.refType] = calcValue;
+			valueCache[constr.refFor][refPtType][constr.refType] = calcValue;
 		}
 		return calcValue;
 	};
