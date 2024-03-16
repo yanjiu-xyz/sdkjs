@@ -2637,7 +2637,8 @@
 		if (IsUserSave && this.DocInfo.get_SupportsOnSaveDocument()) {
 			if (this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml")) {
 				this.saveLogicDocumentToZip(undefined, undefined, function (data) {
-					t.sendEvent('asc_onSaveDocument', data);
+					//slice to fix error after zip: Failed to execute 'postMessage' on 'Window': ArrayBuffer at index 0 is not detachable and could not be transferred.
+					t.sendEvent('asc_onSaveDocument', data.slice());
 					//AscCommon.DownloadFileFromBytes(data, t.documentTitle, AscCommon.openXml.GetMimeType(t.documentFormat));
 				});
 			} else {
