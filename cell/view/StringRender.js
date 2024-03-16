@@ -164,8 +164,7 @@
 				if (isNL || isSP) {
 					this.FlushWord();
 					let spaceW = ctx.measureChar(null, 0, char).width;
-					this.graphemes.push(AscFonts.NO_GRAPHEME);
-					this.widths.push(spaceW);
+					this._handleGrapheme(AscFonts.NO_GRAPHEME, spaceW, [char], false);
 				} else {
 					this.AppendToString(char);
 				}
@@ -176,14 +175,18 @@
 			if (codePointCount <= 0)
 				return;
 			
-			AscFonts.CTextShaper.prototype.FlushGrapheme.apply(this, arguments);
+			// TODO: RTL
+			let _width = width * this.font.getSize() / 25.4 * this.stringRenderer.drawingCtx.getPPIY();
+			let _codePoints = this.Buffer.slice(this.BufferIndex, this.BufferIndex + codePointCount);
+			this._handleGrapheme(grapheme, _width, _codePoints, isLigature);
 			
-			this.graphemes.push(grapheme);
-			this.widths.push(width * this.font.getSize() / 25.4 * this.stringRenderer.drawingCtx.getPPIY());
-			this.codePointCount.push(codePointCount);
+			AscFonts.CTextShaper.prototype.FlushGrapheme.apply(this, arguments);
 		};
 		FragmentShaper.prototype.GetFontSlot = function() {
 			return AscWord.fontslot_ASCII;
+		};
+		FragmentShaper.prototype.GetDirection = function(script) {
+			return AscFonts.HB_DIRECTION.HB_DIRECTION_LTR;
 		};
 		FragmentShaper.prototype.GetFontInfo = function() {
 			return {
@@ -191,6 +194,18 @@
 				Size  : this.font.getSize(),
 				Style : (this.font.getBold() ? 1 : 0) | (this.font.getItalic() ? 2 : 0)
 			};
+		};
+		FragmentShaper.prototype._handleGrapheme = function(grapheme, width, codePoints, isLigature) {
+			
+			let sr = this.stringRenderer;
+			
+			let charIndex = sr.charToGrapheme.length;
+			for (let j = 0; j < codePoints.length; ++j)
+				sr.charToGrapheme[charIndex++] = sr.graphemes.length;
+			
+			sr.graphemes.push(grapheme);
+			sr.graphemeWidths.push(width);
+			sr.graphemeCodePoints.push(codePoints);
 		};
 		
 		/**
@@ -215,9 +230,11 @@
 			this.textShaper = new AscFonts.CTextShaper();
 			this.fragmentShaper = new FragmentShaper();
 
-			this.graphemes      = [];
-			this.graphemeWidths = [];
-			this.graphemeProps  = [];
+			this.graphemes          = [];
+			this.graphemeWidths     = [];
+			this.graphemeProps      = [];
+			this.graphemeCodePoints = [];
+			this.charToGrapheme     = [];
 			
 			this.charWidths = [];
 			this.charProps = [];
@@ -571,9 +588,10 @@
 			this.charProps = [];
 			this.lines = [];
 			
-			this.graphemes      = [];
-			this.graphemeWidths = [];
-			this.graphemeProps  = [];
+			this.graphemes          = [];
+			this.graphemeWidths     = [];
+			this.graphemeProps      = [];
+			this.graphemeCodePoints = [];
 		};
 
 		/**
@@ -920,29 +938,11 @@
 			var tw = 0, nlPos = 0, isEastAsian, hpPos = undefined, isSP_ = true, delta = 0;
 			let frShaper = this.fragmentShaper;
 			
-			var zoom = ctx.getZoom();
-			var ppiy = ctx.getPPIY();
-			
 			this.charToGrapheme = [];
-			let charToGraphemeIndex = 0;
 
 			function measureFragment(_chars, fragment) {
 				
 				frShaper.shapeFragment(_chars, fragment.format, self);
-				
-				let graphemes = frShaper.graphemes;
-				let widths    = frShaper.widths;
-				let codePointCount = frShaper.codePointCount;
-				
-				for (let i = 0; i < graphemes.length; ++i) {
-					for (let j = 0; j < codePointCount[i]; ++j) {
-						self.charToGrapheme[charToGraphemeIndex++] = self.graphemes.length + i;
-					}
-				}
-
-				self.graphemes = self.graphemes.concat(graphemes);
-				self.graphemeWidths = self.graphemeWidths.concat(widths);
-				
 				
 				var j, chc, chw, chPos, isNL, isSP, isHP, tm;
 				for (chPos = self.chars.length, j = 0; j < _chars.length; ++j, ++chPos) {
@@ -1315,6 +1315,7 @@
 				graphemes: this.graphemes,
 				graphemeWidths: this.graphemeWidths,
 				graphemeProps: this.graphemeProps,
+				graphemeCodePoints: this.graphemeCodePoints,
 				charToGrapheme: this.charToGrapheme
 				
 			};
@@ -1329,6 +1330,7 @@
 			this.graphemes = state.graphemes;
 			this.graphemeWidths = state.graphemeWidths;
 			this.graphemeProps = state.graphemeProps;
+			this.graphemeCodePoints = state.graphemeCodePoints;
 			this.charToGrapheme = state.charToGrapheme;
 			return this;
 		};
