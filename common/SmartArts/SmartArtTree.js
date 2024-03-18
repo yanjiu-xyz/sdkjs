@@ -1632,7 +1632,8 @@
 				while (nextIndex < nodes.length && !nodes[nextIndex].isMainElement()) {
 					nextIndex += 1;
 				}
-				if (nextIndex === nodes.length && !this.isHideLastChild()) {
+				const lastNode = nodes[nodes.length - 1].node;
+				if (nextIndex === nodes.length && !lastNode.isHideLastTrans) {
 					nextIndex = 0;
 					while (nextIndex < previousIndex && !nodes[nextIndex].isMainElement()) {
 						nextIndex += 1;
@@ -1813,7 +1814,7 @@
 	BaseAlgorithm.prototype.applyPostAlgorithmSettingsForShape = function (smartartAlgorithm, shape, customCoefficient) {
 		const presNode = shape.node;
 		const prSet = presNode.getPrSet();
-		if (prSet.custLinFactY || prSet.custLinFactX || prSet.custLinFactNeighborY || prSet.custLinFactNeighborX) {
+		if (prSet.custLinFactY || prSet.custLinFactX || prSet.custLinFactNeighborY || prSet.custLinFactNeighborX || prSet.custRadScaleInc || prSet.custRadScaleRad) {
 			smartartAlgorithm.addSettingsForMove({shape: shape, coefficient: customCoefficient || 1});
 		}
 	};
@@ -3848,16 +3849,25 @@ function HierarchyAlgorithm() {
 			currentAngle = AscFormat.normalizeRotate(currentAngle + stepAngle);
 		}
 
+		const parentWidth = this.getParentNodeWidth();
+		const parentHeight = this.getParentNodeHeight();
 		const cycleHeight = cycleBounds.b - cycleBounds.t;
 		const cycleWidth = cycleBounds.r - cycleBounds.l;
-		const coefficient = Math.min(1, parentConstraints.width / cycleWidth, parentConstraints.height / cycleHeight);
+		const coefficient = Math.min(1,parentWidth / cycleWidth, parentHeight / cycleHeight);
 		let radiusCoefficient = coefficient;
 		const scaleFactor = this.getOffsetScaleFactor(radiusBounds, cycleBounds);
 		if (scaleFactor > 1) {
 			radiusCoefficient = Math.max(coefficient, scaleFactor);
 		}
 		this.calcValues.radius = maxRadius * radiusCoefficient;
-		// todo set coefficinet
+		const presNames = {};
+		for (let i = 0; i < this.parentNode.childs.length; i += 1) {
+			const child = this.parentNode.childs[i];
+			const presName = child.getPresName();
+			presNames[presName] = true;
+			child.setWidthScale(coefficient, presNames);
+			child.setHeightScale(coefficient, presNames);
+		}
 	};
 	CycleAlgorithm.prototype.getOffsetScaleFactor = function (radiusBounds, cycleBounds) {
 		if (this.parentNode.constr[AscFormat.Constr_type_sp] !== undefined) {
@@ -5718,11 +5728,15 @@ PresNode.prototype.addChild = function (ch, pos) {
 			const refConstrObject = isAdapt ? refNode.adaptConstr : refNode.constr;
 			const curConstrObject = isAdapt ? this.adaptConstr : this.constr;
 
+			let factor = this.getFactRule(constr.type);
+			if (factor === undefined) {
+				factor = constr.fact;
+			}
 			if (refConstrObject[constr.refType]) {
-				if ( refNode === this && refConstrObject[constr.refType] * constr.fact !== curConstrObject[constr.type]) {
+				if ( refNode === this && refConstrObject[constr.refType] * factor !== curConstrObject[constr.type]) {
 					refConstrObject[constr.refType] = curConstrObject[constr.type]
 				} else {
-					curConstrObject[constr.type] = refConstrObject[constr.refType] * constr.fact;
+					curConstrObject[constr.type] = refConstrObject[constr.refType] * factor;
 				}
 			}
 		}
