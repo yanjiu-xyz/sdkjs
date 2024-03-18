@@ -3811,6 +3811,16 @@ Because of this, the display is sometimes not correct.
 							return this.val;
 					}
 				}
+				case Param_type_rotPath: {
+					switch (this.val) {
+						case 'alongPath':
+							return ParameterVal_rotationPath_alongPath;
+						case 'none':
+							return ParameterVal_rotationPath_none;
+						default:
+							return this.val;
+					}
+				}
 				case Param_type_fallback: {
 					switch (this.val) {
 						case '1D':

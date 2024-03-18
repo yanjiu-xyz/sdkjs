@@ -2200,8 +2200,8 @@
 		const cycleCY = bounds.t + (bounds.b - bounds.t) / 2;
 		const cycleCX = bounds.l + (bounds.r - bounds.l) / 2;
 		return {
-			x: parentWidth / 2 - cycleCX,
-			y: parentHeight / 2 - cycleCY
+			offX: parentWidth / 2 - cycleCX,
+			offY: parentHeight / 2 - cycleCY
 		};
 	};
 
@@ -3598,7 +3598,8 @@ function HierarchyAlgorithm() {
 			startAngle: 0,
 			stepAngle: 0,
 			mainElements: [],
-			centerNodeIndex: null
+			centerNodeIndex: null,
+			isInit: false
 		};
 	}
 	AscFormat.InitClassWithoutType(CycleAlgorithm, PositionAlgorithm);
@@ -3634,8 +3635,8 @@ function HierarchyAlgorithm() {
 		}
 		const result = {};
 		const shapeContainer = this.getShapeContainer();
-		const offsets = shapeContainer.getOffsets(parentHeight, parentWidth); // todo isCalculateScaleCoefficient
-		result.point = new CCoordPoint(offsets.x, offsets.y);
+		const offsets = shapeContainer.getOffsets(parentHeight, parentWidth, false);
+		result.point = new CCoordPoint(offsets.offX, offsets.offY);
 		result.radius = this.calcValues.radius;
 		// todo: add custom radial info
 		result.angle = AscFormat.normalizeRotate(this.calcValues.startAngle + this.calcValues.stepAngle * nodeIndex);
@@ -3645,7 +3646,7 @@ function HierarchyAlgorithm() {
 	CycleAlgorithm.prototype.initParams = function (params) {
 		PositionAlgorithm.prototype.initParams.call(this, params);
 		if (this.params[AscFormat.Param_type_stAng] === undefined) {
-			this.params[AscFormat.Param_type_stAng] = 0;
+			this.params[AscFormat.Param_type_stAng] = 90;
 		}
 		if (this.params[AscFormat.Param_type_spanAng] === undefined) {
 			this.params[AscFormat.Param_type_spanAng] = 360;
@@ -3676,7 +3677,8 @@ function HierarchyAlgorithm() {
 	CycleAlgorithm.prototype.getStartCycleBounds = function () {
 		const centerNode = this.getCenterNode();
 		if (centerNode) {
-			const bounds = this.getCleanNodeBounds(centerNode);
+			const centerShape = centerNode.getShape(true);
+			const bounds = centerShape.getBounds(true);
 			const halfWidth = (bounds.r - bounds.l) / 2;
 			const halfHeight = (bounds.b - bounds.t) / 2;
 			return {
@@ -3701,59 +3703,74 @@ function HierarchyAlgorithm() {
 		}
 		return 0;
 	};
+	CycleAlgorithm.prototype.calculateStartValues = function () {
+		if (!this.calcValues.isInit) {
+			this.calcValues.isInit = true;
+			const spanAngle = this.params[AscFormat.Param_type_spanAng];
+			const startAngle = AscFormat.normalizeRotate(this.params[AscFormat.Param_type_stAng] * degToRad - Math.PI / 2);
+
+			const mainElements = this.calcValues.mainElements;
+			const childs = this.parentNode.childs;
+			let startIndex = this.initCenterShapeMap();
+			for (startIndex; startIndex < childs.length; startIndex += 1) {
+				const child = childs[startIndex];
+				if (child.isContentNode()) {
+					mainElements.push(child);
+				}
+			}
+
+			let stepAngle;
+			if (Math.abs(spanAngle) === 360) {
+				if (mainElements.length === 0) {
+					stepAngle = 0;
+				} else {
+					stepAngle = (spanAngle / mainElements.length) * degToRad;
+				}
+
+			} else {
+				if (mainElements.length === 0) {
+					stepAngle = 0;
+				} else {
+					stepAngle = (spanAngle / (mainElements.length - 1)) * degToRad;
+				}
+			}
+			stepAngle = AscFormat.normalizeRotate(stepAngle);
+			this.calcValues.startAngle = startAngle;
+			this.calcValues.stepAngle  = stepAngle;
+		}
+	};
+	CycleAlgorithm.prototype.getParentNodeWidth = function () {
+		return this.parentNode.getConstr(AscFormat.Constr_type_w) || this.parentNode.getParentWidth();
+	};
+	CycleAlgorithm.prototype.getParentNodeHeight = function () {
+		return this.parentNode.getConstr(AscFormat.Constr_type_h) || this.parentNode.getParentHeight();
+	};
 	CycleAlgorithm.prototype.calcScaleCoefficients = function () {
-		this.parentNode.calcNodeConstraints();
-		const parentConstraints = this.getNodeConstraints(this.parentNode);
-		const spanAngle = this.params[AscFormat.Param_type_spanAng];
-		const startAngle = AscFormat.normalizeRotate(this.params[AscFormat.Param_type_stAng] * degToRad - Math.PI / 2);
-
-		const childs = this.parentNode.childs;
-		const mainElementsBounds = [];
-		let startIndex = this.initCenterShapeMap();
-		for (startIndex; startIndex < childs.length; startIndex += 1) {
-			const child = childs[startIndex];
-			if (child.isContentNode()) {
-				mainElementsBounds.push(this.getCleanNodeBounds(child));
-				this.calcValues.mainElements.push(child);
-			}
-		}
-
-		let stepAngle;
-		if (Math.abs(spanAngle) === 360) {
-			if (mainElementsBounds.length === 0) {
-				stepAngle = 0;
-			} else {
-				stepAngle = (spanAngle / mainElementsBounds.length) * degToRad;
-			}
-
-		} else {
-			if (mainElementsBounds.length === 0) {
-				stepAngle = 0;
-			} else {
-				stepAngle = (spanAngle / (mainElementsBounds.length - 1)) * degToRad;
-			}
-		}
-		stepAngle = AscFormat.normalizeRotate(stepAngle);
-		this.calcValues.startAngle = startAngle;
-		this.calcValues.stepAngle  = stepAngle;
-
+		const startAngle = this.calcValues.startAngle;
+		const stepAngle = this.calcValues.stepAngle;
+		const mainElements = this.calcValues.mainElements;
 		let previousAngle = startAngle;
 		let currentAngle = AscFormat.normalizeRotate(startAngle + stepAngle);
 		const divider = Math.sqrt(2 * (1 - Math.cos(Math.abs(stepAngle))));
 		const sibSp = this.parentNode.getConstr(AscFormat.Constr_type_sibSp);
 
+
+		const firstShape = mainElements[0] && mainElements[0].getShape(true)
+		const firstElementBounds = firstShape && firstShape.getBounds(true);
 		let maxRadius = 0;
 		const centerNode = this.getCenterNode();
 		let centerShapeBounds;
 		if (centerNode) {
 			const startGuideVector = CVector.getVectorByAngle(startAngle);
-			centerShapeBounds = this.getCleanNodeBounds(centerNode);
-			maxRadius = this.getCenterShapeRadius(centerShapeBounds, mainElementsBounds[0], startGuideVector);
+			const centerShape = centerNode.getShape(true);
+			const centerShapeBounds = centerShape.getBounds(true);
+			maxRadius = this.getCenterShapeRadius(centerShapeBounds, firstElementBounds, startGuideVector);
 		}
 		if (divider !== 0) {
-			let previousBounds = mainElementsBounds[0];
-			for (let i = 1; i < mainElementsBounds.length; i++) {
-				const currentBounds = mainElementsBounds[i];
+			let previousBounds = firstElementBounds;
+			for (let i = 1; i < mainElements.length; i++) {
+				const shape = mainElements[i].getShape(true);
+				const currentBounds = shape.getBounds(true);
 				const centerGuideVector = CVector.getVectorByAngle(currentAngle);
 				const tempCenterRadius = this.getCenterShapeRadius(centerShapeBounds, currentBounds, centerGuideVector);
 
@@ -3782,10 +3799,11 @@ function HierarchyAlgorithm() {
 		currentAngle = startAngle;
 		const cycleBounds = this.getStartCycleBounds();
 		const radiusBounds = {l: 0, r: 0, t: 0, b: 0};
-		for (let i = 0; i < mainElementsBounds.length; i++) {
+		for (let i = 0; i < mainElements.length; i++) {
 			const radiusVector = CVector.getVectorByAngle(currentAngle);
 			radiusVector.multiply(maxRadius);
-			const currentBounds = mainElementsBounds[i];
+			const shape = mainElements[i].getShape(true);
+			const currentBounds = shape.getBounds(true);
 			const halfWidth = (currentBounds.r - currentBounds.l) / 2;
 			const halfHeight = (currentBounds.b - currentBounds.t) / 2;
 			const newL = radiusVector.x - halfWidth;
@@ -3828,12 +3846,13 @@ function HierarchyAlgorithm() {
 		if (this.parentNode.constr[AscFormat.Constr_type_sp] !== undefined) {
 			return 1;
 		}
-		const parentConstraints = this.getNodeConstraints(this.parentNode);
+		const parentNodeWidth = this.getParentNodeWidth();
+		const parentNodeHeight = this.getParentNodeHeight();
 
 		const radiusHeight = radiusBounds.b - radiusBounds.t;
 		const radiusWidth = radiusBounds.r - radiusBounds.l;
-		const parentWidth = parentConstraints.width - (radiusBounds.l - cycleBounds.l) - (cycleBounds.r - radiusBounds.r);
-		const parentHeight = parentConstraints.height - (radiusBounds.t - cycleBounds.t) - (cycleBounds.b - radiusBounds.b);
+		const parentWidth = parentNodeWidth - (radiusBounds.l - cycleBounds.l) - (cycleBounds.r - radiusBounds.r);
+		const parentHeight = parentNodeHeight - (radiusBounds.t - cycleBounds.t) - (cycleBounds.b - radiusBounds.b);
 		if (radiusHeight !== 0 && radiusWidth !== 0) {
 			return Math.max(1, Math.min(parentWidth / radiusWidth, parentHeight / radiusHeight));
 		} else if (radiusHeight === 0 && radiusWidth !== 0) {
@@ -3845,6 +3864,28 @@ function HierarchyAlgorithm() {
 	};
 
 	CycleAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm, isCalculateScaleCoefficients) {
+		this.calculateStartValues();
+		if (isCalculateScaleCoefficients) {
+			this.calcScaleCoefficients();
+		} else {
+			this._calculateShapePositions();
+			this.applyParamOffsets();
+			this.applyConstraintOffset();
+			this.applyPostAlgorithmSettings();
+			this.setConnections();
+			this.createShadowShape(isCalculateScaleCoefficients);
+		}
+	};
+	CycleAlgorithm.prototype.isAlongPath = function () {
+		return this.params[AscFormat.Param_type_rotPath] === AscFormat.ParameterVal_rotationPath_alongPath;
+	}
+	CycleAlgorithm.prototype.getAlongRot = function (currentAngle) {
+		if (this.isAlongPath()) {
+			return AscFormat.normalizeRotate(currentAngle + Math.PI / 2);
+		}
+		return 0;
+	};
+	CycleAlgorithm.prototype._calculateShapePositions = function () {
 		const childs = this.parentNode.childs;
 		const radius = this.calcValues.radius;
 		let currentAngle = this.calcValues.startAngle;
@@ -3853,7 +3894,7 @@ function HierarchyAlgorithm() {
 		let startIndex = 0;
 		if (this.calcValues.centerNodeIndex !== null) {
 			const centerNode = this.getCenterNode();
-			const shape = centerNode && centerNode.shape;
+			const shape = centerNode && centerNode.getShape(false);
 			if  (shape) {
 				shape.x -= shape.width / 2;
 				shape.y -= shape.height / 2;
@@ -3868,31 +3909,24 @@ function HierarchyAlgorithm() {
 
 		for (let i = startIndex; i < childs.length; i++) {
 			const child = childs[i];
-			if (child.isContentNode()) {
-				const shape = child.shape;
-				if (shape) {
+				const shape = child.getShape(false);
+				if (child.isContentNode() && shape) {
 					const radiusGuideVector = CVector.getVectorByAngle(currentAngle);
 					radiusGuideVector.multiply(radius);
 					shape.radialVector = radiusGuideVector;
 					shape.incAngle = incAngle;
-					const offX = radiusGuideVector.x - shape.width / 2;
-					const offY = radiusGuideVector.y - shape.height / 2;
-					shape.x += offX;
-					shape.y += offY;
+					const bounds = shape.getBounds(true);
+					const width = bounds.r - bounds.l;
+					const height = bounds.b - bounds.t;
+					const offX = radiusGuideVector.x - width / 2;
+					const offY = radiusGuideVector.y - height / 2;
+
+					shape.rot = this.getAlongRot(currentAngle);
+					shape.moveTo(offX, offY);
 					currentAngle = currentAngle + stepAngle;
 					container.push(shape);
 				}
-			} else {
-				if (child.shape) {
-					container.push(child.shape);
-				}
-			}
 		}
-		this.applyParamOffsets();
-		this.applyConstraintOffset();
-		this.applyPostAlgorithmSettings();
-		this.setConnections();
-		this.createShadowShape(isCalculateScaleCoefficients);
 	};
 	CycleAlgorithm.prototype.createShadowShape = function (isCalculateScaleCoefficients) {
 		return this.parentNode.createShadowShape(true);
@@ -3909,21 +3943,6 @@ function HierarchyAlgorithm() {
 		}
 		return this.shapeContainer;
 	};
-
-	CycleAlgorithm.prototype.getCleanNodeBounds = function (node) {
-		const width = node.getConstr(AscFormat.Constr_type_w);
-		const height = node.getConstr(AscFormat.Constr_type_h);
-		const x = node.getConstr(AscFormat.Constr_type_l);
-		const y = node.getConstr(AscFormat.Constr_type_t);
-		const isEllipse = node.layoutInfo.shape.type === AscFormat.LayoutShapeType_shapeType_ellipse;
-		return {
-			l: x,
-			t: y,
-			r: x + width,
-			b: y + height,
-			isEllipse: isEllipse
-		};
-	}
 
 	function LinearAlgorithm() {
 		PositionAlgorithm.call(this);
