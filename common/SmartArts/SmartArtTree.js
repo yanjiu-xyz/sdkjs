@@ -1362,12 +1362,31 @@
 			return shape;
 		}
 	}
-	ShadowShape.prototype.getAdjValueWithApplyFactor = function (val) {
+	ShadowShape.prototype.getAdjValueWithApplyFactor = function (adj) {
+		const val = adj.val;
+		const idx = adj.idx;
 		switch (this.type) {
 			case AscFormat.LayoutShapeType_shapeType_pie:
 			case AscFormat.LayoutShapeType_shapeType_arc:
-				val = AscFormat.normalizeRotate(val * degToRad) * radToDeg;
-				return val * 60000;
+				return AscFormat.normalizeRotate(val * degToRad) * radToDeg * 60000;
+			case AscFormat.LayoutShapeType_shapeType_blockArc:
+				switch (idx) {
+					case 1:
+					case 2:
+						return AscFormat.normalizeRotate(val * degToRad) * radToDeg * 60000;
+					default:
+						return val * 100000;
+				}
+			case AscFormat.LayoutShapeType_shapeType_circularArrow:
+			case AscFormat.LayoutShapeType_shapeType_leftCircularArrow:
+				switch (idx) {
+					case 2:
+					case 3:
+					case 4:
+						return AscFormat.normalizeRotate(val * degToRad) * radToDeg * 60000;
+					default:
+						return val * 100000;
+				}
 			default:
 				return val * 100000;
 		}
@@ -1401,7 +1420,7 @@
 				const adj = adjLst.list[i];
 				const adjName = getAdjName(geometry, adj.idx);
 				if (adjName) {
-					geometry.AddAdj(adjName, 0, this.getAdjValueWithApplyFactor(adj.val));
+					geometry.AddAdj(adjName, 0, this.getAdjValueWithApplyFactor(adj));
 				}
 			}
 		}
