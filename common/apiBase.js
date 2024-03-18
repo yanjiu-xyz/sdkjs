@@ -2634,7 +2634,7 @@
 	};
 	baseEditorsApi.prototype.checkSaveDocumentEvent = function (IsUserSave) {
 		let t = this;
-		if (IsUserSave && this.DocInfo.get_SupportsOnSaveDocument()) {
+		if (IsUserSave && this.DocInfo && this.DocInfo.get_SupportsOnSaveDocument()) {
 			if (this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml")) {
 				this.saveLogicDocumentToZip(undefined, undefined, function (data) {
 					//slice to fix error after zip: Failed to execute 'postMessage' on 'Window': ArrayBuffer at index 0 is not detachable and could not be transferred.
