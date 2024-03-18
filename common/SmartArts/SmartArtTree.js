@@ -1217,30 +1217,33 @@
 		const shapeBounds = this.getBounds();
 		checkBounds(bounds, shapeBounds);
 	};
-	Position.prototype.getBounds = function () {
+	Position.prototype.getBounds = function (isClean) {
 		const matrix = this.getMatrix();
-		const x1 = matrix.TransformPointX(this.x, this.y);
-		const x2 = matrix.TransformPointX(this.x + this.width, this.y);
-		const x3 = matrix.TransformPointX(this.x, this.y + this.height);
-		const x4 = matrix.TransformPointX(this.x + this.width, this.y + this.height);
-		const y1 = matrix.TransformPointY(this.x, this.y);
-		const y2 = matrix.TransformPointY(this.x + this.width, this.y);
-		const y3 = matrix.TransformPointY(this.x, this.y + this.height);
-		const y4 = matrix.TransformPointY(this.x + this.width, this.y + this.height);
+		const pos = isClean ? this.cleanParams : this;
+		const x1 = matrix.TransformPointX(pos.x, pos.y);
+		const x2 = matrix.TransformPointX(pos.x + pos.width, pos.y);
+		const x3 = matrix.TransformPointX(pos.x, pos.y + pos.height);
+		const x4 = matrix.TransformPointX(pos.x + pos.width, pos.y + pos.height);
+		const y1 = matrix.TransformPointY(pos.x, pos.y);
+		const y2 = matrix.TransformPointY(pos.x + pos.width, pos.y);
+		const y3 = matrix.TransformPointY(pos.x, pos.y + pos.height);
+		const y4 = matrix.TransformPointY(pos.x + pos.width, pos.y + pos.height);
 
-		const res = {};
+		const res = {
+			isEllipse: this.node.layoutInfo.shape.type === AscFormat.LayoutShapeType_shapeType_ellipse
+		};
 		const minX = Math.min(x1, x2, x3, x4);
 		const maxX = Math.max(x1, x2, x3, x4);
 		const minY = Math.min(y1, y2, y3, y4);
 		const maxY = Math.max(y1, y2, y3, y4);
-		if (this.width < 0) {
+		if (pos.width < 0) {
 			res.l = maxX;
 			res.r = minX;
 		} else {
 			res.l = minX;
 			res.r = maxX;
 		}
-		if (this.height < 0) {
+		if (pos.height < 0) {
 			res.t = maxY;
 			res.b = minY;
 		} else {
@@ -1266,11 +1269,6 @@
 	AscFormat.InitClassWithoutType(ShadowShape, Position);
 	ShadowShape.prototype.moveTo = function (dX, dY) {
 		this.node.moveTo(dX, dY, false);
-	};
-	ShadowShape.prototype.getBounds = function () {
-		const bounds = Position.prototype.getBounds.call(this);
-		bounds.isEllipse = this.type === AscFormat.LayoutShapeType_shapeType_ellipse;
-		return bounds;
 	};
 	ShadowShape.prototype.setCalcInfo = function () {
 		this.calcInfo = {
