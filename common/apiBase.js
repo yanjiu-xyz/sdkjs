@@ -1205,10 +1205,22 @@
 			AscCommon.getFile(url);
 		}
 	};
-	baseEditorsApi.prototype.getDrawingObjects = function () {};
-	baseEditorsApi.prototype.getDrawingDocument = function () {};
-	baseEditorsApi.prototype.getLogicDocument = function () {};
-	baseEditorsApi.prototype._createSmartArt = function () {};
+	baseEditorsApi.prototype.getDrawingObjects = function ()
+	{
+		return null;
+	};
+	baseEditorsApi.prototype.getDrawingDocument = function ()
+	{
+		return null;
+	};
+	baseEditorsApi.prototype.getLogicDocument = function ()
+	{
+		return null;
+	};
+	baseEditorsApi.prototype._createSmartArt = function ()
+	{
+		return null;
+	};
 	baseEditorsApi.prototype.asc_createSmartArt = function (nSmartArtType, oPlaceholderObject) {
 		const oThis = this;
 		AscCommon.g_oBinarySmartArts.checkLoadDrawing().then(function()

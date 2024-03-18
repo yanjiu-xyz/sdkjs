@@ -58,7 +58,7 @@ CDocumentContentBase.prototype.GetId = function()
 };
 CDocumentContentBase.prototype.GetApi = function()
 {
-	return editor;
+	return Asc.editor;
 };
 /**
  * Получаем ссылку на основной объект документа
@@ -73,8 +73,7 @@ CDocumentContentBase.prototype.GetLogicDocument = function()
 };
 CDocumentContentBase.prototype.getDrawingDocument = function()
 {
-	let logicDocument = this.GetLogicDocument();
-	return logicDocument ? logicDocument.GetDrawingDocument() : null;
+	return this.GetApi().getDrawingDocument();
 };
 /**
  * Получаем тип активной части документа.
