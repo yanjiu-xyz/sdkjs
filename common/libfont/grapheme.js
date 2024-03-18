@@ -77,21 +77,29 @@
 
 		let sFontName = AscCommon.FontNameMap.GetName(nFontId);
 		oContext.SetFontInternal(sFontName, nFontSize, nStyle);
-
+		
 		let nKoef = COEF * nFontSize * coeff;
-		let nPos  = 3;
-		for (let nIndex = 0, nCount = oGrapheme[2]; nIndex < nCount; ++nIndex)
+		if (1 === oGrapheme[2])
 		{
-			let nGID          = oGrapheme[nPos++];
-			let nAdvanceX     = oGrapheme[nPos++];
-			let nAdvanceY     = oGrapheme[nPos++];
-			let nOffsetX      = oGrapheme[nPos++];
-			let nOffsetY      = oGrapheme[nPos++];
-			let arrCodePoints = oGrapheme[nPos++];
-
-			oContext.tg(nGID, nX + nOffsetX * nKoef, nY - nOffsetY * nKoef, arrCodePoints);
-			nX += nAdvanceX * nKoef;
-			nY += nAdvanceY * nKoef;
+			oContext.tg(oGrapheme[3], nX + oGrapheme[6] * nKoef, nY - oGrapheme[7] * nKoef, oGrapheme[8]);
+		}
+		else
+		{
+			let nKoef = COEF * nFontSize * coeff;
+			let nPos  = 3;
+			for (let nIndex = 0, nCount = oGrapheme[2]; nIndex < nCount; ++nIndex)
+			{
+				let nGID          = oGrapheme[nPos++];
+				let nAdvanceX     = oGrapheme[nPos++];
+				let nAdvanceY     = oGrapheme[nPos++];
+				let nOffsetX      = oGrapheme[nPos++];
+				let nOffsetY      = oGrapheme[nPos++];
+				let arrCodePoints = oGrapheme[nPos++];
+				
+				oContext.tg(nGID, nX + nOffsetX * nKoef, nY - nOffsetY * nKoef, arrCodePoints);
+				nX += nAdvanceX * nKoef;
+				nY += nAdvanceY * nKoef;
+			}
 		}
 	}
 	function CompareGraphemes(g)

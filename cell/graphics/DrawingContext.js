@@ -399,6 +399,11 @@
 	function DrawingContext(settings) {
 		this.canvas = null;
 		this.ctx = null;
+		
+		this.fontSize  = -1;
+		this.fontName  = "";
+		this.fontStyle = -1;
+		this.angle     = -1;
 
 		this.setCanvas(settings.canvas);
 
@@ -888,6 +893,14 @@
 		} else {
 			fontStyle = FontStyle.FontStyleRegular;
 		}
+		
+		if (this.fontSize === font.getSize() && fontStyle === this.fontStyle && font.getName() === this.fontName)
+			return;
+
+		this.fontSize  = font.getSize();
+		this.fontName  = font.getName();
+		this.fontStyle = fontStyle;
+		this.angle     = angle;
 
 		if (window["IS_NATIVE_EDITOR"]) {
 			var fontInfo = AscFonts.g_fontApplication.GetFontInfo(this.font.getName(), fontStyle, this.LastFontOriginInfo);

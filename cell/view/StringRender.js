@@ -180,7 +180,10 @@
 			let _codePoints = this.Buffer.slice(this.BufferIndex, this.BufferIndex + codePointCount);
 			this._handleGrapheme(grapheme, _width, _codePoints, isLigature);
 			
-			AscFonts.CTextShaper.prototype.FlushGrapheme.apply(this, arguments);
+			if (this.IsRtlDirection())
+				this.BufferIndex -= codePointCount;
+			else
+				this.BufferIndex += codePointCount;
 		};
 		FragmentShaper.prototype.GetFontSlot = function() {
 			return AscWord.fontslot_ASCII;
