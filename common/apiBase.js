@@ -519,6 +519,10 @@
 		{
 			this.DocInfo.put_OfflineApp(true);
 		}
+		else if (AscCommon.dataMode === this.documentUrl)
+		{
+			this.DocInfo.put_IsWebOpening(true);
+		}
 
 		if (this.DocInfo.get_EncryptedInfo())
 		{
@@ -619,6 +623,10 @@
 	// Events
 	baseEditorsApi.prototype.sendEvent                       = function()
 	{
+	};
+	baseEditorsApi.prototype.asc_checkNeedCallback = function(name)
+	{
+		return false;
 	};
 	baseEditorsApi.prototype.SendOpenProgress                = function()
 	{
@@ -2632,9 +2640,43 @@
 			} else if (this.isForceSaveOnUserSave && this.IsUserSave) {
 				this.forceSave();
 			}
+			this.checkSaveDocumentEvent(this.IsUserSave);
 		}
 		return res;
 	};
+	baseEditorsApi.prototype.checkSaveDocumentEvent = function (IsUserSave) {
+		let t = this;
+		if (IsUserSave && this.DocInfo && this.DocInfo.get_SupportsOnSaveDocument()) {
+			if (this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml")) {
+				this.saveLogicDocumentToZip(undefined, undefined, function (data) {
+					//slice to fix error after zip: Failed to execute 'postMessage' on 'Window': ArrayBuffer at index 0 is not detachable and could not be transferred.
+					t.sendEvent('asc_onSaveDocument', data.slice());
+					//AscCommon.DownloadFileFromBytes(data, t.documentTitle, AscCommon.openXml.GetMimeType(t.documentFormat));
+				});
+			} else {
+				let opts = new Asc.asc_CDownloadOptions(t.documentFormatSave, true);
+				opts.callback = function() {
+					t.fCurCallback = function(res) {
+						t.sync_EndAction(Asc.c_oAscAsyncActionType.BlockInteraction, Asc.c_oAscAsyncAction.DownloadAs);
+						if (res.status === "ok") {
+							AscCommon.loadFileContent(res.data, function (httpRequest) {
+								if (httpRequest && httpRequest.response) {
+									let data = new Uint8Array(httpRequest.response);
+									t.sendEvent('asc_onSaveDocument', data);
+									// AscCommon.DownloadFileFromBytes(data, t.documentTitle, AscCommon.openXml.GetMimeType(t.documentFormat));
+								} else {
+									t.sendEvent("asc_onError", c_oAscError.ID.Unknown, c_oAscError.Level.Critical);
+								}
+							}, "arraybuffer");
+						} else {
+							t.sendEvent("asc_onError", c_oAscError.ID.ConvertationSaveError, c_oAscError.Level.NoCritical);
+						}
+					};
+				}
+				t.downloadAs(Asc.c_oAscAsyncAction.DownloadAs, opts);
+			}
+		}
+	}
 	/**
 	 * Эта функция возвращает true, если есть изменения или есть lock-и в документе
 	 */
@@ -2683,6 +2725,12 @@
 	};
 	baseEditorsApi.prototype.openDocumentFromZip  = function()
 	{
+	};
+	baseEditorsApi.prototype.saveLogicDocumentToZip  = function(fileType, options, callback)
+	{
+		//todo common getLogicDocument
+		let model = this.WordControl && this.WordControl.m_oLogicDocument ? this.WordControl.m_oLogicDocument : this.wb.model;
+		this.saveDocumentToZip(model, this.editorId, callback, fileType, options);
 	};
 	baseEditorsApi.prototype.onEndLoadDocInfo = function()
 	{
@@ -4842,6 +4890,14 @@
 		return AscCommon.getUserColorById(id, null, false, true);
 	};
 
+	baseEditorsApi.prototype.asc_openDocumentFromBytes = function(data)
+	{
+		let file = new AscCommon.OpenFileResult();
+		file.data = data;
+		file.bSerFormat = AscCommon.checkStreamSignature(file.data, AscCommon.c_oSerFormat.Signature);
+		this.onEndLoadFile(file);
+	};
+
 	//----------------------------------------------------------export----------------------------------------------------
 	window['AscCommon']                = window['AscCommon'] || {};
 	window['AscCommon'].baseEditorsApi = baseEditorsApi;
@@ -4911,6 +4967,7 @@
 	prot['asc_endFindText'] = prot.asc_endFindText;
 	prot['asc_setContentDarkMode'] = prot.asc_setContentDarkMode;
 	prot['asc_getFilePath'] = prot.asc_getFilePath;
+	prot['asc_openDocumentFromBytes'] = prot.asc_openDocumentFromBytes;
 
 	// passwords
 	prot["asc_setCurrentPassword"] = prot.asc_setCurrentPassword;

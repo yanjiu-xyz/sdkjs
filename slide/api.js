@@ -8220,10 +8220,10 @@ background-repeat: no-repeat;\
 			oAdditionalData["codepage"] = AscCommon.c_oAscCodePageUtf8;
 			dataContainer.data = last.data;
 		}
-		else if(this.isOpenOOXInBrowser && this.saveDocumentToZip)
+		else if(this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml"))
 		{
 			var title = this.documentTitle;
-			this.saveDocumentToZip(this.WordControl.m_oLogicDocument, AscCommon.c_oEditorId.Presentation,
+			this.saveLogicDocumentToZip(undefined, undefined,
 				function(data) {
 					if (data) {
 						if (c_oAscFileType.PPTX === fileType && !window.isCloudCryptoDownloadAs) {
@@ -8705,9 +8705,9 @@ background-repeat: no-repeat;\
 
 	window["asc_docs_api"].prototype["asc_nativeGetFileData"] = function()
 	{
-		if (this.isOpenOOXInBrowser && this.saveDocumentToZip) {
+		if (this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml")) {
 			let res;
-			this.saveDocumentToZip(this.WordControl.m_oLogicDocument, this.editorId, function(data) {
+			this.saveLogicDocumentToZip(undefined, undefined, function(data) {
 				res = data;
 			});
 			if (res) {

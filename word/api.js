@@ -8745,6 +8745,10 @@ background-repeat: no-repeat;\
 			}
 		}
 
+		let canDownloadFromBytes = null == options.oDocumentMailMerge && null == options.oMailMergeSendData
+			&& !window.isCloudCryptoDownloadAs && DownloadType.None === downloadType
+			&& !(AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.isChrome)
+			&& !AscCommon.AscBrowser.isAndroidNativeApp;
 		if ('savefromorigin' === oAdditionalData["c"])
 		{
 			oAdditionalData["format"] = this.documentFormat;
@@ -8793,11 +8797,7 @@ background-repeat: no-repeat;\
 			oAdditionalData["codepage"] = AscCommon.c_oAscCodePageUtf8;
 			dataContainer.data = last.data;
 		}
-		else if (c_oAscFileType.HTML === fileType
-			&& null == options.oDocumentMailMerge && null == options.oMailMergeSendData
-			&& !window.isCloudCryptoDownloadAs && DownloadType.None === downloadType
-			&& !(AscCommon.AscBrowser.isAppleDevices && AscCommon.AscBrowser.isChrome)
-			&& !AscCommon.AscBrowser.isAndroidNativeApp)
+		else if (c_oAscFileType.HTML === fileType && canDownloadFromBytes)
 		{
 			//DownloadFileFromBytes has bug on Chrome on iOS https://github.com/kennethjiang/js-file-download/issues/72
 			//в asc_nativeGetHtml будет вызван select all, чтобы выделился документ должны выйти из колонтитулов и автофигур
@@ -8815,12 +8815,12 @@ background-repeat: no-repeat;\
 			}
 			return true;
 		}
-		else if(this.isOpenOOXInBrowser && this.saveDocumentToZip)
+		else if(this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml"))
 		{
 			var title = this.documentTitle;
-			this.saveDocumentToZip(this.WordControl.m_oLogicDocument, AscCommon.c_oEditorId.Word, function(data) {
+			this.saveLogicDocumentToZip(fileType, options, function(data) {
 				if (data) {
-					if (c_oAscFileType.DOCX === fileType && !window.isCloudCryptoDownloadAs) {
+					if (c_oAscFileType.DOCX === fileType && canDownloadFromBytes) {
 						AscCommon.DownloadFileFromBytes(data, title, AscCommon.openXml.GetMimeType("docx"));
 					} else {
 						dataContainer.data = data;
@@ -8839,7 +8839,7 @@ background-repeat: no-repeat;\
 				if (actionType) {
 					t.sync_EndAction(c_oAscAsyncActionType.BlockInteraction, actionType);
 				}
-			}, fileType, options);
+			});
 			return true;
 		} else {
 			if (options.advancedOptions instanceof Asc.asc_CTextOptions)
@@ -12631,9 +12631,9 @@ background-repeat: no-repeat;\
 
 	window["asc_docs_api"].prototype["asc_nativeGetFileData"] = function()
 	{
-		if (this.isOpenOOXInBrowser && this.saveDocumentToZip) {
+		if (this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml")) {
 			let res;
-			this.saveDocumentToZip(this.WordControl.m_oLogicDocument, this.editorId, function(data) {
+			this.saveLogicDocumentToZip(undefined, undefined, function(data) {
 				res = data;
 			});
 			if (res) {

@@ -4463,6 +4463,8 @@ function (window, undefined) {
 		this.EncryptedInfo;
 		this.IsEnabledPlugins = true;
 		this.IsEnabledMacroses = true;
+		this.IsWebOpening = false;
+		this.SupportsOnSaveDocument = false;
 
 		//for external reference
 		this.ReferenceData = null;
@@ -4609,6 +4611,18 @@ function (window, undefined) {
 	};
 	prot.put_ReferenceData = prot.asc_putReferenceData = function (v) {
 		this.ReferenceData = v;
+	};
+	prot.put_IsWebOpening = prot.asc_putIsWebOpening = function (v) {
+		this.IsWebOpening = v;
+	};
+	prot.get_IsWebOpening = prot.asc_getIsWebOpening = function () {
+		return this.IsWebOpening;
+	};
+	prot.put_SupportsOnSaveDocument = prot.asc_putSupportsOnSaveDocument = function (v) {
+		this.SupportsOnSaveDocument = v;
+	};
+	prot.get_SupportsOnSaveDocument = prot.asc_getSupportsOnSaveDocument = function () {
+		return this.SupportsOnSaveDocument;
 	};
 
 	function COpenProgress() {
@@ -6546,6 +6560,10 @@ function (window, undefined) {
 	prot["get_CoEditingMode"] = prot["asc_getCoEditingMode"] = prot.asc_getCoEditingMode;
 	prot["put_CoEditingMode"] = prot["asc_putCoEditingMode"] = prot.asc_putCoEditingMode;
 	prot["put_ReferenceData"] = prot["asc_putReferenceData"] = prot.asc_putReferenceData;
+	prot["put_IsWebOpening"] = prot["asc_putIsWebOpening"] = prot.asc_putIsWebOpening;
+	prot["get_IsWebOpening"] = prot["asc_getIsWebOpening"] = prot.asc_getIsWebOpening;
+	prot["put_SupportsOnSaveDocument"] = prot["asc_putSupportsOnSaveDocument"] = prot.asc_putSupportsOnSaveDocument;
+	prot["get_SupportsOnSaveDocument"] = prot["asc_getSupportsOnSaveDocument"] = prot.asc_getSupportsOnSaveDocument;
 
 	window["AscCommon"].COpenProgress = COpenProgress;
 	prot = COpenProgress.prototype;
