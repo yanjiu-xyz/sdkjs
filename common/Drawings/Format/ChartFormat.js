@@ -12519,7 +12519,7 @@
 
     InitClass(CRadarSeries, CLineSeries, AscDFH.historyitem_type_RadarSeries);
     CRadarSeries.prototype.getChildren = function() {
-        var aRet = CSeriesBase.prototype.getChildren(this);
+        var aRet = CSeriesBase.prototype.getChildren.call(this);
         aRet.push(this.dLbls);
         for(var i = 0; i < this.dPt.length; ++i) {
             aRet.push(this.dPt[i]);
