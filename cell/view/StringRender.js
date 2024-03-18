@@ -644,6 +644,19 @@
 			}
 			return w;
 		};
+		
+		/**
+		 * @param {Number} start
+		 * @param {Number} end
+		 * @return {Number}
+		 */
+		StringRender.prototype._calcGraphemesWidth = function (start, end) {
+			let w = 0;
+			for (let i = start; i <= end; ++i)
+				w += this.graphemeWidths[i];
+			
+			return w;
+		};
 
 		/**
 		 * @param {Number} startPos
@@ -924,6 +937,12 @@
 			}
 			return prop;
 		};
+		StringRender.prototype._getGraphemePropAt = function(index) {
+			if (this.graphemeProps[index])
+				return this.graphemeProps[index];
+			
+			return this.graphemeProps[index] = new charProperties();
+		};
 
 		/**
 		 * @param {Number} maxWidth
@@ -945,17 +964,17 @@
 
 			function measureFragment(_chars, fragment) {
 				
+				let grPos = self.graphemes.length;
 				frShaper.shapeFragment(_chars, fragment.format, self);
 				
-				var j, chc, chw, chPos, isNL, isSP, isHP, tm;
-				for (chPos = self.chars.length, j = 0; j < _chars.length; ++j, ++chPos) {
-					chc = _chars[j];
-					tm = ctx.measureChar(null, 0/*px units*/, chc);
-					chw = tm.width;
-
+				var chc, isNL, isSP, isHP, grW;
+				for (; grPos < self.graphemes.length; ++grPos) {
+					chc = self.graphemeCodePoints[grPos][0];
+					grW = asc_round(self.graphemeWidths[grPos]);
+					
 					isNL = self.codesHypNL[chc];
 					isSP = !isNL ? self.codesHypSp[chc] : false;
-					
+
 					// if 'wrap flag' is set
 					if (wrap || wrapNL || verticalText) {
 						isHP = !isSP && !isNL ? self.codesHyphen[chc] : false;
@@ -963,58 +982,59 @@
 						if (verticalText) {
 							// ToDo verticalText and new line or space
 						} else if (isNL) {
-							// add new line marker
-							nlPos = chPos;
-							self._getCharPropAt(nlPos).nl = true;
-							self._getCharPropAt(nlPos).delta = delta;
-							chc = 0xA0;
-							chw = 0;
+							nlPos = grPos;
+							self._getGraphemePropAt(grPos).nl = true;
+							self._getGraphemePropAt(grPos).delta = delta;
 							tw = 0;
 							hpPos = undefined;
 						} else if (isSP || isHP) {
 							// move hyphenation position
-							hpPos = chPos + 1;
-						} else if (isEastAsian) {
-							if (0 !== j && !(AscCommon.g_aPunctuation[_chars[j - 1]] &
-								AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_END_E) &&
+							hpPos = grPos + 1;
+						} else if (isEastAsian && 0 !== grPos) {
+							let prevChar = self.graphemeCodePoints[grPos - 1][0];
+							if (!(AscCommon.g_aPunctuation[prevChar] & AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_END_E) &&
 								!(AscCommon.g_aPunctuation[chc] & AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_BEGIN_E)) {
 								// move hyphenation position
-								hpPos = chPos;
+								hpPos = grPos;
 							}
 						}
-
-						if (chPos !== nlPos && ((wrap && !isSP && tw + chw > maxWidth) || verticalText)) {
+						
+						if (grPos !== nlPos && ((wrap && !isSP && tw + grW > maxWidth) || verticalText)) {
 							// add hyphenation marker
-							nlPos = hpPos !== undefined ? hpPos : chPos;
+							nlPos = hpPos !== undefined ? hpPos : grPos;
 							self._getCharPropAt(nlPos).hp = true;
 							self._getCharPropAt(nlPos).delta = delta;
-							tw = self._calcCharsWidth(nlPos, chPos - 1);
+							tw = self._calcGraphemesWidth(nlPos, grPos - 1);
 							hpPos = undefined;
 						}
-
-						if (isEastAsian) {
-							// move hyphenation position
-							if (j !== _chars.length && !(AscCommon.g_aPunctuation[_chars[j + 1]] &
-								AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_BEGIN_E) &&
+						
+						if (isEastAsian && grPos < self.graphemes.length - 1) {
+							let nextChar = self.graphemeCodePoints[grPos + 1][0];
+							if (!(AscCommon.g_aPunctuation[nextChar] & AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_BEGIN_E) &&
 								!(AscCommon.g_aPunctuation[chc] & AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_END_E)) {
-								hpPos = chPos + 1;
+								hpPos = grPos + 1;
 							}
 						}
 					}
-
+					
 					if (isSP_ && !isSP && !isNL) {
 						// add word beginning marker
-						self._getCharPropAt(chPos).wrd = true;
+						self._getCharPropAt(grPos).wrd = true;
 					}
-
-					tw += chw;
-					self.charWidths.push(chw);
+					
+					// TODO: Временно добавим, чтобы массив char не был пустым
+					self.charWidths.push(grW);
 					if (!self.chars) {
 						self.chars = [];
 					}
 					self.chars.push(chc);
+					//---------------------------------------------------------
+					
+					tw += grW;
 					isSP_ = isSP || isNL;
-					delta = tm.widthBB - tm.width;
+					
+					// TODO: Delta  (widthBB - width)
+					// delta = tm.widthBB - tm.width;
 				}
 			}
 
