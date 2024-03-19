@@ -4571,10 +4571,10 @@ function(window, undefined) {
 							if (bStrings && bStrings.length != 0) {
 								// ranges always start with '[' and end with ']', however between they can have '(' and ')'
 								let start = '[';
-								let end = binning.intervalClosed === "r" ? ')' : ']';
+								let end = binning.intervalClosed === AscFormat.INTERVAL_CLOSED_SIDE_R ? ')' : ']';
 								// user can manually set minimum and maximum, therefore alternative start and end needed
-								const alternativeStart = binning.intervalClosed === 'r' ? '<' : '≤';
-								const alternativeEnd = binning.intervalClosed === 'r' ? '≥' : '>';
+								const alternativeStart = binning.intervalClosed === AscFormat.INTERVAL_CLOSED_SIDE_R ? '<' : '≤';
+								const alternativeEnd = binning.intervalClosed === AscFormat.INTERVAL_CLOSED_SIDE_R ? '≥' : '>';
 
 								const isAlternativeStartExist = binning.underflow === 0 || binning.underflow ? true : false;
 								const isAlternativeEndExist = binning.overflow === 0 || binning.overflow ? true : false;
@@ -4587,11 +4587,11 @@ function(window, undefined) {
 								// if element not the first one, then change value of start
 								// if element is last one and no alternativeEnd exist, then change value of end
 								for (let i = 0; i < (bStrings.length - 1); i++) {
-									if (i === 1 && start != "(" && binning.intervalClosed !== 'r') {
+									if (i === 1 && start != "(" && binning.intervalClosed !== AscFormat.INTERVAL_CLOSED_SIDE_R) {
 										start = '(';
 									}
 
-									if (i === (bStrings.length - 2) && !isAlternativeEndExist && binning.intervalClosed === "r") {
+									if (i === (bStrings.length - 2) && !isAlternativeEndExist && binning.intervalClosed === AscFormat.INTERVAL_CLOSED_SIDE_R) {
 										end = ']';
 									}
 									aStrings.push(start + bStrings[i] + ", " + bStrings[i + 1] + end)
