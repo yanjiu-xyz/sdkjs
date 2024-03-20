@@ -3763,6 +3763,21 @@ function HierarchyAlgorithm() {
 	CycleAlgorithm.prototype.getParentNodeHeight = function () {
 		return this.parentNode.getConstr(AscFormat.Constr_type_h) || this.parentNode.getParentHeight();
 	};
+	CycleAlgorithm.prototype.getNormalizeSibSp = function () {
+		//todo think about how it is actually calculated
+		const stepAngle = this.calcValues.stepAngle;
+		const sibSp = this.parentNode.getConstr(AscFormat.Constr_type_sibSp);
+		if (this.isClockwise()) {
+			if (stepAngle > Math.PI / 2 && sibSp < 0) {
+				return 0;
+			}
+		} else {
+			if (stepAngle < -Math.PI / 2 && sibSp < 0) {
+				return 0;
+			}
+		}
+		return sibSp;
+	}
 	CycleAlgorithm.prototype.calcScaleCoefficients = function () {
 		const startAngle = this.calcValues.startAngle;
 		const stepAngle = this.calcValues.stepAngle;
@@ -3770,8 +3785,7 @@ function HierarchyAlgorithm() {
 		let previousAngle = startAngle;
 		let currentAngle = AscFormat.normalizeRotate(startAngle + stepAngle);
 		const divider = Math.sqrt(2 * (1 - Math.cos(Math.abs(stepAngle))));
-		const sibSp = this.parentNode.getConstr(AscFormat.Constr_type_sibSp);
-
+		const sibSp = this.getNormalizeSibSp();
 
 		const firstShape = mainElements[0] && mainElements[0].getShape(true)
 		const firstElementBounds = firstShape && firstShape.getBounds(true);
