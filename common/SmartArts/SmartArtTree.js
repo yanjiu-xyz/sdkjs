@@ -3787,7 +3787,6 @@ function HierarchyAlgorithm() {
 					stepAngle = (spanAngle / (mainElements.length - 1)) * degToRad;
 				}
 			}
-			stepAngle = AscFormat.normalizeRotate(stepAngle);
 			this.calcValues.startAngle = startAngle;
 			this.calcValues.stepAngle  = stepAngle;
 		}
