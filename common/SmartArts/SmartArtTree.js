@@ -3679,8 +3679,8 @@ function HierarchyAlgorithm() {
 		return this.calcValues.mainElements.indexOf(shape);
 	};
 	CycleAlgorithm.prototype.getRadialConnectionInfo = function (node) {
-		const parentHeight = this.parentNode.getConstr(AscFormat.Constr_type_h, true);
-		const parentWidth = this.parentNode.getConstr(AscFormat.Constr_type_w, true);
+		const parentHeight = this.getParentNodeHeight(true);
+		const parentWidth = this.getParentNodeWidth(true);
 
 		const nodeIndex = this.getShapeIndex(node);
 		if (nodeIndex === -1) {
@@ -3699,7 +3699,7 @@ function HierarchyAlgorithm() {
 	CycleAlgorithm.prototype.initParams = function (params) {
 		PositionAlgorithm.prototype.initParams.call(this, params);
 		if (this.params[AscFormat.Param_type_stAng] === undefined) {
-			this.params[AscFormat.Param_type_stAng] = 90;
+			this.params[AscFormat.Param_type_stAng] = 0;
 		}
 		if (this.params[AscFormat.Param_type_spanAng] === undefined) {
 			this.params[AscFormat.Param_type_spanAng] = 360;
@@ -3792,11 +3792,11 @@ function HierarchyAlgorithm() {
 			this.calcValues.stepAngle  = stepAngle;
 		}
 	};
-	CycleAlgorithm.prototype.getParentNodeWidth = function () {
-		return this.parentNode.getConstr(AscFormat.Constr_type_w) || this.parentNode.getParentWidth();
+	CycleAlgorithm.prototype.getParentNodeWidth = function (isAdapt) {
+		return this.parentNode.getConstr(AscFormat.Constr_type_w, isAdapt) || this.parentNode.getParentWidth(isAdapt);
 	};
-	CycleAlgorithm.prototype.getParentNodeHeight = function () {
-		return this.parentNode.getConstr(AscFormat.Constr_type_h) || this.parentNode.getParentHeight();
+	CycleAlgorithm.prototype.getParentNodeHeight = function (isAdapt) {
+		return this.parentNode.getConstr(AscFormat.Constr_type_h, isAdapt) || this.parentNode.getParentHeight(isAdapt);
 	};
 	CycleAlgorithm.prototype.getNormalizeSibSp = function () {
 		//todo think about how it is actually calculated
