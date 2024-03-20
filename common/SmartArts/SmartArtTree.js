@@ -2222,7 +2222,42 @@
 			offY: parentHeight / 2 - cycleCY
 		};
 	};
+	CycleContainer.prototype.getBounds = function (isCalculateScaleCoefficient) {
+		if (this.bounds === null) {
+			if (this.shapes.length) {
+				const firstShape = this.shapes[0];
+				const bounds = {
+					l: firstShape.x,
+					t: firstShape.y,
+					b: firstShape.y + firstShape.height,
+					r: firstShape.x + firstShape.width
+				};
+				this.bounds = bounds;
+				for (let i = 0; i < this.shapes.length; i += 1) {
+					const shape = this.shapes[i];
+					if (shape.x < bounds.l) {
+						bounds.l = shape.x;
+					}
+					if (shape.y < bounds.t) {
+						bounds.t = shape.y;
+					}
 
+					const r = shape.x + shape.width;
+					if (r > bounds.r) {
+						bounds.r = r;
+					}
+
+					const b = shape.y + shape.height;
+					if (b > bounds.b) {
+						bounds.b = b;
+					}
+				}
+			} else {
+				this.bounds = {l: 0, r: 0, b: 0, t: 0};
+			}
+		}
+		return this.bounds;
+	};
 
 
 	function ShapeRows() {
