@@ -3834,8 +3834,9 @@ function HierarchyAlgorithm() {
 		}
 		if (divider !== 0) {
 			let previousBounds = firstElementBounds;
-			for (let i = 1; i < mainElements.length; i++) {
-				const shape = mainElements[i].getShape(true);
+			for (let i = 1; i < mainElements.length + 1; i++) {
+				const curIndex = i === mainElements.length ? 0 : i;
+				const shape = mainElements[curIndex].getShape(true);
 				const currentBounds = shape.getBounds(true);
 				const centerGuideVector = CVector.getVectorByAngle(currentAngle);
 				const tempCenterRadius = this.getCenterShapeRadius(centerShapeBounds, currentBounds, centerGuideVector);
@@ -3859,7 +3860,8 @@ function HierarchyAlgorithm() {
 				}
 				maxRadius = Math.max(maxRadius, tempSibRadius, tempCenterRadius);
 				previousAngle = currentAngle;
-				currentAngle = AscFormat.normalizeRotate(currentAngle + stepAngle);
+				currentAngle = i === mainElements.length - 1 ? AscFormat.normalizeRotate(startAngle) : AscFormat.normalizeRotate(currentAngle + stepAngle);
+				previousBounds = currentBounds;
 			}
 		}
 		currentAngle = startAngle;
@@ -3971,8 +3973,7 @@ function HierarchyAlgorithm() {
 			const centerNode = this.getCenterNode();
 			const shape = centerNode && centerNode.getShape(false);
 			if  (shape) {
-				shape.x -= shape.width / 2;
-				shape.y -= shape.height / 2;
+				shape.moveTo(-shape.width / 2, -shape.height / 2);
 				container.push(shape);
 			}
 			startIndex = this.calcValues.centerNodeIndex + 1;
@@ -5727,7 +5728,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 			return;
 		}
 		const calcValue = refNode.getRefConstr(constr, isAdapt);
-		if (constr.refType !== AscFormat.Constr_type_none && !constr.refForName) {
+		if (constr.refType !== AscFormat.Constr_type_none && !constr.refForName && constr.refFor !== AscFormat.Constr_for_self) {
 			valueCache[constr.refFor][refPtType][constr.refType] = calcValue;
 		}
 		return calcValue;
@@ -5965,7 +5966,9 @@ PresNode.prototype.addChild = function (ch, pos) {
 		}
 		const constrObject = isAdapt ? this.adaptConstr : this.constr;
 		let value;
-		if (constr.refFor === AscFormat.Constr_for_self && constrObject[constr.type] !== undefined && constr.refType === AscFormat.Constr_type_none) {
+		if (constr.refType === AscFormat.Constr_type_none) {
+			value = constr.val;
+		} else if (constr.refFor === AscFormat.Constr_for_self && constrObject[constr.type] !== undefined) {
 			value = constrObject[constr.type];
 		} else if (constrObject[constr.refType]) {
 			value = constrObject[constr.refType];
@@ -6016,6 +6019,24 @@ PresNode.prototype.addChild = function (ch, pos) {
 					}
 					return value;
 				}
+				case AscFormat.Constr_type_l: {
+					const width = this.getConstr(AscFormat.Constr_type_w, isAdapt, true);
+					if (AscFormat.isRealNumber(width)) {
+						const right = this.getConstr(AscFormat.Constr_type_r, isAdapt);
+						value = right - width;
+						constrObject[AscFormat.Constr_type_l] = value;
+					}
+					return value;
+				}
+				case AscFormat.Constr_type_ctrY: {
+					const height = this.getConstr(AscFormat.Constr_type_h, isAdapt, true);
+					if (AscFormat.isRealNumber(height)) {
+						const top = this.getConstr(AscFormat.Constr_type_t, isAdapt);
+						value = top + height / 2;
+						constrObject[AscFormat.Constr_type_ctrY] = value;
+					}
+					return value;
+				}
 				case AscFormat.Constr_type_w: {
 					return this.getParentWidth(isAdapt);
 				}
@@ -6049,7 +6070,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 			switch (type) {
 				case AscFormat.Constr_type_l: {
 					result = constrObj[AscFormat.Constr_type_l];
-					const width = constrObj[AscFormat.Constr_type_w] || 0;
+					const width = this.getConstr(AscFormat.Constr_type_w, isAdapt, false, depth + 1);
 					const right = constrObj[AscFormat.Constr_type_r];
 					const ctrX = constrObj[AscFormat.Constr_type_ctrX];
 					if (right !== undefined) {
