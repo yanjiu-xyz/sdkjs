@@ -12264,7 +12264,7 @@
 
     InitClass(CPivotFmt, CBaseChartObject, AscDFH.historyitem_type_PivotFmt);
     CPivotFmt.prototype.getChildren = function() {
-        var aRet = CSeriesBase.prototype.getChildren.call(this);
+        let aRet = [];
         aRet.push(this.dLbl);
         aRet.push(this.marker);
         aRet.push(this.spPr);
