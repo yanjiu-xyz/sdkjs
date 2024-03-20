@@ -5968,9 +5968,9 @@ PresNode.prototype.addChild = function (ch, pos) {
 		let value;
 		if (constr.refType === AscFormat.Constr_type_none) {
 			value = constr.val;
-		} else if (constr.refFor === AscFormat.Constr_for_self && constrObject[constr.type] !== undefined) {
+		} /*else if (constr.refFor === AscFormat.Constr_for_self && constrObject[constr.type] !== undefined && constr.refType === AscFormat.Constr_type_none) {
 			value = constrObject[constr.type];
-		} else if (constrObject[constr.refType]) {
+		} */else if (constrObject[constr.refType]) {
 			value = constrObject[constr.refType];
 		}
 		if (value !== undefined) {
