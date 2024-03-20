@@ -5287,24 +5287,34 @@ PresNode.prototype.getDefaultConnectionNode = function() {
 					}
 			}
 	}
-
-	PresNode.prototype.getSummaryScale = function (refNode, relationConstr, startCoefficient) {
+	PresNode.prototype.getSummaryScale = function (refNode, relationConstr, startCoefficient, mapRelations) {
 		while (relationConstr && refNode) {
 			if (relationConstr.refType === AscFormat.Constr_type_h) {
 				startCoefficient *= refNode.parentScale.height;
-				if (refNode.relations.heightRef === refNode) {
+				if (refNode.relations.heightRef) {
+					const refPresName = refNode.relations.heightRef.getPresName();
+					if (mapRelations[AscFormat.Constr_type_h][refPresName]) {
+						break;
+					}
+					mapRelations[AscFormat.Constr_type_h][refPresName] = true;
+					relationConstr = refNode.relations.heightConstr;
+					refNode = refNode.relations.heightRef;
+				} else {
 					break;
 				}
-				relationConstr = refNode.relations.heightConstr;
-				refNode = refNode.relations.heightRef;
-
 			} else if (relationConstr.refType === AscFormat.Constr_type_w) {
 				startCoefficient *= refNode.parentScale.width;
-				if (refNode.relations.widthRef === refNode) {
+				if (refNode.relations.widthRef) {
+					const refPresName = refNode.relations.widthRef.getPresName();
+					if (mapRelations[AscFormat.Constr_type_w][refPresName]) {
+						break;
+					}
+					mapRelations[AscFormat.Constr_type_w][refPresName] = true;
+					relationConstr = refNode.relations.widthConstr;
+					refNode = refNode.relations.widthRef;
+				} else {
 					break;
 				}
-				relationConstr = refNode.relations.widthConstr;
-				refNode = refNode.relations.widthRef;
 			}
 		}
 		return startCoefficient;
@@ -5314,16 +5324,26 @@ PresNode.prototype.getDefaultConnectionNode = function() {
 		const coefficient = this.parentScale.height;
 		const relationConstr = this.relations.heightConstr;
 		const refNode = this.relations.heightRef;
-
-		return this.getSummaryScale(refNode, relationConstr, coefficient);
+		const mapRelations = {};
+		mapRelations[AscFormat.Constr_type_w] = {};
+		mapRelations[AscFormat.Constr_type_h] = {};
+		if (refNode) {
+			mapRelations[AscFormat.Constr_type_h][refNode.getPresName()] = true;
+		}
+		return this.getSummaryScale(refNode, relationConstr, coefficient, mapRelations);
 	};
 
 	PresNode.prototype.getSummaryWidthScale = function () {
 		const coefficient = this.parentScale.width;
 		const relationConstr = this.relations.widthConstr;
 		const refNode = this.relations.widthRef;
-
-		return this.getSummaryScale(refNode, relationConstr, coefficient);
+		const mapRelations = {};
+		mapRelations[AscFormat.Constr_type_w] = {};
+		mapRelations[AscFormat.Constr_type_h] = {};
+		if (refNode) {
+			mapRelations[AscFormat.Constr_type_w][refNode.getPresName()] = true;
+		}
+		return this.getSummaryScale(refNode, relationConstr, coefficient, mapRelations);
 	};
 	PresNode.prototype.setHeightScale = function (pr, mapPresName, isLinear) {
 		const relationConstr = this.relations.heightConstr;
