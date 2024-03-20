@@ -3829,7 +3829,7 @@ function HierarchyAlgorithm() {
 		if (centerNode) {
 			const startGuideVector = CVector.getVectorByAngle(startAngle);
 			const centerShape = centerNode.getShape(true);
-			const centerShapeBounds = centerShape.getBounds(true);
+			centerShapeBounds = centerShape.getBounds(true);
 			maxRadius = this.getCenterShapeRadius(centerShapeBounds, firstElementBounds, startGuideVector);
 		}
 		if (divider !== 0) {
