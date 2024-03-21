@@ -1329,10 +1329,7 @@ CDocumentContentElementBase.prototype.GetLogicDocument = function()
  */
 CDocumentContentElementBase.prototype.getDrawingDocument = function()
 {
-	if (this.DrawingDocument)
-		return this.DrawingDocument;
-	
-	return this.Parent && this.Parent.getDrawingDocument ? this.Parent.getDrawingDocument() : null;
+	return Asc.editor.getDrawingDocument();
 };
 /**
  * @returns {?CDocumentSpellChecker}
