@@ -5175,14 +5175,15 @@ function HierarchyAlgorithm() {
 			this.setScaleCoefficient(bounds);
 		} else {
 			const shape = parentNode.getShape(isCalculateCoefficients);
-			const boundsHeight = shape.height;
 			const constrBounds = /*parentNode.getChildConstraintBounds(isCalculateCoefficients)*/shape.getBounds();
 			const boundsWidth = constrBounds.r - constrBounds.l;
+			const boundsHeight = shape.height;
+			const parentBounds = shape.getBounds();
 			const parentWidth = parentNode.getConstr(AscFormat.Constr_type_w, true);
 			const parentHeight = parentNode.getConstr(AscFormat.Constr_type_h, true);
-			const offX = -constrBounds.l + (parentWidth - boundsWidth) / 2;
+			const offX = this.constraintSizes.x + this.constraintSizes.width / 2 - (constrBounds.l + boundsWidth / 2);
 			//todo: height alignment is carried out without taking into account ctrY
-			const offY = -bounds.t + (parentHeight - boundsHeight) / 2;
+			const offY = this.constraintSizes.y + this.constraintSizes.height / 2 - (constrBounds.t + boundsHeight / 2);
 			parentNode.moveTo(offX, offY, isCalculateCoefficients);
 			this.setConnections();
 		}
