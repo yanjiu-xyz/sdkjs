@@ -8295,7 +8295,8 @@
         name: sMediaName,//name of media file
         fullScreen: bFullScreen, //show on fullscreen or not
         mute: false,
-        vol: 100
+        vol: 100,
+        isVideo: true
         }*/
 
         let oSp = this.getTargetObject();
@@ -8305,10 +8306,10 @@
 
 
         let oData = oSp.getMediaData();
-        let sId = oSp.GetId();
         if(!oData) {
             return null;
         }
+        let sId = oSp.GetId();
         let oRoot = this.getRoot();//find video node with video
         if(oRoot) {
             let oMediaNode = null;
@@ -8322,9 +8323,13 @@
                 }
             });
             if(oMediaNode) {
-                oData["fullScreen"] = !!oMediaNode.fullScrn;
-                oData["mute"] = !!oMediaNode.mute;
-                oData["vol"] = oMediaNode.vol !== null ? oMediaNode.vol : null;
+                let oAdditionalData = new CAdditionalMediaData();
+                oAdditionalData.fullScreen = !!oMediaNode.fullScrn;
+                oAdditionalData.mute = !!oMediaNode.mute;
+                oAdditionalData.vol = oMediaNode.vol !== null ? oMediaNode.vol : null;
+                oAdditionalData.isVideo = oMediaNode.isVideo();
+                oData.setAdditionalData(oAdditionalData);
+
             }
         }
         return oData;
@@ -8349,6 +8354,27 @@
             }
         }
     };
+
+
+    function CAdditionalMediaData() {
+        this.fullScreen = null;
+        this.mute = null;
+        this.vol = null;
+        this.isVideo = null;
+    }
+    CAdditionalMediaData.prototype.isFullScreen = function () {
+        return this.fullScreen === true;
+    };
+    CAdditionalMediaData.prototype.isMute = function () {
+        return this.mute === true;
+    };
+    CAdditionalMediaData.prototype.getVol = function () {
+        return this.vol;
+    };
+    CAdditionalMediaData.prototype.getVol = function () {
+        return this.vol;
+    };
+
 
     changesFactory[AscDFH.historyitem_TimeNodeContainerCTn] = CChangeObject;
     drawingsChangesMap[AscDFH.historyitem_TimeNodeContainerCTn] = function (oClass, value) {

@@ -2633,7 +2633,7 @@ function CEditorPage(api)
 			this.m_oApi.sendEvent("asc_onDocumentPlaceChanged");
 
 		// update media control position
-		this.m_oApi.onUpdateMediaControl();
+		this.m_oApi.onUpdateMediaPlayer();
 		AscCommon.g_specialPasteHelper.SpecialPasteButton_Update_Position();
 	};
 
@@ -4795,117 +4795,184 @@ function CEditorPage(api)
 	};
 
 
-	this.GetMediaPlayerRect = function()
+	this.GetMediaPlayerData = function()
 	{
-		let mediaData = this.m_oApi.mediaData;
-		if(!mediaData)
-		{
-			return null;
-		}
-		if(!oThis.m_oApi.isReporterMode) return null;
+		let mediaData = this.m_oApi.getMediaData();
+		if(!mediaData) return null;
 
-		let oDrawing = AscCommon.g_oTableId.Get_ById(mediaData["id"])
+		let oMediaFrameRect = this.GetMediaFrameRect();
+		if(!oMediaFrameRect) return null;
+
+		let oMediaControlRect = this.GetMediaControlRect(oMediaFrameRect);
+		if(!oMediaControlRect) return null;
+
+		return mediaData.getPlayerData(oMediaFrameRect, oMediaControlRect);
+	};
+
+	this.GetMediaFrameRect = function()
+	{
+		let mediaData = this.m_oApi.getMediaData();
+		if(!mediaData) return null;
+		let oDrawing = mediaData.getDrawing();
+		if(!oDrawing) return null;
+
+
+		let oNotRotatedBounds = new AscFormat.CGraphicBounds(
+			oDrawing.x,
+			oDrawing.y,
+			oDrawing.x + oDrawing.extX,
+			oDrawing.y + oDrawing.extY
+		);
+		let oBounds = oNotRotatedBounds;
+		if(!this.DemonstrationManager.Mode)
+		{
+			let nControlX = this.X;
+			let nControlY = this.Y;
+			let oDD = this.m_oDrawingDocument;
+			let nSlide = this.m_oLogicDocument.CurPage;
+			let getCoords = function(x, y)
+			{
+				let oPos = oDD.ConvertCoordsToCursorWR(x, y, nSlide, null, true);
+				oPos.X += nControlX;
+				oPos.Y += nControlY;
+				oPos.X = oPos.X >> 0;
+				oPos.Y = oPos.Y >> 0;
+				return oPos;
+			};
+			let oLeftTop = getCoords(oBounds.x, oBounds.y);
+			let oRightBottom = getCoords(oBounds.x + oBounds.w, oBounds.y + oBounds.h);
+			return new AscFormat.CGraphicBounds(
+				oLeftTop.X,
+				oLeftTop.Y,
+				oRightBottom.X,
+				oRightBottom.Y
+			);
+		}
+		else
+		{
+			let manager = this.DemonstrationManager;
+			let transition = manager.Transition;
+			if ((manager.SlideNum >= 0 && manager.SlideNum < manager.SlidesCount) && (!transition || !transition.IsPlaying()))
+			{
+				let _x = (transition.Rect.x / AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+				let _y = (transition.Rect.y / AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+				let _w = (transition.Rect.w / AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+
+				let _w_mm = this.m_oLogicDocument.GetWidthMM();
+
+				if (this.m_oApi.isReporterMode)
+				{
+					_x += ((this.m_oMainParent.AbsolutePosition.L * AscCommon.g_dKoef_mm_to_pix) >> 0);
+				}
+
+				let zoom = _w / _w_mm;
+
+
+				let getCoords = function(x, y)
+				{
+					return {
+						X: _x + zoom * x + 0.5 >> 0,
+						Y: _y + zoom * y + 0.5 >> 0
+					}
+				};
+				let oLeftTop = getCoords(oBounds.x, oBounds.y);
+				let oRightBottom = getCoords(oBounds.x + oBounds.w, oBounds.y + oBounds.h);
+				return new AscFormat.CGraphicBounds(
+					oLeftTop.X,
+					oLeftTop.Y,
+					oRightBottom.X,
+					oRightBottom.Y
+				);
+			}
+		}
+		return null;
+
+	};
+	this.GetMediaControlRect = function(oMediaFrameRect)
+	{
+
+		if(!oMediaFrameRect) return null;
+
+		let mediaData = this.m_oApi.getMediaData();
+		if(!mediaData) return null;
+
+		let oDrawing = mediaData.getDrawing();
 		if(!oDrawing) return;
 
 		let nWidth, nHeight, nX, nY;
-		let dWidthMM, dHeightMM, dXMM, dYMM;
+
+
+
+		nWidth = oMediaFrameRect.w - 2 * MIN_MEDIA_CONTROL_CONTROL_INSET;
+		nWidth = Math.max(nWidth, MIN_MEDIA_CONTROL_WIDTH);
+		nHeight = MEDIA_CONTROL_HEIGHT;
 
 		if(!oThis.DemonstrationManager.Mode)
 		{
-			let dZoomValue = this.m_nZoomValue / 100;
-			let dKoef = AscCommon.g_dKoef_mm_to_pix * dZoomValue;
-			let oBounds = oDrawing.bounds;
-			nWidth = (oBounds.w * dKoef - 2 * MIN_MEDIA_CONTROL_CONTROL_INSET + 0.5) >> 0;
-			nWidth = Math.max(nWidth, MIN_MEDIA_CONTROL_WIDTH);
-			nHeight = MEDIA_CONTROL_HEIGHT;
+			let dKoef = AscCommon.g_dKoef_mm_to_pix;
+			nX = (oMediaFrameRect.l + oMediaFrameRect.r) / 2.0 - nWidth / 2 + 0.5 >> 0;
+			nY = oMediaFrameRect.b + MEDIA_CONTROL_TOP_MARGIN + 0.5 >> 0;
 
-			dWidthMM = nWidth / dKoef;
-			dHeightMM = nHeight / dKoef;
 
-			dXMM = (oBounds.l + oBounds.r) / 2.0;
-			dYMM = oBounds.b + MEDIA_CONTROL_TOP_MARGIN / dKoef;
+			let nControlX = this.X;
+			let nControlY = this.Y;
 
 			//view rect relative to slide coords
-			let dViewRectL, dViewRectT, dViewRectR, dViewRectB, dViewRectW, dViewRectH;
-			let oSlideRect = this.m_oDrawingDocument.SlideCurrectRect;
 			let oMainViewRect = this.m_oMainView.AbsolutePosition;
-			dViewRectL = -oSlideRect.l / dKoef;
-			dViewRectT = -oSlideRect.t / dKoef;
-			dViewRectW = (oMainViewRect.R - oMainViewRect.L) / dZoomValue;
-			dViewRectH = (oMainViewRect.B - oMainViewRect.T) / dZoomValue;
-			dViewRectR = dViewRectL + dViewRectW;
-			dViewRectB = dViewRectT + dViewRectH;
+			let nViewRectL = nControlX + oMainViewRect.L * dKoef + 0.5 >> 0;
+			let nViewRectT = nControlY + oMainViewRect.T * dKoef + 0.5 >> 0;
+			let nViewRectR = nControlX + oMainViewRect.R * dKoef + 0.5 >> 0;
+			let nViewRectB = nControlY + oMainViewRect.B * dKoef + 0.5 >> 0;
 
-			if(dXMM + dWidthMM > dViewRectR)
-			{
-				dXMM = dViewRectR - dWidthMM;
-			}
-			if(dYMM + dHeightMM > dViewRectB)
-			{
-				dYMM = dViewRectB - dHeightMM;
-			}
-			return new AscFormat.CGraphicBounds(dXMM, dYMM, dXMM + dWidthMM, dYMM + dHeightMM);
+
+			if(nX < nViewRectL)
+				nX = nViewRectT;
+			if(nY < nViewRectT)
+				nY = nViewRectT;
+			if(nX + nWidth > nViewRectR)
+				nX = nViewRectR - nWidth;
+			if(nY + nHeight > nViewRectB)
+				nY = nViewRectB - nHeight;
+			return new AscFormat.CGraphicBounds(nX, nY, nX + nWidth, nY + nHeight);
 		}
 		else
 		{
+			let manager = this.DemonstrationManager;
+			let transition = manager.Transition;
+			if ((manager.SlideNum >= 0 && manager.SlideNum < manager.SlidesCount) && (!transition || !transition.IsPlaying()))
+			{
+				let _x = (transition.Rect.x / AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+				let _y = (transition.Rect.y / AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+				let _w = (transition.Rect.w / AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+				let _h = (transition.Rect.h / AscCommon.AscBrowser.retinaPixelRatio) >> 0;
+				if (this.m_oApi.isReporterMode)
+				{
+					_x += ((this.m_oMainParent.AbsolutePosition.L * AscCommon.g_dKoef_mm_to_pix) >> 0);
+				}
 
+				let _r = _x + _w;
+				let _b = _y + _h;
+
+				nX = (oMediaFrameRect.l + oMediaFrameRect.r) / 2.0 - nWidth / 2 + 0.5 >> 0;
+				nY = oMediaFrameRect.b - MEDIA_CONTROL_TOP_MARGIN + 0.5 >> 0;
+
+				if(nX < _x)
+					nX = _x;
+				if(nY < _y)
+					nY = _y;
+				if(nX + nWidth > _r)
+					nX = _r - nWidth;
+				if(nY + nHeight > _b)
+					nY = _b - nHeight;
+				return new AscFormat.CGraphicBounds(nX, nY, nX + nWidth, nY + nHeight);
+			}
 		}
+		return null;
 	};
-	this.OnUpdateMediaControlRect = function()
+	this.OnUpdateMediaPlayer = function()
 	{
-		let mediaData = this.m_oApi.mediaData;
-		if(!mediaData)
-		{
-			return null;
-		}
-		if(!oThis.m_oApi.isReporterMode) return null;
-
-		let oDrawing = AscCommon.g_oTableId.Get_ById(mediaData["id"])
-		if(!oDrawing) return null;
-
-		let nWidth, nHeight;
-		let dWidthMM, dHeightMM, dXMM, dYMM;
-
-		if(!oThis.DemonstrationManager.Mode)
-		{
-			let dZoomValue = this.m_nZoomValue / 100;
-			let dKoef = AscCommon.g_dKoef_mm_to_pix * dZoomValue;
-			let oBounds = oDrawing.bounds;
-			nWidth = (oBounds.w * dKoef - 2 * MIN_MEDIA_CONTROL_CONTROL_INSET + 0.5) >> 0;
-			nWidth = Math.max(nWidth, MIN_MEDIA_CONTROL_WIDTH);
-			nHeight = MEDIA_CONTROL_HEIGHT;
-
-			dWidthMM = nWidth / dKoef;
-			dHeightMM = nHeight / dKoef;
-
-			dXMM = (oBounds.l + oBounds.r) / 2.0;
-			dYMM = oBounds.b + MEDIA_CONTROL_TOP_MARGIN / dKoef;
-
-			//view rect relative to slide coords
-			let dViewRectL, dViewRectT, dViewRectR, dViewRectB, dViewRectW, dViewRectH;
-			let oSlideRect = this.m_oDrawingDocument.SlideCurrectRect;
-			let oMainViewRect = this.m_oMainView.AbsolutePosition;
-			dViewRectL = -oSlideRect.l / dKoef;
-			dViewRectT = -oSlideRect.t / dKoef;
-			dViewRectW = (oMainViewRect.R - oMainViewRect.L) / dZoomValue;
-			dViewRectH = (oMainViewRect.B - oMainViewRect.T) / dZoomValue;
-			dViewRectR = dViewRectL + dViewRectW;
-			dViewRectB = dViewRectT + dViewRectH;
-
-			if(dXMM + dWidthMM > dViewRectR)
-			{
-				dXMM = dViewRectR - dWidthMM;
-			}
-			if(dYMM + dHeightMM > dViewRectB)
-			{
-				dYMM = dViewRectB - dHeightMM;
-			}
-			return new AscFormat.CGraphicBounds(dXMM, dYMM, dXMM + dWidthMM, dYMM + dHeightMM);
-		}
-		else
-		{
-
-		}
+		let oPlayerData = this.GetMediaPlayerData();
+		console.log(JSON.stringify(oPlayerData))
 	};
 }
 

@@ -184,11 +184,6 @@
 			snapY.push(transform.ty + this.extY);
 		};
 
-		CImageShape.prototype.isPlaceholder = function () {
-			return this.nvPicPr != null && this.nvPicPr.nvPr != undefined && this.nvPicPr.nvPr.ph != undefined;
-		};
-
-
 		CImageShape.prototype.getWatermarkProps = function () {
 			var oProps = new Asc.CAscWatermarkProperties();
 			oProps.put_Type(Asc.c_oAscWatermarkType.Image);
@@ -639,14 +634,14 @@
 		CImageShape.prototype.hitToAdjustment = CShape.prototype.hitToAdjustment;
 
 		CImageShape.prototype.getMediaFileName = function () {
-			if (this.nvPicPr && this.nvPicPr.nvPr && this.nvPicPr.nvPr.unimedia) {
-				var oUniMedia = this.nvPicPr.nvPr.unimedia;
+			let oUniMedia = this.getUniMedia();
+			if (oUniMedia) {
 				if (oUniMedia.type === 7 || oUniMedia.type === 8) {
 					if (typeof oUniMedia.media === "string" && oUniMedia.media.length > 0) {
-						var sExt = AscCommon.GetFileExtension(oUniMedia.media);
+						let sExt = AscCommon.GetFileExtension(oUniMedia.media);
 						if (this.blipFill && typeof this.blipFill.RasterImageId === 'string') {
-							var sName = AscCommon.GetFileName(this.blipFill.RasterImageId);
-							var sMediaFile = sName + '.' + sExt;
+							let sName = AscCommon.GetFileName(this.blipFill.RasterImageId);
+							let sMediaFile = sName + '.' + sExt;
 							return sMediaFile;
 						}
 					}
@@ -655,26 +650,21 @@
 			return null;
 		};
 
+
+		CImageShape.prototype.isVideo = function() {
+			let oUniMedia = this.getUniMedia();
+			if (oUniMedia && oUniMedia.type === 7) {
+				return true;
+			}
+			return false;
+		};
+
 		CImageShape.prototype.getMediaData = function () {
-			let sMediaName = this.getMediaFileName();
-			if (!sMediaName) {
+			let oMediaData = new CMediaData(this);
+			if (!oMediaData.isValid()) {
 				return null;
 			}
-
-			let oData = {};
-			let sId = this.GetId();
-			oData["id"] = sId;
-			oData["name"] = sMediaName;
-			oData["extX"] = this.extX;
-			oData["extY"] = this.extY;
-			let oTransform = this.getTransformMatrix();
-			oData["sx"] = oTransform.sx;
-			oData["sy"] = oTransform.sy;
-			oData["shx"] = oTransform.shx;
-			oData["shy"] = oTransform.shy;
-			oData["tx"] = oTransform.tx;
-			oData["ty"] = oTransform.ty;
-			return oData;
+			return oMediaData;
 		};
 
 		CImageShape.prototype.setNvSpPr = function (pr) {
@@ -849,6 +839,8 @@
 		CImageShape.prototype.getText = function() {
 			return null;
 		};
+
+
 		function CreateBrushFromBlipFill(oBlipFill) {
 			if (!oBlipFill) {
 				return null;
@@ -867,6 +859,88 @@
 			return oBrush;
 		}
 
+		function CMediaData(drawing) {
+			this.drawing = drawing;
+			this.additionalData = null;
+		}
+		CMediaData.prototype.setDrawing = function(oDrawing) {
+			this.drawing = oDrawing;
+		};
+		CMediaData.prototype.setAdditionalData = function(oAdditionalData) {
+			this.additionalData = oAdditionalData;
+		};
+		CMediaData.prototype.getName = function() {
+			if(!this.drawing)
+				return null;
+			return this.drawing.getMediaFileName();
+		};
+		CMediaData.prototype.isValid = function() {
+			if(!this.getName())
+				return false;
+			let oDrawing = this.getDrawing();
+			if(!oDrawing || !oDrawing.IsUseInDocument())
+				return false;
+			return true;
+		};
+		CMediaData.prototype.getDrawing = function() {
+			return this.drawing;
+		};
+		CMediaData.prototype.getTransform = function() {
+			if(!this.drawing)
+				return null;
+			return this.drawing.getTransformMatrix();
+		};
+		CMediaData.prototype.isFullScreen = function() {
+			if(!this.additionalData)
+				return false;
+
+			return this.additionalData.isFullScreen();
+		};
+		CMediaData.prototype.isMute = function() {
+			if(!this.additionalData)
+				return false;
+
+			return this.additionalData.isMute();
+		};
+		CMediaData.prototype.isVideo = function() {
+			if(!this.additionalData)
+				return this.drawing.isVideo();
+
+			return this.additionalData.isVideo();
+		};
+		CMediaData.prototype.getVol = function() {
+			if(!this.additionalData)
+				return null;
+
+			return this.additionalData.getVol();
+		};
+		CMediaData.prototype.getStartTime = function() {
+			if(!this.drawing)
+				return null;
+			return this.drawing.getMediaStartTime();
+		};
+		CMediaData.prototype.getEndTime = function() {
+			if(!this.drawing)
+				return null;
+			return this.drawing.getMediaEndTime();
+		};
+		CMediaData.prototype.getPlayerData = function(oFrameRect, oControlRect) {
+			if(!this.isValid())
+				return null;
+			let oData = {};
+			let oDrawing = this.getDrawing();
+			oData["DrawingId"] = oDrawing.Id;
+			oData["FullScreen"] = this.isFullScreen();
+			oData["Mute"] = this.isMute();
+			oData["IsVideo"] = this.isVideo();
+			oData["Volume"] = this.getVol();
+			oData["StartTime"] = this.getStartTime();
+			oData["EndTime"] = this.getEndTime();
+			oData["FrameRect"] = oFrameRect.toObject();
+			oData["ControlRect"] = oControlRect.toObject();
+			oData["DrawingTransform"] = oDrawing.transform.exportToObject();
+			return oData;
+		};
 
 		//--------------------------------------------------------export----------------------------------------------------
 		window['AscFormat'] = window['AscFormat'] || {};

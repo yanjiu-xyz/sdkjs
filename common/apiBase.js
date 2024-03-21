@@ -3060,30 +3060,41 @@
 
 	};
 
-	baseEditorsApi.prototype.onUpdateMediaControl = function()
+	baseEditorsApi.prototype.updateMediaControlData = function(oMediaData)
 	{
-		if(this.mediaData)
+		console.log(JSON.stringify(oMediaData));
+	};
+
+	baseEditorsApi.prototype.getMediaData = function()
+	{
+		if(this.mediaData && !this.mediaData.isValid())
+			this.mediaData = null;
+		return this.mediaData;
+	};
+
+	baseEditorsApi.prototype.onUpdateMediaPlayer = function()
+	{
+		switch (this.editorId)
 		{
-			switch (this.editorId)
+			case c_oEditorId.Word:
 			{
-				case c_oEditorId.Word:
-				{
-					break;
-				}
-				case c_oEditorId.Presentation:
-				{
-					this.WordControl.OnUpdateMediaControl(this.mediaData);
-					break;
-				}
-				case c_oEditorId.Spreadsheet:
-				{
-					break;
-				}
+				break;
+			}
+			case c_oEditorId.Presentation:
+			{
+				this.WordControl.OnUpdateMediaPlayer();
+				break;
+			}
+			case c_oEditorId.Spreadsheet:
+			{
+				break;
 			}
 		}
 	};
 	baseEditorsApi.prototype.callMediaPlayerCommand = function(sCmd, oMediaData)
 	{
+		this.mediaData = oMediaData;
+
 		if(!sCmd) return;
 		console.log(sCmd);
 		switch (sCmd)
@@ -3114,16 +3125,12 @@
 			}
 			case "showMediaControl":
 			{
-				this.mediaData = oMediaData;
-				this.onUpdateMediaControl();
+				this.onUpdateMediaPlayer();
 				break;
 			}
 			case "hideMediaControl":
 			{
-				if(this.mediaData)
-				{
-					this.mediaData = null;
-				}
+				this.onUpdateMediaPlayer();
 				break;
 			}
 		}
