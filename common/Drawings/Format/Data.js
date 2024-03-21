@@ -7659,6 +7659,7 @@ Because of this, the display is sometimes not correct.
 	  ColorDefStyleLbl.prototype.checkNoLn = function () {
 		  switch (this.name) {
 			  case "sibTrans2D1":
+			  case "trBgShp":
 					return true;
 			  default:
 				  return false;
@@ -7679,6 +7680,14 @@ Because of this, the display is sometimes not correct.
 		  }
 	  };
 
+	  ColorDefStyleLbl.prototype.getLineWidth = function () {
+		  switch (this.name) {
+			  case "trAlignAcc1":
+				  return 6350;
+			  default:
+				  return 12700;
+		  }
+	  }
 	  ColorDefStyleLbl.prototype.getShapeLn = function (index, shadowShape, isConnector) {
 		  const lst = this.linClrLst && this.linClrLst.list;
 			if (lst) {
@@ -7693,7 +7702,7 @@ Because of this, the display is sometimes not correct.
 					}
 
 					const ln = new AscFormat.CLn();
-					ln.setW(12700);
+					ln.setW(this.getLineWidth());
 					const fill = AscFormat.CreateUniFillByUniColorCopy(uniColor);
 					ln.setFill(fill);
 					return ln;
