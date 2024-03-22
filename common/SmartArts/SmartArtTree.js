@@ -1430,7 +1430,7 @@
 		const shapeSmartArtInfo = new AscFormat.ShapeSmartArtInfo();
 		const presNode = this.node;
 		// todo: think about it
-		const contentNodes = presNode.algorithm instanceof TextAlgorithm ? presNode.contentNodes : [];
+		const contentNodes = !presNode.isTxXfrm() ? presNode.contentNodes : [];
 		shapeSmartArtInfo.setShapePoint(presNode.presPoint);
 		editorShape.setShapeSmartArtInfo(shapeSmartArtInfo);
 		let sumRot = this.rot;
@@ -5235,6 +5235,7 @@ function PresNode(presPoint, contentNode) {
 		height: 1
 	}
 	this.moveWith = null;
+	this._isTxXfrm = null;
 }
 	PresNode.prototype.initPresShape = function () {
 		if (!this.layoutInfo.shape) {
@@ -6160,23 +6161,53 @@ PresNode.prototype.addChild = function (ch, pos) {
 	PresNode.prototype.setLayoutRules = function (lst) {
 		this.layoutInfo.ruleLst = lst;
 	};
+	PresNode.prototype.isTxXfrm = function () {
+		if (this._isTxXfrm === null) {
+			this._isTxXfrm = false;
+			const textShape = this.getShape(true);
+			if (this.algorithm instanceof TextAlgorithm && this.parent && (this.parent.algorithm instanceof CompositeAlgorithm) && this.layoutInfo.shape.hideGeom) {
+				const childs = this.parent.childs;
+				for (let i = 0; i < childs.length; i++) {
+					const child = childs[i];
+					const spaceShape = child.getShape(true);
+					const isCorrectTxXfrmSizes = textShape.width <= spaceShape.width && textShape.height <= spaceShape.height;
+					if (isCorrectTxXfrmSizes && (child.algorithm instanceof SpaceAlgorithm) && child.contentNodes.length) {
+						this._isTxXfrm = true;
+						break;
+					}
+				}
+			}
+		}
+		return this._isTxXfrm;
+	};
 	PresNode.prototype.updateCompositeSizes = function (isCalculateCoefficients, changePosition) {
+		const shape = this.getShape(isCalculateCoefficients);
 		if (!this.childs.length) {
+			shape.width = 0;
+			shape.height = 0;
 			return;
 		}
 
-		const firstShape = this.childs[0].getShape(isCalculateCoefficients);
-		const shapeBounds = firstShape.getBounds();
-		for (let i = 1; i < this.childs.length; i += 1) {
+		let shapeBounds;
+		for (let i = 0; i < this.childs.length; i += 1) {
 			const node = this.childs[i];
-			const shape = node.getShape(isCalculateCoefficients);
+			const childShape = node.getShape(isCalculateCoefficients);
 			// todo: check this
-			if (/*!node.isContentNode() ||*/ shape.width === 0 && shape.height === 0 || (node.algorithm instanceof ConnectorAlgorithm) || (node.algorithm instanceof TextAlgorithm) && (!node.isMainElement() || node.layoutInfo.shape.hideGeom)) {
+			if (childShape.width === 0 && childShape.height === 0 || (node.algorithm instanceof ConnectorAlgorithm) || ((node.algorithm instanceof TextAlgorithm) && !node.isMainElement()) || node.isTxXfrm()) {
 				continue;
 			}
-			checkBounds(shapeBounds, shape.getBounds());
+			if (shapeBounds) {
+				checkBounds(shapeBounds, childShape.getBounds());
+			} else {
+				shapeBounds = childShape.getBounds();
+			}
 		}
-		const shape = this.getShape(isCalculateCoefficients);
+		if (!shapeBounds) {
+			shape.width = 0;
+			shape.height = 0;
+			return;
+		}
+
 		if (!changePosition) {
 			shape.x = shapeBounds.l;
 			shape.y = shapeBounds.t;
@@ -6186,6 +6217,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 		shape.height = shapeBounds.b - shapeBounds.t;
 		return shapeBounds;
 	};
+
 	PresNode.prototype.createShadowShape = function (isComposite, isCombine, isCalculateCoefficients) {
 
 		const shape = this.getShape(isCalculateCoefficients);
