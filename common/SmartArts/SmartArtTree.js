@@ -6024,10 +6024,14 @@ PresNode.prototype.addChild = function (ch, pos) {
 			if (value === undefined) {
 				switch (constr.refType) {
 					case AscFormat.Constr_type_w: {
-						return this.getParentWidth(isAdapt);
+						const parentWidth = this.getParentWidth(isAdapt);
+						constrObject[AscFormat.Constr_type_w] = parentWidth;
+						return parentWidth;
 					}
 					case AscFormat.Constr_type_h: {
-						return this.getParentHeight(isAdapt);
+						const parentHeight = this.getParentHeight(isAdapt);
+						constrObject[AscFormat.Constr_type_h] = parentHeight;
+						return parentHeight;
 					}
 					default: {
 						value = constr.val;
@@ -6057,19 +6061,32 @@ PresNode.prototype.addChild = function (ch, pos) {
 					const width = this.getConstr(AscFormat.Constr_type_w, isAdapt, false, depth + 1);
 					const right = constrObj[AscFormat.Constr_type_r];
 					const ctrX = constrObj[AscFormat.Constr_type_ctrX];
-					if (right !== undefined) {
-						result = right - width;
-					} else if (ctrX !== undefined) {
+					if (ctrX !== undefined) {
 						result = ctrX - width / 2;
+						const offset = constrObj[AscFormat.Constr_type_ctrXOff];
+						if (offset !== undefined) {
+							result += offset;
+						}
+					} else if (right !== undefined) {
+						result = right - width;
 					}
 					break;
 				}
 				case AscFormat.Constr_type_t: {
 					result = constrObj[AscFormat.Constr_type_t];
-					const bottom = constrObj[AscFormat.Constr_type_b];
 					const height = constrObj[AscFormat.Constr_type_h];
-					if (bottom !== undefined && height !== undefined) {
-						result = bottom - height;
+					if (height !== undefined) {
+						const ctrY = constrObj[AscFormat.Constr_type_ctrY];
+						const bottom = constrObj[AscFormat.Constr_type_b];
+						if (ctrY !== undefined) {
+							result = ctrY - height / 2;
+							const offset = constrObj[AscFormat.Constr_type_ctrYOff];
+							if (offset !== undefined) {
+								result += offset;
+							}
+						} else if (bottom !== undefined) {
+							result = bottom - height;
+						}
 					}
 					break;
 				}
@@ -6100,7 +6117,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 				case AscFormat.Constr_type_r: {
 					const width = this.getConstr(AscFormat.Constr_type_w, isAdapt, true, depth + 1);
 					if (AscFormat.isRealNumber(width)) {
-						const left = this.getConstr(AscFormat.Constr_type_l, isAdapt, depth + 1);
+						const left = this.getConstr(AscFormat.Constr_type_l, isAdapt, false, depth + 1);
 						result = left + width;
 					}
 					break;
@@ -6108,7 +6125,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 				case AscFormat.Constr_type_ctrY: {
 					const height = this.getConstr(AscFormat.Constr_type_h, isAdapt, true, depth + 1);
 					if (AscFormat.isRealNumber(height)) {
-						const top = this.getConstr(AscFormat.Constr_type_t, isAdapt, depth + 1);
+						const top = this.getConstr(AscFormat.Constr_type_t, isAdapt, false, depth + 1);
 						result = top + height / 2;
 					}
 					break;
@@ -6294,20 +6311,8 @@ PresNode.prototype.addChild = function (ch, pos) {
 			scaleHeight = temp;
 		}
 
-		const calcL = constrNode.getConstr(AscFormat.Constr_type_l, !isCalculateCoefficients, true);
-		if (calcL !== undefined) {
-			x += calcL;
-		}
-		if (constrObject[AscFormat.Constr_type_ctrX] !== undefined) {
-			x += constrObject[AscFormat.Constr_type_ctrX] - (x + width / 2);
-		}
-		const calcT = constrNode.getConstr(AscFormat.Constr_type_t, !isCalculateCoefficients, true);
-		if (calcT !== undefined) {
-			y += calcT;
-		}
-		if (constrObject[AscFormat.Constr_type_ctrY] !== undefined) {
-			y += constrObject[AscFormat.Constr_type_ctrY] - (y + height / 2);
-		}
+		x += constrNode.getConstr(AscFormat.Constr_type_l, !isCalculateCoefficients);
+		y += constrNode.getConstr(AscFormat.Constr_type_t, !isCalculateCoefficients);
 
 		shape.x = x;
 		shape.y = y;
