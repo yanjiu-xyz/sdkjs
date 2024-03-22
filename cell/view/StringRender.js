@@ -92,6 +92,7 @@
 
 		/** @constructor */
 		function charProperties() {
+			this.grapheme = AscFonts.NO_GRAPHEME;
 			this.c = undefined;
 			this.lm = undefined;
 			this.fm = undefined;
@@ -109,6 +110,7 @@
 
 		charProperties.prototype.clone = function () {
 			var oRes = new charProperties();
+			oRes.grapheme = this.grapheme;
 			oRes.c = (undefined !== this.c) ? this.c.clone() : undefined;
 			oRes.lm = (undefined !== this.lm) ? this.lm.clone() : undefined;
 			oRes.fm = (undefined !== this.fm) ? this.fm.clone() : undefined;
@@ -133,26 +135,17 @@
 			AscFonts.CTextShaper.call(this);
 			
 			this.font           = null;
-			this.graphemes      = [];
-			this.widths         = [];
-			this.codePointCount = [];
 			this.stringRenderer = null;
+			this.charIndex      = 0;
 		}
 		FragmentShaper.prototype = Object.create(AscFonts.CTextShaper.prototype);
 		FragmentShaper.prototype.constructor = FragmentShaper;
-		FragmentShaper.prototype.init = function(font){
+		FragmentShaper.prototype.shapeFragment = function(chars, font, stringRenderer, beginIndex) {
 			this.font           = font;
-			this.graphemes      = [];
-			this.widths         = [];
-			this.codePointCount = [];
-		};
-		FragmentShaper.prototype.shapeFragment = function(chars, font, stringRenderer) {
-			this.init(font);
 			this.stringRenderer = stringRenderer;
+			this.charIndex      = beginIndex;
 			
 			this.StartString();
-			
-			let ctx = stringRenderer.drawingCtx;
 			
 			let char, isNL, isSP;
 			for (let i = 0; i < chars.length; ++i) {
@@ -163,22 +156,44 @@
 				
 				if (isNL || isSP) {
 					this.FlushWord();
-					let spaceW = ctx.measureChar(null, 0, char).width;
-					this._handleGrapheme(AscFonts.NO_GRAPHEME, spaceW, [char], false);
+					this._handleSpace(char);
 				} else {
 					this.AppendToString(char);
 				}
 			}
 			this.FlushWord();
 		};
+		FragmentShaper.prototype._handleSpace = function(char) {
+			let st = this.stringRenderer;
+			let width = this.stringRenderer.drawingCtx.measureChar(null, 0, char).width;
+			
+			let _width = asc_round(width * this.font.getSize() / 25.4 * this.stringRenderer.drawingCtx.getPPIY());
+			st._getCharPropAt(this.charIndex).grapheme = AscFonts.NO_GRAPHEME;
+			st.charWidths[this.charIndex] = _width;
+			st.chars[this.charIndex] = char;
+			++this.charIndex;
+		};
 		FragmentShaper.prototype.FlushGrapheme = function(grapheme, width, codePointCount, isLigature) {
 			if (codePointCount <= 0)
 				return;
 			
+			let st = this.stringRenderer;
+			
+			let _width = asc_round(width * this.font.getSize() / 25.4 * this.stringRenderer.drawingCtx.getPPIY());
+			
 			// TODO: RTL
-			let _width = width * this.font.getSize() / 25.4 * this.stringRenderer.drawingCtx.getPPIY();
-			let _codePoints = this.Buffer.slice(this.BufferIndex, this.BufferIndex + codePointCount);
-			this._handleGrapheme(grapheme, _width, _codePoints, isLigature);
+			st._getCharPropAt(this.charIndex).grapheme = grapheme;
+			st.charWidths[this.charIndex] = _width / codePointCount;
+			st.chars[this.charIndex] = this.Buffer[this.BufferIndex];
+			++this.charIndex;
+			
+			for (let i = 1; i < codePointCount; ++i)
+			{
+				st._getCharPropAt(this.charIndex).grapheme = AscFonts.NO_GRAPHEME;
+				st.charWidths[this.charIndex] = _width / codePointCount;
+				st.chars[this.charIndex] = this.Buffer[this.BufferIndex + i];
+				++this.charIndex;
+			}
 			
 			if (this.IsRtlDirection())
 				this.BufferIndex -= codePointCount;
@@ -198,18 +213,6 @@
 				Style : (this.font.getBold() ? 1 : 0) | (this.font.getItalic() ? 2 : 0)
 			};
 		};
-		FragmentShaper.prototype._handleGrapheme = function(grapheme, width, codePoints, isLigature) {
-			
-			let sr = this.stringRenderer;
-			
-			let charIndex = sr.charToGrapheme.length;
-			for (let j = 0; j < codePoints.length; ++j)
-				sr.charToGrapheme[charIndex++] = sr.graphemes.length;
-			
-			sr.graphemes.push(grapheme);
-			sr.graphemeWidths.push(width);
-			sr.graphemeCodePoints.push(codePoints);
-		};
 		
 		/**
 		 * Formatted text render
@@ -221,6 +224,7 @@
 		 */
 		function StringRender(drawingCtx) {
 			this.drawingCtx = drawingCtx;
+			this.fragmentShaper = new FragmentShaper();
 
 			/** @type Array */
 			this.fragments = undefined;
@@ -230,15 +234,6 @@
 
 			/** @type String */
 			this.chars = [];
-			this.textShaper = new AscFonts.CTextShaper();
-			this.fragmentShaper = new FragmentShaper();
-
-			this.graphemes          = [];
-			this.graphemeWidths     = [];
-			this.graphemeProps      = [];
-			this.graphemeCodePoints = [];
-			this.charToGrapheme     = [];
-			
 			this.charWidths = [];
 			this.charProps = [];
 			this.lines = [];
@@ -590,11 +585,6 @@
 			this.charWidths = [];
 			this.charProps = [];
 			this.lines = [];
-			
-			this.graphemes          = [];
-			this.graphemeWidths     = [];
-			this.graphemeProps      = [];
-			this.graphemeCodePoints = [];
 		};
 
 		/**
@@ -645,19 +635,6 @@
 			return w;
 		};
 		
-		/**
-		 * @param {Number} start
-		 * @param {Number} end
-		 * @return {Number}
-		 */
-		StringRender.prototype._calcGraphemesWidth = function (start, end) {
-			let w = 0;
-			for (let i = start; i <= end; ++i)
-				w += this.graphemeWidths[i];
-			
-			return w;
-		};
-
 		/**
 		 * @param {Number} startPos
 		 * @param {Number} endPos
@@ -937,12 +914,6 @@
 			}
 			return prop;
 		};
-		StringRender.prototype._getGraphemePropAt = function(index) {
-			if (this.graphemeProps[index])
-				return this.graphemeProps[index];
-			
-			return this.graphemeProps[index] = new charProperties();
-		};
 
 		/**
 		 * @param {Number} maxWidth
@@ -960,21 +931,23 @@
 			var tw = 0, nlPos = 0, isEastAsian, hpPos = undefined, isSP_ = true, delta = 0;
 			let frShaper = this.fragmentShaper;
 			
-			this.charToGrapheme = [];
-
 			function measureFragment(_chars, fragment) {
 				
-				let grPos = self.graphemes.length;
-				frShaper.shapeFragment(_chars, fragment.format, self);
+				let chPos = self.chars.length;
+				frShaper.shapeFragment(_chars, fragment.format, self, chPos);
 				
-				var chc, isNL, isSP, isHP, grW;
-				for (; grPos < self.graphemes.length; ++grPos) {
-					chc = self.graphemeCodePoints[grPos][0];
-					grW = asc_round(self.graphemeWidths[grPos]);
+				var j, chc, chw, isNL, isSP, isHP, tm;
+				for (j = 0; j < _chars.length; ++j, ++chPos) {
+					// TODO: delta
+					//tm = ctx.measureChar(null, 0/*px units*/, chc);
+					//chw = tm.width;
+					
+					chc = self.chars[chPos];
+					chw = self.charWidths[chPos];
 					
 					isNL = self.codesHypNL[chc];
 					isSP = !isNL ? self.codesHypSp[chc] : false;
-
+					
 					// if 'wrap flag' is set
 					if (wrap || wrapNL || verticalText) {
 						isHP = !isSP && !isNL ? self.codesHyphen[chc] : false;
@@ -982,64 +955,62 @@
 						if (verticalText) {
 							// ToDo verticalText and new line or space
 						} else if (isNL) {
-							nlPos = grPos;
-							self._getGraphemePropAt(grPos).nl = true;
-							self._getGraphemePropAt(grPos).delta = delta;
+							// add new line marker
+							nlPos = chPos;
+							self._getCharPropAt(nlPos).nl = true;
+							self._getCharPropAt(nlPos).delta = delta;
+							chc = 0xA0;
+							chw = 0;
 							tw = 0;
 							hpPos = undefined;
 						} else if (isSP || isHP) {
 							// move hyphenation position
-							hpPos = grPos + 1;
-						} else if (isEastAsian && 0 !== grPos) {
-							let prevChar = self.graphemeCodePoints[grPos - 1][0];
-							if (!(AscCommon.g_aPunctuation[prevChar] & AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_END_E) &&
+							hpPos = chPos + 1;
+						} else if (isEastAsian) {
+							if (0 !== j && !(AscCommon.g_aPunctuation[_chars[j - 1]] &
+									AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_END_E) &&
 								!(AscCommon.g_aPunctuation[chc] & AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_BEGIN_E)) {
 								// move hyphenation position
-								hpPos = grPos;
+								hpPos = chPos;
 							}
 						}
 						
-						if (grPos !== nlPos && ((wrap && !isSP && tw + grW > maxWidth) || verticalText)) {
+						if (chPos !== nlPos && ((wrap && !isSP && tw + chw > maxWidth) || verticalText)) {
 							// add hyphenation marker
-							nlPos = hpPos !== undefined ? hpPos : grPos;
+							nlPos = hpPos !== undefined ? hpPos : chPos;
 							self._getCharPropAt(nlPos).hp = true;
 							self._getCharPropAt(nlPos).delta = delta;
-							tw = self._calcGraphemesWidth(nlPos, grPos - 1);
+							tw = self._calcCharsWidth(nlPos, chPos - 1);
 							hpPos = undefined;
 						}
 						
-						if (isEastAsian && grPos < self.graphemes.length - 1) {
-							let nextChar = self.graphemeCodePoints[grPos + 1][0];
-							if (!(AscCommon.g_aPunctuation[nextChar] & AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_BEGIN_E) &&
+						if (isEastAsian) {
+							// move hyphenation position
+							if (j !== _chars.length && !(AscCommon.g_aPunctuation[_chars[j + 1]] &
+									AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_BEGIN_E) &&
 								!(AscCommon.g_aPunctuation[chc] & AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_END_E)) {
-								hpPos = grPos + 1;
+								hpPos = chPos + 1;
 							}
 						}
 					}
 					
 					if (isSP_ && !isSP && !isNL) {
 						// add word beginning marker
-						self._getCharPropAt(grPos).wrd = true;
+						self._getCharPropAt(chPos).wrd = true;
 					}
 					
-					// TODO: Временно добавим, чтобы массив char не был пустым
-					self.charWidths.push(grW);
-					if (!self.chars) {
-						self.chars = [];
-					}
-					self.chars.push(chc);
-					//---------------------------------------------------------
+					tw += chw;
 					
-					tw += grW;
 					isSP_ = isSP || isNL;
 					
-					// TODO: Delta  (widthBB - width)
-					// delta = tm.widthBB - tm.width;
+					// TODO: delta
+					//delta = tm.widthBB - tm.width;
+					delta = 0;
 				}
 			}
-
+			
 			this._reset();
-
+			
 			// for each text fragment
 			for (i = 0; i < this.fragments.length; ++i) {
 				startCh = this.charWidths.length;
@@ -1153,7 +1124,7 @@
 			}
 			return tm;
 		};
-
+		
 		/**
 		 * @param {DrawingContext} drawingCtx
 		 * @param {Number} x
@@ -1193,7 +1164,21 @@
 				}
 				return c > 1 ? (maxWidth - l.tw) / (c - 1) : 0;
 			}
+			
+			function renderGraphemes(begin, end, x, y, fontSize) {
+				
+				for (let charPos = begin; charPos < end; ++charPos) {
+					
+					let gr = self._getCharPropAt(charPos).grapheme;
+					if (AscFonts.NO_GRAPHEME !== gr)
+						AscFonts.DrawGrapheme(gr, ctx, x, y, fontSize, ppiy / 25.4);
 
+					x += self.charWidths[charPos];
+				}
+				
+				return x;
+			}
+			
 			function renderFragment(begin, end, prop, angle) {
 				var dh = prop && prop.lm && prop.lm.bl2 > 0 ? prop.lm.bl2 - prop.lm.bl : 0;
 				var dw = self._calcCharsWidth(strBeg, end - 1);
@@ -1203,53 +1188,30 @@
 				var fsz, x2, y, lw, dy, i, b, x_, cp;
 				var bl = asc_round(l.bl * zoom);
 				
-				if (begin >= end)
+				if (begin > end)
 					return;
 				
-				let beginGrapheme = self.charToGrapheme[begin];
-				let endGrapheme   = self.charToGrapheme[end - 1];
+				let fontSize = prop.font.getSize();
 				y = y1 + bl + dh;
-				let __x = x1;
-				for (let glyphIndex = beginGrapheme; glyphIndex <= endGrapheme; ++glyphIndex)
-				{
-					AscFonts.DrawGrapheme(self.graphemes[glyphIndex], ctx, __x, y, prop.font.getSize(), ppiy / 25.4);
-					__x += self.graphemeWidths[glyphIndex];
+				if (align !== AscCommon.align_Justify || dx < 0.000001) {
+					renderGraphemes(begin, end, x1, y, fontSize);
+					//ctx.fillTextCode(self.chars.slice(begin, end), x1, y, undefined, self.charWidths.slice(begin, end), angle);
+				} else {
+					for (i = b = begin, x_ = x1; i < end; ++i) {
+						cp = self.charProps[i];
+						if (cp && cp.wrd && i > b) {
+							//ctx.fillTextCode(self.chars.slice(b, i), x_, y, undefined, self.charWidths.slice(b, i), angle);
+							renderGraphemes(b, i, x_, y, fontSize);
+							x_ += self._calcCharsWidth(b, i - 1) + dx;
+							dw += dx;
+							b = i;
+						}
+					}
+					if (i > b) { // draw remainder of text
+						//ctx.fillTextCode(self.chars.slice(b, i), x_, y, undefined, self.charWidths.slice(b, i), angle);
+						renderGraphemes(b, i, x_, y, fontSize);
+					}
 				}
-				
-				// let glyphs = [];
-				// let widths = [];
-				//
-				// self.textShaper.ShapeArray(self.chars.slice(begin, end), function(grapheme, width, isLigature){
-				// 	glyphs.push(grapheme);
-				// 	widths.push(width * prop.font.getSize() / 25.4 * ppiy);
-				// });
-				//
-				// y = y1 + bl + dh;
-				// let __x = x1;
-				// for (let glyphIndex = 0; glyphIndex < glyphs.length; ++glyphIndex)
-				// {
-				// 	AscFonts.DrawGrapheme(glyphs[glyphIndex], ctx, __x, y, prop.font.getSize(), ppiy / 25.4);
-				// 	__x += widths[glyphIndex];
-				// }
-				
-
-				// y = y1 + bl + dh;
-				// if (align !== AscCommon.align_Justify || dx < 0.000001) {
-				// 	ctx.fillTextCode(self.chars.slice(begin, end), x1, y, undefined, self.charWidths.slice(begin, end), angle);
-				// } else {
-				// 	for (i = b = begin, x_ = x1; i < end; ++i) {
-				// 		cp = self.charProps[i];
-				// 		if (cp && cp.wrd && i > b) {
-				// 			ctx.fillTextCode(self.chars.slice(b, i), x_, y, undefined, self.charWidths.slice(b, i), angle);
-				// 			x_ += self._calcCharsWidth(b, i - 1) + dx;
-				// 			dw += dx;
-				// 			b = i;
-				// 		}
-				// 	}
-				// 	if (i > b) { // draw remainder of text
-				// 		ctx.fillTextCode(self.chars.slice(b, i), x_, y, undefined, self.charWidths.slice(b, i), angle);
-				// 	}
-				// }
 				
 
 				if (isSO || ul) {
@@ -1282,7 +1244,7 @@
 
 				return dw;
 			}
-
+			
 			for (i = 0, strBeg = 0; i < this.chars.length; ++i) {
 				p = this.charProps[i];
 
@@ -1333,14 +1295,7 @@
 				chars: this.chars,
 				charWidths: this.charWidths,
 				charProps: this.charProps,
-				lines: this.lines,
-				
-				graphemes: this.graphemes,
-				graphemeWidths: this.graphemeWidths,
-				graphemeProps: this.graphemeProps,
-				graphemeCodePoints: this.graphemeCodePoints,
-				charToGrapheme: this.charToGrapheme
-				
+				lines: this.lines
 			};
 		};
 
@@ -1350,11 +1305,6 @@
 			this.charWidths = state.charWidths;
 			this.charProps = state.charProps;
 			this.lines = state.lines;
-			this.graphemes = state.graphemes;
-			this.graphemeWidths = state.graphemeWidths;
-			this.graphemeProps = state.graphemeProps;
-			this.graphemeCodePoints = state.graphemeCodePoints;
-			this.charToGrapheme = state.charToGrapheme;
 			return this;
 		};
 
