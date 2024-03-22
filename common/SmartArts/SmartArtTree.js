@@ -6020,58 +6020,22 @@ PresNode.prototype.addChild = function (ch, pos) {
 				}
 			}
 		} else {
-			switch (constr.refType) {
-				case AscFormat.Constr_type_b: {
-					const top = constrObject[AscFormat.Constr_type_t] || 0;
-					const height = constrObject[AscFormat.Constr_type_h];
-					if (AscFormat.isRealNumber(height)) {
-						value = top + height;
-						constrObject[AscFormat.Constr_type_b] = value;
-					}
-					return value;
-				}
-				case AscFormat.Constr_type_r: {
-					const width = this.getConstr(AscFormat.Constr_type_w, isAdapt, true);
-					if (AscFormat.isRealNumber(width)) {
-						const left = this.getConstr(AscFormat.Constr_type_l, isAdapt);
-						value = left + width;
-						constrObject[AscFormat.Constr_type_r] = value;
-					}
-					return value;
-				}
-				case AscFormat.Constr_type_l: {
-					const width = this.getConstr(AscFormat.Constr_type_w, isAdapt, true);
-					if (AscFormat.isRealNumber(width)) {
-						const right = this.getConstr(AscFormat.Constr_type_r, isAdapt);
-						value = right - width;
-						constrObject[AscFormat.Constr_type_l] = value;
-					}
-					return value;
-				}
-				case AscFormat.Constr_type_ctrY: {
-					const height = this.getConstr(AscFormat.Constr_type_h, isAdapt, true);
-					if (AscFormat.isRealNumber(height)) {
-						const top = this.getConstr(AscFormat.Constr_type_t, isAdapt);
-						value = top + height / 2;
-						constrObject[AscFormat.Constr_type_ctrY] = value;
-					}
-					return value;
-				}
-				case AscFormat.Constr_type_w: {
-					return this.getParentWidth(isAdapt);
-				}
-				case AscFormat.Constr_type_h: {
-					return this.getParentHeight(isAdapt);
-				}
-				default: {
-					break;
-				}
-			}
+			value = this.getConstr(constr.refType, isAdapt, true);
 			if (value === undefined) {
-				value = constr.val;
+				switch (constr.refType) {
+					case AscFormat.Constr_type_w: {
+						return this.getParentWidth(isAdapt);
+					}
+					case AscFormat.Constr_type_h: {
+						return this.getParentHeight(isAdapt);
+					}
+					default: {
+						value = constr.val;
+						break;
+					}
+				}
 			}
 		}
-
 		return value;
 	};
 
@@ -6122,6 +6086,30 @@ PresNode.prototype.addChild = function (ch, pos) {
 					const top = this.getConstr(AscFormat.Constr_type_t, isAdapt, true, depth + 1);
 					if (bottom !== undefined && top !== undefined) {
 						result = bottom - top;
+					}
+					break;
+				}
+				case AscFormat.Constr_type_b: {
+					const top = constrObj[AscFormat.Constr_type_t] || 0;
+					const height = constrObj[AscFormat.Constr_type_h];
+					if (AscFormat.isRealNumber(height)) {
+						result = top + height;
+					}
+					break;
+				}
+				case AscFormat.Constr_type_r: {
+					const width = this.getConstr(AscFormat.Constr_type_w, isAdapt, true, depth + 1);
+					if (AscFormat.isRealNumber(width)) {
+						const left = this.getConstr(AscFormat.Constr_type_l, isAdapt, depth + 1);
+						result = left + width;
+					}
+					break;
+				}
+				case AscFormat.Constr_type_ctrY: {
+					const height = this.getConstr(AscFormat.Constr_type_h, isAdapt, true, depth + 1);
+					if (AscFormat.isRealNumber(height)) {
+						const top = this.getConstr(AscFormat.Constr_type_t, isAdapt, depth + 1);
+						result = top + height / 2;
 					}
 					break;
 				}
