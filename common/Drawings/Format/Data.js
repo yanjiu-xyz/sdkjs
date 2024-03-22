@@ -7660,6 +7660,7 @@ Because of this, the display is sometimes not correct.
 		  switch (this.name) {
 			  case "sibTrans2D1":
 			  case "trBgShp":
+			  case "bgShp":
 					return true;
 			  default:
 				  return false;
