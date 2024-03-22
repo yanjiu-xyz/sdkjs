@@ -165,9 +165,8 @@
 		};
 		FragmentShaper.prototype._handleSpace = function(char) {
 			let st = this.stringRenderer;
-			let width = this.stringRenderer.drawingCtx.measureChar(null, 0, char).width;
+			let _width = this.stringRenderer.drawingCtx.measureChar(null, 0, char).width;
 			
-			let _width = asc_round(width * this.font.getSize() / 25.4 * this.stringRenderer.drawingCtx.getPPIY());
 			st._getCharPropAt(this.charIndex).grapheme = AscFonts.NO_GRAPHEME;
 			st.charWidths[this.charIndex] = _width;
 			st.chars[this.charIndex] = char;
@@ -963,6 +962,7 @@
 							chw = 0;
 							tw = 0;
 							hpPos = undefined;
+							self.charWidths[chPos] = 0;
 						} else if (isSP || isHP) {
 							// move hyphenation position
 							hpPos = chPos + 1;
