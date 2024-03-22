@@ -936,8 +936,8 @@
 				let chPos = self.chars.length;
 				frShaper.shapeFragment(_chars, fragment.format, self, chPos);
 				
-				var j, chc, chw, isNL, isSP, isHP, tm;
-				for (j = 0; j < _chars.length; ++j, ++chPos) {
+				var chc, chw, isNL, isSP, isHP;
+				for (; chPos < self.chars.length; ++chPos) {
 					// TODO: delta
 					//tm = ctx.measureChar(null, 0/*px units*/, chc);
 					//chw = tm.width;
@@ -967,7 +967,7 @@
 							// move hyphenation position
 							hpPos = chPos + 1;
 						} else if (isEastAsian) {
-							if (0 !== j && !(AscCommon.g_aPunctuation[_chars[j - 1]] &
+							if (0 !== chPos && !(AscCommon.g_aPunctuation[self.chars[chPos - 1]] &
 									AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_END_E) &&
 								!(AscCommon.g_aPunctuation[chc] & AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_BEGIN_E)) {
 								// move hyphenation position
@@ -986,7 +986,7 @@
 						
 						if (isEastAsian) {
 							// move hyphenation position
-							if (j !== _chars.length && !(AscCommon.g_aPunctuation[_chars[j + 1]] &
+							if (chPos < self.chars.length - 1 && !(AscCommon.g_aPunctuation[self.chars[chPos + 1]] &
 									AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_BEGIN_E) &&
 								!(AscCommon.g_aPunctuation[chc] & AscCommon.PUNCTUATION_FLAG_CANT_BE_AT_END_E)) {
 								hpPos = chPos + 1;
@@ -1260,7 +1260,7 @@
 
 					if (p.font) {
 						// change canvas font style
-						this._setFont(ctx, p.font);
+						//this._setFont(ctx, p.font);
 						ctx.setFillStyle(p.c || textColor);
 						p_ = p;
 					}
