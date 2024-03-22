@@ -1299,6 +1299,28 @@
 		};
 	}
 
+	Api.prototype.getUsedBackgroundPlugins = function()
+	{
+		let services = [];
+		try
+		{
+			services = JSON.parse(window.localStorage.getItem("asc_plugins_background"));
+			if (!services)
+				services = [];
+		}
+		catch (e)
+		{
+			services = [];
+		}
+		return services;
+	};
+	Api.prototype["getUsedBackgroundPlugins"] = Api.prototype.getUsedBackgroundPlugins;
+
+	Api.prototype.setUsedBackgroundPlugins = function(services)
+	{
+		window.localStorage.setItem("asc_plugins_background", JSON.stringify(services));
+	};
+
 	Api.prototype.checkInstalledPlugins = function()
 	{
 		if (this.disableCheckInstalledPlugins)
@@ -1720,6 +1742,7 @@
 	 * @property {string} id - The item ID.
 	 * @property {localeTranslate} text - The item text.
 	 * @property {boolean} [disabled] - Specifies if the current item is disabled or not.
+	 * @property {string} [icons] - The item icons (see plugins config documentation)
 	 * @property {ContextMenuItem[]} items - An array containing the context menu items for the current item.
 	 */
 
@@ -1751,6 +1774,63 @@
 		let baseUrl = this.pluginsManager.pluginsMap[items["guid"]].baseUrl;
 		if (items["items"]) correctItemsWithData(items["items"], baseUrl);
 		this.onPluginUpdateContextMenuItem([items]);
+	};
+
+	/**
+	 * The possible values for the base which the relative vertical positioning of an object will be calculated from.
+	 * @typedef {("button" | "...")} ToolbarMenuItemType
+	 */
+
+	/**
+	 * @typedef {Object} ToolbarMenuItem
+	 * The toolbar menu item.
+	 * @property {string} id - The item ID.
+	 * @property {ToolbarMenuItemType} The item type
+	 * @property {string} text - The item text.
+	 * @property {string} hint - The item text.
+	 * @property {string} [icons] - The item icons (see plugins config documentation)
+	 * @property {boolean} [disabled] - Specifies if the current item is disabled or not.
+	 * @property {boolean} [enableToggle]
+	 * @property {boolean} [lockInViewMode]
+	 * @property {boolean} [separator]
+	 * @property {boolean} [split]
+	 * @property {ContextMenuItem[]} [items] - An array containing the context menu items for the current item.
+	 */
+
+	/**
+	 * @typedef {Object} ToolbarMenuTab
+	 * The toolbar menu item.
+	 * @property {string} id - The tab ID.
+	 * @property {string} text - The tab text.
+	 * @property {ToolbarMenuItem[]} [items] - The tab items.
+	 */
+
+	/**
+	 * @typedef {Object} ToolbarMenuMainItem
+	 * The toolbar menu item.
+	 * @property {string} giud - The plugin guid.
+	 * @property {ToolbarMenuTab[]} tabs
+	 */
+
+	/**
+	 * Adds an item to the toolbar menu.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias AddToolbarMenuItem
+	 * @param {ToolbarMenuMainItem[]} items - An array containing the context menu items for the current item.
+	 * @since 8.1.0
+	 */
+	Api.prototype["pluginMethod_AddToolbarMenuItem"] = function(items)
+	{
+		let baseUrl = this.pluginsManager.pluginsMap[items["guid"]].baseUrl;
+		for (let i = 0, len = items.length; i < len; i++)
+		{
+			if (items[i]["items"])
+				correctItemsWithData(items[i]["items"], baseUrl);
+		}
+
+		if (items["items"]) correctItemsWithData(items["items"], baseUrl);
+		this.sendEvent("onPluginToolbarMenu", items);
 	};
 
 	/**

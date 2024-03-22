@@ -4624,6 +4624,11 @@
 		this.sendEvent("onPluginContextMenu", items);
 	};
 
+	baseEditorsApi.prototype.onPluginCloseToolbarMenuItem = function(guid)
+	{
+		this.sendEvent("onPluginToolbarMenu", [{ "guid" : guid, "tabs" : [] }]);
+	};
+
 	// ---------------------------------------------------- wopi ---------------------------------------------
 	baseEditorsApi.prototype.asc_wopi_renameFile = function(name) {
 		var t = this;
