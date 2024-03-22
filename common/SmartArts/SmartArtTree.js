@@ -6153,12 +6153,14 @@ PresNode.prototype.addChild = function (ch, pos) {
 		if (this._isTxXfrm === null) {
 			this._isTxXfrm = false;
 			const textShape = this.getShape(true);
+			const textBounds = textShape.getBounds(true);
 			if (this.algorithm instanceof TextAlgorithm && this.parent && (this.parent.algorithm instanceof CompositeAlgorithm) && this.layoutInfo.shape.hideGeom) {
 				const childs = this.parent.childs;
 				for (let i = 0; i < childs.length; i++) {
 					const child = childs[i];
 					const spaceShape = child.getShape(true);
-					const isCorrectTxXfrmSizes = textShape.width <= spaceShape.width && textShape.height <= spaceShape.height;
+					const spaceBounds = spaceShape.getBounds(true);
+					const isCorrectTxXfrmSizes = (textBounds.r - textBounds.l) <= (spaceBounds.r - spaceBounds.l) && (textBounds.b - textBounds.t) <= (spaceBounds.b - spaceBounds.t);
 					if (isCorrectTxXfrmSizes && (child.algorithm instanceof SpaceAlgorithm) && child.contentNodes.length) {
 						this._isTxXfrm = true;
 						break;
