@@ -1651,22 +1651,7 @@
 					if (oSelector.selectedObjects.length === 1 && oSelector.selectedObjects[0].getObjectType() === AscDFH.historyitem_type_OleObject) {
 						var oleObject = oSelector.selectedObjects[0];
 						this.checkSelectedObjectsAndFireCallback(function () {
-							var pluginData = new Asc.CPluginData();
-							pluginData.setAttribute("data", oleObject.m_sData);
-							pluginData.setAttribute("guid", oleObject.m_sApplicationId);
-							pluginData.setAttribute("width", oleObject.extX);
-							pluginData.setAttribute("height", oleObject.extY);
-							pluginData.setAttribute("widthPix", oleObject.m_nPixWidth);
-							pluginData.setAttribute("heightPix", oleObject.m_nPixHeight);
-							pluginData.setAttribute("objectId", oleObject.Id);
-
-							if (window["Asc"]["editor"]) {
-								window["Asc"]["editor"].asc_pluginRun(oleObject.m_sApplicationId, 0, pluginData);
-							} else {
-								if (editor) {
-									editor.asc_pluginRun(oleObject.m_sApplicationId, 0, pluginData);
-								}
-							}
+							oleObject.runPlugin();
 						}, []);
 					}
 				},
@@ -3916,16 +3901,7 @@
 						for (i = 0; i < objects_by_type.oleObjects.length; ++i) {
 							let oOleObject = objects_by_type.oleObjects[i];
 							fApplyDrawingSize(oOleObject, props);
-							var api = window.editor || window["Asc"]["editor"];
-							if (api) {
-								var pluginData = new Asc.CPluginData();
-								pluginData.setAttribute("data", oOleObject.m_sData);
-								pluginData.setAttribute("guid", oOleObject.m_sApplicationId);
-								pluginData.setAttribute("width", oOleObject.spPr.xfrm.extX);
-								pluginData.setAttribute("height", oOleObject.spPr.xfrm.extY);
-								pluginData.setAttribute("objectId", oOleObject.Get_Id());
-								api.asc_pluginResize(pluginData);
-							}
+							oOleObject.callPluginOnResize();
 						}
 
 						if (editorId === AscCommon.c_oEditorId.Presentation || editorId === AscCommon.c_oEditorId.Spreadsheet) {
@@ -7065,6 +7041,18 @@
 					return this.selectedObjects;
 				},
 
+				getSelectedOleObjects: function () {
+					let aRes = [];
+					let aSelected = this.getSelectedArray();
+					for(let nIdx = 0; nIdx < aSelected.length; ++nIdx) {
+						let oDrawing = aSelected[nIdx];
+						if(oDrawing.isOleObject()) {
+							aRes.push(oDrawing);
+						}
+					}
+					return aRes;
+				},
+
 				getDrawingPropsFromArray: function (drawings) {
 					var image_props, shape_props, chart_props, table_props = undefined, new_image_props,
 						new_shape_props, new_chart_props, new_table_props, shape_chart_props, locked;
@@ -7264,14 +7252,7 @@
 								break;
 							}
 							case AscDFH.historyitem_type_OleObject: {
-								var pluginData = new Asc.CPluginData();
-								pluginData.setAttribute("data", drawing.m_sData);
-								pluginData.setAttribute("guid", drawing.m_sApplicationId);
-								pluginData.setAttribute("width", drawing.extX);
-								pluginData.setAttribute("height", drawing.extY);
-								pluginData.setAttribute("widthPix", drawing.m_nPixWidth);
-								pluginData.setAttribute("heightPix", drawing.m_nPixHeight);
-								pluginData.setAttribute("objectId", drawing.Id);
+								let pluginData = drawing.getPluginData();
 								new_image_props =
 									{
 										ImageUrl: drawing.getImageUrl(),

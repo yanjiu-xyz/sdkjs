@@ -150,6 +150,18 @@
 	 * @property {localeTranslate} [textLocale] - Translations for the text field. The object keys are the two letter language codes (ru, de, it, etc.) and the values are the button label translation for each language.
 	 */
 
+	/**
+	 * OLE-object properties
+	 * @typed {Object} OLEProperties
+	 * @property {string} data - OLE object data (internal format).
+	 * @property {string} imgSrc - A link to the image (its visual representation) stored in the OLE object and used by the plugin.
+	 * @property {string} guid - An identifier of the plugin which can edit the current OLE object and must be of the *asc.{UUID}* type.
+	 * @property {number} width - The OLE object width measured in millimeters.
+	 * @property {number} height - The OLE object height measured in millimeters.
+	 * @property {number} widthPix - The OLE object image width in pixels.
+	 * @property {number} heightPix - The OLE object image height in pixels.
+	 */
+
     /**
      * Base class
      * @global
@@ -174,14 +186,7 @@
      * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias AddOleObject
 	 * @this Api
-     * @param {Object} data - The OLE object properties.
-     * @param {string} data.data - OLE object data (internal format).
-     * @param {string} data.imgSrc - A link to the image (its visual representation) stored in the OLE object and used by the plugin.
-     * @param {string} data.guid - An identifier of the plugin which can edit the current OLE object and must be of the *asc.{UUID}* type.
-     * @param {number} data.width - The OLE object width measured in millimeters.
-     * @param {number} data.height - The OLE object height measured in millimeters.
-     * @param {number} data.widthPix - The OLE object image width in pixels.
-     * @param {number} data.heightPix - The OLE object image height in pixels.
+     * @param {OLEProperties} data - The OLE object properties.
     */
     Api.prototype["pluginMethod_AddOleObject"] = function(data) { return this.asc_addOleObject(data); };
 
@@ -190,16 +195,30 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias EditOleObject
-     * @param {Object} data - The OLE object properties.
-     * @param {string} data.data - OLE object data (internal format).
-     * @param {string} data.imgSrc - A link to the image (its visual representation) stored in the OLE object and used by the plugin.
-     * @param {string} data.objectId - The OLE object identifier.
-     * @param {number} data.width - The OLE object width measured in millimeters.
-     * @param {number} data.height - The OLE object height measured in millimeters.
-     * @param {number} data.widthPix - The OLE object image width in pixels.
-     * @param {number} data.heightPix - The OLE object image height in pixels.
+     * @param {Object} OLEProperties - The OLE object properties.
      */
     Api.prototype["pluginMethod_EditOleObject"] = function(data) { return this.asc_editOleObject(data); };
+
+
+	/**
+	 * Returns an array of selected ole-objects.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @alias GetSelectedOleObjects
+	 * @param @returns {OLEProperties[]} - An array of the OLEObjectData objects containing the data about the OLE object parameters.
+	 */
+	Api.prototype["pluginMethod_GetSelectedOleObjects"] = function()
+	{
+		let oDrawingsController = this.getGraphicController();
+		let aRes = [];
+		if(!oDrawingsController) return aRes;
+		let aSelectedOle = oDrawingsController.getSelectedOleObjects();
+		for(let nIdx = 0; nIdx < aSelectedOle.length; ++nIdx)
+		{
+			aRes.push(aSelectedOle[nIdx].getPluginDataObject());
+		}
+		return aRes;
+	};
 
     /**
 	 * An object containing the font information.

@@ -78,6 +78,19 @@
 		wrap : function(obj)
 		{
 			this.privateData = obj;
+		},
+
+		getDataObject: function ()
+		{
+			let oData = {};
+			for(let sKey in this.privateData)
+			{
+				if(this.privateData.hasOwnProperty(sKey))
+				{
+					oData[sKey] = this.privateData[sKey];
+				}
+			}
+			return oData;
 		}
 	};
 
