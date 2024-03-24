@@ -1823,14 +1823,13 @@
 	Api.prototype["pluginMethod_AddToolbarMenuItem"] = function(items)
 	{
 		let baseUrl = this.pluginsManager.pluginsMap[items["guid"]].baseUrl;
-		for (let i = 0, len = items.length; i < len; i++)
+		for (let i = 0, len = items.tabs.length; i < len; i++)
 		{
-			if (items[i]["items"])
-				correctItemsWithData(items[i]["items"], baseUrl);
+			if (items.tabs[i]["items"])
+				correctItemsWithData(items.tabs[i]["items"], baseUrl);
 		}
 
-		if (items["items"]) correctItemsWithData(items["items"], baseUrl);
-		this.sendEvent("onPluginToolbarMenu", items);
+		this.sendEvent("onPluginToolbarMenu", [items]);
 	};
 
 	/**
