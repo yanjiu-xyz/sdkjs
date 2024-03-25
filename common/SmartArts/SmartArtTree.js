@@ -3420,9 +3420,7 @@ function HierarchyAlgorithm() {
 
 	}
 	PyramidAlgorithm.prototype.calcScaleCoefficients = function () {
-		this.parentNode.calcNodeConstraints();
-		const parentConstraints = this.getNodeConstraints(this.parentNode);
-		const parentHeight = parentConstraints.height;
+		const parentHeight = this.parentNode.getConstr(AscFormat.Constr_type_h, false);
 		const childs = this.parentNode.childs;
 		const defaultBlockHeight = parentHeight / childs.length;
 		let sumHeight = 0;
@@ -3434,7 +3432,7 @@ function HierarchyAlgorithm() {
 		this.calcValues.defaultBlockHeight = defaultBlockHeight * (parentHeight / sumHeight);
 	};
 	PyramidAlgorithm.prototype.setPyramidParametersForNode = function (child, x, y, height, width, cleanHeight, cleanWidth, adjValue) {
-		const shape = child.shape;
+		const shape = child.getShape(false);
 		if (shape) {
 			if (width < height) {
 				adjValue = adjValue * height / cleanWidth;
@@ -3465,8 +3463,8 @@ function HierarchyAlgorithm() {
 		return this.params[AscFormat.Param_type_linDir] === AscFormat.ParameterVal_linearDirection_fromT;
 	};
 	PyramidAlgorithm.prototype.getStartDefaultBlockWidth = function () {
-		const acctRatio = this.parentNode.getConstr(AscFormat.Constr_type_pyraAcctRatio);
-		const parentWidth = this.getNodeConstraints(this.parentNode).width;
+		const acctRatio = this.parentNode.getConstr(AscFormat.Constr_type_pyraAcctRatio, true);
+		const parentWidth = this.parentNode.getConstr(AscFormat.Constr_type_w, true);
 		return parentWidth * (1 - acctRatio);
 	}
 	PyramidAlgorithm.prototype.forEachChild = function (callback, startIndex) {
@@ -3501,14 +3499,11 @@ function HierarchyAlgorithm() {
 		}
 		return this.shapeContainer;
 	};
-	PyramidAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm, isCalculateScaleCoefficients) {
-		const childs = this.parentNode.childs;
-		if (!childs.length) {
-			return;
-		}
-		const shapeContainer = this.getShapeContainer();
-		const parentConstraints = this.getNodeConstraints(this.parentNode);
-		const parentHeight = parentConstraints.height;
+	PyramidAlgorithm.prototype._calculateShapePositions = function () {
+		const parentNode = this.parentNode;
+		const shapeContainer = this.getShapeContainer(false);
+		const parentHeight = parentNode.getConstr(AscFormat.Constr_type_h, true);
+		const parentWidth = parentNode.getConstr(AscFormat.Constr_type_w, true);
 		const defaultBlockHeight = this.calcValues.defaultBlockHeight;
 		let previousBlockWidth = this.getStartDefaultBlockWidth();
 		const defaultAdjValue = (previousBlockWidth / 2) / parentHeight;
@@ -3516,11 +3511,12 @@ function HierarchyAlgorithm() {
 
 		const firstPyramidComponents = this.getFirstPyramidComponents();
 		const firstChild = firstPyramidComponents.pyramid;
+		const firstShape = firstChild.getShape(false);
 		const firstHeight = defaultBlockHeight * firstChild.getHeightScale();
 		const firstWidth = previousBlockWidth * firstChild.getWidthScale();
 		let ctrX = (previousBlockWidth - firstWidth) / 2 + firstWidth / 2;
 		if (!this.isAfterAcct()) {
-			ctrX = parentConstraints.width - ctrX;
+			ctrX = parentWidth - ctrX;
 		}
 		let previousY;
 		if (this.isReversedPyramid()) {
@@ -3532,17 +3528,18 @@ function HierarchyAlgorithm() {
 		this.setPyramidParametersForNode(firstChild, ctrX - firstWidth / 2, previousY,  firstHeight, firstWidth, defaultBlockHeight, previousBlockWidth, defaultAdjValue);
 		const firstAcctOffset = defaultAdjValue * previousBlockHeight;
 		if (this.isReversedPyramid()) {
-			firstChild.shape.rot = Math.PI;
+			firstShape.rot = Math.PI;
 			this.addAcctShape(firstChild, firstPyramidComponents.acct, defaultAdjValue, firstAcctOffset);
-			shapeContainer.push(firstChild.shape);
+			shapeContainer.push(firstShape);
 		} else {
-			shapeContainer.push(firstChild.shape);
+			shapeContainer.push(firstShape);
 			this.addAcctShape(firstChild, firstPyramidComponents.acct, defaultAdjValue, firstAcctOffset);
 		}
 		const oThis = this;
 		this.forEachChild(function (node) {
 			const pyramidComponents = oThis.getPyramidChildren(node);
 			const child = pyramidComponents.pyramid;
+			const shape = child.getShape(false);
 			const blockHeightFactor = child.getHeightScale();
 			const blockWidthFactor = child.getWidthScale();
 			const scaledBlockHeight = blockHeightFactor * defaultBlockHeight;
@@ -3558,11 +3555,11 @@ function HierarchyAlgorithm() {
 			const acctOffset = defaultAdjValue * scaledBlockHeight;
 			oThis.setPyramidParametersForNode(child, x, y,  scaledBlockHeight, scaledBlockWidth, defaultBlockHeight, curBlockWidth, defaultAdjValue);
 			if (oThis.isReversedPyramid()) {
-				child.shape.rot = Math.PI;
+				shape.rot = Math.PI;
 				oThis.addAcctShape(child, pyramidComponents.acct, defaultAdjValue, acctOffset);
-				oThis.shapeContainer.push(child.shape);
+				shapeContainer.push(shape);
 			} else {
-				oThis.shapeContainer.push(child.shape);
+				shapeContainer.push(shape);
 				oThis.addAcctShape(child, pyramidComponents.acct, defaultAdjValue, acctOffset);
 			}
 			previousBlockWidth = curBlockWidth;
@@ -3572,9 +3569,21 @@ function HierarchyAlgorithm() {
 		if (!this.isReversedPyramid()) {
 			shapeContainer.reverse();
 		}
-		this.applyParamOffsets();
-		this.applyPostAlgorithmSettings();
-		this.createShadowShape(isCalculateScaleCoefficients);
+	};
+	PyramidAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm, isCalculateScaleCoefficients) {
+		const parentNode = this.parentNode;
+		const childs = parentNode.childs;
+		if (!childs.length) {
+			return;
+		}
+		if (isCalculateScaleCoefficients) {
+			this.calcScaleCoefficients();
+		} else {
+			this._calculateShapePositions();
+			this.applyParamOffsets();
+			this.applyPostAlgorithmSettings();
+			this.createShadowShape(false);
+		}
 	};
 	PyramidAlgorithm.prototype.createShadowShape = function (isCalculateScaleCoefficients) {
 		return this.parentNode.createShadowShape(true);
@@ -3601,9 +3610,9 @@ function HierarchyAlgorithm() {
 			return;
 		}
 		const shapeContainer = this.getShapeContainer();
-		const parentWidth = this.getNodeConstraints(this.parentNode).width;
-		const mainShape = mainNode.shape;
-		const acctShape = acctNode.shape;
+		const parentWidth = this.parentNode.getConstr(AscFormat.Constr_type_w, true);
+		const mainShape = mainNode.getShape(false);
+		const acctShape = acctNode.getShape(false);
 
 		const heightScale = acctNode.getHeightScale();
 		const widthScale = acctNode.getWidthScale();
