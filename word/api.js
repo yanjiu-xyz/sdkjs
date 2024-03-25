@@ -2770,7 +2770,7 @@ background-repeat: no-repeat;\
 			options.pdfChanges = changes;
 			this.asc_DownloadAs(options);
 			return;
-		} else if(this.documentIsWopi && options.isSaveAs) {
+		} else if((this.documentIsWopi && options.isSaveAs) || !(this.isUseNativeViewer && this.isDocumentRenderer())) {
 			//todo add new server request wopi_putRelativeOrigin
 			options.asc_setFileType(AscCommon.getFormatByExtention(this.documentFormat));
 			this.asc_DownloadAs(options);
