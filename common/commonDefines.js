@@ -518,6 +518,7 @@ window.AscCommon.g_cIsBeta = "false";
 		FODP : 0x0089,
 		OTP  : 0x008a,
 		PPTX_PACKAGE  : 0x008b,
+		PPTY : 0x1003,
 
 		//image
 		IMG  : 0x0400,

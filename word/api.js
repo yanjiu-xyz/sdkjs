@@ -2771,10 +2771,10 @@ background-repeat: no-repeat;\
 			this.asc_DownloadAs(options);
 			return;
 		} else if(this.documentIsWopi && options.isSaveAs) {
-			//todo server request
-			// options.asc_setFileType(Asc.c_oAscFileType.PDF);
-			// this.asc_DownloadAs(options);
-			// return;
+			//todo add new server request wopi_putRelativeOrigin
+			options.asc_setFileType(AscCommon.getFormatByExtention(this.documentFormat));
+			this.asc_DownloadAs(options);
+			return;
 		}
 		//скачивание оригинального pdf, djvu, xps
 		var downloadType = bIsDownloadEvent ? DownloadType.Download : DownloadType.None;
