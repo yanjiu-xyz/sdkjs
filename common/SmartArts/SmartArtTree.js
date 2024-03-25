@@ -6095,40 +6095,62 @@ PresNode.prototype.addChild = function (ch, pos) {
 	PresNode.prototype.getAlgorithm = function () {
 		return this.algorithm;
 	}
+	PresNode.prototype.getPositionConstrWithOffset = function (posConstrType, offsetConstrType, isAdapt) {
+		const constrObject = this.getConstraints(isAdapt);
+		const position = constrObject[posConstrType];
+		let result;
+		if (position !== undefined) {
+			result = position;
+			const offset = constrObject[offsetConstrType];
+			if (offset !== undefined) {
+				result += offset;
+			}
+		}
+		return result;
+	}
+	PresNode.prototype.getConstrForCalculating = function (type, isAdapt) {
+		switch (type) {
+			case AscFormat.Constr_type_l:
+				return this.getPositionConstrWithOffset(type, AscFormat.Constr_type_lOff, isAdapt);
+			case AscFormat.Constr_type_r:
+				return this.getPositionConstrWithOffset(type, AscFormat.Constr_type_rOff, isAdapt);
+			case AscFormat.Constr_type_t:
+				return this.getPositionConstrWithOffset(type, AscFormat.Constr_type_tOff, isAdapt);
+			case AscFormat.Constr_type_b:
+				return this.getPositionConstrWithOffset(type, AscFormat.Constr_type_bOff, isAdapt);
+			case AscFormat.Constr_type_ctrX:
+				return this.getPositionConstrWithOffset(type, AscFormat.Constr_type_ctrXOff, isAdapt);
+			case AscFormat.Constr_type_ctrY:
+				return this.getPositionConstrWithOffset(type, AscFormat.Constr_type_ctrYOff, isAdapt);
+			default:
+				const constrObj = this.getConstraints(isAdapt);
+				return constrObj[type];
+		}
+	};
 	PresNode.prototype.getConstr = function (type, isAdapt, skipDefaultValue, depth) {
 		depth = depth || 0;
 		const constrObj = isAdapt ? this.adaptConstr : this.constr;
-		let result = constrObj[type];
+		let result = this.getConstrForCalculating(type, isAdapt);
 		if (depth < 2) {
 			switch (type) {
 				case AscFormat.Constr_type_l: {
-					result = constrObj[AscFormat.Constr_type_l];
 					const width = this.getConstr(AscFormat.Constr_type_w, isAdapt, false, depth + 1);
-					const right = constrObj[AscFormat.Constr_type_r];
-					const ctrX = constrObj[AscFormat.Constr_type_ctrX];
+					const right = this.getConstrForCalculating(AscFormat.Constr_type_r, isAdapt);
+					const ctrX = this.getConstrForCalculating(AscFormat.Constr_type_ctrX, isAdapt);
 					if (ctrX !== undefined) {
 						result = ctrX - width / 2;
-						const offset = constrObj[AscFormat.Constr_type_ctrXOff];
-						if (offset !== undefined) {
-							result += offset;
-						}
 					} else if (right !== undefined) {
 						result = right - width;
 					}
 					break;
 				}
 				case AscFormat.Constr_type_t: {
-					result = constrObj[AscFormat.Constr_type_t];
 					const height = constrObj[AscFormat.Constr_type_h];
 					if (height !== undefined) {
-						const ctrY = constrObj[AscFormat.Constr_type_ctrY];
-						const bottom = constrObj[AscFormat.Constr_type_b];
+						const ctrY = this.getConstrForCalculating(AscFormat.Constr_type_ctrY, isAdapt);
+						const bottom = this.getConstrForCalculating(AscFormat.Constr_type_b, isAdapt);
 						if (ctrY !== undefined) {
 							result = ctrY - height / 2;
-							const offset = constrObj[AscFormat.Constr_type_ctrYOff];
-							if (offset !== undefined) {
-								result += offset;
-							}
 						} else if (bottom !== undefined) {
 							result = bottom - height;
 						}
@@ -6136,15 +6158,15 @@ PresNode.prototype.addChild = function (ch, pos) {
 					break;
 				}
 				case AscFormat.Constr_type_w: {
-					const right = constrObj[AscFormat.Constr_type_r];
-					const left = constrObj[AscFormat.Constr_type_l];
+					const right = this.getConstrForCalculating(AscFormat.Constr_type_r, isAdapt);
+					const left = this.getConstrForCalculating(AscFormat.Constr_type_l, isAdapt);
 					if (right !== undefined && left !== undefined) {
 						result = right - left;
 					}
 					break;
 				}
 				case AscFormat.Constr_type_h: {
-					const bottom = constrObj[AscFormat.Constr_type_b];
+					const bottom = this.getConstrForCalculating(AscFormat.Constr_type_b, isAdapt);
 					const top = this.getConstr(AscFormat.Constr_type_t, isAdapt, true, depth + 1);
 					if (bottom !== undefined && top !== undefined) {
 						result = bottom - top;
@@ -6152,7 +6174,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 					break;
 				}
 				case AscFormat.Constr_type_b: {
-					const top = constrObj[AscFormat.Constr_type_t] || 0;
+					const top = this.getConstrForCalculating(AscFormat.Constr_type_t, isAdapt) || 0;
 					const height = constrObj[AscFormat.Constr_type_h];
 					if (AscFormat.isRealNumber(height)) {
 						result = top + height;
