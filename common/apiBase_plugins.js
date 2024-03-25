@@ -195,7 +195,7 @@
      * @memberof Api
      * @typeofeditors ["CDE", "CSE", "CPE"]
      * @alias EditOleObject
-     * @param {Object} OLEProperties - The OLE object properties.
+     * @param {OLEProperties} data - The OLE object properties.
      */
     Api.prototype["pluginMethod_EditOleObject"] = function(data) { return this.asc_editOleObject(data); };
 
@@ -205,7 +205,7 @@
 	 * @memberof Api
 	 * @typeofeditors ["CDE", "CSE", "CPE"]
 	 * @alias GetSelectedOleObjects
-	 * @param @returns {OLEProperties[]} - An array of the OLEObjectData objects containing the data about the OLE object parameters.
+	 * @returns {OLEProperties[]} - An array of the OLEObjectData objects containing the data about the OLE object parameters.
 	 */
 	Api.prototype["pluginMethod_GetSelectedOleObjects"] = function()
 	{
