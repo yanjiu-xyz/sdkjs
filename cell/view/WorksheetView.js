@@ -23941,7 +23941,7 @@
 			//}
 		}
 
-		if("mousemove" === type) {
+		if(AscCommon.getPtrEvtName("move") === type) {
 			if(t.clickedGroupButton) {
 				var props;
 				bCol = t.clickedGroupButton.bCol;
@@ -24009,10 +24009,10 @@
 								collapsed = t._getGroupCollapsed(arrayLines[i][j].start - 1, bCol);/*levelMap[arrayLines[i][j].end + 1] && levelMap[arrayLines[i][j].end + 1].collapsed*/
 								if(props) {
 									if(x >= props.x - offsetX && x <= props.x + props.w - offsetX && y >= props.y - offsetY && y <= props.y - offsetY + props.h) {
-										if("mouseup" === type) {
+										if(AscCommon.getPtrEvtName("up") === type) {
 											t._tryChangeGroup(arrayLines[i][j], collapsed, i, bCol);
 											t.clickedGroupButton = null;
-										} else if("mousedown" === type) {
+										} else if(AscCommon.getPtrEvtName("down") === type) {
 											//перерисовываем кнопку в нажатом состоянии
 											t._drawGroupDataButtons(null, [{r: arrayLines[i][j].start - 1, level: i, active: true, clean: true}], undefined, undefined, bCol);
 											t.clickedGroupButton = {level: i, r: arrayLines[i][j].start - 1, bCol: bCol};
@@ -24033,10 +24033,10 @@
 								collapsed = t._getGroupCollapsed(arrayLines[i][j].end + 1, bCol);/*levelMap[arrayLines[i][j].end + 1] && levelMap[arrayLines[i][j].end + 1].collapsed*/
 								if(props) {
 									if(x >= props.x - offsetX && x <= props.x + props.w - offsetX && y >= props.y - offsetY && y <= props.y - offsetY + props.h) {
-										if("mouseup" === type) {
+										if(AscCommon.getPtrEvtName("up") === type) {
 											t._tryChangeGroup(arrayLines[i][j], collapsed, i, bCol);
 											t.clickedGroupButton = null;
-										} else if("mousedown" === type) {
+										} else if(AscCommon.getPtrEvtName("down") === type) {
 											//перерисовываем кнопку в нажатом состоянии
 											t._drawGroupDataButtons(null, [{r: arrayLines[i][j].end + 1, level: i, active: true, clean: true}], undefined, undefined, bCol);
 											t.clickedGroupButton = {level: i, r: arrayLines[i][j].end + 1, bCol: bCol};
