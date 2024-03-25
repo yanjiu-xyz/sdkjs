@@ -6348,7 +6348,8 @@ PresNode.prototype.addChild = function (ch, pos) {
 	};
 
 	PresNode.prototype.createShadowShapeFromConstraints = function (layoutShape, isCalculateCoefficients) {
-		const constrNode = this.parent && this.parent.algorithm instanceof SpaceAlgorithm ? this.parent : this;
+		const isChildInSpaceAlgorithm = this.parent && this.parent.algorithm instanceof SpaceAlgorithm;
+		const constrNode = isChildInSpaceAlgorithm ? this.parent : this;
 
 		const constrObject = constrNode.getConstraints(!isCalculateCoefficients);
 		const shape = this.getShape(isCalculateCoefficients);
@@ -6358,8 +6359,16 @@ PresNode.prototype.addChild = function (ch, pos) {
 		const heightCoef = this.getHeightScale();
 		let x = 0;
 		let y = 0;
-		let width = constrNode.getConstr(AscFormat.Constr_type_w, !isCalculateCoefficients);
-		let height = constrNode.getConstr(AscFormat.Constr_type_h, !isCalculateCoefficients);
+		let width = constrNode.getConstr(AscFormat.Constr_type_w, !isCalculateCoefficients, !isChildInSpaceAlgorithm);
+		let height = constrNode.getConstr(AscFormat.Constr_type_h, !isCalculateCoefficients, !isChildInSpaceAlgorithm);
+		if (width === undefined && height === undefined) {
+			const isSpaceAlgorithm = this.algorithm instanceof SpaceAlgorithm;
+			width = isSpaceAlgorithm ? (constrNode.getParentWidth(!isCalculateCoefficients) || 0) : 0;
+			height = isSpaceAlgorithm ? (constrNode.getParentHeight(!isCalculateCoefficients) || 0): 0;
+		} else {
+			width = width || 0;
+			height = height || 0;
+		}
 		if (layoutShape.rot === 45 || layoutShape.rot === 225) {
 			const side = width / Math.sqrt(2);
 			const center = (width - side) / 2;
