@@ -179,19 +179,26 @@
 			let st = this.stringRenderer;
 			
 			let _width = asc_round(width * this.font.getSize() / 25.4 * this.stringRenderer.drawingCtx.getPPIY());
+
+			// Make all widths integer values
+			let w = Math.trunc(_width / codePointCount);
+			let r = Math.max(0, _width - w * codePointCount);
 			
 			// TODO: RTL
 			st._getCharPropAt(this.charIndex).grapheme = grapheme;
-			st.charWidths[this.charIndex] = _width / codePointCount;
+			st.charWidths[this.charIndex] = w;
 			st.chars[this.charIndex] = this.Buffer[this.BufferIndex];
 			++this.charIndex;
 			
 			for (let i = 1; i < codePointCount; ++i)
 			{
 				st._getCharPropAt(this.charIndex).grapheme = AscFonts.NO_GRAPHEME;
-				st.charWidths[this.charIndex] = _width / codePointCount;
+				st.charWidths[this.charIndex] = w + (r ? 1 : 0);
 				st.chars[this.charIndex] = this.Buffer[this.BufferIndex + i];
 				++this.charIndex;
+				
+				if (r)
+					--r;
 			}
 			
 			if (this.IsRtlDirection())
