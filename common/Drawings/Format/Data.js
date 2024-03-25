@@ -690,10 +690,10 @@ Because of this, the display is sometimes not correct.
     const ParameterVal_connectorRouting_stra = 3;
     const ParameterVal_continueDirection_revDir = 0;
     const ParameterVal_continueDirection_sameDir = 1;
-    const ParameterVal_diagramHorizontalAlignment_ctr = 0;
-    const ParameterVal_diagramHorizontalAlignment_l = 1;
-    const ParameterVal_diagramHorizontalAlignment_none = 2;
-    const ParameterVal_diagramHorizontalAlignment_r = 3;
+    const ParameterVal_horizontalAlignment_ctr = 0;
+    const ParameterVal_horizontalAlignment_l = 1;
+    const ParameterVal_horizontalAlignment_none = 2;
+    const ParameterVal_horizontalAlignment_r = 3;
     const ParameterVal_diagramTextAlignment_ctr = 0;
     const ParameterVal_diagramTextAlignment_l = 1;
     const ParameterVal_diagramTextAlignment_r = 2;
@@ -3242,7 +3242,7 @@ Because of this, the display is sometimes not correct.
     changesFactory[AscDFH.historyitem_ParameterValConnectorPoint] = CChangeLong;
     changesFactory[AscDFH.historyitem_ParameterValConnectorRouting] = CChangeLong;
     changesFactory[AscDFH.historyitem_ParameterValContinueDirection] = CChangeLong;
-    changesFactory[AscDFH.historyitem_ParameterValDiagramHorizontalAlignment] = CChangeLong;
+    changesFactory[AscDFH.historyitem_ParameterValHorizontalAlignment] = CChangeLong;
     changesFactory[AscDFH.historyitem_ParameterValDiagramTextAlignment] = CChangeLong;
     changesFactory[AscDFH.historyitem_ParameterValFallbackDimension] = CChangeLong;
     changesFactory[AscDFH.historyitem_ParameterValFlowDirection] = CChangeLong;
@@ -3300,8 +3300,8 @@ Because of this, the display is sometimes not correct.
     drawingsChangesMap[AscDFH.historyitem_ParameterValContinueDirection] = function (oClass, value) {
       oClass.continueDirection = value;
     };
-    drawingsChangesMap[AscDFH.historyitem_ParameterValDiagramHorizontalAlignment] = function (oClass, value) {
-      oClass.diagramHorizontalAlignment = value;
+    drawingsChangesMap[AscDFH.historyitem_ParameterValHorizontalAlignment] = function (oClass, value) {
+      oClass.horizontalAlignment = value;
     };
     drawingsChangesMap[AscDFH.historyitem_ParameterValDiagramTextAlignment] = function (oClass, value) {
       oClass.diagramTextAlignment = value;
@@ -3389,7 +3389,7 @@ Because of this, the display is sometimes not correct.
       this.connectorPoint = null;
       this.connectorRouting = null;
       this.continueDirection = null;
-      this.diagramHorizontalAlignment = null;
+      this.horizontalAlignment = null;
       this.diagramTextAlignment = null;
       this.fallbackDimension = null;
       this.flowDirection = null;
@@ -3473,9 +3473,9 @@ Because of this, the display is sometimes not correct.
       this.continueDirection = pr;
     };
 
-    ParameterVal.prototype.setDiagramHorizontalAlignment = function (pr) {
-      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValDiagramHorizontalAlignment, this.getDiagramHorizontalAlignment(), pr));
-      this.diagramHorizontalAlignment = pr;
+    ParameterVal.prototype.setHorizontalAlignment = function (pr) {
+      oHistory.CanAddChanges() && oHistory.Add(new CChangeLong(this, AscDFH.historyitem_ParameterValHorizontalAlignment, this.getHorizontalAlignment(), pr));
+      this.horizontalAlignment = pr;
     };
 
     ParameterVal.prototype.setDiagramTextAlignment = function (pr) {
@@ -3642,8 +3642,8 @@ Because of this, the display is sometimes not correct.
       return this.continueDirection;
     };
 
-    ParameterVal.prototype.getDiagramHorizontalAlignment = function () {
-      return this.diagramHorizontalAlignment;
+    ParameterVal.prototype.getHorizontalAlignment = function () {
+      return this.horizontalAlignment;
     };
 
     ParameterVal.prototype.getDiagramTextAlignment = function () {
@@ -3754,7 +3754,7 @@ Because of this, the display is sometimes not correct.
       oCopy.setConnectorPoint(this.getConnectorPoint());
       oCopy.setConnectorRouting(this.getConnectorRouting());
       oCopy.setContinueDirection(this.getContinueDirection());
-      oCopy.setDiagramHorizontalAlignment(this.getDiagramHorizontalAlignment());
+      oCopy.setHorizontalAlignment(this.getHorizontalAlignment());
       oCopy.setDiagramTextAlignment(this.getDiagramTextAlignment());
       oCopy.setFallbackDimension(this.getFallbackDimension());
       oCopy.setFlowDirection(this.getFlowDirection());
@@ -4026,17 +4026,21 @@ Because of this, the display is sometimes not correct.
 							return ParameterVal_verticalAlignment_b;
 						case 't':
 							return ParameterVal_verticalAlignment_t;
+						case 'none':
+							return ParameterVal_verticalAlignment_none;
 						default:
 							return this.val;
 					}
 				case Param_type_horzAlign:
 					switch (this.val) {
 						case 'r':
-							return ParameterVal_diagramHorizontalAlignment_r;
+							return ParameterVal_horizontalAlignment_r;
 						case 'l':
-							return ParameterVal_diagramHorizontalAlignment_l;
+							return ParameterVal_horizontalAlignment_l;
 						case 'ctr':
-							return ParameterVal_diagramHorizontalAlignment_ctr;
+							return ParameterVal_horizontalAlignment_ctr;
+						case 'none':
+							return ParameterVal_horizontalAlignment_none;
 						default:
 							return this.val;
 					}
@@ -12338,10 +12342,10 @@ Because of this, the display is sometimes not correct.
     window['AscFormat'].ParameterVal_connectorRouting_stra = ParameterVal_connectorRouting_stra;
     window['AscFormat'].ParameterVal_continueDirection_revDir = ParameterVal_continueDirection_revDir;
     window['AscFormat'].ParameterVal_continueDirection_sameDir = ParameterVal_continueDirection_sameDir;
-    window['AscFormat'].ParameterVal_diagramHorizontalAlignment_ctr = ParameterVal_diagramHorizontalAlignment_ctr;
-    window['AscFormat'].ParameterVal_diagramHorizontalAlignment_l = ParameterVal_diagramHorizontalAlignment_l;
-    window['AscFormat'].ParameterVal_diagramHorizontalAlignment_none = ParameterVal_diagramHorizontalAlignment_none;
-    window['AscFormat'].ParameterVal_diagramHorizontalAlignment_r = ParameterVal_diagramHorizontalAlignment_r;
+    window['AscFormat'].ParameterVal_horizontalAlignment_ctr = ParameterVal_horizontalAlignment_ctr;
+    window['AscFormat'].ParameterVal_horizontalAlignment_l = ParameterVal_horizontalAlignment_l;
+    window['AscFormat'].ParameterVal_horizontalAlignment_none = ParameterVal_horizontalAlignment_none;
+    window['AscFormat'].ParameterVal_horizontalAlignment_r = ParameterVal_horizontalAlignment_r;
     window['AscFormat'].ParameterVal_diagramTextAlignment_ctr = ParameterVal_diagramTextAlignment_ctr;
     window['AscFormat'].ParameterVal_diagramTextAlignment_l = ParameterVal_diagramTextAlignment_l;
     window['AscFormat'].ParameterVal_diagramTextAlignment_r = ParameterVal_diagramTextAlignment_r;

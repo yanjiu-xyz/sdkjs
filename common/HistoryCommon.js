@@ -3968,7 +3968,7 @@
 	AscDFH.historyitem_ParameterValConnectorPoint             = AscDFH.historyitem_type_ParameterVal | 9;
 	AscDFH.historyitem_ParameterValConnectorRouting           = AscDFH.historyitem_type_ParameterVal | 10;
 	AscDFH.historyitem_ParameterValContinueDirection          = AscDFH.historyitem_type_ParameterVal | 11;
-	AscDFH.historyitem_ParameterValDiagramHorizontalAlignment = AscDFH.historyitem_type_ParameterVal | 12;
+	AscDFH.historyitem_ParameterValHorizontalAlignment        = AscDFH.historyitem_type_ParameterVal | 12;
 	AscDFH.historyitem_ParameterValDiagramTextAlignment       = AscDFH.historyitem_type_ParameterVal | 13;
 	AscDFH.historyitem_ParameterValFallbackDimension          = AscDFH.historyitem_type_ParameterVal | 14;
 	AscDFH.historyitem_ParameterValFlowDirection              = AscDFH.historyitem_type_ParameterVal | 15;
