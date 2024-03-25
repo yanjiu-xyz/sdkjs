@@ -6299,7 +6299,10 @@ PresNode.prototype.addChild = function (ch, pos) {
 		this.createShadowShapeFromConstraints(this.layoutInfo.shape, isCalculateCoefficients);
 		if (isComposite) {
 			shape.isSpacing = !(isComposite || isCombine);
-			//todo
+			for (let i = 0; i < this.childs.length; i += 1) {
+				const child = this.childs[i];
+				child.moveTo(shape.x, shape.y, isCalculateCoefficients);
+			}
 			this.algorithm.setConstraintSizes(shape);
 			return this.updateCompositeSizes(isCalculateCoefficients, isCombine);
 		}
