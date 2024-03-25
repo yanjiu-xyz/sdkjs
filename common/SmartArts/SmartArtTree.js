@@ -5099,7 +5099,15 @@ function HierarchyAlgorithm() {
 		BaseAlgorithm.call(this);
 	}
 	AscFormat.InitClassWithoutType(CompositeAlgorithm, BaseAlgorithm);
-
+	CompositeAlgorithm.prototype.initParams = function (params) {
+		BaseAlgorithm.prototype.initParams.call(this, params);
+		if (this.params[AscFormat.Param_type_horzAlign] === undefined) {
+			this.params[AscFormat.Param_type_horzAlign] = AscFormat.ParameterVal_horizontalAlignment_ctr;
+		}
+		if (this.params[AscFormat.Param_type_vertAlign] === undefined) {
+			this.params[AscFormat.Param_type_vertAlign] = AscFormat.ParameterVal_verticalAlignment_mid;
+		}
+	};
 	CompositeAlgorithm.prototype.setSibConnection = function (startNode, endNode, connectorAlgorithm) {
 		let srcNode;
 		let dstNode;
@@ -5168,23 +5176,60 @@ function HierarchyAlgorithm() {
 	CompositeAlgorithm.prototype.createShadowShape = function (isCalculateScaleCoefficients) {
 		return this.parentNode.createShadowShape(true, false, isCalculateScaleCoefficients);
 	};
+	CompositeAlgorithm.prototype.getHorizontalOffset = function (isCalculateCoefficients) {
+		const shape = this.parentNode.getShape(isCalculateCoefficients);
+		switch (this.params[AscFormat.Param_type_horzAlign]) {
+			case AscFormat.ParameterVal_horizontalAlignment_ctr: {
+				const constrBounds = shape.getBounds();
+				const boundsWidth = constrBounds.r - constrBounds.l;
+				return this.constraintSizes.x + this.constraintSizes.width / 2 - (constrBounds.l + boundsWidth / 2);
+			}
+			case AscFormat.ParameterVal_horizontalAlignment_l: {
+				const constrBounds = shape.getBounds();
+				return this.constraintSizes.x - constrBounds.l;
+			}
+			case AscFormat.ParameterVal_horizontalAlignment_r: {
+				const constrBounds = shape.getBounds();
+				return this.constraintSizes.x + this.constraintSizes.width - constrBounds.r;
+			}
+			case AscFormat.ParameterVal_horizontalAlignment_none:
+			default:
+				return 0;
+
+		}
+	};
+	CompositeAlgorithm.prototype.getVerticalOffset = function (isCalculateCoefficients) {
+		const shape = this.parentNode.getShape(isCalculateCoefficients);
+		switch (this.params[AscFormat.Param_type_vertAlign]) {
+			case AscFormat.ParameterVal_verticalAlignment_mid: {
+				const constrBounds = shape.getBounds();
+				const boundsHeight = shape.height;
+				return this.constraintSizes.y + this.constraintSizes.height / 2 - (constrBounds.t + boundsHeight / 2);
+			}
+			case AscFormat.ParameterVal_verticalAlignment_t: {
+				const constrBounds = shape.getBounds();
+				return this.constraintSizes.y - constrBounds.t;
+			}
+			case AscFormat.ParameterVal_verticalAlignment_b: {
+				const constrBounds = shape.getBounds();
+				return this.constraintSizes.y + this.constraintSizes.height - constrBounds.b;
+			}
+			case AscFormat.ParameterVal_verticalAlignment_none:
+			default:
+				return 0;
+		}
+	};
+	CompositeAlgorithm.prototype.applyAligns = function (isCalculateCoefficients) {
+		const offX = this.getHorizontalOffset(isCalculateCoefficients);
+		const offY = this.getVerticalOffset(isCalculateCoefficients);
+		this.parentNode.moveTo(offX, offY, isCalculateCoefficients);
+	};
 	CompositeAlgorithm.prototype.calculateShapePositions = function (smartartAlgorithm, isCalculateCoefficients) {
-		const parentNode = this.parentNode;
 		const bounds = this.createShadowShape(isCalculateCoefficients);
 		if (isCalculateCoefficients) {
 			this.setScaleCoefficient(bounds);
 		} else {
-			const shape = parentNode.getShape(isCalculateCoefficients);
-			const constrBounds = /*parentNode.getChildConstraintBounds(isCalculateCoefficients)*/shape.getBounds();
-			const boundsWidth = constrBounds.r - constrBounds.l;
-			const boundsHeight = shape.height;
-			const parentBounds = shape.getBounds();
-			const parentWidth = parentNode.getConstr(AscFormat.Constr_type_w, true);
-			const parentHeight = parentNode.getConstr(AscFormat.Constr_type_h, true);
-			const offX = this.constraintSizes.x + this.constraintSizes.width / 2 - (constrBounds.l + boundsWidth / 2);
-			//todo: height alignment is carried out without taking into account ctrY
-			const offY = this.constraintSizes.y + this.constraintSizes.height / 2 - (constrBounds.t + boundsHeight / 2);
-			parentNode.moveTo(offX, offY, isCalculateCoefficients);
+			this.applyAligns(isCalculateCoefficients);
 			this.setConnections();
 		}
 	};
