@@ -6009,14 +6009,14 @@
 						if (!oSettings)
 							oSettings = new AscCommon.CAddTextSettings();
 
-						var oTargetDocContent = this.getTargetDocContent(true, false);
-						if (oTargetDocContent) {
+						let fContentFunction = function() {
+							let oTargetDocContent = this;
 							oTargetDocContent.Remove(-1, true, true, true, undefined);
-							var oCurrentTextPr = oTargetDocContent.GetDirectTextPr();
-							var oParagraph = oTargetDocContent.GetCurrentParagraph();
+							let oCurrentTextPr = oTargetDocContent.GetDirectTextPr();
+							let oParagraph = oTargetDocContent.GetCurrentParagraph();
 							if (oParagraph && oParagraph.GetParent()) {
-								var oTempPara = new AscWord.Paragraph(oParagraph.GetParent());
-								var oRun = new ParaRun(oTempPara, false);
+								let oTempPara = new AscWord.Paragraph(oParagraph.GetParent());
+								let oRun = new ParaRun(oTempPara, false);
 								oRun.AddText(sText);
 								oTempPara.AddToContent(0, oRun);
 
@@ -6026,10 +6026,10 @@
 								if (oTextPr)
 									oRun.ApplyPr(oTextPr);
 
-								var oAnchorPos = oParagraph.GetCurrentAnchorPosition();
+								let oAnchorPos = oParagraph.GetCurrentAnchorPosition();
 
-								var oSelectedContent = new AscCommonWord.CSelectedContent();
-								var oSelectedElement = new AscCommonWord.CSelectedElement();
+								let oSelectedContent = new AscCommonWord.CSelectedContent();
+								let oSelectedElement = new AscCommonWord.CSelectedElement();
 
 								oSelectedElement.Element = oTempPara;
 								oSelectedElement.SelectedAll = false;
@@ -6038,14 +6038,13 @@
 								oSelectedContent.ForceInlineInsert();
 								oSelectedContent.PlaceCursorInLastInsertedRun(!oSettings.IsMoveCursorOutside());
 								oSelectedContent.Insert(oAnchorPos);
-
-								var oTargetTextObject = getTargetTextObject(this);
-								if (oTargetTextObject && oTargetTextObject.checkExtentsByDocContent) {
-									oTargetTextObject.checkExtentsByDocContent();
-								}
 							}
-
-						}
+						};
+						let fTableFunction = function () {
+							let oContent = this.CurCell.Content;
+							fContentFunction.call(oContent);
+						};
+						this.applyTextFunction(fContentFunction, fTableFunction, []);
 					}, [], false, AscDFH.historydescription_Document_AddTextWithProperties);
 				},
 
