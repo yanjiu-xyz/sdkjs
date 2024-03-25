@@ -1759,7 +1759,8 @@
 	 * @typedef {Object} ContextMenuItem
 	 * The context menu item.
 	 * @property {string} id - The item ID.
-	 * @property {localeTranslate} text - The item text.
+	 * @property {string} text - The item text.
+	 * @property {string} [data] - The item data (this data will be sended to click event callback).
 	 * @property {boolean} [disabled] - Specifies if the current item is disabled or not.
 	 * @property {string} [icons] - The item icons (see plugins config documentation)
 	 * @property {ContextMenuItem[]} items - An array containing the context menu items for the current item.
