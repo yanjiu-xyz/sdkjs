@@ -1071,6 +1071,16 @@
 		this.fillGlyph(glyph, fontManager);
 	};
 
+	DrawingContext.prototype.getBBox = function(gid, units) {
+		let r = getCvtRatio(0/*px*/, units >= 0 && units <= 3 ? units : this.units, this.ppiX);
+		let fm = this.fmgrGraphics[3];
+		
+		fm.SetStringGID(true);
+		let tmp = fm.MeasureChar(gid);
+		fm.SetStringGID(false);
+		
+		return (asc_round(tmp.fAdvanceX) - tmp.fAdvanceX + tmp.oBBox.fMaxX - tmp.oBBox.fMinX + 1) * r;
+	};
 
 	// Path methods
 
