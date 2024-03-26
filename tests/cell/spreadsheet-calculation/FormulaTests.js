@@ -15109,6 +15109,32 @@ $(function () {
 		assert.ok(oParser.parse(), 'COUNTIFS(B:B,">0",C:C,"=0")');
 		assert.strictEqual(oParser.calculate().getValue(), 2);
 
+		// for bug 66654
+		ws.getRange2("C200:C220").cleanAll();
+		ws.getRange2("C200:C210").setValue("externe");
+		ws.getRange2("C212:C215").setValue("interne");
+		ws.getRange2("C217:C220").setValue("externe");
+
+		ws.getRange2("D200:D220").cleanAll();
+		ws.getRange2("D200:D204").setValue("1")
+
+		ws.getRange2("F200:F220").cleanAll();
+		ws.getRange2("F200:F202").setValue("1");
+		ws.getRange2("F205:F215").setValue("1");
+		ws.getRange2("F219:F220").setValue("1");
+
+		oParser = new parserFormula('COUNTIFS(C200:C220,"=externe")', "E1", ws);
+		assert.ok(oParser.parse(), 'COUNTIFS(C200:C220,"=externe")',);
+		assert.strictEqual(oParser.calculate().getValue(), 15, 'Result of COUNTIFS(C200:C220,"=externe")');
+
+		oParser = new parserFormula('COUNTIFS(C200:C220,"=externe", D200:D220, "=1")', "E1", ws);
+		assert.ok(oParser.parse(), 'COUNTIFS(C200:C220,"=externe", D200:D220, "=1")',);
+		assert.strictEqual(oParser.calculate().getValue(), 5, 'Result of COUNTIFS(C200:C220,"=externe", D200:D220, "=1")');
+
+		oParser = new parserFormula('COUNTIFS(C200:C220,"=externe", D200:D220, "=1", F200:F220, "=1")', "E1", ws);
+		assert.ok(oParser.parse(), 'COUNTIFS(C200:C220,"=externe", D200:D220, "=1", F200:F220, "=1")',);
+		assert.strictEqual(oParser.calculate().getValue(), 3, 'Result of COUNTIFS(C200:C220,"=externe", D200:D220, "=1", F200:F220, "=1")');
+
 	});
 
 	QUnit.test("Test: \"COUNTIF\"", function (assert) {
