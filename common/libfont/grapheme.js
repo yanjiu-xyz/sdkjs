@@ -198,6 +198,59 @@
 
 		return oGrapheme[1] * COEF;
 	}
+	function GetGraphemeBBox(graphemeId, fontSize, dpi)
+	{
+		let grapheme = GRAPHEMES[graphemeId];
+		if (!grapheme || grapheme[2] <= 0)
+			return {minX : 0, maxX : 0, minY : 0, maxY : 0};
+		
+		let measurer = AscCommon.g_oTextMeasurer;
+		
+		if (undefined === dpi)
+			dpi = 72;
+		
+		let fontId    = grapheme[0] >> 8;
+		let fontStyle = grapheme[0] & 0xF;
+		
+		let fontName = AscCommon.FontNameMap.GetName(fontId);
+		measurer.SetFontInternal(fontName, fontSize, fontStyle, dpi);
+		
+		let bbox = measurer.GetBBox(grapheme[3]);
+		
+		let minX = bbox.fMinX;
+		let maxX = bbox.fMaxX;
+		let minY = bbox.fMinY;
+		let maxY = bbox.fMaxY;
+		
+		if (grapheme[2] > 1)
+		{
+			let x = 0;
+			let y = 0;
+			
+			let grCoeff = COEF * fontSize * dpi / 25.4;
+			for (let pos = 3, index = 0, count = grapheme[2]; index < count; ++index)
+			{
+				let bbox = measurer.GetBBox(grapheme[pos++]);
+				
+				minX = Math.min(minX, x + bbox.fMinX);
+				maxX = Math.max(maxX, x + bbox.fMaxX);
+				minY = Math.min(minY, y + bbox.fMinY);
+				maxY = Math.max(maxY, y + bbox.fMaxY);
+				
+				x += grapheme[pos++] * grCoeff; // advanceX
+				y += grapheme[pos++] * grCoeff; // advanceY
+				
+				pos += 3;
+			}
+		}
+		
+		return {
+			minX : minX,
+			maxX : maxX,
+			minY : minY,
+			maxY : maxY
+		};
+	}
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscFonts'] = window['AscFonts'] || {};
 	window['AscFonts'].NO_GRAPHEME        = NO_GRAPHEME;
@@ -207,5 +260,6 @@
 	window['AscFonts'].AddGlyphToGrapheme = AddGlyphToGrapheme;
 	window['AscFonts'].GetGrapheme        = GetGrapheme;
 	window['AscFonts'].GetGraphemeWidth   = GetGraphemeWidth;
+	window['AscFonts'].GetGraphemeBBox    = GetGraphemeBBox;
 
 })(window);

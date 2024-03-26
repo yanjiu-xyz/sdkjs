@@ -923,12 +923,9 @@
 		
 		StringRender.prototype._getGraphemeDelta = function(grapheme, fontSize) {
 			let ppiy = this.drawingCtx.getPPIY();
-			let width = AscFonts.GetGraphemeWidth(gid) * ppiy / 25.4 * fontSize;
-			let bbox = AscFonts.GetGraphemeBBox(grapheme, fontSize, ppiy / 25.4);
-			
-			let delta = width - asc_round(width) - bbox.maxX - bbox.minX + 1;
-			
-			return delta;
+			let width = AscFonts.GetGraphemeWidth(grapheme) * ppiy / 25.4 * fontSize;
+			let bbox = AscFonts.GetGraphemeBBox(grapheme, fontSize, ppiy);
+			return width + bbox.maxX - bbox.minX + 1 - width;
 		};
 
 		/**
@@ -946,7 +943,6 @@
 			var i, j, fr, fmt, chars, p, p_ = {}, pIndex, startCh;
 			var tw = 0, nlPos = 0, isEastAsian, hpPos = undefined, isSP_ = true, delta = 0;
 			let frShaper = this.fragmentShaper;
-			let ppiy = this.drawingCtx.getPPIY();
 			
 			function measureFragment(_chars, fragment) {
 				
@@ -959,9 +955,6 @@
 					chc = self.chars[chPos];
 					chw = self.charWidths[chPos];
 					
-					let tm = ctx.measureChar(null, 0/*px units*/, chc);
-					let oldDelta = tm.widthBB - tm.width;
-
 					isNL = self.codesHypNL[chc];
 					isSP = !isNL ? self.codesHypSp[chc] : false;
 					
@@ -976,8 +969,6 @@
 							nlPos = chPos;
 							self._getCharPropAt(nlPos).nl = true;
 							self._getCharPropAt(nlPos).delta = delta;
-							console.log("New " + delta + " old " + oldDelta);
-							
 							chc = 0xA0;
 							chw = 0;
 							tw = 0;
@@ -1000,8 +991,6 @@
 							nlPos = hpPos !== undefined ? hpPos : chPos;
 							self._getCharPropAt(nlPos).hp = true;
 							self._getCharPropAt(nlPos).delta = delta;
-							console.log("New " + delta + " old " + oldDelta);
-							
 							tw = self._calcCharsWidth(nlPos, chPos - 1);
 							hpPos = undefined;
 						}
@@ -1027,18 +1016,9 @@
 					
 					if (isSP || isNL) {
 						delta = 0;
-						oldDelta = tm.widthBB - tm.width
 					} else if (AscFonts.NO_GRAPHEME !== self._getCharPropAt(chPos).grapheme) {
-						// let gids = AscFonts.GetGraphemeGids(self._getCharPropAt(chPos).grapheme);
-						// delta = ctx.getBBox(gids[gids.length - 1]);
 						delta = self._getGraphemeDelta(self._getCharPropAt(chPos).grapheme, fontSize);
-						oldDelta = tm.widthBB - tm.width
 					}
-					
-					
-					// TODO: delta
-					//delta = tm.widthBB - tm.width;
-					//delta = 0;
 				}
 			}
 			
