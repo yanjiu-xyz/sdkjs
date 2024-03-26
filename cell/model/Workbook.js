@@ -597,6 +597,7 @@
 		this.volatileListeners = {};
 		this.defNameListeners = {};
 		this.tempGetByCells = [];
+		this.volatileArrays = {};	// contains all daf formulas on the sheet that could not be expanded (vm="1")
 		//set dirty
 		this.isInCalc = false;
 		this.changedCell = null;
@@ -1338,6 +1339,25 @@
 			}
 			this.calcTree();
 		},
+		addToVolatileArrays: function(formula) {
+			if (!this.volatileArrays) {
+				this.volatileArrays = {};
+			}
+			let listenerId = formula.getListenerId();
+			this.volatileArrays[listenerId] = formula;
+		},
+		getVolatileArrays: function() {
+			if (!this.volatileArrays) {
+				return
+			}
+
+			return this.volatileArrays
+		},
+		endListeningVolatileArray: function(listenerId) {
+			if (listenerId) {
+				delete this.volatileArrays[listenerId];
+			}
+		},
 		//set dirty
 		addToChangedRange2: function(sheetId, bbox) {
 			if (!this.changedRange) {
@@ -1843,14 +1863,19 @@
 			this.tempGetByCells = [];
 		},
 		_calculateDirty: function() {
-			var t = this;
+			const t = this;
 			this._foreachChanged(function(cell){
 				if (cell && cell.isFormula()) {
 					cell.setIsDirty(true);
 				}
 			});
+
 			this._foreachChanged(function(cell){
 				cell && cell._checkDirty();
+				if (cell.formulaParsed && AscCommonExcel.bIsSupportDynamicArrays && (cell.formulaParsed.getDynamicRef() || cell.formulaParsed.getArrayFormulaRef()) && cell.formulaParsed.aca && cell.formulaParsed.ca) {
+					t.addToVolatileArrays(cell.formulaParsed);
+				}
+				
 			});
 			this.changedCell = null;
 			this.changedRange = null;
@@ -2346,6 +2371,8 @@
 
 		this.timelineCaches = [];
 		this.TimelineStyles = null;
+
+		this.metadata = null;
 	}
 	Workbook.prototype.init=function(tableCustomFunc, tableIds, sheetIds, bNoBuildDep, bSnapshot){
 		if(this.nActive < 0)
@@ -5221,6 +5248,7 @@
 		this.bFillHandleRightClick = false;
 		this.activeFillType = null;
 		this.timelines = [];
+		this.changedArrays = null;
 	}
 
 	Worksheet.prototype.getCompiledStyle = function (row, col, opt_cell, opt_styleComponents) {
@@ -12887,6 +12915,119 @@
 			}
 		}
 	};
+	Worksheet.prototype.addChangedArray = function (rangeName, arrayInfo) {
+		if (!rangeName || !arrayInfo) {
+			return
+		}
+
+		if (!this.changedArrays) {
+			this.changedArrays = {};
+		}
+
+		if (!this.changedArrays[rangeName]) {
+			this.changedArrays[rangeName] = arrayInfo
+		}
+	};
+	Worksheet.prototype.getChangedArrayList = function () {
+		if (!this.changedArrays) {
+			return
+		}
+
+		return this.changedArrays
+	};
+	Worksheet.prototype.removeFromChangedArrayList = function (name) {
+		if (!this.changedArrays) {
+			return
+		}
+
+		return this.changedArrays[name]
+	};
+	Worksheet.prototype.clearChangedArrayList = function () {
+		this.changedArrays = null;
+	};
+	Worksheet.prototype.recalculateVolatileArrays = function () {
+		if (AscCommonExcel.bIsSupportDynamicArrays) {
+			const ws = this;
+
+			// recalculate all volatile arrays on page
+			if (ws && ws.workbook && ws.workbook.dependencyFormulas) {
+				let depGraph = ws.workbook.dependencyFormulas;
+				// get volatileArraysList
+				let volatileArrayList = depGraph.getVolatileArrays();
+				if (volatileArrayList) {
+					for (let listenerId in volatileArrayList) {
+						let formula = volatileArrayList[listenerId];
+						let formulaResult = formula.calculate();
+						let firstCellRef = formula.parent && new Asc.Range(formula.parent.nCol, formula.parent.nRow, formula.parent.nCol, formula.parent.nRow);
+						if (!(formula.aca && formula.ca)) {
+							// array can expand, setValue for each cell except first
+							let dimensions = formulaResult.getDimensions();
+							let newRef = new Asc.Range(firstCellRef.c1, firstCellRef.r1, firstCellRef.c1 + dimensions.col - 1, firstCellRef.r1 + dimensions.row - 1);
+							formula.setDynamicRef(newRef);
+							if (newRef) {
+								for (let row = newRef.r1; row <= newRef.r2; row++) {
+									for (let col = newRef.c1; col <= newRef.c2; col++) {
+										// if (row === newRef.r1 && col === newRef.c1) {
+										// 	continue
+										// }
+										// get cell and setPF to it
+										ws._getCell(row, col, function(cell) {
+											cell && cell.setFormulaInternal(formula);
+										});
+									}
+								}
+							}
+							depGraph.addToChangedRange2(formula.getWs().getId(), formula.getDynamicRef());
+							depGraph.endListeningVolatileArray(listenerId);
+						} else {
+							formula.setDynamicRef(firstCellRef);
+							ws._getCell(firstCellRef.r1, firstCellRef.c1, function(cell) {
+								cell && cell.setFormulaInternal(formula);
+							});
+	
+							depGraph.addToChangedRange2(formula.getWs().getId(), formula.getArrayFormulaRef());
+						}
+					}
+				}
+			}
+		}
+	};
+	Worksheet.prototype.getRefDynamicInfo = function (formula) {
+		if (formula) {
+			let applyByArray = true, ctrlKey = true, dynamicRange = null, cannoChangeFormulaArray = false; 
+				
+			if (formula.ref) {
+				dynamicRange = formula.ref;
+			} else {
+				let tempRef = new Asc.Range(formula.parent.nCol, formula.parent.nRow, formula.parent.nCol, formula.parent.nRow);
+				formula.ref = tempRef;
+
+				let formulaResult = formula.calculate();
+				let arraySize = formulaResult.getDimensions(true);
+				let newR2 = (formula.parent.nRow + arraySize.row) > AscCommon.gc_nMaxRow ? AscCommon.gc_nMaxRow - 1 : (formula.parent.nRow + arraySize.row - 1);
+				let newC2 = (formula.parent.nCol + arraySize.col) > AscCommon.gc_nMaxCol ? AscCommon.gc_nMaxCol - 1 : (formula.parent.nCol + arraySize.col - 1);
+
+				let tempDynamicSelectionRange = this.getRange3(formula.parent.nRow, formula.parent.nCol, newR2, newC2);
+				tempDynamicSelectionRange._foreachNoEmpty(function (cell) {
+					let ref = cell.formulaParsed && cell.formulaParsed.ref ? cell.formulaParsed.ref : null;
+
+					if (ref && !tempDynamicSelectionRange.bbox.containsRange(ref)) {
+						cannoChangeFormulaArray = true;
+						return false;
+					}
+				});
+
+				if (tempDynamicSelectionRange.bbox.isOneCell() && (formulaResult.type !== cElementType.array && formulaResult.type !== cElementType.cellsRange && formulaResult.type !== cElementType.cellsRange3D)) {
+					applyByArray = false;
+					ctrlKey = false;
+				}
+
+				dynamicRange = tempDynamicSelectionRange.bbox;
+			}
+
+			return {applyByArray: applyByArray, ctrlKey: ctrlKey, dynamicRange: dynamicRange, cannoChangeFormulaArray: cannoChangeFormulaArray};
+		}
+	};
 
 //-------------------------------------------------------------------------------------------------
 	var g_nCellOffsetFlag = 0;
@@ -12941,6 +13082,9 @@
 
 		this.isDirty = false;
 		this.isCalc = false;
+
+		this.cm = null;
+		this.vm = null;
 
 		this._hasChanged = true;
 	};
@@ -13226,7 +13370,7 @@
 		this.textIndex = null;
 		this._hasChanged = true;
 	};
-	Cell.prototype.setValue=function(val,callback, isCopyPaste, byRef, ignoreHyperlink) {
+	Cell.prototype.setValue=function(val,callback, isCopyPaste, byRef, ignoreHyperlink, dynamicRange) {
 		var ws = this.ws;
 		var wb = ws.workbook;
 		var DataOld = null;
@@ -13234,7 +13378,7 @@
 			DataOld = this.getValueData();
 		}
 		var isFirstArrayFormulaCell = byRef && this.nCol === byRef.c1 && this.nRow === byRef.r1;
-		var newFP = this.setValueGetParsed(val, callback, isCopyPaste, byRef);
+		var newFP = this.setValueGetParsed(val, callback, isCopyPaste, byRef, dynamicRange);
 		if (undefined === newFP) {
 			return;
 		}
@@ -13248,6 +13392,9 @@
 			this.setFormulaInternal(newFP);
 			if(byRef) {
 				if(isFirstArrayFormulaCell) {
+					if (dynamicRange) {
+						this.setDynamicArrayFlags();
+					}
 					wb.dependencyFormulas.addToBuildDependencyArray(newFP);
 				}
 			} else {
@@ -13263,7 +13410,16 @@
 			}
 			wb.dependencyFormulas.addToChangedCell(this);
 		} else {
-			wb.dependencyFormulas.addToChangedCell(this);
+			// when deleting a cell value we get here
+			if (oldFP && oldFP.dynamicRange) {
+				isFirstArrayFormulaCell = this.nCol === oldFP.dynamicRange.c1 && this.nRow === oldFP.dynamicRange.r1;
+				// we check here and add the range with daf to the dependency sheet
+				if (isFirstArrayFormulaCell) {
+					wb.dependencyFormulas.addToChangedRange2(oldFP.getWs().getId(), oldFP.getDynamicRef());
+				}
+			} else {
+				wb.dependencyFormulas.addToChangedCell(this);
+			}
 			if (this.ws.workbook.handlers) {
 				this.ws.workbook.handlers.trigger("changeDocument", AscCommonExcel.docChangedType.cellValue, this, null, this.ws.getId());
 			}
@@ -13335,7 +13491,7 @@
 		}
 	};
 
-	Cell.prototype.setValueGetParsed=function(val,callback, isCopyPaste, byRef) {
+	Cell.prototype.setValueGetParsed=function(val,callback, isCopyPaste, byRef, dynamicRange) {
 		var ws = this.ws;
 		var wb = ws.workbook;
 		var bIsTextFormat = false;
@@ -13400,8 +13556,14 @@
 						}
 					} else {
 						newFP.setFormulaString(newFP.assemble());
+						//***dynamic-array-formula***
+						if(byRef && dynamicRange) {
+							newFP.dynamicRange = dynamicRange;
+							newFP.ref = byRef;
+							this.ws.formulaArrayLink = newFP;
+						} 
 						//***array-formula***
-						if(byRef) {
+						else if(byRef) {
 							newFP.ref = byRef;
 							this.ws.formulaArrayLink = newFP;
 						}
@@ -13489,8 +13651,9 @@
 	};
 	Cell.prototype.setFormulaInternal = function(formula, dontTouchPrev) {
 		if (!dontTouchPrev && this.formulaParsed) {
-			var shared = this.formulaParsed.getShared();
-			var arrayFormula = this.formulaParsed.getArrayFormulaRef();
+			let shared = this.formulaParsed.getShared();
+			let arrayFormula = this.formulaParsed.getArrayFormulaRef();
+			let dynamicRange = this.formulaParsed.getDynamicRef();
 			if (shared) {
 				if (shared.ref.isOnTheEdge(this.nCol, this.nRow)) {
 					this.ws.workbook.dependencyFormulas.addToChangedShared(this.formulaParsed);
@@ -14027,9 +14190,18 @@
 			var DataNew = null;
 			if (History.Is_On())
 				DataOld = this.getValueData();
-			this.setFormulaInternal(null);
+			if (this.formulaParsed && this.formulaParsed.getDynamicRef()) {
+				this.ws.workbook.dependencyFormulas.addToChangedRange2(this.formulaParsed.getWs().getId(), this.formulaParsed.getDynamicRef());
+				if (Val.value.getTextValue()) {
+					// non empty val, delete PF from cell
+					this.setFormulaInternal(null);
+				}
+			} else {
+				this.setFormulaInternal(null);
+				this.ws.workbook.dependencyFormulas.addToChangedCell(this);
+			}
+
 			this._setValueData(Val.value);
-			this.ws.workbook.dependencyFormulas.addToChangedCell(this);
 			this.ws.workbook.sortDependency();
 			if (History.Is_On()) {
 				DataNew = this.getValueData();
@@ -14705,6 +14877,9 @@
 			case cErrorOrigin["calc"]:
 				return cErrorLocal["calc"];
 				break;
+			case cErrorOrigin["spill"]:
+				return cErrorLocal["spill"];
+				break;
 		}
 		return cErrorLocal["nil"];
 	};
@@ -15068,10 +15243,14 @@
 		if (formulaToWrite) {
 			flags = this.toXLSBFormula(stream, formulaToWrite, isBlankFormula);
 		}
+
+
 		stream.WriteUShort(flags);
+
 		if (formulaToWrite) {
 			flags = this.toXLSBFormulaExt(stream, formulaToWrite);
 		}
+
 		stream.XlsbEndRecord();
 	};
 	Cell.prototype.readAttributes = function(attr, uq) {
@@ -15173,6 +15352,14 @@
 		if (undefined !== formulaToWrite.si) {
 			stream.WriteULong(formulaToWrite.si);
 		}
+	};
+	Cell.prototype.setDynamicArrayFlags = function () {
+		this.cm = 1;
+		// this.vm = 1;
+		// todo prop vm - determines the order in which dynamic arrays are expanded?
+		// presumably the metadata it refers to contains the estimated size of the array
+		// the size of the array is unique and has its own number in the order of initialization on the page
+		// for example array 3x1 initialized before than array 2x1 will have the number 1 in vm prop 
 	};
 //-------------------------------------------------------------------------------------------------
 
@@ -15794,7 +15981,7 @@
 			return new Range(this.worksheet, r1, c1, r2, c2);
 		}
 	};
-	Range.prototype.setValue=function(val, callback, isCopyPaste, byRef, ignoreHyperlink){
+	Range.prototype.setValue=function(val, callback, isCopyPaste, byRef, ignoreHyperlink, dynamicRange){
 		History.Create_NewPoint();
 		History.StartTransaction();
 		//не хотелось бы вводить дополнительный параметр, поэтому если byRef == null
@@ -15819,7 +16006,8 @@
 				var offset = new AscCommon.CellBase(cell.nRow - activeCell.row, cell.nCol - activeCell.col);
 				_val = "=" + _formula.changeOffset(offset, null, true).assembleLocale(AscCommonExcel.cFormulaFunctionToLocale, true, true);
 			}
-			cell.setValue(_val, callback, isCopyPaste, byRef, ignoreHyperlink);
+			// when creating new array formulas, it is necessary to transfer information about the dynamic array because regular ref is used
+			cell.setValue(_val, callback, isCopyPaste, byRef, ignoreHyperlink, dynamicRange);
 		});
 		History.EndTransaction();
 	};
@@ -17761,15 +17949,26 @@
 		});
 		History.EndTransaction();
 	};
-	Range.prototype.cleanText=function(){
+	Range.prototype.cleanText = function () {
 		History.Create_NewPoint();
 		History.StartTransaction();
 		this._setPropertyNoEmpty(null, null,
-								 function(cell, nRow0, nCol0, nRowStart, nColStart){
-									 cell.setValue("");
-									 // if(cell.isEmpty())
-									 // cell.Remove();
-								 });
+			function (cell, nRow0, nCol0, nRowStart, nColStart) {
+				cell.setValue("");
+				// if(cell.isEmpty())
+				// cell.Remove();
+			});
+		History.EndTransaction();
+	};
+	Range.prototype.cleanTextExceptFirst = function () {
+		History.Create_NewPoint();
+		History.StartTransaction();
+		this._setPropertyNoEmpty(null, null,
+			function (cell, nRow0, nCol0, nRowStart, nColStart) {
+				if (!(cell.nRow === nRowStart && cell.nCol === nColStart)) {
+					cell.setValue("");
+				}
+			});
 		History.EndTransaction();
 	};
 	Range.prototype.cleanAll=function(){
