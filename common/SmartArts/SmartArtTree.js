@@ -268,12 +268,8 @@
 	};
 	If.prototype.funcPos = function (nodes, currentNode) {
 		const conditionValue = parseInt(this.getConditionValue(), 10);
-		for (let i = 0; i < nodes.length; i++) {
-			if (nodes[i] === currentNode) {
-				return this.check(conditionValue, i + 1);
-			}
-		}
-		return false;
+		const position = currentNode.getPositionByParent() + 1;
+		return this.check(conditionValue, position);
 	};
 	If.prototype.funcRevPos = function (nodes, currentNode) {
 		const conditionValue = parseInt(this.getConditionValue(), 10);
