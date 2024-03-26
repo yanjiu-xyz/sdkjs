@@ -6037,7 +6037,9 @@ PresNode.prototype.addChild = function (ch, pos) {
 		aspectRatio = this.getAspectRatio();
 		const constrObject = isAdapt ? this.adaptConstr : this.constr;
 		let value;
-		if (constr.refType === AscFormat.Constr_type_none) {
+		if (isUserConstr(constr.type) && constr.refType === AscFormat.Constr_type_none && constrObject[constr.type] !== undefined && constr.refFor === AscFormat.Constr_for_self) {
+			value = constrObject[constr.type];
+		} else if (constr.refType === AscFormat.Constr_type_none) {
 			value = constr.val;
 		} /*else if (constr.refFor === AscFormat.Constr_for_self && constrObject[constr.type] !== undefined && constr.refType === AscFormat.Constr_type_none) {
 			value = constrObject[constr.type];
@@ -6128,6 +6130,10 @@ PresNode.prototype.addChild = function (ch, pos) {
 				return this.getPositionConstrWithOffset(type, AscFormat.Constr_type_ctrXOff, isAdapt);
 			case AscFormat.Constr_type_ctrY:
 				return this.getPositionConstrWithOffset(type, AscFormat.Constr_type_ctrYOff, isAdapt);
+			case AscFormat.Constr_type_w:
+				return this.getPositionConstrWithOffset(type, AscFormat.Constr_type_wOff, isAdapt);
+			case AscFormat.Constr_type_h:
+				return this.getPositionConstrWithOffset(type, AscFormat.Constr_type_hOff, isAdapt);
 			default:
 				const constrObj = this.getConstraints(isAdapt);
 				return constrObj[type];
@@ -6168,6 +6174,14 @@ PresNode.prototype.addChild = function (ch, pos) {
 					const left = this.getConstrForCalculating(AscFormat.Constr_type_l, isAdapt);
 					if (right !== undefined && left !== undefined) {
 						result = right - left;
+					} else if (this.algorithm instanceof TextAlgorithm && result === undefined) {
+						const wOff = constrObj[AscFormat.Constr_type_wOff];
+						result = this.getParentWidth(isAdapt);
+						if (left !== undefined) {
+							result -= left;
+						} else if (wOff !== undefined) {
+							result += wOff;
+						}
 					}
 					break;
 				}
@@ -6273,7 +6287,7 @@ PresNode.prototype.addChild = function (ch, pos) {
 			const node = this.childs[i];
 			const childShape = node.getShape(isCalculateCoefficients);
 			// todo: check this
-			if (childShape.width === 0 && childShape.height === 0 || (node.algorithm instanceof ConnectorAlgorithm) || ((node.algorithm instanceof TextAlgorithm) && !node.isMainElement()) || node.isTxXfrm()) {
+			if (childShape.width <= 0 && childShape.height <= 0 || (node.algorithm instanceof ConnectorAlgorithm) || ((node.algorithm instanceof TextAlgorithm) && !node.isMainElement()) || node.isTxXfrm()) {
 				continue;
 			}
 			if (shapeBounds) {
@@ -6362,8 +6376,8 @@ PresNode.prototype.addChild = function (ch, pos) {
 
 		const widthCoef = this.getWidthScale();
 		const heightCoef = this.getHeightScale();
-		let x = 0;
-		let y = 0;
+		let x = constrNode.getConstr(AscFormat.Constr_type_l, !isCalculateCoefficients);
+		let y = constrNode.getConstr(AscFormat.Constr_type_t, !isCalculateCoefficients);
 		let width = constrNode.getConstr(AscFormat.Constr_type_w, !isCalculateCoefficients, !isChildInSpaceAlgorithm);
 		let height = constrNode.getConstr(AscFormat.Constr_type_h, !isCalculateCoefficients, !isChildInSpaceAlgorithm);
 		if (width === undefined && height === undefined) {
@@ -6395,8 +6409,6 @@ PresNode.prototype.addChild = function (ch, pos) {
 			scaleHeight = temp;
 		}
 
-		x += constrNode.getConstr(AscFormat.Constr_type_l, !isCalculateCoefficients);
-		y += constrNode.getConstr(AscFormat.Constr_type_t, !isCalculateCoefficients);
 
 		shape.x = x;
 		shape.y = y;
