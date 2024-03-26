@@ -1904,34 +1904,6 @@
 		return isCalculateScaleCoefficient ? this.coefficientShapeContainer : this.shapeContainer;
 	};
 
-	PositionAlgorithm.prototype.applyConstraintOffset = function (isCalculateScaleCoefficient) {
-		const parentNode = this.parentNode;
-		const constrObject = isCalculateScaleCoefficient ? parentNode.constr : parentNode.adaptConstr;
-		const width = constrObject[AscFormat.Constr_type_w];
-		const height = constrObject[AscFormat.Constr_type_h];
-		const ctrX = constrObject[AscFormat.Constr_type_ctrX];
-		const ctrY = constrObject[AscFormat.Constr_type_ctrY];
-		let offX = parentNode.getConstr(AscFormat.Constr_type_l, !isCalculateScaleCoefficient);
-		let offY = parentNode.getConstr(AscFormat.Constr_type_t, !isCalculateScaleCoefficient);
-		if (ctrX !== undefined) {
-			offX += ctrX - width / 2;
-		}
-		if (ctrY !== undefined) {
-			offY += ctrY - height / 2;
-		}
-
-		const shapeContainer = this.getShapeContainer(isCalculateScaleCoefficient);
-		shapeContainer.forEachShape(function (shape) {
-			const node = shape.node;
-			node.forEachDesOrSelf(function (node) {
-				const shape = node.getShape(isCalculateScaleCoefficient);
-				if (shape) {
-					shape.x += offX;
-					shape.y += offY;
-				}
-			});
-		});
-	};
 	PositionAlgorithm.prototype.applyParamOffsets = function (isCalculateScaleCoefficient) {
 		switch (this.params[AscFormat.Param_type_off]) {
 			case AscFormat.ParameterVal_offset_ctr:
@@ -2484,9 +2456,6 @@ function HierarchyAlgorithm() {
 	HierarchyAlgorithm.prototype.setLevelBounds = function (bounds) {
 		this.levelPositions.push(Object.assign({}, bounds));
 	};
-	HierarchyAlgorithm.prototype.getScaleCoefficient = function () {
-		return 1;
-	};
 	HierarchyAlgorithm.prototype.getHorizontalOffset = function (node, isCalculateScaleCoefficient, fromLeft) {
 		const algorithm = node.algorithm;
 		let maxSpace = 0;
@@ -2613,7 +2582,6 @@ function HierarchyAlgorithm() {
 		this.putShapesToShapeContainer(isCalculateScaleCoefficients);
 		this._calculateShapePositions(isCalculateScaleCoefficients);
 		this.applyParamOffsets(isCalculateScaleCoefficients);
-		this.applyConstraintOffset(isCalculateScaleCoefficients);
 		this.collectHierarchyPositions();
 		if (isCalculateScaleCoefficients) {
 			this.setScaleCoefficient();
@@ -2752,7 +2720,6 @@ function HierarchyAlgorithm() {
 	};
 	HierarchyChildAlgorithm.prototype.calculateHorizontalHierarchyVerticalShapePositions = function (isCalculateScaleCoefficient, fromTop) {
 		const childs = fromTop ? this.getMainChilds() : this.getMainChilds().slice().reverse();
-		const parentNode = this.parentNode;
 		const commonBounds = this.getCommonChildBounds(isCalculateScaleCoefficient);
 		const firstNode = childs[0];
 		const firstShape = firstNode.getShape(isCalculateScaleCoefficient);
@@ -4031,7 +3998,6 @@ function HierarchyAlgorithm() {
 		} else {
 			this._calculateShapePositions();
 			this.applyParamOffsets();
-			this.applyConstraintOffset();
 			this.applyPostAlgorithmSettings();
 			this.setConnections();
 			this.createShadowShape(isCalculateScaleCoefficients);
