@@ -403,12 +403,13 @@
 		this.setupFontSize  = -1;
 		this.setupFontName  = "";
 		this.setupFontStyle = -1;
-		this.setupAngle     = -1;
+		this.setupRotated   = false;
 		this.setupPpiX      = -1;
 		this.setupPpiY      = -1;
 
 		this.setCanvas(settings.canvas);
 
+		this.textRotated = false;
 		this.ppiX = 96;
 		this.ppiY = 96;
 		this.scaleFactor = 1;
@@ -744,6 +745,7 @@
 		var _g = val.getG();
 		var _b = val.getB();
 		var _a = val.getA();
+		
 		this.fillColor = new AscCommon.CColor(_r, _g, _b, _a);
 		if (this.ctx.fillStyle) {
 			this.ctx.fillStyle = "rgba(" + _r + "," + _g + "," + _b + "," + _a + ")";
@@ -880,7 +882,6 @@
 	 */
 	DrawingContext.prototype.setFont = function (font, angle) {
 
-		var r;
 		this.font.assign(font);
 
 		var italic = this.font.getItalic();
@@ -896,25 +897,35 @@
 			fontStyle = FontStyle.FontStyleRegular;
 		}
 		
-		if (this.setupFontName === font.getName()
-			&& this.setupFontSize === font.getSize()
+		this.setTextRotated(!!angle);
+		this._setFont(this.font.getName(), this.font.getSize(), fontStyle);
+		return this;
+	};
+	
+	
+	DrawingContext.prototype._setFont = function(fontName, fontSize, fontStyle) {
+		
+		let isRotated = this.textRotated;
+		
+		if (this.setupFontName === fontName
+			&& this.setupFontSize === fontSize
 			&& this.setupFontStyle === fontStyle
 			&& this.setupPpiX === this.ppiX
 			&& this.setupPpiY === this.ppiY) {
 			return;
 		}
-
-		this.setupFontSize  = font.getSize();
-		this.setupFontName  = font.getName();
+		
+		this.setupFontSize  = fontSize;
+		this.setupFontName  = fontName;
 		this.setupFontStyle = fontStyle;
-		this.setupAngle     = angle;
+		this.setupRotated   = isRotated;
 		this.setupPpiX      = this.ppiX;
 		this.setupPpiY      = this.ppiY;
-
+		
 		if (window["IS_NATIVE_EDITOR"]) {
-			var fontInfo = AscFonts.g_fontApplication.GetFontInfo(this.font.getName(), fontStyle, this.LastFontOriginInfo);
+			var fontInfo = AscFonts.g_fontApplication.GetFontInfo(fontName, fontStyle, this.LastFontOriginInfo);
 			fontInfo = AscCommon.GetLoadInfoForMeasurer(fontInfo, fontStyle);
-
+			
 			var flag = 0;
 			if (fontInfo.NeedBold) {
 				flag |= 0x01;
@@ -928,52 +939,43 @@
 			if (fontInfo.SrcItalic) {
 				flag |= 0x08;
 			}
-
-			// выставляем шрифт и отрисовщику...
-			var drawFontSize = this.font.getSize() * this.scaleFactor * 96.0 / 25.4;
-			window["native"]["PD_LoadFont"](fontInfo.Path, fontInfo.FaceIndex, drawFontSize, flag);
-
-			// на отрисовке ячейки трансформ выставляется/сбрасывается. так что тут - только если есть angle
-			if (angle)
-				window["native"]["PD_transform"](this._mt.sx, this._mt.shy, this._mt.shx, this._mt.sy, this._mt.tx, this._mt.ty);
-
-			// ...и измерятелю
-			AscFonts.g_fontApplication.LoadFont(this.font.getName(), AscCommon.g_font_loader, this.fmgrGraphics[3],
-				this.font.getSize(), fontStyle, this.ppiX, this.ppiY);
 			
-			return this;
+			// выставляем шрифт и отрисовщику...
+			var drawFontSize = fontSize * this.scaleFactor * 96.0 / 25.4;
+			window["native"]["PD_LoadFont"](fontInfo.Path, fontInfo.FaceIndex, drawFontSize, flag);
+			
+			// на отрисовке ячейки трансформ выставляется/сбрасывается. так что тут - только если есть angle
+			if (isRotated)
+				window["native"]["PD_transform"](this._mt.sx, this._mt.shy, this._mt.shx, this._mt.sy, this._mt.tx, this._mt.ty);
+			
+			// ...и измерятелю
+			AscFonts.g_fontApplication.LoadFont(fontName, AscCommon.g_font_loader, this.fmgrGraphics[3], fontSize, fontStyle, this.ppiX, this.ppiY);
 		} else {
-			if (angle) {
-				r = AscFonts.g_fontApplication.LoadFont(this.font.getName(), AscCommon.g_font_loader, this.fmgrGraphics[1],
-					this.font.getSize(), fontStyle, this.ppiX, this.ppiY);
+			let r;
+			if (isRotated) {
+				r = AscFonts.g_fontApplication.LoadFont(fontName, AscCommon.g_font_loader, this.fmgrGraphics[1], fontSize, fontStyle, this.ppiX, this.ppiY);
 			} else {
-				r = AscFonts.g_fontApplication.LoadFont(this.font.getName(), AscCommon.g_font_loader, this.fmgrGraphics[0],
-					this.font.getSize(), fontStyle, this.ppiX, this.ppiY);
-				AscFonts.g_fontApplication.LoadFont(this.font.getName(), AscCommon.g_font_loader, this.fmgrGraphics[3],
-					this.font.getSize(), fontStyle, this.ppiX, this.ppiY);
+				r = AscFonts.g_fontApplication.LoadFont(fontName, AscCommon.g_font_loader, this.fmgrGraphics[0], fontSize, fontStyle, this.ppiX, this.ppiY);
+				AscFonts.g_fontApplication.LoadFont(fontName, AscCommon.g_font_loader, this.fmgrGraphics[3], fontSize, fontStyle, this.ppiX, this.ppiY);
+			}
+			
+			if (isRotated) {
+				this.fmgrGraphics[1].SetTextMatrix(this._mt.sx, this._mt.shy, this._mt.shx, this._mt.sy, this._mt.tx, this._mt.ty);
+			}
+			
+			if (r === false) {
+				throw "Can not use " + fontName + " font. (Check whether font file is loaded)";
 			}
 		}
-
-		if (angle) {
-			this.fmgrGraphics[1].SetTextMatrix(this._mt.sx, this._mt.shy, this._mt.shx, this._mt.sy, this._mt.tx, this._mt.ty);
-		}
-
-		if (r === false) {
-			throw "Can not use " + this.font.getName() + " font. (Check whether font file is loaded)";
-		}
-
-		return this;
+		
 	};
 	
 	DrawingContext.prototype.SetFontInternal = function(name, size, style) {
-		let font = new AscCommonExcel.Font();
-		font.setName(name);
-		font.setSize(size);
-		if (style & 1)
-			font.setBold(true);
-		if (style & 2)
-			font.setItalic(true);
-		this.setFont(font);
+		this._setFont(name, size, style);
+	};
+	
+	DrawingContext.prototype.setTextRotated = function(isRotated) {
+		this.textRotated = isRotated;
 	};
 
 	/**
@@ -1061,9 +1063,7 @@
 	};
 	
 	DrawingContext.prototype.tg = function(gid, x, y, codePoints) {
-		// TODO: angle
-		let angle = 0;
-		let fontManager = angle ? this.fmgrGraphics[1] : this.fmgrGraphics[0];
+		let fontManager = this.textRotated ? this.fmgrGraphics[1] : this.fmgrGraphics[0];
 		
 		var _x = this._mift.transformPointX(x, y);
 		var _y = this._mift.transformPointY(x, y);
@@ -1075,20 +1075,10 @@
 		
 		let glyph = fontManager.m_oGlyphString.m_pGlyphsBuffer[0];
 		if (!glyph || !glyph.oBitmap)
-			return;
+			return this;
 		
 		this.fillGlyph(glyph, fontManager);
-	};
-
-	DrawingContext.prototype.getBBox = function(gid, units) {
-		let r = getCvtRatio(0/*px*/, units >= 0 && units <= 3 ? units : this.units, this.ppiX);
-		let fm = this.fmgrGraphics[3];
-		
-		fm.SetStringGID(true);
-		let tmp = fm.MeasureChar(gid);
-		fm.SetStringGID(false);
-		
-		return (asc_round(tmp.fAdvanceX) - tmp.fAdvanceX + tmp.oBBox.fMaxX - tmp.oBBox.fMinX + 1) * r;
+		return this;
 	};
 
 	// Path methods
