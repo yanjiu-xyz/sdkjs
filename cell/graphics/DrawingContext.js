@@ -400,10 +400,12 @@
 		this.canvas = null;
 		this.ctx = null;
 		
-		this.fontSize  = -1;
-		this.fontName  = "";
-		this.fontStyle = -1;
-		this.angle     = -1;
+		this.setupFontSize  = -1;
+		this.setupFontName  = "";
+		this.setupFontStyle = -1;
+		this.setupAngle     = -1;
+		this.setupPpiX      = -1;
+		this.setupPpiY      = -1;
 
 		this.setCanvas(settings.canvas);
 
@@ -894,13 +896,20 @@
 			fontStyle = FontStyle.FontStyleRegular;
 		}
 		
-		if (this.fontSize === font.getSize() && fontStyle === this.fontStyle && font.getName() === this.fontName)
+		if (this.setupFontName === font.getName()
+			&& this.setupFontSize === font.getSize()
+			&& this.setupFontStyle === fontStyle
+			&& this.setupPpiX === this.ppiX
+			&& this.setupPpiY === this.ppiY) {
 			return;
+		}
 
-		this.fontSize  = font.getSize();
-		this.fontName  = font.getName();
-		this.fontStyle = fontStyle;
-		this.angle     = angle;
+		this.setupFontSize  = font.getSize();
+		this.setupFontName  = font.getName();
+		this.setupFontStyle = fontStyle;
+		this.setupAngle     = angle;
+		this.setupPpiX      = this.ppiX;
+		this.setupPpiY      = this.ppiY;
 
 		if (window["IS_NATIVE_EDITOR"]) {
 			var fontInfo = AscFonts.g_fontApplication.GetFontInfo(this.font.getName(), fontStyle, this.LastFontOriginInfo);
