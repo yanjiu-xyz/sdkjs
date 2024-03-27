@@ -911,7 +911,8 @@
 			&& this.setupFontSize === fontSize
 			&& this.setupFontStyle === fontStyle
 			&& this.setupPpiX === this.ppiX
-			&& this.setupPpiY === this.ppiY) {
+			&& this.setupPpiY === this.ppiY
+			&& this.setupRotated === isRotated) {
 			return;
 		}
 		
