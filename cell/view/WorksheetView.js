@@ -18907,6 +18907,11 @@
 					return;
 				}
 				bbox = c.bbox;
+
+				// set selection if dynamic arrays are used
+				if (dynamicSelectionRange) {
+					ws.copySelection && ws.copySelection.assign2(bbox);
+				}
 			}
 		};
 
