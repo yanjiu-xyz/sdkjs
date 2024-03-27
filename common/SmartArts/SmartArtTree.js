@@ -1651,7 +1651,7 @@
 		const shadowShapes = this.parentNode.getShadowShapesByZOrder();
 		for (let i = 0; i < shadowShapes.length; i++) {
 			const shadowShape = shadowShapes[i];
-			if (!(shadowShape.shape.hideGeom && (shadowShape.height === 0 || shadowShape.width === 0)) && !(shadowShape.node.algorithm instanceof SpaceAlgorithm && shadowShape.shape.hideGeom)) {
+			if (!(shadowShape.shape.hideGeom && (shadowShape.height <= 0 || shadowShape.width <= 0)) && !(shadowShape.node.algorithm instanceof SpaceAlgorithm && shadowShape.shape.hideGeom) && !shadowShape.node.isTxXfrm()) {
 				const editorShape = shadowShape.getEditorShape();
 				if (editorShape) {
 					shapes.push(editorShape);
