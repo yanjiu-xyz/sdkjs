@@ -2201,7 +2201,6 @@
 		this.shapes.push(shape);
 	};
 	ShapeContainer.prototype.getBounds = function (isCalculateScaleCoefficient) {
-		if (this.bounds === null) {
 			if (this.shapes.length) {
 				const firstShape = this.shapes[0];
 				this.bounds = firstShape.getBounds();
@@ -2211,7 +2210,6 @@
 			} else {
 				this.bounds = {l: 0, r: 0, t: 0, b: 0};
 			}
-		}
 		return this.bounds;
 	};
 	ShapeContainer.prototype.getOffsets = function (parentHeight, parentWidth, isCalculateScaleCoefficient) {
@@ -2270,7 +2268,6 @@
 		};
 	};
 	CycleContainer.prototype.getBounds = function (isCalculateScaleCoefficient) {
-		if (this.bounds === null) {
 			if (this.shapes.length) {
 				const firstShape = this.shapes[0];
 				const bounds = {
@@ -2302,7 +2299,6 @@
 			} else {
 				this.bounds = {l: 0, r: 0, b: 0, t: 0};
 			}
-		}
 		return this.bounds;
 	};
 
@@ -2318,7 +2314,6 @@
 		this.rows.push(elem);
 	}
 	ShapeRows.prototype.getBounds = function () {
-		if (this.bounds === null) {
 			if (this.rows.length) {
 				const firstBounds = Object.assign({}, this.rows[0].getBounds());
 				for (let i = 0; i < this.rows.length; i++) {
@@ -2330,7 +2325,6 @@
 			} else {
 				this.bounds = {l: 0, r: 0, t: 0, b: 0};
 			}
-		}
 		return this.bounds;
 	};
 
@@ -2373,7 +2367,6 @@
 		this.columns.push(elem);
 	}
 	ShapeColumns.prototype.getBounds = function () {
-		if (this.bounds === null) {
 			if (this.columns.length) {
 				const firstBounds = Object.assign({}, this.columns[0].getBounds());
 				for (let i = 0; i < this.columns.length; i++) {
@@ -2385,7 +2378,6 @@
 			} else {
 				this.bounds = {l: 0, r: 0, t: 0, b: 0};
 			}
-		}
 		return this.bounds;
 	};
 
