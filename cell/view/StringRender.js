@@ -1154,6 +1154,8 @@
 			var i, j, p, p_, strBeg;
 			var n = 0, l = this.lines[0], x1 = l ? initX(0) : 0, y1 = y, dx = l ? computeWordDeltaX() : 0;
 			
+			ctx.setTextRotated(!!this.angle);
+			
 			function initX(startPos) {
 				var x_ = x;
 				if (align === AscCommon.align_Right) {
