@@ -6182,6 +6182,14 @@ PresNode.prototype.addChild = function (ch, pos) {
 					const top = this.getConstr(AscFormat.Constr_type_t, isAdapt, true, depth + 1);
 					if (bottom !== undefined && top !== undefined) {
 						result = bottom - top;
+					} else if (this.algorithm instanceof TextAlgorithm && result === undefined) {
+						const hOff = constrObj[AscFormat.Constr_type_hOff];
+						result = this.getParentHeight(isAdapt);
+						if (top !== undefined) {
+							result -= top;
+						} else if (hOff !== undefined) {
+							result += hOff;
+						}
 					}
 					break;
 				}
@@ -6206,6 +6214,14 @@ PresNode.prototype.addChild = function (ch, pos) {
 					if (AscFormat.isRealNumber(height)) {
 						const top = this.getConstr(AscFormat.Constr_type_t, isAdapt, false, depth + 1);
 						result = top + height / 2;
+					}
+					break;
+				}
+				case AscFormat.Constr_type_ctrX: {
+					const width = this.getConstr(AscFormat.Constr_type_w, isAdapt, true, depth + 1);
+					if (AscFormat.isRealNumber(width)) {
+						const left = this.getConstr(AscFormat.Constr_type_l, isAdapt, false, depth + 1);
+						result = left + width / 2;
 					}
 					break;
 				}
