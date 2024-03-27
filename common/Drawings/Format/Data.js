@@ -7665,6 +7665,7 @@ Because of this, the display is sometimes not correct.
 			  case "sibTrans2D1":
 			  case "trBgShp":
 			  case "bgShp":
+			  case "dkBgShp":
 					return true;
 			  default:
 				  return false;
