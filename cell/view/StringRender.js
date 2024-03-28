@@ -245,9 +245,6 @@
 			this.lines = [];
 			this.angle = 0;
 
-			this.fontNeedUpdate = false;
-
-
 			this.codesNL = {0xD: 1, 0xA: 1};
 
 			this.codesSpace = {
@@ -388,7 +385,6 @@
 			}
 
 			this.angle = 0;
-			this.fontNeedUpdate = true;
 		};
 
 		/**
@@ -406,7 +402,6 @@
 			// TODO: добавить padding по сторонам
 
 			this.angle = 0;  //  angle;
-			this.fontNeedUpdate = true;
 
 			var dx = 0, dy = 0, offsetX = 0,    // смещение BB
 
@@ -1050,13 +1045,16 @@
 					fmt.fs = p.fsz * 2 / 3;
 					p.font = fmt;
 				}
-
+				
 				// change font on canvas
-				if (this._setFont(ctx, fmt) || fmt.getUnderline() !== font.getUnderline() ||
-					fmt.getStrikeout() !== font.getStrikeout() || fmt.getColor() !== p_.c) {
+				if (!fmt.isEqual(ctx.font)
+					|| fmt.getUnderline() !== font.getUnderline()
+					|| fmt.getStrikeout() !== font.getStrikeout()
+					|| fmt.getColor() !== p_.c) {
 					p.font = fmt;
 				}
-
+				this._setFont(ctx, fmt);
+				
 				// add marker in chars flow
 				if (i === 0) {
 					p.font = fmt;
@@ -1275,7 +1273,7 @@
 
 					if (p.font) {
 						// change canvas font style
-						//this._setFont(ctx, p.font);
+						this._setFont(ctx, p.font);
 						ctx.setFillStyle(p.c || textColor);
 						p_ = p;
 					}
@@ -1324,12 +1322,7 @@
 		};
 
 		StringRender.prototype._setFont = function (ctx, font) {
-			if (!font.isEqual(ctx.font) || this.fontNeedUpdate) {
-				ctx.setFont(font, this.angle);
-				this.fontNeedUpdate = false;
-				return true;
-			}
-			return false;
+			ctx.setFont(font, this.angle);
 		};
 
 

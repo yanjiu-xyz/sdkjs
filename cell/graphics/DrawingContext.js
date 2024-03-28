@@ -383,7 +383,16 @@
 	NativeContext.prototype.clearRect = function (x, y, w, h) {};
 	NativeContext.prototype.getImageData = function (sx,sy,sw,sh) {};
 	NativeContext.prototype.putImageData = function (image_data,dx,dy,dirtyX,dirtyY,dirtyWidth,dirtyHeight) {};
-
+	
+	// В текущей реализации используется несколько разных DrawingContext, но ссылающихся на одни и те же
+	// FontManager, чтобы разрулить правильное выставление шрифта используем здесь локальные переменные
+	let setupFontSize  = -1;
+	let setupFontName  = "";
+	let setupFontStyle = -1;
+	let setupRotated   = false;
+	let setupPpiX      = -1;
+	let setupPpiY      = -1;
+	
 	/**
 	 * Emulates scalable canvas context
 	 * -----------------------------------------------------------------------------
@@ -399,13 +408,6 @@
 	function DrawingContext(settings) {
 		this.canvas = null;
 		this.ctx = null;
-		
-		this.setupFontSize  = -1;
-		this.setupFontName  = "";
-		this.setupFontStyle = -1;
-		this.setupRotated   = false;
-		this.setupPpiX      = -1;
-		this.setupPpiY      = -1;
 
 		this.setCanvas(settings.canvas);
 
@@ -904,24 +906,28 @@
 	
 	
 	DrawingContext.prototype._setFont = function(fontName, fontSize, fontStyle) {
-		
 		let isRotated = this.textRotated;
 		
-		if (this.setupFontName === fontName
-			&& this.setupFontSize === fontSize
-			&& this.setupFontStyle === fontStyle
-			&& this.setupPpiX === this.ppiX
-			&& this.setupPpiY === this.ppiY
-			&& this.setupRotated === isRotated) {
+		if (setupFontName === fontName
+			&& setupFontSize === fontSize
+			&& setupFontStyle === fontStyle
+			&& setupPpiX === this.ppiX
+			&& setupPpiY === this.ppiY
+			&& setupRotated === isRotated) {
 			return;
 		}
 		
-		this.setupFontSize  = fontSize;
-		this.setupFontName  = fontName;
-		this.setupFontStyle = fontStyle;
-		this.setupRotated   = isRotated;
-		this.setupPpiX      = this.ppiX;
-		this.setupPpiY      = this.ppiY;
+		setupFontSize  = fontSize;
+		setupFontName  = fontName;
+		setupFontStyle = fontStyle;
+		setupRotated   = isRotated;
+		setupPpiX      = this.ppiX;
+		setupPpiY      = this.ppiY;
+		
+		this.font.setName(fontName);
+		this.font.setSize(fontSize);
+		this.font.setBold(fontStyle & FontStyle.FontStyleBold);
+		this.font.setItalic(fontStyle & FontStyle.FontStyleItalic);
 		
 		if (window["IS_NATIVE_EDITOR"]) {
 			var fontInfo = AscFonts.g_fontApplication.GetFontInfo(fontName, fontStyle, this.LastFontOriginInfo);
