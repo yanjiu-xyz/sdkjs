@@ -6998,7 +6998,7 @@
 			}
 		}
 
-        if (canFill) {/*Отрисовка светлой полосы при выборе ячеек для формулы*/
+        if (canFill && !notStroke) {/*Отрисовка светлой полосы при выборе ячеек для формулы*/
             ctx.setLineWidth(1);
             ctx.setStrokeStyle(colorN);
             ctx.beginPath();
@@ -7237,6 +7237,19 @@
         }
 
         this.drawTraceDependents();
+
+        let historyChangedRanges = this.workbook.historyChangedRanges && this.workbook.historyChangedRanges[this.model.Id];
+        if (historyChangedRanges) {
+            for (let i in historyChangedRanges) {
+                let range = historyChangedRanges[i].range;
+                let color = historyChangedRanges[i].color;
+                if (range && color) {
+                    this._drawElements(this._drawSelectionElement, range,
+                        AscCommonExcel.selectionLineType.Selection | AscCommonExcel.selectionLineType.NotStroke,
+                        new CColor(color.r, color.g, color.b));
+                }
+            }
+        }
 
         // restore canvas' original clipping range
         ctx.restore();
@@ -7694,6 +7707,24 @@
                 }
             });
         }
+
+		let historyChangedRanges = this.workbook.historyChangedRanges && this.workbook.historyChangedRanges[this.model.Id];
+		if (historyChangedRanges) {
+			historyChangedRanges.forEach(function (item) {
+				var arnIntersection = item && item.range.intersectionSimple(range);
+				if (arnIntersection) {
+					_x1 = t._getColLeft(arnIntersection.c1) - offsetX - 2;
+					_x2 = t._getColLeft(arnIntersection.c2 + 1) - offsetX + 1 + /* Это ширина "квадрата" для автофильтра от границы ячейки */2;
+					_y1 = t._getRowTop(arnIntersection.r1) - offsetY - 2;
+					_y2 = t._getRowTop(arnIntersection.r2 + 1) - offsetY + 1 + /* Это высота "квадрата" для автофильтра от границы ячейки */2;
+
+					x1 = Math.min(x1, _x1);
+					x2 = Math.max(x2, _x2);
+					y1 = Math.min(y1, _y1);
+					y2 = Math.max(y2, _y2);
+				}
+			});
+		}
 		
         //todo для ретины все сдвиги необходимо сделать общими
 		//clean foreign cursors
