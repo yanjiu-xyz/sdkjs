@@ -172,7 +172,6 @@ $(function () {
 				}
 
 				oChart.Chart.recalculate();
-				console.log(oChart.Chart);
 				return oChart.Chart.pathMemory.ArrPathCommand.toString();
 			};
 
