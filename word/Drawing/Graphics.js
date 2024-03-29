@@ -573,7 +573,7 @@
 	// images
 	CGraphics.prototype.checkLoadingImage = function(img)
 	{
-		return (_img.Status === AscFonts.ImageLoadStatus.Loading);
+		return (img.Status === AscFonts.ImageLoadStatus.Loading);
 	};
 
 	CGraphics.prototype.drawImage2 = function(img,x,y,w,h,alpha,srcRect)
