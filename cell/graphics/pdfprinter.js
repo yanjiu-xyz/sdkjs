@@ -297,6 +297,10 @@ CPdfPrinter.prototype =
         this.SetFont(font);
         return this;
     },
+	setTextRotated : function(isRotated)
+	{
+		// TODO: implement
+	},
 
     measureChar : function(text, units)
     {
