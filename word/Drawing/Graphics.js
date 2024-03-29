@@ -355,10 +355,10 @@
 	// TRANSFORMS
 	CGraphics.prototype.SetBaseTransform = function(m)
 	{
-		if (!this.m_oBaseTransform)
-			this.m_oBaseTransform = new AscCommon.CMatrix();
+		this.ResetBaseTransform();
+		this.m_oBaseTransform = new AscCommon.CMatrix();
 		this.m_oBaseTransform.CopyFrom(m);
-		this.m_oTransform.Multiply(this.m_oBaseTransform, AscCommon.MATRIX_ORDER_PREPEND);
+		this.m_oTransform.Multiply(this.m_oBaseTransform, AscCommon.MATRIX_ORDER_APPEND);
 	};
 	CGraphics.prototype.ResetBaseTransform = function()
 	{
@@ -367,7 +367,7 @@
 			let m = new AscCommon.CMatrix();
 			m.CopyFrom(this.m_oBaseTransform);
 			m.Invert();
-			this.m_oTransform.Multiply(m, AscCommon.MATRIX_ORDER_PREPEND);
+			this.m_oTransform.Multiply(m, AscCommon.MATRIX_ORDER_APPEND);
 		}
 
 		this.m_oBaseTransform = null;
@@ -377,7 +377,7 @@
 	{
 		this.m_oTransform.Reset();
 		if (this.m_oBaseTransform)
-			this.m_oTransform.Multiply(this.m_oBaseTransform, AscCommon.MATRIX_ORDER_PREPEND);
+			this.m_oTransform.Multiply(this.m_oBaseTransform, AscCommon.MATRIX_ORDER_APPEND);
 
 		this.CalculateFullTransform(false);
 
@@ -389,7 +389,7 @@
 	{
 		this.m_oTransform.SetValues(sx,shy,shx,sy,tx,ty);
 		if (this.m_oBaseTransform)
-			this.m_oTransform.Multiply(this.m_oBaseTransform, AscCommon.MATRIX_ORDER_PREPEND);
+			this.m_oTransform.Multiply(this.m_oBaseTransform, AscCommon.MATRIX_ORDER_APPEND);
 
 		this.CalculateFullTransform();
 
@@ -399,18 +399,16 @@
 			this.m_oContext.setTransform(m.sx,m.shy,m.shx,m.sy,m.tx,m.ty);
 		}
 
+		// TODO: remove this code
 		if (null != this.m_oFontManager)
-		{
-			var _t = this.m_oTransform;
-			this.m_oFontManager.SetTextMatrix(_t.sx,_t.shy,_t.shx,_t.sy,_t.tx,_t.ty);
-		}
+			this.m_oFontManager.SetTextMatrix(sx,shy,shx,sy,tx,ty);
 	};
 
 	CGraphics.prototype.transform3 = function(m, isNeedInvert)
 	{
 		this.m_oTransform.CopyFrom(m);
 		if (this.m_oBaseTransform)
-			this.m_oTransform.Multiply(this.m_oBaseTransform, AscCommon.MATRIX_ORDER_PREPEND);
+			this.m_oTransform.Multiply(this.m_oBaseTransform, AscCommon.MATRIX_ORDER_APPEND);
 
 		this.CalculateFullTransform(isNeedInvert);
 

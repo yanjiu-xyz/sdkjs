@@ -396,6 +396,9 @@
 			if (null == this.Parent || -1 == _ind)
 				return;
 
+			if (this.Parent.grStateIsUseBaseTransform())
+				this.Parent.grStateSaveBaseTransform();
+
 			var _state = this.States[_ind];
 			if (_state.Type === gr_state_state)
 			{
@@ -417,6 +420,9 @@
 				this.Parent.transform3(_state.Transform);
 				this.Parent.SetIntegerGrid(_state.IsIntegerGrid);
 			}
+
+			if (this.Parent.grStateIsUseBaseTransform())
+				this.Parent.grStateRestoreBaseTransform();
 		},
 
 		RemoveLastClip : function()
@@ -424,6 +430,9 @@
 			// цель - убрать примененные this.Clips
 			if (this.Clips.length === 0)
 				return;
+
+			if (this.Parent.grStateIsUseBaseTransform())
+				this.Parent.grStateSaveBaseTransform();
 
 			this.lastState = new CGrState_State();
 			this.lastState.Init(this.Parent.m_oTransform, !!this.Parent.m_bIntegerGrid, this.Clips);
@@ -438,12 +447,18 @@
 			this.Clips = [];
 			this.Parent.transform3(this.lastState.Transform);
 			this.Parent.SetIntegerGrid(this.lastState.IsIntegerGrid);
+
+			if (this.Parent.grStateIsUseBaseTransform())
+				this.Parent.grStateRestoreBaseTransform();
 		},
 		RestoreLastClip : function()
 		{
 			// цель - вернуть примененные this.lastState.Clips
 			if (!this.lastState)
 				return;
+
+			if (this.Parent.grStateIsUseBaseTransform())
+				this.Parent.grStateSaveBaseTransform();
 
 			this.lastState.Apply(this.Parent);
 
@@ -452,6 +467,9 @@
 			this.Parent.SetIntegerGrid(this.lastState.IsIntegerGrid);
 
 			this.lastState = null;
+
+			if (this.Parent.grStateIsUseBaseTransform())
+				this.Parent.grStateRestoreBaseTransform();
 		},
 
 		Save : function()
@@ -3218,29 +3236,6 @@
 			return this.m_arrayPages[this.m_lPagesCount - 1].m_oBrush;
 		}
 		return 0;
-	};
-
-	CDocumentRenderer.prototype.RestoreGrState = function()
-	{
-		var _t                = this.m_oBaseTransform;
-		this.m_oBaseTransform = null;
-		this.GrState.RestoreGrState();
-		this.m_oBaseTransform = _t;
-	};
-
-	CDocumentRenderer.prototype.RemoveLastClip = function()
-	{
-		var _t                = this.m_oBaseTransform;
-		this.m_oBaseTransform = null;
-		this.GrState.RemoveLastClip();
-		this.m_oBaseTransform = _t;
-	};
-	CDocumentRenderer.prototype.RestoreLastClip = function()
-	{
-		var _t                = this.m_oBaseTransform;
-		this.m_oBaseTransform = null;
-		this.GrState.RestoreLastClip();
-		this.m_oBaseTransform = _t;
 	};
 
 	CDocumentRenderer.prototype.StartClipPath = function()
