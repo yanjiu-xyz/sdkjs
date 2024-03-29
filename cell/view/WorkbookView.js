@@ -329,6 +329,8 @@
 	//for version history - changed ranges
 	this.oHistoryChangedRanges = null;
 
+	this.customFunctionEngine = null;
+
 	return this;
   }
 
@@ -5740,6 +5742,13 @@
 			}
 		}
 		changedRanges.push({range: range, color: userColor});
+	};
+
+	WorkbookView.prototype.addCustomFunction = function(func, options) {
+		if (!this.customFunctionEngine) {
+			this.customFunctionEngine = new AscCommonExcel.CCustomFunctionEngine(this);
+		}
+		this.customFunctionEngine.add(func, options);
 	};
 
 

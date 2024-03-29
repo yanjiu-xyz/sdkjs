@@ -51,7 +51,7 @@
 
     CGraphics.prototype.checkLoadingImage = function(img)
     {
-        return (_img.Status === AscFonts.ImageLoadStatus.Loading || (AscCommon.CollaborativeEditing.WaitImages && AscCommon.CollaborativeEditing.WaitImages[img]));
+        return (img.Status === AscFonts.ImageLoadStatus.Loading || (AscCommon.CollaborativeEditing.WaitImages && AscCommon.CollaborativeEditing.WaitImages[img]));
     };
 
     // TODO:

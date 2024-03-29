@@ -253,6 +253,21 @@
 	};
 
 	// TRANSFORM
+	CGraphicsBase.prototype.grStateIsUseBaseTransform = function()
+	{
+		return true;
+	};
+	CGraphicsBase.prototype.grStateSaveBaseTransform = function()
+	{
+		this._m_oBaseTransform = this.m_oBaseTransform;
+		this.m_oBaseTransform = null;
+	};
+	CGraphicsBase.prototype.grStateRestoreBaseTransform = function()
+	{
+		this.m_oBaseTransform = this._m_oBaseTransform;
+		delete this._m_oBaseTransform;
+	};
+
 	CGraphicsBase.prototype.reset = function()
 	{
 	};
