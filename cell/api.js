@@ -9121,6 +9121,14 @@ var editor;
 		return ws && ws.cleanFillHandleProps();
 	};
 
+	spreadsheet_api.prototype.addCustomFunction = function(func, options) {
+		let wb = this.wb;
+		if (!wb) {
+			return;
+		}
+		return wb.addCustomFunction(func, options);
+	};
+
   /*
    * Export
    * -----------------------------------------------------------------------------

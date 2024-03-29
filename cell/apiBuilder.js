@@ -380,6 +380,113 @@
 			.getValue();
 	};
 
+
+	/**
+	 * Creates a new custom function.
+	 * The description of the function parameters and result is set using jsdoc.
+	 * Parameters and results can be set as number/string/bool/any/number[][]/string[][]/bool[][]/any[][] types.
+	 * Parameters can be required or optional. Also user can set the default value.
+	 *
+	 * Example with description:
+	 *
+	 * 'Calculates the sum of the specified numbers.
+	 * '@customfunction
+	 * '@param {number} first Required first number.
+	 * '@param {number} [second] Optional second number to add.
+	 * '@returns {number} The sum of the numbers.
+	 * 'Api.AddCustomFunction(function add(first, second) {
+	 * '    if (second === null) {
+	 * '        second = 0;
+	 * '    }
+	 * '    return first + second;
+	 * '})
+	 * 'Tag customfunction is required.
+	 *
+	 * @memberof Api
+	 * @typeofeditors ["CSE"]
+	 * @param {Function} fCustom - A new function for calculating.
+	 */
+	Api.prototype.AddCustomFunction = function (fCustom) {
+		// get parsedJSDoc from a macros (we receive it from the Api class)
+		// take the first element and validate it
+		const parsedJSDoc = this.parsedJSDoc.shift();
+		const isValidJsDoc = parsedJSDoc ? private_ValidateParamsForCustomFunction(parsedJSDoc) : false;
+		//const isValidOptions = options ? private_ValidateParamsForCustomFunction(options) : false;
+		if (!isValidJsDoc/* && !isValidOptions*/) {
+			throwException(new Error('Invalid parameters type in JSDOC or options.'));
+		}
+		// remove it from this class and use it from the variable (only if it was the last)
+		// we don't remove it immediately, because we can have there data for another function
+		if (!this.parsedJSDoc.length) {
+			delete this.parsedJSDoc;
+		}
+
+
+		// now we have to decide what we're going to use (make the priority order) - parsedJSDoc or options
+
+
+		//1. jsdoc params:
+		//
+		//  * Calculates the sum of the specified numbers
+		//  * @customfunction
+		//  * @param {number} first First number.
+		//  * @param {number} second Second number.
+		//  * @param {number} [third] Third number to add. If omitted, third = 0.
+		//  * @returns {number} The sum of the numbers.
+		//
+		/*Api.AddCustomFunction(function add(first, second, third) {
+			if (third === null) {
+				third = 0;
+			}
+			return first + second + third;
+		})*/
+
+		//2. object params - removed it at the moment
+		/*
+
+		(function()
+		{
+    		function add(first, second, third) {
+				if (third === null) {
+					third = 0;
+				}
+				return first + second + third;
+			}
+			Api.AddCustomFunction(add,
+				{
+					"params":[
+						{
+							 "defaultValue": "",
+							 "description": "First number. *",
+							 "name": "first",
+							 "optional": false,
+							 "parentName": "",
+							 "type": "number" // "string", "bool"
+						 },
+						 {
+							 "defaultValue": "",
+							 "description": "Second number. *",
+							 "name": "second",
+							 "optional": false,
+							 "parentName": "",
+							 "type": "number"
+						 },
+						 {
+							 "defaultValue": "",
+							 "description": "Second number. *",
+							 "name": "second",
+							 "optional": true,
+							 "parentName": "",
+							 "type": "number"
+						 }
+					 ]
+				}
+			);
+		})();*/
+
+		this.addCustomFunction(fCustom, parsedJSDoc/*isValidJsDoc ? parsedJSDoc : options*/);
+	};
+
 	/**
 	 * Creates a new worksheet. The new worksheet becomes the active sheet.
 	 * @memberof Api
@@ -7359,6 +7466,34 @@
 
 		return nLockType;
 	}
+
+	/**
+	 * Validate parsed JSDOC or options for custom functions.
+	 * @param {object} jsdoc - Parsed JSDOC object.
+	 * @returns {boolean} - Returns false if jsdoc isn't valid
+	 */
+	function private_ValidateParamsForCustomFunction(jsdoc) {
+		let result = true;
+		const types = [
+			'number', 'string', 'boolean', 'bool', 'any',
+			'number[]', 'string[]', 'boolean[]', 'bool[]', 'any[]',
+			'number[][]', 'string[][]', 'boolean[][]', 'bool[][]', 'any[][]'
+		];
+
+		if (jsdoc.returnInfo && !types.includes(jsdoc.returnInfo.type)) {
+			result = false;
+		}
+
+		for (let index = 0; result && index < jsdoc.params.length; index++) {
+			const param = jsdoc.params[index];
+			if (!types.includes(param.type)) {
+				result = false;
+				break;
+			}
+		}
+
+		return result;
+	};
 
 	function logError(err) {
 		if (console.error)
