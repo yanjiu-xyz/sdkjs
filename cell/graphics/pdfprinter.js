@@ -299,7 +299,7 @@ CPdfPrinter.prototype =
     },
 	setTextRotated : function(isRotated)
 	{
-		// TODO: implement
+		// For compatibility with Asc.DrawingContext in spreadsheets
 	},
 
     measureChar : function(text, units)
