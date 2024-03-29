@@ -343,6 +343,10 @@ CPdfPrinter.prototype =
         }
         return this;
     },
+	tg : function(gid, x, y, codePoints)
+	{
+		this.DocumentRenderer.tg(gid, x, y, codePoints);
+	},
 
     beginPath : function()
     {
