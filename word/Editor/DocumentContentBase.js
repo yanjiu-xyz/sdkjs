@@ -58,7 +58,7 @@ CDocumentContentBase.prototype.GetId = function()
 };
 CDocumentContentBase.prototype.GetApi = function()
 {
-	return editor;
+	return Asc.editor;
 };
 /**
  * Получаем ссылку на основной объект документа
@@ -73,8 +73,7 @@ CDocumentContentBase.prototype.GetLogicDocument = function()
 };
 CDocumentContentBase.prototype.getDrawingDocument = function()
 {
-	let logicDocument = this.GetLogicDocument();
-	return logicDocument ? logicDocument.GetDrawingDocument() : null;
+	return this.GetApi().getDrawingDocument();
 };
 /**
  * Получаем тип активной части документа.
@@ -2437,7 +2436,7 @@ CDocumentContentBase.prototype.UpdateInterfaceParaPr = function()
 	paraPr.CanAddDropCap = this.CanAddDropCap();
 	
 	let logicDocument = this.GetLogicDocument();
-	if (logicDocument)
+	if (logicDocument && logicDocument.IsDocumentEditor())
 	{
 		let selectedInfo = logicDocument.GetSelectedElementsInfo({CheckAllSelection : true});
 
@@ -2466,18 +2465,18 @@ CDocumentContentBase.prototype.UpdateInterfaceParaPr = function()
 		paraPr.Shd.Unifill.check(this.GetTheme(), this.GetColorMap());
 	
 	// Если мы находимся внутри автофигуры, тогда нам надо проверить лок параграфа, в котором находится автофигура
-	if (logicDocument
-		&& logicDocument.IsDocumentEditor()
-		&& docpostype_DrawingObjects === logicDocument.GetDocPosType()
-		&& true !== paraPr.Locked)
+	if (logicDocument && logicDocument.IsDocumentEditor())
 	{
-		let drawing = logicDocument.GetDrawingObjects().getMajorParaDrawing();
-		if (drawing)
-			paraPr.Locked = drawing.Lock.Is_Locked();
+		if(docpostype_DrawingObjects === logicDocument.GetDocPosType() && true !== paraPr.Locked)
+		{
+			let drawing = logicDocument.GetDrawingObjects().getMajorParaDrawing();
+			if (drawing)
+				paraPr.Locked = drawing.Lock.Is_Locked();
+		}
+		paraPr.StyleName = AscWord.DisplayStyleCalculator.CalculateName(this);
+		api.sync_ParaStyleName(paraPr.StyleName);
 	}
-	
-	paraPr.StyleName = AscWord.DisplayStyleCalculator.CalculateName(this);
-	api.sync_ParaStyleName(paraPr.StyleName);
+
 	api.UpdateParagraphProp(paraPr);
 };
 CDocumentContentBase.prototype.CanAddDropCap = function()

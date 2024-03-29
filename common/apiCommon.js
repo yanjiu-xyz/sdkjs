@@ -4463,6 +4463,8 @@ function (window, undefined) {
 		this.EncryptedInfo;
 		this.IsEnabledPlugins = true;
 		this.IsEnabledMacroses = true;
+		this.IsWebOpening = false;
+		this.SupportsOnSaveDocument = false;
 
 		//for external reference
 		this.ReferenceData = null;
@@ -4609,6 +4611,18 @@ function (window, undefined) {
 	};
 	prot.put_ReferenceData = prot.asc_putReferenceData = function (v) {
 		this.ReferenceData = v;
+	};
+	prot.put_IsWebOpening = prot.asc_putIsWebOpening = function (v) {
+		this.IsWebOpening = v;
+	};
+	prot.get_IsWebOpening = prot.asc_getIsWebOpening = function () {
+		return this.IsWebOpening;
+	};
+	prot.put_SupportsOnSaveDocument = prot.asc_putSupportsOnSaveDocument = function (v) {
+		this.SupportsOnSaveDocument = v;
+	};
+	prot.get_SupportsOnSaveDocument = prot.asc_getSupportsOnSaveDocument = function () {
+		return this.SupportsOnSaveDocument;
 	};
 
 	function COpenProgress() {
@@ -5229,16 +5243,18 @@ function (window, undefined) {
 
 	// ----------------------------- plugins ------------------------------- //
 	let PluginType = {
-		System: 0, // Системный, неотключаемый плагин.
-		Background: 1, // Фоновый плагин. Тоже самое, что и системный, но отключаемый.
-		Window: 2, // Окно
-		Panel: 3  // Панель
+		System: 0,      // Системный, неотключаемый плагин.
+		Background: 1,  // Фоновый плагин. Тоже самое, что и системный, но отключаемый.
+		Window: 2,      // Окно
+		Panel: 3,       // Панель
+		Invisible : 4   // Невидимый
 	};
 
 	PluginType["System"] = PluginType.System;
 	PluginType["Background"] = PluginType.Background;
 	PluginType["Window"] = PluginType.Window;
 	PluginType["Panel"] = PluginType.Panel;
+	PluginType["Unvisible"] = PluginType.Unvisible;
 
 	function CPluginVariation() {
 		this.description = "";
@@ -5392,10 +5408,16 @@ function (window, undefined) {
 			if ("system" === _type) this.type = PluginType.System;
 			if ("window" === _type) this.type = PluginType.Window;
 			if ("panel" === _type) this.type = PluginType.Panel;
+			if ("invisible" === _type) this.type = PluginType.Invisible;
 		}
 		else {
-			if (true === _object["isSystem"]) this.type = PluginType.System;
-			if (true === _object["isVisual"]) this.type = (true === _object["isInsideMode"]) ? PluginType.Panel : PluginType.Window;
+			// old version: not support background plugins
+			if (true === _object["isSystem"])
+				this.type = PluginType.System;
+			else if (true === _object["isVisual"])
+				this.type = (true === _object["isInsideMode"]) ? PluginType.Panel : PluginType.Window;
+			else
+				this.type = PluginType.Invisible;
 		}
 
 		this.isCustomWindow = (_object["isCustomWindow"] != null) ? _object["isCustomWindow"] : this.isCustomWindow;
@@ -6546,6 +6568,10 @@ function (window, undefined) {
 	prot["get_CoEditingMode"] = prot["asc_getCoEditingMode"] = prot.asc_getCoEditingMode;
 	prot["put_CoEditingMode"] = prot["asc_putCoEditingMode"] = prot.asc_putCoEditingMode;
 	prot["put_ReferenceData"] = prot["asc_putReferenceData"] = prot.asc_putReferenceData;
+	prot["put_IsWebOpening"] = prot["asc_putIsWebOpening"] = prot.asc_putIsWebOpening;
+	prot["get_IsWebOpening"] = prot["asc_getIsWebOpening"] = prot.asc_getIsWebOpening;
+	prot["put_SupportsOnSaveDocument"] = prot["asc_putSupportsOnSaveDocument"] = prot.asc_putSupportsOnSaveDocument;
+	prot["get_SupportsOnSaveDocument"] = prot["asc_getSupportsOnSaveDocument"] = prot.asc_getSupportsOnSaveDocument;
 
 	window["AscCommon"].COpenProgress = COpenProgress;
 	prot = COpenProgress.prototype;

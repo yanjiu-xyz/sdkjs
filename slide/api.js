@@ -36,11 +36,11 @@
 {
 
 	// Import
-	var locktype_None               = AscCommon.locktype_None;
-	var locktype_Mine               = AscCommon.locktype_Mine;
-	var locktype_Other              = AscCommon.locktype_Other;
-	var locktype_Other2             = AscCommon.locktype_Other2;
-	var locktype_Other3             = AscCommon.locktype_Other3;
+	var locktype_None = AscCommon.c_oAscLockTypes.kLockTypeNone;
+	var locktype_Mine = AscCommon.c_oAscLockTypes.kLockTypeMine;
+	var locktype_Other = AscCommon.c_oAscLockTypes.kLockTypeOther;
+	var locktype_Other2 = AscCommon.c_oAscLockTypes.kLockTypeOther2;
+	var locktype_Other3 = AscCommon.c_oAscLockTypes.kLockTypeOther3;
 	var changestype_Drawing_Props   = AscCommon.changestype_Drawing_Props;
 	var asc_CSelectedObject         = AscCommon.asc_CSelectedObject;
 	var g_oDocumentUrls             = AscCommon.g_oDocumentUrls;
@@ -8220,10 +8220,10 @@ background-repeat: no-repeat;\
 			oAdditionalData["codepage"] = AscCommon.c_oAscCodePageUtf8;
 			dataContainer.data = last.data;
 		}
-		else if(this.isOpenOOXInBrowser && this.saveDocumentToZip)
+		else if(this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml"))
 		{
 			var title = this.documentTitle;
-			this.saveDocumentToZip(this.WordControl.m_oLogicDocument, AscCommon.c_oEditorId.Presentation,
+			this.saveLogicDocumentToZip(undefined, undefined,
 				function(data) {
 					if (data) {
 						if (c_oAscFileType.PPTX === fileType && !window.isCloudCryptoDownloadAs) {
@@ -8312,6 +8312,17 @@ background-repeat: no-repeat;\
 			return false;
 
 		this.WordControl.m_oLogicDocument.StartAction(AscDFH.historydescription_Document_PasteHotKey);
+		return true;
+	};
+	asc_docs_api.prototype.canRunBuilderScript = function()
+	{
+		return this.asc_canPaste();
+	};
+	asc_docs_api.prototype.onEndBuilderScript = function()
+	{
+		this.asc_Recalculate();
+		let logicDocument = this.getLogicDocument();
+		logicDocument.FinalizeAction();
 		return true;
 	};
 
@@ -8694,9 +8705,9 @@ background-repeat: no-repeat;\
 
 	window["asc_docs_api"].prototype["asc_nativeGetFileData"] = function()
 	{
-		if (this.isOpenOOXInBrowser && this.saveDocumentToZip) {
+		if (this.isOpenOOXInBrowser && this["asc_isSupportFeature"]("ooxml")) {
 			let res;
-			this.saveDocumentToZip(this.WordControl.m_oLogicDocument, this.editorId, function(data) {
+			this.saveLogicDocumentToZip(undefined, undefined, function(data) {
 				res = data;
 			});
 			if (res) {

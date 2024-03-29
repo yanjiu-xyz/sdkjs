@@ -347,7 +347,10 @@ CInlineLevelSdt.prototype.Add_ToContent = function(Pos, Item, UpdatePosition)
 {
 	History.Add(new CChangesParaFieldAddItem(this, Pos, [Item]));
 	CParagraphContentWithParagraphLikeContent.prototype.Add_ToContent.apply(this, arguments);
-	this.GetLogicDocument().OnChangeForm(this);
+	
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument)
+		logicDocument.OnChangeForm(this);
 };
 CInlineLevelSdt.prototype.Remove_FromContent = function(Pos, Count, UpdatePosition)
 {
@@ -358,7 +361,10 @@ CInlineLevelSdt.prototype.Remove_FromContent = function(Pos, Count, UpdatePositi
 	var DeletedItems = this.Content.slice(Pos, Pos + Count);
 	History.Add(new CChangesParaFieldRemoveItem(this, Pos, DeletedItems));
 	CParagraphContentWithParagraphLikeContent.prototype.Remove_FromContent.apply(this, arguments);
-	this.GetLogicDocument().OnChangeForm(this);
+	
+	let logicDocument = this.GetLogicDocument();
+	if (logicDocument)
+		logicDocument.OnChangeForm(this);
 };
 CInlineLevelSdt.prototype.OnContentChange = function()
 {
@@ -620,7 +626,7 @@ CInlineLevelSdt.prototype.GetRangeBounds = function(_CurLine, _CurRange)
 };
 CInlineLevelSdt.prototype.private_IsAddFormFieldToGraphics = function(oGraphics, oTransform)
 {
-	if (oGraphics.isPrintMode || !oGraphics.IsPdfRenderer || !oGraphics.IsPdfRenderer())
+	if (oGraphics.isPrintMode || !oGraphics.isPdf())
 		return false;
 	
 	var _oTransform = oTransform;
@@ -1348,10 +1354,7 @@ CInlineLevelSdt.prototype.Document_UpdateInterfaceState = function()
 };
 CInlineLevelSdt.prototype.SetParagraph = function(oParagraph)
 {
-	let oLogicDocument;
-	if (this.GetTextFormPr() && (oLogicDocument = this.GetLogicDocument()))
-		oLogicDocument.GetFormsManager().Register(this);
-
+	AscWord.registerForm(this);
 	CParagraphContentWithParagraphLikeContent.prototype.SetParagraph.apply(this, arguments);
 };
 CInlineLevelSdt.prototype.Apply_TextPr = function(TextPr, IncFontSize, ApplyToAll)
@@ -1496,13 +1499,15 @@ CInlineLevelSdt.prototype.private_FillPlaceholderContent = function()
 	var isSelection = this.IsSelectionUse();
 
 	this.RemoveFromContent(0, this.GetElementsCount());
+	
+	let logicDocument = this.GetLogicDocument();
+	let docPart       = null;
+	if (logicDocument && logicDocument.IsDocumentEditor())
+		docPart = logicDocument.GetGlossaryDocument().GetDocPartByName(this.GetPlaceholder());
 
-	var oParagraph     = this.GetParagraph();
-	var oLogicDocument = oParagraph ? oParagraph.GetLogicDocument() : editor.WordControl.m_oLogicDocument;
-	var oDocPart       = oLogicDocument.GetGlossaryDocument().GetDocPartByName(this.GetPlaceholder());
-	if (oDocPart)
+	if (docPart)
 	{
-		var oFirstParagraph = oDocPart.GetFirstParagraph();
+		var oFirstParagraph = docPart.GetFirstParagraph();
 
 		if (this.IsContentControlEquation())
 		{
@@ -1541,7 +1546,7 @@ CInlineLevelSdt.prototype.private_FillPlaceholderContent = function()
 		}
 		else
 		{
-			var oRun = new ParaRun(oParagraph, false);
+			var oRun = new AscWord.Run();
 			oRun.AddText(String.fromCharCode(nbsp_charcode, nbsp_charcode, nbsp_charcode, nbsp_charcode));
 			this.AddToContent(0, oRun);
 		}
@@ -2695,8 +2700,9 @@ CInlineLevelSdt.prototype.IsShowingPlcHdr = function()
 };
 CInlineLevelSdt.prototype.GetLogicDocument = function()
 {
-	var oParagraph = this.GetParagraph();
-	return oParagraph ? oParagraph.GetLogicDocument() : editor.WordControl.m_oLogicDocument;
+	let paragraph = this.GetParagraph();
+	let logicDocument = paragraph ? paragraph.GetLogicDocument() : null;
+	return logicDocument ? logicDocument : editor.WordControl.m_oLogicDocument;
 };
 CInlineLevelSdt.prototype.private_OnAddFormPr = function()
 {

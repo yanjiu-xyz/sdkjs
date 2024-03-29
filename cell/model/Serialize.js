@@ -1197,11 +1197,18 @@
         Name: 2,
         Text: 3,
         User: 4,
-        UsersGroup: 5
+        UsersGroup: 5,
+        Type: 6
     };
 	var c_oSerUserProtectedRangeDesc = {
 		Id: 0,
-		Name: 1
+		Name: 1,
+		Type: 2
+	};
+	var c_oSerUserProtectedRangeType = {
+		notView: 0,
+		view: 1,
+		edit: 2
 	};
 
     /** @enum */
@@ -6733,6 +6740,11 @@
 				this.memory.WriteByte(c_oSerPropLenType.Variable);
 				this.memory.WriteString2(desc.name);
 			}
+			if (null != desc.type) {
+				this.memory.WriteByte(c_oSerUserProtectedRangeDesc.Type);
+				this.memory.WriteByte(c_oSerPropLenType.Byte);
+				this.memory.WriteByte(desc.type);
+			}
 		};
         this.WriteUserProtectedRange = function (oUserProtectedRange) {
 
@@ -6771,6 +6783,11 @@
 						oThis.WriteUserProtectedRangeDesc(userGroups[i]);
 					});
 				}
+            }
+            if (null != oUserProtectedRange.type) {
+                this.bs.WriteItem(c_oSerUserProtectedRange.Type, function () {
+                    oThis.memory.WriteByte(oUserProtectedRange.type);
+                });
             }
         };
 
@@ -10277,6 +10294,8 @@
 				oUser.name = this.stream.GetString2LE(length);
 			} else if (c_oSerUserProtectedRangeDesc.Id === type) {
 				oUser.id = this.stream.GetString2LE(length);
+			} else if (c_oSerUserProtectedRangeDesc.Type === type) {
+				oUser.type = this.stream.GetByte();
 			} else {
 				res = c_oSerConstants.ReadUnknown;
 			}
@@ -10287,14 +10306,16 @@
             var res = c_oSerConstants.ReadOk;
             var oThis = this;
             if (c_oSerUserProtectedRange.Name === type) {
-                oUserProtectedRange.name = this.stream.GetString2(length);
+                oUserProtectedRange.name = this.stream.GetString2LE(length);
             } else if (c_oSerUserProtectedRange.Sqref === type) {
-                var range = AscCommonExcel.g_oRangeCache.getAscRange(this.stream.GetString2(length));
+                var range = AscCommonExcel.g_oRangeCache.getAscRange(this.stream.GetString2LE(length));
                 if (range) {
                     oUserProtectedRange.ref = range.clone();
                 }
             } else if (c_oSerUserProtectedRange.Text === type) {
-                oUserProtectedRange.warningText = this.stream.GetString2(length);
+                oUserProtectedRange.warningText = this.stream.GetString2LE(length);
+            } else if (c_oSerUserProtectedRange.Type === type) {
+                oUserProtectedRange.type = this.stream.GetByte(length);
             } else if (c_oSerUserProtectedRange.User === type)
 			{
 
@@ -13373,6 +13394,11 @@
                 //TODO так же он проставляет флаг ca - рассмотреть стоит ли его нам доблавлять
                 formula.v = formula.v.replace("_xludf.", "");
             }
+            if (formula.v.startsWith("IFERROR(__xludf.DUMMYFUNCTION(\"")) {
+                formula.v = formula.v.replace('IFERROR(__xludf.DUMMYFUNCTION(\"', "");
+                formula.v = formula.v.substr(0, formula.v.lastIndexOf('\"\)'));
+                formula.v = formula.v.replace(/\"\"/g,"\"");
+            }
             if (formula.v.startsWith("=")) {
                 //LO write "=" to file
                 formula.v = formula.v.replace("=", "");
@@ -13417,6 +13443,15 @@
                     tmp.ws.workbook.openErrors.push(cell.getName());
                     return;
                 }
+
+				if (parsed.importFunctionsRangeLinks) {
+					for (let i in parsed.importFunctionsRangeLinks) {
+						let eR = tmp.ws.workbook.getExternalLinkByName(i);
+						if (eR) {
+							eR.notUpdateId = true;
+						}
+					}
+				}
 
                 if (null !== formula.ref) {
                     let range;
@@ -14286,11 +14321,19 @@
         } else {
             formula = parsed.getFormula();
         }
+        //TODO пока едиственный идентификатор, что внутри есть функция import - importFunctionsRangeLinks
+        //обходить каждый раз колстек - не хотелось бы замедлять сохранение, так же как и искать в строке
+
+        //view ->sum(IMPORTRANGE("https://","Sheet1!A1"))+cos(1)
+        //file -> IFERROR(__xludf.DUMMYFUNCTION("sum(IMPORTRANGE(""https://"",""Sheet1!A1""))+cos(1)"),123)</f>
+        if (formula && parsed && parsed.importFunctionsRangeLinks) {
+            formula = "IFERROR(__xludf.DUMMYFUNCTION(\"" + formula.replace(/\"/g,"\"\"") + "\")" + "," + cell.getValue() + ")";
+        }
         return {formula: formula, si: si, ref: ref, type: type, ca: parsed.ca};
     };
 
     function ReadWbComments (wb, contentWorkbookComment, InitOpenManager) {
-        var stream = new AscCommon.FT_Stream2(contentWorkbookComment, contentWorkbookComment.length)
+        var stream = new AscCommon.FT_Stream2(contentWorkbookComment, contentWorkbookComment.length);
         var bwtr = new Binary_WorksheetTableReader(stream, InitOpenManager, wb);
         var bcr = new AscCommon.Binary_CommonReader(stream);
         bcr.Read1(contentWorkbookComment.length, function(t,l){
@@ -14667,6 +14710,10 @@
     prot['pageBreakPreview'] = prot.pageBreakPreview;
     prot['pageLayout'] = prot.pageLayout;
 
-
+    window['Asc']['c_oSerUserProtectedRangeType'] = window['Asc'].c_oSerUserProtectedRangeType = c_oSerUserProtectedRangeType;
+    prot = c_oSerUserProtectedRangeType;
+    prot['notView'] = prot.notView;
+    prot['view'] = prot.view;
+    prot['edit'] = prot.edit;
 
 })(window);

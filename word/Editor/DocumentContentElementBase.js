@@ -1329,10 +1329,29 @@ CDocumentContentElementBase.prototype.GetLogicDocument = function()
  */
 CDocumentContentElementBase.prototype.getDrawingDocument = function()
 {
-	if (this.DrawingDocument)
-		return this.DrawingDocument;
-	
-	return this.Parent && this.Parent.getDrawingDocument ? this.Parent.getDrawingDocument() : null;
+	return Asc.editor.getDrawingDocument();
+};
+/**
+ * @returns {?CDocumentSpellChecker}
+ */
+CDocumentContentElementBase.prototype.getSpelling = function()
+{
+	let oLogicDocument = this.GetLogicDocument();
+	if(oLogicDocument)
+	{
+		return oLogicDocument.Spelling;
+	}
+	return null;
+};
+/**
+ * @returns {boolean}
+ */
+CDocumentContentElementBase.prototype.IsSpellingUse = function()
+{
+	let oSpelling = this.getSpelling();
+	if(!oSpelling)
+		return false;
+	return oSpelling.Use;
 };
 /**
  * Получаем настройки рамки для данного элемента
@@ -1385,6 +1404,10 @@ CDocumentContentElementBase.prototype.getLayoutScaleCoefficient = function()
 		return 1;
 	
 	return logicDocument.GetDocumentLayout().GetScaleBySection(sectPr);
+};
+CDocumentContentElementBase.prototype.updateTrackRevisions = function()
+{
+	AscWord.checkElementInRevision(this);
 };
 
 //--------------------------------------------------------export--------------------------------------------------------

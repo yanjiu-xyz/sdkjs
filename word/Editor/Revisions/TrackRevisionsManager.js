@@ -34,6 +34,48 @@
 
 (function(window)
 {
+	let elementToCheck = {};
+	function checkElementInRevision(element)
+	{
+		if (!element)
+			return;
+		
+		let logicDocument = element.GetLogicDocument();
+		if (!element.GetLogicDocument())
+		{
+			elementToCheck[element.GetId()] = element;
+			return;
+		}
+		
+		if (!logicDocument || !logicDocument.IsDocumentEditor())
+			return;
+		
+		logicDocument.GetTrackRevisionsManager().CheckElement(element);
+	}
+	function haveElementToCheck()
+	{
+		for (let id in elementToCheck)
+		{
+			return true;
+		}
+		
+		return false;
+	}
+	function flushElementToCheck()
+	{
+		for (let id in elementToCheck)
+		{
+			let element = elementToCheck[id];
+			let logicDocument = element.GetLogicDocument();
+			if (!logicDocument || !logicDocument.IsDocumentEditor())
+				continue;
+			
+			logicDocument.GetTrackRevisionsManager().CheckElement(elementToCheck[id]);
+		}
+		
+		elementToCheck = {};
+	}
+	
 	// ВАЖНО: CheckArray - специальный массив-дублер для мапа CheckMap, для более быстрого выполнения функции
 	//        ContinueTrackRevisions. Заметим, что на функции CompleteTrackChangesForElements мы не выкидываем
 	//        элемент из CheckArray, но выкидываем из CheckMap. Это не страшно, т.к. при последующей проверке по
@@ -110,6 +152,8 @@
 	{
 		if (this.IsAllChecked())
 			return;
+		
+		flushElementToCheck();
 
 		var nStartTime = performance.now();
 
@@ -658,27 +702,25 @@
 	};
 	CTrackRevisionsManager.prototype.private_GetSelectedChangesXY = function()
 	{
-		if (this.SelectedChanges.length > 0)
-		{
-			var oChange = this.SelectedChanges[0];
+		if (!this.SelectedChanges.length)
+			return {X : 0, Y : 0};
+		
+		let change = this.SelectedChanges[0];
+		
+		let element = change.GetElement();
+		if (!element)
+			return {X : 0, Y : 0};
+		
+		let x    = change.GetInternalPosX();
+		let y    = change.GetInternalPosY();
+		let page = change.GetInternalPosPageNum();
 
-			var nX       = oChange.GetInternalPosX();
-			var nY       = oChange.GetInternalPosY();
-			var nPageNum = oChange.GetInternalPosPageNum();
-			var oElement = oChange.GetElement();
-
-			if (oElement && oElement.DrawingDocument)
-			{
-				var oTransform = (oElement ? oElement.Get_ParentTextTransform() : undefined);
-				if (oTransform)
-					nY = oTransform.TransformPointY(nX, nY);
-
-				var oWorldCoords = oElement.DrawingDocument.ConvertCoordsToCursorWR(nX, nY, nPageNum);
-				return {X : oWorldCoords.X, Y : oWorldCoords.Y};
-			}
-		}
-
-		return {X : 0, Y : 0};
+		let transform = element.Get_ParentTextTransform();
+		if (transform)
+			y = transform.TransformPointY(x, y);
+		
+		let drawingCoords = this.LogicDocument.getDrawingDocument().ConvertCoordsToCursorWR(x, y, page);
+		return {X : drawingCoords.X, Y : drawingCoords.Y};
 	};
 	CTrackRevisionsManager.prototype.Get_AllChangesLogicDocuments = function()
 	{
@@ -811,7 +853,7 @@
 	};
 	CTrackRevisionsManager.prototype.IsAllChecked = function()
 	{
-		return (!this.CheckArray.length);
+		return (!this.CheckArray.length && !haveElementToCheck());
 	};
 	/**
 	 * Завершаем проверку всех элементов на наличие рецензирования
@@ -1352,5 +1394,6 @@
 	};
 	//--------------------------------------------------------export----------------------------------------------------
 	window['AscWord'].CTrackRevisionsManager = CTrackRevisionsManager;
+	window['AscWord'].checkElementInRevision = checkElementInRevision;
 
 })(window);

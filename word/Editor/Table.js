@@ -103,7 +103,7 @@ function CTable(DrawingDocument, Parent, Inline, Rows, Cols, TableGrid, bPresent
 		&& AscCommon.CollaborativeEditing
 		&& !AscCommon.CollaborativeEditing.Is_SingleUser())
 	{
-		this.Lock.Set_Type(AscCommon.locktype_Mine, false);
+		this.Lock.Set_Type(AscCommon.c_oAscLockTypes.kLockTypeMine, false);
 		AscCommon.CollaborativeEditing.Add_Unlock2(this);
 	}
 
@@ -8601,7 +8601,7 @@ CTable.prototype.Set_Pr = function(TablePr)
 	this.private_UpdateTableGrid();
 
 	if (isHavePrChange || this.HavePrChange())
-		this.UpdateTrackRevisions();
+		this.updateTrackRevisions();
 };
 CTable.prototype.SetPr = function(oTablePr)
 {
@@ -17391,7 +17391,7 @@ CTable.prototype.SetTableGridChange = function(arrTableGridChange)
 {
 	History.Add(new CChangesTableTableGridChange(this, this.TableGridChange, arrTableGridChange));
 	this.TableGridChange = arrTableGridChange;
-	this.UpdateTrackRevisions();
+	this.updateTrackRevisions();
 };
 /**
  * Получаем ширину заданного промежутка в сетке таблицы
@@ -18988,7 +18988,7 @@ CTable.prototype.AddPrChange = function()
 			PrChange   : this.Pr.PrChange,
 			ReviewInfo : this.Pr.ReviewInfo
 		}));
-		this.UpdateTrackRevisions();
+		this.updateTrackRevisions();
 	}
 };
 CTable.prototype.RemovePrChange = function()
@@ -19003,21 +19003,13 @@ CTable.prototype.RemovePrChange = function()
 			ReviewInfo : undefined
 		}));
 		this.Pr.RemovePrChange();
-		this.UpdateTrackRevisions();
+		this.updateTrackRevisions();
 	}
 };
 CTable.prototype.private_AddPrChange = function()
 {
 	if (this.LogicDocument && true === this.LogicDocument.IsTrackRevisions() && true !== this.HavePrChange())
 		this.AddPrChange();
-};
-CTable.prototype.UpdateTrackRevisions = function()
-{
-	if (this.LogicDocument && this.LogicDocument.GetTrackRevisionsManager)
-	{
-		var oRevisionsManager = this.LogicDocument.GetTrackRevisionsManager();
-		oRevisionsManager.CheckElement(this);
-	}
 };
 CTable.prototype.GetPrReviewColor = function()
 {
@@ -19943,3 +19935,4 @@ window['AscCommonWord'] = window['AscCommonWord'] || {};
 window['AscCommonWord'].CTable = CTable;
 window['AscCommonWord'].type_Table = type_Table;
 window['AscWord'].CTable = CTable;
+window['AscWord'].Table = CTable;

@@ -603,7 +603,9 @@ CopyProcessor.prototype =
 		var closeBookmarks = function (_level) {
 			var tempTarget = bookmarkPrviousTargetMap[_level];
 			if (tempTarget) {
-				tempTarget.addChild(oTarget);
+				if (oTarget && !oTarget.isEmptyChild()) {
+					tempTarget.addChild(oTarget);
+				}
 				oTarget = tempTarget;
 			}
 		};
@@ -1709,6 +1711,10 @@ CopyProcessor.prototype =
 				this.oBinaryFileWriter.Document = elementsContent[0].Element.LogicDocument;
 			}
 
+			if (!this.oBinaryFileWriter.Document) {
+				this.oBinaryFileWriter.Document = this.oDocument;
+			}
+
 			this.oBinaryFileWriter.CopyStart();
 			this.CopyDocument2(this.oRoot, oDocument, elementsContent, bFromPresentation);
 			this.CopyFootnotes(this.oRoot, this.aFootnoteReference);
@@ -2430,7 +2436,7 @@ function PasteProcessor(api, bUploadImage, bUploadFonts, bNested, pasteInExcel, 
         "mso-border-insideh": 1, "mso-row-margin-left": 1, "mso-row-margin-right": 1, "mso-cellspacing": 1, "mso-border-alt": 1,
         "mso-border-left-alt": 1, "mso-border-top-alt": 1, "mso-border-right-alt": 1, "mso-border-bottom-alt": 1, "mso-border-between": 1, "mso-list": 1,
 		"mso-comment-reference": 1, "mso-comment-date": 1, "mso-comment-continuation": 1, "mso-data-placement": 1, "mso-table-layout-alt": 1, "mso-table-left": 1,
-		"mso-table-top": 1};
+		"mso-table-top": 1, "mso-ignore": 1};
     this.oBorderCache = {};
 
 	this.msoListMap = [];
@@ -8541,7 +8547,13 @@ PasteProcessor.prototype =
 						if (null == dWidth)
 							dWidth = tc.clientWidth * g_dKoef_pix_to_mm;
 
-						var nColSpan = tc.getAttribute("colspan");
+						let style = tc.getAttribute("style");
+						let tblPrMso = {};
+						if (style) {
+							this._parseCss(style, tblPrMso);
+						}
+
+						var nColSpan = tblPrMso["mso-ignore"] === "colspan" ? null : tc.getAttribute("colspan");
 						if (null != nColSpan)
 							nColSpan = nColSpan - 0;
 						else
@@ -9228,7 +9240,14 @@ PasteProcessor.prototype =
 			var tc = node.childNodes[i];
 			var tcName = tc.nodeName.toLowerCase();
 			if ("td" === tcName || "th" === tcName) {
-				var nColSpan = tc.getAttribute("colspan");
+				let style = tc.getAttribute("style");
+				let tblPrMso = {};
+				if (style) {
+					this._parseCss(style, tblPrMso);
+				}
+
+				var nColSpan = tblPrMso["mso-ignore"] === "colspan" ? null : tc.getAttribute("colspan");
+
 				if (null != nColSpan)
 					nColSpan = nColSpan - 0;
 				else

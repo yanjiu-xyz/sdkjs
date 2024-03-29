@@ -1914,6 +1914,7 @@ function CDocument(DrawingDocument, isMainLogicDocument)
 		Description     : AscDFH.historyitem_type_Unknown,
 		Recalculate     : false,
 		CancelAction    : false,
+		CheckLock       : false,
 		UpdateSelection : false,
 		UpdateInterface : false,
 		UpdateRulers    : false,
@@ -2725,12 +2726,13 @@ CDocument.prototype.private_Redraw = function(nStartPage, nEndPage)
 };
 /**
  * Завершаем действие
- * @param {boolean} [isCheckEmptyAction=true] Нужно ли проверять, что действие ничего не делало
+ * @param {boolean} [checkEmptyAction=true] Нужно ли проверять, что действие ничего не делало
+ * @returns {boolean} Выполнилось ли действие
  */
-CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
+CDocument.prototype.FinalizeAction = function(checkEmptyAction)
 {
 	if (!this.IsActionStarted())
-		return;
+		return true;
 
 	if (this.Action.Depth > 0)
 	{
@@ -2742,12 +2744,14 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 		}
 
 		this.Action.Depth--;
-		return;
+		return true;
 	}
-
+	
 	this.private_CheckAdditionalOnFinalize();
-
-	var isAllPointsEmpty = true;
+	this.private_CheckEmptyPointsInAction(checkEmptyAction);
+	this.private_CheckActionLock();
+	
+	let actionCompleted = true;
 	if (this.Action.CancelAction)
 	{
 		let arrChanges = [];
@@ -2755,34 +2759,17 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 		{
 			arrChanges = arrChanges.concat(this.History.Undo());
 		}
-
-		this.RecalculateByChanges(arrChanges);
+		
+		if (arrChanges.length)
+			this.RecalculateByChanges(arrChanges);
+		
+		actionCompleted = false;
 	}
-	else if (false !== isCheckEmptyAction)
-	{
-		for (var nIndex = 0, nPointsCount = this.Action.PointsCount; nIndex < nPointsCount; ++nIndex)
-		{
-			if (this.History.Is_LastPointEmpty())
-			{
-				this.History.Remove_LastPoint();
-			}
-			else
-			{
-				isAllPointsEmpty = false;
-				break;
-			}
-		}
-	}
-	else
-	{
-		isAllPointsEmpty = false;
-	}
-
-	if (!isAllPointsEmpty)
+	
+	if (this.Action.PointsCount)
 	{
 		if (this.Action.Recalculate)
 		{
-
             if (this.Action.Additional.ShapeAutoFit)
                 this.private_FinalizeShapeAutoFit();
 
@@ -2810,13 +2797,14 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	this.Action.PointsCount        = 0;
 	this.Action.Recalculate        = false;
 	this.Action.CancelAction       = false;
+	this.Action.CheckLock          = false;
 	this.Action.Redraw.Start       = undefined;
 	this.Action.Redraw.End         = undefined;
 	this.Action.Additional         = {};
 	this.Api.checkChangesSize();
 	
 	if (this.Action.UpdateStates)
-		return;
+		return actionCompleted;
 	
 	this.Action.UpdateStates = true;
 	
@@ -2848,6 +2836,7 @@ CDocument.prototype.FinalizeAction = function(isCheckEmptyAction)
 	this.Action.UpdateStates = false;
 	
 	this.sendEvent("asc_onUserActionEnd");
+	return actionCompleted;
 };
 /**
  * Сообщаем, что нужно отменить начатое действие
@@ -2858,6 +2847,17 @@ CDocument.prototype.CancelAction = function()
 		return;
 
 	this.Action.CancelAction = true;
+};
+/**
+ * Сообщаем, что перед окончанием действия нужно проверить, что все выполненные изменения были разрешены
+ * Используется, когда мы не может проверить лок объектов до самого действия
+ */
+CDocument.prototype.CheckActionLock = function()
+{
+	if (!this.IsActionStarted())
+		return;
+	
+	this.Action.CheckLock = true;
 };
 CDocument.prototype.StartUndoRedoAction = function()
 {
@@ -2918,6 +2918,40 @@ CDocument.prototype.private_CheckAdditionalOnFinalize = function()
 		this.OFormDocument.onEndAction();
 	
 	this.Action.Additional.Start = false;
+};
+CDocument.prototype.private_CheckEmptyPointsInAction = function(checkEmptyAction)
+{
+	if (false === checkEmptyAction)
+		return;
+	
+	for (let pointIndex = 0, pointCount = this.Action.PointsCount; pointIndex < pointCount; ++pointIndex)
+	{
+		if (!this.History.Is_LastPointEmpty())
+			break;
+		
+		this.History.Remove_LastPoint();
+		--this.Action.PointsCount;
+	}
+};
+CDocument.prototype.private_CheckActionLock = function()
+{
+	if (!this.Action.CheckLock || !this.Action.PointsCount || this.Action.CancelAction)
+		return;
+	
+	if (!this.StartSelectionLockCheck())
+	{
+		this.Action.CancelAction = true;
+		return;
+	}
+	
+	this.History.checkLock(this.Action.PointsCount);
+	
+	if (this.EndSelectionLockCheck())
+		this.Action.CancelAction = true;
+	
+	// TODO: Если сервер нам запрещает делать действие, то мы делаем Undo из совместки. Но там делается отмена
+	//       только для одной точки, а в действии их может быть несколько. Надо доработать этот момент (но в текущий
+	//       момент данная проверка не вызывается для случаев, где в действии более одной точки)
 };
 /**
  * Пересчитываем нумерацию строк
@@ -5674,11 +5708,11 @@ CDocument.prototype.Draw                                     = function(nPageInd
     if (section_borders_ZOrderFront === SectPr.Get_Borders_ZOrder())
         this.DrawPageBorders(pGraphics, SectPr, nPageIndex);
 
-    if (docpostype_HdrFtr === this.CurPos.Type)
+    if (docpostype_HdrFtr === this.CurPos.Type && pGraphics.isSupportEditFeatures())
     {
         pGraphics.put_GlobalAlpha(false, 1.0);
 
-        // Рисуем колонтитулы
+		// Рисуем колонтитулы
         var SectIndex = this.SectionsInfo.Get_Index(Page_StartPos);
         var SectCount = this.SectionsInfo.Get_Count();
 
