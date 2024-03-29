@@ -9470,9 +9470,9 @@
 			this.map_bounds_shape = {};
 			this.map_bounds_shape["heart"] = true;
 
-			this.m_oCoordTransform = new AscCommon.CMatrixL();
-			this.m_oTransform = new AscCommon.CMatrixL();
-			this.m_oFullTransform = new AscCommon.CMatrixL();
+			this.m_oCoordTransform = new AscCommon.CMatrix();
+			this.m_oTransform = new AscCommon.CMatrix();
+			this.m_oFullTransform = new AscCommon.CMatrix();
 
 			this.m_oCurFont = null;
 			this.m_oTextPr = null;

@@ -141,11 +141,12 @@
 
 		this.m_oFontManager = null;
 
-		this.m_oCoordTransform  = new AscCommon.CMatrixL();
-		this.m_oBaseTransform   = new AscCommon.CMatrixL();
-		this.m_oTransform       = new AscCommon.CMatrixL();
-		this.m_oFullTransform   = new AscCommon.CMatrixL();
-		this.m_oInvertFullTransform = new AscCommon.CMatrixL();
+		this.m_oCoordTransform  = new AscCommon.CMatrix();
+		this.m_oTransform       = new AscCommon.CMatrix();
+		this.m_oFullTransform   = new AscCommon.CMatrix();
+		this.m_oInvertFullTransform = new AscCommon.CMatrix();
+
+		this.m_oBaseTransform   = null;
 
 		this.ArrayPoints = null;
 
@@ -351,54 +352,91 @@
 		_c.A = a;
 	};
 
+	// TRANSFORMS
+	CGraphics.prototype.SetBaseTransform = function(m)
+	{
+		if (!this.m_oBaseTransform)
+			this.m_oBaseTransform = new AscCommon.CMatrix();
+		this.m_oBaseTransform.CopyFrom(m);
+		this.m_oTransform.Multiply(this.m_oBaseTransform, AscCommon.MATRIX_ORDER_PREPEND);
+	};
+	CGraphics.prototype.ResetBaseTransform = function()
+	{
+		if (this.m_oBaseTransform)
+		{
+			let m = new AscCommon.CMatrix();
+			m.CopyFrom(this.m_oBaseTransform);
+			m.Invert();
+			this.m_oTransform.Multiply(m, AscCommon.MATRIX_ORDER_PREPEND);
+		}
+
+		this.m_oBaseTransform = null;
+	};
+
+	CGraphics.prototype.reset = function()
+	{
+		this.m_oTransform.Reset();
+		if (this.m_oBaseTransform)
+			this.m_oTransform.Multiply(this.m_oBaseTransform, AscCommon.MATRIX_ORDER_PREPEND);
+
+		this.CalculateFullTransform(false);
+
+		if (!this.m_bIntegerGrid)
+			this.m_oContext.setTransform(this.m_oCoordTransform.sx,0,0,this.m_oCoordTransform.sy,0, 0);
+	};
+
 	CGraphics.prototype.transform = function(sx,shy,shx,sy,tx,ty)
 	{
-		var _t = this.m_oTransform;
-		_t.sx    = sx;
-		_t.shx   = shx;
-		_t.shy   = shy;
-		_t.sy    = sy;
-		_t.tx    = tx;
-		_t.ty    = ty;
+		this.m_oTransform.SetValues(sx,shy,shx,sy,tx,ty);
+		if (this.m_oBaseTransform)
+			this.m_oTransform.Multiply(this.m_oBaseTransform, AscCommon.MATRIX_ORDER_PREPEND);
 
 		this.CalculateFullTransform();
+
 		if (false === this.m_bIntegerGrid)
 		{
-			var _ft = this.m_oFullTransform;
-			this.m_oContext.setTransform(_ft.sx,_ft.shy,_ft.shx,_ft.sy,_ft.tx,_ft.ty);
+			let m = this.m_oFullTransform;
+			this.m_oContext.setTransform(m.sx,m.shy,m.shx,m.sy,m.tx,m.ty);
 		}
 
 		if (null != this.m_oFontManager)
 		{
+			var _t = this.m_oTransform;
 			this.m_oFontManager.SetTextMatrix(_t.sx,_t.shy,_t.shx,_t.sy,_t.tx,_t.ty);
 		}
 	};
-	CGraphics.prototype.CalculateFullTransform = function(isInvertNeed)
+
+	CGraphics.prototype.transform3 = function(m, isNeedInvert)
 	{
-		var _ft = this.m_oFullTransform;
-		var _t = this.m_oTransform;
-		_ft.sx = _t.sx;
-		_ft.shx = _t.shx;
-		_ft.shy = _t.shy;
-		_ft.sy = _t.sy;
-		_ft.tx = _t.tx;
-		_ft.ty = _t.ty;
-		global_MatrixTransformer.MultiplyAppend(_ft, this.m_oCoordTransform);
+		this.m_oTransform.CopyFrom(m);
+		if (this.m_oBaseTransform)
+			this.m_oTransform.Multiply(this.m_oBaseTransform, AscCommon.MATRIX_ORDER_PREPEND);
 
-		var _it = this.m_oInvertFullTransform;
-		_it.sx = _ft.sx;
-		_it.shx = _ft.shx;
-		_it.shy = _ft.shy;
-		_it.sy = _ft.sy;
-		_it.tx = _ft.tx;
-		_it.ty = _ft.ty;
+		this.CalculateFullTransform(isNeedInvert);
 
-		if (false !== isInvertNeed)
+		if (false === this.m_bIntegerGrid)
 		{
-			global_MatrixTransformer.MultiplyAppendInvert(_it, _t);
+			let m = this.m_oFullTransform;
+			this.m_oContext.setTransform(m.sx,m.shy,m.shx,m.sy,m.tx,m.ty);
+		}
+		else
+		{
+			this.SetIntegerGrid(false);
 		}
 	};
-		// path commands
+
+	CGraphics.prototype.CalculateFullTransform = function(isInvertNeed)
+	{
+		this.m_oCoordTransform.CopyTo(this.m_oFullTransform);
+		this.m_oFullTransform.Multiply(this.m_oTransform, AscCommon.MATRIX_ORDER_PREPEND);
+
+		this.m_oFullTransform.CopyTo(this.m_oInvertFullTransform);
+
+		if (false !== isInvertNeed)
+			global_MatrixTransformer.MultiplyAppendInvert(this.m_oInvertFullTransform, this.m_oTransform);
+	};
+
+	// path commands
 	CGraphics.prototype._s = function()
 	{
 		this.m_oContext.beginPath();
@@ -501,7 +539,7 @@
 		this.m_oContext.fill();
 	};
 
-		// canvas state
+	// canvas state
 	CGraphics.prototype.save = function()
 	{
 		this.m_oContext.save();
@@ -516,46 +554,6 @@
 	CGraphics.prototype.clip = function()
 	{
 		this.m_oContext.clip();
-	};
-
-	CGraphics.prototype.reset = function()
-	{
-		this.m_oTransform.Reset();
-		this.CalculateFullTransform(false);
-
-		if (!this.m_bIntegerGrid)
-			this.m_oContext.setTransform(this.m_oCoordTransform.sx,0,0,this.m_oCoordTransform.sy,0, 0);
-	};
-
-	CGraphics.prototype.transform3 = function(m, isNeedInvert)
-	{
-		var _t = this.m_oTransform;
-		_t.sx = m.sx;
-		_t.shx = m.shx;
-		_t.shy = m.shy;
-		_t.sy = m.sy;
-		_t.tx = m.tx;
-		_t.ty = m.ty;
-		this.CalculateFullTransform(isNeedInvert);
-
-		if (!this.m_bIntegerGrid)
-		{
-			var _ft = this.m_oFullTransform;
-			this.m_oContext.setTransform(_ft.sx,_ft.shy,_ft.shx,_ft.sy,_ft.tx,_ft.ty);
-		}
-		else
-		{
-			this.SetIntegerGrid(false);
-		}
-
-		// теперь трансформ выставляется ТОЛЬКО при загрузке шрифта. Здесь другого быть и не может
-		/*
-		if (null != this.m_oFontManager && false !== isNeedInvert)
-		{
-			this.m_oFontManager.SetTextMatrix(this.m_oTransform.sx,this.m_oTransform.shy,this.m_oTransform.shx,
-				this.m_oTransform.sy,this.m_oTransform.tx,this.m_oTransform.ty);
-		}
-		*/
 	};
 
 	CGraphics.prototype.FreeFont = function()
