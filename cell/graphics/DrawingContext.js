@@ -1070,21 +1070,25 @@
 	};
 	
 	DrawingContext.prototype.tg = function(gid, x, y, codePoints) {
-		let fontManager = this.textRotated ? this.fmgrGraphics[1] : this.fmgrGraphics[0];
 		
 		var _x = this._mift.transformPointX(x, y);
 		var _y = this._mift.transformPointY(x, y);
 		
-		try {
-			fontManager.LoadString3C(gid, _x, _y, codePoints);
+		if (window["IS_NATIVE_EDITOR"]) {
+			window["native"]["PD_FillTextG"](_x, _y, gid);
+		} else {
+			let fontManager = this.textRotated ? this.fmgrGraphics[1] : this.fmgrGraphics[0];
+			try {
+				fontManager.LoadString3C(gid, _x, _y, codePoints);
+			}
+			catch(err){}
+			
+			let glyph = fontManager.m_oGlyphString.m_pGlyphsBuffer[0];
+			if (!glyph || !glyph.oBitmap)
+				return this;
+			
+			this.fillGlyph(glyph, fontManager);
 		}
-		catch(err){}
-		
-		let glyph = fontManager.m_oGlyphString.m_pGlyphsBuffer[0];
-		if (!glyph || !glyph.oBitmap)
-			return this;
-		
-		this.fillGlyph(glyph, fontManager);
 		return this;
 	};
 
