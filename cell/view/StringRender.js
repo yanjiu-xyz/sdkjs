@@ -1208,12 +1208,10 @@
 				y = y1 + bl + dh;
 				if (align !== AscCommon.align_Justify || dx < 0.000001) {
 					renderGraphemes(begin, end, x1, y, fontSize);
-					//ctx.fillTextCode(self.chars.slice(begin, end), x1, y, undefined, self.charWidths.slice(begin, end), angle);
 				} else {
 					for (i = b = begin, x_ = x1; i < end; ++i) {
 						cp = self.charProps[i];
 						if (cp && cp.wrd && i > b) {
-							//ctx.fillTextCode(self.chars.slice(b, i), x_, y, undefined, self.charWidths.slice(b, i), angle);
 							renderGraphemes(b, i, x_, y, fontSize);
 							x_ += self._calcCharsWidth(b, i - 1) + dx;
 							dw += dx;
@@ -1221,7 +1219,6 @@
 						}
 					}
 					if (i > b) { // draw remainder of text
-						//ctx.fillTextCode(self.chars.slice(b, i), x_, y, undefined, self.charWidths.slice(b, i), angle);
 						renderGraphemes(b, i, x_, y, fontSize);
 					}
 				}

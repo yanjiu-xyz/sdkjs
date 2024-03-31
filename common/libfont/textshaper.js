@@ -67,7 +67,6 @@
 		this.FontSize       = 10;
 		this.ForceCheckFont = false;
 		this.Direction      = AscFonts.HB_DIRECTION.HB_DIRECTION_LTR;
-		this.Handler        = null;
 	}
 	CTextShaper.prototype.ClearBuffer = function()
 	{
@@ -240,20 +239,6 @@
 		}
 		this.FlushWord();
 	};
-	CTextShaper.prototype.ShapeArray = function(codePoints, handler)
-	{
-		this.Handler = handler ? handler : null;
-		
-		this.StartString();
-		
-		for (let i = 0; i < codePoints.length; ++i)
-		{
-			this.AppendToString(codePoints[i]);
-		}
-		this.FlushWord();
-		
-		this.Handler = null;
-	};
 	CTextShaper.prototype.GetCodePoint = function(oItem)
 	{
 		return oItem;
@@ -264,9 +249,6 @@
 			this.BufferIndex -= nCodePointsCount;
 		else
 			this.BufferIndex += nCodePointsCount;
-		
-		if (this.Handler)
-			this.Handler(nGrapheme, nWidth, nCodePointsCount, isLigature);
 	};
 	CTextShaper.prototype.IsRtlDirection = function()
 	{
