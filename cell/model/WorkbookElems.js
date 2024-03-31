@@ -540,12 +540,6 @@ g_oColorManager = new ColorManager();
 	Fragment.prototype.initText = function () {
 		this.setFragmentText(this.charCodes ? AscCommon.convertUnicodeToUTF16(this.charCodes) : "", true);
 	};
-	Fragment.prototype.getCharCode = function (index) {
-		if (!this.isInitCharCodes()) {
-			this.initCharCodes();
-		}
-		return this.charCodes && this.charCodes[index];
-	};
 	Fragment.prototype.isInitCharCodes = function () {
 		return this.charCodes !== null;
 	};
@@ -1155,6 +1149,7 @@ var g_oFontProperties = {
 		}
 		this.fn = stream.GetString();
 	};
+	window["AscCommonExcel"].Font = Font;
 
 	var c_oAscPatternType = {
 		DarkDown :  0,
