@@ -1740,6 +1740,28 @@
         return langName;
     };
 
+	function correctItemIcons(item, baseUrl)
+	{
+		if (item && item["icons"])
+		{
+			if ((0 === item["icons"].indexOf("http://")) ||
+				(0 === item["icons"].indexOf("https://")) ||
+				(0 === item["icons"].indexOf("file://")) ||
+				(0 === item["icons"].indexOf("www.")))
+			{
+				// nothing
+			}
+			else if (0 === item["icons"].indexOf("external://"))
+			{
+				item["icons"] = item["icons"].substr("external://".length);
+			}
+			else
+			{
+				item["icons"] = baseUrl + item["icons"];
+			}
+		}
+	}
+
 	function correctItemsWithData(items, baseUrl)
 	{
 		for (let i = 0, itemsLen = items.length; i < itemsLen; i++)
@@ -1747,8 +1769,7 @@
 			if (undefined !== items[i]["id"] && undefined !== items[i]["data"])
 				items[i]["id"] = items[i]["id"] + "_oo_sep_" + items[i]["data"];
 
-			if (items[i]["icons"]) 
-				items[i]["icons"] = baseUrl + items[i]["icons"];
+			correctItemIcons(items[i], baseUrl);
 
 			if (items[i]["items"])
 				correctItemsWithData(items[i]["items"], baseUrl);
@@ -1867,8 +1888,7 @@
 		variation["guid"] = guid;
 
 		let baseUrl = this.pluginsManager.pluginsMap[guid].baseUrl;
-		if (variation["icons"])
-			variation["icons"] = baseUrl + variation["icons"];
+		correctItemIcons(variation["icons"], baseUrl);
 
 		this.sendEvent("asc_onPluginWindowShow", frameId, variation);
 	};
