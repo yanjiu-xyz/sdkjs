@@ -1863,8 +1863,27 @@
 	 */
 	Api.prototype["pluginMethod_ShowWindow"] = function(frameId, variation)
 	{
-		variation["guid"] = window.g_asc_plugins.getCurrentPluginGuid();
+		let guid = window.g_asc_plugins.getCurrentPluginGuid();
+		variation["guid"] = guid;
+
+		let baseUrl = this.pluginsManager.pluginsMap[guid].baseUrl;
+		if (variation["icons"])
+			variation["icons"] = baseUrl + variation["icons"];
+
 		this.sendEvent("asc_onPluginWindowShow", frameId, variation);
+	};
+
+	/**
+	 * Activate (move to front) the plugin window/panel.
+	 * @memberof Api
+	 * @typeofeditors ["CDE", "CSE", "CPE"]
+	 * @param {string} frameId - The frame ID.
+	 * @alias ActivateWindow
+	 * @since 8.1.0
+	 */
+	Api.prototype["pluginMethod_ActivateWindow"] = function(frameId)
+	{
+		this.sendEvent("asc_onPluginWindowActivate", frameId);
 	};
 
 	/**
