@@ -1747,108 +1747,6 @@
 		}
 		return this._isHideLastChild;
 	};
-	BaseAlgorithm.prototype.getShapePoint = function (bounds) {
-		return new CCoordPoint(bounds.l + (bounds.r - bounds.l) / 2, bounds.t + (bounds.b - bounds.t) / 2);
-	};
-
-	BaseAlgorithm.prototype.getMinShapeEdgePoint = function (bounds, guideVector) {
-		if (bounds.isEllipse) {
-			return this.getMinCircleEdgePoint(bounds, guideVector);
-		} else {
-			return this.getMinRectEdgePoint(bounds, guideVector);
-		}
-	};
-
-	BaseAlgorithm.prototype.getParametricLinEquation = function (startPoint, guideVector) {
-		const len = guideVector.getDistance();
-		return {
-			x: startPoint.x,
-			ax: guideVector.x / len,
-			y: startPoint.y,
-			ay: guideVector.y / len
-		};
-	}
-	BaseAlgorithm.prototype.resolveParameterLineAndShapeEquation = function (ellipseBounds, paramLine) {
-		const width = ellipseBounds.r - ellipseBounds.l;
-		const height = ellipseBounds.b - ellipseBounds.t;
-		const cw = width / 2;
-		const ch = height / 2;
-		const cx = cw + ellipseBounds.l;
-		const cy = ch + ellipseBounds.t;
-
-		const px = paramLine.ax;
-		const py = paramLine.ay;
-		const x1 = paramLine.x;
-		const y1 = paramLine.y;
-		const ch2 = ch * ch;
-		const cw2 = cw * cw;
-		const a = ch2 * px * px + cw2 * py * py;
-		const b = 2 * ch2 * px * (x1 - cx) + 2 * cw2 * py * (y1 - cy);
-		const c = ch2 * (cy * cy - 2 * cy * y1 + y1 * y1) + cw2 * (cx * cx - 2 * cx * x1 + x1 * x1) - cw2 * ch2;
-		return AscFormat.fSolveQuadraticEquation(a, b, c);
-	}
-	BaseAlgorithm.prototype.getMinCircleEdgePoint = function (bounds, guideVector) {
-		const shapePoint = this.getShapePoint(bounds);
-		const line = this.getParametricLinEquation(shapePoint, guideVector);
-		const answer = this.resolveParameterLineAndShapeEquation(bounds, line);
-		if (answer.bError) {
-			return null;
-		}
-		const angle = guideVector.getAngle();
-
-		const xt1 = line.x + line.ax * answer.x1;
-		const yt1 = line.y + line.ay * answer.x1;
-
-		let edgeAngle = new CVector(xt1 - shapePoint.x, yt1 - shapePoint.y).getAngle();
-		if (AscFormat.fApproxEqual(edgeAngle, angle, algDelta)) {
-			return new CCoordPoint(xt1, yt1);
-		}
-
-		const xt2 = line.x + line.ax * answer.x2;
-		const yt2 = line.y + line.ay * answer.x2;
-
-		edgeAngle = new CVector(xt2 - shapePoint.x, yt2 - shapePoint.y).getAngle();
-		if (AscFormat.fApproxEqual(edgeAngle, angle, algDelta)) {
-			return new CCoordPoint(xt2, yt2);
-		}
-	};
-	BaseAlgorithm.prototype.getMinRectEdgePoint = function (bounds, guideVector) {
-		const shapePoint = this.getShapePoint(bounds);
-		const centerAngle = guideVector.getAngle();
-		let checkEdges = [
-			[new CCoordPoint(bounds.l, bounds.t), new CCoordPoint(bounds.r, bounds.t)],
-			[new CCoordPoint(bounds.r, bounds.t), new CCoordPoint(bounds.r, bounds.b)],
-			[new CCoordPoint(bounds.l, bounds.t), new CCoordPoint(bounds.l, bounds.b)],
-			[new CCoordPoint(bounds.l, bounds.b), new CCoordPoint(bounds.r, bounds.b)]
-		];
-		for (let i = 0; i < checkEdges.length; i += 1) {
-			const edge = checkEdges[i];
-			const point = this.getRectEdgePoint(shapePoint, guideVector, edge[0], edge[1]);
-			if (point) {
-				const edgeGuideVector = new CVector(point.x - shapePoint.x, point.y - shapePoint.y);
-				const edgeAngle = edgeGuideVector.getAngle();
-				if (AscFormat.fApproxEqual(edgeAngle, centerAngle, algDelta)) {
-					return point;
-				}
-			}
-		}
-	};
-	BaseAlgorithm.prototype.getRectEdgePoint = function (linePoint, guideVector, rectEdgePoint1, rectEdgePoint2) {
-		const line1 = this.getParametricLinEquation(linePoint, guideVector);
-		const line2 = this.getParametricLinEquation(rectEdgePoint1, new CVector(rectEdgePoint2.x - rectEdgePoint1.x, rectEdgePoint2.y - rectEdgePoint1.y));
-		const divider = line1.ay * line2.ax - line1.ax * line2.ay;
-		if (divider === 0) {
-			return null;
-		}
-		const parameter = (line1.ax * (line2.y - line1.y) - line1.ay * (line2.x - line1.x)) / divider;
-		const x = line2.x + line2.ax * parameter;
-		const y = line2.y + line2.ay * parameter;
-		if (((x > rectEdgePoint1.x && x < rectEdgePoint2.x) || AscFormat.fApproxEqual(x, rectEdgePoint2.x, algDelta) || AscFormat.fApproxEqual(x, rectEdgePoint1.x, algDelta))
-			&& ((y > rectEdgePoint1.y && y < rectEdgePoint2.y) || AscFormat.fApproxEqual(y, rectEdgePoint2.y, algDelta) || AscFormat.fApproxEqual(y, rectEdgePoint1.y, algDelta))) {
-			return new CCoordPoint(x, y);
-		}
-		return null;
-	}
 
 	BaseAlgorithm.prototype.calcScaleCoefficients = function () {
 		this.parentNode.calcNodeConstraints();
@@ -3758,10 +3656,10 @@ function HierarchyAlgorithm() {
 		if (!centerBounds || !anotherBounds) {
 			return 0;
 		}
-		const centerPoint = this.getShapePoint(centerBounds);
-		const anotherPoint = this.getShapePoint(anotherBounds);
-		const centerEdgePoint = this.getMinShapeEdgePoint(centerBounds, guideVector);
-		const anotherEdgePoint = this.getMinShapeEdgePoint(anotherBounds, new CVector(-guideVector.x, -guideVector.y));
+		const centerPoint = getShapePoint(centerBounds);
+		const anotherPoint = getShapePoint(anotherBounds);
+		const centerEdgePoint = getMinShapeEdgePoint(centerBounds, guideVector);
+		const anotherEdgePoint = getMinShapeEdgePoint(anotherBounds, new CVector(-guideVector.x, -guideVector.y));
 		if (centerEdgePoint && anotherEdgePoint) {
 			const centerDistance = centerPoint.getVector(centerEdgePoint).getDistance();
 			const anotherDistance = anotherPoint.getVector(anotherEdgePoint).getDistance();
@@ -3889,11 +3787,11 @@ function HierarchyAlgorithm() {
 				const previousVector = CVector.getVectorByAngle(previousAngle);
 				const currentVector = CVector.getVectorByAngle(currentAngle);
 				const guideVector = currentVector.getDiffVector(previousVector);
-				const currentEdgePoint = this.getMinShapeEdgePoint(currentBounds, guideVector);
-				const previousEdgePoint = this.getMinShapeEdgePoint(previousBounds, new CVector(-guideVector.x, -guideVector.y));
+				const currentEdgePoint = getMinShapeEdgePoint(currentBounds, guideVector);
+				const previousEdgePoint = getMinShapeEdgePoint(previousBounds, new CVector(-guideVector.x, -guideVector.y));
 				if (currentEdgePoint && previousEdgePoint) {
-					const currentShapePoint = this.getShapePoint(currentBounds);
-					const previousShapePoint = this.getShapePoint(previousBounds);
+					const currentShapePoint = getShapePoint(currentBounds);
+					const previousShapePoint = getShapePoint(previousBounds);
 					const currentVector = currentShapePoint.getVector(currentEdgePoint);
 					const previousVector = previousShapePoint.getVector(previousEdgePoint);
 					const previousDistance = previousVector.getDistance();
@@ -4464,8 +4362,8 @@ function HierarchyAlgorithm() {
 		const endShape = this.getEndShape();
 		const startBounds = startShape.getBounds();
 		const endBounds = endShape.getBounds();
-		const startPoint = this.getShapePoint(startBounds);
-		const endPoint = this.getShapePoint(endBounds);
+		const startPoint = getShapePoint(startBounds);
+		const endPoint = getShapePoint(endBounds);
 		let guideVector;
 		if (isStart) {
 			guideVector = new CVector(endPoint.x - startPoint.x, endPoint.y - startPoint.y);
@@ -4473,7 +4371,7 @@ function HierarchyAlgorithm() {
 			guideVector = new CVector(startPoint.x - endPoint.x, startPoint.y - endPoint.y);
 		}
 		const bounds = isStart ? startBounds : endBounds;
-		return this.getMinShapeEdgePoint(bounds, guideVector);
+		return getMinShapeEdgePoint(bounds, guideVector);
 	};
 	ConnectorAlgorithm.prototype.getEllipseRadialEdgePoint = function (radialInfo, bounds, isStart) {
 		const cycleAngle = radialInfo.angle;
@@ -4521,10 +4419,10 @@ function HierarchyAlgorithm() {
 			[new CCoordPoint(bounds.l, bounds.b), new CCoordPoint(bounds.r, bounds.b)],
 			[new CCoordPoint(bounds.r, bounds.t), new CCoordPoint(bounds.r, bounds.b)]
 		];
-		const rectCenterPoint = this.getShapePoint(bounds);
+		const rectCenterPoint = getShapePoint(bounds);
 		for (let i = 0; i < linePoints.length; i += 1) {
 			const coords = linePoints[i];
-			const paramLine = this.getParametricLinEquation(coords[0], new CVector(coords[1].x - coords[0].x, coords[1].y - coords[0].y));
+			const paramLine = getParametricLinEquation(coords[0], new CVector(coords[1].x - coords[0].x, coords[1].y - coords[0].y));
 			const answer = this.resolveParameterLineAndShapeEquation(ellipseBounds, paramLine);
 			if (!answer.bError) {
 				let point;
@@ -6609,6 +6507,112 @@ function CConnectionDistanceResolver() {
 	};
 	CConnectionDistanceResolver.prototype.addConnection = function (algorithm) {
 		this.connectionAlgorithms.push(algorithm);
+	}
+
+	function getShapePoint(bounds) {
+		return new CCoordPoint(bounds.l + (bounds.r - bounds.l) / 2, bounds.t + (bounds.b - bounds.t) / 2);
+	}
+	function getMinShapeEdgePoint() {
+		if (bounds.isEllipse) {
+			return getMinCircleEdgePoint(bounds, guideVector);
+		} else {
+			return getMinRectEdgePoint(bounds, guideVector);
+		}
+	}
+	function resolveParameterLineAndShapeEquation(ellipseBounds, paramLine) {
+		const width = ellipseBounds.r - ellipseBounds.l;
+		const height = ellipseBounds.b - ellipseBounds.t;
+		const cw = width / 2;
+		const ch = height / 2;
+		const cx = cw + ellipseBounds.l;
+		const cy = ch + ellipseBounds.t;
+
+		const px = paramLine.ax;
+		const py = paramLine.ay;
+		const x1 = paramLine.x;
+		const y1 = paramLine.y;
+		const ch2 = ch * ch;
+		const cw2 = cw * cw;
+		const a = ch2 * px * px + cw2 * py * py;
+		const b = 2 * ch2 * px * (x1 - cx) + 2 * cw2 * py * (y1 - cy);
+		const c = ch2 * (cy * cy - 2 * cy * y1 + y1 * y1) + cw2 * (cx * cx - 2 * cx * x1 + x1 * x1) - cw2 * ch2;
+		return AscFormat.fSolveQuadraticEquation(a, b, c);
+	}
+
+	function getMinCircleEdgePoint(bounds, guideVector) {
+		const shapePoint = getShapePoint(bounds);
+		const line = getParametricLinEquation(shapePoint, guideVector);
+		const answer = resolveParameterLineAndShapeEquation(bounds, line);
+		if (answer.bError) {
+			return null;
+		}
+		const angle = guideVector.getAngle();
+
+		const xt1 = line.x + line.ax * answer.x1;
+		const yt1 = line.y + line.ay * answer.x1;
+
+		let edgeAngle = new CVector(xt1 - shapePoint.x, yt1 - shapePoint.y).getAngle();
+		if (AscFormat.fApproxEqual(edgeAngle, angle, algDelta)) {
+			return new CCoordPoint(xt1, yt1);
+		}
+
+		const xt2 = line.x + line.ax * answer.x2;
+		const yt2 = line.y + line.ay * answer.x2;
+
+		edgeAngle = new CVector(xt2 - shapePoint.x, yt2 - shapePoint.y).getAngle();
+		if (AscFormat.fApproxEqual(edgeAngle, angle, algDelta)) {
+			return new CCoordPoint(xt2, yt2);
+		}
+	}
+
+	function getMinRectEdgePoint(bounds, guideVector) {
+		const shapePoint = getShapePoint(bounds);
+		const centerAngle = guideVector.getAngle();
+		let checkEdges = [
+			[new CCoordPoint(bounds.l, bounds.t), new CCoordPoint(bounds.r, bounds.t)],
+			[new CCoordPoint(bounds.r, bounds.t), new CCoordPoint(bounds.r, bounds.b)],
+			[new CCoordPoint(bounds.l, bounds.t), new CCoordPoint(bounds.l, bounds.b)],
+			[new CCoordPoint(bounds.l, bounds.b), new CCoordPoint(bounds.r, bounds.b)]
+		];
+		for (let i = 0; i < checkEdges.length; i += 1) {
+			const edge = checkEdges[i];
+			const point = getRectEdgePoint(shapePoint, guideVector, edge[0], edge[1]);
+			if (point) {
+				const edgeGuideVector = new CVector(point.x - shapePoint.x, point.y - shapePoint.y);
+				const edgeAngle = edgeGuideVector.getAngle();
+				if (AscFormat.fApproxEqual(edgeAngle, centerAngle, algDelta)) {
+					return point;
+				}
+			}
+		}
+	}
+	function getParametricLinEquation(startPoint, guideVector) {
+		const len = guideVector.getDistance();
+		return {
+			x: startPoint.x,
+			ax: guideVector.x / len,
+			y: startPoint.y,
+			ay: guideVector.y / len
+		};
+	}
+	function getRectEdgePoint(linePoint, guideVector, rectEdgePoint1, rectEdgePoint2) {
+		const line1 = getParametricLinEquation(linePoint, guideVector);
+		const line2 = getParametricLinEquation(rectEdgePoint1, new CVector(rectEdgePoint2.x - rectEdgePoint1.x, rectEdgePoint2.y - rectEdgePoint1.y));
+		return getIntersectionLines(line1, line2, rectEdgePoint1, rectEdgePoint2);
+	}
+	function getIntersectionLines(line1, line2, rectEdgePoint1, rectEdgePoint2) {
+		const divider = line1.ay * line2.ax - line1.ax * line2.ay;
+		if (divider === 0) {
+			return null;
+		}
+		const parameter = (line1.ax * (line2.y - line1.y) - line1.ay * (line2.x - line1.x)) / divider;
+		const x = line2.x + line2.ax * parameter;
+		const y = line2.y + line2.ay * parameter;
+		if (((x > rectEdgePoint1.x && x < rectEdgePoint2.x) || AscFormat.fApproxEqual(x, rectEdgePoint2.x, algDelta) || AscFormat.fApproxEqual(x, rectEdgePoint1.x, algDelta))
+			&& ((y > rectEdgePoint1.y && y < rectEdgePoint2.y) || AscFormat.fApproxEqual(y, rectEdgePoint2.y, algDelta) || AscFormat.fApproxEqual(y, rectEdgePoint1.y, algDelta))) {
+			return new CCoordPoint(x, y);
+		}
+		return null;
 	}
 
 
