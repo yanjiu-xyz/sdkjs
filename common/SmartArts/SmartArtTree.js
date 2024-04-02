@@ -258,8 +258,12 @@
 	}
 	If.prototype.funcPosEven = function (nodes, currentNode) {
 		const conditionValue = parseInt(this.getConditionValue(), 10);
-		const position = currentNode.getPositionByParent() + 1;
-		return this.check(conditionValue, position % 2 === 0 ? 1 : 0);
+		for (let i = 0; i < nodes.length; i += 1) {
+			if (nodes === currentNode) {
+				return this.check(conditionValue, (i + 1) % 2 === 0 ? 1 : 0);
+			}
+		}
+		return false;
 	};
 	If.prototype.funcPosOdd = function (nodes, currentNode) {
 		const conditionValue = parseInt(this.getConditionValue(), 10);
@@ -1075,8 +1079,7 @@
 	SmartArtDataNode.prototype.getPointType = function () {
 		return this.point.getType();
 	}
-
-	SmartArtDataNodeBase.prototype.getPositionByParent = function () {
+	SmartArtDataNode.prototype.getPositionByParent = function () {
 		const parent = this.getParent();
 		for (let i = 0; i < parent.childs.length; i++) {
 			if (parent.childs[i] === this) {
