@@ -226,7 +226,7 @@
 			} else if (angle % (Math.PI / 2) === 0) {
 				inscribedWidth = height;
 				inscribedHeight = width;
-			} else if ((shortSide * (tanA + 1 / tanA) / 2 <= longSide) || (angle % (Math.PI / 4) === 0)) {
+			} else if (shortSide * (tanA + 1 / tanA) / 2 <= longSide) {
 				if (isShortWidth) {
 					inscribedWidth = shortSide / (2 * cosA);
 					inscribedHeight = shortSide / (2 * sinA);
