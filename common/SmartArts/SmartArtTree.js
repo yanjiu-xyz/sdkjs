@@ -2159,15 +2159,6 @@
 		ShapeContainer.call(this);
 	}
 	AscFormat.InitClassWithoutType(CycleContainer, ShapeContainer);
-	CycleContainer.prototype.getOffsets = function (parentHeight, parentWidth, isCalculateScaleCoefficient) {
-		const bounds = this.getBounds(isCalculateScaleCoefficient);
-		const cycleCY = bounds.t + (bounds.b - bounds.t) / 2;
-		const cycleCX = bounds.l + (bounds.r - bounds.l) / 2;
-		return {
-			offX: parentWidth / 2 - cycleCX,
-			offY: parentHeight / 2 - cycleCY
-		};
-	};
 	CycleContainer.prototype.getBounds = function (isCalculateScaleCoefficient) {
 			if (this.shapes.length) {
 				const firstShape = this.shapes[0];
@@ -3631,9 +3622,7 @@ function HierarchyAlgorithm() {
 			return null;
 		}
 		const result = {};
-		const shapeContainer = this.getShapeContainer();
-		const offsets = shapeContainer.getOffsets(parentHeight, parentWidth, false);
-		result.point = new CCoordPoint(offsets.offX, offsets.offY);
+		result.point = this.calcValues.centerPoint;
 		result.radius = this.calcValues.radius;
 		// todo: add custom radial info
 		result.angle = AscFormat.normalizeRotate(this.calcValues.startAngle + this.calcValues.stepAngle * nodeIndex);
@@ -3946,6 +3935,14 @@ function HierarchyAlgorithm() {
 					container.push(shape);
 				}
 		}
+		this.calculateCenterPoint();
+	};
+	CycleAlgorithm.prototype.calculateCenterPoint = function () {
+		const width = this.getParentNodeWidth(true);
+		const height = this.getParentNodeHeight(true);
+		const shapeContainer = this.getShapeContainer();
+		const bounds = shapeContainer.getBounds();
+		this.calcValues.centerPoint = new CCoordPoint(width / 2 - (bounds.l + (bounds.r - bounds.l) / 2), height / 2 - (bounds.t + (bounds.b - bounds.t) / 2));
 	};
 	CycleAlgorithm.prototype.createShadowShape = function (isCalculateScaleCoefficients) {
 		return this.parentNode.createShadowShape(true);
@@ -4426,7 +4423,7 @@ function HierarchyAlgorithm() {
 		for (let i = 0; i < linePoints.length; i += 1) {
 			const coords = linePoints[i];
 			const paramLine = getParametricLinEquation(coords[0], new CVector(coords[1].x - coords[0].x, coords[1].y - coords[0].y));
-			const answer = this.resolveParameterLineAndShapeEquation(ellipseBounds, paramLine);
+			const answer = resolveParameterLineAndShapeEquation(ellipseBounds, paramLine);
 			if (!answer.bError) {
 				let point;
 				const point1 = new CCoordPoint(paramLine.x + paramLine.ax * answer.x1, paramLine.y + paramLine.ay * answer.x1);
